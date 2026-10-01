@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 809,
-        "typen": 92
+        "felder": 832,
+        "typen": 93
     },
     "typen": [
         {
@@ -2638,6 +2638,127 @@
             ],
             "name": "Lyapunov",
             "typkey": "lyapunov"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "beatsPerLine"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 6737151,
+                    "name": "color2"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16769126,
+                    "name": "colorBoth"
+                },
+                {
+                    "art": "zahl",
+                    "default": 8421504,
+                    "name": "colorNext"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "fontFace"
+                },
+                {
+                    "art": "zahl",
+                    "default": -36,
+                    "name": "fontHeight"
+                },
+                {
+                    "art": "zahl",
+                    "default": 700,
+                    "name": "fontWeight"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "hAlign"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "italic"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "offsetMs"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "outline"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "outlineColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "outlineSize"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "previewLines"
+                },
+                {
+                    "art": "bool",
+                    "default": true,
+                    "name": "showSyncMark"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "vAlign"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "xShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": -6,
+                    "name": "yShift"
+                }
+            ],
+            "name": "Lyrics",
+            "typkey": "lyrics"
         },
         {
             "felder": [

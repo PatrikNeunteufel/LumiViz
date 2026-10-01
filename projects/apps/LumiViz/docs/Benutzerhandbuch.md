@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.28.0
+> **Version:** 1.29.0
 > **Datum:** 2026-10-01
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -478,6 +478,38 @@ die drei nacheinander. Gelesen werden ID3v2/ID3v1 (MP3), Vorbis-Kommentare
 (Ogg, FLAC), APE und MP4. Ist kein Titel geladen, zeichnet eine reine
 Tag-Vorlage nichts. Die Voreinstellung **Now Playing** bringt eine fertige
 Zeile unten im Bild mit.
+
+**Lyrics: Songtext zum laufenden Titel.** Der Knoten **Lyrics** (Effekt-Palette
+→ Images) zeigt den Text des laufenden Titels. Den Text sucht LumiViz beim
+Titelwechsel, in dieser Reihenfolge — synchron vor unsynchron, nah am Song vor
+fern:
+
+1. eingebetteter **synchroner** Text (ID3 `SYLT`, oder ein eingebetteter Text
+   mit Zeitmarken)
+2. `<Song>.lrc` neben dem Song
+3. `<Interpret> - <Titel>.lrc` im Benutzerordner
+   (`%APPDATA%\LumiViz\lyrics`)
+4. eingebetteter unsynchroner Text (ID3 `USLT`, Vorbis `LYRICS`)
+5. `<Song>.txt` neben dem Song
+6. `<Interpret> - <Titel>.txt` im Benutzerordner
+
+Synchron ist ein Text, sobald er Zeitmarken trägt (`[01:23.45]`) — die Endung
+entscheidet nicht. Oben im Editor steht, was gefunden wurde.
+
+| Feld | Bedeutung |
+|---|---|
+| **Preview lines** | So viele kommende Zeilen stehen unter der laufenden (0–4), in **Color upcoming**. |
+| **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
+| **Timing offset (ms)** | Verschiebt synchronen Text: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
+| **Unsynced: beats per line** | Unsynchroner Text steht als Block; mit einem Wert > 0 rückt er alle N Beats eine Zeile weiter. |
+| **Mark unsynced lyrics** | Schreibt „(not synced)" über einen unsynchronen Text — er läuft nicht zum Gesang. |
+
+Synchroner Text läuft an der **Abspielposition** des Players, auch nach dem
+Springen im Titel. Trägt die Datei Wort-Zeiten (`<01:23.80>` im Text), füllt
+sich die laufende Zeile **Wort für Wort**. Zu lange Zeilen werden kleiner
+gesetzt, bis sie passen. Schrift, Lage, Kontur und Formelfelder wie beim
+Text-Knoten. Voreinstellungen: **Karaoke Bottom**, **Big Centre**, **Three
+Lines Left**. Noch nicht gebaut: Songtexte aus dem Netz holen.
 
 **Fenstergröße ändern.** Das Bild der Effektkette und jeder Effect List bzw.
 Host-Gruppe wird beim Größenwechsel in die neue Größe übernommen (wie in AVS
@@ -1085,6 +1117,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.29.0 | 2026-10-01 | Session 86. §11 NEU Knoten **Lyrics**: Songtext zum laufenden Titel (eingebettet, `.lrc`/`.txt` neben dem Song oder im Benutzerordner; Suchreihenfolge), synchron an der Abspielposition mit Vorschau-Zeilen und Wort-für-Wort-Füllung, Duett-Farben, unsynchroner Block, drei Voreinstellungen |
 | 1.28.0 | 2026-10-01 | Session 86. §2 NEU Panel **Tag View**: Tags, Datei, Dauer und Cover des laufenden Titels (nur Anzeige) |
 | 1.27.0 | 2026-10-01 | Session 86. §11 NEU „Text: Titel und Interpret anzeigen": Platzhalter `{title}` `{artist}` `{album}` `{year}` `{genre}` `{track}` `{file}`, wahlfreie Teile in eckigen Klammern, Knopf **Insert tag**, Voreinstellung **Now Playing** |
 | 1.26.0 | 2026-10-01 | Session 86. §11 Text: **Font** ist eine Auswahlliste der installierten Schriften (weiter editierbar), NEU Häkchen **Bold**. §11 NEU „Fenstergröße ändern": das Bild von Kette, Effect List und Host-Gruppe bleibt beim Größenwechsel erhalten — Blur und Trails brechen nicht mehr ab |

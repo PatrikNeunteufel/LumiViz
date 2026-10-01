@@ -124,6 +124,9 @@ bool AudioPlayer::load(const QString& filePath)
     m_impl->engine.getMetadataExtra(m_impl->currentStream, m_impl->currentTrack.year,
                                     m_impl->currentTrack.genre,
                                     m_impl->currentTrack.trackNumber);
+    // Eingebettete Songtexte fuer den Lyrics-Knoten (S86)
+    m_impl->engine.getLyrics(m_impl->currentStream, m_impl->currentTrack.lyricsSynced,
+                             m_impl->currentTrack.lyricsPlain);
     
     // Apply current volume
     m_impl->engine.setVolume(m_impl->currentStream, m_impl->muted ? 0.0f : m_impl->volume);

@@ -33,6 +33,7 @@
 #include "visualizers/VisualizerBase.hpp"
 #include "visualizers/MilkdropVisualizer.hpp"
 #include "visualizers/multieffect/EffectChain.hpp"
+#include "visualizers/multieffect/LyricsModel.hpp"
 #include "visualizers/multieffect/TextTags.hpp"
 #include "visualizers/modules/processing/BeatEstimator.hpp"
 #include "visualizers/modules/processing/BeatModule.hpp"
@@ -271,6 +272,20 @@ public:
     /// angelegter Visualizer sieht sie ebenfalls. Thread-sicher.
     static void notifySongChanged(const lumi::multieffect::texttags::SongTags& tags);
 
+    /// S86 (Lyrics-Knoten): der Songtext des laufenden Titels. Gesetzt beim
+    /// Songwechsel (nach der Suche, `audio/SongtextQuelle`), spaeter auch
+    /// von Werkzeugen (Online-Abruf, Nachsynchronisieren). Thread-sicher.
+    static void setSongtext(const lumi::multieffect::lyrics::Songtext& text);
+    /// Kurzbeschreibung des gesetzten Songtexts fuer die Oberflaeche:
+    /// Quelle, synchron/unsynchron, Zeilenzahl; leer = keiner.
+    [[nodiscard]] static std::string songtextInfo();
+    /// Abspielposition des Players in ms (S86): der Player meldet sie
+    /// 10–30-mal je Sekunde, dazwischen wird auf der Wanduhr weitergezaehlt,
+    /// solange er laeuft (`notifyPlayState`). Thread-sicher.
+    static void notifyPlayPosition(std::int64_t positionMs);
+    static void notifyPlayState(bool laeuft);
+    [[nodiscard]] static std::int64_t playPositionMs();
+
     /**
      * @brief Test-Hook (S82): laufende Gruppe eines Host Switchers (Index
      *        1..count), 0 = noch nicht gelaufen / unbekannt.
@@ -395,6 +410,11 @@ private:
         float textRandY = 0.0f;
         std::string textSnapshot;      ///< draw-state snapshot behind textTexture
         unsigned int textTexture = 0;  ///< GL RGBA glyph layer (deleted in onCleanup)
+        /// Lyrics (S86): Zeile und Beat-Zaehler des unsynchronen Blocks und
+        /// der Songtext-Stand, zu dem sie gehoeren (neuer Titel = von vorn).
+        int lyricsZeile = 0;
+        int lyricsBeats = 0;
+        uint64_t lyricsStand = 0;
 
         // AVI (r_avi): VfW stream handles (opaque void* — vfw.h stays in the .cpp)
         void* aviFile = nullptr;       ///< PAVIFILE
@@ -945,6 +965,11 @@ private:
                     const lumi::multieffect::PictureParams& params);
     void runText(const lumi::multieffect::ChainNode& node,
                  const lumi::multieffect::TextParams& params);
+    void runLyrics(const lumi::multieffect::ChainNode& node,
+                   const lumi::multieffect::LyricsParams& params);
+    /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
+    /// Pass wie im Text-Knoten). blend: 0 ersetzen, 1 additiv, 2 50/50.
+    void composeGlyphLayer(unsigned int texture, int blend);
     void runAvi(const lumi::multieffect::ChainNode& node,
                 const lumi::multieffect::AviParams& params);
     /// Release the VfW handles of an AVI node (safe on empty runtimes).
@@ -1318,6 +1343,7 @@ private:
     /// S86: Tags des laufenden Titels (Kopie fuer den Render-Thread) und der
     /// Stand, zu dem sie gehoeren.
     lumi::multieffect::texttags::SongTags m_songTags;
+    lumi::multieffect::lyrics::Songtext m_songtext;  ///< S86, gleicher Stand wie die Tags
     uint64_t m_songTagsStand = 0;
     double m_modBeatLage = 0.0;
     double m_modBeatSeit = 0.0;

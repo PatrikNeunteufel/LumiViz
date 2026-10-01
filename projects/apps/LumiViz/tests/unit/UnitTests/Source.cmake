@@ -51,6 +51,8 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldDocs.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldBindings.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_TextTags.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LyricsModel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_SongtextQuelle.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_FeldSteuerungGl.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldInventory.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ParamScript.cpp"

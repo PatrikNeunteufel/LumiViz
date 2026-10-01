@@ -2891,6 +2891,49 @@ struct PassthroughParams
     std::string note;      ///< import report text ("effect X not implemented")
 };
 
+/**
+ * LumiViz "Lyrics" (S86): shows the lyrics of the playing track. Synchronised
+ * lyrics follow the playback position of the player (current line highlighted,
+ * the next lines as a preview; word by word where the file carries word
+ * times). Unsynchronised lyrics stand as a block and can step on beats. The
+ * text itself is not part of the node — it comes from the track (embedded,
+ * `.lrc`/`.txt` next to the song or in the user folder).
+ */
+struct LyricsParams
+{
+    std::string fontFace;          ///< font family ("" = default font)
+    int fontHeight = -36;          ///< character height in pixels (stored negative, like Text)
+    int fontWeight = 700;          ///< 400 normal, 700 bold (bold from 600)
+    bool italic = false;           ///< italic
+    std::uint32_t color = 0xFFFFFF;      ///< current line / voice 1 (0x00RRGGBB)
+    std::uint32_t color2 = 0x66CCFF;     ///< voice 2 in duets
+    std::uint32_t colorBoth = 0xFFE066;  ///< both voices in duets
+    std::uint32_t colorNext = 0x808080;  ///< upcoming lines and words not sung yet
+    int previewLines = 1;          ///< upcoming lines shown below the current one (0..4)
+    int hAlign = 1;                ///< 0 left, 1 center, 2 right
+    int vAlign = 2;                ///< 0 top, 1 center, 2 bottom
+    int xShift = 0;                ///< percent of width
+    int yShift = -6;               ///< percent of height (negative = up)
+    bool outline = true;           ///< draw an outline around the glyphs
+    std::uint32_t outlineColor = 0;  ///< outline color 0x00RRGGBB
+    int outlineSize = 2;           ///< outline width in pixels
+    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
+    /// Timing offset in milliseconds for synchronised lyrics: positive = the
+    /// lyrics appear earlier, negative = later (same sense as LRC `[offset:]`).
+    int offsetMs = 0;
+    /// Unsynchronised lyrics: step one line forward every N beats (0 = the
+    /// block stands still). Has no effect on synchronised lyrics.
+    int beatsPerLine = 0;
+    bool showSyncMark = true;      ///< mark unsynchronised lyrics with "(not synced)"
+
+    /// Parameter script (S86): every field of this node + `b`/`w`/`h` + audio
+    /// set. Fields that re-render the glyphs follow the script from Init, Song
+    /// and Beat only. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+};
+
 using EffectParams =
     std::variant<ListParams, ClearParams, FadeoutParams, InvertParams,
                  BrightnessParams, FastBrightnessParams, BlurParams, MirrorParams,
@@ -2920,7 +2963,8 @@ using EffectParams =
                  SuperScope3DParams, Terrain3DParams, GlowOrbsParams,
                  ShadertoyParams, MeshWarpParams, GpuParticlesParams,
                  VideoSourceParams, PixelFilterParams, IsfFilterParams,
-                 HostSwitcherParams, PassthroughParams>;
+                 HostSwitcherParams, PassthroughParams,
+                 LyricsParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
 
 /**
  * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
@@ -3140,6 +3184,7 @@ struct CompileResult
         const char* operator()(const ListParams&) const { return "Effect List"; }
         const char* operator()(const HostGroupParams&) const { return "Host Group"; }
         const char* operator()(const HostSwitcherParams&) const { return "Host Switcher"; }
+        const char* operator()(const LyricsParams&) const { return "Lyrics"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }

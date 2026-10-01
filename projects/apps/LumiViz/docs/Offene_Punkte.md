@@ -2433,24 +2433,41 @@ Datei — braucht eine Tag-Bibliothek, BASS liest nur; Kandidat TagLib,
 Lizenz LGPL/MPL prüfen) und **Online-Datenbank durchsuchen** wie beim
 CD-Rippen (Kandidat MusicBrainz; früher freedb/CDDB — nur als Opt-in, sendet
 Titeldaten nach außen).
-**Songtexte — Fragen Patrik S86 (Konzept offen, noch nichts entschieden):**
-Online-Quellen? Ablage bei den Songs oder getrennt, Suchreihenfolge? Wie wird
-der Zeilenwechsel koordiniert? Karaoke-Modus, Duette? Vorschlag Claude S86
-(aus dem Gedächtnis, Formate und Dienste vor dem Bauen nachprüfen):
-*Reihenfolge* eingebettet synchron (ID3 `SYLT`) → `.lrc` neben der Datei →
-`.lrc` im Benutzerordner (`<AppData>/LumiViz/lyrics/`, Name aus Interpret –
-Titel) → eingebettet unsynchron (ID3 `USLT`, Vorbis `LYRICS`) → `.txt` neben
-der Datei → online nur als Opt-in mit Cache im Benutzerordner (sendet
-Titeldaten nach außen, wie beim Cover; Kandidat LRCLIB, weil frei und mit
-Zeitstempeln — Lizenzlage je Dienst klären). *Koordination:* synchrone Texte
-laufen an der **Abspielposition** des Players (nicht an Frames oder Beats),
-mit einstellbarem Versatz je Titel; unsynchrone Texte nur als Block oder im
-festen Takt (Zeilen je n Beats), nie als vorgetäuschte Synchronität.
-*Karaoke:* Zeile vorab zeigen, laufende Zeile hervorheben; Wort-für-Wort nur,
-wenn die Datei Wort-Zeitstempel trägt (erweitertes LRC). *Duette:* keine
-einheitliche Norm — gängig sind Stimm-Marken am Zeilenanfang; Umsetzung als
-Farbe je Stimme. Eigener Knoten „Lyrics" oder Quelle des Text-Knotens: offen
-(für einen eigenen Knoten sprechen Zeitachse, Vorschau-Zeile, Hervorhebung).
+**Songtexte — Entscheide Patrik S86 (1a–7a) und Stand:**
+(1a) eigener Knoten **Lyrics** · (2a) Suchreihenfolge synchron vor unsynchron,
+nah vor fern · (3a) Online-Suche nur als Opt-in, nach den lokalen Quellen ·
+(4a) ein Online-Fund wird gespeichert, Einstellung *User folder* (Vorgabe) /
+*Next to the song* · (5a) synchron an der Abspielposition mit Versatz,
+unsynchron als Block oder alle n Beats, gekennzeichnet · (6a) Zeile +
+Vorschau, Wort für Wort nur mit echten Wort-Zeiten · (7a) Stimm-Marken →
+Farbe je Stimme.
+**✅ S86 gebaut (Stufe 1):** `LyricsModel.hpp` (Modell Zeile/Wort/Stimme,
+LRC lesen und schreiben — die EINE Schnittstelle für alle Quellen und
+Werkzeuge), `audio/SongtextQuelle` (Suche 1–6, `speichereSongtext`),
+`BassEngine::getLyrics` (ID3 `USLT`/`SYLT`, Vorbis/APE/MP4 `LYRICS`), Knoten
+`lyrics` (`LyricsParams`, ans Ende der Variante) mit Vorschau-Zeilen,
+Wort-für-Wort-Füllung, Duett-Farben, Versatz, unsynchronem Block,
+Formelfeldern und drei Voreinstellungen; Abspielposition über
+`notifyPlayPosition/-State` (zwischen den Meldungen des Players zählt die
+Wanduhr weiter). Tests: Modell, Suchreihenfolge an Dateien, Bild.
+**Nicht an echten Dateien geprüft:** das Lesen eingebetteter Texte
+(`USLT`/`SYLT`/Vorbis) — nach dem Format gebaut; `SYLT` nur im Zeitformat
+Millisekunden. LRC-`[offset:]` als „positiv = früher" angenommen (aus dem
+Gedächtnis; gegen echte Dateien prüfen). Die Duett-Marken (`v1:`/`v2:`/
+`v1+v2:`, `M:`/`F:`/`D:`) sind eine eigene Festlegung, keine Norm.
+**Offen (Stufe 2):** Online-Abruf (3a) samt Einstellung für den Speicherort
+(4a) — eigener Schritt, weil die Schnittstelle des Dienstes erst gegen dessen
+Dokumentation zu prüfen ist; Versatz **je Titel** speichern (heute: Feld am
+Knoten und `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen;
+Tag View zeigt den gefundenen Songtext.
+**Idee Patrik S86 — unsynchron zu synchron machen:** von Hand mitklopfen
+(Taste je Zeile, während der Titel läuft), per Skript grob verteilen, per KI
+ausrichten — und danach von Hand nachjustieren. **Die Schnittstelle dafür
+ist gelegt:** jedes solche Werkzeug füllt nur `Zeile::zeitMs` (bzw.
+`Wort::zeitMs`) im Modell und ruft `speichereSongtext()`; der Knoten merkt
+keinen Unterschied, und die Suche findet die `.lrc` beim nächsten Mal von
+selbst. Nötig wäre ein kleiner Editor (Zeilenliste mit Zeiten, Mitklopfen,
+Zeile ± verschieben, Vorhören).
 (3) **Neue Idee S86: Text als Milkdrop-
 Element** — neben Wave, Shape und Sprite ein Text-Element im Milkdrop-Node,
 das in dessen Pipeline (vor Warp/Composite) gezeichnet wird und so mit dem

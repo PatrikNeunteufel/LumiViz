@@ -441,6 +441,7 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
         // S86: Text und AVI — alle Namen kommen aus der Feldtabelle
         {ix<TextParams>, {kParam, {}}},
         {ix<AviParams>, {kParam, {}}},
+        {ix<LyricsParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
           {{"quality", "in/out", "1..100", "block resolution (100 = off)"},

@@ -652,9 +652,122 @@ QString parseId3v2TextFrame(const char* data, int size)
  * - Header (10 bytes): "ID3" + version + flags + size
  * - Frames: Frame ID (4 bytes) + Size (4 bytes) + Flags (2 bytes) + Data
  */
+/// Ein Text aus einem ID3v2-Rahmen bis zu seinem Nullzeichen (S86). `enc` wie
+/// in parseId3v2TextFrame; `pos` rueckt hinter den Abschluss.
+QString id3Bis0(const char* data, int size, unsigned char enc, int& pos)
+{
+    const int start = pos;
+    const bool breit = enc == 1 || enc == 2;
+    int ende = start;
+    if (breit)
+    {
+        while (ende + 1 < size && !(data[ende] == 0 && data[ende + 1] == 0)) ende += 2;
+        pos = std::min(size, ende + 2);
+    }
+    else
+    {
+        while (ende < size && data[ende] != 0) ++ende;
+        pos = std::min(size, ende + 1);
+    }
+    const int n = std::max(0, std::min(ende, size) - start);
+    if (n == 0) return QString();
+    switch (enc)
+    {
+    case 1:
+    {
+        const auto b0 = static_cast<unsigned char>(data[start]);
+        const auto b1 = n > 1 ? static_cast<unsigned char>(data[start + 1]) : 0;
+        const bool be = b0 == 0xFE && b1 == 0xFF;
+        const int ab = (b0 == 0xFF && b1 == 0xFE) || be ? 2 : 0;
+        QString s;
+        for (int i = start + ab; i + 1 < start + n; i += 2)
+        {
+            const auto lo = static_cast<unsigned char>(data[be ? i + 1 : i]);
+            const auto hi = static_cast<unsigned char>(data[be ? i : i + 1]);
+            s.append(QChar(static_cast<char16_t>(lo | (hi << 8))));
+        }
+        return s;
+    }
+    case 2:
+    {
+        QString s;
+        for (int i = start; i + 1 < start + n; i += 2)
+            s.append(QChar(static_cast<char16_t>(
+                static_cast<unsigned char>(data[i + 1]) |
+                (static_cast<unsigned char>(data[i]) << 8))));
+        return s;
+    }
+    case 3:
+        return QString::fromUtf8(data + start, n);
+    default:
+        return QString::fromLatin1(data + start, n);
+    }
+}
+
+/// USLT (unsynchroner Songtext): Kodierung, Sprache (3), Beschreibung, Text.
+QString parseId3v2Uslt(const char* data, int size)
+{
+    if (size < 5) return QString();
+    const auto enc = static_cast<unsigned char>(data[0]);
+    int pos = 4;
+    id3Bis0(data, size, enc, pos);  // Beschreibung
+    QString text = id3Bis0(data, size, enc, pos);
+    text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+    text.replace(QLatin1Char('\r'), QLatin1Char('\n'));
+    return text.trimmed();
+}
+
+/// SYLT (synchroner Songtext) -> LRC-Text. Kodierung, Sprache (3),
+/// Zeitformat (2 = Millisekunden), Inhaltsart, Beschreibung; dann je Eintrag
+/// Text + Abschluss + 4 Byte Zeit. Ein Eintrag, der mit einem Zeilenumbruch
+/// beginnt (oder der erste), eroeffnet eine Zeile; die uebrigen sind Worte
+/// derselben Zeile. Zeitformat 1 (MPEG-Frames) wird nicht gelesen.
+QString parseId3v2Sylt(const char* data, int size)
+{
+    if (size < 7) return QString();
+    const auto enc = static_cast<unsigned char>(data[0]);
+    if (static_cast<unsigned char>(data[4]) != 2) return QString();
+    int pos = 6;
+    id3Bis0(data, size, enc, pos);  // Beschreibung
+    const auto marke = [](quint32 ms) {
+        return QStringLiteral("%1:%2.%3")
+            .arg(ms / 60000, 2, 10, QLatin1Char('0'))
+            .arg((ms / 1000) % 60, 2, 10, QLatin1Char('0'))
+            .arg((ms % 1000) / 10, 2, 10, QLatin1Char('0'));
+    };
+    QString lrc;
+    bool erste = true;
+    while (pos < size)
+    {
+        QString text = id3Bis0(data, size, enc, pos);
+        if (pos + 4 > size) break;
+        const quint32 ms = (static_cast<quint32>(static_cast<unsigned char>(data[pos])) << 24) |
+                           (static_cast<quint32>(static_cast<unsigned char>(data[pos + 1])) << 16) |
+                           (static_cast<quint32>(static_cast<unsigned char>(data[pos + 2])) << 8) |
+                           static_cast<quint32>(static_cast<unsigned char>(data[pos + 3]));
+        pos += 4;
+        const bool neueZeile = erste || text.startsWith(QLatin1Char('\n')) ||
+                               text.startsWith(QLatin1Char('\r'));
+        text.remove(QLatin1Char('\r'));
+        text.remove(QLatin1Char('\n'));
+        if (neueZeile)
+        {
+            if (!erste) lrc += QLatin1Char('\n');
+            lrc += QLatin1Char('[') + marke(ms) + QLatin1Char(']') + text;
+        }
+        else
+        {
+            lrc += QLatin1Char('<') + marke(ms) + QLatin1Char('>') + text;
+        }
+        erste = false;
+    }
+    return lrc;
+}
+
 bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& album,
                     QString* year = nullptr, QString* genre = nullptr,
-                    QString* track = nullptr)
+                    QString* track = nullptr, QString* uslt = nullptr,
+                    QString* sylt = nullptr)
 {
     if (data == nullptr) return false;
     
@@ -772,6 +885,17 @@ bool parseId3v2Tags(const char* data, QString& title, QString& artist, QString& 
         else if (track != nullptr && (frameIdStr == "TRCK" || frameIdStr == "TRK"))
         {
             *track = parseId3v2TextFrame(frameData, frameSize);
+        }
+        // S86: Songtexte — USLT unsynchron, SYLT synchron (v2.2: ULT/SLT)
+        else if (uslt != nullptr && uslt->isEmpty() &&
+                 (frameIdStr == "USLT" || frameIdStr == "ULT"))
+        {
+            *uslt = parseId3v2Uslt(frameData, frameSize);
+        }
+        else if (sylt != nullptr && sylt->isEmpty() &&
+                 (frameIdStr == "SYLT" || frameIdStr == "SLT"))
+        {
+            *sylt = parseId3v2Sylt(frameData, frameSize);
         }
         
         pos += headerSize + frameSize;
@@ -927,6 +1051,43 @@ bool BassEngine::getMetadata(AudioStreamHandle stream,
     }
     
     return false;
+}
+
+/// S86: eingebettete Songtexte. ID3v2 SYLT (synchron, als LRC-Text) und USLT;
+/// Vorbis/FLAC, APE und MP4 fuehren den Text unter LYRICS, UNSYNCEDLYRICS
+/// bzw. „©lyr". Ob ein solcher Text Zeitmarken traegt, entscheidet erst
+/// der Leser (`lyrics::leseLrc`) — hier wird nichts gedeutet.
+bool BassEngine::getLyrics(AudioStreamHandle stream, QString& syncedLrc, QString& plain)
+{
+    syncedLrc.clear();
+    plain.clear();
+    if (stream == INVALID_STREAM) return false;
+    HSTREAM hStream = static_cast<HSTREAM>(stream);
+
+    QString t, a, al;
+    if (const char* id3v2 = BASS_ChannelGetTags(hStream, BASS_TAG_ID3V2))
+        parseId3v2Tags(id3v2, t, a, al, nullptr, nullptr, nullptr, &plain, &syncedLrc);
+
+    for (const DWORD art : {DWORD(BASS_TAG_OGG), DWORD(BASS_TAG_APE), DWORD(BASS_TAG_MP4)})
+    {
+        const char* p = BASS_ChannelGetTags(hStream, art);
+        while (plain.isEmpty() && p != nullptr && *p)
+        {
+            const QString tag = QString::fromUtf8(p);
+            const int eq = tag.indexOf(QLatin1Char('='));
+            if (eq > 0)
+            {
+                const QString key = tag.left(eq).toUpper();
+                if (key == QStringLiteral("LYRICS") ||
+                    key == QStringLiteral("UNSYNCEDLYRICS") ||
+                    key == QStringLiteral("UNSYNCED LYRICS") ||
+                    key == QChar(0x00A9) + QStringLiteral("LYR"))
+                    plain = tag.mid(eq + 1).trimmed();
+            }
+            p += strlen(p) + 1;
+        }
+    }
+    return !syncedLrc.isEmpty() || !plain.isEmpty();
 }
 
 /// S86: Jahr, Genre, Tracknummer — dieselben Quellen wie getMetadata. Die Werte

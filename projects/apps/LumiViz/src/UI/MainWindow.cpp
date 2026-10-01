@@ -61,6 +61,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include "audio/SongtextQuelle.hpp"  // Lyrics (S86)
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMutexLocker>
@@ -754,7 +755,17 @@ void MainWindow::setupEventHandlers()
             tags.track = e.track.trackNumber.toStdString();
             tags.file = QFileInfo(e.track.filePath).completeBaseName().toStdString();
             MultiEffectVisualizer::notifySongChanged(tags);
+            // S86: Songtext suchen (lokale Quellen in fester Reihenfolge) und
+            // die Abspielposition auf Anfang — der Lyrics-Knoten laeuft an ihr
+            MultiEffectVisualizer::setSongtext(lumi::audio::findeSongtext(e.track));
+            MultiEffectVisualizer::notifyPlayPosition(0);
         });
+    pEventBus->subscribe<PlaybackPositionEvent>([](const PlaybackPositionEvent& e) {
+        MultiEffectVisualizer::notifyPlayPosition(e.positionMs);
+    });
+    pEventBus->subscribe<PlaybackStateEvent>([](const PlaybackStateEvent& e) {
+        MultiEffectVisualizer::notifyPlayState(e.state == PlaybackState::Playing);
+    });
 
     pEventBus->subscribe<NewEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const NewEffectChainEvent&) {

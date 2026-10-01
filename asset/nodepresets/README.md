@@ -234,6 +234,9 @@ ausdrücklich Teil der Vorlage.
 | | Additive Overlay | Video additiv über dem Bild |
 | | Beat Stutter | Beat-Skript würfelt die Bildzeit neu (`speedms`) |
 | | Bass Persist | Frame-Skript: Beat-Fenster wächst mit dem Bass (`persist`) |
+| `lyrics` (S86) | Karaoke Bottom | laufende Zeile unten mittig mit Kontur, eine Vorschau-Zeile |
+| | Big Centre | eine große Zeile in der Bildmitte, additiv, ohne Vorschau |
+| | Three Lines Left | linksbündig unten, laufende Zeile plus zwei Vorschau-Zeilen |
 
 Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt —
 außer „Now Playing", das die Tag-Vorlage als Text mitbringt.

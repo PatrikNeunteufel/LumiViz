@@ -1,0 +1,16 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "lyrics",
+        "fontHeight": -72,
+        "fontWeight": 700,
+        "previewLines": 0,
+        "hAlign": 1,
+        "vAlign": 1,
+        "xShift": 0,
+        "yShift": 0,
+        "outline": false,
+        "blend": 1
+    }
+}

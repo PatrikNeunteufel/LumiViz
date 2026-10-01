@@ -340,6 +340,15 @@ KLASSEN = {
     "text.outline": "Struktur", "text.outlineColor": "Struktur",
     "text.outlineSize": "Struktur", "text.shadow": "Struktur",
     "text.randomPos": "Struktur",
+    # Lyrics (S86): dieselbe Regel — alles, was die Glyphen neu rastert
+    "lyrics.color": "Struktur", "lyrics.color2": "Struktur",
+    "lyrics.colorBoth": "Struktur", "lyrics.colorNext": "Struktur",
+    "lyrics.fontHeight": "Struktur", "lyrics.fontWeight": "Struktur",
+    "lyrics.italic": "Struktur", "lyrics.hAlign": "Struktur",
+    "lyrics.vAlign": "Struktur", "lyrics.xShift": "Struktur",
+    "lyrics.yShift": "Struktur", "lyrics.outline": "Struktur",
+    "lyrics.outlineColor": "Struktur", "lyrics.outlineSize": "Struktur",
+    "lyrics.previewLines": "Struktur",
     # Startwert: billig, setzt aber Laufzeitzustand neu
     "interferences.rotation": "Zustand",
     "dotPlane.startRotation": "Zustand", "dotFountain.startRotation": "Zustand",

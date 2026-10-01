@@ -4024,6 +4024,36 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         });
         addRow(field, label, edit, tip);
     };
+    // Schrift-Auswahlliste (S86, Wunsch Patrik): alle installierten Schriften,
+    // weiter frei editierbar — importierte Presets tragen Namen, die hier nicht
+    // installiert sein muessen. Leer = Standardschrift. Text- und Lyrics-Knoten.
+    auto addFontFace = [&](const char* field, const QString& label, const std::string& value,
+                           std::function<void(ChainNode&, std::string)> set) {
+        auto* font = new QFontComboBox(m_propContainer);
+        font->setEditable(true);
+        font->setInsertPolicy(QComboBox::NoInsert);
+        font->lineEdit()->setPlaceholderText(tr("(default font)"));
+        {
+            const QSignalBlocker ruhe(font);
+            if (value.empty())
+            {
+                font->setCurrentIndex(-1);
+                font->clearEditText();
+            }
+            else
+            {
+                font->setCurrentText(QString::fromStdString(value));
+            }
+        }
+        const auto setze = [this, path, set](const QString& name) {
+            const std::string v = name.trimmed().toStdString();
+            mutate(path, [&](ChainNode& n) { set(n, v); });
+        };
+        connect(font, &QComboBox::textActivated, this, setze);
+        connect(font->lineEdit(), &QLineEdit::editingFinished, this,
+                [font, setze]() { setze(font->currentText()); });
+        addRow(field, label, font);
+    };
     // Fremdsprachen-Code-Editor (GLSL, Strang S): wie addScript mit ⓘ-Referenz
     // und ⤢-Groß-Editor, aber OHNE EEL-Highlighter (falsche Einfärbung) und
     // mit frei wählbarer Referenzseite + Tooltip. `exportName` (S69) =
@@ -7674,36 +7704,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             tagKnopf->setMenu(menue);
             form->addRow(QString(), tagKnopf);
         }
-        {
-            // Schrift-Auswahlliste (S86, Wunsch Patrik): alle installierten
-            // Schriften, weiter frei editierbar — importierte Presets tragen
-            // Namen, die hier nicht installiert sein muessen. Leer = Standard.
-            auto* font = new QFontComboBox(m_propContainer);
-            font->setEditable(true);
-            font->setInsertPolicy(QComboBox::NoInsert);
-            font->lineEdit()->setPlaceholderText(tr("(default font)"));
-            {
-                const QSignalBlocker ruhe(font);
-                if (p->fontFace.empty())
-                {
-                    font->setCurrentIndex(-1);
-                    font->clearEditText();
-                }
-                else
-                {
-                    font->setCurrentText(QString::fromStdString(p->fontFace));
-                }
-            }
-            const auto setze = [this, path](const QString& name) {
-                mutate(path, [&](ChainNode& n) {
-                    std::get<TextParams>(n.params).fontFace = name.trimmed().toStdString();
-                });
-            };
-            connect(font, &QComboBox::textActivated, this, setze);
-            connect(font->lineEdit(), &QLineEdit::editingFinished, this,
-                    [font, setze]() { setze(font->currentText()); });
-            addRow("fontFace", tr("Font"), font);
-        }
+        addFontFace("fontFace", tr("Font"), p->fontFace,
+                    [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).fontFace = std::move(v); });
         addInt("fontHeight", tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
                [](ChainNode& n, int v) { std::get<TextParams>(n.params).fontHeight = -v; });
         addInt("fontWeight", tr("Weight"), p->fontWeight, 100, 900,
@@ -7777,6 +7779,71 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<TextParams>(n.params).beatCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<LyricsParams>(&params))
+    {
+        // Lyrics (S86): der Text kommt vom laufenden Titel — hier steht nur,
+        // was gefunden wurde (Stand beim Oeffnen dieser Seite).
+        {
+            const std::string info = MultiEffectVisualizer::songtextInfo();
+            auto* quelle = new QLabel(
+                info.empty() ? tr("No lyrics found for the playing track.")
+                             : QString::fromStdString(info),
+                m_propContainer);
+            quelle->setObjectName(QStringLiteral("lyricsSource"));
+            quelle->setWordWrap(true);
+            quelle->setToolTip(
+                tr("Search order: embedded synced lyrics, <song>.lrc next to the song, "
+                   "<artist> - <title>.lrc in the user folder, embedded unsynced lyrics, "
+                   "<song>.txt next to the song, .txt in the user folder."));
+            form->addRow(tr("Lyrics"), quelle);
+        }
+        addFontFace("fontFace", tr("Font"), p->fontFace,
+                    [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).fontFace = std::move(v); });
+        addInt("fontHeight", tr("Height (px)"), std::abs(p->fontHeight), 4, 400,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).fontHeight = -v; });
+        addInt("fontWeight", tr("Weight"), p->fontWeight, 100, 900,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).fontWeight = v; });
+        addBool("italic", tr("Italic"), p->italic,
+                [](ChainNode& n, bool v) { std::get<LyricsParams>(n.params).italic = v; });
+        addColor("color", tr("Color (voice 1)"), p->color,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).color = v; });
+        addColor("color2", tr("Color voice 2"), p->color2,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).color2 = v; });
+        addColor("colorBoth", tr("Color both voices"), p->colorBoth,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).colorBoth = v; });
+        addColor("colorNext", tr("Color upcoming"), p->colorNext,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).colorNext = v; });
+        addInt("previewLines", tr("Preview lines"), p->previewLines, 0, 4,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewLines = v; });
+        addEnum("hAlign", tr("Horizontal"), std::clamp(p->hAlign, 0, 2),
+                {tr("Left"), tr("Center"), tr("Right")},
+                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).hAlign = v; });
+        addEnum("vAlign", tr("Vertical"), std::clamp(p->vAlign, 0, 2),
+                {tr("Top"), tr("Center"), tr("Bottom")},
+                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).vAlign = v; });
+        addInt("xShift", tr("X shift (%)"), p->xShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).xShift = v; });
+        addInt("yShift", tr("Y shift (%)"), p->yShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).yShift = v; });
+        addBool("outline", tr("Outline"), p->outline,
+                [](ChainNode& n, bool v) { std::get<LyricsParams>(n.params).outline = v; });
+        addColor("outlineColor", tr("Outline color"), p->outlineColor,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).outlineColor = v; });
+        addInt("outlineSize", tr("Outline size"), p->outlineSize, 1, 32,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).outlineSize = v; });
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
+                {tr("Replace"), tr("Additive"), tr("50/50")},
+                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).blend = v; });
+        addInt("offsetMs", tr("Timing offset (ms)"), p->offsetMs, -10000, 10000,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).offsetMs = v; });
+        addInt("beatsPerLine", tr("Unsynced: beats per line"), p->beatsPerLine, 0, 64,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).beatsPerLine = v; });
+        addBool("showSyncMark", tr("Mark unsynced lyrics"), p->showSyncMark,
+                [](ChainNode& n, bool v) { std::get<LyricsParams>(n.params).showSyncMark = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).beatCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AviParams>(&params))
     {

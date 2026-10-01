@@ -1056,6 +1056,32 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
     }
+    void operator()(const LyricsParams& p) const  // S86
+    {
+        o["fontFace"] = QString::fromStdString(p.fontFace);
+        o["fontHeight"] = p.fontHeight;
+        o["fontWeight"] = p.fontWeight;
+        o["italic"] = p.italic;
+        o["color"] = static_cast<double>(p.color);
+        o["color2"] = static_cast<double>(p.color2);
+        o["colorBoth"] = static_cast<double>(p.colorBoth);
+        o["colorNext"] = static_cast<double>(p.colorNext);
+        o["previewLines"] = p.previewLines;
+        o["hAlign"] = p.hAlign;
+        o["vAlign"] = p.vAlign;
+        o["xShift"] = p.xShift;
+        o["yShift"] = p.yShift;
+        o["outline"] = p.outline;
+        o["outlineColor"] = static_cast<double>(p.outlineColor);
+        o["outlineSize"] = p.outlineSize;
+        o["blend"] = p.blend;
+        o["offsetMs"] = p.offsetMs;
+        o["beatsPerLine"] = p.beatsPerLine;
+        o["showSyncMark"] = p.showSyncMark;
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+    }
     void operator()(const AviParams& p) const
     {
         o["filename"] = QString::fromStdString(p.filename);
@@ -2492,6 +2518,34 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         return p;
     }
+    if (type == "lyrics")  // S86
+    {
+        LyricsParams p;
+        p.fontFace = getStr(o, "fontFace", p.fontFace);
+        p.fontHeight = getInt(o, "fontHeight", p.fontHeight);
+        p.fontWeight = getInt(o, "fontWeight", p.fontWeight);
+        p.italic = getBool(o, "italic", p.italic);
+        p.color = getColor(o, "color", p.color);
+        p.color2 = getColor(o, "color2", p.color2);
+        p.colorBoth = getColor(o, "colorBoth", p.colorBoth);
+        p.colorNext = getColor(o, "colorNext", p.colorNext);
+        p.previewLines = getInt(o, "previewLines", p.previewLines);
+        p.hAlign = getInt(o, "hAlign", p.hAlign);
+        p.vAlign = getInt(o, "vAlign", p.vAlign);
+        p.xShift = getInt(o, "xShift", p.xShift);
+        p.yShift = getInt(o, "yShift", p.yShift);
+        p.outline = getBool(o, "outline", p.outline);
+        p.outlineColor = getColor(o, "outlineColor", p.outlineColor);
+        p.outlineSize = getInt(o, "outlineSize", p.outlineSize);
+        p.blend = getInt(o, "blend", p.blend);
+        p.offsetMs = getInt(o, "offsetMs", p.offsetMs);
+        p.beatsPerLine = getInt(o, "beatsPerLine", p.beatsPerLine);
+        p.showSyncMark = getBool(o, "showSyncMark", p.showSyncMark);
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        return p;
+    }
     if (type == "avi")
     {
         AviParams p;
@@ -3056,6 +3110,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const PixelFilterParams&) const { return "pixelFilter"; }
         QString operator()(const IsfFilterParams&) const { return "isfFilter"; }
         QString operator()(const HostSwitcherParams&) const { return "hostSwitcher"; }
+        QString operator()(const LyricsParams&) const { return "lyrics"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

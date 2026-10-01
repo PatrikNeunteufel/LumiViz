@@ -107,6 +107,7 @@ public:
                      QString& album) override;
     bool getMetadataExtra(AudioStreamHandle stream, QString& year, QString& genre,
                           QString& track) override;
+    bool getLyrics(AudioStreamHandle stream, QString& syncedLrc, QString& plain) override;
 
     // Engine Info
     [[nodiscard]] QString getVersion() const override;

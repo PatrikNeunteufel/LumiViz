@@ -315,6 +315,20 @@ public:
         return false;
     }
 
+    /**
+     * @brief Embedded lyrics of the track (S86, Lyrics node)
+     *
+     * @param[out] syncedLrc Synchronised lyrics as LRC text (from ID3 SYLT)
+     * @param[out] plain Lyrics text as stored (ID3 USLT, Vorbis/APE/MP4 lyrics)
+     * @return true if at least one of them was found
+     */
+    virtual bool getLyrics(AudioStreamHandle /*stream*/, QString& syncedLrc, QString& plain)
+    {
+        syncedLrc.clear();
+        plain.clear();
+        return false;
+    }
+
     // =========================================================================
     // Engine Info
     // =========================================================================

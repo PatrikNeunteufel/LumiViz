@@ -594,6 +594,92 @@ TEST_CASE("Text S86: Tags des Titels kommen vom Songwechsel bis ins Bild")
     MultiEffectVisualizer::notifySongChanged(tt::SongTags{});  // Zustand zuruecksetzen
 }
 
+TEST_CASE("Lyrics S86: laufende Zeile an der Abspielposition, Vorschau, unsynchroner Block")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    // Zeile 1 ist schmal („I"), Zeile 2 breit — die Zahl heller Pixel verraet,
+    // welche Zeile in der Farbe der laufenden Zeile (weiss) gezeichnet ist.
+    const auto hell = [](const LyricsParams& lp) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(320, 120));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 120);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200) ++n;
+        return n;
+    };
+    LyricsParams lp;
+    lp.fontHeight = -24;
+    lp.outline = false;
+    lp.previewLines = 0;
+    lp.colorNext = 0x202020;  // Vorschau dunkel: zaehlt nicht als hell
+
+    MultiEffectVisualizer::notifyPlayState(false);  // Position steht (keine Wanduhr im Test)
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    CHECK(hell(lp) == 0);  // kein Songtext: nichts
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]I\n[00:20.00]MMMMMMMM\n"));
+    MultiEffectVisualizer::notifyPlayPosition(5000);
+    CHECK(hell(lp) == 0);  // vor der ersten Zeile
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+    const int schmal = hell(lp);
+    CHECK(schmal > 0);
+    MultiEffectVisualizer::notifyPlayPosition(25000);
+    const int breit = hell(lp);
+    CHECK(breit > schmal * 3);  // die zweite Zeile laeuft
+
+    // Versatz: +9000 ms laesst die zweite Zeile schon bei 12 s erscheinen
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+    lp.offsetMs = 9000;
+    CHECK(hell(lp) == breit);
+    lp.offsetMs = 0;
+
+    // Vorschau: die naechste Zeile steht (dunkel) dabei — hell bleibt nur die laufende
+    lp.previewLines = 1;
+    CHECK(hell(lp) == doctest::Approx(schmal).epsilon(0.05));
+    lp.colorNext = 0xFFFFFF;  // Gegenprobe: helle Vorschau zaehlt mit
+    CHECK(hell(lp) > schmal * 3);
+    lp.previewLines = 0;
+    lp.colorNext = 0x202020;
+
+    // Wort fuer Wort: nur die gesungenen Worte tragen die Farbe der Zeile
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM <00:14.00>MMMM\n"));
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+    const int halb = hell(lp);
+    MultiEffectVisualizer::notifyPlayPosition(15000);
+    const int ganz = hell(lp);
+    CHECK(halb > 0);
+    CHECK(ganz > halb * 1.6);
+
+    // Unsynchron: der Block steht — die Position spielt keine Rolle
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("I\nMMMMMMMM\n"));
+    lp.showSyncMark = false;
+    MultiEffectVisualizer::notifyPlayPosition(0);
+    const int block = hell(lp);
+    MultiEffectVisualizer::notifyPlayPosition(999000);
+    CHECK(hell(lp) == block);
+    CHECK(block == doctest::Approx(schmal).epsilon(0.05));  // erste Zeile
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});  // Zustand zuruecksetzen
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 TEST_CASE("Modulation F4d: LFO-Rate in Beats — im Takt, phasengleich, folgt dem Tempo")
 {
     GlUmgebung gl;

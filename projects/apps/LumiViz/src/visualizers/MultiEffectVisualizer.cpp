@@ -53,6 +53,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <mutex>
 #include <cmath>
 #include <cstring>
@@ -83,6 +84,13 @@ std::atomic<uint64_t> g_songWechsel{0};
 /// Songwechsel, gelesen vom Render-Thread, sobald der Stand sich aendert.
 std::mutex g_songTagsMutex;
 lumi::multieffect::texttags::SongTags g_songTags;
+lumi::multieffect::lyrics::Songtext g_songtext;  ///< S86, unter g_songTagsMutex
+
+/// Abspielposition des Players (S86): zuletzt gemeldeter Wert, die Wanduhr
+/// dazu und ob er laeuft — dazwischen zaehlt playPositionMs() weiter.
+std::atomic<std::int64_t> g_posMs{0};
+std::atomic<std::int64_t> g_posStempelMs{0};
+std::atomic<bool> g_posLaeuft{false};
 std::atomic<uint64_t> g_songTagsStand{0};
 
 // Defined further down; forward-declared for the earlier render handlers.
@@ -4180,6 +4188,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         {
             const std::lock_guard<std::mutex> lock(g_songTagsMutex);
             m_songTags = g_songTags;
+            m_songtext = g_songtext;
             m_songTagsStand = stand;
         }
     }
@@ -4465,6 +4474,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         void operator()(const MilkdropNodeParams& params) const { self.runMilkdropNode(node, params); }
         void operator()(const TextParams& params) const { self.runText(node, params); }
         void operator()(const AviParams& params) const { self.runAvi(node, params); }
+        void operator()(const LyricsParams& params) const { self.runLyrics(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const ImportNotesParams&) const { /* Import-Protokoll, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
@@ -8129,6 +8139,230 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     bindActive();
 }
 
+void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend)
+{
+    if (m_textShader == nullptr || texture == 0) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    SurfacePair& pair = active();
+    pair.partner()->bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    m_textShader->bind();
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, pair.current()->texture());
+    m_textShader->setUniformValue("uTex", 0);
+    f->glActiveTexture(GL_TEXTURE1);
+    f->glBindTexture(GL_TEXTURE_2D, texture);
+    m_textShader->setUniformValue("uImg", 1);
+    f->glActiveTexture(GL_TEXTURE0);
+    m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_textShader->release();
+    pair.partner()->release();
+    pair.swap();
+    bindActive();
+}
+
+// =============================================================================
+// Lyrics (S86, Entscheide Patrik 1a–7a) — docs/Offene_Punkte.md „Songtexte"
+// =============================================================================
+
+void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams& params)
+{
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    // Parameter-Skript auf der Frame-Kopie; Felder, die neu rastern, folgen
+    // dem Skript nur aus Init, Song und Beat (E3).
+    runParamScript(rt, "lyrics", params.initCode, params.frameCode, params.beatCode, {});
+
+    namespace ly = lumi::multieffect::lyrics;
+    const ly::Songtext& s = m_songtext;
+    if (rt.lyricsStand != m_songTagsStand)  // neuer Titel: der Block beginnt von vorn
+    {
+        rt.lyricsStand = m_songTagsStand;
+        rt.lyricsZeile = 0;
+        rt.lyricsBeats = 0;
+    }
+    if (s.leer()) return;
+
+    // Eine Bildzeile: `vorn` in der Stimmfarbe (laufende Zeile bzw. schon
+    // gesungene Worte), `hinten` in der Vorschau-Farbe.
+    struct Anzeige
+    {
+        std::string vorn;
+        std::string hinten;
+        std::uint32_t farbe = 0;
+        bool klein = false;
+    };
+    std::vector<Anzeige> zeilen;
+    const auto stimmFarbe = [&params](ly::Stimme st) {
+        return st == ly::Stimme::Zwei    ? params.color2
+               : st == ly::Stimme::Beide ? params.colorBoth
+                                         : params.color;
+    };
+    const int vorschau = std::clamp(static_cast<int>(params.previewLines), 0, 4);
+    const int anzahl = static_cast<int>(s.zeilen.size());
+    if (s.synchron)
+    {
+        // Entscheid 5a: die Zeit kommt vom Player, nicht von Frames oder Beats
+        const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(params.offsetMs);
+        const int idx = ly::zeileBei(s, pos);
+        if (idx >= 0)
+        {
+            const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(idx)];
+            Anzeige a;
+            a.farbe = stimmFarbe(zl.stimme);
+            if (zl.worte.empty())
+            {
+                a.vorn = zl.text;
+            }
+            else  // Entscheid 6a, Stufe 2: Wort fuer Wort, nur mit echten Wort-Zeiten
+            {
+                const int gesungen = ly::worteBei(s, zl, pos);
+                for (int i = 0; i < static_cast<int>(zl.worte.size()); ++i)
+                    (i < gesungen ? a.vorn : a.hinten) += zl.worte[static_cast<std::size_t>(i)].text;
+            }
+            zeilen.push_back(std::move(a));
+        }
+        else
+        {
+            zeilen.push_back({});  // vor der ersten Zeile: Platz halten, Vorschau zeigen
+        }
+        for (int i = idx + 1, k = 0; i < anzahl && k < vorschau; ++i)
+        {
+            const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(i)];
+            if (zl.text.empty()) continue;
+            zeilen.push_back({std::string(), zl.text, params.colorNext, false});
+            ++k;
+        }
+    }
+    else
+    {
+        // Unsynchron: ein stehender Block, auf Wunsch alle N Beats eine Zeile
+        // weiter — und als unsynchron gekennzeichnet (keine vorgetaeuschte Zeit).
+        if (params.beatsPerLine > 0 && m_frameBeat && ++rt.lyricsBeats >= params.beatsPerLine)
+        {
+            rt.lyricsBeats = 0;
+            if (rt.lyricsZeile + 1 < anzahl) ++rt.lyricsZeile;
+        }
+        if (params.showSyncMark)
+            zeilen.push_back({std::string(), "(not synced)", params.colorNext, true});
+        for (int i = std::clamp(rt.lyricsZeile, 0, anzahl - 1), k = 0;
+             i < anzahl && k < 1 + vorschau; ++i, ++k)
+        {
+            const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(i)];
+            if (k == 0)
+                zeilen.push_back({zl.text, std::string(), stimmFarbe(zl.stimme), false});
+            else
+                zeilen.push_back({std::string(), zl.text, params.colorNext, false});
+        }
+    }
+
+    // --- Glyphen-Ebene: nur neu zeichnen, wenn sich der Zustand aendert
+    std::string snapshot = params.fontFace + '\x1f' + std::to_string(params.fontHeight) + ':' +
+                           std::to_string(params.fontWeight) + std::to_string(params.italic) +
+                           ':' + std::to_string(params.colorNext) + ':' +
+                           std::to_string(params.hAlign) + std::to_string(params.vAlign) + ':' +
+                           std::to_string(params.xShift) + ',' + std::to_string(params.yShift) +
+                           ':' + std::to_string(params.outline) +
+                           std::to_string(params.outlineColor) + ':' +
+                           std::to_string(params.outlineSize) + ':' +
+                           std::to_string(m_surfaceWidth) + 'x' + std::to_string(m_surfaceHeight);
+    bool etwas = false;
+    for (const Anzeige& a : zeilen)
+    {
+        snapshot += '\x1f' + a.vorn + '\x1e' + a.hinten + '\x1e' + std::to_string(a.farbe);
+        etwas = etwas || (!a.klein && (!a.vorn.empty() || !a.hinten.empty()));
+    }
+    if (!etwas) return;  // nur Pause/Marke: nichts zeichnen
+
+    auto* f = QOpenGLContext::currentContext()->functions();
+    if (rt.textTexture == 0 || rt.textSnapshot != snapshot)
+    {
+        rt.textSnapshot = snapshot;
+        QImage img(m_surfaceWidth, m_surfaceHeight, QImage::Format_RGBA8888);
+        img.fill(Qt::transparent);
+        {
+            QPainter painter(&img);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setRenderHint(QPainter::TextAntialiasing, true);
+            QFont basis;
+            if (!params.fontFace.empty()) basis.setFamily(QString::fromStdString(params.fontFace));
+            const int px = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
+            basis.setPixelSize(px);
+            basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
+            basis.setItalic(params.italic);
+            const auto toColor = [](std::uint32_t c) {
+                return QColor(static_cast<int>((c >> 16) & 0xFF), static_cast<int>((c >> 8) & 0xFF),
+                              static_cast<int>(c & 0xFF));
+            };
+            // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb
+            const double zeilenHoehe = QFontMetrics(basis).height() * 1.15;
+            double gesamt = 0.0;
+            for (const Anzeige& a : zeilen) gesamt += a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+            double y = 0.0;
+            if (params.vAlign == 1) y = (m_surfaceHeight - gesamt) / 2.0;
+            else if (params.vAlign == 2) y = m_surfaceHeight - gesamt;
+            y += params.yShift * m_surfaceHeight / 100.0;
+            const double breite = m_surfaceWidth * 0.94;  // Rand lassen
+            for (const Anzeige& a : zeilen)
+            {
+                const double hoehe = a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+                const QString vorn = QString::fromStdString(a.vorn);
+                const QString hinten = QString::fromStdString(a.hinten);
+                if (!vorn.isEmpty() || !hinten.isEmpty())
+                {
+                    QFont font = basis;
+                    if (a.klein) font.setPixelSize(std::max(4, px / 2));
+                    // zu lange Zeile: Schrift verkleinern, bis sie passt
+                    int tw = QFontMetrics(font).horizontalAdvance(vorn + hinten);
+                    if (tw > breite && tw > 0)
+                    {
+                        font.setPixelSize(std::max(
+                            8, static_cast<int>(font.pixelSize() * breite / tw)));
+                        tw = QFontMetrics(font).horizontalAdvance(vorn + hinten);
+                    }
+                    const QFontMetrics fm(font);
+                    double x = 0.0;
+                    if (params.hAlign == 1) x = (m_surfaceWidth - tw) / 2.0;
+                    else if (params.hAlign == 2) x = m_surfaceWidth - tw;
+                    x += params.xShift * m_surfaceWidth / 100.0;
+                    const QPointF grund(x, y + (hoehe - fm.height()) / 2.0 + fm.ascent());
+                    QPainterPath p1;
+                    QPainterPath p2;
+                    p1.addText(grund, font, vorn);
+                    p2.addText(grund + QPointF(fm.horizontalAdvance(vorn), 0.0), font, hinten);
+                    if (params.outline)
+                    {
+                        painter.setPen(QPen(toColor(params.outlineColor),
+                                            std::max(1, static_cast<int>(params.outlineSize)) * 2.0));
+                        painter.setBrush(Qt::NoBrush);
+                        painter.drawPath(p1);
+                        painter.drawPath(p2);
+                    }
+                    painter.fillPath(p1, toColor(a.farbe));
+                    painter.fillPath(p2, toColor(params.colorNext));
+                }
+                y += hoehe;
+            }
+        }
+        if (rt.textTexture == 0)
+        {
+            f->glGenTextures(1, &rt.textTexture);
+            f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+        f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA,
+                        GL_UNSIGNED_BYTE, img.constBits());
+    }
+    composeGlyphLayer(rt.textTexture, params.blend);
+}
+
 void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)
 {
 #ifdef _WIN32
@@ -9279,6 +9513,55 @@ void MultiEffectVisualizer::notifySongChanged(const lumi::multieffect::texttags:
     }
     g_songTagsStand.fetch_add(1, std::memory_order_release);
     notifySongChanged();
+}
+
+void MultiEffectVisualizer::setSongtext(const lumi::multieffect::lyrics::Songtext& text)
+{
+    {
+        const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+        g_songtext = text;
+    }
+    g_songTagsStand.fetch_add(1, std::memory_order_release);
+}
+
+std::string MultiEffectVisualizer::songtextInfo()
+{
+    const std::lock_guard<std::mutex> lock(g_songTagsMutex);
+    if (g_songtext.leer()) return {};
+    return g_songtext.quelle + (g_songtext.synchron ? " — synced, " : " — not synced, ") +
+           std::to_string(g_songtext.zeilen.size()) + " lines";
+}
+
+namespace
+{
+std::int64_t wanduhrMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+}  // namespace
+
+std::int64_t MultiEffectVisualizer::playPositionMs()
+{
+    std::int64_t pos = g_posMs.load(std::memory_order_relaxed);
+    if (g_posLaeuft.load(std::memory_order_relaxed))
+        pos += wanduhrMs() - g_posStempelMs.load(std::memory_order_relaxed);
+    return pos;
+}
+
+void MultiEffectVisualizer::notifyPlayPosition(std::int64_t positionMs)
+{
+    g_posMs.store(positionMs, std::memory_order_relaxed);
+    g_posStempelMs.store(wanduhrMs(), std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::notifyPlayState(bool laeuft)
+{
+    // erst die laufende Position festhalten, dann umschalten — sonst spraenge
+    // sie beim Pausieren auf die zuletzt gemeldete zurueck
+    notifyPlayPosition(playPositionMs());
+    g_posLaeuft.store(laeuft, std::memory_order_relaxed);
 }
 
 bool MultiEffectVisualizer::effectiveEnabled(const ChainNode& node) const

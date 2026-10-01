@@ -255,6 +255,8 @@ const std::vector<EffectType>& effectPalette()
          "Draws words one after another, timed by frames or beats.", "Render / Text"},
         {"AVI", &makeDefault<AviParams>, R, Avs,
          "Plays an AVI video file onto the frame.", "Render / AVI"},
+        {"Lyrics", &makeDefault<LyricsParams>, R, Lumi,
+         "Shows the lyrics of the playing track, in time with the music."},
         {"Texer", &makeDefault<TexerParams>, R, Ape,
          "Sprites of an image along the waveform.", "Texer"},
         {"Texer II", &makeDefault<TexerIIParams>, R, Ape,

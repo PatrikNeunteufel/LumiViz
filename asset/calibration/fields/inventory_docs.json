@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 92,
-    "felder": 809,
+    "typen": 93,
+    "felder": 832,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5325,6 +5325,218 @@
           "lo": 0.0,
           "hi": 2000.0,
           "doc": "settle iterations before measuring"
+        }
+      ]
+    },
+    {
+      "typkey": "lyrics",
+      "name": "Lyrics",
+      "struct": "LyricsParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "beatsPerLine",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 64.0,
+          "doc": "Unsynchronised lyrics: step one line forward every N beats (0 = the block stands still). Has no effect on synchronised lyrics."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "blend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "0 replace, 1 additive, 2 50/50 (glyphs only)"
+        },
+        {
+          "art": "zahl",
+          "default": 16777215,
+          "name": "color",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "current line / voice 1 (0x00RRGGBB)"
+        },
+        {
+          "art": "zahl",
+          "default": 6737151,
+          "name": "color2",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "voice 2 in duets"
+        },
+        {
+          "art": "zahl",
+          "default": 16769126,
+          "name": "colorBoth",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "both voices in duets"
+        },
+        {
+          "art": "zahl",
+          "default": 8421504,
+          "name": "colorNext",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "upcoming lines and words not sung yet"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "fontFace",
+          "panel": "sonderzeile",
+          "doc": "font family (\"\" = default font)"
+        },
+        {
+          "art": "zahl",
+          "default": -36,
+          "name": "fontHeight",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 4.0,
+          "hi": 400.0,
+          "doc": "character height in pixels (stored negative, like Text)"
+        },
+        {
+          "art": "zahl",
+          "default": 700,
+          "name": "fontWeight",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 100.0,
+          "hi": 900.0,
+          "doc": "400 normal, 700 bold (bold from 600)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "hAlign",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "0 left, 1 center, 2 right"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S86): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
+          "skriptvars": []
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "italic",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "italic"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "offsetMs",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -10000.0,
+          "hi": 10000.0,
+          "doc": "Timing offset in milliseconds for synchronised lyrics: positive = the lyrics appear earlier, negative = later (same sense as LRC `[offset:]`)."
+        },
+        {
+          "art": "bool",
+          "default": true,
+          "name": "outline",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "draw an outline around the glyphs"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "outlineColor",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "outline color 0x00RRGGBB"
+        },
+        {
+          "art": "zahl",
+          "default": 2,
+          "name": "outlineSize",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 1.0,
+          "hi": 32.0,
+          "doc": "outline width in pixels"
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "previewLines",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 4.0,
+          "doc": "upcoming lines shown below the current one (0..4)"
+        },
+        {
+          "art": "bool",
+          "default": true,
+          "name": "showSyncMark",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "mark unsynchronised lyrics with \"(not synced)\""
+        },
+        {
+          "art": "zahl",
+          "default": 2,
+          "name": "vAlign",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 3,
+          "doc": "0 top, 1 center, 2 bottom"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "xShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "percent of width"
+        },
+        {
+          "art": "zahl",
+          "default": -6,
+          "name": "yShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "percent of height (negative = up)"
         }
       ]
     },

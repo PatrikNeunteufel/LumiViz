@@ -412,6 +412,27 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(LyapunovParams, negColor, "negColor", "negcolor", "", 1.0, Farbe, Live, kNaN, kNaN),
         LV_FELD(LyapunovParams, warmup, "warmup", "warmup", "", 1.0, Ganzzahl, Live, 0.0, 2000.0),
     }}});
+    out.push_back({ix<LyricsParams>(), Typ{"lyrics", Traeger::ParamSkript, {
+        LV_FELD(LyricsParams, beatsPerLine, "beatsPerLine", "beatsperline", "", 1.0, Ganzzahl, Live, 0.0, 64.0),
+        LV_FELD(LyricsParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
+        LV_FELD(LyricsParams, color, "color", "color", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsParams, color2, "color2", "color2", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsParams, colorBoth, "colorBoth", "colorboth", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsParams, colorNext, "colorNext", "colornext", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsParams, fontHeight, "fontHeight", "fontheight", "", 1.0, Ganzzahl, Struktur, 4.0, 400.0),
+        LV_FELD(LyricsParams, fontWeight, "fontWeight", "fontweight", "", 1.0, Ganzzahl, Struktur, 100.0, 900.0),
+        LV_FELD(LyricsParams, hAlign, "hAlign", "halign", "", 1.0, Aufzaehlung, Struktur, 0.0, 2.0),
+        LV_FELD(LyricsParams, italic, "italic", "italic", "", 1.0, Schalter, Struktur, 0.0, 1.0),
+        LV_FELD(LyricsParams, offsetMs, "offsetMs", "offsetms", "", 1.0, Ganzzahl, Live, -10000.0, 10000.0),
+        LV_FELD(LyricsParams, outline, "outline", "outline", "", 1.0, Schalter, Struktur, 0.0, 1.0),
+        LV_FELD(LyricsParams, outlineColor, "outlineColor", "outlinecolor", "", 1.0, Farbe, Struktur, kNaN, kNaN),
+        LV_FELD(LyricsParams, outlineSize, "outlineSize", "outlinesize", "", 1.0, Ganzzahl, Struktur, 1.0, 32.0),
+        LV_FELD(LyricsParams, previewLines, "previewLines", "previewlines", "", 1.0, Ganzzahl, Struktur, 0.0, 4.0),
+        LV_FELD(LyricsParams, showSyncMark, "showSyncMark", "showsyncmark", "", 1.0, Schalter, Live, 0.0, 1.0),
+        LV_FELD(LyricsParams, vAlign, "vAlign", "valign", "", 1.0, Aufzaehlung, Struktur, 0.0, 2.0),
+        LV_FELD(LyricsParams, xShift, "xShift", "xshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
+        LV_FELD(LyricsParams, yShift, "yShift", "yshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
+    }}});
     out.push_back({ix<MeshWarpParams>(), Typ{"meshWarp", Traeger::ParamSkript, {
         LV_FELD(MeshWarpParams, gridX, "gridX", "gridx", "", 1.0, Ganzzahl, Struktur, kNaN, kNaN),
         LV_FELD(MeshWarpParams, gridY, "gridY", "gridy", "", 1.0, Ganzzahl, Struktur, kNaN, kNaN),
