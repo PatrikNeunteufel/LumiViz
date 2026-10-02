@@ -278,11 +278,30 @@ void EffectPaletteWindow::buildTree()
     }
 }
 
+void EffectPaletteWindow::setUebergeordneterFilter(bool (*erlaubt)(const EffectType&),
+                                                   const QString& titel)
+{
+    m_erlaubt = erlaubt;
+    if (!titel.isEmpty()) setWindowTitle(titel);
+    // Rollen-Chips ohne erlaubten Eintrag ausblenden
+    const auto& palette = effectPalette();
+    for (size_t r = 0; r < std::size(kRoles) && r < m_roleChips.size(); ++r)
+    {
+        bool hat = erlaubt == nullptr;
+        for (size_t i = 0; i < palette.size() && !hat; ++i)
+            hat = !palette[i].isHeader() && palette[i].role == kRoles[r] && erlaubt(palette[i]);
+        m_roleChips[r]->setChecked(false);
+        m_roleChips[r]->setVisible(hat);
+    }
+    applyFilter();
+}
+
 bool EffectPaletteWindow::matches(int paletteIndex) const
 {
     const EffectType& t = effectPalette()[static_cast<size_t>(paletteIndex)];
+    if (m_erlaubt != nullptr && !m_erlaubt(t)) return false;
 
-    auto groupPasses = [](const std::vector<QToolButton*>& chips, size_t hit) {
+    auto groupPasses =[](const std::vector<QToolButton*>& chips, size_t hit) {
         bool any = false;
         for (const QToolButton* c : chips) any = any || c->isChecked();
         return !any || chips[hit]->isChecked();

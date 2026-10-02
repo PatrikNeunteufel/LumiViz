@@ -132,6 +132,17 @@ public:
     /// danach in die Ablage der Ebene geschrieben.
     struct KaraokeLyrics {};
     MultiEffectPanel(ServiceContainer& services, KaraokeLyrics, QWidget* parent = nullptr);
+    /// Zweiter eingeschraenkter Modus (KE3): die Trail-Liste der Ebene als
+    /// kurze Kette — Baum und Werkzeugleiste sichtbar, die Palette zeigt nur
+    /// Module der Rollen Transform und Color (Entscheid K1 a), am Ende steht
+    /// fest der Lyrics Trail (nicht entfernbar, nicht klonbar, immer zuletzt).
+    struct KaraokeTrail {};
+    MultiEffectPanel(ServiceContainer& services, KaraokeTrail, QWidget* parent = nullptr);
+    /// Baum und Editor neu aus dem Visualizer lesen (nach einem Laden von aussen).
+    void baumNeuLesen();
+    /// Auge der Wurzel des gebundenen Baums — im Trail-Modus „Trail on/off".
+    [[nodiscard]] bool wurzelAn();
+    void setWurzelAn(bool an);
     ~MultiEffectPanel() override = default;
 
     // --- Karaoke-Ebene als Ganzes (nur im eingeschraenkten Modus sinnvoll) ---
@@ -152,7 +163,8 @@ public:
 
     /// Welchen Baum des Visualizers das Panel bearbeitet (KE2, Entscheid K2 a):
     /// die Effektkette (Vorgabe) oder die Karaoke-Ebene (`karaokeKette()`).
-    enum class Baum { Kette, Karaoke };
+    /// `KaraokeTrail`: nur die Trail-Liste der Ebene (deren Kind 1) als Wurzel.
+    enum class Baum { Kette, Karaoke, KaraokeTrail };
     void setBaum(Baum baum);
     [[nodiscard]] Baum baum() const { return m_baum; }
 
@@ -169,6 +181,12 @@ private:
     /// Knoten wieder in den Editor holen.
     void zeigeFestenKnoten();
     QTimer* m_karaokeSpeichern = nullptr;  ///< sammelt Edits vor dem Schreiben
+    void richteKaraokeSpeichernEin();
+    /// Trail-Modus, unter dem Render-Mutex nach jeder Strukturaenderung: der
+    /// Lyrics Trail steht wieder als Letztes auf der obersten Ebene.
+    void ordneKaraokeTrail();
+    /// Trail-Modus: ist `path` der feste Lyrics-Trail-Knoten? (unter dem Mutex)
+    [[nodiscard]] bool istFesterTrail(const QList<int>& path);
 
     void setupUI();
     void connectToActiveVisualizer();

@@ -81,6 +81,16 @@ struct EffectType
     }
 };
 
+/// Trail der Karaoke-Ebene (S89, KE3 — Entscheid K1 a): erlaubt sind nur
+/// Module, die das vorhandene Bild umformen oder faerben. Was zeichnet oder
+/// steuert (auch Listen, Gruppen, Presets aus Dateien, Milkdrop-Elemente),
+/// gehoert nicht in den Trail.
+[[nodiscard]] inline bool karaokeTrailErlaubt(const EffectType& t)
+{
+    return t.make != nullptr && !t.fromFile && t.milkElement == MilkElement::None &&
+           (t.role == Role::Transform || t.role == Role::Color);
+}
+
 /// Die Palette in Anzeige-Reihenfolge (Koepfe und Eintraege gemischt).
 [[nodiscard]] const std::vector<EffectType>& effectPalette();
 

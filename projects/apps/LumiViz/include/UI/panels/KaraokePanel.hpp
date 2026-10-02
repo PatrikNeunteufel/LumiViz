@@ -6,7 +6,9 @@
  * (`.lvkar` im Ordner der Ablage), darunter Reiter. Reiter 1 „Lyrics" ist das
  * Ketten-Panel im eingeschraenkten Modus (Entscheid K2 a): derselbe Editor wie
  * am Lyrics-Knoten einer Kette, gebunden an den Lyrics-Knoten der Ebene.
- * Reiter 2 „Lyrics Trail" folgt mit KE3.
+ * Reiter 2 „Lyrics Trail" (KE3): Schalter „Trail on" und die Trail-Liste der
+ * Ebene als kurze Kette — die Palette zeigt nur Module der Rollen Transform
+ * und Color (Entscheid K1 a), der Lyrics Trail am Ende ist fest.
  */
 
 #pragma once
@@ -47,8 +49,15 @@ public:
     /// Endung der Karaoke-Presets, mit Punkt.
     static constexpr const char* kEndung = ".lvkar";
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 private:
     void setupUI();
+    /// „Trail on" auf den Stand der Ebene stellen (Auge der Trail-Liste).
+    void gleicheTrailSchalterAb();
+    QCheckBox* m_trailSchalter = nullptr;
+    MultiEffectPanel* m_trail = nullptr;  ///< Reiter 2: die Trail-Liste der Ebene
     void fuelleCombo(const QString& gewaehlt = {});
     [[nodiscard]] QString ordner() const;                      ///< leer = keine Ablage gesetzt
     [[nodiscard]] QString dateiVon(const QString& name) const; ///< leer = Name ungueltig

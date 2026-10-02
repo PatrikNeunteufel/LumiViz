@@ -80,6 +80,7 @@
 #include <QSettings>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
+#include <QTabWidget>
 #include <QTableWidget>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -687,9 +688,10 @@ TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Pre
         CHECK(QSettings().value(QStringLiteral("karaoke/enabled")).toBool());
 
         // --- Reiter 1: der Editor steht auf dem Lyrics-Knoten der Ebene, ohne Baum
-        auto* editor = panel.findChild<MultiEffectPanel*>();
+        MultiEffectPanel* editor = nullptr;
+        for (MultiEffectPanel* e : panel.findChildren<MultiEffectPanel*>())
+            if (e->baum() == MultiEffectPanel::Baum::Karaoke) editor = e;
         REQUIRE(editor != nullptr);
-        CHECK(editor->baum() == MultiEffectPanel::Baum::Karaoke);
         for (QTreeWidget* t : editor->findChildren<QTreeWidget*>())
             if (dynamic_cast<ChainTreeWidget*>(t) != nullptr) CHECK_FALSE(t->isVisible());
         auto* yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
@@ -739,6 +741,127 @@ TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Pre
     }
     MultiEffectVisualizer::setKaraokeEbene(false);
     MultiEffectVisualizer::setKaraokeAblage(QString());
+}
+
+// S89, KE3: Reiter „Lyrics Trail" — die Trail-Liste der Ebene als kurze Kette.
+// Die Palette zeigt nur Erlaubtes (Rollen Transform und Color, Entscheid K1 a),
+// der Lyrics Trail am Ende ist fest, „Trail on" ist das Auge der Liste.
+TEST_CASE("Karaoke-Panel S89: Reiter Lyrics Trail — Liste, Paletten-Filter, fester Trail, Trail on/off")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    using lumi::multieffect::LyricsTrailParams;
+
+    // --- der uebergeordnete Filter der Palette
+    {
+        EffectPaletteWindow w;
+        const std::set<int> alle = sichtbareEintraege(w);
+        w.setUebergeordneterFilter(&lumi::ui::karaokeTrailErlaubt, QStringLiteral("Trail"));
+        const std::set<int> erlaubt = sichtbareEintraege(w);
+        CHECK(erlaubt.size() > 10);
+        CHECK(erlaubt.size() < alle.size());
+        for (int i : erlaubt)
+        {
+            const auto& t = effectPalette()[static_cast<size_t>(i)];
+            CAPTURE(t.name);
+            CHECK((t.role == lumi::ui::Role::Transform || t.role == lumi::ui::Role::Color));
+        }
+        CHECK(erlaubt.count(indexVon("Blitter Feedback")) == 1);
+        CHECK(erlaubt.count(indexVon("Fadeout")) == 1);
+        CHECK(erlaubt.count(indexVon("Lyrics")) == 0);
+        CHECK(erlaubt.count(indexVon("Lyrics Trail")) == 0);
+        CHECK(erlaubt.count(indexVon("Effect List")) == 0);
+        // die Chips der Rollen ohne erlaubten Eintrag sind weg
+        w.show();
+        CHECK_FALSE(chip(w, lumi::ui::roleText(lumi::ui::Role::Render))->isVisible());
+        CHECK(chip(w, lumi::ui::roleText(lumi::ui::Role::Color))->isVisible());
+    }
+
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    MultiEffectVisualizer vis;
+    QMutex mutex;
+    KaraokePanel panel(services);
+    panel.resize(520, 1000);
+    zeigen(panel);
+    services.tryResolve<IEventBus>()->publish(VisualizerChangedEvent(
+        "multieffect", "Multi Effect", static_cast<IVisualizer*>(&vis), &mutex));
+    QCoreApplication::processEvents();
+    auto* reiter = panel.findChild<QTabWidget*>();
+    REQUIRE(reiter != nullptr);
+    REQUIRE(reiter->count() == 2);
+    reiter->setCurrentIndex(1);
+    QCoreApplication::processEvents();
+
+    MultiEffectPanel* trail = nullptr;
+    for (MultiEffectPanel* e : panel.findChildren<MultiEffectPanel*>())
+        if (e->baum() == MultiEffectPanel::Baum::KaraokeTrail) trail = e;
+    REQUIRE(trail != nullptr);
+    ChainTreeWidget* tree = nullptr;
+    for (QTreeWidget* t : trail->findChildren<QTreeWidget*>())
+        if (auto* c = dynamic_cast<ChainTreeWidget*>(t)) tree = c;
+    REQUIRE(tree != nullptr);
+    CHECK(tree->isVisible());
+    const auto kinder = [&]() -> const std::vector<ChainNode>& {
+        return vis.karaokeKette().children[1].children;
+    };
+    const auto istTrail = [](const ChainNode& n) {
+        return std::holds_alternative<LyricsTrailParams>(n.params);
+    };
+    // Vorgabe: Drift, Fadeout, Lyrics Trail — der Baum zeigt genau diese drei
+    REQUIRE(kinder().size() == 3);
+    CHECK(tree->topLevelItemCount() == 3);
+    schnappschuss(panel, "S89_karaoke_trail");
+
+    const auto ziehe = [&](const char* name) {
+        QMimeData data;
+        data.setData(QString::fromUtf8(lumi::ui::kPaletteMime), QByteArray::number(indexVon(name)));
+        const QPoint pos(60, tree->viewport()->height() - 10);  // Leerflaeche = anhaengen
+        QWidget* vp = tree->viewport();
+        QDragEnterEvent enter(pos, Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(vp, &enter);
+        QDragMoveEvent move(pos, Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(vp, &move);
+        QDropEvent drop(QPointF(pos), Qt::CopyAction, &data, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(vp, &drop);
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+    };
+
+    // --- Erlaubtes ans Ende gezogen landet VOR dem festen Lyrics Trail
+    ziehe("Invert");
+    REQUIRE(kinder().size() == 4);
+    CHECK(ist<lumi::multieffect::InvertParams>(kinder()[2]));
+    CHECK(istTrail(kinder()[3]));
+    CHECK(tree->topLevelItemCount() == 4);
+
+    // --- nicht Erlaubtes wird abgewiesen (auch aus dem Fenster der Kette gezogen)
+    ziehe("Lyrics");
+    ziehe("Effect List");
+    ziehe("Lyrics Trail");
+    CHECK(kinder().size() == 4);
+
+    // --- der Lyrics Trail ist nicht entfernbar, ein anderer Knoten schon
+    tree->setCurrentItem(tree->topLevelItem(3));
+    tree->onDeleteKey();
+    QCoreApplication::processEvents();
+    CHECK(kinder().size() == 4);
+    tree->setCurrentItem(tree->topLevelItem(2));
+    tree->onDeleteKey();
+    QCoreApplication::processEvents();
+    REQUIRE(kinder().size() == 3);
+    CHECK(istTrail(kinder()[2]));
+
+    // --- Trail on/off = das Auge der Trail-Liste
+    auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("karaokeTrailSchalter"));
+    REQUIRE(schalter != nullptr);
+    CHECK(schalter->isChecked());
+    schalter->setChecked(false);
+    CHECK_FALSE(vis.karaokeKette().children[1].enabled);
+    schalter->setChecked(true);
+    CHECK(vis.karaokeKette().children[1].enabled);
+    // die Zeile (Kind 0) bleibt davon unberuehrt
+    CHECK(vis.karaokeKette().children[0].enabled);
 }
 
 // S89, KE2 Schritt 4: Mischart und Staerke der Ebene standen bis S88 in den

@@ -35,6 +35,8 @@ namespace lumi::ui {
 /// MIME-Typ eines gezogenen Paletteneintrags; Nutzlast = Index als Dezimaltext.
 inline constexpr const char* kPaletteMime = "application/x-lumiviz-palette-index";
 
+struct EffectType;  // UI/panels/EffectPalette.hpp
+
 /// Baum der Palette: zieht Eintraege als `kPaletteMime`.
 class PaletteTree : public QTreeWidget
 {
@@ -67,6 +69,11 @@ public:
     /// Oeffnen bzw. nach vorn holen, Fokus in die Suche.
     void present();
 
+    /// Uebergeordneter Filter (S89, KE3): nur Eintraege, fuer die `erlaubt`
+    /// true liefert, erscheinen ueberhaupt — unabhaengig von Suche und Chips.
+    /// Rollen-Chips, hinter denen kein erlaubter Eintrag steht, verschwinden.
+    void setUebergeordneterFilter(bool (*erlaubt)(const EffectType&), const QString& titel);
+
 signals:
     void addRequested(int paletteIndex);
 
@@ -98,6 +105,7 @@ private:
     QToolButton* m_favButton = nullptr;
     QPushButton* m_addButton = nullptr;
     bool m_insertEnabled = false;
+    bool (*m_erlaubt)(const EffectType&) = nullptr;  ///< nullptr = alles
 
     QList<int> m_favorites;  ///< Paletten-Indizes
     QList<int> m_recent;     ///< juengster zuerst

@@ -3737,8 +3737,9 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
     renderNode(*trail);
     m_karaokeLaeuft = false;
 
+    // „Trail on/off" (KE3) = das Auge der Trail-Liste: aus heisst kein Trail-Bild
     if (const auto it = m_listRuntimes.find(trail->nodeId);
-        it != m_listRuntimes.end() && it->second.surface.ready())
+        trail->enabled && it != m_listRuntimes.end() && it->second.surface.ready())
         m_karaokeTrailTex = it->second.surface.current()->texture();
     m_karaokeGezeichnet = true;
     bindActive();

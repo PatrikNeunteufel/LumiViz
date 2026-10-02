@@ -221,10 +221,37 @@ mitgelieferten Ebene. Die Zeilen in Settings → Audio sind entfernt;
 QSettings-Werte einmal in die Ablage und löscht die Schlüssel. Geprüft:
 Bildtests (Ebene: Invert, Invert 50 %, Normal 50 % und 0 % mit Kontur; Knoten
 in der Kette: 50 %, Invert 50 %, Additive 0 %), Übernahme-Test, 797/797,
-Vergleichslauf 84/84 bitgleich. **Lücke bis KE3:** die Mischart des Trails der
-Ebene ist im Panel nicht erreichbar (der Trail-Knoten hat noch keinen Reiter).
+Vergleichslauf 84/84 bitgleich.
 **Offen in KE2:** `.lvkar` im Effect Browser (Icon, Doppelklick lädt in die
 Ebene).
+
+### Stand KE3 — ✅ gebaut (S89)
+
+Reiter **Lyrics Trail** im Karaoke-Panel: `MultiEffectPanel` im zweiten
+eingeschränkten Modus (`Baum::KaraokeTrail`) — die Trail-Liste der Ebene
+(Kind 1) ist die Wurzel des Panels, Baum und Werkzeugleiste sichtbar.
+
+- **Paletten-Filter (K1 a):** `karaokeTrailErlaubt` (Rollen Transform und
+  Color; keine Datei-Presets, keine Milkdrop-Elemente);
+  `EffectPaletteWindow::setUebergeordneterFilter` zeigt nichts anderes und
+  blendet die Chips der übrigen Rollen aus. Dieselbe Prüfung sitzt in
+  `insertPaletteNode` — auch ein aus dem Fenster der Kette gezogener Eintrag
+  wird abgewiesen; Datei-Drops ebenso.
+- **Fester Lyrics Trail:** nicht entfernbar, nicht klonbar; nach jeder
+  Strukturänderung stellt `ordneKaraokeTrail` ihn wieder ans Ende.
+- **Trail on** = das Auge der Trail-Liste; aus legt der Renderer kein
+  Trail-Bild auf.
+- Mischart und Stärke des Trails sind damit im Panel erreichbar (Felder des
+  Lyrics Trail) — die Lücke aus Schritt 4 ist zu.
+- Die Splitter-Stellung der Reiter liegt getrennt von der Kette
+  (`karaoke/trailSplitter`).
+- Geprüft: UI-Test (Filter zeigt nur Erlaubtes, Chips; Baum zeigt die drei
+  Knoten; Erlaubtes landet vor dem Trail; Lyrics, Effect List und ein zweiter
+  Lyrics Trail werden abgewiesen; Trail nicht löschbar; Trail on/off),
+  798/798, Vergleichslauf 84/84 bitgleich, Schnappschuss angesehen.
+- **Nicht geprüft:** im laufenden Programm; Verschieben per Maus; ob jedes
+  erlaubte Modul auf dem Trail-Bild etwas Sinnvolles tut (der Filter geht nach
+  der Rolle, nicht nach dem Ergebnis).
 
 ## 8. Risiken
 

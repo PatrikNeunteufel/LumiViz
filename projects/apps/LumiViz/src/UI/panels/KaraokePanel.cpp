@@ -20,6 +20,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QSignalBlocker>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
@@ -103,14 +104,48 @@ void KaraokePanel::setupUI()
     });
     connect(vorgabe, &QPushButton::clicked, this, [this] { setzeVorgabe(); });
 
-    // --- Reiter: 1 Lyrics (Ketten-Panel im eingeschraenkten Modus, K2 a);
-    //     2 Lyrics Trail folgt mit KE3
+    // --- Reiter: 1 Lyrics, 2 Lyrics Trail — beides das Ketten-Panel im
+    //     eingeschraenkten Modus (K2 a)
     m_reiter = new QTabWidget(this);
     m_editor = new MultiEffectPanel(services(), MultiEffectPanel::KaraokeLyrics{}, m_reiter);
     m_reiter->addTab(m_editor, tr("Lyrics"));
+
+    auto* trailSeite = new QWidget(m_reiter);
+    auto* trailLayout = new QVBoxLayout(trailSeite);
+    trailLayout->setContentsMargins(0, 6, 0, 0);
+    m_trailSchalter = new QCheckBox(tr("Trail on"), trailSeite);
+    m_trailSchalter->setObjectName(QStringLiteral("karaokeTrailSchalter"));
+    m_trailSchalter->setToolTip(
+        tr("The line that just ended drifts away behind the running line. The list below "
+           "works on the trail image only; the Lyrics Trail at its end is fixed."));
+    trailLayout->addWidget(m_trailSchalter);
+    m_trail = new MultiEffectPanel(services(), MultiEffectPanel::KaraokeTrail{}, trailSeite);
+    trailLayout->addWidget(m_trail, 1);
+    m_reiter->addTab(trailSeite, tr("Lyrics Trail"));
     root->addWidget(m_reiter, 1);
 
+    connect(m_trailSchalter, &QCheckBox::toggled, this, [this](bool an) {
+        if (m_trail->hatHost() && m_trail->wurzelAn() != an) m_trail->setWurzelAn(an);
+    });
+    connect(m_reiter, &QTabWidget::currentChanged, this, [this] { gleicheTrailSchalterAb(); });
+
     fuelleCombo();
+    gleicheTrailSchalterAb();
+}
+
+void KaraokePanel::gleicheTrailSchalterAb()
+{
+    const bool da = m_trail->hatHost();
+    m_trailSchalter->setEnabled(da);
+    if (!da) return;
+    const QSignalBlocker ruhe(m_trailSchalter);
+    m_trailSchalter->setChecked(m_trail->wurzelAn());
+}
+
+void KaraokePanel::showEvent(QShowEvent* event)
+{
+    PanelBase::showEvent(event);
+    gleicheTrailSchalterAb();
 }
 
 QString KaraokePanel::ordner() const
@@ -165,7 +200,10 @@ bool KaraokePanel::ladePreset(const QString& name)
 {
     const QString datei = dateiVon(name);
     if (datei.isEmpty() || !QFileInfo::exists(datei)) return false;
-    return m_editor->karaokeLaden(datei);
+    if (!m_editor->karaokeLaden(datei)) return false;
+    m_trail->baumNeuLesen();
+    gleicheTrailSchalterAb();
+    return true;
 }
 
 bool KaraokePanel::loeschePreset(const QString& name)
@@ -179,4 +217,6 @@ bool KaraokePanel::loeschePreset(const QString& name)
 void KaraokePanel::setzeVorgabe()
 {
     m_editor->karaokeVorgabe();
+    m_trail->baumNeuLesen();
+    gleicheTrailSchalterAb();
 }

@@ -1119,6 +1119,24 @@ MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, KaraokeLyrics, QW
                        static_cast<QWidget*>(m_downButton), static_cast<QWidget*>(m_tree)})
         w->hide();
     m_hint->setText(tr("The karaoke layer works with the \"Multi Effect\" visualizer."));
+    richteKaraokeSpeichernEin();
+    connectToActiveVisualizer();
+}
+
+MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, KaraokeTrail, QWidget* parent)
+    : PanelBase(services, "karaoke_trail_editor", tr("Karaoke Trail"), parent)
+{
+    m_baum = Baum::KaraokeTrail;
+    setupUI();
+    m_hint->setText(tr("The karaoke layer works with the \"Multi Effect\" visualizer."));
+    m_addButton->setToolTip(tr("Open the palette of modules allowed in the trail "
+                               "(they transform or colour the trail image)"));
+    richteKaraokeSpeichernEin();
+    connectToActiveVisualizer();
+}
+
+void MultiEffectPanel::richteKaraokeSpeichernEin()
+{
     // Edits sammeln und kurz danach in die Ablage schreiben — nicht unter dem
     // Render-Mutex und nicht bei jedem Reglerschritt
     m_karaokeSpeichern = new QTimer(this);
@@ -1128,7 +1146,50 @@ MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, KaraokeLyrics, QW
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
         if (m_karaokeSpeichern->isActive()) speichereKaraokeJetzt();
     });
-    connectToActiveVisualizer();
+}
+
+void MultiEffectPanel::baumNeuLesen()
+{
+    m_presetMarken.clear();
+    rebuildTree();
+    clearPropertyEditor();
+    zeigeFestenKnoten();
+}
+
+bool MultiEffectPanel::wurzelAn()
+{
+    if (m_host == nullptr || m_mutex == nullptr) return false;
+    QMutexLocker lock(m_mutex);
+    return wurzel().enabled;
+}
+
+void MultiEffectPanel::setWurzelAn(bool an)
+{
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    QMutexLocker lock(m_mutex);
+    wurzel().enabled = an;
+    uebersetze();
+}
+
+bool MultiEffectPanel::istFesterTrail(const QList<int>& path)
+{
+    if (m_baum != Baum::KaraokeTrail || path.size() != 1) return false;
+    const ChainNode* n = nodeAtPath(path);
+    return n != nullptr && std::holds_alternative<LyricsTrailParams>(n->params);
+}
+
+void MultiEffectPanel::ordneKaraokeTrail()
+{
+    if (m_baum != Baum::KaraokeTrail || m_host == nullptr) return;
+    auto& kinder = wurzel().children;
+    // der (letzte) Lyrics Trail der obersten Ebene wandert ans Ende
+    for (std::size_t i = kinder.size(); i-- > 0;)
+    {
+        if (!std::holds_alternative<LyricsTrailParams>(kinder[i].params)) continue;
+        std::rotate(kinder.begin() + static_cast<std::ptrdiff_t>(i),
+                    kinder.begin() + static_cast<std::ptrdiff_t>(i) + 1, kinder.end());
+        break;
+    }
 }
 
 void MultiEffectPanel::zeigeFestenKnoten()
@@ -1296,14 +1357,15 @@ void MultiEffectPanel::setupUI()
     split->addWidget(m_propScroll);
     split->setStretchFactor(0, 1);
     split->setStretchFactor(1, 1);
+    // Die Reiter des Karaoke-Panels merken ihre Stellung getrennt von der Kette
+    const QString splitKey = m_baum == Baum::Kette ? QStringLiteral("multieffect/chainSplitter")
+                                                   : QStringLiteral("karaoke/trailSplitter");
     {
-        const QByteArray state =
-            QSettings().value(QStringLiteral("multieffect/chainSplitter")).toByteArray();
+        const QByteArray state = QSettings().value(splitKey).toByteArray();
         if (!state.isEmpty()) split->restoreState(state);
     }
-    connect(split, &QSplitter::splitterMoved, this, [split]() {
-        QSettings().setValue(QStringLiteral("multieffect/chainSplitter"),
-                             split->saveState());
+    connect(split, &QSplitter::splitterMoved, this, [split, splitKey]() {
+        QSettings().setValue(splitKey, split->saveState());
     });
     root->addWidget(split, 1);
 
@@ -1352,7 +1414,7 @@ void MultiEffectPanel::connectToActiveVisualizer()
             [this](const EffectChainChangedEvent&) {
                 m_kameraDialogGezeigt = false;  // neue Kette darf neu fragen (S70)
                 // die Karaoke-Ebene aendert sich durch einen Kettenwechsel nicht
-                if (!m_festerPfad.isEmpty()) return;
+                if (m_baum != Baum::Kette) return;
                 rebuildTree();
                 clearPropertyEditor();
             }));
@@ -1733,12 +1795,16 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
 // Zugriffe des Panels auf den Baum laufen hier durch — nie direkt ueber m_host.
 ChainNode& MultiEffectPanel::wurzel()
 {
-    return m_baum == Baum::Karaoke ? m_host->karaokeKette() : m_host->chain();
+    if (m_baum == Baum::Kette) return m_host->chain();
+    ChainNode& ebene = m_host->karaokeKette();
+    // Trail-Modus: die Trail-Liste (Kind 1) ist die Wurzel dieses Panels
+    if (m_baum == Baum::KaraokeTrail && ebene.children.size() >= 2) return ebene.children[1];
+    return ebene;
 }
 
 void MultiEffectPanel::uebersetze()
 {
-    if (m_baum == Baum::Karaoke)
+    if (m_baum != Baum::Kette)
     {
         (void)m_host->recompileKaraoke();
         if (m_karaokeSpeichern != nullptr) m_karaokeSpeichern->start();
@@ -1858,6 +1924,7 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
     {
         QMutexLocker lock(m_mutex);
         fn();
+        ordneKaraokeTrail();  // nur im Trail-Modus: der Lyrics Trail bleibt zuletzt
         uebersetze();
     }
     rebuildTree(/*aufklappZustandBehalten=*/true);
@@ -1873,6 +1940,9 @@ void MultiEffectPanel::openPalette()
         connect(m_palette, &lumi::ui::EffectPaletteWindow::addRequested, this,
                 &MultiEffectPanel::onAddEffect);
     }
+    if (m_baum == Baum::KaraokeTrail)
+        m_palette->setUebergeordneterFilter(&lumi::ui::karaokeTrailErlaubt,
+                                            tr("Karaoke Trail Palette"));
     m_palette->setInsertEnabled(m_active);
     m_palette->present();
 }
@@ -1992,6 +2062,7 @@ void MultiEffectPanel::onPresetFileDrop(const QStringList& files, QTreeWidgetIte
                                         ChainDrop where)
 {
     if (m_host == nullptr || files.isEmpty()) return;
+    if (m_baum != Baum::Kette) return;  // Presets gehoeren in die Kette, nicht in die Ebene
     // Der Paletteneintrag „Preset Reference…" ist der eine Weg, einen Verweis
     // anzulegen — der Drop gibt ihm nur die Datei vor (kein Dateidialog).
     const auto& palette = effectPalette();
@@ -2025,6 +2096,9 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
 {
     const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
     if (chosen.make == nullptr) return false;
+    // Trail der Karaoke-Ebene (KE3): nur Erlaubtes — auch wenn der Eintrag aus
+    // dem Palettenfenster der Kette herübergezogen wird
+    if (m_baum == Baum::KaraokeTrail && !lumi::ui::karaokeTrailErlaubt(chosen)) return false;
     ChainNode fresh;
     fresh.params = chosen.make();
 
@@ -2134,6 +2208,7 @@ bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>&
 
 bool MultiEffectPanel::insertMilkElement(int paletteIndex, const QList<int>& anchorPath)
 {
+    if (m_baum != Baum::Kette) return false;  // die Karaoke-Ebene kennt keine Milkdrop-Nodes
     const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
     // Milkdrop-Node-Inhalt (N3.1/N3.3): landet im PresetState des Milkdrop-Nodes
     // (bzw. seiner Sektion/seines Elements), nicht in der Chain.
@@ -2192,6 +2267,13 @@ void MultiEffectPanel::onRemove()
 {
     const QList<QList<int>> paths = selectedPaths();
     if (paths.isEmpty()) return;  // never remove the root
+    if (m_baum == Baum::KaraokeTrail && m_mutex != nullptr)
+    {
+        // der Lyrics Trail am Ende der Liste ist fest (KE3)
+        QMutexLocker lock(m_mutex);
+        for (const QList<int>& p : paths)
+            if (istFesterTrail(p)) return;
+    }
 
     // Milk-Elemente (N3.1/N3.3): selektierte Waves/Shapes/Sprites entfernen.
     // Sektions-Items selbst sind nicht loeschbar.
@@ -2260,6 +2342,11 @@ void MultiEffectPanel::onClone()
 {
     const QList<int> path = currentPath();
     if (path.isEmpty()) return;  // root is not clonable
+    if (m_baum == Baum::KaraokeTrail && m_mutex != nullptr)
+    {
+        QMutexLocker lock(m_mutex);
+        if (istFesterTrail(path)) return;  // es gibt genau einen Lyrics Trail (KE3)
+    }
 
     // Milk-Elemente (N3.1/N3.3): Wave/Shape/Sprite duplizieren (Einfuegung
     // direkt dahinter, frischer index). Sektions-Items sind nicht klonbar.

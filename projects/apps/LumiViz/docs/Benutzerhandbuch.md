@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.46.0
+> **Version:** 1.47.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -697,8 +697,19 @@ und bleibt über den Neustart erhalten. Den Stand der ganzen Ebene (Zeile und
 Trail) hältst du als **Karaoke-Preset** fest: **Save…** legt ihn unter einem
 Namen ab, **Load** holt ihn zurück, **Delete** entfernt ihn, **Default** stellt
 das mitgelieferte Aussehen wieder her. Die Dateien (`.lvkar`) liegen im
-Benutzerordner unter `karaoke`. Der Trail hat noch keine eigenen Regler im
-Panel (folgt). Rechnet ein Preset mit **Render Scale** in kleinerer
+Benutzerordner unter `karaoke`.
+
+Der **Trail** hat seinen eigenen Reiter **Lyrics Trail**: oben **Trail on**
+(aus = die Zeile steht ohne Nachwehen da), darunter eine kurze Liste von
+Modulen, die nur auf dem Bild des Trails arbeiten — mitgeliefert Blitter
+Feedback (lässt die alte Zeile nach hinten wegziehen) und Fadeout (lässt sie
+verblassen). Mit **+** öffnet sich die Palette; sie zeigt hier nur Module, die
+ein Bild **umformen** oder **färben** — was selbst zeichnet oder steuert,
+gehört nicht in den Trail und lässt sich auch nicht hineinziehen. Am Ende der
+Liste steht fest der **Lyrics Trail**: er lässt sich nicht entfernen und
+bleibt immer das Letzte. An ihm stellst du Haltezeit, Versatz, eigene Farbe
+und mit **Blend** / **Blend strength (%)** ein, wie sich der Trail mit dem
+Bild mischt. Rechnet ein Preset mit **Render Scale** in kleinerer
 Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
 Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
 Presets.
@@ -707,8 +718,8 @@ Wie sich die Zeile mit dem Bild dahinter **mischt**, stellst du im Reiter
 **Lyrics** ein: Feld **Blend** und daneben **Blend strength (%)** von 0–100.
 Die Stärke nimmt nur die Füllung der Buchstaben zurück, die Kontur bleibt
 stehen. Beide Felder gibt es genauso am Lyrics-Knoten und am Lyrics Trail
-einer Kette. Der Trail der Ebene mischt additiv mit voller Stärke; seine
-Regler folgen mit dem Reiter *Lyrics Trail*. (Bis Version 1.45 standen
+einer Kette. Für den Trail der Ebene stehen dieselben beiden Felder am Lyrics
+Trail im Reiter *Lyrics Trail* (Vorgabe: Additive, 100 %). (Bis Version 1.45 standen
 Mischart und Stärke der Ebene unter Settings → Audio — die dort gewählten
 Werte werden beim ersten Start übernommen.)
 
@@ -1369,6 +1380,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.47.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Panel, NEU Reiter **Lyrics Trail** — *Trail on*, Liste der Trail-Module, Palette nur mit umformenden und färbenden Modulen, fester Lyrics Trail am Ende |
 | 1.46.0 | 2026-10-02 | Session 89. §11 Lyrics / Lyrics Trail: NEU Feld **Blend strength (%)**; Mischart und Stärke der Karaoke-Ebene stehen im Karaoke-Panel (Reiter *Lyrics*) statt unter Settings → Audio, alte Werte werden übernommen |
 | 1.45.0 | 2026-10-02 | Session 89. §11 Lyrics: NEU Panel **Karaoke** — Schalter *Karaoke on* (bisher Settings → Audio), Reiter *Lyrics* mit dem Aussehen der Zeile, **Karaoke-Presets** (`.lvkar`: Save…, Load, Delete, Default) |
 | 1.44.0 | 2026-10-02 | Session 89. §11 Lyrics: die Zeile der Karaoke-Ebene bleibt mit Render Scale scharf (Fensterauflösung) |
