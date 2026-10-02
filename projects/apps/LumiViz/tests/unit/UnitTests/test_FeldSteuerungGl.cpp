@@ -811,6 +811,85 @@ TEST_CASE("Lyrics Trail S87: die eben beendete Zeile, fuer die Haltezeit, an der
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S88: seit Ids nie wiederverwendet werden (S87), blieb die Laufzeit eines im
+// Panel entfernten Knotens bis zum naechsten Laden liegen (Texturen, Skript-
+// Hosts, ein laufender Video-/Kamera-Feed). Der Render-Thread raeumt sie nach
+// dem Edit ab — und nur sie.
+TEST_CASE("Laufzeiten S88: ein entfernter Knoten nimmt seine Laufzeit mit, die uebrigen behalten ihre")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:01.00]MMMM\n"));
+    MultiEffectVisualizer::notifyPlayPosition(2000);
+
+    ChainNode root;
+    root.params = ListParams{};
+    ChainNode clear;
+    clear.params = ClearParams{};
+    ChainNode a;
+    a.params = LyricsParams{};
+    ChainNode liste;  // der zweite Lyrics-Knoten steckt in einer Liste
+    liste.params = ListParams{};
+    ChainNode b;
+    b.params = LyricsParams{};
+    liste.children = {b};
+    root.children = {clear, a, liste};
+    MultiEffectVisualizer vis;
+    vis.setChain(std::move(root));
+    vis.initialize();
+    vis.resize(QSize(160, 120));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 160, 120);
+    vis.render(1.0f / 60.0f);
+    vis.render(1.0f / 60.0f);
+
+    const uint64_t idA = vis.chain().children[1].nodeId;
+    const uint64_t idB = vis.chain().children[2].children[0].nodeId;
+    REQUIRE(idA != 0);
+    REQUIRE(idB != 0);
+    REQUIRE(idA != idB);
+    REQUIRE(vis.debugHatLaufzeit(idA));
+    REQUIRE(vis.debugHatLaufzeit(idB));
+    const std::size_t vorher = vis.debugLaufzeitAnzahl();
+
+    // Gegenprobe: ein Edit, der nichts entfernt, laesst alle Laufzeiten stehen
+    vis.recompileChain();
+    vis.render(1.0f / 60.0f);
+    CHECK(vis.debugLaufzeitAnzahl() == vorher);
+    CHECK(vis.debugHatLaufzeit(idA));
+
+    // Knoten A entfernen (wie das Panel: Baum aendern, neu uebersetzen)
+    vis.chain().children.erase(vis.chain().children.begin() + 1);
+    vis.recompileChain();
+    CHECK(vis.debugHatLaufzeit(idA));  // erst der Render-Thread raeumt ab
+    vis.render(1.0f / 60.0f);
+    CHECK_FALSE(vis.debugHatLaufzeit(idA));
+    CHECK(vis.debugHatLaufzeit(idB));  // der in der Liste bleibt
+    CHECK(vis.debugLaufzeitAnzahl() == vorher - 1);
+
+    // ein neuer Knoten an derselben Stelle: neue Id, eigene, frische Laufzeit
+    ChainNode neu;
+    neu.params = LyricsParams{};
+    vis.chain().children.insert(vis.chain().children.begin() + 1, neu);
+    vis.recompileChain();
+    vis.render(1.0f / 60.0f);
+    const uint64_t idNeu = vis.chain().children[1].nodeId;
+    CHECK(idNeu != idA);
+    CHECK(vis.debugHatLaufzeit(idNeu));
+    CHECK_FALSE(vis.debugHatLaufzeit(idA));
+
+    // die ganze Liste entfernen: auch die Laufzeit des Knotens darin geht
+    vis.chain().children.pop_back();
+    vis.recompileChain();
+    vis.render(1.0f / 60.0f);
+    CHECK_FALSE(vis.debugHatLaufzeit(idB));
+    CHECK(vis.debugHatLaufzeit(idNeu));
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88: zwei Reste des Trails. (1) Er las die GESPEICHERTEN Felder des
 // Lyrics-Knotens — mit einem Skript („Karaoke Bounce") stand die alte Zeile an
 // der Grundposition. (2) Unsynchronen Text kannte er nicht; dort rueckt der

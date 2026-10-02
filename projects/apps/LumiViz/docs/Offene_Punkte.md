@@ -2213,6 +2213,47 @@ Idee Preset-Warmup/Pre-Roll.
   Anknüpfungen: Presetverweis (Visual-Clips als Verweis), Host-Gruppen-
   Crossfade (Kurven), Visual-Playlist P2, Idee „Video aufnehmen" (ein
   Timeline-Arrangement offline rendern).
+- **Ideen Patrik S88 zum Timeline-Panel** (Notiz, nichts gebaut; Umfang für
+  die Konzept-Session):
+  - **Visual-Kanäle:** mindestens zwei, weitere lassen sich hinzufügen.
+  - **Pegelkurve je Kanal** (Skizze Patrik S88, zwei Kanäle über der Zeit):
+    jeder Kanal hat einen Pegel, der über Rampen steigt und fällt.
+    **Übergang** („trans", Patriks Wort „Transienten" = Ein-/Ausblenden):
+    CH1 steigt, während CH2 fällt — der Wechsel von einem Visual zum
+    anderen. **Überlagerung** („zwischendurch"): laufen in beiden Kanälen
+    im selben Zeitbereich verschiedene Presets, kann der eine Kanal mitten
+    im Clip teilweise zurückgehen und der andere teilweise dazukommen (in
+    der Skizze beide auf etwa halbem Pegel, eine Weile gehalten) und danach
+    wieder zurück — also nicht nur Wechsel, sondern auch Mischen auf Zeit.
+    Rampen mit eigenen Zeiten je Kanal, so frei einstellbar wie möglich.
+  - **Mischarten:** für Übergänge wie für Überlagerungen nicht nur
+    Überblenden, sondern auch andere Verknüpfungen (Add, Sub, Xor usw.).
+  - **Übergangs-Editor:** die Ein-/Ausblend-Kurve von Hand editieren.
+    Kandidat zum Vorziehen: die Host-Gruppe hat schon Crossfade-Kurven, ein
+    Editor könnte dort zuerst nützen.
+  - **Dateiarten:** `.lvfx` = Einzel-Preset, `.lvfx2` = Preset-Stapel (mit
+    Host Switcher), **eigenes Icon** für `.lvfx2` (heute teilen sich beide
+    `lumiviz.ico`). Die Timeline kann ein `.lvfx2` abspielen, **warnt aber
+    beim Hinzufügen**: dann wechseln zwei Wechsler (Timeline und Host
+    Switcher) — möglich, nicht empfohlen. **Entscheid Patrik 1a (S88):** die
+    Endung bleibt, wie sie ist (`.lvfx2` = Kette mit Host-Gruppe, auch ohne
+    Switcher), bekommt ihr eigenes Icon; gewarnt wird nur, wenn die Datei
+    wirklich einen Host Switcher enthält.
+  - **Karaoke in der Timeline:** zuschaltbar, geschaltet etwa wie die Liste
+    in `20261001.mix.lvfx2`, gesteuert über ein neues **Karaoke-Panel** mit
+    zwei Reitern — (1) das Lyrics-Modul, (2) „Lyrics Trail": im Prinzip die
+    Effect List aus dem Mix, die begrenzt Module aufnimmt (keine Render-
+    Quellen, keine Hosts; **Umfang noch zu klären**). Auswahl über den
+    vorhandenen Paletten-Dialog mit einem **übergeordneten Filter**, der
+    nicht Erlaubtes vorab ausblendet. **Entscheid Patrik 2a (S88):** die
+    Karaoke-Ebene wird eine eigene Ebene über allem Laufenden, schaltbar im
+    Karaoke-Panel, und kann vor der Timeline gebaut werden (eigener Block,
+    erst Kurzkonzept); die Timeline schaltet später denselben Schalter.
+    **Der Lyrics-Knoten bleibt** — die Ebene ist ein weiterer Weg, kein
+    Ersatz. **Die Effektkette gewinnt:** enthält das laufende Preset selbst
+    Lyrics, zeichnet es sie (es ist womöglich auf das Preset abgestimmt) und
+    die Ebene tritt zurück — gezeigt wird in beiden Fällen derselbe Songtext,
+    nie doppelt.
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
 
@@ -3365,6 +3406,20 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 **Gitter** je Frame (beweglich, interpoliert, mit Buffer-Zugriff und Alpha).
 
 ## 8. Werkzeug- und Doku-Schulden
+
+- ✅ **Laufzeiten entfernter Knoten (offen seit S87, erledigt S88):** seit
+  Knoten-Ids nie wiederverwendet werden, blieb der Laufzeitblock eines im
+  Panel entfernten Knotens (Texturen, Skript-Hosts, Milkdrop-Kern) bis zum
+  nächsten Laden liegen, und ein laufender Video-/Kamera-Feed lief weiter.
+  Jetzt räumt der Render-Thread nach jedem Panel-Edit ab
+  (`raeumeVerwaisteLaufzeiten`, auch Listen-, Gruppen-, Switcher- und
+  Modulations-Zustand); der Feed gehört dem Knoten allein (Schlüssel = Id),
+  andere Knoten auf derselben Kamera und die Camera-Clip-Aufnahme der
+  Einstellungen bleiben. Vergleichslauf Regressionsliste 84/84 bitgleich
+  gegen S86. **Nicht geprüft:** der Feed-Stopp mit echter Kamera/Datei
+  (**Sichttest Patrik:** Video-Source-Knoten mit Kamera löschen → die
+  Kamera-Leuchte geht aus); ein per Undo zurückgeholter Knoten beginnt mit
+  frischem Zustand.
 
 - 🟡 **Oberflächentexte englisch — erledigt bis auf die Feld-Tooltips** (S83,
   Entscheid Patrik a). **Umgesetzt:** ~220 `tr()`-Texte + ~150 sichtbare

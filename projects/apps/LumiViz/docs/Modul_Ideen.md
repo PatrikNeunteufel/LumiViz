@@ -1,7 +1,7 @@
 # LumiViz — Modul-Ideen (Übersicht)
 
-> **Version:** 1.0.0
-> **Datum:** 2026-10-01 (Session 86)
+> **Version:** 1.1.0
+> **Datum:** 2026-10-02 (Session 88)
 > **Typ:** Übersicht
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -57,7 +57,7 @@ in der Spalte „Offen").
 | Idee | Was es wäre | Stand | Offen | Einzelheiten |
 |---|---|---|---|---|
 | **Tag View: Tags bearbeiten und online suchen** | Im Panel „Tag View" Tags nachträglich eintragen (in die Datei schreiben) und eine Online-Datenbank durchsuchen, wie beim CD-Rippen | 🟡 | gebaut S86: das Panel als reine Anzeige (Tags, Cover). Offen: Schreiben (braucht eine Tag-Bibliothek), Online-Suche (Opt-in) | `Offene_Punkte` §7 „Text-Knoten ausbauen", Absatz „Panel Tag View" |
-| **Timeline / Composit** | Zeitleiste, die Visuals und Übergänge je Titel anordnet (statt Host Switcher), bis hin zum Offline-Rendern | ⚪ | Konzept-Session; Vorarbeit S84 (Ziehen aus Browser/Playlist) | `Offene_Punkte` §7 „Drag … Weg zur Timeline", Ausblick |
+| **Timeline / Composit** | Zeitleiste, die Visuals und Übergänge je Titel anordnet (statt Host Switcher), bis hin zum Offline-Rendern; Ideen S88: mindestens zwei Visual-Kanäle, Übergänge je Kanal mit Kurven-Editor, Karaoke zuschaltbar über ein Karaoke-Panel, Warnung bei `.lvfx2` mit Host Switcher, eigenes `.lvfx2`-Icon | ⚪ | Konzept-Session; Vorarbeit S84 (Ziehen aus Browser/Playlist); Entscheide S88: `.lvfx2` bleibt „Kette mit Host-Gruppe", Karaoke-Ebene als eigener Block vor der Timeline (Lyrics-Knoten bleibt, die Kette gewinnt) | `Offene_Punkte` §7 „Drag … Weg zur Timeline", Ausblick |
 | **Visual-Playlist** | Abfolge von Visuals wie eine Musik-Playlist | ⚪ | hängt an offenen Entscheiden | `Offene_Punkte` §6 (P2), §5 |
 | **Preset-Warmup / Pre-Roll** | Beim Laden, Resize und Vollbildwechsel einige hundert Frames vorrechnen — kein Schwarz-Start | ⚪ | alles | `Offene_Punkte` §7 (Sammelzeile) |
 | **Startwert (Seed) im Preset** | Der Kaltstart-Zustand als Feld des Presets statt aus der Umgebung | 🟡 | Grundstein S76; Wahl des Seeds offen | `Offene_Punkte` §6 |

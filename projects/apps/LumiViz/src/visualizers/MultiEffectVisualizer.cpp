@@ -58,6 +58,8 @@
 #include <cmath>
 #include <cstring>
 #include <filesystem>
+#include <iterator>
+#include <unordered_set>
 
 // AVI effect (r_avi.cpp port): decoded via Video for Windows — the same API the
 // original uses, so the legacy codecs (Cinepak/Indeo/MSVideo1) keep working.
@@ -2957,6 +2959,10 @@ CompileResult MultiEffectVisualizer::recompileChain()
     // Id — ein neuer Presetverweis an der Stelle eines entfernten zeigte
     // dessen Preset weiter (Milkdrop: gleiche Id, gleiche `revision`), bis
     // die Kette neu geladen wurde.
+    // S88: seither bleiben die Laufzeiten ENTFERNTER Knoten verwaist liegen
+    // (Texturen, Skript-Hosts — und ein laufender Video-/Kamera-Feed lief
+    // weiter). Der Render-Thread raeumt sie beim naechsten Frame ab.
+    m_pendingRuntimePrune = true;
     return compileChain(m_root, &m_idHochwasser);
 }
 
@@ -3959,34 +3965,68 @@ bool MultiEffectVisualizer::ensureSurfacePair(SurfacePair& pair, int width,
     return true;
 }
 
-void MultiEffectVisualizer::resetRuntimes()
+void MultiEffectVisualizer::gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt)
 {
     if (auto* ctx = QOpenGLContext::currentContext())
     {
         auto* f = ctx->functions();
-        for (auto& [id, rt] : m_leafRuntimes)
-        {
-            if (rt.lutTexture != 0) f->glDeleteTextures(1, &rt.lutTexture);
-            if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
-            if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
-            if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
-            if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
-            if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
-            if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
-            if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
-            if (rt.grainTex != 0) f->glDeleteTextures(1, &rt.grainTex);
-            closeAviRuntime(rt);  // VfW handles (no GL, but lifecycle-coupled)
-            // Meganode: der Milkdrop-Kern gibt seine GL-Objekte selbst frei
-            // (braucht den current Context — deshalb hier, nicht im Dtor)
-            if (rt.milk != nullptr) rt.milk->cleanup();
-        }
+        if (rt.lutTexture != 0) f->glDeleteTextures(1, &rt.lutTexture);
+        if (rt.cmTexture != 0) f->glDeleteTextures(1, &rt.cmTexture);
+        if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
+        if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
+        if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
+        if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
+        if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
+        if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
+        if (rt.grainTex != 0) f->glDeleteTextures(1, &rt.grainTex);
+        closeAviRuntime(rt);  // VfW handles (no GL, but lifecycle-coupled)
+        // Meganode: der Milkdrop-Kern gibt seine GL-Objekte selbst frei
+        // (braucht den current Context — deshalb hier, nicht im Dtor)
+        if (rt.milk != nullptr) rt.milk->cleanup();
     }
-    // videoSource: laufende Live-Feeds (Kamera/Streaming) beenden — braucht
-    // keinen GL-Context, muss aber auch ohne einen passieren (S70).
-    for (auto& [id, rt] : m_leafRuntimes)
+    // videoSource: laufenden Live-Feed (Kamera/Streaming) beenden — braucht
+    // keinen GL-Context, muss aber auch ohne einen passieren (S70). Der Feed
+    // gehoert diesem Knoten allein (Schluessel = seine Id): ein anderer Knoten
+    // auf derselben Kamera und die Testaufnahme der Einstellungen bleiben.
+    if (rt.vsLive) lumi::services::LiveVideoFeed::instance().stopp(id);
+}
+
+void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
+{
+    // welche Ids gibt es noch? (auch in Listen, Gruppen, aufgeloesten Verweisen)
+    std::unordered_set<uint64_t> lebend;
+    const std::function<void(const ChainNode&)> sammle = [&](const ChainNode& n) {
+        lebend.insert(n.nodeId);
+        for (const ChainNode& kind : n.children) sammle(kind);
+    };
+    sammle(m_root);
+
+    for (auto it = m_leafRuntimes.begin(); it != m_leafRuntimes.end();)
     {
-        if (rt.vsLive) lumi::services::LiveVideoFeed::instance().stopp(id);
+        if (lebend.count(it->first) != 0)
+        {
+            ++it;
+            continue;
+        }
+        gibLeafLaufzeitFrei(it->first, it->second);
+        it = m_leafRuntimes.erase(it);
     }
+    // die uebrigen Tabellen je Knoten: ihre Eintraege raeumen sich selbst ab
+    const auto ohneVerwaiste = [&lebend](auto& tabelle) {
+        for (auto it = tabelle.begin(); it != tabelle.end();)
+            it = lebend.count(it->first) != 0 ? std::next(it) : tabelle.erase(it);
+    };
+    ohneVerwaiste(m_listRuntimes);
+    ohneVerwaiste(m_groupRuntimes);
+    ohneVerwaiste(m_switcherRuntimes);
+    ohneVerwaiste(m_groupOverride);
+    ohneVerwaiste(m_modZustand);
+    ohneVerwaiste(m_modWerte);
+}
+
+void MultiEffectVisualizer::resetRuntimes()
+{
+    for (auto& [id, rt] : m_leafRuntimes) gibLeafLaufzeitFrei(id, rt);
     // Preset-Wechsel: der rand()-Strom faengt wieder bei Seed 1 an — AvsRef
     // startet je Preset einen frischen Prozess und ruft nie srand() (S49).
     if (m_scriptContext != nullptr) m_scriptContext->resetRandom();
@@ -4061,7 +4101,14 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     {
         resetRuntimes();
         m_pendingRuntimeReset = false;
+        m_pendingRuntimePrune = false;  // es ist ohnehin alles frisch
         m_firstFrame = true;
+    }
+    // S88: nach einem Panel-Edit die Laufzeiten entfernter Knoten abraeumen
+    if (m_pendingRuntimePrune)
+    {
+        m_pendingRuntimePrune = false;
+        raeumeVerwaisteLaufzeiten();
     }
 
     // Waveform RMS: smoothed level for DebugBars/vol.

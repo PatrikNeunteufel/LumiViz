@@ -257,6 +257,12 @@ public:
      *        Surface VOR dem Present (unabhaengig vom Fenster-Framebuffer).
      */
     [[nodiscard]] QImage debugGrabRootSurface() const;
+    /// Test-Naht (S88): gibt es fuer den Knoten eine Laufzeit? / wie viele gibt es?
+    [[nodiscard]] bool debugHatLaufzeit(uint64_t nodeId) const
+    {
+        return m_leafRuntimes.count(nodeId) != 0;
+    }
+    [[nodiscard]] std::size_t debugLaufzeitAnzahl() const { return m_leafRuntimes.size(); }
 
     /**
      * @brief Songwechsel melden (S82) — Host Switcher (Song-Slot, „bei
@@ -1454,10 +1460,21 @@ private:
     int m_surfaceHeight = 0;
     bool m_firstFrame = true;
     bool m_pendingRuntimeReset = false;  ///< a new chain was installed (loadAvsFile)
+    /// S88: nach `recompileChain()` (Panel-Edit) raeumt der Render-Thread die
+    /// Laufzeiten von Knoten ab, die es in der Kette nicht mehr gibt.
+    bool m_pendingRuntimePrune = false;
     uint64_t m_idHochwasser = 1;         ///< naechste nie vergebene Knoten-Id (recompileChain)
 
     /** Free all per-node GL runtimes (render thread, context current). */
     void resetRuntimes();
+    /// GL-Objekte, VfW-Handles, Milkdrop-Kern und Live-Feed EINER Laufzeit
+    /// freigeben (Render-Thread; ohne GL-Context nur der Feed).
+    void gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt);
+    /// S88: Laufzeiten aller Knoten abraeumen, die es in `m_root` nicht mehr
+    /// gibt (nach einem Panel-Edit). Ids werden nie wiederverwendet (S87) —
+    /// ohne das bliebe der Zustand eines entfernten Knotens bis zum naechsten
+    /// Laden liegen, und sein Video-/Kamera-Feed liefe weiter.
+    void raeumeVerwaisteLaufzeiten();
 
     std::unique_ptr<QOpenGLShaderProgram> m_fadeShader;
     std::unique_ptr<QOpenGLShaderProgram> m_invertShader;
