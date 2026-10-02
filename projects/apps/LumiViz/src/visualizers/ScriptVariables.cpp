@@ -441,7 +441,12 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
         // S86: Text und AVI — alle Namen kommen aus der Feldtabelle
         {ix<TextParams>, {kParam, {}}},
         {ix<AviParams>, {kParam, {}}},
-        {ix<LyricsParams>, {kParam, {}}},
+        // S89: der Lyrics-Knoten kennt die laufende Zeile — und einen eigenen
+        // Slot „Line", der bei jedem Zeilenwechsel einmal laeuft
+        {ix<LyricsParams>,
+         {kParam,
+          {{"line", "in", "0..n", "number of the running line (0 = before the first line)"},
+           {"linecount", "in", "lines", "number of lines of the lyrics"}}}},
         {ix<LyricsTrailParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
@@ -755,7 +760,8 @@ bool hatSkriptSchalter(const EffectParams& params)
         [](const auto& p) {
             return requires { p.initCode; } || requires { p.frameCode; } ||
                    requires { p.beatCode; } || requires { p.pointCode; } ||
-                   requires { p.pixelCode; } || requires { p.levelCode; };
+                   requires { p.pixelCode; } || requires { p.levelCode; } ||
+                   requires { p.lineCode; };
         },
         params);
 }
@@ -771,6 +777,7 @@ void leereSkriptSlots(EffectParams& params)
             if constexpr (requires { p.pointCode; }) p.pointCode.clear();
             if constexpr (requires { p.pixelCode; }) p.pixelCode.clear();
             if constexpr (requires { p.levelCode; }) p.levelCode.clear();
+            if constexpr (requires { p.lineCode; }) p.lineCode.clear();  // S89: Lyrics
         },
         params);
 }

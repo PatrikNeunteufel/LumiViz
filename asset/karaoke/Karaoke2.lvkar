@@ -12,8 +12,8 @@
         "bufferOutInvert": false,
         "children": [
             {
-                "beatCode": "",
-                "beatsPerLine": 8,
+                "beatCode": "fontheight= 2 * reffont;",
+                "beatsPerLine": 4,
                 "blend": 4,
                 "blendStrength": 100,
                 "color": 16755978,
@@ -24,9 +24,9 @@
                 "fontFace": "Broadway",
                 "fontHeight": -64,
                 "fontWeight": 700,
-                "frameCode": "",
+                "frameCode": "fontheight= reffont;",
                 "hAlign": 1,
-                "initCode": "",
+                "initCode": "reffont = fontheight;",
                 "italic": false,
                 "name": "Karaoke Lyrics",
                 "offsetMs": 0,

@@ -36,6 +36,7 @@
 #include <cmath>
 #include <functional>
 #include <iomanip>
+#include <map>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -1352,6 +1353,157 @@ TEST_CASE("Karaoke-Ebene S89: Mischart und Staerke aus den Knoten, Staerke-Feld 
     CHECK(falsch(bild(false, 4, 50), innenK, 128, 128, 128) == 0);
     CHECK(falsch(bild(false, 1, 0), innenK, 64, 128, 192) == 0);
 
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S89 (Auftrag Patrik): der Lyrics-Knoten — und damit die Karaoke-Ebene — hat
+// ein Skriptfeld „Line": es laeuft einmal je Zeilenwechsel, kennt `line` und
+// `linecount`, und Felder, die neu rastern (Lage, Groesse, Farben), folgen ihm.
+TEST_CASE("Lyrics S89: Slot Line laeuft einmal je Zeilenwechsel, kennt line/linecount, auch in der Karaoke-Ebene")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM\n[00:13.00]IIII\n[00:16.00]WWWW\n"));
+
+    // was der Renderer nach den Skripten wirklich benutzt, je Knotenname
+    std::map<std::string, LyricsParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter([&](const ChainNode& n, const EffectParams& p) {
+        if (const auto* lp = std::get_if<LyricsParams>(&p))
+            gesehen[n.displayName.empty() ? std::string("Lyrics") : n.displayName] = *lp;
+    });
+    const auto kette = [](const std::string& lineCode) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        root.children = {clear};
+        if (!lineCode.empty())
+        {
+            ChainNode lyr;
+            LyricsParams lp;
+            lp.initCode = "c=0;";
+            lp.lineCode = lineCode;
+            lyr.params = lp;
+            lyr.displayName = "Zeile";
+            root.children.push_back(lyr);
+        }
+        return root;
+    };
+    const auto frames = [](MultiEffectVisualizer& vis, int posMs, int n = 8) {
+        MultiEffectVisualizer::notifyPlayPosition(posMs);
+        for (int i = 0; i < n; ++i) vis.render(1.0f / 60.0f);
+    };
+    const auto starte = [](MultiEffectVisualizer& vis, ChainNode root) {
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);  // kein Beat: Strukturfelder duerfen nur ueber Line kommen
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+    };
+
+    {
+        // c zaehlt die Laeufe des Slots; xshift/yshift sind Felder, die neu rastern
+        MultiEffectVisualizer vis;
+        starte(vis, kette("c=c+1; xshift=c; yshift=-line*10;"));
+        frames(vis, 11000);  // erste Zeile laeuft
+        REQUIRE(gesehen.count("Zeile") == 1);
+        CHECK(gesehen["Zeile"].xShift == 1);   // genau einmal gelaufen (auch ueber 8 Frames)
+        CHECK(gesehen["Zeile"].yShift == -10); // line = 1
+        frames(vis, 12500);  // dieselbe Zeile: kein Lauf
+        CHECK(gesehen["Zeile"].xShift == 1);
+        frames(vis, 13100);  // zweite Zeile
+        CHECK(gesehen["Zeile"].xShift == 2);
+        CHECK(gesehen["Zeile"].yShift == -20);
+        frames(vis, 16500);  // dritte
+        CHECK(gesehen["Zeile"].xShift == 3);
+        CHECK(gesehen["Zeile"].yShift == -30);
+        frames(vis, 5000);   // zurueckgespult vor die erste Zeile: line = 0
+        CHECK(gesehen["Zeile"].xShift == 4);
+        CHECK(gesehen["Zeile"].yShift == 0);
+    }
+    {
+        // linecount
+        MultiEffectVisualizer vis;
+        starte(vis, kette("xshift=linecount;"));
+        frames(vis, 11000);
+        CHECK(gesehen["Zeile"].xShift == 3);
+    }
+    {
+        // „Script active" aus: auch der Line-Slot ruht — der Renderer sieht die Felder des Knotens
+        gesehen.clear();
+        ChainNode root = kette("xshift=50;");
+        root.children[1].scriptsActive = false;
+        MultiEffectVisualizer vis;
+        starte(vis, std::move(root));
+        frames(vis, 11000);
+        CHECK(gesehen.count("Zeile") == 0);  // keine Frame-Kopie, kein Skriptlauf
+    }
+    {
+        // Karaoke-Ebene: ihr Lyrics-Knoten traegt dasselbe Feld
+        gesehen.clear();
+        MultiEffectVisualizer vis;
+        std::get<LyricsParams>(vis.karaokeKette().children[0].params).lineCode = "yshift=-line*10;";
+        (void)vis.recompileKaraoke();
+        starte(vis, kette(""));
+        MultiEffectVisualizer::setKaraokeEbene(true);
+        frames(vis, 13100);
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        REQUIRE(gesehen.count("Karaoke Lyrics") == 1);
+        CHECK(gesehen["Karaoke Lyrics"].yShift == -20);
+    }
+    {
+        // Lyrics Trail: stellt Line die Zeilen verschieden, weht die ALTE Zeile
+        // von dort weg, wo sie stand — nicht von der Lage der neuen. Zeile 1
+        // steht oben, Zeile 2 unten; kurz nach dem Wechsel zeichnet der Trail
+        // (rot) die alte Zeile oben.
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        LyricsParams lp;
+        lp.previewLines = 0;
+        lp.lineCode = "valign = if(equal(line,1),0,2);";
+        lyr.params = lp;
+        ChainNode trail;
+        LyricsTrailParams tp;
+        tp.holdMs = 400;
+        tp.xShift = 0;
+        tp.yShift = 0;
+        tp.useOwnColor = true;
+        tp.color = 0xFF0000;
+        trail.params = tp;
+        root.children = {clear, lyr, trail};
+        MultiEffectVisualizer vis;
+        starte(vis, std::move(root));
+        frames(vis, 11000);      // Zeile 1 laeuft (oben)
+        frames(vis, 13060, 2);   // 60 ms in Zeile 2 (unten) — der Trail haelt Zeile 1
+        const QImage bild = vis.debugGrabRootSurface();
+        REQUIRE(!bild.isNull());
+        int rotOben = 0;
+        int rotUnten = 0;
+        for (int y = 0; y < bild.height(); ++y)
+            for (int x = 0; x < bild.width(); ++x)
+                if (bild.pixel(x, y) == qRgb(255, 0, 0)) ++(y < bild.height() / 2 ? rotOben : rotUnten);
+        CHECK(rotOben > 100);
+        CHECK(rotUnten == 0);
+    }
+    {
+        // das Feld ueberlebt Speichern und Laden
+        ChainNode root = kette("xshift=line;");
+        QStringList report;
+        const ChainNode zurueck = nodeFromJson(nodeToJson(root), &report);
+        REQUIRE(zurueck.children.size() == 2);
+        CHECK(std::get<LyricsParams>(zurueck.children[1].params).lineCode == "xshift=line;");
+    }
+
+    MultiEffectVisualizer::setzeParamBeobachter({});
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
 }

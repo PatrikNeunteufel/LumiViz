@@ -8341,6 +8341,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).beatCode = std::move(v); });
+        // S89 (Auftrag Patrik): einmal je Zeilenwechsel — die Stelle fuer Lage,
+        // Groesse und Farben, die dem Skript nicht aus Frame folgen
+        addScript("lineCode", tr("Line"), p->lineCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).lineCode = std::move(v); });
     }
     else if (auto* p = std::get_if<LyricsTrailParams>(&params))
     {

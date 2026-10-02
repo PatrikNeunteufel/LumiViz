@@ -558,7 +558,15 @@ private:
         /// dem letzten Wechsel samt dessen Zeitpunkt auf der Sim-Uhr (`m_time`).
         lumi::multieffect::LyricsParams lyricsEffektiv;
         bool lyricsEffektivDa = false;
+        /// S89: die Werte, mit denen die ZULETZT BEENDETE Zeile gezeichnet
+        /// wurde — nur gefuehrt, wenn der Knoten Line-Code traegt (dann stellt
+        /// er die Zeilen womoeglich verschieden, und der Trail braucht die alte).
+        lumi::multieffect::LyricsParams lyricsEffektivAlt;
+        bool lyricsEffektivAltDa = false;
         int lyricsVorZeile = -1;         ///< -1 = seit dem Titelwechsel kein Zeilenwechsel
+        /// S89: Zeilennummer, die das Skript zuletzt gesehen hat (Slot Line);
+        /// -1 = noch keine — der erste Frame gilt als Zeilenwechsel
+        int lyricsSkriptZeile = -1;
         float lyricsWechselZeit = 0.0f;
 
         // AVI (r_avi): VfW stream handles (opaque void* — vfw.h stays in the .cpp)
@@ -1450,6 +1458,13 @@ private:
     /// Song-Code des Knotens, den renderNode gerade laeuft (Scope wie
     /// activeContext; Listen setzen ihn fuer ihre Kinder neu und zurueck).
     const std::string* m_nodeSong = nullptr;
+    /// Slot „Line" (S89, Auftrag Patrik): nur der Lyrics-Knoten setzt das —
+    /// fuer die Dauer seines runParamScript. Code des Slots, „in diesem Frame
+    /// hat die Zeile gewechselt", und die Werte fuer `line` / `linecount`.
+    const std::string* m_nodeLine = nullptr;
+    bool m_frameLine = false;
+    int m_lineNummer = 0;
+    int m_lineAnzahl = 0;
     /// Anhang an die Kompilier-Vergleiche der Skriptstellen: aendert sich nur
     /// der Song-Code, wird trotzdem neu kompiliert.
     [[nodiscard]] std::string songSchluessel() const;

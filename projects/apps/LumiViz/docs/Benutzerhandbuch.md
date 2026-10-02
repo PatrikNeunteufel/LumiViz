@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.52.0
+> **Version:** 1.53.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -578,7 +578,15 @@ Synchroner Text läuft an der **Abspielposition** des Players, auch nach dem
 Springen im Titel. Trägt die Datei Wort-Zeiten (`<01:23.80>` im Text), füllt
 sich die laufende Zeile **Wort für Wort**. Zu lange Zeilen werden kleiner
 gesetzt, bis sie passen. Schrift, Lage, Kontur und Formelfelder wie beim
-Text-Knoten. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
+Text-Knoten — dazu das Feld **Line**: es läuft **einmal bei jedem
+Zeilenwechsel** (nach Song, vor Frame) und ist die Stelle für alles, was mit
+der Zeile wechseln soll. Lage, Größe und Farben folgen dem Skript von hier
+(aus Frame folgen sie nicht, weil sie den Text neu zeichnen lassen). Es liest
+`line` (Nummer der laufenden Zeile, 0 = vor der ersten) und `linecount`; beide
+stehen auch in den anderen Feldern bereit. Beispiele: `yshift = -6 - rand(8);`
+(jede Zeile etwas anders hoch), `halign = line % 3;` (links, Mitte, rechts im
+Wechsel). Auch Zurückspulen und ein neuer Titel gelten als Zeilenwechsel. Die
+Karaoke-Ebene hat dasselbe Feld im Reiter *Lyrics*. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
 Top**, **Karaoke Classic**, **Karaoke Neon**, **Big Centre**, **Three Lines
 Left**, **Side Right**, **Subtitle Small**, **Verse Sheet**) und bewegte
 Karaoke-Varianten, die per Skript arbeiten: **Karaoke Beat Colours** (neue
@@ -1444,6 +1452,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.53.0 | 2026-10-02 | Session 89. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Line** — läuft einmal je Zeilenwechsel, liest `line` und `linecount`; Lage, Größe und Farben folgen dem Skript von dort |
 | 1.52.0 | 2026-10-02 | Session 89. §11 Host Switcher: NEU **Keep group state** (Gruppen merken sich ihren Stand und laufen beim Wiederbetreten weiter), **Reset buffers** und Skriptvariable `clearbuffers` |
 | 1.51.0 | 2026-10-02 | Session 89. §9 NEU **Die Preset-Zeile** in den Panels Effect Chain und Karaoke (laufendes Preset, Favoriten ★, zehn zuletzt benutzte, lädt sofort, Load…/Save/Save As…); Karaoke-Presets an frei wählbarem Ort, **Delete** entfällt, Rückfrage bei ungespeicherter Karaoke-Ebene |
 | 1.50.0 | 2026-10-02 | Session 89. §9 NEU **Save** (Ctrl+S) und **Save As…** (Ctrl+Shift+S) für die Effektkette; **Rückfrage bei ungespeicherten Änderungen** vor jedem Ersetzen der Kette und beim Beenden (im Vollbild: erst Vollbild verlassen) |

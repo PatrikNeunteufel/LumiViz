@@ -5091,6 +5091,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
                     if constexpr (requires { p.initCode; }) code = code || !p.initCode.empty();
                     if constexpr (requires { p.frameCode; }) code = code || !p.frameCode.empty();
                     if constexpr (requires { p.beatCode; }) code = code || !p.beatCode.empty();
+                    if constexpr (requires { p.lineCode; }) code = code || !p.lineCode.empty();
                     // F2b (S85): eigene Hosts mit nur Punkt-/Pixel-Code
                     if constexpr (requires { p.pointCode; }) code = code || !p.pointCode.empty();
                     if constexpr (requires { p.pixelCode; }) code = code || !p.pixelCode.empty();
@@ -8743,9 +8744,53 @@ void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
 void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    // S89 (Auftrag Patrik): Slot „Line" — einmal je Zeilenwechsel. Die
+    // laufende Zeile steht VOR dem Skript fest (mit dem gespeicherten Versatz;
+    // ein per Skript verstellter Versatz wirkt hier einen Frame spaeter).
+    // Unsynchron zaehlt die Zeile, auf der der Block steht.
+    {
+        namespace lyr = lumi::multieffect::lyrics;
+        const lyr::Songtext& st = m_songtext;
+        const bool neuerTitel = rt.lyricsStand != m_songTagsStand;
+        int nummer = 0;  // 0 = kein Text / vor der ersten Zeile
+        if (!st.leer())
+        {
+            if (st.synchron)
+                nummer = lyr::zeileBei(st, playPositionMs() +
+                                               static_cast<std::int64_t>(params.offsetMs) +
+                                               songtextTitelVersatzMs()) + 1;
+            else
+                nummer = neuerTitel ? 1 : rt.lyricsZeile + 1;  // neuer Titel: der Block beginnt vorn
+        }
+        // auch ein neuer Titel ist ein Zeilenwechsel — selbst wenn die Nummer zufaellig gleich ist
+        m_frameLine = nummer != rt.lyricsSkriptZeile || (neuerTitel && rt.lyricsSkriptZeile >= 0);
+        rt.lyricsSkriptZeile = nummer;
+        m_lineNummer = nummer;
+        m_lineAnzahl = static_cast<int>(st.zeilen.size());
+        m_nodeLine = &params.lineCode;
+    }
     // Parameter-Skript auf der Frame-Kopie; Felder, die neu rastern, folgen
-    // dem Skript nur aus Init, Song und Beat (E3).
+    // dem Skript nur aus Init, Song, Beat und Line (E3).
+    const bool zeileGewechselt = m_frameLine;
     runParamScript(rt, "lyrics", params.initCode, params.frameCode, params.beatCode, {});
+    m_nodeLine = nullptr;
+    m_frameLine = false;
+    // S89: stellt das Feld „Line" die Zeile je Wechsel anders (Lage, Farbe,
+    // Groesse), muss der Lyrics Trail die ALTE Zeile so zeichnen, wie sie
+    // stand — nicht mit den Werten der neuen. Deshalb beim Wechsel den Stand
+    // von eben aufheben. Ohne Line-Code bleibt es beim Verhalten aus S88.
+    if (!params.lineCode.empty())
+    {
+        if (zeileGewechselt && rt.lyricsEffektivDa)
+        {
+            rt.lyricsEffektivAlt = rt.lyricsEffektiv;
+            rt.lyricsEffektivAltDa = true;
+        }
+    }
+    else
+    {
+        rt.lyricsEffektivAltDa = false;
+    }
     // S88: der Lyrics Trail zeichnet mit den Werten NACH dem Skript — sonst
     // stuende die alte Zeile an der Grundposition, waehrend die laufende huepft
     rt.lyricsEffektiv = params;
@@ -8906,7 +8951,9 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     const auto quellRt = m_leafRuntimes.find(quelle->nodeId);
     const bool gelaufen = quellRt != m_leafRuntimes.end() && quellRt->second.lyricsEffektivDa;
     const LyricsParams& lp =
-        gelaufen ? quellRt->second.lyricsEffektiv : std::get<LyricsParams>(quelle->params);
+        !gelaufen                             ? std::get<LyricsParams>(quelle->params)
+        : quellRt->second.lyricsEffektivAltDa ? quellRt->second.lyricsEffektivAlt  // S89: Slot Line
+                                              : quellRt->second.lyricsEffektiv;
     const int halteMs = std::clamp(static_cast<int>(params.holdMs), 0, 5000);
 
     if (!s.synchron)
@@ -10653,7 +10700,8 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
                                            const std::vector<ParamVar>& handVars)
 {
     // Opt-in: ein Knoten ohne Skript darf keinen Cent Rechenzeit kosten.
-    if (init.empty() && frame.empty() && beat.empty() && !hatSongCode()) return;
+    const bool hatLine = m_nodeLine != nullptr && !m_nodeLine->empty();  // S89, nur Lyrics
+    if (init.empty() && frame.empty() && beat.empty() && !hatSongCode() && !hatLine) return;
 
     // Block F (F2): zu den Hand-Bindungen des Renderers kommen ALLE Felder der
     // Feldtabelle — geschrieben wird in die Frame-Kopie, die renderNode dem
@@ -10664,7 +10712,8 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     std::vector<double> feldWerte;
     feldBindungVor(rt, vars, feldPlan, feldWerte);
 
-    const std::string combined = init + '\n' + frame + '\n' + beat + songSchluessel();
+    const std::string combined = init + '\n' + frame + '\n' + beat + songSchluessel() +
+                                 (hatLine ? '\x1f' + *m_nodeLine : std::string());
     const bool fresh = (rt.paramHost == nullptr || rt.paramCompiled != combined);
     if (fresh)
     {
@@ -10674,6 +10723,7 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
         rt.paramHost->setSource(Slot::Frame, frame);
         rt.paramHost->setSource(Slot::Beat, beat);
         setzeSong(*rt.paramHost);
+        if (hatLine) rt.paramHost->setSource(Slot::Line, *m_nodeLine);
         // Ein Uebersetzungsfehler darf NICHT still bleiben: bis S54 fragte
         // niemand `lastError()` ab, ein Skript mit Tippfehler verhielt sich
         // damit exakt wie ein leeres — die Probe mit absichtlichem Unsinn kam
@@ -10715,9 +10765,17 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     engine.setNumber("w", static_cast<double>(m_surfaceWidth));
     engine.setNumber("h", static_cast<double>(m_surfaceHeight));
     feedAudio(engine);
+    // S89: der Lyrics-Knoten gibt die laufende Zeile mit (alle Slots lesen sie)
+    if (m_nodeLine != nullptr)
+    {
+        engine.setNumber("line", static_cast<double>(m_lineNummer));
+        engine.setNumber("linecount", static_cast<double>(m_lineAnzahl));
+    }
 
     if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
     laufeSong(*rt.paramHost);
+    // S89 (Auftrag Patrik): einmal je Zeilenwechsel, nach Song und vor Frame
+    if (m_frameLine && rt.paramHost->has(Slot::Line)) rt.paramHost->run(Slot::Line);
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
 
@@ -10838,8 +10896,9 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
     if (m_gesteuerteKopie == nullptr || plan.empty()) return;
     EffectParams& kopie = *m_gesteuerteKopie;
     // Strukturfelder (E3, S84): Aenderungen wirken aus Init, Song und Beat —
-    // nie aus dem Frame-Slot allein (sonst Neuaufbau je Frame).
-    const bool strukturFrei = fresh || m_frameBeat || m_frameSong;
+    // nie aus dem Frame-Slot allein (sonst Neuaufbau je Frame). S89: dazu der
+    // Zeilenwechsel des Lyrics-Knotens (Slot Line).
+    const bool strukturFrei = fresh || m_frameBeat || m_frameSong || m_frameLine;
 
     for (std::size_t i = 0; i < plan.size();)
     {
