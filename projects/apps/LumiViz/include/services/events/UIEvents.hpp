@@ -339,6 +339,32 @@ struct SaveEffectChainEvent : public Event
 };
 
 /**
+ * @brief The running preset of the effect chain changed — a file was loaded,
+ *        imported or saved, or the chain is new (`path` empty). The preset
+ *        row of the Effect Chain panel shows it (S89).
+ */
+struct CurrentPresetChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("CurrentPresetChangedEvent")
+
+    std::string path;  ///< absolute file path; empty = new chain
+
+    CurrentPresetChangedEvent() = default;
+    explicit CurrentPresetChangedEvent(std::string p)
+        : path(std::move(p))
+    {}
+};
+
+/**
+ * @brief Favorites or the recently-used list of preset files changed
+ *        (UI/PresetListen.hpp) — preset rows rebuild their dropdown.
+ */
+struct PresetListsChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("PresetListsChangedEvent")
+};
+
+/**
  * @brief Request to load a karaoke preset (.lvkar) into the karaoke layer of
  *        the active Multi Effect visualizer (Effect Browser double-click,
  *        S89). The chain is not touched.

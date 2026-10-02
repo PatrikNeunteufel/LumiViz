@@ -29,6 +29,7 @@
 #include "UI/panels/EffectPalette.hpp"
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/PresetListen.hpp"
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
 #include "audio/SongtextQuelle.hpp"
@@ -863,6 +864,63 @@ TEST_CASE("Karaoke-Panel S89: Reiter Lyrics Trail — Liste, Paletten-Filter, fe
     CHECK(vis.karaokeKette().children[1].enabled);
     // die Zeile (Kind 0) bleibt davon unberuehrt
     CHECK(vis.karaokeKette().children[0].enabled);
+}
+
+// S89 (Auftrag Patrik): Favoriten und „zuletzt benutzt" fuer Preset-Dateien —
+// je eine Liste fuer die Kette und fuer Karaoke, in den QSettings.
+TEST_CASE("PresetListen S89: Favoriten und die zehn zuletzt benutzten, je Art getrennt")
+{
+    UiUmgebung env;  // eigene, leere QSettings
+    using lumi::ui::PresetArt;
+    using L = lumi::ui::PresetListen;
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    const auto pfad = [&](int i) { return dir.filePath(QStringLiteral("p%1.lvfx").arg(i)); };
+
+    CHECK(L::favoriten(PresetArt::Kette).isEmpty());
+    CHECK(L::zuletzt(PresetArt::Kette).isEmpty());
+
+    // zuletzt: juengstes zuerst, hoechstens zehn, kein Eintrag doppelt
+    for (int i = 0; i < 12; ++i) L::merkeBenutzt(PresetArt::Kette, pfad(i));
+    QStringList z = L::zuletzt(PresetArt::Kette);
+    REQUIRE(z.size() == L::kZuletztMax);
+    CHECK(QFileInfo(z.first()) == QFileInfo(pfad(11)));
+    CHECK(QFileInfo(z.last()) == QFileInfo(pfad(2)));
+    L::merkeBenutzt(PresetArt::Kette, pfad(5));            // schon drin: wandert nach vorn
+    L::merkeBenutzt(PresetArt::Kette, pfad(5).toUpper());  // andere Schreibweise = dieselbe Datei
+    z = L::zuletzt(PresetArt::Kette);
+    CHECK(z.size() == L::kZuletztMax);
+    CHECK(L::position(z, pfad(5)) == 0);
+    L::merkeBenutzt(PresetArt::Kette, QString());           // leer zaehlt nicht
+    CHECK(L::zuletzt(PresetArt::Kette).size() == L::kZuletztMax);
+
+    // Favoriten: setzen, nehmen, kein Doppel, Reihenfolge des Setzens
+    L::setzeFavorit(PresetArt::Kette, pfad(3), true);
+    L::setzeFavorit(PresetArt::Kette, pfad(1), true);
+    L::setzeFavorit(PresetArt::Kette, pfad(3).toUpper(), true);
+    CHECK(L::favoriten(PresetArt::Kette).size() == 2);
+    CHECK(L::istFavorit(PresetArt::Kette, pfad(3)));
+    CHECK(L::position(L::favoriten(PresetArt::Kette), pfad(3)) == 0);
+    L::setzeFavorit(PresetArt::Kette, pfad(3), false);
+    CHECK_FALSE(L::istFavorit(PresetArt::Kette, pfad(3)));
+    CHECK(L::istFavorit(PresetArt::Kette, pfad(1)));
+
+    // die Arten teilen nichts
+    CHECK(L::zuletzt(PresetArt::Karaoke).isEmpty());
+    L::merkeBenutzt(PresetArt::Karaoke, dir.filePath(QStringLiteral("abend.lvkar")));
+    L::setzeFavorit(PresetArt::Karaoke, dir.filePath(QStringLiteral("abend.lvkar")), true);
+    CHECK(L::zuletzt(PresetArt::Karaoke).size() == 1);
+    CHECK(L::favoriten(PresetArt::Kette).size() == 1);
+
+    // vergiss: aus beiden Listen der Art
+    L::vergiss(PresetArt::Kette, pfad(1));
+    CHECK_FALSE(L::istFavorit(PresetArt::Kette, pfad(1)));
+    CHECK(L::position(L::zuletzt(PresetArt::Kette), pfad(1)) < 0);
+    CHECK(L::zuletzt(PresetArt::Karaoke).size() == 1);
+
+    // die Listen ueberleben ein „neues Programm" (QSettings)
+    CHECK(QSettings().value(QStringLiteral("presets/chain/recent")).toStringList().size() ==
+          L::zuletzt(PresetArt::Kette).size());
 }
 
 // S89, KE4: ein Schalter fuer Panel, Menue und Tastenkuerzel — und die

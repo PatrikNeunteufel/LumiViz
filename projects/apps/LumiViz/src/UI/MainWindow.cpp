@@ -27,6 +27,7 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"  // Karaoke-Ablage schreiben (S89)
 #include "UI/panels/KaraokePanel.hpp"                   // setzeKaraokeAn (KE4)
 #include "UI/PresetSpeichern.hpp"                       // Save gegen Save As (S89)
+#include "UI/PresetListen.hpp"                          // Favoriten / zuletzt (S89)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -694,7 +695,7 @@ void MainWindow::setupEventHandlers()
             // beim Namen nennen und seinen Pfad daneben legen.
             if (m_pScreenshotManager != nullptr)
             {
-                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
+                setzeLaufendesPreset(QFileInfo(path).absoluteFilePath());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
             // NUR Probleme (Parser, Passthrough, fehlende Dateien) kommen hier
@@ -753,7 +754,7 @@ void MainWindow::setupEventHandlers()
             }
             if (m_pScreenshotManager != nullptr)
             {
-                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
+                setzeLaufendesPreset(QFileInfo(path).absoluteFilePath());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
             // "ℹ"-Zeilen sind reine Bestaetigungen — nur echte Warnungen melden
@@ -858,7 +859,7 @@ void MainWindow::setupEventHandlers()
             }
             if (m_pScreenshotManager != nullptr)
             {
-                m_pScreenshotManager->setCurrentPreset(QString());
+                setzeLaufendesPreset(QString());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
         });
@@ -909,6 +910,8 @@ void MainWindow::setupEventHandlers()
                 QDir().mkpath(QFileInfo(ablage).absolutePath());
                 (void)lumi::multieffect::saveChainToFile(ebene, ablage);
             }
+            lumi::ui::PresetListen::merkeBenutzt(lumi::ui::PresetArt::Karaoke, path);
+            pEventBus->publish(PresetListsChangedEvent{});
             pEventBus->publish(KaraokeLayerChangedEvent{});
         });
 
@@ -957,7 +960,7 @@ void MainWindow::setupEventHandlers()
                 }
                 if (m_pScreenshotManager != nullptr)
                 {
-                    m_pScreenshotManager->setCurrentPreset(
+                    setzeLaufendesPreset(
                         QFileInfo(path).absoluteFilePath());
                 }
                 pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
@@ -1003,7 +1006,7 @@ void MainWindow::setupEventHandlers()
             }
             if (m_pScreenshotManager != nullptr)
             {
-                m_pScreenshotManager->setCurrentPreset(QFileInfo(path).absoluteFilePath());
+                setzeLaufendesPreset(QFileInfo(path).absoluteFilePath());
             }
             reportProblem(tr("Load Effect Chain"), report);
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
@@ -1028,6 +1031,15 @@ QString MainWindow::laufendesPreset() const
 void MainWindow::setzeLaufendesPreset(const QString& absolutePath)
 {
     if (m_pScreenshotManager != nullptr) m_pScreenshotManager->setCurrentPreset(absolutePath);
+    // S89: geladen, importiert oder gespeichert — an die Spitze von „zuletzt",
+    // und die Preset-Zeile des Effect-Chain-Panels zieht nach
+    if (!absolutePath.isEmpty())
+        lumi::ui::PresetListen::merkeBenutzt(lumi::ui::PresetArt::Kette, absolutePath);
+    if (auto* bus = m_pServices->tryResolve<IEventBus>())
+    {
+        bus->publish(CurrentPresetChangedEvent{absolutePath.toStdString()});
+        bus->publish(PresetListsChangedEvent{});
+    }
 }
 
 bool MainWindow::speichereKette(bool saveAs)
