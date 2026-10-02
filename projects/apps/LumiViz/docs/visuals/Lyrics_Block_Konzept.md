@@ -208,6 +208,85 @@ und ließe später auch einen Stimmwechsel mitten in der Zeile zu (L6).
 Zeilen **ohne** Wort-Zeiten — fast alle Texte des Dienstes — zeigen kein
 laufendes Wort (Entscheid **L3 a**).
 
+### Stand LB2 — ✅ gebaut (S90), Rastern auf der CPU
+
+- Fünf Felder an `LyricsParams` (`wordScale`, `useWordColor`, `colorWord`,
+  `wordLayout`, `wordFlowMs`; Feldzahl 851 → 856). Mit den Vorgaben läuft der
+  alte Weg (`vorn` / `hinten`) — vorhandene Presets rechnen bitgleich.
+- Wort-Ebene an: `runLyrics` baut die laufende Zeile als `LyricsStueck`-Liste
+  (Text, Farbe, Größe); die Größe je Wort gleitet in `LeafRuntime::
+  lyricsWortSkala` (Annäherung mit Zeitkonstante *Word flow*, angekommen ab
+  0,4 % Abstand — dann ruht das Rastern). `zeichneLyricsZeilen` setzt jedes
+  Wort in der Schrift der Zeile und skaliert den Pfad stufenlos; Overlay
+  wächst um die Mitte der Buchstaben, das größte Wort liegt zuoberst. Eine zu
+  lange Zeile wird nach ihrer **größten** Breite verkleinert, damit die
+  Schrift während der Zeile nicht wechselt.
+- **Zeilenbild so groß wie das Gemalte:** ein Probelauf ohne Rastern
+  (`QPicture`) liefert den Rahmen; gerastert und hochgeladen wird nur er
+  (ersetzt den Streifen mit festem Rand aus LB1).
+- **Geprüft:** neuer Test (drei Farben gemessen: Reihenfolge der Zustände,
+  doppelte Höhe, Reflow rückt die Nachbarn, Overlay lässt sie stehen und
+  hält die Wortmitte, Gleiten 18 → 26 → 33 px, das vorige Wort schrumpft,
+  ohne Wort-Zeiten kein laufendes Wort); zwölf LB1-Szenen weiter 13/13
+  bitgleich gegen den Stand vor LB1; Unit-Tests 816/816; Vergleichslauf 84/84
+  bitgleich (`out/f4c/bp30_s90_lb2`); Kontaktbogen `out/lb1/lb2/lb2_bogen.png`
+  angesehen.
+- **Rasterzeit gemessen** (Testing-Build, 1920×1080, Schrift 96 px, drei
+  Worte): ruhende Zeile 0,56 ms je Frame; Rastern in jedem Frame **6,2 ms mit
+  Kontur, 2,0 ms ohne**. Nach Teilen: Probelauf 0,2 ms, Hochladen 0,03 ms,
+  der Rest ist das Zeichnen — die Kontur (breiter Strich um jeden Buchstaben)
+  kostet etwa 4 ms. Mit getrennter Kontur (Mischart, Ebene) fällt das
+  Zeichnen zweimal an.
+- **Nicht geprüft:** im laufenden Programm; Release-Build nicht gemessen;
+  Wort-Ebene in der Karaoke-Ebene mit Render Scale; Overlay mit getrennter
+  Kontur nur gebaut, nicht im Bild geprüft.
+
+### Befund und Entscheid B1 (S90) — Skript beim Zeilenwechsel
+
+Patrik: mit Skript zeigt die Karaoke-Ebene beim Zeilenwechsel kurz eine andere
+Fassung. Nachgestellt mit dem Skript aus `Karaoke2.lvkar` (Frame setzt
+`fontheight` zurück, Beat verdoppelt): Kette und Ebene liefen Frame für Frame
+**gleich**; in beiden fiel die Schrift beim Zeilenwechsel auf die Grundgröße
+und sprang beim nächsten Beat zurück. Ursache: seit S89 gab der Zeilenwechsel
+die neu rasternden Felder für den **ganzen** Frame frei, also auch für das
+Frame-Feld. **Entscheid B1 a (Patrik):** beim Zeilenwechsel gilt nur, was das
+Feld Line gesetzt hat. Gebaut: `runParamScript` hält fest, welche Variablen
+Line verändert hat und auf welchen Wert; `feldBindungNach` gibt ein
+Strukturfeld beim Zeilenwechsel nur damit frei. Test „Skript am
+Lyrics-Knoten — Kette und Karaoke-Ebene laufen gleich" (kein Sprung; Line
+gilt weiter, auch gegen ein Frame-Feld). Grenze: setzt Line einen Wert, der
+der Variable schon innewohnt, zählt das nicht als Änderung.
+**B1 b** (Felder folgen dem Skript auch aus Frame) hängt an der Rasterzeit —
+siehe Entscheid B2.
+
+### Entscheid B2 (offen) — Größe, Lage und Farbe ohne Rasterkosten
+
+Auftrag Patrik: genau untersuchen, ob B1 b ohne Zeitkosten geht. Die Messung
+sagt, **wo** die Zeit liegt: nicht im Hochladen (0,03 ms) und kaum in der
+Fläche, sondern im Zeichnen der Buchstaben und ihrer Kontur auf der CPU.
+Kostenfrei wird es also nur, wenn in den bewegten Frames **nicht gezeichnet**
+wird. Drei Wege:
+
+- **a — Wort-Masken auf der Grafikkarte:** jedes Wort wird einmal gerastert,
+  als Maske (Füllung und Kontur getrennt, in der größten vorkommenden Größe).
+  Je Frame setzt ein kleiner Zeichendurchgang die Worte zum Zeilenbild
+  zusammen; Größe, Lage und Farbe sind dabei Parameter der Grafikkarte.
+  Gerastert wird nur noch bei neuem Text, anderer Schrift, anderem Gewicht
+  oder anderer Konturbreite. Damit wären das Gleiten (LB2) und B1 b für
+  Größe, Lage und Farben der laufenden Zeile ohne Rasterkosten. *Geschätzt,
+  nicht gemessen:* je Frame bleiben das Setzen der Zeile (Rechnen mit
+  gemerkten Wortbreiten) und einige kleine Rechtecke. Preis: ein zweiter
+  Zeichenweg neben dem heutigen; das Bild weicht an den Kanten leicht vom
+  CPU-Bild ab, deshalb nur dort, wo bewegt wird — ruhende Zeilen bleiben
+  bitgleich.
+- **b — das ganze Zeilenbild verschieben und skalieren:** ändert ein Skript
+  nur Größe oder Lage, bleibt die Textur und nur ihr Rechteck ändert sich;
+  neu gerastert wird, wenn der Inhalt wechselt oder die Zeile zur Ruhe kommt
+  (Nachschärfen). Deckt `fontheight`, `xshift`, `yshift` aus dem Frame-Feld
+  ab; Farben und das Gleiten einzelner Worte kosten weiter die gemessene Zeit.
+- **c — so lassen:** B1 a gilt, das Gleiten kostet während seiner Dauer
+  2–6 ms je Frame.
+
 Prüfung: Bildtests mit einer Test-LRC mit Wort-Zeiten (drei Zustände an drei
 Positionen, Farbe und Rahmenbreite des laufenden Worts gemessen);
 Bildfolge über einen Wortwechsel (Kontaktbogen: die Zeile gleitet, kein

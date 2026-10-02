@@ -1099,6 +1099,11 @@ struct WriteVisitor
         o["previewXShift"] = p.previewXShift;
         o["previewYShift"] = p.previewYShift;
         o["lineSpacing"] = p.lineSpacing;
+        o["wordScale"] = p.wordScale;  // S90, LB2: das laufende Wort
+        o["useWordColor"] = p.useWordColor;
+        o["colorWord"] = static_cast<double>(p.colorWord);
+        o["wordLayout"] = p.wordLayout;
+        o["wordFlowMs"] = p.wordFlowMs;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -2586,6 +2591,11 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.previewXShift = getInt(o, "previewXShift", p.previewXShift);
         p.previewYShift = getInt(o, "previewYShift", p.previewYShift);
         p.lineSpacing = std::clamp(getInt(o, "lineSpacing", p.lineSpacing), 50, 400);
+        p.wordScale = std::clamp(getInt(o, "wordScale", p.wordScale), 50, 400);
+        p.useWordColor = getBool(o, "useWordColor", p.useWordColor);
+        p.colorWord = getColor(o, "colorWord", p.colorWord);
+        p.wordLayout = std::clamp(getInt(o, "wordLayout", p.wordLayout), 0, 1);
+        p.wordFlowMs = std::clamp(getInt(o, "wordFlowMs", p.wordFlowMs), 0, 2000);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);

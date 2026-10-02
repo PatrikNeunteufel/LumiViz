@@ -589,6 +589,11 @@ private:
         /// kein neues Rastern) — das legt der Lyrics Trail auf.
         GlyphBild lyricsBild[2];
         GlyphBild lyricsBildAlt[2];
+        /// S90, LB2: laufende Groesse je Wort der laufenden Zeile — sie gleitet
+        /// ihrem Ziel nach (Feld wordFlowMs) — und die Zeile, zu der sie gehoert.
+        std::vector<float> lyricsWortSkala;
+        int lyricsWortZeile = -1;
+        float lyricsWortZeit = 0.0f;  ///< Sim-Uhr (`m_time`) des letzten Schritts
         int lyricsBildZeile = -1;  ///< Index der Zeile in `lyricsBild`; -1 = keine
         int lyricsAltZeile = -1;   ///< Index der Zeile in `lyricsBildAlt`; -1 = keine
 
@@ -1145,6 +1150,14 @@ private:
                    const lumi::multieffect::LyricsParams& params);
     /// Eine Bildzeile der Lyrics: `vorn` in `farbe` (laufende Zeile bzw. schon
     /// gesungene Worte), `hinten` in der Vorschau-Farbe; `klein` = halbe Hoehe.
+    /// Ein Stueck der laufenden Zeile mit eigener Farbe und Groesse (S90, LB2:
+    /// ein Wort — gesungen, gerade jetzt, noch nicht).
+    struct LyricsStueck
+    {
+        std::string text;
+        std::uint32_t farbe = 0;
+        float skala = 1.0f;  ///< Groesse gegen die Schrift der Zeile
+    };
     struct LyricsAnzeige
     {
         std::string vorn;
@@ -1152,6 +1165,8 @@ private:
         std::uint32_t farbe = 0;
         bool klein = false;
         bool laufend = false;  ///< die laufende Zeile (S90, LB1: eigenes Zeilenbild)
+        /// Nicht leer = die Zeile Stueck fuer Stueck (LB2) statt `vorn`/`hinten`.
+        std::vector<LyricsStueck> stuecke;
     };
     /// Welche Reihen ein Aufruf rastert und auflegt (S90, LB1). Die Lage
     /// rechnet immer ueber ALLE Reihen — jede steht, wo sie mit `Alle` stuende.
@@ -1495,6 +1510,11 @@ private:
     /// hat die Zeile gewechselt", und die Werte fuer `line` / `linecount`.
     const std::string* m_nodeLine = nullptr;
     bool m_frameLine = false;
+    /// S90 (Entscheid B1 a): Stand der Skriptvariablen gleich NACH dem Feld
+    /// Line und welche davon Line veraendert hat — je Lauf von runParamScript
+    /// neu, leer ausserhalb eines Zeilenwechsels mit Line-Code.
+    std::vector<double> m_lineWert;
+    std::vector<char> m_lineGeschrieben;
     int m_lineNummer = 0;
     int m_lineAnzahl = 0;
     /// Anhang an die Kompilier-Vergleiche der Skriptstellen: aendert sich nur

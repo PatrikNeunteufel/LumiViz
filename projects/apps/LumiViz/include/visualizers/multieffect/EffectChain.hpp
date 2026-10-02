@@ -2953,6 +2953,19 @@ struct LyricsParams
     /// Line spacing in percent of the font height (50..400); 115 is the
     /// spacing used up to version 1.54.
     int lineSpacing = 115;
+    /// Size of the word being sung in percent of the line's font size
+    /// (50..400); 100 = no change. Needs lyrics with word times.
+    int wordScale = 100;
+    /// Draw the word being sung in `colorWord` instead of the voice color.
+    bool useWordColor = false;
+    std::uint32_t colorWord = 0xFFE066;  ///< color of the word being sung (with `useWordColor`)
+    /// How the enlarged word sits in the line: 0 reflow (the neighbours move
+    /// aside), 1 overlay (the line stays put, the word grows around its centre
+    /// and lies over its neighbours — the calmer choice with a Lyrics Trail).
+    int wordLayout = 0;
+    /// Time in milliseconds over which the word size glides to its target
+    /// (0..2000); 0 = hard switch.
+    int wordFlowMs = 120;
 
     /// Parameter script (S86): every field of this node + `b`/`w`/`h` + audio
     /// set. Fields that re-render the glyphs follow the script from Init, Song,

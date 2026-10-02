@@ -8320,6 +8320,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewYShift = v; });
         addInt("lineSpacing", tr("Line spacing (%)"), p->lineSpacing, 50, 400,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).lineSpacing = v; });
+        // S90 (LB2): das laufende Wort hervorheben — nur bei Text mit Wort-Zeiten
+        addInt("wordScale", tr("Word scale (%)"), p->wordScale, 50, 400,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordScale = v; });
+        addBool("useWordColor", tr("Own word color"), p->useWordColor,
+                [](ChainNode& n, bool v) { std::get<LyricsParams>(n.params).useWordColor = v; });
+        addColor("colorWord", tr("Word color"), p->colorWord,
+                 [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).colorWord = v; });
+        addEnum("wordLayout", tr("Word layout"), std::clamp(p->wordLayout, 0, 1),
+                {tr("Reflow"), tr("Overlay")},
+                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordLayout = v; });
+        addInt("wordFlowMs", tr("Word flow (ms)"), p->wordFlowMs, 0, 2000,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordFlowMs = v; });
         addEnum("hAlign", tr("Horizontal"), std::clamp(p->hAlign, 0, 2),
                 {tr("Left"), tr("Center"), tr("Right")},
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).hAlign = v; });

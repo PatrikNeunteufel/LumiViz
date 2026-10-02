@@ -51,6 +51,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPicture>
 #include <QString>
 
 #include <algorithm>
@@ -8826,6 +8827,7 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         rt.lyricsZeile = 0;
         rt.lyricsBeats = 0;
         rt.lyricsVorZeile = -1;
+        rt.lyricsWortZeile = -1;
         rt.lyricsBildZeile = -1;  // S90: die Zeilenbilder gehoeren zum alten Titel
         rt.lyricsAltZeile = -1;
     }
@@ -8887,8 +8889,49 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
             else  // Entscheid 6a, Stufe 2: Wort fuer Wort, nur mit echten Wort-Zeiten
             {
                 const int gesungen = ly::worteBei(s, zl, pos);
-                for (int i = 0; i < static_cast<int>(zl.worte.size()); ++i)
-                    (i < gesungen ? a.vorn : a.hinten) += zl.worte[static_cast<std::size_t>(i)].text;
+                const int wortSkala = std::clamp(static_cast<int>(params.wordScale), 50, 400);
+                if (wortSkala == 100 && !params.useWordColor)
+                {
+                    for (int i = 0; i < static_cast<int>(zl.worte.size()); ++i)
+                        (i < gesungen ? a.vorn : a.hinten) +=
+                            zl.worte[static_cast<std::size_t>(i)].text;
+                }
+                else
+                {
+                    // S90, LB2: drei Zustaende je Wort — gesungen, gerade jetzt
+                    // (das zuletzt begonnene), noch nicht. Die Groesse jedes
+                    // Worts gleitet ihrem Ziel nach (Entscheid L2: „moving
+                    // average"): das neue Wort waechst, waehrend das vorige
+                    // schrumpft — die Zeile gleitet statt zu springen.
+                    const std::size_t n = zl.worte.size();
+                    const int laufWort = gesungen - 1;
+                    if (rt.lyricsWortZeile != idx || rt.lyricsWortSkala.size() != n)
+                    {
+                        rt.lyricsWortSkala.assign(n, 1.0f);
+                        rt.lyricsWortZeile = idx;
+                        rt.lyricsWortZeit = m_time;
+                    }
+                    const float dt = std::max(0.0f, m_time - rt.lyricsWortZeit);
+                    rt.lyricsWortZeit = m_time;
+                    const float tau =
+                        static_cast<float>(std::clamp(static_cast<int>(params.wordFlowMs), 0, 2000)) /
+                        1000.0f;
+                    const float zug = tau > 0.0f ? 1.0f - std::exp(-dt / tau) : 1.0f;
+                    for (std::size_t i = 0; i < n; ++i)
+                    {
+                        const int wi = static_cast<int>(i);
+                        const float ziel =
+                            wi == laufWort ? static_cast<float>(wortSkala) / 100.0f : 1.0f;
+                        float& sk = rt.lyricsWortSkala[i];
+                        sk += (ziel - sk) * zug;
+                        if (std::abs(ziel - sk) < 0.004f) sk = ziel;  // angekommen: das Rastern ruht
+                        const std::uint32_t farbe =
+                            wi < laufWort    ? a.farbe
+                            : wi == laufWort ? (params.useWordColor ? params.colorWord : a.farbe)
+                                             : params.colorNext;
+                        a.stuecke.push_back({zl.worte[i].text, farbe, sk});
+                    }
+                }
             }
             zeilen.push_back(std::move(a));
         }
@@ -9169,6 +9212,12 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     snapshot += '|' + std::to_string(vorschauSkala) + ',' + std::to_string(params.previewWeight) +
                 ',' + std::to_string(params.previewXShift) + ',' +
                 std::to_string(params.previewYShift) + ',' + std::to_string(abstandProzent);
+    // S90, LB2: groesste Wortgroesse (Rand des Streifens, Verkleinern langer
+    // Zeilen) und die Art, wie das groessere Wort in der Zeile sitzt
+    const double wortMax =
+        std::max(1.0, std::clamp(static_cast<int>(params.wordScale), 50, 400) / 100.0);
+    const bool wortUeberlagert = params.wordLayout == 1;
+    snapshot += (wortUeberlagert ? 'o' : 'r') + std::to_string(params.wordScale);
     // K4 b: die Zeile der Karaoke-Ebene rastert in Fenstergroesse (scharf auch
     // mit Render Scale). Gesetzt wird weiter im Kettenmass — der Painter
     // skaliert, so deckt sich die Lage mit der des Knotens. In der Kette und
@@ -9185,7 +9234,11 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         snapshot += a.klein ? '\x1d' : a.laufend ? '\x1c' : '\x1f';
         if (!gewaehlt(a)) continue;
         snapshot += a.vorn + '\x1e' + a.hinten + '\x1e' + std::to_string(a.farbe);
-        etwas = etwas || (!a.klein && (!a.vorn.empty() || !a.hinten.empty()));
+        for (const LyricsStueck& st : a.stuecke)  // LB2: Wort fuer Wort mit Farbe und Groesse
+            snapshot += '\x1b' + st.text + ':' + std::to_string(st.farbe) + ':' +
+                        std::to_string(std::lround(st.skala * 1000.0f));
+        etwas = etwas ||
+                (!a.klein && (!a.vorn.empty() || !a.hinten.empty() || !a.stuecke.empty()));
     }
     if (!etwas) return;  // nur Pause/Marke: nichts zeichnen
 
@@ -9222,46 +9275,13 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         else if (params.vAlign == 2) yStart = m_surfaceHeight - gesamt;
         yStart += params.yShift * m_surfaceHeight / 100.0;
 
-        // Streifen der laufenden Zeile in Rasterpixeln: die Reihe plus Rand
-        // fuer Kontur und Ueberhaenge; ganz ausserhalb des Bilds = kein Bild
-        int streifenOben = 0;
-        int streifenHoehe = rasterH;
-        if (zeilenbild != nullptr)
-        {
-            double yReihe = yStart;
-            double hReihe = zeilenHoehe;
-            for (const Anzeige& a : zeilen)
-            {
-                hReihe = reihenHoehe(a);
-                if (a.laufend) break;
-                yReihe += hReihe;
-            }
-            const double rand = (params.outline ? std::max(1, static_cast<int>(params.outlineSize)) : 0) +
-                                hReihe * 0.5;
-            const double sy = static_cast<double>(rasterH) / m_surfaceHeight;
-            const int oben = std::clamp(static_cast<int>(std::floor((yReihe - rand) * sy)), 0, rasterH);
-            const int unten =
-                std::clamp(static_cast<int>(std::ceil((yReihe + hReihe + rand) * sy)), 0, rasterH);
-            if (unten <= oben)
-            {
-                stand.clear();  // nichts gerastert — der Stand gilt nicht
-                return;
-            }
-            streifenOben = oben;
-            streifenHoehe = unten - oben;
-            zeilenbild->x = 0.0f;
-            zeilenbild->b = 1.0f;
-            zeilenbild->y = static_cast<float>(oben) / static_cast<float>(rasterH);
-            zeilenbild->h = static_cast<float>(streifenHoehe) / static_cast<float>(rasterH);
-        }
-
-        QImage img(rasterB, streifenHoehe, QImage::Format_RGBA8888);
-        img.fill(Qt::transparent);
-        {
-            QPainter painter(&img);
+        // Die gewaehlten Reihen malen; `x0`/`y0` = Ecke des Zielbilds im
+        // Rasterbild (das Zeilenbild ist nur ein Ausschnitt).
+        const auto maleReihen = [&](QPainter& painter, int x0, int y0) {
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setRenderHint(QPainter::TextAntialiasing, true);
-            if (streifenOben != 0) painter.translate(0.0, -static_cast<double>(streifenOben));
+            if (x0 != 0 || y0 != 0)
+                painter.translate(-static_cast<double>(x0), -static_cast<double>(y0));
             if (skaliert)
                 painter.scale(static_cast<double>(rasterB) / m_surfaceWidth,
                               static_cast<double>(rasterH) / m_surfaceHeight);
@@ -9276,7 +9296,110 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                 const double hoehe = reihenHoehe(a);
                 const QString vorn = QString::fromStdString(a.vorn);
                 const QString hinten = QString::fromStdString(a.hinten);
-                if (gewaehlt(a) && (!vorn.isEmpty() || !hinten.isEmpty()))
+                if (gewaehlt(a) && !a.stuecke.empty())
+                {
+                    // --- LB2: die Zeile Wort fuer Wort. Jedes Wort wird in der
+                    // Schrift der Zeile gesetzt und als Pfad um seine Groesse
+                    // skaliert — stufenlos, damit die Groesse gleiten kann.
+                    QFont font = basis;
+                    std::vector<QString> texte;
+                    std::vector<double> breiten;
+                    const auto messe = [&] {
+                        const QFontMetrics m(font);
+                        breiten.clear();
+                        double summe = 0.0, groesste = 0.0;
+                        for (const QString& t : texte)
+                        {
+                            breiten.push_back(m.horizontalAdvance(t));
+                            summe += breiten.back();
+                            groesste = std::max(groesste, breiten.back());
+                        }
+                        // so breit wird die Zeile hoechstens: ein Wort ganz gross
+                        return summe + (wortUeberlagert ? 0.0 : groesste * (wortMax - 1.0));
+                    };
+                    for (const LyricsStueck& st : a.stuecke) texte.push_back(QString::fromStdString(st.text));
+                    // zu lange Zeile: verkleinern — nach der GROESSTEN Breite,
+                    // damit die Schrift waehrend der Zeile nicht wechselt
+                    if (const double weit = messe(); weit > breite && weit > 0.0)
+                    {
+                        font.setPixelSize(
+                            std::max(8, static_cast<int>(font.pixelSize() * breite / weit)));
+                        (void)messe();
+                    }
+                    const QFontMetrics fm(font);
+                    double tw = 0.0;
+                    for (std::size_t i = 0; i < breiten.size(); ++i)
+                        tw += breiten[i] * (wortUeberlagert ? 1.0 : a.stuecke[i].skala);
+                    double x = 0.0;
+                    if (params.hAlign == 1) x = (m_surfaceWidth - tw) / 2.0;
+                    else if (params.hAlign == 2) x = m_surfaceWidth - tw;
+                    x += params.xShift * m_surfaceWidth / 100.0;
+                    const double grundY = y + (hoehe - fm.height()) / 2.0 + fm.ascent();
+                    std::vector<QPainterPath> pfade;
+                    std::size_t oben = 0;  // das groesste Wort liegt zuoberst
+                    for (std::size_t i = 0; i < texte.size(); ++i)
+                    {
+                        const double sk = a.stuecke[i].skala;
+                        QPainterPath p;
+                        p.addText(QPointF(0.0, 0.0), font, texte[i]);
+                        QTransform t;
+                        // Reflow: das Wort beginnt, wo das vorige endet. Overlay:
+                        // es bleibt an seinem Platz und waechst um die Mitte
+                        // seiner BUCHSTABEN (das Wort traegt sein Leerzeichen).
+                        double mitte = breiten[i] / 2.0;
+                        if (wortUeberlagert)
+                        {
+                            int von = 0;
+                            int bis = static_cast<int>(texte[i].size());
+                            while (von < bis && texte[i].at(von).isSpace()) ++von;
+                            while (bis > von && texte[i].at(bis - 1).isSpace()) --bis;
+                            mitte = fm.horizontalAdvance(texte[i].left(von)) +
+                                    fm.horizontalAdvance(texte[i].mid(von, bis - von)) / 2.0;
+                        }
+                        t.translate(wortUeberlagert ? x + mitte * (1.0 - sk) : x, grundY);
+                        t.scale(sk, sk);
+                        pfade.push_back(t.map(p));
+                        x += breiten[i] * (wortUeberlagert ? 1.0 : sk);
+                        if (sk > a.stuecke[oben].skala) oben = i;
+                    }
+                    const QPen stift(toColor(params.outlineColor),
+                                     std::max(1, static_cast<int>(params.outlineSize)) * 2.0);
+                    const auto male = [&](std::size_t i) {
+                        if (params.outline && m_glyphTeil != GlyphTeil::NurFuellung)
+                        {
+                            painter.setPen(stift);
+                            painter.setBrush(Qt::NoBrush);
+                            painter.drawPath(pfade[i]);
+                        }
+                        if (m_glyphTeil == GlyphTeil::NurKontur)
+                        {
+                            painter.setCompositionMode(QPainter::CompositionMode_Clear);
+                            painter.fillPath(pfade[i], Qt::black);
+                            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                        }
+                        else
+                        {
+                            painter.fillPath(pfade[i], toColor(a.stuecke[i].farbe));
+                        }
+                    };
+                    for (std::size_t i = 0; i < pfade.size(); ++i)
+                        if (i != oben) male(i);
+                    if (!pfade.empty())
+                    {
+                        // getrennte Fuellung: wo die Kontur des obersten Worts
+                        // liegt, darf keine Fuellung der Nachbarn durchscheinen
+                        if (m_glyphTeil == GlyphTeil::NurFuellung && params.outline && wortUeberlagert)
+                        {
+                            painter.setCompositionMode(QPainter::CompositionMode_Clear);
+                            painter.setPen(stift);
+                            painter.setBrush(Qt::NoBrush);
+                            painter.drawPath(pfade[oben]);
+                            painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                        }
+                        male(oben);
+                    }
+                }
+                else if (gewaehlt(a) && (!vorn.isEmpty() || !hinten.isEmpty()))
                 {
                     const bool vorschauZeile = !a.klein && !a.laufend;
                     QFont font = basis;
@@ -9336,6 +9459,36 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                 }
                 y += hoehe;
             }
+        };
+
+        // Das Zeilenbild der laufenden Zeile ist nur so gross wie das, was
+        // gemalt wird (S90, LB1/LB2): ein Probelauf ohne Rastern liefert den
+        // Rahmen — Flaeche kostet beim Rastern und beim Hochladen, und mit
+        // fliessender Wortgroesse wird die Zeile in jedem Frame neu gerastert.
+        QRect rahmen(0, 0, rasterB, rasterH);
+        if (zeilenbild != nullptr)
+        {
+            QPicture probe;
+            {
+                QPainter painter(&probe);
+                maleReihen(painter, 0, 0);
+            }
+            rahmen &= probe.boundingRect().adjusted(-2, -2, 2, 2);
+            if (rahmen.isEmpty())
+            {
+                stand.clear();  // ganz ausserhalb des Bilds: nichts gerastert
+                return;
+            }
+            zeilenbild->x = static_cast<float>(rahmen.x()) / static_cast<float>(rasterB);
+            zeilenbild->y = static_cast<float>(rahmen.y()) / static_cast<float>(rasterH);
+            zeilenbild->b = static_cast<float>(rahmen.width()) / static_cast<float>(rasterB);
+            zeilenbild->h = static_cast<float>(rahmen.height()) / static_cast<float>(rasterH);
+        }
+        QImage img(rahmen.size(), QImage::Format_RGBA8888);
+        img.fill(Qt::transparent);
+        {
+            QPainter painter(&img);
+            maleReihen(painter, rahmen.x(), rahmen.y());
         }
         if (tex == 0)
         {
@@ -10947,7 +11100,25 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
     laufeSong(*rt.paramHost);
     // S89 (Auftrag Patrik): einmal je Zeilenwechsel, nach Song und vor Frame
-    if (m_frameLine && rt.paramHost->has(Slot::Line)) rt.paramHost->run(Slot::Line);
+    // S90 (Befund Patrik, Entscheid B1 a): beim Zeilenwechsel folgen die neu
+    // rasternden Felder NUR dem, was das Feld Line selbst gesetzt hat — nicht
+    // dem Frame-Feld, das danach laeuft. Dafuer festhalten, welche Variablen
+    // Line veraendert hat und auf welchen Wert (feldBindungNach liest es).
+    m_lineWert.clear();
+    m_lineGeschrieben.clear();
+    if (m_frameLine && rt.paramHost->has(Slot::Line))
+    {
+        std::vector<double> vorher(vars.size());
+        for (std::size_t i = 0; i < vars.size(); ++i) vorher[i] = engine.number(vars[i].name);
+        rt.paramHost->run(Slot::Line);
+        m_lineWert.resize(vars.size());
+        m_lineGeschrieben.resize(vars.size());
+        for (std::size_t i = 0; i < vars.size(); ++i)
+        {
+            m_lineWert[i] = engine.number(vars[i].name);
+            m_lineGeschrieben[i] = m_lineWert[i] != vorher[i] ? 1 : 0;
+        }
+    }
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
 
@@ -11070,7 +11241,14 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
     // Strukturfelder (E3, S84): Aenderungen wirken aus Init, Song und Beat —
     // nie aus dem Frame-Slot allein (sonst Neuaufbau je Frame). S89: dazu der
     // Zeilenwechsel des Lyrics-Knotens (Slot Line).
-    const bool strukturFrei = fresh || m_frameBeat || m_frameSong || m_frameLine;
+    // S90 (Entscheid B1 a): der Zeilenwechsel gibt ein Strukturfeld nur frei,
+    // wenn das Feld Line seine Variable veraendert hat — und dann gilt der
+    // Wert, den Line hinterliess, nicht der des Frame-Felds danach. Bis S89
+    // war der ganze Frame frei: ein Frame-Feld, das sonst wirkungslos ist,
+    // schlug einmal je Zeilenwechsel durch (sichtbar als kurzer Sprung).
+    const bool strukturFrei = fresh || m_frameBeat || m_frameSong;
+    const bool lineFrame = !strukturFrei && m_frameLine && m_lineWert.size() == vars.size();
+    std::vector<double> gesichert;
 
     for (std::size_t i = 0; i < plan.size();)
     {
@@ -11079,6 +11257,24 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
         while (ende < plan.size() && plan[ende].feld == plan[i].feld) ++ende;
         const ft::Feld& f = *plan[i].feld;
         const double basis = f.lesen(kopie);
+
+        // Strukturfeld im Frame eines Zeilenwechsels: mit den Werten rechnen,
+        // die Line hinterliess (die Variablen danach wieder zuruecksetzen)
+        bool vonLine = false;
+        if (lineFrame && f.klasse == ft::Klasse::Struktur)
+        {
+            for (std::size_t k = i; k < ende; ++k)
+                vonLine = vonLine || m_lineGeschrieben[plan[k].var] != 0;
+            if (vonLine)
+            {
+                gesichert.clear();
+                for (std::size_t k = i; k < ende; ++k)
+                {
+                    gesichert.push_back(*vars[plan[k].var].value);
+                    *vars[plan[k].var].value = m_lineWert[plan[k].var];
+                }
+            }
+        }
 
         double neu = basis;
         if (f.art == ft::Art::Farbe)
@@ -11130,7 +11326,7 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
                 gemerkt != rt.strukturWert.end() ? gemerkt->second.wert : basis;
             if (neu != geltend)
             {
-                if (strukturFrei)
+                if (strukturFrei || vonLine)
                 {
                     rt.strukturWert[schluessel] = {neu, basis};
                 }
@@ -11151,6 +11347,9 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
             if (f.art != ft::Art::Farbe)
                 for (std::size_t k = i; k < ende; ++k)
                     *vars[plan[k].var].value = plan[k].alias ? neu * f.aliasSkala : neu;
+            else if (vonLine)  // Farbkanaele: die Variablen des Frames zuruecklegen
+                for (std::size_t k = i; k < ende; ++k)
+                    *vars[plan[k].var].value = gesichert[k - i];
         }
 
         if (neu != basis) f.schreiben(kopie, neu);

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.55.0
+> **Version:** 1.56.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -571,6 +571,10 @@ gefunden wurde:
 | **Preview weight (0 = as line)** | Gewicht der Vorschau-Zeilen: 0 = wie die laufende Zeile, sonst 400 normal oder 700 fett. |
 | **Preview X shift / Y shift (%)** | Versatz der Vorschau-Zeilen gegen ihren gewohnten Platz, in Prozent von Breite und Höhe (negativ = nach links bzw. oben). Die laufende Zeile bleibt stehen. |
 | **Line spacing (%)** | Zeilenabstand in Prozent der Schrifthöhe (50–400); 115 ist der Abstand bis Version 1.54. |
+| **Word scale (%)** | Größe des Worts, das gerade gesungen wird, in Prozent der Zeile (50–400); 100 = aus. Wirkt nur bei Songtext **mit Wort-Zeiten** (`<mm:ss.xx>` im Text) — ohne sie gibt es kein laufendes Wort. |
+| **Own word color** / **Word color** | Das laufende Wort in eigener Farbe statt in der Farbe der Stimme. Schon Gesungenes behält die Stimmfarbe, noch nicht Gesungenes **Color upcoming**. |
+| **Word layout** | Wie das größere Wort in der Zeile sitzt: **Reflow** — die Nachbarn rücken zur Seite; **Overlay** — die Zeile bleibt stehen, das Wort wächst um seine Mitte und liegt über den Nachbarn (ruhiger, mit Lyrics Trail die bessere Wahl). |
+| **Word flow (ms)** | Zeit, in der die Wortgröße gleitet (0–2000): das neue Wort wächst, während das vorige schrumpft — die Zeile gleitet, statt zu springen. 0 = harter Wechsel. Während des Gleitens wird die Zeile in jedem Frame neu gezeichnet; das kostet Rechenzeit (bei großer Schrift mit Kontur einige Millisekunden je Frame). |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
 | **Blend** | Wie sich der Text mit dem Bild mischt: **Replace**, **Additive**, **50/50**, **Subtract**, **Invert** (weißer Text kehrt die Farbe darunter um), **XOR**, **Multiply**, **Maximum**, **Minimum** — dieselben Arten wie bei der Karaoke-Ebene (unten). Ab **Subtract** mischt nur die Füllung der Buchstaben, die Kontur bleibt normal; bei Replace, Additive und 50/50 mischt die Kontur wie bisher mit. Der **Lyrics Trail** hat dasselbe Feld. |
 | **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
@@ -1464,6 +1468,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.56.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU das **laufende Wort** hervorheben — **Word scale (%)**, **Own word color** / **Word color**, **Word layout** (Reflow / Overlay), **Word flow (ms)**; nur mit Wort-Zeiten. Skript: beim Zeilenwechsel gilt für Lage, Größe und Farben nur noch, was das Feld **Line** setzt — ein Frame-Feld schlägt dort nicht mehr durch |
 | 1.55.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Felder für die Vorschau-Zeilen — **Preview size (%)**, **Preview weight**, **Preview X shift / Y shift (%)** — und **Line spacing (%)** |
 | 1.54.0 | 2026-10-02 | Session 90. §11 Lyrics Trail: der Trail zeigt **das Bild, das stand** (Wort-Stand, verkleinerte Zeile, Lage) statt einer neu gezeichneten Zeile; mit *Own color* und ohne laufenden Lyrics-Knoten zeichnet er wie bisher neu; nach einer Pause-Zeile kein zweiter Trail |
 | 1.53.0 | 2026-10-02 | Session 89. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Line** — läuft einmal je Zeilenwechsel, liest `line` und `linecount`; Lage, Größe und Farben folgen dem Skript von dort |

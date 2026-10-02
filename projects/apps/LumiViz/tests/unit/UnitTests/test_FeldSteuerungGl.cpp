@@ -22,6 +22,7 @@
 #include "visualizers/multieffect/FieldBindings.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -1006,6 +1007,164 @@ TEST_CASE("Lyrics Trail S90 LB1: der Trail uebernimmt das Zeilenbild mit Wort-St
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90 (Befund Patrik): mit Skript zeigt die Karaoke-Ebene beim Zeilenwechsel
+// kurz eine andere Fassung als danach — in der Kette nicht. Der Test faehrt
+// dasselbe Skript in beiden ueber einen Zeilenwechsel und vergleicht die
+// Schrifthoehe Frame fuer Frame.
+TEST_CASE("Lyrics S90: Skript am Lyrics-Knoten — Kette und Karaoke-Ebene laufen gleich")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM\n[00:10.50]HHHH\n[00:11.00]MMMM HH\n[00:20.00]ende\n"));
+
+    // Hoehe des hellen Bereichs je Frame (0 = nichts): die Schriftgroesse
+    const auto folge = [](bool ebene) {
+        LyricsParams lp;
+        lp.fontHeight = -20;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.vAlign = 1;
+        lp.yShift = 0;
+        // das Skript aus Patriks Karaoke2.lvkar
+        lp.initCode = "reffont = fontheight;";
+        lp.frameCode = "fontheight= reffont;";
+        lp.beatCode = "fontheight= 2 * reffont;";
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        root.children = {clear};
+        if (!ebene)
+        {
+            ChainNode lyr;
+            lyr.params = lp;
+            root.children.push_back(lyr);
+        }
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        MultiEffectVisualizer vis;
+        if (ebene)
+        {
+            vis.karaokeKette().children[0].params = lp;
+            vis.karaokeKette().children[1].enabled = false;  // ohne Trail: nur die Zeile
+            (void)vis.recompileKaraoke();
+        }
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(12);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        std::vector<int> hoehen;
+        for (int frame = 0; frame < 90; ++frame)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(10000 + frame * 1000 / 60);
+            vis.render(1.0f / 60.0f);
+            const QImage img = ebene ? vis.debugGrabMitKaraoke() : vis.debugGrabRootSurface();
+            int oben = -1, unten = -1;
+            for (int y = 0; y < img.height(); ++y)
+                for (int x = 0; x < img.width(); ++x)
+                    if (qGray(img.pixel(x, y)) > 200)
+                    {
+                        if (oben < 0) oben = y;
+                        unten = y;
+                        break;
+                    }
+            hoehen.push_back(oben < 0 ? 0 : unten - oben + 1);
+        }
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        return hoehen;
+    };
+    const auto text = [](const std::vector<int>& v) {
+        std::string s;
+        for (const int h : v) s += std::to_string(h) + ' ';
+        return s;
+    };
+    const std::vector<int> kette = folge(false);
+    const std::vector<int> ebene = folge(true);
+    MESSAGE("Kette: " << text(kette));
+    MESSAGE("Ebene: " << text(ebene));
+    CHECK(kette == ebene);
+    // Entscheid B1 a: das Frame-Feld wirkt auf die Schriftgroesse nicht — auch
+    // nicht im Frame des Zeilenwechsels (Frame 30 und 60). Nach dem ersten
+    // Beat (Frame 0) steht die doppelte Groesse und bleibt.
+    REQUIRE(kette.size() == 90);
+    const int gross = kette[5];
+    CHECK(gross > 20);
+    for (std::size_t i = 5; i < kette.size(); ++i)
+    {
+        CAPTURE(i);
+        CHECK(kette[i] == gross);
+    }
+
+    // Gegenprobe: was das Feld LINE setzt, gilt beim Zeilenwechsel weiter —
+    // auch wenn ein Frame-Feld danach dieselbe Variable ueberschreibt
+    const auto mitLine = [](const char* frameCode) {
+        LyricsParams lp;
+        lp.fontHeight = -20;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.vAlign = 1;
+        lp.yShift = 0;
+        lp.lineCode = "fontheight = 20 + 20 * (line % 2);";  // Zeile 1: 40, Zeile 2: 20, Zeile 3: 40
+        lp.frameCode = frameCode;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        std::vector<int> hoehen;
+        for (const int ms : {10100, 10200, 10600, 10700, 11100, 11200})
+        {
+            MultiEffectVisualizer::notifyPlayPosition(ms);
+            vis.render(1.0f / 60.0f);
+            const QImage img = vis.debugGrabRootSurface();
+            int oben = -1, unten = -1;
+            for (int y = 0; y < img.height(); ++y)
+                for (int x = 0; x < img.width(); ++x)
+                    if (qGray(img.pixel(x, y)) > 200)
+                    {
+                        if (oben < 0) oben = y;
+                        unten = y;
+                        break;
+                    }
+            hoehen.push_back(oben < 0 ? 0 : unten - oben + 1);
+        }
+        return hoehen;
+    };
+    const std::vector<int> nurLine = mitLine("");
+    MESSAGE("Line allein: " << text(nurLine));
+    REQUIRE(nurLine.size() == 6);
+    CHECK(nurLine[1] > nurLine[3] * 1.6);  // Zeile 1 gross, Zeile 2 klein
+    CHECK(nurLine[5] == nurLine[1]);       // Zeile 3 wieder gross
+    CHECK(nurLine[0] == nurLine[1]);       // innerhalb der Zeile ruhig
+    // Ein Frame-Feld, das dieselbe Variable ueberschreibt: im allerersten Frame
+    // gilt es (der Start ist frei, wie bei Init) — bei den Zeilenwechseln
+    // danach gilt allein, was Line gesetzt hat.
+    const std::vector<int> mitFrame = mitLine("fontheight = 7;");
+    MESSAGE("Line + Frame: " << text(mitFrame));
+    REQUIRE(mitFrame.size() == 6);
+    CHECK(mitFrame[0] < nurLine[3]);  // Start: die 7 px des Frame-Felds
+    for (const std::size_t i : {2u, 3u, 4u, 5u})
+    {
+        CAPTURE(i);
+        CHECK(mitFrame[i] == nurLine[i]);
+    }
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90, LB1b (Entscheid L4): die Vorschau-Zeilen eigens gestalten — Groesse,
 // Gewicht, Lage relativ zur laufenden Zeile, dazu der Zeilenabstand. Die
 // laufende Zeile bleibt, wo sie ist.
@@ -1123,6 +1282,198 @@ TEST_CASE("Lyrics S90 LB1b: Vorschau-Zeilen — Groesse, Gewicht, Lage, Zeilenab
     const Bild f = miss(beides, true);
     CHECK(s.hell == f.hell);
     CHECK(s.y == doctest::Approx(f.y));
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S90, LB2 (Entscheide L2 b mit Fliessen, L3 a): das laufende Wort — eigene
+// Farbe, eigene Groesse, zwei Arten zu sitzen (Reflow / Overlay), die Groesse
+// gleitet. Gemessen ueber drei reine Farben: gesungen rot, laufend gruen,
+// noch nicht blau.
+TEST_CASE("Lyrics S90 LB2: das laufende Wort — Farbe, Groesse, Reflow/Overlay, Fliessen")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    const char* mitWorten = "[00:10.00]MMMM <00:11.00>HHHH <00:12.00>MMMM\n[00:14.00]ende\n";
+
+    struct Teil
+    {
+        int n = 0;
+        int x0 = 1 << 20, x1 = -1, y0 = 1 << 20, y1 = -1;
+        [[nodiscard]] int hoehe() const { return n > 0 ? y1 - y0 + 1 : 0; }
+    };
+    struct Bild
+    {
+        Teil rot, gruen, blau;
+    };
+    const auto werte = [](const QImage& img) {
+        Bild b;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+            {
+                const QRgb c = img.pixel(x, y);
+                Teil* t = qRed(c) > 200 && qGreen(c) < 60 && qBlue(c) < 60     ? &b.rot
+                          : qGreen(c) > 200 && qRed(c) < 60 && qBlue(c) < 60   ? &b.gruen
+                          : qBlue(c) > 200 && qRed(c) < 60 && qGreen(c) < 60   ? &b.blau
+                                                                               : nullptr;
+                if (t == nullptr) continue;
+                ++t->n;
+                t->x0 = std::min(t->x0, x);
+                t->x1 = std::max(t->x1, x);
+                t->y0 = std::min(t->y0, y);
+                t->y1 = std::max(t->y1, y);
+            }
+        return b;
+    };
+    const auto knoten = [](LyricsParams lp) {
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.vAlign = 1;
+        lp.yShift = 0;
+        lp.color = 0xFF0000;
+        lp.colorWord = 0x00FF00;
+        lp.colorNext = 0x0000FF;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        return root;
+    };
+    // ein Visualizer von `vonMs` bis `bisMs` in Schritten von 1/60 s
+    const auto lauf = [&](const LyricsParams& lp, int vonMs, int bisMs, QSize groesse = QSize(480, 240)) {
+        MultiEffectVisualizer vis;
+        vis.setChain(knoten(lp));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(groesse);
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, groesse.width(),
+                                                                 groesse.height());
+        for (int ms = vonMs; ms <= bisMs; ms += 1000 / 60)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(ms);
+            vis.render(1.0f / 60.0f);
+        }
+        return vis.debugGrabRootSurface();
+    };
+    const QString schnapp = qEnvironmentVariable("LUMIVIZ_LB1_SNAP");
+    const auto merke = [&](const QImage& img, const char* name) {
+        if (!schnapp.isEmpty()) img.save(schnapp + '/' + QLatin1String(name) + ".png");
+        return img;
+    };
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(mitWorten));
+
+    // --- Vorgaben: zwei Zustaende wie bisher, kein „gerade jetzt"
+    const Bild aus = werte(lauf(LyricsParams{}, 11400, 11500));
+    CHECK(aus.rot.n > 0);
+    CHECK(aus.gruen.n == 0);
+    CHECK(aus.blau.n > 0);
+
+    // --- eigene Farbe: das zweite Wort laeuft (seit 11,0 s) — zwischen den beiden anderen
+    LyricsParams farbig;
+    farbig.useWordColor = true;
+    farbig.wordFlowMs = 0;
+    const Bild f = werte(merke(lauf(farbig, 11400, 11500), "lb2_farbe"));
+    REQUIRE(f.rot.n > 0);
+    REQUIRE(f.gruen.n > 0);
+    REQUIRE(f.blau.n > 0);
+    CHECK(f.rot.x1 < f.gruen.x0);
+    CHECK(f.gruen.x1 < f.blau.x0);
+    CHECK(f.gruen.hoehe() == f.rot.hoehe());  // gleiche Groesse
+    // vor dem ersten Wort gibt es kein laufendes … (die Zeile beginnt mit dem ersten Wort)
+    const Bild erstes = werte(lauf(farbig, 10400, 10500));
+    CHECK(erstes.rot.n == 0);
+    CHECK(erstes.gruen.n > 0);
+    CHECK(erstes.gruen.x1 < erstes.blau.x0);
+
+    // --- Groesse, Reflow: das Wort ist doppelt so hoch, die Nachbarn ruecken zur Seite
+    LyricsParams gross = farbig;
+    gross.wordScale = 200;
+    const Bild r = werte(merke(lauf(gross, 11400, 11500), "lb2_reflow"));
+    REQUIRE(r.gruen.n > 0);
+    CHECK(r.gruen.hoehe() == doctest::Approx(2.0 * f.gruen.hoehe()).epsilon(0.12));
+    CHECK(r.rot.x0 < f.rot.x0 - 10);    // nach links gerueckt
+    CHECK(r.blau.x1 > f.blau.x1 + 10);  // nach rechts gerueckt
+    CHECK(r.rot.hoehe() == f.rot.hoehe());  // die Nachbarn behalten ihre Groesse
+    CHECK(r.rot.x1 < r.gruen.x0);       // nichts ueberdeckt sich
+    CHECK(r.gruen.x1 < r.blau.x0);
+
+    // --- Groesse, Overlay: die Zeile bleibt stehen, das Wort waechst um seine Mitte
+    LyricsParams ueber = gross;
+    ueber.wordLayout = 1;
+    const Bild o = werte(merke(lauf(ueber, 11400, 11500), "lb2_overlay"));
+    REQUIRE(o.gruen.n > 0);
+    CHECK(o.gruen.hoehe() == r.gruen.hoehe());
+    CHECK(o.rot.x0 == f.rot.x0);
+    CHECK(o.blau.x1 == f.blau.x1);
+    CHECK((o.gruen.x0 + o.gruen.x1) / 2 ==
+          doctest::Approx((f.gruen.x0 + f.gruen.x1) / 2).epsilon(0.01));
+    CHECK(o.gruen.x0 < f.gruen.x0);  // breiter als der Platz: liegt ueber den Nachbarn
+
+    // --- Fliessen: gleich nach dem Wortwechsel noch klein, spaeter am Ziel, dazwischen wachsend
+    LyricsParams fliesst = gross;
+    fliesst.wordFlowMs = 300;
+    const int kurz = werte(lauf(fliesst, 10900, 11040)).gruen.hoehe();
+    const int mitte = werte(lauf(fliesst, 10900, 11250)).gruen.hoehe();
+    const int ziel = werte(lauf(fliesst, 10900, 13900)).gruen.hoehe();  // drittes Wort seit 12,0 s
+    MESSAGE("Fliessen: Hoehe nach 40 ms " << kurz << ", nach 250 ms " << mitte << ", am Ziel "
+                                          << ziel << " (hart: " << r.gruen.hoehe() << ")");
+    CHECK(kurz < mitte);
+    CHECK(mitte < ziel);
+    CHECK(kurz < r.gruen.hoehe() * 0.75);
+    CHECK(ziel == r.gruen.hoehe());
+    // das vorige Wort schrumpft waehrenddessen: 40 ms nach dem Wechsel ist Rot noch groesser als normal
+    CHECK(werte(lauf(fliesst, 10900, 11040)).rot.hoehe() > f.rot.hoehe());
+
+    // --- ohne Wort-Zeiten kein laufendes Wort (Entscheid L3 a)
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM HHHH MMMM\n[00:14.00]ende\n"));
+    const Bild ohne = werte(lauf(gross, 11400, 11500));
+    CHECK(ohne.gruen.n == 0);
+    CHECK(ohne.rot.n > 0);
+
+    // --- Rasterzeit (Messung, kein Urteil): 1920x1080, die Zeile rastert in
+    // jedem Frame neu (Fliessen ueber 2 s) gegen eine ruhende Zeile
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(mitWorten));
+    const auto zeit = [&](const LyricsParams& lp, bool kontur = true) {
+        LyricsParams gr = lp;
+        MultiEffectVisualizer vis;
+        ChainNode kette = knoten(gr);
+        std::get<LyricsParams>(kette.children[1].params).fontHeight = -96;
+        std::get<LyricsParams>(kette.children[1].params).outline = kontur;
+        vis.setChain(std::move(kette));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(1920, 1080));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 1920, 1080);
+        MultiEffectVisualizer::notifyPlayPosition(10990);
+        vis.render(1.0f / 60.0f);
+        QElapsedTimer uhr;
+        uhr.start();
+        for (int i = 0; i < 60; ++i)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(11000 + i * 1000 / 60);
+            vis.render(1.0f / 60.0f);
+        }
+        QOpenGLContext::currentContext()->functions()->glFinish();
+        return static_cast<double>(uhr.nsecsElapsed()) / 60.0e6;
+    };
+    LyricsParams ruht = gross;       // hart: nach dem ersten Frame steht die Zeile
+    LyricsParams gleitet = gross;
+    gleitet.wordFlowMs = 2000;       // gleitet die ganze Messung ueber
+    const double msRuht = zeit(ruht);
+    const double msGleitet = zeit(gleitet);
+    MESSAGE("Rasterzeit 1920x1080, Schrift 96 px mit Kontur: ruhend " << msRuht
+            << " ms/Frame, gleitend (Rastern je Frame) " << msGleitet << " ms/Frame; ohne Kontur gleitend "
+            << zeit(gleitet, false) << " ms/Frame");
+    CHECK(msGleitet > 0.0);
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);

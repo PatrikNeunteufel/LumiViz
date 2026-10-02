@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 851,
+        "felder": 856,
         "typen": 94
     },
     "typen": [
@@ -2687,6 +2687,11 @@
                     "name": "colorNext"
                 },
                 {
+                    "art": "zahl",
+                    "default": 16769126,
+                    "name": "colorWord"
+                },
+                {
                     "art": "text",
                     "default": "",
                     "name": "fontFace"
@@ -2782,9 +2787,29 @@
                     "name": "showSyncMark"
                 },
                 {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useWordColor"
+                },
+                {
                     "art": "zahl",
                     "default": 2,
                     "name": "vAlign"
+                },
+                {
+                    "art": "zahl",
+                    "default": 120,
+                    "name": "wordFlowMs"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "wordLayout"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "wordScale"
                 },
                 {
                     "art": "zahl",

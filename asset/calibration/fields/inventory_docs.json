@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 94,
-    "felder": 851,
+    "felder": 856,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5412,6 +5412,14 @@
           "doc": "upcoming lines and words not sung yet"
         },
         {
+          "art": "zahl",
+          "default": 16769126,
+          "name": "colorWord",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "color of the word being sung (with `useWordColor`)"
+        },
+        {
           "art": "text",
           "default": "",
           "name": "fontFace",
@@ -5590,6 +5598,14 @@
           "doc": "mark unsynchronised lyrics with \"(not synced)\""
         },
         {
+          "art": "bool",
+          "default": false,
+          "name": "useWordColor",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Draw the word being sung in `colorWord` instead of the voice color."
+        },
+        {
           "art": "zahl",
           "default": 2,
           "name": "vAlign",
@@ -5597,6 +5613,35 @@
           "helfer": "addEnum",
           "enumWerte": 3,
           "doc": "0 top, 1 center, 2 bottom"
+        },
+        {
+          "art": "zahl",
+          "default": 120,
+          "name": "wordFlowMs",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 2000.0,
+          "doc": "Time in milliseconds over which the word size glides to its target (0..2000); 0 = hard switch."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "wordLayout",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 2,
+          "doc": "How the enlarged word sits in the line: 0 reflow (the neighbours move aside), 1 overlay (the line stays put, the word grows around its centre and lies over its neighbours — the calmer choice with a Lyrics Trail)."
+        },
+        {
+          "art": "zahl",
+          "default": 100,
+          "name": "wordScale",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 50.0,
+          "hi": 400.0,
+          "doc": "Size of the word being sung in percent of the line's font size (50..400); 100 = no change. Needs lyrics with word times."
         },
         {
           "art": "zahl",
