@@ -61,6 +61,7 @@
 #include "services/events/UIEvents.hpp"
 
 #include <QApplication>
+#include <QMainWindow>
 #include <QSettings>
 #include <BasicLogger.h>
 
@@ -149,12 +150,26 @@ void initMenuDefaults(MenuRegistry& registry)
     registry.registerItem(
         MenuItemDesc{
             {"menu.file.savechain", "menu.file", 320},
-            "Save Effect Chain...",
+            "Save Effect Chain",
             [](ServiceContainer& svc) {
                 if (auto* eventBus = svc.tryResolve<IEventBus>())
-                    eventBus->publish(SaveEffectChainEvent{});
+                    eventBus->publish(SaveEffectChainEvent{false});
             },
-            {}, {}, ""
+            {}, {}, "Ctrl+S"
+        },
+        false);
+
+    // S89 (Entscheid Patrik 3a): Save ueberschreibt still nur eine eigene
+    // .lvfx/.lvfx2, Save As fragt immer (Regel: UI/PresetSpeichern.hpp)
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.savechainas", "menu.file", 325},
+            "Save Effect Chain As...",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(SaveEffectChainEvent{true});
+            },
+            {}, {}, "Ctrl+Shift+S"
         },
         false);
 
@@ -168,7 +183,18 @@ void initMenuDefaults(MenuRegistry& registry)
         MenuItemDesc{
             {"menu.file.exit", "menu.file", 900},
             "Exit",
-            [](ServiceContainer& /*svc*/) { QApplication::quit(); },
+            [](ServiceContainer& /*svc*/) {
+                // Das Fenster SCHLIESSEN statt die App zu beenden (S89): nur so
+                // laeuft die Rueckfrage zu ungespeicherten Aenderungen
+                // (MainWindow::closeEvent); das Fenster beendet danach selbst.
+                for (QWidget* w : QApplication::topLevelWidgets())
+                    if (qobject_cast<QMainWindow*>(w) != nullptr)
+                    {
+                        w->close();
+                        return;
+                    }
+                QApplication::quit();
+            },
             {},  // isChecked
             {},  // isEnabled
             "Alt+F4"

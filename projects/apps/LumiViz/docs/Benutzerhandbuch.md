@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.49.0
+> **Version:** 1.50.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -249,10 +249,32 @@ Bedienung entkoppelt.
 | Esc | Vollbild verlassen |
 | Ctrl+Z / Ctrl+Y | Parameter-Änderung rückgängig / wiederherstellen |
 | Ctrl+O | *Open Audio…* (derzeit ohne Funktion, siehe §10) |
-| Ctrl+Shift+N | *File → New Effect Chain* — leere Kette als Ausgangspunkt für ein neues Preset (fragt vorher nach) |
+| Ctrl+Shift+N | *File → New Effect Chain* — leere Kette als Ausgangspunkt für ein neues Preset |
+| Ctrl+S | *File → Save Effect Chain* — speichert in die laufende eigene Datei, ohne nachzufragen (sonst wie Save As, s. u.) |
+| Ctrl+Shift+S | *File → Save Effect Chain As…* — fragt immer nach Ort und Namen |
 | F1 | *About LumiViz* |
 | Alt+F4 | Beenden |
 | Ctrl+K | *Karaoke On / Off* — Songtext über jedem Preset ein- und ausschalten (umbelegbar; auch **View → Karaoke** und der Haken im Karaoke-Panel) |
+
+### Speichern und ungespeicherte Änderungen
+
+**Save** schreibt ohne Dialog, wenn die Kette aus einer eigenen `.lvfx` oder
+`.lvfx2` geladen oder dorthin gespeichert wurde. In allen anderen Fällen
+öffnet auch Save den Dialog von **Save As…**: bei einer neuen Kette, bei
+einem importierten `.avs` oder `.milk`, bei einem mitgelieferten Preset aus
+dem Programmordner, und wenn sich die Endung ändern muss (eine Kette mit
+Host-Gruppe ist `.lvfx2`, eine ohne `.lvfx`). Nach dem Speichern gilt die
+gespeicherte Datei als laufendes Preset.
+
+Hat die Kette **ungespeicherte Änderungen**, fragt LumiViz nach, bevor sie
+ersetzt wird — bei *New Effect Chain*, beim Laden und Importieren über das
+Menü, beim Doppelklick im Effect Browser, beim Blättern mit Bild ab/Bild auf
+und beim Beenden: **Save** (speichern, dann weiter), **Discard** (weiter ohne
+Speichern), **Cancel** (zurück). Als Änderung zählt nur, was auch gespeichert
+würde — ein Feld hin und zurück gestellt ist keine, ein frisch geladenes oder
+importiertes Preset auch nicht. Im **Vollbild** verlässt LumiViz dafür erst
+das Vollbild und fragt dann. Knoten-Voreinstellungen fragen nie nach: sie zu
+laden und zu verändern ist eine Änderung an der Kette wie jede andere.
 
 ### Presets durchblättern
 
@@ -1389,6 +1411,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.50.0 | 2026-10-02 | Session 89. §9 NEU **Save** (Ctrl+S) und **Save As…** (Ctrl+Shift+S) für die Effektkette; **Rückfrage bei ungespeicherten Änderungen** vor jedem Ersetzen der Kette und beim Beenden (im Vollbild: erst Vollbild verlassen) |
 | 1.49.0 | 2026-10-02 | Session 89. Karaoke: Menü **View → Karaoke**, Tastenkürzel **Ctrl+K** (*Karaoke On / Off*), Zustandszeile *Preset shows its own lyrics* im Karaoke-Panel |
 | 1.48.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Presets (`.lvkar`) im Effect Browser — eigenes Icon, Doppelklick lädt in die Karaoke-Ebene |
 | 1.47.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Panel, NEU Reiter **Lyrics Trail** — *Trail on*, Liste der Trail-Module, Palette nur mit umformenden und färbenden Modulen, fester Lyrics Trail am Ende |

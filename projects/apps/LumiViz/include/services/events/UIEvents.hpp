@@ -327,6 +327,15 @@ struct LoadEffectChainEvent : public Event
 struct SaveEffectChainEvent : public Event
 {
     EVENT_TYPE_NAME("SaveEffectChainEvent")
+
+    /// false = „Save": ohne Dialog in die laufende eigene Datei, sonst wie
+    /// Save As (Regel: UI/PresetSpeichern.hpp). true = „Save As…": immer fragen.
+    bool saveAs = false;
+
+    SaveEffectChainEvent() = default;
+    explicit SaveEffectChainEvent(bool alsNeu)
+        : saveAs(alsNeu)
+    {}
 };
 
 /**

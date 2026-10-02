@@ -12,6 +12,9 @@
 
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "UI/PresetSpeichern.hpp"
+
+#include <QFile>
 
 #include <QJsonArray>
 #include <QJsonObject>
@@ -2674,6 +2677,55 @@ TEST_SUITE("Ungespeicherte Aenderungen")
         REQUIRE(b.loadChainFile(datei));
         (void)b.recompileChain();
         CHECK_FALSE(b.ketteGeaendert());
+    }
+
+    // Entscheid Patrik S89 (3a): Save ueberschreibt still nur eine EIGENE
+    // .lvfx/.lvfx2 — sonst verhaelt es sich wie Save As.
+    TEST_CASE("Save gegen Save As: still nur in die eigene Datei mit passender Endung")
+    {
+        using lumi::ui::stillSpeicherbar;
+        QTemporaryDir eigen;
+        QTemporaryDir mitgeliefert;
+        REQUIRE(eigen.isValid());
+        REQUIRE(mitgeliefert.isValid());
+        const auto lege = [](const QString& pfad) {
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write("{}");
+            return pfad;
+        };
+        const QStringList geschuetzt{mitgeliefert.path()};
+        const QString flach = lege(eigen.filePath(QStringLiteral("a.lvfx")));
+        const QString stapel = lege(eigen.filePath(QStringLiteral("b.lvfx2")));
+        const QString avs = lege(eigen.filePath(QStringLiteral("c.avs")));
+        const QString milk = lege(eigen.filePath(QStringLiteral("d.milk")));
+        const QString beispiel = lege(mitgeliefert.filePath(QStringLiteral("demo.lvfx")));
+        QDir(mitgeliefert.path()).mkpath(QStringLiteral("unter/ordner"));
+        const QString tief = lege(mitgeliefert.filePath(QStringLiteral("unter/ordner/x.lvfx")));
+
+        CHECK(stillSpeicherbar(flach, false, geschuetzt));
+        CHECK(stillSpeicherbar(stapel, true, geschuetzt));
+        // neue Kette: kein laufendes Preset
+        CHECK_FALSE(stillSpeicherbar(QString(), false, geschuetzt));
+        // importiert: keine eigene Kette
+        CHECK_FALSE(stillSpeicherbar(avs, false, geschuetzt));
+        CHECK_FALSE(stillSpeicherbar(milk, false, geschuetzt));
+        // die Endung muesste wechseln (Host-Gruppe dazu / weg)
+        CHECK_FALSE(stillSpeicherbar(flach, true, geschuetzt));
+        CHECK_FALSE(stillSpeicherbar(stapel, false, geschuetzt));
+        // mitgeliefert: nie still, auch nicht in Unterordnern und bei anderer Schreibweise
+        CHECK_FALSE(stillSpeicherbar(beispiel, false, geschuetzt));
+        CHECK_FALSE(stillSpeicherbar(tief, false, geschuetzt));
+        CHECK_FALSE(stillSpeicherbar(beispiel.toUpper(), false, geschuetzt));
+        // ein Ordner mit gleichem Namensanfang ist NICHT geschuetzt
+        CHECK(stillSpeicherbar(flach, false, {eigen.path().chopped(1)}));
+        // die Datei gibt es nicht mehr: lieber fragen
+        CHECK_FALSE(stillSpeicherbar(eigen.filePath(QStringLiteral("weg.lvfx")), false, geschuetzt));
+
+        CHECK(lumi::ui::kettenEndung(true) == QStringLiteral(".lvfx2"));
+        CHECK(lumi::ui::kettenEndung(false) == QStringLiteral(".lvfx"));
+        // der Programmordner gilt immer als mitgeliefert
+        CHECK(lumi::ui::mitgelieferteOrdner().contains(QCoreApplication::applicationDirPath()));
     }
 
     TEST_CASE("Karaoke-Ebene: Vorgabe und geladenes Preset ungeaendert, Edit geaendert")

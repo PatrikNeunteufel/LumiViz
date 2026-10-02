@@ -287,6 +287,30 @@ private:
     /// @brief Kurzform fuer eine einzelne Meldung.
     void reportProblem(const QString& title, const QString& problem);
 
+    /**
+     * @brief Vor jedem Ersetzen der Effektkette und vor dem Schliessen (S89):
+     *        hat die Kette ungespeicherte Aenderungen, fragt ein Dialog —
+     *        Save (speichern, dann weiter), Discard (weiter), Cancel (zurueck).
+     * @return true = weiter; false = der Aufrufer bricht ab
+     *
+     * Im Vollbild wird ERST das Vollbild verlassen, dann gefragt (Entscheid
+     * Patrik S89): dort ein Preset weiterzugehen, waehrend etwas ungespeichert
+     * ist, ist hoechstwahrscheinlich ein Unfall. Ohne Aenderungen bleibt das
+     * Vollbild, und es wird nichts gefragt.
+     */
+    [[nodiscard]] bool darfKetteErsetzen(const QString& title);
+
+    /**
+     * @brief Kette speichern. `saveAs` false = „Save" (ohne Dialog, wenn die
+     *        Regel in UI/PresetSpeichern.hpp es erlaubt), true = immer fragen.
+     * @return true = gespeichert; false = abgebrochen oder fehlgeschlagen
+     */
+    bool speichereKette(bool saveAs);
+
+    /// @brief Das laufende Preset (Datei) — SSOT bleibt der ScreenshotManager.
+    void setzeLaufendesPreset(const QString& absolutePath);
+    [[nodiscard]] QString laufendesPreset() const;
+
     // =========================================================================
     // Private Members
     // =========================================================================

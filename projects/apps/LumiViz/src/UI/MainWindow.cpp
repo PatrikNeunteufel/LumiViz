@@ -26,6 +26,7 @@
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"  // Karaoke-Ablage schreiben (S89)
 #include "UI/panels/KaraokePanel.hpp"                   // setzeKaraokeAn (KE4)
+#include "UI/PresetSpeichern.hpp"                       // Save gegen Save As (S89)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -643,6 +644,7 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<ImportAvsPresetEvent>(
         [this, findMultiEffect, pEventBus](const ImportAvsPresetEvent& ev) {
+            if (!darfKetteErsetzen(tr("Import AVS Preset"))) return;  // ungespeichert? (S89)
             // Auto-activate the Multi Effect host if it is not already active
             // (lets the Import Browser panel import without a manual switch).
             auto [widget, host] = findMultiEffect();
@@ -679,6 +681,7 @@ void MainWindow::setupEventHandlers()
                         .value(QStringLiteral("import/avsRenderScaleDivisor"), 1)
                         .toInt());
                 ok = host->loadAvsFile(path, &report);
+                if (ok) host->merkeKettenStand();  // frisch geladen = ungeaendert (S89)
             }
             if (!ok)
             {
@@ -706,6 +709,7 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<ImportMilkPresetEvent>(
         [this, findMultiEffect, pEventBus](const ImportMilkPresetEvent& ev) {
+            if (!darfKetteErsetzen(tr("Import MilkDrop Preset"))) return;  // ungespeichert? (S89)
             // N2 (Entscheide E1/E2): .milk landet als Milkdrop-Chain-Node im
             // MultiEffect-Host — der Standalone-Milkdrop ist Geschichte.
             auto [widget, host] = findMultiEffect();
@@ -739,6 +743,7 @@ void MainWindow::setupEventHandlers()
                 // fuer Nodes auf "App-Einstellung" (Muster: Render-Scale S47).
                 applyMilkdropPufferWechselDefault(*host);
                 ok = host->loadMilkFile(path, &report);
+                if (ok) host->merkeKettenStand();  // frisch geladen = ungeaendert (S89)
             }
             if (!ok)
             {
@@ -840,11 +845,9 @@ void MainWindow::setupEventHandlers()
                 return;
             }
             // Eine Kette kann viel Arbeit sein — nicht kommentarlos wegwerfen.
-            if (QMessageBox::question(
-                    this, tr("New Effect Chain"),
-                    tr("Discard the current effect chain and start empty?")) !=
-                QMessageBox::Yes)
-                return;
+            // Seit S89 fragt das die gemeinsame Rueckfrage, und nur noch, wenn
+            // es wirklich ungespeicherte Aenderungen gibt.
+            if (!darfKetteErsetzen(tr("New Effect Chain"))) return;
 
             lumi::multieffect::ChainNode root;
             root.params = lumi::multieffect::ListParams{};
@@ -911,6 +914,7 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<LoadEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const LoadEffectChainEvent& ev) {
+            if (!darfKetteErsetzen(tr("Load Effect Chain"))) return;  // ungespeichert? (S89)
             QString path = QString::fromStdString(ev.path);
             if (path.isEmpty())
             {
@@ -943,6 +947,7 @@ void MainWindow::setupEventHandlers()
                     // Puffer-Wechsel-Default (S66) — wie beim .milk-Import
                     applyMilkdropPufferWechselDefault(*host);
                     ok = host->loadMilkDocument(path, &report);
+                    if (ok) host->merkeKettenStand();  // frisch geladen = ungeaendert (S89)
                 }
                 if (!ok)
                 {
@@ -988,6 +993,7 @@ void MainWindow::setupEventHandlers()
                 // Frame der frischen Runtime)
                 applyMilkdropPufferWechselDefault(*host);
                 ok = host->loadChainFile(path, &report);
+                if (ok) host->merkeKettenStand();  // frisch geladen = ungeaendert (S89)
             }
             if (!ok)
             {
@@ -1003,54 +1009,125 @@ void MainWindow::setupEventHandlers()
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
         });
 
+    // Save / Save As (S89, Entscheid Patrik 3a) — Regel: UI/PresetSpeichern.hpp
     pEventBus->subscribe<SaveEffectChainEvent>(
-        [this, requireMultiEffect](const SaveEffectChainEvent&) {
-            // N2: Milkdrop lebt als Chain-Node — Speichern laeuft IMMER ueber
-            // den Chain-Serializer (Milkdrop-Nodes betten ihr Preset ein).
-            // Alte milkdrop-Schwester-Dokumente bleiben LADbar (Dispatch oben).
-            auto [widget, host] = requireMultiEffect("Save Effect Chain");
-            if (host == nullptr) return;
-            // Namensvorschlag (Wunsch S65): das zuletzt geladene/importierte
-            // Preset (SSOT: ScreenshotManager, wird bei .lvfx/.avs/.milk-Loads
-            // gesetzt) — ein importiertes AVS/MilkDrop speichert so als
-            // gleichnamige .lvfx-Kette.
-            QString suggestion;
-            if (m_pScreenshotManager != nullptr &&
-                !m_pScreenshotManager->currentPreset().isEmpty())
-            {
-                const QFileInfo last(m_pScreenshotManager->currentPreset());
-                suggestion = last.absolutePath() + QLatin1Char('/') +
-                             last.completeBaseName() + QStringLiteral(".lvfx");
-            }
-            QString path = QFileDialog::getSaveFileName(
-                this, tr("Save Effect Chain"), suggestion,
-                tr("LumiViz Effect Chain (*.lvfx *.lvfx2)"));
-            if (path.isEmpty()) return;
-
-            // HG1 (Entwurf §6): Ketten mit mindestens einer Host-Gruppe
-            // speichern als .lvfx2 — flache Ketten bleiben .lvfx.
-            bool hasGroup = false;
-            {
-                QMutexLocker lock(&widget->renderMutex());
-                hasGroup = lumi::multieffect::chainHasHostGroup(host->chain());
-            }
-            if (path.endsWith(".lvfx2", Qt::CaseInsensitive)) path.chop(6);
-            else if (path.endsWith(".lvfx", Qt::CaseInsensitive)) path.chop(5);
-            path += hasGroup ? QStringLiteral(".lvfx2") : QStringLiteral(".lvfx");
-
-            bool ok = false;
-            {
-                QMutexLocker lock(&widget->renderMutex());
-                ok = host->saveChainFile(path);
-            }
-            if (!ok)
-            {
-                QMessageBox::warning(this, tr("Save Effect Chain"),
-                                     tr("Could not save:\n%1").arg(path));
-            }
-        });
+        [this](const SaveEffectChainEvent& ev) { (void)speichereKette(ev.saveAs); });
 
     BasicLogger::logDebug("  Event handlers registered");
+}
+
+// =============================================================================
+// Speichern und ungespeicherte Aenderungen (S89)
+// =============================================================================
+
+QString MainWindow::laufendesPreset() const
+{
+    return m_pScreenshotManager != nullptr ? m_pScreenshotManager->currentPreset() : QString();
+}
+
+void MainWindow::setzeLaufendesPreset(const QString& absolutePath)
+{
+    if (m_pScreenshotManager != nullptr) m_pScreenshotManager->setCurrentPreset(absolutePath);
+}
+
+bool MainWindow::speichereKette(bool saveAs)
+{
+    // N2: Milkdrop lebt als Chain-Node — Speichern laeuft IMMER ueber den
+    // Chain-Serializer (Milkdrop-Nodes betten ihr Preset ein). Alte
+    // milkdrop-Schwester-Dokumente bleiben LADbar.
+    VisualizerWidget* widget = primaryVisualizer();
+    auto* host = widget != nullptr ? dynamic_cast<MultiEffectVisualizer*>(widget->visualizer())
+                                   : nullptr;
+    if (host == nullptr)
+    {
+        QMessageBox::information(this, tr("Save Effect Chain"),
+                                 tr("Select the \"Multi Effect\" visualizer first."));
+        return false;
+    }
+
+    // HG1 (Entwurf §6): Ketten mit mindestens einer Host-Gruppe speichern als
+    // .lvfx2 — flache Ketten bleiben .lvfx.
+    bool hasGroup = false;
+    {
+        QMutexLocker lock(&widget->renderMutex());
+        hasGroup = lumi::multieffect::chainHasHostGroup(host->chain());
+    }
+    const QString laufend = laufendesPreset();
+
+    QString path;
+    if (!saveAs && lumi::ui::stillSpeicherbar(laufend, hasGroup, lumi::ui::mitgelieferteOrdner()))
+    {
+        path = laufend;  // „Save": die eigene Datei, ohne Dialog
+    }
+    else
+    {
+        // Namensvorschlag (Wunsch S65): das zuletzt geladene/importierte Preset
+        // — ein importiertes AVS/MilkDrop speichert so als gleichnamige Kette.
+        QString suggestion;
+        if (!laufend.isEmpty())
+        {
+            const QFileInfo last(laufend);
+            suggestion = last.absolutePath() + QLatin1Char('/') + last.completeBaseName() +
+                         lumi::ui::kettenEndung(hasGroup);
+        }
+        path = QFileDialog::getSaveFileName(this, tr("Save Effect Chain"), suggestion,
+                                            tr("LumiViz Effect Chain (*.lvfx *.lvfx2)"));
+        if (path.isEmpty()) return false;
+        if (path.endsWith(".lvfx2", Qt::CaseInsensitive)) path.chop(6);
+        else if (path.endsWith(".lvfx", Qt::CaseInsensitive)) path.chop(5);
+        path += lumi::ui::kettenEndung(hasGroup);
+    }
+
+    bool ok = false;
+    {
+        QMutexLocker lock(&widget->renderMutex());
+        ok = host->saveChainFile(path);
+        if (ok) host->merkeKettenStand();  // ab jetzt gilt die Kette als gespeichert
+    }
+    if (!ok)
+    {
+        QMessageBox::warning(this, tr("Save Effect Chain"), tr("Could not save:\n%1").arg(path));
+        return false;
+    }
+    // die gespeicherte Datei ist jetzt das laufende Preset (bis S88 blieb es
+    // die zuletzt GELADENE — der naechste Dialog schlug den alten Namen vor)
+    setzeLaufendesPreset(QFileInfo(path).absoluteFilePath());
+    return true;
+}
+
+bool MainWindow::darfKetteErsetzen(const QString& title)
+{
+    VisualizerWidget* widget = primaryVisualizer();
+    auto* host = widget != nullptr ? dynamic_cast<MultiEffectVisualizer*>(widget->visualizer())
+                                   : nullptr;
+    if (host == nullptr) return true;  // keine Kette, nichts zu verlieren
+    bool geaendert = false;
+    {
+        QMutexLocker lock(&widget->renderMutex());
+        geaendert = host->ketteGeaendert();
+    }
+    if (!geaendert) return true;
+
+    // Vollbild: keine Dialoge (S52) — aber ungespeichert ein Preset weiter ist
+    // hoechstwahrscheinlich ein Unfall: Vollbild verlassen, dann fragen.
+    if (m_isFullscreen) exitFullscreen();
+
+    const QString laufend = laufendesPreset();
+    const QString name =
+        laufend.isEmpty() ? tr("The new effect chain") : QFileInfo(laufend).fileName();
+    QMessageBox frage(this);
+    frage.setIcon(QMessageBox::Question);
+    frage.setWindowTitle(title);
+    frage.setText(tr("%1 has unsaved changes.").arg(name));
+    frage.setInformativeText(tr("Save them before continuing?"));
+    frage.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    frage.setDefaultButton(QMessageBox::Save);
+    switch (frage.exec())
+    {
+        case QMessageBox::Save: return speichereKette(false);  // abgebrochen = zurueck
+        case QMessageBox::Discard: return true;
+        default: return false;
+    }
 }
 
 void MainWindow::onAudioUpdate()
@@ -1508,6 +1585,12 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    // S89: ungespeicherte Aenderungen an der Kette? Cancel haelt das Fenster offen.
+    if (!darfKetteErsetzen(tr("Quit LumiViz")))
+    {
+        event->ignore();
+        return;
+    }
     BasicLogger::logInfo("MainWindow closed - quitting application");
     // Kamera-Feeds werden hier bewusst NICHT gestoppt (S70, dritter Anlauf):
     // eine STERBENDE MF-/D3D-Pipeline waehrend des GL-Teardowns verklemmt
