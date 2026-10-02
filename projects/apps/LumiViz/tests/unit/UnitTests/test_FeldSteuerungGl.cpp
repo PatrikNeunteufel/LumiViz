@@ -1647,6 +1647,172 @@ TEST_CASE("Lyrics S90 LB3: Slot Word laeuft einmal je Wortwechsel, kennt word/wo
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90, LB4 (Entscheid L5 a): unsynchronen Text per Skript weiterruecken —
+// `linetrigger` eine Zeile, `wordtrigger` ein Wort; beide gelten nur fuer den
+// Frame, in dem sie gesetzt werden. Am Zeilenende fuehrt `wordtrigger` in die
+// naechste Zeile.
+TEST_CASE("Lyrics S90 LB4: linetrigger / wordtrigger ruecken den unsynchronen Text")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    const char* block = "MMMM HHHH MMMM\nAAAA BBBB\nCCCC\n";
+
+    std::map<std::string, LyricsParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter([&](const ChainNode& n, const EffectParams& p) {
+        if (const auto* lp = std::get_if<LyricsParams>(&p))
+            gesehen[n.displayName.empty() ? std::string("Lyrics") : n.displayName] = *lp;
+    });
+    // Beats auf Frame 0, 10, 20, … — `frames` Frames laufen lassen
+    const auto lauf = [&](LyricsParams lp, int frames) {
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.showSyncMark = false;
+        lp.vAlign = 1;
+        lp.yShift = 0;
+        lp.color = 0xFF0000;
+        lp.colorWord = 0x00FF00;
+        lp.colorNext = 0x0000FF;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        lyr.displayName = "Zeile";
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(10);
+        vis.initialize();
+        vis.resize(QSize(480, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 240);
+        for (int i = 0; i < frames; ++i) vis.render(1.0f / 60.0f);
+        return vis.debugGrabRootSurface();
+    };
+    const auto zaehle = [](const QImage& img, int kanal) {  // 0 rot, 1 gruen, 2 blau
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+            {
+                const QRgb c = img.pixel(x, y);
+                const int w[3] = {qRed(c), qGreen(c), qBlue(c)};
+                if (w[kanal] > 200 && w[(kanal + 1) % 3] < 60 && w[(kanal + 2) % 3] < 60) ++n;
+            }
+        return n;
+    };
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(block));
+    {
+        // linetrigger auf jeden Beat: je Beat genau eine Zeile (Line traegt die Nummer nach xshift)
+        LyricsParams lp;
+        lp.lineCode = "xshift = line;";
+        lp.frameCode = "linetrigger = b;";
+        (void)lauf(lp, 5);   // ein Beat (Frame 0)
+        CHECK(gesehen["Zeile"].xShift == 2);
+        (void)lauf(lp, 15);  // zwei Beats
+        CHECK(gesehen["Zeile"].xShift == 3);
+        (void)lauf(lp, 45);  // fuenf Beats: am Textende bleibt der Block stehen
+        CHECK(gesehen["Zeile"].xShift == 3);
+        // Gegenprobe: ohne Ausloeser steht der Block
+        LyricsParams steht;
+        steht.lineCode = "xshift = line;";
+        (void)lauf(steht, 45);
+        CHECK(gesehen["Zeile"].xShift == 1);
+    }
+    {
+        // einmal gesetzt rueckt nicht ewig: der Wert gilt nur fuer seinen Frame
+        LyricsParams lp;
+        lp.lineCode = "xshift = line;";
+        lp.initCode = "linetrigger = 1;";
+        (void)lauf(lp, 40);
+        CHECK(gesehen["Zeile"].xShift == 2);
+    }
+    {
+        // zurueck: zwei Beats vor, der dritte zurueck
+        LyricsParams lp;
+        lp.lineCode = "xshift = line;";
+        lp.initCode = "k = 0;";
+        lp.frameCode = "k = k + b; linetrigger = if(b, if(above(k, 2), -1, 1), 0);";
+        (void)lauf(lp, 15);
+        CHECK(gesehen["Zeile"].xShift == 3);
+        (void)lauf(lp, 25);
+        CHECK(gesehen["Zeile"].xShift == 2);
+    }
+    {
+        // wordtrigger auf jeden Beat: Wort fuer Wort, am Zeilenende in die naechste Zeile (L5 a)
+        LyricsParams lp;
+        lp.frameCode = "wordtrigger = b;";
+        lp.wordCode = "yshift = -word; xshift = line; previewlines = wordcount;";
+        (void)lauf(lp, 5);   // Beat 1: erstes Wort
+        CHECK(gesehen["Zeile"].xShift == 1);
+        CHECK(gesehen["Zeile"].yShift == -1);
+        CHECK(gesehen["Zeile"].previewLines == 3);
+        (void)lauf(lp, 25);  // Beat 3: drittes Wort
+        CHECK(gesehen["Zeile"].yShift == -3);
+        (void)lauf(lp, 35);  // Beat 4: naechste Zeile, ihr erstes Wort
+        CHECK(gesehen["Zeile"].xShift == 2);
+        CHECK(gesehen["Zeile"].yShift == -1);
+        CHECK(gesehen["Zeile"].previewLines == 2);
+        (void)lauf(lp, 55);  // Beat 6: dritte Zeile, erstes Wort
+        CHECK(gesehen["Zeile"].xShift == 3);
+        CHECK(gesehen["Zeile"].yShift == -1);
+        (void)lauf(lp, 95);  // am Textende: das letzte Wort bleibt
+        CHECK(gesehen["Zeile"].xShift == 3);
+        CHECK(gesehen["Zeile"].yShift == -1);
+    }
+    {
+        // Wort-Stand im Bild: ohne wordtrigger die ganze Zeile in der Stimmfarbe (rot);
+        // nach zwei wordtriggern: erstes Wort rot, zweites laeuft (gruen), drittes blau
+        LyricsParams lp;
+        lp.useWordColor = true;
+        lp.wordFlowMs = 0;
+        const QImage ohne = lauf(lp, 5);
+        CHECK(zaehle(ohne, 0) > 0);
+        CHECK(zaehle(ohne, 1) == 0);
+        CHECK(zaehle(ohne, 2) == 0);
+        lp.frameCode = "wordtrigger = b;";
+        const QImage mit = lauf(lp, 15);
+        CHECK(zaehle(mit, 0) > 0);
+        CHECK(zaehle(mit, 1) > 0);
+        CHECK(zaehle(mit, 2) > 0);
+        // … und nach einem linetrigger steht die neue Zeile noch ungesungen (blau)
+        lp.frameCode = "wordtrigger = if(equal(n, 0), b, 0); linetrigger = if(equal(n, 1), b, 0); n = n + b;";
+        lp.initCode = "n = 0;";
+        const QImage neu = lauf(lp, 15);
+        CHECK(zaehle(neu, 0) == 0);
+        CHECK(zaehle(neu, 1) == 0);
+        CHECK(zaehle(neu, 2) > 0);
+    }
+    {
+        // synchroner Text: die Abspielposition bestimmt — die Ausloeser wirken nicht
+        MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM\n[00:13.00]HHHH\n"));
+        MultiEffectVisualizer::notifyPlayPosition(11000);
+        LyricsParams lp;
+        lp.lineCode = "xshift = line;";
+        lp.frameCode = "linetrigger = 1; wordtrigger = 1;";
+        (void)lauf(lp, 20);
+        CHECK(gesehen["Zeile"].xShift == 1);
+    }
+    // Worte in Stuecken (Modell): aneinandergereiht wieder der Text
+    {
+        const auto st = ly::wortStuecke(ly::Zeile{0, " eins  zwei drei ", ly::Stimme::Keine, {}});
+        REQUIRE(st.size() == 3);
+        CHECK(st[0] == " eins  ");
+        CHECK(st[1] == "zwei ");
+        CHECK(st[2] == "drei ");
+        CHECK(ly::wortStuecke(ly::Zeile{0, "", ly::Stimme::Keine, {}}).empty());
+    }
+
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90 (Frage Patrik): warum aendern sich Zeilenabstand und Lage, wenn ein
 // Skript die Schrift vergroessert? Eine zu lange Zeile wurde verkleinert, bis
 // sie in die Breite passte — der Zeilenabstand aber rechnete mit der

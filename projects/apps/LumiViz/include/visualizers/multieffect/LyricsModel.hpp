@@ -433,4 +433,36 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
     return n;
 }
 
+/// Die Worte einer Zeile als Stuecke, die aneinandergereiht wieder den Text
+/// ergeben (S90): mit Wort-Zeiten die Wort-Eintraege, sonst am Leerraum
+/// getrennt — jedes Wort traegt den Leerraum, der ihm folgt (das erste auch
+/// den davor).
+[[nodiscard]] inline std::vector<std::string> wortStuecke(const Zeile& z)
+{
+    std::vector<std::string> out;
+    if (!z.worte.empty())
+    {
+        for (const Wort& w : z.worte) out.push_back(w.text);
+        return out;
+    }
+    std::string stueck;
+    bool imWort = false;
+    bool leerNachWort = false;
+    for (const char c : z.text)
+    {
+        const bool leer = c == ' ' || c == '\t';
+        if (!leer && leerNachWort)  // ein neues Wort beginnt: das vorige ablegen
+        {
+            out.push_back(stueck);
+            stueck.clear();
+            leerNachWort = false;
+        }
+        stueck += c;
+        if (!leer) imWort = true;
+        else if (imWort) leerNachWort = true;
+    }
+    if (imWort) out.push_back(stueck);
+    return out;
+}
+
 }  // namespace lumi::multieffect::lyrics

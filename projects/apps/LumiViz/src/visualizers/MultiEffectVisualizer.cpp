@@ -8864,6 +8864,10 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
                 wort = lyr::worteBei(st, zl, playPositionMs() +
                                                  static_cast<std::int64_t>(params.offsetMs) +
                                                  songtextTitelVersatzMs());
+            // LB4: der unsynchrone Block traegt seinen eigenen Wort-Stand,
+            // sobald das Skript ihn mit `wordtrigger` fuehrt
+            else if (!st.synchron && !neuerTitel && rt.lyricsWortModus)
+                wort = std::clamp(rt.lyricsWort, 0, worte);
         }
         const std::int64_t stelle = static_cast<std::int64_t>(nummer) * 100000 + wort;
         m_frameWord = wort > 0 && (stelle != rt.lyricsSkriptWort || m_frameLine);
@@ -8875,6 +8879,8 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     // Parameter-Skript auf der Frame-Kopie; Felder, die neu rastern, folgen
     // dem Skript nur aus Init, Song, Beat, Line und Word (E3).
     const bool zeileGewechselt = m_frameLine;
+    m_lineTrigger = 0.0;  // LB4: gelten nur fuer diesen Frame (runParamScript liest sie aus)
+    m_wordTrigger = 0.0;
     runParamScript(rt, "lyrics", params.initCode, params.frameCode, params.beatCode, {});
     m_nodeLine = nullptr;
     m_nodeWord = nullptr;
@@ -8910,6 +8916,8 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         rt.lyricsBeats = 0;
         rt.lyricsVorZeile = -1;
         rt.lyricsWortZeile = -1;
+        rt.lyricsWort = 0;  // S90, LB4: der Wort-Stand des unsynchronen Blocks
+        rt.lyricsWortModus = false;
         rt.lyricsBildZeile = -1;  // S90: die Zeilenbilder gehoeren zum alten Titel
         rt.lyricsAltZeile = -1;
     }
@@ -8924,6 +8932,50 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         return st == ly::Stimme::Zwei    ? params.color2
                : st == ly::Stimme::Beide ? params.colorBoth
                                          : params.color;
+    };
+    // Die laufende Zeile Wort fuer Wort: `gesungen` Worte sind begonnen, das
+    // letzte davon laeuft gerade. Ohne Wort-Ebene (Vorgaben) zwei Stuecke wie
+    // seit S86 — gesungen in der Stimmfarbe, der Rest in der Vorschau-Farbe.
+    const auto setzeWorte = [&](Anzeige& a, const std::vector<std::string>& worte, int gesungen,
+                                int zeilenIdx) {
+        const int wortSkala = std::clamp(static_cast<int>(params.wordScale), 50, 400);
+        if (wortSkala == 100 && !params.useWordColor)
+        {
+            for (int i = 0; i < static_cast<int>(worte.size()); ++i)
+                (i < gesungen ? a.vorn : a.hinten) += worte[static_cast<std::size_t>(i)];
+            return;
+        }
+        // S90, LB2: drei Zustaende je Wort — gesungen, gerade jetzt (das
+        // zuletzt begonnene), noch nicht. Die Groesse jedes Worts gleitet
+        // ihrem Ziel nach (Entscheid L2: „moving average"): das neue Wort
+        // waechst, waehrend das vorige schrumpft — die Zeile gleitet statt zu
+        // springen.
+        const std::size_t n = worte.size();
+        const int laufWort = gesungen - 1;
+        if (rt.lyricsWortZeile != zeilenIdx || rt.lyricsWortSkala.size() != n)
+        {
+            rt.lyricsWortSkala.assign(n, 1.0f);
+            rt.lyricsWortZeile = zeilenIdx;
+            rt.lyricsWortZeit = m_time;
+        }
+        const float dt = std::max(0.0f, m_time - rt.lyricsWortZeit);
+        rt.lyricsWortZeit = m_time;
+        const float tau =
+            static_cast<float>(std::clamp(static_cast<int>(params.wordFlowMs), 0, 2000)) / 1000.0f;
+        const float zug = tau > 0.0f ? 1.0f - std::exp(-dt / tau) : 1.0f;
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            const int wi = static_cast<int>(i);
+            const float ziel = wi == laufWort ? static_cast<float>(wortSkala) / 100.0f : 1.0f;
+            float& sk = rt.lyricsWortSkala[i];
+            sk += (ziel - sk) * zug;
+            if (std::abs(ziel - sk) < 0.004f) sk = ziel;  // angekommen
+            const std::uint32_t farbe =
+                wi < laufWort    ? a.farbe
+                : wi == laufWort ? (params.useWordColor ? params.colorWord : a.farbe)
+                                 : params.colorNext;
+            a.stuecke.push_back({worte[i], farbe, sk});
+        }
     };
     const int vorschau = std::clamp(static_cast<int>(params.previewLines), 0, 4);
     const int anzahl = static_cast<int>(s.zeilen.size());
@@ -8970,50 +9022,7 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
             }
             else  // Entscheid 6a, Stufe 2: Wort fuer Wort, nur mit echten Wort-Zeiten
             {
-                const int gesungen = ly::worteBei(s, zl, pos);
-                const int wortSkala = std::clamp(static_cast<int>(params.wordScale), 50, 400);
-                if (wortSkala == 100 && !params.useWordColor)
-                {
-                    for (int i = 0; i < static_cast<int>(zl.worte.size()); ++i)
-                        (i < gesungen ? a.vorn : a.hinten) +=
-                            zl.worte[static_cast<std::size_t>(i)].text;
-                }
-                else
-                {
-                    // S90, LB2: drei Zustaende je Wort — gesungen, gerade jetzt
-                    // (das zuletzt begonnene), noch nicht. Die Groesse jedes
-                    // Worts gleitet ihrem Ziel nach (Entscheid L2: „moving
-                    // average"): das neue Wort waechst, waehrend das vorige
-                    // schrumpft — die Zeile gleitet statt zu springen.
-                    const std::size_t n = zl.worte.size();
-                    const int laufWort = gesungen - 1;
-                    if (rt.lyricsWortZeile != idx || rt.lyricsWortSkala.size() != n)
-                    {
-                        rt.lyricsWortSkala.assign(n, 1.0f);
-                        rt.lyricsWortZeile = idx;
-                        rt.lyricsWortZeit = m_time;
-                    }
-                    const float dt = std::max(0.0f, m_time - rt.lyricsWortZeit);
-                    rt.lyricsWortZeit = m_time;
-                    const float tau =
-                        static_cast<float>(std::clamp(static_cast<int>(params.wordFlowMs), 0, 2000)) /
-                        1000.0f;
-                    const float zug = tau > 0.0f ? 1.0f - std::exp(-dt / tau) : 1.0f;
-                    for (std::size_t i = 0; i < n; ++i)
-                    {
-                        const int wi = static_cast<int>(i);
-                        const float ziel =
-                            wi == laufWort ? static_cast<float>(wortSkala) / 100.0f : 1.0f;
-                        float& sk = rt.lyricsWortSkala[i];
-                        sk += (ziel - sk) * zug;
-                        if (std::abs(ziel - sk) < 0.004f) sk = ziel;  // angekommen: das Rastern ruht
-                        const std::uint32_t farbe =
-                            wi < laufWort    ? a.farbe
-                            : wi == laufWort ? (params.useWordColor ? params.colorWord : a.farbe)
-                                             : params.colorNext;
-                        a.stuecke.push_back({zl.worte[i].text, farbe, sk});
-                    }
-                }
+                setzeWorte(a, ly::wortStuecke(zl), ly::worteBei(s, zl, pos), idx);
             }
             zeilen.push_back(std::move(a));
         }
@@ -9035,16 +9044,57 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     {
         // Unsynchron: ein stehender Block, auf Wunsch alle N Beats eine Zeile
         // weiter — und als unsynchron gekennzeichnet (keine vorgetaeuschte Zeit).
+        // S90, LB4: dazu rueckt ihn das Skript — `linetrigger` eine Zeile,
+        // `wordtrigger` ein Wort (positiv vor, negativ zurueck). Beide gelten
+        // nur fuer den Frame, in dem sie gesetzt werden.
+        int schritt = 0;      // Zeilen vor (+) oder zurueck (−)
+        int wortDanach = 0;   // laufendes Wort nach einem Zeilenwechsel (0 = vor dem ersten)
         if (params.beatsPerLine > 0 && m_frameBeat && ++rt.lyricsBeats >= params.beatsPerLine)
         {
             rt.lyricsBeats = 0;
-            if (rt.lyricsZeile + 1 < anzahl)
+            ++schritt;
+        }
+        if (m_lineTrigger > 0.0) ++schritt;
+        else if (m_lineTrigger < 0.0) --schritt;
+        const int hier = std::clamp(rt.lyricsZeile, 0, anzahl - 1);
+        if (m_wordTrigger != 0.0)
+        {
+            // der erste wordtrigger eines Titels schaltet den Wort-Stand ein
+            rt.lyricsWortModus = true;
+            const int n = ly::wortAnzahl(s.zeilen[static_cast<std::size_t>(hier)]);
+            if (m_wordTrigger > 0.0)
+            {
+                if (rt.lyricsWort < n) ++rt.lyricsWort;
+                else if (hier + 1 < anzahl)
+                {
+                    // Entscheid L5 a: am Zeilenende beginnt die naechste Zeile,
+                    // ihr erstes Wort laeuft — wordtrigger allein fuehrt durch den Text
+                    ++schritt;
+                    wortDanach = 1;
+                }
+            }
+            else
+            {
+                if (rt.lyricsWort > 1) --rt.lyricsWort;
+                else if (hier > 0)
+                {
+                    --schritt;
+                    wortDanach = -1;  // das letzte Wort der Zeile davor
+                }
+            }
+        }
+        const int ziel = std::clamp(hier + schritt, 0, anzahl - 1);
+        if (ziel != hier)
+        {
+            if (ziel > hier)
             {
                 // S88: fuer den Lyrics Trail festhalten, welche Zeile eben ging und wann
-                rt.lyricsVorZeile = rt.lyricsZeile;
+                rt.lyricsVorZeile = hier;
                 rt.lyricsWechselZeit = m_time;
-                ++rt.lyricsZeile;
             }
+            rt.lyricsZeile = ziel;
+            rt.lyricsWort = wortDanach < 0 ? ly::wortAnzahl(s.zeilen[static_cast<std::size_t>(ziel)])
+                                           : wortDanach;
         }
         if (params.showSyncMark)
             zeilen.push_back({std::string(), "(not synced)", params.colorNext, true});
@@ -9052,10 +9102,24 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         for (int i = laufZeile, k = 0; i < anzahl && k < 1 + vorschau; ++i, ++k)
         {
             const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(i)];
-            if (k == 0)
-                zeilen.push_back({zl.text, std::string(), stimmFarbe(zl.stimme), false, true});
-            else
+            if (k > 0)
+            {
                 zeilen.push_back({std::string(), zl.text, params.colorNext, false});
+            }
+            else if (!rt.lyricsWortModus)
+            {
+                // ohne wordtrigger wie bisher: die ganze Zeile in der Stimmfarbe
+                zeilen.push_back({zl.text, std::string(), stimmFarbe(zl.stimme), false, true});
+            }
+            else
+            {
+                // Wort-Stand des Blocks: gesungen / gerade jetzt / noch nicht
+                Anzeige a;
+                a.laufend = true;
+                a.farbe = stimmFarbe(zl.stimme);
+                setzeWorte(a, ly::wortStuecke(zl), rt.lyricsWort, i);
+                zeilen.push_back(std::move(a));
+            }
         }
     }
 
@@ -11617,6 +11681,10 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
         engine.setNumber("linecount", static_cast<double>(m_lineAnzahl));
         engine.setNumber("word", static_cast<double>(m_wordNummer));  // S90
         engine.setNumber("wordcount", static_cast<double>(m_wordAnzahl));
+        // LB4: Ausgaben wie `nextgroup` am Host Switcher — vor jedem Lauf auf
+        // 0, sonst rueckte ein einmal gesetzter Wert in jedem Frame weiter
+        engine.setNumber("linetrigger", 0.0);
+        engine.setNumber("wordtrigger", 0.0);
     }
 
     if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
@@ -11648,6 +11716,11 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     }
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
+    if (m_nodeLine != nullptr)  // LB4: die Ausloeser des Lyrics-Knotens, aus jedem Feld
+    {
+        m_lineTrigger = engine.number("linetrigger");
+        m_wordTrigger = engine.number("wordtrigger");
+    }
 
     // Laufzeitfehler: der Slot schaltet sich selbst ab (LuaScriptEngine), die
     // Meldung waere sonst verloren. Einmal je NEUEM Fehlertext, nicht je Frame.

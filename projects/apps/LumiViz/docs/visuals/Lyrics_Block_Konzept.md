@@ -420,6 +420,23 @@ Prüfung: Bildtest/Zähltest (`linetrigger = b` rückt je Beat genau eine Zeile;
 einmal gesetzt rückt nicht ewig — Gegenprobe wie beim Host Switcher), synchron
 = keine Wirkung, Variablentabelle und Hilfetext.
 
+**Stand LB4 — ✅ gebaut (S90/03.10.):** `runParamScript` setzt beide
+Variablen vor jedem Lauf auf 0 und liest sie danach (`m_lineTrigger`,
+`m_wordTrigger`); `runLyrics` rückt im unsynchronen Zweig — Beats, 
+`linetrigger` und `wordtrigger` zusammen ergeben den Schritt, am Textrand
+geklemmt. Wort-Stand des Blocks in `LeafRuntime::lyricsWort` /
+`lyricsWortModus` (ein mit dem ersten `wordtrigger`, aus beim neuen Titel);
+ein Zeilenwechsel ohne `wordtrigger` setzt das Wort auf 0, mit `wordtrigger`
+über das Zeilenende auf 1, rückwärts auf das letzte Wort der Zeile davor.
+Gezeichnet wird über dieselbe Wort-Routine wie bei synchronem Text
+(`setzeWorte`, Stücke aus `lyrics::wortStuecke`). Geprüft: je Beat genau eine
+Zeile, Stillstand ohne Auslöser, einmal gesetzt rückt nicht weiter, zurück,
+Wort für Wort mit Übergang in die nächste Zeile, `word` / `wordcount` und
+Feld Word im Block, Wort-Stand im Bild (drei Farben), synchron ohne Wirkung;
+Unit-Tests 819/819. **Nicht geprüft:** im laufenden Programm; Trail beim
+Rücken per Auslöser nur über den vorhandenen Weg (`lyricsVorZeile`), nicht
+eigens im Bild.
+
 ## 7. Stufe LB5 — Lyrics Sync nachrüsten: Wort-Zeiten und Duett
 
 Auftrag Patrik (S90): der Sync-Editor soll mit dem Block Schritt halten —

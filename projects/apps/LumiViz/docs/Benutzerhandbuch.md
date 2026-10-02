@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.58.0
-> **Datum:** 2026-10-02
+> **Version:** 1.59.0
+> **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -603,6 +603,20 @@ Worts, das gerade gesungen wird, 1 = erstes; 0 = keins oder keine
 Wort-Zeiten) und `wordcount` (Worte der laufenden Zeile, ohne Wort-Zeiten am
 Leerraum gezählt); auch sie stehen in allen Feldern bereit. Beispiel:
 `yshift = -6 - word;` (die Zeile steigt mit jedem Wort).
+
+**Unsynchronen Text per Skript weiterrücken.** Zwei Variablen rücken den
+stehenden Block: `linetrigger = 1;` eine Zeile weiter, `wordtrigger = 1;` ein
+Wort weiter (negativ: zurück). Beide gelten nur für den Frame, in dem sie
+gesetzt werden — `linetrigger = b;` im Frame-Feld rückt also auf jeden Beat
+eine Zeile. Der erste `wordtrigger` eines Titels schaltet den Wort-Stand ein:
+Gesungenes in der Stimmfarbe, das laufende Wort nach **Word scale** und
+**Word color**, der Rest in **Color upcoming**; `word` und das Feld Word
+laufen dann mit. Nach dem letzten Wort einer Zeile beginnt die nächste Zeile
+mit ihrem ersten Wort — `wordtrigger = b;` allein führt durch den ganzen
+Text. Wer am Zeilenende halten will: `wordtrigger = if(below(word,
+wordcount), b, 0);`. **Unsynced: beats per line** wirkt zusätzlich (auf 0
+stellen, wenn das Skript rückt); am Textende bleibt der Block stehen. Bei
+synchronem Text bestimmt die Abspielposition, die Auslöser wirken dort nicht.
 
 **Was dem Skript wann folgt.** Lage, Größe und Farben — der laufenden Zeile
 wie der Vorschau — folgen dem Skript aus **jedem** Feld, auch aus Frame: ein
@@ -1490,6 +1504,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.59.0 | 2026-10-03 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptvariablen **`linetrigger`** und **`wordtrigger`** — rücken unsynchronen Text eine Zeile bzw. ein Wort weiter (oder zurück); der erste `wordtrigger` schaltet den Wort-Stand des Blocks ein |
 | 1.58.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): Lage, Größe und Farben folgen dem Skript jetzt aus **jedem** Feld, auch aus Frame (die Zeilen werden dafür auf der Grafikkarte aus einmal gezeichneten Worten zusammengesetzt); nur Weight, Italic, Outline size und Preview weight folgen weiter allein aus Init, Song, Beat, Line und Word. Das Gleiten der Wortgröße kostet kein neues Zeichnen mehr. **Eine Schriftgröße je Song:** die längste Zeile bestimmt die Schrift aller Zeilen, der Zeilenabstand geht mit (bisher wurde jede Zeile einzeln verkleinert, der Abstand blieb bei der eingestellten Schrift) |
 | 1.57.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Word** — läuft einmal je Wortwechsel (nur mit Wort-Zeiten), liest `word` und `wordcount`; beide Variablen in allen Feldern |
 | 1.56.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU das **laufende Wort** hervorheben — **Word scale (%)**, **Own word color** / **Word color**, **Word layout** (Reflow / Overlay), **Word flow (ms)**; nur mit Wort-Zeiten. Skript: beim Zeilenwechsel gilt für Lage, Größe und Farben nur noch, was das Feld **Line** setzt — ein Frame-Feld schlägt dort nicht mehr durch |

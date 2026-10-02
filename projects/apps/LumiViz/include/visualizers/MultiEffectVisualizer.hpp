@@ -582,6 +582,10 @@ private:
         /// der Songtext-Stand, zu dem sie gehoeren (neuer Titel = von vorn).
         int lyricsZeile = 0;
         int lyricsBeats = 0;
+        /// S90, LB4: laufendes Wort des unsynchronen Blocks (0 = vor dem
+        /// ersten) — gefuehrt, sobald ein `wordtrigger` gefallen ist.
+        int lyricsWort = 0;
+        bool lyricsWortModus = false;
         uint64_t lyricsStand = 0;
         /// S88, fuer den Lyrics Trail: die Felder des Lyrics-Knotens, wie er
         /// sie zuletzt wirklich gezeichnet hat (NACH seinem Skript — „Karaoke
@@ -1567,6 +1571,10 @@ private:
     bool m_frameWord = false;
     int m_wordNummer = 0;
     int m_wordAnzahl = 0;
+    /// S90, LB4: was das Skript des Lyrics-Knotens in diesem Frame als
+    /// `linetrigger` / `wordtrigger` hinterlassen hat (0 = nichts).
+    double m_lineTrigger = 0.0;
+    double m_wordTrigger = 0.0;
     /// S90 (Entscheid B1 a): Stand der Skriptvariablen gleich NACH dem Feld
     /// Line und welche davon Line veraendert hat — je Lauf von runParamScript
     /// neu, leer ausserhalb eines Zeilenwechsels mit Line-Code.

@@ -451,7 +451,14 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
            {"word", "in", "0..n",
             "number of the word being sung in the running line (1 = first; 0 = none, or the "
             "lyrics carry no word times)"},
-           {"wordcount", "in", "words", "number of words of the running line"}}}},
+           {"wordcount", "in", "words", "number of words of the running line"},
+           // S90: unsynchronen Text per Skript weiterruecken
+           {"linetrigger", "out", "-1/0/1",
+            "unsynced lyrics: step one line forward (positive) or back (negative); counts for "
+            "the frame it is set in"},
+           {"wordtrigger", "out", "-1/0/1",
+            "unsynced lyrics: step one word forward or back; past the last word the next line "
+            "begins. The first use turns on the word state (sung / current / upcoming)"}}}},
         {ix<LyricsTrailParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
