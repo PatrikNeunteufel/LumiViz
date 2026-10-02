@@ -1,7 +1,7 @@
 # LumiViz — Modul-Ideen (Übersicht)
 
-> **Version:** 1.1.0
-> **Datum:** 2026-10-02 (Session 88)
+> **Version:** 1.2.0
+> **Datum:** 2026-10-02 (Session 89)
 > **Typ:** Übersicht
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -33,12 +33,13 @@ in der Spalte „Offen").
 | Idee | Was dazukäme | Stand | Offen | Einzelheiten |
 |---|---|---|---|---|
 | **Text-Knoten ausbauen** | Textquellen: Listen, **Tags des Titels** (`{artist} – {title}`), Songtexte (auch zeitsynchron), Laufzeitwerte. Darstellung: **Schriftauswahl** (installierte und mitgelieferte Schriften), Verlauf, Leuchten, Animationen (Ticker, Schreibmaschine, Buchstaben auf dem Beat) | 🟡 | gebaut S86: Palette, Init/Frame/Beat-Felder, Voreinstellungen, Schrift-Auswahlliste, Häkchen Bold, **Tags des Titels als Platzhalter**. Offen: Listen, Laufzeitwerte, mitgelieferte Schriften, Verlauf/Leuchten, Animationen |
-| **Songtexte / Karaoke** | Liedtext zum laufenden Titel, zeitsynchron (eingebettet oder `.lrc`), Karaoke-Zeile, Stimmen bei Duetten; Quelle lokal, online nur als Opt-in | 🟡 | gebaut S86: Knoten **Lyrics** (lokale Quellen in fester Reihenfolge, Vorschau, Wort für Wort, Duett-Farben), Online-Abruf als Opt-in mit Speicherort-Einstellung. Offen: Versatz je Titel, Datei zuweisen, Wort-Zeiten des Dienstes |
+| **Songtexte / Karaoke** | Liedtext zum laufenden Titel, zeitsynchron (eingebettet oder `.lrc`), Karaoke-Zeile, Stimmen bei Duetten; Quelle lokal, online nur als Opt-in | 🟡 | gebaut S86: Knoten **Lyrics** (lokale Quellen in fester Reihenfolge, Vorschau, Wort für Wort, Duett-Farben), Online-Abruf als Opt-in mit Speicherort-Einstellung; S88: Versatz je Titel, Datei zuweisen, Lyrics Trail, **Karaoke-Ebene**; S89: **Karaoke-Panel** (Reiter Lyrics / Lyrics Trail, Karaoke-Presets `.lvkar`, View → Karaoke, Ctrl+K), Skriptfeld *Line*. Offen: Wort-Zeiten des Dienstes; Wort-Ebene und Zeilen-Puffer s. eigene Zeile |
 | **Songtext nachsynchronisieren (Panel)** | Ein Panel, das einen unsynchronen Text mit Zeiten versieht — mitklopfen, per Skript verteilen oder per KI ausrichten, danach von Hand nachjustieren; Ergebnis als `.lrc` | ⚪ | Panel fehlt; die Schnittstelle (Modell + `speichereSongtext`) steht |
 | **Installer mit Dateityp-Registrierung** | Dateitypen und Icons in Windows wählbar registrieren (eigene Formate mit „Öffnen mit", fremde nur auf Wunsch) | ⚪ | alles; Icons als `.ico` liegen bereit, Notiz in `asset/img/logo/icons/README.md` | `Offene_Punkte` §7 „Text-Knoten ausbauen", Absatz „Songtexte" | `Offene_Punkte` §7 „Text-Knoten ausbauen" (S84/S86) |
 | **Text als Milkdrop-Element** | Neben Wave, Shape und Sprite ein Text-Element im Milkdrop-Node — in dessen Pipeline gezeichnet, verschmiert mit dem Feedback | ⚪ | alles (neu S86) | `Offene_Punkte` §7 „Text-Knoten ausbauen", Punkt (3) |
 | **Gemeinsame Farbquelle** | Eine Farbquelle für alle Zeichen-Knoten: Farbtafel, Verlauf über Punkte **oder über die Zeit**, Wechsel in Sekunden statt Frames | ⚪ | alles; betrifft 28 Zeichen-Knoten | `Offene_Punkte` §7 „gemeinsame Farbquelle" (S84) |
 | **Szenen-Wechsler, Rest** | Szenen = Effect Lists beliebiger Tiefe, Wechsel nach Energie und Strophe/Refrain | 🟡 | gebaut S82: Host Switcher für Host-Gruppen. Offen: Listen, Energie-Klassen, Songstruktur | `Offene_Punkte` §7 „Szenen-Wechsler-Modul" |
+| **Lyrics: Zeilen-Puffer, Wort-Ebene, Auslöser** | Trail übernimmt das fertige Bild der aktiven Zeile; laufendes Wort hervorheben (größer, eigene Farbe); Worte per Index (`word`, `wordcount`, Slot *Word*); `linetrigger` / `wordtrigger` für unsynchronen Text; Wort-Zeiten im Sync-Panel klopfen | ⚪ | alles; Vorstufe S89: Slot *Line*, `line` / `linecount`, Trail merkt die Felder der alten Zeile. Erst Kurzkonzept | `Offene_Punkte` §7 „Lyrics: Zeilen-Puffer für den Trail, Wort-Ebene, Auslöser" |
 | **Host Switcher: Puffer je Gruppe** | Beim Verlassen einer Gruppe bleibt ihr Stand (Bild, Buffer, Skriptwerte) liegen, beim Wiederbetreten läuft sie dort weiter; einschaltbar, Puffer zurücksetzbar, leerer Puffer = Neustart | ✅ | gebaut S89: *Keep group state*, *Reset buffers*, `clearbuffers`. Offen: Sichttest mit echten Presets; über den Neustart hinweg (nicht geplant) | `Offene_Punkte` §7 „Host Switcher: Puffer je Gruppe" |
 | **Video Source: nur passende Felder** | Der Editor zeigt nur die Felder der gewählten Quelle (Datei, Kamera, Clip) | ⚪ | alles | `Offene_Punkte` §7 (S83) |
 | **Skript für Movement, Render Scale, Debug Bars** | Formelfelder nachrüsten wie bei Text und AVI | ⚪ | bewusst zurückgestellt (Entscheid S86) | `visuals/Feldsteuerung_Konzept.md` §4 (F2e) |
@@ -78,4 +79,6 @@ in der Spalte „Offen").
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.2.0 | 2026-10-02 | Session 89 — „Host Switcher: Puffer je Gruppe" gebaut (✅); neu „Lyrics: Zeilen-Puffer, Wort-Ebene, Auslöser" (Ideen Patrik für S90); „Songtexte / Karaoke" auf den Stand S89 (Karaoke-Panel, Feld Line) |
+| 1.1.0 | 2026-10-02 | Session 88 — Timeline-Ideen, Karaoke-Ebene als eigener Block vor der Timeline |
 | 1.0.0 | 2026-10-01 | Session 86 — erste Fassung (Wunsch Patrik): 24 Ideen aus `Offene_Punkte.md`, den Konzeptdokumenten und den Sitzungsnotizen; neu aufgenommen „Text als Milkdrop-Element" |
