@@ -145,9 +145,24 @@ eigene Felder, alle **relativ zur laufenden Zeile**:
 | *Preview Y shift (%)* `previewYShift` | 0 | dito, senkrecht |
 | *Line spacing (%)* `lineSpacing` | 115 | Zeilenabstand in Prozent der Schrifthöhe (heute fest 1,15) |
 
-Die Farbe gibt es schon (*Color next*). Mit den Vorgaben bleibt jedes Preset,
-wie es ist. Die Felder sind Felder des Knotens und damit auch per Skript
-stellbar (aus Init, Song, Beat, Line — sie rastern neu).
+Die Farbe gibt es schon (*Color upcoming*). Mit den Vorgaben bleibt jedes
+Preset, wie es ist. Die Felder sind Felder des Knotens und damit auch per
+Skript stellbar (aus Init, Song, Beat, Line — sie rastern neu).
+
+**Stand LB1b — ✅ gebaut (S90):** fünf Felder an `LyricsParams` (Struct,
+Serializer, Panel, Klasse *Struktur* im Ernter; Feldzahl 846 → 851,
+Feldtabelle und FieldDocs neu erzeugt). „Vorschau-Zeile" ist jede Reihe, die
+weder die laufende noch die Marke ist; ihre Reihenhöhe geht mit der Größe,
+der Versatz verschiebt nur sie. Der Rückfall-Weg des Trails kennzeichnet die
+alte Zeile als laufend, damit sie nicht als Vorschau gesetzt wird. Geprüft:
+neuer Test (Größe 50 / 150 %, Gewicht, Versatz in Pixeln, doppelter
+Zeilenabstand, per Skript gleich wie per Feld, die laufende Zeile bleibt
+jeweils unverändert), die zwölf LB1-Szenen mit Vorgaben weiter 13/13
+bitgleich gegen den Stand vor LB1, Unit-Tests 814/814, Vergleichslauf 84/84
+bitgleich (`out/f4c/bp30_s90_lb1b`; vier `_manuell.png` im Ordner — Eingaben
+trafen das Messfenster, die 84 verglichenen Bilder sind davon unberührt),
+Bild `13_vorschau_gestaltet` angesehen. **Nicht geprüft:** im Panel und im
+laufenden Programm.
 
 Prüfung: Bildtests — (a) Zeile mit halb gesungenem Wort-Stand wechselt, das
 Trail-Bild zeigt beide Farben an derselben Stelle; (b) verkleinerte lange

@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 94,
-    "felder": 846,
+    "felder": 851,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5487,6 +5487,16 @@
         },
         {
           "art": "zahl",
+          "default": 115,
+          "name": "lineSpacing",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 50.0,
+          "hi": 400.0,
+          "doc": "Line spacing in percent of the font height (50..400); 115 is the spacing used up to version 1.54."
+        },
+        {
+          "art": "zahl",
           "default": 0,
           "name": "offsetMs",
           "panel": "int",
@@ -5530,6 +5540,46 @@
           "lo": 0.0,
           "hi": 4.0,
           "doc": "upcoming lines shown below the current one (0..4)"
+        },
+        {
+          "art": "zahl",
+          "default": 100,
+          "name": "previewScale",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 10.0,
+          "hi": 400.0,
+          "doc": "Size of the preview lines in percent of the current line's font size (10..400). Their row height scales along."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "previewWeight",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 900.0,
+          "doc": "Font weight of the preview lines: 0 = same as the current line, otherwise 400 normal, 700 bold (bold from 600)."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "previewXShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "Horizontal offset of the preview lines against their usual place, in percent of the width. The current line stays where it is."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "previewYShift",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "Vertical offset of the preview lines against their usual place, in percent of the height (negative = up). The current line stays where it is."
         },
         {
           "art": "bool",

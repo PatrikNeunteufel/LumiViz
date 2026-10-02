@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.54.0
+> **Version:** 1.55.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -567,6 +567,10 @@ gefunden wurde:
 | Feld | Bedeutung |
 |---|---|
 | **Preview lines** | So viele kommende Zeilen stehen unter der laufenden (0–4), in **Color upcoming**. |
+| **Preview size (%)** | Schriftgröße der Vorschau-Zeilen in Prozent der laufenden Zeile (10–400); ihre Zeilenhöhe geht mit. |
+| **Preview weight (0 = as line)** | Gewicht der Vorschau-Zeilen: 0 = wie die laufende Zeile, sonst 400 normal oder 700 fett. |
+| **Preview X shift / Y shift (%)** | Versatz der Vorschau-Zeilen gegen ihren gewohnten Platz, in Prozent von Breite und Höhe (negativ = nach links bzw. oben). Die laufende Zeile bleibt stehen. |
+| **Line spacing (%)** | Zeilenabstand in Prozent der Schrifthöhe (50–400); 115 ist der Abstand bis Version 1.54. |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
 | **Blend** | Wie sich der Text mit dem Bild mischt: **Replace**, **Additive**, **50/50**, **Subtract**, **Invert** (weißer Text kehrt die Farbe darunter um), **XOR**, **Multiply**, **Maximum**, **Minimum** — dieselben Arten wie bei der Karaoke-Ebene (unten). Ab **Subtract** mischt nur die Füllung der Buchstaben, die Kontur bleibt normal; bei Replace, Additive und 50/50 mischt die Kontur wie bisher mit. Der **Lyrics Trail** hat dasselbe Feld. |
 | **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
@@ -1460,6 +1464,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.55.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Felder für die Vorschau-Zeilen — **Preview size (%)**, **Preview weight**, **Preview X shift / Y shift (%)** — und **Line spacing (%)** |
 | 1.54.0 | 2026-10-02 | Session 90. §11 Lyrics Trail: der Trail zeigt **das Bild, das stand** (Wort-Stand, verkleinerte Zeile, Lage) statt einer neu gezeichneten Zeile; mit *Own color* und ohne laufenden Lyrics-Knoten zeichnet er wie bisher neu; nach einer Pause-Zeile kein zweiter Trail |
 | 1.53.0 | 2026-10-02 | Session 89. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Line** — läuft einmal je Zeilenwechsel, liest `line` und `linecount`; Lage, Größe und Farben folgen dem Skript von dort |
 | 1.52.0 | 2026-10-02 | Session 89. §11 Host Switcher: NEU **Keep group state** (Gruppen merken sich ihren Stand und laufen beim Wiederbetreten weiter), **Reset buffers** und Skriptvariable `clearbuffers` |

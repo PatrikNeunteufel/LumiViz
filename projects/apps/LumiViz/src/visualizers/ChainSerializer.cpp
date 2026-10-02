@@ -1094,6 +1094,11 @@ struct WriteVisitor
         o["offsetMs"] = p.offsetMs;
         o["beatsPerLine"] = p.beatsPerLine;
         o["showSyncMark"] = p.showSyncMark;
+        o["previewScale"] = p.previewScale;  // S90, LB1b: Vorschau-Zeilen
+        o["previewWeight"] = p.previewWeight;
+        o["previewXShift"] = p.previewXShift;
+        o["previewYShift"] = p.previewYShift;
+        o["lineSpacing"] = p.lineSpacing;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -2576,6 +2581,11 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.offsetMs = getInt(o, "offsetMs", p.offsetMs);
         p.beatsPerLine = getInt(o, "beatsPerLine", p.beatsPerLine);
         p.showSyncMark = getBool(o, "showSyncMark", p.showSyncMark);
+        p.previewScale = std::clamp(getInt(o, "previewScale", p.previewScale), 10, 400);
+        p.previewWeight = getInt(o, "previewWeight", p.previewWeight);
+        p.previewXShift = getInt(o, "previewXShift", p.previewXShift);
+        p.previewYShift = getInt(o, "previewYShift", p.previewYShift);
+        p.lineSpacing = std::clamp(getInt(o, "lineSpacing", p.lineSpacing), 50, 400);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);

@@ -2938,6 +2938,21 @@ struct LyricsParams
     /// block stands still). Has no effect on synchronised lyrics.
     int beatsPerLine = 0;
     bool showSyncMark = true;      ///< mark unsynchronised lyrics with "(not synced)"
+    /// Size of the preview lines in percent of the current line's font size
+    /// (10..400). Their row height scales along.
+    int previewScale = 100;
+    /// Font weight of the preview lines: 0 = same as the current line,
+    /// otherwise 400 normal, 700 bold (bold from 600).
+    int previewWeight = 0;
+    /// Horizontal offset of the preview lines against their usual place, in
+    /// percent of the width. The current line stays where it is.
+    int previewXShift = 0;
+    /// Vertical offset of the preview lines against their usual place, in
+    /// percent of the height (negative = up). The current line stays where it is.
+    int previewYShift = 0;
+    /// Line spacing in percent of the font height (50..400); 115 is the
+    /// spacing used up to version 1.54.
+    int lineSpacing = 115;
 
     /// Parameter script (S86): every field of this node + `b`/`w`/`h` + audio
     /// set. Fields that re-render the glyphs follow the script from Init, Song,

@@ -9058,7 +9058,8 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
                                     : alt.stimme == ly::Stimme::Beide   ? lp.colorBoth
                                                                         : lp.color;
         if (lp.showSyncMark) zeilen.push_back({std::string(), std::string(), farbe, true});
-        zeilen.push_back({alt.text, std::string(), farbe, false});
+        // `laufend`: die alte Zeile steht am Platz der laufenden, nicht als Vorschau
+        zeilen.push_back({alt.text, std::string(), farbe, false, true});
         const int vorschau = std::clamp(static_cast<int>(lp.previewLines), 0, 4);
         for (int k = 0; k < vorschau && q.lyricsVorZeile + 1 + k < anzahl; ++k)
             zeilen.push_back({});
@@ -9098,7 +9099,7 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
                                 : alt.stimme == ly::Stimme::Zwei    ? lp.color2
                                 : alt.stimme == ly::Stimme::Beide   ? lp.colorBoth
                                                                     : lp.color;
-    zeilen.push_back({alt.text, std::string(), farbe, false});
+    zeilen.push_back({alt.text, std::string(), farbe, false, true});  // am Platz der laufenden
     for (int i = idx + 1, k = 0; i < anzahl && k < vorschau; ++i)
     {
         if (s.zeilen[static_cast<std::size_t>(i)].text.empty()) continue;
@@ -9162,6 +9163,12 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                            std::to_string(params.outlineColor) + ':' +
                            std::to_string(params.outlineSize) + ':' +
                            std::to_string(m_surfaceWidth) + 'x' + std::to_string(m_surfaceHeight);
+    // S90, LB1b: die Vorschau-Zeilen eigens gestaltet, relativ zur laufenden
+    const int vorschauSkala = std::clamp(static_cast<int>(params.previewScale), 10, 400);
+    const int abstandProzent = std::clamp(static_cast<int>(params.lineSpacing), 50, 400);
+    snapshot += '|' + std::to_string(vorschauSkala) + ',' + std::to_string(params.previewWeight) +
+                ',' + std::to_string(params.previewXShift) + ',' +
+                std::to_string(params.previewYShift) + ',' + std::to_string(abstandProzent);
     // K4 b: die Zeile der Karaoke-Ebene rastert in Fenstergroesse (scharf auch
     // mit Render Scale). Gesetzt wird weiter im Kettenmass — der Painter
     // skaliert, so deckt sich die Lage mit der des Knotens. In der Kette und
@@ -9175,7 +9182,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     {
         // die Reihenfolge und Hoehe aller Reihen bestimmt die Lage; der Inhalt
         // zaehlt nur fuer die Reihen, die dieser Aufruf malt
-        snapshot += a.klein ? '\x1d' : '\x1f';
+        snapshot += a.klein ? '\x1d' : a.laufend ? '\x1c' : '\x1f';
         if (!gewaehlt(a)) continue;
         snapshot += a.vorn + '\x1e' + a.hinten + '\x1e' + std::to_string(a.farbe);
         etwas = etwas || (!a.klein && (!a.vorn.empty() || !a.hinten.empty()));
@@ -9200,10 +9207,16 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         basis.setPixelSize(px);
         basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
         basis.setItalic(params.italic);
-        // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb
-        const double zeilenHoehe = QFontMetrics(basis).height() * 1.15;
+        // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb, eine Vorschau-
+        // Zeile nach ihrer Groesse (LB1b); der Zeilenabstand ist ein Feld
+        const double zeilenHoehe = QFontMetrics(basis).height() * (abstandProzent / 100.0);
+        const auto reihenHoehe = [zeilenHoehe, vorschauSkala](const Anzeige& a) {
+            return a.klein      ? zeilenHoehe * 0.55
+                   : a.laufend  ? zeilenHoehe
+                                : zeilenHoehe * (vorschauSkala / 100.0);
+        };
         double gesamt = 0.0;
-        for (const Anzeige& a : zeilen) gesamt += a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+        for (const Anzeige& a : zeilen) gesamt += reihenHoehe(a);
         double yStart = 0.0;
         if (params.vAlign == 1) yStart = (m_surfaceHeight - gesamt) / 2.0;
         else if (params.vAlign == 2) yStart = m_surfaceHeight - gesamt;
@@ -9219,7 +9232,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
             double hReihe = zeilenHoehe;
             for (const Anzeige& a : zeilen)
             {
-                hReihe = a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+                hReihe = reihenHoehe(a);
                 if (a.laufend) break;
                 yReihe += hReihe;
             }
@@ -9260,13 +9273,21 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
             const double breite = m_surfaceWidth * 0.94;  // Rand lassen
             for (const Anzeige& a : zeilen)
             {
-                const double hoehe = a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+                const double hoehe = reihenHoehe(a);
                 const QString vorn = QString::fromStdString(a.vorn);
                 const QString hinten = QString::fromStdString(a.hinten);
                 if (gewaehlt(a) && (!vorn.isEmpty() || !hinten.isEmpty()))
                 {
+                    const bool vorschauZeile = !a.klein && !a.laufend;
                     QFont font = basis;
                     if (a.klein) font.setPixelSize(std::max(4, px / 2));
+                    if (vorschauZeile)
+                    {
+                        if (vorschauSkala != 100)
+                            font.setPixelSize(std::max(4, px * vorschauSkala / 100));
+                        if (params.previewWeight > 0)
+                            font.setWeight(params.previewWeight >= 600 ? QFont::Bold : QFont::Normal);
+                    }
                     // zu lange Zeile: Schrift verkleinern, bis sie passt
                     int tw = QFontMetrics(font).horizontalAdvance(vorn + hinten);
                     if (tw > breite && tw > 0)
@@ -9280,7 +9301,13 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                     if (params.hAlign == 1) x = (m_surfaceWidth - tw) / 2.0;
                     else if (params.hAlign == 2) x = m_surfaceWidth - tw;
                     x += params.xShift * m_surfaceWidth / 100.0;
-                    const QPointF grund(x, y + (hoehe - fm.height()) / 2.0 + fm.ascent());
+                    double yReihe = y;
+                    if (vorschauZeile)
+                    {
+                        x += params.previewXShift * m_surfaceWidth / 100.0;
+                        yReihe += params.previewYShift * m_surfaceHeight / 100.0;
+                    }
+                    const QPointF grund(x, yReihe + (hoehe - fm.height()) / 2.0 + fm.ascent());
                     QPainterPath p1;
                     QPainterPath p2;
                     p1.addText(grund, font, vorn);

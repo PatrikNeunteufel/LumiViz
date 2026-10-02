@@ -8308,6 +8308,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                  [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).colorNext = v; });
         addInt("previewLines", tr("Preview lines"), p->previewLines, 0, 4,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewLines = v; });
+        // S90 (LB1b, Entscheid L4): die Vorschau-Zeilen eigens gestalten —
+        // alles relativ zur laufenden Zeile
+        addInt("previewScale", tr("Preview size (%)"), p->previewScale, 10, 400,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewScale = v; });
+        addInt("previewWeight", tr("Preview weight (0 = as line)"), p->previewWeight, 0, 900,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewWeight = v; });
+        addInt("previewXShift", tr("Preview X shift (%)"), p->previewXShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewXShift = v; });
+        addInt("previewYShift", tr("Preview Y shift (%)"), p->previewYShift, -100, 100,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).previewYShift = v; });
+        addInt("lineSpacing", tr("Line spacing (%)"), p->lineSpacing, 50, 400,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).lineSpacing = v; });
         addEnum("hAlign", tr("Horizontal"), std::clamp(p->hAlign, 0, 2),
                 {tr("Left"), tr("Center"), tr("Right")},
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).hAlign = v; });

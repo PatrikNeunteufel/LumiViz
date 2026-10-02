@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     846>
+                     851>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -958,6 +958,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "italic"},
     {"lyrics.lineCode",
      "Parameter script (S86): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song, Beat and Line only. Empty = no script. Runs once on every line change of the lyrics, before Frame \342\200\224 the place for fields that re-render the glyphs (position, size, colours). Reads `line` (number of the running line, 0 = before the first line) and `linecount`. Empty = no script."},
+    {"lyrics.lineSpacing",
+     "Line spacing in percent of the font height (50..400); 115 is the spacing used up to version 1.54."},
     {"lyrics.offsetMs",
      "Timing offset in milliseconds for synchronised lyrics: positive = the lyrics appear earlier, negative = later (same sense as LRC `[offset:]`)."},
     {"lyrics.outline",
@@ -968,6 +970,14 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "outline width in pixels"},
     {"lyrics.previewLines",
      "upcoming lines shown below the current one (0..4)"},
+    {"lyrics.previewScale",
+     "Size of the preview lines in percent of the current line's font size (10..400). Their row height scales along."},
+    {"lyrics.previewWeight",
+     "Font weight of the preview lines: 0 = same as the current line, otherwise 400 normal, 700 bold (bold from 600)."},
+    {"lyrics.previewXShift",
+     "Horizontal offset of the preview lines against their usual place, in percent of the width. The current line stays where it is."},
+    {"lyrics.previewYShift",
+     "Vertical offset of the preview lines against their usual place, in percent of the height (negative = up). The current line stays where it is."},
     {"lyrics.showSyncMark",
      "mark unsynchronised lyrics with \"(not synced)\""},
     {"lyrics.vAlign",

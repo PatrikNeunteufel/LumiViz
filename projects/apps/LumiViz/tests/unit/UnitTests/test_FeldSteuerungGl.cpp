@@ -1006,6 +1006,128 @@ TEST_CASE("Lyrics Trail S90 LB1: der Trail uebernimmt das Zeilenbild mit Wort-St
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90, LB1b (Entscheid L4): die Vorschau-Zeilen eigens gestalten — Groesse,
+// Gewicht, Lage relativ zur laufenden Zeile, dazu der Zeilenabstand. Die
+// laufende Zeile bleibt, wo sie ist.
+TEST_CASE("Lyrics S90 LB1b: Vorschau-Zeilen — Groesse, Gewicht, Lage, Zeilenabstand")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM\n[00:13.00]HHHH\n"));
+    MultiEffectVisualizer::notifyPlayPosition(12000);
+
+    struct Bild
+    {
+        int hell = 0;
+        double x = 0.0;
+        double y = 0.0;
+    };
+    // `vorschauHell`: die Vorschau-Zeile ist hell und die laufende dunkel —
+    // oder umgekehrt. So laesst sich jede der beiden allein messen.
+    const auto miss = [](LyricsParams lp, bool vorschauHell) {
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 1;
+        lp.vAlign = 0;  // oben: die laufende Zeile ist der feste Punkt
+        lp.yShift = 10;
+        lp.color = vorschauHell ? 0x202020 : 0xFFFFFF;
+        lp.colorNext = vorschauHell ? 0xFFFFFF : 0x202020;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        Bild b;
+        double sx = 0.0, sy = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    ++b.hell;
+                    sx += x;
+                    sy += y;
+                }
+        if (b.hell > 0)
+        {
+            b.x = sx / b.hell;
+            b.y = sy / b.hell;
+        }
+        return b;
+    };
+
+    const LyricsParams vorgabe;
+    const Bild zeile = miss(vorgabe, false);
+    const Bild vorschau = miss(vorgabe, true);
+    REQUIRE(zeile.hell > 0);
+    REQUIRE(vorschau.hell > 0);
+    const double abstand = vorschau.y - zeile.y;
+    CHECK(abstand > 20.0);  // die Vorschau steht eine Zeile tiefer
+
+    // Groesse: halbe Schrift = etwa ein Viertel der Flaeche; die laufende bleibt
+    LyricsParams klein;
+    klein.previewScale = 50;
+    CHECK(miss(klein, true).hell < vorschau.hell * 0.4);
+    CHECK(miss(klein, true).hell > vorschau.hell * 0.1);
+    CHECK(miss(klein, false).hell == zeile.hell);
+    CHECK(miss(klein, false).y == doctest::Approx(zeile.y));
+    LyricsParams gross;
+    gross.previewScale = 150;
+    CHECK(miss(gross, true).hell > vorschau.hell * 1.7);
+
+    // Gewicht: normal statt fett — duenner, also weniger helle Pixel
+    LyricsParams duenn;
+    duenn.previewWeight = 400;
+    CHECK(miss(duenn, true).hell < vorschau.hell * 0.95);
+    CHECK(miss(duenn, false).hell == zeile.hell);  // die laufende bleibt fett
+    LyricsParams fett;
+    fett.previewWeight = 700;  // wie die Zeile selbst: nichts aendert sich
+    CHECK(miss(fett, true).hell == vorschau.hell);
+
+    // Lage: 10 % von 320 px nach rechts, 20 % von 240 px nach unten
+    LyricsParams lage;
+    lage.previewXShift = 10;
+    lage.previewYShift = 20;
+    const Bild verschoben = miss(lage, true);
+    CHECK(verschoben.hell == vorschau.hell);
+    CHECK(verschoben.x == doctest::Approx(vorschau.x + 32.0).epsilon(0.01));
+    CHECK(verschoben.y == doctest::Approx(vorschau.y + 48.0).epsilon(0.01));
+    CHECK(miss(lage, false).x == doctest::Approx(zeile.x));
+    CHECK(miss(lage, false).y == doctest::Approx(zeile.y));
+
+    // Zeilenabstand: doppelt so weit (230 statt 115 %)
+    LyricsParams weit;
+    weit.lineSpacing = 230;
+    CHECK(miss(weit, true).y - miss(weit, false).y ==
+          doctest::Approx(2.0 * abstand).epsilon(0.05));
+
+    // per Skript: die Felder sind Skriptvariablen (Init, weil sie neu rastern)
+    LyricsParams skript;
+    skript.initCode = "previewscale = 50; previewyshift = 20;";
+    const Bild s = miss(skript, true);
+    LyricsParams beides = klein;
+    beides.previewYShift = 20;
+    const Bild f = miss(beides, true);
+    CHECK(s.hell == f.hell);
+    CHECK(s.y == doctest::Approx(f.y));
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90, LB1: Bilder des Lyrics-Knotens fuer den Vergleich vorher/nachher. Mit
 // `LUMIVIZ_LB1_SNAP=<ordner>` schreibt der Test je Szene ein PNG — derselbe
 // Lauf vor und nach einem Umbau am Rastern, die Ordner dann bitweise
@@ -1100,6 +1222,14 @@ TEST_CASE("Lyrics S90 LB1: Szenen des Lyrics-Knotens (Schnappschuesse fuer den V
     a = lp;
     a.outlineSize = 14;  // Reihen ueberlappen sich
     CHECK(zeichnet(bild("11_breite_kontur", a, false, false, 12000)));
+
+    // LB1b: Vorschau kleiner, duenner, eingerueckt, enger gesetzt (nur zum Ansehen)
+    a = lp;
+    a.previewScale = 60;
+    a.previewWeight = 400;
+    a.previewXShift = 6;
+    a.lineSpacing = 100;
+    CHECK(zeichnet(bild("13_vorschau_gestaltet", a, false, false, 12000)));
 
     MultiEffectVisualizer::setSongtext(ly::leseLrc("MMMM gggg\nIIII jjjj\nThird line\n"));
     CHECK(zeichnet(bild("12_unsynchron_marke", lp, false, false, 0)));

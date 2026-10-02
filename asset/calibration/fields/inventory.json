@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 846,
+        "felder": 851,
         "typen": 94
     },
     "typen": [
@@ -2728,6 +2728,11 @@
                 },
                 {
                     "art": "zahl",
+                    "default": 115,
+                    "name": "lineSpacing"
+                },
+                {
+                    "art": "zahl",
                     "default": 0,
                     "name": "offsetMs"
                 },
@@ -2750,6 +2755,26 @@
                     "art": "zahl",
                     "default": 1,
                     "name": "previewLines"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "previewScale"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "previewWeight"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "previewXShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "previewYShift"
                 },
                 {
                     "art": "bool",

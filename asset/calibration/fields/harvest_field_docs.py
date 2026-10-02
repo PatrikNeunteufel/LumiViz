@@ -349,6 +349,9 @@ KLASSEN = {
     "lyrics.yShift": "Struktur", "lyrics.outline": "Struktur",
     "lyrics.outlineColor": "Struktur", "lyrics.outlineSize": "Struktur",
     "lyrics.previewLines": "Struktur",
+    "lyrics.previewScale": "Struktur", "lyrics.previewWeight": "Struktur",
+    "lyrics.previewXShift": "Struktur", "lyrics.previewYShift": "Struktur",
+    "lyrics.lineSpacing": "Struktur",
     # Lyrics Trail (S87): dieselbe Regel
     "lyricsTrail.color": "Struktur", "lyricsTrail.useOwnColor": "Struktur",
     "lyricsTrail.xShift": "Struktur", "lyricsTrail.yShift": "Struktur",
