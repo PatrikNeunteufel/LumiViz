@@ -814,6 +814,67 @@ TEST_CASE("Lyrics Trail S87: die eben beendete Zeile, fuer die Haltezeit, an der
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90, LB1 (docs/visuals/Lyrics_Block_Konzept.md): Befund per Test, bevor der
+// Trail umgebaut wird. Eine Pause-Zeile (Zeit ohne Text) zwischen zwei
+// Textzeilen — wie oft zeichnet der Trail die Zeile davor? Gezaehlt werden
+// die Abschnitte zusammenhaengender Frames, in denen der Trail etwas zeichnet.
+TEST_CASE("Lyrics Trail S90: Pause-Zeile — wie oft die alte Zeile gezeichnet wird")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    const auto abschnitte = [](const char* lrc) {
+        MultiEffectVisualizer::setSongtext(ly::leseLrc(lrc));
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        LyricsParams lp;
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lyr.params = lp;
+        lyr.enabled = false;  // nur der Trail zeichnet
+        ChainNode trail;
+        trail.params = LyricsTrailParams{};  // Haltezeit 300 ms
+        root.children = {clear, lyr, trail};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        int n = 0;
+        bool war = false;
+        // 12,5 s bis 17 s in Schritten von 1/60 s
+        for (int frame = 0; frame <= 270; ++frame)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(12500 + frame * 1000 / 60);
+            vis.render(1.0f / 60.0f);
+            const QImage img = vis.debugGrabRootSurface();
+            bool hell = false;
+            for (int y = 0; y < img.height() && !hell; ++y)
+                for (int x = 0; x < img.width() && !hell; ++x)
+                    hell = qGray(img.pixel(x, y)) > 200;
+            if (hell && !war) ++n;
+            war = hell;
+        }
+        return n;
+    };
+
+    // Gegenprobe: ohne Pause ein Wechsel bei 13 s und einer bei 16 s
+    CHECK(abschnitte("[00:10.00]MMMM\n[00:13.00]MMMM IIII\n[00:16.00]IIII\n") == 2);
+    // mit Pause: „MMMM" endet bei 13 s — einmal ist richtig
+    const int mitPause = abschnitte("[00:10.00]MMMM\n[00:13.00]\n[00:16.00]IIII\n");
+    MESSAGE("Trail-Abschnitte mit Pause-Zeile: " << mitPause);
+    CHECK(mitPause == 1);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88, KE1 (docs/visuals/Karaoke_Ebene_Konzept.md): Songtext ueber jedem Preset
 // als eigene Ebene. Der Kern: die Ebene wird erst beim Present aufgelegt — die
 // Root-Surface (das Feedback des naechsten Frames) bleibt BITGLEICH, ob die

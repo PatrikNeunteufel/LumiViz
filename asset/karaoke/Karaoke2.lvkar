@@ -28,8 +28,9 @@
                 "hAlign": 1,
                 "initCode": "reffont = fontheight;",
                 "italic": false,
+                "lineCode": "",
                 "name": "Karaoke Lyrics",
-                "offsetMs": 0,
+                "offsetMs": 5,
                 "outline": true,
                 "outlineColor": 0,
                 "outlineSize": 5,
@@ -37,8 +38,8 @@
                 "showSyncMark": true,
                 "type": "lyrics",
                 "vAlign": 2,
-                "xShift": 0,
-                "yShift": -29
+                "xShift": 2,
+                "yShift": -2
             },
             {
                 "blendIn": 0,

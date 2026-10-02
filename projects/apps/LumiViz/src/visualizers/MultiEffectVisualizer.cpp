@@ -8999,10 +8999,12 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     // seit wann die laufende Zeile laeuft = seit wann die vorige zu Ende ist
     const std::int64_t seit = pos + s.versatzMs - s.zeilen[static_cast<std::size_t>(idx)].zeitMs;
     if (seit < 0 || seit > halteMs) return;
-    // die Zeile, die eben zu Ende ging: die letzte MIT Text vor der laufenden
-    int vor = idx - 1;
-    while (vor >= 0 && s.zeilen[static_cast<std::size_t>(vor)].text.empty()) --vor;
-    if (vor < 0) return;
+    // die Zeile, die eben zu Ende ging: die unmittelbar vor der laufenden.
+    // S90: ist das eine Pause-Zeile (Zeit ohne Text), ging nichts zu Ende — die
+    // Textzeile davor hat der Trail schon beim Beginn der Pause gezeichnet (bis
+    // S89 suchte er hier zurueck und zeichnete sie ein zweites Mal).
+    const int vor = idx - 1;
+    if (s.zeilen[static_cast<std::size_t>(vor)].text.empty()) return;
     const ly::Zeile& alt = s.zeilen[static_cast<std::size_t>(vor)];
 
     // Dieselbe Geometrie wie der Lyrics-Knoten in diesem Augenblick: so viele
