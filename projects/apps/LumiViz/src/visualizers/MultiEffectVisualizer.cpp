@@ -8185,6 +8185,10 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     // Parameter-Skript auf der Frame-Kopie; Felder, die neu rastern, folgen
     // dem Skript nur aus Init, Song und Beat (E3).
     runParamScript(rt, "lyrics", params.initCode, params.frameCode, params.beatCode, {});
+    // S88: der Lyrics Trail zeichnet mit den Werten NACH dem Skript — sonst
+    // stuende die alte Zeile an der Grundposition, waehrend die laufende huepft
+    rt.lyricsEffektiv = params;
+    rt.lyricsEffektivDa = true;
 
     namespace ly = lumi::multieffect::lyrics;
     const ly::Songtext& s = m_songtext;
@@ -8193,6 +8197,7 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         rt.lyricsStand = m_songTagsStand;
         rt.lyricsZeile = 0;
         rt.lyricsBeats = 0;
+        rt.lyricsVorZeile = -1;
     }
     if (s.leer()) return;
 
@@ -8273,7 +8278,13 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         if (params.beatsPerLine > 0 && m_frameBeat && ++rt.lyricsBeats >= params.beatsPerLine)
         {
             rt.lyricsBeats = 0;
-            if (rt.lyricsZeile + 1 < anzahl) ++rt.lyricsZeile;
+            if (rt.lyricsZeile + 1 < anzahl)
+            {
+                // S88: fuer den Lyrics Trail festhalten, welche Zeile eben ging und wann
+                rt.lyricsVorZeile = rt.lyricsZeile;
+                rt.lyricsWechselZeit = m_time;
+                ++rt.lyricsZeile;
+            }
         }
         if (params.showSyncMark)
             zeilen.push_back({std::string(), "(not synced)", params.colorNext, true});
@@ -8316,8 +8327,50 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     namespace ly = lumi::multieffect::lyrics;
     const ChainNode* quelle = findeLyricsKnoten(params.source);
     const ly::Songtext& s = m_songtext;
-    if (quelle == nullptr || !s.synchron) return;  // nur an echten Zeiten zu erkennen
-    const LyricsParams& lp = std::get<LyricsParams>(quelle->params);
+    if (quelle == nullptr || s.leer()) return;
+    // S88: Schrift und Lage so, wie der Lyrics-Knoten sie zuletzt gezeichnet
+    // hat (nach seinem Skript); hat er noch nie gezeichnet (Auge aus), die
+    // gespeicherten Felder.
+    const auto quellRt = m_leafRuntimes.find(quelle->nodeId);
+    const bool gelaufen = quellRt != m_leafRuntimes.end() && quellRt->second.lyricsEffektivDa;
+    const LyricsParams& lp =
+        gelaufen ? quellRt->second.lyricsEffektiv : std::get<LyricsParams>(quelle->params);
+    const int halteMs = std::clamp(static_cast<int>(params.holdMs), 0, 5000);
+
+    if (!s.synchron)
+    {
+        // S88 — unsynchroner Text: Zeiten gibt es keine, aber der Lyrics-Knoten
+        // rueckt alle N Beats eine Zeile weiter. Den Wechsel kennt nur er — der
+        // Trail braucht hier den LAUFENDEN Lyrics-Knoten (Auge an).
+        if (!gelaufen) return;
+        const LeafRuntime& q = quellRt->second;
+        const int anzahl = static_cast<int>(s.zeilen.size());
+        if (q.lyricsStand != m_songTagsStand || q.lyricsVorZeile < 0 ||
+            q.lyricsVorZeile >= anzahl)
+            return;
+        const float seitMs = (m_time - q.lyricsWechselZeit) * 1000.0f;
+        if (seitMs < 0.0f || seitMs > static_cast<float>(halteMs)) return;
+        const ly::Zeile& alt = s.zeilen[static_cast<std::size_t>(q.lyricsVorZeile)];
+        if (alt.text.empty()) return;
+        // die Reihen, wie sie standen, als die alte Zeile noch lief: Marke
+        // (klein), die Zeile, ihre Vorschau — nur die Zeile traegt Text
+        std::vector<LyricsAnzeige> zeilen;
+        const std::uint32_t farbe = params.useOwnColor                  ? params.color
+                                    : alt.stimme == ly::Stimme::Zwei    ? lp.color2
+                                    : alt.stimme == ly::Stimme::Beide   ? lp.colorBoth
+                                                                        : lp.color;
+        if (lp.showSyncMark) zeilen.push_back({std::string(), std::string(), farbe, true});
+        zeilen.push_back({alt.text, std::string(), farbe, false});
+        const int vorschau = std::clamp(static_cast<int>(lp.previewLines), 0, 4);
+        for (int k = 0; k < vorschau && q.lyricsVorZeile + 1 + k < anzahl; ++k)
+            zeilen.push_back({});
+        LyricsParams lage = lp;
+        lage.xShift = lp.xShift + params.xShift;
+        lage.yShift = lp.yShift + params.yShift;
+        lage.blend = params.blend;
+        zeichneLyricsZeilen(rt, lage, zeilen);
+        return;
+    }
 
     const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(lp.offsetMs) +
                              songtextTitelVersatzMs();
@@ -8325,7 +8378,7 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     if (idx < 1) return;
     // seit wann die laufende Zeile laeuft = seit wann die vorige zu Ende ist
     const std::int64_t seit = pos + s.versatzMs - s.zeilen[static_cast<std::size_t>(idx)].zeitMs;
-    if (seit < 0 || seit > std::clamp(static_cast<int>(params.holdMs), 0, 5000)) return;
+    if (seit < 0 || seit > halteMs) return;
     // die Zeile, die eben zu Ende ging: die letzte MIT Text vor der laufenden
     int vor = idx - 1;
     while (vor >= 0 && s.zeilen[static_cast<std::size_t>(vor)].text.empty()) --vor;

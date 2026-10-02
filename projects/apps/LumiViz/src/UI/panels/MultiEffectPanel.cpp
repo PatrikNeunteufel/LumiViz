@@ -7832,11 +7832,19 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 tr("Where fetched lyrics came from — written into the file as [source:…]."));
             // Ordner der gelesenen Datei oeffnen (Wunsch Patrik S86) — nur bei
             // einer eigenen Datei, nicht bei eingebettetem Text
-            auto* ordner = new QToolButton(tabelle);
+            // S88 (Wunsch Patrik): die Knoepfe stehen in zwei Reihen unter der
+            // Tabelle — oben was den Text ersetzt (Alternatives…, Wrong lyrics),
+            // unten was die Datei betrifft (Lyrics file…, Open folder)
+            auto* knopfZeile = new QWidget(tabelle);
+            auto* kl = new QGridLayout(knopfZeile);
+            kl->setContentsMargins(0, 2, 0, 0);
+            kl->setHorizontalSpacing(6);
+            kl->setVerticalSpacing(2);
+            kl->setColumnStretch(2, 1);
+            auto* ordner = new QToolButton(knopfZeile);
             ordner->setObjectName(QStringLiteral("lyricsOpenFolder"));
             ordner->setText(tr("Open folder"));
             ordner->setToolTip(tr("Opens the folder of the lyrics file that is being shown."));
-            gl->addWidget(ordner, reihe - 1, 2, Qt::AlignTop);
             connect(ordner, &QToolButton::clicked, tabelle, []() {
                 const QString pfad =
                     QString::fromStdString(MultiEffectVisualizer::songtextDatei());
@@ -7846,9 +7854,6 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             });
             // S87 (Wunsch Patrik): eine andere Fassung suchen bzw. den
             // gezeigten Text als falsch verwerfen (loeschen + sperren)
-            auto* knopfZeile = new QWidget(tabelle);
-            auto* kl = new QHBoxLayout(knopfZeile);
-            kl->setContentsMargins(0, 2, 0, 0);
             auto* andere = new QToolButton(knopfZeile);
             andere->setObjectName(QStringLiteral("lyricsAlternatives"));
             andere->setText(tr("Alternatives…"));
@@ -7903,15 +7908,20 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             .arg(QDir::toNativeSeparators(z.ziel),
                                  QString::fromStdString(z.gilt.quelle)));
             });
-            kl->addWidget(andere);
-            kl->addWidget(falsch);
-            kl->addWidget(zuweisen);
-            kl->addStretch(1);
-            gl->addWidget(knopfZeile, reihe, 0, 1, 3);
+            // gleich breite Knoepfe je Spalte: die beiden Reihen stehen buendig
+            for (QToolButton* k : {andere, falsch, zuweisen, ordner})
+                k->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+            kl->addWidget(andere, 0, 0);
+            kl->addWidget(falsch, 0, 1);
+            kl->addWidget(zuweisen, 1, 0);
+            kl->addWidget(ordner, 1, 1);
+            gl->addWidget(knopfZeile, reihe, 0, 1, 2);
             ++reihe;
             // S88 (Entscheid Patrik a): Versatz nur fuer den laufenden Titel —
-            // liegt in offsets.json im Benutzerordner, nicht am Knoten
-            auto* titelVersatz = new QSpinBox(tabelle);
+            // liegt in offsets.json im Benutzerordner, nicht am Knoten. Eigene
+            // Formularzeile unter der Tabelle (Wunsch Patrik: Beschriftung ganz
+            // links wie die anderen, nicht umbrochen in der Tabellenspalte).
+            auto* titelVersatz = new QSpinBox(m_propContainer);
             titelVersatz->setObjectName(QStringLiteral("lyricsTrackOffset"));
             titelVersatz->setRange(-60000, 60000);
             titelVersatz->setSingleStep(50);
@@ -7920,10 +7930,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 tr("Timing offset for the playing track only: positive = the lyrics appear "
                    "earlier, negative = later. It is remembered per track and adds to "
                    "\"Timing offset (ms)\" below and to an [offset:] line in the lyrics file."));
-            auto* versatzKopf = new QLabel(tr("Offset for this track"), tabelle);
-            gl->addWidget(versatzKopf, reihe, 0);
-            gl->addWidget(titelVersatz, reihe, 1, Qt::AlignLeft);
-            connect(titelVersatz, QOverload<int>::of(&QSpinBox::valueChanged), tabelle,
+            connect(titelVersatz, QOverload<int>::of(&QSpinBox::valueChanged), titelVersatz,
                     [](int ms) {
                         const TrackInfo titel = lumi::audio::laufenderTitel();
                         if (titel.filePath.isEmpty()) return;
@@ -8005,6 +8012,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             connect(uhr, &QTimer::timeout, tabelle, zeige);
             uhr->start();
             form->addRow(tr("Lyrics"), tabelle);
+            form->addRow(tr("Offset for this track"), titelVersatz);
         }
         addFontFace("fontFace", tr("Font"), p->fontFace,
                     [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).fontFace = std::move(v); });

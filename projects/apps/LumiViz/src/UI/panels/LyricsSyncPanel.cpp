@@ -233,6 +233,58 @@ bool LyricsSyncPanel::springeZu(int reihe, int vorlaufMs)
     return true;
 }
 
+LyricsSyncPanel::Stand LyricsSyncPanel::jetzigerStand() const
+{
+    const QList<int> reihen = markierteReihen();
+    return {m_text.zeilen, m_geaendert, reihen.isEmpty() ? -1 : reihen.first()};
+}
+
+void LyricsSyncPanel::merke(Stand vorher)
+{
+    m_zurueck.push_back(std::move(vorher));
+    if (m_zurueck.size() > kGeschichteMax) m_zurueck.erase(m_zurueck.begin());
+    m_vor.clear();  // ein neuer Schritt: was zurueckgenommen war, ist nicht wiederholbar
+}
+
+void LyricsSyncPanel::setzeStand(const Stand& s)
+{
+    m_text.zeilen = s.zeilen;
+    m_geaendert = s.geaendert;
+    m_laufend = -1;
+    fuelleListe();
+    if (s.reihe >= 0 && s.reihe < m_liste->rowCount())
+    {
+        m_liste->selectRow(s.reihe);
+        m_liste->scrollToItem(m_liste->item(s.reihe, kText));
+    }
+    zeigeStand();
+    // im Bild: der zurueckgenommene Stand — ohne jede Zeit wieder der Text,
+    // wie er geladen wurde (vorschau() liesse sonst die letzte Zeit stehen)
+    if (lumi::audio::laufenderTitel().filePath != m_track.filePath) return;
+    const ly::Songtext jetzt = alsSongtext();
+    MultiEffectVisualizer::setSongtext(jetzt.leer() ? m_geladen : jetzt);
+}
+
+bool LyricsSyncPanel::rueckgaengig()
+{
+    if (m_zurueck.empty()) return false;
+    m_vor.push_back(jetzigerStand());
+    const Stand s = std::move(m_zurueck.back());
+    m_zurueck.pop_back();
+    setzeStand(s);
+    return true;
+}
+
+bool LyricsSyncPanel::wiederholen()
+{
+    if (m_vor.empty()) return false;
+    m_zurueck.push_back(jetzigerStand());
+    const Stand s = std::move(m_vor.back());
+    m_vor.pop_back();
+    setzeStand(s);
+    return true;
+}
+
 void LyricsSyncPanel::setzeTitelVersatz(int ms)
 {
     if (m_track.filePath.isEmpty()) return;
@@ -344,6 +396,19 @@ void LyricsSyncPanel::setupUI()
     reihe2->addWidget(leeren);
     reihe2->addWidget(neu);
     reihe2->addWidget(m_speichern);
+    // S88: Rueckgaengig / Wiederholen fuer die Schritte an den Zeiten
+    m_undo = knopf(tr("Undo"), "lyricsSyncUndo",
+                   tr("Takes back the last step (tap, shift, clear, typed time). Ctrl+Z in "
+                      "the list."));
+    m_redo = knopf(tr("Redo"), "lyricsSyncRedo",
+                   tr("Restores the step taken back last. Ctrl+Y in the list."));
+    reihe2->addWidget(m_undo);
+    reihe2->addWidget(m_redo);
+    connect(m_undo, &QPushButton::clicked, this, &LyricsSyncPanel::rueckgaengig);
+    connect(m_redo, &QPushButton::clicked, this, &LyricsSyncPanel::wiederholen);
+    reihe2->addStretch(1);
+    vl->addLayout(reihe2);
+    reihe2 = new QHBoxLayout();  // dritte Reihe: Versatz und Mitlaufen
     // S88 (Entscheid Patrik a): Versatz nur dieses Titels — verschiebt den
     // ganzen Text, ohne die Zeiten oder die Datei anzufassen; wirkt sofort
     m_versatzFeld = new QSpinBox(this);
@@ -398,6 +463,12 @@ void LyricsSyncPanel::setupUI()
             zeigeZeile(reihe);  // unlesbar: alter Wert zurueck
             return;
         }
+        if (m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs == zeit)
+        {
+            zeigeZeile(reihe);  // nichts geaendert: nur die Schreibweise richten
+            return;
+        }
+        merke(jetzigerStand());
         m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs = zeit;
         m_geaendert = true;
         zeigeZeile(reihe);
@@ -422,6 +493,9 @@ void LyricsSyncPanel::lade(const TrackInfo& track, const ly::Songtext& text)
 {
     m_track = track;
     m_text = text;
+    m_geladen = text;
+    m_zurueck.clear();  // die Geschichte gehoert zur Arbeitskopie
+    m_vor.clear();
     // die Zeiten stehen in der Liste so, wie sie in der Datei stuenden —
     // der Versatz der Datei bleibt als `[offset:]` erhalten
     m_geaendert = false;
@@ -536,6 +610,8 @@ void LyricsSyncPanel::zeigeStand()
     m_welle->setMarken(std::move(marken), gewaehlteZeit);
 
     m_tap->setEnabled(!m_text.leer() && !fremd);
+    m_undo->setEnabled(!m_zurueck.empty());
+    m_redo->setEnabled(!m_vor.empty());
     m_speichern->setEnabled(m_geaendert && !m_text.leer() && offen == 0 && !zielPfad().isEmpty());
 }
 
@@ -544,6 +620,7 @@ bool LyricsSyncPanel::tippe(std::int64_t posMs)
     const QList<int> reihen = markierteReihen();
     if (reihen.isEmpty() || m_text.leer()) return false;
     const int reihe = reihen.first();
+    merke(jetzigerStand());
     // wie der Knoten rechnet: wirksame Zeit = Position + Versatz (Datei + Titel)
     m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs =
         std::max<std::int64_t>(0, posMs + versatz());
@@ -575,6 +652,7 @@ void LyricsSyncPanel::verschiebe(int deltaMs, bool abHier)
         reihen.clear();
         for (int r = start; r < static_cast<int>(m_text.zeilen.size()); ++r) reihen.append(r);
     }
+    Stand vorher = jetzigerStand();
     bool etwas = false;
     for (const int r : reihen)
     {
@@ -585,6 +663,7 @@ void LyricsSyncPanel::verschiebe(int deltaMs, bool abHier)
         etwas = true;
     }
     if (!etwas) return;
+    merke(std::move(vorher));
     m_geaendert = true;
     zeigeStand();
     vorschau();
@@ -592,6 +671,7 @@ void LyricsSyncPanel::verschiebe(int deltaMs, bool abHier)
 
 void LyricsSyncPanel::loescheZeit()
 {
+    Stand vorher = jetzigerStand();
     bool etwas = false;
     for (const int r : markierteReihen())
     {
@@ -603,6 +683,7 @@ void LyricsSyncPanel::loescheZeit()
         etwas = true;
     }
     if (!etwas) return;
+    merke(std::move(vorher));
     m_geaendert = true;
     zeigeStand();
     vorschau();
@@ -661,6 +742,9 @@ bool LyricsSyncPanel::speichere()
     s.datei = ziel.toStdString();
     s.quelle = "synced in LumiViz: " + QFileInfo(ziel).fileName().toStdString();
     m_text = s;  // die Leerzeilen ohne Zeit sind damit weg, wie in der Datei
+    m_geladen = s;
+    m_zurueck.clear();  // die Reihen sind jetzt andere: aeltere Staende passen nicht mehr
+    m_vor.clear();
     m_geaendert = false;
     fuelleListe();
     if (lumi::audio::laufenderTitel().filePath == m_track.filePath)
@@ -746,6 +830,31 @@ bool LyricsSyncPanel::eventFilter(QObject* watched, QEvent* event)
 {
     // Tasten der LISTE — waehrend F2 die Zeit bearbeitet, hat das Eingabefeld
     // den Fokus und die Tasten kommen hier gar nicht an
+    // S88: Ctrl+Z / Ctrl+Y (auch Ctrl+Shift+Z) gehoeren in der Liste dem Panel.
+    // ShortcutOverride annehmen, sonst nimmt ein fensterweites Kuerzel
+    // (Undo der Effektkette) die Taste, bevor sie als KeyPress hier ankommt.
+    if (watched == m_liste &&
+        (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress))
+    {
+        auto* taste = static_cast<QKeyEvent*>(event);
+        const bool ctrl = (taste->modifiers() & Qt::ControlModifier) != 0;
+        const bool shift = (taste->modifiers() & Qt::ShiftModifier) != 0;
+        const bool zurueck = ctrl && !shift && taste->key() == Qt::Key_Z;
+        const bool vor = ctrl && (taste->key() == Qt::Key_Y || (shift && taste->key() == Qt::Key_Z));
+        if (zurueck || vor)
+        {
+            if (event->type() == QEvent::ShortcutOverride)
+            {
+                event->accept();
+                return true;
+            }
+            if (zurueck)
+                rueckgaengig();
+            else
+                wiederholen();
+            return true;
+        }
+    }
     if (watched == m_liste && event->type() == QEvent::KeyPress)
     {
         const auto* taste = static_cast<QKeyEvent*>(event);

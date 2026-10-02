@@ -1967,6 +1967,33 @@ TEST_CASE("PaletteUi S86/S87: Lyrics — Tabelle laeuft mit, Abruf-Stand, Ordner
     CHECK(datei->toolTip() == QStringLiteral("C:/Musik/lied.lrc"));
     CHECK(ordner->isEnabled());
 
+    // S88: Versatz nur dieses Titels — eigene Formularzeile, ohne Titel gesperrt,
+    // folgt dem Titel und haelt eine Eingabe fest (QSettings/AppData abgeschottet)
+    auto* versatz = p.panel->findChild<QSpinBox*>(QStringLiteral("lyricsTrackOffset"));
+    auto* zuweisen = p.panel->findChild<QToolButton*>(QStringLiteral("lyricsAssignFile"));
+    REQUIRE(versatz != nullptr);
+    REQUIRE(zuweisen != nullptr);
+    CHECK_FALSE(versatz->isEnabled());  // Gegenprobe: es laeuft kein Titel
+    CHECK_FALSE(zuweisen->isEnabled());
+    TrackInfo titel;
+    titel.filePath = QStringLiteral("C:/Musik/lied.mp3");
+    titel.title = QStringLiteral("Lied S88 Versatz");
+    titel.artist = QStringLiteral("Wer");
+    lumi::audio::setzeLaufendenTitel(titel);
+    MultiEffectVisualizer::setSongtextTitelVersatz(250);  // wie beim Songwechsel
+    warte(700);
+    CHECK(versatz->isEnabled());
+    CHECK(zuweisen->isEnabled());
+    CHECK(versatz->value() == 250);
+    CHECK(lumi::audio::songtextTitelVersatzMs(titel) == 0);  // nachziehen schreibt nichts
+    versatz->setValue(-100);
+    CHECK(MultiEffectVisualizer::songtextTitelVersatzMs() == -100);
+    CHECK(lumi::audio::songtextTitelVersatzMs(titel) == -100);
+    schnappschuss(*versatz->parentWidget(), "lyrics_editor_s88");  // der Editor, nicht das Panel
+    versatz->setValue(0);  // raeumt den Eintrag wieder ab
+    CHECK(lumi::audio::songtextTitelVersatzMs(titel) == 0);
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+
     // aus dem Netz geholt: der Vermerk aus der Datei hat sein eigenes Feld
     s.herkunft = "LRCLIB id 7, fetched 2026-10-01";
     MultiEffectVisualizer::setSongtext(s);
@@ -2201,6 +2228,119 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
     CHECK(gefunden.laengeMs == 200000);
     CHECK(liste->rowCount() == 3);  // wie in der Datei: ohne die Leerzeile
     CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 3);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S88: Lyrics Sync kannte kein Rueckgaengig — ein verklopfter Einsatz liess
+// sich nur von Hand richten.
+TEST_CASE("PaletteUi S88: Lyrics Sync — Undo und Redo fuer jeden Schritt an den Zeiten")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    TrackInfo t;
+    t.filePath = tmp.path() + "/lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    const ly::Songtext text = ly::leseLrc("eins\nzwei\ndrei\n");
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+    panel.lade(t, text);
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    auto* undo = panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncUndo"));
+    auto* redo = panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncRedo"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(undo != nullptr);
+    REQUIRE(redo != nullptr);
+    const auto zeit = [liste](int r) { return liste->item(r, 0)->text(); };
+
+    // Gegenprobe: frisch geladen gibt es nichts zurueckzunehmen
+    CHECK_FALSE(undo->isEnabled());
+    CHECK_FALSE(redo->isEnabled());
+    CHECK_FALSE(panel.rueckgaengig());
+    CHECK_FALSE(panel.wiederholen());
+
+    // drei Schritte: klopfen, klopfen, die erste Zeile verschieben
+    REQUIRE(panel.tippe(10000));
+    REQUIRE(panel.tippe(20000));
+    liste->selectRow(0);
+    panel.verschiebe(300, false);
+    CHECK(zeit(0) == QStringLiteral("00:10.30"));
+    CHECK(zeit(1) == QStringLiteral("00:20.00"));
+    CHECK(undo->isEnabled());
+    CHECK_FALSE(redo->isEnabled());
+
+    // zurueck in umgekehrter Reihenfolge; die Markierung steht wieder dort,
+    // wo der Schritt begann — der Einsatz laesst sich gleich neu klopfen
+    undo->click();
+    CHECK(zeit(0) == QStringLiteral("00:10.00"));
+    CHECK(redo->isEnabled());
+    REQUIRE(panel.rueckgaengig());
+    CHECK(zeit(1).isEmpty());
+    CHECK(liste->currentRow() == 1);
+    CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 1);  // das Bild folgt
+    REQUIRE(panel.rueckgaengig());
+    CHECK(zeit(0).isEmpty());
+    CHECK(liste->currentRow() == 0);
+    CHECK_FALSE(panel.geaendert());  // wieder der geladene Stand
+    CHECK_FALSE(undo->isEnabled());
+    // ohne jede Zeit zeigt der Knoten wieder den Text, wie er geladen wurde
+    CHECK_FALSE(MultiEffectVisualizer::songtext().synchron);
+    CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 3);
+
+    // wieder vor: alle drei Schritte
+    REQUIRE(panel.wiederholen());
+    redo->click();
+    REQUIRE(panel.wiederholen());
+    CHECK(zeit(0) == QStringLiteral("00:10.30"));
+    CHECK(zeit(1) == QStringLiteral("00:20.00"));
+    CHECK(panel.geaendert());
+    CHECK_FALSE(redo->isEnabled());
+
+    // ein neuer Schritt nach dem Zuruecknehmen verwirft das Wiederholbare
+    REQUIRE(panel.rueckgaengig());
+    liste->selectRow(1);
+    panel.loescheZeit();
+    CHECK(zeit(1).isEmpty());
+    CHECK_FALSE(redo->isEnabled());
+    REQUIRE(panel.rueckgaengig());
+    CHECK(zeit(1) == QStringLiteral("00:20.00"));
+
+    // Zeit von Hand zaehlt als Schritt; ein Schritt, der nichts aendert, nicht
+    liste->item(1, 0)->setText(QStringLiteral("00:21.50"));
+    REQUIRE(panel.rueckgaengig());
+    CHECK(zeit(1) == QStringLiteral("00:20.00"));
+    liste->selectRow(2);  // „drei" hat keine Zeit: Verschieben aendert nichts
+    panel.verschiebe(100, false);
+    REQUIRE(panel.wiederholen());  // das Wiederholbare ist noch da
+    CHECK(zeit(1) == QStringLiteral("00:21.50"));
+
+    // Ctrl+Z / Ctrl+Y in der Liste
+    QKeyEvent z(QEvent::KeyPress, Qt::Key_Z, Qt::ControlModifier);
+    QCoreApplication::sendEvent(liste, &z);
+    CHECK(zeit(1) == QStringLiteral("00:20.00"));
+    QKeyEvent y(QEvent::KeyPress, Qt::Key_Y, Qt::ControlModifier);
+    QCoreApplication::sendEvent(liste, &y);
+    CHECK(zeit(1) == QStringLiteral("00:21.50"));
+
+    // Speichern und Laden leeren die Geschichte
+    REQUIRE(panel.tippe(30000));
+    REQUIRE(panel.speichere());
+    CHECK_FALSE(undo->isEnabled());
+    CHECK_FALSE(panel.rueckgaengig());
+    REQUIRE(panel.tippe(5000));
+    CHECK(undo->isEnabled());
+    panel.lade(t, text);
+    CHECK_FALSE(undo->isEnabled());
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     lumi::audio::setzeLaufendenTitel(TrackInfo{});

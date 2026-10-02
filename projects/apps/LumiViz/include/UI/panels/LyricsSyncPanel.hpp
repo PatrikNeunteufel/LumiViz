@@ -35,6 +35,9 @@
  * - **Track offset** (S88): verschiebt den ganzen Text dieses Titels, ohne
  *   Zeiten oder Datei anzufassen; liegt in `offsets.json`, wirkt sofort.
  *
+ * - **Undo / Redo** (S88): jeder Schritt an den Zeiten laesst sich
+ *   zuruecknehmen (Ctrl+Z / Ctrl+Y in der Liste), bis zum Laden oder Speichern.
+ *
  * Nicht in dieser Stufe: Wort-Zeiten, automatisches Verteilen.
  ****************************************************************************************
  */
@@ -52,6 +55,7 @@
 #include <cstdint>
 #include <memory>
 #include <thread>
+#include <vector>
 
 class QCheckBox;
 class QLabel;
@@ -109,6 +113,13 @@ public:
 
     [[nodiscard]] bool geaendert() const { return m_geaendert; }
 
+    /// S88: den letzten Schritt (Klopfen, Verschieben, Zeit loeschen, Zeit von
+    /// Hand) zuruecknehmen bzw. wieder herstellen — Knoepfe und Ctrl+Z /
+    /// Ctrl+Y in der Liste. Die Geschichte gilt fuer die Arbeitskopie: Laden
+    /// und Speichern leeren sie. false = nichts zurueckzunehmen.
+    bool rueckgaengig();
+    bool wiederholen();
+
     /// S88: Versatz, der nur fuer den Titel des Panels gilt (`offsets.json`,
     /// `audio::setzeSongtextTitelVersatz`) — sofort wirksam und gespeichert,
     /// unabhaengig von „Save". Ohne Titel geschieht nichts.
@@ -134,6 +145,23 @@ private:
     void zeigeTitelVersatz();
     /// Versatz, mit dem der Knoten rechnet: `[offset:]` der Datei + der des Titels.
     [[nodiscard]] std::int64_t versatz() const { return m_text.versatzMs + m_titelVersatzMs; }
+
+    /// Ein Stand der Arbeitskopie fuer Rueckgaengig (S88).
+    struct Stand
+    {
+        std::vector<lumi::multieffect::lyrics::Zeile> zeilen;
+        bool geaendert = false;
+        int reihe = -1;  ///< erste markierte Reihe — nach dem Zuruecknehmen wieder markiert
+    };
+    static constexpr std::size_t kGeschichteMax = 200;
+    [[nodiscard]] Stand jetzigerStand() const;
+    void merke(Stand vorher);           ///< den Stand VOR einer Aenderung festhalten
+    void setzeStand(const Stand& s);
+    std::vector<Stand> m_zurueck;
+    std::vector<Stand> m_vor;
+    lumi::multieffect::lyrics::Songtext m_geladen;  ///< der Text, wie er geladen wurde
+    QPushButton* m_undo = nullptr;
+    QPushButton* m_redo = nullptr;
 
     std::int64_t m_titelVersatzMs = 0;       ///< Versatz nur dieses Titels (S88)
     class QSpinBox* m_versatzFeld = nullptr;

@@ -2515,11 +2515,14 @@ Effekte danach. Rastern teilt er mit dem Lyrics-Knoten
 Trail. **Befund bei der Abstimmung:** `scale` 33 bewegt die Zeile unter einem
 Pixel je Frame, das Fadeout frisst die Vorderkante — sie schrumpft zum Strich;
 Blur taugt dabei nicht (ohne `roundUp` löscht er dünne Striche, mit `roundUp`
-bleibt ein Grauschleier über der ganzen Liste). **Nur synchroner Text;**
-unsynchron (Zeilenwechsel alle n Beats) kennt der Trail nicht. **Der Trail
-liest die gespeicherten Felder des Lyrics-Knotens**, nicht dessen
-skriptgesteuerte Werte — mit „Karaoke Bounce" steht die alte Zeile an der
-Grundposition. **Sichttest offen (Patrik):** Wirkung im Mix über laufendem
+bleibt ein Grauschleier über der ganzen Liste). **✅ S88: beide Reste des
+Trails gebaut** — er liest die Felder des Lyrics-Knotens, wie dieser sie
+zuletzt gezeichnet hat (nach seinem Skript, `LeafRuntime::lyricsEffektiv`;
+„Karaoke Bounce"/„Flip" nehmen die alte Zeile mit), und er kennt
+unsynchronen Text (die Zeile vor dem letzten Beat-Wechsel, Haltezeit auf der
+Sim-Uhr; braucht dort den eingeschalteten Lyrics-Knoten). Kein Vergleichslauf:
+der Pfad betrifft nur Lyrics/Lyrics Trail. **Sichttest offen (Patrik):** Trail
+mit „Karaoke Bounce" und mit unsynchronem Text. **Sichttest offen (Patrik):** Wirkung im Mix über laufendem
 Bild (geprüft nur auf Schwarz, an gerenderten Bildern).
 **Möglich, nicht gebaut:** falsche Texte an den Dienst melden (`POST
 /api/flag`, verlangt je Meldung einen Rechen-Nachweis wie `/api/publish`);
@@ -2531,19 +2534,30 @@ auf ausdrücklichen Wunsch, es geht etwas hinaus.
 Doppelklick (1,5 s Vorlauf), Vorschau sofort am Knoten, Speichern als `.lrc`
 neben der Quelle — nur wenn jede Textzeile eine Zeit hat (der LRC-Leser
 verwirft Zeilen ohne Zeit). Ungespeicherte Arbeit bleibt beim Titelwechsel
-stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen, Rückgängig.
+stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen.
+**✅ S88 gebaut: Undo / Redo** (Knöpfe, Ctrl+Z / Ctrl+Y in der Liste; bis
+200 Schritte, Speichern und Laden leeren die Geschichte; der Versatz je Titel
+gehört nicht dazu). **Sichttest offen (Patrik):** ob Ctrl+Z in der Liste beim
+Panel ankommt und nicht beim Undo der Effektkette (im Test nur als direkt
+zugestellter Tastendruck geprüft).
 **Sichttest offen (Patrik):** das Panel im Betrieb — ob Enter/T beim Klopfen
 ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
-**Offen:** Wort-Zeiten des Dienstes (`hasWordSync`, Feld `lyricsfile`)
-werden nicht gelesen.
+**Offen, zurückgestellt (Freigabe Patrik S88):** Wort-Zeiten des Dienstes —
+laut lrclib.net/docs (gelesen 2026-10-02) stehen sie nicht im LRC-Text,
+sondern im Feld `lyricsfile`, einem YAML-Dokument mit `lines[].words`
+(`hasWordSync`); das Format beschreibt die Seite nicht, einen YAML-Leser hat
+LumiViz nicht. Erst Formatbeschreibung oder Beispieldatensätze, dann Leser.
+**S88 Lyrics-Editor:** Knöpfe in zwei Reihen (Alternatives…/Wrong lyrics,
+Lyrics file…/Open folder), „Offset for this track" als eigene Formularzeile
+(Wunsch Patrik nach Schnappschuss).
 **✅ S88 gebaut: Knopf „Lyrics file…"** (Entscheid Patrik: kopieren) —
 `audio::weiseSongtextZu`: die gewählte `.lrc`/`.txt` wird unverändert in den
 Benutzerordner kopiert (`<Interpret> - <Titel>`, Endung nach Zeitmarken),
 ersetzt dort eine Datei gleichen Namens; die mit der anderen Endung weicht
 nur, wenn LumiViz sie geholt hat. Die Suchreihenfolge bleibt — gewinnt eine
 Quelle mit Vorrang (eingebettet synchron, `.lrc` neben dem Song, eigene
-`.lrc` im Benutzerordner), meldet der Knopf das. **Offen dazu:** ob eine
-zugewiesene Datei Vorrang vor allem bekommen soll (Entscheid Patrik); die
+`.lrc` im Benutzerordner), meldet der Knopf das. Vorrang für zugewiesene
+Dateien: **Entscheid Patrik a (S88) — nein, Reihenfolge bleibt.** Die
 Kopie trägt kein `[length:]`, gilt also für alle Fassungen des Namens. Der
 Knopf selbst (Dateidialog, Meldungen) hat keinen Test. **Sichttest offen
 (Patrik).**

@@ -811,6 +811,107 @@ TEST_CASE("Lyrics Trail S87: die eben beendete Zeile, fuer die Haltezeit, an der
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S88: zwei Reste des Trails. (1) Er las die GESPEICHERTEN Felder des
+// Lyrics-Knotens — mit einem Skript („Karaoke Bounce") stand die alte Zeile an
+// der Grundposition. (2) Unsynchronen Text kannte er nicht; dort rueckt der
+// Lyrics-Knoten alle N Beats eine Zeile weiter.
+TEST_CASE("Lyrics Trail S88: folgt den Skriptwerten des Lyrics-Knotens und kennt unsynchronen Text")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    struct Bild
+    {
+        int hell = 0;
+        double y = 0.0;
+    };
+    // Die Zeilen des Lyrics-Knotens sind dunkel, der Trail zeichnet in eigener,
+    // heller Farbe — helle Pixel gehoeren damit allein dem Trail.
+    const auto zeichne = [](LyricsParams lp, bool trailAn, int frames, int beatAlle) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.color = 0x202020;
+        lp.colorNext = 0x202020;
+        lyr.params = lp;
+        ChainNode trail;
+        LyricsTrailParams tp;
+        tp.yShift = 0;
+        tp.useOwnColor = true;
+        tp.color = 0xFFFFFF;
+        trail.params = tp;  // Haltezeit: Vorgabe 300 ms
+        trail.enabled = trailAn;
+        root.children = {clear, lyr, trail};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(beatAlle);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < frames; ++i) vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        Bild b;
+        double summe = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    ++b.hell;
+                    summe += y;
+                }
+        if (b.hell > 0) b.y = summe / b.hell;
+        return b;
+    };
+
+    // --- (1) Skriptwerte: 100 ms nach dem Zeilenwechsel
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(13100);
+    LyricsParams schlicht;
+    const Bild unten = zeichne(schlicht, true, 2, 100000);
+    REQUIRE(unten.hell > 0);
+    CHECK(zeichne(schlicht, false, 2, 100000).hell == 0);  // Gegenprobe: hell ist nur der Trail
+    LyricsParams skript;
+    skript.initCode = "yshift = -40;";  // das Skript hebt die Zeile um 40 % der Hoehe
+    const Bild oben = zeichne(skript, true, 2, 100000);
+    REQUIRE(oben.hell > 0);
+    CHECK(oben.y < unten.y - 60.0);  // 40 % von 240 px = 96 px — der Trail geht mit
+    CHECK(oben.hell == doctest::Approx(unten.hell).epsilon(0.05));  // dieselbe Zeile
+
+    // --- (2) unsynchron: Beat auf Frame 0 rueckt von „MMMM" zu „IIII"
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("MMMM\nIIII\nIIII\n"));
+    LyricsParams block;
+    block.showSyncMark = false;
+    block.beatsPerLine = 1;
+    const Bild alt = zeichne(block, true, 2, 100000);
+    CHECK(alt.hell > 0);  // die eben beendete Zeile steht da
+    CHECK(alt.hell == doctest::Approx(unten.hell).epsilon(0.05));  // es ist „MMMM"
+    CHECK(alt.y == doctest::Approx(unten.y).epsilon(0.02));        // an derselben Stelle
+    CHECK(zeichne(block, false, 2, 100000).hell == 0);
+    // die Haltezeit (300 ms = 18 Frames) ist um: nichts mehr
+    CHECK(zeichne(block, true, 30, 100000).hell == 0);
+    // Gegenprobe: ohne Weiterruecken (beats per line 0) gibt es keinen Wechsel
+    LyricsParams steht = block;
+    steht.beatsPerLine = 0;
+    CHECK(zeichne(steht, true, 2, 100000).hell == 0);
+    // die Marke „(not synced)" verschiebt die Zeile — der Trail rechnet sie ein
+    LyricsParams marke = block;
+    marke.showSyncMark = true;
+    marke.vAlign = 0;  // oben: jede Reihe darueber schiebt nach unten
+    LyricsParams ohneMarke = marke;
+    ohneMarke.showSyncMark = false;
+    CHECK(zeichne(marke, true, 2, 100000).y > zeichne(ohneMarke, true, 2, 100000).y + 5.0);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // Wunsch Patrik S87: der Trail in einer Effect List, die ihr Bild behaelt —
 // Blitter Feedback zieht die alte Zeile nach hinten (zur Bildmitte, kleiner),
 // Fadeout laesst sie verblassen. Genau diese Liste steht in

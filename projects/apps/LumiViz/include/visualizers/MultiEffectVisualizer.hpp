@@ -444,6 +444,14 @@ private:
         int lyricsZeile = 0;
         int lyricsBeats = 0;
         uint64_t lyricsStand = 0;
+        /// S88, fuer den Lyrics Trail: die Felder des Lyrics-Knotens, wie er
+        /// sie zuletzt wirklich gezeichnet hat (NACH seinem Skript — „Karaoke
+        /// Bounce" bewegt die Zeile), und beim unsynchronen Block die Zeile vor
+        /// dem letzten Wechsel samt dessen Zeitpunkt auf der Sim-Uhr (`m_time`).
+        lumi::multieffect::LyricsParams lyricsEffektiv;
+        bool lyricsEffektivDa = false;
+        int lyricsVorZeile = -1;         ///< -1 = seit dem Titelwechsel kein Zeilenwechsel
+        float lyricsWechselZeit = 0.0f;
 
         // AVI (r_avi): VfW stream handles (opaque void* — vfw.h stays in the .cpp)
         void* aviFile = nullptr;       ///< PAVIFILE

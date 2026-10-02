@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.37.0
+> **Version:** 1.39.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -518,7 +518,7 @@ gefunden wurde:
 | **Preview lines** | So viele kommende Zeilen stehen unter der laufenden (0–4), in **Color upcoming**. |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
 | **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
-| **Offset for this track** (bei der Tabelle oben) | Derselbe Versatz, aber **nur für den laufenden Titel**. LumiViz merkt ihn sich je Titel (Interpret, Titel, Album, Dauer) in `offsets.json` im Benutzerordner der Songtexte; die Songtext-Datei wird dafür nicht angefasst, und er gilt auch für eingebetteten Text. Er zählt zu **Timing offset (ms)** und zu `[offset:…]` dazu. Dasselbe Feld steht als **Track offset** im Panel Lyrics Sync. |
+| **Offset for this track** (eigene Zeile unter der Tabelle) | Derselbe Versatz, aber **nur für den laufenden Titel**. LumiViz merkt ihn sich je Titel (Interpret, Titel, Album, Dauer) in `offsets.json` im Benutzerordner der Songtexte; die Songtext-Datei wird dafür nicht angefasst, und er gilt auch für eingebetteten Text. Er zählt zu **Timing offset (ms)** und zu `[offset:…]` dazu. Dasselbe Feld steht als **Track offset** im Panel Lyrics Sync. |
 | **Unsynced: beats per line** | Unsynchroner Text steht als Block; mit einem Wert > 0 rückt er alle N Beats eine Zeile weiter. |
 | **Mark unsynced lyrics** | Schreibt „(not synced)" über einen unsynchronen Text — er läuft nicht zum Gesang. |
 
@@ -551,7 +551,9 @@ wie der Song, `.lrc` für synchronen, `.txt` für unsynchronen Text; ist der
 Ordner schreibgeschützt, landet der Fund im Benutzerordner). Die Rechte an den
 Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
 
-**Falscher Text?** Unter der Tabelle im Editor stehen drei Knöpfe:
+**Falscher Text?** Unter der Tabelle im Editor stehen die Knöpfe in zwei
+Reihen — oben **Alternatives…** und **Wrong lyrics**, darunter **Lyrics
+file…** und **Open folder** (öffnet den Ordner der gezeigten Datei):
 
 - **Alternatives…** sucht bei lrclib.net nach anderen Fassungen. Titel und
   Interpret sind aus den Tags vorbelegt und lassen sich ändern — nützlich bei
@@ -623,6 +625,7 @@ ein Strich auf dem Einsatz sitzt.
 | Klick in die Wellenform | springt an diese Stelle |
 | **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
 | **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
+| **Undo** / **Redo** (Ctrl+Z / Ctrl+Y in der Liste) | nimmt den letzten Schritt an den Zeiten zurück (Klopfen, Verschieben, Zeit löschen, Zeit von Hand) bzw. stellt ihn wieder her. Nach **Undo** ist wieder die Zeile markiert, an der der Schritt begann — ein verklopfter Einsatz lässt sich gleich neu klopfen. **Save** und **Reload** leeren die Geschichte |
 | **Track offset** | verschiebt den **ganzen** Text dieses Titels (positiv = früher), ohne die Zeiten der Zeilen zu ändern; wirkt sofort und wird je Titel gemerkt — **Save** ist dafür nicht nötig. Sitzt ein fertiger Text gleichmäßig daneben, ist das der kürzeste Weg |
 
 Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
@@ -654,7 +657,13 @@ Lyrics                 die laufende Zeile, wie gewohnt
 | **Own color** / **Color** | eigene Farbe statt der, die die Zeile hatte |
 | **Blend** | wie beim Lyrics-Knoten |
 
-Der Trail arbeitet nur mit synchronem Text. Eine zu langsame Drift (Blitter
+Der Trail steht dort, wo der Lyrics-Knoten die Zeile **wirklich gezeichnet**
+hat — auch wenn ein Skript sie bewegt (etwa die Voreinstellungen *Karaoke
+Bounce* und *Flip*). Bei **unsynchronem Text** gibt es keine Zeiten; dort
+zeichnet der Trail die Zeile, die der Lyrics-Knoten eben verlassen hat, wenn
+dieser mit **Unsynced: beats per line** weiterrückt. Dafür muss der
+Lyrics-Knoten eingeschaltet sein (bei synchronem Text genügt es, dass es ihn
+gibt). Eine zu langsame Drift (Blitter
 Feedback **scale** 33) lässt die Zeile zu einem Strich schrumpfen, statt sie
 wegzutragen — 35 und mehr wirkt. Ein fertiges Beispiel steht in
 `asset/effectchain/20261001.mix.lvfx2` (Liste „Lyrics Trail List").
@@ -1301,6 +1310,8 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.39.0 | 2026-10-02 | Session 88. §11 Lyrics Trail: folgt den **skriptgesteuerten** Werten des Lyrics-Knotens (Karaoke Bounce, Flip) und arbeitet auch mit **unsynchronem Text** (Wechsel alle N Beats). §11 Lyrics-Editor: Knöpfe in zwei Reihen, **Offset for this track** als eigene Zeile |
+| 1.38.0 | 2026-10-02 | Session 88. §11 Lyrics Sync: NEU **Undo** / **Redo** (Ctrl+Z / Ctrl+Y) für jeden Schritt an den Zeiten |
 | 1.37.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU Knopf **Lyrics file…** — eine vorhandene `.lrc`/`.txt` dem laufenden Titel zuweisen (wird in den Benutzerordner kopiert) |
 | 1.36.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Versatz je Titel** — Feld **Offset for this track** im Editor des Lyrics-Knotens und **Track offset** im Panel Lyrics Sync; je Titel gemerkt (`offsets.json`), ohne die Songtext-Datei anzufassen |
 | 1.35.0 | 2026-10-02 | Session 88. §2 Tag View zeigt den **Songtext** des laufenden Titels (Quelle, synchron oder nicht, Zeilenzahl, Text) |
