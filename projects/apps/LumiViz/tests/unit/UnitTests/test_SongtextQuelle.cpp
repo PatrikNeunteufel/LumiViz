@@ -15,8 +15,11 @@
 #include "audio/SongtextOnline.hpp"
 #include "audio/SongtextQuelle.hpp"
 
+#include <QCoreApplication>
+#include <QDate>
 #include <QDir>
 #include <QFile>
+#include <QSettings>
 #include <QTemporaryDir>
 
 #include <vector>
@@ -603,5 +606,134 @@ TEST_CASE("SongtextOnline: 404 und instrumental = nicht gefunden; Dauer-503 gibt
     online.antwort(t, 503, 1, QByteArray());
     CHECK(stand == SongtextAbruf::Fehlgeschlagen);
     CHECK(funde == 0);
-    CHECK(QDir(tmp.path()).entryList(QDir::Files).isEmpty());
+    // kein Songtext gespeichert — nur der Merker „online nichts gefunden" (S88)
+    CHECK(QDir(tmp.path()).entryList(QDir::Files) == QStringList{"notfound.json"});
+}
+
+// S88: bis S87 loeste ein Titel ohne Text bei jedem Abspielen eine Anfrage aus.
+TEST_CASE("SongtextOnline: Merker — nichts gefunden wird eine Weile nicht wieder gefragt")
+{
+    using lumi::audio::SongtextAbruf;
+    using lumi::audio::songtextFehlanzeige;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    const QDate tag(2026, 10, 2);
+    TrackInfo t;
+    t.filePath = tmp.path() + "/x.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.album = "Platte";
+    t.durationMs = 200000;
+
+    // Gegenprobe: ohne Merker gilt nichts, und eine Datei gibt es nicht
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer, tag));
+    CHECK_FALSE(QFile::exists(nutzer + "/notfound.json"));
+
+    // nicht gefunden: 7 Tage; Schreibweise und Leerraum zaehlen nicht
+    lumi::audio::merkeSongtextFehlanzeige(t, false, nutzer, tag);
+    CHECK(songtextFehlanzeige(t, nutzer, tag));
+    TrackInfo gross = t;
+    gross.title = " LIED ";
+    CHECK(songtextFehlanzeige(gross, nutzer, tag));
+    CHECK(songtextFehlanzeige(t, nutzer, tag.addDays(6)));
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer, tag.addDays(7)));
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer, tag.addDays(-1)));  // Uhr zurueckgestellt
+    // eine andere Fassung (Dauer, Album) ist ein anderer Titel
+    TrackInfo andere = t;
+    andere.durationMs = 260000;
+    CHECK_FALSE(songtextFehlanzeige(andere, nutzer, tag));
+    andere = t;
+    andere.album = "Andere Platte";
+    CHECK_FALSE(songtextFehlanzeige(andere, nutzer, tag));
+
+    // instrumental: 30 Tage; der neue Merker ersetzt den alten
+    lumi::audio::merkeSongtextFehlanzeige(t, true, nutzer, tag);
+    CHECK(songtextFehlanzeige(t, nutzer, tag.addDays(29)));
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer, tag.addDays(30)));
+
+    // Abgelaufenes faellt beim naechsten Schreiben aus der Datei
+    TrackInfo spaeter = t;
+    spaeter.title = "Spaeter";
+    lumi::audio::merkeSongtextFehlanzeige(spaeter, false, nutzer, tag.addDays(40));
+    CHECK(lumi::audio::vergissSongtextFehlanzeigen(nutzer, tag.addDays(40)) == 1);
+    CHECK_FALSE(QFile::exists(nutzer + "/notfound.json"));
+    CHECK_FALSE(songtextFehlanzeige(spaeter, nutzer, tag.addDays(40)));
+
+    // der Abruf setzt den Merker selbst: 404, instrumental, keine passende Dauer
+    lumi::audio::SongtextOnline online;
+    online.setBenutzerOrdner(nutzer);
+    SongtextAbruf stand = SongtextAbruf::Ruhe;
+    QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                     [&](const QString&, SongtextAbruf s) { stand = s; });
+    online.antwort(t, 404, -1, QByteArray());
+    CHECK(songtextFehlanzeige(t, nutzer));
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer, QDate::currentDate().addDays(7)));
+    (void)lumi::audio::vergissSongtextFehlanzeigen(nutzer);
+    online.antwort(t, 200, -1, R"({"instrumental":true,"plainLyrics":null,"syncedLyrics":null})");
+    CHECK(songtextFehlanzeige(t, nutzer, QDate::currentDate().addDays(29)));
+    (void)lumi::audio::vergissSongtextFehlanzeigen(nutzer);
+    TrackInfo zusatz = t;
+    zusatz.title = "Lied (Video Version)";
+    online.suche(TrackInfo{});
+    online.antwort(zusatz, 404, -1, QByteArray());  // -> zweite Stufe
+    CHECK_FALSE(songtextFehlanzeige(zusatz, nutzer));  // noch nicht entschieden
+    online.antwort(zusatz, 200, -1, "[]");
+    CHECK(stand == SongtextAbruf::NichtGefunden);
+    CHECK(songtextFehlanzeige(zusatz, nutzer));
+
+    // kein Merker bei „beschaeftigt" und bei Netzfehlern — das sagt nichts ueber den Titel
+    (void)lumi::audio::vergissSongtextFehlanzeigen(nutzer);
+    online.suche(TrackInfo{});
+    online.antwort(t, 503, 1, QByteArray());
+    online.antwort(t, 0, -1, QByteArray());
+    CHECK(stand == SongtextAbruf::Fehlgeschlagen);
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer));
+
+    // eine Freigabe in der Sperrliste vergisst die Merker (sie soll sofort wirken)
+    lumi::audio::sperreSongtext(7, "Wer - Lied", nutzer);
+    lumi::audio::merkeSongtextFehlanzeige(t, false, nutzer);
+    lumi::audio::entsperreSongtext(7, nutzer);
+    CHECK_FALSE(songtextFehlanzeige(t, nutzer));
+}
+
+// Der Weg ueber `suche` braucht die Einstellung „Search lyrics online" — in
+// abgeschotteten QSettings, die echten bleiben unberuehrt.
+TEST_CASE("SongtextOnline: Merker — suche() fragt den gemerkten Titel nicht an")
+{
+    using lumi::audio::SongtextAbruf;
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("SongtextMerker"));
+    QSettings().clear();
+    QSettings().setValue(QStringLiteral("lyrics/onlineSearch"), true);
+    {
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        TrackInfo t;
+        t.filePath = tmp.path() + "/x.mp3";
+        t.title = "Lied";
+        t.artist = "Wer";
+
+        lumi::audio::SongtextOnline online;
+        online.setBenutzerOrdner(tmp.path());
+        SongtextAbruf stand = SongtextAbruf::Ruhe;
+        QObject::connect(&online, &lumi::audio::SongtextOnline::zustand, &online,
+                         [&](const QString&, SongtextAbruf s) { stand = s; });
+
+        // Gegenprobe: ohne Merker setzt suche() die Anfrage an (Atempause laeuft)
+        online.suche(t);
+        CHECK(stand == SongtextAbruf::Laedt);
+        online.suche(TrackInfo{});  // abbrechen, bevor etwas hinausgeht
+        CHECK(stand == SongtextAbruf::Ruhe);
+
+        lumi::audio::merkeSongtextFehlanzeige(t, false, tmp.path());
+        online.suche(t);
+        CHECK(stand == SongtextAbruf::NichtGefunden);
+        online.suche(TrackInfo{});
+    }
+    QSettings().clear();
+    QCoreApplication::setOrganizationName(org);
+    QCoreApplication::setApplicationName(app);
 }

@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.33.0
-> **Datum:** 2026-10-01
+> **Version:** 1.34.0
+> **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -573,6 +573,18 @@ Die Sperrliste steht unter **Settings → Audio → Blocked lyrics** (**Show…*
 **Unblock** gibt einen Eintrag wieder frei. Sie liegt als `blocked.json` im
 Benutzerordner der Songtexte.
 
+**Kein Text beim Dienst?** Hat lrclib.net zu einem Titel nichts — unbekannt,
+ohne Text eingetragen oder keine Fassung mit passender Dauer —, merkt sich
+LumiViz das und fragt für diesen Titel **7 Tage** nicht wieder (bei als
+instrumental eingetragenen Titeln **30 Tage**). In der Tabelle steht dann
+gleich *No lyrics found — not online either.*, ohne dass etwas hinausgeht.
+Danach wird von selbst wieder gefragt, denn der Dienst trägt fehlende Titel
+nach. Sofort wieder fragen: **Settings → Audio → Lyrics not found → Ask
+again** vergisst alle gemerkten Titel; dasselbe geschieht, wenn du in der
+Sperrliste einen Eintrag freigibst. **Alternatives…** sucht immer, unabhängig
+davon. War der Dienst nur beschäftigt oder das Netz weg, wird nichts gemerkt.
+Die Merker liegen als `notfound.json` im Benutzerordner der Songtexte.
+
 **Nachsynchronisieren: Panel „Lyrics Sync"** (View → Panels). Macht aus einem
 unsynchronen Text einen synchronen, oder stellt einen synchronen nach. Das
 Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**
@@ -1037,6 +1049,19 @@ die oberste Ebene der Kette.
   `switch = n` (Gruppe n) oder `nextgroup = 1` (nächste). Beide gelten nur
   für den Frame, in dem sie gesetzt werden. Beispiel alle 32 Beats:
   `nextgroup = above(beatcount, 31);`
+- **Voreinstellungen** (Zeile *Preset* oben im Editor): sechs fertige
+  Wechsel-Regeln. Sie setzen nur Wechselart und Skripte — die **Gruppenliste
+  und die Startgruppe bleiben, wie sie sind**. Die Zahlen stehen als Variablen
+  im Init-Feld und lassen sich dort ändern.
+
+  | Voreinstellung | Wechselt … | Stellgrößen (Init) |
+  |---|---|---|
+  | **Random Runtime** | nach einer zufälligen Zahl Beats, zufällige Reihenfolge; die Zahl wird je Song neu gewürfelt | `min_runtime` 5, `max_runtime` 35 |
+  | **Random Runtime per Group** | wie oben, aber jede Gruppe würfelt ihre eigene Laufzeit | `min_runtime` 5, `max_runtime` 35 |
+  | **Random Seconds** | nach einer zufälligen Zeit in Sekunden, je Gruppe neu gewürfelt, zufällige Reihenfolge | `min_seconds` 10, `max_seconds` 40 |
+  | **Every 16 Beats** | alle 16 Beats (vier Takte im 4/4), in Listenreihenfolge | `beats_per_group` 16 |
+  | **Bass Drop** | bei einem Bass-Schlag, der das laufende Mittel um den Faktor `kick` übertrifft — frühestens nach `min_seconds`, spätestens nach `max_seconds`; zufällige Reihenfolge | `min_seconds` 8, `max_seconds` 60, `kick` 1.8 |
+  | **One per Song** | bei jedem Songwechsel (**Next on song change**), zufällige Reihenfolge; kein Skript | — |
 - **Gespeichert wird, was du eingestellt hast:** Der Switcher schaltet nur
   zur Laufzeit; die Augen der Gruppen in der Datei bleiben unverändert.
   Solange ein Switcher eine Gruppe führt, entscheidet er — ihr Auge und
@@ -1258,6 +1283,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.34.0 | 2026-10-02 | Session 88. §11 Host Switcher: die sechs **Voreinstellungen** (Random Runtime, Random Runtime per Group, Random Seconds, Every 16 Beats, Bass Drop, One per Song) mit ihren Stellgrößen. §11 Lyrics: Titel ohne Text beim Dienst werden **gemerkt** und 7 Tage (instrumental 30) nicht wieder gefragt; **Settings → Audio → Lyrics not found → Ask again** |
 | 1.33.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Knoten **Lyrics Trail** (die eben beendete Zeile noch einmal zeichnen, damit Effekte sie verwehen lassen; Muster mit Effect List, Blitter Feedback und Fadeout) |
 | 1.32.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Panel **Lyrics Sync** (Zeiten je Zeile mitklopfen, nachstellen, vorhören, als `.lrc` speichern) |
 | 1.31.0 | 2026-10-01 | Session 87. §11 Lyrics: Angaben im Editor als **Tabelle** mit Status (*…downloading…*); Online-Abruf **wiederholt sich von selbst**, wenn der Dienst beschäftigt ist; zehn neue Voreinstellungen, darunter bewegte Karaoke-Varianten; **Alternatives…** (andere Fassung suchen, eigene Suchbegriffe), **Wrong lyrics** mit Sperrliste (Settings → Audio); wiederholte Zeilen blenden vor dem Einsatz; Fassungen eines Songs getrennt nach Dauer. Playlist: Dauer je Titel; Shuffle, Loop und Repeat bleiben über den Neustart erhalten |

@@ -13,7 +13,9 @@
 - **Alternatives…:** andere Fassungen eines Songtexts bei lrclib.net suchen —
   mit eigenen Suchbegriffen. Die Liste zeigt Album, Dauer, Zeilenzahl; bis zu
   drei Fassungen stehen nebeneinander, mit Zeitmarken, und ein Balken zeigt,
-  wo der Song gerade ist.
+  wo der Song gerade ist. Oben stehen Titel, Länge und Spielzeit; wechselt
+  der Song, bleibt das Fenster beim bisherigen Titel, nennt den neuen und
+  bietet **Switch to the playing track** an.
 - **Wrong lyrics:** verwirft den gezeigten Text und sperrt den Eintrag. Die
   Sperrliste steht unter Settings → Audio → *Blocked lyrics*.
 - **Panel „Lyrics Sync"** (View → Panels): Zeiten je Zeile mitklopfen (Tap,

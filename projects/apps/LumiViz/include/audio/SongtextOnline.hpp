@@ -171,6 +171,39 @@ bool verwerfeSongtext(const TrackInfo& track, const std::string& herkunft,
                       const std::string& datei,
                       const QString& benutzerOrdner = songtextOrdner());
 
+// --- S88: Merker „online nichts gefunden" ------------------------------------
+//
+// Bis S87 loeste jeder Titel ohne Text bei JEDEM Abspielen eine Anfrage aus
+// (404, instrumental, keine Fassung mit passender Dauer). Der Merker haelt das
+// Ergebnis fest; solange er gilt, geht fuer diesen Titel nichts hinaus. Er
+// laeuft ab, weil der Dienst fehlende Titel nachtragen kann (lrclib.net/docs
+// zu 404, gelesen 2026-10-01). Eine Freigabe in der Sperrliste soll sofort
+// wirken: `entsperreSongtext` vergisst deshalb alle Merker (der gesperrte
+// Eintrag kann der Grund fuer „nichts Passendes" gewesen sein).
+// „Alternatives…" sucht unabhaengig vom Merker.
+
+/// Wie lange ein Merker gilt (Tage): „nicht gefunden" kurz, „instrumental"
+/// laenger — das ist eine Aussage des Dienstes, kein Fehlen.
+inline constexpr int kSongtextMerkerTageNichtGefunden = 7;
+inline constexpr int kSongtextMerkerTageInstrumental = 30;
+
+/// Gilt fuer `track` ein Merker (`notfound.json` im Benutzerordner der
+/// Songtexte)? Schluessel: Interpret, Titel, Album und Dauer in Sekunden —
+/// dieselben Angaben, die die Anfrage traegt.
+[[nodiscard]] bool songtextFehlanzeige(const TrackInfo& track,
+                                       const QString& benutzerOrdner = songtextOrdner(),
+                                       const QDate& heute = QDate::currentDate());
+
+/// Merker fuer `track` setzen (ersetzt einen frueheren); abgelaufene Eintraege
+/// fallen dabei aus der Datei.
+void merkeSongtextFehlanzeige(const TrackInfo& track, bool instrumental,
+                              const QString& benutzerOrdner = songtextOrdner(),
+                              const QDate& heute = QDate::currentDate());
+
+/// Alle Merker vergessen (Settings → Audio); liefert, wie viele noch galten.
+int vergissSongtextFehlanzeigen(const QString& benutzerOrdner = songtextOrdner(),
+                                const QDate& heute = QDate::currentDate());
+
 /// Der laufende Titel, wie ihn der Player zuletzt gemeldet hat — fuer
 /// Werkzeuge der Oberflaeche (Alternativen, Nachsynchronisieren). Thread-sicher.
 void setzeLaufendenTitel(const TrackInfo& track);
@@ -194,7 +227,9 @@ using SongtextAbruf = lumi::multieffect::lyrics::Abruf;
  * Titel von selbst wieder gefragt (`songtextWartezeitMs`). Kennt der Dienst
  * den Titel nicht (404) und traegt der Zusaetze („(Video Version)",
  * „feat. …"), folgt eine Suche ohne sie; uebernommen wird daraus nur ein
- * Eintrag, dessen Dauer passt (`waehleKandidat`). Lebt im GUI-Thread.
+ * Eintrag, dessen Dauer passt (`waehleKandidat`). Ein Titel, zu dem der Dienst
+ * nichts hatte, wird gemerkt und fuer eine Weile nicht wieder gefragt
+ * (`songtextFehlanzeige`, S88). Lebt im GUI-Thread.
  */
 class SongtextOnline : public QObject
 {

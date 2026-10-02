@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.80.0
-> **Datum:** 2026-09-30 (Session 84)
+> **Version:** 1.81.0
+> **Datum:** 2026-10-02 (Session 88)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2537,8 +2537,16 @@ ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
 **Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
 `[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
 den gefundenen Songtext; Wort-Zeiten des Dienstes (`hasWordSync`, Feld
-`lyricsfile`) werden nicht gelesen; Titel ohne Text (instrumental) und 404
-werden bei jedem Abspielen neu angefragt (kein Merker).
+`lyricsfile`) werden nicht gelesen.
+**✅ S88 gebaut: Merker „online nichts gefunden"** (`notfound.json` im
+Benutzerordner, `songtextFehlanzeige`/`merkeSongtextFehlanzeige`): 404,
+Eintrag ohne Text und „keine Fassung mit passender Dauer" werden 7 Tage nicht
+wieder angefragt, instrumental 30 Tage; Schlüssel = Interpret, Titel, Album,
+Dauer in Sekunden. Kein Merker bei 429/503 und Netzfehlern. Zurücksetzen:
+Settings → Audio → *Lyrics not found* → **Ask again**; eine Freigabe in der
+Sperrliste vergisst die Merker ebenfalls. Die Fristen (7/30 Tage) sind von
+Claude gesetzt, nicht von Patrik entschieden. **Sichttest offen (Patrik):**
+zweites Abspielen eines Titels ohne Text → Log „not asked again", Knopf.
 Die Dokumentation sagt nichts zur Lizenz der Texte.
 **Datei-Icons (S86, Wunsch Patrik):** `.lrc`-Icon erzeugt; alle Icons liegen
 als `.ico` in `asset/img/logo/icons/` (Zuordnung Endung → Icon und Bauskript

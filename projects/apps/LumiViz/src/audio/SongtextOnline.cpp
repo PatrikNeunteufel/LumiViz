@@ -24,6 +24,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSettings>
+#include <QStringList>
 #include <QUrlQuery>
 
 #include <algorithm>
@@ -291,6 +292,9 @@ void entsperreSongtext(qint64 id, const QString& benutzerOrdner)
     if (neuEnde == liste.end()) return;
     liste.erase(neuEnde, liste.end());
     schreibeSperrliste(liste, benutzerOrdner);
+    // S88: der freigegebene Eintrag kann der Grund fuer einen Merker „nichts
+    // Passendes" gewesen sein — die Freigabe soll sofort wirken
+    (void)vergissSongtextFehlanzeigen(benutzerOrdner);
 }
 
 bool verwerfeSongtext(const TrackInfo& track, const std::string& herkunft,
@@ -301,6 +305,111 @@ bool verwerfeSongtext(const TrackInfo& track, const std::string& herkunft,
     if (!pfad.isEmpty() && vonLumiVizGeholt(pfad)) QFile::remove(pfad);
     sperreSongtext(lrclibKennung(herkunft), songtextName(track), benutzerOrdner);
     return true;
+}
+
+// --- S88: Merker „online nichts gefunden" ------------------------------------
+
+namespace
+{
+struct Merker
+{
+    QString schluessel;
+    QString titel;  ///< `<Interpret> - <Titel>`, nur zum Nachlesen in der Datei
+    bool instrumental = false;
+    QDate datum;
+};
+
+QString merkerDatei(const QString& benutzerOrdner)
+{
+    return benutzerOrdner + QStringLiteral("/notfound.json");
+}
+
+/// Dieselben Angaben, die die Anfrage traegt (`lrclibUrl`)
+QString merkerSchluessel(const TrackInfo& track)
+{
+    return QStringList{track.artist.simplified().toLower(), track.title.simplified().toLower(),
+                       track.album.simplified().toLower(),
+                       QString::number((track.durationMs + 500) / 1000)}
+        .join(QLatin1Char('|'));
+}
+
+bool merkerGilt(const Merker& m, const QDate& heute)
+{
+    if (!m.datum.isValid()) return false;
+    const qint64 alter = m.datum.daysTo(heute);  // < 0: Uhr zurueckgestellt — gilt nicht
+    return alter >= 0 && alter < (m.instrumental ? kSongtextMerkerTageInstrumental
+                                                 : kSongtextMerkerTageNichtGefunden);
+}
+
+std::vector<Merker> leseMerker(const QString& benutzerOrdner)
+{
+    std::vector<Merker> out;
+    QFile f(merkerDatei(benutzerOrdner));
+    if (!f.open(QIODevice::ReadOnly)) return out;
+    for (const QJsonValue& v : QJsonDocument::fromJson(f.readAll()).array())
+    {
+        const QJsonObject o = v.toObject();
+        Merker m;
+        m.schluessel = o.value(QStringLiteral("key")).toString();
+        m.titel = o.value(QStringLiteral("title")).toString();
+        m.instrumental = o.value(QStringLiteral("reason")).toString() ==
+                         QStringLiteral("instrumental");
+        m.datum = QDate::fromString(o.value(QStringLiteral("date")).toString(), Qt::ISODate);
+        if (!m.schluessel.isEmpty()) out.push_back(std::move(m));
+    }
+    return out;
+}
+
+void schreibeMerker(const std::vector<Merker>& liste, const QString& benutzerOrdner)
+{
+    QJsonArray a;
+    for (const Merker& m : liste)
+        a.append(QJsonObject{
+            {QStringLiteral("key"), m.schluessel},
+            {QStringLiteral("title"), m.titel},
+            {QStringLiteral("reason"),
+             m.instrumental ? QStringLiteral("instrumental") : QStringLiteral("notfound")},
+            {QStringLiteral("date"), m.datum.toString(Qt::ISODate)}});
+    QDir().mkpath(benutzerOrdner);
+    QFile f(merkerDatei(benutzerOrdner));
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        f.write(QJsonDocument(a).toJson(QJsonDocument::Indented));
+}
+}  // namespace
+
+bool songtextFehlanzeige(const TrackInfo& track, const QString& benutzerOrdner,
+                         const QDate& heute)
+{
+    const QString schluessel = merkerSchluessel(track);
+    const auto liste = leseMerker(benutzerOrdner);
+    return std::any_of(liste.begin(), liste.end(), [&](const Merker& m) {
+        return m.schluessel == schluessel && merkerGilt(m, heute);
+    });
+}
+
+void merkeSongtextFehlanzeige(const TrackInfo& track, bool instrumental,
+                              const QString& benutzerOrdner, const QDate& heute)
+{
+    if (track.title.trimmed().isEmpty()) return;
+    const QString schluessel = merkerSchluessel(track);
+    auto liste = leseMerker(benutzerOrdner);
+    // der fruehere Eintrag dieses Titels und alles Abgelaufene: hinaus
+    liste.erase(std::remove_if(liste.begin(), liste.end(),
+                               [&](const Merker& m) {
+                                   return m.schluessel == schluessel || !merkerGilt(m, heute);
+                               }),
+                liste.end());
+    liste.push_back({schluessel, songtextName(track), instrumental, heute});
+    schreibeMerker(liste, benutzerOrdner);
+}
+
+int vergissSongtextFehlanzeigen(const QString& benutzerOrdner, const QDate& heute)
+{
+    const auto liste = leseMerker(benutzerOrdner);
+    const auto galten = std::count_if(liste.begin(), liste.end(),
+                                      [&](const Merker& m) { return merkerGilt(m, heute); });
+    QFile::remove(merkerDatei(benutzerOrdner));
+    return static_cast<int>(galten);
 }
 
 namespace
@@ -359,6 +468,16 @@ void SongtextOnline::suche(const TrackInfo& track)
 
     if (track.filePath.isEmpty() || !songtextOnlineErlaubt()) return;
     if (lrclibUrl(track).isEmpty()) return;  // Titel oder Interpret fehlt
+
+    // S88: der Dienst hatte zu diesem Titel vor Kurzem nichts — nicht bei
+    // jedem Abspielen wieder fragen
+    if (songtextFehlanzeige(track, m_ordner.isEmpty() ? songtextOrdner() : m_ordner))
+    {
+        BasicLogger::logInfo("Lyrics: not asked again, nothing was found online recently — " +
+                             track.title.toStdString());
+        Q_EMIT zustand(track.filePath, SongtextAbruf::NichtGefunden);
+        return;
+    }
 
     // der Dienst hat um Ruhe gebeten: nicht verwerfen, sondern danach fragen
     const qint64 restMs = m_pauseBis.isValid()
@@ -457,6 +576,7 @@ void SongtextOnline::antwort(const TrackInfo& track, int status, int retryAfterS
     if (status == 404)  // der Dienst kennt den Titel nicht
     {
         if (zweiteStufe(false)) return;
+        merkeSongtextFehlanzeige(track, false, ordner);
         BasicLogger::logInfo("Lyrics: not found online — " + name);
         Q_EMIT zustand(track.filePath, SongtextAbruf::NichtGefunden);
         return;
@@ -478,6 +598,7 @@ void SongtextOnline::antwort(const TrackInfo& track, int status, int retryAfterS
         const int wahl = waehleKandidat(kandidaten, track, ordner);
         if (wahl < 0)
         {
+            merkeSongtextFehlanzeige(track, false, ordner);
             BasicLogger::logInfo("Lyrics: no entry with a matching duration (" +
                                  std::to_string(kandidaten.size()) +
                                  " found — see Alternatives) — " + name);
@@ -492,6 +613,10 @@ void SongtextOnline::antwort(const TrackInfo& track, int status, int retryAfterS
         if (text.leer())  // instrumental oder ohne Text eingetragen
         {
             if (zweiteStufe(false)) return;
+            merkeSongtextFehlanzeige(
+                track,
+                QJsonDocument::fromJson(body).object().value(QStringLiteral("instrumental")).toBool(),
+                ordner);
             BasicLogger::logInfo("Lyrics: entry without text (instrumental?) — " + name);
             Q_EMIT zustand(track.filePath, SongtextAbruf::NichtGefunden);
             return;

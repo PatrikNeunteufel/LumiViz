@@ -47,6 +47,7 @@
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QToolTip>
 #include <QUrl>
 #include <QCamera>                 // Kamera-Tab (S70)
 #include <QCameraDevice>
@@ -449,6 +450,22 @@ QWidget* SettingsPanel::createAudioTab()
         connect(sperren, &QPushButton::clicked, this,
                 [this]() { zeigeLyricsSperrliste(this); });
         layout->addRow(tr("Blocked lyrics:"), sperren);
+
+        // S88: Titel, zu denen der Dienst nichts hatte, werden eine Weile nicht
+        // wieder gefragt — hier laesst sich das zuruecksetzen
+        auto* vergessen = new QPushButton(tr("Ask again"), widget);
+        vergessen->setObjectName(QStringLiteral("lyricsNotFoundForget"));
+        vergessen->setToolTip(
+            tr("Tracks without lyrics online are remembered and not asked again for %1 days "
+               "(instrumental: %2 days). This forgets them, so the next playback asks again.")
+                .arg(lumi::audio::kSongtextMerkerTageNichtGefunden)
+                .arg(lumi::audio::kSongtextMerkerTageInstrumental));
+        connect(vergessen, &QPushButton::clicked, this, [vergessen]() {
+            const int n = lumi::audio::vergissSongtextFehlanzeigen();
+            QToolTip::showText(vergessen->mapToGlobal(QPoint(0, vergessen->height())),
+                               tr("%1 remembered track(s) forgotten.").arg(n), vergessen);
+        });
+        layout->addRow(tr("Lyrics not found:"), vergessen);
     }
 
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
