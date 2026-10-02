@@ -1022,17 +1022,19 @@ TEST_CASE("Lyrics S90: Skript am Lyrics-Knoten — Kette und Karaoke-Ebene laufe
         ly::leseLrc("[00:10.00]MMMM\n[00:10.50]HHHH\n[00:11.00]MMMM HH\n[00:20.00]ende\n"));
 
     // Hoehe des hellen Bereichs je Frame (0 = nichts): die Schriftgroesse
-    const auto folge = [](bool ebene) {
+    // Vorgabe: das Skript aus Patriks Karaoke2.lvkar
+    const auto folge = [](bool ebene, const char* init = "reffont = fontheight;",
+                          const char* frame = "fontheight= reffont;",
+                          const char* beat = "fontheight= 2 * reffont;") {
         LyricsParams lp;
         lp.fontHeight = -20;
         lp.outline = false;
         lp.previewLines = 0;
         lp.vAlign = 1;
         lp.yShift = 0;
-        // das Skript aus Patriks Karaoke2.lvkar
-        lp.initCode = "reffont = fontheight;";
-        lp.frameCode = "fontheight= reffont;";
-        lp.beatCode = "fontheight= 2 * reffont;";
+        lp.initCode = init;
+        lp.frameCode = frame;
+        lp.beatCode = beat;
         ChainNode root;
         root.params = ListParams{};
         ChainNode clear;
@@ -1087,17 +1089,33 @@ TEST_CASE("Lyrics S90: Skript am Lyrics-Knoten — Kette und Karaoke-Ebene laufe
     MESSAGE("Kette: " << text(kette));
     MESSAGE("Ebene: " << text(ebene));
     CHECK(kette == ebene);
-    // Entscheid B1 a: das Frame-Feld wirkt auf die Schriftgroesse nicht — auch
-    // nicht im Frame des Zeilenwechsels (Frame 30 und 60). Nach dem ersten
-    // Beat (Frame 0) steht die doppelte Groesse und bleibt.
+    // Entscheid B2 a / B1 b: Groesse, Lage und Farben folgen dem Skript aus
+    // JEDEM Feld (die Grafikkarte setzt die Zeile aus Wort-Masken zusammen,
+    // gerastert wird dafuer nichts). Das Skript tut damit, was es sagt: auf
+    // jeden Beat (alle 12 Frames) ein Frame in doppelter Groesse, sonst die
+    // Grundgroesse — und am Zeilenwechsel (Frame 30, 60) aendert sich nichts.
     REQUIRE(kette.size() == 90);
-    const int gross = kette[5];
-    CHECK(gross > 20);
-    for (std::size_t i = 5; i < kette.size(); ++i)
+    const int klein = kette[5];
+    const int gross = kette[12];
+    CHECK(klein > 8);
+    CHECK(gross > klein * 1.7);
+    for (std::size_t i = 1; i < kette.size(); ++i)
     {
         CAPTURE(i);
-        CHECK(kette[i] == gross);
+        CHECK(kette[i] == (i % 12 == 0 ? gross : klein));
     }
+
+    // Das Puls-Beispiel aus dem Benutzerhandbuch: auf den Beat gross, dann
+    // klingt die Groesse von Frame zu Frame ab
+    const std::vector<int> puls =
+        folge(false, "ref = fontheight; p = 0;",
+              "p = if(b, 1, p * 0.85); fontheight = ref * (1 + p);", "");
+    MESSAGE("Puls: " << text(puls));
+    CHECK(puls[12] > puls[11] * 1.5);  // Beat-Frame deutlich groesser als der Frame davor
+    CHECK(puls[13] <= puls[12]);
+    CHECK(puls[16] < puls[12]);
+    CHECK(puls[23] < puls[16]);        // klingt weiter ab
+    CHECK(puls[23] >= klein);          // nie unter die Grundgroesse
 
     // Gegenprobe: was das Feld LINE setzt, gilt beim Zeilenwechsel weiter —
     // auch wenn ein Frame-Feld danach dieselbe Variable ueberschreibt
@@ -1148,17 +1166,16 @@ TEST_CASE("Lyrics S90: Skript am Lyrics-Knoten — Kette und Karaoke-Ebene laufe
     CHECK(nurLine[1] > nurLine[3] * 1.6);  // Zeile 1 gross, Zeile 2 klein
     CHECK(nurLine[5] == nurLine[1]);       // Zeile 3 wieder gross
     CHECK(nurLine[0] == nurLine[1]);       // innerhalb der Zeile ruhig
-    // Ein Frame-Feld, das dieselbe Variable ueberschreibt: im allerersten Frame
-    // gilt es (der Start ist frei, wie bei Init) — bei den Zeilenwechseln
-    // danach gilt allein, was Line gesetzt hat.
+    // Ein Frame-Feld, das dieselbe Variable ueberschreibt, gewinnt jetzt in
+    // jedem Frame (es laeuft nach Line) — die Schrift bleibt bei seinen 7 px.
     const std::vector<int> mitFrame = mitLine("fontheight = 7;");
     MESSAGE("Line + Frame: " << text(mitFrame));
     REQUIRE(mitFrame.size() == 6);
-    CHECK(mitFrame[0] < nurLine[3]);  // Start: die 7 px des Frame-Felds
-    for (const std::size_t i : {2u, 3u, 4u, 5u})
+    for (std::size_t i = 0; i < mitFrame.size(); ++i)
     {
         CAPTURE(i);
-        CHECK(mitFrame[i] == nurLine[i]);
+        CHECK(mitFrame[i] > 0);
+        CHECK(mitFrame[i] < nurLine[3]);
     }
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
@@ -1280,8 +1297,11 @@ TEST_CASE("Lyrics S90 LB1b: Vorschau-Zeilen — Groesse, Gewicht, Lage, Zeilenab
     LyricsParams beides = klein;
     beides.previewYShift = 20;
     const Bild f = miss(beides, true);
-    CHECK(s.hell == f.hell);
-    CHECK(s.y == doctest::Approx(f.y));
+    // (mit Skript setzt die Grafikkarte die Zeile aus Masken zusammen, ohne
+    // rastert die CPU — die Kanten weichen um Bruchteile eines Pixels ab)
+    MESSAGE("Vorschau 50 %: helle Pixel per Skript (Masken) " << s.hell << ", per Feld (CPU) " << f.hell);
+    CHECK(s.hell == doctest::Approx(f.hell).epsilon(0.3));
+    CHECK(s.y == doctest::Approx(f.y).epsilon(0.01));
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
@@ -1581,24 +1601,23 @@ TEST_CASE("Lyrics S90 LB3: Slot Word laeuft einmal je Wortwechsel, kennt word/wo
         CHECK(gesehen["Zeile"].xShift == 13);  // Word allein: +2
     }
     {
-        // ein Frame-Feld schlaegt beim Wortwechsel nicht durch (wie beim Zeilenwechsel, B1 a)
+        // Felder, die die Masken neu rastern (Konturbreite, Gewicht, kursiv),
+        // folgen dem Skript weiter nur aus Init, Song, Beat, Line und Word:
+        // ein Frame-Feld schlaegt beim Wortwechsel nicht durch (B1 a). Lage,
+        // Groesse und Farben dagegen folgen jedem Feld (B2 a).
         LyricsParams lp;
         lp.wordCode = "yshift = -word;";
-        lp.frameCode = "xshift = 33;";
+        lp.frameCode = "outlinesize = 3 + word; xshift = 20 + word;";
         MultiEffectVisualizer vis;
         starte(vis, kette(lp));
-        frames(vis, 10500);  // Start: der erste Frame ist frei, xshift 33 gilt
+        frames(vis, 10500);
+        const int start = gesehen["Zeile"].outlineSize;  // der erste Frame ist frei: 4
+        CHECK(start == 4);
+        CHECK(gesehen["Zeile"].xShift == 21);
         frames(vis, 11500);
-        LyricsParams ohne;
-        ohne.wordCode = lp.wordCode;
-        ohne.frameCode = "xshift = 33 + word;";  // aendert sich je Wort — darf nicht wirken
-        MultiEffectVisualizer vis2;
-        starte(vis2, kette(ohne));
-        frames(vis2, 10500);
-        const int start = gesehen["Zeile"].xShift;
-        frames(vis2, 11500);
-        CHECK(gesehen["Zeile"].xShift == start);  // 34 vom Start, nicht 35
-        CHECK(gesehen["Zeile"].yShift == -2);     // Word selbst wirkt
+        CHECK(gesehen["Zeile"].outlineSize == start);  // nicht 5
+        CHECK(gesehen["Zeile"].xShift == 22);          // Lage folgt dem Frame-Feld
+        CHECK(gesehen["Zeile"].yShift == -2);          // Word selbst wirkt
     }
     {
         // „Script active" aus: auch Word ruht
@@ -1629,18 +1648,18 @@ TEST_CASE("Lyrics S90 LB3: Slot Word laeuft einmal je Wortwechsel, kennt word/wo
 }
 
 // S90 (Frage Patrik): warum aendern sich Zeilenabstand und Lage, wenn ein
-// Skript die Schrift vergroessert? Eine zu lange Zeile wird verkleinert, bis
-// sie in die Breite passt — der Zeilenabstand aber rechnet mit der
-// UNVERKLEINERTEN Schrift. Der Test haelt fest, was heute gilt.
-TEST_CASE("Lyrics S90: verkleinerte lange Zeile — Schrift passt sich an, der Zeilenabstand nicht")
+// Skript die Schrift vergroessert? Eine zu lange Zeile wurde verkleinert, bis
+// sie in die Breite passte — der Zeilenabstand aber rechnete mit der
+// unverkleinerten Schrift. Entscheid B3 a1: eine Schriftgroesse je Song.
+TEST_CASE("Lyrics S90: eine Schriftgroesse je Song — lange Zeilen bestimmen Schrift und Abstand")
 {
     GlUmgebung gl;
     if (!gl.ok) return;
     namespace ly = lumi::multieffect::lyrics;
     MultiEffectVisualizer::notifyPlayState(false);
     MultiEffectVisualizer::setKaraokeEbene(false);
-    MultiEffectVisualizer::setSongtext(ly::leseLrc(
-        "[00:10.00]MMMM MMMM MMMM MMMM MMMM\n[00:13.00]HHHH HHHH HHHH HHHH HHHH\n"));
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MMMM MMMM MMMM\n[00:13.00]HH\n"));
     MultiEffectVisualizer::notifyPlayPosition(11000);
 
     struct Mass
@@ -1683,18 +1702,29 @@ TEST_CASE("Lyrics S90: verkleinerte lange Zeile — Schrift passt sich an, der Z
                 }
         return Mass{oben < 0 ? 0 : unten - oben + 1, oben};
     };
-    // 40 px passt nicht in 480 px Breite, 80 px erst recht nicht: beide werden
-    // auf dieselbe Breite verkleinert und sehen gleich gross aus …
+    // Entscheid B3 a1: eine Schriftgroesse je Song. 40 px passt mit der langen
+    // Zeile nicht in 480 px Breite, 60 px erst recht nicht — beide werden auf
+    // dieselbe Groesse gesetzt, und der Zeilenabstand geht mit: gleiche
+    // Zeilenhoehe, gleicher Abstand, gleiche Lage. (Bis S90 folgte der Abstand
+    // der eingestellten Schrift: gleiche Buchstaben, aber 1,5-facher Abstand.)
     const Mass z40 = miss(40, false);
-    const Mass z80 = miss(80, false);
+    const Mass z60 = miss(60, false);
     const Mass v40 = miss(40, true);
-    const Mass v80 = miss(80, true);
+    const Mass v60 = miss(60, true);
     MESSAGE("Schrift 40: Zeile y=" << z40.y << " h=" << z40.hoehe << ", Vorschau y=" << v40.y
-            << " | Schrift 80: Zeile y=" << z80.y << " h=" << z80.hoehe << ", Vorschau y=" << v80.y);
+            << " h=" << v40.hoehe << " | Schrift 60: Zeile y=" << z60.y << " h=" << z60.hoehe
+            << ", Vorschau y=" << v60.y);
     REQUIRE(z40.hoehe > 0);
-    CHECK(z80.hoehe == doctest::Approx(z40.hoehe).epsilon(0.15));
-    // … der Abstand zwischen laufender Zeile und Vorschau aber folgt der Schrift, wie sie eingestellt ist
-    CHECK((v80.y - z80.y) > (v40.y - z40.y) * 1.6);
+    CHECK(std::abs(z60.hoehe - z40.hoehe) <= 1);
+    CHECK(std::abs((v60.y - z60.y) - (v40.y - z40.y)) <= 2);
+    CHECK(std::abs(z60.y - z40.y) <= 2);
+    // die KURZE Vorschau-Zeile traegt dieselbe Schrift wie die lange laufende
+    CHECK(std::abs(v40.hoehe - z40.hoehe) <= 1);
+    // Untergrenze 50 %: bei 200 px passt die Zeile auch mit halber Schrift
+    // nicht — sie wird dann einzeln weiter verkleinert und steht trotzdem ganz im Bild
+    const Mass z200 = miss(200, false);
+    CHECK(z200.hoehe > 0);
+    CHECK(z200.hoehe <= z40.hoehe + 1);
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
@@ -1802,6 +1832,13 @@ TEST_CASE("Lyrics S90 LB1: Szenen des Lyrics-Knotens (Schnappschuesse fuer den V
     a.previewXShift = 6;
     a.lineSpacing = 100;
     CHECK(zeichnet(bild("13_vorschau_gestaltet", a, false, false, 12000)));
+    // B2 a: dieselben Szenen auf dem Masken-Weg (ein Skript, das nichts tut,
+    // schaltet ihn ein) — zum Ansehen neben 01 und 04
+    a = lp;
+    a.initCode = "nichts = 0;";
+    CHECK(zeichnet(bild("14_masken_replace", a, false, false, 12000)));
+    a.blend = 4;
+    CHECK(zeichnet(bild("15_masken_invert", a, false, false, 12000)));
 
     MultiEffectVisualizer::setSongtext(ly::leseLrc("MMMM gggg\nIIII jjjj\nThird line\n"));
     CHECK(zeichnet(bild("12_unsynchron_marke", lp, false, false, 0)));

@@ -229,6 +229,7 @@ uniform sampler2D uImg;
 uniform int uBlend;   // 0 replace, 1 additive, 2 50/50; 3..8 s. u.
 uniform float uStrength;  // 0..1: Deckung der Glyphen (S89, Feld blendStrength)
 uniform vec4 uImgRect;    // Platz der Ebene im Bild (x, y von oben, b, h); ganz = 0,0,1,1 (S90)
+uniform bool uVormult;    // die Ebene traegt Farbe mal Deckung (Masken-Weg, S90)
 out vec4 fragColor;
 void main()
 {
@@ -236,6 +237,7 @@ void main()
     vec2 q = (vec2(vTex.x, 1.0 - vTex.y) - uImgRect.xy) / uImgRect.zw;
     vec4 t = texture(uImg, q);
     if (q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) t = vec4(0.0);  // ausserhalb: nichts
+    if (uVormult && t.a > 0.0) t.rgb = min(t.rgb / t.a, vec3(1.0));
     t.a *= uStrength;
     // S88 (K6): die Mischarten der Karaoke-Ebene auch am Lyrics-Knoten —
     // dieselben Gleichungen wie beim Present (p = Farbe mal Deckung):
@@ -258,6 +260,48 @@ void main()
     else if (uBlend == 2) mixed = (fb + t.rgb) * 0.5;
     else                  mixed = t.rgb;
     fragColor = vec4(mix(fb, mixed, t.a), 1.0);
+}
+)";
+
+// Lyrics, Masken-Weg (S90, B2 a): ein Wort als Maske an seinen Platz in der
+// Flaeche der Zeile zeichnen. Die Maske traegt in R die Deckung der Fuellung
+// und in G die des Kontur-Strichs; Farbe, Groesse und Lage kommen als
+// Uniforms — gerastert wird dafuer nichts. Ausgabe vormultipliziert.
+const char* kMaskenVertexShader = R"(
+#version 330 core
+layout(location = 0) in vec2 aPos;
+uniform vec4 uRect;  // Platz in NDC: x, y, b, h
+out vec2 vTex;
+void main()
+{
+    vTex = aPos * 0.5 + 0.5;
+    gl_Position = vec4(uRect.xy + vTex * uRect.zw, 0.0, 1.0);
+}
+)";
+const char* kMaskenFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uMaske;
+uniform vec3 uFuell;
+uniform vec3 uKontur;
+uniform bool uMitKontur;
+uniform int uModus;  // 0 Kontur + Fuellung, 1 nur Fuellung, 2 nur der Ring, 3 Strich als Stempel
+out vec4 fragColor;
+void main()
+{
+    // etwas schaerfer als die Mip-Stufe, die der Massstab ergibt: verkleinerte
+    // Schrift bliebe sonst flau (duenne Striche verlieren Deckung)
+    vec2 m = texture(uMaske, vTex, -0.75).rg;
+    float r = m.r;
+    float g = uMitKontur ? m.g : 0.0;
+    if (uModus == 1)
+        fragColor = vec4(uFuell * r, r);
+    else if (uModus == 2)
+        fragColor = vec4(uKontur * (g * (1.0 - r)), g * (1.0 - r));
+    else if (uModus == 3)
+        fragColor = vec4(0.0, 0.0, 0.0, g);
+    else
+        fragColor = vec4(uFuell * r + uKontur * (g * (1.0 - r)), r + g * (1.0 - r));
 }
 )";
 
@@ -3486,10 +3530,12 @@ uniform bool uFlip;        // Glyphen-Texturen liegen top-down vor
 uniform bool uSchluessel;  // Deckung aus der Helligkeit (Trail) statt aus dem Alpha
 uniform int uModus;        // MultiEffectVisualizer::kKaraokeMischarten
 uniform float uStaerke;    // 0..1
+uniform bool uVormult;     // die Textur traegt Farbe mal Deckung (Masken-Weg, S90)
 out vec4 fragColor;
 void main()
 {
     vec4 t = texture(uTex, uFlip ? vec2(vTex.x, 1.0 - vTex.y) : vTex);
+    if (uVormult && t.a > 0.0) t.rgb = min(t.rgb / t.a, vec3(1.0));
     float a;
     vec3 p;
     if (uSchluessel)
@@ -3775,9 +3821,10 @@ void MultiEffectVisualizer::legeKaraokeAuf()
     // Eine Textur mit einer Mischart auflegen. Jede Mischart ist eine
     // Blend-Gleichung auf dem Zielbild — siehe Tabelle K6 im Konzept.
     const auto lege = [&](unsigned int tex, bool flip, bool schluessel, int modus,
-                          int staerkeProzent) {
+                          int staerkeProzent, bool vormult = false) {
         if (tex == 0 || staerkeProzent <= 0) return;
         f->glBindTexture(GL_TEXTURE_2D, tex);
+        m_overlayShader->setUniformValue("uVormult", vormult);
         m_overlayShader->setUniformValue("uFlip", flip);
         m_overlayShader->setUniformValue("uSchluessel", schluessel);
         m_overlayShader->setUniformValue("uModus", modus);
@@ -3835,8 +3882,8 @@ void MultiEffectVisualizer::legeKaraokeAuf()
         const int h = static_cast<int>(std::lround(l.h * vp[3]));
         if (b <= 0 || h <= 0) continue;
         f->glViewport(vp[0] + x0, vp[1] + vp[3] - y0 - h, b, h);
-        if (l.kontur) lege(l.tex, true, false, 0, 100);
-        else lege(l.tex, true, false, m_karaokeZeileArt, m_karaokeZeileStaerke);
+        if (l.kontur) lege(l.tex, true, false, 0, 100, l.vormult);
+        else lege(l.tex, true, false, m_karaokeZeileArt, m_karaokeZeileStaerke, l.vormult);
     }
     f->glViewport(vp[0], vp[1], vp[2], vp[3]);
 
@@ -4055,6 +4102,7 @@ void MultiEffectVisualizer::onCleanup()
     m_bumpShader.reset();
     m_presentShader.reset();
     m_overlayShader.reset();
+    m_maskenShader.reset();
     m_bloomDownShader.reset();
     m_bloomGaussShader.reset();
     m_bloomCompShader.reset();
@@ -4160,6 +4208,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
     m_presentShader = makeProgram(kQuadVertexShader, kPresentFragmentShader);
     m_overlayShader = makeProgram(kQuadVertexShader, kOverlayFragmentShader);  // Karaoke-Ebene
+    m_maskenShader = makeProgram(kMaskenVertexShader, kMaskenFragmentShader);  // Lyrics, B2 a
     m_bloomDownShader = makeProgram(kQuadVertexShader, kBloomDownFragmentShader);
     m_bloomGaussShader = makeProgram(kQuadVertexShader, kBloomGaussFragmentShader);
     m_bloomCompShader = makeProgram(kQuadVertexShader, kBloomCompFragmentShader);
@@ -4237,6 +4286,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_bumpShader.reset();
         m_presentShader.reset();
         m_overlayShader.reset();
+        m_maskenShader.reset();
         m_bloomDownShader.reset();
         m_bloomGaussShader.reset();
         m_bloomCompShader.reset();
@@ -4474,9 +4524,15 @@ void MultiEffectVisualizer::gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt)
         if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
         if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
         if (rt.textTexture2 != 0) f->glDeleteTextures(1, &rt.textTexture2);
-        for (GlyphBild* bilder : {rt.lyricsBild, rt.lyricsBildAlt})
+        for (GlyphBild* bilder : {rt.lyricsBild, rt.lyricsBildAlt, rt.lyricsRest})
             for (int i = 0; i < 2; ++i)
+            {
                 if (bilder[i].tex != 0) f->glDeleteTextures(1, &bilder[i].tex);
+                bilder[i].fbo.reset();  // braucht den Kontext — deshalb hier
+            }
+        for (auto& [schluessel, maske] : rt.lyricsMasken)
+            if (maske.tex != 0) f->glDeleteTextures(1, &maske.tex);
+        rt.lyricsMasken.clear();
         if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
         if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
         if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
@@ -8722,6 +8778,7 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     m_textShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_textShader->setUniformValue("uStrength", 1.0f);  // der Text-Knoten kennt keine Staerke
     m_textShader->setUniformValue("uImgRect", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
+    m_textShader->setUniformValue("uVormult", false);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8732,7 +8789,7 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
 
 void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
                                               int staerkeProzent, float x, float y, float b,
-                                              float h)
+                                              float h, bool vormult)
 {
     if (m_textShader == nullptr || texture == 0) return;
     auto* f = QOpenGLContext::currentContext()->functions();
@@ -8753,6 +8810,7 @@ void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
     m_textShader->setUniformValue(
         "uStrength", static_cast<float>(std::clamp(staerkeProzent, 0, 100)) / 100.0f);
     m_textShader->setUniformValue("uImgRect", QVector4D(x, y, b, h));
+    m_textShader->setUniformValue("uVormult", vormult);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -9016,8 +9074,433 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     }
     rt.lyricsBild[0].da = false;
     rt.lyricsBild[1].da = false;
+    // S90, B2 a: koennen sich die Felder je Frame aendern (der Knoten laeuft
+    // auf einer gesteuerten Kopie: Skript oder Modulation) oder wird das
+    // laufende Wort hervorgehoben, setzt die Grafikkarte die Zeilen aus
+    // einmal gerasterten Wort-Masken zusammen — Groesse, Lage und Farbe kosten
+    // dann kein Rastern. Sonst der CPU-Weg, bitgleich wie bisher.
+    bool wortEbene = false;
+    for (const Anzeige& a : zeilen) wortEbene = wortEbene || !a.stuecke.empty();
+    if ((m_gesteuerteKopie != nullptr || wortEbene) && m_maskenShader != nullptr)
+    {
+        zeichneLyricsMasken(rt, std::get<LyricsParams>(node.params), params, zeilen);
+        return;
+    }
     zeichneLyricsZeilen(rt, params, zeilen, LyricsReihen::Rest);
     zeichneLyricsZeilen(rt, params, zeilen, LyricsReihen::Laufende);
+}
+
+double MultiEffectVisualizer::lyricsSongFaktor(LeafRuntime& rt, const LyricsParams& params,
+                                               double px)
+{
+    // Die Breite der laengsten Zeile haengt nur an Songtext und Schrift — sie
+    // wird einmal bei 100 px gemessen und geht dann mit der Schriftgroesse.
+    const std::string schluessel = std::to_string(m_songTagsStand) + '\x1f' + params.fontFace +
+                                   '\x1f' + std::to_string(params.fontWeight >= 600) +
+                                   std::to_string(params.italic);
+    if (rt.lyricsSongSchluessel != schluessel)
+    {
+        rt.lyricsSongSchluessel = schluessel;
+        QFont font;
+        if (!params.fontFace.empty()) font.setFamily(QString::fromStdString(params.fontFace));
+        font.setPixelSize(100);
+        font.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
+        font.setItalic(params.italic);
+        const QFontMetricsF fm(font);
+        double weit = 0.0;
+        for (const auto& zl : m_songtext.zeilen)
+            if (!zl.text.empty())
+                weit = std::max(weit, fm.horizontalAdvance(QString::fromStdString(zl.text)));
+        rt.lyricsSongBreite100 = weit;
+    }
+    const double weit = rt.lyricsSongBreite100 * px / 100.0;
+    const double platz = m_surfaceWidth * 0.94;
+    if (weit <= platz || weit <= 0.0) return 1.0;
+    return std::max(0.5, platz / weit);
+}
+
+void MultiEffectVisualizer::zeichneLyricsMasken(LeafRuntime& rt, const LyricsParams& basis,
+                                                const LyricsParams& params,
+                                                const std::vector<LyricsAnzeige>& zeilen)
+{
+    using Anzeige = LyricsAnzeige;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    const int rasterB = m_glyphNurRastern ? m_fensterBreite : m_surfaceWidth;
+    const int rasterH = m_glyphNurRastern ? m_fensterHoehe : m_surfaceHeight;
+    if (rasterB <= 0 || rasterH <= 0 || m_surfaceWidth <= 0 || m_surfaceHeight <= 0) return;
+    const double sx = static_cast<double>(rasterB) / m_surfaceWidth;   // Kettenmass -> Rasterpixel
+    const double sy = static_cast<double>(rasterH) / m_surfaceHeight;
+
+    const int vorschauSkala = std::clamp(static_cast<int>(params.previewScale), 10, 400);
+    const double abstand = std::clamp(static_cast<int>(params.lineSpacing), 50, 400) / 100.0;
+    const double wortMax =
+        std::max(1.0, std::clamp(static_cast<int>(params.wordScale), 50, 400) / 100.0);
+    const bool ueberlagert = params.wordLayout == 1;
+    const double pxFeld = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
+    // B3 a1: eine Schriftgroesse je Song — die laengste Zeile bestimmt sie
+    const double px = std::max(4.0, pxFeld * lyricsSongFaktor(rt, params, pxFeld));
+    const double pxBasis = std::max(4, std::abs(static_cast<int>(basis.fontHeight)));
+
+    // --- Masken-Vorrat: gilt fuer eine Schrift, eine Bezugsgroesse und eine
+    // Strichbreite. Die Bezugsgroesse ist die groesste Schrift, die gebraucht
+    // wird (in Rasterpixeln) — sie waechst mit dem Bedarf (mit etwas Luft,
+    // damit ein langsam wachsender Wert nicht in jedem Frame neu rastert) und
+    // schrumpft erst, wenn sie viermal zu gross ist. Die Strichbreite steht
+    // im Verhaeltnis zur GESPEICHERTEN Schrift: vergroessert ein Skript die
+    // Schrift, waechst die Kontur mit.
+    const double bedarf =
+        std::max(px, px * vorschauSkala / 100.0) * wortMax * sy;
+    float ref = rt.lyricsMaskenRef;
+    if (ref < bedarf || ref > bedarf * 4.0)
+        ref = static_cast<float>(std::min(1024.0, std::ceil(bedarf * (ref < bedarf && ref > 0.0f ? 1.25 : 1.0))));
+    ref = std::max(ref, 8.0f);
+    const int strich =
+        params.outline ? std::max(1, static_cast<int>(params.outlineSize)) : 0;
+    const double strichRef = 2.0 * strich * sy * ref / (pxBasis * sy);  // bei Bezugsgroesse
+    const std::string vorrat =
+        params.fontFace + '\x1f' + std::to_string(params.fontWeight >= 600) +
+        std::to_string(params.italic) + ':' + std::to_string(static_cast<int>(ref)) + ':' +
+        std::to_string(std::lround(strichRef * 16.0));
+    QFont schrift;
+    if (!params.fontFace.empty()) schrift.setFamily(QString::fromStdString(params.fontFace));
+    schrift.setPixelSize(static_cast<int>(ref));
+    schrift.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
+    schrift.setItalic(params.italic);
+    if (rt.lyricsMaskenSchluessel != vorrat || rt.lyricsMasken.size() > 512)
+    {
+        for (auto& [schluessel, maske] : rt.lyricsMasken)
+            if (maske.tex != 0) f->glDeleteTextures(1, &maske.tex);
+        rt.lyricsMasken.clear();
+        rt.lyricsMaskenSchluessel = vorrat;
+        rt.lyricsMaskenRef = ref;
+        const QFontMetricsF fm(schrift);
+        rt.lyricsMaskenHoehe = static_cast<float>(fm.height());
+        rt.lyricsMaskenAufstieg = static_cast<float>(fm.ascent());
+    }
+    // Ein Stueck Text als Maske holen (einmal rastern, dann aus dem Vorrat)
+    const auto maskeFuer = [&](const std::string& text, bool fett) -> const WortMaske& {
+        const std::string schluessel = (fett ? 'b' : 'n') + text;
+        if (const auto it = rt.lyricsMasken.find(schluessel); it != rt.lyricsMasken.end())
+            return it->second;
+        WortMaske m;
+        QFont font = schrift;
+        font.setWeight(fett ? QFont::Bold : QFont::Normal);
+        const QString t = QString::fromStdString(text);
+        const QFontMetricsF fm(font);
+        m.vor = static_cast<float>(fm.horizontalAdvance(t));
+        int von = 0;
+        int bis = static_cast<int>(t.size());
+        while (von < bis && t.at(von).isSpace()) ++von;
+        while (bis > von && t.at(bis - 1).isSpace()) --bis;
+        m.mitte = static_cast<float>(fm.horizontalAdvance(t.left(von)) +
+                                     fm.horizontalAdvance(t.mid(von, bis - von)) / 2.0);
+        QPainterPath pfad;
+        pfad.addText(QPointF(0.0, 0.0), font, t);
+        const double rand = strichRef / 2.0 + 2.0;
+        const QRect rahmen = pfad.boundingRect().adjusted(-rand, -rand, rand, rand).toAlignedRect();
+        if (!pfad.isEmpty() && rahmen.width() > 0 && rahmen.height() > 0 &&
+            rahmen.width() <= 8192 && rahmen.height() <= 4096)
+        {
+            QImage fuell(rahmen.size(), QImage::Format_Grayscale8);
+            QImage kontur(rahmen.size(), QImage::Format_Grayscale8);
+            fuell.fill(0);
+            kontur.fill(0);
+            {
+                QPainter p(&fuell);
+                p.setRenderHint(QPainter::Antialiasing, true);
+                p.translate(-rahmen.topLeft());
+                p.fillPath(pfad, Qt::white);
+            }
+            if (strichRef > 0.0)
+            {
+                QPainter p(&kontur);
+                p.setRenderHint(QPainter::Antialiasing, true);
+                p.translate(-rahmen.topLeft());
+                p.setPen(QPen(Qt::white, strichRef));
+                p.setBrush(Qt::NoBrush);
+                p.drawPath(pfad);
+            }
+            std::vector<unsigned char> rg(static_cast<std::size_t>(rahmen.width()) *
+                                          static_cast<std::size_t>(rahmen.height()) * 2u);
+            for (int y = 0; y < rahmen.height(); ++y)
+            {
+                const uchar* a = fuell.constScanLine(y);
+                const uchar* b = kontur.constScanLine(y);
+                unsigned char* ziel = rg.data() + static_cast<std::size_t>(y) * rahmen.width() * 2u;
+                for (int x = 0; x < rahmen.width(); ++x)
+                {
+                    ziel[2 * x] = a[x];
+                    ziel[2 * x + 1] = b[x];
+                }
+            }
+            f->glGenTextures(1, &m.tex);
+            f->glBindTexture(GL_TEXTURE_2D, m.tex);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, rahmen.width(), rahmen.height(), 0, GL_RG,
+                            GL_UNSIGNED_BYTE, rg.data());
+            f->glGenerateMipmap(GL_TEXTURE_2D);
+            m.bx = static_cast<float>(rahmen.x());
+            m.by = static_cast<float>(rahmen.y());
+            m.bb = static_cast<float>(rahmen.width());
+            m.bh = static_cast<float>(rahmen.height());
+        }
+        return rt.lyricsMasken.emplace(schluessel, m).first->second;
+    };
+
+    // --- Satz: dieselbe Rechnung wie der CPU-Weg, im Kettenmass. Die Masse
+    // der Schrift kommen von der Bezugsgroesse und gehen mit der Groesse.
+    struct Teil  // ein Rechteck im Rasterbild (y von oben) mit Maske und Farbe
+    {
+        const WortMaske* maske;
+        double x, y, b, h;
+        std::uint32_t farbe;
+        bool oben;  // liegt ueber den Nachbarn (das groesste Wort in Overlay)
+    };
+    std::vector<Teil> laufendeTeile;
+    std::vector<Teil> restTeile;
+    const double fmHoehe = rt.lyricsMaskenHoehe / ref;      // je Pixel Schrift
+    const double fmAufstieg = rt.lyricsMaskenAufstieg / ref;
+    const double zeilenHoehe = fmHoehe * px * abstand;
+    const auto reihenHoehe = [&](const Anzeige& a) {
+        return a.klein ? zeilenHoehe * 0.55 : a.laufend ? zeilenHoehe : zeilenHoehe * (vorschauSkala / 100.0);
+    };
+    double gesamt = 0.0;
+    bool etwas = false;
+    for (const Anzeige& a : zeilen)
+    {
+        gesamt += reihenHoehe(a);
+        etwas = etwas || (!a.klein && (!a.vorn.empty() || !a.hinten.empty() || !a.stuecke.empty()));
+    }
+    if (!etwas) return;  // nur Pause/Marke: nichts zeichnen
+    double y = 0.0;
+    if (params.vAlign == 1) y = (m_surfaceHeight - gesamt) / 2.0;
+    else if (params.vAlign == 2) y = m_surfaceHeight - gesamt;
+    y += params.yShift * m_surfaceHeight / 100.0;
+    const double breite = m_surfaceWidth * 0.94;
+    const bool fettZeile = params.fontWeight >= 600;
+    for (const Anzeige& a : zeilen)
+    {
+        const double hoehe = reihenHoehe(a);
+        const bool vorschauZeile = !a.klein && !a.laufend;
+        // die Stuecke der Reihe: Wort fuer Wort, oder `vorn` / `hinten`
+        struct Stueck
+        {
+            const WortMaske* maske;
+            std::uint32_t farbe;
+            double skala;
+        };
+        std::vector<Stueck> stuecke;
+        const bool fett =
+            vorschauZeile && params.previewWeight > 0 ? params.previewWeight >= 600 : fettZeile;
+        if (!a.stuecke.empty())
+        {
+            for (const LyricsStueck& st : a.stuecke)
+                stuecke.push_back({&maskeFuer(st.text, fett), st.farbe, st.skala});
+        }
+        else
+        {
+            if (!a.vorn.empty()) stuecke.push_back({&maskeFuer(a.vorn, fett), a.farbe, 1.0});
+            if (!a.hinten.empty())
+                stuecke.push_back({&maskeFuer(a.hinten, fett), params.colorNext, 1.0});
+        }
+        if (!stuecke.empty())
+        {
+            double pxReihe = a.klein          ? std::max(4.0, px / 2.0)
+                             : vorschauZeile ? std::max(4.0, px * vorschauSkala / 100.0)
+                                             : px;
+            const bool worte = !a.stuecke.empty();
+            const auto weite = [&](double groesse) {
+                double summe = 0.0, groesste = 0.0;
+                for (const Stueck& s : stuecke)
+                {
+                    const double w = s.maske->vor / ref * groesse;
+                    summe += w;
+                    groesste = std::max(groesste, w);
+                }
+                return summe + (worte && !ueberlagert ? groesste * (wortMax - 1.0) : 0.0);
+            };
+            // zu lange Zeile: verkleinern, bis sie passt
+            if (const double w = weite(pxReihe); w > breite && w > 0.0)
+                pxReihe = std::max(8.0, pxReihe * breite / w);
+            const double k = pxReihe / ref;  // Bezugsgroesse -> Kettenmass
+            double tw = 0.0;
+            for (const Stueck& s : stuecke) tw += s.maske->vor * k * (ueberlagert ? 1.0 : s.skala);
+            double x = 0.0;
+            if (params.hAlign == 1) x = (m_surfaceWidth - tw) / 2.0;
+            else if (params.hAlign == 2) x = m_surfaceWidth - tw;
+            x += params.xShift * m_surfaceWidth / 100.0;
+            double yReihe = y;
+            if (vorschauZeile)
+            {
+                x += params.previewXShift * m_surfaceWidth / 100.0;
+                yReihe += params.previewYShift * m_surfaceHeight / 100.0;
+            }
+            const double grundY =
+                yReihe + (hoehe - fmHoehe * pxReihe) / 2.0 + fmAufstieg * pxReihe;
+            std::vector<Teil>& ziel = a.laufend ? laufendeTeile : restTeile;
+            const std::size_t erster = ziel.size();
+            std::size_t groesstes = erster;
+            double groessteSkala = 0.0;
+            for (const Stueck& s : stuecke)
+            {
+                const double ks = k * s.skala;
+                const double ursprung = ueberlagert ? x + s.maske->mitte * k * (1.0 - s.skala) : x;
+                if (s.maske->tex != 0)
+                {
+                    if (s.skala > groessteSkala)
+                    {
+                        groessteSkala = s.skala;
+                        groesstes = ziel.size();
+                    }
+                    ziel.push_back({s.maske, (ursprung + s.maske->bx * ks) * sx,
+                                    (grundY + s.maske->by * ks) * sy, s.maske->bb * ks * sx,
+                                    s.maske->bh * ks * sy, s.farbe, false});
+                }
+                x += s.maske->vor * k * (ueberlagert ? 1.0 : s.skala);
+            }
+            // Overlay: das groesste Wort zuletzt zeichnen — es liegt zuoberst
+            if (worte && ueberlagert && groesstes < ziel.size() && groesstes >= erster)
+            {
+                ziel[groesstes].oben = true;
+                std::rotate(ziel.begin() + static_cast<std::ptrdiff_t>(groesstes),
+                            ziel.begin() + static_cast<std::ptrdiff_t>(groesstes) + 1, ziel.end());
+            }
+        }
+        y += hoehe;
+    }
+
+    // --- Zeichnen: je Teilbild (alles, oder Ring und Fuellung getrennt) eine
+    // Flaeche so breit wie das Bild und so hoch wie noetig.
+    const bool getrennt =
+        ((m_glyphNurRastern ? params.blend != 0 : params.blend >= 3) || params.blendStrength < 100) &&
+        params.outline;
+    if (m_glyphNurRastern)
+    {
+        m_karaokeZeileArt = std::clamp(static_cast<int>(params.blend), 0, kKaraokeMischarten - 1);
+        m_karaokeZeileStaerke = std::clamp(static_cast<int>(params.blendStrength), 0, 100);
+    }
+    const auto farbe = [](std::uint32_t c) {
+        return QVector3D(static_cast<float>((c >> 16) & 0xFF) / 255.0f,
+                         static_cast<float>((c >> 8) & 0xFF) / 255.0f,
+                         static_cast<float>(c & 0xFF) / 255.0f);
+    };
+    GLint blendSrcRgb = GL_ONE, blendDstRgb = GL_ZERO, blendSrcA = GL_ONE, blendDstA = GL_ZERO;
+    f->glGetIntegerv(GL_BLEND_SRC_RGB, &blendSrcRgb);
+    f->glGetIntegerv(GL_BLEND_DST_RGB, &blendDstRgb);
+    f->glGetIntegerv(GL_BLEND_SRC_ALPHA, &blendSrcA);
+    f->glGetIntegerv(GL_BLEND_DST_ALPHA, &blendDstA);
+    const GLboolean blendWar = f->glIsEnabled(GL_BLEND);
+
+    // modus: 0 Kontur + Fuellung, 1 nur Fuellung, 2 nur der Ring
+    const auto baue = [&](GlyphBild& bild, const std::vector<Teil>& teile, int modus) {
+        bild.da = false;
+        if (teile.empty()) return;
+        double oben = teile.front().y, unten = teile.front().y + teile.front().h;
+        for (const Teil& t : teile)
+        {
+            oben = std::min(oben, t.y);
+            unten = std::max(unten, t.y + t.h);
+        }
+        const int y0 = static_cast<int>(std::floor(oben));
+        const int hoehe = ((static_cast<int>(std::ceil(unten)) - y0 + 63) / 64) * 64;
+        if (hoehe <= 0 || y0 >= rasterH || y0 + hoehe <= 0) return;  // ganz ausserhalb
+        if (bild.fbo == nullptr || bild.fbo->width() != rasterB || bild.fbo->height() != hoehe)
+        {
+            bild.fbo = std::make_unique<QOpenGLFramebufferObject>(rasterB, hoehe);
+            f->glBindTexture(GL_TEXTURE_2D, bild.fbo->texture());
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        bild.fbo->bind();
+        f->glViewport(0, 0, rasterB, hoehe);
+        f->glDisable(GL_BLEND);
+        f->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+        f->glEnable(GL_BLEND);
+        f->glBlendEquation(GL_FUNC_ADD);
+        m_maskenShader->bind();
+        m_quadVao->bind();
+        f->glActiveTexture(GL_TEXTURE0);
+        m_maskenShader->setUniformValue("uMaske", 0);
+        m_maskenShader->setUniformValue("uKontur", farbe(params.outlineColor));
+        m_maskenShader->setUniformValue("uMitKontur", params.outline);
+        for (const Teil& t : teile)
+        {
+            // Die Flaeche liegt wie die CPU-Texturen von oben nach unten vor:
+            // Bildzeile 0 (oben) ist die unterste Zeile der Flaeche.
+            m_maskenShader->setUniformValue(
+                "uRect", QVector4D(static_cast<float>(2.0 * t.x / rasterB - 1.0),
+                                   static_cast<float>(2.0 * (t.y - y0) / hoehe - 1.0),
+                                   static_cast<float>(2.0 * t.b / rasterB),
+                                   static_cast<float>(2.0 * t.h / hoehe)));
+            f->glBindTexture(GL_TEXTURE_2D, t.maske->tex);
+            if (modus == 1 && t.oben && params.outline)
+            {
+                // getrennte Fuellung: unter der Kontur des obersten Worts darf
+                // keine Fuellung der Nachbarn durchscheinen
+                f->glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+                m_maskenShader->setUniformValue("uModus", 3);
+                f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
+            f->glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // vormultipliziert uebereinander
+            m_maskenShader->setUniformValue("uFuell", farbe(t.farbe));
+            m_maskenShader->setUniformValue("uModus", modus);
+            f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+        m_quadVao->release();
+        m_maskenShader->release();
+        bild.fbo->release();
+        bild.zeig = bild.fbo->texture();
+        bild.vormult = true;
+        bild.x = 0.0f;
+        bild.b = 1.0f;
+        bild.y = static_cast<float>(y0) / static_cast<float>(rasterH);
+        bild.h = static_cast<float>(hoehe) / static_cast<float>(rasterH);
+        bild.da = true;
+    };
+    for (GlyphBild* bilder : {rt.lyricsRest, rt.lyricsBild})
+    {
+        const std::vector<Teil>& teile = bilder == rt.lyricsRest ? restTeile : laufendeTeile;
+        if (getrennt)
+        {
+            baue(bilder[1], teile, 2);
+            baue(bilder[0], teile, 1);
+        }
+        else
+        {
+            bilder[1].da = false;
+            baue(bilder[0], teile, 0);
+        }
+    }
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+    f->glBlendFuncSeparate(static_cast<GLenum>(blendSrcRgb), static_cast<GLenum>(blendDstRgb),
+                           static_cast<GLenum>(blendSrcA), static_cast<GLenum>(blendDstA));
+    if (blendWar == GL_TRUE) f->glEnable(GL_BLEND);
+    else f->glDisable(GL_BLEND);
+    bindActive();
+
+    // --- Auflegen: erst die uebrigen Reihen, dann die laufende Zeile; der
+    // Ring liegt immer normal, die Fuellung mit der Mischart.
+    for (GlyphBild* bilder : {rt.lyricsRest, rt.lyricsBild})
+        for (const int i : {1, 0})
+        {
+            const GlyphBild& bild = bilder[i];
+            if (!bild.da) continue;
+            const bool ring = i == 1;
+            if (m_glyphNurRastern)  // Karaoke-Ebene: aufgelegt wird erst beim Present
+            {
+                m_karaokeLagen.push_back({bild.zeig, ring, bild.x, bild.y, bild.b, bild.h, true});
+                continue;
+            }
+            composeGlyphLayer(bild.zeig, ring ? 0 : params.blend, ring ? 100 : params.blendStrength,
+                              bild.x, bild.y, bild.b, bild.h, true);
+        }
 }
 
 const ChainNode* MultiEffectVisualizer::findeLyricsKnoten(const std::string& name) const
@@ -9094,10 +9577,11 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
         const float dx = static_cast<float>(params.xShift) / 100.0f;
         const float dy = static_cast<float>(params.yShift) / 100.0f;
         if (hatRing)
-            composeGlyphLayer(bild[1].tex, getrennt ? 0 : art, getrennt ? 100 : staerke,
-                              bild[1].x + dx, bild[1].y + dy, bild[1].b, bild[1].h);
-        composeGlyphLayer(bild[0].tex, art, staerke, bild[0].x + dx, bild[0].y + dy, bild[0].b,
-                          bild[0].h);
+            composeGlyphLayer(bild[1].zeig, getrennt ? 0 : art, getrennt ? 100 : staerke,
+                              bild[1].x + dx, bild[1].y + dy, bild[1].b, bild[1].h,
+                              bild[1].vormult);
+        composeGlyphLayer(bild[0].zeig, art, staerke, bild[0].x + dx, bild[0].y + dy, bild[0].b,
+                          bild[0].h, bild[0].vormult);
         return true;
     };
 
@@ -9230,6 +9714,11 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                            std::to_string(params.outlineColor) + ':' +
                            std::to_string(params.outlineSize) + ':' +
                            std::to_string(m_surfaceWidth) + 'x' + std::to_string(m_surfaceHeight);
+    // B3 a1 (S90): eine Schriftgroesse je Song — die laengste Zeile des
+    // Songtexts bestimmt sie, Schrift und Zeilenabstand gehen zusammen
+    const int pxFeld = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
+    const double songFaktor = lyricsSongFaktor(rt, params, pxFeld);
+    snapshot += '*' + std::to_string(std::lround(songFaktor * 1000.0));
     // S90, LB1b: die Vorschau-Zeilen eigens gestaltet, relativ zur laufenden
     const int vorschauSkala = std::clamp(static_cast<int>(params.previewScale), 10, 400);
     const int abstandProzent = std::clamp(static_cast<int>(params.lineSpacing), 50, 400);
@@ -9280,7 +9769,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         stand = snapshot;
         QFont basis;
         if (!params.fontFace.empty()) basis.setFamily(QString::fromStdString(params.fontFace));
-        const int px = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
+        const int px = std::max(4, static_cast<int>(std::lround(pxFeld * songFaktor)));
         basis.setPixelSize(px);
         basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
         basis.setItalic(params.italic);
@@ -9532,6 +10021,8 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     if (zeilenbild != nullptr)
     {
         zeilenbild->da = true;
+        zeilenbild->zeig = tex;  // CPU-Weg: die eigene Textur, Farbe unvormultipliziert
+        zeilenbild->vormult = false;
         bx = zeilenbild->x;
         by = zeilenbild->y;
         bb = zeilenbild->b;
@@ -9788,6 +10279,7 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     f->glActiveTexture(GL_TEXTURE0);
     m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
     m_textShader->setUniformValue("uImgRect", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
+    m_textShader->setUniformValue("uVormult", false);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();

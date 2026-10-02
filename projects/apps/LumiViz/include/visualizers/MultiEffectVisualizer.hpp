@@ -515,6 +515,23 @@ private:
         float b = 1.0f;
         float h = 1.0f;
         bool da = false;       ///< traegt das Bild der laufenden Zeile dieses Frames
+        /// S90, B2 a: auf dem Masken-Weg wird das Bild auf der Grafikkarte
+        /// zusammengesetzt — dann lebt es in dieser Flaeche, vormultipliziert.
+        std::unique_ptr<QOpenGLFramebufferObject> fbo;
+        unsigned int zeig = 0;  ///< die Textur, die aufzulegen ist (`tex` oder die der Flaeche)
+        bool vormult = false;   ///< Farbe ist mit der Deckung vormultipliziert (Flaeche)
+    };
+    /// S90, B2 a: ein Wort (oder ein Zeilenstueck) als Maske — einmal gerastert,
+    /// danach sind Groesse, Lage und Farbe Parameter der Grafikkarte. R traegt
+    /// die Deckung der Fuellung, G die des Kontur-Strichs. Die Masse stehen in
+    /// Pixeln der Bezugsgroesse (`lyricsMaskenRef`), relativ zum Ursprung auf
+    /// der Grundlinie.
+    struct WortMaske
+    {
+        unsigned int tex = 0;  ///< 0 = nichts zu zeichnen (nur Leerraum)
+        float bx = 0.0f, by = 0.0f, bb = 0.0f, bh = 0.0f;  ///< Rahmen der Maske
+        float vor = 0.0f;    ///< Vorschub des ganzen Stuecks
+        float mitte = 0.0f;  ///< Mitte der Buchstaben (ohne Leerraum am Rand)
     };
 
     /** Per-leaf render-thread state (beat counters, scripts), keyed by nodeId. */
@@ -592,6 +609,20 @@ private:
         /// kein neues Rastern) — das legt der Lyrics Trail auf.
         GlyphBild lyricsBild[2];
         GlyphBild lyricsBildAlt[2];
+        /// S90, B2 a (Masken-Weg): die uebrigen Reihen als Flaeche, der
+        /// Masken-Vorrat (Schluessel = Gewicht + Text) und wofuer er gilt —
+        /// Schrift, Bezugsgroesse in Rasterpixeln, Strichbreite. Aendert sich
+        /// der Schluessel, wird der Vorrat geleert und neu gerastert.
+        /// S90, B3 a1: Breite der laengsten Zeile des Songtexts bei 100 px
+        /// Schrift und wofuer sie gilt (Songtext-Stand, Schrift)
+        std::string lyricsSongSchluessel;
+        double lyricsSongBreite100 = 0.0;
+        GlyphBild lyricsRest[2];
+        std::unordered_map<std::string, WortMaske> lyricsMasken;
+        std::string lyricsMaskenSchluessel;
+        float lyricsMaskenRef = 0.0f;
+        float lyricsMaskenHoehe = 0.0f;   ///< Zeilenhoehe der Schrift bei Bezugsgroesse
+        float lyricsMaskenAufstieg = 0.0f;  ///< Oberlaenge bei Bezugsgroesse
         /// S90, LB2: laufende Groesse je Wort der laufenden Zeile — sie gleitet
         /// ihrem Ziel nach (Feld wordFlowMs) — und die Zeile, zu der sie gehoert.
         std::vector<float> lyricsWortSkala;
@@ -1191,7 +1222,24 @@ private:
     /// `x/y/b/h` (S90): Platz der Textur im Bild in Anteilen, y von oben —
     /// die Vorgabe ist das ganze Bild.
     void composeGlyphLayer(unsigned int texture, int blend, int staerkeProzent = 100,
-                           float x = 0.0f, float y = 0.0f, float b = 1.0f, float h = 1.0f);
+                           float x = 0.0f, float y = 0.0f, float b = 1.0f, float h = 1.0f,
+                           bool vormult = false);
+    /// S90, Entscheid B3 a1: eine Schriftgroesse je Song. Liefert den Faktor
+    /// (0,5..1), um den die Schrift `px` (Kettenmass) fuer ALLE Zeilen kleiner
+    /// gesetzt wird, damit die laengste Zeile des Songtexts in die Breite
+    /// passt — Schrift und Zeilenabstand gehen zusammen, die Lage bleibt ueber
+    /// den Song stabil. Was bei 50 % noch nicht passt, wird einzeln verkleinert.
+    [[nodiscard]] double lyricsSongFaktor(LeafRuntime& rt,
+                                          const lumi::multieffect::LyricsParams& params,
+                                          double px);
+    /// S90, B2 a: die Reihen aus Wort-Masken auf der Grafikkarte zusammensetzen
+    /// (statt sie auf der CPU zu rastern) und auflegen — fuer Knoten, deren
+    /// Felder sich je Frame aendern koennen (Skript, Modulation) oder die das
+    /// laufende Wort hervorheben. `basis` = die gespeicherten Felder des
+    /// Knotens (Bezug fuer Maskengroesse und Strichbreite).
+    void zeichneLyricsMasken(LeafRuntime& rt, const lumi::multieffect::LyricsParams& basis,
+                             const lumi::multieffect::LyricsParams& params,
+                             const std::vector<LyricsAnzeige>& zeilen);
     void runAvi(const lumi::multieffect::ChainNode& node,
                 const lumi::multieffect::AviParams& params);
     /// Release the VfW handles of an AVI node (safe on empty runtimes).
@@ -1693,7 +1741,9 @@ private:
         unsigned int tex = 0;
         bool kontur = false;  ///< Kontur-Ring: liegt immer normal und voll
         float x = 0.0f, y = 0.0f, b = 1.0f, h = 1.0f;
+        bool vormult = false;  ///< Flaeche des Masken-Wegs (B2 a)
     };
+    std::unique_ptr<QOpenGLShaderProgram> m_maskenShader;  ///< Wort-Maske -> Farbe (B2 a)
     std::vector<KaraokeLage> m_karaokeLagen;
     unsigned int m_karaokeTrailTex = 0;  ///< Bild der Trail-Liste (0 = keins)
     /// Mischart (0..8) und Staerke (0..100) fuers Auflegen — je Frame aus den

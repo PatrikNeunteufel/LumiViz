@@ -2968,21 +2968,21 @@ struct LyricsParams
     int wordFlowMs = 120;
 
     /// Parameter script (S86): every field of this node + `b`/`w`/`h` + audio
-    /// set. Fields that re-render the glyphs follow the script from Init, Song,
-    /// Beat and Line only. Empty = no script.
+    /// set. Position, size and colours follow the script from every slot; font
+    /// weight, italic, outline size and preview weight re-render the glyphs
+    /// and follow it from Init, Song, Beat, Line and Word only. Empty = no script.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
     /// Runs once on every line change of the lyrics, before Frame — the place
-    /// for fields that re-render the glyphs (position, size, colours). Reads
-    /// `line` (number of the running line, 0 = before the first line) and
-    /// `linecount`. Empty = no script.
+    /// for whatever should change with the line. Reads `line` (number of the
+    /// running line, 0 = before the first line) and `linecount`. Empty = no
+    /// script.
     std::string lineCode;
     /// Runs once on every word change of the lyrics, after Line and before
     /// Frame — needs lyrics with word times. Reads `word` (number of the word
     /// being sung in the running line, 1 = first, 0 = none or unknown) and
-    /// `wordcount` (words of the running line). Fields that re-render the
-    /// glyphs follow the script from here too. Empty = no script.
+    /// `wordcount` (words of the running line). Empty = no script.
     std::string wordCode;
 };
 

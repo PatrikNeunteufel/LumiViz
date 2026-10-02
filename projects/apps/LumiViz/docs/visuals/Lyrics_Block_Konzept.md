@@ -287,6 +287,56 @@ wird. Drei Wege:
 - **c — so lassen:** B1 a gilt, das Gleiten kostet während seiner Dauer
   2–6 ms je Frame.
 
+**Entscheid Patrik: B2 a.** ✅ gebaut (S90):
+
+- **Wann:** der Lyrics-Knoten nimmt den Masken-Weg, wenn er auf einer
+  gesteuerten Kopie läuft (Skript oder Modulation — `m_gesteuerteKopie`) oder
+  das laufende Wort hervorhebt. Sonst der CPU-Weg, bitgleich wie bisher.
+- **Masken** (`WortMaske`, Vorrat je Knoten in `LeafRuntime::lyricsMasken`):
+  je Wort bzw. Zeilenstück eine RG-Textur mit Mip-Stufen — R die Füllung, G
+  der Kontur-Strich —, gerastert in einer Bezugsgröße. Die Bezugsgröße ist
+  die größte gebrauchte Schrift in Rasterpixeln; sie wächst mit dem Bedarf
+  (25 % Luft) und schrumpft erst, wenn sie viermal zu groß ist. Der Vorrat
+  gilt für Schrift, Gewicht, kursiv, Bezugsgröße und Strichbreite und wird
+  bei deren Änderung geleert.
+- **Satz** je Frame auf der CPU (`zeichneLyricsMasken`): dieselbe Rechnung
+  wie der CPU-Weg, mit den Maßen der Bezugsgröße, die mit der Schrift gehen.
+- **Zusammensetzen:** `m_maskenShader` zeichnet die Worte als Rechtecke in
+  eine Fläche je Teilbild (`GlyphBild::fbo`, so breit wie das Bild, Höhe in
+  64er-Schritten), vormultipliziert; Ring und Füllung getrennt wie beim
+  CPU-Weg. Text-Shader und Overlay-Shader kennen `uVormult`. Übergabe an den
+  Trail und Karaoke-Ebene laufen über dieselben `GlyphBild`.
+- **Folge für die Skripte (B1 b):** Lage, Größe und Farben des Lyrics-Knotens
+  sind in der Feldtabelle nicht mehr *Struktur* und folgen dem Skript aus
+  jedem Feld. *Struktur* bleiben `fontWeight`, `italic`, `outlineSize`,
+  `previewWeight` (sie rastern die Masken neu); für sie gilt B1 a weiter.
+- **Eigenheit:** die Kontur ist Teil der Maske und wächst mit der Schrift
+  (ihre Breite gilt bei der gespeicherten Schriftgröße).
+- **Gemessen** (derselbe Test wie oben): gleitend **0,41 ms je Frame** gegen
+  ruhend 0,42 ms — vorher 6,2 ms mit Kontur.
+- **Geprüft:** alle Lyrics-Tests laufen über den Masken-Weg, sobald ein
+  Skript da ist (LB2-Farbmessung, Zähler, Trail mit Wort-Stand, Ebene);
+  Skript aus `Karaoke2.lvkar`: Beat-Frames groß, sonst Grundgröße, Kette =
+  Ebene; Puls-Beispiel des Handbuchs klingt ab; CPU-Szenen 13/13 bitgleich
+  gegen den Stand vor LB1; Unit-Tests 818/818; Vergleichslauf 84/84 bitgleich
+  (`out/f4c/bp30_s90_b2a`); Bilder CPU neben Masken angesehen
+  (`out/lb1/b2a/b2a_vergleich.png`) — mit bloßem Auge gleich; verkleinerte
+  Vorschau (50 %) 113 gegen 107 helle Pixel.
+- **Nicht geprüft:** im laufenden Programm; Masken-Weg in der Ebene mit
+  Render Scale; Speicher bei sehr großen Fenstern (je Teilbild eine Fläche in
+  Bildbreite); Overlay mit getrennter Kontur nur gebaut, nicht im Bild
+  geprüft; Modulation ohne Skript.
+
+**Entscheid B3 a1 (Patrik): eine Schriftgröße je Song.** ✅ gebaut (S90):
+`lyricsSongFaktor` misst die längste Zeile des Songtexts einmal bei 100 px
+(je Songtext-Stand und Schrift) und liefert den Faktor 0,5..1 für die Schrift
+aller Zeilen; Schrift und Zeilenabstand gehen zusammen, in beiden
+Zeichenwegen. Was bei 50 % noch nicht passt, wird wie bisher einzeln
+verkleinert. Test „eine Schriftgröße je Song": Schrift 40 und 60 px ergeben
+dieselbe Zeilenhöhe, denselben Abstand und dieselbe Lage; die kurze
+Vorschau-Zeile trägt dieselbe Schrift. Presets, deren Zeilen alle passen,
+bleiben unverändert.
+
 Prüfung: Bildtests mit einer Test-LRC mit Wort-Zeiten (drei Zustände an drei
 Positionen, Farbe und Rahmenbreite des laufenden Worts gemessen);
 Bildfolge über einen Wortwechsel (Kontaktbogen: die Zeile gleitet, kein

@@ -340,20 +340,11 @@ KLASSEN = {
     "text.outline": "Struktur", "text.outlineColor": "Struktur",
     "text.outlineSize": "Struktur", "text.shadow": "Struktur",
     "text.randomPos": "Struktur",
-    # Lyrics (S86): dieselbe Regel — alles, was die Glyphen neu rastert
-    "lyrics.color": "Struktur", "lyrics.color2": "Struktur",
-    "lyrics.colorBoth": "Struktur", "lyrics.colorNext": "Struktur",
-    "lyrics.fontHeight": "Struktur", "lyrics.fontWeight": "Struktur",
-    "lyrics.italic": "Struktur", "lyrics.hAlign": "Struktur",
-    "lyrics.vAlign": "Struktur", "lyrics.xShift": "Struktur",
-    "lyrics.yShift": "Struktur", "lyrics.outline": "Struktur",
-    "lyrics.outlineColor": "Struktur", "lyrics.outlineSize": "Struktur",
-    "lyrics.previewLines": "Struktur",
-    "lyrics.previewScale": "Struktur", "lyrics.previewWeight": "Struktur",
-    "lyrics.previewXShift": "Struktur", "lyrics.previewYShift": "Struktur",
-    "lyrics.lineSpacing": "Struktur",
-    "lyrics.wordScale": "Struktur", "lyrics.useWordColor": "Struktur",
-    "lyrics.colorWord": "Struktur", "lyrics.wordLayout": "Struktur",
+    # Lyrics: seit S90 (B2 a, Wort-Masken auf der Grafikkarte) kosten Groesse,
+    # Lage und Farben kein Rastern mehr und folgen dem Skript aus jedem Feld.
+    # Neu gerastert wird nur noch, was die Masken selbst aendert:
+    "lyrics.fontWeight": "Struktur", "lyrics.italic": "Struktur",
+    "lyrics.outlineSize": "Struktur", "lyrics.previewWeight": "Struktur",
     # Lyrics Trail (S87): dieselbe Regel
     "lyricsTrail.color": "Struktur", "lyricsTrail.useOwnColor": "Struktur",
     "lyricsTrail.xShift": "Struktur", "lyricsTrail.yShift": "Struktur",
