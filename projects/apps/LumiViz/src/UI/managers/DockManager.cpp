@@ -74,6 +74,7 @@ struct DockManager::Impl
 
     // Event subscription IDs
     std::vector<int> subscriptionIds;
+    std::function<bool(const QString&)> wechselWaechter;  ///< S89, s. setVisualizerWechselWaechter
 
     // Debounce flag for the native-handle resync after dock layout changes
     bool nativeResyncPending{false};
@@ -455,6 +456,11 @@ std::vector<VisualizerWidget*> DockManager::visualizers() const
     return m_impl->visualizers;
 }
 
+void DockManager::setVisualizerWechselWaechter(std::function<bool(const QString& vizId)> waechter)
+{
+    m_impl->wechselWaechter = std::move(waechter);
+}
+
 ads::CDockWidget* DockManager::dockWidget(const QString& title) const
 {
     return m_impl->pAdsDockManager->findDockWidget(title);
@@ -763,6 +769,13 @@ void DockManager::subscribeToEvents()
             
             // Apply to first visualizer (TODO: apply to focused one)
             QString vizId = QString::fromStdString(e.visualizerId);
+            // S89: der Wechsel verwirft die Effektkette — erst den Waechter
+            // fragen (ungespeicherte Aenderungen), dann wechseln
+            if (m_impl->wechselWaechter && !m_impl->wechselWaechter(vizId))
+            {
+                BasicLogger::logInfo("Visualizer change cancelled: " + e.visualizerId);
+                return;
+            }
             m_impl->visualizers[0]->setVisualizer(vizId);
             BasicLogger::logInfo("Changed visualizer to: " + e.visualizerId);
         });

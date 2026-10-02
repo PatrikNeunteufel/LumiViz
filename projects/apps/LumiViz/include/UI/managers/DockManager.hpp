@@ -185,6 +185,17 @@ public:
     [[nodiscard]] std::vector<VisualizerWidget*> visualizers() const;
 
     /**
+     * @brief Waechter vor dem Wechsel des Visualizers (S89): der Wechsel
+     *        verwirft den laufenden Visualizer samt seiner Effektkette.
+     *
+     * Wird vor `ChangeVisualizerEvent` gefragt, mit der gewuenschten Id.
+     * Liefert er false, bleibt der Visualizer, wie er ist. Das Fenster haengt
+     * hier die Rueckfrage zu ungespeicherten Aenderungen ein. Ohne Waechter
+     * wird immer gewechselt.
+     */
+    void setVisualizerWechselWaechter(std::function<bool(const QString& vizId)> waechter);
+
+    /**
      * @brief Gets a dock widget by title.
      */
     [[nodiscard]] ads::CDockWidget* dockWidget(const QString& title) const;

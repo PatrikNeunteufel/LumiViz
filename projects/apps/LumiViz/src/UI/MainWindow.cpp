@@ -393,6 +393,14 @@ void MainWindow::setupUi()
     // It takes over the central area of MainWindow.
 
     m_pDockManager = std::make_unique<DockManager>(*m_pServices, this);
+    // S89: der Wechsel des Visualizers verwirft die Effektkette — vorher die
+    // Rueckfrage zu ungespeicherten Aenderungen. Derselbe Visualizer noch
+    // einmal ist kein Wechsel (und kein Verlust).
+    m_pDockManager->setVisualizerWechselWaechter([this](const QString& vizId) {
+        const VisualizerWidget* widget = primaryVisualizer();
+        if (widget != nullptr && widget->currentVisualizerId() == vizId) return true;
+        return darfKetteErsetzen(tr("Change Visualizer"));
+    });
 
     // Connect signals
     connect(m_pDockManager.get(), &DockManager::visualizerCreated,

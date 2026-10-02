@@ -268,8 +268,9 @@ gespeicherte Datei als laufendes Preset.
 
 Hat die Kette **ungespeicherte Änderungen**, fragt LumiViz nach, bevor sie
 ersetzt wird — bei *New Effect Chain*, beim Laden und Importieren über das
-Menü, beim Doppelklick im Effect Browser, beim Blättern mit Bild ab/Bild auf
-und beim Beenden: **Save** (speichern, dann weiter), **Discard** (weiter ohne
+Menü, beim Doppelklick im Effect Browser, beim Blättern mit Bild ab/Bild auf,
+beim Wechsel auf einen anderen Visualizer (Panel *Visualizers*) und beim
+Beenden: **Save** (speichern, dann weiter), **Discard** (weiter ohne
 Speichern), **Cancel** (zurück). Als Änderung zählt nur, was auch gespeichert
 würde — ein Feld hin und zurück gestellt ist keine, ein frisch geladenes oder
 importiertes Preset auch nicht. Im **Vollbild** verlässt LumiViz dafür erst
