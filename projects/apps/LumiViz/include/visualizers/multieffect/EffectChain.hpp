@@ -2978,6 +2978,12 @@ struct LyricsParams
     /// `line` (number of the running line, 0 = before the first line) and
     /// `linecount`. Empty = no script.
     std::string lineCode;
+    /// Runs once on every word change of the lyrics, after Line and before
+    /// Frame — needs lyrics with word times. Reads `word` (number of the word
+    /// being sung in the running line, 1 = first, 0 = none or unknown) and
+    /// `wordcount` (words of the running line). Fields that re-render the
+    /// glyphs follow the script from here too. Empty = no script.
+    std::string wordCode;
 };
 
 /**

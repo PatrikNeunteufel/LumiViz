@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     856>
+                     857>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -986,6 +986,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Draw the word being sung in `colorWord` instead of the voice color."},
     {"lyrics.vAlign",
      "0 top, 1 center, 2 bottom"},
+    {"lyrics.wordCode",
+     "Parameter script (S86): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song, Beat and Line only. Empty = no script. Runs once on every line change of the lyrics, before Frame \342\200\224 the place for fields that re-render the glyphs (position, size, colours). Reads `line` (number of the running line, 0 = before the first line) and `linecount`. Empty = no script. Runs once on every word change of the lyrics, after Line and before Frame \342\200\224 needs lyrics with word times. Reads `word` (number of the word being sung in the running line, 1 = first, 0 = none or unknown) and `wordcount` (words of the running line). Fields that re-render the glyphs follow the script from here too. Empty = no script."},
     {"lyrics.wordFlowMs",
      "Time in milliseconds over which the word size glides to its target (0..2000); 0 = hard switch."},
     {"lyrics.wordLayout",

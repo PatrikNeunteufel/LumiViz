@@ -581,6 +581,9 @@ private:
         /// S89: Zeilennummer, die das Skript zuletzt gesehen hat (Slot Line);
         /// -1 = noch keine — der erste Frame gilt als Zeilenwechsel
         int lyricsSkriptZeile = -1;
+        /// S90: Zeile und Wort (Zeile * 100000 + Wort), die das Skript zuletzt
+        /// gesehen hat (Slot Word); -1 = noch nichts
+        std::int64_t lyricsSkriptWort = -1;
         float lyricsWechselZeit = 0.0f;
         /// S90, LB1 (Zeilen-Puffer): das Bild der LAUFENDEN Zeile, getrennt
         /// von den uebrigen Reihen gerastert — [0] Fuellung bzw. alles,
@@ -1510,6 +1513,12 @@ private:
     /// hat die Zeile gewechselt", und die Werte fuer `line` / `linecount`.
     const std::string* m_nodeLine = nullptr;
     bool m_frameLine = false;
+    /// S90, LB3: dasselbe fuer das laufende Wort — Code des Slots „Word",
+    /// „in diesem Frame hat das Wort gewechselt", `word` und `wordcount`.
+    const std::string* m_nodeWord = nullptr;
+    bool m_frameWord = false;
+    int m_wordNummer = 0;
+    int m_wordAnzahl = 0;
     /// S90 (Entscheid B1 a): Stand der Skriptvariablen gleich NACH dem Feld
     /// Line und welche davon Line veraendert hat — je Lauf von runParamScript
     /// neu, leer ausserhalb eines Zeilenwechsels mit Line-Code.

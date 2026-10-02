@@ -1479,6 +1479,227 @@ TEST_CASE("Lyrics S90 LB2: das laufende Wort — Farbe, Groesse, Reflow/Overlay,
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90, LB3: das laufende Wort im Skript — `word`, `wordcount` und der Slot
+// „Word", der einmal je Wortwechsel laeuft (nach Line, vor Frame). Ein
+// laufendes Wort gibt es nur mit echten Wort-Zeiten (Entscheid L3 a).
+TEST_CASE("Lyrics S90 LB3: Slot Word laeuft einmal je Wortwechsel, kennt word/wordcount")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    // Zeile 1: drei Worte mit Zeiten; Zeile 2: ohne Wort-Zeiten; Zeile 3: zwei Worte
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(
+        "[00:10.00]MMMM <00:11.00>HHHH <00:12.00>MMMM\n[00:13.00]eins zwei drei vier\n"
+        "[00:16.00]AAAA <00:17.00>BBBB\n"));
+
+    std::map<std::string, LyricsParams> gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter([&](const ChainNode& n, const EffectParams& p) {
+        if (const auto* lp = std::get_if<LyricsParams>(&p))
+            gesehen[n.displayName.empty() ? std::string("Lyrics") : n.displayName] = *lp;
+    });
+    const auto kette = [](const LyricsParams& lp, bool skripte = true) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        lyr.displayName = "Zeile";
+        lyr.scriptsActive = skripte;
+        root.children = {clear, lyr};
+        return root;
+    };
+    const auto frames = [](MultiEffectVisualizer& vis, int posMs, int n = 8) {
+        MultiEffectVisualizer::notifyPlayPosition(posMs);
+        for (int i = 0; i < n; ++i) vis.render(1.0f / 60.0f);
+    };
+    const auto starte = [](MultiEffectVisualizer& vis, ChainNode root) {
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);  // kein Beat: Strukturfelder kommen nur ueber Word
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+    };
+
+    {
+        // c zaehlt die Laeufe des Slots (xshift); yshift traegt das Wort, previewlines wordcount
+        LyricsParams lp;
+        lp.initCode = "c=0;";
+        lp.wordCode = "c=c+1; xshift=c; yshift=-word; previewlines=wordcount;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp));
+        frames(vis, 10500);  // Zeile 1, erstes Wort
+        REQUIRE(gesehen.count("Zeile") == 1);
+        CHECK(gesehen["Zeile"].xShift == 1);  // genau einmal, auch ueber 8 Frames
+        CHECK(gesehen["Zeile"].yShift == -1);
+        CHECK(gesehen["Zeile"].previewLines == 3);
+        frames(vis, 10800);  // dasselbe Wort: kein Lauf
+        CHECK(gesehen["Zeile"].xShift == 1);
+        frames(vis, 11500);  // zweites Wort
+        CHECK(gesehen["Zeile"].xShift == 2);
+        CHECK(gesehen["Zeile"].yShift == -2);
+        frames(vis, 12500);  // drittes Wort
+        CHECK(gesehen["Zeile"].xShift == 3);
+        CHECK(gesehen["Zeile"].yShift == -3);
+        frames(vis, 14000);  // Zeile 2 hat keine Wort-Zeiten: der Slot ruht, die Werte bleiben
+        CHECK(gesehen["Zeile"].xShift == 3);
+        frames(vis, 16500);  // Zeile 3, erstes Wort — auch wenn die Wortnummer (1) schon einmal dran war
+        CHECK(gesehen["Zeile"].xShift == 4);
+        CHECK(gesehen["Zeile"].yShift == -1);
+        CHECK(gesehen["Zeile"].previewLines == 2);
+        frames(vis, 17500);  // zweites Wort der dritten Zeile
+        CHECK(gesehen["Zeile"].xShift == 5);
+        CHECK(gesehen["Zeile"].yShift == -2);
+    }
+    {
+        // `word` / `wordcount` in den anderen Feldern; ohne Wort-Zeiten ist word 0
+        // und wordcount zaehlt die Worte am Leerraum (hier vier)
+        LyricsParams lp;
+        lp.lineCode = "xshift = wordcount; yshift = -word;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp));
+        frames(vis, 14000);  // Zeile 2
+        CHECK(gesehen["Zeile"].xShift == 4);
+        CHECK(gesehen["Zeile"].yShift == 0);
+        frames(vis, 16500);  // Zeile 3: zwei Worte, das erste laeuft
+        CHECK(gesehen["Zeile"].xShift == 2);
+        CHECK(gesehen["Zeile"].yShift == -1);
+    }
+    {
+        // Zeilenwechsel mit Wort-Zeiten: Line laeuft vor Word — Word sieht, was Line gesetzt hat
+        LyricsParams lp;
+        lp.lineCode = "xshift = 10;";
+        lp.wordCode = "xshift = xshift + word;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp));
+        frames(vis, 10500);
+        CHECK(gesehen["Zeile"].xShift == 11);  // 10 von Line, +1 von Word
+        frames(vis, 11500);
+        CHECK(gesehen["Zeile"].xShift == 13);  // Word allein: +2
+    }
+    {
+        // ein Frame-Feld schlaegt beim Wortwechsel nicht durch (wie beim Zeilenwechsel, B1 a)
+        LyricsParams lp;
+        lp.wordCode = "yshift = -word;";
+        lp.frameCode = "xshift = 33;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp));
+        frames(vis, 10500);  // Start: der erste Frame ist frei, xshift 33 gilt
+        frames(vis, 11500);
+        LyricsParams ohne;
+        ohne.wordCode = lp.wordCode;
+        ohne.frameCode = "xshift = 33 + word;";  // aendert sich je Wort — darf nicht wirken
+        MultiEffectVisualizer vis2;
+        starte(vis2, kette(ohne));
+        frames(vis2, 10500);
+        const int start = gesehen["Zeile"].xShift;
+        frames(vis2, 11500);
+        CHECK(gesehen["Zeile"].xShift == start);  // 34 vom Start, nicht 35
+        CHECK(gesehen["Zeile"].yShift == -2);     // Word selbst wirkt
+    }
+    {
+        // „Script active" aus: auch Word ruht
+        gesehen.clear();
+        LyricsParams lp;
+        lp.wordCode = "xshift=50;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp, false));
+        frames(vis, 10500);
+        CHECK(gesehen.count("Zeile") == 0);
+    }
+    {
+        // das Feld ueberlebt Speichern und Laden
+        LyricsParams lp;
+        lp.wordCode = "xshift=word;";
+        QStringList report;
+        const ChainNode zurueck = nodeFromJson(nodeToJson(kette(lp)), &report);
+        REQUIRE(zurueck.children.size() == 2);
+        CHECK(std::get<LyricsParams>(zurueck.children[1].params).wordCode == "xshift=word;");
+    }
+    // Worte zaehlen (Modell)
+    CHECK(ly::wortAnzahl(ly::Zeile{0, "eins  zwei\tdrei ", ly::Stimme::Keine, {}}) == 3);
+    CHECK(ly::wortAnzahl(ly::Zeile{0, "", ly::Stimme::Keine, {}}) == 0);
+
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S90 (Frage Patrik): warum aendern sich Zeilenabstand und Lage, wenn ein
+// Skript die Schrift vergroessert? Eine zu lange Zeile wird verkleinert, bis
+// sie in die Breite passt — der Zeilenabstand aber rechnet mit der
+// UNVERKLEINERTEN Schrift. Der Test haelt fest, was heute gilt.
+TEST_CASE("Lyrics S90: verkleinerte lange Zeile — Schrift passt sich an, der Zeilenabstand nicht")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(
+        "[00:10.00]MMMM MMMM MMMM MMMM MMMM\n[00:13.00]HHHH HHHH HHHH HHHH HHHH\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+
+    struct Mass
+    {
+        int hoehe = 0;  ///< Hoehe der hellen Zeile
+        int y = 0;      ///< ihre Oberkante
+    };
+    const auto miss = [](int schrift, bool vorschauHell) {
+        LyricsParams lp;
+        lp.fontHeight = -schrift;
+        lp.outline = false;
+        lp.previewLines = 1;
+        lp.vAlign = 2;
+        lp.yShift = -2;
+        lp.color = vorschauHell ? 0x202020 : 0xFFFFFF;
+        lp.colorNext = vorschauHell ? 0xFFFFFF : 0x202020;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.initialize();
+        vis.resize(QSize(480, 270));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 270);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        int oben = -1, unten = -1;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    if (oben < 0) oben = y;
+                    unten = y;
+                    break;
+                }
+        return Mass{oben < 0 ? 0 : unten - oben + 1, oben};
+    };
+    // 40 px passt nicht in 480 px Breite, 80 px erst recht nicht: beide werden
+    // auf dieselbe Breite verkleinert und sehen gleich gross aus …
+    const Mass z40 = miss(40, false);
+    const Mass z80 = miss(80, false);
+    const Mass v40 = miss(40, true);
+    const Mass v80 = miss(80, true);
+    MESSAGE("Schrift 40: Zeile y=" << z40.y << " h=" << z40.hoehe << ", Vorschau y=" << v40.y
+            << " | Schrift 80: Zeile y=" << z80.y << " h=" << z80.hoehe << ", Vorschau y=" << v80.y);
+    REQUIRE(z40.hoehe > 0);
+    CHECK(z80.hoehe == doctest::Approx(z40.hoehe).epsilon(0.15));
+    // … der Abstand zwischen laufender Zeile und Vorschau aber folgt der Schrift, wie sie eingestellt ist
+    CHECK((v80.y - z80.y) > (v40.y - z40.y) * 1.6);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90, LB1: Bilder des Lyrics-Knotens fuer den Vergleich vorher/nachher. Mit
 // `LUMIVIZ_LB1_SNAP=<ordner>` schreibt der Test je Szene ein PNG — derselbe
 // Lauf vor und nach einem Umbau am Rastern, die Ordner dann bitweise

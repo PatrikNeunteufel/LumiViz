@@ -428,6 +428,15 @@ private:
                               "and <code>linecount</code>. Position, size and colours follow "
                               "the script from here.");
     }
+    else if (field == QLatin1String("wordCode"))  // S90: Lyrics
+    {
+        wann = QStringLiteral("<b>once per word change</b> of the lyrics, after Line and "
+                              "before the Frame slot of that frame");
+        rest = QStringLiteral("Needs lyrics with word times. Reads <code>word</code> (word "
+                              "being sung in the running line, 1 = first) and "
+                              "<code>wordcount</code>. Position, size and colours follow the "
+                              "script from here.");
+    }
     else if (field == QLatin1String("beatCode"))
     {
         wann = QStringLiteral("<b>once per beat</b> — in each frame with a beat, after the "

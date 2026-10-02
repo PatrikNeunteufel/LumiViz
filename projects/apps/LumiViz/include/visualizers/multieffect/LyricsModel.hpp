@@ -417,4 +417,20 @@ inline void worte(std::string_view roh, std::int64_t zeilenZeit, Zeile& z)
     return n;
 }
 
+/// Zahl der Worte einer Zeile (S90): mit Wort-Zeiten die Zahl der Wort-
+/// Eintraege, sonst die durch Leerraum getrennten Stuecke des Texts.
+[[nodiscard]] inline int wortAnzahl(const Zeile& z)
+{
+    if (!z.worte.empty()) return static_cast<int>(z.worte.size());
+    int n = 0;
+    bool imWort = false;
+    for (const char c : z.text)
+    {
+        const bool leer = c == ' ' || c == '\t';
+        if (!leer && !imWort) ++n;
+        imWort = !leer;
+    }
+    return n;
+}
+
 }  // namespace lumi::multieffect::lyrics

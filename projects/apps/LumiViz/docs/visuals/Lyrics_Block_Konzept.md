@@ -316,6 +316,32 @@ Prüfung: Zähltest (`slotRunCount`: Word läuft genau einmal je Wortwechsel,
 nicht je Frame; Gegenprobe ohne Wort-Zeiten = 0 Läufe), Werte von `word` /
 `wordcount` an bekannten Positionen, Hilfetext-Test, Script active aus.
 
+**Stand LB3 — ✅ gebaut (S90):** `Slot::Word` (`kSlotCount` 7, Name „word"),
+Feld `LyricsParams::wordCode` (Serializer, Panel, `hatSkriptSchalter`,
+`leereSkriptSlots`, `hatCode`, `slotScopeHtml`, Variablentabelle; Feldzahl
+857), `lyrics::wortAnzahl` im Modell. `runLyrics` bestimmt Wort und Wortzahl
+vor dem Skript; Word läuft, wenn sich (Zeile, Wort) ändert und es ein
+laufendes Wort gibt. Das B1-Fenster umfasst Line und Word: beim Wechsel
+gelten für die neu rasternden Felder nur deren Werte. Geprüft (Zähler im
+Skript über den Param-Beobachter): einmal je Wortwechsel, Ruhe ohne
+Wort-Zeiten, neuer Lauf beim ersten Wort der nächsten Zeile, `wordcount`
+am Leerraum, Line vor Word, Frame schlägt beim Wortwechsel nicht durch,
+Script active aus, Speichern/Laden; Unit-Tests 818/818, Szenen 13/13 und
+Vergleichslauf 84/84 bitgleich (`out/f4c/bp30_s90_lb3`). **Nicht geprüft:**
+im laufenden Programm.
+
+### Befund S90 (Frage Patrik) — Zeilenabstand bei verkleinerter Zeile
+
+„Warum unterscheiden sich Zeilenabstand und Lage, wenn das Skript an oder aus
+ist?" Mit dem Skript aus `Karaoke2.lvkar` ist die Schrift doppelt so groß
+(128 statt 64 px). Eine zu lange Zeile wird verkleinert, bis sie in die
+Breite passt — sie sieht dann fast gleich groß aus. Der **Zeilenabstand**
+und damit die Lage der Reihen rechnen aber mit der **eingestellten**,
+unverkleinerten Schrift. Gemessen (Test „verkleinerte lange Zeile"): Schrift
+40 und 80 px auf 480 px Breite ergeben dieselbe Zeilenhöhe im Bild (15 / 14
+px), aber 60 gegen 120 px Abstand zur Vorschau, und die laufende Zeile steht
+91 px höher. Entscheid **B3** offen.
+
 ## 6. Stufe LB4 — `linetrigger` / `wordtrigger`
 
 Ausgabe-Variablen des Lyrics-Knotens nach dem Muster von `switch` /

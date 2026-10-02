@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 856,
+        "felder": 857,
         "typen": 94
     },
     "typen": [
@@ -2795,6 +2795,11 @@
                     "art": "zahl",
                     "default": 2,
                     "name": "vAlign"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "wordCode"
                 },
                 {
                     "art": "zahl",

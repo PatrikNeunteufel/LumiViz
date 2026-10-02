@@ -446,7 +446,12 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
         {ix<LyricsParams>,
          {kParam,
           {{"line", "in", "0..n", "number of the running line (0 = before the first line)"},
-           {"linecount", "in", "lines", "number of lines of the lyrics"}}}},
+           {"linecount", "in", "lines", "number of lines of the lyrics"},
+           // S90: das laufende Wort — und der Slot „Word" je Wortwechsel
+           {"word", "in", "0..n",
+            "number of the word being sung in the running line (1 = first; 0 = none, or the "
+            "lyrics carry no word times)"},
+           {"wordcount", "in", "words", "number of words of the running line"}}}},
         {ix<LyricsTrailParams>, {kParam, {}}},
         {ix<MosaicParams>,
          {kParam,
@@ -761,7 +766,7 @@ bool hatSkriptSchalter(const EffectParams& params)
             return requires { p.initCode; } || requires { p.frameCode; } ||
                    requires { p.beatCode; } || requires { p.pointCode; } ||
                    requires { p.pixelCode; } || requires { p.levelCode; } ||
-                   requires { p.lineCode; };
+                   requires { p.lineCode; } || requires { p.wordCode; };
         },
         params);
 }
@@ -778,6 +783,7 @@ void leereSkriptSlots(EffectParams& params)
             if constexpr (requires { p.pixelCode; }) p.pixelCode.clear();
             if constexpr (requires { p.levelCode; }) p.levelCode.clear();
             if constexpr (requires { p.lineCode; }) p.lineCode.clear();  // S89: Lyrics
+            if constexpr (requires { p.wordCode; }) p.wordCode.clear();  // S90: Lyrics
         },
         params);
 }

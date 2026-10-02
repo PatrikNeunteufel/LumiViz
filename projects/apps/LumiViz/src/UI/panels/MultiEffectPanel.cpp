@@ -8368,6 +8368,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         // S89 (Auftrag Patrik): einmal je Zeilenwechsel — die Stelle fuer Lage,
         // Groesse und Farben, die dem Skript nicht aus Frame folgen
         addScript("lineCode", tr("Line"), p->lineCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).lineCode = std::move(v); });
+        // S90 (LB3): einmal je Wortwechsel — nur bei Text mit Wort-Zeiten
+        addScript("wordCode", tr("Word"), p->wordCode, [](ChainNode& n, std::string v) { std::get<LyricsParams>(n.params).wordCode = std::move(v); });
     }
     else if (auto* p = std::get_if<LyricsTrailParams>(&params))
     {

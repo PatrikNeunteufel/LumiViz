@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.56.0
+> **Version:** 1.57.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -593,8 +593,16 @@ der Zeile wechseln soll. Lage, Größe und Farben folgen dem Skript von hier
 `line` (Nummer der laufenden Zeile, 0 = vor der ersten) und `linecount`; beide
 stehen auch in den anderen Feldern bereit. Beispiele: `yshift = -6 - rand(8);`
 (jede Zeile etwas anders hoch), `halign = line % 3;` (links, Mitte, rechts im
-Wechsel). Auch Zurückspulen und ein neuer Titel gelten als Zeilenwechsel. Die
-Karaoke-Ebene hat dasselbe Feld im Reiter *Lyrics*. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
+Wechsel). Auch Zurückspulen und ein neuer Titel gelten als Zeilenwechsel.
+Das Feld **Word** läuft **einmal bei jedem Wortwechsel** (nach Line, vor
+Frame) — nur bei Songtext mit Wort-Zeiten — und liest `word` (Nummer des
+Worts, das gerade gesungen wird, 1 = erstes; 0 = keins oder keine
+Wort-Zeiten) und `wordcount` (Worte der laufenden Zeile, ohne Wort-Zeiten am
+Leerraum gezählt); auch sie stehen in allen Feldern bereit. Lage, Größe und
+Farben folgen dem Skript auch von hier. Beispiel: `yshift = -6 - word;` (die
+Zeile steigt mit jedem Wort). Beim Wechsel gilt nur, was Line und Word selbst
+setzen — ein Frame-Feld, das dieselbe Variable schreibt, wirkt dort nicht.
+Die Karaoke-Ebene hat beide Felder im Reiter *Lyrics*. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
 Top**, **Karaoke Classic**, **Karaoke Neon**, **Big Centre**, **Three Lines
 Left**, **Side Right**, **Subtitle Small**, **Verse Sheet**) und bewegte
 Karaoke-Varianten, die per Skript arbeiten: **Karaoke Beat Colours** (neue
@@ -1468,6 +1476,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.57.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Word** — läuft einmal je Wortwechsel (nur mit Wort-Zeiten), liest `word` und `wordcount`; beide Variablen in allen Feldern |
 | 1.56.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU das **laufende Wort** hervorheben — **Word scale (%)**, **Own word color** / **Word color**, **Word layout** (Reflow / Overlay), **Word flow (ms)**; nur mit Wort-Zeiten. Skript: beim Zeilenwechsel gilt für Lage, Größe und Farben nur noch, was das Feld **Line** setzt — ein Frame-Feld schlägt dort nicht mehr durch |
 | 1.55.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Felder für die Vorschau-Zeilen — **Preview size (%)**, **Preview weight**, **Preview X shift / Y shift (%)** — und **Line spacing (%)** |
 | 1.54.0 | 2026-10-02 | Session 90. §11 Lyrics Trail: der Trail zeigt **das Bild, das stand** (Wort-Stand, verkleinerte Zeile, Lage) statt einer neu gezeichneten Zeile; mit *Own color* und ohne laufenden Lyrics-Knoten zeichnet er wie bisher neu; nach einer Pause-Zeile kein zweiter Trail |

@@ -1108,6 +1108,7 @@ struct WriteVisitor
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
         o["lineCode"] = QString::fromStdString(p.lineCode);  // S89: je Zeilenwechsel
+        o["wordCode"] = QString::fromStdString(p.wordCode);  // S90: je Wortwechsel
     }
     void operator()(const AviParams& p) const
     {
@@ -2600,6 +2601,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
         p.lineCode = getStr(o, "lineCode", p.lineCode);
+        p.wordCode = getStr(o, "wordCode", p.wordCode);
         return p;
     }
     if (type == "avi")

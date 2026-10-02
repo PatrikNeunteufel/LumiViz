@@ -5112,6 +5112,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
                     if constexpr (requires { p.frameCode; }) code = code || !p.frameCode.empty();
                     if constexpr (requires { p.beatCode; }) code = code || !p.beatCode.empty();
                     if constexpr (requires { p.lineCode; }) code = code || !p.lineCode.empty();
+                    if constexpr (requires { p.wordCode; }) code = code || !p.wordCode.empty();
                     // F2b (S85): eigene Hosts mit nur Punkt-/Pixel-Code
                     if constexpr (requires { p.pointCode; }) code = code || !p.pointCode.empty();
                     if constexpr (requires { p.pixelCode; }) code = code || !p.pixelCode.empty();
@@ -8791,13 +8792,36 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         m_lineNummer = nummer;
         m_lineAnzahl = static_cast<int>(st.zeilen.size());
         m_nodeLine = &params.lineCode;
+        // S90, LB3: das laufende Wort der laufenden Zeile und der Slot „Word"
+        // (einmal je Wortwechsel). Ein laufendes Wort gibt es nur mit echten
+        // Wort-Zeiten (Entscheid L3 a) — sonst ist `word` 0 und Word ruht;
+        // `wordcount` zaehlt dann die durch Leerraum getrennten Worte.
+        int wort = 0;
+        int worte = 0;
+        if (nummer >= 1 && nummer <= m_lineAnzahl)
+        {
+            const lyr::Zeile& zl = st.zeilen[static_cast<std::size_t>(nummer - 1)];
+            worte = lyr::wortAnzahl(zl);
+            if (st.synchron && !zl.worte.empty())
+                wort = lyr::worteBei(st, zl, playPositionMs() +
+                                                 static_cast<std::int64_t>(params.offsetMs) +
+                                                 songtextTitelVersatzMs());
+        }
+        const std::int64_t stelle = static_cast<std::int64_t>(nummer) * 100000 + wort;
+        m_frameWord = wort > 0 && (stelle != rt.lyricsSkriptWort || m_frameLine);
+        rt.lyricsSkriptWort = stelle;
+        m_wordNummer = wort;
+        m_wordAnzahl = worte;
+        m_nodeWord = &params.wordCode;
     }
     // Parameter-Skript auf der Frame-Kopie; Felder, die neu rastern, folgen
-    // dem Skript nur aus Init, Song, Beat und Line (E3).
+    // dem Skript nur aus Init, Song, Beat, Line und Word (E3).
     const bool zeileGewechselt = m_frameLine;
     runParamScript(rt, "lyrics", params.initCode, params.frameCode, params.beatCode, {});
     m_nodeLine = nullptr;
+    m_nodeWord = nullptr;
     m_frameLine = false;
+    m_frameWord = false;
     // S89: stellt das Feld „Line" die Zeile je Wechsel anders (Lage, Farbe,
     // Groesse), muss der Lyrics Trail die ALTE Zeile so zeichnen, wie sie
     // stand — nicht mit den Werten der neuen. Deshalb beim Wechsel den Stand
@@ -11026,7 +11050,9 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
 {
     // Opt-in: ein Knoten ohne Skript darf keinen Cent Rechenzeit kosten.
     const bool hatLine = m_nodeLine != nullptr && !m_nodeLine->empty();  // S89, nur Lyrics
-    if (init.empty() && frame.empty() && beat.empty() && !hatSongCode() && !hatLine) return;
+    const bool hatWord = m_nodeWord != nullptr && !m_nodeWord->empty();  // S90, nur Lyrics
+    if (init.empty() && frame.empty() && beat.empty() && !hatSongCode() && !hatLine && !hatWord)
+        return;
 
     // Block F (F2): zu den Hand-Bindungen des Renderers kommen ALLE Felder der
     // Feldtabelle — geschrieben wird in die Frame-Kopie, die renderNode dem
@@ -11038,7 +11064,8 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     feldBindungVor(rt, vars, feldPlan, feldWerte);
 
     const std::string combined = init + '\n' + frame + '\n' + beat + songSchluessel() +
-                                 (hatLine ? '\x1f' + *m_nodeLine : std::string());
+                                 (hatLine ? '\x1f' + *m_nodeLine : std::string()) +
+                                 (hatWord ? '\x1e' + *m_nodeWord : std::string());
     const bool fresh = (rt.paramHost == nullptr || rt.paramCompiled != combined);
     if (fresh)
     {
@@ -11049,6 +11076,7 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
         rt.paramHost->setSource(Slot::Beat, beat);
         setzeSong(*rt.paramHost);
         if (hatLine) rt.paramHost->setSource(Slot::Line, *m_nodeLine);
+        if (hatWord) rt.paramHost->setSource(Slot::Word, *m_nodeWord);
         // Ein Uebersetzungsfehler darf NICHT still bleiben: bis S54 fragte
         // niemand `lastError()` ab, ein Skript mit Tippfehler verhielt sich
         // damit exakt wie ein leeres — die Probe mit absichtlichem Unsinn kam
@@ -11095,6 +11123,8 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     {
         engine.setNumber("line", static_cast<double>(m_lineNummer));
         engine.setNumber("linecount", static_cast<double>(m_lineAnzahl));
+        engine.setNumber("word", static_cast<double>(m_wordNummer));  // S90
+        engine.setNumber("wordcount", static_cast<double>(m_wordAnzahl));
     }
 
     if (fresh && rt.paramHost->has(Slot::Init)) rt.paramHost->run(Slot::Init);
@@ -11106,11 +11136,16 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     // Line veraendert hat und auf welchen Wert (feldBindungNach liest es).
     m_lineWert.clear();
     m_lineGeschrieben.clear();
-    if (m_frameLine && rt.paramHost->has(Slot::Line))
+    // S90, LB3: dasselbe gilt fuer das Feld Word (einmal je Wortwechsel, nach
+    // Line) — beide zusammen sind das Fenster, dessen Werte zaehlen.
+    const bool laeuftLine = m_frameLine && rt.paramHost->has(Slot::Line);
+    const bool laeuftWord = m_frameWord && rt.paramHost->has(Slot::Word);
+    if (laeuftLine || laeuftWord)
     {
         std::vector<double> vorher(vars.size());
         for (std::size_t i = 0; i < vars.size(); ++i) vorher[i] = engine.number(vars[i].name);
-        rt.paramHost->run(Slot::Line);
+        if (laeuftLine) rt.paramHost->run(Slot::Line);
+        if (laeuftWord) rt.paramHost->run(Slot::Word);
         m_lineWert.resize(vars.size());
         m_lineGeschrieben.resize(vars.size());
         for (std::size_t i = 0; i < vars.size(); ++i)
@@ -11247,7 +11282,8 @@ void MultiEffectVisualizer::feldBindungNach(LeafRuntime& rt, bool fresh,
     // war der ganze Frame frei: ein Frame-Feld, das sonst wirkungslos ist,
     // schlug einmal je Zeilenwechsel durch (sichtbar als kurzer Sprung).
     const bool strukturFrei = fresh || m_frameBeat || m_frameSong;
-    const bool lineFrame = !strukturFrei && m_frameLine && m_lineWert.size() == vars.size();
+    const bool lineFrame = !strukturFrei && (m_frameLine || m_frameWord) && !m_lineWert.empty() &&
+                           m_lineWert.size() == vars.size();
     std::vector<double> gesichert;
 
     for (std::size_t i = 0; i < plan.size();)
