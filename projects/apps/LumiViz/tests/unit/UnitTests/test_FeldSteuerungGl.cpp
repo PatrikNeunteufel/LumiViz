@@ -23,6 +23,7 @@
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -30,6 +31,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QSurfaceFormat>
+#include <QTemporaryDir>
 
 #include <cmath>
 #include <functional>
@@ -1151,6 +1153,102 @@ TEST_CASE("Karaoke-Ebene S89: Zeile in Fensteraufloesung — scharf mit Render S
         gross.fenster.save(snap + QStringLiteral("/k4b_gross.png"));
     }
 
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S89, KE2 Schritt 1: die Ebene ist ein eigener Baum (Lyrics + Trail-Liste),
+// der sich im Kettenformat speichern und laden laesst (.lvkar). Geladen wird
+// nur, was diese Form hat; eine gesetzte Ablage laedt jede neue Instanz selbst.
+TEST_CASE("Karaoke-Ebene S89: Baum speichern, laden, Ablage beim Start — Fremdes wird abgewiesen")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString datei = tmp.filePath(QStringLiteral("karaoke/current.lvkar"));
+    constexpr std::uint64_t kBasis = 0xF000'0000'0000'0000ull;
+
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    MultiEffectVisualizer a;
+    // Vorgabe: Lyrics + Liste mit drei Kindern, Ids im eigenen Bereich
+    REQUIRE(a.karaokeKette().children.size() == 2);
+    REQUIRE(std::holds_alternative<LyricsParams>(a.karaokeKette().children[0].params));
+    REQUIRE(a.karaokeKette().children[1].children.size() == 3);
+    CHECK(a.karaokeKette().children[0].nodeId > kBasis);
+    CHECK(a.karaokeKette().children[1].children[2].nodeId > kBasis);
+    CHECK(std::get<LyricsParams>(a.karaokeKette().children[0].params).vAlign == 2);
+
+    // aendern (Zeile nach oben, Trail-Haltezeit) und speichern — der Ordner entsteht
+    std::get<LyricsParams>(a.karaokeKette().children[0].params).vAlign = 0;
+    std::get<LyricsTrailParams>(a.karaokeKette().children[1].children[2].params).holdMs = 250;
+    (void)a.recompileKaraoke();
+    REQUIRE(a.speichereKaraokeDatei(datei));
+    REQUIRE(QFileInfo::exists(datei));
+
+    // eine zweite Instanz laedt die Datei
+    MultiEffectVisualizer b;
+    const std::uint64_t idVorher = b.karaokeKette().children[0].nodeId;
+    REQUIRE(b.ladeKaraokeDatei(datei));
+    CHECK(std::get<LyricsParams>(b.karaokeKette().children[0].params).vAlign == 0);
+    CHECK(std::get<LyricsTrailParams>(b.karaokeKette().children[1].children[2].params).holdMs == 250);
+    CHECK(b.karaokeKette().children[0].nodeId > idVorher);  // frische Ids, nie wiederverwendet
+    b.setzeKaraokeVorgabe();
+    CHECK(std::get<LyricsParams>(b.karaokeKette().children[0].params).vAlign == 2);
+
+    // eine gewoehnliche Kette ist kein Karaoke-Preset: abgewiesen, Ebene unveraendert
+    const QString fremd = tmp.filePath(QStringLiteral("fremd.lvfx"));
+    {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        root.children = {clear};
+        REQUIRE(saveChainToFile(root, fremd));
+    }
+    QStringList meldung;
+    CHECK_FALSE(b.ladeKaraokeDatei(fremd, &meldung));
+    CHECK_FALSE(meldung.isEmpty());
+    CHECK(b.karaokeKette().children.size() == 2);
+    CHECK_FALSE(b.ladeKaraokeDatei(tmp.filePath(QStringLiteral("gibtsnicht.lvkar"))));
+
+    // Ablage gesetzt: eine neue Instanz traegt die gespeicherte Ebene — und
+    // zeichnet die Zeile oben statt unten
+    MultiEffectVisualizer::setKaraokeAblage(datei);
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+    MultiEffectVisualizer::setKaraokeEbene(true);
+    {
+        MultiEffectVisualizer c;
+        CHECK(std::get<LyricsParams>(c.karaokeKette().children[0].params).vAlign == 0);
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x4080C0;
+        clear.params = cp;
+        root.children = {clear};
+        c.setChain(std::move(root));
+        c.setBeatPeriodOverride(100000);
+        c.initialize();
+        c.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < 12; ++i) c.render(1.0f / 60.0f);
+        const QImage bild = c.debugGrabMitKaraoke();
+        const QRgb grund = qRgb(64, 128, 192);
+        int oben = 0;
+        int unten = 0;
+        for (int y = 0; y < bild.height(); ++y)
+            for (int x = 0; x < bild.width(); ++x)
+                if (bild.pixel(x, y) != grund) ++(y < bild.height() / 2 ? oben : unten);
+        CHECK(oben > 200);
+        CHECK(unten == 0);
+    }
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setKaraokeAblage(QString());
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
 }

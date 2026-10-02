@@ -42,6 +42,8 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QSettings>
 #include <QFont>
 #include <QFontMetrics>
@@ -2907,6 +2909,10 @@ MultiEffectVisualizer::MultiEffectVisualizer()
       m_scriptContext(std::make_shared<lumi::scripting::ScriptContext>())
 {
     baueKaraokeEbene();  // S88 (KE1): eigene Knoten ausserhalb der Kette
+    // KE2: die gespeicherte Ebene des Benutzers, falls das Fenster eine Ablage
+    // gesetzt hat und die Datei taugt — sonst bleibt die Vorgabe
+    if (const QString ablage = karaokeAblage(); !ablage.isEmpty() && QFileInfo::exists(ablage))
+        (void)ladeKaraokeDatei(ablage);
 
     // Hand-built default chain: root trails + a nested additive list with its
     // own faster orbit — visible proof of nesting + blend (5.2 sight test).
@@ -3452,10 +3458,6 @@ QImage MultiEffectVisualizer::debugGrabRootSurface() const
 namespace
 {
 std::atomic<bool> g_karaokeEbene{false};
-/// Ids der Ebenen-Knoten: fest und weit ueber allem, was `compileChain`
-/// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
-constexpr uint64_t kKaraokeIdBasis = 0xF000'0000'0000'0000ull;
-
 /// Mischart und Staerke (0..100) je Teil der Ebene: [0] Zeile, [1] Trail.
 /// Vorgabe wie KE1: Zeile Normal, Trail Additive, beide volle Staerke.
 std::atomic<int> g_karaokeMischart[2] = {0, 1};
@@ -3535,36 +3537,119 @@ void MultiEffectVisualizer::baueKaraokeEbene()
     // asset/effectchain/20261001.mix.lvfx2 (Blitter Feedback 35, Fadeout 4,
     // Trail 120 ms / 7 % nach oben). Die Liste behaelt ihr Bild und mischt
     // NICHT in den Elternpuffer (Out: Ignore) — aufgelegt wird beim Present.
-    m_karaokeLyrics = ChainNode{};
-    m_karaokeLyrics.params = LyricsParams{};
-    m_karaokeLyrics.displayName = "Karaoke Lyrics";
-    m_karaokeLyrics.nodeId = kKaraokeIdBasis + 1;
+    // KE2: beide haengen unter einer eigenen Wurzel (Kind 0 = Lyrics, Kind 1 =
+    // Trail-Liste) — so laesst sich die Ebene wie eine Kette speichern, laden
+    // und im Panel bearbeiten. Die Wurzel selbst wird nie gerendert.
+    ChainNode lyrics;
+    lyrics.params = LyricsParams{};
+    lyrics.displayName = "Karaoke Lyrics";
 
     ListParams liste;
     liste.clearEveryFrame = false;
     liste.blendIn = BlendMode::Ignore;
     liste.blendOut = BlendMode::Ignore;
-    m_karaokeTrail = ChainNode{};
-    m_karaokeTrail.params = liste;
-    m_karaokeTrail.displayName = "Karaoke Trail";
-    m_karaokeTrail.nodeId = kKaraokeIdBasis + 2;
+    ChainNode trailListe;
+    trailListe.params = liste;
+    trailListe.displayName = "Karaoke Trail";
 
     ChainNode drift;
     BlitterFeedbackParams bf;
     bf.scale = 35;
     bf.scale2 = 35;
     drift.params = bf;
-    drift.nodeId = kKaraokeIdBasis + 3;
     ChainNode fade;
     fade.params = FadeoutParams{4, 0x000000};
-    fade.nodeId = kKaraokeIdBasis + 4;
     ChainNode trail;
     LyricsTrailParams tp;
     tp.holdMs = 120;
     tp.yShift = -7;
     trail.params = tp;
-    trail.nodeId = kKaraokeIdBasis + 5;
-    m_karaokeTrail.children = {drift, fade, trail};
+    trailListe.children = {drift, fade, trail};
+
+    m_karaokeWurzel = ChainNode{};
+    m_karaokeWurzel.params = ListParams{};
+    m_karaokeWurzel.displayName = "Karaoke";
+    m_karaokeWurzel.children = {lyrics, trailListe};
+    (void)recompileKaraoke();
+}
+
+namespace
+{
+/// Ein Baum taugt als Karaoke-Ebene, wenn Kind 0 ein Lyrics-Knoten und Kind 1
+/// eine Effect List ist (die Trail-Liste) — alles andere wird nicht geladen.
+bool istKaraokeBaum(const ChainNode& wurzel)
+{
+    return wurzel.isList() && wurzel.children.size() >= 2 &&
+           std::holds_alternative<LyricsParams>(wurzel.children[0].params) &&
+           std::holds_alternative<ListParams>(wurzel.children[1].params);
+}
+
+QMutex g_karaokeAblageMutex;
+QString g_karaokeAblage;
+}  // namespace
+
+CompileResult MultiEffectVisualizer::recompileKaraoke()
+{
+    // Eigener Id-Zaehler weit ueber allem, was die Kette vergibt: die
+    // Laufzeiten der Ebene beissen sich nie mit denen der Kette, und ein
+    // neuer Knoten traegt nie die Id eines entfernten (wie recompileChain).
+    m_pendingRuntimePrune = true;
+    return compileChain(m_karaokeWurzel, &m_karaokeIdHochwasser);
+}
+
+void MultiEffectVisualizer::setzeKaraokeVorgabe()
+{
+    baueKaraokeEbene();
+}
+
+bool MultiEffectVisualizer::ladeKaraokeDatei(const QString& pfad, QStringList* report)
+{
+    ChainNode geladen;
+    if (!loadChainFromFile(pfad, geladen, report)) return false;
+    if (!istKaraokeBaum(geladen))
+    {
+        if (report != nullptr)
+            report->append(QStringLiteral("not a karaoke preset (expected Lyrics + Effect List)"));
+        return false;
+    }
+    // Ids aus der Datei gelten nicht: alles bekommt frische aus dem Zaehler
+    // der Ebene (die alten Laufzeiten raeumt der Render-Thread ab).
+    const std::function<void(ChainNode&)> ohneId = [&](ChainNode& n) {
+        n.nodeId = 0;
+        for (ChainNode& kind : n.children) ohneId(kind);
+    };
+    ohneId(geladen);
+    m_karaokeWurzel = std::move(geladen);
+    (void)recompileKaraoke();
+    return true;
+}
+
+bool MultiEffectVisualizer::speichereKaraokeDatei(const QString& pfad) const
+{
+    QDir().mkpath(QFileInfo(pfad).absolutePath());
+    return saveChainToFile(m_karaokeWurzel, pfad);
+}
+
+void MultiEffectVisualizer::setKaraokeAblage(const QString& datei)
+{
+    QMutexLocker lock(&g_karaokeAblageMutex);
+    g_karaokeAblage = datei;
+}
+
+QString MultiEffectVisualizer::karaokeAblage()
+{
+    QMutexLocker lock(&g_karaokeAblageMutex);
+    return g_karaokeAblage;
+}
+
+const ChainNode* MultiEffectVisualizer::karaokeLyricsKnoten() const
+{
+    return istKaraokeBaum(m_karaokeWurzel) ? &m_karaokeWurzel.children[0] : nullptr;
+}
+
+const ChainNode* MultiEffectVisualizer::karaokeTrailKnoten() const
+{
+    return istKaraokeBaum(m_karaokeWurzel) ? &m_karaokeWurzel.children[1] : nullptr;
 }
 
 bool MultiEffectVisualizer::ketteZeigtLyrics() const
@@ -3587,17 +3672,20 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
     m_karaokeTrailTex = 0;
     m_karaokeGezeichnet = false;
     if (!karaokeEbene() || m_songtext.leer() || ketteZeigtLyrics()) return;
+    const ChainNode* lyrics = karaokeLyricsKnoten();
+    const ChainNode* trail = karaokeTrailKnoten();
+    if (lyrics == nullptr || trail == nullptr) return;
 
     // Beides laeuft NACH dem Ketten-Walk und fasst die Root-Surface nicht an:
     // die Zeile wird nur gerastert (kein Compose), die Liste mischt nicht aus.
     m_karaokeLaeuft = true;
     m_glyphNurRastern = true;
-    renderNode(m_karaokeLyrics);
+    renderNode(*lyrics);
     m_glyphNurRastern = false;
-    renderNode(m_karaokeTrail);
+    renderNode(*trail);
     m_karaokeLaeuft = false;
 
-    if (const auto it = m_listRuntimes.find(m_karaokeTrail.nodeId);
+    if (const auto it = m_listRuntimes.find(trail->nodeId);
         it != m_listRuntimes.end() && it->second.surface.ready())
         m_karaokeTrailTex = it->second.surface.current()->texture();
     m_karaokeGezeichnet = true;
@@ -4290,8 +4378,7 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
         for (const ChainNode& kind : n.children) sammle(kind);
     };
     sammle(m_root);
-    sammle(m_karaokeLyrics);  // die Knoten der Karaoke-Ebene leben ausserhalb der Kette
-    sammle(m_karaokeTrail);
+    sammle(m_karaokeWurzel);  // die Knoten der Karaoke-Ebene leben ausserhalb der Kette
 
     for (auto it = m_leafRuntimes.begin(); it != m_leafRuntimes.end();)
     {
@@ -8674,7 +8761,7 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     namespace ly = lumi::multieffect::lyrics;
     // in der Karaoke-Ebene (S88) folgt der Trail deren eigenem Lyrics-Knoten
     const ChainNode* quelle =
-        m_karaokeLaeuft ? &m_karaokeLyrics : findeLyricsKnoten(params.source);
+        m_karaokeLaeuft ? karaokeLyricsKnoten() : findeLyricsKnoten(params.source);
     const ly::Songtext& s = m_songtext;
     if (quelle == nullptr || s.leer()) return;
     // S88: Schrift und Lage so, wie der Lyrics-Knoten sie zuletzt gezeichnet

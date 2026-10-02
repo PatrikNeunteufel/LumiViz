@@ -41,6 +41,8 @@
 #include <QSettings>  // Uebernahme der MyViz-Einstellungen (S73)
 #include <QDir>
 #include <QStandardPaths>
+
+#include "visualizers/MultiEffectVisualizer.hpp"  // Ablage der Karaoke-Ebene (KE2)
 #include <QTimer>
 
 // BasicLogger - Logging for GUI Applications
@@ -364,6 +366,10 @@ bool Application::init(int argc, char* argv[])
     std::string audioPresetsDir = (appData + "/presets/audio").toStdString();
     lumi::modules::AudioSourceModule::setUserPresetsDirectory(audioPresetsDir);
     BasicLogger::logInfo("Audio presets directory: " + audioPresetsDir);
+
+    // Karaoke-Ebene (KE2): die laufende Ebene des Benutzers; benannte
+    // Karaoke-Presets (.lvkar) liegen im selben Ordner
+    MultiEffectVisualizer::setKaraokeAblage(appData + QStringLiteral("/karaoke/current.lvkar"));
 
     // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)

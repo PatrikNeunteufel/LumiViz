@@ -164,6 +164,29 @@ weitere Stufe ist für sich abnehmbar.
 - **Nicht geprüft:** im laufenden Programm, mit Post-Bloom, mit Render Scale,
   mit Host Switcher (Gruppe mit Lyrics-Knoten).
 
+### Stand KE2 — in Arbeit (S89)
+
+**Klärung K2 a:** das Ketten-Panel greift nur über `m_host->chain()` (18
+Stellen) und `m_host->recompileChain()` (3 Stellen) auf den Baum zu — es lässt
+sich an einen zweiten Baum binden; K2 b ist nicht nötig.
+
+**Entscheid Patrik S89 — Dateityp a:** Karaoke-Presets tragen die eigene
+Endung **`.lvkar`** (Inhalt im Kettenformat). Laufende Ebene:
+`<Benutzerdaten>/karaoke/current.lvkar`, benannte Presets im selben Ordner.
+Icon: die **Marke mit Mikrofon im Kreis** (`lumiviz_karaoke.ico`) — die Marke
+ist eine Familie, je Verwendung ein Zeichen im Kreis (Idee Patrik).
+
+**Schritt 1 ✅ Renderer:** die Ebene ist ein eigener Baum `karaokeKette()`
+(Wurzel, Kind 0 Lyrics, Kind 1 Trail-Liste) mit eigenem Id-Zähler ab
+`0xF000…` (`recompileKaraoke`); `ladeKaraokeDatei` / `speichereKaraokeDatei`
+(geladen wird nur die Form Lyrics + Liste, sonst bleibt die Ebene),
+`setzeKaraokeVorgabe`; `setKaraokeAblage` setzt die App vor dem Fenster, jede
+Instanz lädt die Datei im Konstruktor (leer = Tests laden nichts). Geprüft:
+Test (Speichern, Laden, frische Ids, Abweisen, Ablage → Zeile steht oben),
+793/793, Vergleichslauf 84/84 bitgleich. **Gespeichert wird noch nirgends** —
+das macht das Panel (Schritt 3). **Offen:** Schritt 2 Panel-Umleitung,
+3 Karaoke-Panel, 4 Mischarten in die Knoten (Stärke-Feld), 5 Doku.
+
 ## 8. Risiken
 
 - **Editor-Wiederverwendung:** die Feld-Editoren stecken heute in einer

@@ -315,6 +315,25 @@ public:
     static void setKaraokeEbene(bool an);
     [[nodiscard]] static bool karaokeEbene();
     /**
+     * KE2: der Baum der Ebene — eine Wurzel mit Kind 0 = Lyrics-Knoten und
+     * Kind 1 = Trail-Liste. Bearbeitet wie die Kette: unter dem Render-Mutex
+     * aendern, danach `recompileKaraoke()`. Dateien tragen das Kettenformat
+     * (Endung `.lvkar`, Entscheid Patrik S89); geladen wird nur, was die Form
+     * Lyrics + Liste hat — sonst bleibt die Ebene, wie sie ist.
+     */
+    [[nodiscard]] lumi::multieffect::ChainNode& karaokeKette() { return m_karaokeWurzel; }
+    [[nodiscard]] const lumi::multieffect::ChainNode& karaokeKette() const { return m_karaokeWurzel; }
+    lumi::multieffect::CompileResult recompileKaraoke();
+    void setzeKaraokeVorgabe();  ///< zurueck auf das mitgelieferte Aussehen (wie KE1)
+    [[nodiscard]] bool ladeKaraokeDatei(const QString& pfad, QStringList* report = nullptr);
+    [[nodiscard]] bool speichereKaraokeDatei(const QString& pfad) const;
+    /// Ablage der laufenden Ebene (`<Benutzerdaten>/karaoke/current.lvkar`):
+    /// das Fenster setzt sie beim Start; jede danach angelegte Instanz laedt
+    /// die Datei im Konstruktor, wenn es sie gibt. Leer (Vorgabe, Tests) =
+    /// nichts laden. Thread-sicher.
+    static void setKaraokeAblage(const QString& datei);
+    [[nodiscard]] static QString karaokeAblage();
+    /**
      * Mischart der Karaoke-Ebene (K6, Entscheid Patrik a): je Teil — laufende
      * Zeile und Trail — wie sich die Ebene mit dem Bild dahinter mischt, und
      * wie stark (0..100 %). Arten (Nummern = Werte der Einstellung):
@@ -1508,9 +1527,15 @@ private:
     void rechneKaraokeEbene();   ///< nach dem Ketten-Walk: Zeile rastern, Trail-Liste rechnen
     void legeKaraokeAuf();       ///< auf den gebundenen Framebuffer: Trail additiv, Zeile mit Alpha
     [[nodiscard]] bool ketteZeigtLyrics() const;
-    lumi::multieffect::ChainNode m_karaokeLyrics;  ///< Lyrics-Knoten der Ebene (nicht in m_root)
-    lumi::multieffect::ChainNode m_karaokeTrail;   ///< Liste: Drift, Fadeout, Lyrics Trail
-    bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt m_karaokeLyrics)
+    /// Baum der Ebene (nicht in m_root): Kind 0 = Lyrics-Knoten, Kind 1 = Liste
+    /// (Drift, Fadeout, Lyrics Trail). Die Wurzel selbst wird nie gerendert.
+    lumi::multieffect::ChainNode m_karaokeWurzel;
+    /// Ids der Ebenen-Knoten: eigener Zaehler weit ueber allem, was die Kette
+    /// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
+    uint64_t m_karaokeIdHochwasser = 0xF000'0000'0000'0001ull;
+    [[nodiscard]] const lumi::multieffect::ChainNode* karaokeLyricsKnoten() const;
+    [[nodiscard]] const lumi::multieffect::ChainNode* karaokeTrailKnoten() const;
+    bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt deren Lyrics-Knoten)
     bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
     /// K4 b: Fenstergroesse (Viewport in onRender) — darin rastert die Zeile
