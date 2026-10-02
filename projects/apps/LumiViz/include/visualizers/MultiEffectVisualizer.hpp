@@ -314,6 +314,12 @@ public:
      */
     static void setKaraokeEbene(bool an);
     [[nodiscard]] static bool karaokeEbene();
+    /// „Die Kette gewinnt": enthaelt die laufende Kette einen eingeschalteten
+    /// Lyrics-Knoten (er selbst und alle Container ueber ihm an, Host-Gruppen
+    /// nach der Wahl des Switchers)? Dann zeichnet die Ebene nichts. Unter dem
+    /// Render-Mutex aufrufen (liest die Kette) — das Karaoke-Panel zeigt damit
+    /// „Preset shows its own lyrics" (KE4).
+    [[nodiscard]] bool ketteZeigtLyrics() const;
     /**
      * KE2: der Baum der Ebene — eine Wurzel mit Kind 0 = Lyrics-Knoten und
      * Kind 1 = Trail-Liste. Bearbeitet wie die Kette: unter dem Render-Mutex
@@ -1537,7 +1543,6 @@ private:
     void baueKaraokeEbene();     ///< die festen Knoten der Ebene anlegen (Konstruktor)
     void rechneKaraokeEbene();   ///< nach dem Ketten-Walk: Zeile rastern, Trail-Liste rechnen
     void legeKaraokeAuf();       ///< auf den gebundenen Framebuffer: Trail additiv, Zeile mit Alpha
-    [[nodiscard]] bool ketteZeigtLyrics() const;
     /// Baum der Ebene (nicht in m_root): Kind 0 = Lyrics-Knoten, Kind 1 = Liste
     /// (Drift, Fadeout, Lyrics Trail). Die Wurzel selbst wird nie gerendert.
     lumi::multieffect::ChainNode m_karaokeWurzel;

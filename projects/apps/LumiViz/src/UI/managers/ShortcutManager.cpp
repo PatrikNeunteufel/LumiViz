@@ -291,6 +291,11 @@ void ShortcutManager::dispatch(const QString& actionId)
         BasicLogger::logDebug("ShortcutManager: view.screenshot");
         bus->publish(ScreenshotRequestEvent{});
     }
+    else if (actionId == QStringLiteral("view.karaoke"))
+    {
+        BasicLogger::logDebug("ShortcutManager: view.karaoke");
+        bus->publish(KaraokeToggleEvent{});
+    }
     else if (const auto it = kTransport.constFind(actionId); it != kTransport.constEnd())
     {
         BasicLogger::logDebug("ShortcutManager: " + actionId.toStdString());

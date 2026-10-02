@@ -347,6 +347,32 @@ struct LoadKaraokePresetEvent : public Event
 };
 
 /**
+ * @brief Request to switch the karaoke layer on/off (menu View → Karaoke,
+ *        shortcut `view.karaoke`). The main window toggles and announces the
+ *        new state with KaraokeEnabledChangedEvent.
+ */
+struct KaraokeToggleEvent : public Event
+{
+    EVENT_TYPE_NAME("KaraokeToggleEvent")
+};
+
+/**
+ * @brief The karaoke layer was switched on or off — by the panel, the menu or
+ *        the shortcut. All three show the same state.
+ */
+struct KaraokeEnabledChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("KaraokeEnabledChangedEvent")
+
+    bool enabled = false;
+
+    KaraokeEnabledChangedEvent() = default;
+    explicit KaraokeEnabledChangedEvent(bool an)
+        : enabled(an)
+    {}
+};
+
+/**
  * @brief Emitted after the karaoke layer was replaced from outside the
  *        Karaoke panel, so the panel can re-read it.
  */

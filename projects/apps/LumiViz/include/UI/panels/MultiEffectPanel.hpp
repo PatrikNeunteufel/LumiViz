@@ -156,6 +156,8 @@ public:
     /// Die Ebene JETZT in ihre Ablage schreiben (sonst kurz nach jedem Edit).
     void speichereKaraokeJetzt();
     [[nodiscard]] bool hatHost() const { return m_host != nullptr; }
+    /// Zeigt die laufende Kette selbst Lyrics (dann tritt die Ebene zurueck)?
+    [[nodiscard]] bool ketteZeigtLyrics();
 
     /// Das Panel bringt seine Scrollareas selbst mit (aussen waagrecht, Baum
     /// und Editor senkrecht) — keine zweite von Qt-ADS darum (S78).

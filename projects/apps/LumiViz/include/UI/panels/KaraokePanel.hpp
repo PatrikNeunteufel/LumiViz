@@ -21,6 +21,7 @@
 class MultiEffectPanel;
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QTabWidget;
 
 class KaraokePanel : public PanelBase
@@ -46,6 +47,11 @@ public:
     /// Zurueck auf das mitgelieferte Aussehen.
     void setzeVorgabe();
 
+    /// Der EINE Weg, die Ebene zu schalten (Panel, Menue, Tastenkuerzel — KE4):
+    /// merkt die Einstellung (QSettings `karaoke/enabled`), schaltet den
+    /// Renderer und meldet `KaraokeEnabledChangedEvent`. `bus` darf null sein.
+    static void setzeKaraokeAn(IEventBus* bus, bool an);
+
     /// Endung der Karaoke-Presets, mit Punkt.
     static constexpr const char* kEndung = ".lvkar";
 
@@ -56,6 +62,11 @@ private:
     void setupUI();
     /// „Trail on" auf den Stand der Ebene stellen (Auge der Trail-Liste).
     void gleicheTrailSchalterAb();
+    /// Zustandszeile (KE4): „Preset shows its own lyrics", solange die Ebene
+    /// an ist und die laufende Kette selbst Lyrics zeigt — erklaert einen
+    /// scheinbar wirkungslosen Schalter. Laeuft zweimal je Sekunde.
+    void aktualisiereZustand();
+    QLabel* m_zustand = nullptr;
     QCheckBox* m_trailSchalter = nullptr;
     MultiEffectPanel* m_trail = nullptr;  ///< Reiter 2: die Trail-Liste der Ebene
     void fuelleCombo(const QString& gewaehlt = {});

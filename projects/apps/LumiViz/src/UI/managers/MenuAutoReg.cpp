@@ -61,6 +61,7 @@
 #include "services/events/UIEvents.hpp"
 
 #include <QApplication>
+#include <QSettings>
 #include <BasicLogger.h>
 
 // =============================================================================
@@ -267,6 +268,26 @@ void initMenuDefaults(MenuRegistry& registry)
         },
         false);
     
+    // Karaoke an/aus (S89, KE4): Songtext ueber jedem Preset. Die Taste steht
+    // in der Tastenkuerzel-Tabelle (`view.karaoke`, umbelegbar), nicht hier —
+    // sonst loeste ein Druck zweimal aus. Der Haken kommt aus der gemerkten
+    // Einstellung: der Renderer wird erst nach dem Menue geschaltet.
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.view.karaoke", "menu.view", 160},
+            "Karaoke",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(KaraokeToggleEvent{});
+            },
+            [](ServiceContainer& /*svc*/) {
+                return QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool();
+            },
+            {},  // isEnabled
+            {}   // shortcut
+        },
+        false);
+
     // Panels submenu - auto-populated by MenuManager from PanelRegistry
     registry.registerContainer(
         MenuContainerDesc{{"menu.view.panels", "menu.view", 100}, "Panels", false},

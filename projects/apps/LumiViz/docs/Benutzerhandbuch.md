@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.48.0
+> **Version:** 1.49.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -252,6 +252,7 @@ Bedienung entkoppelt.
 | Ctrl+Shift+N | *File → New Effect Chain* — leere Kette als Ausgangspunkt für ein neues Preset (fragt vorher nach) |
 | F1 | *About LumiViz* |
 | Alt+F4 | Beenden |
+| Ctrl+K | *Karaoke On / Off* — Songtext über jedem Preset ein- und ausschalten (umbelegbar; auch **View → Karaoke** und der Haken im Karaoke-Panel) |
 
 ### Presets durchblättern
 
@@ -687,7 +688,11 @@ Sie zeichnet die laufende Zeile unten mittig mit einer Vorschau-Zeile, dazu
 den Trail (die eben beendete Zeile weht nach hinten weg). Hat das laufende
 Preset selbst einen **eingeschalteten** Lyrics-Knoten, **gewinnt das Preset**:
 es zeigt den Text auf seine Art, und die Ebene tritt zurück — der Text steht
-nie doppelt da. In Screenshots aus der App ist die Ebene enthalten.
+nie doppelt da. Das Panel zeigt dann neben dem Schalter **Preset shows its own
+lyrics** — so ist erklärt, warum der Schalter gerade nichts zu ändern scheint.
+In Screenshots aus der App ist die Ebene enthalten. Ein- und ausschalten
+lässt sich die Ebene auch über **View → Karaoke** und mit **Ctrl+K**; alle
+drei zeigen denselben Zustand.
 
 Das **Aussehen der Zeile** stellst du im Karaoke-Panel im Reiter **Lyrics**
 ein — dieselben Felder wie am Lyrics-Knoten einer Kette (Schrift, Farben,
@@ -1384,6 +1389,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.49.0 | 2026-10-02 | Session 89. Karaoke: Menü **View → Karaoke**, Tastenkürzel **Ctrl+K** (*Karaoke On / Off*), Zustandszeile *Preset shows its own lyrics* im Karaoke-Panel |
 | 1.48.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Presets (`.lvkar`) im Effect Browser — eigenes Icon, Doppelklick lädt in die Karaoke-Ebene |
 | 1.47.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Panel, NEU Reiter **Lyrics Trail** — *Trail on*, Liste der Trail-Module, Palette nur mit umformenden und färbenden Modulen, fester Lyrics Trail am Ende |
 | 1.46.0 | 2026-10-02 | Session 89. §11 Lyrics / Lyrics Trail: NEU Feld **Blend strength (%)**; Mischart und Stärke der Karaoke-Ebene stehen im Karaoke-Panel (Reiter *Lyrics*) statt unter Settings → Audio, alte Werte werden übernommen |

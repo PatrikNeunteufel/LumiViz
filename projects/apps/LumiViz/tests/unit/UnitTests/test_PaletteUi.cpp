@@ -44,6 +44,7 @@
 #include "audio/Playlist.hpp"
 #include "services/EventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/ShortcutRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
@@ -862,6 +863,87 @@ TEST_CASE("Karaoke-Panel S89: Reiter Lyrics Trail — Liste, Paletten-Filter, fe
     CHECK(vis.karaokeKette().children[1].enabled);
     // die Zeile (Kind 0) bleibt davon unberuehrt
     CHECK(vis.karaokeKette().children[0].enabled);
+}
+
+// S89, KE4: ein Schalter fuer Panel, Menue und Tastenkuerzel — und die
+// Zustandszeile „Preset shows its own lyrics", wenn die Kette gewinnt.
+TEST_CASE("Karaoke-Panel S89: gemeinsamer Schalter (Panel/Menue/Kuerzel) und Zustandszeile")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    std::vector<bool> gemeldet;
+    const auto abo = bus->subscribeScoped<KaraokeEnabledChangedEvent>(
+        [&](const KaraokeEnabledChangedEvent& e) { gemeldet.push_back(e.enabled); });
+
+    // die Aktion steht in der Tastenkuerzel-Tabelle
+    const lumi::services::ShortcutAction* aktion = lumi::services::shortcutAction("view.karaoke");
+    REQUIRE(aktion != nullptr);
+    CHECK(aktion->wired);
+    CHECK_FALSE(aktion->defaultSequence.empty());
+
+    MultiEffectVisualizer vis;
+    QMutex mutex;
+    KaraokePanel panel(services);
+    panel.resize(520, 700);
+    zeigen(panel);
+    bus->publish(VisualizerChangedEvent("multieffect", "Multi Effect",
+                                        static_cast<IVisualizer*>(&vis), &mutex));
+    QCoreApplication::processEvents();
+    auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("karaokeSchalter"));
+    auto* zustand = panel.findChild<QLabel*>(QStringLiteral("karaokeZustand"));
+    REQUIRE(schalter != nullptr);
+    REQUIRE(zustand != nullptr);
+
+    // --- von aussen geschaltet (Menue, Kuerzel): Renderer, Einstellung, Haken — einmal gemeldet
+    KaraokePanel::setzeKaraokeAn(bus, true);
+    CHECK(MultiEffectVisualizer::karaokeEbene());
+    CHECK(QSettings().value(QStringLiteral("karaoke/enabled")).toBool());
+    CHECK(schalter->isChecked());
+    CHECK(gemeldet == std::vector<bool>{true});  // der nachgezogene Haken meldet nicht noch einmal
+
+    // --- im Panel geschaltet: derselbe Weg
+    schalter->setChecked(false);
+    CHECK_FALSE(MultiEffectVisualizer::karaokeEbene());
+    CHECK(gemeldet == std::vector<bool>{true, false});
+
+    // --- Zustandszeile: die Kette zeigt selbst Lyrics und die Ebene ist an
+    const auto warteAuf = [&](const QString& text) {
+        QElapsedTimer t;
+        t.start();
+        while (zustand->text() != text && t.elapsed() < 3000)
+        {
+            QCoreApplication::processEvents();
+            QThread::msleep(20);
+        }
+        return zustand->text() == text;
+    };
+    const auto setzeKette = [&](bool lyricsAn) {
+        ChainNode root;
+        root.params = lumi::multieffect::ListParams{};
+        ChainNode lyr;
+        lyr.params = lumi::multieffect::LyricsParams{};
+        lyr.enabled = lyricsAn;
+        root.children = {lyr};
+        QMutexLocker lock(&mutex);
+        vis.setChain(std::move(root));
+    };
+    const QString hinweis = QStringLiteral("Preset shows its own lyrics");
+    setzeKette(true);
+    CHECK(zustand->text().isEmpty());            // Ebene aus: kein Hinweis
+    schalter->setChecked(true);
+    CHECK(warteAuf(hinweis));
+    setzeKette(false);                           // Lyrics-Knoten aus: die Ebene uebernimmt
+    CHECK(warteAuf(QString()));
+    setzeKette(true);
+    CHECK(warteAuf(hinweis));
+    schalter->setChecked(false);                 // Ebene aus: der Hinweis geht sofort
+    CHECK(zustand->text().isEmpty());
+
+    MultiEffectVisualizer::setKaraokeEbene(false);
 }
 
 // S89, KE2 Schritt 4: Mischart und Staerke der Ebene standen bis S88 in den

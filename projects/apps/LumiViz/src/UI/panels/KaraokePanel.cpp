@@ -24,6 +24,7 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QTabWidget>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace
@@ -50,11 +51,21 @@ void KaraokePanel::setupUI()
         tr("Shows the lyrics of the playing track on top of every preset, without a "
            "Lyrics node in the chain. If the preset has its own enabled Lyrics node, the "
            "preset wins and the layer steps back."));
-    connect(m_schalter, &QCheckBox::toggled, this, [](bool an) {
-        QSettings().setValue(QStringLiteral("karaoke/enabled"), an);
-        MultiEffectVisualizer::setKaraokeEbene(an);
-    });
-    root->addWidget(m_schalter);
+    connect(m_schalter, &QCheckBox::toggled, this,
+            [this](bool an) { setzeKaraokeAn(eventBus(), an); });
+    auto* kopf = new QHBoxLayout();
+    kopf->addWidget(m_schalter);
+    m_zustand = new QLabel(this);
+    m_zustand->setObjectName(QStringLiteral("karaokeZustand"));
+    m_zustand->setToolTip(
+        tr("The running preset has its own enabled Lyrics node. It shows the lyrics its own "
+           "way, and the karaoke layer steps back while it runs."));
+    kopf->addWidget(m_zustand, 1);
+    root->addLayout(kopf);
+    auto* takt = new QTimer(this);
+    takt->setInterval(500);
+    connect(takt, &QTimer::timeout, this, [this] { aktualisiereZustand(); });
+    takt->start();
 
     // --- Karaoke-Presets: Stand der ganzen Ebene als Datei (.lvkar)
     auto* zeile = new QHBoxLayout();
@@ -138,6 +149,13 @@ void KaraokePanel::setupUI()
     // Browser): beide Reiter neu lesen
     if (IEventBus* bus = eventBus())
     {
+        // Menue oder Tastenkuerzel haben geschaltet: der Haken zieht nach
+        m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeEnabledChangedEvent>(
+            [this](const KaraokeEnabledChangedEvent& e) {
+                const QSignalBlocker ruhe(m_schalter);
+                m_schalter->setChecked(e.enabled);
+                aktualisiereZustand();
+            }));
         m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeLayerChangedEvent>(
             [this](const KaraokeLayerChangedEvent&) {
                 m_editor->baumNeuLesen();
@@ -145,6 +163,20 @@ void KaraokePanel::setupUI()
                 gleicheTrailSchalterAb();
             }));
     }
+}
+
+void KaraokePanel::setzeKaraokeAn(IEventBus* bus, bool an)
+{
+    QSettings().setValue(QStringLiteral("karaoke/enabled"), an);
+    MultiEffectVisualizer::setKaraokeEbene(an);
+    if (bus != nullptr) bus->publish(KaraokeEnabledChangedEvent{an});
+}
+
+void KaraokePanel::aktualisiereZustand()
+{
+    if (!isVisible()) return;  // die Abfrage nimmt den Render-Mutex — nur wenn man es sieht
+    const bool zurueck = MultiEffectVisualizer::karaokeEbene() && m_editor->ketteZeigtLyrics();
+    m_zustand->setText(zurueck ? tr("Preset shows its own lyrics") : QString());
 }
 
 void KaraokePanel::gleicheTrailSchalterAb()

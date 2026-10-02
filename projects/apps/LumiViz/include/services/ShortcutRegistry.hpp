@@ -88,6 +88,9 @@ struct ShortcutAction
         // dieselbe Taste eventuell das Snipping Tool — das ist eine
         // Windows-Einstellung und liegt ausserhalb der App.
         {"view.screenshot", "Screenshot of the Visual", ShortcutCategory::View, "Print"},
+        // S89 (KE4): Karaoke-Ebene an/aus — derselbe Schalter wie im Karaoke-
+        // Panel und im Menue View
+        {"view.karaoke", "Karaoke On / Off", ShortcutCategory::View, "Ctrl+K"},
     };
     return kActions;
 }

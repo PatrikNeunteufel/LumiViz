@@ -25,6 +25,7 @@
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"  // Karaoke-Ablage schreiben (S89)
+#include "UI/panels/KaraokePanel.hpp"                   // setzeKaraokeAn (KE4)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -857,6 +858,18 @@ void MainWindow::setupEventHandlers()
                 m_pScreenshotManager->setCurrentPreset(QString());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+        });
+
+    // Karaoke an/aus aus dem Menue oder per Tastenkuerzel (KE4): derselbe Weg
+    // wie der Haken im Karaoke-Panel; der Menue-Haken zieht bei jedem Wechsel
+    // nach, egal wer geschaltet hat.
+    pEventBus->subscribe<KaraokeToggleEvent>([pEventBus](const KaraokeToggleEvent&) {
+        KaraokePanel::setzeKaraokeAn(pEventBus, !MultiEffectVisualizer::karaokeEbene());
+    });
+    pEventBus->subscribe<KaraokeEnabledChangedEvent>(
+        [this](const KaraokeEnabledChangedEvent& e) {
+            if (auto* aktion = findChild<QAction*>(QStringLiteral("menu.view.karaoke")))
+                aktion->setChecked(e.enabled);
         });
 
     // Karaoke-Preset (.lvkar) aus dem Effect Browser (S89): in die Karaoke-

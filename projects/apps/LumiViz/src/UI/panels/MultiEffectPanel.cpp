@@ -1148,6 +1148,13 @@ void MultiEffectPanel::richteKaraokeSpeichernEin()
     });
 }
 
+bool MultiEffectPanel::ketteZeigtLyrics()
+{
+    if (m_host == nullptr || m_mutex == nullptr) return false;
+    QMutexLocker lock(m_mutex);
+    return m_host->ketteZeigtLyrics();
+}
+
 void MultiEffectPanel::baumNeuLesen()
 {
     m_presetMarken.clear();

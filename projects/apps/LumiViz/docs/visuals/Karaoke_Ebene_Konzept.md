@@ -263,6 +263,28 @@ eingeschränkten Modus (`Baum::KaraokeTrail`) — die Trail-Liste der Ebene
   erlaubte Modul auf dem Trail-Bild etwas Sinnvolles tut (der Filter geht nach
   der Rolle, nicht nach dem Ergebnis).
 
+### Stand KE4 — ✅ gebaut (S89)
+
+- **Ein Schalter für alle:** `KaraokePanel::setzeKaraokeAn(bus, an)` merkt die
+  Einstellung, schaltet den Renderer und meldet `KaraokeEnabledChangedEvent`.
+  Der Haken im Panel, **View → Karaoke** (`menu.view.karaoke`, mit Haken) und
+  das Tastenkürzel `view.karaoke` (Vorgabe **Ctrl+K**, umbelegbar) laufen alle
+  dort durch; Menü und Kürzel melden `KaraokeToggleEvent`, das Fenster
+  schaltet um. Die Taste steht nur in der Tastenkürzel-Tabelle, nicht am
+  Menüeintrag — sonst löste ein Druck zweimal aus.
+- **Zustandszeile:** *Preset shows its own lyrics* neben dem Schalter, solange
+  die Ebene an ist und `ketteZeigtLyrics()` gilt (zweimal je Sekunde, nur bei
+  sichtbarem Panel).
+- Geprüft: UI-Test (von außen geschaltet → Renderer, Einstellung, Haken, eine
+  Meldung; im Panel geschaltet; Zustandszeile mit/ohne Lyrics-Knoten und mit
+  Ebene aus), 800/800. **Nicht geprüft:** Menüeintrag und Tastendruck im
+  Fenster (`MainWindow`, `ShortcutManager` laufen in keinem Test dieses
+  Wegs); ob Ctrl+K mit einer Taste eines Editors kollidiert.
+
+Damit sind **KE1–KE4 gebaut**. Offen: Sichttests (alles), „später" aus §7
+(Timeline schaltet die Ebene, weicher Übergang beim Zurücktreten), Trail der
+Ebene über den Preset-Wechsel halten.
+
 ## 8. Risiken
 
 - **Editor-Wiederverwendung:** die Feld-Editoren stecken heute in einer
