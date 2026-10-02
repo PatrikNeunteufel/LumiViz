@@ -42,6 +42,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QSettings>
@@ -2975,7 +2976,9 @@ CompileResult MultiEffectVisualizer::setChain(ChainNode root)
     // fuer JEDEN Ketten-Tausch. Panel-Edits laufen ueber recompileChain()
     // und behalten ihre Runtimes.
     m_pendingRuntimeReset = true;
-    return recompileChain();
+    const CompileResult ergebnis = recompileChain();
+    merkeKettenStand();  // eine frisch gesetzte Kette gilt als ungeaendert (S89)
+    return ergebnis;
 }
 
 CompileResult MultiEffectVisualizer::recompileChain()
@@ -2989,6 +2992,7 @@ CompileResult MultiEffectVisualizer::recompileChain()
     // (Texturen, Skript-Hosts — und ein laufender Video-/Kamera-Feed lief
     // weiter). Der Render-Thread raeumt sie beim naechsten Frame ab.
     m_pendingRuntimePrune = true;
+    m_kettenBeruehrt = true;  // die Anzeige „geaendert" vergleicht beim naechsten Blick neu
     return compileChain(m_root, &m_idHochwasser);
 }
 
@@ -3582,6 +3586,7 @@ void MultiEffectVisualizer::baueKaraokeEbene()
     m_karaokeWurzel.displayName = "Karaoke";
     m_karaokeWurzel.children = {lyrics, trailListe};
     (void)recompileKaraoke();
+    merkeKaraokeStand();
 }
 
 namespace
@@ -3632,6 +3637,7 @@ bool MultiEffectVisualizer::ladeKaraokeDatei(const QString& pfad, QStringList* r
     ohneId(geladen);
     m_karaokeWurzel = std::move(geladen);
     (void)recompileKaraoke();
+    merkeKaraokeStand();
     return true;
 }
 
@@ -3860,7 +3866,53 @@ bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outR
     m_pendingRuntimeReset = true;  // new node ids — free old GL runtimes (render thread)
     m_beatPeriodFrame = 0;  // --beat-period zaehlt je Preset ab 0 (wie AvsRef)
     m_root = std::move(loaded);
+    merkeKettenStand();
     return true;
+}
+
+// =============================================================================
+// Ungespeicherte Aenderungen (S89) — Kette und Karaoke-Ebene
+// =============================================================================
+
+namespace
+{
+/// Der Stand eines Baums so, wie er gespeichert wuerde — ohne Kopf, ohne
+/// Knoten-Ids und ohne alles, was nur zur Laufzeit lebt.
+QByteArray standVon(const ChainNode& wurzel)
+{
+    return QJsonDocument(nodeToJson(wurzel)).toJson(QJsonDocument::Compact);
+}
+}  // namespace
+
+void MultiEffectVisualizer::merkeKettenStand()
+{
+    m_kettenStand = standVon(m_root);
+    m_kettenBeruehrt = false;
+    m_kettenGeaendertZuletzt = false;
+}
+
+bool MultiEffectVisualizer::ketteGeaendert() const
+{
+    m_kettenGeaendertZuletzt = standVon(m_root) != m_kettenStand;
+    m_kettenBeruehrt = false;
+    return m_kettenGeaendertZuletzt;
+}
+
+bool MultiEffectVisualizer::ketteVermutlichGeaendert() const
+{
+    // Billig fuer die Anzeige: neu verglichen wird nur nach einem Panel-Edit
+    // (recompileChain), sonst gilt das letzte Ergebnis.
+    return m_kettenBeruehrt ? ketteGeaendert() : m_kettenGeaendertZuletzt;
+}
+
+void MultiEffectVisualizer::merkeKaraokeStand()
+{
+    m_karaokeStand = standVon(m_karaokeWurzel);
+}
+
+bool MultiEffectVisualizer::karaokeGeaendert() const
+{
+    return standVon(m_karaokeWurzel) != m_karaokeStand;
 }
 
 bool MultiEffectVisualizer::buildPresetTree(const QString& path, ChainNode& outRoot,

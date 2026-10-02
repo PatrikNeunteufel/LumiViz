@@ -17,6 +17,7 @@
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
+#include <QTemporaryDir>
 
 #include <filesystem>
 #include <functional>
@@ -2592,5 +2593,112 @@ TEST_SUITE("Presetverweis")
         CHECK(g.isReference());
         CHECK_FALSE(g.acceptsChildren());
         CHECK(g.isContainer());  // Laufzeit und Kompilieren sehen ihn weiter als Container
+    }
+}
+
+// S89 (Auftrag Patrik): vor jedem Laden und beim Schliessen wird gefragt, ob
+// ungespeicherte Aenderungen verloren gehen duerfen. Grundlage ist der
+// Vergleich „wie wuerde es gespeichert" gegen den gemerkten Stand.
+TEST_SUITE("Ungespeicherte Aenderungen")
+{
+    TEST_CASE("Kette: frisch gesetzt ungeaendert, Edit geaendert, hin und zurueck ungeaendert")
+    {
+        MultiEffectVisualizer vis;
+        CHECK_FALSE(vis.ketteGeaendert());  // die eingebaute Startkette
+
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x112233;
+        clear.params = cp;
+        root.children = {clear};
+        vis.setChain(root);
+        CHECK_FALSE(vis.ketteGeaendert());
+        CHECK_FALSE(vis.ketteVermutlichGeaendert());
+
+        // Edit wie aus dem Panel: Feld aendern, neu uebersetzen
+        std::get<ClearParams>(vis.chain().children[0].params).color = 0x445566;
+        (void)vis.recompileChain();
+        CHECK(vis.ketteVermutlichGeaendert());
+        CHECK(vis.ketteGeaendert());
+
+        // hin und zurueck ist keine Aenderung
+        std::get<ClearParams>(vis.chain().children[0].params).color = 0x112233;
+        (void)vis.recompileChain();
+        CHECK_FALSE(vis.ketteGeaendert());
+
+        // Struktur: ein Knoten mehr, das Auge, der Name
+        vis.chain().children.push_back(clear);
+        (void)vis.recompileChain();
+        CHECK(vis.ketteGeaendert());
+        vis.chain().children.pop_back();
+        vis.chain().children[0].enabled = false;
+        (void)vis.recompileChain();
+        CHECK(vis.ketteGeaendert());
+        vis.chain().children[0].enabled = true;
+        vis.chain().children[0].displayName = "Grund";
+        (void)vis.recompileChain();
+        CHECK(vis.ketteGeaendert());
+
+        // „gespeichert": der Aufrufer merkt den Stand
+        vis.merkeKettenStand();
+        CHECK_FALSE(vis.ketteGeaendert());
+        CHECK_FALSE(vis.ketteVermutlichGeaendert());
+
+        // nur neu uebersetzen (ohne Aenderung) macht nichts geaendert —
+        // auch nicht in der billigen Fassung
+        (void)vis.recompileChain();
+        CHECK_FALSE(vis.ketteVermutlichGeaendert());
+
+        // die genaue Fassung sieht auch eine Aenderung OHNE recompileChain
+        vis.chain().children[0].displayName = "Anders";
+        CHECK(vis.ketteGeaendert());
+    }
+
+    TEST_CASE("Kette: speichern, laden — die geladene Kette gilt als ungeaendert")
+    {
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString datei = tmp.filePath(QStringLiteral("k.lvfx"));
+        MultiEffectVisualizer a;
+        a.chain().children.clear();
+        (void)a.recompileChain();
+        CHECK(a.ketteGeaendert());
+        REQUIRE(a.saveChainFile(datei));
+        CHECK(a.ketteGeaendert());  // saveChainFile ist const — der Aufrufer merkt
+        a.merkeKettenStand();
+        CHECK_FALSE(a.ketteGeaendert());
+
+        MultiEffectVisualizer b;
+        REQUIRE(b.loadChainFile(datei));
+        (void)b.recompileChain();
+        CHECK_FALSE(b.ketteGeaendert());
+    }
+
+    TEST_CASE("Karaoke-Ebene: Vorgabe und geladenes Preset ungeaendert, Edit geaendert")
+    {
+        MultiEffectVisualizer::setKaraokeAblage(QString());
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString datei = tmp.filePath(QStringLiteral("abend.lvkar"));
+        MultiEffectVisualizer vis;
+        CHECK_FALSE(vis.karaokeGeaendert());
+        std::get<LyricsParams>(vis.karaokeKette().children[0].params).yShift = -40;
+        (void)vis.recompileKaraoke();
+        CHECK(vis.karaokeGeaendert());
+        // das selbsttaetige Schreiben der Ablage ist KEIN Speichern
+        REQUIRE(vis.speichereKaraokeDatei(datei));
+        CHECK(vis.karaokeGeaendert());
+        vis.merkeKaraokeStand();  // unter einem Namen gespeichert
+        CHECK_FALSE(vis.karaokeGeaendert());
+
+        vis.setzeKaraokeVorgabe();
+        CHECK_FALSE(vis.karaokeGeaendert());
+        REQUIRE(vis.ladeKaraokeDatei(datei));
+        CHECK_FALSE(vis.karaokeGeaendert());
+        CHECK(std::get<LyricsParams>(vis.karaokeKette().children[0].params).yShift == -40);
+        // die Kette bleibt von alledem unberuehrt
+        CHECK_FALSE(vis.ketteGeaendert());
     }
 }

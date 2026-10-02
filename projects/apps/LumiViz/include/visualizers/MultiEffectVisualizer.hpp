@@ -90,6 +90,28 @@ public:
     lumi::multieffect::CompileResult recompileChain();
 
     /**
+     * Ungespeicherte Aenderungen (S89): die Kette gilt als geaendert, wenn sie
+     * anders gespeichert wuerde als zum gemerkten Stand. Verglichen wird das
+     * Gespeicherte selbst — ein Feld hin und zurueck ist keine Aenderung, und
+     * was nur zur Laufzeit lebt (Skriptwerte, Wahl des Host Switchers,
+     * Knoten-Ids) zaehlt nicht. Gemerkt wird von selbst nach `setChain` und
+     * `loadChainFile`; nach dem SPEICHERN ruft der Aufrufer
+     * `merkeKettenStand()` (saveChainFile ist const). Alles unter dem
+     * Render-Mutex.
+     */
+    void merkeKettenStand();
+    [[nodiscard]] bool ketteGeaendert() const;
+    /// Billige Fassung fuer eine Anzeige, die oft fragt: vergleicht nur nach
+    /// einem Panel-Edit neu, sonst gilt das letzte Ergebnis.
+    [[nodiscard]] bool ketteVermutlichGeaendert() const;
+    /// Dasselbe fuer die Karaoke-Ebene. Gemerkt wird nach dem Laden eines
+    /// Karaoke-Presets, nach `setzeKaraokeVorgabe` und im Konstruktor; nach
+    /// dem Speichern unter einem Namen ruft der Aufrufer `merkeKaraokeStand()`.
+    /// Das selbsttaetige Schreiben der Ablage zaehlt NICHT als Speichern.
+    void merkeKaraokeStand();
+    [[nodiscard]] bool karaokeGeaendert() const;
+
+    /**
      * Letzter GL-Kompilierfehler eines Shadertoy- ODER Mesh-Warp-Nodes
      * ("" = fehlerfrei; beide Typen teilen das stError-Feld der LeafRuntime —
      * ein Knoten ist genau ein Typ). Der Panel-Editor zeigt ihn beim
@@ -1537,6 +1559,11 @@ private:
     /// Laufzeiten von Knoten ab, die es in der Kette nicht mehr gibt.
     bool m_pendingRuntimePrune = false;
     uint64_t m_idHochwasser = 1;         ///< naechste nie vergebene Knoten-Id (recompileChain)
+    // --- ungespeicherte Aenderungen (S89)
+    QByteArray m_kettenStand;                       ///< die Kette, wie sie zuletzt geladen/gespeichert war
+    mutable bool m_kettenBeruehrt = false;          ///< seit dem letzten Vergleich gab es einen Panel-Edit
+    mutable bool m_kettenGeaendertZuletzt = false;  ///< Ergebnis des letzten Vergleichs
+    QByteArray m_karaokeStand;                      ///< die Ebene, wie sie zuletzt benannt geladen/gespeichert war
 
     /** Free all per-node GL runtimes (render thread, context current). */
     // --- Karaoke-Ebene (S88, KE1)
