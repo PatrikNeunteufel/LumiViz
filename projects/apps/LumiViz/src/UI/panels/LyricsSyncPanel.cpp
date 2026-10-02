@@ -831,8 +831,8 @@ bool LyricsSyncPanel::eventFilter(QObject* watched, QEvent* event)
     // Tasten der LISTE — waehrend F2 die Zeit bearbeitet, hat das Eingabefeld
     // den Fokus und die Tasten kommen hier gar nicht an
     // S88: Ctrl+Z / Ctrl+Y (auch Ctrl+Shift+Z) gehoeren in der Liste dem Panel.
-    // ShortcutOverride annehmen, sonst nimmt ein fensterweites Kuerzel
-    // (Undo der Effektkette) die Taste, bevor sie als KeyPress hier ankommt.
+    // ShortcutOverride annehmen, sonst nimmt das fensterweite Kuerzel
+    // (Edit → Undo, CommandBus) die Taste, bevor sie als KeyPress hier ankommt.
     if (watched == m_liste &&
         (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress))
     {

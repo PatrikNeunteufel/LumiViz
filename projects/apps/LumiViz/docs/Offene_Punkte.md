@@ -2258,7 +2258,10 @@ Idee Preset-Warmup/Pre-Roll.
     Ersatz. **Die Effektkette gewinnt:** enthält das laufende Preset selbst
     Lyrics, zeichnet es sie (es ist womöglich auf das Preset abgestimmt) und
     die Ebene tritt zurück — gezeigt wird in beiden Fällen derselbe Songtext,
-    nie doppelt.
+    nie doppelt. **Kurzkonzept (S88):**
+    [Karaoke_Ebene_Konzept.md](visuals/Karaoke_Ebene_Konzept.md) — Einhängen
+    beim Present wie der Post-Bloom (die Root-Surface bleibt unberührt),
+    Stufen KE1–KE4, **Entscheide K1–K5 offen**.
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
 
@@ -3417,8 +3420,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
   Panel entfernten Knotens (Texturen, Skript-Hosts, Milkdrop-Kern) bis zum
   nächsten Laden liegen, und ein laufender Video-/Kamera-Feed lief weiter.
   Jetzt räumt der Render-Thread nach jedem Panel-Edit ab
-  (`raeumeVerwaisteLaufzeiten`, auch Listen-, Gruppen-, Switcher- und
-  Modulations-Zustand); der Feed gehört dem Knoten allein (Schlüssel = Id),
+  (`raeumeVerwaisteLaufzeiten`, dazu der Modulations-Zustand; Listen-,
+  Gruppen- und Switcher-Laufzeiten räumte das Frame-Ende schon immer ab); der Feed gehört dem Knoten allein (Schlüssel = Id),
   andere Knoten auf derselben Kamera und die Camera-Clip-Aufnahme der
   Einstellungen bleiben. Vergleichslauf Regressionsliste 84/84 bitgleich
   gegen S86. **Nicht geprüft:** der Feed-Stopp mit echter Kamera/Datei

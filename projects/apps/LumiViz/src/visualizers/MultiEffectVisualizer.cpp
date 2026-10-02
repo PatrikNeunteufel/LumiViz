@@ -4011,15 +4011,13 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
         gibLeafLaufzeitFrei(it->first, it->second);
         it = m_leafRuntimes.erase(it);
     }
-    // die uebrigen Tabellen je Knoten: ihre Eintraege raeumen sich selbst ab
+    // Modulations-Zustand je Knoten: die Eintraege raeumen sich selbst ab.
+    // (Listen-, Gruppen- und Switcher-Laufzeiten faellt schon das Frame-Ende
+    // ueber `seenThisFrame`; nur die Blatt-Laufzeiten blieben bisher liegen.)
     const auto ohneVerwaiste = [&lebend](auto& tabelle) {
         for (auto it = tabelle.begin(); it != tabelle.end();)
             it = lebend.count(it->first) != 0 ? std::next(it) : tabelle.erase(it);
     };
-    ohneVerwaiste(m_listRuntimes);
-    ohneVerwaiste(m_groupRuntimes);
-    ohneVerwaiste(m_switcherRuntimes);
-    ohneVerwaiste(m_groupOverride);
     ohneVerwaiste(m_modZustand);
     ohneVerwaiste(m_modWerte);
 }
