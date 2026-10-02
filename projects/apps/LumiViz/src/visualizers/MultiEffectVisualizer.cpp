@@ -10342,6 +10342,11 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     m_textShader->setUniformValue("uImg", 1);
     f->glActiveTexture(GL_TEXTURE0);
     m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    // S90: der Shader traegt seit S89 eine Staerke (Lyrics, Feld blendStrength).
+    // Der AVI-Pfad setzte sie nie — ein AVI-Bild allein blieb unsichtbar (die
+    // Uniform startet mit 0), und hinter einem Text- oder Lyrics-Knoten erbte
+    // es dessen Staerke. Das Video liegt immer voll.
+    m_textShader->setUniformValue("uStrength", 1.0f);
     m_textShader->setUniformValue("uImgRect", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
     m_textShader->setUniformValue("uVormult", false);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

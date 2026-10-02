@@ -35,6 +35,7 @@
 #include <QTemporaryDir>
 
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <iomanip>
 #include <map>
@@ -1643,6 +1644,87 @@ TEST_CASE("Lyrics S90 LB3: Slot Word laeuft einmal je Wortwechsel, kennt word/wo
     CHECK(ly::wortAnzahl(ly::Zeile{0, "", ly::Stimme::Keine, {}}) == 0);
 
     MultiEffectVisualizer::setzeParamBeobachter({});
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S90 (Nebenbefund beim Umbau des Text-Shaders): der AVI-Knoten zeichnet
+// ueber denselben Shader wie Text und Lyrics. Seit S89 traegt der Shader eine
+// Staerke (`uStrength`) — der AVI-Pfad setzte sie nicht. Der Test zaehlt, was
+// daraus folgt: ein AVI-Bild allein, und eines hinter einem Lyrics-Knoten mit
+// Staerke 0, muessen so hell sein wie eines hinter einem mit Staerke 100.
+TEST_CASE("AVI S90: das Bild haengt nicht an der Staerke eines Text- oder Lyrics-Knotens davor")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    // das Testvideo liegt im Repo: vom Quelltext aus nach oben suchen
+    std::filesystem::path video;
+    for (std::filesystem::path p = std::filesystem::path(__FILE__).parent_path(); !p.empty();
+         p = p.parent_path())
+    {
+        const auto kandidat = p / "asset" / "calibration" / "fields" / "testvideo.avi";
+        if (std::filesystem::exists(kandidat))
+        {
+            video = kandidat;
+            break;
+        }
+        if (p == p.parent_path()) break;
+    }
+    REQUIRE_FALSE(video.empty());
+
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM\n[00:20.00]ende\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+
+    // mittlere Helligkeit des Bilds; `lyricsStaerke` < 0 = kein Lyrics-Knoten davor
+    const auto hell = [&](int lyricsStaerke, bool mitAvi) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        root.children = {clear};
+        if (lyricsStaerke >= 0)
+        {
+            ChainNode lyr;
+            LyricsParams lp;
+            lp.blendStrength = lyricsStaerke;
+            lyr.params = lp;
+            root.children.push_back(lyr);
+        }
+        if (mitAvi)
+        {
+            ChainNode avi;
+            AviParams ap;
+            ap.filename = video.filename().string();
+            ap.resolvedPath = video.string();
+            avi.params = ap;
+            root.children.push_back(avi);
+        }
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(160, 120));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 160, 120);
+        for (int i = 0; i < 4; ++i) vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        double summe = 0.0;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x) summe += qGray(img.pixel(x, y));
+        return summe / (img.width() * img.height());
+    };
+
+    const double nachVoll = hell(100, true);  // Lyrics mit voller Staerke, dann das Video
+    const double allein = hell(-1, true);
+    const double nachNull = hell(0, true);    // Lyrics mit Staerke 0, dann das Video
+    MESSAGE("AVI-Helligkeit: nach Lyrics 100 % " << nachVoll << ", allein " << allein
+            << ", nach Lyrics 0 % " << nachNull);
+    REQUIRE(nachVoll > 5.0);  // das Video ist da (ersetzt das ganze Bild)
+    CHECK(allein == doctest::Approx(nachVoll).epsilon(0.001));
+    CHECK(nachNull == doctest::Approx(nachVoll).epsilon(0.001));
+
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
