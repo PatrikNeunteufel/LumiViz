@@ -2261,7 +2261,12 @@ Idee Preset-Warmup/Pre-Roll.
     nie doppelt. **Kurzkonzept (S88):**
     [Karaoke_Ebene_Konzept.md](visuals/Karaoke_Ebene_Konzept.md) — Einhängen
     beim Present wie der Post-Bloom (die Root-Surface bleibt unberührt),
-    Stufen KE1–KE4, **Entscheide K1–K5 offen**.
+    Stufen KE1–KE4. Entscheide Patrik S88: K1 a, K2 a, K5 a; K3/K4 vorläufig
+    a. **✅ KE1 gebaut (S88):** die Ebene im Renderer mit festem Aussehen,
+    Schalter Settings → Audio → *Karaoke layer*; Root-Surface bitgleich mit
+    Ebene an und aus. **Offen:** KE2–KE4 (Panel, Ablage, Trail-Reiter,
+    Menü/Kürzel); **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
+    Post-Bloom, mit Render Scale).
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
 

@@ -303,6 +303,22 @@ public:
     /// Verstellen. Thread-sicher.
     static void setSongtextTitelVersatz(std::int64_t ms);
     [[nodiscard]] static std::int64_t songtextTitelVersatzMs();
+    /**
+     * Karaoke-Ebene (S88, KE1 — docs/visuals/Karaoke_Ebene_Konzept.md): der
+     * Songtext des laufenden Titels ueber JEDEM Preset, ohne Lyrics-Knoten in
+     * der Kette. Die Ebene rechnet in eigene Texturen und wird erst beim
+     * Present aufgelegt — die Root-Surface (das Feedback des naechsten Frames)
+     * bleibt unberuehrt. Enthaelt die laufende Kette selbst einen
+     * eingeschalteten Lyrics-Knoten, tritt die Ebene zurueck („die Kette
+     * gewinnt"). Prozessweiter Schalter, thread-sicher; Vorgabe aus.
+     */
+    static void setKaraokeEbene(bool an);
+    [[nodiscard]] static bool karaokeEbene();
+    /// Test-Naht: das Bild, wie es am Fenster steht (Root-Surface + Karaoke-
+    /// Ebene), in Kettenaufloesung. `debugGrabRootSurface` sieht die Ebene nie.
+    [[nodiscard]] QImage debugGrabMitKaraoke();
+    /// Test-Naht: hat die Ebene im letzten Frame gezeichnet (nicht zurueckgetreten)?
+    [[nodiscard]] bool debugKaraokeGezeichnet() const { return m_karaokeGezeichnet; }
     /// Kopie des gesetzten Songtexts (S87: Vergleich im Alternativen-Dialog).
     [[nodiscard]] static lumi::multieffect::lyrics::Songtext songtext();
     /// Stand des Online-Abrufs fuer den laufenden Titel (S87) — das Fenster
@@ -1466,6 +1482,20 @@ private:
     uint64_t m_idHochwasser = 1;         ///< naechste nie vergebene Knoten-Id (recompileChain)
 
     /** Free all per-node GL runtimes (render thread, context current). */
+    // --- Karaoke-Ebene (S88, KE1)
+    void baueKaraokeEbene();     ///< die festen Knoten der Ebene anlegen (Konstruktor)
+    void rechneKaraokeEbene();   ///< nach dem Ketten-Walk: Zeile rastern, Trail-Liste rechnen
+    void legeKaraokeAuf();       ///< auf den gebundenen Framebuffer: Trail additiv, Zeile mit Alpha
+    [[nodiscard]] bool ketteZeigtLyrics() const;
+    lumi::multieffect::ChainNode m_karaokeLyrics;  ///< Lyrics-Knoten der Ebene (nicht in m_root)
+    lumi::multieffect::ChainNode m_karaokeTrail;   ///< Liste: Drift, Fadeout, Lyrics Trail
+    bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt m_karaokeLyrics)
+    bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
+    bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
+    unsigned int m_karaokeGlyphTex = 0;  ///< Glyphen der laufenden Zeile (0 = keine)
+    unsigned int m_karaokeTrailTex = 0;  ///< Bild der Trail-Liste (0 = keins)
+    std::unique_ptr<QOpenGLShaderProgram> m_overlayShader;  ///< Textur 1:1, wahlweise y-gespiegelt
+
     void resetRuntimes();
     /// GL-Objekte, VfW-Handles, Milkdrop-Kern und Live-Feed EINER Laufzeit
     /// freigeben (Render-Thread; ohne GL-Context nur der Feed).

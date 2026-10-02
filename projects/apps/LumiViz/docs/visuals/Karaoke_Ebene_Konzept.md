@@ -2,7 +2,8 @@
 
 > **Version:** 0.1.0
 > **Datum:** 2026-10-02 (Session 88)
-> **Typ:** Konzept — Entwurf, **Entscheide K1–K5 offen**; nichts gebaut
+> **Typ:** Konzept — **K1, K2, K5 entschieden (a)**, K3/K4 vorläufig a;
+> Umsetzung ab KE1
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Ausblick Timeline-Panel / Composit"
@@ -141,6 +142,28 @@ Kostenpunkt des Vorhabens.
 Nach KE1 ist die Ebene schon nutzbar (Schalter über die Einstellungen), jede
 weitere Stufe ist für sich abnehmbar.
 
+### Stand KE1 — ✅ gebaut (S88)
+
+- Schalter: **Settings → Audio → Karaoke layer** (QSettings `karaoke/enabled`,
+  Vorgabe aus; `MultiEffectVisualizer::setKaraokeEbene`).
+- Renderer: `baueKaraokeEbene` (feste Knoten mit Ids ab `0xF000…`, außerhalb
+  von `m_root`), `rechneKaraokeEbene` nach dem Ketten-Walk (die Zeile wird nur
+  gerastert, die Trail-Liste mischt nicht aus), `legeKaraokeAuf` nach dem
+  Present-Draw (Trail additiv, Zeile mit Alpha), `ketteZeigtLyrics`.
+- Aussehen fest: Vorgaben des Lyrics-Knotens; Trail = Blitter Feedback 35,
+  Fadeout 4, Lyrics Trail 120 ms / 7 % nach oben (wie im Mix).
+- Geprüft: Bildtest (Text da · Root-Surface **bitgleich** mit Ebene an und aus,
+  über 20 Frames einer Rückkopplungs-Kette ohne Clear · ohne Songtext nichts ·
+  eingeschalteter Lyrics-Knoten gewinnt, ausgeschalteter nicht); Bilder
+  angesehen (`LUMIVIZ_KARAOKE_SNAP`); Vergleichslauf Regressionsliste 84/84
+  bitgleich (Ebene aus).
+- **Abweichungen vom Konzept in KE1:** die Laufzeiten der Ebene überleben den
+  Preset-Wechsel **nicht** (der Wechsel leert alle Laufzeiten; der Trail
+  beginnt danach neu); der Blend des Lyrics-Knotens (Additive, 50/50) wirkt
+  in der Ebene nicht — die Zeile liegt immer deckend mit Alpha.
+- **Nicht geprüft:** im laufenden Programm, mit Post-Bloom, mit Render Scale,
+  mit Host Switcher (Gruppe mit Lyrics-Knoten).
+
 ## 8. Risiken
 
 - **Editor-Wiederverwendung:** die Feld-Editoren stecken heute in einer
@@ -155,7 +178,14 @@ weitere Stufe ist für sich abnehmbar.
   liegen — bewusst nicht in dieser Stufe.
 - **Kosten:** eine Surface mehr und zwei Draws; nur wenn die Ebene an ist.
 
-## 9. Offene Entscheide
+## 9. Entscheide
+
+**Stand (Patrik, S88):** **K1 a · K2 a · K5 a** entschieden. Zu K5: „natürlich
+nein — das ist ja der springende Punkt, wenn ein Preset alles aufeinander
+abstimmt." **K3 und K4:** vorläufig a, Patrik beurteilt sie nach einer
+Erklärung der Begriffe neu („Look" = Zustand der ganzen Ebene im Unterschied
+zu den Voreinstellungen je Knoten; K4 betrifft nur Presets mit Render Scale
+unter 1). Beide lassen KE1 unberührt.
 
 **K1 — Welche Module darf der Trail-Reiter aufnehmen?**
 *Heute:* offen (Patrik S88: „keine Render, keine Host — Umfang noch zu klären").

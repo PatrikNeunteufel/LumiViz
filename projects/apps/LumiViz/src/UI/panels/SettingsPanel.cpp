@@ -22,6 +22,7 @@
 #include "audio/IAudioEngine.hpp"
 #include "audio/SongtextQuelle.hpp"  // Benutzerordner der Songtexte (S86)
 #include "UI/dialogs/LyricsAlternativesDialog.hpp"  // Sperrliste der Songtexte (S87)
+#include "visualizers/MultiEffectVisualizer.hpp"    // Schalter der Karaoke-Ebene (S88)
 
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -466,6 +467,21 @@ QWidget* SettingsPanel::createAudioTab()
                                tr("%1 remembered track(s) forgotten.").arg(n), vergessen);
         });
         layout->addRow(tr("Lyrics not found:"), vergessen);
+
+        // S88 (KE1): Karaoke-Ebene — der Schalter zieht mit KE2 ins Karaoke-Panel
+        auto* karaoke = new QCheckBox(tr("Enable"), widget);
+        karaoke->setObjectName(QStringLiteral("karaokeLayer"));
+        karaoke->setChecked(
+            QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
+        karaoke->setToolTip(
+            tr("Shows the lyrics of the playing track on top of every preset, without a "
+               "Lyrics node in the chain. If the preset has its own enabled Lyrics node, the "
+               "preset wins and the layer steps back."));
+        connect(karaoke, &QCheckBox::toggled, this, [](bool an) {
+            QSettings().setValue(QStringLiteral("karaoke/enabled"), an);
+            MultiEffectVisualizer::setKaraokeEbene(an);
+        });
+        layout->addRow(tr("Karaoke layer:"), karaoke);
     }
 
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));

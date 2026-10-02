@@ -811,6 +811,128 @@ TEST_CASE("Lyrics Trail S87: die eben beendete Zeile, fuer die Haltezeit, an der
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S88, KE1 (docs/visuals/Karaoke_Ebene_Konzept.md): Songtext ueber jedem Preset
+// als eigene Ebene. Der Kern: die Ebene wird erst beim Present aufgelegt — die
+// Root-Surface (das Feedback des naechsten Frames) bleibt BITGLEICH, ob die
+// Ebene an oder aus ist. Und: ein Lyrics-Knoten in der Kette gewinnt.
+TEST_CASE("Karaoke-Ebene S88: Text ueber dem Bild, Root-Surface unberuehrt, die Kette gewinnt")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+
+    // Eine Kette MIT Rueckkopplung und ohne Clear: alles, was in die
+    // Root-Surface geriete, bliebe dort und wuerde weitergetragen.
+    const auto kette = [](bool mitLyrics, bool lyricsAn) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode balken;
+        balken.params = DebugBarsParams{0x40C0FF, -2.5f};
+        ChainNode drift;
+        BlitterFeedbackParams bf;
+        bf.scale = 34;
+        bf.scale2 = 34;
+        drift.params = bf;
+        ChainNode fade;
+        fade.params = FadeoutParams{2, 0x000000};
+        root.children = {balken, drift, fade};
+        if (mitLyrics)
+        {
+            ChainNode lyr;
+            LyricsParams lp;
+            lp.vAlign = 0;  // oben — die Ebene zeichnet unten
+            lp.yShift = 6;
+            lyr.params = lp;
+            lyr.enabled = lyricsAn;
+            root.children.push_back(lyr);
+        }
+        return root;
+    };
+    struct Lauf
+    {
+        QImage root;      ///< Root-Surface nach dem letzten Frame
+        QImage fenster;   ///< wie am Fenster: Root + Ebene
+        bool gezeichnet;  ///< die Ebene war im letzten Frame dran
+    };
+    const auto lauf = [&](ChainNode root, bool ebene, int posMs, int frames = 20) {
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        MultiEffectVisualizer::notifyPlayPosition(posMs);
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < frames; ++i) vis.render(1.0f / 60.0f);
+        Lauf l{vis.debugGrabRootSurface(), vis.debugGrabMitKaraoke(), vis.debugKaraokeGezeichnet()};
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        return l;
+    };
+    const auto unterschied = [](const QImage& a, const QImage& b, int yVon, int yBis) {
+        int n = 0;
+        for (int y = yVon; y < yBis; ++y)
+            for (int x = 0; x < a.width(); ++x)
+                if (a.pixel(x, y) != b.pixel(x, y)) ++n;
+        return n;
+    };
+
+    // --- Ebene aus: das Fenster zeigt genau die Root-Surface
+    const Lauf aus = lauf(kette(false, false), false, 11000);
+    REQUIRE_FALSE(aus.root.isNull());
+    REQUIRE(aus.fenster.size() == aus.root.size());
+    CHECK_FALSE(aus.gezeichnet);
+    CHECK(unterschied(aus.fenster, aus.root, 0, aus.root.height()) == 0);
+
+    // --- Ebene an, erste Zeile laeuft: Text im Fenster, unten
+    const Lauf an = lauf(kette(false, false), true, 11000);
+    CHECK(an.gezeichnet);
+    CHECK(an.root == aus.root);  // der Kern: die Root-Surface ist BITGLEICH
+    const int h = an.root.height();
+    // toImage() liefert das Bild mit dem Ursprung oben: der Text steht in der unteren Haelfte
+    CHECK(unterschied(an.fenster, an.root, h / 2, h) > 200);
+    CHECK(unterschied(an.fenster, an.root, 0, h / 4) == 0);
+
+    // --- kurz nach dem Zeilenwechsel: Trail und neue Zeile, Root weiter bitgleich
+    const Lauf wechselAus = lauf(kette(false, false), false, 13060);
+    const Lauf wechselAn = lauf(kette(false, false), true, 13060);
+    CHECK(wechselAn.root == wechselAus.root);
+    CHECK(unterschied(wechselAn.fenster, wechselAn.root, h / 2, h) > 100);
+    // Bilder zum Ansehen (Merkregel S87: Bildwirkung an Bildern pruefen)
+    if (const QString snap = qEnvironmentVariable("LUMIVIZ_KARAOKE_SNAP"); !snap.isEmpty())
+    {
+        an.fenster.save(snap + QStringLiteral("/karaoke_zeile.png"));
+        wechselAn.fenster.save(snap + QStringLiteral("/karaoke_wechsel.png"));
+        an.root.save(snap + QStringLiteral("/karaoke_root.png"));
+    }
+
+    // --- ohne Songtext zeichnet die Ebene nichts
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    const Lauf ohneText = lauf(kette(false, false), true, 11000);
+    CHECK_FALSE(ohneText.gezeichnet);
+    CHECK(unterschied(ohneText.fenster, ohneText.root, 0, h) == 0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+
+    // --- die Kette gewinnt: ein eingeschalteter Lyrics-Knoten (oben), und die
+    //     Ebene tritt zurueck — das Fenster ist die Root-Surface, der Text steht
+    //     nur einmal da (oben, vom Knoten)
+    const Lauf gewinnt = lauf(kette(true, true), true, 11000);
+    CHECK_FALSE(gewinnt.gezeichnet);
+    CHECK(unterschied(gewinnt.fenster, gewinnt.root, 0, h) == 0);
+    CHECK(unterschied(gewinnt.root, aus.root, 0, h / 2) > 200);  // Gegenprobe: der Knoten zeichnet
+    // ein AUSGESCHALTETER Lyrics-Knoten zaehlt nicht: die Ebene uebernimmt
+    const Lauf knotenAus = lauf(kette(true, false), true, 11000);
+    CHECK(knotenAus.gezeichnet);
+    CHECK(unterschied(knotenAus.fenster, knotenAus.root, h / 2, h) > 200);
+
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88: seit Ids nie wiederverwendet werden (S87), blieb die Laufzeit eines im
 // Panel entfernten Knotens bis zum naechsten Laden liegen (Texturen, Skript-
 // Hosts, ein laufender Video-/Kamera-Feed). Der Render-Thread raeumt sie nach

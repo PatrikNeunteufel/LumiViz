@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.40.0
+> **Version:** 1.41.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -668,6 +668,19 @@ Feedback **scale** 33) lässt die Zeile zu einem Strich schrumpfen, statt sie
 wegzutragen — 35 und mehr wirkt. Ein fertiges Beispiel steht in
 `asset/effectchain/20261001.mix.lvfx2` (Liste „Lyrics Trail List").
 
+**Karaoke-Ebene: Songtext über jedem Preset.** Mit **Settings → Audio →
+Karaoke layer** zeigt LumiViz den Songtext des laufenden Titels über **allem**,
+was als Kette läuft — auch über importierten AVS- und MilkDrop-Presets, ohne
+dass die Kette einen Lyrics-Knoten braucht. Die Ebene liegt über dem fertigen
+Bild: sie wird von den Effekten des Presets nicht mitgezogen oder verwischt.
+Sie zeichnet die laufende Zeile unten mittig mit einer Vorschau-Zeile, dazu
+den Trail (die eben beendete Zeile weht nach hinten weg). Hat das laufende
+Preset selbst einen **eingeschalteten** Lyrics-Knoten, **gewinnt das Preset**:
+es zeigt den Text auf seine Art, und die Ebene tritt zurück — der Text steht
+nie doppelt da. Das Aussehen der Ebene ist vorerst fest; ein eigenes
+Karaoke-Panel mit allen Einstellungen folgt. In Screenshots aus der App ist
+die Ebene enthalten.
+
 **Zwei Fassungen desselben Songs.** Im Benutzerordner heißt die Datei
 `<Interpret> - <Titel>`. Geholte Texte tragen dazu die Dauer des Titels
 (`[length:…]`); passt sie nicht zum laufenden Titel (mehr als 2,5 s
@@ -1311,6 +1324,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.41.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Karaoke-Ebene** — Songtext über jedem Preset (Settings → Audio → Karaoke layer); ein Lyrics-Knoten im Preset gewinnt |
 | 1.40.0 | 2026-10-02 | Session 88. §11 Host-Gruppen: `.lvfx2` trägt im Effect Browser ein eigenes Icon (Stapel) |
 | 1.39.0 | 2026-10-02 | Session 88. §11 Lyrics Trail: folgt den **skriptgesteuerten** Werten des Lyrics-Knotens (Karaoke Bounce, Flip) und arbeitet auch mit **unsynchronem Text** (Wechsel alle N Beats). §11 Lyrics-Editor: Knöpfe in zwei Reihen, **Offset for this track** als eigene Zeile |
 | 1.38.0 | 2026-10-02 | Session 88. §11 Lyrics Sync: NEU **Undo** / **Redo** (Ctrl+Z / Ctrl+Y) für jeden Schritt an den Zeiten |

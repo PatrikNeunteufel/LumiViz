@@ -2890,6 +2890,8 @@ MultiEffectVisualizer::MultiEffectVisualizer()
                      "AVS-style effect chain host (import target)"),
       m_scriptContext(std::make_shared<lumi::scripting::ScriptContext>())
 {
+    baueKaraokeEbene();  // S88 (KE1): eigene Knoten ausserhalb der Kette
+
     // Hand-built default chain: root trails + a nested additive list with its
     // own faster orbit — visible proof of nesting + blend (5.2 sight test).
     ChainNode root;
@@ -3427,6 +3429,176 @@ QImage MultiEffectVisualizer::debugGrabRootSurface() const
     return m_rootSurface.ready() ? m_rootSurface.current()->toImage() : QImage();
 }
 
+// =============================================================================
+// Karaoke-Ebene (S88, KE1) — docs/visuals/Karaoke_Ebene_Konzept.md
+// =============================================================================
+
+namespace
+{
+std::atomic<bool> g_karaokeEbene{false};
+/// Ids der Ebenen-Knoten: fest und weit ueber allem, was `compileChain`
+/// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
+constexpr uint64_t kKaraokeIdBasis = 0xF000'0000'0000'0000ull;
+
+const char* kOverlayFragmentShader = R"(
+#version 330 core
+in vec2 vTex;
+uniform sampler2D uTex;
+uniform bool uFlip;   // Glyphen-Texturen liegen top-down vor
+out vec4 fragColor;
+void main()
+{
+    fragColor = texture(uTex, uFlip ? vec2(vTex.x, 1.0 - vTex.y) : vTex);
+}
+)";
+}  // namespace
+
+void MultiEffectVisualizer::setKaraokeEbene(bool an)
+{
+    g_karaokeEbene.store(an, std::memory_order_relaxed);
+}
+
+bool MultiEffectVisualizer::karaokeEbene()
+{
+    return g_karaokeEbene.load(std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::baueKaraokeEbene()
+{
+    // KE1: festes Aussehen. Die Zeile = die Vorgaben des Lyrics-Knotens
+    // (unten mittig, Kontur, eine Vorschau-Zeile); der Trail = die Liste aus
+    // asset/effectchain/20261001.mix.lvfx2 (Blitter Feedback 35, Fadeout 4,
+    // Trail 120 ms / 7 % nach oben). Die Liste behaelt ihr Bild und mischt
+    // NICHT in den Elternpuffer (Out: Ignore) — aufgelegt wird beim Present.
+    m_karaokeLyrics = ChainNode{};
+    m_karaokeLyrics.params = LyricsParams{};
+    m_karaokeLyrics.displayName = "Karaoke Lyrics";
+    m_karaokeLyrics.nodeId = kKaraokeIdBasis + 1;
+
+    ListParams liste;
+    liste.clearEveryFrame = false;
+    liste.blendIn = BlendMode::Ignore;
+    liste.blendOut = BlendMode::Ignore;
+    m_karaokeTrail = ChainNode{};
+    m_karaokeTrail.params = liste;
+    m_karaokeTrail.displayName = "Karaoke Trail";
+    m_karaokeTrail.nodeId = kKaraokeIdBasis + 2;
+
+    ChainNode drift;
+    BlitterFeedbackParams bf;
+    bf.scale = 35;
+    bf.scale2 = 35;
+    drift.params = bf;
+    drift.nodeId = kKaraokeIdBasis + 3;
+    ChainNode fade;
+    fade.params = FadeoutParams{4, 0x000000};
+    fade.nodeId = kKaraokeIdBasis + 4;
+    ChainNode trail;
+    LyricsTrailParams tp;
+    tp.holdMs = 120;
+    tp.yShift = -7;
+    trail.params = tp;
+    trail.nodeId = kKaraokeIdBasis + 5;
+    m_karaokeTrail.children = {drift, fade, trail};
+}
+
+bool MultiEffectVisualizer::ketteZeigtLyrics() const
+{
+    // „Die Effektkette gewinnt" (Entscheid Patrik 2a/K5): ein EINGESCHALTETER
+    // Lyrics-Knoten — er selbst und alle Container ueber ihm an, Host-Gruppen
+    // nach der Wahl des Switchers — und die Ebene zeichnet nichts.
+    const std::function<bool(const ChainNode&)> hat = [&](const ChainNode& n) {
+        if (!effectiveEnabled(n)) return false;
+        if (std::holds_alternative<LyricsParams>(n.params)) return true;
+        return std::any_of(n.children.begin(), n.children.end(), hat);
+    };
+    return std::any_of(m_root.children.begin(), m_root.children.end(), hat);
+}
+
+void MultiEffectVisualizer::rechneKaraokeEbene()
+{
+    m_karaokeGlyphTex = 0;
+    m_karaokeTrailTex = 0;
+    m_karaokeGezeichnet = false;
+    if (!karaokeEbene() || m_songtext.leer() || ketteZeigtLyrics()) return;
+
+    // Beides laeuft NACH dem Ketten-Walk und fasst die Root-Surface nicht an:
+    // die Zeile wird nur gerastert (kein Compose), die Liste mischt nicht aus.
+    m_karaokeLaeuft = true;
+    m_glyphNurRastern = true;
+    renderNode(m_karaokeLyrics);
+    m_glyphNurRastern = false;
+    renderNode(m_karaokeTrail);
+    m_karaokeLaeuft = false;
+
+    if (const auto it = m_listRuntimes.find(m_karaokeTrail.nodeId);
+        it != m_listRuntimes.end() && it->second.surface.ready())
+        m_karaokeTrailTex = it->second.surface.current()->texture();
+    m_karaokeGezeichnet = true;
+    bindActive();
+}
+
+void MultiEffectVisualizer::legeKaraokeAuf()
+{
+    if (!m_karaokeGezeichnet || m_overlayShader == nullptr) return;
+    if (m_karaokeTrailTex == 0 && m_karaokeGlyphTex == 0) return;
+    auto* f = QOpenGLContext::currentContext()->functions();
+    GLint srcRgb = GL_ONE, dstRgb = GL_ZERO, srcA = GL_ONE, dstA = GL_ZERO;
+    f->glGetIntegerv(GL_BLEND_SRC_RGB, &srcRgb);
+    f->glGetIntegerv(GL_BLEND_DST_RGB, &dstRgb);
+    f->glGetIntegerv(GL_BLEND_SRC_ALPHA, &srcA);
+    f->glGetIntegerv(GL_BLEND_DST_ALPHA, &dstA);
+    const GLboolean blendWar = f->glIsEnabled(GL_BLEND);
+
+    f->glEnable(GL_BLEND);
+    m_overlayShader->bind();
+    m_overlayShader->setUniformValue("uTex", 0);
+    m_quadVao->bind();
+    f->glActiveTexture(GL_TEXTURE0);
+    if (m_karaokeTrailTex != 0)  // der Trail: additiv, wie die Liste im Mix
+    {
+        f->glBlendFunc(GL_ONE, GL_ONE);
+        f->glBindTexture(GL_TEXTURE_2D, m_karaokeTrailTex);
+        m_overlayShader->setUniformValue("uFlip", false);
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+    if (m_karaokeGlyphTex != 0)  // die laufende Zeile: mit Alpha darueber (Kontur bleibt)
+    {
+        f->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+        f->glBindTexture(GL_TEXTURE_2D, m_karaokeGlyphTex);
+        m_overlayShader->setUniformValue("uFlip", true);
+        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+    m_quadVao->release();
+    m_overlayShader->release();
+    f->glBindTexture(GL_TEXTURE_2D, 0);
+    f->glBlendFuncSeparate(static_cast<GLenum>(srcRgb), static_cast<GLenum>(dstRgb),
+                           static_cast<GLenum>(srcA), static_cast<GLenum>(dstA));
+    if (blendWar != GL_TRUE) f->glDisable(GL_BLEND);
+}
+
+QImage MultiEffectVisualizer::debugGrabMitKaraoke()
+{
+    if (!m_rootSurface.ready() || m_presentShader == nullptr) return QImage();
+    auto* f = QOpenGLContext::currentContext()->functions();
+    QOpenGLFramebufferObject ziel(m_surfaceWidth, m_surfaceHeight);
+    ziel.bind();
+    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    f->glDisable(GL_BLEND);
+    f->glActiveTexture(GL_TEXTURE0);
+    f->glBindTexture(GL_TEXTURE_2D, m_rootSurface.current()->texture());
+    m_presentShader->bind();
+    m_presentShader->setUniformValue("uTex", 0);
+    m_quadVao->bind();
+    f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    m_quadVao->release();
+    m_presentShader->release();
+    legeKaraokeAuf();
+    const QImage bild = ziel.toImage();
+    ziel.release();
+    return bild;
+}
+
 bool MultiEffectVisualizer::loadChainFile(const QString& path, QStringList* outReport)
 {
     ChainNode loaded;
@@ -3559,6 +3731,7 @@ void MultiEffectVisualizer::onCleanup()
     m_waterShader.reset();
     m_bumpShader.reset();
     m_presentShader.reset();
+    m_overlayShader.reset();
     m_bloomDownShader.reset();
     m_bloomGaussShader.reset();
     m_bloomCompShader.reset();
@@ -3663,6 +3836,7 @@ bool MultiEffectVisualizer::ensurePipelines()
     m_waterShader = makeProgram(kQuadVertexShader, kWaterFragmentShader);
     m_bumpShader = makeProgram(kQuadVertexShader, kBumpFragmentShader);
     m_presentShader = makeProgram(kQuadVertexShader, kPresentFragmentShader);
+    m_overlayShader = makeProgram(kQuadVertexShader, kOverlayFragmentShader);  // Karaoke-Ebene
     m_bloomDownShader = makeProgram(kQuadVertexShader, kBloomDownFragmentShader);
     m_bloomGaussShader = makeProgram(kQuadVertexShader, kBloomGaussFragmentShader);
     m_bloomCompShader = makeProgram(kQuadVertexShader, kBloomCompFragmentShader);
@@ -3739,6 +3913,7 @@ bool MultiEffectVisualizer::ensurePipelines()
         m_waterShader.reset();
         m_bumpShader.reset();
         m_presentShader.reset();
+        m_overlayShader.reset();
         m_bloomDownShader.reset();
         m_bloomGaussShader.reset();
         m_bloomCompShader.reset();
@@ -4000,6 +4175,8 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
         for (const ChainNode& kind : n.children) sammle(kind);
     };
     sammle(m_root);
+    sammle(m_karaokeLyrics);  // die Knoten der Karaoke-Ebene leben ausserhalb der Kette
+    sammle(m_karaokeTrail);
 
     for (auto it = m_leafRuntimes.begin(); it != m_leafRuntimes.end();)
     {
@@ -4287,6 +4464,10 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         renderNode(child);
     }
 
+    // Karaoke-Ebene (S88, KE1): rechnet in eigene Texturen, die Root-Surface
+    // bleibt unberuehrt — aufgelegt wird unten beim Present.
+    rechneKaraokeEbene();
+
     // Post-Bloom (S48, Lights-Etappe 1): der erste aktivierte Bloom-Knoten
     // mit post=true wirkt beim Present — der Glow wird JETZT aus der fertigen
     // Root-Surface erzeugt und nur in die Anzeige gemischt, die Surface (und
@@ -4379,6 +4560,9 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, prevMin);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, prevMag);
         f->glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Karaoke-Ebene ueber das fertige Bild (auch ueber den Post-Bloom)
+        legeKaraokeAuf();
     }
 
     // Drop runtimes of nodes no longer in the chain (edited away).
@@ -8370,7 +8554,9 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     runParamScript(rt, "lyricstrail", params.initCode, params.frameCode, params.beatCode, {});
 
     namespace ly = lumi::multieffect::lyrics;
-    const ChainNode* quelle = findeLyricsKnoten(params.source);
+    // in der Karaoke-Ebene (S88) folgt der Trail deren eigenem Lyrics-Knoten
+    const ChainNode* quelle =
+        m_karaokeLaeuft ? &m_karaokeLyrics : findeLyricsKnoten(params.source);
     const ly::Songtext& s = m_songtext;
     if (quelle == nullptr || s.leer()) return;
     // S88: Schrift und Lage so, wie der Lyrics-Knoten sie zuletzt gezeichnet
@@ -8560,6 +8746,11 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA,
                         GL_UNSIGNED_BYTE, img.constBits());
+    }
+    if (m_glyphNurRastern)  // Karaoke-Ebene: aufgelegt wird erst beim Present
+    {
+        m_karaokeGlyphTex = rt.textTexture;
+        return;
     }
     composeGlyphLayer(rt.textTexture, params.blend);
 }

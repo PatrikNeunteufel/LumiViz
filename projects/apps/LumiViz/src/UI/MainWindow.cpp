@@ -746,6 +746,10 @@ void MainWindow::setupEventHandlers()
     // S86 (Entscheide 3a/4a): Online-Suche nach dem Songtext — Opt-in in den
     // Einstellungen, erst wenn keine lokale Quelle etwas liefert; der Fund wird
     // gespeichert und gilt nur, wenn derselbe Titel noch laeuft.
+    // S88 (KE1): Karaoke-Ebene — Songtext ueber jedem Preset; der Schalter
+    // steht vorerst in Settings → Audio (das Karaoke-Panel folgt mit KE2)
+    MultiEffectVisualizer::setKaraokeEbene(
+        QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
     auto* songtextOnline = new lumi::audio::SongtextOnline(this);
     auto laufenderSong = std::make_shared<QString>();
     connect(songtextOnline, &lumi::audio::SongtextOnline::gefunden, this,
