@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.47.0
+> **Version:** 1.48.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -697,7 +697,11 @@ und bleibt über den Neustart erhalten. Den Stand der ganzen Ebene (Zeile und
 Trail) hältst du als **Karaoke-Preset** fest: **Save…** legt ihn unter einem
 Namen ab, **Load** holt ihn zurück, **Delete** entfernt ihn, **Default** stellt
 das mitgelieferte Aussehen wieder her. Die Dateien (`.lvkar`) liegen im
-Benutzerordner unter `karaoke`.
+Benutzerordner unter `karaoke`. Im **Effect Browser** erscheinen sie mit einem
+eigenen Icon (Mikrofon im Kreis); ein **Doppelklick** lädt das Karaoke-Preset
+in die Ebene — die Effektkette bleibt, wie sie ist, und das Karaoke-Panel
+zeigt den neuen Stand. Eingeschaltet wird die Ebene dadurch nicht: das macht
+weiter **Karaoke on**.
 
 Der **Trail** hat seinen eigenen Reiter **Lyrics Trail**: oben **Trail on**
 (aus = die Zeile steht ohne Nachwehen da), darunter eine kurze Liste von
@@ -1380,6 +1384,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.48.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Presets (`.lvkar`) im Effect Browser — eigenes Icon, Doppelklick lädt in die Karaoke-Ebene |
 | 1.47.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Panel, NEU Reiter **Lyrics Trail** — *Trail on*, Liste der Trail-Module, Palette nur mit umformenden und färbenden Modulen, fester Lyrics Trail am Ende |
 | 1.46.0 | 2026-10-02 | Session 89. §11 Lyrics / Lyrics Trail: NEU Feld **Blend strength (%)**; Mischart und Stärke der Karaoke-Ebene stehen im Karaoke-Panel (Reiter *Lyrics*) statt unter Settings → Audio, alte Werte werden übernommen |
 | 1.45.0 | 2026-10-02 | Session 89. §11 Lyrics: NEU Panel **Karaoke** — Schalter *Karaoke on* (bisher Settings → Audio), Reiter *Lyrics* mit dem Aussehen der Zeile, **Karaoke-Presets** (`.lvkar`: Save…, Load, Delete, Default) |

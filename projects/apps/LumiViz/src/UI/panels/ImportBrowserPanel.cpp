@@ -255,11 +255,11 @@ QStringList ImportBrowserPanel::currentNameFilters() const
         case Filter::Avs:  return {QStringLiteral("*.avs")};
         case Filter::Milk: return {QStringLiteral("*.milk")};
         case Filter::Lvfx:
-            return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2")};
+            return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
         case Filter::All:  break;
     }
     return {QStringLiteral("*.avs"), QStringLiteral("*.milk"),
-            QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2")};
+            QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
 }
 
 int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
@@ -267,6 +267,7 @@ int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
     if (suffix.compare(QStringLiteral("milk"), Qt::CaseInsensitive) == 0) return Type_Milk;
     if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
     if (suffix.compare(QStringLiteral("lvfx2"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
+    if (suffix.compare(QStringLiteral("lvkar"), Qt::CaseInsensitive) == 0) return Type_Karaoke;
     return Type_Avs;
 }
 
@@ -399,6 +400,14 @@ void ImportBrowserPanel::openEntry(int type, const QString& path)
             {
                 bus->publish(LoadEffectChainEvent{path.toStdString()});
                 setStatus(tr("↺ loading chain %1").arg(QFileInfo(path).fileName()));
+            }
+            return;
+
+        case Type_Karaoke:  // S89: in die Karaoke-Ebene, die Kette bleibt
+            if (auto* bus = eventBus())
+            {
+                bus->publish(LoadKaraokePresetEvent{path.toStdString()});
+                setStatus(tr("↺ loading karaoke preset %1").arg(QFileInfo(path).fileName()));
             }
             return;
 

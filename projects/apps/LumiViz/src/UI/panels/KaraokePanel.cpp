@@ -6,6 +6,8 @@
 #include "UI/panels/KaraokePanel.hpp"
 
 #include "UI/panels/MultiEffectPanel.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"  // sanitize
 
@@ -131,6 +133,18 @@ void KaraokePanel::setupUI()
 
     fuelleCombo();
     gleicheTrailSchalterAb();
+
+    // Die Ebene wurde von aussen ersetzt (Doppelklick auf ein .lvkar im Effect
+    // Browser): beide Reiter neu lesen
+    if (IEventBus* bus = eventBus())
+    {
+        m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeLayerChangedEvent>(
+            [this](const KaraokeLayerChangedEvent&) {
+                m_editor->baumNeuLesen();
+                m_trail->baumNeuLesen();
+                gleicheTrailSchalterAb();
+            }));
+    }
 }
 
 void KaraokePanel::gleicheTrailSchalterAb()

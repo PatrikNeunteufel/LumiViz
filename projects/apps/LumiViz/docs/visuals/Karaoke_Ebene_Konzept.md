@@ -222,8 +222,18 @@ QSettings-Werte einmal in die Ablage und löscht die Schlüssel. Geprüft:
 Bildtests (Ebene: Invert, Invert 50 %, Normal 50 % und 0 % mit Kontur; Knoten
 in der Kette: 50 %, Invert 50 %, Additive 0 %), Übernahme-Test, 797/797,
 Vergleichslauf 84/84 bitgleich.
-**Offen in KE2:** `.lvkar` im Effect Browser (Icon, Doppelklick lädt in die
-Ebene).
+
+**`.lvkar` im Effect Browser ✅ (S89):** eigener Eintragstyp `Type_Karaoke`
+(Filter *All* und *LumiViz* zeigen ihn), Icon `PresetIconKind::Karaoke`
+(`lumiviz_karaoke.ico`). Doppelklick → `LoadKaraokePresetEvent`; das Fenster
+lädt unter dem Render-Mutex in die Ebene, schreibt die Ablage und meldet
+`KaraokeLayerChangedEvent`, worauf das Karaoke-Panel beide Reiter neu liest.
+Ein Karaoke-Preset zählt nicht als „zuletzt geladenes Preset", wird beim
+Blättern (`preset.next`) übersprungen und ist nicht in die Kette ziehbar. Die
+Ebene wird durch das Laden **nicht** eingeschaltet. Geprüft: UI-Test (Typ,
+Icon-Datei, Doppelklick meldet Karaoke und kein Ketten-Laden, nicht ziehbar,
+Panel liest neu), 799/799. **Nicht geprüft:** der Ladeweg im Fenster selbst
+(`MainWindow` ist nicht im Unit-Test) — Sichttest. Damit ist **KE2 fertig**.
 
 ### Stand KE3 — ✅ gebaut (S89)
 

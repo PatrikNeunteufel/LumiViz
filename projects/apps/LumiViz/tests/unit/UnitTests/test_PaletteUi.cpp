@@ -1684,6 +1684,91 @@ TEST_CASE("PaletteUi S84: Effect Browser gibt Presets als Datei-URL mit, Ordner 
     CHECK(leer == nullptr);
 }
 
+// S89: Karaoke-Presets (.lvkar) im Effect Browser — eigener Typ: ein
+// Doppelklick fordert das Laden in die Karaoke-Ebene an (nicht in die Kette),
+// die Datei ist nicht in die Kette ziehbar, und das Karaoke-Panel liest die
+// Ebene neu, wenn sie von aussen ersetzt wurde.
+TEST_CASE("Karaoke S89: .lvkar im Effect Browser — Doppelklick laedt in die Ebene, Panel liest neu")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    using lumi::multieffect::LyricsParams;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("Intro.lvfx"));
+    const QString lvkar = dir.filePath(QStringLiteral("Abend.lvkar"));
+    {
+        MultiEffectVisualizer quelle;
+        std::get<LyricsParams>(quelle.karaokeKette().children[0].params).yShift = -33;
+        REQUIRE(quelle.speichereKaraokeDatei(lvkar));
+    }
+
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    std::vector<std::string> karaoke;
+    int ketten = 0;
+    const auto abo1 = bus->subscribeScoped<LoadKaraokePresetEvent>(
+        [&](const LoadKaraokePresetEvent& e) { karaoke.push_back(e.path); });
+    const auto abo2 =
+        bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent&) { ++ketten; });
+
+    // --- Zuordnung: Typ und Icon
+    CHECK(QFileInfo::exists(lumi::ui::presetIconDir() + QStringLiteral("/lumiviz_karaoke.ico")));
+    // beim Blaettern (preset.next) zaehlt ein Karaoke-Preset nicht als Preset
+    CHECK(ImportBrowserPanel::nextPresetRow(
+              {ImportBrowserPanel::Type_Karaoke, ImportBrowserPanel::Type_Lvfx}, -1, 1) == 1);
+
+    ImportBrowserPanel browser(services);
+    zeigen(browser);
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+    REQUIRE(liste != nullptr);
+    QListWidgetItem* eintrag = nullptr;
+    for (int i = 0; i < liste->count(); ++i)
+        if (liste->item(i)->text() == QStringLiteral("Abend.lvkar")) eintrag = liste->item(i);
+    REQUIRE(eintrag != nullptr);  // der Filter „All" zeigt die Datei
+    CHECK(eintrag->data(Qt::UserRole + 1).toInt() == ImportBrowserPanel::Type_Karaoke);
+
+    // nicht in die Kette ziehbar
+    std::unique_ptr<QMimeData> leer(liste->model()->mimeData({liste->indexFromItem(eintrag)}));
+    CHECK(leer == nullptr);
+
+    // Doppelklick: Karaoke-Ereignis mit dem Pfad, KEIN Ketten-Laden
+    emit liste->itemDoubleClicked(eintrag);
+    REQUIRE(karaoke.size() == 1);
+    CHECK(QFileInfo(QString::fromStdString(karaoke[0])) == QFileInfo(lvkar));
+    CHECK(ketten == 0);
+
+    // --- das Karaoke-Panel liest die von aussen ersetzte Ebene neu
+    MultiEffectVisualizer vis;
+    QMutex mutex;
+    KaraokePanel panel(services);
+    panel.resize(520, 900);
+    zeigen(panel);
+    bus->publish(VisualizerChangedEvent("multieffect", "Multi Effect",
+                                        static_cast<IVisualizer*>(&vis), &mutex));
+    QCoreApplication::processEvents();
+    MultiEffectPanel* editor = nullptr;
+    for (MultiEffectPanel* e : panel.findChildren<MultiEffectPanel*>())
+        if (e->baum() == MultiEffectPanel::Baum::Karaoke) editor = e;
+    REQUIRE(editor != nullptr);
+    auto* yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
+    REQUIRE(yShift != nullptr);
+    CHECK(yShift->value() != -33);
+    // so, wie es das Fenster tut: laden, dann melden
+    REQUIRE(vis.ladeKaraokeDatei(lvkar));
+    bus->publish(KaraokeLayerChangedEvent{});
+    QCoreApplication::processEvents();
+    yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
+    REQUIRE(yShift != nullptr);
+    CHECK(yShift->value() == -33);
+}
+
 // --- Audio ziehen: Audio Browser, Playlist, Player, Visualisierung (S84) -------
 //
 // Entscheide Patrik S84: 1a Playlist nimmt an und gibt ab; Drop auf Player/

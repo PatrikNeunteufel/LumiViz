@@ -330,6 +330,32 @@ struct SaveEffectChainEvent : public Event
 };
 
 /**
+ * @brief Request to load a karaoke preset (.lvkar) into the karaoke layer of
+ *        the active Multi Effect visualizer (Effect Browser double-click,
+ *        S89). The chain is not touched.
+ */
+struct LoadKaraokePresetEvent : public Event
+{
+    EVENT_TYPE_NAME("LoadKaraokePresetEvent")
+
+    std::string path;
+
+    LoadKaraokePresetEvent() = default;
+    explicit LoadKaraokePresetEvent(std::string p)
+        : path(std::move(p))
+    {}
+};
+
+/**
+ * @brief Emitted after the karaoke layer was replaced from outside the
+ *        Karaoke panel, so the panel can re-read it.
+ */
+struct KaraokeLayerChangedEvent : public Event
+{
+    EVENT_TYPE_NAME("KaraokeLayerChangedEvent")
+};
+
+/**
  * @brief Emitted after the Multi Effect host's chain was replaced (import/load),
  *        so the chain editor panel can rebuild its tree.
  */

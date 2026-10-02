@@ -24,6 +24,7 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/ChainSerializer.hpp"  // Karaoke-Ablage schreiben (S89)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -856,6 +857,43 @@ void MainWindow::setupEventHandlers()
                 m_pScreenshotManager->setCurrentPreset(QString());
             }
             pEventBus->publish(EffectChainChangedEvent{});  // refresh the editor
+        });
+
+    // Karaoke-Preset (.lvkar) aus dem Effect Browser (S89): in die Karaoke-
+    // Ebene laden, nicht in die Kette. Der Stand wird zur laufenden Ebene
+    // (Ablage), das Karaoke-Panel liest ihn neu.
+    pEventBus->subscribe<LoadKaraokePresetEvent>(
+        [this, findMultiEffect, pEventBus](const LoadKaraokePresetEvent& ev) {
+            const QString path = QString::fromStdString(ev.path);
+            auto [widget, host] = findMultiEffect();
+            if (host == nullptr)
+            {
+                QMessageBox::information(
+                    this, tr("Load Karaoke Preset"),
+                    tr("The karaoke layer works with the \"Multi Effect\" visualizer."));
+                return;
+            }
+            QStringList report;
+            bool ok = false;
+            lumi::multieffect::ChainNode ebene;
+            {
+                QMutexLocker lock(&widget->renderMutex());
+                ok = host->ladeKaraokeDatei(path, &report);
+                if (ok) ebene = host->karaokeKette();
+            }
+            if (!ok)
+            {
+                reportProblem(tr("Load Karaoke Preset"),
+                              tr("Could not load:\n%1\n%2").arg(path, report.join(QLatin1Char('\n'))));
+                return;
+            }
+            // ausserhalb des Render-Mutex schreiben
+            if (const QString ablage = MultiEffectVisualizer::karaokeAblage(); !ablage.isEmpty())
+            {
+                QDir().mkpath(QFileInfo(ablage).absolutePath());
+                (void)lumi::multieffect::saveChainToFile(ebene, ablage);
+            }
+            pEventBus->publish(KaraokeLayerChangedEvent{});
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(

@@ -77,7 +77,11 @@ public:
         Type_Dir = 1,
         Type_Avs = 2,
         Type_Milk = 3,
-        Type_Lvfx = 4
+        Type_Lvfx = 4,
+        /// S89: Karaoke-Preset (.lvkar) — laedt in die Karaoke-Ebene, nicht in
+        /// die Kette. Kein „Preset" im Sinn von nextPresetRow()/Zuletzt-geladen
+        /// und nicht in die Kette ziehbar.
+        Type_Karaoke = 5
     };
 
     /**
