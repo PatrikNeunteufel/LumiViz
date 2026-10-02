@@ -25,6 +25,7 @@
 #include "visualizers/MultiEffectVisualizer.hpp"    // Schalter der Karaoke-Ebene (S88)
 
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QTabWidget>
@@ -60,6 +61,7 @@
 #include <QMediaFormat>
 #include <QMediaRecorder>
 
+#include <algorithm>
 #include <optional>
 
 #include <BasicLogger.h>
@@ -482,6 +484,49 @@ QWidget* SettingsPanel::createAudioTab()
             MultiEffectVisualizer::setKaraokeEbene(an);
         });
         layout->addRow(tr("Karaoke layer:"), karaoke);
+
+        // S88 (K6, Entscheid Patrik a): Mischart je Teil der Ebene + Staerke.
+        // Vorab hier; mit KE2 ziehen die Felder ins Karaoke-Panel.
+        const QStringList arten{tr("Normal"),   tr("Additive"), tr("50/50"),
+                                tr("Subtract"), tr("Invert"),   tr("XOR"),
+                                tr("Multiply"), tr("Maximum"),  tr("Minimum")};
+        const auto mischZeile = [&](MultiEffectVisualizer::KaraokeTeil teil, const char* name,
+                                    const QString& beschriftung, int vorgabe, const QString& tipp) {
+            const QString schluessel = QStringLiteral("karaoke/") + QLatin1String(name);
+            auto* zeile = new QWidget(widget);
+            auto* hl = new QHBoxLayout(zeile);
+            hl->setContentsMargins(0, 0, 0, 0);
+            auto* art = new QComboBox(zeile);
+            art->setObjectName(QStringLiteral("karaoke") + QLatin1String(name) + QStringLiteral("Blend"));
+            art->addItems(arten);
+            art->setCurrentIndex(std::clamp(
+                QSettings().value(schluessel + QStringLiteral("Blend"), vorgabe).toInt(), 0,
+                static_cast<int>(arten.size()) - 1));
+            art->setToolTip(tipp);
+            auto* staerke = new QSpinBox(zeile);
+            staerke->setObjectName(QStringLiteral("karaoke") + QLatin1String(name) +
+                                   QStringLiteral("Strength"));
+            staerke->setRange(0, 100);
+            staerke->setSuffix(tr(" %"));
+            staerke->setValue(QSettings().value(schluessel + QStringLiteral("Strength"), 100).toInt());
+            staerke->setToolTip(tr("Strength of the blend, 0–100 %."));
+            hl->addWidget(art, 1);
+            hl->addWidget(staerke);
+            const auto setze = [teil, schluessel, art, staerke]() {
+                QSettings().setValue(schluessel + QStringLiteral("Blend"), art->currentIndex());
+                QSettings().setValue(schluessel + QStringLiteral("Strength"), staerke->value());
+                MultiEffectVisualizer::setKaraokeMischung(teil, art->currentIndex(), staerke->value());
+            };
+            connect(art, QOverload<int>::of(&QComboBox::currentIndexChanged), zeile, setze);
+            connect(staerke, QOverload<int>::of(&QSpinBox::valueChanged), zeile, setze);
+            layout->addRow(beschriftung, zeile);
+        };
+        mischZeile(MultiEffectVisualizer::KaraokeTeil::Zeile, "Line", tr("Karaoke line blend:"), 0,
+                   tr("How the lyrics line mixes with the picture behind it. Invert: white text "
+                      "inverts the colour underneath. The outline is always drawn normally, so "
+                      "the text stays readable."));
+        mischZeile(MultiEffectVisualizer::KaraokeTeil::Trail, "Trail", tr("Karaoke trail blend:"), 1,
+                   tr("How the trail of the line that just ended mixes with the picture."));
     }
 
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));

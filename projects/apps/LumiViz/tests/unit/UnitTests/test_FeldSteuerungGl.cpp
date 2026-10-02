@@ -933,6 +933,132 @@ TEST_CASE("Karaoke-Ebene S88: Text ueber dem Bild, Root-Surface unberuehrt, die 
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S88, K6 (Entscheid Patrik a): Mischarten der Karaoke-Ebene — je Teil (Zeile,
+// Trail) wie bei den Listen bekannt, dazu Invert und eine Staerke. Gerechnet
+// wird per GL-Blending auf dem fertigen Bild; geprueft an den Pixeln im
+// Inneren der Buchstaben (dort ist die Deckung 1) ueber einfarbigem Grund.
+TEST_CASE("Karaoke-Ebene S88: Mischarten der Zeile rechnen wie angegeben, die Kontur bleibt normal")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    using Teil = MultiEffectVisualizer::KaraokeTeil;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    const QRgb grund = qRgb(64, 128, 192);
+    const QString snap = qEnvironmentVariable("LUMIVIZ_KARAOKE_SNAP");
+
+    const auto fenster = [&](int zeile, int zeileStaerke, int trail, int posMs, const char* name) {
+        MultiEffectVisualizer::setKaraokeEbene(true);
+        MultiEffectVisualizer::setKaraokeMischung(Teil::Zeile, zeile, zeileStaerke);
+        MultiEffectVisualizer::setKaraokeMischung(Teil::Trail, trail, 100);
+        MultiEffectVisualizer::notifyPlayPosition(posMs);
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x4080C0;
+        clear.params = cp;
+        root.children = {clear};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < 12; ++i) vis.render(1.0f / 60.0f);
+        const QImage root0 = vis.debugGrabRootSurface();
+        REQUIRE(root0.pixel(5, 5) == grund);  // der Grund steht, die Ebene fasst ihn nicht an
+        REQUIRE(root0.pixel(160, 150) == grund);
+        const QImage bild = vis.debugGrabMitKaraoke();
+        if (!snap.isEmpty()) bild.save(snap + QStringLiteral("/misch_%1.png").arg(QLatin1String(name)));
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        MultiEffectVisualizer::setKaraokeMischung(Teil::Zeile, 0, 100);
+        MultiEffectVisualizer::setKaraokeMischung(Teil::Trail, 1, 100);
+        return bild;
+    };
+
+    // Normal: die Pixel im Inneren der laufenden Zeile sind reinweiss — sie
+    // sind die Messpunkte fuer alle anderen Arten
+    const QImage normal = fenster(0, 100, 1, 11000, "0_normal");
+    std::vector<QPoint> innen;
+    for (int y = 0; y < normal.height(); ++y)
+        for (int x = 0; x < normal.width(); ++x)
+            if (normal.pixel(x, y) == qRgb(255, 255, 255)) innen.emplace_back(x, y);
+    REQUIRE(innen.size() > 300);
+
+    // Erwartung je Art fuer Quelle weiss, Deckung 1, ueber (64,128,192)
+    struct Fall
+    {
+        int art;
+        const char* name;
+        int r, g, b;
+    };
+    const Fall faelle[] = {
+        {1, "1_additive", 255, 255, 255},
+        {2, "2_5050", 160, 192, 224},
+        {3, "3_subtract", 0, 0, 0},
+        {4, "4_invert", 191, 127, 63},
+        {5, "5_xor", 191, 127, 63},
+        {6, "6_multiply", 64, 128, 192},
+        {7, "7_maximum", 255, 255, 255},
+        {8, "8_minimum", 64, 128, 192},
+    };
+    const auto falsch = [&](const QImage& bild, int r, int g, int b) {
+        int n = 0;
+        for (const QPoint& p : innen)
+        {
+            const QRgb c = bild.pixel(p);
+            if (std::abs(qRed(c) - r) > 2 || std::abs(qGreen(c) - g) > 2 || std::abs(qBlue(c) - b) > 2)
+                ++n;
+        }
+        return n;
+    };
+    for (const Fall& f : faelle)
+    {
+        CAPTURE(f.name);
+        const QImage bild = fenster(f.art, 100, 1, 11000, f.name);
+        CHECK(falsch(bild, f.r, f.g, f.b) == 0);
+        // ausserhalb des Texts bleibt der Grund, wie er ist
+        CHECK(bild.pixel(5, 5) == grund);
+        // die Kontur bleibt normal: schwarze Pixel um die Buchstaben (ausser dort,
+        // wo die Fuellung selbst schwarz wird — Subtract)
+        int schwarz = 0;
+        for (int y = 0; y < bild.height(); ++y)
+            for (int x = 0; x < bild.width(); ++x)
+                if (bild.pixel(x, y) == qRgb(0, 0, 0)) ++schwarz;
+        CHECK(schwarz > 100);
+    }
+
+    // Staerke: Invert zu 50 % — weiss mit halber Deckung macht aus jedem Grund Mittelgrau
+    const QImage halb = fenster(4, 50, 1, 11000, "4_invert_50");
+    CHECK(falsch(halb, 128, 128, 128) == 0);
+    // Staerke 0 = die Fuellung fehlt, die Kontur steht noch
+    const QImage null = fenster(4, 0, 1, 11000, "4_invert_0");
+    CHECK(falsch(null, 64, 128, 192) == 0);
+
+    // Trail: kurz nach dem Zeilenwechsel; Additive hellt auf, Subtract dunkelt ab
+    const QImage trailAdd = fenster(0, 100, 1, 13060, "trail_additive");
+    const QImage trailSub = fenster(0, 100, 3, 13060, "trail_subtract");
+    const QImage trailAus = fenster(0, 100, 1, 12900, "trail_keiner");  // vor dem Wechsel
+    int heller = 0;
+    int dunkler = 0;
+    for (int y = 0; y < trailAdd.height(); ++y)
+        for (int x = 0; x < trailAdd.width(); ++x)
+        {
+            if (trailSub.pixel(x, y) == trailAdd.pixel(x, y)) continue;
+            if (qGray(trailAdd.pixel(x, y)) > qGray(grund)) ++heller;
+            if (qGray(trailSub.pixel(x, y)) < qGray(grund)) ++dunkler;
+        }
+    CHECK(heller > 100);
+    CHECK(dunkler > 100);
+    CHECK(trailAus != trailAdd);  // Gegenprobe: ohne Wechsel kein Trail
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88: seit Ids nie wiederverwendet werden (S87), blieb die Laufzeit eines im
 // Panel entfernten Knotens bis zum naechsten Laden liegen (Texturen, Skript-
 // Hosts, ein laufender Video-/Kamera-Feed). Der Render-Thread raeumt sie nach

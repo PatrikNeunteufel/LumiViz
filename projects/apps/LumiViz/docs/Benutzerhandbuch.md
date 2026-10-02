@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.41.0
+> **Version:** 1.42.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -677,9 +677,27 @@ Sie zeichnet die laufende Zeile unten mittig mit einer Vorschau-Zeile, dazu
 den Trail (die eben beendete Zeile weht nach hinten weg). Hat das laufende
 Preset selbst einen **eingeschalteten** Lyrics-Knoten, **gewinnt das Preset**:
 es zeigt den Text auf seine Art, und die Ebene tritt zurück — der Text steht
-nie doppelt da. Das Aussehen der Ebene ist vorerst fest; ein eigenes
+nie doppelt da. Schrift und Lage der Ebene sind vorerst fest; ein eigenes
 Karaoke-Panel mit allen Einstellungen folgt. In Screenshots aus der App ist
 die Ebene enthalten.
+
+Wie sich die Ebene mit dem Bild dahinter **mischt**, stellst du daneben ein —
+getrennt für die laufende Zeile (**Karaoke line blend**) und den Trail
+(**Karaoke trail blend**), je mit einer **Stärke** von 0–100 %:
+
+| Mischart | Wirkung |
+|---|---|
+| **Normal** | deckend über dem Bild (Vorgabe der Zeile) |
+| **Additive** | hellt auf (Vorgabe des Trails) |
+| **50/50** | halb Text, halb Bild |
+| **Subtract** | dunkelt ab |
+| **Invert** | weißer Text kehrt die Farbe darunter um; mit weniger Stärke nur teilweise — bei 50 % wird aus jeder Farbe Mittelgrau |
+| **XOR** | bitweises Exklusiv-Oder wie in AVS; bei weißem Text wie Invert, bei farbigem bunt |
+| **Multiply** · **Maximum** · **Minimum** | wie bei den Effect Lists; mit weißem Text bleiben von Multiply und Minimum nur die Konturen |
+
+Bei jeder Mischart außer Normal mischt nur die **Füllung** der Buchstaben —
+die Kontur bleibt normal gezeichnet, damit der Text lesbar bleibt. Über
+mittelgrauem Bild geben Invert und XOR wenig Kontrast; dort trägt die Kontur.
 
 **Zwei Fassungen desselben Songs.** Im Benutzerordner heißt die Datei
 `<Interpret> - <Titel>`. Geholte Texte tragen dazu die Dauer des Titels
@@ -1324,6 +1342,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.42.0 | 2026-10-02 | Session 88. §11 Karaoke-Ebene: NEU **Mischarten** je Zeile und Trail (Normal, Additive, 50/50, Subtract, Invert, XOR, Multiply, Maximum, Minimum) mit Stärke; die Kontur bleibt normal |
 | 1.41.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Karaoke-Ebene** — Songtext über jedem Preset (Settings → Audio → Karaoke layer); ein Lyrics-Knoten im Preset gewinnt |
 | 1.40.0 | 2026-10-02 | Session 88. §11 Host-Gruppen: `.lvfx2` trägt im Effect Browser ein eigenes Icon (Stapel) |
 | 1.39.0 | 2026-10-02 | Session 88. §11 Lyrics Trail: folgt den **skriptgesteuerten** Werten des Lyrics-Knotens (Karaoke Bounce, Flip) und arbeitet auch mit **unsynchronem Text** (Wechsel alle N Beats). §11 Lyrics-Editor: Knöpfe in zwei Reihen, **Offset for this track** als eigene Zeile |

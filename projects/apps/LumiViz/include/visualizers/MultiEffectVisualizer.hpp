@@ -314,6 +314,21 @@ public:
      */
     static void setKaraokeEbene(bool an);
     [[nodiscard]] static bool karaokeEbene();
+    /**
+     * Mischart der Karaoke-Ebene (K6, Entscheid Patrik a): je Teil — laufende
+     * Zeile und Trail — wie sich die Ebene mit dem Bild dahinter mischt, und
+     * wie stark (0..100 %). Arten (Nummern = Werte der Einstellung):
+     * 0 Normal (deckend mit Alpha) · 1 Additive · 2 50/50 · 3 Subtract ·
+     * 4 Invert (weisser Text kehrt die Farbe darunter um) · 5 XOR ·
+     * 6 Multiply · 7 Maximum · 8 Minimum. 0–2 wie das Feld Blend des
+     * Lyrics-Knotens. Bei der Zeile bleibt die Kontur immer normal — nur die
+     * Fuellung mischt. Vorgabe: Zeile Normal, Trail Additive, je 100 %.
+     */
+    enum class KaraokeTeil { Zeile = 0, Trail = 1 };
+    static constexpr int kKaraokeMischarten = 9;
+    static void setKaraokeMischung(KaraokeTeil teil, int mischart, int staerkeProzent);
+    [[nodiscard]] static int karaokeMischart(KaraokeTeil teil);
+    [[nodiscard]] static int karaokeStaerke(KaraokeTeil teil);
     /// Test-Naht: das Bild, wie es am Fenster steht (Root-Surface + Karaoke-
     /// Ebene), in Kettenaufloesung. `debugGrabRootSurface` sieht die Ebene nie.
     [[nodiscard]] QImage debugGrabMitKaraoke();
@@ -1492,6 +1507,11 @@ private:
     bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt m_karaokeLyrics)
     bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
+    /// Was `zeichneLyricsZeilen` rastert: alles in eine Textur (Vorgabe) oder,
+    /// fuer die Karaoke-Ebene mit Mischart, Fuellung und Kontur-Ring getrennt.
+    enum class GlyphTeil { Alles, NurFuellung, NurKontur };
+    GlyphTeil m_glyphTeil = GlyphTeil::Alles;
+    unsigned int m_karaokeKonturTex = 0; ///< Kontur-Ring der Zeile (nur bei Mischart ungleich Normal)
     unsigned int m_karaokeGlyphTex = 0;  ///< Glyphen der laufenden Zeile (0 = keine)
     unsigned int m_karaokeTrailTex = 0;  ///< Bild der Trail-Liste (0 = keins)
     std::unique_ptr<QOpenGLShaderProgram> m_overlayShader;  ///< Textur 1:1, wahlweise y-gespiegelt

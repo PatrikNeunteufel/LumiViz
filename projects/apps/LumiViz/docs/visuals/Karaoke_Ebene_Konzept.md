@@ -2,8 +2,8 @@
 
 > **Version:** 0.1.0
 > **Datum:** 2026-10-02 (Session 88)
-> **Typ:** Konzept — **K1, K2, K5 entschieden (a)**, K3/K4 vorläufig a;
-> Umsetzung ab KE1
+> **Typ:** Konzept — **alle Entscheide gefallen** (K1 a, K2 a, K3 b, K4 b,
+> K5 a, K6 a); KE1 und die Mischarten (K6) gebaut, KE2–KE4 offen
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Ausblick Timeline-Panel / Composit"
@@ -187,6 +187,46 @@ Erklärung der Begriffe neu („Look" = Zustand der ganzen Ebene im Unterschied
 zu den Voreinstellungen je Knoten; K4 betrifft nur Presets mit Render Scale
 unter 1). Beide lassen KE1 unberührt.
 
+**Entschieden (Patrik S88): K3 b · K4 b · K6 a.** Damit stehen alle sechs:
+K1 a, K2 a, K3 b (Karaoke-Presets als Dateien, Icon „Marke"), K4 b (Zeile in
+Fensterauflösung, eigener kleiner Schritt), K5 a, K6 a (Mischart je Teil +
+Stärke, Kontur bleibt normal).
+
+**K6 vorab gebaut (S88):** `MultiEffectVisualizer::setKaraokeMischung`
+(Teil Zeile/Trail, Art 0–8, Stärke 0–100 %), Schalter vorerst unter Settings →
+Audio (*Karaoke line blend*, *Karaoke trail blend*; QSettings
+`karaoke/LineBlend|LineStrength|TrailBlend|TrailStrength`). Umsetzung: je Art
+eine Blend-Gleichung beim Present, XOR über die Logik-Operation des Kontexts
+(fehlt sie, fällt XOR auf Invert zurück); bei einer Art ungleich Normal werden
+Füllung und Kontur-Ring getrennt gerastert, der Ring liegt immer normal.
+Geprüft im Bildtest über einfarbigem Grund: alle acht Arten treffen den
+gerechneten Wert im Inneren der Buchstaben (±2), Stärke 50 % und 0 %, Kontur
+vorhanden, Trail Additive gegen Subtract; XOR unterscheidet sich an der grauen
+Vorschau-Zeile wie erwartet von Invert. Kontaktbogen angesehen. **Nicht
+geprüft:** auf dem multisampled Fenster der App (der Test rechnet in eine
+gewöhnliche Fläche) — das ist der offene Punkt für XOR.
+**Folgefrage Patrik:** dieselben Mischarten auch am Lyrics-Knoten der Kette
+(„die Kette gewinnt" soll nicht ärmer sein als die Ebene) — sinnvoll, eigener
+Schritt: Text-Shader um die Arten 3–8 erweitern, Feld Blend von Lyrics und
+Lyrics Trail auf neun Werte, Feldtabelle/Inventar nachziehen.
+
+**Nachtrag Patrik (S88, nach der Erklärung):**
+
+- **K3:** „also sozusagen ein Karaoke-Preset" — und ein Kandidat für das
+  Reserve-Icon **Marke** (`lumiviz_marke.ico`). Tendenz **b** (benannte
+  Karaoke-Presets als eigene Dateien); Bestätigung steht aus.
+- **K4:** Patrik fragt, ob b nicht flexibler wäre. Einschätzung Claude: b ist
+  nicht flexibler, aber **schärfer** — es wirkt nur bei Presets mit Render
+  Scale über 1 (Kette kleiner als das Fenster), dort aber deutlich. Mit dem
+  Mischen über GL-Blending (K6) braucht b keine zusätzliche Fläche; Aufwand:
+  die Rastergröße der Zeile vom Kettenmaß lösen, neu rastern beim Ändern der
+  Fenstergröße. Der Trail bliebe in Kettenauflösung. Empfehlung jetzt: **b**,
+  als eigener kleiner Schritt. Entscheid steht aus.
+- **K6 (neu, Idee Patrik):** wenn die Ebene schon eine eigene Schicht ist —
+  **Mischart der Ebene** wie von den Listen bekannt (Replace, Add, Sub, Xor …),
+  insbesondere „die dahinterliegende Farbe invertieren, ganz oder zu einem
+  gewissen Grad". Siehe K6 unten.
+
 **K1 — Welche Module darf der Trail-Reiter aufnehmen?**
 *Heute:* offen (Patrik S88: „keine Render, keine Host — Umfang noch zu klären").
 *Problem:* der Filter braucht eine Regel, die auch für künftige Module gilt.
@@ -252,6 +292,43 @@ Musikrichtung umschalten willst.
 („derselbe Songtext", gleiche Voreinstellungen, gleiche Lage) und der kleinere
 Umbau. Für b spricht die Lesbarkeit, wenn Presets mit kleinem Render Scale
 laufen; kippen würde es, sobald das im Sichttest stört.
+
+**K6 — Mischart der Ebene (Idee Patrik S88)**
+*Heute (KE1):* die Zeile liegt deckend mit Alpha über dem Bild, der Trail
+additiv; beides fest.
+*Idee:* die Ebene mischt sich wählbar mit dem Bild dahinter — bis hin zum
+Invertieren der Farbe unter dem Text.
+
+Machbar **ohne** das Bild dahinter zu lesen, allein über das Blending beim
+Present (darum auch mit K4 = b verträglich und ohne zusätzliche Fläche):
+
+| Mischart | Wirkung | Umsetzung |
+|---|---|---|
+| Normal | deckend mit Alpha (heute) | Alpha-Blending |
+| Additive | Text hellt auf | Quelle + Ziel |
+| Subtract | Text dunkelt ab | Ziel − Quelle |
+| Invert | weißer Text kehrt die Farbe darunter um; grauer Text nur teilweise — der „gewisse Grad" ist die Helligkeit/Deckkraft des Texts | Quelle·(1−Ziel) + Ziel·(1−Quelle) |
+| XOR | bitweises Exklusiv-Oder wie in AVS | Logik-Operation der Grafikkarte |
+| Multiply · Maximum · Minimum · 50/50 | wie bei den Listen | Blend-Gleichungen |
+
+„Ignore" entfällt als Mischart — das ist der Hauptschalter.
+
+- **a (Empfehlung):** ein Feld **Blend** je Teil der Ebene — eines für die
+  Zeile, eines für den Trail — mit der Liste oben, dazu ein Regler
+  **Strength** (0–100 %) für den Grad; Vorgabe wie heute (Zeile Normal, Trail
+  Additive). Gebaut mit dem Panel in KE2.
+- **b:** nur ein gemeinsames Feld für die ganze Ebene.
+- **c:** nicht bauen; Farbe und Kontur wie bisher über die Lyrics-Felder.
+
+*Warum die Empfehlung:* den Ausschlag gibt, dass Zeile und Trail verschiedene
+Aufgaben haben (die Zeile soll lesbar sein, der Trail darf Effekt sein) und
+der Aufwand für zwei Felder kaum höher ist als für eines. Für b spricht die
+einfachere Bedienung; für c, dass Invert und XOR über mittelgrauem Bild fast
+keinen Kontrast geben (Umkehrung von 50 % Grau ist 50 % Grau) — die Lesbarkeit
+hängt dann am Preset. Das wiegt weniger, weil die **Kontur** normal gezeichnet
+bleiben kann, während nur die Füllung mischt; das wäre Teil von a. Kippen
+würde es, wenn die Logik-Operation für XOR auf dem (multisampled) Fenster der
+App nicht sauber arbeitet — dann XOR weglassen oder über eine Zwischenfläche.
 
 **K5 — Trail der Ebene, wenn die Kette gewinnt?**
 *Heute:* nicht festgelegt; Abschnitt 4 nimmt „die Ebene zeichnet dann nichts" an.

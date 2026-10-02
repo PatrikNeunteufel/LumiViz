@@ -750,6 +750,15 @@ void MainWindow::setupEventHandlers()
     // steht vorerst in Settings → Audio (das Karaoke-Panel folgt mit KE2)
     MultiEffectVisualizer::setKaraokeEbene(
         QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
+    // K6: Mischart und Staerke je Teil der Ebene (Vorgabe: Zeile Normal, Trail Additive)
+    MultiEffectVisualizer::setKaraokeMischung(
+        MultiEffectVisualizer::KaraokeTeil::Zeile,
+        QSettings().value(QStringLiteral("karaoke/LineBlend"), 0).toInt(),
+        QSettings().value(QStringLiteral("karaoke/LineStrength"), 100).toInt());
+    MultiEffectVisualizer::setKaraokeMischung(
+        MultiEffectVisualizer::KaraokeTeil::Trail,
+        QSettings().value(QStringLiteral("karaoke/TrailBlend"), 1).toInt(),
+        QSettings().value(QStringLiteral("karaoke/TrailStrength"), 100).toInt());
     auto* songtextOnline = new lumi::audio::SongtextOnline(this);
     auto laufenderSong = std::make_shared<QString>();
     connect(songtextOnline, &lumi::audio::SongtextOnline::gefunden, this,

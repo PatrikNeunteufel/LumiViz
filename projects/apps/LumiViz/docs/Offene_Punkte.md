@@ -2264,8 +2264,13 @@ Idee Preset-Warmup/Pre-Roll.
     Stufen KE1–KE4. Entscheide Patrik S88: K1 a, K2 a, K5 a; K3/K4 vorläufig
     a. **✅ KE1 gebaut (S88):** die Ebene im Renderer mit festem Aussehen,
     Schalter Settings → Audio → *Karaoke layer*; Root-Surface bitgleich mit
-    Ebene an und aus. **Offen:** KE2–KE4 (Panel, Ablage, Trail-Reiter,
-    Menü/Kürzel); **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
+    Ebene an und aus. **✅ Mischarten (K6 a, S88):** je Teil (Zeile, Trail)
+    Normal · Additive · 50/50 · Subtract · Invert · XOR · Multiply · Maximum ·
+    Minimum mit Stärke, Kontur bleibt normal; vorerst Settings → Audio.
+    Entscheide jetzt vollständig: K3 b (Karaoke-Presets, Icon „Marke"), K4 b
+    (Zeile in Fensterauflösung). **Offen:** KE2–KE4 (Panel, Ablage mit
+    Karaoke-Presets, Trail-Reiter, Menü/Kürzel), K4 b, dieselben Mischarten am
+    Lyrics-Knoten der Kette (Folgefrage Patrik); **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
     Post-Bloom, mit Render Scale).
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
@@ -3420,6 +3425,17 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🟠 **Vergleichslauf: ein Preset startet gelegentlich doppelt (Befund S88).**
+  In einem von fünf Läufen der Regressionsliste wich `3ds.lvfx` ab (6 Bilder,
+  MAE 0,009–0,023). Das Log dieses Laufs zeigt die Zeile
+  `=== Preset 1/1: 3ds.lvfx ===` **zweimal** — der Standalone hat das Preset
+  nach dem ersten Bild noch einmal von vorn begonnen; drei Wiederholungen mit
+  demselben Build waren untereinander und gegen die Basis bitgleich. Ursache
+  offen (Kandidat: ein Fenster-/Bildschirm-Ereignis startet den Auto-Lauf
+  neu). **Vermutlich dieselbe Ursache wie die einmalige Abweichung bei
+  `fUk - afterburner remix` aus S86** (1 von 12 Läufen, „schon im ersten
+  Frame"). Merke: bei einer Abweichung zuerst `stdout.txt` des Laufs auf die
+  doppelte Preset-Zeile prüfen, dann erst den Code verdächtigen.
 - ✅ **Laufzeiten entfernter Knoten (offen seit S87, erledigt S88):** seit
   Knoten-Ids nie wiederverwendet werden, blieb der Laufzeitblock eines im
   Panel entfernten Knotens (Texturen, Skript-Hosts, Milkdrop-Kern) bis zum

@@ -3439,16 +3439,49 @@ std::atomic<bool> g_karaokeEbene{false};
 /// Ids der Ebenen-Knoten: fest und weit ueber allem, was `compileChain`
 /// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
 constexpr uint64_t kKaraokeIdBasis = 0xF000'0000'0000'0000ull;
+/// Laufzeit der getrennt gerasterten Kontur (Mischart ungleich Normal, K6).
+constexpr uint64_t kKaraokeKonturId = kKaraokeIdBasis + 6;
 
+/// Mischart und Staerke (0..100) je Teil der Ebene: [0] Zeile, [1] Trail.
+/// Vorgabe wie KE1: Zeile Normal, Trail Additive, beide volle Staerke.
+std::atomic<int> g_karaokeMischart[2] = {0, 1};
+std::atomic<int> g_karaokeStaerke[2] = {100, 100};
+
+// Die Ebene liegt per GL-Blending auf dem fertigen Bild — das Bild dahinter
+// wird nie gelesen. Der Shader liefert dazu je Mischart die passende Quelle:
+//   p = Farbe mal Deckung (vormultipliziert), a = Deckung.
+// Glyphen bringen ihre Deckung im Alpha mit; die Trail-Flaeche hat keins —
+// dort gilt die Helligkeit als Deckung (Schwarz = durchsichtig).
 const char* kOverlayFragmentShader = R"(
 #version 330 core
 in vec2 vTex;
 uniform sampler2D uTex;
-uniform bool uFlip;   // Glyphen-Texturen liegen top-down vor
+uniform bool uFlip;        // Glyphen-Texturen liegen top-down vor
+uniform bool uSchluessel;  // Deckung aus der Helligkeit (Trail) statt aus dem Alpha
+uniform int uModus;        // MultiEffectVisualizer::kKaraokeMischarten
+uniform float uStaerke;    // 0..1
 out vec4 fragColor;
 void main()
 {
-    fragColor = texture(uTex, uFlip ? vec2(vTex.x, 1.0 - vTex.y) : vTex);
+    vec4 t = texture(uTex, uFlip ? vec2(vTex.x, 1.0 - vTex.y) : vTex);
+    float a;
+    vec3 p;
+    if (uSchluessel)
+    {
+        a = max(t.r, max(t.g, t.b)) * uStaerke;
+        p = t.rgb * uStaerke;
+    }
+    else
+    {
+        a = t.a * uStaerke;
+        p = t.rgb * a;
+    }
+    if (uModus == 2)                      // 50/50: halbe Deckung
+        fragColor = vec4(p * 0.5, a * 0.5);
+    else if (uModus == 6 || uModus == 8)  // Multiply / Minimum: ausserhalb = 1 (neutral)
+        fragColor = vec4(vec3(1.0 - a) + p, a);
+    else
+        fragColor = vec4(p, a);
 }
 )";
 }  // namespace
@@ -3456,6 +3489,24 @@ void main()
 void MultiEffectVisualizer::setKaraokeEbene(bool an)
 {
     g_karaokeEbene.store(an, std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::setKaraokeMischung(KaraokeTeil teil, int mischart, int staerkeProzent)
+{
+    const auto i = static_cast<std::size_t>(teil);
+    g_karaokeMischart[i].store(std::clamp(mischart, 0, kKaraokeMischarten - 1),
+                               std::memory_order_relaxed);
+    g_karaokeStaerke[i].store(std::clamp(staerkeProzent, 0, 100), std::memory_order_relaxed);
+}
+
+int MultiEffectVisualizer::karaokeMischart(KaraokeTeil teil)
+{
+    return g_karaokeMischart[static_cast<std::size_t>(teil)].load(std::memory_order_relaxed);
+}
+
+int MultiEffectVisualizer::karaokeStaerke(KaraokeTeil teil)
+{
+    return g_karaokeStaerke[static_cast<std::size_t>(teil)].load(std::memory_order_relaxed);
 }
 
 bool MultiEffectVisualizer::karaokeEbene()
@@ -3518,6 +3569,7 @@ bool MultiEffectVisualizer::ketteZeigtLyrics() const
 void MultiEffectVisualizer::rechneKaraokeEbene()
 {
     m_karaokeGlyphTex = 0;
+    m_karaokeKonturTex = 0;
     m_karaokeTrailTex = 0;
     m_karaokeGezeichnet = false;
     if (!karaokeEbene() || m_songtext.leer() || ketteZeigtLyrics()) return;
@@ -3541,7 +3593,7 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
 void MultiEffectVisualizer::legeKaraokeAuf()
 {
     if (!m_karaokeGezeichnet || m_overlayShader == nullptr) return;
-    if (m_karaokeTrailTex == 0 && m_karaokeGlyphTex == 0) return;
+    if (m_karaokeTrailTex == 0 && m_karaokeGlyphTex == 0 && m_karaokeKonturTex == 0) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     GLint srcRgb = GL_ONE, dstRgb = GL_ZERO, srcA = GL_ONE, dstA = GL_ZERO;
     f->glGetIntegerv(GL_BLEND_SRC_RGB, &srcRgb);
@@ -3550,31 +3602,78 @@ void MultiEffectVisualizer::legeKaraokeAuf()
     f->glGetIntegerv(GL_BLEND_DST_ALPHA, &dstA);
     const GLboolean blendWar = f->glIsEnabled(GL_BLEND);
 
-    f->glEnable(GL_BLEND);
     m_overlayShader->bind();
     m_overlayShader->setUniformValue("uTex", 0);
     m_quadVao->bind();
     f->glActiveTexture(GL_TEXTURE0);
-    if (m_karaokeTrailTex != 0)  // der Trail: additiv, wie die Liste im Mix
-    {
-        f->glBlendFunc(GL_ONE, GL_ONE);
-        f->glBindTexture(GL_TEXTURE_2D, m_karaokeTrailTex);
-        m_overlayShader->setUniformValue("uFlip", false);
+    f->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);  // das Alpha des Ziels bleibt
+
+    // Eine Textur mit einer Mischart auflegen. Jede Mischart ist eine
+    // Blend-Gleichung auf dem Zielbild — siehe Tabelle K6 im Konzept.
+    const auto lege = [&](unsigned int tex, bool flip, bool schluessel, int modus,
+                          int staerkeProzent) {
+        if (tex == 0 || staerkeProzent <= 0) return;
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        m_overlayShader->setUniformValue("uFlip", flip);
+        m_overlayShader->setUniformValue("uSchluessel", schluessel);
+        m_overlayShader->setUniformValue("uModus", modus);
+        m_overlayShader->setUniformValue("uStaerke", static_cast<float>(staerkeProzent) / 100.0f);
+        // XOR: Logik-Operation statt Blending. `glLogicOp` gehoert nicht zum
+        // ES-Satz von QOpenGLFunctions und opengl32 ist nicht gelinkt — die
+        // Funktion kommt deshalb vom Kontext. Fehlt sie, faellt XOR auf
+        // Invert zurueck (fuer weissen Text dasselbe Ergebnis).
+        using LogikFn = void (QOPENGLF_APIENTRYP)(GLenum);
+        static const auto logikOp = reinterpret_cast<LogikFn>(
+            QOpenGLContext::currentContext()->getProcAddress("glLogicOp"));
+        if (modus == 5 && logikOp == nullptr) modus = 4;
+        const bool logik = modus == 5;
+        if (logik)
+        {
+            f->glDisable(GL_BLEND);
+            f->glEnable(GL_COLOR_LOGIC_OP);
+            logikOp(GL_XOR);
+        }
+        else
+        {
+            f->glEnable(GL_BLEND);
+            GLenum gleichung = GL_FUNC_ADD;
+            GLenum quelle = GL_ONE;
+            GLenum ziel = GL_ONE;
+            switch (modus)
+            {
+                case 1: break;                                                // Additive
+                case 3: gleichung = GL_FUNC_REVERSE_SUBTRACT; break;          // Subtract: Ziel − Quelle
+                case 4: quelle = GL_ONE_MINUS_DST_COLOR;                      // Invert:
+                        ziel = GL_ONE_MINUS_SRC_COLOR; break;                 //   p(1−Z) + Z(1−p)
+                case 6: quelle = GL_DST_COLOR; ziel = GL_ZERO; break;         // Multiply
+                case 7: gleichung = GL_MAX; break;                            // Maximum
+                case 8: gleichung = GL_MIN; break;                            // Minimum
+                default: ziel = GL_ONE_MINUS_SRC_ALPHA; break;                // Normal, 50/50
+            }
+            f->glBlendEquation(gleichung);
+            f->glBlendFunc(quelle, ziel);
+        }
         f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    }
-    if (m_karaokeGlyphTex != 0)  // die laufende Zeile: mit Alpha darueber (Kontur bleibt)
-    {
-        f->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-        f->glBindTexture(GL_TEXTURE_2D, m_karaokeGlyphTex);
-        m_overlayShader->setUniformValue("uFlip", true);
-        f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    }
+        if (logik) f->glDisable(GL_COLOR_LOGIC_OP);
+    };
+    // Reihenfolge: Trail, dann die Kontur (immer normal), dann die Fuellung
+    lege(m_karaokeTrailTex, false, true, karaokeMischart(KaraokeTeil::Trail),
+         karaokeStaerke(KaraokeTeil::Trail));
+    lege(m_karaokeKonturTex, true, false, 0, 100);
+    lege(m_karaokeGlyphTex, true, false, karaokeMischart(KaraokeTeil::Zeile),
+         karaokeStaerke(KaraokeTeil::Zeile));
+
     m_quadVao->release();
     m_overlayShader->release();
     f->glBindTexture(GL_TEXTURE_2D, 0);
+    f->glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    f->glBlendEquation(GL_FUNC_ADD);
     f->glBlendFuncSeparate(static_cast<GLenum>(srcRgb), static_cast<GLenum>(dstRgb),
                            static_cast<GLenum>(srcA), static_cast<GLenum>(dstA));
-    if (blendWar != GL_TRUE) f->glDisable(GL_BLEND);
+    if (blendWar == GL_TRUE)
+        f->glEnable(GL_BLEND);
+    else
+        f->glDisable(GL_BLEND);
 }
 
 QImage MultiEffectVisualizer::debugGrabMitKaraoke()
@@ -4177,6 +4276,7 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
     sammle(m_root);
     sammle(m_karaokeLyrics);  // die Knoten der Karaoke-Ebene leben ausserhalb der Kette
     sammle(m_karaokeTrail);
+    lebend.insert(kKaraokeKonturId);
 
     for (auto it = m_leafRuntimes.begin(); it != m_leafRuntimes.end();)
     {
@@ -8645,8 +8745,24 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                                                 const std::vector<LyricsAnzeige>& zeilen)
 {
     using Anzeige = LyricsAnzeige;
+    // Karaoke-Ebene mit einer Mischart ungleich Normal (K6): Fuellung und
+    // Kontur getrennt rastern — die Fuellung mischt sich mit dem Bild, die
+    // Kontur bleibt normal und haelt den Text lesbar. Die Kontur-Textur
+    // traegt nur den Ring AUSSERHALB der Buchstaben (sonst mischte die
+    // Fuellung mit der schwarzen Kontur statt mit dem Bild).
+    if (m_glyphNurRastern && m_glyphTeil == GlyphTeil::Alles && params.outline &&
+        karaokeMischart(KaraokeTeil::Zeile) != 0)
+    {
+        m_glyphTeil = GlyphTeil::NurFuellung;
+        zeichneLyricsZeilen(rt, params, zeilen);
+        m_glyphTeil = GlyphTeil::NurKontur;
+        zeichneLyricsZeilen(m_leafRuntimes[kKaraokeKonturId], params, zeilen);
+        m_glyphTeil = GlyphTeil::Alles;
+        return;
+    }
     // --- Glyphen-Ebene: nur neu zeichnen, wenn sich der Zustand aendert
-    std::string snapshot = params.fontFace + '\x1f' + std::to_string(params.fontHeight) + ':' +
+    std::string snapshot = std::to_string(static_cast<int>(m_glyphTeil)) + '\x1f' +
+                           params.fontFace + '\x1f' + std::to_string(params.fontHeight) + ':' +
                            std::to_string(params.fontWeight) + std::to_string(params.italic) +
                            ':' + std::to_string(params.colorNext) + ':' +
                            std::to_string(params.hAlign) + std::to_string(params.vAlign) + ':' +
@@ -8719,7 +8835,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                     QPainterPath p2;
                     p1.addText(grund, font, vorn);
                     p2.addText(grund + QPointF(fm.horizontalAdvance(vorn), 0.0), font, hinten);
-                    if (params.outline)
+                    if (params.outline && m_glyphTeil != GlyphTeil::NurFuellung)
                     {
                         painter.setPen(QPen(toColor(params.outlineColor),
                                             std::max(1, static_cast<int>(params.outlineSize)) * 2.0));
@@ -8727,8 +8843,19 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                         painter.drawPath(p1);
                         painter.drawPath(p2);
                     }
-                    painter.fillPath(p1, toColor(a.farbe));
-                    painter.fillPath(p2, toColor(params.colorNext));
+                    if (m_glyphTeil == GlyphTeil::NurKontur)
+                    {
+                        // nur der Ring: das Innere der Buchstaben wieder leeren
+                        painter.setCompositionMode(QPainter::CompositionMode_Clear);
+                        painter.fillPath(p1, Qt::black);
+                        painter.fillPath(p2, Qt::black);
+                        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+                    }
+                    else
+                    {
+                        painter.fillPath(p1, toColor(a.farbe));
+                        painter.fillPath(p2, toColor(params.colorNext));
+                    }
                 }
                 y += hoehe;
             }
@@ -8749,7 +8876,8 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     }
     if (m_glyphNurRastern)  // Karaoke-Ebene: aufgelegt wird erst beim Present
     {
-        m_karaokeGlyphTex = rt.textTexture;
+        (m_glyphTeil == GlyphTeil::NurKontur ? m_karaokeKonturTex : m_karaokeGlyphTex) =
+            rt.textTexture;
         return;
     }
     composeGlyphLayer(rt.textTexture, params.blend);
