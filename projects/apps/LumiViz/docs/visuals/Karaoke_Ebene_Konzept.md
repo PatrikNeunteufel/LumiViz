@@ -184,8 +184,17 @@ ist eine Familie, je Verwendung ein Zeichen im Kreis (Idee Patrik).
 Instanz lädt die Datei im Konstruktor (leer = Tests laden nichts). Geprüft:
 Test (Speichern, Laden, frische Ids, Abweisen, Ablage → Zeile steht oben),
 793/793, Vergleichslauf 84/84 bitgleich. **Gespeichert wird noch nirgends** —
-das macht das Panel (Schritt 3). **Offen:** Schritt 2 Panel-Umleitung,
-3 Karaoke-Panel, 4 Mischarten in die Knoten (Stärke-Feld), 5 Doku.
+das macht das Panel (Schritt 3).
+
+**Schritt 2 ✅ Panel-Umleitung:** alle Baumzugriffe des `MultiEffectPanel`
+laufen über `wurzel()` und `uebersetze()`; `setBaum(Baum::Karaoke)` bindet das
+Panel an die Ebene (Vorgabe `Baum::Kette`, Verhalten unverändert). Zur
+Undo-Frage: das Ketten-Panel hängt gar nicht am CommandBus (der Kommentar
+„undo-fähig" bei der Preset-Zeile stimmt nicht) — für den zweiten Baum ist
+nichts zuzuordnen. Geprüft: UI-Test (Baum zeigt Lyrics + Trail-Liste,
+Umbenennen trifft die Ebene und nicht die Kette, zurück steht die Kette),
+794/794. **Offen:** 3 Karaoke-Panel, 4 Mischarten in die Knoten
+(Stärke-Feld), 5 Doku.
 
 ## 8. Risiken
 

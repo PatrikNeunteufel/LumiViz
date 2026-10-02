@@ -131,7 +131,19 @@ public:
     /// und Editor senkrecht) — keine zweite von Qt-ADS darum (S78).
     [[nodiscard]] bool scrollsItself() const override { return true; }
 
+    /// Welchen Baum des Visualizers das Panel bearbeitet (KE2, Entscheid K2 a):
+    /// die Effektkette (Vorgabe) oder die Karaoke-Ebene (`karaokeKette()`).
+    enum class Baum { Kette, Karaoke };
+    void setBaum(Baum baum);
+    [[nodiscard]] Baum baum() const { return m_baum; }
+
 private:
+    /// Wurzel des gebundenen Baums — nur mit gesetztem m_host aufrufen.
+    [[nodiscard]] lumi::multieffect::ChainNode& wurzel();
+    /// Den gebundenen Baum neu uebersetzen (unter dem Render-Mutex).
+    void uebersetze();
+    Baum m_baum = Baum::Kette;
+
     void setupUI();
     void connectToActiveVisualizer();
     void setHost(MultiEffectVisualizer* host, QMutex* mutex);

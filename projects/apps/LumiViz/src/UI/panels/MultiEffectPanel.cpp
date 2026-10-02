@@ -1353,7 +1353,7 @@ void MultiEffectPanel::rebuildTree(bool aufklappZustandBehalten)
     if (m_host != nullptr && m_mutex != nullptr)
     {
         QMutexLocker lock(m_mutex);
-        const ChainNode& root = m_host->chain();
+        const ChainNode& root = wurzel();
         for (int i = 0; i < static_cast<int>(root.children.size()); ++i)
         {
             addTreeItem(nullptr, root.children[i], {i});
@@ -1397,7 +1397,7 @@ void MultiEffectPanel::pruefeKameraFreigabe()
     bool hatKamera = false;
     {
         QMutexLocker lock(m_mutex);
-        hatKamera = chainHatKameraQuelle(m_host->chain());
+        hatKamera = chainHatKameraQuelle(wurzel());
     }
     if (!hatKamera) return;
     m_kameraDialogGezeigt = true;  // je geladener Kette nur einmal fragen
@@ -1648,10 +1648,34 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
     }
 }
 
+// Der gebundene Baum (KE2): die Effektkette oder die Karaoke-Ebene. ALLE
+// Zugriffe des Panels auf den Baum laufen hier durch — nie direkt ueber m_host.
+ChainNode& MultiEffectPanel::wurzel()
+{
+    return m_baum == Baum::Karaoke ? m_host->karaokeKette() : m_host->chain();
+}
+
+void MultiEffectPanel::uebersetze()
+{
+    if (m_baum == Baum::Karaoke)
+        (void)m_host->recompileKaraoke();
+    else
+        (void)m_host->recompileChain();
+}
+
+void MultiEffectPanel::setBaum(Baum baum)
+{
+    if (m_baum == baum) return;
+    m_baum = baum;
+    m_presetMarken.clear();
+    rebuildTree();
+    clearPropertyEditor();
+}
+
 ChainNode* MultiEffectPanel::nodeAtPath(const QList<int>& path)
 {
     if (m_host == nullptr) return nullptr;
-    ChainNode* node = &m_host->chain();
+    ChainNode* node = &wurzel();
     for (int idx : path)
     {
         if (idx < 0 || idx >= static_cast<int>(node->children.size())) return nullptr;
@@ -1720,7 +1744,7 @@ void MultiEffectPanel::mutate(const QList<int>& path,
             const PresetMarke& m = m_presetMarken[schluessel];
             if (sichtLesen(*node, m.section, m.element) != json) geaendert.append(schluessel);
         }
-        m_host->recompileChain();
+        uebersetze();
     }
     for (const QString& schluessel : geaendert) markierePresetGeaendert(schluessel);
     // Refresh the affected item's label (name/clamps may have changed).
@@ -1750,7 +1774,7 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
     {
         QMutexLocker lock(m_mutex);
         fn();
-        m_host->recompileChain();
+        uebersetze();
     }
     rebuildTree(/*aufklappZustandBehalten=*/true);
     clearPropertyEditor();
@@ -1839,7 +1863,7 @@ void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,
                 if (anker.isEmpty() || where == ChainDrop::Viewport)
                 {
                     QMutexLocker lock(m_mutex);
-                    anker = letzterMilkdropPfad(m_host->chain());
+                    anker = letzterMilkdropPfad(wurzel());
                 }
                 ok = insertMilkElement(paletteIndex, anker);
             }
@@ -1924,7 +1948,7 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
         // Tiefenregel VOR dem Dateidialog — sonst waehlt man umsonst eine Datei
         {
             QMutexLocker lock(m_mutex);
-            if (pathTouchesHostGroup(m_host->chain(), parentPath))
+            if (pathTouchesHostGroup(wurzel(), parentPath))
             {
                 QMessageBox::information(
                     this, tr("Preset as Group"),
@@ -1953,7 +1977,7 @@ bool MultiEffectPanel::insertPaletteNode(int paletteIndex, const QList<int>& par
         // Geprueft wird der EINFUEGE-ORT, nicht die Auswahl: seit der neue
         // Knoten neben einem markierten Effekt landen kann, sind das zwei
         // verschiedene Dinge.
-        if (fresh.isHostGroup() && pathTouchesHostGroup(m_host->chain(), parentPath)) return;
+        if (fresh.isHostGroup() && pathTouchesHostGroup(wurzel(), parentPath)) return;
 
         const int anzahl = static_cast<int>(eltern->children.size());
         const int at = (pos < 0 || pos > anzahl) ? anzahl : pos;
@@ -2305,7 +2329,7 @@ void MultiEffectPanel::setNodeEnabled(const QList<int>& path, bool enabled)
     if (ChainNode* node = nodeAtPath(path))
     {
         node->enabled = enabled;
-        m_host->recompileChain();  // no structural change -> paths stay valid
+        uebersetze();  // no structural change -> paths stay valid
     }
 }
 
@@ -2379,7 +2403,7 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
     int dstIndex = 0;
     if (targetPath.isEmpty() || where == ChainDrop::Viewport)
     {
-        dstIndex = static_cast<int>(m_host->chain().children.size());
+        dstIndex = static_cast<int>(wurzel().children.size());
     }
     else
     {
@@ -2408,7 +2432,7 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
     }
 
     // Tiefenregel (HG1): Teilbaeume MIT Host-Gruppe nicht in eine Gruppe ziehen.
-    if (pathTouchesHostGroup(m_host->chain(), dstParentPath))
+    if (pathTouchesHostGroup(wurzel(), dstParentPath))
     {
         for (const QList<int>& sp : srcPaths)
         {
@@ -2447,7 +2471,7 @@ bool MultiEffectPanel::moveNodesLocked(const QList<QList<int>>& srcPaths,
     ChainNode* dstParent = nodeAtPath(dstParentPath);
     if (dstParent == nullptr)
     {
-        dstParent = &m_host->chain();
+        dstParent = &wurzel();
         dstParentPath = {};
         dstIndex = static_cast<int>(dstParent->children.size());
     }
@@ -2480,7 +2504,7 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
     if (targetPath.isEmpty() || where == ChainDrop::Viewport)
     {
         dstParentPath = {};  // dropped on empty space -> end of root
-        dstIndex = static_cast<int>(m_host->chain().children.size());
+        dstIndex = static_cast<int>(wurzel().children.size());
     }
     else
     {
@@ -2523,7 +2547,7 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
     }
 
     // Tiefenregel (HG1): Teilbaum MIT Host-Gruppe nicht in eine Gruppe ziehen.
-    if (pathTouchesHostGroup(m_host->chain(), dstParentPath))
+    if (pathTouchesHostGroup(wurzel(), dstParentPath))
     {
         ChainNode* srcNode = nodeAtPath(srcPath);
         if (srcNode != nullptr && chainHasHostGroup(*srcNode)) return false;
@@ -2554,7 +2578,7 @@ bool MultiEffectPanel::moveNodeLocked(const QList<int>& srcPath,
     if (dstParent == nullptr)
     {
         // Should not happen after the guards; fall back to root append.
-        dstParent = &m_host->chain();
+        dstParent = &wurzel();
         dstParentPath = {};
         dstIndex = static_cast<int>(dstParent->children.size());
     }
@@ -2724,9 +2748,9 @@ void MultiEffectPanel::umbenennenLocked(ChainNode& n, std::string neu)
     // in jede Switcher-Liste nachtragen
     if (neu.empty()) neu = effectTypeName(n.params);
     const std::string alt = n.displayName;
-    const std::string frei = freierHostGruppenName(m_host->chain(), neu, &n);
+    const std::string frei = freierHostGruppenName(wurzel(), neu, &n);
     n.displayName = frei;
-    if (alt != frei) (void)hostGruppeUmbenennenInSwitchern(m_host->chain(), alt, frei);
+    if (alt != frei) (void)hostGruppeUmbenennenInSwitchern(wurzel(), alt, frei);
 }
 
 void MultiEffectPanel::onItemChanged(QTreeWidgetItem* item, int column)
@@ -3893,7 +3917,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         {
             QMutexLocker lock(m_mutex);
             const ChainNode* node = nodeAtPath(path);
-            collectInitGlobalsExcept(m_host->chain(), node, others);
+            collectInitGlobalsExcept(wurzel(), node, others);
         }
         for (const QString& g : cur)
             if (others.contains(g)) initConflicts.insert(g);
@@ -6312,7 +6336,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                               g->crossfadeSeconds = v;
                           for (ChainNode& ch : c.children) sync(ch);
                       };
-                      sync(m_host->chain());
+                      sync(wurzel());
                   });
         const QStringList curveNames = {tr("Linear"), tr("S-curve (smooth)"),
                                         tr("Ease-In"), tr("Ease-Out"),
@@ -6339,7 +6363,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                     if (n.isHostGroup()) n.enabled = (&n == me);
                     for (ChainNode& c : n.children) toggle(c);
                 };
-                toggle(m_host->chain());
+                toggle(wurzel());
             });
         });
         form->addRow(switchBtn);
@@ -6532,7 +6556,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         uint64_t switcherId = 0;
         {
             QMutexLocker lock(m_mutex);
-            for (const ChainNode& c : m_host->chain().children)
+            for (const ChainNode& c : wurzel().children)
                 if (c.isHostGroup()) vorhanden << QString::fromStdString(c.displayName);
             if (const ChainNode* self = nodeAtPath(path)) switcherId = self->nodeId;
         }

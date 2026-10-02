@@ -619,6 +619,36 @@ TEST_CASE("PaletteUi Panel: Startzustand — Host haengt, Baum zeigt die drei Kn
     schnappschuss(*p.panel, "A_panel_start");
 }
 
+// S89, KE2 Schritt 2 (Entscheid K2 a): dasselbe Panel an den Baum der
+// Karaoke-Ebene gebunden — der Baum zeigt deren Knoten, ein Edit trifft die
+// Ebene und nicht die Kette, und zurueck steht wieder die Kette da.
+TEST_CASE("PaletteUi Panel S89: an den Karaoke-Baum gebunden trifft ein Edit die Ebene, nicht die Kette")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    CHECK(p.panel->baum() == MultiEffectPanel::Baum::Kette);
+
+    p.panel->setBaum(MultiEffectPanel::Baum::Karaoke);
+    QCoreApplication::processEvents();
+    REQUIRE(p.tree->topLevelItemCount() == 2);  // Lyrics + Trail-Liste
+    CHECK(p.oben(1)->childCount() == 3);        // Drift, Fadeout, Lyrics Trail
+    CHECK(ist<lumi::multieffect::LyricsParams>(p.vis.karaokeKette().children[0]));
+
+    // Lyrics-Knoten im Baum umbenennen: die Ebene aendert sich, die Kette nicht
+    const std::string ketteVorher = p.root().children[0].displayName;
+    p.oben(0)->setText(0, QStringLiteral("Meine Zeile"));
+    QCoreApplication::processEvents();
+    CHECK(p.vis.karaokeKette().children[0].displayName == "Meine Zeile");
+    CHECK(p.root().children.size() == 3);
+    CHECK(p.root().children[0].displayName == ketteVorher);
+    schnappschuss(*p.panel, "S89_panel_karaoke_baum");
+
+    p.panel->setBaum(MultiEffectPanel::Baum::Kette);
+    QCoreApplication::processEvents();
+    CHECK(p.tree->topLevelItemCount() == 3);
+}
+
 TEST_CASE("PaletteUi Panel A14: Drop auf die Leerflaeche haengt ans Ende der Kette")
 {
     UiUmgebung env;
