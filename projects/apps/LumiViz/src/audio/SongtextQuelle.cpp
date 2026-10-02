@@ -192,6 +192,39 @@ bool speichereSongtext(const Songtext& text, const QString& pfad)
     return f.commit();
 }
 
+SongtextZuweisung weiseSongtextZu(const TrackInfo& track, const QString& quellPfad,
+                                  const QString& benutzerOrdner)
+{
+    SongtextZuweisung z;
+    const Songtext gelesen = lese(liesText(quellPfad), QString());
+    if (gelesen.leer()) return z;  // nichts Lesbares: nichts anfassen
+    const QString basis = songtextBenutzerBasis(track, benutzerOrdner);
+    if (basis.isEmpty() || track.filePath.isEmpty()) return z;
+    const QString endung = gelesen.synchron ? QStringLiteral(".lrc") : QStringLiteral(".txt");
+    const QString ziel = basis + endung;
+
+    // unveraendert kopieren (Kopfzeilen und Kodierung bleiben, wie sie sind);
+    // liegt die Datei schon an ihrem Platz, ist nichts zu tun
+    if (QFileInfo(quellPfad).absoluteFilePath() != QFileInfo(ziel).absoluteFilePath())
+    {
+        if (!QDir().mkpath(QFileInfo(ziel).absolutePath())) return z;
+        if (QFile::exists(ziel) && !QFile::remove(ziel)) return z;
+        if (!QFile::copy(quellPfad, ziel)) return z;
+    }
+    // die fruehere Fassung mit der anderen Endung: weg, wenn LumiViz sie geholt
+    // hat (Herkunftsvermerk) — eine eigene Datei bleibt liegen
+    const QString andere = basis + (gelesen.synchron ? QStringLiteral(".txt")
+                                                     : QStringLiteral(".lrc"));
+    if (QFile::exists(andere) && !lese(liesText(andere), QString()).herkunft.empty())
+        QFile::remove(andere);
+
+    z.ok = true;
+    z.ziel = QFileInfo(ziel).absoluteFilePath();
+    z.gilt = findeSongtext(track, benutzerOrdner);
+    z.verdeckt = QString::fromStdString(z.gilt.datei) != z.ziel;
+    return z;
+}
+
 QString songtextSchluessel(const TrackInfo& track)
 {
     return QStringList{track.artist.simplified().toLower(), track.title.simplified().toLower(),

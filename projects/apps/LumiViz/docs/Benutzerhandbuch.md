@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.36.0
+> **Version:** 1.37.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -551,7 +551,7 @@ wie der Song, `.lrc` für synchronen, `.txt` für unsynchronen Text; ist der
 Ordner schreibgeschützt, landet der Fund im Benutzerordner). Die Rechte an den
 Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
 
-**Falscher Text?** Unter der Tabelle im Editor stehen zwei Knöpfe:
+**Falscher Text?** Unter der Tabelle im Editor stehen drei Knöpfe:
 
 - **Alternatives…** sucht bei lrclib.net nach anderen Fassungen. Titel und
   Interpret sind aus den Tags vorbelegt und lassen sich ändern — nützlich bei
@@ -576,6 +576,15 @@ Texten liegen bei Dritten; sie sind für den eigenen Gebrauch gedacht.
   gelöscht und der Eintrag **gesperrt**, er wird nicht wieder geholt. Danach
   öffnen sich die Alternativen. Der Knopf gilt nur für online geholte Texte;
   eine selbst angelegte Datei wird nie gelöscht.
+
+- **Lyrics file…** weist dem laufenden Titel eine vorhandene `.lrc`- oder
+  `.txt`-Datei zu. Sie wird **unverändert kopiert** — in den Benutzerordner
+  der Songtexte, unter `<Interpret> - <Titel>` (mit `.lrc`, wenn sie
+  Zeitmarken trägt, sonst `.txt`); das Original bleibt, wo es ist. Eine dort
+  schon liegende Datei dieses Namens wird ersetzt. Der Text erscheint sofort.
+  Die Suchreihenfolge gilt weiter: hat der Titel einen eingebetteten
+  synchronen Text oder liegt eine `.lrc` neben dem Song, gewinnt diese —
+  LumiViz sagt dir dann, welche Quelle stattdessen gezeigt wird.
 
 Die Sperrliste steht unter **Settings → Audio → Blocked lyrics** (**Show…**);
 **Unblock** gibt einen Eintrag wieder frei. Sie liegt als `blocked.json` im
@@ -1292,6 +1301,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.37.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU Knopf **Lyrics file…** — eine vorhandene `.lrc`/`.txt` dem laufenden Titel zuweisen (wird in den Benutzerordner kopiert) |
 | 1.36.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Versatz je Titel** — Feld **Offset for this track** im Editor des Lyrics-Knotens und **Track offset** im Panel Lyrics Sync; je Titel gemerkt (`offsets.json`), ohne die Songtext-Datei anzufassen |
 | 1.35.0 | 2026-10-02 | Session 88. §2 Tag View zeigt den **Songtext** des laufenden Titels (Quelle, synchron oder nicht, Zeilenzahl, Text) |
 | 1.34.0 | 2026-10-02 | Session 88. §11 Host Switcher: die sechs **Voreinstellungen** (Random Runtime, Random Runtime per Group, Random Seconds, Every 16 Beats, Bass Drop, One per Song) mit ihren Stellgrößen. §11 Lyrics: Titel ohne Text beim Dienst werden **gemerkt** und 7 Tage (instrumental 30) nicht wieder gefragt; **Settings → Audio → Lyrics not found → Ask again** |

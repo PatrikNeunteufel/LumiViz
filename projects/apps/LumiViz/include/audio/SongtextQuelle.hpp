@@ -61,6 +61,30 @@ namespace lumi::audio
 [[nodiscard]] lumi::multieffect::lyrics::Songtext findeSongtext(
     const TrackInfo& track, const QString& benutzerOrdner = songtextOrdner());
 
+/// Ergebnis von `weiseSongtextZu`.
+struct SongtextZuweisung
+{
+    bool ok = false;  ///< false = nichts Lesbares in der Datei, kein Name, Schreibfehler
+    QString ziel;     ///< die Kopie im Benutzerordner (absoluter Pfad)
+    /// Was die Suche fuer den Titel danach liefert — das zeigt der Knoten.
+    lumi::multieffect::lyrics::Songtext gilt;
+    /// Die Kopie liegt da, aber eine Quelle mit Vorrang gewinnt (eingebetteter
+    /// Text, Datei neben dem Song, eine eigene `.lrc` im Benutzerordner).
+    bool verdeckt = false;
+};
+
+/**
+ * S88 („Lyrics file…", Entscheid Patrik: kopieren): eine vorhandene `.lrc`/
+ * `.txt` dem Titel zuweisen — sie wird UNVERAENDERT in den Benutzerordner
+ * kopiert, unter `<Interpret> - <Titel>` (`songtextBenutzerBasis`), mit `.lrc`,
+ * wenn sie Zeitmarken traegt, sonst `.txt`. Eine dort schon liegende Datei
+ * gleichen Namens wird ersetzt; die mit der anderen Endung nur entfernt, wenn
+ * LumiViz sie geholt hat. Die Suchreihenfolge bleibt, wie sie ist — gewinnt
+ * danach eine andere Quelle, meldet `verdeckt` das.
+ */
+[[nodiscard]] SongtextZuweisung weiseSongtextZu(const TrackInfo& track, const QString& quellPfad,
+                                                const QString& benutzerOrdner = songtextOrdner());
+
 /// Schluessel eines Titels fuer Ablagen im Benutzerordner (Merker, Versatz):
 /// Interpret, Titel, Album und Dauer in Sekunden, ohne Ruecksicht auf
 /// Gross-/Kleinschreibung und Leerraum. Zwei Fassungen eines Songs haben

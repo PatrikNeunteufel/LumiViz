@@ -743,6 +743,91 @@ TEST_CASE("SongtextQuelle: Versatz je Titel — festhalten, je Fassung getrennt,
     CHECK_FALSE(setzeSongtextTitelVersatz(TrackInfo{}, 100, nutzer));
 }
 
+// S88 („Lyrics file…", Entscheid Patrik: kopieren): die gewaehlte Datei liegt
+// danach unter dem Namen des Titels im Benutzerordner, das Original bleibt.
+TEST_CASE("SongtextQuelle: Lyrics file — Datei zuweisen = unveraendert in den Benutzerordner kopieren")
+{
+    using lumi::audio::weiseSongtextZu;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    const QString fremd = tmp.path() + "/sammlung";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/musik/x.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.durationMs = 200000;
+
+    // Gegenprobe: vorher gibt es fuer den Titel nichts
+    CHECK(findeSongtext(t, nutzer).leer());
+
+    // synchron -> .lrc, Byte fuer Byte (auch Kopfzeilen, die das Modell nicht kennt)
+    const char* inhalt = "[ar:Wer]\n[ti:Lied]\n[00:01.00]synchron\n";
+    schreibe(fremd + "/irgendein name.lrc", inhalt);
+    auto z = weiseSongtextZu(t, fremd + "/irgendein name.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK(QFileInfo(z.ziel).fileName() == "Wer - Lied.lrc");
+    CHECK_FALSE(z.verdeckt);
+    CHECK(z.gilt.synchron);
+    CHECK(z.gilt.zeilen.at(0).text == "synchron");
+    CHECK(QFile::exists(fremd + "/irgendein name.lrc"));  // das Original bleibt
+    {
+        QFile f(z.ziel);
+        REQUIRE(f.open(QIODevice::ReadOnly));
+        CHECK(f.readAll() == QByteArray(inhalt));
+    }
+
+    // noch einmal mit anderer Datei: die Kopie wird ersetzt
+    schreibe(fremd + "/besser.lrc", "[00:02.00]besser\n");
+    z = weiseSongtextZu(t, fremd + "/besser.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK(z.gilt.zeilen.at(0).text == "besser");
+
+    // die Datei liegt schon an ihrem Platz: in Ordnung, nichts geht verloren
+    z = weiseSongtextZu(t, nutzer + "/Wer - Lied.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK(z.gilt.zeilen.at(0).text == "besser");
+
+    // unsynchron -> .txt; die eigene .lrc daneben bleibt liegen und gewinnt: verdeckt
+    schreibe(fremd + "/nur text.lrc", "nur Text\n");  // Endung .lrc, aber ohne Zeitmarken
+    z = weiseSongtextZu(t, fremd + "/nur text.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK(QFileInfo(z.ziel).fileName() == "Wer - Lied.txt");
+    CHECK(z.verdeckt);
+    CHECK(z.gilt.zeilen.at(0).text == "besser");
+    CHECK(QFile::exists(nutzer + "/Wer - Lied.lrc"));
+
+    // eine von LumiViz GEHOLTE .lrc weicht der zugewiesenen .txt
+    QFile::remove(nutzer + "/Wer - Lied.lrc");
+    QFile::remove(nutzer + "/Wer - Lied.txt");
+    schreibe(nutzer + "/Wer - Lied.lrc",
+             "[re:LumiViz]\n[source:LRCLIB id 7, fetched 2026-10-01]\n[00:01.00]geholt\n");
+    REQUIRE_FALSE(findeSongtext(t, nutzer).herkunft.empty());  // der Vermerk wird gelesen
+    z = weiseSongtextZu(t, fremd + "/nur text.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK_FALSE(z.verdeckt);
+    CHECK_FALSE(QFile::exists(nutzer + "/Wer - Lied.lrc"));
+    CHECK(z.gilt.zeilen.at(0).text == "nur Text");
+
+    // eingebetteter synchroner Text hat Vorrang: kopiert, aber verdeckt
+    TrackInfo eingebettet = t;
+    eingebettet.lyricsSynced = "[00:01.00]aus der Datei\n";
+    z = weiseSongtextZu(eingebettet, fremd + "/besser.lrc", nutzer);
+    REQUIRE(z.ok);
+    CHECK(z.verdeckt);
+    CHECK(z.gilt.zeilen.at(0).text == "aus der Datei");
+
+    // nichts Lesbares, fehlende Datei, Titel ohne Namen: nichts wird angefasst
+    schreibe(fremd + "/leer.txt", "   \n");
+    const QStringList vorher = QDir(nutzer).entryList(QDir::Files);
+    CHECK_FALSE(weiseSongtextZu(t, fremd + "/leer.txt", nutzer).ok);
+    CHECK_FALSE(weiseSongtextZu(t, fremd + "/gibt es nicht.lrc", nutzer).ok);
+    TrackInfo namenlos;
+    namenlos.filePath = t.filePath;
+    CHECK_FALSE(weiseSongtextZu(namenlos, fremd + "/besser.lrc", nutzer).ok);
+    CHECK(QDir(nutzer).entryList(QDir::Files) == vorher);
+}
+
 // Der Weg ueber `suche` braucht die Einstellung „Search lyrics online" — in
 // abgeschotteten QSettings, die echten bleiben unberuehrt.
 TEST_CASE("SongtextOnline: Merker — suche() fragt den gemerkten Titel nicht an")

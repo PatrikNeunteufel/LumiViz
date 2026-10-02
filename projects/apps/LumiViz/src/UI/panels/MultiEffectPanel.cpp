@@ -7863,8 +7863,49 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 tr("Discards the lyrics shown: deletes the fetched file and blocks this entry, "
                    "so it is not fetched again. Only for lyrics fetched online. The block list "
                    "is in Settings → Audio."));
+            // S88 (Entscheid Patrik: kopieren): eine vorhandene Datei zuweisen
+            auto* zuweisen = new QToolButton(knopfZeile);
+            zuweisen->setObjectName(QStringLiteral("lyricsAssignFile"));
+            zuweisen->setText(tr("Lyrics file…"));
+            zuweisen->setToolTip(
+                tr("Assign a .lrc or .txt file to the playing track. The file is copied to the "
+                   "user folder under the name of the track and replaces a file of that name "
+                   "there; the original stays where it is."));
+            connect(zuweisen, &QToolButton::clicked, tabelle, [this]() {
+                const TrackInfo titel = lumi::audio::laufenderTitel();
+                if (titel.filePath.isEmpty()) return;
+                const QString pfad = QFileDialog::getOpenFileName(
+                    this, tr("Lyrics file for %1").arg(titel.title),
+                    QFileInfo(titel.filePath).absolutePath(),
+                    tr("Lyrics (*.lrc *.txt);;All files (*)"));
+                if (pfad.isEmpty()) return;
+                const auto z = lumi::audio::weiseSongtextZu(titel, pfad);
+                if (!z.ok)
+                {
+                    QMessageBox::warning(
+                        this, tr("Lyrics file"),
+                        tr("No lyrics could be taken from %1 (empty or unreadable, the track has "
+                           "no title, or the user folder is not writable).")
+                            .arg(QDir::toNativeSeparators(pfad)));
+                    return;
+                }
+                // derselbe Titel laeuft noch: zeigen, was die Suche jetzt liefert
+                if (lumi::audio::laufenderTitel().filePath == titel.filePath)
+                {
+                    MultiEffectVisualizer::setSongtext(z.gilt);
+                    MultiEffectVisualizer::setSongtextAbruf(lumi::audio::SongtextAbruf::Ruhe);
+                }
+                if (z.verdeckt)
+                    QMessageBox::information(
+                        this, tr("Lyrics file"),
+                        tr("The file was copied to %1, but another source has priority and is "
+                           "shown: %2.")
+                            .arg(QDir::toNativeSeparators(z.ziel),
+                                 QString::fromStdString(z.gilt.quelle)));
+            });
             kl->addWidget(andere);
             kl->addWidget(falsch);
+            kl->addWidget(zuweisen);
             kl->addStretch(1);
             gl->addWidget(knopfZeile, reihe, 0, 1, 3);
             ++reihe;
@@ -7917,9 +7958,10 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 oeffneAlternativen();
             });
             const auto zeige = [status, quelle, takt, zeilen, herkunft, datei, ordner, andere,
-                                falsch, titelVersatz]() {
+                                falsch, titelVersatz, zuweisen]() {
                 const auto a = MultiEffectVisualizer::songtextAngaben();
                 andere->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());
+                zuweisen->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());
                 // der Wert gehoert zum Titel: beim Songwechsel (und wenn Lyrics
                 // Sync ihn verstellt) nachziehen — nicht, waehrend getippt wird
                 titelVersatz->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());

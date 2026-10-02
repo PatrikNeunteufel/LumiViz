@@ -2534,8 +2534,19 @@ verwirft Zeilen ohne Zeit). Ungespeicherte Arbeit bleibt beim Titelwechsel
 stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen, Rückgängig.
 **Sichttest offen (Patrik):** das Panel im Betrieb — ob Enter/T beim Klopfen
 ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
-**Offen:** Knopf „Lyrics file…" zum Zuweisen; Wort-Zeiten des Dienstes
-(`hasWordSync`, Feld `lyricsfile`) werden nicht gelesen.
+**Offen:** Wort-Zeiten des Dienstes (`hasWordSync`, Feld `lyricsfile`)
+werden nicht gelesen.
+**✅ S88 gebaut: Knopf „Lyrics file…"** (Entscheid Patrik: kopieren) —
+`audio::weiseSongtextZu`: die gewählte `.lrc`/`.txt` wird unverändert in den
+Benutzerordner kopiert (`<Interpret> - <Titel>`, Endung nach Zeitmarken),
+ersetzt dort eine Datei gleichen Namens; die mit der anderen Endung weicht
+nur, wenn LumiViz sie geholt hat. Die Suchreihenfolge bleibt — gewinnt eine
+Quelle mit Vorrang (eingebettet synchron, `.lrc` neben dem Song, eigene
+`.lrc` im Benutzerordner), meldet der Knopf das. **Offen dazu:** ob eine
+zugewiesene Datei Vorrang vor allem bekommen soll (Entscheid Patrik); die
+Kopie trägt kein `[length:]`, gilt also für alle Fassungen des Namens. Der
+Knopf selbst (Dateidialog, Meldungen) hat keinen Test. **Sichttest offen
+(Patrik).**
 **✅ S88 gebaut: Versatz je Titel** (Entscheid Patrik a: eigene Ablage, keine
 Songtext-Datei wird umgeschrieben) — `offsets.json` im Benutzerordner
 (`audio::songtextTitelVersatzMs`/`setzeSongtextTitelVersatz`, Schlüssel
