@@ -227,11 +227,14 @@ uniform sampler2D uTex;
 uniform sampler2D uImg;
 uniform int uBlend;   // 0 replace, 1 additive, 2 50/50; 3..8 s. u.
 uniform float uStrength;  // 0..1: Deckung der Glyphen (S89, Feld blendStrength)
+uniform vec4 uImgRect;    // Platz der Ebene im Bild (x, y von oben, b, h); ganz = 0,0,1,1 (S90)
 out vec4 fragColor;
 void main()
 {
     vec3 fb = texture(uTex, vTex).rgb;
-    vec4 t = texture(uImg, vec2(vTex.x, 1.0 - vTex.y));
+    vec2 q = (vec2(vTex.x, 1.0 - vTex.y) - uImgRect.xy) / uImgRect.zw;
+    vec4 t = texture(uImg, q);
+    if (q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) t = vec4(0.0);  // ausserhalb: nichts
     t.a *= uStrength;
     // S88 (K6): die Mischarten der Karaoke-Ebene auch am Lyrics-Knoten —
     // dieselben Gleichungen wie beim Present (p = Farbe mal Deckung):
@@ -3717,8 +3720,7 @@ bool MultiEffectVisualizer::ketteZeigtLyrics() const
 
 void MultiEffectVisualizer::rechneKaraokeEbene()
 {
-    m_karaokeGlyphTex = 0;
-    m_karaokeKonturTex = 0;
+    m_karaokeLagen.clear();
     m_karaokeTrailTex = 0;
     m_karaokeGezeichnet = false;
     if (!karaokeEbene() || m_songtext.leer() || ketteZeigtLyrics()) return;
@@ -3754,7 +3756,7 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
 void MultiEffectVisualizer::legeKaraokeAuf()
 {
     if (!m_karaokeGezeichnet || m_overlayShader == nullptr) return;
-    if (m_karaokeTrailTex == 0 && m_karaokeGlyphTex == 0 && m_karaokeKonturTex == 0) return;
+    if (m_karaokeTrailTex == 0 && m_karaokeLagen.empty()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     GLint srcRgb = GL_ONE, dstRgb = GL_ZERO, srcA = GL_ONE, dstA = GL_ZERO;
     f->glGetIntegerv(GL_BLEND_SRC_RGB, &srcRgb);
@@ -3820,8 +3822,22 @@ void MultiEffectVisualizer::legeKaraokeAuf()
     // Reihenfolge: Trail, dann die Kontur (immer normal), dann die Fuellung
     // Mischart und Staerke kommen aus den Knoten der Ebene (S89, KE2)
     lege(m_karaokeTrailTex, false, true, m_karaokeTrailArt, m_karaokeTrailStaerke);
-    lege(m_karaokeKonturTex, true, false, 0, 100);
-    lege(m_karaokeGlyphTex, true, false, m_karaokeZeileArt, m_karaokeZeileStaerke);
+    // S90, LB1: die Glyphen-Bilder tragen ihren Platz (die laufende Zeile ist
+    // ein Streifen) — der Viewport stellt das Rechteck, der Shader bleibt.
+    GLint vp[4] = {0, 0, 0, 0};
+    f->glGetIntegerv(GL_VIEWPORT, vp);
+    for (const KaraokeLage& l : m_karaokeLagen)
+    {
+        const int x0 = static_cast<int>(std::lround(l.x * vp[2]));
+        const int y0 = static_cast<int>(std::lround(l.y * vp[3]));
+        const int b = static_cast<int>(std::lround(l.b * vp[2]));
+        const int h = static_cast<int>(std::lround(l.h * vp[3]));
+        if (b <= 0 || h <= 0) continue;
+        f->glViewport(vp[0] + x0, vp[1] + vp[3] - y0 - h, b, h);
+        if (l.kontur) lege(l.tex, true, false, 0, 100);
+        else lege(l.tex, true, false, m_karaokeZeileArt, m_karaokeZeileStaerke);
+    }
+    f->glViewport(vp[0], vp[1], vp[2], vp[3]);
 
     m_quadVao->release();
     m_overlayShader->release();
@@ -4457,6 +4473,9 @@ void MultiEffectVisualizer::gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt)
         if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
         if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
         if (rt.textTexture2 != 0) f->glDeleteTextures(1, &rt.textTexture2);
+        for (GlyphBild* bilder : {rt.lyricsBild, rt.lyricsBildAlt})
+            for (int i = 0; i < 2; ++i)
+                if (bilder[i].tex != 0) f->glDeleteTextures(1, &bilder[i].tex);
         if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
         if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
         if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
@@ -8700,6 +8719,7 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     f->glActiveTexture(GL_TEXTURE0);
     m_textShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
     m_textShader->setUniformValue("uStrength", 1.0f);  // der Text-Knoten kennt keine Staerke
+    m_textShader->setUniformValue("uImgRect", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8709,7 +8729,8 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
 }
 
 void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
-                                              int staerkeProzent)
+                                              int staerkeProzent, float x, float y, float b,
+                                              float h)
 {
     if (m_textShader == nullptr || texture == 0) return;
     auto* f = QOpenGLContext::currentContext()->functions();
@@ -8729,6 +8750,7 @@ void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
     m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, kKaraokeMischarten - 1));
     m_textShader->setUniformValue(
         "uStrength", static_cast<float>(std::clamp(staerkeProzent, 0, 100)) / 100.0f);
+    m_textShader->setUniformValue("uImgRect", QVector4D(x, y, b, h));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8804,8 +8826,11 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         rt.lyricsZeile = 0;
         rt.lyricsBeats = 0;
         rt.lyricsVorZeile = -1;
+        rt.lyricsBildZeile = -1;  // S90: die Zeilenbilder gehoeren zum alten Titel
+        rt.lyricsAltZeile = -1;
     }
     if (s.leer()) return;
+    int laufZeile = -1;  // S90, LB1: Index der laufenden Zeile (-1 = vor der ersten)
 
     // Eine Bildzeile: `vorn` in der Stimmfarbe (laufende Zeile bzw. schon
     // gesungene Worte), `hinten` in der Vorschau-Farbe.
@@ -8825,10 +8850,12 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(params.offsetMs) +
                                  songtextTitelVersatzMs();
         const int idx = ly::zeileBei(s, pos);
+        laufZeile = idx;
         if (idx >= 0)
         {
             const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(idx)];
             Anzeige a;
+            a.laufend = true;
             a.farbe = stimmFarbe(zl.stimme);
             // S87 (Befund Patrik): dieselbe Zeile mehrmals hintereinander —
             // sie blieb durchgehend aktiv, der Einsatz der Wiederholung war
@@ -8867,7 +8894,9 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         }
         else
         {
-            zeilen.push_back({});  // vor der ersten Zeile: Platz halten, Vorschau zeigen
+            Anzeige platz;  // vor der ersten Zeile: Platz halten, Vorschau zeigen
+            platz.laufend = true;
+            zeilen.push_back(std::move(platz));
         }
         for (int i = idx + 1, k = 0; i < anzahl && k < vorschau; ++i)
         {
@@ -8894,18 +8923,34 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
         }
         if (params.showSyncMark)
             zeilen.push_back({std::string(), "(not synced)", params.colorNext, true});
-        for (int i = std::clamp(rt.lyricsZeile, 0, anzahl - 1), k = 0;
-             i < anzahl && k < 1 + vorschau; ++i, ++k)
+        laufZeile = std::clamp(rt.lyricsZeile, 0, anzahl - 1);
+        for (int i = laufZeile, k = 0; i < anzahl && k < 1 + vorschau; ++i, ++k)
         {
             const ly::Zeile& zl = s.zeilen[static_cast<std::size_t>(i)];
             if (k == 0)
-                zeilen.push_back({zl.text, std::string(), stimmFarbe(zl.stimme), false});
+                zeilen.push_back({zl.text, std::string(), stimmFarbe(zl.stimme), false, true});
             else
                 zeilen.push_back({std::string(), zl.text, params.colorNext, false});
         }
     }
 
-    zeichneLyricsZeilen(rt, params, zeilen);
+    // S90, LB1 (Zeilen-Puffer): wechselt die Zeile nach vorn und stand von der
+    // alten ein Bild, wandert es zum Lyrics Trail — die Texturen tauschen den
+    // Platz, gerastert wird dafuer nichts. Zurueckspulen und Zeilen ohne Text
+    // uebergeben nichts (der Trail zeichnet dann wie bis S89 neu).
+    if (laufZeile != rt.lyricsBildZeile)
+    {
+        if (rt.lyricsBild[0].da && rt.lyricsBildZeile >= 0 && laufZeile > rt.lyricsBildZeile)
+        {
+            std::swap(rt.lyricsBild, rt.lyricsBildAlt);
+            rt.lyricsAltZeile = rt.lyricsBildZeile;
+        }
+        rt.lyricsBildZeile = laufZeile;
+    }
+    rt.lyricsBild[0].da = false;
+    rt.lyricsBild[1].da = false;
+    zeichneLyricsZeilen(rt, params, zeilen, LyricsReihen::Rest);
+    zeichneLyricsZeilen(rt, params, zeilen, LyricsReihen::Laufende);
 }
 
 const ChainNode* MultiEffectVisualizer::findeLyricsKnoten(const std::string& name) const
@@ -8956,6 +9001,39 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
                                               : quellRt->second.lyricsEffektiv;
     const int halteMs = std::clamp(static_cast<int>(params.holdMs), 0, 5000);
 
+    // S90, LB1 (Zeilen-Puffer): steht vom Lyrics-Knoten das Bild der Zeile
+    // `zeile`, legt der Trail genau dieses auf — Wort-Stand, verkleinerte lange
+    // Zeile und Skriptwerte bleiben, wie sie standen; der eigene Versatz
+    // verschiebt nur das Rechteck. Das Bild liegt nach der Uebergabe unter
+    // „alt"; steht der Trail in der Kette VOR dem Lyrics-Knoten, ist es im
+    // Frame des Wechsels noch das laufende. false = kein Bild, der Aufrufer
+    // zeichnet wie bis S89 neu. Mit eigener Farbe immer neu (Entscheid L1 a).
+    const auto legeZeilenbild = [&](int zeile) {
+        if (!gelaufen || params.useOwnColor || zeile < 0) return false;
+        const LeafRuntime& q = quellRt->second;
+        if (q.lyricsStand != m_songTagsStand) return false;
+        const GlyphBild* bild = nullptr;
+        if (q.lyricsAltZeile == zeile && q.lyricsBildAlt[0].da) bild = q.lyricsBildAlt;
+        else if (q.lyricsBildZeile == zeile && q.lyricsBild[0].da) bild = q.lyricsBild;
+        if (bild == nullptr) return false;
+        const int art = inEbene ? 0 : std::clamp(static_cast<int>(params.blend), 0,
+                                                 kKaraokeMischarten - 1);
+        const int staerke = inEbene ? 100 : std::clamp(static_cast<int>(params.blendStrength), 0, 100);
+        // der Trail will die Kontur normal und nur die Fuellung gemischt, das
+        // Bild traegt aber beides in einem: dann lieber neu zeichnen
+        const bool getrennt = art >= 3 || staerke < 100;
+        const bool hatRing = bild[1].da;
+        if (getrennt && !hatRing && lp.outline) return false;
+        const float dx = static_cast<float>(params.xShift) / 100.0f;
+        const float dy = static_cast<float>(params.yShift) / 100.0f;
+        if (hatRing)
+            composeGlyphLayer(bild[1].tex, getrennt ? 0 : art, getrennt ? 100 : staerke,
+                              bild[1].x + dx, bild[1].y + dy, bild[1].b, bild[1].h);
+        composeGlyphLayer(bild[0].tex, art, staerke, bild[0].x + dx, bild[0].y + dy, bild[0].b,
+                          bild[0].h);
+        return true;
+    };
+
     if (!s.synchron)
     {
         // S88 — unsynchroner Text: Zeiten gibt es keine, aber der Lyrics-Knoten
@@ -8971,6 +9049,7 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
         if (seitMs < 0.0f || seitMs > static_cast<float>(halteMs)) return;
         const ly::Zeile& alt = s.zeilen[static_cast<std::size_t>(q.lyricsVorZeile)];
         if (alt.text.empty()) return;
+        if (legeZeilenbild(q.lyricsVorZeile)) return;
         // die Reihen, wie sie standen, als die alte Zeile noch lief: Marke
         // (klein), die Zeile, ihre Vorschau — nur die Zeile traegt Text
         std::vector<LyricsAnzeige> zeilen;
@@ -9006,6 +9085,7 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     const int vor = idx - 1;
     if (s.zeilen[static_cast<std::size_t>(vor)].text.empty()) return;
     const ly::Zeile& alt = s.zeilen[static_cast<std::size_t>(vor)];
+    if (legeZeilenbild(vor)) return;
 
     // Dieselbe Geometrie wie der Lyrics-Knoten in diesem Augenblick: so viele
     // Reihen wie er zeigt (laufende Zeile + Vorschau), nur traegt die erste
@@ -9034,9 +9114,16 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
 }
 
 void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsParams& params,
-                                                const std::vector<LyricsAnzeige>& zeilen)
+                                                const std::vector<LyricsAnzeige>& zeilen,
+                                                LyricsReihen reihen)
 {
     using Anzeige = LyricsAnzeige;
+    // S90, LB1: welche Reihen dieser Aufruf malt. Die Lage rechnet weiter ueber
+    // alle — eine Reihe steht, wo sie mit `Alle` stuende.
+    const bool nurLaufende = reihen == LyricsReihen::Laufende;
+    const auto gewaehlt = [reihen, nurLaufende](const Anzeige& a) {
+        return reihen == LyricsReihen::Alle || a.laufend == nurLaufende;
+    };
     // Mischart jenseits der drei alten (K6): Fuellung und Kontur getrennt
     // rastern — die Fuellung mischt sich mit dem Bild, die Kontur bleibt normal
     // und haelt den Text lesbar. Die Kontur-Textur traegt nur den Ring
@@ -9057,14 +9144,15 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     if (getrennt && m_glyphTeil == GlyphTeil::Alles && params.outline)
     {
         m_glyphTeil = GlyphTeil::NurKontur;  // erst der Ring (normal) …
-        zeichneLyricsZeilen(rt, params, zeilen);
+        zeichneLyricsZeilen(rt, params, zeilen, reihen);
         m_glyphTeil = GlyphTeil::NurFuellung;  // … dann die Fuellung mit der Mischart
-        zeichneLyricsZeilen(rt, params, zeilen);
+        zeichneLyricsZeilen(rt, params, zeilen, reihen);
         m_glyphTeil = GlyphTeil::Alles;
         return;
     }
     // --- Glyphen-Ebene: nur neu zeichnen, wenn sich der Zustand aendert
-    std::string snapshot = std::to_string(static_cast<int>(m_glyphTeil)) + '\x1f' +
+    std::string snapshot = std::to_string(static_cast<int>(reihen)) +
+                           std::to_string(static_cast<int>(m_glyphTeil)) + '\x1f' +
                            params.fontFace + '\x1f' + std::to_string(params.fontHeight) + ':' +
                            std::to_string(params.fontWeight) + std::to_string(params.italic) +
                            ':' + std::to_string(params.colorNext) + ':' +
@@ -9085,53 +9173,97 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     bool etwas = false;
     for (const Anzeige& a : zeilen)
     {
-        snapshot += '\x1f' + a.vorn + '\x1e' + a.hinten + '\x1e' + std::to_string(a.farbe);
+        // die Reihenfolge und Hoehe aller Reihen bestimmt die Lage; der Inhalt
+        // zaehlt nur fuer die Reihen, die dieser Aufruf malt
+        snapshot += a.klein ? '\x1d' : '\x1f';
+        if (!gewaehlt(a)) continue;
+        snapshot += a.vorn + '\x1e' + a.hinten + '\x1e' + std::to_string(a.farbe);
         etwas = etwas || (!a.klein && (!a.vorn.empty() || !a.hinten.empty()));
     }
     if (!etwas) return;  // nur Pause/Marke: nichts zeichnen
 
     auto* f = QOpenGLContext::currentContext()->functions();
-    // der Kontur-Ring hat seine eigene Textur neben der der Fuellung
+    // der Kontur-Ring hat seine eigene Textur neben der der Fuellung; die
+    // laufende Zeile ihr eigenes Zeilenbild (ein Streifen mit Platz im Bild)
     const bool ring = m_glyphTeil == GlyphTeil::NurKontur;
-    unsigned int& tex = ring ? rt.textTexture2 : rt.textTexture;
-    std::string& stand = ring ? rt.textSnapshot2 : rt.textSnapshot;
+    GlyphBild* const zeilenbild = nurLaufende ? &rt.lyricsBild[ring ? 1 : 0] : nullptr;
+    unsigned int& tex = zeilenbild != nullptr ? zeilenbild->tex
+                                              : ring ? rt.textTexture2 : rt.textTexture;
+    std::string& stand = zeilenbild != nullptr ? zeilenbild->stand
+                                               : ring ? rt.textSnapshot2 : rt.textSnapshot;
     if (tex == 0 || stand != snapshot)
     {
         stand = snapshot;
-        QImage img(rasterB, rasterH, QImage::Format_RGBA8888);
+        QFont basis;
+        if (!params.fontFace.empty()) basis.setFamily(QString::fromStdString(params.fontFace));
+        const int px = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
+        basis.setPixelSize(px);
+        basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
+        basis.setItalic(params.italic);
+        // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb
+        const double zeilenHoehe = QFontMetrics(basis).height() * 1.15;
+        double gesamt = 0.0;
+        for (const Anzeige& a : zeilen) gesamt += a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+        double yStart = 0.0;
+        if (params.vAlign == 1) yStart = (m_surfaceHeight - gesamt) / 2.0;
+        else if (params.vAlign == 2) yStart = m_surfaceHeight - gesamt;
+        yStart += params.yShift * m_surfaceHeight / 100.0;
+
+        // Streifen der laufenden Zeile in Rasterpixeln: die Reihe plus Rand
+        // fuer Kontur und Ueberhaenge; ganz ausserhalb des Bilds = kein Bild
+        int streifenOben = 0;
+        int streifenHoehe = rasterH;
+        if (zeilenbild != nullptr)
+        {
+            double yReihe = yStart;
+            double hReihe = zeilenHoehe;
+            for (const Anzeige& a : zeilen)
+            {
+                hReihe = a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
+                if (a.laufend) break;
+                yReihe += hReihe;
+            }
+            const double rand = (params.outline ? std::max(1, static_cast<int>(params.outlineSize)) : 0) +
+                                hReihe * 0.5;
+            const double sy = static_cast<double>(rasterH) / m_surfaceHeight;
+            const int oben = std::clamp(static_cast<int>(std::floor((yReihe - rand) * sy)), 0, rasterH);
+            const int unten =
+                std::clamp(static_cast<int>(std::ceil((yReihe + hReihe + rand) * sy)), 0, rasterH);
+            if (unten <= oben)
+            {
+                stand.clear();  // nichts gerastert — der Stand gilt nicht
+                return;
+            }
+            streifenOben = oben;
+            streifenHoehe = unten - oben;
+            zeilenbild->x = 0.0f;
+            zeilenbild->b = 1.0f;
+            zeilenbild->y = static_cast<float>(oben) / static_cast<float>(rasterH);
+            zeilenbild->h = static_cast<float>(streifenHoehe) / static_cast<float>(rasterH);
+        }
+
+        QImage img(rasterB, streifenHoehe, QImage::Format_RGBA8888);
         img.fill(Qt::transparent);
         {
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setRenderHint(QPainter::TextAntialiasing, true);
+            if (streifenOben != 0) painter.translate(0.0, -static_cast<double>(streifenOben));
             if (skaliert)
                 painter.scale(static_cast<double>(rasterB) / m_surfaceWidth,
                               static_cast<double>(rasterH) / m_surfaceHeight);
-            QFont basis;
-            if (!params.fontFace.empty()) basis.setFamily(QString::fromStdString(params.fontFace));
-            const int px = std::max(4, std::abs(static_cast<int>(params.fontHeight)));
-            basis.setPixelSize(px);
-            basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
-            basis.setItalic(params.italic);
             const auto toColor = [](std::uint32_t c) {
                 return QColor(static_cast<int>((c >> 16) & 0xFF), static_cast<int>((c >> 8) & 0xFF),
                               static_cast<int>(c & 0xFF));
             };
-            // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb
-            const double zeilenHoehe = QFontMetrics(basis).height() * 1.15;
-            double gesamt = 0.0;
-            for (const Anzeige& a : zeilen) gesamt += a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
-            double y = 0.0;
-            if (params.vAlign == 1) y = (m_surfaceHeight - gesamt) / 2.0;
-            else if (params.vAlign == 2) y = m_surfaceHeight - gesamt;
-            y += params.yShift * m_surfaceHeight / 100.0;
+            double y = yStart;
             const double breite = m_surfaceWidth * 0.94;  // Rand lassen
             for (const Anzeige& a : zeilen)
             {
                 const double hoehe = a.klein ? zeilenHoehe * 0.55 : zeilenHoehe;
                 const QString vorn = QString::fromStdString(a.vorn);
                 const QString hinten = QString::fromStdString(a.hinten);
-                if (!vorn.isEmpty() || !hinten.isEmpty())
+                if (gewaehlt(a) && (!vorn.isEmpty() || !hinten.isEmpty()))
                 {
                     QFont font = basis;
                     if (a.klein) font.setPixelSize(std::max(4, px / 2));
@@ -9192,13 +9324,23 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA,
                         GL_UNSIGNED_BYTE, img.constBits());
     }
+    float bx = 0.0f, by = 0.0f, bb = 1.0f, bh = 1.0f;
+    if (zeilenbild != nullptr)
+    {
+        zeilenbild->da = true;
+        bx = zeilenbild->x;
+        by = zeilenbild->y;
+        bb = zeilenbild->b;
+        bh = zeilenbild->h;
+    }
     if (m_glyphNurRastern)  // Karaoke-Ebene: aufgelegt wird erst beim Present
     {
-        (ring ? m_karaokeKonturTex : m_karaokeGlyphTex) = tex;
+        m_karaokeLagen.push_back({tex, ring, bx, by, bb, bh});
         return;
     }
     // in der Kette: der Ring liegt immer normal, die Fuellung mit der Mischart
-    composeGlyphLayer(tex, ring ? 0 : params.blend, ring ? 100 : params.blendStrength);
+    composeGlyphLayer(tex, ring ? 0 : params.blend, ring ? 100 : params.blendStrength, bx, by,
+                      bb, bh);
 }
 
 void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)
@@ -9441,6 +9583,7 @@ void MultiEffectVisualizer::runAvi(const ChainNode& node, const AviParams& param
     m_textShader->setUniformValue("uImg", 1);
     f->glActiveTexture(GL_TEXTURE0);
     m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    m_textShader->setUniformValue("uImgRect", QVector4D(0.0f, 0.0f, 1.0f, 1.0f));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();

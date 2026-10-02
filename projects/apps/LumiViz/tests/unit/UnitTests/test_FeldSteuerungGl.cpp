@@ -875,6 +875,239 @@ TEST_CASE("Lyrics Trail S90: Pause-Zeile — wie oft die alte Zeile gezeichnet w
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S90, LB1 (Zeilen-Puffer): der Trail legt das Bild auf, das STAND — nicht
+// eine neu gezeichnete Fassung der alten Zeile. Sichtbar am Wort-Stand: das
+// zweite Wort der ersten Zeile ist beim Zeilenwechsel noch nicht gesungen
+// (dunkel); bis S89 zeichnete der Trail die ganze Zeile hell.
+TEST_CASE("Lyrics Trail S90 LB1: der Trail uebernimmt das Zeilenbild mit Wort-Stand und Lage")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+
+    struct Bild
+    {
+        int hell = 0;     ///< helle Pixel im Band
+        double y = 0.0;   ///< ihr Schwerpunkt
+    };
+    const auto band = [](const QImage& img, int yVon, int yBis) {
+        Bild b;
+        double summe = 0.0;
+        for (int y = yVon; y < yBis; ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    ++b.hell;
+                    summe += y;
+                }
+        if (b.hell > 0) b.y = summe / b.hell;
+        return b;
+    };
+    // Ein Visualizer laeuft von `vonMs` in Schritten von 1/60 s bis `bisMs` —
+    // der Lyrics-Knoten zeichnet die erste Zeile also wirklich, bevor sie endet.
+    const auto lauf = [](const char* lrc, const LyricsTrailParams& tp, bool ebene, int vonMs,
+                         int bisMs, bool trailZuerst = false) {
+        MultiEffectVisualizer::setSongtext(ly::leseLrc(lrc));
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        root.children = {clear};
+        if (!ebene)
+        {
+            ChainNode lyr;
+            LyricsParams lp;
+            lp.fontHeight = -24;
+            lp.outline = false;
+            lp.previewLines = 0;
+            lp.colorNext = 0x202020;  // nicht Gesungenes dunkel
+            lyr.params = lp;
+            ChainNode trail;
+            trail.params = tp;
+            if (trailZuerst) root.children.push_back(trail);
+            root.children.push_back(lyr);
+            if (!trailZuerst) root.children.push_back(trail);
+        }
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int ms = vonMs; ms <= bisMs; ms += 1000 / 60)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(ms);
+            vis.render(1.0f / 60.0f);
+        }
+        const QImage img = ebene ? vis.debugGrabMitKaraoke() : vis.debugGrabRootSurface();
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        return img;
+    };
+    // das zweite Wort beginnt erst NACH dem Zeilenende: es bleibt ungesungen
+    const char* halb = "[00:10.00]MMMM <00:14.00>MMMM\n[00:13.00]IIII\n";
+    const char* voll = "[00:10.00]MMMM MMMM\n[00:13.00]IIII\n";
+    LyricsTrailParams tp;
+    tp.yShift = -30;  // 72 px ueber der Zeile: ein eigenes Band
+    tp.holdMs = 1000;
+
+    // vor dem Wechsel: die Zeile steht unten, oben ist nichts
+    const QImage vorher = lauf(voll, tp, false, 12800, 12950);
+    const Bild zeile = band(vorher, 120, 240);
+    REQUIRE(zeile.hell > 0);
+    CHECK(band(vorher, 0, 120).hell == 0);
+
+    // nach dem Wechsel, ganze Zeile gesungen: der Trail zeigt sie ganz, 72 px hoeher
+    const Bild ganz = band(lauf(voll, tp, false, 12800, 13100), 0, 150);
+    REQUIRE(ganz.hell > 0);
+    CHECK(ganz.hell == doctest::Approx(zeile.hell).epsilon(0.03));
+    CHECK(ganz.y == doctest::Approx(zeile.y - 72.0).epsilon(0.02));
+
+    // Wort-Stand: nur das erste Wort war gesungen — der Trail zeigt genau das
+    const Bild halbB = band(lauf(halb, tp, false, 12800, 13100), 0, 150);
+    CHECK(halbB.hell > ganz.hell * 0.3);
+    CHECK(halbB.hell < ganz.hell * 0.7);
+    // … auch wenn der Trail in der Kette VOR dem Lyrics-Knoten steht
+    const Bild davor = band(lauf(halb, tp, false, 12800, 13100, true), 0, 150);
+    CHECK(davor.hell == halbB.hell);
+    // Gegenprobe: ein frischer Visualizer hat die Zeile nie gezeichnet — ohne
+    // Zeilenbild zeichnet der Trail wie bis S89 neu, die ganze Zeile hell
+    const Bild frisch = band(lauf(halb, tp, false, 13100, 13120), 0, 150);
+    CHECK(frisch.hell == doctest::Approx(ganz.hell).epsilon(0.03));
+    // eigene Farbe: immer neu gezeichnet, einfarbig (Entscheid L1 a)
+    LyricsTrailParams eigen = tp;
+    eigen.useOwnColor = true;
+    eigen.color = 0xFFFFFF;
+    const Bild eigenB = band(lauf(halb, eigen, false, 12800, 13100), 0, 150);
+    CHECK(eigenB.hell == doctest::Approx(ganz.hell).epsilon(0.03));
+    // die Haltezeit gilt weiter
+    CHECK(band(lauf(halb, tp, false, 12800, 14200), 0, 150).hell == 0);
+
+    // Karaoke-Ebene: auch dort traegt der Trail den Wort-Stand — mit halb
+    // gesungener Zeile ist weniger hell im Bild als mit ganz gesungener
+    const QImage ebeneHalb = lauf(halb, tp, true, 12800, 13060);
+    const QImage ebeneVoll = lauf(voll, tp, true, 12800, 13060);
+    const int hH = band(ebeneHalb, 0, 240).hell;
+    const int hV = band(ebeneVoll, 0, 240).hell;
+    MESSAGE("Ebene: hell mit halber Zeile " << hH << ", mit ganzer " << hV);
+    if (const QString schnapp = qEnvironmentVariable("LUMIVIZ_LB1_SNAP"); !schnapp.isEmpty())
+    {
+        ebeneHalb.save(schnapp + "/trail_ebene_halb.png");
+        ebeneVoll.save(schnapp + "/trail_ebene_voll.png");
+        lauf(halb, tp, false, 12800, 13100).save(schnapp + "/trail_kette_halb.png");
+        lauf(voll, tp, false, 12800, 13100).save(schnapp + "/trail_kette_voll.png");
+    }
+    CHECK(hH > 0);
+    CHECK(hH < hV * 0.9);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S90, LB1: Bilder des Lyrics-Knotens fuer den Vergleich vorher/nachher. Mit
+// `LUMIVIZ_LB1_SNAP=<ordner>` schreibt der Test je Szene ein PNG — derselbe
+// Lauf vor und nach einem Umbau am Rastern, die Ordner dann bitweise
+// vergleichen. Ohne die Variable prueft er nur, dass jede Szene etwas zeichnet.
+TEST_CASE("Lyrics S90 LB1: Szenen des Lyrics-Knotens (Schnappschuesse fuer den Vergleich)")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    const QString schnapp = qEnvironmentVariable("LUMIVIZ_LB1_SNAP");
+    const char* synchron = "[00:10.00]MMMM <00:11.50>gggg\n[00:13.00]IIII jjjj\n"
+                           "[00:16.00]Third line\n[00:19.00]Fourth\n";
+
+    const auto bild = [&](const char* name, LyricsParams lp, bool mitTrail, bool ebene,
+                          int posMs) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode balken;
+        balken.params = DebugBarsParams{0x40C0FF, -2.5f};
+        root.children = {balken};
+        if (!ebene)
+        {
+            ChainNode lyr;
+            lyr.params = lp;
+            root.children.push_back(lyr);
+        }
+        if (mitTrail)
+        {
+            ChainNode trail;
+            trail.params = LyricsTrailParams{};
+            root.children.push_back(trail);
+        }
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        MultiEffectVisualizer::notifyPlayPosition(posMs);
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(480, 270));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 270);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = ebene ? vis.debugGrabMitKaraoke() : vis.debugGrabRootSurface();
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        if (!schnapp.isEmpty()) img.save(schnapp + '/' + QLatin1String(name) + ".png");
+        return img;
+    };
+    // weicht das Bild vom blossen Hintergrund ab?
+    const auto zeichnet = [&](const QImage& img) {
+        static QImage leer;
+        if (leer.isNull())
+        {
+            MultiEffectVisualizer::setSongtext(ly::Songtext{});
+            leer = bild("leer", LyricsParams{}, false, false, 0);
+        }
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (img.pixel(x, y) != leer.pixel(x, y)) return true;
+        return false;
+    };
+    (void)zeichnet(QImage(1, 1, QImage::Format_RGB32));  // Hintergrund einmal holen
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc(synchron));
+    LyricsParams lp;
+    lp.fontHeight = -28;
+    lp.previewLines = 2;
+    CHECK(zeichnet(bild("01_replace", lp, false, false, 12000)));
+    LyricsParams a = lp;
+    a.blend = 1;
+    CHECK(zeichnet(bild("02_additive", a, false, false, 12000)));
+    a.blend = 2;
+    CHECK(zeichnet(bild("03_5050", a, false, false, 12000)));
+    a.blend = 4;
+    CHECK(zeichnet(bild("04_invert", a, false, false, 12000)));
+    a = lp;
+    a.blendStrength = 50;
+    CHECK(zeichnet(bild("05_staerke50", a, false, false, 12000)));
+    a = lp;
+    a.outline = false;
+    a.blend = 7;
+    CHECK(zeichnet(bild("06_maximum_ohne_kontur", a, false, false, 12000)));
+    a = lp;
+    a.vAlign = 0;
+    a.yShift = 4;
+    a.previewLines = 0;
+    CHECK(zeichnet(bild("07_oben_ohne_vorschau", a, false, false, 12000)));
+    CHECK(zeichnet(bild("08_vor_der_ersten_zeile", lp, false, false, 5000)));
+    CHECK(zeichnet(bild("09_trail_rueckfall", lp, true, false, 13100)));
+    CHECK(zeichnet(bild("10_ebene", lp, false, true, 12000)));
+    a = lp;
+    a.outlineSize = 14;  // Reihen ueberlappen sich
+    CHECK(zeichnet(bild("11_breite_kontur", a, false, false, 12000)));
+
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("MMMM gggg\nIIII jjjj\nThird line\n"));
+    CHECK(zeichnet(bild("12_unsynchron_marke", lp, false, false, 0)));
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88, KE1 (docs/visuals/Karaoke_Ebene_Konzept.md): Songtext ueber jedem Preset
 // als eigene Ebene. Der Kern: die Ebene wird erst beim Present aufgelegt — die
 // Root-Surface (das Feedback des naechsten Frames) bleibt BITGLEICH, ob die

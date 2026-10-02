@@ -94,6 +94,44 @@ Was sich ändert:
   Vollbild je Frame wäre zu teuer, ein Streifen ist ein Bruchteil davon. Der
   Trail verschiebt dann nur das Rechteck.
 
+### Stand LB1 — ✅ gebaut (S90)
+
+- **Rastern:** `zeichneLyricsZeilen` kennt `LyricsReihen` (Alle · Rest ·
+  Laufende). Der Lyrics-Knoten rastert die übrigen Reihen wie bisher als
+  Vollbild und die laufende Zeile als **Streifen** (`GlyphBild`: Textur,
+  Zustandsschlüssel, Rechteck in Bildanteilen) nach `LeafRuntime::lyricsBild`
+  — [0] Füllung bzw. alles, [1] Kontur-Ring.
+- **Auflegen:** der Text-Shader trägt den Platz der Textur (`uImgRect`, ganz =
+  0,0,1,1 — Text- und AVI-Knoten setzen das ganze Bild); in der Ebene stellt
+  beim Present der Viewport das Rechteck (`m_karaokeLagen` statt der zwei
+  festen Texturen).
+- **Übergabe:** in `runLyrics` — wechselt der Index der laufenden Zeile nach
+  vorn und stand ein Bild, tauschen `lyricsBild` und `lyricsBildAlt`
+  (`lyricsBildZeile`, `lyricsAltZeile`). Neuer Titel, Zurückspulen, Zeile
+  ohne Text: keine Übergabe.
+- **Trail:** `legeZeilenbild` in `runLyricsTrail` legt das Bild der gesuchten
+  Zeile auf, verschoben um den Versatz des Trails. Steht der Trail in der
+  Kette vor dem Lyrics-Knoten, nimmt er im Frame des Wechsels das noch
+  laufende Bild. Rückfall auf das Neu-Zeichnen: kein Bild der gesuchten Zeile
+  (Knoten lief nicht, Sprung im Titel), *Own color* (L1 a), oder der Trail
+  will die Kontur getrennt (Mischart ab Subtract oder Stärke unter 100 in
+  einer Kette), das Bild trägt aber Kontur und Füllung in einem.
+- **Geprüft:** Bilder des Knotens vorher gegen nachher, zwölf Szenen
+  (Mischarten, Stärke, ohne Kontur, oben, vor der ersten Zeile, breite Kontur,
+  unsynchron mit Marke, Ebene, Trail im Rückfall): **13/13 bitgleich**
+  (Doppellauf desselben Builds vorher ebenfalls bitgleich) — die Hypothese
+  aus Abschnitt 2 hält für diese Szenen. Neuer Test „der Trail übernimmt das
+  Zeilenbild": halb gesungene Zeile bleibt im Trail halb (Kette, Trail vor
+  dem Knoten, Ebene), Lage = Zeile + Versatz, frischer Visualizer und *Own
+  color* zeichnen neu, Haltezeit gilt. Unit-Tests 813/813; Vergleichslauf
+  Regressionsliste 84/84 bitgleich (`out/f4c/bp30_s90_lb1`); Kontaktbogen
+  angesehen. Werkzeug: `.claude/handover/messung/lb1_schnapp.ps1`,
+  `lb1_vergleich.py`.
+- **Nicht geprüft:** im laufenden Programm; mit Render Scale in der Ebene
+  (Streifen in Fenstergröße, Trail in Kettengröße — nur ohne Render Scale im
+  Test); Rasterzeit (kommt mit LB2); Text- und AVI-Knoten nach der
+  Shader-Änderung nur über die vorhandenen Unit-Tests und den Vergleichslauf.
+
 ### Stufe LB1b — Vorschau-Zeilen gestalten (aus Entscheid L4)
 
 Die Vorschau-Zeilen werden in LB1 ohnehin getrennt gerastert; sie bekommen

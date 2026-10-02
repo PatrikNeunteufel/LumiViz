@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.53.0
+> **Version:** 1.54.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -714,12 +714,20 @@ Lyrics                 die laufende Zeile, wie gewohnt
 | **Lyrics node** | Name des Lyrics-Knotens, dem der Trail folgt; leer = der erste der Kette |
 | **Hold (ms)** | so lange wird die alte Zeile gezeichnet; danach tragen die Effekte sie weg |
 | **X shift / Y shift (%)** | Versatz gegen die Stelle, an der die Zeile stand (negativ = nach oben) |
-| **Own color** / **Color** | eigene Farbe statt der, die die Zeile hatte |
+| **Own color** / **Color** | eigene Farbe statt der, die die Zeile hatte — die Zeile wird dafür einfarbig neu gezeichnet |
 | **Blend** | wie beim Lyrics-Knoten |
 
-Der Trail steht dort, wo der Lyrics-Knoten die Zeile **wirklich gezeichnet**
-hat — auch wenn ein Skript sie bewegt (etwa die Voreinstellungen *Karaoke
-Bounce* und *Flip*). Bei **unsynchronem Text** gibt es keine Zeiten; dort
+Der Trail zeigt **das Bild, das stand**: der Lyrics-Knoten hebt das Bild der
+laufenden Zeile auf und gibt es beim Zeilenwechsel an den Trail weiter. Was
+die Zeile im Augenblick des Wechsels zeigte, weht also weg — Wort für Wort
+Gesungenes in seinen zwei Farben, eine verkleinerte lange Zeile, und die
+Stelle, an der sie stand, auch wenn ein Skript sie bewegt (etwa die
+Voreinstellungen *Karaoke Bounce* und *Flip*). Hat der Lyrics-Knoten die
+Zeile nicht selbst gezeichnet (er ist ausgeschaltet, oder du bist im Titel
+gesprungen), zeichnet der Trail sie aus dem Text neu, ganz in der Farbe der
+Zeile; mit **Own color** tut er das immer. Auf eine **Pause-Zeile** (Zeit
+ohne Text) folgt kein zweiter Trail: die Zeile davor weht einmal weg, wenn
+die Pause beginnt. Bei **unsynchronem Text** gibt es keine Zeiten; dort
 zeichnet der Trail die Zeile, die der Lyrics-Knoten eben verlassen hat, wenn
 dieser mit **Unsynced: beats per line** weiterrückt. Dafür muss der
 Lyrics-Knoten eingeschaltet sein (bei synchronem Text genügt es, dass es ihn
@@ -1452,6 +1460,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.54.0 | 2026-10-02 | Session 90. §11 Lyrics Trail: der Trail zeigt **das Bild, das stand** (Wort-Stand, verkleinerte Zeile, Lage) statt einer neu gezeichneten Zeile; mit *Own color* und ohne laufenden Lyrics-Knoten zeichnet er wie bisher neu; nach einer Pause-Zeile kein zweiter Trail |
 | 1.53.0 | 2026-10-02 | Session 89. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Line** — läuft einmal je Zeilenwechsel, liest `line` und `linecount`; Lage, Größe und Farben folgen dem Skript von dort |
 | 1.52.0 | 2026-10-02 | Session 89. §11 Host Switcher: NEU **Keep group state** (Gruppen merken sich ihren Stand und laufen beim Wiederbetreten weiter), **Reset buffers** und Skriptvariable `clearbuffers` |
 | 1.51.0 | 2026-10-02 | Session 89. §9 NEU **Die Preset-Zeile** in den Panels Effect Chain und Karaoke (laufendes Preset, Favoriten ★, zehn zuletzt benutzte, lädt sofort, Load…/Save/Save As…); Karaoke-Presets an frei wählbarem Ort, **Delete** entfällt, Rückfrage bei ungespeicherter Karaoke-Ebene |

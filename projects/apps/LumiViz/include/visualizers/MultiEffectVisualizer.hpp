@@ -503,6 +503,20 @@ private:
         uint32_t c = 0;   ///< Farbe aus der 64er-Tabelle
     };
 
+    /// S90, LB1: ein gerastertes Glyphen-Bild mit seinem Platz im Bild. Das
+    /// Rechteck steht in Anteilen der Bildgroesse, y von oben — ein Streifen
+    /// statt des ganzen Bilds, damit haeufiges Neu-Rastern billig bleibt.
+    struct GlyphBild
+    {
+        unsigned int tex = 0;  ///< GL RGBA (in gibLeafLaufzeitFrei geloescht)
+        std::string stand;     ///< Zustandsschluessel hinter der Textur
+        float x = 0.0f;
+        float y = 0.0f;
+        float b = 1.0f;
+        float h = 1.0f;
+        bool da = false;       ///< traegt das Bild der laufenden Zeile dieses Frames
+    };
+
     /** Per-leaf render-thread state (beat counters, scripts), keyed by nodeId. */
     struct LeafRuntime
     {
@@ -568,6 +582,15 @@ private:
         /// -1 = noch keine — der erste Frame gilt als Zeilenwechsel
         int lyricsSkriptZeile = -1;
         float lyricsWechselZeit = 0.0f;
+        /// S90, LB1 (Zeilen-Puffer): das Bild der LAUFENDEN Zeile, getrennt
+        /// von den uebrigen Reihen gerastert — [0] Fuellung bzw. alles,
+        /// [1] der Kontur-Ring (nur bei getrennter Kontur). Wechselt die Zeile
+        /// nach vorn, wandert es nach `lyricsBildAlt` (Tausch der Texturen,
+        /// kein neues Rastern) — das legt der Lyrics Trail auf.
+        GlyphBild lyricsBild[2];
+        GlyphBild lyricsBildAlt[2];
+        int lyricsBildZeile = -1;  ///< Index der Zeile in `lyricsBild`; -1 = keine
+        int lyricsAltZeile = -1;   ///< Index der Zeile in `lyricsBildAlt`; -1 = keine
 
         // AVI (r_avi): VfW stream handles (opaque void* — vfw.h stays in the .cpp)
         void* aviFile = nullptr;       ///< PAVIFILE
@@ -1128,11 +1151,17 @@ private:
         std::string hinten;
         std::uint32_t farbe = 0;
         bool klein = false;
+        bool laufend = false;  ///< die laufende Zeile (S90, LB1: eigenes Zeilenbild)
     };
+    /// Welche Reihen ein Aufruf rastert und auflegt (S90, LB1). Die Lage
+    /// rechnet immer ueber ALLE Reihen — jede steht, wo sie mit `Alle` stuende.
+    enum class LyricsReihen { Alle, Rest, Laufende };
     /// Reihen rastern (nur bei geaendertem Zustand) und ueber das Bild legen —
-    /// gemeinsam fuer Lyrics und Lyrics Trail (S87).
+    /// gemeinsam fuer Lyrics und Lyrics Trail (S87). `Laufende` rastert einen
+    /// Streifen nach `rt.lyricsBild`.
     void zeichneLyricsZeilen(LeafRuntime& rt, const lumi::multieffect::LyricsParams& params,
-                             const std::vector<LyricsAnzeige>& zeilen);
+                             const std::vector<LyricsAnzeige>& zeilen,
+                             LyricsReihen reihen = LyricsReihen::Alle);
     /// Lyrics Trail (S87): die eben beendete Zeile an dieser Stelle der Kette
     /// noch einmal zeichnen; Schrift und Lage vom Lyrics-Knoten `source`.
     void runLyricsTrail(const lumi::multieffect::ChainNode& node,
@@ -1141,7 +1170,10 @@ private:
         const std::string& name) const;
     /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
     /// Pass wie im Text-Knoten). blend: 0 ersetzen, 1 additiv, 2 50/50.
-    void composeGlyphLayer(unsigned int texture, int blend, int staerkeProzent = 100);
+    /// `x/y/b/h` (S90): Platz der Textur im Bild in Anteilen, y von oben —
+    /// die Vorgabe ist das ganze Bild.
+    void composeGlyphLayer(unsigned int texture, int blend, int staerkeProzent = 100,
+                           float x = 0.0f, float y = 0.0f, float b = 1.0f, float h = 1.0f);
     void runAvi(const lumi::multieffect::ChainNode& node,
                 const lumi::multieffect::AviParams& params);
     /// Release the VfW handles of an AVI node (safe on empty runtimes).
@@ -1625,8 +1657,15 @@ private:
     /// fuer die Karaoke-Ebene mit Mischart, Fuellung und Kontur-Ring getrennt.
     enum class GlyphTeil { Alles, NurFuellung, NurKontur };
     GlyphTeil m_glyphTeil = GlyphTeil::Alles;
-    unsigned int m_karaokeKonturTex = 0; ///< Kontur-Ring der Zeile (nur bei Mischart ungleich Normal)
-    unsigned int m_karaokeGlyphTex = 0;  ///< Glyphen der laufenden Zeile (0 = keine)
+    /// Glyphen-Bilder der Ebene fuer diesen Frame, in Auflege-Reihenfolge
+    /// (S90, LB1: uebrige Reihen und laufende Zeile getrennt, je mit Platz).
+    struct KaraokeLage
+    {
+        unsigned int tex = 0;
+        bool kontur = false;  ///< Kontur-Ring: liegt immer normal und voll
+        float x = 0.0f, y = 0.0f, b = 1.0f, h = 1.0f;
+    };
+    std::vector<KaraokeLage> m_karaokeLagen;
     unsigned int m_karaokeTrailTex = 0;  ///< Bild der Trail-Liste (0 = keins)
     /// Mischart (0..8) und Staerke (0..100) fuers Auflegen — je Frame aus den
     /// Knoten der Ebene gelesen (Lyrics bzw. Lyrics Trail, nach deren Skript).
