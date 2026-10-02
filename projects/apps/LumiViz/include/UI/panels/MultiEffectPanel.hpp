@@ -42,6 +42,7 @@ class QScrollArea;
 class QLabel;
 class QMutex;
 class QNetworkAccessManager;
+class QTimer;
 class MultiEffectVisualizer;
 namespace lumi::ui {
 class EffectPaletteWindow;
@@ -125,7 +126,25 @@ class MultiEffectPanel : public PanelBase
 
 public:
     explicit MultiEffectPanel(ServiceContainer& services, QWidget* parent = nullptr);
+    /// Eingeschraenkter Modus fuer das Karaoke-Panel (KE2, Entscheid K2 a): an
+    /// die Karaoke-Ebene gebunden, Baum und Werkzeugleiste versteckt, der
+    /// Editor steht fest auf dem Lyrics-Knoten der Ebene. Jeder Edit wird kurz
+    /// danach in die Ablage der Ebene geschrieben.
+    struct KaraokeLyrics {};
+    MultiEffectPanel(ServiceContainer& services, KaraokeLyrics, QWidget* parent = nullptr);
     ~MultiEffectPanel() override = default;
+
+    // --- Karaoke-Ebene als Ganzes (nur im eingeschraenkten Modus sinnvoll) ---
+    /// Karaoke-Preset laden; false = unlesbar oder keine Karaoke-Datei (die
+    /// Ebene bleibt dann, wie sie ist).
+    bool karaokeLaden(const QString& datei, QStringList* report = nullptr);
+    /// Den Stand der Ebene in `datei` schreiben.
+    bool karaokeSpeichern(const QString& datei);
+    /// Zurueck auf das mitgelieferte Aussehen.
+    void karaokeVorgabe();
+    /// Die Ebene JETZT in ihre Ablage schreiben (sonst kurz nach jedem Edit).
+    void speichereKaraokeJetzt();
+    [[nodiscard]] bool hatHost() const { return m_host != nullptr; }
 
     /// Das Panel bringt seine Scrollareas selbst mit (aussen waagrecht, Baum
     /// und Editor senkrecht) — keine zweite von Qt-ADS darum (S78).
@@ -143,6 +162,13 @@ private:
     /// Den gebundenen Baum neu uebersetzen (unter dem Render-Mutex).
     void uebersetze();
     Baum m_baum = Baum::Kette;
+    /// Eingeschraenkter Modus: der Knoten, auf dem der Editor fest steht
+    /// (leer = normaler Betrieb mit Baum).
+    QList<int> m_festerPfad;
+    /// Nach jedem Neuaufbau des Baums: im eingeschraenkten Modus den festen
+    /// Knoten wieder in den Editor holen.
+    void zeigeFestenKnoten();
+    QTimer* m_karaokeSpeichern = nullptr;  ///< sammelt Edits vor dem Schreiben
 
     void setupUI();
     void connectToActiveVisualizer();

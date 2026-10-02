@@ -48,6 +48,7 @@
 #include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/panels/TagViewPanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
+#include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/panels/ShadertoyBrowserPanel.hpp"
 #include "UI/panels/ConfigPanel.hpp"
@@ -174,6 +175,24 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<LyricsSyncPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // KARAOKE PANEL (S89, KE2) — Songtext ueber jedem Preset: Schalter,
+    // Karaoke-Presets, Aussehen der Zeile
+    // =========================================================================
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "karaoke",          // id
+            "Karaoke",          // title
+            247,                // order (nach Lyrics Sync)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<KaraokePanel>(svc);
         },
         false);
 

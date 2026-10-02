@@ -193,8 +193,23 @@ Undo-Frage: das Ketten-Panel hängt gar nicht am CommandBus (der Kommentar
 „undo-fähig" bei der Preset-Zeile stimmt nicht) — für den zweiten Baum ist
 nichts zuzuordnen. Geprüft: UI-Test (Baum zeigt Lyrics + Trail-Liste,
 Umbenennen trifft die Ebene und nicht die Kette, zurück steht die Kette),
-794/794. **Offen:** 3 Karaoke-Panel, 4 Mischarten in die Knoten
-(Stärke-Feld), 5 Doku.
+794/794.
+
+**Schritt 3 ✅ Karaoke-Panel** (`KaraokePanel`, View → Panels → Karaoke):
+Hauptschalter **Karaoke on** (aus Settings → Audio hierher gezogen, QSettings
+`karaoke/enabled` unverändert), Zeile **Karaoke preset** (Load, Save…, Delete,
+Default; Dateien `<Name>.lvkar` im Ordner der Ablage, `current` ist
+reserviert), Reiter **Lyrics** = `MultiEffectPanel` im eingeschränkten Modus
+(Baum und Werkzeugleiste versteckt, Editor fest auf dem Lyrics-Knoten der
+Ebene). Jeder Edit wird 300 ms später in die Ablage geschrieben (außerhalb des
+Render-Mutex; beim Beenden der App sofort). Geprüft: UI-Test (Schalter, Feld
+`yShift` ändert die Ebene, Ablage wird geschrieben und von einer neuen Instanz
+geladen, Preset speichern/laden/löschen, reservierter und leerer Name),
+795/795; Schnappschuss des Panels angesehen. **Nicht geprüft:** im laufenden
+Programm (Andocken, Dialoge Save…/Delete, Songtext-Tabelle mit echtem Titel).
+**Offen in KE2:** `.lvkar` im Effect Browser (Icon, Doppelklick lädt in die
+Ebene) · 4 Mischarten in die Knoten (Stärke-Feld) — die beiden Mischart-Zeilen
+stehen bis dahin weiter unter Settings → Audio.
 
 ## 8. Risiken
 

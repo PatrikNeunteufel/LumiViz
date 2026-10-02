@@ -23,6 +23,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/TagViewPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/LyricsSyncPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/KaraokePanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SettingsPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.cpp"

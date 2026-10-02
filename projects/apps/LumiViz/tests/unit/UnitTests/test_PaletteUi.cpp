@@ -29,6 +29,7 @@
 #include "UI/panels/EffectPalette.hpp"
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
 #include "audio/SongtextQuelle.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
@@ -647,6 +648,97 @@ TEST_CASE("PaletteUi Panel S89: an den Karaoke-Baum gebunden trifft ein Edit die
     p.panel->setBaum(MultiEffectPanel::Baum::Kette);
     QCoreApplication::processEvents();
     CHECK(p.tree->topLevelItemCount() == 3);
+}
+
+// S89, KE2 Schritt 3: das Karaoke-Panel — Hauptschalter, Karaoke-Presets
+// (.lvkar) und Reiter „Lyrics" mit dem Editor des Lyrics-Knotens der Ebene.
+// Jeder Edit landet in der Ablage; ein Preset stellt den Stand wieder her.
+TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets")
+{
+    UiUmgebung env;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString ablage = tmp.filePath(QStringLiteral("karaoke/current.lvkar"));
+    MultiEffectVisualizer::setKaraokeAblage(ablage);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    using lumi::multieffect::LyricsParams;
+    {
+        ServiceContainer services;
+        services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+        MultiEffectVisualizer vis;
+        QMutex mutex;
+        KaraokePanel panel(services);
+        panel.resize(520, 1400);
+        zeigen(panel);
+        services.tryResolve<IEventBus>()->publish(VisualizerChangedEvent(
+            "multieffect", "Multi Effect", static_cast<IVisualizer*>(&vis), &mutex));
+        QCoreApplication::processEvents();
+        QCoreApplication::processEvents();
+        const auto lyrics = [&]() -> const LyricsParams& {
+            return std::get<LyricsParams>(vis.karaokeKette().children[0].params);
+        };
+
+        // --- Hauptschalter: schaltet die Ebene und merkt es sich
+        auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("karaokeSchalter"));
+        REQUIRE(schalter != nullptr);
+        CHECK_FALSE(schalter->isChecked());
+        schalter->setChecked(true);
+        CHECK(MultiEffectVisualizer::karaokeEbene());
+        CHECK(QSettings().value(QStringLiteral("karaoke/enabled")).toBool());
+
+        // --- Reiter 1: der Editor steht auf dem Lyrics-Knoten der Ebene, ohne Baum
+        auto* editor = panel.findChild<MultiEffectPanel*>();
+        REQUIRE(editor != nullptr);
+        CHECK(editor->baum() == MultiEffectPanel::Baum::Karaoke);
+        for (QTreeWidget* t : editor->findChildren<QTreeWidget*>())
+            if (dynamic_cast<ChainTreeWidget*>(t) != nullptr) CHECK_FALSE(t->isVisible());
+        auto* yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
+        REQUIRE(yShift != nullptr);  // ein Feld des Lyrics-Knotens
+        CHECK(editor->findChild<QComboBox*>(QStringLiteral("knotenPreset")) != nullptr);
+        schnappschuss(panel, "S89_karaoke_panel");
+
+        // --- ein Edit trifft die Ebene und landet in der Ablage
+        const int vorgabe = lyrics().yShift;
+        yShift->setValue(vorgabe - 20);
+        QCoreApplication::processEvents();
+        CHECK(lyrics().yShift == vorgabe - 20);
+        editor->speichereKaraokeJetzt();
+        REQUIRE(QFile::exists(ablage));
+        {
+            MultiEffectVisualizer neu;  // laedt die Ablage im Konstruktor
+            CHECK(std::get<LyricsParams>(neu.karaokeKette().children[0].params).yShift ==
+                  vorgabe - 20);
+        }
+
+        // --- Karaoke-Presets: speichern, aendern, laden stellt den Stand her
+        CHECK(panel.presetNamen().isEmpty());  // current.lvkar zaehlt nicht
+        CHECK_FALSE(panel.speicherePreset(QStringLiteral("current")));  // reserviert
+        CHECK_FALSE(panel.speicherePreset(QStringLiteral("   ")));
+        REQUIRE(panel.speicherePreset(QStringLiteral("Abend")));
+        CHECK(panel.presetNamen() == QStringList{QStringLiteral("Abend")});
+        CHECK(QFile::exists(tmp.filePath(QStringLiteral("karaoke/Abend.lvkar"))));
+        auto* combo = panel.findChild<QComboBox*>(QStringLiteral("karaokePresets"));
+        REQUIRE(combo != nullptr);
+        CHECK(combo->currentText() == QStringLiteral("Abend"));
+
+        panel.setzeVorgabe();
+        QCoreApplication::processEvents();
+        CHECK(lyrics().yShift == vorgabe);
+        REQUIRE(panel.ladePreset(QStringLiteral("Abend")));
+        QCoreApplication::processEvents();
+        CHECK(lyrics().yShift == vorgabe - 20);
+        // der Editor zeigt nach dem Laden wieder den Lyrics-Knoten, mit dem neuen Wert
+        yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
+        REQUIRE(yShift != nullptr);
+        CHECK(yShift->value() == vorgabe - 20);
+
+        CHECK_FALSE(panel.ladePreset(QStringLiteral("gibtsnicht")));
+        REQUIRE(panel.loeschePreset(QStringLiteral("Abend")));
+        CHECK(panel.presetNamen().isEmpty());
+        CHECK(QFile::exists(ablage));  // die laufende Ebene bleibt
+    }
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setKaraokeAblage(QString());
 }
 
 TEST_CASE("PaletteUi Panel A14: Drop auf die Leerflaeche haengt ans Ende der Kette")

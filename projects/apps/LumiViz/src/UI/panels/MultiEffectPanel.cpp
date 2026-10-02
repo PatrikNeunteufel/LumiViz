@@ -1107,6 +1107,84 @@ MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, QWidget* parent)
     connectToActiveVisualizer();
 }
 
+MultiEffectPanel::MultiEffectPanel(ServiceContainer& services, KaraokeLyrics, QWidget* parent)
+    : PanelBase(services, "karaoke_lyrics_editor", tr("Karaoke Lyrics"), parent)
+{
+    m_baum = Baum::Karaoke;
+    m_festerPfad = {0};  // Kind 0 der Ebene = ihr Lyrics-Knoten
+    setupUI();
+    // Kein Baum, keine Werkzeugleiste: die Form der Ebene steht fest
+    for (QWidget* w : {static_cast<QWidget*>(m_addButton), static_cast<QWidget*>(m_removeButton),
+                       static_cast<QWidget*>(m_cloneButton), static_cast<QWidget*>(m_upButton),
+                       static_cast<QWidget*>(m_downButton), static_cast<QWidget*>(m_tree)})
+        w->hide();
+    m_hint->setText(tr("The karaoke layer works with the \"Multi Effect\" visualizer."));
+    // Edits sammeln und kurz danach in die Ablage schreiben — nicht unter dem
+    // Render-Mutex und nicht bei jedem Reglerschritt
+    m_karaokeSpeichern = new QTimer(this);
+    m_karaokeSpeichern->setSingleShot(true);
+    m_karaokeSpeichern->setInterval(300);
+    connect(m_karaokeSpeichern, &QTimer::timeout, this, &MultiEffectPanel::speichereKaraokeJetzt);
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+        if (m_karaokeSpeichern->isActive()) speichereKaraokeJetzt();
+    });
+    connectToActiveVisualizer();
+}
+
+void MultiEffectPanel::zeigeFestenKnoten()
+{
+    if (m_festerPfad.isEmpty() || m_host == nullptr) return;
+    selectByPath(m_festerPfad);  // loest den Aufbau des Editors aus
+}
+
+void MultiEffectPanel::speichereKaraokeJetzt()
+{
+    if (m_karaokeSpeichern != nullptr) m_karaokeSpeichern->stop();
+    const QString datei = MultiEffectVisualizer::karaokeAblage();
+    if (!datei.isEmpty()) (void)karaokeSpeichern(datei);
+}
+
+bool MultiEffectPanel::karaokeSpeichern(const QString& datei)
+{
+    if (m_host == nullptr || m_mutex == nullptr) return false;
+    ChainNode kopie;
+    {
+        QMutexLocker lock(m_mutex);
+        kopie = m_host->karaokeKette();
+    }
+    QDir().mkpath(QFileInfo(datei).absolutePath());
+    return saveChainToFile(kopie, datei);  // ausserhalb des Render-Mutex
+}
+
+bool MultiEffectPanel::karaokeLaden(const QString& datei, QStringList* report)
+{
+    if (m_host == nullptr || m_mutex == nullptr) return false;
+    {
+        QMutexLocker lock(m_mutex);
+        if (!m_host->ladeKaraokeDatei(datei, report)) return false;
+    }
+    m_presetMarken.clear();
+    rebuildTree();
+    clearPropertyEditor();
+    zeigeFestenKnoten();
+    speichereKaraokeJetzt();
+    return true;
+}
+
+void MultiEffectPanel::karaokeVorgabe()
+{
+    if (m_host == nullptr || m_mutex == nullptr) return;
+    {
+        QMutexLocker lock(m_mutex);
+        m_host->setzeKaraokeVorgabe();
+    }
+    m_presetMarken.clear();
+    rebuildTree();
+    clearPropertyEditor();
+    zeigeFestenKnoten();
+    speichereKaraokeJetzt();
+}
+
 void MultiEffectPanel::setupUI()
 {
     // Aeussere Scrollarea (S78, Vorgabe Patrik): die Felder schrumpfen mit dem
@@ -1273,6 +1351,8 @@ void MultiEffectPanel::connectToActiveVisualizer()
         m_eventSubscriptions.push_back(bus->subscribeScoped<EffectChainChangedEvent>(
             [this](const EffectChainChangedEvent&) {
                 m_kameraDialogGezeigt = false;  // neue Kette darf neu fragen (S70)
+                // die Karaoke-Ebene aendert sich durch einen Kettenwechsel nicht
+                if (!m_festerPfad.isEmpty()) return;
                 rebuildTree();
                 clearPropertyEditor();
             }));
@@ -1297,6 +1377,7 @@ void MultiEffectPanel::setHost(MultiEffectVisualizer* host, QMutex* mutex)
     m_downButton->setEnabled(active);
     rebuildTree();
     clearPropertyEditor();
+    zeigeFestenKnoten();
 }
 
 // =============================================================================
@@ -1658,7 +1739,10 @@ ChainNode& MultiEffectPanel::wurzel()
 void MultiEffectPanel::uebersetze()
 {
     if (m_baum == Baum::Karaoke)
+    {
         (void)m_host->recompileKaraoke();
+        if (m_karaokeSpeichern != nullptr) m_karaokeSpeichern->start();
+    }
     else
         (void)m_host->recompileChain();
 }
@@ -1778,6 +1862,7 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
     }
     rebuildTree(/*aufklappZustandBehalten=*/true);
     clearPropertyEditor();
+    zeigeFestenKnoten();
 }
 
 void MultiEffectPanel::openPalette()

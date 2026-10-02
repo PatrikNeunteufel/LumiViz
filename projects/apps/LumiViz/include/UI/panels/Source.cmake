@@ -28,6 +28,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/PlayerPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/TagViewPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/LyricsSyncPanel.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/KaraokePanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PlaylistPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/SettingsPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/VisualSelectPanel.hpp"

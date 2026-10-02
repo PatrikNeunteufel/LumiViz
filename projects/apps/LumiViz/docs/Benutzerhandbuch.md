@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.44.0
+> **Version:** 1.45.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -678,8 +678,8 @@ Feedback **scale** 33) lässt die Zeile zu einem Strich schrumpfen, statt sie
 wegzutragen — 35 und mehr wirkt. Ein fertiges Beispiel steht in
 `asset/effectchain/20261001.mix.lvfx2` (Liste „Lyrics Trail List").
 
-**Karaoke-Ebene: Songtext über jedem Preset.** Mit **Settings → Audio →
-Karaoke layer** zeigt LumiViz den Songtext des laufenden Titels über **allem**,
+**Karaoke-Ebene: Songtext über jedem Preset.** Mit **Karaoke on** im Panel
+**Karaoke** (View → Panels) zeigt LumiViz den Songtext des laufenden Titels über **allem**,
 was als Kette läuft — auch über importierten AVS- und MilkDrop-Presets, ohne
 dass die Kette einen Lyrics-Knoten braucht. Die Ebene liegt über dem fertigen
 Bild: sie wird von den Effekten des Presets nicht mitgezogen oder verwischt.
@@ -687,14 +687,24 @@ Sie zeichnet die laufende Zeile unten mittig mit einer Vorschau-Zeile, dazu
 den Trail (die eben beendete Zeile weht nach hinten weg). Hat das laufende
 Preset selbst einen **eingeschalteten** Lyrics-Knoten, **gewinnt das Preset**:
 es zeigt den Text auf seine Art, und die Ebene tritt zurück — der Text steht
-nie doppelt da. Schrift und Lage der Ebene sind vorerst fest; ein eigenes
-Karaoke-Panel mit allen Einstellungen folgt. In Screenshots aus der App ist
-die Ebene enthalten. Rechnet ein Preset mit **Render Scale** in kleinerer
+nie doppelt da. In Screenshots aus der App ist die Ebene enthalten.
+
+Das **Aussehen der Zeile** stellst du im Karaoke-Panel im Reiter **Lyrics**
+ein — dieselben Felder wie am Lyrics-Knoten einer Kette (Schrift, Farben,
+Lage, Vorschau-Zeilen, Kontur, Skripte, die Zeile **Preset** mit den
+Lyrics-Voreinstellungen und die Songtext-Tabelle). Jede Änderung gilt sofort
+und bleibt über den Neustart erhalten. Den Stand der ganzen Ebene (Zeile und
+Trail) hältst du als **Karaoke-Preset** fest: **Save…** legt ihn unter einem
+Namen ab, **Load** holt ihn zurück, **Delete** entfernt ihn, **Default** stellt
+das mitgelieferte Aussehen wieder her. Die Dateien (`.lvkar`) liegen im
+Benutzerordner unter `karaoke`. Der Trail hat noch keine eigenen Regler im
+Panel (folgt). Rechnet ein Preset mit **Render Scale** in kleinerer
 Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
 Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
 Presets.
 
-Wie sich die Ebene mit dem Bild dahinter **mischt**, stellst du daneben ein —
+Wie sich die Ebene mit dem Bild dahinter **mischt**, stellst du vorerst unter
+**Settings → Audio** ein —
 getrennt für die laufende Zeile (**Karaoke line blend**) und den Trail
 (**Karaoke trail blend**), je mit einer **Stärke** von 0–100 %:
 
@@ -1355,6 +1365,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.45.0 | 2026-10-02 | Session 89. §11 Lyrics: NEU Panel **Karaoke** — Schalter *Karaoke on* (bisher Settings → Audio), Reiter *Lyrics* mit dem Aussehen der Zeile, **Karaoke-Presets** (`.lvkar`: Save…, Load, Delete, Default) |
 | 1.44.0 | 2026-10-02 | Session 89. §11 Lyrics: die Zeile der Karaoke-Ebene bleibt mit Render Scale scharf (Fensterauflösung) |
 | 1.43.0 | 2026-10-02 | Session 88. §2 NEU **Resume playback** (Player-Panel und Settings → Audio): nach dem Neustart dort weiterspielen. §11 Lyrics / Lyrics Trail: Feld **Blend** mit neun Mischarten (neu Subtract, Invert, XOR, Multiply, Maximum, Minimum) |
 | 1.42.0 | 2026-10-02 | Session 88. §11 Karaoke-Ebene: NEU **Mischarten** je Zeile und Trail (Normal, Additive, 50/50, Subtract, Invert, XOR, Multiply, Maximum, Minimum) mit Stärke; die Kontur bleibt normal |

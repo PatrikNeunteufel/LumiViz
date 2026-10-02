@@ -499,23 +499,9 @@ QWidget* SettingsPanel::createAudioTab()
         });
         layout->addRow(tr("Lyrics not found:"), vergessen);
 
-        // S88 (KE1): Karaoke-Ebene — der Schalter zieht mit KE2 ins Karaoke-Panel
-        auto* karaoke = new QCheckBox(tr("Enable"), widget);
-        karaoke->setObjectName(QStringLiteral("karaokeLayer"));
-        karaoke->setChecked(
-            QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
-        karaoke->setToolTip(
-            tr("Shows the lyrics of the playing track on top of every preset, without a "
-               "Lyrics node in the chain. If the preset has its own enabled Lyrics node, the "
-               "preset wins and the layer steps back."));
-        connect(karaoke, &QCheckBox::toggled, this, [](bool an) {
-            QSettings().setValue(QStringLiteral("karaoke/enabled"), an);
-            MultiEffectVisualizer::setKaraokeEbene(an);
-        });
-        layout->addRow(tr("Karaoke layer:"), karaoke);
-
+        // Der Schalter der Karaoke-Ebene steht seit S89 (KE2) im Karaoke-Panel.
         // S88 (K6, Entscheid Patrik a): Mischart je Teil der Ebene + Staerke.
-        // Vorab hier; mit KE2 ziehen die Felder ins Karaoke-Panel.
+        // Vorab hier; sie ziehen in die Knoten der Ebene (KE2 Schritt 4).
         const QStringList arten{tr("Normal"),   tr("Additive"), tr("50/50"),
                                 tr("Subtract"), tr("Invert"),   tr("XOR"),
                                 tr("Multiply"), tr("Maximum"),  tr("Minimum")};
