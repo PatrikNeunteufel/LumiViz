@@ -35,6 +35,7 @@
 #include "UI/panels/PlayerPanel.hpp"
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/TagViewPanel.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -2231,6 +2232,45 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S88 (Entscheid Patrik): `.lvfx2` (Preset-Stapel) traegt ein eigenes Icon —
+// im Effect Browser auf einen Blick von einem Einzel-Preset zu unterscheiden.
+TEST_CASE("PaletteUi S88: .lvfx2 hat ein eigenes Icon, .lvfx behaelt das der Familie")
+{
+    UiUmgebung env;
+    using lumi::ui::PresetIconKind;
+    using lumi::ui::presetTypeIcon;
+    using lumi::ui::presetTypeIconForSuffix;
+    REQUIRE_FALSE(lumi::ui::presetIconDir().isEmpty());
+    // Die Icons selbst sind prozessweite Statics — in diesem Testlauf womoeglich
+    // angelegt, bevor es eine QGuiApplication gab (dann leer). Geprueft wird
+    // deshalb die ZUORDNUNG (welches Objekt) und die Dateien dahinter.
+    const QIcon* einzel = &presetTypeIconForSuffix(QStringLiteral("lvfx"));
+    const QIcon* stapel = &presetTypeIconForSuffix(QStringLiteral("LVFX2"));  // Schreibweise egal
+    CHECK(stapel != einzel);
+    CHECK(einzel == &presetTypeIcon(PresetIconKind::Native));
+    CHECK(stapel == &presetTypeIcon(PresetIconKind::NativeStapel));
+    // die anderen Formate bleiben, was sie waren
+    CHECK(&presetTypeIconForSuffix(QStringLiteral("milk")) ==
+          &presetTypeIcon(PresetIconKind::MilkDrop));
+    CHECK(&presetTypeIconForSuffix(QStringLiteral("avs")) == &presetTypeIcon(PresetIconKind::Avs));
+
+    // die Datei liegt da, ist ein ICO und eine andere als das Einzel-Icon. (Das
+    // Bild selbst laesst sich hier nicht pruefen: in diesem Testlauf liefert
+    // QIcon(<.ico>).pixmap() ein leeres Bild, Ursache nicht geklaert — ausserhalb
+    // liest Qt die Datei, geprueft mit QImageReader am 2026-10-02.)
+    const QString ordner = lumi::ui::presetIconDir();
+    const auto bytes = [&ordner](const char* name) {
+        QFile f(ordner + QLatin1Char('/') + QLatin1String(name));
+        return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+    };
+    const QByteArray dateiStapel = bytes("lumiviz_lvfx2.ico");
+    const QByteArray dateiEinzel = bytes("lumiviz.ico");
+    REQUIRE(dateiStapel.size() > 1000);
+    REQUIRE(dateiEinzel.size() > 1000);
+    CHECK(dateiStapel.startsWith(QByteArray::fromHex("00000100")));  // ICO-Kopf
+    CHECK(dateiStapel != dateiEinzel);
 }
 
 // S88: Lyrics Sync kannte kein Rueckgaengig — ein verklopfter Einsatz liess

@@ -2238,7 +2238,12 @@ Idee Preset-Warmup/Pre-Roll.
     Switcher) — möglich, nicht empfohlen. **Entscheid Patrik 1a (S88):** die
     Endung bleibt, wie sie ist (`.lvfx2` = Kette mit Host-Gruppe, auch ohne
     Switcher), bekommt ihr eigenes Icon; gewarnt wird nur, wenn die Datei
-    wirklich einen Host Switcher enthält.
+    wirklich einen Host Switcher enthält. **✅ Icon gebaut (S88):**
+    `lumiviz_lvfx2.ico` („Stapel", Wahl Patrik aus drei Entwürfen), der
+    Effect Browser zeigt es für `.lvfx2` (`PresetIconKind::NativeStapel`).
+    Die Entwürfe „Marke" und „Fächer" liegen als Reserve daneben; Ideen
+    (Marke für Knoten-Voreinstellungen, Fächer für eine Timeline-Datei) im
+    README der Icons. **Sichttest offen (Patrik):** Icon im Effect Browser.
   - **Karaoke in der Timeline:** zuschaltbar, geschaltet etwa wie die Liste
     in `20261001.mix.lvfx2`, gesteuert über ein neues **Karaoke-Panel** mit
     zwei Reitern — (1) das Lyrics-Modul, (2) „Lyrics Trail": im Prinzip die

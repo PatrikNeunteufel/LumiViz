@@ -32,7 +32,10 @@ enum class PresetIconKind
 {
     Avs,
     MilkDrop,
-    Native
+    Native,
+    /// S88 (Entscheid Patrik): `.lvfx2` = Preset-Stapel (Kette mit Host-Gruppe)
+    /// — eigenes Icon „Stapel" (`lumiviz_lvfx2.ico`), sonst wie Native.
+    NativeStapel
 };
 
 /// Icon-Verzeichnis (asset/img/logo/icons) — leer, wenn nicht gefunden.
@@ -59,10 +62,16 @@ inline const QIcon& presetTypeIcon(PresetIconKind kind)
     static const QIcon kAvs(presetIconDir() + QStringLiteral("/avs.ico"));
     static const QIcon kMilkDrop(presetIconDir() + QStringLiteral("/milkdrop.ico"));
     static const QIcon kNative(presetIconDir() + QStringLiteral("/lumiviz.ico"));
+    // fehlt die Stapel-Datei (aelterer Asset-Stand), gilt das Icon der Familie
+    static const QIcon kStapel(
+        QFileInfo::exists(presetIconDir() + QStringLiteral("/lumiviz_lvfx2.ico"))
+            ? presetIconDir() + QStringLiteral("/lumiviz_lvfx2.ico")
+            : presetIconDir() + QStringLiteral("/lumiviz.ico"));
     switch (kind)
     {
         case PresetIconKind::Avs: return kAvs;
         case PresetIconKind::MilkDrop: return kMilkDrop;
+        case PresetIconKind::NativeStapel: return kStapel;
         default: return kNative;
     }
 }
@@ -73,8 +82,9 @@ inline const QIcon& presetTypeIconForSuffix(const QString& suffix)
 {
     if (suffix.compare(QStringLiteral("milk"), Qt::CaseInsensitive) == 0)
         return presetTypeIcon(PresetIconKind::MilkDrop);
-    if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0 ||
-        suffix.compare(QStringLiteral("lvfx2"), Qt::CaseInsensitive) == 0)
+    if (suffix.compare(QStringLiteral("lvfx2"), Qt::CaseInsensitive) == 0)
+        return presetTypeIcon(PresetIconKind::NativeStapel);
+    if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0)
         return presetTypeIcon(PresetIconKind::Native);
     return presetTypeIcon(PresetIconKind::Avs);
 }

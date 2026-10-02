@@ -6,7 +6,10 @@ Windows).
 
 | Endung(en) | Icon | Quelle | in der App benutzt |
 |---|---|---|---|
-| `.lvfx`, `.lvfx2` | `lumiviz.ico` | Handarbeit | Effect Browser (LumiViz-Presets) |
+| `.lvfx` (Einzel-Preset) | `lumiviz.ico` | Handarbeit | Effect Browser (LumiViz-Presets) |
+| `.lvfx2` (Preset-Stapel: Kette mit Host-Gruppe) | `lumiviz_lvfx2.ico` „Stapel" | erzeugt aus `lumiviz.ico` | Effect Browser |
+| — (Reserve) | `lumiviz_marke.ico` „Marke" | erzeugt aus `lumiviz.ico` | noch nicht |
+| — (Reserve) | `lumiviz_faecher.ico` „Fächer" | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.avs` | `avs.ico` | Handarbeit | Effect Browser (AVS-Presets) |
 | `.milk`, `.milk2` | `milkdrop.ico` | Handarbeit | Effect Browser (MilkDrop-Presets) |
 | `.mp3` | `audio_mp3.svg` / `.ico` | erzeugt | Audio Browser |
@@ -17,7 +20,8 @@ Windows).
 | übrige Audioformate | `audio.svg` / `.ico` | erzeugt | Audio Browser |
 | `.lrc` (Songtext) | `lyrics_lrc.svg` / `.ico` | erzeugt | noch nicht |
 
-Für die drei von Hand gezeichneten Icons gibt es kein SVG.
+Für die drei von Hand gezeichneten Icons gibt es kein SVG; die aus
+`lumiviz.ico` abgeleiteten entstehen aus dessen Pixelbild (s. u.).
 
 ## ICO-Dateien neu bauen
 
@@ -28,6 +32,33 @@ python asset/img/logo/icons/build_icons.py
 Braucht ein normales Python mit PySide6 und Pillow. Das Skript erzeugt
 `lyrics_lrc.svg` und legt zu jeder `*.svg` die gleichnamige `.ico` ab; die drei
 Handarbeit-Icons fasst es nicht an.
+
+## Aus `lumiviz.ico` abgeleitete Icons (Session 88)
+
+```
+python asset/img/logo/icons/build_lvfx2_icons.py
+```
+
+Braucht ein normales Python mit Pillow. Das Skript liest `lumiviz.ico` und
+schreibt drei `.ico` (16–256 px):
+
+- **Stapel** (`lumiviz_lvfx2.ico`): das Icon vorn, zwei abgedunkelte Kopien
+  versetzt dahinter — das Icon für `.lvfx2` (Entscheid Patrik S88: gewählt,
+  weil das vordere Icon auch in 32 px noch als LumiViz zu erkennen ist).
+- **Marke** (`lumiviz_marke.ico`): das Icon ganz, unten rechts eine runde
+  Marke mit drei Ebenen in den Logofarben.
+- **Fächer** (`lumiviz_faecher.ico`): drei gleich große Icons diagonal
+  gestaffelt.
+
+Marke und Fächer sind **Reserve** (Wunsch Patrik S88: behalten). Ideen für
+ihre Verwendung, nichts davon entschieden:
+
+- **Marke** für **Knoten-Voreinstellungen** (`asset/nodepresets/`, heute
+  `.json` ohne eigene Endung): „ein Teil von LumiViz, nicht das ganze Preset".
+  Patrik: hat auch etwas von einer Palette. Die Marke ließe sich als System
+  ausbauen — dasselbe Icon, je Dateiart ein anderes Zeichen im Kreis.
+- **Fächer** für eine künftige Datei der **Timeline** (mehrere Presets
+  nebeneinander über die Zeit) oder für eine Visual-Playlist.
 
 ## Notiz für einen späteren Installer
 

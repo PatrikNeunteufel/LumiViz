@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.39.0
+> **Version:** 1.40.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1096,7 +1096,8 @@ die oberste Ebene der Kette.
   (sein Auge) oder die Gruppe nicht in seiner Liste steht.
 - **Speichern:** Ketten mit Host-Gruppe(n) werden automatisch als
   **`.lvfx2`** gespeichert, flache Ketten bleiben `.lvfx`; laden kann die
-  App beides.
+  App beides. Im Effect Browser trägt ein `.lvfx2` ein eigenes Icon — das
+  LumiViz-Icon als **Stapel** —, ein `.lvfx` das einfache.
 
 ---
 
@@ -1310,6 +1311,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.40.0 | 2026-10-02 | Session 88. §11 Host-Gruppen: `.lvfx2` trägt im Effect Browser ein eigenes Icon (Stapel) |
 | 1.39.0 | 2026-10-02 | Session 88. §11 Lyrics Trail: folgt den **skriptgesteuerten** Werten des Lyrics-Knotens (Karaoke Bounce, Flip) und arbeitet auch mit **unsynchronem Text** (Wechsel alle N Beats). §11 Lyrics-Editor: Knöpfe in zwei Reihen, **Offset for this track** als eigene Zeile |
 | 1.38.0 | 2026-10-02 | Session 88. §11 Lyrics Sync: NEU **Undo** / **Redo** (Ctrl+Z / Ctrl+Y) für jeden Schritt an den Zeiten |
 | 1.37.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU Knopf **Lyrics file…** — eine vorhandene `.lrc`/`.txt` dem laufenden Titel zuweisen (wird in den Benutzerordner kopiert) |
