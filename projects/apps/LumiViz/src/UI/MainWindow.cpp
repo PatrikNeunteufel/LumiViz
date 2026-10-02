@@ -879,6 +879,8 @@ void MainWindow::setupEventHandlers()
     // Karaoke-Preset (.lvkar) aus dem Effect Browser (S89): in die Karaoke-
     // Ebene laden, nicht in die Kette. Der Stand wird zur laufenden Ebene
     // (Ablage), das Karaoke-Panel liest ihn neu.
+    // Derselbe Weg wie im Karaoke-Panel: erst die Rueckfrage zu ungespeicherten
+    // Aenderungen der Ebene (Entscheid 5a), dann laden.
     pEventBus->subscribe<LoadKaraokePresetEvent>(
         [this, findMultiEffect, pEventBus](const LoadKaraokePresetEvent& ev) {
             const QString path = QString::fromStdString(ev.path);
@@ -890,29 +892,12 @@ void MainWindow::setupEventHandlers()
                     tr("The karaoke layer works with the \"Multi Effect\" visualizer."));
                 return;
             }
+            const KaraokePanel::Ziel ziel{host, &widget->renderMutex(), pEventBus, this};
+            if (!KaraokePanel::darfKaraokeErsetzen(ziel, tr("Load Karaoke Preset"))) return;
             QStringList report;
-            bool ok = false;
-            lumi::multieffect::ChainNode ebene;
-            {
-                QMutexLocker lock(&widget->renderMutex());
-                ok = host->ladeKaraokeDatei(path, &report);
-                if (ok) ebene = host->karaokeKette();
-            }
-            if (!ok)
-            {
+            if (!KaraokePanel::ladeKaraokeDatei(ziel, path, &report))
                 reportProblem(tr("Load Karaoke Preset"),
                               tr("Could not load:\n%1\n%2").arg(path, report.join(QLatin1Char('\n'))));
-                return;
-            }
-            // ausserhalb des Render-Mutex schreiben
-            if (const QString ablage = MultiEffectVisualizer::karaokeAblage(); !ablage.isEmpty())
-            {
-                QDir().mkpath(QFileInfo(ablage).absolutePath());
-                (void)lumi::multieffect::saveChainToFile(ebene, ablage);
-            }
-            lumi::ui::PresetListen::merkeBenutzt(lumi::ui::PresetArt::Karaoke, path);
-            pEventBus->publish(PresetListsChangedEvent{});
-            pEventBus->publish(KaraokeLayerChangedEvent{});
         });
 
     pEventBus->subscribe<LoadEffectChainEvent>(
@@ -1031,6 +1016,7 @@ QString MainWindow::laufendesPreset() const
 void MainWindow::setzeLaufendesPreset(const QString& absolutePath)
 {
     if (m_pScreenshotManager != nullptr) m_pScreenshotManager->setCurrentPreset(absolutePath);
+    lumi::ui::PresetListen::setzeLaufendesKettenPreset(absolutePath);
     // S89: geladen, importiert oder gespeichert — an die Spitze von „zuletzt",
     // und die Preset-Zeile des Effect-Chain-Panels zieht nach
     if (!absolutePath.isEmpty())

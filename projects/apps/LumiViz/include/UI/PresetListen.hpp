@@ -85,6 +85,26 @@ public:
         }
     }
 
+    /// Das laufende Preset der Kette, wie das Fenster es zuletzt gemeldet hat
+    /// (leer = neue Kette). Nur im Speicher und nur vom Oberflaechen-Thread:
+    /// ein Panel, das spaeter geoeffnet wird, kennt so den Stand, ohne das
+    /// CurrentPresetChangedEvent gesehen zu haben.
+    [[nodiscard]] static QString laufendesKettenPreset() { return laufendSpeicher(); }
+    static void setzeLaufendesKettenPreset(const QString& pfad) { laufendSpeicher() = pfad; }
+
+    /// Das zuletzt unter einem Namen geladene/gespeicherte Karaoke-Preset
+    /// (leer = keins, z. B. nach „Default"). Ueberlebt den Neustart — die
+    /// Ebene selbst tut es auch (`current.lvkar`).
+    [[nodiscard]] static QString laufendesKaraokePreset()
+    {
+        return QSettings().value(QStringLiteral("karaoke/currentPreset")).toString();
+    }
+    static void setzeLaufendesKaraokePreset(const QString& pfad)
+    {
+        QSettings().setValue(QStringLiteral("karaoke/currentPreset"),
+                             pfad.isEmpty() ? QString() : normal(pfad));
+    }
+
     /// Einheitliche Schreibweise eines Pfads in den Listen.
     [[nodiscard]] static QString normal(const QString& pfad)
     {
@@ -101,6 +121,12 @@ public:
     }
 
 private:
+    [[nodiscard]] static QString& laufendSpeicher()
+    {
+        static QString pfad;
+        return pfad;
+    }
+
     [[nodiscard]] static QString schluessel(PresetArt art, const char* liste)
     {
         return QStringLiteral("presets/") +

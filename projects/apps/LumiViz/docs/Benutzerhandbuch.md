@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.50.0
+> **Version:** 1.51.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -275,6 +275,24 @@ würde — ein Feld hin und zurück gestellt ist keine, ein frisch geladenes ode
 importiertes Preset auch nicht. Im **Vollbild** verlässt LumiViz dafür erst
 das Vollbild und fragt dann. Knoten-Voreinstellungen fragen nie nach: sie zu
 laden und zu verändern ist eine Änderung an der Kette wie jede andere.
+
+### Die Preset-Zeile
+
+Die Panels **Effect Chain** und **Karaoke** tragen oben dieselbe Zeile:
+
+- **Dropdown:** ganz oben das laufende Preset — mit einem `*` dahinter,
+  solange es ungespeicherte Änderungen hat —, darunter deine **Favoriten**
+  und die **zehn zuletzt benutzten**. Es zeigt nicht alle Dateien eines
+  Ordners; dafür ist der Effect Browser da. Eine Auswahl **lädt sofort**
+  (mit der Rückfrage oben, falls etwas ungespeichert ist). Das Mausrad über
+  dem Dropdown wechselt nichts. Ein Eintrag, dessen Datei es nicht mehr gibt,
+  steht grau da und fällt beim Anklicken aus der Liste.
+- **★** macht das laufende Preset zum Favoriten bzw. nimmt es wieder heraus.
+- **Load…**, **Save**, **Save As…** tun dasselbe wie die Einträge im Menü
+  File. Im Effect-Chain-Panel landet in „zuletzt" alles, was als Visual
+  geladen oder gespeichert wurde (`.avs`, `.milk`, `.lvfx`, `.lvfx2`) — egal
+  ob über Menü, Effect Browser oder die Zeile selbst. Das Karaoke-Panel führt
+  eigene Listen für `.lvkar`.
 
 ### Presets durchblättern
 
@@ -721,10 +739,14 @@ ein — dieselben Felder wie am Lyrics-Knoten einer Kette (Schrift, Farben,
 Lage, Vorschau-Zeilen, Kontur, Skripte, die Zeile **Preset** mit den
 Lyrics-Voreinstellungen und die Songtext-Tabelle). Jede Änderung gilt sofort
 und bleibt über den Neustart erhalten. Den Stand der ganzen Ebene (Zeile und
-Trail) hältst du als **Karaoke-Preset** fest: **Save…** legt ihn unter einem
-Namen ab, **Load** holt ihn zurück, **Delete** entfernt ihn, **Default** stellt
-das mitgelieferte Aussehen wieder her. Die Dateien (`.lvkar`) liegen im
-Benutzerordner unter `karaoke`. Im **Effect Browser** erscheinen sie mit einem
+Trail) hältst du als **Karaoke-Preset** (`.lvkar`) fest — über die
+**Preset-Zeile** oben im Panel, dieselbe wie im Panel *Effect Chain* (siehe
+§9 „Die Preset-Zeile"): **Save As…** legt ihn an einem Ort deiner Wahl ab,
+**Save** schreibt in das laufende Karaoke-Preset, **Load…** und das Dropdown
+holen einen Stand zurück, **Default** stellt das mitgelieferte Aussehen wieder
+her. Hat die Ebene ungespeicherte Änderungen, fragt LumiViz vor dem Laden und
+vor Default nach. Beim Beenden fragt es nicht: die laufende Ebene bleibt
+ohnehin erhalten. Im **Effect Browser** erscheinen sie mit einem
 eigenen Icon (Mikrofon im Kreis); ein **Doppelklick** lädt das Karaoke-Preset
 in die Ebene — die Effektkette bleibt, wie sie ist, und das Karaoke-Panel
 zeigt den neuen Stand. Eingeschaltet wird die Ebene dadurch nicht: das macht
@@ -1411,6 +1433,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.51.0 | 2026-10-02 | Session 89. §9 NEU **Die Preset-Zeile** in den Panels Effect Chain und Karaoke (laufendes Preset, Favoriten ★, zehn zuletzt benutzte, lädt sofort, Load…/Save/Save As…); Karaoke-Presets an frei wählbarem Ort, **Delete** entfällt, Rückfrage bei ungespeicherter Karaoke-Ebene |
 | 1.50.0 | 2026-10-02 | Session 89. §9 NEU **Save** (Ctrl+S) und **Save As…** (Ctrl+Shift+S) für die Effektkette; **Rückfrage bei ungespeicherten Änderungen** vor jedem Ersetzen der Kette und beim Beenden (im Vollbild: erst Vollbild verlassen) |
 | 1.49.0 | 2026-10-02 | Session 89. Karaoke: Menü **View → Karaoke**, Tastenkürzel **Ctrl+K** (*Karaoke On / Off*), Zustandszeile *Preset shows its own lyrics* im Karaoke-Panel |
 | 1.48.0 | 2026-10-02 | Session 89. §11 Lyrics: Karaoke-Presets (`.lvkar`) im Effect Browser — eigenes Icon, Doppelklick lädt in die Karaoke-Ebene |

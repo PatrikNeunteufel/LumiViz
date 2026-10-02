@@ -38,6 +38,7 @@
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/TagViewPanel.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "UI/widgets/PresetZeile.hpp"
 #include "audio/Wiederaufnahme.hpp"
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
@@ -82,6 +83,8 @@
 #include <QSettings>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
+#include <QStandardItemModel>
+#include <QWheelEvent>
 #include <QTabWidget>
 #include <QTableWidget>
 #include <QTextBlock>
@@ -714,31 +717,47 @@ TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Pre
                   vorgabe - 20);
         }
 
-        // --- Karaoke-Presets: speichern, aendern, laden stellt den Stand her
-        CHECK(panel.presetNamen().isEmpty());  // current.lvkar zaehlt nicht
-        CHECK_FALSE(panel.speicherePreset(QStringLiteral("current")));  // reserviert
-        CHECK_FALSE(panel.speicherePreset(QStringLiteral("   ")));
-        REQUIRE(panel.speicherePreset(QStringLiteral("Abend")));
-        CHECK(panel.presetNamen() == QStringList{QStringLiteral("Abend")});
-        CHECK(QFile::exists(tmp.filePath(QStringLiteral("karaoke/Abend.lvkar"))));
-        auto* combo = panel.findChild<QComboBox*>(QStringLiteral("karaokePresets"));
+        // --- Karaoke-Presets (Auftrag Patrik S89): frei waehlbarer Ort, Preset-
+        //     Zeile mit laufendem Preset / zuletzt; hier ohne Dialoge
+        using lumi::ui::PresetArt;
+        using lumi::ui::PresetListen;
+        const KaraokePanel::Ziel ziel{&vis, &mutex, services.tryResolve<IEventBus>(), nullptr};
+        const QString abend = tmp.filePath(QStringLiteral("woanders/Abend.lvkar"));
+        CHECK(vis.karaokeGeaendert());                              // der Edit von eben
+        CHECK_FALSE(KaraokePanel::speichereKaraokeNach(ziel, ablage));  // die Ablage ist kein Preset
+        REQUIRE(KaraokePanel::speichereKaraokeNach(ziel, abend));   // der Ordner entsteht
+        CHECK(QFile::exists(abend));
+        CHECK_FALSE(vis.karaokeGeaendert());                        // gespeichert = ungeaendert
+        CHECK(QFileInfo(PresetListen::laufendesKaraokePreset()) == QFileInfo(abend));
+        CHECK(PresetListen::position(PresetListen::zuletzt(PresetArt::Karaoke), abend) == 0);
+        auto* zeile = panel.findChild<lumi::ui::PresetZeile*>();
+        REQUIRE(zeile != nullptr);
+        QCoreApplication::processEvents();
+        CHECK(QFileInfo(zeile->laufend()) == QFileInfo(abend));
+        auto* combo = zeile->findChild<QComboBox*>(QStringLiteral("presetZeileCombo"));
         REQUIRE(combo != nullptr);
-        CHECK(combo->currentText() == QStringLiteral("Abend"));
+        CHECK(combo->itemText(0) == QStringLiteral("Abend"));
 
+        // Default (nichts ungespeichert → keine Rueckfrage): Vorgabe, kein laufendes Preset
         panel.setzeVorgabe();
         QCoreApplication::processEvents();
         CHECK(lyrics().yShift == vorgabe);
-        REQUIRE(panel.ladePreset(QStringLiteral("Abend")));
+        CHECK(PresetListen::laufendesKaraokePreset().isEmpty());
+        CHECK(zeile->laufend().isEmpty());
+
+        // Laden stellt den Stand her; beide Reiter und die Zeile ziehen nach
+        REQUIRE(panel.ladeDatei(abend));
         QCoreApplication::processEvents();
         CHECK(lyrics().yShift == vorgabe - 20);
-        // der Editor zeigt nach dem Laden wieder den Lyrics-Knoten, mit dem neuen Wert
+        CHECK_FALSE(vis.karaokeGeaendert());
         yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
         REQUIRE(yShift != nullptr);
         CHECK(yShift->value() == vorgabe - 20);
+        CHECK(QFileInfo(zeile->laufend()) == QFileInfo(abend));
 
-        CHECK_FALSE(panel.ladePreset(QStringLiteral("gibtsnicht")));
-        REQUIRE(panel.loeschePreset(QStringLiteral("Abend")));
-        CHECK(panel.presetNamen().isEmpty());
+        // unlesbar / fremd: abgewiesen, die Ebene bleibt
+        CHECK_FALSE(KaraokePanel::ladeKaraokeDatei(ziel, tmp.filePath(QStringLiteral("gibtsnicht.lvkar"))));
+        CHECK(lyrics().yShift == vorgabe - 20);
         CHECK(QFile::exists(ablage));  // die laufende Ebene bleibt
     }
     MultiEffectVisualizer::setKaraokeEbene(false);
@@ -921,6 +940,153 @@ TEST_CASE("PresetListen S89: Favoriten und die zehn zuletzt benutzten, je Art ge
     // die Listen ueberleben ein „neues Programm" (QSettings)
     CHECK(QSettings().value(QStringLiteral("presets/chain/recent")).toStringList().size() ==
           L::zuletzt(PresetArt::Kette).size());
+}
+
+// S89 (Auftrag Patrik): die Preset-Zeile — laufendes Preset, Favoriten, zuletzt;
+// eine Auswahl laedt sofort (1a), das Mausrad laedt nichts, kein Loeschen (2a).
+TEST_CASE("PresetZeile S89: laufendes Preset, Favoriten, zuletzt — Auswahl meldet Laden, Rad nicht")
+{
+    UiUmgebung env;
+    using lumi::ui::PresetArt;
+    using lumi::ui::PresetListen;
+    using lumi::ui::PresetZeile;
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    const auto lege = [&](const QString& name) {
+        const QString pfad = dir.filePath(name);
+        QFile f(pfad);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("{}");
+        return pfad;
+    };
+    const QString eins = lege(QStringLiteral("Eins.lvfx"));
+    const QString zwei = lege(QStringLiteral("Zwei.lvfx"));
+    const QString weg = dir.filePath(QStringLiteral("Weg.lvfx"));  // gibt es nicht
+    PresetListen::merkeBenutzt(PresetArt::Kette, weg);
+    PresetListen::merkeBenutzt(PresetArt::Kette, zwei);
+    PresetListen::merkeBenutzt(PresetArt::Kette, eins);
+    PresetListen::setzeFavorit(PresetArt::Kette, zwei, true);
+
+    PresetZeile zeile(PresetArt::Kette);
+    zeigen(zeile);
+    auto* combo = zeile.findChild<QComboBox*>(QStringLiteral("presetZeileCombo"));
+    auto* stern = zeile.findChild<QToolButton*>(QStringLiteral("presetZeileStern"));
+    REQUIRE(combo != nullptr);
+    REQUIRE(stern != nullptr);
+    QStringList geladen;
+    int listen = 0;
+    QObject::connect(&zeile, &PresetZeile::ladeDatei, [&](const QString& p) { geladen.append(p); });
+    QObject::connect(&zeile, &PresetZeile::listenGeaendert, [&] { ++listen; });
+
+    // Aufbau: laufend · Kopf Favoriten · Zwei · Kopf Zuletzt · Eins · Zwei · Weg
+    REQUIRE(combo->count() == 7);
+    CHECK(combo->itemText(0) == QStringLiteral("(new effect chain)"));
+    CHECK(combo->itemText(2) == QStringLiteral("Zwei"));
+    CHECK(combo->itemText(4) == QStringLiteral("Eins"));
+    CHECK(combo->itemText(6) == QStringLiteral("Weg"));
+    CHECK_FALSE(stern->isEnabled());  // ohne laufendes Preset kein Favorit
+    // die Kopfzeilen sind nicht waehlbar
+    const auto* modell = qobject_cast<QStandardItemModel*>(combo->model());
+    REQUIRE(modell != nullptr);
+    CHECK(modell->item(1)->flags() == Qt::NoItemFlags);
+    CHECK(modell->item(3)->flags() == Qt::NoItemFlags);
+
+    // laufendes Preset + Stern fuer „geaendert"
+    zeile.setLaufend(eins);
+    CHECK(combo->itemText(0) == QStringLiteral("Eins"));
+    CHECK(stern->isEnabled());
+    CHECK_FALSE(stern->isChecked());
+    zeile.setGeaendert(true);
+    CHECK(combo->itemText(0) == QStringLiteral("Eins *"));
+    zeile.setGeaendert(false);
+
+    // Auswahl laedt sofort — und die Zeile zeigt danach wieder das laufende Preset
+    emit combo->activated(2);
+    REQUIRE(geladen.size() == 1);
+    CHECK(QFileInfo(geladen[0]) == QFileInfo(zwei));
+    CHECK(combo->currentIndex() == 0);
+    // Zeile 0 und Kopfzeilen laden nichts
+    emit combo->activated(0);
+    emit combo->activated(1);
+    CHECK(geladen.size() == 1);
+
+    // das Mausrad laedt nichts und wechselt nichts
+    QWheelEvent rad(QPointF(5, 5), combo->mapToGlobal(QPointF(5, 5)), QPoint(), QPoint(0, -120),
+                    Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+    QCoreApplication::sendEvent(combo, &rad);
+    CHECK(combo->currentIndex() == 0);
+    CHECK(geladen.size() == 1);
+
+    // ein fehlender Eintrag faellt beim Anklicken aus den Listen (kein Laden)
+    emit combo->activated(6);
+    CHECK(geladen.size() == 1);
+    CHECK(PresetListen::position(PresetListen::zuletzt(PresetArt::Kette), weg) < 0);
+    CHECK(combo->count() == 6);
+    CHECK(listen == 1);
+
+    // ★ macht das laufende Preset zum Favoriten und nimmt es wieder
+    stern->setChecked(true);
+    CHECK(PresetListen::istFavorit(PresetArt::Kette, eins));
+    CHECK(combo->count() == 7);
+    stern->setChecked(false);
+    CHECK_FALSE(PresetListen::istFavorit(PresetArt::Kette, eins));
+    CHECK(listen == 3);
+
+    // Knoepfe melden Load… / Save / Save As…
+    int dialoge = 0;
+    std::vector<bool> sichern;
+    QObject::connect(&zeile, &PresetZeile::ladenDialog, [&] { ++dialoge; });
+    QObject::connect(&zeile, &PresetZeile::speichern, [&](bool a) { sichern.push_back(a); });
+    zeile.findChild<QPushButton*>(QStringLiteral("presetZeileLaden"))->click();
+    zeile.findChild<QPushButton*>(QStringLiteral("presetZeileSpeichern"))->click();
+    zeile.findChild<QPushButton*>(QStringLiteral("presetZeileSpeichernAls"))->click();
+    CHECK(dialoge == 1);
+    CHECK(sichern == std::vector<bool>{false, true});
+    schnappschuss(zeile, "S89_preset_zeile");
+}
+
+// S89: die Preset-Zeile im Effect-Chain-Panel haengt an denselben Wegen wie
+// Menue File und Effect Browser — sie meldet nur, das Fenster laedt/speichert.
+TEST_CASE("PaletteUi Panel S89: Preset-Zeile der Kette meldet Laden je Typ, Speichern, zeigt das laufende Preset")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    auto* zeile = p.panel->findChild<lumi::ui::PresetZeile*>();
+    REQUIRE(zeile != nullptr);
+    IEventBus* bus = p.services.tryResolve<IEventBus>();
+    QStringList gemeldet;
+    const auto a1 = bus->subscribeScoped<ImportAvsPresetEvent>([&](const ImportAvsPresetEvent& e) {
+        gemeldet.append(QStringLiteral("avs:") + QString::fromStdString(e.path));
+    });
+    const auto a2 = bus->subscribeScoped<ImportMilkPresetEvent>([&](const ImportMilkPresetEvent& e) {
+        gemeldet.append(QStringLiteral("milk:") + QString::fromStdString(e.path));
+    });
+    const auto a3 = bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent& e) {
+        gemeldet.append(QStringLiteral("lvfx:") + QString::fromStdString(e.path));
+    });
+    const auto a4 = bus->subscribeScoped<SaveEffectChainEvent>([&](const SaveEffectChainEvent& e) {
+        gemeldet.append(e.saveAs ? QStringLiteral("saveas") : QStringLiteral("save"));
+    });
+
+    emit zeile->ladeDatei(QStringLiteral("C:/x/a.avs"));
+    emit zeile->ladeDatei(QStringLiteral("C:/x/b.MILK"));
+    emit zeile->ladeDatei(QStringLiteral("C:/x/c.lvfx2"));
+    emit zeile->ladenDialog();
+    emit zeile->speichern(false);
+    emit zeile->speichern(true);
+    CHECK(gemeldet == QStringList{QStringLiteral("avs:C:/x/a.avs"), QStringLiteral("milk:C:/x/b.MILK"),
+                                  QStringLiteral("lvfx:C:/x/c.lvfx2"), QStringLiteral("lvfx:"),
+                                  QStringLiteral("save"), QStringLiteral("saveas")});
+
+    // das Fenster meldet das laufende Preset: die Zeile zeigt es
+    bus->publish(CurrentPresetChangedEvent{"C:/x/Mein Preset.lvfx"});
+    CHECK(QFileInfo(zeile->laufend()).completeBaseName() == QStringLiteral("Mein Preset"));
+    bus->publish(CurrentPresetChangedEvent{std::string()});
+    CHECK(zeile->laufend().isEmpty());
+
+    // die Reiter des Karaoke-Panels haben KEINE Ketten-Zeile (es hat seine eigene)
+    MultiEffectPanel lyrics(p.services, MultiEffectPanel::KaraokeLyrics{});
+    CHECK(lyrics.findChild<lumi::ui::PresetZeile*>() == nullptr);
 }
 
 // S89, KE4: ein Schalter fuer Panel, Menue und Tastenkuerzel — und die

@@ -5,21 +5,23 @@
 
 #include "UI/panels/KaraokePanel.hpp"
 
+#include "UI/PresetListen.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
+#include "UI/widgets/PresetZeile.hpp"
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
-#include "visualizers/multieffect/NodePresetStore.hpp"  // sanitize
+#include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QCheckBox>
-#include <QComboBox>
 #include <QDir>
-#include <QFile>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
-#include <QInputDialog>
 #include <QLabel>
 #include <QMessageBox>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalBlocker>
@@ -27,15 +29,53 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
+using lumi::ui::PresetArt;
+using lumi::ui::PresetListen;
+
 namespace
 {
-const QString kAktuell = QStringLiteral("current");  // Name der laufenden Ebene
+/// Ordner, in dem die Dateidialoge beginnen: der zuletzt benutzte, sonst der
+/// Ordner der Ablage (`<Benutzerdaten>/karaoke`).
+QString startOrdner()
+{
+    const QString gemerkt = QSettings().value(QStringLiteral("karaoke/lastDir")).toString();
+    if (!gemerkt.isEmpty() && QDir(gemerkt).exists()) return gemerkt;
+    const QString ablage = MultiEffectVisualizer::karaokeAblage();
+    return ablage.isEmpty() ? QString() : QFileInfo(ablage).absolutePath();
 }
+
+void merkeOrdner(const QString& datei)
+{
+    QSettings().setValue(QStringLiteral("karaoke/lastDir"), QFileInfo(datei).absolutePath());
+}
+
+/// Ist `pfad` die Ablage der laufenden Ebene selbst? Sie ist kein Preset.
+bool istAblage(const QString& pfad)
+{
+    const QString ablage = MultiEffectVisualizer::karaokeAblage();
+    return !ablage.isEmpty() &&
+           PresetListen::normal(pfad).compare(PresetListen::normal(ablage), Qt::CaseInsensitive) == 0;
+}
+
+/// Die laufende Ebene in ihre Ablage schreiben (ausserhalb des Render-Mutex).
+void schreibeAblage(const lumi::multieffect::ChainNode& ebene)
+{
+    const QString ablage = MultiEffectVisualizer::karaokeAblage();
+    if (ablage.isEmpty()) return;
+    QDir().mkpath(QFileInfo(ablage).absolutePath());
+    (void)lumi::multieffect::saveChainToFile(ebene, ablage);
+}
+}  // namespace
 
 KaraokePanel::KaraokePanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "karaoke", tr("Karaoke"), parent)
 {
     setupUI();
+}
+
+KaraokePanel::Ziel KaraokePanel::ziel()
+{
+    return Ziel{m_editor->host(), m_editor->renderMutex(), eventBus(), this};
 }
 
 void KaraokePanel::setupUI()
@@ -67,53 +107,41 @@ void KaraokePanel::setupUI()
     connect(takt, &QTimer::timeout, this, [this] { aktualisiereZustand(); });
     takt->start();
 
-    // --- Karaoke-Presets: Stand der ganzen Ebene als Datei (.lvkar)
-    auto* zeile = new QHBoxLayout();
-    zeile->addWidget(new QLabel(tr("Karaoke preset:"), this));
-    m_presets = new QComboBox(this);
-    m_presets->setObjectName(QStringLiteral("karaokePresets"));
-    m_presets->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    m_presets->setMinimumContentsLength(12);
-    zeile->addWidget(m_presets, 1);
-    auto* laden = new QPushButton(tr("Load"), this);
-    laden->setToolTip(tr("Replace the karaoke layer with the selected preset."));
-    auto* speichern = new QPushButton(tr("Save…"), this);
-    speichern->setToolTip(tr("Save the current karaoke layer (lyrics and trail) under a name."));
-    auto* loeschen = new QPushButton(tr("Delete"), this);
+    // --- Preset-Zeile: wie im Panel „Effect Chain" (Auftrag Patrik S89)
+    m_presetZeile = new lumi::ui::PresetZeile(PresetArt::Karaoke, this);
+    m_presetZeile->setLaufend(PresetListen::laufendesKaraokePreset());
     auto* vorgabe = new QPushButton(tr("Default"), this);
+    vorgabe->setObjectName(QStringLiteral("karaokeVorgabe"));
     vorgabe->setToolTip(tr("Back to the built-in look of the karaoke layer."));
-    for (QPushButton* b : {laden, speichern, loeschen, vorgabe}) zeile->addWidget(b);
-    root->addLayout(zeile);
+    m_presetZeile->haengeAn(vorgabe);
+    root->addWidget(m_presetZeile);
 
-    connect(laden, &QPushButton::clicked, this, [this] {
-        const QString name = m_presets->currentText();
-        if (name.isEmpty()) return;
-        if (!ladePreset(name))
-            QMessageBox::warning(this, tr("Karaoke preset"),
-                                 tr("Karaoke preset '%1' could not be loaded.").arg(name));
+    connect(m_presetZeile, &lumi::ui::PresetZeile::ladeDatei, this, [this](const QString& pfad) {
+        // Cancel in der Rueckfrage ist kein Ladefehler
+        if (!darfKaraokeErsetzen(ziel(), tr("Load Karaoke Preset"))) return;
+        QStringList report;
+        if (!ladeKaraokeDatei(ziel(), pfad, &report))
+            QMessageBox::warning(
+                this, tr("Karaoke preset"),
+                tr("Could not load:\n%1\n%2").arg(pfad, report.join(QLatin1Char('\n'))));
     });
-    connect(speichern, &QPushButton::clicked, this, [this] {
-        bool ok = false;
-        const QString name = QInputDialog::getText(this, tr("Save karaoke preset"), tr("Name:"),
-                                                   QLineEdit::Normal, m_presets->currentText(), &ok);
-        if (!ok) return;
-        const QString datei = dateiVon(name);
-        if (!datei.isEmpty() && QFileInfo::exists(datei) &&
-            QMessageBox::question(this, tr("Karaoke preset"),
-                                  tr("'%1' already exists. Overwrite?").arg(name)) !=
-                QMessageBox::Yes)
-            return;
-        if (!speicherePreset(name))
-            QMessageBox::warning(this, tr("Karaoke preset"),
-                                 tr("Karaoke preset '%1' could not be saved.").arg(name));
+    connect(m_presetZeile, &lumi::ui::PresetZeile::ladenDialog, this, [this] {
+        if (!darfKaraokeErsetzen(ziel(), tr("Load Karaoke Preset"))) return;
+        const QString pfad = QFileDialog::getOpenFileName(
+            this, tr("Load Karaoke Preset"), startOrdner(),
+            tr("LumiViz Karaoke Preset (*.lvkar);;All Files (*)"));
+        if (pfad.isEmpty()) return;
+        merkeOrdner(pfad);
+        QStringList report;
+        if (!ladeKaraokeDatei(ziel(), pfad, &report))
+            QMessageBox::warning(
+                this, tr("Karaoke preset"),
+                tr("Could not load:\n%1\n%2").arg(pfad, report.join(QLatin1Char('\n'))));
     });
-    connect(loeschen, &QPushButton::clicked, this, [this] {
-        const QString name = m_presets->currentText();
-        if (name.isEmpty()) return;
-        if (QMessageBox::question(this, tr("Karaoke preset"),
-                                  tr("Delete karaoke preset '%1'?").arg(name)) != QMessageBox::Yes)
-            return;
-        (void)loeschePreset(name);
+    connect(m_presetZeile, &lumi::ui::PresetZeile::speichern, this,
+            [this](bool saveAs) { (void)speichereKaraoke(ziel(), saveAs); });
+    connect(m_presetZeile, &lumi::ui::PresetZeile::listenGeaendert, this, [this] {
+        if (IEventBus* bus = eventBus()) bus->publish(PresetListsChangedEvent{});
     });
     connect(vorgabe, &QPushButton::clicked, this, [this] { setzeVorgabe(); });
 
@@ -142,11 +170,8 @@ void KaraokePanel::setupUI()
     });
     connect(m_reiter, &QTabWidget::currentChanged, this, [this] { gleicheTrailSchalterAb(); });
 
-    fuelleCombo();
     gleicheTrailSchalterAb();
 
-    // Die Ebene wurde von aussen ersetzt (Doppelklick auf ein .lvkar im Effect
-    // Browser): beide Reiter neu lesen
     if (IEventBus* bus = eventBus())
     {
         // Menue oder Tastenkuerzel haben geschaltet: der Haken zieht nach
@@ -156,11 +181,19 @@ void KaraokePanel::setupUI()
                 m_schalter->setChecked(e.enabled);
                 aktualisiereZustand();
             }));
+        // Die Ebene wurde ersetzt (Laden im Panel, Doppelklick auf ein .lvkar
+        // im Effect Browser): beide Reiter neu lesen
         m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeLayerChangedEvent>(
             [this](const KaraokeLayerChangedEvent&) {
                 m_editor->baumNeuLesen();
                 m_trail->baumNeuLesen();
                 gleicheTrailSchalterAb();
+                m_presetZeile->setGeaendert(false);
+                m_presetZeile->setLaufend(PresetListen::laufendesKaraokePreset());
+            }));
+        m_eventSubscriptions.push_back(bus->subscribeScoped<PresetListsChangedEvent>(
+            [this](const PresetListsChangedEvent&) {
+                m_presetZeile->setLaufend(PresetListen::laufendesKaraokePreset());
             }));
     }
 }
@@ -172,11 +205,153 @@ void KaraokePanel::setzeKaraokeAn(IEventBus* bus, bool an)
     if (bus != nullptr) bus->publish(KaraokeEnabledChangedEvent{an});
 }
 
+// =============================================================================
+// Karaoke-Presets
+// =============================================================================
+
+bool KaraokePanel::ladeKaraokeDatei(const Ziel& ziel, const QString& pfad, QStringList* report)
+{
+    if (ziel.host == nullptr || ziel.mutex == nullptr) return false;
+    lumi::multieffect::ChainNode ebene;
+    {
+        QMutexLocker lock(ziel.mutex);
+        if (!ziel.host->ladeKaraokeDatei(pfad, report)) return false;  // merkt den Stand selbst
+        ebene = ziel.host->karaokeKette();
+    }
+    schreibeAblage(ebene);  // das geladene Preset ist jetzt die laufende Ebene
+    PresetListen::setzeLaufendesKaraokePreset(pfad);
+    PresetListen::merkeBenutzt(PresetArt::Karaoke, pfad);
+    if (ziel.bus != nullptr)
+    {
+        ziel.bus->publish(KaraokeLayerChangedEvent{});
+        ziel.bus->publish(PresetListsChangedEvent{});
+    }
+    return true;
+}
+
+bool KaraokePanel::speichereKaraokeNach(const Ziel& ziel, const QString& pfad)
+{
+    if (ziel.host == nullptr || ziel.mutex == nullptr || pfad.isEmpty()) return false;
+    if (istAblage(pfad)) return false;  // die laufende Ebene ist kein Preset
+    lumi::multieffect::ChainNode ebene;
+    {
+        QMutexLocker lock(ziel.mutex);
+        ebene = ziel.host->karaokeKette();
+    }
+    QDir().mkpath(QFileInfo(pfad).absolutePath());
+    if (!lumi::multieffect::saveChainToFile(ebene, pfad)) return false;
+    {
+        QMutexLocker lock(ziel.mutex);
+        ziel.host->merkeKaraokeStand();  // ab jetzt gilt die Ebene als gespeichert
+    }
+    PresetListen::setzeLaufendesKaraokePreset(pfad);
+    PresetListen::merkeBenutzt(PresetArt::Karaoke, pfad);
+    if (ziel.bus != nullptr) ziel.bus->publish(PresetListsChangedEvent{});
+    return true;
+}
+
+bool KaraokePanel::speichereKaraoke(const Ziel& ziel, bool saveAs)
+{
+    if (ziel.host == nullptr || ziel.mutex == nullptr) return false;
+    const QString laufend = PresetListen::laufendesKaraokePreset();
+    QString pfad;
+    if (!saveAs && !laufend.isEmpty() && QFileInfo::exists(laufend))
+    {
+        pfad = laufend;  // „Save": das laufende Karaoke-Preset, ohne Dialog
+    }
+    else
+    {
+        const QString vorschlag =
+            !laufend.isEmpty() ? laufend
+                               : startOrdner() + QStringLiteral("/Karaoke") + QLatin1String(kEndung);
+        pfad = QFileDialog::getSaveFileName(ziel.parent, tr("Save Karaoke Preset"), vorschlag,
+                                            tr("LumiViz Karaoke Preset (*.lvkar)"));
+        if (pfad.isEmpty()) return false;
+        if (!pfad.endsWith(QLatin1String(kEndung), Qt::CaseInsensitive))
+            pfad += QLatin1String(kEndung);
+        merkeOrdner(pfad);
+    }
+    if (istAblage(pfad))
+    {
+        QMessageBox::information(
+            ziel.parent, tr("Save Karaoke Preset"),
+            tr("This file is the running karaoke layer itself — it saves on its own. "
+               "Please choose another name."));
+        return false;
+    }
+    if (!speichereKaraokeNach(ziel, pfad))
+    {
+        QMessageBox::warning(ziel.parent, tr("Save Karaoke Preset"),
+                             tr("Could not save:\n%1").arg(pfad));
+        return false;
+    }
+    return true;
+}
+
+bool KaraokePanel::darfKaraokeErsetzen(const Ziel& ziel, const QString& titel)
+{
+    if (ziel.host == nullptr || ziel.mutex == nullptr) return true;
+    bool geaendert = false;
+    {
+        QMutexLocker lock(ziel.mutex);
+        geaendert = ziel.host->karaokeGeaendert();
+    }
+    if (!geaendert) return true;
+
+    const QString laufend = PresetListen::laufendesKaraokePreset();
+    const QString name =
+        laufend.isEmpty() ? tr("The karaoke layer") : QFileInfo(laufend).fileName();
+    QMessageBox frage(ziel.parent);
+    frage.setIcon(QMessageBox::Question);
+    frage.setWindowTitle(titel);
+    frage.setText(tr("%1 has unsaved changes.").arg(name));
+    frage.setInformativeText(tr("Save them before continuing?"));
+    frage.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    frage.setDefaultButton(QMessageBox::Save);
+    switch (frage.exec())
+    {
+        case QMessageBox::Save: return speichereKaraoke(ziel, false);  // abgebrochen = zurueck
+        case QMessageBox::Discard: return true;
+        default: return false;
+    }
+}
+
+bool KaraokePanel::ladeDatei(const QString& pfad)
+{
+    if (!darfKaraokeErsetzen(ziel(), tr("Load Karaoke Preset"))) return false;
+    return ladeKaraokeDatei(ziel(), pfad);
+}
+
+void KaraokePanel::setzeVorgabe()
+{
+    if (!darfKaraokeErsetzen(ziel(), tr("Default Karaoke Layer"))) return;
+    m_editor->karaokeVorgabe();  // setzt, liest neu, schreibt die Ablage
+    m_trail->baumNeuLesen();
+    gleicheTrailSchalterAb();
+    PresetListen::setzeLaufendesKaraokePreset(QString());
+    m_presetZeile->setGeaendert(false);
+    m_presetZeile->setLaufend(QString());
+}
+
+// =============================================================================
+// Zustand
+// =============================================================================
+
 void KaraokePanel::aktualisiereZustand()
 {
-    if (!isVisible()) return;  // die Abfrage nimmt den Render-Mutex — nur wenn man es sieht
+    if (!isVisible()) return;  // die Abfragen nehmen den Render-Mutex — nur wenn man es sieht
     const bool zurueck = MultiEffectVisualizer::karaokeEbene() && m_editor->ketteZeigtLyrics();
     m_zustand->setText(zurueck ? tr("Preset shows its own lyrics") : QString());
+    const Ziel z = ziel();
+    if (z.host != nullptr && z.mutex != nullptr)
+    {
+        bool geaendert = false;
+        {
+            QMutexLocker lock(z.mutex);
+            geaendert = z.host->karaokeGeaendert();
+        }
+        m_presetZeile->setGeaendert(geaendert);
+    }
 }
 
 void KaraokePanel::gleicheTrailSchalterAb()
@@ -191,78 +366,5 @@ void KaraokePanel::gleicheTrailSchalterAb()
 void KaraokePanel::showEvent(QShowEvent* event)
 {
     PanelBase::showEvent(event);
-    gleicheTrailSchalterAb();
-}
-
-QString KaraokePanel::ordner() const
-{
-    const QString ablage = MultiEffectVisualizer::karaokeAblage();
-    return ablage.isEmpty() ? QString() : QFileInfo(ablage).absolutePath();
-}
-
-QString KaraokePanel::dateiVon(const QString& name) const
-{
-    const QString sauber = lumi::multieffect::nodepresets::sanitize(name);
-    const QString dir = ordner();
-    if (sauber.isEmpty() || dir.isEmpty()) return {};
-    // die laufende Ebene ist kein Preset (unter Windows ohne Gross/Klein)
-    if (sauber.compare(kAktuell, Qt::CaseInsensitive) == 0) return {};
-    return dir + QLatin1Char('/') + sauber + QLatin1String(kEndung);
-}
-
-QStringList KaraokePanel::presetNamen() const
-{
-    QStringList namen;
-    const QString dir = ordner();
-    if (dir.isEmpty()) return namen;
-    const QStringList dateien = QDir(dir).entryList(
-        {QStringLiteral("*") + QLatin1String(kEndung)}, QDir::Files, QDir::Name | QDir::IgnoreCase);
-    for (const QString& d : dateien)
-    {
-        const QString name = QFileInfo(d).completeBaseName();
-        if (name.compare(kAktuell, Qt::CaseInsensitive) != 0) namen.append(name);
-    }
-    return namen;
-}
-
-void KaraokePanel::fuelleCombo(const QString& gewaehlt)
-{
-    const QString vorher = gewaehlt.isEmpty() ? m_presets->currentText() : gewaehlt;
-    m_presets->clear();
-    m_presets->addItems(presetNamen());
-    const int i = m_presets->findText(vorher, Qt::MatchFixedString);
-    if (i >= 0) m_presets->setCurrentIndex(i);
-}
-
-bool KaraokePanel::speicherePreset(const QString& name)
-{
-    const QString datei = dateiVon(name);
-    if (datei.isEmpty() || !m_editor->karaokeSpeichern(datei)) return false;
-    fuelleCombo(QFileInfo(datei).completeBaseName());
-    return true;
-}
-
-bool KaraokePanel::ladePreset(const QString& name)
-{
-    const QString datei = dateiVon(name);
-    if (datei.isEmpty() || !QFileInfo::exists(datei)) return false;
-    if (!m_editor->karaokeLaden(datei)) return false;
-    m_trail->baumNeuLesen();
-    gleicheTrailSchalterAb();
-    return true;
-}
-
-bool KaraokePanel::loeschePreset(const QString& name)
-{
-    const QString datei = dateiVon(name);
-    if (datei.isEmpty() || !QFile::remove(datei)) return false;
-    fuelleCombo();
-    return true;
-}
-
-void KaraokePanel::setzeVorgabe()
-{
-    m_editor->karaokeVorgabe();
-    m_trail->baumNeuLesen();
     gleicheTrailSchalterAb();
 }

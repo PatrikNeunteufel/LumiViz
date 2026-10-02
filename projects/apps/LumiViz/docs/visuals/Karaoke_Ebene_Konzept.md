@@ -281,6 +281,22 @@ eingeschränkten Modus (`Baum::KaraokeTrail`) — die Trail-Liste der Ebene
   Fenster (`MainWindow`, `ShortcutManager` laufen in keinem Test dieses
   Wegs); ob Ctrl+K mit einer Taste eines Editors kollidiert.
 
+### Nachtrag S89 — Preset-Zeile statt Namensliste (Auftrag Patrik)
+
+Die Karaoke-Presets liegen nicht mehr fest im Ordner `karaoke`: das Panel
+trägt dieselbe **Preset-Zeile** wie das Panel Effect Chain (`PresetZeile`,
+`PresetListen`) — laufendes Preset mit `*` bei Änderungen, Favoriten, zehn
+zuletzt benutzte, Auswahl lädt sofort (Entscheid 1a), Load… / Save / Save As…
+über Dateidialoge, **Default**; **Delete entfällt** (Entscheid 2a). Vor dem
+Laden und vor Default fragt die Ebene bei ungespeicherten Änderungen
+Save / Discard / Cancel (Entscheid 5a), auch beim Doppelklick im Effect
+Browser; beim Schließen nicht. Die Wege sind statisch in `KaraokePanel`
+(`ladeKaraokeDatei`, `speichereKaraokeNach`, `speichereKaraoke`,
+`darfKaraokeErsetzen`), damit Fenster und Panel denselben gehen. Das laufende
+Karaoke-Preset merkt `karaoke/currentPreset`; nach einem Neustart gilt der
+geladene Stand als ungeändert (Unschärfe, bewusst). `current.lvkar` ist als
+Speicherziel abgewiesen.
+
 Damit sind **KE1–KE4 gebaut**. Offen: Sichttests (alles), „später" aus §7
 (Timeline schaltet die Ebene, weicher Übergang beim Zurücktreten), Trail der
 Ebene über den Preset-Wechsel halten.

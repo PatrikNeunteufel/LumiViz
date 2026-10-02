@@ -45,6 +45,7 @@ class QNetworkAccessManager;
 class QTimer;
 class MultiEffectVisualizer;
 namespace lumi::ui {
+class PresetZeile;
 class EffectPaletteWindow;
 }
 
@@ -156,6 +157,9 @@ public:
     /// Die Ebene JETZT in ihre Ablage schreiben (sonst kurz nach jedem Edit).
     void speichereKaraokeJetzt();
     [[nodiscard]] bool hatHost() const { return m_host != nullptr; }
+    /// Visualizer und Render-Mutex, an denen das Panel haengt (null ohne Host).
+    [[nodiscard]] MultiEffectVisualizer* host() const { return m_host; }
+    [[nodiscard]] QMutex* renderMutex() const { return m_mutex; }
     /// Zeigt die laufende Kette selbst Lyrics (dann tritt die Ebene zurueck)?
     [[nodiscard]] bool ketteZeigtLyrics();
 
@@ -183,6 +187,9 @@ private:
     /// Knoten wieder in den Editor holen.
     void zeigeFestenKnoten();
     QTimer* m_karaokeSpeichern = nullptr;  ///< sammelt Edits vor dem Schreiben
+    /// Preset-Zeile der Kette (S89) — nur im normalen Betrieb, nicht in den
+    /// Reitern des Karaoke-Panels (das hat seine eigene).
+    lumi::ui::PresetZeile* m_presetZeile = nullptr;
     void richteKaraokeSpeichernEin();
     /// Trail-Modus, unter dem Render-Mutex nach jeder Strukturaenderung: der
     /// Lyrics Trail steht wieder als Letztes auf der obersten Ebene.

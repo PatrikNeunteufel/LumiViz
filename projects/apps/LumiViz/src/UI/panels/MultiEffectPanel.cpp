@@ -42,6 +42,7 @@
 #include "services/LiveVideoFeed.hpp"                   // videoSource: Kamera/Testaufnahmen (S70)
 #include "services/events/UIEvents.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "UI/widgets/PresetZeile.hpp"                   // Preset-Zeile der Kette (S89)
 #include "UI/dialogs/LyricsAlternativesDialog.hpp"      // Lyrics: andere Fassung suchen (S87)
 #include "audio/SongtextOnline.hpp"                     // laufender Titel, Sperrliste (S87)
 
@@ -1283,6 +1284,50 @@ void MultiEffectPanel::setupUI()
     m_hint->setWordWrap(true);
     root->addWidget(m_hint);
 
+    // Preset-Zeile (S89, Auftrag Patrik): laufendes Preset, Favoriten, zuletzt
+    // benutzt, Load…/Save/Save As… — dieselben Wege wie Menue File und Effect
+    // Browser (die Rueckfrage zu ungespeicherten Aenderungen stellt das Fenster).
+    if (m_baum == Baum::Kette)
+    {
+        using lumi::ui::PresetListen;
+        m_presetZeile = new lumi::ui::PresetZeile(lumi::ui::PresetArt::Kette, this);
+        m_presetZeile->setLaufend(PresetListen::laufendesKettenPreset());
+        root->addWidget(m_presetZeile);
+        connect(m_presetZeile, &lumi::ui::PresetZeile::ladeDatei, this, [this](const QString& pfad) {
+            IEventBus* bus = eventBus();
+            if (bus == nullptr) return;
+            const QString endung = QFileInfo(pfad).suffix().toLower();
+            if (endung == QLatin1String("avs"))
+                bus->publish(ImportAvsPresetEvent{pfad.toStdString()});
+            else if (endung == QLatin1String("milk"))
+                bus->publish(ImportMilkPresetEvent{pfad.toStdString()});
+            else
+                bus->publish(LoadEffectChainEvent{pfad.toStdString()});
+        });
+        connect(m_presetZeile, &lumi::ui::PresetZeile::ladenDialog, this, [this] {
+            if (IEventBus* bus = eventBus()) bus->publish(LoadEffectChainEvent{});
+        });
+        connect(m_presetZeile, &lumi::ui::PresetZeile::speichern, this, [this](bool saveAs) {
+            if (IEventBus* bus = eventBus()) bus->publish(SaveEffectChainEvent{saveAs});
+        });
+        connect(m_presetZeile, &lumi::ui::PresetZeile::listenGeaendert, this, [this] {
+            if (IEventBus* bus = eventBus()) bus->publish(PresetListsChangedEvent{});
+        });
+        // der Stern hinter dem Namen: zweimal je Sekunde, nur bei sichtbarem Panel
+        auto* takt = new QTimer(this);
+        takt->setInterval(500);
+        connect(takt, &QTimer::timeout, this, [this] {
+            if (!isVisible() || m_host == nullptr || m_mutex == nullptr) return;
+            bool geaendert = false;
+            {
+                QMutexLocker lock(m_mutex);
+                geaendert = m_host->ketteVermutlichGeaendert();
+            }
+            m_presetZeile->setGeaendert(geaendert);
+        });
+        takt->start();
+    }
+
     // Toolbar: Palette (+) / entfernen / klonen / hoch / runter. Die Add-Combo
     // ist seit S79 ein eigenes Fenster (EffectPaletteWindow).
     auto* toolbar = new QHBoxLayout();
@@ -1416,6 +1461,16 @@ void MultiEffectPanel::connectToActiveVisualizer()
                             static_cast<IVisualizer*>(e.visualizerPtr)),
                         e.renderMutex);
             }));
+        if (m_presetZeile != nullptr)  // S89: Preset-Zeile der Kette
+        {
+            m_eventSubscriptions.push_back(bus->subscribeScoped<CurrentPresetChangedEvent>(
+                [this](const CurrentPresetChangedEvent& e) {
+                    m_presetZeile->setGeaendert(false);
+                    m_presetZeile->setLaufend(QString::fromStdString(e.path));
+                }));
+            m_eventSubscriptions.push_back(bus->subscribeScoped<PresetListsChangedEvent>(
+                [this](const PresetListsChangedEvent&) { m_presetZeile->aktualisiere(); }));
+        }
         // The chain was replaced externally (AVS import / preset load) — rebuild.
         m_eventSubscriptions.push_back(bus->subscribeScoped<EffectChainChangedEvent>(
             [this](const EffectChainChangedEvent&) {
