@@ -21,6 +21,7 @@
 #include "services/events/UIEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/SongtextQuelle.hpp"  // Benutzerordner der Songtexte (S86)
+#include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "UI/dialogs/LyricsAlternativesDialog.hpp"  // Sperrliste der Songtexte (S87)
 #include "visualizers/MultiEffectVisualizer.hpp"    // Schalter der Karaoke-Ebene (S88)
 
@@ -48,6 +49,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <QSignalBlocker>
 #include <QTimer>
 #include <QToolTip>
 #include <QUrl>
@@ -409,6 +411,33 @@ QWidget* SettingsPanel::createAudioTab()
     m_pSampleRateSpinBox->setSuffix(tr(" Hz"));
     m_pSampleRateSpinBox->setToolTip(tr("Audio sample rate"));
     layout->addRow(tr("Sample Rate:"), m_pSampleRateSpinBox);
+
+    // S88 (Wunsch Patrik): „Resume playback" — derselbe Schalter steht im
+    // Player-Panel; beide lesen und schreiben `player/resumePlayback`.
+    {
+        auto* resume = new QCheckBox(tr("Enable"), widget);
+        resume->setObjectName(QStringLiteral("resumePlayback"));
+        resume->setChecked(lumi::audio::wiederaufnahmeAn());
+        resume->setToolTip(
+            tr("If LumiViz is closed while a track is playing, the next start continues "
+               "that track at the same position. Closed while paused or stopped: it stays "
+               "silent."));
+        connect(resume, &QCheckBox::toggled, this,
+                [](bool an) { lumi::audio::setWiederaufnahme(an); });
+        // der Schalter im Player-Panel kann den Wert geaendert haben
+        auto* uhr = new QTimer(resume);
+        uhr->setInterval(1000);
+        connect(uhr, &QTimer::timeout, resume, [resume]() {
+            const bool an = lumi::audio::wiederaufnahmeAn();
+            if (resume->isChecked() != an)
+            {
+                const QSignalBlocker ruhe(resume);
+                resume->setChecked(an);
+            }
+        });
+        uhr->start();
+        layout->addRow(tr("Resume playback:"), resume);
+    }
 
     // Songtexte (S86, Entscheide Patrik 3a/4a): Online-Suche als Opt-in und
     // der Speicherort eines Funds. Beide wirken sofort (QSettings), gelesen

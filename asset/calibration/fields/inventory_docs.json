@@ -5358,8 +5358,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3,
-          "doc": "0 replace, 1 additive, 2 50/50 (glyphs only)"
+          "enumWerte": 9,
+          "doc": "How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50, 3 subtract, 4 invert (white text inverts the colour underneath), 5 XOR, 6 multiply, 7 maximum, 8 minimum. From 3 on only the fill mixes — the outline is drawn normally and keeps the text readable."
         },
         {
           "art": "zahl",
@@ -5560,8 +5560,8 @@
           "name": "blend",
           "panel": "enum",
           "helfer": "addEnum",
-          "enumWerte": 3,
-          "doc": "0 replace, 1 additive, 2 50/50 (glyphs only)"
+          "enumWerte": 9,
+          "doc": "How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50, 3 subtract, 4 invert, 5 XOR, 6 multiply, 7 maximum, 8 minimum (as on the Lyrics node; from 3 on the outline stays normal)."
         },
         {
           "art": "zahl",

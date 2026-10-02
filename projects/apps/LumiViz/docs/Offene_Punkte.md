@@ -2268,9 +2268,12 @@ Idee Preset-Warmup/Pre-Roll.
     Normal · Additive · 50/50 · Subtract · Invert · XOR · Multiply · Maximum ·
     Minimum mit Stärke, Kontur bleibt normal; vorerst Settings → Audio.
     Entscheide jetzt vollständig: K3 b (Karaoke-Presets, Icon „Marke"), K4 b
-    (Zeile in Fensterauflösung). **Offen:** KE2–KE4 (Panel, Ablage mit
-    Karaoke-Presets, Trail-Reiter, Menü/Kürzel), K4 b, dieselben Mischarten am
-    Lyrics-Knoten der Kette (Folgefrage Patrik); **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
+    (Zeile in Fensterauflösung). **✅ Dieselben Mischarten am Lyrics-Knoten
+    und am Lyrics Trail (S88):** Feld Blend mit neun Arten; Replace, Additive,
+    50/50 bitgleich wie bisher, ab Subtract bleibt die Kontur normal.
+    **Offen:** KE2–KE4 (Panel, Ablage mit Karaoke-Presets, Trail-Reiter,
+    Menü/Kürzel), K4 b, Stärke-Regler am Knoten (hat nur die Ebene);
+    **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
     Post-Bloom, mit Render Scale).
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
@@ -3436,6 +3439,21 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
   `fUk - afterburner remix` aus S86** (1 von 12 Läufen, „schon im ersten
   Frame"). Merke: bei einer Abweichung zuerst `stdout.txt` des Laufs auf die
   doppelte Preset-Zeile prüfen, dann erst den Code verdächtigen.
+  **Zweite Spur (S88):** in zwei späteren Läufen lag im Ordner `list` eine
+  zusätzliche Datei `list_lvfx2_manuell.png` — ein von Hand ausgelöster
+  Screenshot. Die Messfenster sind sichtbar und nehmen Eingaben an; ein
+  Tastendruck oder Klick, der eigentlich einem anderen Fenster galt, kann
+  dort landen. Das würde auch den Neustart des Presets erklären. Nicht
+  geprüft; Gegenmittel wäre, dass der Auto-Lauf Eingaben ignoriert.
+- ✅ **Resume playback (Wunsch Patrik S88):** `audio/Wiederaufnahme.hpp` —
+  beim geordneten Beenden werden Datei, Playlist-Index, Position und „lief
+  gerade" festgehalten (`player/resume…`), beim Start nach dem
+  Wiederherstellen der Playlist aufgenommen (über die Playlist, sonst direkt
+  laden; dann Sprung). Schalter `player/resumePlayback` (Vorgabe aus) in
+  Settings → Audio und als Taste im Player-Panel. Ablauf mit Player-Attrappe
+  getestet. **Nicht geprüft / Sichttest Patrik:** mit echter Wiedergabe —
+  ob beim Beenden der Player noch „spielt" meldet, ob der Sprung nach dem
+  Start sitzt, ob Songtext und Visual sauber anlaufen.
 - ✅ **Laufzeiten entfernter Knoten (offen seit S87, erledigt S88):** seit
   Knoten-Ids nie wiederverwendet werden, blieb der Laufzeitblock eines im
   Panel entfernten Knotens (Texturen, Skript-Hosts, Milkdrop-Kern) bis zum

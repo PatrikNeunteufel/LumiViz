@@ -205,10 +205,17 @@ vorhanden, Trail Additive gegen Subtract; XOR unterscheidet sich an der grauen
 Vorschau-Zeile wie erwartet von Invert. Kontaktbogen angesehen. **Nicht
 geprüft:** auf dem multisampled Fenster der App (der Test rechnet in eine
 gewöhnliche Fläche) — das ist der offene Punkt für XOR.
-**Folgefrage Patrik:** dieselben Mischarten auch am Lyrics-Knoten der Kette
-(„die Kette gewinnt" soll nicht ärmer sein als die Ebene) — sinnvoll, eigener
-Schritt: Text-Shader um die Arten 3–8 erweitern, Feld Blend von Lyrics und
-Lyrics Trail auf neun Werte, Feldtabelle/Inventar nachziehen.
+**Folgefrage Patrik, ✅ gebaut (S88):** dieselben Mischarten auch am
+Lyrics-Knoten der Kette („die Kette gewinnt" soll nicht ärmer sein als die
+Ebene). Feld **Blend** von Lyrics und Lyrics Trail hat neun Werte; die Arten
+3–8 rechnet der Text-Shader mit denselben Gleichungen wie der Present. Ab Art 3
+werden Füllung und Kontur-Ring getrennt gerastert (`textTexture2`), der Ring
+liegt normal. **Replace, Additive und 50/50 bleiben am Knoten unverändert**
+(die Kontur mischt dort wie bisher mit) — vorhandene Presets rechnen bitgleich.
+Unterschied zur Ebene: dort gilt die getrennte Kontur schon ab Additive, und
+der Knoten hat keinen Stärke-Regler. Feldtabelle und Tooltips neu erzeugt
+(Ernter), Bildtest über einfarbigem Grund mit derselben Erwartungstabelle wie
+die Ebene, Vergleichslauf 84/84 bitgleich.
 
 **Nachtrag Patrik (S88, nach der Erklärung):**
 

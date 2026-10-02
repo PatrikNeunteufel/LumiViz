@@ -36,6 +36,7 @@
 #include "UI/panels/PlaylistPanel.hpp"
 #include "UI/panels/TagViewPanel.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "audio/Wiederaufnahme.hpp"
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -2232,6 +2233,123 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S88 (Wunsch Patrik): „Resume playback" — waehrend des Abspielens beendet,
+// beim naechsten Start genau dort weiter. Geprueft am Ablauf mit einer
+// Player-Attrappe; QSettings sind abgeschottet (UiUmgebung).
+namespace
+{
+class ResumeAttrappe : public PlayerAttrappe
+{
+public:
+    IPlaylist* liste = nullptr;
+    TrackInfo titel;
+    bool spielt = false;
+    int position = 0;
+    int index = -1;
+    QString geladen;      ///< was `load` bekam
+    int gestartet = 0;    ///< wie oft `play` lief
+
+    bool load(const QString& pfad) override
+    {
+        geladen = pfad;
+        return true;
+    }
+    void play() override { ++gestartet; }
+    [[nodiscard]] bool isPlaying() const override { return spielt; }
+    [[nodiscard]] int positionMs() const override { return position; }
+    [[nodiscard]] TrackInfo currentTrack() const override { return titel; }
+    [[nodiscard]] bool hasTrack() const override { return !titel.filePath.isEmpty(); }
+    [[nodiscard]] IPlaylist* playlist() const override { return liste; }
+    [[nodiscard]] int playlistIndex() const override { return index; }
+};
+}  // namespace
+
+TEST_CASE("PaletteUi S88: Resume playback — Stand beim Beenden, Aufnahme beim Start")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    using namespace lumi::audio;
+    const QString a = audio.datei(QStringLiteral("a.mp3"));
+    const QString b = audio.datei(QStringLiteral("b.mp3"));
+    const QString c = audio.datei(QStringLiteral("c.mp3"));
+    audio.playlist->addTrack(a);
+    audio.playlist->addTrack(b);
+
+    // Vorgabe aus; der Schalter haelt
+    CHECK_FALSE(wiederaufnahmeAn());
+    setWiederaufnahme(true);
+    CHECK(wiederaufnahmeAn());
+
+    // --- beim Beenden: Titel b lief bei 83 s
+    ResumeAttrappe alt;
+    alt.liste = audio.playlist;
+    alt.titel.filePath = b;
+    alt.spielt = true;
+    alt.position = 83000;
+    alt.index = 1;
+    speichereWiederaufnahme(standZumBeenden(alt));
+    const WiederaufnahmeStand stand = ladeWiederaufnahme();
+    CHECK(stand.datei == b);
+    CHECK(stand.index == 1);
+    CHECK(stand.positionMs == 83000);
+    CHECK(stand.lief);
+
+    // --- beim Start: derselbe Eintrag der Playlist, dann der Sprung
+    ResumeAttrappe neu;
+    neu.liste = audio.playlist;
+    REQUIRE(nimmWiederAuf(neu, stand));
+    CHECK(neu.gespielt == QList<int>{1});
+    CHECK(neu.letzterSprung == 83000);
+    CHECK(neu.geladen.isEmpty());  // ueber die Playlist, nicht direkt geladen
+
+    // die Liste hat sich geaendert (b steht jetzt vorn): die Datei wird gesucht
+    audio.playlist->clear();
+    audio.playlist->addTrack(b);
+    audio.playlist->addTrack(a);
+    ResumeAttrappe verschoben;
+    verschoben.liste = audio.playlist;
+    REQUIRE(nimmWiederAuf(verschoben, stand));
+    CHECK(verschoben.gespielt == QList<int>{0});
+
+    // der Titel steht nicht in der Playlist: direkt laden und spielen
+    WiederaufnahmeStand fremd = stand;
+    fremd.datei = c;
+    ResumeAttrappe direkt;
+    direkt.liste = audio.playlist;
+    REQUIRE(nimmWiederAuf(direkt, fremd));
+    CHECK(direkt.gespielt.isEmpty());
+    CHECK(direkt.geladen == c);
+    CHECK(direkt.gestartet == 1);
+    CHECK(direkt.letzterSprung == 83000);
+
+    // Gegenproben: pausiert/gestoppt beendet, Datei weg, kein Titel -> es bleibt still
+    alt.spielt = false;
+    speichereWiederaufnahme(standZumBeenden(alt));
+    ResumeAttrappe still;
+    still.liste = audio.playlist;
+    CHECK_FALSE(nimmWiederAuf(still, ladeWiederaufnahme()));
+    CHECK(still.gespielt.isEmpty());
+    CHECK(still.gestartet == 0);
+    WiederaufnahmeStand weg = stand;
+    weg.datei = audio.dir.filePath(QStringLiteral("gibt es nicht.mp3"));
+    CHECK_FALSE(nimmWiederAuf(still, weg));
+    ResumeAttrappe leer;  // kein Titel geladen
+    speichereWiederaufnahme(standZumBeenden(leer));
+    CHECK(ladeWiederaufnahme().datei.isEmpty());
+    CHECK_FALSE(ladeWiederaufnahme().lief);
+
+    // der Schalter im Player-Panel schreibt dieselbe Einstellung
+    PlayerPanel panel(audio.services);
+    auto* knopf = panel.findChild<QPushButton*>(QStringLiteral("playerResume"));
+    REQUIRE(knopf != nullptr);
+    CHECK(knopf->isCheckable());
+    CHECK(knopf->isChecked());  // oben eingeschaltet
+    knopf->click();
+    CHECK_FALSE(wiederaufnahmeAn());
+    knopf->click();
+    CHECK(wiederaufnahmeAn());
 }
 
 // S88 (Entscheid Patrik): `.lvfx2` (Preset-Stapel) traegt ein eigenes Icon —

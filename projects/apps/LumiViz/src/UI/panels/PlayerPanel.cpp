@@ -14,6 +14,7 @@
 #include "services/IEventBus.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/AudioEvents.hpp"
+#include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "UI/widgets/AudioDateien.hpp"
 
 #include <QDragEnterEvent>
@@ -27,6 +28,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QStyle>
+#include <QTimer>
 
 #include <BasicLogger.h>
 
@@ -432,6 +434,18 @@ void PlayerPanel::updateLoopButton(bool enabled)
     }
 }
 
+void PlayerPanel::updateResumeButton(bool enabled)
+{
+    m_pResumeButton->setChecked(enabled);
+    m_pResumeButton->setStyleSheet(
+        enabled ? QStringLiteral("QPushButton { background-color: #4a6fa5; border-radius: 4px; }")
+                : QString());
+    m_pResumeButton->setToolTip(
+        enabled ? tr("Resume playback after restart (ON): closing LumiViz while a track "
+                     "plays continues it at the same position next time")
+                : tr("Resume playback after restart"));
+}
+
 // =============================================================================
 // UI Setup
 // =============================================================================
@@ -500,6 +514,27 @@ void PlayerPanel::setupUI()
     m_pLoopButton->setToolTip(tr("Repeat current track"));
     m_pLoopButton->setFixedSize(32, 32);
     buttonLayout->addWidget(m_pLoopButton);
+
+    // Resume playback (S88, Wunsch Patrik): nach dem Neustart dort weiterspielen
+    m_pResumeButton = new QPushButton(this);
+    m_pResumeButton->setObjectName(QStringLiteral("playerResume"));
+    m_pResumeButton->setIcon(style()->standardIcon(QStyle::SP_MediaSeekForward));
+    m_pResumeButton->setCheckable(true);
+    m_pResumeButton->setFixedSize(32, 32);
+    buttonLayout->addWidget(m_pResumeButton);
+    updateResumeButton(lumi::audio::wiederaufnahmeAn());
+    connect(m_pResumeButton, &QPushButton::clicked, this, [this](bool an) {
+        lumi::audio::setWiederaufnahme(an);
+        updateResumeButton(an);
+    });
+    // der Schalter in Settings → Audio kann den Wert geaendert haben
+    auto* resumeUhr = new QTimer(this);
+    resumeUhr->setInterval(1000);
+    connect(resumeUhr, &QTimer::timeout, this, [this]() {
+        const bool an = lumi::audio::wiederaufnahmeAn();
+        if (m_pResumeButton->isChecked() != an) updateResumeButton(an);
+    });
+    resumeUhr->start();
 
     buttonLayout->addSpacing(20);
 

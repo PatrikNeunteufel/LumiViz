@@ -126,6 +126,10 @@ private:
     QPushButton* m_pNextButton = nullptr;
     QPushButton* m_pMuteButton = nullptr;
     QPushButton* m_pLoopButton = nullptr;
+    /// S88: „Resume playback" — nach dem Neustart dort weiterspielen
+    /// (`audio/Wiederaufnahme.hpp`; derselbe Schalter steht in Settings → Audio)
+    QPushButton* m_pResumeButton = nullptr;
+    void updateResumeButton(bool enabled);
     QSlider* m_pVolumeSlider = nullptr;
     QSlider* m_pProgressSlider = nullptr;
     

@@ -1059,6 +1059,101 @@ TEST_CASE("Karaoke-Ebene S88: Mischarten der Zeile rechnen wie angegeben, die Ko
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S88 (Folgefrage Patrik zu K6): dieselben Mischarten am Lyrics-Knoten der
+// Kette — „die Kette gewinnt" soll nicht aermer sein als die Ebene. Gerechnet
+// im Text-Shader; ab Subtract mischt nur die Fuellung, die Kontur bleibt normal.
+TEST_CASE("Lyrics S88: Mischarten am Knoten rechnen wie in der Karaoke-Ebene")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+    const QRgb grund = qRgb(64, 128, 192);
+    const QString snap = qEnvironmentVariable("LUMIVIZ_KARAOKE_SNAP");
+
+    const auto bild = [&](int blend, const char* name) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x4080C0;
+        clear.params = cp;
+        ChainNode lyr;
+        LyricsParams lp;
+        lp.blend = blend;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < 4; ++i) vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        if (!snap.isEmpty()) img.save(snap + QStringLiteral("/knoten_%1.png").arg(QLatin1String(name)));
+        return img;
+    };
+
+    const QImage normal = bild(0, "0_replace");
+    std::vector<QPoint> innen;
+    for (int y = 0; y < normal.height(); ++y)
+        for (int x = 0; x < normal.width(); ++x)
+            if (normal.pixel(x, y) == qRgb(255, 255, 255)) innen.emplace_back(x, y);
+    REQUIRE(innen.size() > 300);
+    int schwarzNormal = 0;
+    for (int y = 0; y < normal.height(); ++y)
+        for (int x = 0; x < normal.width(); ++x)
+            if (normal.pixel(x, y) == qRgb(0, 0, 0)) ++schwarzNormal;
+    REQUIRE(schwarzNormal > 100);  // die Kontur bei Replace
+
+    struct Fall
+    {
+        int art;
+        const char* name;
+        int r, g, b;
+    };
+    // Quelle weiss, Deckung 1, ueber (64,128,192) — dieselbe Tabelle wie bei der Ebene
+    const Fall faelle[] = {
+        {1, "1_additive", 255, 255, 255}, {2, "2_5050", 160, 192, 224},
+        {3, "3_subtract", 0, 0, 0},       {4, "4_invert", 191, 127, 63},
+        {5, "5_xor", 191, 127, 63},       {6, "6_multiply", 64, 128, 192},
+        {7, "7_maximum", 255, 255, 255},  {8, "8_minimum", 64, 128, 192},
+    };
+    for (const Fall& f : faelle)
+    {
+        CAPTURE(f.name);
+        const QImage img = bild(f.art, f.name);
+        int falsch = 0;
+        for (const QPoint& p : innen)
+        {
+            const QRgb c = img.pixel(p);
+            if (std::abs(qRed(c) - f.r) > 2 || std::abs(qGreen(c) - f.g) > 2 ||
+                std::abs(qBlue(c) - f.b) > 2)
+                ++falsch;
+        }
+        CHECK(falsch == 0);
+        CHECK(img.pixel(5, 5) == grund);  // ausserhalb des Texts unveraendert
+        if (f.art >= 3)  // ab Subtract bleibt die Kontur normal: schwarzer Ring
+        {
+            int schwarz = 0;
+            for (int y = 0; y < img.height(); ++y)
+                for (int x = 0; x < img.width(); ++x)
+                    if (img.pixel(x, y) == qRgb(0, 0, 0)) ++schwarz;
+            CHECK(schwarz > 100);
+        }
+    }
+    // ein Wert jenseits der Liste wird auf die letzte Art geklemmt, nicht zu Unsinn
+    CHECK(bild(99, "99_geklemmt") == bild(8, "8_minimum"));
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88: seit Ids nie wiederverwendet werden (S87), blieb die Laufzeit eines im
 // Panel entfernten Knotens bis zum naechsten Laden liegen (Texturen, Skript-
 // Hosts, ein laufender Video-/Kamera-Feed). Der Render-Thread raeumt sie nach

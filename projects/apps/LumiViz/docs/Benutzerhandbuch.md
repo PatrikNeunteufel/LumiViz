@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.42.0
+> **Version:** 1.43.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -65,11 +65,20 @@ Das **Player-Panel** steuert die Wiedergabe:
 | ▶ / ⏸ | Wiedergabe starten / pausieren |
 | ⏹ | Stopp (zurück an den Trackanfang) |
 | Loop-Taste | **Aktuellen Track** wiederholen (leuchtet bei aktiv) |
+| Resume-Taste (⏩) | **Resume playback**: nach dem Neustart dort weiterspielen (leuchtet bei aktiv) |
 | Fortschrittsbalken | Anfassen und ziehen = Spulen (Seek) |
 | 🔇 + Lautstärkeregler | Stummschalten / Lautstärke |
 
 Musik kommt über die Playlist (§3) in die App — Titel dort doppelklicken
 startet die Wiedergabe.
+
+**Resume playback** (auch unter **Settings → Audio**): Beendest du LumiViz,
+**während ein Titel läuft**, spielt der nächste Start denselben Titel an
+derselben Stelle weiter. Warst du beim Beenden auf Pause oder Stopp, bleibt es
+still. Steht der Titel noch in der Playlist, läuft er von dort (und danach
+normal weiter zum nächsten); fehlt die Datei inzwischen, passiert nichts.
+Festgehalten wird der Stand beim geordneten Beenden — nach einem Absturz gilt
+der vom letzten Beenden davor.
 
 **Ziehen zum Abspielen** (seit Session 84): Zieh eine Audiodatei (aus dem
 Audio Browser oder dem Explorer) oder einen **Playlist-Eintrag** auf das
@@ -517,6 +526,7 @@ gefunden wurde:
 |---|---|
 | **Preview lines** | So viele kommende Zeilen stehen unter der laufenden (0–4), in **Color upcoming**. |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
+| **Blend** | Wie sich der Text mit dem Bild mischt: **Replace**, **Additive**, **50/50**, **Subtract**, **Invert** (weißer Text kehrt die Farbe darunter um), **XOR**, **Multiply**, **Maximum**, **Minimum** — dieselben Arten wie bei der Karaoke-Ebene (unten). Ab **Subtract** mischt nur die Füllung der Buchstaben, die Kontur bleibt normal; bei Replace, Additive und 50/50 mischt die Kontur wie bisher mit. Der **Lyrics Trail** hat dasselbe Feld. |
 | **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
 | **Offset for this track** (eigene Zeile unter der Tabelle) | Derselbe Versatz, aber **nur für den laufenden Titel**. LumiViz merkt ihn sich je Titel (Interpret, Titel, Album, Dauer) in `offsets.json` im Benutzerordner der Songtexte; die Songtext-Datei wird dafür nicht angefasst, und er gilt auch für eingebetteten Text. Er zählt zu **Timing offset (ms)** und zu `[offset:…]` dazu. Dasselbe Feld steht als **Track offset** im Panel Lyrics Sync. |
 | **Unsynced: beats per line** | Unsynchroner Text steht als Block; mit einem Wert > 0 rückt er alle N Beats eine Zeile weiter. |
@@ -1342,6 +1352,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.43.0 | 2026-10-02 | Session 88. §2 NEU **Resume playback** (Player-Panel und Settings → Audio): nach dem Neustart dort weiterspielen. §11 Lyrics / Lyrics Trail: Feld **Blend** mit neun Mischarten (neu Subtract, Invert, XOR, Multiply, Maximum, Minimum) |
 | 1.42.0 | 2026-10-02 | Session 88. §11 Karaoke-Ebene: NEU **Mischarten** je Zeile und Trail (Normal, Additive, 50/50, Subtract, Invert, XOR, Multiply, Maximum, Minimum) mit Stärke; die Kontur bleibt normal |
 | 1.41.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Karaoke-Ebene** — Songtext über jedem Preset (Settings → Audio → Karaoke layer); ein Lyrics-Knoten im Preset gewinnt |
 | 1.40.0 | 2026-10-02 | Session 88. §11 Host-Gruppen: `.lvfx2` trägt im Effect Browser ein eigenes Icon (Stapel) |

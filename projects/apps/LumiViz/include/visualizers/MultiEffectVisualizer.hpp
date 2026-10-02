@@ -476,6 +476,10 @@ private:
         float textRandY = 0.0f;
         std::string textSnapshot;      ///< draw-state snapshot behind textTexture
         unsigned int textTexture = 0;  ///< GL RGBA glyph layer (deleted in onCleanup)
+        /// Lyrics mit Mischart (S88, K6): der Kontur-Ring getrennt von der
+        /// Fuellung — er liegt immer normal, nur die Fuellung mischt.
+        std::string textSnapshot2;
+        unsigned int textTexture2 = 0;
         /// Lyrics (S86): Zeile und Beat-Zaehler des unsynchronen Blocks und
         /// der Songtext-Stand, zu dem sie gehoeren (neuer Titel = von vorn).
         int lyricsZeile = 0;

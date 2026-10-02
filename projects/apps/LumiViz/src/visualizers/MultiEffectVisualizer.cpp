@@ -222,12 +222,28 @@ const char* kTextFragmentShader = R"(
 in vec2 vTex;
 uniform sampler2D uTex;
 uniform sampler2D uImg;
-uniform int uBlend;   // 0 replace, 1 additive, 2 50/50
+uniform int uBlend;   // 0 replace, 1 additive, 2 50/50; 3..8 s. u.
 out vec4 fragColor;
 void main()
 {
     vec3 fb = texture(uTex, vTex).rgb;
     vec4 t = texture(uImg, vec2(vTex.x, 1.0 - vTex.y));
+    // S88 (K6): die Mischarten der Karaoke-Ebene auch am Lyrics-Knoten —
+    // dieselben Gleichungen wie beim Present (p = Farbe mal Deckung):
+    // 3 Subtract, 4 Invert, 5 XOR, 6 Multiply, 7 Maximum, 8 Minimum.
+    if (uBlend >= 3)
+    {
+        vec3 p = t.rgb * t.a;
+        vec3 c;
+        if (uBlend == 3)      c = max(fb - p, vec3(0.0));
+        else if (uBlend == 4) c = p * (vec3(1.0) - fb) + fb * (vec3(1.0) - p);
+        else if (uBlend == 5) c = vec3(ivec3(fb * 255.0 + 0.5) ^ ivec3(p * 255.0 + 0.5)) / 255.0;
+        else if (uBlend == 6) c = fb * (vec3(1.0 - t.a) + p);
+        else if (uBlend == 7) c = max(fb, p);
+        else                  c = min(fb, vec3(1.0 - t.a) + p);
+        fragColor = vec4(c, 1.0);
+        return;
+    }
     vec3 mixed;
     if (uBlend == 1)      mixed = min(fb + t.rgb, vec3(1.0));
     else if (uBlend == 2) mixed = (fb + t.rgb) * 0.5;
@@ -3439,8 +3455,6 @@ std::atomic<bool> g_karaokeEbene{false};
 /// Ids der Ebenen-Knoten: fest und weit ueber allem, was `compileChain`
 /// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
 constexpr uint64_t kKaraokeIdBasis = 0xF000'0000'0000'0000ull;
-/// Laufzeit der getrennt gerasterten Kontur (Mischart ungleich Normal, K6).
-constexpr uint64_t kKaraokeKonturId = kKaraokeIdBasis + 6;
 
 /// Mischart und Staerke (0..100) je Teil der Ebene: [0] Zeile, [1] Trail.
 /// Vorgabe wie KE1: Zeile Normal, Trail Additive, beide volle Staerke.
@@ -4249,6 +4263,7 @@ void MultiEffectVisualizer::gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt)
         if (rt.picTexture != 0) f->glDeleteTextures(1, &rt.picTexture);
         if (rt.fracLut != 0) f->glDeleteTextures(1, &rt.fracLut);
         if (rt.textTexture != 0) f->glDeleteTextures(1, &rt.textTexture);
+        if (rt.textTexture2 != 0) f->glDeleteTextures(1, &rt.textTexture2);
         if (rt.aviTexture != 0) f->glDeleteTextures(1, &rt.aviTexture);
         if (rt.vsTexture != 0) f->glDeleteTextures(1, &rt.vsTexture);
         if (rt.moveTabTex != 0) f->glDeleteTextures(1, &rt.moveTabTex);
@@ -4276,7 +4291,6 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
     sammle(m_root);
     sammle(m_karaokeLyrics);  // die Knoten der Karaoke-Ebene leben ausserhalb der Kette
     sammle(m_karaokeTrail);
-    lebend.insert(kKaraokeKonturId);
 
     for (auto it = m_leafRuntimes.begin(); it != m_leafRuntimes.end();)
     {
@@ -8495,7 +8509,8 @@ void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend)
     f->glBindTexture(GL_TEXTURE_2D, texture);
     m_textShader->setUniformValue("uImg", 1);
     f->glActiveTexture(GL_TEXTURE0);
-    m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, 2));
+    // 0–2 wie r_text; 3–8 die Mischarten der Karaoke-Ebene (S88, K6)
+    m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, kKaraokeMischarten - 1));
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8745,18 +8760,21 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                                                 const std::vector<LyricsAnzeige>& zeilen)
 {
     using Anzeige = LyricsAnzeige;
-    // Karaoke-Ebene mit einer Mischart ungleich Normal (K6): Fuellung und
-    // Kontur getrennt rastern — die Fuellung mischt sich mit dem Bild, die
-    // Kontur bleibt normal und haelt den Text lesbar. Die Kontur-Textur
-    // traegt nur den Ring AUSSERHALB der Buchstaben (sonst mischte die
-    // Fuellung mit der schwarzen Kontur statt mit dem Bild).
-    if (m_glyphNurRastern && m_glyphTeil == GlyphTeil::Alles && params.outline &&
-        karaokeMischart(KaraokeTeil::Zeile) != 0)
+    // Mischart jenseits der drei alten (K6): Fuellung und Kontur getrennt
+    // rastern — die Fuellung mischt sich mit dem Bild, die Kontur bleibt normal
+    // und haelt den Text lesbar. Die Kontur-Textur traegt nur den Ring
+    // AUSSERHALB der Buchstaben (sonst mischte die Fuellung mit der schwarzen
+    // Kontur statt mit dem Bild). In der Karaoke-Ebene gilt das fuer jede Art
+    // ungleich Normal; am Knoten der Kette erst ab Art 3 — Replace, Additive
+    // und 50/50 bleiben dort bitgleich mit dem Stand vor S88.
+    const bool getrennt = m_glyphNurRastern ? karaokeMischart(KaraokeTeil::Zeile) != 0
+                                            : params.blend >= 3;
+    if (getrennt && m_glyphTeil == GlyphTeil::Alles && params.outline)
     {
-        m_glyphTeil = GlyphTeil::NurFuellung;
+        m_glyphTeil = GlyphTeil::NurKontur;  // erst der Ring (normal) …
         zeichneLyricsZeilen(rt, params, zeilen);
-        m_glyphTeil = GlyphTeil::NurKontur;
-        zeichneLyricsZeilen(m_leafRuntimes[kKaraokeKonturId], params, zeilen);
+        m_glyphTeil = GlyphTeil::NurFuellung;  // … dann die Fuellung mit der Mischart
+        zeichneLyricsZeilen(rt, params, zeilen);
         m_glyphTeil = GlyphTeil::Alles;
         return;
     }
@@ -8780,9 +8798,13 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     if (!etwas) return;  // nur Pause/Marke: nichts zeichnen
 
     auto* f = QOpenGLContext::currentContext()->functions();
-    if (rt.textTexture == 0 || rt.textSnapshot != snapshot)
+    // der Kontur-Ring hat seine eigene Textur neben der der Fuellung
+    const bool ring = m_glyphTeil == GlyphTeil::NurKontur;
+    unsigned int& tex = ring ? rt.textTexture2 : rt.textTexture;
+    std::string& stand = ring ? rt.textSnapshot2 : rt.textSnapshot;
+    if (tex == 0 || stand != snapshot)
     {
-        rt.textSnapshot = snapshot;
+        stand = snapshot;
         QImage img(m_surfaceWidth, m_surfaceHeight, QImage::Format_RGBA8888);
         img.fill(Qt::transparent);
         {
@@ -8860,27 +8882,27 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                 y += hoehe;
             }
         }
-        if (rt.textTexture == 0)
+        if (tex == 0)
         {
-            f->glGenTextures(1, &rt.textTexture);
-            f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+            f->glGenTextures(1, &tex);
+            f->glBindTexture(GL_TEXTURE_2D, tex);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
-        f->glBindTexture(GL_TEXTURE_2D, rt.textTexture);
+        f->glBindTexture(GL_TEXTURE_2D, tex);
         f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA,
                         GL_UNSIGNED_BYTE, img.constBits());
     }
     if (m_glyphNurRastern)  // Karaoke-Ebene: aufgelegt wird erst beim Present
     {
-        (m_glyphTeil == GlyphTeil::NurKontur ? m_karaokeKonturTex : m_karaokeGlyphTex) =
-            rt.textTexture;
+        (ring ? m_karaokeKonturTex : m_karaokeGlyphTex) = tex;
         return;
     }
-    composeGlyphLayer(rt.textTexture, params.blend);
+    // in der Kette: der Ring liegt immer normal, die Fuellung mit der Mischart
+    composeGlyphLayer(tex, ring ? 0 : params.blend);
 }
 
 void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)

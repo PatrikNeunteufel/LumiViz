@@ -62,6 +62,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include "audio/SongtextOnline.hpp"  // Lyrics online (S86)
+#include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "audio/SongtextQuelle.hpp"  // Lyrics (S86)
 #include <QFileDialog>
 #include <QMessageBox>
@@ -169,7 +170,24 @@ MainWindow::MainWindow(QWidget* parent)
     restoreSessionPlaylist();
 
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+        // S88 „Resume playback": den Stand des Players festhalten, solange er
+        // noch spielt — VOR allem, was beim Beenden die Wiedergabe anhaelt
+        if (auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>())
+            lumi::audio::speichereWiederaufnahme(lumi::audio::standZumBeenden(*pPlayer));
         saveSessionPlaylist();
+    });
+
+    // S88 „Resume playback" (Wunsch Patrik): wurde beim letzten Mal waehrend
+    // des Abspielens beendet, dort weiterspielen — erst wenn die
+    // Ereignisschleife laeuft (Panels aktiv, Abonnenten des Titelwechsels da).
+    QTimer::singleShot(0, this, [this]() {
+        if (!lumi::audio::wiederaufnahmeAn()) return;
+        auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>();
+        if (pPlayer == nullptr) return;
+        const auto stand = lumi::audio::ladeWiederaufnahme();
+        if (lumi::audio::nimmWiederAuf(*pPlayer, stand))
+            BasicLogger::logInfo("Resume playback: " + stand.datei.toStdString() + " at " +
+                                 std::to_string(stand.positionMs / 1000) + " s");
     });
 
     // -------------------------------------------------------------------------

@@ -414,7 +414,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
     }}});
     out.push_back({ix<LyricsParams>(), Typ{"lyrics", Traeger::ParamSkript, {
         LV_FELD(LyricsParams, beatsPerLine, "beatsPerLine", "beatsperline", "", 1.0, Ganzzahl, Live, 0.0, 64.0),
-        LV_FELD(LyricsParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
+        LV_FELD(LyricsParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 8.0),
         LV_FELD(LyricsParams, color, "color", "color", "", 1.0, Farbe, Struktur, kNaN, kNaN),
         LV_FELD(LyricsParams, color2, "color2", "color2", "", 1.0, Farbe, Struktur, kNaN, kNaN),
         LV_FELD(LyricsParams, colorBoth, "colorBoth", "colorboth", "", 1.0, Farbe, Struktur, kNaN, kNaN),
@@ -434,7 +434,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(LyricsParams, yShift, "yShift", "yshift", "", 1.0, Ganzzahl, Struktur, -100.0, 100.0),
     }}});
     out.push_back({ix<LyricsTrailParams>(), Typ{"lyricsTrail", Traeger::ParamSkript, {
-        LV_FELD(LyricsTrailParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
+        LV_FELD(LyricsTrailParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 8.0),
         LV_FELD(LyricsTrailParams, color, "color", "color", "", 1.0, Farbe, Struktur, kNaN, kNaN),
         LV_FELD(LyricsTrailParams, holdMs, "holdMs", "holdms", "", 1.0, Ganzzahl, Live, 0.0, 5000.0),
         LV_FELD(LyricsTrailParams, useOwnColor, "useOwnColor", "useowncolor", "", 1.0, Schalter, Struktur, 0.0, 1.0),

@@ -8048,8 +8048,11 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                  [](ChainNode& n, uint32_t v) { std::get<LyricsParams>(n.params).outlineColor = v; });
         addInt("outlineSize", tr("Outline size"), p->outlineSize, 1, 32,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).outlineSize = v; });
-        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
-                {tr("Replace"), tr("Additive"), tr("50/50")},
+        // S88 (K6): dieselben Mischarten wie die Karaoke-Ebene; ab Subtract
+        // mischt nur die Fuellung, die Kontur bleibt normal
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 8),
+                {tr("Replace"), tr("Additive"), tr("50/50"), tr("Subtract"), tr("Invert"),
+                 tr("XOR"), tr("Multiply"), tr("Maximum"), tr("Minimum")},
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).blend = v; });
         addInt("offsetMs", tr("Timing offset (ms)"), p->offsetMs, -10000, 10000,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).offsetMs = v; });
@@ -8087,8 +8090,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, bool v) { std::get<LyricsTrailParams>(n.params).useOwnColor = v; });
         addColor("color", tr("Color"), p->color,
                  [](ChainNode& n, uint32_t v) { std::get<LyricsTrailParams>(n.params).color = v; });
-        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 2),
-                {tr("Replace"), tr("Additive"), tr("50/50")},
+        addEnum("blend", tr("Blend"), std::clamp(p->blend, 0, 8),
+                {tr("Replace"), tr("Additive"), tr("50/50"), tr("Subtract"), tr("Invert"),
+                 tr("XOR"), tr("Multiply"), tr("Maximum"), tr("Minimum")},
                 [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).blend = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).frameCode = std::move(v); });

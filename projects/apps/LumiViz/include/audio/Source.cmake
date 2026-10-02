@@ -24,6 +24,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/IAudioPlayer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/IPlaylist.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/Playlist.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Wiederaufnahme.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

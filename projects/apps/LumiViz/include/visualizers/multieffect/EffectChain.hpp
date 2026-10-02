@@ -2917,7 +2917,11 @@ struct LyricsParams
     bool outline = true;           ///< draw an outline around the glyphs
     std::uint32_t outlineColor = 0;  ///< outline color 0x00RRGGBB
     int outlineSize = 2;           ///< outline width in pixels
-    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
+    /// How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50,
+    /// 3 subtract, 4 invert (white text inverts the colour underneath), 5 XOR,
+    /// 6 multiply, 7 maximum, 8 minimum. From 3 on only the fill mixes — the
+    /// outline is drawn normally and keeps the text readable.
+    int blend = 0;
     /// Timing offset in milliseconds for synchronised lyrics: positive = the
     /// lyrics appear earlier, negative = later (same sense as LRC `[offset:]`).
     int offsetMs = 0;
@@ -2950,7 +2954,10 @@ struct LyricsTrailParams
     int yShift = -8;               ///< offset from the place of the line, percent of height (negative = up)
     bool useOwnColor = false;      ///< draw in `color` instead of the color the line had
     std::uint32_t color = 0xFFFFFF;  ///< own color 0x00RRGGBB (with `useOwnColor`)
-    int blend = 0;                 ///< 0 replace, 1 additive, 2 50/50 (glyphs only)
+    /// How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50,
+    /// 3 subtract, 4 invert, 5 XOR, 6 multiply, 7 maximum, 8 minimum (as on
+    /// the Lyrics node; from 3 on the outline stays normal).
+    int blend = 0;
 
     /// Parameter script (S87): every field of this node + `b`/`w`/`h` + audio
     /// set. Fields that re-render the glyphs follow the script from Init, Song
