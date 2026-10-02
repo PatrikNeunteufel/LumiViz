@@ -6,7 +6,7 @@
  * @details
  * Session 86 (Wunsch Patrik): zeigt, was die App aus der laufenden Datei liest
  * — Titel, Interpret, Album, Jahr, Genre, Tracknummer, dazu Datei und Format —
- * und das Cover in groesserer Vorschau. Dieselben Werte setzt der Text-Knoten
+ * und das Cover in groesserer Vorschau, seit S88 auch den Songtext. Dieselben Werte setzt der Text-Knoten
  * in seine Vorlagen ein (`TextTags.hpp`); das Panel ist damit auch das
  * Pruefwerkzeug dafuer.
  *
@@ -43,6 +43,12 @@ public:
     /// Zeigt die Tags von `track`; ein leerer `filePath` heisst „kein Titel".
     void zeige(const TrackInfo& track);
 
+    /// S88: zeigt den Songtext, den der Lyrics-Knoten gerade fuehrt
+    /// (`MultiEffectVisualizer::songtext()`), mit seiner Quelle. Laeuft im
+    /// Betrieb zweimal je Sekunde — ein online geholter oder nachtraeglich
+    /// gewaehlter Text kommt spaeter als der Titelwechsel.
+    void zeigeSongtext();
+
 protected:
     void onActivate() override;
     void onDeactivate() override;
@@ -60,5 +66,8 @@ private:
     QLabel* m_track = nullptr;
     QLabel* m_file = nullptr;
     QLabel* m_format = nullptr;
+    QLabel* m_lyricsSource = nullptr;
+    class QPlainTextEdit* m_lyrics = nullptr;
+    class QTimer* m_uhr = nullptr;  ///< haelt den Songtext aktuell (nur eingeblendet)
     class QFormLayout* m_form = nullptr;
 };

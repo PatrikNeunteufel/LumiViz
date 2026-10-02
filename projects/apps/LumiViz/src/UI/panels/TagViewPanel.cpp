@@ -11,12 +11,16 @@
 #include "audio/IAudioPlayer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"  // Songtext des laufenden Titels (S88)
 
 #include <QDir>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QLabel>
 #include <QPixmap>
+#include <QPlainTextEdit>
+#include <QStringList>
+#include <QTimer>
 #include <QVBoxLayout>
 
 TagViewPanel::TagViewPanel(ServiceContainer& services, QWidget* parent)
@@ -62,7 +66,39 @@ void TagViewPanel::setupUI()
     m_track = zeile("tagTrack", tr("Track"));
     m_file = zeile("tagFile", tr("File"));
     m_format = zeile("tagFormat", tr("Format"));
-    layout->addStretch(1);
+
+    // S88: der Songtext des laufenden Titels, wie ihn der Lyrics-Knoten fuehrt
+    m_lyricsSource = zeile("tagLyricsSource", tr("Lyrics"));
+    m_lyrics = new QPlainTextEdit(this);
+    m_lyrics->setObjectName(QStringLiteral("tagLyrics"));
+    m_lyrics->setReadOnly(true);
+    m_lyrics->setPlaceholderText(tr("No lyrics for this track"));
+    layout->addWidget(m_lyrics, 1);
+
+    m_uhr = new QTimer(this);
+    m_uhr->setInterval(500);
+    connect(m_uhr, &QTimer::timeout, this, &TagViewPanel::zeigeSongtext);
+}
+
+void TagViewPanel::zeigeSongtext()
+{
+    const auto s = MultiEffectVisualizer::songtext();
+    QString quelle = QStringLiteral("—");
+    QString text;
+    if (!s.leer())
+    {
+        quelle = QStringLiteral("%1 · %2 · %3")
+                     .arg(QString::fromStdString(s.quelle),
+                          s.synchron ? tr("synced") : tr("not synced"),
+                          tr("%n line(s)", nullptr, static_cast<int>(s.zeilen.size())));
+        QStringList zeilen;
+        zeilen.reserve(static_cast<qsizetype>(s.zeilen.size()));
+        for (const auto& z : s.zeilen) zeilen << QString::fromStdString(z.text);
+        text = zeilen.join(QLatin1Char('\n'));
+    }
+    // nur bei Aenderung setzen — sonst springt die Rollstellung zweimal je Sekunde
+    if (m_lyricsSource->text() != quelle) m_lyricsSource->setText(quelle);
+    if (m_lyrics->toPlainText() != text) m_lyrics->setPlainText(text);
 }
 
 void TagViewPanel::zeige(const TrackInfo& track)
@@ -116,9 +152,12 @@ void TagViewPanel::onActivate()
     // beim Einblenden den laufenden Titel nachholen
     if (auto* player = services().tryResolve<IAudioPlayer>())
         zeige(player->hasTrack() ? player->currentTrack() : TrackInfo{});
+    zeigeSongtext();
+    m_uhr->start();
 }
 
 void TagViewPanel::onDeactivate()
 {
+    m_uhr->stop();
     m_eventSubscriptions.clear();
 }

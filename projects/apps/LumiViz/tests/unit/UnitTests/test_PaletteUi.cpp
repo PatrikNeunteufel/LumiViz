@@ -2382,6 +2382,47 @@ TEST_CASE("PaletteUi S86: Tag View zeigt die Tags des Titels")
     CHECK(text("tagCover") == QStringLiteral("No cover"));  // Datei existiert nicht
 }
 
+// S88: Tag View zeigt auch den Songtext, den der Lyrics-Knoten fuehrt — und
+// zieht nach, wenn er spaeter kommt (online geholt, nachtraeglich gewaehlt).
+TEST_CASE("PaletteUi S88: Tag View zeigt den Songtext des Titels")
+{
+    namespace ly = lumi::multieffect::lyrics;
+    UiUmgebung env;
+    ServiceContainer dienste;
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    TagViewPanel panel(dienste);
+    auto* quelle = panel.findChild<QLabel*>(QStringLiteral("tagLyricsSource"));
+    auto* feld = panel.findChild<QPlainTextEdit*>(QStringLiteral("tagLyrics"));
+    REQUIRE(quelle != nullptr);
+    REQUIRE(feld != nullptr);
+    CHECK(feld->isReadOnly());
+
+    // Gegenprobe: ohne Text steht nichts da
+    panel.zeigeSongtext();
+    CHECK(quelle->text() == QStringLiteral("—"));
+    CHECK(feld->toPlainText().isEmpty());
+
+    ly::Songtext s = ly::leseLrc("[00:01.00]erste Zeile\n[00:05.00]zweite Zeile\n");
+    s.quelle = "user folder: Wer - Lied.lrc";
+    MultiEffectVisualizer::setSongtext(s);
+    CHECK(feld->toPlainText().isEmpty());  // erst der naechste Takt der Uhr zieht nach
+    panel.zeigeSongtext();
+    CHECK(feld->toPlainText() == QStringLiteral("erste Zeile\nzweite Zeile"));
+    CHECK(quelle->text() == QStringLiteral("user folder: Wer - Lied.lrc · synced · 2 line(s)"));
+
+    // ein anderer (unsynchroner) Text ersetzt ihn; kein Text raeumt ab
+    ly::Songtext u = ly::leseLrc("nur Text\n");
+    u.quelle = "embedded";
+    MultiEffectVisualizer::setSongtext(u);
+    panel.zeigeSongtext();
+    CHECK(feld->toPlainText() == QStringLiteral("nur Text"));
+    CHECK(quelle->text().contains(QStringLiteral("not synced")));
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    panel.zeigeSongtext();
+    CHECK(feld->toPlainText().isEmpty());
+    CHECK(quelle->text() == QStringLiteral("—"));
+}
+
 // S86 (Wunsch Patrik): der Text-Knoten waehlt die Schrift aus einer Liste und
 // hat ein Haekchen Bold, das mit dem Zahlfeld Weight im Gleichschritt bleibt.
 TEST_CASE("PaletteUi S86: Text — Schrift-Auswahlliste und Bold")

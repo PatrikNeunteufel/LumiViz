@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.34.0
+> **Version:** 1.35.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -106,6 +106,13 @@ Werte lassen sich markieren und kopieren. Es sind dieselben, die der
 Text-Knoten in seine Vorlagen einsetzt (`{title}`, `{artist}` …) — das Panel
 zeigt also auch, warum eine Vorlage leer bleibt. Ändern lassen sich die Tags
 hier nicht.
+
+Darunter steht der **Songtext** des laufenden Titels, so wie ihn der
+Lyrics-Knoten führt: die Zeile **Lyrics** nennt Quelle, *synced* oder *not
+synced* und die Zeilenzahl, das Feld darunter den Text ohne Zeitmarken (nur
+lesen, markieren und kopieren). Ein online geholter oder über
+**Alternatives…** gewählter Text erscheint von selbst, sobald er da ist. Ohne
+Text steht dort *No lyrics for this track*.
 
 ### Audio Browser
 
@@ -1283,6 +1290,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.35.0 | 2026-10-02 | Session 88. §2 Tag View zeigt den **Songtext** des laufenden Titels (Quelle, synchron oder nicht, Zeilenzahl, Text) |
 | 1.34.0 | 2026-10-02 | Session 88. §11 Host Switcher: die sechs **Voreinstellungen** (Random Runtime, Random Runtime per Group, Random Seconds, Every 16 Beats, Bass Drop, One per Song) mit ihren Stellgrößen. §11 Lyrics: Titel ohne Text beim Dienst werden **gemerkt** und 7 Tage (instrumental 30) nicht wieder gefragt; **Settings → Audio → Lyrics not found → Ask again** |
 | 1.33.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Knoten **Lyrics Trail** (die eben beendete Zeile noch einmal zeichnen, damit Effekte sie verwehen lassen; Muster mit Effect List, Blitter Feedback und Fadeout) |
 | 1.32.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Panel **Lyrics Sync** (Zeiten je Zeile mitklopfen, nachstellen, vorhören, als `.lrc` speichern) |

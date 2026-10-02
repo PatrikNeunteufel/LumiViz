@@ -2535,9 +2535,12 @@ stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen, Rückgängig.
 **Sichttest offen (Patrik):** das Panel im Betrieb — ob Enter/T beim Klopfen
 ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
 **Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
-`[offset:]` in der Datei); Knopf „Lyrics file…" zum Zuweisen; Tag View zeigt
-den gefundenen Songtext; Wort-Zeiten des Dienstes (`hasWordSync`, Feld
-`lyricsfile`) werden nicht gelesen.
+`[offset:]` in der Datei) — **Entscheid Patrik offen (S88): wo der Versatz
+liegt**; Knopf „Lyrics file…" zum Zuweisen; Wort-Zeiten des Dienstes
+(`hasWordSync`, Feld `lyricsfile`) werden nicht gelesen.
+**✅ S88 gebaut: Tag View zeigt den Songtext** (Zeile *Lyrics* mit Quelle,
+synced/not synced, Zeilenzahl; Textfeld nur lesend; zieht alle 500 ms nach).
+**Sichttest offen (Patrik).**
 **✅ S88 gebaut: Merker „online nichts gefunden"** (`notfound.json` im
 Benutzerordner, `songtextFehlanzeige`/`merkeSongtextFehlanzeige`): 404,
 Eintrag ohne Text und „keine Fassung mit passender Dauer" werden 7 Tage nicht
