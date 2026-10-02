@@ -330,6 +330,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
     }}});
     out.push_back({ix<HostSwitcherParams>(), Typ{"hostSwitcher", Traeger::EigenerHost, {
         LV_FELD(HostSwitcherParams, intervalSeconds, "intervalSeconds", "intervalseconds", "", 1.0, Kommazahl, Live, 0.0, 3600.0),
+        LV_FELD(HostSwitcherParams, keepState, "keepState", "keepstate", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, nextOnSongChange, "nextOnSongChange", "nextonsongchange", "", 1.0, Schalter, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, order, "order", "order", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
         LV_FELD(HostSwitcherParams, startIndex, "startIndex", "startindex", "", 1.0, Ganzzahl, Zustand, kNaN, kNaN),

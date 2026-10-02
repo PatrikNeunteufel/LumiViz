@@ -4929,6 +4929,16 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
             const auto it = m_groupRuntimes.find(node.nodeId);
             if (it == m_groupRuntimes.end() || it->second.blendWeight <= 0.0)
             {
+                // S89 (Idee Patrik): eine ruhende Gruppe verliert sonst am
+                // Frame-Ende ihre ganze Laufzeit (Bild, Pool, Skript-Kontext)
+                // und die ihrer verschachtelten Listen. Haelt ein Host
+                // Switcher ihren Zustand („Keep group state"), bleibt alles
+                // liegen — gezeichnet wird trotzdem nichts.
+                if (it != m_groupRuntimes.end() && m_gruppenPuffer.count(node.nodeId) != 0)
+                {
+                    it->second.seenThisFrame = true;
+                    haltePufferAmLeben(node);
+                }
                 return;
             }
         }
@@ -5371,6 +5381,15 @@ void MultiEffectVisualizer::renderHostGroup(const ChainNode& node,
         }
         if (!laeuft && runtime.blendWeight <= 0.0)
         {
+            // S89 (Idee Patrik): haelt ein Host Switcher den Zustand dieser
+            // Gruppe („Keep group state"), bleibt alles liegen — Bild,
+            // Laufzeit und die verschachtelten Listen; beim Wiederbetreten
+            // laeuft sie dort weiter.
+            if (m_gruppenPuffer.count(node.nodeId) != 0)
+            {
+                haltePufferAmLeben(node);
+                return;
+            }
             // Fertig ausgeblendet: Buffer fuers naechste Einblenden frisch
             // starten (Milkdrop-Verhalten: der alte Zustand stirbt mit A)
             runtime.needsClear = true;
@@ -10412,6 +10431,8 @@ std::string MultiEffectVisualizer::debugSwitcherError(uint64_t nodeId) const
 void MultiEffectVisualizer::runHostSwitchers()
 {
     m_groupOverride.clear();
+    m_gruppenPuffer.clear();
+    std::vector<std::vector<std::string>> zuLeeren;  // S89: Gruppenlisten mit Leer-Wunsch
     for (auto& [id, rt] : m_switcherRuntimes) rt.seenThisFrame = false;
 
     for (const ChainNode& node : m_root.children)
@@ -10433,6 +10454,8 @@ void MultiEffectVisualizer::runHostSwitchers()
 
         int ziel = -1;       // 0-basiert, vom Skript gewaehlt
         bool weiter = false; // naechste Gruppe nach `order`
+        // S89: Puffer leeren — Knopf im Panel oder `clearbuffers` im Skript
+        bool pufferLeeren = m_pufferLeeren.erase(node.nodeId) > 0;
 
         // --- Skript: Init / Frame / Beat / Song (Song-Slot = ChainNode::
         // songCode, wie bei allen Knoten). Ausgaben `switch`/`nextgroup` gelten
@@ -10489,6 +10512,7 @@ void MultiEffectVisualizer::runHostSwitchers()
             engine.setNumber("beatcount", static_cast<double>(rt.beats));
             engine.setNumber("switch", 0.0);
             engine.setNumber("nextgroup", 0.0);
+            engine.setNumber("clearbuffers", 0.0);  // S89: Puffer der ruhenden Gruppen leeren
             engine.setNumber("b", m_frameBeat ? 1.0 : 0.0);
             engine.setNumber("w", static_cast<double>(m_surfaceWidth));
             engine.setNumber("h", static_cast<double>(m_surfaceHeight));
@@ -10518,6 +10542,7 @@ void MultiEffectVisualizer::runHostSwitchers()
             const double s = engine.number("switch");
             if (s >= 1.0 && s <= anzahl) ziel = static_cast<int>(s) - 1;
             if (engine.number("nextgroup") > 0.0) weiter = true;
+            if (engine.number("clearbuffers") > 0.0) pufferLeeren = true;
         }
 
         if (anzahl == 0) continue;  // leere Liste: Skript lief, geschaltet wird nichts
@@ -10553,9 +10578,61 @@ void MultiEffectVisualizer::runHostSwitchers()
             for (const ChainNode& g : m_root.children)
             {
                 if (g.isHostGroup() && g.displayName == sw->groups[static_cast<size_t>(i)])
+                {
                     m_groupOverride[g.nodeId] = (i == rt.index);
+                    // S89: „Keep group state" — die ruhenden Gruppen dieser
+                    // Liste behalten ihren Stand (nach dem Skript: skriptbar)
+                    if (sw->keepState) m_gruppenPuffer.insert(g.nodeId);
+                }
             }
         }
+        if (pufferLeeren) zuLeeren.push_back(sw->groups);
+    }
+    // Erst jetzt steht fuer alle Gruppen fest, welche laeuft — nur die
+    // ruhenden werden geleert
+    for (const auto& gruppen : zuLeeren) leerePufferVon(gruppen);
+    m_pufferLeeren.clear();  // Wuensche fuer Switcher, die es nicht mehr gibt
+}
+
+void MultiEffectVisualizer::leerePufferVon(const std::vector<std::string>& gruppen)
+{
+    for (const ChainNode& g : m_root.children)
+    {
+        if (!g.isHostGroup() ||
+            std::find(gruppen.begin(), gruppen.end(), g.displayName) == gruppen.end())
+            continue;
+        const auto git = m_groupRuntimes.find(g.nodeId);
+        const bool blendet = git != m_groupRuntimes.end() && git->second.blendWeight > 0.0;
+        if (effectiveEnabled(g) || blendet) continue;  // laeuft (oder blendet noch aus): bleibt
+        if (git != m_groupRuntimes.end())
+        {
+            git->second.needsClear = true;
+            git->second.activeSeconds = 0.0;
+            git->second.pool.reset();     // Buffer-Save-Puffer
+            git->second.context.reset();  // reg / q / gmegabuf der Gruppe
+        }
+        // die Laufzeiten aller Knoten darin: Skripte, Partikel, Texturen —
+        // beim naechsten Betreten laufen die Init-Skripte wieder
+        const std::function<void(const ChainNode&)> frei = [&](const ChainNode& n) {
+            if (const auto it = m_leafRuntimes.find(n.nodeId); it != m_leafRuntimes.end())
+            {
+                gibLeafLaufzeitFrei(it->first, it->second);
+                m_leafRuntimes.erase(it);
+            }
+            m_listRuntimes.erase(n.nodeId);
+            for (const ChainNode& kind : n.children) frei(kind);
+        };
+        frei(g);
+    }
+}
+
+void MultiEffectVisualizer::haltePufferAmLeben(const ChainNode& node)
+{
+    for (const ChainNode& kind : node.children)
+    {
+        if (const auto it = m_listRuntimes.find(kind.nodeId); it != m_listRuntimes.end())
+            it->second.seenThisFrame = true;
+        haltePufferAmLeben(kind);
     }
 }
 

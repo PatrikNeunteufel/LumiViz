@@ -315,6 +315,12 @@ struct HostSwitcherParams
     double intervalSeconds = 0.0;     ///< advance after this many seconds; 0 = off
     bool nextOnSongChange = false;    ///< advance on song change
     int order = 0;                    ///< advance: 0 = list order, 1 = random
+    /// Keep the state of the listed groups while they rest: on leaving a group
+    /// its picture, run time and nested lists stay as they are, on entering it
+    /// again it continues from there. Off = a group starts with an empty
+    /// picture each time. The script variable `clearbuffers` (set to 1) and the
+    /// button Reset buffers make the resting groups start completely fresh.
+    bool keepState = false;
     std::string initCode;             ///< EEL, once after loading
     std::string frameCode;            ///< EEL, every frame
     std::string beatCode;             ///< EEL, on every beat

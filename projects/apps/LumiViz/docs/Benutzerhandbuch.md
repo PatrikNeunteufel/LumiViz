@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.51.0
+> **Version:** 1.52.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1192,12 +1192,22 @@ die oberste Ebene der Kette.
 - **Switch after (s):** nach so vielen Sekunden zur nächsten Gruppe (0 = aus).
 - **Next on song change:** beim nächsten Titel zur nächsten Gruppe.
 - **Order:** nächste Gruppe nach Liste (*List order*) oder zufällig (*Random*, nie dieselbe).
+- **Keep group state:** an = jede Gruppe der Liste **merkt sich ihren Stand**,
+  solange sie ruht — Bild, Zwischenpuffer, Skriptwerte, Laufzeit — und läuft
+  beim nächsten Betreten **dort weiter**, wo sie verlassen wurde. Aus (Vorgabe)
+  = eine Gruppe beginnt jedes Mal mit leerem Bild. Die ruhenden Gruppen
+  rechnen nicht weiter; sie halten nur ihren Stand (und dessen Speicher).
+- **Reset buffers:** leert die Puffer der ruhenden Gruppen — sie beginnen
+  beim nächsten Betreten **ganz frisch** (auch Skripte und Partikel starten
+  neu). Die gerade laufende Gruppe bleibt unberührt. Im Skript:
+  `clearbuffers = 1`, z. B. im Song-Feld, damit jeder Titel frisch beginnt.
 - **Skripte** Init / Frame / Beat / **Song** (läuft einmal bei jedem
   Songwechsel). Lesen: `index`, `count`, `seconds` und `beatcount` (beide
   **0 direkt nach einem Wechsel** — so erkennt der Frame-Slot, dass gerade
   umgeschaltet wurde), dazu `bass`/`mid`/`treb`, `getspec` usw. Schreiben:
-  `switch = n` (Gruppe n) oder `nextgroup = 1` (nächste). Beide gelten nur
-  für den Frame, in dem sie gesetzt werden. Beispiel alle 32 Beats:
+  `switch = n` (Gruppe n), `nextgroup = 1` (nächste) oder `clearbuffers = 1`
+  (Puffer leeren, s. o.). Alle drei gelten nur für den Frame, in dem sie
+  gesetzt werden. Beispiel alle 32 Beats:
   `nextgroup = above(beatcount, 31);`
 - **Voreinstellungen** (Zeile *Preset* oben im Editor): sechs fertige
   Wechsel-Regeln. Sie setzen nur Wechselart und Skripte — die **Gruppenliste
@@ -1434,6 +1444,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.52.0 | 2026-10-02 | Session 89. §11 Host Switcher: NEU **Keep group state** (Gruppen merken sich ihren Stand und laufen beim Wiederbetreten weiter), **Reset buffers** und Skriptvariable `clearbuffers` |
 | 1.51.0 | 2026-10-02 | Session 89. §9 NEU **Die Preset-Zeile** in den Panels Effect Chain und Karaoke (laufendes Preset, Favoriten ★, zehn zuletzt benutzte, lädt sofort, Load…/Save/Save As…); Karaoke-Presets an frei wählbarem Ort, **Delete** entfällt, Rückfrage bei ungespeicherter Karaoke-Ebene |
 | 1.50.0 | 2026-10-02 | Session 89. §9 NEU **Save** (Ctrl+S) und **Save As…** (Ctrl+Shift+S) für die Effektkette; **Rückfrage bei ungespeicherten Änderungen** vor jedem Ersetzen der Kette und beim Beenden (im Vollbild: erst Vollbild verlassen) |
 | 1.49.0 | 2026-10-02 | Session 89. Karaoke: Menü **View → Karaoke**, Tastenkürzel **Ctrl+K** (*Karaoke On / Off*), Zustandszeile *Preset shows its own lyrics* im Karaoke-Panel |

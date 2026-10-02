@@ -63,6 +63,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 /**
@@ -336,6 +337,12 @@ public:
      */
     static void setKaraokeEbene(bool an);
     [[nodiscard]] static bool karaokeEbene();
+    /// Host Switcher (S89): die Puffer der ruhenden Gruppen dieses Switchers
+    /// leeren — sie beginnen beim naechsten Betreten ganz frisch. Unter dem
+    /// Render-Mutex aufrufen; gewirkt wird im naechsten Frame. Im Skript des
+    /// Switchers tut `clearbuffers = 1` dasselbe.
+    void leereSwitcherPuffer(uint64_t switcherNodeId) { m_pufferLeeren.insert(switcherNodeId); }
+
     /// „Die Kette gewinnt": enthaelt die laufende Kette einen eingeschalteten
     /// Lyrics-Knoten (er selbst und alle Container ueber ihm an, Host-Gruppen
     /// nach der Wahl des Switchers)? Dann zeichnet die Ebene nichts. Unter dem
@@ -1542,6 +1549,20 @@ private:
     /// Gruppen-nodeId -> laeuft (true) / ruht (false), je Frame von den
     /// Switchern neu gesetzt; fehlt eine Gruppe, gilt ihr `enabled`.
     std::unordered_map<uint64_t, bool> m_groupOverride;
+    /// S89 (Idee Patrik): Gruppen, deren Zustand ein Switcher mit „Keep group
+    /// state" haelt — je Frame von den Switchern neu gesetzt. Eine ruhende
+    /// Gruppe darin behaelt Bild, Laufzeit und ihre verschachtelten Listen.
+    std::unordered_set<uint64_t> m_gruppenPuffer;
+    /// Switcher, deren Puffer geleert werden sollen (Knopf im Panel) —
+    /// abgearbeitet vom Render-Thread in runHostSwitchers.
+    std::unordered_set<uint64_t> m_pufferLeeren;
+    /// Die RUHENDEN Gruppen der Liste wirklich frisch machen (Entscheid Patrik
+    /// S89 a): Bild, Laufzeit, Pool, Skript-Kontext, verschachtelte Listen und
+    /// die Laufzeiten aller Knoten darin. Laufende Gruppen bleiben unberuehrt.
+    void leerePufferVon(const std::vector<std::string>& gruppen);
+    /// Verschachtelte Listen einer ruhenden, gepufferten Gruppe am Leben
+    /// halten (sonst fallen ihre Laufzeiten am Frame-Ende weg).
+    void haltePufferAmLeben(const lumi::multieffect::ChainNode& node);
     /// Alle Host Switcher der obersten Ebene einen Frame weiterrechnen und
     /// m_groupOverride setzen — VOR dem HG2-Gewichtsscan (onRender).
     void runHostSwitchers();

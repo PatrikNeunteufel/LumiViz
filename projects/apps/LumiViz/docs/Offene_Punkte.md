@@ -3034,7 +3034,7 @@ Liste statt pro Gruppe. Trigger-Stufen:
 Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
 sich — im Konzept abgrenzen.
 
-### ⚪ Host Switcher: Puffer je Gruppe — Zustand beim Wiederbetreten fortsetzen (Idee Patrik S89, **zeitnah**)
+### ✅ Host Switcher: Puffer je Gruppe — „Keep group state" (Idee Patrik S89, umgesetzt S89 — Sichttest offen)
 
 **Idee:** der Host Switcher hält für jede gelistete Gruppe einen Puffer
 (anfangs leer). Wird die Gruppe verlassen, bleibt ihr Stand im Puffer; wird
@@ -3042,32 +3042,47 @@ dieselbe Gruppe wieder betreten, läuft sie von dort weiter. Das Puffern ist
 einschaltbar, die Puffer lassen sich zurücksetzen; bei leerem Puffer beginnt
 die Gruppe einfach neu.
 
-**Befund S89 (Code gelesen, nichts gebaut, nichts gemessen): machbar.**
+**Befund (S89, am Code und im Test):** ohne Puffer verliert eine fertig
+ausgeblendete Gruppe am Frame-Ende ihre **ganze Gruppen-Laufzeit** (Bild,
+Buffer-Save-Pool, Skript-Kontext reg/q/gmegabuf, Laufzeit `activeSeconds`) und
+die Laufzeiten ihrer verschachtelten Effect Lists — `renderNode` zeichnet sie
+nicht mehr, und was einen Frame lang nicht gesehen wurde, wird weggeräumt. Die
+Laufzeiten der **Knoten** darin (Skriptvariablen, Partikel, Milkdrop-Zustand)
+bleiben dagegen liegen: der heutige Neustart ist also kein vollständiger.
+(Die erste Lesung in S89 — „Pool und Kontext bleiben erhalten" — war falsch;
+der Bildtest hat es gezeigt.)
 
-- Der Puffer existiert schon: jede Host-Gruppe hat eine `GroupRuntime`
-  (Feedback-Bild, Buffer-Save-Pool, Skript-Kontext mit reg/q/gmegabuf). Sie
-  bleibt im Speicher, solange die Gruppe in der Kette steht — auch wenn sie
-  nicht läuft.
-- Der Stand wird heute **absichtlich** verworfen: ist die Gruppe fertig
-  ausgeblendet, setzt `renderHostGroup` `needsClear = true` und
-  `activeSeconds = 0` („Milkdrop-Verhalten: der alte Zustand stirbt mit A").
-- Einschalten hieße im Kern: diese beiden Zeilen hinter einen Schalter am
-  Host Switcher legen. Zurücksetzen: Knopf im Panel und eine Skriptvariable,
-  die für alle gelisteten Gruppen `needsClear` setzt.
-- Speicher: die Bilder liegen heute schon je Gruppe im VRAM — nichts kommt dazu.
+**Umgesetzt:**
 
-**Vor dem Bau zu klären:**
+- Feld **Keep group state** am Host Switcher (`HostSwitcherParams::keepState`,
+  Vorgabe aus, skriptbar als `keepstate`). An: die ruhenden Gruppen der Liste
+  behalten Bild, Pool, Skript-Kontext, Laufzeit und ihre verschachtelten
+  Listen (`m_gruppenPuffer`, `haltePufferAmLeben`); gezeichnet wird weiter
+  nichts, solange sie ruhen.
+- **Zurücksetzen** (Entscheid Patrik a — wirklich frisch): Knopf **Reset
+  buffers** im Editor und Skriptvariable `clearbuffers = 1`
+  (`leereSwitcherPuffer`, `leerePufferVon`): Bild, Laufzeit, Pool,
+  Skript-Kontext, verschachtelte Listen **und** die Laufzeiten aller Knoten
+  der ruhenden Gruppen — die Init-Skripte laufen beim nächsten Betreten
+  wieder. Die laufende (oder noch ausblendende) Gruppe bleibt unberührt.
+- Ohne das Feld bleibt alles wie vor S89 (Vergleichslauf 84/84 bitgleich).
+- Geprüft im Bildtest (`test_HostSwitcher.cpp`): ohne Puffer beginnt das Bild
+  nach der Rückkehr leer; mit Puffer läuft es weiter (auch wenn eine
+  verschachtelte Liste das Bild trägt); `clearbuffers` und der Knopf leeren;
+  die laufende Gruppe wird nicht angefasst; Roundtrip des Felds.
 
-1. Was zum „Stand" gehört: Bild, Pool und Skript-Kontext der Gruppe sicher.
-   **Nicht geprüft:** ob die Init-Slots der Kinder und die Blatt-Laufzeiten
-   (Partikel, Wasser, Delay-Ringe, Milkdrop-Node) beim Wiedereinblenden heute
-   neu starten — das entscheidet, ob „weiterlaufen" wirklich nahtlos ist.
-2. Wo der Schalter sitzt: am Switcher (für alle gelisteten Gruppen) oder je
-   Gruppe.
-3. Größenwechsel leert den Puffer zwangsläufig (Bild in anderer Größe).
-4. Reichweite: nur zur Laufzeit. Über App-Neustart oder Neuladen der Kette
-   hinweg müssten Bilder auf Platte — eigener, größerer Schritt, nicht Teil
-   dieser Idee.
+**Offen / Grenzen:**
+
+- **Sichttest** mit echten Presets (Milkdrop-Node, Partikel, Video Source in
+  einer ruhenden Gruppe).
+- Ein Größenwechsel leert die Bilder (andere Auflösung) — die übrigen
+  Zustände bleiben.
+- Speicher: je gepufferter Gruppe bleiben ihre Flächen im VRAM liegen, auch
+  die der verschachtelten Listen und die Buffer-Save-Puffer.
+- Nur zur Laufzeit. Über App-Neustart oder Neuladen der Kette hinweg müssten
+  Bilder auf Platte — eigener, größerer Schritt, nicht Teil dieser Idee.
+- Der Puffer hängt am Switcher: eine von Hand (Auge) geschaltete Gruppe
+  verhält sich wie bisher.
 
 ### ✅ Effekt-Palette als Fenster statt Dropdown (Entscheid + Umsetzung S79 — Sichttest offen)
 

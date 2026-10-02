@@ -6907,6 +6907,24 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addEnum("order", tr("Order"), std::clamp(p->order, 0, 1),
                 {tr("List order"), tr("Random")},
                 [](ChainNode& n, int v) { std::get<HostSwitcherParams>(n.params).order = v; });
+        // S89 (Idee Patrik): Puffer je Gruppe — beim Verlassen bleibt der Stand,
+        // beim Wiederbetreten laeuft die Gruppe dort weiter
+        addBool("keepState", tr("Keep group state"), p->keepState,
+                [](ChainNode& n, bool v) { std::get<HostSwitcherParams>(n.params).keepState = v; });
+        {
+            auto* leeren = new QPushButton(tr("Reset buffers"), m_propContainer);
+            leeren->setObjectName(QStringLiteral("hostSwitcherResetBuffers"));
+            leeren->setToolTip(
+                tr("Makes the resting groups of this list start completely fresh the next "
+                   "time they are entered (picture, run time, scripts, particles). The group "
+                   "that is running now is not touched. Script: clearbuffers = 1."));
+            connect(leeren, &QPushButton::clicked, this, [this, switcherId] {
+                if (m_host == nullptr || m_mutex == nullptr) return;
+                QMutexLocker lock(m_mutex);
+                m_host->leereSwitcherPuffer(switcherId);
+            });
+            form->addRow(QString(), leeren);
+        }
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<HostSwitcherParams>(n.params).beatCode = std::move(v); });

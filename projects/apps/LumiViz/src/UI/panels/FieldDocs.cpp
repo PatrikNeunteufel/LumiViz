@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     844>
+                     845>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -734,6 +734,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "EEL, once after loading"},
     {"hostSwitcher.intervalSeconds",
      "advance after this many seconds; 0 = off"},
+    {"hostSwitcher.keepState",
+     "Keep the state of the listed groups while they rest: on leaving a group its picture, run time and nested lists stay as they are, on entering it again it continues from there. Off = a group starts with an empty picture each time. The script variable `clearbuffers` (set to 1) and the button Reset buffers make the resting groups start completely fresh."},
     {"hostSwitcher.nextOnSongChange",
      "advance on song change"},
     {"hostSwitcher.order",

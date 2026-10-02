@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 94,
-    "felder": 844,
+    "felder": 845,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -4302,6 +4302,14 @@
           "lo": 0.0,
           "hi": 3600.0,
           "doc": "advance after this many seconds; 0 = off"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "keepState",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Keep the state of the listed groups while they rest: on leaving a group its picture, run time and nested lists stay as they are, on entering it again it continues from there. Off = a group starts with an empty picture each time. The script variable `clearbuffers` (set to 1) and the button Reset buffers make the resting groups start completely fresh."
         },
         {
           "art": "bool",

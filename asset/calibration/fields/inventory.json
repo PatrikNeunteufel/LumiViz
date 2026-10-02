@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 844,
+        "felder": 845,
         "typen": 94
     },
     "typen": [
@@ -2099,6 +2099,11 @@
                     "art": "zahl",
                     "default": 0,
                     "name": "intervalSeconds"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "keepState"
                 },
                 {
                     "art": "bool",

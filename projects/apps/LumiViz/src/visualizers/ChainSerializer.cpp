@@ -288,6 +288,7 @@ struct WriteVisitor
         o["intervalSeconds"] = p.intervalSeconds;
         o["nextOnSongChange"] = p.nextOnSongChange;
         o["order"] = p.order;
+        o["keepState"] = p.keepState;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -1583,6 +1584,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.intervalSeconds = o.value("intervalSeconds").toDouble(p.intervalSeconds);
         p.nextOnSongChange = getBool(o, "nextOnSongChange", p.nextOnSongChange);
         p.order = getInt(o, "order", p.order);
+        p.keepState = getBool(o, "keepState", p.keepState);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
