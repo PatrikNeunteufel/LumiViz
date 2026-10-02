@@ -652,6 +652,15 @@ TEST_CASE("Lyrics S86: laufende Zeile an der Abspielposition, Vorschau, unsynchr
     lp.offsetMs = 9000;
     CHECK(hell(lp) == breit);
     lp.offsetMs = 0;
+    // S88: derselbe Versatz nur fuer den laufenden Titel — gleicher Sinn, und
+    // er zaehlt zum Feld des Knotens dazu
+    CHECK(hell(lp) == schmal);  // Gegenprobe: ohne Versatz die erste Zeile
+    MultiEffectVisualizer::setSongtextTitelVersatz(9000);
+    CHECK(hell(lp) == breit);
+    lp.offsetMs = -9000;  // Knoten und Titel heben sich auf
+    CHECK(hell(lp) == schmal);
+    lp.offsetMs = 0;
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
 
     // Vorschau: die naechste Zeile steht (dunkel) dabei — hell bleibt nur die laufende
     lp.previewLines = 1;

@@ -2534,10 +2534,19 @@ verwirft Zeilen ohne Zeit). Ungespeicherte Arbeit bleibt beim Titelwechsel
 stehen. **Nicht gebaut:** Wort-Zeiten, automatisches Verteilen, Rückgängig.
 **Sichttest offen (Patrik):** das Panel im Betrieb — ob Enter/T beim Klopfen
 ankommen (die Leertaste gehört dem Player), Bedienfluss, Breite der Knöpfe.
-**Offen:** Versatz **je Titel** speichern (heute: Feld am Knoten und
-`[offset:]` in der Datei) — **Entscheid Patrik offen (S88): wo der Versatz
-liegt**; Knopf „Lyrics file…" zum Zuweisen; Wort-Zeiten des Dienstes
+**Offen:** Knopf „Lyrics file…" zum Zuweisen; Wort-Zeiten des Dienstes
 (`hasWordSync`, Feld `lyricsfile`) werden nicht gelesen.
+**✅ S88 gebaut: Versatz je Titel** (Entscheid Patrik a: eigene Ablage, keine
+Songtext-Datei wird umgeschrieben) — `offsets.json` im Benutzerordner
+(`audio::songtextTitelVersatzMs`/`setzeSongtextTitelVersatz`, Schlüssel
+`songtextSchluessel` = Interpret, Titel, Album, Dauer in Sekunden), am
+Renderer `MultiEffectVisualizer::setSongtextTitelVersatz` (gesetzt beim
+Songwechsel; Lyrics und Lyrics Trail rechnen ihn zu `offsetMs` und
+`[offset:]` dazu). Felder: **Offset for this track** im Lyrics-Editor,
+**Track offset** in Lyrics Sync (Sprünge, Klopfen und Wellenform-Striche
+rechnen ihn ein). Das Feld im Lyrics-Editor hat keinen eigenen Test.
+**Sichttest offen (Patrik).** Nicht einbezogen: der Balken im
+Alternativen-Dialog.
 **✅ S88 gebaut: Tag View zeigt den Songtext** (Zeile *Lyrics* mit Quelle,
 synced/not synced, Zeilenzahl; Textfeld nur lesend; zieht alle 500 ms nach).
 **Sichttest offen (Patrik).**
@@ -2547,8 +2556,8 @@ Eintrag ohne Text und „keine Fassung mit passender Dauer" werden 7 Tage nicht
 wieder angefragt, instrumental 30 Tage; Schlüssel = Interpret, Titel, Album,
 Dauer in Sekunden. Kein Merker bei 429/503 und Netzfehlern. Zurücksetzen:
 Settings → Audio → *Lyrics not found* → **Ask again**; eine Freigabe in der
-Sperrliste vergisst die Merker ebenfalls. Die Fristen (7/30 Tage) sind von
-Claude gesetzt, nicht von Patrik entschieden. **Sichttest offen (Patrik):**
+Sperrliste vergisst die Merker ebenfalls. Fristen 7/30 Tage: Entscheid
+Patrik a (S88). **Sichttest offen (Patrik):**
 zweites Abspielen eines Titels ohne Text → Log „not asked again", Knopf.
 Die Dokumentation sagt nichts zur Lizenz der Texte.
 **Datei-Icons (S86, Wunsch Patrik):** `.lrc`-Icon erzeugt; alle Icons liegen

@@ -29,6 +29,8 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QPushButton>
+#include <QSignalBlocker>
+#include <QSpinBox>
 #include <QTableWidget>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -226,9 +228,30 @@ bool LyricsSyncPanel::springeZu(int reihe, int vorlaufMs)
     const std::int64_t zeit = m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs;
     if (zeit < 0) return false;
     // Zeiten stehen wie in der Datei: Abspielposition = Zeit − Versatz
-    const std::int64_t ziel = std::max<std::int64_t>(0, zeit - m_text.versatzMs - vorlaufMs);
+    const std::int64_t ziel = std::max<std::int64_t>(0, zeit - versatz() - vorlaufMs);
     if (auto* player = services().tryResolve<IAudioPlayer>()) player->seek(static_cast<int>(ziel));
     return true;
+}
+
+void LyricsSyncPanel::setzeTitelVersatz(int ms)
+{
+    if (m_track.filePath.isEmpty()) return;
+    m_titelVersatzMs = ms;
+    lumi::audio::setzeSongtextTitelVersatz(
+        m_track, ms, m_ordner.isEmpty() ? lumi::audio::songtextOrdner() : m_ordner);
+    // sofort im Bild — aber nur, wenn dieser Titel auch der laufende ist
+    if (lumi::audio::laufenderTitel().filePath == m_track.filePath)
+        MultiEffectVisualizer::setSongtextTitelVersatz(ms);
+    zeigeTitelVersatz();
+    zeigeStand();  // die Striche in der Wellenform wandern mit
+}
+
+void LyricsSyncPanel::zeigeTitelVersatz()
+{
+    m_versatzFeld->setEnabled(!m_track.filePath.isEmpty());
+    if (m_versatzFeld->value() == m_titelVersatzMs) return;
+    const QSignalBlocker ruhe(m_versatzFeld);
+    m_versatzFeld->setValue(static_cast<int>(m_titelVersatzMs));
 }
 
 int LyricsSyncPanel::preferredArea() const
@@ -321,6 +344,21 @@ void LyricsSyncPanel::setupUI()
     reihe2->addWidget(leeren);
     reihe2->addWidget(neu);
     reihe2->addWidget(m_speichern);
+    // S88 (Entscheid Patrik a): Versatz nur dieses Titels — verschiebt den
+    // ganzen Text, ohne die Zeiten oder die Datei anzufassen; wirkt sofort
+    m_versatzFeld = new QSpinBox(this);
+    m_versatzFeld->setObjectName(QStringLiteral("lyricsSyncTrackOffset"));
+    m_versatzFeld->setRange(-60000, 60000);
+    m_versatzFeld->setSingleStep(50);
+    m_versatzFeld->setSuffix(tr(" ms"));
+    m_versatzFeld->setToolTip(
+        tr("Timing offset for this track only: positive = the lyrics appear earlier, negative "
+           "= later. Shifts the whole text without changing the times or the file; remembered "
+           "per track, applied at once (no Save needed)."));
+    reihe2->addWidget(new QLabel(tr("Track offset:"), this));
+    reihe2->addWidget(m_versatzFeld);
+    connect(m_versatzFeld, QOverload<int>::of(&QSpinBox::valueChanged), this,
+            &LyricsSyncPanel::setzeTitelVersatz);
     reihe2->addStretch(1);
     reihe2->addWidget(m_folgen);
     vl->addLayout(reihe2);
@@ -388,6 +426,10 @@ void LyricsSyncPanel::lade(const TrackInfo& track, const ly::Songtext& text)
     // der Versatz der Datei bleibt als `[offset:]` erhalten
     m_geaendert = false;
     m_laufend = -1;
+    // S88: der Versatz, der nur fuer diesen Titel gilt (offsets.json)
+    m_titelVersatzMs = lumi::audio::songtextTitelVersatzMs(
+        track, m_ordner.isEmpty() ? lumi::audio::songtextOrdner() : m_ordner);
+    zeigeTitelVersatz();
     fuelleListe();
     if (m_liste->rowCount() > 0) m_liste->selectRow(0);
     zeigeStand();
@@ -484,13 +526,13 @@ void LyricsSyncPanel::zeigeStand()
     // Striche in der Wellenform: Zeiten als Abspielpositionen (Zeit − Versatz)
     std::vector<std::int64_t> marken;
     for (const ly::Zeile& z : m_text.zeilen)
-        if (z.zeitMs >= 0) marken.push_back(z.zeitMs - m_text.versatzMs);
+        if (z.zeitMs >= 0) marken.push_back(z.zeitMs - versatz());
     const QList<int> gewaehlt = markierteReihen();
     std::int64_t gewaehlteZeit = -1;
     if (!gewaehlt.isEmpty() && gewaehlt.first() < static_cast<int>(m_text.zeilen.size()) &&
         m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs >= 0)
         gewaehlteZeit =
-            m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs - m_text.versatzMs;
+            m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs - versatz();
     m_welle->setMarken(std::move(marken), gewaehlteZeit);
 
     m_tap->setEnabled(!m_text.leer() && !fremd);
@@ -502,9 +544,9 @@ bool LyricsSyncPanel::tippe(std::int64_t posMs)
     const QList<int> reihen = markierteReihen();
     if (reihen.isEmpty() || m_text.leer()) return false;
     const int reihe = reihen.first();
-    // wie der Knoten rechnet: wirksame Zeit = Position + Versatz der Datei
+    // wie der Knoten rechnet: wirksame Zeit = Position + Versatz (Datei + Titel)
     m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs =
-        std::max<std::int64_t>(0, posMs + m_text.versatzMs);
+        std::max<std::int64_t>(0, posMs + versatz());
     m_geaendert = true;
     zeigeZeile(reihe);
 
@@ -642,7 +684,15 @@ void LyricsSyncPanel::zeigePosition()
     if (m_text.leer() || laufend.filePath != m_track.filePath) return;
 
     // die Zeile an der Abspielposition: die spaeteste, deren Zeit erreicht ist
-    const std::int64_t jetzt = MultiEffectVisualizer::playPositionMs() + m_text.versatzMs;
+    // S88: der Lyrics-Editor kann den Versatz dieses Titels verstellt haben
+    const std::int64_t titelVersatz = MultiEffectVisualizer::songtextTitelVersatzMs();
+    if (titelVersatz != m_titelVersatzMs)
+    {
+        m_titelVersatzMs = titelVersatz;
+        zeigeTitelVersatz();
+        zeigeStand();
+    }
+    const std::int64_t jetzt = MultiEffectVisualizer::playPositionMs() + versatz();
     int reihe = -1;
     std::int64_t beste = -1;
     for (int r = 0; r < static_cast<int>(m_text.zeilen.size()); ++r)

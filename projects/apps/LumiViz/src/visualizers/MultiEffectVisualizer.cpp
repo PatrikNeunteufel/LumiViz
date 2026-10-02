@@ -86,6 +86,7 @@ std::mutex g_songTagsMutex;
 lumi::multieffect::texttags::SongTags g_songTags;
 lumi::multieffect::lyrics::Songtext g_songtext;  ///< S86, unter g_songTagsMutex
 std::atomic<int> g_songtextAbruf{0};             ///< S87, lyrics::Abruf des laufenden Titels
+std::atomic<std::int64_t> g_songtextTitelVersatzMs{0};  ///< S88, Versatz nur dieses Titels
 
 /// Abspielposition des Players (S86): zuletzt gemeldeter Wert, die Wanduhr
 /// dazu und ob er laeuft — dazwischen zaehlt playPositionMs() weiter.
@@ -8209,7 +8210,9 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     if (s.synchron)
     {
         // Entscheid 5a: die Zeit kommt vom Player, nicht von Frames oder Beats
-        const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(params.offsetMs);
+        // S88: dazu der Versatz, der nur fuer DIESEN Titel gilt
+        const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(params.offsetMs) +
+                                 songtextTitelVersatzMs();
         const int idx = ly::zeileBei(s, pos);
         if (idx >= 0)
         {
@@ -8316,7 +8319,8 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     if (quelle == nullptr || !s.synchron) return;  // nur an echten Zeiten zu erkennen
     const LyricsParams& lp = std::get<LyricsParams>(quelle->params);
 
-    const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(lp.offsetMs);
+    const std::int64_t pos = playPositionMs() + static_cast<std::int64_t>(lp.offsetMs) +
+                             songtextTitelVersatzMs();
     const int idx = ly::zeileBei(s, pos);
     if (idx < 1) return;
     // seit wann die laufende Zeile laeuft = seit wann die vorige zu Ende ist
@@ -9650,6 +9654,16 @@ lumi::multieffect::lyrics::Songtext MultiEffectVisualizer::songtext()
 void MultiEffectVisualizer::setSongtextAbruf(lumi::multieffect::lyrics::Abruf stand)
 {
     g_songtextAbruf.store(static_cast<int>(stand), std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::setSongtextTitelVersatz(std::int64_t ms)
+{
+    g_songtextTitelVersatzMs.store(ms, std::memory_order_relaxed);
+}
+
+std::int64_t MultiEffectVisualizer::songtextTitelVersatzMs()
+{
+    return g_songtextTitelVersatzMs.load(std::memory_order_relaxed);
 }
 
 std::string MultiEffectVisualizer::songtextDatei()

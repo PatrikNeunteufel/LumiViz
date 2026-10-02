@@ -697,6 +697,52 @@ TEST_CASE("SongtextOnline: Merker — nichts gefunden wird eine Weile nicht wied
     CHECK_FALSE(songtextFehlanzeige(t, nutzer));
 }
 
+// S88 (Entscheid Patrik a): Versatz je Titel in offsets.json — fuer jede
+// Quelle gleich, keine Songtext-Datei wird dafuer angefasst.
+TEST_CASE("SongtextQuelle: Versatz je Titel — festhalten, je Fassung getrennt, 0 entfernt")
+{
+    using lumi::audio::setzeSongtextTitelVersatz;
+    using lumi::audio::songtextTitelVersatzMs;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/x.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.durationMs = 200000;
+
+    // Gegenprobe: ohne Ablage 0, und Lesen legt nichts an
+    CHECK(songtextTitelVersatzMs(t, nutzer) == 0);
+    CHECK_FALSE(QDir(nutzer).exists());
+
+    REQUIRE(setzeSongtextTitelVersatz(t, -350, nutzer));
+    CHECK(songtextTitelVersatzMs(t, nutzer) == -350);
+    TrackInfo gross = t;
+    gross.artist = "WER";
+    gross.filePath = tmp.path() + "/anderswo/x.mp3";  // der Pfad zaehlt nicht
+    CHECK(songtextTitelVersatzMs(gross, nutzer) == -350);
+    // eine andere Fassung (Dauer) hat ihren eigenen Versatz
+    TrackInfo lang = t;
+    lang.durationMs = 260000;
+    CHECK(songtextTitelVersatzMs(lang, nutzer) == 0);
+    REQUIRE(setzeSongtextTitelVersatz(lang, 500, nutzer));
+    CHECK(songtextTitelVersatzMs(t, nutzer) == -350);
+    CHECK(songtextTitelVersatzMs(lang, nutzer) == 500);
+
+    // neu setzen ersetzt (kein zweiter Eintrag), 0 entfernt
+    REQUIRE(setzeSongtextTitelVersatz(t, 120, nutzer));
+    CHECK(songtextTitelVersatzMs(t, nutzer) == 120);
+    REQUIRE(setzeSongtextTitelVersatz(t, 0, nutzer));
+    CHECK(songtextTitelVersatzMs(t, nutzer) == 0);
+    CHECK(songtextTitelVersatzMs(lang, nutzer) == 500);
+    REQUIRE(setzeSongtextTitelVersatz(lang, 0, nutzer));
+    CHECK_FALSE(QFile::exists(nutzer + "/offsets.json"));  // nichts mehr festzuhalten
+
+    // ein Titel ohne Namen laesst sich nicht festhalten
+    CHECK_FALSE(setzeSongtextTitelVersatz(TrackInfo{}, 100, nutzer));
+}
+
 // Der Weg ueber `suche` braucht die Einstellung „Search lyrics online" — in
 // abgeschotteten QSettings, die echten bleiben unberuehrt.
 TEST_CASE("SongtextOnline: Merker — suche() fragt den gemerkten Titel nicht an")

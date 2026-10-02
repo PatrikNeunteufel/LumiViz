@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.35.0
+> **Version:** 1.36.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -517,7 +517,8 @@ gefunden wurde:
 |---|---|
 | **Preview lines** | So viele kommende Zeilen stehen unter der laufenden (0–4), in **Color upcoming**. |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
-| **Timing offset (ms)** | Verschiebt synchronen Text: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
+| **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
+| **Offset for this track** (bei der Tabelle oben) | Derselbe Versatz, aber **nur für den laufenden Titel**. LumiViz merkt ihn sich je Titel (Interpret, Titel, Album, Dauer) in `offsets.json` im Benutzerordner der Songtexte; die Songtext-Datei wird dafür nicht angefasst, und er gilt auch für eingebetteten Text. Er zählt zu **Timing offset (ms)** und zu `[offset:…]` dazu. Dasselbe Feld steht als **Track offset** im Panel Lyrics Sync. |
 | **Unsynced: beats per line** | Unsynchroner Text steht als Block; mit einem Wert > 0 rückt er alle N Beats eine Zeile weiter. |
 | **Mark unsynced lyrics** | Schreibt „(not synced)" über einen unsynchronen Text — er läuft nicht zum Gesang. |
 
@@ -613,6 +614,7 @@ ein Strich auf dem Einsatz sitzt.
 | Klick in die Wellenform | springt an diese Stelle |
 | **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
 | **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
+| **Track offset** | verschiebt den **ganzen** Text dieses Titels (positiv = früher), ohne die Zeiten der Zeilen zu ändern; wirkt sofort und wird je Titel gemerkt — **Save** ist dafür nicht nötig. Sitzt ein fertiger Text gleichmäßig daneben, ist das der kürzeste Weg |
 
 Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
 klopfst. Gespeichert wird erst mit **Save**, und nur, wenn jede Textzeile eine
@@ -1290,6 +1292,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.36.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Versatz je Titel** — Feld **Offset for this track** im Editor des Lyrics-Knotens und **Track offset** im Panel Lyrics Sync; je Titel gemerkt (`offsets.json`), ohne die Songtext-Datei anzufassen |
 | 1.35.0 | 2026-10-02 | Session 88. §2 Tag View zeigt den **Songtext** des laufenden Titels (Quelle, synchron oder nicht, Zeilenzahl, Text) |
 | 1.34.0 | 2026-10-02 | Session 88. §11 Host Switcher: die sechs **Voreinstellungen** (Random Runtime, Random Runtime per Group, Random Seconds, Every 16 Beats, Bass Drop, One per Song) mit ihren Stellgrößen. §11 Lyrics: Titel ohne Text beim Dienst werden **gemerkt** und 7 Tage (instrumental 30) nicht wieder gefragt; **Settings → Audio → Lyrics not found → Ask again** |
 | 1.33.0 | 2026-10-01 | Session 87. §11 Lyrics: NEU Knoten **Lyrics Trail** (die eben beendete Zeile noch einmal zeichnen, damit Effekte sie verwehen lassen; Muster mit Effect List, Blitter Feedback und Fadeout) |

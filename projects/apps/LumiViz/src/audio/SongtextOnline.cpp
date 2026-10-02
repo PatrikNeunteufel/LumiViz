@@ -324,15 +324,6 @@ QString merkerDatei(const QString& benutzerOrdner)
     return benutzerOrdner + QStringLiteral("/notfound.json");
 }
 
-/// Dieselben Angaben, die die Anfrage traegt (`lrclibUrl`)
-QString merkerSchluessel(const TrackInfo& track)
-{
-    return QStringList{track.artist.simplified().toLower(), track.title.simplified().toLower(),
-                       track.album.simplified().toLower(),
-                       QString::number((track.durationMs + 500) / 1000)}
-        .join(QLatin1Char('|'));
-}
-
 bool merkerGilt(const Merker& m, const QDate& heute)
 {
     if (!m.datum.isValid()) return false;
@@ -380,7 +371,8 @@ void schreibeMerker(const std::vector<Merker>& liste, const QString& benutzerOrd
 bool songtextFehlanzeige(const TrackInfo& track, const QString& benutzerOrdner,
                          const QDate& heute)
 {
-    const QString schluessel = merkerSchluessel(track);
+    // dieselben Angaben, die die Anfrage traegt (`lrclibUrl`)
+    const QString schluessel = songtextSchluessel(track);
     const auto liste = leseMerker(benutzerOrdner);
     return std::any_of(liste.begin(), liste.end(), [&](const Merker& m) {
         return m.schluessel == schluessel && merkerGilt(m, heute);
@@ -391,7 +383,7 @@ void merkeSongtextFehlanzeige(const TrackInfo& track, bool instrumental,
                               const QString& benutzerOrdner, const QDate& heute)
 {
     if (track.title.trimmed().isEmpty()) return;
-    const QString schluessel = merkerSchluessel(track);
+    const QString schluessel = songtextSchluessel(track);
     auto liste = leseMerker(benutzerOrdner);
     // der fruehere Eintrag dieses Titels und alles Abgelaufene: hinaus
     liste.erase(std::remove_if(liste.begin(), liste.end(),

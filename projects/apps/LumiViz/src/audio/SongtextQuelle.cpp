@@ -10,9 +10,13 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QStringDecoder>
+#include <QStringList>
 
 namespace lumi::audio
 {
@@ -185,6 +189,63 @@ bool speichereSongtext(const Songtext& text, const QString& pfad)
     if (!f.open(QIODevice::WriteOnly)) return false;
     const std::string lrc = lumi::multieffect::lyrics::schreibeLrc(text);
     f.write(lrc.data(), static_cast<qint64>(lrc.size()));
+    return f.commit();
+}
+
+QString songtextSchluessel(const TrackInfo& track)
+{
+    return QStringList{track.artist.simplified().toLower(), track.title.simplified().toLower(),
+                       track.album.simplified().toLower(),
+                       QString::number((track.durationMs + 500) / 1000)}
+        .join(QLatin1Char('|'));
+}
+
+namespace
+{
+QString versatzDatei(const QString& benutzerOrdner)
+{
+    return benutzerOrdner + QStringLiteral("/offsets.json");
+}
+
+QJsonArray leseVersaetze(const QString& benutzerOrdner)
+{
+    QFile f(versatzDatei(benutzerOrdner));
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    return QJsonDocument::fromJson(f.readAll()).array();
+}
+}  // namespace
+
+int songtextTitelVersatzMs(const TrackInfo& track, const QString& benutzerOrdner)
+{
+    if (track.title.trimmed().isEmpty()) return 0;
+    const QString schluessel = songtextSchluessel(track);
+    for (const QJsonValue& v : leseVersaetze(benutzerOrdner))
+    {
+        const QJsonObject o = v.toObject();
+        if (o.value(QStringLiteral("key")).toString() == schluessel)
+            return o.value(QStringLiteral("offsetMs")).toInt();
+    }
+    return 0;
+}
+
+bool setzeSongtextTitelVersatz(const TrackInfo& track, int ms, const QString& benutzerOrdner)
+{
+    if (track.title.trimmed().isEmpty() || benutzerOrdner.isEmpty()) return false;
+    const QString schluessel = songtextSchluessel(track);
+    QJsonArray neu;
+    for (const QJsonValue& v : leseVersaetze(benutzerOrdner))
+        if (v.toObject().value(QStringLiteral("key")).toString() != schluessel) neu.append(v);
+    if (ms != 0)
+        neu.append(QJsonObject{{QStringLiteral("key"), schluessel},
+                               {QStringLiteral("title"), songtextName(track)},
+                               {QStringLiteral("offsetMs"), ms}});
+    if (neu.isEmpty())  // nichts mehr festzuhalten: keine leere Datei liegen lassen
+        return !QFile::exists(versatzDatei(benutzerOrdner)) ||
+               QFile::remove(versatzDatei(benutzerOrdner));
+    if (!QDir().mkpath(benutzerOrdner)) return false;
+    QSaveFile f(versatzDatei(benutzerOrdner));
+    if (!f.open(QIODevice::WriteOnly)) return false;
+    f.write(QJsonDocument(neu).toJson(QJsonDocument::Indented));
     return f.commit();
 }
 

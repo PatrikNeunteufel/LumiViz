@@ -32,6 +32,9 @@
  * Wechselt der Titel, waehrend ungespeicherte Zeiten da sind, bleibt die
  * Arbeit stehen (Hinweis im Panel) — sie wird nie stillschweigend verworfen.
  *
+ * - **Track offset** (S88): verschiebt den ganzen Text dieses Titels, ohne
+ *   Zeiten oder Datei anzufassen; liegt in `offsets.json`, wirkt sofort.
+ *
  * Nicht in dieser Stufe: Wort-Zeiten, automatisches Verteilen.
  ****************************************************************************************
  */
@@ -106,6 +109,11 @@ public:
 
     [[nodiscard]] bool geaendert() const { return m_geaendert; }
 
+    /// S88: Versatz, der nur fuer den Titel des Panels gilt (`offsets.json`,
+    /// `audio::setzeSongtextTitelVersatz`) — sofort wirksam und gespeichert,
+    /// unabhaengig von „Save". Ohne Titel geschieht nichts.
+    void setzeTitelVersatz(int ms);
+
     /// Benutzerordner ersetzen (Tests — der echte bleibt unberuehrt).
     void setBenutzerOrdner(const QString& ordner) { m_ordner = ordner; }
 
@@ -123,7 +131,12 @@ private:
     void vorschau();
     void uebernimmLaufenden(bool erzwungen);
     [[nodiscard]] QList<int> markierteReihen() const;
+    void zeigeTitelVersatz();
+    /// Versatz, mit dem der Knoten rechnet: `[offset:]` der Datei + der des Titels.
+    [[nodiscard]] std::int64_t versatz() const { return m_text.versatzMs + m_titelVersatzMs; }
 
+    std::int64_t m_titelVersatzMs = 0;       ///< Versatz nur dieses Titels (S88)
+    class QSpinBox* m_versatzFeld = nullptr;
     TrackInfo m_track;
     lumi::multieffect::lyrics::Songtext m_text;  ///< Arbeitskopie, Reihenfolge der Datei
     bool m_geaendert = false;

@@ -2206,6 +2206,82 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }
 
+// S88 (Entscheid Patrik a): der Versatz nur dieses Titels — im Panel
+// einstellbar, sofort am Knoten, festgehalten in offsets.json; Spruenge und
+// Klopfen rechnen ihn ein, die Zeiten der Zeilen bleiben, wie sie sind.
+TEST_CASE("PaletteUi S88: Lyrics Sync — Versatz je Titel wirkt sofort und wird festgehalten")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString nutzer = tmp.path() + "/nutzer";
+    TrackInfo t;
+    t.filePath = tmp.path() + "/lied.mp3";
+    t.title = "Lied";
+    t.artist = "Wer";
+    t.durationMs = 200000;
+    const ly::Songtext text = ly::leseLrc("[00:10.00]eins\n[00:20.00]zwei\n");
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(nutzer);
+    panel.lade(t, text);
+    auto* feld = panel.findChild<QSpinBox*>(QStringLiteral("lyricsSyncTrackOffset"));
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    REQUIRE(feld != nullptr);
+    REQUIRE(liste != nullptr);
+    CHECK(feld->isEnabled());
+    CHECK(feld->value() == 0);
+
+    // Gegenprobe: ohne Versatz springt der Knopf genau auf die Zeit der Zeile
+    REQUIRE(panel.springeZu(1, 0));
+    CHECK(audio.player->letzterSprung == 20000);
+
+    // ueber das Feld: sofort am Knoten, in der Ablage, und der Sprung folgt
+    feld->setValue(500);  // Text 500 ms frueher
+    CHECK(MultiEffectVisualizer::songtextTitelVersatzMs() == 500);
+    CHECK(lumi::audio::songtextTitelVersatzMs(t, nutzer) == 500);
+    REQUIRE(panel.springeZu(1, 0));
+    CHECK(audio.player->letzterSprung == 19500);
+    // die Zeiten der Zeilen bleiben, nichts gilt als ungespeichert
+    CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.00"));
+    CHECK_FALSE(panel.geaendert());
+    // klopfen bei 30 s: die Zeile bekommt die Zeit, zu der der Knoten sie zeigt
+    liste->selectRow(0);
+    REQUIRE(panel.tippe(30000));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:30.50"));
+
+    // ein neu geladenes Panel liest den Versatz aus der Ablage
+    LyricsSyncPanel zweites(audio.services);
+    zweites.setBenutzerOrdner(nutzer);
+    zweites.lade(t, text);
+    CHECK(zweites.findChild<QSpinBox*>(QStringLiteral("lyricsSyncTrackOffset"))->value() == 500);
+
+    // laeuft inzwischen ein anderer Titel, bleibt dessen Versatz am Knoten unberuehrt
+    TrackInfo anderer = t;
+    anderer.filePath = tmp.path() + "/anderes.mp3";
+    anderer.title = "Anderes";
+    lumi::audio::setzeLaufendenTitel(anderer);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    panel.setzeTitelVersatz(-200);
+    CHECK(MultiEffectVisualizer::songtextTitelVersatzMs() == 0);
+    CHECK(lumi::audio::songtextTitelVersatzMs(t, nutzer) == -200);
+    CHECK(lumi::audio::songtextTitelVersatzMs(anderer, nutzer) == 0);
+
+    // ohne Titel ist das Feld gesperrt
+    LyricsSyncPanel leer(audio.services);
+    CHECK_FALSE(leer.findChild<QSpinBox*>(QStringLiteral("lyricsSyncTrackOffset"))->isEnabled());
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
 // S87 (Wunsch Patrik): andere Fassungen eines Songtexts — die Kandidaten
 // stehen nach Naehe der Dauer sortiert, die Vorschau zeigt den Text, und
 // „Use these lyrics" speichert und zeigt die gewaehlte Fassung.

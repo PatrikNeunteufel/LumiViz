@@ -61,6 +61,25 @@ namespace lumi::audio
 [[nodiscard]] lumi::multieffect::lyrics::Songtext findeSongtext(
     const TrackInfo& track, const QString& benutzerOrdner = songtextOrdner());
 
+/// Schluessel eines Titels fuer Ablagen im Benutzerordner (Merker, Versatz):
+/// Interpret, Titel, Album und Dauer in Sekunden, ohne Ruecksicht auf
+/// Gross-/Kleinschreibung und Leerraum. Zwei Fassungen eines Songs haben
+/// verschiedene Schluessel.
+[[nodiscard]] QString songtextSchluessel(const TrackInfo& track);
+
+/// S88 (Entscheid Patrik a): Versatz in ms, der nur fuer `track` gilt
+/// (`offsets.json` im Benutzerordner der Songtexte) — positiv = Text frueher,
+/// wie `[offset:]`. 0 = keiner. Er wirkt zusaetzlich zum Feld des Knotens und
+/// zur Datei, fuer jede Quelle gleich (auch eingebetteten Text); eine
+/// Songtext-Datei wird dafuer nie umgeschrieben.
+[[nodiscard]] int songtextTitelVersatzMs(const TrackInfo& track,
+                                         const QString& benutzerOrdner = songtextOrdner());
+
+/// Versatz fuer `track` festhalten; 0 entfernt den Eintrag. false = Titel ohne
+/// Namen oder Schreibfehler.
+bool setzeSongtextTitelVersatz(const TrackInfo& track, int ms,
+                               const QString& benutzerOrdner = songtextOrdner());
+
 /// Songtext als UTF-8-LRC nach `pfad` schreiben (Ordner wird angelegt).
 bool speichereSongtext(const lumi::multieffect::lyrics::Songtext& text, const QString& pfad);
 

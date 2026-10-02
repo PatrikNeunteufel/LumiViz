@@ -775,6 +775,9 @@ void MainWindow::setupEventHandlers()
             // die Abspielposition auf Anfang — der Lyrics-Knoten laeuft an ihr
             const auto lokal = lumi::audio::findeSongtext(e.track);
             MultiEffectVisualizer::setSongtext(lokal);
+            // S88: der Versatz, der nur fuer diesen Titel gilt (offsets.json)
+            MultiEffectVisualizer::setSongtextTitelVersatz(
+                lumi::audio::songtextTitelVersatzMs(e.track));
             MultiEffectVisualizer::notifyPlayPosition(0);
             *laufenderSong = e.track.filePath;
             lumi::audio::setzeLaufendenTitel(e.track);  // S87: fuer „Alternatives…"

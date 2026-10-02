@@ -289,6 +289,14 @@ public:
         lumi::multieffect::lyrics::Abruf abruf = lumi::multieffect::lyrics::Abruf::Ruhe;
     };
     [[nodiscard]] static SongtextAngaben songtextAngaben();
+    /// S88 (Entscheid Patrik a): Versatz in ms, der nur fuer den LAUFENDEN
+    /// Titel gilt — zusaetzlich zum Feld `offsetMs` des Knotens und zu
+    /// `[offset:]` der Datei, gleicher Sinn (positiv = Text frueher). Die
+    /// Ablage ist `audio::songtextTitelVersatzMs` (`offsets.json`); das
+    /// Fenster setzt den Wert beim Songwechsel, die Oberflaeche beim
+    /// Verstellen. Thread-sicher.
+    static void setSongtextTitelVersatz(std::int64_t ms);
+    [[nodiscard]] static std::int64_t songtextTitelVersatzMs();
     /// Kopie des gesetzten Songtexts (S87: Vergleich im Alternativen-Dialog).
     [[nodiscard]] static lumi::multieffect::lyrics::Songtext songtext();
     /// Stand des Online-Abrufs fuer den laufenden Titel (S87) — das Fenster

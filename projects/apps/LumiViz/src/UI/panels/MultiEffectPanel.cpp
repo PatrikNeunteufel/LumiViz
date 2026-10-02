@@ -7867,6 +7867,28 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
             kl->addWidget(falsch);
             kl->addStretch(1);
             gl->addWidget(knopfZeile, reihe, 0, 1, 3);
+            ++reihe;
+            // S88 (Entscheid Patrik a): Versatz nur fuer den laufenden Titel —
+            // liegt in offsets.json im Benutzerordner, nicht am Knoten
+            auto* titelVersatz = new QSpinBox(tabelle);
+            titelVersatz->setObjectName(QStringLiteral("lyricsTrackOffset"));
+            titelVersatz->setRange(-60000, 60000);
+            titelVersatz->setSingleStep(50);
+            titelVersatz->setSuffix(tr(" ms"));
+            titelVersatz->setToolTip(
+                tr("Timing offset for the playing track only: positive = the lyrics appear "
+                   "earlier, negative = later. It is remembered per track and adds to "
+                   "\"Timing offset (ms)\" below and to an [offset:] line in the lyrics file."));
+            auto* versatzKopf = new QLabel(tr("Offset for this track"), tabelle);
+            gl->addWidget(versatzKopf, reihe, 0);
+            gl->addWidget(titelVersatz, reihe, 1, Qt::AlignLeft);
+            connect(titelVersatz, QOverload<int>::of(&QSpinBox::valueChanged), tabelle,
+                    [](int ms) {
+                        const TrackInfo titel = lumi::audio::laufenderTitel();
+                        if (titel.filePath.isEmpty()) return;
+                        MultiEffectVisualizer::setSongtextTitelVersatz(ms);
+                        lumi::audio::setzeSongtextTitelVersatz(titel, ms);
+                    });
             const auto oeffneAlternativen = [this]() {
                 const TrackInfo titel = lumi::audio::laufenderTitel();
                 if (titel.filePath.isEmpty()) return;
@@ -7895,9 +7917,18 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 oeffneAlternativen();
             });
             const auto zeige = [status, quelle, takt, zeilen, herkunft, datei, ordner, andere,
-                                falsch]() {
+                                falsch, titelVersatz]() {
                 const auto a = MultiEffectVisualizer::songtextAngaben();
                 andere->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());
+                // der Wert gehoert zum Titel: beim Songwechsel (und wenn Lyrics
+                // Sync ihn verstellt) nachziehen — nicht, waehrend getippt wird
+                titelVersatz->setEnabled(!lumi::audio::laufenderTitel().filePath.isEmpty());
+                const int versatz = static_cast<int>(MultiEffectVisualizer::songtextTitelVersatzMs());
+                if (!titelVersatz->hasFocus() && titelVersatz->value() != versatz)
+                {
+                    const QSignalBlocker ruhe(titelVersatz);
+                    titelVersatz->setValue(versatz);
+                }
                 falsch->setEnabled(a.vorhanden && lumi::audio::lrclibKennung(a.herkunft) > 0);
                 const QString strich = QStringLiteral("—");
                 const auto setze = [](QLabel* l, const QString& t) {
