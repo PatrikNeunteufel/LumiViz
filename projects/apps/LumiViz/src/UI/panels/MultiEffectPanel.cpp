@@ -8163,6 +8163,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 {tr("Replace"), tr("Additive"), tr("50/50"), tr("Subtract"), tr("Invert"),
                  tr("XOR"), tr("Multiply"), tr("Maximum"), tr("Minimum")},
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).blend = v; });
+        addInt("blendStrength", tr("Blend strength (%)"), p->blendStrength, 0, 100,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).blendStrength = v; });
         addInt("offsetMs", tr("Timing offset (ms)"), p->offsetMs, -10000, 10000,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).offsetMs = v; });
         addInt("beatsPerLine", tr("Unsynced: beats per line"), p->beatsPerLine, 0, 64,
@@ -8203,6 +8205,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 {tr("Replace"), tr("Additive"), tr("50/50"), tr("Subtract"), tr("Invert"),
                  tr("XOR"), tr("Multiply"), tr("Maximum"), tr("Minimum")},
                 [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).blend = v; });
+        addInt("blendStrength", tr("Blend strength (%)"), p->blendStrength, 0, 100,
+               [](ChainNode& n, int v) { std::get<LyricsTrailParams>(n.params).blendStrength = v; });
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).beatCode = std::move(v); });

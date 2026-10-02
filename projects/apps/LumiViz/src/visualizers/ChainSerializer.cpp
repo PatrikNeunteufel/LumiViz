@@ -1065,6 +1065,7 @@ struct WriteVisitor
         o["useOwnColor"] = p.useOwnColor;
         o["color"] = static_cast<double>(p.color);
         o["blend"] = p.blend;
+        o["blendStrength"] = p.blendStrength;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -1088,6 +1089,7 @@ struct WriteVisitor
         o["outlineColor"] = static_cast<double>(p.outlineColor);
         o["outlineSize"] = p.outlineSize;
         o["blend"] = p.blend;
+        o["blendStrength"] = p.blendStrength;
         o["offsetMs"] = p.offsetMs;
         o["beatsPerLine"] = p.beatsPerLine;
         o["showSyncMark"] = p.showSyncMark;
@@ -2541,6 +2543,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.useOwnColor = getBool(o, "useOwnColor", p.useOwnColor);
         p.color = getColor(o, "color", p.color);
         p.blend = getInt(o, "blend", p.blend);
+        p.blendStrength = std::clamp(getInt(o, "blendStrength", p.blendStrength), 0, 100);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
@@ -2566,6 +2569,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.outlineColor = getColor(o, "outlineColor", p.outlineColor);
         p.outlineSize = getInt(o, "outlineSize", p.outlineSize);
         p.blend = getInt(o, "blend", p.blend);
+        p.blendStrength = std::clamp(getInt(o, "blendStrength", p.blendStrength), 0, 100);
         p.offsetMs = getInt(o, "offsetMs", p.offsetMs);
         p.beatsPerLine = getInt(o, "beatsPerLine", p.beatsPerLine);
         p.showSyncMark = getBool(o, "showSyncMark", p.showSyncMark);

@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 94,
-    "felder": 842,
+    "felder": 844,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5363,6 +5363,16 @@
         },
         {
           "art": "zahl",
+          "default": 100,
+          "name": "blendStrength",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 100.0,
+          "doc": "Strength of the blend in percent (0..100): scales the opacity of the fill — 100 = full, 0 = the fill is gone (the outline stays)."
+        },
+        {
+          "art": "zahl",
           "default": 16777215,
           "name": "color",
           "panel": "farbe",
@@ -5562,6 +5572,16 @@
           "helfer": "addEnum",
           "enumWerte": 9,
           "doc": "How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50, 3 subtract, 4 invert, 5 XOR, 6 multiply, 7 maximum, 8 minimum (as on the Lyrics node; from 3 on the outline stays normal)."
+        },
+        {
+          "art": "zahl",
+          "default": 100,
+          "name": "blendStrength",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 0.0,
+          "hi": 100.0,
+          "doc": "Strength of the blend in percent (0..100): scales the opacity of the trail — 100 = full, 0 = nothing is drawn."
         },
         {
           "art": "zahl",

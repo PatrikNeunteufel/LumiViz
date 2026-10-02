@@ -2922,6 +2922,9 @@ struct LyricsParams
     /// 6 multiply, 7 maximum, 8 minimum. From 3 on only the fill mixes — the
     /// outline is drawn normally and keeps the text readable.
     int blend = 0;
+    /// Strength of the blend in percent (0..100): scales the opacity of the
+    /// fill — 100 = full, 0 = the fill is gone (the outline stays).
+    int blendStrength = 100;
     /// Timing offset in milliseconds for synchronised lyrics: positive = the
     /// lyrics appear earlier, negative = later (same sense as LRC `[offset:]`).
     int offsetMs = 0;
@@ -2958,6 +2961,9 @@ struct LyricsTrailParams
     /// 3 subtract, 4 invert, 5 XOR, 6 multiply, 7 maximum, 8 minimum (as on
     /// the Lyrics node; from 3 on the outline stays normal).
     int blend = 0;
+    /// Strength of the blend in percent (0..100): scales the opacity of the
+    /// trail — 100 = full, 0 = nothing is drawn.
+    int blendStrength = 100;
 
     /// Parameter script (S87): every field of this node + `b`/`w`/`h` + audio
     /// set. Fields that re-render the glyphs follow the script from Init, Song

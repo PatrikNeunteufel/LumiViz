@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 842,
+        "felder": 844,
         "typen": 94
     },
     "typen": [
@@ -2658,6 +2658,11 @@
                 },
                 {
                     "art": "zahl",
+                    "default": 100,
+                    "name": "blendStrength"
+                },
+                {
+                    "art": "zahl",
                     "default": 16777215,
                     "name": "color"
                 },
@@ -2771,6 +2776,11 @@
                     "art": "zahl",
                     "default": 0,
                     "name": "blend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 100,
+                    "name": "blendStrength"
                 },
                 {
                     "art": "zahl",

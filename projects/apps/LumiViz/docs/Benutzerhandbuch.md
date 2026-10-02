@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.45.0
+> **Version:** 1.46.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -703,10 +703,14 @@ Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
 Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
 Presets.
 
-Wie sich die Ebene mit dem Bild dahinter **mischt**, stellst du vorerst unter
-**Settings → Audio** ein —
-getrennt für die laufende Zeile (**Karaoke line blend**) und den Trail
-(**Karaoke trail blend**), je mit einer **Stärke** von 0–100 %:
+Wie sich die Zeile mit dem Bild dahinter **mischt**, stellst du im Reiter
+**Lyrics** ein: Feld **Blend** und daneben **Blend strength (%)** von 0–100.
+Die Stärke nimmt nur die Füllung der Buchstaben zurück, die Kontur bleibt
+stehen. Beide Felder gibt es genauso am Lyrics-Knoten und am Lyrics Trail
+einer Kette. Der Trail der Ebene mischt additiv mit voller Stärke; seine
+Regler folgen mit dem Reiter *Lyrics Trail*. (Bis Version 1.45 standen
+Mischart und Stärke der Ebene unter Settings → Audio — die dort gewählten
+Werte werden beim ersten Start übernommen.)
 
 | Mischart | Wirkung |
 |---|---|
@@ -1365,6 +1369,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.46.0 | 2026-10-02 | Session 89. §11 Lyrics / Lyrics Trail: NEU Feld **Blend strength (%)**; Mischart und Stärke der Karaoke-Ebene stehen im Karaoke-Panel (Reiter *Lyrics*) statt unter Settings → Audio, alte Werte werden übernommen |
 | 1.45.0 | 2026-10-02 | Session 89. §11 Lyrics: NEU Panel **Karaoke** — Schalter *Karaoke on* (bisher Settings → Audio), Reiter *Lyrics* mit dem Aussehen der Zeile, **Karaoke-Presets** (`.lvkar`: Save…, Load, Delete, Default) |
 | 1.44.0 | 2026-10-02 | Session 89. §11 Lyrics: die Zeile der Karaoke-Ebene bleibt mit Render Scale scharf (Fensterauflösung) |
 | 1.43.0 | 2026-10-02 | Session 88. §2 NEU **Resume playback** (Player-Panel und Settings → Audio): nach dem Neustart dort weiterspielen. §11 Lyrics / Lyrics Trail: Feld **Blend** mit neun Mischarten (neu Subtract, Invert, XOR, Multiply, Maximum, Minimum) |

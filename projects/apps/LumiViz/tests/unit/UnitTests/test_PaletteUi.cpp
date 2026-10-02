@@ -741,6 +741,65 @@ TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Pre
     MultiEffectVisualizer::setKaraokeAblage(QString());
 }
 
+// S89, KE2 Schritt 4: Mischart und Staerke der Ebene standen bis S88 in den
+// QSettings — sie wandern einmal in die Ablage, die Schluessel verschwinden.
+TEST_CASE("Karaoke S89: alte Mischart-Einstellungen wandern einmal in die Ablage")
+{
+    UiUmgebung env;  // eigene QSettings
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString ablage = tmp.filePath(QStringLiteral("karaoke/current.lvkar"));
+    using lumi::multieffect::LyricsParams;
+    using lumi::multieffect::LyricsTrailParams;
+    using Teil = MultiEffectVisualizer::KaraokeTeil;
+    const auto setzeAlt = [] {
+        QSettings s;
+        s.setValue(QStringLiteral("karaoke/LineBlend"), 4);
+        s.setValue(QStringLiteral("karaoke/LineStrength"), 50);
+        s.setValue(QStringLiteral("karaoke/TrailBlend"), 3);
+    };
+
+    // nichts Altes da: nichts zu tun
+    MultiEffectVisualizer::setKaraokeAblage(ablage);
+    CHECK_FALSE(MultiEffectVisualizer::uebernehmeAlteKaraokeMischung());
+    CHECK_FALSE(QFile::exists(ablage));
+
+    // alte Werte, noch keine Ablage: sie wird mit ihnen geschrieben
+    setzeAlt();
+    CHECK(MultiEffectVisualizer::uebernehmeAlteKaraokeMischung());
+    REQUIRE(QFile::exists(ablage));
+    CHECK_FALSE(QSettings().contains(QStringLiteral("karaoke/LineBlend")));
+    CHECK_FALSE(QSettings().contains(QStringLiteral("karaoke/TrailBlend")));
+    {
+        MultiEffectVisualizer vis;  // laedt die Ablage
+        const auto& lp = std::get<LyricsParams>(vis.karaokeKette().children[0].params);
+        CHECK(lp.blend == 4);
+        CHECK(lp.blendStrength == 50);
+        const auto& tp =
+            std::get<LyricsTrailParams>(vis.karaokeKette().children[1].children[2].params);
+        CHECK(tp.blend == 3);
+        CHECK(tp.blendStrength == 100);
+    }
+    // die prozessweite Vorgabe steht danach wieder auf dem Mitgelieferten
+    CHECK(MultiEffectVisualizer::karaokeMischart(Teil::Zeile) == 0);
+    CHECK(MultiEffectVisualizer::karaokeMischart(Teil::Trail) == 1);
+
+    // alte Werte, aber die Ablage gibt es schon: sie gilt, die Schluessel gehen trotzdem
+    const QByteArray vorher = [&] {
+        QFile f(ablage);
+        REQUIRE(f.open(QIODevice::ReadOnly));
+        return f.readAll();
+    }();
+    QSettings().setValue(QStringLiteral("karaoke/LineBlend"), 7);
+    CHECK_FALSE(MultiEffectVisualizer::uebernehmeAlteKaraokeMischung());
+    CHECK_FALSE(QSettings().contains(QStringLiteral("karaoke/LineBlend")));
+    QFile f(ablage);
+    REQUIRE(f.open(QIODevice::ReadOnly));
+    CHECK(f.readAll() == vorher);
+
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+}
+
 TEST_CASE("PaletteUi Panel A14: Drop auf die Leerflaeche haengt ans Ende der Kette")
 {
     UiUmgebung env;

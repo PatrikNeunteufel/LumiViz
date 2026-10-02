@@ -1253,6 +1253,109 @@ TEST_CASE("Karaoke-Ebene S89: Baum speichern, laden, Ablage beim Start — Fremd
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S89, KE2 Schritt 4: Mischart und Staerke stehen in den KNOTEN — die Ebene
+// liest sie aus ihrem Lyrics-Knoten, und das neue Feld `blendStrength` wirkt
+// auch am Lyrics-Knoten einer Kette (nimmt nur die Fuellung zurueck).
+TEST_CASE("Karaoke-Ebene S89: Mischart und Staerke aus den Knoten, Staerke-Feld am Lyrics-Knoten")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+    const QRgb grund = qRgb(64, 128, 192);
+
+    // `ebene`: Mischart/Staerke in den Lyrics-Knoten der Ebene; sonst ein
+    // Lyrics-Knoten in der Kette mit denselben Werten (Ebene aus)
+    const auto bild = [&](bool ebene, int blend, int staerke) {
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x4080C0;
+        clear.params = cp;
+        root.children = {clear};
+        if (!ebene)
+        {
+            ChainNode lyr;
+            LyricsParams lp;
+            lp.blend = blend;
+            lp.blendStrength = staerke;
+            lyr.params = lp;
+            root.children.push_back(lyr);
+        }
+        MultiEffectVisualizer vis;
+        if (ebene)
+        {
+            auto& lp = std::get<LyricsParams>(vis.karaokeKette().children[0].params);
+            lp.blend = blend;
+            lp.blendStrength = staerke;
+            (void)vis.recompileKaraoke();
+        }
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        for (int i = 0; i < 12; ++i) vis.render(1.0f / 60.0f);
+        QImage b = ebene ? vis.debugGrabMitKaraoke() : vis.debugGrabRootSurface();
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        return b;
+    };
+    const auto innenVon = [](const QImage& normal) {
+        std::vector<QPoint> innen;
+        for (int y = 0; y < normal.height(); ++y)
+            for (int x = 0; x < normal.width(); ++x)
+                if (normal.pixel(x, y) == qRgb(255, 255, 255)) innen.emplace_back(x, y);
+        return innen;
+    };
+    const auto falsch = [](const QImage& b, const std::vector<QPoint>& innen, int r, int g, int bl) {
+        int n = 0;
+        for (const QPoint& p : innen)
+        {
+            const QRgb c = b.pixel(p);
+            if (std::abs(qRed(c) - r) > 2 || std::abs(qGreen(c) - g) > 2 || std::abs(qBlue(c) - bl) > 2)
+                ++n;
+        }
+        return n;
+    };
+    const auto schwarze = [](const QImage& b) {
+        int n = 0;
+        for (int y = 0; y < b.height(); ++y)
+            for (int x = 0; x < b.width(); ++x)
+                if (b.pixel(x, y) == qRgb(0, 0, 0)) ++n;
+        return n;
+    };
+
+    // --- Ebene: die Werte des Knotens gelten (die prozessweite Vorgabe ist Normal/100)
+    const std::vector<QPoint> innenE = innenVon(bild(true, 0, 100));
+    REQUIRE(innenE.size() > 300);
+    CHECK(falsch(bild(true, 4, 100), innenE, 191, 127, 63) == 0);   // Invert
+    CHECK(falsch(bild(true, 4, 50), innenE, 128, 128, 128) == 0);   // Invert, halbe Staerke
+    const QImage halbE = bild(true, 0, 50);                         // Normal, halbe Staerke
+    CHECK(falsch(halbE, innenE, 160, 192, 224) == 0);
+    CHECK(schwarze(halbE) > 100);                                   // die Kontur bleibt
+    const QImage nullE = bild(true, 0, 0);
+    CHECK(falsch(nullE, innenE, 64, 128, 192) == 0);                // Fuellung weg
+    CHECK(schwarze(nullE) > 100);
+    CHECK(nullE.pixel(5, 5) == grund);
+
+    // --- Lyrics-Knoten in der Kette: das Staerke-Feld nimmt die Fuellung zurueck
+    const std::vector<QPoint> innenK = innenVon(bild(false, 0, 100));
+    REQUIRE(innenK.size() > 300);
+    const QImage halbK = bild(false, 0, 50);
+    CHECK(falsch(halbK, innenK, 160, 192, 224) == 0);
+    CHECK(schwarze(halbK) > 100);
+    CHECK(falsch(bild(false, 4, 50), innenK, 128, 128, 128) == 0);
+    CHECK(falsch(bild(false, 1, 0), innenK, 64, 128, 192) == 0);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88 (Folgefrage Patrik zu K6): dieselben Mischarten am Lyrics-Knoten der
 // Kette — „die Kette gewinnt" soll nicht aermer sein als die Ebene. Gerechnet
 // im Text-Shader; ab Subtract mischt nur die Fuellung, die Kontur bleibt normal.

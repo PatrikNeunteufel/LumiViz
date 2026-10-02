@@ -342,12 +342,23 @@ public:
      * 6 Multiply · 7 Maximum · 8 Minimum. 0–2 wie das Feld Blend des
      * Lyrics-Knotens. Bei der Zeile bleibt die Kontur immer normal — nur die
      * Fuellung mischt. Vorgabe: Zeile Normal, Trail Additive, je 100 %.
+     *
+     * Seit S89 (KE2) stehen Mischart und Staerke in den KNOTEN der Ebene
+     * (Felder `blend` / `blendStrength` von Lyrics und Lyrics Trail) und
+     * werden dort bearbeitet und gespeichert. `setKaraokeMischung` setzt nur
+     * noch die Werte, mit denen die mitgelieferte Ebene AUFGEBAUT wird
+     * (Konstruktor, `setzeKaraokeVorgabe`) — fuer Tests und die Uebernahme.
      */
     enum class KaraokeTeil { Zeile = 0, Trail = 1 };
     static constexpr int kKaraokeMischarten = 9;
     static void setKaraokeMischung(KaraokeTeil teil, int mischart, int staerkeProzent);
     [[nodiscard]] static int karaokeMischart(KaraokeTeil teil);
     [[nodiscard]] static int karaokeStaerke(KaraokeTeil teil);
+    /// Einmalige Uebernahme der Einstellungen bis S88 (QSettings
+    /// `karaoke/LineBlend|LineStrength|TrailBlend|TrailStrength`): gibt es
+    /// noch keine Ablage, wird sie mit diesen Werten geschrieben; die
+    /// Schluessel verschwinden in jedem Fall. true = Ablage geschrieben.
+    static bool uebernehmeAlteKaraokeMischung();
     /// Test-Naht: das Bild, wie es am Fenster steht (Root-Surface + Karaoke-
     /// Ebene), in der Fenstergroesse des letzten Frames (K4 b: die Zeile der
     /// Ebene ist dort gerastert; ohne Render Scale gleich der Kettenaufloesung).
@@ -1087,7 +1098,7 @@ private:
         const std::string& name) const;
     /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
     /// Pass wie im Text-Knoten). blend: 0 ersetzen, 1 additiv, 2 50/50.
-    void composeGlyphLayer(unsigned int texture, int blend);
+    void composeGlyphLayer(unsigned int texture, int blend, int staerkeProzent = 100);
     void runAvi(const lumi::multieffect::ChainNode& node,
                 const lumi::multieffect::AviParams& params);
     /// Release the VfW handles of an AVI node (safe on empty runtimes).
@@ -1549,6 +1560,12 @@ private:
     unsigned int m_karaokeKonturTex = 0; ///< Kontur-Ring der Zeile (nur bei Mischart ungleich Normal)
     unsigned int m_karaokeGlyphTex = 0;  ///< Glyphen der laufenden Zeile (0 = keine)
     unsigned int m_karaokeTrailTex = 0;  ///< Bild der Trail-Liste (0 = keins)
+    /// Mischart (0..8) und Staerke (0..100) fuers Auflegen — je Frame aus den
+    /// Knoten der Ebene gelesen (Lyrics bzw. Lyrics Trail, nach deren Skript).
+    int m_karaokeZeileArt = 0;
+    int m_karaokeZeileStaerke = 100;
+    int m_karaokeTrailArt = 1;
+    int m_karaokeTrailStaerke = 100;
     std::unique_ptr<QOpenGLShaderProgram> m_overlayShader;  ///< Textur 1:1, wahlweise y-gespiegelt
 
     void resetRuntimes();

@@ -370,6 +370,10 @@ bool Application::init(int argc, char* argv[])
     // Karaoke-Ebene (KE2): die laufende Ebene des Benutzers; benannte
     // Karaoke-Presets (.lvkar) liegen im selben Ordner
     MultiEffectVisualizer::setKaraokeAblage(appData + QStringLiteral("/karaoke/current.lvkar"));
+    // Mischart/Staerke der Ebene aus den Einstellungen bis S88 einmal in die
+    // Ablage uebernehmen — VOR dem Fenster, dessen Visualizer sie laedt
+    if (MultiEffectVisualizer::uebernehmeAlteKaraokeMischung())
+        BasicLogger::logInfo("Karaoke: blend settings moved into the karaoke layer file");
 
     // -------------------------------------------------------------------------
     // Create MainWindow (this creates the OpenGL context)

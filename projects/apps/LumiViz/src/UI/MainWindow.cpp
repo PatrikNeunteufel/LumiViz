@@ -764,19 +764,11 @@ void MainWindow::setupEventHandlers()
     // S86 (Entscheide 3a/4a): Online-Suche nach dem Songtext — Opt-in in den
     // Einstellungen, erst wenn keine lokale Quelle etwas liefert; der Fund wird
     // gespeichert und gilt nur, wenn derselbe Titel noch laeuft.
-    // S88 (KE1): Karaoke-Ebene — Songtext ueber jedem Preset; der Schalter
-    // steht vorerst in Settings → Audio (das Karaoke-Panel folgt mit KE2)
+    // S88 (KE1): Karaoke-Ebene — Songtext ueber jedem Preset; Schalter,
+    // Mischart und Staerke stehen seit S89 im Karaoke-Panel (die Mischart in
+    // den Knoten der Ebene, s. Application: uebernehmeAlteKaraokeMischung)
     MultiEffectVisualizer::setKaraokeEbene(
         QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
-    // K6: Mischart und Staerke je Teil der Ebene (Vorgabe: Zeile Normal, Trail Additive)
-    MultiEffectVisualizer::setKaraokeMischung(
-        MultiEffectVisualizer::KaraokeTeil::Zeile,
-        QSettings().value(QStringLiteral("karaoke/LineBlend"), 0).toInt(),
-        QSettings().value(QStringLiteral("karaoke/LineStrength"), 100).toInt());
-    MultiEffectVisualizer::setKaraokeMischung(
-        MultiEffectVisualizer::KaraokeTeil::Trail,
-        QSettings().value(QStringLiteral("karaoke/TrailBlend"), 1).toInt(),
-        QSettings().value(QStringLiteral("karaoke/TrailStrength"), 100).toInt());
     auto* songtextOnline = new lumi::audio::SongtextOnline(this);
     auto laufenderSong = std::make_shared<QString>();
     connect(songtextOnline, &lumi::audio::SongtextOnline::gefunden, this,

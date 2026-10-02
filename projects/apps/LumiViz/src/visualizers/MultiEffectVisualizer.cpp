@@ -225,11 +225,13 @@ in vec2 vTex;
 uniform sampler2D uTex;
 uniform sampler2D uImg;
 uniform int uBlend;   // 0 replace, 1 additive, 2 50/50; 3..8 s. u.
+uniform float uStrength;  // 0..1: Deckung der Glyphen (S89, Feld blendStrength)
 out vec4 fragColor;
 void main()
 {
     vec3 fb = texture(uTex, vTex).rgb;
     vec4 t = texture(uImg, vec2(vTex.x, 1.0 - vTex.y));
+    t.a *= uStrength;
     // S88 (K6): die Mischarten der Karaoke-Ebene auch am Lyrics-Knoten —
     // dieselben Gleichungen wie beim Present (p = Farbe mal Deckung):
     // 3 Subtract, 4 Invert, 5 XOR, 6 Multiply, 7 Maximum, 8 Minimum.
@@ -3540,8 +3542,15 @@ void MultiEffectVisualizer::baueKaraokeEbene()
     // KE2: beide haengen unter einer eigenen Wurzel (Kind 0 = Lyrics, Kind 1 =
     // Trail-Liste) — so laesst sich die Ebene wie eine Kette speichern, laden
     // und im Panel bearbeiten. Die Wurzel selbst wird nie gerendert.
+    // Mischart und Staerke stehen in den Knoten (S89). Die prozessweite
+    // Vorgabe (`setKaraokeMischung`: Zeile Normal, Trail Additive) gilt nur
+    // noch fuer diesen Aufbau — Tests und die einmalige Uebernahme alter
+    // Einstellungen setzen sie.
     ChainNode lyrics;
-    lyrics.params = LyricsParams{};
+    LyricsParams lp;
+    lp.blend = karaokeMischart(KaraokeTeil::Zeile);
+    lp.blendStrength = karaokeStaerke(KaraokeTeil::Zeile);
+    lyrics.params = lp;
     lyrics.displayName = "Karaoke Lyrics";
 
     ListParams liste;
@@ -3563,6 +3572,8 @@ void MultiEffectVisualizer::baueKaraokeEbene()
     LyricsTrailParams tp;
     tp.holdMs = 120;
     tp.yShift = -7;
+    tp.blend = karaokeMischart(KaraokeTeil::Trail);
+    tp.blendStrength = karaokeStaerke(KaraokeTeil::Trail);
     trail.params = tp;
     trailListe.children = {drift, fade, trail};
 
@@ -3642,6 +3653,39 @@ QString MultiEffectVisualizer::karaokeAblage()
     return g_karaokeAblage;
 }
 
+bool MultiEffectVisualizer::uebernehmeAlteKaraokeMischung()
+{
+    // Bis S88 standen Mischart und Staerke der Ebene in den QSettings
+    // (Settings → Audio). Seit S89 stehen sie in den Knoten der Ebene: die
+    // alten Werte wandern EINMAL in die Ablage, dann verschwinden die
+    // Schluessel. Gibt es die Ablage schon, hat der Benutzer die Ebene bereits
+    // im Panel eingestellt — dann gilt sie.
+    QSettings s;
+    const QString schluessel[4] = {
+        QStringLiteral("karaoke/LineBlend"), QStringLiteral("karaoke/LineStrength"),
+        QStringLiteral("karaoke/TrailBlend"), QStringLiteral("karaoke/TrailStrength")};
+    bool vorhanden = false;
+    for (const QString& k : schluessel) vorhanden = vorhanden || s.contains(k);
+    if (!vorhanden) return false;
+    bool geschrieben = false;
+    const QString ablage = karaokeAblage();
+    if (!ablage.isEmpty() && !QFileInfo::exists(ablage))
+    {
+        setKaraokeMischung(KaraokeTeil::Zeile, s.value(schluessel[0], 0).toInt(),
+                           s.value(schluessel[1], 100).toInt());
+        setKaraokeMischung(KaraokeTeil::Trail, s.value(schluessel[2], 1).toInt(),
+                           s.value(schluessel[3], 100).toInt());
+        {
+            MultiEffectVisualizer ebene;  // baut die Vorgabe mit den alten Werten
+            geschrieben = ebene.speichereKaraokeDatei(ablage);
+        }
+        setKaraokeMischung(KaraokeTeil::Zeile, 0, 100);
+        setKaraokeMischung(KaraokeTeil::Trail, 1, 100);
+    }
+    for (const QString& k : schluessel) s.remove(k);
+    return geschrieben;
+}
+
 const ChainNode* MultiEffectVisualizer::karaokeLyricsKnoten() const
 {
     return istKaraokeBaum(m_karaokeWurzel) ? &m_karaokeWurzel.children[0] : nullptr;
@@ -3675,6 +3719,14 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
     const ChainNode* lyrics = karaokeLyricsKnoten();
     const ChainNode* trail = karaokeTrailKnoten();
     if (lyrics == nullptr || trail == nullptr) return;
+    // Mischart/Staerke des Trails: der Lyrics-Trail-Knoten setzt sie im Walk
+    // (nach seinem Skript); bis dahin die gespeicherten Felder
+    for (const ChainNode& kind : trail->children)
+        if (const auto* tp = std::get_if<LyricsTrailParams>(&kind.params))
+        {
+            m_karaokeTrailArt = std::clamp(static_cast<int>(tp->blend), 0, kKaraokeMischarten - 1);
+            m_karaokeTrailStaerke = std::clamp(static_cast<int>(tp->blendStrength), 0, 100);
+        }
 
     // Beides laeuft NACH dem Ketten-Walk und fasst die Root-Surface nicht an:
     // die Zeile wird nur gerastert (kein Compose), die Liste mischt nicht aus.
@@ -3759,11 +3811,10 @@ void MultiEffectVisualizer::legeKaraokeAuf()
         if (logik) f->glDisable(GL_COLOR_LOGIC_OP);
     };
     // Reihenfolge: Trail, dann die Kontur (immer normal), dann die Fuellung
-    lege(m_karaokeTrailTex, false, true, karaokeMischart(KaraokeTeil::Trail),
-         karaokeStaerke(KaraokeTeil::Trail));
+    // Mischart und Staerke kommen aus den Knoten der Ebene (S89, KE2)
+    lege(m_karaokeTrailTex, false, true, m_karaokeTrailArt, m_karaokeTrailStaerke);
     lege(m_karaokeKonturTex, true, false, 0, 100);
-    lege(m_karaokeGlyphTex, true, false, karaokeMischart(KaraokeTeil::Zeile),
-         karaokeStaerke(KaraokeTeil::Zeile));
+    lege(m_karaokeGlyphTex, true, false, m_karaokeZeileArt, m_karaokeZeileStaerke);
 
     m_quadVao->release();
     m_overlayShader->release();
@@ -8575,6 +8626,7 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     m_textShader->setUniformValue("uImg", 1);
     f->glActiveTexture(GL_TEXTURE0);
     m_textShader->setUniformValue("uBlend", std::clamp(params.blend, 0, 2));
+    m_textShader->setUniformValue("uStrength", 1.0f);  // der Text-Knoten kennt keine Staerke
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8583,7 +8635,8 @@ void MultiEffectVisualizer::runText(const ChainNode& node, const TextParams& par
     bindActive();
 }
 
-void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend)
+void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend,
+                                              int staerkeProzent)
 {
     if (m_textShader == nullptr || texture == 0) return;
     auto* f = QOpenGLContext::currentContext()->functions();
@@ -8601,6 +8654,8 @@ void MultiEffectVisualizer::composeGlyphLayer(unsigned int texture, int blend)
     f->glActiveTexture(GL_TEXTURE0);
     // 0–2 wie r_text; 3–8 die Mischarten der Karaoke-Ebene (S88, K6)
     m_textShader->setUniformValue("uBlend", std::clamp(blend, 0, kKaraokeMischarten - 1));
+    m_textShader->setUniformValue(
+        "uStrength", static_cast<float>(std::clamp(staerkeProzent, 0, 100)) / 100.0f);
     f->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     m_quadVao->release();
     m_textShader->release();
@@ -8757,6 +8812,15 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
     runParamScript(rt, "lyricstrail", params.initCode, params.frameCode, params.beatCode, {});
+    // S89: in der Karaoke-Ebene gelten Mischart und Staerke dieses Knotens fuer
+    // das AUFLEGEN des Trail-Bilds beim Present; in die Liste der Ebene
+    // zeichnet er deckend. In einer Kette mischt er wie bisher selbst.
+    const bool inEbene = m_karaokeLaeuft;
+    if (inEbene)
+    {
+        m_karaokeTrailArt = std::clamp(static_cast<int>(params.blend), 0, kKaraokeMischarten - 1);
+        m_karaokeTrailStaerke = std::clamp(static_cast<int>(params.blendStrength), 0, 100);
+    }
 
     namespace ly = lumi::multieffect::lyrics;
     // in der Karaoke-Ebene (S88) folgt der Trail deren eigenem Lyrics-Knoten
@@ -8803,7 +8867,8 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
         LyricsParams lage = lp;
         lage.xShift = lp.xShift + params.xShift;
         lage.yShift = lp.yShift + params.yShift;
-        lage.blend = params.blend;
+        lage.blend = inEbene ? 0 : params.blend;
+        lage.blendStrength = inEbene ? 100 : params.blendStrength;
         zeichneLyricsZeilen(rt, lage, zeilen);
         return;
     }
@@ -8842,7 +8907,8 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
     LyricsParams lage = lp;
     lage.xShift = lp.xShift + params.xShift;
     lage.yShift = lp.yShift + params.yShift;
-    lage.blend = params.blend;
+    lage.blend = inEbene ? 0 : params.blend;
+    lage.blendStrength = inEbene ? 100 : params.blendStrength;
     zeichneLyricsZeilen(rt, lage, zeilen);
 }
 
@@ -8857,8 +8923,16 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     // Kontur statt mit dem Bild). In der Karaoke-Ebene gilt das fuer jede Art
     // ungleich Normal; am Knoten der Kette erst ab Art 3 — Replace, Additive
     // und 50/50 bleiben dort bitgleich mit dem Stand vor S88.
-    const bool getrennt = m_glyphNurRastern ? karaokeMischart(KaraokeTeil::Zeile) != 0
-                                            : params.blend >= 3;
+    // S89: dasselbe bei einer Staerke unter 100 % — sie nimmt nur die Fuellung
+    // zurueck, die Kontur bleibt stehen. Die Ebene liest Mischart und Staerke
+    // aus ihrem eigenen Lyrics-Knoten (nach dessen Skript).
+    const bool getrennt =
+        (m_glyphNurRastern ? params.blend != 0 : params.blend >= 3) || params.blendStrength < 100;
+    if (m_glyphNurRastern)
+    {
+        m_karaokeZeileArt = std::clamp(static_cast<int>(params.blend), 0, kKaraokeMischarten - 1);
+        m_karaokeZeileStaerke = std::clamp(static_cast<int>(params.blendStrength), 0, 100);
+    }
     if (getrennt && m_glyphTeil == GlyphTeil::Alles && params.outline)
     {
         m_glyphTeil = GlyphTeil::NurKontur;  // erst der Ring (normal) …
@@ -9003,7 +9077,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         return;
     }
     // in der Kette: der Ring liegt immer normal, die Fuellung mit der Mischart
-    composeGlyphLayer(tex, ring ? 0 : params.blend);
+    composeGlyphLayer(tex, ring ? 0 : params.blend, ring ? 100 : params.blendStrength);
 }
 
 void MultiEffectVisualizer::closeAviRuntime(LeafRuntime& rt)

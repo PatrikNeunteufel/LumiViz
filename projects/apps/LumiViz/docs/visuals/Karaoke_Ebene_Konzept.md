@@ -207,9 +207,24 @@ Render-Mutex; beim Beenden der App sofort). Geprüft: UI-Test (Schalter, Feld
 geladen, Preset speichern/laden/löschen, reservierter und leerer Name),
 795/795; Schnappschuss des Panels angesehen. **Nicht geprüft:** im laufenden
 Programm (Andocken, Dialoge Save…/Delete, Songtext-Tabelle mit echtem Titel).
+
+**Schritt 4 ✅ Mischart in den Knoten:** neues Feld `blendStrength` (0–100,
+Vorgabe 100) an Lyrics und Lyrics Trail — Struct, Serializer, Panel
+(*Blend strength (%)*), Text-Shader (`uStrength`), Feldtabelle und FieldDocs
+neu erzeugt (844 Felder). Unter 100 % rastern Füllung und Kontur getrennt, die
+Kontur bleibt. Die Ebene liest Mischart und Stärke je Frame aus ihren Knoten
+(Zeile: Lyrics nach dessen Skript; Trail: Lyrics Trail — dort gelten die
+Felder fürs **Auflegen** des Trail-Bilds, in die Liste der Ebene zeichnet er
+deckend). `setKaraokeMischung` ist nur noch die Vorgabe für den Aufbau der
+mitgelieferten Ebene. Die Zeilen in Settings → Audio sind entfernt;
+`uebernehmeAlteKaraokeMischung` (Application, vor dem Fenster) schreibt alte
+QSettings-Werte einmal in die Ablage und löscht die Schlüssel. Geprüft:
+Bildtests (Ebene: Invert, Invert 50 %, Normal 50 % und 0 % mit Kontur; Knoten
+in der Kette: 50 %, Invert 50 %, Additive 0 %), Übernahme-Test, 797/797,
+Vergleichslauf 84/84 bitgleich. **Lücke bis KE3:** die Mischart des Trails der
+Ebene ist im Panel nicht erreichbar (der Trail-Knoten hat noch keinen Reiter).
 **Offen in KE2:** `.lvkar` im Effect Browser (Icon, Doppelklick lädt in die
-Ebene) · 4 Mischarten in die Knoten (Stärke-Feld) — die beiden Mischart-Zeilen
-stehen bis dahin weiter unter Settings → Audio.
+Ebene).
 
 ## 8. Risiken
 

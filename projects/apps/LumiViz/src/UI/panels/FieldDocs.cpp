@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     842>
+                     844>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -930,6 +930,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Unsynchronised lyrics: step one line forward every N beats (0 = the block stands still). Has no effect on synchronised lyrics."},
     {"lyrics.blend",
      "How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50, 3 subtract, 4 invert (white text inverts the colour underneath), 5 XOR, 6 multiply, 7 maximum, 8 minimum. From 3 on only the fill mixes \342\200\224 the outline is drawn normally and keeps the text readable."},
+    {"lyrics.blendStrength",
+     "Strength of the blend in percent (0..100): scales the opacity of the fill \342\200\224 100 = full, 0 = the fill is gone (the outline stays)."},
     {"lyrics.color",
      "current line / voice 1 (0x00RRGGBB)"},
     {"lyrics.color2",
@@ -974,6 +976,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script."},
     {"lyricsTrail.blend",
      "How the glyphs mix with the picture: 0 replace, 1 additive, 2 50/50, 3 subtract, 4 invert, 5 XOR, 6 multiply, 7 maximum, 8 minimum (as on the Lyrics node; from 3 on the outline stays normal)."},
+    {"lyricsTrail.blendStrength",
+     "Strength of the blend in percent (0..100): scales the opacity of the trail \342\200\224 100 = full, 0 = nothing is drawn."},
     {"lyricsTrail.color",
      "own color 0x00RRGGBB (with `useOwnColor`)"},
     {"lyricsTrail.frameCode",
