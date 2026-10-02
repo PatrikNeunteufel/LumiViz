@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.43.0
+> **Version:** 1.44.0
 > **Datum:** 2026-10-02
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -689,7 +689,10 @@ Preset selbst einen **eingeschalteten** Lyrics-Knoten, **gewinnt das Preset**:
 es zeigt den Text auf seine Art, und die Ebene tritt zurück — der Text steht
 nie doppelt da. Schrift und Lage der Ebene sind vorerst fest; ein eigenes
 Karaoke-Panel mit allen Einstellungen folgt. In Screenshots aus der App ist
-die Ebene enthalten.
+die Ebene enthalten. Rechnet ein Preset mit **Render Scale** in kleinerer
+Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
+Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
+Presets.
 
 Wie sich die Ebene mit dem Bild dahinter **mischt**, stellst du daneben ein —
 getrennt für die laufende Zeile (**Karaoke line blend**) und den Trail
@@ -1352,6 +1355,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.44.0 | 2026-10-02 | Session 89. §11 Lyrics: die Zeile der Karaoke-Ebene bleibt mit Render Scale scharf (Fensterauflösung) |
 | 1.43.0 | 2026-10-02 | Session 88. §2 NEU **Resume playback** (Player-Panel und Settings → Audio): nach dem Neustart dort weiterspielen. §11 Lyrics / Lyrics Trail: Feld **Blend** mit neun Mischarten (neu Subtract, Invert, XOR, Multiply, Maximum, Minimum) |
 | 1.42.0 | 2026-10-02 | Session 88. §11 Karaoke-Ebene: NEU **Mischarten** je Zeile und Trail (Normal, Additive, 50/50, Subtract, Invert, XOR, Multiply, Maximum, Minimum) mit Stärke; die Kontur bleibt normal |
 | 1.41.0 | 2026-10-02 | Session 88. §11 Lyrics: NEU **Karaoke-Ebene** — Songtext über jedem Preset (Settings → Audio → Karaoke layer); ein Lyrics-Knoten im Preset gewinnt |

@@ -3694,9 +3694,10 @@ QImage MultiEffectVisualizer::debugGrabMitKaraoke()
 {
     if (!m_rootSurface.ready() || m_presentShader == nullptr) return QImage();
     auto* f = QOpenGLContext::currentContext()->functions();
-    QOpenGLFramebufferObject ziel(m_surfaceWidth, m_surfaceHeight);
+    // K4 b: in Fenstergroesse — dort ist die Zeile der Ebene gerastert
+    QOpenGLFramebufferObject ziel(m_fensterBreite, m_fensterHoehe);
     ziel.bind();
-    f->glViewport(0, 0, m_surfaceWidth, m_surfaceHeight);
+    f->glViewport(0, 0, m_fensterBreite, m_fensterHoehe);
     f->glDisable(GL_BLEND);
     f->glActiveTexture(GL_TEXTURE0);
     f->glBindTexture(GL_TEXTURE_2D, m_rootSurface.current()->texture());
@@ -4505,6 +4506,8 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     }
     m_surfaceWidth = internalW;
     m_surfaceHeight = internalH;
+    m_fensterBreite = std::max(internalW, static_cast<int>(viewport[2]));
+    m_fensterHoehe = std::max(internalH, static_cast<int>(viewport[3]));
     if (resized) m_firstFrame = true;
 
     const GLboolean blendWasEnabled = f->glIsEnabled(GL_BLEND);
@@ -8789,6 +8792,14 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                            std::to_string(params.outlineColor) + ':' +
                            std::to_string(params.outlineSize) + ':' +
                            std::to_string(m_surfaceWidth) + 'x' + std::to_string(m_surfaceHeight);
+    // K4 b: die Zeile der Karaoke-Ebene rastert in Fenstergroesse (scharf auch
+    // mit Render Scale). Gesetzt wird weiter im Kettenmass — der Painter
+    // skaliert, so deckt sich die Lage mit der des Knotens. In der Kette und
+    // ohne Render Scale ist der Faktor 1 und nichts aendert sich.
+    const int rasterB = m_glyphNurRastern ? m_fensterBreite : m_surfaceWidth;
+    const int rasterH = m_glyphNurRastern ? m_fensterHoehe : m_surfaceHeight;
+    const bool skaliert = rasterB != m_surfaceWidth || rasterH != m_surfaceHeight;
+    if (skaliert) snapshot += '@' + std::to_string(rasterB) + 'x' + std::to_string(rasterH);
     bool etwas = false;
     for (const Anzeige& a : zeilen)
     {
@@ -8805,12 +8816,15 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
     if (tex == 0 || stand != snapshot)
     {
         stand = snapshot;
-        QImage img(m_surfaceWidth, m_surfaceHeight, QImage::Format_RGBA8888);
+        QImage img(rasterB, rasterH, QImage::Format_RGBA8888);
         img.fill(Qt::transparent);
         {
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setRenderHint(QPainter::TextAntialiasing, true);
+            if (skaliert)
+                painter.scale(static_cast<double>(rasterB) / m_surfaceWidth,
+                              static_cast<double>(rasterH) / m_surfaceHeight);
             QFont basis;
             if (!params.fontFace.empty()) basis.setFamily(QString::fromStdString(params.fontFace));
             const int px = std::max(4, std::abs(static_cast<int>(params.fontHeight)));

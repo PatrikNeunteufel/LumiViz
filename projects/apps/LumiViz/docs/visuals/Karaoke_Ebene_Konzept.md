@@ -68,9 +68,9 @@ Folgen:
 - Ein Screenshot aus der App (liest das Fenster) enthält die Ebene; die
   Mess- und Vergleichswerkzeuge (lesen die Root-Surface) sehen sie nicht.
   Beides ist so gewollt.
-- Render Scale: die Ebene wird in Kettenauflösung gerechnet und mit dem Bild
-  hochskaliert. Ob der Text stattdessen in Fensterauflösung gerastert werden
-  soll (schärfer bei kleinem Render Scale), ist Entscheid **K4**.
+- Render Scale: die Zeile wird in Fensterauflösung gerastert (Entscheid
+  **K4 b**, gebaut S89) und bleibt scharf; der Trail wird in Kettenauflösung
+  gerechnet und mit dem Bild hochskaliert.
 
 **Reichweite:** die Ebene sitzt im `MultiEffectVisualizer`, also über allem,
 was als Kette läuft (`.lvfx`, `.lvfx2`, `.avs`, `.milk` über den
@@ -191,6 +191,20 @@ unter 1). Beide lassen KE1 unberührt.
 K1 a, K2 a, K3 b (Karaoke-Presets als Dateien, Icon „Marke"), K4 b (Zeile in
 Fensterauflösung, eigener kleiner Schritt), K5 a, K6 a (Mischart je Teil +
 Stärke, Kontur bleibt normal).
+
+**K4 b gebaut (S89):** die Zeile der Ebene rastert in Fenstergröße (Viewport
+des Frames), der Trail bleibt in Kettenauflösung. Gesetzt wird weiter im
+Kettenmaß — der Painter skaliert die Vektorpfade auf die Fenstergröße; damit
+deckt sich die Lage mit der des Knotens, und ohne Render Scale (Faktor 1)
+ändert sich nichts. Der Snapshot-Schlüssel trägt die Rastergröße (neu rastern
+beim Größenwechsel). `debugGrabMitKaraoke` liefert das Bild jetzt in
+Fenstergröße. Geprüft im Bildtest mit Render Scale (Divisor 2, Fenster
+640×480, Kette 320×240): Root-Surface bitgleich mit Ebene an/aus, Textrahmen =
+Rahmen ohne Render Scale mal zwei (±4 px), Kanten nicht aus 2×2-Blöcken;
+Bilder angesehen. Vergleichslauf 84/84 bitgleich. **Nicht geprüft:** im
+App-Fenster; Fenster mit anderem Seitenverhältnis als die Kette kommt nicht
+vor (Kette = Fenster / Divisor), bei ungeradem Rest weicht der Faktor je Achse
+um unter ein Pixel ab.
 
 **K6 vorab gebaut (S88):** `MultiEffectVisualizer::setKaraokeMischung`
 (Teil Zeile/Trail, Art 0–8, Stärke 0–100 %), Schalter vorerst unter Settings →

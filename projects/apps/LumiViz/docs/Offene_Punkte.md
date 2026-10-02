@@ -3034,6 +3034,41 @@ Liste statt pro Gruppe. Trigger-Stufen:
 Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
 sich — im Konzept abgrenzen.
 
+### ⚪ Host Switcher: Puffer je Gruppe — Zustand beim Wiederbetreten fortsetzen (Idee Patrik S89, **zeitnah**)
+
+**Idee:** der Host Switcher hält für jede gelistete Gruppe einen Puffer
+(anfangs leer). Wird die Gruppe verlassen, bleibt ihr Stand im Puffer; wird
+dieselbe Gruppe wieder betreten, läuft sie von dort weiter. Das Puffern ist
+einschaltbar, die Puffer lassen sich zurücksetzen; bei leerem Puffer beginnt
+die Gruppe einfach neu.
+
+**Befund S89 (Code gelesen, nichts gebaut, nichts gemessen): machbar.**
+
+- Der Puffer existiert schon: jede Host-Gruppe hat eine `GroupRuntime`
+  (Feedback-Bild, Buffer-Save-Pool, Skript-Kontext mit reg/q/gmegabuf). Sie
+  bleibt im Speicher, solange die Gruppe in der Kette steht — auch wenn sie
+  nicht läuft.
+- Der Stand wird heute **absichtlich** verworfen: ist die Gruppe fertig
+  ausgeblendet, setzt `renderHostGroup` `needsClear = true` und
+  `activeSeconds = 0` („Milkdrop-Verhalten: der alte Zustand stirbt mit A").
+- Einschalten hieße im Kern: diese beiden Zeilen hinter einen Schalter am
+  Host Switcher legen. Zurücksetzen: Knopf im Panel und eine Skriptvariable,
+  die für alle gelisteten Gruppen `needsClear` setzt.
+- Speicher: die Bilder liegen heute schon je Gruppe im VRAM — nichts kommt dazu.
+
+**Vor dem Bau zu klären:**
+
+1. Was zum „Stand" gehört: Bild, Pool und Skript-Kontext der Gruppe sicher.
+   **Nicht geprüft:** ob die Init-Slots der Kinder und die Blatt-Laufzeiten
+   (Partikel, Wasser, Delay-Ringe, Milkdrop-Node) beim Wiedereinblenden heute
+   neu starten — das entscheidet, ob „weiterlaufen" wirklich nahtlos ist.
+2. Wo der Schalter sitzt: am Switcher (für alle gelisteten Gruppen) oder je
+   Gruppe.
+3. Größenwechsel leert den Puffer zwangsläufig (Bild in anderer Größe).
+4. Reichweite: nur zur Laufzeit. Über App-Neustart oder Neuladen der Kette
+   hinweg müssten Bilder auf Platte — eigener, größerer Schritt, nicht Teil
+   dieser Idee.
+
 ### ✅ Effekt-Palette als Fenster statt Dropdown (Entscheid + Umsetzung S79 — Sichttest offen)
 
 **Umgesetzt S79** (`EffectPaletteWindow`, Daten `EffectPalette.{hpp,cpp}`,

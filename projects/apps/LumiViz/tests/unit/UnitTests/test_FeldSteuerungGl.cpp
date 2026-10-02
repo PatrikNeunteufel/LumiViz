@@ -1059,6 +1059,102 @@ TEST_CASE("Karaoke-Ebene S88: Mischarten der Zeile rechnen wie angegeben, die Ko
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S89, K4 b (Entscheid Patrik): die Zeile der Karaoke-Ebene rastert in
+// Fensteraufloesung. Mit Render Scale (Divisor 2) ist die Kette halb so gross
+// wie das Fenster — der Text bleibt scharf, steht an derselben Stelle wie
+// ohne Render Scale, und die Root-Surface bleibt bitgleich.
+TEST_CASE("Karaoke-Ebene S89: Zeile in Fensteraufloesung — scharf mit Render Scale, Lage gleich")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::notifyPlayPosition(11000);
+    const QRgb grund = qRgb(64, 128, 192);
+
+    struct Lauf
+    {
+        QImage root;
+        QImage fenster;
+    };
+    const auto lauf = [&](bool ebene, int divisor, QSize groesse) {
+        MultiEffectVisualizer::setKaraokeEbene(ebene);
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0x4080C0;
+        clear.params = cp;
+        root.children = {clear};
+        if (divisor > 1)
+        {
+            ChainNode scale;
+            scale.params = RenderScaleParams{divisor, 0};
+            root.children.push_back(scale);
+        }
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(groesse);
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, groesse.width(),
+                                                                  groesse.height());
+        for (int i = 0; i < 12; ++i) vis.render(1.0f / 60.0f);
+        Lauf l{vis.debugGrabRootSurface(), vis.debugGrabMitKaraoke()};
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        return l;
+    };
+    const auto rahmen = [&](const QImage& bild) {
+        QRect r;
+        for (int y = 0; y < bild.height(); ++y)
+            for (int x = 0; x < bild.width(); ++x)
+                if (bild.pixel(x, y) != grund) r |= QRect(x, y, 1, 1);
+        return r;
+    };
+
+    const Lauf klein = lauf(true, 1, QSize(320, 240));    // Vergleich: ohne Render Scale
+    const Lauf gross = lauf(true, 2, QSize(640, 480));    // Kette 320x240, Fenster 640x480
+    const Lauf grossAus = lauf(false, 2, QSize(640, 480));
+    REQUIRE(gross.root.size() == QSize(320, 240));
+    REQUIRE(gross.fenster.size() == QSize(640, 480));
+    REQUIRE(klein.fenster.size() == QSize(320, 240));
+    CHECK(gross.root == grossAus.root);  // Root-Surface bitgleich, Ebene an/aus
+
+    // Lage: der Rahmen des Texts ist der des kleinen Laufs mal zwei
+    const QRect rk = rahmen(klein.fenster);
+    const QRect rg = rahmen(gross.fenster);
+    REQUIRE(rk.width() > 50);
+    CHECK(std::abs(rg.left() - 2 * rk.left()) <= 4);
+    CHECK(std::abs(rg.top() - 2 * rk.top()) <= 4);
+    CHECK(std::abs(rg.right() - (2 * rk.right() + 1)) <= 4);
+    CHECK(std::abs(rg.bottom() - (2 * rk.bottom() + 1)) <= 4);
+
+    // Scharf: ein aus der Kettenaufloesung (nearest) hochgezogenes Bild bestuende
+    // aus einfarbigen 2x2-Bloecken. In Fensteraufloesung gerastert gibt es an den
+    // Kanten viele Bloecke, die es nicht sind.
+    int gemischt = 0;
+    for (int y = 0; y + 1 < gross.fenster.height(); y += 2)
+        for (int x = 0; x + 1 < gross.fenster.width(); x += 2)
+        {
+            const QRgb c = gross.fenster.pixel(x, y);
+            if (gross.fenster.pixel(x + 1, y) != c || gross.fenster.pixel(x, y + 1) != c ||
+                gross.fenster.pixel(x + 1, y + 1) != c)
+                ++gemischt;
+        }
+    CHECK(gemischt > 200);
+
+    if (const QString snap = qEnvironmentVariable("LUMIVIZ_KARAOKE_SNAP"); !snap.isEmpty())
+    {
+        klein.fenster.save(snap + QStringLiteral("/k4b_klein.png"));
+        gross.fenster.save(snap + QStringLiteral("/k4b_gross.png"));
+    }
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88 (Folgefrage Patrik zu K6): dieselben Mischarten am Lyrics-Knoten der
 // Kette — „die Kette gewinnt" soll nicht aermer sein als die Ebene. Gerechnet
 // im Text-Shader; ab Subtract mischt nur die Fuellung, die Kontur bleibt normal.

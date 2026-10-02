@@ -330,7 +330,9 @@ public:
     [[nodiscard]] static int karaokeMischart(KaraokeTeil teil);
     [[nodiscard]] static int karaokeStaerke(KaraokeTeil teil);
     /// Test-Naht: das Bild, wie es am Fenster steht (Root-Surface + Karaoke-
-    /// Ebene), in Kettenaufloesung. `debugGrabRootSurface` sieht die Ebene nie.
+    /// Ebene), in der Fenstergroesse des letzten Frames (K4 b: die Zeile der
+    /// Ebene ist dort gerastert; ohne Render Scale gleich der Kettenaufloesung).
+    /// `debugGrabRootSurface` sieht die Ebene nie.
     [[nodiscard]] QImage debugGrabMitKaraoke();
     /// Test-Naht: hat die Ebene im letzten Frame gezeichnet (nicht zurueckgetreten)?
     [[nodiscard]] bool debugKaraokeGezeichnet() const { return m_karaokeGezeichnet; }
@@ -1511,6 +1513,10 @@ private:
     bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt m_karaokeLyrics)
     bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
+    /// K4 b: Fenstergroesse (Viewport in onRender) — darin rastert die Zeile
+    /// der Ebene; der Trail bleibt in Kettenaufloesung.
+    int m_fensterBreite = 0;
+    int m_fensterHoehe = 0;
     /// Was `zeichneLyricsZeilen` rastert: alles in eine Textur (Vorgabe) oder,
     /// fuer die Karaoke-Ebene mit Mischart, Fuellung und Kontur-Ring getrennt.
     enum class GlyphTeil { Alles, NurFuellung, NurKontur };
