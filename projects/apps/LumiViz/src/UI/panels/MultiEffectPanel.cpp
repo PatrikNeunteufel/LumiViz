@@ -25,6 +25,7 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"  // effectTypeKey
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"    // Element-Presets (S83)
 #include "visualizers/multieffect/NodePresetStore.hpp"  // Voreinstellungen je Knoten
+#include "visualizers/multieffect/TrailPresetStore.hpp" // Trail-Presets in der Kette (S92)
 #include "visualizers/multieffect/ShadertoyImport.hpp"  // URL-/ID-Import (Strang S3)
 #include "visualizers/multieffect/ShadertoyWrapper.hpp" // Starter-Shader (Strang S)
 #include "visualizers/multieffect/MeshWarpWrapper.hpp"      // Starter-Warp + Klemmen (G1)
@@ -84,6 +85,7 @@
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QInputDialog>
 #include <QLineEdit>
 #include <QMenu>
 #include <QMutex>
@@ -1387,6 +1389,24 @@ void MultiEffectPanel::setupUI()
     // Drag & drop re-parents/reorders effects (into / out of groups). We handle
     // the drop ourselves (onDrop) and rebuild from the model.
     m_tree->configureDragDrop();
+    // S92: Kontextmenue — Trail-Presets in die Kette und aus ihr heraus. Nur im
+    // Baum der Kette; die Ebene hat ihre eigene Zeile im Karaoke-Panel.
+    if (m_baum == Baum::Kette)
+    {
+        m_tree->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(m_tree, &QWidget::customContextMenuRequested, this, [this](const QPoint& p) {
+            if (m_host == nullptr) return;
+            QList<int> path;
+            if (QTreeWidgetItem* item = m_tree->itemAt(p))
+            {
+                m_tree->setCurrentItem(item);
+                path = pathFromVariant(item->data(0, Qt::UserRole));
+            }
+            QMenu menu(this);
+            fuelleKettenMenue(menu, path);
+            if (!menu.isEmpty()) menu.exec(m_tree->viewport()->mapToGlobal(p));
+        });
+    }
     m_tree->onDrop = [this](QTreeWidgetItem* s, QTreeWidgetItem* t, ChainDrop w) {
         onDropRequested(s, t, w);
     };
@@ -2003,6 +2023,127 @@ void MultiEffectPanel::mutateStructure(const std::function<void()>& fn)
     rebuildTree(/*aufklappZustandBehalten=*/true);
     clearPropertyEditor();
     zeigeFestenKnoten();
+}
+
+// =============================================================================
+// Trail-Presets in der Kette (S92)
+// =============================================================================
+
+bool MultiEffectPanel::fuegeTrailPresetEin(const QString& name, const QList<int>& ziel)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    if (m_host == nullptr || m_mutex == nullptr || m_baum != Baum::Kette) return false;
+    const tp::Entry e = tp::finde(name);
+    ChainNode liste;
+    if (e.path.isEmpty() || !tp::load(e.path, liste, nullptr)) return false;
+    ChainNode fresh = tp::fuerKette(std::move(liste), e.name);
+
+    // wohin: wie beim Einfuegen aus der Palette (onAddEffect) — eine
+    // Milkdrop-Sektion meint ihren Knoten
+    const QList<int> sel = splitMilkPath(ziel).nodePath;
+    QList<int> elternPfad;
+    int pos = -1;  // -1 = anhaengen
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* target = nodeAtPath(sel);
+        if (target != nullptr && target->acceptsChildren())
+        {
+            elternPfad = sel;
+        }
+        else if (!sel.isEmpty())
+        {
+            elternPfad = sel;
+            pos = elternPfad.takeLast() + 1;
+        }
+    }
+    QList<int> neuerPfad;
+    mutateStructure([&] {
+        ChainNode* eltern = nodeAtPath(elternPfad);
+        if (eltern == nullptr) return;
+        const int anzahl = static_cast<int>(eltern->children.size());
+        const int at = (pos < 0 || pos > anzahl) ? anzahl : pos;
+        eltern->children.insert(eltern->children.begin() + at, std::move(fresh));
+        neuerPfad = elternPfad;
+        neuerPfad << at;
+    });
+    if (neuerPfad.isEmpty()) return false;
+    selectByPath(neuerPfad);
+    buildPropertyEditor(neuerPfad);
+    return true;
+}
+
+bool MultiEffectPanel::speichereAlsTrailPreset(const QList<int>& path, const QString& name)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    if (m_host == nullptr || m_mutex == nullptr || path.isEmpty()) return false;
+    ChainNode kopie;
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* n = nodeAtPath(path);
+        if (n == nullptr || !std::holds_alternative<ListParams>(n->params)) return false;
+        kopie = *n;
+    }
+    return tp::save(name, kopie, nullptr);  // ausserhalb des Render-Mutex
+}
+
+void MultiEffectPanel::fuelleKettenMenue(QMenu& menu, const QList<int>& path)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    if (m_host == nullptr || m_mutex == nullptr || m_baum != Baum::Kette) return;
+    bool istListe = false;
+    QString listenName;
+    if (!path.isEmpty())
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* n = nodeAtPath(path);
+        istListe = n != nullptr && std::holds_alternative<ListParams>(n->params);
+        if (istListe) listenName = QString::fromStdString(n->displayName);
+    }
+    if (istListe)
+    {
+        QAction* a = menu.addAction(tr("Save as trail preset…"));
+        a->setObjectName(QStringLiteral("chainMenuSaveTrail"));
+        a->setToolTip(tr("Saves this Effect List with everything in it as a trail preset for the "
+                         "karaoke layer (Karaoke panel, tab Lyrics Trail)."));
+        connect(a, &QAction::triggered, this, [this, path, listenName] {
+            bool ok = false;
+            const QString name = QInputDialog::getText(
+                this, tr("Save Trail Preset"), tr("Name:"), QLineEdit::Normal,
+                listenName.isEmpty() ? tr("My Trail") : listenName, &ok);
+            if (!ok) return;
+            const auto vorhanden = lumi::multieffect::trailpresets::finde(
+                lumi::multieffect::nodepresets::sanitize(name));
+            if (!vorhanden.path.isEmpty() && !vorhanden.builtin &&
+                QMessageBox::question(this, tr("Save Trail Preset"),
+                                      tr("\"%1\" exists. Overwrite it?").arg(vorhanden.name)) !=
+                    QMessageBox::Yes)
+                return;
+            if (!speichereAlsTrailPreset(path, name))
+                QMessageBox::warning(this, tr("Save Trail Preset"),
+                                     tr("Could not save \"%1\".").arg(name));
+        });
+    }
+    const std::vector<tp::Entry> alle = tp::list();
+    if (alle.empty()) return;
+    QMenu* einfuegen = menu.addMenu(tr("Add trail preset"));
+    einfuegen->setObjectName(QStringLiteral("chainMenuAddTrail"));
+    einfuegen->setToolTipsVisible(true);
+    bool strich = false;
+    for (const tp::Entry& e : alle)
+    {
+        if (!e.builtin && !strich && !einfuegen->isEmpty())
+        {
+            einfuegen->addSeparator();
+            strich = true;
+        }
+        QAction* a = einfuegen->addAction(e.name);
+        a->setObjectName(QStringLiteral("chainMenuAddTrailEntry"));
+        a->setToolTip(tr("Adds the trail preset as an Effect List (output: Additive). It follows "
+                         "the first Lyrics node of the chain; place it before that node."));
+        const QString name = e.name;
+        connect(a, &QAction::triggered, this,
+                [this, name, path] { (void)fuegeTrailPresetEin(name, path); });
+    }
 }
 
 void MultiEffectPanel::openPalette()

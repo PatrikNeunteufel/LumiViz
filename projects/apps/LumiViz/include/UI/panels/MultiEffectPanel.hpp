@@ -141,6 +141,24 @@ public:
     MultiEffectPanel(ServiceContainer& services, KaraokeTrail, QWidget* parent = nullptr);
     /// Baum und Editor neu aus dem Visualizer lesen (nach einem Laden von aussen).
     void baumNeuLesen();
+
+    // --- Trail-Presets in der Kette (S92, Wunsch Patrik) — `TrailPresetStore` ---
+    //
+    // Dieselbe Liste, die im Karaoke-Panel den Trail der Ebene formt, laesst
+    // sich in eine Effektkette einfuegen und aus einer herausnehmen.
+
+    /// Trail-Preset `name` als Effect List in die Kette einfuegen: `ziel` eine
+    /// Liste -> als letztes Element hinein, ein Effekt -> direkt darunter,
+    /// leer -> ans Ende der Kette. Die Liste mischt additiv ins Bild
+    /// (`trailpresets::fuerKette`). false = gibt es nicht / kein Kettenbaum.
+    bool fuegeTrailPresetEin(const QString& name, const QList<int>& ziel);
+    /// Die Effect List an `path` samt Kindern als eigenes Trail-Preset
+    /// speichern — ohne Dialog. false = keine Effect List oder Schreibfehler.
+    bool speichereAlsTrailPreset(const QList<int>& path, const QString& name);
+    /// Kontextmenue des Kettenbaums fuer den Knoten an `path` (leer = freie
+    /// Flaeche): „Save as trail preset…" nur an einer Effect List, „Add trail
+    /// preset" mit allen Trail-Presets immer.
+    void fuelleKettenMenue(class QMenu& menu, const QList<int>& path);
     /// Auge der Wurzel des gebundenen Baums — im Trail-Modus „Trail on/off".
     [[nodiscard]] bool wurzelAn();
     void setWurzelAn(bool an);

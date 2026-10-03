@@ -1554,6 +1554,114 @@ QColor farbeBei(QTextDocument& doc, int zeile, int spalte)
 }
 }  // namespace
 
+// S92 (Wunsch Patrik): Trail-Presets in die Kette und aus ihr heraus — das
+// Kontextmenue des Kettenbaums. Verzeichnisse umgebogen wie im Test darueber.
+TEST_CASE("PaletteUi Panel S92: Trail-Preset in die Kette einfuegen, Effect List als Trail-Preset speichern")
+{
+    UiUmgebung env;
+    namespace tp = lumi::multieffect::trailpresets;
+    using lumi::multieffect::BlendMode;
+    using lumi::multieffect::BlitterFeedbackParams;
+    using lumi::multieffect::ListParams;
+    using lumi::multieffect::LyricsTrailParams;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    tp::setRootForTesting(tmp.path());
+    REQUIRE(QDir().mkpath(tp::assetDir()));
+    {
+        MultiEffectVisualizer ebene;
+        REQUIRE(lumi::multieffect::saveChainToFile(tp::fuerEbene(ebene.karaokeKette().children[1]),
+                                                   tp::assetDir() + "/Drift Up.lvtrail"));
+    }
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    REQUIRE(p.root().children.size() == 3);  // Knoten, Liste, Knoten
+    REQUIRE(std::holds_alternative<ListParams>(p.root().children[1].params));
+    const auto hat = [](const QMenu& m, const char* name) {
+        return m.findChild<QAction*>(QLatin1String(name)) != nullptr;
+    };
+
+    // --- Menue: an einem gewoehnlichen Knoten nur „Add trail preset"
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {0});
+        CHECK_FALSE(hat(menu, "chainMenuSaveTrail"));
+        const QList<QAction*> namen =
+            menu.findChildren<QAction*>(QStringLiteral("chainMenuAddTrailEntry"));
+        REQUIRE(namen.size() == 1);
+        CHECK(namen.first()->text() == QStringLiteral("Drift Up"));
+        // einfuegen: direkt UNTER dem Knoten, als Effect List, additiv, mit Namen
+        namen.first()->trigger();
+        QCoreApplication::processEvents();
+    }
+    REQUIRE(p.root().children.size() == 4);
+    {
+        const ChainNode& neu = p.root().children[1];
+        REQUIRE(std::holds_alternative<ListParams>(neu.params));
+        CHECK(std::get<ListParams>(neu.params).blendOut == BlendMode::Additive);
+        CHECK(neu.displayName == "Drift Up");
+        REQUIRE(neu.children.size() == 3);
+        CHECK(std::holds_alternative<BlitterFeedbackParams>(neu.children[0].params));
+        CHECK(std::holds_alternative<LyricsTrailParams>(neu.children[2].params));
+        CHECK(p.tree->topLevelItemCount() == 4);
+    }
+
+    // --- an einer Liste: hinein, ans Ende; an der freien Flaeche: ans Ende der Kette
+    const std::size_t inListe = p.root().children[2].children.size();
+    REQUIRE(p.panel->fuegeTrailPresetEin(QStringLiteral("Drift Up"), {2}));
+    REQUIRE(p.root().children[2].children.size() == inListe + 1);
+    CHECK(p.root().children[2].children.back().displayName == "Drift Up");
+    REQUIRE(p.panel->fuegeTrailPresetEin(QStringLiteral("Drift Up"), {}));
+    REQUIRE(p.root().children.size() == 5);
+    CHECK(p.root().children.back().displayName == "Drift Up");
+    CHECK_FALSE(p.panel->fuegeTrailPresetEin(QStringLiteral("Gibt es nicht"), {}));
+    CHECK(p.root().children.size() == 5);
+
+    // --- Menue an einer Effect List: „Save as trail preset…" ist da
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {1});
+        CHECK(hat(menu, "chainMenuSaveTrail"));
+        CHECK(menu.findChild<QMenu*>(QStringLiteral("chainMenuAddTrail")) != nullptr);
+    }
+    {
+        QMenu menu;  // freie Flaeche: nur einfuegen
+        p.panel->fuelleKettenMenue(menu, {});
+        CHECK_FALSE(hat(menu, "chainMenuSaveTrail"));
+        CHECK(menu.findChild<QMenu*>(QStringLiteral("chainMenuAddTrail")) != nullptr);
+    }
+
+    // --- speichern: die eingefuegte Liste, veraendert, als eigenes Trail-Preset
+    std::get<BlitterFeedbackParams>(p.vis.chain().children[1].children[0].params).scale = 41;
+    CHECK_FALSE(p.panel->speichereAlsTrailPreset({0}, QStringLiteral("Kein Knoten")));  // keine Liste
+    CHECK_FALSE(p.panel->speichereAlsTrailPreset({}, QStringLiteral("Wurzel")));
+    REQUIRE(p.panel->speichereAlsTrailPreset({1}, QStringLiteral("From Chain")));
+    const tp::Entry eigen = tp::finde(QStringLiteral("From Chain"));
+    REQUIRE_FALSE(eigen.path.isEmpty());
+    CHECK_FALSE(eigen.builtin);
+    ChainNode zurueck;
+    REQUIRE(tp::load(eigen.path, zurueck, nullptr));
+    // so, wie die Ebene sie braucht: mischt nicht selbst, heisst Karaoke Trail, Inhalt gleich
+    CHECK(std::get<ListParams>(zurueck.params).blendOut == BlendMode::Ignore);
+    CHECK(zurueck.displayName == "Karaoke Trail");
+    REQUIRE(zurueck.children.size() == 3);
+    CHECK(std::get<BlitterFeedbackParams>(zurueck.children[0].params).scale == 41);
+    CHECK(tp::gleich(zurueck, p.root().children[1]));
+    // eine Liste OHNE Lyrics Trail bekommt beim Speichern einen ans Ende
+    REQUIRE(p.panel->speichereAlsTrailPreset({2}, QStringLiteral("Plain List")));
+    ChainNode schlicht;
+    REQUIRE(tp::load(tp::finde(QStringLiteral("Plain List")).path, schlicht, nullptr));
+    REQUIRE_FALSE(schlicht.children.empty());
+    int trails = 0;
+    for (const ChainNode& k : schlicht.children)
+        if (std::holds_alternative<LyricsTrailParams>(k.params)) ++trails;
+    CHECK(trails == 1);
+    CHECK(std::holds_alternative<LyricsTrailParams>(schlicht.children.back().params));
+
+    tp::setRootForTesting(QString());
+}
+
 TEST_CASE("PaletteUi C1: im Shape-Code ist b gefaerbt wie r, g, r2, g2, b2")
 {
     UiUmgebung env;
