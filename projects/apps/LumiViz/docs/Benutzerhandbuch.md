@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.76.0
+> **Version:** 1.77.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -288,6 +288,9 @@ Die Panels **Effect Chain** und **Karaoke** tragen oben dieselbe Zeile:
   (mit der Rückfrage oben, falls etwas ungespeichert ist). Das Mausrad über
   dem Dropdown wechselt nichts. Ein Eintrag, dessen Datei es nicht mehr gibt,
   steht grau da und fällt beim Anklicken aus der Liste.
+- **+ New empty effect chain** (nur im Effect-Chain-Panel) steht immer direkt
+  unter dem laufenden Preset: eine leere Kette für ein neues Preset — dasselbe
+  wie **File → New Effect Chain** (Ctrl+Shift+N), mit derselben Rückfrage.
 - **★** macht das laufende Preset zum Favoriten bzw. nimmt es wieder heraus.
 - **Load…**, **Save**, **Save As…** tun dasselbe wie die Einträge im Menü
   File. **Load…** im Effect-Chain-Panel bietet dabei jedes Preset an —
@@ -1648,6 +1651,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.77.0 | 2026-10-03 | Session 93. Die Preset-Zeile: fester Eintrag **+ New empty effect chain** im Dropdown des Effect-Chain-Panels |
 | 1.76.0 | 2026-10-03 | Session 93. Presets durchblättern: der Start lädt das zuletzt laufende Preset, gleich über welchen Weg es kam; der Effect Browser bleibt in seinem Ordner und folgt dem laufenden Preset nur auf Knopfdruck (**◎**) |
 | 1.75.0 | 2026-10-03 | Session 93. §11: Rechtsklick im Baum der Effect Chain — **Add module** mit den **Favorites** und **Recently used** der Modul-Palette, **All modules…** öffnet sie |
 | 1.74.0 | 2026-10-03 | Session 93. §11 Host-Gruppen: Rechtsklick im Baum der Effect Chain — **Add preset** mit **Favorites** und **Recent**, fügt das Preset als Presetverweis ein |

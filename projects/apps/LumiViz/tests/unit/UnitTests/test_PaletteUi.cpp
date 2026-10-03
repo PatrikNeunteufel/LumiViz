@@ -1200,6 +1200,69 @@ TEST_CASE("PresetZeile S89: laufendes Preset, Favoriten, zuletzt — Auswahl mel
     schnappschuss(zeile, "S89_preset_zeile");
 }
 
+// S93 (Wunsch Patrik): im Dropdown der Kette steht immer ein Eintrag fuer eine
+// neue, leere Kette — direkt unter dem laufenden Preset, vor Favoriten und Zuletzt.
+TEST_CASE("PaletteUi Panel S93: das Dropdown der Kette fuehrt immer den Eintrag fuer eine neue leere Kette")
+{
+    UiUmgebung env;
+    using lumi::ui::PresetArt;
+    using L = lumi::ui::PresetListen;
+    for (const QString& alt : L::favoriten(PresetArt::Kette)) L::setzeFavorit(PresetArt::Kette, alt, false);
+    for (const QString& alt : L::zuletzt(PresetArt::Kette)) L::vergiss(PresetArt::Kette, alt);
+
+    PanelUmgebung p;
+    auto* zeile = p.panel->findChild<lumi::ui::PresetZeile*>();
+    REQUIRE(zeile != nullptr);
+    auto* combo = zeile->findChild<QComboBox*>(QStringLiteral("presetZeileCombo"));
+    REQUIRE(combo != nullptr);
+    IEventBus* bus = p.services.tryResolve<IEventBus>();
+    int neu = 0;
+    int geladen = 0;
+    const auto a1 = bus->subscribeScoped<NewEffectChainEvent>([&](const NewEffectChainEvent&) { ++neu; });
+    const auto a2 = bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent&) { ++geladen; });
+    const QString kNeu = QStringLiteral("+ New empty effect chain");
+
+    // --- ohne laufendes Preset, ohne Listen: zwei Zeilen
+    zeile->setLaufend(QString());
+    REQUIRE(combo->count() == 2);
+    CHECK(combo->itemText(1) == kNeu);
+    CHECK(combo->currentIndex() == 0);
+
+    // --- waehlen meldet „neu" — einmal, kein Laden — und das Dropdown zeigt
+    //     wieder das Laufende (die Rueckfrage des Fensters kann verneint werden)
+    combo->setCurrentIndex(1);
+    emit combo->activated(1);
+    CHECK(neu == 1);
+    CHECK(geladen == 0);
+    CHECK(combo->currentIndex() == 0);
+
+    // --- mit laufendem Preset, Favorit und Zuletzt: weiter Zeile 1, davor nichts
+    zeile->setLaufend(QStringLiteral("C:/x/Mein Preset.lvfx"));
+    L::setzeFavorit(PresetArt::Kette, QStringLiteral("C:/x/Liebling.lvfx"), true);
+    L::merkeBenutzt(PresetArt::Kette, QStringLiteral("C:/x/Neulich.lvfx"));
+    zeile->aktualisiere();
+    REQUIRE(combo->count() == 6);  // laufend, neu, Kopf, Favorit, Kopf, Zuletzt
+    CHECK(combo->itemText(0) == QStringLiteral("Mein Preset"));
+    CHECK(combo->itemText(1) == kNeu);
+    CHECK(combo->itemText(3) == QStringLiteral("Liebling"));
+    emit combo->activated(1);
+    CHECK(neu == 2);
+
+    // --- der Stern fuer ungespeicherte Aenderungen trifft weiter nur Zeile 0
+    zeile->setGeaendert(true);
+    CHECK(combo->itemText(0) == QStringLiteral("Mein Preset *"));
+    CHECK(combo->itemText(1) == kNeu);
+
+    // --- das Karaoke-Panel hat keinen solchen Eintrag
+    lumi::ui::PresetZeile karaoke(PresetArt::Karaoke);
+    auto* kCombo = karaoke.findChild<QComboBox*>(QStringLiteral("presetZeileCombo"));
+    REQUIRE(kCombo != nullptr);
+    CHECK(kCombo->findText(kNeu) < 0);
+
+    L::setzeFavorit(PresetArt::Kette, QStringLiteral("C:/x/Liebling.lvfx"), false);
+    L::vergiss(PresetArt::Kette, QStringLiteral("C:/x/Neulich.lvfx"));
+}
+
 // S89: die Preset-Zeile im Effect-Chain-Panel haengt an denselben Wegen wie
 // Menue File und Effect Browser — sie meldet nur, das Fenster laedt/speichert.
 TEST_CASE("PaletteUi Panel S89: Preset-Zeile der Kette meldet Laden je Typ, Speichern, zeigt das laufende Preset")

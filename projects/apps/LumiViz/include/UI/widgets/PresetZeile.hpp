@@ -55,7 +55,13 @@ public:
     /// Text der ersten Zeile, wenn kein Preset laeuft.
     void setOhneNameText(const QString& text);
 
+    /// Fester Eintrag „neu anfangen" direkt unter dem laufenden Preset (S93,
+    /// Wunsch Patrik) — immer da, auch wenn schon eine neue Kette laeuft.
+    /// Ihn zu waehlen meldet `neu()`; leer = kein solcher Eintrag.
+    void setNeuEintrag(const QString& text);
+
 signals:
+    void neu();                           ///< der Eintrag „neu anfangen"
     void ladeDatei(const QString& pfad);  ///< Auswahl im Dropdown
     void ladenDialog();                   ///< „Load…"
     void speichern(bool saveAs);          ///< „Save" / „Save As…"
@@ -70,6 +76,7 @@ private:
     PresetArt m_art;
     QString m_laufend;
     QString m_ohneName;
+    QString m_neuEintrag;  ///< leer = kein Eintrag „neu anfangen"
     bool m_geaendert = false;
     QComboBox* m_combo = nullptr;
     QToolButton* m_stern = nullptr;

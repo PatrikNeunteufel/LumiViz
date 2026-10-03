@@ -1295,6 +1295,12 @@ void MultiEffectPanel::setupUI()
         using lumi::ui::PresetListen;
         m_presetZeile = new lumi::ui::PresetZeile(lumi::ui::PresetArt::Kette, this);
         m_presetZeile->setLaufend(PresetListen::laufendesKettenPreset());
+        // S93 (Wunsch Patrik): schnell ein neues Preset anfangen — derselbe Weg
+        // wie File → New Effect Chain, samt Rueckfrage des Fensters
+        m_presetZeile->setNeuEintrag(tr("+ New empty effect chain"));
+        connect(m_presetZeile, &lumi::ui::PresetZeile::neu, this, [this] {
+            if (IEventBus* bus = eventBus()) bus->publish(NewEffectChainEvent{});
+        });
         root->addWidget(m_presetZeile);
         connect(m_presetZeile, &lumi::ui::PresetZeile::ladeDatei, this, [this](const QString& pfad) {
             IEventBus* bus = eventBus();

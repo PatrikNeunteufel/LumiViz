@@ -36,6 +36,9 @@ void kopfzeile(QComboBox* combo, const QString& text)
             item->setFont(f);
         }
 }
+
+/// Merkmal des Eintrags „neu anfangen" (er traegt keinen Pfad).
+constexpr int kRolleNeu = Qt::UserRole + 1;
 }  // namespace
 
 PresetZeile::PresetZeile(PresetArt art, QWidget* parent)
@@ -86,6 +89,14 @@ PresetZeile::PresetZeile(PresetArt art, QWidget* parent)
 
     connect(m_combo, &QComboBox::activated, this, [this](int index) {
         const QString pfad = m_combo->itemData(index).toString();
+        if (m_combo->itemData(index, kRolleNeu).toBool())
+        {
+            // erst zurueck auf das Laufende: wird die Rueckfrage zu
+            // ungespeicherten Aenderungen verneint, steht es weiter da
+            baueListe();
+            emit neu();
+            return;
+        }
         if (index == 0 || pfad.isEmpty())
         {
             baueListe();  // Kopfzeile oder das laufende Preset: nichts zu tun
@@ -165,6 +176,12 @@ void PresetZeile::setOhneNameText(const QString& text)
     baueListe();
 }
 
+void PresetZeile::setNeuEintrag(const QString& text)
+{
+    m_neuEintrag = text;
+    baueListe();
+}
+
 void PresetZeile::baueListe()
 {
     const QSignalBlocker ruhe(m_combo);
@@ -176,6 +193,16 @@ void PresetZeile::baueListe()
         m_laufend.isEmpty() ? m_ohneName : QFileInfo(m_laufend).completeBaseName();
     m_combo->addItem(name + (m_geaendert ? QStringLiteral(" *") : QString()), m_laufend);
     m_combo->setItemData(0, m_laufend.isEmpty() ? QString() : m_laufend, Qt::ToolTipRole);
+
+    // Zeile 1 (S93): neu anfangen — immer da, vor Favoriten und Zuletzt
+    if (!m_neuEintrag.isEmpty())
+    {
+        m_combo->addItem(m_neuEintrag);
+        m_combo->setItemData(1, true, kRolleNeu);
+        m_combo->setItemData(1, tr("Starts an empty chain for a new preset. Asks first if the "
+                                   "running one has unsaved changes."),
+                             Qt::ToolTipRole);
+    }
 
     const bool icons = !presetIconDir().isEmpty();
     const auto eintraege = [&](const QStringList& pfade) {
