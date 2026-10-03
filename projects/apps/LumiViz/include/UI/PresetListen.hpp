@@ -29,6 +29,23 @@ enum class PresetArt
     Karaoke  ///< Karaoke-Presets (.lvkar)
 };
 
+/// Welcher Ladeweg zu einer Preset-Datei gehoert (S91) — die Endung
+/// entscheidet, Gross-/Kleinschreibung egal; alles Unbekannte ist eine Kette.
+enum class PresetDateiArt
+{
+    Kette,  ///< .lvfx / .lvfx2 (und alles Unbekannte) -> LoadEffectChainEvent
+    Avs,    ///< .avs  -> ImportAvsPresetEvent
+    Milk    ///< .milk -> ImportMilkPresetEvent
+};
+
+[[nodiscard]] inline PresetDateiArt presetDateiArt(const QString& pfad)
+{
+    const QString endung = QFileInfo(pfad).suffix().toLower();
+    if (endung == QLatin1String("avs")) return PresetDateiArt::Avs;
+    if (endung == QLatin1String("milk")) return PresetDateiArt::Milk;
+    return PresetDateiArt::Kette;
+}
+
 class PresetListen
 {
 public:

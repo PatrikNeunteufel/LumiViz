@@ -215,10 +215,13 @@ struct ImportAvsPresetEvent : public Event
     EVENT_TYPE_NAME("ImportAvsPresetEvent")
 
     std::string path;  ///< empty = ask via file dialog
+    /// S91: the question about unsaved changes has already been asked (the
+    /// file came from the "Load…" dialog of the chain panel) — do not ask again.
+    bool confirmed = false;
 
     ImportAvsPresetEvent() = default;
-    explicit ImportAvsPresetEvent(std::string p)
-        : path(std::move(p))
+    explicit ImportAvsPresetEvent(std::string p, bool alreadyConfirmed = false)
+        : path(std::move(p)), confirmed(alreadyConfirmed)
     {}
 };
 
@@ -231,10 +234,11 @@ struct ImportMilkPresetEvent : public Event
     EVENT_TYPE_NAME("ImportMilkPresetEvent")
 
     std::string path;  ///< empty = ask via file dialog
+    bool confirmed = false;  ///< S91: unsaved-changes question already asked
 
     ImportMilkPresetEvent() = default;
-    explicit ImportMilkPresetEvent(std::string p)
-        : path(std::move(p))
+    explicit ImportMilkPresetEvent(std::string p, bool alreadyConfirmed = false)
+        : path(std::move(p)), confirmed(alreadyConfirmed)
     {}
 };
 
@@ -314,6 +318,9 @@ struct LoadEffectChainEvent : public Event
     EVENT_TYPE_NAME("LoadEffectChainEvent")
 
     std::string path;  ///< empty = ask via file dialog
+    /// S91: the dialog also offers .avs and .milk and hands such a file on to
+    /// the matching import ("Load…" of the chain panel — one way to any preset).
+    bool anyPreset = false;
 
     LoadEffectChainEvent() = default;
     explicit LoadEffectChainEvent(std::string p)

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.62.0
+> **Version:** 1.63.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -290,7 +290,9 @@ Die Panels **Effect Chain** und **Karaoke** tragen oben dieselbe Zeile:
   steht grau da und fällt beim Anklicken aus der Liste.
 - **★** macht das laufende Preset zum Favoriten bzw. nimmt es wieder heraus.
 - **Load…**, **Save**, **Save As…** tun dasselbe wie die Einträge im Menü
-  File. Im Effect-Chain-Panel landet in „zuletzt" alles, was als Visual
+  File. **Load…** im Effect-Chain-Panel bietet dabei jedes Preset an —
+  `.lvfx`, `.lvfx2`, `.avs` und `.milk` in einem Dialog; eine `.avs` oder
+  `.milk` geht von dort an den passenden Import. Im Effect-Chain-Panel landet in „zuletzt" alles, was als Visual
   geladen oder gespeichert wurde (`.avs`, `.milk`, `.lvfx`, `.lvfx2`) — egal
   ob über Menü, Effect Browser oder die Zeile selbst. Das Karaoke-Panel führt
   eigene Listen für `.lvkar`.
@@ -1512,6 +1514,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.63.0 | 2026-10-03 | Session 91. §9 Preset-Zeile: **Load…** im Effect-Chain-Panel bietet jedes Preset an (`.lvfx`, `.lvfx2`, `.avs`, `.milk`) |
 | 1.62.0 | 2026-10-03 | Session 91. §11 Lyrics Sync: NEU **Speed** — Schieber 50–100 %, spielt den Titel zum Klopfen langsamer ab (der Ton wird tiefer); gilt nur, solange das Panel sichtbar ist |
 | 1.61.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Words** — Wort-Zeiten klopfen (Streifen mit den Worten der markierten Zeile, Tap je Wort, **Clear words**); eine Zeile wird nur mit Wort-Zeiten gespeichert, wenn alle ihre Worte eine haben |
 | 1.60.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Duett** — Spalte **Voice**, Knöpfe **Voice 1 / 2 / Both** und Tasten 1 / 2 / 3 setzen die Stimme der markierten Zeilen |

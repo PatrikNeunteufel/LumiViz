@@ -653,7 +653,8 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<ImportAvsPresetEvent>(
         [this, findMultiEffect, pEventBus](const ImportAvsPresetEvent& ev) {
-            if (!darfKetteErsetzen(tr("Import AVS Preset"))) return;  // ungespeichert? (S89)
+            // ungespeichert? (S89) — ausser die Frage ist schon gestellt (S91)
+            if (!ev.confirmed && !darfKetteErsetzen(tr("Import AVS Preset"))) return;
             // Auto-activate the Multi Effect host if it is not already active
             // (lets the Import Browser panel import without a manual switch).
             auto [widget, host] = findMultiEffect();
@@ -718,7 +719,8 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<ImportMilkPresetEvent>(
         [this, findMultiEffect, pEventBus](const ImportMilkPresetEvent& ev) {
-            if (!darfKetteErsetzen(tr("Import MilkDrop Preset"))) return;  // ungespeichert? (S89)
+            // ungespeichert? (S89) — ausser die Frage ist schon gestellt (S91)
+            if (!ev.confirmed && !darfKetteErsetzen(tr("Import MilkDrop Preset"))) return;
             // N2 (Entscheide E1/E2): .milk landet als Milkdrop-Chain-Node im
             // MultiEffect-Host — der Standalone-Milkdrop ist Geschichte.
             auto [widget, host] = findMultiEffect();
@@ -918,11 +920,30 @@ void MainWindow::setupEventHandlers()
             QString path = QString::fromStdString(ev.path);
             if (path.isEmpty())
             {
+                // S91: „Load…" im Ketten-Panel bietet jedes Preset an — vorher nur
+                // .lvfx, und eine ueber „All Files" gewaehlte .avs/.milk wurde
+                // als Kette gelesen und scheiterte
                 path = QFileDialog::getOpenFileName(
-                    this, tr("Load Effect Chain"), QString(),
-                    tr("LumiViz Effect Chain (*.lvfx *.lvfx2);;All Files (*)"));
+                    this, ev.anyPreset ? tr("Load Preset") : tr("Load Effect Chain"), QString(),
+                    ev.anyPreset
+                        ? tr("Presets (*.lvfx *.lvfx2 *.avs *.milk);;LumiViz Effect Chain (*.lvfx "
+                             "*.lvfx2);;AVS Presets (*.avs);;MilkDrop Presets (*.milk);;All Files (*)")
+                        : tr("LumiViz Effect Chain (*.lvfx *.lvfx2);;All Files (*)"));
             }
             if (path.isEmpty()) return;
+            // eine .avs / .milk gehoert dem Import — auch wenn sie ueber „All
+            // Files" kam. Die Rueckfrage oben gilt, der Import fragt nicht noch einmal.
+            switch (lumi::ui::presetDateiArt(path))
+            {
+                case lumi::ui::PresetDateiArt::Avs:
+                    pEventBus->publish(ImportAvsPresetEvent{path.toStdString(), true});
+                    return;
+                case lumi::ui::PresetDateiArt::Milk:
+                    pEventBus->publish(ImportMilkPresetEvent{path.toStdString(), true});
+                    return;
+                case lumi::ui::PresetDateiArt::Kette:
+                    break;
+            }
 
             // .lvfx dispatch (M6/N2): a milkdrop sister document becomes a
             // Milkdrop chain node in the MultiEffect host (Entscheid E1/E2).

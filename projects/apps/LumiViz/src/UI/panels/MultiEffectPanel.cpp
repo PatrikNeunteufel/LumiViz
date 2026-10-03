@@ -1296,16 +1296,27 @@ void MultiEffectPanel::setupUI()
         connect(m_presetZeile, &lumi::ui::PresetZeile::ladeDatei, this, [this](const QString& pfad) {
             IEventBus* bus = eventBus();
             if (bus == nullptr) return;
-            const QString endung = QFileInfo(pfad).suffix().toLower();
-            if (endung == QLatin1String("avs"))
-                bus->publish(ImportAvsPresetEvent{pfad.toStdString()});
-            else if (endung == QLatin1String("milk"))
-                bus->publish(ImportMilkPresetEvent{pfad.toStdString()});
-            else
-                bus->publish(LoadEffectChainEvent{pfad.toStdString()});
+            switch (lumi::ui::presetDateiArt(pfad))
+            {
+                case lumi::ui::PresetDateiArt::Avs:
+                    bus->publish(ImportAvsPresetEvent{pfad.toStdString()});
+                    break;
+                case lumi::ui::PresetDateiArt::Milk:
+                    bus->publish(ImportMilkPresetEvent{pfad.toStdString()});
+                    break;
+                case lumi::ui::PresetDateiArt::Kette:
+                    bus->publish(LoadEffectChainEvent{pfad.toStdString()});
+                    break;
+            }
         });
         connect(m_presetZeile, &lumi::ui::PresetZeile::ladenDialog, this, [this] {
-            if (IEventBus* bus = eventBus()) bus->publish(LoadEffectChainEvent{});
+            // S91: die Zeile fuehrt jedes Preset (Favoriten, Zuletzt) — der
+            // Dialog bietet deshalb auch .avs und .milk an
+            IEventBus* bus = eventBus();
+            if (bus == nullptr) return;
+            LoadEffectChainEvent ev;
+            ev.anyPreset = true;
+            bus->publish(ev);
         });
         connect(m_presetZeile, &lumi::ui::PresetZeile::speichern, this, [this](bool saveAs) {
             if (IEventBus* bus = eventBus()) bus->publish(SaveEffectChainEvent{saveAs});

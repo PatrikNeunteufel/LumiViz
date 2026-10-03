@@ -1065,7 +1065,17 @@ TEST_CASE("PaletteUi Panel S89: Preset-Zeile der Kette meldet Laden je Typ, Spei
     });
     const auto a3 = bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent& e) {
         gemeldet.append(QStringLiteral("lvfx:") + QString::fromStdString(e.path));
+        // S91: „Load…" (leerer Pfad) bietet im Dialog jedes Preset an, auch
+        // .avs und .milk — ein Favorit mit Pfad geht direkt als Kette
+        CHECK(e.anyPreset == e.path.empty());
     });
+    // S91: welcher Ladeweg zu welcher Datei gehoert — Panel und Fenster fragen dasselbe
+    using lumi::ui::PresetDateiArt;
+    CHECK(lumi::ui::presetDateiArt(QStringLiteral("C:/x/a.avs")) == PresetDateiArt::Avs);
+    CHECK(lumi::ui::presetDateiArt(QStringLiteral("C:/x/b.MILK")) == PresetDateiArt::Milk);
+    CHECK(lumi::ui::presetDateiArt(QStringLiteral("C:/x/c.lvfx2")) == PresetDateiArt::Kette);
+    CHECK(lumi::ui::presetDateiArt(QStringLiteral("C:/x/ohne")) == PresetDateiArt::Kette);
+    CHECK(lumi::ui::presetDateiArt(QStringLiteral("C:/x.avs/d.lvfx")) == PresetDateiArt::Kette);
     const auto a4 = bus->subscribeScoped<SaveEffectChainEvent>([&](const SaveEffectChainEvent& e) {
         gemeldet.append(e.saveAs ? QStringLiteral("saveas") : QStringLiteral("save"));
     });
