@@ -318,6 +318,14 @@ bool KaraokePanel::ladeKaraokeDatei(const Ziel& ziel, const QString& pfad, QStri
     return true;
 }
 
+bool KaraokePanel::ladeUndZeigeKaraokeDatei(const Ziel& ziel, const QString& pfad,
+                                            QStringList* report)
+{
+    if (!ladeKaraokeDatei(ziel, pfad, report)) return false;
+    if (!MultiEffectVisualizer::karaokeEbene()) setzeKaraokeAn(ziel.bus, true);
+    return true;
+}
+
 bool KaraokePanel::speichereKaraokeNach(const Ziel& ziel, const QString& pfad)
 {
     if (ziel.host == nullptr || ziel.mutex == nullptr || pfad.isEmpty()) return false;

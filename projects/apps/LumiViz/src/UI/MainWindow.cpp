@@ -909,7 +909,8 @@ void MainWindow::setupEventHandlers()
             const KaraokePanel::Ziel ziel{host, &widget->renderMutex(), pEventBus, this};
             if (!KaraokePanel::darfKaraokeErsetzen(ziel, tr("Load Karaoke Preset"))) return;
             QStringList report;
-            if (!KaraokePanel::ladeKaraokeDatei(ziel, path, &report))
+            // S92 (1a): der Doppelklick schaltet die Ebene auch ein
+            if (!KaraokePanel::ladeUndZeigeKaraokeDatei(ziel, path, &report))
                 reportProblem(tr("Load Karaoke Preset"),
                               tr("Could not load:\n%1\n%2").arg(path, report.join(QLatin1Char('\n'))));
         });

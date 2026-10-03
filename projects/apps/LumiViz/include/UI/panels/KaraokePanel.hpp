@@ -69,6 +69,12 @@ public:
     /// meldet `KaraokeLayerChangedEvent`. false = unlesbar / kein Karaoke-Preset.
     static bool ladeKaraokeDatei(const Ziel& ziel, const QString& pfad,
                                  QStringList* report = nullptr);
+    /// Wie `ladeKaraokeDatei`, und schaltet die Ebene EIN, wenn sie aus ist
+    /// (S92, Entscheid Patrik 1a) — der Weg des Doppelklicks im Effect
+    /// Browser: wer ein Karaoke-Preset oeffnet, will es sehen. Bei einem
+    /// Ladefehler bleibt der Schalter, wie er ist.
+    static bool ladeUndZeigeKaraokeDatei(const Ziel& ziel, const QString& pfad,
+                                         QStringList* report = nullptr);
     /// Die Ebene nach `pfad` speichern — ohne Dialog. false = Schreibfehler
     /// oder `pfad` ist die Ablage der laufenden Ebene selbst.
     static bool speichereKaraokeNach(const Ziel& ziel, const QString& pfad);

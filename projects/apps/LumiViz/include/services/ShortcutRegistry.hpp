@@ -49,6 +49,11 @@ struct ShortcutAction
     bool reserved = false;
     /// false = registriert und reserviert, aber noch ohne Wirkung (Stufe 2)
     bool wired = true;
+    /// true = ruht in Textfeldern AUCH als Ctrl-Kombination (S92, Entscheid
+    /// Patrik 4a). Sonst gilt: unmodifizierte Tasten gehoeren im Textfeld dem
+    /// Text, modifizierte wirken ueberall. Fuer Schalter, die beim Schreiben
+    /// eines Skripts nicht versehentlich ausloesen sollen.
+    bool notWhileTyping = false;
 };
 
 /**
@@ -90,7 +95,9 @@ struct ShortcutAction
         {"view.screenshot", "Screenshot of the Visual", ShortcutCategory::View, "Print"},
         // S89 (KE4): Karaoke-Ebene an/aus — derselbe Schalter wie im Karaoke-
         // Panel und im Menue View
-        {"view.karaoke", "Karaoke On / Off", ShortcutCategory::View, "Ctrl+K"},
+        // … und ruht in Textfeldern und im Skript-Editor (S92, 4a): Ctrl+K
+        // ist dort leicht versehentlich gedrueckt
+        {"view.karaoke", "Karaoke On / Off", ShortcutCategory::View, "Ctrl+K", false, true, true},
     };
     return kActions;
 }

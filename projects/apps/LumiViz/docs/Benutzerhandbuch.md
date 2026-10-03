@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.71.0
+> **Version:** 1.72.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -254,7 +254,7 @@ Bedienung entkoppelt.
 | Ctrl+Shift+S | *File → Save Effect Chain As…* — fragt immer nach Ort und Namen |
 | F1 | *About LumiViz* |
 | Alt+F4 | Beenden |
-| Ctrl+K | *Karaoke On / Off* — Songtext über jedem Preset ein- und ausschalten (umbelegbar; auch **View → Karaoke** und der Haken im Karaoke-Panel) |
+| Ctrl+K | *Karaoke On / Off* — Songtext über jedem Preset ein- und ausschalten (umbelegbar; auch **View → Karaoke** und der Haken im Karaoke-Panel). Ruht, solange der Cursor in einem Textfeld oder im Skript-Editor steht — auch nach dem Umbelegen |
 
 ### Speichern und ungespeicherte Änderungen
 
@@ -860,8 +860,12 @@ vor Default nach. Beim Beenden fragt es nicht: die laufende Ebene bleibt
 ohnehin erhalten. Im **Effect Browser** erscheinen sie mit einem
 eigenen Icon (Mikrofon im Kreis); ein **Doppelklick** lädt das Karaoke-Preset
 in die Ebene — die Effektkette bleibt, wie sie ist, und das Karaoke-Panel
-zeigt den neuen Stand. Eingeschaltet wird die Ebene dadurch nicht: das macht
-weiter **Karaoke on**.
+zeigt den neuen Stand. Ist die Ebene aus, schaltet der Doppelklick sie dabei
+**ein** (wer ein Karaoke-Preset öffnet, will es sehen); das Laden im
+Karaoke-Panel selbst (Dropdown, **Load…**) lässt den Schalter, wie er ist.
+Die laufende Ebene (`current.lvkar` im Benutzerordner) zeigt der Effect
+Browser nicht — sie ist kein Preset, sondern der Stand, der sich bei jeder
+Änderung selbst schreibt.
 
 Der **Trail** hat seinen eigenen Reiter **Lyrics Trail**: oben **Trail on**
 (aus = die Zeile steht ohne Nachwehen da), darunter eine kurze Liste von
@@ -1604,6 +1608,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.72.0 | 2026-10-03 | Session 92. Karaoke: der Doppelklick auf ein `.lvkar` im Effect Browser schaltet die Ebene ein; `current.lvkar` steht dort nicht mehr; **Ctrl+K** ruht in Textfeldern und im Skript-Editor |
 | 1.71.0 | 2026-10-03 | Session 92. §11 Trail-Presets: eigenes Icon (Marke mit Schweif) — im Baum des Panels Effect Chain trägt es jede Effect List, die einen Lyrics Trail enthält |
 | 1.70.0 | 2026-10-03 | Session 92. §11 Trail-Presets und die Effektkette: Rechtsklick im Baum des Panels Effect Chain — **Add trail preset ▸ Name** (als Effect List, Additive) und **Save as trail preset…** (an einer Effect List) |
 | 1.69.0 | 2026-10-03 | Session 92. §11 Karaoke-Panel, Reiter Lyrics Trail: NEU **Trail-Presets** — Zeile **Trail preset** (Dropdown, **Save As…**, **Delete**) tauscht nur die Trail-Liste; acht mitgelieferte (Drift Up, Fall Back, Zoom Burst, Swirl, Smoke, Echo, Wave, Melt), eigene im Benutzerordner |

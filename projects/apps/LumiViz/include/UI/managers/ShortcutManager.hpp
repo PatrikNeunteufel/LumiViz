@@ -85,12 +85,24 @@ public:
      */
     [[nodiscard]] static bool acceptsTextInput(const QWidget* widget);
 
+    /**
+     * @brief Die Regel, wann eine Taste im Textfeld dem Feld gehoert.
+     *
+     * Frei und statisch (testbar): unmodifizierte Tasten (auch mit Shift)
+     * gehoeren dem Text; eine Aktion mit `notWhileTyping` ruht dort auch als
+     * Ctrl-Kombination (S92). `aufnahmeFeld` = das Tastenaufnahme-Feld des
+     * Editors, das grundsaetzlich alles schluckt.
+     */
+    [[nodiscard]] static bool gehoertDemTextfeld(const QKeySequence& sequence,
+                                                 bool notWhileTyping, bool aufnahmeFeld);
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void loadOverrides();
-    [[nodiscard]] bool shouldIgnoreWhileTyping(const QKeySequence& sequence) const;
+    [[nodiscard]] bool shouldIgnoreWhileTyping(const QKeySequence& sequence,
+                                               bool notWhileTyping) const;
     void dispatch(const QString& actionId);
 
     ServiceContainer& m_services;

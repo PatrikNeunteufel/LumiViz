@@ -200,7 +200,23 @@ bool ShortcutManager::acceptsTextInput(const QWidget* widget)
     return false;
 }
 
-bool ShortcutManager::shouldIgnoreWhileTyping(const QKeySequence& sequence) const
+bool ShortcutManager::gehoertDemTextfeld(const QKeySequence& sequence, bool notWhileTyping,
+                                         bool aufnahmeFeld)
+{
+    // Im Textfeld bleibt nur Platz fuer modifizierte Kombinationen — eine
+    // unmodifizierte Taste (oder Shift+Taste) gehoert dort dem Text.
+    // Ausnahmen: das Aufnahmefeld schluckt grundsaetzlich alles, und eine
+    // Aktion mit `notWhileTyping` ruht dort auch als Ctrl-Kombination (S92).
+    if (aufnahmeFeld || notWhileTyping) return true;
+    if (sequence.isEmpty()) return true;
+    const int key = sequence[0].toCombined();
+    const int mods = key & static_cast<int>(Qt::KeyboardModifierMask);
+    const int relevant = mods & ~static_cast<int>(Qt::ShiftModifier);
+    return relevant == 0;
+}
+
+bool ShortcutManager::shouldIgnoreWhileTyping(const QKeySequence& sequence,
+                                              bool notWhileTyping) const
 {
     if (qApp == nullptr) return false;
     const QWidget* focus = QApplication::focusWidget();
@@ -214,15 +230,8 @@ bool ShortcutManager::shouldIgnoreWhileTyping(const QKeySequence& sequence) cons
     if (!focus->isVisible()) return false;
     const QWidget* window = focus->window();
     if (window != nullptr && !window->isActiveWindow()) return false;
-    // Im Textfeld bleibt nur Platz fuer modifizierte Kombinationen — eine
-    // unmodifizierte Taste (oder Shift+Taste) gehoert dort dem Text.
-    // Ausnahme: das Aufnahmefeld schluckt grundsaetzlich alles.
-    if (qobject_cast<const QKeySequenceEdit*>(focus) != nullptr) return true;
-    if (sequence.isEmpty()) return true;
-    const int key = sequence[0].toCombined();
-    const int mods = key & static_cast<int>(Qt::KeyboardModifierMask);
-    const int relevant = mods & ~static_cast<int>(Qt::ShiftModifier);
-    return relevant == 0;
+    return gehoertDemTextfeld(sequence, notWhileTyping,
+                              qobject_cast<const QKeySequenceEdit*>(focus) != nullptr);
 }
 
 bool ShortcutManager::eventFilter(QObject* watched, QEvent* event)
@@ -253,7 +262,8 @@ bool ShortcutManager::eventFilter(QObject* watched, QEvent* event)
         // wird NICHT verschluckt, damit sie sich normal verhaelt.
         return QObject::eventFilter(watched, event);
     }
-    if (shouldIgnoreWhileTyping(pressed)) return QObject::eventFilter(watched, event);
+    if (shouldIgnoreWhileTyping(pressed, action->notWhileTyping))
+        return QObject::eventFilter(watched, event);
 
     dispatch(actionId);
     event->accept();

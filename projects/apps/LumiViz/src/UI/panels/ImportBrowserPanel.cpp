@@ -11,6 +11,7 @@
 
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/PresetListen.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"  // karaokeAblage (S92)
 #include "UI/widgets/DateiListe.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "services/ServiceContainer.hpp"
@@ -335,8 +336,18 @@ void ImportBrowserPanel::refresh()
     const QFileInfoList files = m_dir.entryInfoList(
         currentNameFilters(), QDir::Files, QDir::Name | QDir::IgnoreCase);
     int presetCount = 0;
+    // S92 (Entscheid Patrik 2a): die Ablage der laufenden Karaoke-Ebene
+    // (`current.lvkar`) ist kein Preset — sie laedt sich nur in sich selbst
+    // und ist als Speicherziel gesperrt. Erkannt am Pfad, nicht am Namen.
+    const QString ablage = MultiEffectVisualizer::karaokeAblage().isEmpty()
+                               ? QString()
+                               : lumi::ui::PresetListen::normal(MultiEffectVisualizer::karaokeAblage());
     for (const QFileInfo& fi : files)
     {
+        if (!ablage.isEmpty() &&
+            lumi::ui::PresetListen::normal(fi.absoluteFilePath())
+                    .compare(ablage, Qt::CaseInsensitive) == 0)
+            continue;
         const QIcon& icon = haveTypeIcons
                                 ? lumi::ui::presetTypeIconForSuffix(fi.suffix())
                                 : fileIcon;

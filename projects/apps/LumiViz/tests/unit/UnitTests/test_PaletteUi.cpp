@@ -32,6 +32,8 @@
 #include "UI/PresetListen.hpp"
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
+#include "UI/managers/ShortcutManager.hpp"
+#include "services/ShortcutRegistry.hpp"
 #include "visualizers/multieffect/TrailPresetStore.hpp"
 #include "audio/SongtextQuelle.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
@@ -2355,6 +2357,106 @@ TEST_CASE("Karaoke S89: .lvkar im Effect Browser — Doppelklick laedt in die Eb
     yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
     REQUIRE(yShift != nullptr);
     CHECK(yShift->value() == -33);
+}
+
+// S92: die drei Entscheide zu den offenen Fragen aus S89 (1a, 2a, 4a).
+TEST_CASE("Karaoke S92: Doppelklick schaltet die Ebene ein, die Ablage steht nicht im Browser, Ctrl+K ruht im Textfeld")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    const QString lvkar = dir.filePath(QStringLiteral("Abend.lvkar"));
+    const QString ablage = dir.filePath(QStringLiteral("current.lvkar"));
+    {
+        MultiEffectVisualizer quelle;
+        REQUIRE(quelle.speichereKaraokeDatei(lvkar));
+        REQUIRE(quelle.speichereKaraokeDatei(ablage));
+    }
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+
+    // --- 2a: die Ablage der laufenden Ebene ist kein Preset — der Browser zeigt sie nicht
+    {
+        ImportBrowserPanel browser(services);
+        zeigen(browser);
+        QLineEdit* pfad = nullptr;
+        for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+            if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+        REQUIRE(pfad != nullptr);
+        auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+        REQUIRE(liste != nullptr);
+        const auto namen = [&] {
+            pfad->setText(dir.path());
+            emit pfad->returnPressed();
+            QStringList n;
+            for (int i = 0; i < liste->count(); ++i) n << liste->item(i)->text();
+            return n;
+        };
+        // Gegenprobe: ohne gesetzte Ablage ist `current.lvkar` eine Datei wie jede andere
+        CHECK(namen().contains(QStringLiteral("current.lvkar")));
+        MultiEffectVisualizer::setKaraokeAblage(ablage);
+        const QStringList mit = namen();
+        CHECK_FALSE(mit.contains(QStringLiteral("current.lvkar")));
+        CHECK(mit.contains(QStringLiteral("Abend.lvkar")));
+        MultiEffectVisualizer::setKaraokeAblage(QString());
+    }
+
+    // --- 1a: der Weg des Doppelklicks laedt UND schaltet die Ebene ein
+    {
+        MultiEffectVisualizer vis;
+        QMutex mutex;
+        std::vector<bool> gemeldet;
+        const auto abo = bus->subscribeScoped<KaraokeEnabledChangedEvent>(
+            [&](const KaraokeEnabledChangedEvent& e) { gemeldet.push_back(e.enabled); });
+        const KaraokePanel::Ziel ziel{&vis, &mutex, bus, nullptr};
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        // ein Ladefehler laesst den Schalter, wie er ist
+        CHECK_FALSE(KaraokePanel::ladeUndZeigeKaraokeDatei(ziel, dir.filePath("fehlt.lvkar")));
+        CHECK_FALSE(MultiEffectVisualizer::karaokeEbene());
+        CHECK(gemeldet.empty());
+        REQUIRE(KaraokePanel::ladeUndZeigeKaraokeDatei(ziel, lvkar));
+        CHECK(MultiEffectVisualizer::karaokeEbene());
+        REQUIRE(gemeldet.size() == 1);
+        CHECK(gemeldet[0]);
+        // schon an: laden, ohne noch einmal zu melden
+        REQUIRE(KaraokePanel::ladeUndZeigeKaraokeDatei(ziel, lvkar));
+        CHECK(gemeldet.size() == 1);
+        // der Weg des Panels (Dropdown, Load…) schaltet NICHT
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        REQUIRE(KaraokePanel::ladeKaraokeDatei(ziel, lvkar));
+        CHECK_FALSE(MultiEffectVisualizer::karaokeEbene());
+    }
+
+    // --- 4a: Ctrl+K ruht im Textfeld, andere Ctrl-Kombinationen wirken dort weiter
+    {
+        using lumi::services::shortcutAction;
+        const auto* karaoke = shortcutAction("view.karaoke");
+        REQUIRE(karaoke != nullptr);
+        CHECK(karaoke->notWhileTyping);
+        CHECK(karaoke->wired);
+        CHECK(karaoke->defaultSequence == "Ctrl+K");
+        for (const auto& a : lumi::services::shortcutActions())
+        {
+            CAPTURE(std::string(a.id));
+            CHECK(a.notWhileTyping == (a.id == "view.karaoke"));
+        }
+        const QKeySequence ctrlK(QStringLiteral("Ctrl+K"));
+        CHECK(ShortcutManager::gehoertDemTextfeld(ctrlK, karaoke->notWhileTyping, false));
+        // die Regel fuer alle anderen bleibt: modifiziert wirkt, unmodifiziert gehoert dem Text
+        CHECK_FALSE(ShortcutManager::gehoertDemTextfeld(ctrlK, false, false));
+        CHECK_FALSE(ShortcutManager::gehoertDemTextfeld(QKeySequence(QStringLiteral("Ctrl+Right")),
+                                                        false, false));
+        CHECK(ShortcutManager::gehoertDemTextfeld(QKeySequence(QStringLiteral("Space")), false, false));
+        CHECK(ShortcutManager::gehoertDemTextfeld(QKeySequence(QStringLiteral("Shift+K")), false, false));
+        CHECK(ShortcutManager::gehoertDemTextfeld(QKeySequence(), false, false));
+        // das Tastenaufnahme-Feld schluckt alles
+        CHECK(ShortcutManager::gehoertDemTextfeld(QKeySequence(QStringLiteral("Ctrl+Right")), false, true));
+    }
+
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setKaraokeAblage(QString());
 }
 
 // S91 (Entscheid F1 a): Favoriten im Effect Browser — Stern vor dem Namen,
