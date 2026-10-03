@@ -1,7 +1,7 @@
 # LumiViz — Lyrics-Block: Zeilen-Puffer, Wort-Ebene, Auslöser (Kurzkonzept)
 
-> **Version:** 1.0.0
-> **Datum:** 2026-10-03 (Session 90)
+> **Version:** 1.1.0
+> **Datum:** 2026-10-03 (Session 91)
 > **Typ:** Konzept — **alle Entscheide gefallen (Patrik S90):** L1 a · L2 b
 > mit fließender Größe, a schaltbar · L3 a · L4 a mit eigenen Feldern für die
 > Vorschau-Zeilen · L5 a · L6 alle a · B1 a → b über B2 a · B3 a1.
