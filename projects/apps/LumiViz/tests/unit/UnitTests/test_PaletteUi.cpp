@@ -1607,6 +1607,19 @@ TEST_CASE("PaletteUi Panel S92: Trail-Preset in die Kette einfuegen, Effect List
         CHECK(p.tree->topLevelItemCount() == 4);
     }
 
+    // --- der Baum erkennt die Trail-Liste (Effect List mit Lyrics Trail) und
+    //     gibt ihr das Icon der Trail-Presets; eine gewoehnliche Liste nicht.
+    //     (Geprueft an Zuordnung und Datei — ein QIcon aus .ico ist im
+    //     Testprozess leer, S88.)
+    CHECK(tp::istTrailListe(p.root().children[1]));
+    CHECK_FALSE(tp::istTrailListe(p.root().children[2]));
+    CHECK_FALSE(tp::istTrailListe(p.root().children[0]));
+    CHECK(p.oben(1)->toolTip(2).startsWith(QStringLiteral("Trail list")));
+    CHECK_FALSE(p.oben(2)->toolTip(2).startsWith(QStringLiteral("Trail list")));
+    CHECK(QFileInfo::exists(lumi::ui::presetIconDir() + QStringLiteral("/lumiviz_trail.ico")));
+    CHECK(&lumi::ui::presetTypeIconForSuffix(QStringLiteral("lvtrail")) ==
+          &lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Trail));
+
     // --- an einer Liste: hinein, ans Ende; an der freien Flaeche: ans Ende der Kette
     const std::size_t inListe = p.root().children[2].children.size();
     REQUIRE(p.panel->fuegeTrailPresetEin(QStringLiteral("Drift Up"), {2}));

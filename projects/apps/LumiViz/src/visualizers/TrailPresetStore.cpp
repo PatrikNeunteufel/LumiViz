@@ -160,6 +160,14 @@ ChainNode fuerKette(ChainNode liste, const QString& name)
     return liste;
 }
 
+bool istTrailListe(const ChainNode& node)
+{
+    return std::holds_alternative<ListParams>(node.params) &&
+           std::any_of(node.children.cbegin(), node.children.cend(), [](const ChainNode& k) {
+               return std::holds_alternative<LyricsTrailParams>(k.params);
+           });
+}
+
 bool gleich(const ChainNode& a, const ChainNode& b)
 {
     return nodeToJson(fuerEbene(a)) == nodeToJson(fuerEbene(b));

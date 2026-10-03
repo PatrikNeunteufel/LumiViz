@@ -1670,6 +1670,15 @@ void MultiEffectPanel::addTreeItem(QTreeWidgetItem* parentItem, const ChainNode&
         const Origin origin = originForParams(node.params);
         item->setIcon(2, originIcon(origin));
         item->setToolTip(2, originToolTip(origin));
+        // S92 (Idee Patrik): eine Effect List mit einem Lyrics Trail darin ist
+        // eine Trail-Liste — sie traegt das Icon der Trail-Presets
+        if (lumi::multieffect::trailpresets::istTrailListe(node))
+        {
+            item->setIcon(2, lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Trail));
+            item->setToolTip(2, tr("Trail list: an Effect List with a Lyrics Trail in it. "
+                                   "Right-click to save it as a trail preset for the karaoke "
+                                   "layer."));
+        }
     }
     item->setText(3, QString::fromStdString(node.description));
     item->setFlags((item->flags() | Qt::ItemIsEditable | Qt::ItemIsDragEnabled |

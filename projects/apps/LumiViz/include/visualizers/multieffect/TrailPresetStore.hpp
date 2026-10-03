@@ -79,6 +79,11 @@ inline constexpr const char* kEndung = ".lvtrail";
  */
 [[nodiscard]] ChainNode fuerKette(ChainNode liste, const QString& name);
 
+/// Ist der Knoten eine Trail-Liste — eine Effect List, die (unmittelbar) einen
+/// Lyrics Trail enthaelt? Daran erkennt der Kettenbaum sie und gibt ihr das
+/// Icon der Trail-Presets.
+[[nodiscard]] bool istTrailListe(const ChainNode& node);
+
 /// Sind zwei Trail-Listen dasselbe Preset? Verglichen wird, was `fuerEbene`
 /// aus ihnen macht — Ids, Name und Mischung der Liste zaehlen nicht.
 [[nodiscard]] bool gleich(const ChainNode& a, const ChainNode& b);

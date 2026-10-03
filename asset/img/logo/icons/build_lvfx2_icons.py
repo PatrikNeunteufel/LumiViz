@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt vier .ico (16–256 px) neben diesem Skript:
+Erzeugt fuenf .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -14,6 +14,11 @@ Erzeugt vier .ico (16–256 px) neben diesem Skript:
 - `lumiviz_karaoke.ico` „Marke" mit Mikrofon im Kreis — das Datei-Icon fuer
                         Karaoke-Presets `.lvkar` (Session 89). Die Marke ist
                         eine Familie: je Verwendung ein Zeichen im Kreis.
+- `lumiviz_trail.ico`   „Marke" mit Schweif im Kreis — das Datei-Icon fuer
+                        Trail-Presets `.lvtrail` (Session 92, Entscheid
+                        Patrik: der Komet bleibt auch in 32 px als Bewegung
+                        lesbar). In der App traegt es jede Effect List, die
+                        einen Lyrics Trail enthaelt.
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 
@@ -105,6 +110,19 @@ def zeichen_mikrofon(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
            width=18)
 
 
+def zeichen_schweif(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Komet: ein Kopf rechts, drei Striche ziehen nach links weg (Nachwehen)."""
+    kopf = int(r * 0.22)
+    kx = cx + int(r * 0.40)
+    dicke = int(r * 0.13)
+    for dy, laenge, farbe in ((-0.34, 0.55, BERNSTEIN), (0.0, 0.85, MAGENTA),
+                              (0.34, 0.55, BERNSTEIN)):
+        y = cy + int(r * dy)
+        d.rounded_rectangle((kx - int(r * laenge) - kopf, y - dicke // 2, kx - kopf // 2,
+                             y + dicke // 2), radius=dicke // 2, fill=(*farbe, 255))
+    d.ellipse((kx - kopf, cy - kopf, kx + kopf, cy + kopf), fill=(*CYAN, 255))
+
+
 def marke(icon: Image.Image, zeichen=zeichen_ebenen) -> Image.Image:
     """Das Icon ganz, unten rechts ein Kreis mit einem Zeichen — eine Familie:
     je Verwendung ein eigenes Zeichen im Kreis (Idee Patrik S89)."""
@@ -140,6 +158,7 @@ def main() -> int:
     als_ico(stapel(icon), "lumiviz_lvfx2.ico")
     als_ico(marke(icon), "lumiviz_marke.ico")
     als_ico(marke(icon, zeichen_mikrofon), "lumiviz_karaoke.ico")
+    als_ico(marke(icon, zeichen_schweif), "lumiviz_trail.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     return 0
 

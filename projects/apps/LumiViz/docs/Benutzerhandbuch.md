@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.70.0
+> **Version:** 1.71.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -918,6 +918,11 @@ Kette und kommen aus ihr heraus — per Rechtsklick im Baum des Panels
   einen ans Ende. Für die Ebene zählt nur der Inhalt: wie die Liste in der
   Kette hieß und mischte, geht nicht mit.
 
+Eine Effect List, die einen Lyrics Trail enthält, erkennt der Baum als
+**Trail-Liste**: in der Spalte **Type** trägt sie das Icon der Trail-Presets
+(das LumiViz-Icon mit einem Kometen im Kreis) statt des gewöhnlichen — egal,
+ob sie aus einem Trail-Preset stammt oder von Hand gebaut ist.
+
 Rechnet ein Preset mit **Render Scale** in kleinerer
 Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
 Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
@@ -1599,6 +1604,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.71.0 | 2026-10-03 | Session 92. §11 Trail-Presets: eigenes Icon (Marke mit Schweif) — im Baum des Panels Effect Chain trägt es jede Effect List, die einen Lyrics Trail enthält |
 | 1.70.0 | 2026-10-03 | Session 92. §11 Trail-Presets und die Effektkette: Rechtsklick im Baum des Panels Effect Chain — **Add trail preset ▸ Name** (als Effect List, Additive) und **Save as trail preset…** (an einer Effect List) |
 | 1.69.0 | 2026-10-03 | Session 92. §11 Karaoke-Panel, Reiter Lyrics Trail: NEU **Trail-Presets** — Zeile **Trail preset** (Dropdown, **Save As…**, **Delete**) tauscht nur die Trail-Liste; acht mitgelieferte (Drift Up, Fall Back, Zoom Burst, Swirl, Smoke, Echo, Wave, Melt), eigene im Benutzerordner |
 | 1.68.0 | 2026-10-03 | Session 92. §11 Lyrics (und Karaoke-Ebene): NEU **Word spacing (%)** — Abstand zwischen den Worten (50–400 % des Leerzeichens), für jede Zeile; gibt dem vergrößerten Wort in Overlay Luft |

@@ -10,6 +10,7 @@ Windows).
 | `.lvfx2` (Preset-Stapel: Kette mit Host-Gruppe) | `lumiviz_lvfx2.ico` „Stapel" | erzeugt aus `lumiviz.ico` | Effect Browser |
 | — (Reserve) | `lumiviz_marke.ico` „Marke" | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.lvkar` (Karaoke-Preset, S89) | `lumiviz_karaoke.ico` — Marke mit Mikrofon im Kreis | erzeugt aus `lumiviz.ico` | Effect Browser (S89) |
+| `.lvtrail` (Trail-Preset der Karaoke-Ebene, S92) | `lumiviz_trail.ico` — Marke mit Schweif im Kreis | erzeugt aus `lumiviz.ico` | Effect Chain: jede Effect List, die einen Lyrics Trail enthält |
 | — (Reserve) | `lumiviz_faecher.ico` „Fächer" | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.avs` | `avs.ico` | Handarbeit | Effect Browser (AVS-Presets) |
 | `.milk`, `.milk2` | `milkdrop.ico` | Handarbeit | Effect Browser (MilkDrop-Presets) |
@@ -41,7 +42,9 @@ python asset/img/logo/icons/build_lvfx2_icons.py
 ```
 
 Braucht ein normales Python mit Pillow. Das Skript liest `lumiviz.ico` und
-schreibt drei `.ico` (16–256 px):
+schreibt fünf `.ico` (16–256 px) — neben den dreien unten die beiden Marken
+mit eigenem Zeichen, `lumiviz_karaoke.ico` (Mikrofon, S89) und
+`lumiviz_trail.ico` (Schweif, S92):
 
 - **Stapel** (`lumiviz_lvfx2.ico`): das Icon vorn, zwei abgedunkelte Kopien
   versetzt dahinter — das Icon für `.lvfx2` (Entscheid Patrik S88: gewählt,
