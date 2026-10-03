@@ -56,6 +56,10 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QTimer>
+#include <QAction>
+#include <QEventLoop>
+#include <QMenu>
+#include <QMouseEvent>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -3375,6 +3379,292 @@ TEST_CASE("PaletteUi S90: Lyrics Sync — Wort-Zeiten klopfen, Streifen, halb ge
         REQUIRE(v.zeilen[0].worte.size() == 3);
         CHECK(v.zeilen[0].worte[0].zeitMs == 9500);
         CHECK(v.zeilen[0].worte[2].zeitMs == 11500);  // um dieselbe Sekunde mitgegangen
+    }
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S92 (Sichttest-Befund H1): Enter und T klopften nur, solange die ZEILENLISTE
+// den Fokus hatte — nach einem Klick in den Wort-Streifen, auf „Words" oder
+// einen Knopf gingen sie ins Leere. Jetzt gelten sie im ganzen Panel, ausser
+// in Eingabefeldern.
+TEST_CASE("PaletteUi S92: Lyrics Sync — Enter und T klopfen im ganzen Panel, nicht in Eingabefeldern")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+
+    TrackInfo t;
+    t.filePath = tmp.path() + "/tasten.mp3";
+    t.title = "Tasten";
+    t.durationMs = 200000;
+    const ly::Songtext text = ly::leseLrc("eins zwei drei\nvier fuenf\n");
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+    panel.lade(t, text);
+    panel.resize(460, 520);
+    zeigen(panel);
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    auto* worte = panel.findChild<QListWidget*>(QStringLiteral("lyricsSyncWords"));
+    auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("lyricsSyncWordMode"));
+    auto* versatz = panel.findChild<QSpinBox*>(QStringLiteral("lyricsSyncTrackOffset"));
+    auto* tempo = panel.findChild<QSlider*>(QStringLiteral("lyricsSyncSpeed"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(worte != nullptr);
+    REQUIRE(schalter != nullptr);
+    REQUIRE(versatz != nullptr);
+    REQUIRE(tempo != nullptr);
+    schalter->setChecked(true);
+    REQUIRE(worte->count() == 3);
+    const QString offen = QString::fromUtf8("—");
+    REQUIRE(worte->item(0)->text().contains(offen));
+
+    // Gegenprobe zuerst: im Eingabefeld (Track offset) klopft keine Taste
+    tippe(versatz, Qt::Key_T);
+    tippe(versatz, Qt::Key_Return);
+    CHECK(worte->item(0)->text().contains(offen));
+    CHECK(panel.gewaehltesWort() == 0);
+
+    // im Wort-Streifen: Enter gibt dem ersten Wort die Zeit, das zweite ist dran
+    tippe(worte, Qt::Key_Return);
+    CHECK_FALSE(worte->item(0)->text().contains(offen));
+    CHECK(panel.gewaehltesWort() == 1);
+    // auf dem Schalter „Words": T
+    tippe(schalter, Qt::Key_T);
+    CHECK_FALSE(worte->item(1)->text().contains(offen));
+    CHECK(panel.gewaehltesWort() == 2);
+    // auf dem Schieber Speed: Enter des Ziffernblocks — letztes Wort, weiter zur naechsten Zeile
+    tippe(tempo, Qt::Key_Enter);
+    CHECK(liste->currentRow() == 1);
+    REQUIRE(worte->count() == 2);
+    // in der Liste wie bisher
+    tippe(liste, Qt::Key_T);
+    CHECK_FALSE(worte->item(0)->text().contains(offen));
+    CHECK(panel.gewaehltesWort() == 1);
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S92 (Wuensche Patrik nach dem Sichttest): Vorlauf des Doppelklicks
+// einstellbar, Sprungleiste ueber den ganzen Titel, Kontextmenue je Zeile.
+TEST_CASE("PaletteUi S92: Lyrics Sync — Pre-roll, Sprungleiste, Kontextmenue je nach Zeile")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+
+    TrackInfo t;
+    t.filePath = tmp.path() + "/menue.mp3";
+    t.title = "Menue";
+    t.durationMs = 200000;
+    const ly::Songtext text = ly::leseLrc("eins zwei\nzwei\n\ndrei\n");
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    const auto hat = [](const QMenu& m, const char* name) {
+        return m.findChild<QAction*>(QLatin1String(name)) != nullptr;
+    };
+    const auto loese = [](const QMenu& m, const char* name) {
+        QAction* a = m.findChild<QAction*>(QLatin1String(name));
+        REQUIRE(a != nullptr);
+        a->trigger();
+    };
+
+    {
+        LyricsSyncPanel panel(audio.services);
+        panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+        panel.lade(t, text);
+        panel.resize(460, 560);
+        auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+        auto* vorlauf = panel.findChild<QDoubleSpinBox*>(QStringLiteral("lyricsSyncPreroll"));
+        auto* leiste = panel.findChild<QSlider*>(QStringLiteral("lyricsSyncSeek"));
+        REQUIRE(liste != nullptr);
+        REQUIRE(vorlauf != nullptr);
+        REQUIRE(leiste != nullptr);
+        REQUIRE(panel.tippe(10000));
+        REQUIRE(panel.tippe(20000));  // „drei" (Reihe 3) bleibt ohne Zeit
+
+        // --- Vorlauf: Vorgabe 1,5 s, einstellbar, gilt fuer den Doppelklick ---
+        CHECK(panel.vorlaufMs() == LyricsSyncPanel::kVorlaufMs);
+        CHECK(vorlauf->value() == doctest::Approx(1.5));
+        vorlauf->setValue(3.0);
+        CHECK(panel.vorlaufMs() == 3000);
+        Q_EMIT liste->cellDoubleClicked(1, 2);
+        CHECK(audio.player->letzterSprung == 20000 - 3000);
+        panel.setzeVorlaufMs(99999);  // nie ueber 10 s
+        CHECK(panel.vorlaufMs() == LyricsSyncPanel::kVorlaufMaxMs);
+        panel.setzeVorlaufMs(3000);
+        CHECK(vorlauf->value() == doctest::Approx(3.0));
+
+        // --- Kontextmenue: Zeile MIT Zeit ---
+        liste->selectRow(1);
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 1);
+            CHECK(hat(menu, "lyricsSyncMenuJump"));
+            CHECK(hat(menu, "lyricsSyncMenuJumpBefore"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuJumpPrev"));
+            CHECK(hat(menu, "lyricsSyncMenuTap"));
+            CHECK(hat(menu, "lyricsSyncMenuMinus"));
+            CHECK(hat(menu, "lyricsSyncMenuClear"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuClearWords"));  // keine Wort-Zeiten
+            CHECK(hat(menu, "lyricsSyncMenuVoice1"));
+            CHECK(hat(menu, "lyricsSyncMenuUndo"));  // es wurde geklopft
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuRedo"));
+            CHECK(menu.findChild<QAction*>(QStringLiteral("lyricsSyncMenuJumpBefore"))
+                      ->text()
+                      .contains(QStringLiteral("3 s")));
+            loese(menu, "lyricsSyncMenuJump");
+            CHECK(audio.player->letzterSprung == 20000);
+            loese(menu, "lyricsSyncMenuJumpBefore");
+            CHECK(audio.player->letzterSprung == 17000);
+            loese(menu, "lyricsSyncMenuPlus");
+            CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.10"));
+            loese(menu, "lyricsSyncMenuVoice2");
+            CHECK(liste->item(1, 3)->text() == QStringLiteral("2"));
+        }
+        REQUIRE(panel.rueckgaengig());  // Stimme
+        REQUIRE(panel.rueckgaengig());  // +100 ms
+
+        // --- Zeile OHNE Zeit: kein Sprung auf sie, aber zur letzten mit Zeit davor ---
+        liste->selectRow(3);
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 3);
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuJump"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuJumpBefore"));
+            CHECK(hat(menu, "lyricsSyncMenuJumpPrev"));
+            CHECK(hat(menu, "lyricsSyncMenuTap"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuMinus"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuClear"));
+            CHECK(hat(menu, "lyricsSyncMenuRedo"));
+            audio.player->letzterSprung = -1;
+            loese(menu, "lyricsSyncMenuJumpPrev");
+            CHECK(audio.player->letzterSprung == 20000 - 3000);
+        }
+        // --- Leerzeile: weder Tap noch Stimme ---
+        liste->selectRow(2);
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 2);
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuTap"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuVoice1"));
+            CHECK(hat(menu, "lyricsSyncMenuJumpPrev"));
+        }
+        // --- freie Flaeche: nur das Allgemeine; Pre-roll 0 nimmt „davor" heraus ---
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, -1);
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuTap"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuJumpPrev"));
+            CHECK(hat(menu, "lyricsSyncMenuWords"));
+            CHECK(hat(menu, "lyricsSyncMenuFollow"));
+            const QList<QAction*> werte =
+                menu.findChildren<QAction*>(QStringLiteral("lyricsSyncMenuPrerollValue"));
+            REQUIRE(werte.size() == 7);
+            int haken = 0;
+            for (QAction* a : werte)
+                if (a->isChecked()) ++haken;
+            CHECK(haken == 1);  // 3 s
+            werte.first()->trigger();  // 0 s
+            CHECK(panel.vorlaufMs() == 0);
+            CHECK(vorlauf->value() == doctest::Approx(0.0));
+            loese(menu, "lyricsSyncMenuWords");
+            CHECK(panel.wortModus());
+        }
+        liste->selectRow(1);
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 1);
+            CHECK(hat(menu, "lyricsSyncMenuJump"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuJumpBefore"));
+        }
+        panel.setzeVorlaufMs(2000);
+
+        // --- Wort-Modus: der Tap-Eintrag nennt das Wort; Menue des Streifens ---
+        liste->selectRow(0);
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 0);
+            CHECK(menu.findChild<QAction*>(QStringLiteral("lyricsSyncMenuTap"))->text() ==
+                  QStringLiteral("Tap word: eins"));
+        }
+        {
+            QMenu menu;
+            panel.fuelleWortMenue(menu, 1);  // „zwei": noch ohne Zeit
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuWordJump"));
+            CHECK(hat(menu, "lyricsSyncMenuWordTap"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuWordMinus"));
+            CHECK_FALSE(hat(menu, "lyricsSyncMenuWordClear"));
+        }
+        panel.waehleWort(0);
+        REQUIRE(panel.tippe(10000));
+        REQUIRE(panel.tippe(10800));  // „zwei"
+        liste->selectRow(0);
+        {
+            QMenu menu;
+            panel.fuelleWortMenue(menu, 1);
+            CHECK(hat(menu, "lyricsSyncMenuWordJump"));
+            CHECK(hat(menu, "lyricsSyncMenuWordJumpBefore"));
+            CHECK(hat(menu, "lyricsSyncMenuWordClear"));
+            loese(menu, "lyricsSyncMenuWordJump");
+            CHECK(audio.player->letzterSprung == 10800);
+            loese(menu, "lyricsSyncMenuWordJumpBefore");
+            CHECK(audio.player->letzterSprung == 8800);
+            loese(menu, "lyricsSyncMenuWordPlus");
+            auto* worte = panel.findChild<QListWidget*>(QStringLiteral("lyricsSyncWords"));
+            REQUIRE(worte != nullptr);
+            CHECK(worte->item(1)->text().contains(QStringLiteral("00:10.90")));
+        }
+        {
+            QMenu menu;
+            panel.fuelleZeilenMenue(menu, 0);
+            CHECK(hat(menu, "lyricsSyncMenuClearWords"));  // jetzt gibt es Wort-Zeiten
+        }
+
+        // --- Sprungleiste: laeuft stumm mit, springt nur auf den Benutzer ---
+        audio.player->letzterSprung = -1;
+        zeigen(panel);
+        {
+            QEventLoop warte;
+            QTimer::singleShot(200, &warte, &QEventLoop::quit);
+            warte.exec();
+        }
+        CHECK(leiste->isEnabled());
+        CHECK(leiste->maximum() == 200000);
+        CHECK(audio.player->letzterSprung == -1);  // Mitlaufen ist kein Sprung
+        leiste->setValue(42000);
+        CHECK(audio.player->letzterSprung == 42000);
+        // Klick in die Rille: dorthin, nicht einen Seitenschritt weit
+        {
+            const QPointF ort(leiste->width() * 0.75, leiste->height() / 2.0);
+            QMouseEvent druck(QEvent::MouseButtonPress, ort, leiste->mapToGlobal(ort),
+                              Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(leiste, &druck);
+            QMouseEvent los(QEvent::MouseButtonRelease, ort, leiste->mapToGlobal(ort),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(leiste, &los);
+        }
+        CHECK(audio.player->letzterSprung > 140000);
+        CHECK(audio.player->letzterSprung < 160000);
+        schnappschuss(panel, "lyrics_sync_s92");
+    }
+
+    // der Vorlauf ist gemerkt: ein neues Panel traegt ihn
+    {
+        LyricsSyncPanel zweites(audio.services);
+        CHECK(zweites.vorlaufMs() == 2000);
     }
 
     MultiEffectVisualizer::setSongtext(ly::Songtext{});

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.65.0
+> **Version:** 1.66.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -733,16 +733,21 @@ Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**,
 **Spielzeit** mit, und eine **Wellenform** zeigt vier Sekunden vor und nach
 der Abspielposition (rote Marke in der Mitte). Die senkrechten Striche darin
 sind die Zeiten der Zeilen, die markierte ist hervorgehoben — so siehst du, ob
-ein Strich auf dem Einsatz sitzt.
+ein Strich auf dem Einsatz sitzt. Unter der Wellenform liegt die
+**Sprungleiste**: sie reicht über den ganzen Titel und läuft mit.
 
 | Bedienung | Wirkung |
 |---|---|
-| **Tap** (oder Enter bzw. T in der Liste) | gibt der markierten Zeile die Abspielposition und rückt zur nächsten Textzeile |
+| **Tap** (oder Enter bzw. T) | gibt der markierten Zeile die Abspielposition und rückt zur nächsten Textzeile. Enter und T gelten im ganzen Panel — auch nach einem Klick in den Wort-Streifen, auf einen Schalter oder einen Schieber —, nur nicht in den Eingabefeldern (**Track offset**, **Pre-roll**, Zeit per F2) |
 | **−100 ms** / **+100 ms** | verschiebt die markierten Zeilen |
 | **From here −** / **From here +** | verschiebt alle Zeilen ab der ersten markierten |
 | **Clear time** | nimmt den markierten Zeilen die Zeit |
 | F2 in der Spalte **Time** | Zeit von Hand eintragen (`mm:ss.xx`) |
-| Doppelklick auf eine Zeile | springt im Titel 1,5 s vor die Zeile (Vorhören) |
+| Doppelklick auf eine Zeile | springt im Titel vor die Zeile (Vorhören) — um die Zeit im Feld **Pre-roll** |
+| **Pre-roll** (0–10 s, Vorgabe 1,5 s) | wie weit vor der Zeile der Doppelklick ansetzt; 0 = genau auf der Zeile. Wird über den Neustart gemerkt und steht auch im Kontextmenü der Liste |
+| **Sprungleiste** (unter der Wellenform) | Klicken oder Ziehen springt an diese Stelle des Titels — auch dorthin, wo noch keine Zeile eine Zeit hat. Pfeiltasten: eine Sekunde, Bild auf / Bild ab: fünf |
+| Rechtsklick auf eine Zeile | Kontextmenü, das sich nach der Zeile richtet: mit Zeit **Jump to line**, **Jump … s before the line**, Verschieben und **Clear time**; ohne Zeit **Jump to the last timed line before** (dorthin, wo das Klopfen weitergeht); bei Textzeilen **Tap line** (mit **Words**: **Tap word: …**) und **Voice**; mit Wort-Zeiten **Clear word times**. Immer da: **Pre-roll**, **Words**, **Follow playback**, und **Undo** / **Redo**, sobald es etwas zurückzunehmen gibt. Was für die Zeile nicht geht, steht gar nicht erst im Menü |
+| Rechtsklick auf ein Wort im Streifen | **Jump to word**, **Jump … s before the word**, **Tap word**, **Word −100 ms** / **+100 ms**, **Clear word times of the line** — wieder nur, was für das Wort geht |
 | **▶** in der Spalte **Go** | springt genau auf die Zeit der Zeile |
 | Klick in die Wellenform | springt an diese Stelle |
 | **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
@@ -1540,6 +1545,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.66.0 | 2026-10-03 | Session 92. §11 Lyrics Sync: Enter / T klopfen im ganzen Panel (vorher nur in der Liste); NEU **Pre-roll** (Vorlauf des Doppelklicks, 0–10 s), **Sprungleiste** über den ganzen Titel, **Kontextmenü** in der Liste und im Wort-Streifen |
 | 1.65.0 | 2026-10-03 | Session 91. §11 Lyrics Trail: NEU Skriptfeld **Line** — einmal je gegangener Zeile, mit `line` (die Zeile, die eben ging) und `linecount` |
 | 1.64.0 | 2026-10-03 | Session 91. §9 NEU **Favoriten im Effect Browser** — ★ vor dem Namen, Rechtsklick **Add to / Remove from favorites**, Filter **★ Favorites** (alle Favoriten aus allen Ordnern); Bild ab / Bild auf blättern in dieser Ansicht durch die Favoriten |
 | 1.63.0 | 2026-10-03 | Session 91. §9 Preset-Zeile: **Load…** im Effect-Chain-Panel bietet jedes Preset an (`.lvfx`, `.lvfx2`, `.avs`, `.milk`) |

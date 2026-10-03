@@ -8,8 +8,11 @@
  * oder einen synchronen nachstellen. Das Panel arbeitet am Text des laufenden
  * Titels (derselbe, den der Lyrics-Knoten zeigt):
  *
- * - **Mitklopfen:** „Tap" (Knopf, Enter oder T in der Liste) gibt der
- *   markierten Zeile die Abspielposition und rueckt zur naechsten Textzeile.
+ * - **Mitklopfen:** „Tap" (Knopf, Enter oder T — seit S92 im ganzen Panel,
+ *   ausser in Eingabefeldern) gibt der markierten Zeile die Abspielposition
+ *   und rueckt zur naechsten Textzeile.
+ * - **Sprungleiste** (S92): unter der Wellenform, ueber den ganzen Titel.
+ * - **Kontextmenue** (S92): in der Liste und im Wort-Streifen, je nach Zeile.
  * - **Nachstellen:** markierte Zeilen ±100 ms, „ab hier" ±100 ms, Zeit
  *   loeschen, Zeit von Hand eintragen (F2 in der Spalte Time).
  * - **Vorhoeren:** Doppelklick auf eine Zeile springt im Titel kurz davor; der
@@ -80,8 +83,31 @@ public:
 
     [[nodiscard]] int preferredArea() const override;
 
-    /// Vorlauf beim Vorhoeren: so viele ms vor der Zeile setzt der Sprung an.
+    /// Vorlauf beim Vorhoeren: so viele ms vor der Zeile setzt der Sprung an
+    /// (Vorgabe; einstellbar seit S92, s. `setzeVorlaufMs`).
     static constexpr int kVorlaufMs = 1500;
+    static constexpr int kVorlaufMaxMs = 10000;
+
+    /// S92 (Wunsch Patrik): Vorlauf des Doppelklicks einstellen — Feld
+    /// „Pre-roll" und Untermenue im Kontextmenue; gemerkt ueber den Neustart
+    /// (QSettings `lyricsSync/prerollMs`). 0 = genau auf die Zeile.
+    void setzeVorlaufMs(int ms);
+    [[nodiscard]] int vorlaufMs() const { return m_vorlaufMs; }
+
+    /// S92: zum Wort `wort` der markierten Zeile springen (`vorlaufMs` davor).
+    /// false = das Wort hat keine Zeit.
+    bool springeZuWort(int wort, int vorlaufMs);
+
+    /// S92 (Wunsch Patrik): Kontextmenue der Zeilenliste — die Eintraege
+    /// richten sich nach der Zeile unter dem Zeiger: mit Zeit (springen,
+    /// verschieben, Zeit loeschen), ohne Zeit (zur letzten Zeile mit Zeit
+    /// davor), mit Wort-Zeiten (Clear word times), Textzeile (Tap, Voice).
+    /// Immer da: Pre-roll, Words, Follow playback, Undo / Redo. `reihe` < 0 =
+    /// freie Flaeche (nur die allgemeinen Eintraege).
+    void fuelleZeilenMenue(class QMenu& menu, int reihe);
+    /// S92: Kontextmenue des Wort-Streifens fuer das Wort `wort` der
+    /// markierten Zeile (springen, Tap, verschieben, Wort-Zeiten loeschen).
+    void fuelleWortMenue(class QMenu& menu, int wort);
     /// Schritt der Knoepfe „−"/„+".
     static constexpr int kSchrittMs = 100;
 
@@ -211,6 +237,9 @@ private:
     class QSpinBox* m_versatzFeld = nullptr;
     class QSlider* m_tempo = nullptr;        ///< Abspieltempo in Prozent (S91)
     QLabel* m_tempoText = nullptr;
+    int m_vorlaufMs = kVorlaufMs;            ///< Vorlauf des Doppelklicks (S92)
+    class QDoubleSpinBox* m_vorlauf = nullptr;
+    class QSlider* m_leiste = nullptr;       ///< Sprungleiste ueber den ganzen Titel (S92)
     void wendeTempoAn();  ///< sichtbar: Wert des Schiebers an den Player; verborgen: 100 %
     TrackInfo m_track;
     lumi::multieffect::lyrics::Songtext m_text;  ///< Arbeitskopie, Reihenfolge der Datei

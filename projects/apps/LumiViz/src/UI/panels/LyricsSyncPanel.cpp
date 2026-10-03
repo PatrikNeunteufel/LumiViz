@@ -17,6 +17,7 @@
 
 #include <BasicLogger.h>
 
+#include <QAbstractSpinBox>
 #include <QApplication>
 #include <QCheckBox>
 #include <QFileInfo>
@@ -27,8 +28,14 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QDoubleSpinBox>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
+#include <QMenu>
+#include <QSettings>
+#include <QStyle>
+#include <QStyleOptionSlider>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSignalBlocker>
@@ -39,6 +46,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <vector>
 
@@ -183,6 +191,35 @@ private:
     std::int64_t m_gewaehlt = -1;
 };
 
+/**
+ * Sprungleiste ueber den ganzen Titel (S92, Wunsch Patrik): ein Klick in die
+ * Rille springt genau dorthin — die Vorgabe von QSlider waere ein
+ * Seitenschritt in Richtung des Klicks. Der Griff sitzt danach unter dem
+ * Zeiger, das Ziehen geht also aus demselben Klick weiter.
+ */
+class LyricsSprungLeiste : public QSlider
+{
+public:
+    explicit LyricsSprungLeiste(QWidget* parent) : QSlider(Qt::Horizontal, parent) {}
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override
+    {
+        if (event->button() == Qt::LeftButton && maximum() > minimum())
+        {
+            QStyleOptionSlider opt;
+            initStyleOption(&opt);
+            const QRect griff = style()->subControlRect(QStyle::CC_Slider, &opt,
+                                                        QStyle::SC_SliderHandle, this);
+            const int spanne = std::max(1, width() - griff.width());
+            setValue(QStyle::sliderValueFromPosition(
+                minimum(), maximum(),
+                static_cast<int>(event->position().x()) - griff.width() / 2, spanne));
+        }
+        QSlider::mousePressEvent(event);
+    }
+};
+
 LyricsSyncPanel::LyricsSyncPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, QStringLiteral("lyrics_sync"), tr("Lyrics Sync"), parent)
 {
@@ -249,6 +286,218 @@ bool LyricsSyncPanel::springeZu(int reihe, int vorlaufMs)
     const std::int64_t ziel = std::max<std::int64_t>(0, zeit - versatz() - vorlaufMs);
     if (auto* player = services().tryResolve<IAudioPlayer>()) player->seek(static_cast<int>(ziel));
     return true;
+}
+
+bool LyricsSyncPanel::springeZuWort(int wort, int vorlaufMs)
+{
+    const QList<int> reihen = markierteReihen();
+    if (reihen.isEmpty() || reihen.first() >= static_cast<int>(m_text.zeilen.size())) return false;
+    const ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihen.first())];
+    if (wort < 0 || wort >= static_cast<int>(z.worte.size())) return false;
+    const std::int64_t zeit = z.worte[static_cast<std::size_t>(wort)].zeitMs;
+    if (zeit < 0) return false;
+    const std::int64_t ziel = std::max<std::int64_t>(0, zeit - versatz() - vorlaufMs);
+    if (auto* player = services().tryResolve<IAudioPlayer>()) player->seek(static_cast<int>(ziel));
+    return true;
+}
+
+void LyricsSyncPanel::setzeVorlaufMs(int ms)
+{
+    m_vorlaufMs = std::clamp(ms, 0, kVorlaufMaxMs);
+    QSettings().setValue(QStringLiteral("lyricsSync/prerollMs"), m_vorlaufMs);
+    if (m_vorlauf == nullptr) return;
+    const QSignalBlocker ruhe(m_vorlauf);
+    m_vorlauf->setValue(m_vorlaufMs / 1000.0);
+}
+
+namespace
+{
+/// Menue-Eintrag mit Objektnamen (die Tests finden ihn daran).
+QAction* eintrag(QMenu& menu, QObject* ziel, const QString& text, const char* name,
+                 std::function<void()> tun)
+{
+    QAction* a = menu.addAction(text);
+    a->setObjectName(QLatin1String(name));
+    QObject::connect(a, &QAction::triggered, ziel, [tun = std::move(tun)]() { tun(); });
+    return a;
+}
+
+QString sekundenText(int ms)
+{
+    return QString::number(ms / 1000.0, 'g', 3);
+}
+}  // namespace
+
+void LyricsSyncPanel::fuelleZeilenMenue(QMenu& menu, int reihe)
+{
+    const int anzahl = static_cast<int>(m_text.zeilen.size());
+    const bool fremd = !m_track.filePath.isEmpty() &&
+                       lumi::audio::laufenderTitel().filePath != m_track.filePath;
+    if (reihe >= 0 && reihe < anzahl)
+    {
+        const ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihe)];
+        const QList<int> reihen = markierteReihen();
+        const auto irgendeine = [this, &reihen](auto&& probe) {
+            return std::any_of(reihen.begin(), reihen.end(), [this, &probe](int r) {
+                return probe(m_text.zeilen[static_cast<std::size_t>(r)]);
+            });
+        };
+
+        // springen: zur Zeile, oder — ohne Zeit — zur letzten Zeile mit Zeit davor
+        if (z.zeitMs >= 0 && !fremd)
+        {
+            eintrag(menu, this, tr("Jump to line"), "lyricsSyncMenuJump",
+                    [this, reihe]() { springeZu(reihe, 0); });
+            if (m_vorlaufMs > 0)
+                eintrag(menu, this,
+                        tr("Jump %1 s before the line").arg(sekundenText(m_vorlaufMs)),
+                        "lyricsSyncMenuJumpBefore",
+                        [this, reihe]() { springeZu(reihe, m_vorlaufMs); });
+        }
+        else if (!fremd)
+        {
+            int davor = reihe - 1;
+            while (davor >= 0 && m_text.zeilen[static_cast<std::size_t>(davor)].zeitMs < 0) --davor;
+            if (davor >= 0)
+                eintrag(menu, this, tr("Jump to the last timed line before"),
+                        "lyricsSyncMenuJumpPrev",
+                        [this, davor]() { springeZu(davor, m_vorlaufMs); });
+        }
+        if (!z.text.empty() && m_tap->isEnabled())
+        {
+            QString text = tr("Tap line");
+            if (wortModus())
+            {
+                const std::vector<ly::Wort> worte = worteVon(z);
+                const int idx = std::clamp(m_wort, 0, std::max(0, static_cast<int>(worte.size()) - 1));
+                if (!worte.empty())
+                    text = tr("Tap word: %1")
+                               .arg(QString::fromStdString(worte[static_cast<std::size_t>(idx)].text)
+                                        .trimmed());
+            }
+            eintrag(menu, this, text, "lyricsSyncMenuTap",
+                    [this]() { tippe(MultiEffectVisualizer::playPositionMs()); });
+        }
+
+        // nachstellen: nur, wo es eine Zeit gibt
+        const bool hatZeit = irgendeine([](const ly::Zeile& x) { return x.zeitMs >= 0; });
+        if (hatZeit)
+        {
+            menu.addSeparator();
+            const bool wort = wortModus();
+            eintrag(menu, this, wort ? tr("Word −100 ms") : tr("−100 ms"), "lyricsSyncMenuMinus",
+                    [this]() { verschiebe(-kSchrittMs, false); });
+            eintrag(menu, this, wort ? tr("Word +100 ms") : tr("+100 ms"), "lyricsSyncMenuPlus",
+                    [this]() { verschiebe(kSchrittMs, false); });
+            eintrag(menu, this, tr("From here −100 ms"), "lyricsSyncMenuFromMinus",
+                    [this]() { verschiebe(-kSchrittMs, true); });
+            eintrag(menu, this, tr("From here +100 ms"), "lyricsSyncMenuFromPlus",
+                    [this]() { verschiebe(kSchrittMs, true); });
+            eintrag(menu, this, tr("Clear time"), "lyricsSyncMenuClear", [this]() { loescheZeit(); });
+        }
+        if (irgendeine([](const ly::Zeile& x) { return !x.worte.empty(); }))
+            eintrag(menu, this, tr("Clear word times"), "lyricsSyncMenuClearWords",
+                    [this]() { loescheWortZeiten(); });
+
+        // Stimme: nur Textzeilen; der Haken steht, wenn alle markierten sie tragen
+        if (irgendeine([](const ly::Zeile& x) { return !x.text.empty(); }))
+        {
+            menu.addSeparator();
+            QMenu* stimmen = menu.addMenu(tr("Voice"));
+            stimmen->setObjectName(QStringLiteral("lyricsSyncMenuVoice"));
+            const auto stimme = [&](const QString& text, const char* name, ly::Stimme s) {
+                QAction* a = eintrag(*stimmen, this, text, name, [this, s]() { setzeStimme(s); });
+                a->setCheckable(true);
+                a->setChecked(std::all_of(reihen.begin(), reihen.end(), [this, s](int r) {
+                    const ly::Zeile& x = m_text.zeilen[static_cast<std::size_t>(r)];
+                    return x.text.empty() || x.stimme == s;
+                }));
+            };
+            stimme(tr("Voice 1"), "lyricsSyncMenuVoice1", ly::Stimme::Eins);
+            stimme(tr("Voice 2"), "lyricsSyncMenuVoice2", ly::Stimme::Zwei);
+            stimme(tr("Both voices"), "lyricsSyncMenuVoiceBoth", ly::Stimme::Beide);
+        }
+        menu.addSeparator();
+    }
+
+    // immer da: Vorlauf, Schalter, Rueckgaengig
+    QMenu* vorlauf = menu.addMenu(tr("Pre-roll"));
+    vorlauf->setObjectName(QStringLiteral("lyricsSyncMenuPreroll"));
+    bool getroffen = false;
+    for (const int ms : {0, 500, 1000, 1500, 2000, 3000, 5000})
+    {
+        QAction* a = eintrag(*vorlauf, this, tr("%1 s").arg(sekundenText(ms)),
+                             "lyricsSyncMenuPrerollValue", [this, ms]() { setzeVorlaufMs(ms); });
+        a->setCheckable(true);
+        a->setChecked(ms == m_vorlaufMs);
+        getroffen = getroffen || ms == m_vorlaufMs;
+    }
+    if (!getroffen)  // ein Wert aus dem Feld, der nicht in der Liste steht
+    {
+        QAction* a = vorlauf->addAction(tr("%1 s").arg(sekundenText(m_vorlaufMs)));
+        a->setCheckable(true);
+        a->setChecked(true);
+    }
+    QAction* worte = eintrag(menu, this, tr("Words"), "lyricsSyncMenuWords",
+                             [this]() { setWortModus(!wortModus()); });
+    worte->setCheckable(true);
+    worte->setChecked(wortModus());
+    QAction* folgen = eintrag(menu, this, tr("Follow playback"), "lyricsSyncMenuFollow",
+                              [this]() { m_folgen->toggle(); });
+    folgen->setCheckable(true);
+    folgen->setChecked(m_folgen->isChecked());
+    if (!m_zurueck.empty() || !m_vor.empty())
+    {
+        menu.addSeparator();
+        if (!m_zurueck.empty())
+            eintrag(menu, this, tr("Undo"), "lyricsSyncMenuUndo", [this]() { rueckgaengig(); });
+        if (!m_vor.empty())
+            eintrag(menu, this, tr("Redo"), "lyricsSyncMenuRedo", [this]() { wiederholen(); });
+    }
+}
+
+void LyricsSyncPanel::fuelleWortMenue(QMenu& menu, int wort)
+{
+    const QList<int> reihen = markierteReihen();
+    if (reihen.isEmpty() || reihen.first() >= static_cast<int>(m_text.zeilen.size())) return;
+    const ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihen.first())];
+    const std::vector<ly::Wort> worte = worteVon(z);
+    if (wort < 0 || wort >= static_cast<int>(worte.size())) return;
+    const bool hatZeit = worte[static_cast<std::size_t>(wort)].zeitMs >= 0;
+    const bool fremd = lumi::audio::laufenderTitel().filePath != m_track.filePath;
+
+    if (hatZeit && !fremd)
+    {
+        eintrag(menu, this, tr("Jump to word"), "lyricsSyncMenuWordJump",
+                [this, wort]() { springeZuWort(wort, 0); });
+        if (m_vorlaufMs > 0)
+            eintrag(menu, this, tr("Jump %1 s before the word").arg(sekundenText(m_vorlaufMs)),
+                    "lyricsSyncMenuWordJumpBefore",
+                    [this, wort]() { springeZuWort(wort, m_vorlaufMs); });
+    }
+    if (m_tap->isEnabled())
+        eintrag(menu, this, tr("Tap word"), "lyricsSyncMenuWordTap", [this, wort]() {
+            waehleWort(wort);
+            tippe(MultiEffectVisualizer::playPositionMs());
+        });
+    if (hatZeit)
+    {
+        menu.addSeparator();
+        eintrag(menu, this, tr("Word −100 ms"), "lyricsSyncMenuWordMinus", [this, wort]() {
+            waehleWort(wort);
+            verschiebe(-kSchrittMs, false);
+        });
+        eintrag(menu, this, tr("Word +100 ms"), "lyricsSyncMenuWordPlus", [this, wort]() {
+            waehleWort(wort);
+            verschiebe(kSchrittMs, false);
+        });
+    }
+    if (!z.worte.empty())
+    {
+        menu.addSeparator();
+        eintrag(menu, this, tr("Clear word times of the line"), "lyricsSyncMenuWordClear",
+                [this]() { loescheWortZeiten(); });
+    }
 }
 
 LyricsSyncPanel::Stand LyricsSyncPanel::jetzigerStand() const
@@ -376,6 +625,21 @@ void LyricsSyncPanel::setupUI()
             player->seek(static_cast<int>(ms));
     };
     vl->addWidget(m_welle);
+    // S92 (Wunsch Patrik): Sprungleiste ueber den GANZEN Titel — die Wellenform
+    // zeigt nur einen Ausschnitt, und eine Zeile ohne Zeit bietet keinen Sprung
+    m_leiste = new LyricsSprungLeiste(this);
+    m_leiste->setObjectName(QStringLiteral("lyricsSyncSeek"));
+    m_leiste->setRange(0, 0);
+    m_leiste->setSingleStep(1000);
+    m_leiste->setPageStep(5000);
+    m_leiste->setEnabled(false);
+    m_leiste->setToolTip(tr("Position in the whole track. Click or drag to jump there; the arrow "
+                            "keys step one second, Page Up / Page Down five."));
+    vl->addWidget(m_leiste);
+    // nur was der Benutzer bewegt, springt — das Mitlaufen setzt den Wert stumm
+    connect(m_leiste, &QSlider::valueChanged, this, [this](int ms) {
+        if (auto* player = this->services().tryResolve<IAudioPlayer>()) player->seek(ms);
+    });
 
     m_liste = new QTableWidget(0, 4, this);
     m_liste->setObjectName(QStringLiteral("lyricsSyncList"));
@@ -397,9 +661,19 @@ void LyricsSyncPanel::setupUI()
     m_liste->horizontalHeader()->setSectionResizeMode(kText, QHeaderView::Stretch);
     m_liste->setToolTip(
         tr("Enter or T: give the selected line the current playback position and move on. "
-           "Double-click: jump to just before the line. F2 in the Time column: type a time "
-           "(mm:ss.xx). 1 / 2 / 3: voice 1, voice 2, both voices for the selected lines."));
-    m_liste->installEventFilter(this);
+           "Double-click: jump to before the line (by the Pre-roll time). F2 in the Time "
+           "column: type a time (mm:ss.xx). 1 / 2 / 3: voice 1, voice 2, both voices for the "
+           "selected lines. Right-click: menu for the line."));
+    // S92: Kontextmenue — die Zeile unter dem Zeiger bestimmt die Eintraege
+    m_liste->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_liste, &QWidget::customContextMenuRequested, this, [this](const QPoint& p) {
+        const int reihe = m_liste->rowAt(p.y());
+        // eine Zeile ausserhalb der Markierung: sie wird die markierte
+        if (reihe >= 0 && !markierteReihen().contains(reihe)) m_liste->selectRow(reihe);
+        QMenu menu(this);
+        fuelleZeilenMenue(menu, reihe);
+        if (!menu.isEmpty()) menu.exec(m_liste->viewport()->mapToGlobal(p));
+    });
     // S91: Kopf und drei Zeilen bleiben immer sichtbar — sonst drueckt der
     // Wort-Streifen die Liste in einem knappen Panel auf anderthalb Zeilen
     m_liste->setMinimumHeight(m_liste->horizontalHeader()->sizeHint().height() +
@@ -427,6 +701,15 @@ void LyricsSyncPanel::setupUI()
     connect(m_wortListe, &QListWidget::currentRowChanged, this, [this](int reihe) {
         if (!m_fuellt && reihe >= 0) m_wort = reihe;
     });
+    m_wortListe->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_wortListe, &QWidget::customContextMenuRequested, this, [this](const QPoint& p) {
+        const int wort = m_wortListe->row(m_wortListe->itemAt(p));
+        if (wort < 0) return;
+        waehleWort(wort);
+        QMenu menu(this);
+        fuelleWortMenue(menu, wort);
+        if (!menu.isEmpty()) menu.exec(m_wortListe->viewport()->mapToGlobal(p));
+    });
 
     const auto knopf = [this](const QString& text, const char* name, const QString& tipp) {
         auto* k = new QPushButton(text, this);
@@ -437,7 +720,7 @@ void LyricsSyncPanel::setupUI()
     auto* reihe1 = new QHBoxLayout();
     m_tap = knopf(tr("Tap"), "lyricsSyncTap",
                   tr("Gives the selected line the current playback position and moves to the "
-                     "next line (Enter or T in the list)."));
+                     "next line (Enter or T anywhere in this panel, except in input fields)."));
     auto* minus = knopf(tr("−100 ms"), "lyricsSyncMinus", tr("Selected lines 100 ms earlier."));
     auto* plus = knopf(tr("+100 ms"), "lyricsSyncPlus", tr("Selected lines 100 ms later."));
     auto* abMinus = knopf(tr("From here −"), "lyricsSyncFromMinus",
@@ -528,6 +811,24 @@ void LyricsSyncPanel::setupUI()
     reihe2->addWidget(m_versatzFeld);
     connect(m_versatzFeld, QOverload<int>::of(&QSpinBox::valueChanged), this,
             &LyricsSyncPanel::setzeTitelVersatz);
+    // S92 (Wunsch Patrik): Vorlauf des Doppelklicks — einstellbar und gemerkt
+    m_vorlauf = new QDoubleSpinBox(this);
+    m_vorlauf->setObjectName(QStringLiteral("lyricsSyncPreroll"));
+    m_vorlauf->setRange(0.0, kVorlaufMaxMs / 1000.0);
+    m_vorlauf->setDecimals(1);
+    m_vorlauf->setSingleStep(0.5);
+    m_vorlauf->setSuffix(tr(" s"));
+    m_vorlauf->setToolTip(
+        tr("How far before a line a double-click starts playback (0–10 s; 0 = exactly on the "
+           "line). Also in the right-click menu of the list. Remembered across restarts."));
+    m_vorlaufMs = std::clamp(
+        QSettings().value(QStringLiteral("lyricsSync/prerollMs"), kVorlaufMs).toInt(), 0,
+        kVorlaufMaxMs);
+    m_vorlauf->setValue(m_vorlaufMs / 1000.0);
+    reihe2->addWidget(new QLabel(tr("Pre-roll:"), this));
+    reihe2->addWidget(m_vorlauf);
+    connect(m_vorlauf, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+            [this](double s) { setzeVorlaufMs(static_cast<int>(std::lround(s * 1000.0))); });
     reihe2->addStretch(1);
     reihe2->addWidget(m_folgen);
     vl->addLayout(reihe2);
@@ -569,7 +870,7 @@ void LyricsSyncPanel::setupUI()
 
     // Vorhoeren: kurz vor die Zeile springen
     connect(m_liste, &QTableWidget::cellDoubleClicked, this,
-            [this](int reihe, int) { springeZu(reihe, kVorlaufMs); });
+            [this](int reihe, int) { springeZu(reihe, m_vorlaufMs); });
     // die markierte Zeile in der Wellenform hervorheben
     connect(m_liste, &QTableWidget::itemSelectionChanged, this, [this]() {
         if (m_fuellt) return;
@@ -613,6 +914,14 @@ void LyricsSyncPanel::setupUI()
     m_uhr = new QTimer(this);
     m_uhr->setInterval(50);  // die Wellenform soll fliessen, nicht ruckeln
     connect(m_uhr, &QTimer::timeout, this, &LyricsSyncPanel::zeigePosition);
+
+    // S92 (Sichttest H1): Enter / T klopfen im ganzen Panel, nicht nur in der
+    // Zeilenliste — nach einem Klick in den Wort-Streifen, auf einen Schalter
+    // oder den Schieber gingen die Tasten ins Leere. Eingabefelder behalten
+    // ihre Tasten (Track offset; die Zeit per F2 hat ein eigenes Feld).
+    for (QWidget* w : findChildren<QWidget*>())
+        if (qobject_cast<QAbstractSpinBox*>(w) == nullptr && qobject_cast<QLineEdit*>(w) == nullptr)
+            w->installEventFilter(this);
 }
 
 QList<int> LyricsSyncPanel::markierteReihen() const
@@ -694,6 +1003,7 @@ void LyricsSyncPanel::zeigeZeile(int reihe)
         knopf->setObjectName(QStringLiteral("lyricsSyncJump"));
         knopf->setText(QString::fromUtf8("▶"));
         knopf->setAutoRaise(true);  // flach: die Zeilenfarbe scheint durch
+        knopf->setFocusPolicy(Qt::NoFocus);  // S92: der Fokus bleibt in der Liste (Enter / T)
         knopf->setToolTip(tr("Jump to the time of this line."));
         connect(knopf, &QToolButton::clicked, this, [this, reihe]() { springeZu(reihe, 0); });
         m_liste->setCellWidget(reihe, kSprung, knopf);
@@ -1118,6 +1428,14 @@ void LyricsSyncPanel::zeigePosition()
         laufend.filePath.isEmpty() ? QStringLiteral("—") : spielzeitText(pos, laufend.durationMs);
     if (m_zeit->text() != zeit) m_zeit->setText(zeit);
     m_welle->setPosition(laufend.filePath == m_track.filePath ? pos : 0);
+    // S92: die Sprungleiste laeuft mit — ausser, der Benutzer zieht gerade
+    if (!m_leiste->isSliderDown())
+    {
+        const QSignalBlocker ruhe(m_leiste);
+        m_leiste->setEnabled(laufend.durationMs > 0);
+        m_leiste->setRange(0, std::max(0, laufend.durationMs));
+        m_leiste->setValue(static_cast<int>(std::clamp<std::int64_t>(pos, 0, m_leiste->maximum())));
+    }
     if (m_text.leer() || laufend.filePath != m_track.filePath) return;
 
     // die Zeile an der Abspielposition: die spaeteste, deren Zeit erreicht ist
@@ -1210,15 +1528,29 @@ bool LyricsSyncPanel::eventFilter(QObject* watched, QEvent* event)
             return true;
         }
     }
-    if (watched == m_liste && event->type() == QEvent::KeyPress)
+    // S92: Enter / T klopfen in jedem Kind des Panels, das den Filter traegt
+    // (alle ausser den Eingabefeldern, s. setupUI). ShortcutOverride annehmen,
+    // damit ein frei belegtes Kuerzel auf T oder Enter die Taste hier nicht nimmt.
+    if (event->type() == QEvent::ShortcutOverride || event->type() == QEvent::KeyPress)
     {
-        const auto* taste = static_cast<QKeyEvent*>(event);
-        if (taste->key() == Qt::Key_Return || taste->key() == Qt::Key_Enter ||
-            taste->key() == Qt::Key_T)
+        auto* taste = static_cast<QKeyEvent*>(event);
+        const bool ohneZusatz =
+            (taste->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) == 0;
+        if (ohneZusatz && (taste->key() == Qt::Key_Return || taste->key() == Qt::Key_Enter ||
+                           taste->key() == Qt::Key_T))
         {
+            if (event->type() == QEvent::ShortcutOverride)
+            {
+                event->accept();
+                return true;
+            }
             if (m_tap->isEnabled()) tippe(MultiEffectVisualizer::playPositionMs());
             return true;
         }
+    }
+    if (watched == m_liste && event->type() == QEvent::KeyPress)
+    {
+        const auto* taste = static_cast<QKeyEvent*>(event);
         // S90 (Duett): 1 / 2 / 3 setzen die Stimme der markierten Zeilen
         if (taste->modifiers() == Qt::NoModifier || taste->modifiers() == Qt::KeypadModifier)
         {
