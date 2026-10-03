@@ -3652,7 +3652,8 @@ void MultiEffectPanel::addPresetRow(QFormLayout* form, const QList<int>& path,
                             .arg(e.name, report.join(QLatin1Char('\n'))));
                     return;
                 }
-                // Eine Mutation: unter renderMutex + recompileChain, undo-faehig.
+                // Eine Mutation: unter renderMutex + recompileChain. Kein Undo —
+                // das Ketten-Panel haengt nicht am CommandBus.
                 mutate(path, [&](ChainNode& n) {
                     sichtSchreiben(n, section, element, felder, &report);
                 });
