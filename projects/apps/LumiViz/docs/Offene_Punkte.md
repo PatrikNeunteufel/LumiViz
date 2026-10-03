@@ -2206,6 +2206,11 @@ Idee Preset-Warmup/Pre-Roll.
 - Gemeinsame Bausteine: `UI/widgets/DateiDrag.hpp`, `DateiListe.hpp`,
   `AudioDateien.hpp`, `audio/AlbumCover.hpp` — die Timeline nimmt dieselben
   Datei-URLs an.
+- **Konzept (S93, Entwurf zur Durchsicht):**
+  [Composer_Konzept.md](ui/Composer_Konzept.md) — das Vorhaben heißt
+  **Composer** (Vorgabe Patrik S93; „Timeline" ist nur noch die Zeitachse im
+  Panel). Stufen C0–C6, Entscheide C2–C7 und C9 offen. Die folgenden Notizen
+  sind dort eingearbeitet und bleiben als Quelle stehen.
 - **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
   Konzept-Session): *n* Audiokanäle und *n* Visual-Kanäle zum Mischen;
   Einblenden/Ausblenden im Prinzip wie bei der Host-Gruppe (Crossfade,

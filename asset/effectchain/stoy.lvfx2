@@ -1,0 +1,72 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 1,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blendOut": 1,
+                "crossfadeSeconds": 2,
+                "curveIn": 0,
+                "curveOut": 0,
+                "enabled": false,
+                "frameCode": "",
+                "initCode": "",
+                "name": "01_audio_ringpulse",
+                "outAdjustAlpha": 128,
+                "sourceFile": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/effectchain/shadertoys/01_audio_ringpulse.lvfx",
+                "type": "hostgroup",
+                "verweis": true
+            },
+            {
+                "beatCode": "",
+                "blendOut": 1,
+                "crossfadeSeconds": 2,
+                "curveIn": 0,
+                "curveOut": 0,
+                "enabled": false,
+                "frameCode": "",
+                "initCode": "",
+                "name": "02_spektrum_stadt",
+                "outAdjustAlpha": 128,
+                "sourceFile": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/effectchain/shadertoys/02_spektrum_stadt.lvfx",
+                "type": "hostgroup",
+                "verweis": true
+            },
+            {
+                "beatCode": "",
+                "blendOut": 1,
+                "crossfadeSeconds": 2,
+                "curveIn": 0,
+                "curveOut": 0,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "04_plasma_interferenz",
+                "outAdjustAlpha": 128,
+                "sourceFile": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/asset/effectchain/shadertoys/04_plasma_interferenz.lvfx",
+                "type": "hostgroup",
+                "verweis": true
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Effect List",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}
