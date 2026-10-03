@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.82.0
-> **Datum:** 2026-10-02 (Session 89)
+> **Version:** 1.83.0
+> **Datum:** 2026-10-03 (Session 90)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3034,7 +3034,43 @@ Liste statt pro Gruppe. Trigger-Stufen:
 Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
 sich — im Konzept abgrenzen.
 
-### ⚪ Lyrics: Zeilen-Puffer für den Trail, Wort-Ebene, Auslöser für unsynchronen Text (Ideen Patrik S89 — für S90)
+### 🟡 Lyrics-Block: Zeilen-Puffer, Wort-Ebene, Auslöser, Lyrics Sync (S90 gebaut bis auf LB5-3 — Sichttest offen)
+
+**Steuerdokument:** `visuals/Lyrics_Block_Konzept.md` (Entscheide L1–L6,
+B1–B3, Stand je Stufe mit „geprüft / nicht geprüft").
+
+**✅ Gebaut in S90:** LB1 Zeilen-Puffer (der Trail legt das Bild auf, das
+stand) · LB1b Vorschau-Zeilen (Größe, Gewicht, Lage, Zeilenabstand) · LB2
+laufendes Wort (*Word scale*, *Word color*, *Word layout*, *Word flow*) · LB3
+`word` / `wordcount` und Skriptfeld Word · B2 a Wort-Masken auf der
+Grafikkarte (Lage, Größe und Farben folgen dem Skript aus jedem Feld; Gleiten
+0,4 statt 6 ms je Frame) · B3 a1 eine Schriftgröße je Song · LB4
+`linetrigger` / `wordtrigger` · LB5-1 Stimmen im Panel Lyrics Sync · LB5-2
+Wort-Zeiten klopfen. Dazu drei Fixes: Doppel-Trail nach Pause-Zeilen, Sprung
+der Schrift beim Zeilenwechsel (B1), AVI-Knoten unsichtbar ohne Text-Knoten
+davor (Regression aus S89; seither steht ein AVI-Preset in der lokalen
+Regressionsliste).
+
+**Offen:**
+1. **LB5-3 langsamer abspielen** (Entscheid L6-4 a): Schieber 50–100 % im
+   Panel Lyrics Sync über die Abtastrate (`BASS_ATTRIB_FREQ`), der Ton wird
+   tiefer. Dabei muss die Abspielposition zwischen zwei Meldungen des Players
+   mit dem Tempo mitlaufen (`MultiEffectVisualizer::playPositionMs` zählt
+   heute mit der Wanduhr weiter) — sonst sitzen die Taps daneben.
+2. **Sichttests S90 (Patrik):** alles — im laufenden Programm ist nichts
+   gesehen. Liste lokal: `.claude/handover/Sichttests_S90.md`.
+3. **Nicht geprüft** (aus dem Konzept): Masken-Weg in der Karaoke-Ebene mit
+   Render Scale; Overlay mit getrennter Kontur im Bild; Modulation ohne
+   Skript; Speicher bei sehr großen Fenstern; Trail beim Rücken per Auslöser.
+4. **Ideen, nicht eingeplant:** Stimme je Wort (L6-3 b), Tempo über `bass_fx`
+   ohne Tonhöhenänderung (L6-4 b), Einsätze in der Wellenform einrasten
+   (L6-5 b), Worte aus dem Signal erkennen (braucht Stimmentrennung und
+   Sprachmodell), geschätzte Wort-Zeiten als Schalter (L3 b), Zeilen und
+   Worte im Voraus je Index gestalten (L4 b).
+5. **Kleinkram:** Statuszeile des Panels Lyrics Sync ist bei kleinem Panel
+   unter dem Wort-Streifen abgeschnitten (am Schnappschuss gesehen).
+
+**Ursprüngliche Notiz (S89), zur Einordnung:**
 
 Vier zusammenhängende Wünsche vom Ende der Session 89, nichts davon gebaut.
 Ausgangslage: der Lyrics-Knoten kennt seit S89 den Slot **Line** und die
@@ -3838,6 +3874,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.83.0 | 2026-10-03 | Session 90 — **§7 Lyrics-Block gebaut bis auf LB5-3** (Zeilen-Puffer, Vorschau-Zeilen, laufendes Wort, `word` / `wordcount` und Feld Word, Wort-Masken auf der Grafikkarte, eine Schriftgröße je Song, `linetrigger` / `wordtrigger`, Lyrics Sync mit Stimmen und Wort-Zeiten; Steuerdokument `visuals/Lyrics_Block_Konzept.md`); drei Fixes (Doppel-Trail nach Pausen, Sprung beim Zeilenwechsel, AVI-Knoten unsichtbar). Offen: langsamer abspielen (LB5-3), Sichttests S90 |
 | 1.82.0 | 2026-10-02 | Session 89 — **Karaoke-Ebene KE2–KE4 gebaut** (Panel mit Reitern Lyrics / Lyrics Trail, Karaoke-Presets `.lvkar`, View → Karaoke, Ctrl+K; Steuerdokument `visuals/Karaoke_Ebene_Konzept.md`), K4 b (Zeile in Fensterauflösung). **Save / Save As**, **Rückfrage bei ungespeicherten Änderungen** (alle Ladewege, Beenden, Visualizer-Wechsel), **Preset-Zeile** mit Favoriten und Zuletzt in den Panels Effect Chain und Karaoke. **§7 ✅ Host Switcher: Puffer je Gruppe** (*Keep group state*, *Reset buffers*, `clearbuffers`; Befund berichtigt: ruhende Gruppen verlieren ohne Puffer ihre ganze Gruppen-Laufzeit). Skriptfeld **Line** am Lyrics-Knoten (`line`, `linecount`), Feld **Blend strength** an Lyrics / Lyrics Trail. **§7 NEU:** Lyrics — Zeilen-Puffer für den Trail, Wort-Ebene (laufendes Wort, `word` / `wordcount`, Slot Word), `linetrigger` / `wordtrigger`, Wort-Zeiten klopfen (für S90). Sichttests: alles aus S89 offen (`.claude/handover/Sichttests_S89.md`). Tests 810, Felder 846 |
 | 1.79.0 | 2026-09-30 | Session 83 — **§4:** Sichttests S82 (Presetverweis, Song-Slot, Host Switcher, Preset as Group) abgenommen; neue Zeile S83. **Preset-Zeile:** Combo behält die Wahl, „(unsaved) – Name" nach echter Änderung (Vergleich vorher/nachher, nur solange sauber), 🗑 zielt auf die Quelle (Entscheid a); Name/Beschreibung zählen nicht. **§7 ✅ Vorlagen für Milkdrop-Elemente und Shader** (Element-Presets, 3D-Template-Listen → nodepresets, Shader-Vorlagen im Groß-Editor mit Kompiliertest). **Schalter „Script active"** am Knoten (E1a, zentral in `renderNode`, 79 Typen per Test mit Gegenprobe). **§6 NEU Block F** mit der Bestandsaufnahme als Eingang (E2b). **§8:** Milkdrop-Variablentabelle unvollständig (neu), ISF-Referenz ✅. **§7 NEU (Ideen):** Bild an andere Programme (Spout/NDI — Stand: nicht vorhanden) · externer Audio-Eingang (Loopback angelegt, nicht gebaut; Line-in/Mikrofon fehlt) · MIDI/OSC (nicht vorhanden; Anknüpfung Block F) · Video aufnehmen (App: nur Screenshot; PNG-Folgen nur im AvsStandalone; Qt 6.10 bietet den Weg) · Video Source: nur Felder der gewählten Quelle zeigen. **§7 NEU:** S84-Plan (Drag aus Effect Browser/Playlist, Audio Browser, Timeline-Ausblick; Englisch fortsetzen mit Entscheiden 1a/2a) · später Code-Kommentare englisch · später Sprachwahl (i18n). **§8:** Oberflächentexte englisch (≈ 370 Texte, „Testaufnahme" → „Camera Clip", Wächter über `tr()` + Referenzseiten); offen Feld-Tooltips (FieldDocs, Entscheid) und Clip-Dateiname. Tests 677. **Nachtrag:** Namen englisch (Vorgabe Patrik) — **alle** mitgelieferten Presets (≈ 150), Beispiele (134) und Shader-Vorlagen; Zuordnung alt → neu in `asset/nodepresets/README.md` (ältere Einträge dieser Liste nennen noch die alten Namen), Kommentare, Beschreibungen und Knotennamen darin ebenfalls englisch (74 Kommentar-/Beschreibungszeilen, 7 Knotennamen). **Wächter** gegen eine Liste bekannter deutscher Namen und Wörter (`tests/unit/UnitTests/deutsche_woerter.txt`: 147 alte Namen + 148 Wörter ohne englische Doppelgänger) plus Umlaute — prüft Dateinamen, Code-Kommentare, `description`/`name`; neue deutsche Wörter, die auffallen, kommen in die Liste. Presets für Milkdrop *Code* und *Parameter* inkl. *Old LumiViz Look (pre-S80)*; Feld-Wache im Ladbarkeitstest. Tests 676 |
 | 1.78.0 | 2026-09-29 | Session 82 — **§3 Kalibrierlauf 4090 komplett** (22 × 5 Formate × 2 Saaten, ersetzt die 610M-Tabelle; Kartenvergleich: ps_2-Presets kartenunabhängig, `Beauty` OK, `Neomtwister` näher; Vorbehalt Früh-MAE 0,000 = beide schwarz). Harness `--kerne ccd2` (Affinität, Kontrollmessung: Zahlen gleich, Tctl −3–4 °C). **Preset as Group** (Palette, `.avs`/`.milk`/`.lvfx` als Kopie in eine Host-Gruppe, „Aus Quelle neu laden", Wurzel-Einstellungen bleiben erhalten) — Sichttest in §4. „Import Browser" → **Effect Browser**. **Host Switcher** (Stufe Host-Gruppen des Szenen-Wechslers, §7) + eindeutige Gruppennamen + Songwechsel-Signal an den Renderer; Fix: eingeklappte Container bleiben nach Strukturänderungen zu. **Song-Slot für alle Skript-Knoten** (§6 `onChange`-Slot ✅; Engine-Slot 5, `ChainNode::songCode`, 79 Typen per Test). **Presetverweis** (Host-Gruppe mit `verweis`: nur Pfad gespeichert, Auflösung beim Laden mit Zyklus-Schutz, Palette „Preset Reference…"). Tests 665 |

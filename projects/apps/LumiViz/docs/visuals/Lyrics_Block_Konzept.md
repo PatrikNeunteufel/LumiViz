@@ -1,11 +1,12 @@
 # LumiViz — Lyrics-Block: Zeilen-Puffer, Wort-Ebene, Auslöser (Kurzkonzept)
 
-> **Version:** 0.2.0
-> **Datum:** 2026-10-02 (Session 90)
-> **Typ:** Konzept — **Entscheide gefallen (Patrik S90): L1 a · L2 b mit
-> fließender Größe, a schaltbar · L3 a · L4 a mit eigenen Feldern für die
-> Vorschau-Zeilen · L5 a**; L6 bis vor Stufe LB5 vertagt (freigegeben);
-> nichts gebaut
+> **Version:** 1.0.0
+> **Datum:** 2026-10-03 (Session 90)
+> **Typ:** Konzept — **alle Entscheide gefallen (Patrik S90):** L1 a · L2 b
+> mit fließender Größe, a schaltbar · L3 a · L4 a mit eigenen Feldern für die
+> Vorschau-Zeilen · L5 a · L6 alle a · B1 a → b über B2 a · B3 a1.
+> **Gebaut:** LB1, LB1b, LB2, LB3, B2 a, B3 a1, LB4, LB5-1, LB5-2.
+> **Offen:** LB5-3 (langsamer abspielen), Sichttests
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Lyrics: Zeilen-Puffer für den Trail,
