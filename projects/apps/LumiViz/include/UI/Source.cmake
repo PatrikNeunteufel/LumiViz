@@ -16,6 +16,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/MainWindow.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PresetSpeichern.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/PresetListen.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/StartPreset.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

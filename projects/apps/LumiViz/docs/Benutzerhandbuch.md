@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.75.0
+> **Version:** 1.76.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -327,6 +327,20 @@ Favoriten (Karaoke-Presets werden übersprungen). Das Panel muss
 dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
 Skript-Editor getippt wird, blättern die Tasten nicht, sondern verhalten sich
 normal.
+
+**Was läuft, und wo der Browser steht.** Der Effect Browser bleibt in dem
+Ordner, in den du ihn gestellt hast — auch über den Neustart, und auch wenn
+das laufende Preset von woanders kommt (Preset-Zeile, **File → Load**). Zeigt
+er den Ordner des laufenden Presets, ist es in der Liste markiert. Der Knopf
+**◎** neben der Ordnerwahl springt in den Ordner des laufenden Presets und
+markiert es; verdeckt ein Typfilter, die Suche oder die Ansicht **★ Favorites**
+es, löst der Knopf das. Geblättert wird immer in der Liste, die der Browser
+zeigt.
+
+**Beim Start** lädt LumiViz das Preset, das zuletzt lief — gleich, über
+welchen Weg es geladen oder gespeichert wurde. Lief zuletzt eine neue Kette
+ohne Namen, ist es das davor benannte; gibt es die Datei nicht mehr, das
+mitgelieferte Start-Preset.
 
 ### Musikwiedergabe
 
@@ -1634,6 +1648,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.76.0 | 2026-10-03 | Session 93. Presets durchblättern: der Start lädt das zuletzt laufende Preset, gleich über welchen Weg es kam; der Effect Browser bleibt in seinem Ordner und folgt dem laufenden Preset nur auf Knopfdruck (**◎**) |
 | 1.75.0 | 2026-10-03 | Session 93. §11: Rechtsklick im Baum der Effect Chain — **Add module** mit den **Favorites** und **Recently used** der Modul-Palette, **All modules…** öffnet sie |
 | 1.74.0 | 2026-10-03 | Session 93. §11 Host-Gruppen: Rechtsklick im Baum der Effect Chain — **Add preset** mit **Favorites** und **Recent**, fügt das Preset als Presetverweis ein |
 | 1.73.0 | 2026-10-03 | Session 93. §11 Milkdrop-Node: Rechtsklick — **Add custom wave**, **Add custom shape**, **Add sprite…** (mit Dateiauswahl); Feld **Image** des Sprites mit Knopf **…**, volle Pfade gelten; das Frame-Feld der Shape heißt **Frame (per instance)** |

@@ -69,8 +69,14 @@ public:
 
     [[nodiscard]] int preferredArea() const override;
 
-    /// Das Preset, das der naechste Start wieder laedt (leer = keins).
-    [[nodiscard]] const QString& letztesPreset() const { return m_lastPreset; }
+    /// Das laufende Preset, wie das Hauptfenster es gemeldet hat (leer = keins).
+    [[nodiscard]] const QString& aktivesPreset() const { return m_lastPreset; }
+    /// Ordner, den der Browser gerade zeigt.
+    [[nodiscard]] QString ordner() const { return m_dir.absolutePath(); }
+    /// In den Ordner des laufenden Presets wechseln und es markieren (S93,
+    /// Knopf ◎). Loest dafuer die Ansicht „★ Favorites", einen Typfilter oder
+    /// Suchtext, wenn sie es verdecken. false = nichts laeuft / Datei fehlt.
+    bool springeZumAktivenPreset();
 
     /// Per-item role Qt::UserRole+1 — what a double-click should do. Oeffentlich,
     /// weil es der Eingabe-Vertrag von nextPresetRow() ist.
@@ -163,19 +169,15 @@ private:
     /// Settings panel.
     void resetStoredDir();
 
-    /// Das zuletzt geladene Preset wieder laden (S73). Laeuft verzoegert aus
-    /// dem Konstruktor, damit der Visualizer schon steht, wenn das
-    /// Import-Event kommt.
-    void restoreLastPreset();
-
-    /// Das laufende Preset des Hauptfensters uebernehmen (S93) — merken,
-    /// sofort sichern, in der Liste markieren. Leer, unladbar oder nicht
-    /// vorhanden: das Gemerkte bleibt.
+    /// Das laufende Preset des Hauptfensters uebernehmen (S93) — merken und,
+    /// wenn die Liste es zeigt, markieren. Leer = nichts laeuft unter einem
+    /// Namen. Gesichert und beim Start geladen wird es NICHT hier
+    /// (UI/StartPreset.hpp); der Ordner des Browsers bleibt, wo er ist.
     void merkeLaufendesPreset(const QString& pfad);
+    void aktualisiereSprungKnopf();
 
-    /// Gemeinsamer Weg "Eintrag oeffnen" fuer Doppelklick, Blaettern-Hotkey
-    /// und die Wiederherstellung beim Start — eine Wahrheit, ein Ort, an dem
-    /// `m_lastPreset` fortgeschrieben wird.
+    /// Gemeinsamer Weg "Eintrag oeffnen" fuer Doppelklick und
+    /// Blaettern-Hotkey.
     void openEntry(int type, const QString& path);
 
     /// Das laufende Preset in der Liste markieren, ohne es zu laden.
@@ -184,6 +186,7 @@ private:
     // UI Elements
     QLineEdit* m_pPathEdit = nullptr;
     QPushButton* m_pUpButton = nullptr;
+    QPushButton* m_pJumpButton = nullptr;  ///< ◎ zum aktiven Preset (S93)
     QPushButton* m_pBrowseButton = nullptr;
     QComboBox* m_pFilterCombo = nullptr;
     QLineEdit* m_pSearchEdit = nullptr;

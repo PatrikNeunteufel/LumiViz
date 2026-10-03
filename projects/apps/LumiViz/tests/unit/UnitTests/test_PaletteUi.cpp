@@ -30,6 +30,7 @@
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "UI/PresetListen.hpp"
+#include "UI/StartPreset.hpp"
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
 #include "UI/managers/ShortcutManager.hpp"
@@ -2512,57 +2513,164 @@ TEST_CASE("PaletteUi S84 Panel: mehrere Dateien auf die Leerflaeche -> Verweise 
 }
 
 // Befund Patrik S93: nach dem Start lief nicht das zuletzt aktive Preset. Der
-// Effect Browser laedt beim Start, was ER sich gemerkt hat — und merkte nur,
-// was ueber ihn selbst geoeffnet wurde. Preset-Zeile, File → Load und Save As
-// gingen an ihm vorbei.
-TEST_CASE("PaletteUi S93: der Start laedt das zuletzt aktive Preset, egal ueber welchen Weg es kam")
+// Effect Browser lud beim Start, was ER sich gemerkt hatte — und merkte nur,
+// was ueber ihn selbst geoeffnet wurde. Seit S93 (Entscheid 1a) sichert und
+// laedt das Hauptfenster (UI/StartPreset.hpp); der Browser markiert nur noch.
+TEST_CASE("PaletteUi S93: das laufende Preset ueber den Neustart — sichern, waehlen, laden")
 {
     UiUmgebung env;
+    namespace sp = lumi::ui::startpreset;
+    QSettings().remove(sp::schluessel());
+    QSettings().remove(sp::alterSchluessel());
     QTemporaryDir dir;
     REQUIRE(dir.isValid());
-    const QString ueberBrowser = schreibeLvfx(dir, QStringLiteral("UeberBrowser.lvfx"));
-    const QString ueberZeile = schreibeLvfx(dir, QStringLiteral("UeberZeile.lvfx"));
+    const QString kette = schreibeLvfx(dir, QStringLiteral("Kette.lvfx"));
+    const QString alt = schreibeLvfx(dir, QStringLiteral("AusDemBrowser.lvfx"));
+    const QString vorgabe = schreibeLvfx(dir, QStringLiteral("Mitgeliefert.lvfx"));
+    const QString fehlt = dir.filePath(QStringLiteral("Fehlt.lvfx"));
+
+    // --- nichts gesichert: die Vorgabe; gibt es auch die nicht: nichts
+    CHECK(QFileInfo(sp::waehle(vorgabe)) == QFileInfo(vorgabe));
+    CHECK(sp::waehle(fehlt).isEmpty());
+    CHECK(sp::waehle(QString()).isEmpty());
+
+    // --- was der Effect Browser vor S93 gemerkt hatte, gilt weiter
+    QSettings().setValue(sp::alterSchluessel(), alt);
+    CHECK(QFileInfo(sp::waehle(vorgabe)) == QFileInfo(alt));
+
+    // --- gesichert gewinnt; leer (neue Kette ohne Namen) aendert nichts
+    sp::sichere(kette);
+    CHECK(QFileInfo(sp::waehle(vorgabe)) == QFileInfo(kette));
+    sp::sichere(QString());
+    CHECK(QFileInfo(sp::gesichert()) == QFileInfo(kette));
+
+    // --- die gesicherte Datei ist weg: der alte Eintrag, dann die Vorgabe
+    sp::sichere(fehlt);
+    CHECK(QFileInfo(sp::waehle(vorgabe)) == QFileInfo(alt));
+    QSettings().remove(sp::alterSchluessel());
+    CHECK(QFileInfo(sp::waehle(vorgabe)) == QFileInfo(vorgabe));
+
+    // --- laden: je Endung der richtige Weg, AVS und MilkDrop ohne Rueckfrage
     ServiceContainer services;
     services.registerInstance<IEventBus>(std::make_unique<EventBus>());
     IEventBus* bus = services.tryResolve<IEventBus>();
-    {
-        ImportBrowserPanel browser(services);
-        QCoreApplication::processEvents();
-        const QString anfang = browser.letztesPreset();
+    QStringList wege;
+    auto a1 = bus->subscribeScoped<LoadEffectChainEvent>([&wege](const LoadEffectChainEvent& e) {
+        wege << QStringLiteral("kette:") + QString::fromStdString(e.path);
+    });
+    auto a2 = bus->subscribeScoped<ImportAvsPresetEvent>([&wege](const ImportAvsPresetEvent& e) {
+        wege << QString::fromLatin1(e.confirmed ? "avs+:" : "avs?:") + QString::fromStdString(e.path);
+    });
+    auto a3 = bus->subscribeScoped<ImportMilkPresetEvent>([&wege](const ImportMilkPresetEvent& e) {
+        wege << QString::fromLatin1(e.confirmed ? "milk+:" : "milk?:") + QString::fromStdString(e.path);
+    });
+    sp::lade(*bus, QStringLiteral("C:/x/a.lvfx2"));
+    sp::lade(*bus, QStringLiteral("C:/x/b.AVS"));
+    sp::lade(*bus, QStringLiteral("C:/x/c.milk"));
+    REQUIRE(wege.size() == 3);
+    CHECK(wege[0] == QStringLiteral("kette:C:/x/a.lvfx2"));
+    CHECK(wege[1] == QStringLiteral("avs+:C:/x/b.AVS"));
+    CHECK(wege[2] == QStringLiteral("milk+:C:/x/c.milk"));
 
-        // --- das Hauptfenster meldet ein neues laufendes Preset (so melden es
-        //     Preset-Zeile, File → Load, Save As und der Browser selbst)
-        bus->publish(CurrentPresetChangedEvent{ueberBrowser.toStdString()});
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberBrowser));
-        bus->publish(CurrentPresetChangedEvent{ueberZeile.toStdString()});
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+    QSettings().remove(sp::schluessel());
+}
 
-        // (das Panel wurde hier nie gezeigt — es folgt also auch unsichtbar)
+// S93 (Entscheid Patrik): der Effect Browser laedt beim Start nichts mehr und
+// wechselt nicht von selbst dorthin, woher das laufende Preset kommt. Zeigt er
+// dessen Ordner, markiert er es; der Knopf ◎ springt hin.
+TEST_CASE("PaletteUi S93: Effect Browser markiert das laufende Preset, folgt ihm aber nur auf Knopfdruck")
+{
+    UiUmgebung env;
+    lumi::ui::PresetListen::setzeLaufendesKettenPreset(QString());
+    QTemporaryDir hier, dort;
+    REQUIRE(hier.isValid());
+    REQUIRE(dort.isValid());
+    const QString a = schreibeLvfx(hier, QStringLiteral("A.lvfx"));
+    const QString b = schreibeLvfx(hier, QStringLiteral("B.lvfx"));
+    const QString fern = schreibeLvfx(dort, QStringLiteral("Fern.lvfx"));
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    int geladen = 0;
+    auto abo = bus->subscribeScoped<LoadEffectChainEvent>(
+        [&geladen](const LoadEffectChainEvent&) { ++geladen; });
 
-        // --- neue Kette (leer), Karaoke-Preset, fehlende Datei: das Gemerkte bleibt
-        bus->publish(CurrentPresetChangedEvent{std::string()});
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
-        bus->publish(CurrentPresetChangedEvent{(dir.path() + "/Abend.lvkar").toStdString()});
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
-        bus->publish(CurrentPresetChangedEvent{(dir.path() + "/Fehlt.lvfx").toStdString()});
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
-        CHECK(QFileInfo(anfang) != QFileInfo(ueberZeile));
+    ImportBrowserPanel browser(services);
+    zeigen(browser);
+    QCoreApplication::processEvents();
+    CHECK(geladen == 0);  // der Browser wirft beim Start nichts mehr an
+    CHECK(browser.aktivesPreset().isEmpty());
 
-        // --- es steht sofort in den Einstellungen, nicht erst beim Beenden:
-        //     ein zweiter Browser liest es, waehrend der erste noch lebt
-        ImportBrowserPanel zweiter(services);
-        CHECK(QFileInfo(zweiter.letztesPreset()) == QFileInfo(ueberZeile));
-    }
-    // --- der naechste Start: ein neuer Browser will genau dieses Preset laden
-    {
-        std::string geladen;
-        auto abo = bus->subscribeScoped<LoadEffectChainEvent>(
-            [&geladen](const LoadEffectChainEvent& e) { geladen = e.path; });
-        ImportBrowserPanel browser(services);
-        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
-        QCoreApplication::processEvents();  // restoreLastPreset laeuft verzoegert
-        CHECK(QFileInfo(QString::fromStdString(geladen)) == QFileInfo(ueberZeile));
-    }
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+    REQUIRE(liste != nullptr);
+    auto* sprung = browser.findChild<QPushButton*>(QStringLiteral("effectBrowserJump"));
+    REQUIRE(sprung != nullptr);
+    CHECK_FALSE(sprung->isEnabled());  // nichts laeuft
+    const auto markiert = [liste] {
+        const QListWidgetItem* it = liste->currentItem();
+        return it != nullptr ? QFileInfo(it->data(Qt::UserRole).toString()).fileName() : QString();
+    };
+    pfad->setText(hier.path());
+    emit pfad->returnPressed();
+    REQUIRE(QDir(browser.ordner()) == QDir(hier.path()));
+
+    // --- das laufende Preset liegt im gezeigten Ordner: markiert, egal woher es kam
+    bus->publish(CurrentPresetChangedEvent{b.toStdString()});
+    CHECK(QFileInfo(browser.aktivesPreset()) == QFileInfo(b));
+    CHECK(markiert() == QStringLiteral("B.lvfx"));
+    CHECK(sprung->isEnabled());
+    bus->publish(CurrentPresetChangedEvent{a.toStdString()});
+    CHECK(markiert() == QStringLiteral("A.lvfx"));
+
+    // --- es kommt aus einem ANDEREN Ordner: der Browser bleibt, wo er ist
+    bus->publish(CurrentPresetChangedEvent{fern.toStdString()});
+    CHECK(QFileInfo(browser.aktivesPreset()) == QFileInfo(fern));
+    CHECK(QDir(browser.ordner()) == QDir(hier.path()));
+
+    // --- der Knopf springt hin und markiert
+    sprung->click();
+    CHECK(QDir(browser.ordner()) == QDir(dort.path()));
+    CHECK(markiert() == QStringLiteral("Fern.lvfx"));
+
+    // --- zurueck im alten Ordner wird nichts Falsches markiert; ein Filter,
+    //     der das aktive Preset verdeckt, wird beim Sprung geloest
+    pfad->setText(hier.path());
+    emit pfad->returnPressed();
+    CHECK(markiert() != QStringLiteral("Fern.lvfx"));
+    auto* filter = browser.findChild<QComboBox*>(QStringLiteral("effectBrowserFilter"));
+    REQUIRE(filter != nullptr);
+    filter->setCurrentIndex(0);  // nur AVS
+    REQUIRE(browser.springeZumAktivenPreset());
+    CHECK(QDir(browser.ordner()) == QDir(dort.path()));
+    CHECK(markiert() == QStringLiteral("Fern.lvfx"));
+
+    // --- aus der Ansicht ★ Favorites heraus (das aktive ist kein Favorit)
+    filter->setCurrentIndex(4);
+    pfad->setText(hier.path());
+    REQUIRE(browser.springeZumAktivenPreset());
+    CHECK(filter->currentIndex() != 4);
+    CHECK(markiert() == QStringLiteral("Fern.lvfx"));
+
+    // --- neue Kette ohne Namen: nichts ist markiert, der Knopf ruht
+    bus->publish(CurrentPresetChangedEvent{std::string()});
+    CHECK(browser.aktivesPreset().isEmpty());
+    CHECK(liste->currentItem() == nullptr);
+    CHECK_FALSE(sprung->isEnabled());
+    CHECK_FALSE(browser.springeZumAktivenPreset());
+
+    // --- der Ordner des Browsers ist sofort gesichert: ein zweiter beginnt dort,
+    //     nicht im Ordner eines laufenden Presets
+    lumi::ui::PresetListen::setzeLaufendesKettenPreset(a);
+    ImportBrowserPanel zweiter(services);
+    CHECK(QDir(zweiter.ordner()) == QDir(dort.path()));
+    CHECK(QFileInfo(zweiter.aktivesPreset()) == QFileInfo(a));
+    QCoreApplication::processEvents();
+    CHECK(geladen == 0);
+    lumi::ui::PresetListen::setzeLaufendesKettenPreset(QString());
 }
 
 TEST_CASE("PaletteUi S84: Effect Browser gibt Presets als Datei-URL mit, Ordner nicht")

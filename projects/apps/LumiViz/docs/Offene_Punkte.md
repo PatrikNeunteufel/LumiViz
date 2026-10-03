@@ -2213,6 +2213,22 @@ Idee Preset-Warmup/Pre-Roll.
   Anknüpfungen: Presetverweis (Visual-Clips als Verweis), Host-Gruppen-
   Crossfade (Kurven), Visual-Playlist P2, Idee „Video aufnehmen" (ein
   Timeline-Arrangement offline rendern).
+- **Blättern und Timeline (Notiz Patrik S93, nichts gebaut):**
+  - **Befund:** Bild ab / Bild auf blättern in der Liste, die der Effect
+    Browser zeigt, ab der dort markierten Zeile — nicht ab dem laufenden
+    Preset. Kommt das laufende Preset aus einem anderen Ordner (Preset-Zeile,
+    File → Load), geht das nächste Blättern im Ordner des Browsers weiter.
+    **Entscheid Patrik S93 (2a):** bleibt so bis zum Timeline-Konzept; der
+    Browser wechselt nicht von selbst in den Ordner des laufenden Presets,
+    dafür gibt es seit S93 den Knopf ◎.
+  - **Offene Frage für das Konzept:** sollen Bild ab / Bild auf und die
+    Kürzel für nächstes / voriges Lied bei aktiver Timeline überhaupt wirken?
+    Idee Patrik: sie lassen sich bei Timeline **sperren**.
+  - **Vorarbeit S93:** das laufende Preset sichert und lädt das Hauptfenster
+    (`UI/StartPreset.hpp`, `MainWindow::setzeLaufendesPreset`), nicht mehr
+    der Effect Browser. Eine Timeline setzt das laufende Preset über denselben
+    Aufruf. Offen für das Konzept: was der Start wiederherstellt, wenn eine
+    Timeline lief (ein Preset oder die Abfolge samt Position).
 - **Ideen Patrik S88 zum Timeline-Panel** (Notiz, nichts gebaut; Umfang für
   die Konzept-Session):
   - **Visual-Kanäle:** mindestens zwei, weitere lassen sich hinzufügen.

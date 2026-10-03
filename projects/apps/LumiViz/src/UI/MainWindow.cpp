@@ -28,6 +28,7 @@
 #include "UI/panels/KaraokePanel.hpp"                   // setzeKaraokeAn (KE4)
 #include "UI/PresetSpeichern.hpp"                       // Save gegen Save As (S89)
 #include "UI/PresetListen.hpp"                          // Favoriten / zuletzt (S89)
+#include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -179,6 +180,19 @@ MainWindow::MainWindow(QWidget* parent)
         if (auto* pPlayer = m_pServices->tryResolve<IAudioPlayer>())
             lumi::audio::speichereWiederaufnahme(lumi::audio::standZumBeenden(*pPlayer));
         saveSessionPlaylist();
+    });
+
+    // S93: das zuletzt aktive Preset wieder anwerfen — verzoegert ueber die
+    // Ereignisschleife, damit der Visualizer steht, wenn das Lade-Ereignis
+    // kommt. Bis S93 tat das der Effect Browser aus seinem Konstruktor, mit
+    // dem, was ER sich gemerkt hatte.
+    QTimer::singleShot(0, this, [this]() {
+        auto* bus = m_pServices->tryResolve<IEventBus>();
+        if (bus == nullptr) return;
+        const QString pfad = lumi::ui::startpreset::waehle(lumi::ui::startpreset::mitgeliefert());
+        if (pfad.isEmpty()) return;
+        BasicLogger::logInfo("Start: restoring last preset: " + pfad.toStdString());
+        lumi::ui::startpreset::lade(*bus, pfad);
     });
 
     // S88 „Resume playback" (Wunsch Patrik): wurde beim letzten Mal waehrend
@@ -1051,6 +1065,10 @@ void MainWindow::setzeLaufendesPreset(const QString& absolutePath)
 {
     if (m_pScreenshotManager != nullptr) m_pScreenshotManager->setCurrentPreset(absolutePath);
     lumi::ui::PresetListen::setzeLaufendesKettenPreset(absolutePath);
+    // S93: fuer den naechsten Start festhalten — HIER, weil jeder Ladeweg
+    // hier durchkommt (Browser, Preset-Zeile, Load, Save As, Import). Leer
+    // (neue Kette) laesst das zuletzt benannte Preset stehen.
+    lumi::ui::startpreset::sichere(absolutePath);
     // S89: geladen, importiert oder gespeichert — an die Spitze von „zuletzt",
     // und die Preset-Zeile des Effect-Chain-Panels zieht nach
     if (!absolutePath.isEmpty())
