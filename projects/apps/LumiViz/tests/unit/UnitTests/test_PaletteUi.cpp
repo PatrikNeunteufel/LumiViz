@@ -1781,6 +1781,96 @@ TEST_CASE("PaletteUi Panel S93: Kontextmenue am Milkdrop-Knoten fuegt Wave, Shap
     CHECK(milk().shapes.size() == formen + 1);
 }
 
+// S93 (Entscheid Patrik 2a): Favoriten und zuletzt benutzte Presets stehen im
+// Kontextmenue des Kettenbaums und kommen als Presetverweis IN die Kette.
+TEST_CASE("PaletteUi Panel S93: Add preset im Kontextmenue fuegt Favoriten und Zuletzt als Presetverweis ein")
+{
+    UiUmgebung env;
+    using lumi::multieffect::HostGroupParams;
+    using lumi::ui::PresetArt;
+    using L = lumi::ui::PresetListen;
+    for (const QString& alt : L::favoriten(PresetArt::Kette)) L::setzeFavorit(PresetArt::Kette, alt, false);
+    for (const QString& alt : L::zuletzt(PresetArt::Kette)) L::vergiss(PresetArt::Kette, alt);
+
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString liebling = tmp.path() + QStringLiteral("/Liebling.lvfx2");
+    const QString neulich = tmp.path() + QStringLiteral("/Neulich.lvfx2");
+    const QString weg = tmp.path() + QStringLiteral("/Weg.lvfx2");
+    {
+        ChainNode kette;
+        kette.params = lumi::multieffect::ListParams{};
+        kette.children.push_back(PanelUmgebung::knoten("Clear"));
+        REQUIRE(lumi::multieffect::saveChainToFile(kette, liebling));
+        REQUIRE(lumi::multieffect::saveChainToFile(kette, neulich));
+    }
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    REQUIRE(p.root().children.size() == 3);
+
+    // --- ohne Favoriten und Zuletzt: das Untermenue ist da, aber nichts zum Waehlen
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {0});
+        auto* presets = menu.findChild<QMenu*>(QStringLiteral("chainMenuAddPreset"));
+        REQUIRE(presets != nullptr);
+        CHECK(presets->findChildren<QAction*>(QStringLiteral("chainMenuAddPresetEntry")).isEmpty());
+    }
+
+    L::setzeFavorit(PresetArt::Kette, liebling, true);
+    L::merkeBenutzt(PresetArt::Kette, weg);  // gibt es nicht (mehr)
+    L::merkeBenutzt(PresetArt::Kette, neulich);
+
+    // --- Favorit zuerst, dann Zuletzt (juengstes zuerst); die fehlende Datei ist grau
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {0});
+        auto* presets = menu.findChild<QMenu*>(QStringLiteral("chainMenuAddPreset"));
+        REQUIRE(presets != nullptr);
+        const QList<QAction*> namen =
+            presets->findChildren<QAction*>(QStringLiteral("chainMenuAddPresetEntry"));
+        REQUIRE(namen.size() == 3);
+        CHECK(namen[0]->text() == QStringLiteral("Liebling"));
+        CHECK(namen[1]->text() == QStringLiteral("Neulich"));
+        CHECK(namen[2]->text() == QStringLiteral("Weg"));
+        CHECK(namen[0]->isEnabled());
+        CHECK_FALSE(namen[2]->isEnabled());
+        // an einem Knoten: direkt darunter
+        namen[0]->trigger();
+        QCoreApplication::processEvents();
+    }
+    REQUIRE(p.root().children.size() == 4);
+    {
+        const ChainNode& neu = p.root().children[1];
+        REQUIRE(std::holds_alternative<HostGroupParams>(neu.params));
+        const auto& hg = std::get<HostGroupParams>(neu.params);
+        CHECK(hg.verweis);
+        CHECK(QFileInfo(QString::fromStdString(hg.sourceFile)) == QFileInfo(liebling));
+        CHECK(neu.displayName == "Liebling");
+        CHECK(neu.children.size() == 1);
+    }
+
+    // --- freie Flaeche: ans Ende; an einer Effect List: hinein
+    REQUIRE(p.panel->fuegePresetVerweisEin(neulich, {}));
+    REQUIRE(p.root().children.size() == 5);
+    CHECK(p.root().children.back().displayName == "Neulich");
+    REQUIRE(std::holds_alternative<lumi::multieffect::ListParams>(p.root().children[2].params));
+    const std::size_t inListe = p.root().children[2].children.size();
+    REQUIRE(p.panel->fuegePresetVerweisEin(neulich, {2}));
+    CHECK(p.root().children[2].children.size() == inListe + 1);
+    CHECK(p.root().children.size() == 5);
+
+    // --- Einfuegen ist kein Laden: die Listen bleiben, wie sie waren
+    CHECK(L::zuletzt(PresetArt::Kette).size() == 2);
+    CHECK(L::position(L::zuletzt(PresetArt::Kette), neulich) == 0);
+    CHECK_FALSE(p.panel->fuegePresetVerweisEin(QString(), {}));
+
+    L::setzeFavorit(PresetArt::Kette, liebling, false);
+    L::vergiss(PresetArt::Kette, neulich);
+    L::vergiss(PresetArt::Kette, weg);
+}
+
 TEST_CASE("PaletteUi C1: im Shape-Code ist b gefaerbt wie r, g, r2, g2, b2")
 {
     UiUmgebung env;

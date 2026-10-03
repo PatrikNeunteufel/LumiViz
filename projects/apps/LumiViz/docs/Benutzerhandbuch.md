@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.73.0
+> **Version:** 1.74.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1347,6 +1347,13 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   Leerfläche = ans Ende. Mehrere Dateien auf einmal landen in ihrer
   Reihenfolge. Ordner lassen sich nicht ziehen; die Datei selbst wird dabei
   nie verschoben. Innerhalb einer Host-Gruppe gilt die Tiefenregel wie sonst.
+- **Favoriten und zuletzt Benutztes per Rechtsklick:** im Baum der Effect
+  Chain führt das Kontextmenü **Add preset** die **Favorites** (★ der
+  Preset-Zeile) und die zehn **Recent**. Ein Klick fügt das Preset als
+  Presetverweis ein — an einer Liste hinein, an einem anderen Knoten direkt
+  darunter, auf der freien Fläche ans Ende. Die Preset-Zeile über dem Baum
+  **lädt** dieselben Einträge und ersetzt die Kette; das Kontextmenü setzt sie
+  **in** die Kette. Eine Datei, die es nicht mehr gibt, steht grau da.
 - **Namen sind eindeutig:** Der Name einer Gruppe ist ihre ID für den Host
   Switcher. Eine zweite „Host Group" heißt deshalb automatisch „Host Group 2"
   (auch beim Klonen und beim Laden älterer Dateien). Benennst du eine Gruppe
@@ -1620,6 +1627,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.74.0 | 2026-10-03 | Session 93. §11 Host-Gruppen: Rechtsklick im Baum der Effect Chain — **Add preset** mit **Favorites** und **Recent**, fügt das Preset als Presetverweis ein |
 | 1.73.0 | 2026-10-03 | Session 93. §11 Milkdrop-Node: Rechtsklick — **Add custom wave**, **Add custom shape**, **Add sprite…** (mit Dateiauswahl); Feld **Image** des Sprites mit Knopf **…**, volle Pfade gelten; das Frame-Feld der Shape heißt **Frame (per instance)** |
 | 1.72.0 | 2026-10-03 | Session 92. Karaoke: der Doppelklick auf ein `.lvkar` im Effect Browser schaltet die Ebene ein; `current.lvkar` steht dort nicht mehr; **Ctrl+K** ruht in Textfeldern und im Skript-Editor |
 | 1.71.0 | 2026-10-03 | Session 92. §11 Trail-Presets: eigenes Icon (Marke mit Schweif) — im Baum des Panels Effect Chain trägt es jede Effect List, die einen Lyrics Trail enthält |

@@ -16,6 +16,7 @@
 #include "UI/panels/EffectPaletteWindow.hpp"              // Palettenfenster (S79)
 #include "UI/panels/FieldDocs.hpp"                       // Tooltip je Feld (§10)
 #include "UI/panels/ParameterBaum.hpp"                   // generischer Parameter-Baum (S72)
+#include "UI/PresetListen.hpp"                           // Favoriten/Zuletzt im Kettenmenue (S93)
 #include "UI/widgets/DateiDrag.hpp"                       // Preset-Dateien im Drag (S84)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
@@ -2081,6 +2082,38 @@ bool MultiEffectPanel::fuegeTrailPresetEin(const QString& name, const QList<int>
     return true;
 }
 
+bool MultiEffectPanel::fuegePresetVerweisEin(const QString& datei, const QList<int>& ziel)
+{
+    if (m_host == nullptr || m_mutex == nullptr || m_baum != Baum::Kette) return false;
+    if (datei.isEmpty()) return false;
+    // Der Paletteneintrag „Preset Reference…" ist der eine Weg, einen Verweis
+    // anzulegen (wie onPresetFileDrop) — hier bekommt er nur die Datei vor.
+    const auto& palette = effectPalette();
+    int verweisIndex = -1;
+    for (size_t i = 0; i < palette.size() && verweisIndex < 0; ++i)
+        if (palette[i].fromFile && palette[i].asReference) verweisIndex = static_cast<int>(i);
+    if (verweisIndex < 0) return false;
+
+    // wohin: wie fuegeTrailPresetEin — in eine Liste hinein, sonst darunter
+    const QList<int> sel = splitMilkPath(ziel).nodePath;
+    QList<int> elternPfad;
+    int pos = -1;  // -1 = anhaengen
+    {
+        QMutexLocker lock(m_mutex);
+        const ChainNode* target = nodeAtPath(sel);
+        if (target != nullptr && target->acceptsChildren())
+        {
+            elternPfad = sel;
+        }
+        else if (!sel.isEmpty())
+        {
+            elternPfad = sel;
+            pos = elternPfad.takeLast() + 1;
+        }
+    }
+    return insertPaletteNode(verweisIndex, elternPfad, pos, datei);
+}
+
 bool MultiEffectPanel::speichereAlsTrailPreset(const QList<int>& path, const QString& name)
 {
     namespace tp = lumi::multieffect::trailpresets;
@@ -2154,6 +2187,41 @@ void MultiEffectPanel::fuelleKettenMenue(QMenu& menu, const QList<int>& klick)
         });
         menu.setToolTipsVisible(true);
         menu.addSeparator();
+    }
+    // S93 (Entscheid Patrik 2a): Favoriten und zuletzt benutzte Presets als
+    // Presetverweis an die Klickstelle — die Preset-Zeile darueber LAEDT sie,
+    // hier kommen sie IN die Kette.
+    {
+        using lumi::ui::PresetArt;
+        using lumi::ui::PresetListen;
+        QMenu* presets = menu.addMenu(tr("Add preset"));
+        presets->setObjectName(QStringLiteral("chainMenuAddPreset"));
+        presets->setToolTipsVisible(true);
+        const QStringList favoriten = PresetListen::favoriten(PresetArt::Kette);
+        const QStringList zuletzt = PresetListen::zuletzt(PresetArt::Kette);
+        const auto fuelle = [this, presets, path](const QString& titel, const QStringList& dateien) {
+            if (dateien.isEmpty()) return;
+            presets->addSection(titel);
+            for (const QString& datei : dateien)
+            {
+                QAction* a = presets->addAction(QFileInfo(datei).completeBaseName());
+                a->setObjectName(QStringLiteral("chainMenuAddPresetEntry"));
+                const bool da = QFileInfo::exists(datei);
+                a->setEnabled(da);
+                a->setToolTip(da ? tr("Adds this preset as a preset reference:\n%1")
+                                       .arg(QDir::toNativeSeparators(datei))
+                                 : tr("File not found:\n%1").arg(QDir::toNativeSeparators(datei)));
+                connect(a, &QAction::triggered, this,
+                        [this, datei, path] { (void)fuegePresetVerweisEin(datei, path); });
+            }
+        };
+        fuelle(tr("Favorites"), favoriten);
+        fuelle(tr("Recent"), zuletzt);
+        if (favoriten.isEmpty() && zuletzt.isEmpty())
+        {
+            QAction* leer = presets->addAction(tr("(no favorites or recent presets yet)"));
+            leer->setEnabled(false);
+        }
     }
     if (istListe)
     {

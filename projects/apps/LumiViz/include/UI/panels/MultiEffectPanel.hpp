@@ -163,8 +163,14 @@ public:
     /// Flaeche): „Save as trail preset…" nur an einer Effect List, „Add trail
     /// preset" mit allen Trail-Presets immer. An einem Milkdrop-Knoten, einer
     /// seiner Sektionen oder Elemente (S93) zuerst „Add custom wave", „Add
-    /// custom shape", „Add sprite…".
+    /// custom shape", „Add sprite…". Immer (S93): „Add preset" mit den
+    /// Favoriten und den zuletzt benutzten Presets der Kette.
     void fuelleKettenMenue(class QMenu& menu, const QList<int>& path);
+    /// Preset-Datei als Presetverweis in die Kette einfuegen (S93) — derselbe
+    /// Weg wie das Ziehen aus dem Effect Browser, der Ort wie bei
+    /// `fuegeTrailPresetEin`. false = kein Kettenbaum, Datei unlesbar oder
+    /// Tiefenregel (dann hat der Nutzer eine Meldung gesehen).
+    bool fuegePresetVerweisEin(const QString& datei, const QList<int>& ziel);
     /// Wave, Shape oder Sprite in den Milkdrop-Knoten an `anker` legen (der
     /// Knoten selbst, eine Sektion oder ein Element) und das Neue markieren.
     /// `bild` (nur Sprite): Bilddatei, wird als Image eingetragen. false =
