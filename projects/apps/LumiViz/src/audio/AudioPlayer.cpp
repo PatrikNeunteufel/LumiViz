@@ -40,7 +40,10 @@ struct AudioPlayer::Impl
     float volume = 1.0f;
     float volumeBeforeMute = 1.0f;
     bool muted = false;
-    
+
+    // Tempo (S91): 1.0 = wie aufgenommen
+    float tempo = 1.0f;
+
     // Playlist integration
     IPlaylist* playlist = nullptr;
     int playlistIndex = -1;
@@ -140,7 +143,10 @@ bool AudioPlayer::load(const QString& filePath)
     
     // Apply current volume
     m_impl->engine.setVolume(m_impl->currentStream, m_impl->muted ? 0.0f : m_impl->volume);
-    
+    // S91: ein neuer Stream laeuft mit der Rate seiner Datei — das Tempo des
+    // Players muss ihm eigens gesetzt werden, sonst stimmen beide nicht ueberein
+    if (m_impl->tempo != 1.0f) m_impl->engine.setTempo(m_impl->currentStream, m_impl->tempo);
+
     setState(PlaybackState::Stopped);
     publishTrackChanged();
     
@@ -393,6 +399,31 @@ void AudioPlayer::setMuted(bool muted)
 void AudioPlayer::toggleMute()
 {
     setMuted(!m_impl->muted);
+}
+
+// =============================================================================
+// Tempo
+// =============================================================================
+
+float AudioPlayer::tempo() const
+{
+    return m_impl->tempo;
+}
+
+void AudioPlayer::setTempo(float tempo)
+{
+    tempo = std::clamp(tempo, 0.25f, 2.0f);
+    if (m_impl->tempo == tempo) return;
+
+    m_impl->tempo = tempo;
+    if (m_impl->currentStream != INVALID_STREAM)
+    {
+        m_impl->engine.setTempo(m_impl->currentStream, tempo);
+    }
+
+    PlaybackTempoEvent event;
+    event.tempo = tempo;
+    m_impl->eventBus.publish(event);
 }
 
 // =============================================================================

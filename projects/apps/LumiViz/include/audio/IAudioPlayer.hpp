@@ -175,6 +175,19 @@ public:
     virtual void toggleMute() = 0;
 
     // =========================================================================
+    // Tempo (S91, Lyrics Sync)
+    // =========================================================================
+
+    /**
+     * @brief Abspieltempo: 1.0 = wie aufgenommen, 0.5 = halb so schnell.
+     *
+     * Geht ueber die Abtastrate (der Ton wird tiefer). Positionen bleiben Zeit
+     * im Titel. Meldet die Aenderung als `PlaybackTempoEvent`.
+     */
+    [[nodiscard]] virtual float tempo() const { return 1.0f; }
+    virtual void setTempo(float /*tempo*/) {}
+
+    // =========================================================================
     // State Queries
     // =========================================================================
 

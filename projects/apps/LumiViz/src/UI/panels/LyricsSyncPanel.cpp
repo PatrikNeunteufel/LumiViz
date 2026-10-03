@@ -31,6 +31,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QSignalBlocker>
+#include <QSlider>
 #include <QSpinBox>
 #include <QTableWidget>
 #include <QTimer>
@@ -322,6 +323,27 @@ void LyricsSyncPanel::zeigeTitelVersatz()
     m_versatzFeld->setValue(static_cast<int>(m_titelVersatzMs));
 }
 
+void LyricsSyncPanel::setzeTempo(int prozent)
+{
+    prozent = std::clamp(prozent, kTempoMin, 100);
+    {
+        const QSignalBlocker ruhe(m_tempo);
+        m_tempo->setValue(prozent);
+    }
+    m_tempoText->setText(QStringLiteral("%1 %").arg(prozent));
+    wendeTempoAn();
+}
+
+void LyricsSyncPanel::wendeTempoAn()
+{
+    // Entscheid T1 a (S91): das Tempo gilt nur, solange das Panel sichtbar ist
+    // — langsame Musik und sichtbarer Schieber fallen immer zusammen. Verborgen
+    // spielt der Player mit 100 %; der Schieber behaelt seinen Wert.
+    auto* player = services().tryResolve<IAudioPlayer>();
+    if (player == nullptr) return;
+    player->setTempo(isActive() ? static_cast<float>(m_tempo->value()) / 100.0f : 1.0f);
+}
+
 int LyricsSyncPanel::preferredArea() const
 {
     return Qt::RightDockWidgetArea;
@@ -503,6 +525,26 @@ void LyricsSyncPanel::setupUI()
     reihe2->addStretch(1);
     reihe2->addWidget(m_folgen);
     vl->addLayout(reihe2);
+
+    // S91 (LB5-3, Entscheid L6-4 a): langsamer abspielen zum Klopfen
+    auto* reiheTempo = new QHBoxLayout();
+    m_tempo = new QSlider(Qt::Horizontal, this);
+    m_tempo->setObjectName(QStringLiteral("lyricsSyncSpeed"));
+    m_tempo->setRange(kTempoMin, 100);
+    m_tempo->setSingleStep(5);
+    m_tempo->setPageStep(10);
+    m_tempo->setValue(100);
+    m_tempo->setToolTip(
+        tr("Playback speed for tapping: 50–100 %. Slower playback also lowers the pitch. The "
+           "times you tap stay times in the track — they fit at normal speed. Applies only while "
+           "this panel is visible; hidden, the track plays at 100 %."));
+    m_tempoText = new QLabel(QStringLiteral("100 %"), this);
+    m_tempoText->setObjectName(QStringLiteral("lyricsSyncSpeedText"));
+    reiheTempo->addWidget(new QLabel(tr("Speed:"), this));
+    reiheTempo->addWidget(m_tempo, 1);
+    reiheTempo->addWidget(m_tempoText);
+    vl->addLayout(reiheTempo);
+    connect(m_tempo, &QSlider::valueChanged, this, &LyricsSyncPanel::setzeTempo);
 
     m_stand = new QLabel(this);
     m_stand->setObjectName(QStringLiteral("lyricsSyncStatus"));
@@ -1103,12 +1145,14 @@ void LyricsSyncPanel::uebernimmLaufenden(bool erzwungen)
 void LyricsSyncPanel::onActivate()
 {
     uebernimmLaufenden(false);
+    wendeTempoAn();  // wieder sichtbar: der Wert des Schiebers gilt wieder
     m_uhr->start();
 }
 
 void LyricsSyncPanel::onDeactivate()
 {
     m_uhr->stop();
+    wendeTempoAn();  // verborgen: der Player spielt mit 100 %
 }
 
 bool LyricsSyncPanel::eventFilter(QObject* watched, QEvent* event)

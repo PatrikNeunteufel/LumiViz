@@ -522,6 +522,21 @@ bool BassEngine::setVolume(AudioStreamHandle stream, float volume)
     return BASS_ChannelSetAttribute(static_cast<HSTREAM>(stream), BASS_ATTRIB_VOL, volume) != 0;
 }
 
+bool BassEngine::setTempo(AudioStreamHandle stream, float faktor)
+{
+    if (stream == INVALID_STREAM) return false;
+
+    // Ueber die Abtastrate (Entscheid L6-4 a, ohne bass_fx): der Ton wird mit
+    // tiefer. Die Rate der Datei steht in der Kanal-Info und bleibt dort —
+    // deshalb rechnet BASS_ChannelBytes2Seconds weiter in Zeit des Titels.
+    BASS_CHANNELINFO info{};
+    if (BASS_ChannelGetInfo(static_cast<HSTREAM>(stream), &info) == 0 || info.freq == 0)
+        return false;
+    faktor = std::clamp(faktor, 0.25f, 2.0f);
+    return BASS_ChannelSetAttribute(static_cast<HSTREAM>(stream), BASS_ATTRIB_FREQ,
+                                    static_cast<float>(info.freq) * faktor) != 0;
+}
+
 // =============================================================================
 // FFT / Audio Analysis
 // =============================================================================

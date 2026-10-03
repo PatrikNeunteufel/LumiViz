@@ -121,6 +121,17 @@ struct PlaybackPositionEvent : public Event
 };
 
 /**
+ * @struct PlaybackTempoEvent
+ * @brief Emitted when the playback tempo changes (S91, Lyrics Sync)
+ */
+struct PlaybackTempoEvent : public Event
+{
+    EVENT_TYPE_NAME("PlaybackTempoEvent")
+
+    float tempo = 1.0f;     ///< 1.0 = as recorded, 0.5 = half speed
+};
+
+/**
  * @struct VolumeChangedEvent
  * @brief Emitted when volume changes
  */

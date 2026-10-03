@@ -92,6 +92,10 @@ public:
     void setMuted(bool muted) override;
     void toggleMute() override;
 
+    // Tempo
+    [[nodiscard]] float tempo() const override;
+    void setTempo(float tempo) override;
+
     // State Queries
     [[nodiscard]] PlaybackState state() const override;
     [[nodiscard]] bool isPlaying() const override;

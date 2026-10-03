@@ -414,7 +414,14 @@ public:
     /// solange er laeuft (`notifyPlayState`). Thread-sicher.
     static void notifyPlayPosition(std::int64_t positionMs);
     static void notifyPlayState(bool laeuft);
+    /// Abspieltempo (S91, Lyrics Sync): 1.0 = wie aufgenommen, 0.5 = halb so
+    /// schnell. Die Hochrechnung zwischen zwei Meldungen zaehlt die Wanduhr
+    /// mit diesem Faktor — sonst liefe sie dem Player davon.
+    static void notifyPlayTempo(double tempo);
     [[nodiscard]] static std::int64_t playPositionMs();
+    /// Test-Naht (S91): die Wanduhr der Hochrechnung festsetzen (ms);
+    /// negativ = wieder die echte Uhr.
+    static void debugSetzeWanduhrMs(std::int64_t ms);
 
     /**
      * @brief Test-Hook (S82): laufende Gruppe eines Host Switchers (Index

@@ -95,6 +95,7 @@ public:
                                                 const std::atomic<bool>* abbruch) override;
     [[nodiscard]] float getVolume(AudioStreamHandle stream) const override;
     bool setVolume(AudioStreamHandle stream, float volume) override;
+    bool setTempo(AudioStreamHandle stream, float faktor) override;
 
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;

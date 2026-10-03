@@ -255,6 +255,15 @@ public:
     [[nodiscard]] virtual float getVolume(AudioStreamHandle stream) const = 0;
     virtual bool setVolume(AudioStreamHandle stream, float volume) = 0;
 
+    /**
+     * @brief Abspieltempo eines Streams (S91, Lyrics Sync: langsamer klopfen).
+     *        `faktor` 1.0 = wie aufgenommen, 0.5 = halb so schnell. Geht ueber
+     *        die Abtastrate — der Ton wird mit tiefer. Die Position des Streams
+     *        (`getPositionMs`) bleibt Zeit im Titel, nicht Wanduhr.
+     *        Default false = die Engine kann es nicht.
+     */
+    virtual bool setTempo(AudioStreamHandle /*stream*/, float /*faktor*/) { return false; }
+
     // =========================================================================
     // FFT / Audio Analysis
     // =========================================================================

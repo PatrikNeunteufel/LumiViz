@@ -147,6 +147,17 @@ public:
     /// unabhaengig von „Save". Ohne Titel geschieht nichts.
     void setzeTitelVersatz(int ms);
 
+    /// S91 (LB5-3, Entscheid L6-4 a): langsamer abspielen, damit sich Zeilen
+    /// und Worte klopfen lassen — `prozent` 50..100 geht als Tempo an den
+    /// Player (ueber die Abtastrate, der Ton wird tiefer). Die Zeiten bleiben
+    /// Zeit im Titel: ein Tap bei halbem Tempo gilt bei vollem genauso.
+    /// Entscheid T1 a: das Tempo gilt nur, solange das Panel sichtbar ist —
+    /// verborgen spielt der Player mit 100 %, der Schieber behaelt seinen Wert
+    /// und gilt wieder, sobald das Panel gezeigt wird. Ein Titelwechsel
+    /// aendert nichts.
+    void setzeTempo(int prozent);
+    static constexpr int kTempoMin = 50;
+
     /// Benutzerordner ersetzen (Tests — der echte bleibt unberuehrt).
     void setBenutzerOrdner(const QString& ordner) { m_ordner = ordner; }
 
@@ -196,6 +207,9 @@ private:
 
     std::int64_t m_titelVersatzMs = 0;       ///< Versatz nur dieses Titels (S88)
     class QSpinBox* m_versatzFeld = nullptr;
+    class QSlider* m_tempo = nullptr;        ///< Abspieltempo in Prozent (S91)
+    QLabel* m_tempoText = nullptr;
+    void wendeTempoAn();  ///< sichtbar: Wert des Schiebers an den Player; verborgen: 100 %
     TrackInfo m_track;
     lumi::multieffect::lyrics::Songtext m_text;  ///< Arbeitskopie, Reihenfolge der Datei
     bool m_geaendert = false;

@@ -835,6 +835,10 @@ void MainWindow::setupEventHandlers()
     pEventBus->subscribe<PlaybackStateEvent>([](const PlaybackStateEvent& e) {
         MultiEffectVisualizer::notifyPlayState(e.state == PlaybackState::Playing);
     });
+    // S91: das Tempo geht in die Hochrechnung der Position zwischen zwei Meldungen
+    pEventBus->subscribe<PlaybackTempoEvent>([](const PlaybackTempoEvent& e) {
+        MultiEffectVisualizer::notifyPlayTempo(static_cast<double>(e.tempo));
+    });
 
     pEventBus->subscribe<NewEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const NewEffectChainEvent&) {

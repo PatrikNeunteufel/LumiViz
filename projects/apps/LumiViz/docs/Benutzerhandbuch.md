@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.61.0
+> **Version:** 1.62.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -734,6 +734,7 @@ ein Strich auf dem Einsatz sitzt.
 | **Words** | Wort-Zeiten klopfen: unter der Liste erscheint ein Streifen mit den Worten der markierten Zeile und ihren Zeiten. **Tap** gibt dann dem gewählten Wort die Abspielposition und rückt zum nächsten; nach dem letzten Wort geht es mit dem ersten Wort der nächsten Zeile weiter. Das erste Wort trägt die Zeit der Zeile. Ein Klick auf ein Wort wählt es zum Neu-Klopfen; **−100 ms** / **+100 ms** verschieben mit **Words** das gewählte Wort. In der Wellenform stehen die Wort-Zeiten der markierten Zeile als zusätzliche Striche |
 | **Clear words** (nur mit **Words**) | nimmt den markierten Zeilen die Wort-Zeiten; die Zeit der Zeile bleibt |
 | **Track offset** | verschiebt den **ganzen** Text dieses Titels (positiv = früher), ohne die Zeiten der Zeilen zu ändern; wirkt sofort und wird je Titel gemerkt — **Save** ist dafür nicht nötig. Sitzt ein fertiger Text gleichmäßig daneben, ist das der kürzeste Weg |
+| **Speed** (Schieber, 50–100 %) | spielt den Titel langsamer ab, damit sich Zeilen und vor allem Worte in Ruhe klopfen lassen. Der Ton wird dabei tiefer (bei 50 % eine Oktave). Die geklopften Zeiten bleiben Zeiten im Titel — sie passen bei normalem Tempo, umrechnen musst du nichts. Das Tempo gilt nur, **solange das Panel sichtbar ist**: liegt es hinter einem anderen Reiter oder ist es geschlossen, läuft der Titel mit 100 %; der Schieber behält seinen Wert und gilt wieder, sobald das Panel zu sehen ist. Ein Titelwechsel ändert das Tempo nicht |
 
 Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
 klopfst. Gespeichert wird erst mit **Save**, und nur, wenn jede Textzeile eine
@@ -1511,6 +1512,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.62.0 | 2026-10-03 | Session 91. §11 Lyrics Sync: NEU **Speed** — Schieber 50–100 %, spielt den Titel zum Klopfen langsamer ab (der Ton wird tiefer); gilt nur, solange das Panel sichtbar ist |
 | 1.61.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Words** — Wort-Zeiten klopfen (Streifen mit den Worten der markierten Zeile, Tap je Wort, **Clear words**); eine Zeile wird nur mit Wort-Zeiten gespeichert, wenn alle ihre Worte eine haben |
 | 1.60.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Duett** — Spalte **Voice**, Knöpfe **Voice 1 / 2 / Both** und Tasten 1 / 2 / 3 setzen die Stimme der markierten Zeilen |
 | 1.59.0 | 2026-10-03 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptvariablen **`linetrigger`** und **`wordtrigger`** — rücken unsynchronen Text eine Zeile bzw. ein Wort weiter (oder zurück); der erste `wordtrigger` schaltet den Wort-Stand des Blocks ein |

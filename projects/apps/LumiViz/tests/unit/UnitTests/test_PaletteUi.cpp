@@ -74,6 +74,7 @@
 #include <QElapsedTimer>
 #include <QImage>
 #include <QLabel>
+#include <QSlider>
 #include <QSet>
 #include <QThread>
 #include <QLineEdit>
@@ -2107,6 +2108,9 @@ public:
     void seek(int ms) override { letzterSprung = ms; }
     void seekFraction(float) override {}
     void seekRelative(int) override {}
+    float tempoWert = 1.0F;  ///< S91: zuletzt gesetztes Tempo
+    [[nodiscard]] float tempo() const override { return tempoWert; }
+    void setTempo(float t) override { tempoWert = t; }
     [[nodiscard]] float volume() const override { return 1.0F; }
     void setVolume(float) override {}
     [[nodiscard]] bool isMuted() const override { return false; }
@@ -3577,6 +3581,108 @@ TEST_CASE("PaletteUi S88: Lyrics Sync — Versatz je Titel wirkt sofort und wird
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     MultiEffectVisualizer::setSongtextTitelVersatz(0);
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S91 (LB5-3, Entscheid L6-4 a): langsamer abspielen. Der Player meldet die
+// Position nur einige Male je Sekunde; dazwischen zaehlt die Wanduhr weiter.
+// Bei halbem Tempo darf sie nur halb so schnell zaehlen — sonst sitzt jeder
+// Tap bis zu einer Meldung weit daneben.
+TEST_CASE("PaletteUi S91: Abspielposition rechnet zwischen zwei Meldungen mit dem Tempo")
+{
+    using M = MultiEffectVisualizer;
+    M::debugSetzeWanduhrMs(1000000);
+    M::notifyPlayTempo(1.0);
+    M::notifyPlayState(true);
+    M::notifyPlayPosition(10000);
+
+    // Gegenprobe: volles Tempo — 200 ms Wanduhr sind 200 ms im Titel
+    M::debugSetzeWanduhrMs(1000200);
+    CHECK(M::playPositionMs() == 10200);
+
+    // halbes Tempo: das Umschalten selbst verschiebt nichts …
+    M::notifyPlayTempo(0.5);
+    CHECK(M::playPositionMs() == 10200);
+    // … danach ruecken 200 ms Wanduhr den Titel nur 100 ms weiter
+    M::debugSetzeWanduhrMs(1000400);
+    CHECK(M::playPositionMs() == 10300);
+    // eine Meldung des Players setzt neu auf, die Hochrechnung bleibt halb
+    M::notifyPlayPosition(10310);
+    M::debugSetzeWanduhrMs(1000500);
+    CHECK(M::playPositionMs() == 10360);
+
+    // Pause haelt die Position, auch wenn die Wanduhr weiterlaeuft
+    M::notifyPlayState(false);
+    M::debugSetzeWanduhrMs(1005000);
+    CHECK(M::playPositionMs() == 10360);
+
+    // zurueck auf volles Tempo, laufend: wieder eins zu eins
+    M::notifyPlayState(true);
+    M::notifyPlayTempo(1.0);
+    M::debugSetzeWanduhrMs(1005100);
+    CHECK(M::playPositionMs() == 10460);
+
+    M::notifyPlayState(false);
+    M::notifyPlayPosition(0);
+    M::debugSetzeWanduhrMs(-1);
+}
+
+// S91 (LB5-3): der Schieber Speed im Panel Lyrics Sync gibt das Tempo an den
+// Player — aber nur, solange das Panel sichtbar ist (Entscheid T1 a): verborgen
+// spielt der Player mit 100 %, der Schieber behaelt seinen Wert.
+TEST_CASE("PaletteUi S91: Lyrics Sync — Schieber Speed setzt das Tempo, solange das Panel sichtbar ist")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    LyricsSyncPanel panel(audio.services);
+    auto* schieber = panel.findChild<QSlider*>(QStringLiteral("lyricsSyncSpeed"));
+    auto* zahl = panel.findChild<QLabel*>(QStringLiteral("lyricsSyncSpeedText"));
+    REQUIRE(schieber != nullptr);
+    REQUIRE(zahl != nullptr);
+    CHECK(schieber->minimum() == 50);
+    CHECK(schieber->maximum() == 100);
+    CHECK(schieber->value() == 100);
+    CHECK(audio.player->tempoWert == doctest::Approx(1.0F));
+
+    // verborgen: der Schieber nimmt den Wert, der Player bleibt bei 100 %
+    schieber->setValue(60);
+    CHECK(zahl->text() == QStringLiteral("60 %"));
+    CHECK(audio.player->tempoWert == doctest::Approx(1.0F));
+
+    // gezeigt: der Wert des Schiebers gilt
+    panel.show();
+    QCoreApplication::processEvents();
+    REQUIRE(panel.isActive());
+    CHECK(audio.player->tempoWert == doctest::Approx(0.6F));
+
+    schieber->setValue(50);
+    CHECK(audio.player->tempoWert == doctest::Approx(0.5F));
+    CHECK(zahl->text() == QStringLiteral("50 %"));
+
+    // unter 50 % geht es nicht — auch nicht am Schieber vorbei
+    panel.setzeTempo(20);
+    CHECK(audio.player->tempoWert == doctest::Approx(0.5F));
+    CHECK(schieber->value() == 50);
+
+    panel.setzeTempo(75);
+    CHECK(audio.player->tempoWert == doctest::Approx(0.75F));
+    CHECK(schieber->value() == 75);
+    CHECK(zahl->text() == QStringLiteral("75 %"));
+
+    // verbergen: der Player spielt wieder mit 100 %, der Schieber bleibt stehen
+    panel.hide();
+    QCoreApplication::processEvents();
+    REQUIRE_FALSE(panel.isActive());
+    CHECK(audio.player->tempoWert == doctest::Approx(1.0F));
+    CHECK(schieber->value() == 75);
+    CHECK(zahl->text() == QStringLiteral("75 %"));
+
+    // wieder zeigen: der Wert des Schiebers gilt wieder
+    panel.show();
+    QCoreApplication::processEvents();
+    CHECK(audio.player->tempoWert == doctest::Approx(0.75F));
+    panel.hide();
+    QCoreApplication::processEvents();
+    CHECK(audio.player->tempoWert == doctest::Approx(1.0F));
 }
 
 // S87 (Wunsch Patrik): andere Fassungen eines Songtexts — die Kandidaten

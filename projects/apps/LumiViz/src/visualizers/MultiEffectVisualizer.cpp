@@ -99,6 +99,8 @@ std::atomic<std::int64_t> g_songtextTitelVersatzMs{0};  ///< S88, Versatz nur di
 std::atomic<std::int64_t> g_posMs{0};
 std::atomic<std::int64_t> g_posStempelMs{0};
 std::atomic<bool> g_posLaeuft{false};
+std::atomic<double> g_posTempo{1.0};               ///< S91, Abspieltempo des Players
+std::atomic<std::int64_t> g_wanduhrTestMs{-1};     ///< S91, Test-Naht: >= 0 ersetzt die Wanduhr
 std::atomic<uint64_t> g_songTagsStand{0};
 
 // Defined further down; forward-declared for the earlier render handlers.
@@ -11319,6 +11321,8 @@ namespace
 {
 std::int64_t wanduhrMs()
 {
+    const std::int64_t test = g_wanduhrTestMs.load(std::memory_order_relaxed);
+    if (test >= 0) return test;
     return std::chrono::duration_cast<std::chrono::milliseconds>(
                std::chrono::steady_clock::now().time_since_epoch())
         .count();
@@ -11329,8 +11333,27 @@ std::int64_t MultiEffectVisualizer::playPositionMs()
 {
     std::int64_t pos = g_posMs.load(std::memory_order_relaxed);
     if (g_posLaeuft.load(std::memory_order_relaxed))
-        pos += wanduhrMs() - g_posStempelMs.load(std::memory_order_relaxed);
+    {
+        // S91: die Wanduhr zaehlt mit dem Tempo des Players — bei 50 % ruecken
+        // 100 ms Wanduhr den Titel nur 50 ms weiter
+        const std::int64_t wand = wanduhrMs() - g_posStempelMs.load(std::memory_order_relaxed);
+        pos += std::llround(static_cast<double>(wand) *
+                            g_posTempo.load(std::memory_order_relaxed));
+    }
     return pos;
+}
+
+void MultiEffectVisualizer::notifyPlayTempo(double tempo)
+{
+    // wie beim Pausieren: erst die laufende Position mit dem ALTEN Tempo
+    // festhalten, dann umschalten — sonst spraenge sie beim Verstellen
+    notifyPlayPosition(playPositionMs());
+    g_posTempo.store(tempo > 0.0 ? tempo : 1.0, std::memory_order_relaxed);
+}
+
+void MultiEffectVisualizer::debugSetzeWanduhrMs(std::int64_t ms)
+{
+    g_wanduhrTestMs.store(ms, std::memory_order_relaxed);
 }
 
 void MultiEffectVisualizer::notifyPlayPosition(std::int64_t positionMs)

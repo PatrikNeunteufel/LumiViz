@@ -5,8 +5,9 @@
 > **Typ:** Konzept — **alle Entscheide gefallen (Patrik S90):** L1 a · L2 b
 > mit fließender Größe, a schaltbar · L3 a · L4 a mit eigenen Feldern für die
 > Vorschau-Zeilen · L5 a · L6 alle a · B1 a → b über B2 a · B3 a1.
-> **Gebaut:** LB1, LB1b, LB2, LB3, B2 a, B3 a1, LB4, LB5-1, LB5-2.
-> **Offen:** LB5-3 (langsamer abspielen), Sichttests
+> **Gebaut:** LB1, LB1b, LB2, LB3, B2 a, B3 a1, LB4, LB5-1, LB5-2, LB5-3
+> (S91, mit Entscheid T1 a).
+> **Offen:** Sichttests
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Lyrics: Zeilen-Puffer für den Trail,
@@ -529,6 +530,27 @@ Wort neu klopfen und verschieben, erstes Wort nimmt die Zeile mit, Undo,
 „From here", Speichern und Wiederlesen, Clear words, Tap ohne Words.
 Schnappschuss angesehen. Unit-Tests 822/822. **Nicht geprüft:** im laufenden
 Programm (Klopfen im Takt, Höhe des Streifens bei langen Zeilen).
+
+**Stand LB5-3 — ✅ gebaut (03.10., S91):** Schieber *Speed* (50–100 %,
+`lyricsSyncSpeed`) im Panel. Weg: `LyricsSyncPanel::setzeTempo` →
+`IAudioPlayer::setTempo` → `IAudioEngine::setTempo` (`BASS_ATTRIB_FREQ` =
+Rate der Datei × Faktor); der Player setzt das Tempo auch einem neu geladenen
+Stream und meldet es als `PlaybackTempoEvent`, das Fenster reicht es an
+`MultiEffectVisualizer::notifyPlayTempo` — `playPositionMs()` zählt die
+Wanduhr zwischen zwei Meldungen mit dem Tempo, das Umschalten hält die
+Position vorher fest. **Entscheid T1 a (Patrik S91):** das Tempo gilt nur,
+solange das Panel sichtbar ist (`onActivate` / `onDeactivate`); verborgen
+spielt der Player mit 100 %, der Schieber behält seinen Wert; ein
+Titelwechsel ändert nichts. Geprüft: BASS-Probe ohne Tonausgabe (WAV und
+MP3: bei halber Rate rückt der Titel in 2,000 s Wanduhr um 1,000 s, Länge und
+Sprungziel bleiben Zeit im Titel — Taps brauchen keine Umrechnung); Test der
+Hochrechnung mit festgesetzter Wanduhr (`debugSetzeWanduhrMs`; volles Tempo
+als Gegenprobe, Umschalten ohne Sprung, Pause); UI-Test Schieber gegen die
+Player-Attrappe (verborgen / gezeigt / wieder verborgen, Untergrenze).
+**Nicht geprüft:** der Ton und das Klopfen bei verlangsamtem Titel im
+laufenden Programm; `AudioPlayer` mit echter Engine (keine Engine-Attrappe);
+Vergleichslauf ausgelassen (Freigabe Patrik — bei Tempo 1,0 rechnet die
+Hochrechnung dieselbe Ganzzahl, `AvsStandalone` hat keinen Player).
 
 ## 8. Stufen im Überblick
 
