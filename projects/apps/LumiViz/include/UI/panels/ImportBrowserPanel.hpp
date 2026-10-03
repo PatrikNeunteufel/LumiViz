@@ -100,6 +100,20 @@ public:
     [[nodiscard]] static int nextPresetRow(const QList<int>& types, int from,
                                           int delta);
 
+    /**
+     * @brief S91 (Entscheid F1 a): Favorit setzen oder nehmen, ohne das Preset
+     *        zu laden — der Rechtsklick in der Liste ruft das.
+     *
+     * Dieselben Listen wie der Stern der Preset-Zeile (`PresetListen`): Ketten-
+     * Presets und Karaoke-Presets (.lvkar) getrennt. Meldet die Aenderung als
+     * PresetListsChangedEvent. Ordner und ".." tun nichts (false).
+     */
+    bool schalteFavorit(int reihe);
+
+    /// Die Ansicht „★ Favorites" ein- oder ausschalten (aus = Filter „All").
+    void setFavoritenAnsicht(bool an);
+    [[nodiscard]] bool favoritenAnsicht() const { return m_filter == Filter::Favoriten; }
+
 protected:
     void onActivate() override;
     void onDeactivate() override;
@@ -121,8 +135,13 @@ private:
         Avs = 0,
         Milk = 1,
         Lvfx = 2,   ///< native LumiViz effect chains
-        All = 3
+        All = 3,
+        /// S91: keine Ordneransicht — alle Favoriten (Kette und Karaoke) aus
+        /// allen Ordnern als eine Liste; Pfadzeile, Up und Browse ruhen.
+        Favoriten = 4
     };
+    void refreshFavoriten();  ///< die Liste der Ansicht „★ Favorites" aufbauen
+    void zeigeKontextMenue(const QPoint& stelle);
 
     void setupUI();
     void setupConnections();

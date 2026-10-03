@@ -10,6 +10,7 @@
  */
 
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "UI/PresetListen.hpp"
 #include "UI/widgets/DateiListe.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "services/ServiceContainer.hpp"
@@ -28,9 +29,12 @@
 #include <QFileInfo>
 #include <QSettings>
 #include <QCoreApplication>
+#include <QMenu>
 #include <QTimer>
 
 #include <BasicLogger.h>
+
+#include <algorithm>
 
 namespace
 {
@@ -71,8 +75,9 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
     QSettings settings;
     settings.beginGroup(settingsPrefix());
     const QString lastDir = settings.value(QStringLiteral("lastDir")).toString();
-    m_filter = static_cast<Filter>(
-        settings.value(QStringLiteral("filter"), static_cast<int>(Filter::All)).toInt());
+    m_filter = static_cast<Filter>(std::clamp(
+        settings.value(QStringLiteral("filter"), static_cast<int>(Filter::All)).toInt(),
+        static_cast<int>(Filter::Avs), static_cast<int>(Filter::Favoriten)));
     // Zuletzt geladenes Preset (S73) — MUSS innerhalb der Gruppe gelesen
     // werden, sonst kommt es aus der Wurzel und ist immer leer.
     m_lastPreset = settings.value(QStringLiteral("lastPreset")).toString();
@@ -229,6 +234,10 @@ void ImportBrowserPanel::subscribeToEvents()
         [this](const AvsImportResultEvent& e) {
             onImportResult(e.path, e.ok, e.noteCount);
         }));
+    // S91: ein Stern in der Preset-Zeile (oder hier) — Markierung und
+    // Favoriten-Ansicht ziehen nach
+    m_eventSubscriptions.push_back(bus->subscribeScoped<PresetListsChangedEvent>(
+        [this](const PresetListsChangedEvent&) { refresh(); }));
 }
 
 // =============================================================================
@@ -257,6 +266,7 @@ QStringList ImportBrowserPanel::currentNameFilters() const
         case Filter::Lvfx:
             return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
         case Filter::All:  break;
+        case Filter::Favoriten: break;  // keine Ordneransicht — refreshFavoriten()
     }
     return {QStringLiteral("*.avs"), QStringLiteral("*.milk"),
             QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
@@ -274,6 +284,18 @@ int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
 void ImportBrowserPanel::refresh()
 {
     if (m_pListWidget == nullptr) return;
+
+    // S91: die Ansicht „★ Favorites" hat keinen Ordner — Pfadzeile, Up und
+    // Browse ruhen dort
+    const bool ordner = m_filter != Filter::Favoriten;
+    m_pPathEdit->setEnabled(ordner);
+    m_pUpButton->setEnabled(ordner);
+    m_pBrowseButton->setEnabled(ordner);
+    if (!ordner)
+    {
+        refreshFavoriten();
+        return;
+    }
 
     m_pListWidget->clear();
     m_pPathEdit->setText(m_dir.absolutePath());
@@ -318,9 +340,15 @@ void ImportBrowserPanel::refresh()
         const QIcon& icon = haveTypeIcons
                                 ? lumi::ui::presetTypeIconForSuffix(fi.suffix())
                                 : fileIcon;
-        auto* item = new QListWidgetItem(icon, fi.fileName(), m_pListWidget);
+        // S91: Favoriten tragen einen Stern vor dem Namen
+        const int type = entryTypeForSuffix(fi.suffix());
+        const bool favorit = lumi::ui::PresetListen::istFavorit(
+            type == Type_Karaoke ? lumi::ui::PresetArt::Karaoke : lumi::ui::PresetArt::Kette,
+            fi.absoluteFilePath());
+        auto* item = new QListWidgetItem(
+            icon, favorit ? QString::fromUtf8("★ ") + fi.fileName() : fi.fileName(), m_pListWidget);
         item->setData(Qt::UserRole, fi.absoluteFilePath());
-        item->setData(Qt::UserRole + 1, entryTypeForSuffix(fi.suffix()));
+        item->setData(Qt::UserRole + 1, type);
         item->setToolTip(fi.absoluteFilePath());
         ++presetCount;
     }
@@ -334,6 +362,97 @@ void ImportBrowserPanel::refresh()
     selectLastPresetInList();
 
     setStatus(tr("%1 preset(s) · %2 folder(s)").arg(presetCount).arg(dirs.size()));
+}
+
+void ImportBrowserPanel::refreshFavoriten()
+{
+    using lumi::ui::PresetArt;
+    using lumi::ui::PresetListen;
+    m_pListWidget->clear();
+    m_pPathEdit->setText(tr("Favorites from all folders"));
+
+    // Ketten- und Karaoke-Favoriten in einer Liste, nach Dateiname geordnet
+    QFileInfoList dateien;
+    for (const PresetArt art : {PresetArt::Kette, PresetArt::Karaoke})
+        for (const QString& pfad : PresetListen::favoriten(art)) dateien.append(QFileInfo(pfad));
+    std::sort(dateien.begin(), dateien.end(), [](const QFileInfo& a, const QFileInfo& b) {
+        const int c = a.fileName().compare(b.fileName(), Qt::CaseInsensitive);
+        return c != 0 ? c < 0 : a.absoluteFilePath() < b.absoluteFilePath();
+    });
+
+    const QIcon fileIcon = style()->standardIcon(QStyle::SP_FileIcon);
+    const bool haveTypeIcons = !lumi::ui::presetIconDir().isEmpty();
+    for (const QFileInfo& fi : dateien)
+    {
+        const QIcon& icon =
+            haveTypeIcons ? lumi::ui::presetTypeIconForSuffix(fi.suffix()) : fileIcon;
+        auto* item = new QListWidgetItem(icon, fi.fileName(), m_pListWidget);
+        item->setData(Qt::UserRole, fi.absoluteFilePath());
+        item->setData(Qt::UserRole + 1, entryTypeForSuffix(fi.suffix()));
+        if (fi.exists())
+        {
+            item->setToolTip(fi.absoluteFilePath());
+        }
+        else
+        {
+            // die Datei gibt es nicht mehr: grau, faellt beim Oeffnen aus der
+            // Liste (wie im Dropdown der Preset-Zeile)
+            item->setForeground(palette().color(QPalette::Disabled, QPalette::Text));
+            item->setToolTip(tr("File not found: %1").arg(fi.absoluteFilePath()));
+            item->setFlags(item->flags() & ~Qt::ItemIsDragEnabled);
+        }
+    }
+    onSearchChanged(m_pSearchEdit->text());
+    selectLastPresetInList();
+    setStatus(tr("%1 favorite(s)").arg(dateien.size()));
+}
+
+bool ImportBrowserPanel::schalteFavorit(int reihe)
+{
+    using lumi::ui::PresetArt;
+    using lumi::ui::PresetListen;
+    if (m_pListWidget == nullptr || reihe < 0 || reihe >= m_pListWidget->count()) return false;
+    const QListWidgetItem* item = m_pListWidget->item(reihe);
+    const int type = item->data(Qt::UserRole + 1).toInt();
+    if (type != Type_Avs && type != Type_Milk && type != Type_Lvfx && type != Type_Karaoke)
+        return false;
+    const QString pfad = item->data(Qt::UserRole).toString();
+    const PresetArt art = type == Type_Karaoke ? PresetArt::Karaoke : PresetArt::Kette;
+    PresetListen::setzeFavorit(art, pfad, !PresetListen::istFavorit(art, pfad));
+    // die Preset-Zeilen der Panels ziehen nach; ist dieses Panel sichtbar,
+    // kommt das Ereignis auch hier an — sonst die Liste selbst neu aufbauen
+    bool gemeldet = false;
+    if (auto* bus = eventBus())
+    {
+        bus->publish(PresetListsChangedEvent{});
+        gemeldet = !m_eventSubscriptions.empty();
+    }
+    if (!gemeldet) refresh();
+    return true;
+}
+
+void ImportBrowserPanel::setFavoritenAnsicht(bool an)
+{
+    m_pFilterCombo->setCurrentIndex(static_cast<int>(an ? Filter::Favoriten : Filter::All));
+}
+
+void ImportBrowserPanel::zeigeKontextMenue(const QPoint& stelle)
+{
+    using lumi::ui::PresetArt;
+    using lumi::ui::PresetListen;
+    const QListWidgetItem* item = m_pListWidget->itemAt(stelle);
+    if (item == nullptr) return;
+    const int type = item->data(Qt::UserRole + 1).toInt();
+    if (type != Type_Avs && type != Type_Milk && type != Type_Lvfx && type != Type_Karaoke) return;
+    const bool favorit = PresetListen::istFavorit(
+        type == Type_Karaoke ? PresetArt::Karaoke : PresetArt::Kette,
+        item->data(Qt::UserRole).toString());
+    const int reihe = m_pListWidget->row(item);
+    QMenu menue(this);
+    const QAction* schalten =
+        menue.addAction(favorit ? tr("Remove from favorites") : tr("Add to favorites"));
+    if (menue.exec(m_pListWidget->viewport()->mapToGlobal(stelle)) == schalten)
+        schalteFavorit(reihe);
 }
 
 void ImportBrowserPanel::selectLastPresetInList()
@@ -364,6 +483,21 @@ void ImportBrowserPanel::onItemDoubleClicked(QListWidgetItem* item)
 
 void ImportBrowserPanel::openEntry(int type, const QString& path)
 {
+    // S91: ein Favorit, dessen Datei es nicht mehr gibt, faellt aus der Liste
+    // (nur in der Ansicht „★ Favorites" — im Ordner steht er gar nicht)
+    if (m_filter == Filter::Favoriten && type != Type_Up && type != Type_Dir &&
+        !QFileInfo::exists(path))
+    {
+        const QString name = QFileInfo(path).fileName();
+        lumi::ui::PresetListen::vergiss(type == Type_Karaoke ? lumi::ui::PresetArt::Karaoke
+                                                              : lumi::ui::PresetArt::Kette,
+                                        path);
+        if (auto* bus = eventBus()) bus->publish(PresetListsChangedEvent{});
+        refresh();
+        setStatus(tr("Removed from favorites — file not found: %1").arg(name));
+        return;
+    }
+
     // Merken, was zuletzt WIRKLICH geladen wurde (S73) — Ordner und ".." nicht.
     // Beim naechsten Start wird genau das wieder markiert und geladen.
     if (type == Type_Avs || type == Type_Milk || type == Type_Lvfx)
@@ -456,7 +590,10 @@ void ImportBrowserPanel::onPresetStep(int delta)
                           std::to_string(types.size()) + " entries)");
     if (row < 0)
     {
-        setStatus(delta > 0 ? tr("End of folder") : tr("Start of folder"));
+        if (m_filter == Filter::Favoriten)
+            setStatus(delta > 0 ? tr("End of favorites") : tr("Start of favorites"));
+        else
+            setStatus(delta > 0 ? tr("End of folder") : tr("Start of folder"));
         return;
     }
     m_pListWidget->setCurrentRow(row);
@@ -594,8 +731,12 @@ void ImportBrowserPanel::setupUI()
     m_pFilterCombo->addItem(tr("MilkDrop (*.milk)"));   // Filter::Milk
     m_pFilterCombo->addItem(tr("LumiViz (*.lvfx)"));    // Filter::Lvfx
     m_pFilterCombo->addItem(tr("All"));                 // Filter::All
+    m_pFilterCombo->addItem(tr("★ Favorites"));         // Filter::Favoriten (S91)
+    m_pFilterCombo->setObjectName(QStringLiteral("effectBrowserFilter"));
     m_pFilterCombo->setCurrentIndex(static_cast<int>(m_filter));
-    m_pFilterCombo->setToolTip(tr("Which preset types to list"));
+    m_pFilterCombo->setToolTip(
+        tr("Which preset types to list. \"★ Favorites\" shows your favorites from all folders "
+           "in one list (right-click a preset to add or remove it)."));
     filterLayout->addWidget(m_pFilterCombo);
 
     m_pSearchEdit = new QLineEdit(this);
@@ -619,6 +760,10 @@ void ImportBrowserPanel::setupUI()
     m_pListWidget->setObjectName(QStringLiteral("effectBrowserListe"));
     m_pListWidget->setAlternatingRowColors(true);
     m_pListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    // S91: Rechtsklick — Favorit setzen / nehmen, ohne zu laden
+    m_pListWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_pListWidget, &QWidget::customContextMenuRequested, this,
+            &ImportBrowserPanel::zeigeKontextMenue);
     mainLayout->addWidget(m_pListWidget, 1);
 
     // Status line

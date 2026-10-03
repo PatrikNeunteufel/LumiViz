@@ -2087,6 +2087,130 @@ TEST_CASE("Karaoke S89: .lvkar im Effect Browser — Doppelklick laedt in die Eb
     CHECK(yShift->value() == -33);
 }
 
+// S91 (Entscheid F1 a): Favoriten im Effect Browser — Stern vor dem Namen,
+// setzen / nehmen ohne zu laden, und die Ansicht „★ Favorites" mit allen
+// Favoriten aus allen Ordnern, durch die die Hotkeys blaettern.
+TEST_CASE("PaletteUi S91: Effect Browser — Favoriten markieren, umschalten, Ansicht Favorites")
+{
+    UiUmgebung env;
+    using lumi::ui::PresetArt;
+    using lumi::ui::PresetListen;
+    QTemporaryDir dir1;
+    QTemporaryDir dir2;
+    const QString a = schreibeLvfx(dir1, QStringLiteral("Anfang.lvfx"));
+    const QString b = schreibeLvfx(dir1, QStringLiteral("Bogen.lvfx"));
+    const QString c = schreibeLvfx(dir2, QStringLiteral("Chor.lvfx"));
+    const QString k = dir2.filePath(QStringLiteral("Karaoke.lvkar"));
+    {
+        QFile f(k);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("x");
+    }
+    const QString weg = dir2.filePath(QStringLiteral("weg.avs"));  // gibt es nicht
+
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    QStringList geladen;
+    int listen = 0;
+    int importe = 0;
+    const auto abo1 = bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent& e) {
+        geladen.append(QFileInfo(QString::fromStdString(e.path)).fileName());
+    });
+    const auto abo2 =
+        bus->subscribeScoped<PresetListsChangedEvent>([&](const PresetListsChangedEvent&) { ++listen; });
+    const auto abo3 =
+        bus->subscribeScoped<ImportAvsPresetEvent>([&](const ImportAvsPresetEvent&) { ++importe; });
+
+    ImportBrowserPanel browser(services);
+    zeigen(browser);
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(dir1.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+    auto* filter = browser.findChild<QComboBox*>(QStringLiteral("effectBrowserFilter"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(filter != nullptr);
+    const auto texte = [&] {
+        QStringList t;
+        for (int i = 0; i < liste->count(); ++i) t.append(liste->item(i)->text());
+        return t;
+    };
+    const auto reihe = [&](const QString& text) {
+        for (int i = 0; i < liste->count(); ++i)
+            if (liste->item(i)->text() == text) return i;
+        return -1;
+    };
+
+    // --- Ordneransicht: noch kein Stern
+    REQUIRE(reihe(QStringLiteral("Anfang.lvfx")) >= 0);
+    REQUIRE(reihe(QStringLiteral("Bogen.lvfx")) >= 0);
+    CHECK_FALSE(browser.favoritenAnsicht());
+
+    // --- umschalten ohne zu laden: Stern vor dem Namen, Liste der Preset-Zeile, Meldung
+    REQUIRE(browser.schalteFavorit(reihe(QStringLiteral("Anfang.lvfx"))));
+    CHECK(PresetListen::istFavorit(PresetArt::Kette, a));
+    CHECK(reihe(QString::fromUtf8("★ Anfang.lvfx")) >= 0);
+    CHECK(reihe(QStringLiteral("Bogen.lvfx")) >= 0);  // der Nachbar bleibt ohne
+    CHECK(listen == 1);
+    CHECK(geladen.isEmpty());
+    // ".." und Ordner sind keine Presets
+    CHECK_FALSE(browser.schalteFavorit(reihe(QStringLiteral(".."))));
+    CHECK_FALSE(browser.schalteFavorit(-1));
+    // ein Stern von aussen (Preset-Zeile) kommt an
+    PresetListen::setzeFavorit(PresetArt::Kette, b, true);
+    bus->publish(PresetListsChangedEvent{});
+    CHECK(reihe(QString::fromUtf8("★ Bogen.lvfx")) >= 0);
+    PresetListen::setzeFavorit(PresetArt::Kette, b, false);
+
+    // --- Ansicht „★ Favorites": alle Favoriten aus allen Ordnern, nach Name,
+    //     Karaoke-Favoriten dabei, eine fehlende Datei steht noch da
+    PresetListen::setzeFavorit(PresetArt::Kette, c, true);
+    PresetListen::setzeFavorit(PresetArt::Karaoke, k, true);
+    PresetListen::setzeFavorit(PresetArt::Kette, weg, true);
+    browser.setFavoritenAnsicht(true);
+    CHECK(browser.favoritenAnsicht());
+    CHECK(filter->currentText().contains(QStringLiteral("Favorites")));
+    CHECK(texte() == QStringList{QStringLiteral("Anfang.lvfx"), QStringLiteral("Chor.lvfx"),
+                                 QStringLiteral("Karaoke.lvkar"), QStringLiteral("weg.avs")});
+    CHECK(liste->item(2)->data(Qt::UserRole + 1).toInt() == ImportBrowserPanel::Type_Karaoke);
+    CHECK_FALSE(pfad->isEnabled());  // kein Ordner in dieser Ansicht
+
+    // --- die Hotkeys blaettern durch die Favoriten (Karaoke zaehlt nicht als Preset)
+    bus->publish(PresetStepEvent{1});
+    bus->publish(PresetStepEvent{1});
+    CHECK(geladen == QStringList{QStringLiteral("Anfang.lvfx"), QStringLiteral("Chor.lvfx")});
+    // der naechste waere die fehlende Datei: sie faellt aus Liste und Favoriten, nichts wird geladen
+    const int listenVorher = listen;
+    bus->publish(PresetStepEvent{1});
+    CHECK(importe == 0);
+    CHECK_FALSE(PresetListen::istFavorit(PresetArt::Kette, weg));
+    CHECK(listen == listenVorher + 1);
+    CHECK(texte() == QStringList{QStringLiteral("Anfang.lvfx"), QStringLiteral("Chor.lvfx"),
+                                 QStringLiteral("Karaoke.lvkar")});
+
+    // --- in der Ansicht einen Favoriten nehmen: er verschwindet
+    REQUIRE(browser.schalteFavorit(reihe(QStringLiteral("Anfang.lvfx"))));
+    CHECK_FALSE(PresetListen::istFavorit(PresetArt::Kette, a));
+    CHECK(texte() == QStringList{QStringLiteral("Chor.lvfx"), QStringLiteral("Karaoke.lvkar")});
+    // der Karaoke-Favorit geht in SEINE Liste
+    REQUIRE(browser.schalteFavorit(reihe(QStringLiteral("Karaoke.lvkar"))));
+    CHECK_FALSE(PresetListen::istFavorit(PresetArt::Karaoke, k));
+    CHECK(PresetListen::istFavorit(PresetArt::Kette, c));
+
+    schnappschuss(browser, "S91_effect_browser_favoriten");
+
+    // --- zurueck: wieder der Ordner von vorher, ohne Stern an Anfang
+    browser.setFavoritenAnsicht(false);
+    CHECK(pfad->isEnabled());
+    CHECK(QFileInfo(pfad->text()) == QFileInfo(dir1.path()));
+    CHECK(reihe(QStringLiteral("Anfang.lvfx")) >= 0);
+    CHECK(reihe(QStringLiteral("Bogen.lvfx")) >= 0);
+}
+
 // --- Audio ziehen: Audio Browser, Playlist, Player, Visualisierung (S84) -------
 //
 // Entscheide Patrik S84: 1a Playlist nimmt an und gibt ab; Drop auf Player/

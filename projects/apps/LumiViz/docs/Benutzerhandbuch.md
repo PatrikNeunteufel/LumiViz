@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.63.0
+> **Version:** 1.64.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -297,6 +297,20 @@ Die Panels **Effect Chain** und **Karaoke** tragen oben dieselbe Zeile:
   ob über Menü, Effect Browser oder die Zeile selbst. Das Karaoke-Panel führt
   eigene Listen für `.lvkar`.
 
+**Favoriten im Effect Browser.** Dieselben Favoriten zeigt und setzt auch der
+Effect Browser:
+
+- Ein Favorit trägt in der Dateiliste ein **★** vor dem Namen.
+- **Rechtsklick** auf ein Preset → **Add to favorites** bzw. **Remove from
+  favorites** — ohne es zu laden. So lässt sich eine Sammlung durchsehen und
+  nebenbei merken, was gefällt.
+- In der Filter-Auswahl steht neben AVS, MilkDrop, LumiViz und All der Eintrag
+  **★ Favorites**: er zeigt **alle Favoriten aus allen Ordnern** als eine
+  Liste, nach Name geordnet (der Ordner steht im Tooltip), Karaoke-Presets
+  eingeschlossen. Pfadzeile, „Up" und die Ordnerwahl ruhen in dieser Ansicht;
+  ein anderer Filter bringt den Ordner von vorher zurück. Ein Favorit, dessen
+  Datei es nicht mehr gibt, steht grau da und fällt beim Öffnen aus der Liste.
+
 ### Presets durchblättern
 
 | Kürzel | Aktion |
@@ -307,7 +321,9 @@ Die Panels **Effect Chain** und **Karaoke** tragen oben dieselbe Zeile:
 `Bild ab` geht in der Liste nach unten, also **vorwärts**.
 
 Geblättert wird über die Presets des Ordners, der im Effect Browser offen ist —
-Unterordner werden übersprungen, am Ende des Ordners hält es an. Das Panel muss
+Unterordner werden übersprungen, am Ende des Ordners hält es an. Steht der
+Effect Browser auf **★ Favorites**, blättern die Tasten stattdessen durch die
+Favoriten (Karaoke-Presets werden übersprungen). Das Panel muss
 dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
 Skript-Editor getippt wird, blättern die Tasten nicht, sondern verhalten sich
 normal.
@@ -1514,6 +1530,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.64.0 | 2026-10-03 | Session 91. §9 NEU **Favoriten im Effect Browser** — ★ vor dem Namen, Rechtsklick **Add to / Remove from favorites**, Filter **★ Favorites** (alle Favoriten aus allen Ordnern); Bild ab / Bild auf blättern in dieser Ansicht durch die Favoriten |
 | 1.63.0 | 2026-10-03 | Session 91. §9 Preset-Zeile: **Load…** im Effect-Chain-Panel bietet jedes Preset an (`.lvfx`, `.lvfx2`, `.avs`, `.milk`) |
 | 1.62.0 | 2026-10-03 | Session 91. §11 Lyrics Sync: NEU **Speed** — Schieber 50–100 %, spielt den Titel zum Klopfen langsamer ab (der Ton wird tiefer); gilt nur, solange das Panel sichtbar ist |
 | 1.61.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Words** — Wort-Zeiten klopfen (Streifen mit den Worten der markierten Zeile, Tap je Wort, **Clear words**); eine Zeile wird nur mit Wort-Zeiten gespeichert, wenn alle ihre Worte eine haben |
