@@ -2188,6 +2188,41 @@ void MultiEffectPanel::fuelleKettenMenue(QMenu& menu, const QList<int>& klick)
         menu.setToolTipsVisible(true);
         menu.addSeparator();
     }
+    // S93 (Wunsch Patrik): die Favoriten und die zuletzt benutzten Module der
+    // Palette — ohne das Palettenfenster zu oeffnen. Ein Milkdrop-Element
+    // (Custom Wave …) geht nur an einem Milkdrop-Knoten.
+    {
+        using lumi::ui::EffectPaletteWindow;
+        QMenu* module = menu.addMenu(tr("Add module"));
+        module->setObjectName(QStringLiteral("chainMenuAddModule"));
+        module->setToolTipsVisible(true);
+        const auto fuelle = [this, module, path, milkAnker, istMilkdrop](const QString& titel,
+                                                                        const QList<int>& indizes) {
+            if (indizes.isEmpty()) return;
+            module->addSection(titel);
+            for (int index : indizes)
+            {
+                const EffectType& typ = effectPalette()[static_cast<size_t>(index)];
+                const bool milkElement = typ.milkElement != MilkElement::None;
+                QAction* a = module->addAction(QString::fromUtf8(typ.name));
+                a->setObjectName(QStringLiteral("chainMenuAddModuleEntry"));
+                a->setEnabled(!milkElement || istMilkdrop);
+                a->setToolTip(milkElement && !istMilkdrop
+                                  ? tr("Needs a Milkdrop node — right-click one.")
+                                  : QString::fromUtf8(typ.summary));
+                const QList<int> ziel = milkElement ? milkAnker : path;
+                connect(a, &QAction::triggered, this,
+                        [this, index, ziel] { (void)fuegeModulEin(index, ziel); });
+            }
+        };
+        fuelle(tr("Favorites"), EffectPaletteWindow::gespeicherteFavoriten());
+        fuelle(tr("Recently used"), EffectPaletteWindow::gespeicherteZuletzt());
+        if (!module->isEmpty()) module->addSeparator();
+        QAction* alle = module->addAction(tr("All modules…"));
+        alle->setObjectName(QStringLiteral("chainMenuAddModuleAll"));
+        alle->setToolTip(tr("Opens the module palette. Mark favorites there with the star."));
+        connect(alle, &QAction::triggered, this, [this] { openPalette(); });
+    }
     // S93 (Entscheid Patrik 2a): Favoriten und zuletzt benutzte Presets als
     // Presetverweis an die Klickstelle — die Preset-Zeile darueber LAEDT sie,
     // hier kommen sie IN die Kette.
@@ -2287,13 +2322,17 @@ void MultiEffectPanel::openPalette()
 
 void MultiEffectPanel::onAddEffect(int paletteIndex)
 {
-    if (m_host == nullptr) return;
-    const auto& palette = effectPalette();
-    if (paletteIndex < 0 || paletteIndex >= static_cast<int>(palette.size())) return;
-    const EffectType& chosen = palette[static_cast<size_t>(paletteIndex)];
-    if (chosen.isHeader()) return;  // category title, not an insertable effect
+    (void)fuegeModulEin(paletteIndex, currentPath());
+}
 
-    const QList<int> sel = currentPath();
+bool MultiEffectPanel::fuegeModulEin(int paletteIndex, const QList<int>& sel)
+{
+    if (m_host == nullptr) return false;
+    const auto& palette = effectPalette();
+    if (paletteIndex < 0 || paletteIndex >= static_cast<int>(palette.size())) return false;
+    const EffectType& chosen = palette[static_cast<size_t>(paletteIndex)];
+    if (chosen.isHeader()) return false;  // category title, not an insertable effect
+
     bool ok = false;
     if (chosen.milkElement != MilkElement::None)
     {
@@ -2325,7 +2364,14 @@ void MultiEffectPanel::onAddEffect(int paletteIndex)
         }
         ok = insertPaletteNode(paletteIndex, elternPfad, pos);
     }
-    if (ok && m_palette != nullptr) m_palette->noteUsed(paletteIndex);
+    if (!ok) return false;
+    // „Recently used" gehoert der Palette; ist ihr Fenster noch nie geoeffnet
+    // worden (Einfuegen per Kontextmenue, S93), wird die Liste direkt gefuehrt.
+    if (m_palette != nullptr)
+        m_palette->noteUsed(paletteIndex);
+    else
+        lumi::ui::EffectPaletteWindow::merkeBenutzt(paletteIndex);
+    return true;
 }
 
 void MultiEffectPanel::onPaletteDrop(int paletteIndex, QTreeWidgetItem* target,

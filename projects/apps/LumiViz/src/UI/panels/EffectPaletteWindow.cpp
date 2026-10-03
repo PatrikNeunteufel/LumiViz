@@ -419,6 +419,28 @@ void EffectPaletteWindow::requestAdd()
     emit addRequested(index);
 }
 
+QList<int> EffectPaletteWindow::gespeicherteFavoriten()
+{
+    return indicesForNames(QSettings().value(kKeyFavorites).toStringList());
+}
+
+QList<int> EffectPaletteWindow::gespeicherteZuletzt()
+{
+    return indicesForNames(QSettings().value(kKeyRecent).toStringList());
+}
+
+void EffectPaletteWindow::merkeBenutzt(int paletteIndex)
+{
+    const auto& palette = effectPalette();
+    if (paletteIndex < 0 || paletteIndex >= static_cast<int>(palette.size())) return;
+    if (palette[static_cast<size_t>(paletteIndex)].isHeader()) return;
+    QList<int> zuletzt = gespeicherteZuletzt();
+    zuletzt.removeAll(paletteIndex);
+    zuletzt.prepend(paletteIndex);
+    while (zuletzt.size() > kRecentMax) zuletzt.removeLast();
+    QSettings().setValue(kKeyRecent, namesForIndices(zuletzt));
+}
+
 void EffectPaletteWindow::noteUsed(int paletteIndex)
 {
     m_recent.removeAll(paletteIndex);

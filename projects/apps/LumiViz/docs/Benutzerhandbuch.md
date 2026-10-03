@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.74.0
+> **Version:** 1.75.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1354,6 +1354,13 @@ Gruppen dürfen gleichzeitig aktiv sein und mischen sich über ihren
   darunter, auf der freien Fläche ans Ende. Die Preset-Zeile über dem Baum
   **lädt** dieselben Einträge und ersetzt die Kette; das Kontextmenü setzt sie
   **in** die Kette. Eine Datei, die es nicht mehr gibt, steht grau da.
+- **Module per Rechtsklick:** gleich daneben führt **Add module** die
+  **Favorites** (★ im Palettenfenster) und die acht **Recently used** der
+  Modul-Palette — das Palettenfenster muss dafür nicht offen sein. Der Ort
+  ist derselbe wie bei **+**: an einer Liste oder Host-Gruppe hinein, an
+  einem Effekt direkt darunter, auf der freien Fläche ans Ende. Custom Wave,
+  Custom Shape und Sprite sind nur an einem Milkdrop-Node wählbar. **All
+  modules…** öffnet die Palette.
 - **Namen sind eindeutig:** Der Name einer Gruppe ist ihre ID für den Host
   Switcher. Eine zweite „Host Group" heißt deshalb automatisch „Host Group 2"
   (auch beim Klonen und beim Laden älterer Dateien). Benennst du eine Gruppe
@@ -1627,6 +1634,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.75.0 | 2026-10-03 | Session 93. §11: Rechtsklick im Baum der Effect Chain — **Add module** mit den **Favorites** und **Recently used** der Modul-Palette, **All modules…** öffnet sie |
 | 1.74.0 | 2026-10-03 | Session 93. §11 Host-Gruppen: Rechtsklick im Baum der Effect Chain — **Add preset** mit **Favorites** und **Recent**, fügt das Preset als Presetverweis ein |
 | 1.73.0 | 2026-10-03 | Session 93. §11 Milkdrop-Node: Rechtsklick — **Add custom wave**, **Add custom shape**, **Add sprite…** (mit Dateiauswahl); Feld **Image** des Sprites mit Knopf **…**, volle Pfade gelten; das Frame-Feld der Shape heißt **Frame (per instance)** |
 | 1.72.0 | 2026-10-03 | Session 92. Karaoke: der Doppelklick auf ein `.lvkar` im Effect Browser schaltet die Ebene ein; `current.lvkar` steht dort nicht mehr; **Ctrl+K** ruht in Textfeldern und im Skript-Editor |

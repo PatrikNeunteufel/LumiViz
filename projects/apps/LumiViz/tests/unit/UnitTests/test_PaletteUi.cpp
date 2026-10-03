@@ -1871,6 +1871,93 @@ TEST_CASE("PaletteUi Panel S93: Add preset im Kontextmenue fuegt Favoriten und Z
     L::vergiss(PresetArt::Kette, weg);
 }
 
+// S93 (Wunsch Patrik): die Favoriten und die zuletzt benutzten Module der
+// Palette im Kontextmenue des Kettenbaums — ohne das Palettenfenster.
+TEST_CASE("PaletteUi Panel S93: Add module im Kontextmenue zeigt Favoriten und Zuletzt der Palette")
+{
+    UiUmgebung env;
+    using lumi::multieffect::MilkdropNodeParams;
+    const QString kFav = QStringLiteral("effectPalette/favorites");
+    const QString kZuletzt = QStringLiteral("effectPalette/recent");
+    QSettings().remove(kFav);
+    QSettings().remove(kZuletzt);
+
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    REQUIRE(p.root().children.size() == 3);
+    const auto eintraege = [](const QMenu& menu) {
+        auto* module = menu.findChild<QMenu*>(QStringLiteral("chainMenuAddModule"));
+        REQUIRE(module != nullptr);
+        return module->findChildren<QAction*>(QStringLiteral("chainMenuAddModuleEntry"));
+    };
+
+    // --- nichts gemerkt: nur der Weg zur Palette
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {0});
+        CHECK(eintraege(menu).isEmpty());
+        CHECK(menu.findChild<QAction*>(QStringLiteral("chainMenuAddModuleAll")) != nullptr);
+    }
+    CHECK(EffectPaletteWindow::gespeicherteFavoriten().isEmpty());
+    CHECK(EffectPaletteWindow::gespeicherteZuletzt().isEmpty());
+
+    // --- zwei Favoriten, einer davon ein Milkdrop-Element; ein Name, den es nicht gibt
+    QSettings().setValue(kFav, QStringList{QStringLiteral("Clear"), QStringLiteral("Custom Wave"),
+                                           QStringLiteral("Gibt es nicht")});
+    REQUIRE(EffectPaletteWindow::gespeicherteFavoriten().size() == 2);
+    {
+        QMenu menu;  // an einem gewoehnlichen Knoten
+        p.panel->fuelleKettenMenue(menu, {0});
+        const QList<QAction*> e = eintraege(menu);
+        REQUIRE(e.size() == 2);
+        CHECK(e[0]->text() == QStringLiteral("Clear"));
+        CHECK(e[0]->isEnabled());
+        CHECK(e[1]->text() == QStringLiteral("Custom Wave"));
+        CHECK_FALSE(e[1]->isEnabled());  // braucht einen Milkdrop-Knoten
+        e[0]->trigger();                 // direkt unter den Knoten
+        QCoreApplication::processEvents();
+    }
+    REQUIRE(p.root().children.size() == 4);
+    CHECK(p.root().children[1].params.index() == p.root().children[0].params.index());
+
+    // --- das Eingefuegte steht jetzt unter „Recently used", auch ohne Palettenfenster
+    REQUIRE(EffectPaletteWindow::gespeicherteZuletzt().size() == 1);
+    CHECK(EffectPaletteWindow::gespeicherteZuletzt().first() == indexVon("Clear"));
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {0});
+        CHECK(eintraege(menu).size() == 3);  // zwei Favoriten + einmal Zuletzt
+    }
+
+    // --- am Milkdrop-Knoten geht das Milkdrop-Element, und es landet IM Knoten
+    const auto wellen = [&p] {
+        return std::get<MilkdropNodeParams>(p.root().children[3].params).preset.waves.size();
+    };
+    const std::size_t vorher = wellen();
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {3});
+        const QList<QAction*> e = eintraege(menu);
+        REQUIRE(e.size() == 3);
+        REQUIRE(e[1]->isEnabled());
+        e[1]->trigger();
+        QCoreApplication::processEvents();
+    }
+    CHECK(wellen() == vorher + 1);
+    CHECK(p.root().children.size() == 4);
+
+    // --- an einer Effect List: hinein; freie Flaeche: ans Ende
+    const std::size_t inListe = p.root().children[2].children.size();
+    REQUIRE(p.panel->fuegeModulEin(indexVon("Clear"), {2}));
+    CHECK(p.root().children[2].children.size() == inListe + 1);
+    REQUIRE(p.panel->fuegeModulEin(indexVon("Clear"), {}));
+    CHECK(p.root().children.size() == 5);
+    CHECK_FALSE(p.panel->fuegeModulEin(-1, {}));
+
+    QSettings().remove(kFav);
+    QSettings().remove(kZuletzt);
+}
+
 TEST_CASE("PaletteUi C1: im Shape-Code ist b gefaerbt wie r, g, r2, g2, b2")
 {
     UiUmgebung env;

@@ -66,6 +66,14 @@ public:
     /// Nach einem erfolgreichen Einfuegen (Button ODER Drop): in „Recently used".
     void noteUsed(int paletteIndex);
 
+    /// Favoriten und „Recently used", wie sie gespeichert sind (S93) — fuer
+    /// das Kontextmenue der Kette, das sie ohne dieses Fenster zeigt.
+    /// Paletten-Indizes; was es in der Palette nicht mehr gibt, faellt weg.
+    [[nodiscard]] static QList<int> gespeicherteFavoriten();
+    [[nodiscard]] static QList<int> gespeicherteZuletzt();
+    /// `noteUsed` ohne Fenster: nur die gespeicherte Liste nachfuehren.
+    static void merkeBenutzt(int paletteIndex);
+
     /// Oeffnen bzw. nach vorn holen, Fokus in die Suche.
     void present();
 
