@@ -442,6 +442,7 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(LyricsParams, wordFlowMs, "wordFlowMs", "wordflowms", "", 1.0, Ganzzahl, Live, 0.0, 2000.0),
         LV_FELD(LyricsParams, wordLayout, "wordLayout", "wordlayout", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
         LV_FELD(LyricsParams, wordScale, "wordScale", "wordscale", "", 1.0, Ganzzahl, Live, 50.0, 400.0),
+        LV_FELD(LyricsParams, wordSpacing, "wordSpacing", "wordspacing", "", 1.0, Ganzzahl, Struktur, 50.0, 400.0),
         LV_FELD(LyricsParams, xShift, "xShift", "xshift", "", 1.0, Ganzzahl, Live, -100.0, 100.0),
         LV_FELD(LyricsParams, yShift, "yShift", "yshift", "", 1.0, Ganzzahl, Live, -100.0, 100.0),
     }}});

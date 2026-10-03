@@ -2966,11 +2966,17 @@ struct LyricsParams
     /// Time in milliseconds over which the word size glides to its target
     /// (0..2000); 0 = hard switch.
     int wordFlowMs = 120;
+    /// Space between the words in percent of the font's own space (50..400);
+    /// 100 = as the font sets it. Applies to every line — the running one and
+    /// the preview lines. A wider space gives an enlarged word room to its
+    /// neighbours (Word layout: Overlay); the line gets wider with it.
+    int wordSpacing = 100;
 
     /// Parameter script (S86): every field of this node + `b`/`w`/`h` + audio
     /// set. Position, size and colours follow the script from every slot; font
-    /// weight, italic, outline size and preview weight re-render the glyphs
-    /// and follow it from Init, Song, Beat, Line and Word only. Empty = no script.
+    /// weight, italic, outline size, preview weight and word spacing re-render
+    /// the glyphs and follow it from Init, Song, Beat, Line and Word only.
+    /// Empty = no script.
     std::string initCode;
     std::string frameCode;
     std::string beatCode;

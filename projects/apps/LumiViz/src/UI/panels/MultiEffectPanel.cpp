@@ -8344,6 +8344,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordLayout = v; });
         addInt("wordFlowMs", tr("Word flow (ms)"), p->wordFlowMs, 0, 2000,
                [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordFlowMs = v; });
+        addInt("wordSpacing", tr("Word spacing (%)"), p->wordSpacing, 50, 400,
+               [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).wordSpacing = v; });
         addEnum("hAlign", tr("Horizontal"), std::clamp(p->hAlign, 0, 2),
                 {tr("Left"), tr("Center"), tr("Right")},
                 [](ChainNode& n, int v) { std::get<LyricsParams>(n.params).hAlign = v; });

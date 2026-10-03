@@ -9168,6 +9168,23 @@ void MultiEffectVisualizer::runLyrics(const ChainNode& node, const LyricsParams&
     zeichneLyricsZeilen(rt, params, zeilen, LyricsReihen::Laufende);
 }
 
+namespace
+{
+/// S92 (Sichttest D2, Entscheid 1a): Wortabstand in Prozent des Leerzeichens
+/// der Schrift — er steckt in der Schrift selbst (`QFont::setWordSpacing`),
+/// so messen und zeichnen alle Wege der Lyrics gleich. 100 laesst die Schrift
+/// unberuehrt (bitgleich wie vorher). Nach JEDEM Wechsel von Groesse oder
+/// Gewicht neu rufen: der Abstand ist ein Pixelmass.
+void setzeWortabstand(QFont& font, int prozent)
+{
+    prozent = std::clamp(prozent, 50, 400);
+    if (prozent == 100) return;
+    font.setWordSpacing(0.0);  // das Leerzeichen der Schrift messen, nicht das gedehnte
+    font.setWordSpacing(QFontMetricsF(font).horizontalAdvance(QLatin1Char(' ')) *
+                        (prozent - 100) / 100.0);
+}
+}  // namespace
+
 double MultiEffectVisualizer::lyricsSongFaktor(LeafRuntime& rt, const LyricsParams& params,
                                                double px)
 {
@@ -9175,7 +9192,8 @@ double MultiEffectVisualizer::lyricsSongFaktor(LeafRuntime& rt, const LyricsPara
     // wird einmal bei 100 px gemessen und geht dann mit der Schriftgroesse.
     const std::string schluessel = std::to_string(m_songTagsStand) + '\x1f' + params.fontFace +
                                    '\x1f' + std::to_string(params.fontWeight >= 600) +
-                                   std::to_string(params.italic);
+                                   std::to_string(params.italic) + ':' +
+                                   std::to_string(params.wordSpacing);
     if (rt.lyricsSongSchluessel != schluessel)
     {
         rt.lyricsSongSchluessel = schluessel;
@@ -9184,6 +9202,7 @@ double MultiEffectVisualizer::lyricsSongFaktor(LeafRuntime& rt, const LyricsPara
         font.setPixelSize(100);
         font.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
         font.setItalic(params.italic);
+        setzeWortabstand(font, params.wordSpacing);
         const QFontMetricsF fm(font);
         double weit = 0.0;
         for (const auto& zl : m_songtext.zeilen)
@@ -9238,12 +9257,13 @@ void MultiEffectVisualizer::zeichneLyricsMasken(LeafRuntime& rt, const LyricsPar
     const std::string vorrat =
         params.fontFace + '\x1f' + std::to_string(params.fontWeight >= 600) +
         std::to_string(params.italic) + ':' + std::to_string(static_cast<int>(ref)) + ':' +
-        std::to_string(std::lround(strichRef * 16.0));
+        std::to_string(std::lround(strichRef * 16.0)) + ':' + std::to_string(params.wordSpacing);
     QFont schrift;
     if (!params.fontFace.empty()) schrift.setFamily(QString::fromStdString(params.fontFace));
     schrift.setPixelSize(static_cast<int>(ref));
     schrift.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
     schrift.setItalic(params.italic);
+    setzeWortabstand(schrift, params.wordSpacing);
     if (rt.lyricsMaskenSchluessel != vorrat || rt.lyricsMasken.size() > 512)
     {
         for (auto& [schluessel, maske] : rt.lyricsMasken)
@@ -9263,6 +9283,7 @@ void MultiEffectVisualizer::zeichneLyricsMasken(LeafRuntime& rt, const LyricsPar
         WortMaske m;
         QFont font = schrift;
         font.setWeight(fett ? QFont::Bold : QFont::Normal);
+        setzeWortabstand(font, params.wordSpacing);
         const QString t = QString::fromStdString(text);
         const QFontMetricsF fm(font);
         m.vor = static_cast<float>(fm.horizontalAdvance(t));
@@ -9855,6 +9876,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         std::max(1.0, std::clamp(static_cast<int>(params.wordScale), 50, 400) / 100.0);
     const bool wortUeberlagert = params.wordLayout == 1;
     snapshot += (wortUeberlagert ? 'o' : 'r') + std::to_string(params.wordScale);
+    snapshot += 'w' + std::to_string(params.wordSpacing);  // S92: Wortabstand
     // K4 b: die Zeile der Karaoke-Ebene rastert in Fenstergroesse (scharf auch
     // mit Render Scale). Gesetzt wird weiter im Kettenmass — der Painter
     // skaliert, so deckt sich die Lage mit der des Knotens. In der Kette und
@@ -9897,6 +9919,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
         basis.setPixelSize(px);
         basis.setWeight(params.fontWeight >= 600 ? QFont::Bold : QFont::Normal);
         basis.setItalic(params.italic);
+        setzeWortabstand(basis, params.wordSpacing);
         // Hoehe des Blocks: kleine Zeile (Marke) zaehlt halb, eine Vorschau-
         // Zeile nach ihrer Groesse (LB1b); der Zeilenabstand ist ein Feld
         const double zeilenHoehe = QFontMetrics(basis).height() * (abstandProzent / 100.0);
@@ -9961,6 +9984,7 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                     {
                         font.setPixelSize(
                             std::max(8, static_cast<int>(font.pixelSize() * breite / weit)));
+                        setzeWortabstand(font, params.wordSpacing);
                         (void)messe();
                     }
                     const QFontMetrics fm(font);
@@ -10048,12 +10072,14 @@ void MultiEffectVisualizer::zeichneLyricsZeilen(LeafRuntime& rt, const LyricsPar
                         if (params.previewWeight > 0)
                             font.setWeight(params.previewWeight >= 600 ? QFont::Bold : QFont::Normal);
                     }
+                    setzeWortabstand(font, params.wordSpacing);
                     // zu lange Zeile: Schrift verkleinern, bis sie passt
                     int tw = QFontMetrics(font).horizontalAdvance(vorn + hinten);
                     if (tw > breite && tw > 0)
                     {
                         font.setPixelSize(std::max(
                             8, static_cast<int>(font.pixelSize() * breite / tw)));
+                        setzeWortabstand(font, params.wordSpacing);
                         tw = QFontMetrics(font).horizontalAdvance(vorn + hinten);
                     }
                     const QFontMetrics fm(font);

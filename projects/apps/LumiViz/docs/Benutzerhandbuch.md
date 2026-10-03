@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.67.0
+> **Version:** 1.68.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -593,6 +593,7 @@ gefunden wurde:
 | **Own word color** / **Word color** | Das laufende Wort in eigener Farbe statt in der Farbe der Stimme. Schon Gesungenes behält die Stimmfarbe, noch nicht Gesungenes **Color upcoming**. |
 | **Word layout** | Wie das größere Wort in der Zeile sitzt: **Reflow** — die Nachbarn rücken zur Seite; **Overlay** — die Zeile bleibt stehen, das Wort wächst um seine Mitte und liegt über den Nachbarn (ruhiger, mit Lyrics Trail die bessere Wahl). |
 | **Word flow (ms)** | Zeit, in der die Wortgröße gleitet (0–2000): das neue Wort wächst, während das vorige schrumpft — die Zeile gleitet, statt zu springen. 0 = harter Wechsel. |
+| **Word spacing (%)** | Abstand zwischen den Worten in Prozent des Leerzeichens der Schrift (50–400, 100 = wie die Schrift ihn setzt). Gilt für jede Zeile, die laufende wie die Vorschau, mit und ohne Wort-Zeiten. Ein weiterer Abstand gibt dem vergrößerten Wort Luft zu seinen Nachbarn — vor allem mit **Word layout** Overlay, wo es sonst über ihnen liegt. Die Zeile wird damit breiter; passt die längste Zeile des Songs nicht mehr, wird die Schrift für den ganzen Song kleiner. Im Skript: `wordspacing` |
 | **Color (voice 1)**, **Color voice 2**, **Color both voices** | Farbe der laufenden Zeile; bei Duetten je Stimme. Stimm-Marken am Zeilenanfang: `v1:`, `v2:`, `v1+v2:` (auch `M:`, `F:`, `D:`); eine Marke gilt bis zur nächsten. |
 | **Blend** | Wie sich der Text mit dem Bild mischt: **Replace**, **Additive**, **50/50**, **Subtract**, **Invert** (weißer Text kehrt die Farbe darunter um), **XOR**, **Multiply**, **Maximum**, **Minimum** — dieselben Arten wie bei der Karaoke-Ebene (unten). Ab **Subtract** mischt nur die Füllung der Buchstaben, die Kontur bleibt normal; bei Replace, Additive und 50/50 mischt die Kontur wie bisher mit. Der **Lyrics Trail** hat dasselbe Feld. |
 | **Timing offset (ms)** | Verschiebt synchronen Text für **alle** Titel: positiv = früher, negativ = später. Eine `[offset:…]`-Zeile in der Datei wirkt zusätzlich. |
@@ -651,9 +652,9 @@ kein neues Zeichnen. Beispiel für einen Puls auf den Beat: Init
 schnell der Puls abklingt: näher an 1 klingt er länger nach (0.85 ist nach
 wenigen Bildern weg, 0.97 steht bei schneller Musik fast dauernd). Sie gilt je
 Bild — bei höherer Bildrate klingt derselbe Wert schneller ab. Die Kontur
-wächst dabei mit der Schrift. Nur vier Felder lassen die Worte neu zeichnen und folgen dem Skript
+wächst dabei mit der Schrift. Nur fünf Felder lassen die Worte neu zeichnen und folgen dem Skript
 deshalb allein aus Init, Song, Beat, Line und Word: **Weight**, **Italic**,
-**Outline size** und **Preview weight**. Ein Knoten ohne Skript wird wie bisher
+**Outline size**, **Preview weight** und **Word spacing**. Ein Knoten ohne Skript wird wie bisher
 gezeichnet; an den Kanten der Buchstaben können sich beide Wege um Bruchteile
 eines Pixels unterscheiden.
 Die Karaoke-Ebene hat beide Felder im Reiter *Lyrics*. Voreinstellungen: feste Lagen (**Karaoke Bottom**, **Karaoke
@@ -1553,6 +1554,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.68.0 | 2026-10-03 | Session 92. §11 Lyrics (und Karaoke-Ebene): NEU **Word spacing (%)** — Abstand zwischen den Worten (50–400 % des Leerzeichens), für jede Zeile; gibt dem vergrößerten Wort in Overlay Luft |
 | 1.67.0 | 2026-10-03 | Session 92. §11 Lyrics, Skript-Beispiele nach dem Sichttest: der Puls klingt mit 0.93 statt 0.85 ab (mit Erklärung der Zahl); NEU Beispiel „eine Zeile auf jeden vierten Beat" und der Hinweis, wann **Unsynced: beats per line** ohne Skript reicht |
 | 1.66.0 | 2026-10-03 | Session 92. §11 Lyrics Sync: Enter / T klopfen im ganzen Panel (vorher nur in der Liste); NEU **Pre-roll** (Vorlauf des Doppelklicks, 0–10 s), **Sprungleiste** über den ganzen Titel, **Kontextmenü** in der Liste und im Wort-Streifen |
 | 1.65.0 | 2026-10-03 | Session 91. §11 Lyrics Trail: NEU Skriptfeld **Line** — einmal je gegangener Zeile, mit `line` (die Zeile, die eben ging) und `linecount` |

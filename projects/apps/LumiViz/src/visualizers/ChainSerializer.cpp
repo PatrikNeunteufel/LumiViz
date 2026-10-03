@@ -1105,6 +1105,7 @@ struct WriteVisitor
         o["colorWord"] = static_cast<double>(p.colorWord);
         o["wordLayout"] = p.wordLayout;
         o["wordFlowMs"] = p.wordFlowMs;
+        o["wordSpacing"] = p.wordSpacing;
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
@@ -2599,6 +2600,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.colorWord = getColor(o, "colorWord", p.colorWord);
         p.wordLayout = std::clamp(getInt(o, "wordLayout", p.wordLayout), 0, 1);
         p.wordFlowMs = std::clamp(getInt(o, "wordFlowMs", p.wordFlowMs), 0, 2000);
+        p.wordSpacing = std::clamp(getInt(o, "wordSpacing", p.wordSpacing), 50, 400);
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);

@@ -345,6 +345,8 @@ KLASSEN = {
     # Neu gerastert wird nur noch, was die Masken selbst aendert:
     "lyrics.fontWeight": "Struktur", "lyrics.italic": "Struktur",
     "lyrics.outlineSize": "Struktur", "lyrics.previewWeight": "Struktur",
+    # S92: der Wortabstand steckt in der Schrift, mit der die Masken gerastert werden
+    "lyrics.wordSpacing": "Struktur",
     # Lyrics Trail (S87): dieselbe Regel
     "lyricsTrail.color": "Struktur", "lyricsTrail.useOwnColor": "Struktur",
     "lyricsTrail.xShift": "Struktur", "lyricsTrail.yShift": "Struktur",

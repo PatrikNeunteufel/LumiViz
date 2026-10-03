@@ -2148,6 +2148,123 @@ TEST_CASE("Lyrics S90: eine Schriftgroesse je Song — lange Zeilen bestimmen Sc
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S92 (Sichttest D2, Entscheid 1a): Feld „Word spacing (%)" — der Abstand
+// zwischen den Worten in Prozent des Leerzeichens der Schrift. Gemessen wird
+// die Breite der laufenden Zeile, auf jedem der drei Wege: CPU (ohne Skript),
+// Masken (mit Skript), Wort fuer Wort (mit Wort-Zeiten).
+TEST_CASE("Lyrics S92: Wortabstand — breiter und enger auf allen Zeichenwegen, 100 = wie bisher")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::notifyPlayPosition(12500);
+
+    const auto breite = [&](LyricsParams lp) {
+        lp.fontHeight = -24;
+        lp.outline = false;
+        lp.previewLines = 0;
+        lp.showSyncMark = false;
+        lp.vAlign = 1;
+        lp.yShift = 0;
+        lp.color = 0xFFFFFF;
+        lp.colorWord = 0xFFFFFF;
+        lp.colorNext = 0xFFFFFF;
+        lp.wordFlowMs = 0;
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        root.children = {clear, lyr};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(480, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 240);
+        vis.render(1.0f / 60.0f);
+        vis.render(1.0f / 60.0f);
+        const QImage img = vis.debugGrabRootSurface();
+        int links = -1, rechts = -1;
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                if (qGray(img.pixel(x, y)) > 200)
+                {
+                    if (links < 0 || x < links) links = x;
+                    rechts = std::max(rechts, x);
+                }
+        return links < 0 ? 0 : rechts - links + 1;
+    };
+    const auto mit = [](int abstand, const char* frameCode = "") {
+        LyricsParams lp;
+        lp.wordSpacing = abstand;
+        lp.frameCode = frameCode;
+        return lp;
+    };
+
+    // --- CPU-Weg: Zeile ohne Wort-Zeiten, Knoten ohne Skript ---
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MM MM MM\n[00:20.00]Ende\n"));
+    const int cpu100 = breite(mit(100));
+    const int cpu200 = breite(mit(200));
+    const int cpu50 = breite(mit(50));
+    const int cpu400 = breite(mit(400));
+    MESSAGE("CPU: 50=" << cpu50 << " 100=" << cpu100 << " 200=" << cpu200 << " 400=" << cpu400);
+    REQUIRE(cpu100 > 0);
+    CHECK(cpu200 > cpu100 + 4);  // zwei Luecken, jede um ein Leerzeichen weiter
+    CHECK(cpu50 < cpu100);
+    CHECK(cpu400 > cpu200);
+    // die Luecke waechst gleichmaessig: 100 -> 200 ist ein Leerzeichen je Luecke,
+    // 200 -> 400 sind zwei
+    CHECK(std::abs((cpu400 - cpu200) - 2 * (cpu200 - cpu100)) <= 3);
+    // Werte ausserhalb 50..400 klemmen
+    CHECK(breite(mit(9999)) == cpu400);
+    CHECK(breite(mit(0)) == cpu50);
+    // ein Wort allein hat keine Luecke: der Abstand aendert nichts
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMMMM\n[00:20.00]Ende\n"));
+    CHECK(breite(mit(100)) == breite(mit(300)));
+
+    // --- Masken-Weg: derselbe Text, der Knoten traegt ein Skript ---
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MM MM MM\n[00:20.00]Ende\n"));
+    const char* neutral = "xshift = xshift;";
+    const int gpu100 = breite(mit(100, neutral));
+    const int gpu200 = breite(mit(200, neutral));
+    const int gpu50 = breite(mit(50, neutral));
+    MESSAGE("Masken: 50=" << gpu50 << " 100=" << gpu100 << " 200=" << gpu200);
+    CHECK(std::abs(gpu100 - cpu100) <= 2);  // beide Wege setzen gleich
+    CHECK(std::abs(gpu200 - cpu200) <= 2);
+    CHECK(std::abs(gpu50 - cpu50) <= 2);
+    // per Skript: das Feld folgt aus Init (es laesst die Masken neu rastern)
+    {
+        LyricsParams lp;
+        lp.initCode = "wordspacing = 200;";
+        CHECK(std::abs(breite(lp) - cpu200) <= 2);
+    }
+
+    // --- Wort fuer Wort: Text mit Wort-Zeiten, das laufende Wort eingefaerbt ---
+    MultiEffectVisualizer::setSongtext(
+        ly::leseLrc("[00:10.00]MM <00:11.00>MM <00:12.00>MM\n[00:20.00]Ende\n"));
+    const auto worte = [&](int abstand, int layout) {
+        LyricsParams lp;
+        lp.wordSpacing = abstand;
+        lp.useWordColor = true;
+        lp.wordLayout = layout;
+        return breite(lp);
+    };
+    const int wort100 = worte(100, 0);
+    const int wort200 = worte(200, 0);
+    MESSAGE("Worte: 100=" << wort100 << " 200=" << wort200);
+    CHECK(std::abs(wort100 - cpu100) <= 2);
+    CHECK(std::abs(wort200 - cpu200) <= 2);
+    CHECK(std::abs(worte(200, 1) - wort200) <= 1);  // Overlay ohne Vergroesserung: gleich breit
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90, LB1: Bilder des Lyrics-Knotens fuer den Vergleich vorher/nachher. Mit
 // `LUMIVIZ_LB1_SNAP=<ordner>` schreibt der Test je Szene ein PNG — derselbe
 // Lauf vor und nach einem Umbau am Rastern, die Ordner dann bitweise
