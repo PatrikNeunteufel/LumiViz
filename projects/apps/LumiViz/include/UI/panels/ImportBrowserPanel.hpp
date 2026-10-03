@@ -69,6 +69,9 @@ public:
 
     [[nodiscard]] int preferredArea() const override;
 
+    /// Das Preset, das der naechste Start wieder laedt (leer = keins).
+    [[nodiscard]] const QString& letztesPreset() const { return m_lastPreset; }
+
     /// Per-item role Qt::UserRole+1 — what a double-click should do. Oeffentlich,
     /// weil es der Eingabe-Vertrag von nextPresetRow() ist.
     enum EntryType
@@ -165,6 +168,11 @@ private:
     /// Import-Event kommt.
     void restoreLastPreset();
 
+    /// Das laufende Preset des Hauptfensters uebernehmen (S93) — merken,
+    /// sofort sichern, in der Liste markieren. Leer, unladbar oder nicht
+    /// vorhanden: das Gemerkte bleibt.
+    void merkeLaufendesPreset(const QString& pfad);
+
     /// Gemeinsamer Weg "Eintrag oeffnen" fuer Doppelklick, Blaettern-Hotkey
     /// und die Wiederherstellung beim Start — eine Wahrheit, ein Ort, an dem
     /// `m_lastPreset` fortgeschrieben wird.
@@ -197,4 +205,7 @@ private:
     /// Permanent wie m_resetSubscription: der Hotkey wirkt auch, wenn dieses
     /// Panel nicht sichtbar ist.
     IEventBus::SubscriberHandle m_stepSubscription;
+    /// Permanent: das laufende Preset wird auch gemerkt, wenn dieses Panel
+    /// nie sichtbar war (S93).
+    IEventBus::SubscriberHandle m_laufendSubscription;
 };

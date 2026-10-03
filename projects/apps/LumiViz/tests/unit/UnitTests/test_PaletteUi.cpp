@@ -2511,6 +2511,60 @@ TEST_CASE("PaletteUi S84 Panel: mehrere Dateien auf die Leerflaeche -> Verweise 
     CHECK(gruppe(p.root().children[4]) != nullptr);
 }
 
+// Befund Patrik S93: nach dem Start lief nicht das zuletzt aktive Preset. Der
+// Effect Browser laedt beim Start, was ER sich gemerkt hat — und merkte nur,
+// was ueber ihn selbst geoeffnet wurde. Preset-Zeile, File → Load und Save As
+// gingen an ihm vorbei.
+TEST_CASE("PaletteUi S93: der Start laedt das zuletzt aktive Preset, egal ueber welchen Weg es kam")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    const QString ueberBrowser = schreibeLvfx(dir, QStringLiteral("UeberBrowser.lvfx"));
+    const QString ueberZeile = schreibeLvfx(dir, QStringLiteral("UeberZeile.lvfx"));
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    {
+        ImportBrowserPanel browser(services);
+        QCoreApplication::processEvents();
+        const QString anfang = browser.letztesPreset();
+
+        // --- das Hauptfenster meldet ein neues laufendes Preset (so melden es
+        //     Preset-Zeile, File → Load, Save As und der Browser selbst)
+        bus->publish(CurrentPresetChangedEvent{ueberBrowser.toStdString()});
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberBrowser));
+        bus->publish(CurrentPresetChangedEvent{ueberZeile.toStdString()});
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+
+        // (das Panel wurde hier nie gezeigt — es folgt also auch unsichtbar)
+
+        // --- neue Kette (leer), Karaoke-Preset, fehlende Datei: das Gemerkte bleibt
+        bus->publish(CurrentPresetChangedEvent{std::string()});
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+        bus->publish(CurrentPresetChangedEvent{(dir.path() + "/Abend.lvkar").toStdString()});
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+        bus->publish(CurrentPresetChangedEvent{(dir.path() + "/Fehlt.lvfx").toStdString()});
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+        CHECK(QFileInfo(anfang) != QFileInfo(ueberZeile));
+
+        // --- es steht sofort in den Einstellungen, nicht erst beim Beenden:
+        //     ein zweiter Browser liest es, waehrend der erste noch lebt
+        ImportBrowserPanel zweiter(services);
+        CHECK(QFileInfo(zweiter.letztesPreset()) == QFileInfo(ueberZeile));
+    }
+    // --- der naechste Start: ein neuer Browser will genau dieses Preset laden
+    {
+        std::string geladen;
+        auto abo = bus->subscribeScoped<LoadEffectChainEvent>(
+            [&geladen](const LoadEffectChainEvent& e) { geladen = e.path; });
+        ImportBrowserPanel browser(services);
+        CHECK(QFileInfo(browser.letztesPreset()) == QFileInfo(ueberZeile));
+        QCoreApplication::processEvents();  // restoreLastPreset laeuft verzoegert
+        CHECK(QFileInfo(QString::fromStdString(geladen)) == QFileInfo(ueberZeile));
+    }
+}
+
 TEST_CASE("PaletteUi S84: Effect Browser gibt Presets als Datei-URL mit, Ordner nicht")
 {
     UiUmgebung env;

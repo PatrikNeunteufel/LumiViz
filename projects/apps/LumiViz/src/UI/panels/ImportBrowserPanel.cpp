@@ -137,6 +137,15 @@ ImportBrowserPanel::ImportBrowserPanel(ServiceContainer& services, QWidget* pare
         // ist er da (docs/ui/Hotkey_Konzept.md §1, Stufe 1).
         m_stepSubscription = bus->subscribeScoped<PresetStepEvent>(
             [this](const PresetStepEvent& e) { onPresetStep(e.delta); });
+        // PERMANENT (Befund Patrik S93): das laufende Preset meldet das
+        // Hauptfenster — egal, ob es ueber diesen Browser, die Preset-Zeile,
+        // File → Load oder Save As kam. Bis S93 merkte sich der Browser nur,
+        // was ueber ihn selbst geoeffnet wurde, und der naechste Start lud
+        // deshalb ein aelteres Preset.
+        m_laufendSubscription = bus->subscribeScoped<CurrentPresetChangedEvent>(
+            [this](const CurrentPresetChangedEvent& e) {
+                merkeLaufendesPreset(QString::fromStdString(e.path));
+            });
     }
 
     // Zuletzt geladenes Preset wieder anwerfen (S73) — VERZOEGERT ueber die
@@ -185,6 +194,25 @@ void ImportBrowserPanel::restoreState()
 {
     PanelBase::restoreState();
     refresh();
+}
+
+void ImportBrowserPanel::merkeLaufendesPreset(const QString& pfad)
+{
+    // Leer = neue Kette ohne Namen: das zuletzt BENANNTE Preset bleibt gemerkt.
+    // Nur, was der Start auch laden kann — und nur, was es gibt.
+    if (pfad.isEmpty() || !QFileInfo::exists(pfad)) return;
+    const int type = entryTypeForSuffix(QFileInfo(pfad).suffix());
+    if (type != Type_Avs && type != Type_Milk && type != Type_Lvfx) return;
+    if (!m_lastPreset.isEmpty() && QFileInfo(m_lastPreset) == QFileInfo(pfad)) return;
+
+    m_lastPreset = pfad;
+    // Sofort sichern, nicht erst in saveState(): nach einem Absturz soll der
+    // Start dasselbe laden wie nach einem sauberen Beenden.
+    QSettings settings;
+    settings.beginGroup(settingsPrefix());
+    settings.setValue(QStringLiteral("lastPreset"), m_lastPreset);
+    settings.endGroup();
+    selectLastPresetInList();
 }
 
 void ImportBrowserPanel::restoreLastPreset()
