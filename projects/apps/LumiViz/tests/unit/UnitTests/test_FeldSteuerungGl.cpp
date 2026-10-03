@@ -1241,9 +1241,18 @@ TEST_CASE("Lyrics S90: Skript am Lyrics-Knoten — Kette und Karaoke-Ebene laufe
     // klingt die Groesse von Frame zu Frame ab
     const std::vector<int> puls =
         folge(false, "ref = fontheight; p = 0;",
-              "p = if(b, 1, p * 0.85); fontheight = ref * (1 + p);", "");
+              "p = if(b, 1, p * 0.93); fontheight = ref * (1 + p);", "");
     MESSAGE("Puls: " << text(puls));
-    CHECK(puls[12] > puls[11] * 1.5);  // Beat-Frame deutlich groesser als der Frame davor
+    // S92 (Sichttest E1): 0.85 klang zu schnell ab — mit 0.93 ist der Puls
+    // kurz vor dem naechsten Beat noch zu sehen, mit 0.85 schon weg
+    const std::vector<int> pulsAlt =
+        folge(false, "ref = fontheight; p = 0;",
+              "p = if(b, 1, p * 0.85); fontheight = ref * (1 + p);", "");
+    CHECK(puls[18] > pulsAlt[18]);
+    // Beat-Frame deutlich groesser als der Frame davor. Der Test schlaegt alle
+    // 12 Frames (300 BPM) — mit 0.93 ist der Puls davor erst halb abgeklungen,
+    // deshalb 1.2 statt der 1.5, die fuer 0.85 galten
+    CHECK(puls[12] > puls[11] * 1.2);
     CHECK(puls[13] <= puls[12]);
     CHECK(puls[16] < puls[12]);
     CHECK(puls[23] < puls[16]);        // klingt weiter ab
@@ -1955,6 +1964,22 @@ TEST_CASE("Lyrics S90 LB4: linetrigger / wordtrigger ruecken den unsynchronen Te
         CHECK(gesehen["Zeile"].xShift == 3);
         (void)lauf(lp, 25);
         CHECK(gesehen["Zeile"].xShift == 2);
+    }
+    {
+        // S92 (Sichttest G1): das Beispiel aus dem Benutzerhandbuch — eine
+        // Zeile auf jeden VIERTEN Beat (je Beat ist fuer einen Text zu schnell)
+        LyricsParams lp;
+        lp.lineCode = "xshift = line;";
+        lp.initCode = "n = 0;";
+        lp.frameCode = "n = n + b; linetrigger = if(b, equal(n % 4, 0), 0);";
+        (void)lauf(lp, 25);  // drei Beats: noch die erste Zeile
+        CHECK(gesehen["Zeile"].xShift == 1);
+        (void)lauf(lp, 35);  // vierter Beat (Frame 30): zweite Zeile
+        CHECK(gesehen["Zeile"].xShift == 2);
+        (void)lauf(lp, 65);  // sieben Beats: immer noch die zweite
+        CHECK(gesehen["Zeile"].xShift == 2);
+        (void)lauf(lp, 75);  // achter Beat (Frame 70): dritte Zeile
+        CHECK(gesehen["Zeile"].xShift == 3);
     }
     {
         // wordtrigger auf jeden Beat: Wort fuer Wort, am Zeilenende in die naechste Zeile (L5 a)

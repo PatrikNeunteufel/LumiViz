@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.66.0
+> **Version:** 1.67.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -626,7 +626,12 @@ Leerraum gezählt); auch sie stehen in allen Feldern bereit. Beispiel:
 stehenden Block: `linetrigger = 1;` eine Zeile weiter, `wordtrigger = 1;` ein
 Wort weiter (negativ: zurück). Beide gelten nur für den Frame, in dem sie
 gesetzt werden — `linetrigger = b;` im Frame-Feld rückt also auf jeden Beat
-eine Zeile. Der erste `wordtrigger` eines Titels schaltet den Wort-Stand ein:
+eine Zeile. Für einen Text ist das zu schnell; eine Zeile auf jeden vierten
+Beat: Init `n = 0;`, Frame
+`n = n + b; linetrigger = if(b, equal(n % 4, 0), 0);`. Soll der Text nur in
+einem festen Takt weitergehen, reicht **Unsynced: beats per line** ganz ohne
+Skript — `linetrigger` ist für alles, was das Feld nicht kann (rückwärts, nur
+unter einer Bedingung, im Wechsel mit `wordtrigger`). Der erste `wordtrigger` eines Titels schaltet den Wort-Stand ein:
 Gesungenes in der Stimmfarbe, das laufende Wort nach **Word scale** und
 **Word color**, der Rest in **Color upcoming**; `word` und das Feld Word
 laufen dann mit. Nach dem letzten Wort einer Zeile beginnt die nächste Zeile
@@ -642,8 +647,11 @@ Knoten mit Skript (oder Modulation) setzt seine Zeilen auf der Grafikkarte aus
 einmal gezeichneten Worten zusammen, und Größe, Lage und Farbe kosten dabei
 kein neues Zeichnen. Beispiel für einen Puls auf den Beat: Init
 `ref = fontheight; p = 0;`, Frame
-`p = if(b, 1, p * 0.85); fontheight = ref * (1 + p);`. Die Kontur wächst dabei
-mit der Schrift. Nur vier Felder lassen die Worte neu zeichnen und folgen dem Skript
+`p = if(b, 1, p * 0.93); fontheight = ref * (1 + p);`. Die Zahl bestimmt, wie
+schnell der Puls abklingt: näher an 1 klingt er länger nach (0.85 ist nach
+wenigen Bildern weg, 0.97 steht bei schneller Musik fast dauernd). Sie gilt je
+Bild — bei höherer Bildrate klingt derselbe Wert schneller ab. Die Kontur
+wächst dabei mit der Schrift. Nur vier Felder lassen die Worte neu zeichnen und folgen dem Skript
 deshalb allein aus Init, Song, Beat, Line und Word: **Weight**, **Italic**,
 **Outline size** und **Preview weight**. Ein Knoten ohne Skript wird wie bisher
 gezeichnet; an den Kanten der Buchstaben können sich beide Wege um Bruchteile
@@ -1545,6 +1553,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.67.0 | 2026-10-03 | Session 92. §11 Lyrics, Skript-Beispiele nach dem Sichttest: der Puls klingt mit 0.93 statt 0.85 ab (mit Erklärung der Zahl); NEU Beispiel „eine Zeile auf jeden vierten Beat" und der Hinweis, wann **Unsynced: beats per line** ohne Skript reicht |
 | 1.66.0 | 2026-10-03 | Session 92. §11 Lyrics Sync: Enter / T klopfen im ganzen Panel (vorher nur in der Liste); NEU **Pre-roll** (Vorlauf des Doppelklicks, 0–10 s), **Sprungleiste** über den ganzen Titel, **Kontextmenü** in der Liste und im Wort-Streifen |
 | 1.65.0 | 2026-10-03 | Session 91. §11 Lyrics Trail: NEU Skriptfeld **Line** — einmal je gegangener Zeile, mit `line` (die Zeile, die eben ging) und `linecount` |
 | 1.64.0 | 2026-10-03 | Session 91. §9 NEU **Favoriten im Effect Browser** — ★ vor dem Namen, Rechtsklick **Add to / Remove from favorites**, Filter **★ Favorites** (alle Favoriten aus allen Ordnern); Bild ab / Bild auf blättern in dieser Ansicht durch die Favoriten |
