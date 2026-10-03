@@ -1735,7 +1735,11 @@ private:
     lumi::multieffect::ChainNode m_karaokeWurzel;
     /// Ids der Ebenen-Knoten: eigener Zaehler weit ueber allem, was die Kette
     /// vergibt — ihre Laufzeiten beissen sich nie mit denen der Kette.
-    uint64_t m_karaokeIdHochwasser = 0xF000'0000'0000'0001ull;
+    static constexpr uint64_t kKaraokeIdBasis = 0xF000'0000'0000'0000ull;
+    uint64_t m_karaokeIdHochwasser = kKaraokeIdBasis + 1;
+    /// Gehoert die Id einem Knoten der Karaoke-Ebene? Deren Laufzeiten
+    /// ueberleben den Wechsel der Kette (S91) — der Trail reisst nicht ab.
+    [[nodiscard]] static constexpr bool istKaraokeId(uint64_t id) { return id >= kKaraokeIdBasis; }
     [[nodiscard]] const lumi::multieffect::ChainNode* karaokeLyricsKnoten() const;
     [[nodiscard]] const lumi::multieffect::ChainNode* karaokeTrailKnoten() const;
     bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt deren Lyrics-Knoten)
@@ -1769,7 +1773,9 @@ private:
     int m_karaokeTrailStaerke = 100;
     std::unique_ptr<QOpenGLShaderProgram> m_overlayShader;  ///< Textur 1:1, wahlweise y-gespiegelt
 
-    void resetRuntimes();
+    /// Laufzeiten der Kette verwerfen (Wechsel der Kette); die der
+    /// Karaoke-Ebene bleiben, ausser beim Abbau (`auchEbene`).
+    void resetRuntimes(bool auchEbene = false);
     /// GL-Objekte, VfW-Handles, Milkdrop-Kern und Live-Feed EINER Laufzeit
     /// freigeben (Render-Thread; ohne GL-Context nur der Feed).
     void gibLeafLaufzeitFrei(uint64_t id, LeafRuntime& rt);

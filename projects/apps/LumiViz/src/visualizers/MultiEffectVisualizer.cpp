@@ -4076,7 +4076,7 @@ void MultiEffectVisualizer::onResize(const QSize& size)
 void MultiEffectVisualizer::onCleanup()
 {
     destroySurfaces();
-    resetRuntimes();
+    resetRuntimes(true);  // Abbau: auch die Laufzeiten der Karaoke-Ebene
     m_scopeRenderer.destroy();
     m_fadeShader.reset();
     m_invertShader.reset();
@@ -4583,19 +4583,31 @@ void MultiEffectVisualizer::raeumeVerwaisteLaufzeiten()
     ohneVerwaiste(m_modWerte);
 }
 
-void MultiEffectVisualizer::resetRuntimes()
+void MultiEffectVisualizer::resetRuntimes(bool auchEbene)
 {
-    for (auto& [id, rt] : m_leafRuntimes) gibLeafLaufzeitFrei(id, rt);
+    // S91: die Laufzeiten der Karaoke-Ebene gehoeren nicht zur Kette und
+    // ueberleben ihren Wechsel (Konzept KE1) — sonst baute der Lyrics-Knoten
+    // der Ebene sich neu auf und liesse die eben gegangene Zeile noch einmal
+    // von ihrer Stelle wegwehen: der Trail spraenge zurueck. Die Ids der Ebene
+    // liegen in einem eigenen Bereich (`istKaraokeId`). Beim Abbau des
+    // Visualizers (`auchEbene`) geht alles.
+    const auto bleibt = [auchEbene](uint64_t id) { return !auchEbene && istKaraokeId(id); };
+    const auto ohneKette = [&bleibt](auto& tabelle) {
+        for (auto it = tabelle.begin(); it != tabelle.end();)
+            it = bleibt(it->first) ? std::next(it) : tabelle.erase(it);
+    };
+    for (auto& [id, rt] : m_leafRuntimes)
+        if (!bleibt(id)) gibLeafLaufzeitFrei(id, rt);
     // Preset-Wechsel: der rand()-Strom faengt wieder bei Seed 1 an — AvsRef
     // startet je Preset einen frischen Prozess und ruft nie srand() (S49).
     if (m_scriptContext != nullptr) m_scriptContext->resetRandom();
-    m_listRuntimes.clear();  // slot hosts / FBOs die with their GL-frame owner
-    m_leafRuntimes.clear();
-    m_groupRuntimes.clear();  // HG1: Gruppen-Surfaces/-Pools sterben mit
-    m_switcherRuntimes.clear();  // S82: neue Kette startet bei der Startgruppe
-    m_groupOverride.clear();
-    m_modZustand.clear();  // F4: LFO-Phasen und Huellen beginnen neu
-    m_modWerte.clear();
+    ohneKette(m_listRuntimes);  // slot hosts / FBOs die with their GL-frame owner
+    ohneKette(m_leafRuntimes);
+    ohneKette(m_groupRuntimes);  // HG1: Gruppen-Surfaces/-Pools sterben mit
+    ohneKette(m_switcherRuntimes);  // S82: neue Kette startet bei der Startgruppe
+    ohneKette(m_groupOverride);
+    ohneKette(m_modZustand);  // F4: LFO-Phasen und Huellen beginnen neu
+    ohneKette(m_modWerte);
     m_modBeatLage = 0.0;   // F4d: Beat-Uhr beginnt neu
     m_modBeatSeit = 0.0;
     m_modBeatPeriode = 0.5;

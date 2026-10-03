@@ -298,8 +298,23 @@ geladene Stand als ungeändert (Unschärfe, bewusst). `current.lvkar` ist als
 Speicherziel abgewiesen.
 
 Damit sind **KE1–KE4 gebaut**. Offen: Sichttests (alles), „später" aus §7
-(Timeline schaltet die Ebene, weicher Übergang beim Zurücktreten), Trail der
-Ebene über den Preset-Wechsel halten.
+(Timeline schaltet die Ebene, weicher Übergang beim Zurücktreten).
+
+**Nachtrag S91 — Trail über den Preset-Wechsel: ✅ gebaut.** Befund per Test
+und Bild: der Trail ging beim Wechsel der Kette nicht verloren, er **sprang
+zurück** — `resetRuntimes()` verwarf auch die Laufzeiten der Ebene, ihr
+Lyrics-Knoten baute sich neu auf und ließ die eben gegangene Zeile noch einmal
+von ihrer Stelle loswehen. Jetzt bleiben beim Wechsel der Kette alle
+Laufzeiten, deren Id im Bereich der Ebene liegt (`istKaraokeId`, ab
+`kKaraokeIdBasis`): Blatt-, Listen-, Gruppen-, Switcher-Laufzeiten und der
+Modulations-Zustand; erst der Abbau des Visualizers räumt sie
+(`resetRuntimes(true)`). Die Abweichung aus KE1 (oben) ist damit aufgehoben.
+Geprüft: Test „der Trail haelt ueber den Wechsel der Kette" (70 Frames über
+einen Zeilenwechsel, Tausch in Frame 37 — die Ebene legt in jedem Frame
+dieselben Pixel auf wie ohne Tausch; vorher in Frame 37: 5428 statt 6183),
+Bilder vorher / nachher angesehen. **Nicht geprüft:** im laufenden Programm;
+Ebene mit Host-Gruppe oder Buffer Save in der Trail-Liste (der Puffer-Pool
+wird beim Wechsel weiter geleert).
 
 ## 8. Risiken
 

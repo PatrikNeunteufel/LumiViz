@@ -2231,6 +2231,80 @@ TEST_CASE("Karaoke-Ebene S88: Text ueber dem Bild, Root-Surface unberuehrt, die 
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S91: der Trail der Ebene haelt ueber den Wechsel der Kette (neues Preset).
+// Die Position laeuft ueber einen Zeilenwechsel, kurz danach wird die Kette
+// getauscht; gezaehlt werden die Pixel, die die Ebene im Fenster ueber die
+// Root-Surface legt — mit und ohne Tausch.
+TEST_CASE("Karaoke-Ebene S91: der Trail haelt ueber den Wechsel der Kette")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::setKaraokeEbene(true);
+
+    const auto kette = [](uint32_t farbe) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode balken;
+        balken.params = DebugBarsParams{farbe, -2.5f};
+        root.children = {clear, balken};
+        return root;
+    };
+    const auto ebenePixel = [](MultiEffectVisualizer& vis) {
+        const QImage root = vis.debugGrabRootSurface();
+        const QImage fenster = vis.debugGrabMitKaraoke();
+        int n = 0;
+        for (int y = 0; y < root.height(); ++y)
+            for (int x = 0; x < root.width(); ++x)
+                if (root.pixel(x, y) != fenster.pixel(x, y)) ++n;
+        return n;
+    };
+    const QString snap = qEnvironmentVariable("LUMIVIZ_KARAOKE_SNAP");
+    // Frame 30 ueberschreitet 13 s (Zeilenwechsel); bei Frame `tausch` wechselt die Kette
+    const auto lauf = [&](int tausch, const char* name) {
+        MultiEffectVisualizer vis;
+        vis.setChain(kette(0x40C0FF));
+        vis.setBeatPeriodOverride(100000);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+        std::vector<int> pixel;
+        for (int frame = 0; frame < 70; ++frame)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(12500 + frame * 1000 / 60);
+            if (frame == tausch) vis.setChain(kette(0xFF8040));
+            vis.render(1.0f / 60.0f);
+            pixel.push_back(ebenePixel(vis));
+            if (!snap.isEmpty() && (frame == 36 || frame == 37 || frame == 45))
+                vis.debugGrabMitKaraoke().save(
+                    QStringLiteral("%1/wechsel_%2_f%3.png").arg(snap, QLatin1String(name)).arg(frame));
+        }
+        return pixel;
+    };
+    const std::vector<int> ohne = lauf(-1, "ohne");
+    const std::vector<int> mit = lauf(37, "mit");
+    // Der Trail ist da (Gegenprobe: nach dem Zeilenwechsel liegt mehr auf als davor) …
+    CHECK(ohne[36] > ohne[29]);
+    // … und der Tausch der Kette aendert an der Ebene nichts: in jedem Frame
+    // dieselbe Zahl Pixel wie ohne Tausch. Vor S91 baute sich der Lyrics-Knoten
+    // der Ebene beim Tausch neu auf, die gegangene Zeile wehte noch einmal von
+    // ihrer Stelle los (gemessen in Frame 37: 5428 statt 6183 Pixel).
+    for (std::size_t f = 0; f < ohne.size(); ++f)
+    {
+        CAPTURE(f);
+        CHECK(mit[f] == ohne[f]);
+    }
+
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S88, K6 (Entscheid Patrik a): Mischarten der Karaoke-Ebene — je Teil (Zeile,
 // Trail) wie bei den Listen bekannt, dazu Invert und eine Staerke. Gerechnet
 // wird per GL-Blending auf dem fertigen Bild; geprueft an den Pixeln im
