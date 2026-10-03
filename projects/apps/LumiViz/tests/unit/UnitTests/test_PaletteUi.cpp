@@ -66,6 +66,7 @@
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
+#include <QHeaderView>
 #include <QKeyEvent>
 #include <QRegularExpression>
 #include <QScrollBar>
@@ -2926,6 +2927,141 @@ TEST_CASE("PaletteUi S87: Lyrics Sync — klopfen, verschieben, speichern als .l
     CHECK(liste->rowCount() == 3);  // wie in der Datei: ohne die Leerzeile
     CHECK(MultiEffectVisualizer::songtext().zeilen.size() == 3);
 
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
+// S90 (LB5, Entscheid L6-3 a): Duett — die Stimme je Zeile im Panel setzen.
+// Zuerst der Befund, der vorher nur aus dem Code gelesen war: eine Stimme, die
+// der Text schon traegt, uebersteht Klopfen und Speichern.
+TEST_CASE("PaletteUi S90: Lyrics Sync — Stimmen setzen (Duett), Spalte Voice, speichern")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+
+    const QString quelle = tmp.path() + "/Zwei - Duett.txt";
+    {
+        QFile f(quelle);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("eins\nv2: zwei\ndrei\n\nvier\n");
+    }
+    TrackInfo t;
+    t.filePath = tmp.path() + "/duett.mp3";
+    t.title = "Duett";
+    t.artist = "Zwei";
+    t.durationMs = 200000;
+    // „v2:" gilt bis zur naechsten Marke: zwei, drei und vier singt Stimme 2
+    ly::Songtext text = ly::leseLrc("eins\nv2: zwei\ndrei\n\nvier\n");
+    text.datei = quelle.toStdString();
+    REQUIRE(text.zeilen.size() == 5);
+    REQUIRE(text.zeilen[1].stimme == ly::Stimme::Zwei);
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+    panel.lade(t, text);
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(liste->columnCount() == 4);
+    // Spalte Voice (logisch 3) steht VOR dem Text, der Text fuellt den Rest
+    CHECK(liste->horizontalHeaderItem(3)->text() == QStringLiteral("Voice"));
+    CHECK(liste->horizontalHeader()->visualIndex(3) < liste->horizontalHeader()->visualIndex(2));
+    CHECK(liste->item(0, 3)->text().isEmpty());
+    CHECK(liste->item(1, 3)->text() == QStringLiteral("2"));
+    CHECK(liste->item(2, 3)->text() == QStringLiteral("2"));
+    CHECK(liste->item(3, 3)->text().isEmpty());  // Leerzeile: niemand singt
+
+    // Stimme setzen: Knopf fuer mehrere markierte Zeilen, Taste in der Liste
+    auto* beide = panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncVoiceBoth"));
+    REQUIRE(beide != nullptr);
+    REQUIRE(panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncVoice1")) != nullptr);
+    REQUIRE(panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncVoice2")) != nullptr);
+    liste->clearSelection();
+    liste->setSelectionMode(QAbstractItemView::MultiSelection);
+    liste->selectRow(2);
+    liste->selectRow(3);  // die Leerzeile ist mit markiert — sie bleibt ohne Stimme
+    liste->selectRow(4);
+    liste->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    beide->click();
+    CHECK(liste->item(2, 3)->text() == QStringLiteral("1+2"));
+    CHECK(liste->item(3, 3)->text().isEmpty());
+    CHECK(liste->item(4, 3)->text() == QStringLiteral("1+2"));
+    CHECK(liste->item(1, 3)->text() == QStringLiteral("2"));  // nicht markiert: unberuehrt
+    CHECK(panel.geaendert());
+    liste->selectRow(4);
+    QKeyEvent taste(QEvent::KeyPress, Qt::Key_1, Qt::NoModifier, QStringLiteral("1"));
+    QCoreApplication::sendEvent(liste, &taste);
+    CHECK(liste->item(4, 3)->text() == QStringLiteral("1"));
+    // zuruecknehmen und wiederholen gilt auch fuer die Stimme
+    REQUIRE(panel.rueckgaengig());
+    CHECK(liste->item(4, 3)->text() == QStringLiteral("1+2"));
+    REQUIRE(panel.wiederholen());
+    CHECK(liste->item(4, 3)->text() == QStringLiteral("1"));
+
+    // klopfen aendert die Stimmen nicht
+    liste->selectRow(0);
+    REQUIRE(panel.tippe(10000));
+    REQUIRE(panel.tippe(20000));
+    REQUIRE(panel.tippe(30000));
+    REQUIRE(panel.tippe(40000));
+    CHECK(panel.offeneZeilen() == 0);
+    CHECK(liste->item(1, 3)->text() == QStringLiteral("2"));
+    CHECK(liste->item(2, 3)->text() == QStringLiteral("1+2"));
+    // die Vorschau am Knoten traegt die Stimmen; die Zeile ohne Marke zaehlt
+    // in einem Duett als Stimme 1 (in der Datei gilt eine Marke bis zur naechsten)
+    const ly::Songtext vorschau = MultiEffectVisualizer::songtext();
+    REQUIRE(vorschau.zeilen.size() == 4);
+    CHECK(vorschau.zeilen[0].stimme == ly::Stimme::Eins);
+    CHECK(vorschau.zeilen[1].stimme == ly::Stimme::Zwei);
+    CHECK(vorschau.zeilen[2].stimme == ly::Stimme::Beide);
+    CHECK(vorschau.zeilen[3].stimme == ly::Stimme::Eins);
+
+    // speichern und wieder lesen: jede Zeile kommt mit ihrer Stimme zurueck
+    REQUIRE(panel.speichere());
+    const ly::Songtext gefunden = lumi::audio::findeSongtext(t, tmp.path());
+    REQUIRE(gefunden.synchron);
+    REQUIRE(gefunden.zeilen.size() == 4);
+    CHECK(gefunden.zeilen[0].stimme == ly::Stimme::Eins);
+    CHECK(gefunden.zeilen[0].text == "eins");
+    CHECK(gefunden.zeilen[1].stimme == ly::Stimme::Zwei);
+    CHECK(gefunden.zeilen[2].stimme == ly::Stimme::Beide);
+    CHECK(gefunden.zeilen[3].stimme == ly::Stimme::Eins);
+    CHECK(gefunden.zeilen[3].text == "vier");
+    CHECK(liste->item(0, 3)->text() == QStringLiteral("1"));  // nach dem Speichern steht sie da
+
+    // ein Text ganz ohne Stimmen bleibt ohne: keine Marken in der Datei
+    const QString ohne = tmp.path() + "/Wer - Solo.txt";
+    {
+        QFile f(ohne);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("eins\nzwei\n");
+    }
+    TrackInfo s;
+    s.filePath = tmp.path() + "/solo.mp3";
+    s.title = "Solo";
+    s.artist = "Wer";
+    ly::Songtext solo = ly::leseLrc("eins\nzwei\n");
+    solo.datei = ohne.toStdString();
+    lumi::audio::setzeLaufendenTitel(s);
+    MultiEffectVisualizer::setSongtext(solo);
+    panel.lade(s, solo);
+    liste->selectRow(0);
+    REQUIRE(panel.tippe(1000));
+    REQUIRE(panel.tippe(2000));
+    REQUIRE(panel.speichere());
+    QFile datei(tmp.path() + "/Wer - Solo.lrc");
+    REQUIRE(datei.open(QIODevice::ReadOnly));
+    const QByteArray inhalt = datei.readAll();
+    CHECK_FALSE(inhalt.contains("v1:"));
+    CHECK(inhalt.contains("]eins"));
+
+    panel.resize(460, 460);
+    schnappschuss(panel, "lyrics_sync_duett");
     MultiEffectVisualizer::setSongtext(ly::Songtext{});
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }

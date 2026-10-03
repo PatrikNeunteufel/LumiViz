@@ -43,7 +43,22 @@ namespace
 {
 namespace ly = lumi::multieffect::lyrics;
 
-enum Spalte { kZeit, kSprung, kText };
+/// Logische Spalten. `kStimme` (S90) haengt hinten an, damit die uebrigen
+/// ihre Nummern behalten — angezeigt wird sie VOR dem Text.
+enum Spalte { kZeit, kSprung, kText, kStimme };
+
+/// Kurztext der Stimme in der Spalte Voice (leer = keine Marke).
+QString stimmText(ly::Stimme s)
+{
+    switch (s)
+    {
+        case ly::Stimme::Eins: return QStringLiteral("1");
+        case ly::Stimme::Zwei: return QStringLiteral("2");
+        case ly::Stimme::Beide: return QStringLiteral("1+2");
+        case ly::Stimme::Keine: break;
+    }
+    return QString();
+}
 
 constexpr int kMsProWert = 10;      ///< Aufloesung der Huellkurve
 constexpr int kFensterMs = 4000;    ///< so viel zeigt die Wellenform vor und nach der Marke
@@ -338,9 +353,14 @@ void LyricsSyncPanel::setupUI()
     };
     vl->addWidget(m_welle);
 
-    m_liste = new QTableWidget(0, 3, this);
+    m_liste = new QTableWidget(0, 4, this);
     m_liste->setObjectName(QStringLiteral("lyricsSyncList"));
-    m_liste->setHorizontalHeaderLabels({tr("Time"), tr("Go"), tr("Text")});
+    m_liste->setHorizontalHeaderLabels({tr("Time"), tr("Go"), tr("Text"), tr("Voice")});
+    // S90 (LB5, Duett): die Stimme steht vor dem Text
+    m_liste->horizontalHeader()->moveSection(kStimme, kText);
+    m_liste->horizontalHeaderItem(kStimme)->setToolTip(
+        tr("Who sings the line in a duet: 1, 2 or both. Sets the colour of the line (Color "
+           "voice 1 / voice 2 / both voices)."));
     // abwechselnd gefaerbte Zeilen; die Sprung-Knoepfe sind flach, damit die
     // Farbe der Zeile auch in ihrer Zelle steht
     m_liste->setAlternatingRowColors(true);
@@ -349,11 +369,12 @@ void LyricsSyncPanel::setupUI()
     // Doppelklick gehoert dem Vorhoeren; die Zeit aendert man mit F2
     m_liste->setEditTriggers(QAbstractItemView::EditKeyPressed);
     m_liste->verticalHeader()->setVisible(false);
-    m_liste->horizontalHeader()->setStretchLastSection(true);
+    m_liste->horizontalHeader()->setStretchLastSection(false);
+    m_liste->horizontalHeader()->setSectionResizeMode(kText, QHeaderView::Stretch);
     m_liste->setToolTip(
         tr("Enter or T: give the selected line the current playback position and move on. "
            "Double-click: jump to just before the line. F2 in the Time column: type a time "
-           "(mm:ss.xx)."));
+           "(mm:ss.xx). 1 / 2 / 3: voice 1, voice 2, both voices for the selected lines."));
     m_liste->installEventFilter(this);
     vl->addWidget(m_liste, 1);
 
@@ -408,6 +429,23 @@ void LyricsSyncPanel::setupUI()
     connect(m_redo, &QPushButton::clicked, this, &LyricsSyncPanel::wiederholen);
     reihe2->addStretch(1);
     vl->addLayout(reihe2);
+    // S90 (LB5, Entscheid L6-3 a): Stimmen fuer Duette — je Zeile
+    auto* reiheStimme = new QHBoxLayout();
+    reiheStimme->addWidget(new QLabel(tr("Voice:"), this));
+    const auto stimmKnopf = [&](const QString& text, const char* name, ly::Stimme s,
+                                const QString& tipp) {
+        auto* k = knopf(text, name, tipp);
+        connect(k, &QPushButton::clicked, this, [this, s]() { setzeStimme(s); });
+        reiheStimme->addWidget(k);
+    };
+    stimmKnopf(tr("1"), "lyricsSyncVoice1", ly::Stimme::Eins,
+               tr("Selected lines are sung by voice 1 (key 1 in the list)."));
+    stimmKnopf(tr("2"), "lyricsSyncVoice2", ly::Stimme::Zwei,
+               tr("Selected lines are sung by voice 2 (key 2 in the list)."));
+    stimmKnopf(tr("Both"), "lyricsSyncVoiceBoth", ly::Stimme::Beide,
+               tr("Selected lines are sung by both voices (key 3 in the list)."));
+    reiheStimme->addStretch(1);
+    vl->addLayout(reiheStimme);
     reihe2 = new QHBoxLayout();  // dritte Reihe: Versatz und Mitlaufen
     // S88 (Entscheid Patrik a): Versatz nur dieses Titels — verschiebt den
     // ganzen Text, ohne die Zeiten oder die Datei anzufassen; wirkt sofort
@@ -524,11 +562,16 @@ void LyricsSyncPanel::fuelleListe()
         auto* text = new QTableWidgetItem();
         text->setFlags(text->flags() & ~Qt::ItemIsEditable);
         m_liste->setItem(r, kText, text);
+        auto* stimme = new QTableWidgetItem();
+        stimme->setFlags(stimme->flags() & ~Qt::ItemIsEditable);
+        stimme->setTextAlignment(Qt::AlignCenter);
+        m_liste->setItem(r, kStimme, stimme);
         zeigeZeile(r);
     }
     m_liste->resizeColumnToContents(kZeit);
     if (m_liste->columnWidth(kZeit) < 80) m_liste->setColumnWidth(kZeit, 80);
     m_liste->setColumnWidth(kSprung, 34);
+    m_liste->setColumnWidth(kStimme, 48);
     m_fuellt = false;
 }
 
@@ -540,6 +583,7 @@ void LyricsSyncPanel::zeigeZeile(int reihe)
     m_fuellt = true;
     m_liste->item(reihe, kZeit)->setText(zeitText(z.zeitMs));
     m_liste->item(reihe, kText)->setText(QString::fromStdString(z.text));
+    m_liste->item(reihe, kStimme)->setText(z.text.empty() ? QString() : stimmText(z.stimme));
     for (const int s : {static_cast<int>(kZeit), static_cast<int>(kText)})
     {
         QFont f = m_liste->item(reihe, s)->font();
@@ -689,6 +733,25 @@ void LyricsSyncPanel::loescheZeit()
     vorschau();
 }
 
+void LyricsSyncPanel::setzeStimme(ly::Stimme stimme)
+{
+    Stand vorher = jetzigerStand();
+    bool etwas = false;
+    for (const int r : markierteReihen())
+    {
+        ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(r)];
+        if (z.text.empty() || z.stimme == stimme) continue;  // Leerzeilen singt niemand
+        z.stimme = stimme;
+        zeigeZeile(r);
+        etwas = true;
+    }
+    if (!etwas) return;
+    merke(std::move(vorher));
+    m_geaendert = true;
+    zeigeStand();
+    vorschau();
+}
+
 ly::Songtext LyricsSyncPanel::alsSongtext() const
 {
     ly::Songtext out = m_text;
@@ -698,6 +761,16 @@ ly::Songtext LyricsSyncPanel::alsSongtext() const
     std::stable_sort(out.zeilen.begin(), out.zeilen.end(),
                      [](const ly::Zeile& a, const ly::Zeile& b) { return a.zeitMs < b.zeitMs; });
     out.synchron = !out.zeilen.empty();
+    // S90 (Duett): in der Datei gilt eine Stimm-Marke bis zur naechsten — eine
+    // Zeile OHNE Stimme nach einer mit Stimme liesse sich nicht schreiben und
+    // kaeme beim Lesen als die Stimme davor zurueck. Traegt irgendeine Zeile
+    // eine Stimme, zaehlen die uebrigen deshalb als Stimme 1 (dieselbe Farbe).
+    const bool duett = std::any_of(out.zeilen.begin(), out.zeilen.end(), [](const ly::Zeile& z) {
+        return z.stimme != ly::Stimme::Keine;
+    });
+    if (duett)
+        for (ly::Zeile& z : out.zeilen)
+            if (z.stimme == ly::Stimme::Keine) z.stimme = ly::Stimme::Eins;
     return out;
 }
 
@@ -863,6 +936,13 @@ bool LyricsSyncPanel::eventFilter(QObject* watched, QEvent* event)
         {
             if (m_tap->isEnabled()) tippe(MultiEffectVisualizer::playPositionMs());
             return true;
+        }
+        // S90 (Duett): 1 / 2 / 3 setzen die Stimme der markierten Zeilen
+        if (taste->modifiers() == Qt::NoModifier || taste->modifiers() == Qt::KeypadModifier)
+        {
+            if (taste->key() == Qt::Key_1) { setzeStimme(ly::Stimme::Eins); return true; }
+            if (taste->key() == Qt::Key_2) { setzeStimme(ly::Stimme::Zwei); return true; }
+            if (taste->key() == Qt::Key_3) { setzeStimme(ly::Stimme::Beide); return true; }
         }
     }
     return PanelBase::eventFilter(watched, event);

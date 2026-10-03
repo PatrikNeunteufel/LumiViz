@@ -99,6 +99,12 @@ public:
     /// Zeit der markierten Zeilen loeschen.
     void loescheZeit();
 
+    /// S90 (LB5, Duett): die Stimme der markierten Textzeilen setzen — Knoepfe
+    /// „Voice 1 / 2 / Both" und die Tasten 1 / 2 / 3 in der Liste. Die Stimme
+    /// bestimmt die Farbe der Zeile; gespeichert wird sie als Marke am
+    /// Zeilenanfang (`v1:`, `v2:`, `v1+v2:`).
+    void setzeStimme(lumi::multieffect::lyrics::Stimme stimme);
+
     /// Arbeitskopie als Songtext: nur Zeilen mit Zeit, nach Zeit geordnet.
     [[nodiscard]] lumi::multieffect::lyrics::Songtext alsSongtext() const;
 

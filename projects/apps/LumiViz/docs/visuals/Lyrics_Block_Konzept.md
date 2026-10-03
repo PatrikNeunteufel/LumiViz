@@ -485,6 +485,33 @@ die Stimme je Wort wechseln können, müsste das Rastern der laufenden Zeile
 mehr als drei Farbstücke tragen — das lässt sich in LB2 gleich so anlegen
 (Stücke-Liste statt `vorn` / `hinten`), ohne den Entscheid vorwegzunehmen.
 
+### Entscheide L6 (Patrik, 03.10.) — alle a
+
+- **L6-1 a:** Schalter *Words* im Panel; ein Streifen unter der Liste zeigt
+  die Worte der markierten Zeile, Tap gibt dem nächsten Wort die Zeit, nach
+  dem letzten weiter zur nächsten Zeile.
+- **L6-2 a:** eine Zeile wird nur mit Wort-Zeiten gespeichert, wenn alle ihre
+  Worte eine haben; das Panel zeigt, wie viele Zeilen offene Worte haben.
+- **L6-3 a:** Stimme je Zeile; Spalte *Voice*, Tasten 1 / 2 / 3.
+- **L6-4 a:** langsamer abspielen über die Abtastrate (der Ton wird tiefer),
+  ohne `bass_fx`.
+- **L6-5 a:** Einsätze in der Wellenform nicht in LB5; bleibt Idee.
+
+LB5 wird in drei Schritten gebaut, je einer zum Committen: **LB5-1** Stimmen,
+**LB5-2** Wort-Zeiten, **LB5-3** langsamer abspielen.
+
+**Stand LB5-1 — ✅ gebaut (03.10.):** Spalte *Voice* (logisch die vierte,
+angezeigt vor dem Text), `LyricsSyncPanel::setzeStimme` für die markierten
+Textzeilen (Knöpfe *Voice 1 / 2 / Both*, Tasten 1 / 2 / 3, mit Undo),
+Vorschau sofort am Knoten. Weil eine Stimm-Marke in der Datei bis zur
+nächsten gilt, zählen in einem Text mit Stimmen die Zeilen ohne Angabe als
+Stimme 1 (`alsSongtext`); ein Text ohne Stimmen bleibt ohne Marken. Geprüft
+(UI-Test): vorhandene Stimmen überstehen Klopfen und Speichern (der vorher
+nur gelesene Befund), Setzen für mehrere Zeilen, Leerzeile bleibt ohne,
+Taste, Undo/Redo, Vorschau, Speichern und Wiederlesen, Solo-Text ohne
+Marken; Schnappschuss angesehen. Unit-Tests 821/821. **Nicht geprüft:** im
+laufenden Programm (Tasten 1 / 2 / 3 gegen fensterweite Kürzel).
+
 ## 8. Stufen im Überblick
 
 | Stufe | Inhalt | sichtbar bei | hängt ab von |

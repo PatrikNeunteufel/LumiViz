@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.59.0
+> **Version:** 1.60.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -710,8 +710,8 @@ Die Merker liegen als `notfound.json` im Benutzerordner der Songtexte.
 
 **Nachsynchronisieren: Panel „Lyrics Sync"** (View → Panels). Macht aus einem
 unsynchronen Text einen synchronen, oder stellt einen synchronen nach. Das
-Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**
-und **Text**; die Zeile an der Abspielposition steht fett. Darüber läuft die
+Panel zeigt den Text des laufenden Titels als Liste mit den Spalten **Time**,
+**Voice** und **Text**; die Zeile an der Abspielposition steht fett. Darüber läuft die
 **Spielzeit** mit, und eine **Wellenform** zeigt vier Sekunden vor und nach
 der Abspielposition (rote Marke in der Mitte). Die senkrechten Striche darin
 sind die Zeiten der Zeilen, die markierte ist hervorgehoben — so siehst du, ob
@@ -730,6 +730,7 @@ ein Strich auf dem Einsatz sitzt.
 | **Reload** | nimmt den Text des laufenden Titels neu — ungespeicherte Zeiten gehen dabei verloren |
 | **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
 | **Undo** / **Redo** (Ctrl+Z / Ctrl+Y in der Liste) | nimmt den letzten Schritt an den Zeiten zurück (Klopfen, Verschieben, Zeit löschen, Zeit von Hand) bzw. stellt ihn wieder her. Nach **Undo** ist wieder die Zeile markiert, an der der Schritt begann — ein verklopfter Einsatz lässt sich gleich neu klopfen. **Save** und **Reload** leeren die Geschichte |
+| **Voice 1** / **2** / **Both** (oder 1, 2, 3 in der Liste) | Duett: legt fest, wer die markierten Zeilen singt. Die Spalte **Voice** zeigt es (1, 2, 1+2), der Lyrics-Knoten färbt danach (**Color (voice 1)**, **Color voice 2**, **Color both voices**). Gespeichert wird die Stimme als Marke am Zeilenanfang (`v1:`, `v2:`, `v1+v2:`). Sobald eine Zeile eine Stimme trägt, zählen Zeilen ohne Angabe als Stimme 1; ein Text ganz ohne Stimmen bleibt ohne Marken |
 | **Track offset** | verschiebt den **ganzen** Text dieses Titels (positiv = früher), ohne die Zeiten der Zeilen zu ändern; wirkt sofort und wird je Titel gemerkt — **Save** ist dafür nicht nötig. Sitzt ein fertiger Text gleichmäßig daneben, ist das der kürzeste Weg |
 
 Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
@@ -1504,6 +1505,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.60.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Duett** — Spalte **Voice**, Knöpfe **Voice 1 / 2 / Both** und Tasten 1 / 2 / 3 setzen die Stimme der markierten Zeilen |
 | 1.59.0 | 2026-10-03 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptvariablen **`linetrigger`** und **`wordtrigger`** — rücken unsynchronen Text eine Zeile bzw. ein Wort weiter (oder zurück); der erste `wordtrigger` schaltet den Wort-Stand des Blocks ein |
 | 1.58.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): Lage, Größe und Farben folgen dem Skript jetzt aus **jedem** Feld, auch aus Frame (die Zeilen werden dafür auf der Grafikkarte aus einmal gezeichneten Worten zusammengesetzt); nur Weight, Italic, Outline size und Preview weight folgen weiter allein aus Init, Song, Beat, Line und Word. Das Gleiten der Wortgröße kostet kein neues Zeichnen mehr. **Eine Schriftgröße je Song:** die längste Zeile bestimmt die Schrift aller Zeilen, der Zeilenabstand geht mit (bisher wurde jede Zeile einzeln verkleinert, der Abstand blieb bei der eingestellten Schrift) |
 | 1.57.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptfeld **Word** — läuft einmal je Wortwechsel (nur mit Wort-Zeiten), liest `word` und `wordcount`; beide Variablen in allen Feldern |
