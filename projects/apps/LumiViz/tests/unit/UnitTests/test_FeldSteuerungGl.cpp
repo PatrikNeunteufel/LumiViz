@@ -1848,6 +1848,20 @@ TEST_CASE("Lyrics S90 LB4: linetrigger / wordtrigger ruecken den unsynchronen Te
         CHECK(gesehen["Zeile"].yShift == -1);
     }
     {
+        // S91: das Beispiel aus dem Benutzerhandbuch — am Zeilenende halten.
+        // Gegenprobe ist der Block darueber: `wordtrigger = b;` laeuft in
+        // derselben Zeit bis in die dritte Zeile.
+        LyricsParams lp;
+        lp.frameCode = "wordtrigger = if(below(word, wordcount), b, 0);";
+        lp.wordCode = "yshift = -word; xshift = line;";
+        (void)lauf(lp, 25);  // Beat 3: drittes (letztes) Wort der ersten Zeile
+        CHECK(gesehen["Zeile"].xShift == 1);
+        CHECK(gesehen["Zeile"].yShift == -3);
+        (void)lauf(lp, 95);  // zehn Beats: bleibt auf dem letzten Wort der ersten Zeile
+        CHECK(gesehen["Zeile"].xShift == 1);
+        CHECK(gesehen["Zeile"].yShift == -3);
+    }
+    {
         // Wort-Stand im Bild: ohne wordtrigger die ganze Zeile in der Stimmfarbe (rot);
         // nach zwei wordtriggern: erstes Wort rot, zweites laeuft (gruen), drittes blau
         LyricsParams lp;

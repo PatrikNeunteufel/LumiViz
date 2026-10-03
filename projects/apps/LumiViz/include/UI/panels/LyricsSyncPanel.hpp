@@ -165,12 +165,14 @@ protected:
     void onActivate() override;
     void onDeactivate() override;
     bool eventFilter(QObject* watched, QEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     void setupUI();
     void fuelleListe();
     void zeigeZeile(int reihe);
     void zeigeStand();
+    void passeStandHoehe();  ///< Mindesthoehe der Statuszeile fuer die jetzige Breite
     void zeigePosition();
     void vorschau();
     void uebernimmLaufenden(bool erzwungen);

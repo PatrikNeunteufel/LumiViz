@@ -30,6 +30,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
+#include <QResizeEvent>
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QSpinBox>
@@ -399,6 +400,11 @@ void LyricsSyncPanel::setupUI()
            "Double-click: jump to just before the line. F2 in the Time column: type a time "
            "(mm:ss.xx). 1 / 2 / 3: voice 1, voice 2, both voices for the selected lines."));
     m_liste->installEventFilter(this);
+    // S91: Kopf und drei Zeilen bleiben immer sichtbar — sonst drueckt der
+    // Wort-Streifen die Liste in einem knappen Panel auf anderthalb Zeilen
+    m_liste->setMinimumHeight(m_liste->horizontalHeader()->sizeHint().height() +
+                              3 * m_liste->verticalHeader()->defaultSectionSize() +
+                              2 * m_liste->frameWidth());
     vl->addWidget(m_liste, 1);
 
     // S90 (LB5-2, Entscheid L6-1 a): Wort-Zeiten — ein Streifen mit den Worten
@@ -699,6 +705,25 @@ void LyricsSyncPanel::zeigeZeile(int reihe)
     m_fuellt = war;
 }
 
+void LyricsSyncPanel::passeStandHoehe()
+{
+    // S91: ein umbrechendes Label meldet dem Layout als Mindesthoehe nur EINE
+    // Zeile — wird das Panel knapp, schneidet das Layout die zweite ab. Die
+    // Hoehe fuer die tatsaechliche Breite deshalb selbst als Minimum setzen;
+    // das Dock (Scrollarea) scrollt dann, statt zu beschneiden.
+    if (m_stand == nullptr || layout() == nullptr) return;
+    const QMargins rand = layout()->contentsMargins();
+    const int breite = std::max(1, width() - rand.left() - rand.right());
+    const int hoehe = m_stand->text().isEmpty() ? 0 : m_stand->heightForWidth(breite);
+    if (m_stand->minimumHeight() != hoehe) m_stand->setMinimumHeight(hoehe);
+}
+
+void LyricsSyncPanel::resizeEvent(QResizeEvent* event)
+{
+    PanelBase::resizeEvent(event);
+    passeStandHoehe();
+}
+
 int LyricsSyncPanel::offeneZeilen() const
 {
     return static_cast<int>(std::count_if(m_text.zeilen.begin(), m_text.zeilen.end(),
@@ -736,6 +761,7 @@ void LyricsSyncPanel::zeigeStand()
                      tr("Lines with words still to tap: %1 (saved without word times).")
                          .arg(offeneWorte);
     m_stand->setText(stand);
+    passeStandHoehe();
     zeigeWorte();
 
     // Striche in der Wellenform: Zeiten als Abspielpositionen (Zeit − Versatz)

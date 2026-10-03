@@ -3193,6 +3193,15 @@ TEST_CASE("PaletteUi S90: Lyrics Sync — Wort-Zeiten klopfen, Streifen, halb ge
     CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.50"));
     CHECK(worte->item(2)->text().contains(QStringLiteral("00:12.50")));
 
+    // S91: die Statuszeile ist ganz zu sehen (sie bricht hier um), und die
+    // Liste zeigt mindestens ihren Kopf und drei Zeilen — auch im knappen Panel
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    CHECK(stand->text().contains(QStringLiteral("still to tap")));
+    CHECK(stand->heightForWidth(stand->width()) > stand->fontMetrics().lineSpacing());
+    CHECK(stand->height() >= stand->heightForWidth(stand->width()));
+    CHECK(stand->geometry().bottom() <= panel.rect().bottom());
+    CHECK(liste->height() >= 3 * liste->verticalHeader()->defaultSectionSize());
     schnappschuss(panel, "lyrics_sync_worte");
 
     // speichern: die vollstaendige Zeile mit Wort-Zeiten, die halbe als gewoehnliche Zeile
