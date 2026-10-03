@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.77.0
+> **Version:** 1.78.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -141,6 +141,10 @@ Ordner bleibt dabei bedienbar. Ogg/Opus-Cover werden noch nicht gelesen.
   Visualisierung (abspielen). Mehrfachauswahl geht.
 - Der zuletzt geöffnete Ordner wird gemerkt; beim ersten Mal öffnet der
   Musik-Ordner von Windows.
+- **Der laufende Titel** ist markiert, wenn der Browser seinen Ordner zeigt.
+  Der Browser wechselt nie von selbst den Ordner; der Knopf **◎** neben der
+  Ordnerwahl springt in den Ordner des laufenden Titels und markiert ihn (ein
+  Suchtext, der ihn verdeckt, wird dabei gelöscht) — wie im Effect Browser.
 
 **Session-Playlist:** Beim Beenden wird die aktuelle Playlist automatisch
 gespeichert und beim nächsten Start wiederhergestellt (inklusive Position in
@@ -1651,6 +1655,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.78.0 | 2026-10-03 | Session 93. Audio Browser: der laufende Titel ist markiert, Knopf **◎** springt in seinen Ordner |
 | 1.77.0 | 2026-10-03 | Session 93. Die Preset-Zeile: fester Eintrag **+ New empty effect chain** im Dropdown des Effect-Chain-Panels |
 | 1.76.0 | 2026-10-03 | Session 93. Presets durchblättern: der Start lädt das zuletzt laufende Preset, gleich über welchen Weg es kam; der Effect Browser bleibt in seinem Ordner und folgt dem laufenden Preset nur auf Knopfdruck (**◎**) |
 | 1.75.0 | 2026-10-03 | Session 93. §11: Rechtsklick im Baum der Effect Chain — **Add module** mit den **Favorites** und **Recently used** der Modul-Palette, **All modules…** öffnet sie |

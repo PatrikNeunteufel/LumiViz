@@ -9,6 +9,9 @@
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiListe.hpp"
 #include "audio/AlbumCover.hpp"
+#include "audio/AudioEvents.hpp"
+#include "audio/IAudioPlayer.hpp"
+#include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 
 #include <QIcon>
@@ -49,8 +52,18 @@ AudioBrowserPanel::AudioBrowserPanel(ServiceContainer& services, QWidget* parent
                     item->setIcon(QIcon(QPixmap::fromImage(bild)));
             });
 
+    // S93 (Wunsch Patrik, wie im Effect Browser): der laufende Titel wird
+    // gemerkt und markiert, der Browser wechselt aber nie von selbst den
+    // Ordner — dafuer gibt es den Knopf ◎.
+    if (auto* player = services.tryResolve<IAudioPlayer>())
+        if (player->hasTrack()) m_aktuell = player->currentTrack().filePath;
+
     setupUI();
     refresh();
+
+    if (auto* bus = eventBus())
+        m_titelSubscription = bus->subscribeScoped<TrackChangedEvent>(
+            [this](const TrackChangedEvent& e) { merkeAktuellenTitel(e.track.filePath); });
 }
 
 // Hier, nicht im Header: CoverLader ist dort nur vorwaerts deklariert.
@@ -145,7 +158,68 @@ void AudioBrowserPanel::refresh()
     m_coverAuftrag = m_coverLader->lade(coverPfade, kIconKante * 2);
 
     onSearchChanged(m_pSearchEdit->text());
+    // Den laufenden Titel markieren, sooft die Liste neu entsteht (S93).
+    markiereAktuellenTitel();
     setStatus(tr("%1 audio file(s) · %2 folder(s)").arg(files.size()).arg(dirs.size()));
+}
+
+void AudioBrowserPanel::merkeAktuellenTitel(const QString& pfad)
+{
+    m_aktuell = pfad;
+    aktualisiereSprungKnopf();
+    if (m_pListWidget == nullptr) return;
+    if (m_aktuell.isEmpty())
+        m_pListWidget->setCurrentRow(-1);
+    else
+        markiereAktuellenTitel();
+}
+
+void AudioBrowserPanel::markiereAktuellenTitel()
+{
+    if (m_aktuell.isEmpty() || m_pListWidget == nullptr) return;
+    const QFileInfo gesucht(m_aktuell);
+    for (int row = 0; row < m_pListWidget->count(); ++row)
+    {
+        QListWidgetItem* item = m_pListWidget->item(row);
+        if (item->data(Qt::UserRole + 1).toInt() != Type_Audio) continue;
+        if (QFileInfo(item->data(Qt::UserRole).toString()) != gesucht) continue;
+        m_pListWidget->setCurrentRow(row);
+        m_pListWidget->scrollToItem(item);
+        return;
+    }
+}
+
+bool AudioBrowserPanel::springeZumAktuellenTitel()
+{
+    if (m_aktuell.isEmpty() || !QFileInfo::exists(m_aktuell))
+    {
+        setStatus(tr("No current song to jump to"));
+        return false;
+    }
+    const auto steht = [this] {
+        const QListWidgetItem* item = m_pListWidget->currentItem();
+        return item != nullptr && !item->isHidden() &&
+               QFileInfo(item->data(Qt::UserRole).toString()) == QFileInfo(m_aktuell);
+    };
+    m_pListWidget->setCurrentRow(-1);
+    navigateTo(QFileInfo(m_aktuell).absolutePath());
+    if (!steht())
+    {
+        m_pSearchEdit->clear();  // ein Suchtext verdeckt ihn
+        markiereAktuellenTitel();
+    }
+    return steht();
+}
+
+void AudioBrowserPanel::aktualisiereSprungKnopf()
+{
+    if (m_pJumpButton == nullptr) return;
+    const bool da = !m_aktuell.isEmpty();
+    m_pJumpButton->setEnabled(da);
+    m_pJumpButton->setToolTip(
+        da ? tr("Jump to the current song: show its folder and mark it\n%1")
+                 .arg(QDir::toNativeSeparators(m_aktuell))
+           : tr("Jump to the current song (none is loaded)"));
 }
 
 // =============================================================================
@@ -232,6 +306,13 @@ void AudioBrowserPanel::setupUI()
     m_pBrowseButton->setToolTip(tr("Choose folder…"));
     m_pBrowseButton->setFixedWidth(32);
     navLayout->addWidget(m_pBrowseButton);
+
+    // S93: wie im Effect Browser — in den Ordner des laufenden Titels
+    m_pJumpButton = new QPushButton(QStringLiteral("◎"), this);
+    m_pJumpButton->setObjectName(QStringLiteral("audioBrowserJump"));
+    m_pJumpButton->setFixedWidth(32);
+    navLayout->addWidget(m_pJumpButton);
+    aktualisiereSprungKnopf();
     mainLayout->addLayout(navLayout);
 
     m_pSearchEdit = new QLineEdit(this);
@@ -265,6 +346,8 @@ void AudioBrowserPanel::setupUI()
             &AudioBrowserPanel::onItemDoubleClicked);
     connect(m_pUpButton, &QPushButton::clicked, this, &AudioBrowserPanel::onUpClicked);
     connect(m_pBrowseButton, &QPushButton::clicked, this, &AudioBrowserPanel::onBrowseClicked);
+    connect(m_pJumpButton, &QPushButton::clicked, this,
+            [this] { (void)springeZumAktuellenTitel(); });
     connect(m_pPathEdit, &QLineEdit::returnPressed, this, &AudioBrowserPanel::onPathEntered);
     connect(m_pSearchEdit, &QLineEdit::textChanged, this, &AudioBrowserPanel::onSearchChanged);
 }

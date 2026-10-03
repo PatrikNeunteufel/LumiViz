@@ -3317,6 +3317,83 @@ TEST_CASE("PaletteUi S84: Playlist — Umsortieren per Drag landet im Dienst, Da
     CHECK(playlistPfade(*a.playlist) == QStringList{s2, s0, neu, s1});
 }
 
+// S93 (Wunsch Patrik): wie der Effect Browser das laufende Preset — der Audio
+// Browser markiert den laufenden Titel, wenn sein Ordner ihn zeigt, wechselt
+// nie von selbst den Ordner, und der Knopf ◎ springt hin.
+TEST_CASE("PaletteUi S93: Audio Browser markiert den laufenden Titel, folgt ihm aber nur auf Knopfdruck")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString eins = a.datei(QStringLiteral("eins.mp3"));
+    const QString zwei = a.datei(QStringLiteral("zwei.mp3"));
+    REQUIRE(QDir(a.dir.path()).mkdir(QStringLiteral("Album")));
+    const QString fern = a.datei(QStringLiteral("Album/fern.mp3"));
+    IEventBus* bus = a.services.tryResolve<IEventBus>();
+    const auto melde = [bus](const QString& pfad) {
+        TrackChangedEvent e;
+        e.track.filePath = pfad;
+        bus->publish(e);
+    };
+
+    AudioBrowserPanel browser(a.services);
+    zeigen(browser);
+    CHECK(browser.aktuellerTitel().isEmpty());
+    QLineEdit* pfad = nullptr;
+    QLineEdit* suche = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+    {
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+        if (e->placeholderText().startsWith(QStringLiteral("Filter"))) suche = e;
+    }
+    REQUIRE(pfad != nullptr);
+    REQUIRE(suche != nullptr);
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("audioBrowserListe"));
+    REQUIRE(liste != nullptr);
+    auto* sprung = browser.findChild<QPushButton*>(QStringLiteral("audioBrowserJump"));
+    REQUIRE(sprung != nullptr);
+    CHECK_FALSE(sprung->isEnabled());  // kein Titel geladen
+    CHECK_FALSE(browser.springeZumAktuellenTitel());
+    const auto markiert = [liste] {
+        const QListWidgetItem* it = liste->currentItem();
+        return it != nullptr ? it->text() : QString();
+    };
+    pfad->setText(a.dir.path());
+    emit pfad->returnPressed();
+    REQUIRE(QDir(browser.ordner()) == QDir(a.dir.path()));
+
+    // --- der laufende Titel liegt im gezeigten Ordner: markiert
+    melde(zwei);
+    CHECK(QFileInfo(browser.aktuellerTitel()) == QFileInfo(zwei));
+    CHECK(markiert() == QStringLiteral("zwei.mp3"));
+    CHECK(sprung->isEnabled());
+    melde(eins);
+    CHECK(markiert() == QStringLiteral("eins.mp3"));
+
+    // --- er kommt aus einem anderen Ordner: der Browser bleibt, wo er ist
+    melde(fern);
+    CHECK(QFileInfo(browser.aktuellerTitel()) == QFileInfo(fern));
+    CHECK(QDir(browser.ordner()) == QDir(a.dir.path()));
+
+    // --- der Knopf springt hin und markiert
+    sprung->click();
+    CHECK(QDir(browser.ordner()) == QDir(a.dir.path() + QStringLiteral("/Album")));
+    CHECK(markiert() == QStringLiteral("fern.mp3"));
+
+    // --- ein Suchtext, der ihn verdeckt, wird beim Sprung geloest
+    pfad->setText(a.dir.path());
+    emit pfad->returnPressed();
+    suche->setText(QStringLiteral("gibt es nicht"));
+    REQUIRE(browser.springeZumAktuellenTitel());
+    CHECK(suche->text().isEmpty());
+    CHECK(markiert() == QStringLiteral("fern.mp3"));
+
+    // --- nichts spielt, es wird nichts abgespielt durch das Markieren
+    CHECK(a.player->gespielt.isEmpty());
+    melde(QString());
+    CHECK(browser.aktuellerTitel().isEmpty());
+    CHECK_FALSE(sprung->isEnabled());
+}
+
 TEST_CASE("PaletteUi S84: Audio Browser — Icons, Drag als Datei-URL, Doppelklick spielt")
 {
     UiUmgebung env;

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "PanelBase.hpp"
+#include "services/IEventBus.hpp"
 
 #include <QDir>
 #include <QHash>
@@ -68,6 +69,15 @@ public:
         Type_Audio = 2
     };
 
+    /// Der laufende Titel, wie der Player ihn gemeldet hat (leer = keiner).
+    [[nodiscard]] const QString& aktuellerTitel() const { return m_aktuell; }
+    /// Ordner, den der Browser gerade zeigt.
+    [[nodiscard]] QString ordner() const { return m_dir.absolutePath(); }
+    /// In den Ordner des laufenden Titels wechseln und ihn markieren (S93,
+    /// Knopf ◎ — wie im Effect Browser). Loest dafuer einen Suchtext, der ihn
+    /// verdeckt. false = kein Titel / Datei fehlt.
+    bool springeZumAktuellenTitel();
+
 protected:
     void onActivate() override;
 
@@ -83,8 +93,20 @@ private:
     void navigateTo(const QString& dirPath);
     void refresh();
     void setStatus(const QString& text);
+    /// Den laufenden Titel uebernehmen (S93, wie der Effect Browser das
+    /// laufende Preset): merken und, wenn die Liste ihn zeigt, markieren. Der
+    /// Ordner des Browsers bleibt, wo er ist.
+    void merkeAktuellenTitel(const QString& pfad);
+    /// Den laufenden Titel in der Liste markieren, ohne ihn zu spielen.
+    void markiereAktuellenTitel();
+    void aktualisiereSprungKnopf();
+
+    QString m_aktuell;  ///< laufender Titel (leer = keiner)
+    /// Permanent: der Titel wird auch gemerkt, wenn das Panel nie sichtbar war.
+    IEventBus::SubscriberHandle m_titelSubscription;
 
     QLineEdit* m_pPathEdit = nullptr;
+    QPushButton* m_pJumpButton = nullptr;  ///< ◎ zum laufenden Titel (S93)
     QPushButton* m_pUpButton = nullptr;
     QPushButton* m_pBrowseButton = nullptr;
     QLineEdit* m_pSearchEdit = nullptr;
