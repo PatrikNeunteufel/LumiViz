@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.72.0
+> **Version:** 1.73.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1083,6 +1083,18 @@ Vectors, Blur).
   seiner Sektionen muss selektiert sein). **Entfernen/Klonen:** das Element
   im Baum markieren, dann **−**/**⧉**. Ein Element anklicken zeigt seinen
   Voll-Editor (numerische Startwerte + Code).
+- **Schneller per Rechtsklick:** auf dem Milkdrop-Node, einer seiner
+  Sektionen oder einem Element stehen im Kontextmenü **Add custom wave**,
+  **Add custom shape** und **Add sprite…**. Das Neue ist danach markiert.
+  **Add sprite…** fragt zuerst nach der Bilddatei (PNG, JPG, BMP); wer
+  abbricht, legt nichts an.
+- **Sprite-Bild:** das Feld **Image** hat einen Knopf **…**, der die Datei
+  auswählt und ihren vollen Pfad einträgt. Von Hand geht weiter ein
+  Dateiname relativ zum Texturordner des Presets. Eine `.lvfx2` nimmt das
+  Bild beim Speichern mit.
+- **Shape · Frame (per instance):** der Frame-Code einer Shape läuft einmal
+  je Instanz. `instance` zählt von 0 bis `num_inst` − 1 — ein eigenes Feld
+  je Instanz braucht es deshalb nicht.
 - **ⓘ neben jedem Skript-Feld** öffnet die zur Sektion passende
   Variablen-Referenz (per_frame/per_pixel, Wave, Shape, Sprite) — nur
   Original-MilkDrop-Variablen, damit Presets kompatibel bleiben. Auch die
@@ -1608,6 +1620,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.73.0 | 2026-10-03 | Session 93. §11 Milkdrop-Node: Rechtsklick — **Add custom wave**, **Add custom shape**, **Add sprite…** (mit Dateiauswahl); Feld **Image** des Sprites mit Knopf **…**, volle Pfade gelten; das Frame-Feld der Shape heißt **Frame (per instance)** |
 | 1.72.0 | 2026-10-03 | Session 92. Karaoke: der Doppelklick auf ein `.lvkar` im Effect Browser schaltet die Ebene ein; `current.lvkar` steht dort nicht mehr; **Ctrl+K** ruht in Textfeldern und im Skript-Editor |
 | 1.71.0 | 2026-10-03 | Session 92. §11 Trail-Presets: eigenes Icon (Marke mit Schweif) — im Baum des Panels Effect Chain trägt es jede Effect List, die einen Lyrics Trail enthält |
 | 1.70.0 | 2026-10-03 | Session 92. §11 Trail-Presets und die Effektkette: Rechtsklick im Baum des Panels Effect Chain — **Add trail preset ▸ Name** (als Effect List, Additive) und **Save as trail preset…** (an einer Effect List) |

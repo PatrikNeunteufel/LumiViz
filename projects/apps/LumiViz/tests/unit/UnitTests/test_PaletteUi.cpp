@@ -52,6 +52,7 @@
 #include "services/ShortcutRegistry.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/milkdrop/MilkdropTextureResolve.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
@@ -1675,6 +1676,109 @@ TEST_CASE("PaletteUi Panel S92: Trail-Preset in die Kette einfuegen, Effect List
     CHECK(std::holds_alternative<LyricsTrailParams>(schlicht.children.back().params));
 
     tp::setRootForTesting(QString());
+}
+
+// S93 (Wunsch Patrik): Wave, Shape und Sprite per Rechtsklick in den
+// Milkdrop-Knoten; das Sprite-Bild als voller Pfad; das Frame-Feld der Shape
+// sagt, dass es je Instanz laeuft (Entscheid 1a).
+TEST_CASE("PaletteUi Panel S93: Kontextmenue am Milkdrop-Knoten fuegt Wave, Shape und Sprite ein")
+{
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    using lumi::multieffect::MilkdropNodeParams;
+    using lumi::ui::MilkElement;
+    const auto milk = [&p]() -> const lumi::milkdrop::PresetState& {
+        return std::get<MilkdropNodeParams>(p.root().children[2].params).preset;
+    };
+    const auto hat = [](const QMenu& m, const char* name) {
+        return m.findChild<QAction*>(QLatin1String(name)) != nullptr;
+    };
+    const int kSektion = 1000000;  // kMilkSectionBase des Panels
+
+    // --- an einem gewoehnlichen Knoten und auf der freien Flaeche: nichts davon
+    for (const QList<int>& ort : {QList<int>{0}, QList<int>{1}, QList<int>{}})
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, ort);
+        CHECK_FALSE(hat(menu, "chainMenuMilkWave"));
+        CHECK_FALSE(hat(menu, "chainMenuMilkShape"));
+        CHECK_FALSE(hat(menu, "chainMenuMilkSprite"));
+    }
+
+    // --- am Milkdrop-Knoten, an einer Sektion und an einem Element: alle drei
+    const std::size_t wellen = milk().waves.size();
+    const std::size_t formen = milk().shapes.size();
+    {
+        QMenu menu;
+        p.panel->fuelleKettenMenue(menu, {2});
+        REQUIRE(hat(menu, "chainMenuMilkWave"));
+        REQUIRE(hat(menu, "chainMenuMilkShape"));
+        REQUIRE(hat(menu, "chainMenuMilkSprite"));
+        menu.findChild<QAction*>(QStringLiteral("chainMenuMilkWave"))->trigger();
+        QCoreApplication::processEvents();
+    }
+    CHECK(milk().waves.size() == wellen + 1);
+    CHECK(milk().waves.back().enabled);
+    {
+        QMenu menu;  // Sektion Shapes
+        p.panel->fuelleKettenMenue(menu, {2, kSektion + 2});
+        REQUIRE(hat(menu, "chainMenuMilkShape"));
+        menu.findChild<QAction*>(QStringLiteral("chainMenuMilkShape"))->trigger();
+        QCoreApplication::processEvents();
+    }
+    REQUIRE(milk().shapes.size() == formen + 1);
+    CHECK(milk().shapes.back().enabled);
+    CHECK(p.root().children.size() == 3);  // nichts davon wurde ein Kettenknoten
+    {
+        QMenu menu;  // die eben angelegte Wave
+        p.panel->fuelleKettenMenue(menu, {2, kSektion + 1, static_cast<int>(wellen)});
+        CHECK(hat(menu, "chainMenuMilkSprite"));
+    }
+
+    // --- 1a: die neue Shape ist markiert, ihr Frame-Feld heisst „per instance"
+    {
+        bool gefunden = false;
+        for (const QLabel* l : p.panel->findChildren<QLabel*>())
+            if (l->text().endsWith(QStringLiteral("Frame (per instance)")))
+            {
+                gefunden = true;
+                CHECK(l->toolTip().contains(QStringLiteral("once per instance")));
+            }
+        CHECK(gefunden);
+    }
+
+    // --- Sprite mit Bild: der volle Pfad steht im Feld Image
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    const QString bild = tmp.path() + QStringLiteral("/stern.png");
+    {
+        QImage img(8, 8, QImage::Format_ARGB32);
+        img.fill(Qt::yellow);
+        REQUIRE(img.save(bild));
+    }
+    const std::size_t sprites = milk().sprites.size();
+    REQUIRE(p.panel->fuegeMilkElementEin(MilkElement::Sprite, {2}, bild));
+    QCoreApplication::processEvents();
+    REQUIRE(milk().sprites.size() == sprites + 1);
+    CHECK(QString::fromStdString(milk().sprites.back().imageName) == bild);
+    auto* feld = p.panel->findChild<QLineEdit*>(QStringLiteral("milkSpriteImage"));
+    REQUIRE(feld != nullptr);
+    CHECK(feld->text() == bild);
+    CHECK(p.panel->findChild<QToolButton*>(QStringLiteral("milkSpriteImageBrowse")) != nullptr);
+
+    // --- der volle Pfad wird gefunden, auch ohne Preset-Ordner; ein Name ohne
+    //     Ordner dort weiter nicht
+    CHECK(lumi::milkdrop::resolveSpriteFile(QString(), bild) == bild);
+    CHECK(lumi::milkdrop::resolveSpriteFile(QStringLiteral("C:/gibt/es/nicht"), bild) == bild);
+    CHECK(lumi::milkdrop::resolveSpriteFile(QString(), QStringLiteral("stern.png")).isEmpty());
+    CHECK(lumi::milkdrop::resolveSpriteFile(QString(), tmp.path() + "/fehlt.png").isEmpty());
+    CHECK(lumi::milkdrop::resolveSpriteFile(tmp.path(), QStringLiteral("stern.png")) == bild);
+
+    // --- kein Milkdrop-Knoten: nichts passiert
+    CHECK_FALSE(p.panel->fuegeMilkElementEin(MilkElement::Shape, {0}));
+    CHECK_FALSE(p.panel->fuegeMilkElementEin(MilkElement::Wave, {}));
+    CHECK(milk().shapes.size() == formen + 1);
 }
 
 TEST_CASE("PaletteUi C1: im Shape-Code ist b gefaerbt wie r, g, r2, g2, b2")

@@ -452,7 +452,9 @@ private:
                               "Frame slot");
     }
     else if (field == QLatin1String("frameCode") || field == QLatin1String("perFrame") ||
-             (milk && label.endsWith(QLatin1String("Frame"))))
+             (milk && (label.endsWith(QLatin1String("Frame")) ||
+                       // S93: das Frame-Feld der Shape heisst „… · Frame (per instance)"
+                       label.endsWith(QLatin1String("Frame (per instance)")))))
     {
         wann = milk && label.startsWith(QLatin1String("Shape"))
                    ? QStringLiteral("<b>once per frame and shape instance</b> "

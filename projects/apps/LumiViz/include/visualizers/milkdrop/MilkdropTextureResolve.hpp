@@ -71,9 +71,13 @@ namespace lumi::milkdrop {
 [[nodiscard]] inline QString resolveSpriteFile(const QString& presetDir,
                                                const QString& rawName)
 {
-    if (presetDir.isEmpty()) return {};
     QString rel = rawName;
     rel.replace(QLatin1Char('\\'), QLatin1Char('/'));
+    // S93: ein per Dateidialog gewaehltes Bild steht als absoluter Pfad da —
+    // es gilt ohne Suche, auch an einem Knoten ohne Preset-Ordner.
+    if (!rel.isEmpty() && QFileInfo(rel).isAbsolute())
+        return QFileInfo::exists(rel) ? rel : QString();
+    if (presetDir.isEmpty()) return {};
     const QString fileName = QFileInfo(rel).fileName();
     QDir walk(presetDir);
     for (int up = 0; up <= 4; ++up)

@@ -44,6 +44,10 @@ class QMutex;
 class QNetworkAccessManager;
 class QTimer;
 class MultiEffectVisualizer;
+namespace lumi::ui
+{
+enum class MilkElement;
+}
 namespace lumi::ui {
 class PresetZeile;
 class EffectPaletteWindow;
@@ -157,8 +161,16 @@ public:
     bool speichereAlsTrailPreset(const QList<int>& path, const QString& name);
     /// Kontextmenue des Kettenbaums fuer den Knoten an `path` (leer = freie
     /// Flaeche): „Save as trail preset…" nur an einer Effect List, „Add trail
-    /// preset" mit allen Trail-Presets immer.
+    /// preset" mit allen Trail-Presets immer. An einem Milkdrop-Knoten, einer
+    /// seiner Sektionen oder Elemente (S93) zuerst „Add custom wave", „Add
+    /// custom shape", „Add sprite…".
     void fuelleKettenMenue(class QMenu& menu, const QList<int>& path);
+    /// Wave, Shape oder Sprite in den Milkdrop-Knoten an `anker` legen (der
+    /// Knoten selbst, eine Sektion oder ein Element) und das Neue markieren.
+    /// `bild` (nur Sprite): Bilddatei, wird als Image eingetragen. false =
+    /// kein Milkdrop-Knoten oder Obergrenze erreicht.
+    bool fuegeMilkElementEin(lumi::ui::MilkElement art, const QList<int>& anker,
+                             const QString& bild = {});
     /// Auge der Wurzel des gebundenen Baums — im Trail-Modus „Trail on/off".
     [[nodiscard]] bool wurzelAn();
     void setWurzelAn(bool an);

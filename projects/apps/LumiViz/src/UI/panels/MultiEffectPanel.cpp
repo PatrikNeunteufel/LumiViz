@@ -2095,18 +2095,65 @@ bool MultiEffectPanel::speichereAlsTrailPreset(const QList<int>& path, const QSt
     return tp::save(name, kopie, nullptr);  // ausserhalb des Render-Mutex
 }
 
-void MultiEffectPanel::fuelleKettenMenue(QMenu& menu, const QList<int>& path)
+namespace
+{
+/// Dateidialog fuer das Bild eines Milkdrop-Sprites; merkt sich den Ordner.
+/// Leer = abgebrochen.
+QString waehleSpriteBild(QWidget* parent)
+{
+    QSettings settings;
+    const QString schluessel = QStringLiteral("milkdrop/spriteDir");
+    const QString datei = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Sprite Image"), settings.value(schluessel).toString(),
+        QObject::tr("Images (*.png *.jpg *.jpeg *.jfif *.bmp);;All files (*)"));
+    if (!datei.isEmpty()) settings.setValue(schluessel, QFileInfo(datei).absolutePath());
+    return datei;
+}
+}  // namespace
+
+void MultiEffectPanel::fuelleKettenMenue(QMenu& menu, const QList<int>& klick)
 {
     namespace tp = lumi::multieffect::trailpresets;
     if (m_host == nullptr || m_mutex == nullptr || m_baum != Baum::Kette) return;
+    // Der Rechtsklick kann auf einer Sektion oder einem Element eines
+    // Milkdrop-Knotens liegen — fuer alles, was die Kette betrifft, zaehlt der
+    // Knoten selbst.
+    const QList<int> milkAnker = klick;
+    const QList<int> path = splitMilkPath(klick).nodePath;
     bool istListe = false;
+    bool istMilkdrop = false;
     QString listenName;
     if (!path.isEmpty())
     {
         QMutexLocker lock(m_mutex);
         const ChainNode* n = nodeAtPath(path);
         istListe = n != nullptr && std::holds_alternative<ListParams>(n->params);
+        istMilkdrop = n != nullptr && std::holds_alternative<MilkdropNodeParams>(n->params);
         if (istListe) listenName = QString::fromStdString(n->displayName);
+    }
+    if (istMilkdrop)
+    {
+        // S93 (Wunsch Patrik): Wave, Shape und Sprite ohne den Umweg ueber
+        // Dropdown und „+" — das Neue ist danach markiert.
+        QAction* wave = menu.addAction(tr("Add custom wave"));
+        wave->setObjectName(QStringLiteral("chainMenuMilkWave"));
+        connect(wave, &QAction::triggered, this, [this, milkAnker] {
+            (void)fuegeMilkElementEin(MilkElement::Wave, milkAnker);
+        });
+        QAction* shape = menu.addAction(tr("Add custom shape"));
+        shape->setObjectName(QStringLiteral("chainMenuMilkShape"));
+        connect(shape, &QAction::triggered, this, [this, milkAnker] {
+            (void)fuegeMilkElementEin(MilkElement::Shape, milkAnker);
+        });
+        QAction* sprite = menu.addAction(tr("Add sprite…"));
+        sprite->setObjectName(QStringLiteral("chainMenuMilkSprite"));
+        sprite->setToolTip(tr("Asks for the image file and adds a sprite that shows it."));
+        connect(sprite, &QAction::triggered, this, [this, milkAnker] {
+            const QString bild = waehleSpriteBild(this);
+            if (!bild.isEmpty()) (void)fuegeMilkElementEin(MilkElement::Sprite, milkAnker, bild);
+        });
+        menu.setToolTipsVisible(true);
+        menu.addSeparator();
     }
     if (istListe)
     {
@@ -2431,8 +2478,15 @@ bool MultiEffectPanel::presetGruppeLaden(QString& datei, std::vector<ChainNode>&
 
 bool MultiEffectPanel::insertMilkElement(int paletteIndex, const QList<int>& anchorPath)
 {
-    if (m_baum != Baum::Kette) return false;  // die Karaoke-Ebene kennt keine Milkdrop-Nodes
     const EffectType& chosen = effectPalette()[static_cast<size_t>(paletteIndex)];
+    return fuegeMilkElementEin(chosen.milkElement, anchorPath);
+}
+
+bool MultiEffectPanel::fuegeMilkElementEin(MilkElement art, const QList<int>& anchorPath,
+                                           const QString& bild)
+{
+    if (m_baum != Baum::Kette) return false;  // die Karaoke-Ebene kennt keine Milkdrop-Nodes
+    if (m_host == nullptr || m_mutex == nullptr) return false;
     // Milkdrop-Node-Inhalt (N3.1/N3.3): landet im PresetState des Milkdrop-Nodes
     // (bzw. seiner Sektion/seines Elements), nicht in der Chain.
     const MilkPathInfo mp = splitMilkPath(anchorPath);
@@ -2442,7 +2496,7 @@ bool MultiEffectPanel::insertMilkElement(int paletteIndex, const QList<int>& anc
         auto* milk = node ? std::get_if<MilkdropNodeParams>(&node->params) : nullptr;
         if (milk == nullptr) return;  // Ziel ist kein Milkdrop-Node
         auto& preset = milk->preset;
-        switch (chosen.milkElement)
+        switch (art)
         {
             case MilkElement::Wave:
             {
@@ -2472,6 +2526,7 @@ bool MultiEffectPanel::insertMilkElement(int paletteIndex, const QList<int>& anc
             {
                 lumi::milkdrop::SpriteState sp;
                 sp.index = nextFreeMilkIndex(preset.sprites);
+                sp.imageName = QDir::fromNativeSeparators(bild).toStdString();
                 preset.sprites.push_back(std::move(sp));
                 ++milk->revision;
                 newSel = mp.nodePath;
@@ -4345,7 +4400,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
 
     auto addScript = [&](const char* field, const QString& label,
                          const std::string& value,
-                         std::function<void(ChainNode&, std::string)> set) {
+                         std::function<void(ChainNode&, std::string)> set,
+                         const QString& hinweis = QString()) {
         const bool isInit = label.startsWith(QLatin1String("Init"));
         const QSet<QString> conflicts = isInit ? initConflicts : QSet<QString>{};
         // S85: die ⓘ-Seite beginnt mit dem Takt DIESES Slots
@@ -4370,7 +4426,9 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         auto* header = new QWidget(m_propContainer);
         auto* hl = new QHBoxLayout(header);
         hl->setContentsMargins(0, 0, 0, 0);
-        hl->addWidget(new QLabel(label, header));
+        auto* kopf = new QLabel(label, header);
+        kopf->setToolTip(hinweis);  // leer = der Hinweis des Kastens (Feldtabelle) gilt
+        hl->addWidget(kopf);
         hl->addStretch(1);
         auto* varsBtn = new QToolButton(header);
         varsBtn->setText(QString::fromUtf8("ⓘ"));  // ⓘ
@@ -7481,7 +7539,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Create new: 'Custom Wave' in the dropdown + '+'. "
+                    tr("Create new: right-click here, or 'Custom Wave' in the dropdown + '+'. "
                        "Remove/clone: select the wave in the tree."),
                     m_propContainer));
             const std::size_t nWaves = p->preset.waves.size();
@@ -7558,7 +7616,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Create new: 'Custom Shape' in the dropdown + '+'. "
+                    tr("Create new: right-click here, or 'Custom Shape' in the dropdown + '+'. "
                        "Remove/clone: select the shape in the tree."),
                     m_propContainer));
             const std::size_t nShapes = p->preset.shapes.size();
@@ -7632,8 +7690,12 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 }
                 addScript("milkdrop", tr("Shape %1 · Init").arg(s.index), s.initCode,
                           setShape(&lumi::milkdrop::ShapeState::initCode));
-                addScript("milkdrop", tr("Shape %1 · Frame").arg(s.index), s.frameCode,
-                          setShape(&lumi::milkdrop::ShapeState::frameCode));
+                // S93 (Entscheid Patrik 1a): der Frame-Code einer Shape laeuft je
+                // Instanz — das steht jetzt am Feld, ein eigenes Feld gibt es nicht.
+                addScript("milkdrop", tr("Shape %1 · Frame (per instance)").arg(s.index),
+                          s.frameCode, setShape(&lumi::milkdrop::ShapeState::frameCode),
+                          tr("Runs once per instance, every frame. `instance` counts from 0 to "
+                             "`num_inst` - 1."));
             }
         }
         // Warp- und Comp-Shader sind seit S66 GETRENNTE Sektionen (3 = Warp,
@@ -7755,7 +7817,7 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                                         m_propContainer));
             if (milkElem < 0)
                 form->addRow(new QLabel(
-                    tr("Create new: 'Sprite' in the dropdown + '+'. "
+                    tr("Create new: right-click here, or 'Sprite' in the dropdown + '+'. "
                        "Remove/clone: select the sprite in the tree."),
                     m_propContainer));
             const std::size_t nSprites = p->preset.sprites.size();
@@ -7786,12 +7848,41 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                 // im Tooltip (Panel-Breite folgt der Label-Spalte).
                 if (milkElem >= 0)
                 {
-                    addText("imageName", tr("Image"), sp.imageName,
+                    {
+                        // S93: Feld + „…" — der Dateidialog traegt den vollen
+                        // Pfad ein; von Hand geht weiter ein Name relativ zum
+                        // Preset-Ordner.
+                        const std::function<void(ChainNode&, std::string)> setBild =
                             spriteSet([](SpriteState& s, std::string v) {
                                 s.imageName = std::move(v);
-                            }),
-                            tr("File name, relative to the preset's "
-                               "texture folder"));
+                            });
+                        auto* zeile = new QWidget(m_propContainer);
+                        auto* zl = new QHBoxLayout(zeile);
+                        zl->setContentsMargins(0, 0, 0, 0);
+                        auto* edit = new QLineEdit(QString::fromStdString(sp.imageName), zeile);
+                        edit->setObjectName(QStringLiteral("milkSpriteImage"));
+                        auto* waehle = new QToolButton(zeile);
+                        waehle->setObjectName(QStringLiteral("milkSpriteImageBrowse"));
+                        waehle->setText(QStringLiteral("…"));
+                        waehle->setToolTip(tr("Choose the image file"));
+                        zl->addWidget(edit, 1);
+                        zl->addWidget(waehle);
+                        const auto uebernimm = [this, path, setBild, edit]() {
+                            const std::string t =
+                                QDir::fromNativeSeparators(edit->text()).toStdString();
+                            mutate(path, [&](ChainNode& n) { setBild(n, t); });
+                        };
+                        connect(edit, &QLineEdit::editingFinished, this, uebernimm);
+                        connect(waehle, &QToolButton::clicked, this, [this, edit, uebernimm]() {
+                            const QString bild = waehleSpriteBild(this);
+                            if (bild.isEmpty()) return;
+                            edit->setText(QDir::fromNativeSeparators(bild));
+                            uebernimm();
+                        });
+                        addRow("imageName", tr("Image"), zeile,
+                               tr("Image file: a full path (button …), or a file name relative "
+                                  "to the preset's texture folder"));
+                    }
                     addColor("colorKey", tr("Colorkey"), sp.colorKey,
                              spriteSet([](SpriteState& s, uint32_t v) {
                                  s.colorKey = v;
