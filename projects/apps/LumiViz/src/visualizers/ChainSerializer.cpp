@@ -1070,6 +1070,7 @@ struct WriteVisitor
         o["initCode"] = QString::fromStdString(p.initCode);
         o["frameCode"] = QString::fromStdString(p.frameCode);
         o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["lineCode"] = QString::fromStdString(p.lineCode);  // S91: je gegangener Zeile
     }
     void operator()(const LyricsParams& p) const  // S86
     {
@@ -2561,6 +2562,7 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.initCode = getStr(o, "initCode", p.initCode);
         p.frameCode = getStr(o, "frameCode", p.frameCode);
         p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.lineCode = getStr(o, "lineCode", p.lineCode);
         return p;
     }
     if (type == "lyrics")  // S86

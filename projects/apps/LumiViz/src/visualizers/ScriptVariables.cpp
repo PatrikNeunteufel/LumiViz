@@ -459,7 +459,11 @@ const std::unordered_map<std::size_t, ScriptVarTable>& tables()
            {"wordtrigger", "out", "-1/0/1",
             "unsynced lyrics: step one word forward or back; past the last word the next line "
             "begins. The first use turns on the word state (sung / current / upcoming)"}}}},
-        {ix<LyricsTrailParams>, {kParam, {}}},
+        {ix<LyricsTrailParams>,
+         {kParam,
+          // S91: Slot Line — einmal je gegangener Zeile
+          {{"line", "in", "0..n", "number of the line that has just ended (0 = none yet)"},
+           {"linecount", "in", "lines", "number of lines of the lyrics"}}}},
         {ix<MosaicParams>,
          {kParam,
           {{"quality", "in/out", "1..100", "block resolution (100 = off)"},

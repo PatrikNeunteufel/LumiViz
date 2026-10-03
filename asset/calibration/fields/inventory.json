@@ -1,7 +1,7 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 857,
+        "felder": 858,
         "typen": 94
     },
     "typen": [
@@ -2866,6 +2866,11 @@
                     "art": "text",
                     "default": "",
                     "name": "initCode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "lineCode"
                 },
                 {
                     "art": "text",

@@ -420,6 +420,16 @@ private:
     {
         wann = QStringLiteral("<b>once per song change</b>, before the Frame slot of that frame");
     }
+    else if (field == QLatin1String("lineCode") && typeKey == QLatin1String("lyricsTrail"))
+    {
+        // S91: am Lyrics Trail meint `line` die Zeile, die eben ging
+        wann = QStringLiteral("<b>once per line that has just ended</b> (when the Lyrics node "
+                              "it follows moves on), before the Frame slot of that frame");
+        rest = QStringLiteral("Reads <code>line</code> (number of the line that has just ended "
+                              "— the one this node draws) and <code>linecount</code>. The place "
+                              "to send every line off differently, e.g. "
+                              "<code>xshift = rand(21) - 10;</code>");
+    }
     else if (field == QLatin1String("lineCode"))  // S89: Lyrics
     {
         wann = QStringLiteral("<b>once per line change</b> of the lyrics, before the Frame "

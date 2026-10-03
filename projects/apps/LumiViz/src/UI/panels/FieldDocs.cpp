@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     857>
+                     858>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -1012,6 +1012,8 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "how long the ended line is drawn, in milliseconds (0..5000)"},
     {"lyricsTrail.initCode",
      "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script."},
+    {"lyricsTrail.lineCode",
+     "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script. Runs once for every line that has just ended \342\200\224 when the Lyrics node this node follows moves on to the next line \342\200\224, before Frame. Reads `line` (number of the line that has just ended, the one this node draws) and `linecount`; both are available in every slot. The place to send each line off differently. Empty = no script."},
     {"lyricsTrail.source",
      "Name of the Lyrics node to follow (\"\" = the first Lyrics node of the chain)."},
     {"lyricsTrail.useOwnColor",

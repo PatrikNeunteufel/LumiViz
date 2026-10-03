@@ -609,6 +609,10 @@ private:
         /// S89: Zeilennummer, die das Skript zuletzt gesehen hat (Slot Line);
         /// -1 = noch keine — der erste Frame gilt als Zeilenwechsel
         int lyricsSkriptZeile = -1;
+        /// S91, Lyrics Trail: die gegangene Zeile, die sein Skript zuletzt
+        /// gesehen hat (Slot Line), und — unsynchron — wann sie ging
+        int trailSkriptZeile = 0;
+        float trailSkriptWechsel = -1.0f;
         /// S90: Zeile und Wort (Zeile * 100000 + Wort), die das Skript zuletzt
         /// gesehen hat (Slot Word); -1 = noch nichts
         std::int64_t lyricsSkriptWort = -1;

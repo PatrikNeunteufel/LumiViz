@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.64.0
+> **Version:** 1.65.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -786,6 +786,16 @@ Lyrics                 die laufende Zeile, wie gewohnt
 | **X shift / Y shift (%)** | Versatz gegen die Stelle, an der die Zeile stand (negativ = nach oben) |
 | **Own color** / **Color** | eigene Farbe statt der, die die Zeile hatte — die Zeile wird dafür einfarbig neu gezeichnet |
 | **Blend** | wie beim Lyrics-Knoten |
+| Skriptfelder **Init**, **Frame**, **Beat**, **Line** | alle Felder des Knotens sind Variablen. **Line** läuft **einmal je gegangener Zeile** (vor Frame) — der Ort, um jede Zeile anders loszuschicken |
+
+Im Feld **Line** — und danach in allen Feldern des Trails — stehen `line` (die
+Nummer der Zeile, die **eben ging**, also die, die der Trail zeichnet) und
+`linecount` bereit. Am Lyrics-Knoten meint `line` dagegen die **laufende**
+Zeile: jeder Knoten nennt die, die er zeichnet. Beispiel:
+`xshift = rand(21) - 10; yshift = -6 - rand(8);` lässt jede Zeile in eine
+andere Richtung wehen; `blendstrength = if(line % 2, 100, 50);` jede zweite
+schwächer. Auf eine Pause-Zeile läuft Line nicht noch einmal. Ein Feld Word
+hat der Trail nicht.
 
 Der Trail zeigt **das Bild, das stand**: der Lyrics-Knoten hebt das Bild der
 laufenden Zeile auf und gibt es beim Zeilenwechsel an den Trail weiter. Was
@@ -1530,6 +1540,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.65.0 | 2026-10-03 | Session 91. §11 Lyrics Trail: NEU Skriptfeld **Line** — einmal je gegangener Zeile, mit `line` (die Zeile, die eben ging) und `linecount` |
 | 1.64.0 | 2026-10-03 | Session 91. §9 NEU **Favoriten im Effect Browser** — ★ vor dem Namen, Rechtsklick **Add to / Remove from favorites**, Filter **★ Favorites** (alle Favoriten aus allen Ordnern); Bild ab / Bild auf blättern in dieser Ansicht durch die Favoriten |
 | 1.63.0 | 2026-10-03 | Session 91. §9 Preset-Zeile: **Load…** im Effect-Chain-Panel bietet jedes Preset an (`.lvfx`, `.lvfx2`, `.avs`, `.milk`) |
 | 1.62.0 | 2026-10-03 | Session 91. §11 Lyrics Sync: NEU **Speed** — Schieber 50–100 %, spielt den Titel zum Klopfen langsamer ab (der Ton wird tiefer); gilt nur, solange das Panel sichtbar ist |

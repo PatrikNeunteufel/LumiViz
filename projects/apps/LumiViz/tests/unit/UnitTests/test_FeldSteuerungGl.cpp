@@ -877,6 +877,137 @@ TEST_CASE("Lyrics Trail S90: Pause-Zeile — wie oft die alte Zeile gezeichnet w
     MultiEffectVisualizer::notifyPlayPosition(0);
 }
 
+// S91 (Entscheid T2 a): das Feld Line am Lyrics Trail — einmal je gegangener
+// Zeile; `line` ist die Zeile, die eben ging (die der Trail zeichnet).
+TEST_CASE("Lyrics Trail S91: Feld Line laeuft einmal je gegangener Zeile, kennt line / linecount")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+
+    LyricsTrailParams gesehen;
+    MultiEffectVisualizer::setzeParamBeobachter([&](const ChainNode&, const EffectParams& p) {
+        if (const auto* tp = std::get_if<LyricsTrailParams>(&p)) gesehen = *tp;
+    });
+    const auto kette = [](const LyricsParams& lp, const LyricsTrailParams& tp) {
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode lyr;
+        lyr.params = lp;
+        ChainNode trail;
+        trail.params = tp;
+        root.children = {clear, lyr, trail};
+        return root;
+    };
+    const auto starte = [](MultiEffectVisualizer& vis, ChainNode root) {
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(10);
+        vis.initialize();
+        vis.resize(QSize(320, 240));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 320, 240);
+    };
+    LyricsParams lp;
+    lp.fontHeight = -24;
+    lp.previewLines = 0;
+
+    {
+        // synchron: vier Zeilen, die dritte ist eine Pause (Zeit ohne Text)
+        MultiEffectVisualizer::setSongtext(
+            ly::leseLrc("[00:10.00]AAAA\n[00:13.00]BBBB\n[00:16.00]\n[00:19.00]CCCC\n"));
+        LyricsTrailParams tp;
+        tp.initCode = "n = 0;";
+        tp.lineCode = "n = n + 1; xshift = line; yshift = -n;";
+        tp.frameCode = "holdms = 100 + linecount;";  // linecount steht auch in Frame bereit
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp, tp));
+        const auto bis = [&](int vonMs, int bisMs) {
+            for (int ms = vonMs; ms <= bisMs; ms += 1000 / 60)
+            {
+                MultiEffectVisualizer::notifyPlayPosition(ms);
+                vis.render(1.0f / 60.0f);
+            }
+        };
+        bis(9500, 12000);  // die erste Zeile laeuft: noch ging keine — Line ruht
+        CHECK(gesehen.xShift == 0);
+        CHECK(gesehen.yShift == -8);
+        CHECK(gesehen.holdMs == 104);
+        bis(12000, 14000);  // Zeile 1 ging
+        CHECK(gesehen.xShift == 1);
+        CHECK(gesehen.yShift == -1);
+        bis(14000, 17000);  // Zeile 2 ging (die Pause beginnt)
+        CHECK(gesehen.xShift == 2);
+        CHECK(gesehen.yShift == -2);
+        bis(17000, 20000);  // die Pause endet: nichts ging — Line laeuft nicht noch einmal
+        CHECK(gesehen.xShift == 2);
+        CHECK(gesehen.yShift == -2);
+    }
+    {
+        // die beiden Beispiele aus dem Benutzerhandbuch (S90: kein ungeprueftes
+        // Beispiel mehr ins Handbuch)
+        LyricsTrailParams tp;
+        tp.lineCode = "xshift = rand(21) - 10; yshift = -6 - rand(8); "
+                      "blendstrength = if(line % 2, 100, 50);";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp, tp));
+        const auto bis = [&](int vonMs, int bisMs) {
+            for (int ms = vonMs; ms <= bisMs; ms += 1000 / 60)
+            {
+                MultiEffectVisualizer::notifyPlayPosition(ms);
+                vis.render(1.0f / 60.0f);
+            }
+        };
+        bis(12500, 14000);  // Zeile 1 ging: ungerade — volle Staerke
+        CHECK(gesehen.blendStrength == 100);
+        CHECK(gesehen.xShift >= -10);
+        CHECK(gesehen.xShift <= 10);
+        CHECK(gesehen.yShift <= -6);
+        CHECK(gesehen.yShift >= -13);
+        bis(14000, 17000);  // Zeile 2 ging: gerade — halbe Staerke
+        CHECK(gesehen.blendStrength == 50);
+    }
+    {
+        // Gegenprobe: ein Skript ohne Feld Line (der Beobachter sieht nur
+        // Knoten mit Skript) — der Versatz bleibt, wie er am Knoten steht
+        gesehen = LyricsTrailParams{};
+        LyricsTrailParams tp;
+        tp.xShift = 7;
+        tp.frameCode = "holdms = 111;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(lp, tp));
+        for (int ms = 12500; ms <= 14000; ms += 1000 / 60)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(ms);
+            vis.render(1.0f / 60.0f);
+        }
+        CHECK(gesehen.holdMs == 111);
+        CHECK(gesehen.xShift == 7);
+    }
+    {
+        // unsynchron: der Lyrics-Knoten rueckt per linetrigger; der Trail sieht,
+        // welche Zeile er verlassen hat
+        MultiEffectVisualizer::setSongtext(ly::leseLrc("AAAA\nBBBB\nCCCC\n"));
+        LyricsParams rueckt = lp;
+        rueckt.frameCode = "linetrigger = b;";  // Beats auf Frame 0, 10, 20, …
+        LyricsTrailParams tp;
+        tp.lineCode = "xshift = line;";
+        MultiEffectVisualizer vis;
+        starte(vis, kette(rueckt, tp));
+        for (int i = 0; i < 5; ++i) vis.render(1.0f / 60.0f);
+        CHECK(gesehen.xShift == 1);  // ein Beat: Zeile 1 ging
+        for (int i = 0; i < 10; ++i) vis.render(1.0f / 60.0f);
+        CHECK(gesehen.xShift == 2);  // zweiter Beat: Zeile 2 ging
+    }
+
+    MultiEffectVisualizer::setzeParamBeobachter({});
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
 // S90, LB1 (Zeilen-Puffer): der Trail legt das Bild auf, das STAND — nicht
 // eine neu gezeichnete Fassung der alten Zeile. Sichtbar am Wort-Stand: das
 // zweite Wort der ersten Zeile ist beim Zeilenwechsel noch nicht gesungen

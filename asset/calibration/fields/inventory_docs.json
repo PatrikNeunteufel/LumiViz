@@ -7,7 +7,7 @@
   },
   "summe": {
     "typen": 94,
-    "felder": 857,
+    "felder": 858,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -5747,6 +5747,18 @@
           "helfer": "addScript",
           "doc": "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script.",
           "skriptvars": []
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "lineCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Parameter script (S87): every field of this node + `b`/`w`/`h` + audio set. Fields that re-render the glyphs follow the script from Init, Song and Beat only. Empty = no script. Runs once for every line that has just ended — when the Lyrics node this node follows moves on to the next line —, before Frame. Reads `line` (number of the line that has just ended, the one this node draws) and `linecount`; both are available in every slot. The place to send each line off differently. Empty = no script.",
+          "skriptvars": [
+            "line",
+            "linecount"
+          ]
         },
         {
           "art": "text",

@@ -3016,6 +3016,12 @@ struct LyricsTrailParams
     std::string initCode;
     std::string frameCode;
     std::string beatCode;
+    /// Runs once for every line that has just ended — when the Lyrics node
+    /// this node follows moves on to the next line —, before Frame. Reads
+    /// `line` (number of the line that has just ended, the one this node
+    /// draws) and `linecount`; both are available in every slot. The place to
+    /// send each line off differently. Empty = no script.
+    std::string lineCode;
 };
 
 using EffectParams =

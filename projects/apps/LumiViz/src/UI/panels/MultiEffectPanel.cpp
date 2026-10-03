@@ -8418,6 +8418,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).initCode = std::move(v); });
         addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).frameCode = std::move(v); });
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).beatCode = std::move(v); });
+        // S91 (Entscheid T2 a): einmal je gegangener Zeile — `line` ist die Zeile, die der Trail zeichnet
+        addScript("lineCode", tr("Line"), p->lineCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).lineCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AviParams>(&params))
     {

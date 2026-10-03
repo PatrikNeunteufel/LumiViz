@@ -9601,7 +9601,53 @@ void MultiEffectVisualizer::runLyricsTrail(const ChainNode& node,
                                            const LyricsTrailParams& params)
 {
     LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+    // S91 (Entscheid T2 a): Slot „Line" — einmal je gegangener Zeile. Welche
+    // Zeile eben ging, steht VOR dem Skript fest (wie am Lyrics-Knoten):
+    // synchron die Textzeile unmittelbar vor der laufenden (eine Pause-Zeile
+    // zaehlt nicht — dort ging nichts), unsynchron die, die der gefolgte
+    // Lyrics-Knoten zuletzt verlassen hat.
+    {
+        namespace lyr = lumi::multieffect::lyrics;
+        const lyr::Songtext& st = m_songtext;
+        const ChainNode* q =
+            m_karaokeLaeuft ? karaokeLyricsKnoten() : findeLyricsKnoten(params.source);
+        const auto qRt = q != nullptr ? m_leafRuntimes.find(q->nodeId) : m_leafRuntimes.end();
+        const bool lief = qRt != m_leafRuntimes.end() && qRt->second.lyricsEffektivDa;
+        const int anzahl = static_cast<int>(st.zeilen.size());
+        int nummer = 0;  // 0 = noch keine Zeile gegangen
+        bool erneut = false;
+        if (q != nullptr && !st.leer())
+        {
+            if (st.synchron)
+            {
+                const auto versatz = static_cast<std::int64_t>(
+                    lief ? qRt->second.lyricsEffektiv.offsetMs
+                         : std::get<LyricsParams>(q->params).offsetMs);
+                const int idx =
+                    lyr::zeileBei(st, playPositionMs() + versatz + songtextTitelVersatzMs());
+                if (idx >= 1)
+                    nummer = st.zeilen[static_cast<std::size_t>(idx - 1)].text.empty()
+                                 ? rt.trailSkriptZeile  // Pause: es bleibt bei der Zeile davor
+                                 : idx;                 // Nummer (ab 1) der Zeile vor der laufenden
+            }
+            else if (lief && qRt->second.lyricsStand == m_songTagsStand &&
+                     qRt->second.lyricsVorZeile >= 0 && qRt->second.lyricsVorZeile < anzahl)
+            {
+                nummer = qRt->second.lyricsVorZeile + 1;
+                // dieselbe Zeile kann zweimal gehen (zurueck und wieder vor)
+                erneut = qRt->second.lyricsWechselZeit != rt.trailSkriptWechsel;
+                rt.trailSkriptWechsel = qRt->second.lyricsWechselZeit;
+            }
+        }
+        m_frameLine = nummer > 0 && (nummer != rt.trailSkriptZeile || erneut);
+        rt.trailSkriptZeile = nummer;
+        m_lineNummer = nummer;
+        m_lineAnzahl = anzahl;
+        m_nodeLine = &params.lineCode;
+    }
     runParamScript(rt, "lyricstrail", params.initCode, params.frameCode, params.beatCode, {});
+    m_nodeLine = nullptr;
+    m_frameLine = false;
     // S89: in der Karaoke-Ebene gelten Mischart und Staerke dieses Knotens fuer
     // das AUFLEGEN des Trail-Bilds beim Present; in die Liste der Ebene
     // zeichnet er deckend. In einer Kette mischt er wie bisher selbst.
@@ -11715,10 +11761,15 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     engine.setNumber("h", static_cast<double>(m_surfaceHeight));
     feedAudio(engine);
     // S89: der Lyrics-Knoten gibt die laufende Zeile mit (alle Slots lesen sie)
+    // S91: der Lyrics Trail die eben gegangene — er hat kein Feld Word
+    // (`m_nodeWord` bleibt leer), also auch keine Wort-Variablen und Ausloeser
     if (m_nodeLine != nullptr)
     {
         engine.setNumber("line", static_cast<double>(m_lineNummer));
         engine.setNumber("linecount", static_cast<double>(m_lineAnzahl));
+    }
+    if (m_nodeWord != nullptr)
+    {
         engine.setNumber("word", static_cast<double>(m_wordNummer));  // S90
         engine.setNumber("wordcount", static_cast<double>(m_wordAnzahl));
         // LB4: Ausgaben wie `nextgroup` am Host Switcher — vor jedem Lauf auf
@@ -11756,7 +11807,7 @@ void MultiEffectVisualizer::runParamScript(LeafRuntime& rt, const char* prefix,
     }
     if (rt.paramHost->has(Slot::Frame)) rt.paramHost->run(Slot::Frame);
     if (m_frameBeat && rt.paramHost->has(Slot::Beat)) rt.paramHost->run(Slot::Beat);
-    if (m_nodeLine != nullptr)  // LB4: die Ausloeser des Lyrics-Knotens, aus jedem Feld
+    if (m_nodeWord != nullptr)  // LB4: die Ausloeser des Lyrics-Knotens, aus jedem Feld
     {
         m_lineTrigger = engine.number("linetrigger");
         m_wordTrigger = engine.number("wordtrigger");
