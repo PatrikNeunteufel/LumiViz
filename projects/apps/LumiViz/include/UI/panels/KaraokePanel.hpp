@@ -87,14 +87,39 @@ public:
     /// Endung der Karaoke-Presets, mit Punkt.
     static constexpr const char* kEndung = ".lvkar";
 
+    // --- Trail-Presets (S92, Wunsch Patrik): nur die Trail-Liste der Ebene ---
+    //
+    // Zeile im Reiter „Lyrics Trail": ein Dropdown mit allen mitgelieferten
+    // und eigenen Trail-Presets nach Namen (`TrailPresetStore`), Save As…,
+    // Delete. Eine Auswahl ersetzt nur die Trail-Liste — Schrift, Farben und
+    // Lage der Zeile bleiben. Weicht die Liste vom gewaehlten Preset ab, steht
+    // „(unsaved) – Name" oben im Dropdown.
+
+    /// Trail-Preset `name` in die Ebene laden — ohne Rueckfrage. Schreibt die
+    /// Ablage und merkt den Namen. false = gibt es nicht / unlesbar.
+    bool ladeTrailPreset(const QString& name);
+    /// Die Trail-Liste der Ebene als eigenes Trail-Preset speichern — ohne
+    /// Dialog. false = ungueltiger Name oder Schreibfehler.
+    bool speichereTrailPreset(const QString& name);
+    /// Ein eigenes Trail-Preset loeschen — ohne Rueckfrage. false = mitgeliefert
+    /// oder nicht da.
+    bool loescheTrailPreset(const QString& name);
+    /// Name des Trail-Presets, von dem die Liste stammt (leer = keins).
+    [[nodiscard]] static QString trailPresetName();
+    /// Entspricht die Trail-Liste der Ebene gerade dem gemerkten Preset?
+    [[nodiscard]] bool trailPasstZumPreset();
+
 protected:
     void showEvent(QShowEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     void setupUI();
     [[nodiscard]] Ziel ziel();
     /// „Trail on" auf den Stand der Ebene stellen (Auge der Trail-Liste).
     void gleicheTrailSchalterAb();
+    /// Dropdown der Trail-Presets neu fuellen — nur, wenn sich etwas geaendert hat.
+    void fuelleTrailPresets();
     /// Zustandszeile (KE4): „Preset shows its own lyrics", solange die Ebene
     /// an ist und die laufende Kette selbst Lyrics zeigt — und der Stern der
     /// Preset-Zeile. Laeuft zweimal je Sekunde, nur bei sichtbarem Panel.
@@ -107,4 +132,7 @@ private:
     MultiEffectPanel* m_editor = nullptr;  ///< Reiter 1: der Lyrics-Knoten der Ebene
     QCheckBox* m_trailSchalter = nullptr;
     MultiEffectPanel* m_trail = nullptr;   ///< Reiter 2: die Trail-Liste der Ebene
+    class QComboBox* m_trailPresets = nullptr;
+    class QPushButton* m_trailLoeschen = nullptr;
+    QString m_trailStand;  ///< was das Dropdown zuletzt zeigte (Name, passt, Liste)
 };

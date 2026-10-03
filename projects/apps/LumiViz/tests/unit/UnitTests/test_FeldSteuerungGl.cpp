@@ -21,6 +21,7 @@
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/FieldBindings.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
+#include "visualizers/multieffect/TrailPresetStore.hpp"
 
 #include <QElapsedTimer>
 #include <QFile>
@@ -2571,6 +2572,127 @@ TEST_CASE("Karaoke-Ebene S91: der Trail haelt ueber den Wechsel der Kette")
     {
         CAPTURE(f);
         CHECK(mit[f] == ohne[f]);
+    }
+
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    MultiEffectVisualizer::notifyPlayPosition(0);
+}
+
+// S92 (Wunsch Patrik): Trail-Presets — die Trail-Liste der Ebene als Datei.
+// Jedes mitgelieferte Preset wird geladen, in die Ebene gesetzt und ueber einen
+// Zeilenwechsel gerendert. Mit `LUMIVIZ_TRAIL_PRESET_SNAP=<ordner>` schreibt der
+// Test je Preset fuenf Bilder (Kontaktbogen); mit
+// `LUMIVIZ_TRAIL_PRESET_REWRITE=1` schreibt er jede Datei so zurueck, wie die
+// App sie speichert (nach dem Anlegen von Hand).
+TEST_CASE("Trail-Presets S92: jedes mitgelieferte laedt, zeichnet einen Trail, steht vollstaendig in der Datei")
+{
+    GlUmgebung gl;
+    if (!gl.ok) return;
+    namespace ly = lumi::multieffect::lyrics;
+    namespace tp = lumi::multieffect::trailpresets;
+    MultiEffectVisualizer::notifyPlayState(false);
+    MultiEffectVisualizer::setSongtextTitelVersatz(0);
+    MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+    MultiEffectVisualizer::setKaraokeEbene(true);
+    const QString snap = qEnvironmentVariable("LUMIVIZ_TRAIL_PRESET_SNAP");
+    const bool rewrite = qEnvironmentVariableIsSet("LUMIVIZ_TRAIL_PRESET_REWRITE");
+
+    std::vector<tp::Entry> mitgeliefert;
+    for (const tp::Entry& e : tp::list())
+        if (e.builtin) mitgeliefert.push_back(e);
+    QStringList namen;
+    for (const tp::Entry& e : mitgeliefert) namen << e.name;
+    CAPTURE(namen.join(QStringLiteral(", ")).toStdString());
+    REQUIRE(mitgeliefert.size() == 8);
+
+    const auto ebenePixel = [](MultiEffectVisualizer& vis) {
+        const QImage root = vis.debugGrabRootSurface();
+        const QImage fenster = vis.debugGrabMitKaraoke();
+        int n = 0;
+        for (int y = 0; y < root.height(); ++y)
+            for (int x = 0; x < root.width(); ++x)
+                if (root.pixel(x, y) != fenster.pixel(x, y)) ++n;
+        return n;
+    };
+    // Gegenprobe: mit ausgeschaltetem Trail liegt nach dem Zeilenwechsel nur die neue Zeile auf
+    int ohneTrail = 0;
+
+    for (int durchgang = -1; durchgang < static_cast<int>(mitgeliefert.size()); ++durchgang)
+    {
+        ChainNode liste;
+        std::string name = "(trail off)";
+        if (durchgang >= 0)
+        {
+            const tp::Entry& e = mitgeliefert[static_cast<std::size_t>(durchgang)];
+            name = e.name.toStdString();
+            QStringList report;
+            REQUIRE_MESSAGE(tp::load(e.path, liste, &report),
+                            name << ": " << report.join(QStringLiteral("; ")).toStdString());
+            if (rewrite) REQUIRE(saveChainToFile(liste, e.path));
+            // die Datei steht so da, wie die App sie schreibt (Tippfehler-Wache:
+            // ein unbekanntes Feld ginge beim Lesen verloren und fehlte hier)
+            QFile f(e.path);
+            REQUIRE(f.open(QIODevice::ReadOnly));
+            const QJsonObject datei = QJsonDocument::fromJson(f.readAll()).object();
+            CHECK_MESSAGE(datei == chainToJson(liste), name << ": file differs from what the app writes");
+            // ein Trail-Preset endet auf genau einen Lyrics Trail
+            REQUIRE_FALSE(liste.children.empty());
+            CHECK(std::holds_alternative<LyricsTrailParams>(liste.children.back().params));
+        }
+        CAPTURE(name);
+
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode balken;
+        balken.params = DebugBarsParams{0x203040, -2.5f};
+        root.children = {clear, balken};
+        MultiEffectVisualizer vis;
+        vis.setChain(std::move(root));
+        vis.setBeatPeriodOverride(100000);
+        if (durchgang >= 0)
+        {
+            REQUIRE(vis.setzeKaraokeTrailListe(liste));
+            // die Liste der Ebene ist danach dieses Preset
+            CHECK(tp::gleich(vis.karaokeKette().children[1], liste));
+        }
+        else
+        {
+            // das mitgelieferte Aussehen der Ebene IST das Preset „Drift Up"
+            ChainNode drift;
+            REQUIRE(tp::load(tp::finde(QStringLiteral("Drift Up")).path, drift, nullptr));
+            CHECK(tp::gleich(vis.karaokeKette().children[1], drift));
+            vis.karaokeKette().children[1].enabled = false;
+            (void)vis.recompileKaraoke();
+        }
+        vis.initialize();
+        vis.resize(QSize(480, 270));
+        QOpenGLContext::currentContext()->functions()->glViewport(0, 0, 480, 270);
+        std::vector<int> pixel;
+        // Frame 30 ueberschreitet 13 s (Zeilenwechsel)
+        for (int frame = 0; frame < 100; ++frame)
+        {
+            MultiEffectVisualizer::notifyPlayPosition(12500 + frame * 1000 / 60);
+            vis.render(1.0f / 60.0f);
+            pixel.push_back(ebenePixel(vis));
+            if (!snap.isEmpty() && durchgang >= 0 &&
+                (frame == 32 || frame == 38 || frame == 48 || frame == 65 || frame == 95))
+                vis.debugGrabMitKaraoke().save(QStringLiteral("%1/%2_f%3.png")
+                                                   .arg(snap, QString::fromStdString(name))
+                                                   .arg(frame, 3, 10, QLatin1Char('0')));
+        }
+        if (durchgang < 0)
+        {
+            ohneTrail = pixel[36];
+            REQUIRE(ohneTrail > 0);
+            continue;
+        }
+        MESSAGE(name << ": f29=" << pixel[29] << " f36=" << pixel[36] << " f60=" << pixel[60]
+                     << " f99=" << pixel[99] << " (ohne Trail f36=" << ohneTrail << ")");
+        // der Trail ist da: kurz nach dem Wechsel liegt deutlich mehr auf als die neue Zeile allein
+        CHECK(pixel[36] > ohneTrail * 1.3);
     }
 
     MultiEffectVisualizer::setKaraokeEbene(false);

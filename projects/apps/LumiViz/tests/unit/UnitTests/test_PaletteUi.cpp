@@ -32,6 +32,7 @@
 #include "UI/PresetListen.hpp"
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
+#include "visualizers/multieffect/TrailPresetStore.hpp"
 #include "audio/SongtextQuelle.hpp"
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/PlayerPanel.hpp"
@@ -889,6 +890,150 @@ TEST_CASE("Karaoke-Panel S89: Reiter Lyrics Trail — Liste, Paletten-Filter, fe
     CHECK(vis.karaokeKette().children[1].enabled);
     // die Zeile (Kind 0) bleibt davon unberuehrt
     CHECK(vis.karaokeKette().children[0].enabled);
+}
+
+// S92 (Wunsch Patrik): Trail-Presets — die Trail-Liste der Ebene fuer sich
+// waehlen, speichern, loeschen. Die Verzeichnisse sind umgebogen (kein Zugriff
+// auf den Benutzerordner); zwei „mitgelieferte" Presets entstehen im Test.
+TEST_CASE("Karaoke-Panel S92: Trail-Presets — Dropdown, laden, (unsaved), Save As, Delete")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    namespace tp = lumi::multieffect::trailpresets;
+    using lumi::multieffect::BlitterFeedbackParams;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    tp::setRootForTesting(tmp.path());
+    REQUIRE(QDir().mkpath(tp::assetDir()));
+
+    MultiEffectVisualizer vis;
+    QMutex mutex;
+    // „Drift Up" = das mitgelieferte Aussehen; „Fall Back" = dasselbe mit Blitter 44
+    {
+        const ChainNode drift = tp::fuerEbene(vis.karaokeKette().children[1]);
+        REQUIRE(lumi::multieffect::saveChainToFile(drift, tp::assetDir() + "/Drift Up.lvtrail"));
+        ChainNode fall = drift;
+        std::get<BlitterFeedbackParams>(fall.children[0].params).scale = 44;
+        REQUIRE(lumi::multieffect::saveChainToFile(fall, tp::assetDir() + "/Fall Back.lvtrail"));
+    }
+    REQUIRE(tp::list().size() == 2);
+
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    KaraokePanel panel(services);
+    panel.resize(520, 1000);
+    zeigen(panel);
+    services.tryResolve<IEventBus>()->publish(VisualizerChangedEvent(
+        "multieffect", "Multi Effect", static_cast<IVisualizer*>(&vis), &mutex));
+    QCoreApplication::processEvents();
+    auto* reiter = panel.findChild<QTabWidget*>();
+    auto* combo = panel.findChild<QComboBox*>(QStringLiteral("karaokeTrailPreset"));
+    auto* loeschen = panel.findChild<QPushButton*>(QStringLiteral("karaokeTrailDelete"));
+    auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("karaokeTrailSchalter"));
+    REQUIRE(reiter != nullptr);
+    REQUIRE(combo != nullptr);
+    REQUIRE(loeschen != nullptr);
+    REQUIRE(schalter != nullptr);
+    REQUIRE(panel.findChild<QPushButton*>(QStringLiteral("karaokeTrailSaveAs")) != nullptr);
+    const auto neuLesen = [&] {  // der Reiterwechsel liest die Zeile neu (wie der Takt des Panels)
+        reiter->setCurrentIndex(0);
+        reiter->setCurrentIndex(1);
+        QCoreApplication::processEvents();
+    };
+    const auto blitter = [&] {
+        return std::get<BlitterFeedbackParams>(vis.karaokeKette().children[1].children[0].params)
+            .scale;
+    };
+    neuLesen();
+
+    // --- die Ebene traegt ihr mitgeliefertes Aussehen: das IST „Drift Up"
+    CHECK(combo->isEnabled());
+    REQUIRE(combo->count() == 2);
+    CHECK(combo->currentText() == QStringLiteral("Drift Up"));
+    CHECK(KaraokePanel::trailPresetName() == QStringLiteral("Drift Up"));
+    CHECK(panel.trailPasstZumPreset());
+    CHECK_FALSE(loeschen->isEnabled());  // mitgeliefert
+
+    // --- laden ersetzt NUR den Trail: die Zeile bleibt, „Trail on" auch
+    std::get<lumi::multieffect::LyricsParams>(vis.karaokeKette().children[0].params).fontHeight = -77;
+    const QJsonObject zeileVorher = lumi::multieffect::nodeToJson(vis.karaokeKette().children[0]);
+    schalter->setChecked(false);
+    REQUIRE(panel.ladeTrailPreset(QStringLiteral("Fall Back")));
+    CHECK(blitter() == 44);
+    CHECK(lumi::multieffect::nodeToJson(vis.karaokeKette().children[0]) == zeileVorher);
+    CHECK_FALSE(vis.karaokeKette().children[1].enabled);
+    CHECK_FALSE(schalter->isChecked());
+    schalter->setChecked(true);
+    CHECK(combo->currentText() == QStringLiteral("Fall Back"));
+    CHECK(combo->count() == 2);
+    CHECK_FALSE(panel.ladeTrailPreset(QStringLiteral("Gibt es nicht")));
+    CHECK(blitter() == 44);
+
+    // --- die Liste weicht ab: „(unsaved) – Name" steht oben und ist gewaehlt
+    {
+        QMutexLocker lock(&mutex);
+        std::get<BlitterFeedbackParams>(vis.karaokeKette().children[1].children[0].params).scale = 40;
+        (void)vis.recompileKaraoke();
+    }
+    neuLesen();
+    CHECK_FALSE(panel.trailPasstZumPreset());
+    REQUIRE(combo->count() == 3);
+    CHECK(combo->itemText(0) == QString::fromUtf8("(unsaved) – Fall Back"));
+    CHECK(combo->currentIndex() == 0);
+    CHECK(combo->itemData(0).toString().isEmpty());
+
+    // --- Save As: eigenes Preset im Benutzerordner, unter dem Strich, loeschbar
+    CHECK_FALSE(panel.speichereTrailPreset(QStringLiteral("///")));  // kein Name
+    REQUIRE(panel.speichereTrailPreset(QStringLiteral("Mine")));
+    CHECK(QFile::exists(tp::userDir() + "/Mine.lvtrail"));
+    CHECK(combo->currentText() == QStringLiteral("Mine"));
+    CHECK(combo->count() == 4);  // zwei mitgelieferte, Strich, das eigene
+    CHECK(loeschen->isEnabled());
+    CHECK(panel.trailPasstZumPreset());
+    // das gespeicherte ist die Liste der Ebene: neu geladen wieder Blitter 40
+    REQUIRE(panel.ladeTrailPreset(QStringLiteral("Drift Up")));
+    CHECK(blitter() == 35);
+    CHECK_FALSE(loeschen->isEnabled());
+    REQUIRE(panel.ladeTrailPreset(QStringLiteral("Mine")));
+    CHECK(blitter() == 40);
+    schnappschuss(panel, "S92_karaoke_trail_presets");
+
+    // --- Delete: nur eigene; die Liste der Ebene bleibt und heisst dann „(custom)"
+    CHECK_FALSE(panel.loescheTrailPreset(QStringLiteral("Drift Up")));
+    CHECK(QFile::exists(tp::assetDir() + "/Drift Up.lvtrail"));
+    REQUIRE(panel.loescheTrailPreset(QStringLiteral("Mine")));
+    CHECK_FALSE(QFile::exists(tp::userDir() + "/Mine.lvtrail"));
+    CHECK(blitter() == 40);
+    REQUIRE(combo->count() == 3);
+    CHECK(combo->itemText(0) == QStringLiteral("(custom)"));
+    CHECK(KaraokePanel::trailPresetName().isEmpty());
+
+    // --- Default bringt das mitgelieferte Aussehen zurueck — und seinen Namen
+    vis.merkeKaraokeStand();  // sonst fragt Default nach den ungespeicherten Aenderungen
+    panel.setzeVorgabe();
+    CHECK(blitter() == 35);
+    CHECK(combo->currentText() == QStringLiteral("Drift Up"));
+    CHECK(combo->count() == 2);
+
+    // --- ein eigenes mit dem Namen eines mitgelieferten verdraengt es (und laesst sich loeschen)
+    REQUIRE(panel.speichereTrailPreset(QStringLiteral("Fall Back")));
+    REQUIRE(tp::list().size() == 2);
+    CHECK_FALSE(tp::finde(QStringLiteral("Fall Back")).builtin);
+    REQUIRE(panel.loescheTrailPreset(QStringLiteral("Fall Back")));
+    CHECK(tp::finde(QStringLiteral("Fall Back")).builtin);
+
+    // --- fuer die Kette: mischt additiv, traegt den Namen
+    {
+        ChainNode liste;
+        REQUIRE(tp::load(tp::finde(QStringLiteral("Fall Back")).path, liste, nullptr));
+        const ChainNode k = tp::fuerKette(liste, QStringLiteral("Fall Back"));
+        CHECK(std::get<lumi::multieffect::ListParams>(k.params).blendOut ==
+              lumi::multieffect::BlendMode::Additive);
+        CHECK(k.displayName == "Fall Back");
+        CHECK(tp::gleich(k, liste));  // dieselbe Liste — Name und Mischung zaehlen nicht
+    }
+
+    tp::setRootForTesting(QString());
 }
 
 // S89 (Auftrag Patrik): Favoriten und „zuletzt benutzt" fuer Preset-Dateien —

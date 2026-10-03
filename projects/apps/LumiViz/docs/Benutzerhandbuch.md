@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.68.0
+> **Version:** 1.69.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -873,7 +873,34 @@ gehört nicht in den Trail und lässt sich auch nicht hineinziehen. Am Ende der
 Liste steht fest der **Lyrics Trail**: er lässt sich nicht entfernen und
 bleibt immer das Letzte. An ihm stellst du Haltezeit, Versatz, eigene Farbe
 und mit **Blend** / **Blend strength (%)** ein, wie sich der Trail mit dem
-Bild mischt. Rechnet ein Preset mit **Render Scale** in kleinerer
+Bild mischt.
+
+**Trail-Presets.** Die Zeile **Trail preset** unter **Trail on** hält die
+Trail-Liste als Ganzes fest — alle Module samt dem Lyrics Trail am Ende. Eine
+Auswahl im Dropdown **ersetzt nur den Trail**: Schrift, Farben und Lage der
+Zeile bleiben, **Trail on** ebenso. Oben stehen die mitgelieferten Presets,
+unter dem Strich deine eigenen:
+
+| Preset | Was es tut |
+|---|---|
+| **Drift Up** | das mitgelieferte Aussehen: die alte Zeile zieht nach hinten, steigt und verblasst |
+| **Fall Back** | schrumpft schnell zur Mitte, kurzer Nachzug |
+| **Zoom Burst** | wächst dem Betrachter entgegen und löst sich auf |
+| **Swirl** | dreht sich beim Verwehen um die Bildmitte |
+| **Smoke** | weich, steigt langsam und schlängelt sich dabei |
+| **Echo** | keine Bewegung: ein versetztes Nachbild, das lange steht und langsam verblasst |
+| **Wave** | wellige Verformung, die zur Mitte zieht |
+| **Melt** | läuft nach unten weg |
+
+Änderst du etwas an der Liste, steht oben im Dropdown **(unsaved) – Name**;
+passt die Liste zu keinem Preset, **(custom)**. **Save As…** speichert die
+Liste unter einem Namen als eigenes Trail-Preset (Benutzerordner
+`karaoke/trails`, Endung `.lvtrail`); ein eigenes Preset mit dem Namen eines
+mitgelieferten verdrängt es. **Delete** löscht das gewählte eigene Preset —
+mitgelieferte lassen sich nicht löschen. Wählst du ein Preset, während die
+Liste zu keinem passt, fragt LumiViz vorher nach. Ein Karaoke-Preset
+(`.lvkar`) trägt weiterhin die ganze Ebene samt Trail; ein Trail-Preset ist
+der Weg, nur den Trail zu tauschen. Rechnet ein Preset mit **Render Scale** in kleinerer
 Auflösung, bleibt die Zeile der Ebene trotzdem scharf — sie wird in der
 Auflösung des Fensters gezeichnet; nur der Trail folgt der Auflösung des
 Presets.
@@ -1554,6 +1581,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.69.0 | 2026-10-03 | Session 92. §11 Karaoke-Panel, Reiter Lyrics Trail: NEU **Trail-Presets** — Zeile **Trail preset** (Dropdown, **Save As…**, **Delete**) tauscht nur die Trail-Liste; acht mitgelieferte (Drift Up, Fall Back, Zoom Burst, Swirl, Smoke, Echo, Wave, Melt), eigene im Benutzerordner |
 | 1.68.0 | 2026-10-03 | Session 92. §11 Lyrics (und Karaoke-Ebene): NEU **Word spacing (%)** — Abstand zwischen den Worten (50–400 % des Leerzeichens), für jede Zeile; gibt dem vergrößerten Wort in Overlay Luft |
 | 1.67.0 | 2026-10-03 | Session 92. §11 Lyrics, Skript-Beispiele nach dem Sichttest: der Puls klingt mit 0.93 statt 0.85 ab (mit Erklärung der Zahl); NEU Beispiel „eine Zeile auf jeden vierten Beat" und der Hinweis, wann **Unsynced: beats per line** ohne Skript reicht |
 | 1.66.0 | 2026-10-03 | Session 92. §11 Lyrics Sync: Enter / T klopfen im ganzen Panel (vorher nur in der Liste); NEU **Pre-roll** (Vorlauf des Doppelklicks, 0–10 s), **Sprungleiste** über den ganzen Titel, **Kontextmenü** in der Liste und im Wort-Streifen |

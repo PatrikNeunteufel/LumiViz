@@ -12,9 +12,15 @@
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/multieffect/TrailPresetStore.hpp"
 
+#include <QAbstractItemView>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDir>
+#include <QEvent>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -160,6 +166,80 @@ void KaraokePanel::setupUI()
         tr("The line that just ended drifts away behind the running line. The list below "
            "works on the trail image only; the Lyrics Trail at its end is fixed."));
     trailLayout->addWidget(m_trailSchalter);
+
+    // --- Trail-Presets (S92): nur die Trail-Liste, nach Namen
+    auto* presetReihe = new QHBoxLayout();
+    presetReihe->addWidget(new QLabel(tr("Trail preset:"), trailSeite));
+    m_trailPresets = new QComboBox(trailSeite);
+    m_trailPresets->setObjectName(QStringLiteral("karaokeTrailPreset"));
+    m_trailPresets->setFocusPolicy(Qt::StrongFocus);  // das Mausrad wechselt nichts
+    m_trailPresets->installEventFilter(this);
+    m_trailPresets->setToolTip(
+        tr("Trail presets: the list below as a whole, including the Lyrics Trail at its end. "
+           "Choosing one replaces the trail only — font, colours and position of the line "
+           "stay. Built-in presets come first, your own follow below the line."));
+    presetReihe->addWidget(m_trailPresets, 1);
+    auto* trailSichern = new QPushButton(tr("Save As…"), trailSeite);
+    trailSichern->setObjectName(QStringLiteral("karaokeTrailSaveAs"));
+    trailSichern->setToolTip(tr("Saves the trail list as your own trail preset under a name."));
+    presetReihe->addWidget(trailSichern);
+    m_trailLoeschen = new QPushButton(tr("Delete"), trailSeite);
+    m_trailLoeschen->setObjectName(QStringLiteral("karaokeTrailDelete"));
+    m_trailLoeschen->setToolTip(
+        tr("Deletes the selected trail preset. Only your own presets can be deleted."));
+    presetReihe->addWidget(m_trailLoeschen);
+    trailLayout->addLayout(presetReihe);
+
+    connect(m_trailPresets, &QComboBox::activated, this, [this](int index) {
+        const QString name = m_trailPresets->itemData(index).toString();
+        if (name.isEmpty()) return;  // die Kopfzeile „(unsaved) …" / „(custom)"
+        // eine Liste, die zu keinem Preset passt, ginge mit der Auswahl verloren
+        if (!trailPasstZumPreset() &&
+            QMessageBox::question(this, tr("Trail preset"),
+                                  tr("The current trail is not saved as a trail preset. "
+                                     "Replace it with \"%1\"?")
+                                      .arg(name)) != QMessageBox::Yes)
+        {
+            m_trailStand.clear();
+            fuelleTrailPresets();  // die Auswahl zurueckstellen
+            return;
+        }
+        if (!ladeTrailPreset(name))
+            QMessageBox::warning(this, tr("Trail preset"), tr("Could not load \"%1\".").arg(name));
+    });
+    connect(trailSichern, &QPushButton::clicked, this, [this] {
+        bool ok = false;
+        const QString vorschlag =
+            trailPresetName().isEmpty() ? tr("My Trail") : trailPresetName();
+        const QString name = QInputDialog::getText(this, tr("Save Trail Preset"), tr("Name:"),
+                                                   QLineEdit::Normal, vorschlag, &ok);
+        if (!ok) return;
+        const auto vorhanden = lumi::multieffect::trailpresets::finde(
+            lumi::multieffect::nodepresets::sanitize(name));
+        if (!vorhanden.path.isEmpty() && !vorhanden.builtin &&
+            QMessageBox::question(this, tr("Save Trail Preset"),
+                                  tr("\"%1\" exists. Overwrite it?").arg(vorhanden.name)) !=
+                QMessageBox::Yes)
+            return;
+        if (!speichereTrailPreset(name))
+            QMessageBox::warning(this, tr("Save Trail Preset"),
+                                 tr("Could not save \"%1\".").arg(name));
+    });
+    connect(m_trailLoeschen, &QPushButton::clicked, this, [this] {
+        const QString name = m_trailPresets->currentData().toString();
+        if (name.isEmpty()) return;
+        if (QMessageBox::question(this, tr("Delete Trail Preset"),
+                                  tr("Delete your trail preset \"%1\"?").arg(name)) !=
+            QMessageBox::Yes)
+            return;
+        (void)loescheTrailPreset(name);
+    });
+    connect(m_trailPresets, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this] {
+        const auto e =
+            lumi::multieffect::trailpresets::finde(m_trailPresets->currentData().toString());
+        m_trailLoeschen->setEnabled(!e.path.isEmpty() && !e.builtin);
+    });
+
     m_trail = new MultiEffectPanel(services(), MultiEffectPanel::KaraokeTrail{}, trailSeite);
     trailLayout->addWidget(m_trail, 1);
     m_reiter->addTab(trailSeite, tr("Lyrics Trail"));
@@ -168,9 +248,13 @@ void KaraokePanel::setupUI()
     connect(m_trailSchalter, &QCheckBox::toggled, this, [this](bool an) {
         if (m_trail->hatHost() && m_trail->wurzelAn() != an) m_trail->setWurzelAn(an);
     });
-    connect(m_reiter, &QTabWidget::currentChanged, this, [this] { gleicheTrailSchalterAb(); });
+    connect(m_reiter, &QTabWidget::currentChanged, this, [this] {
+        gleicheTrailSchalterAb();
+        fuelleTrailPresets();
+    });
 
     gleicheTrailSchalterAb();
+    fuelleTrailPresets();
 
     if (IEventBus* bus = eventBus())
     {
@@ -188,6 +272,11 @@ void KaraokePanel::setupUI()
                 m_editor->baumNeuLesen();
                 m_trail->baumNeuLesen();
                 gleicheTrailSchalterAb();
+                // das Karaoke-Preset bringt seinen eigenen Trail mit: von
+                // welchem Trail-Preset er stammt, wird neu gesucht
+                QSettings().remove(QStringLiteral("karaoke/currentTrailPreset"));
+                m_trailStand.clear();
+                fuelleTrailPresets();
                 m_presetZeile->setGeaendert(false);
                 m_presetZeile->setLaufend(PresetListen::laufendesKaraokePreset());
             }));
@@ -328,6 +417,9 @@ void KaraokePanel::setzeVorgabe()
     m_editor->karaokeVorgabe();  // setzt, liest neu, schreibt die Ablage
     m_trail->baumNeuLesen();
     gleicheTrailSchalterAb();
+    QSettings().remove(QStringLiteral("karaoke/currentTrailPreset"));
+    m_trailStand.clear();
+    fuelleTrailPresets();
     PresetListen::setzeLaufendesKaraokePreset(QString());
     m_presetZeile->setGeaendert(false);
     m_presetZeile->setLaufend(QString());
@@ -352,6 +444,157 @@ void KaraokePanel::aktualisiereZustand()
         }
         m_presetZeile->setGeaendert(geaendert);
     }
+    // die Trail-Zeile: „(unsaved) – Name", sobald die Liste vom Preset abweicht
+    if (!m_trailPresets->view()->isVisible()) fuelleTrailPresets();
+}
+
+// =============================================================================
+// Trail-Presets (S92)
+// =============================================================================
+
+namespace
+{
+const QString kTrailPresetKey = QStringLiteral("karaoke/currentTrailPreset");
+
+/// Die Trail-Liste der Ebene (Kind 1) als Kopie; false = keine Ebene.
+bool trailListeVon(const KaraokePanel::Ziel& ziel, lumi::multieffect::ChainNode& out)
+{
+    if (ziel.host == nullptr || ziel.mutex == nullptr) return false;
+    QMutexLocker lock(ziel.mutex);
+    const auto& kinder = ziel.host->karaokeKette().children;
+    if (kinder.size() < 2) return false;
+    out = kinder[1];
+    return true;
+}
+}  // namespace
+
+QString KaraokePanel::trailPresetName()
+{
+    return QSettings().value(kTrailPresetKey).toString();
+}
+
+bool KaraokePanel::trailPasstZumPreset()
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    const tp::Entry e = tp::finde(trailPresetName());
+    lumi::multieffect::ChainNode jetzt;
+    lumi::multieffect::ChainNode preset;
+    return !e.path.isEmpty() && trailListeVon(ziel(), jetzt) &&
+           tp::load(e.path, preset, nullptr) && tp::gleich(jetzt, preset);
+}
+
+bool KaraokePanel::ladeTrailPreset(const QString& name)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    const Ziel z = ziel();
+    const tp::Entry e = tp::finde(name);
+    lumi::multieffect::ChainNode liste;
+    if (z.host == nullptr || z.mutex == nullptr || e.path.isEmpty() ||
+        !tp::load(e.path, liste, nullptr))
+        return false;
+    lumi::multieffect::ChainNode ebene;
+    {
+        QMutexLocker lock(z.mutex);
+        if (!z.host->setzeKaraokeTrailListe(std::move(liste))) return false;
+        ebene = z.host->karaokeKette();
+    }
+    schreibeAblage(ebene);
+    QSettings().setValue(kTrailPresetKey, e.name);
+    m_trail->baumNeuLesen();
+    gleicheTrailSchalterAb();
+    m_trailStand.clear();
+    fuelleTrailPresets();
+    return true;
+}
+
+bool KaraokePanel::speichereTrailPreset(const QString& name)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    lumi::multieffect::ChainNode liste;
+    QString pfad;
+    if (!trailListeVon(ziel(), liste) || !tp::save(name, liste, &pfad)) return false;
+    QSettings().setValue(kTrailPresetKey, QFileInfo(pfad).completeBaseName());
+    m_trailStand.clear();
+    fuelleTrailPresets();
+    return true;
+}
+
+bool KaraokePanel::loescheTrailPreset(const QString& name)
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    if (!tp::remove(tp::finde(name))) return false;
+    // die Liste der Ebene bleibt, wie sie ist — sie gehoert nur zu keinem
+    // Preset mehr (ausser, ein mitgeliefertes gleichen Namens kommt zum Vorschein)
+    if (QString::compare(trailPresetName(), name, Qt::CaseInsensitive) == 0 &&
+        tp::finde(name).path.isEmpty())
+        QSettings().remove(kTrailPresetKey);
+    m_trailStand.clear();
+    fuelleTrailPresets();
+    return true;
+}
+
+void KaraokePanel::fuelleTrailPresets()
+{
+    namespace tp = lumi::multieffect::trailpresets;
+    const std::vector<tp::Entry> alle = tp::list();
+    lumi::multieffect::ChainNode jetzt;
+    const bool da = trailListeVon(ziel(), jetzt);
+    QString name = trailPresetName();
+    bool passt = da && trailPasstZumPreset();
+    // noch kein Name gemerkt (erste Benutzung, nach Default oder einem
+    // Karaoke-Preset): passt die Liste zu einem Preset, traegt sie dessen Namen.
+    // Nur ohne Namen — sonst laese jeder Takt alle Dateien, solange die Liste
+    // von ihrem Preset abweicht.
+    if (da && !passt && name.isEmpty())
+        for (const tp::Entry& e : alle)
+        {
+            lumi::multieffect::ChainNode preset;
+            if (!tp::load(e.path, preset, nullptr) || !tp::gleich(jetzt, preset)) continue;
+            name = e.name;
+            passt = true;
+            QSettings().setValue(kTrailPresetKey, name);
+            break;
+        }
+    QString stand = name + QLatin1Char('|') + QString::number(passt) + QString::number(da);
+    for (const tp::Entry& e : alle) stand += QLatin1Char('|') + e.name + (e.builtin ? 'b' : 'u');
+    if (stand == m_trailStand) return;
+    m_trailStand = stand;
+
+    const QSignalBlocker ruhe(m_trailPresets);
+    m_trailPresets->clear();
+    m_trailPresets->setEnabled(da);
+    if (!passt)
+        m_trailPresets->addItem(
+            name.isEmpty() || tp::finde(name).path.isEmpty() ? tr("(custom)")
+                                                              : tr("(unsaved) – %1").arg(name),
+            QString());
+    bool strich = false;
+    int wahl = passt ? -1 : 0;
+    for (const tp::Entry& e : alle)
+    {
+        if (!e.builtin && !strich && m_trailPresets->count() > 0)
+        {
+            m_trailPresets->insertSeparator(m_trailPresets->count());
+            strich = true;
+        }
+        m_trailPresets->addItem(e.name, e.name);
+        if (passt && QString::compare(e.name, name, Qt::CaseInsensitive) == 0)
+            wahl = m_trailPresets->count() - 1;
+    }
+    m_trailPresets->setCurrentIndex(std::max(0, wahl));
+    const tp::Entry gewaehlt = tp::finde(m_trailPresets->currentData().toString());
+    m_trailLoeschen->setEnabled(da && !gewaehlt.path.isEmpty() && !gewaehlt.builtin);
+}
+
+bool KaraokePanel::eventFilter(QObject* watched, QEvent* event)
+{
+    // wie die Preset-Zeile: das Mausrad ueber dem Dropdown wechselt kein Preset
+    if (watched == m_trailPresets && event->type() == QEvent::Wheel)
+    {
+        event->ignore();
+        return true;
+    }
+    return PanelBase::eventFilter(watched, event);
 }
 
 void KaraokePanel::gleicheTrailSchalterAb()
@@ -367,4 +610,5 @@ void KaraokePanel::showEvent(QShowEvent* event)
 {
     PanelBase::showEvent(event);
     gleicheTrailSchalterAb();
+    fuelleTrailPresets();
 }

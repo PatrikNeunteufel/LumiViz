@@ -25,7 +25,7 @@
                 "fontFace": "Broadway",
                 "fontHeight": -64,
                 "fontWeight": 700,
-                "frameCode": "p = if(b, 1, p * 0.99); fontheight = ref * (1 + p);\nlinetrigger = b;",
+                "frameCode": "//p = if(b, 1, p * 0.99);\n//fontheight = ref * (1 + p);\nlinetrigger = b;",
                 "hAlign": 1,
                 "initCode": "ref = fontheight; p = 0;",
                 "italic": false,
@@ -49,6 +49,7 @@
                 "wordFlowMs": 120,
                 "wordLayout": 0,
                 "wordScale": 150,
+                "wordSpacing": 200,
                 "xShift": 2,
                 "yShift": -2
             },

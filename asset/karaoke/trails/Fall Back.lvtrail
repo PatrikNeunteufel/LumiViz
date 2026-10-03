@@ -1,0 +1,67 @@
+{
+    "header": {
+        "formatVersion": 1,
+        "generator": "LumiViz MultiEffect"
+    },
+    "root": {
+        "blendIn": 0,
+        "blendOut": 0,
+        "bufferIn": 0,
+        "bufferInInvert": false,
+        "bufferOut": 0,
+        "bufferOutInvert": false,
+        "children": [
+            {
+                "beatCode": "",
+                "blend": false,
+                "enabled": true,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Blitter Feedback",
+                "onBeat": false,
+                "scale": 44,
+                "scale2": 44,
+                "subpixel": true,
+                "type": "blitterFeedback"
+            },
+            {
+                "beatCode": "",
+                "color": 0,
+                "enabled": true,
+                "fadeLen": 10,
+                "frameCode": "",
+                "initCode": "",
+                "name": "Fadeout",
+                "type": "fadeout"
+            },
+            {
+                "beatCode": "",
+                "blend": 1,
+                "blendStrength": 100,
+                "color": 16777215,
+                "enabled": true,
+                "frameCode": "",
+                "holdMs": 80,
+                "initCode": "",
+                "lineCode": "",
+                "name": "Lyrics Trail",
+                "source": "",
+                "type": "lyricsTrail",
+                "useOwnColor": false,
+                "xShift": 0,
+                "yShift": 0
+            }
+        ],
+        "clearEveryFrame": false,
+        "enabled": true,
+        "frameCode": "",
+        "inAdjustAlpha": 128,
+        "initCode": "",
+        "name": "Karaoke Trail",
+        "onBeatFrames": 1,
+        "onBeatRender": false,
+        "outAdjustAlpha": 128,
+        "type": "list",
+        "useCode": false
+    }
+}

@@ -362,6 +362,10 @@ public:
     void setzeKaraokeVorgabe();  ///< zurueck auf das mitgelieferte Aussehen (wie KE1)
     [[nodiscard]] bool ladeKaraokeDatei(const QString& pfad, QStringList* report = nullptr);
     [[nodiscard]] bool speichereKaraokeDatei(const QString& pfad) const;
+    /// S92 (Trail-Presets): nur die Trail-Liste der Ebene ersetzen — der
+    /// Lyrics-Knoten bleibt, ebenso ob der Trail an ist. `liste` wie aus
+    /// `trailpresets::load`. Unter dem Render-Mutex. false = keine Effect List.
+    bool setzeKaraokeTrailListe(lumi::multieffect::ChainNode liste);
     /// Ablage der laufenden Ebene (`<Benutzerdaten>/karaoke/current.lvkar`):
     /// das Fenster setzt sie beim Start; jede danach angelegte Instanz laedt
     /// die Datei im Konstruktor, wenn es sie gibt. Leer (Vorgabe, Tests) =

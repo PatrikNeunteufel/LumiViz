@@ -3693,6 +3693,24 @@ bool MultiEffectVisualizer::ladeKaraokeDatei(const QString& pfad, QStringList* r
     return true;
 }
 
+bool MultiEffectVisualizer::setzeKaraokeTrailListe(ChainNode liste)
+{
+    if (!std::holds_alternative<ListParams>(liste.params)) return false;
+    if (m_karaokeWurzel.children.size() < 2) return false;
+    // „Trail on" ist das Auge der Liste: ein Preset schaltet den Trail nicht
+    liste.enabled = m_karaokeWurzel.children[1].enabled;
+    // frische Ids aus dem Zaehler der Ebene (die alten Laufzeiten — auch das
+    // Bild der alten Liste — raeumt der Render-Thread ab)
+    const std::function<void(ChainNode&)> ohneId = [&](ChainNode& n) {
+        n.nodeId = 0;
+        for (ChainNode& kind : n.children) ohneId(kind);
+    };
+    ohneId(liste);
+    m_karaokeWurzel.children[1] = std::move(liste);
+    (void)recompileKaraoke();
+    return true;
+}
+
 bool MultiEffectVisualizer::speichereKaraokeDatei(const QString& pfad) const
 {
     QDir().mkpath(QFileInfo(pfad).absolutePath());
