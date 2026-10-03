@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.84.0
-> **Datum:** 2026-10-03 (Session 91)
+> **Version:** 1.85.0
+> **Datum:** 2026-10-03 (Session 92)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3034,7 +3034,7 @@ Liste statt pro Gruppe. Trigger-Stufen:
 Bezug: P2 Visual-Playlist (§6) und Hotkeys Stufe 3 (Composer) überschneiden
 sich — im Konzept abgrenzen.
 
-### 🟡 Lyrics-Block: Zeilen-Puffer, Wort-Ebene, Auslöser, Lyrics Sync (S90/S91 gebaut — Sichttest offen)
+### 🟡 Lyrics-Block: Zeilen-Puffer, Wort-Ebene, Auslöser, Lyrics Sync (S90/S91 gebaut — Sichttest begonnen S92)
 
 **Steuerdokument:** `visuals/Lyrics_Block_Konzept.md` (Entscheide L1–L6,
 B1–B3, Stand je Stufe mit „geprüft / nicht geprüft").
@@ -3064,13 +3064,49 @@ Blättern), Skriptfeld **Line am Lyrics Trail** (Entscheid **T2 a**: einmal je
 gegangener Zeile, `line` = die Zeile, die eben ging), Handbuch-Beispiel
 `wordtrigger = if(below(word, wordcount), b, 0);` per Test belegt.
 
+**✅ Sichttest S92, erste Runde (Patrik):** abgenommen A1 (Trail zeigt das
+Bild, das stand), D1 (Word scale, Reflow), J1 und J3 (Schieber Speed, Sprung
+beim Reiterwechsel). Vier Befunde, alle in S92 behoben: **H1** Enter / T
+klopften nur mit Fokus in der Zeilenliste → gelten jetzt im ganzen Panel;
+**E1** der Puls im Handbuch klang zu schnell ab → 0.93 statt 0.85; **G1**
+„eine Zeile je Beat" unrealistisch → Beispiel für jeden vierten Beat; **D2**
+in Overlay zu wenig Luft um das große Wort → Feld **Word spacing (%)**.
+
+**✅ Gebaut in S92** (alles Wünsche und Entscheide Patriks aus dem Sichttest):
+Panel Lyrics Sync mit **Pre-roll** (Vorlauf des Doppelklicks, 0–10 s),
+**Sprungleiste** über den ganzen Titel und **Kontextmenü** je Zeile / Wort ·
+Feld **Word spacing (%)** am Lyrics-Knoten (steckt in der Schrift:
+`QFont::setWordSpacing`; folgt dem Skript aus Init, Song, Beat, Line, Word) ·
+**Trail-Presets**: die Trail-Liste der Karaoke-Ebene als eigenes Preset
+(`.lvtrail`, Kettenformat; `TrailPresetStore`; mitgeliefert
+`asset/karaoke/trails/`, acht Stück; eigene im Benutzerordner), Zeile **Trail
+preset** im Karaoke-Panel, im Kettenbaum **Add trail preset ▸** / **Save as
+trail preset…** per Rechtsklick, eigenes Icon (`lumiviz_trail.ico`) für jede
+Effect List mit Lyrics Trail · **Prüfer für die Skriptbeispiele des
+Benutzerhandbuchs** (`test_HandbuchBeispiele.cpp`: 20 Beispiele, 14 belegt,
+6 nur übersetzt) · die **vier Fragen aus S89** entschieden: Doppelklick auf
+ein `.lvkar` schaltet die Ebene ein (1a), `current.lvkar` steht nicht mehr im
+Effect Browser (2a), die Rückfrage vor der Dateiauswahl bleibt (3a), Ctrl+K
+ruht in Textfeldern (4a).
+
 **Offen:**
-1. **Sichttests S90/S91 (Patrik):** alles — im laufenden Programm ist nichts
-   gesehen. Liste lokal: `.claude/handover/Sichttests_S90.md` (Abschnitt J =
-   langsamer abspielen); dazu aus S91 ohne eigenen Listenpunkt: Load… mit
-   `.avs` bei ungespeicherter Kette (genau eine Rückfrage), Rechtsklick und
-   Ansicht ★ Favorites im Effect Browser, Feld Line am Lyrics Trail (Kette
-   und Karaoke-Ebene), Preset-Wechsel bei laufendem Trail der Ebene.
+1. **Sichttests (Patrik):** `.claude/handover/Sichttests_S92.md` (A–F: alles
+   aus S92 — im laufenden Programm ist davon nichts gesehen; zuerst A1, B1,
+   B3, D1, D3, E1) und der Rest von `Sichttests_S90.md` (A2–A6, B, C, D3–D6,
+   E2–E6, F, G2–G5, H2–H8, J2, J4, J5, I1); dazu aus S91 ohne eigenen
+   Listenpunkt: Load… mit `.avs` bei ungespeicherter Kette (genau eine
+   Rückfrage), Rechtsklick und Ansicht ★ Favorites im Effect Browser, Feld
+   Line am Lyrics Trail (Kette und Karaoke-Ebene), Preset-Wechsel bei
+   laufendem Trail der Ebene.
+1a. **Nicht geprüft aus S92:** eine eingefügte Trail-Liste im Bild einer
+   echten Kette (nur die Struktur ist getestet); ob ein Trail-Preset mit
+   zeichnenden Modulen (über **Save as trail preset…** möglich) in der Ebene
+   sinnvoll aussieht; Zoom Burst und Swirl drehen um die Bildmitte (Zeile
+   unten → der Trail wandert zum Rand); Vorschau-Zeilen mit Word spacing
+   nicht eigens gemessen; **Ctrl+S** im Skript-Editor (Menü-Kürzel, läuft
+   nicht über die Kürzel-Tabelle — weder geprüft noch angefasst); sechs
+   Handbuch-Beispiele nur übersetzt (vier Drift-Zeilen des Milkdrop-Nodes,
+   `nextgroup` am Host Switcher, das Song-Muster).
 2. **Nicht geprüft aus S91:** `AudioPlayer` mit echter Engine (keine
    Engine-Attrappe — das BASS-Verhalten ist nur durch eine Probe belegt);
    ein sichtbar zerstörtes Sync-Panel setzt das Tempo nicht zurück; Ebene mit
@@ -3892,6 +3928,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.85.0 | 2026-10-03 | Session 92 — **Sichttest S90/S91 begonnen** (A1, D1, J1, J3 abgenommen; vier Befunde H1, E1, G1, D2 behoben). **§7 Lyrics-Block:** Lyrics Sync mit Pre-roll, Sprungleiste, Kontextmenü; Feld Word spacing; **Trail-Presets** (`.lvtrail`, acht mitgeliefert, Zeile im Karaoke-Panel, Rechtsklick im Kettenbaum, eigenes Icon); Prüfer für die Skriptbeispiele des Handbuchs; die vier Fragen aus S89 entschieden (1a, 2a, 3a, 4a). Offen: Sichttests S88–S92 |
 | 1.84.0 | 2026-10-03 | Session 91 — **§7 Lyrics-Block: LB5-3 gebaut** (Schieber Speed im Panel Lyrics Sync, Entscheid T1 a) und die kleinen Reste aus S89/S90 erledigt: Statuszeile des Sync-Panels, Trail der Karaoke-Ebene über den Preset-Wechsel, Load… mit `.avs` / `.milk`, Favoriten im Effect Browser (F1 a), Feld Line am Lyrics Trail (T2 a). Offen: Sichttests S88–S91, die vier Fragen aus S89 |
 | 1.83.0 | 2026-10-03 | Session 90 — **§7 Lyrics-Block gebaut bis auf LB5-3** (Zeilen-Puffer, Vorschau-Zeilen, laufendes Wort, `word` / `wordcount` und Feld Word, Wort-Masken auf der Grafikkarte, eine Schriftgröße je Song, `linetrigger` / `wordtrigger`, Lyrics Sync mit Stimmen und Wort-Zeiten; Steuerdokument `visuals/Lyrics_Block_Konzept.md`); drei Fixes (Doppel-Trail nach Pausen, Sprung beim Zeilenwechsel, AVI-Knoten unsichtbar). Offen: langsamer abspielen (LB5-3), Sichttests S90 |
 | 1.82.0 | 2026-10-02 | Session 89 — **Karaoke-Ebene KE2–KE4 gebaut** (Panel mit Reitern Lyrics / Lyrics Trail, Karaoke-Presets `.lvkar`, View → Karaoke, Ctrl+K; Steuerdokument `visuals/Karaoke_Ebene_Konzept.md`), K4 b (Zeile in Fensterauflösung). **Save / Save As**, **Rückfrage bei ungespeicherten Änderungen** (alle Ladewege, Beenden, Visualizer-Wechsel), **Preset-Zeile** mit Favoriten und Zuletzt in den Panels Effect Chain und Karaoke. **§7 ✅ Host Switcher: Puffer je Gruppe** (*Keep group state*, *Reset buffers*, `clearbuffers`; Befund berichtigt: ruhende Gruppen verlieren ohne Puffer ihre ganze Gruppen-Laufzeit). Skriptfeld **Line** am Lyrics-Knoten (`line`, `linecount`), Feld **Blend strength** an Lyrics / Lyrics Trail. **§7 NEU:** Lyrics — Zeilen-Puffer für den Trail, Wort-Ebene (laufendes Wort, `word` / `wordcount`, Slot Word), `linetrigger` / `wordtrigger`, Wort-Zeiten klopfen (für S90). Sichttests: alles aus S89 offen (`.claude/handover/Sichttests_S89.md`). Tests 810, Felder 846 |
