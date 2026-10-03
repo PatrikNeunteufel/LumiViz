@@ -49,6 +49,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_NodePresetStore.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVorlagen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldDocs.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_HandbuchBeispiele.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_FieldBindings.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_TextTags.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LyricsModel.cpp"

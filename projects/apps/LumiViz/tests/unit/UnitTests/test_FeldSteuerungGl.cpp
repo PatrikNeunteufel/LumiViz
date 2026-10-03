@@ -1983,6 +1983,30 @@ TEST_CASE("Lyrics S90 LB4: linetrigger / wordtrigger ruecken den unsynchronen Te
         CHECK(gesehen["Zeile"].xShift == 3);
     }
     {
+        // S92 (Pruefer test_HandbuchBeispiele): zwei Beispiele aus dem
+        // Benutzerhandbuch, die bisher in keinem Test liefen. Feld Line:
+        // die Ausrichtung wechselt mit der Zeile (1 -> 1, 2 -> 2, 3 -> 0).
+        LyricsParams lp;
+        lp.lineCode = "halign = line % 3;";
+        lp.frameCode = "linetrigger = b;";
+        (void)lauf(lp, 5);   // ein Beat: zweite Zeile
+        CHECK(gesehen["Zeile"].hAlign == 2);
+        (void)lauf(lp, 15);  // zwei Beats: dritte Zeile
+        CHECK(gesehen["Zeile"].hAlign == 0);
+        LyricsParams steht;
+        steht.lineCode = "halign = line % 3;";
+        (void)lauf(steht, 5);  // ohne Ausloeser: erste Zeile
+        CHECK(gesehen["Zeile"].hAlign == 1);
+        // Feld Word: die Zeile steigt mit jedem Wort
+        LyricsParams wp;
+        wp.frameCode = "wordtrigger = b;";
+        wp.wordCode = "yshift = -6 - word;";
+        (void)lauf(wp, 5);   // erstes Wort
+        CHECK(gesehen["Zeile"].yShift == -7);
+        (void)lauf(wp, 25);  // drittes Wort
+        CHECK(gesehen["Zeile"].yShift == -9);
+    }
+    {
         // wordtrigger auf jeden Beat: Wort fuer Wort, am Zeilenende in die naechste Zeile (L5 a)
         LyricsParams lp;
         lp.frameCode = "wordtrigger = b;";
