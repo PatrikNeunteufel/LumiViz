@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.60.0
+> **Version:** 1.61.0
 > **Datum:** 2026-10-03
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -731,11 +731,17 @@ ein Strich auf dem Einsatz sitzt.
 | **Save** | schreibt eine `.lrc` neben die Textdatei (gleicher Name); bei eingebettetem Text dorthin, wo geholte Texte landen |
 | **Undo** / **Redo** (Ctrl+Z / Ctrl+Y in der Liste) | nimmt den letzten Schritt an den Zeiten zurück (Klopfen, Verschieben, Zeit löschen, Zeit von Hand) bzw. stellt ihn wieder her. Nach **Undo** ist wieder die Zeile markiert, an der der Schritt begann — ein verklopfter Einsatz lässt sich gleich neu klopfen. **Save** und **Reload** leeren die Geschichte |
 | **Voice 1** / **2** / **Both** (oder 1, 2, 3 in der Liste) | Duett: legt fest, wer die markierten Zeilen singt. Die Spalte **Voice** zeigt es (1, 2, 1+2), der Lyrics-Knoten färbt danach (**Color (voice 1)**, **Color voice 2**, **Color both voices**). Gespeichert wird die Stimme als Marke am Zeilenanfang (`v1:`, `v2:`, `v1+v2:`). Sobald eine Zeile eine Stimme trägt, zählen Zeilen ohne Angabe als Stimme 1; ein Text ganz ohne Stimmen bleibt ohne Marken |
+| **Words** | Wort-Zeiten klopfen: unter der Liste erscheint ein Streifen mit den Worten der markierten Zeile und ihren Zeiten. **Tap** gibt dann dem gewählten Wort die Abspielposition und rückt zum nächsten; nach dem letzten Wort geht es mit dem ersten Wort der nächsten Zeile weiter. Das erste Wort trägt die Zeit der Zeile. Ein Klick auf ein Wort wählt es zum Neu-Klopfen; **−100 ms** / **+100 ms** verschieben mit **Words** das gewählte Wort. In der Wellenform stehen die Wort-Zeiten der markierten Zeile als zusätzliche Striche |
+| **Clear words** (nur mit **Words**) | nimmt den markierten Zeilen die Wort-Zeiten; die Zeit der Zeile bleibt |
 | **Track offset** | verschiebt den **ganzen** Text dieses Titels (positiv = früher), ohne die Zeiten der Zeilen zu ändern; wirkt sofort und wird je Titel gemerkt — **Save** ist dafür nicht nötig. Sitzt ein fertiger Text gleichmäßig daneben, ist das der kürzeste Weg |
 
 Jede Änderung geht sofort an den Lyrics-Knoten — du siehst im Bild, was du
 klopfst. Gespeichert wird erst mit **Save**, und nur, wenn jede Textzeile eine
-Zeit hat (Leerzeilen brauchen keine). Die bisherige `.txt` bleibt liegen; die
+Zeit hat (Leerzeilen brauchen keine). **Wort-Zeiten** werden je Zeile nur
+gespeichert, wenn **alle** ihre Worte eine haben — eine halb geklopfte Zeile
+geht als gewöhnliche Zeile in die Datei, ihre Wort-Zeiten sind danach weg;
+die Statuszeile nennt vorher, wie viele Zeilen das betrifft. Verschiebst du
+eine Zeile, gehen ihre Wort-Zeiten mit. Die bisherige `.txt` bleibt liegen; die
 Suche nimmt ab dann die `.lrc`. Wechselt der Titel, während ungespeicherte
 Zeiten da sind, bleibt deine Arbeit im Panel stehen, bis du speicherst oder
 **Reload** drückst.
@@ -1505,6 +1511,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.61.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Words** — Wort-Zeiten klopfen (Streifen mit den Worten der markierten Zeile, Tap je Wort, **Clear words**); eine Zeile wird nur mit Wort-Zeiten gespeichert, wenn alle ihre Worte eine haben |
 | 1.60.0 | 2026-10-03 | Session 90. §11 Lyrics Sync: NEU **Duett** — Spalte **Voice**, Knöpfe **Voice 1 / 2 / Both** und Tasten 1 / 2 / 3 setzen die Stimme der markierten Zeilen |
 | 1.59.0 | 2026-10-03 | Session 90. §11 Lyrics (und Karaoke-Ebene): NEU Skriptvariablen **`linetrigger`** und **`wordtrigger`** — rücken unsynchronen Text eine Zeile bzw. ein Wort weiter (oder zurück); der erste `wordtrigger` schaltet den Wort-Stand des Blocks ein |
 | 1.58.0 | 2026-10-02 | Session 90. §11 Lyrics (und Karaoke-Ebene): Lage, Größe und Farben folgen dem Skript jetzt aus **jedem** Feld, auch aus Frame (die Zeilen werden dafür auf der Grafikkarte aus einmal gezeichneten Worten zusammengesetzt); nur Weight, Italic, Outline size und Preview weight folgen weiter allein aus Init, Song, Beat, Line und Word. Das Gleiten der Wortgröße kostet kein neues Zeichnen mehr. **Eine Schriftgröße je Song:** die längste Zeile bestimmt die Schrift aller Zeilen, der Zeilenabstand geht mit (bisher wurde jede Zeile einzeln verkleinert, der Abstand blieb bei der eingestellten Schrift) |

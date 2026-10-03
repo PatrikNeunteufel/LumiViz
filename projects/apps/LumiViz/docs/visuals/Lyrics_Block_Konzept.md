@@ -512,6 +512,23 @@ Taste, Undo/Redo, Vorschau, Speichern und Wiederlesen, Solo-Text ohne
 Marken; Schnappschuss angesehen. Unit-Tests 821/821. **Nicht geprüft:** im
 laufenden Programm (Tasten 1 / 2 / 3 gegen fensterweite Kürzel).
 
+**Stand LB5-2 — ✅ gebaut (03.10.):** Schalter *Words* und Streifen
+`lyricsSyncWords` (waagrechte Liste, je Wort Text und Zeit). Die Arbeitskopie
+führt offene Worte mit Zeit −1 in `Zeile::worte`; angelegt werden sie erst
+beim ersten Tap der Zeile (das bloße Anzeigen ändert die Arbeitskopie nicht —
+sonst hielte das Panel jeden Text für verändert). `tippe` gilt mit *Words* dem
+gewählten Wort (das erste setzt auch die Zeit der Zeile), danach dem
+nächsten, am Zeilenende der nächsten Textzeile. `alsSongtext` gibt
+Wort-Zeiten nur für vollständige Zeilen hinaus (L6-2 a) — für Vorschau und
+Speichern gleich. Zeile verschieben, Zeit von Hand und Tap ohne *Words*
+nehmen die Wort-Zeiten mit; *Clear time* löscht sie (wie bisher), *Clear
+words* nur sie. Geprüft (UI-Test): Streifen, Tap je Wort mit Übergang zur
+nächsten Zeile, halb geklopfte Zeile ohne Wort-Zeiten in Vorschau und Datei,
+Wort neu klopfen und verschieben, erstes Wort nimmt die Zeile mit, Undo,
+„From here", Speichern und Wiederlesen, Clear words, Tap ohne Words.
+Schnappschuss angesehen. Unit-Tests 822/822. **Nicht geprüft:** im laufenden
+Programm (Klopfen im Takt, Höhe des Streifens bei langen Zeilen).
+
 ## 8. Stufen im Überblick
 
 | Stufe | Inhalt | sichtbar bei | hängt ab von |

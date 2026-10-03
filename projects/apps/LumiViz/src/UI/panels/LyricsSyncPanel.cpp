@@ -28,6 +28,7 @@
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QListWidget>
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QSpinBox>
@@ -378,6 +379,27 @@ void LyricsSyncPanel::setupUI()
     m_liste->installEventFilter(this);
     vl->addWidget(m_liste, 1);
 
+    // S90 (LB5-2, Entscheid L6-1 a): Wort-Zeiten — ein Streifen mit den Worten
+    // der markierten Zeile, sichtbar mit dem Schalter „Words"
+    m_wortListe = new QListWidget(this);
+    m_wortListe->setObjectName(QStringLiteral("lyricsSyncWords"));
+    m_wortListe->setFlow(QListView::LeftToRight);
+    m_wortListe->setWrapping(true);
+    m_wortListe->setResizeMode(QListView::Adjust);
+    m_wortListe->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_wortListe->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_wortListe->setSpacing(2);
+    m_wortListe->setMaximumHeight(96);
+    m_wortListe->setToolTip(
+        tr("Words of the selected line with their times. The selected word gets the next tap; "
+           "after the last word the tap moves on to the next line. Click a word to tap it "
+           "again."));
+    m_wortListe->setVisible(false);
+    vl->addWidget(m_wortListe);
+    connect(m_wortListe, &QListWidget::currentRowChanged, this, [this](int reihe) {
+        if (!m_fuellt && reihe >= 0) m_wort = reihe;
+    });
+
     const auto knopf = [this](const QString& text, const char* name, const QString& tipp) {
         auto* k = new QPushButton(text, this);
         k->setObjectName(QLatin1String(name));
@@ -445,6 +467,22 @@ void LyricsSyncPanel::setupUI()
     stimmKnopf(tr("Both"), "lyricsSyncVoiceBoth", ly::Stimme::Beide,
                tr("Selected lines are sung by both voices (key 3 in the list)."));
     reiheStimme->addStretch(1);
+    // S90 (LB5-2): Wort-Zeiten klopfen
+    m_worteAn = new QCheckBox(tr("Words"), this);
+    m_worteAn->setObjectName(QStringLiteral("lyricsSyncWordMode"));
+    m_worteAn->setToolTip(
+        tr("Tap word times: shows the words of the selected line; Tap (Enter or T) gives the "
+           "selected word the playback position and moves to the next word. The first word "
+           "carries the time of the line. −100 ms / +100 ms then shift the selected word. A "
+           "line is saved with word times only when all its words have one."));
+    m_wortLeeren = knopf(tr("Clear words"), "lyricsSyncClearWords",
+                         tr("Removes the word times of the selected lines; the time of the "
+                            "line stays."));
+    m_wortLeeren->setVisible(false);
+    reiheStimme->addWidget(m_wortLeeren);
+    reiheStimme->addWidget(m_worteAn);
+    connect(m_worteAn, &QCheckBox::toggled, this, &LyricsSyncPanel::setWortModus);
+    connect(m_wortLeeren, &QPushButton::clicked, this, &LyricsSyncPanel::loescheWortZeiten);
     vl->addLayout(reiheStimme);
     reihe2 = new QHBoxLayout();  // dritte Reihe: Versatz und Mitlaufen
     // S88 (Entscheid Patrik a): Versatz nur dieses Titels — verschiebt den
@@ -486,7 +524,11 @@ void LyricsSyncPanel::setupUI()
             [this](int reihe, int) { springeZu(reihe, kVorlaufMs); });
     // die markierte Zeile in der Wellenform hervorheben
     connect(m_liste, &QTableWidget::itemSelectionChanged, this, [this]() {
-        if (!m_fuellt) zeigeStand();
+        if (m_fuellt) return;
+        // eine andere Zeile: der naechste Tap trifft ihr erstes Wort ohne Zeit
+        m_wort = -1;
+        zeigeWorte();
+        zeigeStand();
     });
     // Zeit von Hand (F2): mm:ss.xx; leer = ohne Zeit; Unlesbares wird verworfen
     connect(m_liste, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
@@ -507,7 +549,13 @@ void LyricsSyncPanel::setupUI()
             return;
         }
         merke(jetzigerStand());
-        m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs = zeit;
+        ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihe)];
+        // die Wort-Zeiten gehen mit der Zeile (ohne Zeilen-Zeit sind sie wertlos)
+        if (zeit < 0) z.worte.clear();
+        else if (z.zeitMs >= 0)
+            for (ly::Wort& w : z.worte)
+                if (w.zeitMs >= 0) w.zeitMs = std::max<std::int64_t>(0, w.zeitMs + zeit - z.zeitMs);
+        z.zeitMs = zeit;
         m_geaendert = true;
         zeigeZeile(reihe);
         zeigeStand();
@@ -639,13 +687,25 @@ void LyricsSyncPanel::zeigeStand()
         stand = tr("All lines have a time — not saved yet.");
     else
         stand = tr("All lines have a time.");
+    // S90 (LB5-2): Zeilen mit halb geklopften Worten gehen ohne Wort-Zeiten hinaus
+    if (!m_text.leer() && !fremd)
+        if (const int offeneWorte = offeneWortZeilen(); offeneWorte > 0)
+            stand += QLatin1Char(' ') +
+                     tr("Lines with words still to tap: %1 (saved without word times).")
+                         .arg(offeneWorte);
     m_stand->setText(stand);
+    zeigeWorte();
 
     // Striche in der Wellenform: Zeiten als Abspielpositionen (Zeit − Versatz)
     std::vector<std::int64_t> marken;
     for (const ly::Zeile& z : m_text.zeilen)
         if (z.zeitMs >= 0) marken.push_back(z.zeitMs - versatz());
     const QList<int> gewaehlt = markierteReihen();
+    // mit „Words" dazu die Wort-Zeiten der markierten Zeile
+    if (wortModus() && !gewaehlt.isEmpty() &&
+        gewaehlt.first() < static_cast<int>(m_text.zeilen.size()))
+        for (const ly::Wort& w : m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].worte)
+            if (w.zeitMs >= 0) marken.push_back(w.zeitMs - versatz());
     std::int64_t gewaehlteZeit = -1;
     if (!gewaehlt.isEmpty() && gewaehlt.first() < static_cast<int>(m_text.zeilen.size()) &&
         m_text.zeilen[static_cast<std::size_t>(gewaehlt.first())].zeitMs >= 0)
@@ -664,32 +724,175 @@ bool LyricsSyncPanel::tippe(std::int64_t posMs)
     const QList<int> reihen = markierteReihen();
     if (reihen.isEmpty() || m_text.leer()) return false;
     const int reihe = reihen.first();
-    merke(jetzigerStand());
     // wie der Knoten rechnet: wirksame Zeit = Position + Versatz (Datei + Titel)
-    m_text.zeilen[static_cast<std::size_t>(reihe)].zeitMs =
-        std::max<std::int64_t>(0, posMs + versatz());
+    const std::int64_t zeit = std::max<std::int64_t>(0, posMs + versatz());
+    const auto zurNaechstenZeile = [this, reihe]() {
+        // weiter zur naechsten TEXTzeile (Leerzeilen brauchen keine Zeit)
+        int naechste = reihe + 1;
+        while (naechste < static_cast<int>(m_text.zeilen.size()) &&
+               m_text.zeilen[static_cast<std::size_t>(naechste)].text.empty())
+            ++naechste;
+        if (naechste < static_cast<int>(m_text.zeilen.size()))
+        {
+            m_liste->selectRow(naechste);
+            m_liste->scrollToItem(m_liste->item(naechste, kText),
+                                  QAbstractItemView::PositionAtCenter);
+        }
+    };
+    ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihe)];
+
+    if (wortModus())
+    {
+        // S90 (LB5-2): der Tap gilt dem gewaehlten WORT der Zeile
+        std::vector<ly::Wort> worte = worteVon(z);
+        if (worte.empty()) return false;  // Leerzeile
+        merke(jetzigerStand());
+        const int n = static_cast<int>(worte.size());
+        const int idx = std::clamp(m_wort, 0, n - 1);
+        worte[static_cast<std::size_t>(idx)].zeitMs = zeit;
+        z.worte = std::move(worte);
+        if (idx == 0) z.zeitMs = zeit;  // das erste Wort traegt die Zeit der Zeile
+        m_geaendert = true;
+        zeigeZeile(reihe);
+        if (idx + 1 < n)
+        {
+            m_wort = idx + 1;
+            zeigeWorte();
+        }
+        else
+        {
+            zurNaechstenZeile();  // die Auswahl wechselt: ihr erstes offenes Wort ist dran
+        }
+        zeigeStand();
+        vorschau();
+        return true;
+    }
+
+    merke(jetzigerStand());
+    // hat die Zeile Wort-Zeiten, gehen sie mit der Zeile
+    if (z.zeitMs >= 0)
+        for (ly::Wort& w : z.worte)
+            if (w.zeitMs >= 0) w.zeitMs = std::max<std::int64_t>(0, w.zeitMs + zeit - z.zeitMs);
+    z.zeitMs = zeit;
     m_geaendert = true;
     zeigeZeile(reihe);
-
-    // weiter zur naechsten TEXTzeile (Leerzeilen brauchen keine Zeit)
-    int naechste = reihe + 1;
-    while (naechste < static_cast<int>(m_text.zeilen.size()) &&
-           m_text.zeilen[static_cast<std::size_t>(naechste)].text.empty())
-        ++naechste;
-    if (naechste < static_cast<int>(m_text.zeilen.size()))
-    {
-        m_liste->selectRow(naechste);
-        m_liste->scrollToItem(m_liste->item(naechste, kText), QAbstractItemView::PositionAtCenter);
-    }
+    zurNaechstenZeile();
     zeigeStand();
     vorschau();
     return true;
+}
+
+std::vector<ly::Wort> LyricsSyncPanel::worteVon(const ly::Zeile& z)
+{
+    if (!z.worte.empty()) return z.worte;
+    std::vector<ly::Wort> out;
+    for (const std::string& stueck : ly::wortStuecke(z)) out.push_back({-1, stueck});
+    return out;
+}
+
+void LyricsSyncPanel::setWortModus(bool an)
+{
+    if (m_worteAn->isChecked() != an)
+    {
+        m_worteAn->setChecked(an);  // meldet sich hier wieder
+        return;
+    }
+    m_wort = -1;
+    zeigeWorte();
+    zeigeStand();
+}
+
+bool LyricsSyncPanel::wortModus() const
+{
+    return m_worteAn != nullptr && m_worteAn->isChecked();
+}
+
+void LyricsSyncPanel::waehleWort(int index)
+{
+    m_wort = index;
+    zeigeWorte();
+}
+
+int LyricsSyncPanel::offeneWortZeilen() const
+{
+    return static_cast<int>(
+        std::count_if(m_text.zeilen.begin(), m_text.zeilen.end(), [](const ly::Zeile& z) {
+            return std::any_of(z.worte.begin(), z.worte.end(),
+                               [](const ly::Wort& w) { return w.zeitMs < 0; });
+        }));
+}
+
+void LyricsSyncPanel::loescheWortZeiten()
+{
+    Stand vorher = jetzigerStand();
+    bool etwas = false;
+    for (const int r : markierteReihen())
+    {
+        ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(r)];
+        if (z.worte.empty()) continue;
+        z.worte.clear();
+        etwas = true;
+    }
+    if (!etwas) return;
+    merke(std::move(vorher));
+    m_geaendert = true;
+    m_wort = -1;
+    zeigeStand();
+    vorschau();
+}
+
+void LyricsSyncPanel::zeigeWorte()
+{
+    if (m_wortListe == nullptr || m_worteAn == nullptr) return;
+    const bool an = wortModus();
+    m_wortListe->setVisible(an);
+    m_wortLeeren->setVisible(an);
+    if (!an) return;
+    const bool war = m_fuellt;
+    m_fuellt = true;
+    m_wortListe->clear();
+    const QList<int> reihen = markierteReihen();
+    std::vector<ly::Wort> worte;
+    if (!reihen.isEmpty() && reihen.first() < static_cast<int>(m_text.zeilen.size()))
+        worte = worteVon(m_text.zeilen[static_cast<std::size_t>(reihen.first())]);
+    int erstesOffene = -1;
+    for (std::size_t i = 0; i < worte.size(); ++i)
+    {
+        const ly::Wort& w = worte[i];
+        if (w.zeitMs < 0 && erstesOffene < 0) erstesOffene = static_cast<int>(i);
+        auto* item = new QListWidgetItem(
+            QString::fromStdString(w.text).trimmed() + QLatin1Char('\n') +
+            (w.zeitMs >= 0 ? zeitText(w.zeitMs) : QString::fromUtf8("—")));
+        item->setTextAlignment(Qt::AlignCenter);
+        m_wortListe->addItem(item);
+    }
+    // welches Wort der naechste Tap trifft: das gewaehlte, sonst das erste ohne Zeit
+    if (m_wort < 0 || m_wort >= static_cast<int>(worte.size()))
+        m_wort = erstesOffene >= 0 ? erstesOffene : 0;
+    if (!worte.empty()) m_wortListe->setCurrentRow(m_wort);
+    m_fuellt = war;
 }
 
 void LyricsSyncPanel::verschiebe(int deltaMs, bool abHier)
 {
     QList<int> reihen = markierteReihen();
     if (reihen.isEmpty()) return;
+    // S90 (LB5-2): mit „Words" verschieben −/+ das GEWAEHLTE WORT der Zeile
+    if (wortModus() && !abHier)
+    {
+        ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(reihen.first())];
+        if (m_wort < 0 || m_wort >= static_cast<int>(z.worte.size())) return;
+        ly::Wort& w = z.worte[static_cast<std::size_t>(m_wort)];
+        if (w.zeitMs < 0) return;
+        merke(jetzigerStand());
+        w.zeitMs = std::max<std::int64_t>(0, w.zeitMs + deltaMs);
+        if (m_wort == 0) z.zeitMs = w.zeitMs;  // das erste Wort traegt die Zeit der Zeile
+        m_geaendert = true;
+        zeigeZeile(reihen.first());
+        zeigeStand();
+        vorschau();
+        return;
+    }
     if (abHier)
     {
         const int start = reihen.first();
@@ -703,6 +906,8 @@ void LyricsSyncPanel::verschiebe(int deltaMs, bool abHier)
         ly::Zeile& z = m_text.zeilen[static_cast<std::size_t>(r)];
         if (z.zeitMs < 0) continue;
         z.zeitMs = std::max<std::int64_t>(0, z.zeitMs + deltaMs);
+        for (ly::Wort& w : z.worte)  // die Wort-Zeiten gehen mit der Zeile
+            if (w.zeitMs >= 0) w.zeitMs = std::max<std::int64_t>(0, w.zeitMs + deltaMs);
         zeigeZeile(r);
         etwas = true;
     }
@@ -758,6 +963,13 @@ ly::Songtext LyricsSyncPanel::alsSongtext() const
     out.zeilen.clear();
     for (const ly::Zeile& z : m_text.zeilen)
         if (z.zeitMs >= 0) out.zeilen.push_back(z);
+    // S90 (Entscheid L6-2 a): Wort-Zeiten nur, wenn ALLE Worte der Zeile eine
+    // haben — sonst geht die Zeile als gewoehnliche Zeile hinaus (keine
+    // erfundenen Zeiten)
+    for (ly::Zeile& z : out.zeilen)
+        if (std::any_of(z.worte.begin(), z.worte.end(),
+                        [](const ly::Wort& w) { return w.zeitMs < 0; }))
+            z.worte.clear();
     std::stable_sort(out.zeilen.begin(), out.zeilen.end(),
                      [](const ly::Zeile& a, const ly::Zeile& b) { return a.zeitMs < b.zeitMs; });
     out.synchron = !out.zeilen.empty();

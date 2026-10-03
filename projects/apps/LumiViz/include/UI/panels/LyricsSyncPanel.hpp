@@ -105,6 +105,22 @@ public:
     /// Zeilenanfang (`v1:`, `v2:`, `v1+v2:`).
     void setzeStimme(lumi::multieffect::lyrics::Stimme stimme);
 
+    /// S90 (LB5-2, Entscheide L6-1 a / L6-2 a): Wort-Zeiten klopfen. Mit dem
+    /// Schalter „Words" zeigt ein Streifen unter der Liste die Worte der
+    /// markierten Zeile; `tippe` gibt dann dem gewaehlten Wort die Zeit und
+    /// rueckt zum naechsten — nach dem letzten zur naechsten Textzeile. Das
+    /// erste Wort traegt die Zeit der Zeile. Gespeichert wird eine Zeile nur
+    /// dann mit Wort-Zeiten, wenn ALLE ihre Worte eine haben.
+    void setWortModus(bool an);
+    [[nodiscard]] bool wortModus() const;
+    /// Das Wort der markierten Zeile waehlen, das der naechste Tap trifft.
+    void waehleWort(int index);
+    [[nodiscard]] int gewaehltesWort() const { return m_wort; }
+    /// Zeilen, die Wort-Zeiten haben, aber nicht fuer alle Worte.
+    [[nodiscard]] int offeneWortZeilen() const;
+    /// Die Wort-Zeiten der markierten Zeilen loeschen (die Zeit der Zeile bleibt).
+    void loescheWortZeiten();
+
     /// Arbeitskopie als Songtext: nur Zeilen mit Zeit, nach Zeit geordnet.
     [[nodiscard]] lumi::multieffect::lyrics::Songtext alsSongtext() const;
 
@@ -149,6 +165,15 @@ private:
     void uebernimmLaufenden(bool erzwungen);
     [[nodiscard]] QList<int> markierteReihen() const;
     void zeigeTitelVersatz();
+    void zeigeWorte();  ///< den Wort-Streifen aus der markierten Zeile fuellen
+    /// Worte der Zeile fuer den Streifen: ihre Wort-Eintraege, sonst am
+    /// Leerraum getrennt und ohne Zeit (-1).
+    [[nodiscard]] static std::vector<lumi::multieffect::lyrics::Wort> worteVon(
+        const lumi::multieffect::lyrics::Zeile& z);
+    class QListWidget* m_wortListe = nullptr;
+    QCheckBox* m_worteAn = nullptr;
+    QPushButton* m_wortLeeren = nullptr;
+    int m_wort = 0;  ///< Index des Worts, das der naechste Tap trifft
     /// Versatz, mit dem der Knoten rechnet: `[offset:]` der Datei + der des Titels.
     [[nodiscard]] std::int64_t versatz() const { return m_text.versatzMs + m_titelVersatzMs; }
 

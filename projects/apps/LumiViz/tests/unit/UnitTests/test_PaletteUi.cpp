@@ -3066,6 +3066,174 @@ TEST_CASE("PaletteUi S90: Lyrics Sync — Stimmen setzen (Duett), Spalte Voice, 
     lumi::audio::setzeLaufendenTitel(TrackInfo{});
 }
 
+// S90 (LB5-2, Entscheide L6-1 a / L6-2 a): Wort-Zeiten klopfen. Schalter
+// „Words", Streifen mit den Worten der markierten Zeile, Tap je Wort.
+TEST_CASE("PaletteUi S90: Lyrics Sync — Wort-Zeiten klopfen, Streifen, halb geklopfte Zeilen")
+{
+    UiUmgebung env;
+    AudioUmgebung audio;
+    namespace ly = lumi::multieffect::lyrics;
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+
+    const QString quelle = tmp.path() + "/Wer - Worte.txt";
+    {
+        QFile f(quelle);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("eins zwei drei\nvier fuenf\n");
+    }
+    TrackInfo t;
+    t.filePath = tmp.path() + "/worte.mp3";
+    t.title = "Worte";
+    t.artist = "Wer";
+    t.durationMs = 200000;
+    ly::Songtext text = ly::leseLrc("eins zwei drei\nvier fuenf\n");
+    text.datei = quelle.toStdString();
+    lumi::audio::setzeLaufendenTitel(t);
+    MultiEffectVisualizer::setSongtext(text);
+    MultiEffectVisualizer::notifyPlayState(false);
+
+    LyricsSyncPanel panel(audio.services);
+    panel.setBenutzerOrdner(tmp.path() + "/nutzer");
+    panel.lade(t, text);
+    panel.resize(460, 520);
+    zeigen(panel);
+    auto* liste = panel.findChild<QTableWidget*>(QStringLiteral("lyricsSyncList"));
+    auto* worte = panel.findChild<QListWidget*>(QStringLiteral("lyricsSyncWords"));
+    auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("lyricsSyncWordMode"));
+    auto* leeren = panel.findChild<QPushButton*>(QStringLiteral("lyricsSyncClearWords"));
+    auto* stand = panel.findChild<QLabel*>(QStringLiteral("lyricsSyncStatus"));
+    REQUIRE(liste != nullptr);
+    REQUIRE(worte != nullptr);
+    REQUIRE(schalter != nullptr);
+    REQUIRE(leeren != nullptr);
+    REQUIRE(stand != nullptr);
+
+    // aus: kein Streifen, Tap gilt der Zeile (wie bisher)
+    CHECK_FALSE(panel.wortModus());
+    CHECK_FALSE(worte->isVisible());
+    CHECK_FALSE(leeren->isVisible());
+
+    // an: der Streifen zeigt die Worte der markierten Zeile, das erste ist dran
+    schalter->setChecked(true);
+    CHECK(panel.wortModus());
+    CHECK(worte->isVisible());
+    CHECK(leeren->isVisible());
+    REQUIRE(worte->count() == 3);
+    CHECK(worte->item(0)->text().startsWith(QStringLiteral("eins")));
+    CHECK(worte->item(2)->text().startsWith(QStringLiteral("drei")));
+    CHECK(worte->currentRow() == 0);
+    CHECK(panel.gewaehltesWort() == 0);
+
+    // Tap: das erste Wort bekommt die Zeit — und die Zeile mit ihm
+    REQUIRE(panel.tippe(10000));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.00"));
+    CHECK(liste->currentRow() == 0);  // die Zeile bleibt, das naechste Wort ist dran
+    CHECK(panel.gewaehltesWort() == 1);
+    CHECK(worte->item(0)->text().contains(QStringLiteral("00:10.00")));
+    CHECK(panel.offeneWortZeilen() == 1);
+    CHECK(stand->text().contains(QStringLiteral("words still to tap")));
+    // halb geklopft: die Vorschau am Knoten traegt die Zeile OHNE Wort-Zeiten (L6-2 a)
+    REQUIRE(MultiEffectVisualizer::songtext().zeilen.size() == 1);
+    CHECK(MultiEffectVisualizer::songtext().zeilen[0].worte.empty());
+
+    REQUIRE(panel.tippe(11000));
+    REQUIRE(panel.tippe(12000));  // letztes Wort: weiter zur naechsten Zeile, ihr erstes Wort
+    CHECK(liste->currentRow() == 1);
+    CHECK(panel.gewaehltesWort() == 0);
+    REQUIRE(worte->count() == 2);
+    CHECK(worte->item(0)->text().startsWith(QStringLiteral("vier")));
+    CHECK(panel.offeneWortZeilen() == 0);
+    // die erste Zeile ist vollstaendig: die Vorschau traegt ihre Wort-Zeiten
+    {
+        const ly::Songtext v = MultiEffectVisualizer::songtext();
+        REQUIRE(v.zeilen.size() == 1);
+        REQUIRE(v.zeilen[0].worte.size() == 3);
+        CHECK(v.zeilen[0].worte[0].zeitMs == 10000);
+        CHECK(v.zeilen[0].worte[1].zeitMs == 11000);
+        CHECK(v.zeilen[0].worte[2].zeitMs == 12000);
+        CHECK(v.zeilen[0].worte[0].text + v.zeilen[0].worte[1].text + v.zeilen[0].worte[2].text ==
+              "eins zwei drei");
+    }
+
+    // zweite Zeile nur zur Haelfte
+    REQUIRE(panel.tippe(20000));
+    CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.00"));
+    CHECK(panel.offeneZeilen() == 0);      // jede Zeile hat eine Zeit …
+    CHECK(panel.offeneWortZeilen() == 1);  // … aber eine hat ein offenes Wort
+
+    // ein Wort neu klopfen: im Streifen waehlen
+    liste->selectRow(0);
+    panel.waehleWort(1);
+    CHECK(worte->currentRow() == 1);
+    REQUIRE(panel.tippe(11400));
+    CHECK(worte->item(1)->text().contains(QStringLiteral("00:11.40")));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.00"));  // die Zeile bleibt
+    // −100 ms gilt mit „Words" dem gewaehlten Wort
+    panel.waehleWort(1);
+    panel.verschiebe(-LyricsSyncPanel::kSchrittMs, false);
+    CHECK(worte->item(1)->text().contains(QStringLiteral("00:11.30")));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.00"));
+    // das erste Wort verschieben nimmt die Zeile mit
+    panel.waehleWort(0);
+    panel.verschiebe(LyricsSyncPanel::kSchrittMs, false);
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.10"));
+    // Undo nimmt den Schritt zurueck
+    REQUIRE(panel.rueckgaengig());
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.00"));
+
+    // „From here +" verschiebt Zeilen samt ihren Wort-Zeiten
+    liste->selectRow(0);
+    panel.verschiebe(500, true);
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.50"));
+    CHECK(liste->item(1, 0)->text() == QStringLiteral("00:20.50"));
+    CHECK(worte->item(2)->text().contains(QStringLiteral("00:12.50")));
+
+    schnappschuss(panel, "lyrics_sync_worte");
+
+    // speichern: die vollstaendige Zeile mit Wort-Zeiten, die halbe als gewoehnliche Zeile
+    REQUIRE(panel.speichere());
+    const ly::Songtext gefunden = lumi::audio::findeSongtext(t, tmp.path());
+    REQUIRE(gefunden.synchron);
+    REQUIRE(gefunden.zeilen.size() == 2);
+    REQUIRE(gefunden.zeilen[0].worte.size() == 3);
+    CHECK(gefunden.zeilen[0].zeitMs == 10500);
+    CHECK(gefunden.zeilen[0].worte[1].zeitMs == 11800);
+    CHECK(gefunden.zeilen[0].worte[2].zeitMs == 12500);
+    CHECK(gefunden.zeilen[0].text == "eins zwei drei");
+    CHECK(gefunden.zeilen[1].worte.empty());
+    CHECK(gefunden.zeilen[1].zeitMs == 20500);
+    CHECK(gefunden.zeilen[1].text == "vier fuenf");
+    CHECK(panel.offeneWortZeilen() == 0);  // nach dem Speichern: wie in der Datei
+
+    // „Clear words": die Wort-Zeiten gehen, die Zeit der Zeile bleibt
+    liste->selectRow(0);
+    REQUIRE(worte->count() == 3);
+    CHECK(worte->item(1)->text().contains(QStringLiteral("00:11.80")));
+    leeren->click();
+    CHECK(worte->item(1)->text().contains(QString::fromUtf8("—")));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:10.50"));
+    CHECK(panel.geaendert());
+
+    // ohne „Words" gilt Tap wieder der Zeile; vorhandene Wort-Zeiten gehen mit ihr
+    REQUIRE(panel.rueckgaengig());  // Wort-Zeiten wieder da
+    schalter->setChecked(false);
+    CHECK_FALSE(worte->isVisible());
+    liste->selectRow(0);
+    REQUIRE(panel.tippe(9500));
+    CHECK(liste->item(0, 0)->text() == QStringLiteral("00:09.50"));
+    CHECK(liste->currentRow() == 1);
+    {
+        const ly::Songtext v = MultiEffectVisualizer::songtext();
+        REQUIRE(v.zeilen[0].worte.size() == 3);
+        CHECK(v.zeilen[0].worte[0].zeitMs == 9500);
+        CHECK(v.zeilen[0].worte[2].zeitMs == 11500);  // um dieselbe Sekunde mitgegangen
+    }
+
+    MultiEffectVisualizer::setSongtext(ly::Songtext{});
+    lumi::audio::setzeLaufendenTitel(TrackInfo{});
+}
+
 // S88 (Wunsch Patrik): „Resume playback" — waehrend des Abspielens beendet,
 // beim naechsten Start genau dort weiter. Geprueft am Ablauf mit einer
 // Player-Attrappe; QSettings sind abgeschottet (UiUmgebung).
