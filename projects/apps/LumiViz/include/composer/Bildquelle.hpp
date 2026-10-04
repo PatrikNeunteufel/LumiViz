@@ -160,6 +160,7 @@ private:
     Komposition m_wartend;                     ///< gesetzt, aber noch nicht uebernommen
     bool m_neueKomposition = false;
     QStringList m_richtBericht;
+    QStringList m_anlaufZuletzt;  ///< Anlauf-Zeilen der Clips beim letzten cleanup
 
     QSize m_groesse;
     QSize m_letzteGroesse;

@@ -148,7 +148,9 @@ QStringList Bildquelle::anlaufText() const
                  .arg(m_messung.langeGesamt)
                  .arg(teile.join(QStringLiteral(", ")));
     }
-    if (m_wiedergabe == nullptr) return z;
+    // Nach dem Aufraeumen (App beendet, Fenster abgedockt) gibt es die
+    // Wiedergabe nicht mehr — dann gilt, was sie zuletzt wusste.
+    if (m_wiedergabe == nullptr) return z + m_anlaufZuletzt;
     for (const Anlauf& a : m_wiedergabe->anlaeufe())
     {
         z << QStringLiteral("  start-up at %1 s, CH%2 clip %3 (%4): load %5 ms, initialize %6 ms, "
@@ -199,6 +201,10 @@ void Bildquelle::cleanup()
 {
     if (m_wiedergabe != nullptr)
     {
+        // Der Anlauf je Clip fuer die Zusammenfassung beim Beenden der App:
+        // nur die Zeilen der Clips, ohne die Zeile der langen Bilder davor
+        m_anlaufZuletzt = anlaufText();
+        if (m_messung.langeGesamt > 0 && !m_anlaufZuletzt.isEmpty()) m_anlaufZuletzt.removeFirst();
         // Die Komposition ueberlebt das Aufraeumen — ausser es wartet schon
         // eine neuere.
         if (!m_neueKomposition) m_wartend = m_wiedergabe->komposition();

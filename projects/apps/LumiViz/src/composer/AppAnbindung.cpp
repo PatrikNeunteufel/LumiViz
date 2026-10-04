@@ -9,6 +9,7 @@
 #include "composer/Bildquelle.hpp"
 #include "composer/Komposition.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -27,6 +28,7 @@ namespace lumi::composer
 namespace
 {
 const char* const kLetzterOrdner = "composer/lastDir";
+const char* const kBeendenMarke = "composerBeendenProtokoll";  ///< Eigenschaft am Fenster
 }
 
 QStringList messungDerKomposition(VisualizerWidget& widget)
@@ -68,6 +70,17 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad, QStringLis
     quelle->setKomposition(std::move(komposition));
     quelle->uhr().starte();
     protokolliereMessung(widget);  // eine laufende wird ersetzt
+
+    // Wird die App mit laufender Komposition beendet, ruft niemand
+    // schliesseKomposition — die Zusammenfassung kaeme nie ins Log (Befund
+    // S94). Einmal je Fenster: beim Beenden schreiben, falls noch eine laeuft.
+    // Der Render-Thread ist dann schon angehalten, die Bildquelle lebt noch.
+    if (!widget.property(kBeendenMarke).toBool())
+    {
+        widget.setProperty(kBeendenMarke, true);
+        QObject::connect(qApp, &QCoreApplication::aboutToQuit, &widget,
+                         [&widget]() { protokolliereMessung(widget); });
+    }
     widget.setBildquelle(std::move(quelle));
     BasicLogger::logInfo("Composer: composition started: " +
                          QDir::toNativeSeparators(pfad).toStdString());

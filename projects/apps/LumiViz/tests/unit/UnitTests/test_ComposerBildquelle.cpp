@@ -50,6 +50,7 @@
 #include <QSurfaceFormat>
 #include <QTemporaryDir>
 #include <QThread>
+#include <QTimer>
 
 #include <atomic>
 #include <functional>
@@ -336,9 +337,16 @@ TEST_SUITE("ComposerBildquelle")
         }
 
         // --- Aufraeumen und erneut anlegen: die Komposition ist noch da ------
+        const QStringList anlaufVorher = quelle.anlaufText();
+        const int bilderVorher = quelle.messung().bilder;
         quelle.cleanup();
         CHECK_FALSE(quelle.isInitialized());
         CHECK(quelle.rendererAnzahl() == 0);
+        // Messung und Anlauf bleiben lesbar — so kommt die Zusammenfassung
+        // auch ins Log, wenn die App mit laufender Komposition beendet wird
+        CHECK(quelle.messung().bilder == bilderVorher);
+        CHECK(quelle.anlaufText() == anlaufVorher);
+        CHECK_FALSE(quelle.anlaufText().isEmpty());
         quelle.initialize();
         quelle.resize(gross);
         quelle.uhr().springe(700);
@@ -674,5 +682,19 @@ TEST_SUITE("ComposerBildquelle")
         CHECK(mitte() != kRot);
         CHECK(messungDerKomposition(widget).isEmpty());
         schliesseKomposition(widget);  // zweimal schadet nicht
+
+        // --- die App wird mit laufender Komposition beendet (Befund S94): die
+        //     Zusammenfassung kommt beim Beenden ins Log, nichts haengt. Das
+        //     Log selbst prueft dieser Test nicht — nur, dass der Weg laeuft.
+        REQUIRE(starteKomposition(widget, datei));
+        REQUIRE(warte([&] {
+            QMutexLocker halt(&widget.renderMutex());
+            auto* q = dynamic_cast<Bildquelle*>(widget.bildquelle());
+            return q != nullptr && q->gerechneteBilder() >= 3;
+        }));
+        QTimer::singleShot(0, &app, &QCoreApplication::quit);
+        QApplication::exec();  // loest aboutToQuit aus
+        CHECK(kompositionLaeuft(widget));              // niemand hat sie geschlossen
+        CHECK(messungDerKomposition(widget).size() == 6);  // und sie ist noch lesbar
     }
 }
