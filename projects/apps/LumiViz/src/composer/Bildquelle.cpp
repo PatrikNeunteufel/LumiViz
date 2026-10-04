@@ -8,6 +8,7 @@
 #include "composer/Wiedergabe.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 
+#include <QFileInfo>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
@@ -125,6 +126,28 @@ int Bildquelle::rendererAnzahl() const
 int Bildquelle::gemischteClips() const
 {
     return m_wiedergabe != nullptr ? m_wiedergabe->gemischteClips() : 0;
+}
+
+QStringList Bildquelle::anlaufText() const
+{
+    QStringList z;
+    if (m_wiedergabe == nullptr) return z;
+    for (const Anlauf& a : m_wiedergabe->anlaeufe())
+    {
+        z << QStringLiteral("  start-up at %1 s, CH%2 clip %3 (%4): load %5 ms, initialize %6 ms, "
+                            "first frame %7 ms, second frame %8 ms, total %9 ms — %10")
+                 .arg(static_cast<double>(a.stelleMs) / 1000.0, 0, 'f', 2)
+                 .arg(a.kanal + 1)
+                 .arg(a.clip + 1)
+                 .arg(a.vorgewaermt ? QStringLiteral("warmed up") : QStringLiteral("on entry"))
+                 .arg(a.ladenMs, 0, 'f', 1)
+                 .arg(a.anlegenMs, 0, 'f', 1)
+                 .arg(a.erstesBildMs, 0, 'f', 1)
+                 .arg(a.zweitesBildMs, 0, 'f', 1)
+                 .arg(a.summeMs(), 0, 'f', 1)
+                 .arg(QFileInfo(a.datei).fileName());
+    }
+    return z;
 }
 
 QStringList Bildquelle::bericht() const

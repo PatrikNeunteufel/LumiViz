@@ -33,11 +33,30 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <vector>
 
 class MultiEffectVisualizer;
 
 namespace lumi::composer
 {
+
+/// Was das Anlegen eines Renderers gekostet hat (C2a, Messung). CPU-seitig:
+/// wie lange die Aufrufe dauern — das Uebersetzen der Shader steckt je nach
+/// Treiber im Anlegen oder im ersten Bild.
+struct Anlauf
+{
+    int kanal = 0;
+    int clip = 0;
+    QString datei;
+    std::int64_t stelleMs = 0;  ///< Stelle der Zeitachse beim Anlegen
+    bool vorgewaermt = false;   ///< vor dem Start angelegt (sonst beim Betreten)
+    double ladenMs = 0.0;       ///< Datei lesen, Kette bauen, Skripte uebersetzen (ohne GL)
+    double anlegenMs = 0.0;     ///< initialize + resize (GL)
+    double erstesBildMs = 0.0;
+    double zweitesBildMs = 0.0;  ///< 0 = noch nicht gerechnet
+
+    [[nodiscard]] double summeMs() const { return ladenMs + anlegenMs + erstesBildMs; }
+};
 
 class Wiedergabe
 {
@@ -78,6 +97,9 @@ public:
     [[nodiscard]] bool karaokeAufgelegt() const { return m_karaokeAufgelegt; }
     /// Was beim Anlegen der Renderer schiefging (fehlende / unlesbare Dateien).
     [[nodiscard]] const QStringList& bericht() const { return m_bericht; }
+    /// Jeder angelegte Renderer dieser Komposition, in der Reihenfolge des
+    /// Anlegens — auch die schon wieder entladenen.
+    [[nodiscard]] const std::vector<Anlauf>& anlaeufe() const { return m_anlaeufe; }
 
     /// Jeden vorhandenen Renderer besuchen — etwa um Audiodaten zu reichen.
     void fuerJedenRenderer(const std::function<void(MultiEffectVisualizer&)>& tu);
@@ -88,10 +110,15 @@ private:
         std::unique_ptr<MultiEffectVisualizer> renderer;
         Leinwand leinwand;
         bool defekt = false;  ///< Datei liess sich nicht laden — nicht jedes Bild neu versuchen
+        int anlauf = -1;      ///< Platz in m_anlaeufe
+        int bilder = 0;       ///< gerechnete Bilder (fuer die Messung der ersten zwei)
     };
     using Schluessel = std::pair<int, int>;  ///< (Kanal, Clip)
 
-    Lauf& sichere(const Schluessel& s, const VisualClip& clip, QSize groesse);
+    Lauf& sichere(const Schluessel& s, const VisualClip& clip, QSize groesse,
+                  std::int64_t stelleMs, bool vorgewaermt);
+    /// Ein Bild des Laufs rechnen; die ersten zwei werden gemessen.
+    void rechne(Lauf& lauf, float deltaSekunden, QSize groesse);
     static void wirfWeg(Lauf& lauf);
 
     Komposition m_komposition;
@@ -103,6 +130,7 @@ private:
     int m_gemischt = 0;
     bool m_karaokeAufgelegt = false;
     QStringList m_bericht;
+    std::vector<Anlauf> m_anlaeufe;
 };
 
 }  // namespace lumi::composer

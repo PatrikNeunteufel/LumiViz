@@ -318,6 +318,20 @@ TEST_SUITE("ComposerBildquelle")
         }
         CHECK(Messung{}.alsText().size() == 1);  // nichts gerechnet: eine Zeile
 
+        // --- Anlauf je Clip: Rot beim Betreten, Blau und Balken vorgewaermt;
+        //     nach den Spruengen kamen Renderer neu dazu — jeder steht einmal da
+        {
+            const QStringList anlauf = quelle.anlaufText();
+            CHECK(anlauf.size() >= 3);
+            // im ersten Bild: erst die vorgewaermten, dann der laufende
+            CHECK(anlauf[0].contains(QStringLiteral("warmed up")));
+            CHECK(anlauf[0].contains(QStringLiteral("Blau.lvfx")));
+            CHECK(anlauf[1].contains(QStringLiteral("Balken.lvfx")));
+            CHECK(anlauf[2].contains(QStringLiteral("on entry")));
+            CHECK(anlauf[2].contains(QStringLiteral("Rot.lvfx")));
+            for (const QString& zeile : anlauf) MESSAGE(zeile.toStdString());
+        }
+
         // --- Aufraeumen und erneut anlegen: die Komposition ist noch da ------
         quelle.cleanup();
         CHECK_FALSE(quelle.isInitialized());

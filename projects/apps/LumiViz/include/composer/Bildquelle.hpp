@@ -109,6 +109,9 @@ public:
     [[nodiscard]] int gerechneteBilder() const { return m_gerechnet; }
     /// Zeiten, Renderer und Grafikspeicher seit dem Anlegen dieser Bildquelle.
     [[nodiscard]] const Messung& messung() const { return m_messung; }
+    /// Der Anlauf je Clip als Zeilen fuer das Log: Laden, Anlegen, erstes und
+    /// zweites Bild — eine Zeile je angelegtem Renderer der laufenden Komposition.
+    [[nodiscard]] QStringList anlaufText() const;
     /// Wie oft Audiodaten an einen Renderer gereicht wurden (Test).
     [[nodiscard]] int debugAudioGereicht() const { return m_audioGereicht; }
 

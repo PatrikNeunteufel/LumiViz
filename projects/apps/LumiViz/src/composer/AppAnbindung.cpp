@@ -41,8 +41,13 @@ namespace
 /// Die Zusammenfassung der laufenden Komposition ins Log — bevor sie geht.
 void protokolliereMessung(VisualizerWidget& widget)
 {
-    for (const QString& zeile : messungDerKomposition(widget))
-        BasicLogger::logInfo(zeile.toStdString());
+    QStringList zeilen = messungDerKomposition(widget);
+    {
+        QMutexLocker halt(&widget.renderMutex());
+        if (const auto* quelle = dynamic_cast<const Bildquelle*>(widget.bildquelle()))
+            zeilen += quelle->anlaufText();
+    }
+    for (const QString& zeile : zeilen) BasicLogger::logInfo(zeile.toStdString());
 }
 }  // namespace
 

@@ -8,6 +8,7 @@
 #include "visualizers/MultiEffectVisualizer.hpp"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 
 #include <algorithm>
@@ -40,6 +41,7 @@ void Wiedergabe::setKomposition(Komposition komposition)
 {
     entladeAlles();
     m_bericht.clear();
+    m_anlaeufe.clear();
     komposition.richte(&m_bericht);
     m_komposition = std::move(komposition);
 }
@@ -60,11 +62,14 @@ void Wiedergabe::entladeAlles()
     m_karaokeAufgelegt = false;
 }
 
-Wiedergabe::Lauf& Wiedergabe::sichere(const Schluessel& s, const VisualClip& clip, QSize groesse)
+Wiedergabe::Lauf& Wiedergabe::sichere(const Schluessel& s, const VisualClip& clip, QSize groesse,
+                                      std::int64_t stelleMs, bool vorgewaermt)
 {
     Lauf& lauf = m_laeufe[s];
     if (lauf.renderer != nullptr || lauf.defekt) return lauf;
 
+    QElapsedTimer uhr;
+    uhr.start();
     auto renderer = std::make_unique<MultiEffectVisualizer>();
     if (clip.datei.isEmpty() || !QFileInfo::exists(clip.datei) || !ladePreset(*renderer, clip.datei))
     {
@@ -73,12 +78,43 @@ Wiedergabe::Lauf& Wiedergabe::sichere(const Schluessel& s, const VisualClip& cli
         lauf.defekt = true;
         return lauf;
     }
+    const double ladenMs = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
+    uhr.restart();
     // Die Ebene legt der Mischer einmal ueber alles (Composer-Naht R2)
     renderer->setKaraokeAuslassen(true);
     renderer->initialize();
     renderer->resize(groesse);
     lauf.renderer = std::move(renderer);
+
+    // --- Messung (C2a): was der Anlauf kostet
+    Anlauf a;
+    a.kanal = s.first;
+    a.clip = s.second;
+    a.datei = clip.datei;
+    a.stelleMs = stelleMs;
+    a.vorgewaermt = vorgewaermt;
+    a.ladenMs = ladenMs;
+    a.anlegenMs = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
+    lauf.anlauf = static_cast<int>(m_anlaeufe.size());
+    lauf.bilder = 0;
+    m_anlaeufe.push_back(std::move(a));
     return lauf;
+}
+
+void Wiedergabe::rechne(Lauf& lauf, float deltaSekunden, QSize groesse)
+{
+    if (lauf.bilder >= 2 || lauf.anlauf < 0)
+    {
+        lauf.leinwand.rendere(*lauf.renderer, deltaSekunden, groesse);
+        return;
+    }
+    QElapsedTimer uhr;
+    uhr.start();
+    lauf.leinwand.rendere(*lauf.renderer, deltaSekunden, groesse);
+    const double ms = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
+    Anlauf& a = m_anlaeufe[static_cast<size_t>(lauf.anlauf)];
+    (lauf.bilder == 0 ? a.erstesBildMs : a.zweitesBildMs) = ms;
+    ++lauf.bilder;
 }
 
 bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse)
@@ -130,8 +166,8 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
     {
         if (d.laeuft) continue;
         const bool neu = m_laeufe.count(d.schluessel) == 0;
-        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse);
-        if (neu && lauf.renderer != nullptr) lauf.leinwand.rendere(*lauf.renderer, 0.0f, groesse);
+        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, true);
+        if (neu && lauf.renderer != nullptr) rechne(lauf, 0.0f, groesse);
     }
 
     // --- 3. Laufende Clips rechnen und mischen (dran ist in Kanalreihenfolge)
@@ -139,10 +175,10 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
     for (const Dran& d : dran)
     {
         if (!d.laeuft) continue;
-        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse);
+        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, false);
         if (lauf.renderer == nullptr) continue;
         // Auch bei Pegel 0 weiterrechnen: das Visual lebt, nur sieht man es nicht.
-        lauf.leinwand.rendere(*lauf.renderer, deltaSekunden, groesse);
+        rechne(lauf, deltaSekunden, groesse);
         const double pegel = d.clip->pegelBei(stelleMs - d.clip->startMs);
         m_mischer.lege(lauf.leinwand, pegel, d.clip->mischart);
         ++m_gemischt;

@@ -160,6 +160,7 @@ TEST_CASE("C2a Messlauf: eine Komposition im Render-Thread (nur mit LUMIVIZ_COMP
     {
         QMutexLocker halt(&renderMutex);
         zeilen = q->messung().alsText();
+        zeilen += q->anlaufText();
         for (const QString& zeile : q->bericht()) zeilen << QStringLiteral("  remark: %1").arg(zeile);
     }
     if (!bildraten.empty())
