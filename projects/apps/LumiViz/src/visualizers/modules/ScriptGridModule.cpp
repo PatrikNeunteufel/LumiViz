@@ -14,6 +14,7 @@
 #include "scripting/ScriptSlotHost.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 namespace lumi::modules {
@@ -304,18 +305,55 @@ void ScriptGridModule::fillIdentity()
 bool ScriptGridModule::buildTransTable(int width, int height, bool wrap,
                                        bool subpixel, std::vector<int>& out)
 {
+    if (!beginTransTable(width, height, wrap, subpixel)) return false;
+    if (continueTransTable(0.0) != TransBau::Fertig) return false;
+    out = takeTransTable();
+    return true;
+}
+
+bool ScriptGridModule::beginTransTable(int width, int height, bool wrap, bool subpixel)
+{
+    m_trans = TransZustand{};
     if (!m_compiled) initializeScripts();
     if (!m_script->has(Slot::Point)) return false;
 
-    const int w = std::max(2, width);
-    const int h = std::max(2, height);
-    out.assign(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), 0);
+    m_trans.w = std::max(2, width);
+    m_trans.h = std::max(2, height);
+    m_trans.wrap = wrap;
+    m_trans.subpixel = subpixel;
+    m_trans.tab.assign(static_cast<std::size_t>(m_trans.w) * static_cast<std::size_t>(m_trans.h),
+                       0);
 
     auto& engine = m_script->engine();
-    engine.setNumber("w", static_cast<double>(w));
-    engine.setNumber("h", static_cast<double>(h));
-    engine.setNumber("sw", static_cast<double>(w));
-    engine.setNumber("sh", static_cast<double>(h));
+    engine.setNumber("w", static_cast<double>(m_trans.w));
+    engine.setNumber("h", static_cast<double>(m_trans.h));
+    engine.setNumber("sw", static_cast<double>(m_trans.w));
+    engine.setNumber("sh", static_cast<double>(m_trans.h));
+    m_trans.aktiv = true;
+    return true;
+}
+
+std::vector<int> ScriptGridModule::takeTransTable()
+{
+    std::vector<int> tab = std::move(m_trans.tab);
+    m_trans = TransZustand{};
+    return tab;
+}
+
+ScriptGridModule::TransBau ScriptGridModule::continueTransTable(double budgetMs)
+{
+    if (!m_trans.aktiv) return TransBau::Fehler;
+    if (m_trans.y >= m_trans.h) return TransBau::Fertig;
+
+    // Dieselbe Rechnung wie immer, Zeile fuer Zeile in derselben Reihenfolge —
+    // nur darf sie nach einer vollen Zeile unterbrochen werden (Budget).
+    const auto beginn = std::chrono::steady_clock::now();
+    const int w = m_trans.w;
+    const int h = m_trans.h;
+    const bool wrap = m_trans.wrap;
+    const bool subpixel = m_trans.subpixel;
+    std::vector<int>& out = m_trans.tab;
+    auto& engine = m_script->engine();
 
     // r_trans.cpp:428-451 — w2/h2 kommen aus INTEGER-Division (w/2), maxD aus
     // sqrt(w*w+h*h)/2. Zeile 0 ist oben (AVS-Raum, den das Skript sieht).
@@ -327,9 +365,19 @@ bool ScriptGridModule::buildTransTable(int width, int height, bool wrap,
     const double xsc = 1.0 / w2;
     const double ysc = 1.0 / h2;
 
-    std::size_t idx = 0;
-    for (int y = 0; y < h; ++y)
+    std::size_t idx = static_cast<std::size_t>(m_trans.y) * static_cast<std::size_t>(w);
+    for (int y = m_trans.y; y < h; ++y)
     {
+        if (budgetMs > 0.0 && y > m_trans.y)
+        {
+            const std::chrono::duration<double, std::milli> vergangen =
+                std::chrono::steady_clock::now() - beginn;
+            if (vergangen.count() >= budgetMs)
+            {
+                m_trans.y = y;
+                return TransBau::Laeuft;
+            }
+        }
         for (int x = 0; x < w; ++x, ++idx)
         {
             const double xd = x - w2;
@@ -341,7 +389,8 @@ bool ScriptGridModule::buildTransTable(int width, int height, bool wrap,
             if (!m_script->run(Slot::Point))
             {
                 m_lastScriptError = m_script->lastError();
-                return false;  // Slot tot: Aufrufer laesst das Bild unberuehrt
+                m_trans = TransZustand{};
+                return TransBau::Fehler;  // Slot tot: Aufrufer laesst das Bild unberuehrt
             }
 
             double tmp1;  // Zielzeile
@@ -411,7 +460,8 @@ bool ScriptGridModule::buildTransTable(int width, int height, bool wrap,
             out[idx] = static_cast<int>(packed);
         }
     }
-    return true;
+    m_trans.y = h;
+    return TransBau::Fertig;
 }
 
 void ScriptGridModule::fillIdentityFx(int width, int height)

@@ -103,6 +103,75 @@ std::atomic<double> g_posTempo{1.0};               ///< S91, Abspieltempo des Pl
 std::atomic<std::int64_t> g_wanduhrTestMs{-1};     ///< S91, Test-Naht: >= 0 ersetzt die Wanduhr
 std::atomic<uint64_t> g_songTagsStand{0};
 
+// ---- Movement-Tabelle in Scheiben (S94) -------------------------------------
+/// Zeitscheibe je Bild und Knoten in ms; 0 = sofort, in einem Stueck (Vorgabe)
+std::atomic<double> g_movementScheibeMs{0.0};
+
+/// Fertige Tabellen, prozessweit: Schluessel = Flags + Skript + Bildgroesse.
+/// Nur im Scheiben-Betrieb benutzt; der aelteste Eintrag faellt, wenn die
+/// Grenze erreicht ist.
+struct MovementSpeicher
+{
+    using Tabelle = std::shared_ptr<const std::vector<int>>;
+    std::mutex schloss;
+    std::vector<std::pair<std::string, Tabelle>> eintraege;  ///< juengster hinten
+    std::size_t bytes = 0;
+    static constexpr std::size_t kGrenzeBytes = std::size_t{256} << 20;
+
+    Tabelle hole(const std::string& schluessel)
+    {
+        std::lock_guard<std::mutex> halt(schloss);
+        for (auto it = eintraege.begin(); it != eintraege.end(); ++it)
+            if (it->first == schluessel)
+            {
+                auto eintrag = *it;  // als juengsten nach hinten
+                eintraege.erase(it);
+                eintraege.push_back(eintrag);
+                return eintrag.second;
+            }
+        return nullptr;
+    }
+    void lege(const std::string& schluessel, Tabelle tabelle)
+    {
+        std::lock_guard<std::mutex> halt(schloss);
+        for (const auto& e : eintraege)
+            if (e.first == schluessel) return;
+        bytes += tabelle->size() * sizeof(int);
+        eintraege.emplace_back(schluessel, std::move(tabelle));
+        while (bytes > kGrenzeBytes && eintraege.size() > 1)
+        {
+            bytes -= eintraege.front().second->size() * sizeof(int);
+            eintraege.erase(eintraege.begin());
+        }
+    }
+    void leere()
+    {
+        std::lock_guard<std::mutex> halt(schloss);
+        eintraege.clear();
+        bytes = 0;
+    }
+    std::size_t anzahl()
+    {
+        std::lock_guard<std::mutex> halt(schloss);
+        return eintraege.size();
+    }
+};
+MovementSpeicher g_movementSpeicher;
+
+/// Darf die Tabelle dieses Skripts in Scheiben gebaut und geteilt werden? Nur
+/// wenn sie allein von x, y, d, r, w, h abhaengt: Skripte, die den gemeinsamen
+/// Zustand der Kette (reg, megabuf), den Zufallsstrom oder Audio und Uhr lesen
+/// (get…), bauen weiter sofort — zwischen zwei Scheiben laufen andere Knoten.
+bool movementSkriptIstRein(const std::string& code)
+{
+    std::string klein(code.size(), '\0');
+    std::transform(code.begin(), code.end(), klein.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    for (const char* wort : {"reg", "megabuf", "rand", "get"})
+        if (klein.find(wort) != std::string::npos) return false;
+    return true;
+}
+
 // Defined further down; forward-declared for the earlier render handlers.
 void computeAudioBands(const std::vector<float>& spec, float& bass, float& mid,
                        float& treble);
@@ -4684,6 +4753,7 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     m_time += deltaTime;
     m_deltaTime = deltaTime;
     m_modBaenderGueltig = false;  // F4: Audio-Baender neu je Frame
+    m_movementImBau = 0;          // S94: zaehlt je Frame neu
 
     // A freshly installed chain (loadAvsFile) reuses node ids — free the old
     // per-node GL runtimes here on the render thread before walking the new tree.
@@ -6149,7 +6219,46 @@ void MultiEffectVisualizer::runMovement(const ChainNode& node,
         return;
     }
     if (applyMovementTable(rt, params)) return;
+    if (rt.grid->transTableImBau())
+    {
+        // Die Tabelle entsteht noch (Scheiben, S94): so lange ueber das Gitter
+        // zeichnen — mit einem EIGENEN Modul, damit die Skript-Maschine, die
+        // die Tabelle baut, zwischen den Scheiben unberuehrt bleibt.
+        if (rt.gridErsatz == nullptr || rt.gridErsatzCompiled != combined)
+        {
+            rt.gridErsatz = std::make_unique<lumi::modules::ScriptGridModule>(activeContext());
+            rt.gridErsatz->setPointCode(params.code);
+            rt.gridErsatz->setGridSize(kXres, kYres);
+            rt.gridErsatzCompiled = combined;
+            rt.gridFieldW = 0;  // das Feld des Ersatz-Moduls ist noch nicht gerechnet
+        }
+        rt.gridErsatz->setRectCoords(params.rectCoords);
+        std::swap(rt.grid, rt.gridErsatz);
+        applyGridWarp(rt, kXres, kYres, opt);
+        std::swap(rt.grid, rt.gridErsatz);
+        return;
+    }
     applyGridWarp(rt, kXres, kYres, opt);
+}
+
+void MultiEffectVisualizer::setMovementScheibeMs(double ms)
+{
+    g_movementScheibeMs = ms > 0.0 ? ms : 0.0;
+}
+
+double MultiEffectVisualizer::movementScheibeMs()
+{
+    return g_movementScheibeMs.load();
+}
+
+void MultiEffectVisualizer::leereMovementSpeicher()
+{
+    g_movementSpeicher.leere();
+}
+
+std::size_t MultiEffectVisualizer::movementTabellenImSpeicher()
+{
+    return g_movementSpeicher.anzahl();
 }
 
 bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
@@ -6169,7 +6278,43 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
         rt.moveTabKey != key)
     {
         std::vector<int> tab;
-        if (!rt.grid->buildTransTable(w, h, params.wrap, subpixel, tab)) return false;
+        MovementSpeicher::Tabelle geteilt;
+        const double scheibeMs = g_movementScheibeMs.load();
+        if (scheibeMs <= 0.0 || !movementSkriptIstRein(params.code))
+        {
+            // sofort, in einem Stueck — wie immer
+            if (!rt.grid->buildTransTable(w, h, params.wrap, subpixel, tab)) return false;
+        }
+        else
+        {
+            // In Scheiben (S94): erst im gemeinsamen Speicher nachsehen, sonst
+            // je Bild ein Stueck weiterbauen. Bis die Tabelle fertig ist,
+            // zeichnet der Aufrufer ueber das Gitter.
+            const std::string schluessel =
+                key + '\n' + std::to_string(w) + 'x' + std::to_string(h);
+            geteilt = g_movementSpeicher.hole(schluessel);
+            if (geteilt == nullptr)
+            {
+                if (!rt.grid->transTableImBau() || rt.moveBauKey != schluessel)
+                {
+                    rt.moveBauKey.clear();
+                    if (!rt.grid->beginTransTable(w, h, params.wrap, subpixel)) return false;
+                    rt.moveBauKey = schluessel;
+                }
+                using Bau = lumi::modules::ScriptGridModule::TransBau;
+                const Bau stand = rt.grid->continueTransTable(scheibeMs);
+                if (stand == Bau::Laeuft)
+                {
+                    ++m_movementImBau;
+                    return false;
+                }
+                rt.moveBauKey.clear();
+                if (stand == Bau::Fehler) return false;
+                geteilt = std::make_shared<const std::vector<int>>(rt.grid->takeTransTable());
+                g_movementSpeicher.lege(schluessel, geteilt);
+            }
+        }
+        const int* daten = geteilt != nullptr ? geteilt->data() : tab.data();
 
         auto* f = QOpenGLContext::currentContext()->functions();
         f->glActiveTexture(GL_TEXTURE1);
@@ -6187,7 +6332,7 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
             f->glBindTexture(GL_TEXTURE_2D, rt.moveTabTex);
         }
         f->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32I, w, h, 0, GL_RED_INTEGER, GL_INT,
-                        tab.data());
+                        daten);
         f->glActiveTexture(GL_TEXTURE0);
         rt.moveTabW = w;
         rt.moveTabH = h;

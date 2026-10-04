@@ -126,7 +126,19 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     BasicLogger::logDebug("MainWindow constructor");
-    
+
+    // Movement-Tabelle in Scheiben (S94): in der App entsteht die Tabelle des
+    // Knotens Movement ueber mehrere Bilder verteilt statt in einem Stueck
+    // (rund 0,5 s Stillstand je Knoten in Full HD). Standalones und Tests
+    // lassen die Vorgabe „sofort" stehen. LUMIVIZ_MOVEMENT_SCHEIBE_MS stellt
+    // die Scheibe fuer eine Diagnose um; 0 = sofort wie frueher.
+    {
+        bool gesetzt = false;
+        const double wunsch =
+            qEnvironmentVariable("LUMIVIZ_MOVEMENT_SCHEIBE_MS").toDouble(&gesetzt);
+        MultiEffectVisualizer::setMovementScheibeMs(gesetzt ? wunsch : 4.0);
+    }
+
     // Create ServiceContainer
     m_pServices = std::make_unique<ServiceContainer>();
     

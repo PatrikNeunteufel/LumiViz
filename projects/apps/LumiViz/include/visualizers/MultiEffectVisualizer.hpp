@@ -311,6 +311,26 @@ public:
     /// Presents.
     void legeKaraokeEbeneAuf() { legeKaraokeAuf(); }
 
+    // ---- Movement-Tabelle in Scheiben (S94) --------------------------------
+    // Der Knoten Movement wertet sein Skript je PIXEL aus und legt eine
+    // Tabelle an — in Full HD rund eine halbe Sekunde, in der das Bild steht.
+    // Im Scheiben-Betrieb entsteht dieselbe Tabelle ueber mehrere Bilder
+    // verteilt; bis sie fertig ist, zeichnet der Knoten ueber das 96 x 72-
+    // Gitter. Fertige Tabellen teilen sich alle Renderer des Prozesses.
+
+    /// Zeitscheibe je Bild und Knoten in Millisekunden. **0 (Vorgabe) =
+    /// sofort, in einem Stueck, wie immer** — so laufen die Standalones, der
+    /// Vergleichslauf und die Unit-Tests. Skripte, die den gemeinsamen Zustand
+    /// der Kette, den Zufallsstrom, Audio oder die Uhr lesen, bauen immer sofort.
+    static void setMovementScheibeMs(double ms);
+    [[nodiscard]] static double movementScheibeMs();
+    /// Entsteht in dieser Instanz noch eine Movement-Tabelle? (Stand des
+    /// letzten Bilds — der Composer waermt einen Clip so lange weiter vor.)
+    [[nodiscard]] bool movementTabelleImBau() const { return m_movementImBau > 0; }
+    /// Der gemeinsame Speicher fertiger Tabellen (Test, Aufraeumen).
+    static void leereMovementSpeicher();
+    [[nodiscard]] static std::size_t movementTabellenImSpeicher();
+
     /**
      * @brief Songwechsel melden (S82) — Host Switcher (Song-Slot, „bei
      *        Songwechsel weiter"). Ein prozessweiter Zaehler statt eines Flags
@@ -783,6 +803,11 @@ private:
         int moveTabW = 0;
         int moveTabH = 0;
         std::string moveTabKey;  ///< Skript + Flags, hinter denen die Tabelle steht
+        /// Bau in Scheiben (S94): Schluessel der Tabelle, die gerade entsteht,
+        /// und das Ersatz-Modul fuer das Gitter-Bild bis dahin
+        std::string moveBauKey;
+        std::unique_ptr<lumi::modules::ScriptGridModule> gridErsatz;
+        std::string gridErsatzCompiled;
 
         // SuperScope: scripted point generator (drawn via the shared renderer)
         std::unique_ptr<lumi::modules::SuperscopeModule> scope;
@@ -1779,6 +1804,7 @@ private:
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
     bool m_karaokeAuslassen = false;   ///< Composer-Naht R2: diese Instanz zeichnet die Ebene nie
     unsigned int m_presentZiel = 0;    ///< Composer-Naht R1: Framebuffer des Presents (0 = Fenster)
+    int m_movementImBau = 0;           ///< S94: Movement-Knoten, deren Tabelle in diesem Frame noch entsteht
     /// K4 b: Fenstergroesse (Viewport in onRender) — darin rastert die Zeile
     /// der Ebene; der Trail bleibt in Kettenaufloesung.
     int m_fensterBreite = 0;

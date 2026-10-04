@@ -159,6 +159,37 @@ public:
     bool buildTransTable(int width, int height, bool wrap, bool subpixel,
                          std::vector<int>& out);
 
+    /// Stand eines Baus in Scheiben
+    enum class TransBau
+    {
+        Fertig,  ///< die Tabelle ist vollstaendig — `takeTransTable()`
+        Laeuft,  ///< Budget verbraucht, beim naechsten Aufruf geht es weiter
+        Fehler   ///< kein Bau begonnen oder das Skript ist gescheitert
+    };
+
+    /**
+     * @brief Dieselbe r_trans-Tabelle in Scheiben bauen (S94)
+     *
+     * `beginTransTable` legt den Bau an, `continueTransTable(budgetMs)` rechnet
+     * ganze Zeilen, bis das Budget verbraucht ist, und setzt beim naechsten
+     * Aufruf dort fort. Dieselbe Skript-Maschine, dieselbe Pixel-Reihenfolge —
+     * das Ergebnis ist das von `buildTransTable`, solange zwischen den
+     * Scheiben niemand diese Maschine benutzt (also kein `execute()` auf
+     * diesem Modul). `budgetMs <= 0` = ohne Grenze, in einem Stueck.
+     *
+     * @return beginTransTable: false, wenn kein Punkt-Slot lebt
+     */
+    bool beginTransTable(int width, int height, bool wrap, bool subpixel);
+    TransBau continueTransTable(double budgetMs);
+    [[nodiscard]] bool transTableImBau() const { return m_trans.aktiv; }
+    /// Anteil 0…1 der schon gerechneten Zeilen
+    [[nodiscard]] double transTableFortschritt() const
+    {
+        return m_trans.aktiv && m_trans.h > 0 ? static_cast<double>(m_trans.y) / m_trans.h : 0.0;
+    }
+    /// Die fertige Tabelle herausnehmen; der Bau ist danach beendet.
+    [[nodiscard]] std::vector<int> takeTransTable();
+
     [[nodiscard]] const GridNode& node(int gx, int gy) const
     {
         return m_field[static_cast<std::size_t>(gy) * static_cast<std::size_t>(m_xres) +
@@ -212,6 +243,19 @@ private:
     std::string m_lastScriptError;
     std::vector<GridNode> m_field;
     std::vector<GridNodeFx> m_fieldFx;
+
+    /// Bau der r_trans-Tabelle in Scheiben (beginTransTable / continueTransTable)
+    struct TransZustand
+    {
+        bool aktiv = false;
+        int w = 0;
+        int h = 0;
+        bool wrap = false;
+        bool subpixel = false;
+        int y = 0;  ///< naechste zu rechnende Zeile
+        std::vector<int> tab;
+    };
+    TransZustand m_trans;
 };
 
 } // namespace lumi::modules
