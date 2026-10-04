@@ -9,6 +9,15 @@
 > `ImportBrowserPanel` · `PlaylistPanel` (Audio) · `IAudioPlayer`/`IPlaylist`
 > **Sprache:** Deutsch
 
+> **Aufgegangen in Composer und Host Switcher (Entscheid Patrik S93, C4 a).**
+> Die Visual-Playlist wird **nicht** als eigenes Vorhaben gebaut: die feste
+> Folge über der Zeit übernimmt der Composer
+> ([Composer_Konzept.md](Composer_Konzept.md)), den Wechsel nach Zeit, beim
+> Songwechsel oder zufällig der Host Switcher mit Presetverweisen (seit S82).
+> Dieses Dokument bleibt als Quelle stehen — §2 (Import-Browser) ist seit S84
+> umgesetzt, §4 verweist auf das Hotkey-Konzept, §5a ist der Ursprung des
+> Composers.
+
 ---
 
 ## 1. Begriffsklärung (drei verschiedene Dinge)

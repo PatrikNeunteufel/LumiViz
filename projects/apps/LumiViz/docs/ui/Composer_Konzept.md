@@ -1,17 +1,17 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Datum:** 2026-10-04 (Session 93)
-> **Typ:** Konzept — **Entwurf, im Grundsatz gebilligt (Patrik S93)**; Stufe
-> **C0 und C0b (Belege) erledigt**, sonst nichts gebaut; Entscheide §11 offen;
-> Vorgabe: rückbaubar (§12); entsteht im Zweig `composer` (C10 a)
+> **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
+> C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
+> Stufen **C0 und C0b (Belege) erledigt**, sonst nichts gebaut
 > **Status:** Entwurf
+> **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Weg zur Timeline" (Ideen Patrik S84, S88,
 > S93) · [Visual_Playlist_Konzept.md](Visual_Playlist_Konzept.md) §5a
 > („Composer" als Fernziel, S51) · [Hotkey_Konzept.md](Hotkey_Konzept.md) §1
-> (Stufe 3) · [HostGruppen_Crossfade_Entwurf.md](../visuals/HostGruppen_Crossfade_Entwurf.md) ·
-> [Karaoke_Ebene_Konzept.md](../visuals/Karaoke_Ebene_Konzept.md)
+> (Stufe 3) · [Karaoke_Ebene_Konzept.md](../visuals/Karaoke_Ebene_Konzept.md)
 > **Sprache:** Deutsch
 
 ---
@@ -45,6 +45,7 @@ Was er können soll (Patrik S84, S88, S93):
   Das entscheidet, **wer die Presets steuert**.
 - Ein angelegter Audiokanal lässt sich ebenfalls ein- und ausschalten. Ist er
   an, ist **er** maßgebend und nicht die Playlist.
+- Für Vorführungen lässt sich der Composer **sperren** (§8).
 
 Nicht das Ziel: ein Wechsel des Visuals je Song. Das kann der **Host
 Switcher** schon (innerhalb einer Kette, beim Songwechsel, nach Zeit oder per
@@ -56,11 +57,10 @@ Skript).
 
 | Was | Tut | Verhältnis zum Composer |
 |---|---|---|
-| **Effektkette** | die Komposition **eines** Presets | ein Clip verweist auf eine Kette |
-| **Host-Gruppe** | ein ganzes Visual als Teil einer Kette, mit eigenem Bild und Crossfade | Baustein des Renderwegs (§5) |
-| **Host Switcher** | schaltet Host-Gruppen einer Kette um (Zeit, Songwechsel, Skript) | bleibt; läuft in einem Clip weiter, wenn die Datei ihn enthält — der Composer warnt (Entscheid 1a, S88) |
-| **Visual-Playlist** (Konzept S51, nie gebaut) | geordnete Folge ganzer Presets mit Auslösern | siehe Entscheid C4 |
-| **Karaoke-Ebene** | Songtext über allem Laufenden | bleibt darüber; der Composer schaltet später denselben Schalter |
+| **Effektkette** | die Komposition **eines** Presets | ein Clip verweist auf eine Kette und läuft in seinem eigenen Renderer |
+| **Host-Gruppe, Host Switcher** | Visuals innerhalb einer Kette, mit Crossfade; der Switcher schaltet sie um | bleiben, wie sie sind; eine Datei, die sie enthält, läuft als Clip unverändert. Enthält sie einen Host Switcher, warnt der Composer beim Hinzufügen: dann wechseln zwei Wechsler (Entscheid 1a, S88) |
+| **Visual-Playlist** (Konzept S51) | geordnete Folge ganzer Presets mit Auslösern | **entfällt als eigenes Vorhaben** (C4 a): die feste Folge übernimmt der Composer, den Wechsel nach Zeit, Songwechsel oder Zufall der Host Switcher |
+| **Karaoke-Ebene** | Songtext über allem Laufenden | bleibt darüber; bei laufendem Composer zeichnet sie der Mischer einmal über das gemischte Bild (§5) |
 | **Playlist** (Audio) | Folge von Songs | bleibt; tritt zurück, solange ein Audiokanal des Composers an ist |
 
 ---
@@ -69,31 +69,31 @@ Skript).
 
 | Baustein | Stand | Nutzen für den Composer |
 |---|---|---|
-| **Presetverweis** (S82) | Host-Gruppe, die nur den Pfad speichert | ein Clip **ist** ein Presetverweis |
-| **Host-Gruppen** (S39–S43) | eigenes Bild, eigener Puffer-Pool, eigener Skript-Kontext je Gruppe; mehrere gleichzeitig aktiv; stapeln sich über `blendOut` | zwei Clips übereinander = zwei aktive Gruppen |
-| **Crossfade** (HG2) | Gewicht je Gruppe 0…1, Ein- und Ausgangskurve je Gruppe (fünf Formen), normalisierter Mix | Übergang zwischen zwei Clips |
-| **Mischarten** | `blendOut` kennt 13 Arten (Replace, 50/50, Maximum, Additive, zweimal Subtractive, Every other line/pixel, Xor, Adjustable, Multiply, Buffer, Minimum) | „Add, Sub, Xor usw." |
+| **Mehrere Renderer nebeneinander** | belegt in C0b: bitgleich mit dem Lauf allein | der Renderweg (§5) |
+| **Ladewege je Endung** | `.avs`, `.milk`, `.lvfx`, `.lvfx2` | ein Clip ist eine Pfad-Referenz auf eine dieser Dateien |
+| **Mischformeln** | der Mischpass der Kette kennt 13 Arten | Vorlage für die Mischarten des Mischers (eigener Code, gleiche Formeln) |
+| **Kurvenformen** | fünf Formen am Crossfade der Host-Gruppe (linear, S-Kurve, Ease-In, Ease-Out, exponentiell) | Vorlage für die Pegelkurven |
 | **Ziehen** (S84) | Effect Browser, Audio Browser, Playlist geben Datei-URLs ab | Clips und Songs ins Panel ziehen |
 | **Lyrics Sync** (S87–S92) | Wellenform eines Titels, Sprungleiste, Positions-Hochrechnung | Zeitachse, Audiokanal |
-| **Laufendes Preset** (S93) | sichert und lädt das Hauptfenster | der Composer setzt es über denselben Aufruf |
-| **Freeze-Frame** (HG3) | bricht die Bildrate im Blend ein, friert die ausblendende Gruppe ein | Rückfall bei zwei schweren Visuals |
-
-**Belegt in C0** (`test_ComposerBelege.cpp`, Stand §9a): mehrere Gruppen
-zugleich, das Gewicht als Pegel, der exakte Mix im Wechsel. Die übrigen
-Zeilen der Tabelle sind aus dem Code gelesen.
+| **Laufendes Preset** (S93) | sichert und lädt das Hauptfenster (`UI/StartPreset.hpp`) | der Start kennt künftig auch eine Komposition (C7) |
+| **Preset-Zeile** (S89) | Dropdown, ★, Load…, Save, Save As… | Vorbild für die Datei-Zeile des Panels |
+| **Sperre von Kürzeln** (S92) | `notWhileTyping` in der Kürzel-Tabelle | Vorbild für die Sperre |
 
 ---
 
 ## 4. Die Uhr
 
-Der Composer hat **eine Zeitachse** in Millisekunden ab Null. Woher die Zeit
-kommt, hängt am Audiokanal:
+Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
 
+- **Ohne Audiokanal, oder mit ausgeschaltetem** (C2 a): der Composer hat einen
+  **eigenen Transport** — Start, Stopp, an den Anfang, Sprung per Klick ins
+  Zeitlineal. Die Zeit läuft nach der Wanduhr, unabhängig von der Musik. Die
+  Playlist spielt daneben, was sie will. Der Schalter **Follow player**
+  koppelt nur Start und Stopp: startet oder pausiert der Player, tut der
+  Composer dasselbe.
 - **Audiokanal an:** die Zeit ist die Stelle im Programm, die gerade zu hören
   ist. Der Composer führt den Player: er lädt die Songs der Audio-Clips zu
   ihren Startzeiten und spielt sie. Die Playlist ruht.
-- **Kein Audiokanal, oder aus:** siehe Entscheid C2 — der Composer braucht
-  dann eine eigene Uhr mit Start, Stopp und Sprung.
 
 In beiden Fällen gilt: **die Stelle auf der Zeitachse bestimmt das Bild**,
 nicht die verstrichene Zeit. Pegel werden aus der Stelle berechnet — nach
@@ -103,62 +103,48 @@ Betreten frisch, auch nach einem Sprung mitten hinein (§10).
 
 ---
 
-## 5. Der Renderweg
+## 5. Der Renderweg — der eigene Mischer
 
-> **Stand nach C0b (§9b):** Beide Wege tragen. Die Empfehlung ist seither
-> **der eigene Mischer** (C3 b, C11 c) — er braucht keine Naht im
-> kalibrierten Renderer und nimmt jede Datei unverändert. Der folgende Text
-> beschreibt den Weg über Host-Gruppen, wie er vor C0b empfohlen war; er
-> wird nach Patriks Entscheid zu C3 neu gefasst.
+**Entscheid C3 (Patrik S93): der eigene Mischer.** Belegt in C0b (§9b).
 
-**Empfehlung (Entscheid C3): der Composer baut auf den Host-Gruppen auf.**
-Aus der Komposition entsteht eine Kette, in der jeder Clip eine Host-Gruppe
-ist (Presetverweis). Der Composer setzt je Bild, welche Gruppen laufen und
-mit welchem Pegel. Die Kette selbst ist ein gewöhnlicher Baum — der
-kalibrierte Renderer bleibt der einzige.
+- **Je laufendem Clip ein eigener Renderer.** Jede Datei läuft darin
+  unverändert, mit allem, was sie enthält — auch Host-Gruppen und Host
+  Switcher. Der kalibrierte Renderer rechnet jedes Bild wie immer.
+- **Darüber der Mischer** — eigener Code des Composers. Er nimmt die fertigen
+  Bilder der laufenden Clips und führt sie zusammen: von unten nach oben in
+  Kanalreihenfolge, jeder Clip mit seinem **Pegel** (aus der Kurve an der
+  Stelle der Zeitachse) und seiner **Mischart**.
+- **Der Grund ist Schwarz** (C9 a). Liegt an einer Stelle in keinem Kanal ein
+  Clip, ist das Bild schwarz.
+- **Die Karaoke-Ebene** zeichnet der Mischer **einmal** über das gemischte
+  Bild. Die Renderer der Clips lassen sie aus (C0b: sonst zeichnet sie jeder
+  selbst).
+- **Vorwärmen:** der Composer weiß, was kommt. Er legt den Renderer eines
+  Clips kurz vor dessen Start an und lässt ihn sein erstes Bild rechnen,
+  damit der Anlauf nicht als Ruck zu sehen ist.
+- **Entladen:** endet ein Clip, wird sein Renderer weggeworfen.
 
-Was dafür schon passt (gelesen, s. §3): mehrere Gruppen laufen gleichzeitig,
-jede in ihrem eigenen Bild; eine Gruppe mit Gewicht 0 rendert nicht; der
-Übergang zweier Gruppen ist ein exakter gewichteter Mix.
+Was vor C1 nicht belegt ist und dort **zuerst** geprüft wird (§9, C1a):
 
-Was fehlt — **Stand nach C0** (Messwerte in §9a):
+1. das fertige Bild eines Renderers als Textur für den Mischer (heute gibt es
+   nur einen Testzugang, der ein Bild kopiert);
+2. die Karaoke-Ebene je Renderer auslassen;
+3. der Betrieb im Render-Thread der App und was am Ende aufs Fenster kommt
+   (Render Scale, Post-Bloom macht heute der einzelne Renderer);
+4. Bildspeicher je Renderer und die Zeiten im Release-Build;
+5. MilkDrop-Presets nebeneinander (C0b hat AVS und native Ketten belegt).
 
-1. **Pegel von außen** (Naht N1). Das Gewicht einer Gruppe wirkt schon als
-   Pegel über dem, was darunter steht — die Überlagerung aus der Skizze S88
-   geht also im Grundsatz. Es läuft aber mit der **Zeit** auf sein Ziel zu
-   (`crossfadeSeconds`); der Composer muss es aus der Kurve **setzen**.
-2. **Mischart mit Pegel** (Naht N2). Bestätigt: der Pegel wirkt nur bei
-   „Adjustable". Additive mit Pegel 64 legt das Bild **voll** dazu; und unter
-   vollem Gewicht wird immer überblendet, egal welche Mischart gewählt ist.
-   „Additiv auf halbem Pegel" braucht eine Erweiterung der Mischung.
-3. **Laden — kleiner als gedacht, dafür zwei andere Punkte** (Naht N3).
-   Ein ruhender Clip kostet **nichts** außer dem Lesen (6–12 ms je Preset):
-   nichts wird kompiliert, kein Bild angelegt, bis er läuft. 32 ruhende
-   Clips ändern an zwei laufenden nichts. „Laden nach Bedarf" entfällt als
-   Voraussetzung. Dafür:
-   - **Anlauf-Ruck:** das erste Bild eines Clips kostet das Kompilieren
-     (im Test 110–240 ms, Testing-Build) — sichtbar als Ruck am Clip-Anfang.
-     Der Composer weiß im Voraus, was kommt, und kann **vorwärmen**.
-   - **Entladen:** was ein Clip angelegt hat, bleibt nach seinem Ende
-     liegen (8 Clips nacheinander: 19 → 174 Laufzeiten). Über ein langes
-     Programm muss der Bestand wieder freigegeben werden.
-4. **Tiefenregel — schwerer als gedacht.** Ein `.lvfx2` mit Host Switcher
-   bleibt als Clip **schwarz**: seine Gruppen werden zu Effect Lists, der
-   Switcher findet nichts mehr zu schalten, und weil er die Gruppen erst zur
-   Laufzeit einschaltete, ruhen die Listen. Der Ladebericht sagt nichts
-   dazu. „Warnen" (Entscheid 1a, S88) genügt damit nicht — siehe C11.
-
-Die Alternative (ein eigener Mischer über mehreren unabhängigen Renderern)
-steht in Entscheid C3.
+Der andere Weg — die Komposition als eine Kette aus Host-Gruppen — ist in C0
+untersucht und verworfen: er braucht drei Eingriffe in die Bildberechnung,
+und Dateien mit Host Switcher bleiben darin schwarz (§9a).
 
 ---
 
 ## 6. Datenmodell und Datei
 
-Eine Komposition ist eine eigene Datei, Vorschlag **`.lvcomp`** (JSON, wie
-`.lvfx`). Sie enthält **Pfad-Referenzen**, keine eingebetteten Presets
-(Entscheid Patrik S60 für die Visual-Playlist, hier übernommen); fehlende
-Dateien meldet das Laden.
+Eine Komposition ist eine eigene Datei, **`.lvcomp`** (JSON, wie `.lvfx`).
+Sie enthält **Pfad-Referenzen**, keine eingebetteten Presets (Entscheid Patrik
+S60, übernommen); fehlende Dateien meldet das Laden.
 
 ```
 Komposition
@@ -177,6 +163,8 @@ Komposition
   Kanälen.
 - Zeiten in Millisekunden. Ein Raster (Einrasten beim Ziehen) ist Bedienung,
   nicht Datenmodell.
+- **Nicht in der Datei:** ob der Composer an ist, ob er gesperrt ist, die
+  Stelle der Abspielmarke — das sind Einstellungen (`composer/…`).
 
 ---
 
@@ -184,9 +172,9 @@ Komposition
 
 **View → Panels → Composer**, eigenes andockbares Panel, breit gedacht.
 
-- **Kopf:** Schalter **Composer on**, Transport (Start, Stopp, an den Anfang),
-  Stelle als Zeit, Zoom, Datei (New, Load…, Save, Save As… — die Preset-Zeile
-  aus S89 als Vorbild).
+- **Kopf:** Schalter **Composer on**, Schalter **Lock**, Transport (Start,
+  Stopp, an den Anfang), Schalter **Follow player**, Stelle als Zeit, Zoom,
+  Datei-Zeile (New, Load…, Save, Save As…).
 - **Zeitlineal** mit Abspielmarke; Klick springt.
 - **Kanäle** als Zeilen, links je Kanal Name und an/aus. Clips als Blöcke:
   ziehen = verschieben, Kanten ziehen = Start und Ende, Entf = löschen.
@@ -196,6 +184,9 @@ Komposition
   Songs aus Audio Browser und Playlist in den Audio-Kanal.
 - **Audio-Kanal:** die Wellenform des Songs im Clip (wie in Lyrics Sync).
 - **Rechtsklick** auf Clip, Kanal und freie Fläche — wie im Kettenbaum.
+
+Offen für C2: was das Panel **Effect Chain** zeigt, solange der Composer an
+ist. Vorschlag dort: den Clip, der im Composer angeklickt ist.
 
 ---
 
@@ -207,36 +198,66 @@ Komposition
 | **Composer an, kein Audiokanal an** | der Composer | Playlist |
 | **Composer an, Audiokanal an** | der Composer | der Composer; die Playlist ruht |
 
-Offen und als Entscheid geführt: was PgUp/PgDn und die Lied-Kürzel bei
-laufendem Composer tun (C5), was ein von Hand geladenes Preset bewirkt (C6),
-was der Start wiederherstellt (C7).
+**Kürzel bei laufendem Composer** (C5 a):
+
+- **PgUp / PgDn** springen zum vorigen bzw. nächsten Clip-Anfang auf der
+  Zeitachse, über alle Visual-Kanäle.
+- **Die Lied-Kürzel** springen bei aktivem Audiokanal zum vorigen bzw.
+  nächsten Song der Komposition; ohne aktiven Audiokanal wirken sie wie heute
+  auf die Playlist.
+
+**Ein Preset von Hand laden** (C6 a) — Doppelklick im Effect Browser, Wahl in
+der Preset-Zeile, File → Load, Import, „+ New empty effect chain": Rückfrage
+„The Composer is running. Stop it and load this preset?". Bei Ja hält der
+Composer an und wird ausgeschaltet, das Preset läuft wie gewohnt; die
+Komposition bleibt im Panel, **Composer on** bringt sie zurück. Bei Nein
+passiert nichts.
+
+**Lock** (Ergänzung Patrik zu C5 und C6, ein Schalter für beides): Ist der
+Composer gesperrt,
+
+- tun PgUp / PgDn und die Lied-Kürzel nichts;
+- laden die Ladewege nichts, und es erscheint **keine Rückfrage** auf dem
+  Bildschirm;
+- sagt die Statuszeile, warum: „Composer is locked".
+
+Die Sperre ist für Vorführungen gedacht: nichts, was man versehentlich
+drückt, darf das Bild umreißen oder ein Fenster aufgehen lassen.
+
+**Der Start** (C7 a): War beim Beenden der Composer an, lädt der Start die
+**Komposition** wieder — Composer an, an den **Anfang** gestellt,
+**angehalten**. Zu sehen ist das Bild der Stelle null. Losgelassen wird von
+Hand. War er aus, lädt der Start wie seit S93 das zuletzt laufende Preset.
 
 ---
 
 ## 9. Stufen
 
-Jede Stufe endet mit etwas Prüfbarem. Gebaut wird erst nach Freigabe des
-Konzepts und der Entscheide. Für jede Stufe gelten die Regeln zum Rückbau
+Jede Stufe endet mit etwas Prüfbarem. Für jede gelten die Regeln zum Rückbau
 (§12): Eigenes in eigenen Dateien, Bestehendes nur an benannten Nahtstellen,
 „Composer aus" belegt wie vorher, Rückbau-Liste nachgeführt.
 
 | Stufe | Inhalt | Prüfbar an |
 |---|---|---|
-| **C0 Belege** ✅ | Tests zu §5: Pegel einer Gruppe, zwei Gruppen auf Teilpegel, Mischart mit Pegel, `.lvfx2` als Clip, Kosten von N Clips | erledigt (S93), Ergebnisse §9a |
-| **C1 Modell und Wiedergabe** | Komposition als Datenmodell, `.lvcomp` lesen und schreiben, Komposition → Kette, Pegel von außen, Uhr; **ohne Panel** | Test: an Stelle *t* zeigt das Bild die erwarteten Clips mit den erwarteten Pegeln |
-| **C2 Panel zum Ansehen** | Panel mit Lineal, Kanälen, Clips, Abspielmarke, Transport, Schalter Composer on | eine von Hand geschriebene `.lvcomp` läuft und ist zu sehen |
-| **C3 Bearbeiten** | Clips hineinziehen, verschieben, Kanten ziehen, löschen; Kanäle anlegen; Undo | eine Komposition ganz im Panel bauen |
+| **C0 Belege** ✅ | Renderweg über Host-Gruppen untersucht | erledigt (S93), §9a — verworfen |
+| **C0b Belege** ✅ | mehrere Renderer nebeneinander | erledigt (S93), §9b — trägt |
+| **C1a Mischer, kleinste Fassung** | zwei Renderer, ein Mischpass mit Pegel und Mischart, Karaoke einmal darüber; die fünf offenen Punkte aus §5 belegt; Nähte R1 und R2 | Test: zwei Presets auf Teilpegel in jeder Mischart, Bild wie berechnet; Zahlen zu Speicher und Zeit im Release-Build |
+| **C1b Modell und Wiedergabe** | Komposition als Datenmodell, `.lvcomp` lesen und schreiben, Uhr mit Transport, Pegel aus der Kurve, Vorwärmen und Entladen; **ohne Panel** | Test: an Stelle *t* zeigt das Bild die erwarteten Clips mit den erwarteten Pegeln; nach einem Sprung ebenso |
+| **C2 Panel zum Ansehen** | Panel mit Lineal, Kanälen, Clips, Abspielmarke, Transport, Schalter Composer on; der Composer als Bildquelle der App | eine von Hand geschriebene `.lvcomp` läuft und ist zu sehen |
+| **C3 Bearbeiten** | Clips hineinziehen, verschieben, Kanten ziehen, löschen; Kanäle anlegen; Datei-Zeile; Undo | eine Komposition ganz im Panel bauen |
 | **C4 Pegelkurven** | Punkte im Clip, Kurvenformen, Mischart je Clip | Übergang und Überlagerung aus der Skizze S88 |
 | **C5 Audiokanal** | ein Audiokanal: Songs als Clips, Wellenform, führt den Player, Playlist ruht | Visuals an einem Song ausrichten |
-| **C6 Steuerung** | Kürzel, Preset laden bei laufendem Composer, Start-Wiederherstellung | Entscheide C5–C7 im Programm |
+| **C6 Steuerung** | Kürzel, Laden bei laufendem Composer, Lock, Start-Wiederherstellung | §8 im Programm |
 | später | zweiter Audiokanal (Songs mischen), Takt-Raster, Karaoke-Schalter als Spur, Kompositionen als Video rendern, Parameter über der Zeit | — |
 
-### 9a. Stand C0 — ✅ erledigt (S93)
+**Der Rückbau wird einmal wirklich durchgespielt, nach C1a** — der ersten
+Stufe mit Nähten (§12.4).
+
+### 9a. Stand C0 — ✅ erledigt (S93): Host-Gruppen, verworfen
 
 `tests/unit/UnitTests/test_ComposerBelege.cpp`, Suite `ComposerBelege`,
-vier Testfälle. Kein bestehender Code berührt. Wo ein Test eine **Lücke**
-festhält, steht das am Test — er wird mit der Naht, die sie schließt,
-bewusst umgeschrieben.
+vier Testfälle. Kein bestehender Code berührt. Die Tests bleiben stehen: sie
+halten fest, was die Host-Gruppen können und was nicht.
 
 | Frage | Ergebnis | Messwert |
 |---|---|---|
@@ -244,30 +265,21 @@ bewusst umgeschrieben.
 | Geht ein Teilpegel? | ja, über „Adjustable" und `outAdjustAlpha`, auch je Bild per Skript | 128 → 0,498 / 0,502; per Skript 64 → 0,749 / 0,251 |
 | Wirkt das Gewicht als Pegel über dem Darunterliegenden? | ja | Blau blendet über stehendem Rot ein, halbe Zeit → Blau 0,494, Rot von 0,502 auf 0,255 |
 | Ist der Wechsel A → B ein exakter Mix? | ja | halbe Zeit → 0,498 / 0,502 |
-| Lässt sich das Gewicht setzen? | **nein** — nur zeitgeführt | Lücke N1 |
-| Nimmt eine andere Mischart einen Pegel an? | **nein** | Additive, Pegel 64 → Blau 1,000 statt 0,25; im Übergang Replace und Additive bildgleich. Lücke N2 |
+| Lässt sich das Gewicht setzen? | **nein** — nur zeitgeführt | — |
+| Nimmt eine andere Mischart einen Pegel an? | **nein** | Additive, Pegel 64 → Blau 1,000 statt 0,25; im Übergang Replace und Additive bildgleich |
 | Was kostet ein ruhender Clip? | Lesen, sonst nichts | 6–12 ms je Preset; 8 und 32 ruhende Clips: 0 Laufzeiten, 0 ms je Bild |
 | Was kostet der Anlauf? | das Kompilieren im ersten Bild | 110–240 ms (Testing-Build, 640 × 640) |
 | Wird nach dem Ende entladen? | **nein** | 8 Clips nacheinander: 19 → 174 Laufzeiten |
 | `.lvfx2` mit Host Switcher als Clip? | **schwarz**, ohne Meldung | 0 Host-Gruppen, 2 Listen, 1 Switcher; allein geladen dagegen richtig (0,251) |
 
-**Nicht gemessen:** der Bildspeicher je laufender Gruppe (kein Zugang im
-Test; rechnerisch ein Bildpaar in Kettenauflösung plus Puffer-Pool), die
-Zeiten im Release-Build und auf der schnellen GPU, zwei wirklich schwere
-Visuals zugleich. Die Bildzeiten des Tests (105–118 ms je Bild) sind die
-des Testing-Builds und sagen nichts über den Betrieb.
-
-**Folge für C3:** die Empfehlung a (Host-Gruppen) hält. N1 und N2 sind
-kleine, abgegrenzte Erweiterungen an einer Stelle (`renderHostGroup`); N3
-wird kleiner und anders (vorwärmen, entladen). Neu zu entscheiden ist die
-Tiefenregel (C11).
+**Warum verworfen:** drei Eingriffe in die Bildberechnung (Gewicht setzen,
+Mischart mit Pegel, Entladen), und Mix-Dateien mit Host Switcher wären als
+Clip unbrauchbar.
 
 ### 9b. Stand C0b — ✅ erledigt (S93): mehrere Renderer nebeneinander
 
-Frage Patrik zu C11: wäre der eigene Mischer (c) die beste Lösung? Dafür
-musste belegt werden, ob mehrere Renderer nebeneinander laufen. Dieselbe
-Datei `test_ComposerBelege.cpp`, Suite `ComposerBelegeB`, vier Testfälle,
-kein bestehender Code berührt.
+Frage Patrik: wäre der eigene Mischer die beste Lösung? Dieselbe Datei,
+Suite `ComposerBelegeB`, vier Testfälle, kein bestehender Code berührt.
 
 | Frage | Ergebnis | Messwert |
 |---|---|---|
@@ -278,211 +290,62 @@ kein bestehender Code berührt.
 | Was kostet ein weiterer Renderer? | wenig: die Einrichtung fällt nur beim ersten an | `initialize` 114–127 ms beim ersten, 1 ms bei jedem weiteren; erstes Bild 10–205 ms je nach Preset (Testing-Build) |
 
 **Nicht gemessen:** Bildspeicher je Renderer, Zeiten im Release-Build und
-auf der schnellen GPU, das Mischen selbst (es gibt noch keinen Mischer),
-MilkDrop-Presets nebeneinander (die mitgelieferten sechs ersten sind AVS),
-der Betrieb mit dem Render-Thread der App.
-
-**Folge:** Der eigene Mischer ist machbar und der sauberere Weg.
-
-| | Host-Gruppen (C3 a) | Eigener Mischer (C3 b) |
-|---|---|---|
-| Nähte im kalibrierten Renderer | drei (Pegel setzen, Mischart mit Pegel, Vorwärmen / Entladen) | **keine an der Bildberechnung**; zwei kleine am Rand (fertiges Bild als Textur herausgeben, Karaoke-Ebene je Renderer auslassen) |
-| Pegel und Mischart | Erweiterung von `renderHostGroup` | gehören dem Mischer — eigener Code |
-| Entladen, Vorwärmen | neue Verwaltung der Gruppen-Laufzeiten | Renderer wegwerfen bzw. früher anlegen |
-| Dateien mit Host-Gruppen / Switcher | schwarz bzw. entwertet (C11) | laufen unverändert |
-| Effect-Chain-Panel | zeigt die erzeugte Kette | hängt an einem Renderer — zu klären, was es bei laufendem Composer zeigt |
-| Rückbau | drei Naht-Commits im Renderer zurücknehmen | eigene Dateien löschen, zwei Rand-Nähte zurücknehmen |
+auf der schnellen GPU, das Mischen selbst, MilkDrop-Presets nebeneinander,
+der Betrieb mit dem Render-Thread der App — alles Stoff von C1a.
 
 ---
 
 ## 10. Risiken
 
-- **Ladezeit und Speicher.** Jede Gruppe hält ein eigenes Bildpaar und einen
-  eigenen Puffer-Pool. Ohne Laden nach Bedarf (§5 Punkt 3) skaliert das nicht.
+- **Render-Thread und Fenster.** Die App rendert in einem eigenen Thread mit
+  genau einem Renderer, der auch das Fenster bedient. Mehrere Renderer plus
+  Mischer in diesen Ablauf zu setzen, ist die größte Unbekannte — darum steht
+  sie am Anfang (C1a).
+- **Speicher.** Jeder laufende Renderer hält seine eigenen Bilder. Zwei bis
+  drei zugleich sind der Normalfall; das Vorwärmen legt kurz einen weiteren
+  an.
 - **Zwei schwere Visuals zugleich.** Eine Überlagerung rechnet beide voll.
-  Der Freeze-Frame-Rückfall friert heute nur die **ausblendende** Gruppe ein —
-  bei einer gehaltenen Überlagerung gibt es keine ausblendende.
+  Einen Rückfall bei einbrechender Bildrate gibt es im Mischer zunächst nicht.
 - **Springen.** Visuals haben Zustand; nach einem Sprung mitten in einen Clip
-  sieht er anders aus als beim Durchlauf. Verwandt: die Idee Preset-Warmup
-  (Bilder vorrechnen).
-- **Nachladen im Lauf.** Ein Preset zu kompilieren kostet Zeit; geschieht es
-  erst am Clip-Anfang, ruckt das Bild. Vorladen im Hintergrund ist mit dem
-  Render-Thread abzustimmen.
+  sieht er anders aus als beim Durchlauf. Verwandt: die Idee Preset-Warmup.
+- **Vorwärmen im Lauf.** Ein Preset zu kompilieren kostet Zeit; geschieht es,
+  während ein anderes läuft, kann das laufende ruckeln.
+- **Was am Fenster ankommt.** Render Scale und Post-Bloom gehören heute dem
+  einzelnen Renderer. Bei mehreren ist zu klären, ob sie je Clip oder einmal
+  am Ende wirken.
 - **Zweiter Audiokanal.** Die Audio-Engine führt heute einen Stream. Zwei
   Songs zu mischen heißt zwei Streams oder ein Mixer — und die Frage, wessen
   Spektrum die Visuals sehen.
 - **Größe des Panels.** Eine Zeitachse mit Clips, Kurven und Wellenform ist
-  das größte Bedienelement der App; Schritt für Schritt (C2–C4), nicht auf
-  einmal.
+  das größte Bedienelement der App; Schritt für Schritt (C2–C4).
 
 ---
 
 ## 11. Entscheide
 
-**Schon entschieden:** Name **Composer** (Patrik S93) · Pfad-Referenzen statt
-eingebetteter Presets (S60) · ein `.lvfx2` darf Clip sein, gewarnt wird nur
-bei enthaltenem Host Switcher (S88, 1a) · die Karaoke-Ebene bleibt über allem,
-der Composer schaltet später ihren Schalter (S88, 2a).
+Alle gefallen (Patrik, Session 93). Die verworfenen Möglichkeiten stehen
+dabei, damit die Gründe nachlesbar bleiben.
 
-### C2 — Die Uhr ohne Audiokanal
+| | Frage | Entschieden | Verworfen |
+|---|---|---|---|
+| — | Name | **Composer**; „Timeline" ist nur die Zeitachse im Panel | Timeline |
+| C2 | Die Uhr ohne Audiokanal | **eigener Transport** nach der Wanduhr; Schalter Follow player koppelt Start und Stopp | Stelle im laufenden Song als Uhr; beides umschaltbar |
+| C3 | Der Renderweg | **eigener Mischer** über je einem Renderer je laufendem Clip | Komposition als Kette aus Host-Gruppen (C0) |
+| C4 | Visual-Playlist (S51) | **entfällt als eigenes Vorhaben**; Konzept bleibt als Quelle mit Vermerk, Punkt P2 geschlossen | vor dem Composer bauen; offen stehen lassen |
+| C5 | PgUp/PgDn, Lied-Kürzel | **springen im Composer** (Clip-Anfang bzw. Song der Komposition); sperrbar | immer gesperrt; wie heute mit Ausschalten des Composers |
+| C6 | Preset von Hand laden | **schaltet den Composer aus, nach Rückfrage**; gesperrt lädt nichts und fragt nichts | immer gesperrt; als Clip einfügen; ohne Rückfrage |
+| — | Lock | **ein** Schalter für Kürzel und Laden | zwei getrennte Schalter |
+| C7 | Der Start | lädt die **Komposition**, Composer an, am **Anfang**, **angehalten** | läuft an der letzten Stelle weiter; lädt ein einzelnes Preset; letzte Stelle angehalten |
+| C9 | Die Lücke | **schwarz** | letztes Bild; durchscheinendes Preset; Grund-Visual als eigenes Feld |
+| C10 | Wo der Composer entsteht | **Zweig `composer`**, nach jeder abgenommenen Stufe nach `master` geholt | auf `master` |
+| C11 | Dateien mit Host-Gruppen als Clip | **entfällt** — mit dem eigenen Mischer läuft jede Datei unverändert | — |
 
-- **Problem:** Ohne Audiokanal gibt es keine Stelle im Programm, aus der die
-  Zeit käme. Die Playlist spielt daneben irgendeinen Song.
-- **a (Empfehlung):** Der Composer hat einen **eigenen Transport** (Start,
-  Stopp, Sprung) und läuft nach der Wanduhr. Die Playlist spielt unabhängig;
-  ein Schalter „mit dem Player starten und stoppen" koppelt nur Start und
-  Stopp.
-- **b:** Die Uhr ist die **Stelle im laufenden Song** der Playlist; mit jedem
-  Song beginnt die Komposition von vorn.
-- *Warum:* Den Ausschlag gibt Patriks Satz, man könne die Visuals „anhand der
-  Zeitlinie als Referenz" anordnen — das verlangt eine Zeit, die es auch ohne
-  Musik gibt. Für b spricht, dass Bild und Musik ohne Zutun zusammenlaufen;
-  das leistet aber der Audiokanal, sobald man einen anlegt. Kippt, wenn der
-  häufigste Fall „ein Song, eine Komposition, Musik aus der Playlist" ist.
+**Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
+Presets (S60) · bei einer Datei mit Host Switcher warnt der Composer beim
+Hinzufügen (S88, 1a) · die Karaoke-Ebene bleibt über allem (S88, 2a).
 
-### C3 — Der Renderweg
-
-> **Nach C0b: Empfehlung gedreht auf b** (eigener Mischer). Begründung und
-> Vergleich in §9b. Der Text darunter ist der Stand vor C0b.
-
-- **Problem:** Zwei Kanäle heißt zwei Visuals zugleich, mit freiem Pegel und
-  wählbarer Mischart.
-- **a (Empfehlung):** **Host-Gruppen** (§5): die Komposition wird eine Kette,
-  der Composer setzt die Pegel.
-- **b:** Ein **eigener Mischer** über mehreren unabhängigen Renderern, je
-  Kanal einer, darüber ein Mischpass.
-- *Warum:* Den Ausschlag gibt, dass Gruppen, eigener Zustand je Gruppe,
-  Presetverweis, Kurven und der exakte Mix vorhanden sind und der kalibrierte
-  Renderer der einzige bleibt. Für b spricht die saubere Trennung: jedes
-  Preset läuft unverändert, die Tiefenregel entfällt, und je Kanal wäre ein
-  eigener Thread denkbar. Das wiegt weniger, solange C0 die vier Lücken aus §5
-  als schließbar belegt. **Kippt zu b**, wenn C0 zeigt, dass die Tiefenregel
-  gängige `.lvfx2` als Clips unbrauchbar macht oder das Laden nach Bedarf den
-  Ketten-Aufbau sprengt.
-
-### C4 — Die Visual-Playlist
-
-- **Problem:** Das Konzept von S51 (Folge ganzer Presets mit Auslösern) ist
-  entschieden, aber nie gebaut — und überschneidet sich mit dem Composer.
-- **a (Empfehlung):** Sie **entfällt als eigenes Vorhaben**. Was sie sollte,
-  deckt der Composer (feste Folge über der Zeit) zusammen mit dem Host
-  Switcher (Wechsel nach Zeit, Songwechsel, Zufall). Das Konzept bleibt als
-  Quelle stehen und bekommt einen Vermerk.
-- **b:** Sie wird **vor** dem Composer gebaut, als einfache Vorstufe.
-- *Warum:* Den Ausschlag gibt, dass ihr Kern — „ein Song, ein Look" — seit
-  S82 mit Host Switcher und Presetverweisen geht. Für b spricht, dass sie
-  klein ist und ohne Zeitachse auskommt. Kippt, wenn du eine lose Liste von
-  Presets zum Durchschalten vermisst, die keine Zeiten braucht.
-
-### C5 — PgUp/PgDn und die Lied-Kürzel bei laufendem Composer
-
-- **Problem:** Die Tasten blättern heute im Effect Browser bzw. in der
-  Playlist. Bei laufendem Composer würden sie ihm das Bild oder den Song
-  wegnehmen.
-- **a (Empfehlung):** Sie **springen im Composer**: PgUp/PgDn zum vorigen
-  bzw. nächsten Clip-Anfang, die Lied-Kürzel (nur mit aktivem Audiokanal) zum
-  vorigen bzw. nächsten Song der Komposition. Ein Schalter im Panel **sperrt**
-  sie ganz (Idee Patrik S93).
-- **b:** Sie sind bei laufendem Composer **immer gesperrt**.
-- **c:** Sie wirken **wie heute** und schalten den Composer dabei aus.
-- *Warum:* Den Ausschlag gibt das Hotkey-Konzept (§1): dieselbe Taste bedient
-  in jeder Ausbaustufe dieselbe Absicht, nur die Quelle wechselt — „nächstes
-  Preset" bleibt „nächstes Preset". Für b spricht die Sicherheit bei einer
-  Vorführung; das deckt der Sperr-Schalter. Kippt, wenn ein Sprung auf der
-  Zeitachse im Betrieb mehr stört als hilft.
-
-### C6 — Ein Preset von Hand laden, während der Composer läuft
-
-- **Problem:** Doppelklick im Browser oder eine Wahl in der Preset-Zeile.
-- **a (Empfehlung):** Das Laden **schaltet den Composer aus**, nach einer
-  Rückfrage („Composer is running — stop it and load this preset?").
-- **b:** Das Laden ist **gesperrt**, solange der Composer an ist.
-- **c:** Das Preset wird als **Clip an der Abspielmarke** eingefügt.
-- *Warum:* Den Ausschlag gibt, dass die App sich ohne Composer wie gewohnt
-  bedienen lassen muss und der Weg zurück ein Klick sein soll. Für c spricht
-  der Arbeitsfluss beim Bauen; dafür gibt es das Ziehen ins Panel, und ein
-  Doppelklick mit zwei Bedeutungen ist schwer zu merken.
-
-### C7 — Was der Start wiederherstellt
-
-- **Problem:** Seit S93 lädt der Start das zuletzt laufende Preset. Lief ein
-  Composer, gibt es kein einzelnes.
-- **a (Empfehlung):** Der Start lädt die **Komposition** wieder, Composer
-  **an**, an den **Anfang** gestellt und **angehalten**.
-- **b:** Der Start lädt sie und **läuft** an der letzten Stelle weiter (wie
-  „Resume playback").
-- **c:** Der Start lädt das zuletzt laufende **einzelne** Preset, die
-  Komposition bleibt nur im Panel gemerkt.
-- *Warum:* Den Ausschlag gibt, dass ein Programm, das von selbst losläuft,
-  bei einer Vorführung überrascht. Für b spricht die Gleichbehandlung mit dem
-  Player; mit aktivem Audiokanal könnte b dem Schalter „Resume playback"
-  folgen.
-
-### C9 — Die Lücke
-
-- **Problem:** An einer Stelle, an der in **keinem** Visual-Kanal ein Clip
-  liegt.
-- **a (Empfehlung):** **Schwarz.** Was nicht angeordnet ist, ist nicht da.
-- **b:** Das **letzte Bild** bleibt stehen.
-- **c:** Die Kette, die **vor dem Einschalten** des Composers lief, scheint
-  durch.
-- *Warum:* Den Ausschlag gibt, dass der Composer die Kontrolle über das Bild
-  hat, sobald er an ist — eine Lücke ist dann eine gewollte Pause. Für c
-  spricht ein „Grund-Visual" unter allem; das lässt sich als Clip im untersten
-  Kanal über die ganze Länge ausdrücken.
-
-### C10 — Wo der Composer entsteht
-
-- **Ort:** das Repo; bisher committet Patrik jeden Schritt auf `master`.
-- **Problem:** Der Composer soll sich zurückbauen lassen (§12). Am
-  einfachsten ist ein Rückbau, der gar nicht nötig wird, weil das Unfertige
-  nie im Hauptzweig lag.
-- **a (Empfehlung):** Ein **eigener Zweig** `composer`. `master` bleibt, wie
-  er ist; nach jeder abgenommenen Stufe (Tests, Vergleichslauf, Sichttest)
-  wird der Zweig nach `master` geholt. Vor dem Holen ist der Rückbau: nicht
-  holen. Danach gilt die Rückbau-Liste (§12.4).
-- **b:** Weiter auf **`master`**, mit den Regeln aus §12 (Naht und Eigenes
-  getrennt committet). Der Rückbau läuft immer über die Rückbau-Liste.
-- *Warum:* Den Ausschlag gibt, dass die Nähte N1–N3 im kalibrierten Renderer
-  liegen und eine Stufe erst nach dem Sichttest als gut gilt — bis dahin soll
-  `master` davon frei sein. Für b spricht, dass nichts auseinanderläuft und
-  jede andere Arbeit sofort mit dem Composer zusammen getestet wird. Das wiegt
-  weniger, solange der Zweig nach jeder Stufe geholt wird und nie lange lebt.
-  Kippt, wenn du parallel zum Composer viel am Renderer oder am
-  Effect-Chain-Panel arbeitest — dann kosten die Zusammenführungen mehr, als
-  der Zweig schützt.
-
-### C11 — Dateien mit Host-Gruppen als Clip (neu nach C0)
-
-> **Nach C0b: Empfehlung gedreht auf c** — mit dem eigenen Mischer (C3 b)
-> stellt sich die Frage nicht mehr, jede Datei läuft unverändert. C11
-> entfällt, wenn C3 b entschieden ist.
-
-- **Ort:** Tiefenregel der Kette (keine Host-Gruppe in einer Host-Gruppe);
-  Entscheid 1a aus S88 („ein `.lvfx2` darf Clip sein, gewarnt wird nur bei
-  enthaltenem Host Switcher").
-- **Heute:** In einer Host-Gruppe werden Host-Gruppen zu Effect Lists.
-- **Problem (C0):** Ein Clip ist eine Host-Gruppe. Ein `.lvfx2` mit Host
-  Switcher bleibt darin schwarz, ohne Meldung. Ein `.lvfx2` ohne Switcher
-  läuft, verliert aber, was seine Gruppen ausmacht (eigenes Bild, eigener
-  Zustand, Crossfade). 1a aus S88 ist so nicht haltbar.
-- **a (Empfehlung):** In den ersten Stufen **nimmt der Composer solche
-  Dateien nicht an** und sagt, warum („contains host groups — not
-  supported as a clip yet"). Clips sind `.avs`, `.milk`, `.lvfx` und
-  `.lvfx2` ohne Host-Gruppen. Ob eine Gruppe im Clip laufen kann, wird als
-  eigene spätere Stufe belegt und dann entschieden.
-- **b:** Der Clip wird eine **eigene Knotenart**, in der Host-Gruppen
-  erlaubt bleiben (eine Ebene tiefer als heute) — von Anfang an.
-- **c:** Wechsel zum **eigenen Mischer** (C3 b), bei dem jede Datei
-  unverändert in ihrem eigenen Renderer läuft.
-- *Warum:* Den Ausschlag gibt die Rückbaubarkeit: a braucht keine Naht im
-  Renderer und nimmt nichts vorweg. Für b spricht, dass deine Mix-Dateien
-  (`20261001.mix.lvfx2`) genau solche sind und sonst draußen bleiben. Ob b
-  technisch trägt, ist **nicht belegt** — die Degradierung greift vor dem
-  Rendern, ein Test dafür müsste sie erst umgehen. Für c spricht, dass die
-  Frage dort gar nicht entsteht; es kostet den zweiten Renderweg. Kippt zu
-  b, wenn Mix-Dateien als Clips für dich der Normalfall sind — dann gehört
-  der Beleg dazu an den Anfang von C1.
+**Zum Zweig (Stand S93):** C0, C0b und dieses Konzept liegen auf `master` —
+es sind nur eine Testdatei und Doku. Der Zweig beginnt mit C1a.
 
 ---
 
@@ -494,8 +357,8 @@ Ernstfall, sondern eine Bauregel für jede Stufe.
 
 ### 12.1 Regeln
 
-1. **Eigenes liegt in eigenen Dateien.** Modell, Datei-Format, Uhr, Panel und
-   Tests des Composers stehen in neuen Dateien unter eigenen Namen
+1. **Eigenes liegt in eigenen Dateien.** Modell, Datei-Format, Uhr, Mischer,
+   Panel und Tests des Composers stehen in neuen Dateien unter eigenen Namen
    (`composer/…`, `ComposerPanel`, `test_Composer*.cpp`). Rückbau heißt hier:
    Dateien löschen, Einträge aus den `Source.cmake` nehmen.
 2. **Bestehendes wird nur an benannten Nahtstellen berührt** (12.2). Jede
@@ -517,32 +380,32 @@ Ernstfall, sondern eine Bauregel für jede Stufe.
 6. **Eine Stufe ist erst fertig, wenn ihr Rückbau aufgeschrieben ist.** Die
    Rückbau-Liste wird mit jeder Stufe nachgeführt.
 
-### 12.2 Die Nahtstellen (Stand des Entwurfs)
+### 12.2 Die Nahtstellen (Stand nach den Entscheiden)
 
-| Naht | Wo | Was sich ändert | Vorgabe = altes Verhalten |
-|---|---|---|---|
-| N1 Pegel von außen | `renderHostGroup`, `GroupRuntime` | ein optionaler Pegel überschreibt das zeitgeführte Gewicht | nicht gesetzt → Gewicht läuft wie heute |
-| N2 Mischart mit Pegel | Ausgangs-Mischung der Gruppe | die gewählte Mischart gilt auch unter vollem Gewicht | nur für Gruppen mit Pegel von außen; alle anderen mischen wie heute |
-| N3 Vorwärmen und Entladen | Laufzeiten der Gruppen | eine Gruppe lässt sich vor ihrem Einsatz kompilieren und nach ihrem Ende freigeben | ohne Aufruf des Composers wie heute (C0: ruhende Clips kosten ohnehin nichts) |
-| N4 Laufendes Preset | `MainWindow::setzeLaufendesPreset`, Start | der Composer meldet sich als Quelle; der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute |
-| N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn | Composer aus → Effect Browser bzw. Playlist |
-| N6 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist |
-| N7 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge | — (reine Zusätze) |
+Die Bildberechnung des Renderers wird **nicht** berührt.
 
-Welche Nähte es wirklich braucht, zeigt C0. Kommt eine dazu, kommt sie in
-diese Tabelle, bevor sie gebaut wird.
+| Naht | Wo | Was sich ändert | Vorgabe = altes Verhalten | Stufe |
+|---|---|---|---|---|
+| R1 Bild herausgeben | Renderer | das fertige Bild als Textur lesbar (heute nur ein Testzugang, der kopiert) | reiner Lesezugang, ändert nichts | C1a |
+| R2 Karaoke auslassen | Renderer | ein Renderer kann die Karaoke-Ebene auslassen | Vorgabe: zeichnet sie wie heute | C1a |
+| R3 Bildquelle | Fenster / Render-Thread | der Composer tritt als Bildquelle an die Stelle des einen Renderers | Composer aus → der eine Renderer wie heute | C2 |
+| N4 Laufendes Preset, Start | `MainWindow`, `UI/StartPreset.hpp` | der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute | C6 |
+| N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
+| N6 Laden von Hand | `MainWindow` (gemeinsame Rückfrage vor dem Ersetzen der Kette) | Rückfrage bzw. Sperre bei laufendem Composer | Composer aus → wie heute | C6 |
+| N7 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist | C5 |
+| N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge | — (reine Zusätze) | C2 |
+
+Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 
 ### 12.3 Der Beleg je Stufe
 
 - **Unit-Tests** grün, 0 Skips — die bestehenden unverändert.
-- **Vergleichslauf** nach jeder Stufe, die den Renderer berührt (N1–N3):
+- **Vergleichslauf** nach jeder Stufe, die den Renderer berührt (R1, R2, R3):
   bitgleich gegen den Bezugsstand, mit ausgeschaltetem Composer.
 - **Ein eigener Test „Composer aus"** je Naht: derselbe Aufruf mit und ohne
   die Naht liefert dasselbe Ergebnis, solange der Composer nicht eingreift.
 
 ### 12.4 Die Rückbau-Liste
-
-Wird mit C0 angelegt und je Stufe nachgeführt, in diesem Dokument:
 
 | Stufe | Eigene Dateien (löschen) | Naht-Commits (zurücknehmen) | Einträge (herausnehmen) | Rückbau geprüft |
 |---|---|---|---|---|
@@ -550,8 +413,7 @@ Wird mit C0 angelegt und je Stufe nachgeführt, in diesem Dokument:
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich. Geprüft wird das **einmal
-nach C1** — der ersten Stufe mit Nähten im Renderer — und danach, wenn eine
-neue Naht dazukommt.
+nach C1a** und danach, wenn eine neue Naht dazukommt.
 
 ---
 
@@ -559,7 +421,8 @@ neue Naht dazukommt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 0.4.0 | 2026-10-04 | Session 93 — **Stufe C0b erledigt** (Frage Patrik: ist der eigene Mischer die beste Lösung?): §9b — zwei Renderer nebeneinander sind bitgleich mit dem Lauf allein, eine Mix-Datei mit Host Switcher läuft darin unverändert, ein weiterer Renderer kostet wenig, die Karaoke-Ebene zeichnet jeder selbst; Vergleichstabelle beider Wege; **Empfehlung C3 auf b, C11 auf c gedreht** (Entscheid offen) |
-| 0.3.0 | 2026-10-04 | Session 93 — **Stufe C0 erledigt:** §9a mit den Messwerten; §5 danach neu gefasst (Gewicht wirkt als Pegel; Mischart kennt keinen Pegel; ruhende Clips kosten nichts, dafür Anlauf-Ruck und fehlendes Entladen; `.lvfx2` mit Switcher als Clip schwarz); Naht N3 = Vorwärmen und Entladen; neuer Entscheid C11; Rückbau-Liste C0; Zweig `composer` (C10 a) |
-| 0.2.0 | 2026-10-04 | Session 93 — Vorgabe Patrik: rückbaubar. Neu §12 Rückbau (Regeln, Nahtstellen N1–N7, Beleg je Stufe, Rückbau-Liste), Entscheid C10 (Zweig), Stufen verweisen darauf |
-| 0.1.0 | 2026-10-03 | Session 93 — Erstfassung aus den Notizen S84, S88, S93 und Patriks Vorgaben vom 03.10.: Name Composer, Visual-Kanäle als Mischer, Audiokanal als Bezug, ein- und ausschaltbar; Renderweg über Host-Gruppen als Empfehlung (gelesen, nicht getestet); Stufen C0–C6; Entscheide C2–C7, C9 offen |
+| 0.5.0 | 2026-10-04 | Session 93 — **alle Entscheide gefallen** (Patrik): C2 a eigener Transport, C3 eigener Mischer, C4 a Visual-Playlist entfällt, C5 a Kürzel springen im Composer, C6 a Laden schaltet nach Rückfrage aus, dazu **ein Schalter Lock** für Kürzel und Laden (keine Rückfrage bei Vorführungen), C7 a Start lädt die Komposition angehalten am Anfang, C9 a Lücke schwarz, C11 entfällt. §5 neu gefasst (Mischer, Vorwärmen, Entladen, Karaoke einmal durch den Mischer, fünf offene Punkte für C1a); §8 mit den Regeln; Stufen C1a / C1b; Nahtstellen neu (R1–R3 am Rand des Renderers, keine in der Bildberechnung) |
+| 0.4.0 | 2026-10-04 | Session 93 — **Stufe C0b erledigt** (Frage Patrik: ist der eigene Mischer die beste Lösung?): §9b — zwei Renderer nebeneinander sind bitgleich mit dem Lauf allein, eine Mix-Datei mit Host Switcher läuft darin unverändert, ein weiterer Renderer kostet wenig, die Karaoke-Ebene zeichnet jeder selbst; Empfehlung C3 und C11 gedreht |
+| 0.3.0 | 2026-10-04 | Session 93 — **Stufe C0 erledigt:** §9a mit den Messwerten; Gewicht wirkt als Pegel; Mischart kennt keinen Pegel; ruhende Clips kosten nichts, dafür Anlauf-Ruck und fehlendes Entladen; `.lvfx2` mit Switcher als Clip schwarz; Entscheid C11; Rückbau-Liste C0 |
+| 0.2.0 | 2026-10-04 | Session 93 — Vorgabe Patrik: rückbaubar. Neu §12 Rückbau (Regeln, Nahtstellen, Beleg je Stufe, Rückbau-Liste), Entscheid C10 (Zweig) |
+| 0.1.0 | 2026-10-03 | Session 93 — Erstfassung aus den Notizen S84, S88, S93 und Patriks Vorgaben vom 03.10.: Name Composer, Visual-Kanäle als Mischer, Audiokanal als Bezug, ein- und ausschaltbar; Stufen; Entscheide |

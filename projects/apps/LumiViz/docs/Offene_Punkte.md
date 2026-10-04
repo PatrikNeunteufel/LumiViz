@@ -2151,7 +2151,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   1. Symboltabelle Modul×Slot×Name → Kategorie/Typ/Range/Text · 2. Referenz daraus
   generieren statt Hand-HTML · 3. Kategorie-Highlighter modul-bewusst ·
   4. Fehler-Markierung je Slot statt global konservativ.
-- 🟡 **P2 Visual-Playlist** — hängt an den Entscheiden §5.
+- ~~**P2 Visual-Playlist**~~ — ✅ **geschlossen (Entscheid Patrik S93, C4 a):**
+  entfällt als eigenes Vorhaben, aufgegangen in Composer
+  ([Composer_Konzept.md](ui/Composer_Konzept.md)) und Host Switcher.
 - 🔧 **P1 Set Render Mode auf alle Scope-Effekte** — durch S45/S3 weitgehend erledigt
   (`drawScopeShape`, `drawDots` zeichnen über den SRM-Zustand); als Punkt nie
   formal geschlossen. Prüfen und schließen.
@@ -2206,11 +2208,14 @@ Idee Preset-Warmup/Pre-Roll.
 - Gemeinsame Bausteine: `UI/widgets/DateiDrag.hpp`, `DateiListe.hpp`,
   `AudioDateien.hpp`, `audio/AlbumCover.hpp` — die Timeline nimmt dieselben
   Datei-URLs an.
-- **Konzept (S93, Entwurf zur Durchsicht):**
+- **Konzept (S93, gebilligt, alle Entscheide gefallen):**
   [Composer_Konzept.md](ui/Composer_Konzept.md) — das Vorhaben heißt
   **Composer** (Vorgabe Patrik S93; „Timeline" ist nur noch die Zeitachse im
-  Panel). Stufen C0–C6, Entscheide C2–C7 und C9 offen. Die folgenden Notizen
-  sind dort eingearbeitet und bleiben als Quelle stehen.
+  Panel). Renderweg: eigener Mischer über je einem Renderer je laufendem
+  Clip; rückbaubar; Stufen C0 und C0b (Belege) erledigt, **nächste Stufe
+  C1a** (Mischer in kleinster Fassung) im Zweig `composer`. Die folgenden
+  Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
+  aus S93 (Kürzel sperren, Start) sind dort entschieden.
 - **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
   Konzept-Session): *n* Audiokanäle und *n* Visual-Kanäle zum Mischen;
   Einblenden/Ausblenden im Prinzip wie bei der Host-Gruppe (Crossfade,
