@@ -1,10 +1,11 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.6.0
+> **Version:** 0.7.0
 > **Datum:** 2026-10-04 (Session 93)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
-> Stufen **C0, C0b (Belege) und C1a (Mischer, Nähte R1 / R2) erledigt** —
+> Stufen **C0, C0b (Belege), C1a (Mischer, Nähte R1 / R2) und C1b (Modell,
+> Datei, Uhr, Wiedergabe ohne Panel) erledigt** —
 > im Zweig `composer`, noch nicht nach `master` geholt
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`
@@ -243,7 +244,7 @@ Jede Stufe endet mit etwas Prüfbarem. Für jede gelten die Regeln zum Rückbau
 | **C0 Belege** ✅ | Renderweg über Host-Gruppen untersucht | erledigt (S93), §9a — verworfen |
 | **C0b Belege** ✅ | mehrere Renderer nebeneinander | erledigt (S93), §9b — trägt |
 | **C1a Mischer, kleinste Fassung** ✅ | zwei Renderer, ein Mischpass mit Pegel und Mischart, Karaoke einmal darüber; Nähte R1 und R2 | erledigt (S93), §9c. Von den fünf offenen Punkten aus §5 sind drei belegt; Render-Thread / Fenster und die Zeiten im Release-Build gehen nach C2 |
-| **C1b Modell und Wiedergabe** | Komposition als Datenmodell, `.lvcomp` lesen und schreiben, Uhr mit Transport, Pegel aus der Kurve, Vorwärmen und Entladen; **ohne Panel** | Test: an Stelle *t* zeigt das Bild die erwarteten Clips mit den erwarteten Pegeln; nach einem Sprung ebenso |
+| **C1b Modell und Wiedergabe** ✅ | Komposition als Datenmodell, `.lvcomp` lesen und schreiben, Uhr mit Transport, Pegel aus der Kurve, Vorwärmen und Entladen; **ohne Panel** | erledigt (S93), §9d |
 | **C2 Panel zum Ansehen** | Panel mit Lineal, Kanälen, Clips, Abspielmarke, Transport, Schalter Composer on; der Composer als Bildquelle der App | eine von Hand geschriebene `.lvcomp` läuft und ist zu sehen |
 | **C3 Bearbeiten** | Clips hineinziehen, verschieben, Kanten ziehen, löschen; Kanäle anlegen; Datei-Zeile; Undo | eine Komposition ganz im Panel bauen |
 | **C4 Pegelkurven** | Punkte im Clip, Kurvenformen, Mischart je Clip | Übergang und Überlagerung aus der Skizze S88 |
@@ -351,6 +352,47 @@ vermerkt; die Bildberechnung ist nicht berührt):
 **Offen für später:** „Die Effektkette gewinnt" über mehrere Clips — zeigt
 ein Clip selbst Lyrics, tritt die Ebene heute nur im **selben** Renderer
 zurück. Der Mischer muss das über alle laufenden Clips entscheiden.
+
+### 9d. Stand C1b — ✅ erledigt (S93): Modell, Datei, Uhr, Wiedergabe
+
+Nur eigener Code, **keine Naht**, kein bestehender Code berührt.
+
+| Datei | Inhalt |
+|---|---|
+| `composer/Komposition.hpp` / `.cpp` | Datenmodell (`Komposition`, `Kanal`, `VisualClip`, `AudioClip`, `PegelPunkt`), sechs Kurvenformen (Linear, S-Kurve, Ease-In, Ease-Out, Exponentiell, Halten), `pegelBei`, `setzeBlenden`, `richte`; Datei `.lvcomp` (`speichereKomposition`, `ladeKomposition`) |
+| `composer/Uhr.hpp` | der Transport nach C2 a: `starte`, `stoppe`, `springe`, `anDenAnfang`, Länge; Zeitquelle austauschbar |
+| `composer/Wiedergabe.hpp` / `.cpp` | `rendere(stelle, delta, größe)`: Renderer je Clip anlegen, vorwärmen, entladen, mischen, Karaoke einmal darüber |
+| `tests/…/test_ComposerWiedergabe.cpp` | Suite `ComposerWiedergabe`, acht Testfälle |
+
+**Die Datei `.lvcomp`:** JSON mit `format: "lumiviz-composition"`,
+`version`, `length`, `gridSeconds`, `channels[]` (`kind`, `name`,
+`enabled`, `clips[]`). Ein Visual-Clip: `file`, `start`, `end`, `blend`,
+`levels[]` (`t`, `level`, `curve`). Ein Audio-Clip: `file`, `start`,
+`offset`. Dateien unterhalb des Ordners der `.lvcomp` stehen **relativ**
+darin, alle anderen absolut.
+
+| Frage | Ergebnis |
+|---|---|
+| Zeigt das Bild an jeder Stelle die erwarteten Clips mit den erwarteten Pegeln? | ja — neun Stellen einer Komposition mit Einblenden, Ausblenden, Überlagerung (additiv auf halbem Pegel, dann steigend), Lücke und Ende; je Kanal höchstens 2 von 255 daneben |
+| Auch nach einem Sprung? | ja — dieselben Stellen in anderer Reihenfolge, dasselbe Bild |
+| Lücke? | schwarz (C9 a); das Ende eines Clips ist ausschließlich |
+| Ausgeschalteter Kanal? | fällt weg |
+| Vorwärmen, Entladen? | Renderer gibt es nur für Clips, die laufen oder im Vorlauf (Vorgabe 2 s) sind; im Vorlauf angelegt, aber nicht gemischt; nach dem Ende und nach einem Sprung weg |
+| Verstellt das Vorwärmen den Clip? | nein — das Vorwärm-Bild rechnet mit Delta 0; ein vorgewärmter Clip ist nach 30 Bildern bitgleich mit dem Lauf allein (0 von 19 200 Pixeln). Belegt an einem Preset mit Feedback; für Presets, die Bilder zählen statt Zeit zu messen, nicht belegt |
+| Ein Clip auf vollem Pegel? | bitgleich mit dem Renderer allein |
+| Fehlende Datei? | gemeldet (`bericht()`), der Clip bleibt schwarz, kein neuer Versuch in jedem Bild |
+| Karaoke? | einmal über dem Gemischten — über zwei Clips so viele Pixel wie bei einem Renderer allein (8671); auch in der Lücke; Ebene aus = sofort weg |
+| `.lvcomp` | Roundtrip aller Felder; relative und absolute Pfade; fehlende Datei gemeldet, Clip bleibt; fremdes JSON wird abgelehnt |
+| Uhr | steht, bis sie gestartet wird; Stopp hält die Stelle; Sprung im Stand und im Lauf; hält am Ende, ein neuer Start beginnt von vorn |
+
+Unit-Tests **866 / 866 grün, 0 Skips**. Kein Vergleichslauf nötig: der
+Renderer ist in C1b nicht berührt.
+
+**Nicht gebaut, bewusst:** Audio-Clips stehen im Modell und in der Datei,
+werden aber noch nicht gespielt (C5). Die Renderer der Clips bekommen noch
+keine Audiodaten — das reicht die Bildquelle in C2 durch
+(`fuerJedenRenderer`). Die Warnung bei einer Datei mit Host Switcher kommt
+mit dem Hinzufügen von Clips im Panel (C3).
 
 ---
 
@@ -469,7 +511,8 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | Stufe | Eigene Dateien (löschen) | Naht-Commits (zurücknehmen) | Einträge (herausnehmen) | Rückbau geprüft |
 |---|---|---|---|---|
 | C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
-| C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | der Commit `composer-naht: R1, R2` (`MultiEffectVisualizer.hpp` / `.cpp`) | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | solange der Zweig nicht geholt ist, **ist `master` der zurückgebaute Stand**; vor dem Holen: `git diff --stat master composer` muss genau diese Liste zeigen |
+| C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | **`91967c2`** — Naht (`MultiEffectVisualizer.hpp` / `.cpp`) und Eigenes liegen in diesem einen Commit; ihn zurückzunehmen baut C1a ganz zurück | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | ✅ S93: `git diff --stat master composer` zeigt genau diese neun Dateien; an Bestehendem drei Naht-Zeilen in der `.cpp`, 26 Zeilen im Header, je eine Zeile in zwei Quellenlisten |
+| C1b | `include/composer/` (Komposition.hpp, Uhr.hpp, Wiedergabe.hpp), `src/composer/` (Komposition.cpp, Wiedergabe.cpp), `tests/unit/UnitTests/test_ComposerWiedergabe.cpp` | keine | zwei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich. Im Zweig ist das ohne
@@ -483,6 +526,7 @@ zwischen `master` und `composer` muss sich mit der Rückbau-Liste decken.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.7.0 | 2026-10-04 | Session 93 — **Stufe C1b erledigt** (Zweig `composer`): §9d — Datenmodell mit Pegelkurven (sechs Formen), Datei `.lvcomp`, Uhr mit Transport, Wiedergabe mit Vorwärmen, Entladen und Karaoke einmal darüber; nur eigener Code, keine Naht; 866 Cases; Rückbau-Liste: C1a geprüft (ein Commit `91967c2`), C1b eingetragen |
 | 0.6.0 | 2026-10-04 | Session 93 — **Stufe C1a erledigt** (Zweig `composer`): §9c — `Leinwand` und `Mischer` mit sieben Mischarten und Pegel; Nähte R1 (Present-Ziel statt Lesezugang) und R2 (Karaoke auslassen, einmal auflegen); MilkDrop nebeneinander bitgleich; Mischen 0,29 ms je Bild; Vergleichslauf 90 / 90 bitgleich, 858 Cases; Render-Thread und Release-Zeiten gehen nach C2; Rückbau-Liste C1a |
 | 0.5.0 | 2026-10-04 | Session 93 — **alle Entscheide gefallen** (Patrik): C2 a eigener Transport, C3 eigener Mischer, C4 a Visual-Playlist entfällt, C5 a Kürzel springen im Composer, C6 a Laden schaltet nach Rückfrage aus, dazu **ein Schalter Lock** für Kürzel und Laden (keine Rückfrage bei Vorführungen), C7 a Start lädt die Komposition angehalten am Anfang, C9 a Lücke schwarz, C11 entfällt. §5 neu gefasst (Mischer, Vorwärmen, Entladen, Karaoke einmal durch den Mischer, fünf offene Punkte für C1a); §8 mit den Regeln; Stufen C1a / C1b; Nahtstellen neu (R1–R3 am Rand des Renderers, keine in der Bildberechnung) |
 | 0.4.0 | 2026-10-04 | Session 93 — **Stufe C0b erledigt** (Frage Patrik: ist der eigene Mischer die beste Lösung?): §9b — zwei Renderer nebeneinander sind bitgleich mit dem Lauf allein, eine Mix-Datei mit Host Switcher läuft darin unverändert, ein weiterer Renderer kostet wenig, die Karaoke-Ebene zeichnet jeder selbst; Empfehlung C3 und C11 gedreht |
