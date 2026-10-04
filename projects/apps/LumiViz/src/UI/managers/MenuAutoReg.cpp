@@ -59,6 +59,7 @@
 #include "services/IEventBus.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/events/UIEvents.hpp"
+#include "composer/AppAnbindung.hpp"  // Composer-Naht N8
 
 #include <QApplication>
 #include <QMainWindow>
@@ -170,6 +171,36 @@ void initMenuDefaults(MenuRegistry& registry)
                     eventBus->publish(SaveEffectChainEvent{true});
             },
             {}, {}, "Ctrl+Shift+S"
+        },
+        false);
+
+    // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2): eine Komposition
+    // ein- und ausschalten, solange es kein Panel gibt (C2a)
+    registry.registerGroup(
+        MenuGroupDesc{{"menu.file.group.composer", "menu.file", 400}},
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.opencomposition", "menu.file", 410},
+            "Open Composition...",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(lumi::composer::OpenCompositionEvent{});
+            },
+            {}, {}, ""
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.closecomposition", "menu.file", 420},
+            "Close Composition",
+            [](ServiceContainer& svc) {
+                if (auto* eventBus = svc.tryResolve<IEventBus>())
+                    eventBus->publish(lumi::composer::CloseCompositionEvent{});
+            },
+            {}, {}, ""
         },
         false);
 

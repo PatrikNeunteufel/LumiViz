@@ -29,6 +29,7 @@
 #include "UI/PresetSpeichern.hpp"                       // Save gegen Save As (S89)
 #include "UI/PresetListen.hpp"                          // Favoriten / zuletzt (S89)
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
+#include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -1048,6 +1049,20 @@ void MainWindow::setupEventHandlers()
     // Save / Save As (S89, Entscheid Patrik 3a) — Regel: UI/PresetSpeichern.hpp
     pEventBus->subscribe<SaveEffectChainEvent>(
         [this](const SaveEffectChainEvent& ev) { (void)speichereKette(ev.saveAs); });
+
+    // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2): Menue File →
+    // Open / Close Composition; alles Weitere in composer/AppAnbindung
+    pEventBus->subscribe<lumi::composer::OpenCompositionEvent>(
+        [this](const lumi::composer::OpenCompositionEvent& ev) {
+            if (VisualizerWidget* widget = primaryVisualizer())
+                (void)lumi::composer::oeffneKomposition(*widget, this,
+                                                        QString::fromStdString(ev.path));
+        });
+    pEventBus->subscribe<lumi::composer::CloseCompositionEvent>(
+        [this](const lumi::composer::CloseCompositionEvent&) {
+            if (VisualizerWidget* widget = primaryVisualizer())
+                lumi::composer::schliesseKomposition(*widget);
+        });
 
     BasicLogger::logDebug("  Event handlers registered");
 }
