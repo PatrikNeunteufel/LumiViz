@@ -230,6 +230,18 @@ bool VisualizerWidget::setVisualizer(const QString& id)
     return true;
 }
 
+// Composer-Naht R3
+void VisualizerWidget::setBildquelle(std::unique_ptr<IVisualizer> quelle)
+{
+    if (m_thread == nullptr)
+    {
+        return;
+    }
+    std::unique_ptr<IVisualizer> alt = std::move(m_bildquelle);
+    m_bildquelle = std::move(quelle);
+    m_thread->setBildquelle(m_bildquelle.get(), std::move(alt));
+}
+
 QString VisualizerWidget::currentVisualizerName() const
 {
     if (m_visualizer != nullptr)

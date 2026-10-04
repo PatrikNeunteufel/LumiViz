@@ -203,6 +203,24 @@ void VisualizerRenderThread::setVisualizer(IVisualizer* next,
     m_cond.wakeAll();
 }
 
+// Composer-Naht R3
+void VisualizerRenderThread::setBildquelle(IVisualizer* quelle,
+                                           std::unique_ptr<IVisualizer> retire)
+{
+    QMutexLocker lock(&m_mutex);
+
+    // Anders als beim Visualizer-Tausch kann eine wartende alte Bildquelle
+    // schon GL-Objekte halten — keine wird still verworfen, alle warten.
+    if (retire != nullptr)
+    {
+        m_pendingQuelleRetire.push_back(std::move(retire));
+    }
+
+    m_pendingQuelle = quelle;
+    m_hasQuelle = true;
+    m_cond.wakeAll();
+}
+
 void VisualizerRenderThread::setPacing(RenderPacing pacing, int targetFps)
 {
     QMutexLocker lock(&m_mutex);
@@ -310,6 +328,10 @@ void VisualizerRenderThread::run()
         IVisualizer* adopt = nullptr;
         std::unique_ptr<IVisualizer> retire;
         bool pacingDirty = false;
+        // Composer-Naht R3
+        bool doQuelle = false;
+        IVisualizer* quelleNeu = nullptr;
+        std::vector<std::unique_ptr<IVisualizer>> quelleRetire;
 
         // ---------------------------------------------------------------------
         // Sync point: wait until exposed, serve surface release, pop commands
@@ -348,6 +370,13 @@ void VisualizerRenderThread::run()
             m_hasAdopt = false;
             retire = std::move(m_pendingRetire);
 
+            // Composer-Naht R3
+            doQuelle = m_hasQuelle;
+            quelleNeu = m_pendingQuelle;
+            m_hasQuelle = false;
+            quelleRetire = std::move(m_pendingQuelleRetire);
+            m_pendingQuelleRetire.clear();
+
             pacingDirty = m_pacingDirty;
             pacing = m_pacing;
             targetFps = m_targetFps;
@@ -380,6 +409,16 @@ void VisualizerRenderThread::run()
             if (pacingDirty)
             {
                 m_pacingDirty = true;
+            }
+            // Composer-Naht R3: auch das Bildquellen-Kommando zuruecklegen
+            if (doQuelle && !m_hasQuelle)
+            {
+                m_pendingQuelle = quelleNeu;
+                m_hasQuelle = true;
+            }
+            for (auto& alt : quelleRetire)
+            {
+                m_pendingQuelleRetire.push_back(std::move(alt));
             }
             lock.unlock();
             QThread::msleep(20);
@@ -446,6 +485,42 @@ void VisualizerRenderThread::run()
                                  std::to_string(schritt.elapsed()) + " ms");
         }
 
+        // Composer-Naht R3: alte Bildquellen aufraeumen und loeschen, die neue
+        // anlegen, Groesse nachfuehren — alles auf DIESEM Thread.
+        if (!quelleRetire.empty() || doQuelle)
+        {
+            QMutexLocker render(&m_renderMutex);
+            for (auto& alt : quelleRetire)
+            {
+                if (m_quelle == alt.get())
+                {
+                    m_quelle = nullptr;
+                }
+                if (alt->isInitialized())
+                {
+                    alt->cleanup();
+                }
+                alt.reset();
+            }
+            if (doQuelle)
+            {
+                m_quelle = quelleNeu;
+                if (m_quelle != nullptr && !m_quelle->isInitialized())
+                {
+                    m_quelle->initialize();
+                    if (pendingSize.isValid())
+                    {
+                        m_quelle->resize(pendingSize);
+                    }
+                }
+            }
+        }
+        if (m_quelle != nullptr && doResize && pendingSize.isValid())
+        {
+            QMutexLocker render(&m_renderMutex);
+            m_quelle->resize(pendingSize);
+        }
+
         const float currentTime = frameTimer.elapsed() / 1000.0f;
         const float deltaTime = currentTime - lastFrameTime;
         lastFrameTime = currentTime;
@@ -455,6 +530,10 @@ void VisualizerRenderThread::run()
             // Audio snapshot + render under the render mutex (UI accessors
             // hold the same mutex for setParam/getParam/gradients/taps)
             QMutexLocker render(&m_renderMutex);
+            // Composer-Naht R3: ist der Platz besetzt, bekommt die Bildquelle
+            // dieselben Audiodaten und rechnet das Bild. Leer = wie immer.
+            IVisualizer* const quelle =
+                (m_quelle != nullptr && m_quelle->isInitialized()) ? m_quelle : nullptr;
             {
                 QMutexLocker audioLock(&m_audioMutex);
                 if (m_audioDirty)
@@ -464,12 +543,24 @@ void VisualizerRenderThread::run()
                         m_current->updateSpectrum(
                             m_spectrum.data(),
                             static_cast<int>(m_spectrum.size()));
+                        if (quelle != nullptr)
+                        {
+                            quelle->updateSpectrum(
+                                m_spectrum.data(),
+                                static_cast<int>(m_spectrum.size()));
+                        }
                     }
                     if (!m_waveform.empty())
                     {
                         m_current->updateWaveform(
                             m_waveform.data(),
                             static_cast<int>(m_waveform.size()));
+                        if (quelle != nullptr)
+                        {
+                            quelle->updateWaveform(
+                                m_waveform.data(),
+                                static_cast<int>(m_waveform.size()));
+                        }
                     }
                     m_audioDirty = false;
                 }
@@ -479,11 +570,25 @@ void VisualizerRenderThread::run()
                         m_specI.empty() ? nullptr : m_specI.data(), m_stereoBins,
                         m_waveI.empty() ? nullptr : m_waveI.data(), m_stereoFrames,
                         m_stereoChannels);
+                    if (quelle != nullptr)
+                    {
+                        quelle->updateAudioStereo(
+                            m_specI.empty() ? nullptr : m_specI.data(), m_stereoBins,
+                            m_waveI.empty() ? nullptr : m_waveI.data(), m_stereoFrames,
+                            m_stereoChannels);
+                    }
                     m_stereoDirty = false;
                 }
             }
             schritt.restart();
-            m_current->render(deltaTime);
+            if (quelle != nullptr)
+            {
+                quelle->render(deltaTime);
+            }
+            else
+            {
+                m_current->render(deltaTime);
+            }
             if (schritt.elapsed() > kLangMs)
             {
                 BasicLogger::logInfo("RenderThread: render " +
@@ -585,6 +690,30 @@ void VisualizerRenderThread::run()
             m_pendingRetire->cleanup();
         }
         m_pendingRetire.reset();
+    }
+
+    // Composer-Naht R3: wartende alte Bildquellen loeschen, die laufende nur
+    // aufraeumen (sie gehoert der Fassade).
+    for (auto& alt : m_pendingQuelleRetire)
+    {
+        if (m_quelle == alt.get())
+        {
+            m_quelle = nullptr;
+        }
+        if (haveSurface && alt->isInitialized())
+        {
+            alt->cleanup();
+        }
+        alt.reset();
+    }
+    m_pendingQuelleRetire.clear();
+    if (m_quelle != nullptr)
+    {
+        if (haveSurface && m_quelle->isInitialized())
+        {
+            m_quelle->cleanup();
+        }
+        m_quelle = nullptr;
     }
 
     if (m_current != nullptr)

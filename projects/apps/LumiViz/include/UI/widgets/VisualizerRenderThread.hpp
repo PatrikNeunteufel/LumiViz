@@ -147,6 +147,22 @@ public:
     void setVisualizer(IVisualizer* next, std::unique_ptr<IVisualizer> retire);
 
     /**
+     * @brief Composer-Naht R3 (docs/ui/Composer_Konzept.md §12.2): eine
+     *        Bildquelle neben dem einen Visualizer.
+     *
+     * Ist der Platz besetzt, gehen Audiodaten und `render` an die Bildquelle;
+     * der Visualizer bleibt angelegt, bekommt weiter Groesse und Audiodaten,
+     * wird aber nicht gerechnet. Vorgabe: Platz leer — der eine Visualizer wie
+     * immer.
+     *
+     * @param quelle Bildquelle (gehoert der Fassade; GL-Anlegen auf dem
+     *               Render-Thread vor ihrem ersten Bild); nullptr = Platz leer
+     * @param retire vorige Bildquelle; wird auf dem Render-Thread aufgeraeumt
+     *               und GELOESCHT
+     */
+    void setBildquelle(IVisualizer* quelle, std::unique_ptr<IVisualizer> retire);
+
+    /**
      * @brief Change frame pacing (swap interval is applied on the thread)
      */
     void setPacing(RenderPacing pacing, int targetFps);
@@ -219,6 +235,11 @@ private:
     IVisualizer* m_pendingAdopt = nullptr;
     std::unique_ptr<IVisualizer> m_pendingRetire;
 
+    // Composer-Naht R3: Bildquellen-Kommando (m_mutex)
+    bool m_hasQuelle = false;
+    IVisualizer* m_pendingQuelle = nullptr;
+    std::vector<std::unique_ptr<IVisualizer>> m_pendingQuelleRetire;
+
     // Pacing command (m_mutex)
     RenderPacing m_pacing = RenderPacing::Limited;
     int m_targetFps = 60;
@@ -239,4 +260,5 @@ private:
 
     // Render-thread-only state
     IVisualizer* m_current = nullptr;  ///< non-owning (facade owns)
+    IVisualizer* m_quelle = nullptr;   ///< Composer-Naht R3; non-owning (facade owns)
 };

@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.7.1
-> **Datum:** 2026-10-04 (Session 93)
+> **Version:** 0.8.0
+> **Datum:** 2026-10-04 (Session 94)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0, C0b (Belege), C1a (Mischer, Nähte R1 / R2) und C1b (Modell,
@@ -494,7 +494,7 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 |---|---|---|---|---|
 | R1 Present-Ziel ✅ | Renderer, eine Zeile im Present | `setPresentZiel`: der Renderer legt sein fertiges Bild in ein Framebuffer-Objekt des Aufrufers | 0 = das Fenster, wie immer | C1a |
 | R2 Karaoke ✅ | Renderer, eine Abfrage und eine Weiterleitung | `setKaraokeAuslassen`; `legeKaraokeEbeneAuf` legt die gerechnete Ebene auf den gebundenen Framebuffer | Vorgabe: zeichnet sie wie heute | C1a |
-| R3 Bildquelle | Fenster / Render-Thread | der Composer tritt als Bildquelle an die Stelle des einen Renderers | Composer aus → der eine Renderer wie heute | C2 |
+| R3 Bildquelle ✅ | `VisualizerRenderThread` (`setBildquelle`, Auswahl je Bild, Herunterfahren), `VisualizerWidget` (`setBildquelle` als Durchreichung, Besitz) | der Thread bekommt neben dem einen Renderer einen zweiten Platz für eine Bildquelle (`IVisualizer`). Ist er besetzt, gehen Audiodaten und `render` an die Bildquelle; der Renderer der Kette bleibt angelegt, bekommt weiter Größe und Audiodaten, wird aber nicht gerechnet. Die Bildquelle wird auf dem Render-Thread angelegt, aufgeräumt und gelöscht (Entscheid Patrik S94: a) | Platz leer (Vorgabe) → der eine Renderer wie heute | C2a |
 | N4 Laufendes Preset, Start | `MainWindow`, `UI/StartPreset.hpp` | der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute | C6 |
 | N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
 | N6 Laden von Hand | `MainWindow` (gemeinsame Rückfrage vor dem Ersetzen der Kette) | Rückfrage bzw. Sperre bei laufendem Composer | Composer aus → wie heute | C6 |
@@ -506,8 +506,15 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 ### 12.3 Der Beleg je Stufe
 
 - **Unit-Tests** grün, 0 Skips — die bestehenden unverändert.
-- **Vergleichslauf** nach jeder Stufe, die den Renderer berührt (R1, R2, R3):
+- **Vergleichslauf** nach jeder Stufe, die den Renderer berührt (R1, R2):
   bitgleich gegen den Bezugsstand, mit ausgeschaltetem Composer.
+- **R3 belegt der Vergleichslauf nicht** (Befund S94): er läuft über
+  `AvsStandalone`, und weder dieses noch die übrigen Unit-Tests benutzen
+  `VisualizerRenderThread` oder `VisualizerWidget`. Der Beleg für R3 ist
+  `test_ComposerNahtR3.cpp` — der echte Thread an einem echten Fenster mit
+  zählenden Visualizern: Platz leer wie immer, Platz besetzt, Wegnehmen,
+  Herunterfahren. Die Durchreichung in `VisualizerWidget` (zehn Zeilen) hat
+  keinen eigenen Test; sie wird mit der Bildquelle in C2a im Programm gesehen.
 - **Ein eigener Test „Composer aus"** je Naht: derselbe Aufruf mit und ohne
   die Naht liefert dasselbe Ergebnis, solange der Composer nicht eingreift.
 
@@ -518,6 +525,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
 | C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | **`91967c2`** — Naht (`MultiEffectVisualizer.hpp` / `.cpp`) und Eigenes liegen in diesem einen Commit; ihn zurückzunehmen baut C1a ganz zurück | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | ✅ S93: `git diff --stat master composer` zeigt genau diese neun Dateien; an Bestehendem drei Naht-Zeilen in der `.cpp`, 26 Zeilen im Header, je eine Zeile in zwei Quellenlisten |
 | C1b | `include/composer/` (Komposition.hpp, Uhr.hpp, Wiedergabe.hpp), `src/composer/` (Komposition.cpp, Wiedergabe.cpp), `tests/unit/UnitTests/test_ComposerWiedergabe.cpp` | keine Naht; der Commit ist **`db3a026`** | zwei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
+| C2a, Naht R3 | `tests/unit/UnitTests/test_ComposerNahtR3.cpp` | **Commit nachtragen** — nur Naht: `VisualizerRenderThread.hpp` / `.cpp` (`setBildquelle`, Kommando, Auswahl je Bild, Herunterfahren), `VisualizerWidget.hpp` / `.cpp` (`setBildquelle`, `bildquelle`, `m_bildquelle`); jede Stelle trägt `Composer-Naht R3` | eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/widgets/VisualizerRenderThread.*` und `VisualizerWidget.*` erweitert |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -539,6 +547,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.8.0 | 2026-10-04 | Session 94 — **Naht R3 gebaut** (Entscheid Patrik: a — zweiter Platz im Render-Thread, der Renderer der Kette bleibt angelegt): §12.2 Zeile R3 neu gefasst; §12.3 — der Vergleichslauf belegt R3 nicht, Beleg ist `test_ComposerNahtR3.cpp`; Rückbau-Liste um C2a, Naht R3 erweitert; 867 Cases |
 | 0.7.1 | 2026-10-04 | Session 93 — **Zweig-Regel geändert (Patrik):** nach `master` geholt wird erst, wenn der Composer sauber funktioniert; bis dahin läuft alle Arbeit im Zweig. C10, §11 „Zum Zweig" und §12.4 angepasst: Rückbau über die Rückbau-Liste statt „Zweig verwerfen", Prüfung über die Pfade des Composers; Commit von C1b eingetragen |
 | 0.7.0 | 2026-10-04 | Session 93 — **Stufe C1b erledigt** (Zweig `composer`): §9d — Datenmodell mit Pegelkurven (sechs Formen), Datei `.lvcomp`, Uhr mit Transport, Wiedergabe mit Vorwärmen, Entladen und Karaoke einmal darüber; nur eigener Code, keine Naht; 866 Cases; Rückbau-Liste: C1a geprüft (ein Commit `91967c2`), C1b eingetragen |
 | 0.6.0 | 2026-10-04 | Session 93 — **Stufe C1a erledigt** (Zweig `composer`): §9c — `Leinwand` und `Mischer` mit sieben Mischarten und Pegel; Nähte R1 (Present-Ziel statt Lesezugang) und R2 (Karaoke auslassen, einmal auflegen); MilkDrop nebeneinander bitgleich; Mischen 0,29 ms je Bild; Vergleichslauf 90 / 90 bitgleich, 858 Cases; Render-Thread und Release-Zeiten gehen nach C2; Rückbau-Liste C1a |

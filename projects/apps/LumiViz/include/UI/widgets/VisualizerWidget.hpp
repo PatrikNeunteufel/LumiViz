@@ -151,6 +151,20 @@ public:
      */
     [[nodiscard]] QMutex& renderMutex() { return m_renderMutex; }
 
+    /**
+     * @brief Composer-Naht R3 (docs/ui/Composer_Konzept.md §12.2): eine
+     *        Bildquelle an die Stelle des Visualizers setzen.
+     *
+     * Solange eine Bildquelle gesetzt ist, liefert sie das Bild; visualizer()
+     * bleibt angelegt und fuer die Panels erreichbar, wird aber nicht
+     * gerechnet. nullptr nimmt sie wieder weg — der Visualizer laeuft weiter
+     * wie zuvor. Die vorige Bildquelle raeumt und loescht der Render-Thread.
+     *
+     * @warning Zugriffe auf bildquelle() nur unter renderMutex().
+     */
+    void setBildquelle(std::unique_ptr<IVisualizer> quelle);
+    [[nodiscard]] IVisualizer* bildquelle() const { return m_bildquelle.get(); }
+
     // =========================================================================
     // Frame Pacing
     // =========================================================================
@@ -284,4 +298,8 @@ private:
     // Active visualizer (owned here; GL lifecycle on the render thread)
     std::unique_ptr<IVisualizer> m_visualizer;
     QString m_currentVisualizerId;
+
+    /// Composer-Naht R3: Bildquelle (hier im Besitz; GL-Lebenszyklus auf dem
+    /// Render-Thread). Leer = der Visualizer liefert das Bild.
+    std::unique_ptr<IVisualizer> m_bildquelle;
 };
