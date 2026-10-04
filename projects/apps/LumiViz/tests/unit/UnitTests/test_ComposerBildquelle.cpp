@@ -23,14 +23,19 @@
 #include <doctest.h>
 
 #include "UI/widgets/VisualizerRenderThread.hpp"
+#include "UI/widgets/VisualizerWidget.hpp"
+#include "composer/AppAnbindung.hpp"
 #include "composer/Bildquelle.hpp"
+#include "services/ServiceContainer.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Uhr.hpp"
 #include "visualizers/IVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
+#include <QApplication>
 #include <QColor>
 #include <QCoreApplication>
+#include <QFile>
 #include <QElapsedTimer>
 #include <QGuiApplication>
 #include <QImage>
@@ -417,5 +422,94 @@ TEST_SUITE("ComposerBildquelle")
 
         faden.stopAndWait();
         fenster.attachThread(nullptr);
+    }
+
+    TEST_CASE("C2a AppAnbindung: eine .lvcomp ueber die Fassade ein- und ausschalten")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), rot, 0, 60000));
+        const QString datei = dir.filePath(QStringLiteral("probe.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        widget.show();
+
+        QImage aufnahme;
+        int aufnahmen = 0;
+        QObject::connect(&widget, &VisualizerWidget::frameCaptured, &app,
+                         [&](const QImage& bild) {
+                             aufnahme = bild;
+                             ++aufnahmen;
+                         });
+        const auto nimmAuf = [&]() {
+            const int vorher = aufnahmen;
+            widget.requestScreenshot();
+            return warte([&] { return aufnahmen > vorher; });
+        };
+        const auto mitte = [&]() {
+            return aufnahme.pixelColor(aufnahme.width() / 2, aufnahme.height() / 2);
+        };
+        if (!widget.hasVisualizer() || !nimmAuf())
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        const QColor kRot(255, 0, 0);
+        CHECK_FALSE(lumi::composer::kompositionLaeuft(widget));
+        IVisualizer* const kette = widget.visualizer();
+
+        // keine Komposition: nichts aendert sich
+        const QString unsinn = dir.filePath(QStringLiteral("unsinn.lvcomp"));
+        {
+            QFile f(unsinn);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write("{\"irgendwas\": 1}");
+        }
+        CHECK_FALSE(starteKomposition(widget, unsinn));
+        CHECK_FALSE(kompositionLaeuft(widget));
+
+        // einschalten: die Komposition liefert das Bild, die Kette bleibt der Host
+        QStringList bericht;
+        REQUIRE(starteKomposition(widget, datei, &bericht));
+        CHECK(bericht.isEmpty());
+        CHECK(kompositionLaeuft(widget));
+        CHECK(widget.visualizer() == kette);
+        REQUIRE(warte([&] {
+            QMutexLocker halt(&widget.renderMutex());
+            auto* q = dynamic_cast<Bildquelle*>(widget.bildquelle());
+            return q != nullptr && q->gerechneteBilder() >= 3;
+        }));
+        REQUIRE(nimmAuf());
+        CHECK(mitte() == kRot);
+        {
+            QMutexLocker halt(&widget.renderMutex());
+            auto* q = dynamic_cast<Bildquelle*>(widget.bildquelle());
+            REQUIRE(q != nullptr);
+            CHECK(q->uhr().laeuft());  // C2a: die Uhr startet sofort
+        }
+
+        // noch einmal oeffnen ersetzt die laufende
+        REQUIRE(starteKomposition(widget, datei));
+        CHECK(kompositionLaeuft(widget));
+
+        // ausschalten: die Kette liefert wieder das Bild
+        schliesseKomposition(widget);
+        CHECK_FALSE(kompositionLaeuft(widget));
+        CHECK(widget.visualizer() == kette);
+        REQUIRE(nimmAuf());
+        REQUIRE(nimmAuf());  // sicher ein Bild NACH dem Wegnehmen
+        CHECK(mitte() != kRot);
+        schliesseKomposition(widget);  // zweimal schadet nicht
     }
 }

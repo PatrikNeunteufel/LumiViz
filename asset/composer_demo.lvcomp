@@ -1,0 +1,58 @@
+{
+    "format": "lumiviz-composition",
+    "version": 1,
+    "length": 50000,
+    "gridSeconds": 1.0,
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "calibration/avs/matrix/02_osc_star/01_default.lvfx",
+                    "start": 0,
+                    "end": 20000,
+                    "blend": 0,
+                    "levels": [
+                        { "t": 0, "level": 0.0, "curve": 1 },
+                        { "t": 3000, "level": 1.0, "curve": 0 },
+                        { "t": 15000, "level": 1.0, "curve": 1 },
+                        { "t": 20000, "level": 0.0, "curve": 0 }
+                    ]
+                },
+                {
+                    "file": "calibration/avs/matrix/27_starfield/01_default.lvfx",
+                    "start": 30000,
+                    "end": 50000,
+                    "blend": 0,
+                    "levels": [
+                        { "t": 0, "level": 0.0, "curve": 1 },
+                        { "t": 5000, "level": 1.0, "curve": 0 },
+                        { "t": 17000, "level": 1.0, "curve": 0 },
+                        { "t": 20000, "level": 0.0, "curve": 0 }
+                    ]
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "calibration/avs/matrix/13_rotating_stars/01_default.lvfx",
+                    "start": 15000,
+                    "end": 35000,
+                    "blend": 1,
+                    "levels": [
+                        { "t": 0, "level": 0.0, "curve": 0 },
+                        { "t": 5000, "level": 1.0, "curve": 0 },
+                        { "t": 15000, "level": 1.0, "curve": 0 },
+                        { "t": 20000, "level": 0.0, "curve": 0 }
+                    ]
+                }
+            ]
+        }
+    ]
+}
