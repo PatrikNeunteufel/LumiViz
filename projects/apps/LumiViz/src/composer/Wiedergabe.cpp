@@ -167,7 +167,11 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         if (d.laeuft) continue;
         const bool neu = m_laeufe.count(d.schluessel) == 0;
         Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, true);
-        if (neu && lauf.renderer != nullptr) rechne(lauf, 0.0f, groesse);
+        // Baut der Renderer noch an einer Movement-Tabelle (Scheiben-Betrieb),
+        // rechnet er weiter Bilder, bis sie steht — sonst kaeme der Rest des
+        // Baus erst, wenn der Clip schon zu sehen ist.
+        if (lauf.renderer != nullptr && (neu || lauf.renderer->movementTabelleImBau()))
+            rechne(lauf, 0.0f, groesse);
     }
 
     // --- 3. Laufende Clips rechnen und mischen (dran ist in Kanalreihenfolge)

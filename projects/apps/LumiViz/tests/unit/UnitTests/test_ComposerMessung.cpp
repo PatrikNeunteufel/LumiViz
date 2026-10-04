@@ -35,6 +35,7 @@
 #include "composer/Bildquelle.hpp"
 #include "composer/Komposition.hpp"
 #include "visualizers/IVisualizer.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -86,6 +87,20 @@ TEST_CASE("C2a Messlauf: eine Komposition im Render-Thread (nur mit LUMIVIZ_COMP
     char arg0[10] = "UnitTests";
     char* argv[2] = {arg0, nullptr};
     QGuiApplication app{argc, argv};
+
+    // Movement-Tabelle: wie die App in Scheiben (LUMIVIZ_MOVEMENT_SCHEIBE_MS,
+    // Vorgabe hier 0 = sofort wie in allen Tests); der Speicher beginnt leer
+    struct Scheibe
+    {
+        ~Scheibe()
+        {
+            MultiEffectVisualizer::setMovementScheibeMs(0.0);
+            MultiEffectVisualizer::leereMovementSpeicher();
+        }
+    } scheibeZurueck;
+    const double scheibeMs = qEnvironmentVariable("LUMIVIZ_MOVEMENT_SCHEIBE_MS").toDouble();
+    MultiEffectVisualizer::leereMovementSpeicher();
+    MultiEffectVisualizer::setMovementScheibeMs(scheibeMs);
 
     Komposition komposition;
     QStringList bericht;
@@ -178,6 +193,10 @@ TEST_CASE("C2a Messlauf: eine Komposition im Render-Thread (nur mit LUMIVIZ_COMP
                       .arg(sortiert.front(), 0, 'f', 0)
                       .arg(sortiert.back(), 0, 'f', 0);
     }
+    zeilen << QStringLiteral("  movement table: %1, %2 table(s) shared")
+                  .arg(scheibeMs > 0.0 ? QStringLiteral("slices of %1 ms").arg(scheibeMs)
+                                       : QStringLiteral("at once"))
+                  .arg(MultiEffectVisualizer::movementTabellenImSpeicher());
     zeilen.prepend(QStringLiteral("Composer measurement: %1").arg(datei));
     for (const QString& zeile : zeilen) MESSAGE(zeile.toStdString());
 
