@@ -292,6 +292,32 @@ TEST_SUITE("ComposerBildquelle")
         CHECK(quelle.gerechneteBilder() == vorGroesse + 1);
         CHECK(ziel2.toImage().pixelColor(90, 66) == kRot);
 
+        // --- Messung: zaehlt, was gerechnet wurde ------------------------------
+        {
+            const Messung& m = quelle.messung();
+            CHECK(m.bilder == quelle.gerechneteBilder());
+            CHECK(m.gezeichnet > m.bilder);  // stehende Bilder werden nur noch einmal gezeigt
+            CHECK(m.rendererMax == 3);
+            CHECK(m.rechnenSummeMs > 0.0);
+            CHECK(m.rechnenMaxMs >= m.rechnenMittelMs());
+            CHECK(m.erstesBildMs > 0.0);
+            CHECK(m.rechnenMaxMs >= m.erstesBildMs);
+            CHECK(m.zeichnenMaxMs >= m.zeichnenMittelMs());
+            // Grafikspeicher: entweder beide Werte oder keiner
+            CHECK((m.speicherFreiVorherKb >= 0) == (m.speicherFreiTiefstKb >= 0));
+            if (m.speicherFreiVorherKb >= 0)
+            {
+                CHECK(m.speicherFreiTiefstKb <= m.speicherFreiVorherKb);
+            }
+            CHECK_FALSE(m.gpu.isEmpty());
+            CHECK(m.groesse == gross);  // die Groesse des letzten gerechneten Bilds
+            const QStringList text = m.alsText();
+            REQUIRE(text.size() == 6);
+            CHECK(text[0].contains(QStringLiteral("%1 frames computed").arg(m.bilder)));
+            for (const QString& zeile : text) MESSAGE(zeile.toStdString());
+        }
+        CHECK(Messung{}.alsText().size() == 1);  // nichts gerechnet: eine Zeile
+
         // --- Aufraeumen und erneut anlegen: die Komposition ist noch da ------
         quelle.cleanup();
         CHECK_FALSE(quelle.isInitialized());
@@ -499,6 +525,9 @@ TEST_SUITE("ComposerBildquelle")
             CHECK(q->uhr().laeuft());  // C2a: die Uhr startet sofort
         }
 
+        // die Messung der laufenden Komposition ist von aussen lesbar
+        CHECK(messungDerKomposition(widget).size() == 6);
+
         // noch einmal oeffnen ersetzt die laufende
         REQUIRE(starteKomposition(widget, datei));
         CHECK(kompositionLaeuft(widget));
@@ -510,6 +539,7 @@ TEST_SUITE("ComposerBildquelle")
         REQUIRE(nimmAuf());
         REQUIRE(nimmAuf());  // sicher ein Bild NACH dem Wegnehmen
         CHECK(mitte() != kRot);
+        CHECK(messungDerKomposition(widget).isEmpty());
         schliesseKomposition(widget);  // zweimal schadet nicht
     }
 }

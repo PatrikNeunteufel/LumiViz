@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.8.2
+> **Version:** 0.8.3
 > **Datum:** 2026-10-04 (Session 94)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -550,6 +550,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.8.3 | 2026-10-04 | Session 94 — **C2a, Messung** (Entscheid Patrik: a — die Bildquelle misst sich in der laufenden App): `Bildquelle::messung()` führt mit: gerechnete Bilder und Bildrate, Zeit je Bild für Rechnen und Zeichnen (Mittel, längstes samt Stelle, erstes Bild), höchste Zahl gleichzeitiger Renderer, freier Grafikspeicher laut Treiber vor dem ersten Bild und am tiefsten Punkt (`GL_NVX_gpu_memory_info` bei NVIDIA, `GL_ATI_meminfo` bei AMD), GPU-Name und Bildgröße. **Close Composition** (und das Ersetzen einer laufenden) schreibt die Zusammenfassung ins `LumiViz.log`. Die Zeiten sind CPU-seitig, ohne `glFinish`; der Speicherwert gilt für das ganze System. Nur eigener Code. **Die Zahlen selbst stehen noch aus** — sie kommen aus Patriks Lauf mit der Release-clang-Exe |
 | 0.8.2 | 2026-10-04 | Session 94 — **C2a, Einschalten** (Entscheid Patrik: a — zwei Menüeinträge): Naht N8 in §12.2 für C2a gefasst — File → **Open Composition...** / **Close Composition** (Schreibweise wie die übrigen Einträge des Menüs), `MainWindow` reicht zwei Ereignisse an `composer/AppAnbindung` weiter; Open lädt die `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort, Close nimmt sie weg; letzter Ordner unter `composer/lastDir`. Belegt über die echte Fassade `VisualizerWidget` (dritter Testfall in `test_ComposerBildquelle.cpp`: einschalten, ersetzen, ausschalten, das Fensterbild aufgenommen) — damit hat auch die Durchreichung der Naht R3 ihren Test; 870 Cases. Beispiel `asset/composer_demo.lvcomp`. Rückbau-Liste: Zeile C2a, Einschalten. Offen für C2a: im Programm gesehen, Zeiten im Release-Build, Bildspeicher |
 | 0.8.1 | 2026-10-04 | Session 94 — **C2a, Bildquelle** (eigener Code, keine Naht): `composer/Bildquelle` setzt sich über R3 an die Stelle des einen Renderers — fragt die Uhr nach der Stelle, lässt die Wiedergabe rechnen, zeichnet das Gemischte ins Fenster, reicht Audiodaten an die Renderer der Clips (auch an neu dazugekommene). **Steht die Uhr, steht das Bild:** gerechnet wird nur bei laufender Uhr oder geänderter Stelle, Größe oder Komposition. Belegt in `test_ComposerBildquelle.cpp`, auch im echten Render-Thread am echten Fenster (Aufnahme des Fensterbilds); 869 Cases. Rückbau-Liste: Commit der Naht R3 (`f8821db`) eingetragen, Zeile C2a, Bildquelle. Offen für C2a: wie die Komposition in der App eingeschaltet wird, Zeiten im Release-Build, Bildspeicher |
 | 0.8.0 | 2026-10-04 | Session 94 — **Naht R3 gebaut** (Entscheid Patrik: a — zweiter Platz im Render-Thread, der Renderer der Kette bleibt angelegt): §12.2 Zeile R3 neu gefasst; §12.3 — der Vergleichslauf belegt R3 nicht, Beleg ist `test_ComposerNahtR3.cpp`; Rückbau-Liste um C2a, Naht R3 erweitert; 867 Cases |

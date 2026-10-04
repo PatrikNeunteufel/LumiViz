@@ -58,6 +58,11 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad,
 /// Die Bildquelle wegnehmen — der Renderer der Kette liefert wieder das Bild.
 void schliesseKomposition(VisualizerWidget& widget);
 
+/// Die Messung der laufenden Komposition als Zeilen (Zeiten, Renderer,
+/// Grafikspeicher); leer, wenn keine laeuft. Dieselben Zeilen schreibt
+/// `schliesseKomposition` ins Log, bevor die Bildquelle geht.
+[[nodiscard]] QStringList messungDerKomposition(VisualizerWidget& widget);
+
 /// Der Weg des Menues: bei leerem Pfad nach der Datei fragen (letzter Ordner
 /// unter `composer/lastDir`), laden, Meldungen zeigen. false = abgebrochen
 /// oder nicht geladen.

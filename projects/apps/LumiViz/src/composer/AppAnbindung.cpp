@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QMutexLocker>
 #include <QObject>
 #include <QSettings>
 
@@ -27,6 +28,23 @@ namespace
 {
 const char* const kLetzterOrdner = "composer/lastDir";
 }
+
+QStringList messungDerKomposition(VisualizerWidget& widget)
+{
+    QMutexLocker halt(&widget.renderMutex());
+    const auto* quelle = dynamic_cast<const Bildquelle*>(widget.bildquelle());
+    return quelle != nullptr ? quelle->messung().alsText() : QStringList{};
+}
+
+namespace
+{
+/// Die Zusammenfassung der laufenden Komposition ins Log — bevor sie geht.
+void protokolliereMessung(VisualizerWidget& widget)
+{
+    for (const QString& zeile : messungDerKomposition(widget))
+        BasicLogger::logInfo(zeile.toStdString());
+}
+}  // namespace
 
 bool kompositionLaeuft(const VisualizerWidget& widget)
 {
@@ -44,6 +62,7 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad, QStringLis
     auto quelle = std::make_unique<Bildquelle>();
     quelle->setKomposition(std::move(komposition));
     quelle->uhr().starte();
+    protokolliereMessung(widget);  // eine laufende wird ersetzt
     widget.setBildquelle(std::move(quelle));
     BasicLogger::logInfo("Composer: composition started: " +
                          QDir::toNativeSeparators(pfad).toStdString());
@@ -53,6 +72,7 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad, QStringLis
 void schliesseKomposition(VisualizerWidget& widget)
 {
     if (widget.bildquelle() == nullptr) return;
+    protokolliereMessung(widget);
     widget.setBildquelle(nullptr);
     BasicLogger::logInfo("Composer: composition closed");
 }

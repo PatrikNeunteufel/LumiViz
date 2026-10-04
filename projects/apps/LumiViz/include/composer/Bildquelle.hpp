@@ -26,6 +26,7 @@
 #include "composer/Uhr.hpp"
 #include "visualizers/IVisualizer.hpp"
 
+#include <QElapsedTimer>
 #include <QSize>
 #include <QStringList>
 
@@ -39,6 +40,39 @@ namespace lumi::composer
 {
 
 class Wiedergabe;
+
+/// Was die Bildquelle ueber ihre Laufzeit mitfuehrt (C2a, Messung). Die Zeiten
+/// sind CPU-seitig — wie lange die GL-Aufrufe dauern, nicht wie lange die GPU
+/// rechnet; die GPU-Last zeigt die Bildrate bei Frame Mode Unlimited.
+struct Messung
+{
+    int bilder = 0;               ///< wirklich gerechnete Bilder
+    double dauerSekunden = 0.0;   ///< vom ersten bis zum letzten gerechneten Bild
+    double rechnenSummeMs = 0.0;  ///< Wiedergabe: Clips rechnen und mischen
+    double rechnenMaxMs = 0.0;
+    std::int64_t rechnenMaxStelleMs = 0;  ///< Stelle des laengsten Bilds
+    double erstesBildMs = 0.0;            ///< enthaelt das Anlegen der ersten Renderer
+    double zeichnenSummeMs = 0.0;         ///< das Gemischte ins Ziel
+    double zeichnenMaxMs = 0.0;
+    int gezeichnet = 0;
+    int rendererMax = 0;  ///< hoechste Zahl gleichzeitiger Renderer (samt Karaoke-Traeger)
+    /// Freier Grafikspeicher laut Treiber (GL_NVX_gpu_memory_info), in kB;
+    /// negativ = der Treiber nennt ihn nicht. Der Wert gilt fuer das ganze
+    /// System — andere Programme zaehlen mit.
+    int speicherFreiVorherKb = -1;
+    int speicherFreiTiefstKb = -1;
+    int speicherGesamtKb = -1;
+    QString gpu;      ///< GL_RENDERER — auf welcher GPU gemessen wurde
+    QSize groesse;    ///< Bildgroesse des letzten gerechneten Bilds
+
+    [[nodiscard]] double rechnenMittelMs() const { return bilder > 0 ? rechnenSummeMs / bilder : 0.0; }
+    [[nodiscard]] double zeichnenMittelMs() const
+    {
+        return gezeichnet > 0 ? zeichnenSummeMs / gezeichnet : 0.0;
+    }
+    /// Die Zusammenfassung als Zeilen fuer das Log.
+    [[nodiscard]] QStringList alsText() const;
+};
 
 class Bildquelle : public IVisualizer
 {
@@ -71,6 +105,8 @@ public:
     [[nodiscard]] QStringList bericht() const;
     /// Wie viele Bilder wirklich gerechnet wurden (nicht nur noch einmal gezeigt).
     [[nodiscard]] int gerechneteBilder() const { return m_gerechnet; }
+    /// Zeiten, Renderer und Grafikspeicher seit dem Anlegen dieser Bildquelle.
+    [[nodiscard]] const Messung& messung() const { return m_messung; }
     /// Wie oft Audiodaten an einen Renderer gereicht wurden (Test).
     [[nodiscard]] int debugAudioGereicht() const { return m_audioGereicht; }
 
@@ -113,6 +149,8 @@ private:
     int m_ziel = -1;
     int m_gerechnet = 0;
     int m_audioGereicht = 0;
+    Messung m_messung;
+    QElapsedTimer m_laufzeit;  ///< ab dem ersten gerechneten Bild
 
     // zuletzt gereichte Audiodaten
     std::vector<float> m_spektrum;

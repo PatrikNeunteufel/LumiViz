@@ -16,6 +16,83 @@
 namespace lumi::composer
 {
 
+namespace
+{
+
+// GL_NVX_gpu_memory_info (NVIDIA)
+constexpr GLenum kSpeicherGesamtNvx = 0x9048;  // GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+constexpr GLenum kSpeicherFreiNvx = 0x9049;    // GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+
+// GL_ATI_meminfo (AMD)
+constexpr GLenum kTexturFreiAti = 0x87FC;  // TEXTURE_FREE_MEMORY_ATI
+
+/// Freier Grafikspeicher in kB; negativ = der Treiber nennt ihn nicht.
+int freierSpeicherKb(QOpenGLContext& kontext, int* gesamtKb)
+{
+    QOpenGLFunctions* f = kontext.functions();
+    if (kontext.hasExtension(QByteArrayLiteral("GL_ATI_meminfo")))
+    {
+        // AMD: vier Werte, der erste ist der freie Texturspeicher in kB; eine
+        // Gesamtgroesse nennt die Erweiterung nicht
+        GLint werte[4] = {-1, -1, -1, -1};
+        f->glGetIntegerv(kTexturFreiAti, werte);
+        if (gesamtKb != nullptr) *gesamtKb = -1;
+        return werte[0];
+    }
+    if (!kontext.hasExtension(QByteArrayLiteral("GL_NVX_gpu_memory_info"))) return -1;
+    GLint frei = -1;
+    f->glGetIntegerv(kSpeicherFreiNvx, &frei);
+    if (gesamtKb != nullptr)
+    {
+        GLint gesamt = -1;
+        f->glGetIntegerv(kSpeicherGesamtNvx, &gesamt);
+        *gesamtKb = gesamt;
+    }
+    return frei;
+}
+
+}  // namespace
+
+QStringList Messung::alsText() const
+{
+    QStringList z;
+    if (bilder == 0)
+    {
+        z << QStringLiteral("Composer: summary — no frame computed");
+        return z;
+    }
+    z << QStringLiteral("Composer: summary — %1 frames computed in %2 s (%3 per second)")
+             .arg(bilder)
+             .arg(dauerSekunden, 0, 'f', 1)
+             .arg(dauerSekunden > 0.0 ? bilder / dauerSekunden : 0.0, 0, 'f', 1);
+    z << QStringLiteral("  on %1, image %2 x %3").arg(gpu).arg(groesse.width()).arg(groesse.height());
+    z << QStringLiteral("  compute (CPU side): mean %1 ms, longest %2 ms at %3 s, first frame %4 ms")
+             .arg(rechnenMittelMs(), 0, 'f', 3)
+             .arg(rechnenMaxMs, 0, 'f', 1)
+             .arg(static_cast<double>(rechnenMaxStelleMs) / 1000.0, 0, 'f', 2)
+             .arg(erstesBildMs, 0, 'f', 1);
+    z << QStringLiteral("  present (CPU side): mean %1 ms, longest %2 ms")
+             .arg(zeichnenMittelMs(), 0, 'f', 3)
+             .arg(zeichnenMaxMs, 0, 'f', 2);
+    z << QStringLiteral("  renderers at once: at most %1").arg(rendererMax);
+    if (speicherFreiVorherKb >= 0 && speicherFreiTiefstKb >= 0)
+    {
+        z << QStringLiteral("  video memory (driver, whole system): free before %1 MB, lowest %2 MB, "
+                            "difference %3 MB, total %4")
+                 .arg(speicherFreiVorherKb / 1024)
+                 .arg(speicherFreiTiefstKb / 1024)
+                 .arg((speicherFreiVorherKb - speicherFreiTiefstKb) / 1024)
+                 .arg(speicherGesamtKb >= 0 ? QStringLiteral("%1 MB").arg(speicherGesamtKb / 1024)
+                                            : QStringLiteral("unknown"));
+    }
+    else
+    {
+        z << QStringLiteral("  video memory: not available (driver has neither "
+                            "GL_NVX_gpu_memory_info nor GL_ATI_meminfo)");
+    }
+    return z;
+}
+
 Bildquelle::Bildquelle() = default;
 
 Bildquelle::Bildquelle(Uhr uhr) : m_uhr(std::move(uhr)) {}
@@ -108,19 +185,54 @@ void Bildquelle::render(float deltaTime)
     const std::int64_t stelle = m_uhr.stelleMs();
     if (laeuft || neu || !m_bildSteht || stelle != m_letzteStelle || m_groesse != m_letzteGroesse)
     {
+        if (m_messung.bilder == 0)
+        {
+            m_laufzeit.start();
+            m_messung.gpu = QString::fromLatin1(
+                reinterpret_cast<const char*>(kontext->functions()->glGetString(GL_RENDERER)));
+            m_messung.speicherFreiVorherKb = freierSpeicherKb(*kontext, &m_messung.speicherGesamtKb);
+            m_messung.speicherFreiTiefstKb = m_messung.speicherFreiVorherKb;
+        }
+        QElapsedTimer uhr;
+        uhr.start();
         // Steht die Uhr, laeuft auch die Zeit der Visuals nicht weiter.
         m_bildSteht = m_wiedergabe->rendere(stelle, laeuft ? deltaTime : 0.0f, m_groesse);
+        const double ms = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
         m_letzteStelle = stelle;
         m_letzteGroesse = m_groesse;
         ++m_gerechnet;
         versorgeNeue();
+
+        // --- Messung (C2a)
+        if (m_messung.bilder == 0) m_messung.erstesBildMs = ms;
+        ++m_messung.bilder;
+        m_messung.dauerSekunden = static_cast<double>(m_laufzeit.nsecsElapsed()) / 1.0e9;
+        m_messung.rechnenSummeMs += ms;
+        if (ms > m_messung.rechnenMaxMs)
+        {
+            m_messung.rechnenMaxMs = ms;
+            m_messung.rechnenMaxStelleMs = stelle;
+        }
+        m_messung.groesse = m_groesse;
+        m_messung.rendererMax = std::max(m_messung.rendererMax, m_wiedergabe->rendererAnzahl());
+        if (m_messung.speicherFreiVorherKb >= 0)
+        {
+            const int frei = freierSpeicherKb(*kontext, nullptr);
+            if (frei >= 0) m_messung.speicherFreiTiefstKb = std::min(m_messung.speicherFreiTiefstKb, frei);
+        }
     }
 
     const unsigned int ziel =
         m_ziel >= 0 ? static_cast<unsigned int>(m_ziel) : kontext->defaultFramebufferObject();
     if (m_bildSteht)
     {
+        QElapsedTimer uhr;
+        uhr.start();
         m_wiedergabe->mischer().zeichneIn(ziel, m_groesse);
+        const double ms = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
+        ++m_messung.gezeichnet;
+        m_messung.zeichnenSummeMs += ms;
+        m_messung.zeichnenMaxMs = std::max(m_messung.zeichnenMaxMs, ms);
     }
     else
     {
