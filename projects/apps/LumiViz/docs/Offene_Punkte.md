@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.85.0
-> **Datum:** 2026-10-03 (Session 92)
+> **Version:** 1.86.0
+> **Datum:** 2026-10-04 (Session 93)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2212,8 +2212,10 @@ Idee Preset-Warmup/Pre-Roll.
   [Composer_Konzept.md](ui/Composer_Konzept.md) — das Vorhaben heißt
   **Composer** (Vorgabe Patrik S93; „Timeline" ist nur noch die Zeitachse im
   Panel). Renderweg: eigener Mischer über je einem Renderer je laufendem
-  Clip; rückbaubar; Stufen C0 und C0b (Belege) erledigt, **nächste Stufe
-  C1a** (Mischer in kleinster Fassung) im Zweig `composer`. Die folgenden
+  Clip; rückbaubar; Stufen C0, C0b (Belege), C1a (Mischer, Nähte R1 / R2)
+  und C1b (Modell, `.lvcomp`, Uhr, Wiedergabe ohne Panel) erledigt — C1a
+  und C1b im Zweig `composer`, noch nicht nach `master` geholt. **Nächste
+  Stufe C2a:** der Composer als Bildquelle der App (Naht R3). Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
 - **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
@@ -3116,6 +3118,13 @@ Effect Browser (2a), die Rückfrage vor der Dateiauswahl bleibt (3a), Ctrl+K
 ruht in Textfeldern (4a).
 
 **Offen:**
+0. **Sichttests S93 (Patrik):** `.claude/handover/Sichttests_S93.md` (A–I:
+   Kontextmenüs im Kettenbaum, Sprite mit Bilddatei, Start und Effect
+   Browser, Knopf ◎, neue leere Kette, Audio Browser) — im laufenden
+   Programm ist davon nichts gesehen; **zuerst G** (der Startablauf ist
+   nicht per Test abgesichert). Zum Abhaken gibt es seit S93 das Werkzeug
+   `Sichttest` (`projects/exec/Sichttest`, README dort); begonnen damit:
+   S88 A1, A2 ✓.
 1. **Sichttests (Patrik):** `.claude/handover/Sichttests_S92.md` (A–F: alles
    aus S92 — im laufenden Programm ist davon nichts gesehen; zuerst A1, B1,
    B3, D1, D3, E1) und der Rest von `Sichttests_S90.md` (A2–A6, B, C, D3–D6,
@@ -3954,6 +3963,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.86.0 | 2026-10-04 | Session 93 — **Composer:** Konzept `ui/Composer_Konzept.md` (0.7.0, alle Entscheide gefallen, rückbaubar), Stufen C0 / C0b / C1a / C1b erledigt (C1a, C1b im Zweig `composer`), nächste Stufe C2a; **P2 Visual-Playlist geschlossen** (aufgegangen in Composer und Host Switcher); Notiz **Blättern und Timeline** (PgUp/PgDn blättern in der Liste des Browsers, Entscheid 2a; im Composer entschieden als C5). **Gebaut:** Kontextmenü im Kettenbaum (Milkdrop-Elemente, Add preset, Add module), Sprite mit Bilddatei, „+ New empty effect chain", Fix Start-Preset und Umzug ins Hauptfenster (`UI/StartPreset.hpp`), Knopf ◎ in Effect Browser und Audio Browser, Werkzeug `Sichttest`. **Sichttests S93** als Punkt 0 der Lyrics-Liste eingetragen (`Sichttests_S93.md`, A–I). Tests 866 (Zweig), 851 (`master`) |
 | 1.85.0 | 2026-10-03 | Session 92 — **Sichttest S90/S91 begonnen** (A1, D1, J1, J3 abgenommen; vier Befunde H1, E1, G1, D2 behoben). **§7 Lyrics-Block:** Lyrics Sync mit Pre-roll, Sprungleiste, Kontextmenü; Feld Word spacing; **Trail-Presets** (`.lvtrail`, acht mitgeliefert, Zeile im Karaoke-Panel, Rechtsklick im Kettenbaum, eigenes Icon); Prüfer für die Skriptbeispiele des Handbuchs; die vier Fragen aus S89 entschieden (1a, 2a, 3a, 4a). Offen: Sichttests S88–S92 |
 | 1.84.0 | 2026-10-03 | Session 91 — **§7 Lyrics-Block: LB5-3 gebaut** (Schieber Speed im Panel Lyrics Sync, Entscheid T1 a) und die kleinen Reste aus S89/S90 erledigt: Statuszeile des Sync-Panels, Trail der Karaoke-Ebene über den Preset-Wechsel, Load… mit `.avs` / `.milk`, Favoriten im Effect Browser (F1 a), Feld Line am Lyrics Trail (T2 a). Offen: Sichttests S88–S91, die vier Fragen aus S89 |
 | 1.83.0 | 2026-10-03 | Session 90 — **§7 Lyrics-Block gebaut bis auf LB5-3** (Zeilen-Puffer, Vorschau-Zeilen, laufendes Wort, `word` / `wordcount` und Feld Word, Wort-Masken auf der Grafikkarte, eine Schriftgröße je Song, `linetrigger` / `wordtrigger`, Lyrics Sync mit Stimmen und Wort-Zeiten; Steuerdokument `visuals/Lyrics_Block_Konzept.md`); drei Fixes (Doppel-Trail nach Pausen, Sprung beim Zeilenwechsel, AVI-Knoten unsichtbar). Offen: langsamer abspielen (LB5-3), Sichttests S90 |
