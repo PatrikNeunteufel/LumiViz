@@ -25,6 +25,7 @@
 
 #include <doctest.h>
 
+#include "TestFenster.hpp"
 #include "UI/widgets/VisualizerRenderThread.hpp"
 #include "visualizers/IVisualizer.hpp"
 
@@ -127,6 +128,7 @@ TEST_CASE("Composer R3: Bildquelle im Render-Thread — leer wie immer, besetzt 
     faden.start();
 
     fenster.resize(160, 120);
+    testfenster::platziere(fenster);
     fenster.show();
 
     Zaehler kette;

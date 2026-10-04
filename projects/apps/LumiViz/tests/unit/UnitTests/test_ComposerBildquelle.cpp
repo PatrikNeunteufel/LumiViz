@@ -22,6 +22,7 @@
 
 #include <doctest.h>
 
+#include "TestFenster.hpp"
 #include "UI/widgets/VisualizerRenderThread.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/AppAnbindung.hpp"
@@ -382,6 +383,7 @@ TEST_SUITE("ComposerBildquelle")
         faden.setPacing(RenderPacing::Unlimited, 60);
         faden.start();
         fenster.resize(160, 120);
+        testfenster::platziere(fenster);
         fenster.show();
 
         QImage aufnahme;
@@ -483,6 +485,7 @@ TEST_SUITE("ComposerBildquelle")
         VisualizerWidget widget(dienste);
         widget.setFrameMode(RenderPacing::Unlimited, 60);
         widget.resize(200, 150);
+        testfenster::platziere(widget);
         widget.show();
 
         QImage aufnahme;

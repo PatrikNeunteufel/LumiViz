@@ -30,6 +30,7 @@
 
 #include <doctest.h>
 
+#include "TestFenster.hpp"
 #include "UI/widgets/VisualizerRenderThread.hpp"
 #include "composer/Bildquelle.hpp"
 #include "composer/Komposition.hpp"
@@ -114,9 +115,10 @@ TEST_CASE("C2a Messlauf: eine Komposition im Render-Thread (nur mit LUMIVIZ_COMP
 
     // Fenstergroesse in logischen Pixeln, damit das Bild die gewuenschten
     // physischen hat
-    const qreal dpr = fenster.devicePixelRatio();
     fenster.setFlags(Qt::FramelessWindowHint);
     fenster.setPosition(0, 0);
+    testfenster::platziere(fenster);  // erst der Bildschirm, dann dessen Skalierung
+    const qreal dpr = fenster.devicePixelRatio();
     fenster.resize(static_cast<int>(std::lround(groesse.width() / dpr)),
                    static_cast<int>(std::lround(groesse.height() / dpr)));
     fenster.show();
