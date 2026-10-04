@@ -15,7 +15,8 @@
  *  - Im Renderer: Vorgabe „sofort" wie immer; im Scheiben-Betrieb ist das Bild
  *    nach dem Bau bitgleich mit dem Bild aus dem Sofort-Betrieb; der zweite
  *    Renderer nimmt die fertige Tabelle aus dem Speicher; ein Skript, das den
- *    gemeinsamen Zustand liest, baut weiter sofort.
+ *    gemeinsamen Zustand liest, baut auch in Scheiben, teilt seine Tabelle
+ *    aber nicht (Entscheid Patrik S94).
  ****************************************************************************************
  */
 
@@ -268,17 +269,38 @@ TEST_SUITE("MovementScheiben")
         }
         CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);  // der halbe Bau zaehlt nicht
 
-        // --- liest den gemeinsamen Zustand: baut auch hier sofort -------------
+        // --- liest den gemeinsamen Zustand (Entscheid Patrik S94: a): baut
+        //     auch in Scheiben, wird aber nicht geteilt. reg00 ist hier nie
+        //     gesetzt (0), die Tabelle also dieselbe wie im Sofort-Betrieb.
+        const std::string unrein = "x = x + reg00 * 0.01 + 0.05;";
+        QImage unreinSoll;
         {
+            MultiEffectVisualizer::setMovementScheibeMs(0.0);
             MultiEffectVisualizer vis;
-            vis.setChain(movementKette("x = x + reg00 * 0.01 + 0.05;", true));
+            vis.setChain(movementKette(unrein, true));
+            vis.initialize();
+            vis.resize(groesse);
+            lumi::composer::Leinwand bild;
+            for (int i = 0; i < kBilder; ++i) bild.rendere(vis, kDelta, groesse);
+            unreinSoll = bild.bild();
+            vis.cleanup();
+            MultiEffectVisualizer::setMovementScheibeMs(1.0e-9);
+        }
+        for (int lauf = 0; lauf < 2; ++lauf)
+        {
+            CAPTURE(lauf);
+            MultiEffectVisualizer vis;
+            vis.setChain(movementKette(unrein, true));
             vis.initialize();
             vis.resize(groesse);
             lumi::composer::Leinwand bild;
             bild.rendere(vis, kDelta, groesse);
+            CHECK(vis.movementTabelleImBau());  // auch der zweite Lauf baut selbst
+            for (int i = 1; i < kBilder; ++i) bild.rendere(vis, kDelta, groesse);
             CHECK_FALSE(vis.movementTabelleImBau());
+            CHECK(verschieden(bild.bild(), unreinSoll) == 0);
             vis.cleanup();
         }
-        CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);
+        CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);  // nichts dazugekommen
     }
 }

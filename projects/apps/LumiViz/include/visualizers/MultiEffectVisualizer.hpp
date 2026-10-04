@@ -316,12 +316,15 @@ public:
     // Tabelle an — in Full HD rund eine halbe Sekunde, in der das Bild steht.
     // Im Scheiben-Betrieb entsteht dieselbe Tabelle ueber mehrere Bilder
     // verteilt; bis sie fertig ist, zeichnet der Knoten ueber das 96 x 72-
-    // Gitter. Fertige Tabellen teilen sich alle Renderer des Prozesses.
+    // Gitter. Fertige Tabellen teilen sich alle Renderer des Prozesses —
+    // ausser das Skript liest den gemeinsamen Zustand der Kette, den
+    // Zufallsstrom, Audio oder die Uhr: dann baut es zwar auch in Scheiben
+    // (Entscheid Patrik S94), liest diese Werte aber ueber mehrere Bilder
+    // verteilt, und seine Tabelle bleibt bei diesem einen Renderer.
 
     /// Zeitscheibe je Bild und Knoten in Millisekunden. **0 (Vorgabe) =
     /// sofort, in einem Stueck, wie immer** — so laufen die Standalones, der
-    /// Vergleichslauf und die Unit-Tests. Skripte, die den gemeinsamen Zustand
-    /// der Kette, den Zufallsstrom, Audio oder die Uhr lesen, bauen immer sofort.
+    /// Vergleichslauf und die Unit-Tests.
     static void setMovementScheibeMs(double ms);
     [[nodiscard]] static double movementScheibeMs();
     /// Entsteht in dieser Instanz noch eine Movement-Tabelle? (Stand des

@@ -158,10 +158,10 @@ struct MovementSpeicher
 };
 MovementSpeicher g_movementSpeicher;
 
-/// Darf die Tabelle dieses Skripts in Scheiben gebaut und geteilt werden? Nur
-/// wenn sie allein von x, y, d, r, w, h abhaengt: Skripte, die den gemeinsamen
+/// Darf die Tabelle dieses Skripts zwischen Renderern GETEILT werden? Nur wenn
+/// sie allein von x, y, d, r, w, h abhaengt. Skripte, die den gemeinsamen
 /// Zustand der Kette (reg, megabuf), den Zufallsstrom oder Audio und Uhr lesen
-/// (get…), bauen weiter sofort — zwischen zwei Scheiben laufen andere Knoten.
+/// (get…), bauen zwar auch in Scheiben, behalten ihre Tabelle aber fuer sich.
 bool movementSkriptIstRein(const std::string& code)
 {
     std::string klein(code.size(), '\0');
@@ -6280,7 +6280,7 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
         std::vector<int> tab;
         MovementSpeicher::Tabelle geteilt;
         const double scheibeMs = g_movementScheibeMs.load();
-        if (scheibeMs <= 0.0 || !movementSkriptIstRein(params.code))
+        if (scheibeMs <= 0.0)
         {
             // sofort, in einem Stueck — wie immer
             if (!rt.grid->buildTransTable(w, h, params.wrap, subpixel, tab)) return false;
@@ -6290,9 +6290,17 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
             // In Scheiben (S94): erst im gemeinsamen Speicher nachsehen, sonst
             // je Bild ein Stueck weiterbauen. Bis die Tabelle fertig ist,
             // zeichnet der Aufrufer ueber das Gitter.
+            //
+            // Entscheid Patrik S94 (a): auch Skripte, die den gemeinsamen
+            // Zustand, den Zufallsstrom, Audio oder die Uhr lesen, bauen in
+            // Scheiben — sie lesen dann ueber mehrere Bilder verteilt statt in
+            // einem Augenblick (auch das Original liest zum zufaelligen
+            // Zeitpunkt des Baus). Geteilt werden ihre Tabellen nicht: sie
+            // haengen an mehr als Skript und Groesse.
+            const bool teilbar = movementSkriptIstRein(params.code);
             const std::string schluessel =
                 key + '\n' + std::to_string(w) + 'x' + std::to_string(h);
-            geteilt = g_movementSpeicher.hole(schluessel);
+            if (teilbar) geteilt = g_movementSpeicher.hole(schluessel);
             if (geteilt == nullptr)
             {
                 if (!rt.grid->transTableImBau() || rt.moveBauKey != schluessel)
@@ -6311,7 +6319,7 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
                 rt.moveBauKey.clear();
                 if (stand == Bau::Fehler) return false;
                 geteilt = std::make_shared<const std::vector<int>>(rt.grid->takeTransTable());
-                g_movementSpeicher.lege(schluessel, geteilt);
+                if (teilbar) g_movementSpeicher.lege(schluessel, geteilt);
             }
         }
         const int* daten = geteilt != nullptr ? geteilt->data() : tab.data();
