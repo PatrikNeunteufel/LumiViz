@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.7.0
+> **Version:** 0.7.1
 > **Datum:** 2026-10-04 (Session 93)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -8,7 +8,8 @@
 > Datei, Uhr, Wiedergabe ohne Panel) erledigt** —
 > im Zweig `composer`, noch nicht nach `master` geholt
 > **Status:** Entwurf
-> **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`
+> **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
+> erst nach `master` geholt wird, wenn der Composer sauber läuft
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Weg zur Timeline" (Ideen Patrik S84, S88,
 > S93) · [Visual_Playlist_Konzept.md](Visual_Playlist_Konzept.md) §5a
@@ -438,15 +439,19 @@ dabei, damit die Gründe nachlesbar bleiben.
 | — | Lock | **ein** Schalter für Kürzel und Laden | zwei getrennte Schalter |
 | C7 | Der Start | lädt die **Komposition**, Composer an, am **Anfang**, **angehalten** | läuft an der letzten Stelle weiter; lädt ein einzelnes Preset; letzte Stelle angehalten |
 | C9 | Die Lücke | **schwarz** | letztes Bild; durchscheinendes Preset; Grund-Visual als eigenes Feld |
-| C10 | Wo der Composer entsteht | **Zweig `composer`**, nach jeder abgenommenen Stufe nach `master` geholt | auf `master` |
+| C10 | Wo der Composer entsteht | **Zweig `composer`**; nach `master` geholt wird **erst, wenn der Composer sauber funktioniert** (Patrik S93, geändert gegenüber „nach jeder abgenommenen Stufe"). Bis dahin läuft **alle** Arbeit im Zweig, auch Abschlüsse und Fixes | auf `master`; nach jeder Stufe holen |
 | C11 | Dateien mit Host-Gruppen als Clip | **entfällt** — mit dem eigenen Mischer läuft jede Datei unverändert | — |
 
 **Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
 Presets (S60) · bei einer Datei mit Host Switcher warnt der Composer beim
 Hinzufügen (S88, 1a) · die Karaoke-Ebene bleibt über allem (S88, 2a).
 
-**Zum Zweig (Stand S93):** C0, C0b und dieses Konzept liegen auf `master` —
-es sind nur eine Testdatei und Doku. Der Zweig beginnt mit C1a.
+**Zum Zweig (Stand S93):** C0, C0b und das Konzept bis 0.5.0 liegen auf
+`master` — es sind nur eine Testdatei und Doku. Der Zweig beginnt mit C1a.
+Seit dem Abschluss S93 (`e14d9c4`) enthält er auch Arbeit, die nicht zum
+Composer gehört (Changelog, offene Punkte, künftig Fixes aus Sichttests).
+Für den Rückbau heißt das: nicht den Zweig verwerfen, sondern die
+Composer-Commits nach §12.4 zurücknehmen.
 
 ---
 
@@ -512,13 +517,21 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 |---|---|---|---|---|
 | C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
 | C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | **`91967c2`** — Naht (`MultiEffectVisualizer.hpp` / `.cpp`) und Eigenes liegen in diesem einen Commit; ihn zurückzunehmen baut C1a ganz zurück | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | ✅ S93: `git diff --stat master composer` zeigt genau diese neun Dateien; an Bestehendem drei Naht-Zeilen in der `.cpp`, 26 Zeilen im Header, je eine Zeile in zwei Quellenlisten |
-| C1b | `include/composer/` (Komposition.hpp, Uhr.hpp, Wiedergabe.hpp), `src/composer/` (Komposition.cpp, Wiedergabe.cpp), `tests/unit/UnitTests/test_ComposerWiedergabe.cpp` | keine | zwei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
+| C1b | `include/composer/` (Komposition.hpp, Uhr.hpp, Wiedergabe.hpp), `src/composer/` (Komposition.cpp, Wiedergabe.cpp), `tests/unit/UnitTests/test_ComposerWiedergabe.cpp` | keine Naht; der Commit ist **`db3a026`** | zwei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
-sind grün und der Vergleichslauf ist bitgleich. Im Zweig ist das ohne
-Probe gegeben — `master` ist dieser Stand. **Wirklich durchgespielt wird
-der Rückbau, bevor eine Stufe nach `master` geholt wird:** der Unterschied
-zwischen `master` und `composer` muss sich mit der Rückbau-Liste decken.
+sind grün und der Vergleichslauf ist bitgleich.
+
+**Wie geprüft wird (Stand S93):** Der Zweig trägt seit dem Abschluss S93
+auch Arbeit, die nicht zum Composer gehört — „Zweig verwerfen" ist damit
+kein Rückbau mehr, und `git diff --stat master composer` zeigt mehr als
+diese Liste. Geprüft wird deshalb über die **Pfade des Composers**:
+`include/composer`, `src/composer`, `tests/unit/UnitTests/test_Composer*.cpp`,
+`MultiEffectVisualizer.hpp` / `.cpp` und die beiden Quellenlisten. Der
+Unterschied zu `master` in diesen Pfaden muss sich mit der Liste decken.
+**Wirklich durchgespielt** wird der Rückbau einmal, bevor der Zweig nach
+`master` geholt wird: die Composer-Commits auf einer Kopie zurücknehmen,
+bauen, Unit-Tests, Vergleichslauf.
 
 ---
 
@@ -526,6 +539,7 @@ zwischen `master` und `composer` muss sich mit der Rückbau-Liste decken.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.7.1 | 2026-10-04 | Session 93 — **Zweig-Regel geändert (Patrik):** nach `master` geholt wird erst, wenn der Composer sauber funktioniert; bis dahin läuft alle Arbeit im Zweig. C10, §11 „Zum Zweig" und §12.4 angepasst: Rückbau über die Rückbau-Liste statt „Zweig verwerfen", Prüfung über die Pfade des Composers; Commit von C1b eingetragen |
 | 0.7.0 | 2026-10-04 | Session 93 — **Stufe C1b erledigt** (Zweig `composer`): §9d — Datenmodell mit Pegelkurven (sechs Formen), Datei `.lvcomp`, Uhr mit Transport, Wiedergabe mit Vorwärmen, Entladen und Karaoke einmal darüber; nur eigener Code, keine Naht; 866 Cases; Rückbau-Liste: C1a geprüft (ein Commit `91967c2`), C1b eingetragen |
 | 0.6.0 | 2026-10-04 | Session 93 — **Stufe C1a erledigt** (Zweig `composer`): §9c — `Leinwand` und `Mischer` mit sieben Mischarten und Pegel; Nähte R1 (Present-Ziel statt Lesezugang) und R2 (Karaoke auslassen, einmal auflegen); MilkDrop nebeneinander bitgleich; Mischen 0,29 ms je Bild; Vergleichslauf 90 / 90 bitgleich, 858 Cases; Render-Thread und Release-Zeiten gehen nach C2; Rückbau-Liste C1a |
 | 0.5.0 | 2026-10-04 | Session 93 — **alle Entscheide gefallen** (Patrik): C2 a eigener Transport, C3 eigener Mischer, C4 a Visual-Playlist entfällt, C5 a Kürzel springen im Composer, C6 a Laden schaltet nach Rückfrage aus, dazu **ein Schalter Lock** für Kürzel und Laden (keine Rückfrage bei Vorführungen), C7 a Start lädt die Komposition angehalten am Anfang, C9 a Lücke schwarz, C11 entfällt. §5 neu gefasst (Mischer, Vorwärmen, Entladen, Karaoke einmal durch den Mischer, fünf offene Punkte für C1a); §8 mit den Regeln; Stufen C1a / C1b; Nahtstellen neu (R1–R3 am Rand des Renderers, keine in der Bildberechnung) |
