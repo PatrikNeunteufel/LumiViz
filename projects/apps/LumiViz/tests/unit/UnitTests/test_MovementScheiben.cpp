@@ -33,6 +33,8 @@
 #include <QOpenGLContext>
 #include <QSurfaceFormat>
 
+#include <cmath>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -104,6 +106,98 @@ struct ScheibenWaechter
 
 TEST_SUITE("MovementScheiben")
 {
+    // Kein Test im engeren Sinn: laeuft nur mit LUMIVIZ_MOVEMENT_PROBE=<preset>
+    // und rendert das Preset einmal sofort und einmal in Scheiben, je
+    // LUMIVIZ_MOVEMENT_PROBE_BILDER Bilder (Vorgabe 300) bei 1280 x 720, ohne
+    // Audio und mit festem Takt. Schreibt `sofort.png` und `scheiben.png` nach
+    // LUMIVIZ_MOVEMENT_PROBE_AUS und nennt den Unterschied der Endbilder —
+    // fuer Befunde wie „sieht in der App anders aus" (Sichttest S94, F7).
+    TEST_CASE("Probe: ein Preset sofort gegen in Scheiben (nur mit LUMIVIZ_MOVEMENT_PROBE)")
+    {
+        const QString preset = qEnvironmentVariable("LUMIVIZ_MOVEMENT_PROBE");
+        if (preset.isEmpty()) return;
+        const QString aus = qEnvironmentVariable("LUMIVIZ_MOVEMENT_PROBE_AUS");
+        int bilder = qEnvironmentVariableIntValue("LUMIVIZ_MOVEMENT_PROBE_BILDER");
+        if (bilder <= 0) bilder = 300;
+
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QGuiApplication app{argc, argv};
+        QOpenGLContext ctx;
+        QSurfaceFormat fmt;
+        fmt.setVersion(3, 3);
+        fmt.setProfile(QSurfaceFormat::CoreProfile);
+        ctx.setFormat(fmt);
+        QOffscreenSurface surface;
+        REQUIRE(ctx.create());
+        surface.setFormat(ctx.format());
+        surface.create();
+        REQUIRE(ctx.makeCurrent(&surface));
+        ScheibenWaechter waechter;
+
+        const QSize groesse(1280, 720);
+        QImage ende[2];
+        int fertigAb[2] = {-1, -1};
+        for (int modus = 0; modus < 2; ++modus)
+        {
+            MultiEffectVisualizer::leereMovementSpeicher();
+            MultiEffectVisualizer::setMovementScheibeMs(modus == 0 ? 0.0 : 4.0);
+            MultiEffectVisualizer vis;
+            const QString endung = preset.section(QLatin1Char('.'), -1).toLower();
+            const bool geladen = endung == QLatin1String("avs")    ? vis.loadAvsFile(preset)
+                                 : endung == QLatin1String("milk") ? vis.loadMilkFile(preset)
+                                                                   : vis.loadChainFile(preset);
+            REQUIRE(geladen);
+            // fester Beat und kuenstliche Audiodaten, in beiden Laeufen dieselben —
+            // ohne sie arbeiten viele Presets gar nicht (Listen „on beat")
+            vis.setBeatPeriodOverride(30);
+            vis.initialize();
+            vis.resize(groesse);
+            lumi::composer::Leinwand bild;
+            std::vector<float> spektrum(256), welle(576);
+            for (int i = 0; i < bilder; ++i)
+            {
+                const double t = i / 60.0;
+                const double schlag = std::exp(-8.0 * std::fmod(t, 0.5));
+                for (size_t n = 0; n < welle.size(); ++n)
+                    welle[n] = static_cast<float>((0.3 + 0.6 * schlag) *
+                                                  std::sin(0.05 * static_cast<double>(n) + 6.0 * t));
+                for (size_t n = 0; n < spektrum.size(); ++n)
+                    spektrum[n] = static_cast<float>((0.2 + 0.8 * schlag) *
+                                                     std::exp(-static_cast<double>(n) / 40.0));
+                vis.updateSpectrum(spektrum.data(), static_cast<int>(spektrum.size()));
+                vis.updateWaveform(welle.data(), static_cast<int>(welle.size()));
+                bild.rendere(vis, 1.0f / 60.0f, groesse);
+                if (vis.movementTabelleImBau()) fertigAb[modus] = i + 1;  // letztes Bau-Bild + 1
+            }
+            ende[modus] = bild.bild().convertToFormat(QImage::Format_RGB32);
+            if (!aus.isEmpty())
+                ende[modus].save(aus + (modus == 0 ? QStringLiteral("/sofort.png")
+                                                   : QStringLiteral("/scheiben.png")));
+            vis.cleanup();
+        }
+        long long summe = 0;
+        int anders = 0;
+        for (int y = 0; y < groesse.height(); ++y)
+            for (int x = 0; x < groesse.width(); ++x)
+            {
+                const QRgb a = ende[0].pixel(x, y);
+                const QRgb b = ende[1].pixel(x, y);
+                const int d = std::abs(qRed(a) - qRed(b)) + std::abs(qGreen(a) - qGreen(b)) +
+                              std::abs(qBlue(a) - qBlue(b));
+                summe += d;
+                if (d != 0) ++anders;
+            }
+        const double flaeche = static_cast<double>(groesse.width()) * groesse.height();
+        MESSAGE("Probe " << preset.toStdString() << ": nach " << bilder
+                         << " Bildern — Tabelle in Scheiben fertig ab Bild " << fertigAb[1]
+                         << " (-1 = nie im Bau)"
+                         << "; verschiedene Pixel " << anders << " ("
+                         << 100.0 * anders / flaeche << " %), mittlere Abweichung je Kanal "
+                         << static_cast<double>(summe) / (flaeche * 3.0) << " von 255");
+    }
+
     TEST_CASE("Tabelle in Scheiben == Tabelle aus einem Stueck, Eintrag fuer Eintrag")
     {
         struct Fall
@@ -244,7 +338,9 @@ TEST_SUITE("MovementScheiben")
             }
             vis.cleanup();
         }
-        CHECK(fertigAb == groesse.height() - 1);  // eine Zeile je Bild, im letzten fertig
+        // kleinstes Budget: eine Zeile beim Besuch des Knotens, eine im Frame-Takt
+        CHECK(fertigAb > 1);
+        CHECK(fertigAb <= groesse.height());
         CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);
 
         // --- zweiter Renderer: die Tabelle kommt aus dem Speicher ------------
@@ -302,5 +398,79 @@ TEST_SUITE("MovementScheiben")
             vis.cleanup();
         }
         CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);  // nichts dazugekommen
+    }
+
+    TEST_CASE("Renderer: der Bau laeuft je Bild weiter, auch wenn der Knoten nur beim Beat drankommt")
+    {
+        // Befund Patrik S94 (Sichttest F7, „pixeliger"): ein Movement in einer
+        // Liste, die nur beim Beat rechnet, bekam eine Scheibe je Beat — das
+        // Gitter-Bild blieb viele Sekunden stehen.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QGuiApplication app{argc, argv};
+        QOpenGLContext ctx;
+        QSurfaceFormat fmt;
+        fmt.setVersion(3, 3);
+        fmt.setProfile(QSurfaceFormat::CoreProfile);
+        ctx.setFormat(fmt);
+        QOffscreenSurface surface;
+        bool gut = ctx.create();
+        if (gut)
+        {
+            surface.setFormat(ctx.format());
+            surface.create();
+            gut = surface.isValid() && ctx.makeCurrent(&surface);
+        }
+        if (!gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        ScheibenWaechter waechter;
+        MultiEffectVisualizer::leereMovementSpeicher();
+        MultiEffectVisualizer::setMovementScheibeMs(1.0e-9);  // eine Zeile je Scheibe
+
+        // Wurzel → Liste „nur beim Beat, ein Bild lang" → Movement
+        ChainNode root;
+        root.params = ListParams{};
+        ChainNode clear;
+        clear.params = ClearParams{};
+        ChainNode balken;
+        balken.params = DebugBarsParams{0x40C0FF, -2.5f};
+        ChainNode beatListe;
+        ListParams lp;
+        lp.onBeatRender = true;
+        lp.onBeatFrames = 1;
+        beatListe.params = lp;
+        ChainNode move;
+        MovementParams mp;
+        mp.code = "x = x * 0.9; y = y * 0.9;";
+        mp.rectCoords = true;
+        move.params = mp;
+        beatListe.children = {move};
+        root.children = {clear, balken, beatListe};
+
+        const QSize groesse(96, 64);  // 64 Zeilen
+        MultiEffectVisualizer vis;
+        vis.setChain(root);
+        vis.setBeatPeriodOverride(30);  // Beat auf Bild 0, 30, 60, 90 …
+        vis.initialize();
+        vis.resize(groesse);
+        lumi::composer::Leinwand bild;
+        int bauBilder = 0;
+        for (int i = 0; i < 100; ++i)
+        {
+            bild.rendere(vis, 0.02f, groesse);
+            if (vis.movementTabelleImBau()) ++bauBilder;
+        }
+        // Vier Besuche des Knotens haetten allein vier Zeilen ergeben; mit dem
+        // Bau je Bild steht die Tabelle nach gut 64 Bildern und ist beim Beat
+        // auf Bild 90 uebernommen (und liegt im Speicher).
+        CHECK(bauBilder > 30);
+        CHECK(bauBilder < 70);
+        CHECK_FALSE(vis.movementTabelleImBau());
+        CHECK(MultiEffectVisualizer::movementTabellenImSpeicher() == 1);
+        vis.cleanup();
     }
 }

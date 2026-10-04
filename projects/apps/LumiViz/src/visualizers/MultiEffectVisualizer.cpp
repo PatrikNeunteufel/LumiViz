@@ -4771,6 +4771,24 @@ void MultiEffectVisualizer::onRender(float deltaTime)
         raeumeVerwaisteLaufzeiten();
     }
 
+    // S94: Movement-Tabellen, die in Scheiben entstehen, je Frame ein Stueck
+    // weiterbauen — auch wenn ihr Knoten in diesem Frame gar nicht drankommt
+    // (Liste „on beat", ruhende Host-Gruppe). Sonst kaeme eine Scheibe je
+    // Beat, und das Gitter-Bild bliebe viele Sekunden stehen (Befund Patrik
+    // S94, Sichttest F7: „pixeliger").
+    ++m_movementBauFrame;
+    if (const double scheibeMs = g_movementScheibeMs.load(); scheibeMs > 0.0)
+    {
+        for (auto& [id, rt] : m_leafRuntimes)
+        {
+            if (rt.grid == nullptr || rt.moveBauKey.empty() || !rt.grid->transTableImBau()) continue;
+            rt.moveBauFrame = m_movementBauFrame;
+            if (rt.grid->continueTransTable(scheibeMs) ==
+                lumi::modules::ScriptGridModule::TransBau::Laeuft)
+                ++m_movementImBau;
+        }
+    }
+
     // Waveform RMS: smoothed level for DebugBars/vol.
     const std::vector<float> waveform = getWaveform();
     float rms = 0.0f;
@@ -6310,7 +6328,10 @@ bool MultiEffectVisualizer::applyMovementTable(LeafRuntime& rt,
                     rt.moveBauKey = schluessel;
                 }
                 using Bau = lumi::modules::ScriptGridModule::TransBau;
-                const Bau stand = rt.grid->continueTransTable(scheibeMs);
+                // Hat dieser Frame schon eine Scheibe gerechnet (onRender),
+                // wird hier nur noch nachgesehen, ob die Tabelle fertig ist.
+                const Bau stand = rt.grid->continueTransTable(
+                    rt.moveBauFrame == m_movementBauFrame ? 1.0e-9 : scheibeMs);
                 if (stand == Bau::Laeuft)
                 {
                     ++m_movementImBau;

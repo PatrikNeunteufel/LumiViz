@@ -327,6 +327,12 @@ public:
     /// Vergleichslauf und die Unit-Tests.
     static void setMovementScheibeMs(double ms);
     [[nodiscard]] static double movementScheibeMs();
+    /// Die Scheibe der App, wenn in den Einstellungen „verteilt" gewaehlt ist.
+    static constexpr double kMovementScheibeAppMs = 4.0;
+    /// QSettings-Schluessel der Einstellung Performance → Movement Table:
+    /// false (Vorgabe der App) = ueber mehrere Bilder verteilt, true = in
+    /// einem Stueck wie das AVS-Original.
+    static constexpr const char* kMovementEinstellung = "performance/movementTableAtOnce";
     /// Entsteht in dieser Instanz noch eine Movement-Tabelle? (Stand des
     /// letzten Bilds — der Composer waermt einen Clip so lange weiter vor.)
     [[nodiscard]] bool movementTabelleImBau() const { return m_movementImBau > 0; }
@@ -809,6 +815,7 @@ private:
         /// Bau in Scheiben (S94): Schluessel der Tabelle, die gerade entsteht,
         /// und das Ersatz-Modul fuer das Gitter-Bild bis dahin
         std::string moveBauKey;
+        std::uint64_t moveBauFrame = 0;  ///< Frame, in dem zuletzt eine Scheibe lief
         std::unique_ptr<lumi::modules::ScriptGridModule> gridErsatz;
         std::string gridErsatzCompiled;
 
@@ -1808,6 +1815,7 @@ private:
     bool m_karaokeAuslassen = false;   ///< Composer-Naht R2: diese Instanz zeichnet die Ebene nie
     unsigned int m_presentZiel = 0;    ///< Composer-Naht R1: Framebuffer des Presents (0 = Fenster)
     int m_movementImBau = 0;           ///< S94: Movement-Knoten, deren Tabelle in diesem Frame noch entsteht
+    std::uint64_t m_movementBauFrame = 1;  ///< S94: zaehlt die Frames fuer den Bau in Scheiben
     /// K4 b: Fenstergroesse (Viewport in onRender) — darin rastert die Zeile
     /// der Ebene; der Trail bleibt in Kettenaufloesung.
     int m_fensterBreite = 0;

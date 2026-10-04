@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.78.0
-> **Datum:** 2026-10-03
+> **Version:** 1.79.0
+> **Datum:** 2026-10-04
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -1266,6 +1266,31 @@ können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameters**-Sektio
 Schalter — es ist die original-treue Betriebsart (D3D9-Verhalten nachgebildet)
 und ohnehin Standard.
 
+**Ein Schalter in die andere Richtung — Movement Table** (*Settings → Performance*,
+Session 94). Hier ist der Standard der App **nicht** das Original-Verhalten:
+
+| Schalter | Standard | „Original" holt zurück | Seit |
+|---|---|---|---|
+| **Movement Table** | Spread over frames (no freeze) | At once (like original AVS) | Session 94 |
+
+Der AVS-Effekt **Movement** rechnet sein Skript einmal je Bildpunkt aus und legt
+das Ergebnis in einer Tabelle ab — in Full HD rund eine halbe Sekunde je
+Movement, beim Laden, bei jeder Größenänderung des Fensters und wenn ein Host
+Switcher eine Gruppe zum ersten Mal zeigt. Das Original bleibt in dieser Zeit
+stehen.
+
+- **Spread over frames** baut die Tabelle über mehrere Bilder verteilt, das Bild
+  läuft weiter. Bis die Tabelle steht (ein bis zwei Sekunden), arbeitet der
+  Effekt mit einem groben Gitter und sieht leicht anders aus. Skripte, die
+  `reg`, `megabuf`, `rand` oder Audio lesen, sehen diese Werte über mehrere
+  Bilder verteilt statt in einem Augenblick.
+- **At once** verhält sich wie das Original: kurzer Stillstand, vom ersten Bild
+  an die genaue Tabelle. **Diese Stellung wählen, wenn ein Preset mit dem
+  AVS-Original verglichen werden soll.** Die Vergleichsläufe der Entwicklung
+  (AvsStandalone, Unit-Tests) laufen immer so.
+
+Der Schalter wirkt sofort auf jede Tabelle, die ab dann entsteht.
+
 ### Styling: Drift und Weichzeichnen (kein Original-Verhalten)
 
 In der **Parameters**-Sektion eines Milkdrop-Nodes, Gruppe **„Styling (not
@@ -1655,6 +1680,7 @@ Filter läuft trotzdem.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.79.0 | 2026-10-04 | Session 94. NEU **Settings → Performance → Movement Table**: die Tabelle des AVS-Effekts Movement entsteht über mehrere Bilder verteilt (Standard, kein Stillstand beim Laden) oder in einem Stück wie im Original (für Vergleiche mit AVS) |
 | 1.78.0 | 2026-10-03 | Session 93. Audio Browser: der laufende Titel ist markiert, Knopf **◎** springt in seinen Ordner |
 | 1.77.0 | 2026-10-03 | Session 93. Die Preset-Zeile: fester Eintrag **+ New empty effect chain** im Dropdown des Effect-Chain-Panels |
 | 1.76.0 | 2026-10-03 | Session 93. Presets durchblättern: der Start lädt das zuletzt laufende Preset, gleich über welchen Weg es kam; der Effect Browser bleibt in seinem Ordner und folgt dem laufenden Preset nur auf Knopfdruck (**◎**) |

@@ -618,6 +618,36 @@ QWidget* SettingsPanel::createPanelsTab()
     }
     layout->addRow(tr("AVS Import Render Scale:"), m_pAvsRenderScaleSpinBox);
 
+    // Movement-Tabelle (S94): Vorgabe der App ist der Bau ueber mehrere Bilder
+    // verteilt (kein Stillstand); „in einem Stueck" ist das Verhalten des
+    // Originals und das der Vergleichslaeufe. Wirkt sofort auf jede Tabelle,
+    // die ab jetzt entsteht.
+    {
+        auto* tabelle = new QComboBox(widget);
+        tabelle->addItem(tr("Spread over frames (no freeze)"));
+        tabelle->addItem(tr("At once (like original AVS)"));
+        tabelle->setCurrentIndex(
+            QSettings().value(QLatin1String(MultiEffectVisualizer::kMovementEinstellung), false).toBool()
+                ? 1
+                : 0);
+        tabelle->setToolTip(
+            tr("The Movement effect evaluates its script once per pixel and stores the result "
+               "in a table — about half a second per Movement in Full HD.\n\n"
+               "Spread over frames: the table is built a few milliseconds per frame; until it "
+               "is ready the effect uses a coarse 96 x 72 grid, so the first second or two "
+               "look slightly different. Scripts that read reg, megabuf, rand or audio see "
+               "these values over several frames instead of one instant.\n\n"
+               "At once: the picture stands still while the table is built, exactly like "
+               "original AVS. Choose this to compare a preset with the original."));
+        connect(tabelle, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [](int index) {
+            QSettings().setValue(QLatin1String(MultiEffectVisualizer::kMovementEinstellung),
+                                 index == 1);
+            MultiEffectVisualizer::setMovementScheibeMs(
+                index == 1 ? 0.0 : MultiEffectVisualizer::kMovementScheibeAppMs);
+        });
+        layout->addRow(tr("Movement Table:"), tabelle);
+    }
+
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren
     // eigener Schalter auf "App-Einstellung" steht. Behalten = Original-
     // Semantik (jedes Preset erbt das Bild des Vorgaengers).
