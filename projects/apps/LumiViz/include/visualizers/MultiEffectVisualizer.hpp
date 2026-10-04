@@ -287,6 +287,30 @@ public:
     }
     [[nodiscard]] std::size_t debugLaufzeitAnzahl() const { return m_leafRuntimes.size(); }
 
+    // ---- Composer-Naht (docs/ui/Composer_Konzept.md §12.2) -----------------
+    // Der Composer laesst mehrere Renderer nebeneinander laufen und mischt
+    // ihre fertigen Bilder. Dafuer braucht er drei Dinge vom Renderer — keins
+    // davon beruehrt die Bildberechnung, und die Vorgabe ist jeweils das
+    // Verhalten von vor dem Composer.
+
+    /// Composer-Naht R1: wohin der Present zeichnet. 0 (Vorgabe) = das
+    /// Fenster, wie immer. Sonst die Nummer eines Framebuffer-Objekts des
+    /// Aufrufers: der Renderer legt sein fertiges Bild dort ab — samt Render
+    /// Scale und Post-Bloom, in der Groesse des gesetzten Viewports.
+    void setPresentZiel(unsigned int framebuffer) { m_presentZiel = framebuffer; }
+    [[nodiscard]] unsigned int presentZiel() const { return m_presentZiel; }
+    /// Composer-Naht R2: diese Instanz laesst die Karaoke-Ebene aus (Vorgabe:
+    /// nein). Der Schalter der Ebene ist fuer alle Renderer gemeinsam; laufen
+    /// mehrere, zeichnete sonst jeder den Songtext ueber sein Bild (C0b).
+    void setKaraokeAuslassen(bool auslassen) { m_karaokeAuslassen = auslassen; }
+    [[nodiscard]] bool karaokeAuslassen() const { return m_karaokeAuslassen; }
+    /// Composer-Naht R2: die in diesem Frame gerechnete Karaoke-Ebene auf den
+    /// GEBUNDENEN Framebuffer legen — damit ein Mischer sie einmal ueber das
+    /// gemischte Bild zeichnen kann. Tut nichts, wenn die Ebene in diesem
+    /// Frame nicht dran war. Der Renderer selbst ruft dasselbe am Ende seines
+    /// Presents.
+    void legeKaraokeEbeneAuf() { legeKaraokeAuf(); }
+
     /**
      * @brief Songwechsel melden (S82) — Host Switcher (Song-Slot, „bei
      *        Songwechsel weiter"). Ein prozessweiter Zaehler statt eines Flags
@@ -1753,6 +1777,8 @@ private:
     bool m_karaokeLaeuft = false;      ///< der Walk der Ebene laeuft (Trail folgt deren Lyrics-Knoten)
     bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
+    bool m_karaokeAuslassen = false;   ///< Composer-Naht R2: diese Instanz zeichnet die Ebene nie
+    unsigned int m_presentZiel = 0;    ///< Composer-Naht R1: Framebuffer des Presents (0 = Fenster)
     /// K4 b: Fenstergroesse (Viewport in onRender) — darin rastert die Zeile
     /// der Ebene; der Trail bleibt in Kettenaufloesung.
     int m_fensterBreite = 0;

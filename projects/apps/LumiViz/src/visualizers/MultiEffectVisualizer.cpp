@@ -3790,6 +3790,7 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
     m_karaokeLagen.clear();
     m_karaokeTrailTex = 0;
     m_karaokeGezeichnet = false;
+    if (m_karaokeAuslassen) return;  // Composer-Naht R2 (Vorgabe: false)
     if (!karaokeEbene() || m_songtext.leer() || ketteZeigtLyrics()) return;
     const ChainNode* lyrics = karaokeLyricsKnoten();
     const ChainNode* trail = karaokeTrailKnoten();
@@ -4928,7 +4929,9 @@ void MultiEffectVisualizer::onRender(float deltaTime)
     // Mit Post-Bloom uebernimmt der Composite-Shader den Present-Draw
     // (Base + Glow additiv + optionale Vignette in Fenster-Aufloesung).
     m_rootSurface.current()->release();
-    f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // Composer-Naht R1: Vorgabe 0 = das Fenster (wie immer); der Composer
+    // laesst hierhin sein eigenes Framebuffer-Objekt setzen.
+    f->glBindFramebuffer(GL_FRAMEBUFFER, m_presentZiel);
     f->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
     if (m_presentShader != nullptr)
     {

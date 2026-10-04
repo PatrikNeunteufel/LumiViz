@@ -1,10 +1,11 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.5.0
+> **Version:** 0.6.0
 > **Datum:** 2026-10-04 (Session 93)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
-> Stufen **C0 und C0b (Belege) erledigt**, sonst nichts gebaut
+> Stufen **C0, C0b (Belege) und C1a (Mischer, Nähte R1 / R2) erledigt** —
+> im Zweig `composer`, noch nicht nach `master` geholt
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`
 > **Zielgruppe:** App-Entwickler
@@ -241,7 +242,7 @@ Jede Stufe endet mit etwas Prüfbarem. Für jede gelten die Regeln zum Rückbau
 |---|---|---|
 | **C0 Belege** ✅ | Renderweg über Host-Gruppen untersucht | erledigt (S93), §9a — verworfen |
 | **C0b Belege** ✅ | mehrere Renderer nebeneinander | erledigt (S93), §9b — trägt |
-| **C1a Mischer, kleinste Fassung** | zwei Renderer, ein Mischpass mit Pegel und Mischart, Karaoke einmal darüber; die fünf offenen Punkte aus §5 belegt; Nähte R1 und R2 | Test: zwei Presets auf Teilpegel in jeder Mischart, Bild wie berechnet; Zahlen zu Speicher und Zeit im Release-Build |
+| **C1a Mischer, kleinste Fassung** ✅ | zwei Renderer, ein Mischpass mit Pegel und Mischart, Karaoke einmal darüber; Nähte R1 und R2 | erledigt (S93), §9c. Von den fünf offenen Punkten aus §5 sind drei belegt; Render-Thread / Fenster und die Zeiten im Release-Build gehen nach C2 |
 | **C1b Modell und Wiedergabe** | Komposition als Datenmodell, `.lvcomp` lesen und schreiben, Uhr mit Transport, Pegel aus der Kurve, Vorwärmen und Entladen; **ohne Panel** | Test: an Stelle *t* zeigt das Bild die erwarteten Clips mit den erwarteten Pegeln; nach einem Sprung ebenso |
 | **C2 Panel zum Ansehen** | Panel mit Lineal, Kanälen, Clips, Abspielmarke, Transport, Schalter Composer on; der Composer als Bildquelle der App | eine von Hand geschriebene `.lvcomp` läuft und ist zu sehen |
 | **C3 Bearbeiten** | Clips hineinziehen, verschieben, Kanten ziehen, löschen; Kanäle anlegen; Datei-Zeile; Undo | eine Komposition ganz im Panel bauen |
@@ -292,6 +293,64 @@ Suite `ComposerBelegeB`, vier Testfälle, kein bestehender Code berührt.
 **Nicht gemessen:** Bildspeicher je Renderer, Zeiten im Release-Build und
 auf der schnellen GPU, das Mischen selbst, MilkDrop-Presets nebeneinander,
 der Betrieb mit dem Render-Thread der App — alles Stoff von C1a.
+
+### 9c. Stand C1a — ✅ erledigt (S93): der Mischer in kleinster Fassung
+
+**Eigenes:** `include/composer/Mischer.hpp`, `src/composer/Mischer.cpp`
+(Klassen `Leinwand` und `Mischer`, sieben Mischarten: Normal, Additive,
+Subtract, Maximum, Minimum, Multiply, XOR — jede mit Pegel:
+`mix(unten, art(unten, oben), pegel)`), `src/composer/Source.cmake`,
+`tests/unit/UnitTests/test_ComposerMischer.cpp` (Suite `ComposerMischer`,
+sieben Testfälle).
+
+**Nähte am Renderer** (`MultiEffectVisualizer`, im Code als `Composer-Naht`
+vermerkt; die Bildberechnung ist nicht berührt):
+
+- **R1 Present-Ziel** — `setPresentZiel(framebuffer)`. Vorgabe 0 = das
+  Fenster wie immer. Der Composer lässt den Renderer sein **fertiges** Bild
+  in ein eigenes Framebuffer-Objekt legen, samt Render Scale und
+  Post-Bloom, in Fenstergröße. Im Code: eine Zeile im Present
+  (`glBindFramebuffer(…, m_presentZiel)` statt `…, 0`). Das ist besser als
+  der zuerst gedachte Lesezugang auf das innere Bild: der Clip sieht im
+  Mischer genau so aus, wie er allein am Fenster stünde.
+- **R2 Karaoke** — `setKaraokeAuslassen(bool)` (Vorgabe: nein) und
+  `legeKaraokeEbeneAuf()`: legt die in diesem Bild gerechnete Ebene auf den
+  gebundenen Framebuffer; der Renderer ruft dasselbe am Ende seines
+  Presents. Im Code: eine Abfrage am Anfang von `rechneKaraokeEbene` und
+  eine öffentliche Weiterleitung.
+
+| Frage | Ergebnis | Messwert |
+|---|---|---|
+| Rechnet der Mischer jede Mischart mit jedem Pegel nach der Formel? | ja | 7 Arten × Pegel 0,25 / 0,5 / 1, je Kanal höchstens 1 von 255 daneben |
+| Grund, Pegel 0, Reihenfolge? | Schwarz; Pegel 0 legt nichts; das Obere gewinnt | — |
+| Bleibt jeder Renderer im Mischer bitgleich mit dem Lauf allein? | ja | zwei Ketten mit Zustand, 30 Bilder, 0 Pixel; das Gemischte ist Pixel für Pixel das Mittel |
+| Trägt die Leinwand das fertige Bild in Fenstergröße? | ja, auch mit Render Scale | Kette 64 × 64, Leinwand 128 × 128 |
+| Karaoke einmal über dem Gemischten? | ja | Clips mit „auslassen": kein Text; der Mischer legt die Ebene eines Träger-Renderers darüber — 8671 Pixel, bildgleich mit dem Renderer allein |
+| MilkDrop nebeneinander? | **bitgleich** | zwei Paare mitgelieferter `.milk`, 30 Bilder, 0 von 19 200 Pixeln |
+| Was kostet das Mischen? | fast nichts | 0,29 ms je Bild bei 1280 × 720 (zwei Durchgänge + Ausgabe, Testing-Build) |
+| Bildspeicher? | gerechnet, nicht gemessen | bei 1280 × 720 je Renderer mindestens 10,5 MB (Bildpaar + Leinwand), der Mischer 7 MB; dazu kommt, was das Preset selbst anlegt |
+
+**Composer aus = wie vorher, belegt:**
+
+- Unit-Tests **858 / 858 grün, 0 Skips** — die 851 bestehenden unverändert.
+- **Vergleichslauf bitgleich:** 90 von 90 Bildern gegen den Bezugsstand
+  `out/f4c/bp30_s91_trailline` (15 Presets, `--beat-period 30`), neuer
+  Stand `out/f4c/bp30_s93_c1a`.
+
+**Nicht belegt, geht nach C2:**
+
+- der Betrieb im **Render-Thread** der App und am **Fenster** — der
+  Composer ist noch keine Bildquelle (Naht R3);
+- die Zeiten im **Release-Build** und auf der schnellen GPU (im Test:
+  Testing-Build; die Bildzeiten dort sagen nichts über den Betrieb);
+- der Bildspeicher gemessen statt gerechnet;
+- dass der Present mit der Vorgabe wirklich am Fenster ankommt, ist im
+  Unit-Test nicht lesbar (unsichtbare Fläche ohne feste Größe) — das
+  belegt der Vergleichslauf, der durch ein echtes Fenster geht.
+
+**Offen für später:** „Die Effektkette gewinnt" über mehrere Clips — zeigt
+ein Clip selbst Lyrics, tritt die Ebene heute nur im **selben** Renderer
+zurück. Der Mischer muss das über alle laufenden Clips entscheiden.
 
 ---
 
@@ -386,8 +445,8 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 
 | Naht | Wo | Was sich ändert | Vorgabe = altes Verhalten | Stufe |
 |---|---|---|---|---|
-| R1 Bild herausgeben | Renderer | das fertige Bild als Textur lesbar (heute nur ein Testzugang, der kopiert) | reiner Lesezugang, ändert nichts | C1a |
-| R2 Karaoke auslassen | Renderer | ein Renderer kann die Karaoke-Ebene auslassen | Vorgabe: zeichnet sie wie heute | C1a |
+| R1 Present-Ziel ✅ | Renderer, eine Zeile im Present | `setPresentZiel`: der Renderer legt sein fertiges Bild in ein Framebuffer-Objekt des Aufrufers | 0 = das Fenster, wie immer | C1a |
+| R2 Karaoke ✅ | Renderer, eine Abfrage und eine Weiterleitung | `setKaraokeAuslassen`; `legeKaraokeEbeneAuf` legt die gerechnete Ebene auf den gebundenen Framebuffer | Vorgabe: zeichnet sie wie heute | C1a |
 | R3 Bildquelle | Fenster / Render-Thread | der Composer tritt als Bildquelle an die Stelle des einen Renderers | Composer aus → der eine Renderer wie heute | C2 |
 | N4 Laufendes Preset, Start | `MainWindow`, `UI/StartPreset.hpp` | der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute | C6 |
 | N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
@@ -410,10 +469,13 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | Stufe | Eigene Dateien (löschen) | Naht-Commits (zurücknehmen) | Einträge (herausnehmen) | Rückbau geprüft |
 |---|---|---|---|---|
 | C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
+| C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | der Commit `composer-naht: R1, R2` (`MultiEffectVisualizer.hpp` / `.cpp`) | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | solange der Zweig nicht geholt ist, **ist `master` der zurückgebaute Stand**; vor dem Holen: `git diff --stat master composer` muss genau diese Liste zeigen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
-sind grün und der Vergleichslauf ist bitgleich. Geprüft wird das **einmal
-nach C1a** und danach, wenn eine neue Naht dazukommt.
+sind grün und der Vergleichslauf ist bitgleich. Im Zweig ist das ohne
+Probe gegeben — `master` ist dieser Stand. **Wirklich durchgespielt wird
+der Rückbau, bevor eine Stufe nach `master` geholt wird:** der Unterschied
+zwischen `master` und `composer` muss sich mit der Rückbau-Liste decken.
 
 ---
 
@@ -421,6 +483,7 @@ nach C1a** und danach, wenn eine neue Naht dazukommt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.6.0 | 2026-10-04 | Session 93 — **Stufe C1a erledigt** (Zweig `composer`): §9c — `Leinwand` und `Mischer` mit sieben Mischarten und Pegel; Nähte R1 (Present-Ziel statt Lesezugang) und R2 (Karaoke auslassen, einmal auflegen); MilkDrop nebeneinander bitgleich; Mischen 0,29 ms je Bild; Vergleichslauf 90 / 90 bitgleich, 858 Cases; Render-Thread und Release-Zeiten gehen nach C2; Rückbau-Liste C1a |
 | 0.5.0 | 2026-10-04 | Session 93 — **alle Entscheide gefallen** (Patrik): C2 a eigener Transport, C3 eigener Mischer, C4 a Visual-Playlist entfällt, C5 a Kürzel springen im Composer, C6 a Laden schaltet nach Rückfrage aus, dazu **ein Schalter Lock** für Kürzel und Laden (keine Rückfrage bei Vorführungen), C7 a Start lädt die Komposition angehalten am Anfang, C9 a Lücke schwarz, C11 entfällt. §5 neu gefasst (Mischer, Vorwärmen, Entladen, Karaoke einmal durch den Mischer, fünf offene Punkte für C1a); §8 mit den Regeln; Stufen C1a / C1b; Nahtstellen neu (R1–R3 am Rand des Renderers, keine in der Bildberechnung) |
 | 0.4.0 | 2026-10-04 | Session 93 — **Stufe C0b erledigt** (Frage Patrik: ist der eigene Mischer die beste Lösung?): §9b — zwei Renderer nebeneinander sind bitgleich mit dem Lauf allein, eine Mix-Datei mit Host Switcher läuft darin unverändert, ein weiterer Renderer kostet wenig, die Karaoke-Ebene zeichnet jeder selbst; Empfehlung C3 und C11 gedreht |
 | 0.3.0 | 2026-10-04 | Session 93 — **Stufe C0 erledigt:** §9a mit den Messwerten; Gewicht wirkt als Pegel; Mischart kennt keinen Pegel; ruhende Clips kosten nichts, dafür Anlauf-Ruck und fehlendes Entladen; `.lvfx2` mit Switcher als Clip schwarz; Entscheid C11; Rückbau-Liste C0 |
