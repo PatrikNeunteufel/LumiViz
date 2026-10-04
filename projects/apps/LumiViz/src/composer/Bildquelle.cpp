@@ -1,0 +1,217 @@
+/**
+ * @file Bildquelle.cpp
+ * @brief Composer: die Komposition als Bildquelle der App (Stufe C2a)
+ */
+
+#include "composer/Bildquelle.hpp"
+
+#include "composer/Wiedergabe.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
+
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+
+#include <algorithm>
+
+namespace lumi::composer
+{
+
+Bildquelle::Bildquelle() = default;
+
+Bildquelle::Bildquelle(Uhr uhr) : m_uhr(std::move(uhr)) {}
+
+Bildquelle::~Bildquelle() = default;
+
+// =============================================================================
+// Steuerung
+// =============================================================================
+
+void Bildquelle::setKomposition(Komposition komposition)
+{
+    m_richtBericht.clear();
+    komposition.richte(&m_richtBericht);
+    m_uhr.stoppe();
+    m_uhr.setLaengeMs(komposition.laenge());
+    m_uhr.anDenAnfang();
+    m_wartend = std::move(komposition);
+    m_neueKomposition = true;
+}
+
+int Bildquelle::rendererAnzahl() const
+{
+    return m_wiedergabe != nullptr ? m_wiedergabe->rendererAnzahl() : 0;
+}
+
+int Bildquelle::gemischteClips() const
+{
+    return m_wiedergabe != nullptr ? m_wiedergabe->gemischteClips() : 0;
+}
+
+QStringList Bildquelle::bericht() const
+{
+    QStringList alles = m_richtBericht;
+    if (m_wiedergabe != nullptr) alles += m_wiedergabe->bericht();
+    return alles;
+}
+
+// =============================================================================
+// IVisualizer (Render-Thread)
+// =============================================================================
+
+void Bildquelle::initialize()
+{
+    m_wiedergabe = std::make_unique<Wiedergabe>();
+    m_versorgt.clear();
+    m_bildSteht = false;
+    m_letzteStelle = -1;
+    // Eine vor dem Anlegen gesetzte Komposition wartet in m_wartend; eine vor
+    // einem cleanup schon uebernommene wird wieder vorgelegt.
+    m_neueKomposition = true;
+    m_angelegt = true;
+}
+
+void Bildquelle::resize(const QSize& size)
+{
+    m_groesse = size;
+}
+
+void Bildquelle::cleanup()
+{
+    if (m_wiedergabe != nullptr)
+    {
+        // Die Komposition ueberlebt das Aufraeumen — ausser es wartet schon
+        // eine neuere.
+        if (!m_neueKomposition) m_wartend = m_wiedergabe->komposition();
+        m_wiedergabe.reset();  // entlaedt alle Renderer, braucht den GL-Kontext
+    }
+    m_versorgt.clear();
+    m_bildSteht = false;
+    m_angelegt = false;
+}
+
+void Bildquelle::render(float deltaTime)
+{
+    QOpenGLContext* kontext = QOpenGLContext::currentContext();
+    if (!m_angelegt || m_wiedergabe == nullptr || kontext == nullptr || m_groesse.isEmpty()) return;
+
+    bool neu = false;
+    if (m_neueKomposition)
+    {
+        m_wiedergabe->setKomposition(std::move(m_wartend));
+        m_wartend = Komposition{};
+        m_neueKomposition = false;
+        m_versorgt.clear();
+        neu = true;
+    }
+
+    const bool laeuft = m_uhr.laeuft();
+    const std::int64_t stelle = m_uhr.stelleMs();
+    if (laeuft || neu || !m_bildSteht || stelle != m_letzteStelle || m_groesse != m_letzteGroesse)
+    {
+        // Steht die Uhr, laeuft auch die Zeit der Visuals nicht weiter.
+        m_bildSteht = m_wiedergabe->rendere(stelle, laeuft ? deltaTime : 0.0f, m_groesse);
+        m_letzteStelle = stelle;
+        m_letzteGroesse = m_groesse;
+        ++m_gerechnet;
+        versorgeNeue();
+    }
+
+    const unsigned int ziel =
+        m_ziel >= 0 ? static_cast<unsigned int>(m_ziel) : kontext->defaultFramebufferObject();
+    if (m_bildSteht)
+    {
+        m_wiedergabe->mischer().zeichneIn(ziel, m_groesse);
+    }
+    else
+    {
+        QOpenGLFunctions* f = kontext->functions();
+        f->glBindFramebuffer(GL_FRAMEBUFFER, ziel);
+        f->glViewport(0, 0, m_groesse.width(), m_groesse.height());
+        f->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        f->glClear(GL_COLOR_BUFFER_BIT);
+    }
+}
+
+// =============================================================================
+// Audiodaten
+// =============================================================================
+
+void Bildquelle::updateSpectrum(const float* spectrum, int count)
+{
+    if (spectrum == nullptr || count <= 0) return;
+    m_spektrum.assign(spectrum, spectrum + count);
+    if (m_wiedergabe == nullptr) return;
+    m_wiedergabe->fuerJedenRenderer([&](MultiEffectVisualizer& r) {
+        r.updateSpectrum(spectrum, count);
+        ++m_audioGereicht;
+    });
+}
+
+void Bildquelle::updateWaveform(const float* waveform, int count)
+{
+    if (waveform == nullptr || count <= 0) return;
+    m_welle.assign(waveform, waveform + count);
+    if (m_wiedergabe == nullptr) return;
+    m_wiedergabe->fuerJedenRenderer([&](MultiEffectVisualizer& r) {
+        r.updateWaveform(waveform, count);
+        ++m_audioGereicht;
+    });
+}
+
+void Bildquelle::updateAudioStereo(const float* specInterleaved, int binsPerCh,
+                                   const float* waveInterleaved, int frames, int channels)
+{
+    const int kanaele = std::max(1, channels);
+    if (specInterleaved != nullptr && binsPerCh > 0)
+        m_spektrumStereo.assign(specInterleaved,
+                                specInterleaved + static_cast<size_t>(binsPerCh) * kanaele);
+    else
+        m_spektrumStereo.clear();
+    if (waveInterleaved != nullptr && frames > 0)
+        m_welleStereo.assign(waveInterleaved, waveInterleaved + static_cast<size_t>(frames) * kanaele);
+    else
+        m_welleStereo.clear();
+    m_stereoBins = binsPerCh;
+    m_stereoFrames = frames;
+    m_stereoKanaele = kanaele;
+    if (m_wiedergabe == nullptr) return;
+    m_wiedergabe->fuerJedenRenderer([&](MultiEffectVisualizer& r) {
+        r.updateAudioStereo(specInterleaved, binsPerCh, waveInterleaved, frames, channels);
+        ++m_audioGereicht;
+    });
+}
+
+void Bildquelle::reicheAlles(MultiEffectVisualizer& renderer)
+{
+    if (!m_spektrum.empty())
+    {
+        renderer.updateSpectrum(m_spektrum.data(), static_cast<int>(m_spektrum.size()));
+        ++m_audioGereicht;
+    }
+    if (!m_welle.empty())
+    {
+        renderer.updateWaveform(m_welle.data(), static_cast<int>(m_welle.size()));
+        ++m_audioGereicht;
+    }
+    if (m_stereoKanaele > 0)
+    {
+        renderer.updateAudioStereo(m_spektrumStereo.empty() ? nullptr : m_spektrumStereo.data(),
+                                   m_stereoBins,
+                                   m_welleStereo.empty() ? nullptr : m_welleStereo.data(),
+                                   m_stereoFrames, m_stereoKanaele);
+        ++m_audioGereicht;
+    }
+}
+
+void Bildquelle::versorgeNeue()
+{
+    std::vector<MultiEffectVisualizer*> jetzt;
+    m_wiedergabe->fuerJedenRenderer([&](MultiEffectVisualizer& r) {
+        jetzt.push_back(&r);
+        if (std::find(m_versorgt.begin(), m_versorgt.end(), &r) == m_versorgt.end())
+            reicheAlles(r);
+    });
+    m_versorgt = std::move(jetzt);
+}
+
+}  // namespace lumi::composer

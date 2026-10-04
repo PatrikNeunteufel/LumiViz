@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.8.0
+> **Version:** 0.8.1
 > **Datum:** 2026-10-04 (Session 94)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -525,7 +525,8 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
 | C1a | `include/composer/` (Mischer.hpp), `src/composer/` (Mischer.cpp, Source.cmake), `tests/unit/UnitTests/test_ComposerMischer.cpp` | **`91967c2`** — Naht (`MultiEffectVisualizer.hpp` / `.cpp`) und Eigenes liegen in diesem einen Commit; ihn zurückzunehmen baut C1a ganz zurück | `include(…/composer/Source.cmake)` in `src/Source.cmake`; eine Zeile in `tests/unit/UnitTests/Source.cmake` | ✅ S93: `git diff --stat master composer` zeigt genau diese neun Dateien; an Bestehendem drei Naht-Zeilen in der `.cpp`, 26 Zeilen im Header, je eine Zeile in zwei Quellenlisten |
 | C1b | `include/composer/` (Komposition.hpp, Uhr.hpp, Wiedergabe.hpp), `src/composer/` (Komposition.cpp, Wiedergabe.cpp), `tests/unit/UnitTests/test_ComposerWiedergabe.cpp` | keine Naht; der Commit ist **`db3a026`** | zwei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
-| C2a, Naht R3 | `tests/unit/UnitTests/test_ComposerNahtR3.cpp` | **Commit nachtragen** — nur Naht: `VisualizerRenderThread.hpp` / `.cpp` (`setBildquelle`, Kommando, Auswahl je Bild, Herunterfahren), `VisualizerWidget.hpp` / `.cpp` (`setBildquelle`, `bildquelle`, `m_bildquelle`); jede Stelle trägt `Composer-Naht R3` | eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/widgets/VisualizerRenderThread.*` und `VisualizerWidget.*` erweitert |
+| C2a, Naht R3 | `tests/unit/UnitTests/test_ComposerNahtR3.cpp` | **`f8821db`** — nur Naht: `VisualizerRenderThread.hpp` / `.cpp` (`setBildquelle`, Kommando, Auswahl je Bild, Herunterfahren), `VisualizerWidget.hpp` / `.cpp` (`setBildquelle`, `bildquelle`, `m_bildquelle`); jede Stelle trägt `Composer-Naht R3` | eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/widgets/VisualizerRenderThread.*` und `VisualizerWidget.*` erweitert |
+| C2a, Bildquelle | `include/composer/Bildquelle.hpp`, `src/composer/Bildquelle.cpp`, `tests/unit/UnitTests/test_ComposerBildquelle.cpp` | keine Naht | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -547,6 +548,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.8.1 | 2026-10-04 | Session 94 — **C2a, Bildquelle** (eigener Code, keine Naht): `composer/Bildquelle` setzt sich über R3 an die Stelle des einen Renderers — fragt die Uhr nach der Stelle, lässt die Wiedergabe rechnen, zeichnet das Gemischte ins Fenster, reicht Audiodaten an die Renderer der Clips (auch an neu dazugekommene). **Steht die Uhr, steht das Bild:** gerechnet wird nur bei laufender Uhr oder geänderter Stelle, Größe oder Komposition. Belegt in `test_ComposerBildquelle.cpp`, auch im echten Render-Thread am echten Fenster (Aufnahme des Fensterbilds); 869 Cases. Rückbau-Liste: Commit der Naht R3 (`f8821db`) eingetragen, Zeile C2a, Bildquelle. Offen für C2a: wie die Komposition in der App eingeschaltet wird, Zeiten im Release-Build, Bildspeicher |
 | 0.8.0 | 2026-10-04 | Session 94 — **Naht R3 gebaut** (Entscheid Patrik: a — zweiter Platz im Render-Thread, der Renderer der Kette bleibt angelegt): §12.2 Zeile R3 neu gefasst; §12.3 — der Vergleichslauf belegt R3 nicht, Beleg ist `test_ComposerNahtR3.cpp`; Rückbau-Liste um C2a, Naht R3 erweitert; 867 Cases |
 | 0.7.1 | 2026-10-04 | Session 93 — **Zweig-Regel geändert (Patrik):** nach `master` geholt wird erst, wenn der Composer sauber funktioniert; bis dahin läuft alle Arbeit im Zweig. C10, §11 „Zum Zweig" und §12.4 angepasst: Rückbau über die Rückbau-Liste statt „Zweig verwerfen", Prüfung über die Pfade des Composers; Commit von C1b eingetragen |
 | 0.7.0 | 2026-10-04 | Session 93 — **Stufe C1b erledigt** (Zweig `composer`): §9d — Datenmodell mit Pegelkurven (sechs Formen), Datei `.lvcomp`, Uhr mit Transport, Wiedergabe mit Vorwärmen, Entladen und Karaoke einmal darüber; nur eigener Code, keine Naht; 866 Cases; Rückbau-Liste: C1a geprüft (ein Commit `91967c2`), C1b eingetragen |
