@@ -1,9 +1,9 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Datum:** 2026-10-04 (Session 93)
 > **Typ:** Konzept — **Entwurf, im Grundsatz gebilligt (Patrik S93)**; Stufe
-> **C0 (Belege) erledigt**, sonst nichts gebaut; Entscheide §11 offen;
+> **C0 und C0b (Belege) erledigt**, sonst nichts gebaut; Entscheide §11 offen;
 > Vorgabe: rückbaubar (§12); entsteht im Zweig `composer` (C10 a)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -104,6 +104,12 @@ Betreten frisch, auch nach einem Sprung mitten hinein (§10).
 ---
 
 ## 5. Der Renderweg
+
+> **Stand nach C0b (§9b):** Beide Wege tragen. Die Empfehlung ist seither
+> **der eigene Mischer** (C3 b, C11 c) — er braucht keine Naht im
+> kalibrierten Renderer und nimmt jede Datei unverändert. Der folgende Text
+> beschreibt den Weg über Host-Gruppen, wie er vor C0b empfohlen war; er
+> wird nach Patriks Entscheid zu C3 neu gefasst.
 
 **Empfehlung (Entscheid C3): der Composer baut auf den Host-Gruppen auf.**
 Aus der Komposition entsteht eine Kette, in der jeder Clip eine Host-Gruppe
@@ -256,6 +262,37 @@ kleine, abgegrenzte Erweiterungen an einer Stelle (`renderHostGroup`); N3
 wird kleiner und anders (vorwärmen, entladen). Neu zu entscheiden ist die
 Tiefenregel (C11).
 
+### 9b. Stand C0b — ✅ erledigt (S93): mehrere Renderer nebeneinander
+
+Frage Patrik zu C11: wäre der eigene Mischer (c) die beste Lösung? Dafür
+musste belegt werden, ob mehrere Renderer nebeneinander laufen. Dieselbe
+Datei `test_ComposerBelege.cpp`, Suite `ComposerBelegeB`, vier Testfälle,
+kein bestehender Code berührt.
+
+| Frage | Ergebnis | Messwert |
+|---|---|---|
+| Zeigt jeder Renderer dasselbe wie allein? | **ja, bitgleich** | zwei Ketten mit eigenem Zustand (Feedback): 0 abweichende Pixel; drei Paare mitgelieferter AVS-Presets (Skripte, Zufall, Feedback), 40 Bilder: 0 von 25 600 |
+| Läuft eine Mix-Datei mit Host Switcher? | **ja**, im eigenen Renderer unverändert | Switcher steht auf Grau (0,251), der Renderer daneben zeigt sein Rot; der Songwechsel schaltet weiter auf Hell |
+| Was ist geteilt? | Songwechsel, Abspielposition, Songtext, Karaoke-Schalter | der Songwechsel erreicht jeden Renderer — für die Musik richtig |
+| Karaoke-Ebene? | **jeder Renderer zeichnet sie selbst** | zwei Renderer, zweimal 5411 Pixel Songtext |
+| Was kostet ein weiterer Renderer? | wenig: die Einrichtung fällt nur beim ersten an | `initialize` 114–127 ms beim ersten, 1 ms bei jedem weiteren; erstes Bild 10–205 ms je nach Preset (Testing-Build) |
+
+**Nicht gemessen:** Bildspeicher je Renderer, Zeiten im Release-Build und
+auf der schnellen GPU, das Mischen selbst (es gibt noch keinen Mischer),
+MilkDrop-Presets nebeneinander (die mitgelieferten sechs ersten sind AVS),
+der Betrieb mit dem Render-Thread der App.
+
+**Folge:** Der eigene Mischer ist machbar und der sauberere Weg.
+
+| | Host-Gruppen (C3 a) | Eigener Mischer (C3 b) |
+|---|---|---|
+| Nähte im kalibrierten Renderer | drei (Pegel setzen, Mischart mit Pegel, Vorwärmen / Entladen) | **keine an der Bildberechnung**; zwei kleine am Rand (fertiges Bild als Textur herausgeben, Karaoke-Ebene je Renderer auslassen) |
+| Pegel und Mischart | Erweiterung von `renderHostGroup` | gehören dem Mischer — eigener Code |
+| Entladen, Vorwärmen | neue Verwaltung der Gruppen-Laufzeiten | Renderer wegwerfen bzw. früher anlegen |
+| Dateien mit Host-Gruppen / Switcher | schwarz bzw. entwertet (C11) | laufen unverändert |
+| Effect-Chain-Panel | zeigt die erzeugte Kette | hängt an einem Renderer — zu klären, was es bei laufendem Composer zeigt |
+| Rückbau | drei Naht-Commits im Renderer zurücknehmen | eigene Dateien löschen, zwei Rand-Nähte zurücknehmen |
+
 ---
 
 ## 10. Risiken
@@ -304,6 +341,9 @@ der Composer schaltet später ihren Schalter (S88, 2a).
   häufigste Fall „ein Song, eine Komposition, Musik aus der Playlist" ist.
 
 ### C3 — Der Renderweg
+
+> **Nach C0b: Empfehlung gedreht auf b** (eigener Mischer). Begründung und
+> Vergleich in §9b. Der Text darunter ist der Stand vor C0b.
 
 - **Problem:** Zwei Kanäle heißt zwei Visuals zugleich, mit freiem Pegel und
   wählbarer Mischart.
@@ -414,6 +454,10 @@ der Composer schaltet später ihren Schalter (S88, 2a).
 
 ### C11 — Dateien mit Host-Gruppen als Clip (neu nach C0)
 
+> **Nach C0b: Empfehlung gedreht auf c** — mit dem eigenen Mischer (C3 b)
+> stellt sich die Frage nicht mehr, jede Datei läuft unverändert. C11
+> entfällt, wenn C3 b entschieden ist.
+
 - **Ort:** Tiefenregel der Kette (keine Host-Gruppe in einer Host-Gruppe);
   Entscheid 1a aus S88 („ein `.lvfx2` darf Clip sein, gewarnt wird nur bei
   enthaltenem Host Switcher").
@@ -502,7 +546,7 @@ Wird mit C0 angelegt und je Stufe nachgeführt, in diesem Dokument:
 
 | Stufe | Eigene Dateien (löschen) | Naht-Commits (zurücknehmen) | Einträge (herausnehmen) | Rückbau geprüft |
 |---|---|---|---|---|
-| C0 | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
+| C0, C0b | `tests/unit/UnitTests/test_ComposerBelege.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich. Geprüft wird das **einmal
@@ -515,6 +559,7 @@ neue Naht dazukommt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.4.0 | 2026-10-04 | Session 93 — **Stufe C0b erledigt** (Frage Patrik: ist der eigene Mischer die beste Lösung?): §9b — zwei Renderer nebeneinander sind bitgleich mit dem Lauf allein, eine Mix-Datei mit Host Switcher läuft darin unverändert, ein weiterer Renderer kostet wenig, die Karaoke-Ebene zeichnet jeder selbst; Vergleichstabelle beider Wege; **Empfehlung C3 auf b, C11 auf c gedreht** (Entscheid offen) |
 | 0.3.0 | 2026-10-04 | Session 93 — **Stufe C0 erledigt:** §9a mit den Messwerten; §5 danach neu gefasst (Gewicht wirkt als Pegel; Mischart kennt keinen Pegel; ruhende Clips kosten nichts, dafür Anlauf-Ruck und fehlendes Entladen; `.lvfx2` mit Switcher als Clip schwarz); Naht N3 = Vorwärmen und Entladen; neuer Entscheid C11; Rückbau-Liste C0; Zweig `composer` (C10 a) |
 | 0.2.0 | 2026-10-04 | Session 93 — Vorgabe Patrik: rückbaubar. Neu §12 Rückbau (Regeln, Nahtstellen N1–N7, Beleg je Stufe, Rückbau-Liste), Entscheid C10 (Zweig), Stufen verweisen darauf |
 | 0.1.0 | 2026-10-03 | Session 93 — Erstfassung aus den Notizen S84, S88, S93 und Patriks Vorgaben vom 03.10.: Name Composer, Visual-Kanäle als Mischer, Audiokanal als Bezug, ein- und ausschaltbar; Renderweg über Host-Gruppen als Empfehlung (gelesen, nicht getestet); Stufen C0–C6; Entscheide C2–C7, C9 offen |

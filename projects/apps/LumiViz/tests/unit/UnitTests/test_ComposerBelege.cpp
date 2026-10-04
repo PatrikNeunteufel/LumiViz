@@ -22,6 +22,7 @@
 
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
+#include "visualizers/multieffect/LyricsModel.hpp"
 
 #include <QColor>
 #include <QDir>
@@ -429,6 +430,302 @@ TEST_SUITE("ComposerBelege")
             MESSAGE("MESSUNG " << anzahl << " Clips nacheinander: Laufzeiten nach dem ersten "
                     << nachErstem << ", nach allen " << vis.debugLaufzeitAnzahl());
             CHECK(vis.debugLaufzeitAnzahl() > nachErstem);
+        }
+    }
+}
+
+// =============================================================================
+// C0b — der andere Renderweg (Konzept C3 b / C11 c): je Kanal ein EIGENER
+// Renderer, darueber ein Mischer. Die Frage hier: laufen mehrere Renderer
+// nebeneinander, ohne einander zu stoeren?
+// =============================================================================
+
+namespace
+{
+
+/// Kette mit eigenem Zustand: Balken, die wandern, und ein Feedback darueber.
+ChainNode zustandsKette(uint32_t farbe, bool mitFeedback)
+{
+    ChainNode root = wurzel();
+    ChainNode clear;
+    ClearParams cp;
+    cp.onlyFirst = mitFeedback;  // mit Feedback bleibt das Bild stehen
+    clear.params = cp;
+    ChainNode balken;
+    balken.params = DebugBarsParams{farbe, -2.5f};
+    root.children = {clear, balken};
+    if (mitFeedback)
+    {
+        ChainNode blit;
+        blit.params = BlitterFeedbackParams{};
+        root.children.push_back(std::move(blit));
+    }
+    return root;
+}
+
+/// Preset ueber den Ladeweg seiner Endung.
+bool ladePreset(MultiEffectVisualizer& vis, const QString& pfad)
+{
+    const QString endung = QFileInfo(pfad).suffix().toLower();
+    if (endung == QLatin1String("avs")) return vis.loadAvsFile(pfad);
+    if (endung == QLatin1String("milk")) return vis.loadMilkFile(pfad);
+    return vis.loadChainFile(pfad);
+}
+
+void bereite(MultiEffectVisualizer& vis, int groesse)
+{
+    vis.setBeatPeriodOverride(30);
+    vis.initialize();
+    vis.resize(QSize(groesse, groesse));
+    QOpenGLContext::currentContext()->functions()->glViewport(0, 0, groesse, groesse);
+}
+
+/// Zahl der Pixel, in denen sich zwei Bilder unterscheiden (-1 = Groesse verschieden).
+int verschieden(const QImage& a, const QImage& b)
+{
+    if (a.size() != b.size()) return -1;
+    int n = 0;
+    for (int y = 0; y < a.height(); ++y)
+        for (int x = 0; x < a.width(); ++x)
+            if (a.pixel(x, y) != b.pixel(x, y)) ++n;
+    return n;
+}
+
+}  // namespace
+
+TEST_SUITE("ComposerBelegeB")
+{
+    TEST_CASE("C0b GL: zwei Renderer nebeneinander zeigen jeder dasselbe Bild wie allein")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        constexpr int kBild = 160;
+        constexpr int kFrames = 40;
+
+        SUBCASE("eigene Ketten mit Zustand (Feedback) — bitgleich")
+        {
+            const auto allein = [&](const ChainNode& kette) {
+                MultiEffectVisualizer vis;
+                vis.setChain(kette);
+                bereite(vis, kBild);
+                for (int i = 0; i < kFrames; ++i) vis.render(1.0f / 60.0f);
+                return vis.debugGrabRootSurface();
+            };
+            const ChainNode ka = zustandsKette(0x40C0FF, true);
+            const ChainNode kb = zustandsKette(0xFF8020, false);
+            const QImage a0 = allein(ka);
+            const QImage b0 = allein(kb);
+            REQUIRE(!a0.isNull());
+            REQUIRE(verschieden(a0, b0) > 0);  // die Ketten zeigen Verschiedenes
+
+            MultiEffectVisualizer va, vb;
+            va.setChain(ka);
+            vb.setChain(kb);
+            bereite(va, kBild);
+            bereite(vb, kBild);
+            for (int i = 0; i < kFrames; ++i)
+            {
+                va.render(1.0f / 60.0f);
+                vb.render(1.0f / 60.0f);
+            }
+            const int da = verschieden(a0, va.debugGrabRootSurface());
+            const int db = verschieden(b0, vb.debugGrabRootSurface());
+            MESSAGE("zwei Renderer, eigene Ketten: abweichende Pixel A " << da << ", B " << db);
+            // BELEG: jeder Renderer haelt seinen Zustand fuer sich — bitgleich
+            CHECK(da == 0);
+            CHECK(db == 0);
+        }
+        SUBCASE("mitgelieferte Presets — Abweichung gegen den Lauf allein")
+        {
+            const QStringList presets = mitgelieferte(6);
+            if (presets.size() < 2)
+            {
+                MESSAGE("asset/presets nicht gefunden — uebersprungen");
+                return;
+            }
+            const auto allein = [&](const QString& pfad) {
+                MultiEffectVisualizer vis;
+                REQUIRE(ladePreset(vis, pfad));
+                bereite(vis, kBild);
+                for (int i = 0; i < kFrames; ++i) vis.render(1.0f / 60.0f);
+                return vis.debugGrabRootSurface();
+            };
+            for (int p = 0; p + 1 < presets.size(); p += 2)
+            {
+                const QImage a0 = allein(presets[p]);
+                const QImage a0b = allein(presets[p]);  // Wiederholbarkeit allein
+                const QImage b0 = allein(presets[p + 1]);
+                MultiEffectVisualizer va, vb;
+                REQUIRE(ladePreset(va, presets[p]));
+                REQUIRE(ladePreset(vb, presets[p + 1]));
+                bereite(va, kBild);
+                bereite(vb, kBild);
+                for (int i = 0; i < kFrames; ++i)
+                {
+                    va.render(1.0f / 60.0f);
+                    vb.render(1.0f / 60.0f);
+                }
+                const int da = verschieden(a0, va.debugGrabRootSurface());
+                const int db = verschieden(b0, vb.debugGrabRootSurface());
+                MESSAGE(QFileInfo(presets[p]).fileName().toStdString() << " + "
+                        << QFileInfo(presets[p + 1]).fileName().toStdString()
+                        << ": allein zweimal " << verschieden(a0, a0b) << ", nebeneinander A "
+                        << da << ", B " << db << " von " << kBild * kBild << " Pixeln");
+                CAPTURE(presets[p].toStdString());
+                // BELEG: auch echte Presets (Skripte, Zufall, Feedback) — bitgleich
+                CHECK(verschieden(a0, a0b) == 0);
+                CHECK(da == 0);
+                CHECK(db == 0);
+            }
+        }
+    }
+
+    TEST_CASE("C0b GL: eine Mix-Datei mit Host Switcher laeuft im eigenen Renderer neben einem anderen")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        ChainNode stapel = wurzel();
+        {
+            ChainNode sw;
+            HostSwitcherParams sp;
+            sp.groups = {"Hell", "Grau"};
+            sp.startIndex = 2;
+            sp.nextOnSongChange = true;
+            sw.params = sp;
+            stapel.children.push_back(std::move(sw));
+            stapel.children.push_back(farbGruppe("Hell", 0xFFFFFF, BlendMode::Replace, 0.0, false));
+            stapel.children.push_back(farbGruppe("Grau", 0x404040, BlendMode::Replace, 0.0, false));
+        }
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString datei = tmp.filePath(QStringLiteral("Stapel.lvfx2"));
+        REQUIRE(saveChainToFile(stapel, datei));
+
+        MultiEffectVisualizer mix, anderer;
+        REQUIRE(mix.loadChainFile(datei));
+        ChainNode rot = wurzel();
+        ChainNode clear;
+        ClearParams cp;
+        cp.color = 0xFF0000;
+        clear.params = cp;
+        rot.children.push_back(std::move(clear));
+        anderer.setChain(std::move(rot));
+        bereite(mix, kGroesse);
+        bereite(anderer, kGroesse);
+        const auto mitte = [](MultiEffectVisualizer& v) {
+            return v.debugGrabRootSurface().pixelColor(kGroesse / 2, kGroesse / 2);
+        };
+        for (int i = 0; i < 3; ++i)
+        {
+            mix.render(1.0f / 60.0f);
+            anderer.render(1.0f / 60.0f);
+        }
+        MESSAGE("Mix-Datei im eigenen Renderer: " << farbText(mitte(mix)).toStdString()
+                << " | daneben: " << farbText(mitte(anderer)).toStdString());
+        CHECK(mitte(mix).redF() == doctest::Approx(0x40 / 255.0).epsilon(0.1));  // Switcher: Grau
+        CHECK(mitte(anderer).redF() > 0.95);
+        CHECK(mitte(anderer).blueF() < 0.05);
+
+        // Der Songwechsel ist geteilter Zustand: er erreicht JEDEN Renderer
+        MultiEffectVisualizer::notifySongChanged();
+        for (int i = 0; i < 3; ++i)
+        {
+            mix.render(1.0f / 60.0f);
+            anderer.render(1.0f / 60.0f);
+        }
+        MESSAGE("nach Songwechsel: " << farbText(mitte(mix)).toStdString());
+        CHECK(mitte(mix).redF() > 0.9);  // weitergeschaltet auf Hell
+    }
+
+    TEST_CASE("C0b GL: geteilter Zustand — die Karaoke-Ebene zeichnet jeder Renderer selbst")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        namespace ly = lumi::multieffect::lyrics;
+        MultiEffectVisualizer::notifyPlayState(false);
+        MultiEffectVisualizer::setSongtextTitelVersatz(0);
+        MultiEffectVisualizer::setSongtext(ly::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+        MultiEffectVisualizer::setKaraokeEbene(true);
+        MultiEffectVisualizer::notifyPlayPosition(11000);
+
+        MultiEffectVisualizer va, vb;
+        va.setChain(zustandsKette(0x40C0FF, false));
+        vb.setChain(zustandsKette(0xFF8020, false));
+        bereite(va, 320);
+        bereite(vb, 320);
+        for (int i = 0; i < 5; ++i)
+        {
+            va.render(1.0f / 60.0f);
+            vb.render(1.0f / 60.0f);
+        }
+        const int pa = verschieden(va.debugGrabRootSurface(), va.debugGrabMitKaraoke());
+        const int pb = verschieden(vb.debugGrabRootSurface(), vb.debugGrabMitKaraoke());
+        MESSAGE("Karaoke-Ebene: Renderer A zeichnet " << va.debugKaraokeGezeichnet() << " ("
+                << pa << " Pixel), Renderer B " << vb.debugKaraokeGezeichnet() << " (" << pb
+                << " Pixel)");
+        // BEFUND: der Schalter ist geteilt, also legt JEDER Renderer den
+        // Songtext ueber sein Bild. Ein Mischer ueber mehreren Renderern
+        // bekaeme ihn mehrfach — die Ebene muss dort der Mischer zeichnen,
+        // und die Renderer der Kanaele muessen sie auslassen koennen.
+        CHECK(va.debugKaraokeGezeichnet());
+        CHECK(vb.debugKaraokeGezeichnet());
+        CHECK(pa > 0);
+        CHECK(pb > 0);
+
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        MultiEffectVisualizer::setSongtext(ly::Songtext{});
+        MultiEffectVisualizer::notifyPlayPosition(0);
+    }
+
+    TEST_CASE("C0b GL Messung: was ein weiterer Renderer kostet")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        const QStringList presets = mitgelieferte(4);
+        if (presets.isEmpty())
+        {
+            MESSAGE("asset/presets nicht gefunden — uebersprungen");
+            return;
+        }
+        constexpr int kBild = 640;
+        std::vector<std::unique_ptr<MultiEffectVisualizer>> renderer;
+        QElapsedTimer t;
+        for (int n = 0; n < 4; ++n)
+        {
+            t.start();
+            auto vis = std::make_unique<MultiEffectVisualizer>();
+            REQUIRE(ladePreset(*vis, presets[n % presets.size()]));
+            const qint64 msLaden = t.restart();
+            bereite(*vis, kBild);
+            const qint64 msInit = t.restart();
+            vis->render(1.0f / 60.0f);
+            QOpenGLContext::currentContext()->functions()->glFinish();
+            const qint64 msErstes = t.restart();
+            renderer.push_back(std::move(vis));
+            for (int i = 0; i < 20; ++i)
+                for (auto& r : renderer) r->render(1.0f / 60.0f);
+            QOpenGLContext::currentContext()->functions()->glFinish();
+            MESSAGE("MESSUNG Renderer " << (n + 1) << " ("
+                    << QFileInfo(presets[n % presets.size()]).fileName().toStdString()
+                    << "): laden " << msLaden << " ms, initialize " << msInit
+                    << " ms, erstes Bild " << msErstes << " ms; danach alle " << renderer.size()
+                    << " zusammen " << (static_cast<double>(t.elapsed()) / 20.0) << " ms je Bild");
         }
     }
 }
