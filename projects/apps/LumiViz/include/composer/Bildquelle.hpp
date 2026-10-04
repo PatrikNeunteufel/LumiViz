@@ -52,6 +52,8 @@ struct Messung
     double rechnenMaxMs = 0.0;
     std::int64_t rechnenMaxStelleMs = 0;  ///< Stelle des laengsten Bilds
     double erstesBildMs = 0.0;            ///< enthaelt das Anlegen der ersten Renderer
+    double spaeterMaxMs = 0.0;            ///< laengstes Bild NACH dem ersten (Ruck beim Vorwaermen)
+    std::int64_t spaeterMaxStelleMs = 0;
     double zeichnenSummeMs = 0.0;         ///< das Gemischte ins Ziel
     double zeichnenMaxMs = 0.0;
     int gezeichnet = 0;

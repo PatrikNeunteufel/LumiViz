@@ -66,11 +66,14 @@ QStringList Messung::alsText() const
              .arg(dauerSekunden, 0, 'f', 1)
              .arg(dauerSekunden > 0.0 ? bilder / dauerSekunden : 0.0, 0, 'f', 1);
     z << QStringLiteral("  on %1, image %2 x %3").arg(gpu).arg(groesse.width()).arg(groesse.height());
-    z << QStringLiteral("  compute (CPU side): mean %1 ms, longest %2 ms at %3 s, first frame %4 ms")
+    z << QStringLiteral("  compute (CPU side): mean %1 ms, longest %2 ms at %3 s, first frame %4 ms, "
+                        "longest after the first %5 ms at %6 s")
              .arg(rechnenMittelMs(), 0, 'f', 3)
              .arg(rechnenMaxMs, 0, 'f', 1)
              .arg(static_cast<double>(rechnenMaxStelleMs) / 1000.0, 0, 'f', 2)
-             .arg(erstesBildMs, 0, 'f', 1);
+             .arg(erstesBildMs, 0, 'f', 1)
+             .arg(spaeterMaxMs, 0, 'f', 1)
+             .arg(static_cast<double>(spaeterMaxStelleMs) / 1000.0, 0, 'f', 2);
     z << QStringLiteral("  present (CPU side): mean %1 ms, longest %2 ms")
              .arg(zeichnenMittelMs(), 0, 'f', 3)
              .arg(zeichnenMaxMs, 0, 'f', 2);
@@ -204,7 +207,15 @@ void Bildquelle::render(float deltaTime)
         versorgeNeue();
 
         // --- Messung (C2a)
-        if (m_messung.bilder == 0) m_messung.erstesBildMs = ms;
+        if (m_messung.bilder == 0)
+        {
+            m_messung.erstesBildMs = ms;
+        }
+        else if (ms > m_messung.spaeterMaxMs)
+        {
+            m_messung.spaeterMaxMs = ms;
+            m_messung.spaeterMaxStelleMs = stelle;
+        }
         ++m_messung.bilder;
         m_messung.dauerSekunden = static_cast<double>(m_laufzeit.nsecsElapsed()) / 1.0e9;
         m_messung.rechnenSummeMs += ms;
