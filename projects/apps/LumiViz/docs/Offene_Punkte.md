@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.86.0
-> **Datum:** 2026-10-04 (Session 93)
+> **Version:** 1.87.0
+> **Datum:** 2026-10-04 (Session 94)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2214,10 +2214,37 @@ Idee Preset-Warmup/Pre-Roll.
   Panel). Renderweg: eigener Mischer über je einem Renderer je laufendem
   Clip; rückbaubar; Stufen C0, C0b (Belege), C1a (Mischer, Nähte R1 / R2)
   und C1b (Modell, `.lvcomp`, Uhr, Wiedergabe ohne Panel) erledigt — C1a
-  und C1b im Zweig `composer`, noch nicht nach `master` geholt. **Nächste
-  Stufe C2a:** der Composer als Bildquelle der App (Naht R3). Die folgenden
+  und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S94 (Konzept 0.9.2):** **Stufe C2a erledigt** — Naht R3
+  (Bildquelle im Render-Thread), `composer/Bildquelle`, Naht N8 (File → Open
+  Composition... / Close Composition), Messung im Log. Sichttest S94: 34 von
+  42 bestanden, drei Befunde behoben. **Nächste Stufe C2b:** das Panel zum
+  Ansehen (Transport, Zeitlineal). **Offen aus C2a:**
+  - Nachlauf des Sichttests: `.claude/handover/Sichttests_S94b.md` (zehn
+    Punkte).
+  - Das erste Bild einer Komposition kostet 190–300 ms (Anlegen des ersten
+    Renderers rund 100 ms, dazu das Laden); `list.lvfx2` mit 20
+    Presetverweisen lädt 110–1100 ms im Bild.
+  - Auf der Radeon 610M reichen fünf Clips gleichzeitig nicht für 60 Bilder
+    je Sekunde (Median 24), der Grafikspeicher ist dann erschöpft.
+  - Die Läufe auf der RTX 4090 streuten stark (938 gegen 1444 Bilder je
+    Sekunde bei derselben Komposition); nicht geklärt.
+  - Was das Panel Effect Chain bei laufender Komposition zeigt; Laden eines
+    Presets bleibt bis C6 ohne Rückfrage unsichtbar.
+- **Movement-Tabelle in Scheiben (S94, betrifft jedes Preset):** in der App
+  entsteht die Tabelle des Knotens Movement über mehrere Bilder verteilt
+  (Settings → Performance → Movement Table; „At once" = wie das Original).
+  Standalones, Vergleichslauf und Unit-Tests bauen weiter in einem Stück.
+  **Offen:** wie nah das Gitter-Bild der ersten ein bis zwei Sekunden am
+  genauen Bild liegt, ist nur im Sichttest beurteilt (F2 bestanden); wie viele
+  Presets der Sammlungen Movement-Skripte mit `reg` / `megabuf` / `rand` /
+  Audio haben, ist nicht gezählt; Dynamic Movement und andere Knoten sind
+  nicht auf Kosten im ersten Bild untersucht (`202609_2b2_md.lvfx` zeigt noch
+  130–145 ms). **Hinweis:** die Beobachtung „erster Wechsel auf ein Preset
+  hakt kurz" (S85, weiter unten) und der Vollbild-Freeze (S84) können dieselbe
+  Ursache gehabt haben — nicht geprüft.
 - **Ausblick Timeline-Panel / Composit** (noch auszuarbeiten, eigene
   Konzept-Session): *n* Audiokanäle und *n* Visual-Kanäle zum Mischen;
   Einblenden/Ausblenden im Prinzip wie bei der Host-Gruppe (Crossfade,
@@ -3963,6 +3990,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.87.0 | 2026-10-04 | Session 94 — **Composer:** Stufe C2a erledigt (Naht R3, Bildquelle, Naht N8, Messung; Konzept 0.9.2), Sichttest 34 von 42 mit drei behobenen Befunden, nächste Stufe C2b; offene Punkte aus C2a eingetragen. **Movement-Tabelle in Scheiben** als eigener Punkt (Einstellung Movement Table, offene Fragen) |
 | 1.86.0 | 2026-10-04 | Session 93 — **Composer:** Konzept `ui/Composer_Konzept.md` (0.7.0, alle Entscheide gefallen, rückbaubar), Stufen C0 / C0b / C1a / C1b erledigt (C1a, C1b im Zweig `composer`), nächste Stufe C2a; **P2 Visual-Playlist geschlossen** (aufgegangen in Composer und Host Switcher); Notiz **Blättern und Timeline** (PgUp/PgDn blättern in der Liste des Browsers, Entscheid 2a; im Composer entschieden als C5). **Gebaut:** Kontextmenü im Kettenbaum (Milkdrop-Elemente, Add preset, Add module), Sprite mit Bilddatei, „+ New empty effect chain", Fix Start-Preset und Umzug ins Hauptfenster (`UI/StartPreset.hpp`), Knopf ◎ in Effect Browser und Audio Browser, Werkzeug `Sichttest`. **Sichttests S93** als Punkt 0 der Lyrics-Liste eingetragen (`Sichttests_S93.md`, A–I). Tests 866 (Zweig), 851 (`master`) |
 | 1.85.0 | 2026-10-03 | Session 92 — **Sichttest S90/S91 begonnen** (A1, D1, J1, J3 abgenommen; vier Befunde H1, E1, G1, D2 behoben). **§7 Lyrics-Block:** Lyrics Sync mit Pre-roll, Sprungleiste, Kontextmenü; Feld Word spacing; **Trail-Presets** (`.lvtrail`, acht mitgeliefert, Zeile im Karaoke-Panel, Rechtsklick im Kettenbaum, eigenes Icon); Prüfer für die Skriptbeispiele des Handbuchs; die vier Fragen aus S89 entschieden (1a, 2a, 3a, 4a). Offen: Sichttests S88–S92 |
 | 1.84.0 | 2026-10-03 | Session 91 — **§7 Lyrics-Block: LB5-3 gebaut** (Schieber Speed im Panel Lyrics Sync, Entscheid T1 a) und die kleinen Reste aus S89/S90 erledigt: Statuszeile des Sync-Panels, Trail der Karaoke-Ebene über den Preset-Wechsel, Load… mit `.avs` / `.milk`, Favoriten im Effect Browser (F1 a), Feld Line am Lyrics Trail (T2 a). Offen: Sichttests S88–S91, die vier Fragen aus S89 |
