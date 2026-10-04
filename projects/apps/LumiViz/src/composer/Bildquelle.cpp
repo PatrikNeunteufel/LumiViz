@@ -131,6 +131,18 @@ int Bildquelle::gemischteClips() const
 QStringList Bildquelle::anlaufText() const
 {
     QStringList z;
+    if (m_messung.langeGesamt > 0)
+    {
+        QStringList teile;
+        for (const Messung::LangesBild& b : m_messung.lange)
+            teile << QStringLiteral("%1 s: %2 ms")
+                         .arg(static_cast<double>(b.stelleMs) / 1000.0, 0, 'f', 2)
+                         .arg(b.ms, 0, 'f', 0);
+        z << QStringLiteral("  long frames after the first (over %1 ms): %2 — %3")
+                 .arg(Messung::kLangMs, 0, 'f', 0)
+                 .arg(m_messung.langeGesamt)
+                 .arg(teile.join(QStringLiteral(", ")));
+    }
     if (m_wiedergabe == nullptr) return z;
     for (const Anlauf& a : m_wiedergabe->anlaeufe())
     {
@@ -234,10 +246,19 @@ void Bildquelle::render(float deltaTime)
         {
             m_messung.erstesBildMs = ms;
         }
-        else if (ms > m_messung.spaeterMaxMs)
+        else
         {
-            m_messung.spaeterMaxMs = ms;
-            m_messung.spaeterMaxStelleMs = stelle;
+            if (ms > m_messung.spaeterMaxMs)
+            {
+                m_messung.spaeterMaxMs = ms;
+                m_messung.spaeterMaxStelleMs = stelle;
+            }
+            if (ms > Messung::kLangMs)
+            {
+                ++m_messung.langeGesamt;
+                if (static_cast<int>(m_messung.lange.size()) < Messung::kLangeMax)
+                    m_messung.lange.push_back({stelle, ms, m_wiedergabe->rendererAnzahl()});
+            }
         }
         ++m_messung.bilder;
         m_messung.dauerSekunden = static_cast<double>(m_laufzeit.nsecsElapsed()) / 1.0e9;

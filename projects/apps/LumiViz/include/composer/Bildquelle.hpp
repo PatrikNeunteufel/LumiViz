@@ -64,6 +64,18 @@ struct Messung
     int speicherFreiVorherKb = -1;
     int speicherFreiTiefstKb = -1;
     int speicherGesamtKb = -1;
+    /// Jedes Bild nach dem ersten, das laenger als `kLangMs` brauchte: Stelle
+    /// und Dauer (hoechstens `kLangeMax` Eintraege, danach wird nur gezaehlt).
+    static constexpr double kLangMs = 50.0;
+    static constexpr int kLangeMax = 40;
+    struct LangesBild
+    {
+        std::int64_t stelleMs = 0;
+        double ms = 0.0;
+        int renderer = 0;  ///< Renderer nach diesem Bild
+    };
+    std::vector<LangesBild> lange;
+    int langeGesamt = 0;
     QString gpu;      ///< GL_RENDERER — auf welcher GPU gemessen wurde
     QSize groesse;    ///< Bildgroesse des letzten gerechneten Bilds
 
