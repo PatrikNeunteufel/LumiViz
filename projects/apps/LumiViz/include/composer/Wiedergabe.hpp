@@ -78,7 +78,13 @@ public:
     /// seit dem letzten Bild (fuer die Bewegung in den Visuals; die PEGEL
     /// kommen allein aus der Stelle). false = der Mischer liess sich nicht
     /// anlegen. Das Ergebnis haelt `mischer()`.
-    bool rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse);
+    ///
+    /// `clipsStehen` (die Uhr steht): die Clips werden nicht neu gerechnet —
+    /// ihr letztes Bild wird noch einmal gemischt —, die Karaoke-Ebene aber
+    /// laeuft mit `deltaSekunden` weiter (Befund Patrik S94: der Songtext darf
+    /// nicht stehen bleiben, wenn die Komposition haelt oder zu Ende ist).
+    bool rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse,
+                 bool clipsStehen = false);
     [[nodiscard]] Mischer& mischer() { return m_mischer; }
 
     /// Alle Renderer wegwerfen (etwa bevor der GL-Kontext geht).

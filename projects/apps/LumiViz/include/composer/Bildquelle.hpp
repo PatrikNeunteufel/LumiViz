@@ -9,9 +9,10 @@
  * das Gemischte ins Fenster. Audiodaten reicht sie an die Renderer der Clips
  * weiter.
  *
- * **Steht die Uhr, steht das Bild:** gerechnet wird nur, wenn die Uhr laeuft
- * oder sich Stelle, Groesse oder Komposition geaendert haben. Sonst wird das
- * letzte Gemischte noch einmal gezeigt.
+ * **Steht die Uhr, stehen die Clips:** gerechnet werden sie nur, wenn die Uhr
+ * laeuft oder sich Stelle, Groesse oder Komposition geaendert haben. Sonst
+ * wird das letzte Gemischte noch einmal gezeigt. **Die Karaoke-Ebene laeuft
+ * dabei weiter** — auch in einer Luecke und nach dem Ende der Komposition.
  *
  * Threads: `initialize` / `render` / `resize` / `cleanup` und die
  * Audio-Aufrufe kommen vom Render-Thread. Die Steuerung (`setKomposition`,
@@ -115,6 +116,8 @@ public:
     [[nodiscard]] std::int64_t letzteStelleMs() const { return m_letzteStelle; }
     [[nodiscard]] int rendererAnzahl() const;
     [[nodiscard]] int gemischteClips() const;
+    /// Lag die Karaoke-Ebene im letzten Bild ueber dem Gemischten?
+    [[nodiscard]] bool karaokeAufgelegt() const;
     /// Was beim Richten und beim Anlegen der Renderer auffiel.
     [[nodiscard]] QStringList bericht() const;
     /// Wie viele Bilder wirklich gerechnet wurden (nicht nur noch einmal gezeigt).
@@ -162,6 +165,7 @@ private:
     QSize m_letzteGroesse;
     std::int64_t m_letzteStelle = -1;
     bool m_bildSteht = false;  ///< der Mischer haelt ein gueltiges Bild
+    bool m_letzteKaraoke = false;  ///< lag die Karaoke-Ebene im letzten gerechneten Bild an?
     bool m_angelegt = false;
     int m_ziel = -1;
     int m_gerechnet = 0;

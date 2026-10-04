@@ -128,6 +128,11 @@ int Bildquelle::gemischteClips() const
     return m_wiedergabe != nullptr ? m_wiedergabe->gemischteClips() : 0;
 }
 
+bool Bildquelle::karaokeAufgelegt() const
+{
+    return m_wiedergabe != nullptr && m_wiedergabe->karaokeAufgelegt();
+}
+
 QStringList Bildquelle::anlaufText() const
 {
     QStringList z;
@@ -221,8 +226,15 @@ void Bildquelle::render(float deltaTime)
 
     const bool laeuft = m_uhr.laeuft();
     const std::int64_t stelle = m_uhr.stelleMs();
-    if (laeuft || neu || !m_bildSteht || stelle != m_letzteStelle || m_groesse != m_letzteGroesse)
+    // Steht die Uhr, stehen die Clips — die Karaoke-Ebene aber laeuft weiter
+    // (Befund Patrik S94): solange sie an ist (und ein Bild danach, damit sie
+    // auch wieder verschwindet), wird neu gemischt, ohne die Clips zu rechnen.
+    const bool karaoke = MultiEffectVisualizer::karaokeEbene();
+    const bool clipsStehen = !laeuft && !neu && m_bildSteht && stelle == m_letzteStelle &&
+                             m_groesse == m_letzteGroesse;
+    if (!clipsStehen || karaoke || m_letzteKaraoke)
     {
+        m_letzteKaraoke = karaoke;
         if (m_messung.bilder == 0)
         {
             m_laufzeit.start();
@@ -234,7 +246,8 @@ void Bildquelle::render(float deltaTime)
         QElapsedTimer uhr;
         uhr.start();
         // Steht die Uhr, laeuft auch die Zeit der Visuals nicht weiter.
-        m_bildSteht = m_wiedergabe->rendere(stelle, laeuft ? deltaTime : 0.0f, m_groesse);
+        m_bildSteht = m_wiedergabe->rendere(stelle, (laeuft || clipsStehen) ? deltaTime : 0.0f,
+                                            m_groesse, clipsStehen);
         const double ms = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
         m_letzteStelle = stelle;
         m_letzteGroesse = m_groesse;

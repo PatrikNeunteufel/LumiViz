@@ -31,6 +31,8 @@
 #include "composer/Komposition.hpp"
 #include "composer/Uhr.hpp"
 #include "visualizers/IVisualizer.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/LyricsModel.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QApplication>
@@ -352,6 +354,120 @@ TEST_SUITE("ComposerBildquelle")
         quelle.render(0.016f);
         CHECK(ziel2.toImage().pixelColor(48, 36) == kSchwarz);
         CHECK_FALSE(quelle.bericht().isEmpty());
+
+        quelle.cleanup();
+    }
+
+    TEST_CASE("C2a Bildquelle: steht die Uhr, stehen die Clips — die Karaoke-Ebene laeuft weiter")
+    {
+        // Befund Patrik S94 (Sichttest A4 / B7): der eingeblendete Songtext
+        // blieb stehen, sobald die Komposition zu Ende war.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QGuiApplication app{argc, argv};
+        QOpenGLContext ctx;
+        QSurfaceFormat fmt;
+        fmt.setVersion(3, 3);
+        fmt.setProfile(QSurfaceFormat::CoreProfile);
+        ctx.setFormat(fmt);
+        QOffscreenSurface surface;
+        bool gut = ctx.create();
+        if (gut)
+        {
+            surface.setFormat(ctx.format());
+            surface.create();
+            gut = surface.isValid() && ctx.makeCurrent(&surface);
+        }
+        if (!gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        struct KaraokeZurueck
+        {
+            ~KaraokeZurueck()
+            {
+                MultiEffectVisualizer::setKaraokeEbene(false);
+                MultiEffectVisualizer::setSongtext(lumi::multieffect::lyrics::Songtext{});
+                MultiEffectVisualizer::notifyPlayPosition(0);
+            }
+        } zurueck;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString balken = balkenPreset(dir, QStringLiteral("Balken.lvfx"), 0xFFFFFF);
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), balken, 0, 2000));
+
+        std::int64_t zeit = 0;
+        Bildquelle quelle{Uhr([&zeit] { return zeit; })};
+        const QSize groesse(256, 128);
+        QOpenGLFramebufferObject ziel(groesse);
+        quelle.setZiel(static_cast<int>(ziel.handle()));
+        quelle.setKomposition(k);
+        quelle.initialize();
+        quelle.resize(groesse);
+
+        // die Uhr laeuft bis 500 ms und haelt dort
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        quelle.uhr().starte();
+        for (int i = 0; i < 5; ++i)
+        {
+            zeit += 100;
+            quelle.render(0.1f);
+        }
+        quelle.uhr().stoppe();
+        quelle.render(0.1f);
+        const QImage clipSteht = ziel.toImage();
+        const int gerechnet = quelle.gerechneteBilder();
+        quelle.render(0.1f);
+        CHECK(quelle.gerechneteBilder() == gerechnet);  // ohne Ebene: nichts zu tun
+        CHECK_FALSE(quelle.karaokeAufgelegt());
+
+        // Ebene an, Uhr steht weiter: jedes Bild wird neu gemischt, der Text
+        // liegt darueber — und wechselt mit der Abspielstelle des Lieds
+        MultiEffectVisualizer::notifyPlayState(false);
+        MultiEffectVisualizer::setSongtextTitelVersatz(0);
+        MultiEffectVisualizer::setSongtext(
+            lumi::multieffect::lyrics::leseLrc("[00:10.00]MMMM MMMM\n[00:13.00]IIII\n"));
+        MultiEffectVisualizer::setKaraokeEbene(true);
+        MultiEffectVisualizer::notifyPlayPosition(11000);
+        for (int i = 0; i < 5; ++i) quelle.render(1.0f / 60.0f);
+        CHECK(quelle.gerechneteBilder() == gerechnet + 5);
+        CHECK(quelle.karaokeAufgelegt());
+        const QImage zeile1 = ziel.toImage();
+        CHECK(verschieden(zeile1, clipSteht) > 0);
+
+        MultiEffectVisualizer::notifyPlayPosition(14000);  // naechste Zeile
+        for (int i = 0; i < 5; ++i) quelle.render(1.0f / 60.0f);
+        CHECK(quelle.karaokeAufgelegt());
+        CHECK(verschieden(ziel.toImage(), zeile1) > 0);  // der Text ist weitergelaufen
+
+        // Ebene aus: der Text ist weg, und der Clip steht noch genau so da wie
+        // beim Halt — er wurde in der Zwischenzeit nicht weitergerechnet
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        quelle.render(1.0f / 60.0f);
+        CHECK_FALSE(quelle.karaokeAufgelegt());
+        CHECK(verschieden(ziel.toImage(), clipSteht) == 0);
+        const int nachAus = quelle.gerechneteBilder();
+        quelle.render(1.0f / 60.0f);
+        CHECK(quelle.gerechneteBilder() == nachAus);  // wieder Ruhe
+
+        // Ende der Komposition: schwarz, die Uhr haelt — der Text laeuft trotzdem
+        MultiEffectVisualizer::setKaraokeEbene(true);
+        quelle.uhr().starte();
+        zeit += 10000;
+        quelle.render(0.1f);
+        CHECK_FALSE(quelle.uhr().laeuft());
+        CHECK(quelle.gemischteClips() == 0);
+        MultiEffectVisualizer::notifyPlayPosition(11000);
+        for (int i = 0; i < 5; ++i) quelle.render(1.0f / 60.0f);
+        CHECK(quelle.karaokeAufgelegt());
+        const QImage endeZeile1 = ziel.toImage();
+        MultiEffectVisualizer::notifyPlayPosition(14000);
+        for (int i = 0; i < 5; ++i) quelle.render(1.0f / 60.0f);
+        CHECK(verschieden(ziel.toImage(), endeZeile1) > 0);
 
         quelle.cleanup();
     }

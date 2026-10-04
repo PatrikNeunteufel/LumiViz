@@ -117,7 +117,8 @@ void Wiedergabe::rechne(Lauf& lauf, float deltaSekunden, QSize groesse)
     ++lauf.bilder;
 }
 
-bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse)
+bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse,
+                         bool clipsStehen)
 {
     m_gemischt = 0;
     m_karaokeAufgelegt = false;
@@ -182,7 +183,10 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, false);
         if (lauf.renderer == nullptr) continue;
         // Auch bei Pegel 0 weiterrechnen: das Visual lebt, nur sieht man es nicht.
-        rechne(lauf, deltaSekunden, groesse);
+        // Steht die Uhr, bleibt sein letztes Bild stehen — ausser es hat noch
+        // keins oder die Groesse hat sich geaendert.
+        if (!clipsStehen || lauf.bilder == 0 || lauf.leinwand.groesse() != groesse)
+            rechne(lauf, clipsStehen ? 0.0f : deltaSekunden, groesse);
         const double pegel = d.clip->pegelBei(stelleMs - d.clip->startMs);
         m_mischer.lege(lauf.leinwand, pegel, d.clip->mischart);
         ++m_gemischt;
