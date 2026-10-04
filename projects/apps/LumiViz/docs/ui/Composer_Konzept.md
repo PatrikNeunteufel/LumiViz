@@ -1,8 +1,9 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.1.0
-> **Datum:** 2026-10-03 (Session 93)
-> **Typ:** Konzept — **Entwurf zur Durchsicht**, nichts gebaut, Entscheide §11 offen
+> **Version:** 0.2.0
+> **Datum:** 2026-10-04 (Session 93)
+> **Typ:** Konzept — **Entwurf, im Grundsatz gebilligt (Patrik S93)**, nichts
+> gebaut, Entscheide §11 offen; Vorgabe: rückbaubar (§12)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** `Offene_Punkte.md` §7 „Weg zur Timeline" (Ideen Patrik S84, S88,
@@ -198,7 +199,9 @@ was der Start wiederherstellt (C7).
 ## 9. Stufen
 
 Jede Stufe endet mit etwas Prüfbarem. Gebaut wird erst nach Freigabe des
-Konzepts und der Entscheide.
+Konzepts und der Entscheide. Für jede Stufe gelten die Regeln zum Rückbau
+(§12): Eigenes in eigenen Dateien, Bestehendes nur an benannten Nahtstellen,
+„Composer aus" belegt wie vorher, Rückbau-Liste nachgeführt.
 
 | Stufe | Inhalt | Prüfbar an |
 |---|---|---|
@@ -346,10 +349,101 @@ der Composer schaltet später ihren Schalter (S88, 2a).
   spricht ein „Grund-Visual" unter allem; das lässt sich als Clip im untersten
   Kanal über die ganze Länge ausdrücken.
 
+### C10 — Wo der Composer entsteht
+
+- **Ort:** das Repo; bisher committet Patrik jeden Schritt auf `master`.
+- **Problem:** Der Composer soll sich zurückbauen lassen (§12). Am
+  einfachsten ist ein Rückbau, der gar nicht nötig wird, weil das Unfertige
+  nie im Hauptzweig lag.
+- **a (Empfehlung):** Ein **eigener Zweig** `composer`. `master` bleibt, wie
+  er ist; nach jeder abgenommenen Stufe (Tests, Vergleichslauf, Sichttest)
+  wird der Zweig nach `master` geholt. Vor dem Holen ist der Rückbau: nicht
+  holen. Danach gilt die Rückbau-Liste (§12.4).
+- **b:** Weiter auf **`master`**, mit den Regeln aus §12 (Naht und Eigenes
+  getrennt committet). Der Rückbau läuft immer über die Rückbau-Liste.
+- *Warum:* Den Ausschlag gibt, dass die Nähte N1–N3 im kalibrierten Renderer
+  liegen und eine Stufe erst nach dem Sichttest als gut gilt — bis dahin soll
+  `master` davon frei sein. Für b spricht, dass nichts auseinanderläuft und
+  jede andere Arbeit sofort mit dem Composer zusammen getestet wird. Das wiegt
+  weniger, solange der Zweig nach jeder Stufe geholt wird und nie lange lebt.
+  Kippt, wenn du parallel zum Composer viel am Renderer oder am
+  Effect-Chain-Panel arbeitest — dann kosten die Zusammenführungen mehr, als
+  der Zweig schützt.
+
 ---
 
-## 12. Changelog
+## 12. Rückbau
+
+**Vorgabe Patrik (S93):** Der Composer muss sich mit einem Rollback wieder
+ausbauen lassen, falls etwas schiefgeht. Das ist keine Notiz für den
+Ernstfall, sondern eine Bauregel für jede Stufe.
+
+### 12.1 Regeln
+
+1. **Eigenes liegt in eigenen Dateien.** Modell, Datei-Format, Uhr, Panel und
+   Tests des Composers stehen in neuen Dateien unter eigenen Namen
+   (`composer/…`, `ComposerPanel`, `test_Composer*.cpp`). Rückbau heißt hier:
+   Dateien löschen, Einträge aus den `Source.cmake` nehmen.
+2. **Bestehendes wird nur an benannten Nahtstellen berührt** (12.2). Jede
+   Naht ist klein, trägt im Code den Vermerk `Composer-Naht` und steht in der
+   Rückbau-Liste (12.4).
+3. **Aus ist wie vorher.** Mit ausgeschaltetem Composer — und das ist die
+   Vorgabe — läuft jeder Weg wie vor dem Composer. Neue Felder an
+   bestehenden Strukturen sind optional und haben als Vorgabe das alte
+   Verhalten. Belegt wird das je Stufe, nicht behauptet (12.3).
+4. **Kein bestehendes Dateiformat ändert sich.** `.lvfx`, `.lvfx2`, `.lvkar`,
+   `.lvtrail` bleiben, wie sie sind; der Composer schreibt nur `.lvcomp`.
+   Einstellungen liegen ausschließlich unter `composer/…`. Nach einem Rückbau
+   bleiben höchstens Dateien und Schlüssel zurück, die der alte Code nicht
+   kennt und nicht liest.
+5. **Naht und Eigenes werden getrennt committet.** Ein Commit ändert
+   entweder Bestehendes (Naht, klein, im Betreff als `composer-naht`
+   gekennzeichnet) oder fügt Eigenes hinzu — nie beides. Der Rückbau ist dann:
+   die Naht-Commits zurücknehmen, die eigenen Dateien löschen.
+6. **Eine Stufe ist erst fertig, wenn ihr Rückbau aufgeschrieben ist.** Die
+   Rückbau-Liste wird mit jeder Stufe nachgeführt.
+
+### 12.2 Die Nahtstellen (Stand des Entwurfs)
+
+| Naht | Wo | Was sich ändert | Vorgabe = altes Verhalten |
+|---|---|---|---|
+| N1 Pegel von außen | `renderHostGroup`, `GroupRuntime` | ein optionaler Pegel überschreibt das zeitgeführte Gewicht | nicht gesetzt → Gewicht läuft wie heute |
+| N2 Mischart mit Pegel | Ausgangs-Mischung der Gruppe | die gewählte Mischart gilt auch unter vollem Gewicht | nur für Gruppen mit Pegel von außen; alle anderen mischen wie heute |
+| N3 Laden nach Bedarf | Laden der Presetverweise | ein Verweis darf „noch nicht geladen" sein | nur für Ketten, die der Composer erzeugt |
+| N4 Laufendes Preset | `MainWindow::setzeLaufendesPreset`, Start | der Composer meldet sich als Quelle; der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute |
+| N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn | Composer aus → Effect Browser bzw. Playlist |
+| N6 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist |
+| N7 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge | — (reine Zusätze) |
+
+Welche Nähte es wirklich braucht, zeigt C0. Kommt eine dazu, kommt sie in
+diese Tabelle, bevor sie gebaut wird.
+
+### 12.3 Der Beleg je Stufe
+
+- **Unit-Tests** grün, 0 Skips — die bestehenden unverändert.
+- **Vergleichslauf** nach jeder Stufe, die den Renderer berührt (N1–N3):
+  bitgleich gegen den Bezugsstand, mit ausgeschaltetem Composer.
+- **Ein eigener Test „Composer aus"** je Naht: derselbe Aufruf mit und ohne
+  die Naht liefert dasselbe Ergebnis, solange der Composer nicht eingreift.
+
+### 12.4 Die Rückbau-Liste
+
+Wird mit C0 angelegt und je Stufe nachgeführt, in diesem Dokument:
+
+| Stufe | Eigene Dateien (löschen) | Naht-Commits (zurücknehmen) | Einträge (herausnehmen) | Rückbau geprüft |
+|---|---|---|---|---|
+| — | noch nichts gebaut | — | — | — |
+
+„Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
+sind grün und der Vergleichslauf ist bitgleich. Geprüft wird das **einmal
+nach C1** — der ersten Stufe mit Nähten im Renderer — und danach, wenn eine
+neue Naht dazukommt.
+
+---
+
+## 13. Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.2.0 | 2026-10-04 | Session 93 — Vorgabe Patrik: rückbaubar. Neu §12 Rückbau (Regeln, Nahtstellen N1–N7, Beleg je Stufe, Rückbau-Liste), Entscheid C10 (Zweig), Stufen verweisen darauf |
 | 0.1.0 | 2026-10-03 | Session 93 — Erstfassung aus den Notizen S84, S88, S93 und Patriks Vorgaben vom 03.10.: Name Composer, Visual-Kanäle als Mischer, Audiokanal als Bezug, ein- und ausschaltbar; Renderweg über Host-Gruppen als Empfehlung (gelesen, nicht getestet); Stufen C0–C6; Entscheide C2–C7, C9 offen |
