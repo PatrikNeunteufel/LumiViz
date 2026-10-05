@@ -165,7 +165,7 @@ bool speichereClipKette(VisualizerWidget& widget, QWidget* eltern)
         for (const auto& [k, c] : andere)
         {
             const Kanal& kanal = sitzung->komposition().kanaele[static_cast<std::size_t>(k)];
-            const VisualClip& clip = kanal.visual[static_cast<std::size_t>(c)];
+            const VisualClip& clip = kanal.clips[static_cast<std::size_t>(c)];
             auto* zeile = new QListWidgetItem(
                 QStringLiteral("%1 · %2 – %3")
                     .arg(kanal.name, ComposerPanel::zeitText(clip.startMs),

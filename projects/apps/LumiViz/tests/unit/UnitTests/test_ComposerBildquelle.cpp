@@ -105,7 +105,7 @@ Kanal visualKanal(const QString& name, const QString& datei, std::int64_t start,
     Kanal k;
     k.art = KanalArt::Visual;
     k.name = name;
-    k.visual = {c};
+    k.clips = {c};
     return k;
 }
 
@@ -579,7 +579,7 @@ TEST_SUITE("ComposerBildquelle")
         // --- die Komposition bearbeiten: Blau wird geloescht. Der Renderer, an dem die
         //     Oberflaeche haengt, bleibt am Leben, bis sie ihn freigibt
         Komposition ohne = k;
-        ohne.kanaele[1].visual.clear();
+        ohne.kanaele[1].clips.clear();
         quelle.ersetzeKomposition(ohne);
         quelle.render(0.016f);
         CHECK(quelle.festerRendererNurSehen() == nullptr);  // festgehalten ist nichts mehr

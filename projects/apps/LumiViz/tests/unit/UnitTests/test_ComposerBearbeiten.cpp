@@ -46,7 +46,7 @@ Komposition probe()
 {
     Kanal k;
     k.name = QStringLiteral("CH1");
-    k.visual = {clip("A", 0, 10000), clip("B", 20000, 30000), clip("C", 30000, 45000)};
+    k.clips = {clip("A", 0, 10000), clip("B", 20000, 30000), clip("C", 30000, 45000)};
     Komposition komposition;
     komposition.kanaele = {k};
     return komposition;
@@ -54,7 +54,7 @@ Komposition probe()
 
 const std::vector<VisualClip>& clips(const Komposition& k)
 {
-    return k.kanaele[0].visual;
+    return k.kanaele[0].clips;
 }
 
 /// Name, Start, Ende je Clip — als Text, damit ein Fehlschlag lesbar ist.
@@ -100,7 +100,7 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(verschiebeClip(k, 0, 2, 22000) == 2);
         CHECK(bild(k) == QStringLiteral("A[0,10000) B[20000,30000) C[30000,45000)"));
         k = probe();
-        k.kanaele[0].visual[1] = clip("B", 26000, 30000);  // Luecke 10–26 s, C ist 15 s lang
+        k.kanaele[0].clips[1] = clip("B", 26000, 30000);  // Luecke 10–26 s, C ist 15 s lang
         CHECK(verschiebeClip(k, 0, 2, 12000) == 1);
         CHECK(bild(k) == QStringLiteral("A[0,10000) C[11000,26000) B[26000,30000)"));
         CHECK(geordnet(k));
@@ -192,8 +192,8 @@ TEST_SUITE("ComposerBearbeiten")
     {
         Komposition k;
         Kanal kanal;
-        kanal.visual = {clip("A", 10000, 30000)};
-        kanal.visual[0].setzeBlenden(3000, 5000);
+        kanal.clips = {clip("A", 10000, 30000)};
+        kanal.clips[0].setzeBlenden(3000, 5000);
         k.kanaele = {kanal};
         const auto pegel = [&k](std::int64_t imClip) { return clips(k)[0].pegelBei(imClip); };
         REQUIRE(pegel(0) == doctest::Approx(0.0));
@@ -267,13 +267,13 @@ TEST_SUITE("ComposerBearbeiten")
             Komposition k = probe();
             Kanal zweiter;
             zweiter.name = QStringLiteral("CH2");
-            zweiter.visual = {clip("X", 5000, 25000)};
+            zweiter.clips = {clip("X", 5000, 25000)};
             k.kanaele.push_back(zweiter);
             return k;
         };
         const auto ch2 = [](const Komposition& k) {
             QStringList teile;
-            for (const VisualClip& c : k.kanaele[1].visual)
+            for (const VisualClip& c : k.kanaele[1].clips)
                 teile << QStringLiteral("%1[%2,%3)").arg(c.datei).arg(c.startMs).arg(c.endeMs);
             return teile.join(QLatin1Char(' '));
         };
@@ -306,10 +306,10 @@ TEST_SUITE("ComposerBearbeiten")
 
         // die Kurve wandert mit
         k = mitZweitem();
-        k.kanaele[0].visual[0].setzeBlenden(2000, 2000);
+        k.kanaele[0].clips[0].setzeBlenden(2000, 2000);
         REQUIRE(versetzeClip(k, 0, 0, 1, 40000) == 1);
-        CHECK(k.kanaele[1].visual[1].ein.dauerMs == 2000);
-        CHECK(k.kanaele[1].visual[1].pegelBei(1000) == doctest::Approx(0.5));
+        CHECK(k.kanaele[1].clips[1].ein.dauerMs == 2000);
+        CHECK(k.kanaele[1].clips[1].pegelBei(1000) == doctest::Approx(0.5));
 
         // Zielkanal, den es nicht gibt, oder ein Audio-Kanal: nichts aendert sich
         k = mitZweitem();
@@ -321,7 +321,7 @@ TEST_SUITE("ComposerBearbeiten")
         ton.art = KanalArt::Audio;
         k.kanaele.push_back(ton);
         CHECK(versetzeClip(k, 0, 0, 2, 0) == -1);
-        CHECK(k.kanaele[0].visual.size() == 3);
+        CHECK(k.kanaele[0].clips.size() == 3);
     }
 
     TEST_CASE("C3a Ende (Befund Patrik S95): das Ende folgt dem letzten Clip — ausser es ist fest gesetzt")
@@ -496,7 +496,7 @@ TEST_SUITE("ComposerBearbeiten")
         // beim Ziehen einer Kante bleiben die Blenden: die Griffe gibt es weiter
         Komposition k;
         Kanal kanal;
-        kanal.visual = {c};
+        kanal.clips = {c};
         k.kanaele = {kanal};
         REQUIRE(zieheKante(k, 0, 0, false, 50000) == 0);
         REQUIRE(liesBlenden(clips(k)[0], b));
@@ -570,7 +570,7 @@ TEST_SUITE("ComposerBearbeiten")
         setzeBlenden(c, soll);
         c.grundpegel = 0.75;
         c.stuecke = {ClipStueck{0.6, 2500, true, delle()}};
-        kanal.visual = {c};
+        kanal.clips = {c};
         k.kanaele = {kanal};
         const QJsonObject json = alsJson(k);
         const QJsonObject clipJson = json.value(QStringLiteral("channels")).toArray().at(0).toObject()
@@ -590,7 +590,7 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK_FALSE(punkte.at(1).toObject().contains(QStringLiteral("bezier")));
         Komposition gelesen;
         REQUIRE(ausJson(json, gelesen));
-        REQUIRE(liesBlenden(gelesen.kanaele[0].visual[0], b));
+        REQUIRE(liesBlenden(gelesen.kanaele[0].clips[0], b));
         CHECK(b.einForm == Kurvenform::Bezier);
         CHECK(b.einBezier == soll.einBezier);
         CHECK(gleich(gelesen, k));
@@ -674,6 +674,138 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK_FALSE(setzeStueckWeite(c, -1, 1000));
     }
 
+    TEST_CASE("C5 Ton-Clips: ein Clip-Typ fuer Bild und Ton — Einsatz, Song-Laenge, Kanten, alte Dateien")
+    {
+        // ein Audio-Kanal heisst A1; Songs gehen nur in Audio-Kanaele, Presets nur in Visual-Kanaele
+        Komposition k = neueKomposition();  // CH1
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        CHECK(k.kanaele[1].name == QStringLiteral("A1"));
+        CHECK(k.kanaele[1].art == KanalArt::Audio);
+        CHECK(fuegeKanalEin(k, {}, KanalArt::Audio) == 2);
+        CHECK(k.kanaele[2].name == QStringLiteral("A2"));
+        CHECK(fuegeSongEin(k, 0, QStringLiteral("s.mp3"), 0, 180000) == -1);
+        CHECK(fuegeClipEin(k, 1, QStringLiteral("p.lvfx"), 0) == -1);
+        const auto ton = [&k]() -> const std::vector<Clip>& { return k.kanaele[1].clips; };
+
+        // ein Song: so lang wie er ist, Einsatz am Anfang, voller Pegel
+        REQUIRE(fuegeSongEin(k, 1, QStringLiteral("eins.mp3"), 10000, 180000) == 0);
+        CHECK(ton()[0].startMs == 10000);
+        CHECK(ton()[0].endeMs == 190000);
+        CHECK(ton()[0].einsatzMs == 0);
+        CHECK(ton()[0].quellMs == 180000);
+        CHECK(ton()[0].vollerPegel());
+        CHECK(k.laenge() == 190000);  // das Ende der Komposition folgt auch dem Ton
+        // ohne bekannte Laenge: 20 s
+        Komposition ohne = k;
+        REQUIRE(fuegeSongEin(ohne, 2, QStringLiteral("x.mp3"), 0, 0) == 0);
+        CHECK(ohne.kanaele[2].clips[0].dauerMs() == kNeuerClipMs);
+        CHECK(ohne.kanaele[2].clips[0].quellMs == 0);
+
+        // welcher Kanal spielt, und was ist wo zu hoeren
+        CHECK(k.tonKanal() == 1);
+        CHECK(k.tonBei(5000) == nullptr);  // Stille vor dem Song
+        REQUIRE(k.tonBei(10000) != nullptr);
+        CHECK(k.tonBei(70000)->songStelle(70000 - 10000) == 60000);
+        CHECK(k.tonBei(190000) == nullptr);  // das Ende gehoert nicht mehr dazu
+        k.kanaele[1].an = false;
+        CHECK(k.tonKanal() == 2);  // der naechste eingeschaltete
+        CHECK(k.tonBei(70000) == nullptr);
+        k.kanaele[2].an = false;
+        CHECK(k.tonKanal() == -1);
+        k.kanaele[1].an = true;
+
+        // die rechte Kante: abschneiden geht, laenger als der Song nicht
+        REQUIRE(zieheKante(k, 1, 0, false, 100000) == 0);
+        CHECK(ton()[0].endeMs == 100000);
+        CHECK(ton()[0].einsatzMs == 0);
+        REQUIRE(zieheKante(k, 1, 0, false, 500000) == 0);
+        CHECK(ton()[0].endeMs == 190000);
+
+        // die linke Kante: der Song beginnt spaeter — was bleibt, ist an derselben Stelle zu hoeren
+        REQUIRE(zieheKante(k, 1, 0, true, 40000) == 0);
+        CHECK(ton()[0].startMs == 40000);
+        CHECK(ton()[0].einsatzMs == 30000);
+        CHECK(ton()[0].endeMs == 190000);
+        CHECK(k.tonBei(70000)->songStelle(70000 - 40000) == 60000);  // wie zuvor
+        // ... und wieder nach links, aber nicht vor den Anfang des Songs
+        REQUIRE(zieheKante(k, 1, 0, true, 0) == 0);
+        CHECK(ton()[0].startMs == 10000);
+        CHECK(ton()[0].einsatzMs == 0);
+        // mit Einsatz reicht die rechte Kante entsprechend weniger weit
+        REQUIRE(zieheKante(k, 1, 0, true, 40000) == 0);
+        REQUIRE(zieheKante(k, 1, 0, false, 100000) == 0);
+        REQUIRE(zieheKante(k, 1, 0, false, 999000) == 0);
+        CHECK(ton()[0].endeMs == 40000 + (180000 - 30000));
+
+        // verschieben: der Einsatz bleibt; die Pegelkurve gilt wie am Bild
+        REQUIRE(verschiebeClip(k, 1, 0, 0) == 0);
+        CHECK(ton()[0].startMs == 0);
+        CHECK(ton()[0].einsatzMs == 30000);
+        k.kanaele[1].clips[0].setzeBlenden(2000, 4000);
+        CHECK(ton()[0].pegelBei(1000) == doctest::Approx(0.5));
+        CHECK(ton()[0].pegelBei(150000 - 2000) == doctest::Approx(0.5));
+
+        // ein zweiter Song dahinter; mit Ctrl darauf gezogen wird der erste gekuerzt — und,
+        // wenn es seinen Anfang trifft, sein Einsatz vorgerueckt
+        REQUIRE(fuegeSongEin(k, 1, QStringLiteral("zwei.mp3"), 200000, 60000) == 1);
+        REQUIRE(verschiebeClip(k, 1, 0, 180000, Stoss::Kuerzen) == 0);  // eins liegt jetzt 180–330 s
+        REQUIRE(ton().size() == 1);                                     // zwei ist ganz ueberdeckt: weg
+        REQUIRE(fuegeSongEin(k, 1, QStringLiteral("drei.mp3"), 100000, 100000, Stoss::Kuerzen) == 0);
+        REQUIRE(ton().size() == 2);
+        CHECK(ton()[1].startMs == 200000);       // eins beginnt, wo drei endet
+        CHECK(ton()[1].einsatzMs == 30000 + 20000);
+        CHECK(geordnet(k));
+
+        // Bild und Ton tauschen nicht den Kanal
+        REQUIRE(fuegeClipEin(k, 0, QStringLiteral("p.lvfx"), 0) == 0);
+        const Komposition vorher = k;
+        CHECK(versetzeClip(k, 0, 0, 1, 500000) == -1);
+        CHECK(versetzeClip(k, 1, 0, 0, 500000) == -1);
+        CHECK(gleich(k, vorher));
+        CHECK(versetzeClip(k, 1, 0, 2, 0) == 0);  // Ton zu Ton geht
+        CHECK(k.kanaele[2].clips.size() == 1);
+
+        // Datei: gelesen wie geschrieben
+        Komposition gelesen;
+        REQUIRE(ausJson(alsJson(k), gelesen));
+        CHECK(gleich(gelesen, k));
+
+        // eine alte Datei (bis S95): ein Ton-Clip ohne Ende reicht bis zum Schluss seines Songs
+        QJsonObject alt = alsJson(neueKomposition());
+        QJsonObject kanal;
+        kanal.insert(QStringLiteral("kind"), QStringLiteral("audio"));
+        kanal.insert(QStringLiteral("name"), QStringLiteral("Audio"));
+        QJsonObject clipAlt;
+        clipAlt.insert(QStringLiteral("file"), QStringLiteral("C:/musik/alt.mp3"));
+        clipAlt.insert(QStringLiteral("start"), 5000);
+        clipAlt.insert(QStringLiteral("offset"), 20000);
+        kanal.insert(QStringLiteral("clips"), QJsonArray{clipAlt});
+        QJsonArray kanaele = alt.value(QStringLiteral("channels")).toArray();
+        kanaele.append(kanal);
+        alt.insert(QStringLiteral("channels"), kanaele);
+        const SongLaenge laenge = [](const QString& datei) -> std::int64_t {
+            return datei.endsWith(QStringLiteral("alt.mp3")) ? 120000 : 0;
+        };
+        REQUIRE(ausJson(alt, gelesen, {}, nullptr, laenge));
+        REQUIRE(gelesen.kanaele[1].clips.size() == 1);
+        CHECK(gelesen.kanaele[1].clips[0].startMs == 5000);
+        CHECK(gelesen.kanaele[1].clips[0].quellMs == 120000);
+        CHECK(gelesen.kanaele[1].clips[0].endeMs == 5000 + (120000 - 20000));
+        // ohne Auskunft ueber die Laenge: eine Sekunde, gemeldet
+        QStringList bericht;
+        REQUIRE(ausJson(alt, gelesen, {}, &bericht));
+        CHECK(gelesen.kanaele[1].clips[0].dauerMs() == 1000);
+        CHECK(bericht.join(QLatin1Char('\n')).contains(QStringLiteral("had no length")));
+        // ein Clip, der laenger ist als sein Song, wird beim Ergaenzen gekuerzt
+        Komposition lang = neueKomposition();
+        (void)fuegeKanalEin(lang, {}, KanalArt::Audio);
+        REQUIRE(fuegeSongEin(lang, 1, QStringLiteral("C:/musik/alt.mp3"), 0, 0) == 0);  // Laenge unbekannt: 20 s
+        lang.kanaele[1].clips[0].endeMs = 500000;
+        lang.ergaenzeTon(laenge);
+        CHECK(lang.kanaele[1].clips[0].quellMs == 120000);
+        CHECK(lang.kanaele[1].clips[0].endeMs == 120000);
+    }
+
     TEST_CASE("C3a Laenge, Loeschen, Unsinn")
     {
         // eine gesetzte Laenge waechst mit; ohne gesetzte Laenge bleibt sie offen
@@ -707,11 +839,11 @@ TEST_SUITE("ComposerBearbeiten")
         k = probe();
         Kanal zweiter;
         zweiter.name = QStringLiteral("CH2");
-        zweiter.visual = {clip("X", 5000, 25000)};
+        zweiter.clips = {clip("X", 5000, 25000)};
         k.kanaele.push_back(zweiter);
         REQUIRE(verschiebeClip(k, 0, 0, 15000, Stoss::Kuerzen) == 0);
-        CHECK(k.kanaele[1].visual[0].startMs == 5000);
-        CHECK(k.kanaele[1].visual[0].endeMs == 25000);
+        CHECK(k.kanaele[1].clips[0].startMs == 5000);
+        CHECK(k.kanaele[1].clips[0].endeMs == 25000);
         REQUIRE(verschiebeClip(k, 1, 0, 0) == 0);
         CHECK(bild(k) == QStringLiteral("A[15000,25000) B[25000,30000) C[30000,45000)"));
     }

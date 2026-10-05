@@ -50,7 +50,7 @@ void Wiedergabe::setFest(int kanal, int clip, bool andererClip)
 void Wiedergabe::festerClipHeisstJetzt(const QString& datei)
 {
     if (m_fest.first < 0 || m_fest.first >= static_cast<int>(m_komposition.kanaele.size())) return;
-    auto& clips = m_komposition.kanaele[static_cast<size_t>(m_fest.first)].visual;
+    auto& clips = m_komposition.kanaele[static_cast<size_t>(m_fest.first)].clips;
     if (m_fest.second < 0 || m_fest.second >= static_cast<int>(clips.size())) return;
     clips[static_cast<size_t>(m_fest.second)].datei = datei;
 }
@@ -72,7 +72,7 @@ void Wiedergabe::ersetzeKomposition(Komposition komposition)
     komposition.richte(&m_bericht);
     const auto clipVon = [](const Komposition& k, const Schluessel& s) -> const VisualClip* {
         if (s.first < 0 || s.first >= static_cast<int>(k.kanaele.size())) return nullptr;
-        const auto& clips = k.kanaele[static_cast<size_t>(s.first)].visual;
+        const auto& clips = k.kanaele[static_cast<size_t>(s.first)].clips;
         if (s.second < 0 || s.second >= static_cast<int>(clips.size())) return nullptr;
         return &clips[static_cast<size_t>(s.second)];
     };
@@ -99,7 +99,7 @@ void Wiedergabe::ersetzeKomposition(Komposition komposition)
         if (lauf.renderer == nullptr || vorher == nullptr) continue;
         for (int k = 0; k < static_cast<int>(komposition.kanaele.size()); ++k)
         {
-            const auto& clips = komposition.kanaele[static_cast<size_t>(k)].visual;
+            const auto& clips = komposition.kanaele[static_cast<size_t>(k)].clips;
             for (int c = 0; c < static_cast<int>(clips.size()); ++c)
             {
                 const VisualClip& neu = clips[static_cast<size_t>(c)];
@@ -246,9 +246,9 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
     {
         const Kanal& kanal = m_komposition.kanaele[static_cast<size_t>(k)];
         if (kanal.art != KanalArt::Visual || !kanal.an) continue;
-        for (int c = 0; c < static_cast<int>(kanal.visual.size()); ++c)
+        for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
         {
-            const VisualClip& clip = kanal.visual[static_cast<size_t>(c)];
+            const VisualClip& clip = kanal.clips[static_cast<size_t>(c)];
             const bool laeuft = stelleMs >= clip.startMs && stelleMs < clip.endeMs;
             const bool bald = m_vorlaufMs > 0 && stelleMs < clip.startMs &&
                               stelleMs >= clip.startMs - m_vorlaufMs;
@@ -263,8 +263,8 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         const bool schon = std::any_of(dran.begin(), dran.end(),
                                        [&](const Dran& d) { return d.schluessel == m_fest; });
         if (!schon && kanal.art == KanalArt::Visual && m_fest.second >= 0 &&
-            m_fest.second < static_cast<int>(kanal.visual.size()))
-            dran.push_back({m_fest, &kanal.visual[static_cast<size_t>(m_fest.second)], false});
+            m_fest.second < static_cast<int>(kanal.clips.size()))
+            dran.push_back({m_fest, &kanal.clips[static_cast<size_t>(m_fest.second)], false});
     }
     // Entladen: was weder laeuft noch bald dran ist
     for (auto it = m_laeufe.begin(); it != m_laeufe.end();)

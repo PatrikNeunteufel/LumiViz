@@ -38,15 +38,18 @@ int verschiebeClip(Komposition& komposition, int kanal, int clip, std::int64_t n
                    Stoss stoss = Stoss::Halten);
 
 /// Wie `verschiebeClip`, und der Clip wechselt dabei in den Kanal `nachKanal`
-/// (nur Visual-Kanaele). Liefert seinen Platz im Zielkanal, -1 = Clip oder
-/// Zielkanal gibt es nicht — dann bleibt alles, wie es war.
+/// — nur in einen seiner Art (Bild zu Bild, Ton zu Ton). Liefert seinen Platz
+/// im Zielkanal, -1 = Clip oder Zielkanal gibt es nicht oder er ist von der
+/// anderen Art — dann bleibt alles, wie es war.
 int versetzeClip(Komposition& komposition, int vonKanal, int clip, int nachKanal,
                  std::int64_t neuerStartMs, Stoss stoss = Stoss::Halten);
 
 /// Die linke (`links` = true) oder rechte Kante des Clips auf `zeitMs` ziehen.
 /// Die Blenden bleiben an ihren Kanten, die Stuecke an ihrem Anteil; alle
-/// behalten ihre eingestellte Weite. Liefert den Platz des Clips danach,
-/// -1 = gibt es nicht.
+/// behalten ihre eingestellte Weite. Ton-Clip: die linke Kante aendert den
+/// Einsatz im Song (was bleibt, ist an derselben Stelle zu hoeren), und der
+/// Clip reicht nie ueber Anfang oder Schluss des Songs hinaus. Liefert den
+/// Platz des Clips danach, -1 = gibt es nicht.
 int zieheKante(Komposition& komposition, int kanal, int clip, bool links, std::int64_t zeitMs,
                Stoss stoss = Stoss::Halten);
 
@@ -66,9 +69,17 @@ inline constexpr std::int64_t kNeuerClipMs = 20000;
 int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
                  std::int64_t dauerMs = kNeuerClipMs, Stoss stoss = Stoss::Halten);
 
-/// Einen leeren Visual-Kanal anhaengen; ohne Namen heisst er „CH<n>" mit der
-/// kleinsten freien Nummer. Liefert seinen Platz.
-int fuegeKanalEin(Komposition& komposition, const QString& name = {});
+/// Einen Song als Ton-Clip in einen Audio-Kanal legen (C5): so lang wie der
+/// Song (`songMs`; 0 = unbekannt, dann `kNeuerClipMs`), Einsatz am Anfang des
+/// Songs, voller Pegel. Am Nachbarn wie `fuegeClipEin`. Liefert seinen Platz,
+/// -1 = den Kanal gibt es nicht (oder er ist kein Audio-Kanal).
+int fuegeSongEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
+                 std::int64_t songMs, Stoss stoss = Stoss::Halten);
+
+/// Einen leeren Kanal anhaengen; ohne Namen heisst ein Visual-Kanal „CH<n>",
+/// ein Audio-Kanal „A<n>", je mit der kleinsten freien Nummer. Liefert seinen
+/// Platz.
+int fuegeKanalEin(Komposition& komposition, const QString& name = {}, KanalArt art = KanalArt::Visual);
 
 /// Den Kanal samt seinen Clips entfernen. false = es gibt ihn nicht.
 bool loescheKanal(Komposition& komposition, int kanal);

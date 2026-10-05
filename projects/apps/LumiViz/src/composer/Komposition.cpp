@@ -184,7 +184,7 @@ std::int64_t Komposition::clipEnde() const
 {
     std::int64_t ende = 0;
     for (const Kanal& k : kanaele)
-        for (const VisualClip& c : k.visual) ende = std::max(ende, c.endeMs);
+        for (const VisualClip& c : k.clips) ende = std::max(ende, c.endeMs);
     return ende;
 }
 
@@ -195,12 +195,13 @@ void Komposition::richte(QStringList* bericht)
     };
     for (Kanal& kanal : kanaele)
     {
-        if (kanal.art != KanalArt::Visual) kanal.visual.clear();
-        if (kanal.art != KanalArt::Audio) kanal.audio.clear();
-
-        for (VisualClip& c : kanal.visual)
+        const bool ton = kanal.art == KanalArt::Audio;
+        for (Clip& c : kanal.clips)
         {
             c.startMs = std::max<std::int64_t>(0, c.startMs);
+            // Einsatz und Song-Laenge gibt es nur am Ton
+            c.einsatzMs = ton ? std::max<std::int64_t>(0, c.einsatzMs) : 0;
+            c.quellMs = ton ? std::max<std::int64_t>(0, c.quellMs) : 0;
             if (c.endeMs <= c.startMs)
             {
                 melde(QStringLiteral("%1: clip \"%2\" had no length — set to one second")
@@ -224,12 +225,12 @@ void Komposition::richte(QStringList* bericht)
                 s.form.richte();
             }
         }
-        std::stable_sort(kanal.visual.begin(), kanal.visual.end(),
+        std::stable_sort(kanal.clips.begin(), kanal.clips.end(),
                          [](const VisualClip& a, const VisualClip& b) { return a.startMs < b.startMs; });
-        for (std::size_t i = 1; i < kanal.visual.size(); ++i)
+        for (std::size_t i = 1; i < kanal.clips.size(); ++i)
         {
-            VisualClip& vor = kanal.visual[i - 1];
-            VisualClip& c = kanal.visual[i];
+            VisualClip& vor = kanal.clips[i - 1];
+            VisualClip& c = kanal.clips[i];
             if (c.startMs >= vor.endeMs) continue;
             melde(QStringLiteral("%1: clip \"%2\" overlapped the one before — moved to its end")
                       .arg(kanal.name, QFileInfo(c.datei).fileName()));
@@ -237,16 +238,43 @@ void Komposition::richte(QStringList* bericht)
             c.startMs = vor.endeMs;
             c.endeMs = std::max(c.endeMs, c.startMs + std::min<std::int64_t>(dauer, 1000));
         }
-        for (AudioClip& a : kanal.audio)
-        {
-            a.startMs = std::max<std::int64_t>(0, a.startMs);
-            a.einsatzMs = std::max<std::int64_t>(0, a.einsatzMs);
-        }
-        std::stable_sort(kanal.audio.begin(), kanal.audio.end(),
-                         [](const AudioClip& a, const AudioClip& b) { return a.startMs < b.startMs; });
     }
     laengeMs = std::max<std::int64_t>(0, laengeMs);
     if (rasterSekunden <= 0.0) rasterSekunden = 1.0;
+}
+
+int Komposition::tonKanal() const
+{
+    for (int k = 0; k < static_cast<int>(kanaele.size()); ++k)
+        if (kanaele[static_cast<std::size_t>(k)].art == KanalArt::Audio && kanaele[static_cast<std::size_t>(k)].an)
+            return k;
+    return -1;
+}
+
+const Clip* Komposition::tonBei(std::int64_t stelleMs) const
+{
+    const int k = tonKanal();
+    if (k < 0) return nullptr;
+    for (const Clip& c : kanaele[static_cast<std::size_t>(k)].clips)
+        if (stelleMs >= c.startMs && stelleMs < c.endeMs) return &c;
+    return nullptr;
+}
+
+void Komposition::ergaenzeTon(const SongLaenge& laengeVon)
+{
+    for (Kanal& kanal : kanaele)
+    {
+        if (kanal.art != KanalArt::Audio) continue;
+        for (Clip& c : kanal.clips)
+        {
+            if (c.quellMs <= 0 && laengeVon) c.quellMs = std::max<std::int64_t>(0, laengeVon(c.datei));
+            if (c.quellMs <= 0) continue;  // unbekannt: der Clip bleibt, wie er ist
+            // der Einsatz liegt im Song, und der Clip hoert spaetestens mit ihm auf
+            c.einsatzMs = std::clamp<std::int64_t>(c.einsatzMs, 0, c.quellMs);
+            const std::int64_t rest = c.quellMs - c.einsatzMs;
+            if (c.dauerMs() > rest) c.endeMs = c.startMs + std::max<std::int64_t>(1, rest);
+        }
+    }
 }
 
 QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
@@ -260,15 +288,21 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
         k.insert(QStringLiteral("name"), kanal.name);
         k.insert(QStringLiteral("enabled"), kanal.an);
         QJsonArray clips;
-        if (kanal.art == KanalArt::Visual)
+        const bool ton = kanal.art == KanalArt::Audio;
         {
-            for (const VisualClip& c : kanal.visual)
+            for (const Clip& c : kanal.clips)
             {
                 QJsonObject o;
                 o.insert(QStringLiteral("file"), fuerDatei(c.datei, basisOrdner));
                 o.insert(QStringLiteral("start"), static_cast<double>(c.startMs));
                 o.insert(QStringLiteral("end"), static_cast<double>(c.endeMs));
-                o.insert(QStringLiteral("blend"), static_cast<int>(c.mischart));
+                if (ton)
+                {
+                    o.insert(QStringLiteral("offset"), static_cast<double>(c.einsatzMs));
+                    if (c.quellMs > 0) o.insert(QStringLiteral("sourceLength"), static_cast<double>(c.quellMs));
+                }
+                else
+                    o.insert(QStringLiteral("blend"), static_cast<int>(c.mischart));
                 // Pegelkurve: nur, was der Clip hat — alle Teile sind freiwillig
                 if (c.grundpegel < 1.0) o.insert(QStringLiteral("base"), c.grundpegel);
                 const auto blende = [](const ClipBlende& b) {
@@ -296,17 +330,6 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                 clips.append(o);
             }
         }
-        else
-        {
-            for (const AudioClip& a : kanal.audio)
-            {
-                QJsonObject o;
-                o.insert(QStringLiteral("file"), fuerDatei(a.datei, basisOrdner));
-                o.insert(QStringLiteral("start"), static_cast<double>(a.startMs));
-                o.insert(QStringLiteral("offset"), static_cast<double>(a.einsatzMs));
-                clips.append(o);
-            }
-        }
         k.insert(QStringLiteral("clips"), clips);
         kanaele.append(k);
     }
@@ -320,7 +343,7 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
 }
 
 bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString& basisOrdner,
-             QStringList* bericht)
+             QStringList* bericht, const SongLaenge& laengeVon)
 {
     if (wurzel.value(QStringLiteral("format")).toString() != kFormat) return false;
     Komposition neu;
@@ -343,14 +366,25 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
             const QString datei = ausDatei(o.value(QStringLiteral("file")).toString(), basisOrdner);
             if (bericht != nullptr && !datei.isEmpty() && !QFileInfo::exists(datei))
                 bericht->append(QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(datei)));
-            if (kanal.art == KanalArt::Visual)
             {
-                VisualClip c;
+                Clip c;
                 c.datei = datei;
                 c.startMs = static_cast<std::int64_t>(o.value(QStringLiteral("start")).toDouble());
                 c.endeMs = static_cast<std::int64_t>(o.value(QStringLiteral("end")).toDouble());
                 c.mischart = static_cast<Mischart>(
                     std::clamp(o.value(QStringLiteral("blend")).toInt(), 0, kMischarten - 1));
+                if (kanal.art == KanalArt::Audio)
+                {
+                    c.einsatzMs = static_cast<std::int64_t>(o.value(QStringLiteral("offset")).toDouble());
+                    c.quellMs = static_cast<std::int64_t>(o.value(QStringLiteral("sourceLength")).toDouble());
+                    if (c.quellMs <= 0 && laengeVon) c.quellMs = laengeVon(datei);
+                    // Bis S95 hatte ein Ton-Clip kein Ende: er reicht bis zum
+                    // Schluss seines Songs (ohne bekannte Laenge gibt `richte`
+                    // ihm eine Sekunde und meldet es).
+                    if (!o.contains(QStringLiteral("end")))
+                        c.endeMs = std::max<std::int64_t>(0, c.startMs) +
+                                   std::max<std::int64_t>(0, c.quellMs - std::max<std::int64_t>(0, c.einsatzMs));
+                }
                 // Bis S95: die Pegelkurve als Punkte in Millisekunden (`levels`).
                 // Sie wird in Blenden oder ein Stueck uebersetzt; geschrieben
                 // wird nur noch die neue Fassung.
@@ -404,20 +438,13 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                         s.form = delle();
                     c.stuecke.push_back(std::move(s));
                 }
-                kanal.visual.push_back(std::move(c));
-            }
-            else
-            {
-                AudioClip a;
-                a.datei = datei;
-                a.startMs = static_cast<std::int64_t>(o.value(QStringLiteral("start")).toDouble());
-                a.einsatzMs = static_cast<std::int64_t>(o.value(QStringLiteral("offset")).toDouble());
-                kanal.audio.push_back(std::move(a));
+                kanal.clips.push_back(std::move(c));
             }
         }
         neu.kanaele.push_back(std::move(kanal));
     }
     neu.richte(bericht);
+    neu.ergaenzeTon(laengeVon);
     // Eine Laenge, die genau das Ende des letzten Clips ist, sagt nichts
     // Eigenes: dann folgt das Ende dem letzten Clip (Befund Patrik S95 — wird
     // ein Clip kuerzer, soll die Komposition nicht leer weiterlaufen). Fest
@@ -435,14 +462,15 @@ bool speichereKomposition(const Komposition& komposition, const QString& pfad)
     return datei.write(doc.toJson(QJsonDocument::Indented)) >= 0 && datei.commit();
 }
 
-bool ladeKomposition(const QString& pfad, Komposition& komposition, QStringList* bericht)
+bool ladeKomposition(const QString& pfad, Komposition& komposition, QStringList* bericht,
+                     const SongLaenge& laengeVon)
 {
     QFile datei(pfad);
     if (!datei.open(QIODevice::ReadOnly)) return false;
     QJsonParseError fehler;
     const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
     if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
-    return ausJson(doc.object(), komposition, QFileInfo(pfad).absolutePath(), bericht);
+    return ausJson(doc.object(), komposition, QFileInfo(pfad).absolutePath(), bericht, laengeVon);
 }
 
 }  // namespace lumi::composer

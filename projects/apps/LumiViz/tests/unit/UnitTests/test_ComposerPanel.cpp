@@ -151,12 +151,12 @@ TEST_SUITE("ComposerPanel")
         Komposition k;
         Kanal unten;
         unten.name = QStringLiteral("CH1");
-        unten.visual = {clip(rot, 0, 20000), clip(blau, 30000, 60000)};
-        unten.visual[0].setzeBlenden(3000, 5000);
+        unten.clips = {clip(rot, 0, 20000), clip(blau, 30000, 60000)};
+        unten.clips[0].setzeBlenden(3000, 5000);
         Kanal oben;
         oben.name = QStringLiteral("CH2");
-        oben.visual = {clip(blau, 15000, 35000)};
-        oben.visual[0].mischart = Mischart::Additive;
+        oben.clips = {clip(blau, 15000, 35000)};
+        oben.clips[0].mischart = Mischart::Additive;
         k.kanaele = {unten, oben};
         const QString datei = dir.filePath(QStringLiteral("probe.lvcomp"));
         REQUIRE(speichereKomposition(k, datei));
@@ -318,10 +318,10 @@ TEST_SUITE("ComposerPanel")
         Komposition k;
         Kanal unten;
         unten.name = QStringLiteral("CH1");
-        unten.visual = {clip(rot, 0, 20000), clip(blau, 30000, 60000)};
+        unten.clips = {clip(rot, 0, 20000), clip(blau, 30000, 60000)};
         Kanal oben;
         oben.name = QStringLiteral("CH2");
-        oben.visual = {clip(blau, 42000, 52000)};
+        oben.clips = {clip(blau, 42000, 52000)};
         k.kanaele = {unten, oben};
         const QString datei = dir.filePath(QStringLiteral("probe.lvcomp"));
         REQUIRE(speichereKomposition(k, datei));
@@ -364,7 +364,7 @@ TEST_SUITE("ComposerPanel")
 
         REQUIRE(sitzung->lade(datei));
         const auto ch1 = [&]() -> const std::vector<VisualClip>& {
-            return sitzung->komposition().kanaele[0].visual;
+            return sitzung->komposition().kanaele[0].clips;
         };
         const auto zug = [&](std::int64_t vonMs, std::int64_t nachMs, int zeile,
                              Qt::KeyboardModifiers tasten = Qt::NoModifier, int versatzPx = 0,
@@ -459,38 +459,38 @@ TEST_SUITE("ComposerPanel")
         zug(15000, 15000, 0, Qt::NoModifier, 0, 1);
         REQUIRE(ch1().size() == 1);
         CHECK(ch1()[0].startMs == 30000);
-        REQUIRE(sitzung->komposition().kanaele[1].visual.size() == 2);
-        CHECK(sitzung->komposition().kanaele[1].visual[0].startMs == 5000);
-        CHECK(sitzung->komposition().kanaele[1].visual[0].endeMs == 27000);
+        REQUIRE(sitzung->komposition().kanaele[1].clips.size() == 2);
+        CHECK(sitzung->komposition().kanaele[1].clips[0].startMs == 5000);
+        CHECK(sitzung->komposition().kanaele[1].clips[0].endeMs == 27000);
         CHECK(achse->gewaehlterKanal() == 1);
         CHECK(achse->gewaehlterClip() == 0);
         CHECK(clipZeile->text().startsWith(QStringLiteral("CH2 · Rot.lvfx · 0:05.0 – 0:27.0")));
         // und weiter nach rechts auf den Clip dort: ohne Taste haelt er buendig davor
         zug(15000, 35000, 1);
-        CHECK(sitzung->komposition().kanaele[1].visual[0].startMs == 20000);
-        CHECK(sitzung->komposition().kanaele[1].visual[0].endeMs == 42000);
+        CHECK(sitzung->komposition().kanaele[1].clips[0].startMs == 20000);
+        CHECK(sitzung->komposition().kanaele[1].clips[0].endeMs == 42000);
         REQUIRE(bus->undo());
         REQUIRE(bus->undo());
         REQUIRE(ch1().size() == 2);
         CHECK(ch1()[0].startMs == 5000);
-        CHECK(sitzung->komposition().kanaele[1].visual.size() == 1);
+        CHECK(sitzung->komposition().kanaele[1].clips.size() == 1);
 
         // --- Mischart des angeklickten Clips
         klick(*achse, QPoint(achse->xVon(47000), achse->yVonZeile(1)));  // CH2
         REQUIRE(achse->gewaehlterKanal() == 1);
         CHECK(mischart->currentIndex() == 0);
         Q_EMIT mischart->activated(static_cast<int>(Mischart::Maximum));
-        CHECK(sitzung->komposition().kanaele[1].visual[0].mischart == Mischart::Maximum);
+        CHECK(sitzung->komposition().kanaele[1].clips[0].mischart == Mischart::Maximum);
         CHECK(clipZeile->text().endsWith(QStringLiteral("Maximum")));
         CHECK(bus->undoDescription() == "Change blend mode");
 
         // --- Entf loescht den angeklickten Clip
         QKeyEvent entf(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
         QCoreApplication::sendEvent(achse, &entf);
-        CHECK(sitzung->komposition().kanaele[1].visual.empty());
+        CHECK(sitzung->komposition().kanaele[1].clips.empty());
         CHECK(achse->auswahl() == nullptr);
         REQUIRE(bus->undo());
-        CHECK(sitzung->komposition().kanaele[1].visual.size() == 1);
+        CHECK(sitzung->komposition().kanaele[1].clips.size() == 1);
 
         // --- Save schreibt in die geladene Datei; danach ist nichts mehr offen
         REQUIRE(sitzung->ungespeichert());
@@ -499,8 +499,8 @@ TEST_SUITE("ComposerPanel")
         CHECK(name->text() == QStringLiteral("probe.lvcomp"));
         Komposition gelesen;
         REQUIRE(ladeKomposition(datei, gelesen));
-        CHECK(gelesen.kanaele[0].visual[0].endeMs == 27000);
-        CHECK(gelesen.kanaele[1].visual[0].mischart == Mischart::Maximum);
+        CHECK(gelesen.kanaele[0].clips[0].endeMs == 27000);
+        CHECK(gelesen.kanaele[1].clips[0].mischart == Mischart::Maximum);
 
         // --- das Ende (Befund Patrik S95): es folgt dem letzten Clip, bis „Fixed end" gesetzt ist
         auto* endeFest = panel.findChild<QCheckBox*>(QStringLiteral("composerFixedEnd"));
@@ -631,16 +631,16 @@ TEST_SUITE("ComposerPanel")
 
         // --- ohne Edit faellt nichts hinein
         CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(5000), achse->yVonZeile(0)), {rot}));
-        CHECK(kanaele()[0].visual.empty());
+        CHECK(kanaele()[0].clips.empty());
 
         // --- Edit an: ein Preset hineinziehen — 20 s lang, auf dem Raster
         edit->click();
         REQUIRE(achse->bearbeiten());
         REQUIRE(achse->lasseFallen(QPoint(achse->xVon(5200), achse->yVonZeile(0)), {rot}));
-        REQUIRE(kanaele()[0].visual.size() == 1);
-        CHECK(kanaele()[0].visual[0].datei == rot);
-        CHECK(kanaele()[0].visual[0].startMs == 5000);
-        CHECK(kanaele()[0].visual[0].endeMs == 25000);
+        REQUIRE(kanaele()[0].clips.size() == 1);
+        CHECK(kanaele()[0].clips[0].datei == rot);
+        CHECK(kanaele()[0].clips[0].startMs == 5000);
+        CHECK(kanaele()[0].clips[0].endeMs == 25000);
         CHECK(sitzung->laengeMs() == 25000);
         CHECK(sitzung->ungespeichert());
         CHECK(name->text() == QStringLiteral("untitled *"));
@@ -666,7 +666,7 @@ TEST_SUITE("ComposerPanel")
                                 Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
                 QCoreApplication::sendEvent(achse, &los);
             };
-            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].visual[0]; };
+            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].clips[0]; };
             Blenden b;
             REQUIRE(liesBlenden(derClip(), b));
             CHECK(b.einMs == 0);
@@ -725,7 +725,7 @@ TEST_SUITE("ComposerPanel")
             Komposition gelesen;
             REQUIRE(ladeKomposition(probe, gelesen));
             Blenden g;
-            REQUIRE(liesBlenden(gelesen.kanaele[0].visual[0], g));
+            REQUIRE(liesBlenden(gelesen.kanaele[0].clips[0], g));
             CHECK(g.einForm == Kurvenform::Bezier);
             CHECK(g.einBezier[1] == doctest::Approx(b.einBezier[1]));
             CHECK(g.ausForm == Kurvenform::SKurve);
@@ -760,7 +760,7 @@ TEST_SUITE("ComposerPanel")
                                    Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
                 QCoreApplication::sendEvent(w, &doppel);
             };
-            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].visual[0]; };
+            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].clips[0]; };
             CHECK(panel.kurvenFenster() == nullptr);  // das Fenster entsteht erst mit der ersten Kurve
 
             // Doppelklick in die Einblendung (1 s nach Clip-Anfang) oeffnet ihre Kurve
@@ -1046,7 +1046,7 @@ TEST_SUITE("ComposerPanel")
             CHECK(titel->text() == QStringLiteral("No curve selected"));
             // eine Blende, die es nicht gibt, entsteht beim Oeffnen
             Komposition ohne = sitzung->komposition();
-            ohne.kanaele[0].visual[0].aus = {};
+            ohne.kanaele[0].clips[0].aus = {};
             sitzung->setzeKomposition(ohne);
             achse->oeffneKurve(0, 0, {TeilArt::Aus, -1});
             CHECK(derClip().aus.dauerMs == 2000);
@@ -1054,7 +1054,7 @@ TEST_SUITE("ComposerPanel")
             CHECK(fenster->hatKurve());
             // ebenso bei der Wahl eines Presets: zwei Sekunden, mit seiner Form
             ohne = sitzung->komposition();
-            ohne.kanaele[0].visual[0].ein = {};
+            ohne.kanaele[0].clips[0].ein = {};
             sitzung->setzeKomposition(ohne);
             achse->setzeBlendenPreset(0, 0, true, QStringLiteral("Steil"));
             CHECK(derClip().ein.dauerMs == 2000);
@@ -1063,29 +1063,29 @@ TEST_SUITE("ComposerPanel")
 
         // --- in eine Luecke: der neue Clip reicht nur bis zum naechsten
         REQUIRE(achse->lasseFallen(QPoint(achse->xVon(0), achse->yVonZeile(0)), {blau}));
-        REQUIRE(kanaele()[0].visual.size() == 2);
-        CHECK(kanaele()[0].visual[0].datei == blau);
-        CHECK(kanaele()[0].visual[0].startMs == 0);
-        CHECK(kanaele()[0].visual[0].endeMs == 5000);
+        REQUIRE(kanaele()[0].clips.size() == 2);
+        CHECK(kanaele()[0].clips[0].datei == blau);
+        CHECK(kanaele()[0].clips[0].startMs == 0);
+        CHECK(kanaele()[0].clips[0].endeMs == 5000);
         // auf einen Clip: er landet in der naechsten Luecke — hier dahinter
         REQUIRE(achse->lasseFallen(QPoint(achse->xVon(15000), achse->yVonZeile(0)), {blau}));
-        REQUIRE(kanaele()[0].visual.size() == 3);
-        CHECK(kanaele()[0].visual[2].startMs == 25000);
-        CHECK(kanaele()[0].visual[2].endeMs == 45000);
+        REQUIRE(kanaele()[0].clips.size() == 3);
+        CHECK(kanaele()[0].clips[2].startMs == 25000);
+        CHECK(kanaele()[0].clips[2].endeMs == 45000);
         REQUIRE(bus->undo());
         REQUIRE(bus->undo());
-        REQUIRE(kanaele()[0].visual.size() == 1);
+        REQUIRE(kanaele()[0].clips.size() == 1);
 
         // --- unter der letzten Zeile: ein neuer Kanal entsteht; zwei Dateien liegen hintereinander
         REQUIRE(achse->lasseFallen(QPoint(achse->xVon(10000), achse->yVonZeile(1)), {blau, rot}));
         REQUIRE(kanaele().size() == 2);
         CHECK(kanaele()[1].name == QStringLiteral("CH2"));
-        REQUIRE(kanaele()[1].visual.size() == 2);
-        CHECK(kanaele()[1].visual[0].datei == blau);
-        CHECK(kanaele()[1].visual[0].startMs == 10000);
-        CHECK(kanaele()[1].visual[1].datei == rot);
-        CHECK(kanaele()[1].visual[1].startMs == 30000);
-        CHECK(kanaele()[1].visual[1].endeMs == 50000);
+        REQUIRE(kanaele()[1].clips.size() == 2);
+        CHECK(kanaele()[1].clips[0].datei == blau);
+        CHECK(kanaele()[1].clips[0].startMs == 10000);
+        CHECK(kanaele()[1].clips[1].datei == rot);
+        CHECK(kanaele()[1].clips[1].startMs == 30000);
+        CHECK(kanaele()[1].clips[1].endeMs == 50000);
         CHECK(bus->undoDescription() == "Add clips");
         CHECK(achse->gewaehlterKanal() == 1);
         CHECK(achse->gewaehlterClip() == 1);
@@ -1101,9 +1101,9 @@ TEST_SUITE("ComposerPanel")
             QDropEvent fall(ort, Qt::CopyAction, &daten, Qt::LeftButton, Qt::NoModifier);
             QCoreApplication::sendEvent(achse, &fall);
             CHECK(fall.isAccepted());
-            REQUIRE(kanaele()[0].visual.size() == 2);
-            CHECK(kanaele()[0].visual[1].datei == blau);
-            CHECK(kanaele()[0].visual[1].startMs == 26000);
+            REQUIRE(kanaele()[0].clips.size() == 2);
+            CHECK(kanaele()[0].clips[1].datei == blau);
+            CHECK(kanaele()[0].clips[1].startMs == 26000);
             // was kein Preset ist, wird nicht angenommen
             QMimeData fremd;
             fremd.setUrls({QUrl::fromLocalFile(dir.filePath(QStringLiteral("lied.mp3")))});
@@ -1132,7 +1132,7 @@ TEST_SUITE("ComposerPanel")
         CHECK(achse->kanalBei(5) == -1);
         REQUIRE(bus->undo());  // der Kanal samt seinen Clips ist wieder da
         REQUIRE(kanaele().size() == 3);
-        CHECK(kanaele()[1].visual.size() == 2);
+        CHECK(kanaele()[1].clips.size() == 2);
         // ein neuer Kanal bekommt die kleinste freie Nummer
         achse->kanalLoeschen(0);
         achse->kanalHinzu();
@@ -1146,7 +1146,7 @@ TEST_SUITE("ComposerPanel")
         Komposition gelesen;
         REQUIRE(ladeKomposition(ziel, gelesen));
         CHECK(gelesen.kanaele.size() == 3);
-        CHECK(gelesen.kanaele[0].visual.size() == 2);  // der fruehere CH2
+        CHECK(gelesen.kanaele[0].clips.size() == 2);  // der fruehere CH2
 
         // --- schliessen: das Panel ist leer, Edit geht aus
         sitzung->entlade();

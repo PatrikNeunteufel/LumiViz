@@ -94,7 +94,7 @@ QString kompositionsDatei(const QTemporaryDir& dir, const QString& name, const Q
     Kanal k;
     k.art = KanalArt::Visual;
     k.name = QStringLiteral("CH1");
-    k.visual = {c};
+    k.clips = {c};
     Komposition komposition;
     komposition.kanaele.push_back(k);
     const QString pfad = dir.filePath(name);
@@ -270,7 +270,7 @@ TEST_SUITE("ComposerSitzung")
 
             // der Clip endet frueher: laeuft weiter, die Stelle bleibt, die Laenge folgt
             Komposition kuerzer = sitzung.komposition();
-            kuerzer.kanaele[0].visual[0].endeMs = 40000;
+            kuerzer.kanaele[0].clips[0].endeMs = 40000;
             sitzung.setzeKomposition(kuerzer);
             CHECK(bearbeitet == 1);
             CHECK(sitzung.ungespeichert());
@@ -283,7 +283,7 @@ TEST_SUITE("ComposerSitzung")
             CHECK(bildJetzt() == kRot);
 
             // kuerzer als die Stelle: die Uhr steht am neuen Ende
-            kuerzer.kanaele[0].visual[0].endeMs = 5000;
+            kuerzer.kanaele[0].clips[0].endeMs = 5000;
             sitzung.setzeKomposition(kuerzer);
             CHECK(sitzung.stelleMs() == 5000);
             CHECK_FALSE(sitzung.laeuft());
@@ -302,14 +302,14 @@ TEST_SUITE("ComposerSitzung")
             CHECK(sitzung.datei() == QFileInfo(kopie).absoluteFilePath());
             Komposition gelesen;
             REQUIRE(ladeKomposition(kopie, gelesen));
-            CHECK(gelesen.kanaele[0].visual[0].endeMs == 5000);
+            CHECK(gelesen.kanaele[0].clips[0].endeMs == 5000);
             REQUIRE(ladeKomposition(lang, gelesen));
-            CHECK(gelesen.kanaele[0].visual[0].endeMs == 60000);  // die alte Datei blieb
+            CHECK(gelesen.kanaele[0].clips[0].endeMs == 60000);  // die alte Datei blieb
 
             // bei ausgeschaltetem Composer: die gemerkte Stelle bleibt im Clip
             sitzung.setAn(false);
             sitzung.springe(4000);
-            kuerzer.kanaele[0].visual[0].endeMs = 2000;
+            kuerzer.kanaele[0].clips[0].endeMs = 2000;
             sitzung.setzeKomposition(kuerzer);
             CHECK(sitzung.stelleMs() == 2000);
             REQUIRE(sitzung.speichere());
@@ -346,7 +346,7 @@ TEST_SUITE("ComposerSitzung")
             b.datei = blau;
             b.startMs = 30000;
             b.endeMs = 60000;
-            kanal.visual = {a, b};
+            kanal.clips = {a, b};
             k.kanaele = {kanal};
             const QString zwei = dir.filePath(QStringLiteral("zwei.lvcomp"));
             REQUIRE(speichereKomposition(k, zwei));
@@ -398,8 +398,8 @@ TEST_SUITE("ComposerSitzung")
             // derselbe Renderer, die geaenderte Kette bleibt, nichts wird neu gemeldet
             const auto meldungen = gemeldet.size();
             Komposition bearbeitet = sitzung.komposition();
-            bearbeitet.kanaele[0].visual[0].endeMs = 20000;
-            bearbeitet.kanaele[0].visual[1].startMs = 20000;
+            bearbeitet.kanaele[0].clips[0].endeMs = 20000;
+            bearbeitet.kanaele[0].clips[1].startMs = 20000;
             sitzung.setzeKomposition(bearbeitet);
             REQUIRE(warte([&] { return sitzung.laengeMs() == 60000; }));
             for (int i = 0; i < 12; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
@@ -411,13 +411,13 @@ TEST_SUITE("ComposerSitzung")
             // der Clip zieht an einen anderen Platz (hinter den zweiten): die Auswahl nennt ihn
             // unter seiner neuen Nummer — immer noch derselbe Renderer
             Komposition vertauscht = sitzung.komposition();
-            vertauscht.kanaele[0].visual[0].startMs = 70000;
-            vertauscht.kanaele[0].visual[0].endeMs = 90000;
+            vertauscht.kanaele[0].clips[0].startMs = 70000;
+            vertauscht.kanaele[0].clips[0].endeMs = 90000;
             sitzung.waehleClip(0, 1);  // wie das Panel: erst die Auswahl,
             sitzung.setzeKomposition(vertauscht);  // dann die neue Fassung
             for (int i = 0; i < 12; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
             REQUIRE(nimmAuf());
-            CHECK(sitzung.komposition().kanaele[0].visual[1].datei == rot);
+            CHECK(sitzung.komposition().kanaele[0].clips[1].datei == rot);
             CHECK(sitzung.bindung() == Sitzung::Bindung::Clip);
             CHECK(sitzung.gebundenerRenderer() == erster);
             CHECK(gemeldet.size() == meldungen);
@@ -436,7 +436,7 @@ TEST_SUITE("ComposerSitzung")
             // der angeklickte Clip wird geloescht: Effect Chain ruht — der Zeiger, den sie
             // bis dahin hielt, blieb gueltig (hier: der Lauf endet nicht in einem Absturz)
             Komposition ohne = sitzung.komposition();
-            ohne.kanaele[0].visual.erase(ohne.kanaele[0].visual.begin());
+            ohne.kanaele[0].clips.erase(ohne.kanaele[0].clips.begin());
             sitzung.waehleClip(-1, -1);
             sitzung.setzeKomposition(ohne);
             REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Ruht; }));
@@ -492,10 +492,10 @@ TEST_SUITE("ComposerSitzung")
             VisualClip b = a;
             b.startMs = 20000;
             b.endeMs = 30000;
-            eins.visual = {a, b};
+            eins.clips = {a, b};
             Kanal zwei;
             zwei.name = QStringLiteral("CH2");
-            zwei.visual = {a};
+            zwei.clips = {a};
             k.kanaele = {eins, zwei};
             const QString datei = dir.filePath(QStringLiteral("drei.lvcomp"));
             REQUIRE(speichereKomposition(k, datei));
@@ -544,9 +544,9 @@ TEST_SUITE("ComposerSitzung")
             const int meldungen = gemeldet;
             REQUIRE(sitzung.speichereClipKette(gruenDatei, {{1, 0}}));
             const auto& kanaele = sitzung.komposition().kanaele;
-            CHECK(QFileInfo(kanaele[0].visual[0].datei) == QFileInfo(gruenDatei));
-            CHECK(QFileInfo(kanaele[1].visual[0].datei) == QFileInfo(gruenDatei));
-            CHECK(QFileInfo(kanaele[0].visual[1].datei) == QFileInfo(rot));
+            CHECK(QFileInfo(kanaele[0].clips[0].datei) == QFileInfo(gruenDatei));
+            CHECK(QFileInfo(kanaele[1].clips[0].datei) == QFileInfo(gruenDatei));
+            CHECK(QFileInfo(kanaele[0].clips[1].datei) == QFileInfo(rot));
             CHECK(sitzung.ungespeichert());  // die Komposition verweist jetzt anders
             {
                 QMutexLocker halt(&widget.renderMutex());

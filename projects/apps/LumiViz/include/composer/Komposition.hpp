@@ -4,9 +4,10 @@
  *        (docs/ui/Composer_Konzept.md §6, Stufe C1b)
  *
  * Eine Komposition ist eine Zeitachse in Millisekunden mit Kanaelen; in den
- * Kanaelen liegen Clips. Ein Visual-Clip verweist auf eine Preset-Datei
- * (`.avs`, `.milk`, `.lvfx`, `.lvfx2`) — eingebettet wird nichts (Entscheid
- * Patrik S60). Kein Qt-Widget, kein GL: reines Modell.
+ * Kanaelen liegen Clips. Ein Clip im Visual-Kanal verweist auf eine
+ * Preset-Datei (`.avs`, `.milk`, `.lvfx`, `.lvfx2`), einer im Audio-Kanal auf
+ * einen Song (C5) — eingebettet wird nichts (Entscheid Patrik S60). Kein
+ * Qt-Widget, kein GL, keine Audio-Engine: reines Modell.
  *
  * Rueckbau (Konzept §12): Teil von `include/composer` / `src/composer`.
  */
@@ -21,6 +22,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace lumi::composer
@@ -53,12 +55,26 @@ struct AltPunkt
     BezierGriffe bezier = kBezierVorgabe;
 };
 
-struct VisualClip
+/// Ein Clip auf der Zeitachse — EIN Typ fuer Bild und Ton (Entscheid Patrik
+/// S96, C5): beide haben Start und Ende, beide dieselbe Pegelkurve mit
+/// denselben Presets. Was er ist, sagt der Kanal, in dem er liegt
+/// (`Kanal::art`): im Visual-Kanal eine Preset-Datei, deren Bild mit
+/// `mischart` gemischt wird; im Audio-Kanal ein Song, der ab `einsatzMs`
+/// spielt und dessen Pegel die Lautstaerke ist.
+struct Clip
 {
-    QString datei;  ///< Preset-Datei, absolut (in der Datei relativ zur `.lvcomp`, wo moeglich)
+    QString datei;  ///< Preset bzw. Song, absolut (in der Datei relativ zur `.lvcomp`, wo moeglich)
     std::int64_t startMs = 0;
     std::int64_t endeMs = 0;  ///< ausschliesslich: der Clip laeuft in [start, ende)
-    Mischart mischart = Mischart::Normal;
+    Mischart mischart = Mischart::Normal;  ///< nur Bild
+
+    // --- nur Ton ---------------------------------------------------------------
+    /// Ab dieser Stelle im Song beginnt der Clip. Wird die linke Kante
+    /// gezogen, wandert der Einsatz mit — der Rest bleibt, wo er zu hoeren war.
+    std::int64_t einsatzMs = 0;
+    /// Laenge des Songs; 0 = unbekannt. Ueber sie hinaus laesst sich der Clip
+    /// nicht ziehen.
+    std::int64_t quellMs = 0;
 
     // --- Pegelkurve (Entscheide Patrik S96): alle Teile sind freiwillig ------
     /// Der Pegel zwischen den Teilen, 0…1. Die Blenden laufen von null bis
@@ -83,20 +99,19 @@ struct VisualClip
     /// Laeuft der Clip durchweg auf vollem Pegel — keine Blende, kein Stueck,
     /// Grundpegel 1?
     [[nodiscard]] bool vollerPegel() const;
+    /// Die Stelle im Song, die an `zeitImClipMs` zu hoeren ist (nur Ton).
+    [[nodiscard]] std::int64_t songStelle(std::int64_t zeitImClipMs) const { return einsatzMs + zeitImClipMs; }
 };
+
+/// Die Namen aus der Zeit, als Bild und Ton zwei Typen waren.
+using VisualClip = Clip;
+using AudioClip = Clip;
 
 /// Eine alte Punktkurve in die Teile des Clips uebersetzen (ersetzt Blenden,
 /// Stuecke und Grundpegel). Das Muster einer einfachen Ein- / Ausblendung wird
 /// zu Blenden; jede andere Kurve zu EINEM Stueck ueber die ganze Clip-Laenge —
 /// der Pegelverlauf bleibt derselbe.
-void ausAltenPunkten(VisualClip& clip, std::vector<AltPunkt> punkte);
-
-struct AudioClip
-{
-    QString datei;
-    std::int64_t startMs = 0;    ///< auf der Zeitachse
-    std::int64_t einsatzMs = 0;  ///< ab dieser Stelle im Song
-};
+void ausAltenPunkten(Clip& clip, std::vector<AltPunkt> punkte);
 
 enum class KanalArt : int
 {
@@ -109,9 +124,13 @@ struct Kanal
     KanalArt art = KanalArt::Visual;
     QString name;
     bool an = true;
-    std::vector<VisualClip> visual;  ///< nur bei Visual, nach Start sortiert, ueberlappungsfrei
-    std::vector<AudioClip> audio;    ///< nur bei Audio
+    /// Bild- oder Ton-Clips, je nach `art`; nach Start sortiert, ueberlappungsfrei.
+    std::vector<Clip> clips;
 };
+
+/// Liefert die Laenge eines Songs in Millisekunden, 0 = unbekannt. Das Modell
+/// kennt keine Audio-Engine — wer laedt, reicht die Auskunft herein.
+using SongLaenge = std::function<std::int64_t(const QString& datei)>;
 
 struct Komposition
 {
@@ -122,10 +141,19 @@ struct Komposition
     std::int64_t laengeMs = 0;
     double rasterSekunden = 1.0;  ///< Einrasten beim Ziehen (Bedienung)
 
-    /// Die gesetzte Laenge, sonst das Ende des letzten Visual-Clips.
+    /// Die gesetzte Laenge, sonst das Ende des letzten Clips — Bild oder Ton.
     [[nodiscard]] std::int64_t laenge() const;
-    /// Das Ende des letzten Visual-Clips, gleich ob eine Laenge gesetzt ist.
+    /// Das Ende des letzten Clips, gleich ob eine Laenge gesetzt ist.
     [[nodiscard]] std::int64_t clipEnde() const;
+    /// Der Audio-Kanal, der spielt: der erste eingeschaltete (C5 kennt einen;
+    /// zwei Songs zugleich brauchen einen zweiten Stream). -1 = keiner.
+    [[nodiscard]] int tonKanal() const;
+    /// Der Ton-Clip an der Stelle `stelleMs` im spielenden Audio-Kanal;
+    /// nullptr = dort ist Stille.
+    [[nodiscard]] const Clip* tonBei(std::int64_t stelleMs) const;
+    /// Fuer Ton-Clips ohne bekannte Song-Laenge die Laenge erfragen; ein Clip,
+    /// der laenger ist als sein Song ab dem Einsatz, wird auf ihn gekuerzt.
+    void ergaenzeTon(const SongLaenge& laengeVon);
     /// Clips je Kanal nach Start sortieren, Unsinn richten (Ende vor Start,
     /// Ueberlappung im selben Kanal: der spaetere Clip beginnt, wo der
     /// fruehere endet), Blenden und Stuecke klemmen. Meldet, was gerichtet
@@ -139,10 +167,13 @@ struct Komposition
 /// JSON lesen; relative Dateien werden gegen `basisOrdner` aufgeloest.
 /// false = kein Composer-Dokument. Der Bericht nennt, was gerichtet wurde
 /// und welche Dateien fehlen (die Clips bleiben trotzdem erhalten).
+/// `laengeVon` (optional): die Laenge der Songs — ein Ton-Clip ohne Ende in
+/// der Datei (bis S95) reicht dann bis zum Schluss seines Songs.
 bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString& basisOrdner = {},
-             QStringList* bericht = nullptr);
+             QStringList* bericht = nullptr, const SongLaenge& laengeVon = {});
 
 bool speichereKomposition(const Komposition& komposition, const QString& pfad);
-bool ladeKomposition(const QString& pfad, Komposition& komposition, QStringList* bericht = nullptr);
+bool ladeKomposition(const QString& pfad, Komposition& komposition, QStringList* bericht = nullptr,
+                     const SongLaenge& laengeVon = {});
 
 }  // namespace lumi::composer

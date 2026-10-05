@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.22.0
+> **Version:** 0.23.0
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -98,6 +98,18 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
 - **Audiokanal an:** die Zeit ist die Stelle im Programm, die gerade zu hören
   ist. Der Composer führt den Player: er lädt die Songs der Audio-Clips zu
   ihren Startzeiten und spielt sie. Die Playlist ruht.
+  - **Wer die Zeit führt** (Entscheid Patrik S96: a): **solange ein Song
+    spielt, führt der Ton** — die Stelle des Composers ist „Clip-Start +
+    Stelle im Song − Einsatz", die Uhr wird im Takt der Sitzung auf den Player
+    nachgestellt. **In Lücken** (kein Ton-Clip an der Stelle, nach dem letzten
+    Song) **führt die Wanduhr** wie ohne Audiokanal; am Anfang des nächsten
+    Ton-Clips lädt und startet der Composer den Song. Einen Sprung im Ton
+    hört man, ein um ein Bild nachgestelltes Visual sieht man nicht. Kippt
+    mit einem zweiten Audiokanal: zwei Songs zugleich haben nicht die eine
+    Stelle im Ton — dann müsste die Uhr führen.
+  - **Welcher Kanal spielt:** der erste eingeschaltete Audio-Kanal
+    (`Komposition::tonKanal`). Mehrere lassen sich anlegen; zwei Songs
+    zugleich brauchen einen zweiten Stream im Player (später).
 
 In beiden Fällen gilt: **die Stelle auf der Zeitachse bestimmt das Bild**,
 nicht die verstrichene Zeit. Pegel werden aus der Stelle berechnet — nach
@@ -161,8 +173,25 @@ Komposition
 └── Länge, Raster (Sekunden; später Takte aus dem Audio)
 ```
 
-- **Ein- und Ausblenden** sind die ersten und letzten Punkte der Pegelkurve,
-  kein eigenes Feld. Ein Clip ohne Punkte läuft auf vollem Pegel.
+- **Ein Clip-Typ für Bild und Ton** (Entscheide Patrik S96, C5): ein
+  Ton-Clip hat **Start und Ende wie ein Bild-Clip** und **dieselbe
+  Pegelkurve** — Grundpegel, Ein- und Ausblendung, Stücke, mit denselben
+  Presets; der Pegel ist am Ton die Lautstärke, **voller Pegel = die
+  Lautstärke des Player-Panels**. Was ein Clip ist, sagt sein Kanal
+  (`Kanal::art`, eine Liste `Kanal::clips` für beide). Nur am Ton: der
+  **Einsatz** im Song (`einsatzMs`) und die **Länge des Songs** (`quellMs`).
+  Beim Hineinlegen ist der Clip so lang wie der Song; die rechte Kante nach
+  links schneidet ab (dahinter Stille), die linke Kante ändert den Einsatz —
+  was bleibt, ist an derselben Stelle zu hören; über Anfang oder Schluss des
+  Songs hinaus lässt sich nicht ziehen. Am Nachbarn gelten dieselben drei
+  Arten wie am Bild; ein Clip wechselt nur in einen Kanal seiner Art. Das
+  Ende der Komposition folgt dem letzten Clip, gleich ob Bild oder Ton.
+  In der Datei: `end`, `offset`, `sourceLength` und die Felder der
+  Pegelkurve; ein Ton-Clip ohne `end` (bis S95) reicht bis zum Schluss
+  seines Songs.
+- **Ein- und Ausblenden** sind eigene Teile des Clips (seit S96, §9) — bis
+  S95 die ersten und letzten Punkte einer Punktliste. Ein Clip ohne Teile
+  läuft auf seinem Grundpegel.
 - Clips eines Kanals **überlappen nicht**; Überlagerung entsteht nur zwischen
   Kanälen.
 - **Trifft ein gezogener Clip auf einen Nachbarn** (Entscheid Patrik S95,
@@ -281,6 +310,24 @@ kommt als weitere dazu, ihre Anfasser als zusätzliche Felder am Punkt — eine
 | **Composer aus** | wie heute: Browser, Preset-Zeile, PgUp/PgDn, Host Switcher | Playlist |
 | **Composer an, kein Audiokanal an** | der Composer | Playlist |
 | **Composer an, Audiokanal an** | der Composer | der Composer; die Playlist ruht |
+
+**Das Player-Panel bei eingeschaltetem Audiokanal** (Entscheid Patrik S96):
+seine Knöpfe steuern den **ganzen Composer** — auch über Hotkey und Menü,
+alle laufen durch dieselbe Stelle (`TransportCommandEvent`).
+
+| Im Player-Panel | Wirkung |
+|---|---|
+| Play / Pause | die ganze Komposition läuft oder hält, auch in einer Lücke ohne Song |
+| Stop | die Komposition hält und geht an den Anfang, wie Stop im Composer |
+| Next / Previous | Sprung zum Anfang des nächsten bzw. vorigen Songs der Komposition |
+| Fortschrittsbalken | Sprung im laufenden Song; die Komposition springt mit (der Ton führt) |
+| Lautstärke, Mute | wie immer; der Pegel des Clips kommt obendrauf |
+
+Der Balken bleibt der Balken des Songs; die Zeit der Komposition steht im
+Composer-Panel. **Die Playlist ruht**, solange der Audiokanal führt: der
+Composer hängt sie am Player aus (`setPlaylist(nullptr)`) und beim
+Ausschalten wieder ein — am Titelende spielt dann nichts von selbst weiter,
+und ein Doppelklick in der Playlist tut nichts.
 
 **Kürzel bei laufendem Composer** (C5 a):
 
@@ -791,9 +838,11 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | R2 Karaoke ✅ | Renderer, eine Abfrage und eine Weiterleitung | `setKaraokeAuslassen`; `legeKaraokeEbeneAuf` legt die gerechnete Ebene auf den gebundenen Framebuffer | Vorgabe: zeichnet sie wie heute | C1a |
 | R3 Bildquelle ✅ | `VisualizerRenderThread` (`setBildquelle`, Auswahl je Bild, Herunterfahren), `VisualizerWidget` (`setBildquelle` als Durchreichung, Besitz) | der Thread bekommt neben dem einen Renderer einen zweiten Platz für eine Bildquelle (`IVisualizer`). Ist er besetzt, gehen Audiodaten und `render` an die Bildquelle; der Renderer der Kette bleibt angelegt, bekommt weiter Größe und Audiodaten, wird aber nicht gerechnet. Die Bildquelle wird auf dem Render-Thread angelegt, aufgeräumt und gelöscht (Entscheid Patrik S94: a) | Platz leer (Vorgabe) → der eine Renderer wie heute | C2a |
 | N4 Start ✅ | `MainWindow` (Konstruktor, nach dem Anwerfen des letzten Presets) | **ein** verzögerter Aufruf von `composer/AppAnbindung`: war beim Beenden eine Komposition geladen, kommt sie wieder ins Panel; mit Resume auch ihr Stand (Entscheid C7, S95). Das Festhalten beim Beenden ist eigener Code (hängt schon an `aboutToQuit`); `UI/StartPreset.hpp` wird **nicht** berührt | ohne Schlüssel `composer/…` tut der Aufruf nichts — der Start wie heute | C2b (vorgezogen aus C6, S95) |
-| N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
+| N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock. **Der Transport ist nach C5 vorgezogen (Entscheid Patrik S96):** `UI/panels/PlayerPanel.cpp`, `onTransportCommand` — eine Abfrage am Anfang und ein Aufruf von `composer/AppAnbindung`: führt ein Audiokanal, gehen Play / Pause, Stop, Next und Previous an den Composer; Lautstärke und Mute bleiben beim Player. `PresetStepEvent` (PgUp / PgDn) und Lock bleiben bei C6 | Composer aus oder kein Audiokanal an → der Befehl geht wie heute an den Player | C5 (Transport), C6 (Rest) |
 | N6 Laden von Hand | `MainWindow` (gemeinsame Rückfrage vor dem Ersetzen der Kette) | Rückfrage bzw. Sperre bei laufendem Composer | Composer aus → wie heute | C6 |
-| N7 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist | C5 |
+| N7a Pegel | `audio/IAudioPlayer.hpp`, `audio/AudioPlayer.hpp` / `.cpp` | ein zweiter Faktor neben der Lautstärke: `setPegel(0…1)` und `pegel()`, im Interface mit Vorgabe (wie `setTempo` seit S91); `AudioPlayer` multipliziert ihn überall dort auf, wo er die Lautstärke an die Engine gibt. Der Regler des Player-Panels und die gespeicherte Lautstärke bleiben unberührt (Entscheid Patrik S96: voller Pegel im Clip = die Lautstärke des Player-Panels) | Pegel 1 (Vorgabe) → die Lautstärke wie heute | C5 |
+| N7b Zugang | `UI/widgets/VisualizerWidget.hpp` | **ein** Getter: das Fenster gibt den Dienste-Behälter heraus, den es im Konstruktor bekommt. Die Sitzung holt sich darüber Player und Engine — auch wenn das Composer-Panel nie offen war (Entscheid Patrik S96: a) | reiner Lesezugriff — am Verhalten des Fensters ändert sich nichts | C5 |
+| — Playlist ruht | **keine Naht** | der Composer ruft die vorhandene `IAudioPlayer::setPlaylist(nullptr)` und hängt die Playlist beim Ausschalten wieder ein; vor dem Bau mit einem Test am echten `AudioPlayer` belegt | — | C5 |
 | N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg. **C2b (S95):** `UI/panels/PanelAutoReg.cpp` bekommt einen Include und eine Anmeldung — Panel `composer`, Titel „Composer", View → Panels, anfangs nicht sichtbar; die Klasse selbst ist eigener Code (`composer/ComposerPanel`) | — (reine Zusätze); ohne Klick auf die Einträge wie heute; das Panel ist ohne Klick nicht zu sehen | C2a, C2b |
 | N9 Einstellung ✅ | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
 | N10 Beenden mit Ungespeichertem ✅ | `UI/MainWindow.cpp` (`closeEvent`, nach der Rückfrage zur Kette) | **ein** Aufruf von `composer/AppAnbindung`: hat die geladene Komposition ungespeicherte Änderungen, fragt ein Dialog Save / Discard / Cancel (Regel S89); Cancel hält das Fenster offen | ohne geänderte Komposition liefert der Aufruf sofort „weiter" — das Beenden wie heute | C3a |
@@ -855,6 +904,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.23.0 | 2026-10-05 | Session 96 — **C5 Audiokanal: Entscheide Patrik und das Modell** (eigener Code, keine Naht). **Entschieden:** der Ton führt die Zeit, solange ein Song spielt, in Lücken die Wanduhr (§4); ein Ton-Clip hat Start und Ende wie ein Bild-Clip und dieselbe Pegelkurve mit denselben Presets, voller Pegel = die Lautstärke des Player-Panels (§6); die Knöpfe des Player-Panels steuern bei eingeschaltetem Audiokanal den ganzen Composer (§8); drei kleine Nähte — N7a Pegel im Player, N5 Transport (vorgezogen aus C6), N7b Zugang über das Fenster — und die Playlist ruht ohne Naht (§12.2, eingetragen vor dem Bau). **Gebaut:** **ein Clip-Typ** `Clip` für Bild und Ton (`VisualClip` / `AudioClip` sind Namen dafür), `Kanal::clips` statt `visual` und `audio`; neu `einsatzMs`, `quellMs`, `songStelle`; `Komposition::tonKanal`, `tonBei`, `ergaenzeTon`; `laenge` / `clipEnde` zählen auch Ton-Clips; Datei: `end`, `offset`, `sourceLength` und die Pegelkurve am Ton-Clip, ein alter Ton-Clip ohne `end` reicht bis zum Schluss seines Songs (`SongLaenge` beim Laden). `Bearbeiten`: `fuegeSongEin`, `fuegeKanalEin` mit Art (Audio-Kanäle heißen A1, A2 …), `zieheKante` und `setzeGrenzen` führen den Einsatz mit und halten sich an die Länge des Songs, ein Clip wechselt nur in einen Kanal seiner Art. Im Panel erscheinen Ton-Clips damit schon als Blöcke; **zu hören ist noch nichts**. Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall) und `test_ComposerWiedergabe.cpp` (Datei). 913 Cases |
 | 0.22.0 | 2026-10-05 | Session 96 — **Presets im Rechtsklick-Menü der Zeitachse** (eigener Code, keine Naht). *Fade in* / *Fade out* listen die Blenden-Presets statt der festen Formenliste (Haken an dem Preset, dem die Form gleicht; ohne jedes Preset die sieben festen Formen als Rückfall); an einem Stück *Shape* mit den Stück-Presets. `Zeitachse::setzeBlendenPreset`, `setzeStueckPreset`. Belegt in `test_ComposerPanel.cpp` (Wahl je Art, die andere Art und unbekannte Namen ändern nichts, Dauer und andere Seite bleiben, Blende ohne Länge bekommt zwei Sekunden, der Curve Editor zeigt das gewählte Preset). 912 Cases. Benutzerhandbuch 1.90.0. **Offen:** die Menüs selbst prüft nur der Sichttest |
 | 0.21.0 | 2026-10-05 | Session 96 — **Griffe der Stücke auf der Zeitachse** (eigener Code, keine Naht). Oben im Clip je Stück eine Raute (verschieben) und zwei Striche (Weite); `Zeitachse::stueckGriff`, Griffe `StueckLage` / `StueckLinks` / `StueckRechts`. `Bearbeiten`: `spielraumVon`, `verschiebeStueck`, `setzeStueckWeite` — erst festschreiben, dann an den Nachbarn anhalten (§9). Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall: anlegen, finden, schieben, Weite, zwei Stücke, gestaucht anfassen) und `test_ComposerPanel.cpp` (Raute und Kanten mit der Maus, Anhalten an der Ausblendung, der Curve Editor folgt). 912 Cases. Benutzerhandbuch 1.89.0 |
 | 0.20.1 | 2026-10-05 | Session 96 — **Der Curve Editor zeigt die Wirkung am Clip** (Entscheid Patrik: a). Eine Ausblendung ist rückwärts gezeichnet, ein gekipptes Stück als Buckel; gezogen wird in dieser Ansicht, die Form selbst bleibt (`Formflaeche::setAnsicht`, die Ansicht sitzt in `ortVon` / `xVon` / `yVon`); eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird. Belegt in `test_ComposerPanel.cpp` (Delle und Buckel, Ausblendung rückwärts, ein in der Ansicht gesetzter Punkt landet in der Form hinten und senkt den Pegel früh). 911 Cases. Benutzerhandbuch 1.88.1 |

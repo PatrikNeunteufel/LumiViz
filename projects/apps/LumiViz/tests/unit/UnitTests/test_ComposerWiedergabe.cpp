@@ -120,7 +120,7 @@ Kanal visualKanal(const QString& name, std::vector<VisualClip> clips)
     Kanal k;
     k.art = KanalArt::Visual;
     k.name = name;
-    k.visual = std::move(clips);
+    k.clips = std::move(clips);
     return k;
 }
 
@@ -200,13 +200,13 @@ TEST_SUITE("ComposerWiedergabe")
                                         {clip(QStringLiteral("b.lvfx"), 3000, 6000),
                                          clip(QStringLiteral("a.lvfx"), 0, 4000),
                                          clip(QStringLiteral("c.lvfx"), 9000, 9000)}));
-        k.kanaele[0].visual[0].grundpegel = 2.0;
-        k.kanaele[0].visual[0].ein.dauerMs = -5;
-        k.kanaele[0].visual[0].aus.dauerMs = 9999;  // laenger als der Clip: bleibt, wie eingestellt
-        k.kanaele[0].visual[0].stuecke = {ClipStueck{3.0, -100, false, Pegelform{}}};
+        k.kanaele[0].clips[0].grundpegel = 2.0;
+        k.kanaele[0].clips[0].ein.dauerMs = -5;
+        k.kanaele[0].clips[0].aus.dauerMs = 9999;  // laenger als der Clip: bleibt, wie eingestellt
+        k.kanaele[0].clips[0].stuecke = {ClipStueck{3.0, -100, false, Pegelform{}}};
         QStringList bericht;
         k.richte(&bericht);
-        const auto& v = k.kanaele[0].visual;
+        const auto& v = k.kanaele[0].clips;
         REQUIRE(v.size() == 3);
         CHECK(v[0].datei == QStringLiteral("a.lvfx"));  // nach Start sortiert
         CHECK(v[1].datei == QStringLiteral("b.lvfx"));
@@ -255,7 +255,12 @@ TEST_SUITE("ComposerWiedergabe")
         Kanal audio;
         audio.art = KanalArt::Audio;
         audio.name = QStringLiteral("Audio");
-        audio.audio.push_back({innen, 2000, 15000});
+        // ein Ton-Clip (C5): Start und Ende wie ein Bild-Clip, dazu Einsatz, Song-Laenge und Pegelkurve
+        Clip song = clip(innen, 2000, 62000);
+        song.einsatzMs = 15000;
+        song.quellMs = 200000;
+        song.aus = {4000, einfacheBlende(Kurvenform::EaseOut)};
+        audio.clips.push_back(song);
         k.kanaele.push_back(audio);
 
         const QString pfad = dir.filePath(QStringLiteral("Programm.lvcomp"));
@@ -279,8 +284,8 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(g.laengeMs == 120000);
         CHECK(g.rasterSekunden == doctest::Approx(0.5));
         REQUIRE(g.kanaele.size() == 3);
-        REQUIRE(g.kanaele[0].visual.size() == 1);
-        const VisualClip& ga = g.kanaele[0].visual[0];
+        REQUIRE(g.kanaele[0].clips.size() == 1);
+        const VisualClip& ga = g.kanaele[0].clips[0];
         CHECK(QFileInfo(ga.datei) == QFileInfo(innen));
         CHECK(ga.startMs == 1000);
         CHECK(ga.endeMs == 9000);
@@ -296,12 +301,24 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(ga.stuecke[0].gekippt);
         CHECK(gleich(ga.stuecke[0].form, delle()));
         CHECK_FALSE(g.kanaele[1].an);
-        CHECK(g.kanaele[1].visual[0].mischart == Mischart::Xor);
-        CHECK(QFileInfo(g.kanaele[1].visual[0].datei) == QFileInfo(aussen));
+        CHECK(g.kanaele[1].clips[0].mischart == Mischart::Xor);
+        CHECK(QFileInfo(g.kanaele[1].clips[0].datei) == QFileInfo(aussen));
         CHECK(g.kanaele[2].art == KanalArt::Audio);
-        REQUIRE(g.kanaele[2].audio.size() == 1);
-        CHECK(g.kanaele[2].audio[0].startMs == 2000);
-        CHECK(g.kanaele[2].audio[0].einsatzMs == 15000);
+        REQUIRE(g.kanaele[2].clips.size() == 1);
+        CHECK(g.kanaele[2].clips[0].startMs == 2000);
+        CHECK(g.kanaele[2].clips[0].endeMs == 62000);
+        CHECK(g.kanaele[2].clips[0].einsatzMs == 15000);
+        CHECK(g.kanaele[2].clips[0].quellMs == 200000);
+        CHECK(g.kanaele[2].clips[0].aus.dauerMs == 4000);
+        CHECK(g.kanaele[2].clips[0].aus.form.punkte.front().form == Kurvenform::EaseOut);
+        CHECK(g.kanaele[2].clips[0].songStelle(1000) == 16000);
+        // Einsatz und Song-Laenge gibt es nur am Ton — am Bild stehen sie nicht in der Datei
+        CHECK(kanaele[2].toObject().value(QStringLiteral("clips")).toArray()[0].toObject()
+                  .contains(QStringLiteral("offset")));
+        CHECK_FALSE(kanaele[0].toObject().value(QStringLiteral("clips")).toArray()[0].toObject()
+                        .contains(QStringLiteral("offset")));
+        CHECK_FALSE(kanaele[2].toObject().value(QStringLiteral("clips")).toArray()[0].toObject()
+                        .contains(QStringLiteral("blend")));
         // die fehlende Datei ist gemeldet, der Clip bleibt
         REQUIRE(bericht.size() == 1);
         CHECK(bericht[0].contains(QStringLiteral("Aussen.avs")));
@@ -724,26 +741,26 @@ TEST_SUITE("ComposerWiedergabe")
         const auto anlaeufe = w.anlaeufe().size();
 
         // --- ein anderer Clip wird verschoben: beide Renderer bleiben, nichts legt sich neu an
-        k.kanaele[0].visual[1].startMs = 40000;
-        k.kanaele[0].visual[1].endeMs = 50000;
+        k.kanaele[0].clips[1].startMs = 40000;
+        k.kanaele[0].clips[1].endeMs = 50000;
         w.ersetzeKomposition(k);
         CHECK(w.rendererVon(0, 0) == unten);
         CHECK(w.rendererVon(1, 0) == oben);
         REQUIRE(w.rendere(1016, 1.0f / 60.0f, groesse));
         CHECK(w.rendererVon(0, 0) == unten);
         CHECK(w.anlaeufe().size() == anlaeufe);
-        CHECK(w.komposition().kanaele[0].visual[1].startMs == 40000);
+        CHECK(w.komposition().kanaele[0].clips[1].startMs == 40000);
 
         // --- der laufende Clip selbst wird laenger: er behaelt seinen Renderer
-        k.kanaele[0].visual[0].endeMs = 15000;
+        k.kanaele[0].clips[0].endeMs = 15000;
         w.ersetzeKomposition(k);
         CHECK(w.rendererVon(0, 0) == unten);
 
         // --- der Clip aus CH1 zieht nach CH2 um: sein Renderer folgt ihm,
         //     der Clip, der dort schon lag, behaelt den seinen
         Komposition umgezogen = k;
-        umgezogen.kanaele[1].visual.push_back(clip(balken, 12000, 27000));
-        umgezogen.kanaele[0].visual.erase(umgezogen.kanaele[0].visual.begin());
+        umgezogen.kanaele[1].clips.push_back(clip(balken, 12000, 27000));
+        umgezogen.kanaele[0].clips.erase(umgezogen.kanaele[0].clips.begin());
         w.ersetzeKomposition(umgezogen);
         CHECK(w.rendererVon(1, 0) == oben);
         CHECK(w.rendererVon(1, 1) == unten);
@@ -753,14 +770,14 @@ TEST_SUITE("ComposerWiedergabe")
 
         // --- ein Clip verschwindet: sein Renderer geht
         Komposition ohne = umgezogen;
-        ohne.kanaele[1].visual.erase(ohne.kanaele[1].visual.begin());  // der mit `oben`
+        ohne.kanaele[1].clips.erase(ohne.kanaele[1].clips.begin());  // der mit `oben`
         w.ersetzeKomposition(ohne);
         CHECK(w.rendererAnzahl() == 1);
         CHECK(w.rendererVon(1, 0) == unten);  // der verbliebene ist nachgerueckt
 
         // --- ein Clip bekommt eine andere Datei: der alte Renderer geht, ein neuer legt sich an
         Komposition andere = ohne;
-        andere.kanaele[1].visual[0] = clip(blau, 0, 27000);
+        andere.kanaele[1].clips[0] = clip(blau, 0, 27000);
         w.ersetzeKomposition(andere);
         CHECK(w.rendererAnzahl() == 0);
         REQUIRE(w.rendere(1050, 1.0f / 60.0f, groesse));

@@ -22,9 +22,8 @@ Clips* clipsVon(Komposition& komposition, int kanal, int clip)
 {
     if (kanal < 0 || kanal >= static_cast<int>(komposition.kanaele.size())) return nullptr;
     Kanal& k = komposition.kanaele[static_cast<std::size_t>(kanal)];
-    if (k.art != KanalArt::Visual) return nullptr;
-    if (clip < 0 || clip >= static_cast<int>(k.visual.size())) return nullptr;
-    return &k.visual;
+    if (clip < 0 || clip >= static_cast<int>(k.clips.size())) return nullptr;
+    return &k.clips;
 }
 
 void verschiebeUm(VisualClip& clip, std::int64_t delta)
@@ -158,7 +157,7 @@ void passeLaengeAn(Komposition& komposition)
 {
     if (komposition.laengeMs <= 0) return;
     for (const Kanal& k : komposition.kanaele)
-        for (const VisualClip& c : k.visual)
+        for (const VisualClip& c : k.clips)
             komposition.laengeMs = std::max(komposition.laengeMs, c.endeMs);
 }
 }  // namespace
@@ -168,6 +167,10 @@ void setzeGrenzen(VisualClip& clip, std::int64_t startMs, std::int64_t endeMs)
     // Die Blenden haengen an ihren Kanten, die Stuecke an ihrem Anteil — und
     // alle behalten ihre eingestellte Weite (Entscheid Patrik S96). Was nicht
     // mehr Platz hat, staucht `VisualClip::verteilung` beim Rechnen.
+    // Ton: wird vorn etwas weggenommen, beginnt der Song entsprechend spaeter —
+    // was bleibt, ist an derselben Stelle zu hoeren. (Am Bild zaehlt der
+    // Einsatz nicht; `richte` und die Datei kennen ihn dort nicht.)
+    clip.einsatzMs = std::max<std::int64_t>(0, clip.einsatzMs + (startMs - clip.startMs));
     clip.startMs = startMs;
     clip.endeMs = startMs + std::max<std::int64_t>(0, endeMs - startMs);
 }
@@ -183,12 +186,14 @@ int versetzeClip(Komposition& komposition, int vonKanal, int clip, int nachKanal
 {
     Clips* quelle = clipsVon(komposition, vonKanal, clip);
     if (quelle == nullptr) return -1;
+    // ein Clip wechselt nur in einen Kanal seiner Art: Bild zu Bild, Ton zu Ton
     if (nachKanal < 0 || nachKanal >= static_cast<int>(komposition.kanaele.size()) ||
-        komposition.kanaele[static_cast<std::size_t>(nachKanal)].art != KanalArt::Visual)
+        komposition.kanaele[static_cast<std::size_t>(nachKanal)].art !=
+            komposition.kanaele[static_cast<std::size_t>(vonKanal)].art)
         return -1;
     VisualClip ich = (*quelle)[static_cast<std::size_t>(clip)];
     quelle->erase(quelle->begin() + clip);
-    Clips* clips = &komposition.kanaele[static_cast<std::size_t>(nachKanal)].visual;
+    Clips* clips = &komposition.kanaele[static_cast<std::size_t>(nachKanal)].clips;
 
     // Im eigenen Kanal liegen links die bisherigen Vorgaenger.
     const int platz = platziere(*clips, std::move(ich), std::max<std::int64_t>(0, neuerStartMs),
@@ -204,6 +209,16 @@ int zieheKante(Komposition& komposition, int kanal, int clip, bool links, std::i
     if (clips == nullptr) return -1;
     VisualClip ich = (*clips)[static_cast<std::size_t>(clip)];
     clips->erase(clips->begin() + clip);
+    // Ton: der Clip zeigt nie mehr, als der Song hat — nach vorn nicht vor den
+    // Anfang des Songs, nach hinten nicht hinter seinen Schluss
+    const bool ton = komposition.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio;
+    if (ton)
+    {
+        if (links)
+            zeitMs = std::max(zeitMs, ich.startMs - ich.einsatzMs);
+        else if (ich.quellMs > 0)
+            zeitMs = std::min(zeitMs, ich.startMs + (ich.quellMs - ich.einsatzMs));
+    }
 
     if (links)
     {
@@ -254,12 +269,36 @@ bool loescheClip(Komposition& komposition, int kanal, int clip)
     return true;
 }
 
+namespace
+{
+/// Einen neuen Clip in einen Kanal der Art `art` legen — der gemeinsame Weg
+/// fuer Presets und Songs.
+int fuegeEin(Komposition& komposition, int kanal, KanalArt art, const QString& datei,
+             std::int64_t startMs, std::int64_t dauerMs, std::int64_t quellMs, Stoss stoss);
+}  // namespace
+
 int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
                  std::int64_t dauerMs, Stoss stoss)
 {
+    return fuegeEin(komposition, kanal, KanalArt::Visual, datei, startMs, dauerMs, 0, stoss);
+}
+
+int fuegeSongEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
+                 std::int64_t songMs, Stoss stoss)
+{
+    // ohne bekannte Laenge: so lang wie ein neuer Bild-Clip
+    return fuegeEin(komposition, kanal, KanalArt::Audio, datei, startMs,
+                    songMs > 0 ? songMs : kNeuerClipMs, std::max<std::int64_t>(0, songMs), stoss);
+}
+
+namespace
+{
+int fuegeEin(Komposition& komposition, int kanal, KanalArt art, const QString& datei,
+             std::int64_t startMs, std::int64_t dauerMs, std::int64_t quellMs, Stoss stoss)
+{
     if (kanal < 0 || kanal >= static_cast<int>(komposition.kanaele.size())) return -1;
     Kanal& k = komposition.kanaele[static_cast<std::size_t>(kanal)];
-    if (k.art != KanalArt::Visual) return -1;
+    if (k.art != art) return -1;
 
     std::int64_t start = std::max<std::int64_t>(0, startMs);
     std::int64_t dauer = std::max(dauerMs, kMinClipMs);
@@ -268,7 +307,7 @@ int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std:
         // Faellt der Clip in freie Flaeche, reicht er hoechstens bis zum naechsten Clip.
         bool frei = true;
         std::int64_t naechster = std::numeric_limits<std::int64_t>::max();
-        for (const VisualClip& o : k.visual)
+        for (const VisualClip& o : k.clips)
         {
             if (o.startMs <= start && start < o.endeMs) frei = false;
             if (o.startMs > start) naechster = std::min(naechster, o.startMs);
@@ -279,21 +318,25 @@ int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std:
     neu.datei = datei;
     neu.startMs = start;
     neu.endeMs = start + dauer;
-    const int platz = platziere(k.visual, std::move(neu), start, stoss, -1);
+    neu.quellMs = quellMs;
+    const int platz = platziere(k.clips, std::move(neu), start, stoss, -1);
     passeLaengeAn(komposition);
     return platz;
 }
+}  // namespace
 
-int fuegeKanalEin(Komposition& komposition, const QString& name)
+int fuegeKanalEin(Komposition& komposition, const QString& name, KanalArt art)
 {
     Kanal neu;
-    neu.art = KanalArt::Visual;
+    neu.art = art;
     neu.name = name;
     if (neu.name.isEmpty())
     {
+        // Bild-Kanaele heissen CH1, CH2 ...; Ton-Kanaele A1, A2 ...
+        const QString muster = art == KanalArt::Audio ? QStringLiteral("A%1") : QStringLiteral("CH%1");
         for (int n = 1; neu.name.isEmpty(); ++n)
         {
-            const QString kandidat = QStringLiteral("CH%1").arg(n);
+            const QString kandidat = muster.arg(n);
             const bool vergeben =
                 std::any_of(komposition.kanaele.begin(), komposition.kanaele.end(),
                             [&kandidat](const Kanal& k) { return k.name == kandidat; });

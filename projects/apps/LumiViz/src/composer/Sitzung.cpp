@@ -375,7 +375,7 @@ QString Sitzung::gebundeneDatei() const
     // verarbeitet), nennt die Auswahl womoeglich schon einen anderen Clip.
     if (m_bindung != Bindung::Clip || m_bindungOffen) return {};
     if (m_wahlKanal < 0 || m_wahlKanal >= static_cast<int>(m_komposition.kanaele.size())) return {};
-    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(m_wahlKanal)].visual;
+    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(m_wahlKanal)].clips;
     if (m_wahlClip < 0 || m_wahlClip >= static_cast<int>(clips.size())) return {};
     return clips[static_cast<std::size_t>(m_wahlClip)].datei;
 }
@@ -394,7 +394,7 @@ std::vector<std::pair<int, int>> Sitzung::andereClipsMitDerDatei() const
     if (datei.isEmpty()) return andere;
     for (int k = 0; k < static_cast<int>(m_komposition.kanaele.size()); ++k)
     {
-        const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].visual;
+        const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].clips;
         for (int c = 0; c < static_cast<int>(clips.size()); ++c)
         {
             if (k == m_wahlKanal && c == m_wahlClip) continue;
@@ -421,12 +421,12 @@ bool Sitzung::speichereClipKette(const QString& pfad, const std::vector<std::pai
     }
     Komposition fassung = m_komposition;
     fassung.kanaele[static_cast<std::size_t>(m_wahlKanal)]
-        .visual[static_cast<std::size_t>(m_wahlClip)]
+        .clips[static_cast<std::size_t>(m_wahlClip)]
         .datei = neu;
     for (const auto& [k, c] : auchDiese)
     {
         if (k < 0 || k >= static_cast<int>(fassung.kanaele.size())) continue;
-        auto& clips = fassung.kanaele[static_cast<std::size_t>(k)].visual;
+        auto& clips = fassung.kanaele[static_cast<std::size_t>(k)].clips;
         if (c < 0 || c >= static_cast<int>(clips.size())) continue;
         if (QFileInfo(clips[static_cast<std::size_t>(c)].datei) == QFileInfo(alt))
             clips[static_cast<std::size_t>(c)].datei = neu;
