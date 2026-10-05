@@ -68,6 +68,11 @@ public:
 
     /// Neue Komposition: alle Renderer werden entladen.
     void setKomposition(Komposition komposition);
+    /// Bearbeiten (C3c): dieselbe Komposition in geaenderter Fassung. Ein
+    /// Renderer bleibt, wenn es seinen Clip — dieselbe Datei — noch gibt, auch
+    /// an anderem Platz; das Visual laeuft dann ohne Neubeginn weiter. Nur wer
+    /// keinen Clip mehr hat, wird entladen.
+    void ersetzeKomposition(Komposition komposition);
     [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
 
     /// So lange vor seinem Start wird ein Clip vorgewaermt (Vorgabe 2 s; 0 = nie).
@@ -98,6 +103,12 @@ public:
     [[nodiscard]] bool hatRenderer(int kanal, int clip) const
     {
         return m_laeufe.count({kanal, clip}) != 0;
+    }
+    /// Der Renderer des Clips, nullptr = er hat gerade keinen.
+    [[nodiscard]] MultiEffectVisualizer* rendererVon(int kanal, int clip) const
+    {
+        const auto ort = m_laeufe.find({kanal, clip});
+        return ort != m_laeufe.end() ? ort->second.renderer.get() : nullptr;
     }
     /// Lag die Karaoke-Ebene im letzten Bild ueber dem Gemischten?
     [[nodiscard]] bool karaokeAufgelegt() const { return m_karaokeAufgelegt; }

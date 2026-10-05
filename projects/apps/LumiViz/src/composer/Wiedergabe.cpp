@@ -12,6 +12,8 @@
 #include <QFileInfo>
 
 #include <algorithm>
+#include <cstdlib>
+#include <map>
 
 namespace lumi::composer
 {
@@ -43,6 +45,63 @@ void Wiedergabe::setKomposition(Komposition komposition)
     m_bericht.clear();
     m_anlaeufe.clear();
     komposition.richte(&m_bericht);
+    m_komposition = std::move(komposition);
+}
+
+void Wiedergabe::ersetzeKomposition(Komposition komposition)
+{
+    komposition.richte(&m_bericht);
+    const auto clipVon = [](const Komposition& k, const Schluessel& s) -> const VisualClip* {
+        if (s.first < 0 || s.first >= static_cast<int>(k.kanaele.size())) return nullptr;
+        const auto& clips = k.kanaele[static_cast<size_t>(s.first)].visual;
+        if (s.second < 0 || s.second >= static_cast<int>(clips.size())) return nullptr;
+        return &clips[static_cast<size_t>(s.second)];
+    };
+
+    std::map<Schluessel, Lauf> alt = std::move(m_laeufe);
+    m_laeufe.clear();
+    // Welcher alte Renderer gehoert zu welchem neuen Clip? Ein Platz
+    // (Kanal, Nummer) sagt es nicht — verschwindet ein Nachbar, ruecken die
+    // Nummern nach. Darum: alle Paare „alter Clip — neuer Clip mit derselben
+    // Datei", das mit dem kleinsten Abstand der Startzeiten zuerst (bei
+    // Gleichstand der gleiche Platz), jeder Renderer und jeder Clip nur einmal.
+    struct Paar
+    {
+        std::int64_t abstand;
+        bool andererPlatz;
+        Schluessel von;
+        Schluessel nach;
+    };
+    std::vector<Paar> paare;
+    for (const auto& [schluessel, lauf] : alt)
+    {
+        const VisualClip* vorher = clipVon(m_komposition, schluessel);
+        if (lauf.renderer == nullptr || vorher == nullptr) continue;
+        for (int k = 0; k < static_cast<int>(komposition.kanaele.size()); ++k)
+        {
+            const auto& clips = komposition.kanaele[static_cast<size_t>(k)].visual;
+            for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+            {
+                const VisualClip& neu = clips[static_cast<size_t>(c)];
+                if (neu.datei != vorher->datei) continue;
+                paare.push_back({std::llabs(neu.startMs - vorher->startMs),
+                                 Schluessel{k, c} != schluessel, schluessel, {k, c}});
+            }
+        }
+    }
+    std::sort(paare.begin(), paare.end(), [](const Paar& a, const Paar& b) {
+        return a.abstand != b.abstand ? a.abstand < b.abstand : a.andererPlatz < b.andererPlatz;
+    });
+    for (const Paar& p : paare)
+    {
+        const auto quelle = alt.find(p.von);
+        if (quelle == alt.end() || m_laeufe.count(p.nach) != 0) continue;
+        // den Knoten umhaengen statt den Lauf zu verschieben (die Leinwand laesst sich nicht bewegen)
+        auto knoten = alt.extract(quelle);
+        knoten.key() = p.nach;
+        m_laeufe.insert(std::move(knoten));
+    }
+    for (auto& [schluessel, lauf] : alt) wirfWeg(lauf);  // ohne Clip: entladen
     m_komposition = std::move(komposition);
 }
 

@@ -116,13 +116,18 @@ void Bildquelle::setKomposition(Komposition komposition)
     m_uhr.anDenAnfang();
     m_wartend = std::move(komposition);
     m_neueKomposition = true;
+    m_nurErsetzen = false;
 }
 
 void Bildquelle::ersetzeKomposition(Komposition komposition)
 {
     const bool lief = m_uhr.laeuft();
     const std::int64_t stelle = m_uhr.stelleMs();
+    // Wartet schon eine ganz neue Komposition, bleibt es dabei: dann ist das
+    // hier deren geaenderte Fassung, und alte Renderer gehoeren ihr nicht.
+    const bool ganzNeu = m_neueKomposition && !m_nurErsetzen;
     setKomposition(std::move(komposition));
+    m_nurErsetzen = !ganzNeu;
     m_uhr.springe(stelle);  // geklemmt, falls die Komposition kuerzer wurde
     if (lief && (m_uhr.laengeMs() <= 0 || m_uhr.stelleMs() < m_uhr.laengeMs())) m_uhr.starte();
 }
@@ -233,9 +238,15 @@ void Bildquelle::render(float deltaTime)
     bool neu = false;
     if (m_neueKomposition)
     {
-        m_wiedergabe->setKomposition(std::move(m_wartend));
+        // Eine bearbeitete Fassung behaelt die Renderer ihrer Clips (C3c):
+        // das Visual laeuft weiter, statt von vorn zu beginnen.
+        if (m_nurErsetzen)
+            m_wiedergabe->ersetzeKomposition(std::move(m_wartend));
+        else
+            m_wiedergabe->setKomposition(std::move(m_wartend));
         m_wartend = Komposition{};
         m_neueKomposition = false;
+        m_nurErsetzen = false;
         m_versorgt.clear();
         neu = true;
     }

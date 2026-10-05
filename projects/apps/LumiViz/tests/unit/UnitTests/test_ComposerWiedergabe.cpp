@@ -673,4 +673,85 @@ TEST_SUITE("ComposerWiedergabe")
         MultiEffectVisualizer::setSongtext(ly::Songtext{});
         MultiEffectVisualizer::notifyPlayPosition(0);
     }
+
+    TEST_CASE("C3c GL: beim Bearbeiten behaelt ein Clip seinen Renderer — auch an anderem Platz")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString balken = balkenPreset(dir, QStringLiteral("Balken.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+        const QSize groesse(64, 64);
+
+        // CH1: Balken 0–10 s, Blau 20–30 s · CH2: noch einmal Balken 0–10 s
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"),
+                                        {clip(balken, 0, 10000), clip(blau, 20000, 30000)}));
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH2"), {clip(balken, 0, 10000)}));
+        Wiedergabe w;
+        w.setKomposition(k);
+        for (int i = 0; i < 3; ++i) REQUIRE(w.rendere(1000, 1.0f / 60.0f, groesse));
+        MultiEffectVisualizer* const unten = w.rendererVon(0, 0);
+        MultiEffectVisualizer* const oben = w.rendererVon(1, 0);
+        REQUIRE(unten != nullptr);
+        REQUIRE(oben != nullptr);
+        CHECK(unten != oben);
+        CHECK(w.rendererVon(0, 1) == nullptr);  // Blau laeuft noch nicht
+        CHECK(w.rendererVon(5, 0) == nullptr);
+        CHECK(w.rendererAnzahl() == 2);
+        const auto anlaeufe = w.anlaeufe().size();
+
+        // --- ein anderer Clip wird verschoben: beide Renderer bleiben, nichts legt sich neu an
+        k.kanaele[0].visual[1].startMs = 40000;
+        k.kanaele[0].visual[1].endeMs = 50000;
+        w.ersetzeKomposition(k);
+        CHECK(w.rendererVon(0, 0) == unten);
+        CHECK(w.rendererVon(1, 0) == oben);
+        REQUIRE(w.rendere(1016, 1.0f / 60.0f, groesse));
+        CHECK(w.rendererVon(0, 0) == unten);
+        CHECK(w.anlaeufe().size() == anlaeufe);
+        CHECK(w.komposition().kanaele[0].visual[1].startMs == 40000);
+
+        // --- der laufende Clip selbst wird laenger: er behaelt seinen Renderer
+        k.kanaele[0].visual[0].endeMs = 15000;
+        w.ersetzeKomposition(k);
+        CHECK(w.rendererVon(0, 0) == unten);
+
+        // --- der Clip aus CH1 zieht nach CH2 um: sein Renderer folgt ihm,
+        //     der Clip, der dort schon lag, behaelt den seinen
+        Komposition umgezogen = k;
+        umgezogen.kanaele[1].visual.push_back(clip(balken, 12000, 27000));
+        umgezogen.kanaele[0].visual.erase(umgezogen.kanaele[0].visual.begin());
+        w.ersetzeKomposition(umgezogen);
+        CHECK(w.rendererVon(1, 0) == oben);
+        CHECK(w.rendererVon(1, 1) == unten);
+        CHECK(w.rendererVon(0, 0) == nullptr);  // dort liegt jetzt Blau, das nicht laeuft
+        CHECK(w.rendererAnzahl() == 2);
+        CHECK(w.anlaeufe().size() == anlaeufe);
+
+        // --- ein Clip verschwindet: sein Renderer geht
+        Komposition ohne = umgezogen;
+        ohne.kanaele[1].visual.erase(ohne.kanaele[1].visual.begin());  // der mit `oben`
+        w.ersetzeKomposition(ohne);
+        CHECK(w.rendererAnzahl() == 1);
+        CHECK(w.rendererVon(1, 0) == unten);  // der verbliebene ist nachgerueckt
+
+        // --- ein Clip bekommt eine andere Datei: der alte Renderer geht, ein neuer legt sich an
+        Komposition andere = ohne;
+        andere.kanaele[1].visual[0] = clip(blau, 0, 27000);
+        w.ersetzeKomposition(andere);
+        CHECK(w.rendererAnzahl() == 0);
+        REQUIRE(w.rendere(1050, 1.0f / 60.0f, groesse));
+        CHECK(w.rendererVon(1, 0) != nullptr);
+        CHECK(w.anlaeufe().size() == anlaeufe + 1);
+
+        // --- eine NEUE Komposition (setKomposition) entlaedt dagegen alles
+        w.setKomposition(k);
+        CHECK(w.rendererAnzahl() == 0);
+    }
 }

@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.13.0
+> **Version:** 0.14.0
 > **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -226,11 +226,29 @@ mit Ergänzung):
 - **C2b:** Effect Chain bleibt an der Kette der App, unverändert. Das
   Composer-Panel zeigt zum angeklickten Clip Datei, Start, Ende und Mischart
   in einer eigenen Zeile.
-- **C3:** das Composer-Panel bekommt den Schalter **Sync on Effect Chain**.
-  **An:** Effect Chain zeigt die Kette des Clips, der im Composer angeklickt
-  ist. **Aus:** Effect Chain ruht, solange eine Komposition das Bild liefert
-  (ausgegraut, mit Hinweis). Beides braucht eine Naht in `MultiEffectPanel`;
-  sie kommt vor dem Bau in §12.2.
+- **C3c:** das Composer-Panel bekommt den Schalter **Sync on Effect Chain**
+  (Entscheid Patrik S95: a — live ändern im Zusammenhang).
+  **An:** Effect Chain hängt am Renderer des Clips, der im Composer
+  angeklickt ist; der Composer hält diesen Renderer dafür am Leben.
+  Änderungen wirken sofort im gemischten Bild. **Aus:** Effect Chain ruht,
+  solange eine Komposition das Bild liefert.
+  - **Binden braucht keine Naht** (Befund S95): Effect Chain und Visualizer
+    Config folgen dem Ereignis `VisualizerChangedEvent`; der Composer meldet
+    darüber den Renderer des Clips, „keinen" (ruht) oder wieder die Kette der
+    App.
+  - **Speichern** (Entscheid Patrik S95): über das gewohnte Speichern von
+    Effect Chain — File → Save Effect Chain / Save As..., Ctrl+S, die
+    Preset-Zeile. Solange Effect Chain an einem Clip hängt, ist es **immer ein
+    Speichern unter**: das Original bleibt unberührt. Der Clip zeigt danach
+    auf die neue Datei. Benutzen weitere Clips der Komposition dieselbe alte
+    Datei, fragt ein Dialog mit einer Liste zum Ankreuzen, welche ebenfalls
+    auf die neue Datei wechseln. Das braucht eine Naht in
+    `MainWindow::speichereKette` (ein Aufruf am Anfang) — sie kommt vor dem
+    Bau in §12.2.
+  - **In drei Schritten:** (0) beim Bearbeiten behält ein Clip seinen
+    Renderer ✅ S95 — sonst ginge jede ungespeicherte Änderung an seiner Kette
+    mit dem nächsten Zug verloren; (1) festhalten, binden, ruhen; (2)
+    Speichern unter und Umhängen der Clips.
 
 **Transport im Kopf** (Wunsch Patrik S95): Play, Pause, Stopp und ein Knopf
 **Loop** für die ganze Komposition — wie im Panel Player.
@@ -350,6 +368,47 @@ Jede Stufe endet mit etwas Prüfbarem. Für jede gelten die Regeln zum Rückbau
 
 **Der Rückbau wird einmal wirklich durchgespielt, nach C1a** — der ersten
 Stufe mit Nähten (§12.4).
+
+**Pegelkurve, nächste Schritte** (Wunsch Patrik S95): in einer Ein- oder
+Ausblendung — linear wie Bézier — sollen sich **zusätzliche Punkte** setzen
+und die **Punkte selbst verschieben** lassen (Zeit und Pegel); freie Punkte
+mitten im Clip danach. Vorschlag S95: ein Punkte-Editor für beides — am
+angeklickten Clip sind alle Punkte der Kurve zu sehen und zu ziehen,
+Doppelklick setzt einen neuen, die Form gilt je Abschnitt. Die zwei Griffe
+für die Länge der Blenden bleiben als Abkürzung.
+
+### 9e. Composer Variables — geplant (Wunsch Patrik S95)
+
+Ein Modul **Composer Variables** in der Modul-Palette (Patrik:
+„Compositor_Variables"): Skriptvariablen, die der **Composer** setzt. Läuft
+das Preset ohne Composer, gelten die **Vorgaben des Moduls** — darum trägt
+jede Variable dort einen Vorgabewert. Zahl und Zweck der Variablen sind
+offen; das Folgende sind **Vorschläge**, kein Entscheid.
+
+*Vorschlag 1 — feste Variablen, die der Composer von selbst liefert:*
+
+| Variable | Bedeutung unter dem Composer | Vorgabe ohne Composer |
+|---|---|---|
+| `comp_on` | 1 | 0 |
+| `comp_level` | Pegel des Clips aus seiner Kurve, 0 … 1 | 1 |
+| `comp_pos` | Anteil des Wegs durch den Clip, 0 … 1 | 0 |
+| `comp_time` | Sekunden seit Clip-Start | 0 |
+| `comp_len` | Länge des Clips in Sekunden | 0 |
+
+Damit kann ein Preset auf sein Ein- und Ausblenden antworten (etwa die
+Bewegung mit dem Pegel beruhigen) oder sich über die Clip-Länge entwickeln.
+
+*Vorschlag 2 — freie Variablen `cv1` … `cv8`:* je Clip eine Kurve über der
+Zeit, im Composer-Panel gezeichnet mit demselben Editor wie die Pegelkurve;
+im Modul je Variable ein Name und ein Vorgabewert. Das ist der Punkt
+„Parameter über der Zeit" aus der Tabelle oben, als Skriptvariable statt als
+Parameter-Bindung.
+
+*Offen:* wie viele freie Variablen; ob sie frei benannt werden; ob eine
+Kurve je Clip gilt oder als eigene Spur über die ganze Komposition; ob das
+Modul nötig ist, damit ein Preset die Variablen sieht, oder nur die Vorgaben
+trägt. Technisch günstig: jeder Clip hat seinen eigenen Renderer, die
+Variablen eines Clips stören keinen anderen.
 
 ### 9a. Stand C0 — ✅ erledigt (S93): Host-Gruppen, verworfen
 
@@ -655,6 +714,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.14.0 | 2026-10-05 | Session 95 — **C3c entschieden und begonnen.** Entscheid Patrik: a — Effect Chain hängt am Renderer des angeklickten Clips, Änderungen wirken live; **Speichern über das gewohnte Speichern von Effect Chain, dann immer als Speichern unter**, der Clip wechselt auf die neue Datei, für weitere Clips mit derselben alten Datei ein Dialog mit Auswahl (§7). Befund: das Binden braucht keine Naht (`VisualizerChangedEvent`), das Speichern eine in `MainWindow::speichereKette`. **Schritt 0 gebaut:** `Wiedergabe::ersetzeKomposition` — beim Bearbeiten behält ein Clip seinen Renderer, auch an anderem Platz oder in anderem Kanal (Zuordnung über Datei und nächstgelegene Startzeit); das Visual läuft weiter, statt von vorn zu beginnen (der Neubeginn aus C3a entfällt); `Wiedergabe::rendererVon`. Belegt in `test_ComposerWiedergabe.cpp` (GL). **Neu §9e Composer Variables** (Wunsch Patrik): Modul mit Vorgabewerten, zwei Vorschläge (feste Variablen `comp_…`, freie `cv1` … `cv8` mit Kurven), offene Fragen. **§9:** nächste Schritte der Pegelkurve (zusätzliche Punkte in Blenden, Punkte verschieben, dann freie Punkte). 893 Cases |
 | 0.13.0 | 2026-10-05 | Session 95 — **Stufe C4, erster Teil: Ein- und Ausblenden im Panel, mit Bézier** (eigener Code, keine Naht). **Modell:** neue Kurvenform `Bezier` (7. Form, `curve` 6) — eine kubische Kurve von (0,0) nach (1,1) mit zwei Anfassern x1, y1, x2, y2 je 0…1, wie `cubic-bezier` in CSS; `PegelPunkt::bezier`, `bezierWert`, `kurvenWert(PegelPunkt, t)`; in der Datei das Feld `bezier` nur an Bézier-Punkten, alte Dateien lesen sich unverändert. `Bearbeiten`: `Blenden` (Länge, Form und Anfasser je Seite), `liesBlenden`, `setzeBlenden`, `kurvenformName`. **Panel** (nur im Edit): oben im Clip je ein Griff für die Länge der Ein- und der Ausblendung (ziehen, rastet ein, Alt frei); Rechtsklick auf den Clip → **Fade in** / **Fade out** mit den sieben Formen (eine Blende der Länge null wird dabei 2 s lang); am angeklickten Clip die zwei Bézier-Anfasser zum Ziehen; alles über Undo. **Grenze:** Griffe gibt es nur, wenn die Kurve eine einfache Ein- / Ausblendung ist; eine Kurve mit eigenen Punkten aus der Datei bleibt unangetastet und ist im Panel nicht bearbeitbar — **freie Punkte im Clip sind der zweite Teil von C4 und noch nicht gebaut**. Belegt in `test_ComposerBearbeiten.cpp` (Kurve, lesen / setzen, Datei) und `test_ComposerPanel.cpp` (Griffe und Anfasser ziehen, Form wählen, speichern und lesen). 892 Cases |
 | 0.12.0 | 2026-10-05 | Session 95 — **Stufe C3b: Neues hinein** (eigener Code, keine Naht). **Presets hineinziehen:** die Zeitachse nimmt Datei-URLs an, wie sie Effect Browser und Explorer liefern (`.avs`, `.milk`, `.lvfx`, `.lvfx2`) — nur bei eingeschaltetem Edit; der neue Clip ist 20 s lang mit vollem Pegel, in einer Lücke reicht er höchstens bis zum nächsten Clip, auf einem Clip landet er in der nächsten Lücke; Ctrl kürzt, Ctrl+Shift schiebt, Alt ohne Raster; mehrere Dateien liegen hintereinander; unter der letzten Zeile entsteht ein neuer Kanal. **Warnung bei Dateien mit Host Switcher** beim Hinzufügen (Entscheid S88, 1a — war für C3 zugesagt). **Kanäle** über Rechtsklick: Add channel, Rename channel..., Channel enabled, Delete channel; Delete clip. **Datei-Zeile:** New (leere Komposition mit einem Kanal, ohne Datei — „untitled", Edit geht an), Load... (wie File → Open Composition...), Save fragt bei einer neuen Komposition nach dem Namen. **Die Achse zeigt Luft hinter dem Ende** (ein Fünftel, mindestens 10 s; leer 30 s), damit sich über das Ende hinaus ziehen und dahinter fallen lassen lässt. Sichttest S95b: 17 bestanden, drei mit Anmerkung, B3 (Einrasten und Alt) unklar formuliert — steht in der Liste S95c noch einmal. Belegt in `test_ComposerBearbeiten.cpp` und `test_ComposerPanel.cpp` (auch ein echter Drop mit Datei-URLs); dabei gefunden und behoben: das Panel las den Kanal des angeklickten Clips aus der Sitzung, die der Achse während eines Schritts einen Augenblick nachläuft (Absturz beim ersten Clip in einem neuen Kanal). 891 Cases. **Offen aus §7:** Ziehen aus dem Browser prüft nur der Sichttest (der Unit-Test schickt das Ereignis selbst); Lock, Follow player, Zoom |
 | 0.11.1 | 2026-10-05 | Session 95 — **Sichttest S95b (C3a) durch (Patrik). Befund daraus: das Ende wanderte nicht mit** — wurden Clips verschoben oder verkürzt, lief die Komposition bis zur alten Endzeit schwarz weiter, und Loop / Ende-Einstellung griffen erst dort. Ursache: die Datei trug eine feste Länge (gleich dem Ende des letzten Clips), und beim Bearbeiten wuchs sie nur. Nachgestellt in `test_ComposerBearbeiten.cpp` (der Test schlug vor dem Fix fehl), behoben: beim Lesen gilt eine Länge, die genau das Ende des letzten Clips ist, als „folgt dem letzten Clip" (Vorgabe Patrik); `Komposition::clipEnde`. **Neu im Panel:** Schalter **Fixed end** mit Zeitfeld (nur im Edit, über Undo), bei festem Ende eine eigene Marke und die leere Strecke schraffiert (§6). 889 Cases |

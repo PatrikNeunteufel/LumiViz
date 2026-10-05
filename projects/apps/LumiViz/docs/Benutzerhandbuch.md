@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.84.0
+> **Version:** 1.84.1
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1816,7 +1816,7 @@ Composition*, *Close Composition* und dem Beenden fragt LumiViz bei
 ungespeicherten Änderungen nach (Save / Discard / Cancel).
 
 Läuft die Komposition, während du sie bearbeitest, siehst du die Änderung
-sofort; die Presets der Clips beginnen dabei von vorn.
+sofort; die Presets der Clips laufen dabei weiter.
 
 ### Einstellungen
 
@@ -1896,6 +1896,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.84.1 | 2026-10-05 | Session 95. §15 Composer: beim Bearbeiten einer laufenden Komposition laufen die Presets der Clips jetzt weiter (bisher begannen sie von vorn) |
 | 1.84.0 | 2026-10-05 | Session 95. §15 Composer NEU **Ein- und Ausblenden** im Panel: zwei Griffe oben im Clip für die Länge, Rechtsklick → *Fade in* / *Fade out* für die Form (sieben Formen), NEU die Form **Bezier** mit zwei ziehbaren Anfassern; Datei: `curve` 6 und Feld `bezier` |
 | 1.83.0 | 2026-10-05 | Session 95. §15 Composer NEU **Neues hinein**: Knöpfe **New** und **Load...**, Presets aus dem Effect Browser oder Explorer in einen Kanal ziehen (20 s, mehrere hintereinander, unter die letzte Zeile = neuer Kanal), Rechtsklick für *Add channel*, *Rename channel...*, *Channel enabled*, *Delete channel*, *Delete clip*; Hinweis bei Ketten mit Host Switcher; die Zeitachse zeigt Luft hinter dem Ende |
 | 1.82.0 | 2026-10-05 | Session 95. §15 Composer: das Ende der Komposition **folgt dem letzten Clip** (bisher blieb eine in der Datei gesetzte Länge stehen, auch wenn die Clips kürzer wurden); NEU Haken **Fixed end** mit Zeitfeld für ein festes Ende, mit eigener Marke im Lineal und schraffierter leerer Strecke; Feld `length` neu beschrieben |

@@ -107,7 +107,7 @@ public:
     /// entladen (das braucht den GL-Kontext).
     void setKomposition(Komposition komposition);
     /// Bearbeiten (C3a): dieselbe Komposition in geaenderter Fassung — die
-    /// Uhr behaelt Stelle und Lauf. Die Renderer werden neu angelegt.
+    /// Uhr behaelt Stelle und Lauf, die Clips behalten ihre Renderer (C3c).
     void ersetzeKomposition(Komposition komposition);
     [[nodiscard]] Uhr& uhr() { return m_uhr; }
     [[nodiscard]] const Uhr& uhr() const { return m_uhr; }
@@ -180,6 +180,7 @@ private:
     std::unique_ptr<Wiedergabe> m_wiedergabe;  ///< lebt zwischen initialize und cleanup
     Komposition m_wartend;                     ///< gesetzt, aber noch nicht uebernommen
     bool m_neueKomposition = false;
+    bool m_nurErsetzen = false;  ///< die wartende ist die bearbeitete Fassung der laufenden
     QStringList m_richtBericht;
     QStringList m_anlaufZuletzt;  ///< Anlauf-Zeilen der Clips beim letzten cleanup
 
