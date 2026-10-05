@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-curve",
+    "version": 1,
+    "kind": "fade",
+    "points": [
+        {
+            "x": 0,
+            "y": 0,
+            "curve": 6,
+            "bezier": [
+                0.4,
+                0.0,
+                0.6,
+                1.0
+            ]
+        },
+        {
+            "x": 1,
+            "y": 1,
+            "curve": 0
+        }
+    ]
+}

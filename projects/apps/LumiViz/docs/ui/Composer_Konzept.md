@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.18.0
+> **Version:** 0.19.0
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -450,9 +450,20 @@ Länge und lässt sich spiegeln.
   loszugehen. Alte Dateien behalten ihren Verlauf (die Form wird beim Lesen
   umgerechnet).
 
-**Offen:** wo die Presets liegen (wie die Trail-Presets: mitgeliefert und
-eigene); das Fenster Curve Editor; Stücke und Grundpegel im Panel (heute nur
-über die Datei); die Anzeige beider Zahlen an einem gestauchten Teil.
+- **Presets** (Entscheid Patrik S96: a — wie die Trail-Presets und die
+  Knoten-Voreinstellungen): `composer/FormPresets`, je Art ein Ordner und
+  eine Endung — Blenden `.lvfade` in `asset/composer/fades/` und
+  `<AppData>/composer/fades/`, Stücke `.lvshape` in `…/shapes/`. Ein eigenes
+  Preset verdrängt ein mitgeliefertes gleichen Namens; mitgelieferte lassen
+  sich in der App nicht überschreiben oder löschen; eine Datei der anderen
+  Art wird abgelehnt. **Mitgeliefert:** die sieben Formen aus C4 Teil 1 als
+  Blenden (Linear, S-curve, Ease in, Ease out, Exponential, Hold, Bezier)
+  und drei Stücke (Dip Soft, Dip Sharp, Dip Flat).
+
+**Offen:** das Fenster Curve Editor (mit der Preset-Zeile); Stücke und
+Grundpegel im Panel (heute nur über die Datei); die Anzeige beider Zahlen an
+einem gestauchten Teil; das Rechtsklick-Menü *Fade in* / *Fade out* führt
+noch seine feste Formenliste statt der Presets.
 
 ### 9e. Composer Variables — geplant (Wunsch Patrik S95)
 
@@ -777,6 +788,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C3c, Sync on Effect Chain | keine neuen Dateien — die Erweiterungen in `Wiedergabe`, `Bildquelle`, `Sitzung`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | **N11 `356a868`** — `UI/MainWindow.cpp` (Empfänger von `SaveEffectChainEvent`: eine Abfrage, ein Aufruf), trägt `Composer-Naht N11`. **Dieser Commit enthält die Naht und eigenen Code zusammen** (C3c Schritt 2; versehentlich als einer committet) — beim Rückbau die Naht-Stelle von Hand herausnehmen oder den ganzen Commit zurücknehmen. Das Binden selbst hat keine Naht | — | vor dem Holen wie oben prüfen. Zurück bleibt der Schlüssel `composer/syncEffectChain` |
 | C3b, Neues hinein | keine neuen Dateien — die Erweiterungen in `Bearbeiten`, `Sitzung`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | keine Naht | — | vor dem Holen wie oben prüfen |
 | C3a, Bearbeiten | `include/composer/Bearbeiten.hpp`, `src/composer/Bearbeiten.cpp`, `tests/unit/UnitTests/test_ComposerBearbeiten.cpp`; die Erweiterungen in `Sitzung`, `Bildquelle`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | **N10 `4826db1`** — `UI/MainWindow.cpp` (`closeEvent`: ein Aufruf von `composer::darfKompositionErsetzen`), trägt `Composer-Naht N10` | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
+| C4 Teil 2, Pegelform und Presets (S96) | `include/composer/` (Pegelform.hpp, FormPresets.hpp), `src/composer/` (Pegelform.cpp, FormPresets.cpp), `tests/unit/UnitTests/` (test_ComposerPegelform.cpp, test_ComposerFormPresets.cpp); **dazu der Ordner `asset/composer/`** (mitgelieferte Kurven-Presets, liegt außerhalb der Composer-Pfade); die Umstellung von `VisualClip` geht mit `Komposition`, `Bearbeiten`, `ComposerPanel` | keine Naht | zwei Quellen und zwei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); zwei Zeilen in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; `asset/composer/` eigens löschen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -798,6 +810,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.19.0 | 2026-10-05 | Session 96 — **Kurven-Presets** (eigener Code, keine Naht; Entscheid Patrik: a, wie die Trail-Presets). `composer/FormPresets`: `liste`, `finde`, `lade`, `speichere`, `loesche` je Art — Blenden `.lvfade`, Stücke `.lvshape`, mitgeliefert unter `asset/composer/fades` und `…/shapes` (Anker `README.md`), eigene unter `<AppData>/composer/…`; ein eigenes verdrängt ein mitgeliefertes, mitgelieferte sind geschützt, die andere Art wird abgelehnt. Mitgeliefert: sieben Blenden, drei Stücke. `test_ComposerFormPresets.cpp` (drei Fälle, auch: jedes mitgelieferte lädt). Rückbau-Liste: Zeile für C4 Teil 2, `asset/composer/` eigens. 911 Cases. **Offen:** das Fenster Curve Editor |
 | 0.18.0 | 2026-10-05 | Session 96 — **Die Pegelform am Clip und in der Datei** (eigener Code, keine Naht). Entscheid Patrik: Grundpegel je Clip (a), alle Teile freiwillig. `VisualClip`: `grundpegel`, `ein`, `aus`, `stuecke` statt der Punktliste `kurve`; `pegelBei` rechnet aus den Teilen, `verteilung`, `vollerPegel`. `Kurvenform`, `BezierGriffe`, `kurvenWert`, `bezierWert` sind nach `Pegelform` umgezogen. Beim Ziehen einer Kante bleiben die eingestellten Dauern (kein Klemmen mehr); `Bearbeiten::schreibeFest`; die Zeitachse zeichnet die Blenden-Griffe an der gestauchten Lage und schreibt vor einem Zug fest. **Datei Version 2** (`base`, `fadeIn`, `fadeOut`, `shapes`); `levels` wird beim Laden übersetzt (`ausAltenPunkten`), der Verlauf bleibt. **Geändert:** die Ausblendung ist die rückwärts gelesene Blende — Ease in, Ease out, Exponential, Hold und Bézier wirken an der Ausblendung anders als in 0.13.0. Tests umgeschrieben (`test_ComposerBearbeiten`, `test_ComposerWiedergabe`), neu Grundpegel, Buckel, Stauchen und Zurückkommen, alte Dateien. 908 Cases. Benutzerhandbuch 1.87.0 |
 | 0.17.0 | 2026-10-05 | Session 96 — **Pegelkurve, Entscheide Patrik und das Modell dazu** (§9). Form und Parameter getrennt: die Kurvenform ist zeitlos und als Preset speicherbar; Typ 1 Blende (Parameter Dauer, als Ausblendung an der y-Achse gespiegelt), Typ 2 Stück mitten im Clip (Parameter Weite und Position, an der x-Achse gespiegelt = oben und unten getauscht). Beim Strecken und Stauchen behalten die Teile ihre Weite, bis sie sich berühren, dann werden die sich berührenden gleichmäßig gestaucht; die eingestellten Werte bleiben, auch in der Datei; ein Zug von Hand an einem gestauchten Teil schreibt die berührende Gruppe auf den sichtbaren Stand fest. Der Editor wird ein eigenes, nicht modales Fenster **Curve Editor** (keine Naht). **Gebaut:** `composer/Pegelform` (`Pegelform`, `blendenPegel`, `stueckPegel`, `formAlsJson` / `formAusJson`, `verteile`) — reines Modell, am Clip noch nicht angeschlossen; `test_ComposerPegelform.cpp` (14 Fälle). 908 Cases. **Offen:** Ablage der Presets, Pegel zwischen den Teilen, alte Kurven mit eigenen Punkten, Anschluss an `VisualClip` und Datei, das Fenster |
 | 0.16.1 | 2026-10-05 | Session 95, Abschluss — Rückbau-Liste: Kennungen der Naht-Commits N10 (`4826db1`) und N11 (`356a868`, mit eigenem Code in einem Commit) eingetragen. Stand der Stufen: C2b und C3a im Programm gesehen; C3b, C4 Teil 1 und C3c gebaut, Sichttest S95c offen. Nächster Schritt: der Punkte-Editor der Pegelkurve (§9) |

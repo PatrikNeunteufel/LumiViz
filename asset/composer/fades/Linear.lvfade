@@ -1,0 +1,17 @@
+{
+    "format": "lumiviz-curve",
+    "version": 1,
+    "kind": "fade",
+    "points": [
+        {
+            "x": 0,
+            "y": 0,
+            "curve": 0
+        },
+        {
+            "x": 1,
+            "y": 1,
+            "curve": 0
+        }
+    ]
+}

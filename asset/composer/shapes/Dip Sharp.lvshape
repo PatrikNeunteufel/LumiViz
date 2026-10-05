@@ -1,0 +1,22 @@
+{
+    "format": "lumiviz-curve",
+    "version": 1,
+    "kind": "shape",
+    "points": [
+        {
+            "x": 0,
+            "y": 1,
+            "curve": 0
+        },
+        {
+            "x": 0.5,
+            "y": 0,
+            "curve": 0
+        },
+        {
+            "x": 1,
+            "y": 1,
+            "curve": 0
+        }
+    ]
+}
