@@ -253,10 +253,15 @@ int Komposition::tonKanal() const
 
 const Clip* Komposition::tonBei(std::int64_t stelleMs) const
 {
-    const int k = tonKanal();
-    if (k < 0) return nullptr;
-    for (const Clip& c : kanaele[static_cast<std::size_t>(k)].clips)
-        if (stelleMs >= c.startMs && stelleMs < c.endeMs) return &c;
+    // Alle eingeschalteten Audio-Kanaele zaehlen (Befund Patrik S96: ein leerer
+    // Kanal oben machte die darunter stumm). Liegen an der Stelle mehrere
+    // Clips, gewinnt der oberste Kanal — es spielt ein Stream.
+    for (const Kanal& kanal : kanaele)
+    {
+        if (kanal.art != KanalArt::Audio || !kanal.an) continue;
+        for (const Clip& c : kanal.clips)
+            if (stelleMs >= c.startMs && stelleMs < c.endeMs) return &c;
+    }
     return nullptr;
 }
 

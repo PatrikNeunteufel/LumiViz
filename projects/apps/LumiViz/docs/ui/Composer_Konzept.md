@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.26.0
+> **Version:** 0.26.1
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -121,9 +121,15 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     an den Player ist Naht N7a). `songAnfang` liefert die Ziele für Next und
     Previous: zurück geht es mitten im Song an seinen Anfang, in seinen
     ersten drei Sekunden zum Song davor.
-  - **Welcher Kanal spielt:** der erste eingeschaltete Audio-Kanal
-    (`Komposition::tonKanal`). Mehrere lassen sich anlegen; zwei Songs
-    zugleich brauchen einen zweiten Stream im Player (später).
+  - **Welcher Clip spielt** (geändert S96 nach Befund Patrik): **alle
+    eingeschalteten Audio-Kanäle zählen**; an jeder Stelle spielt der Clip
+    des obersten Kanals, der dort einen hat (`Komposition::tonBei`). Zuerst
+    galt „der erste eingeschaltete Kanal" — ein leerer Kanal oben machte die
+    Songs darunter stumm, und genau so entstehen Kompositionen im Panel (ein
+    Song unter die letzte Zeile gezogen legt jedes Mal einen neuen Kanal an).
+    Liegen zwei Songs übereinander, ist nur der obere zu hören: zwei zugleich
+    brauchen einen zweiten Stream im Player (später). Next und Previous gehen
+    über die Songs aller Kanäle.
 
 In beiden Fällen gilt: **die Stelle auf der Zeitachse bestimmt das Bild**,
 nicht die verstrichene Zeit. Pegel werden aus der Stelle berechnet — nach
@@ -928,6 +934,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.26.1 | 2026-10-05 | Session 96 — **Befund Patrik: vom Audio-Kanal war nichts zu hören.** Aus dem Log der App und der gespeicherten `composer_demo_audio.lvcomp` belegt: drei Audio-Kanäle, der oberste (A1) leer, die Songs in A2 und A3 — und es spielte nur „der erste eingeschaltete Kanal" („the audio channel leads the player", danach kein geladener Song). Nachgestellt in `test_ComposerTonfuehrung.cpp` (der Test schlug vor dem Fix fehl), behoben: `Komposition::tonBei` zählt alle eingeschalteten Audio-Kanäle, bei mehreren Clips an einer Stelle gewinnt der oberste Kanal; `Tonfuehrung::songAnfang` geht über die Songs aller Kanäle (§4). 924 Cases. Benutzerhandbuch 1.91.1 |
 | 0.26.0 | 2026-10-05 | Session 96 — **C5 Schritt 4: der Audio-Kanal im Panel** (eigener Code, keine Naht). Zeitachse: `audioKanalHinzu` (Rechtsklick → *Add audio channel*), Songs hineinziehen (`lasseFallen` trennt nach Art, `fallDateien`, „New audio channel" unter der letzten Zeile), Wellenform im Ton-Clip (`setHuelle`, mit dem Pegel skaliert), eigene Farbe; `setAudioEndungen`, `setSongLaenge`. Panel: Endungen und Song-Längen aus der Audio-Engine, Hüllkurven im Hintergrund (`ladeHuellen`, ein Thread nach dem anderen, beim Schließen abgebrochen), Clip-Zeile mit dem Einsatz im Song. Belegt in `test_ComposerPanel.cpp` (neuer Fall: Kanal anlegen, Song hineinziehen auch als echter Drop, falsche Art fällt nicht, Wellenform kommt, Kanten mit der Maus, Blende, Curve Editor, Datei). 923 Cases. Benutzerhandbuch 1.91.0. **Offen:** im echten Programm nichts davon gesehen oder gehört; die Anzeige des Player-Panels in Lücken |
 | 0.25.0 | 2026-10-05 | Session 96 — **C5 Schritt 3: die drei Nähte, und die Sitzung führt den Player.** **N7a** `IAudioPlayer::setPegel` / `pegel` (Vorgabe 1), im `AudioPlayer` als zweiter Faktor neben der Lautstärke — Regler, gespeicherte Lautstärke und Ereignisse bleiben. **N7b** `VisualizerWidget::dienste()`. **N5 (Transport)** `PlayerPanel::onTransportCommand` fragt zuerst `composer::transport`. **Eigenes:** `Sitzung` hält eine `Tonfuehrung`: ist der Composer an und ein Audio-Kanal eingeschaltet, übernimmt sie den Player aus den Diensten des Fensters, taktet die Führung, stellt die Uhr nach, wenn der Ton führt, und gibt den Player frei bei Composer aus, ausgeschaltetem Audio-Kanal und beim Beenden; `Sitzung::fuehrende`, `fuehrtTon`, `springeZumSong`; beim Laden kommt die Länge der Songs aus der Engine (`probeDurationMs`). `AppAnbindung::transport`: Play / Pause, Stop, Next, Previous steuern den ganzen Composer, Lautstärke und Mute bleiben beim Player. **Belegt** in `test_ComposerNahtTon.cpp`: der echte `AudioPlayer` mit einer Engine aus Pappe (Pegel; Playlist ruht ohne Naht) und die Sitzung über die echte Fassade mit dem echten Player-Panel (Übernehmen, der Ton führt, Sprung des Players und des Composers, Pegel, alle Transport-Befehle über den Bus, Freigeben). Damit ist eine Komposition mit Audio-Kanal **zum ersten Mal zu hören** — anlegen lässt sich ein Audio-Kanal im Programm noch nicht, nur über die Datei. Kein Vergleichslauf: die Bildberechnung ist nicht berührt. 922 Cases. **Offen:** Audio-Kanal und Songs im Panel (anlegen, hineinziehen, Wellenform); im echten Programm ist noch nichts davon gehört |
 | 0.24.0 | 2026-10-05 | Session 96 — **C5 Schritt 2: die Führung des Players** (eigener Code, keine Naht). `composer/Tonfuehrung`: `uebernimm` / `gibFrei` (die Playlist ruht über `setPlaylist(nullptr)`), `takt` (Einstieg, der Ton führt, die Uhr führt nach einem Sprung, Wanduhr in Lücken und nach dem Ende eines Songs), `setPegelSenke`, `songAnfang` (§4). Läuft gegen `IAudioPlayer`; belegt in `test_ComposerTonfuehrung.cpp` gegen einen Player aus Pappe (sechs Fälle: Playlist ruht und kommt wieder, Lücke / Einstieg / Drift / Clip-Ende, Sprung des Players und der Uhr auch bei stehender Uhr, Song kürzer als sein Clip und fehlende Datei, Pegel, Next / Previous). An der Sitzung hängt sie noch nicht — **zu hören ist weiter nichts**. Rückbau-Liste: Zeile C5. 919 Cases |

@@ -142,9 +142,13 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
 
 std::int64_t Tonfuehrung::songAnfang(const Komposition& komposition, std::int64_t stelleMs, bool vor)
 {
-    const int kanal = komposition.tonKanal();
-    if (kanal < 0) return -1;
-    const auto& clips = komposition.kanaele[static_cast<std::size_t>(kanal)].clips;  // nach Start sortiert
+    // die Songs aller eingeschalteten Audio-Kanaele, nach ihrem Anfang
+    std::vector<Clip> clips;
+    for (const Kanal& kanal : komposition.kanaele)
+        if (kanal.art == KanalArt::Audio && kanal.an)
+            clips.insert(clips.end(), kanal.clips.begin(), kanal.clips.end());
+    std::stable_sort(clips.begin(), clips.end(),
+                     [](const Clip& a, const Clip& b) { return a.startMs < b.startMs; });
     if (vor)
     {
         for (const Clip& c : clips)

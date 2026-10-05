@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.91.0
+> **Version:** 1.91.1
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1920,8 +1920,10 @@ ruht so lange.
   Lautstärke und Mute bleiben, wie sie sind. Dasselbe gilt für die Kürzel und
   das Menü. In einer Lücke zeigt das Panel Player „pausiert", obwohl die
   Komposition läuft.
-- **Mehrere Audio-Kanäle** lassen sich anlegen; es spielt der **erste
-  eingeschaltete**. Zwei Songs zugleich mischt LumiViz noch nicht.
+- **Mehrere Audio-Kanäle** lassen sich anlegen, und alle eingeschalteten
+  zählen: an jeder Stelle spielt der Song des **obersten Kanals, der dort
+  einen hat**. Liegen zwei Songs übereinander, ist nur der obere zu hören —
+  zwei zugleich mischt LumiViz noch nicht.
 - **Aus:** Mit *Channel enabled* aus oder dem Composer aus gehört der Player
   wieder der Playlist; ein gerade laufender Song spielt dabei weiter.
 
@@ -2048,6 +2050,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.91.1 | 2026-10-05 | Session 96. §15 Audio-Kanal GEÄNDERT: alle eingeschalteten Audio-Kanäle zählen, an jeder Stelle spielt der Song des obersten Kanals, der dort einen hat (zuvor nur der erste eingeschaltete Kanal — ein leerer Kanal oben machte die anderen stumm) |
 | 1.91.0 | 2026-10-05 | Session 96. §15 Composer NEU **der Audio-Kanal**: *Add audio channel*, Songs aus Audio Browser, Playlist oder Explorer hineinziehen, Wellenform im Clip, Kanten schneiden ab bzw. ändern den Einsatz, Ein- und Ausblenden als Lautstärke; die Komposition führt den Player, die Playlist ruht, das Panel Player steuert die ganze Komposition. Datei: Kanal `audio` mit `offset` und `sourceLength` |
 | 1.90.0 | 2026-10-05 | Session 96. §15 Composer GEÄNDERT Rechtsklick → *Fade in* / *Fade out* zeigt die **Blenden-Presets** (mitgelieferte und eigene) statt der festen Formenliste; NEU Rechtsklick auf ein Stück → *Shape* mit den Stück-Presets |
 | 1.89.0 | 2026-10-05 | Session 96. §15 Composer NEU **Griffe der Stücke** oben im Clip: die Raute verschiebt ein Stück, die Striche an den Kanten ändern seine Breite; ein Stück hält an Blenden und anderen Stücken an |

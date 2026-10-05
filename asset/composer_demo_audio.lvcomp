@@ -1,0 +1,255 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 64000,
+                    "fadeIn": {
+                        "ms": 3000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "calibration/avs/matrix/02_osc_star/01_default.lvfx",
+                    "start": 0
+                },
+                {
+                    "blend": 0,
+                    "end": 200000,
+                    "fadeIn": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 3000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "calibration/avs/matrix/27_starfield/01_default.lvfx",
+                    "start": 118000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 1,
+                    "end": 126000,
+                    "fadeIn": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "calibration/avs/matrix/13_rotating_stars/01_default.lvfx",
+                    "start": 57000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 210773,
+                    "fadeIn": {
+                        "ms": 14000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 2,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 10773,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 4,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/01. Under The Sun.mp3",
+                    "offset": 0,
+                    "sourceLength": 210773,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        },
+        {
+            "clips": [
+                {
+                    "end": 397000,
+                    "fadeIn": {
+                        "ms": 12600,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 12000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/05. A Million Lights.mp3",
+                    "offset": 0,
+                    "sourceLength": 203600,
+                    "start": 193400
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A3"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 2
+}

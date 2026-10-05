@@ -280,6 +280,53 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(pegel == doctest::Approx(1.0f));
     }
 
+    TEST_CASE("Befund Patrik S96: mehrere Audio-Kanaele — ein leerer oben macht die anderen nicht stumm")
+    {
+        // wie in composer_demo_audio.lvcomp: A1 leer, A2 ein Song 0–210 s, A3 einer 193–397 s
+        Komposition k = neueKomposition();
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 2);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 3);
+        REQUIRE(fuegeSongEin(k, 2, kEins, 0, 210000) == 0);
+        REQUIRE(fuegeSongEin(k, 3, kZwei, 193000, 204000) == 0);
+
+        // an jeder Stelle spielt der Clip des obersten Kanals, der dort einen hat
+        REQUIRE(k.tonBei(1000) != nullptr);
+        CHECK(k.tonBei(1000)->datei == kEins);
+        CHECK(k.tonBei(200000)->datei == kEins);  // beide liegen dort: der obere Kanal gewinnt
+        REQUIRE(k.tonBei(250000) != nullptr);
+        CHECK(k.tonBei(250000)->datei == kZwei);
+        CHECK(k.tonBei(250000)->songStelle(250000 - 193000) == 57000);
+        CHECK(k.tonBei(397000) == nullptr);
+        // ein ausgeschalteter Kanal zaehlt nicht
+        k.kanaele[2].an = false;
+        CHECK(k.tonBei(1000) == nullptr);
+        CHECK(k.tonBei(200000)->datei == kZwei);
+        k.kanaele[2].an = true;
+
+        // die Fuehrung: der Song aus A2 spielt von Anfang an, an seinem Ende uebernimmt der aus A3 —
+        // mitten im Song, dort, wo er auf der Zeitachse gerade ist
+        PappPlayer p;
+        p.laengen = {{kEins, 210000}, {kZwei, 204000}};
+        Tonfuehrung f;
+        f.uebernimm(p);
+        std::int64_t stelle = 0;
+        (void)f.takt(k, stelle, true);
+        CHECK(p.currentTrack().filePath == kEins);
+        CHECK(p.isPlaying());
+        stelle = 209900;
+        (void)f.takt(k, stelle, true);
+        laufe(f, p, k, stelle, 300);
+        CHECK(p.currentTrack().filePath == kZwei);
+        CHECK(p.isPlaying());
+        CHECK(std::llabs(p.positionMs() - (stelle - 193000)) < 100);
+
+        // Next und Previous gehen ueber alle Audio-Kanaele
+        CHECK(Tonfuehrung::songAnfang(k, 1000, true) == 193000);
+        CHECK(Tonfuehrung::songAnfang(k, 250000, false) == 193000);
+        CHECK(Tonfuehrung::songAnfang(k, 194000, false) == 0);
+    }
+
     TEST_CASE("Next und Previous: die Anfaenge der Songs")
     {
         const Komposition k = probe();  // eins 10–70 s, zwei 80–100 s
