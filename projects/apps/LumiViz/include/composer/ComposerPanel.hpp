@@ -102,7 +102,7 @@ class ComposerPanel : public PanelBase
 
 public:
     explicit ComposerPanel(ServiceContainer& services, QWidget* parent = nullptr);
-    ~ComposerPanel() override = default;
+    ~ComposerPanel() override;
 
     /// Die Zeitachse scrollt selbst (viele Kanaele).
     [[nodiscard]] bool scrollsItself() const override { return true; }
@@ -113,7 +113,7 @@ public:
     /// Das Fenster, dessen Komposition das Panel zeigt. Ohne Aufruf sucht das
     /// Panel es beim Zeigen selbst.
     void setFenster(VisualizerWidget* fenster);
-    [[nodiscard]] Sitzung* sitzung() const { return m_sitzung; }
+    [[nodiscard]] Sitzung* sitzung() const;
     [[nodiscard]] Zeitachse* zeitachse() const { return m_zeitachse; }
 
     /// Eine Stelle als Text: Minuten, Sekunden, Zehntel („1:23.4").

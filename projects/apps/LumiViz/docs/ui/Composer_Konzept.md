@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.10.2
+> **Version:** 0.10.3
 > **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -202,6 +202,23 @@ mit Ergänzung):
 
 **Transport im Kopf** (Wunsch Patrik S95): Play, Pause, Stopp und ein Knopf
 **Loop** für die ganze Komposition — wie im Panel Player.
+
+**Andocken:** das Panel ist ein Panel wie jedes andere — es lässt sich an
+jede Seite docken, in Reiter legen und ablösen. Unten ist nur die Stelle, an
+der es beim ersten Öffnen erscheint.
+
+**Schalter Edit** (Wunsch Patrik S95, für C3): Bearbeitet wird nur, wenn der
+Schalter **Edit** im Kopf an ist — Clip-Längen, Verschieben, Übergänge und
+Mischarten. Aus (Vorgabe) ist das Panel wie in C2b nur zum Ansehen und
+Abspielen; ein versehentliches Ziehen ändert nichts. Der Schalter ist nicht
+**Lock**: Lock sperrt Kürzel und Ladewege für Vorführungen (§8), Edit sperrt
+das Verändern der Komposition.
+
+**Übergänge** (Wunsch Patrik S95, für C4): linear und als **Bézier-Kurve**
+mit Anfassern. Heute kennt die Pegelkurve sechs feste Formen je Abschnitt
+(linear, S-Kurve, Ease in, Ease out, exponentiell, halten); die Bézier-Form
+kommt als weitere dazu, ihre Anfasser als zusätzliche Felder am Punkt — eine
+`.lvcomp` ohne diese Felder liest sich wie bisher.
 
 ---
 
@@ -544,12 +561,12 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | R1 Present-Ziel ✅ | Renderer, eine Zeile im Present | `setPresentZiel`: der Renderer legt sein fertiges Bild in ein Framebuffer-Objekt des Aufrufers | 0 = das Fenster, wie immer | C1a |
 | R2 Karaoke ✅ | Renderer, eine Abfrage und eine Weiterleitung | `setKaraokeAuslassen`; `legeKaraokeEbeneAuf` legt die gerechnete Ebene auf den gebundenen Framebuffer | Vorgabe: zeichnet sie wie heute | C1a |
 | R3 Bildquelle ✅ | `VisualizerRenderThread` (`setBildquelle`, Auswahl je Bild, Herunterfahren), `VisualizerWidget` (`setBildquelle` als Durchreichung, Besitz) | der Thread bekommt neben dem einen Renderer einen zweiten Platz für eine Bildquelle (`IVisualizer`). Ist er besetzt, gehen Audiodaten und `render` an die Bildquelle; der Renderer der Kette bleibt angelegt, bekommt weiter Größe und Audiodaten, wird aber nicht gerechnet. Die Bildquelle wird auf dem Render-Thread angelegt, aufgeräumt und gelöscht (Entscheid Patrik S94: a) | Platz leer (Vorgabe) → der eine Renderer wie heute | C2a |
-| N4 Start | `MainWindow` (Konstruktor, nach dem Anwerfen des letzten Presets) | **ein** verzögerter Aufruf von `composer/AppAnbindung`: war beim Beenden eine Komposition geladen, kommt sie wieder ins Panel; mit Resume auch ihr Stand (Entscheid C7, S95). Das Festhalten beim Beenden ist eigener Code (hängt schon an `aboutToQuit`); `UI/StartPreset.hpp` wird **nicht** berührt | ohne Schlüssel `composer/…` tut der Aufruf nichts — der Start wie heute | C2b (vorgezogen aus C6, S95) |
+| N4 Start ✅ | `MainWindow` (Konstruktor, nach dem Anwerfen des letzten Presets) | **ein** verzögerter Aufruf von `composer/AppAnbindung`: war beim Beenden eine Komposition geladen, kommt sie wieder ins Panel; mit Resume auch ihr Stand (Entscheid C7, S95). Das Festhalten beim Beenden ist eigener Code (hängt schon an `aboutToQuit`); `UI/StartPreset.hpp` wird **nicht** berührt | ohne Schlüssel `composer/…` tut der Aufruf nichts — der Start wie heute | C2b (vorgezogen aus C6, S95) |
 | N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
 | N6 Laden von Hand | `MainWindow` (gemeinsame Rückfrage vor dem Ersetzen der Kette) | Rückfrage bzw. Sperre bei laufendem Composer | Composer aus → wie heute | C6 |
 | N7 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist | C5 |
 | N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg. **C2b (S95):** `UI/panels/PanelAutoReg.cpp` bekommt einen Include und eine Anmeldung — Panel `composer`, Titel „Composer", View → Panels, anfangs nicht sichtbar; die Klasse selbst ist eigener Code (`composer/ComposerPanel`) | — (reine Zusätze); ohne Klick auf die Einträge wie heute; das Panel ist ohne Klick nicht zu sehen | C2a, C2b |
-| N9 Einstellung | `UI/panels/SettingsPanel.cpp` (ein Block in einem Reiter) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
+| N9 Einstellung ✅ | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
 
 Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 
@@ -581,6 +598,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C2a, Einschalten (N8) | `include/composer/AppAnbindung.hpp`, `src/composer/AppAnbindung.cpp`, `asset/composer_demo.lvcomp`; der dritte Testfall in `test_ComposerBildquelle.cpp` geht mit der Datei | **`a6d4b08`** (eigener Code davor: `14fef86`) — nur Naht: `MenuAutoReg.cpp` (ein Include, eine Gruppe, zwei Einträge), `MainWindow.cpp` (ein Include, zwei Anmeldungen); jede Stelle trägt `Composer-Naht N8`. Der Naht-Commit folgt hier **nach** dem eigenen, weil er dessen Header braucht — beim Rückbau zuerst ihn zurücknehmen | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis) | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/managers/MenuAutoReg.cpp` und `UI/MainWindow.cpp` erweitert. Zurück bleibt der Schlüssel `composer/lastDir` |
 | C2b, Sitzung | `include/composer/Sitzung.hpp`, `src/composer/Sitzung.cpp`, `tests/unit/UnitTests/test_ComposerSitzung.cpp`; die Schleife in `Uhr.hpp` und der gespiegelte Stand in `Bildquelle.hpp` gehen mit den Dateien | keine Naht | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen. Zurück bleiben die Schlüssel `composer/resume`, `composer/loop`, `composer/openHolds`, `composer/atEnd`, `composer/session/…` |
 | C2b, Panel | `include/composer/ComposerPanel.hpp`, `src/composer/ComposerPanel.cpp`, `tests/unit/UnitTests/test_ComposerPanel.cpp` | keine Naht (die Anmeldung folgt als N8) | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
+| C2b, Nähte N8 / N4 / N9 | — | drei Naht-Commits (Kennungen beim Abschluss S95 nachtragen), je eine Datei: **N8** `UI/panels/PanelAutoReg.cpp` (ein Include, eine Anmeldung `composer`); **N4** `UI/MainWindow.cpp` (ein verzögerter Aufruf im Konstruktor); **N9** `UI/panels/SettingsPanel.cpp` (ein Include, ein Block mit zwei Auswahlen). Jede Stelle trägt `Composer-Naht N8` / `N4` / `N9` | — | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/panels/PanelAutoReg.cpp` und `UI/panels/SettingsPanel.cpp` erweitert. Im gespeicherten Dock-Layout bleibt der Eintrag `composer` zurück |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -602,6 +620,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.10.3 | 2026-10-05 | Session 95 — **C2b, die drei Nähte gebaut:** N8 — Anmeldung des Panels `composer` in `PanelAutoReg.cpp` (View → Panels → Composer); N4 — ein verzögerter Aufruf im Konstruktor von `MainWindow` stellt die zuletzt geladene Komposition wieder her; N9 — im Reiter Panels der Settings die Auswahlen **Open Composition** und **End of a Composition**. Rückbau-Liste um die Nähte erweitert. §7 ergänzt (Wünsche Patrik): das Panel dockt wie jedes andere; für C3 der Schalter **Edit** (Bearbeiten nur bei eingeschaltetem Schalter, nicht zu verwechseln mit Lock); für C4 Übergänge auch als Bézier-Kurve |
 | 0.10.2 | 2026-10-05 | Session 95 — **C2b, das Panel zum Ansehen** (eigener Code, keine Naht; noch nicht angemeldet): `composer/ComposerPanel` — Kopf mit Schalter **Composer on**, Play / Pause in einem Knopf, Stopp, Loop, Resume after restart, Stelle und Länge als Zeit, Dateiname; `Zeitachse` mit Lineal, Abspielmarke (Klick und Ziehen springen; bei ausgeschaltetem Composer gestrichelt), Kanälen als Zeilen — **der oberste Kanal des Stapels in der obersten Zeile** — und Clips als Blöcken mit ihrer Pegelkurve; Clip-Zeile mit Kanal, Datei, Start, Ende und Mischart des angeklickten Clips. Die Achse zeigt die ganze Länge auf ihrer Breite; ein Zoom kommt mit C3. Das Panel bedient nur die Sitzung des Fensters. Belegt in `test_ComposerPanel.cpp` an der echten Fassade (Knöpfe, Lineal, Clips; `LUMIVIZ_COMPOSER_PANEL_BILD` legt ein Bild ab); Rückbau-Liste um C2b, Panel erweitert; 881 Cases |
 | 0.10.1 | 2026-10-05 | Session 95 — **C2b, die Sitzung** (eigener Code, keine Naht): `composer/Sitzung` hält je Fenster die geladene Komposition — **geladen ist nicht an**; Composer on setzt die Bildquelle an der gemerkten Stelle, angehalten; Play, Pause, Stopp, Sprung, Loop (`composer/loop`); Play bei ausgeschaltetem Composer schaltet ihn ein. **Das Ende ohne Loop** (Entscheid Patrik: alle drei wählbar, Vorgabe halten): halten, an den Anfang, Composer aus (`composer/atEnd`) — §8, §11, N9 um die zweite Auswahl erweitert. Öffnen von Hand hält auf Wunsch am Anfang (`composer/openHolds`). **Über den Neustart:** `sichereStand` bei `aboutToQuit`, `stelleWiederHer` für den Start (Naht N4 folgt) — ohne Resume ins Panel und Composer aus, mit Resume der Stand vom Beenden. Die Bildquelle spiegelt den Stand der Uhr je Bild, damit die Anzeige ihn ohne Render-Mutex liest. `AppAnbindung` reicht Menü und Start an die Sitzung weiter; die Zusammenfassung beim Beenden hängt jetzt dort. Belegt in `test_ComposerSitzung.cpp` über die echte Fassade (vier Abschnitte: geladen ist nicht an, Öffnen von Hand, das Ende in drei Arten samt Schleife, Neustart mit und ohne Resume); Rückbau-Liste um C2b, Sitzung erweitert; 879 Cases |
 | 0.10.0 | 2026-10-05 | Session 95 — **C2b vorbereitet.** §7: Entscheid zum Panel Effect Chain (Patrik: a, mit Ergänzung) — in C2b bleibt es an der Kette der App, das Composer-Panel zeigt den angeklickten Clip in einer eigenen Zeile; in C3 kommt der Schalter **Sync on Effect Chain** (an: Kette des angeklickten Clips, aus: Effect Chain ruht). Transport mit Play, Pause, Stopp und Loop (Wunsch Patrik). §12.2: Naht N8 für C2b gefasst — ein Include und eine Anmeldung in `PanelAutoReg.cpp`. **Der Start** (Patrik): §8 und C7 neu gefasst — die Komposition kommt beim Start ins Panel; Knopf **Resume after restart** aus: Composer aus, die Effektkette läuft, im Panel wird vorbereitet; an: der Stand vom Beenden kommt wieder. Daraus: „geladen ist nicht an" — das Panel hält die Komposition, **Composer on** setzt die Bildquelle. Naht N4 neu gefasst und nach C2b vorgezogen: ein Aufruf in `MainWindow`, `StartPreset.hpp` bleibt unberührt. **Öffnen von Hand** (Patrik): startet sofort, per Einstellung „hält am Anfang" — neue Naht N9 in `SettingsPanel.cpp` |

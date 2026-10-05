@@ -312,6 +312,13 @@ ComposerPanel::ComposerPanel(ServiceContainer& services, QWidget* parent)
     zeigeKomposition();
 }
 
+ComposerPanel::~ComposerPanel() = default;
+
+Sitzung* ComposerPanel::sitzung() const
+{
+    return m_sitzung;
+}
+
 QString ComposerPanel::zeitText(std::int64_t ms)
 {
     ms = std::max<std::int64_t>(0, ms);
