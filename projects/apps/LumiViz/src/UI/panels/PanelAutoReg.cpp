@@ -55,6 +55,7 @@
 #include "UI/panels/MultiEffectPanel.hpp"
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/panels/VisualSelectPanel.hpp"
+#include "composer/ComposerPanel.hpp"  // Composer-Naht N8
 
 // =============================================================================
 // initPanelDefaults - Called by PanelRegistry::instance() on first access
@@ -248,6 +249,24 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<MultiEffectPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // COMPOSER PANEL — Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2)
+    // =========================================================================
+    // Visuals ueber der Zeit: Transport, Zeitachse, Kanaele und Clips
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "composer",         // id
+            "Composer",         // title
+            330,                // order (nach Effect Chain)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<lumi::composer::ComposerPanel>(svc);
         },
         false);
 
