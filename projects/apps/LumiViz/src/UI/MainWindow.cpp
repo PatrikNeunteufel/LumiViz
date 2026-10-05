@@ -1681,6 +1681,15 @@ void MainWindow::closeEvent(QCloseEvent* event)
         event->ignore();
         return;
     }
+    // Composer-Naht N10 (docs/ui/Composer_Konzept.md §12.2): dieselbe Frage
+    // fuer eine bearbeitete Komposition
+    if (VisualizerWidget* widget = primaryVisualizer();
+        widget != nullptr &&
+        !lumi::composer::darfKompositionErsetzen(*widget, this, tr("Quit LumiViz")))
+    {
+        event->ignore();
+        return;
+    }
     BasicLogger::logInfo("MainWindow closed - quitting application");
     // Kamera-Feeds werden hier bewusst NICHT gestoppt (S70, dritter Anlauf):
     // eine STERBENDE MF-/D3D-Pipeline waehrend des GL-Teardowns verklemmt
