@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.26.2
-> **Datum:** 2026-10-05 (Session 96)
+> **Version:** 0.27.0
+> **Datum:** 2026-10-05 (Session 97)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -9,7 +9,8 @@
 > Bézier) gebaut** (S95; im Programm gesehen bis C3a); **C4 Teil 2
 > (Pegelform, Curve Editor, Stücke, Kurven-Presets) und C5 (Audiokanal)
 > gebaut** (S96; der Ton im Programm gehört, sonst nichts gesehen — offen:
-> Audio-Kanäle überlagern sich nicht, §4) — dazu Entscheide aus S95 und S96
+> Audio-Kanäle überlagern sich nicht, §4 — **Entscheide dazu gefallen (S97,
+> Stufe C5b), Bau steht aus**) — dazu Entscheide aus S95 und S96
 > in §4 bis §9e; im Zweig `composer`, noch nicht nach `master` geholt
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
@@ -142,6 +143,45 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     Stream** (der Player führt heute einen) — und dann **führt die Uhr**
     statt des Tons, wie beim Entscheid vorgemerkt. Offen dabei: wessen
     Spektrum die Visuals sehen, und wessen Songtext die Karaoke-Ebene zeigt.
+  - **Entschieden (Patrik S97) — Stufe C5b, noch nicht gebaut.** Mit dem Bau
+    ersetzt das die Punkte „Wer die Zeit führt" und „Welcher Clip spielt"
+    oben.
+    - **Ein Mixer in der Engine** (Entscheid a): die Songs aller
+      eingeschalteten Audio-Kanäle laufen als Quellen in **einem
+      Mixer-Stream** (BASSmix). Der Composer hält den Mixer über
+      `IAudioEngine` und setzt je Quelle Stelle und Pegel. **Die Uhr führt**
+      — immer; der Ton wird an sie gehalten. Der Puffer des Mixers steht auf
+      0. Der Player bleibt, wie er ist, und schweigt, solange der Composer
+      Ton führt; die Playlist ruht wie bisher.
+    - **Die Visuals sehen die Summe mit den Pegeln** (Zielbild Patrik):
+      Spektrum und Wellenform kommen vom Mixer — dasselbe, was zu hören ist.
+    - **Der laufende Song** (Entscheid a): der Ton-Clip mit dem höchsten
+      Wert der Pegelkurve an der Stelle der Uhr. Bei Gleichstand bleibt der
+      bisherige; gibt es keinen, gilt der oberste Kanal. Der Composer meldet
+      ihn über die bestehenden Wege (Songwechsel, Stelle im Song, läuft /
+      hält). Ihm folgen Karaoke-Ebene, Tags, Songwechsel-Zähler, Tag View
+      und Audio Browser. In einer symmetrischen Überblendung wechselt alles
+      am Kreuzungspunkt der beiden Kurven. Das Player-Panel zeigt ihn
+      **nicht** (§8).
+    - **Belegt vor dem Entscheid** (`test_ComposerBelegeTon.cpp`): zwei
+      Streams der echten `BassEngine` spielen zugleich, jeder mit eigener
+      Stelle; Spektrum und Pegel eines einzelnen Streams kennen weder den
+      anderen Stream noch die eigene Lautstärke — einzelne Streams liefern
+      die Summe mit den Pegeln also nicht. Der Mixer liefert sie (am
+      dekodierenden Mixer abgezählt, Abweichung 0), dazu Hüllkurve und
+      Stelle je Quelle, und ist für die Engine ein Stream wie jeder andere.
+      Ein Pegelwechsel kommt am spielenden Mixer nach etwa 460 ms an
+      (Puffer 0,5 s, die Vorgabe), 90 ms (0,1 s), 30 ms (0 s).
+    - **Nicht gemessen:** ob Puffer 0 unter Last aussetzt oder knistert —
+      dann müsste der Puffer größer werden und die Pegel als Hüllkurve
+      vorausgeplant statt je Takt gesetzt (die Hüllkurve ist belegt); Songs
+      mit verschiedenen Abtastraten im Mixer.
+  - **Vorgemerkt (Patrik S97), nach C5b:** läuft die Komposition in der
+    Schleife, sollen sich ihr Ende und ihr Anfang **überlagern** — Bild und
+    Ton gleichermaßen, die Länge einstellbar. Offen (Frage Patrik): ob ein
+    Ein- und Ausblenden der ganzen Komposition nur in der Schleife gilt,
+    immer, oder einstellbar ist. Die Vorlage dazu folgt, wenn der heutige
+    Sprung der Schleife gelesen ist.
 
 In beiden Fällen gilt: **die Stelle auf der Zeitachse bestimmt das Bild**,
 nicht die verstrichene Zeit. Pegel werden aus der Stelle berechnet — nach
@@ -369,6 +409,17 @@ Composer-Panel. **Die Playlist ruht**, solange der Audiokanal führt: der
 Composer hängt sie am Player aus (`setPlaylist(nullptr)`) und beim
 Ausschalten wieder ein — am Titelende spielt dann nichts von selbst weiter,
 und ein Doppelklick in der Playlist tut nichts.
+
+**Ab C5b (Entscheid Patrik S97: b) — noch nicht gebaut:** Solange der
+Composer Ton führt, zeigt das Player-Panel **die Komposition**: als Titel
+ihren Dateinamen, als Zeit und Balken die Zeitachse der Komposition. Ein
+Klick in den Balken springt auf der Zeitachse. Der Loop-Knopf des Panels
+schaltet die Schleife der Komposition. Lautstärke und Mute wirken auf den
+ganzen Ton der Komposition. Der laufende Song (§4) steht in Tag View und im
+Composer-Panel. Damit ersetzt das die Zeile „Fortschrittsbalken" der Tabelle
+und den Satz „Der Balken bleibt der Balken des Songs". Verworfen: das Panel
+zeigt den laufenden Song (der Balken spränge am Kreuzungspunkt einer
+Überblendung); das Panel ruht.
 
 **Kürzel bei laufendem Composer** (C5 a):
 
@@ -824,6 +875,10 @@ dabei, damit die Gründe nachlesbar bleiben.
 | C9 | Die Lücke | **schwarz** | letztes Bild; durchscheinendes Preset; Grund-Visual als eigenes Feld |
 | C10 | Wo der Composer entsteht | **Zweig `composer`**; nach `master` geholt wird **erst, wenn der Composer sauber funktioniert** (Patrik S93, geändert gegenüber „nach jeder abgenommenen Stufe"). Bis dahin läuft **alle** Arbeit im Zweig, auch Abschlüsse und Fixes | auf `master`; nach jeder Stufe holen |
 | C11 | Dateien mit Host-Gruppen als Clip | **entfällt** — mit dem eigenen Mischer läuft jede Datei unverändert | — |
+| — | Mehrere Songs zugleich: woher die Streams kommen (S97) | **ein Mixer in der Engine** (BASSmix), der Composer hält ihn; die Uhr führt | eigene Streams des Composers mit selbst gerechneter Summe (das eigene Spektrum liefe neben dem von BASS, an dem die Presets kalibriert sind — nicht geprüft, ob gleich); mehrere Streams im Player (größte Naht, löst die Summe nicht) |
+| — | Wessen Spektrum die Visuals sehen (S97) | **die Summe mit den Pegeln** — das, was zu hören ist | — (Zielbild Patrik) |
+| — | Der laufende Song bei mehreren zugleich (S97) | **die Pegelkurve entscheidet, und alles folgt** (Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio Browser) | der gemessene Pegel entscheidet; nur die Karaoke folgt, der Rest wechselt am Clip-Anfang |
+| — | Das Player-Panel bei führendem Composer (S97) | **zeigt die Komposition** (Dateiname, Zeitachse; Loop-Knopf = Schleife der Komposition) | zeigt den laufenden Song; ruht |
 
 **Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
 Presets (S60) · bei einer Datei mit Host Switcher warnt der Composer beim
@@ -888,6 +943,10 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | N9 Einstellung ✅ | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
 | N10 Beenden mit Ungespeichertem ✅ | `UI/MainWindow.cpp` (`closeEvent`, nach der Rückfrage zur Kette) | **ein** Aufruf von `composer/AppAnbindung`: hat die geladene Komposition ungespeicherte Änderungen, fragt ein Dialog Save / Discard / Cancel (Regel S89); Cancel hält das Fenster offen | ohne geänderte Komposition liefert der Aufruf sofort „weiter" — das Beenden wie heute | C3a |
 | N11 Speichern einer Clip-Kette ✅ | `UI/MainWindow.cpp` (der Empfänger von `SaveEffectChainEvent`) | eine Abfrage und ein Aufruf von `composer/AppAnbindung`: hängt Effect Chain an einem Clip (Sync on Effect Chain), speichert der Composer dessen Kette — immer als Speichern unter, der Clip wechselt auf die neue Datei (Entscheid Patrik S95). Das gilt für jedes Speichern von Hand: File → Save Effect Chain / Save As..., Ctrl+S, die Preset-Zeile. **Nicht** in `speichereKette` selbst (so zuerst gebaut, dann verlegt): die ruft auch die Rückfrage zu ungespeicherten Änderungen an der Kette der App, und die soll bei der Kette der App bleiben | hängt Effect Chain nicht an einem Clip, geht das Ereignis wie heute an `speichereKette` | C3c |
+| N12 Mixer (geplant) | `audio/IAudioEngine.hpp`, `audio/BassEngine.hpp` / `.cpp`; `Solution.json` (`BASS_MIX` an App-Kern und Runner) | die Engine bekommt Mixer-Aufrufe, im Interface mit Vorgabe (wie `setTempo`): einen Mixer anlegen (Puffer 0), eine Datei als Quelle hinzufügen und wegnehmen, je Quelle Stelle lesen und setzen, Pegel setzen, halten. Der Mixer selbst ist ein `AudioStreamHandle` — `play`, `pause`, `setVolume`, `getFFTData` … gelten unverändert. `BassEngine::loadPlugins` übergeht `bassmix.dll` (kein Decoder-Plugin). **Offen vor dem Bau:** wie `bassmix.dll` neben die Test-Exe kommt — der App-Kern ist eine statische Bibliothek, linkt die Engine BASSmix, braucht jede Test-Exe die DLL, und CMakeCraft v0.9.0 reicht `external_options` eines App-Tests nicht durch (`AppCreate.cmake:767`) | niemand ruft die neuen Aufrufe → die Engine wie heute; eine Engine ohne Mixer liefert „kein Mixer" | C5b |
+| N13 Spektrum (geplant) | `UI/MainWindow.cpp`, `onAudioUpdate` | **eine** Abfrage bei `composer/AppAnbindung`: führt der Composer Ton, liest `onAudioUpdate` Spektrum und Wellenform von dessen Mixer statt vom Stream des Players | Composer führt keinen Ton → der Stream des Players wie heute | C5b |
+| N5 wächst: Anzeige (geplant) | `UI/panels/PlayerPanel.cpp` | Folge des Entscheids „das Panel zeigt die Komposition" (S97): führt der Composer Ton, nimmt das Panel Titel, Zeit und Balken vom Composer und übergeht dafür die drei Ereignisse des Players (`TrackChangedEvent`, `PlaybackStateEvent`, `PlaybackPositionEvent` — die braucht weiter der laufende Song für Karaoke und Tags); dazu fragen `onActivate`, `onProgressReleased` und `onLoopClicked` zuerst den Composer. Das sind mehr Stellen als bei jeder Naht bisher — vor dem Bau einzeln aufzählen | Composer führt keinen Ton → das Panel wie heute | C5b |
+| — Lautstärke, Player schweigt (geplant) | **keine Naht** | der Composer spiegelt Lautstärke und Mute des Players über `VolumeChangedEvent` auf den Mixer, hält den Player beim Übernehmen an und hängt die Playlist aus wie bisher; den laufenden Song meldet er über `TrackChangedEvent` und die statischen Wege des Renderers (`notifyPlayPosition`, `notifyPlayState`). **N7a (`setPegel`) braucht C5b nicht mehr** — nach dem Bau prüfen, ob die Naht zurückgenommen wird | — | C5b |
 
 Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 
@@ -925,6 +984,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C3a, Bearbeiten | `include/composer/Bearbeiten.hpp`, `src/composer/Bearbeiten.cpp`, `tests/unit/UnitTests/test_ComposerBearbeiten.cpp`; die Erweiterungen in `Sitzung`, `Bildquelle`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | **N10 `4826db1`** — `UI/MainWindow.cpp` (`closeEvent`: ein Aufruf von `composer::darfKompositionErsetzen`), trägt `Composer-Naht N10` | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 | C4 Teil 2, Pegelform und Presets (S96) | `include/composer/` (Pegelform.hpp, FormPresets.hpp, KurvenEditor.hpp), `src/composer/` (Pegelform.cpp, FormPresets.cpp, KurvenEditor.cpp), `tests/unit/UnitTests/` (test_ComposerPegelform.cpp, test_ComposerFormPresets.cpp); **dazu der Ordner `asset/composer/`** (mitgelieferte Kurven-Presets, liegt außerhalb der Composer-Pfade); die Umstellung von `VisualClip` geht mit `Komposition`, `Bearbeiten`, `ComposerPanel` | keine Naht | drei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); zwei Zeilen in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; `asset/composer/` eigens löschen |
 | C5, Audiokanal (S96, im Bau) | `include/composer/Tonfuehrung.hpp`, `src/composer/Tonfuehrung.cpp`, `tests/unit/UnitTests/` (test_ComposerTonfuehrung.cpp, test_ComposerNahtTon.cpp, PappTon.hpp); das Modell (ein Clip-Typ, `Kanal::clips`) geht mit `Komposition` und `Bearbeiten`, die Führung des Players mit `Sitzung`, der Transport mit `AppAnbindung` | **N7a** — `audio/IAudioPlayer.hpp` (`pegel` / `setPegel` mit Vorgabe), `audio/AudioPlayer.hpp` / `.cpp` (Feld `pegel`, `laut()`, an drei Stellen statt der Lautstärke an die Engine); **N7b** — `UI/widgets/VisualizerWidget.hpp` (Getter `dienste()`); **N5 Transport** — `UI/panels/PlayerPanel.cpp` (ein Include, eine Abfrage am Anfang von `onTransportCommand`). Alle tragen `Composer-Naht`. Commits: **N7a und N7b `3881510`** (für sich baubar), dann Eigenes `9f6a7f1`, dann **N5 `e54ad39`** (ruft `composer::transport`; der Test über das Player-Panel in `test_ComposerNahtTon.cpp` ist erst mit diesem Commit grün) | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); zwei Zeilen in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
+| Belege vor C5b (S97) | `tests/unit/UnitTests/test_ComposerBelegeTon.cpp` | keine | eine Zeile in `tests/unit/UnitTests/Source.cmake` | nicht nötig — nur Tests, kein bestehender Code berührt |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -946,6 +1006,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.27.0 | 2026-10-05 | Session 97 — **Entscheide zum Überlagern der Audio-Kanäle (Stufe C5b), gebaut ist nichts.** Vorher belegt in `test_ComposerBelegeTon.cpp` (vier Fälle, baut nichts am Composer): zwei Streams der echten `BassEngine` spielen zugleich; Spektrum und Pegel eines Streams kennen weder den anderen noch die eigene Lautstärke; der BASSmix-Mixer liefert die Summe mit den Pegeln, Hüllkurve und Stelle je Quelle; Verzug eines Pegelwechsels 460 / 90 / 30 ms bei Puffer 0,5 / 0,1 / 0 s. **Entschieden (Patrik):** ein Mixer in der Engine, die Uhr führt; die Visuals sehen die Summe mit den Pegeln; der laufende Song ist der mit dem höchsten Wert der Pegelkurve, ihm folgen Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio Browser (§4); das Player-Panel zeigt bei führendem Composer die Komposition (§8); §11 vier Zeilen. **Nähte eingetragen vor dem Bau** (§12.2): N12 Mixer in der Engine, N13 Spektrum in `onAudioUpdate`, N5 wächst um die Anzeige des Player-Panels; offen dabei, wie `bassmix.dll` neben die Test-Exe kommt. **Vorgemerkt:** Überlagern von Ende und Anfang in der Schleife (§4). Rückbau-Liste: Zeile „Belege vor C5b". 928 Cases |
 | 0.26.2 | 2026-10-05 | Session 96, Abschluss — **Befund Patrik nach dem Hören:** der Ton kommt, aber Audio-Kanäle überlagern sich nicht — es spielt immer nur ein Song, Ein- und Ausblenden zweier Songs überlappen nicht. Als nächster Schritt in §4 eingetragen: je Audio-Kanal ein eigener Stream, dann führt die Uhr. Kopf: Stand der Stufen. Rückbau-Liste unverändert (alle Commits von S96 sind eingetragen) |
 | 0.26.1 | 2026-10-05 | Session 96 — **Befund Patrik: vom Audio-Kanal war nichts zu hören.** Aus dem Log der App und der gespeicherten `composer_demo_audio.lvcomp` belegt: drei Audio-Kanäle, der oberste (A1) leer, die Songs in A2 und A3 — und es spielte nur „der erste eingeschaltete Kanal" („the audio channel leads the player", danach kein geladener Song). Nachgestellt in `test_ComposerTonfuehrung.cpp` (der Test schlug vor dem Fix fehl), behoben: `Komposition::tonBei` zählt alle eingeschalteten Audio-Kanäle, bei mehreren Clips an einer Stelle gewinnt der oberste Kanal; `Tonfuehrung::songAnfang` geht über die Songs aller Kanäle (§4). 924 Cases. Benutzerhandbuch 1.91.1 |
 | 0.26.0 | 2026-10-05 | Session 96 — **C5 Schritt 4: der Audio-Kanal im Panel** (eigener Code, keine Naht). Zeitachse: `audioKanalHinzu` (Rechtsklick → *Add audio channel*), Songs hineinziehen (`lasseFallen` trennt nach Art, `fallDateien`, „New audio channel" unter der letzten Zeile), Wellenform im Ton-Clip (`setHuelle`, mit dem Pegel skaliert), eigene Farbe; `setAudioEndungen`, `setSongLaenge`. Panel: Endungen und Song-Längen aus der Audio-Engine, Hüllkurven im Hintergrund (`ladeHuellen`, ein Thread nach dem anderen, beim Schließen abgebrochen), Clip-Zeile mit dem Einsatz im Song. Belegt in `test_ComposerPanel.cpp` (neuer Fall: Kanal anlegen, Song hineinziehen auch als echter Drop, falsche Art fällt nicht, Wellenform kommt, Kanten mit der Maus, Blende, Curve Editor, Datei). 923 Cases. Benutzerhandbuch 1.91.0. **Offen:** im echten Programm nichts davon gesehen oder gehört; die Anzeige des Player-Panels in Lücken |
