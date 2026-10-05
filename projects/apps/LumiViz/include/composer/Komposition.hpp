@@ -94,11 +94,15 @@ struct Komposition
 {
     /// Reihenfolge = Stapelreihenfolge der Visual-Kanaele, unten zuerst.
     std::vector<Kanal> kanaele;
-    std::int64_t laengeMs = 0;    ///< 0 = bis zum Ende des letzten Clips
+    /// 0 = das Ende folgt dem letzten Clip (Vorgabe); groesser = festes Ende —
+    /// die Komposition laeuft bis dorthin, auch wenn kein Clip mehr liegt.
+    std::int64_t laengeMs = 0;
     double rasterSekunden = 1.0;  ///< Einrasten beim Ziehen (Bedienung)
 
     /// Die gesetzte Laenge, sonst das Ende des letzten Visual-Clips.
     [[nodiscard]] std::int64_t laenge() const;
+    /// Das Ende des letzten Visual-Clips, gleich ob eine Laenge gesetzt ist.
+    [[nodiscard]] std::int64_t clipEnde() const;
     /// Clips je Kanal nach Start sortieren, Unsinn richten (Ende vor Start,
     /// Ueberlappung im selben Kanal: der spaetere Clip beginnt, wo der
     /// fruehere endet), Kurven sortieren und klemmen. Meldet, was gerichtet

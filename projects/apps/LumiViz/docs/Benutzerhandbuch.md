@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.81.0
+> **Version:** 1.82.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1760,6 +1760,14 @@ in anderen Kanälen) und auf die Abspielmarke ein, sonst auf das Raster der
 Datei (eine Sekunde, Feld `gridSeconds`). Mit gedrückter **Alt**-Taste ziehst
 du frei.
 
+**Das Ende der Komposition** folgt dem letzten Clip: wird er kürzer,
+verschoben oder gelöscht, endet die Komposition entsprechend früher — Loop
+und die Einstellung *End of a Composition* greifen dort. Soll sie länger
+laufen (oder früher enden) als ihre Clips, setz bei eingeschaltetem **Edit**
+unten den Haken **Fixed end** und stell die Zeit daneben ein. Das feste Ende
+trägt im Lineal eine eigene, orange Marke; die leere Strecke zwischen dem
+letzten Clip und dem Ende ist schraffiert — dort ist das Bild schwarz.
+
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
 nach einem neuen Namen und arbeitet dann mit dieser Datei weiter. Vor *Open
@@ -1836,7 +1844,7 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `blend` | Mischart mit dem, was darunter liegt: 0 Normal · 1 Additive · 2 Subtract · 3 Maximum · 4 Minimum · 5 Multiply · 6 Xor |
 | `levels` | Die Pegelkurve: Punkte mit `t` (Millisekunden **ab Clip-Start**) und `level` (0 … 1). Ohne Punkte läuft der Clip auf vollem Pegel |
 | `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) |
-| `length` | Länge in Millisekunden (optional; ohne Angabe das Ende des letzten Clips) |
+| `length` | Festes Ende in Millisekunden (optional). Ohne Angabe, mit 0 oder genau am Ende des letzten Clips folgt das Ende dem letzten Clip |
 
 Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
@@ -1846,6 +1854,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.82.0 | 2026-10-05 | Session 95. §15 Composer: das Ende der Komposition **folgt dem letzten Clip** (bisher blieb eine in der Datei gesetzte Länge stehen, auch wenn die Clips kürzer wurden); NEU Haken **Fixed end** mit Zeitfeld für ein festes Ende, mit eigener Marke im Lineal und schraffierter leerer Strecke; Feld `length` neu beschrieben |
 | 1.81.0 | 2026-10-05 | Session 95. §15 NEU **Bearbeiten** im Panel Composer: Haken **Edit**, Clips verschieben (auch in einen anderen Kanal), Kanten ziehen, Entf, Auswahl **Blend**, Undo / Redo, **Save** / **Save As...** mit Stern für Ungespeichertes und Rückfrage vor Open, Close und Beenden; drei Arten am Nachbarn (keine Taste: anhalten, Ctrl: kürzen, Ctrl+Shift: schieben); Einrasten, mit Alt frei. Die Kanäle stehen in der Reihenfolge der Datei, CH1 oben |
 | 1.80.0 | 2026-10-05 | Session 95. NEU **§15 Composer**: Presets über der Zeit auf mehreren Kanälen. *File → Open Composition...* / *Close Composition* (seit Session 94, bisher nicht im Handbuch); NEU das **Panel Composer** (*View → Panels → Composer*) mit Schalter **Composer on**, Play / Pause, Stopp, Loop, **Resume after restart**, Lineal mit Abspielmarke, Kanälen, Clips mit Pegelkurve und der Zeile zum angeklickten Clip; NEU *Settings → Panels*: **Open Composition** und **End of a Composition**; die Komposition kommt nach dem Neustart wieder ins Panel; Aufbau einer `.lvcomp` zum Schreiben von Hand |
 | 1.79.0 | 2026-10-04 | Session 94. NEU **Settings → Performance → Movement Table**: die Tabelle des AVS-Effekts Movement entsteht über mehrere Bilder verteilt (Standard, kein Stillstand beim Laden) oder in einem Stück wie im Original (für Vergleiche mit AVS) |

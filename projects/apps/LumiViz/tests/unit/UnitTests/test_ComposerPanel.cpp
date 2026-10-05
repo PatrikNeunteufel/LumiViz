@@ -34,6 +34,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
+#include <QDoubleSpinBox>
 #include <QKeyEvent>
 #include <QElapsedTimer>
 #include <QLabel>
@@ -489,6 +490,42 @@ TEST_SUITE("ComposerPanel")
         REQUIRE(ladeKomposition(datei, gelesen));
         CHECK(gelesen.kanaele[0].visual[0].endeMs == 27000);
         CHECK(gelesen.kanaele[1].visual[0].mischart == Mischart::Maximum);
+
+        // --- das Ende (Befund Patrik S95): es folgt dem letzten Clip, bis „Fixed end" gesetzt ist
+        auto* endeFest = panel.findChild<QCheckBox*>(QStringLiteral("composerFixedEnd"));
+        auto* endeZeit = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerEndTime"));
+        REQUIRE(endeFest != nullptr);
+        REQUIRE(endeZeit != nullptr);
+        CHECK(endeFest->isEnabled());
+        CHECK_FALSE(endeFest->isChecked());
+        CHECK_FALSE(endeZeit->isEnabled());
+        CHECK(endeZeit->value() == doctest::Approx(60.0));
+        zug(60000, 50000, 0, Qt::NoModifier, -3);  // die rechte Kante des letzten Clips hinein
+        CHECK(ch1()[1].endeMs == 50000);
+        CHECK(sitzung->laengeMs() == 52000);  // jetzt endet der Clip in CH2 zuletzt
+        CHECK(endeZeit->value() == doctest::Approx(52.0));
+        endeFest->click();  // fest: an der heutigen Stelle
+        CHECK(sitzung->komposition().laengeMs == 52000);
+        CHECK(endeZeit->isEnabled());
+        endeZeit->setValue(70.0);
+        CHECK(sitzung->laengeMs() == 70000);
+        zug(50000, 40000, 0, Qt::NoModifier, -3);  // der Clip wird kuerzer — das feste Ende bleibt
+        CHECK(ch1()[1].endeMs == 40000);
+        CHECK(sitzung->laengeMs() == 70000);
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+        {
+            QCoreApplication::processEvents();
+            CHECK(panel.grab().save(bild + QStringLiteral(".ende.png")));
+        }
+        endeFest->click();  // wieder folgen
+        CHECK(sitzung->komposition().laengeMs == 0);
+        CHECK(sitzung->laengeMs() == 52000);
+        CHECK_FALSE(endeZeit->isEnabled());
+        for (int i = 0; i < 5; ++i) REQUIRE(bus->undo());  // folgen, kuerzer, 70 s, fest, Kante
+        CHECK(ch1()[1].endeMs == 60000);
+        CHECK(sitzung->laengeMs() == 60000);
+        CHECK_FALSE(endeFest->isChecked());
+        CHECK_FALSE(sitzung->ungespeichert());
 
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
         REQUIRE(sitzung->lade(datei));

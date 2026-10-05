@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.11.0
+> **Version:** 0.11.1
 > **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -181,6 +181,16 @@ Komposition
   lang wie zuvor. Beim Verschieben wandert die Kurve unverändert mit.
 - **Einrasten** (Bedienung): auf die Kanten anderer Clips (aller Kanäle) und
   die Abspielmarke, sonst auf das Raster der Datei; mit Alt frei.
+- **Das Ende der Komposition** (Befund und Vorgabe Patrik S95): es **folgt
+  dem letzten Clip** — wird er kürzer, verschoben oder gelöscht, kommt das
+  Ende mit, und Loop bzw. die Einstellung zum Ende greifen dort. Das ist die
+  Vorgabe (`length` 0 oder nicht gesetzt). Mit **Fixed end** im Panel steht
+  das Ende fest (`length` in Millisekunden): die Komposition läuft bis
+  dorthin, auch wenn kein Clip mehr liegt; die leere Strecke ist schraffiert,
+  das Ende trägt eine eigene Marke. Ein festes Ende wächst nur, wenn ein Clip
+  darüber hinausgezogen wird. **Beim Lesen** gilt eine Länge, die genau das
+  Ende des letzten Clips ist, als „folgt" — sie sagt nichts Eigenes (so
+  stand es in `composer_demo.lvcomp`, und so entstand der Befund).
 - **Kanal wechseln** (Wunsch Patrik S95): ein Clip, der beim Verschieben in
   eine andere Zeile gezogen wird, zieht in diesen Kanal um — mit derselben
   Regel am Nachbarn und denselben Tasten.
@@ -644,6 +654,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.11.1 | 2026-10-05 | Session 95 — **Sichttest S95b (C3a) durch (Patrik). Befund daraus: das Ende wanderte nicht mit** — wurden Clips verschoben oder verkürzt, lief die Komposition bis zur alten Endzeit schwarz weiter, und Loop / Ende-Einstellung griffen erst dort. Ursache: die Datei trug eine feste Länge (gleich dem Ende des letzten Clips), und beim Bearbeiten wuchs sie nur. Nachgestellt in `test_ComposerBearbeiten.cpp` (der Test schlug vor dem Fix fehl), behoben: beim Lesen gilt eine Länge, die genau das Ende des letzten Clips ist, als „folgt dem letzten Clip" (Vorgabe Patrik); `Komposition::clipEnde`. **Neu im Panel:** Schalter **Fixed end** mit Zeitfeld (nur im Edit, über Undo), bei festem Ende eine eigene Marke und die leere Strecke schraffiert (§6). 889 Cases |
 | 0.11.0 | 2026-10-05 | Session 95 — **Stufe C3a: Bearbeiten, was da ist.** C3 in drei Teile geschnitten: C3a (Schalter Edit, verschieben, Kanten, löschen, Mischart, Undo, Save), C3b (Presets hineinziehen, Kanäle anlegen, New / Load), C3c (Sync on Effect Chain). **Entscheid Patrik:** trifft ein gezogener Clip auf einen Nachbarn, hält er an; mit Ctrl wird der Nachbar gekürzt, mit Ctrl+Shift rücken die Nachbarn mit (§6). **CH1 steht oben** (Entscheid Patrik, §7). Gebaut: `composer/Bearbeiten` (reines Modell: `verschiebeClip`, `versetzeClip` — der Clip wechselt per Ziehen den Kanal, Wunsch Patrik —, `zieheKante`, `loescheClip`, `setzeGrenzen`); die Pegelkurve bleibt beim Ziehen einer Kante an ihrer Kante; `Sitzung::setzeKomposition` (die geänderte Fassung läuft an derselben Stelle weiter — die Renderer der Clips legen sich dabei neu an), `ungespeichert`, `speichere`, `speichereNach`; im Panel Schalter **Edit** (nach jedem Start aus), Ziehen mit Einrasten auf Raster, Clip-Kanten und Abspielmarke (Alt frei, Esc bricht ab), Entf, Auswahl **Blend**, **Save** / **Save As...**, Stern am Dateinamen; **Undo / Redo über den CommandBus der App** (Edit → Undo, Ctrl+Z), Schritte einer früheren Ladung gelten nicht mehr. Rückfrage Save / Discard / Cancel vor Open, Close und — **Naht N10** — beim Beenden. Belegt: `test_ComposerBearbeiten.cpp` (sechs Fälle, reines Modell), `test_ComposerPanel.cpp` (Ziehen mit und ohne Tasten, Kanalwechsel, Undo, Save an der echten Fassade), `test_ComposerSitzung.cpp` (bearbeiten im Lauf); 888 Cases. **Offen:** ein Edit bei laufendem Composer legt alle Renderer neu an (Visuals beginnen von vorn); die Rückfrage-Dialoge sind nur im Programm zu prüfen |
 | 0.10.4 | 2026-10-05 | Session 95 — **Stufe C2b im Programm gesehen** (Patrik, Sichttest S95 nach der Liste `Sichttests_S95.md`, ohne das Sichttest-Werkzeug: alles in Ordnung). **Aus dem Log der App belegt** (Release-clang, RTX 4090): die Zusammenfassung beim Beenden mit eingeschaltetem Composer steht jetzt im Log (10:59:24, 10:59:47, 11:00:07 — der Befund aus S94 war bis heute im echten Programm nicht gesehen); ohne Resume kommt die Komposition nach dem Neustart ins Panel („restored composition", kein „on"); mit Resume setzt sie an der Stelle des Beendens fort (beendet bei 2,2 s, „resumed at 2 s", der erste Clip läuft bei 2,20 s an). Rückbau-Liste: Kennungen der drei Naht-Commits eingetragen |
 | 0.10.3 | 2026-10-05 | Session 95 — **C2b, die drei Nähte gebaut:** N8 — Anmeldung des Panels `composer` in `PanelAutoReg.cpp` (View → Panels → Composer); N4 — ein verzögerter Aufruf im Konstruktor von `MainWindow` stellt die zuletzt geladene Komposition wieder her; N9 — im Reiter Panels der Settings die Auswahlen **Open Composition** und **End of a Composition**. Rückbau-Liste um die Nähte erweitert. §7 ergänzt (Wünsche Patrik): das Panel dockt wie jedes andere; für C3 der Schalter **Edit** (Bearbeiten nur bei eingeschaltetem Schalter, nicht zu verwechseln mit Lock); für C4 Übergänge auch als Bézier-Kurve |

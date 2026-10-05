@@ -27,6 +27,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QDoubleSpinBox;
 class QLabel;
 class QPushButton;
 class VisualizerWidget;
@@ -171,6 +172,8 @@ private:
     /// Dateiname mit Stern und die Knoepfe Save / Save As.
     void zeigeDatei();
     void zeigeClip();
+    /// Der Schalter „Fixed end" und seine Zeit.
+    void zeigeEnde();
     /// Eine Aenderung ausfuehren — ueber den CommandBus der App (Undo / Redo),
     /// ohne ihn direkt.
     void bearbeite(const Komposition& neu, const QString& was);
@@ -192,6 +195,8 @@ private:
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
     QComboBox* m_mischart = nullptr;
+    QCheckBox* m_endeFest = nullptr;
+    QDoubleSpinBox* m_endeZeit = nullptr;
     int m_gezeigt = -1;  ///< was Schalter und Knoepfe zuletzt zeigten
 };
 

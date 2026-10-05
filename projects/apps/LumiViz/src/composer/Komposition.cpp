@@ -108,7 +108,11 @@ void VisualClip::setzeBlenden(std::int64_t einMs, std::int64_t ausMs, Kurvenform
 
 std::int64_t Komposition::laenge() const
 {
-    if (laengeMs > 0) return laengeMs;
+    return laengeMs > 0 ? laengeMs : clipEnde();
+}
+
+std::int64_t Komposition::clipEnde() const
+{
     std::int64_t ende = 0;
     for (const Kanal& k : kanaele)
         for (const VisualClip& c : k.visual) ende = std::max(ende, c.endeMs);
@@ -280,6 +284,11 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
         neu.kanaele.push_back(std::move(kanal));
     }
     neu.richte(bericht);
+    // Eine Laenge, die genau das Ende des letzten Clips ist, sagt nichts
+    // Eigenes: dann folgt das Ende dem letzten Clip (Befund Patrik S95 — wird
+    // ein Clip kuerzer, soll die Komposition nicht leer weiterlaufen). Fest
+    // bleibt nur, was davon abweicht.
+    if (neu.laengeMs == neu.clipEnde()) neu.laengeMs = 0;
     komposition = std::move(neu);
     return true;
 }

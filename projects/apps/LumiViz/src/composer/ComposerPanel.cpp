@@ -16,6 +16,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -234,8 +235,32 @@ void Zeitachse::paintEvent(QPaintEvent*)
         else
             p.drawText(QRect(x + 3, 0, 80, kLinealHoehe - 4), Qt::AlignLeft | Qt::AlignVCenter, marke);
     }
-    p.setPen(linie);
-    p.drawLine(xVon(m_laengeMs), 0, xVon(m_laengeMs), unten);  // das Ende
+    // --- das Ende: folgt es dem letzten Clip, eine duenne Linie; ist es fest
+    //     gesetzt, eine eigene Marke — und die leere Strecke davor schraffiert
+    const std::int64_t endeMs = m_komposition.laenge();
+    const int xEnde = xVon(endeMs);
+    if (m_komposition.laengeMs > 0)
+    {
+        const QColor fest(240, 170, 60);
+        const int xClips = xVon(std::min(m_komposition.clipEnde(), endeMs));
+        if (xEnde > xClips)
+        {
+            QColor strich = fest;
+            strich.setAlpha(90);
+            p.fillRect(QRect(xClips, kLinealHoehe, xEnde - xClips, unten - kLinealHoehe),
+                       QBrush(strich, Qt::BDiagPattern));
+        }
+        p.setPen(QPen(fest, 2.0));
+        p.drawLine(xEnde, 0, xEnde, unten);
+        p.setBrush(fest);
+        p.drawPolygon(QPolygon({QPoint(xEnde - 6, 0), QPoint(xEnde + 6, 0), QPoint(xEnde, 9)}));
+        p.setBrush(Qt::NoBrush);
+    }
+    else
+    {
+        p.setPen(linie);
+        p.drawLine(xEnde, 0, xEnde, unten);
+    }
 
     // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
     p.setFont(font());
@@ -658,6 +683,39 @@ void ComposerPanel::setupUI()
     m_clipZeile->setTextInteractionFlags(Qt::TextSelectableByMouse);
     auto* fuss = new QHBoxLayout();
     fuss->addWidget(m_clipZeile, 1);
+    // Das Ende der Komposition: folgt dem letzten Clip — oder steht fest
+    m_endeFest = new QCheckBox(tr("Fixed end"), this);
+    m_endeFest->setObjectName(QStringLiteral("composerFixedEnd"));
+    m_endeFest->setToolTip(
+        tr("Off: the composition ends where its last clip ends — shorten or move the last clip "
+           "and the end follows.\n\n"
+           "On: the composition ends at the time on the right, even when no clip is left; the "
+           "empty stretch is hatched and the end carries its own marker. Loop and the end "
+           "setting act there. Can be changed while Edit is on."));
+    fuss->addWidget(m_endeFest);
+    m_endeZeit = new QDoubleSpinBox(this);
+    m_endeZeit->setObjectName(QStringLiteral("composerEndTime"));
+    m_endeZeit->setDecimals(1);
+    m_endeZeit->setSingleStep(1.0);
+    m_endeZeit->setRange(0.1, 86400.0);
+    m_endeZeit->setSuffix(tr(" s"));
+    m_endeZeit->setKeyboardTracking(false);
+    fuss->addWidget(m_endeZeit);
+    fuss->addSpacing(12);
+    connect(m_endeFest, &QCheckBox::clicked, this, [this](bool fest) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.laengeMs = fest ? neu.laenge() : 0;
+        bearbeite(neu, fest ? tr("Fix the end") : tr("Let the end follow the last clip"));
+        zeigeEnde();
+    });
+    connect(m_endeZeit, &QDoubleSpinBox::valueChanged, this, [this](double sekunden) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen() || m_sitzung->komposition().laengeMs <= 0)
+            return;
+        Komposition neu = m_sitzung->komposition();
+        neu.laengeMs = static_cast<std::int64_t>(sekunden * 1000.0 + 0.5);
+        bearbeite(neu, tr("Change the end"));
+    });
     auto* mischTitel = new QLabel(tr("Blend:"), this);
     fuss->addWidget(mischTitel);
     m_mischart = new QComboBox(this);
@@ -672,6 +730,7 @@ void ComposerPanel::setupUI()
     connect(m_edit, &QCheckBox::toggled, this, [this](bool an) {
         m_zeitachse->setBearbeiten(an);
         zeigeClip();
+        zeigeEnde();
     });
     connect(m_zeitachse, &Zeitachse::bearbeitet, this,
             [this](const Komposition& neu, const QString& was) { bearbeite(neu, was); });
@@ -732,6 +791,7 @@ void ComposerPanel::setFenster(VisualizerWidget* fenster)
         connect(m_sitzung, &Sitzung::kompositionGeaendert, this, [this] { zeigeKomposition(); });
         connect(m_sitzung, &Sitzung::kompositionBearbeitet, this, [this] {
             m_zeitachse->zeigeBearbeitet(m_sitzung->komposition());
+            zeigeEnde();
         });
         connect(m_sitzung, &Sitzung::geaendert, this, [this] {
             zeigeStand();
@@ -775,6 +835,19 @@ void ComposerPanel::zeigeKomposition()
     zeigeDatei();
     zeigeStand();
     zeigeClip();
+    zeigeEnde();
+}
+
+void ComposerPanel::zeigeEnde()
+{
+    const bool geladen = m_sitzung != nullptr && m_sitzung->geladen();
+    const bool fest = geladen && m_sitzung->komposition().laengeMs > 0;
+    const bool bearbeiten = geladen && m_zeitachse->bearbeiten();
+    m_endeFest->setChecked(fest);
+    m_endeFest->setEnabled(bearbeiten);
+    m_endeZeit->setEnabled(bearbeiten && fest);
+    const QSignalBlocker ruhe(m_endeZeit);
+    m_endeZeit->setValue(geladen ? static_cast<double>(m_sitzung->laengeMs()) / 1000.0 : 0.1);
 }
 
 void ComposerPanel::zeigeDatei()

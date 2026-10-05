@@ -298,6 +298,37 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(k.kanaele[0].visual.size() == 3);
     }
 
+    TEST_CASE("C3a Ende (Befund Patrik S95): das Ende folgt dem letzten Clip — ausser es ist fest gesetzt")
+    {
+        // Eine Datei, deren Laenge genau das Ende des letzten Clips ist (wie
+        // composer_demo.lvcomp), sagt damit nichts Eigenes: das Ende folgt.
+        Komposition k = probe();
+        k.laengeMs = 45000;
+        Komposition gelesen;
+        REQUIRE(ausJson(alsJson(k), gelesen));
+        CHECK(gelesen.laengeMs == 0);
+        CHECK(gelesen.laenge() == 45000);
+        REQUIRE(zieheKante(gelesen, 0, 2, false, 38000) == 2);  // der letzte Clip wird kuerzer
+        CHECK(gelesen.laenge() == 38000);                        // — das Ende kommt mit
+        REQUIRE(loescheClip(gelesen, 0, 2));
+        CHECK(gelesen.laenge() == 30000);
+
+        // Eine Laenge UEBER das Ende des letzten Clips hinaus ist gewollt: sie bleibt fest.
+        k.laengeMs = 60000;
+        REQUIRE(ausJson(alsJson(k), gelesen));
+        CHECK(gelesen.laengeMs == 60000);
+        REQUIRE(zieheKante(gelesen, 0, 2, false, 38000) == 2);
+        CHECK(gelesen.laenge() == 60000);
+        // ... und waechst nur, wenn ein Clip darueber hinausragt
+        REQUIRE(zieheKante(gelesen, 0, 2, false, 70000) == 2);
+        CHECK(gelesen.laenge() == 70000);
+
+        // Eine Laenge VOR dem Ende des letzten Clips schneidet ab — auch gewollt.
+        k.laengeMs = 40000;
+        REQUIRE(ausJson(alsJson(k), gelesen));
+        CHECK(gelesen.laengeMs == 40000);
+    }
+
     TEST_CASE("C3a Laenge, Loeschen, Unsinn")
     {
         // eine gesetzte Laenge waechst mit; ohne gesetzte Laenge bleibt sie offen
