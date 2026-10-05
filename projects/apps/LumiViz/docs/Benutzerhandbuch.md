@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.84.1
+> **Version:** 1.85.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1700,9 +1700,20 @@ Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
 - ***File → Close Composition*** nimmt die Komposition weg — das Bild kommt
   wieder von der Effektkette.
 
-Die Effektkette bleibt die ganze Zeit geladen. Solange der Composer an ist,
-zeigt das Panel **Effect Chain** weiter diese Kette; was du dort änderst,
-siehst du erst, wenn der Composer aus ist.
+Die Effektkette der App bleibt die ganze Zeit geladen; ist der Composer aus,
+zeigt das Panel **Effect Chain** sie wie immer.
+
+**Sync on Effect Chain** (Haken im Panel Composer) bestimmt, was Effect Chain
+zeigt, solange eine Komposition das Bild liefert:
+
+- **An:** die Kette des Clips, der im Composer angeklickt ist. Änderungen
+  wirken sofort im gemischten Bild — auch bei Pause. Der Clip muss dafür
+  nicht gerade laufen; zu sehen ist die Änderung, sobald seine Stelle dran ist.
+- **Aus (Standard):** Effect Chain ruht — der Kettenbaum ist leer und grau.
+
+> Die Änderungen an der Kette eines Clips lassen sich **noch nicht
+> speichern**; klickst du einen anderen Clip an oder schaltest den Composer
+> aus, sind sie weg. Das Speichern folgt.
 
 ### Das Panel Composer
 
@@ -1896,6 +1907,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.85.0 | 2026-10-05 | Session 95. §15 Composer NEU **Sync on Effect Chain**: Effect Chain zeigt bei laufender Komposition die Kette des angeklickten Clips (Änderungen wirken sofort) oder ruht; Speichern dieser Änderungen noch nicht möglich. Die Datei-Knöpfe des Panels stehen in einer eigenen Zeile |
 | 1.84.1 | 2026-10-05 | Session 95. §15 Composer: beim Bearbeiten einer laufenden Komposition laufen die Presets der Clips jetzt weiter (bisher begannen sie von vorn) |
 | 1.84.0 | 2026-10-05 | Session 95. §15 Composer NEU **Ein- und Ausblenden** im Panel: zwei Griffe oben im Clip für die Länge, Rechtsklick → *Fade in* / *Fade out* für die Form (sieben Formen), NEU die Form **Bezier** mit zwei ziehbaren Anfassern; Datei: `curve` 6 und Feld `bezier` |
 | 1.83.0 | 2026-10-05 | Session 95. §15 Composer NEU **Neues hinein**: Knöpfe **New** und **Load...**, Presets aus dem Effect Browser oder Explorer in einen Kanal ziehen (20 s, mehrere hintereinander, unter die letzte Zeile = neuer Kanal), Rechtsklick für *Add channel*, *Rename channel...*, *Channel enabled*, *Delete channel*, *Delete clip*; Hinweis bei Ketten mit Host Switcher; die Zeitachse zeigt Luft hinter dem Ende |

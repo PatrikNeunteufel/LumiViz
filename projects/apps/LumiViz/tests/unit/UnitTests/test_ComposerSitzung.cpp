@@ -26,7 +26,10 @@
 #include "composer/Bildquelle.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Sitzung.hpp"
+#include "services/EventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QApplication>
@@ -311,6 +314,160 @@ TEST_SUITE("ComposerSitzung")
             CHECK(sitzung.stelleMs() == 2000);
             REQUIRE(sitzung.speichere());
             CHECK(sitzung.ladung() == ladung);
+        }
+
+        SUBCASE("C3c Sync on Effect Chain: am angeklickten Clip, sonst in Ruhe — und nie an etwas, das es nicht mehr gibt")
+        {
+            // Der Bus der App: Effect Chain und Visualizer Config folgen diesem Ereignis.
+            struct BusFuerDieDauer
+            {
+                EventBus bus;
+                BusFuerDieDauer() { Sitzung::setzeBus(&bus); }
+                ~BusFuerDieDauer() { Sitzung::setzeBus(nullptr); }
+            } dienst;
+            std::vector<void*> gemeldet;
+            dienst.bus.subscribe<VisualizerChangedEvent>(
+                [&](const VisualizerChangedEvent& e) { gemeldet.push_back(e.visualizerPtr); });
+            void* const kette = static_cast<void*>(widget.visualizer());
+            const auto alsMeldung = [](MultiEffectVisualizer* r) {
+                return static_cast<void*>(static_cast<IVisualizer*>(r));
+            };
+
+            // CH1: Rot 0–30 s, Blau 30–60 s
+            const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+            Komposition k;
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH1");
+            VisualClip a;
+            a.datei = rot;
+            a.startMs = 0;
+            a.endeMs = 30000;
+            VisualClip b = a;
+            b.datei = blau;
+            b.startMs = 30000;
+            b.endeMs = 60000;
+            kanal.visual = {a, b};
+            k.kanaele = {kanal};
+            const QString zwei = dir.filePath(QStringLiteral("zwei.lvcomp"));
+            REQUIRE(speichereKomposition(k, zwei));
+
+            // geladen, Composer aus: Effect Chain bleibt an der Kette — nichts wird gemeldet
+            REQUIRE(sitzung.lade(zwei));
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Kette);
+            CHECK(gemeldet.empty());
+
+            // Composer an, Sync aus: Effect Chain ruht (zuletzt gemeldet: nichts)
+            CHECK_FALSE(sitzung.sync());
+            sitzung.setAn(true);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Ruht);
+            REQUIRE(gemeldet.size() == 2);
+            CHECK(gemeldet[0] == kette);  // erst die Kette — Visualizer Config uebergeht „nichts"
+            CHECK(gemeldet[1] == nullptr);
+
+            // Sync an, aber kein Clip angeklickt: ruht weiter
+            sitzung.setSync(true);
+            CHECK(QSettings().value(QStringLiteral("composer/syncEffectChain")).toBool());
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Ruht);
+
+            // ein Clip angeklickt: Effect Chain haengt an seinem Renderer
+            sitzung.waehleClip(0, 0);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Clip; }));
+            MultiEffectVisualizer* const erster = sitzung.gebundenerRenderer();
+            REQUIRE(erster != nullptr);
+            CHECK(gemeldet.back() == alsMeldung(erster));
+            CHECK(gemeldet.back() != kette);
+            CHECK(bildJetzt() == kRot);
+
+            // seine Kette aendern, wie es Effect Chain tut: sofort im Bild — auch bei stehender Uhr
+            CHECK_FALSE(sitzung.laeuft());
+            const QColor kGruen(0, 255, 0);
+            {
+                ChainNode wurzel;
+                wurzel.params = ListParams{};
+                ChainNode fuellen;
+                ClearParams cp;
+                cp.color = 0x00FF00;
+                fuellen.params = cp;
+                wurzel.children.push_back(std::move(fuellen));
+                QMutexLocker halt(&widget.renderMutex());
+                (void)erster->setChain(std::move(wurzel));
+            }
+            CHECK(bildJetzt() == kGruen);
+
+            // die Komposition bearbeiten (der Clip wird kuerzer, der andere rueckt vor):
+            // derselbe Renderer, die geaenderte Kette bleibt, nichts wird neu gemeldet
+            const auto meldungen = gemeldet.size();
+            Komposition bearbeitet = sitzung.komposition();
+            bearbeitet.kanaele[0].visual[0].endeMs = 20000;
+            bearbeitet.kanaele[0].visual[1].startMs = 20000;
+            sitzung.setzeKomposition(bearbeitet);
+            REQUIRE(warte([&] { return sitzung.laengeMs() == 60000; }));
+            for (int i = 0; i < 12; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            CHECK(bildJetzt() == kGruen);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Clip);
+            CHECK(sitzung.gebundenerRenderer() == erster);
+            CHECK(gemeldet.size() == meldungen);
+
+            // der Clip zieht an einen anderen Platz (hinter den zweiten): die Auswahl nennt ihn
+            // unter seiner neuen Nummer — immer noch derselbe Renderer
+            Komposition vertauscht = sitzung.komposition();
+            vertauscht.kanaele[0].visual[0].startMs = 70000;
+            vertauscht.kanaele[0].visual[0].endeMs = 90000;
+            sitzung.waehleClip(0, 1);  // wie das Panel: erst die Auswahl,
+            sitzung.setzeKomposition(vertauscht);  // dann die neue Fassung
+            for (int i = 0; i < 12; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            REQUIRE(nimmAuf());
+            CHECK(sitzung.komposition().kanaele[0].visual[1].datei == rot);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Clip);
+            CHECK(sitzung.gebundenerRenderer() == erster);
+            CHECK(gemeldet.size() == meldungen);
+
+            // ein anderer Clip angeklickt: erst zurueck an die Kette, dann an den neuen
+            sitzung.waehleClip(0, 0);  // Blau
+            REQUIRE(warte([&] {
+                return sitzung.bindung() == Sitzung::Bindung::Clip && sitzung.gebundenerRenderer() != erster;
+            }));
+            MultiEffectVisualizer* const zweiter = sitzung.gebundenerRenderer();
+            REQUIRE(zweiter != nullptr);
+            REQUIRE(gemeldet.size() >= meldungen + 2);
+            CHECK(gemeldet[gemeldet.size() - 2] == kette);
+            CHECK(gemeldet.back() == alsMeldung(zweiter));
+
+            // der angeklickte Clip wird geloescht: Effect Chain ruht — der Zeiger, den sie
+            // bis dahin hielt, blieb gueltig (hier: der Lauf endet nicht in einem Absturz)
+            Komposition ohne = sitzung.komposition();
+            ohne.kanaele[0].visual.erase(ohne.kanaele[0].visual.begin());
+            sitzung.waehleClip(-1, -1);
+            sitzung.setzeKomposition(ohne);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Ruht; }));
+            CHECK(gemeldet.back() == nullptr);
+            CHECK(gemeldet[gemeldet.size() - 2] == kette);
+
+            // wieder der verbliebene Clip (Rot mit der geaenderten Kette — sie ging mit dem
+            // Abwaehlen verloren: er laedt neu aus seiner Datei)
+            sitzung.waehleClip(0, 0);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Clip; }));
+            CHECK(sitzung.gebundenerRenderer() != nullptr);
+
+            // Sync aus: ruht; Composer aus: zurueck an die Kette der App
+            sitzung.setSync(false);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Ruht);
+            CHECK(gemeldet.back() == nullptr);
+            sitzung.setSync(true);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Clip; }));
+            sitzung.setAn(false);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Kette);
+            CHECK(gemeldet.back() == kette);
+            CHECK(bildJetzt() != kGruen);
+
+            // ohne Bus (das Composer-Panel gab es nie): nichts wird gemeldet, nichts gebunden
+            Sitzung::setzeBus(nullptr);
+            const auto vorher = gemeldet.size();
+            sitzung.setAn(true);
+            for (int i = 0; i < 6; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Kette);
+            CHECK(gemeldet.size() == vorher);
+            sitzung.entlade();
         }
 
         SUBCASE("Oeffnen von Hand: spielt sofort — oder haelt am Anfang (Einstellung)")

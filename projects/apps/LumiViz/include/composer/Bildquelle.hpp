@@ -25,6 +25,7 @@
 
 #include "composer/Komposition.hpp"
 #include "composer/Uhr.hpp"
+#include "composer/Wiedergabe.hpp"
 #include "visualizers/IVisualizer.hpp"
 
 #include <QElapsedTimer>
@@ -130,6 +131,31 @@ public:
     /// Die Uhr ist am Ende von selbst zum Stehen gekommen.
     [[nodiscard]] bool standAmEnde() const { return m_standAmEnde.load(); }
 
+    // --- Ein Clip fuer Effect Chain festhalten (C3c) — GUI unter dem Mutex ---
+    //
+    // Ablauf der GUI-Seite: `haltFest` (Wunsch) → warten, bis `festAngewandt`
+    // → `festerRenderer` (ab da ist er geschuetzt) → die Oberflaeche daran
+    // binden. Loesen: erst die Oberflaeche woanders binden, dann `gibFrei`.
+
+    /// Diesen Clip festhalten: er behaelt einen Renderer, auch wenn er nicht
+    /// laeuft. (-1, -1) = keinen. Wirkt mit dem naechsten Bild.
+    void haltFest(int kanal, int clip);
+    /// Hat der Render-Thread den letzten Wunsch (und eine wartende Fassung
+    /// der Komposition) schon verarbeitet? OHNE Mutex lesbar.
+    [[nodiscard]] bool festAngewandt() const { return m_angewandtNr.load() == m_wunschNr.load(); }
+    /// Der Renderer des festgehaltenen Clips, nullptr = (noch) keiner. Was
+    /// hier herausgegeben wird, loescht die Bildquelle nicht, bis `gibFrei`
+    /// gerufen ist — auch nicht, wenn sein Clip verschwindet oder der
+    /// GL-Kontext geht.
+    [[nodiscard]] MultiEffectVisualizer* festerRenderer();
+    /// Derselbe Zeiger, nur zum Vergleichen: nichts wird dadurch geschuetzt.
+    [[nodiscard]] const MultiEffectVisualizer* festerRendererNurSehen() const;
+    /// Die Oberflaeche haengt nicht mehr am herausgegebenen Renderer.
+    void gibFrei();
+    /// Zaehlt jedes Mal, wenn der festgehaltene Clip einen anderen Renderer
+    /// hat als im Bild davor (auch: keinen mehr). OHNE Mutex lesbar.
+    [[nodiscard]] int festStand() const { return m_festStand.load(); }
+
     // --- Auskunft (Stand des letzten Bilds) --------------------------------
     [[nodiscard]] std::int64_t letzteStelleMs() const { return m_letzteStelle; }
     [[nodiscard]] int rendererAnzahl() const;
@@ -181,6 +207,17 @@ private:
     Komposition m_wartend;                     ///< gesetzt, aber noch nicht uebernommen
     bool m_neueKomposition = false;
     bool m_nurErsetzen = false;  ///< die wartende ist die bearbeitete Fassung der laufenden
+
+    // der festgehaltene Clip (C3c)
+    int m_festKanal = -1;  ///< der Wunsch der GUI
+    int m_festClip = -1;
+    Parkplatz m_park;
+    bool m_parkLeeren = false;  ///< der geparkte Renderer ist frei: mit dem naechsten Bild loeschen
+    bool m_dieselbeNachAnlegen = false;  ///< nach cleanup wartet dieselbe Komposition wieder
+    std::atomic<int> m_wunschNr{0};     ///< zaehlt Wuensche und neue Fassungen (GUI)
+    std::atomic<int> m_angewandtNr{0};  ///< was der Render-Thread davon verarbeitet hat
+    std::atomic<int> m_festStand{0};
+    MultiEffectVisualizer* m_festZuletzt = nullptr;  ///< nur zum Vergleichen, nie benutzen
     QStringList m_richtBericht;
     QStringList m_anlaufZuletzt;  ///< Anlauf-Zeilen der Clips beim letzten cleanup
 

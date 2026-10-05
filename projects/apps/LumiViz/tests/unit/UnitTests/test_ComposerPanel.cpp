@@ -241,7 +241,9 @@ TEST_SUITE("ComposerPanel")
         klick(*achse, QPoint(achse->xVon(30000), 6));
         CHECK(sitzung->stelleMs() == achse->stelleVon(achse->xVon(30000)));
         CHECK_FALSE(sitzung->an());
-        CHECK(zeit->text().startsWith(QStringLiteral("0:30.0")));
+        // die Zeit zeigt die Stelle des Klicks (auf den Pixel gerundet)
+        CHECK(zeit->text().startsWith(ComposerPanel::zeitText(sitzung->stelleMs())));
+        CHECK(sitzung->stelleMs() == doctest::Approx(30000).epsilon(0.01));
 
         // --- Composer on
         an->click();

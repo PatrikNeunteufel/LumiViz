@@ -117,6 +117,51 @@ void Bildquelle::setKomposition(Komposition komposition)
     m_wartend = std::move(komposition);
     m_neueKomposition = true;
     m_nurErsetzen = false;
+    ++m_wunschNr;  // erst mit dem naechsten Bild gilt wieder, was `festerRenderer` sagt
+}
+
+// =============================================================================
+// Ein Clip fuer Effect Chain festhalten (C3c)
+// =============================================================================
+
+void Bildquelle::haltFest(int kanal, int clip)
+{
+    if (kanal == m_festKanal && clip == m_festClip) return;
+    m_festKanal = kanal;
+    m_festClip = clip;
+    ++m_wunschNr;
+}
+
+const MultiEffectVisualizer* Bildquelle::festerRendererNurSehen() const
+{
+    const MultiEffectVisualizer* renderer = nullptr;
+    if (m_wiedergabe != nullptr)
+    {
+        const auto fest = m_wiedergabe->fest();
+        renderer = m_wiedergabe->rendererVon(fest.first, fest.second);
+    }
+    // Zwischen Aufraeumen und Anlegen (der GL-Kontext war weg) wartet er geparkt.
+    if (renderer == nullptr && m_park.adoptierbar) renderer = m_park.geparkt.get();
+    return renderer;
+}
+
+MultiEffectVisualizer* Bildquelle::festerRenderer()
+{
+    auto* renderer = const_cast<MultiEffectVisualizer*>(festerRendererNurSehen());
+    if (renderer == nullptr) return nullptr;
+    m_park.geschuetzt = renderer;
+    // Ein frueher herausgegebener, inzwischen geparkter Renderer ist damit frei.
+    if (m_park.geparkt != nullptr && m_park.geparkt.get() != renderer && !m_park.adoptierbar)
+        m_parkLeeren = true;
+    return renderer;
+}
+
+void Bildquelle::gibFrei()
+{
+    m_park.geschuetzt = nullptr;
+    // Ein geparkter Renderer, den kein Clip wiederbekommt, kann jetzt gehen —
+    // geloescht wird auf dem Render-Thread (er hat den GL-Kontext).
+    if (m_park.geparkt != nullptr && !m_park.adoptierbar) m_parkLeeren = true;
 }
 
 void Bildquelle::ersetzeKomposition(Komposition komposition)
@@ -197,6 +242,7 @@ QStringList Bildquelle::bericht() const
 void Bildquelle::initialize()
 {
     m_wiedergabe = std::make_unique<Wiedergabe>();
+    m_wiedergabe->setParkplatz(&m_park);
     m_versorgt.clear();
     m_bildSteht = false;
     m_letzteStelle = -1;
@@ -221,8 +267,14 @@ void Bildquelle::cleanup()
         if (m_messung.langeGesamt > 0 && !m_anlaufZuletzt.isEmpty()) m_anlaufZuletzt.removeFirst();
         // Die Komposition ueberlebt das Aufraeumen — ausser es wartet schon
         // eine neuere.
-        if (!m_neueKomposition) m_wartend = m_wiedergabe->komposition();
-        m_wiedergabe.reset();  // entlaedt alle Renderer, braucht den GL-Kontext
+        if (!m_neueKomposition)
+        {
+            m_wartend = m_wiedergabe->komposition();
+            m_dieselbeNachAnlegen = true;  // der festgehaltene Clip ist noch derselbe
+        }
+        // entlaedt alle Renderer (braucht den GL-Kontext); einen, an dem die
+        // Oberflaeche haengt, parkt sie stattdessen in m_park
+        m_wiedergabe.reset();
     }
     m_versorgt.clear();
     m_bildSteht = false;
@@ -235,21 +287,66 @@ void Bildquelle::render(float deltaTime)
     QOpenGLContext* kontext = QOpenGLContext::currentContext();
     if (!m_angelegt || m_wiedergabe == nullptr || kontext == nullptr || m_groesse.isEmpty()) return;
 
+    // Ein freigegebener, geparkter Renderer geht hier — mit dem GL-Kontext.
+    if (m_parkLeeren)
+    {
+        if (m_park.geparkt != nullptr && m_park.geparkt.get() != m_park.geschuetzt &&
+            !m_park.adoptierbar)
+            m_park.geparkt.reset();
+        m_parkLeeren = false;
+    }
+
+    const int wunschNr = m_wunschNr.load();  // was dieses Bild verarbeitet
     bool neu = false;
     if (m_neueKomposition)
     {
-        // Eine bearbeitete Fassung behaelt die Renderer ihrer Clips (C3c):
-        // das Visual laeuft weiter, statt von vorn zu beginnen.
         if (m_nurErsetzen)
+        {
+            // Eine bearbeitete Fassung behaelt die Renderer ihrer Clips (C3c):
+            // das Visual laeuft weiter, statt von vorn zu beginnen. Das
+            // Festhalten folgt dabei seinem Renderer an den neuen Platz —
+            // und mit ihm der Wunsch, wenn die GUI inzwischen nichts anderes
+            // verlangt hat (sie nennt denselben Clip sonst gleich selbst
+            // unter seiner neuen Nummer).
+            const std::pair<int, int> vorher = m_wiedergabe->fest();
             m_wiedergabe->ersetzeKomposition(std::move(m_wartend));
+            if (std::pair<int, int>{m_festKanal, m_festClip} == vorher)
+            {
+                const auto fest = m_wiedergabe->fest();
+                m_festKanal = fest.first;
+                m_festClip = fest.second;
+            }
+        }
         else
+        {
+            // Dieselbe Komposition nach dem Verlust des GL-Kontexts: der
+            // festgehaltene Clip bekommt seinen geparkten Renderer wieder.
+            const bool dieselbe = m_dieselbeNachAnlegen;
+            const bool adoptierbar = m_park.adoptierbar;
             m_wiedergabe->setKomposition(std::move(m_wartend));
+            if (dieselbe)
+            {
+                m_wiedergabe->setFest(m_festKanal, m_festClip, false);
+                m_park.adoptierbar = adoptierbar;
+            }
+        }
+        m_dieselbeNachAnlegen = false;
         m_wartend = Komposition{};
         m_neueKomposition = false;
         m_nurErsetzen = false;
         m_versorgt.clear();
         neu = true;
     }
+    // Der Wunsch der GUI: einen (anderen) Clip festhalten
+    if (m_wiedergabe->fest() != std::pair<int, int>{m_festKanal, m_festClip})
+        m_wiedergabe->setFest(m_festKanal, m_festClip, true);
+    // Ein neuer Wunsch rechnet einmal — auch bei stehender Uhr —, damit der
+    // festgehaltene Clip seinen Renderer bekommt.
+    if (wunschNr != m_angewandtNr.load()) neu = true;
+    // Haengt Effect Chain an einem Clip, wird auch bei stehender Uhr jedes
+    // Bild gerechnet (mit Zeitschritt null): eine Aenderung an seiner Kette
+    // soll sofort zu sehen sein, nicht erst nach Play.
+    if (m_park.geschuetzt != nullptr) neu = true;
 
     const bool laeuft = m_uhr.laeuft();
     const std::int64_t stelle = m_uhr.stelleMs();
@@ -280,6 +377,19 @@ void Bildquelle::render(float deltaTime)
         m_letzteGroesse = m_groesse;
         ++m_gerechnet;
         versorgeNeue();
+
+        // Der festgehaltene Clip (C3c): hat er einen anderen Renderer als im
+        // Bild davor, merkt es die GUI am Zaehler; der Wunsch ist verarbeitet.
+        {
+            const auto fest = m_wiedergabe->fest();
+            MultiEffectVisualizer* const jetzt = m_wiedergabe->rendererVon(fest.first, fest.second);
+            if (jetzt != m_festZuletzt)
+            {
+                m_festZuletzt = jetzt;
+                ++m_festStand;
+            }
+            m_angewandtNr.store(wunschNr);
+        }
 
         // --- Messung (C2a)
         if (m_messung.bilder == 0)

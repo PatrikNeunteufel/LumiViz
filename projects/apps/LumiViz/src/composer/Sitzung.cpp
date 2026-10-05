@@ -8,6 +8,9 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -30,6 +33,7 @@ const QLatin1String kResume("composer/resume");
 const QLatin1String kSchleife("composer/loop");
 const QLatin1String kOeffnenHaelt("composer/openHolds");
 const QLatin1String kAmEnde("composer/atEnd");
+const QLatin1String kSync("composer/syncEffectChain");
 // der Stand ueber den Neustart
 const QLatin1String kStandDatei("composer/session/file");
 const QLatin1String kStandAn("composer/session/on");
@@ -57,8 +61,10 @@ Sitzung::Sitzung(VisualizerWidget& widget) : QObject(&widget), m_widget(widget)
     // schon angehalten, die Bildquelle lebt noch.
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
         sichereStand();
+        loeseKette();  // die Panels nicht an einem Clip haengen lassen, wenn alles abgebaut wird
         protokolliereMessung();
     });
+    m_sync = QSettings().value(kSync, false).toBool();
 }
 
 Sitzung& Sitzung::fuer(VisualizerWidget& widget)
@@ -201,10 +207,13 @@ void Sitzung::setAn(bool an)
         m_widget.setBildquelle(std::move(neu));
         if (!this->an()) return;  // das Fenster hat keinen Render-Thread
         m_takt->start();
+        m_festStand = -1;
+        bindeKette();  // Effect Chain: an den angeklickten Clip oder zur Ruhe
         BasicLogger::logInfo("Composer: on");
     }
     else
     {
+        loeseKette();  // Effect Chain zurueck an die Kette, BEVOR die Renderer der Clips gehen
         protokolliereMessung();
         {
             QMutexLocker halt(&m_widget.renderMutex());
@@ -215,6 +224,144 @@ void Sitzung::setAn(bool an)
         BasicLogger::logInfo("Composer: off");
     }
     Q_EMIT geaendert();
+}
+
+// =============================================================================
+// Sync on Effect Chain (C3c)
+// =============================================================================
+
+namespace
+{
+IEventBus* g_bus = nullptr;
+}  // namespace
+
+void Sitzung::setzeBus(IEventBus* bus)
+{
+    g_bus = bus;
+}
+
+void Sitzung::setSync(bool an)
+{
+    if (an == m_sync) return;
+    m_sync = an;
+    QSettings().setValue(kSync, an);
+    bindeKette();
+    Q_EMIT geaendert();
+}
+
+void Sitzung::waehleClip(int kanal, int clip)
+{
+    if (kanal == m_wahlKanal && clip == m_wahlClip) return;
+    m_wahlKanal = kanal;
+    m_wahlClip = clip;
+    // Nicht sofort: mitten in einem Bearbeitungsschritt nennt die Auswahl den
+    // Clip schon unter seiner neuen Nummer, die Bildquelle kennt die neue
+    // Fassung aber noch nicht. Der naechste Takt sieht beides zusammen.
+    m_bindungOffen = true;
+}
+
+void Sitzung::meldeKette()
+{
+    if (g_bus == nullptr) return;
+    IVisualizer* kette = m_widget.visualizer();
+    g_bus->publish(VisualizerChangedEvent{
+        kette != nullptr ? kette->visualizerId().toStdString() : std::string(),
+        kette != nullptr ? kette->visualizerName().toStdString() : std::string(),
+        static_cast<void*>(kette), &m_widget.renderMutex()});
+}
+
+void Sitzung::meldeNichts()
+{
+    if (g_bus == nullptr) return;
+    g_bus->publish(VisualizerChangedEvent{std::string(), std::string(), nullptr,
+                                          &m_widget.renderMutex()});
+}
+
+void Sitzung::loeseKette()
+{
+    if (m_bindung == Bindung::Kette) return;
+    meldeKette();
+    m_bindung = Bindung::Kette;
+    m_gebunden = nullptr;
+    m_bindungOffen = false;
+}
+
+void Sitzung::bindeKette()
+{
+    if (g_bus == nullptr) return;
+    Bildquelle* q = quelle();
+    if (q == nullptr)  // Composer aus: die Kette der App
+    {
+        loeseKette();
+        return;
+    }
+
+    if (!m_sync || m_wahlKanal < 0)  // ruht
+    {
+        if (m_bindung != Bindung::Ruht)
+        {
+            // Erst an die Kette: Visualizer Config uebergeht „nichts" und
+            // hinge sonst weiter an einem Clip. Dann Effect Chain an nichts.
+            meldeKette();
+            meldeNichts();
+        }
+        {
+            QMutexLocker halt(&m_widget.renderMutex());
+            q->haltFest(-1, -1);
+            q->gibFrei();
+        }
+        m_bindung = Bindung::Ruht;
+        m_gebunden = nullptr;
+        m_bindungOffen = false;
+        return;
+    }
+
+    // Der angeklickte Clip: festhalten, und sobald der Render-Thread so weit
+    // ist, an seinen Renderer.
+    const MultiEffectVisualizer* soll = nullptr;
+    {
+        QMutexLocker halt(&m_widget.renderMutex());
+        q->haltFest(m_wahlKanal, m_wahlClip);
+        if (!q->festAngewandt())
+        {
+            m_bindungOffen = true;  // bis dahin bleibt, was ist — es ist geschuetzt
+            return;
+        }
+        soll = q->festerRendererNurSehen();
+    }
+    m_bindungOffen = soll == nullptr;  // (noch) kein Renderer: der Takt versucht es wieder
+    if (m_bindung == Bindung::Clip && soll == m_gebunden) return;
+
+    // Weg vom bisherigen, bevor er freigegeben wird.
+    meldeKette();
+    if (soll == nullptr)
+    {
+        meldeNichts();
+        QMutexLocker halt(&m_widget.renderMutex());
+        q->gibFrei();
+        m_bindung = Bindung::Ruht;
+        m_gebunden = nullptr;
+        return;
+    }
+    MultiEffectVisualizer* renderer = nullptr;
+    {
+        QMutexLocker halt(&m_widget.renderMutex());
+        renderer = q->festerRenderer();  // ab hier geschuetzt
+    }
+    if (renderer == nullptr)
+    {
+        meldeNichts();
+        m_bindung = Bindung::Ruht;
+        m_gebunden = nullptr;
+        m_bindungOffen = true;
+        return;
+    }
+    g_bus->publish(VisualizerChangedEvent{renderer->visualizerId().toStdString(),
+                                          renderer->visualizerName().toStdString(),
+                                          static_cast<void*>(static_cast<IVisualizer*>(renderer)),
+                                          &m_widget.renderMutex()});
+    m_bindung = Bindung::Clip;
+    m_gebunden = renderer;
 }
 
 // =============================================================================
@@ -314,6 +461,15 @@ void Sitzung::beimTakt()
     {
         q->spiegleStand();
         m_widget.renderMutex().unlock();
+    }
+    // Effect Chain (C3c): nachholen, was noch offen ist — und folgen, wenn der
+    // festgehaltene Clip einen anderen Renderer hat (oder keinen mehr).
+    if (m_bindungOffen || q->festStand() != m_festStand)
+    {
+        m_festStand = q->festStand();
+        bindeKette();
+        q = quelle();
+        if (q == nullptr) return;
     }
     if (q->standAmEnde())
     {

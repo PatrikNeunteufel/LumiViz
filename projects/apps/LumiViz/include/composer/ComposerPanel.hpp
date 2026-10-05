@@ -203,7 +203,7 @@ public:
     [[nodiscard]] bool scrollsItself() const override { return true; }
     [[nodiscard]] int preferredArea() const override { return Qt::BottomDockWidgetArea; }
     /// Breit und flach — nicht das hohe Format der uebrigen Panels.
-    [[nodiscard]] QSize sizeHint() const override { return {900, 260}; }
+    [[nodiscard]] QSize sizeHint() const override { return {900, 300}; }
 
     /// Das Fenster, dessen Komposition das Panel zeigt. Ohne Aufruf sucht das
     /// Panel es beim Zeigen selbst.
@@ -249,6 +249,7 @@ private:
     Zeitachse* m_zeitachse = nullptr;
     QLabel* m_clipZeile = nullptr;
     QCheckBox* m_edit = nullptr;
+    QCheckBox* m_sync = nullptr;
     QPushButton* m_neu = nullptr;
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;

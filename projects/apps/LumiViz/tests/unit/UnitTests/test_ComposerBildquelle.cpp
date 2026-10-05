@@ -480,6 +480,135 @@ TEST_SUITE("ComposerBildquelle")
         quelle.cleanup();
     }
 
+    TEST_CASE("C3c Bildquelle: der festgehaltene Clip behaelt seinen Renderer — auch ausserhalb seiner Zeit und ueber den Verlust des GL-Kontexts")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QGuiApplication app{argc, argv};
+        QOpenGLContext ctx;
+        QSurfaceFormat fmt;
+        fmt.setVersion(3, 3);
+        fmt.setProfile(QSurfaceFormat::CoreProfile);
+        ctx.setFormat(fmt);
+        QOffscreenSurface surface;
+        bool gut = ctx.create();
+        if (gut)
+        {
+            surface.setFormat(ctx.format());
+            surface.create();
+            gut = surface.isValid() && ctx.makeCurrent(&surface);
+        }
+        if (!gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+
+        // Rot 0–10 s, Blau 60–70 s (weit weg: weder laufend noch vorgewaermt)
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), rot, 0, 10000));
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH2"), blau, 60000, 70000));
+        std::int64_t zeit = 0;
+        Bildquelle quelle{Uhr([&zeit] { return zeit; })};
+        const QSize groesse(64, 48);
+        QOpenGLFramebufferObject ziel(groesse);
+        quelle.setZiel(static_cast<int>(ziel.handle()));
+        quelle.setKomposition(k);
+        quelle.initialize();
+        quelle.resize(groesse);
+        const auto mitte = [&] { return ziel.toImage().pixelColor(32, 24); };
+        const QColor kRot(255, 0, 0), kGruen(0, 255, 0);
+
+        quelle.render(0.016f);
+        CHECK(quelle.festAngewandt());
+        CHECK(quelle.rendererAnzahl() == 1);  // nur Rot
+        CHECK(quelle.festerRenderer() == nullptr);  // nichts festgehalten
+
+        // --- Blau festhalten: er bekommt einen Renderer, obwohl er nicht dran ist
+        const int stand = quelle.festStand();
+        quelle.haltFest(1, 0);
+        CHECK_FALSE(quelle.festAngewandt());  // erst mit dem naechsten Bild
+        const int vorher = quelle.gerechneteBilder();
+        quelle.render(0.016f);  // die Uhr steht — der Wunsch rechnet trotzdem einmal
+        CHECK(quelle.gerechneteBilder() == vorher + 1);
+        CHECK(quelle.festAngewandt());
+        CHECK(quelle.festStand() == stand + 1);
+        CHECK(quelle.rendererAnzahl() == 2);
+        CHECK(quelle.festerRendererNurSehen() != nullptr);
+        MultiEffectVisualizer* const blauer = quelle.festerRenderer();  // ab jetzt geschuetzt
+        REQUIRE(blauer != nullptr);
+        CHECK(mitte() == kRot);  // gemischt wird er nicht: seine Zeit ist nicht da
+
+        // solange die Oberflaeche an ihm haengt, wird jedes Bild gerechnet (Uhr steht)
+        quelle.render(0.016f);
+        quelle.render(0.016f);
+        CHECK(quelle.gerechneteBilder() == vorher + 3);
+
+        // --- seine Kette aendern (wie Effect Chain) und an seine Stelle springen: gruen
+        {
+            ChainNode wurzel;
+            wurzel.params = ListParams{};
+            ChainNode fuellen;
+            ClearParams cp;
+            cp.color = 0x00FF00;
+            fuellen.params = cp;
+            wurzel.children.push_back(std::move(fuellen));
+            (void)blauer->setChain(std::move(wurzel));
+        }
+        quelle.uhr().springe(65000);
+        quelle.render(0.016f);
+        CHECK(mitte() == kGruen);
+        CHECK(quelle.festerRenderer() == blauer);
+
+        // --- der GL-Kontext geht und kommt (Fenster umgehaengt): derselbe Renderer,
+        //     dieselbe geaenderte Kette — der Zeiger der Oberflaeche blieb gueltig
+        quelle.cleanup();
+        CHECK(quelle.festerRenderer() == blauer);  // geparkt, nicht geloescht
+        CHECK(blauer->chain().children.size() == 1);
+        quelle.initialize();
+        quelle.resize(groesse);
+        quelle.render(0.016f);
+        CHECK(quelle.festerRenderer() == blauer);
+        CHECK(mitte() == kGruen);
+
+        // --- die Komposition bearbeiten: Blau wird geloescht. Der Renderer, an dem die
+        //     Oberflaeche haengt, bleibt am Leben, bis sie ihn freigibt
+        Komposition ohne = k;
+        ohne.kanaele[1].visual.clear();
+        quelle.ersetzeKomposition(ohne);
+        quelle.render(0.016f);
+        CHECK(quelle.festerRendererNurSehen() == nullptr);  // festgehalten ist nichts mehr
+        CHECK(blauer->chain().children.size() == 1);        // das Objekt lebt noch
+        quelle.haltFest(-1, -1);
+        quelle.gibFrei();
+        quelle.render(0.016f);  // jetzt geht er (auf dem Render-Thread)
+        CHECK(quelle.festerRenderer() == nullptr);
+
+        // --- einen anderen Clip festhalten, waehrend die Oberflaeche noch am ersten haengt:
+        //     der erste bleibt gueltig, bis der zweite herausgegeben ist
+        quelle.ersetzeKomposition(k);
+        quelle.haltFest(1, 0);
+        quelle.render(0.016f);
+        MultiEffectVisualizer* const eins = quelle.festerRenderer();
+        REQUIRE(eins != nullptr);
+        quelle.uhr().springe(30000);  // weder Rot noch Blau laeuft
+        quelle.haltFest(0, 0);
+        quelle.render(0.016f);  // Blau ist nicht mehr festgehalten und nicht dran: geparkt
+        CHECK(eins->chain().children.size() == 1);  // lebt
+        MultiEffectVisualizer* const zwei = quelle.festerRenderer();
+        REQUIRE(zwei != nullptr);
+        CHECK(zwei != eins);
+        quelle.render(0.016f);  // der alte ist frei und geht
+        CHECK(quelle.festerRenderer() == zwei);
+
+        quelle.cleanup();
+    }
+
     TEST_CASE("C2a Bildquelle im Render-Thread: das Bild der Komposition kommt im Fenster an")
     {
         int argc = 1;

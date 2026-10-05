@@ -969,11 +969,16 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
 ComposerPanel::ComposerPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "composer", tr("Composer"), parent)
 {
+    // Ueber diesen Bus haengt die Sitzung Effect Chain an einen Clip (C3c).
+    Sitzung::setzeBus(eventBus());
     setupUI();
     zeigeKomposition();
 }
 
-ComposerPanel::~ComposerPanel() = default;
+ComposerPanel::~ComposerPanel()
+{
+    Sitzung::setzeBus(nullptr);  // der Bus gehoert den Diensten des Panels
+}
 
 Sitzung* ComposerPanel::sitzung() const
 {
@@ -1039,10 +1044,21 @@ void ComposerPanel::setupUI()
            "position; hold Alt to drag freely. Esc cancels a drag.\n\n"
            "Off: the panel only shows and plays the composition."));
     kopf->addWidget(m_edit);
+    m_sync = new QCheckBox(tr("Sync on Effect Chain"), this);
+    m_sync->setObjectName(QStringLiteral("composerSync"));
+    m_sync->setToolTip(
+        tr("While a composition delivers the picture:\n\n"
+           "On: the Effect Chain panel shows the chain of the clip selected here. Changes "
+           "act at once, in the mixed picture.\n\n"
+           "Off: the Effect Chain panel rests.\n\n"
+           "With the Composer off, Effect Chain shows the chain of the app as always."));
+    kopf->addWidget(m_sync);
     kopf->addStretch(1);
-    m_datei = new QLabel(this);
-    m_datei->setObjectName(QStringLiteral("composerDatei"));
-    kopf->addWidget(m_datei);
+    root->addLayout(kopf);
+
+    // --- Datei-Zeile (eine eigene Zeile: der Kopf waere sonst breiter als ein
+    //     schmal angedocktes Panel)
+    kopf = new QHBoxLayout();
     m_neu = new QPushButton(tr("New"), this);
     m_neu->setObjectName(QStringLiteral("composerNew"));
     m_neu->setToolTip(tr("Start a new, empty composition with one channel. Drag presets from "
@@ -1059,6 +1075,11 @@ void ComposerPanel::setupUI()
     m_speichernUnter = new QPushButton(tr("Save As..."), this);
     m_speichernUnter->setObjectName(QStringLiteral("composerSaveAs"));
     kopf->addWidget(m_speichernUnter);
+    kopf->addSpacing(8);
+    m_datei = new QLabel(this);
+    m_datei->setObjectName(QStringLiteral("composerDatei"));
+    kopf->addWidget(m_datei);
+    kopf->addStretch(1);
     root->addLayout(kopf);
 
     // --- Zeitachse (scrollt bei vielen Kanaelen)
@@ -1124,6 +1145,9 @@ void ComposerPanel::setupUI()
         m_zeitachse->setBearbeiten(an);
         zeigeClip();
         zeigeEnde();
+    });
+    connect(m_sync, &QCheckBox::clicked, this, [this](bool an) {
+        if (m_sitzung != nullptr) m_sitzung->setSync(an);
     });
     connect(m_zeitachse, &Zeitachse::bearbeitet, this,
             [this](const Komposition& neu, const QString& was) { bearbeite(neu, was); });
@@ -1278,6 +1302,8 @@ void ComposerPanel::zeigeDatei()
     m_speichernUnter->setEnabled(geladen);
     m_edit->setEnabled(geladen);
     if (!geladen && m_edit->isChecked()) m_edit->setChecked(false);
+    m_sync->setEnabled(m_sitzung != nullptr);
+    m_sync->setChecked(m_sitzung != nullptr && m_sitzung->sync());
 }
 
 bool ComposerPanel::hatHostSwitcher(const QString& pfad)
@@ -1357,6 +1383,10 @@ void ComposerPanel::zeigeClip()
 {
     const VisualClip* clip = m_zeitachse->auswahl();
     m_mischart->setEnabled(clip != nullptr && m_zeitachse->bearbeiten());
+    // Sync on Effect Chain (C3c) folgt dem angeklickten Clip
+    if (m_sitzung != nullptr)
+        m_sitzung->waehleClip(clip != nullptr ? m_zeitachse->gewaehlterKanal() : -1,
+                              clip != nullptr ? m_zeitachse->gewaehlterClip() : -1);
     if (clip == nullptr || m_sitzung == nullptr)
     {
         m_clipZeile->setText(m_sitzung != nullptr && m_sitzung->geladen() ? tr("No clip selected")

@@ -58,6 +58,17 @@ struct Anlauf
     [[nodiscard]] double summeMs() const { return ladenMs + anlegenMs + erstesBildMs; }
 };
 
+/// Ein Renderer, an dem die Oberflaeche haengt (C3c), darf nicht verschwinden,
+/// solange sie ihn hat: was die Wiedergabe fallen laesst, wird hier geparkt —
+/// GL aufgeraeumt, das Objekt samt seiner Kette lebt. Geloescht wird erst,
+/// wenn die Oberflaeche ihn freigegeben hat.
+struct Parkplatz
+{
+    MultiEffectVisualizer* geschuetzt = nullptr;      ///< den hat die Oberflaeche
+    std::unique_ptr<MultiEffectVisualizer> geparkt;   ///< aufgeraeumt, aber am Leben
+    bool adoptierbar = false;  ///< der geparkte gehoert dem festgehaltenen Clip: er bekommt ihn wieder
+};
+
 class Wiedergabe
 {
 public:
@@ -110,6 +121,19 @@ public:
         const auto ort = m_laeufe.find({kanal, clip});
         return ort != m_laeufe.end() ? ort->second.renderer.get() : nullptr;
     }
+    // --- Ein Clip, der festgehalten wird (C3c: Effect Chain haengt an ihm) -----
+
+    /// Den Clip festhalten: er hat immer einen Renderer, auch wenn er gerade
+    /// nicht laeuft, und der wird nicht entladen. (-1, -1) = keinen. Beim
+    /// Bearbeiten (`ersetzeKomposition`) folgt das Festhalten seinem Renderer.
+    /// `andererClip` false: derselbe Clip wie zuvor (eine neue Wiedergabe nach
+    /// dem Verlust des GL-Kontexts) — ein geparkter Renderer bleibt seiner.
+    void setFest(int kanal, int clip, bool andererClip = true);
+    [[nodiscard]] std::pair<int, int> fest() const { return m_fest; }
+    /// Wo ein geschuetzter Renderer bleibt, wenn die Wiedergabe ihn fallen
+    /// laesst (der Besitzer ist die Bildquelle).
+    void setParkplatz(Parkplatz* parkplatz) { m_park = parkplatz; }
+
     /// Lag die Karaoke-Ebene im letzten Bild ueber dem Gemischten?
     [[nodiscard]] bool karaokeAufgelegt() const { return m_karaokeAufgelegt; }
     /// Was beim Anlegen der Renderer schiefging (fehlende / unlesbare Dateien).
@@ -136,8 +160,13 @@ private:
                   std::int64_t stelleMs, bool vorgewaermt);
     /// Ein Bild des Laufs rechnen; die ersten zwei werden gemessen.
     void rechne(Lauf& lauf, float deltaSekunden, QSize groesse);
-    static void wirfWeg(Lauf& lauf);
+    /// Den Renderer des Laufs aufgeben. Ein geschuetzter wird nur aufgeraeumt
+    /// und geparkt, nicht geloescht; `warFest` = er gehoerte dem festgehaltenen
+    /// Clip, der ihn wiederbekommt.
+    void wirfWeg(Lauf& lauf, bool warFest);
 
+    Schluessel m_fest{-1, -1};
+    Parkplatz* m_park = nullptr;
     Komposition m_komposition;
     Mischer m_mischer;
     std::map<Schluessel, Lauf> m_laeufe;

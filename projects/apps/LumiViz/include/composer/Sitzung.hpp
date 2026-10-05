@@ -29,6 +29,8 @@
 
 #include <cstdint>
 
+class IEventBus;
+class MultiEffectVisualizer;
 class QTimer;
 class VisualizerWidget;
 
@@ -120,6 +122,35 @@ public:
     void setSchleife(bool an);
     [[nodiscard]] bool schleife() const { return m_schleife; }
 
+    // --- Sync on Effect Chain (C3c) -------------------------------------------
+    //
+    // Solange eine Komposition das Bild liefert, haengt Effect Chain (und
+    // Visualizer Config) entweder am Renderer des angeklickten Clips — Sync
+    // an — oder ruht. Gemeldet wird das ueber `VisualizerChangedEvent`, dem
+    // beide Panels ohnehin folgen: keine Naht. Ist der Composer aus, haengen
+    // sie wieder an der Kette der App.
+
+    /// Der EventBus der App — einmal gesetzt (vom Composer-Panel). Ohne ihn
+    /// bleibt Effect Chain an der Kette der App, wie vor C3c.
+    static void setzeBus(IEventBus* bus);
+    /// Schalter „Sync on Effect Chain"; bleibt ueber den Neustart
+    /// (`composer/syncEffectChain`).
+    void setSync(bool an);
+    [[nodiscard]] bool sync() const { return m_sync; }
+    /// Der im Composer angeklickte Clip, (-1, -1) = keiner.
+    void waehleClip(int kanal, int clip);
+
+    /// Woran Effect Chain gerade haengt.
+    enum class Bindung
+    {
+        Kette,  ///< an der Kette der App (Composer aus — oder kein Bus)
+        Ruht,   ///< an nichts
+        Clip,   ///< am Renderer des angeklickten Clips
+    };
+    [[nodiscard]] Bindung bindung() const { return m_bindung; }
+    /// Der Renderer, an dem Effect Chain haengt (nur bei `Bindung::Clip`).
+    [[nodiscard]] MultiEffectVisualizer* gebundenerRenderer() const { return m_gebunden; }
+
     // --- Einstellungen (QSettings unter `composer/…`) -------------------------
 
     /// Resume after restart (Vorgabe aus).
@@ -159,6 +190,23 @@ private:
 
     [[nodiscard]] Bildquelle* quelle() const;
     void beimTakt();
+    /// Effect Chain dorthin haengen, wohin sie nach Composer on, Sync und
+    /// Auswahl gehoert. Was noch nicht geht (der Render-Thread hat den Wunsch
+    /// noch nicht verarbeitet), holt der Takt nach.
+    void bindeKette();
+    /// Effect Chain zurueck an die Kette der App — vor allem, was die
+    /// Bildquelle wegnimmt.
+    void loeseKette();
+    void meldeKette();
+    void meldeNichts();
+
+    bool m_sync = false;
+    int m_wahlKanal = -1;
+    int m_wahlClip = -1;
+    Bindung m_bindung = Bindung::Kette;
+    MultiEffectVisualizer* m_gebunden = nullptr;
+    bool m_bindungOffen = false;  ///< der Takt soll es noch einmal versuchen
+    int m_festStand = -1;
 
     VisualizerWidget& m_widget;
     Komposition m_komposition;
