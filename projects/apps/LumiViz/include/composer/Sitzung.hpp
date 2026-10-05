@@ -124,6 +124,8 @@ public:
     void protokolliereMessung();
 
 Q_SIGNALS:
+    /// Eine andere Komposition ist geladen — oder keine mehr.
+    void kompositionGeaendert();
     /// Komposition, Composer on, Loop oder Transport haben sich geaendert.
     void geaendert();
     /// Solange der Composer an ist: etwa 30-mal je Sekunde — die Stelle neu lesen.

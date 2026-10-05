@@ -91,6 +91,7 @@ bool Sitzung::lade(const QString& pfad, QStringList* bericht)
     m_datei = QFileInfo(pfad).absoluteFilePath();
     m_geladen = true;
     m_stelleMs = 0;
+    Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
     return true;
 }
@@ -114,6 +115,7 @@ void Sitzung::entlade()
     m_geladen = false;
     m_stelleMs = 0;
     BasicLogger::logInfo("Composer: composition closed");
+    Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
 }
 

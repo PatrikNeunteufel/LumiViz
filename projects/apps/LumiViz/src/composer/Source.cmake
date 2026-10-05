@@ -15,6 +15,7 @@ dbg(DBG_OFTEN
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/AppAnbindung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bildquelle.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ComposerPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Komposition.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Mischer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Sitzung.cpp"
@@ -23,6 +24,7 @@ set(_local_sources
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/AppAnbindung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bildquelle.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/ComposerPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Komposition.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Mischer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Sitzung.hpp"
