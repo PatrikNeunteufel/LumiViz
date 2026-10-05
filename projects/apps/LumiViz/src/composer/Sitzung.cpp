@@ -6,9 +6,12 @@
 #include "composer/Sitzung.hpp"
 
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "audio/IAudioEngine.hpp"
+#include "audio/IAudioPlayer.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
 #include "services/IEventBus.hpp"
+#include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/EffectChain.hpp"
@@ -62,6 +65,7 @@ Sitzung::Sitzung(VisualizerWidget& widget) : QObject(&widget), m_widget(widget)
     // schon angehalten, die Bildquelle lebt noch.
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
         sichereStand();
+        gibTonFrei();  // solange der Player noch lebt: die Playlist haengt wieder
         loeseKette();  // die Panels nicht an einem Clip haengen lassen, wenn alles abgebaut wird
         protokolliereMessung();
     });
@@ -91,7 +95,14 @@ Bildquelle* Sitzung::quelle() const
 bool Sitzung::lade(const QString& pfad, QStringList* bericht)
 {
     Komposition neu;
-    if (!ladeKomposition(pfad, neu, bericht)) return false;
+    // C5: die Laenge der Songs kennt die Audio-Engine — ein Ton-Clip reicht nie
+    // ueber seinen Song hinaus, einer aus einer alten Datei bis zu dessen Schluss
+    SongLaenge laenge;
+    if (IAudioEngine* engine = m_widget.dienste().tryResolve<IAudioEngine>())
+        laenge = [engine](const QString& datei) {
+            return static_cast<std::int64_t>(engine->probeDurationMs(datei));
+        };
+    if (!ladeKomposition(pfad, neu, bericht, laenge)) return false;
     neu.richte();  // was das Panel zeigt, ist was laeuft
 
     setAn(false);
@@ -215,6 +226,7 @@ void Sitzung::setAn(bool an)
     else
     {
         loeseKette();  // Effect Chain zurueck an die Kette, BEVOR die Renderer der Clips gehen
+        gibTonFrei();  // der Player gehoert wieder der Playlist
         protokolliereMessung();
         {
             QMutexLocker halt(&m_widget.renderMutex());
@@ -543,6 +555,7 @@ void Sitzung::beimTakt()
         q = quelle();
         if (q == nullptr) return;
     }
+    fuehreTon(*q);  // C5: der Audiokanal fuehrt den Player
     if (q->standAmEnde())
     {
         switch (amEnde())
@@ -560,6 +573,69 @@ void Sitzung::beimTakt()
         }
     }
     Q_EMIT takt();
+}
+
+// =============================================================================
+// Der Audiokanal (C5)
+// =============================================================================
+
+namespace
+{
+Sitzung* g_fuehrende = nullptr;  ///< wer den Player fuehrt — es gibt nur einen Player
+}  // namespace
+
+Sitzung::~Sitzung()
+{
+    if (g_fuehrende == this) g_fuehrende = nullptr;
+}
+
+Sitzung* Sitzung::fuehrende()
+{
+    return g_fuehrende;
+}
+
+void Sitzung::fuehreTon(Bildquelle& q)
+{
+    IAudioPlayer* player = m_widget.dienste().tryResolve<IAudioPlayer>();
+    if (player == nullptr || m_komposition.tonKanal() < 0)
+    {
+        gibTonFrei();  // kein Player oder kein eingeschalteter Audio-Kanal
+        return;
+    }
+    if (!m_ton.fuehrt())
+    {
+        if (g_fuehrende != nullptr && g_fuehrende != this) return;  // eine andere Sitzung hat ihn
+        // der Pegel des Clips kommt auf die Lautstaerke des Players obendrauf (Naht N7a)
+        m_ton.setPegelSenke([player](float pegel) { player->setPegel(pegel); });
+        m_ton.uebernimm(*player);
+        g_fuehrende = this;
+        BasicLogger::logInfo("Composer: the audio channel leads the player");
+        Q_EMIT geaendert();
+    }
+    // Die Stelle aus dem gespiegelten Stand — ohne auf den Render-Thread zu warten.
+    const Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleMs(), q.standLaeuft());
+    if (!ergebnis.uhrStellen) return;
+    // der Ton fuehrt: die Uhr dorthin, wo zu hoeren ist
+    QMutexLocker halt(&m_widget.renderMutex());
+    q.uhr().springe(ergebnis.stelleMs);
+    q.spiegleStand();
+}
+
+void Sitzung::gibTonFrei()
+{
+    if (!m_ton.fuehrt()) return;
+    m_ton.gibFrei();
+    if (g_fuehrende == this) g_fuehrende = nullptr;
+    BasicLogger::logInfo("Composer: the player is back with the playlist");
+    Q_EMIT geaendert();
+}
+
+bool Sitzung::springeZumSong(bool vor)
+{
+    const std::int64_t ziel = Tonfuehrung::songAnfang(m_komposition, stelleMs(), vor);
+    if (ziel < 0) return false;
+    springe(ziel);
+    return true;
 }
 
 // =============================================================================

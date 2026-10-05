@@ -73,6 +73,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerPegelform.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerFormPresets.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerTonfuehrung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ComposerNahtTon.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGestaltung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_NseelZufall.cpp"

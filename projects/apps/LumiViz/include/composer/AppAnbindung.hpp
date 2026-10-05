@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include "audio/AudioEvents.hpp"
 #include "services/events/Event.hpp"
 
 #include <QString>
@@ -96,6 +97,14 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 /// Grafikspeicher); leer, wenn keine laeuft. Dieselben Zeilen schreibt
 /// `schliesseKomposition` ins Log, bevor die Bildquelle geht.
 [[nodiscard]] QStringList messungDerKomposition(VisualizerWidget& widget);
+
+/// Ein Transport-Befehl des Player-Panels, eines Hotkeys oder des Menues (Naht
+/// N5, Entscheid Patrik S96): fuehrt ein Audiokanal des Composers den Player,
+/// steuert der Befehl den ganzen Composer — Play / Pause, Stop (an den Anfang),
+/// Next / Previous (zum Anfang des naechsten bzw. vorigen Songs). true = der
+/// Composer hat ihn genommen. false = er fuehrt nicht, oder es ist Lautstaerke
+/// oder Mute — dann geht der Befehl wie immer an den Player.
+[[nodiscard]] bool transport(TransportCommandEvent::Action aktion);
 
 /// Der Weg des Menues: bei leerem Pfad nach der Datei fragen (letzter Ordner
 /// unter `composer/lastDir`), laden, Meldungen zeigen. false = abgebrochen

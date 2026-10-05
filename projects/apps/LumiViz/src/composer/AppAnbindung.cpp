@@ -203,6 +203,36 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget)
     return Sitzung::fuer(widget).stelleWiederHer();
 }
 
+bool transport(TransportCommandEvent::Action aktion)
+{
+    Sitzung* sitzung = Sitzung::fuehrende();
+    if (sitzung == nullptr) return false;  // kein Audiokanal fuehrt: der Player wie immer
+    using Aktion = TransportCommandEvent::Action;
+    switch (aktion)
+    {
+        case Aktion::PlayPause:
+            if (sitzung->laeuft())
+                sitzung->pausiere();
+            else
+                sitzung->spiele();
+            return true;
+        case Aktion::Stop:
+            sitzung->stoppe();
+            return true;
+        case Aktion::Next:
+            (void)sitzung->springeZumSong(true);  // nach dem letzten Song bleibt alles, wo es ist
+            return true;
+        case Aktion::Previous:
+            (void)sitzung->springeZumSong(false);
+            return true;
+        case Aktion::VolumeUp:
+        case Aktion::VolumeDown:
+        case Aktion::ToggleMute:
+            break;  // Lautstaerke und Mute bleiben beim Player
+    }
+    return false;
+}
+
 bool oeffneKomposition(VisualizerWidget& widget, QWidget* eltern, const QString& pfad)
 {
     const QString titel = QObject::tr("Open Composition");

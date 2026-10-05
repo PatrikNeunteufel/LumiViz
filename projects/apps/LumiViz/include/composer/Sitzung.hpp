@@ -22,6 +22,7 @@
 #pragma once
 
 #include "composer/Komposition.hpp"
+#include "composer/Tonfuehrung.hpp"
 
 #include <QObject>
 #include <QString>
@@ -55,6 +56,8 @@ class Sitzung : public QObject
     Q_OBJECT
 
 public:
+    ~Sitzung() override;
+
     /// Die Sitzung dieses Fensters; beim ersten Aufruf angelegt.
     [[nodiscard]] static Sitzung& fuer(VisualizerWidget& widget);
     /// Die Sitzung dieses Fensters, wenn es schon eine gibt.
@@ -195,6 +198,23 @@ public:
     /// Die Messung der laufenden Komposition samt Anlauf je Clip ins Log.
     void protokolliereMessung();
 
+    // --- Der Audiokanal (C5) ---------------------------------------------------
+    //
+    // Ist der Composer an und hat die Komposition einen eingeschalteten
+    // Audio-Kanal, fuehrt die Sitzung den Player der App (`Tonfuehrung`): sie
+    // laedt und spielt die Songs der Ton-Clips, die Playlist ruht, und solange
+    // ein Song spielt, fuehrt der Ton die Uhr. Den Player holt sie sich aus den
+    // Diensten des Fensters (Naht N7b) — ohne Player bleibt alles, wie es war.
+
+    /// Fuehrt diese Sitzung gerade den Player?
+    [[nodiscard]] bool fuehrtTon() const { return m_ton.fuehrt(); }
+    /// Die Sitzung, die den Player fuehrt — es gibt nur einen Player, also
+    /// hoechstens eine. nullptr = keine.
+    [[nodiscard]] static Sitzung* fuehrende();
+    /// Zum Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition
+    /// springen. false = es gibt keinen.
+    bool springeZumSong(bool vor);
+
 Q_SIGNALS:
     /// Eine andere Komposition ist geladen — oder keine mehr.
     void kompositionGeaendert();
@@ -220,6 +240,13 @@ private:
     void loeseKette();
     void meldeKette();
     void meldeNichts();
+    /// Je Takt: den Player uebernehmen oder freigeben, die Fuehrung takten und
+    /// die Uhr nachstellen, wenn der Ton fuehrt.
+    void fuehreTon(Bildquelle& q);
+    /// Den Player freigeben — die Playlist haengt wieder.
+    void gibTonFrei();
+
+    Tonfuehrung m_ton;
 
     bool m_sync = false;
     int m_wahlKanal = -1;

@@ -19,7 +19,7 @@
 
 #include <doctest.h>
 
-#include "audio/IAudioPlayer.hpp"
+#include "PappTon.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Tonfuehrung.hpp"
@@ -30,103 +30,10 @@
 #include <algorithm>
 
 using namespace lumi::composer;
+using papp::PappPlayer;
 
 namespace
 {
-
-/// Ein Player aus Pappe: kennt die Laenge seiner „Dateien", schreibt mit, was
-/// er tun soll, und laeuft nur, wenn der Test `vor` ruft.
-class PappPlayer : public IAudioPlayer
-{
-public:
-    QMap<QString, int> laengen;  ///< was sich laden laesst, und wie lang es ist
-    QStringList protokoll;       ///< load / seek / play / pause, in der Reihenfolge der Aufrufe
-
-    /// Die Zeit weiterdrehen: ein spielender Song rueckt vor und haelt an seinem Ende.
-    void vor(int ms)
-    {
-        if (m_state != PlaybackState::Playing) return;
-        m_pos += ms;
-        if (m_pos >= m_track.durationMs)
-        {
-            m_pos = m_track.durationMs;
-            m_state = PlaybackState::Stopped;  // wie der echte Player ohne Playlist
-        }
-    }
-    [[nodiscard]] int zahl(const QString& anfang) const
-    {
-        return static_cast<int>(std::count_if(protokoll.begin(), protokoll.end(),
-                                              [&](const QString& z) { return z.startsWith(anfang); }));
-    }
-
-    bool load(const QString& filePath) override
-    {
-        protokoll << QStringLiteral("load ") + filePath;
-        if (!laengen.contains(filePath)) return false;
-        m_track = TrackInfo{};
-        m_track.filePath = filePath;
-        m_track.durationMs = laengen.value(filePath);
-        m_hat = true;
-        m_pos = 0;
-        m_state = PlaybackState::Stopped;
-        return true;
-    }
-    void play() override
-    {
-        protokoll << QStringLiteral("play");
-        if (m_hat) m_state = PlaybackState::Playing;
-    }
-    void pause() override
-    {
-        protokoll << QStringLiteral("pause");
-        if (m_state == PlaybackState::Playing) m_state = PlaybackState::Paused;
-    }
-    void togglePlayPause() override {}
-    void stop() override
-    {
-        m_state = PlaybackState::Stopped;
-        m_pos = 0;
-    }
-    bool next() override { return false; }
-    bool previous() override { return false; }
-    bool playIndex(int) override { return false; }
-    void seek(int positionMs) override
-    {
-        protokoll << QStringLiteral("seek %1").arg(positionMs);
-        m_pos = std::clamp(positionMs, 0, m_track.durationMs);
-    }
-    void seekFraction(float) override {}
-    void seekRelative(int) override {}
-    [[nodiscard]] float volume() const override { return 1.0f; }
-    void setVolume(float) override {}
-    [[nodiscard]] bool isMuted() const override { return false; }
-    void setMuted(bool) override {}
-    void toggleMute() override {}
-    [[nodiscard]] PlaybackState state() const override { return m_state; }
-    [[nodiscard]] bool isPlaying() const override { return m_state == PlaybackState::Playing; }
-    [[nodiscard]] bool isPaused() const override { return m_state == PlaybackState::Paused; }
-    [[nodiscard]] bool isStopped() const override { return m_state == PlaybackState::Stopped; }
-    [[nodiscard]] int positionMs() const override { return m_pos; }
-    [[nodiscard]] int durationMs() const override { return m_track.durationMs; }
-    [[nodiscard]] float positionFraction() const override { return 0.0f; }
-    [[nodiscard]] TrackInfo currentTrack() const override { return m_track; }
-    [[nodiscard]] bool hasTrack() const override { return m_hat; }
-    void setPlaylist(IPlaylist* playlist) override { m_playlist = playlist; }
-    [[nodiscard]] IPlaylist* playlist() const override { return m_playlist; }
-    [[nodiscard]] int playlistIndex() const override { return -1; }
-    [[nodiscard]] RepeatMode repeatMode() const override { return RepeatMode::None; }
-    void setRepeatMode(RepeatMode) override {}
-    [[nodiscard]] bool shuffle() const override { return false; }
-    void setShuffle(bool) override {}
-    void update() override {}
-
-private:
-    TrackInfo m_track;
-    bool m_hat = false;
-    int m_pos = 0;
-    PlaybackState m_state = PlaybackState::Stopped;
-    IPlaylist* m_playlist = nullptr;
-};
 
 const QString kEins = QStringLiteral("C:/musik/eins.mp3");
 const QString kZwei = QStringLiteral("C:/musik/zwei.mp3");
