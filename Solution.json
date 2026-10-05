@@ -188,7 +188,7 @@
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
-            "bass": { "BASS_FLAC": true },
+            "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
           }
         },
@@ -198,7 +198,7 @@
           "dependencies": [ "BasicLogger" ],
           "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
           "external_options": {
-            "bass": { "BASS_FLAC": true },
+            "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
           }
         },
@@ -224,6 +224,7 @@
               "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
               "externals": [ "Qt6", "bass", "lua54" ],
               "external_options": {
+                "bass": { "BASS_MIX": true },
                 "lua54": { "LUA_EMBEDDED": false }
               }
             },

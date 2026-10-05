@@ -24,14 +24,19 @@ Apache-2.0, BASS nicht. Siehe [`../../THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY
 
 ## Benötigte Pakete
 
-LumiViz braucht zwei Pakete (`Solution.json`: External `bass` mit `BASS_FLAC: true`):
+LumiViz braucht drei Pakete (`Solution.json`: External `bass` mit `BASS_FLAC: true` und
+`BASS_MIX: true`):
 
 | Paket | Download | Zielordner hier |
 |---|---|---|
 | **BASS** 2.4 | <https://www.un4seen.com/bass.html> | `bass24/` |
 | **BASSFLAC** | <https://www.un4seen.com/> (Add-ons) | `bassflac24/` |
+| **BASSmix** | <https://www.un4seen.com/> (Add-ons) | `bassmix24/` |
 
-Weitere Add-ons (Opus, WMA, WASAPI, MIDI, Mix, Encoder …) unterstützt das
+BASSmix ist seit dem Composer Pflicht (mehrere Songs zugleich, Stufe C5b): das Build-System
+linkt `bassmix.lib` und kopiert `bassmix.dll` neben App und Tests.
+
+Weitere Add-ons (Opus, WMA, WASAPI, MIDI, Encoder …) unterstützt das
 Build-System ebenfalls — sie werden nur gebraucht, wenn du sie in `Solution.json`
 unter `external_options` einschaltest. Das Namensschema ist immer dasselbe wie unten.
 

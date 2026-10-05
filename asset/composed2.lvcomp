@@ -4,7 +4,7 @@
             "clips": [
                 {
                     "blend": 0,
-                    "end": 128000,
+                    "end": 73000,
                     "fadeIn": {
                         "ms": 15000,
                         "shape": {
@@ -46,7 +46,7 @@
                 },
                 {
                     "blend": 0,
-                    "end": 578000,
+                    "end": 236000,
                     "fadeIn": {
                         "ms": 14000,
                         "shape": {
@@ -84,7 +84,91 @@
                         }
                     },
                     "file": "Milkdrop3/presets/martin - polar lights.milk",
-                    "start": 254000
+                    "start": 135000
+                },
+                {
+                    "blend": 0,
+                    "end": 400600,
+                    "fadeIn": {
+                        "ms": 9406,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 11600,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - glassworks 3.milk",
+                    "start": 315000
+                },
+                {
+                    "blend": 0,
+                    "end": 540000,
+                    "fadeIn": {
+                        "ms": 13000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 13000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/shifter - liquid circuitry - model without work.milk",
+                    "start": 461000
                 }
             ],
             "enabled": true,
@@ -95,7 +179,7 @@
             "clips": [
                 {
                     "blend": 0,
-                    "end": 264000,
+                    "end": 153000,
                     "fadeIn": {
                         "ms": 19000,
                         "shape": {
@@ -139,19 +223,97 @@
                         }
                     },
                     "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
-                    "start": 114000
-                }
-            ],
-            "enabled": true,
-            "kind": "visual",
-            "name": "CH2"
-        },
-        {
-            "clips": [
+                    "start": 52000
+                },
                 {
-                    "end": 210773,
+                    "blend": 0,
+                    "end": 324406,
                     "fadeIn": {
-                        "ms": 14000,
+                        "ms": 20000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 9406,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - crystal palace.milk",
+                    "start": 225000
+                },
+                {
+                    "blend": 0,
+                    "end": 474000,
+                    "fadeIn": {
+                        "ms": 11600,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 13000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/MilkDrop2077 vs martin - juggernaut brighter.milk",
+                    "start": 389000
+                },
+                {
+                    "blend": 0,
+                    "end": 578000,
+                    "fadeIn": {
+                        "ms": 13000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -168,13 +330,25 @@
                             ]
                         }
                     },
-                    "fadeOut": {
-                        "ms": 10773,
+                    "file": "Milkdrop3/presets/MilkDrop2077 - NeonAngel vs Flexi - CyberPunk Rain2.milk",
+                    "start": 527000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+                {
+                    "end": 220330,
+                    "fadeIn": {
+                        "ms": 17000,
                         "shape": {
                             "kind": "fade",
                             "points": [
                                 {
-                                    "curve": 4,
+                                    "curve": 0,
                                     "x": 0,
                                     "y": 0
                                 },
@@ -186,9 +360,27 @@
                             ]
                         }
                     },
-                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/01. Under The Sun.mp3",
+                    "fadeOut": {
+                        "ms": 23330,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - 3 Words/02. Parachute.mp3",
                     "offset": 0,
-                    "sourceLength": 210773,
+                    "sourceLength": 220330,
                     "start": 0
                 },
                 {

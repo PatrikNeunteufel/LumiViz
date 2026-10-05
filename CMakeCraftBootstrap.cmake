@@ -2,6 +2,10 @@
 # CMakeCraftBootstrap.cmake — holt das Build-System in der gepinnten Version
 # ==============================================================================
 #
+# Diese Datei gehoert in den Root deines Projekts, neben cmakecraft.pin und
+# CMakeLists.txt. Sie wird unveraendert uebernommen — anzupassen ist nur
+# cmakecraft.pin.
+#
 # Bezieht CMakeCraft gemaess cmakecraft.pin und laedt dessen Entry-Point.
 # Diese Datei ist bewusst klein und stabil — sie ist der einzige committete
 # Build-System-Code im Projekt. Aenderungen am Build-System passieren im
@@ -65,7 +69,21 @@ if(NOT EXISTS "${_craft_dir}/CMakeCraft.cmake")
     set(_craft_ok FALSE)
     foreach(_src IN LISTS _craft_sources)
         message(STATUS "[Bootstrap] Hole CMakeCraft ${CMAKECRAFT_VERSION} von: ${_src}")
+
+        # Reste eines abgebrochenen Klons muessen weg - git clone weigert sich
+        # sonst mit "destination path already exists". Scheitert das Loeschen,
+        # hier abbrechen: die Meldung von git nennt die Ursache nicht.
         file(REMOVE_RECURSE "${_craft_dir}")
+        if(EXISTS "${_craft_dir}")
+            message(FATAL_ERROR
+                "[Bootstrap] Das Cache-Verzeichnis liess sich nicht entfernen:\n"
+                "    ${_craft_dir}\n"
+                "  Es ist der Rest eines abgebrochenen Klons und muss weg, bevor neu geholt werden kann.\n"
+                "  Uebliche Ursachen: ein Programm haelt eine Datei darin offen (Editor, Explorer,\n"
+                "  Terminal mit cd dorthin, Virenscanner), oder der Pfad ist zu lang.\n"
+                "  Abhilfe: das Programm schliessen, das Verzeichnis von Hand loeschen, neu konfigurieren.")
+        endif()
+
         execute_process(
             COMMAND "${GIT_EXECUTABLE}" clone --depth 1 --branch "${CMAKECRAFT_VERSION}"
                     --config advice.detachedHead=false "${_src}" "${_craft_dir}"
