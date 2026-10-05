@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.23.0
+> **Version:** 0.24.0
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -107,6 +107,20 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     hört man, ein um ein Bild nachgestelltes Visual sieht man nicht. Kippt
     mit einem zweiten Audiokanal: zwei Songs zugleich haben nicht die eine
     Stelle im Ton — dann müsste die Uhr führen.
+  - **Gebaut als `composer/Tonfuehrung`** (S96, noch nicht an der Sitzung):
+    je Takt aus Stelle, Komposition und Stand des Players. **Einstieg** in
+    einen Ton-Clip: laden (nur wenn der Player eine andere Datei hat), an die
+    Stelle setzen, spielen oder halten. **Der Ton führt:** liegen Uhr und Ton
+    mehr als 40 ms auseinander, wird die Uhr nachgestellt — auch nach einem
+    Sprung im Player. **Springt die Uhr** (ein Schritt rückwärts oder mehr
+    als 1,5 s voraus; bei stehender Uhr jede Bewegung), führt sie dieses eine
+    Mal, und der Player wird gesetzt. **Wanduhr:** in der Lücke, und wenn der
+    Song vor dem Ende seines Clips aus ist oder sich nicht laden lässt — dann
+    startet ihn bis zum Clip-Ende niemand neu, außer die Uhr springt zurück
+    in den Song. Der Pegel des Clips geht je Takt an eine Senke (der Anschluss
+    an den Player ist Naht N7a). `songAnfang` liefert die Ziele für Next und
+    Previous: zurück geht es mitten im Song an seinen Anfang, in seinen
+    ersten drei Sekunden zum Song davor.
   - **Welcher Kanal spielt:** der erste eingeschaltete Audio-Kanal
     (`Komposition::tonKanal`). Mehrere lassen sich anlegen; zwei Songs
     zugleich brauchen einen zweiten Stream im Player (später).
@@ -883,6 +897,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C3b, Neues hinein | keine neuen Dateien — die Erweiterungen in `Bearbeiten`, `Sitzung`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | keine Naht | — | vor dem Holen wie oben prüfen |
 | C3a, Bearbeiten | `include/composer/Bearbeiten.hpp`, `src/composer/Bearbeiten.cpp`, `tests/unit/UnitTests/test_ComposerBearbeiten.cpp`; die Erweiterungen in `Sitzung`, `Bildquelle`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | **N10 `4826db1`** — `UI/MainWindow.cpp` (`closeEvent`: ein Aufruf von `composer::darfKompositionErsetzen`), trägt `Composer-Naht N10` | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 | C4 Teil 2, Pegelform und Presets (S96) | `include/composer/` (Pegelform.hpp, FormPresets.hpp, KurvenEditor.hpp), `src/composer/` (Pegelform.cpp, FormPresets.cpp, KurvenEditor.cpp), `tests/unit/UnitTests/` (test_ComposerPegelform.cpp, test_ComposerFormPresets.cpp); **dazu der Ordner `asset/composer/`** (mitgelieferte Kurven-Presets, liegt außerhalb der Composer-Pfade); die Umstellung von `VisualClip` geht mit `Komposition`, `Bearbeiten`, `ComposerPanel` | keine Naht | drei Quellen und drei Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); zwei Zeilen in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen; `asset/composer/` eigens löschen |
+| C5, Audiokanal (S96, im Bau) | `include/composer/Tonfuehrung.hpp`, `src/composer/Tonfuehrung.cpp`, `tests/unit/UnitTests/test_ComposerTonfuehrung.cpp`; das Modell (ein Clip-Typ, `Kanal::clips`) geht mit `Komposition` und `Bearbeiten` | noch keine — N7a, N7b und N5 (Transport) stehen in §12.2 und folgen | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -904,6 +919,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.24.0 | 2026-10-05 | Session 96 — **C5 Schritt 2: die Führung des Players** (eigener Code, keine Naht). `composer/Tonfuehrung`: `uebernimm` / `gibFrei` (die Playlist ruht über `setPlaylist(nullptr)`), `takt` (Einstieg, der Ton führt, die Uhr führt nach einem Sprung, Wanduhr in Lücken und nach dem Ende eines Songs), `setPegelSenke`, `songAnfang` (§4). Läuft gegen `IAudioPlayer`; belegt in `test_ComposerTonfuehrung.cpp` gegen einen Player aus Pappe (sechs Fälle: Playlist ruht und kommt wieder, Lücke / Einstieg / Drift / Clip-Ende, Sprung des Players und der Uhr auch bei stehender Uhr, Song kürzer als sein Clip und fehlende Datei, Pegel, Next / Previous). An der Sitzung hängt sie noch nicht — **zu hören ist weiter nichts**. Rückbau-Liste: Zeile C5. 919 Cases |
 | 0.23.0 | 2026-10-05 | Session 96 — **C5 Audiokanal: Entscheide Patrik und das Modell** (eigener Code, keine Naht). **Entschieden:** der Ton führt die Zeit, solange ein Song spielt, in Lücken die Wanduhr (§4); ein Ton-Clip hat Start und Ende wie ein Bild-Clip und dieselbe Pegelkurve mit denselben Presets, voller Pegel = die Lautstärke des Player-Panels (§6); die Knöpfe des Player-Panels steuern bei eingeschaltetem Audiokanal den ganzen Composer (§8); drei kleine Nähte — N7a Pegel im Player, N5 Transport (vorgezogen aus C6), N7b Zugang über das Fenster — und die Playlist ruht ohne Naht (§12.2, eingetragen vor dem Bau). **Gebaut:** **ein Clip-Typ** `Clip` für Bild und Ton (`VisualClip` / `AudioClip` sind Namen dafür), `Kanal::clips` statt `visual` und `audio`; neu `einsatzMs`, `quellMs`, `songStelle`; `Komposition::tonKanal`, `tonBei`, `ergaenzeTon`; `laenge` / `clipEnde` zählen auch Ton-Clips; Datei: `end`, `offset`, `sourceLength` und die Pegelkurve am Ton-Clip, ein alter Ton-Clip ohne `end` reicht bis zum Schluss seines Songs (`SongLaenge` beim Laden). `Bearbeiten`: `fuegeSongEin`, `fuegeKanalEin` mit Art (Audio-Kanäle heißen A1, A2 …), `zieheKante` und `setzeGrenzen` führen den Einsatz mit und halten sich an die Länge des Songs, ein Clip wechselt nur in einen Kanal seiner Art. Im Panel erscheinen Ton-Clips damit schon als Blöcke; **zu hören ist noch nichts**. Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall) und `test_ComposerWiedergabe.cpp` (Datei). 913 Cases |
 | 0.22.0 | 2026-10-05 | Session 96 — **Presets im Rechtsklick-Menü der Zeitachse** (eigener Code, keine Naht). *Fade in* / *Fade out* listen die Blenden-Presets statt der festen Formenliste (Haken an dem Preset, dem die Form gleicht; ohne jedes Preset die sieben festen Formen als Rückfall); an einem Stück *Shape* mit den Stück-Presets. `Zeitachse::setzeBlendenPreset`, `setzeStueckPreset`. Belegt in `test_ComposerPanel.cpp` (Wahl je Art, die andere Art und unbekannte Namen ändern nichts, Dauer und andere Seite bleiben, Blende ohne Länge bekommt zwei Sekunden, der Curve Editor zeigt das gewählte Preset). 912 Cases. Benutzerhandbuch 1.90.0. **Offen:** die Menüs selbst prüft nur der Sichttest |
 | 0.21.0 | 2026-10-05 | Session 96 — **Griffe der Stücke auf der Zeitachse** (eigener Code, keine Naht). Oben im Clip je Stück eine Raute (verschieben) und zwei Striche (Weite); `Zeitachse::stueckGriff`, Griffe `StueckLage` / `StueckLinks` / `StueckRechts`. `Bearbeiten`: `spielraumVon`, `verschiebeStueck`, `setzeStueckWeite` — erst festschreiben, dann an den Nachbarn anhalten (§9). Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall: anlegen, finden, schieben, Weite, zwei Stücke, gestaucht anfassen) und `test_ComposerPanel.cpp` (Raute und Kanten mit der Maus, Anhalten an der Ausblendung, der Curve Editor folgt). 912 Cases. Benutzerhandbuch 1.89.0 |

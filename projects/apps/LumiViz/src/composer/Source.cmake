@@ -23,6 +23,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Mischer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Pegelform.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Sitzung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Tonfuehrung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Wiedergabe.cpp"
 )
 set(_local_headers
@@ -36,6 +37,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Mischer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Pegelform.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Sitzung.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Tonfuehrung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Uhr.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Wiedergabe.hpp"
 )
