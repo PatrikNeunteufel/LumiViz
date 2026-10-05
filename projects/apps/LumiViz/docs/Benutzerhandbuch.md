@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.90.0
+> **Version:** 1.91.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1889,6 +1889,42 @@ unter `composer/fades` und `composer/shapes`.
 Hinter dem Ende der Komposition zeigt die Zeitachse etwas Luft, damit sich
 dort etwas ablegen oder ein Clip darüber hinausziehen lässt.
 
+**Der Audio-Kanal — Musik in der Komposition.** Ein Audio-Kanal trägt Songs
+als Clips. Ist er eingeschaltet und der Composer an, **führt die Komposition
+den Player**: sie lädt und spielt die Songs zu ihren Zeiten, und die Playlist
+ruht so lange.
+
+- **Anlegen:** Rechtsklick in die Zeitachse → *Add audio channel* (er heißt
+  A1, A2 …) — oder einen Song **unter die letzte Zeile** ziehen; dort steht
+  dann „New audio channel".
+- **Songs hineinziehen:** aus dem **Audio Browser**, der **Playlist** oder dem
+  Explorer in die Zeile des Audio-Kanals. Der Clip ist so lang wie der Song
+  und zeigt dessen **Wellenform** (sie erscheint kurz nach dem Ablegen). Songs
+  fallen nur in Audio-Kanäle, Presets nur in die anderen.
+- **Kanten:** Die rechte Kante nach links **schneidet den Song ab** — dahinter
+  ist Stille, bis der nächste Clip kommt. Die linke Kante nach rechts lässt
+  den Song **später einsetzen**; was bleibt, ist an derselben Stelle zu hören.
+  Länger als der Song lässt sich der Clip nicht ziehen. Die Clip-Zeile unten
+  nennt die Stelle im Song, an der er einsetzt.
+- **Ein- und Ausblenden:** wie am Bild — Griffe, Formen, Curve Editor, Stücke,
+  dieselben Presets. Der Pegel ist hier die **Lautstärke**: voller Pegel ist
+  so laut, wie der Regler im Panel Player steht; die Wellenform im Clip wird
+  mit dem Pegel schmaler.
+- **Wer die Zeit führt:** Solange ein Song spielt, richtet sich die Uhr der
+  Komposition nach dem Ton — Bild und Musik bleiben zusammen. In einer Lücke
+  ohne Song läuft sie nach der Uhr weiter.
+- **Das Panel Player steuert dann die ganze Komposition:** Play / Pause und
+  Stop wirken auf den Composer (auch in einer Lücke), Next / Previous springen
+  zum nächsten bzw. vorigen Song der Komposition, und ein Griff in den
+  Fortschrittsbalken springt im Song — die Komposition springt mit.
+  Lautstärke und Mute bleiben, wie sie sind. Dasselbe gilt für die Kürzel und
+  das Menü. In einer Lücke zeigt das Panel Player „pausiert", obwohl die
+  Komposition läuft.
+- **Mehrere Audio-Kanäle** lassen sich anlegen; es spielt der **erste
+  eingeschaltete**. Zwei Songs zugleich mischt LumiViz noch nicht.
+- **Aus:** Mit *Channel enabled* aus oder dem Composer aus gehört der Player
+  wieder der Playlist; ein gerade laufender Song spielt dabei weiter.
+
 **Trifft der gezogene Clip auf einen Nachbarn im selben Kanal,** entscheidet
 die Taste, die du beim Ziehen hältst:
 
@@ -1997,6 +2033,8 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `shape` | Eine Form ohne Zeit: `points` mit `x` (Anteil der Dauer, 0 … 1) und `y` (Pegel, 0 … 1). Eine Blende (`kind` `fade`) läuft von (0, 0) nach (1, 1); als `fadeOut` wird dieselbe Form rückwärts gelesen |
 | `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) · 6 Bézier |
 | `base` | Grundpegel des Clips, 0 … 1 (ohne Angabe 1): der Pegel zwischen den Teilen. Die Blenden laufen von null bis dorthin |
+| `kind` (am Kanal) | `visual` — Presets als Clips — oder `audio` — Songs als Clips. Ein Clip im Audio-Kanal hat dieselben Felder für Zeit und Pegelkurve; statt `blend` trägt er `offset` |
+| `offset`, `sourceLength` | Nur im Audio-Kanal: `offset` ist die Stelle im Song (Millisekunden), an der der Clip einsetzt; `sourceLength` die Länge des Songs (schreibt LumiViz selbst). Fehlt `end`, reicht der Clip bis zum Schluss des Songs |
 | `shapes` | Stücke mitten im Clip, freiwillig: je `pos` (Mitte des Stücks als Anteil der Clip-Länge), `width` (Millisekunden), `flipped` und `shape` (`kind` `shape`). Die Form sagt, wie viel vom Grundpegel bleibt — 1 alles, 0 nichts (eine Delle); mit `flipped` tauschen oben und unten, das Stück hebt den Pegel vom Grundpegel bis auf voll (ein Buckel) |
 | `levels` | **Alt (bis Version 1):** die Pegelkurve als Punkte mit `t` (Millisekunden ab Clip-Start) und `level`. Wird beim Laden übersetzt — eine einfache Ein- / Ausblendung in `fadeIn` / `fadeOut`, jede andere Kurve in ein Stück über den ganzen Clip; der Verlauf bleibt derselbe. Geschrieben wird das Feld nicht mehr |
 | `bezier` | Nur bei `curve` 6: die zwei Anfasser als `[x1, y1, x2, y2]`, je 0 … 1 — x ist der Anteil der Zeit, y der Anteil des Wegs (wie `cubic-bezier` in CSS). Ohne Angabe eine weiche S-Kurve |
@@ -2010,6 +2048,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.91.0 | 2026-10-05 | Session 96. §15 Composer NEU **der Audio-Kanal**: *Add audio channel*, Songs aus Audio Browser, Playlist oder Explorer hineinziehen, Wellenform im Clip, Kanten schneiden ab bzw. ändern den Einsatz, Ein- und Ausblenden als Lautstärke; die Komposition führt den Player, die Playlist ruht, das Panel Player steuert die ganze Komposition. Datei: Kanal `audio` mit `offset` und `sourceLength` |
 | 1.90.0 | 2026-10-05 | Session 96. §15 Composer GEÄNDERT Rechtsklick → *Fade in* / *Fade out* zeigt die **Blenden-Presets** (mitgelieferte und eigene) statt der festen Formenliste; NEU Rechtsklick auf ein Stück → *Shape* mit den Stück-Presets |
 | 1.89.0 | 2026-10-05 | Session 96. §15 Composer NEU **Griffe der Stücke** oben im Clip: die Raute verschiebt ein Stück, die Striche an den Kanten ändern seine Breite; ein Stück hält an Blenden und anderen Stücken an |
 | 1.88.1 | 2026-10-05 | Session 96. §15 Curve Editor: das Fenster zeigt die Kurve, **wie sie am Clip wirkt** — eine Ausblendung fällt von links oben nach rechts unten, ein Stück mit Flipped steht als Buckel nach oben; eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird |

@@ -20,14 +20,20 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 
+#include <QHash>
 #include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
 
+#include <atomic>
 #include <cstdint>
+#include <memory>
+#include <thread>
+#include <vector>
 
 class QCheckBox;
+class QMimeData;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
@@ -75,6 +81,26 @@ public:
                      Qt::KeyboardModifiers tasten = Qt::NoModifier);
     /// Einen leeren Kanal anhaengen.
     void kanalHinzu();
+
+    // --- Audiokanal (C5) — Songs als Clips -----------------------------------
+    //
+    // Songs fallen nur in Audio-Kanaele, Presets nur in Visual-Kanaele; unter
+    // der letzten Zeile entsteht ein Kanal der Art der ersten Datei. Die
+    // Zeitachse kennt keine Audio-Engine: Endungen, Song-Laengen und
+    // Huellkurven reicht das Panel herein.
+
+    /// Einen leeren Audio-Kanal anhaengen (heisst A1, A2 ...).
+    void audioKanalHinzu();
+    /// Welche Endungen als Song gelten (klein, ohne Punkt).
+    void setAudioEndungen(const QStringList& endungen) { m_audioEndungen = endungen; }
+    /// Woher die Laenge eines Songs kommt; ohne Auskunft ist ein neuer Ton-Clip 20 s lang.
+    void setSongLaenge(SongLaenge laengeVon) { m_songLaenge = std::move(laengeVon); }
+    /// Die Huellkurve eines Songs (je `msProWert` Millisekunden ein Wert 0…1)
+    /// — die Wellenform im Ton-Clip. Leer = nicht lesbar; auch das wird gemerkt.
+    void setHuelle(const QString& datei, std::vector<float> huelle, int msProWert);
+    [[nodiscard]] bool hatHuelle(const QString& datei) const { return m_huellen.contains(datei); }
+    /// Die Dateien, die in einem Drag als Clips in Frage kommen: Presets und Songs.
+    [[nodiscard]] QStringList fallDateien(const QMimeData* daten) const;
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
@@ -220,7 +246,18 @@ private:
     int m_zugStueck = -1;            ///< das gezogene Stueck (Griffe der Stuecke)
     Komposition m_vorZug;            ///< der Stand beim Druck
     QPoint m_fallOrt{-1, -1};        ///< wohin ein Drag von aussen gerade zeigt (-1 = keiner)
+    bool m_fallTon = false;          ///< der Drag traegt nur Songs
     Teil m_teil;                     ///< das Teil im Curve Editor (markiert)
+
+    /// Die Huellkurve eines Songs, wie die Audio-Engine sie liefert.
+    struct Huelle
+    {
+        std::vector<float> werte;
+        int msProWert = 0;
+    };
+    QStringList m_audioEndungen;
+    SongLaenge m_songLaenge;
+    QHash<QString, Huelle> m_huellen;
 };
 
 class KurvenFenster;
@@ -275,6 +312,16 @@ private:
     void oeffneKurve(Teil teil);
     /// Dem Curve Editor den Stand des angeklickten Clips geben.
     void zeigeKurve();
+    /// Fuer jeden Song der Komposition, dessen Wellenform noch fehlt, die
+    /// Huellkurve holen — einen nach dem anderen, in einem eigenen Thread (die
+    /// Engine dekodiert dafuer die ganze Datei).
+    void ladeHuellen();
+    void starteHuelle();
+
+    QStringList m_huellWarten;                         ///< Songs, deren Huellkurve noch aussteht
+    QString m_huellLaeuft;                             ///< der, an dem der Thread arbeitet
+    std::thread m_huellFaden;
+    std::shared_ptr<std::atomic<bool>> m_huellAbbruch;
 
     QPointer<VisualizerWidget> m_fenster;
     QPointer<Sitzung> m_sitzung;

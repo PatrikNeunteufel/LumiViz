@@ -20,6 +20,7 @@
 
 #include <doctest.h>
 
+#include "PappTon.hpp"
 #include "TestFenster.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bearbeiten.hpp"
@@ -1153,5 +1154,185 @@ TEST_SUITE("ComposerPanel")
         CHECK_FALSE(edit->isChecked());
         CHECK_FALSE(edit->isEnabled());
         CHECK_FALSE(achse->bearbeiten());
+    }
+
+    TEST_CASE("C5 Panel: ein Audio-Kanal — anlegen, Songs hineinziehen, Wellenform, Kanten und Blenden")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        // zwei „Songs": leere Dateien genuegen, Laenge und Wellenform kommen aus der Engine aus Pappe
+        const QString eins = dir.filePath(QStringLiteral("Eins.mp3"));
+        const QString zwei = dir.filePath(QStringLiteral("Zwei.mp3"));
+        for (const QString& pfad : {eins, zwei})
+        {
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+        }
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new papp::PappEngine); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        auto* engine = dynamic_cast<papp::PappEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(bus != nullptr);
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{eins, 20000}, {zwei, 8000}};
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 300);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        auto* clipZeile = panel.findChild<QLabel*>(QStringLiteral("composerClip"));
+        auto* mischart = panel.findChild<QComboBox*>(QStringLiteral("composerMischart"));
+        REQUIRE(edit != nullptr);
+        REQUIRE(clipZeile != nullptr);
+        REQUIRE(mischart != nullptr);
+        const auto kanaele = [&]() -> const std::vector<Kanal>& { return sitzung->komposition().kanaele; };
+        const auto zieh = [&](QPoint a, QPoint b) {
+            QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                              Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &druck);
+            for (int i = 1; i <= 4; ++i)
+            {
+                const QPoint m = a + (b - a) * i / 4;
+                QMouseEvent bewegt(QEvent::MouseMove, QPointF(m), QPointF(achse->mapToGlobal(m)),
+                                   Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(achse, &bewegt);
+            }
+            QMouseEvent los(QEvent::MouseButtonRelease, QPointF(b), QPointF(achse->mapToGlobal(b)),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &los);
+        };
+
+        sitzung->neu();
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+
+        // --- ein Audio-Kanal: heisst A1, ueber Undo
+        achse->audioKanalHinzu();
+        REQUIRE(kanaele().size() == 2);
+        CHECK(kanaele()[1].art == KanalArt::Audio);
+        CHECK(kanaele()[1].name == QStringLiteral("A1"));
+        CHECK(bus->undoDescription() == "Add audio channel");
+
+        // --- ein Song in den Audio-Kanal: so lang, wie er ist
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(2000), achse->yVonZeile(1)), {eins}));
+        REQUIRE(kanaele()[1].clips.size() == 1);
+        CHECK(kanaele()[1].clips[0].datei == eins);
+        CHECK(kanaele()[1].clips[0].startMs == 2000);
+        CHECK(kanaele()[1].clips[0].endeMs == 22000);
+        CHECK(kanaele()[1].clips[0].quellMs == 20000);
+        CHECK(kanaele()[1].clips[0].einsatzMs == 0);
+        CHECK(bus->undoDescription() == "Add song");
+        CHECK(sitzung->laengeMs() == 22000);  // das Ende folgt auch dem Ton
+        // die Clip-Zeile nennt am Ton den Einsatz, und Blend ist nicht zu waehlen
+        CHECK(clipZeile->text().startsWith(QStringLiteral("A1 · Eins.mp3 · 0:02.0 – 0:22.0 · from 0:00.0")));
+        CHECK_FALSE(mischart->isEnabled());
+
+        // --- was nicht passt, faellt nicht: ein Preset in den Audio-Kanal, ein Song in den Visual-Kanal
+        CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(25000), achse->yVonZeile(1)), {rot}));
+        CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(1000), achse->yVonZeile(0)), {zwei}));
+        CHECK(kanaele()[0].clips.empty());
+        CHECK(kanaele()[1].clips.size() == 1);
+        // aus einer gemischten Auswahl nimmt jede Zeile das Ihre
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(0), achse->yVonZeile(0)), {zwei, rot}));
+        REQUIRE(kanaele()[0].clips.size() == 1);
+        CHECK(kanaele()[0].clips[0].datei == rot);
+        CHECK(mischart->isEnabled());  // der angeklickte Clip ist jetzt ein Bild-Clip
+
+        // --- unter der letzten Zeile: ein neuer Kanal der Art der Datei
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(3000), achse->yVonZeile(2)), {zwei}));
+        REQUIRE(kanaele().size() == 3);
+        CHECK(kanaele()[2].art == KanalArt::Audio);
+        CHECK(kanaele()[2].name == QStringLiteral("A2"));
+        CHECK(kanaele()[2].clips[0].endeMs == 3000 + 8000);
+        REQUIRE(bus->undo());
+        REQUIRE(kanaele().size() == 2);
+
+        // --- der echte Weg: ein Drop mit Datei-URLs, wie Audio Browser und Playlist ihn liefern
+        {
+            QMimeData daten;
+            daten.setUrls({QUrl::fromLocalFile(zwei)});
+            const QPointF ort(achse->xVon(24000), achse->yVonZeile(1));
+            QDragEnterEvent hinein(ort.toPoint(), Qt::CopyAction, &daten, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &hinein);
+            CHECK(hinein.isAccepted());
+            QDropEvent fall(ort, Qt::CopyAction, &daten, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &fall);
+            CHECK(fall.isAccepted());
+            REQUIRE(kanaele()[1].clips.size() == 2);
+            CHECK(kanaele()[1].clips[1].datei == zwei);
+            CHECK(kanaele()[1].clips[1].startMs == 24000);
+            CHECK(kanaele()[1].clips[1].endeMs == 32000);
+        }
+
+        // --- die Wellenform: die Huellkurve jedes Songs kommt im Hintergrund
+        REQUIRE(warte([&] { return achse->hatHuelle(eins) && achse->hatHuelle(zwei); }));
+
+        // --- die Kanten des Ton-Clips: links aendert den Einsatz, rechts schneidet ab — nie ueber den Song hinaus
+        const auto song = [&]() -> const Clip& { return kanaele()[1].clips[0]; };
+        const int y = achse->yVonZeile(1) + 6;
+        zieh(QPoint(achse->xVon(2000) + 2, y), QPoint(achse->xVon(5000), y));
+        CHECK(song().startMs == 5000);
+        CHECK(song().einsatzMs == 3000);
+        CHECK(song().endeMs == 22000);
+        CHECK(bus->undoDescription() == "Resize clip");
+        CHECK(clipZeile->text().contains(QStringLiteral("from 0:03.0 in the song")));
+        zieh(QPoint(achse->xVon(5000) + 2, y), QPoint(achse->xVon(0), y));  // weiter, als der Song reicht
+        CHECK(song().startMs == 2000);
+        CHECK(song().einsatzMs == 0);
+        zieh(QPoint(achse->xVon(22000) - 2, y), QPoint(achse->xVon(15000), y));
+        CHECK(song().endeMs == 15000);
+        zieh(QPoint(achse->xVon(15000) - 2, y), QPoint(achse->xVon(23500), y));  // der zweite Song liegt erst bei 24 s
+        CHECK(song().endeMs == 22000);  // laenger als der Song geht nicht
+
+        // --- Ein- und Ausblenden wie am Bild — der Pegel ist die Lautstaerke
+        const QPoint ein = achse->blendenGriff(1, 0, true);
+        REQUIRE(ein.x() >= 0);
+        zieh(ein, QPoint(achse->xVon(6000), ein.y()));
+        CHECK(song().ein.dauerMs == 4000);
+        CHECK(song().pegelBei(2000) == doctest::Approx(0.5));
+        achse->oeffneKurve(1, 0, {TeilArt::Ein, -1});  // der Curve Editor haengt auch an einem Ton-Clip
+        REQUIRE(panel.kurvenFenster() != nullptr);
+        testfenster::platziere(*panel.kurvenFenster());
+        CHECK(panel.kurvenFenster()->hatKurve());
+
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+        {
+            QCoreApplication::processEvents();
+            CHECK(panel.grab().save(bild + QStringLiteral(".ton.png")));
+        }
+
+        // --- gespeichert und gelesen: der Ton-Clip kommt ganz zurueck
+        const QString ziel = dir.filePath(QStringLiteral("mitTon.lvcomp"));
+        REQUIRE(sitzung->speichereNach(ziel));
+        Komposition gelesen;
+        REQUIRE(ladeKomposition(ziel, gelesen));
+        CHECK(gleich(gelesen, sitzung->komposition()));
+        CHECK(gelesen.kanaele[1].clips[0].ein.dauerMs == 4000);
     }
 }

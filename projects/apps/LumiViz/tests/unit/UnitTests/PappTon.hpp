@@ -26,6 +26,7 @@
 #include <QStringList>
 
 #include <algorithm>
+#include <atomic>
 #include <vector>
 
 namespace papp
@@ -217,6 +218,13 @@ public:
     }
     [[nodiscard]] int getDurationMs(AudioStreamHandle h) const override { return m_streams[h - 1].dauer; }
     [[nodiscard]] int probeDurationMs(const QString& filePath) override { return laengen.value(filePath, 0); }
+    /// Eine gleichmaessige Huellkurve, halbe Hoehe — genug, um eine Wellenform zu sehen.
+    [[nodiscard]] std::vector<float> probePeaks(const QString& filePath, int msProWert,
+                                                const std::atomic<bool>* = nullptr) override
+    {
+        const int dauer = laengen.value(filePath, 0);
+        return std::vector<float>(static_cast<std::size_t>(msProWert > 0 ? dauer / msProWert : 0), 0.5f);
+    }
     [[nodiscard]] float getVolume(AudioStreamHandle h) const override { return m_streams[h - 1].lautstaerke; }
     bool setVolume(AudioStreamHandle h, float volume) override
     {

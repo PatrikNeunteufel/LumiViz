@@ -5,8 +5,10 @@
 
 #include "composer/ComposerPanel.hpp"
 
+#include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "audio/IAudioEngine.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/FormPresets.hpp"
@@ -63,6 +65,15 @@ QColor kanalFarbe(int kanal, bool an)
     if (!an) f = QColor::fromHsv(f.hue(), 40, 110);
     return f;
 }
+
+/// Farbe der Ton-Clips: ein warmer Ton, den kein Bild-Kanal traegt.
+QColor tonFarbe(bool an)
+{
+    return an ? QColor::fromHsv(32, 110, 150) : QColor::fromHsv(32, 40, 105);
+}
+
+/// So fein wird die Huellkurve eines Songs geholt (ein Wert je 50 ms).
+constexpr int kHuelleMs = 50;
 
 /// Abstand der Striche im Lineal, in Sekunden: der kleinste, bei dem die
 /// Beschriftungen nicht zusammenstossen.
@@ -308,10 +319,42 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const VisualClip& clip = kanal.clips[static_cast<std::size_t>(c)];
             const QRect r = clipRechteck(zeile, clip);
             const bool gewaehlt = k == m_kanal && c == m_clip;
-            const QColor farbe = kanalFarbe(k, m_an && kanal.an);
+            const bool ton = kanal.art == KanalArt::Audio;
+            const QColor farbe = ton ? tonFarbe(m_an && kanal.an) : kanalFarbe(k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
             p.drawRoundedRect(r, 4, 4);
+
+            // Ton (C5): die Wellenform des Songs — so hoch, wie der Pegel des
+            // Clips sie laesst; man sieht die Blenden an ihr
+            const auto huelle = ton ? m_huellen.constFind(clip.datei) : m_huellen.constEnd();
+            if (huelle != m_huellen.constEnd() && !huelle->werte.empty() && huelle->msProWert > 0 &&
+                r.width() > 8 && clip.dauerMs() > 0)
+            {
+                const double dauer = static_cast<double>(clip.dauerMs());
+                const double halb = (r.height() - 6) / 2.0;
+                const double mitte = r.center().y() + 0.5;
+                const auto werte = static_cast<std::int64_t>(huelle->werte.size());
+                const QColor welle(255, 255, 255, 95);
+                double pegel = 1.0;
+                for (int x = r.left() + 1; x < r.right(); ++x)
+                {
+                    const double a0 = static_cast<double>(x - r.left()) / r.width();
+                    const double a1 = static_cast<double>(x + 1 - r.left()) / r.width();
+                    const auto imClip = static_cast<std::int64_t>(a0 * dauer);
+                    // den Pegel nur alle vier Pixel neu rechnen
+                    if ((x - r.left()) % 4 == 1) pegel = clip.pegelBei(imClip);
+                    // der groesste Ausschlag in dem Stueck Song, das dieses Pixel zeigt
+                    const std::int64_t von = clip.songStelle(imClip) / huelle->msProWert;
+                    const std::int64_t bis = std::max(
+                        von + 1, clip.songStelle(static_cast<std::int64_t>(a1 * dauer)) / huelle->msProWert);
+                    float spitze = 0.0f;
+                    for (std::int64_t i = std::max<std::int64_t>(0, von); i < std::min(bis, werte); ++i)
+                        spitze = std::max(spitze, huelle->werte[static_cast<std::size_t>(i)]);
+                    const double hoch = std::max(0.5, spitze * pegel * halb);
+                    p.fillRect(QRectF(x, mitte - hoch, 1.0, 2.0 * hoch), welle);
+                }
+            }
 
             // die Pegelkurve: Hoehe im Clip = Pegel
             if (!clip.vollerPegel() && r.width() > 8 && clip.dauerMs() > 0)
@@ -422,7 +465,8 @@ void Zeitachse::paintEvent(QPaintEvent*)
         {
             p.setPen(text);
             p.drawText(QRect(8, ziel.top(), kKopfBreite - 12, kZeilenHoehe),
-                       Qt::AlignLeft | Qt::AlignVCenter, tr("New channel"));
+                       Qt::AlignLeft | Qt::AlignVCenter,
+                       m_fallTon ? tr("New audio channel") : tr("New channel"));
         }
     }
 
@@ -1028,8 +1072,20 @@ bool Zeitachse::lasseFallen(QPoint ort, const QStringList& dateien, Qt::Keyboard
     if (ort.y() < kLinealHoehe) return false;
     Komposition neu = m_komposition;
     int kanal = kanalBei(ort.y());
-    if (kanal < 0) kanal = fuegeKanalEin(neu);  // unter der letzten Zeile: ein neuer Kanal
-    if (neu.kanaele[static_cast<std::size_t>(kanal)].art != KanalArt::Visual) return false;
+
+    // Songs fallen nur in Audio-Kanaele, Presets nur in Visual-Kanaele (C5).
+    // Die Zeile bestimmt, was faellt; unter der letzten Zeile die erste Datei.
+    const auto istSong = [this](const QString& datei) {
+        return m_audioEndungen.contains(QFileInfo(datei).suffix(), Qt::CaseInsensitive);
+    };
+    const bool ton = kanal >= 0 ? neu.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio
+                                : istSong(dateien.first());
+    QStringList passend;
+    for (const QString& datei : dateien)
+        if (istSong(datei) == ton) passend << datei;
+    if (passend.isEmpty()) return false;
+    // unter der letzten Zeile: ein neuer Kanal dieser Art
+    if (kanal < 0) kanal = fuegeKanalEin(neu, {}, ton ? KanalArt::Audio : KanalArt::Visual);
 
     const Stoss stoss = !(tasten & Qt::ControlModifier) ? Stoss::Halten
                         : (tasten & Qt::ShiftModifier)  ? Stoss::Schieben
@@ -1037,16 +1093,30 @@ bool Zeitachse::lasseFallen(QPoint ort, const QStringList& dateien, Qt::Keyboard
     std::int64_t start = stelleVon(ort.x());
     if (!(tasten & Qt::AltModifier)) start = raste(start, m_komposition, -1, -1);
     int platz = -1;
-    for (const QString& datei : dateien)  // mehrere Dateien: hintereinander
+    for (const QString& datei : passend)  // mehrere Dateien: hintereinander
     {
-        platz = fuegeClipEin(neu, kanal, datei, start, kNeuerClipMs, stoss);
+        // ein Song ist so lang, wie er ist — ohne Auskunft 20 s
+        platz = ton ? fuegeSongEin(neu, kanal, datei, start, m_songLaenge ? m_songLaenge(datei) : 0, stoss)
+                    : fuegeClipEin(neu, kanal, datei, start, kNeuerClipMs, stoss);
         if (platz < 0) return false;
         start = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(platz)].endeMs;
     }
     uebernimm(neu, kanal, platz);
-    Q_EMIT bearbeitet(neu, dateien.size() == 1 ? tr("Add clip") : tr("Add clips"));
-    Q_EMIT hineingezogen(dateien);
+    Q_EMIT bearbeitet(neu, ton ? (passend.size() == 1 ? tr("Add song") : tr("Add songs"))
+                               : (passend.size() == 1 ? tr("Add clip") : tr("Add clips")));
+    Q_EMIT hineingezogen(passend);
     return true;
+}
+
+QStringList Zeitachse::fallDateien(const QMimeData* daten) const
+{
+    return lumi::ui::presetDateien(daten) + lumi::ui::dateienMitEndung(daten, m_audioEndungen);
+}
+
+void Zeitachse::setHuelle(const QString& datei, std::vector<float> huelle, int msProWert)
+{
+    m_huellen.insert(datei, Huelle{std::move(huelle), msProWert});
+    update();
 }
 
 void Zeitachse::kanalHinzu()
@@ -1056,6 +1126,15 @@ void Zeitachse::kanalHinzu()
     (void)fuegeKanalEin(neu);
     uebernimm(neu, m_kanal, m_clip);
     Q_EMIT bearbeitet(neu, tr("Add channel"));
+}
+
+void Zeitachse::audioKanalHinzu()
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    Komposition neu = m_komposition;
+    (void)fuegeKanalEin(neu, {}, KanalArt::Audio);
+    uebernimm(neu, m_kanal, m_clip);
+    Q_EMIT bearbeitet(neu, tr("Add audio channel"));
 }
 
 void Zeitachse::kanalLoeschen(int kanal)
@@ -1089,8 +1168,10 @@ void Zeitachse::kanalSchalten(int kanal, bool an)
 
 void Zeitachse::dragEnterEvent(QDragEnterEvent* event)
 {
-    if (m_bearbeiten && m_geladen && !lumi::ui::presetDateien(event->mimeData()).isEmpty())
+    if (m_bearbeiten && m_geladen && !fallDateien(event->mimeData()).isEmpty())
     {
+        // nur Songs: unter der letzten Zeile entstuende ein Audio-Kanal
+        m_fallTon = lumi::ui::presetDateien(event->mimeData()).isEmpty();
         m_fallOrt = event->position().toPoint();
         event->acceptProposedAction();
         update();
@@ -1119,8 +1200,7 @@ void Zeitachse::dropEvent(QDropEvent* event)
 {
     m_fallOrt = QPoint(-1, -1);
     update();
-    if (lasseFallen(event->position().toPoint(), lumi::ui::presetDateien(event->mimeData()),
-                    event->modifiers()))
+    if (lasseFallen(event->position().toPoint(), fallDateien(event->mimeData()), event->modifiers()))
         event->acceptProposedAction();
 }
 
@@ -1247,6 +1327,7 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         menu.addSeparator();
     }
     menu.addAction(tr("Add channel"), this, [this] { kanalHinzu(); });
+    menu.addAction(tr("Add audio channel"), this, [this] { audioKanalHinzu(); });
     menu.exec(event->globalPos());
 }
 
@@ -1266,6 +1347,55 @@ ComposerPanel::ComposerPanel(ServiceContainer& services, QWidget* parent)
 ComposerPanel::~ComposerPanel()
 {
     Sitzung::setzeBus(nullptr);  // der Bus gehoert den Diensten des Panels
+    // der Thread, der eine Huellkurve holt: abbrechen und auf ihn warten
+    if (m_huellAbbruch) m_huellAbbruch->store(true);
+    if (m_huellFaden.joinable()) m_huellFaden.join();
+}
+
+void ComposerPanel::ladeHuellen()
+{
+    if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+    for (const Kanal& kanal : m_zeitachse->komposition().kanaele)
+    {
+        if (kanal.art != KanalArt::Audio) continue;
+        for (const Clip& clip : kanal.clips)
+            if (!m_zeitachse->hatHuelle(clip.datei) && clip.datei != m_huellLaeuft &&
+                !m_huellWarten.contains(clip.datei))
+                m_huellWarten << clip.datei;
+    }
+    starteHuelle();
+}
+
+void ComposerPanel::starteHuelle()
+{
+    if (!m_huellLaeuft.isEmpty() || m_huellWarten.isEmpty()) return;
+    auto* engine = services().tryResolve<IAudioEngine>();
+    if (engine == nullptr)
+    {
+        m_huellWarten.clear();  // ohne Engine keine Wellenform
+        return;
+    }
+    if (m_huellFaden.joinable()) m_huellFaden.join();  // der vorige ist fertig
+    m_huellLaeuft = m_huellWarten.takeFirst();
+    m_huellAbbruch = std::make_shared<std::atomic<bool>>(false);
+    // Die ganze Datei zu dekodieren dauert spuerbar — in einem eigenen Thread
+    // (wie Lyrics Sync); das Ergebnis kommt ueber die Ereignisschleife zurueck.
+    const auto abbruch = m_huellAbbruch;
+    const QString datei = m_huellLaeuft;
+    const QPointer<ComposerPanel> panel(this);
+    m_huellFaden = std::thread([engine, datei, abbruch, panel]() {
+        std::vector<float> huelle = engine->probePeaks(datei, kHuelleMs, abbruch.get());
+        if (abbruch->load()) return;
+        QMetaObject::invokeMethod(
+            qApp,
+            [panel, datei, abbruch, huelle = std::move(huelle)]() mutable {
+                if (!panel || abbruch->load()) return;
+                panel->m_zeitachse->setHuelle(datei, std::move(huelle), kHuelleMs);
+                panel->m_huellLaeuft.clear();
+                panel->starteHuelle();  // der naechste
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 Sitzung* ComposerPanel::sitzung() const
@@ -1505,6 +1635,13 @@ void ComposerPanel::setupUI()
     });
     connect(m_zeitachse, &Zeitachse::auswahlGeaendert, this, [this] { zeigeClip(); });
     connect(m_zeitachse, &Zeitachse::kurveOeffnen, this, [this](Teil teil) { oeffneKurve(teil); });
+
+    // Audiokanal (C5): was die Zeitachse ueber Songs wissen muss, kommt von der Audio-Engine
+    m_zeitachse->setAudioEndungen(lumi::ui::audioEndungen(services()));
+    if (auto* engine = services().tryResolve<IAudioEngine>())
+        m_zeitachse->setSongLaenge([engine](const QString& datei) {
+            return static_cast<std::int64_t>(engine->probeDurationMs(datei));
+        });
 }
 
 KurvenFenster* ComposerPanel::kurvenFenster() const
@@ -1716,7 +1853,8 @@ void ComposerPanel::zeigeStand()
 void ComposerPanel::zeigeClip()
 {
     const VisualClip* clip = m_zeitachse->auswahl();
-    zeigeKurve();  // der Curve Editor folgt dem angeklickten Clip
+    zeigeKurve();   // der Curve Editor folgt dem angeklickten Clip
+    ladeHuellen();  // C5: die Wellenform neuer Songs holen
     // die Mischart gibt es nur am Bild
     const bool bild = clip != nullptr &&
                       m_zeitachse->komposition().kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())].art ==
@@ -1738,10 +1876,12 @@ void ComposerPanel::zeigeClip()
     // der Sitzung einen Augenblick voraus (ein eben entstandener Kanal).
     const Kanal& kanal =
         m_zeitachse->komposition().kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())];
+    // am Bild die Mischart, am Ton die Stelle im Song, an der der Clip einsetzt
     m_clipZeile->setText(QStringLiteral("%1 · %2 · %3 – %4 · %5")
                              .arg(kanal.name, QFileInfo(clip->datei).fileName(),
                                   zeitText(clip->startMs), zeitText(clip->endeMs),
-                                  QString::fromLatin1(mischartName(clip->mischart))));
+                                  bild ? QString::fromLatin1(mischartName(clip->mischart))
+                                       : tr("from %1 in the song").arg(zeitText(clip->einsatzMs))));
     m_clipZeile->setToolTip(QDir::toNativeSeparators(clip->datei));
 }
 
