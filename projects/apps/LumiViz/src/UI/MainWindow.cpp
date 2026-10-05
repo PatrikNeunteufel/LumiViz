@@ -213,6 +213,14 @@ MainWindow::MainWindow(QWidget* parent)
         lumi::ui::startpreset::lade(*bus, pfad);
     });
 
+    // Composer-Naht N4 (docs/ui/Composer_Konzept.md §12.2): war beim Beenden
+    // eine Komposition geladen, kommt sie wieder ins Panel — mit „Resume after
+    // restart" auch ihr Stand. Nach dem Preset der Kette: sie legt sich darueber.
+    QTimer::singleShot(0, this, [this]() {
+        if (VisualizerWidget* widget = primaryVisualizer())
+            (void)lumi::composer::stelleKompositionWiederHer(*widget);
+    });
+
     // S88 „Resume playback" (Wunsch Patrik): wurde beim letzten Mal waehrend
     // des Abspielens beendet, dort weiterspielen — erst wenn die
     // Ereignisschleife laeuft (Panels aktiv, Abonnenten des Titelwechsels da).
