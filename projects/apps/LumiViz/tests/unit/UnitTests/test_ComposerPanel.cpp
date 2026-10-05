@@ -864,6 +864,23 @@ TEST_SUITE("ComposerPanel")
             REQUIRE(fenster->loeschePreset(QStringLiteral("Mein Anlauf")));
             CHECK(presets->count() == 1);
 
+            // dieselben Presets stehen im Rechtsklick-Menue der Zeitachse (hier: die Wahl daraus)
+            REQUIRE(formpresets::speichere(QStringLiteral("Steil"), einfacheBlende(Kurvenform::Exponentiell)));
+            achse->setzeBlendenPreset(0, 0, true, QStringLiteral("Steil"));
+            CHECK(derClip().ein.form.punkte[0].form == Kurvenform::Exponentiell);
+            CHECK(derClip().ein.dauerMs == 3000);                            // die Dauer bleibt
+            CHECK(derClip().aus.form.punkte[0].form == Kurvenform::SKurve);  // die andere Seite auch
+            CHECK(bus->undoDescription() == "Change fade shape");
+            CHECK(presets->currentText() == QStringLiteral("Steil"));  // der Curve Editor zeigt es
+            {
+                const auto schritte = bus->undoCount();
+                achse->setzeBlendenPreset(0, 0, true, QStringLiteral("gibt es nicht"));
+                achse->setzeBlendenPreset(0, 0, true, QStringLiteral("Tal"));  // ein Stueck-Preset
+                CHECK(bus->undoCount() == schritte);
+            }
+            REQUIRE(bus->undo());
+            CHECK(derClip().ein.form.punkte[0].form == Kurvenform::EaseIn);
+
             // die Dauer; zusammen laenger als der Clip: beide Zahlen, die eingestellte bleibt
             dauer->setValue(4.0);
             CHECK(derClip().ein.dauerMs == 4000);
@@ -981,6 +998,26 @@ TEST_SUITE("ComposerPanel")
             CHECK(derClip().stuecke[0].weiteMs == 4000);
             CHECK(achse->stueckGriff(0, 0, 7, 0) == QPoint(-1, -1));  // das Stueck gibt es nicht
 
+            // ein Stueck-Preset aus dem Rechtsklick-Menue: nur die Form wechselt
+            {
+                Pegelform spitz = delle();
+                spitz.punkte[0].form = Kurvenform::Linear;
+                spitz.punkte[1].form = Kurvenform::Linear;
+                REQUIRE(formpresets::speichere(QStringLiteral("Spitz"), spitz));
+                achse->setzeStueckPreset(0, 0, 0, QStringLiteral("Spitz"));
+                CHECK(gleich(derClip().stuecke[0].form, spitz));
+                CHECK(derClip().stuecke[0].gekippt);  // Flipped, Lage und Weite bleiben
+                CHECK(derClip().stuecke[0].weiteMs == 4000);
+                CHECK(bus->undoDescription() == "Change shape curve");
+                CHECK(presets->currentText() == QStringLiteral("Spitz"));
+                const auto schritte = bus->undoCount();
+                achse->setzeStueckPreset(0, 0, 0, QStringLiteral("Steil"));  // ein Blenden-Preset
+                achse->setzeStueckPreset(0, 0, 4, QStringLiteral("Spitz"));  // kein solches Stueck
+                CHECK(bus->undoCount() == schritte);
+                REQUIRE(bus->undo());
+                CHECK(gleich(derClip().stuecke[0].form, delle()));
+            }
+
             if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
             {
                 QCoreApplication::processEvents();
@@ -1015,6 +1052,13 @@ TEST_SUITE("ComposerPanel")
             CHECK(derClip().aus.dauerMs == 2000);
             CHECK(bus->undoDescription() == "Add fade");
             CHECK(fenster->hatKurve());
+            // ebenso bei der Wahl eines Presets: zwei Sekunden, mit seiner Form
+            ohne = sitzung->komposition();
+            ohne.kanaele[0].visual[0].ein = {};
+            sitzung->setzeKomposition(ohne);
+            achse->setzeBlendenPreset(0, 0, true, QStringLiteral("Steil"));
+            CHECK(derClip().ein.dauerMs == 2000);
+            CHECK(derClip().ein.form.punkte[0].form == Kurvenform::Exponentiell);
         }
 
         // --- in eine Luecke: der neue Clip reicht nur bis zum naechsten

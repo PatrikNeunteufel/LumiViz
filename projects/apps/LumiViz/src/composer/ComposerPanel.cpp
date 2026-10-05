@@ -9,6 +9,7 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "composer/Bearbeiten.hpp"
+#include "composer/FormPresets.hpp"
 #include "composer/KurvenEditor.hpp"
 #include "composer/Mischer.hpp"
 #include "composer/Sitzung.hpp"
@@ -641,6 +642,39 @@ void Zeitachse::setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form)
     Q_EMIT bearbeitet(neu, tr("Change fade shape"));
 }
 
+void Zeitachse::setzeBlendenPreset(int kanal, int clip, bool ein, const QString& name)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
+    Komposition neu = m_komposition;
+    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].visual;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
+    Pegelform form;
+    if (!formpresets::lade(formpresets::finde(FormArt::Blende, name).pfad, FormArt::Blende, form)) return;
+    VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    ClipBlende& blende = ein ? c.ein : c.aus;
+    blende.form = form;
+    if (blende.dauerMs <= 0) blende.dauerMs = std::min<std::int64_t>(2000, c.dauerMs() / 4);
+    uebernimm(neu, kanal, clip);
+    Q_EMIT bearbeitet(neu, tr("Change fade shape"));
+}
+
+void Zeitachse::setzeStueckPreset(int kanal, int clip, int stueck, const QString& name)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
+    Komposition neu = m_komposition;
+    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].visual;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
+    VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    if (stueck < 0 || stueck >= static_cast<int>(c.stuecke.size())) return;
+    Pegelform form;
+    if (!formpresets::lade(formpresets::finde(FormArt::Stueck, name).pfad, FormArt::Stueck, form)) return;
+    c.stuecke[static_cast<std::size_t>(stueck)].form = form;
+    uebernimm(neu, kanal, clip);
+    Q_EMIT bearbeitet(neu, tr("Change shape curve"));
+}
+
 void Zeitachse::setTeil(Teil teil)
 {
     if (teil == m_teil) return;
@@ -1112,11 +1146,32 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         {
             const VisualClip& gewaehlt =
                 m_komposition.kanaele[static_cast<std::size_t>(kanal)].visual[static_cast<std::size_t>(clip)];
+            // Die Liste sind die Blenden-Presets — mitgelieferte und eigene; der
+            // Haken sitzt an dem, dessen Form die Blende gerade traegt.
+            const std::vector<formpresets::Eintrag> presets = formpresets::liste(FormArt::Blende);
             for (const bool ein : {true, false})
             {
                 const ClipBlende& blende = ein ? gewaehlt.ein : gewaehlt.aus;
                 const bool zeigt = blende.dauerMs > 0 && einfach(blende.form);
                 QMenu* formen = menu.addMenu(ein ? tr("Fade in") : tr("Fade out"));
+                bool gefunden = false;
+                for (const formpresets::Eintrag& e : presets)
+                {
+                    QAction* a = formen->addAction(e.name);
+                    a->setCheckable(true);
+                    Pegelform f;
+                    if (!gefunden && blende.dauerMs > 0 && formpresets::lade(e.pfad, FormArt::Blende, f) &&
+                        gleich(f, blende.form))
+                    {
+                        a->setChecked(true);
+                        gefunden = true;
+                    }
+                    connect(a, &QAction::triggered, this, [this, kanal, clip, ein, name = e.name] {
+                        setzeBlendenPreset(kanal, clip, ein, name);
+                    });
+                }
+                if (!presets.empty()) continue;
+                // ohne Preset-Ordner (die App findet `asset/composer` nicht): die sieben festen Formen
                 for (int f = 0; f < kKurvenformen; ++f)
                 {
                     const auto form = static_cast<Kurvenform>(f);
@@ -1142,6 +1197,25 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
                            [this, kanal, clip] { oeffneKurve(kanal, clip, {TeilArt::Aus, -1}); });
             if (unter.art == TeilArt::Stueck)
             {
+                // die Stueck-Presets, wie bei den Blenden
+                const ClipStueck& stueck = c.stuecke[static_cast<std::size_t>(unter.stueck)];
+                QMenu* formen = menu.addMenu(tr("Shape"));
+                bool gefunden = false;
+                for (const formpresets::Eintrag& e : formpresets::liste(FormArt::Stueck))
+                {
+                    QAction* a = formen->addAction(e.name);
+                    a->setCheckable(true);
+                    Pegelform f;
+                    if (!gefunden && formpresets::lade(e.pfad, FormArt::Stueck, f) && gleich(f, stueck.form))
+                    {
+                        a->setChecked(true);
+                        gefunden = true;
+                    }
+                    connect(a, &QAction::triggered, this, [this, kanal, clip, unter, name = e.name] {
+                        setzeStueckPreset(kanal, clip, unter.stueck, name);
+                    });
+                }
+                formen->setEnabled(!formen->isEmpty());
                 menu.addAction(tr("Edit shape curve..."), this,
                                [this, kanal, clip, unter] { oeffneKurve(kanal, clip, unter); });
                 menu.addAction(tr("Delete shape"), this,

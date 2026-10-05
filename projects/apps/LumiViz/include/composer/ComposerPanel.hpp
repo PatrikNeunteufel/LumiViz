@@ -92,6 +92,14 @@ public:
     /// null wird dabei zwei Sekunden lang — sonst saehe man die Wahl nicht.
     void setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form);
 
+    /// Die Form einer Blende aus einem Blenden-Preset setzen (Rechtsklick);
+    /// Dauer und die andere Seite bleiben. Eine Blende der Laenge null wird
+    /// dabei zwei Sekunden lang. Ein Name, den es nicht gibt, aendert nichts.
+    void setzeBlendenPreset(int kanal, int clip, bool ein, const QString& name);
+    /// Die Form eines Stuecks aus einem Stueck-Preset setzen; Lage, Weite
+    /// und „Flipped" bleiben.
+    void setzeStueckPreset(int kanal, int clip, int stueck, const QString& name);
+
     // --- Teile der Pegelkurve (C4 Teil 2) ------------------------------------
     /// Die Kurve eines Teils oeffnen: der Clip wird angeklickt, `kurveOeffnen`
     /// gemeldet. Eine Blende ohne Dauer bekommt im Bearbeiten zwei Sekunden.

@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.21.0
+> **Version:** 0.22.0
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -497,10 +497,17 @@ Länge und lässt sich spiegeln.
   Felder Width und Position im Curve Editor setzen die Werte dagegen frei —
   dort kann ein Stück auch in einen Nachbarn hinein und wird dann gestaucht.
 
+- **Presets im Rechtsklick-Menü der Zeitachse:** *Fade in* / *Fade out*
+  listen die Blenden-Presets (mitgelieferte und eigene), der Haken sitzt an
+  dem, dessen Form die Blende trägt; an einem Stück listet *Shape* die
+  Stück-Presets. `Zeitachse::setzeBlendenPreset`, `setzeStueckPreset` — nur
+  die Form wechselt, Dauer, Lage, Weite, Flipped und die andere Seite
+  bleiben. Findet die App `asset/composer` nicht und gibt es keine eigenen
+  Presets, zeigt das Menü wie zuvor die sieben festen Formen
+  (`setzeBlendenForm`).
+
 **Offen:**
 
-- Das Rechtsklick-Menü *Fade in* / *Fade out* führt noch seine feste
-  Formenliste statt der Presets.
 - Eine Änderung wirkt beim Loslassen der Maus, nicht schon während des Zugs.
 
 ### 9e. Composer Variables — geplant (Wunsch Patrik S95)
@@ -848,6 +855,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.22.0 | 2026-10-05 | Session 96 — **Presets im Rechtsklick-Menü der Zeitachse** (eigener Code, keine Naht). *Fade in* / *Fade out* listen die Blenden-Presets statt der festen Formenliste (Haken an dem Preset, dem die Form gleicht; ohne jedes Preset die sieben festen Formen als Rückfall); an einem Stück *Shape* mit den Stück-Presets. `Zeitachse::setzeBlendenPreset`, `setzeStueckPreset`. Belegt in `test_ComposerPanel.cpp` (Wahl je Art, die andere Art und unbekannte Namen ändern nichts, Dauer und andere Seite bleiben, Blende ohne Länge bekommt zwei Sekunden, der Curve Editor zeigt das gewählte Preset). 912 Cases. Benutzerhandbuch 1.90.0. **Offen:** die Menüs selbst prüft nur der Sichttest |
 | 0.21.0 | 2026-10-05 | Session 96 — **Griffe der Stücke auf der Zeitachse** (eigener Code, keine Naht). Oben im Clip je Stück eine Raute (verschieben) und zwei Striche (Weite); `Zeitachse::stueckGriff`, Griffe `StueckLage` / `StueckLinks` / `StueckRechts`. `Bearbeiten`: `spielraumVon`, `verschiebeStueck`, `setzeStueckWeite` — erst festschreiben, dann an den Nachbarn anhalten (§9). Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall: anlegen, finden, schieben, Weite, zwei Stücke, gestaucht anfassen) und `test_ComposerPanel.cpp` (Raute und Kanten mit der Maus, Anhalten an der Ausblendung, der Curve Editor folgt). 912 Cases. Benutzerhandbuch 1.89.0 |
 | 0.20.1 | 2026-10-05 | Session 96 — **Der Curve Editor zeigt die Wirkung am Clip** (Entscheid Patrik: a). Eine Ausblendung ist rückwärts gezeichnet, ein gekipptes Stück als Buckel; gezogen wird in dieser Ansicht, die Form selbst bleibt (`Formflaeche::setAnsicht`, die Ansicht sitzt in `ortVon` / `xVon` / `yVon`); eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird. Belegt in `test_ComposerPanel.cpp` (Delle und Buckel, Ausblendung rückwärts, ein in der Ansicht gesetzter Punkt landet in der Form hinten und senkt den Pegel früh). 911 Cases. Benutzerhandbuch 1.88.1 |
 | 0.20.0 | 2026-10-05 | Session 96 — **Das Fenster Curve Editor** (eigener Code, keine Naht; Entscheid Patrik, Rückfrage 2: a). `composer/KurvenEditor`: `Formflaeche` und `KurvenFenster` (§9). `Bearbeiten`: `Teil`, `hatTeil`, `teilBei`, `bereichVon`, `fuegeStueckEin`, `loescheStueck`. Zeitachse: Doppelklick öffnet die Kurve einer Blende oder eines Stücks, Rechtsklick-Einträge für Kurven und Stücke, `oeffneKurve`, `stueckHinzu`, `stueckLoeschen`, `setTeil` (gelber Strich); die Länge einer Blende mit eigenen Punkten lässt sich ziehen, `setzeBlendenForm` ändert nur seine Seite. Panel: das Fenster entsteht bei der ersten Kurve, folgt dem angeklickten Clip, Änderungen über Undo. Damit haben Grundpegel und Stücke eine Bedienung, und ein gestauchtes Teil zeigt beide Zahlen. Belegt in `test_ComposerPanel.cpp` (Doppelklick, Punkte mit der Maus, Undo, Presets, Dauer mit Stauchen und Festschreiben, Grundpegel, Stück mit Lage, Weite und Flipped, ohne Edit, Blende entsteht beim Öffnen). 911 Cases. Benutzerhandbuch 1.88.0. **Offen:** siehe §9 |

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.89.0
+> **Version:** 1.90.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1776,9 +1776,12 @@ Ausblendung.
   diese Strecke ein; der rechte Griff nach links ergibt die Ausblendung.
   Zurück an die Kante gezogen ist die Blende wieder weg. Die helle Linie im
   Clip zeigt den Verlauf.
-- **Form:** Rechtsklick auf den Clip → *Fade in* bzw. *Fade out*: Linear,
-  S-curve, Ease in, Ease out, Exponential, Hold (Sprung am Ende) und
-  **Bezier**. Hat die Blende noch keine Länge, bekommt sie dabei zwei Sekunden.
+- **Form:** Rechtsklick auf den Clip → *Fade in* bzw. *Fade out* zeigt die
+  **Blenden-Presets**: die mitgelieferten — Linear, S-curve, Ease in, Ease
+  out, Exponential, Hold (Sprung am Ende) und **Bezier** — und alle, die du
+  im Curve Editor selbst gespeichert hast. Der Haken steht an dem Preset,
+  dessen Form die Blende gerade trägt; gleicht sie keinem, steht keiner. Hat
+  die Blende noch keine Länge, bekommt sie bei der Wahl zwei Sekunden.
   **Die Ausblendung ist dieselbe Form, rückwärts gelesen:** eine Form, die
   als Einblendung langsam losgeht (Ease in), kommt als Ausblendung langsam an.
 - **Bezier:** Ist der Clip angeklickt, zeigt eine Bézier-Blende zwei gelbe
@@ -1792,8 +1795,8 @@ Ausblendung.
 
 Eine Blende, deren Form aus mehr als einem Abschnitt besteht (im Curve Editor
 gezeichnet), behält den Griff für die Länge; ihre Form änderst du im Curve
-Editor. Wählst du im Rechtsklick-Menü eine der sieben Formen, ersetzt sie die
-gezeichnete.
+Editor. Wählst du im Rechtsklick-Menü ein Preset, ersetzt es die gezeichnete
+Form.
 
 **Curve Editor — die Form einer Kurve zeichnen.** Ein eigenes Fenster, das
 offen bleiben kann, während du im Composer weiterarbeitest. Es öffnet sich mit
@@ -1853,7 +1856,10 @@ null: im Curve Editor ist oben der Grundpegel, unten null.
   seinen Stücken zu sehen. Die Kurve im Fenster dreht sich mit: aus der Delle
   wird ein Buckel. Als Preset gespeichert ist es dieselbe Kurve, ungekippt.
 - Doppelklick auf ein Stück oder Rechtsklick → *Edit shape curve...* öffnet
-  seine Kurve, *Delete shape* nimmt es weg.
+  seine Kurve, *Delete shape* nimmt es weg. Rechtsklick auf ein Stück →
+  *Shape* zeigt die **Stück-Presets** (mitgeliefert Dip Soft, Dip Sharp, Dip
+  Flat, dazu deine eigenen); eine Wahl ersetzt nur die Form — Lage, Breite
+  und *Flipped* bleiben.
 - Berühren sich Stücke und Blenden, weil der Clip zu kurz ist, werden die
   sich berührenden gleichmäßig gestaucht — wie bei den Blenden.
 
@@ -2004,6 +2010,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.90.0 | 2026-10-05 | Session 96. §15 Composer GEÄNDERT Rechtsklick → *Fade in* / *Fade out* zeigt die **Blenden-Presets** (mitgelieferte und eigene) statt der festen Formenliste; NEU Rechtsklick auf ein Stück → *Shape* mit den Stück-Presets |
 | 1.89.0 | 2026-10-05 | Session 96. §15 Composer NEU **Griffe der Stücke** oben im Clip: die Raute verschiebt ein Stück, die Striche an den Kanten ändern seine Breite; ein Stück hält an Blenden und anderen Stücken an |
 | 1.88.1 | 2026-10-05 | Session 96. §15 Curve Editor: das Fenster zeigt die Kurve, **wie sie am Clip wirkt** — eine Ausblendung fällt von links oben nach rechts unten, ein Stück mit Flipped steht als Buckel nach oben; eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird |
 | 1.88.0 | 2026-10-05 | Session 96. §15 Composer NEU **Curve Editor**: eigenes Fenster zum Zeichnen der Form einer Blende (Doppelklick auf die Blende oder Rechtsklick → *Edit fade in curve...* / *Edit fade out curve...*) — Punkte ziehen, setzen, wegnehmen, Form je Abschnitt, Bézier-Anfasser; **Kurven-Presets** laden, speichern, löschen; Felder Duration und Base level. NEU **Stücke mitten im Clip** (*Add shape here*, Width, Position, Flipped, *Delete shape*). Eine gezeichnete Blende behält auf der Zeitachse den Griff für die Länge |
