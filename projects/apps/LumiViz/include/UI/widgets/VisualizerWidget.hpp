@@ -152,6 +152,14 @@ public:
     [[nodiscard]] QMutex& renderMutex() { return m_renderMutex; }
 
     /**
+     * @brief Der Dienste-Behaelter dieses Fensters (Composer-Naht N7b,
+     *        docs/ui/Composer_Konzept.md §12.2) — reiner Lesezugriff auf das,
+     *        was der Konstruktor bekam: der Composer holt sich darueber Player
+     *        und Audio-Engine, auch wenn sein Panel nie offen war.
+     */
+    [[nodiscard]] ServiceContainer& dienste() { return services(); }
+
+    /**
      * @brief Composer-Naht R3 (docs/ui/Composer_Konzept.md §12.2): eine
      *        Bildquelle an die Stelle des Visualizers setzen.
      *
