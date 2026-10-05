@@ -97,6 +97,16 @@ public:
     bool setVolume(AudioStreamHandle stream, float volume) override;
     bool setTempo(AudioStreamHandle stream, float faktor) override;
 
+    // Mixer (Composer-Naht N12) — BASSmix
+    [[nodiscard]] AudioStreamHandle createMixer() override;
+    [[nodiscard]] AudioStreamHandle mixerAddSource(AudioStreamHandle mixer,
+                                                   const QString& filePath) override;
+    void mixerRemoveSource(AudioStreamHandle source) override;
+    [[nodiscard]] int getSourcePositionMs(AudioStreamHandle source) const override;
+    bool setSourcePositionMs(AudioStreamHandle source, int positionMs) override;
+    bool setSourcePaused(AudioStreamHandle source, bool paused) override;
+    [[nodiscard]] bool isSourcePlaying(AudioStreamHandle source) const override;
+
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;
     bool getWaveformData(AudioStreamHandle stream, float* data, int size) override;

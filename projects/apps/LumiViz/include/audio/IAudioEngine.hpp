@@ -265,6 +265,52 @@ public:
     virtual bool setTempo(AudioStreamHandle /*stream*/, float /*faktor*/) { return false; }
 
     // =========================================================================
+    // Mixer (Composer-Naht N12, docs/ui/Composer_Konzept.md §4 und §12.2)
+    // =========================================================================
+    // Mehrere Dateien zugleich in EINEM Stream: was aus dem Mixer kommt, ist die
+    // Summe seiner Quellen mit ihren Pegeln — zu hoeren und zu messen an
+    // derselben Stelle. Der Mixer ist ein Stream wie jeder andere (`play`,
+    // `pause`, `setVolume`, `getFFTData`, `freeStream` …). Eine Quelle ist kein
+    // spielbarer Stream: fuer sie gelten nur die Aufrufe hier, dazu `setVolume`
+    // (ihr Pegel im Mix), `getDurationMs` und die Metadaten.
+    // Vorgabe ueberall: die Engine kann es nicht.
+
+    /**
+     * @brief Einen Mixer anlegen (Stereo, ohne Puffer: ein neuer Pegel oder eine
+     *        neue Stelle einer Quelle ist nach wenigen zehn Millisekunden zu
+     *        hoeren). Ohne Quellen spielt er Stille und laeuft weiter.
+     * @return Stream-Handle oder INVALID_STREAM
+     */
+    [[nodiscard]] virtual AudioStreamHandle createMixer() { return INVALID_STREAM; }
+
+    /**
+     * @brief Eine Datei als Quelle in den Mixer haengen. Sie steht am Anfang und
+     *        ist **angehalten** — erst Stelle und Pegel setzen, dann
+     *        `setSourcePaused(…, false)`.
+     * @return Handle der Quelle oder INVALID_STREAM
+     */
+    [[nodiscard]] virtual AudioStreamHandle mixerAddSource(AudioStreamHandle /*mixer*/,
+                                                           const QString& /*filePath*/)
+    {
+        return INVALID_STREAM;
+    }
+
+    /** @brief Eine Quelle aus ihrem Mixer nehmen und freigeben. */
+    virtual void mixerRemoveSource(AudioStreamHandle /*source*/) {}
+
+    /** @brief Stelle einer Quelle in ms — die Stelle, die gerade zu hoeren ist. */
+    [[nodiscard]] virtual int getSourcePositionMs(AudioStreamHandle /*source*/) const { return 0; }
+
+    /** @brief Eine Quelle an eine Stelle setzen; ob sie laeuft, bleibt. */
+    virtual bool setSourcePositionMs(AudioStreamHandle /*source*/, int /*positionMs*/) { return false; }
+
+    /** @brief Eine Quelle anhalten oder weiterlaufen lassen; der Mixer laeuft davon unberuehrt. */
+    virtual bool setSourcePaused(AudioStreamHandle /*source*/, bool /*paused*/) { return false; }
+
+    /** @brief Liefert die Quelle gerade Ton in den Mixer (nicht angehalten, nicht am Ende)? */
+    [[nodiscard]] virtual bool isSourcePlaying(AudioStreamHandle /*source*/) const { return false; }
+
+    // =========================================================================
     // FFT / Audio Analysis
     // =========================================================================
 

@@ -16,6 +16,7 @@
 
 // BASS Library
 #include <bass.h>
+#include <bassmix.h>  // Composer-Naht N12: mehrere Dateien in einem Stream
 // Note: basswasapi.h would be needed for loopback capture (future feature)
 
 #include <QDir>
@@ -535,6 +536,99 @@ bool BassEngine::setTempo(AudioStreamHandle stream, float faktor)
     faktor = std::clamp(faktor, 0.25f, 2.0f);
     return BASS_ChannelSetAttribute(static_cast<HSTREAM>(stream), BASS_ATTRIB_FREQ,
                                     static_cast<float>(info.freq) * faktor) != 0;
+}
+
+// =============================================================================
+// Mixer (Composer-Naht N12, docs/ui/Composer_Konzept.md §4 und §12.2)
+// =============================================================================
+
+AudioStreamHandle BassEngine::createMixer()
+{
+    if (!m_impl->initialized)
+    {
+        m_impl->lastErrorMsg = "Engine not initialized";
+        return INVALID_STREAM;
+    }
+    // NONSTOP: ohne Quellen Stille statt Stillstand — eine Luecke zwischen zwei
+    // Songs haelt den Mixer nicht an.
+    const HSTREAM mixer = BASS_Mixer_StreamCreate(static_cast<DWORD>(m_impl->sampleRate), 2,
+                                                  BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP);
+    if (mixer == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BasicLogger::logError("Failed to create mixer: " + m_impl->lastErrorMsg.toStdString());
+        return INVALID_STREAM;
+    }
+    // Ohne Wiedergabe-Puffer: mit der Vorgabe (0,5 s) kaeme ein neuer Pegel
+    // einer Quelle erst nach etwa 460 ms am Ohr an, ohne nach etwa 30 ms
+    // (gemessen, test_ComposerBelegeTon.cpp).
+    BASS_ChannelSetAttribute(mixer, BASS_ATTRIB_BUFFER, 0.0f);
+    return static_cast<AudioStreamHandle>(mixer);
+}
+
+AudioStreamHandle BassEngine::mixerAddSource(AudioStreamHandle mixer, const QString& filePath)
+{
+    if (!m_impl->initialized || mixer == INVALID_STREAM) return INVALID_STREAM;
+
+    // Eine Quelle wird dekodiert, nicht gespielt — den Ton gibt der Mixer aus.
+    const std::string path = filePath.toLocal8Bit().constData();
+    const HSTREAM source = BASS_StreamCreateFile(
+        FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN);
+    if (source == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BasicLogger::logError("Failed to create mixer source: " + m_impl->lastErrorMsg.toStdString() +
+                              " - " + filePath.toStdString());
+        return INVALID_STREAM;
+    }
+    if (BASS_Mixer_StreamAddChannel(static_cast<HSTREAM>(mixer), source, BASS_MIXER_CHAN_PAUSE) == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BASS_StreamFree(source);
+        return INVALID_STREAM;
+    }
+    return static_cast<AudioStreamHandle>(source);
+}
+
+void BassEngine::mixerRemoveSource(AudioStreamHandle source)
+{
+    if (source == INVALID_STREAM) return;
+    BASS_Mixer_ChannelRemove(static_cast<DWORD>(source));
+    BASS_StreamFree(static_cast<HSTREAM>(source));
+}
+
+int BassEngine::getSourcePositionMs(AudioStreamHandle source) const
+{
+    if (source == INVALID_STREAM) return 0;
+    // Die Stelle im Mixer, nicht die des dekodierten Kanals: der liegt um das
+    // voraus, was der Mixer schon geholt hat.
+    const QWORD bytes = BASS_Mixer_ChannelGetPosition(static_cast<DWORD>(source), BASS_POS_BYTE);
+    if (bytes == static_cast<QWORD>(-1)) return 0;
+    return static_cast<int>(BASS_ChannelBytes2Seconds(static_cast<DWORD>(source), bytes) * 1000.0);
+}
+
+bool BassEngine::setSourcePositionMs(AudioStreamHandle source, int positionMs)
+{
+    if (source == INVALID_STREAM) return false;
+    const QWORD bytes =
+        BASS_ChannelSeconds2Bytes(static_cast<DWORD>(source), std::max(0, positionMs) / 1000.0);
+    return BASS_Mixer_ChannelSetPosition(static_cast<DWORD>(source), bytes, BASS_POS_BYTE) != 0;
+}
+
+bool BassEngine::setSourcePaused(AudioStreamHandle source, bool paused)
+{
+    if (source == INVALID_STREAM) return false;
+    return BASS_Mixer_ChannelFlags(static_cast<DWORD>(source), paused ? BASS_MIXER_CHAN_PAUSE : 0,
+                                   BASS_MIXER_CHAN_PAUSE) != static_cast<DWORD>(-1);
+}
+
+bool BassEngine::isSourcePlaying(AudioStreamHandle source) const
+{
+    if (source == INVALID_STREAM) return false;
+    return BASS_Mixer_ChannelIsActive(static_cast<DWORD>(source)) == BASS_ACTIVE_PLAYING;
 }
 
 // =============================================================================
@@ -1281,6 +1375,13 @@ int BassEngine::loadPlugins(const QString& pluginDir)
     {
         // Skip the main bass.dll - it's not a plugin
         if (file.fileName().compare("bass.dll", Qt::CaseInsensitive) == 0)
+        {
+            continue;
+        }
+        // Composer-Naht N12: bassmix.dll ist ebenfalls kein Decoder-Plugin —
+        // BASS_PluginLoad lehnt sie ab (Fehler 41) und es stuende je Start eine
+        // Warnung im Log.
+        if (file.fileName().compare("bassmix.dll", Qt::CaseInsensitive) == 0)
         {
             continue;
         }
