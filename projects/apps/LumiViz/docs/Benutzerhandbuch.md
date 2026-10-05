@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.80.0
+> **Version:** 1.81.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1684,9 +1684,11 @@ Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
 **Komposition**, eine Datei mit der Endung **`.lvcomp`**. Die Karaoke-Ebene
 (*View → Karaoke*) liegt wie immer über allem.
 
-> **Stand:** Der Composer zeigt und spielt Kompositionen. **Bearbeiten im
-> Panel gibt es noch nicht** — eine Komposition schreibst du vorerst von Hand
-> (siehe unten). Ein Beispiel steht im Projektordner unter
+> **Stand:** Der Composer zeigt und spielt Kompositionen, und vorhandene Clips
+> lassen sich im Panel bearbeiten (verschieben, Länge, Kanal, Mischart,
+> löschen). **Neue Clips und Kanäle anlegen geht noch nicht** — eine neue
+> Komposition schreibst du vorerst von Hand (siehe unten) und richtest sie
+> dann im Panel ein. Ein Beispiel steht im Projektordner unter
 > `asset\composer_demo.lvcomp`; mit der App wird es noch nicht ausgeliefert.
 
 ### Öffnen und schließen
@@ -1729,6 +1731,43 @@ genau dort, angehalten.
 
 **Steht die Komposition, stehen ihre Clips** — bei Pause, in einer Lücke und
 am Ende. Die Karaoke-Ebene läuft dabei mit der Musik weiter.
+
+### Bearbeiten
+
+Bearbeitet wird nur, wenn der Haken **Edit** im Kopf des Panels gesetzt ist.
+Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
+
+| Handgriff | Wirkung |
+|---|---|
+| Clip ziehen | Verschieben. In eine andere Zeile gezogen, wechselt der Clip den Kanal |
+| Linke / rechte Kante ziehen | Anfang / Ende des Clips. Ein- und Ausblendung bleiben an ihrer Kante und gleich lang |
+| **Entf** | Löscht den angeklickten Clip |
+| **Blend** (unten rechts) | Mischart des angeklickten Clips |
+| **Esc** während eines Zugs | Bricht ihn ab |
+| *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
+
+**Trifft der gezogene Clip auf einen Nachbarn im selben Kanal,** entscheidet
+die Taste, die du beim Ziehen hältst:
+
+| Taste | Was geschieht |
+|---|---|
+| keine | Der Clip **hält am Nachbarn an**: eine Kante geht nur bis dorthin, ein verschobener Clip landet bündig in der nächsten Lücke, in die er passt. Sonst ändert sich nichts |
+| **Ctrl** | Der gezogene Clip gewinnt: der Nachbar wird **gekürzt**, ein ganz überdeckter verschwindet |
+| **Ctrl+Shift** | Die Nachbarn **rücken mit** und schieben ihrerseits weiter; ihre Länge bleibt |
+
+**Einrasten:** Beim Ziehen rastet der Clip auf die Kanten anderer Clips (auch
+in anderen Kanälen) und auf die Abspielmarke ein, sonst auf das Raster der
+Datei (eine Sekunde, Feld `gridSeconds`). Mit gedrückter **Alt**-Taste ziehst
+du frei.
+
+**Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
+Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
+nach einem neuen Namen und arbeitet dann mit dieser Datei weiter. Vor *Open
+Composition*, *Close Composition* und dem Beenden fragt LumiViz bei
+ungespeicherten Änderungen nach (Save / Discard / Cancel).
+
+Läuft die Komposition, während du sie bearbeitest, siehst du die Änderung
+sofort; die Presets der Clips beginnen dabei von vorn.
 
 ### Einstellungen
 
@@ -1807,6 +1846,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.81.0 | 2026-10-05 | Session 95. §15 NEU **Bearbeiten** im Panel Composer: Haken **Edit**, Clips verschieben (auch in einen anderen Kanal), Kanten ziehen, Entf, Auswahl **Blend**, Undo / Redo, **Save** / **Save As...** mit Stern für Ungespeichertes und Rückfrage vor Open, Close und Beenden; drei Arten am Nachbarn (keine Taste: anhalten, Ctrl: kürzen, Ctrl+Shift: schieben); Einrasten, mit Alt frei. Die Kanäle stehen in der Reihenfolge der Datei, CH1 oben |
 | 1.80.0 | 2026-10-05 | Session 95. NEU **§15 Composer**: Presets über der Zeit auf mehreren Kanälen. *File → Open Composition...* / *Close Composition* (seit Session 94, bisher nicht im Handbuch); NEU das **Panel Composer** (*View → Panels → Composer*) mit Schalter **Composer on**, Play / Pause, Stopp, Loop, **Resume after restart**, Lineal mit Abspielmarke, Kanälen, Clips mit Pegelkurve und der Zeile zum angeklickten Clip; NEU *Settings → Panels*: **Open Composition** und **End of a Composition**; die Komposition kommt nach dem Neustart wieder ins Panel; Aufbau einer `.lvcomp` zum Schreiben von Hand |
 | 1.79.0 | 2026-10-04 | Session 94. NEU **Settings → Performance → Movement Table**: die Tabelle des AVS-Effekts Movement entsteht über mehrere Bilder verteilt (Standard, kein Stillstand beim Laden) oder in einem Stück wie im Original (für Vergleiche mit AVS) |
 | 1.78.0 | 2026-10-03 | Session 93. Audio Browser: der laufende Titel ist markiert, Knopf **◎** springt in seinen Ordner |

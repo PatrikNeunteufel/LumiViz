@@ -6,16 +6,24 @@
 #include "composer/ComposerPanel.hpp"
 
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "composer/Bearbeiten.hpp"
 #include "composer/Mischer.hpp"
 #include "composer/Sitzung.hpp"
+#include "services/ICommandBus.hpp"
+#include "services/ServiceContainer.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDir>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QLabel>
+#include <QMessageBox>
 #include <QMouseEvent>
+#include <QSettings>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPushButton>
@@ -52,6 +60,43 @@ int strichSekunden(std::int64_t laengeMs, int breite)
         if (static_cast<double>(s) * 1000.0 / static_cast<double>(laengeMs) * breite >= 64.0) return s;
     return kStufen.back();
 }
+
+/// Ein Schritt des Bearbeitens fuer Undo / Redo: die Fassung davor und danach.
+/// Gilt nur fuer die Ladung, in der er entstand — nach Open oder Close
+/// Composition tut er nichts mehr.
+class KompositionsBefehl : public ICommand
+{
+public:
+    KompositionsBefehl(Sitzung& sitzung, Komposition nachher, QString was)
+        : m_sitzung(&sitzung),
+          m_ladung(sitzung.ladung()),
+          m_vorher(sitzung.komposition()),
+          m_nachher(std::move(nachher)),
+          m_was(was.toStdString())
+    {
+    }
+
+    bool execute() override
+    {
+        if (!gilt() || gleich(m_vorher, m_nachher)) return false;
+        m_sitzung->setzeKomposition(m_nachher);
+        return true;
+    }
+    void undo() override
+    {
+        if (gilt()) m_sitzung->setzeKomposition(m_vorher);
+    }
+    [[nodiscard]] std::string description() const override { return m_was; }
+
+private:
+    [[nodiscard]] bool gilt() const { return m_sitzung != nullptr && m_sitzung->ladung() == m_ladung; }
+
+    QPointer<Sitzung> m_sitzung;
+    int m_ladung;
+    Komposition m_vorher;
+    Komposition m_nachher;
+    std::string m_was;
+};
 }  // namespace
 
 // =============================================================================
@@ -62,6 +107,7 @@ Zeitachse::Zeitachse(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("composerZeitachse"));
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    setFocusPolicy(Qt::StrongFocus);  // Entf und Esc im Bearbeiten
 }
 
 void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
@@ -257,6 +303,89 @@ void Zeitachse::paintEvent(QPaintEvent*)
     p.drawLine(x, 0, x, unten);
 }
 
+void Zeitachse::setBearbeiten(bool an)
+{
+    if (an == m_bearbeiten) return;
+    brichZugAb();
+    m_bearbeiten = an;
+    setMouseTracking(an);  // fuer den Zeiger an den Kanten
+    if (!an) unsetCursor();
+    update();
+}
+
+void Zeitachse::zeigeBearbeitet(const Komposition& komposition)
+{
+    m_griff = Griff::Keiner;
+    m_zugLaeuft = false;
+    m_komposition = komposition;
+    m_laengeMs = komposition.laenge();
+    m_stelleMs = std::min(m_stelleMs, m_laengeMs);
+    if (auswahl() == nullptr)  // den Clip gibt es nicht mehr
+    {
+        m_kanal = -1;
+        m_clip = -1;
+    }
+    updateGeometry();
+    update();
+    Q_EMIT auswahlGeaendert();  // auch bei gleicher Auswahl: der Clip kann neue Zeiten haben
+}
+
+std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int ausserKanal,
+                              int ausserClip) const
+{
+    // so viele Millisekunden sind acht Pixel
+    const std::int64_t nah =
+        m_laengeMs > 0 ? static_cast<std::int64_t>(8.0 * static_cast<double>(m_laengeMs) / zeitBreite())
+                       : 0;
+    std::int64_t beste = -1;
+    std::int64_t abstand = nah + 1;
+    const auto pruefe = [&](std::int64_t kante) {
+        const std::int64_t a = kante > zeitMs ? kante - zeitMs : zeitMs - kante;
+        if (a < abstand)
+        {
+            abstand = a;
+            beste = kante;
+        }
+    };
+    for (int k = 0; k < static_cast<int>(in.kanaele.size()); ++k)
+    {
+        const auto& clips = in.kanaele[static_cast<std::size_t>(k)].visual;
+        for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+        {
+            if (k == ausserKanal && c == ausserClip) continue;
+            pruefe(clips[static_cast<std::size_t>(c)].startMs);
+            pruefe(clips[static_cast<std::size_t>(c)].endeMs);
+        }
+    }
+    pruefe(m_stelleMs);
+    if (beste >= 0) return beste;
+    const auto raster = static_cast<std::int64_t>(in.rasterSekunden * 1000.0 + 0.5);
+    if (raster <= 0) return zeitMs;
+    return (zeitMs + raster / 2) / raster * raster;
+}
+
+Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip) const
+{
+    *kanal = -1;
+    *clip = -1;
+    const int zeile = ort.y() < kLinealHoehe ? -1 : (ort.y() - kLinealHoehe) / kZeilenHoehe;
+    if (zeile < 0 || zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
+    const int k = kanalVonZeile(zeile);
+    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].visual;
+    for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+    {
+        const QRect r = clipRechteck(zeile, clips[static_cast<std::size_t>(c)]);
+        if (!r.contains(ort)) continue;
+        *kanal = k;
+        *clip = c;
+        // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
+        if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
+        if (r.right() - ort.x() <= 6) return Griff::KanteRechts;
+        return Griff::Verschieben;
+    }
+    return Griff::Keiner;
+}
+
 void Zeitachse::mousePressEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -269,20 +398,18 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
     }
     int kanal = -1;
     int clipIndex = -1;
-    const int zeile = (ort.y() - kLinealHoehe) / kZeilenHoehe;
-    if (zeile >= 0 && zeile < static_cast<int>(m_komposition.kanaele.size()))
+    const Griff griff = griffBei(ort, &kanal, &clipIndex);
+    if (m_bearbeiten && griff != Griff::Keiner)
     {
-        const int k = kanalVonZeile(zeile);
-        const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].visual;
-        for (int c = 0; c < static_cast<int>(clips.size()); ++c)
-        {
-            if (clipRechteck(zeile, clips[static_cast<std::size_t>(c)]).contains(ort))
-            {
-                kanal = k;
-                clipIndex = c;
-                break;
-            }
-        }
+        m_griff = griff;
+        m_zugLaeuft = false;
+        m_zugStart = ort;
+        m_zugKanal = kanal;
+        m_zugClip = clipIndex;
+        m_vorZug = m_komposition;
+        m_zugVersatzMs =
+            stelleVon(ort.x()) -
+            m_komposition.kanaele[static_cast<std::size_t>(kanal)].visual[static_cast<std::size_t>(clipIndex)].startMs;
     }
     if (kanal == m_kanal && clipIndex == m_clip) return;
     m_kanal = kanal;
@@ -291,14 +418,139 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
     Q_EMIT auswahlGeaendert();
 }
 
+void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
+{
+    // Entscheid Patrik S95: ohne Taste anhalten, Ctrl kuerzen, Ctrl+Shift schieben
+    const Stoss stoss = !(tasten & Qt::ControlModifier) ? Stoss::Halten
+                        : (tasten & Qt::ShiftModifier)  ? Stoss::Schieben
+                                                        : Stoss::Kuerzen;
+    const bool frei = (tasten & Qt::AltModifier) != 0;
+    const auto gerastet = [&](std::int64_t zeit) {
+        return frei ? zeit : raste(zeit, m_vorZug, m_zugKanal, m_zugClip);
+    };
+    const VisualClip& alt =
+        m_vorZug.kanaele[static_cast<std::size_t>(m_zugKanal)].visual[static_cast<std::size_t>(m_zugClip)];
+    const std::int64_t maus = stelleVon(ort.x());
+
+    m_komposition = m_vorZug;
+    int platz = -1;
+    int ziel = m_zugKanal;
+    switch (m_griff)
+    {
+        case Griff::Verschieben:
+        {
+            // die Zeile unter der Maus: der Clip wechselt den Kanal (nur Visual-Kanaele)
+            const int zeilen = static_cast<int>(m_vorZug.kanaele.size());
+            const int zeile = std::clamp((ort.y() - kLinealHoehe) / kZeilenHoehe, 0, zeilen - 1);
+            if (ort.y() >= kLinealHoehe &&
+                m_vorZug.kanaele[static_cast<std::size_t>(kanalVonZeile(zeile))].art == KanalArt::Visual)
+                ziel = kanalVonZeile(zeile);
+            // einrasten darf der Anfang oder das Ende — was weniger weit weg liegt
+            const std::int64_t wunsch = maus - m_zugVersatzMs;
+            const std::int64_t vorn = gerastet(wunsch);
+            const std::int64_t hinten = gerastet(wunsch + alt.dauerMs()) - alt.dauerMs();
+            const auto weg = [wunsch](std::int64_t s) { return s > wunsch ? s - wunsch : wunsch - s; };
+            platz = versetzeClip(m_komposition, m_zugKanal, m_zugClip, ziel,
+                                 weg(hinten) < weg(vorn) ? hinten : vorn, stoss);
+            break;
+        }
+        case Griff::KanteLinks:
+            platz = zieheKante(m_komposition, m_zugKanal, m_zugClip, true, gerastet(maus), stoss);
+            break;
+        case Griff::KanteRechts:
+            platz = zieheKante(m_komposition, m_zugKanal, m_zugClip, false, gerastet(maus), stoss);
+            break;
+        case Griff::Keiner:
+            return;
+    }
+    m_kanal = ziel;
+    m_clip = platz;
+    // m_laengeMs bleibt im Zug, wie es war: aenderte sich der Massstab unter
+    // der Maus, liefe der Clip ihr davon. Neu gemessen wird beim Loslassen.
+    update();
+}
+
+void Zeitachse::brichZugAb()
+{
+    if (m_griff == Griff::Keiner) return;
+    if (m_zugLaeuft)
+    {
+        m_komposition = m_vorZug;
+        m_kanal = m_zugKanal;
+        m_clip = m_zugClip;
+        m_laengeMs = m_komposition.laenge();
+    }
+    m_griff = Griff::Keiner;
+    m_zugLaeuft = false;
+    update();
+}
+
 void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_zieht) Q_EMIT sprung(stelleVon(event->position().toPoint().x()));
+    const QPoint ort = event->position().toPoint();
+    if (m_zieht)
+    {
+        Q_EMIT sprung(stelleVon(ort.x()));
+        return;
+    }
+    if (m_griff != Griff::Keiner && (event->buttons() & Qt::LeftButton))
+    {
+        if (!m_zugLaeuft && (ort - m_zugStart).manhattanLength() < 4) return;
+        m_zugLaeuft = true;
+        zieheZu(ort, event->modifiers());
+        return;
+    }
+    if (m_bearbeiten && m_geladen)
+    {
+        int kanal = -1;
+        int clip = -1;
+        const Griff griff = griffBei(ort, &kanal, &clip);
+        if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
+            setCursor(Qt::SizeHorCursor);
+        else
+            unsetCursor();
+    }
 }
 
 void Zeitachse::mouseReleaseEvent(QMouseEvent*)
 {
     m_zieht = false;
+    if (m_griff == Griff::Keiner) return;
+    const Griff griff = m_griff;
+    const bool gezogen = m_zugLaeuft;
+    m_griff = Griff::Keiner;
+    m_zugLaeuft = false;
+    if (!gezogen) return;
+    m_laengeMs = m_komposition.laenge();
+    update();
+    if (gleich(m_komposition, m_vorZug)) return;
+    Q_EMIT auswahlGeaendert();  // der Clip hat neue Zeiten
+    Q_EMIT bearbeitet(m_komposition, griff == Griff::Verschieben ? tr("Move clip") : tr("Resize clip"));
+}
+
+void Zeitachse::keyPressEvent(QKeyEvent* event)
+{
+    if (m_bearbeiten && event->key() == Qt::Key_Escape && m_griff != Griff::Keiner)
+    {
+        brichZugAb();
+        return;
+    }
+    if (m_bearbeiten && m_griff == Griff::Keiner && auswahl() != nullptr &&
+        (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace))
+    {
+        Komposition neu = m_komposition;
+        if (loescheClip(neu, m_kanal, m_clip))
+        {
+            m_komposition = neu;
+            m_kanal = -1;
+            m_clip = -1;
+            update();
+            Q_EMIT auswahlGeaendert();
+            Q_EMIT bearbeitet(neu, tr("Delete clip"));
+        }
+        return;
+    }
+    QWidget::keyPressEvent(event);
 }
 
 // =============================================================================
@@ -363,10 +615,32 @@ void ComposerPanel::setupUI()
     m_zeit->setObjectName(QStringLiteral("composerZeit"));
     kopf->addSpacing(8);
     kopf->addWidget(m_zeit);
+    kopf->addSpacing(12);
+    m_edit = new QCheckBox(tr("Edit"), this);
+    m_edit->setObjectName(QStringLiteral("composerEdit"));
+    m_edit->setToolTip(
+        tr("On: clips can be changed.\n"
+           "Drag a clip to move it, drag its left or right edge to change its length, "
+           "Del removes the selected clip. Edit → Undo takes a step back.\n\n"
+           "When the dragged clip meets a neighbour:\n"
+           "no key — it stops there\n"
+           "Ctrl — the neighbour is shortened\n"
+           "Ctrl+Shift — the neighbours are pushed along\n\n"
+           "Dragging snaps to the grid, to the edges of other clips and to the play "
+           "position; hold Alt to drag freely. Esc cancels a drag.\n\n"
+           "Off: the panel only shows and plays the composition."));
+    kopf->addWidget(m_edit);
     kopf->addStretch(1);
     m_datei = new QLabel(this);
     m_datei->setObjectName(QStringLiteral("composerDatei"));
     kopf->addWidget(m_datei);
+    m_speichern = new QPushButton(tr("Save"), this);
+    m_speichern->setObjectName(QStringLiteral("composerSave"));
+    m_speichern->setToolTip(tr("Write the changes into the loaded file"));
+    kopf->addWidget(m_speichern);
+    m_speichernUnter = new QPushButton(tr("Save As..."), this);
+    m_speichernUnter->setObjectName(QStringLiteral("composerSaveAs"));
+    kopf->addWidget(m_speichernUnter);
     root->addLayout(kopf);
 
     // --- Zeitachse (scrollt bei vielen Kanaelen)
@@ -382,7 +656,41 @@ void ComposerPanel::setupUI()
     m_clipZeile = new QLabel(this);
     m_clipZeile->setObjectName(QStringLiteral("composerClip"));
     m_clipZeile->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    root->addWidget(m_clipZeile);
+    auto* fuss = new QHBoxLayout();
+    fuss->addWidget(m_clipZeile, 1);
+    auto* mischTitel = new QLabel(tr("Blend:"), this);
+    fuss->addWidget(mischTitel);
+    m_mischart = new QComboBox(this);
+    m_mischart->setObjectName(QStringLiteral("composerMischart"));
+    for (int i = 0; i < kMischarten; ++i)
+        m_mischart->addItem(QString::fromLatin1(mischartName(static_cast<Mischart>(i))));
+    m_mischart->setToolTip(tr("How the selected clip is mixed with what lies below it. "
+                              "Can be changed while Edit is on."));
+    fuss->addWidget(m_mischart);
+    root->addLayout(fuss);
+
+    connect(m_edit, &QCheckBox::toggled, this, [this](bool an) {
+        m_zeitachse->setBearbeiten(an);
+        zeigeClip();
+    });
+    connect(m_zeitachse, &Zeitachse::bearbeitet, this,
+            [this](const Komposition& neu, const QString& was) { bearbeite(neu, was); });
+    connect(m_mischart, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        const VisualClip* clip = m_zeitachse->auswahl();
+        if (clip == nullptr || m_sitzung == nullptr || !m_zeitachse->bearbeiten()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())]
+            .visual[static_cast<std::size_t>(m_zeitachse->gewaehlterClip())]
+            .mischart = static_cast<Mischart>(index);
+        bearbeite(neu, tr("Change blend mode"));
+    });
+    connect(m_speichern, &QPushButton::clicked, this, [this] {
+        if (m_sitzung == nullptr || m_sitzung->speichere()) return;
+        QMessageBox::warning(this, tr("Save Composition"),
+                             tr("Could not save the composition:\n%1")
+                                 .arg(QDir::toNativeSeparators(m_sitzung->datei())));
+    });
+    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { speichereUnter(); });
 
     connect(m_an, &QCheckBox::toggled, this, [this](bool an) {
         if (m_sitzung != nullptr) m_sitzung->setAn(an);
@@ -422,7 +730,13 @@ void ComposerPanel::setFenster(VisualizerWidget* fenster)
     if (m_sitzung != nullptr)
     {
         connect(m_sitzung, &Sitzung::kompositionGeaendert, this, [this] { zeigeKomposition(); });
-        connect(m_sitzung, &Sitzung::geaendert, this, [this] { zeigeStand(); });
+        connect(m_sitzung, &Sitzung::kompositionBearbeitet, this, [this] {
+            m_zeitachse->zeigeBearbeitet(m_sitzung->komposition());
+        });
+        connect(m_sitzung, &Sitzung::geaendert, this, [this] {
+            zeigeStand();
+            zeigeDatei();
+        });
         connect(m_sitzung, &Sitzung::takt, this, [this] { zeigeStand(); });
     }
     zeigeKomposition();
@@ -458,10 +772,45 @@ void ComposerPanel::zeigeKomposition()
 {
     const bool geladen = m_sitzung != nullptr && m_sitzung->geladen();
     m_zeitachse->setKomposition(geladen ? m_sitzung->komposition() : Komposition{}, geladen);
-    m_datei->setText(geladen ? QFileInfo(m_sitzung->datei()).fileName() : QString());
-    m_datei->setToolTip(geladen ? QDir::toNativeSeparators(m_sitzung->datei()) : QString());
+    zeigeDatei();
     zeigeStand();
     zeigeClip();
+}
+
+void ComposerPanel::zeigeDatei()
+{
+    const bool geladen = m_sitzung != nullptr && m_sitzung->geladen();
+    const bool offen = geladen && m_sitzung->ungespeichert();
+    // der Stern wie in der Preset-Zeile: es gibt Ungespeichertes
+    m_datei->setText(geladen ? QFileInfo(m_sitzung->datei()).fileName() +
+                                   (offen ? QStringLiteral(" *") : QString())
+                             : QString());
+    m_datei->setToolTip(geladen ? QDir::toNativeSeparators(m_sitzung->datei()) : QString());
+    m_speichern->setEnabled(offen);
+    m_speichernUnter->setEnabled(geladen);
+    m_edit->setEnabled(geladen);
+}
+
+void ComposerPanel::bearbeite(const Komposition& neu, const QString& was)
+{
+    if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+    if (auto* bus = services().tryResolve<ICommandBus>())
+        (void)bus->execute(std::make_unique<KompositionsBefehl>(*m_sitzung, neu, was));
+    else
+        m_sitzung->setzeKomposition(neu);
+}
+
+void ComposerPanel::speichereUnter()
+{
+    if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+    const QString titel = tr("Save Composition As");
+    QString pfad = QFileDialog::getSaveFileName(this, titel, m_sitzung->datei(),
+                                                tr("LumiViz Composition (*.lvcomp)"));
+    if (pfad.isEmpty()) return;
+    if (!pfad.endsWith(QStringLiteral(".lvcomp"), Qt::CaseInsensitive)) pfad += QStringLiteral(".lvcomp");
+    if (!m_sitzung->speichereNach(pfad))
+        QMessageBox::warning(this, titel,
+                             tr("Could not save the composition:\n%1").arg(QDir::toNativeSeparators(pfad)));
 }
 
 void ComposerPanel::zeigeStand()
@@ -515,6 +864,7 @@ void ComposerPanel::zeigeStand()
 void ComposerPanel::zeigeClip()
 {
     const VisualClip* clip = m_zeitachse->auswahl();
+    m_mischart->setEnabled(clip != nullptr && m_zeitachse->bearbeiten());
     if (clip == nullptr || m_sitzung == nullptr)
     {
         m_clipZeile->setText(m_sitzung != nullptr && m_sitzung->geladen() ? tr("No clip selected")
@@ -522,6 +872,7 @@ void ComposerPanel::zeigeClip()
         m_clipZeile->setToolTip(QString());
         return;
     }
+    m_mischart->setCurrentIndex(static_cast<int>(clip->mischart));
     const Kanal& kanal =
         m_sitzung->komposition().kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())];
     m_clipZeile->setText(QStringLiteral("%1 · %2 · %3 – %4 · %5")

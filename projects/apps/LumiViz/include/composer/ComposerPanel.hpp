@@ -26,6 +26,7 @@
 #include <cstdint>
 
 class QCheckBox;
+class QComboBox;
 class QLabel;
 class QPushButton;
 class VisualizerWidget;
@@ -49,6 +50,18 @@ public:
     void setStelle(std::int64_t stelleMs);
     /// Der Composer ist aus: die Clips blasser, die Marke gestrichelt.
     void setAn(bool an);
+    /// Bearbeiten (C3a, Schalter Edit): Clips lassen sich verschieben, an den
+    /// Kanten ziehen und mit Entf loeschen. Aus = nur ansehen und anklicken.
+    void setBearbeiten(bool an);
+    [[nodiscard]] bool bearbeiten() const { return m_bearbeiten; }
+    /// Die bearbeitete Fassung derselben Komposition zeigen (auch nach Undo);
+    /// Stelle und — wo es den Clip noch gibt — Auswahl bleiben.
+    void zeigeBearbeitet(const Komposition& komposition);
+    /// Eine Zeit beim Ziehen einrasten: auf Kanten anderer Clips und die
+    /// Abspielmarke, sonst auf das Raster der Datei. `ausser` = der gezogene
+    /// Clip (Kanal, Clip) in `in`.
+    [[nodiscard]] std::int64_t raste(std::int64_t zeitMs, const Komposition& in, int ausserKanal,
+                                     int ausserClip) const;
 
     [[nodiscard]] int gewaehlterKanal() const { return m_kanal; }
     [[nodiscard]] int gewaehlterClip() const { return m_clip; }
@@ -74,12 +87,16 @@ Q_SIGNALS:
     void sprung(qint64 stelleMs);
     /// Ein Clip wurde angeklickt — oder die freie Flaeche (dann -1, -1).
     void auswahlGeaendert();
+    /// Ein Zug ist losgelassen oder ein Clip geloescht: die neue Fassung und
+    /// ein Wort dazu fuer Undo („Move clip").
+    void bearbeitet(const lumi::composer::Komposition& neu, const QString& was);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
     [[nodiscard]] QSize sizeHint() const override;
     [[nodiscard]] QSize minimumSizeHint() const override;
 
@@ -95,6 +112,27 @@ private:
     int m_kanal = -1;
     int m_clip = -1;
     bool m_zieht = false;  ///< Maus im Lineal gedrueckt
+    bool m_bearbeiten = false;
+
+    /// Ein Zug an einem Clip (nur im Bearbeiten).
+    enum class Griff
+    {
+        Keiner,
+        Verschieben,
+        KanteLinks,
+        KanteRechts,
+    };
+    [[nodiscard]] Griff griffBei(QPoint ort, int* kanal, int* clip) const;
+    void zieheZu(QPoint ort, Qt::KeyboardModifiers tasten);
+    void brichZugAb();
+
+    Griff m_griff = Griff::Keiner;
+    bool m_zugLaeuft = false;        ///< die Maus hat sich seit dem Druck weit genug bewegt
+    QPoint m_zugStart;
+    std::int64_t m_zugVersatzMs = 0; ///< Abstand Maus – Clip-Start beim Druck
+    int m_zugKanal = -1;             ///< Kanal und
+    int m_zugClip = -1;              ///< Platz des Clips in `m_vorZug`
+    Komposition m_vorZug;            ///< der Stand beim Druck
 };
 
 class ComposerPanel : public PanelBase
@@ -130,7 +168,13 @@ private:
     void zeigeKomposition();
     /// Schalter, Knoepfe, Stelle — bei jeder Aenderung und im Takt.
     void zeigeStand();
+    /// Dateiname mit Stern und die Knoepfe Save / Save As.
+    void zeigeDatei();
     void zeigeClip();
+    /// Eine Aenderung ausfuehren — ueber den CommandBus der App (Undo / Redo),
+    /// ohne ihn direkt.
+    void bearbeite(const Komposition& neu, const QString& was);
+    void speichereUnter();
 
     QPointer<VisualizerWidget> m_fenster;
     QPointer<Sitzung> m_sitzung;
@@ -144,6 +188,10 @@ private:
     QLabel* m_datei = nullptr;
     Zeitachse* m_zeitachse = nullptr;
     QLabel* m_clipZeile = nullptr;
+    QCheckBox* m_edit = nullptr;
+    QPushButton* m_speichern = nullptr;
+    QPushButton* m_speichernUnter = nullptr;
+    QComboBox* m_mischart = nullptr;
     int m_gezeigt = -1;  ///< was Schalter und Knoepfe zuletzt zeigten
 };
 

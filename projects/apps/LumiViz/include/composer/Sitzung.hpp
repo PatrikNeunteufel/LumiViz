@@ -71,6 +71,22 @@ public:
     [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
     [[nodiscard]] const QString& datei() const { return m_datei; }
 
+    // --- Bearbeiten und Speichern (C3a) ---------------------------------------
+
+    /// Die geladene Komposition durch eine geaenderte Fassung ersetzen. Datei,
+    /// Composer on, Stelle und Lauf bleiben; laeuft sie gerade, sieht man die
+    /// Aenderung sofort (die Renderer der Clips legen sich dafuer neu an).
+    void setzeKomposition(Komposition neu);
+    /// Weicht die Komposition von dem ab, was in der Datei steht?
+    [[nodiscard]] bool ungespeichert() const;
+    /// In die geladene Datei schreiben. false = nichts geladen oder Schreibfehler.
+    bool speichere();
+    /// In eine andere Datei schreiben; sie ist danach die geladene.
+    bool speichereNach(const QString& pfad);
+    /// Zaehlt Laden und Entladen — ein Undo-Schritt einer frueheren Ladung
+    /// gilt nicht mehr.
+    [[nodiscard]] int ladung() const { return m_ladung; }
+
     // --- Composer on ----------------------------------------------------------
 
     /// An: die Komposition liefert das Bild, an der gemerkten Stelle,
@@ -126,7 +142,10 @@ public:
 Q_SIGNALS:
     /// Eine andere Komposition ist geladen — oder keine mehr.
     void kompositionGeaendert();
-    /// Komposition, Composer on, Loop oder Transport haben sich geaendert.
+    /// Die geladene Komposition wurde bearbeitet (auch: Undo, Redo).
+    void kompositionBearbeitet();
+    /// Komposition, Composer on, Loop, Transport oder der Stand „gespeichert"
+    /// haben sich geaendert.
     void geaendert();
     /// Solange der Composer an ist: etwa 30-mal je Sekunde — die Stelle neu lesen.
     void takt();
@@ -139,7 +158,9 @@ private:
 
     VisualizerWidget& m_widget;
     Komposition m_komposition;
+    Komposition m_gespeichert;  ///< was in der Datei steht
     QString m_datei;
+    int m_ladung = 0;
     bool m_geladen = false;
     bool m_schleife = false;
     std::int64_t m_stelleMs = 0;  ///< die Stelle, solange der Composer aus ist

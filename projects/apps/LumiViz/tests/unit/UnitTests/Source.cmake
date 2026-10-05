@@ -69,6 +69,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerMessung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerSitzung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ComposerBearbeiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGestaltung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_NseelZufall.cpp"

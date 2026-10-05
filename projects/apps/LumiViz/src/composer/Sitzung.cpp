@@ -6,6 +6,7 @@
 #include "composer/Sitzung.hpp"
 
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
 
 #include <QCoreApplication>
@@ -88,8 +89,10 @@ bool Sitzung::lade(const QString& pfad, QStringList* bericht)
 
     setAn(false);
     m_komposition = std::move(neu);
+    m_gespeichert = m_komposition;
     m_datei = QFileInfo(pfad).absoluteFilePath();
     m_geladen = true;
+    ++m_ladung;
     m_stelleMs = 0;
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
@@ -111,12 +114,57 @@ void Sitzung::entlade()
     if (!m_geladen) return;
     setAn(false);
     m_komposition = Komposition{};
+    m_gespeichert = Komposition{};
     m_datei.clear();
     m_geladen = false;
+    ++m_ladung;
     m_stelleMs = 0;
     BasicLogger::logInfo("Composer: composition closed");
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
+}
+
+// =============================================================================
+// Bearbeiten und Speichern
+// =============================================================================
+
+void Sitzung::setzeKomposition(Komposition neu)
+{
+    if (!m_geladen) return;
+    neu.richte();
+    if (gleich(neu, m_komposition)) return;
+    m_komposition = std::move(neu);
+    if (Bildquelle* q = quelle())
+    {
+        QMutexLocker halt(&m_widget.renderMutex());
+        q->ersetzeKomposition(m_komposition);
+        q->spiegleStand();
+    }
+    m_stelleMs = std::clamp<std::int64_t>(m_stelleMs, 0, laengeMs());
+    Q_EMIT kompositionBearbeitet();
+    Q_EMIT geaendert();
+}
+
+bool Sitzung::ungespeichert() const
+{
+    return m_geladen && !gleich(m_komposition, m_gespeichert);
+}
+
+bool Sitzung::speichere()
+{
+    return m_geladen && speichereNach(m_datei);
+}
+
+bool Sitzung::speichereNach(const QString& pfad)
+{
+    if (!m_geladen || pfad.isEmpty()) return false;
+    if (!speichereKomposition(m_komposition, pfad)) return false;
+    m_gespeichert = m_komposition;
+    m_datei = QFileInfo(pfad).absoluteFilePath();
+    BasicLogger::logInfo("Composer: composition saved: " +
+                         QDir::toNativeSeparators(m_datei).toStdString());
+    Q_EMIT geaendert();
+    return true;
 }
 
 // =============================================================================

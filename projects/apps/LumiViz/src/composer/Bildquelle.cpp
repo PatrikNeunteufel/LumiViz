@@ -118,6 +118,15 @@ void Bildquelle::setKomposition(Komposition komposition)
     m_neueKomposition = true;
 }
 
+void Bildquelle::ersetzeKomposition(Komposition komposition)
+{
+    const bool lief = m_uhr.laeuft();
+    const std::int64_t stelle = m_uhr.stelleMs();
+    setKomposition(std::move(komposition));
+    m_uhr.springe(stelle);  // geklemmt, falls die Komposition kuerzer wurde
+    if (lief && (m_uhr.laengeMs() <= 0 || m_uhr.stelleMs() < m_uhr.laengeMs())) m_uhr.starte();
+}
+
 int Bildquelle::rendererAnzahl() const
 {
     return m_wiedergabe != nullptr ? m_wiedergabe->rendererAnzahl() : 0;

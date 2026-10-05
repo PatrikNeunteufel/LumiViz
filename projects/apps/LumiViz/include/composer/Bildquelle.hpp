@@ -106,6 +106,9 @@ public:
     /// Komposition. Die Renderer der alten werden mit dem naechsten Bild
     /// entladen (das braucht den GL-Kontext).
     void setKomposition(Komposition komposition);
+    /// Bearbeiten (C3a): dieselbe Komposition in geaenderter Fassung — die
+    /// Uhr behaelt Stelle und Lauf. Die Renderer werden neu angelegt.
+    void ersetzeKomposition(Komposition komposition);
     [[nodiscard]] Uhr& uhr() { return m_uhr; }
     [[nodiscard]] const Uhr& uhr() const { return m_uhr; }
 

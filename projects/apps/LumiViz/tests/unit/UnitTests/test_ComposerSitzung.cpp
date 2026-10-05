@@ -244,6 +244,75 @@ TEST_SUITE("ComposerSitzung")
             sitzung.entlade();  // zweimal schadet nicht
         }
 
+        SUBCASE("C3a bearbeiten: die geaenderte Fassung laeuft an derselben Stelle weiter; gespeichert wird in die Datei")
+        {
+            // ohne Komposition gibt es nichts zu bearbeiten
+            Komposition leer;
+            sitzung.setzeKomposition(leer);
+            CHECK_FALSE(sitzung.geladen());
+            CHECK_FALSE(sitzung.ungespeichert());
+            CHECK_FALSE(sitzung.speichere());
+
+            REQUIRE(sitzung.oeffne(lang));
+            const int ladung = sitzung.ladung();
+            sitzung.springe(20000);
+            REQUIRE(sitzung.laeuft());
+            int bearbeitet = 0;
+            QObject::connect(&sitzung, &Sitzung::kompositionBearbeitet, &app, [&] { ++bearbeitet; });
+
+            // dieselbe Fassung noch einmal: nichts geschieht
+            sitzung.setzeKomposition(sitzung.komposition());
+            CHECK(bearbeitet == 0);
+            CHECK_FALSE(sitzung.ungespeichert());
+
+            // der Clip endet frueher: laeuft weiter, die Stelle bleibt, die Laenge folgt
+            Komposition kuerzer = sitzung.komposition();
+            kuerzer.kanaele[0].visual[0].endeMs = 40000;
+            sitzung.setzeKomposition(kuerzer);
+            CHECK(bearbeitet == 1);
+            CHECK(sitzung.ungespeichert());
+            CHECK(sitzung.an());
+            CHECK(sitzung.laeuft());
+            CHECK(sitzung.laengeMs() == 40000);
+            CHECK(sitzung.stelleMs() >= 20000);
+            CHECK(sitzung.stelleMs() < 30000);
+            CHECK(sitzung.ladung() == ladung);  // bearbeitet ist nicht neu geladen
+            CHECK(bildJetzt() == kRot);
+
+            // kuerzer als die Stelle: die Uhr steht am neuen Ende
+            kuerzer.kanaele[0].visual[0].endeMs = 5000;
+            sitzung.setzeKomposition(kuerzer);
+            CHECK(sitzung.stelleMs() == 5000);
+            CHECK_FALSE(sitzung.laeuft());
+
+            // zurueck auf die Fassung der Datei: nichts mehr offen
+            Komposition wieLang;
+            REQUIRE(ladeKomposition(lang, wieLang));
+            sitzung.setzeKomposition(wieLang);
+            CHECK_FALSE(sitzung.ungespeichert());
+
+            // speichern unter anderem Namen: das ist danach die geladene Datei
+            sitzung.setzeKomposition(kuerzer);
+            const QString kopie = dir.filePath(QStringLiteral("kopie.lvcomp"));
+            REQUIRE(sitzung.speichereNach(kopie));
+            CHECK_FALSE(sitzung.ungespeichert());
+            CHECK(sitzung.datei() == QFileInfo(kopie).absoluteFilePath());
+            Komposition gelesen;
+            REQUIRE(ladeKomposition(kopie, gelesen));
+            CHECK(gelesen.kanaele[0].visual[0].endeMs == 5000);
+            REQUIRE(ladeKomposition(lang, gelesen));
+            CHECK(gelesen.kanaele[0].visual[0].endeMs == 60000);  // die alte Datei blieb
+
+            // bei ausgeschaltetem Composer: die gemerkte Stelle bleibt im Clip
+            sitzung.setAn(false);
+            sitzung.springe(4000);
+            kuerzer.kanaele[0].visual[0].endeMs = 2000;
+            sitzung.setzeKomposition(kuerzer);
+            CHECK(sitzung.stelleMs() == 2000);
+            REQUIRE(sitzung.speichere());
+            CHECK(sitzung.ladung() == ladung);
+        }
+
         SUBCASE("Oeffnen von Hand: spielt sofort — oder haelt am Anfang (Einstellung)")
         {
             CHECK_FALSE(Sitzung::oeffnenHaelt());

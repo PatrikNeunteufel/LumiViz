@@ -25,12 +25,16 @@
 #include "composer/ComposerPanel.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Sitzung.hpp"
+#include "services/CommandBus.hpp"
+#include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QCoreApplication>
+#include <QKeyEvent>
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QMouseEvent>
@@ -285,5 +289,218 @@ TEST_SUITE("ComposerPanel")
         CHECK(name->text().isEmpty());
         CHECK(zeit->text().isEmpty());
         CHECK(clipZeile->text().isEmpty());
+    }
+
+    TEST_CASE("C3a Panel: bearbeitet wird nur mit dem Schalter Edit — ziehen, loeschen, Mischart, Undo, Save")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+        Komposition k;
+        Kanal unten;
+        unten.name = QStringLiteral("CH1");
+        unten.visual = {clip(rot, 0, 20000), clip(blau, 30000, 60000)};
+        Kanal oben;
+        oben.name = QStringLiteral("CH2");
+        oben.visual = {clip(blau, 42000, 52000)};
+        k.kanaele = {unten, oben};
+        const QString datei = dir.filePath(QStringLiteral("probe.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        REQUIRE(bus != nullptr);
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 260);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        auto* speichern = panel.findChild<QPushButton*>(QStringLiteral("composerSave"));
+        auto* name = panel.findChild<QLabel*>(QStringLiteral("composerDatei"));
+        auto* mischart = panel.findChild<QComboBox*>(QStringLiteral("composerMischart"));
+        auto* clipZeile = panel.findChild<QLabel*>(QStringLiteral("composerClip"));
+        REQUIRE(edit != nullptr);
+        REQUIRE(speichern != nullptr);
+        REQUIRE(name != nullptr);
+        REQUIRE(mischart != nullptr);
+        REQUIRE(clipZeile != nullptr);
+        CHECK_FALSE(edit->isEnabled());  // nichts geladen
+
+        REQUIRE(sitzung->lade(datei));
+        const auto ch1 = [&]() -> const std::vector<VisualClip>& {
+            return sitzung->komposition().kanaele[0].visual;
+        };
+        const auto zug = [&](std::int64_t vonMs, std::int64_t nachMs, int zeile,
+                             Qt::KeyboardModifiers tasten = Qt::NoModifier, int versatzPx = 0,
+                             int nachZeile = -1) {
+            const QPoint a(achse->xVon(vonMs) + versatzPx, achse->yVonZeile(zeile));
+            const QPoint b(achse->xVon(nachMs) + versatzPx,
+                           achse->yVonZeile(nachZeile < 0 ? zeile : nachZeile));
+            QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                              Qt::LeftButton, Qt::LeftButton, tasten);
+            QCoreApplication::sendEvent(achse, &druck);
+            for (int i = 1; i <= 4; ++i)
+            {
+                const QPoint m = a + (b - a) * i / 4;
+                QMouseEvent zieh(QEvent::MouseMove, QPointF(m), QPointF(achse->mapToGlobal(m)),
+                                 Qt::NoButton, Qt::LeftButton, tasten);
+                QCoreApplication::sendEvent(achse, &zieh);
+            }
+            QMouseEvent los(QEvent::MouseButtonRelease, QPointF(b), QPointF(achse->mapToGlobal(b)),
+                            Qt::LeftButton, Qt::NoButton, tasten);
+            QCoreApplication::sendEvent(achse, &los);
+        };
+
+        // --- Edit aus (Vorgabe): ein Zug aendert nichts, die Mischart ist gesperrt
+        CHECK(edit->isEnabled());
+        CHECK_FALSE(edit->isChecked());
+        zug(10000, 15000, 0);
+        CHECK(ch1()[0].startMs == 0);
+        CHECK_FALSE(sitzung->ungespeichert());
+        CHECK(achse->gewaehlterClip() == 0);  // angeklickt ist er trotzdem
+        CHECK_FALSE(mischart->isEnabled());
+        CHECK_FALSE(speichern->isEnabled());
+        CHECK_FALSE(bus->canUndo());
+
+        // --- Edit an: verschieben, auf das Raster von 1 s
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        CHECK(mischart->isEnabled());
+        zug(10000, 15000, 0);
+        CHECK(ch1()[0].startMs == 5000);
+        CHECK(ch1()[0].endeMs == 25000);
+        CHECK(sitzung->ungespeichert());
+        CHECK(name->text() == QStringLiteral("probe.lvcomp *"));
+        CHECK(speichern->isEnabled());
+        CHECK(clipZeile->text().startsWith(QStringLiteral("CH1 · Rot.lvfx · 0:05.0 – 0:25.0")));
+
+        // --- Undo und Redo ueber den CommandBus der App
+        REQUIRE(bus->canUndo());
+        CHECK(bus->undoDescription() == "Move clip");
+        REQUIRE(bus->undo());
+        CHECK(ch1()[0].startMs == 0);
+        CHECK_FALSE(sitzung->ungespeichert());
+        CHECK(name->text() == QStringLiteral("probe.lvcomp"));
+        REQUIRE(bus->redo());
+        CHECK(ch1()[0].startMs == 5000);
+
+        // --- ohne Taste haelt der Clip am Nachbarn: buendig vor Blau
+        zug(15000, 24000, 0);
+        CHECK(ch1()[0].startMs == 10000);
+        CHECK(ch1()[0].endeMs == 30000);
+        REQUIRE(bus->undo());
+        CHECK(ch1()[0].startMs == 5000);
+
+        // --- die rechte Kante: rastet an der Kante des Clips im anderen Kanal ein (42 s liegt nicht an)
+        zug(25000, 27300, 0, Qt::NoModifier, -3);
+        CHECK(ch1()[0].startMs == 5000);
+        CHECK(ch1()[0].endeMs == 27000);
+        CHECK(bus->undoDescription() == "Resize clip");
+        // mit Alt frei: nicht auf dem Raster
+        zug(27000, 28400, 0, Qt::AltModifier, -3);
+        CHECK(ch1()[0].endeMs > 27000);
+        CHECK(ch1()[0].endeMs % 1000 != 0);
+        REQUIRE(bus->undo());
+        CHECK(ch1()[0].endeMs == 27000);
+
+        // --- Ctrl: der Nachbar wird gekuerzt; Ctrl+Shift: er rueckt mit
+        zug(15000, 22000, 0, Qt::ControlModifier);
+        CHECK(ch1()[0].startMs == 12000);
+        CHECK(ch1()[0].endeMs == 34000);
+        CHECK(ch1()[1].startMs == 34000);
+        CHECK(ch1()[1].endeMs == 60000);
+        REQUIRE(bus->undo());
+        CHECK(ch1()[1].startMs == 30000);
+        zug(15000, 22000, 0, Qt::ControlModifier | Qt::ShiftModifier);
+        CHECK(ch1()[0].endeMs == 34000);
+        CHECK(ch1()[1].startMs == 34000);
+        CHECK(ch1()[1].endeMs == 64000);
+        CHECK(sitzung->laengeMs() == 64000);
+        REQUIRE(bus->undo());
+        CHECK(sitzung->laengeMs() == 60000);
+
+        // --- in die Zeile darunter gezogen: der Clip wechselt den Kanal
+        zug(15000, 15000, 0, Qt::NoModifier, 0, 1);
+        REQUIRE(ch1().size() == 1);
+        CHECK(ch1()[0].startMs == 30000);
+        REQUIRE(sitzung->komposition().kanaele[1].visual.size() == 2);
+        CHECK(sitzung->komposition().kanaele[1].visual[0].startMs == 5000);
+        CHECK(sitzung->komposition().kanaele[1].visual[0].endeMs == 27000);
+        CHECK(achse->gewaehlterKanal() == 1);
+        CHECK(achse->gewaehlterClip() == 0);
+        CHECK(clipZeile->text().startsWith(QStringLiteral("CH2 · Rot.lvfx · 0:05.0 – 0:27.0")));
+        // und weiter nach rechts auf den Clip dort: ohne Taste haelt er buendig davor
+        zug(15000, 35000, 1);
+        CHECK(sitzung->komposition().kanaele[1].visual[0].startMs == 20000);
+        CHECK(sitzung->komposition().kanaele[1].visual[0].endeMs == 42000);
+        REQUIRE(bus->undo());
+        REQUIRE(bus->undo());
+        REQUIRE(ch1().size() == 2);
+        CHECK(ch1()[0].startMs == 5000);
+        CHECK(sitzung->komposition().kanaele[1].visual.size() == 1);
+
+        // --- Mischart des angeklickten Clips
+        klick(*achse, QPoint(achse->xVon(47000), achse->yVonZeile(1)));  // CH2
+        REQUIRE(achse->gewaehlterKanal() == 1);
+        CHECK(mischart->currentIndex() == 0);
+        Q_EMIT mischart->activated(static_cast<int>(Mischart::Maximum));
+        CHECK(sitzung->komposition().kanaele[1].visual[0].mischart == Mischart::Maximum);
+        CHECK(clipZeile->text().endsWith(QStringLiteral("Maximum")));
+        CHECK(bus->undoDescription() == "Change blend mode");
+
+        // --- Entf loescht den angeklickten Clip
+        QKeyEvent entf(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
+        QCoreApplication::sendEvent(achse, &entf);
+        CHECK(sitzung->komposition().kanaele[1].visual.empty());
+        CHECK(achse->auswahl() == nullptr);
+        REQUIRE(bus->undo());
+        CHECK(sitzung->komposition().kanaele[1].visual.size() == 1);
+
+        // --- Save schreibt in die geladene Datei; danach ist nichts mehr offen
+        REQUIRE(sitzung->ungespeichert());
+        speichern->click();
+        CHECK_FALSE(sitzung->ungespeichert());
+        CHECK(name->text() == QStringLiteral("probe.lvcomp"));
+        Komposition gelesen;
+        REQUIRE(ladeKomposition(datei, gelesen));
+        CHECK(gelesen.kanaele[0].visual[0].endeMs == 27000);
+        CHECK(gelesen.kanaele[1].visual[0].mischart == Mischart::Maximum);
+
+        // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
+        REQUIRE(sitzung->lade(datei));
+        REQUIRE(bus->canUndo());
+        (void)bus->undo();
+        CHECK(ch1()[0].endeMs == 27000);
+        CHECK_FALSE(sitzung->ungespeichert());
+
+        // --- Edit aus: wieder gesperrt
+        edit->click();
+        zug(10000, 15000, 0);
+        CHECK(ch1()[0].startMs == 5000);
+        CHECK_FALSE(sitzung->ungespeichert());
     }
 }

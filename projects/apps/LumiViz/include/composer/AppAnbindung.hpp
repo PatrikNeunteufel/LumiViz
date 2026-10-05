@@ -61,6 +61,12 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad,
 /// liefert wieder das Bild.
 void schliesseKomposition(VisualizerWidget& widget);
 
+/// Vor dem Ersetzen, Schliessen oder Beenden (Naht N10): hat die geladene
+/// Komposition ungespeicherte Aenderungen, fragt ein Dialog Save / Discard /
+/// Cancel (Regel S89). true = weiter. Ohne Aenderungen fragt nichts.
+[[nodiscard]] bool darfKompositionErsetzen(VisualizerWidget& widget, QWidget* eltern,
+                                           const QString& titel);
+
 /// Beim Start der App (Naht N4): die zuletzt geladene Komposition wieder ins
 /// Panel; mit „Resume after restart" auch ihr Stand (Konzept §8). false = es
 /// gab keine.

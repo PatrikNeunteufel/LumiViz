@@ -14,6 +14,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/AppAnbindung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Bearbeiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bildquelle.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ComposerPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Komposition.cpp"
@@ -23,6 +24,7 @@ set(_local_sources
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/AppAnbindung.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bearbeiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bildquelle.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/ComposerPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Komposition.hpp"

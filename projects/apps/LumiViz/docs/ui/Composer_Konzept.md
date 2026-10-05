@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.10.4
+> **Version:** 0.11.0
 > **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -164,6 +164,26 @@ Komposition
   kein eigenes Feld. Ein Clip ohne Punkte läuft auf vollem Pegel.
 - Clips eines Kanals **überlappen nicht**; Überlagerung entsteht nur zwischen
   Kanälen.
+- **Trifft ein gezogener Clip auf einen Nachbarn** (Entscheid Patrik S95,
+  Stufe C3a) — drei Arten, gewählt mit der Taste beim Ziehen:
+  - **ohne Taste — anhalten:** eine Kante lässt sich nur bis an den Nachbarn
+    ziehen; ein verschobener Clip landet in der nächstgelegenen Lücke, in die
+    er ganz passt, bündig am Nachbarn. Nichts außer dem angefassten Clip
+    ändert sich.
+  - **Ctrl — kürzen:** der gezogene Clip gewinnt. Ein Nachbar, den er
+    überdeckt, wird gekürzt; ein ganz überdeckter verschwindet. Liegt der
+    gezogene Clip mitten in einem Nachbarn, bleibt von diesem der vordere Teil.
+  - **Ctrl+Shift — schieben:** die Nachbarn rücken mit und schieben ihrerseits
+    weiter; ihre Länge bleibt. Am Anfang der Zeitachse ist Schluss.
+- **Die Pegelkurve beim Ziehen einer Kante** (gebaut S95, nicht eigens
+  entschieden): jeder Punkt behält seinen Abstand zu der Kante, der er näher
+  liegt — die Einblendung bleibt am Anfang, die Ausblendung am Ende, gleich
+  lang wie zuvor. Beim Verschieben wandert die Kurve unverändert mit.
+- **Einrasten** (Bedienung): auf die Kanten anderer Clips (aller Kanäle) und
+  die Abspielmarke, sonst auf das Raster der Datei; mit Alt frei.
+- **Kanal wechseln** (Wunsch Patrik S95): ein Clip, der beim Verschieben in
+  eine andere Zeile gezogen wird, zieht in diesen Kanal um — mit derselben
+  Regel am Nachbarn und denselben Tasten.
 - Zeiten in Millisekunden. Ein Raster (Einrasten beim Ziehen) ist Bedienung,
   nicht Datenmodell.
 - **Nicht in der Datei:** ob der Composer an ist, ob er gesperrt ist, die
@@ -569,6 +589,7 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | N7 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist | C5 |
 | N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg. **C2b (S95):** `UI/panels/PanelAutoReg.cpp` bekommt einen Include und eine Anmeldung — Panel `composer`, Titel „Composer", View → Panels, anfangs nicht sichtbar; die Klasse selbst ist eigener Code (`composer/ComposerPanel`) | — (reine Zusätze); ohne Klick auf die Einträge wie heute; das Panel ist ohne Klick nicht zu sehen | C2a, C2b |
 | N9 Einstellung ✅ | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
+| N10 Beenden mit Ungespeichertem ✅ | `UI/MainWindow.cpp` (`closeEvent`, nach der Rückfrage zur Kette) | **ein** Aufruf von `composer/AppAnbindung`: hat die geladene Komposition ungespeicherte Änderungen, fragt ein Dialog Save / Discard / Cancel (Regel S89); Cancel hält das Fenster offen | ohne geänderte Komposition liefert der Aufruf sofort „weiter" — das Beenden wie heute | C3a |
 
 Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 
@@ -601,6 +622,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C2b, Sitzung | `include/composer/Sitzung.hpp`, `src/composer/Sitzung.cpp`, `tests/unit/UnitTests/test_ComposerSitzung.cpp`; die Schleife in `Uhr.hpp` und der gespiegelte Stand in `Bildquelle.hpp` gehen mit den Dateien | keine Naht | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen. Zurück bleiben die Schlüssel `composer/resume`, `composer/loop`, `composer/openHolds`, `composer/atEnd`, `composer/session/…` |
 | C2b, Panel | `include/composer/ComposerPanel.hpp`, `src/composer/ComposerPanel.cpp`, `tests/unit/UnitTests/test_ComposerPanel.cpp` | keine Naht (die Anmeldung folgt als N8) | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 | C2b, Nähte N8 / N4 / N9 | — | drei Naht-Commits, je eine Datei: **N8 `acb8a9b`** `UI/panels/PanelAutoReg.cpp` (ein Include, eine Anmeldung `composer`); **N4 `1815da7`** `UI/MainWindow.cpp` (ein verzögerter Aufruf im Konstruktor); **N9 `4ac6be9`** `UI/panels/SettingsPanel.cpp` (ein Include, ein Block mit zwei Auswahlen). Der Stand zwischen `acb8a9b` und `612289c` baut nicht (der Header des Panels brauchte den vollen Typ der Sitzung) — für den Rückbau ohne Belang, für ein `git bisect` schon. Jede Stelle trägt `Composer-Naht N8` / `N4` / `N9` | — | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/panels/PanelAutoReg.cpp` und `UI/panels/SettingsPanel.cpp` erweitert. Im gespeicherten Dock-Layout bleibt der Eintrag `composer` zurück |
+| C3a, Bearbeiten | `include/composer/Bearbeiten.hpp`, `src/composer/Bearbeiten.cpp`, `tests/unit/UnitTests/test_ComposerBearbeiten.cpp`; die Erweiterungen in `Sitzung`, `Bildquelle`, `ComposerPanel` und `AppAnbindung` gehen mit den Dateien | **N10** — `UI/MainWindow.cpp` (`closeEvent`: ein Aufruf von `composer::darfKompositionErsetzen`), trägt `Composer-Naht N10`; Kennung beim Abschluss S95 nachtragen | eine Quelle und ein Header in `src/composer/Source.cmake` (geht mit dem Verzeichnis); eine Zeile in `tests/unit/UnitTests/Source.cmake` | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -622,6 +644,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.11.0 | 2026-10-05 | Session 95 — **Stufe C3a: Bearbeiten, was da ist.** C3 in drei Teile geschnitten: C3a (Schalter Edit, verschieben, Kanten, löschen, Mischart, Undo, Save), C3b (Presets hineinziehen, Kanäle anlegen, New / Load), C3c (Sync on Effect Chain). **Entscheid Patrik:** trifft ein gezogener Clip auf einen Nachbarn, hält er an; mit Ctrl wird der Nachbar gekürzt, mit Ctrl+Shift rücken die Nachbarn mit (§6). **CH1 steht oben** (Entscheid Patrik, §7). Gebaut: `composer/Bearbeiten` (reines Modell: `verschiebeClip`, `versetzeClip` — der Clip wechselt per Ziehen den Kanal, Wunsch Patrik —, `zieheKante`, `loescheClip`, `setzeGrenzen`); die Pegelkurve bleibt beim Ziehen einer Kante an ihrer Kante; `Sitzung::setzeKomposition` (die geänderte Fassung läuft an derselben Stelle weiter — die Renderer der Clips legen sich dabei neu an), `ungespeichert`, `speichere`, `speichereNach`; im Panel Schalter **Edit** (nach jedem Start aus), Ziehen mit Einrasten auf Raster, Clip-Kanten und Abspielmarke (Alt frei, Esc bricht ab), Entf, Auswahl **Blend**, **Save** / **Save As...**, Stern am Dateinamen; **Undo / Redo über den CommandBus der App** (Edit → Undo, Ctrl+Z), Schritte einer früheren Ladung gelten nicht mehr. Rückfrage Save / Discard / Cancel vor Open, Close und — **Naht N10** — beim Beenden. Belegt: `test_ComposerBearbeiten.cpp` (sechs Fälle, reines Modell), `test_ComposerPanel.cpp` (Ziehen mit und ohne Tasten, Kanalwechsel, Undo, Save an der echten Fassade), `test_ComposerSitzung.cpp` (bearbeiten im Lauf); 888 Cases. **Offen:** ein Edit bei laufendem Composer legt alle Renderer neu an (Visuals beginnen von vorn); die Rückfrage-Dialoge sind nur im Programm zu prüfen |
 | 0.10.4 | 2026-10-05 | Session 95 — **Stufe C2b im Programm gesehen** (Patrik, Sichttest S95 nach der Liste `Sichttests_S95.md`, ohne das Sichttest-Werkzeug: alles in Ordnung). **Aus dem Log der App belegt** (Release-clang, RTX 4090): die Zusammenfassung beim Beenden mit eingeschaltetem Composer steht jetzt im Log (10:59:24, 10:59:47, 11:00:07 — der Befund aus S94 war bis heute im echten Programm nicht gesehen); ohne Resume kommt die Komposition nach dem Neustart ins Panel („restored composition", kein „on"); mit Resume setzt sie an der Stelle des Beendens fort (beendet bei 2,2 s, „resumed at 2 s", der erste Clip läuft bei 2,20 s an). Rückbau-Liste: Kennungen der drei Naht-Commits eingetragen |
 | 0.10.3 | 2026-10-05 | Session 95 — **C2b, die drei Nähte gebaut:** N8 — Anmeldung des Panels `composer` in `PanelAutoReg.cpp` (View → Panels → Composer); N4 — ein verzögerter Aufruf im Konstruktor von `MainWindow` stellt die zuletzt geladene Komposition wieder her; N9 — im Reiter Panels der Settings die Auswahlen **Open Composition** und **End of a Composition**. Rückbau-Liste um die Nähte erweitert. §7 ergänzt (Wünsche Patrik): das Panel dockt wie jedes andere; für C3 der Schalter **Edit** (Bearbeiten nur bei eingeschaltetem Schalter, nicht zu verwechseln mit Lock); für C4 Übergänge auch als Bézier-Kurve |
 | 0.10.2 | 2026-10-05 | Session 95 — **C2b, das Panel zum Ansehen** (eigener Code, keine Naht; noch nicht angemeldet): `composer/ComposerPanel` — Kopf mit Schalter **Composer on**, Play / Pause in einem Knopf, Stopp, Loop, Resume after restart, Stelle und Länge als Zeit, Dateiname; `Zeitachse` mit Lineal, Abspielmarke (Klick und Ziehen springen; bei ausgeschaltetem Composer gestrichelt), Kanälen als Zeilen — **der oberste Kanal des Stapels in der obersten Zeile** — und Clips als Blöcken mit ihrer Pegelkurve; Clip-Zeile mit Kanal, Datei, Start, Ende und Mischart des angeklickten Clips. Die Achse zeigt die ganze Länge auf ihrer Breite; ein Zoom kommt mit C3. Das Panel bedient nur die Sitzung des Fensters. Belegt in `test_ComposerPanel.cpp` an der echten Fassade (Knöpfe, Lineal, Clips; `LUMIVIZ_COMPOSER_PANEL_BILD` legt ein Bild ab); Rückbau-Liste um C2b, Panel erweitert; 881 Cases |

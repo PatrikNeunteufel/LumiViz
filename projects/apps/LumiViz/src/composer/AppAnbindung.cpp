@@ -47,7 +47,28 @@ bool starteKomposition(VisualizerWidget& widget, const QString& pfad, QStringLis
 
 void schliesseKomposition(VisualizerWidget& widget)
 {
-    if (Sitzung* sitzung = Sitzung::finde(widget)) sitzung->entlade();
+    Sitzung* sitzung = Sitzung::finde(widget);
+    if (sitzung == nullptr) return;
+    if (!darfKompositionErsetzen(widget, widget.window(), QObject::tr("Close Composition"))) return;
+    sitzung->entlade();
+}
+
+bool darfKompositionErsetzen(VisualizerWidget& widget, QWidget* eltern, const QString& titel)
+{
+    Sitzung* sitzung = Sitzung::finde(widget);
+    if (sitzung == nullptr || !sitzung->ungespeichert()) return true;
+    const QMessageBox::StandardButton wahl = QMessageBox::question(
+        eltern, titel,
+        QObject::tr("The composition '%1' has unsaved changes.")
+            .arg(QFileInfo(sitzung->datei()).fileName()),
+        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
+    if (wahl == QMessageBox::Cancel) return false;
+    if (wahl == QMessageBox::Discard) return true;
+    if (sitzung->speichere()) return true;
+    QMessageBox::warning(eltern, titel,
+                         QObject::tr("Could not save the composition:\n%1")
+                             .arg(QDir::toNativeSeparators(sitzung->datei())));
+    return false;
 }
 
 bool stelleKompositionWiederHer(VisualizerWidget& widget)
@@ -58,6 +79,7 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget)
 bool oeffneKomposition(VisualizerWidget& widget, QWidget* eltern, const QString& pfad)
 {
     const QString titel = QObject::tr("Open Composition");
+    if (!darfKompositionErsetzen(widget, eltern, titel)) return false;
     QString datei = pfad;
     if (datei.isEmpty())
     {
