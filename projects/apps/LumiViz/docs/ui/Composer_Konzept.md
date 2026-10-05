@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.20.0
+> **Version:** 0.20.1
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -478,11 +478,16 @@ Länge und lässt sich spiegeln.
   Blende lässt sich auch ziehen, wenn ihre Form eigene Punkte hat; die Form
   einer Seite zu wählen lässt die andere Seite unberührt.
 
+- **Das Fenster zeigt die Wirkung am Clip** (Entscheid Patrik S96: a): eine
+  Ausblendung ist rückwärts gezeichnet (fällt von links oben nach rechts
+  unten), ein gekipptes Stück als Buckel; gezogen wird in dieser Ansicht,
+  gespeichert weiter die eine Form. `Formflaeche::setAnsicht` — die Ansicht
+  sitzt allein in `ortVon`, `xVon`, `yVon`. Eine Zeile unter der Kurve sagt,
+  wenn gespiegelt gezeigt wird. Der Grundpegel geht nicht in die Ansicht ein:
+  die Fläche zeigt immer die volle Höhe.
+
 **Offen:**
 
-- Die Kurve im Fenster zeigt immer die gezeichnete Form — eine Ausblendung
-  nicht rückwärts, ein gekipptes Stück nicht als Buckel. Ob das Fenster die
-  Wirkung zeigen soll, ist nicht entschieden.
 - Stücke haben auf der Zeitachse keine Griffe: Weite und Lage gehen nur über
   die Felder im Fenster.
 - Das Rechtsklick-Menü *Fade in* / *Fade out* führt noch seine feste
@@ -834,6 +839,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.20.1 | 2026-10-05 | Session 96 — **Der Curve Editor zeigt die Wirkung am Clip** (Entscheid Patrik: a). Eine Ausblendung ist rückwärts gezeichnet, ein gekipptes Stück als Buckel; gezogen wird in dieser Ansicht, die Form selbst bleibt (`Formflaeche::setAnsicht`, die Ansicht sitzt in `ortVon` / `xVon` / `yVon`); eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird. Belegt in `test_ComposerPanel.cpp` (Delle und Buckel, Ausblendung rückwärts, ein in der Ansicht gesetzter Punkt landet in der Form hinten und senkt den Pegel früh). 911 Cases. Benutzerhandbuch 1.88.1 |
 | 0.20.0 | 2026-10-05 | Session 96 — **Das Fenster Curve Editor** (eigener Code, keine Naht; Entscheid Patrik, Rückfrage 2: a). `composer/KurvenEditor`: `Formflaeche` und `KurvenFenster` (§9). `Bearbeiten`: `Teil`, `hatTeil`, `teilBei`, `bereichVon`, `fuegeStueckEin`, `loescheStueck`. Zeitachse: Doppelklick öffnet die Kurve einer Blende oder eines Stücks, Rechtsklick-Einträge für Kurven und Stücke, `oeffneKurve`, `stueckHinzu`, `stueckLoeschen`, `setTeil` (gelber Strich); die Länge einer Blende mit eigenen Punkten lässt sich ziehen, `setzeBlendenForm` ändert nur seine Seite. Panel: das Fenster entsteht bei der ersten Kurve, folgt dem angeklickten Clip, Änderungen über Undo. Damit haben Grundpegel und Stücke eine Bedienung, und ein gestauchtes Teil zeigt beide Zahlen. Belegt in `test_ComposerPanel.cpp` (Doppelklick, Punkte mit der Maus, Undo, Presets, Dauer mit Stauchen und Festschreiben, Grundpegel, Stück mit Lage, Weite und Flipped, ohne Edit, Blende entsteht beim Öffnen). 911 Cases. Benutzerhandbuch 1.88.0. **Offen:** siehe §9 |
 | 0.19.0 | 2026-10-05 | Session 96 — **Kurven-Presets** (eigener Code, keine Naht; Entscheid Patrik: a, wie die Trail-Presets). `composer/FormPresets`: `liste`, `finde`, `lade`, `speichere`, `loesche` je Art — Blenden `.lvfade`, Stücke `.lvshape`, mitgeliefert unter `asset/composer/fades` und `…/shapes` (Anker `README.md`), eigene unter `<AppData>/composer/…`; ein eigenes verdrängt ein mitgeliefertes, mitgelieferte sind geschützt, die andere Art wird abgelehnt. Mitgeliefert: sieben Blenden, drei Stücke. `test_ComposerFormPresets.cpp` (drei Fälle, auch: jedes mitgelieferte lädt). Rückbau-Liste: Zeile für C4 Teil 2, `asset/composer/` eigens. 911 Cases. **Offen:** das Fenster Curve Editor |
 | 0.18.0 | 2026-10-05 | Session 96 — **Die Pegelform am Clip und in der Datei** (eigener Code, keine Naht). Entscheid Patrik: Grundpegel je Clip (a), alle Teile freiwillig. `VisualClip`: `grundpegel`, `ein`, `aus`, `stuecke` statt der Punktliste `kurve`; `pegelBei` rechnet aus den Teilen, `verteilung`, `vollerPegel`. `Kurvenform`, `BezierGriffe`, `kurvenWert`, `bezierWert` sind nach `Pegelform` umgezogen. Beim Ziehen einer Kante bleiben die eingestellten Dauern (kein Klemmen mehr); `Bearbeiten::schreibeFest`; die Zeitachse zeichnet die Blenden-Griffe an der gestauchten Lage und schreibt vor einem Zug fest. **Datei Version 2** (`base`, `fadeIn`, `fadeOut`, `shapes`); `levels` wird beim Laden übersetzt (`ausAltenPunkten`), der Verlauf bleibt. **Geändert:** die Ausblendung ist die rückwärts gelesene Blende — Ease in, Ease out, Exponential, Hold und Bézier wirken an der Ausblendung anders als in 0.13.0. Tests umgeschrieben (`test_ComposerBearbeiten`, `test_ComposerWiedergabe`), neu Grundpegel, Buckel, Stauchen und Zurückkommen, alte Dateien. 908 Cases. Benutzerhandbuch 1.87.0 |

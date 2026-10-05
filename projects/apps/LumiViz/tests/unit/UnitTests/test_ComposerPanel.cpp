@@ -782,6 +782,8 @@ TEST_SUITE("ComposerPanel")
             auto* gekippt = fenster->findChild<QCheckBox*>(QStringLiteral("curveFlipped"));
             auto* grund = fenster->findChild<QDoubleSpinBox*>(QStringLiteral("curveBase"));
             auto* jetzt = fenster->findChild<QLabel*>(QStringLiteral("curveNow"));
+            auto* ansicht = fenster->findChild<QLabel*>(QStringLiteral("curveView"));
+            REQUIRE(ansicht != nullptr);
             REQUIRE(titel != nullptr);
             REQUIRE(presets != nullptr);
             REQUIRE(dauer != nullptr);
@@ -898,7 +900,16 @@ TEST_SUITE("ComposerPanel")
             CHECK(derClip().pegelBei(10000) == doctest::Approx(0.0));  // die Delle: vom Grundpegel auf null
             CHECK(presets->count() == 2);  // jetzt die Stueck-Presets: „Tal"
             CHECK(presets->currentText() == QStringLiteral("Tal"));
+            // die Flaeche zeigt die Wirkung: die Delle haengt nach unten ...
+            CHECK_FALSE(flaeche->gekippt());
+            CHECK(flaeche->punktOrt(1).y() > flaeche->punktOrt(0).y());
+            CHECK_FALSE(ansicht->isVisible());
             gekippt->click();  // der Buckel: vom Grundpegel auf voll
+            // ... der Buckel steht nach oben — dieselbe Form, anders gezeigt
+            CHECK(flaeche->gekippt());
+            CHECK(flaeche->punktOrt(1).y() < flaeche->punktOrt(0).y());
+            CHECK(ansicht->isVisible());
+            CHECK(presets->currentText() == QStringLiteral("Tal"));
             CHECK(derClip().stuecke[0].gekippt);
             CHECK(derClip().pegelBei(10000) == doctest::Approx(1.0));
             CHECK(derClip().pegelBei(9000) == doctest::Approx(0.5));  // am Rand ohne Sprung
@@ -920,6 +931,25 @@ TEST_SUITE("ComposerPanel")
             CHECK(fenster->teil() == Teil{TeilArt::Aus, -1});
             CHECK(titel->text() == QStringLiteral("Fade out — Rot"));
             CHECK(dauer->value() == doctest::Approx(4.35));  // 4348 ms, das Feld zeigt zwei Stellen
+            // eine Ausblendung ist rueckwaerts gezeigt: sie faellt von links oben nach rechts unten
+            CHECK(flaeche->rueckwaerts());
+            CHECK(ansicht->isVisible());
+            CHECK(flaeche->punktOrt(0).x() > flaeche->punktOrt(1).x());  // der Fuss der Blende liegt rechts
+            CHECK(flaeche->punktOrt(0).y() > flaeche->punktOrt(1).y());
+            // gezeichnet wird in dieser Ansicht: ein Punkt links unten — nach einem Viertel
+            // der Ausblendung ist der Pegel schon tief
+            const QRect ganz = flaeche->rect();
+            doppelklick(flaeche, QPoint(ganz.left() + ganz.width() / 4, ganz.top() + ganz.height() * 3 / 4));
+            REQUIRE(derClip().aus.form.punkte.size() == 3);
+            CHECK(derClip().aus.form.punkte[1].x > 0.6);  // in der Form liegt er hinten
+            CHECK(derClip().aus.form.punkte[1].y < 0.4);
+            {
+                const Bereich aus = derClip().verteilung().aus;
+                const double pegel = derClip().pegelBei(aus.vonMs + aus.weiteMs() / 4);
+                CHECK(pegel < 0.5 * 0.45);  // Grundpegel 0.5; linear waeren es 0.5 * 0.75
+            }
+            REQUIRE(bus->undo());
+            CHECK(derClip().aus.form.punkte.size() == 2);
             doppelklick(achse, QPoint(achse->xVon(5000 + 5000), achse->yVonZeile(0) + 6));
             CHECK(fenster->teil() == Teil{TeilArt::Stueck, 0});
 

@@ -48,6 +48,12 @@ public:
     /// Die Form, die gezeigt wird; eine laufende Bewegung der Maus endet.
     void setForm(const Pegelform& form);
     [[nodiscard]] const Pegelform& form() const { return m_form; }
+    /// Die Flaeche zeigt die Wirkung am Clip (Entscheid Patrik S96): `rueckwaerts`
+    /// = als Ausblendung, an der y-Achse gespiegelt; `gekippt` = oben und unten
+    /// getauscht. Die Form selbst bleibt, wie sie ist — nur die Ansicht wechselt.
+    void setAnsicht(bool rueckwaerts, bool gekippt);
+    [[nodiscard]] bool rueckwaerts() const { return m_rueckwaerts; }
+    [[nodiscard]] bool gekippt() const { return m_gekippt; }
     /// Aus: nur ansehen.
     void setBearbeitbar(bool an);
     [[nodiscard]] bool bearbeitbar() const { return m_bearbeitbar; }
@@ -61,6 +67,7 @@ public:
     void setzeAbschnittForm(int punkt, Kurvenform form);
 
     // --- Geometrie (auch fuer Tests) ----------------------------------------
+    /// Wo der Punkt (x, y) DER FORM auf der Flaeche liegt — in der Ansicht.
     [[nodiscard]] QPoint ortVon(double x, double y) const;
     [[nodiscard]] QPoint punktOrt(int punkt) const;
     /// Einer der zwei Bézier-Anfasser (`nr` 0 oder 1) des Abschnitts, der bei
@@ -97,6 +104,8 @@ private:
 
     Pegelform m_form;
     bool m_bearbeitbar = true;
+    bool m_rueckwaerts = false;
+    bool m_gekippt = false;
     int m_gewaehlt = -1;
 
     enum class Zug
@@ -162,6 +171,7 @@ private:
     QPushButton* m_loeschen = nullptr;
     Formflaeche* m_flaeche = nullptr;
     QLabel* m_hinweis = nullptr;
+    QLabel* m_ansicht = nullptr;        ///< sagt, wenn die Flaeche gespiegelt zeigt
     QLabel* m_dauerTitel = nullptr;
     QDoubleSpinBox* m_dauer = nullptr;  ///< Dauer der Blende bzw. Weite des Stuecks
     QLabel* m_jetzt = nullptr;          ///< „now 2.1 s", wenn das Teil gestaucht ist

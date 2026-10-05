@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.88.0
+> **Version:** 1.88.1
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1806,6 +1806,10 @@ Kurve nur an.
 
 Die Kurve im Fenster kennt **keine Zeit**: von links nach rechts läuft die
 Dauer, von unten nach oben der Pegel. Wie lang die Blende ist, steht darunter.
+Das Fenster zeigt die Kurve so, **wie sie am Clip wirkt**: eine Einblendung
+steigt von links unten nach rechts oben, eine Ausblendung fällt von links oben
+nach rechts unten. Es ist beide Male dieselbe Form — eine Zeile unter der
+Kurve sagt, wenn sie gespiegelt gezeigt wird.
 
 | Bedienung | Wirkung |
 |---|---|
@@ -1833,16 +1837,15 @@ zurücknehmen.
 **Stücke mitten im Clip.** Rechtsklick in den Clip → *Add shape here* legt an
 der Stelle ein Stück an — zuerst eine weiche Delle, zwei Sekunden breit — und
 öffnet seine Kurve. Ein Stück senkt den Pegel vom Grundpegel in Richtung
-null; im Curve Editor heißt oben „der Grundpegel bleibt", unten „nichts
-bleibt".
+null: im Curve Editor ist oben der Grundpegel, unten null.
 
 - **Width** und **Position** (unten im Fenster): wie breit das Stück ist und
   wo seine Mitte liegt, gezählt vom Anfang des Clips. Wird der Clip länger
   oder kürzer, behält das Stück seine Breite und seinen Anteil an der Länge.
 - **Flipped:** oben und unten tauschen — das Stück **hebt** den Pegel, vom
   Grundpegel bis auf voll. Mit *Base level* 0 % ist der Clip damit nur in
-  seinen Stücken zu sehen. (Die Kurve im Fenster bleibt dabei, wie sie
-  gezeichnet ist; der Clip auf der Zeitachse zeigt die Wirkung.)
+  seinen Stücken zu sehen. Die Kurve im Fenster dreht sich mit: aus der Delle
+  wird ein Buckel. Als Preset gespeichert ist es dieselbe Kurve, ungekippt.
 - Doppelklick auf ein Stück oder Rechtsklick → *Edit shape curve...* öffnet
   seine Kurve, *Delete shape* nimmt es weg.
 - Berühren sich Stücke und Blenden, weil der Clip zu kurz ist, werden die
@@ -1995,6 +1998,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.88.1 | 2026-10-05 | Session 96. §15 Curve Editor: das Fenster zeigt die Kurve, **wie sie am Clip wirkt** — eine Ausblendung fällt von links oben nach rechts unten, ein Stück mit Flipped steht als Buckel nach oben; eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird |
 | 1.88.0 | 2026-10-05 | Session 96. §15 Composer NEU **Curve Editor**: eigenes Fenster zum Zeichnen der Form einer Blende (Doppelklick auf die Blende oder Rechtsklick → *Edit fade in curve...* / *Edit fade out curve...*) — Punkte ziehen, setzen, wegnehmen, Form je Abschnitt, Bézier-Anfasser; **Kurven-Presets** laden, speichern, löschen; Felder Duration und Base level. NEU **Stücke mitten im Clip** (*Add shape here*, Width, Position, Flipped, *Delete shape*). Eine gezeichnete Blende behält auf der Zeitachse den Griff für die Länge |
 | 1.87.0 | 2026-10-05 | Session 96. §15 Composer: **Blenden haben eine eingestellte Dauer** — ein zu kurzer Clip staucht sie, wieder länger gezogen kommen sie zurück; GEÄNDERT die Ausblendung ist dieselbe Form wie die Einblendung, rückwärts gelesen (Ease in und Ease out wirken an der Ausblendung damit umgekehrt wie in 1.84.0). Datei `.lvcomp` Version 2: `fadeIn` / `fadeOut` mit `ms` und `shape`, NEU `base` (Grundpegel) und `shapes` (Stücke mitten im Clip, mit `flipped`); das alte Feld `levels` wird beim Laden übersetzt |
 | 1.86.0 | 2026-10-05 | Session 95. §15 Composer NEU **die Kette eines Clips speichern**: über das Speichern von Effect Chain, bei gebundenem Clip immer unter neuem Namen; der Clip wechselt auf die neue Datei, weitere Clips mit demselben Preset nach Auswahl |

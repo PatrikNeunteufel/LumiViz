@@ -89,9 +89,22 @@ QRect Formflaeche::feld() const
     return rect().adjusted(14, 12, -14, -12);
 }
 
+void Formflaeche::setAnsicht(bool rueckwaerts, bool gekippt)
+{
+    if (rueckwaerts == m_rueckwaerts && gekippt == m_gekippt) return;
+    m_rueckwaerts = rueckwaerts;
+    m_gekippt = gekippt;
+    m_zug = Zug::Keiner;
+    update();
+}
+
+// Die Ansicht sitzt allein in diesen drei Funktionen: alles andere rechnet in
+// den Anteilen der Form.
 QPoint Formflaeche::ortVon(double x, double y) const
 {
     const QRect f = feld();
+    if (m_rueckwaerts) x = 1.0 - x;
+    if (m_gekippt) y = 1.0 - y;
     return {f.left() + static_cast<int>(std::lround(x * (f.width() - 1))),
             f.bottom() - static_cast<int>(std::lround(y * (f.height() - 1)))};
 }
@@ -99,13 +112,15 @@ QPoint Formflaeche::ortVon(double x, double y) const
 double Formflaeche::xVon(int px) const
 {
     const QRect f = feld();
-    return std::clamp(static_cast<double>(px - f.left()) / std::max(1, f.width() - 1), 0.0, 1.0);
+    const double x = std::clamp(static_cast<double>(px - f.left()) / std::max(1, f.width() - 1), 0.0, 1.0);
+    return m_rueckwaerts ? 1.0 - x : x;
 }
 
 double Formflaeche::yVon(int py) const
 {
     const QRect f = feld();
-    return std::clamp(static_cast<double>(f.bottom() - py) / std::max(1, f.height() - 1), 0.0, 1.0);
+    const double y = std::clamp(static_cast<double>(f.bottom() - py) / std::max(1, f.height() - 1), 0.0, 1.0);
+    return m_gekippt ? 1.0 - y : y;
 }
 
 QPoint Formflaeche::punktOrt(int punkt) const
@@ -211,8 +226,8 @@ void Formflaeche::paintEvent(QPaintEvent*)
     QPainterPath kurve;
     for (int px = f.left(); px <= f.right(); ++px)
     {
-        const double x = xVon(px);
-        const QPointF ort(px, f.bottom() - m_form.wert(x) * (f.height() - 1));
+        const double pegel = m_form.wert(xVon(px));
+        const QPointF ort(px, f.bottom() - (m_gekippt ? 1.0 - pegel : pegel) * (f.height() - 1));
         if (px == f.left())
             kurve.moveTo(ort);
         else
@@ -437,8 +452,8 @@ void KurvenFenster::setupUI()
            "Double-click the empty area — a new point\n"
            "Double-click a point, or Del — remove it\n"
            "Right-click — the shape of that segment (Bezier shows two handles)\n\n"
-           "A fade runs from bottom left to top right; as a fade out it plays backwards. "
-           "A shape says how much of the base level stays: top all of it, bottom nothing."));
+           "The curve is shown as it acts on the clip: a fade in rises from left to right, a "
+           "fade out falls; a shape lowers the level and, flipped, raises it."));
     root->addWidget(m_flaeche, 1);
     m_hinweis = new QLabel(tr("No curve selected.\n\nIn the Composer, with Edit on: double-click a "
                               "fade or a shape of a clip — or right-click the clip."),
@@ -447,6 +462,10 @@ void KurvenFenster::setupUI()
     m_hinweis->setAlignment(Qt::AlignCenter);
     m_hinweis->setWordWrap(true);
     root->addWidget(m_hinweis, 1);
+    m_ansicht = new QLabel(this);
+    m_ansicht->setObjectName(QStringLiteral("curveView"));
+    m_ansicht->setWordWrap(true);
+    root->addWidget(m_ansicht);
 
     // --- das Teil am Clip
     const auto zeitfeld = [this](const char* name) {
@@ -587,6 +606,19 @@ void KurvenFenster::zeige(const VisualClip* clip, Teil teil, const QString& name
         if (!m_bearbeitbar) titel += tr("  (Edit is off)");
     }
     m_titel->setText(titel);
+
+    // Die Flaeche zeigt die Wirkung am Clip (Entscheid Patrik S96): eine
+    // Ausblendung faellt, ein gekipptes Stueck hebt.
+    const bool rueckwaerts = m_hat && teil.art == TeilArt::Aus;
+    const bool gekippt =
+        m_hat && teil.art == TeilArt::Stueck && m_clip.stuecke[static_cast<std::size_t>(teil.stueck)].gekippt;
+    m_flaeche->setAnsicht(rueckwaerts, gekippt);
+    m_ansicht->setText(rueckwaerts ? tr("Shown as it plays: a fade out is the same curve as a fade in, "
+                                        "backwards. Saved as a preset it fits both ends.")
+                       : gekippt   ? tr("Shown as it plays: flipped, the shape raises the level. "
+                                        "Saved as a preset it is the same curve, unflipped.")
+                                   : QString());
+    m_ansicht->setVisible(rueckwaerts || gekippt);
 
     m_flaeche->setVisible(m_hat);
     m_hinweis->setVisible(!m_hat);
