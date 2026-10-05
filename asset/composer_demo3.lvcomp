@@ -1,0 +1,106 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 20000,
+                    "file": "calibration/avs/matrix/02_osc_star/01_default.lvfx",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 3000
+                        },
+                        {
+                            "curve": 1,
+                            "level": 1,
+                            "t": 15000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 0
+                },
+                {
+                    "blend": 0,
+                    "end": 44000,
+                    "file": "calibration/avs/matrix/27_starfield/01_default.lvfx",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 5000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 11000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 14000
+                        }
+                    ],
+                    "start": 30000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 1,
+                    "end": 35000,
+                    "file": "calibration/avs/matrix/13_rotating_stars/01_default.lvfx",
+                    "levels": [
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 5000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 15000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 15000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 1
+}

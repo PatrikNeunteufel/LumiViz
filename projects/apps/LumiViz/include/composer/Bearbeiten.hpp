@@ -52,6 +52,29 @@ int zieheKante(Komposition& komposition, int kanal, int clip, bool links, std::i
 /// Den Clip entfernen. false = es gibt ihn nicht.
 bool loescheClip(Komposition& komposition, int kanal, int clip);
 
+// --- Neues hinein (C3b) -------------------------------------------------------
+
+/// Laenge eines hineingezogenen Clips, wenn nichts im Weg ist.
+inline constexpr std::int64_t kNeuerClipMs = 20000;
+
+/// Einen neuen Clip mit vollem Pegel in den Kanal legen. Mit `Stoss::Halten`
+/// passt er sich der Luecke an, in die er faellt: er reicht hoechstens bis zum
+/// naechsten Clip; faellt er auf einen Clip, landet er in der naechsten Luecke.
+/// Kuerzen und Schieben wie beim Verschieben. Liefert seinen Platz, -1 = den
+/// Kanal gibt es nicht (oder er ist kein Visual-Kanal).
+int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
+                 std::int64_t dauerMs = kNeuerClipMs, Stoss stoss = Stoss::Halten);
+
+/// Einen leeren Visual-Kanal anhaengen; ohne Namen heisst er „CH<n>" mit der
+/// kleinsten freien Nummer. Liefert seinen Platz.
+int fuegeKanalEin(Komposition& komposition, const QString& name = {});
+
+/// Den Kanal samt seinen Clips entfernen. false = es gibt ihn nicht.
+bool loescheKanal(Komposition& komposition, int kanal);
+
+/// Eine neue, leere Komposition: ein Kanal „CH1", das Ende folgt den Clips.
+[[nodiscard]] Komposition neueKomposition();
+
 /// Start und Ende eines Clips aendern und seine Pegelkurve mitnehmen: jeder
 /// Punkt behaelt den Abstand zu der Kante, der er naeher liegt.
 void setzeGrenzen(VisualClip& clip, std::int64_t startMs, std::int64_t endeMs);

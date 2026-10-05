@@ -60,15 +60,47 @@ bool darfKompositionErsetzen(VisualizerWidget& widget, QWidget* eltern, const QS
     const QMessageBox::StandardButton wahl = QMessageBox::question(
         eltern, titel,
         QObject::tr("The composition '%1' has unsaved changes.")
-            .arg(QFileInfo(sitzung->datei()).fileName()),
+            .arg(sitzung->datei().isEmpty() ? QObject::tr("untitled")
+                                            : QFileInfo(sitzung->datei()).fileName()),
         QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
     if (wahl == QMessageBox::Cancel) return false;
     if (wahl == QMessageBox::Discard) return true;
-    if (sitzung->speichere()) return true;
+    return speichereMitDialog(widget, eltern, false);
+}
+
+bool speichereMitDialog(VisualizerWidget& widget, QWidget* eltern, bool immerFragen)
+{
+    Sitzung* sitzung = Sitzung::finde(widget);
+    if (sitzung == nullptr || !sitzung->geladen()) return false;
+    QString pfad = sitzung->datei();
+    const QString titel = immerFragen || pfad.isEmpty() ? QObject::tr("Save Composition As")
+                                                        : QObject::tr("Save Composition");
+    if (immerFragen || pfad.isEmpty())
+    {
+        QSettings einstellungen;
+        const QString vorschlag =
+            !pfad.isEmpty() ? pfad
+                            : einstellungen.value(QLatin1String(kLetzterOrdner)).toString() +
+                                  QStringLiteral("/untitled.lvcomp");
+        pfad = QFileDialog::getSaveFileName(eltern, titel, vorschlag,
+                                            QObject::tr("LumiViz Composition (*.lvcomp)"));
+        if (pfad.isEmpty()) return false;
+        if (!pfad.endsWith(QStringLiteral(".lvcomp"), Qt::CaseInsensitive))
+            pfad += QStringLiteral(".lvcomp");
+        einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
+    }
+    if (sitzung->speichereNach(pfad)) return true;
     QMessageBox::warning(eltern, titel,
                          QObject::tr("Could not save the composition:\n%1")
-                             .arg(QDir::toNativeSeparators(sitzung->datei())));
+                             .arg(QDir::toNativeSeparators(pfad)));
     return false;
+}
+
+bool beginneKomposition(VisualizerWidget& widget, QWidget* eltern)
+{
+    if (!darfKompositionErsetzen(widget, eltern, QObject::tr("New Composition"))) return false;
+    Sitzung::fuer(widget).neu();
+    return true;
 }
 
 bool stelleKompositionWiederHer(VisualizerWidget& widget)

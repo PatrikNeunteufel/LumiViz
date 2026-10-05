@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.82.0
+> **Version:** 1.83.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1684,11 +1684,11 @@ Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
 **Komposition**, eine Datei mit der Endung **`.lvcomp`**. Die Karaoke-Ebene
 (*View → Karaoke*) liegt wie immer über allem.
 
-> **Stand:** Der Composer zeigt und spielt Kompositionen, und vorhandene Clips
-> lassen sich im Panel bearbeiten (verschieben, Länge, Kanal, Mischart,
-> löschen). **Neue Clips und Kanäle anlegen geht noch nicht** — eine neue
-> Komposition schreibst du vorerst von Hand (siehe unten) und richtest sie
-> dann im Panel ein. Ein Beispiel steht im Projektordner unter
+> **Stand:** Eine Komposition lässt sich ganz im Panel bauen: New, Presets aus
+> dem Effect Browser hineinziehen, verschieben, Länge, Kanal, Mischart,
+> speichern. **Noch nicht im Panel:** die Pegelkurve (Ein- und Ausblenden) —
+> die steht vorerst nur in der Datei (siehe unten). Ein Beispiel steht im
+> Projektordner unter
 > `asset\composer_demo.lvcomp`; mit der App wird es noch nicht ausgeliefert.
 
 ### Öffnen und schließen
@@ -1745,6 +1745,28 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
+
+**Neues hinein** (auch nur mit **Edit**):
+
+- **New** (oben rechts) beginnt eine leere Komposition mit einem Kanal. Sie
+  heißt „untitled", bis du sie mit **Save** unter einem Namen ablegst.
+  **Load...** öffnet eine vorhandene — dasselbe wie *File → Open Composition...*.
+- **Presets hineinziehen:** Zieh ein Preset aus dem **Effect Browser** — oder
+  eine oder mehrere Dateien aus dem Explorer — in die Zeile eines Kanals.
+  Jeder neue Clip ist 20 Sekunden lang und läuft auf vollem Pegel; mehrere
+  Dateien liegen hintereinander. Fällt der Clip in eine Lücke, reicht er höchstens bis zum
+  nächsten Clip; fällt er auf einen Clip, landet er in der nächsten Lücke.
+  Ctrl, Ctrl+Shift und Alt wirken wie beim Verschieben.
+- **Neuer Kanal:** Zieh das Preset **unter die letzte Zeile** — dort steht
+  während des Ziehens „New channel". Oder Rechtsklick → *Add channel*.
+- **Rechtsklick** auf eine Zeile: *Rename channel...*, *Channel enabled*
+  (ein ausgeschalteter Kanal trägt nichts zum Bild bei), *Delete channel*
+  (samt seinen Clips), *Add channel*; auf einem Clip zusätzlich *Delete clip*.
+- Enthält eine hineingezogene Kette einen **Host Switcher**, sagt LumiViz das:
+  der Switcher schaltet in seinem Clip weiter — dann wechseln zwei.
+
+Hinter dem Ende der Komposition zeigt die Zeitachse etwas Luft, damit sich
+dort etwas ablegen oder ein Clip darüber hinausziehen lässt.
 
 **Trifft der gezogene Clip auf einen Nachbarn im selben Kanal,** entscheidet
 die Taste, die du beim Ziehen hältst:
@@ -1854,6 +1876,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.83.0 | 2026-10-05 | Session 95. §15 Composer NEU **Neues hinein**: Knöpfe **New** und **Load...**, Presets aus dem Effect Browser oder Explorer in einen Kanal ziehen (20 s, mehrere hintereinander, unter die letzte Zeile = neuer Kanal), Rechtsklick für *Add channel*, *Rename channel...*, *Channel enabled*, *Delete channel*, *Delete clip*; Hinweis bei Ketten mit Host Switcher; die Zeitachse zeigt Luft hinter dem Ende |
 | 1.82.0 | 2026-10-05 | Session 95. §15 Composer: das Ende der Komposition **folgt dem letzten Clip** (bisher blieb eine in der Datei gesetzte Länge stehen, auch wenn die Clips kürzer wurden); NEU Haken **Fixed end** mit Zeitfeld für ein festes Ende, mit eigener Marke im Lineal und schraffierter leerer Strecke; Feld `length` neu beschrieben |
 | 1.81.0 | 2026-10-05 | Session 95. §15 NEU **Bearbeiten** im Panel Composer: Haken **Edit**, Clips verschieben (auch in einen anderen Kanal), Kanten ziehen, Entf, Auswahl **Blend**, Undo / Redo, **Save** / **Save As...** mit Stern für Ungespeichertes und Rückfrage vor Open, Close und Beenden; drei Arten am Nachbarn (keine Taste: anhalten, Ctrl: kürzen, Ctrl+Shift: schieben); Einrasten, mit Alt frei. Die Kanäle stehen in der Reihenfolge der Datei, CH1 oben |
 | 1.80.0 | 2026-10-05 | Session 95. NEU **§15 Composer**: Presets über der Zeit auf mehreren Kanälen. *File → Open Composition...* / *Close Composition* (seit Session 94, bisher nicht im Handbuch); NEU das **Panel Composer** (*View → Panels → Composer*) mit Schalter **Composer on**, Play / Pause, Stopp, Loop, **Resume after restart**, Lineal mit Abspielmarke, Kanälen, Clips mit Pegelkurve und der Zeile zum angeklickten Clip; NEU *Settings → Panels*: **Open Composition** und **End of a Composition**; die Komposition kommt nach dem Neustart wieder ins Panel; Aufbau einer `.lvcomp` zum Schreiben von Hand |

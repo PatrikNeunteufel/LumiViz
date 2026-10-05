@@ -123,6 +123,36 @@ int setzeEin(Clips& andere, VisualClip ich)
     return platz;
 }
 
+/// Den Clip `ich` (nicht in `andere`) an `start` legen, nach der Regel
+/// `stoss`. `links` = wie viele der anderen fuer das Schieben links von ihm
+/// liegen; -1 = aus der Lage bestimmen (die, deren Mitte vor seiner liegt).
+int platziere(Clips& andere, VisualClip ich, std::int64_t start, Stoss stoss, int links)
+{
+    const std::int64_t dauer = ich.dauerMs();
+    if (links < 0)
+    {
+        links = 0;
+        for (const VisualClip& o : andere)
+            if (o.startMs + o.endeMs < 2 * start + dauer) ++links;
+    }
+    switch (stoss)
+    {
+        case Stoss::Halten:
+            start = naechsterPlatz(andere, start, dauer);
+            break;
+        case Stoss::Kuerzen:
+            kuerze(andere, start, start + dauer);
+            break;
+        case Stoss::Schieben:
+            start += schiebeLinks(andere, links, start);
+            schiebeRechts(andere, links, start + dauer);
+            break;
+    }
+    ich.startMs = start;
+    ich.endeMs = start + dauer;
+    return setzeEin(andere, std::move(ich));
+}
+
 /// Eine gesetzte Laenge waechst mit, wenn ein Clip ueber sie hinausragt.
 void passeLaengeAn(Komposition& komposition)
 {
@@ -167,34 +197,9 @@ int versetzeClip(Komposition& komposition, int vonKanal, int clip, int nachKanal
     quelle->erase(quelle->begin() + clip);
     Clips* clips = &komposition.kanaele[static_cast<std::size_t>(nachKanal)].visual;
 
-    const std::int64_t dauer = ich.dauerMs();
-    std::int64_t start = std::max<std::int64_t>(0, neuerStartMs);
-    // Fuer das Schieben: wie viele Clips des Zielkanals links liegen. Im
-    // eigenen Kanal sind es die bisherigen Vorgaenger; in einem fremden die,
-    // deren Mitte vor der Mitte des Clips liegt.
-    int links = clip;
-    if (nachKanal != vonKanal)
-    {
-        links = 0;
-        for (const VisualClip& o : *clips)
-            if (o.startMs + o.endeMs < 2 * start + dauer) ++links;
-    }
-    switch (stoss)
-    {
-        case Stoss::Halten:
-            start = naechsterPlatz(*clips, start, dauer);
-            break;
-        case Stoss::Kuerzen:
-            kuerze(*clips, start, start + dauer);
-            break;
-        case Stoss::Schieben:
-            start += schiebeLinks(*clips, links, start);
-            schiebeRechts(*clips, links, start + dauer);
-            break;
-    }
-    ich.startMs = start;
-    ich.endeMs = start + dauer;
-    const int platz = setzeEin(*clips, std::move(ich));
+    // Im eigenen Kanal liegen links die bisherigen Vorgaenger.
+    const int platz = platziere(*clips, std::move(ich), std::max<std::int64_t>(0, neuerStartMs),
+                                stoss, nachKanal == vonKanal ? clip : -1);
     passeLaengeAn(komposition);
     return platz;
 }
@@ -254,6 +259,70 @@ bool loescheClip(Komposition& komposition, int kanal, int clip)
     if (clips == nullptr) return false;
     clips->erase(clips->begin() + clip);
     return true;
+}
+
+int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
+                 std::int64_t dauerMs, Stoss stoss)
+{
+    if (kanal < 0 || kanal >= static_cast<int>(komposition.kanaele.size())) return -1;
+    Kanal& k = komposition.kanaele[static_cast<std::size_t>(kanal)];
+    if (k.art != KanalArt::Visual) return -1;
+
+    std::int64_t start = std::max<std::int64_t>(0, startMs);
+    std::int64_t dauer = std::max(dauerMs, kMinClipMs);
+    if (stoss == Stoss::Halten)
+    {
+        // Faellt der Clip in freie Flaeche, reicht er hoechstens bis zum naechsten Clip.
+        bool frei = true;
+        std::int64_t naechster = std::numeric_limits<std::int64_t>::max();
+        for (const VisualClip& o : k.visual)
+        {
+            if (o.startMs <= start && start < o.endeMs) frei = false;
+            if (o.startMs > start) naechster = std::min(naechster, o.startMs);
+        }
+        if (frei && naechster - start >= kMinClipMs) dauer = std::min(dauer, naechster - start);
+    }
+    VisualClip neu;
+    neu.datei = datei;
+    neu.startMs = start;
+    neu.endeMs = start + dauer;
+    const int platz = platziere(k.visual, std::move(neu), start, stoss, -1);
+    passeLaengeAn(komposition);
+    return platz;
+}
+
+int fuegeKanalEin(Komposition& komposition, const QString& name)
+{
+    Kanal neu;
+    neu.art = KanalArt::Visual;
+    neu.name = name;
+    if (neu.name.isEmpty())
+    {
+        for (int n = 1; neu.name.isEmpty(); ++n)
+        {
+            const QString kandidat = QStringLiteral("CH%1").arg(n);
+            const bool vergeben =
+                std::any_of(komposition.kanaele.begin(), komposition.kanaele.end(),
+                            [&kandidat](const Kanal& k) { return k.name == kandidat; });
+            if (!vergeben) neu.name = kandidat;
+        }
+    }
+    komposition.kanaele.push_back(std::move(neu));
+    return static_cast<int>(komposition.kanaele.size()) - 1;
+}
+
+bool loescheKanal(Komposition& komposition, int kanal)
+{
+    if (kanal < 0 || kanal >= static_cast<int>(komposition.kanaele.size())) return false;
+    komposition.kanaele.erase(komposition.kanaele.begin() + kanal);
+    return true;
+}
+
+Komposition neueKomposition()
+{
+    Komposition k;
+    (void)fuegeKanalEin(k);
+    return k;
 }
 
 bool gleich(const Komposition& a, const Komposition& b)

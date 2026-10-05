@@ -64,6 +64,10 @@ public:
     /// Oeffnen von Hand (Menue): laden, Composer an und — ausser die
     /// Einstellung „haelt am Anfang" ist gesetzt — sofort abspielen.
     bool oeffne(const QString& pfad, QStringList* bericht = nullptr);
+    /// Eine neue, leere Komposition (ein Kanal) ins Panel — noch ohne Datei:
+    /// `datei()` ist leer, bis sie mit `speichereNach` einen Namen bekommt.
+    /// Der Composer geht dabei aus.
+    void neu();
     /// Composer aus und die Komposition weg.
     void entlade();
 

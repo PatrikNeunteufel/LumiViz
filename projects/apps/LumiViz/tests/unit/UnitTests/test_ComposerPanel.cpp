@@ -35,7 +35,11 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDoubleSpinBox>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QKeyEvent>
+#include <QMimeData>
+#include <QUrl>
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QMouseEvent>
@@ -208,9 +212,11 @@ TEST_SUITE("ComposerPanel")
         CHECK(name->text() == QStringLiteral("probe.lvcomp"));
         CHECK(zeit->text() == QStringLiteral("0:00.0 / 1:00.0"));
         CHECK(clipZeile->text() == QStringLiteral("No clip selected"));
-        // die Achse zeigt die ganze Laenge auf ihrer Breite
+        // die Achse zeigt die ganze Laenge und etwas Luft dahinter (C3b: zum Hinausziehen)
         CHECK(achse->xVon(0) == Zeitachse::kKopfBreite);
-        CHECK(achse->xVon(60000) == achse->width() - Zeitachse::kRand);
+        CHECK(Zeitachse::anzeigeLaenge(sitzung->komposition()) == 72000);
+        CHECK(achse->xVon(72000) == achse->width() - Zeitachse::kRand);
+        CHECK(achse->xVon(60000) < achse->width() - Zeitachse::kRand - 50);
         CHECK(achse->stelleVon(achse->xVon(30000)) == doctest::Approx(30000).epsilon(0.01));
         // CH1 steht in der obersten Zeile (Entscheid Patrik S95)
         CHECK(achse->kanalVonZeile(0) == 0);
@@ -539,5 +545,196 @@ TEST_SUITE("ComposerPanel")
         zug(10000, 15000, 0);
         CHECK(ch1()[0].startMs == 5000);
         CHECK_FALSE(sitzung->ungespeichert());
+    }
+
+    TEST_CASE("C3b Panel: eine neue Komposition, Presets hineinziehen, Kanaele anlegen und verwalten")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+
+        // eine Kettendatei mit Host Switcher wird erkannt, eine ohne nicht
+        {
+            ChainNode root;
+            root.params = ListParams{};
+            ChainNode schalter;
+            schalter.params = HostSwitcherParams{};
+            root.children.push_back(std::move(schalter));
+            const QString mit = dir.filePath(QStringLiteral("Wechsler.lvfx"));
+            REQUIRE(saveChainToFile(root, mit));
+            CHECK(ComposerPanel::hatHostSwitcher(mit));
+            CHECK_FALSE(ComposerPanel::hatHostSwitcher(rot));
+            CHECK_FALSE(ComposerPanel::hatHostSwitcher(dir.filePath(QStringLiteral("fehlt.lvfx"))));
+            CHECK_FALSE(ComposerPanel::hatHostSwitcher(dir.filePath(QStringLiteral("etwas.avs"))));
+        }
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        REQUIRE(bus != nullptr);
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 300);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        auto* name = panel.findChild<QLabel*>(QStringLiteral("composerDatei"));
+        auto* speichern = panel.findChild<QPushButton*>(QStringLiteral("composerSave"));
+        auto* clipZeile = panel.findChild<QLabel*>(QStringLiteral("composerClip"));
+        REQUIRE(panel.findChild<QPushButton*>(QStringLiteral("composerNew")) != nullptr);
+        REQUIRE(panel.findChild<QPushButton*>(QStringLiteral("composerLoad")) != nullptr);
+        REQUIRE(edit != nullptr);
+        REQUIRE(name != nullptr);
+        REQUIRE(speichern != nullptr);
+        REQUIRE(clipZeile != nullptr);
+        const auto kanaele = [&]() -> const std::vector<Kanal>& { return sitzung->komposition().kanaele; };
+
+        // --- neu: ein leerer Kanal, noch ohne Datei; die Achse zeigt 30 s
+        sitzung->neu();
+        CHECK(sitzung->geladen());
+        CHECK(sitzung->datei().isEmpty());
+        CHECK_FALSE(sitzung->ungespeichert());
+        CHECK_FALSE(sitzung->speichere());  // ohne Datei geht nur „Save As"
+        REQUIRE(kanaele().size() == 1);
+        CHECK(kanaele()[0].name == QStringLiteral("CH1"));
+        CHECK(name->text() == QStringLiteral("untitled"));
+        CHECK(speichern->isEnabled());
+        CHECK(Zeitachse::anzeigeLaenge(sitzung->komposition()) == 30000);
+        CHECK(achse->xVon(30000) == achse->width() - Zeitachse::kRand);
+
+        // --- ohne Edit faellt nichts hinein
+        CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(5000), achse->yVonZeile(0)), {rot}));
+        CHECK(kanaele()[0].visual.empty());
+
+        // --- Edit an: ein Preset hineinziehen — 20 s lang, auf dem Raster
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(5200), achse->yVonZeile(0)), {rot}));
+        REQUIRE(kanaele()[0].visual.size() == 1);
+        CHECK(kanaele()[0].visual[0].datei == rot);
+        CHECK(kanaele()[0].visual[0].startMs == 5000);
+        CHECK(kanaele()[0].visual[0].endeMs == 25000);
+        CHECK(sitzung->laengeMs() == 25000);
+        CHECK(sitzung->ungespeichert());
+        CHECK(name->text() == QStringLiteral("untitled *"));
+        CHECK(clipZeile->text().startsWith(QStringLiteral("CH1 · Rot.lvfx · 0:05.0 – 0:25.0")));
+        CHECK(bus->undoDescription() == "Add clip");
+        // im Lineal faellt nichts
+        CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(1000), 5), {blau}));
+
+        // --- in eine Luecke: der neue Clip reicht nur bis zum naechsten
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(0), achse->yVonZeile(0)), {blau}));
+        REQUIRE(kanaele()[0].visual.size() == 2);
+        CHECK(kanaele()[0].visual[0].datei == blau);
+        CHECK(kanaele()[0].visual[0].startMs == 0);
+        CHECK(kanaele()[0].visual[0].endeMs == 5000);
+        // auf einen Clip: er landet in der naechsten Luecke — hier dahinter
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(15000), achse->yVonZeile(0)), {blau}));
+        REQUIRE(kanaele()[0].visual.size() == 3);
+        CHECK(kanaele()[0].visual[2].startMs == 25000);
+        CHECK(kanaele()[0].visual[2].endeMs == 45000);
+        REQUIRE(bus->undo());
+        REQUIRE(bus->undo());
+        REQUIRE(kanaele()[0].visual.size() == 1);
+
+        // --- unter der letzten Zeile: ein neuer Kanal entsteht; zwei Dateien liegen hintereinander
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(10000), achse->yVonZeile(1)), {blau, rot}));
+        REQUIRE(kanaele().size() == 2);
+        CHECK(kanaele()[1].name == QStringLiteral("CH2"));
+        REQUIRE(kanaele()[1].visual.size() == 2);
+        CHECK(kanaele()[1].visual[0].datei == blau);
+        CHECK(kanaele()[1].visual[0].startMs == 10000);
+        CHECK(kanaele()[1].visual[1].datei == rot);
+        CHECK(kanaele()[1].visual[1].startMs == 30000);
+        CHECK(kanaele()[1].visual[1].endeMs == 50000);
+        CHECK(bus->undoDescription() == "Add clips");
+        CHECK(achse->gewaehlterKanal() == 1);
+        CHECK(achse->gewaehlterClip() == 1);
+
+        // --- der echte Weg: ein Drop mit Datei-URLs, wie ihn der Effect Browser liefert
+        {
+            QMimeData daten;
+            daten.setUrls({QUrl::fromLocalFile(blau)});
+            const QPointF ort(achse->xVon(26000), achse->yVonZeile(0));
+            QDragEnterEvent hinein(ort.toPoint(), Qt::CopyAction, &daten, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &hinein);
+            CHECK(hinein.isAccepted());
+            QDropEvent fall(ort, Qt::CopyAction, &daten, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &fall);
+            CHECK(fall.isAccepted());
+            REQUIRE(kanaele()[0].visual.size() == 2);
+            CHECK(kanaele()[0].visual[1].datei == blau);
+            CHECK(kanaele()[0].visual[1].startMs == 26000);
+            // was kein Preset ist, wird nicht angenommen
+            QMimeData fremd;
+            fremd.setUrls({QUrl::fromLocalFile(dir.filePath(QStringLiteral("lied.mp3")))});
+            QDragEnterEvent nein(ort.toPoint(), Qt::CopyAction, &fremd, Qt::LeftButton, Qt::NoModifier);
+            nein.ignore();
+            QCoreApplication::sendEvent(achse, &nein);
+            CHECK_FALSE(nein.isAccepted());
+        }
+
+        // --- Kanaele: anlegen, umbenennen, ausschalten, loeschen — alles ueber Undo
+        achse->kanalHinzu();
+        REQUIRE(kanaele().size() == 3);
+        CHECK(kanaele()[2].name == QStringLiteral("CH3"));
+        achse->kanalUmbenennen(2, QStringLiteral("  Sterne "));
+        CHECK(kanaele()[2].name == QStringLiteral("Sterne"));
+        achse->kanalUmbenennen(2, QStringLiteral("   "));  // leer gilt nicht
+        CHECK(kanaele()[2].name == QStringLiteral("Sterne"));
+        achse->kanalSchalten(1, false);
+        CHECK_FALSE(kanaele()[1].an);
+        CHECK(bus->undoDescription() == "Disable channel");
+        achse->kanalLoeschen(1);
+        REQUIRE(kanaele().size() == 2);
+        CHECK(kanaele()[1].name == QStringLiteral("Sterne"));
+        CHECK(achse->kanalBei(achse->yVonZeile(1)) == 1);
+        CHECK(achse->kanalBei(achse->yVonZeile(2)) == -1);
+        CHECK(achse->kanalBei(5) == -1);
+        REQUIRE(bus->undo());  // der Kanal samt seinen Clips ist wieder da
+        REQUIRE(kanaele().size() == 3);
+        CHECK(kanaele()[1].visual.size() == 2);
+        // ein neuer Kanal bekommt die kleinste freie Nummer
+        achse->kanalLoeschen(0);
+        achse->kanalHinzu();
+        CHECK(kanaele().back().name == QStringLiteral("CH1"));
+
+        // --- gespeichert unter einem Namen: die Datei laesst sich wieder laden
+        const QString ziel = dir.filePath(QStringLiteral("neu.lvcomp"));
+        REQUIRE(sitzung->speichereNach(ziel));
+        CHECK(name->text() == QStringLiteral("neu.lvcomp"));
+        CHECK_FALSE(speichern->isEnabled());
+        Komposition gelesen;
+        REQUIRE(ladeKomposition(ziel, gelesen));
+        CHECK(gelesen.kanaele.size() == 3);
+        CHECK(gelesen.kanaele[0].visual.size() == 2);  // der fruehere CH2
+
+        // --- schliessen: das Panel ist leer, Edit geht aus
+        sitzung->entlade();
+        CHECK_FALSE(edit->isChecked());
+        CHECK_FALSE(edit->isEnabled());
+        CHECK_FALSE(achse->bearbeiten());
     }
 }

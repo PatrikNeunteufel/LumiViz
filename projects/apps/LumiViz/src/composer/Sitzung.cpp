@@ -109,6 +109,20 @@ bool Sitzung::oeffne(const QString& pfad, QStringList* bericht)
     return true;
 }
 
+void Sitzung::neu()
+{
+    setAn(false);
+    m_komposition = neueKomposition();
+    m_gespeichert = m_komposition;
+    m_datei.clear();
+    m_geladen = true;
+    ++m_ladung;
+    m_stelleMs = 0;
+    BasicLogger::logInfo("Composer: new composition");
+    Q_EMIT kompositionGeaendert();
+    Q_EMIT geaendert();
+}
+
 void Sitzung::entlade()
 {
     if (!m_geladen) return;

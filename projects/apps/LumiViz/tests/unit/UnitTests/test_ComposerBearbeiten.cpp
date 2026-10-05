@@ -329,6 +329,66 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(gelesen.laengeMs == 40000);
     }
 
+    TEST_CASE("C3b Neues hinein: ein Clip faellt in den Kanal, Kanaele entstehen und gehen")
+    {
+        // anhalten: in freier Flaeche reicht der neue Clip hoechstens bis zum naechsten
+        Komposition k = probe();  // A 0–10, B 20–30, C 30–45
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 12000) == 1);
+        CHECK(bild(k) == QStringLiteral("A[0,10000) N[12000,20000) B[20000,30000) C[30000,45000)"));
+        k = probe();
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 50000) == 3);  // hinter allem: volle 20 s
+        CHECK(clips(k)[3].startMs == 50000);
+        CHECK(clips(k)[3].endeMs == 50000 + kNeuerClipMs);
+        CHECK(clips(k)[3].kurve.empty());  // voller Pegel
+        k = probe();
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 25000) == 3);  // auf B: die naechste Luecke, die 20 s fasst
+        CHECK(clips(k)[3].startMs == 45000);
+        k = probe();
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 12000, 5000) == 1);  // eigene Laenge
+        CHECK(clips(k)[1].endeMs == 17000);
+
+        // kuerzen und schieben wie beim Verschieben
+        k = probe();
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 5000, 20000, Stoss::Kuerzen) == 1);
+        CHECK(bild(k) == QStringLiteral("A[0,5000) N[5000,25000) B[25000,30000) C[30000,45000)"));
+        k = probe();
+        CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 12000, 20000, Stoss::Schieben) == 1);
+        CHECK(bild(k) == QStringLiteral("A[0,10000) N[12000,32000) B[32000,42000) C[42000,57000)"));
+        CHECK(geordnet(k));
+
+        // den Kanal gibt es nicht, oder er ist ein Audio-Kanal
+        const Komposition vorher = k;
+        CHECK(fuegeClipEin(k, 4, QStringLiteral("N"), 0) == -1);
+        CHECK(fuegeClipEin(k, -1, QStringLiteral("N"), 0) == -1);
+        CHECK(gleich(k, vorher));
+
+        // eine neue Komposition: ein leerer Kanal, das Ende folgt den Clips
+        Komposition neu = neueKomposition();
+        REQUIRE(neu.kanaele.size() == 1);
+        CHECK(neu.kanaele[0].name == QStringLiteral("CH1"));
+        CHECK(neu.kanaele[0].art == KanalArt::Visual);
+        CHECK(neu.kanaele[0].an);
+        CHECK(neu.laengeMs == 0);
+        CHECK(neu.laenge() == 0);
+        CHECK(fuegeClipEin(neu, 0, QStringLiteral("N"), 3000) == 0);
+        CHECK(neu.laenge() == 3000 + kNeuerClipMs);
+
+        // Kanaele: der Name ist die kleinste freie Nummer — oder der gewuenschte
+        CHECK(fuegeKanalEin(neu) == 1);
+        CHECK(neu.kanaele[1].name == QStringLiteral("CH2"));
+        CHECK(fuegeKanalEin(neu, QStringLiteral("Sterne")) == 2);
+        CHECK(loescheKanal(neu, 0));  // samt seinem Clip
+        CHECK(neu.laenge() == 0);
+        CHECK(fuegeKanalEin(neu) == 2);
+        CHECK(neu.kanaele[2].name == QStringLiteral("CH1"));
+        CHECK_FALSE(loescheKanal(neu, 3));
+        CHECK_FALSE(loescheKanal(neu, -1));
+        Kanal ton;
+        ton.art = KanalArt::Audio;
+        neu.kanaele.push_back(ton);
+        CHECK(fuegeClipEin(neu, 3, QStringLiteral("N"), 0) == -1);
+    }
+
     TEST_CASE("C3a Laenge, Loeschen, Unsinn")
     {
         // eine gesetzte Laenge waechst mit; ohne gesetzte Laenge bleibt sie offen

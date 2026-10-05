@@ -67,6 +67,15 @@ void schliesseKomposition(VisualizerWidget& widget);
 [[nodiscard]] bool darfKompositionErsetzen(VisualizerWidget& widget, QWidget* eltern,
                                            const QString& titel);
 
+/// Speichern mit Meldung bei Fehlern (C3b): in die geladene Datei — oder, mit
+/// `immerFragen` bzw. bei einer neuen Komposition ohne Datei, nach einem
+/// Dateidialog. false = abgebrochen oder nicht geschrieben.
+bool speichereMitDialog(VisualizerWidget& widget, QWidget* eltern, bool immerFragen);
+
+/// Eine neue, leere Komposition ins Panel (C3b) — nach der Rueckfrage zu
+/// ungespeicherten Aenderungen. false = abgebrochen.
+bool beginneKomposition(VisualizerWidget& widget, QWidget* eltern);
+
 /// Beim Start der App (Naht N4): die zuletzt geladene Komposition wieder ins
 /// Panel; mit „Resume after restart" auch ihr Stand (Konzept §8). false = es
 /// gab keine.

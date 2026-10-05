@@ -21,6 +21,7 @@
 
 #include <QPointer>
 #include <QString>
+#include <QStringList>
 #include <QWidget>
 
 #include <cstdint>
@@ -64,6 +65,23 @@ public:
     [[nodiscard]] std::int64_t raste(std::int64_t zeitMs, const Komposition& in, int ausserKanal,
                                      int ausserClip) const;
 
+    // --- Neues hinein (C3b) — alles nur im Bearbeiten -----------------------
+    /// Preset-Dateien an der Stelle `ort` fallen lassen: in die Zeile darunter
+    /// als neue Clips hintereinander; unterhalb der letzten Zeile entsteht ein
+    /// neuer Kanal. `tasten` wie beim Ziehen (Ctrl kuerzen, Ctrl+Shift
+    /// schieben, Alt frei). false = nichts eingefuegt.
+    bool lasseFallen(QPoint ort, const QStringList& dateien,
+                     Qt::KeyboardModifiers tasten = Qt::NoModifier);
+    /// Einen leeren Kanal anhaengen.
+    void kanalHinzu();
+    void kanalLoeschen(int kanal);
+    void kanalUmbenennen(int kanal, const QString& name);
+    void kanalSchalten(int kanal, bool an);
+    /// Der Kanal der Zeile unter `y`, -1 = keine Zeile (Lineal, freie Flaeche).
+    [[nodiscard]] int kanalBei(int y) const;
+
+    /// Die Fassung, die die Achse gerade zeigt.
+    [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
     [[nodiscard]] int gewaehlterKanal() const { return m_kanal; }
     [[nodiscard]] int gewaehlterClip() const { return m_clip; }
     /// Der angeklickte Clip, nullptr = keiner.
@@ -91,8 +109,15 @@ Q_SIGNALS:
     /// Ein Zug ist losgelassen oder ein Clip geloescht: die neue Fassung und
     /// ein Wort dazu fuer Undo („Move clip").
     void bearbeitet(const lumi::composer::Komposition& neu, const QString& was);
+    /// Diese Dateien wurden gerade als Clips eingefuegt.
+    void hineingezogen(const QStringList& dateien);
 
 protected:
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void dragLeaveEvent(QDragLeaveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -101,7 +126,15 @@ protected:
     [[nodiscard]] QSize sizeHint() const override;
     [[nodiscard]] QSize minimumSizeHint() const override;
 
+public:
+    /// So viel Zeit zeigt die Achse fuer diese Komposition: ihre Laenge und
+    /// etwas Luft dahinter, damit sich ueber das Ende hinaus ziehen laesst.
+    [[nodiscard]] static std::int64_t anzeigeLaenge(const Komposition& komposition);
+
 private:
+    void loescheAuswahl();
+    /// Eine selbst erzeugte Fassung zeigen und die Auswahl setzen.
+    void uebernimm(const Komposition& neu, int kanal, int clip);
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
 
@@ -134,6 +167,7 @@ private:
     int m_zugKanal = -1;             ///< Kanal und
     int m_zugClip = -1;              ///< Platz des Clips in `m_vorZug`
     Komposition m_vorZug;            ///< der Stand beim Druck
+    QPoint m_fallOrt{-1, -1};        ///< wohin ein Drag von aussen gerade zeigt (-1 = keiner)
 };
 
 class ComposerPanel : public PanelBase
@@ -158,6 +192,9 @@ public:
 
     /// Eine Stelle als Text: Minuten, Sekunden, Zehntel („1:23.4").
     [[nodiscard]] static QString zeitText(std::int64_t ms);
+    /// Enthaelt die Kettendatei einen Host Switcher? Dann wechseln im Composer
+    /// zwei Wechsler — davor warnt das Panel beim Hinzufuegen (Entscheid S88).
+    [[nodiscard]] static bool hatHostSwitcher(const QString& pfad);
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -177,7 +214,6 @@ private:
     /// Eine Aenderung ausfuehren — ueber den CommandBus der App (Undo / Redo),
     /// ohne ihn direkt.
     void bearbeite(const Komposition& neu, const QString& was);
-    void speichereUnter();
 
     QPointer<VisualizerWidget> m_fenster;
     QPointer<Sitzung> m_sitzung;
@@ -192,6 +228,8 @@ private:
     Zeitachse* m_zeitachse = nullptr;
     QLabel* m_clipZeile = nullptr;
     QCheckBox* m_edit = nullptr;
+    QPushButton* m_neu = nullptr;
+    QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
     QComboBox* m_mischart = nullptr;
