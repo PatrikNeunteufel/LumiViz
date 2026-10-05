@@ -24,6 +24,7 @@
 #include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "UI/dialogs/LyricsAlternativesDialog.hpp"  // Sperrliste der Songtexte (S87)
 #include "visualizers/MultiEffectVisualizer.hpp"    // Schalter der Karaoke-Ebene (S88)
+#include "composer/Sitzung.hpp"                     // Composer-Naht N9
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -646,6 +647,44 @@ QWidget* SettingsPanel::createPanelsTab()
                 index == 1 ? 0.0 : MultiEffectVisualizer::kMovementScheibeAppMs);
         });
         layout->addRow(tr("Movement Table:"), tabelle);
+    }
+
+    // Composer-Naht N9 (docs/ui/Composer_Konzept.md §12.2): was Open
+    // Composition tut und was am Ende einer Komposition geschieht (S95).
+    // Beides liest die Sitzung des Composers, wenn es so weit ist.
+    {
+        using lumi::composer::AmEnde;
+        using lumi::composer::Sitzung;
+        auto* oeffnen = new QComboBox(widget);
+        oeffnen->setObjectName(QStringLiteral("composerOpenBehaviour"));
+        oeffnen->addItem(tr("Starts playing"));
+        oeffnen->addItem(tr("Holds at the start"));
+        oeffnen->setCurrentIndex(Sitzung::oeffnenHaelt() ? 1 : 0);
+        oeffnen->setToolTip(
+            tr("What File → Open Composition... does after loading.\n\n"
+               "Starts playing: the Composer is switched on and the composition runs at once.\n\n"
+               "Holds at the start: the Composer is switched on and waits at position zero — "
+               "press Play in the Composer panel."));
+        connect(oeffnen, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [](int index) { Sitzung::setOeffnenHaelt(index == 1); });
+        layout->addRow(tr("Open Composition:"), oeffnen);
+
+        auto* ende = new QComboBox(widget);
+        ende->setObjectName(QStringLiteral("composerAtEnd"));
+        ende->addItem(tr("Hold at the end"));
+        ende->addItem(tr("Return to the start"));
+        ende->addItem(tr("Switch the Composer off"));
+        ende->setCurrentIndex(static_cast<int>(Sitzung::amEnde()));
+        ende->setToolTip(
+            tr("What happens when a composition reaches its end and Loop is off.\n\n"
+               "Hold at the end: the picture stays black, the karaoke layer keeps running, "
+               "the Composer stays on. Play starts again from the beginning.\n\n"
+               "Return to the start: jumps to position zero and waits there, like Stop.\n\n"
+               "Switch the Composer off: the effect chain delivers the picture again; the "
+               "composition stays loaded in the Composer panel."));
+        connect(ende, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [](int index) { Sitzung::setAmEnde(static_cast<AmEnde>(index)); });
+        layout->addRow(tr("End of a Composition:"), ende);
     }
 
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren
