@@ -111,6 +111,43 @@ void setzeBlenden(VisualClip& clip, const Blenden& blenden);
 /// Hand geaendert wird: danach bewegt sich nur, was angefasst wird.
 void schreibeFest(VisualClip& clip);
 
+// --- Teile der Pegelkurve (C4 Teil 2) -----------------------------------------
+
+enum class TeilArt : int
+{
+    Keins = 0,
+    Ein = 1,     ///< die Einblendung
+    Aus = 2,     ///< die Ausblendung
+    Stueck = 3,  ///< ein Stueck mitten im Clip
+};
+
+/// Ein Teil der Pegelkurve eines Clips — das, woran der Curve Editor haengt.
+struct Teil
+{
+    TeilArt art = TeilArt::Keins;
+    int stueck = -1;  ///< nur bei `Stueck`: sein Platz in `VisualClip::stuecke`
+
+    [[nodiscard]] bool operator==(const Teil& o) const { return art == o.art && stueck == o.stueck; }
+};
+
+/// Gibt es das Teil am Clip — eine Blende mit Dauer bzw. das Stueck?
+[[nodiscard]] bool hatTeil(const VisualClip& clip, Teil teil);
+/// Das Teil, das an der Stelle `zeitImClipMs` liegt (nach der jetzigen
+/// Verteilung); `Keins` = dort gilt nur der Grundpegel.
+[[nodiscard]] Teil teilBei(const VisualClip& clip, std::int64_t zeitImClipMs);
+/// Wo das Teil gerade liegt; ein leerer Bereich, wenn es das Teil nicht gibt.
+[[nodiscard]] Bereich bereichVon(const VisualClip& clip, Teil teil);
+
+/// Weite eines neuen Stuecks, wenn der Clip lang genug ist.
+inline constexpr std::int64_t kNeuesStueckMs = 2000;
+
+/// Ein Stueck (eine weiche Delle) mit der Mitte bei `mitteMs` in den Clip
+/// legen; seine Weite ist `kNeuesStueckMs`, hoechstens ein Viertel des Clips.
+/// Liefert seinen Platz in `stuecke`.
+int fuegeStueckEin(VisualClip& clip, std::int64_t mitteMs);
+/// Das Stueck entfernen. false = es gibt es nicht.
+bool loescheStueck(VisualClip& clip, int stueck);
+
 /// Name der Kurvenform fuer die Oberflaeche (englisch, wie die App).
 [[nodiscard]] const char* kurvenformName(Kurvenform form);
 

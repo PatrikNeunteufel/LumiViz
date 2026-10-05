@@ -24,7 +24,9 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/ComposerPanel.hpp"
+#include "composer/FormPresets.hpp"
 #include "composer/Komposition.hpp"
+#include "composer/KurvenEditor.hpp"
 #include "composer/Sitzung.hpp"
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -727,6 +729,234 @@ TEST_SUITE("ComposerPanel")
             CHECK(g.einForm == Kurvenform::Bezier);
             CHECK(g.einBezier[1] == doctest::Approx(b.einBezier[1]));
             CHECK(g.ausForm == Kurvenform::SKurve);
+        }
+
+        // --- C4 Teil 2: der Curve Editor — Punkte, Presets, Dauer, Grundpegel, Stuecke
+        {
+            QTemporaryDir presetDir;
+            REQUIRE(presetDir.isValid());
+            formpresets::setzeWurzelFuerTests(presetDir.path());
+            const struct Zurueck
+            {
+                ~Zurueck() { formpresets::setzeWurzelFuerTests({}); }
+            } zurueck;
+            const auto zieh = [](QWidget* w, QPoint a, QPoint b) {
+                QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(w->mapToGlobal(a)),
+                                  Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(w, &druck);
+                for (int i = 1; i <= 4; ++i)
+                {
+                    const QPoint m = a + (b - a) * i / 4;
+                    QMouseEvent bewegt(QEvent::MouseMove, QPointF(m), QPointF(w->mapToGlobal(m)),
+                                       Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(w, &bewegt);
+                }
+                QMouseEvent los(QEvent::MouseButtonRelease, QPointF(b), QPointF(w->mapToGlobal(b)),
+                                Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(w, &los);
+            };
+            const auto doppelklick = [](QWidget* w, QPoint ort) {
+                QMouseEvent doppel(QEvent::MouseButtonDblClick, QPointF(ort), QPointF(w->mapToGlobal(ort)),
+                                   Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(w, &doppel);
+            };
+            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].visual[0]; };
+            CHECK(panel.kurvenFenster() == nullptr);  // das Fenster entsteht erst mit der ersten Kurve
+
+            // Doppelklick in die Einblendung (1 s nach Clip-Anfang) oeffnet ihre Kurve
+            doppelklick(achse, QPoint(achse->xVon(6000), achse->yVonZeile(0) + 6));
+            KurvenFenster* fenster = panel.kurvenFenster();
+            REQUIRE(fenster != nullptr);
+            testfenster::platziere(*fenster);
+            CHECK(fenster->isVisible());
+            REQUIRE(fenster->hatKurve());
+            CHECK(fenster->teil() == Teil{TeilArt::Ein, -1});
+            Formflaeche* flaeche = fenster->flaeche();
+            REQUIRE(warte([&] { return flaeche->width() > 150 && flaeche->height() > 100; }));
+            REQUIRE(flaeche->form().punkte.size() == 2);
+            CHECK(flaeche->form().punkte[0].form == Kurvenform::Bezier);
+            auto* titel = fenster->findChild<QLabel*>(QStringLiteral("curveTitle"));
+            auto* presets = fenster->findChild<QComboBox*>(QStringLiteral("curvePreset"));
+            auto* dauer = fenster->findChild<QDoubleSpinBox*>(QStringLiteral("curveDuration"));
+            auto* lage = fenster->findChild<QDoubleSpinBox*>(QStringLiteral("curvePosition"));
+            auto* gekippt = fenster->findChild<QCheckBox*>(QStringLiteral("curveFlipped"));
+            auto* grund = fenster->findChild<QDoubleSpinBox*>(QStringLiteral("curveBase"));
+            auto* jetzt = fenster->findChild<QLabel*>(QStringLiteral("curveNow"));
+            REQUIRE(titel != nullptr);
+            REQUIRE(presets != nullptr);
+            REQUIRE(dauer != nullptr);
+            REQUIRE(lage != nullptr);
+            REQUIRE(gekippt != nullptr);
+            REQUIRE(grund != nullptr);
+            REQUIRE(jetzt != nullptr);
+            CHECK(titel->text() == QStringLiteral("Fade in — Rot"));
+            CHECK(dauer->value() == doctest::Approx(3.0));
+            CHECK_FALSE(lage->isVisible());  // Lage und Flipped gibt es nur am Stueck
+
+            // ein Punkt dazu: die Blende hat zwei Abschnitte — ueber Undo, das Fenster zeigt den Stand
+            flaeche->fuegePunktEin(0.5, 0.9);
+            REQUIRE(derClip().ein.form.punkte.size() == 3);
+            CHECK(derClip().ein.form.punkte[1].y == doctest::Approx(0.9));
+            CHECK(derClip().pegelBei(1500) == doctest::Approx(0.9));
+            CHECK(bus->undoDescription() == "Add curve point");
+            CHECK(flaeche->form().punkte.size() == 3);
+            CHECK(flaeche->gewaehlterPunkt() == 1);
+            // die Laenge laesst sich auf der Zeitachse weiter ziehen, Anfasser gibt es dort keine mehr
+            CHECK(achse->blendenGriff(0, 0, true).x() >= 0);
+            CHECK(achse->bezierGriff(0, 0, true, 0) == QPoint(-1, -1));
+            zieh(achse, achse->blendenGriff(0, 0, true),
+                 QPoint(achse->xVon(9000), achse->blendenGriff(0, 0, true).y()));
+            CHECK(derClip().ein.dauerMs == 4000);
+            CHECK(derClip().ein.form.punkte.size() == 3);  // die Form blieb
+            REQUIRE(bus->undo());
+            CHECK(derClip().ein.dauerMs == 3000);
+
+            // den Punkt mit der Maus ziehen: nach links unten
+            zieh(flaeche, flaeche->punktOrt(1), flaeche->ortVon(0.25, 0.5));
+            CHECK(derClip().ein.form.punkte[1].x == doctest::Approx(0.25).epsilon(0.03));
+            CHECK(derClip().ein.form.punkte[1].y == doctest::Approx(0.5).epsilon(0.03));
+            CHECK(bus->undoDescription() == "Move curve point");
+            // die Enden einer Blende bleiben, wo sie sind
+            zieh(flaeche, flaeche->punktOrt(0), flaeche->ortVon(0.2, 0.6));
+            CHECK(derClip().ein.form.punkte[0].y == doctest::Approx(0.0));
+            CHECK(bus->undoDescription() == "Move curve point");
+            // Doppelklick ins Leere setzt einen Punkt, Doppelklick auf ihn nimmt ihn weg
+            doppelklick(flaeche, flaeche->ortVon(0.8, 0.2));
+            REQUIRE(derClip().ein.form.punkte.size() == 4);
+            doppelklick(flaeche, flaeche->punktOrt(2));
+            REQUIRE(derClip().ein.form.punkte.size() == 3);
+            CHECK(bus->undoDescription() == "Delete curve point");
+            doppelklick(flaeche, flaeche->punktOrt(0));  // ein Ende bleibt
+            CHECK(derClip().ein.form.punkte.size() == 3);
+
+            // Undo: Schritt fuer Schritt zurueck — das Fenster folgt
+            REQUIRE(bus->undo());  // der Punkt bei 0.8 ist wieder da
+            REQUIRE(bus->undo());  // ... und wieder weg
+            REQUIRE(bus->undo());  // der gezogene Punkt liegt wieder bei 0.5 / 0.9
+            CHECK(flaeche->form().punkte[1].x == doctest::Approx(0.5));
+            REQUIRE(bus->undo());
+            CHECK(derClip().ein.form.punkte.size() == 2);
+            CHECK(flaeche->form().punkte.size() == 2);
+
+            // die Form eines Abschnitts
+            flaeche->setzeAbschnittForm(0, Kurvenform::EaseIn);
+            CHECK(derClip().ein.form.punkte[0].form == Kurvenform::EaseIn);
+            CHECK(bus->undoDescription() == "Change curve shape");
+
+            // Presets: speichern, die Liste zeigt es als das geltende; aendern — „custom"; laden; loeschen
+            CHECK(presets->count() == 1);
+            REQUIRE(fenster->speicherePreset(QStringLiteral("Mein Anlauf")));
+            REQUIRE(presets->count() == 2);
+            CHECK(presets->currentText() == QStringLiteral("Mein Anlauf"));
+            flaeche->setzeAbschnittForm(0, Kurvenform::Linear);
+            CHECK(presets->currentIndex() == 0);
+            REQUIRE(fenster->ladePreset(QStringLiteral("mein anlauf")));
+            CHECK(derClip().ein.form.punkte[0].form == Kurvenform::EaseIn);
+            CHECK(derClip().ein.dauerMs == 3000);  // die Dauer gehoert nicht zum Preset
+            CHECK(bus->undoDescription() == "Load curve preset");
+            CHECK(presets->currentText() == QStringLiteral("Mein Anlauf"));
+            CHECK_FALSE(fenster->ladePreset(QStringLiteral("gibt es nicht")));
+            // ein Stueck-Preset gilt nicht fuer eine Blende
+            REQUIRE(formpresets::speichere(QStringLiteral("Tal"), delle()));
+            CHECK_FALSE(fenster->ladePreset(QStringLiteral("Tal")));
+            REQUIRE(fenster->loeschePreset(QStringLiteral("Mein Anlauf")));
+            CHECK(presets->count() == 1);
+
+            // die Dauer; zusammen laenger als der Clip: beide Zahlen, die eingestellte bleibt
+            dauer->setValue(4.0);
+            CHECK(derClip().ein.dauerMs == 4000);
+            CHECK(bus->undoDescription() == "Change fade duration");
+            CHECK(jetzt->text().isEmpty());
+            dauer->setValue(18.0);  // 18 s + 5 s in einem Clip von 20 s
+            CHECK(derClip().ein.dauerMs == 18000);
+            CHECK(derClip().aus.dauerMs == 5000);
+            CHECK(dauer->value() == doctest::Approx(18.0));
+            CHECK(jetzt->text() == QStringLiteral("(now 15.65 s)"));
+            // von Hand aendern: erst gilt der sichtbare Stand — die Ausblendung behaelt, was sie zeigt
+            dauer->setValue(2.0);
+            CHECK(derClip().ein.dauerMs == 2000);
+            CHECK(derClip().aus.dauerMs == 4348);
+            CHECK(jetzt->text().isEmpty());
+
+            // der Grundpegel des Clips
+            grund->setValue(50.0);
+            CHECK(derClip().grundpegel == doctest::Approx(0.5));
+            CHECK(derClip().pegelBei(10000) == doctest::Approx(0.5));
+            CHECK(derClip().pegelBei(1000) == doctest::Approx(0.5 * kurvenWert(Kurvenform::EaseIn, 0.5)));
+            CHECK(bus->undoDescription() == "Change base level");
+
+            // ein Stueck mitten im Clip: entsteht als Delle, das Fenster haengt daran
+            achse->stueckHinzu(0, 0, 10000);
+            REQUIRE(derClip().stuecke.size() == 1);
+            CHECK(derClip().stuecke[0].lage == doctest::Approx(0.5));
+            CHECK(derClip().stuecke[0].weiteMs == kNeuesStueckMs);
+            CHECK(fenster->teil() == Teil{TeilArt::Stueck, 0});
+            CHECK(titel->text() == QStringLiteral("Shape 1 — Rot"));
+            CHECK(lage->isVisible());
+            CHECK(lage->value() == doctest::Approx(10.0));
+            CHECK(dauer->value() == doctest::Approx(2.0));
+            CHECK(derClip().pegelBei(10000) == doctest::Approx(0.0));  // die Delle: vom Grundpegel auf null
+            CHECK(presets->count() == 2);  // jetzt die Stueck-Presets: „Tal"
+            CHECK(presets->currentText() == QStringLiteral("Tal"));
+            gekippt->click();  // der Buckel: vom Grundpegel auf voll
+            CHECK(derClip().stuecke[0].gekippt);
+            CHECK(derClip().pegelBei(10000) == doctest::Approx(1.0));
+            CHECK(derClip().pegelBei(9000) == doctest::Approx(0.5));  // am Rand ohne Sprung
+            CHECK(bus->undoDescription() == "Flip shape");
+            lage->setValue(5.0);
+            CHECK(derClip().stuecke[0].lage == doctest::Approx(0.25));
+            CHECK(bus->undoDescription() == "Move shape");
+            dauer->setValue(4.0);
+            CHECK(derClip().stuecke[0].weiteMs == 4000);
+            CHECK(bus->undoDescription() == "Change shape width");
+            // die Enden eines Stuecks duerfen in der Hoehe wandern, nicht zur Seite
+            zieh(flaeche, flaeche->punktOrt(0), flaeche->ortVon(0.3, 0.5));
+            CHECK(derClip().stuecke[0].form.punkte[0].x == doctest::Approx(0.0));
+            CHECK(derClip().stuecke[0].form.punkte[0].y == doctest::Approx(0.5).epsilon(0.03));
+            REQUIRE(bus->undo());
+
+            // das Fenster folgt dem Teil, das man oeffnet
+            achse->oeffneKurve(0, 0, {TeilArt::Aus, -1});
+            CHECK(fenster->teil() == Teil{TeilArt::Aus, -1});
+            CHECK(titel->text() == QStringLiteral("Fade out — Rot"));
+            CHECK(dauer->value() == doctest::Approx(4.35));  // 4348 ms, das Feld zeigt zwei Stellen
+            doppelklick(achse, QPoint(achse->xVon(5000 + 5000), achse->yVonZeile(0) + 6));
+            CHECK(fenster->teil() == Teil{TeilArt::Stueck, 0});
+
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+            {
+                QCoreApplication::processEvents();
+                CHECK(fenster->grab().save(bild + QStringLiteral(".kurve.png")));
+                CHECK(panel.grab().save(bild + QStringLiteral(".stueck.png")));
+            }
+
+            // ohne Edit: ansehen ja, aendern nein
+            edit->click();
+            REQUIRE_FALSE(achse->bearbeiten());
+            CHECK(fenster->hatKurve());
+            CHECK_FALSE(flaeche->bearbeitbar());
+            const auto schritte = bus->undoCount();
+            flaeche->fuegePunktEin(0.3, 0.3);
+            CHECK(derClip().stuecke[0].form.punkte.size() == 3);
+            CHECK(bus->undoCount() == schritte);
+            edit->click();
+            REQUIRE(achse->bearbeiten());
+            CHECK(flaeche->bearbeitbar());
+
+            // das Stueck weg: das Fenster hat nichts mehr zu zeigen
+            achse->stueckLoeschen(0, 0, 0);
+            CHECK(derClip().stuecke.empty());
+            CHECK(bus->undoDescription() == "Delete shape");
+            CHECK_FALSE(fenster->hatKurve());
+            CHECK(titel->text() == QStringLiteral("No curve selected"));
+            // eine Blende, die es nicht gibt, entsteht beim Oeffnen
+            Komposition ohne = sitzung->komposition();
+            ohne.kanaele[0].visual[0].aus = {};
+            sitzung->setzeKomposition(ohne);
+            achse->oeffneKurve(0, 0, {TeilArt::Aus, -1});
+            CHECK(derClip().aus.dauerMs == 2000);
+            CHECK(bus->undoDescription() == "Add fade");
+            CHECK(fenster->hatKurve());
         }
 
         // --- in eine Luecke: der neue Clip reicht nur bis zum naechsten

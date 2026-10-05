@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.87.0
+> **Version:** 1.88.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1790,8 +1790,67 @@ Ausblendung.
   nach Speichern und Laden. Ziehst du dagegen an einem gestauchten Griff, gilt
   ab da, was du siehst.
 
-Eine Blende, deren Form aus mehr als einem Abschnitt besteht (aus der Datei),
-hat keine Griffe; sie bleibt, wie sie ist.
+Eine Blende, deren Form aus mehr als einem Abschnitt besteht (im Curve Editor
+gezeichnet), behält den Griff für die Länge; ihre Form änderst du im Curve
+Editor. Wählst du im Rechtsklick-Menü eine der sieben Formen, ersetzt sie die
+gezeichnete.
+
+**Curve Editor — die Form einer Kurve zeichnen.** Ein eigenes Fenster, das
+offen bleiben kann, während du im Composer weiterarbeitest. Es öffnet sich mit
+einem **Doppelklick auf eine Blende** im Clip oder über Rechtsklick auf den
+Clip → *Edit fade in curve...* / *Edit fade out curve...* (eine Blende, die es
+noch nicht gibt, entsteht dabei mit zwei Sekunden). Das Teil, an dem das
+Fenster hängt, trägt im Clip unten einen gelben Strich. Klickst du einen
+anderen Clip an, zeigt das Fenster dessen Teil; ohne **Edit** zeigt es die
+Kurve nur an.
+
+Die Kurve im Fenster kennt **keine Zeit**: von links nach rechts läuft die
+Dauer, von unten nach oben der Pegel. Wie lang die Blende ist, steht darunter.
+
+| Bedienung | Wirkung |
+|---|---|
+| Punkt ziehen | Verschiebt ihn — zwischen seinen Nachbarn. Anfang und Ende einer Blende bleiben fest |
+| Doppelklick ins Leere | Ein neuer Punkt |
+| Doppelklick auf einen Punkt, oder **Del** | Nimmt ihn weg |
+| Rechtsklick → *Segment shape* | Die Form des Abschnitts ab dem Punkt davor: Linear, S-curve, Ease in, Ease out, Exponential, Hold, Bezier |
+| Gelbe Punkte | Die zwei Anfasser eines Bézier-Abschnitts |
+
+Jeder Schritt wirkt sofort im Bild und lässt sich mit *Edit → Undo*
+zurücknehmen.
+
+- **Preset** (oben): eine Liste fertiger Kurven. Eine Wahl ersetzt die Form;
+  Dauer und Lage bleiben. **Save...** legt die gezeichnete Kurve unter einem
+  Namen ab, **Delete** löscht ein eigenes Preset — die mitgelieferten bleiben.
+  Ein Blenden-Preset passt auf beide Seiten: als Ausblendung läuft es
+  rückwärts. „(custom)" heißt: die Kurve gleicht keinem Preset.
+- **Duration** (unten): die eingestellte Länge der Blende. Ist der Clip zu
+  kurz, steht daneben in Klammern, wie lang sie gerade ist — „(now 2.10 s)".
+  Trägst du dann einen neuen Wert ein, gilt für die mitgestauchten Teile ab da
+  der Stand, den du siehst.
+- **Base level of the clip:** der Pegel des Clips zwischen seinen Blenden und
+  Stücken, 0 … 100 %. Die Blenden laufen von null bis dorthin.
+
+**Stücke mitten im Clip.** Rechtsklick in den Clip → *Add shape here* legt an
+der Stelle ein Stück an — zuerst eine weiche Delle, zwei Sekunden breit — und
+öffnet seine Kurve. Ein Stück senkt den Pegel vom Grundpegel in Richtung
+null; im Curve Editor heißt oben „der Grundpegel bleibt", unten „nichts
+bleibt".
+
+- **Width** und **Position** (unten im Fenster): wie breit das Stück ist und
+  wo seine Mitte liegt, gezählt vom Anfang des Clips. Wird der Clip länger
+  oder kürzer, behält das Stück seine Breite und seinen Anteil an der Länge.
+- **Flipped:** oben und unten tauschen — das Stück **hebt** den Pegel, vom
+  Grundpegel bis auf voll. Mit *Base level* 0 % ist der Clip damit nur in
+  seinen Stücken zu sehen. (Die Kurve im Fenster bleibt dabei, wie sie
+  gezeichnet ist; der Clip auf der Zeitachse zeigt die Wirkung.)
+- Doppelklick auf ein Stück oder Rechtsklick → *Edit shape curve...* öffnet
+  seine Kurve, *Delete shape* nimmt es weg.
+- Berühren sich Stücke und Blenden, weil der Clip zu kurz ist, werden die
+  sich berührenden gleichmäßig gestaucht — wie bei den Blenden.
+
+Die Presets liegen als Dateien: mitgeliefert in `asset/composer/fades`
+(`.lvfade`) und `asset/composer/shapes` (`.lvshape`), eigene im Benutzerordner
+unter `composer/fades` und `composer/shapes`.
 
 **Neues hinein** (auch nur mit **Edit**):
 
@@ -1936,6 +1995,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.88.0 | 2026-10-05 | Session 96. §15 Composer NEU **Curve Editor**: eigenes Fenster zum Zeichnen der Form einer Blende (Doppelklick auf die Blende oder Rechtsklick → *Edit fade in curve...* / *Edit fade out curve...*) — Punkte ziehen, setzen, wegnehmen, Form je Abschnitt, Bézier-Anfasser; **Kurven-Presets** laden, speichern, löschen; Felder Duration und Base level. NEU **Stücke mitten im Clip** (*Add shape here*, Width, Position, Flipped, *Delete shape*). Eine gezeichnete Blende behält auf der Zeitachse den Griff für die Länge |
 | 1.87.0 | 2026-10-05 | Session 96. §15 Composer: **Blenden haben eine eingestellte Dauer** — ein zu kurzer Clip staucht sie, wieder länger gezogen kommen sie zurück; GEÄNDERT die Ausblendung ist dieselbe Form wie die Einblendung, rückwärts gelesen (Ease in und Ease out wirken an der Ausblendung damit umgekehrt wie in 1.84.0). Datei `.lvcomp` Version 2: `fadeIn` / `fadeOut` mit `ms` und `shape`, NEU `base` (Grundpegel) und `shapes` (Stücke mitten im Clip, mit `flipped`); das alte Feld `levels` wird beim Laden übersetzt |
 | 1.86.0 | 2026-10-05 | Session 95. §15 Composer NEU **die Kette eines Clips speichern**: über das Speichern von Effect Chain, bei gebundenem Clip immer unter neuem Namen; der Clip wechselt auf die neue Datei, weitere Clips mit demselben Preset nach Auswahl |
 | 1.85.0 | 2026-10-05 | Session 95. §15 Composer NEU **Sync on Effect Chain**: Effect Chain zeigt bei laufender Komposition die Kette des angeklickten Clips (Änderungen wirken sofort) oder ruht; Speichern dieser Änderungen noch nicht möglich. Die Datei-Knöpfe des Panels stehen in einer eigenen Zeile |

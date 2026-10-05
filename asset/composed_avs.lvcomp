@@ -1,0 +1,231 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 20000,
+                    "file": "avs/Community Picks/Acid - Twitchy liquid shit (mixing plastics mix by tuggummi).avs",
+                    "levels": [
+                        {
+                            "curve": 2,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 6000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 14000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 0
+                },
+                {
+                    "blend": 0,
+                    "end": 52000,
+                    "file": "avs/Community Picks/duo - alien intercourse 4.avs",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 5000
+                        },
+                        {
+                            "curve": 2,
+                            "level": 1,
+                            "t": 16000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 22000
+                        }
+                    ],
+                    "start": 30000
+                },
+                {
+                    "blend": 0,
+                    "end": 81000,
+                    "file": "avs/Community Picks/UnConeD - Butterfly Caught.avs",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 7000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 13000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 61000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 36000,
+                    "file": "avs/Community Picks/el-vis - golden.avs",
+                    "levels": [
+                        {
+                            "bezier": [
+                                0.4,
+                                0,
+                                0.6,
+                                1
+                            ],
+                            "curve": 6,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 7000
+                        },
+                        {
+                            "curve": 4,
+                            "level": 1,
+                            "t": 14000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 16000
+                },
+                {
+                    "blend": 0,
+                    "end": 67000,
+                    "file": "avs/Community Picks/S_KuPeRS - Curvism 002 (Tuggummi's Paprika Mix).avs",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 6000
+                        },
+                        {
+                            "curve": 1,
+                            "level": 1,
+                            "t": 14000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 47000
+                },
+                {
+                    "blend": 0,
+                    "end": 97000,
+                    "file": "avs/Community Picks/UnConeD - Seismogrid.avs",
+                    "levels": [
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 5000
+                        },
+                        {
+                            "curve": 1,
+                            "level": 1,
+                            "t": 14000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 20000
+                        }
+                    ],
+                    "start": 77000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 128000,
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "levels": [
+                        {
+                            "curve": 1,
+                            "level": 0,
+                            "t": 0
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 6000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 1,
+                            "t": 35000
+                        },
+                        {
+                            "curve": 0,
+                            "level": 0,
+                            "t": 40000
+                        }
+                    ],
+                    "start": 88000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH3"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 1
+}

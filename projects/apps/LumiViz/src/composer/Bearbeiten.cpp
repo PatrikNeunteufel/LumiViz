@@ -364,6 +364,60 @@ void schreibeFest(VisualClip& clip)
     }
 }
 
+bool hatTeil(const VisualClip& clip, Teil teil)
+{
+    switch (teil.art)
+    {
+        case TeilArt::Ein: return clip.ein.dauerMs > 0;
+        case TeilArt::Aus: return clip.aus.dauerMs > 0;
+        case TeilArt::Stueck:
+            return teil.stueck >= 0 && teil.stueck < static_cast<int>(clip.stuecke.size());
+        case TeilArt::Keins: break;
+    }
+    return false;
+}
+
+Bereich bereichVon(const VisualClip& clip, Teil teil)
+{
+    if (!hatTeil(clip, teil)) return {};
+    const Verteilung v = clip.verteilung();
+    if (teil.art == TeilArt::Ein) return v.ein;
+    if (teil.art == TeilArt::Aus) return v.aus;
+    return v.stuecke[static_cast<std::size_t>(teil.stueck)];
+}
+
+Teil teilBei(const VisualClip& clip, std::int64_t zeitImClipMs)
+{
+    // dieselbe Reihenfolge wie `VisualClip::pegelBei`
+    const Verteilung v = clip.verteilung();
+    if (v.ein.weiteMs() > 0 && zeitImClipMs < v.ein.bisMs) return {TeilArt::Ein, -1};
+    if (v.aus.weiteMs() > 0 && zeitImClipMs >= v.aus.vonMs) return {TeilArt::Aus, -1};
+    for (int i = 0; i < static_cast<int>(v.stuecke.size()); ++i)
+    {
+        const Bereich& b = v.stuecke[static_cast<std::size_t>(i)];
+        if (b.weiteMs() > 0 && zeitImClipMs >= b.vonMs && zeitImClipMs < b.bisMs)
+            return {TeilArt::Stueck, i};
+    }
+    return {};
+}
+
+int fuegeStueckEin(VisualClip& clip, std::int64_t mitteMs)
+{
+    const std::int64_t dauer = std::max<std::int64_t>(1, clip.dauerMs());
+    ClipStueck neu;
+    neu.lage = std::clamp(static_cast<double>(mitteMs) / static_cast<double>(dauer), 0.0, 1.0);
+    neu.weiteMs = std::max<std::int64_t>(1, std::min(kNeuesStueckMs, dauer / 4));
+    clip.stuecke.push_back(std::move(neu));
+    return static_cast<int>(clip.stuecke.size()) - 1;
+}
+
+bool loescheStueck(VisualClip& clip, int stueck)
+{
+    if (stueck < 0 || stueck >= static_cast<int>(clip.stuecke.size())) return false;
+    clip.stuecke.erase(clip.stuecke.begin() + stueck);
+    return true;
+}
+
 const char* kurvenformName(Kurvenform form)
 {
     switch (form)

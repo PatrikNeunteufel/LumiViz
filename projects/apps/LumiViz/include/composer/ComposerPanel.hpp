@@ -92,6 +92,17 @@ public:
     /// null wird dabei zwei Sekunden lang — sonst saehe man die Wahl nicht.
     void setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form);
 
+    // --- Teile der Pegelkurve (C4 Teil 2) ------------------------------------
+    /// Die Kurve eines Teils oeffnen: der Clip wird angeklickt, `kurveOeffnen`
+    /// gemeldet. Eine Blende ohne Dauer bekommt im Bearbeiten zwei Sekunden.
+    void oeffneKurve(int kanal, int clip, Teil teil);
+    /// Ein Stueck mit der Mitte bei `zeitImClipMs` in den Clip legen und
+    /// seine Kurve oeffnen (nur im Bearbeiten).
+    void stueckHinzu(int kanal, int clip, std::int64_t zeitImClipMs);
+    void stueckLoeschen(int kanal, int clip, int stueck);
+    /// Das Teil, an dem der Curve Editor haengt — am angeklickten Clip markiert.
+    void setTeil(Teil teil);
+
     /// Die Fassung, die die Achse gerade zeigt.
     [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
     [[nodiscard]] int gewaehlterKanal() const { return m_kanal; }
@@ -123,6 +134,8 @@ Q_SIGNALS:
     void bearbeitet(const lumi::composer::Komposition& neu, const QString& was);
     /// Diese Dateien wurden gerade als Clips eingefuegt.
     void hineingezogen(const QStringList& dateien);
+    /// Die Kurve dieses Teils des angeklickten Clips soll in den Curve Editor.
+    void kurveOeffnen(lumi::composer::Teil teil);
 
 protected:
     void dragEnterEvent(QDragEnterEvent* event) override;
@@ -134,6 +147,7 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     [[nodiscard]] QSize sizeHint() const override;
     [[nodiscard]] QSize minimumSizeHint() const override;
@@ -189,7 +203,10 @@ private:
     int m_zugClip = -1;              ///< Platz des Clips in `m_vorZug`
     Komposition m_vorZug;            ///< der Stand beim Druck
     QPoint m_fallOrt{-1, -1};        ///< wohin ein Drag von aussen gerade zeigt (-1 = keiner)
+    Teil m_teil;                     ///< das Teil im Curve Editor (markiert)
 };
+
+class KurvenFenster;
 
 class ComposerPanel : public PanelBase
 {
@@ -210,6 +227,8 @@ public:
     void setFenster(VisualizerWidget* fenster);
     [[nodiscard]] Sitzung* sitzung() const;
     [[nodiscard]] Zeitachse* zeitachse() const { return m_zeitachse; }
+    /// Das Fenster Curve Editor; nullptr, solange noch keine Kurve geoeffnet wurde.
+    [[nodiscard]] KurvenFenster* kurvenFenster() const;
 
     /// Eine Stelle als Text: Minuten, Sekunden, Zehntel („1:23.4").
     [[nodiscard]] static QString zeitText(std::int64_t ms);
@@ -235,9 +254,15 @@ private:
     /// Eine Aenderung ausfuehren — ueber den CommandBus der App (Undo / Redo),
     /// ohne ihn direkt.
     void bearbeite(const Komposition& neu, const QString& was);
+    /// Den Curve Editor zeigen (er entsteht beim ersten Mal) und an `teil` haengen.
+    void oeffneKurve(Teil teil);
+    /// Dem Curve Editor den Stand des angeklickten Clips geben.
+    void zeigeKurve();
 
     QPointer<VisualizerWidget> m_fenster;
     QPointer<Sitzung> m_sitzung;
+    QPointer<KurvenFenster> m_kurven;
+    Teil m_kurvenTeil;
 
     QCheckBox* m_an = nullptr;
     QPushButton* m_spielen = nullptr;
