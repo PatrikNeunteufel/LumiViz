@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.88.1
+> **Version:** 1.89.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1839,9 +1839,15 @@ der Stelle ein Stück an — zuerst eine weiche Delle, zwei Sekunden breit — u
 öffnet seine Kurve. Ein Stück senkt den Pegel vom Grundpegel in Richtung
 null: im Curve Editor ist oben der Grundpegel, unten null.
 
-- **Width** und **Position** (unten im Fenster): wie breit das Stück ist und
-  wo seine Mitte liegt, gezählt vom Anfang des Clips. Wird der Clip länger
-  oder kürzer, behält das Stück seine Breite und seinen Anteil an der Länge.
+- **Griffe oben im Clip:** die kleine **Raute** über der Mitte des Stücks
+  verschiebt es, die **Striche** an seinen Kanten ändern die Breite — die
+  Mitte bleibt dabei, wo sie ist. Ein Stück hält an der nächsten Blende und
+  am nächsten Stück an; durch Ziehen wird nichts gestaucht. Es rastet ein wie
+  ein Clip, mit Alt frei.
+- **Width** und **Position** (unten im Fenster): dieselben Werte als Zahlen —
+  wie breit das Stück ist und wo seine Mitte liegt, gezählt vom Anfang des
+  Clips. Wird der Clip länger oder kürzer, behält das Stück seine Breite und
+  seinen Anteil an der Länge.
 - **Flipped:** oben und unten tauschen — das Stück **hebt** den Pegel, vom
   Grundpegel bis auf voll. Mit *Base level* 0 % ist der Clip damit nur in
   seinen Stücken zu sehen. Die Kurve im Fenster dreht sich mit: aus der Delle
@@ -1998,6 +2004,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.89.0 | 2026-10-05 | Session 96. §15 Composer NEU **Griffe der Stücke** oben im Clip: die Raute verschiebt ein Stück, die Striche an den Kanten ändern seine Breite; ein Stück hält an Blenden und anderen Stücken an |
 | 1.88.1 | 2026-10-05 | Session 96. §15 Curve Editor: das Fenster zeigt die Kurve, **wie sie am Clip wirkt** — eine Ausblendung fällt von links oben nach rechts unten, ein Stück mit Flipped steht als Buckel nach oben; eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird |
 | 1.88.0 | 2026-10-05 | Session 96. §15 Composer NEU **Curve Editor**: eigenes Fenster zum Zeichnen der Form einer Blende (Doppelklick auf die Blende oder Rechtsklick → *Edit fade in curve...* / *Edit fade out curve...*) — Punkte ziehen, setzen, wegnehmen, Form je Abschnitt, Bézier-Anfasser; **Kurven-Presets** laden, speichern, löschen; Felder Duration und Base level. NEU **Stücke mitten im Clip** (*Add shape here*, Width, Position, Flipped, *Delete shape*). Eine gezeichnete Blende behält auf der Zeitachse den Griff für die Länge |
 | 1.87.0 | 2026-10-05 | Session 96. §15 Composer: **Blenden haben eine eingestellte Dauer** — ein zu kurzer Clip staucht sie, wieder länger gezogen kommen sie zurück; GEÄNDERT die Ausblendung ist dieselbe Form wie die Einblendung, rückwärts gelesen (Ease in und Ease out wirken an der Ausblendung damit umgekehrt wie in 1.84.0). Datei `.lvcomp` Version 2: `fadeIn` / `fadeOut` mit `ms` und `shape`, NEU `base` (Grundpegel) und `shapes` (Stücke mitten im Clip, mit `flipped`); das alte Feld `levels` wird beim Laden übersetzt |

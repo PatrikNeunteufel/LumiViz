@@ -148,6 +148,24 @@ int fuegeStueckEin(VisualClip& clip, std::int64_t mitteMs);
 /// Das Stueck entfernen. false = es gibt es nicht.
 bool loescheStueck(VisualClip& clip, int stueck);
 
+/// Schmaler wird kein Stueck gezogen.
+inline constexpr std::int64_t kMinStueckMs = 100;
+
+/// Der Platz, den ein Stueck einnehmen darf, ohne ein anderes Teil zu
+/// beruehren: vom Ende des Teils davor bis zum Anfang des Teils dahinter (nach
+/// der jetzigen Verteilung; ohne Nachbarn die Kanten des Clips).
+[[nodiscard]] Bereich spielraumVon(const VisualClip& clip, int stueck);
+
+/// Das Stueck mit seiner Mitte auf `mitteMs` schieben (Griff auf der
+/// Zeitachse). Zuerst wird der sichtbare Stand festgeschrieben; dann haelt das
+/// Stueck an seinen Nachbarn an — wie ein Clip am Nachbarn —, es wird also nie
+/// durch das Schieben gestaucht. false = es gibt es nicht.
+bool verschiebeStueck(VisualClip& clip, int stueck, std::int64_t mitteMs);
+
+/// Die Weite des Stuecks setzen, seine Mitte bleibt. Zuerst wird der sichtbare
+/// Stand festgeschrieben; breiter als bis an die Nachbarn wird es nicht.
+bool setzeStueckWeite(VisualClip& clip, int stueck, std::int64_t weiteMs);
+
 /// Name der Kurvenform fuer die Oberflaeche (englisch, wie die App).
 [[nodiscard]] const char* kurvenformName(Kurvenform form);
 

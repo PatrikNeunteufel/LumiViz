@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.20.1
+> **Version:** 0.21.0
 > **Datum:** 2026-10-05 (Session 96)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -486,10 +486,19 @@ Länge und lässt sich spiegeln.
   wenn gespiegelt gezeigt wird. Der Grundpegel geht nicht in die Ansicht ein:
   die Fläche zeigt immer die volle Höhe.
 
+- **Griffe der Stücke auf der Zeitachse:** oben im Clip je Stück eine Raute
+  über der Mitte (verschieben) und ein Strich an jeder Kante (Weite, die
+  Mitte bleibt). `Bearbeiten::verschiebeStueck`, `setzeStueckWeite`,
+  `spielraumVon`: beide schreiben zuerst den sichtbaren Stand fest
+  (Rückfrage 2a) und **halten an den Nachbarn an** — an der nächsten Blende
+  und am nächsten Stück, wie ein Clip am Nachbarn; durch Ziehen wird nichts
+  gestaucht, und kein Stück schiebt sich durch ein anderes (gebaut S96,
+  nicht eigens entschieden). Einrasten wie bei den Clips, Alt frei. Die
+  Felder Width und Position im Curve Editor setzen die Werte dagegen frei —
+  dort kann ein Stück auch in einen Nachbarn hinein und wird dann gestaucht.
+
 **Offen:**
 
-- Stücke haben auf der Zeitachse keine Griffe: Weite und Lage gehen nur über
-  die Felder im Fenster.
 - Das Rechtsklick-Menü *Fade in* / *Fade out* führt noch seine feste
   Formenliste statt der Presets.
 - Eine Änderung wirkt beim Loslassen der Maus, nicht schon während des Zugs.
@@ -839,6 +848,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.21.0 | 2026-10-05 | Session 96 — **Griffe der Stücke auf der Zeitachse** (eigener Code, keine Naht). Oben im Clip je Stück eine Raute (verschieben) und zwei Striche (Weite); `Zeitachse::stueckGriff`, Griffe `StueckLage` / `StueckLinks` / `StueckRechts`. `Bearbeiten`: `spielraumVon`, `verschiebeStueck`, `setzeStueckWeite` — erst festschreiben, dann an den Nachbarn anhalten (§9). Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall: anlegen, finden, schieben, Weite, zwei Stücke, gestaucht anfassen) und `test_ComposerPanel.cpp` (Raute und Kanten mit der Maus, Anhalten an der Ausblendung, der Curve Editor folgt). 912 Cases. Benutzerhandbuch 1.89.0 |
 | 0.20.1 | 2026-10-05 | Session 96 — **Der Curve Editor zeigt die Wirkung am Clip** (Entscheid Patrik: a). Eine Ausblendung ist rückwärts gezeichnet, ein gekipptes Stück als Buckel; gezogen wird in dieser Ansicht, die Form selbst bleibt (`Formflaeche::setAnsicht`, die Ansicht sitzt in `ortVon` / `xVon` / `yVon`); eine Zeile unter der Kurve sagt, wenn gespiegelt gezeigt wird. Belegt in `test_ComposerPanel.cpp` (Delle und Buckel, Ausblendung rückwärts, ein in der Ansicht gesetzter Punkt landet in der Form hinten und senkt den Pegel früh). 911 Cases. Benutzerhandbuch 1.88.1 |
 | 0.20.0 | 2026-10-05 | Session 96 — **Das Fenster Curve Editor** (eigener Code, keine Naht; Entscheid Patrik, Rückfrage 2: a). `composer/KurvenEditor`: `Formflaeche` und `KurvenFenster` (§9). `Bearbeiten`: `Teil`, `hatTeil`, `teilBei`, `bereichVon`, `fuegeStueckEin`, `loescheStueck`. Zeitachse: Doppelklick öffnet die Kurve einer Blende oder eines Stücks, Rechtsklick-Einträge für Kurven und Stücke, `oeffneKurve`, `stueckHinzu`, `stueckLoeschen`, `setTeil` (gelber Strich); die Länge einer Blende mit eigenen Punkten lässt sich ziehen, `setzeBlendenForm` ändert nur seine Seite. Panel: das Fenster entsteht bei der ersten Kurve, folgt dem angeklickten Clip, Änderungen über Undo. Damit haben Grundpegel und Stücke eine Bedienung, und ein gestauchtes Teil zeigt beide Zahlen. Belegt in `test_ComposerPanel.cpp` (Doppelklick, Punkte mit der Maus, Undo, Presets, Dauer mit Stauchen und Festschreiben, Grundpegel, Stück mit Lage, Weite und Flipped, ohne Edit, Blende entsteht beim Öffnen). 911 Cases. Benutzerhandbuch 1.88.0. **Offen:** siehe §9 |
 | 0.19.0 | 2026-10-05 | Session 96 — **Kurven-Presets** (eigener Code, keine Naht; Entscheid Patrik: a, wie die Trail-Presets). `composer/FormPresets`: `liste`, `finde`, `lade`, `speichere`, `loesche` je Art — Blenden `.lvfade`, Stücke `.lvshape`, mitgeliefert unter `asset/composer/fades` und `…/shapes` (Anker `README.md`), eigene unter `<AppData>/composer/…`; ein eigenes verdrängt ein mitgeliefertes, mitgelieferte sind geschützt, die andere Art wird abgelehnt. Mitgeliefert: sieben Blenden, drei Stücke. `test_ComposerFormPresets.cpp` (drei Fälle, auch: jedes mitgelieferte lädt). Rückbau-Liste: Zeile für C4 Teil 2, `asset/composer/` eigens. 911 Cases. **Offen:** das Fenster Curve Editor |

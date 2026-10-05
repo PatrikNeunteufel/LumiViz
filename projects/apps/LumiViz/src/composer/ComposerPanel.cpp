@@ -381,6 +381,22 @@ void Zeitachse::paintEvent(QPaintEvent*)
                     p.drawEllipse(a1, 4, 4);
                     p.drawEllipse(a2, 4, 4);
                 }
+                // Griffe der Stuecke: eine Raute in der Mitte (verschieben), je
+                // ein Strich an den Kanten (Weite)
+                p.setPen(QPen(QColor(30, 30, 30), 1.0));
+                p.setBrush(Qt::white);
+                for (int s = 0; s < static_cast<int>(clip.stuecke.size()); ++s)
+                {
+                    const QPoint mitte = stueckGriff(k, c, s, 0);
+                    if (mitte.x() < 0) continue;
+                    p.drawPolygon(QPolygon({QPoint(mitte.x(), mitte.y() - 4), QPoint(mitte.x() + 4, mitte.y()),
+                                            QPoint(mitte.x(), mitte.y() + 4), QPoint(mitte.x() - 4, mitte.y())}));
+                    for (const int seite : {-1, 1})
+                    {
+                        const QPoint kante = stueckGriff(k, c, s, seite);
+                        if (kante.x() >= 0) p.drawRect(QRect(kante.x() - 1, kante.y() - 4, 3, 8));
+                    }
+                }
                 p.setBrush(Qt::NoBrush);
             }
         }
@@ -479,10 +495,29 @@ std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int au
     return (zeitMs + raster / 2) / raster * raster;
 }
 
-Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip) const
+QPoint Zeitachse::stueckGriff(int kanal, int clip, int stueck, int welcher) const
+{
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return {-1, -1};
+    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(kanal)].visual;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return {-1, -1};
+    const VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    if (stueck < 0 || stueck >= static_cast<int>(c.stuecke.size())) return {-1, -1};
+    const QRect r = clipRechteck(kanal, c);  // Zeile = Kanal (CH1 oben)
+    if (r.width() < 24) return {-1, -1};     // zu schmal fuer Griffe
+    // wo das Stueck gerade liegt — gestaucht, wenn der Platz nicht reicht
+    const Bereich b = c.verteilung().stuecke[static_cast<std::size_t>(stueck)];
+    const int x0 = xVon(c.startMs + b.vonMs);
+    const int x1 = xVon(c.startMs + b.bisMs);
+    if (welcher == 0) return {(x0 + x1) / 2, r.top() + 5};
+    if (x1 - x0 < 28) return {-1, -1};  // die Kanten laegen auf der Raute
+    return {welcher < 0 ? x0 : x1, r.top() + 5};
+}
+
+Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stueck) const
 {
     *kanal = -1;
     *clip = -1;
+    if (stueck != nullptr) *stueck = -1;
     const int zeile = ort.y() < kLinealHoehe ? -1 : (ort.y() - kLinealHoehe) / kZeilenHoehe;
     if (zeile < 0 || zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
     const int k = kanalVonZeile(zeile);
@@ -505,8 +540,23 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip) const
         }
         if (ort.y() <= r.top() + 11)
         {
+            // Stuecke (C4 Teil 2): die Raute in der Mitte geht vor, dann die
+            // Blenden, zuletzt die Kanten der Stuecke
+            const int stuecke = static_cast<int>(clips[static_cast<std::size_t>(c)].stuecke.size());
+            const auto trifft = [&](int welcher, Griff griff) {
+                for (int s = 0; s < stuecke; ++s)
+                {
+                    if (!nah(stueckGriff(k, c, s, welcher))) continue;
+                    if (stueck != nullptr) *stueck = s;
+                    return griff;
+                }
+                return Griff::Keiner;
+            };
+            if (trifft(0, Griff::StueckLage) != Griff::Keiner) return Griff::StueckLage;
             if (nah(blendenGriff(k, c, true))) return Griff::BlendeEin;
             if (nah(blendenGriff(k, c, false))) return Griff::BlendeAus;
+            if (trifft(-1, Griff::StueckLinks) != Griff::Keiner) return Griff::StueckLinks;
+            if (trifft(1, Griff::StueckRechts) != Griff::Keiner) return Griff::StueckRechts;
         }
         // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
         if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
@@ -675,10 +725,12 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
     }
     int kanal = -1;
     int clipIndex = -1;
-    const Griff griff = griffBei(ort, &kanal, &clipIndex);
+    int stueck = -1;
+    const Griff griff = griffBei(ort, &kanal, &clipIndex, &stueck);
     if (m_bearbeiten && griff != Griff::Keiner)
     {
         m_griff = griff;
+        m_zugStueck = stueck;
         m_zugLaeuft = false;
         m_zugStart = ort;
         m_zugKanal = kanal;
@@ -782,6 +834,31 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
             platz = m_zugClip;
             break;
         }
+        case Griff::StueckLage:
+        case Griff::StueckLinks:
+        case Griff::StueckRechts:
+        {
+            // Beide schreiben zuerst den sichtbaren Stand fest (Entscheid Patrik
+            // S96) und halten an den Nachbarn an: gezogen wird nie ins Stauchen.
+            VisualClip fest = alt;
+            const std::int64_t imClip = gerastet(maus) - alt.startMs;
+            if (m_griff == Griff::StueckLage)
+            {
+                if (!verschiebeStueck(fest, m_zugStueck, imClip)) return;
+            }
+            else
+            {
+                // die Mitte bleibt: der Abstand der Maus zur Mitte ist die halbe Weite
+                const Bereich jetzt = bereichVon(alt, {TeilArt::Stueck, m_zugStueck});
+                const std::int64_t mitte = (jetzt.vonMs + jetzt.bisMs) / 2;
+                const std::int64_t halb = imClip > mitte ? imClip - mitte : mitte - imClip;
+                if (!setzeStueckWeite(fest, m_zugStueck, 2 * halb)) return;
+            }
+            m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
+                .visual[static_cast<std::size_t>(m_zugClip)] = fest;
+            platz = m_zugClip;
+            break;
+        }
         case Griff::Keiner:
             return;
     }
@@ -849,9 +926,18 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent*)
     update();
     if (gleich(m_komposition, m_vorZug)) return;
     Q_EMIT auswahlGeaendert();  // der Clip hat neue Zeiten
-    Q_EMIT bearbeitet(m_komposition, griff == Griff::Verschieben                              ? tr("Move clip")
-                                     : griff == Griff::KanteLinks || griff == Griff::KanteRechts ? tr("Resize clip")
-                                                                                                 : tr("Change fade"));
+    QString was = tr("Change fade");
+    switch (griff)
+    {
+        case Griff::Verschieben: was = tr("Move clip"); break;
+        case Griff::KanteLinks:
+        case Griff::KanteRechts: was = tr("Resize clip"); break;
+        case Griff::StueckLage: was = tr("Move shape"); break;
+        case Griff::StueckLinks:
+        case Griff::StueckRechts: was = tr("Change shape width"); break;
+        default: break;
+    }
+    Q_EMIT bearbeitet(m_komposition, was);
 }
 
 void Zeitachse::keyPressEvent(QKeyEvent* event)

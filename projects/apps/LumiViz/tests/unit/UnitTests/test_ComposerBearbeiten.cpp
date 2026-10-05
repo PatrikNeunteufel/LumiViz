@@ -597,6 +597,83 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(QString::fromLatin1(kurvenformName(Kurvenform::Bezier)) == QStringLiteral("Bezier"));
     }
 
+    TEST_CASE("C4 Stuecke: anlegen, finden, schieben und in der Weite ziehen — sie halten an den Nachbarn an")
+    {
+        VisualClip c = clip("A", 10000, 30000);  // 20 s
+        c.setzeBlenden(3000, 5000);
+        CHECK(teilBei(c, 1000) == Teil{TeilArt::Ein, -1});
+        CHECK(teilBei(c, 10000) == Teil{});
+        CHECK(teilBei(c, 16000) == Teil{TeilArt::Aus, -1});
+        CHECK_FALSE(hatTeil(c, {TeilArt::Stueck, 0}));
+
+        // ein neues Stueck: eine Delle, 2 s breit, die Mitte an der Stelle
+        REQUIRE(fuegeStueckEin(c, 10000) == 0);
+        CHECK(c.stuecke[0].lage == doctest::Approx(0.5));
+        CHECK(c.stuecke[0].weiteMs == kNeuesStueckMs);
+        CHECK(hatTeil(c, {TeilArt::Stueck, 0}));
+        CHECK(teilBei(c, 9500) == Teil{TeilArt::Stueck, 0});
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).vonMs == 9000);
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).bisMs == 11000);
+        // in einem kurzen Clip hoechstens ein Viertel
+        VisualClip kurz = clip("K", 0, 4000);
+        REQUIRE(fuegeStueckEin(kurz, 2000) == 0);
+        CHECK(kurz.stuecke[0].weiteMs == 1000);
+
+        // der Spielraum: von der Einblendung bis zur Ausblendung
+        CHECK(spielraumVon(c, 0).vonMs == 3000);
+        CHECK(spielraumVon(c, 0).bisMs == 15000);
+
+        // schieben: frei im Spielraum, an den Blenden ist Schluss
+        REQUIRE(verschiebeStueck(c, 0, 6000));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).vonMs == 5000);
+        REQUIRE(verschiebeStueck(c, 0, 500));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).vonMs == 3000);  // buendig an der Einblendung
+        CHECK_FALSE(c.verteilung().ein.gestaucht);
+        REQUIRE(verschiebeStueck(c, 0, 19000));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).bisMs == 15000);  // buendig an der Ausblendung
+        CHECK_FALSE(c.verteilung().aus.gestaucht);
+
+        // die Weite: die Mitte bleibt, breiter als bis zum naeheren Nachbarn wird es nicht
+        REQUIRE(verschiebeStueck(c, 0, 10000));
+        REQUIRE(setzeStueckWeite(c, 0, 6000));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).vonMs == 7000);
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).bisMs == 13000);
+        REQUIRE(setzeStueckWeite(c, 0, 30000));
+        CHECK(c.stuecke[0].weiteMs == 10000);  // rechts sind es 5 s bis zur Ausblendung
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).bisMs == 15000);
+        REQUIRE(setzeStueckWeite(c, 0, 10));
+        CHECK(c.stuecke[0].weiteMs == kMinStueckMs);
+
+        // zwei Stuecke: keines schiebt sich durch das andere
+        REQUIRE(setzeStueckWeite(c, 0, 2000));  // 9–11 s
+        REQUIRE(fuegeStueckEin(c, 13000) == 1);  // 12–14 s
+        CHECK(spielraumVon(c, 0).bisMs == 12000);
+        CHECK(spielraumVon(c, 1).vonMs == 11000);
+        REQUIRE(verschiebeStueck(c, 0, 14000));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 0}).bisMs == 12000);
+        REQUIRE(verschiebeStueck(c, 1, 4000));
+        CHECK(bereichVon(c, {TeilArt::Stueck, 1}).vonMs == 12000);
+        CHECK_FALSE(c.verteilung().stuecke[0].gestaucht);
+
+        // ein gestauchtes Stueck anfassen: erst gilt, was zu sehen ist
+        VisualClip eng = clip("E", 0, 6000);
+        eng.setzeBlenden(4000, 0);
+        eng.stuecke = {ClipStueck{0.5, 4000, false, delle()}};  // 1–5 s gegen 0–4 s: beide gestaucht
+        REQUIRE(eng.verteilung().ein.gestaucht);
+        const std::int64_t einJetzt = eng.verteilung().ein.weiteMs();
+        REQUIRE(verschiebeStueck(eng, 0, 5500));
+        CHECK(eng.ein.dauerMs == einJetzt);  // die Einblendung behaelt, was sie zeigte
+        CHECK_FALSE(eng.verteilung().ein.gestaucht);
+        CHECK(bereichVon(eng, {TeilArt::Stueck, 0}).bisMs == 6000);
+
+        // loeschen; was es nicht gibt
+        CHECK(loescheStueck(c, 0));
+        CHECK(c.stuecke.size() == 1);
+        CHECK_FALSE(loescheStueck(c, 5));
+        CHECK_FALSE(verschiebeStueck(c, 3, 0));
+        CHECK_FALSE(setzeStueckWeite(c, -1, 1000));
+    }
+
     TEST_CASE("C3a Laenge, Loeschen, Unsinn")
     {
         // eine gesetzte Laenge waechst mit; ohne gesetzte Laenge bleibt sie offen

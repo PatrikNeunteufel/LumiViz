@@ -418,6 +418,65 @@ bool loescheStueck(VisualClip& clip, int stueck)
     return true;
 }
 
+Bereich spielraumVon(const VisualClip& clip, int stueck)
+{
+    Bereich raum{0, std::max<std::int64_t>(0, clip.dauerMs()), false};
+    if (stueck < 0 || stueck >= static_cast<int>(clip.stuecke.size())) return raum;
+    const Verteilung v = clip.verteilung();
+    const Bereich& ich = v.stuecke[static_cast<std::size_t>(stueck)];
+    const std::int64_t mitte = ich.vonMs + ich.bisMs;  // doppelt — zum Vergleichen genuegt es
+    if (v.ein.weiteMs() > 0) raum.vonMs = std::max(raum.vonMs, v.ein.bisMs);
+    if (v.aus.weiteMs() > 0) raum.bisMs = std::min(raum.bisMs, v.aus.vonMs);
+    for (int j = 0; j < static_cast<int>(v.stuecke.size()); ++j)
+    {
+        if (j == stueck) continue;
+        const Bereich& b = v.stuecke[static_cast<std::size_t>(j)];
+        if (b.weiteMs() <= 0) continue;
+        const std::int64_t seine = b.vonMs + b.bisMs;
+        // bei gleicher Mitte entscheidet der Platz in der Liste — wie beim Verteilen
+        if (seine < mitte || (seine == mitte && j < stueck))
+            raum.vonMs = std::max(raum.vonMs, b.bisMs);
+        else
+            raum.bisMs = std::min(raum.bisMs, b.vonMs);
+    }
+    raum.bisMs = std::max(raum.bisMs, raum.vonMs);
+    return raum;
+}
+
+bool verschiebeStueck(VisualClip& clip, int stueck, std::int64_t mitteMs)
+{
+    if (stueck < 0 || stueck >= static_cast<int>(clip.stuecke.size())) return false;
+    schreibeFest(clip);
+    const std::int64_t dauer = clip.dauerMs();
+    if (dauer <= 0) return true;
+    ClipStueck& s = clip.stuecke[static_cast<std::size_t>(stueck)];
+    const Bereich raum = spielraumVon(clip, stueck);
+    const std::int64_t vorn = s.weiteMs / 2;  // wie `verteile` die Mitte teilt
+    const std::int64_t hinten = s.weiteMs - vorn;
+    const std::int64_t mitte = raum.weiteMs() >= s.weiteMs
+                                   ? std::clamp(mitteMs, raum.vonMs + vorn, raum.bisMs - hinten)
+                                   : (raum.vonMs + raum.bisMs) / 2;
+    s.lage = std::clamp(static_cast<double>(mitte) / static_cast<double>(dauer), 0.0, 1.0);
+    return true;
+}
+
+bool setzeStueckWeite(VisualClip& clip, int stueck, std::int64_t weiteMs)
+{
+    if (stueck < 0 || stueck >= static_cast<int>(clip.stuecke.size())) return false;
+    schreibeFest(clip);
+    const Bereich ich = clip.verteilung().stuecke[static_cast<std::size_t>(stueck)];
+    const Bereich raum = spielraumVon(clip, stueck);
+    const std::int64_t mitte = (ich.vonMs + ich.bisMs) / 2;
+    // die Mitte bleibt: nach beiden Seiten gleich weit, bis an den naeheren Nachbarn
+    const std::int64_t hoechstens = 2 * std::min(mitte - raum.vonMs, raum.bisMs - mitte);
+    ClipStueck& s = clip.stuecke[static_cast<std::size_t>(stueck)];
+    s.weiteMs = std::clamp(weiteMs, kMinStueckMs, std::max(kMinStueckMs, hoechstens));
+    // die Mitte, wie sie zu sehen ist (ein Stueck an der Kante war hineingerueckt)
+    if (clip.dauerMs() > 0)
+        s.lage = std::clamp(static_cast<double>(mitte) / static_cast<double>(clip.dauerMs()), 0.0, 1.0);
+    return true;
+}
+
 const char* kurvenformName(Kurvenform form)
 {
     switch (form)

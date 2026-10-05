@@ -102,6 +102,11 @@ public:
     void stueckLoeschen(int kanal, int clip, int stueck);
     /// Das Teil, an dem der Curve Editor haengt — am angeklickten Clip markiert.
     void setTeil(Teil teil);
+    /// Mitte eines Griffs des Stuecks oben im Clip: `welcher` 0 = die Raute in
+    /// der Mitte (verschieben), -1 / +1 = der Strich an der linken / rechten
+    /// Kante (Weite). (-1,-1) = keinen — das Stueck gibt es nicht, oder es ist
+    /// fuer Kanten-Griffe zu schmal.
+    [[nodiscard]] QPoint stueckGriff(int kanal, int clip, int stueck, int welcher) const;
 
     /// Die Fassung, die die Achse gerade zeigt.
     [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
@@ -187,11 +192,14 @@ private:
         BezierEin2,
         BezierAus1,
         BezierAus2,
+        StueckLage,   ///< ein Stueck verschieben
+        StueckLinks,  ///< seine Weite, an der linken
+        StueckRechts, ///< oder rechten Kante gezogen
     };
     /// Der Zeitbereich einer Blende des Clips in Pixeln; false = keine.
     [[nodiscard]] bool blendenBereich(int kanal, int clip, bool ein, QRect* clipRect, int* x0,
                                       int* x1, Blenden* blenden) const;
-    [[nodiscard]] Griff griffBei(QPoint ort, int* kanal, int* clip) const;
+    [[nodiscard]] Griff griffBei(QPoint ort, int* kanal, int* clip, int* stueck = nullptr) const;
     void zieheZu(QPoint ort, Qt::KeyboardModifiers tasten);
     void brichZugAb();
 
@@ -201,6 +209,7 @@ private:
     std::int64_t m_zugVersatzMs = 0; ///< Abstand Maus – Clip-Start beim Druck
     int m_zugKanal = -1;             ///< Kanal und
     int m_zugClip = -1;              ///< Platz des Clips in `m_vorZug`
+    int m_zugStueck = -1;            ///< das gezogene Stueck (Griffe der Stuecke)
     Komposition m_vorZug;            ///< der Stand beim Druck
     QPoint m_fallOrt{-1, -1};        ///< wohin ein Drag von aussen gerade zeigt (-1 = keiner)
     Teil m_teil;                     ///< das Teil im Curve Editor (markiert)

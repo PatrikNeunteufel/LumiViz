@@ -953,6 +953,34 @@ TEST_SUITE("ComposerPanel")
             doppelklick(achse, QPoint(achse->xVon(5000 + 5000), achse->yVonZeile(0) + 6));
             CHECK(fenster->teil() == Teil{TeilArt::Stueck, 0});
 
+            // die Griffe des Stuecks oben im Clip: die Raute verschiebt, die Striche aendern die Weite
+            const QPoint raute = achse->stueckGriff(0, 0, 0, 0);
+            REQUIRE(raute.x() >= 0);
+            CHECK(std::abs(raute.x() - achse->xVon(5000 + 5000)) <= 1);
+            zieh(achse, raute, QPoint(achse->xVon(5000 + 10000), raute.y()));
+            CHECK(derClip().stuecke[0].lage == doctest::Approx(0.5));
+            CHECK(derClip().stuecke[0].weiteMs == 4000);
+            CHECK(bus->undoDescription() == "Move shape");
+            CHECK(lage->value() == doctest::Approx(10.0));  // der Curve Editor zeigt die neue Lage
+            // gegen die Ausblendung gezogen: das Stueck haelt an ihr an, gestaucht wird nichts
+            zieh(achse, achse->stueckGriff(0, 0, 0, 0), QPoint(achse->xVon(5000 + 19000), raute.y()));
+            CHECK(bereichVon(derClip(), {TeilArt::Stueck, 0}).bisMs == derClip().verteilung().aus.vonMs);
+            CHECK(derClip().stuecke[0].weiteMs == 4000);
+            CHECK_FALSE(derClip().verteilung().aus.gestaucht);
+            REQUIRE(bus->undo());
+            // die rechte Kante nach innen: 2 s breit, die Mitte bleibt
+            const QPoint rechts = achse->stueckGriff(0, 0, 0, 1);
+            REQUIRE(rechts.x() >= 0);
+            zieh(achse, rechts, QPoint(achse->xVon(5000 + 11000), rechts.y()));
+            CHECK(derClip().stuecke[0].weiteMs == 2000);
+            CHECK(derClip().stuecke[0].lage == doctest::Approx(0.5));
+            CHECK(bus->undoDescription() == "Change shape width");
+            CHECK(dauer->value() == doctest::Approx(2.0));
+            // die linke Kante nach aussen: wieder 4 s
+            zieh(achse, achse->stueckGriff(0, 0, 0, -1), QPoint(achse->xVon(5000 + 8000), rechts.y()));
+            CHECK(derClip().stuecke[0].weiteMs == 4000);
+            CHECK(achse->stueckGriff(0, 0, 7, 0) == QPoint(-1, -1));  // das Stueck gibt es nicht
+
             if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
             {
                 QCoreApplication::processEvents();
