@@ -79,6 +79,31 @@ bool loescheKanal(Komposition& komposition, int kanal);
 /// Punkt behaelt den Abstand zu der Kante, der er naeher liegt.
 void setzeGrenzen(VisualClip& clip, std::int64_t startMs, std::int64_t endeMs);
 
+// --- Ein- und Ausblenden (C4) -------------------------------------------------
+
+/// Ein- und Ausblendung eines Clips: Laenge, Form und — bei Bézier — Anfasser.
+struct Blenden
+{
+    std::int64_t einMs = 0;  ///< 0 = keine Einblendung
+    std::int64_t ausMs = 0;
+    Kurvenform einForm = Kurvenform::Linear;
+    Kurvenform ausForm = Kurvenform::Linear;
+    BezierGriffe einBezier = kBezierVorgabe;
+    BezierGriffe ausBezier = kBezierVorgabe;
+};
+
+/// Die Blenden aus der Pegelkurve lesen. false = die Kurve ist keine einfache
+/// Ein- / Ausblendung (eigene Punkte aus der Datei) — dann bleibt sie, wie sie
+/// ist, und das Panel bietet keine Blenden-Griffe an.
+[[nodiscard]] bool liesBlenden(const VisualClip& clip, Blenden& blenden);
+
+/// Die Pegelkurve aus den Blenden bauen (ersetzt die Kurve). Ueberlappen sich
+/// beide, treffen sie sich in der Mitte.
+void setzeBlenden(VisualClip& clip, const Blenden& blenden);
+
+/// Name der Kurvenform fuer die Oberflaeche (englisch, wie die App).
+[[nodiscard]] const char* kurvenformName(Kurvenform form);
+
 /// Sind zwei Kompositionen gleich (Kanaele, Clips, Kurven, Laenge, Raster)?
 [[nodiscard]] bool gleich(const Komposition& a, const Komposition& b);
 

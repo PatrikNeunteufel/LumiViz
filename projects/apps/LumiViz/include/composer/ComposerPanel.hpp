@@ -17,6 +17,7 @@
 #pragma once
 
 #include "UI/panels/PanelBase.hpp"
+#include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 
 #include <QPointer>
@@ -79,6 +80,17 @@ public:
     void kanalSchalten(int kanal, bool an);
     /// Der Kanal der Zeile unter `y`, -1 = keine Zeile (Lineal, freie Flaeche).
     [[nodiscard]] int kanalBei(int y) const;
+
+    // --- Ein- und Ausblenden (C4) — nur im Bearbeiten ------------------------
+    /// Mitte des Blenden-Griffs oben im Clip: am Ende der Einblendung
+    /// (`ein`) bzw. am Anfang der Ausblendung. (-1,-1) = der Clip hat keine
+    /// Griffe (es gibt ihn nicht, oder seine Kurve ist keine einfache Blende).
+    [[nodiscard]] QPoint blendenGriff(int kanal, int clip, bool ein) const;
+    /// Mitte eines der zwei Bézier-Anfasser (`nr` 0 oder 1) einer Blende.
+    [[nodiscard]] QPoint bezierGriff(int kanal, int clip, bool ein, int nr) const;
+    /// Die Form einer Blende setzen (Rechtsklick). Eine Blende der Laenge
+    /// null wird dabei zwei Sekunden lang — sonst saehe man die Wahl nicht.
+    void setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form);
 
     /// Die Fassung, die die Achse gerade zeigt.
     [[nodiscard]] const Komposition& komposition() const { return m_komposition; }
@@ -155,7 +167,16 @@ private:
         Verschieben,
         KanteLinks,
         KanteRechts,
+        BlendeEin,   ///< Laenge der Einblendung
+        BlendeAus,
+        BezierEin1,  ///< die zwei Anfasser der Einblendung
+        BezierEin2,
+        BezierAus1,
+        BezierAus2,
     };
+    /// Der Zeitbereich einer Blende des Clips in Pixeln; false = keine.
+    [[nodiscard]] bool blendenBereich(int kanal, int clip, bool ein, QRect* clipRect, int* x0,
+                                      int* x1, Blenden* blenden) const;
     [[nodiscard]] Griff griffBei(QPoint ort, int* kanal, int* clip) const;
     void zieheZu(QPoint ort, Qt::KeyboardModifiers tasten);
     void brichZugAb();

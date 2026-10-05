@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.83.0
+> **Version:** 1.84.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1685,10 +1685,10 @@ Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
 (*View → Karaoke*) liegt wie immer über allem.
 
 > **Stand:** Eine Komposition lässt sich ganz im Panel bauen: New, Presets aus
-> dem Effect Browser hineinziehen, verschieben, Länge, Kanal, Mischart,
-> speichern. **Noch nicht im Panel:** die Pegelkurve (Ein- und Ausblenden) —
-> die steht vorerst nur in der Datei (siehe unten). Ein Beispiel steht im
-> Projektordner unter
+> dem Effect Browser hineinziehen, verschieben, Länge, Kanal, Mischart, Ein-
+> und Ausblenden, speichern. **Noch nicht im Panel:** eine Pegelkurve mit
+> eigenen Punkten mitten im Clip — die geht vorerst nur über die Datei (siehe
+> unten). Ein Beispiel steht im Projektordner unter
 > `asset\composer_demo.lvcomp`; mit der App wird es noch nicht ausgeliefert.
 
 ### Öffnen und schließen
@@ -1745,6 +1745,25 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
+
+**Ein- und Ausblenden** (auch nur mit **Edit**): Oben in jedem Clip sitzen
+zwei kleine weiße Quadrate — links der Griff der Einblendung, rechts der der
+Ausblendung.
+
+- **Länge:** Zieh den linken Griff nach rechts, und der Clip blendet über
+  diese Strecke ein; der rechte Griff nach links ergibt die Ausblendung.
+  Zurück an die Kante gezogen ist die Blende wieder weg. Die helle Linie im
+  Clip zeigt den Verlauf.
+- **Form:** Rechtsklick auf den Clip → *Fade in* bzw. *Fade out*: Linear,
+  S-curve, Ease in, Ease out, Exponential, Hold (Sprung am Ende) und
+  **Bezier**. Hat die Blende noch keine Länge, bekommt sie dabei zwei Sekunden.
+- **Bezier:** Ist der Clip angeklickt, zeigt eine Bézier-Blende zwei gelbe
+  Punkte mit Hebeln. Zieh sie, und die Kurve folgt — der erste Punkt bestimmt,
+  wie die Blende losgeht, der zweite, wie sie ankommt.
+
+Ein Clip, dessen Pegelkurve in der Datei aus eigenen Punkten besteht (mehr
+als eine Ein- und eine Ausblendung), hat keine Griffe; seine Kurve bleibt, wie
+sie ist.
 
 **Neues hinein** (auch nur mit **Edit**):
 
@@ -1865,7 +1884,8 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `start`, `end` | In Millisekunden auf der Zeitachse. Clips eines Kanals überlappen nicht |
 | `blend` | Mischart mit dem, was darunter liegt: 0 Normal · 1 Additive · 2 Subtract · 3 Maximum · 4 Minimum · 5 Multiply · 6 Xor |
 | `levels` | Die Pegelkurve: Punkte mit `t` (Millisekunden **ab Clip-Start**) und `level` (0 … 1). Ohne Punkte läuft der Clip auf vollem Pegel |
-| `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) |
+| `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) · 6 Bézier |
+| `bezier` | Nur bei `curve` 6: die zwei Anfasser als `[x1, y1, x2, y2]`, je 0 … 1 — x ist der Anteil der Zeit, y der Anteil des Wegs (wie `cubic-bezier` in CSS). Ohne Angabe eine weiche S-Kurve |
 | `length` | Festes Ende in Millisekunden (optional). Ohne Angabe, mit 0 oder genau am Ende des letzten Clips folgt das Ende dem letzten Clip |
 
 Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
@@ -1876,6 +1896,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.84.0 | 2026-10-05 | Session 95. §15 Composer NEU **Ein- und Ausblenden** im Panel: zwei Griffe oben im Clip für die Länge, Rechtsklick → *Fade in* / *Fade out* für die Form (sieben Formen), NEU die Form **Bezier** mit zwei ziehbaren Anfassern; Datei: `curve` 6 und Feld `bezier` |
 | 1.83.0 | 2026-10-05 | Session 95. §15 Composer NEU **Neues hinein**: Knöpfe **New** und **Load...**, Presets aus dem Effect Browser oder Explorer in einen Kanal ziehen (20 s, mehrere hintereinander, unter die letzte Zeile = neuer Kanal), Rechtsklick für *Add channel*, *Rename channel...*, *Channel enabled*, *Delete channel*, *Delete clip*; Hinweis bei Ketten mit Host Switcher; die Zeitachse zeigt Luft hinter dem Ende |
 | 1.82.0 | 2026-10-05 | Session 95. §15 Composer: das Ende der Komposition **folgt dem letzten Clip** (bisher blieb eine in der Datei gesetzte Länge stehen, auch wenn die Clips kürzer wurden); NEU Haken **Fixed end** mit Zeitfeld für ein festes Ende, mit eigener Marke im Lineal und schraffierter leerer Strecke; Feld `length` neu beschrieben |
 | 1.81.0 | 2026-10-05 | Session 95. §15 NEU **Bearbeiten** im Panel Composer: Haken **Edit**, Clips verschieben (auch in einen anderen Kanal), Kanten ziehen, Entf, Auswahl **Blend**, Undo / Redo, **Save** / **Save As...** mit Stern für Ungespeichertes und Rückfrage vor Open, Close und Beenden; drei Arten am Nachbarn (keine Taste: anhalten, Ctrl: kürzen, Ctrl+Shift: schieben); Einrasten, mit Alt frei. Die Kanäle stehen in der Reihenfolge der Datei, CH1 oben |

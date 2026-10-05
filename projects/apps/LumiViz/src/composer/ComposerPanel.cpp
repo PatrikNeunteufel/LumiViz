@@ -337,6 +337,38 @@ void Zeitachse::paintEvent(QPaintEvent*)
             p.drawText(r.adjusted(6, 0, -4, 0), Qt::AlignLeft | Qt::AlignVCenter,
                        fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
                                                 Qt::ElideRight, std::max(0, r.width() - 10)));
+
+            // Griffe der Blenden (C4), nur im Bearbeiten: oben im Clip je ein
+            // Quadrat fuer die Laenge; am angeklickten Clip die Bézier-Anfasser
+            if (m_bearbeiten)
+            {
+                for (const bool ein : {true, false})
+                {
+                    const QPoint griff = blendenGriff(k, c, ein);
+                    if (griff.x() < 0) continue;
+                    p.setPen(QPen(QColor(30, 30, 30), 1.0));
+                    p.setBrush(Qt::white);
+                    p.drawRect(QRect(griff.x() - 3, griff.y() - 3, 7, 7));
+                    if (!gewaehlt) continue;
+                    const QPoint a1 = bezierGriff(k, c, ein, 0);
+                    const QPoint a2 = bezierGriff(k, c, ein, 1);
+                    if (a1.x() < 0) continue;
+                    // die Hebel: vom Anfang der Blende zum ersten, vom Ende zum zweiten Anfasser
+                    Blenden b;
+                    (void)liesBlenden(clip, b);
+                    const int x0 = ein ? xVon(clip.startMs) : xVon(clip.endeMs - b.ausMs);
+                    const int x1 = ein ? xVon(clip.startMs + b.einMs) : xVon(clip.endeMs);
+                    const int unten0 = r.bottom() - 1;
+                    const int oben0 = r.bottom() - 1 - (r.height() - 3);
+                    p.setPen(QPen(QColor(255, 220, 120), 1.0));
+                    p.drawLine(QPoint(x0, ein ? unten0 : oben0), a1);
+                    p.drawLine(QPoint(x1, ein ? oben0 : unten0), a2);
+                    p.setBrush(QColor(255, 220, 120));
+                    p.drawEllipse(a1, 4, 4);
+                    p.drawEllipse(a2, 4, 4);
+                }
+                p.setBrush(Qt::NoBrush);
+            }
         }
     }
     p.setPen(linie);
@@ -447,12 +479,94 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip) const
         if (!r.contains(ort)) continue;
         *kanal = k;
         *clip = c;
+        // Blenden (C4): zuerst die Bézier-Anfasser des angeklickten Clips,
+        // dann die Griffe oben im Clip — sie gehen den Kanten vor
+        const auto nah = [&ort](QPoint p) { return p.x() >= 0 && (ort - p).manhattanLength() <= 8; };
+        if (k == m_kanal && c == m_clip)
+        {
+            if (nah(bezierGriff(k, c, true, 0))) return Griff::BezierEin1;
+            if (nah(bezierGriff(k, c, true, 1))) return Griff::BezierEin2;
+            if (nah(bezierGriff(k, c, false, 0))) return Griff::BezierAus1;
+            if (nah(bezierGriff(k, c, false, 1))) return Griff::BezierAus2;
+        }
+        if (ort.y() <= r.top() + 11)
+        {
+            if (nah(blendenGriff(k, c, true))) return Griff::BlendeEin;
+            if (nah(blendenGriff(k, c, false))) return Griff::BlendeAus;
+        }
         // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
         if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
         if (r.right() - ort.x() <= 6) return Griff::KanteRechts;
         return Griff::Verschieben;
     }
     return Griff::Keiner;
+}
+
+bool Zeitachse::blendenBereich(int kanal, int clip, bool ein, QRect* clipRect, int* x0, int* x1,
+                               Blenden* blenden) const
+{
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return false;
+    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(kanal)].visual;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return false;
+    const VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    if (!liesBlenden(c, *blenden)) return false;
+    *clipRect = clipRechteck(kanal, c);  // Zeile = Kanal (CH1 oben)
+    if (clipRect->width() < 24) return false;  // zu schmal fuer Griffe
+    *x0 = ein ? xVon(c.startMs) : xVon(c.endeMs - blenden->ausMs);
+    *x1 = ein ? xVon(c.startMs + blenden->einMs) : xVon(c.endeMs);
+    return true;
+}
+
+QPoint Zeitachse::blendenGriff(int kanal, int clip, bool ein) const
+{
+    QRect r;
+    int x0 = 0;
+    int x1 = 0;
+    Blenden b;
+    if (!blendenBereich(kanal, clip, ein, &r, &x0, &x1, &b)) return {-1, -1};
+    return {std::clamp(ein ? x1 : x0, r.left() + 4, r.right() - 4), r.top() + 5};
+}
+
+QPoint Zeitachse::bezierGriff(int kanal, int clip, bool ein, int nr) const
+{
+    QRect r;
+    int x0 = 0;
+    int x1 = 0;
+    Blenden b;
+    if (!blendenBereich(kanal, clip, ein, &r, &x0, &x1, &b)) return {-1, -1};
+    if ((ein ? b.einForm : b.ausForm) != Kurvenform::Bezier || x1 - x0 < 8) return {-1, -1};
+    const BezierGriffe& g = ein ? b.einBezier : b.ausBezier;
+    const double bx = g[static_cast<std::size_t>(nr * 2)];
+    const double by = g[static_cast<std::size_t>(nr * 2 + 1)];
+    const double pegel = ein ? by : 1.0 - by;  // die Einblendung steigt, die Ausblendung faellt
+    return {x0 + static_cast<int>(bx * (x1 - x0) + 0.5),
+            r.bottom() - 1 - static_cast<int>(pegel * (r.height() - 3) + 0.5)};
+}
+
+void Zeitachse::setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    QRect r;
+    int x0 = 0;
+    int x1 = 0;
+    Blenden b;
+    if (!blendenBereich(kanal, clip, ein, &r, &x0, &x1, &b)) return;
+    Komposition neu = m_komposition;
+    VisualClip& c = neu.kanaele[static_cast<std::size_t>(kanal)].visual[static_cast<std::size_t>(clip)];
+    const std::int64_t vorgabe = std::min<std::int64_t>(2000, c.dauerMs() / 4);
+    if (ein)
+    {
+        b.einForm = form;
+        if (b.einMs == 0) b.einMs = vorgabe;
+    }
+    else
+    {
+        b.ausForm = form;
+        if (b.ausMs == 0) b.ausMs = vorgabe;
+    }
+    setzeBlenden(c, b);
+    uebernimm(neu, kanal, clip);
+    Q_EMIT bearbeitet(neu, tr("Change fade shape"));
 }
 
 void Zeitachse::mousePressEvent(QMouseEvent* event)
@@ -529,6 +643,41 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
         case Griff::KanteRechts:
             platz = zieheKante(m_komposition, m_zugKanal, m_zugClip, false, gerastet(maus), stoss);
             break;
+        case Griff::BlendeEin:
+        case Griff::BlendeAus:
+        case Griff::BezierEin1:
+        case Griff::BezierEin2:
+        case Griff::BezierAus1:
+        case Griff::BezierAus2:
+        {
+            Blenden b;
+            if (!liesBlenden(alt, b)) return;
+            const std::int64_t dauer = alt.dauerMs();
+            if (m_griff == Griff::BlendeEin)
+                b.einMs = std::clamp<std::int64_t>(gerastet(maus) - alt.startMs, 0, dauer - b.ausMs);
+            else if (m_griff == Griff::BlendeAus)
+                b.ausMs = std::clamp<std::int64_t>(alt.endeMs - gerastet(maus), 0, dauer - b.einMs);
+            else
+            {
+                // ein Bézier-Anfasser: seine Lage im Rechteck der Blende, je 0…1
+                const bool ein = m_griff == Griff::BezierEin1 || m_griff == Griff::BezierEin2;
+                const std::size_t nr = (m_griff == Griff::BezierEin2 || m_griff == Griff::BezierAus2) ? 1 : 0;
+                const QRect r = clipRechteck(m_zugKanal, alt);
+                const int x0 = ein ? xVon(alt.startMs) : xVon(alt.endeMs - b.ausMs);
+                const int x1 = ein ? xVon(alt.startMs + b.einMs) : xVon(alt.endeMs);
+                const double bx = std::clamp(static_cast<double>(ort.x() - x0) / std::max(1, x1 - x0), 0.0, 1.0);
+                const double pegel = std::clamp(
+                    static_cast<double>(r.bottom() - 1 - ort.y()) / std::max(1, r.height() - 3), 0.0, 1.0);
+                BezierGriffe& g = ein ? b.einBezier : b.ausBezier;
+                g[nr * 2] = bx;
+                g[nr * 2 + 1] = ein ? pegel : 1.0 - pegel;
+            }
+            setzeBlenden(m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
+                             .visual[static_cast<std::size_t>(m_zugClip)],
+                         b);
+            platz = m_zugClip;
+            break;
+        }
         case Griff::Keiner:
             return;
     }
@@ -576,6 +725,8 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
         const Griff griff = griffBei(ort, &kanal, &clip);
         if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
             setCursor(Qt::SizeHorCursor);
+        else if (griff != Griff::Keiner && griff != Griff::Verschieben)
+            setCursor(Qt::PointingHandCursor);  // ein Griff der Blende
         else
             unsetCursor();
     }
@@ -594,7 +745,9 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent*)
     update();
     if (gleich(m_komposition, m_vorZug)) return;
     Q_EMIT auswahlGeaendert();  // der Clip hat neue Zeiten
-    Q_EMIT bearbeitet(m_komposition, griff == Griff::Verschieben ? tr("Move clip") : tr("Resize clip"));
+    Q_EMIT bearbeitet(m_komposition, griff == Griff::Verschieben                              ? tr("Move clip")
+                                     : griff == Griff::KanteLinks || griff == Griff::KanteRechts ? tr("Resize clip")
+                                                                                                 : tr("Change fade"));
 }
 
 void Zeitachse::keyPressEvent(QKeyEvent* event)
@@ -763,6 +916,28 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
             m_clip = clip;
             update();
             Q_EMIT auswahlGeaendert();
+        }
+        // Blenden (C4): die Form je Seite — nur, wenn die Kurve eine einfache Blende ist
+        Blenden b;
+        if (liesBlenden(m_komposition.kanaele[static_cast<std::size_t>(kanal)]
+                            .visual[static_cast<std::size_t>(clip)],
+                        b))
+        {
+            for (const bool ein : {true, false})
+            {
+                QMenu* formen = menu.addMenu(ein ? tr("Fade in") : tr("Fade out"));
+                for (int f = 0; f < kKurvenformen; ++f)
+                {
+                    const auto form = static_cast<Kurvenform>(f);
+                    QAction* a = formen->addAction(QString::fromLatin1(kurvenformName(form)));
+                    a->setCheckable(true);
+                    a->setChecked((ein ? b.einMs : b.ausMs) > 0 && (ein ? b.einForm : b.ausForm) == form);
+                    connect(a, &QAction::triggered, this, [this, kanal, clip, ein, form] {
+                        setzeBlendenForm(kanal, clip, ein, form);
+                    });
+                }
+            }
+            menu.addSeparator();
         }
         menu.addAction(tr("Delete clip"), this, [this] { loescheAuswahl(); });
         menu.addSeparator();

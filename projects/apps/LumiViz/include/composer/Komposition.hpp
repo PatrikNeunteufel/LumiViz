@@ -18,6 +18,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -34,19 +35,34 @@ enum class Kurvenform : int
     EaseOut = 3,
     Exponentiell = 4,
     Halten = 5,
+    Bezier = 6,  ///< kubische Bézier-Kurve mit zwei Anfassern (C4, Wunsch Patrik S95)
 };
 
-inline constexpr int kKurvenformen = 6;
+inline constexpr int kKurvenformen = 7;
 
-/// Anteil 0…1 des Wegs nach Anteil `t` 0…1 der Zeit.
+/// Die zwei Anfasser einer Bézier-Kurve: x1, y1, x2, y2 — je 0…1, x = Anteil
+/// der Zeit, y = Anteil des Wegs (wie `cubic-bezier` in CSS). Die Kurve laeuft
+/// von (0,0) nach (1,1).
+using BezierGriffe = std::array<double, 4>;
+/// Die Vorgabe: eine weiche S-Kurve.
+inline constexpr BezierGriffe kBezierVorgabe = {0.4, 0.0, 0.6, 1.0};
+
+/// Anteil 0…1 des Wegs nach Anteil `t` 0…1 der Zeit. `Bezier` braucht seine
+/// Anfasser — ohne sie (diese Fassung) laeuft die Form linear.
 [[nodiscard]] double kurvenWert(Kurvenform form, double t);
+/// Der Weg einer Bézier-Kurve mit diesen Anfassern nach Anteil `t` der Zeit.
+[[nodiscard]] double bezierWert(const BezierGriffe& griffe, double t);
 
 struct PegelPunkt
 {
     std::int64_t zeitMs = 0;  ///< im Clip, ab Clip-Start
     double pegel = 1.0;       ///< 0…1
     Kurvenform form = Kurvenform::Linear;  ///< Form des Abschnitts BIS zum naechsten Punkt
+    BezierGriffe bezier = kBezierVorgabe;  ///< nur bei `form == Bezier`
 };
+
+/// Anteil des Wegs im Abschnitt, der bei `punkt` beginnt — mit seinen Anfassern.
+[[nodiscard]] double kurvenWert(const PegelPunkt& punkt, double t);
 
 struct VisualClip
 {

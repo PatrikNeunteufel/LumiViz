@@ -22,6 +22,7 @@
 
 #include "TestFenster.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "composer/Bearbeiten.hpp"
 #include "composer/ComposerPanel.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Sitzung.hpp"
@@ -643,6 +644,88 @@ TEST_SUITE("ComposerPanel")
         CHECK(bus->undoDescription() == "Add clip");
         // im Lineal faellt nichts
         CHECK_FALSE(achse->lasseFallen(QPoint(achse->xVon(1000), 5), {blau}));
+
+        // --- C4: Ein- und Ausblenden an den Griffen oben im Clip, Form per Auswahl, Bézier-Anfasser
+        {
+            const auto zieh = [&](QPoint a, QPoint b) {
+                QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                                  Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(achse, &druck);
+                for (int i = 1; i <= 4; ++i)
+                {
+                    const QPoint m = a + (b - a) * i / 4;
+                    QMouseEvent bewegt(QEvent::MouseMove, QPointF(m), QPointF(achse->mapToGlobal(m)),
+                                       Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+                    QCoreApplication::sendEvent(achse, &bewegt);
+                }
+                QMouseEvent los(QEvent::MouseButtonRelease, QPointF(b), QPointF(achse->mapToGlobal(b)),
+                                Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(achse, &los);
+            };
+            const auto derClip = [&]() -> const VisualClip& { return kanaele()[0].visual[0]; };
+            Blenden b;
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.einMs == 0);
+            CHECK(b.ausMs == 0);
+            CHECK(achse->bezierGriff(0, 0, true, 0) == QPoint(-1, -1));  // keine Bézier-Blende
+
+            // der Griff der Einblendung sitzt oben links; nach rechts gezogen: 3 s Einblendung
+            const QPoint ein = achse->blendenGriff(0, 0, true);
+            REQUIRE(ein.x() >= 0);
+            zieh(ein, QPoint(achse->xVon(8000), ein.y()));
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.einMs == 3000);
+            CHECK(b.ausMs == 0);
+            CHECK(derClip().pegelBei(1500) == doctest::Approx(0.5));
+            CHECK(derClip().startMs == 5000);  // der Clip selbst blieb, wo er war
+            CHECK(derClip().endeMs == 25000);
+            CHECK(bus->undoDescription() == "Change fade");
+            // der Griff der Ausblendung oben rechts; nach links gezogen: 5 s Ausblendung
+            const QPoint aus = achse->blendenGriff(0, 0, false);
+            zieh(aus, QPoint(achse->xVon(20000), aus.y()));
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.einMs == 3000);
+            CHECK(b.ausMs == 5000);
+            CHECK(derClip().pegelBei(17500) == doctest::Approx(0.5));
+
+            // die Form: Bézier — die Vorgabe ist eine weiche S-Kurve
+            achse->setzeBlendenForm(0, 0, true, Kurvenform::Bezier);
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.einForm == Kurvenform::Bezier);
+            CHECK(b.ausForm == Kurvenform::Linear);
+            CHECK(derClip().pegelBei(1500) == doctest::Approx(0.5).epsilon(0.02));
+            CHECK(derClip().pegelBei(600) < 0.15);
+            CHECK(bus->undoDescription() == "Change fade shape");
+            // der erste Anfasser nach oben links gezogen: die Kurve steigt sofort steil
+            const QPoint a1 = achse->bezierGriff(0, 0, true, 0);
+            REQUIRE(a1.x() >= 0);
+            zieh(a1, QPoint(achse->xVon(5000) + 1, achse->yVonZeile(0) - Zeitachse::kZeilenHoehe / 2 + 5));
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.einBezier[0] < 0.1);
+            CHECK(b.einBezier[1] > 0.8);
+            CHECK(derClip().pegelBei(600) > 0.3);
+            // eine Blende der Laenge null bekommt mit der Form zwei Sekunden
+            achse->setzeBlendenForm(0, 0, false, Kurvenform::SKurve);
+            REQUIRE(liesBlenden(derClip(), b));
+            CHECK(b.ausMs == 5000);  // sie hatte schon eine Laenge: bleibt
+            CHECK(b.ausForm == Kurvenform::SKurve);
+
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+            {
+                QCoreApplication::processEvents();
+                CHECK(panel.grab().save(bild + QStringLiteral(".blenden.png")));
+            }
+            // gespeichert und gelesen: Form und Anfasser bleiben
+            const QString probe = dir.filePath(QStringLiteral("blenden.lvcomp"));
+            REQUIRE(speichereKomposition(sitzung->komposition(), probe));
+            Komposition gelesen;
+            REQUIRE(ladeKomposition(probe, gelesen));
+            Blenden g;
+            REQUIRE(liesBlenden(gelesen.kanaele[0].visual[0], g));
+            CHECK(g.einForm == Kurvenform::Bezier);
+            CHECK(g.einBezier[1] == doctest::Approx(b.einBezier[1]));
+            CHECK(g.ausForm == Kurvenform::SKurve);
+        }
 
         // --- in eine Luecke: der neue Clip reicht nur bis zum naechsten
         REQUIRE(achse->lasseFallen(QPoint(achse->xVon(0), achse->yVonZeile(0)), {blau}));

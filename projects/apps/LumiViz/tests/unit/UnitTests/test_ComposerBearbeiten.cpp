@@ -21,6 +21,9 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 
+#include <QJsonArray>
+#include <QJsonObject>
+
 #include <utility>
 #include <vector>
 
@@ -387,6 +390,128 @@ TEST_SUITE("ComposerBearbeiten")
         ton.art = KanalArt::Audio;
         neu.kanaele.push_back(ton);
         CHECK(fuegeClipEin(neu, 3, QStringLiteral("N"), 0) == -1);
+    }
+
+    TEST_CASE("C4 Blenden: Laenge und Form je Seite, Bézier mit zwei Anfassern, lesen und schreiben")
+    {
+        // --- die Bézier-Kurve selbst
+        CHECK(bezierWert(kBezierVorgabe, 0.0) == doctest::Approx(0.0).epsilon(0.001));
+        CHECK(bezierWert(kBezierVorgabe, 1.0) == doctest::Approx(1.0).epsilon(0.001));
+        CHECK(bezierWert(kBezierVorgabe, 0.5) == doctest::Approx(0.5).epsilon(0.001));  // S-Kurve: symmetrisch
+        CHECK(bezierWert(kBezierVorgabe, 0.2) < 0.2);
+        CHECK(bezierWert(kBezierVorgabe, 0.8) > 0.8);
+        const BezierGriffe gerade = {1.0 / 3.0, 1.0 / 3.0, 2.0 / 3.0, 2.0 / 3.0};
+        for (const double t : {0.1, 0.37, 0.5, 0.9})
+            CHECK(bezierWert(gerade, t) == doctest::Approx(t).epsilon(0.001));  // Anfasser auf der Geraden: linear
+        double zuletzt = 0.0;
+        for (int i = 0; i <= 50; ++i)  // steigt stetig
+        {
+            const double w = bezierWert({0.9, 0.1, 0.2, 0.7}, i / 50.0);
+            CHECK(w >= zuletzt - 1e-9);
+            zuletzt = w;
+        }
+        CHECK(bezierWert({5.0, -3.0, -2.0, 9.0}, 0.5) >= 0.0);  // Unsinn wird geklemmt
+        // ohne Anfasser laeuft die Form linear; mit dem Punkt gilt die Kurve
+        CHECK(kurvenWert(Kurvenform::Bezier, 0.3) == doctest::Approx(0.3));
+        PegelPunkt punkt{0, 0.0, Kurvenform::Bezier, kBezierVorgabe};
+        CHECK(kurvenWert(punkt, 0.2) == doctest::Approx(bezierWert(kBezierVorgabe, 0.2)));
+        punkt.form = Kurvenform::SKurve;
+        CHECK(kurvenWert(punkt, 0.2) == doctest::Approx(kurvenWert(Kurvenform::SKurve, 0.2)));
+
+        // --- Blenden lesen und setzen
+        VisualClip c = clip("A", 10000, 30000);
+        Blenden b;
+        REQUIRE(liesBlenden(c, b));  // keine Kurve: keine Blenden
+        CHECK(b.einMs == 0);
+        CHECK(b.ausMs == 0);
+
+        Blenden soll;
+        soll.einMs = 3000;
+        soll.ausMs = 5000;
+        soll.einForm = Kurvenform::Bezier;
+        soll.einBezier = {0.1, 0.8, 0.5, 1.0};
+        soll.ausForm = Kurvenform::EaseOut;
+        setzeBlenden(c, soll);
+        REQUIRE(c.kurve.size() == 4);
+        REQUIRE(liesBlenden(c, b));
+        CHECK(b.einMs == 3000);
+        CHECK(b.ausMs == 5000);
+        CHECK(b.einForm == Kurvenform::Bezier);
+        CHECK(b.einBezier == soll.einBezier);
+        CHECK(b.ausForm == Kurvenform::EaseOut);
+        CHECK(c.pegelBei(0) == doctest::Approx(0.0));
+        CHECK(c.pegelBei(1500) == doctest::Approx(bezierWert(soll.einBezier, 0.5)));
+        CHECK(c.pegelBei(1500) > 0.7);  // diese Kurve steigt frueh
+        CHECK(c.pegelBei(10000) == doctest::Approx(1.0));
+        CHECK(c.pegelBei(17500) == doctest::Approx(1.0 - kurvenWert(Kurvenform::EaseOut, 0.5)));
+        CHECK(c.pegelBei(20000) == doctest::Approx(0.0));
+
+        // nur eine Seite; beide treffen sich in der Mitte; keine
+        soll = Blenden{};
+        soll.ausMs = 4000;
+        setzeBlenden(c, soll);
+        REQUIRE(c.kurve.size() == 2);
+        REQUIRE(liesBlenden(c, b));
+        CHECK(b.einMs == 0);
+        CHECK(b.ausMs == 4000);
+        soll.einMs = 15000;
+        soll.ausMs = 15000;  // zusammen laenger als der Clip
+        setzeBlenden(c, soll);
+        REQUIRE(c.kurve.size() == 3);
+        REQUIRE(liesBlenden(c, b));
+        CHECK(b.einMs == 10000);
+        CHECK(b.ausMs == 10000);
+        setzeBlenden(c, Blenden{});
+        CHECK(c.kurve.empty());
+
+        // die alte Fassung am Clip schreibt dasselbe Muster
+        c.setzeBlenden(2000, 2000, Kurvenform::SKurve);
+        REQUIRE(liesBlenden(c, b));
+        CHECK(b.einMs == 2000);
+        CHECK(b.einForm == Kurvenform::SKurve);
+        CHECK(b.ausForm == Kurvenform::SKurve);
+        // beim Ziehen einer Kante bleibt das Muster: die Griffe gibt es weiter
+        Komposition k;
+        Kanal kanal;
+        kanal.visual = {c};
+        k.kanaele = {kanal};
+        REQUIRE(zieheKante(k, 0, 0, false, 50000) == 0);
+        REQUIRE(liesBlenden(clips(k)[0], b));
+        CHECK(b.einMs == 2000);
+        CHECK(b.ausMs == 2000);
+
+        // eine eigene Kurve aus der Datei ist keine einfache Blende — sie bleibt unangetastet
+        c.kurve = {{0, 0.0}, {5000, 0.5}, {20000, 1.0}};
+        CHECK_FALSE(liesBlenden(c, b));
+        c.kurve = {{0, 0.3}, {20000, 1.0}};
+        CHECK_FALSE(liesBlenden(c, b));
+        c.kurve = {{0, 0.0}, {4000, 1.0}, {9000, 0.2}, {12000, 1.0}, {20000, 0.0}};
+        CHECK_FALSE(liesBlenden(c, b));
+
+        // --- Datei: die Anfasser stehen nur bei Bézier-Punkten; ohne Feld gilt die Vorgabe
+        soll = Blenden{};
+        soll.einMs = 3000;
+        soll.einForm = Kurvenform::Bezier;
+        soll.einBezier = {0.25, 0.5, 0.75, 0.125};
+        c = clip("A", 0, 20000);
+        setzeBlenden(c, soll);
+        kanal.visual = {c};
+        k.kanaele = {kanal};
+        const QJsonObject json = alsJson(k);
+        const QJsonArray punkte = json.value(QStringLiteral("channels")).toArray().at(0).toObject()
+                                      .value(QStringLiteral("clips")).toArray().at(0).toObject()
+                                      .value(QStringLiteral("levels")).toArray();
+        REQUIRE(punkte.size() == 2);
+        CHECK(punkte.at(0).toObject().value(QStringLiteral("curve")).toInt() == 6);
+        CHECK(punkte.at(0).toObject().value(QStringLiteral("bezier")).toArray().size() == 4);
+        CHECK_FALSE(punkte.at(1).toObject().contains(QStringLiteral("bezier")));
+        Komposition gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        REQUIRE(liesBlenden(gelesen.kanaele[0].visual[0], b));
+        CHECK(b.einForm == Kurvenform::Bezier);
+        CHECK(b.einBezier == soll.einBezier);
+        CHECK(gleich(gelesen, k));
+        CHECK(QString::fromLatin1(kurvenformName(Kurvenform::Bezier)) == QStringLiteral("Bezier"));
     }
 
     TEST_CASE("C3a Laenge, Loeschen, Unsinn")

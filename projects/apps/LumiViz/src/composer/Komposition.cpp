@@ -53,9 +53,41 @@ double kurvenWert(Kurvenform form, double t)
         case Kurvenform::EaseOut: return 1.0 - (1.0 - t) * (1.0 - t);
         case Kurvenform::Exponentiell: return t * t * t;
         case Kurvenform::Halten: return t >= 1.0 ? 1.0 : 0.0;
+        case Kurvenform::Bezier: break;  // ohne Anfasser: linear
         case Kurvenform::Linear: break;
     }
     return t;
+}
+
+double bezierWert(const BezierGriffe& griffe, double t)
+{
+    t = std::clamp(t, 0.0, 1.0);
+    const double x1 = std::clamp(griffe[0], 0.0, 1.0);
+    const double y1 = std::clamp(griffe[1], 0.0, 1.0);
+    const double x2 = std::clamp(griffe[2], 0.0, 1.0);
+    const double y2 = std::clamp(griffe[3], 0.0, 1.0);
+    // Die Kurve ist (x(s), y(s)); gesucht ist y an der Stelle x = t. Mit
+    // Anfassern in 0…1 steigt x(s) stetig — Halbieren genuegt.
+    const auto achse = [](double a, double b, double s) {
+        const double u = 1.0 - s;
+        return 3.0 * u * u * s * a + 3.0 * u * s * s * b + s * s * s;
+    };
+    double von = 0.0;
+    double bis = 1.0;
+    for (int i = 0; i < 40; ++i)
+    {
+        const double mitte = 0.5 * (von + bis);
+        if (achse(x1, x2, mitte) < t)
+            von = mitte;
+        else
+            bis = mitte;
+    }
+    return std::clamp(achse(y1, y2, 0.5 * (von + bis)), 0.0, 1.0);
+}
+
+double kurvenWert(const PegelPunkt& punkt, double t)
+{
+    return punkt.form == Kurvenform::Bezier ? bezierWert(punkt.bezier, t) : kurvenWert(punkt.form, t);
 }
 
 double VisualClip::pegelBei(std::int64_t zeitImClipMs) const
@@ -72,7 +104,7 @@ double VisualClip::pegelBei(std::int64_t zeitImClipMs) const
         const double t = spanne > 0 ? static_cast<double>(zeitImClipMs - a.zeitMs) /
                                           static_cast<double>(spanne)
                                     : 1.0;
-        return std::clamp(a.pegel + (b.pegel - a.pegel) * kurvenWert(a.form, t), 0.0, 1.0);
+        return std::clamp(a.pegel + (b.pegel - a.pegel) * kurvenWert(a, t), 0.0, 1.0);
     }
     return std::clamp(kurve.back().pegel, 0.0, 1.0);
 }
@@ -198,6 +230,9 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                     po.insert(QStringLiteral("t"), static_cast<double>(p.zeitMs));
                     po.insert(QStringLiteral("level"), p.pegel);
                     po.insert(QStringLiteral("curve"), static_cast<int>(p.form));
+                    if (p.form == Kurvenform::Bezier)  // nur dann: alte Dateien bleiben, wie sie sind
+                        po.insert(QStringLiteral("bezier"),
+                                  QJsonArray{p.bezier[0], p.bezier[1], p.bezier[2], p.bezier[3]});
                     punkte.append(po);
                 }
                 o.insert(QStringLiteral("levels"), punkte);
@@ -268,6 +303,11 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                     p.pegel = po.value(QStringLiteral("level")).toDouble(1.0);
                     p.form = static_cast<Kurvenform>(
                         std::clamp(po.value(QStringLiteral("curve")).toInt(), 0, kKurvenformen - 1));
+                    const QJsonArray griffe = po.value(QStringLiteral("bezier")).toArray();
+                    if (griffe.size() == 4)
+                        for (int i = 0; i < 4; ++i)
+                            p.bezier[static_cast<std::size_t>(i)] =
+                                std::clamp(griffe.at(i).toDouble(), 0.0, 1.0);
                     c.kurve.push_back(p);
                 }
                 kanal.visual.push_back(std::move(c));

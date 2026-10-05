@@ -325,6 +325,82 @@ Komposition neueKomposition()
     return k;
 }
 
+bool liesBlenden(const VisualClip& clip, Blenden& blenden)
+{
+    blenden = Blenden{};
+    const auto& k = clip.kurve;
+    if (k.empty()) return true;
+    const std::int64_t dauer = clip.dauerMs();
+    const auto null = [](double pegel) { return pegel < 0.001; };
+    const auto voll = [](double pegel) { return pegel > 0.999; };
+    const std::size_t n = k.size();
+    if (n < 2 || n > 4) return false;
+
+    const bool ein = k[0].zeitMs == 0 && null(k[0].pegel) && voll(k[1].pegel);
+    const bool aus = k[n - 1].zeitMs == dauer && null(k[n - 1].pegel) && voll(k[n - 2].pegel);
+    // zwei Punkte: eine der beiden; drei: beide, in der Mitte vereint; vier: beide
+    if (n == 2 && ein == aus) return false;
+    if (n >= 3 && !(ein && aus)) return false;
+    if (ein)
+    {
+        blenden.einMs = k[1].zeitMs;
+        blenden.einForm = k[0].form;
+        blenden.einBezier = k[0].bezier;
+    }
+    if (aus)
+    {
+        blenden.ausMs = dauer - k[n - 2].zeitMs;
+        blenden.ausForm = k[n - 2].form;
+        blenden.ausBezier = k[n - 2].bezier;
+    }
+    return true;
+}
+
+void setzeBlenden(VisualClip& clip, const Blenden& blenden)
+{
+    clip.kurve.clear();
+    const std::int64_t dauer = std::max<std::int64_t>(0, clip.dauerMs());
+    std::int64_t ein = std::clamp<std::int64_t>(blenden.einMs, 0, dauer);
+    std::int64_t aus = std::clamp<std::int64_t>(blenden.ausMs, 0, dauer);
+    if (ein + aus > dauer)
+    {
+        const std::int64_t mitte = (ein + (dauer - aus)) / 2;
+        ein = mitte;
+        aus = dauer - mitte;
+    }
+    if (ein > 0)
+    {
+        clip.kurve.push_back({0, 0.0, blenden.einForm, blenden.einBezier});
+        clip.kurve.push_back({ein, 1.0, Kurvenform::Linear, kBezierVorgabe});
+    }
+    if (aus > 0)
+    {
+        if (clip.kurve.empty() || clip.kurve.back().zeitMs < dauer - aus)
+            clip.kurve.push_back({dauer - aus, 1.0, blenden.ausForm, blenden.ausBezier});
+        else
+        {
+            clip.kurve.back().form = blenden.ausForm;
+            clip.kurve.back().bezier = blenden.ausBezier;
+        }
+        clip.kurve.push_back({dauer, 0.0, Kurvenform::Linear, kBezierVorgabe});
+    }
+}
+
+const char* kurvenformName(Kurvenform form)
+{
+    switch (form)
+    {
+        case Kurvenform::Linear: return "Linear";
+        case Kurvenform::SKurve: return "S-curve";
+        case Kurvenform::EaseIn: return "Ease in";
+        case Kurvenform::EaseOut: return "Ease out";
+        case Kurvenform::Exponentiell: return "Exponential";
+        case Kurvenform::Halten: return "Hold";
+        case Kurvenform::Bezier: return "Bezier";
+    }
+    return "Linear";
+}
+
 bool gleich(const Komposition& a, const Komposition& b)
 {
     return alsJson(a) == alsJson(b);
