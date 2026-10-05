@@ -26,15 +26,42 @@
  */
 #pragma once
 
-#include "composer/Komposition.hpp"
-
 #include <QJsonObject>
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
 namespace lumi::composer
 {
+
+/// Wie der Pegel von einem Punkt zum naechsten laeuft. Die Formen sind die
+/// des Crossfades der Host-Gruppe, dazu „Halten" (Sprung am naechsten Punkt).
+enum class Kurvenform : int
+{
+    Linear = 0,
+    SKurve = 1,
+    EaseIn = 2,
+    EaseOut = 3,
+    Exponentiell = 4,
+    Halten = 5,
+    Bezier = 6,  ///< kubische Bézier-Kurve mit zwei Anfassern (C4, Wunsch Patrik S95)
+};
+
+inline constexpr int kKurvenformen = 7;
+
+/// Die zwei Anfasser einer Bézier-Kurve: x1, y1, x2, y2 — je 0…1, x = Anteil
+/// der Zeit, y = Anteil des Wegs (wie `cubic-bezier` in CSS). Die Kurve laeuft
+/// von (0,0) nach (1,1).
+using BezierGriffe = std::array<double, 4>;
+/// Die Vorgabe: eine weiche S-Kurve.
+inline constexpr BezierGriffe kBezierVorgabe = {0.4, 0.0, 0.6, 1.0};
+
+/// Anteil 0…1 des Wegs nach Anteil `t` 0…1 der Zeit. `Bezier` braucht seine
+/// Anfasser — ohne sie (diese Fassung) laeuft die Form linear.
+[[nodiscard]] double kurvenWert(Kurvenform form, double t);
+/// Der Weg einer Bézier-Kurve mit diesen Anfassern nach Anteil `t` der Zeit.
+[[nodiscard]] double bezierWert(const BezierGriffe& griffe, double t);
 
 struct FormPunkt
 {
@@ -43,6 +70,9 @@ struct FormPunkt
     Kurvenform form = Kurvenform::Linear;  ///< Form des Abschnitts BIS zum naechsten Punkt
     BezierGriffe bezier = kBezierVorgabe;  ///< nur bei `form == Bezier`
 };
+
+/// Anteil des Wegs im Abschnitt, der bei `punkt` beginnt — mit seinen Anfassern.
+[[nodiscard]] double kurvenWert(const FormPunkt& punkt, double t);
 
 enum class FormArt : int
 {
@@ -69,6 +99,9 @@ struct Pegelform
                                        const BezierGriffe& bezier = kBezierVorgabe);
 /// Die Vorgabe fuer ein Stueck: eine weiche Delle von voll auf null und zurueck.
 [[nodiscard]] Pegelform delle();
+/// Hat die Form nur einen Abschnitt (zwei Punkte)? Dann traegt ihr erster
+/// Punkt Kurvenform und Anfasser — das, was die Griffe der Zeitachse zeigen.
+[[nodiscard]] bool einfach(const Pegelform& form);
 
 /// Pegel einer Blende am Anteil `x` ihrer Dauer. `amEnde` = als Ausblendung:
 /// an der y-Achse gespiegelt, sie laeuft von 1 nach 0.

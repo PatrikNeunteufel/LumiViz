@@ -165,18 +165,11 @@ void passeLaengeAn(Komposition& komposition)
 
 void setzeGrenzen(VisualClip& clip, std::int64_t startMs, std::int64_t endeMs)
 {
-    const std::int64_t alt = clip.dauerMs();
-    const std::int64_t neu = std::max<std::int64_t>(0, endeMs - startMs);
-    for (PegelPunkt& p : clip.kurve)
-    {
-        // naeher am Ende: den Abstand zum Ende behalten
-        if (p.zeitMs * 2 > alt) p.zeitMs = neu - (alt - p.zeitMs);
-        p.zeitMs = std::clamp<std::int64_t>(p.zeitMs, 0, neu);
-    }
-    std::stable_sort(clip.kurve.begin(), clip.kurve.end(),
-                     [](const PegelPunkt& a, const PegelPunkt& b) { return a.zeitMs < b.zeitMs; });
+    // Die Blenden haengen an ihren Kanten, die Stuecke an ihrem Anteil — und
+    // alle behalten ihre eingestellte Weite (Entscheid Patrik S96). Was nicht
+    // mehr Platz hat, staucht `VisualClip::verteilung` beim Rechnen.
     clip.startMs = startMs;
-    clip.endeMs = startMs + neu;
+    clip.endeMs = startMs + std::max<std::int64_t>(0, endeMs - startMs);
 }
 
 int verschiebeClip(Komposition& komposition, int kanal, int clip, std::int64_t neuerStartMs,
@@ -328,61 +321,46 @@ Komposition neueKomposition()
 bool liesBlenden(const VisualClip& clip, Blenden& blenden)
 {
     blenden = Blenden{};
-    const auto& k = clip.kurve;
-    if (k.empty()) return true;
-    const std::int64_t dauer = clip.dauerMs();
-    const auto null = [](double pegel) { return pegel < 0.001; };
-    const auto voll = [](double pegel) { return pegel > 0.999; };
-    const std::size_t n = k.size();
-    if (n < 2 || n > 4) return false;
-
-    const bool ein = k[0].zeitMs == 0 && null(k[0].pegel) && voll(k[1].pegel);
-    const bool aus = k[n - 1].zeitMs == dauer && null(k[n - 1].pegel) && voll(k[n - 2].pegel);
-    // zwei Punkte: eine der beiden; drei: beide, in der Mitte vereint; vier: beide
-    if (n == 2 && ein == aus) return false;
-    if (n >= 3 && !(ein && aus)) return false;
-    if (ein)
+    // eine Form mit eigenen Punkten zeigt sich nicht als Kurvenform mit Anfassern
+    if ((clip.ein.dauerMs > 0 && !einfach(clip.ein.form)) ||
+        (clip.aus.dauerMs > 0 && !einfach(clip.aus.form)))
+        return false;
+    if (clip.ein.dauerMs > 0)
     {
-        blenden.einMs = k[1].zeitMs;
-        blenden.einForm = k[0].form;
-        blenden.einBezier = k[0].bezier;
+        blenden.einMs = clip.ein.dauerMs;
+        blenden.einForm = clip.ein.form.punkte.front().form;
+        blenden.einBezier = clip.ein.form.punkte.front().bezier;
     }
-    if (aus)
+    if (clip.aus.dauerMs > 0)
     {
-        blenden.ausMs = dauer - k[n - 2].zeitMs;
-        blenden.ausForm = k[n - 2].form;
-        blenden.ausBezier = k[n - 2].bezier;
+        blenden.ausMs = clip.aus.dauerMs;
+        blenden.ausForm = clip.aus.form.punkte.front().form;
+        blenden.ausBezier = clip.aus.form.punkte.front().bezier;
     }
     return true;
 }
 
 void setzeBlenden(VisualClip& clip, const Blenden& blenden)
 {
-    clip.kurve.clear();
-    const std::int64_t dauer = std::max<std::int64_t>(0, clip.dauerMs());
-    std::int64_t ein = std::clamp<std::int64_t>(blenden.einMs, 0, dauer);
-    std::int64_t aus = std::clamp<std::int64_t>(blenden.ausMs, 0, dauer);
-    if (ein + aus > dauer)
+    clip.ein = {std::max<std::int64_t>(0, blenden.einMs),
+                einfacheBlende(blenden.einForm, blenden.einBezier)};
+    clip.aus = {std::max<std::int64_t>(0, blenden.ausMs),
+                einfacheBlende(blenden.ausForm, blenden.ausBezier)};
+}
+
+void schreibeFest(VisualClip& clip)
+{
+    const Verteilung v = clip.verteilung();
+    const std::int64_t dauer = clip.dauerMs();
+    if (v.ein.gestaucht) clip.ein.dauerMs = v.ein.weiteMs();
+    if (v.aus.gestaucht) clip.aus.dauerMs = v.aus.weiteMs();
+    for (std::size_t i = 0; i < clip.stuecke.size(); ++i)
     {
-        const std::int64_t mitte = (ein + (dauer - aus)) / 2;
-        ein = mitte;
-        aus = dauer - mitte;
-    }
-    if (ein > 0)
-    {
-        clip.kurve.push_back({0, 0.0, blenden.einForm, blenden.einBezier});
-        clip.kurve.push_back({ein, 1.0, Kurvenform::Linear, kBezierVorgabe});
-    }
-    if (aus > 0)
-    {
-        if (clip.kurve.empty() || clip.kurve.back().zeitMs < dauer - aus)
-            clip.kurve.push_back({dauer - aus, 1.0, blenden.ausForm, blenden.ausBezier});
-        else
-        {
-            clip.kurve.back().form = blenden.ausForm;
-            clip.kurve.back().bezier = blenden.ausBezier;
-        }
-        clip.kurve.push_back({dauer, 0.0, Kurvenform::Linear, kBezierVorgabe});
+        if (!v.stuecke[i].gestaucht) continue;
+        clip.stuecke[i].weiteMs = v.stuecke[i].weiteMs();
+        if (dauer > 0)
+            clip.stuecke[i].lage = static_cast<double>(v.stuecke[i].vonMs + v.stuecke[i].bisMs) /
+                                   (2.0 * static_cast<double>(dauer));
     }
 }
 

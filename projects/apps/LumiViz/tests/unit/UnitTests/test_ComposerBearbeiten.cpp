@@ -220,21 +220,45 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(pegel(26000) == doctest::Approx(0.0));
 
         // verschieben: die Kurve wandert unveraendert mit
-        const auto vorher = clips(k)[0].kurve.size();
         REQUIRE(verschiebeClip(k, 0, 0, 2000) == 0);
-        CHECK(clips(k)[0].kurve.size() == vorher);
+        CHECK(clips(k)[0].ein.dauerMs == 3000);
+        CHECK(clips(k)[0].aus.dauerMs == 5000);
         CHECK(pegel(1500) == doctest::Approx(0.5));
         CHECK(pegel(26000) == doctest::Approx(0.0));
 
-        // kuerzer als beide Blenden zusammen: die Punkte bleiben im Clip und sortiert
+        // kuerzer als beide Blenden zusammen (4 s fuer 3 s + 5 s): sie teilen den
+        // Clip im Verhaeltnis 3 : 5 — die eingestellten Dauern bleiben (Entscheid S96)
         REQUIRE(zieheKante(k, 0, 0, false, 6000) == 0);
-        std::int64_t zuletzt = 0;
-        for (const PegelPunkt& p : clips(k)[0].kurve)
-        {
-            CHECK(p.zeitMs >= zuletzt);
-            CHECK(p.zeitMs <= 4000);
-            zuletzt = p.zeitMs;
-        }
+        CHECK(clips(k)[0].dauerMs() == 4000);
+        CHECK(clips(k)[0].ein.dauerMs == 3000);
+        CHECK(clips(k)[0].aus.dauerMs == 5000);
+        const Verteilung v = clips(k)[0].verteilung();
+        CHECK(v.ein.bisMs == 1500);
+        CHECK(v.aus.vonMs == 1500);
+        CHECK(v.ein.gestaucht);
+        CHECK(v.aus.gestaucht);
+        CHECK(pegel(750) == doctest::Approx(0.5));
+        CHECK(pegel(1500) == doctest::Approx(1.0));
+        CHECK(pegel(2750) == doctest::Approx(0.5));
+
+        // wieder laenger: die Blenden kommen in ihrer eingestellten Groesse zurueck
+        REQUIRE(zieheKante(k, 0, 0, false, 30000) == 0);
+        CHECK(pegel(3000) == doctest::Approx(1.0));
+        CHECK(pegel(1500) == doctest::Approx(0.5));
+        CHECK(pegel(28000 - 2500) == doctest::Approx(0.5));
+
+        // den sichtbaren Stand festschreiben: nur, was gestaucht ist
+        REQUIRE(zieheKante(k, 0, 0, false, 6000) == 0);
+        VisualClip fest = clips(k)[0];
+        schreibeFest(fest);
+        CHECK(fest.ein.dauerMs == 1500);
+        CHECK(fest.aus.dauerMs == 2500);
+        CHECK(fest.pegelBei(750) == doctest::Approx(0.5));
+        VisualClip frei = clip("A", 0, 20000);
+        frei.setzeBlenden(3000, 5000);
+        schreibeFest(frei);
+        CHECK(frei.ein.dauerMs == 3000);
+        CHECK(frei.aus.dauerMs == 5000);
     }
 
     TEST_CASE("C3a Kanal wechseln: der Clip zieht in einen anderen Kanal um, mit derselben Regel am Nachbarn")
@@ -283,9 +307,8 @@ TEST_SUITE("ComposerBearbeiten")
         // die Kurve wandert mit
         k = mitZweitem();
         k.kanaele[0].visual[0].setzeBlenden(2000, 2000);
-        const auto punkte = k.kanaele[0].visual[0].kurve.size();
         REQUIRE(versetzeClip(k, 0, 0, 1, 40000) == 1);
-        CHECK(k.kanaele[1].visual[1].kurve.size() == punkte);
+        CHECK(k.kanaele[1].visual[1].ein.dauerMs == 2000);
         CHECK(k.kanaele[1].visual[1].pegelBei(1000) == doctest::Approx(0.5));
 
         // Zielkanal, den es nicht gibt, oder ein Audio-Kanal: nichts aendert sich
@@ -342,7 +365,7 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 50000) == 3);  // hinter allem: volle 20 s
         CHECK(clips(k)[3].startMs == 50000);
         CHECK(clips(k)[3].endeMs == 50000 + kNeuerClipMs);
-        CHECK(clips(k)[3].kurve.empty());  // voller Pegel
+        CHECK(clips(k)[3].vollerPegel());
         k = probe();
         CHECK(fuegeClipEin(k, 0, QStringLiteral("N"), 25000) == 3);  // auf B: die naechste Luecke, die 20 s fasst
         CHECK(clips(k)[3].startMs == 45000);
@@ -413,7 +436,7 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(bezierWert({5.0, -3.0, -2.0, 9.0}, 0.5) >= 0.0);  // Unsinn wird geklemmt
         // ohne Anfasser laeuft die Form linear; mit dem Punkt gilt die Kurve
         CHECK(kurvenWert(Kurvenform::Bezier, 0.3) == doctest::Approx(0.3));
-        PegelPunkt punkt{0, 0.0, Kurvenform::Bezier, kBezierVorgabe};
+        FormPunkt punkt{0.0, 0.0, Kurvenform::Bezier, kBezierVorgabe};
         CHECK(kurvenWert(punkt, 0.2) == doctest::Approx(bezierWert(kBezierVorgabe, 0.2)));
         punkt.form = Kurvenform::SKurve;
         CHECK(kurvenWert(punkt, 0.2) == doctest::Approx(kurvenWert(Kurvenform::SKurve, 0.2)));
@@ -432,7 +455,6 @@ TEST_SUITE("ComposerBearbeiten")
         soll.einBezier = {0.1, 0.8, 0.5, 1.0};
         soll.ausForm = Kurvenform::EaseOut;
         setzeBlenden(c, soll);
-        REQUIRE(c.kurve.size() == 4);
         REQUIRE(liesBlenden(c, b));
         CHECK(b.einMs == 3000);
         CHECK(b.ausMs == 5000);
@@ -443,34 +465,35 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(c.pegelBei(1500) == doctest::Approx(bezierWert(soll.einBezier, 0.5)));
         CHECK(c.pegelBei(1500) > 0.7);  // diese Kurve steigt frueh
         CHECK(c.pegelBei(10000) == doctest::Approx(1.0));
-        CHECK(c.pegelBei(17500) == doctest::Approx(1.0 - kurvenWert(Kurvenform::EaseOut, 0.5)));
+        // die Ausblendung ist dieselbe Form, rueckwaerts gelesen (Entscheid S96)
+        CHECK(c.pegelBei(17500) == doctest::Approx(kurvenWert(Kurvenform::EaseOut, 0.5)));
         CHECK(c.pegelBei(20000) == doctest::Approx(0.0));
 
-        // nur eine Seite; beide treffen sich in der Mitte; keine
+        // nur eine Seite; zusammen laenger als der Clip; keine
         soll = Blenden{};
         soll.ausMs = 4000;
         setzeBlenden(c, soll);
-        REQUIRE(c.kurve.size() == 2);
         REQUIRE(liesBlenden(c, b));
         CHECK(b.einMs == 0);
         CHECK(b.ausMs == 4000);
         soll.einMs = 15000;
         soll.ausMs = 15000;  // zusammen laenger als der Clip
         setzeBlenden(c, soll);
-        REQUIRE(c.kurve.size() == 3);
         REQUIRE(liesBlenden(c, b));
-        CHECK(b.einMs == 10000);
-        CHECK(b.ausMs == 10000);
+        CHECK(b.einMs == 15000);  // eingestellt bleibt eingestellt ...
+        CHECK(b.ausMs == 15000);
+        CHECK(c.verteilung().ein.bisMs == 10000);  // ... gestaucht wird beim Rechnen
+        CHECK(c.pegelBei(5000) == doctest::Approx(0.5));
         setzeBlenden(c, Blenden{});
-        CHECK(c.kurve.empty());
+        CHECK(c.vollerPegel());
 
-        // die alte Fassung am Clip schreibt dasselbe Muster
+        // die Fassung am Clip schreibt dasselbe
         c.setzeBlenden(2000, 2000, Kurvenform::SKurve);
         REQUIRE(liesBlenden(c, b));
         CHECK(b.einMs == 2000);
         CHECK(b.einForm == Kurvenform::SKurve);
         CHECK(b.ausForm == Kurvenform::SKurve);
-        // beim Ziehen einer Kante bleibt das Muster: die Griffe gibt es weiter
+        // beim Ziehen einer Kante bleiben die Blenden: die Griffe gibt es weiter
         Komposition k;
         Kanal kanal;
         kanal.visual = {c};
@@ -480,13 +503,63 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(b.einMs == 2000);
         CHECK(b.ausMs == 2000);
 
-        // eine eigene Kurve aus der Datei ist keine einfache Blende — sie bleibt unangetastet
-        c.kurve = {{0, 0.0}, {5000, 0.5}, {20000, 1.0}};
+        // eine Form mit eigenen Punkten zeigt sich nicht als einfache Blende
+        c.ein.form.punkte.insert(c.ein.form.punkte.begin() + 1, FormPunkt{0.5, 0.8});
         CHECK_FALSE(liesBlenden(c, b));
-        c.kurve = {{0, 0.3}, {20000, 1.0}};
-        CHECK_FALSE(liesBlenden(c, b));
-        c.kurve = {{0, 0.0}, {4000, 1.0}, {9000, 0.2}, {12000, 1.0}, {20000, 0.0}};
-        CHECK_FALSE(liesBlenden(c, b));
+
+        // --- Grundpegel und Stuecke (Entscheide S96): alle Teile sind freiwillig
+        VisualClip d = clip("D", 0, 10000);
+        d.grundpegel = 0.0;  // dunkel — und nur im Buckel zu sehen
+        d.stuecke = {ClipStueck{0.5, 2000, true, delle()}};
+        CHECK(d.pegelBei(0) == doctest::Approx(0.0));
+        CHECK(d.pegelBei(4000) == doctest::Approx(0.0));
+        CHECK(d.pegelBei(5000) == doctest::Approx(1.0));
+        CHECK(d.pegelBei(4500) == doctest::Approx(0.5));  // S-Kurve: zur Haelfte halb
+        CHECK(d.pegelBei(9999) == doctest::Approx(0.0));
+        d.grundpegel = 1.0;
+        d.stuecke[0].gekippt = false;  // die Delle im vollen Pegel
+        CHECK(d.pegelBei(3999) == doctest::Approx(1.0));
+        CHECK(d.pegelBei(5000) == doctest::Approx(0.0));
+        d.grundpegel = 0.5;  // von der Mitte aus: Delle nach unten, Buckel nach oben
+        CHECK(d.pegelBei(5000) == doctest::Approx(0.0));
+        CHECK(d.pegelBei(1000) == doctest::Approx(0.5));
+        d.stuecke[0].gekippt = true;
+        CHECK(d.pegelBei(5000) == doctest::Approx(1.0));
+        CHECK(d.pegelBei(4000) == doctest::Approx(0.5));  // am Rand ohne Sprung
+        d.setzeBlenden(1000, 0);  // die Blende laeuft bis zum Grundpegel
+        CHECK(d.pegelBei(500) == doctest::Approx(0.25));
+        CHECK(d.pegelBei(1000) == doctest::Approx(0.5));
+
+        // --- alte Dateien: die Punktliste wird uebersetzt, der Verlauf bleibt
+        VisualClip alt = clip("A", 0, 20000);
+        ausAltenPunkten(alt, {{0, 0.0, Kurvenform::EaseIn}, {4000, 1.0}, {15000, 1.0, Kurvenform::EaseIn},
+                              {20000, 0.0}});
+        CHECK(alt.ein.dauerMs == 4000);
+        CHECK(alt.aus.dauerMs == 5000);
+        CHECK(alt.stuecke.empty());
+        CHECK(alt.pegelBei(2000) == doctest::Approx(0.25));
+        CHECK(alt.pegelBei(17500) == doctest::Approx(0.75));  // fiel mit Ease in: 1 − 0.25
+        const BezierGriffe griffe = {0.1, 0.8, 0.5, 1.0};
+        ausAltenPunkten(alt, {{16000, 1.0, Kurvenform::Bezier, griffe}, {20000, 0.0}});
+        CHECK(alt.pegelBei(17000) == doctest::Approx(1.0 - bezierWert(griffe, 0.25)).epsilon(0.001));
+        ausAltenPunkten(alt, {{16000, 1.0, Kurvenform::Exponentiell}, {20000, 0.0}});
+        CHECK(alt.pegelBei(18000) == doctest::Approx(1.0 - 0.125).epsilon(0.001));
+        ausAltenPunkten(alt, {{16000, 1.0, Kurvenform::Halten}, {20000, 0.0}});
+        CHECK(alt.pegelBei(19999) == doctest::Approx(1.0));
+        // jede andere Kurve: ein Stueck ueber den ganzen Clip
+        ausAltenPunkten(alt, {{0, 0.0}, {4000, 1.0}, {9000, 0.2}, {12000, 1.0}, {20000, 0.0}});
+        CHECK(alt.ein.dauerMs == 0);
+        REQUIRE(alt.stuecke.size() == 1);
+        CHECK(alt.stuecke[0].weiteMs == 20000);
+        CHECK(alt.pegelBei(2000) == doctest::Approx(0.5));
+        CHECK(alt.pegelBei(9000) == doctest::Approx(0.2));
+        CHECK(alt.pegelBei(16000) == doctest::Approx(0.5));
+        ausAltenPunkten(alt, {{5000, 0.3}, {10000, 0.9}});
+        CHECK(alt.pegelBei(0) == doctest::Approx(0.3));  // vor dem ersten Punkt: dessen Pegel
+        CHECK(alt.pegelBei(7500) == doctest::Approx(0.6));
+        CHECK(alt.pegelBei(19000) == doctest::Approx(0.9));
+        ausAltenPunkten(alt, {});
+        CHECK(alt.vollerPegel());
 
         // --- Datei: die Anfasser stehen nur bei Bézier-Punkten; ohne Feld gilt die Vorgabe
         soll = Blenden{};
@@ -495,12 +568,22 @@ TEST_SUITE("ComposerBearbeiten")
         soll.einBezier = {0.25, 0.5, 0.75, 0.125};
         c = clip("A", 0, 20000);
         setzeBlenden(c, soll);
+        c.grundpegel = 0.75;
+        c.stuecke = {ClipStueck{0.6, 2500, true, delle()}};
         kanal.visual = {c};
         k.kanaele = {kanal};
         const QJsonObject json = alsJson(k);
-        const QJsonArray punkte = json.value(QStringLiteral("channels")).toArray().at(0).toObject()
-                                      .value(QStringLiteral("clips")).toArray().at(0).toObject()
-                                      .value(QStringLiteral("levels")).toArray();
+        const QJsonObject clipJson = json.value(QStringLiteral("channels")).toArray().at(0).toObject()
+                                         .value(QStringLiteral("clips")).toArray().at(0).toObject();
+        CHECK_FALSE(clipJson.contains(QStringLiteral("levels")));   // die alte Punktliste gibt es nicht mehr
+        CHECK_FALSE(clipJson.contains(QStringLiteral("fadeOut")));  // nur, was der Clip hat
+        CHECK(clipJson.value(QStringLiteral("base")).toDouble() == doctest::Approx(0.75));
+        CHECK(clipJson.value(QStringLiteral("fadeIn")).toObject().value(QStringLiteral("ms")).toDouble() ==
+              doctest::Approx(3000.0));
+        CHECK(clipJson.value(QStringLiteral("shapes")).toArray().size() == 1);
+        const QJsonArray punkte = clipJson.value(QStringLiteral("fadeIn")).toObject()
+                                      .value(QStringLiteral("shape")).toObject()
+                                      .value(QStringLiteral("points")).toArray();
         REQUIRE(punkte.size() == 2);
         CHECK(punkte.at(0).toObject().value(QStringLiteral("curve")).toInt() == 6);
         CHECK(punkte.at(0).toObject().value(QStringLiteral("bezier")).toArray().size() == 4);

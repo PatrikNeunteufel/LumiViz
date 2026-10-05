@@ -13,6 +13,7 @@
 #pragma once
 
 #include "composer/Mischer.hpp"
+#include "composer/Pegelform.hpp"
 
 #include <QJsonObject>
 #include <QString>
@@ -25,44 +26,32 @@
 namespace lumi::composer
 {
 
-/// Wie der Pegel von einem Punkt zum naechsten laeuft. Die Formen sind die
-/// des Crossfades der Host-Gruppe, dazu „Halten" (Sprung am naechsten Punkt).
-enum class Kurvenform : int
+/// Eine Blende am Clip: die eingestellte Dauer und die Form. Die Seite
+/// (Anfang oder Ende) bestimmt die Richtung.
+struct ClipBlende
 {
-    Linear = 0,
-    SKurve = 1,
-    EaseIn = 2,
-    EaseOut = 3,
-    Exponentiell = 4,
-    Halten = 5,
-    Bezier = 6,  ///< kubische Bézier-Kurve mit zwei Anfassern (C4, Wunsch Patrik S95)
+    std::int64_t dauerMs = 0;  ///< eingestellt; 0 = keine Blende an dieser Seite
+    Pegelform form = einfacheBlende();
 };
 
-inline constexpr int kKurvenformen = 7;
-
-/// Die zwei Anfasser einer Bézier-Kurve: x1, y1, x2, y2 — je 0…1, x = Anteil
-/// der Zeit, y = Anteil des Wegs (wie `cubic-bezier` in CSS). Die Kurve laeuft
-/// von (0,0) nach (1,1).
-using BezierGriffe = std::array<double, 4>;
-/// Die Vorgabe: eine weiche S-Kurve.
-inline constexpr BezierGriffe kBezierVorgabe = {0.4, 0.0, 0.6, 1.0};
-
-/// Anteil 0…1 des Wegs nach Anteil `t` 0…1 der Zeit. `Bezier` braucht seine
-/// Anfasser — ohne sie (diese Fassung) laeuft die Form linear.
-[[nodiscard]] double kurvenWert(Kurvenform form, double t);
-/// Der Weg einer Bézier-Kurve mit diesen Anfassern nach Anteil `t` der Zeit.
-[[nodiscard]] double bezierWert(const BezierGriffe& griffe, double t);
-
-struct PegelPunkt
+/// Ein Stueck mitten im Clip: Lage und Weite wie eingestellt, dazu die Form.
+struct ClipStueck
 {
-    std::int64_t zeitMs = 0;  ///< im Clip, ab Clip-Start
-    double pegel = 1.0;       ///< 0…1
-    Kurvenform form = Kurvenform::Linear;  ///< Form des Abschnitts BIS zum naechsten Punkt
-    BezierGriffe bezier = kBezierVorgabe;  ///< nur bei `form == Bezier`
+    double lage = 0.5;         ///< Mitte des Stuecks als Anteil der Clip-Laenge, ab Clip-Anfang
+    std::int64_t weiteMs = 0;  ///< eingestellt
+    bool gekippt = false;      ///< an der x-Achse gespiegelt: oben und unten getauscht
+    Pegelform form = delle();
 };
 
-/// Anteil des Wegs im Abschnitt, der bei `punkt` beginnt — mit seinen Anfassern.
-[[nodiscard]] double kurvenWert(const PegelPunkt& punkt, double t);
+/// Ein Punkt der Pegelkurve, wie `.lvcomp` sie bis S95 trug (Feld `levels`):
+/// Zeit im Clip, Pegel, Form des Abschnitts bis zum naechsten Punkt.
+struct AltPunkt
+{
+    std::int64_t zeitMs = 0;
+    double pegel = 1.0;
+    Kurvenform form = Kurvenform::Linear;
+    BezierGriffe bezier = kBezierVorgabe;
+};
 
 struct VisualClip
 {
@@ -70,19 +59,37 @@ struct VisualClip
     std::int64_t startMs = 0;
     std::int64_t endeMs = 0;  ///< ausschliesslich: der Clip laeuft in [start, ende)
     Mischart mischart = Mischart::Normal;
-    /// Pegelkurve, nach Zeit sortiert. Leer = voller Pegel. Vor dem ersten
-    /// Punkt gilt dessen Pegel, nach dem letzten der letzte.
-    std::vector<PegelPunkt> kurve;
+
+    // --- Pegelkurve (Entscheide Patrik S96): alle Teile sind freiwillig ------
+    /// Der Pegel zwischen den Teilen, 0…1. Die Blenden laufen von null bis
+    /// hierher; eine Delle senkt von hier in Richtung null, ein Buckel hebt
+    /// von hier in Richtung voll.
+    double grundpegel = 1.0;
+    ClipBlende ein;
+    ClipBlende aus;
+    std::vector<ClipStueck> stuecke;
 
     [[nodiscard]] std::int64_t dauerMs() const { return endeMs - startMs; }
+    /// Wo die Teile bei der jetzigen Clip-Laenge liegen — gestaucht, wo sie
+    /// sich ueberdecken. Die eingestellten Werte bleiben, wie sie sind.
+    [[nodiscard]] Verteilung verteilung() const;
     /// Pegel an der Stelle `zeitImClipMs` (0 = Clip-Start).
     [[nodiscard]] double pegelBei(std::int64_t zeitImClipMs) const;
-    /// Ein- und Ausblenden als Kurve setzen (ersetzt die Kurve): von 0 auf 1
-    /// in `einMs`, von 1 auf 0 in den letzten `ausMs`. 0 = kein Blenden an
-    /// diesem Ende. Ueberlappen sich beide, treffen sie sich in der Mitte.
+    /// Ein- und Ausblenden mit einer einfachen Form setzen: von 0 auf den
+    /// Grundpegel in `einMs`, zurueck auf 0 in den letzten `ausMs`. 0 = kein
+    /// Blenden an diesem Ende. Die Stuecke bleiben.
     void setzeBlenden(std::int64_t einMs, std::int64_t ausMs,
                       Kurvenform form = Kurvenform::Linear);
+    /// Laeuft der Clip durchweg auf vollem Pegel — keine Blende, kein Stueck,
+    /// Grundpegel 1?
+    [[nodiscard]] bool vollerPegel() const;
 };
+
+/// Eine alte Punktkurve in die Teile des Clips uebersetzen (ersetzt Blenden,
+/// Stuecke und Grundpegel). Das Muster einer einfachen Ein- / Ausblendung wird
+/// zu Blenden; jede andere Kurve zu EINEM Stueck ueber die ganze Clip-Laenge —
+/// der Pegelverlauf bleibt derselbe.
+void ausAltenPunkten(VisualClip& clip, std::vector<AltPunkt> punkte);
 
 struct AudioClip
 {
@@ -121,7 +128,7 @@ struct Komposition
     [[nodiscard]] std::int64_t clipEnde() const;
     /// Clips je Kanal nach Start sortieren, Unsinn richten (Ende vor Start,
     /// Ueberlappung im selben Kanal: der spaetere Clip beginnt, wo der
-    /// fruehere endet), Kurven sortieren und klemmen. Meldet, was gerichtet
+    /// fruehere endet), Blenden und Stuecke klemmen. Meldet, was gerichtet
     /// wurde.
     void richte(QStringList* bericht = nullptr);
 };

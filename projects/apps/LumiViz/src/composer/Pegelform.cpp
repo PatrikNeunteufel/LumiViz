@@ -18,13 +18,6 @@ namespace lumi::composer
 namespace
 {
 
-/// Anteil des Wegs im Abschnitt, der bei `punkt` beginnt.
-double abschnittWert(const FormPunkt& punkt, double t)
-{
-    return punkt.form == Kurvenform::Bezier ? bezierWert(punkt.bezier, t)
-                                            : kurvenWert(punkt.form, t);
-}
-
 /// Ein Teil beim Verteilen: sein Wunsch und, nach dem Rechnen, sein Platz.
 struct Teil
 {
@@ -38,6 +31,58 @@ struct Teil
 
 }  // namespace
 
+double kurvenWert(Kurvenform form, double t)
+{
+    t = std::clamp(t, 0.0, 1.0);
+    switch (form)
+    {
+        case Kurvenform::SKurve: return t * t * (3.0 - 2.0 * t);
+        case Kurvenform::EaseIn: return t * t;
+        case Kurvenform::EaseOut: return 1.0 - (1.0 - t) * (1.0 - t);
+        case Kurvenform::Exponentiell: return t * t * t;
+        case Kurvenform::Halten: return t >= 1.0 ? 1.0 : 0.0;
+        case Kurvenform::Bezier: break;  // ohne Anfasser: linear
+        case Kurvenform::Linear: break;
+    }
+    return t;
+}
+
+double bezierWert(const BezierGriffe& griffe, double t)
+{
+    t = std::clamp(t, 0.0, 1.0);
+    const double x1 = std::clamp(griffe[0], 0.0, 1.0);
+    const double y1 = std::clamp(griffe[1], 0.0, 1.0);
+    const double x2 = std::clamp(griffe[2], 0.0, 1.0);
+    const double y2 = std::clamp(griffe[3], 0.0, 1.0);
+    // Die Kurve ist (x(s), y(s)); gesucht ist y an der Stelle x = t. Mit
+    // Anfassern in 0…1 steigt x(s) stetig — Halbieren genuegt.
+    const auto achse = [](double a, double b, double s) {
+        const double u = 1.0 - s;
+        return 3.0 * u * u * s * a + 3.0 * u * s * s * b + s * s * s;
+    };
+    double von = 0.0;
+    double bis = 1.0;
+    for (int i = 0; i < 40; ++i)
+    {
+        const double mitte = 0.5 * (von + bis);
+        if (achse(x1, x2, mitte) < t)
+            von = mitte;
+        else
+            bis = mitte;
+    }
+    return std::clamp(achse(y1, y2, 0.5 * (von + bis)), 0.0, 1.0);
+}
+
+double kurvenWert(const FormPunkt& punkt, double t)
+{
+    return punkt.form == Kurvenform::Bezier ? bezierWert(punkt.bezier, t) : kurvenWert(punkt.form, t);
+}
+
+bool einfach(const Pegelform& form)
+{
+    return form.punkte.size() == 2;
+}
+
 double Pegelform::wert(double x) const
 {
     if (punkte.empty()) return art == FormArt::Blende ? std::clamp(x, 0.0, 1.0) : 1.0;
@@ -50,7 +95,7 @@ double Pegelform::wert(double x) const
         if (x >= b.x) continue;
         const double spanne = b.x - a.x;
         const double t = spanne > 0.0 ? (x - a.x) / spanne : 1.0;
-        return std::clamp(a.y + (b.y - a.y) * abschnittWert(a, t), 0.0, 1.0);
+        return std::clamp(a.y + (b.y - a.y) * kurvenWert(a, t), 0.0, 1.0);
     }
     return std::clamp(punkte.back().y, 0.0, 1.0);
 }

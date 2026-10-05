@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.86.0
+> **Version:** 1.87.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1779,13 +1779,19 @@ Ausblendung.
 - **Form:** Rechtsklick auf den Clip → *Fade in* bzw. *Fade out*: Linear,
   S-curve, Ease in, Ease out, Exponential, Hold (Sprung am Ende) und
   **Bezier**. Hat die Blende noch keine Länge, bekommt sie dabei zwei Sekunden.
+  **Die Ausblendung ist dieselbe Form, rückwärts gelesen:** eine Form, die
+  als Einblendung langsam losgeht (Ease in), kommt als Ausblendung langsam an.
 - **Bezier:** Ist der Clip angeklickt, zeigt eine Bézier-Blende zwei gelbe
-  Punkte mit Hebeln. Zieh sie, und die Kurve folgt — der erste Punkt bestimmt,
-  wie die Blende losgeht, der zweite, wie sie ankommt.
+  Punkte mit Hebeln. Zieh sie, und die Kurve folgt — der erste Punkt gehört
+  zum dunklen Ende der Blende, der zweite zum hellen.
+- **Wird der Clip zu kurz für seine Blenden,** werden sie gestaucht — beide
+  im Verhältnis ihrer Längen. Die eingestellten Längen merkt sich der Clip:
+  ziehst du ihn wieder länger, sind die Blenden wieder so lang wie zuvor, auch
+  nach Speichern und Laden. Ziehst du dagegen an einem gestauchten Griff, gilt
+  ab da, was du siehst.
 
-Ein Clip, dessen Pegelkurve in der Datei aus eigenen Punkten besteht (mehr
-als eine Ein- und eine Ausblendung), hat keine Griffe; seine Kurve bleibt, wie
-sie ist.
+Eine Blende, deren Form aus mehr als einem Abschnitt besteht (aus der Datei),
+hat keine Griffe; sie bleibt, wie sie ist.
 
 **Neues hinein** (auch nur mit **Edit**):
 
@@ -1874,7 +1880,7 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 ```json
 {
     "format": "lumiviz-composition",
-    "version": 1,
+    "version": 2,
     "channels": [
         {
             "kind": "visual",
@@ -1886,12 +1892,20 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
                     "start": 0,
                     "end": 20000,
                     "blend": 0,
-                    "levels": [
-                        { "t": 0, "level": 0.0, "curve": 1 },
-                        { "t": 3000, "level": 1.0, "curve": 0 },
-                        { "t": 17000, "level": 1.0, "curve": 1 },
-                        { "t": 20000, "level": 0.0, "curve": 0 }
-                    ]
+                    "fadeIn": {
+                        "ms": 3000,
+                        "shape": { "kind": "fade", "points": [
+                            { "x": 0, "y": 0, "curve": 1 },
+                            { "x": 1, "y": 1, "curve": 0 }
+                        ] }
+                    },
+                    "fadeOut": {
+                        "ms": 3000,
+                        "shape": { "kind": "fade", "points": [
+                            { "x": 0, "y": 0, "curve": 1 },
+                            { "x": 1, "y": 1, "curve": 0 }
+                        ] }
+                    }
                 }
             ]
         }
@@ -1905,8 +1919,12 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `file` | Die Preset-Datei, absolut oder **relativ zur `.lvcomp`** |
 | `start`, `end` | In Millisekunden auf der Zeitachse. Clips eines Kanals überlappen nicht |
 | `blend` | Mischart mit dem, was darunter liegt: 0 Normal · 1 Additive · 2 Subtract · 3 Maximum · 4 Minimum · 5 Multiply · 6 Xor |
-| `levels` | Die Pegelkurve: Punkte mit `t` (Millisekunden **ab Clip-Start**) und `level` (0 … 1). Ohne Punkte läuft der Clip auf vollem Pegel |
+| `fadeIn`, `fadeOut` | Ein- und Ausblendung, beide freiwillig: `ms` ist die eingestellte Dauer, `shape` die Form. Ohne beide läuft der Clip von Anfang bis Ende auf seinem Grundpegel |
+| `shape` | Eine Form ohne Zeit: `points` mit `x` (Anteil der Dauer, 0 … 1) und `y` (Pegel, 0 … 1). Eine Blende (`kind` `fade`) läuft von (0, 0) nach (1, 1); als `fadeOut` wird dieselbe Form rückwärts gelesen |
 | `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) · 6 Bézier |
+| `base` | Grundpegel des Clips, 0 … 1 (ohne Angabe 1): der Pegel zwischen den Teilen. Die Blenden laufen von null bis dorthin |
+| `shapes` | Stücke mitten im Clip, freiwillig: je `pos` (Mitte des Stücks als Anteil der Clip-Länge), `width` (Millisekunden), `flipped` und `shape` (`kind` `shape`). Die Form sagt, wie viel vom Grundpegel bleibt — 1 alles, 0 nichts (eine Delle); mit `flipped` tauschen oben und unten, das Stück hebt den Pegel vom Grundpegel bis auf voll (ein Buckel) |
+| `levels` | **Alt (bis Version 1):** die Pegelkurve als Punkte mit `t` (Millisekunden ab Clip-Start) und `level`. Wird beim Laden übersetzt — eine einfache Ein- / Ausblendung in `fadeIn` / `fadeOut`, jede andere Kurve in ein Stück über den ganzen Clip; der Verlauf bleibt derselbe. Geschrieben wird das Feld nicht mehr |
 | `bezier` | Nur bei `curve` 6: die zwei Anfasser als `[x1, y1, x2, y2]`, je 0 … 1 — x ist der Anteil der Zeit, y der Anteil des Wegs (wie `cubic-bezier` in CSS). Ohne Angabe eine weiche S-Kurve |
 | `length` | Festes Ende in Millisekunden (optional). Ohne Angabe, mit 0 oder genau am Ende des letzten Clips folgt das Ende dem letzten Clip |
 
@@ -1918,6 +1936,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.87.0 | 2026-10-05 | Session 96. §15 Composer: **Blenden haben eine eingestellte Dauer** — ein zu kurzer Clip staucht sie, wieder länger gezogen kommen sie zurück; GEÄNDERT die Ausblendung ist dieselbe Form wie die Einblendung, rückwärts gelesen (Ease in und Ease out wirken an der Ausblendung damit umgekehrt wie in 1.84.0). Datei `.lvcomp` Version 2: `fadeIn` / `fadeOut` mit `ms` und `shape`, NEU `base` (Grundpegel) und `shapes` (Stücke mitten im Clip, mit `flipped`); das alte Feld `levels` wird beim Laden übersetzt |
 | 1.86.0 | 2026-10-05 | Session 95. §15 Composer NEU **die Kette eines Clips speichern**: über das Speichern von Effect Chain, bei gebundenem Clip immer unter neuem Namen; der Clip wechselt auf die neue Datei, weitere Clips mit demselben Preset nach Auswahl |
 | 1.85.0 | 2026-10-05 | Session 95. §15 Composer NEU **Sync on Effect Chain**: Effect Chain zeigt bei laufender Komposition die Kette des angeklickten Clips (Änderungen wirken sofort) oder ruht; Speichern dieser Änderungen noch nicht möglich. Die Datei-Knöpfe des Panels stehen in einer eigenen Zeile |
 | 1.84.1 | 2026-10-05 | Session 95. §15 Composer: beim Bearbeiten einer laufenden Komposition laufen die Presets der Clips jetzt weiter (bisher begannen sie von vorn) |

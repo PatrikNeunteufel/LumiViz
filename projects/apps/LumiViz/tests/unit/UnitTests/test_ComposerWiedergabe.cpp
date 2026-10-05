@@ -148,7 +148,8 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(c.pegelBei(0) == doctest::Approx(1.0));     // keine Kurve = voller Pegel
         CHECK(c.pegelBei(2500) == doctest::Approx(1.0));
 
-        c.kurve = {{1000, 0.2, Kurvenform::Linear}, {3000, 0.8, Kurvenform::Linear}};
+        // eine Punktliste, wie alte Dateien sie tragen
+        ausAltenPunkten(c, {{1000, 0.2, Kurvenform::Linear}, {3000, 0.8, Kurvenform::Linear}});
         CHECK(c.pegelBei(0) == doctest::Approx(0.2));      // vor dem ersten Punkt: dessen Pegel
         CHECK(c.pegelBei(1000) == doctest::Approx(0.2));
         CHECK(c.pegelBei(2000) == doctest::Approx(0.5));   // linear in der Mitte
@@ -169,12 +170,12 @@ TEST_SUITE("ComposerWiedergabe")
             CHECK(kurvenWert(static_cast<Kurvenform>(f), 0.0) == doctest::Approx(0.0));
             CHECK(kurvenWert(static_cast<Kurvenform>(f), 1.0) == doctest::Approx(1.0));
         }
-        c.kurve = {{0, 0.0, Kurvenform::EaseIn}, {2000, 1.0, Kurvenform::Linear}};
+        ausAltenPunkten(c, {{0, 0.0, Kurvenform::EaseIn}, {2000, 1.0, Kurvenform::Linear}});
+        CHECK(c.ein.dauerMs == 2000);  // das Muster einer Einblendung
         CHECK(c.pegelBei(1000) == doctest::Approx(0.25));
 
-        // Ein- und Ausblenden als Kurve
+        // Ein- und Ausblenden
         c.setzeBlenden(1000, 2000);
-        REQUIRE(c.kurve.size() == 4);
         CHECK(c.pegelBei(0) == doctest::Approx(0.0));
         CHECK(c.pegelBei(500) == doctest::Approx(0.5));
         CHECK(c.pegelBei(1000) == doctest::Approx(1.0));
@@ -189,7 +190,7 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(c.pegelBei(1000) == doctest::Approx(0.5));
         CHECK(c.pegelBei(3000) == doctest::Approx(0.5));
         c.setzeBlenden(0, 0);
-        CHECK(c.kurve.empty());
+        CHECK(c.vollerPegel());
     }
 
     TEST_CASE("C1b Modell: richte — sortiert, loest Ueberlappung im Kanal, meldet es; Laenge")
@@ -199,7 +200,10 @@ TEST_SUITE("ComposerWiedergabe")
                                         {clip(QStringLiteral("b.lvfx"), 3000, 6000),
                                          clip(QStringLiteral("a.lvfx"), 0, 4000),
                                          clip(QStringLiteral("c.lvfx"), 9000, 9000)}));
-        k.kanaele[0].visual[0].kurve = {{9999, 2.0, Kurvenform::Linear}, {-5, -1.0, Kurvenform::Linear}};
+        k.kanaele[0].visual[0].grundpegel = 2.0;
+        k.kanaele[0].visual[0].ein.dauerMs = -5;
+        k.kanaele[0].visual[0].aus.dauerMs = 9999;  // laenger als der Clip: bleibt, wie eingestellt
+        k.kanaele[0].visual[0].stuecke = {ClipStueck{3.0, -100, false, Pegelform{}}};
         QStringList bericht;
         k.richte(&bericht);
         const auto& v = k.kanaele[0].visual;
@@ -209,10 +213,14 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(v[1].startMs == 4000);                    // beginnt, wo a endet
         CHECK(v[1].endeMs == 6000);
         CHECK(v[2].endeMs == 10000);                    // ohne Laenge: eine Sekunde
-        REQUIRE(v[1].kurve.size() == 2);
-        CHECK(v[1].kurve[0].zeitMs == 0);               // sortiert und geklemmt
-        CHECK(v[1].kurve[0].pegel == doctest::Approx(0.0));
-        CHECK(v[1].kurve[1].pegel == doctest::Approx(1.0));
+        CHECK(v[1].grundpegel == doctest::Approx(1.0));  // geklemmt
+        CHECK(v[1].ein.dauerMs == 0);
+        CHECK(v[1].aus.dauerMs == 9999);
+        REQUIRE(v[1].stuecke.size() == 1);
+        CHECK(v[1].stuecke[0].lage == doctest::Approx(1.0));
+        CHECK(v[1].stuecke[0].weiteMs == 0);
+        CHECK(v[1].stuecke[0].form.art == FormArt::Stueck);
+        CHECK(v[1].stuecke[0].form.punkte.size() == 2);  // eine leere Form bekommt ihre Enden
         CHECK(bericht.size() == 2);
         CHECK(k.laenge() == 10000);                     // Ende des letzten Clips
         k.laengeMs = 60000;
@@ -236,7 +244,10 @@ TEST_SUITE("ComposerWiedergabe")
         k.laengeMs = 120000;
         k.rasterSekunden = 0.5;
         VisualClip a = clip(innen, 1000, 9000, Mischart::Additive);
-        a.kurve = {{0, 0.0, Kurvenform::SKurve}, {2000, 1.0, Kurvenform::Halten}, {8000, 0.25, Kurvenform::Linear}};
+        a.grundpegel = 0.75;
+        a.ein = {2000, einfacheBlende(Kurvenform::SKurve)};
+        a.aus = {12000, einfacheBlende(Kurvenform::Halten)};  // laenger als der Clip: bleibt so in der Datei
+        a.stuecke = {ClipStueck{0.25, 1500, true, delle()}};
         k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {a}));
         Kanal zwei = visualKanal(QStringLiteral("CH2"), {clip(aussen, 5000, 7000, Mischart::Xor)});
         zwei.an = false;
@@ -274,11 +285,16 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(ga.startMs == 1000);
         CHECK(ga.endeMs == 9000);
         CHECK(ga.mischart == Mischart::Additive);
-        REQUIRE(ga.kurve.size() == 3);
-        CHECK(ga.kurve[0].form == Kurvenform::SKurve);
-        CHECK(ga.kurve[1].form == Kurvenform::Halten);
-        CHECK(ga.kurve[2].zeitMs == 8000);
-        CHECK(ga.kurve[2].pegel == doctest::Approx(0.25));
+        CHECK(ga.grundpegel == doctest::Approx(0.75));
+        CHECK(ga.ein.dauerMs == 2000);
+        CHECK(ga.ein.form.punkte.front().form == Kurvenform::SKurve);
+        CHECK(ga.aus.dauerMs == 12000);  // die eingestellte Dauer, nicht die gestauchte
+        CHECK(ga.aus.form.punkte.front().form == Kurvenform::Halten);
+        REQUIRE(ga.stuecke.size() == 1);
+        CHECK(ga.stuecke[0].lage == doctest::Approx(0.25));
+        CHECK(ga.stuecke[0].weiteMs == 1500);
+        CHECK(ga.stuecke[0].gekippt);
+        CHECK(gleich(ga.stuecke[0].form, delle()));
         CHECK_FALSE(g.kanaele[1].an);
         CHECK(g.kanaele[1].visual[0].mischart == Mischart::Xor);
         CHECK(QFileInfo(g.kanaele[1].visual[0].datei) == QFileInfo(aussen));
@@ -433,7 +449,8 @@ TEST_SUITE("ComposerWiedergabe")
         VisualClip cRot = clip(rot, 0, 4000);
         cRot.setzeBlenden(1000, 1000);
         VisualClip cBlau = clip(blau, 2000, 5000, Mischart::Additive);
-        cBlau.kurve = {{0, 0.5, Kurvenform::Linear}, {2000, 0.5, Kurvenform::Linear}, {3000, 1.0, Kurvenform::Linear}};
+        ausAltenPunkten(cBlau, {{0, 0.5, Kurvenform::Linear}, {2000, 0.5, Kurvenform::Linear},
+                                {3000, 1.0, Kurvenform::Linear}});
         k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {cRot, clip(gruen, 6000, 8000)}));
         k.kanaele.push_back(visualKanal(QStringLiteral("CH2"), {cBlau}));
 

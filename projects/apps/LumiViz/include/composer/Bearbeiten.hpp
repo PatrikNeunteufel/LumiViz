@@ -44,8 +44,9 @@ int versetzeClip(Komposition& komposition, int vonKanal, int clip, int nachKanal
                  std::int64_t neuerStartMs, Stoss stoss = Stoss::Halten);
 
 /// Die linke (`links` = true) oder rechte Kante des Clips auf `zeitMs` ziehen.
-/// Die Punkte der Pegelkurve behalten ihren Abstand zu der Kante, der sie
-/// naeher liegen. Liefert den Platz des Clips danach, -1 = gibt es nicht.
+/// Die Blenden bleiben an ihren Kanten, die Stuecke an ihrem Anteil; alle
+/// behalten ihre eingestellte Weite. Liefert den Platz des Clips danach,
+/// -1 = gibt es nicht.
 int zieheKante(Komposition& komposition, int kanal, int clip, bool links, std::int64_t zeitMs,
                Stoss stoss = Stoss::Halten);
 
@@ -75,8 +76,8 @@ bool loescheKanal(Komposition& komposition, int kanal);
 /// Eine neue, leere Komposition: ein Kanal „CH1", das Ende folgt den Clips.
 [[nodiscard]] Komposition neueKomposition();
 
-/// Start und Ende eines Clips aendern und seine Pegelkurve mitnehmen: jeder
-/// Punkt behaelt den Abstand zu der Kante, der er naeher liegt.
+/// Start und Ende eines Clips aendern. Blenden und Stuecke behalten ihre
+/// eingestellten Werte.
 void setzeGrenzen(VisualClip& clip, std::int64_t startMs, std::int64_t endeMs);
 
 // --- Ein- und Ausblenden (C4) -------------------------------------------------
@@ -92,14 +93,23 @@ struct Blenden
     BezierGriffe ausBezier = kBezierVorgabe;
 };
 
-/// Die Blenden aus der Pegelkurve lesen. false = die Kurve ist keine einfache
-/// Ein- / Ausblendung (eigene Punkte aus der Datei) — dann bleibt sie, wie sie
-/// ist, und das Panel bietet keine Blenden-Griffe an.
+/// Die Blenden des Clips lesen — die eingestellten Dauern, nicht die
+/// gestauchten. false = eine Blende traegt eine Form mit eigenen Punkten (aus
+/// dem Curve Editor oder einem Preset) — dann bietet die Zeitachse keine
+/// Griffe fuer Form und Anfasser an.
 [[nodiscard]] bool liesBlenden(const VisualClip& clip, Blenden& blenden);
 
-/// Die Pegelkurve aus den Blenden bauen (ersetzt die Kurve). Ueberlappen sich
-/// beide, treffen sie sich in der Mitte.
+/// Beide Blenden des Clips setzen, je mit einer einfachen Form. Die Dauern
+/// gelten wie eingestellt, auch wenn sie zusammen laenger sind als der Clip
+/// (gestaucht wird beim Rechnen). Stuecke und Grundpegel bleiben.
 void setzeBlenden(VisualClip& clip, const Blenden& blenden);
+
+/// Den sichtbaren Stand festschreiben (Entscheid Patrik S96): jedes
+/// gestauchte Teil bekommt als eingestellten Wert, was es gerade einnimmt —
+/// Dauer bzw. Weite, ein Stueck auch seine Lage. Teile, die nicht gestaucht
+/// sind, bleiben. Gedacht fuer den Augenblick, bevor ein gestauchtes Teil von
+/// Hand geaendert wird: danach bewegt sich nur, was angefasst wird.
+void schreibeFest(VisualClip& clip);
 
 /// Name der Kurvenform fuer die Oberflaeche (englisch, wie die App).
 [[nodiscard]] const char* kurvenformName(Kurvenform form);

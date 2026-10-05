@@ -21,7 +21,7 @@ namespace
 {
 
 const QString kFormat = QStringLiteral("lumiviz-composition");
-constexpr int kVersion = 1;
+constexpr int kVersion = 2;  // 2 (S96): Blenden und Stuecke statt der Punktliste `levels`
 
 /// Datei fuer die Ablage: relativ zum Ordner der `.lvcomp`, wenn sie darunter liegt.
 QString fuerDatei(const QString& datei, const QString& basisOrdner)
@@ -41,101 +41,138 @@ QString ausDatei(const QString& eintrag, const QString& basisOrdner)
     return QDir::cleanPath(QDir(basisOrdner).absoluteFilePath(eintrag));
 }
 
-}  // namespace
-
-double kurvenWert(Kurvenform form, double t)
+/// Die Form einer Ausblendung aus einer alten Datei. Dort fiel der Pegel mit
+/// der Kurvenform von 1 auf 0 (1 − f(t)); heute laeuft eine Blende als
+/// Ausblendung rueckwaerts (g(1 − t)). Derselbe Verlauf braucht also
+/// g(u) = 1 − f(1 − u): die Form am Mittelpunkt gespiegelt.
+Pegelform alteAusblende(Kurvenform form, const BezierGriffe& griffe)
 {
-    t = std::clamp(t, 0.0, 1.0);
     switch (form)
     {
-        case Kurvenform::SKurve: return t * t * (3.0 - 2.0 * t);
-        case Kurvenform::EaseIn: return t * t;
-        case Kurvenform::EaseOut: return 1.0 - (1.0 - t) * (1.0 - t);
-        case Kurvenform::Exponentiell: return t * t * t;
-        case Kurvenform::Halten: return t >= 1.0 ? 1.0 : 0.0;
-        case Kurvenform::Bezier: break;  // ohne Anfasser: linear
-        case Kurvenform::Linear: break;
+        case Kurvenform::EaseIn: return einfacheBlende(Kurvenform::EaseOut);
+        case Kurvenform::EaseOut: return einfacheBlende(Kurvenform::EaseIn);
+        case Kurvenform::Exponentiell:  // 1 − (1 − u)^3, als Bézier genau
+            return einfacheBlende(Kurvenform::Bezier, {1.0 / 3.0, 1.0, 2.0 / 3.0, 1.0});
+        case Kurvenform::Bezier:
+            return einfacheBlende(Kurvenform::Bezier,
+                                  {1.0 - griffe[2], 1.0 - griffe[3], 1.0 - griffe[0], 1.0 - griffe[1]});
+        case Kurvenform::Halten:
+        {
+            // voll bis zum Schluss: rueckwaerts gelesen ein Sprung am Anfang
+            Pegelform sprung;
+            sprung.punkte = {FormPunkt{0.0, 0.0}, FormPunkt{0.0, 1.0}, FormPunkt{1.0, 1.0}};
+            return sprung;
+        }
+        case Kurvenform::Linear:
+        case Kurvenform::SKurve: break;  // in sich symmetrisch
     }
-    return t;
+    return einfacheBlende(form);
 }
 
-double bezierWert(const BezierGriffe& griffe, double t)
-{
-    t = std::clamp(t, 0.0, 1.0);
-    const double x1 = std::clamp(griffe[0], 0.0, 1.0);
-    const double y1 = std::clamp(griffe[1], 0.0, 1.0);
-    const double x2 = std::clamp(griffe[2], 0.0, 1.0);
-    const double y2 = std::clamp(griffe[3], 0.0, 1.0);
-    // Die Kurve ist (x(s), y(s)); gesucht ist y an der Stelle x = t. Mit
-    // Anfassern in 0…1 steigt x(s) stetig — Halbieren genuegt.
-    const auto achse = [](double a, double b, double s) {
-        const double u = 1.0 - s;
-        return 3.0 * u * u * s * a + 3.0 * u * s * s * b + s * s * s;
-    };
-    double von = 0.0;
-    double bis = 1.0;
-    for (int i = 0; i < 40; ++i)
-    {
-        const double mitte = 0.5 * (von + bis);
-        if (achse(x1, x2, mitte) < t)
-            von = mitte;
-        else
-            bis = mitte;
-    }
-    return std::clamp(achse(y1, y2, 0.5 * (von + bis)), 0.0, 1.0);
-}
+}  // namespace
 
-double kurvenWert(const PegelPunkt& punkt, double t)
+Verteilung VisualClip::verteilung() const
 {
-    return punkt.form == Kurvenform::Bezier ? bezierWert(punkt.bezier, t) : kurvenWert(punkt.form, t);
+    std::vector<StueckLage> lagen;
+    lagen.reserve(stuecke.size());
+    for (const ClipStueck& s : stuecke) lagen.push_back({s.lage, s.weiteMs});
+    return verteile(dauerMs(), ein.dauerMs, aus.dauerMs, lagen);
 }
 
 double VisualClip::pegelBei(std::int64_t zeitImClipMs) const
 {
-    if (kurve.empty()) return 1.0;
-    if (zeitImClipMs <= kurve.front().zeitMs) return std::clamp(kurve.front().pegel, 0.0, 1.0);
-    if (zeitImClipMs >= kurve.back().zeitMs) return std::clamp(kurve.back().pegel, 0.0, 1.0);
-    for (std::size_t i = 0; i + 1 < kurve.size(); ++i)
+    const double grund = std::clamp(grundpegel, 0.0, 1.0);
+    if (ein.dauerMs <= 0 && aus.dauerMs <= 0 && stuecke.empty()) return grund;
+
+    const Verteilung v = verteilung();
+    // Anteil 0…1 im Bereich
+    const auto anteil = [zeitImClipMs](const Bereich& b) {
+        return std::clamp(static_cast<double>(zeitImClipMs - b.vonMs) / static_cast<double>(b.weiteMs()),
+                          0.0, 1.0);
+    };
+    if (v.ein.weiteMs() > 0 && zeitImClipMs < v.ein.bisMs)
+        return grund * blendenPegel(ein.form, anteil(v.ein), false);
+    if (v.aus.weiteMs() > 0 && zeitImClipMs >= v.aus.vonMs)
+        return grund * blendenPegel(aus.form, anteil(v.aus), true);
+    for (std::size_t i = 0; i < stuecke.size(); ++i)
     {
-        const PegelPunkt& a = kurve[i];
-        const PegelPunkt& b = kurve[i + 1];
-        if (zeitImClipMs >= b.zeitMs) continue;
-        const std::int64_t spanne = b.zeitMs - a.zeitMs;
-        const double t = spanne > 0 ? static_cast<double>(zeitImClipMs - a.zeitMs) /
-                                          static_cast<double>(spanne)
-                                    : 1.0;
-        return std::clamp(a.pegel + (b.pegel - a.pegel) * kurvenWert(a, t), 0.0, 1.0);
+        const Bereich& b = v.stuecke[i];
+        // ein Stueck, das bis ans Clip-Ende reicht, gilt auch genau dort
+        const bool hinter = zeitImClipMs >= b.bisMs && b.bisMs < dauerMs();
+        if (b.weiteMs() <= 0 || zeitImClipMs < b.vonMs || hinter) continue;
+        // die Form: 1 = der Grundpegel bleibt, 0 = ganz ausgelenkt
+        const double w = stuecke[i].form.wert(anteil(b));
+        return stuecke[i].gekippt ? grund + (1.0 - grund) * (1.0 - w) : grund * w;
     }
-    return std::clamp(kurve.back().pegel, 0.0, 1.0);
+    return grund;
 }
 
 void VisualClip::setzeBlenden(std::int64_t einMs, std::int64_t ausMs, Kurvenform form)
 {
-    kurve.clear();
-    const std::int64_t dauer = std::max<std::int64_t>(0, dauerMs());
-    einMs = std::clamp<std::int64_t>(einMs, 0, dauer);
-    ausMs = std::clamp<std::int64_t>(ausMs, 0, dauer);
-    if (einMs + ausMs > dauer)
+    ein = {std::max<std::int64_t>(0, einMs), einfacheBlende(form)};
+    aus = {std::max<std::int64_t>(0, ausMs), einfacheBlende(form)};
+}
+
+bool VisualClip::vollerPegel() const
+{
+    return grundpegel >= 1.0 && ein.dauerMs <= 0 && aus.dauerMs <= 0 && stuecke.empty();
+}
+
+void ausAltenPunkten(VisualClip& clip, std::vector<AltPunkt> punkte)
+{
+    clip.grundpegel = 1.0;
+    clip.ein = {};
+    clip.aus = {};
+    clip.stuecke.clear();
+    if (punkte.empty()) return;
+
+    const std::int64_t dauer = std::max<std::int64_t>(1, clip.dauerMs());
+    std::stable_sort(punkte.begin(), punkte.end(),
+                     [](const AltPunkt& a, const AltPunkt& b) { return a.zeitMs < b.zeitMs; });
+    for (AltPunkt& p : punkte)
     {
-        // beide Blenden treffen sich in der Mitte der Ueberlappung
-        const std::int64_t mitte = (einMs + (dauer - ausMs)) / 2;
-        einMs = mitte;
-        ausMs = dauer - mitte;
+        p.zeitMs = std::clamp<std::int64_t>(p.zeitMs, 0, dauer);
+        p.pegel = std::clamp(p.pegel, 0.0, 1.0);
     }
-    if (einMs == 0 && ausMs == 0) return;
-    if (einMs > 0)
+
+    // Das Muster, das die Blenden-Griffe bis S95 schrieben: zwei Punkte = eine
+    // Seite; drei = beide, in der Mitte vereint; vier = beide.
+    const auto null = [](double pegel) { return pegel < 0.001; };
+    const auto voll = [](double pegel) { return pegel > 0.999; };
+    const std::size_t n = punkte.size();
+    if (n >= 2 && n <= 4)
     {
-        kurve.push_back({0, 0.0, form});
-        kurve.push_back({einMs, 1.0, Kurvenform::Linear});
+        const bool istEin = punkte[0].zeitMs == 0 && null(punkte[0].pegel) && voll(punkte[1].pegel);
+        const bool istAus = punkte[n - 1].zeitMs == dauer && null(punkte[n - 1].pegel) &&
+                            voll(punkte[n - 2].pegel);
+        if ((n == 2 && istEin != istAus) || (n >= 3 && istEin && istAus))
+        {
+            if (istEin)
+                clip.ein = {punkte[1].zeitMs, einfacheBlende(punkte[0].form, punkte[0].bezier)};
+            if (istAus)
+                clip.aus = {dauer - punkte[n - 2].zeitMs,
+                            alteAusblende(punkte[n - 2].form, punkte[n - 2].bezier)};
+            return;
+        }
     }
-    if (ausMs > 0)
+
+    // Jede andere Kurve: ein Stueck ueber den ganzen Clip, Punkt fuer Punkt.
+    ClipStueck stueck;
+    stueck.lage = 0.5;
+    stueck.weiteMs = dauer;
+    stueck.form.art = FormArt::Stueck;
+    stueck.form.punkte.clear();
+    if (punkte.front().zeitMs > 0)  // vor dem ersten Punkt galt dessen Pegel
+        stueck.form.punkte.push_back(FormPunkt{0.0, punkte.front().pegel});
+    for (const AltPunkt& p : punkte)
+        stueck.form.punkte.push_back(FormPunkt{static_cast<double>(p.zeitMs) / static_cast<double>(dauer),
+                                               p.pegel, p.form, p.bezier});
+    if (punkte.back().zeitMs < dauer)  // nach dem letzten der letzte
     {
-        if (kurve.empty() || kurve.back().zeitMs < dauer - ausMs)
-            kurve.push_back({dauer - ausMs, 1.0, form});
-        else
-            kurve.back().form = form;
-        kurve.push_back({dauer, 0.0, Kurvenform::Linear});
+        stueck.form.punkte.back().form = Kurvenform::Linear;
+        stueck.form.punkte.push_back(FormPunkt{1.0, punkte.back().pegel});
     }
+    clip.stuecke.push_back(std::move(stueck));
 }
 
 std::int64_t Komposition::laenge() const
@@ -170,12 +207,21 @@ void Komposition::richte(QStringList* bericht)
                           .arg(kanal.name, QFileInfo(c.datei).fileName()));
                 c.endeMs = c.startMs + 1000;
             }
-            std::stable_sort(c.kurve.begin(), c.kurve.end(),
-                             [](const PegelPunkt& a, const PegelPunkt& b) { return a.zeitMs < b.zeitMs; });
-            for (PegelPunkt& p : c.kurve)
+            // Blenden und Stuecke: Unsinn klemmen. Weiten ueber die Clip-Laenge
+            // hinaus bleiben — sie sind eingestellt, gestaucht wird beim Rechnen.
+            c.grundpegel = std::clamp(c.grundpegel, 0.0, 1.0);
+            for (ClipBlende* b : {&c.ein, &c.aus})
             {
-                p.zeitMs = std::clamp<std::int64_t>(p.zeitMs, 0, c.dauerMs());
-                p.pegel = std::clamp(p.pegel, 0.0, 1.0);
+                b->dauerMs = std::max<std::int64_t>(0, b->dauerMs);
+                b->form.art = FormArt::Blende;
+                b->form.richte();
+            }
+            for (ClipStueck& s : c.stuecke)
+            {
+                s.lage = std::clamp(s.lage, 0.0, 1.0);
+                s.weiteMs = std::max<std::int64_t>(0, s.weiteMs);
+                s.form.art = FormArt::Stueck;
+                s.form.richte();
             }
         }
         std::stable_sort(kanal.visual.begin(), kanal.visual.end(),
@@ -223,19 +269,30 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                 o.insert(QStringLiteral("start"), static_cast<double>(c.startMs));
                 o.insert(QStringLiteral("end"), static_cast<double>(c.endeMs));
                 o.insert(QStringLiteral("blend"), static_cast<int>(c.mischart));
-                QJsonArray punkte;
-                for (const PegelPunkt& p : c.kurve)
+                // Pegelkurve: nur, was der Clip hat — alle Teile sind freiwillig
+                if (c.grundpegel < 1.0) o.insert(QStringLiteral("base"), c.grundpegel);
+                const auto blende = [](const ClipBlende& b) {
+                    QJsonObject bo;
+                    bo.insert(QStringLiteral("ms"), static_cast<double>(b.dauerMs));
+                    bo.insert(QStringLiteral("shape"), formAlsJson(b.form));
+                    return bo;
+                };
+                if (c.ein.dauerMs > 0) o.insert(QStringLiteral("fadeIn"), blende(c.ein));
+                if (c.aus.dauerMs > 0) o.insert(QStringLiteral("fadeOut"), blende(c.aus));
+                if (!c.stuecke.empty())
                 {
-                    QJsonObject po;
-                    po.insert(QStringLiteral("t"), static_cast<double>(p.zeitMs));
-                    po.insert(QStringLiteral("level"), p.pegel);
-                    po.insert(QStringLiteral("curve"), static_cast<int>(p.form));
-                    if (p.form == Kurvenform::Bezier)  // nur dann: alte Dateien bleiben, wie sie sind
-                        po.insert(QStringLiteral("bezier"),
-                                  QJsonArray{p.bezier[0], p.bezier[1], p.bezier[2], p.bezier[3]});
-                    punkte.append(po);
+                    QJsonArray stuecke;
+                    for (const ClipStueck& s : c.stuecke)
+                    {
+                        QJsonObject so;
+                        so.insert(QStringLiteral("pos"), s.lage);
+                        so.insert(QStringLiteral("width"), static_cast<double>(s.weiteMs));
+                        so.insert(QStringLiteral("flipped"), s.gekippt);
+                        so.insert(QStringLiteral("shape"), formAlsJson(s.form));
+                        stuecke.append(so);
+                    }
+                    o.insert(QStringLiteral("shapes"), stuecke);
                 }
-                o.insert(QStringLiteral("levels"), punkte);
                 clips.append(o);
             }
         }
@@ -294,21 +351,58 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                 c.endeMs = static_cast<std::int64_t>(o.value(QStringLiteral("end")).toDouble());
                 c.mischart = static_cast<Mischart>(
                     std::clamp(o.value(QStringLiteral("blend")).toInt(), 0, kMischarten - 1));
+                // Bis S95: die Pegelkurve als Punkte in Millisekunden (`levels`).
+                // Sie wird in Blenden oder ein Stueck uebersetzt; geschrieben
+                // wird nur noch die neue Fassung.
                 const QJsonArray punkte = o.value(QStringLiteral("levels")).toArray();
-                for (const QJsonValue& pv : punkte)
+                if (!punkte.isEmpty())
                 {
-                    const QJsonObject po = pv.toObject();
-                    PegelPunkt p;
-                    p.zeitMs = static_cast<std::int64_t>(po.value(QStringLiteral("t")).toDouble());
-                    p.pegel = po.value(QStringLiteral("level")).toDouble(1.0);
-                    p.form = static_cast<Kurvenform>(
-                        std::clamp(po.value(QStringLiteral("curve")).toInt(), 0, kKurvenformen - 1));
-                    const QJsonArray griffe = po.value(QStringLiteral("bezier")).toArray();
-                    if (griffe.size() == 4)
-                        for (int i = 0; i < 4; ++i)
-                            p.bezier[static_cast<std::size_t>(i)] =
-                                std::clamp(griffe.at(i).toDouble(), 0.0, 1.0);
-                    c.kurve.push_back(p);
+                    std::vector<AltPunkt> alt;
+                    for (const QJsonValue& pv : punkte)
+                    {
+                        const QJsonObject po = pv.toObject();
+                        AltPunkt p;
+                        p.zeitMs = static_cast<std::int64_t>(po.value(QStringLiteral("t")).toDouble());
+                        p.pegel = po.value(QStringLiteral("level")).toDouble(1.0);
+                        p.form = static_cast<Kurvenform>(
+                            std::clamp(po.value(QStringLiteral("curve")).toInt(), 0, kKurvenformen - 1));
+                        const QJsonArray griffe = po.value(QStringLiteral("bezier")).toArray();
+                        if (griffe.size() == 4)
+                            for (int i = 0; i < 4; ++i)
+                                p.bezier[static_cast<std::size_t>(i)] =
+                                    std::clamp(griffe.at(i).toDouble(), 0.0, 1.0);
+                        alt.push_back(p);
+                    }
+                    // die Laenge, die `richte` dem Clip gleich gibt
+                    VisualClip mass = c;
+                    mass.startMs = std::max<std::int64_t>(0, mass.startMs);
+                    if (mass.endeMs <= mass.startMs) mass.endeMs = mass.startMs + 1000;
+                    ausAltenPunkten(mass, std::move(alt));
+                    c.ein = mass.ein;
+                    c.aus = mass.aus;
+                    c.stuecke = mass.stuecke;
+                }
+                c.grundpegel = o.value(QStringLiteral("base")).toDouble(1.0);
+                const auto blende = [&o](const QString& feld, ClipBlende& b) {
+                    if (!o.value(feld).isObject()) return;
+                    const QJsonObject bo = o.value(feld).toObject();
+                    b.dauerMs = static_cast<std::int64_t>(bo.value(QStringLiteral("ms")).toDouble());
+                    if (!formAusJson(bo.value(QStringLiteral("shape")).toObject(), b.form))
+                        b.form = einfacheBlende();
+                };
+                blende(QStringLiteral("fadeIn"), c.ein);
+                blende(QStringLiteral("fadeOut"), c.aus);
+                const QJsonArray stuecke = o.value(QStringLiteral("shapes")).toArray();
+                for (const QJsonValue& sv : stuecke)
+                {
+                    const QJsonObject so = sv.toObject();
+                    ClipStueck s;
+                    s.lage = so.value(QStringLiteral("pos")).toDouble(0.5);
+                    s.weiteMs = static_cast<std::int64_t>(so.value(QStringLiteral("width")).toDouble());
+                    s.gekippt = so.value(QStringLiteral("flipped")).toBool(false);
+                    if (!formAusJson(so.value(QStringLiteral("shape")).toObject(), s.form))
+                        s.form = delle();
+                    c.stuecke.push_back(std::move(s));
                 }
                 kanal.visual.push_back(std::move(c));
             }

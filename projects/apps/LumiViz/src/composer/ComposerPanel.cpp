@@ -312,7 +312,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             p.drawRoundedRect(r, 4, 4);
 
             // die Pegelkurve: Hoehe im Clip = Pegel
-            if (!clip.kurve.empty() && r.width() > 8 && clip.dauerMs() > 0)
+            if (!clip.vollerPegel() && r.width() > 8 && clip.dauerMs() > 0)
             {
                 QPainterPath kurve;
                 const int stuetzen = std::clamp(r.width() / 3, 8, 200);
@@ -353,16 +353,20 @@ void Zeitachse::paintEvent(QPaintEvent*)
                     const QPoint a1 = bezierGriff(k, c, ein, 0);
                     const QPoint a2 = bezierGriff(k, c, ein, 1);
                     if (a1.x() < 0) continue;
-                    // die Hebel: vom Anfang der Blende zum ersten, vom Ende zum zweiten Anfasser
+                    // die Hebel: vom Fuss der Blende (Pegel null) zum ersten, von
+                    // ihrem Kopf (Grundpegel) zum zweiten Anfasser — die
+                    // Ausblendung laeuft rueckwaerts, ihr Fuss liegt rechts
+                    QRect br;
+                    int x0 = 0;
+                    int x1 = 0;
                     Blenden b;
-                    (void)liesBlenden(clip, b);
-                    const int x0 = ein ? xVon(clip.startMs) : xVon(clip.endeMs - b.ausMs);
-                    const int x1 = ein ? xVon(clip.startMs + b.einMs) : xVon(clip.endeMs);
+                    if (!blendenBereich(k, c, ein, &br, &x0, &x1, &b)) continue;
                     const int unten0 = r.bottom() - 1;
-                    const int oben0 = r.bottom() - 1 - (r.height() - 3);
+                    const int oben0 =
+                        r.bottom() - 1 - static_cast<int>(clip.grundpegel * (r.height() - 3) + 0.5);
                     p.setPen(QPen(QColor(255, 220, 120), 1.0));
-                    p.drawLine(QPoint(x0, ein ? unten0 : oben0), a1);
-                    p.drawLine(QPoint(x1, ein ? oben0 : unten0), a2);
+                    p.drawLine(QPoint(ein ? x0 : x1, unten0), a1);
+                    p.drawLine(QPoint(ein ? x1 : x0, oben0), a2);
                     p.setBrush(QColor(255, 220, 120));
                     p.drawEllipse(a1, 4, 4);
                     p.drawEllipse(a2, 4, 4);
@@ -512,8 +516,11 @@ bool Zeitachse::blendenBereich(int kanal, int clip, bool ein, QRect* clipRect, i
     if (!liesBlenden(c, *blenden)) return false;
     *clipRect = clipRechteck(kanal, c);  // Zeile = Kanal (CH1 oben)
     if (clipRect->width() < 24) return false;  // zu schmal fuer Griffe
-    *x0 = ein ? xVon(c.startMs) : xVon(c.endeMs - blenden->ausMs);
-    *x1 = ein ? xVon(c.startMs + blenden->einMs) : xVon(c.endeMs);
+    // wo die Blende gerade liegt — gestaucht, wenn der Platz nicht reicht
+    const Verteilung v = c.verteilung();
+    const Bereich& bereich = ein ? v.ein : v.aus;
+    *x0 = xVon(c.startMs + bereich.vonMs);
+    *x1 = xVon(c.startMs + bereich.bisMs);
     return true;
 }
 
@@ -538,8 +545,12 @@ QPoint Zeitachse::bezierGriff(int kanal, int clip, bool ein, int nr) const
     const BezierGriffe& g = ein ? b.einBezier : b.ausBezier;
     const double bx = g[static_cast<std::size_t>(nr * 2)];
     const double by = g[static_cast<std::size_t>(nr * 2 + 1)];
-    const double pegel = ein ? by : 1.0 - by;  // die Einblendung steigt, die Ausblendung faellt
-    return {x0 + static_cast<int>(bx * (x1 - x0) + 0.5),
+    // die Ausblendung ist dieselbe Form, rueckwaerts gelesen (an der y-Achse gespiegelt)
+    const double x = ein ? bx : 1.0 - bx;
+    const double pegel = by * m_komposition.kanaele[static_cast<std::size_t>(kanal)]
+                                  .visual[static_cast<std::size_t>(clip)]
+                                  .grundpegel;
+    return {x0 + static_cast<int>(x * (x1 - x0) + 0.5),
             r.bottom() - 1 - static_cast<int>(pegel * (r.height() - 3) + 0.5)};
 }
 
@@ -650,9 +661,14 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
         case Griff::BezierAus1:
         case Griff::BezierAus2:
         {
+            // Entscheid Patrik S96: ein gestauchtes Teil von Hand aendern heisst,
+            // erst den sichtbaren Stand festschreiben — danach bewegt sich nur,
+            // was angefasst wird
+            VisualClip fest = alt;
+            schreibeFest(fest);
             Blenden b;
-            if (!liesBlenden(alt, b)) return;
-            const std::int64_t dauer = alt.dauerMs();
+            if (!liesBlenden(fest, b)) return;
+            const std::int64_t dauer = fest.dauerMs();
             if (m_griff == Griff::BlendeEin)
                 b.einMs = std::clamp<std::int64_t>(gerastet(maus) - alt.startMs, 0, dauer - b.ausMs);
             else if (m_griff == Griff::BlendeAus)
@@ -663,18 +679,22 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
                 const bool ein = m_griff == Griff::BezierEin1 || m_griff == Griff::BezierEin2;
                 const std::size_t nr = (m_griff == Griff::BezierEin2 || m_griff == Griff::BezierAus2) ? 1 : 0;
                 const QRect r = clipRechteck(m_zugKanal, alt);
-                const int x0 = ein ? xVon(alt.startMs) : xVon(alt.endeMs - b.ausMs);
-                const int x1 = ein ? xVon(alt.startMs + b.einMs) : xVon(alt.endeMs);
-                const double bx = std::clamp(static_cast<double>(ort.x() - x0) / std::max(1, x1 - x0), 0.0, 1.0);
-                const double pegel = std::clamp(
-                    static_cast<double>(r.bottom() - 1 - ort.y()) / std::max(1, r.height() - 3), 0.0, 1.0);
+                const Verteilung v = fest.verteilung();
+                const Bereich& bereich = ein ? v.ein : v.aus;
+                const int x0 = xVon(alt.startMs + bereich.vonMs);
+                const int x1 = xVon(alt.startMs + bereich.bisMs);
+                const double x = std::clamp(static_cast<double>(ort.x() - x0) / std::max(1, x1 - x0), 0.0, 1.0);
+                const double hoehe = std::max(1.0, fest.grundpegel * (r.height() - 3));
+                const double pegel =
+                    std::clamp(static_cast<double>(r.bottom() - 1 - ort.y()) / hoehe, 0.0, 1.0);
                 BezierGriffe& g = ein ? b.einBezier : b.ausBezier;
-                g[nr * 2] = bx;
-                g[nr * 2 + 1] = ein ? pegel : 1.0 - pegel;
+                g[nr * 2] = ein ? x : 1.0 - x;  // die Ausblendung laeuft rueckwaerts
+                g[nr * 2 + 1] = pegel;
             }
-            setzeBlenden(m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
-                             .visual[static_cast<std::size_t>(m_zugClip)],
-                         b);
+            VisualClip& gezogen = m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
+                                      .visual[static_cast<std::size_t>(m_zugClip)];
+            gezogen = fest;
+            setzeBlenden(gezogen, b);
             platz = m_zugClip;
             break;
         }
