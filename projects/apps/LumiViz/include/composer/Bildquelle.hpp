@@ -152,6 +152,10 @@ public:
     [[nodiscard]] const MultiEffectVisualizer* festerRendererNurSehen() const;
     /// Die Oberflaeche haengt nicht mehr am herausgegebenen Renderer.
     void gibFrei();
+    /// Die Kette des festgehaltenen Clips wurde unter diesem Namen gespeichert
+    /// (C3c Schritt 2) — VOR `ersetzeKomposition` mit dem neuen Verweis rufen,
+    /// dann behaelt der Clip seinen Renderer.
+    void festerClipHeisstJetzt(const QString& datei);
     /// Zaehlt jedes Mal, wenn der festgehaltene Clip einen anderen Renderer
     /// hat als im Bild davor (auch: keinen mehr). OHNE Mutex lesbar.
     [[nodiscard]] int festStand() const { return m_festStand.load(); }

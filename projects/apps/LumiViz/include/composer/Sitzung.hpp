@@ -28,6 +28,8 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 class IEventBus;
 class MultiEffectVisualizer;
@@ -150,6 +152,25 @@ public:
     [[nodiscard]] Bindung bindung() const { return m_bindung; }
     /// Der Renderer, an dem Effect Chain haengt (nur bei `Bindung::Clip`).
     [[nodiscard]] MultiEffectVisualizer* gebundenerRenderer() const { return m_gebunden; }
+
+    // --- Die Kette eines Clips speichern (C3c Schritt 2, Entscheid Patrik S95) --
+    //
+    // Immer als Speichern unter: das Original bleibt unberuehrt, der Clip
+    // zeigt danach auf die neue Datei.
+
+    /// Die Preset-Datei des Clips, an dem Effect Chain haengt (leer = keiner).
+    [[nodiscard]] QString gebundeneDatei() const;
+    /// Hat die Kette dieses Clips eine Host-Gruppe? (bestimmt die Endung)
+    [[nodiscard]] bool gebundeneKetteHatHostGruppe() const;
+    /// Die anderen Clips der Komposition, die dieselbe Datei benutzen wie der
+    /// gebundene — als (Kanal, Clip).
+    [[nodiscard]] std::vector<std::pair<int, int>> andereClipsMitDerDatei() const;
+    /// Die Kette des gebundenen Clips nach `pfad` schreiben; er und die Clips
+    /// in `auchDiese` zeigen danach auf diese Datei. false = kein Clip
+    /// gebunden, `pfad` ist das Original, oder Schreibfehler — dann aendert
+    /// sich nichts.
+    bool speichereClipKette(const QString& pfad,
+                            const std::vector<std::pair<int, int>>& auchDiese = {});
 
     // --- Einstellungen (QSettings unter `composer/…`) -------------------------
 

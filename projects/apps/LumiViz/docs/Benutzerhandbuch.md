@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.85.0
+> **Version:** 1.86.0
 > **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1711,9 +1711,20 @@ zeigt, solange eine Komposition das Bild liefert:
   nicht gerade laufen; zu sehen ist die Änderung, sobald seine Stelle dran ist.
 - **Aus (Standard):** Effect Chain ruht — der Kettenbaum ist leer und grau.
 
-> Die Änderungen an der Kette eines Clips lassen sich **noch nicht
-> speichern**; klickst du einen anderen Clip an oder schaltest den Composer
-> aus, sind sie weg. Das Speichern folgt.
+**Die Kette eines Clips speichern:** mit dem gewohnten Speichern von Effect
+Chain — *File → Save Effect Chain* (Ctrl+S), *Save Effect Chain As...* oder
+die Preset-Zeile. Solange Effect Chain an einem Clip hängt, ist das **immer
+ein Speichern unter neuem Namen**: das ursprüngliche Preset bleibt, wie es
+ist (LumiViz schlägt `<Name>_comp` vor und lehnt den Namen des Originals ab).
+Der Clip zeigt danach auf die neue Datei. Benutzen weitere Clips der
+Komposition dasselbe alte Preset, fragt eine Liste zum Ankreuzen, welche von
+ihnen ebenfalls auf das neue wechseln.
+
+Danach trägt die Komposition einen Stern: der neue Verweis steht erst in der
+`.lvcomp`, wenn du auch sie speicherst (**Save** im Panel Composer).
+
+> Klickst du mit ungespeicherten Änderungen an der Kette einen anderen Clip
+> an oder schaltest den Composer aus, sind sie ohne Rückfrage weg.
 
 ### Das Panel Composer
 
@@ -1907,6 +1918,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.86.0 | 2026-10-05 | Session 95. §15 Composer NEU **die Kette eines Clips speichern**: über das Speichern von Effect Chain, bei gebundenem Clip immer unter neuem Namen; der Clip wechselt auf die neue Datei, weitere Clips mit demselben Preset nach Auswahl |
 | 1.85.0 | 2026-10-05 | Session 95. §15 Composer NEU **Sync on Effect Chain**: Effect Chain zeigt bei laufender Komposition die Kette des angeklickten Clips (Änderungen wirken sofort) oder ruht; Speichern dieser Änderungen noch nicht möglich. Die Datei-Knöpfe des Panels stehen in einer eigenen Zeile |
 | 1.84.1 | 2026-10-05 | Session 95. §15 Composer: beim Bearbeiten einer laufenden Komposition laufen die Presets der Clips jetzt weiter (bisher begannen sie von vorn) |
 | 1.84.0 | 2026-10-05 | Session 95. §15 Composer NEU **Ein- und Ausblenden** im Panel: zwei Griffe oben im Clip für die Länge, Rechtsklick → *Fade in* / *Fade out* für die Form (sieben Formen), NEU die Form **Bezier** mit zwei ziehbaren Anfassern; Datei: `curve` 6 und Feld `bezier` |

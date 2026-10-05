@@ -156,6 +156,11 @@ MultiEffectVisualizer* Bildquelle::festerRenderer()
     return renderer;
 }
 
+void Bildquelle::festerClipHeisstJetzt(const QString& datei)
+{
+    if (m_wiedergabe != nullptr) m_wiedergabe->festerClipHeisstJetzt(datei);
+}
+
 void Bildquelle::gibFrei()
 {
     m_park.geschuetzt = nullptr;

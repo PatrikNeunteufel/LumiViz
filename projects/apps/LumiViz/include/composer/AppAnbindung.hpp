@@ -76,6 +76,17 @@ bool speichereMitDialog(VisualizerWidget& widget, QWidget* eltern, bool immerFra
 /// ungespeicherten Aenderungen. false = abgebrochen.
 bool beginneKomposition(VisualizerWidget& widget, QWidget* eltern);
 
+/// Haengt Effect Chain gerade an einem Clip der Komposition (Sync on Effect
+/// Chain)? Dann gehoert „Save Effect Chain" dem Composer (Naht N11).
+[[nodiscard]] bool clipKetteGebunden(const VisualizerWidget& widget);
+
+/// Die Kette des Clips speichern, an dem Effect Chain haengt (Naht N11,
+/// Entscheid Patrik S95): immer mit Dateidialog und nie ueber das Original;
+/// der Clip zeigt danach auf die neue Datei. Benutzen weitere Clips das alte
+/// Preset, fragt eine Liste zum Ankreuzen, welche mitwechseln. false =
+/// abgebrochen oder nicht geschrieben.
+bool speichereClipKette(VisualizerWidget& widget, QWidget* eltern);
+
 /// Beim Start der App (Naht N4): die zuletzt geladene Komposition wieder ins
 /// Panel; mit „Resume after restart" auch ihr Stand (Konzept §8). false = es
 /// gab keine.

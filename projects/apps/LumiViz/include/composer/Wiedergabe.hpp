@@ -130,6 +130,10 @@ public:
     /// dem Verlust des GL-Kontexts) — ein geparkter Renderer bleibt seiner.
     void setFest(int kanal, int clip, bool andererClip = true);
     [[nodiscard]] std::pair<int, int> fest() const { return m_fest; }
+    /// Die Kette des festgehaltenen Clips wurde unter diesem Namen gespeichert:
+    /// sein Renderer gehoert ab jetzt zu dieser Datei. So behaelt er ihn, wenn
+    /// gleich die Fassung der Komposition mit dem neuen Verweis kommt.
+    void festerClipHeisstJetzt(const QString& datei);
     /// Wo ein geschuetzter Renderer bleibt, wenn die Wiedergabe ihn fallen
     /// laesst (der Besitzer ist die Bildquelle).
     void setParkplatz(Parkplatz* parkplatz) { m_park = parkplatz; }

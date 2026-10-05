@@ -470,6 +470,111 @@ TEST_SUITE("ComposerSitzung")
             sitzung.entlade();
         }
 
+        SUBCASE("C3c Speichern: die Kette eines Clips geht unter neuem Namen weg — das Original bleibt, gewaehlte Clips wechseln mit")
+        {
+            struct BusFuerDieDauer
+            {
+                EventBus bus;
+                BusFuerDieDauer() { Sitzung::setzeBus(&bus); }
+                ~BusFuerDieDauer() { Sitzung::setzeBus(nullptr); }
+            } dienst;
+            int gemeldet = 0;
+            dienst.bus.subscribe<VisualizerChangedEvent>([&](const VisualizerChangedEvent&) { ++gemeldet; });
+
+            // dreimal dasselbe Preset: CH1 0–10 s und 20–30 s, CH2 0–10 s
+            Komposition k;
+            Kanal eins;
+            eins.name = QStringLiteral("CH1");
+            VisualClip a;
+            a.datei = rot;
+            a.startMs = 0;
+            a.endeMs = 10000;
+            VisualClip b = a;
+            b.startMs = 20000;
+            b.endeMs = 30000;
+            eins.visual = {a, b};
+            Kanal zwei;
+            zwei.name = QStringLiteral("CH2");
+            zwei.visual = {a};
+            k.kanaele = {eins, zwei};
+            const QString datei = dir.filePath(QStringLiteral("drei.lvcomp"));
+            REQUIRE(speichereKomposition(k, datei));
+            REQUIRE(sitzung.lade(datei));
+
+            // ohne gebundenen Clip gibt es nichts zu speichern
+            const QString gruenDatei = dir.filePath(QStringLiteral("Gruen.lvfx"));
+            CHECK(sitzung.gebundeneDatei().isEmpty());
+            CHECK(sitzung.andereClipsMitDerDatei().empty());
+            CHECK_FALSE(sitzung.speichereClipKette(gruenDatei));
+            CHECK_FALSE(clipKetteGebunden(widget));
+
+            sitzung.setSync(true);
+            sitzung.setAn(true);
+            sitzung.waehleClip(0, 0);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Clip; }));
+            CHECK(clipKetteGebunden(widget));
+            MultiEffectVisualizer* const renderer = sitzung.gebundenerRenderer();
+            CHECK(QFileInfo(sitzung.gebundeneDatei()) == QFileInfo(rot));
+            CHECK_FALSE(sitzung.gebundeneKetteHatHostGruppe());
+            const auto andere = sitzung.andereClipsMitDerDatei();
+            REQUIRE(andere.size() == 2);
+            CHECK(andere[0] == std::pair<int, int>{0, 1});
+            CHECK(andere[1] == std::pair<int, int>{1, 0});
+
+            // die Kette gruen machen (wie in Effect Chain)
+            {
+                ChainNode wurzel;
+                wurzel.params = ListParams{};
+                ChainNode fuellen;
+                ClearParams cp;
+                cp.color = 0x00FF00;
+                fuellen.params = cp;
+                wurzel.children.push_back(std::move(fuellen));
+                QMutexLocker halt(&widget.renderMutex());
+                (void)renderer->setChain(std::move(wurzel));
+                // (`setChain` merkt den Stand selbst als gespeichert — ob die
+                // Kette als geaendert gilt, prueft dieser Test darum nicht)
+            }
+
+            // ueber das Original geht es nicht
+            CHECK_FALSE(sitzung.speichereClipKette(rot));
+            CHECK(QFileInfo(sitzung.gebundeneDatei()) == QFileInfo(rot));
+
+            // unter neuem Namen: dieser Clip und der in CH2 wechseln, der zweite in CH1 nicht
+            const int meldungen = gemeldet;
+            REQUIRE(sitzung.speichereClipKette(gruenDatei, {{1, 0}}));
+            const auto& kanaele = sitzung.komposition().kanaele;
+            CHECK(QFileInfo(kanaele[0].visual[0].datei) == QFileInfo(gruenDatei));
+            CHECK(QFileInfo(kanaele[1].visual[0].datei) == QFileInfo(gruenDatei));
+            CHECK(QFileInfo(kanaele[0].visual[1].datei) == QFileInfo(rot));
+            CHECK(sitzung.ungespeichert());  // die Komposition verweist jetzt anders
+            {
+                QMutexLocker halt(&widget.renderMutex());
+                CHECK_FALSE(renderer->ketteGeaendert());  // die Kette gilt als gespeichert
+            }
+            // die neue Datei traegt die geaenderte Kette, das Original die alte
+            ChainNode gelesen;
+            QStringList bericht;
+            REQUIRE(loadChainFromFile(gruenDatei, gelesen, &bericht));
+            REQUIRE(gelesen.children.size() == 1);
+            CHECK(std::get<ClearParams>(gelesen.children[0].params).color == 0x00FF00);
+            REQUIRE(loadChainFromFile(rot, gelesen, &bericht));
+            CHECK(std::get<ClearParams>(gelesen.children[0].params).color == 0xFF0000);
+
+            // Effect Chain haengt weiter am selben Renderer — nichts wurde neu gemeldet
+            for (int i = 0; i < 12; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Clip);
+            CHECK(sitzung.gebundenerRenderer() == renderer);
+            CHECK(gemeldet == meldungen);
+            CHECK(sitzung.andereClipsMitDerDatei().size() == 1);  // jetzt: der Clip in CH2
+            // im Bild: CH1 gruen, darueber CH2 — auch gruen, neu geladen aus der neuen Datei
+            CHECK(bildJetzt() == QColor(0, 255, 0));
+            // an der Stelle des zweiten CH1-Clips laeuft weiter das Original
+            sitzung.springe(25000);
+            CHECK(bildJetzt() == kRot);
+            sitzung.entlade();
+        }
+
         SUBCASE("Oeffnen von Hand: spielt sofort — oder haelt am Anfang (Einstellung)")
         {
             CHECK_FALSE(Sitzung::oeffnenHaelt());

@@ -11,6 +11,7 @@
 #include "services/IEventBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
+#include "visualizers/multieffect/EffectChain.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -362,6 +363,77 @@ void Sitzung::bindeKette()
                                           &m_widget.renderMutex()});
     m_bindung = Bindung::Clip;
     m_gebunden = renderer;
+}
+
+// -----------------------------------------------------------------------------
+// Die Kette eines Clips speichern (C3c Schritt 2)
+// -----------------------------------------------------------------------------
+
+QString Sitzung::gebundeneDatei() const
+{
+    // Ist die Bindung gerade im Umbruch (eine neue Auswahl, noch nicht
+    // verarbeitet), nennt die Auswahl womoeglich schon einen anderen Clip.
+    if (m_bindung != Bindung::Clip || m_bindungOffen) return {};
+    if (m_wahlKanal < 0 || m_wahlKanal >= static_cast<int>(m_komposition.kanaele.size())) return {};
+    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(m_wahlKanal)].visual;
+    if (m_wahlClip < 0 || m_wahlClip >= static_cast<int>(clips.size())) return {};
+    return clips[static_cast<std::size_t>(m_wahlClip)].datei;
+}
+
+bool Sitzung::gebundeneKetteHatHostGruppe() const
+{
+    if (m_bindung != Bindung::Clip || m_gebunden == nullptr) return false;
+    QMutexLocker halt(&m_widget.renderMutex());
+    return lumi::multieffect::chainHasHostGroup(m_gebunden->chain());
+}
+
+std::vector<std::pair<int, int>> Sitzung::andereClipsMitDerDatei() const
+{
+    std::vector<std::pair<int, int>> andere;
+    const QString datei = gebundeneDatei();
+    if (datei.isEmpty()) return andere;
+    for (int k = 0; k < static_cast<int>(m_komposition.kanaele.size()); ++k)
+    {
+        const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].visual;
+        for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+        {
+            if (k == m_wahlKanal && c == m_wahlClip) continue;
+            if (QFileInfo(clips[static_cast<std::size_t>(c)].datei) == QFileInfo(datei))
+                andere.emplace_back(k, c);
+        }
+    }
+    return andere;
+}
+
+bool Sitzung::speichereClipKette(const QString& pfad, const std::vector<std::pair<int, int>>& auchDiese)
+{
+    const QString alt = gebundeneDatei();
+    Bildquelle* q = quelle();
+    if (alt.isEmpty() || q == nullptr || m_gebunden == nullptr || pfad.isEmpty()) return false;
+    // nur Speichern unter: das Original bleibt, wie es ist
+    if (QFileInfo(pfad) == QFileInfo(alt)) return false;
+    const QString neu = QFileInfo(pfad).absoluteFilePath();
+    {
+        QMutexLocker halt(&m_widget.renderMutex());
+        if (!m_gebunden->saveChainFile(neu)) return false;
+        m_gebunden->merkeKettenStand();  // ab jetzt gilt die Kette als gespeichert
+        q->festerClipHeisstJetzt(neu);   // sein Renderer gehoert jetzt zur neuen Datei
+    }
+    Komposition fassung = m_komposition;
+    fassung.kanaele[static_cast<std::size_t>(m_wahlKanal)]
+        .visual[static_cast<std::size_t>(m_wahlClip)]
+        .datei = neu;
+    for (const auto& [k, c] : auchDiese)
+    {
+        if (k < 0 || k >= static_cast<int>(fassung.kanaele.size())) continue;
+        auto& clips = fassung.kanaele[static_cast<std::size_t>(k)].visual;
+        if (c < 0 || c >= static_cast<int>(clips.size())) continue;
+        if (QFileInfo(clips[static_cast<std::size_t>(c)].datei) == QFileInfo(alt))
+            clips[static_cast<std::size_t>(c)].datei = neu;
+    }
+    BasicLogger::logInfo("Composer: clip preset saved as " + QDir::toNativeSeparators(neu).toStdString());
+    setzeKomposition(fassung);
+    return true;
 }
 
 // =============================================================================

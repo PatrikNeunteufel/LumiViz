@@ -47,6 +47,14 @@ void Wiedergabe::setFest(int kanal, int clip, bool andererClip)
     m_fest = neu;
 }
 
+void Wiedergabe::festerClipHeisstJetzt(const QString& datei)
+{
+    if (m_fest.first < 0 || m_fest.first >= static_cast<int>(m_komposition.kanaele.size())) return;
+    auto& clips = m_komposition.kanaele[static_cast<size_t>(m_fest.first)].visual;
+    if (m_fest.second < 0 || m_fest.second >= static_cast<int>(clips.size())) return;
+    clips[static_cast<size_t>(m_fest.second)].datei = datei;
+}
+
 void Wiedergabe::setKomposition(Komposition komposition)
 {
     entladeAlles();

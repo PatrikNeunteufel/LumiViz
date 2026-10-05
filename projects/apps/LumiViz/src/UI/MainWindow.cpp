@@ -1072,8 +1072,19 @@ void MainWindow::setupEventHandlers()
         });
 
     // Save / Save As (S89, Entscheid Patrik 3a) — Regel: UI/PresetSpeichern.hpp
-    pEventBus->subscribe<SaveEffectChainEvent>(
-        [this](const SaveEffectChainEvent& ev) { (void)speichereKette(ev.saveAs); });
+    pEventBus->subscribe<SaveEffectChainEvent>([this](const SaveEffectChainEvent& ev) {
+        // Composer-Naht N11 (docs/ui/Composer_Konzept.md §12.2): haengt Effect
+        // Chain an einem Clip der Komposition, speichert der Composer dessen
+        // Kette — immer unter neuem Namen. Nur hier, beim Speichern von Hand:
+        // die Rueckfrage zur Kette der App (darfKetteErsetzen) bleibt bei ihr.
+        if (VisualizerWidget* widget = primaryVisualizer();
+            widget != nullptr && lumi::composer::clipKetteGebunden(*widget))
+        {
+            (void)lumi::composer::speichereClipKette(*widget, this);
+            return;
+        }
+        (void)speichereKette(ev.saveAs);
+    });
 
     // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2): Menue File →
     // Open / Close Composition; alles Weitere in composer/AppAnbindung

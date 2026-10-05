@@ -9,7 +9,15 @@
 #include "composer/Bildquelle.hpp"
 #include "composer/Sitzung.hpp"
 
+#include "UI/PresetSpeichern.hpp"
+#include "composer/ComposerPanel.hpp"
+
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
+#include <QLabel>
+#include <QListWidget>
+#include <QVBoxLayout>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
@@ -93,6 +101,93 @@ bool speichereMitDialog(VisualizerWidget& widget, QWidget* eltern, bool immerFra
     QMessageBox::warning(eltern, titel,
                          QObject::tr("Could not save the composition:\n%1")
                              .arg(QDir::toNativeSeparators(pfad)));
+    return false;
+}
+
+bool clipKetteGebunden(const VisualizerWidget& widget)
+{
+    const Sitzung* sitzung = Sitzung::finde(widget);
+    return sitzung != nullptr && sitzung->bindung() == Sitzung::Bindung::Clip;
+}
+
+bool speichereClipKette(VisualizerWidget& widget, QWidget* eltern)
+{
+    Sitzung* sitzung = Sitzung::finde(widget);
+    const QString titel = QObject::tr("Save Clip Preset As");
+    if (sitzung == nullptr) return false;
+    const QString alt = sitzung->gebundeneDatei();
+    if (alt.isEmpty())
+    {
+        QMessageBox::information(eltern, titel,
+                                 QObject::tr("The Effect Chain panel is just switching to another "
+                                             "clip. Please try again."));
+        return false;
+    }
+
+    // --- der neue Name: nie das Original (Entscheid Patrik S95)
+    const QString endung = lumi::ui::kettenEndung(sitzung->gebundeneKetteHatHostGruppe());
+    const QFileInfo original(alt);
+    QString pfad = original.absolutePath() + QLatin1Char('/') + original.completeBaseName() +
+                   QStringLiteral("_comp") + endung;
+    for (;;)
+    {
+        pfad = QFileDialog::getSaveFileName(eltern, titel, pfad,
+                                            QObject::tr("LumiViz Effect Chain (*.lvfx *.lvfx2)"));
+        if (pfad.isEmpty()) return false;
+        if (pfad.endsWith(QStringLiteral(".lvfx2"), Qt::CaseInsensitive))
+            pfad.chop(6);
+        else if (pfad.endsWith(QStringLiteral(".lvfx"), Qt::CaseInsensitive))
+            pfad.chop(5);
+        pfad += endung;
+        if (QFileInfo(pfad) != original) break;
+        QMessageBox::information(
+            eltern, titel,
+            QObject::tr("The preset of a clip is always saved under a new name, so the original "
+                        "'%1' stays as it is. Please choose another name.")
+                .arg(original.fileName()));
+    }
+
+    // --- benutzen weitere Clips das alte Preset? Welche wechseln mit?
+    std::vector<std::pair<int, int>> auchDiese;
+    const std::vector<std::pair<int, int>> andere = sitzung->andereClipsMitDerDatei();
+    if (!andere.empty())
+    {
+        QDialog frage(eltern);
+        frage.setWindowTitle(titel);
+        auto* aufbau = new QVBoxLayout(&frage);
+        aufbau->addWidget(new QLabel(
+            QObject::tr("%n other clip(s) of this composition use '%1'.\n"
+                        "Tick the ones that should switch to the new preset as well.",
+                        nullptr, static_cast<int>(andere.size()))
+                .arg(original.fileName()),
+            &frage));
+        auto* liste = new QListWidget(&frage);
+        for (const auto& [k, c] : andere)
+        {
+            const Kanal& kanal = sitzung->komposition().kanaele[static_cast<std::size_t>(k)];
+            const VisualClip& clip = kanal.visual[static_cast<std::size_t>(c)];
+            auto* zeile = new QListWidgetItem(
+                QStringLiteral("%1 · %2 – %3")
+                    .arg(kanal.name, ComposerPanel::zeitText(clip.startMs),
+                         ComposerPanel::zeitText(clip.endeMs)),
+                liste);
+            zeile->setFlags(zeile->flags() | Qt::ItemIsUserCheckable);
+            zeile->setCheckState(Qt::Checked);
+        }
+        aufbau->addWidget(liste);
+        auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, &frage);
+        QObject::connect(knoepfe, &QDialogButtonBox::accepted, &frage, &QDialog::accept);
+        QObject::connect(knoepfe, &QDialogButtonBox::rejected, &frage, &QDialog::reject);
+        aufbau->addWidget(knoepfe);
+        if (frage.exec() != QDialog::Accepted) return false;  // nichts geschrieben
+        for (int i = 0; i < liste->count(); ++i)
+            if (liste->item(i)->checkState() == Qt::Checked)
+                auchDiese.push_back(andere[static_cast<std::size_t>(i)]);
+    }
+
+    if (sitzung->speichereClipKette(pfad, auchDiese)) return true;
+    QMessageBox::warning(eltern, titel,
+                         QObject::tr("Could not save:\n%1").arg(QDir::toNativeSeparators(pfad)));
     return false;
 }
 
