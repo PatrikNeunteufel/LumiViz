@@ -207,21 +207,21 @@ TEST_SUITE("ComposerPanel")
         CHECK(achse->xVon(0) == Zeitachse::kKopfBreite);
         CHECK(achse->xVon(60000) == achse->width() - Zeitachse::kRand);
         CHECK(achse->stelleVon(achse->xVon(30000)) == doctest::Approx(30000).epsilon(0.01));
-        // der oberste Kanal des Stapels steht in der obersten Zeile
-        CHECK(achse->kanalVonZeile(0) == 1);
-        CHECK(achse->kanalVonZeile(1) == 0);
+        // CH1 steht in der obersten Zeile (Entscheid Patrik S95)
+        CHECK(achse->kanalVonZeile(0) == 0);
+        CHECK(achse->kanalVonZeile(1) == 1);
 
         // --- Clips anklicken
-        klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(0)));  // CH2, Blau
+        klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(1)));  // CH2, Blau
         CHECK(achse->gewaehlterKanal() == 1);
         CHECK(achse->gewaehlterClip() == 0);
         CHECK(clipZeile->text() ==
               QStringLiteral("CH2 · Blau.lvfx · 0:15.0 – 0:35.0 · Additive"));
-        klick(*achse, QPoint(achse->xVon(45000), achse->yVonZeile(1)));  // CH1, zweiter Clip
+        klick(*achse, QPoint(achse->xVon(45000), achse->yVonZeile(0)));  // CH1, zweiter Clip
         CHECK(achse->gewaehlterKanal() == 0);
         CHECK(achse->gewaehlterClip() == 1);
         CHECK(clipZeile->text().startsWith(QStringLiteral("CH1 · Blau.lvfx · 0:30.0 – 1:00.0")));
-        klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(1)));  // Luecke in CH1
+        klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(0)));  // Luecke in CH1
         CHECK(achse->auswahl() == nullptr);
         CHECK(clipZeile->text() == QStringLiteral("No clip selected"));
 
@@ -267,7 +267,7 @@ TEST_SUITE("ComposerPanel")
         const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD");
         if (!bild.isEmpty())
         {
-            klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(0)));
+            klick(*achse, QPoint(achse->xVon(25000), achse->yVonZeile(1)));
             sitzung->springe(22000);
             QCoreApplication::processEvents();
             CHECK(panel.grab().save(bild));

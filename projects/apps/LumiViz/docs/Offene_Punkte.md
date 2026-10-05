@@ -3676,6 +3676,22 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 ## 8. Werkzeug- und Doku-Schulden
 
+- 🟠 **Settings: der Reiter „Panels" ist ein Sammelbecken — bereinigen (Befund
+  S95, Patrik: eigener Punkt).** Anlass: **Movement Table** steht in der App im
+  Reiter **Panels**; Handbuch (§11 „bisher"-Schalter und Changelog 1.79.0),
+  `Changelog_Session94.md`, dieser Datei (§7) und die Sichttest-Liste S94b
+  nennen „Settings → Performance". Patrik: in Performance ergibt der Schalter
+  mehr Sinn — aber dann sind auch die anderen Zeilen des Reiters zu prüfen.
+  Heute stehen dort (`SettingsPanel::createPanelsTab`): Effect Browser (Reset
+  Start Folder), AVS Import Render Scale, Movement Table, Open Composition,
+  End of a Composition, MilkDrop Preset Switch / Fade Amount / Fade-out Time /
+  Start Fade-in, Image Search Folder, User Data. Mit einem Panel hat davon nur
+  die erste Zeile zu tun. **Zu tun:** eine Einteilung vorschlagen (etwa
+  Performance · Import · MilkDrop · Composer · Folders) und Patrik vorlegen;
+  danach umziehen und die Doku-Stellen nachziehen. Die beiden Composer-Zeilen
+  sind Naht N9 (`Composer_Konzept.md` §12.2) — ziehen sie um, die Naht-Zeile
+  dort anpassen. **Bis dahin stimmt die Doku zu Movement Table nicht.**
+
 - 🟠 **Vergleichslauf: ein Preset startet gelegentlich doppelt (Befund S88).**
   In einem von fünf Läufen der Regressionsliste wich `3ds.lvfx` ab (6 Bilder,
   MAE 0,009–0,023). Das Log dieses Laufs zeigt die Zeile

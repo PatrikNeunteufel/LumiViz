@@ -126,7 +126,7 @@ int Zeitachse::yVonZeile(int zeile) const
 
 int Zeitachse::kanalVonZeile(int zeile) const
 {
-    return static_cast<int>(m_komposition.kanaele.size()) - 1 - zeile;
+    return zeile;  // CH1 oben (Entscheid Patrik S95) — im Stapel liegt er zuunterst
 }
 
 QRect Zeitachse::clipRechteck(int zeile, const VisualClip& clip) const
@@ -191,7 +191,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
     p.setPen(linie);
     p.drawLine(xVon(m_laengeMs), 0, xVon(m_laengeMs), unten);  // das Ende
 
-    // --- Kanaele: der oberste des Stapels in der obersten Zeile
+    // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
     p.setFont(font());
     for (int zeile = 0; zeile < zeilen; ++zeile)
     {

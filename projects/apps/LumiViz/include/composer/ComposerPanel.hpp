@@ -60,7 +60,8 @@ public:
     [[nodiscard]] std::int64_t stelleVon(int x) const;
     /// Mitte der Zeile des Kanals (0 = oberste Zeile).
     [[nodiscard]] int yVonZeile(int zeile) const;
-    /// Kanal einer Zeile: gezeigt wird der Stapel, der oberste Kanal zuoberst.
+    /// Kanal einer Zeile: die Reihenfolge der Datei, der erste Kanal zuoberst
+    /// (Entscheid Patrik S95) — im Bild liegt er zuunterst, spaetere darueber.
     [[nodiscard]] int kanalVonZeile(int zeile) const;
 
     static constexpr int kKopfBreite = 96;   ///< Spalte mit den Kanalnamen

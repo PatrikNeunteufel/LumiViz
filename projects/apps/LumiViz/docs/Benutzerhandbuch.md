@@ -1717,7 +1717,7 @@ siehst du erst, wenn der Composer aus ist.
 | Resume-Taste (⏩) | **Resume after restart** (leuchtet bei aktiv), siehe unten |
 | Zeit | Stelle und Länge, etwa „0:22.0 / 0:50.0" |
 | Lineal | Klick oder Ziehen springt an die Stelle; die rote Linie ist die Abspielmarke |
-| Zeilen | Die Kanäle — **der oberste des Stapels steht oben**. Ein ausgeschalteter Kanal trägt „(off)" |
+| Zeilen | Die Kanäle in der Reihenfolge der Datei, **CH1 oben** — im Bild liegt der erste Kanal zuunterst, jeder weitere darüber. Ein ausgeschalteter Kanal trägt „(off)" |
 | Blöcke | Die Clips mit dem Namen ihres Presets; die helle Linie darin ist die Pegelkurve |
 | Zeile darunter | Der angeklickte Clip: Kanal · Datei · Start – Ende · Mischart |
 

@@ -179,7 +179,9 @@ Komposition
   Stopp, an den Anfang), Schalter **Follow player**, Stelle als Zeit, Zoom,
   Datei-Zeile (New, Load…, Save, Save As…).
 - **Zeitlineal** mit Abspielmarke; Klick springt.
-- **Kanäle** als Zeilen, links je Kanal Name und an/aus. Clips als Blöcke:
+- **Kanäle** als Zeilen, links je Kanal Name und an/aus — in der Reihenfolge
+  der Datei, **CH1 oben** (Entscheid Patrik S95, wie Spur 1 in FL Studio); im
+  Bild liegt der erste Kanal zuunterst, jeder weitere darüber. Clips als Blöcke:
   ziehen = verschieben, Kanten ziehen = Start und Ende, Entf = löschen.
 - **Pegelkurve** im Clip sichtbar; Punkte anfassen und ziehen
   (der „Übergangs-Editor" aus S88).
