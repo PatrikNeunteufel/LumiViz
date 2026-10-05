@@ -347,6 +347,68 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(wand.stelleMs() == 0);
     }
 
+    TEST_CASE("C2b Uhr: in der Schleife beginnt sie am Ende von vorn — und haelt wieder, wenn die Schleife aus ist")
+    {
+        std::int64_t jetzt = 70000;
+        Uhr uhr([&jetzt] { return jetzt; });
+        uhr.setLaengeMs(5000);
+        uhr.setSchleife(true);
+        CHECK(uhr.schleife());
+        CHECK_FALSE(uhr.laeuft());  // die Schleife startet nichts
+
+        uhr.starte();
+        jetzt += 4000;
+        CHECK(uhr.stelleMs() == 4000);
+        jetzt += 2500;  // ueber das Ende: von vorn
+        CHECK(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 1500);
+        jetzt += 12000;  // mehr als zwei Runden weiter
+        CHECK(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 3500);
+
+        // angehalten bleibt die Stelle der Runde, nicht die rohe Zeit
+        uhr.stoppe();
+        jetzt += 9000;
+        CHECK(uhr.stelleMs() == 3500);
+        uhr.starte();
+        jetzt += 500;
+        CHECK(uhr.stelleMs() == 4000);
+
+        // Sprung im Lauf, dann ueber das Ende
+        uhr.springe(4800);
+        jetzt += 300;
+        CHECK(uhr.stelleMs() == 100);
+
+        // Schleife aus, mitten in einer spaeteren Runde: die Stelle bleibt,
+        // und am Ende haelt die Uhr wieder
+        jetzt += 11000;  // 100 + 11000 = zwei Runden und 1100
+        CHECK(uhr.stelleMs() == 1100);
+        uhr.setSchleife(false);
+        CHECK(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 1100);
+        jetzt += 2000;
+        CHECK(uhr.stelleMs() == 3100);
+        jetzt += 5000;
+        CHECK(uhr.stelleMs() == 5000);
+        CHECK_FALSE(uhr.laeuft());
+
+        // am Ende stehend die Schleife einschalten: steht weiter; Start von vorn
+        uhr.setSchleife(true);
+        CHECK_FALSE(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 5000);
+        uhr.starte();
+        jetzt += 200;
+        CHECK(uhr.stelleMs() == 200);
+
+        // ohne Laenge gibt es kein Ende und keine Schleife
+        Uhr endlos([&jetzt] { return jetzt; });
+        endlos.setSchleife(true);
+        endlos.starte();
+        jetzt += 123456;
+        CHECK(endlos.stelleMs() == 123456);
+        CHECK(endlos.laeuft());
+    }
+
     // -------------------------------------------------------------------------
     // Wiedergabe (GL)
     // -------------------------------------------------------------------------

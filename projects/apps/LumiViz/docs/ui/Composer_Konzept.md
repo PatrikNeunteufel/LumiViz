@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.9.2
-> **Datum:** 2026-10-04 (Session 94)
+> **Version:** 0.10.0
+> **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0, C0b (Belege), C1a (Mischer, Nähte R1 / R2) und C1b (Modell,
@@ -188,8 +188,20 @@ Komposition
 - **Audio-Kanal:** die Wellenform des Songs im Clip (wie in Lyrics Sync).
 - **Rechtsklick** auf Clip, Kanal und freie Fläche — wie im Kettenbaum.
 
-Offen für C2: was das Panel **Effect Chain** zeigt, solange der Composer an
-ist. Vorschlag dort: den Clip, der im Composer angeklickt ist.
+**Das Panel Effect Chain bei laufender Komposition** (Entscheid Patrik S95: a,
+mit Ergänzung):
+
+- **C2b:** Effect Chain bleibt an der Kette der App, unverändert. Das
+  Composer-Panel zeigt zum angeklickten Clip Datei, Start, Ende und Mischart
+  in einer eigenen Zeile.
+- **C3:** das Composer-Panel bekommt den Schalter **Sync on Effect Chain**.
+  **An:** Effect Chain zeigt die Kette des Clips, der im Composer angeklickt
+  ist. **Aus:** Effect Chain ruht, solange eine Komposition das Bild liefert
+  (ausgegraut, mit Hinweis). Beides braucht eine Naht in `MultiEffectPanel`;
+  sie kommt vor dem Bau in §12.2.
+
+**Transport im Kopf** (Wunsch Patrik S95): Play, Pause, Stopp und ein Knopf
+**Loop** für die ganze Komposition — wie im Panel Player.
 
 ---
 
@@ -227,10 +239,31 @@ Composer gesperrt,
 Die Sperre ist für Vorführungen gedacht: nichts, was man versehentlich
 drückt, darf das Bild umreißen oder ein Fenster aufgehen lassen.
 
-**Der Start** (C7 a): War beim Beenden der Composer an, lädt der Start die
-**Komposition** wieder — Composer an, an den **Anfang** gestellt,
-**angehalten**. Zu sehen ist das Bild der Stelle null. Losgelassen wird von
-Hand. War er aus, lädt der Start wie seit S93 das zuletzt laufende Preset.
+**Der Start** (C7, neu gefasst S95 — Patrik): War beim Beenden eine
+Komposition im Composer-Panel geladen, lädt der Start sie wieder **ins
+Panel**. Was dann läuft, bestimmt der Knopf **Resume after restart** im
+Composer-Panel (Vorgabe aus, wie der gleiche Knopf im Panel Player):
+
+- **Knopf aus:** die Komposition liegt im Panel, **der Composer ist aus** —
+  das Bild liefert die Effektkette. Im Panel lässt sich alles vorbereiten;
+  **Composer on** schaltet die Komposition ins Bild.
+- **Knopf an:** der Composer hält beim geordneten Beenden Datei, Stelle,
+  „Composer an" und „lief gerade" fest; der Start stellt diesen Stand wieder
+  her — lief die Komposition, läuft sie von der letzten Stelle an weiter.
+  Nach einem Absturz gilt der Stand des letzten geordneten Beendens.
+
+War keine Komposition geladen, lädt der Start wie seit S93 das zuletzt
+laufende Preset. Das Preset der Kette wird in jedem Fall geladen; die
+Komposition legt sich bei „Composer on" darüber (Naht R3).
+
+**Geladen ist nicht an** (Folge daraus, S95): Das Panel hält die Komposition,
+auch wenn der Composer aus ist. **Composer on** setzt die Bildquelle, aus
+nimmt sie weg; die Komposition bleibt im Panel.
+
+**Öffnen von Hand** (Entscheid Patrik S95): Open Composition lädt die Datei,
+schaltet den Composer an und **startet die Uhr sofort** — das ist die
+Vorgabe. Eine Einstellung in Settings stellt um auf „hält am Anfang" (los
+geht es dann mit Play).
 
 ---
 
@@ -437,7 +470,8 @@ dabei, damit die Gründe nachlesbar bleiben.
 | C5 | PgUp/PgDn, Lied-Kürzel | **springen im Composer** (Clip-Anfang bzw. Song der Komposition); sperrbar | immer gesperrt; wie heute mit Ausschalten des Composers |
 | C6 | Preset von Hand laden | **schaltet den Composer aus, nach Rückfrage**; gesperrt lädt nichts und fragt nichts | immer gesperrt; als Clip einfügen; ohne Rückfrage |
 | — | Lock | **ein** Schalter für Kürzel und Laden | zwei getrennte Schalter |
-| C7 | Der Start | lädt die **Komposition**, Composer an, am **Anfang**, **angehalten** | läuft an der letzten Stelle weiter; lädt ein einzelnes Preset; letzte Stelle angehalten |
+| C7 | Der Start | **Neu gefasst S95 (Patrik):** lädt die Komposition **ins Panel**. Knopf **Resume after restart** aus (Vorgabe): Composer **aus**, die Effektkette läuft, im Panel wird vorbereitet. Knopf an: der Stand vom Beenden kommt wieder, eine laufende Komposition läuft von der letzten Stelle an weiter | S93: Composer an, am Anfang, angehalten; immer weiterlaufen; lädt ein einzelnes Preset; Knopf aus = keine Komposition beim Start; Knopf erst mit C6 |
+| — | Öffnen von Hand (S95) | Open Composition **startet sofort** (Vorgabe); per Einstellung in Settings „hält am Anfang" | nur eines von beiden, fest |
 | C9 | Die Lücke | **schwarz** | letztes Bild; durchscheinendes Preset; Grund-Visual als eigenes Feld |
 | C10 | Wo der Composer entsteht | **Zweig `composer`**; nach `master` geholt wird **erst, wenn der Composer sauber funktioniert** (Patrik S93, geändert gegenüber „nach jeder abgenommenen Stufe"). Bis dahin läuft **alle** Arbeit im Zweig, auch Abschlüsse und Fixes | auf `master`; nach jeder Stufe holen |
 | C11 | Dateien mit Host-Gruppen als Clip | **entfällt** — mit dem eigenen Mischer läuft jede Datei unverändert | — |
@@ -495,11 +529,12 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | R1 Present-Ziel ✅ | Renderer, eine Zeile im Present | `setPresentZiel`: der Renderer legt sein fertiges Bild in ein Framebuffer-Objekt des Aufrufers | 0 = das Fenster, wie immer | C1a |
 | R2 Karaoke ✅ | Renderer, eine Abfrage und eine Weiterleitung | `setKaraokeAuslassen`; `legeKaraokeEbeneAuf` legt die gerechnete Ebene auf den gebundenen Framebuffer | Vorgabe: zeichnet sie wie heute | C1a |
 | R3 Bildquelle ✅ | `VisualizerRenderThread` (`setBildquelle`, Auswahl je Bild, Herunterfahren), `VisualizerWidget` (`setBildquelle` als Durchreichung, Besitz) | der Thread bekommt neben dem einen Renderer einen zweiten Platz für eine Bildquelle (`IVisualizer`). Ist er besetzt, gehen Audiodaten und `render` an die Bildquelle; der Renderer der Kette bleibt angelegt, bekommt weiter Größe und Audiodaten, wird aber nicht gerechnet. Die Bildquelle wird auf dem Render-Thread angelegt, aufgeräumt und gelöscht (Entscheid Patrik S94: a) | Platz leer (Vorgabe) → der eine Renderer wie heute | C2a |
-| N4 Laufendes Preset, Start | `MainWindow`, `UI/StartPreset.hpp` | der Start kennt eine Komposition | ohne Schlüssel `composer/…` wie heute | C6 |
+| N4 Start | `MainWindow` (Konstruktor, nach dem Anwerfen des letzten Presets) | **ein** verzögerter Aufruf von `composer/AppAnbindung`: war beim Beenden eine Komposition geladen, kommt sie wieder ins Panel; mit Resume auch ihr Stand (Entscheid C7, S95). Das Festhalten beim Beenden ist eigener Code (hängt schon an `aboutToQuit`); `UI/StartPreset.hpp` wird **nicht** berührt | ohne Schlüssel `composer/…` tut der Aufruf nichts — der Start wie heute | C2b (vorgezogen aus C6, S95) |
 | N5 Kürzel | Empfänger von `PresetStepEvent` und der Lied-Kürzel | bei laufendem Composer geht das Ereignis an ihn; Lock | Composer aus → Effect Browser bzw. Playlist | C6 |
 | N6 Laden von Hand | `MainWindow` (gemeinsame Rückfrage vor dem Ersetzen der Kette) | Rückfrage bzw. Sperre bei laufendem Composer | Composer aus → wie heute | C6 |
 | N7 Musik | Player / Playlist | der Audiokanal führt den Player | Audiokanal aus → Playlist | C5 |
-| N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg | — (reine Zusätze); ohne Klick auf die Einträge wie heute | C2a, C2b |
+| N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg. **C2b (S95):** `UI/panels/PanelAutoReg.cpp` bekommt einen Include und eine Anmeldung — Panel `composer`, Titel „Composer", View → Panels, anfangs nicht sichtbar; die Klasse selbst ist eigener Code (`composer/ComposerPanel`) | — (reine Zusätze); ohne Klick auf die Einträge wie heute; das Panel ist ohne Klick nicht zu sehen | C2a, C2b |
+| N9 Einstellung | `UI/panels/SettingsPanel.cpp` (ein Block in einem Reiter) | eine Auswahl **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start"; gelesen wird sie in `composer/AppAnbindung` (Schlüssel `composer/openHolds`) | Vorgabe = startet sofort, wie seit C2a | C2b |
 
 Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 
@@ -550,6 +585,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.10.0 | 2026-10-05 | Session 95 — **C2b vorbereitet.** §7: Entscheid zum Panel Effect Chain (Patrik: a, mit Ergänzung) — in C2b bleibt es an der Kette der App, das Composer-Panel zeigt den angeklickten Clip in einer eigenen Zeile; in C3 kommt der Schalter **Sync on Effect Chain** (an: Kette des angeklickten Clips, aus: Effect Chain ruht). Transport mit Play, Pause, Stopp und Loop (Wunsch Patrik). §12.2: Naht N8 für C2b gefasst — ein Include und eine Anmeldung in `PanelAutoReg.cpp`. **Der Start** (Patrik): §8 und C7 neu gefasst — die Komposition kommt beim Start ins Panel; Knopf **Resume after restart** aus: Composer aus, die Effektkette läuft, im Panel wird vorbereitet; an: der Stand vom Beenden kommt wieder. Daraus: „geladen ist nicht an" — das Panel hält die Komposition, **Composer on** setzt die Bildquelle. Naht N4 neu gefasst und nach C2b vorgezogen: ein Aufruf in `MainWindow`, `StartPreset.hpp` bleibt unberührt. **Öffnen von Hand** (Patrik): startet sofort, per Einstellung „hält am Anfang" — neue Naht N9 in `SettingsPanel.cpp` |
 | 0.9.2 | 2026-10-04 | Session 94 — **Zusammenfassung auch beim Beenden der App:** `starteKomposition` hängt sich einmal je Fenster an `aboutToQuit` und schreibt die Messung der noch laufenden Komposition ins Log; die Bildquelle behält die Anlauf-Zeilen über ihr Aufräumen hinweg (der Render-Thread ist dann schon angehalten). Nur eigener Code, keine Naht. Belegt: der Fassaden-Test beendet die Ereignisschleife mit laufender Komposition, die Zusammenfassung steht in der Ausgabe; 877 Cases. **Die Release-clang-Exe der App enthält diesen Stand noch nicht** (sie lief beim Bau, Stand 23:36 Uhr) |
 | 0.9.1 | 2026-10-04 | Session 94 — **Sichttest S94 (Patrik): 34 von 42 bestanden, 3 mit Befund, 5 unklar formuliert.** Drei Folgen: (1) **Karaoke lief nicht weiter, wenn die Uhr stand** (A4, B7) — behoben: `Wiedergabe::rendere(…, clipsStehen)` mischt das letzte Bild der Clips neu, ohne sie zu rechnen, die Karaoke-Ebene läuft mit dem echten Takt weiter; die Bildquelle rechnet bei stehender Uhr, solange die Ebene an ist. §5 gilt jetzt als „steht die Uhr, stehen die Clips". (2) **„Pixeliger" (F7) war ein Fehler des Scheiben-Baus:** ein Movement in einer Liste, die nur beim Beat rechnet, bekam eine Scheibe je Beat, das Gitter-Bild blieb viele Sekunden stehen. Behoben: der Renderer baut jede laufende Tabelle je Bild weiter, auch wenn ihr Knoten nicht drankommt. Probe `Duo - Hash the Planet.avs` mit festem Beat: vorher nach 900 Bildern noch im Bau und 0,7 % der Pixel anders, jetzt nach rund 80 Bildern fertig und nach 300 und 900 Bildern bitgleich mit dem Sofort-Betrieb. (3) **Einstellung Settings → Performance → Movement Table** (Vorschlag Patrik): „Spread over frames" (Vorgabe der App) oder „At once (like original AVS)" für Vergleiche mit dem Original; Benutzerhandbuch 1.79.0. Belege: neue Testfälle in `test_ComposerBildquelle.cpp` und `test_MovementScheiben.cpp`, 877 Cases; Vergleichslauf 90 / 90 bitgleich (`bp30_s94_scheiben3`). Aus dem Log des Sichttests: die App rechnete die Demo mit 60 Bildern je Sekunde auf der 4090, Rechnen im Mittel 1,4–2,1 ms; beim Schließen der App mit laufender Komposition wird keine Zusammenfassung geschrieben |
 | 0.9.0 | 2026-10-04 | Session 94 — **Auch Movement-Skripte, die den gemeinsamen Zustand lesen, bauen in Scheiben** (Entscheid Patrik: a): im Scheiben-Betrieb entsteht jede Movement-Tabelle über mehrere Bilder, auch mit `reg`, `megabuf`, `rand` oder `get…`; solche Skripte lesen diese Werte dann über mehrere Bilder verteilt statt in einem Augenblick, und ihre Tabelle kommt nicht in den gemeinsamen Speicher. Der Sofort-Betrieb ist unverändert. **Belege:** `test_MovementScheiben.cpp` erweitert (unreines Skript baut in Scheiben, zweimal selbst, nichts im Speicher, Bild gleich dem Sofort-Betrieb bei unverändertem Zustand), 874 Cases; Vergleichslauf 90 / 90 bitgleich (`bp30_s94_scheiben2`). **Messung** (Release-clang, Radeon 610M, 1920 × 1080, Scheiben 4 ms): `Duo - Hash the Planet.avs` zweites Bild 13 ms statt 504 ms; `list.lvfx2` allein kein langes Bild mehr nach dem ersten (längstes 25 ms statt 559 ms); härtere Komposition mit 15 Presets: längstes Bild nach dem ersten 147 ms statt 600–800 ms, tiefste Sekunde 15 Bilder statt 1. **Was bleibt:** das erste Bild einer Komposition 190–300 ms (Anlegen des ersten Renderers rund 100 ms, dazu das Laden); sechs Bilder zwischen 50 und 150 ms in 76 s, zwei davon beim Laden von `list.lvfx2` und eines weiteren Presets; auf der 4090 mit diesem Stand nicht gemessen |

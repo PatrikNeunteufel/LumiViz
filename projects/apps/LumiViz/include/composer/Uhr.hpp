@@ -4,7 +4,8 @@
  *
  * Ohne Audiokanal laeuft die Zeit des Composers nach der Wanduhr: Start,
  * Stopp, an den Anfang, Sprung. Die Stelle auf der Zeitachse bestimmt das
- * Bild — nicht die verstrichene Zeit. Am Ende der Komposition haelt die Uhr.
+ * Bild — nicht die verstrichene Zeit. Am Ende der Komposition haelt die Uhr;
+ * in der Schleife (Loop, C2b) beginnt sie dort von vorn.
  *
  * Die Zeitquelle ist austauschbar (Test); Vorgabe ist eine stetige Uhr.
  * Kein Qt-Objekt, kein Thread: wer zeichnet, fragt `stelleMs()`.
@@ -55,15 +56,32 @@ public:
     /// An eine Stelle springen; ob die Uhr laeuft, bleibt.
     void springe(std::int64_t stelle) { setzeStelle(stelle); }
 
-    /// Laeuft die Uhr? Am Ende der Komposition haelt sie von selbst.
+    /// Schleife (C2b, Knopf Loop): am Ende beginnt die Uhr von vorn, statt zu
+    /// halten. Ohne Laenge gibt es kein Ende, also auch keine Schleife.
+    void setSchleife(bool an)
+    {
+        if (an == m_schleife) return;
+        // die Stelle festhalten: ohne Schleife zaehlt die rohe Zeit wieder ganz
+        // — und ob sie laeuft: eine am Ende stehende Uhr laeuft nicht los
+        const std::int64_t stelle = stelleMs();
+        const bool lief = laeuft();
+        m_schleife = an;
+        m_laeuft = lief;
+        setzeStelle(stelle);
+    }
+    [[nodiscard]] bool schleife() const { return m_schleife; }
+
+    /// Laeuft die Uhr? Am Ende der Komposition haelt sie von selbst — ausser
+    /// in der Schleife.
     [[nodiscard]] bool laeuft() const
     {
-        return m_laeuft && !(m_laengeMs > 0 && roh() >= m_laengeMs);
+        return m_laeuft && (dreht() || !(m_laengeMs > 0 && roh() >= m_laengeMs));
     }
     [[nodiscard]] std::int64_t stelleMs() const
     {
         const std::int64_t s = roh();
-        return m_laengeMs > 0 ? std::min(s, m_laengeMs) : s;
+        if (m_laengeMs <= 0) return s;
+        return m_laeuft && dreht() ? s % m_laengeMs : std::min(s, m_laengeMs);
     }
 
 private:
@@ -72,6 +90,7 @@ private:
         using namespace std::chrono;
         return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
     }
+    [[nodiscard]] bool dreht() const { return m_schleife && m_laengeMs > 0; }
     [[nodiscard]] std::int64_t roh() const
     {
         return m_laeuft ? m_stelleMs + (m_quelle() - m_ankerMs) : m_stelleMs;
@@ -89,6 +108,7 @@ private:
     std::int64_t m_ankerMs = 0;   ///< Zeit der Quelle bei diesem Ereignis
     std::int64_t m_laengeMs = 0;
     bool m_laeuft = false;
+    bool m_schleife = false;
 };
 
 }  // namespace lumi::composer
