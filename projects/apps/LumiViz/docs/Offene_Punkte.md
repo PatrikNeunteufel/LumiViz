@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.89.0
-> **Datum:** 2026-10-05 (Session 95)
+> **Version:** 1.90.0
+> **Datum:** 2026-10-05 (Session 97)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2217,6 +2217,46 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S97 (Konzept 0.28.1) — Stufe C5b, Audio-Kanäle
+  überlagern:** **entschieden, Schritt 1 von 5 gebaut.** Entscheide Patrik:
+  ein Mixer in der Engine (BASSmix), die Uhr führt; die Visuals sehen die
+  Summe mit den Pegeln; der laufende Song ist der mit dem höchsten Wert der
+  Pegelkurve, ihm folgen Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio
+  Browser; das Panel Player zeigt bei führendem Composer die Komposition
+  (Konzept §4, §8, §11). Gebaut: Belege (`test_ComposerBelegeTon.cpp`), der
+  Wechsel auf CMakeCraft v0.9.2 mit `BASS_MIX` an Kern, Runner und
+  Test-Target, **Naht N12** — der Mixer in `IAudioEngine` / `BassEngine`
+  (`test_ComposerNahtMixer.cpp`). **Im Programm überlagern sich die Songs
+  weiter nicht** — der Composer benutzt den Mixer noch nicht.
+  **Offen aus S97, in dieser Reihenfolge:**
+  - **Schritt 2:** `Tonfuehrung` auf den Mixer umbauen (die Uhr führt, je
+    Ton-Clip eine Quelle, Pegel je Takt), der laufende Song, `PappEngine` mit
+    Mixer. **Erster Punkt der nächsten Session.**
+  - **Schritt 3:** Naht N13 — `MainWindow::onAudioUpdate` liest Spektrum und
+    Wellenform vom Mixer, solange der Composer Ton führt.
+  - **Schritt 4:** Naht N5 wächst um die Anzeige des Player-Panels — etwa
+    sechs Stellen in `PlayerPanel.cpp` (drei Ereignis-Empfänger,
+    `onActivate`, `onProgressReleased`, `onLoopClicked`); vor dem Bau einzeln
+    aufzählen.
+  - **Schritt 5:** Sichttest-Liste, Benutzerhandbuch, Rückbau-Liste.
+  - **Danach, vorgemerkt (Patrik S97):** in der Schleife überlagern sich Ende
+    und Anfang der Komposition, Bild und Ton, Länge einstellbar. Frage
+    Patrik: gilt ein Ein- und Ausblenden der ganzen Komposition nur in der
+    Schleife, immer, oder ist es einstellbar. Die Vorlage folgt, wenn der
+    heutige Sprung der Schleife gelesen ist (`Uhr::setSchleife`,
+    `Wiedergabe`).
+  - Nicht gemessen: ob der Mixer ohne Puffer unter Last aussetzt oder
+    knistert (dann Puffer größer und die Pegel als Hüllkurve vorausplanen —
+    die Hüllkurve ist belegt); Songs mit verschiedenen Abtastraten im Mixer.
+  - Von mir gesetzt, nicht entschieden: der Mixer läuft mit der Abtastrate
+    der Engine (44100).
+  - Naht N7a (`IAudioPlayer::setPegel`) braucht C5b nicht mehr — nach dem
+    Bau prüfen, ob sie zurückgenommen wird.
+  - **Lyrics Sync bei führendem Composer** (Nebenbefund): das Panel springt
+    und bremst direkt am Player (`LyricsSyncPanel.cpp:287`, `:300`, `:592`
+    ff.) — mit dem Mixer wirkt das nicht mehr. Nicht eingeplant.
+  - Die Rückbau-Liste führt `e7fe2d5` als Commit mit Naht und Eigenem
+    zusammen (wie `356a868`).
 - **Composer, Stand S96 (Konzept 0.26.1):** **C4 Teil 2 (Pegelform, Curve
   Editor, Stücke, Kurven-Presets) und C5 (Audiokanal) gebaut.** Die Pegelkurve
   eines Clips besteht aus Grundpegel, Ein- und Ausblendung (Dauer + Form) und
@@ -4071,6 +4111,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.90.0 | 2026-10-05 | Session 97 — **Composer, Stufe C5b (Audio-Kanäle überlagern):** vier Entscheide Patrik (Mixer in der Engine, Summe mit den Pegeln für die Visuals, laufender Song nach der Pegelkurve, Player-Panel zeigt die Komposition), Belege, Wechsel auf CMakeCraft v0.9.2 mit BASSmix als Pflichtpaket, Naht N12 gebaut (Konzept 0.28.1); §7 neuer Block „Stand S97" mit den offenen Schritten 2 bis 5, der vorgemerkten Überlagerung in der Schleife und dem Nebenbefund Lyrics Sync. Im Programm überlagern sich die Songs weiter nicht. 930 Cases |
 | 1.89.0 | 2026-10-05 | Session 96 — **Composer:** C4 Teil 2 (Pegelform, Curve Editor, Stücke, Kurven-Presets) und C5 (Audiokanal mit den Nähten N7a, N7b, N5 Transport) gebaut (Konzept 0.26.1); §7 Stand und offene Punkte neu — zuerst der Befund Patrik: Audio-Kanäle überlagern sich nicht (ein Stream), nächster Schritt je Kanal ein eigener Stream; Nebenbefund: `test_PaletteUi.cpp:750` wackelt im vollen Lauf |
 | 1.88.0 | 2026-10-05 | Session 95 — **Composer:** Stufen C2b, C3a, C3b, C3c und C4 Teil 1 gebaut (Konzept 0.16.1); §7 Stand und offene Punkte neu, nächster Schritt Punkte-Editor der Pegelkurve; Composer Variables als geplantes Modul. **§8 neu:** der Reiter Panels der Settings ist ein Sammelbecken (Anlass Movement Table — die Doku nennt Performance) |
 | 1.87.0 | 2026-10-04 | Session 94 — **Composer:** Stufe C2a erledigt (Naht R3, Bildquelle, Naht N8, Messung; Konzept 0.9.2), Sichttest 34 von 42 mit drei behobenen Befunden, nächste Stufe C2b; offene Punkte aus C2a eingetragen. **Movement-Tabelle in Scheiben** als eigener Punkt (Einstellung Movement Table, offene Fragen) |
