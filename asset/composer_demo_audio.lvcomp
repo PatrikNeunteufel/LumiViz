@@ -4,7 +4,7 @@
             "clips": [
                 {
                     "blend": 0,
-                    "end": 64000,
+                    "end": 121000,
                     "fadeIn": {
                         "ms": 3000,
                         "shape": {
@@ -46,7 +46,7 @@
                 },
                 {
                     "blend": 0,
-                    "end": 200000,
+                    "end": 396000,
                     "fadeIn": {
                         "ms": 5000,
                         "shape": {
@@ -84,7 +84,7 @@
                         }
                     },
                     "file": "calibration/avs/matrix/27_starfield/01_default.lvfx",
-                    "start": 118000
+                    "start": 250000
                 }
             ],
             "enabled": true,
@@ -95,7 +95,7 @@
             "clips": [
                 {
                     "blend": 1,
-                    "end": 126000,
+                    "end": 259000,
                     "fadeIn": {
                         "ms": 5000,
                         "shape": {
@@ -133,19 +133,12 @@
                         }
                     },
                     "file": "calibration/avs/matrix/13_rotating_stars/01_default.lvfx",
-                    "start": 57000
+                    "start": 112000
                 }
             ],
             "enabled": true,
             "kind": "visual",
             "name": "CH2"
-        },
-        {
-            "clips": [
-            ],
-            "enabled": true,
-            "kind": "audio",
-            "name": "A1"
         },
         {
             "clips": [
@@ -195,12 +188,12 @@
             ],
             "enabled": true,
             "kind": "audio",
-            "name": "A2"
+            "name": "A1"
         },
         {
             "clips": [
                 {
-                    "end": 397000,
+                    "end": 400600,
                     "fadeIn": {
                         "ms": 12600,
                         "shape": {
@@ -240,8 +233,15 @@
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/05. A Million Lights.mp3",
                     "offset": 0,
                     "sourceLength": 203600,
-                    "start": 193400
+                    "start": 197000
                 }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        },
+        {
+            "clips": [
             ],
             "enabled": true,
             "kind": "audio",

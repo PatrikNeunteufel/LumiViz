@@ -1,0 +1,310 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 128000,
+                    "fadeIn": {
+                        "ms": 15000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 2,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 21000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 4,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/cope - drove through ghosts to get here.milk",
+                    "start": 0
+                },
+                {
+                    "blend": 0,
+                    "end": 578000,
+                    "fadeIn": {
+                        "ms": 14000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 2,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 12600,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 3,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - polar lights.milk",
+                    "start": 254000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 264000,
+                    "fadeIn": {
+                        "ms": 19000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "bezier": [
+                                        1,
+                                        0.25925925925925924,
+                                        0.6,
+                                        1
+                                    ],
+                                    "curve": 6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 14000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "start": 114000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+                {
+                    "end": 210773,
+                    "fadeIn": {
+                        "ms": 14000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 2,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 10773,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 4,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/01. Under The Sun.mp3",
+                    "offset": 0,
+                    "sourceLength": 210773,
+                    "start": 0
+                },
+                {
+                    "end": 578000,
+                    "fadeIn": {
+                        "ms": 99594,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "bezier": [
+                                        0.22477064220183487,
+                                        1,
+                                        0.37155963302752293,
+                                        0.4074074074074074
+                                    ],
+                                    "curve": 6,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 35000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - 3 Words/01. 3 Words (feat. Will.I.Am).mp3",
+                    "offset": 0,
+                    "sourceLength": 273594,
+                    "start": 304406
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 400600,
+                    "fadeIn": {
+                        "ms": 12600,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 12000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 1,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/05. A Million Lights.mp3",
+                    "offset": 0,
+                    "sourceLength": 203600,
+                    "start": 197000
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        },
+        {
+            "clips": [
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A3"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 2
+}

@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.88.0
+> **Version:** 1.89.0
 > **Datum:** 2026-10-05 (Session 95)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,8 +2217,49 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
-- **Composer, Stand S95 (Konzept 0.16.1):** **Stufen C2b, C3a, C3b, C3c und
-  der erste Teil von C4 gebaut.** Panel Composer (View → Panels → Composer)
+- **Composer, Stand S96 (Konzept 0.26.1):** **C4 Teil 2 (Pegelform, Curve
+  Editor, Stücke, Kurven-Presets) und C5 (Audiokanal) gebaut.** Die Pegelkurve
+  eines Clips besteht aus Grundpegel, Ein- und Ausblendung (Dauer + Form) und
+  Stücken mitten im Clip (Lage, Weite, Flipped + Form); die Formen sind
+  zeitlos und als Presets speicherbar (`.lvfade`, `.lvshape`); zu kurze Clips
+  stauchen die Teile, die eingestellten Werte bleiben. Fenster **Curve
+  Editor**; Griffe für Stücke; Presets im Rechtsklick-Menü. **Audiokanal:**
+  ein Clip-Typ für Bild und Ton, Songs als Clips mit Wellenform, die
+  Komposition führt den Player (der Ton führt die Uhr, in Lücken die
+  Wanduhr), die Playlist ruht, das Panel Player steuert den ganzen Composer;
+  Nähte N7a, N7b, N5 (Transport). **Im Programm:** Patrik hat den Ton gehört
+  (S96); sonst ist von S96 nichts gesehen — Liste
+  `.claude/handover/Sichttests_S96.md` (zuerst J2, J3, dann A), dazu weiter
+  `Sichttests_S95c.md` ohne Abschnitt H (zuerst J und K).
+  **Offen aus S96:**
+  - **Befund Patrik: Audio-Kanäle überlagern sich nicht.** Es spielt immer
+    nur ein Song (der Player hat einen Stream); der Song eines zweiten Kanals
+    setzt erst ein, wenn der des ersten zu Ende ist, und wird abgeschaltet,
+    sobald auf dem oberen Kanal wieder einer liegt — Ein- und Ausblenden
+    zweier Songs überlappen also nicht. **Erwartet:** die Kanäle spielen
+    zugleich, jeder mit seiner Pegelkurve (Überblenden, auch drei Kanäle).
+    Braucht je Audio-Kanal einen eigenen Stream — und dann muss die Uhr
+    führen statt des Tons (Konzept §4, „kippt mit einem zweiten Audiokanal").
+    **Erster Punkt der nächsten Session.**
+  - Ob 30 Pegel-Schritte je Sekunde bei einer Blende als Stufen zu hören
+    sind, ist nicht beurteilt (BASS kann gleitend setzen).
+  - Die Schwellen der Führung (40 ms Toleranz, 1,5 s als Sprung) sind
+    gesetzt, nicht gemessen.
+  - In einer Lücke zeigt das Panel Player „pausiert", obwohl die Komposition
+    läuft.
+  - Im Curve Editor wirkt eine Änderung beim Loslassen der Maus, nicht
+    während des Zugs.
+  - Selbst gesetzt, nicht entschieden (Urteile K2, K3, H7 der Liste S96):
+    Position eines Stücks = seine Mitte; Stücke halten beim Ziehen an
+    Nachbarn an; Ease in / Ease out wirken an der Ausblendung umgekehrt wie
+    in S95.
+  - `test_PaletteUi.cpp:750` (Karaoke-Panel, Preset-Zeile „Abend") fiel im
+    vollen Lauf zweimal um und läuft einzeln durch — vermutlich der
+    500-ms-Zeitgeber des Karaoke-Panels; der Test sollte auf den Text warten.
+    Kein Composer-Code, nicht angefasst.
+  - C6 fehlt: PgUp / PgDn, Laden von Hand bei laufendem Composer, Lock.
+  **Stand S95 (Konzept 0.16.1):** Stufen C2b, C3a, C3b, C3c und
+  der erste Teil von C4 gebaut. Panel Composer (View → Panels → Composer)
   mit Composer on, Transport, Loop, Resume after restart; Bearbeiten im Panel
   (Schalter Edit: verschieben, Kanten, Kanal wechseln, löschen, Mischart,
   Undo, Save); New, Presets hineinziehen, Kanäle; Ein- und Ausblenden mit
@@ -2226,9 +2267,9 @@ Idee Preset-Warmup/Pre-Roll.
   eines Clips unter neuem Namen. **Im Programm gesehen:** C2b (Sichttest S95)
   und C3a (S95b: 17 bestanden, drei Anmerkungen, B3 unklar gefragt).
   **Nicht gesehen:** C3b, C4, C3c — Liste `.claude/handover/Sichttests_S95c.md`
-  (A bis K; zuerst J und K). **Nächster Schritt:** der Punkte-Editor der
-  Pegelkurve (Konzept §9: drei Teile, je als Preset speicherbar, Blenden
-  gespiegelt verwendbar). **Offen aus S95:**
+  (A bis K; zuerst J und K; Abschnitt H ist durch `Sichttests_S96.md`
+  ersetzt). Der Punkte-Editor der Pegelkurve ist in S96 gebaut.
+  **Offen aus S95:**
   - Keine Rückfrage, wenn mit ungespeicherten Änderungen an der Kette eines
     Clips ein anderer Clip angeklickt oder der Composer ausgeschaltet wird.
   - Im Ruhezustand zeigt Effect Chain ihren allgemeinen Hinweistext; die
@@ -4030,6 +4071,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.89.0 | 2026-10-05 | Session 96 — **Composer:** C4 Teil 2 (Pegelform, Curve Editor, Stücke, Kurven-Presets) und C5 (Audiokanal mit den Nähten N7a, N7b, N5 Transport) gebaut (Konzept 0.26.1); §7 Stand und offene Punkte neu — zuerst der Befund Patrik: Audio-Kanäle überlagern sich nicht (ein Stream), nächster Schritt je Kanal ein eigener Stream; Nebenbefund: `test_PaletteUi.cpp:750` wackelt im vollen Lauf |
 | 1.88.0 | 2026-10-05 | Session 95 — **Composer:** Stufen C2b, C3a, C3b, C3c und C4 Teil 1 gebaut (Konzept 0.16.1); §7 Stand und offene Punkte neu, nächster Schritt Punkte-Editor der Pegelkurve; Composer Variables als geplantes Modul. **§8 neu:** der Reiter Panels der Settings ist ein Sammelbecken (Anlass Movement Table — die Doku nennt Performance) |
 | 1.87.0 | 2026-10-04 | Session 94 — **Composer:** Stufe C2a erledigt (Naht R3, Bildquelle, Naht N8, Messung; Konzept 0.9.2), Sichttest 34 von 42 mit drei behobenen Befunden, nächste Stufe C2b; offene Punkte aus C2a eingetragen. **Movement-Tabelle in Scheiben** als eigener Punkt (Einstellung Movement Table, offene Fragen) |
 | 1.86.0 | 2026-10-04 | Session 93 — **Composer:** Konzept `ui/Composer_Konzept.md` (0.7.0, alle Entscheide gefallen, rückbaubar), Stufen C0 / C0b / C1a / C1b erledigt (C1a, C1b im Zweig `composer`), nächste Stufe C2a; **P2 Visual-Playlist geschlossen** (aufgegangen in Composer und Host Switcher); Notiz **Blättern und Timeline** (PgUp/PgDn blättern in der Liste des Browsers, Entscheid 2a; im Composer entschieden als C5). **Gebaut:** Kontextmenü im Kettenbaum (Milkdrop-Elemente, Add preset, Add module), Sprite mit Bilddatei, „+ New empty effect chain", Fix Start-Preset und Umzug ins Hauptfenster (`UI/StartPreset.hpp`), Knopf ◎ in Effect Browser und Audio Browser, Werkzeug `Sichttest`. **Sichttests S93** als Punkt 0 der Lyrics-Liste eingetragen (`Sichttests_S93.md`, A–I). Tests 866 (Zweig), 851 (`master`) |
