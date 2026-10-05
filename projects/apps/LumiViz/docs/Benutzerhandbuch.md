@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.79.0
-> **Datum:** 2026-10-04
+> **Version:** 1.80.0
+> **Datum:** 2026-10-05
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -31,6 +31,7 @@ Konfigurations-Panels steht im
 12. [Shadertoy](#12-shadertoy)
 13. [Video & Kamera als Quelle](#13-video--kamera-als-quelle)
 14. [Stilfilter (Pixel Filter)](#14-stilfilter-pixel-filter)
+15. [Composer](#15-composer)
 
 ---
 
@@ -1674,12 +1675,139 @@ Was der Filter nicht übernehmen kann (zusätzliche Bilder, Multipass,
 Audio-Texturen), steht nach dem Import als Hinweisliste im Dialog — der
 Filter läuft trotzdem.
 
+## 15. Composer
+
+Der **Composer** ordnet Presets über der Zeit an: mehrere **Kanäle**
+übereinander, in jedem Kanal **Clips** — jeder Clip ist eine Preset-Datei
+(`.avs`, `.milk`, `.lvfx`, `.lvfx2`) mit Start, Ende, Mischart und einer
+Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
+**Komposition**, eine Datei mit der Endung **`.lvcomp`**. Die Karaoke-Ebene
+(*View → Karaoke*) liegt wie immer über allem.
+
+> **Stand:** Der Composer zeigt und spielt Kompositionen. **Bearbeiten im
+> Panel gibt es noch nicht** — eine Komposition schreibst du vorerst von Hand
+> (siehe unten). Ein Beispiel steht im Projektordner unter
+> `asset\composer_demo.lvcomp`; mit der App wird es noch nicht ausgeliefert.
+
+### Öffnen und schließen
+
+- ***File → Open Composition...*** lädt eine `.lvcomp`, schaltet den Composer
+  ein und spielt sie sofort ab. Fehlt eine der Preset-Dateien oder musste
+  etwas gerichtet werden (etwa zwei Clips, die sich im selben Kanal
+  überlappen), nennt ein Hinweisfenster die Stellen; der Rest läuft.
+- ***File → Close Composition*** nimmt die Komposition weg — das Bild kommt
+  wieder von der Effektkette.
+
+Die Effektkette bleibt die ganze Zeit geladen. Solange der Composer an ist,
+zeigt das Panel **Effect Chain** weiter diese Kette; was du dort änderst,
+siehst du erst, wenn der Composer aus ist.
+
+### Das Panel Composer
+
+*View → Panels → Composer* — ein breites, flaches Panel, das beim ersten
+Öffnen unten erscheint und sich wie jedes Panel umdocken oder ablösen lässt
+(§7).
+
+| Element | Funktion |
+|---|---|
+| **Composer on** | An: die Komposition liefert das Bild. Aus: die Effektkette liefert es — die Komposition bleibt im Panel geladen |
+| ▶ / ⏸ | Abspielen / anhalten. Ist der Composer aus, schaltet Play ihn ein |
+| ⏹ | Stopp: anhalten und an den Anfang |
+| Loop-Taste | Die **ganze Komposition** wiederholen (leuchtet bei aktiv) |
+| Resume-Taste (⏩) | **Resume after restart** (leuchtet bei aktiv), siehe unten |
+| Zeit | Stelle und Länge, etwa „0:22.0 / 0:50.0" |
+| Lineal | Klick oder Ziehen springt an die Stelle; die rote Linie ist die Abspielmarke |
+| Zeilen | Die Kanäle — **der oberste des Stapels steht oben**. Ein ausgeschalteter Kanal trägt „(off)" |
+| Blöcke | Die Clips mit dem Namen ihres Presets; die helle Linie darin ist die Pegelkurve |
+| Zeile darunter | Der angeklickte Clip: Kanal · Datei · Start – Ende · Mischart |
+
+**Geladen ist nicht an.** Nimmst du den Haken **Composer on** heraus, läuft
+wieder die Effektkette, die Komposition bleibt aber im Panel: die Clips
+werden blasser, die Marke gestrichelt. So lässt sich etwas vorbereiten — ein
+Klick ins Lineal merkt die Stelle, und beim Einschalten steht die Komposition
+genau dort, angehalten.
+
+**Steht die Komposition, stehen ihre Clips** — bei Pause, in einer Lücke und
+am Ende. Die Karaoke-Ebene läuft dabei mit der Musik weiter.
+
+### Einstellungen
+
+*Settings → Panels:*
+
+| Einstellung | Wahl | Wirkung |
+|---|---|---|
+| **Open Composition** | *Starts playing* (Standard) | Öffnen spielt sofort ab |
+| | *Holds at the start* | Öffnen schaltet den Composer ein und wartet am Anfang auf Play |
+| **End of a Composition** | *Hold at the end* (Standard) | Am Ende bleibt die Marke stehen, das Bild ist schwarz, der Composer bleibt an. Play beginnt von vorn |
+| | *Return to the start* | Am Ende springt die Marke an den Anfang und wartet, wie nach Stopp |
+| | *Switch the Composer off* | Am Ende kommt die Effektkette zurück; die Komposition bleibt im Panel |
+
+*End of a Composition* gilt nur, wenn **Loop** aus ist.
+
+### Über den Neustart
+
+War beim Beenden eine Komposition geladen, liegt sie nach dem nächsten Start
+wieder im Panel. Was dann läuft, bestimmt die Taste **Resume after restart**:
+
+- **Aus (Standard):** der Composer ist aus, es läuft die Effektkette mit dem
+  zuletzt benutzten Preset. Die Komposition wartet im Panel.
+- **An:** alles kommt so zurück, wie es beim Beenden war — Composer an oder
+  aus, dieselbe Stelle, laufend oder angehalten.
+
+Festgehalten wird der Stand beim geordneten Beenden; nach einem Absturz gilt
+der vom letzten Beenden davor. Nach *Close Composition* kommt nichts zurück.
+
+### Eine Komposition von Hand schreiben
+
+Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
+
+```json
+{
+    "format": "lumiviz-composition",
+    "version": 1,
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/erstes.lvfx",
+                    "start": 0,
+                    "end": 20000,
+                    "blend": 0,
+                    "levels": [
+                        { "t": 0, "level": 0.0, "curve": 1 },
+                        { "t": 3000, "level": 1.0, "curve": 0 },
+                        { "t": 17000, "level": 1.0, "curve": 1 },
+                        { "t": 20000, "level": 0.0, "curve": 0 }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
+
+| Feld | Bedeutung |
+|---|---|
+| `channels` | Die Kanäle, **der unterste zuerst** — spätere liegen darüber |
+| `file` | Die Preset-Datei, absolut oder **relativ zur `.lvcomp`** |
+| `start`, `end` | In Millisekunden auf der Zeitachse. Clips eines Kanals überlappen nicht |
+| `blend` | Mischart mit dem, was darunter liegt: 0 Normal · 1 Additive · 2 Subtract · 3 Maximum · 4 Minimum · 5 Multiply · 6 Xor |
+| `levels` | Die Pegelkurve: Punkte mit `t` (Millisekunden **ab Clip-Start**) und `level` (0 … 1). Ohne Punkte läuft der Clip auf vollem Pegel |
+| `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) |
+| `length` | Länge in Millisekunden (optional; ohne Angabe das Ende des letzten Clips) |
+
+Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
+
 ---
 
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.80.0 | 2026-10-05 | Session 95. NEU **§15 Composer**: Presets über der Zeit auf mehreren Kanälen. *File → Open Composition...* / *Close Composition* (seit Session 94, bisher nicht im Handbuch); NEU das **Panel Composer** (*View → Panels → Composer*) mit Schalter **Composer on**, Play / Pause, Stopp, Loop, **Resume after restart**, Lineal mit Abspielmarke, Kanälen, Clips mit Pegelkurve und der Zeile zum angeklickten Clip; NEU *Settings → Panels*: **Open Composition** und **End of a Composition**; die Komposition kommt nach dem Neustart wieder ins Panel; Aufbau einer `.lvcomp` zum Schreiben von Hand |
 | 1.79.0 | 2026-10-04 | Session 94. NEU **Settings → Performance → Movement Table**: die Tabelle des AVS-Effekts Movement entsteht über mehrere Bilder verteilt (Standard, kein Stillstand beim Laden) oder in einem Stück wie im Original (für Vergleiche mit AVS) |
 | 1.78.0 | 2026-10-03 | Session 93. Audio Browser: der laufende Titel ist markiert, Knopf **◎** springt in seinen Ordner |
 | 1.77.0 | 2026-10-03 | Session 93. Die Preset-Zeile: fester Eintrag **+ New empty effect chain** im Dropdown des Effect-Chain-Panels |
