@@ -3,13 +3,15 @@
  * @brief Composer: eine Komposition in der App ein- und ausschalten
  *        (docs/ui/Composer_Konzept.md §12.2 Naht N8, Stufe C2a)
  *
- * Solange es kein Panel gibt (C2b), schaltet das Menue File den Composer:
- * **Open composition…** laedt eine `.lvcomp`, setzt die Bildquelle an die
- * Stelle des Renderers der Kette (Naht R3) und startet die Uhr; **Close
- * composition** nimmt sie wieder weg — die Kette laeuft weiter wie zuvor.
+ * Das Menue File schaltet den Composer: **Open composition…** laedt eine
+ * `.lvcomp`, setzt die Bildquelle an die Stelle des Renderers der Kette (Naht
+ * R3) und startet die Uhr; **Close composition** nimmt sie wieder weg — die
+ * Kette laeuft weiter wie zuvor.
  *
  * Das Menue meldet nur die beiden Ereignisse; das Hauptfenster reicht sie an
- * die Funktionen hier weiter. Alles Weitere ist eigener Code des Composers.
+ * die Funktionen hier weiter. Seit C2b fuehrt `composer/Sitzung` die geladene
+ * Komposition, den Schalter Composer on und den Transport; die Funktionen hier
+ * sind der Weg des Menues und des Starts dorthin.
  *
  * Rueckbau (Konzept §12): Teil von `include/composer` / `src/composer`.
  */
@@ -48,15 +50,21 @@ struct CloseCompositionEvent : public Event
 /// Liefert gerade eine Komposition das Bild dieses Fensters?
 [[nodiscard]] bool kompositionLaeuft(const VisualizerWidget& widget);
 
-/// Eine `.lvcomp` laden, als Bildquelle setzen und die Uhr starten. Eine schon
-/// laufende Komposition wird ersetzt. false = die Datei ist keine Komposition;
-/// es bleibt alles, wie es war. `bericht` nennt, was gerichtet wurde und
-/// welche Dateien fehlen.
+/// Eine `.lvcomp` laden, den Composer einschalten und abspielen (ausser die
+/// Einstellung „haelt am Anfang" ist gesetzt). Eine schon geladene Komposition
+/// wird ersetzt. false = die Datei ist keine Komposition; es bleibt alles, wie
+/// es war. `bericht` nennt, was gerichtet wurde und welche Dateien fehlen.
 bool starteKomposition(VisualizerWidget& widget, const QString& pfad,
                        QStringList* bericht = nullptr);
 
-/// Die Bildquelle wegnehmen — der Renderer der Kette liefert wieder das Bild.
+/// Composer aus und die Komposition aus dem Panel — der Renderer der Kette
+/// liefert wieder das Bild.
 void schliesseKomposition(VisualizerWidget& widget);
+
+/// Beim Start der App (Naht N4): die zuletzt geladene Komposition wieder ins
+/// Panel; mit „Resume after restart" auch ihr Stand (Konzept §8). false = es
+/// gab keine.
+bool stelleKompositionWiederHer(VisualizerWidget& widget);
 
 /// Die Messung der laufenden Komposition als Zeilen (Zeiten, Renderer,
 /// Grafikspeicher); leer, wenn keine laeuft. Dieselben Zeilen schreibt

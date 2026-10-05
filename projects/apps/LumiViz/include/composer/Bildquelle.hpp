@@ -31,6 +31,7 @@
 #include <QSize>
 #include <QStringList>
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -112,6 +113,20 @@ public:
     /// Standard-Framebuffer des Kontexts, also das Fenster.
     void setZiel(int framebuffer) { m_ziel = framebuffer; }
 
+    // --- Stand der Uhr fuer die Anzeige (C2b) — OHNE Mutex lesbar -----------
+    /// Den Stand der Uhr festhalten. Ruft der Render-Thread je Bild und die
+    /// GUI-Seite nach jedem Eingriff in die Uhr (unter dem Render-Mutex).
+    void spiegleStand()
+    {
+        m_standStelle.store(m_uhr.stelleMs());
+        m_standLaeuft.store(m_uhr.laeuft());
+        m_standAmEnde.store(m_uhr.amEnde());
+    }
+    [[nodiscard]] std::int64_t standStelleMs() const { return m_standStelle.load(); }
+    [[nodiscard]] bool standLaeuft() const { return m_standLaeuft.load(); }
+    /// Die Uhr ist am Ende von selbst zum Stehen gekommen.
+    [[nodiscard]] bool standAmEnde() const { return m_standAmEnde.load(); }
+
     // --- Auskunft (Stand des letzten Bilds) --------------------------------
     [[nodiscard]] std::int64_t letzteStelleMs() const { return m_letzteStelle; }
     [[nodiscard]] int rendererAnzahl() const;
@@ -156,6 +171,9 @@ private:
     void reicheAlles(MultiEffectVisualizer& renderer);
 
     Uhr m_uhr;
+    std::atomic<std::int64_t> m_standStelle{0};
+    std::atomic<bool> m_standLaeuft{false};
+    std::atomic<bool> m_standAmEnde{false};
     std::unique_ptr<Wiedergabe> m_wiedergabe;  ///< lebt zwischen initialize und cleanup
     Komposition m_wartend;                     ///< gesetzt, aber noch nicht uebernommen
     bool m_neueKomposition = false;

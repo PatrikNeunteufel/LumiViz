@@ -217,6 +217,7 @@ void Bildquelle::cleanup()
 
 void Bildquelle::render(float deltaTime)
 {
+    spiegleStand();  // fuer die Anzeige im Panel, auch wenn nichts gerechnet wird
     QOpenGLContext* kontext = QOpenGLContext::currentContext();
     if (!m_angelegt || m_wiedergabe == nullptr || kontext == nullptr || m_groesse.isEmpty()) return;
 

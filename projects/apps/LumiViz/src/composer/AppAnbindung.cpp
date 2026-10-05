@@ -7,9 +7,8 @@
 
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bildquelle.hpp"
-#include "composer/Komposition.hpp"
+#include "composer/Sitzung.hpp"
 
-#include <QCoreApplication>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -18,17 +17,12 @@
 #include <QObject>
 #include <QSettings>
 
-#include <BasicLogger.h>
-
-#include <memory>
-
 namespace lumi::composer
 {
 
 namespace
 {
 const char* const kLetzterOrdner = "composer/lastDir";
-const char* const kBeendenMarke = "composerBeendenProtokoll";  ///< Eigenschaft am Fenster
 }
 
 QStringList messungDerKomposition(VisualizerWidget& widget)
@@ -38,61 +32,27 @@ QStringList messungDerKomposition(VisualizerWidget& widget)
     return quelle != nullptr ? quelle->messung().alsText() : QStringList{};
 }
 
-namespace
-{
-/// Die Zusammenfassung der laufenden Komposition ins Log — bevor sie geht.
-void protokolliereMessung(VisualizerWidget& widget)
-{
-    QStringList zeilen = messungDerKomposition(widget);
-    {
-        QMutexLocker halt(&widget.renderMutex());
-        if (const auto* quelle = dynamic_cast<const Bildquelle*>(widget.bildquelle()))
-            zeilen += quelle->anlaufText();
-    }
-    for (const QString& zeile : zeilen) BasicLogger::logInfo(zeile.toStdString());
-}
-}  // namespace
-
 bool kompositionLaeuft(const VisualizerWidget& widget)
 {
     return dynamic_cast<const Bildquelle*>(widget.bildquelle()) != nullptr;
 }
 
+// Seit C2b fuehrt die Sitzung des Fensters die Komposition (geladen ist nicht
+// an); die Funktionen hier sind der Weg des Menues und des Starts dorthin.
+
 bool starteKomposition(VisualizerWidget& widget, const QString& pfad, QStringList* bericht)
 {
-    Komposition komposition;
-    if (!ladeKomposition(pfad, komposition, bericht)) return false;
-
-    // Noch kein Panel, also niemand, der Start druecken koennte: die Uhr
-    // laeuft sofort (C2a). Gesetzt wird vor der Uebergabe an den Render-Thread
-    // — danach nur noch unter dem Render-Mutex.
-    auto quelle = std::make_unique<Bildquelle>();
-    quelle->setKomposition(std::move(komposition));
-    quelle->uhr().starte();
-    protokolliereMessung(widget);  // eine laufende wird ersetzt
-
-    // Wird die App mit laufender Komposition beendet, ruft niemand
-    // schliesseKomposition — die Zusammenfassung kaeme nie ins Log (Befund
-    // S94). Einmal je Fenster: beim Beenden schreiben, falls noch eine laeuft.
-    // Der Render-Thread ist dann schon angehalten, die Bildquelle lebt noch.
-    if (!widget.property(kBeendenMarke).toBool())
-    {
-        widget.setProperty(kBeendenMarke, true);
-        QObject::connect(qApp, &QCoreApplication::aboutToQuit, &widget,
-                         [&widget]() { protokolliereMessung(widget); });
-    }
-    widget.setBildquelle(std::move(quelle));
-    BasicLogger::logInfo("Composer: composition started: " +
-                         QDir::toNativeSeparators(pfad).toStdString());
-    return true;
+    return Sitzung::fuer(widget).oeffne(pfad, bericht);
 }
 
 void schliesseKomposition(VisualizerWidget& widget)
 {
-    if (widget.bildquelle() == nullptr) return;
-    protokolliereMessung(widget);
-    widget.setBildquelle(nullptr);
-    BasicLogger::logInfo("Composer: composition closed");
+    if (Sitzung* sitzung = Sitzung::finde(widget)) sitzung->entlade();
+}
+
+bool stelleKompositionWiederHer(VisualizerWidget& widget)
+{
+    return Sitzung::fuer(widget).stelleWiederHer();
 }
 
 bool oeffneKomposition(VisualizerWidget& widget, QWidget* eltern, const QString& pfad)

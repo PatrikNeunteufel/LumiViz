@@ -77,6 +77,8 @@ public:
     {
         return m_laeuft && (dreht() || !(m_laengeMs > 0 && roh() >= m_laengeMs));
     }
+    /// Gestartet und am Ende von selbst zum Stehen gekommen (nicht angehalten).
+    [[nodiscard]] bool amEnde() const { return m_laeuft && !laeuft(); }
     [[nodiscard]] std::int64_t stelleMs() const
     {
         const std::int64_t s = roh();

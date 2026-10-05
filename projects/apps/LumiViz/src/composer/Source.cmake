@@ -17,6 +17,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Bildquelle.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Komposition.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Mischer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Sitzung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Wiedergabe.cpp"
 )
 set(_local_headers
@@ -24,6 +25,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bildquelle.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Komposition.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Mischer.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Sitzung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Uhr.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Wiedergabe.hpp"
 )
