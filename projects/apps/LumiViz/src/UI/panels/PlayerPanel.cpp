@@ -16,6 +16,7 @@
 #include "audio/AudioEvents.hpp"
 #include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "UI/widgets/AudioDateien.hpp"
+#include "composer/AppAnbindung.hpp"  // Composer-Naht N5: Transport bei fuehrendem Audiokanal
 
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -228,6 +229,12 @@ void PlayerPanel::publishTransport(TransportCommandEvent::Action action)
 
 void PlayerPanel::onTransportCommand(TransportCommandEvent::Action action)
 {
+    // Composer-Naht N5 (docs/ui/Composer_Konzept.md §12.2): fuehrt ein
+    // Audiokanal des Composers den Player, steuern Play / Pause, Stop, Next und
+    // Previous den ganzen Composer. Sonst — und bei Lautstaerke und Mute — geht
+    // der Befehl wie immer an den Player.
+    if (lumi::composer::transport(action)) return;
+
     auto* player = services().tryResolve<IAudioPlayer>();
     if (player == nullptr)
     {
