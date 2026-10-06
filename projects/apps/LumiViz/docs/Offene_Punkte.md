@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.90.0
-> **Datum:** 2026-10-05 (Session 97)
+> **Version:** 1.91.0
+> **Datum:** 2026-10-06 (Session 98)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2217,8 +2217,48 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S98 (Konzept 0.34.0) — Stufe C5b, Audio-Kanäle
+  überlagern: alle fünf Schritte gebaut, das Überlagern im Programm
+  gehört.** Die Songs aller eingeschalteten Audio-Kanäle laufen als Quellen
+  in einem Mixer, die Uhr führt (`Tonfuehrung` neu); die Visuals lesen den
+  Mixer (Naht N13); der laufende Song geht über den Bus an Karaoke, Tags,
+  Tag View, Audio Browser und das Panel Player („Composer - <Song>", Naht N5
+  Anzeige — Entscheid Patrik S98, ersetzt „zeigt die Komposition"); Tag View
+  beim Einblenden (N15); Weiterspielen beim Wechsel Player / Composer
+  einstellbar; Naht N7a zurückgenommen. Dazu die Bedienung der Zeitachse:
+  Einfügemarke, Kopieren / Ausschneiden / Einfügen, Schatten beim
+  Hineinziehen, Zeit unter dem Zeiger, Vorgabelänge neuer Clips (Konzept §4,
+  §7, §8, §12.2; Benutzerhandbuch §15). **Hörtest Patrik (06.10. mittags,
+  erster Teil):** 26 von 34 geprüften Punkten ohne Befund, kein Knackser; ein
+  Fehler (Tag View, behoben), Nachsetzen im Log (Ursache gemessen, behoben).
+  **Offen aus S98, in dieser Reihenfolge:**
+  - **Patriks zweiter Test:** `.claude/handover/Sichttests_S98b.md`
+    (Korrekturen, Weiterspielen, Bedienung der Zeitachse, Urteile) und aus
+    `Sichttests_S98.md` P13–P16, Abschnitt S (Panel Player), Urteile R.
+    Danach `LumiViz.log`: tauchen noch Zeilen „audio source realigned to the
+    clock" auf?
+  - **Wellenform beim Kürzen eines Song-Clips** (Beobachtung Patrik): sie
+    sehe zusammengeschoben statt abgeschnitten aus. Laut Code wird sie ab der
+    Stelle im Song gezeichnet und endet mit dem Clip; nicht nachgestellt.
+  - **Bekannte Lücke:** nach „Composer off" ohne geladenen Titel im Player
+    bleibt im Panel Player der letzte „Composer - <Song>" stehen.
+  - **Von mir gesetzt, Urteil Patrik steht aus** (alle in `Sichttests_S98b.md`
+    Abschnitt D bzw. `Sichttests_S98.md` Abschnitt R): Vorlauf 2 s; Abweichung
+    80 ms vom Grundabstand, Schonfrist 500 ms; beide Haken „Weiterspielen"
+    Vorgabe an; die Einfügemarke rückt nach dem Einfügen hinter den Clip;
+    ohne Marke landet die Kopie hinter dem angeklickten Clip; eine Kopie wird
+    nicht gekürzt (nächste passende Lücke); der Tooltip nur im Lineal.
+  - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
+    des Übergangs statt an den Song-Anfang.
+  - **Nur im Programm prüfbar:** der Schatten bei einem echten Drag, der
+    Tooltip, Ctrl+C / X / V neben den Kürzeln des Hauptfensters, die Zeile
+    in `MainWindow::onAudioUpdate` (N13 — das Bild reagierte im Hörtest).
+  - **Weiter offen aus S97:** die Überlappung von Ende und Anfang in der
+    Schleife (Vorlage steht aus); Lyrics Sync bei führendem Composer; Songs
+    mit verschiedenen Abtastraten im Mixer nicht gemessen.
 - **Composer, Stand S97 (Konzept 0.28.1) — Stufe C5b, Audio-Kanäle
-  überlagern:** **entschieden, Schritt 1 von 5 gebaut.** Entscheide Patrik:
+  überlagern** (*die Schritte 2 bis 5 und die Frage zu N7a darunter sind in
+  S98 erledigt, siehe oben*)**:** **entschieden, Schritt 1 von 5 gebaut.** Entscheide Patrik:
   ein Mixer in der Engine (BASSmix), die Uhr führt; die Visuals sehen die
   Summe mit den Pegeln; der laufende Song ist der mit dem höchsten Wert der
   Pegelkurve, ihm folgen Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio
@@ -4111,6 +4151,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.91.0 | 2026-10-06 | Session 98 — **Composer, Stufe C5b: alle fünf Schritte gebaut, das Überlagern im Programm gehört** (Mixer, die Uhr führt, laufender Song, Panel Player „Composer - <Song>", Nähte N13, N14, N15, N5 Anzeige, N9 wächst; N7a zurückgenommen); Korrekturen nach dem Hörtest (Tag View, Nachsetzen, Weiterspielen einstellbar); Bedienung der Zeitachse (Einfügemarke, Kopieren / Einfügen, Schatten, Tooltip, Vorgabelänge). §7: neuer Block „Composer, Stand S98" mit dem, was offen ist — Patriks zweiter Test, Wellenform beim Kürzen, bekannte Lücke im Panel Player, gesetzte Vorgaben ohne Urteil |
 | 1.90.0 | 2026-10-05 | Session 97 — **Composer, Stufe C5b (Audio-Kanäle überlagern):** vier Entscheide Patrik (Mixer in der Engine, Summe mit den Pegeln für die Visuals, laufender Song nach der Pegelkurve, Player-Panel zeigt die Komposition), Belege, Wechsel auf CMakeCraft v0.9.2 mit BASSmix als Pflichtpaket, Naht N12 gebaut (Konzept 0.28.1); §7 neuer Block „Stand S97" mit den offenen Schritten 2 bis 5, der vorgemerkten Überlagerung in der Schleife und dem Nebenbefund Lyrics Sync. Im Programm überlagern sich die Songs weiter nicht. 930 Cases |
 | 1.89.0 | 2026-10-05 | Session 96 — **Composer:** C4 Teil 2 (Pegelform, Curve Editor, Stücke, Kurven-Presets) und C5 (Audiokanal mit den Nähten N7a, N7b, N5 Transport) gebaut (Konzept 0.26.1); §7 Stand und offene Punkte neu — zuerst der Befund Patrik: Audio-Kanäle überlagern sich nicht (ein Stream), nächster Schritt je Kanal ein eigener Stream; Nebenbefund: `test_PaletteUi.cpp:750` wackelt im vollen Lauf |
 | 1.88.0 | 2026-10-05 | Session 95 — **Composer:** Stufen C2b, C3a, C3b, C3c und C4 Teil 1 gebaut (Konzept 0.16.1); §7 Stand und offene Punkte neu, nächster Schritt Punkte-Editor der Pegelkurve; Composer Variables als geplantes Modul. **§8 neu:** der Reiter Panels der Settings ist ein Sammelbecken (Anlass Movement Table — die Doku nennt Performance) |
