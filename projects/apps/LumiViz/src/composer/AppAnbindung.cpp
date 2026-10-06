@@ -239,6 +239,33 @@ AudioStreamHandle tonMixer()
     return sitzung != nullptr ? static_cast<AudioStreamHandle>(sitzung->tonMixer()) : INVALID_STREAM;
 }
 
+bool fuehrtTon()
+{
+    return Sitzung::fuehrende() != nullptr;
+}
+
+TonStand tonStand()
+{
+    TonStand stand;
+    const Sitzung* sitzung = Sitzung::fuehrende();
+    if (sitzung == nullptr) return stand;
+    const Sitzung::TonStand s = sitzung->tonStand();
+    stand.fuehrt = true;
+    stand.laeuft = sitzung->laeuft();
+    stand.hatSong = s.hatSong;
+    stand.song = s.song;
+    stand.stelleMs = s.stelleMs;
+    return stand;
+}
+
+bool springeImSong(double anteil)
+{
+    Sitzung* sitzung = Sitzung::fuehrende();
+    if (sitzung == nullptr) return false;
+    (void)sitzung->springeImSong(anteil);  // ohne laufenden Song bleibt alles, wo es ist
+    return true;
+}
+
 bool oeffneKomposition(VisualizerWidget& widget, QWidget* eltern, const QString& pfad)
 {
     const QString titel = QObject::tr("Open Composition");

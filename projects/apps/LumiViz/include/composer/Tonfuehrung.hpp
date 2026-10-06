@@ -83,10 +83,21 @@ public:
         bool songGewechselt = false;   ///< ein anderer als im letzten Takt — `song` ist neu
         TrackInfo song;                ///< der laufende Song (nur bei `songGewechselt` gefuellt)
         std::int64_t songStelleMs = 0; ///< die Stelle im laufenden Song
+        int songDauerMs = 0;           ///< seine Laenge
         bool songLaeuft = false;       ///< die Uhr laeuft und der Song ist nicht zu Ende
+        /// Der Player spielte doch (jemand hat ihn gestartet) und wurde in
+        /// diesem Takt angehalten — seine Meldungen haben die des laufenden
+        /// Songs ueberschrieben, wer taktet, meldet ihn noch einmal.
+        bool playerAngehalten = false;
     };
     /// Ein Takt: `stelleMs` ist die Stelle der Uhr, `laeuft`, ob sie laeuft.
     Ergebnis takt(const Komposition& komposition, std::int64_t stelleMs, bool laeuft);
+
+    /// Die Stelle der Komposition, an der im zuletzt gemeldeten laufenden Song
+    /// der `anteil` (0…1) seiner Laenge zu hoeren ist — fuer den Klick in den
+    /// Balken des Player-Panels. Bleibt im Clip des Songs (geklemmt). -1 = es
+    /// gab noch keinen laufenden Song, oder sein Clip ist nicht mehr da.
+    [[nodiscard]] std::int64_t stelleImLaufenden(const Komposition& komposition, double anteil) const;
 
     /// Wie oft eine Quelle nachgesetzt wurde, weil sie der Uhr davonlief —
     /// seit dem Uebernehmen.
@@ -133,6 +144,7 @@ private:
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts
+    int m_laufendDauerMs = 0;         ///< seine Laenge
     bool m_ersterTakt = true;
     bool m_liefZuletzt = false;       ///< die Uhr lief im letzten Takt
     std::int64_t m_letzteStelle = 0;  ///< Stelle der Uhr im letzten Takt

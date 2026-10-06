@@ -34,6 +34,7 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     m_quellen.clear();
     m_laut = -1.0f;
     m_laufend = {};
+    m_laufendDauerMs = 0;
     m_ersterTakt = true;
     m_liefZuletzt = false;
     m_letzteStelle = 0;
@@ -68,7 +69,11 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
     IAudioEngine& engine = *m_engine;
 
     // --- der Player schweigt; seine Lautstaerke und sein Mute gelten fuer den ganzen Mixer
-    if (m_player->isPlaying()) m_player->pause();
+    if (m_player->isPlaying())
+    {
+        m_player->pause();
+        ergebnis.playerAngehalten = true;
+    }
     const float laut = m_player->isMuted() ? 0.0f : m_player->volume();
     if (laut != m_laut)
     {
@@ -207,11 +212,30 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         if (!(besteQuelle->schluessel == m_laufend))
         {
             m_laufend = besteQuelle->schluessel;
+            m_laufendDauerMs = besteQuelle->dauerMs;
             ergebnis.songGewechselt = true;
             ergebnis.song = leseTrackInfo(engine, besteQuelle->handle, bester->datei);
         }
+        ergebnis.songDauerMs = m_laufendDauerMs;
     }
     return ergebnis;
+}
+
+std::int64_t Tonfuehrung::stelleImLaufenden(const Komposition& komposition, double anteil) const
+{
+    if (m_laufend.startMs < 0 || m_laufendDauerMs <= 0) return -1;
+    for (const Kanal& kanal : komposition.kanaele)
+    {
+        if (kanal.art != KanalArt::Audio || !kanal.an) continue;
+        for (const Clip& c : kanal.clips)
+        {
+            if (!(Schluessel{c.datei, c.startMs, c.einsatzMs} == m_laufend)) continue;
+            const auto imSong = static_cast<std::int64_t>(std::clamp(anteil, 0.0, 1.0) * m_laufendDauerMs);
+            // was vor dem Einsatz oder hinter dem Ende des Clips laege, gibt es in der Komposition nicht
+            return std::clamp<std::int64_t>(c.startMs + (imSong - c.einsatzMs), c.startMs, c.endeMs - 1);
+        }
+    }
+    return -1;
 }
 
 std::int64_t Tonfuehrung::songAnfang(const Komposition& komposition, std::int64_t stelleMs, bool vor)

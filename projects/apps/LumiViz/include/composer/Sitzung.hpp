@@ -217,6 +217,20 @@ public:
     /// Die Sitzung, die den Ton fuehrt — es gibt nur einen Player, also
     /// hoechstens eine. nullptr = keine.
     [[nodiscard]] static Sitzung* fuehrende();
+    /// Der zuletzt gemeldete laufende Song und seine Stelle — was das
+    /// Player-Panel zeigt, wenn es erst jetzt sichtbar wird. `hatSong` false =
+    /// es gab noch keinen.
+    struct TonStand
+    {
+        bool hatSong = false;
+        TrackInfo song;
+        int stelleMs = 0;
+    };
+    [[nodiscard]] TonStand tonStand() const { return m_tonStand; }
+    /// Im laufenden Song an den `anteil` (0…1) seiner Laenge springen — die
+    /// Stelle der Komposition wird daraus gerechnet (Klick in den Balken des
+    /// Player-Panels). false = es gibt keinen laufenden Song.
+    bool springeImSong(double anteil);
     /// Zum Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition
     /// springen. false = es gibt keinen.
     bool springeZumSong(bool vor);
@@ -256,6 +270,9 @@ private:
     Tonfuehrung m_ton;
     bool m_tonVersagt = false;  ///< die Engine hat keinen Mixer: nicht je Takt neu versuchen
     bool m_songLief = false;    ///< zuletzt an den Renderer gemeldet
+    int m_gemeldetLaeuft = -1;  ///< „die Komposition laeuft", zuletzt an den Bus gemeldet; -1 = noch nie
+    int m_stelleTakte = 0;      ///< Takte seit der letzten Stelle an den Bus
+    TonStand m_tonStand;
 
     bool m_sync = false;
     int m_wahlKanal = -1;

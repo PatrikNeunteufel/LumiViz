@@ -114,6 +114,31 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 /// der Stream des Players.
 [[nodiscard]] AudioStreamHandle tonMixer();
 
+// --- Das Player-Panel bei fuehrendem Composer (Naht N5, Anzeige; Entscheid
+//     Patrik S98): es zeigt den laufenden Song als „Composer - <Song>". Titel,
+//     Stelle und „laeuft" bekommt es ueber die Ereignisse, auf die es ohnehin
+//     hoert — die Sitzung verschickt sie fuer den laufenden Song.
+
+/// Fuehrt der Composer gerade den Ton?
+[[nodiscard]] bool fuehrtTon();
+/// Der laufende Song und sein Stand, fuer ein Panel, das erst jetzt sichtbar
+/// wird. `fuehrt` false = der Composer fuehrt keinen Ton; dann gilt der Player.
+struct TonStand
+{
+    bool fuehrt = false;
+    bool laeuft = false;   ///< die Komposition laeuft
+    bool hatSong = false;  ///< es wurde schon ein laufender Song gemeldet
+    TrackInfo song;
+    int stelleMs = 0;      ///< die Stelle in ihm
+};
+[[nodiscard]] TonStand tonStand();
+/// Ein Klick in den Balken des Player-Panels: im laufenden Song an den
+/// `anteil` (0…1) seiner Laenge — der Composer springt an die Stelle der
+/// Komposition, an der das zu hoeren ist. true = der Composer fuehrt den Ton
+/// und hat den Klick genommen (auch wenn es noch keinen Song gab). false = er
+/// fuehrt nicht; der Klick geht wie immer an den Player.
+[[nodiscard]] bool springeImSong(double anteil);
+
 /// Der Weg des Menues: bei leerem Pfad nach der Datei fragen (letzter Ordner
 /// unter `composer/lastDir`), laden, Meldungen zeigen. false = abgebrochen
 /// oder nicht geladen.

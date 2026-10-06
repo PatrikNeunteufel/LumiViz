@@ -27,6 +27,7 @@
 #include <BasicLogger.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <string>
 
@@ -617,19 +618,38 @@ void Sitzung::fuehreTon(Bildquelle& q)
         }
         g_fuehrende = this;
         m_songLief = false;
+        m_gemeldetLaeuft = -1;
+        m_stelleTakte = 0;
+        m_tonStand = {};
         BasicLogger::logInfo("Composer: the audio channels play through the mixer");
         Q_EMIT geaendert();
     }
     // Die Uhr fuehrt: die Stelle aus dem gespiegelten Stand — ohne auf den
     // Render-Thread zu warten.
-    const Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleMs(), q.standLaeuft());
+    const bool laeuft = q.standLaeuft();
+    Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleMs(), laeuft);
+    IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>();
+    // Der Player hat dazwischengefunkt (etwa ein Doppelklick im Audio Browser)
+    // und ist wieder angehalten: seine Meldungen gelten nicht — den laufenden
+    // Song und „laeuft" noch einmal melden.
+    if (ergebnis.playerAngehalten)
+    {
+        m_gemeldetLaeuft = -1;
+        if (ergebnis.hatSong && !ergebnis.songGewechselt && m_tonStand.hatSong)
+        {
+            ergebnis.songGewechselt = true;
+            ergebnis.song = m_tonStand.song;
+        }
+    }
 
-    // Der laufende Song geht dieselben Wege wie ein Titel des Players: der
-    // Songwechsel ueber den Bus (Tags, Songtext, Tag View, Audio Browser),
-    // Stelle und „laeuft" an den Renderer (Karaoke, Lyrics).
+    // Der laufende Song geht dieselben Wege wie ein Titel des Players — ueber
+    // den Bus: der Songwechsel (Tags, Songtext, Tag View, Audio Browser,
+    // Player-Panel), die Stelle im Song und „laeuft" (Player-Panel, Renderer).
     if (ergebnis.songGewechselt)
     {
-        if (IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>())
+        m_tonStand.hatSong = true;
+        m_tonStand.song = ergebnis.song;
+        if (bus != nullptr)
         {
             TrackChangedEvent ereignis;
             ereignis.track = ergebnis.song;
@@ -638,12 +658,59 @@ void Sitzung::fuehreTon(Bildquelle& q)
         BasicLogger::logInfo("Composer: current song: " +
                              QFileInfo(ergebnis.song.filePath).fileName().toStdString());
     }
-    if (ergebnis.hatSong) MultiEffectVisualizer::notifyPlayPosition(ergebnis.songStelleMs);
+    // „laeuft" am Bus heisst: die KOMPOSITION laeuft (Entscheid Patrik S98: der
+    // Play-Knopf des Player-Panels zeigt, was ein Druck auf ihn tut — auch in
+    // einer Luecke).
+    if (bus != nullptr && m_gemeldetLaeuft != (laeuft ? 1 : 0))
+    {
+        PlaybackStateEvent zustand;
+        zustand.state = laeuft ? PlaybackState::Playing : PlaybackState::Paused;
+        zustand.previousState = m_gemeldetLaeuft == 1 ? PlaybackState::Playing : PlaybackState::Paused;
+        m_gemeldetLaeuft = laeuft ? 1 : 0;
+        bus->publish(zustand);
+        m_songLief = !ergebnis.songLaeuft;  // der Renderer hoert am Bus mit: gleich richtigstellen
+    }
+    // Die Stelle im Song: an den Renderer in jedem Takt, an den Bus etwa
+    // zehnmal je Sekunde — und sofort nach einem Songwechsel oder Sprung. In
+    // einer Luecke kommt keine: der Balken des Player-Panels haelt.
+    if (ergebnis.hatSong)
+    {
+        const int stelle = static_cast<int>(ergebnis.songStelleMs);
+        const bool sprung = std::abs(stelle - m_tonStand.stelleMs) > 500;
+        ++m_stelleTakte;
+        if (ergebnis.songGewechselt ||
+            (stelle != m_tonStand.stelleMs && (m_stelleTakte >= 3 || sprung)))
+        {
+            m_stelleTakte = 0;
+            m_tonStand.stelleMs = stelle;
+            if (bus != nullptr)
+            {
+                PlaybackPositionEvent ort;
+                ort.positionMs = stelle;
+                ort.durationMs = ergebnis.songDauerMs;
+                ort.progress = ergebnis.songDauerMs > 0
+                                   ? static_cast<float>(stelle) / static_cast<float>(ergebnis.songDauerMs)
+                                   : 0.0f;
+                bus->publish(ort);
+            }
+        }
+        MultiEffectVisualizer::notifyPlayPosition(ergebnis.songStelleMs);
+    }
+    // Dem Renderer gilt „laeuft" fuer den SONG: in einer Luecke und nach dem
+    // Ende eines Songs zaehlen Karaoke und Lyrics nicht weiter.
     if (ergebnis.songLaeuft != m_songLief || ergebnis.songGewechselt)
     {
         m_songLief = ergebnis.songLaeuft;
         MultiEffectVisualizer::notifyPlayState(m_songLief);
     }
+}
+
+bool Sitzung::springeImSong(double anteil)
+{
+    const std::int64_t ziel = m_ton.stelleImLaufenden(m_komposition, anteil);
+    if (ziel < 0) return false;
+    springe(ziel);
+    return true;
 }
 
 void Sitzung::gibTonFrei(bool melden)
@@ -662,6 +729,7 @@ void Sitzung::gibTonFrei(bool melden)
     {
         IAudioPlayer* player = m_widget.dienste().tryResolve<IAudioPlayer>();
         IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>();
+        const bool spielt = player != nullptr && player->isPlaying();
         if (player != nullptr && player->hasTrack())
         {
             if (bus != nullptr)
@@ -670,11 +738,27 @@ void Sitzung::gibTonFrei(bool melden)
                 ereignis.track = player->currentTrack();
                 ereignis.playlistIndex = player->playlistIndex();
                 bus->publish(ereignis);
+                PlaybackPositionEvent ort;
+                ort.positionMs = player->positionMs();
+                ort.durationMs = player->durationMs();
+                ort.progress = player->positionFraction();
+                bus->publish(ort);
             }
             MultiEffectVisualizer::notifyPlayPosition(player->positionMs());
         }
-        MultiEffectVisualizer::notifyPlayState(player != nullptr && player->isPlaying());
+        // auch ohne Titel im Player: das Player-Panel erfaehrt, dass der
+        // Composer den Ton nicht mehr fuehrt (Play-Knopf, Loop-Knopf)
+        if (bus != nullptr)
+        {
+            PlaybackStateEvent zustand;
+            zustand.state = spielt ? PlaybackState::Playing : PlaybackState::Paused;
+            zustand.previousState = m_gemeldetLaeuft == 1 ? PlaybackState::Playing : PlaybackState::Paused;
+            bus->publish(zustand);
+        }
+        MultiEffectVisualizer::notifyPlayState(spielt);
         m_songLief = false;
+        m_gemeldetLaeuft = -1;
+        m_tonStand = {};
     }
     Q_EMIT geaendert();
 }

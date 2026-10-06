@@ -46,7 +46,10 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QLabel>
+#include <QPushButton>
 #include <QSettings>
+#include <QSlider>
 #include <QTemporaryDir>
 #include <QThread>
 
@@ -271,6 +274,16 @@ TEST_SUITE("ComposerNahtTon")
         QString gemeldet;
         const auto abo =
             bus->subscribeScoped<TrackChangedEvent>([&](const TrackChangedEvent& e) { gemeldet = e.track.filePath; });
+        // ... und Stelle und „laeuft", wie sie das Player-Panel erfaehrt
+        int stelleGemeldet = -1;
+        int dauerGemeldet = 0;
+        PlaybackState zustand = PlaybackState::Stopped;
+        const auto aboStelle = bus->subscribeScoped<PlaybackPositionEvent>([&](const PlaybackPositionEvent& e) {
+            stelleGemeldet = e.positionMs;
+            dauerGemeldet = e.durationMs;
+        });
+        const auto aboZustand =
+            bus->subscribeScoped<PlaybackStateEvent>([&](const PlaybackStateEvent& e) { zustand = e.state; });
         const auto quelle = [&](const QString& datei) -> const PappEngine::Stream* {
             const AudioStreamHandle h = engine->quelle(datei);
             return h != INVALID_STREAM ? &engine->stream(h) : nullptr;
@@ -339,22 +352,80 @@ TEST_SUITE("ComposerNahtTon")
         sitzung.springe(1000);
         REQUIRE(warte([&] { return std::abs(quelle(kEins)->pos - 1000) < 150; }));
         REQUIRE(warte([&] { return std::abs(quelle(kEins)->lautstaerke - 0.5f) < 0.05f; }));
+        // Stelle im Song und „laeuft" gehen ueber den Bus, wie beim Player
+        REQUIRE(warte([&] { return zustand == PlaybackState::Playing; }));
+        REQUIRE(warte([&] { return stelleGemeldet >= 1000 && stelleGemeldet < 3000; }));
+        CHECK(dauerGemeldet == 300000);
+        // spielt der Player doch (jemand hat ihn gestartet), haelt ihn der naechste Takt an —
+        // und der laufende Song der Komposition wird noch einmal gemeldet
+        gemeldet.clear();
+        player->play();
+        REQUIRE(warte([&] { return player->isPaused() && gemeldet == kEins; }));
 
-        // --- Naht N5: die Befehle des Player-Panels steuern den ganzen Composer
+        // --- Naht N5, Anzeige: das Player-Panel zeigt den laufenden Song als „Composer - <Song>"
         PlayerPanel panel(dienste);
+        const auto titel = [&]() -> QString {
+            for (const QLabel* l : panel.findChildren<QLabel*>())
+                if (l->text().startsWith(QStringLiteral("Composer - "))) return l->text();
+            return {};
+        };
+        const auto loopKnopf = [&]() -> QPushButton* {
+            for (QPushButton* b : panel.findChildren<QPushButton*>())
+                if (b->toolTip().startsWith(QStringLiteral("Repeat current track")) ||
+                    b->toolTip().contains(QStringLiteral("Composer panel")))
+                    return b;
+            return nullptr;
+        };
+        QSlider* balken = nullptr;
+        for (QSlider* s : panel.findChildren<QSlider*>())
+            if (s->maximum() == 1000) balken = s;
+        REQUIRE(balken != nullptr);
+        // das Panel wird erst jetzt sichtbar: es nimmt den Stand vom Composer, nicht vom Player
+        panel.show();
+        QCoreApplication::processEvents();
+        CHECK(titel() == QStringLiteral("Composer - eins"));
+        REQUIRE(loopKnopf() != nullptr);
+        CHECK_FALSE(loopKnopf()->isEnabled());  // die Schleife steht im Composer-Panel
+        REQUIRE(warte([&] { return balken->value() > 0; }));  // der Balken laeuft mit dem Song
+        // ein Klick in den Balken bei einem Zehntel des Songs (30 s): die Komposition springt dorthin
+        balken->setValue(100);
+        Q_EMIT balken->sliderReleased();
+        REQUIRE(warte([&] { return std::llabs(sitzung.stelleMs() - 30000) < 300; }));
+        REQUIRE(warte([&] { return std::abs(quelle(kEins)->pos - 30000) < 700; }));
+        CHECK(player->isPaused());  // der Player wurde dafuer nicht bewegt
+        CHECK(player->positionMs() == 0);
+
+        // --- Naht N5, Transport: die Befehle des Player-Panels steuern den ganzen Composer
         player->protokoll.clear();
         const auto befehl = [&](TransportCommandEvent::Action a) { bus->publish(TransportCommandEvent{a}); };
         befehl(TransportCommandEvent::Action::PlayPause);
         CHECK_FALSE(sitzung.laeuft());
         REQUIRE(warte([&] { return !engine->stream(engine->mixer).spielt; }));
+        REQUIRE(warte([&] { return zustand == PlaybackState::Paused; }));
         befehl(TransportCommandEvent::Action::PlayPause);
         CHECK(sitzung.laeuft());
         REQUIRE(warte([&] { return engine->stream(engine->mixer).spielt; }));
+        REQUIRE(warte([&] { return zustand == PlaybackState::Playing; }));
+        // eine Luecke (60–70 s): die Komposition laeuft, kein Song — der zuletzt gezeigte
+        // Song bleibt stehen, der Balken haelt, und „laeuft" bleibt (der Play-Knopf zeigt Pause)
+        sitzung.springe(63000);
+        REQUIRE(warte([&] { return quelle(kEins) == nullptr; }));
+        QCoreApplication::processEvents();
+        const int gehalten = stelleGemeldet;
+        QThread::msleep(300);
+        QCoreApplication::processEvents();
+        CHECK(stelleGemeldet == gehalten);
+        CHECK(zustand == PlaybackState::Playing);
+        CHECK(titel() == QStringLiteral("Composer - eins"));
+        CHECK(sitzung.laeuft());
+        sitzung.springe(1000);
+        REQUIRE(warte([&] { return quelle(kEins) != nullptr; }));
         // Next: zum Anfang des zweiten Songs
         befehl(TransportCommandEvent::Action::Next);
         REQUIRE(warte([&] { return gemeldet == kZwei && quelle(kZwei) != nullptr && !quelle(kZwei)->haelt; }));
         CHECK(std::llabs(sitzung.stelleMs() - 70000) < 150);
         CHECK(quelle(kEins) == nullptr);  // der erste Song ist aus dem Mixer
+        CHECK(titel() == QStringLiteral("Composer - zwei"));
         // Previous in den ersten Sekunden eines Songs: zum Song davor
         befehl(TransportCommandEvent::Action::Previous);
         REQUIRE(warte([&] { return gemeldet == kEins; }));
@@ -389,6 +460,10 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(engine->quellenZahl() == 0);
         CHECK(sitzung.tonMixer() == INVALID_STREAM);
         CHECK(gemeldet == kListe);
+        // das Panel zeigt wieder den Titel des Players, ohne Vorsatz, und der Loop-Knopf geht wieder
+        CHECK(titel().isEmpty());
+        CHECK(loopKnopf()->isEnabled());
+        CHECK(zustand == PlaybackState::Paused);
         stumm.kanaele[1].an = true;
         sitzung.setzeKomposition(stumm);
         REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
@@ -398,7 +473,11 @@ TEST_SUITE("ComposerNahtTon")
         // sein Pegel (Naht N7a) wurde nie angefasst, und die Befehle gehen wie immer an ihn
         sitzung.springe(1000);
         REQUIRE(warte([&] { return gemeldet == kEins; }));
+        CHECK(titel() == QStringLiteral("Composer - eins"));
+        CHECK_FALSE(loopKnopf()->isEnabled());
         sitzung.setAn(false);
+        CHECK(titel().isEmpty());
+        CHECK(loopKnopf()->isEnabled());
         CHECK_FALSE(sitzung.fuehrtTon());
         CHECK(Sitzung::fuehrende() == nullptr);
         CHECK(player->playlist() == liste);

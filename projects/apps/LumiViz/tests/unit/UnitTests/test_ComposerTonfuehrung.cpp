@@ -202,6 +202,7 @@ TEST_SUITE("ComposerTonfuehrung")
         Tonfuehrung f;
         REQUIRE(f.uebernimm(e, p));
         std::int64_t stelle = 20000;
+        CHECK(f.stelleImLaufenden(k, 0.5) == -1);  // noch kein laufender Song
         Tonfuehrung::Ergebnis r = f.takt(k, stelle, true);  // mitten hinein: der Song steht bei 15 s
         const AudioStreamHandle a = e.quelle(kEins);
         REQUIRE(a != INVALID_STREAM);
@@ -214,7 +215,18 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(r.song.title == QStringLiteral("eins"));
         CHECK(r.song.durationMs == 300000);
         CHECK(r.songStelleMs == 15000);
+        CHECK(r.songDauerMs == 300000);
         CHECK(r.songLaeuft);
+        // ein Klick in den Balken des Player-Panels: ein Anteil der Songlaenge wird zur Stelle
+        // der Komposition (Clip 10–70 s, ab 5 s im Song) — und bleibt im Clip
+        CHECK(f.stelleImLaufenden(k, 0.1) == 35000);   // 30 s im Song
+        CHECK(f.stelleImLaufenden(k, 0.0) == 10000);   // vor dem Einsatz: der Clip-Anfang
+        CHECK(f.stelleImLaufenden(k, 0.9) == 69999);   // hinter dem Clip: sein Ende
+        {
+            Komposition ohne = k;  // der Clip ist nicht mehr da
+            ohne.kanaele[1].clips.clear();
+            CHECK(f.stelleImLaufenden(ohne, 0.1) == -1);
+        }
         r = laufe(f, e, k, stelle, 1000);
         CHECK_FALSE(r.songGewechselt);  // derselbe Song wird nicht noch einmal gemeldet
         CHECK(r.songStelleMs == 5000 + (stelle - 10000));
@@ -342,8 +354,9 @@ TEST_SUITE("ComposerTonfuehrung")
         p.laengen = {{kEins, 300000}};
         REQUIRE(p.load(kEins));
         p.play();
-        (void)f.takt(k, 85133, true);
+        CHECK(f.takt(k, 85133, true).playerAngehalten);
         CHECK(p.isPaused());
+        CHECK_FALSE(f.takt(k, 85166, true).playerAngehalten);
     }
 
     TEST_CASE("Die Audio-Kanaele ueberlagern sich — der laufende Song ist der mit dem hoechsten Pegel")
