@@ -2283,8 +2283,9 @@ Idee Preset-Warmup/Pre-Roll.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
     `MainWindow::onAudioUpdate` (N13 — das Bild reagierte im Hörtest).
   - **Überlappung in der Schleife (Frage Patrik S97): entschieden in S99,
-    Schritte 1 bis 5 von 7 gebaut, die Überlappung wirkt im Programm**
-    (Konzept 0.41.0, §4; Benutzerhandbuch 1.96.0; Sichttest S99 Abschnitt E) — *Loop overlap* und
+    Schritte 1 bis 6 von 7 gebaut, Überlappung und Blende der ganzen
+    Komposition wirken im Programm** (Konzept 0.42.0, §4; Benutzerhandbuch
+    1.97.0; Sichttest S99 Abschnitte E und F) — *Loop overlap* und
     *Fade in* / *Fade out* je Komposition, beide Fenster in der Zeitachse,
     zwei Haken für Clips in beiden Fenstern. Gebaut: Modell und Datei, Uhr
     und Bildquelle, das Bild im Fenster samt Vorwärmen über den Umschlag,

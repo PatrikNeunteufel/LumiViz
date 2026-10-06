@@ -565,6 +565,18 @@ TEST_SUITE("ComposerPanel")
             QCoreApplication::processEvents();
             CHECK(achse->schleife());
             CHECK(achse->zweiteStelleMs() == -1);  // die Uhr steht vorn: kein Ende, das hineinspielt
+            // die Blende der ganzen Komposition: zwei Felder, ueber Undo, Keile im Lineal
+            auto* einblende = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerFadeIn"));
+            auto* ausblende = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerFadeOut"));
+            REQUIRE(einblende != nullptr);
+            REQUIRE(ausblende != nullptr);
+            CHECK(einblende->isEnabled());
+            CHECK(einblende->value() == doctest::Approx(0.0));
+            einblende->setValue(6.0);
+            ausblende->setValue(9.0);
+            CHECK(sitzung->komposition().einblendeMs == 6000);
+            CHECK(sitzung->komposition().ausblendeMs == 9000);
+            CHECK(sitzung->komposition().blendeBei(3000) == doctest::Approx(0.5));
             if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
             {
                 // fuer das Bild die zweite Marke von Hand: so sieht das Fenster im Lauf aus
@@ -573,7 +585,13 @@ TEST_SUITE("ComposerPanel")
                 CHECK(panel.grab().save(bild + QStringLiteral(".schleife.png")));
             }
             sitzung->setSchleife(schleifeVorher);
-            // Undo nimmt beides zurueck, die Felder folgen
+            // Undo nimmt alles zurueck, die Felder folgen
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().ausblendeMs == 0);
+            CHECK(ausblende->value() == doctest::Approx(0.0));
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().einblendeMs == 0);
+            CHECK(einblende->value() == doctest::Approx(0.0));
             REQUIRE(bus->undo());
             CHECK(sitzung->komposition().songsDoppelt);
             CHECK(songsDoppelt->isChecked());

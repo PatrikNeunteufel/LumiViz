@@ -318,6 +318,30 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.drawLine(xEnde, 0, xEnde, unten);
     }
 
+    // --- die Blende der ganzen Komposition (S99): je ein schmaler Keil unten
+    //     im Lineal — so weit blendet sie am Anfang ein und am Ende aus. Auch
+    //     ohne Loop, sie gilt immer.
+    {
+        QColor keil = text;
+        keil.setAlpha(150);
+        p.setPen(Qt::NoPen);
+        p.setBrush(keil);
+        const int yUnten = kLinealHoehe - 1;
+        const int yOben = kLinealHoehe - 8;
+        if (m_komposition.einblendeMs > 0)
+        {
+            const int x0 = xVon(0);
+            const int x1 = xVon(std::min(m_komposition.einblendeMs, endeMs));
+            p.drawPolygon(QPolygon({QPoint(x0, yUnten), QPoint(x1, yUnten), QPoint(x1, yOben)}));
+        }
+        if (m_komposition.ausblendeMs > 0)
+        {
+            const int x0 = xVon(std::max<std::int64_t>(0, endeMs - m_komposition.ausblendeMs));
+            p.drawPolygon(QPolygon({QPoint(x0, yOben), QPoint(x0, yUnten), QPoint(xEnde, yUnten)}));
+        }
+        p.setBrush(Qt::NoBrush);
+    }
+
     // --- die Fenster der Ueberlappung (S99, Entscheid Patrik): bei Loop sind
     //     die ersten und die letzten Sekunden getoent — was im vorderen laeuft,
     //     laeuft zugleich mit dem im hinteren. Ein Strich an jeder Grenze.
@@ -1860,6 +1884,52 @@ void ComposerPanel::setupUI()
            "Off: it plays once — it finishes its end and then jumps back inside the song.\n\n"
            "Saved with the composition. Can be changed while Edit is on."));
     schleifenZeile->addWidget(m_songsDoppelt);
+    // Ein- und Ausblenden der ganzen Komposition (Entscheid Patrik S99: getrennt
+    // von der Ueberlappung, gilt immer)
+    const auto blendenFeld = [this, schleifenZeile](const QString& titel, const char* name,
+                                                    const QString& hinweis) {
+        schleifenZeile->addSpacing(12);
+        schleifenZeile->addWidget(new QLabel(titel, this));
+        auto* feld = new QDoubleSpinBox(this);
+        feld->setObjectName(QString::fromLatin1(name));
+        feld->setDecimals(1);
+        feld->setSingleStep(1.0);
+        feld->setRange(0.0, 3600.0);
+        feld->setSuffix(tr(" s"));
+        feld->setKeyboardTracking(false);
+        feld->setToolTip(hinweis);
+        schleifenZeile->addWidget(feld);
+        return feld;
+    };
+    m_einblende = blendenFeld(
+        tr("Fade in:"), "composerFadeIn",
+        tr("The whole composition fades in over this time — picture and sound, on top of the "
+           "level curves of the clips. It applies always: on the first start, in every round of "
+           "a loop, and without Loop. With a loop overlap, fade in and fade out together make a "
+           "crossfade. The karaoke layer is not faded. 0 = no fade.\n\n"
+           "Shown as a small wedge in the ruler. Saved with the composition. Can be changed "
+           "while Edit is on."));
+    m_ausblende = blendenFeld(
+        tr("Fade out:"), "composerFadeOut",
+        tr("The whole composition fades out over this time before its end — picture and sound, "
+           "on top of the level curves of the clips. It applies always, also without Loop. "
+           "The karaoke layer is not faded. 0 = no fade.\n\n"
+           "Shown as a small wedge in the ruler. Saved with the composition. Can be changed "
+           "while Edit is on."));
+    for (QDoubleSpinBox* feld : {m_einblende, m_ausblende})
+    {
+        connect(feld, &QDoubleSpinBox::valueChanged, this, [this, feld](double sekunden) {
+            if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+            Komposition neu = m_sitzung->komposition();
+            const bool ein = feld == m_einblende;
+            std::int64_t& wert = ein ? neu.einblendeMs : neu.ausblendeMs;
+            const std::int64_t vorher = wert;
+            wert = static_cast<std::int64_t>(sekunden * 1000.0 + 0.5);
+            if (wert == vorher) return;
+            bearbeite(neu, ein ? tr("Change the fade in of the composition")
+                               : tr("Change the fade out of the composition"));
+        });
+    }
     root->addLayout(schleifenZeile);
     connect(m_ueberlappung, &QDoubleSpinBox::valueChanged, this, [this](double sekunden) {
         if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
@@ -2080,6 +2150,12 @@ void ComposerPanel::zeigeEnde()
     m_ueberlappung->setValue(geladen ? static_cast<double>(m_sitzung->komposition().ueberlappungMs) / 1000.0
                                      : 0.0);
     m_songsDoppelt->setChecked(!geladen || m_sitzung->komposition().songsDoppelt);
+    m_einblende->setEnabled(bearbeiten);
+    m_ausblende->setEnabled(bearbeiten);
+    const QSignalBlocker ruheEin(m_einblende);
+    const QSignalBlocker ruheAus(m_ausblende);
+    m_einblende->setValue(geladen ? static_cast<double>(m_sitzung->komposition().einblendeMs) / 1000.0 : 0.0);
+    m_ausblende->setValue(geladen ? static_cast<double>(m_sitzung->komposition().ausblendeMs) / 1000.0 : 0.0);
 }
 
 void ComposerPanel::zeigeDatei()

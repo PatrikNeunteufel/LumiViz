@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.96.0
+> **Version:** 1.97.0
 > **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2028,6 +2028,16 @@ Beide Werte gehören zur Komposition und stehen in ihrer Datei. Auch ohne
 Umschlag schon geladen, und ein Song über die ganze Länge setzt nahtlos neu
 an.
 
+**Die ganze Komposition ein- und ausblenden** (Felder **Fade in** und **Fade
+out** daneben, bei eingeschaltetem **Edit**): Die Komposition blendet über
+diese Zeit am Anfang ein und vor ihrem Ende aus — Bild **und** Ton, zusätzlich
+zu den Pegelkurven der Clips. Das gilt **immer**: beim ersten Start, in jeder
+Runde einer Schleife und ohne Loop. Im Lineal steht dafür unten je ein
+schmaler Keil. Zusammen mit *Loop overlap* ergibt das eine fertige
+Überblendung von Ende und Anfang, ohne dass du die Clips einzeln blenden
+musst. Die Karaoke-Ebene wird nicht mitgeblendet. Auch diese Werte stehen in
+der Datei der Komposition; **0** = keine Blende.
+
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
 nach einem neuen Namen und arbeitet dann mit dieser Datei weiter. Vor *Open
@@ -2132,6 +2142,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.97.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die ganze Komposition ein- und ausblenden**: Felder **Fade in** / **Fade out** (Bild und Ton, zusätzlich zu den Pegelkurven der Clips; gilt immer, auch ohne Loop; Keile im Lineal; mit *Loop overlap* eine fertige Überblendung; die Karaoke-Ebene blendet nicht mit) |
 | 1.96.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die Schleife mit Überlappung**: Feld **Loop overlap** (Ende und Anfang laufen in der Schleife zugleich, Bild und Ton; nichts wird von selbst geblendet; die Runde wird kürzer), die Zeitachse tönt beide Fenster und zeigt eine zweite Marke, Haken **Songs overlap themselves**; beide Werte in der `.lvcomp`. GEÄNDERT: auch ohne Überlappung sind die ersten Clips am Schleifenanfang schon geladen, ein Song über die ganze Länge setzt nahtlos neu an |
 | 1.95.0 | 2026-10-06 | Session 99. §15 Audio-Kanal, Absatz **Aus** ERGÄNZT: hat der Player keinen Titel geladen, zeigen Panel Player und Tag View nach Composer aus „No track loaded", der Songtext der Komposition verschwindet (vorher blieb der letzte Song der Komposition stehen) |
 | 1.94.0 | 2026-10-06 | Session 98. §15 Bearbeiten NEU **Einfügemarke** (Klick auf eine freie Stelle einer Kanalzeile), **Kopieren / Ausschneiden / Einfügen** von Clips (Ctrl+C / Ctrl+X / Ctrl+V, Rechtsklick), **Schatten beim Hineinziehen** (der Clip erscheint dort, wo er landen würde; in einer Zeile der anderen Art erscheint nichts), **Zeit unter dem Zeiger** im Lineal. §15 Einstellungen NEU **New clip length** |

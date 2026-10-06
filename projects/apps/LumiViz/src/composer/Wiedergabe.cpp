@@ -264,9 +264,15 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
                 {
                     // Ein Clip in beiden Fenstern laeuft einmal durch; es gilt
                     // der hoehere der zwei Pegel (Entscheid Patrik S99).
+                    // Dazu die Blende der GANZEN Komposition an der jeweiligen
+                    // Stelle: am Anfang herauf, am Ende herunter — im Fenster
+                    // ergibt das eine Ueberblendung.
                     double pegel = 0.0;
-                    if (vorn) pegel = clip.pegelBei(stelleMs - clip.startMs);
-                    if (hinten) pegel = std::max(pegel, clip.pegelBei(zweiteMs - clip.startMs));
+                    if (vorn)
+                        pegel = clip.pegelBei(stelleMs - clip.startMs) * m_komposition.blendeBei(stelleMs);
+                    if (hinten)
+                        pegel = std::max(pegel, clip.pegelBei(zweiteMs - clip.startMs) *
+                                                    m_komposition.blendeBei(zweiteMs));
                     dran.push_back({{k, c}, &clip, true, pegel});
                     continue;
                 }

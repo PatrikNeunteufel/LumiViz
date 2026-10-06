@@ -215,7 +215,8 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             }
             if (imClip < 0) continue;
         }
-        const double pegelWert = clip->pegelBei(imClip);
+        // die Pegelkurve des Clips mal die Blende der ganzen Komposition an der Stelle der Stimme
+        const double pegelWert = clip->pegelBei(imClip) * komposition.blendeBei(stimmStelle);
         if (!zuEnde)
         {
             const auto pegel = static_cast<float>(pegelWert);

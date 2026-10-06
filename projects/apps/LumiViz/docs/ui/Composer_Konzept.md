@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.41.0
+> **Version:** 0.42.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -335,7 +335,18 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     desselben Clips und ist der größte Einzelteil.
     **Bauplan:** (1) Modell und Datei ✅, (2) Uhr und Bildquelle ✅,
     (3) Bild ✅, (4) Ton ✅, (5) Panel und Zeitachse ✅, (6) Blende der
-    ganzen Komposition, (7) Visuals overlap themselves.
+    ganzen Komposition ✅, (7) Visuals overlap themselves.
+    **Die Blende der ganzen Komposition (Schritt 6, gebaut S99):** der
+    Pegel jedes Clips wird mit `Komposition::blendeBei` an seiner Stelle
+    malgenommen — im Bild (`Wiedergabe::rendere`) und im Ton
+    (`Tonfuehrung::takt`), im Fenster je Stelle, sodass Ende und Anfang
+    überblenden. Sie gilt immer, auch in jeder Runde einer Schleife ohne
+    Überlappung. Felder **Fade in** / **Fade out** im Panel (nur bei Edit,
+    über Undo), je ein Keil unten im Lineal. **Von mir gesetzt:** linear;
+    die Karaoke-Ebene blendet nicht mit (sie liegt über dem Gemischten);
+    der laufende Song ist die Stimme mit dem höchsten Produkt aus
+    Pegelkurve und Blende — im Fenster wechselt er in der Mitte der
+    Überblendung.
     **Panel und Zeitachse (Schritt 5, gebaut S99):** unter dem Fuß des
     Panels eine Zeile mit **Loop overlap** (Sekunden, der eingestellte
     Wert) und **Songs overlap themselves**; beide nur bei Edit, über Undo
@@ -1289,6 +1300,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.42.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 6 von 7: die Blende der ganzen Komposition** (eigener Code, keine Naht; §4). Bild und Ton nehmen den Pegel jedes Clips mit `Komposition::blendeBei` an seiner Stelle mal (im Fenster je Stelle: Überblendung); gilt immer, auch ohne Loop. Panel: Felder **Fade in** / **Fade out** (nur bei Edit, über Undo); Zeitachse: je ein Keil unten im Lineal. Von mir gesetzt: linear, die Karaoke-Ebene blendet nicht mit, der laufende Song folgt dem Produkt aus Pegelkurve und Blende. Tests: Erweiterungen in `test_ComposerWiedergabe.cpp` (Mischung in Zahlen, auch im Fenster), `test_ComposerTonfuehrung.cpp` (Lautstärken, Songwechsel in der Mitte des Fensters), `test_ComposerPanel.cpp` (Felder, Undo); Bild `.schleife.png` angesehen. Benutzerhandbuch 1.97.0. Gebaut mit MSVC und clang. Im Programm nicht gesehen und nicht gehört — Sichttest S99, Abschnitt F. **Offen bleibt Schritt 7** (Visuals overlap themselves) |
 | 0.41.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 5 von 7: Panel und Zeitachse — die Überlappung wirkt im Programm** (eigener Code, keine Naht; §4). Panel: Zeile mit **Loop overlap** und **Songs overlap themselves** (nur bei Edit, über Undo, der eingestellte Wert). Zeitachse: bei Loop an die zwei Fenster getönt, gestrichelte Grenzen über den Clips, zweite blassere Marke (`Zeitachse::setSchleife`, `Sitzung::zweiteStelleMs`). Noch nicht im Panel: *Fade in* / *Fade out* mit Keilen (Schritt 6), *Visuals overlap themselves* (Schritt 7). Test: Abschnitt in `test_ComposerPanel.cpp` (Feld, Haken, Undo, Sperre ohne Edit, Zeitachse kennt Loop), Bild `.schleife.png` über `LUMIVIZ_COMPOSER_PANEL_BILD` angesehen. Benutzerhandbuch 1.96.0 (§15). Gebaut mit MSVC und clang. **Im Programm nicht gesehen und nicht gehört** — Sichttest S99, Abschnitt E |
 | 0.40.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 4 von 7: der Ton** (eigener Code, keine Naht; §4). `Tonfuehrung::takt` nimmt die `Schleifenlage` (jetzt in `Komposition.hpp`, für Bild und Ton) und führt Stimmen: Ton-Clips an der vorderen Stelle, im Fenster auch an der hinteren, vor dem Umschlag die ersten Songs der nächsten Runde im Vorlauf. Ein Song in beiden Fenstern bekommt eine zweite Quelle (`songsDoppelt`), sonst spielt er sein Ende aus und springt danach. Quellen werden den Stimmen über die Stelle im Song zugeordnet, ein Sprung wird je Quelle an der Stelle im Song erkannt — **der Umschlag der Schleife ist kein Sprung mehr** (Verhalten geändert, auch ohne Überlappung: ein Song über die ganze Länge beginnt in der Schleife nahtlos mit einer zweiten Quelle statt zurückgesetzt zu werden). `Bildquelle::standStellenJetzt` nennt die Zeit bis zum Umschlag; `Sitzung::fuehreTon` reicht beides herein. Dazu der clang-Fix von Schritt 3 (`Schleifenlage` aus der Klasse gezogen, `fix`-Commit). Neuer Fall in `test_ComposerTonfuehrung.cpp` (zweite Quelle, kein Setzen am Umschlag, Pegel beider Stimmen, ohne den Haken, zwei verschiedene Songs), `PappMischEngine::quellenVon`. Gebaut mit MSVC und clang, App und Tests. **Im Programm:** die Überlappung wirkt weiter nicht (niemand setzt sie); im Loop ohne Überlappung ist der nahtlose Schleifenanfang eines Songs zu hören — nicht gehört |
 | 0.39.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 3 von 7: das Bild** (eigener Code, keine Naht; §4). `Wiedergabe::rendere` nimmt eine `Schleifenlage` (zweite Stelle, Zeit bis zum Umschlag): im Fenster laufen die Clips der vorderen und der hinteren Stelle; im selben Kanal liegt der Clip des Endes unten, der des Anfangs darüber (von mir gesetzt); ein Clip in beiden Fenstern läuft einmal mit dem höheren der zwei Pegel. **Vorwärmen über den Umschlag** — auch in einer Schleife ohne Überlappung: die ersten Clips der nächsten Runde werden im Vorlauf angelegt (Verhalten geändert: bisher begannen sie kalt). `Bildquelle::render` reicht beides aus der Uhr herein. Neuer GL-Fall in `test_ComposerWiedergabe.cpp` (Mischung im Fenster in Zahlen, Vorwärmen, Clip in beiden Fenstern). Kein Vergleichslauf: die Bildberechnung des Renderers ist nicht berührt, der bitgleiche Fall der Wiedergabe läuft unverändert. **Im Programm:** die Überlappung wirkt weiter nicht (niemand setzt sie); das Vorwärmen am Schleifenanfang wirkt ab jetzt bei jedem Loop |

@@ -863,6 +863,32 @@ TEST_SUITE("ComposerWiedergabe")
         // ohne Fenster an derselben Stelle: der Pegel der Einblendung allein
         REQUIRE(v.rendere(500, 1.0f / 60.0f, groesse));
         CHECK(nah(v.mischer().bild().pixelColor(32, 32).green(), 64));
+
+        // --- die Blende der GANZEN Komposition: Clips auf vollem Pegel, die Komposition
+        //     blendet 2 s ein und 2 s aus — auch ohne Schleife
+        Komposition b;
+        b.einblendeMs = 2000;
+        b.ausblendeMs = 2000;
+        b.ueberlappungMs = 2000;
+        b.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {clip(rot, 0, 4000), clip(blau, 6000, 10000)}));
+        Wiedergabe u;
+        u.setKomposition(b);
+        const auto farbe = [&] { return u.mischer().bild().pixelColor(32, 32); };
+        REQUIRE(u.rendere(1000, 1.0f / 60.0f, groesse));
+        CHECK(nah(farbe().red(), 128));  // halb eingeblendet
+        REQUIRE(u.rendere(3000, 1.0f / 60.0f, groesse));
+        CHECK(farbe().red() == 255);     // dahinter voll
+        REQUIRE(u.rendere(9500, 1.0f / 60.0f, groesse));
+        CHECK(nah(farbe().blue(), 64));  // eine halbe Sekunde vor dem Ende: ein Viertel
+        // im Fenster der Schleife ergeben beide eine Ueberblendung: vorn 0,5 s (Rot 0,25),
+        // hinten 8,5 s (Blau 0,75) — Rot 0,25 ueber Blau 0,75 = Rot 64, Blau 143
+        Wiedergabe::Schleifenlage kreuz;
+        kreuz.zweiteMs = b.endStelleZu(500);
+        REQUIRE(kreuz.zweiteMs == 8500);
+        REQUIRE(u.rendere(500, 1.0f / 60.0f, groesse, false, kreuz));
+        CHECK(u.gemischteClips() == 2);
+        CHECK(nah(farbe().red(), 64));
+        CHECK(nah(farbe().blue(), 143));
     }
 
     TEST_CASE("C1b GL: ein Clip auf vollem Pegel ist bitgleich mit dem Renderer allein — mit und ohne Vorwaermen")

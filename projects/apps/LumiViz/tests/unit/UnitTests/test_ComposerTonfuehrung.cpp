@@ -438,6 +438,32 @@ TEST_SUITE("ComposerTonfuehrung")
         (void)laufeRund(h, e3, zwei, roh, 61000);
         CHECK(e3.quelle(kZwei) == INVALID_STREAM);  // hinter dem Fenster ist zwei aus dem Mixer
         CHECK(e3.quellenZahl() == 1);
+
+        // --- die Blende der GANZEN Komposition gilt auch fuer den Ton: dieselben zwei Songs auf
+        //     vollem Pegel, die Komposition blendet 10 s ein und 10 s aus
+        Komposition blende = zwei;
+        blende.einblendeMs = 10000;
+        blende.ausblendeMs = 10000;
+        PappMischEngine e4;
+        e4.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung i;
+        REQUIRE(i.uebernimm(e4, p));
+        // ohne Schleife: am Anfang herauf, in der Mitte voll, am Ende herunter
+        (void)i.takt(blende, 2500, true);
+        CHECK(nah(e4.stream(e4.quelle(kEins)).lautstaerke, 0.25));
+        (void)i.takt(blende, 15000, true);
+        CHECK(nah(e4.stream(e4.quelle(kEins)).lautstaerke, 1.0));
+        (void)i.takt(blende, 57500, true);
+        CHECK(nah(e4.stream(e4.quelle(kZwei)).lautstaerke, 0.25));
+        // im Fenster der Schleife ueberblenden sie: vorn 2,5 s (eins 0,25), hinten 52,5 s (zwei 0,75)
+        r = i.takt(blende, 2500, true, Schleifenlage{52500, kUmlauf - 2500});
+        CHECK(nah(e4.stream(e4.quelle(kEins)).lautstaerke, 0.25));
+        CHECK(nah(e4.stream(e4.quelle(kZwei)).lautstaerke, 0.75));
+        CHECK(r.songStelleMs == 12500);  // der laufende Song ist noch zwei (der lautere), 12,5 s im Song
+        // nach der Mitte des Fensters ist es eins
+        r = i.takt(blende, 7500, true, Schleifenlage{57500, kUmlauf - 7500});
+        CHECK(r.songGewechselt);
+        CHECK(r.song.filePath == kEins);
     }
 
     TEST_CASE("Ein Song, der vor seinem Clip endet, und einer, der sich nicht oeffnen laesst")

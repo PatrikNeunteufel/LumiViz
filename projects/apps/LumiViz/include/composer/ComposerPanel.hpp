@@ -411,6 +411,8 @@ private:
     QDoubleSpinBox* m_endeZeit = nullptr;
     QDoubleSpinBox* m_ueberlappung = nullptr;  ///< Loop overlap (S99)
     QCheckBox* m_songsDoppelt = nullptr;       ///< Songs overlap themselves (S99)
+    QDoubleSpinBox* m_einblende = nullptr;     ///< Fade in der ganzen Komposition (S99)
+    QDoubleSpinBox* m_ausblende = nullptr;     ///< Fade out der ganzen Komposition (S99)
     int m_gezeigt = -1;  ///< was Schalter und Knoepfe zuletzt zeigten
 };
 
