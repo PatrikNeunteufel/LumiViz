@@ -151,6 +151,19 @@ void PlayerPanel::subscribeToEvents()
     // Track changed
     m_eventSubscriptions.push_back(eventBus->subscribeScoped<TrackChangedEvent>(
         [this](const TrackChangedEvent& e) {
+            // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §8, §12.2;
+            // Entscheid Patrik S99): ein Songwechsel ohne Datei heisst, dass kein
+            // Titel mehr geladen ist — der Composer hat den Ton abgegeben, und der
+            // Player hat keinen. Das Panel geht in seinen Ruhezustand.
+            if (e.track.filePath.isEmpty())
+            {
+                m_currentDurationMs = 0;
+                m_pTrackLabel->setText(tr("No track loaded"));
+                m_pArtistLabel->setText(QString());
+                m_pProgressSlider->setValue(0);
+                m_pTimeLabel->setText(QStringLiteral("00:00 / 00:00"));
+                return;
+            }
             onTrackChanged(e.track.title, e.track.artist, e.track.durationMs);
         }));
 
