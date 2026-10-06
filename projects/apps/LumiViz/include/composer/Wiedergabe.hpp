@@ -58,6 +58,21 @@ struct Anlauf
     [[nodiscard]] double summeMs() const { return ladenMs + anlegenMs + erstesBildMs; }
 };
 
+/// Ueberlappung in der Schleife (S99): was `Wiedergabe::rendere` ueber die
+/// Schleife wissen muss. Im Fenster laufen die Clips der vorderen UND der
+/// hinteren Stelle; vor dem Umschlag werden die ersten Clips der naechsten
+/// Runde vorgewaermt. (Ausserhalb der Klasse, weil der Vorgabewert eines
+/// Parameters die Mitglieds-Vorgaben einer eingeschachtelten Struktur erst
+/// nach dem Ende der Klasse kennt — clang lehnt es sonst ab.)
+struct Schleifenlage
+{
+    /// Die Stelle im hinteren Fenster, die zugleich laeuft; -1 = keine.
+    std::int64_t zweiteMs = -1;
+    /// So lange dauert es, bis die Schleife umschlaegt und der Anfang
+    /// wieder beginnt; -1 = sie schlaegt nicht um (keine Schleife).
+    std::int64_t umschlagInMs = -1;
+};
+
 /// Ein Renderer, an dem die Oberflaeche haengt (C3c), darf nicht verschwinden,
 /// solange sie ihn hat: was die Wiedergabe fallen laesst, wird hier geparkt —
 /// GL aufgeraeumt, das Objekt samt seiner Kette lebt. Geloescht wird erst,
@@ -100,17 +115,8 @@ public:
     /// laeuft mit `deltaSekunden` weiter (Befund Patrik S94: der Songtext darf
     /// nicht stehen bleiben, wenn die Komposition haelt oder zu Ende ist).
     ///
-    /// `schleife` (Ueberlappung in der Schleife, S99): im Fenster laufen die
-    /// Clips der vorderen UND der hinteren Stelle; vor dem Umschlag werden die
-    /// ersten Clips der naechsten Runde vorgewaermt.
-    struct Schleifenlage
-    {
-        /// Die Stelle im hinteren Fenster, die zugleich laeuft; -1 = keine.
-        std::int64_t zweiteMs = -1;
-        /// So lange dauert es, bis die Schleife umschlaegt und der Anfang
-        /// wieder beginnt; -1 = sie schlaegt nicht um (keine Schleife).
-        std::int64_t umschlagInMs = -1;
-    };
+    /// `schleife` (Ueberlappung in der Schleife, S99): siehe `Schleifenlage`.
+    using Schleifenlage = lumi::composer::Schleifenlage;
     bool rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse,
                  bool clipsStehen = false, Schleifenlage schleife = {});
     [[nodiscard]] Mischer& mischer() { return m_mischer; }
