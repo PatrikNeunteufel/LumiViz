@@ -296,6 +296,7 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(Sitzung::fuehrende() == nullptr);
         CHECK(player->playlist() == liste);
         CHECK_FALSE(transport(TransportCommandEvent::Action::PlayPause));
+        CHECK(lumi::composer::tonMixer() == INVALID_STREAM);  // N13: der Stream des Players wie immer
         // die Playlist spielt gerade einen Titel
         REQUIRE(player->load(kListe));
         player->play();
@@ -310,6 +311,8 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(player->isPaused());
         CHECK(sitzung.tonMixer() == engine->mixer);
         CHECK(sitzung.tonMixer() != INVALID_STREAM);
+        // Naht N13: daher nehmen Spektrum und Wellenform jetzt ihren Stream
+        CHECK(lumi::composer::tonMixer() == engine->mixer);
 
         // Play: der erste Song laeuft als Quelle im Mixer und ist als laufender Song gemeldet
         // (die Quelle steht schon bei stehender Uhr bereit — zu hoeren ist sie erst, wenn der Mixer spielt)
@@ -403,6 +406,7 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(player->isPaused());
         CHECK(gemeldet == kListe);
         CHECK(engine->quellenZahl() == 0);
+        CHECK(lumi::composer::tonMixer() == INVALID_STREAM);  // N13: wieder der Stream des Players
         player->protokoll.clear();
         befehl(TransportCommandEvent::Action::PlayPause);
         befehl(TransportCommandEvent::Action::Next);

@@ -233,6 +233,12 @@ bool transport(TransportCommandEvent::Action aktion)
     return false;
 }
 
+AudioStreamHandle tonMixer()
+{
+    const Sitzung* sitzung = Sitzung::fuehrende();
+    return sitzung != nullptr ? static_cast<AudioStreamHandle>(sitzung->tonMixer()) : INVALID_STREAM;
+}
+
 bool oeffneKomposition(VisualizerWidget& widget, QWidget* eltern, const QString& pfad)
 {
     const QString titel = QObject::tr("Open Composition");

@@ -164,6 +164,18 @@ TEST_CASE("Naht N12: der Mixer der BassEngine — Quellen, Stelle, Pegel, Summe"
     const float nurA = spitzeBei(engine, mixer, kFreqA);
     CHECK(nurA > 0.3f);
     CHECK(spitzeBei(engine, mixer, kFreqB) < nurA / 50.0f);
+    // ... und alles, was `MainWindow::onAudioUpdate` an einem Stream liest
+    // (Naht N13), liefert auch der Mixer: Wellenform, Kanalzahl, Spektrum je Kanal
+    {
+        std::vector<float> welle(1024, 0.0f);
+        CHECK(engine.getWaveformData(mixer, welle.data(), 1024));
+        float groesste = 0.0f;
+        for (const float w : welle) groesste = std::max(groesste, std::abs(w));
+        CHECK(groesste > 0.1f);
+        CHECK(engine.getStreamChannels(mixer) == 2);
+        std::vector<float> jeKanal(1024 * 2, 0.0f);
+        CHECK(engine.getFFTDataStereo(mixer, jeKanal.data(), 1024));
+    }
 
     // --- B dazu: an eigener Stelle, mit halbem Pegel — die Summe mit den Pegeln
     REQUIRE(engine.setSourcePositionMs(b, 1000));

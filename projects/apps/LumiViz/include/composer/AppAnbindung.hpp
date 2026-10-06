@@ -18,6 +18,7 @@
 #pragma once
 
 #include "audio/AudioEvents.hpp"
+#include "audio/IAudioEngine.hpp"
 #include "services/events/Event.hpp"
 
 #include <QString>
@@ -105,6 +106,13 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 /// Composer hat ihn genommen. false = er fuehrt nicht, oder es ist Lautstaerke
 /// oder Mute — dann geht der Befehl wie immer an den Player.
 [[nodiscard]] bool transport(TransportCommandEvent::Action aktion);
+
+/// Der Mixer, in dem die Songs der Komposition laufen (Naht N13, Entscheid
+/// Patrik S97: die Visuals sehen die Summe mit den Pegeln): fuehrt der
+/// Composer Ton, lesen Spektrum und Wellenform ihn statt des Streams des
+/// Players. `INVALID_STREAM` = der Composer fuehrt keinen Ton — dann wie immer
+/// der Stream des Players.
+[[nodiscard]] AudioStreamHandle tonMixer();
 
 /// Der Weg des Menues: bei leerem Pfad nach der Datei fragen (letzter Ordner
 /// unter `composer/lastDir`), laden, Meldungen zeigen. false = abgebrochen
