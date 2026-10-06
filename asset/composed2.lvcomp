@@ -46,9 +46,9 @@
                 },
                 {
                     "blend": 0,
-                    "end": 236000,
+                    "end": 248000,
                     "fadeIn": {
-                        "ms": 14000,
+                        "ms": 28000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -66,7 +66,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 12600,
+                        "ms": 38000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -84,11 +84,11 @@
                         }
                     },
                     "file": "Milkdrop3/presets/martin - polar lights.milk",
-                    "start": 135000
+                    "start": 129000
                 },
                 {
                     "blend": 0,
-                    "end": 400600,
+                    "end": 414000,
                     "fadeIn": {
                         "ms": 9406,
                         "shape": {
@@ -108,7 +108,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 11600,
+                        "ms": 27133,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -132,7 +132,7 @@
                     "blend": 0,
                     "end": 540000,
                     "fadeIn": {
-                        "ms": 13000,
+                        "ms": 23000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -181,7 +181,7 @@
                     "blend": 0,
                     "end": 153000,
                     "fadeIn": {
-                        "ms": 19000,
+                        "ms": 31000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -205,7 +205,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 14000,
+                        "ms": 28000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -227,7 +227,7 @@
                 },
                 {
                     "blend": 0,
-                    "end": 324406,
+                    "end": 339000,
                     "fadeIn": {
                         "ms": 20000,
                         "shape": {
@@ -247,7 +247,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 9406,
+                        "ms": 28000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -271,7 +271,7 @@
                     "blend": 0,
                     "end": 474000,
                     "fadeIn": {
-                        "ms": 11600,
+                        "ms": 18000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -313,7 +313,7 @@
                     "blend": 0,
                     "end": 611000,
                     "fadeIn": {
-                        "ms": 13000,
+                        "ms": 36000,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -349,7 +349,7 @@
                         }
                     },
                     "file": "Milkdrop3/presets/MilkDrop2077 - NeonAngel vs Flexi - CyberPunk Rain2.milk",
-                    "start": 527000
+                    "start": 510000
                 }
             ],
             "enabled": true,
@@ -379,7 +379,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 23330,
+                        "ms": 17330,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -429,7 +429,7 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 39000,
+                        "ms": 22000,
                         "shape": {
                             "kind": "fade",
                             "points": [
