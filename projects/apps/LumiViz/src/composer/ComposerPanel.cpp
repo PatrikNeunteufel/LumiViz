@@ -1884,10 +1884,35 @@ void ComposerPanel::setupUI()
            "Off: it plays once — it finishes its end and then jumps back inside the song.\n\n"
            "Saved with the composition. Can be changed while Edit is on."));
     schleifenZeile->addWidget(m_songsDoppelt);
+    m_bilderDoppelt = new QCheckBox(tr("Visuals overlap themselves"), this);
+    m_bilderDoppelt->setObjectName(QStringLiteral("composerVisualsTwice"));
+    m_bilderDoppelt->setToolTip(
+        tr("For a visual clip that lies in both windows of the loop overlap (one preset over "
+           "the whole composition).\n\n"
+           "Off: it runs once, without restarting — in the window the higher of its two levels "
+           "counts.\n\n"
+           "On: in the window it runs twice — the old one plays the end, a freshly started one "
+           "is mixed over it for the beginning, each with its own level; after the window the "
+           "fresh one carries on. This loads the preset a second time shortly before the loop "
+           "turns over and needs twice the graphics memory for the length of the window. The "
+           "clip Effect Chain is synced to always runs once.\n\n"
+           "Saved with the composition. Can be changed while Edit is on."));
+    schleifenZeile->addSpacing(8);
+    schleifenZeile->addWidget(m_bilderDoppelt);
+    connect(m_bilderDoppelt, &QCheckBox::clicked, this, [this](bool an) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.bilderDoppelt = an;
+        bearbeite(neu, an ? tr("Let visuals overlap themselves") : tr("Run visuals once in the loop"));
+    });
     // Ein- und Ausblenden der ganzen Komposition (Entscheid Patrik S99: getrennt
     // von der Ueberlappung, gilt immer)
-    const auto blendenFeld = [this, schleifenZeile](const QString& titel, const char* name,
-                                                    const QString& hinweis) {
+    // — in einer eigenen Zeile: zusammen mit den Haken waere das Panel zu breit
+    auto* blendenZeile = new QHBoxLayout();
+    blendenZeile->addStretch(1);
+    const auto blendenFeld = [this, blendenZeile](const QString& titel, const char* name,
+                                                  const QString& hinweis) {
+        QHBoxLayout* const schleifenZeile = blendenZeile;
         schleifenZeile->addSpacing(12);
         schleifenZeile->addWidget(new QLabel(titel, this));
         auto* feld = new QDoubleSpinBox(this);
@@ -1931,6 +1956,7 @@ void ComposerPanel::setupUI()
         });
     }
     root->addLayout(schleifenZeile);
+    root->addLayout(blendenZeile);
     connect(m_ueberlappung, &QDoubleSpinBox::valueChanged, this, [this](double sekunden) {
         if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
         Komposition neu = m_sitzung->komposition();
@@ -2150,6 +2176,8 @@ void ComposerPanel::zeigeEnde()
     m_ueberlappung->setValue(geladen ? static_cast<double>(m_sitzung->komposition().ueberlappungMs) / 1000.0
                                      : 0.0);
     m_songsDoppelt->setChecked(!geladen || m_sitzung->komposition().songsDoppelt);
+    m_bilderDoppelt->setEnabled(bearbeiten);
+    m_bilderDoppelt->setChecked(geladen && m_sitzung->komposition().bilderDoppelt);
     m_einblende->setEnabled(bearbeiten);
     m_ausblende->setEnabled(bearbeiten);
     const QSignalBlocker ruheEin(m_einblende);

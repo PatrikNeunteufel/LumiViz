@@ -864,6 +864,70 @@ TEST_SUITE("ComposerWiedergabe")
         REQUIRE(v.rendere(500, 1.0f / 60.0f, groesse));
         CHECK(nah(v.mischer().bild().pixelColor(32, 32).green(), 64));
 
+        // --- Visuals overlap themselves: derselbe Clip, im Fenster mit ZWEI Exemplaren
+        Komposition d = g;
+        d.bilderDoppelt = true;
+        Wiedergabe z;
+        z.setKomposition(d);
+        const auto gruenVon = [&] { return z.mischer().bild().pixelColor(32, 32).green(); };
+        // mitten in der Runde: ein Exemplar
+        REQUIRE(z.rendere(5000, 1.0f / 60.0f, groesse, false, Wiedergabe::Schleifenlage{-1, 3000}));
+        CHECK(z.rendererAnzahl() == 1);
+        MultiEffectVisualizer* const altes = z.rendererVon(0, 0);
+        REQUIRE(altes != nullptr);
+        CHECK(z.zweitRendererVon(0, 0) == nullptr);
+        // eine halbe Sekunde vor dem Umschlag: das frische ist vorgewaermt, gemischt wird eines
+        REQUIRE(z.rendere(7500, 1.0f / 60.0f, groesse, false, Wiedergabe::Schleifenlage{-1, 500}));
+        CHECK(z.rendererAnzahl() == 2);
+        MultiEffectVisualizer* const frisches = z.zweitRendererVon(0, 0);
+        REQUIRE(frisches != nullptr);
+        CHECK(frisches != altes);
+        CHECK(z.rendererVon(0, 0) == altes);
+        CHECK(z.gemischteClips() == 1);
+        CHECK(gruenVon() == 255);
+        // im Fenster: beide gemischt — das alte spielt das Ende (hinten 8,5 s, Pegel 0,75), das
+        // frische darueber den Anfang (vorn 0,5 s, Pegel 0,25): 0,25 + 0,75 · 0,75 = 0,8125 → 207
+        Wiedergabe::Schleifenlage imFenster;
+        imFenster.zweiteMs = d.endStelleZu(500);
+        imFenster.umschlagInMs = d.umlaufMs() - 500;
+        REQUIRE(z.rendere(500, 1.0f / 60.0f, groesse, false, imFenster));
+        CHECK(z.gemischteClips() == 2);
+        CHECK(z.rendererAnzahl() == 2);
+        CHECK(z.rendererVon(0, 0) == altes);
+        CHECK(z.zweitRendererVon(0, 0) == frisches);
+        CHECK(nah(gruenVon(), 207));
+        // hinter dem Fenster laeuft das FRISCHE weiter, das alte ist weg
+        REQUIRE(z.rendere(2500, 1.0f / 60.0f, groesse, false, Wiedergabe::Schleifenlage{-1, 5500}));
+        CHECK(z.rendererAnzahl() == 1);
+        CHECK(z.rendererVon(0, 0) == frisches);
+        CHECK(z.zweitRendererVon(0, 0) == nullptr);
+        CHECK(z.gemischteClips() == 1);
+        CHECK(gruenVon() == 255);
+        // „Loop aus" im Fenster: die Uhr steht dann an der hinteren Stelle — das ALTE laeuft weiter
+        REQUIRE(z.rendere(7500, 1.0f / 60.0f, groesse, false, Wiedergabe::Schleifenlage{-1, 500}));
+        imFenster.zweiteMs = d.endStelleZu(600);
+        REQUIRE(z.rendere(600, 1.0f / 60.0f, groesse, false, imFenster));
+        REQUIRE(z.rendererAnzahl() == 2);
+        MultiEffectVisualizer* const dasAlte = z.rendererVon(0, 0);
+        CHECK(dasAlte == frisches);  // was eben nachrueckte, ist jetzt das alte
+        REQUIRE(z.rendere(8700, 1.0f / 60.0f, groesse));  // keine Schleife mehr, Stelle im Ende
+        CHECK(z.rendererAnzahl() == 1);
+        CHECK(z.rendererVon(0, 0) == dasAlte);
+        // ohne Vorwaermen (Sprung mitten ins hintere Fenster): das frische entsteht im Fenster
+        Wiedergabe y;
+        y.setKomposition(d);
+        imFenster.zweiteMs = d.endStelleZu(500);
+        REQUIRE(y.rendere(500, 1.0f / 60.0f, groesse, false, imFenster));
+        CHECK(y.rendererAnzahl() == 2);
+        CHECK(y.gemischteClips() == 2);
+        // der festgehaltene Clip (Effect Chain haengt an ihm) laeuft immer nur einmal
+        Wiedergabe x;
+        x.setKomposition(d);
+        x.setFest(0, 0);
+        REQUIRE(x.rendere(500, 1.0f / 60.0f, groesse, false, imFenster));
+        CHECK(x.rendererAnzahl() == 1);
+        CHECK(x.gemischteClips() == 1);
+
         // --- die Blende der GANZEN Komposition: Clips auf vollem Pegel, die Komposition
         //     blendet 2 s ein und 2 s aus — auch ohne Schleife
         Komposition b;

@@ -557,6 +557,15 @@ TEST_SUITE("ComposerPanel")
             CHECK(sitzung->ungespeichert());
             songsDoppelt->click();
             CHECK_FALSE(sitzung->komposition().songsDoppelt);
+            auto* bilderDoppelt = panel.findChild<QCheckBox*>(QStringLiteral("composerVisualsTwice"));
+            REQUIRE(bilderDoppelt != nullptr);
+            CHECK(bilderDoppelt->isEnabled());
+            CHECK_FALSE(bilderDoppelt->isChecked());  // Vorgabe aus
+            bilderDoppelt->click();
+            CHECK(sitzung->komposition().bilderDoppelt);
+            REQUIRE(bus->undo());
+            CHECK_FALSE(sitzung->komposition().bilderDoppelt);
+            CHECK_FALSE(bilderDoppelt->isChecked());
             // die Zeitachse hat die geaenderte Komposition, und sie kennt den Schalter Loop
             const bool schleifeVorher = sitzung->schleife();
             sitzung->setSchleife(true);

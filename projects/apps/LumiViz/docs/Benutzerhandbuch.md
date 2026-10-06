@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.97.0
+> **Version:** 1.98.0
 > **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2020,8 +2020,15 @@ Sekunden laufen zugleich, im Bild und im Ton. Die Runde wird dadurch um die
   beiden Fenstern liegt — etwa einen über die ganze Komposition. An: er
   spielt im Fenster zweimal, sein Ende klingt aus, während sein Anfang schon
   läuft. Aus: er spielt sein Ende zu Ende und springt dann im Song zurück.
-- Ein **Bild-Clip** in beiden Fenstern läuft einmal durch, ohne Neustart; im
-  Fenster gilt der höhere seiner zwei Pegel.
+- **Visuals overlap themselves** (Standard: aus) betrifft einen **Bild-Clip**
+  in beiden Fenstern — etwa ein Preset über die ganze Komposition. Aus: er
+  läuft einmal durch, ohne Neustart; im Fenster gilt der höhere seiner zwei
+  Pegel. An: im Fenster läuft er zweimal — das laufende Exemplar spielt das
+  Ende, ein frisch gestartetes wird für den Anfang darübergemischt, jedes mit
+  seinem Pegel; hinter dem Fenster läuft das frische allein weiter. Das lädt
+  das Preset kurz vor dem Umschlag ein zweites Mal und braucht für die Dauer
+  des Fensters den doppelten Grafikspeicher. Der Clip, an dem *Sync on Effect
+  Chain* gerade hängt, läuft immer nur einmal.
 
 Beide Werte gehören zur Komposition und stehen in ihrer Datei. Auch ohne
 Überlappung beginnt eine Schleife jetzt weicher: die ersten Clips sind beim
@@ -2142,6 +2149,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.98.0 | 2026-10-06 | Session 99. §15 Composer, Schleife mit Überlappung NEU Haken **Visuals overlap themselves** (Standard aus): ein Bild-Clip in beiden Fenstern läuft im Fenster zweimal, ein frisch gestartetes Exemplar über dem laufenden; kostet ein zweites Laden und doppelten Grafikspeicher im Fenster |
 | 1.97.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die ganze Komposition ein- und ausblenden**: Felder **Fade in** / **Fade out** (Bild und Ton, zusätzlich zu den Pegelkurven der Clips; gilt immer, auch ohne Loop; Keile im Lineal; mit *Loop overlap* eine fertige Überblendung; die Karaoke-Ebene blendet nicht mit) |
 | 1.96.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die Schleife mit Überlappung**: Feld **Loop overlap** (Ende und Anfang laufen in der Schleife zugleich, Bild und Ton; nichts wird von selbst geblendet; die Runde wird kürzer), die Zeitachse tönt beide Fenster und zeigt eine zweite Marke, Haken **Songs overlap themselves**; beide Werte in der `.lvcomp`. GEÄNDERT: auch ohne Überlappung sind die ersten Clips am Schleifenanfang schon geladen, ein Song über die ganze Länge setzt nahtlos neu an |
 | 1.95.0 | 2026-10-06 | Session 99. §15 Audio-Kanal, Absatz **Aus** ERGÄNZT: hat der Player keinen Titel geladen, zeigen Panel Player und Tag View nach Composer aus „No track loaded", der Songtext der Komposition verschwindet (vorher blieb der letzte Song der Komposition stehen) |

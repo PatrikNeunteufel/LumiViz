@@ -110,7 +110,18 @@ public:
     void entladeAlles();
 
     // --- Auskunft (Panel, Tests) -------------------------------------------
-    [[nodiscard]] int rendererAnzahl() const { return static_cast<int>(m_laeufe.size()); }
+    [[nodiscard]] int rendererAnzahl() const
+    {
+        return static_cast<int>(m_laeufe.size() + m_frische.size());
+    }
+    /// Das zweite, frisch gestartete Exemplar eines Clips, der in beiden
+    /// Fenstern der Schleife liegt (`Komposition::bilderDoppelt`, S99);
+    /// nullptr = er hat keins.
+    [[nodiscard]] MultiEffectVisualizer* zweitRendererVon(int kanal, int clip) const
+    {
+        const auto ort = m_frische.find({kanal, clip});
+        return ort != m_frische.end() ? ort->second.renderer.get() : nullptr;
+    }
     /// Clips, die im letzten Bild gemischt wurden.
     [[nodiscard]] int gemischteClips() const { return m_gemischt; }
     /// Hat der Clip gerade einen Renderer (laufend oder vorgewaermt)?
@@ -160,11 +171,16 @@ private:
         bool defekt = false;  ///< Datei liess sich nicht laden — nicht jedes Bild neu versuchen
         int anlauf = -1;      ///< Platz in m_anlaeufe
         int bilder = 0;       ///< gerechnete Bilder (fuer die Messung der ersten zwei)
+        /// Die Stelle im Clip, an der dieser Lauf zuletzt gemischt wurde; -1 =
+        /// noch nie. Daran entscheidet sich nach dem Fenster der Schleife,
+        /// welches von zwei Exemplaren weiterlaeuft (S99).
+        std::int64_t imClipMs = -1;
     };
     using Schluessel = std::pair<int, int>;  ///< (Kanal, Clip)
 
+    /// `frisch`: das zweite Exemplar des Clips (`m_frische`) statt des ersten.
     Lauf& sichere(const Schluessel& s, const VisualClip& clip, QSize groesse,
-                  std::int64_t stelleMs, bool vorgewaermt);
+                  std::int64_t stelleMs, bool vorgewaermt, bool frisch = false);
     /// Ein Bild des Laufs rechnen; die ersten zwei werden gemessen.
     void rechne(Lauf& lauf, float deltaSekunden, QSize groesse);
     /// Den Renderer des Laufs aufgeben. Ein geschuetzter wird nur aufgeraeumt
@@ -177,6 +193,11 @@ private:
     Komposition m_komposition;
     Mischer m_mischer;
     std::map<Schluessel, Lauf> m_laeufe;
+    /// Zweite Exemplare (Visuals overlap themselves, S99): ein Clip, der im
+    /// vorderen UND im hinteren Fenster der Schleife liegt, laeuft im Fenster
+    /// zweimal — das alte Exemplar (`m_laeufe`) spielt das Ende, das frische
+    /// hier den Anfang. Hinter dem Fenster rueckt das frische nach `m_laeufe`.
+    std::map<Schluessel, Lauf> m_frische;
     std::unique_ptr<MultiEffectVisualizer> m_karaokeTraeger;
     Leinwand m_karaokeLeinwand;
     std::int64_t m_vorlaufMs = 2000;

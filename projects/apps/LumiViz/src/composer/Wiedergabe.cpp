@@ -77,6 +77,11 @@ void Wiedergabe::ersetzeKomposition(Komposition komposition)
         return &clips[static_cast<size_t>(s.second)];
     };
 
+    // Zweite Exemplare (Schleife, S99) ueberstehen das Bearbeiten nicht: ihr
+    // Clip kann an anderem Platz liegen — im Fenster entsteht ein neues.
+    for (auto& [schluessel, lauf] : m_frische) wirfWeg(lauf, false);
+    m_frische.clear();
+
     const MultiEffectVisualizer* const festVorher = rendererVon(m_fest.first, m_fest.second);
     std::map<Schluessel, Lauf> alt = std::move(m_laeufe);
     m_laeufe.clear();
@@ -154,6 +159,8 @@ void Wiedergabe::entladeAlles()
 {
     for (auto& [schluessel, lauf] : m_laeufe) wirfWeg(lauf, schluessel == m_fest);
     m_laeufe.clear();
+    for (auto& [schluessel, lauf] : m_frische) wirfWeg(lauf, false);
+    m_frische.clear();
     if (m_karaokeTraeger != nullptr) m_karaokeTraeger->cleanup();
     m_karaokeTraeger.reset();
     m_gemischt = 0;
@@ -161,9 +168,9 @@ void Wiedergabe::entladeAlles()
 }
 
 Wiedergabe::Lauf& Wiedergabe::sichere(const Schluessel& s, const VisualClip& clip, QSize groesse,
-                                      std::int64_t stelleMs, bool vorgewaermt)
+                                      std::int64_t stelleMs, bool vorgewaermt, bool frisch)
 {
-    Lauf& lauf = m_laeufe[s];
+    Lauf& lauf = frisch ? m_frische[s] : m_laeufe[s];
     if (lauf.renderer != nullptr || lauf.defekt) return lauf;
 
     QElapsedTimer uhr;
@@ -171,8 +178,8 @@ Wiedergabe::Lauf& Wiedergabe::sichere(const Schluessel& s, const VisualClip& cli
     std::unique_ptr<MultiEffectVisualizer> renderer;
     // Der festgehaltene Clip bekommt seinen geparkten Renderer wieder — samt
     // der Kette, wie sie zuletzt war (auch ungespeicherte Aenderungen).
-    const bool adoptiert =
-        s == m_fest && m_park != nullptr && m_park->geparkt != nullptr && m_park->adoptierbar;
+    const bool adoptiert = !frisch && s == m_fest && m_park != nullptr && m_park->geparkt != nullptr &&
+                           m_park->adoptierbar;
     if (adoptiert)
     {
         renderer = std::move(m_park->geparkt);
@@ -241,6 +248,8 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         const VisualClip* clip;
         bool laeuft;
         double pegel;  ///< nur fuer laufende
+        bool frisch = false;            ///< das zweite Exemplar des Clips (`m_frische`)
+        std::int64_t imClipMs = -1;     ///< die Stelle im Clip, an der er gemischt wird
     };
     std::vector<Dran> dran;
     const std::int64_t zweiteMs = schleife.zweiteMs;
@@ -267,13 +276,33 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
                     // Dazu die Blende der GANZEN Komposition an der jeweiligen
                     // Stelle: am Anfang herauf, am Ende herunter — im Fenster
                     // ergibt das eine Ueberblendung.
-                    double pegel = 0.0;
-                    if (vorn)
-                        pegel = clip.pegelBei(stelleMs - clip.startMs) * m_komposition.blendeBei(stelleMs);
-                    if (hinten)
-                        pegel = std::max(pegel, clip.pegelBei(zweiteMs - clip.startMs) *
-                                                    m_komposition.blendeBei(zweiteMs));
-                    dran.push_back({{k, c}, &clip, true, pegel});
+                    const std::int64_t vornIm = stelleMs - clip.startMs;
+                    const std::int64_t hintenIm = zweiteMs - clip.startMs;
+                    const double pegelVorn =
+                        vorn ? clip.pegelBei(vornIm) * m_komposition.blendeBei(stelleMs) : 0.0;
+                    const double pegelHinten =
+                        hinten ? clip.pegelBei(hintenIm) * m_komposition.blendeBei(zweiteMs) : 0.0;
+                    // Visuals overlap themselves (Haken der Komposition): im
+                    // Fenster zwei Exemplare — das alte spielt das Ende, ein
+                    // frisches darueber den Anfang, jedes mit seinem Pegel.
+                    // Der festgehaltene Clip (Effect Chain haengt an ihm)
+                    // laeuft immer nur einmal.
+                    const bool darfDoppelt = m_komposition.bilderDoppelt && Schluessel{k, c} != m_fest;
+                    if (vorn && hinten && darfDoppelt)
+                    {
+                        dran.push_back({{k, c}, &clip, true, pegelHinten, false, hintenIm});
+                        dran.push_back({{k, c}, &clip, true, pegelVorn, true, vornIm});
+                        continue;
+                    }
+                    dran.push_back({{k, c}, &clip, true, std::max(pegelVorn, pegelHinten), false,
+                                    hinten ? hintenIm : vornIm});
+                    // ... und kurz vor dem Umschlag wird das frische Exemplar
+                    // vorgewaermt: der Clip laeuft ueber den Umschlag hinweg
+                    // und beginnt in der naechsten Runde innerhalb des Vorlaufs
+                    if (vorn && !hinten && darfDoppelt && m_vorlaufMs > 0 && m_komposition.ueberlappung() > 0 &&
+                        schleife.umschlagInMs >= 0 && schleife.umschlagInMs + clip.startMs <= m_vorlaufMs &&
+                        clip.endeMs > stelleMs + schleife.umschlagInMs)
+                        dran.push_back({{k, c}, &clip, false, 0.0, true, -1});
                     continue;
                 }
                 bool bald = m_vorlaufMs > 0 && stelleMs < clip.startMs &&
@@ -297,11 +326,54 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
             m_fest.second < static_cast<int>(kanal.clips.size()))
             dran.push_back({m_fest, &kanal.clips[static_cast<size_t>(m_fest.second)], false, 0.0});
     }
+    // Zweite Exemplare, die niemand mehr braucht. Hinter dem Fenster laeuft
+    // EINES weiter: das, dessen letzte Stelle im Clip der jetzigen am
+    // naechsten liegt — nach einer Runde das frische (es rueckt nach
+    // `m_laeufe`), nach „Loop aus" im Fenster das alte.
+    for (auto it = m_frische.begin(); it != m_frische.end();)
+    {
+        const Schluessel s = it->first;
+        const bool bleibt = std::any_of(dran.begin(), dran.end(), [&](const Dran& d) {
+            return d.frisch && d.schluessel == s;
+        });
+        if (bleibt)
+        {
+            ++it;
+            continue;
+        }
+        const auto einzeln = std::find_if(dran.begin(), dran.end(), [&](const Dran& d) {
+            return !d.frisch && d.laeuft && d.schluessel == s;
+        });
+        const auto alt = m_laeufe.find(s);
+        bool rueckt = false;
+        if (einzeln != dran.end() && it->second.renderer != nullptr && it->second.imClipMs >= 0)
+        {
+            const std::int64_t zumFrischen = std::llabs(it->second.imClipMs - einzeln->imClipMs);
+            rueckt = alt == m_laeufe.end() || alt->second.imClipMs < 0 ||
+                     zumFrischen < std::llabs(alt->second.imClipMs - einzeln->imClipMs);
+        }
+        if (rueckt)
+        {
+            if (alt != m_laeufe.end())
+            {
+                wirfWeg(alt->second, false);
+                m_laeufe.erase(alt);
+            }
+            // den Knoten umhaengen (die Leinwand laesst sich nicht bewegen)
+            auto knoten = m_frische.extract(it++);
+            m_laeufe.insert(std::move(knoten));
+        }
+        else
+        {
+            wirfWeg(it->second, false);
+            it = m_frische.erase(it);
+        }
+    }
     // Entladen: was weder laeuft noch bald dran ist
     for (auto it = m_laeufe.begin(); it != m_laeufe.end();)
     {
         const bool bleibt = std::any_of(dran.begin(), dran.end(), [&](const Dran& d) {
-            return d.schluessel == it->first;
+            return !d.frisch && d.schluessel == it->first;
         });
         if (bleibt)
         {
@@ -318,8 +390,8 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
     for (const Dran& d : dran)
     {
         if (d.laeuft) continue;
-        const bool neu = m_laeufe.count(d.schluessel) == 0;
-        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, true);
+        const bool neu = (d.frisch ? m_frische : m_laeufe).count(d.schluessel) == 0;
+        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, true, d.frisch);
         // Baut der Renderer noch an einer Movement-Tabelle (Scheiben-Betrieb),
         // rechnet er weiter Bilder, bis sie steht — sonst kaeme der Rest des
         // Baus erst, wenn der Clip schon zu sehen ist.
@@ -332,8 +404,9 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
     for (const Dran& d : dran)
     {
         if (!d.laeuft) continue;
-        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, false);
+        Lauf& lauf = sichere(d.schluessel, *d.clip, groesse, stelleMs, false, d.frisch);
         if (lauf.renderer == nullptr) continue;
+        lauf.imClipMs = d.imClipMs;
         // Auch bei Pegel 0 weiterrechnen: das Visual lebt, nur sieht man es nicht.
         // Steht die Uhr, bleibt sein letztes Bild stehen — ausser es hat noch
         // keins oder die Groesse hat sich geaendert.
@@ -372,6 +445,8 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
 void Wiedergabe::fuerJedenRenderer(const std::function<void(MultiEffectVisualizer&)>& tu)
 {
     for (auto& [schluessel, lauf] : m_laeufe)
+        if (lauf.renderer != nullptr) tu(*lauf.renderer);
+    for (auto& [schluessel, lauf] : m_frische)
         if (lauf.renderer != nullptr) tu(*lauf.renderer);
     if (m_karaokeTraeger != nullptr) tu(*m_karaokeTraeger);
 }

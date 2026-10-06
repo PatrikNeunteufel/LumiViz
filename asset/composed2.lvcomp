@@ -502,24 +502,6 @@
             "clips": [
                 {
                     "end": 220330,
-                    "fadeIn": {
-                        "ms": 17000,
-                        "shape": {
-                            "kind": "fade",
-                            "points": [
-                                {
-                                    "curve": 0,
-                                    "x": 0,
-                                    "y": 0
-                                },
-                                {
-                                    "curve": 0,
-                                    "x": 1,
-                                    "y": 1
-                                }
-                            ]
-                        }
-                    },
                     "fadeOut": {
                         "ms": 17330,
                         "shape": {
@@ -874,24 +856,6 @@
                             ]
                         }
                     },
-                    "fadeOut": {
-                        "ms": 103000,
-                        "shape": {
-                            "kind": "fade",
-                            "points": [
-                                {
-                                    "curve": 0,
-                                    "x": 0,
-                                    "y": 0
-                                },
-                                {
-                                    "curve": 0,
-                                    "x": 1,
-                                    "y": 1
-                                }
-                            ]
-                        }
-                    },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/Groove Armada - Love Box/04-madder.mp3",
                     "offset": 0,
                     "sourceLength": 321640,
@@ -903,8 +867,17 @@
             "name": "A4"
         }
     ],
+    "fade": {
+        "in": 3000,
+        "out": 15000
+    },
     "format": "lumiviz-composition",
     "gridSeconds": 1,
     "length": 0,
+    "loop": {
+        "overlap": 17000,
+        "songsTwice": false,
+        "visualsTwice": false
+    },
     "version": 2
 }
