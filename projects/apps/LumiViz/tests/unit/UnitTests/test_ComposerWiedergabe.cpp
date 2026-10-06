@@ -771,6 +771,100 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(w.rendererAnzahl() == 0);
     }
 
+    TEST_CASE("Schleife S99 GL: im Fenster laufen die Clips beider Stellen, ein Clip in beiden einmal — Vorwaermen ueber den Umschlag")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+        const QString gruen = farbPreset(dir, QStringLiteral("Gruen.lvfx"), 0x00FF00);
+        const QSize groesse(64, 64);
+        const auto nah = [](int ist, int soll) { return std::abs(ist - soll) <= 3; };
+
+        // Laenge 10 s, Ueberlappung 2 s: Rot blendet am Anfang ein, Blau am Ende aus — im selben Kanal
+        VisualClip anfang = clip(rot, 0, 4000);
+        anfang.setzeBlenden(2000, 0);
+        VisualClip ende = clip(blau, 6000, 10000);
+        ende.setzeBlenden(0, 2000);
+        Komposition k;
+        k.ueberlappungMs = 2000;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {anfang, ende}));
+        Wiedergabe w;
+        w.setKomposition(k);
+        const auto mitte = [&] { return w.mischer().bild().pixelColor(32, 32); };
+
+        // erste Runde, Stelle 1 s: nur der Anfang (halb eingeblendet)
+        REQUIRE(w.rendere(1000, 1.0f / 60.0f, groesse));
+        CHECK(w.gemischteClips() == 1);
+        CHECK(nah(mitte().red(), 128));
+        CHECK(mitte().blue() == 0);
+        CHECK_FALSE(w.hatRenderer(0, 1));
+
+        // im Fenster: vorn 1 s, hinten 9 s — beide Clips laufen; das Ende liegt unten, der
+        // Anfang darueber: Rot 0,5 ueber (Blau 0,5 ueber Schwarz) = Rot 128, Blau 64
+        Wiedergabe::Schleifenlage fenster;
+        fenster.zweiteMs = k.endStelleZu(1000);
+        REQUIRE(fenster.zweiteMs == 9000);
+        REQUIRE(w.rendere(1000, 1.0f / 60.0f, groesse, false, fenster));
+        CHECK(w.gemischteClips() == 2);
+        CHECK(w.hatRenderer(0, 0));
+        CHECK(w.hatRenderer(0, 1));
+        CHECK(nah(mitte().red(), 128));
+        CHECK(nah(mitte().blue(), 64));
+        // hinter dem Fenster wieder einer
+        REQUIRE(w.rendere(2500, 1.0f / 60.0f, groesse));
+        CHECK(w.gemischteClips() == 1);
+        CHECK_FALSE(w.hatRenderer(0, 1));
+
+        // --- Vorwaermen ueber den Umschlag: 1 s vor dem Umschlag (Stelle 7 s, Umlauf 8 s)
+        //     bekommt der erste Clip der naechsten Runde seinen Renderer
+        REQUIRE(w.rendere(7000, 1.0f / 60.0f, groesse));
+        CHECK_FALSE(w.hatRenderer(0, 0));  // ohne Schleife: der Anfang ist fern
+        Wiedergabe::Schleifenlage vorUmschlag;
+        vorUmschlag.umschlagInMs = k.umlaufMs() - 7000;
+        REQUIRE(w.rendere(7000, 1.0f / 60.0f, groesse, false, vorUmschlag));
+        CHECK(w.hatRenderer(0, 0));        // angelegt ...
+        CHECK(w.gemischteClips() == 1);    // ... aber nicht gemischt: es laeuft nur Blau
+        CHECK(mitte().red() == 0);
+        // weit vor dem Umschlag nicht
+        Wiedergabe::Schleifenlage fern;
+        fern.umschlagInMs = 5000;
+        REQUIRE(w.rendere(3000, 1.0f / 60.0f, groesse, false, fern));
+        CHECK(w.hatRenderer(0, 0));  // Rot laeuft hier selbst (0–4 s)
+        REQUIRE(w.rendere(5000, 1.0f / 60.0f, groesse, false, Wiedergabe::Schleifenlage{-1, 3000}));
+        CHECK(w.rendererAnzahl() == 1);  // nur Blau im Vorlauf (ab 6 s), Rot ist entladen
+        CHECK(w.hatRenderer(0, 1));
+
+        // --- ein Clip in BEIDEN Fenstern (ueber die ganze Laenge): er laeuft einmal, mit
+        //     einem Renderer, und im Fenster gilt der hoehere der zwei Pegel
+        VisualClip ganz = clip(gruen, 0, 10000);
+        ganz.setzeBlenden(2000, 2000);
+        Komposition g;
+        g.ueberlappungMs = 2000;
+        g.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {ganz}));
+        Wiedergabe v;
+        v.setKomposition(g);
+        Wiedergabe::Schleifenlage beide;
+        beide.zweiteMs = g.endStelleZu(500);  // vorn 0,5 s (Pegel 0,25), hinten 8,5 s (Pegel 0,75)
+        REQUIRE(beide.zweiteMs == 8500);
+        REQUIRE(v.rendere(500, 1.0f / 60.0f, groesse, false, beide));
+        CHECK(v.gemischteClips() == 1);
+        CHECK(v.rendererAnzahl() == 1);
+        CHECK(nah(v.mischer().bild().pixelColor(32, 32).green(), 191));
+        beide.zweiteMs = g.endStelleZu(1500);  // vorn 0,75, hinten 0,25
+        REQUIRE(v.rendere(1500, 1.0f / 60.0f, groesse, false, beide));
+        CHECK(nah(v.mischer().bild().pixelColor(32, 32).green(), 191));
+        // ohne Fenster an derselben Stelle: der Pegel der Einblendung allein
+        REQUIRE(v.rendere(500, 1.0f / 60.0f, groesse));
+        CHECK(nah(v.mischer().bild().pixelColor(32, 32).green(), 64));
+    }
+
     TEST_CASE("C1b GL: ein Clip auf vollem Pegel ist bitgleich mit dem Renderer allein — mit und ohne Vorwaermen")
     {
         Gl gl;

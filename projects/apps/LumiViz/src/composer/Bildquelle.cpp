@@ -377,8 +377,14 @@ void Bildquelle::render(float deltaTime)
         QElapsedTimer uhr;
         uhr.start();
         // Steht die Uhr, laeuft auch die Zeit der Visuals nicht weiter.
+        // Ueberlappung in der Schleife (S99): im Fenster die zweite Stelle, und
+        // wie lange es bis zum Umschlag dauert (zum Vorwaermen der ersten Clips)
+        Wiedergabe::Schleifenlage schleife;
+        schleife.zweiteMs = m_uhr.zweiteStelleMs();
+        if (laeuft && m_uhr.schleife() && m_uhr.laengeMs() > 0)
+            schleife.umschlagInMs = m_uhr.umlaufMs() - stelle;
         m_bildSteht = m_wiedergabe->rendere(stelle, (laeuft || clipsStehen) ? deltaTime : 0.0f,
-                                            m_groesse, clipsStehen);
+                                            m_groesse, clipsStehen, schleife);
         const double ms = static_cast<double>(uhr.nsecsElapsed()) / 1.0e6;
         m_letzteStelle = stelle;
         m_letzteGroesse = m_groesse;

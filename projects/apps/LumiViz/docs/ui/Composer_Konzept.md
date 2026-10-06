@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.38.0
+> **Version:** 0.39.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -334,8 +334,18 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     und steht bis dahin nicht im Panel — er braucht ein zweites Exemplar
     desselben Clips und ist der größte Einzelteil.
     **Bauplan:** (1) Modell und Datei ✅, (2) Uhr und Bildquelle ✅,
-    (3) Bild, (4) Ton, (5) Panel und Zeitachse, (6) Blende der ganzen
+    (3) Bild ✅, (4) Ton, (5) Panel und Zeitachse, (6) Blende der ganzen
     Komposition, (7) Visuals overlap themselves.
+    **Das Bild im Fenster (Schritt 3, gebaut S99):** `Wiedergabe::rendere`
+    bekommt die zweite Stelle (`Schleifenlage`) und mischt die Clips beider
+    Stellen. Liegen in einem Kanal zwei Clips zugleich, liegt der des Endes
+    unten und der des Anfangs darüber (**von mir gesetzt** — der Neue kommt
+    obenauf, wie ein höherer Kanal). Ein Clip in beiden Fenstern läuft
+    einmal, mit einem Renderer, und bekommt den höheren der zwei Pegel.
+    **Vorwärmen über den Umschlag:** die ersten Clips der nächsten Runde
+    bekommen ihren Renderer im Vorlauf vor dem Umschlag — das gilt für
+    jede Schleife, auch ohne Überlappung (bisher begannen sie am
+    Schleifenanfang kalt).
     **Die Uhr mit Überlappung (Schritt 2, gebaut S99):** ein Umlauf dauert
     Länge weniger Überlappung (`Uhr::umlaufMs`). `stelleMs` ist die
     **vordere** Stelle (die rote Marke), `zweiteStelleMs` die im hinteren
@@ -1252,6 +1262,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.39.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 3 von 7: das Bild** (eigener Code, keine Naht; §4). `Wiedergabe::rendere` nimmt eine `Schleifenlage` (zweite Stelle, Zeit bis zum Umschlag): im Fenster laufen die Clips der vorderen und der hinteren Stelle; im selben Kanal liegt der Clip des Endes unten, der des Anfangs darüber (von mir gesetzt); ein Clip in beiden Fenstern läuft einmal mit dem höheren der zwei Pegel. **Vorwärmen über den Umschlag** — auch in einer Schleife ohne Überlappung: die ersten Clips der nächsten Runde werden im Vorlauf angelegt (Verhalten geändert: bisher begannen sie kalt). `Bildquelle::render` reicht beides aus der Uhr herein. Neuer GL-Fall in `test_ComposerWiedergabe.cpp` (Mischung im Fenster in Zahlen, Vorwärmen, Clip in beiden Fenstern). Kein Vergleichslauf: die Bildberechnung des Renderers ist nicht berührt, der bitgleiche Fall der Wiedergabe läuft unverändert. **Im Programm:** die Überlappung wirkt weiter nicht (niemand setzt sie); das Vorwärmen am Schleifenanfang wirkt ab jetzt bei jedem Loop |
 | 0.38.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 2 von 7: Uhr und Bildquelle** (eigener Code, keine Naht; §4). `Uhr::setUeberlappungMs`, `ueberlappungMs` (wirksam, höchstens die halbe Länge), `umlaufMs`, `zweiteStelleMs` (die Stelle im hinteren Fenster, −1 = keine), `rueckkehrMs`, `umgelaufen`; `stelleMs` ist in der Schleife die vordere Stelle. Start, Stopp, Länge, Schleife an / aus und Überlappung halten im Fenster die hintere Stelle fest. `Bildquelle` gibt der Uhr die Überlappung der Komposition, spiegelt die zweite Stelle (`standZweiteStelleMs`, `standUeberlappungMs`, `standLaengeMs`) und rechnet beide auf jetzt hoch (`standStellenJetzt`); `ersetzeKomposition`, Composer aus und der Stand für den Neustart merken `rueckkehrMs`. Mit Überlappung 0 unverändert (die bisherigen Uhr-Fälle laufen ohne Änderung). Neue Fälle in `test_ComposerWiedergabe.cpp` (Uhr) und `test_ComposerBildquelle.cpp` (Spiegel). **Im Programm wirkt weiter nichts** — niemand setzt die Überlappung, Bild und Ton lesen die zweite Stelle noch nicht. Von mir gesetzt: Verhalten bei Sprung, Halt und Schleife aus im Fenster |
 | 0.37.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife: vier Entscheide Patrik, Schritt 1 von 7 gebaut** (§4). (1) a — zwei getrennte Einstellungen: *Loop overlap* (nur bei Loop, nichts wird zusätzlich geblendet, die Schleife wird um die Überlappung kürzer) und *Fade in* / *Fade out* der ganzen Komposition (immer). (2) a — die Werte gehören zur Komposition (Kopf der `.lvcomp`, Fuß des Panels, über Undo). (3) a — die Zeitachse tönt beide Fenster, zweite blasse Marke, Keile für die Blende. (4) einstellbar mit zwei Haken: *Songs overlap themselves* (Vorgabe an), *Visuals overlap themselves* (Vorgabe aus, wird mit Freigabe als letzter Schritt gebaut). **Gebaut, Schritt 1 (Modell und Datei, eigener Code, keine Naht):** `Komposition::ueberlappungMs`, `songsDoppelt`, `bilderDoppelt`, `einblendeMs`, `ausblendeMs`; `ueberlappung()` (höchstens die halbe Länge), `umlaufMs()`, `endStelleZu()`, `blendeBei()` (linear — von mir gesetzt); in der Datei `loop { overlap, songsTwice, visualsTwice }` und `fade { in, out }`, nur wenn sie von der Vorgabe abweichen — eine Komposition ohne sie sieht aus wie bisher. Neuer Fall in `test_ComposerWiedergabe.cpp`. **Im Programm wirkt davon noch nichts** — Uhr, Bild, Ton und Panel folgen. Rückbau-Liste: Kennungen der Naht N5, fünfte Stelle (`3624e1f`, Eigenes `e3043ae`) |
 | 0.36.0 | 2026-10-06 | Session 99 — **Freigeben ohne Titel im Player: die Lücke aus S98 geschlossen** (Entscheid Patrik: a). Vor dem Bau per Test gezählt: kein Songwechsel, Player-Panel und Tag View zeigten weiter den letzten Song der Komposition. **Eigenes:** `Sitzung::gibTonFrei` meldet einen leeren Songwechsel, wenn der Player keinen Titel hat und ein Song gemeldet war (§4). **Naht N5, Anzeige, wächst um eine fünfte Stelle** (vor dem Bau eingetragen, §12.2): der Empfänger von `TrackChangedEvent` im Player-Panel geht bei einem Songwechsel ohne Datei in den Ruhezustand. Neuer Fall in `test_ComposerNahtTon.cpp` (echtes Player-Panel, echtes Tag View). Nicht per Test belegt: der Empfänger in `MainWindow` (Songtext, Tags, Songwechsel-Zähler) bei leerem Titel. Dazu: Vorlauf 2 s und Abweichung 80 ms / Schonfrist 500 ms gelten als im Hörtest bestätigt (kein eigenes Urteil in der Liste). Rückbau-Liste: Zeile S99, Kennungen folgen |

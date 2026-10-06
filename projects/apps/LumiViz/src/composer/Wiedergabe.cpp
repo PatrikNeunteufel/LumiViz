@@ -228,7 +228,7 @@ void Wiedergabe::rechne(Lauf& lauf, float deltaSekunden, QSize groesse)
 }
 
 bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse,
-                         bool clipsStehen)
+                         bool clipsStehen, Schleifenlage schleife)
 {
     m_gemischt = 0;
     m_karaokeAufgelegt = false;
@@ -240,19 +240,44 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         Schluessel schluessel;
         const VisualClip* clip;
         bool laeuft;
+        double pegel;  ///< nur fuer laufende
     };
     std::vector<Dran> dran;
+    const std::int64_t zweiteMs = schleife.zweiteMs;
     for (int k = 0; k < static_cast<int>(m_komposition.kanaele.size()); ++k)
     {
         const Kanal& kanal = m_komposition.kanaele[static_cast<size_t>(k)];
         if (kanal.art != KanalArt::Visual || !kanal.an) continue;
-        for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
+        // Im Fenster der Schleife liegen in einem Kanal zwei Clips zugleich:
+        // der des Endes zuerst, der des Anfangs darueber — der Neue kommt
+        // obenauf, wie ein hoeherer Kanal. Ausserhalb gibt es nur einen Durchgang.
+        for (const bool nurHinten : {true, false})
         {
-            const VisualClip& clip = kanal.clips[static_cast<size_t>(c)];
-            const bool laeuft = stelleMs >= clip.startMs && stelleMs < clip.endeMs;
-            const bool bald = m_vorlaufMs > 0 && stelleMs < clip.startMs &&
-                              stelleMs >= clip.startMs - m_vorlaufMs;
-            if (laeuft || bald) dran.push_back({{k, c}, &clip, laeuft});
+            if (nurHinten && zweiteMs < 0) continue;
+            for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
+            {
+                const VisualClip& clip = kanal.clips[static_cast<size_t>(c)];
+                const bool vorn = stelleMs >= clip.startMs && stelleMs < clip.endeMs;
+                const bool hinten = zweiteMs >= clip.startMs && zweiteMs < clip.endeMs;
+                if (nurHinten != (hinten && !vorn)) continue;
+                if (vorn || hinten)
+                {
+                    // Ein Clip in beiden Fenstern laeuft einmal durch; es gilt
+                    // der hoehere der zwei Pegel (Entscheid Patrik S99).
+                    double pegel = 0.0;
+                    if (vorn) pegel = clip.pegelBei(stelleMs - clip.startMs);
+                    if (hinten) pegel = std::max(pegel, clip.pegelBei(zweiteMs - clip.startMs));
+                    dran.push_back({{k, c}, &clip, true, pegel});
+                    continue;
+                }
+                bool bald = m_vorlaufMs > 0 && stelleMs < clip.startMs &&
+                            stelleMs >= clip.startMs - m_vorlaufMs;
+                // ueber den Umschlag der Schleife hinweg: der Clip beginnt in
+                // der naechsten Runde innerhalb des Vorlaufs
+                if (!bald && m_vorlaufMs > 0 && schleife.umschlagInMs >= 0)
+                    bald = schleife.umschlagInMs + clip.startMs <= m_vorlaufMs;
+                if (bald) dran.push_back({{k, c}, &clip, false, 0.0});
+            }
         }
     }
     // Der festgehaltene Clip (C3c) ist immer dran — wie ein vorgewaermter,
@@ -264,7 +289,7 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
                                        [&](const Dran& d) { return d.schluessel == m_fest; });
         if (!schon && kanal.art == KanalArt::Visual && m_fest.second >= 0 &&
             m_fest.second < static_cast<int>(kanal.clips.size()))
-            dran.push_back({m_fest, &kanal.clips[static_cast<size_t>(m_fest.second)], false});
+            dran.push_back({m_fest, &kanal.clips[static_cast<size_t>(m_fest.second)], false, 0.0});
     }
     // Entladen: was weder laeuft noch bald dran ist
     for (auto it = m_laeufe.begin(); it != m_laeufe.end();)
@@ -308,8 +333,7 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         // keins oder die Groesse hat sich geaendert.
         if (!clipsStehen || lauf.bilder == 0 || lauf.leinwand.groesse() != groesse)
             rechne(lauf, clipsStehen ? 0.0f : deltaSekunden, groesse);
-        const double pegel = d.clip->pegelBei(stelleMs - d.clip->startMs);
-        m_mischer.lege(lauf.leinwand, pegel, d.clip->mischart);
+        m_mischer.lege(lauf.leinwand, d.pegel, d.clip->mischart);
         ++m_gemischt;
     }
 

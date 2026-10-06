@@ -99,8 +99,20 @@ public:
     /// ihr letztes Bild wird noch einmal gemischt —, die Karaoke-Ebene aber
     /// laeuft mit `deltaSekunden` weiter (Befund Patrik S94: der Songtext darf
     /// nicht stehen bleiben, wenn die Komposition haelt oder zu Ende ist).
+    ///
+    /// `schleife` (Ueberlappung in der Schleife, S99): im Fenster laufen die
+    /// Clips der vorderen UND der hinteren Stelle; vor dem Umschlag werden die
+    /// ersten Clips der naechsten Runde vorgewaermt.
+    struct Schleifenlage
+    {
+        /// Die Stelle im hinteren Fenster, die zugleich laeuft; -1 = keine.
+        std::int64_t zweiteMs = -1;
+        /// So lange dauert es, bis die Schleife umschlaegt und der Anfang
+        /// wieder beginnt; -1 = sie schlaegt nicht um (keine Schleife).
+        std::int64_t umschlagInMs = -1;
+    };
     bool rendere(std::int64_t stelleMs, float deltaSekunden, QSize groesse,
-                 bool clipsStehen = false);
+                 bool clipsStehen = false, Schleifenlage schleife = {});
     [[nodiscard]] Mischer& mischer() { return m_mischer; }
 
     /// Alle Renderer wegwerfen (etwa bevor der GL-Kontext geht).
