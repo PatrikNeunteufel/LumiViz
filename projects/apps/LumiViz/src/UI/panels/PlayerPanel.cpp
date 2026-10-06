@@ -115,6 +115,19 @@ void PlayerPanel::onActivate()
             onPlaybackPositionChanged(player->positionMs(), track.durationMs);
         }
     }
+
+    // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §8, §12.2): fuehrt
+    // der Composer den Ton, gilt sein Stand — der laufende Song der
+    // Komposition und ob sie laeuft — statt dem des (angehaltenen) Players.
+    if (const lumi::composer::TonStand stand = lumi::composer::tonStand(); stand.fuehrt)
+    {
+        updatePlayButton(stand.laeuft);
+        if (stand.hatSong)
+        {
+            onTrackChanged(stand.song.title, stand.song.artist, stand.song.durationMs);
+            onPlaybackPositionChanged(stand.stelleMs, stand.song.durationMs);
+        }
+    }
 }
 
 void PlayerPanel::onDeactivate()
@@ -284,7 +297,15 @@ void PlayerPanel::onProgressPressed()
 void PlayerPanel::onProgressReleased()
 {
     m_isSeeking = false;
-    
+
+    // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §8, §12.2): fuehrt
+    // der Composer den Ton, springt der Klick im laufenden Song der
+    // Komposition — der Composer rechnet daraus die Stelle auf seiner Zeitachse.
+    if (lumi::composer::springeImSong(static_cast<double>(m_pProgressSlider->value()) / 1000.0))
+    {
+        return;
+    }
+
     // Seek to final position
     if (auto* player = services().tryResolve<IAudioPlayer>())
     {
@@ -314,6 +335,9 @@ void PlayerPanel::onTrackChanged(const QString& title, const QString& artist, in
     
     // Update track info
     QString displayTitle = title.isEmpty() ? tr("Unknown Title") : title;
+    // Composer-Naht N5, Anzeige (Entscheid Patrik S98): fuehrt der Composer den
+    // Ton, ist es der laufende Song der Komposition — „Composer - <Song>".
+    if (lumi::composer::fuehrtTon()) displayTitle = tr("Composer - %1").arg(displayTitle);
     m_pTrackLabel->setText(displayTitle);
     
     QString displayArtist = artist.isEmpty() ? tr("Unknown Artist") : artist;
@@ -381,6 +405,21 @@ QString PlayerPanel::formatTime(int ms)
 
 void PlayerPanel::updatePlayButton(bool isPlaying)
 {
+    // Composer-Naht N5, Anzeige (Entscheid Patrik S98): solange der Composer
+    // den Ton fuehrt, ist der Loop-Knopf ausgegraut — die Schleife steht im
+    // Composer-Panel. Hier, weil der Composer beim Uebernehmen und beim
+    // Freigeben „laeuft / haelt" meldet und das Panel dabei hier vorbeikommt.
+    if (lumi::composer::fuehrtTon())
+    {
+        m_pLoopButton->setEnabled(false);
+        m_pLoopButton->setToolTip(tr("The Composer plays the audio — set the loop in the Composer panel"));
+    }
+    else if (!m_pLoopButton->isEnabled())
+    {
+        m_pLoopButton->setEnabled(true);
+        updateLoopButton(m_loopEnabled);
+    }
+
     if (isPlaying)
     {
         m_pPlayButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
