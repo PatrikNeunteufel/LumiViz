@@ -473,4 +473,114 @@ TEST_SUITE("ComposerNahtTon")
         CHECK_FALSE(sitzung.laeuft());
         sitzung.setAn(false);
     }
+
+    // Beleg zur bekannten Luecke (S98, gezaehlt in S99): der Player hat KEINEN
+    // Titel, der Composer fuehrt den Ton und wird ausgeschaltet. Der Fall haelt
+    // fest, was heute geschieht — er wird umgeschrieben, sobald die Luecke
+    // geschlossen ist.
+    TEST_CASE("C5b Beleg: Composer off ohne Titel im Player — was die Panels danach zeigen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        ChainNode root;
+        root.params = ListParams{};
+        const QString preset = dir.filePath(QStringLiteral("Leer.lvfx"));
+        REQUIRE(saveChainToFile(root, preset));
+        Komposition k = neueKomposition();
+        REQUIRE(fuegeClipEin(k, 0, preset, 0, 90000) == 0);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeSongEin(k, 1, kEins, 0, 60000) == 0);
+        const QString datei = dir.filePath(QStringLiteral("mitTon.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
+        dienste.registerSingleton<IAudioPlayer>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new PappPlayer); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new PappMischEngine); });
+        IEventBus* bus = dienste.tryResolve<IEventBus>();
+        auto* player = dynamic_cast<PappPlayer*>(dienste.tryResolve<IAudioPlayer>());
+        auto* engine = dynamic_cast<PappMischEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(bus != nullptr);
+        REQUIRE(player != nullptr);
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{kEins, 300000}};
+        REQUIRE_FALSE(player->hasTrack());  // der Player hat nichts geladen
+
+        int songwechsel = 0;
+        QString gemeldet;
+        const auto abo = bus->subscribeScoped<TrackChangedEvent>([&](const TrackChangedEvent& e) {
+            ++songwechsel;
+            gemeldet = e.track.filePath;
+        });
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+
+        const auto texte = [](const QWidget& w) {
+            QStringList alle;
+            for (const QLabel* l : w.findChildren<QLabel*>()) alle << l->text();
+            return alle;
+        };
+        PlayerPanel panel(dienste);
+        TagViewPanel tagView(dienste);
+        panel.show();
+        tagView.show();
+        QCoreApplication::processEvents();
+        // vor dem Composer: beide Panels im Ruhezustand
+        CHECK(texte(panel).contains(QStringLiteral("No track loaded")));
+        CHECK(texte(tagView).contains(QStringLiteral("No track loaded")));
+
+        Sitzung& sitzung = Sitzung::fuer(widget);
+        REQUIRE(sitzung.lade(datei));
+        sitzung.setAn(true);
+        REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
+        sitzung.spiele();
+        REQUIRE(warte([&] { return gemeldet == kEins; }));
+        QCoreApplication::processEvents();
+        CHECK(texte(panel).contains(QStringLiteral("Composer - eins")));
+        CHECK(texte(tagView).contains(QDir::toNativeSeparators(kEins)));
+        const int vorher = songwechsel;
+
+        sitzung.setAn(false);
+        QCoreApplication::processEvents();
+        REQUIRE_FALSE(sitzung.fuehrtTon());
+        const QStringList imPlayer = texte(panel);
+        const QStringList imTagView = texte(tagView);
+        MESSAGE("Songwechsel beim Freigeben: " << (songwechsel - vorher));
+        MESSAGE("Panel Player danach:  " << imPlayer.join(QStringLiteral(" | ")).toStdString());
+        MESSAGE("Tag View danach:      " << imTagView.join(QStringLiteral(" | ")).toStdString());
+        // --- die Luecke, wie sie heute ist: niemand erfaehrt, dass kein Song mehr laeuft
+        CHECK(songwechsel == vorher);
+        CHECK(gemeldet == kEins);
+        CHECK(imPlayer.contains(QStringLiteral("Composer - eins")));
+        CHECK_FALSE(imPlayer.contains(QStringLiteral("No track loaded")));
+        CHECK(imTagView.contains(QDir::toNativeSeparators(kEins)));
+
+        // --- Weg „leerer Songwechsel": was die zwei Panels aus einem leeren Titel machen
+        bus->publish(TrackChangedEvent{});
+        QCoreApplication::processEvents();
+        MESSAGE("nach leerem Songwechsel, Panel Player: "
+                << texte(panel).join(QStringLiteral(" | ")).toStdString());
+        MESSAGE("nach leerem Songwechsel, Tag View:     "
+                << texte(tagView).join(QStringLiteral(" | ")).toStdString());
+        CHECK(texte(tagView).contains(QStringLiteral("No track loaded")));
+        CHECK_FALSE(texte(panel).contains(QStringLiteral("No track loaded")));
+        CHECK(texte(panel).contains(QStringLiteral("Unknown Title")));
+    }
 }

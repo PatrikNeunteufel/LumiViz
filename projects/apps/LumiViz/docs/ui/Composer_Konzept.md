@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.34.0
-> **Datum:** 2026-10-06 (Session 98)
+> **Version:** 0.35.0
+> **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -15,7 +15,11 @@
 > Spektrum des Mixers für die Visuals (Naht N13; beide S98) — die Songs
 > überlagern sich, im Programm noch nicht gehört; Schritt 4, die Anzeige des
 > Player-Panels, nach geändertem Entscheid gebaut (S98: „Composer - <Song>");
-> Schritt 5, das Benutzerhandbuch, geschrieben; offen der Sichttest**) — dazu Entscheide aus S95 und S96
+> Schritt 5, das Benutzerhandbuch, geschrieben; das Überlagern im Programm
+> gehört (S98), Korrekturen, Weiterspielen und die Bedienung der Zeitachse
+> im Programm gesehen (Sichttest S98b am 06.10. abends: 33 von 33, im Log
+> kein Nachsetzen); offen aus der ersten Liste P13 bis P16, das Panel Player
+> und die Urteile R**) — dazu Entscheide aus S95 und S96
 > in §4 bis §9e; im Zweig `composer`, noch nicht nach `master` geholt
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
@@ -208,8 +212,13 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
       gespiegelten Stand auf jetzt hoch (Länge und Schleife mitgespiegelt);
       die Führung misst nach jedem Setzen einmal den **Grundabstand** der
       Quelle und setzt nur nach, wenn sie davon abweicht — das trägt auch
-      eine Ausgabe mit großer Latenz (Funk). **Im Programm noch nicht
-      wieder gehört.**
+      eine Ausgabe mit großer Latenz (Funk). **Im Programm gehört
+      (Sichttest S98b, A2 und A3, 06.10. abends):** keine Knackser, kein
+      Rutschen nach einem Sprung; das Log zählt in allen 17 Läufen des
+      Abends **kein einziges Nachsetzen**, obwohl der Render-Thread
+      weiter lange Bilder meldet (103 Zeilen, die längsten 188 und
+      191 ms). Vorlauf und Schwelle selbst (Urteile R der ersten Liste)
+      hat Patrik noch nicht beurteilt.
     - **Die Visuals sehen die Summe, gebaut (S98, Naht N13):**
       `MainWindow::onAudioUpdate` liest Spektrum und Wellenform vom Mixer,
       solange der Composer Ton führt.
@@ -408,9 +417,12 @@ Naht N9):**
   Eingefügt wird mit dem **Anfang an der Einfügemarke**, nur in einen Kanal
   der Art des Clips; liegt dort schon einer, in die nächste Lücke, in die er
   ganz passt (`Bearbeiten::fuegeKopieEin` — er wird nicht gekürzt). Über
-  Undo. **Von mir gesetzt:** nach dem Einfügen rückt die Marke hinter den
-  neuen Clip; ohne Marke landet die Kopie hinter dem angeklickten Clip;
-  Kopieren geht auch ohne Edit.
+  Undo. **Von mir gesetzt, von Patrik im Sichttest S98b gebilligt (S99;
+  D2, D3, C12 — ohne Bemerkung abgehakt):** nach dem Einfügen rückt die
+  Marke hinter den neuen Clip; ohne Marke landet die Kopie hinter dem
+  angeklickten Clip; eine Kopie wird nicht gekürzt. Bei der falschen Art
+  geschieht nichts, ohne Hinweis (C10, ebenso abgehakt). **Weiter nur von
+  mir gesetzt:** Kopieren geht auch ohne Edit (stand nicht in der Liste).
 - **Schatten beim Hineinziehen** (Wortlaut Patrik: „in den passenden Kanälen
   an der voraussichtlichen Einfügestelle ein Schatten des Clips"): solange
   ein Drag aus Effect Browser, Audio Browser, Playlist oder Explorer über
@@ -420,12 +432,19 @@ Naht N9):**
   auf einer Kopie), er kann also nicht danebenliegen. Über einer Zeile der
   anderen Art gibt es keinen, und der Drag wird dort abgelehnt.
 - **Die Zeit unter dem Zeiger:** im Lineal zeigt ein Tooltip die Zeit an der
-  Stelle der Maus.
+  Stelle der Maus — nur im Lineal, nicht über den Zeilen (im Sichttest
+  S98b ohne Einwand, C1).
 - **Vorgabelänge neuer Bild-Clips** in Settings (*New clip length*, 1 bis
   600 s, Vorgabe 20) — Naht N9.
-- **Nur im Programm zu prüfen:** der Schatten während eines echten Drags
-  (der Unit-Test fragt `fallSchatten` und schickt kein Ziehen), der
-  Tooltip, die Kürzel neben den Kürzeln des Hauptfensters.
+- **Im Programm gesehen (Sichttest S98b, S99 ausgewertet):** der Schatten
+  während eines echten Drags (C13 bis C17; der Unit-Test fragt nur
+  `fallSchatten` und schickt kein Ziehen), der Tooltip (C1), die Kürzel
+  neben den Kürzeln des Hauptfensters (C5 bis C9), die Vorgabelänge (C18).
+  Aussehen von Marke und Schatten: gut zu unterscheiden von der
+  Abspielmarke (D4).
+- **Wellenform beim Kürzen eines Song-Clips:** sie wird abgeschnitten, nicht
+  zusammengeschoben (Patrik S99 zu D5) — die Beobachtung aus dem Hörtest
+  S98 ist damit erledigt.
 
 - **Kopf:** Schalter **Composer on**, Schalter **Lock**, Transport (Start,
   Stopp, an den Anfang), Schalter **Follow player**, Stelle als Zeit, Zoom,
@@ -530,7 +549,8 @@ Ausschalten wieder ein — am Titelende spielt dann nichts von selbst weiter,
 und ein Doppelklick in der Playlist tut nichts.
 
 **Wechsel zwischen Player und Composer** (Wunsch Patrik nach dem Hörtest
-S98, einstellbar in Settings, Vorgabe beide an): Spielte der Player, als der
+S98, einstellbar in Settings, Vorgabe beide an — die Vorgabe von Patrik im
+Sichttest S98b gebilligt, D1; B1 bis B6 bestanden): Spielte der Player, als der
 Composer den Ton übernahm, **spielt er von selbst weiter**, wenn der Composer
 den Ton wieder abgibt (Composer aus, letzter Audio-Kanal aus) — nicht beim
 Beenden der App. Lief die Komposition, als der Composer ausgeschaltet wurde,
@@ -1154,6 +1174,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.35.0 | 2026-10-06 | Session 99 — **Sichttest S98b ausgewertet** (Patrik, 06.10. abends: 33 von 33 bestanden, keine Bemerkung). Im Programm gehört und gesehen: Korrekturen nach dem Hörtest (Tag View, kein Knackser, kein Rutschen), Weiterspielen beim Wechsel, Einfügemarke, Kopieren / Ausschneiden / Einfügen, Schatten, Tooltip, Vorgabelänge. **Log:** in allen 17 Läufen des Abends kein Nachsetzen, trotz langer Bilder bis 191 ms (§4). **Gebilligt, was ich gesetzt hatte:** beide Haken „Weiterspielen" Vorgabe an (§8); die Marke rückt hinter den eingefügten Clip, ohne Marke landet die Kopie hinter dem angeklickten Clip, eine Kopie wird nicht gekürzt, kein Hinweis bei falscher Art, Tooltip nur im Lineal (§7). **Wellenform beim Kürzen:** wird abgeschnitten (Patrik zu D5) — erledigt. Weiter ohne Urteil: Vorlauf 2 s, Abweichung 80 ms / Schonfrist 500 ms (Urteile R der ersten Liste, noch nicht geprüft), Kopieren ohne Edit. Kopf nachgezogen |
 | 0.34.0 | 2026-10-06 | Session 98 — **Bedienung der Zeitachse (Wünsche Patrik nach dem Hörtest).** Entscheid Patrik: a — eine eigene **Einfügemarke** (Klick auf eine freie Stelle einer Kanalzeile); **Kopieren / Ausschneiden / Einfügen** von Clips mit Ctrl+C / X / V und im Rechtsklick-Menü, der Anfang an der Marke, nur in einen Kanal der passenden Art (`Bearbeiten::fuegeKopieEin`); **Schatten beim Hineinziehen** aus demselben Code wie das Fallenlassen (`Zeitachse::fallSchatten`), in einer Zeile der anderen Art weder Schatten noch Fallen; **Zeit unter dem Zeiger** im Lineal; **Vorgabelänge neuer Bild-Clips** in Settings (Naht N9 wächst, vor dem Bau eingetragen) — §7, §12.2. Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall) und `test_ComposerPanel.cpp` (neuer Fall mit Marke, Ablage, Tasten, Undo, Schatten, Vorgabelänge). Rückbau-Liste: Kennung der Nähte nach dem Hörtest (`4b3e652`), Zeile „Bedienung der Zeitachse". 934 Cases. **Offen:** im Programm nichts davon gesehen; Patriks Beobachtung zur Wellenform beim Kürzen eines Songs ist nicht nachgestellt |
 | 0.33.0 | 2026-10-06 | Session 98 — **Nach dem Hörtest** (Patrik: 26 bestanden, 6 mit Befund, 1 Fehler, 23 offen; der Mixer trägt). **O1 behoben, Naht N15:** Tag View zeigt beim Einblenden den laufenden Song der Komposition (§12.2). **Nachsetzen:** Ursache gemessen und behoben — die Engine liegt stetig 40 bis 50 ms hinter der Uhr (Latenz), die Ausreißer kamen von einer veralteten Stelle bei langen Bildern des Render-Threads; `Bildquelle::standStelleJetztMs`, Grundabstand je Quelle, jede Nachsetz-Zeile im Log mit Datei (§4). **Weiterspielen einstellbar** (Wunsch Patrik): Player nach Composer aus, Komposition nach Composer on — zwei Haken in Settings, Vorgabe an; Naht N9 wächst (§8, §12.2 — erst nach dem Bau eingetragen). **Naht N7a zurückgenommen** (Entscheid a, der Mixer trägt). Rückbau-Liste: Zeile „nach dem Hörtest". 932 Cases. **Offen:** im Programm nichts davon gesehen oder gehört; die Wünsche Patriks (Clips kopieren und einfügen, Tooltip am Zeitstrahl, Vorgabelänge, Wellenform abschneiden) |
 | 0.32.2 | 2026-10-06 | Session 98 — **Entscheid Patrik zu Naht N7a: a** — sie wird zurückgenommen, sobald der Hörtest zeigt, dass der Mixer trägt (§12.2). Gebaut ist nichts |
