@@ -95,6 +95,37 @@ AudioPlayer::~AudioPlayer()
 }
 
 // =============================================================================
+// Track Info (Composer-Naht N14, docs/ui/Composer_Konzept.md §12.2)
+// =============================================================================
+
+TrackInfo leseTrackInfo(IAudioEngine& engine, AudioStreamHandle stream, const QString& filePath)
+{
+    TrackInfo track;
+    track.filePath = filePath;
+    track.durationMs = engine.getDurationMs(stream);
+
+    // Try to get metadata
+    QString title, artist, album;
+    if (engine.getMetadata(stream, title, artist, album))
+    {
+        track.title = title;
+        track.artist = artist;
+        track.album = album;
+    }
+    else
+    {
+        // Use filename as title
+        QFileInfo info(filePath);
+        track.title = info.completeBaseName();
+    }
+    // Weitere Tags fuer die Text-Vorlagen (S86)
+    engine.getMetadataExtra(stream, track.year, track.genre, track.trackNumber);
+    // Eingebettete Songtexte fuer den Lyrics-Knoten (S86)
+    engine.getLyrics(stream, track.lyricsSynced, track.lyricsPlain);
+    return track;
+}
+
+// =============================================================================
 // Playback Control
 // =============================================================================
 
@@ -119,33 +150,9 @@ bool AudioPlayer::load(const QString& filePath)
         return false;
     }
     
-    // Update track info
-    m_impl->currentTrack = TrackInfo{};
-    m_impl->currentTrack.filePath = filePath;
-    m_impl->currentTrack.durationMs = m_impl->engine.getDurationMs(m_impl->currentStream);
-    
-    // Try to get metadata
-    QString title, artist, album;
-    if (m_impl->engine.getMetadata(m_impl->currentStream, title, artist, album))
-    {
-        m_impl->currentTrack.title = title;
-        m_impl->currentTrack.artist = artist;
-        m_impl->currentTrack.album = album;
-    }
-    else
-    {
-        // Use filename as title
-        QFileInfo info(filePath);
-        m_impl->currentTrack.title = info.completeBaseName();
-    }
-    // Weitere Tags fuer die Text-Vorlagen (S86)
-    m_impl->engine.getMetadataExtra(m_impl->currentStream, m_impl->currentTrack.year,
-                                    m_impl->currentTrack.genre,
-                                    m_impl->currentTrack.trackNumber);
-    // Eingebettete Songtexte fuer den Lyrics-Knoten (S86)
-    m_impl->engine.getLyrics(m_impl->currentStream, m_impl->currentTrack.lyricsSynced,
-                             m_impl->currentTrack.lyricsPlain);
-    
+    // Update track info (Composer-Naht N14: an einer Stelle, auch fuer den Composer)
+    m_impl->currentTrack = leseTrackInfo(m_impl->engine, m_impl->currentStream, filePath);
+
     // Apply current volume
     m_impl->engine.setVolume(m_impl->currentStream, m_impl->laut());
     // S91: ein neuer Stream laeuft mit der Rate seiner Datei — das Tempo des

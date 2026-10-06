@@ -161,3 +161,11 @@ private:
     void publishPlaybackModeChanged();
     void handleTrackEnd();
 };
+
+/// Composer-Naht N14 (docs/ui/Composer_Konzept.md §12.2): die `TrackInfo` eines
+/// geoeffneten Streams — Dauer, Titel (ohne Tag der Dateiname), Kuenstler,
+/// Album, Jahr, Genre, Tracknummer, eingebettete Songtexte. `load` baut seine
+/// damit; der Composer liest so die Tags des laufenden Songs an einer Quelle
+/// seines Mixers.
+[[nodiscard]] TrackInfo leseTrackInfo(IAudioEngine& engine, AudioStreamHandle stream,
+                                      const QString& filePath);
