@@ -9,6 +9,7 @@
 
 #include "audio/AlbumCover.hpp"
 #include "audio/IAudioPlayer.hpp"
+#include "composer/AppAnbindung.hpp"  // Composer-Naht N15: der laufende Song beim Einblenden
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"  // Songtext des laufenden Titels (S88)
@@ -152,6 +153,11 @@ void TagViewPanel::onActivate()
     // beim Einblenden den laufenden Titel nachholen
     if (auto* player = services().tryResolve<IAudioPlayer>())
         zeige(player->hasTrack() ? player->currentTrack() : TrackInfo{});
+    // Composer-Naht N15 (docs/ui/Composer_Konzept.md §12.2): fuehrt der
+    // Composer den Ton, ist der laufende Titel der laufende Song der
+    // Komposition — nicht der des (angehaltenen) Players.
+    if (const lumi::composer::TonStand stand = lumi::composer::tonStand(); stand.fuehrt && stand.hatSong)
+        zeige(stand.song);
     zeigeSongtext();
     m_uhr->start();
 }

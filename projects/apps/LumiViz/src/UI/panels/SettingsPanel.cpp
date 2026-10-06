@@ -685,6 +685,31 @@ QWidget* SettingsPanel::createPanelsTab()
         connect(ende, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
                 [](int index) { Sitzung::setAmEnde(static_cast<AmEnde>(index)); });
         layout->addRow(tr("End of a Composition:"), ende);
+
+        // Wechsel zwischen Player und Composer (Wunsch Patrik S98)
+        auto* playerWeiter = new QCheckBox(tr("Player resumes when the Composer hands the audio back"), widget);
+        playerWeiter->setObjectName(QStringLiteral("composerPlayerResumes"));
+        playerWeiter->setChecked(Sitzung::playerSpieltWeiter());
+        playerWeiter->setToolTip(
+            tr("A composition with an audio channel pauses the player while it plays.\n\n"
+               "On: if the player was playing when the Composer took over, it continues by "
+               "itself when the Composer is switched off (or its last audio channel is disabled).\n\n"
+               "Off: the player stays paused — press Play to continue."));
+        connect(playerWeiter, &QCheckBox::toggled, this,
+                [](bool an) { Sitzung::setPlayerSpieltWeiter(an); });
+        layout->addRow(tr("Composer off:"), playerWeiter);
+
+        auto* nachEinWeiter = new QCheckBox(tr("Composition continues when the Composer is switched on again"), widget);
+        nachEinWeiter->setObjectName(QStringLiteral("composerResumesWhenSwitchedOn"));
+        nachEinWeiter->setChecked(Sitzung::laeuftNachEinWeiter());
+        nachEinWeiter->setToolTip(
+            tr("On: if the composition was playing when the Composer was switched off, it "
+               "continues by itself when the Composer is switched on again.\n\n"
+               "Off: Composer on waits at the remembered position — press Play to continue.\n\n"
+               "A newly loaded composition follows \"Open Composition\" above."));
+        connect(nachEinWeiter, &QCheckBox::toggled, this,
+                [](bool an) { Sitzung::setLaeuftNachEinWeiter(an); });
+        layout->addRow(tr("Composer on:"), nachEinWeiter);
     }
 
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren

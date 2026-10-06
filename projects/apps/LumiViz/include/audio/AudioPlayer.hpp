@@ -96,10 +96,6 @@ public:
     [[nodiscard]] float tempo() const override;
     void setTempo(float tempo) override;
 
-    // Pegel (Composer-Naht N7a)
-    [[nodiscard]] float pegel() const override;
-    void setPegel(float pegel) override;
-
     // State Queries
     [[nodiscard]] PlaybackState state() const override;
     [[nodiscard]] bool isPlaying() const override;

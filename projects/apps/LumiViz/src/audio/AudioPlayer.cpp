@@ -44,11 +44,6 @@ struct AudioPlayer::Impl
     // Tempo (S91): 1.0 = wie aufgenommen
     float tempo = 1.0f;
 
-    // Composer-Naht N7a: ein zweiter Faktor neben der Lautstaerke (Vorgabe 1 =
-    // wie ohne ihn). An die Engine geht ueberall `laut()`.
-    float pegel = 1.0f;
-    [[nodiscard]] float laut() const { return muted ? 0.0f : volume * pegel; }
-
     // Playlist integration
     IPlaylist* playlist = nullptr;
     int playlistIndex = -1;
@@ -154,7 +149,7 @@ bool AudioPlayer::load(const QString& filePath)
     m_impl->currentTrack = leseTrackInfo(m_impl->engine, m_impl->currentStream, filePath);
 
     // Apply current volume
-    m_impl->engine.setVolume(m_impl->currentStream, m_impl->laut());
+    m_impl->engine.setVolume(m_impl->currentStream, m_impl->muted ? 0.0f : m_impl->volume);
     // S91: ein neuer Stream laeuft mit der Rate seiner Datei — das Tempo des
     // Players muss ihm eigens gesetzt werden, sonst stimmen beide nicht ueberein
     if (m_impl->tempo != 1.0f) m_impl->engine.setTempo(m_impl->currentStream, m_impl->tempo);
@@ -373,9 +368,9 @@ void AudioPlayer::setVolume(float volume)
     
     if (m_impl->currentStream != INVALID_STREAM && !m_impl->muted)
     {
-        m_impl->engine.setVolume(m_impl->currentStream, m_impl->laut());
+        m_impl->engine.setVolume(m_impl->currentStream, m_impl->volume);
     }
-    
+
     // Publish event
     VolumeChangedEvent event;
     event.volume = m_impl->volume;
@@ -398,9 +393,10 @@ void AudioPlayer::setMuted(bool muted)
     
     if (m_impl->currentStream != INVALID_STREAM)
     {
-        m_impl->engine.setVolume(m_impl->currentStream, m_impl->laut());
+        m_impl->engine.setVolume(m_impl->currentStream,
+                                  muted ? 0.0f : m_impl->volume);
     }
-    
+
     VolumeChangedEvent event;
     event.volume = m_impl->volume;
     event.muted = muted;
@@ -435,28 +431,6 @@ void AudioPlayer::setTempo(float tempo)
     PlaybackTempoEvent event;
     event.tempo = tempo;
     m_impl->eventBus.publish(event);
-}
-
-// =============================================================================
-// Pegel (Composer-Naht N7a)
-// =============================================================================
-
-float AudioPlayer::pegel() const
-{
-    return m_impl->pegel;
-}
-
-void AudioPlayer::setPegel(float pegel)
-{
-    pegel = std::clamp(pegel, 0.0f, 1.0f);
-    if (m_impl->pegel == pegel) return;
-
-    m_impl->pegel = pegel;
-    // Kein Ereignis: die Lautstaerke des Players — der Regler — bleibt, wie sie ist.
-    if (m_impl->currentStream != INVALID_STREAM && !m_impl->muted)
-    {
-        m_impl->engine.setVolume(m_impl->currentStream, m_impl->laut());
-    }
 }
 
 // =============================================================================

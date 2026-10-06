@@ -188,20 +188,6 @@ public:
     virtual void setTempo(float /*tempo*/) {}
 
     // =========================================================================
-    // Pegel (Composer-Naht N7a, docs/ui/Composer_Konzept.md §12.2)
-    // =========================================================================
-
-    /**
-     * @brief Ein zweiter Faktor neben der Lautstaerke, 0…1; Vorgabe 1.
-     *
-     * Der Composer blendet damit einen Song ein und aus: zu hoeren ist
-     * Lautstaerke × Pegel. `volume()`, der Regler des Player-Panels und die
-     * gespeicherte Lautstaerke bleiben unberuehrt; es gibt dazu kein Ereignis.
-     */
-    [[nodiscard]] virtual float pegel() const { return 1.0f; }
-    virtual void setPegel(float /*pegel*/) {}
-
-    // =========================================================================
     // State Queries
     // =========================================================================
 
