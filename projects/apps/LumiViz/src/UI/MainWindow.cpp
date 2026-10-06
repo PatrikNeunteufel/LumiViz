@@ -1260,7 +1260,16 @@ void MainWindow::onAudioUpdate()
             if (audioPlayer != nullptr)
             {
                 AudioStreamHandle stream = audioPlayer->currentStream();
-                
+                // Composer-Naht N13 (docs/ui/Composer_Konzept.md §12.2): fuehrt
+                // der Composer Ton, kommen Spektrum und Wellenform von seinem
+                // Mixer — die Summe der Songs mit ihren Pegeln, dasselbe, was
+                // zu hoeren ist. Sonst der Stream des Players wie immer.
+                if (const AudioStreamHandle mixer = lumi::composer::tonMixer();
+                    mixer != INVALID_STREAM)
+                {
+                    stream = mixer;
+                }
+
                 if (stream != 0)  // Valid stream
                 {
                     // Get FFT spectrum data (512 bins is good for visualization)
