@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.36.0
+> **Version:** 0.37.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -287,10 +287,55 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
       mit verschiedenen Abtastraten im Mixer.
   - **Vorgemerkt (Patrik S97), nach C5b:** läuft die Komposition in der
     Schleife, sollen sich ihr Ende und ihr Anfang **überlagern** — Bild und
-    Ton gleichermaßen, die Länge einstellbar. Offen (Frage Patrik): ob ein
-    Ein- und Ausblenden der ganzen Komposition nur in der Schleife gilt,
-    immer, oder einstellbar ist. Die Vorlage dazu folgt, wenn der heutige
-    Sprung der Schleife gelesen ist.
+    Ton gleichermaßen, die Länge einstellbar. **Entscheid Patrik S99: a —
+    zwei getrennte Einstellungen, gebaut ist nichts.** (1) **Loop overlap**
+    (Sekunden, Vorgabe 0), wirkt nur bei Loop: der Anfang beginnt um diese
+    Zeit vor dem Ende, im Fenster laufen die letzten und die ersten Sekunden
+    zugleich, jeder Clip mit seiner eigenen Pegelkurve, nichts wird
+    zusätzlich geblendet; die Schleife wird um die Überlappung kürzer; beim
+    ersten Start spielt noch kein Ende hinein. (2) **Fade in / Fade out der
+    ganzen Komposition** (Sekunden, Vorgabe 0 = aus): gelten immer, auch
+    beim ersten Start und am Ende ohne Loop; mit beidem zusammen ergibt die
+    Schleife eine Überblendung. Verworfen: b — ein Regler „Loop crossfade"
+    nur in der Schleife mit automatischer Blende; c — ein Regler „Fade",
+    der immer gilt. **Heute** (gelesen S99): `Uhr::stelleMs` rechnet in der
+    Schleife Stelle modulo Länge, Bild (`Wiedergabe::rendere`) und Ton
+    (`Tonfuehrung::takt`) bekommen genau eine Stelle; über den Sprung
+    hinweg wird nicht vorgewärmt (aus dem Code gelesen, nicht getestet).
+    **Entscheid Patrik S99 (zweiter): a — die drei Werte gehören zur
+    Komposition:** im Kopf der `.lvcomp` und im Fuß des Panels neben
+    *Fixed end*, in Sekunden, Vorgabe 0, über Undo; alte Dateien haben 0;
+    Loop an / aus bleibt eine Einstellung des Programms; keine Naht.
+    Verworfen: b — in Settings für alle Kompositionen gleich (Naht N9
+    wüchse); c — Vorgabe in Settings mit Ausnahme je Datei.
+    **Entscheid Patrik S99 (dritter): a — die Zeitachse zeigt beide
+    Fenster:** bei Loop an und Überlappung größer 0 sind die ersten und die
+    letzten Sekunden getönt (Lineal und alle Zeilen, ein Strich an der
+    Grenze); im Fenster läuft die rote Marke vorn und eine zweite, blassere
+    hinten; *Fade in* / *Fade out* der ganzen Komposition stehen als
+    schmaler Keil im Lineal (auch bei Loop aus). Verworfen: b — nur das
+    Fenster am Ende, eine Marke, keine Keile; c — nichts in der Achse.
+    **Von mir gesetzt:** die Grenze des Fensters ändert zunächst nur das
+    Zahlenfeld, nicht ein Ziehen in der Achse.
+    **Entscheid Patrik S99 (vierter): einstellbar, zwei Haken je
+    Komposition** — für einen Clip, der im vorderen und im hinteren Fenster
+    zugleich liegt (ein Hintergrund-Visual, ein Song über die ganze Länge):
+    **Songs overlap themselves** (Vorgabe an): der Song bekommt im Fenster
+    eine zweite Quelle, sein Ende klingt aus, während sein Anfang spielt.
+    **Visuals overlap themselves** (Vorgabe aus): aus = der Clip läuft
+    einmal durch, ohne Neustart, im Fenster gilt der höhere der zwei Pegel;
+    an = ein zweites, frisch gestartetes Exemplar wird darübergemischt.
+    Verworfen: eine Auswahlliste mit drei Einträgen; ein Haken je Clip
+    (lässt sich später ergänzen). **Heute** (gelesen): je Clip ein Renderer
+    (`Wiedergabe::sichere`, Schlüssel Kanal / Clip) und je Song-Clip eine
+    Quelle; ein Bild-Clip über die ganze Länge behält über den Sprung
+    seinen Renderer, ein Song wird zurückgesetzt. **Reihenfolge (Freigabe
+    Patrik S99):** der Haken für das Bild wird als letzter Schritt gebaut
+    und steht bis dahin nicht im Panel — er braucht ein zweites Exemplar
+    desselben Clips und ist der größte Einzelteil.
+    **Bauplan:** (1) Modell und Datei, (2) Uhr und Bildquelle, (3) Bild,
+    (4) Ton, (5) Panel und Zeitachse, (6) Blende der ganzen Komposition,
+    (7) Visuals overlap themselves.
 
 In beiden Fällen gilt: **die Stelle auf der Zeitachse bestimmt das Bild**,
 nicht die verstrichene Zeit. Pegel werden aus der Stelle berechnet — nach
@@ -1171,7 +1216,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | C5b, Schritt 4: Anzeige des Player-Panels (S98) | keine neuen Dateien — `composer::fuehrtTon` / `tonStand` / `springeImSong` in `AppAnbindung`, `Sitzung::tonStand` / `springeImSong` und die Meldungen an den Bus, `Tonfuehrung::stelleImLaufenden` und die Prüfungen in `test_ComposerNahtTon.cpp` / `test_ComposerTonfuehrung.cpp` gehen mit den Dateien | **N5, Anzeige** — `UI/panels/PlayerPanel.cpp`, vier Stellen (`onActivate`, `onProgressReleased`, `onTrackChanged`, `updatePlayButton`), jede trägt `Composer-Naht N5, Anzeige`. Commit: **`a22e797`** (nur Naht); Eigenes davor `473ea27`. Der Naht-Commit folgt **nach** dem eigenen, weil er die drei Funktionen aus `AppAnbindung` braucht — beim Rückbau zuerst ihn zurücknehmen. Nach `473ea27` allein ist der Sitzungs-Fall in `test_ComposerNahtTon.cpp` rot (er prüft das Panel), erst mit `a22e797` grün | — | vor dem Holen wie oben prüfen |
 | C5b, nach dem Hörtest (S98) | keine neuen Dateien — `Bildquelle::standStelleJetztMs`, der Grundabstand in `Tonfuehrung`, das Weiterspielen in `Sitzung` / `Tonfuehrung` und die Tests (Messung in `test_ComposerNahtMixer.cpp`, Fall in `test_ComposerBildquelle.cpp`) gehen mit den Dateien | **N15** — `UI/panels/TagViewPanel.cpp` (ein Include, eine Abfrage in `onActivate`); **N9 wächst** — `UI/panels/SettingsPanel.cpp` (zwei Haken im Composer-Block); **N7a zurückgenommen** — `audio/IAudioPlayer.hpp`, `audio/AudioPlayer.hpp` / `.cpp`. Commit: **`4b3e652`** (nur Nähte); Eigenes davor `7d3b776` — dazwischen ist der Sitzungs-Fall rot (er prüft Tag View); er folgt nach dem eigenen, weil die Haken die Einstellungen der Sitzung brauchen. Beim Rückbau ist N7a **nicht** wieder einzubauen — sie gehört zum Composer | — | vor dem Holen wie oben prüfen; Pfade des Composers um `UI/panels/TagViewPanel.cpp` erweitert. Zurück bleiben die Schlüssel `composer/playerResumes` und `composer/resumesWhenSwitchedOn` |
 | Bedienung der Zeitachse (S98): Einfügemarke, Kopieren / Einfügen, Schatten, Tooltip, Vorgabelänge | keine neuen Dateien — `Bearbeiten::fuegeKopieEin`, die Erweiterungen in `Zeitachse` / `ComposerPanel`, `Sitzung::neuerClipMs` und die Tests gehen mit den Dateien | **N9 wächst** — `UI/panels/SettingsPanel.cpp` (ein Zahlenfeld *New clip length* im Composer-Block). Commit: **`45ead4e`** (nur Naht); Eigenes davor `f08d6bb` | — | vor dem Holen wie oben prüfen. Zurück bleibt der Schlüssel `composer/newClipSeconds` |
-| Freigeben ohne Titel im Player (S99) | keine neuen Dateien — der leere Songwechsel in `Sitzung::gibTonFrei` und der Fall „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` gehen mit den Dateien | **N5, Anzeige, fünfte Stelle** — `UI/panels/PlayerPanel.cpp` (`subscribeToEvents`, im Empfänger von `TrackChangedEvent`: ein Songwechsel ohne Datei setzt das Panel in den Ruhezustand), trägt `Composer-Naht N5, Anzeige`. Commit: **Kennung folgt** (nur Naht); Eigenes davor: Kennung folgt. Nach dem eigenen Commit allein ist der neue Fall rot (er prüft das Panel), erst mit der Naht grün | — | vor dem Holen wie oben prüfen |
+| Freigeben ohne Titel im Player (S99) | keine neuen Dateien — der leere Songwechsel in `Sitzung::gibTonFrei` und der Fall „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` gehen mit den Dateien | **N5, Anzeige, fünfte Stelle** — `UI/panels/PlayerPanel.cpp` (`subscribeToEvents`, im Empfänger von `TrackChangedEvent`: ein Songwechsel ohne Datei setzt das Panel in den Ruhezustand), trägt `Composer-Naht N5, Anzeige`. Commit: **`3624e1f`** (nur Naht); Eigenes davor `e3043ae`. Nach dem eigenen Commit allein ist der neue Fall rot (er prüft das Panel), erst mit der Naht grün | — | vor dem Holen wie oben prüfen |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -1193,6 +1238,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.37.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife: vier Entscheide Patrik, Schritt 1 von 7 gebaut** (§4). (1) a — zwei getrennte Einstellungen: *Loop overlap* (nur bei Loop, nichts wird zusätzlich geblendet, die Schleife wird um die Überlappung kürzer) und *Fade in* / *Fade out* der ganzen Komposition (immer). (2) a — die Werte gehören zur Komposition (Kopf der `.lvcomp`, Fuß des Panels, über Undo). (3) a — die Zeitachse tönt beide Fenster, zweite blasse Marke, Keile für die Blende. (4) einstellbar mit zwei Haken: *Songs overlap themselves* (Vorgabe an), *Visuals overlap themselves* (Vorgabe aus, wird mit Freigabe als letzter Schritt gebaut). **Gebaut, Schritt 1 (Modell und Datei, eigener Code, keine Naht):** `Komposition::ueberlappungMs`, `songsDoppelt`, `bilderDoppelt`, `einblendeMs`, `ausblendeMs`; `ueberlappung()` (höchstens die halbe Länge), `umlaufMs()`, `endStelleZu()`, `blendeBei()` (linear — von mir gesetzt); in der Datei `loop { overlap, songsTwice, visualsTwice }` und `fade { in, out }`, nur wenn sie von der Vorgabe abweichen — eine Komposition ohne sie sieht aus wie bisher. Neuer Fall in `test_ComposerWiedergabe.cpp`. **Im Programm wirkt davon noch nichts** — Uhr, Bild, Ton und Panel folgen. Rückbau-Liste: Kennungen der Naht N5, fünfte Stelle (`3624e1f`, Eigenes `e3043ae`) |
 | 0.36.0 | 2026-10-06 | Session 99 — **Freigeben ohne Titel im Player: die Lücke aus S98 geschlossen** (Entscheid Patrik: a). Vor dem Bau per Test gezählt: kein Songwechsel, Player-Panel und Tag View zeigten weiter den letzten Song der Komposition. **Eigenes:** `Sitzung::gibTonFrei` meldet einen leeren Songwechsel, wenn der Player keinen Titel hat und ein Song gemeldet war (§4). **Naht N5, Anzeige, wächst um eine fünfte Stelle** (vor dem Bau eingetragen, §12.2): der Empfänger von `TrackChangedEvent` im Player-Panel geht bei einem Songwechsel ohne Datei in den Ruhezustand. Neuer Fall in `test_ComposerNahtTon.cpp` (echtes Player-Panel, echtes Tag View). Nicht per Test belegt: der Empfänger in `MainWindow` (Songtext, Tags, Songwechsel-Zähler) bei leerem Titel. Dazu: Vorlauf 2 s und Abweichung 80 ms / Schonfrist 500 ms gelten als im Hörtest bestätigt (kein eigenes Urteil in der Liste). Rückbau-Liste: Zeile S99, Kennungen folgen |
 | 0.35.0 | 2026-10-06 | Session 99 — **Sichttest S98b ausgewertet** (Patrik, 06.10. abends: 33 von 33 bestanden, keine Bemerkung). Im Programm gehört und gesehen: Korrekturen nach dem Hörtest (Tag View, kein Knackser, kein Rutschen), Weiterspielen beim Wechsel, Einfügemarke, Kopieren / Ausschneiden / Einfügen, Schatten, Tooltip, Vorgabelänge. **Log:** in allen 17 Läufen des Abends kein Nachsetzen, trotz langer Bilder bis 191 ms (§4). **Gebilligt, was ich gesetzt hatte:** beide Haken „Weiterspielen" Vorgabe an (§8); die Marke rückt hinter den eingefügten Clip, ohne Marke landet die Kopie hinter dem angeklickten Clip, eine Kopie wird nicht gekürzt, kein Hinweis bei falscher Art, Tooltip nur im Lineal (§7). **Wellenform beim Kürzen:** wird abgeschnitten (Patrik zu D5) — erledigt. Weiter ohne Urteil: Vorlauf 2 s, Abweichung 80 ms / Schonfrist 500 ms (Urteile R der ersten Liste, noch nicht geprüft), Kopieren ohne Edit. Kopf nachgezogen |
 | 0.34.0 | 2026-10-06 | Session 98 — **Bedienung der Zeitachse (Wünsche Patrik nach dem Hörtest).** Entscheid Patrik: a — eine eigene **Einfügemarke** (Klick auf eine freie Stelle einer Kanalzeile); **Kopieren / Ausschneiden / Einfügen** von Clips mit Ctrl+C / X / V und im Rechtsklick-Menü, der Anfang an der Marke, nur in einen Kanal der passenden Art (`Bearbeiten::fuegeKopieEin`); **Schatten beim Hineinziehen** aus demselben Code wie das Fallenlassen (`Zeitachse::fallSchatten`), in einer Zeile der anderen Art weder Schatten noch Fallen; **Zeit unter dem Zeiger** im Lineal; **Vorgabelänge neuer Bild-Clips** in Settings (Naht N9 wächst, vor dem Bau eingetragen) — §7, §12.2. Belegt in `test_ComposerBearbeiten.cpp` (neuer Fall) und `test_ComposerPanel.cpp` (neuer Fall mit Marke, Ablage, Tasten, Undo, Schatten, Vorgabelänge). Rückbau-Liste: Kennung der Nähte nach dem Hörtest (`4b3e652`), Zeile „Bedienung der Zeitachse". 934 Cases. **Offen:** im Programm nichts davon gesehen; Patriks Beobachtung zur Wellenform beim Kürzen eines Songs ist nicht nachgestellt |

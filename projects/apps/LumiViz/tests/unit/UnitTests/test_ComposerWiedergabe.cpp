@@ -33,6 +33,7 @@
 #include <QImage>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -225,6 +226,88 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(k.laenge() == 10000);                     // Ende des letzten Clips
         k.laengeMs = 60000;
         CHECK(k.laenge() == 60000);
+    }
+
+    TEST_CASE("Schleife S99, Modell: Ueberlappung, Umlauf, die zweite Stelle, Blende der ganzen Komposition — und die Datei")
+    {
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {clip(QStringLiteral("a.lvfx"), 0, 60000)}));
+        // Vorgabe: nichts ueberlappt, nichts blendet
+        CHECK(k.ueberlappung() == 0);
+        CHECK(k.umlaufMs() == 60000);
+        CHECK(k.endStelleZu(0) == -1);
+        CHECK(k.blendeBei(0) == doctest::Approx(1.0));
+        CHECK(k.blendeBei(60000) == doctest::Approx(1.0));
+        CHECK(k.songsDoppelt);
+        CHECK_FALSE(k.bilderDoppelt);
+        // ohne die Werte sieht die Datei aus wie bisher
+        CHECK_FALSE(alsJson(k).contains(QStringLiteral("loop")));
+        CHECK_FALSE(alsJson(k).contains(QStringLiteral("fade")));
+
+        // 10 s Ueberlappung: der Umlauf ist 50 s; die ersten 10 s laufen mit den letzten 10 s
+        k.ueberlappungMs = 10000;
+        CHECK(k.ueberlappung() == 10000);
+        CHECK(k.umlaufMs() == 50000);
+        CHECK(k.endStelleZu(0) == 50000);
+        CHECK(k.endStelleZu(9999) == 59999);
+        CHECK(k.endStelleZu(10000) == -1);  // hinter dem vorderen Fenster
+        CHECK(k.endStelleZu(-1) == -1);
+        // mehr als die halbe Laenge wirkt nicht: die Fenster beruehren sich, kreuzen sich nie —
+        // der eingestellte Wert bleibt
+        k.ueberlappungMs = 45000;
+        CHECK(k.ueberlappung() == 30000);
+        CHECK(k.umlaufMs() == 30000);
+        CHECK(k.endStelleZu(29999) == 59999);
+        CHECK(k.ueberlappungMs == 45000);
+        // ein festes Ende zaehlt als Laenge
+        k.laengeMs = 100000;
+        CHECK(k.ueberlappung() == 45000);
+        CHECK(k.umlaufMs() == 55000);
+        k.laengeMs = 0;
+
+        // Blende der ganzen Komposition: linear, am Anfang herauf, am Ende herunter
+        k.einblendeMs = 4000;
+        k.ausblendeMs = 8000;
+        CHECK(k.blendeBei(0) == doctest::Approx(0.0));
+        CHECK(k.blendeBei(1000) == doctest::Approx(0.25));
+        CHECK(k.blendeBei(4000) == doctest::Approx(1.0));
+        CHECK(k.blendeBei(30000) == doctest::Approx(1.0));
+        CHECK(k.blendeBei(52000) == doctest::Approx(1.0));
+        CHECK(k.blendeBei(56000) == doctest::Approx(0.5));
+        CHECK(k.blendeBei(60000) == doctest::Approx(0.0));
+        // ueberdecken sie sich, gilt der kleinere Wert
+        k.einblendeMs = 60000;
+        k.ausblendeMs = 60000;
+        CHECK(k.blendeBei(15000) == doctest::Approx(0.25));
+        CHECK(k.blendeBei(45000) == doctest::Approx(0.25));
+        CHECK(k.blendeBei(30000) == doctest::Approx(0.5));
+
+        // die Datei traegt alle fuenf Werte, und Unsinn wird gerichtet
+        k.ueberlappungMs = 7000;
+        k.einblendeMs = 1500;
+        k.ausblendeMs = 2500;
+        k.songsDoppelt = false;
+        k.bilderDoppelt = true;
+        const QJsonObject json = alsJson(k);
+        CHECK(json.value(QStringLiteral("loop")).toObject().value(QStringLiteral("overlap")).toDouble() == 7000);
+        Komposition g;
+        REQUIRE(ausJson(json, g));
+        CHECK(g.ueberlappungMs == 7000);
+        CHECK(g.einblendeMs == 1500);
+        CHECK(g.ausblendeMs == 2500);
+        CHECK_FALSE(g.songsDoppelt);
+        CHECK(g.bilderDoppelt);
+        CHECK(alsJson(k) == alsJson(g));
+        Komposition h = k;
+        h.ueberlappungMs = 7001;
+        CHECK_FALSE(alsJson(k) == alsJson(h));  // eine Aenderung zaehlt fuer Undo (`gleich` vergleicht das JSON)
+        h.ueberlappungMs = -5;
+        h.einblendeMs = -1;
+        h.ausblendeMs = -1;
+        h.richte();
+        CHECK(h.ueberlappungMs == 0);
+        CHECK(h.einblendeMs == 0);
+        CHECK(h.ausblendeMs == 0);
     }
 
     TEST_CASE("C1b Datei: .lvcomp — Roundtrip aller Felder, relative Pfade, fehlende Datei gemeldet")

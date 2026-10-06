@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.93.0
+> **Version:** 1.94.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2257,12 +2257,39 @@ Idee Preset-Warmup/Pre-Roll.
   - **Von mir gesetzt, in keiner Liste gefragt:** Kopieren geht auch ohne
     Edit. (Vorlauf 2 s und Abweichung 80 ms / Schonfrist 500 ms gelten als
     im Hörtest bestätigt.)
+  - **Befund Patrik S99, noch nicht nachgestellt — Flipped und einfache
+    Einblendung:** „Flipped shape" und ein einfaches Einblenden passen nicht
+    zusammen; den Clip später beginnen zu lassen, nähme dem Effekt sein
+    Einfahren. Aus dem Code gelesen (`VisualClip::pegelBei`): eine
+    Einblendung beginnt immer am Clip-Anfang und rechnet Grundpegel × Blende
+    (bei Grundpegel 0 also nichts); ein gekipptes Stück hebt vom Grundpegel
+    auf voll und kehrt zum Grundpegel zurück; bei Grundpegel 100 % wirkt es
+    gar nicht (so der CH3-Clip in `asset/singlecomp.lvcomp`). „Unsichtbar
+    einfahren, später einblenden und oben bleiben" lässt sich damit nicht
+    ausdrücken. **Zielbild von Patrik bestätigt (S99)** — die Vorlage als
+    Entscheid steht aus.
+  - **Wünsche Patrik S99 zur Zeitachse (nicht begonnen, je als Entscheid
+    vorlegen):** (1) **Kanalfarben** — heute hat jeder Bild-Kanal einen
+    eigenen Ton, alle Audio-Kanäle denselben (`kanalFarbe` / `tonFarbe` in
+    `ComposerPanel.cpp`); gewünscht: beide Arten gleich behandelt, die Farbe
+    je Kanal einstellbar. (2) **Kanäle von Hand verschieben** (die Reihenfolge
+    frei, Bild und Ton gemischt wie heute). (3) **Rechtsklick: sortieren nach
+    Typ**, evtl. mit Reihenfolge Typ → Name. (4) **Zoom** waagrecht und
+    senkrecht, zusammen oder einzeln, mit Rollbalken; Mausrad mit
+    verschiedenen Tasten; evtl. Schwenken mit linker / rechter Maustaste
+    (Zoom der Zeitachse steht schon in Konzept §7 als fehlend).
   - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
     des Übergangs statt an den Song-Anfang.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
     `MainWindow::onAudioUpdate` (N13 — das Bild reagierte im Hörtest).
-  - **Weiter offen aus S97:** die Überlappung von Ende und Anfang in der
-    Schleife (Vorlage steht aus); Lyrics Sync bei führendem Composer; Songs
+  - **Überlappung in der Schleife (Frage Patrik S97): entschieden in S99,
+    Schritt 1 von 7 gebaut** (Konzept 0.37.0, §4) — *Loop overlap* und
+    *Fade in* / *Fade out* je Komposition, beide Fenster in der Zeitachse,
+    zwei Haken für Clips in beiden Fenstern. Gebaut: Modell und Datei.
+    Offen: Uhr und Bildquelle, Bild, Ton, Panel und Zeitachse, Blende der
+    ganzen Komposition, zuletzt *Visuals overlap themselves*. Im Programm
+    wirkt noch nichts.
+  - **Weiter offen aus S97:** Lyrics Sync bei führendem Composer; Songs
     mit verschiedenen Abtastraten im Mixer nicht gemessen.
 - **Composer, Stand S97 (Konzept 0.28.1) — Stufe C5b, Audio-Kanäle
   überlagern** (*die Schritte 2 bis 5 und die Frage zu N7a darunter sind in
@@ -4159,6 +4186,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.94.0 | 2026-10-06 | Session 99 — **Composer:** Überlappung in der Schleife entschieden (vier Entscheide Patrik), Schritt 1 von 7 gebaut — Modell und Datei (Konzept 0.37.0). §7 neu: Befund Patrik „Flipped und einfache Einblendung" (Zielbild bestätigt: unsichtbar einfahren, später einblenden, oben bleiben — Vorlage steht aus) und vier Wünsche zur Zeitachse (Kanalfarben einstellbar, Kanäle verschieben, sortieren nach Typ, Zoom und Schwenken) |
 | 1.93.0 | 2026-10-06 | Session 99 — **Composer:** Lücke „Composer off ohne Titel im Player" geschlossen (Entscheid Patrik: a — leerer Songwechsel, Panel Player im Ruhezustand; Konzept 0.36.0, Benutzerhandbuch 1.95.0); §7: offen der Sichttest S99 (Rest der ersten Liste, Urteil Kreuzungspunkt, die geschlossene Lücke im Programm); Vorlauf und Schwelle gelten als im Hörtest bestätigt |
 | 1.92.0 | 2026-10-06 | Session 99 — **Composer:** Patriks zweiter Test (`Sichttests_S98b`) ausgewertet — 33 von 33 bestanden, im Log kein Nachsetzen; §7 Block „Stand S98": gebilligte Vorgaben eingetragen (Weiterspielen, Einfügemarke, Kopie, Tooltip), Wellenform beim Kürzen erledigt (wird abgeschnitten); offen der Rest der ersten Liste (P13–P16, Panel Player, Urteile R), die Lücke im Panel Player, Vorlauf und Schwelle ohne Urteil (Konzept 0.35.0) |
 | 1.91.0 | 2026-10-06 | Session 98 — **Composer, Stufe C5b: alle fünf Schritte gebaut, das Überlagern im Programm gehört** (Mixer, die Uhr führt, laufender Song, Panel Player „Composer - <Song>", Nähte N13, N14, N15, N5 Anzeige, N9 wächst; N7a zurückgenommen); Korrekturen nach dem Hörtest (Tag View, Nachsetzen, Weiterspielen einstellbar); Bedienung der Zeitachse (Einfügemarke, Kopieren / Einfügen, Schatten, Tooltip, Vorgabelänge). §7: neuer Block „Composer, Stand S98" mit dem, was offen ist — Patriks zweiter Test, Wellenform beim Kürzen, bekannte Lücke im Panel Player, gesetzte Vorgaben ohne Urteil |

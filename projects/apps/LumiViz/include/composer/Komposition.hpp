@@ -141,6 +141,35 @@ struct Komposition
     std::int64_t laengeMs = 0;
     double rasterSekunden = 1.0;  ///< Einrasten beim Ziehen (Bedienung)
 
+    // --- Schleife und Blende der ganzen Komposition (Entscheide Patrik S99,
+    //     Konzept §4) — alle Werte gehoeren zur Komposition, Vorgabe „nichts" ---
+    /// Eingestellt: in der Schleife beginnt der Anfang um diese Zeit vor dem
+    /// Ende; im Fenster laufen die letzten und die ersten Millisekunden
+    /// zugleich. Was davon wirkt, sagt `ueberlappung()`.
+    std::int64_t ueberlappungMs = 0;
+    /// Ein Song, der im vorderen UND im hinteren Fenster liegt, bekommt im
+    /// Fenster eine zweite Quelle: sein Ende klingt aus, waehrend sein Anfang spielt.
+    bool songsDoppelt = true;
+    /// Dasselbe fuer einen Bild-Clip: ein zweites, frisch gestartetes Exemplar.
+    /// Aus = er laeuft einmal durch, im Fenster gilt der hoehere der zwei Pegel.
+    bool bilderDoppelt = false;
+    /// Ein- und Ausblenden der GANZEN Komposition, Bild und Ton; 0 = keins.
+    /// Gilt immer — auch beim ersten Start und am Ende ohne Schleife.
+    std::int64_t einblendeMs = 0;
+    std::int64_t ausblendeMs = 0;
+
+    /// Die Ueberlappung, die wirkt: hoechstens die halbe Laenge — die zwei
+    /// Fenster beruehren sich dann, sie kreuzen sich nie.
+    [[nodiscard]] std::int64_t ueberlappung() const;
+    /// Die Dauer eines Umlaufs in der Schleife: Laenge weniger Ueberlappung.
+    [[nodiscard]] std::int64_t umlaufMs() const;
+    /// Zu einer Stelle im vorderen Fenster die Stelle im hinteren, die in der
+    /// Schleife zugleich laeuft; -1 = `stelleMs` liegt nicht im vorderen Fenster.
+    [[nodiscard]] std::int64_t endStelleZu(std::int64_t stelleMs) const;
+    /// Pegel der Blende der ganzen Komposition an der Stelle, 0…1 (linear).
+    /// Ueberdecken sich Ein- und Ausblendung, gilt der kleinere Wert.
+    [[nodiscard]] double blendeBei(std::int64_t stelleMs) const;
+
     /// Die gesetzte Laenge, sonst das Ende des letzten Clips — Bild oder Ton.
     [[nodiscard]] std::int64_t laenge() const;
     /// Das Ende des letzten Clips, gleich ob eine Laenge gesetzt ist.

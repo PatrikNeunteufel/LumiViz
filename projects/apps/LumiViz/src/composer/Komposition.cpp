@@ -180,6 +180,35 @@ std::int64_t Komposition::laenge() const
     return laengeMs > 0 ? laengeMs : clipEnde();
 }
 
+std::int64_t Komposition::ueberlappung() const
+{
+    return std::clamp<std::int64_t>(ueberlappungMs, 0, laenge() / 2);
+}
+
+std::int64_t Komposition::umlaufMs() const
+{
+    return laenge() - ueberlappung();
+}
+
+std::int64_t Komposition::endStelleZu(std::int64_t stelleMs) const
+{
+    const std::int64_t fenster = ueberlappung();
+    if (fenster <= 0 || stelleMs < 0 || stelleMs >= fenster) return -1;
+    return stelleMs + umlaufMs();
+}
+
+double Komposition::blendeBei(std::int64_t stelleMs) const
+{
+    const std::int64_t ende = laenge();
+    if (ende <= 0) return 1.0;
+    double pegel = 1.0;
+    if (einblendeMs > 0 && stelleMs < einblendeMs)
+        pegel = static_cast<double>(stelleMs) / static_cast<double>(einblendeMs);
+    if (ausblendeMs > 0 && stelleMs > ende - ausblendeMs)
+        pegel = std::min(pegel, static_cast<double>(ende - stelleMs) / static_cast<double>(ausblendeMs));
+    return std::clamp(pegel, 0.0, 1.0);
+}
+
 std::int64_t Komposition::clipEnde() const
 {
     std::int64_t ende = 0;
@@ -241,6 +270,11 @@ void Komposition::richte(QStringList* bericht)
     }
     laengeMs = std::max<std::int64_t>(0, laengeMs);
     if (rasterSekunden <= 0.0) rasterSekunden = 1.0;
+    // Eingestellte Werte bleiben, auch ueber die Laenge hinaus — geklemmt wird
+    // beim Rechnen (`ueberlappung`, `blendeBei`); nur Unsinn geht weg.
+    ueberlappungMs = std::max<std::int64_t>(0, ueberlappungMs);
+    einblendeMs = std::max<std::int64_t>(0, einblendeMs);
+    ausblendeMs = std::max<std::int64_t>(0, ausblendeMs);
 }
 
 int Komposition::tonKanal() const
@@ -344,6 +378,23 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
     wurzel.insert(QStringLiteral("version"), kVersion);
     wurzel.insert(QStringLiteral("length"), static_cast<double>(komposition.laengeMs));
     wurzel.insert(QStringLiteral("gridSeconds"), komposition.rasterSekunden);
+    // Schleife und Blende (S99): nur, was von der Vorgabe abweicht — eine
+    // Komposition ohne sie sieht in der Datei aus wie bisher
+    if (komposition.ueberlappungMs > 0 || !komposition.songsDoppelt || komposition.bilderDoppelt)
+    {
+        QJsonObject schleife;
+        schleife.insert(QStringLiteral("overlap"), static_cast<double>(komposition.ueberlappungMs));
+        schleife.insert(QStringLiteral("songsTwice"), komposition.songsDoppelt);
+        schleife.insert(QStringLiteral("visualsTwice"), komposition.bilderDoppelt);
+        wurzel.insert(QStringLiteral("loop"), schleife);
+    }
+    if (komposition.einblendeMs > 0 || komposition.ausblendeMs > 0)
+    {
+        QJsonObject blende;
+        blende.insert(QStringLiteral("in"), static_cast<double>(komposition.einblendeMs));
+        blende.insert(QStringLiteral("out"), static_cast<double>(komposition.ausblendeMs));
+        wurzel.insert(QStringLiteral("fade"), blende);
+    }
     wurzel.insert(QStringLiteral("channels"), kanaele);
     return wurzel;
 }
@@ -355,6 +406,13 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
     Komposition neu;
     neu.laengeMs = static_cast<std::int64_t>(wurzel.value(QStringLiteral("length")).toDouble());
     neu.rasterSekunden = wurzel.value(QStringLiteral("gridSeconds")).toDouble(1.0);
+    const QJsonObject schleife = wurzel.value(QStringLiteral("loop")).toObject();
+    neu.ueberlappungMs = static_cast<std::int64_t>(schleife.value(QStringLiteral("overlap")).toDouble());
+    neu.songsDoppelt = schleife.value(QStringLiteral("songsTwice")).toBool(true);
+    neu.bilderDoppelt = schleife.value(QStringLiteral("visualsTwice")).toBool(false);
+    const QJsonObject blende = wurzel.value(QStringLiteral("fade")).toObject();
+    neu.einblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("in")).toDouble());
+    neu.ausblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("out")).toDouble());
     const QJsonArray kanaele = wurzel.value(QStringLiteral("channels")).toArray();
     for (const QJsonValue& kv : kanaele)
     {
