@@ -47,11 +47,14 @@ namespace lumi::composer
 class Tonfuehrung
 {
 public:
-    /// So weit duerfen Uhr und Quelle auseinanderliegen, bevor die Quelle
-    /// nachgesetzt wird. Von mir gesetzt (S98), nicht entschieden: jedes
+    /// So weit darf eine Quelle von ihrem Grundabstand zur Uhr abweichen, bevor
+    /// sie nachgesetzt wird. Der Grundabstand ist die Latenz der Ausgabe: er
+    /// wird nach jedem Setzen einmal gemessen (nach der Schonfrist) und gilt
+    /// dann als „richtig". Von mir gesetzt (S98), nicht entschieden: jedes
     /// Nachsetzen ist zu hoeren.
     static constexpr std::int64_t kToleranzMs = 80;
-    /// Nach einem Setzen wird die Quelle so lange nicht auf Abweichung geprueft.
+    /// Nach einem Setzen wird die Quelle so lange nicht geprueft; danach wird
+    /// zuerst ihr Grundabstand gemessen.
     static constexpr std::int64_t kSchonfristMs = 500;
     /// Ein Schritt der Uhr zwischen zwei Takten, der groesser ist, gilt als Sprung.
     static constexpr std::int64_t kSprungMs = 1500;
@@ -62,7 +65,7 @@ public:
     static constexpr std::int64_t kZurueckMs = 3000;
 
     Tonfuehrung() = default;
-    ~Tonfuehrung() { gibFrei(); }
+    ~Tonfuehrung() { gibFrei(false); }
     Tonfuehrung(const Tonfuehrung&) = delete;
     Tonfuehrung& operator=(const Tonfuehrung&) = delete;
 
@@ -71,8 +74,9 @@ public:
     /// alles, wie es war. Ein zweiter Aufruf bei laufender Fuehrung tut nichts.
     bool uebernimm(IAudioEngine& engine, IAudioPlayer& player);
     /// Den Ton freigeben: Quellen und Mixer gehen, die Playlist haengt wieder.
-    /// Der Player bleibt angehalten.
-    void gibFrei();
+    /// Mit `playerWeiter` spielt der Player weiter, wenn er beim Uebernehmen
+    /// spielte; sonst bleibt er angehalten.
+    void gibFrei(bool playerWeiter = false);
     [[nodiscard]] bool fuehrt() const { return m_engine != nullptr; }
     /// Der Mixer — Spektrum und Wellenform der Summe (Naht N13). INVALID_STREAM = keiner.
     [[nodiscard]] AudioStreamHandle mixer() const { return m_mixer; }
@@ -133,12 +137,15 @@ private:
         bool imClip = false;             ///< die Uhr stand im letzten Takt in seinem Clip
         float pegel = -1.0f;             ///< zuletzt gesetzt
         std::int64_t gesetztBeiMs = 0;   ///< Stelle der Uhr beim letzten Setzen
+        bool hatGrund = false;           ///< der Grundabstand ist seit dem letzten Setzen gemessen
+        std::int64_t grundMs = 0;        ///< Stelle der Quelle minus Uhr, wie sie die Ausgabe-Latenz ergibt
         bool gesehen = false;            ///< in diesem Takt noch gebraucht
     };
 
     IAudioEngine* m_engine = nullptr;
     IAudioPlayer* m_player = nullptr;
     IPlaylist* m_playlist = nullptr;  ///< die ausgehaengte Playlist
+    bool m_playerSpielte = false;     ///< er spielte, als die Fuehrung ihn anhielt
     AudioStreamHandle m_mixer = INVALID_STREAM;
     std::vector<Quelle> m_quellen;
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt

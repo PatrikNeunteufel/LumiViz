@@ -40,6 +40,8 @@ const QLatin1String kResume("composer/resume");
 const QLatin1String kSchleife("composer/loop");
 const QLatin1String kOeffnenHaelt("composer/openHolds");
 const QLatin1String kAmEnde("composer/atEnd");
+const QLatin1String kPlayerWeiter("composer/playerResumes");
+const QLatin1String kNachEinWeiter("composer/resumesWhenSwitchedOn");
 const QLatin1String kSync("composer/syncEffectChain");
 // der Stand ueber den Neustart
 const QLatin1String kStandDatei("composer/session/file");
@@ -115,6 +117,7 @@ bool Sitzung::lade(const QString& pfad, QStringList* bericht)
     m_geladen = true;
     ++m_ladung;
     m_stelleMs = 0;
+    m_liefVorAus = false;  // eine andere Komposition laeuft nicht „weiter"
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
     return true;
@@ -139,6 +142,7 @@ void Sitzung::neu()
     m_geladen = true;
     ++m_ladung;
     m_stelleMs = 0;
+    m_liefVorAus = false;  // eine andere Komposition laeuft nicht „weiter"
     BasicLogger::logInfo("Composer: new composition");
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
@@ -154,6 +158,7 @@ void Sitzung::entlade()
     m_geladen = false;
     ++m_ladung;
     m_stelleMs = 0;
+    m_liefVorAus = false;  // eine andere Komposition laeuft nicht „weiter"
     BasicLogger::logInfo("Composer: composition closed");
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
@@ -218,6 +223,10 @@ void Sitzung::setAn(bool an)
         neu->setKomposition(m_komposition);
         neu->uhr().setSchleife(m_schleife);
         neu->uhr().springe(m_stelleMs);
+        // Einstellung (Wunsch Patrik S98): lief die Komposition, als der Composer
+        // ausgeschaltet wurde, laeuft sie beim Einschalten weiter
+        if (m_liefVorAus && laeuftNachEinWeiter()) neu->uhr().starte();
+        m_liefVorAus = false;
         neu->spiegleStand();
         m_widget.setBildquelle(std::move(neu));
         if (!this->an()) return;  // das Fenster hat keinen Render-Thread
@@ -228,6 +237,7 @@ void Sitzung::setAn(bool an)
     }
     else
     {
+        m_liefVorAus = laeuft();
         loeseKette();  // Effect Chain zurueck an die Kette, BEVOR die Renderer der Clips gehen
         gibTonFrei();  // der Player gehoert wieder der Playlist
         protokolliereMessung();
@@ -624,10 +634,11 @@ void Sitzung::fuehreTon(Bildquelle& q)
         BasicLogger::logInfo("Composer: the audio channels play through the mixer");
         Q_EMIT geaendert();
     }
-    // Die Uhr fuehrt: die Stelle aus dem gespiegelten Stand — ohne auf den
-    // Render-Thread zu warten.
+    // Die Uhr fuehrt: die Stelle aus dem gespiegelten Stand, auf JETZT
+    // hochgerechnet — ohne auf den Render-Thread zu warten, und ohne dass ein
+    // langes Bild dort die Stelle veralten laesst.
     const bool laeuft = q.standLaeuft();
-    Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleMs(), laeuft);
+    Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleJetztMs(), laeuft);
     IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>();
     // Der Player hat dazwischengefunkt (etwa ein Doppelklick im Audio Browser)
     // und ist wieder angehalten: seine Meldungen gelten nicht — den laufenden
@@ -718,13 +729,14 @@ void Sitzung::gibTonFrei(bool melden)
     m_tonVersagt = false;
     if (!m_ton.fuehrt()) return;
     const int nachgesetzt = m_ton.nachgesetzt();
-    m_ton.gibFrei();
+    // Einstellung (Wunsch Patrik S98): spielte der Player, als der Composer den
+    // Ton uebernahm, spielt er jetzt weiter — nicht beim Beenden der App
+    m_ton.gibFrei(melden && playerSpieltWeiter());
     if (g_fuehrende == this) g_fuehrende = nullptr;
     BasicLogger::logInfo("Composer: the player is back with the playlist (audio sources realigned " +
                          std::to_string(nachgesetzt) + " times)");
-    // Von mir gesetzt (S98): der Player bleibt angehalten, und sein Titel gilt
-    // wieder als laufender Song — sonst zeigten Karaoke und Tag View weiter
-    // den letzten Song der Komposition.
+    // Der Titel des Players gilt wieder als laufender Song — sonst zeigten
+    // Karaoke und Tag View weiter den letzten Song der Komposition.
     if (melden)
     {
         IAudioPlayer* player = m_widget.dienste().tryResolve<IAudioPlayer>();
@@ -793,6 +805,26 @@ bool Sitzung::oeffnenHaelt()
 void Sitzung::setOeffnenHaelt(bool haelt)
 {
     QSettings().setValue(kOeffnenHaelt, haelt);
+}
+
+bool Sitzung::playerSpieltWeiter()
+{
+    return QSettings().value(kPlayerWeiter, true).toBool();
+}
+
+void Sitzung::setPlayerSpieltWeiter(bool an)
+{
+    QSettings().setValue(kPlayerWeiter, an);
+}
+
+bool Sitzung::laeuftNachEinWeiter()
+{
+    return QSettings().value(kNachEinWeiter, true).toBool();
+}
+
+void Sitzung::setLaeuftNachEinWeiter(bool an)
+{
+    QSettings().setValue(kNachEinWeiter, an);
 }
 
 AmEnde Sitzung::amEnde()

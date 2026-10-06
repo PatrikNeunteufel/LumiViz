@@ -111,8 +111,6 @@ public:
     [[nodiscard]] bool isMuted() const override { return stumm; }
     void setMuted(bool) override {}
     void toggleMute() override { protokoll << QStringLiteral("mute"); }
-    [[nodiscard]] float pegel() const override { return m_pegel; }
-    void setPegel(float pegel) override { m_pegel = pegel; }
     [[nodiscard]] PlaybackState state() const override { return m_state; }
     [[nodiscard]] bool isPlaying() const override { return m_state == PlaybackState::Playing; }
     [[nodiscard]] bool isPaused() const override { return m_state == PlaybackState::Paused; }
@@ -135,7 +133,6 @@ private:
     TrackInfo m_track;
     bool m_hat = false;
     int m_pos = 0;
-    float m_pegel = 1.0f;
     PlaybackState m_state = PlaybackState::Stopped;
     IPlaylist* m_playlist = nullptr;
 };

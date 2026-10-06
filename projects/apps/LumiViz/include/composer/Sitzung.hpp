@@ -185,6 +185,15 @@ public:
     static void setOeffnenHaelt(bool haelt);
     [[nodiscard]] static AmEnde amEnde();
     static void setAmEnde(AmEnde art);
+    /// Wechsel zwischen Player und Composer (Wunsch Patrik S98, Vorgabe beide
+    /// an): spielte der Player, als der Composer den Ton uebernahm, spielt er
+    /// nach dem Freigeben weiter (`composer/playerResumes`); lief die
+    /// Komposition, als der Composer ausgeschaltet wurde, laeuft sie beim
+    /// Einschalten weiter (`composer/resumesWhenSwitchedOn`).
+    [[nodiscard]] static bool playerSpieltWeiter();
+    static void setPlayerSpieltWeiter(bool an);
+    [[nodiscard]] static bool laeuftNachEinWeiter();
+    static void setLaeuftNachEinWeiter(bool an);
 
     // --- Ueber den Neustart (Konzept §8 „Der Start") --------------------------
 
@@ -269,6 +278,7 @@ private:
 
     Tonfuehrung m_ton;
     bool m_tonVersagt = false;  ///< die Engine hat keinen Mixer: nicht je Takt neu versuchen
+    bool m_liefVorAus = false;  ///< die Komposition lief, als der Composer ausgeschaltet wurde
     bool m_songLief = false;    ///< zuletzt an den Renderer gemeldet
     int m_gemeldetLaeuft = -1;  ///< „die Komposition laeuft", zuletzt an den Bus gemeldet; -1 = noch nie
     int m_stelleTakte = 0;      ///< Takte seit der letzten Stelle an den Bus

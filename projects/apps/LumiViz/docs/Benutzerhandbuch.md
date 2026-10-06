@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.92.0
+> **Version:** 1.93.0
 > **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1947,8 +1947,9 @@ Playlist ruht.
   Dasselbe gilt für die Kürzel und das Menü.
 - **Aus:** Mit dem letzten Audio-Kanal auf *Channel enabled* aus oder dem
   Composer aus endet der Ton der Komposition, und der Player gehört wieder der
-  Playlist. Er steht dann **angehalten** auf seinem Titel — weiter geht es mit
-  Play.
+  Playlist. Spielte er, als die Komposition übernahm, **spielt er von selbst
+  weiter**; sonst steht er angehalten auf seinem Titel. Abschalten lässt sich
+  das Weiterspielen in den Einstellungen (unten).
 
 **Trifft der gezogene Clip auf einen Nachbarn im selben Kanal,** entscheidet
 die Taste, die du beim Ziehen hältst:
@@ -1992,6 +1993,8 @@ sofort; die Presets der Clips laufen dabei weiter.
 | **End of a Composition** | *Hold at the end* (Standard) | Am Ende bleibt die Marke stehen, das Bild ist schwarz, der Composer bleibt an. Play beginnt von vorn |
 | | *Return to the start* | Am Ende springt die Marke an den Anfang und wartet, wie nach Stopp |
 | | *Switch the Composer off* | Am Ende kommt die Effektkette zurück; die Komposition bleibt im Panel |
+| **Composer off** | *Player resumes when the Composer hands the audio back* (Standard: an) | Spielte der Player, als eine Komposition mit Audio-Kanal übernahm, spielt er von selbst weiter, sobald der Composer den Ton wieder abgibt. Aus: er bleibt angehalten |
+| **Composer on** | *Composition continues when the Composer is switched on again* (Standard: an) | Lief die Komposition, als der Composer ausgeschaltet wurde, läuft sie beim Einschalten weiter. Aus: sie wartet an der gemerkten Stelle auf Play. Eine neu geladene Komposition folgt *Open Composition* |
 
 *End of a Composition* gilt nur, wenn **Loop** aus ist.
 
@@ -2073,6 +2076,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.93.0 | 2026-10-06 | Session 98. §15 Einstellungen NEU **Composer off: Player resumes…** und **Composer on: Composition continues…** (beide Standard an) — der Player spielt nach Composer aus von selbst weiter, wenn er vorher spielte; die Komposition läuft nach Composer on weiter, wenn sie vorher lief |
 | 1.92.0 | 2026-10-06 | Session 98. §15 Audio-Kanal GEÄNDERT: **Audio-Kanäle überlagern sich** — alle eingeschalteten spielen zugleich, jeder Song mit seiner Pegelkurve (Überblenden über zwei Kanäle); das Bild reagiert auf die Summe; NEU **der laufende Song** (höchster Pegel — ihm folgen Songtext, Tags, Tag View, Audio Browser, Songwechsel); die Uhr führt statt des Tons; das Panel Player zeigt „Composer - <Titel>", sein Play-Knopf folgt der Komposition, der Loop-Knopf ist grau; nach Composer aus steht der Player angehalten |
 | 1.91.1 | 2026-10-05 | Session 96. §15 Audio-Kanal GEÄNDERT: alle eingeschalteten Audio-Kanäle zählen, an jeder Stelle spielt der Song des obersten Kanals, der dort einen hat (zuvor nur der erste eingeschaltete Kanal — ein leerer Kanal oben machte die anderen stumm) |
 | 1.91.0 | 2026-10-05 | Session 96. §15 Composer NEU **der Audio-Kanal**: *Add audio channel*, Songs aus Audio Browser, Playlist oder Explorer hineinziehen, Wellenform im Clip, Kanten schneiden ab bzw. ändern den Einsatz, Ein- und Ausblenden als Lautstärke; die Komposition führt den Player, die Playlist ruht, das Panel Player steuert die ganze Komposition. Datei: Kanal `audio` mit `offset` und `sourceLength` |

@@ -122,11 +122,29 @@ public:
     /// GUI-Seite nach jedem Eingriff in die Uhr (unter dem Render-Mutex).
     void spiegleStand()
     {
+        m_standStempel.store(wanduhrMs());
         m_standStelle.store(m_uhr.stelleMs());
         m_standLaeuft.store(m_uhr.laeuft());
         m_standAmEnde.store(m_uhr.amEnde());
+        m_standLaenge.store(m_uhr.laengeMs());
+        m_standSchleife.store(m_uhr.schleife());
     }
     [[nodiscard]] std::int64_t standStelleMs() const { return m_standStelle.load(); }
+    /// Die Stelle der Uhr JETZT, aus dem gespiegelten Stand hochgerechnet —
+    /// fuer den Ton (C5b). Der gespiegelte Stand ist so alt wie das letzte
+    /// Bild; rechnet der Render-Thread ein langes (ein Preset laedt), laege
+    /// die Stelle um dessen Dauer zurueck, und der Ton wuerde an eine
+    /// veraltete Stelle gesetzt (Befund im Hoertest S98, im Log neben
+    /// „RenderThread: render 139 ms"). Gilt fuer die Wanduhr der Vorgabe.
+    [[nodiscard]] std::int64_t standStelleJetztMs() const
+    {
+        std::int64_t stelle = m_standStelle.load();
+        if (!m_standLaeuft.load()) return stelle;
+        stelle += std::max<std::int64_t>(0, wanduhrMs() - m_standStempel.load());
+        const std::int64_t laenge = m_standLaenge.load();
+        if (laenge > 0) stelle = m_standSchleife.load() ? stelle % laenge : std::min(stelle, laenge);
+        return stelle;
+    }
     [[nodiscard]] bool standLaeuft() const { return m_standLaeuft.load(); }
     /// Die Uhr ist am Ende von selbst zum Stehen gekommen.
     [[nodiscard]] bool standAmEnde() const { return m_standAmEnde.load(); }
@@ -204,7 +222,15 @@ private:
     void reicheAlles(MultiEffectVisualizer& renderer);
 
     Uhr m_uhr;
+    [[nodiscard]] static std::int64_t wanduhrMs()
+    {
+        using namespace std::chrono;
+        return duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+    }
     std::atomic<std::int64_t> m_standStelle{0};
+    std::atomic<std::int64_t> m_standStempel{0};
+    std::atomic<std::int64_t> m_standLaenge{0};
+    std::atomic<bool> m_standSchleife{false};
     std::atomic<bool> m_standLaeuft{false};
     std::atomic<bool> m_standAmEnde{false};
     std::unique_ptr<Wiedergabe> m_wiedergabe;  ///< lebt zwischen initialize und cleanup

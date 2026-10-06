@@ -103,12 +103,23 @@ TEST_SUITE("ComposerTonfuehrung")
             CHECK_FALSE(f.fuehrt());
             CHECK(p.playlist() == liste);
             CHECK(e.stream(mixer).frei);
-            CHECK(p.isPaused());  // er bleibt angehalten
+            CHECK(p.isPaused());  // ohne den Wunsch bleibt er angehalten
+            // mit dem Wunsch spielt er weiter — wenn er beim Uebernehmen spielte
+            p.play();
+            REQUIRE(f.uebernimm(e, p));
+            CHECK(p.isPaused());
+            f.gibFrei(true);
+            CHECK(p.isPlaying());
+            p.pause();
+            REQUIRE(f.uebernimm(e, p));  // er spielte nicht: er bleibt auch mit dem Wunsch angehalten
+            f.gibFrei(true);
+            CHECK(p.isPaused());
             REQUIRE(f.uebernimm(e, p));
             CHECK(p.playlist() == nullptr);
         }
         CHECK(p.playlist() == liste);  // auch wenn die Fuehrung einfach verschwindet
-        CHECK(e.zahl(QStringLiteral("free mixer")) == 2);
+        CHECK(e.zahl(QStringLiteral("free mixer")) == 4);
+        CHECK(p.isPaused());  // verschwindet die Fuehrung einfach, startet sie den Player nicht
 
         // eine Engine ohne Mixer: die Fuehrung uebernimmt nichts, alles bleibt
         PappEngine ohne;
@@ -163,17 +174,23 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(stelle == davor + 33);
         CHECK(f.nachgesetzt() == 1);
         CHECK(e.stream(a).pos == 5000 + (stelle - 10000));
-        // gleich danach noch einmal daneben: in der Schonfrist bleibt sie
-        e.verschiebe(a, 200);
+        // Ein stetiger Abstand gleich nach dem Setzen ist die Latenz der Ausgabe (was die Engine
+        // als „zu hoeren" meldet, liegt hinter der Uhr) — er gilt als Grundabstand, kein Nachsetzen
+        e.verschiebe(a, -45);
         (void)laufe(f, e, k, stelle, 66);
+        CHECK(f.nachgesetzt() == 1);  // in der Schonfrist wird nicht geprueft
+        (void)laufe(f, e, k, stelle, 2000);
         CHECK(f.nachgesetzt() == 1);
-        (void)laufe(f, e, k, stelle, 600);
-        CHECK(f.nachgesetzt() == 2);
-        // eine kleine Abweichung bleibt
-        (void)laufe(f, e, k, stelle, 600);
+        CHECK(e.stream(a).pos == 5000 + (stelle - 10000) - 45);
+        // eine kleine Abweichung davon bleibt
         e.verschiebe(a, 50);
         (void)laufe(f, e, k, stelle, 1000);
+        CHECK(f.nachgesetzt() == 1);
+        // eine grosse wird nachgesetzt — gemessen am Grundabstand, nicht an null
+        e.verschiebe(a, -140);  // jetzt 90 ms hinter dem Grundabstand von -45
+        (void)laufe(f, e, k, stelle, 33);
         CHECK(f.nachgesetzt() == 2);
+        CHECK(e.stream(a).pos == 5000 + (stelle - 10000));
 
         // am Ende des Clips geht die Quelle aus dem Mixer, obwohl der Song weiterginge
         CHECK_FALSE(laufe(f, e, k, stelle, static_cast<int>(70000 - stelle) + 40).hatSong);

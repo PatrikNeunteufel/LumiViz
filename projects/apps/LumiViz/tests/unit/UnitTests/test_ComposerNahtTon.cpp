@@ -1,17 +1,18 @@
 /**
  ****************************************************************************************
  * @file   test_ComposerNahtTon.cpp
- * @brief  Composer, Stufe C5: die Naehte zum Player — N7a Pegel, N7b Zugang, N5 Transport —
- *         und die Sitzung, die den Player fuehrt (docs/ui/Composer_Konzept.md §12.2)
+ * @brief  Composer, Stufe C5 / C5b: die Naehte zum Player — N7b Zugang, N5 Transport und
+ *         Anzeige, N13, N15 — und die Sitzung, die den Ton fuehrt
+ *         (docs/ui/Composer_Konzept.md §12.2)
  *
  * @author Patrik Neunteufel
  * @date   October 2026
  *
  * @details
- * - **Der echte `AudioPlayer`** mit einer Audio-Engine aus Pappe: der Pegel
- *   (Naht N7a) wirkt neben der Lautstaerke und aendert sie nicht; und ohne
+ * - **Der echte `AudioPlayer`** mit einer Audio-Engine aus Pappe: ohne
  *   Playlist (`setPlaylist(nullptr)`) spielt am Titelende nichts weiter — der
- *   Beleg dafuer, dass die Playlist ohne Naht ruhen kann.
+ *   Beleg dafuer, dass die Playlist ohne Naht ruhen kann. (Der Fall zur Naht
+ *   N7a, Pegel im Player, ist mit der Naht in S98 entfallen.)
  * - **Die Sitzung** mit Player und Audio-Engine aus Pappe in den Diensten des
  *   Fensters (Naht N7b): sie uebernimmt den Ton (C5b: die Songs laufen im Mixer
  *   der Engine, die Uhr fuehrt, der Player schweigt), meldet den laufenden Song,
@@ -29,6 +30,7 @@
 #include "PappTon.hpp"
 #include "TestFenster.hpp"
 #include "UI/panels/PlayerPanel.hpp"
+#include "UI/panels/TagViewPanel.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "audio/AudioEvents.hpp"
 #include "audio/AudioPlayer.hpp"
@@ -44,6 +46,7 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QLabel>
@@ -106,66 +109,6 @@ bool warte(const std::function<bool()>& bedingung, int hoechstensMs = 8000)
 
 TEST_SUITE("ComposerNahtTon")
 {
-    TEST_CASE("N7a Pegel: ein zweiter Faktor neben der Lautstaerke — sie selbst bleibt, wie sie ist")
-    {
-        EventBus bus;
-        PappEngine engine;
-        engine.laengen = {{kEins, 60000}, {kZwei, 60000}};
-        AudioPlayer player(engine, bus);
-        int meldungen = 0;
-        const auto abo = bus.subscribeScoped<VolumeChangedEvent>([&](const VolumeChangedEvent&) { ++meldungen; });
-        const auto laut = [&] { return engine.stream(engine.letzter()).lautstaerke; };
-
-        // Vorgabe: Pegel 1 — die Lautstaerke geht an die Engine wie immer
-        CHECK(player.pegel() == doctest::Approx(1.0f));
-        REQUIRE(player.load(kEins));
-        CHECK(laut() == doctest::Approx(1.0f));
-        player.setVolume(0.8f);
-        CHECK(laut() == doctest::Approx(0.8f));
-        CHECK(meldungen == 1);
-
-        // der Pegel kommt obendrauf; Lautstaerke, Regler und Ereignisse bleiben
-        player.setPegel(0.5f);
-        CHECK(laut() == doctest::Approx(0.4f));
-        CHECK(player.volume() == doctest::Approx(0.8f));
-        CHECK(player.pegel() == doctest::Approx(0.5f));
-        CHECK(meldungen == 1);
-        // die Lautstaerke aendern: der Pegel gilt weiter
-        player.setVolume(0.6f);
-        CHECK(laut() == doctest::Approx(0.3f));
-        player.setVolume(0.8f);
-
-        // stumm bleibt stumm; danach gelten beide wieder
-        player.setMuted(true);
-        CHECK(laut() == doctest::Approx(0.0f));
-        player.setPegel(0.25f);
-        CHECK(laut() == doctest::Approx(0.0f));
-        player.setMuted(false);
-        CHECK(laut() == doctest::Approx(0.2f));
-
-        // ein neuer Song bekommt beides gleich mit
-        REQUIRE(player.load(kZwei));
-        CHECK(laut() == doctest::Approx(0.2f));
-
-        // zurueck auf voll; Unsinn wird geklemmt
-        player.setPegel(1.0f);
-        CHECK(laut() == doctest::Approx(0.8f));
-        player.setPegel(7.0f);
-        CHECK(player.pegel() == doctest::Approx(1.0f));
-        player.setPegel(-1.0f);
-        CHECK(player.pegel() == doctest::Approx(0.0f));
-        CHECK(laut() == doctest::Approx(0.0f));
-
-        // ein Player, der den Pegel nicht kennt, hat die Vorgabe des Interfaces
-        struct Ohne : PappPlayer
-        {
-            [[nodiscard]] float pegel() const override { return IAudioPlayer::pegel(); }
-            void setPegel(float pegel) override { IAudioPlayer::setPegel(pegel); }
-        } ohne;
-        ohne.setPegel(0.3f);
-        CHECK(ohne.pegel() == doctest::Approx(1.0f));
-    }
-
     TEST_CASE("Die Playlist ruht ohne Naht: ohne Playlist spielt der echte Player am Titelende nichts weiter")
     {
         // die Playlist nimmt nur Dateien, die es gibt — leere genuegen, gespielt wird aus Pappe
@@ -387,6 +330,18 @@ TEST_SUITE("ComposerNahtTon")
         REQUIRE(loopKnopf() != nullptr);
         CHECK_FALSE(loopKnopf()->isEnabled());  // die Schleife steht im Composer-Panel
         REQUIRE(warte([&] { return balken->value() > 0; }));  // der Balken laeuft mit dem Song
+        // --- Naht N15 (Befund Patrik S98): auch Tag View zeigt beim Einblenden den laufenden
+        //     Song der Komposition — nicht den Titel des angehaltenen Players
+        {
+            TagViewPanel tagView(dienste);
+            tagView.show();
+            QCoreApplication::processEvents();
+            QStringList texte;
+            for (const QLabel* l : tagView.findChildren<QLabel*>()) texte << l->text();
+            CHECK(texte.contains(QStringLiteral("eins")));                                       // Titel
+            CHECK(texte.contains(QDir::toNativeSeparators(kEins)));                              // Datei
+            CHECK_FALSE(texte.contains(QDir::toNativeSeparators(kListe)));
+        }
         // ein Klick in den Balken bei einem Zehntel des Songs (30 s): die Komposition springt dorthin
         balken->setValue(100);
         Q_EMIT balken->sliderReleased();
@@ -463,14 +418,19 @@ TEST_SUITE("ComposerNahtTon")
         // das Panel zeigt wieder den Titel des Players, ohne Vorsatz, und der Loop-Knopf geht wieder
         CHECK(titel().isEmpty());
         CHECK(loopKnopf()->isEnabled());
-        CHECK(zustand == PlaybackState::Paused);
+        // der Player spielte, als der Composer uebernahm: er spielt von selbst weiter
+        // (Einstellung „Player resumes…", Vorgabe an — Wunsch Patrik S98)
+        CHECK(player->isPlaying());
+        CHECK(zustand == PlaybackState::Playing);
         stumm.kanaele[1].an = true;
         sitzung.setzeKomposition(stumm);
         REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
         CHECK(engine->mixer != ersterMixer);
 
-        // Composer aus: der Player gehoert wieder der Playlist und bleibt angehalten,
-        // sein Pegel (Naht N7a) wurde nie angefasst, und die Befehle gehen wie immer an ihn
+        // Composer aus, die Einstellung diesmal aus: der Player gehoert wieder der Playlist und
+        // bleibt angehalten, und die Befehle gehen wie immer an ihn
+        CHECK(player->isPaused());  // der Composer hat ihn wieder angehalten
+        Sitzung::setPlayerSpieltWeiter(false);
         sitzung.springe(1000);
         REQUIRE(warte([&] { return gemeldet == kEins; }));
         CHECK(titel() == QStringLiteral("Composer - eins"));
@@ -481,7 +441,6 @@ TEST_SUITE("ComposerNahtTon")
         CHECK_FALSE(sitzung.fuehrtTon());
         CHECK(Sitzung::fuehrende() == nullptr);
         CHECK(player->playlist() == liste);
-        CHECK(player->pegel() == doctest::Approx(1.0f));
         CHECK(player->isPaused());
         CHECK(gemeldet == kListe);
         CHECK(engine->quellenZahl() == 0);
@@ -491,5 +450,27 @@ TEST_SUITE("ComposerNahtTon")
         befehl(TransportCommandEvent::Action::Next);
         CHECK(player->zahl(QStringLiteral("toggle")) == 1);
         CHECK(player->zahl(QStringLiteral("next")) == 1);
+
+        // --- Composer on laeuft weiter, wenn die Komposition beim Ausschalten lief
+        //     (Einstellung „Composition continues…", Vorgabe an — Wunsch Patrik S98)
+        sitzung.spiele();
+        REQUIRE(warte([&] { return sitzung.laeuft(); }));
+        sitzung.setAn(false);
+        sitzung.setAn(true);
+        CHECK(sitzung.laeuft());
+        // hielt sie beim Ausschalten, haelt sie auch danach
+        sitzung.pausiere();
+        REQUIRE(warte([&] { return !sitzung.laeuft(); }));
+        sitzung.setAn(false);
+        sitzung.setAn(true);
+        CHECK_FALSE(sitzung.laeuft());
+        // mit ausgeschalteter Einstellung wartet Composer on an der gemerkten Stelle
+        Sitzung::setLaeuftNachEinWeiter(false);
+        sitzung.spiele();
+        REQUIRE(warte([&] { return sitzung.laeuft(); }));
+        sitzung.setAn(false);
+        sitzung.setAn(true);
+        CHECK_FALSE(sitzung.laeuft());
+        sitzung.setAn(false);
     }
 }

@@ -826,4 +826,38 @@ TEST_SUITE("ComposerBildquelle")
         CHECK(kompositionLaeuft(widget));              // niemand hat sie geschlossen
         CHECK(messungDerKomposition(widget).size() == 6);  // und sie ist noch lesbar
     }
+
+    TEST_CASE("C5b Bildquelle: die Stelle JETZT — der gespiegelte Stand, hochgerechnet")
+    {
+        // Befund im Hoertest S98: der gespiegelte Stand ist so alt wie das letzte Bild; rechnet
+        // der Render-Thread ein langes, bekam der Ton eine veraltete Stelle. Kein GL noetig.
+        Bildquelle q;
+        q.uhr().springe(1000);
+        q.spiegleStand();
+        QThread::msleep(60);
+        CHECK(q.standStelleJetztMs() == 1000);  // die Uhr steht: nichts wird hochgerechnet
+
+        q.uhr().starte();
+        q.spiegleStand();
+        QThread::msleep(150);  // niemand spiegelt — wie waehrend eines langen Bildes
+        CHECK(q.standStelleMs() < 1020);  // der Stand ist alt ...
+        const std::int64_t jetzt = q.standStelleJetztMs();
+        CHECK(jetzt >= 1140);  // ... die Stelle JETZT nicht
+        CHECK(jetzt < 1500);
+        CHECK(std::llabs(jetzt - q.uhr().stelleMs()) < 15);  // sie stimmt mit der Uhr selbst
+
+        // am Ende haelt sie; in der Schleife laeuft sie vorn weiter
+        q.uhr().setLaengeMs(1200);
+        q.spiegleStand();
+        QThread::msleep(150);
+        CHECK(q.standStelleJetztMs() == 1200);
+        q.uhr().setSchleife(true);
+        q.uhr().springe(1150);
+        q.uhr().starte();
+        q.spiegleStand();
+        QThread::msleep(150);
+        const std::int64_t rund = q.standStelleJetztMs();
+        CHECK(rund >= 90);
+        CHECK(rund < 400);
+    }
 }

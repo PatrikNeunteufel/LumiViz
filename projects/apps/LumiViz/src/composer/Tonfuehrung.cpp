@@ -8,6 +8,8 @@
 #include "audio/AudioPlayer.hpp"  // leseTrackInfo (Naht N14)
 #include "audio/IAudioPlayer.hpp"
 
+#include <QFileInfo>
+
 #include <BasicLogger.h>
 
 #include <algorithm>
@@ -28,7 +30,8 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     m_mixer = mixer;
     // der Player schweigt, und die Playlist ruht: ohne sie spielt am Titelende
     // nichts von selbst weiter
-    if (player.isPlaying()) player.pause();
+    m_playerSpielte = player.isPlaying();
+    if (m_playerSpielte) player.pause();
     m_playlist = player.playlist();
     player.setPlaylist(nullptr);
     m_quellen.clear();
@@ -42,7 +45,7 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     return true;
 }
 
-void Tonfuehrung::gibFrei()
+void Tonfuehrung::gibFrei(bool playerWeiter)
 {
     if (!fuehrt()) return;
     for (const Quelle& q : m_quellen)
@@ -50,6 +53,8 @@ void Tonfuehrung::gibFrei()
     m_quellen.clear();
     m_engine->freeStream(m_mixer);
     m_player->setPlaylist(m_playlist);
+    if (playerWeiter && m_playerSpielte) m_player->play();
+    m_playerSpielte = false;
     m_engine = nullptr;
     m_player = nullptr;
     m_playlist = nullptr;
@@ -161,15 +166,26 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             bool setze = einstieg || sprang;
             if (!setze && laeuft && std::llabs(stelleMs - q.gesetztBeiMs) >= kSchonfristMs)
             {
-                // die Quelle ist der Uhr davongelaufen (oder sie ihr)
-                const std::int64_t ist = engine.getSourcePositionMs(q.handle);
-                if (std::llabs(ist - soll) > kToleranzMs)
+                const std::int64_t daneben = engine.getSourcePositionMs(q.handle) - soll;
+                if (!q.hatGrund)
                 {
+                    // Was die Engine als „zu hoeren" meldet, liegt um die Latenz
+                    // der Ausgabe hinter der Uhr (gemessen S98: stetig etwa 45 ms
+                    // am Geraet des Rechners; ueber Funk ein Vielfaches). Das ist
+                    // der Grundabstand dieser Quelle, kein Davonlaufen.
+                    q.grundMs = daneben;
+                    q.hatGrund = true;
+                }
+                else if (std::llabs(daneben - q.grundMs) > kToleranzMs)
+                {
+                    // die Quelle ist der Uhr davongelaufen (oder sie ihr)
                     setze = true;
                     ++m_nachgesetzt;
-                    if (m_nachgesetzt <= 5 || m_nachgesetzt % 50 == 0)
+                    if (m_nachgesetzt <= 200 || m_nachgesetzt % 50 == 0)
                         BasicLogger::logInfo("Composer: audio source realigned to the clock (" +
-                                             std::to_string(ist - soll) + " ms off, " +
+                                             std::to_string(daneben - q.grundMs) + " ms off its usual " +
+                                             std::to_string(q.grundMs) + " ms, " +
+                                             QFileInfo(clip->datei).fileName().toStdString() + ", " +
                                              std::to_string(m_nachgesetzt) + " so far)");
                 }
             }
@@ -177,6 +193,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             {
                 engine.setSourcePositionMs(q.handle, static_cast<int>(soll));
                 q.gesetztBeiMs = stelleMs;
+                q.hatGrund = false;  // nach dem Setzen neu messen
             }
             if (einstieg)
             {

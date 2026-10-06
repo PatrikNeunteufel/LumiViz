@@ -28,6 +28,7 @@
 
 #include <QCoreApplication>
 #include <QDataStream>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QTemporaryDir>
 #include <QThread>
@@ -269,6 +270,91 @@ bool schreibeMp3MitTags(const QString& datei)
 }
 
 }  // namespace
+
+TEST_CASE("Messung: wie weit eine Quelle des Mixers nach Einstieg, Sprung und Start neben der Uhr liegt")
+{
+    // Befund im Hoertest S98 (Log): die Fuehrung setzte Quellen etwa eine Sekunde nach einem
+    // Einstieg um rund 280 ms nach. Hier gemessen, woher das kommt: wie lange das Oeffnen und
+    // das Setzen dauern, und wie die Stelle, die die Engine meldet, danach gegen die Wanduhr
+    // laeuft. Prueft nichts, meldet Zahlen. Mit LUMIVIZ_BELEG_SONG=<Datei> an einem echten
+    // Song, sonst an einem Sinus von 20 s.
+    App app;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    QString datei = QString::fromLocal8Bit(qgetenv("LUMIVIZ_BELEG_SONG"));
+    int ziel = 60000;
+    if (datei.isEmpty() || !QFile::exists(datei))
+    {
+        datei = ordner.filePath(QStringLiteral("sinus_20s.wav"));
+        REQUIRE(schreibeSinus(datei, kFreqA, 0.5f, 20));
+        ziel = 5000;
+    }
+    BassEngine bass;
+    if (!bass.initialize())
+    {
+        MESSAGE("kein Ausgabegeraet: nichts gemessen");
+        return;
+    }
+    IAudioEngine& engine = bass;
+    const AudioStreamHandle mixer = engine.createMixer();
+    REQUIRE(mixer != INVALID_STREAM);
+    engine.setVolume(mixer, 0.02f);
+    REQUIRE(engine.play(mixer));
+    QThread::msleep(300);
+
+    QElapsedTimer uhr;
+
+    // --- 1) kalter Einstieg: oeffnen, setzen, laufen lassen — wie ein Sprung mitten in einen Clip
+    uhr.start();
+    const AudioStreamHandle a = engine.mixerAddSource(mixer, datei);
+    const qint64 msOeffnen = uhr.elapsed();
+    REQUIRE(a != INVALID_STREAM);
+    uhr.restart();
+    REQUIRE(engine.setSourcePositionMs(a, ziel));
+    const qint64 msSetzen = uhr.elapsed();
+    REQUIRE(engine.setSourcePaused(a, false));
+    uhr.restart();
+    MESSAGE("oeffnen " << std::to_string(msOeffnen) << " ms, setzen " << std::to_string(msSetzen) << " ms ("
+                       << datei.toStdString() << ")");
+    const auto messe = [&](const char* name, int basis) {
+        std::string zeile = std::string(name) + ": Stelle minus Uhr [ms] alle 100 ms:";
+        for (int i = 0; i < 15; ++i)
+        {
+            QThread::msleep(100);
+            const qint64 soll = basis + uhr.elapsed();
+            zeile += " " + std::to_string(engine.getSourcePositionMs(a) - soll);
+        }
+        MESSAGE(zeile);
+    };
+    messe("kalter Einstieg", ziel);
+
+    // --- 2) Sprung bei laufender Quelle
+    REQUIRE(engine.setSourcePositionMs(a, ziel + 30000 > engine.getDurationMs(a) ? 1000 : ziel + 30000));
+    const int nachSprung = ziel + 30000 > engine.getDurationMs(a) ? 1000 : ziel + 30000;
+    uhr.restart();
+    messe("Sprung im Lauf", nachSprung);
+
+    // --- 3) der Mixer haelt und laeuft wieder (Pause, Play)
+    REQUIRE(engine.pause(mixer));
+    QThread::msleep(500);
+    const int gehalten = engine.getSourcePositionMs(a);
+    REQUIRE(engine.play(mixer));
+    uhr.restart();
+    messe("nach Pause und Play", gehalten);
+
+    // --- 4) gesetzt bei haltendem Mixer, dann Play (Klick ins Lineal bei stehender Uhr)
+    REQUIRE(engine.pause(mixer));
+    QThread::msleep(300);
+    REQUIRE(engine.setSourcePositionMs(a, ziel));
+    MESSAGE("gesetzt bei haltendem Mixer: die Engine meldet "
+            << std::to_string(engine.getSourcePositionMs(a) - ziel) << " ms neben dem Ziel");
+    REQUIRE(engine.play(mixer));
+    uhr.restart();
+    messe("gesetzt im Halt, dann Play", ziel);
+
+    engine.mixerRemoveSource(a);
+    engine.freeStream(mixer);
+}
 
 TEST_CASE("Naht N12: Tags und Songtext liest die Engine auch an einer Quelle des Mixers")
 {
