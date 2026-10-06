@@ -42,6 +42,7 @@ const QLatin1String kOeffnenHaelt("composer/openHolds");
 const QLatin1String kAmEnde("composer/atEnd");
 const QLatin1String kPlayerWeiter("composer/playerResumes");
 const QLatin1String kNachEinWeiter("composer/resumesWhenSwitchedOn");
+const QLatin1String kNeuerClip("composer/newClipSeconds");
 const QLatin1String kSync("composer/syncEffectChain");
 // der Stand ueber den Neustart
 const QLatin1String kStandDatei("composer/session/file");
@@ -825,6 +826,17 @@ bool Sitzung::laeuftNachEinWeiter()
 void Sitzung::setLaeuftNachEinWeiter(bool an)
 {
     QSettings().setValue(kNachEinWeiter, an);
+}
+
+std::int64_t Sitzung::neuerClipMs()
+{
+    const int sekunden = QSettings().value(kNeuerClip, static_cast<int>(kNeuerClipMs / 1000)).toInt();
+    return static_cast<std::int64_t>(std::clamp(sekunden, 1, 600)) * 1000;
+}
+
+void Sitzung::setNeuerClipSekunden(int sekunden)
+{
+    QSettings().setValue(kNeuerClip, std::clamp(sekunden, 1, 600));
 }
 
 AmEnde Sitzung::amEnde()

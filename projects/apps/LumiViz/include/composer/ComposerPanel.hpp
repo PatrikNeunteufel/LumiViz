@@ -101,6 +101,46 @@ public:
     [[nodiscard]] bool hatHuelle(const QString& datei) const { return m_huellen.contains(datei); }
     /// Die Dateien, die in einem Drag als Clips in Frage kommen: Presets und Songs.
     [[nodiscard]] QStringList fallDateien(const QMimeData* daten) const;
+    /// Wo die Dateien eines Drags an `ort` landen wuerden — je Datei Kanal,
+    /// Anfang und Ende. Daraus zeichnet die Achse beim Hineinziehen den
+    /// Schatten der Clips (Wunsch Patrik S98). Leer = dort faellt nichts
+    /// (Lineal, Zeile der anderen Art, kein Bearbeiten). Ein Kanal gleich der
+    /// Zahl der Kanaele heisst: unter der letzten Zeile entstuende ein neuer.
+    struct Schatten
+    {
+        int kanal = -1;
+        std::int64_t startMs = 0;
+        std::int64_t endeMs = 0;
+    };
+    [[nodiscard]] std::vector<Schatten> fallSchatten(QPoint ort, const QStringList& dateien,
+                                                     Qt::KeyboardModifiers tasten = Qt::NoModifier) const;
+
+    // --- Einfuegemarke, Kopieren / Ausschneiden / Einfuegen (S98) ------------
+    //
+    // Entscheid Patrik S98 (a): ein Klick auf eine freie Stelle einer
+    // Kanalzeile setzt dort die Einfuegemarke — Kanal und Stelle. „Einfuegen"
+    // legt den Clip aus der Ablage mit seinem ANFANG an die Marke; die
+    // Abspielmarke bleibt, wo sie ist. Die Ablage gilt fuer alle Zeitachsen
+    // des Programms und traegt einen Clip samt Kurve, Mischart und Einsatz.
+
+    /// Kanal der Einfuegemarke, -1 = es gibt keine.
+    [[nodiscard]] int markeKanal() const { return m_markeKanal; }
+    [[nodiscard]] std::int64_t markeMs() const { return m_markeMs; }
+    /// Die Marke setzen (`kanal` -1 = wegnehmen). Nur im Bearbeiten.
+    void setMarke(int kanal, std::int64_t stelleMs);
+    /// Den angeklickten Clip in die Ablage legen. false = keiner angeklickt.
+    bool kopiere();
+    /// Kopieren und den Clip entfernen (nur im Bearbeiten).
+    bool schneideAus();
+    /// Den Clip aus der Ablage an die Einfuegemarke legen — nur in einen Kanal
+    /// seiner Art; liegt dort schon ein Clip, in die naechste Luecke, in die
+    /// er passt. Danach steht die Marke hinter ihm. Ohne Marke: hinter den
+    /// angeklickten Clip, in dessen Kanal. false = nichts eingefuegt.
+    bool fuegeEin();
+    /// Liegt ein Clip in der Ablage — und ist es ein Song (`ton`)?
+    [[nodiscard]] static bool ablageVoll(bool* ton = nullptr);
+    static void leereAblage();
+
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
@@ -188,6 +228,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    bool event(QEvent* event) override;
     [[nodiscard]] QSize sizeHint() const override;
     [[nodiscard]] QSize minimumSizeHint() const override;
 
@@ -247,6 +288,18 @@ private:
     Komposition m_vorZug;            ///< der Stand beim Druck
     QPoint m_fallOrt{-1, -1};        ///< wohin ein Drag von aussen gerade zeigt (-1 = keiner)
     bool m_fallTon = false;          ///< der Drag traegt nur Songs
+    QStringList m_fallDateien;       ///< was der Drag traegt
+    Qt::KeyboardModifiers m_fallTasten = Qt::NoModifier;
+    int m_markeKanal = -1;           ///< die Einfuegemarke: Kanal (-1 = keine)
+    std::int64_t m_markeMs = 0;      ///< und Stelle
+
+    /// Die Dateien an `ort` in `neu` legen — fuer das Fallenlassen und, auf
+    /// einer Kopie, fuer den Schatten. false = dort faellt nichts.
+    bool legeDateien(Komposition& neu, QPoint ort, const QStringList& dateien,
+                     Qt::KeyboardModifiers tasten, int* kanal, int* platz, QStringList* passend,
+                     std::vector<Schatten>* gelegt) const;
+    [[nodiscard]] std::int64_t songLaenge(const QString& datei) const;
+    mutable QHash<QString, std::int64_t> m_songLaengen;  ///< schon erfragt (der Schatten fragt je Bewegung)
     Teil m_teil;                     ///< das Teil im Curve Editor (markiert)
 
     /// Die Huellkurve eines Songs, wie die Audio-Engine sie liefert.

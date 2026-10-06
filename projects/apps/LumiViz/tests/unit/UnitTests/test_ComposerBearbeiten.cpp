@@ -849,4 +849,53 @@ TEST_SUITE("ComposerBearbeiten")
         REQUIRE(verschiebeClip(k, 1, 0, 0) == 0);
         CHECK(bild(k) == QStringLiteral("A[15000,25000) B[25000,30000) C[30000,45000)"));
     }
+
+    TEST_CASE("S98 Kopie einfuegen: der Clip kommt mit allem, sein Anfang an die Stelle — nur in einen Kanal seiner Art")
+    {
+        Komposition k = neueKomposition();  // CH1
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeClipEin(k, 0, QStringLiteral("a.lvfx"), 0, 10000) == 0);
+        REQUIRE(fuegeClipEin(k, 0, QStringLiteral("b.lvfx"), 20000, 10000) == 1);
+        Clip vorlage = k.kanaele[0].clips[0];
+        vorlage.setzeBlenden(2000, 3000);
+        vorlage.grundpegel = 0.7;
+        vorlage.mischart = Mischart::Additive;
+
+        // in freie Flaeche: der Anfang liegt, wo er hin soll; Laenge, Kurve und Mischart kommen mit
+        REQUIRE(fuegeKopieEin(k, 0, KanalArt::Visual, vorlage, 40000) == 2);
+        const Clip& kopie = k.kanaele[0].clips[2];
+        CHECK(kopie.startMs == 40000);
+        CHECK(kopie.endeMs == 50000);
+        CHECK(kopie.datei == QStringLiteral("a.lvfx"));
+        CHECK(kopie.grundpegel == doctest::Approx(0.7));
+        CHECK(kopie.mischart == Mischart::Additive);
+        CHECK(kopie.pegelBei(1000) == doctest::Approx(0.35));  // die Einblendung haengt an seiner Kante
+        CHECK(k.kanaele[0].clips[0].vollerPegel());            // das Original bleibt, wie es war
+
+        // die Luecke 10–20 s ist genau so lang wie er: dort passt er hin
+        REQUIRE(fuegeKopieEin(k, 0, KanalArt::Visual, vorlage, 10000) == 1);
+        CHECK(k.kanaele[0].clips[1].startMs == 10000);
+        // auf einem Clip: er wird nicht gekuerzt, sondern landet in der naechsten Luecke, in die er passt
+        const int platz = fuegeKopieEin(k, 0, KanalArt::Visual, vorlage, 5000);
+        REQUIRE(platz >= 0);
+        CHECK(k.kanaele[0].clips[static_cast<std::size_t>(platz)].dauerMs() == 10000);
+        CHECK(k.kanaele[0].clips[static_cast<std::size_t>(platz)].startMs == 30000);
+
+        // ein Bild-Clip geht nicht in einen Audio-Kanal, und umgekehrt; einen Kanal, den es nicht gibt, auch nicht
+        CHECK(fuegeKopieEin(k, 1, KanalArt::Visual, vorlage, 0) == -1);
+        CHECK(fuegeKopieEin(k, 0, KanalArt::Audio, vorlage, 0) == -1);
+        CHECK(fuegeKopieEin(k, 7, KanalArt::Visual, vorlage, 0) == -1);
+        CHECK(k.kanaele[1].clips.empty());
+
+        // ein Song behaelt Einsatz und Songlaenge
+        REQUIRE(fuegeSongEin(k, 1, QStringLiteral("s.mp3"), 0, 60000) == 0);
+        Clip song = k.kanaele[1].clips[0];
+        song.einsatzMs = 15000;
+        song.endeMs = 30000;
+        REQUIRE(fuegeKopieEin(k, 1, KanalArt::Audio, song, 100000) == 1);
+        CHECK(k.kanaele[1].clips[1].einsatzMs == 15000);
+        CHECK(k.kanaele[1].clips[1].quellMs == 60000);
+        CHECK(k.kanaele[1].clips[1].songStelle(0) == 15000);
+        CHECK(k.kanaele[1].clips[1].dauerMs() == 30000);
+    }
 }

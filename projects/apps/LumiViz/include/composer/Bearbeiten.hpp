@@ -76,6 +76,16 @@ int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std:
 int fuegeSongEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
                  std::int64_t songMs, Stoss stoss = Stoss::Halten);
 
+/// Die Kopie eines Clips in den Kanal legen (Kopieren / Einfuegen, S98): mit
+/// allem, was er traegt — Laenge, Pegelkurve, Mischart, Einsatz im Song —, sein
+/// **Anfang** bei `startMs`. Anders als ein neuer Clip passt er sich keiner
+/// Luecke an: mit `Stoss::Halten` landet er in der naechsten Luecke, in die er
+/// ganz passt. `art` ist die Art des Clips (Bild oder Ton); er geht nur in
+/// einen Kanal dieser Art. Liefert seinen Platz, -1 = den Kanal gibt es nicht
+/// oder er ist von der anderen Art.
+int fuegeKopieEin(Komposition& komposition, int kanal, KanalArt art, const Clip& vorlage,
+                  std::int64_t startMs, Stoss stoss = Stoss::Halten);
+
 /// Einen leeren Kanal anhaengen; ohne Namen heisst ein Visual-Kanal „CH<n>",
 /// ein Audio-Kanal „A<n>", je mit der kleinsten freien Nummer. Liefert seinen
 /// Platz.

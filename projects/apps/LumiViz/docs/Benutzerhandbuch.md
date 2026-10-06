@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.93.0
+> **Version:** 1.94.0
 > **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1764,9 +1764,26 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | Clip ziehen | Verschieben. In eine andere Zeile gezogen, wechselt der Clip den Kanal |
 | Linke / rechte Kante ziehen | Anfang / Ende des Clips. Ein- und Ausblendung bleiben an ihrer Kante und gleich lang |
 | **Entf** | Löscht den angeklickten Clip |
+| Klick auf eine **freie Stelle** einer Kanalzeile | Setzt dort die **Einfügemarke** — ein Strich mit Dreieck in dieser Zeile, die Zeile ist leicht hervorgehoben. Rastet ein wie ein Clip (Alt: frei). Die Zeile unten nennt Kanal und Zeit |
+| **Ctrl+C** / **Ctrl+X** | Kopiert bzw. schneidet den angeklickten Clip aus — mit Länge, Pegelkurve, Mischart und (beim Song) Einsatz. Auch im Rechtsklick-Menü: *Copy clip*, *Cut clip* |
+| **Ctrl+V** | Fügt den Clip mit seinem **Anfang an der Einfügemarke** ein. Auch: Rechtsklick auf eine freie Stelle → *Paste clip here* |
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
+
+**Kopieren und Einfügen im Einzelnen.** Die Einfügemarke ist nicht die
+Abspielmarke: sie steht still, auch wenn die Komposition läuft, und ein Klick
+auf sie lässt die Musik nicht springen. Eingefügt wird nur in einen Kanal der
+passenden Art — ein Bild-Clip in eine Zeile CH…, ein Song in eine Zeile A….
+Liegt an der Marke schon ein Clip, landet der eingefügte in der nächsten
+Lücke, in die er ganz passt; gekürzt wird er nicht. Nach dem Einfügen steht
+die Marke hinter dem neuen Clip — noch einmal Ctrl+V hängt den nächsten an.
+Ohne Marke landet die Kopie hinter dem angeklickten Clip. Kopieren geht auch
+ohne **Edit**, und die Ablage gilt über das Laden einer anderen Komposition
+hinweg.
+
+**Die Zeit unter dem Zeiger:** Fährst du mit der Maus über das Lineal, zeigt
+ein kleines Schild die Zeit an dieser Stelle.
 
 **Ein- und Ausblenden** (auch nur mit **Edit**): Oben in jedem Clip sitzen
 zwei kleine weiße Quadrate — links der Griff der Einblendung, rechts der der
@@ -1874,10 +1891,15 @@ unter `composer/fades` und `composer/shapes`.
   **Load...** öffnet eine vorhandene — dasselbe wie *File → Open Composition...*.
 - **Presets hineinziehen:** Zieh ein Preset aus dem **Effect Browser** — oder
   eine oder mehrere Dateien aus dem Explorer — in die Zeile eines Kanals.
-  Jeder neue Clip ist 20 Sekunden lang und läuft auf vollem Pegel; mehrere
+  Jeder neue Clip ist 20 Sekunden lang (einstellbar, siehe Einstellungen:
+  *New clip length*) und läuft auf vollem Pegel; mehrere
   Dateien liegen hintereinander. Fällt der Clip in eine Lücke, reicht er höchstens bis zum
   nächsten Clip; fällt er auf einen Clip, landet er in der nächsten Lücke.
   Ctrl, Ctrl+Shift und Alt wirken wie beim Verschieben.
+  **Während des Ziehens zeigt ein Schatten, wo der Clip landen wird** — in
+  seiner Länge, mit einem Strich an seinem Anfang. Über einer Zeile der
+  anderen Art (ein Preset über einer Zeile A…, ein Song über einer Zeile CH…)
+  erscheint kein Schatten, und dort fällt auch nichts.
 - **Neuer Kanal:** Zieh das Preset **unter die letzte Zeile** — dort steht
   während des Ziehens „New channel". Oder Rechtsklick → *Add channel*.
 - **Rechtsklick** auf eine Zeile: *Rename channel...*, *Channel enabled*
@@ -1995,6 +2017,7 @@ sofort; die Presets der Clips laufen dabei weiter.
 | | *Switch the Composer off* | Am Ende kommt die Effektkette zurück; die Komposition bleibt im Panel |
 | **Composer off** | *Player resumes when the Composer hands the audio back* (Standard: an) | Spielte der Player, als eine Komposition mit Audio-Kanal übernahm, spielt er von selbst weiter, sobald der Composer den Ton wieder abgibt. Aus: er bleibt angehalten |
 | **Composer on** | *Composition continues when the Composer is switched on again* (Standard: an) | Lief die Komposition, als der Composer ausgeschaltet wurde, läuft sie beim Einschalten weiter. Aus: sie wartet an der gemerkten Stelle auf Play. Eine neu geladene Komposition folgt *Open Composition* |
+| **New clip length** | 1 bis 600 s (Standard: 20 s) | So lang wird ein Preset, das du in eine Komposition ziehst. In einer Lücke reicht es weiter höchstens bis zum nächsten Clip; Songs behalten ihre eigene Länge |
 
 *End of a Composition* gilt nur, wenn **Loop** aus ist.
 
@@ -2076,6 +2099,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.94.0 | 2026-10-06 | Session 98. §15 Bearbeiten NEU **Einfügemarke** (Klick auf eine freie Stelle einer Kanalzeile), **Kopieren / Ausschneiden / Einfügen** von Clips (Ctrl+C / Ctrl+X / Ctrl+V, Rechtsklick), **Schatten beim Hineinziehen** (der Clip erscheint dort, wo er landen würde; in einer Zeile der anderen Art erscheint nichts), **Zeit unter dem Zeiger** im Lineal. §15 Einstellungen NEU **New clip length** |
 | 1.93.0 | 2026-10-06 | Session 98. §15 Einstellungen NEU **Composer off: Player resumes…** und **Composer on: Composition continues…** (beide Standard an) — der Player spielt nach Composer aus von selbst weiter, wenn er vorher spielte; die Komposition läuft nach Composer on weiter, wenn sie vorher lief |
 | 1.92.0 | 2026-10-06 | Session 98. §15 Audio-Kanal GEÄNDERT: **Audio-Kanäle überlagern sich** — alle eingeschalteten spielen zugleich, jeder Song mit seiner Pegelkurve (Überblenden über zwei Kanäle); das Bild reagiert auf die Summe; NEU **der laufende Song** (höchster Pegel — ihm folgen Songtext, Tags, Tag View, Audio Browser, Songwechsel); die Uhr führt statt des Tons; das Panel Player zeigt „Composer - <Titel>", sein Play-Knopf folgt der Komposition, der Loop-Knopf ist grau; nach Composer aus steht der Player angehalten |
 | 1.91.1 | 2026-10-05 | Session 96. §15 Audio-Kanal GEÄNDERT: alle eingeschalteten Audio-Kanäle zählen, an jeder Stelle spielt der Song des obersten Kanals, der dort einen hat (zuvor nur der erste eingeschaltete Kanal — ein leerer Kanal oben machte die anderen stumm) |

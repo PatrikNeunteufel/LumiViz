@@ -46,6 +46,7 @@
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QToolTip>
 #include <QVBoxLayout>
 
 #include <algorithm>
@@ -71,6 +72,16 @@ QColor tonFarbe(bool an)
 {
     return an ? QColor::fromHsv(32, 110, 150) : QColor::fromHsv(32, 40, 105);
 }
+
+/// Die Ablage fuer Kopieren / Einfuegen (S98): ein Clip samt allem, was er
+/// traegt, und seine Art. Eine fuer das ganze Programm.
+struct Ablage
+{
+    bool voll = false;
+    Clip clip;
+    KanalArt art = KanalArt::Visual;
+};
+Ablage g_ablage;
 
 /// So fein wird die Huellkurve eines Songs geholt (ein Wert je 50 ms).
 constexpr int kHuelleMs = 50;
@@ -134,6 +145,7 @@ Zeitachse::Zeitachse(QWidget* parent) : QWidget(parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     setFocusPolicy(Qt::StrongFocus);  // Entf und Esc im Bearbeiten
     setAcceptDrops(true);             // Presets aus dem Effect Browser (C3b)
+    setMouseTracking(true);           // die Zeit unter dem Zeiger im Lineal; im Bearbeiten der Zeiger an den Kanten
 }
 
 void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
@@ -144,6 +156,7 @@ void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
     m_kanal = -1;
     m_clip = -1;
     m_stelleMs = 0;
+    m_markeKanal = -1;
     updateGeometry();
     update();
     Q_EMIT auswahlGeaendert();
@@ -455,19 +468,59 @@ void Zeitachse::paintEvent(QPaintEvent*)
         const int zeile = k >= 0 ? k : zeilen;  // unter der letzten Zeile: ein neuer Kanal
         const QRect ziel(kKopfBreite, kLinealHoehe + zeile * kZeilenHoehe, width() - kKopfBreite,
                          kZeilenHoehe);
-        QColor hell = pal.color(QPalette::Highlight);
-        hell.setAlpha(60);
-        p.fillRect(ziel, hell);
-        const int xFall = xVon(raste(stelleVon(m_fallOrt.x()), m_komposition, -1, -1));
-        p.setPen(QPen(pal.color(QPalette::Highlight), 2.0));
-        p.drawLine(xFall, ziel.top(), xFall, ziel.bottom());
-        if (k < 0)
+        // Der Schatten (Wunsch Patrik S98): jeder Clip dort, wo er landen
+        // wuerde — mit seinem Anfang als Strich. Faellt hier nichts (eine
+        // Zeile der anderen Art), bleibt die Zeile dunkel.
+        const std::vector<Schatten> schatten = fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten);
+        if (!schatten.empty())
+        {
+            QColor hell = pal.color(QPalette::Highlight);
+            hell.setAlpha(40);
+            p.fillRect(ziel, hell);
+        }
+        for (const Schatten& s : schatten)
+        {
+            VisualClip geist;
+            geist.startMs = s.startMs;
+            geist.endeMs = s.endeMs;
+            const QRect r = clipRechteck(s.kanal, geist);  // Zeile = Kanal, auch fuer den neuen unter der letzten
+            QColor farbe = m_fallTon ? tonFarbe(true) : kanalFarbe(s.kanal, true);
+            farbe.setAlpha(120);
+            p.setBrush(farbe);
+            p.setPen(QPen(pal.color(QPalette::Highlight), 1.0, Qt::DashLine));
+            p.drawRoundedRect(r, 4, 4);
+            p.setBrush(Qt::NoBrush);
+        }
+        if (!schatten.empty())
+        {
+            const int xFall = xVon(schatten.front().startMs);
+            p.setPen(QPen(pal.color(QPalette::Highlight), 2.0));
+            p.drawLine(xFall, ziel.top(), xFall, ziel.bottom());
+        }
+        if (k < 0 && !schatten.empty())
         {
             p.setPen(text);
             p.drawText(QRect(8, ziel.top(), kKopfBreite - 12, kZeilenHoehe),
                        Qt::AlignLeft | Qt::AlignVCenter,
                        m_fallTon ? tr("New audio channel") : tr("New channel"));
         }
+    }
+
+    // --- die Einfuegemarke (S98): ihre Zeile leicht hervorgehoben, ein Strich
+    //     mit einem Dreieck am Kopf — dorthin legt „Einfuegen" den Anfang
+    if (m_bearbeiten && m_markeKanal >= 0 && m_markeKanal < zeilen)
+    {
+        const int oben = kLinealHoehe + m_markeKanal * kZeilenHoehe;
+        QColor zeile = pal.color(QPalette::Highlight);
+        zeile.setAlpha(28);
+        p.fillRect(QRect(0, oben, width(), kZeilenHoehe), zeile);
+        const int xMarke = xVon(m_markeMs);
+        const QColor farbe = pal.color(QPalette::Highlight);
+        p.setPen(QPen(farbe, 2.0));
+        p.drawLine(xMarke, oben, xMarke, oben + kZeilenHoehe);
+        p.setBrush(farbe);
+        p.drawPolygon(QPolygon({QPoint(xMarke - 5, oben), QPoint(xMarke + 5, oben), QPoint(xMarke, oben + 7)}));
+        p.setBrush(Qt::NoBrush);
     }
 
     // --- Abspielmarke
@@ -483,8 +536,8 @@ void Zeitachse::setBearbeiten(bool an)
     if (an == m_bearbeiten) return;
     brichZugAb();
     m_bearbeiten = an;
-    setMouseTracking(an);  // fuer den Zeiger an den Kanten
     if (!an) unsetCursor();
+    if (!an) m_markeKanal = -1;  // die Einfuegemarke gibt es nur im Bearbeiten
     updateGeometry();
     update();
 }
@@ -501,6 +554,7 @@ void Zeitachse::zeigeBearbeitet(const Komposition& komposition)
         m_kanal = -1;
         m_clip = -1;
     }
+    if (m_markeKanal >= static_cast<int>(komposition.kanaele.size())) m_markeKanal = -1;
     updateGeometry();
     update();
     Q_EMIT auswahlGeaendert();  // auch bei gleicher Auswahl: der Clip kann neue Zeiten haben
@@ -818,6 +872,23 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
             stelleVon(ort.x()) -
             m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clipIndex)].startMs;
     }
+    // Eine freie Stelle in einer Kanalzeile: dort steht ab jetzt die
+    // Einfuegemarke (Entscheid Patrik S98) — eingerastet wie ein Clip, Alt frei.
+    if (m_bearbeiten && griff == Griff::Keiner && clipIndex < 0 && ort.x() >= kKopfBreite)
+    {
+        if (const int zeile = kanalBei(ort.y()); zeile >= 0)
+        {
+            std::int64_t stelle = stelleVon(ort.x());
+            if (!(event->modifiers() & Qt::AltModifier)) stelle = raste(stelle, m_komposition, -1, -1);
+            m_markeKanal = zeile;
+            m_markeMs = stelle;
+            m_kanal = -1;
+            m_clip = -1;
+            update();
+            Q_EMIT auswahlGeaendert();
+            return;
+        }
+    }
     if (kanal == m_kanal && clipIndex == m_clip) return;
     m_kanal = kanal;
     m_clip = clipIndex;
@@ -967,6 +1038,10 @@ void Zeitachse::brichZugAb()
 void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
+    // die Zeit unter dem Zeiger, solange er im Lineal steht (Wunsch Patrik S98)
+    if (m_geladen && ort.y() < kLinealHoehe && ort.x() >= kKopfBreite)
+        QToolTip::showText(event->globalPosition().toPoint(), ComposerPanel::zeitText(stelleVon(ort.x())), this,
+                           QRect(ort.x(), 0, 1, kLinealHoehe));
     if (m_zieht)
     {
         Q_EMIT sprung(stelleVon(ort.x()));
@@ -1033,6 +1108,12 @@ void Zeitachse::keyPressEvent(QKeyEvent* event)
         loescheAuswahl();
         return;
     }
+    if (m_geladen && m_griff == Griff::Keiner)
+    {
+        if (event->matches(QKeySequence::Copy) && kopiere()) return;
+        if (event->matches(QKeySequence::Cut) && schneideAus()) return;
+        if (event->matches(QKeySequence::Paste) && fuegeEin()) return;
+    }
     QWidget::keyPressEvent(event);
 }
 
@@ -1050,9 +1131,96 @@ void Zeitachse::uebernimm(const Komposition& neu, int kanal, int clip)
     m_laengeMs = anzeigeLaenge(neu);
     m_kanal = kanal;
     m_clip = clip;
+    if (m_markeKanal >= static_cast<int>(neu.kanaele.size())) m_markeKanal = -1;
     updateGeometry();
     update();
     Q_EMIT auswahlGeaendert();
+}
+
+// -----------------------------------------------------------------------------
+// Einfuegemarke, Kopieren / Ausschneiden / Einfuegen (S98)
+// -----------------------------------------------------------------------------
+
+void Zeitachse::setMarke(int kanal, std::int64_t stelleMs)
+{
+    if (!m_bearbeiten || !m_geladen || kanal >= static_cast<int>(m_komposition.kanaele.size())) kanal = -1;
+    m_markeKanal = kanal;
+    m_markeMs = std::max<std::int64_t>(0, stelleMs);
+    update();
+    Q_EMIT auswahlGeaendert();  // die Clip-Zeile des Panels nennt die Marke
+}
+
+bool Zeitachse::ablageVoll(bool* ton)
+{
+    if (ton != nullptr) *ton = g_ablage.art == KanalArt::Audio;
+    return g_ablage.voll;
+}
+
+void Zeitachse::leereAblage()
+{
+    g_ablage = {};
+}
+
+bool Zeitachse::kopiere()
+{
+    const VisualClip* clip = auswahl();
+    if (clip == nullptr) return false;
+    g_ablage.voll = true;
+    g_ablage.clip = *clip;
+    g_ablage.art = m_komposition.kanaele[static_cast<std::size_t>(m_kanal)].art;
+    return true;
+}
+
+bool Zeitachse::schneideAus()
+{
+    if (!m_bearbeiten || m_griff != Griff::Keiner || !kopiere()) return false;
+    Komposition neu = m_komposition;
+    if (!loescheClip(neu, m_kanal, m_clip)) return false;
+    uebernimm(neu, -1, -1);
+    Q_EMIT bearbeitet(neu, tr("Cut clip"));
+    return true;
+}
+
+bool Zeitachse::fuegeEin()
+{
+    if (!m_bearbeiten || !m_geladen || !g_ablage.voll || m_griff != Griff::Keiner) return false;
+    int kanal = m_markeKanal;
+    std::int64_t start = m_markeMs;
+    if (kanal < 0)
+    {
+        // Ohne Marke (von mir gesetzt, S98): hinter den angeklickten Clip, in
+        // dessen Kanal — Kopieren und gleich Einfuegen verdoppelt ihn.
+        const VisualClip* clip = auswahl();
+        if (clip == nullptr) return false;
+        kanal = m_kanal;
+        start = clip->endeMs;
+    }
+    Komposition neu = m_komposition;
+    const int platz = fuegeKopieEin(neu, kanal, g_ablage.art, g_ablage.clip, start);
+    if (platz < 0) return false;  // ein Kanal der anderen Art
+    // die Marke rueckt hinter den eingefuegten Clip: noch einmal Einfuegen haengt an
+    if (m_markeKanal >= 0)
+        m_markeMs = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(platz)].endeMs;
+    uebernimm(neu, kanal, platz);
+    Q_EMIT bearbeitet(neu, tr("Paste clip"));
+    return true;
+}
+
+bool Zeitachse::event(QEvent* event)
+{
+    // Kopieren, Ausschneiden, Einfuegen gehoeren hier der Zeitachse — auch wenn
+    // das Hauptfenster dieselben Tasten als Kuerzel fuehrt.
+    if (event->type() == QEvent::ShortcutOverride && m_geladen)
+    {
+        auto* taste = static_cast<QKeyEvent*>(event);
+        if (taste->matches(QKeySequence::Copy) || taste->matches(QKeySequence::Cut) ||
+            taste->matches(QKeySequence::Paste))
+        {
+            event->accept();
+            return true;
+        }
+    }
+    return QWidget::event(event);
 }
 
 // -----------------------------------------------------------------------------
@@ -1066,11 +1234,49 @@ int Zeitachse::kanalBei(int y) const
     return zeile < static_cast<int>(m_komposition.kanaele.size()) ? kanalVonZeile(zeile) : -1;
 }
 
+std::int64_t Zeitachse::songLaenge(const QString& datei) const
+{
+    if (!m_songLaenge) return 0;
+    const auto gemerkt = m_songLaengen.constFind(datei);
+    if (gemerkt != m_songLaengen.constEnd()) return *gemerkt;
+    const std::int64_t laenge = m_songLaenge(datei);
+    m_songLaengen.insert(datei, laenge);
+    return laenge;
+}
+
 bool Zeitachse::lasseFallen(QPoint ort, const QStringList& dateien, Qt::KeyboardModifiers tasten)
+{
+    Komposition neu = m_komposition;
+    int kanal = -1;
+    int platz = -1;
+    QStringList passend;
+    if (!legeDateien(neu, ort, dateien, tasten, &kanal, &platz, &passend, nullptr)) return false;
+    const bool ton = neu.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio;
+    uebernimm(neu, kanal, platz);
+    Q_EMIT bearbeitet(neu, ton ? (passend.size() == 1 ? tr("Add song") : tr("Add songs"))
+                               : (passend.size() == 1 ? tr("Add clip") : tr("Add clips")));
+    Q_EMIT hineingezogen(passend);
+    return true;
+}
+
+std::vector<Zeitachse::Schatten> Zeitachse::fallSchatten(QPoint ort, const QStringList& dateien,
+                                                         Qt::KeyboardModifiers tasten) const
+{
+    std::vector<Schatten> gelegt;
+    Komposition probe = m_komposition;
+    int kanal = -1;
+    int platz = -1;
+    QStringList passend;
+    if (!legeDateien(probe, ort, dateien, tasten, &kanal, &platz, &passend, &gelegt)) gelegt.clear();
+    return gelegt;
+}
+
+bool Zeitachse::legeDateien(Komposition& neu, QPoint ort, const QStringList& dateien,
+                            Qt::KeyboardModifiers tasten, int* kanalAus, int* platzAus,
+                            QStringList* passendAus, std::vector<Schatten>* gelegt) const
 {
     if (!m_bearbeiten || !m_geladen || dateien.isEmpty() || m_griff != Griff::Keiner) return false;
     if (ort.y() < kLinealHoehe) return false;
-    Komposition neu = m_komposition;
     int kanal = kanalBei(ort.y());
 
     // Songs fallen nur in Audio-Kanaele, Presets nur in Visual-Kanaele (C5).
@@ -1095,16 +1301,18 @@ bool Zeitachse::lasseFallen(QPoint ort, const QStringList& dateien, Qt::Keyboard
     int platz = -1;
     for (const QString& datei : passend)  // mehrere Dateien: hintereinander
     {
-        // ein Song ist so lang, wie er ist — ohne Auskunft 20 s
-        platz = ton ? fuegeSongEin(neu, kanal, datei, start, m_songLaenge ? m_songLaenge(datei) : 0, stoss)
-                    : fuegeClipEin(neu, kanal, datei, start, kNeuerClipMs, stoss);
+        // ein Song ist so lang, wie er ist — ohne Auskunft so lang wie ein
+        // neuer Bild-Clip; dessen Laenge steht in den Settings (S98)
+        platz = ton ? fuegeSongEin(neu, kanal, datei, start, songLaenge(datei), stoss)
+                    : fuegeClipEin(neu, kanal, datei, start, Sitzung::neuerClipMs(), stoss);
         if (platz < 0) return false;
-        start = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(platz)].endeMs;
+        const Clip& c = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(platz)];
+        if (gelegt != nullptr) gelegt->push_back(Schatten{kanal, c.startMs, c.endeMs});
+        start = c.endeMs;
     }
-    uebernimm(neu, kanal, platz);
-    Q_EMIT bearbeitet(neu, ton ? (passend.size() == 1 ? tr("Add song") : tr("Add songs"))
-                               : (passend.size() == 1 ? tr("Add clip") : tr("Add clips")));
-    Q_EMIT hineingezogen(passend);
+    *kanalAus = kanal;
+    *platzAus = platz;
+    *passendAus = passend;
     return true;
 }
 
@@ -1173,6 +1381,8 @@ void Zeitachse::dragEnterEvent(QDragEnterEvent* event)
         // nur Songs: unter der letzten Zeile entstuende ein Audio-Kanal
         m_fallTon = lumi::ui::presetDateien(event->mimeData()).isEmpty();
         m_fallOrt = event->position().toPoint();
+        m_fallDateien = fallDateien(event->mimeData());
+        m_fallTasten = event->modifiers();
         event->acceptProposedAction();
         update();
     }
@@ -1182,8 +1392,9 @@ void Zeitachse::dragMoveEvent(QDragMoveEvent* event)
 {
     if (m_fallOrt.x() < 0) return;
     m_fallOrt = event->position().toPoint();
-    // im Lineal faellt nichts
-    if (m_fallOrt.y() < kLinealHoehe)
+    m_fallTasten = event->modifiers();
+    // im Lineal faellt nichts — und nichts in eine Zeile der anderen Art
+    if (m_fallOrt.y() < kLinealHoehe || fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten).empty())
         event->ignore();
     else
         event->acceptProposedAction();
@@ -1307,12 +1518,27 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
                            [this, kanal, clip, zeit] { stueckHinzu(kanal, clip, zeit); });
             menu.addSeparator();
         }
+        menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
+        menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
         menu.addAction(tr("Delete clip"), this, [this] { loescheAuswahl(); });
         menu.addSeparator();
     }
     if (zeile >= 0)
     {
         const Kanal& k = m_komposition.kanaele[static_cast<std::size_t>(zeile)];
+        // Einfuegen (S98): an der Stelle des Klicks — sie wird zur Einfuegemarke
+        if (clip < 0 && ort.x() >= kKopfBreite)
+        {
+            bool ton = false;
+            const bool voll = ablageVoll(&ton);
+            QAction* hier = menu.addAction(tr("Paste clip here"), this, [this, zeile, ort] {
+                setMarke(zeile, raste(stelleVon(ort.x()), m_komposition, -1, -1));
+                (void)fuegeEin();
+            });
+            hier->setShortcut(QKeySequence::Paste);
+            hier->setEnabled(voll && ton == (k.art == KanalArt::Audio));
+            menu.addSeparator();
+        }
         menu.addAction(tr("Rename channel..."), this, [this, zeile, alt = k.name] {
             bool ok = false;
             const QString name = QInputDialog::getText(this, tr("Rename Channel"), tr("Name:"),
@@ -1866,8 +2092,13 @@ void ComposerPanel::zeigeClip()
                               clip != nullptr ? m_zeitachse->gewaehlterClip() : -1);
     if (clip == nullptr || m_sitzung == nullptr)
     {
-        m_clipZeile->setText(m_sitzung != nullptr && m_sitzung->geladen() ? tr("No clip selected")
-                                                                          : QString());
+        QString zeile = m_sitzung != nullptr && m_sitzung->geladen() ? tr("No clip selected") : QString();
+        // die Einfuegemarke (S98): wohin „Einfuegen" den Anfang eines Clips legt
+        if (const int k = m_zeitachse->markeKanal(); k >= 0 && !zeile.isEmpty())
+            zeile = tr("Insert mark: %1 at %2")
+                        .arg(m_zeitachse->komposition().kanaele[static_cast<std::size_t>(k)].name,
+                             zeitText(m_zeitachse->markeMs()));
+        m_clipZeile->setText(zeile);
         m_clipZeile->setToolTip(QString());
         return;
     }

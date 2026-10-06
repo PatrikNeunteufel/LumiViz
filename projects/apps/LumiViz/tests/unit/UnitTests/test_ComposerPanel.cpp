@@ -1335,4 +1335,212 @@ TEST_SUITE("ComposerPanel")
         CHECK(gleich(gelesen, sitzung->komposition()));
         CHECK(gelesen.kanaele[1].clips[0].ein.dauerMs == 4000);
     }
+
+    TEST_CASE("S98 Panel: Schatten beim Hineinziehen, Vorgabelaenge, Einfuegemarke, Kopieren / Ausschneiden / Einfuegen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        Zeitachse::leereAblage();
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString eins = dir.filePath(QStringLiteral("Eins.mp3"));
+        {
+            QFile f(eins);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+        }
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new papp::PappEngine); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        auto* engine = dynamic_cast<papp::PappEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(bus != nullptr);
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{eins, 20000}};
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 300);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        auto* clipZeile = panel.findChild<QLabel*>(QStringLiteral("composerClip"));
+        REQUIRE(edit != nullptr);
+        REQUIRE(clipZeile != nullptr);
+        const auto kanaele = [&]() -> const std::vector<Kanal>& { return sitzung->komposition().kanaele; };
+        const auto ort = [&](int kanal, std::int64_t ms) { return QPoint(achse->xVon(ms), achse->yVonZeile(kanal)); };
+        const auto taste = [&](int key) {
+            QKeyEvent druck(QEvent::KeyPress, key, Qt::ControlModifier);
+            QCoreApplication::sendEvent(achse, &druck);
+        };
+
+        sitzung->neu();  // CH1
+        // ohne Edit faellt nichts — also auch kein Schatten
+        CHECK(achse->fallSchatten(ort(0, 5000), {rot}).empty());
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        achse->audioKanalHinzu();  // Kanal 1: A1
+        achse->kanalHinzu();       // Kanal 2: CH2
+        REQUIRE(kanaele().size() == 3);
+
+        // --- der Schatten: wo ein hineingezogenes Preset landen wuerde, mit seinem Anfang
+        CHECK(Sitzung::neuerClipMs() == 20000);  // die Vorgabelaenge
+        auto schatten = achse->fallSchatten(ort(0, 5000), {rot});
+        REQUIRE(schatten.size() == 1);
+        CHECK(schatten[0].kanal == 0);
+        CHECK(schatten[0].startMs == 5000);
+        CHECK(schatten[0].endeMs == 25000);
+        // in einer Zeile der anderen Art faellt nichts: kein Schatten
+        CHECK(achse->fallSchatten(ort(1, 5000), {rot}).empty());
+        CHECK(achse->fallSchatten(ort(0, 5000), {eins}).empty());
+        // ein Song in A1: so lang, wie er ist
+        schatten = achse->fallSchatten(ort(1, 3000), {eins});
+        REQUIRE(schatten.size() == 1);
+        CHECK(schatten[0].kanal == 1);
+        CHECK(schatten[0].startMs == 3000);
+        CHECK(schatten[0].endeMs == 23000);
+        // unter der letzten Zeile: ein neuer Kanal
+        schatten = achse->fallSchatten(ort(3, 2000), {rot});
+        REQUIRE(schatten.size() == 1);
+        CHECK(schatten[0].kanal == 3);
+        // der Schatten aendert nichts ...
+        CHECK(kanaele().size() == 3);
+        CHECK(kanaele()[0].clips.empty());
+        // ... und das Fallenlassen landet genau dort
+        REQUIRE(achse->lasseFallen(ort(0, 5000), {rot}));
+        REQUIRE(kanaele()[0].clips.size() == 1);
+        CHECK(kanaele()[0].clips[0].startMs == 5000);
+        CHECK(kanaele()[0].clips[0].endeMs == 25000);
+        // auf einem Clip: der Schatten zeigt die naechste Luecke
+        schatten = achse->fallSchatten(ort(0, 10000), {rot});
+        REQUIRE(schatten.size() == 1);
+        CHECK(schatten[0].startMs == 25000);
+
+        // --- die Vorgabelaenge neuer Bild-Clips ist einstellbar
+        Sitzung::setNeuerClipSekunden(8);
+        schatten = achse->fallSchatten(ort(0, 40000), {rot});
+        REQUIRE(schatten.size() == 1);
+        CHECK(schatten[0].endeMs - schatten[0].startMs == 8000);
+        REQUIRE(achse->lasseFallen(ort(0, 40000), {rot}));
+        CHECK(kanaele()[0].clips[1].dauerMs() == 8000);
+        Sitzung::setNeuerClipSekunden(5000);  // Unsinn wird geklemmt
+        CHECK(Sitzung::neuerClipMs() == 600000);
+        Sitzung::setNeuerClipSekunden(20);
+
+        // --- die Einfuegemarke: ein Klick auf eine freie Stelle einer Zeile
+        CHECK(achse->markeKanal() == -1);
+        klick(*achse, ort(2, 12000));
+        CHECK(achse->markeKanal() == 2);
+        CHECK(achse->markeMs() == 12000);
+        CHECK(achse->auswahl() == nullptr);
+        CHECK(clipZeile->text().contains(QStringLiteral("Insert mark")));
+        CHECK(clipZeile->text().contains(QStringLiteral("CH2")));
+        // die Abspielmarke bleibt dabei, wo sie ist
+        CHECK(sitzung->stelleMs() == 0);
+        // ein Klick auf einen Clip waehlt ihn — die Marke bleibt
+        klick(*achse, ort(0, 10000));
+        REQUIRE(achse->auswahl() != nullptr);
+        CHECK(achse->markeKanal() == 2);
+
+        // --- kopieren und einfuegen: an die Marke, mit dem Anfang — und mit allem, was der Clip traegt
+        achse->setzeBlendenForm(0, 0, true, Kurvenform::Linear);  // eine Einblendung von zwei Sekunden
+        klick(*achse, ort(0, 10000));
+        CHECK_FALSE(Zeitachse::ablageVoll());
+        REQUIRE(achse->kopiere());
+        bool ton = true;
+        CHECK(Zeitachse::ablageVoll(&ton));
+        CHECK_FALSE(ton);
+        REQUIRE(achse->fuegeEin());
+        REQUIRE(kanaele()[2].clips.size() == 1);
+        CHECK(kanaele()[2].clips[0].startMs == 12000);
+        CHECK(kanaele()[2].clips[0].endeMs == 32000);
+        CHECK(kanaele()[2].clips[0].datei == rot);
+        CHECK(kanaele()[2].clips[0].ein.dauerMs == 2000);
+        CHECK(kanaele()[0].clips.size() == 2);  // das Original bleibt
+        // der eingefuegte ist angeklickt, die Marke steht hinter ihm: noch einmal Einfuegen haengt an
+        CHECK(achse->gewaehlterKanal() == 2);
+        CHECK(achse->markeMs() == 32000);
+        REQUIRE(achse->fuegeEin());
+        REQUIRE(kanaele()[2].clips.size() == 2);
+        CHECK(kanaele()[2].clips[1].startMs == 32000);
+        // ueber Undo
+        REQUIRE(bus->undo());
+        CHECK(kanaele()[2].clips.size() == 1);
+        REQUIRE(bus->redo());
+        CHECK(kanaele()[2].clips.size() == 2);
+
+        // --- mit den Tasten: Ctrl+X schneidet aus, Ctrl+V fuegt an der Marke ein
+        klick(*achse, ort(2, 15000));
+        REQUIRE(achse->auswahl() != nullptr);
+        taste(Qt::Key_X);
+        CHECK(kanaele()[2].clips.size() == 1);
+        klick(*achse, ort(2, 60000));  // die Marke an eine neue Stelle
+        CHECK(achse->markeMs() == 60000);
+        taste(Qt::Key_V);
+        REQUIRE(kanaele()[2].clips.size() == 2);
+        CHECK(kanaele()[2].clips[1].startMs == 60000);
+        CHECK(kanaele()[2].clips[1].dauerMs() == 20000);
+        // Ctrl+C kopiert den angeklickten (den eben eingefuegten)
+        Zeitachse::leereAblage();
+        taste(Qt::Key_C);
+        CHECK(Zeitachse::ablageVoll());
+
+        // --- ein Bild-Clip geht nicht in einen Audio-Kanal
+        klick(*achse, ort(1, 1000));
+        CHECK(achse->markeKanal() == 1);
+        CHECK_FALSE(achse->fuegeEin());
+        CHECK(kanaele()[1].clips.empty());
+
+        // --- ein Song: ohne Marke landet die Kopie hinter dem angeklickten Clip, in dessen Kanal
+        REQUIRE(achse->lasseFallen(ort(1, 0), {eins}));
+        REQUIRE(kanaele()[1].clips.size() == 1);
+        achse->setMarke(-1, 0);
+        klick(*achse, ort(1, 5000));
+        REQUIRE(achse->auswahl() != nullptr);
+        REQUIRE(achse->kopiere());
+        CHECK(Zeitachse::ablageVoll(&ton));
+        CHECK(ton);
+        CHECK(achse->markeKanal() == -1);
+        REQUIRE(achse->fuegeEin());
+        REQUIRE(kanaele()[1].clips.size() == 2);
+        CHECK(kanaele()[1].clips[1].startMs == 20000);
+        CHECK(kanaele()[1].clips[1].quellMs == 20000);
+        // und ein Song geht nicht in einen Bild-Kanal
+        klick(*achse, ort(0, 100000));
+        CHECK(achse->markeKanal() == 0);
+        CHECK_FALSE(achse->fuegeEin());
+
+        // --- ohne Edit: keine Marke, kein Einfuegen, kein Ausschneiden — Kopieren schon
+        edit->click();
+        REQUIRE_FALSE(achse->bearbeiten());
+        CHECK(achse->markeKanal() == -1);
+        klick(*achse, ort(1, 5000));
+        REQUIRE(achse->auswahl() != nullptr);
+        CHECK(achse->markeKanal() == -1);
+        CHECK(achse->kopiere());
+        CHECK_FALSE(achse->schneideAus());
+        CHECK_FALSE(achse->fuegeEin());
+        CHECK(kanaele()[1].clips.size() == 2);
+        Zeitachse::leereAblage();
+    }
 }

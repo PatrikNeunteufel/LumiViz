@@ -325,6 +325,24 @@ int fuegeEin(Komposition& komposition, int kanal, KanalArt art, const QString& d
 }
 }  // namespace
 
+int fuegeKopieEin(Komposition& komposition, int kanal, KanalArt art, const Clip& vorlage,
+                  std::int64_t startMs, Stoss stoss)
+{
+    if (kanal < 0 || kanal >= static_cast<int>(komposition.kanaele.size())) return -1;
+    Kanal& k = komposition.kanaele[static_cast<std::size_t>(kanal)];
+    if (k.art != art) return -1;
+    // Blenden haengen an den Kanten, Stuecke an ihrem Anteil, der Einsatz am
+    // Song: alles zieht mit dem Clip um, wenn nur Start und Ende wandern.
+    Clip neu = vorlage;
+    const std::int64_t dauer = std::max(vorlage.dauerMs(), kMinClipMs);
+    const std::int64_t start = std::max<std::int64_t>(0, startMs);
+    neu.startMs = start;
+    neu.endeMs = start + dauer;
+    const int platz = platziere(k.clips, std::move(neu), start, stoss, -1);
+    passeLaengeAn(komposition);
+    return platz;
+}
+
 int fuegeKanalEin(Komposition& komposition, const QString& name, KanalArt art)
 {
     Kanal neu;

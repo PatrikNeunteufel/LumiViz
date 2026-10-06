@@ -194,6 +194,10 @@ public:
     static void setPlayerSpieltWeiter(bool an);
     [[nodiscard]] static bool laeuftNachEinWeiter();
     static void setLaeuftNachEinWeiter(bool an);
+    /// Laenge eines hineingezogenen Bild-Clips (Wunsch Patrik S98), in
+    /// Sekunden einstellbar (`composer/newClipSeconds`, Vorgabe 20, 1 bis 600).
+    [[nodiscard]] static std::int64_t neuerClipMs();
+    static void setNeuerClipSekunden(int sekunden);
 
     // --- Ueber den Neustart (Konzept §8 „Der Start") --------------------------
 
