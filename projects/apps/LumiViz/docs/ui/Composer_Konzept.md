@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.30.0
+> **Version:** 0.31.0
 > **Datum:** 2026-10-06 (Session 98)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -208,7 +208,8 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
       hält). Ihm folgen Karaoke-Ebene, Tags, Songwechsel-Zähler, Tag View
       und Audio Browser. In einer symmetrischen Überblendung wechselt alles
       am Kreuzungspunkt der beiden Kurven. Das Player-Panel zeigt ihn
-      **nicht** (§8).
+      ebenfalls — als „Composer - <Song>" (Entscheid Patrik S98, §8; in S97
+      hieß es zuerst, das Panel zeige die Komposition).
     - **Belegt vor dem Entscheid** (`test_ComposerBelegeTon.cpp`): zwei
       Streams der echten `BassEngine` spielen zugleich, jeder mit eigener
       Stelle; Spektrum und Pegel eines einzelnen Streams kennen weder den
@@ -456,16 +457,24 @@ Composer hängt sie am Player aus (`setPlaylist(nullptr)`) und beim
 Ausschalten wieder ein — am Titelende spielt dann nichts von selbst weiter,
 und ein Doppelklick in der Playlist tut nichts.
 
-**Ab C5b (Entscheid Patrik S97: b) — noch nicht gebaut:** Solange der
-Composer Ton führt, zeigt das Player-Panel **die Komposition**: als Titel
-ihren Dateinamen, als Zeit und Balken die Zeitachse der Komposition. Ein
-Klick in den Balken springt auf der Zeitachse. Der Loop-Knopf des Panels
-schaltet die Schleife der Komposition. Lautstärke und Mute wirken auf den
-ganzen Ton der Komposition. Der laufende Song (§4) steht in Tag View und im
-Composer-Panel. Damit ersetzt das die Zeile „Fortschrittsbalken" der Tabelle
-und den Satz „Der Balken bleibt der Balken des Songs". Verworfen: das Panel
-zeigt den laufenden Song (der Balken spränge am Kreuzungspunkt einer
-Überblendung); das Panel ruht.
+**Ab C5b (Entscheid Patrik S98: a, mit Anpassung — ersetzt den Entscheid b
+aus S97; noch nicht gebaut):** Solange der Composer Ton führt, zeigt das
+Player-Panel **den laufenden Song** (§4): als Titel **„Composer - <Song>"**
+(Anpassung Patrik), dazu Künstler, Stelle im Song und Länge. Ein Klick in
+den Balken springt in diesem Song; der Composer rechnet daraus die Stelle
+der Komposition und springt dorthin. In einer Lücke bleibt der zuletzt
+gezeigte Song stehen, der Balken hält. Lautstärke und Mute wirken auf den
+ganzen Ton der Komposition. Der Loop-Knopf des Panels ist ausgegraut,
+solange der Composer Ton führt (die Schleife steht im Composer-Panel). Am
+Kreuzungspunkt einer Überblendung wechselt das Panel mit allem anderen auf
+den neuen Song — der Balken springt dort. Die Zeile „Fortschrittsbalken"
+der Tabelle bleibt damit im Kern, nur führt jetzt die Uhr: der Klick setzt
+die Uhr, der Ton folgt.
+
+*Zur Einordnung, in S97 entschieden (b) und in S98 zurückgenommen (Patrik:
+die Fragestellung war anders verstanden):* das Panel zeigt die Komposition —
+Dateiname, Zeitachse, Loop-Knopf = Schleife der Komposition. Gebaut wurde
+davon nichts. Weiter verworfen: das Panel ruht.
 
 **Kürzel bei laufendem Composer** (C5 a):
 
@@ -924,7 +933,7 @@ dabei, damit die Gründe nachlesbar bleiben.
 | — | Mehrere Songs zugleich: woher die Streams kommen (S97) | **ein Mixer in der Engine** (BASSmix), der Composer hält ihn; die Uhr führt | eigene Streams des Composers mit selbst gerechneter Summe (das eigene Spektrum liefe neben dem von BASS, an dem die Presets kalibriert sind — nicht geprüft, ob gleich); mehrere Streams im Player (größte Naht, löst die Summe nicht) |
 | — | Wessen Spektrum die Visuals sehen (S97) | **die Summe mit den Pegeln** — das, was zu hören ist | — (Zielbild Patrik) |
 | — | Der laufende Song bei mehreren zugleich (S97) | **die Pegelkurve entscheidet, und alles folgt** (Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio Browser) | der gemessene Pegel entscheidet; nur die Karaoke folgt, der Rest wechselt am Clip-Anfang |
-| — | Das Player-Panel bei führendem Composer (S97) | **zeigt die Komposition** (Dateiname, Zeitachse; Loop-Knopf = Schleife der Komposition) | zeigt den laufenden Song; ruht |
+| — | Das Player-Panel bei führendem Composer (S97, **geändert S98**) | **zeigt den laufenden Song als „Composer - <Song>"** (Künstler, Stelle im Song, Länge; Klick in den Balken springt im Song und damit in der Komposition; in einer Lücke bleibt der letzte Song stehen; Loop-Knopf ausgegraut) | zeigt die Komposition (Dateiname, Zeitachse; Loop-Knopf = Schleife der Komposition) — in S97 entschieden, in S98 von Patrik zurückgenommen, nichts davon gebaut; ruht |
 
 **Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
 Presets (S60) · bei einer Datei mit Host Switcher warnt der Composer beim
@@ -992,7 +1001,7 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | N12 Mixer ✅ | `audio/IAudioEngine.hpp`, `audio/BassEngine.hpp` / `.cpp`; `Solution.json` (`BASS_MIX` an App-Kern, Runner und Test-Target — schon mit dem Wechsel auf CMakeCraft v0.9.2 committet) | die Engine hat sieben Mixer-Aufrufe, im Interface mit Vorgabe „kann es nicht" (wie `setTempo`): `createMixer` (Stereo, Abtastrate der Engine, Puffer 0, läuft ohne Quellen mit Stille weiter), `mixerAddSource` (eine Datei als Quelle, kommt **angehalten** hinein), `mixerRemoveSource`, `getSourcePositionMs` / `setSourcePositionMs`, `setSourcePaused`, `isSourcePlaying`. Der Pegel einer Quelle ist das vorhandene `setVolume` auf ihrem Handle. Der Mixer selbst ist ein `AudioStreamHandle` — `play`, `pause`, `setVolume`, `getFFTData`, `freeStream` gelten unverändert. `BassEngine::loadPlugins` übergeht `bassmix.dll` (kein Decoder-Plugin). **Belegt** in `test_ComposerNahtMixer.cpp` an der echten `BassEngine`, nur über die Schnittstelle: Quellen angehalten, eigene Stelle, halber Pegel halbiert die Linie im Spektrum des Mixers, eine gehaltene Quelle fällt aus der Summe und ihre Stelle steht, der Mixer läuft ohne Quellen weiter, eine Quelle am Ende schweigt, bleibt aber im Mixer und spielt zurückgesetzt von selbst wieder; eine Engine ohne Mixer (`PappEngine`) meldet „kein Mixer". **Von mir gesetzt:** der Mixer läuft mit der Abtastrate der Engine (44100), damit sein Spektrum für Songs dieser Rate dieselben Linien hat wie der Stream des Players. **Entschieden (Patrik S97: b):** `BassEngine` linkt BASSmix fest, BASSmix ist damit Pflichtpaket wie `bassflac` (`externals/bass/SETUP.md` nachziehen). Der App-Kern ist eine statische Bibliothek, also braucht auch jede Test-Exe die DLL — und CMakeCraft v0.9.0 / v0.9.1 reicht `external_options` eines App-Tests nicht durch (`AppCreate.cmake:767`). **Voraussetzung für N12 war deshalb CMakeCraft v0.9.2** mit diesem Fix — **erledigt S97:** Pin auf v0.9.2, `BASS_MIX` steht an Kern, Runner und Test-Target, `bassmix.dll` liegt neben der Test-Exe (928 Cases grün). Bis N12 gebaut ist, warnt `BassEngine::loadPlugins` im Log einmal je Start über `bassmix.dll` (kein Decoder-Plugin, BASS-Fehler 41). Verworfen: BASSmix zur Laufzeit laden; DLL von Hand zum Test kopieren | niemand ruft die neuen Aufrufe → die Engine wie heute; eine Engine ohne Mixer liefert „kein Mixer" | C5b |
 | N13 Spektrum ✅ | `UI/MainWindow.cpp`, `onAudioUpdate` | **eine** Abfrage bei `composer/AppAnbindung` (`composer::tonMixer`, gleich nach `currentStream()`): führt der Composer Ton, liest `onAudioUpdate` Spektrum und Wellenform von dessen Mixer statt vom Stream des Players — auch wenn der Player keinen Titel geladen hat. **Belegt:** `composer::tonMixer` in `test_ComposerNahtTon.cpp` (Composer aus und Audio-Kanal aus → `INVALID_STREAM`, führend → der Mixer); dass der Mixer der echten `BassEngine` alles liefert, was `onAudioUpdate` liest (Wellenform, zwei Kanäle, Spektrum je Kanal), in `test_ComposerNahtMixer.cpp`. **Nicht durch einen Test gedeckt:** die Zeile in `MainWindow` selbst — `MainWindow` läuft in keinem Unit-Test; ihr Beleg ist der Sichttest (das Bild reagiert auf die Summe) | Composer führt keinen Ton → der Stream des Players wie heute | C5b |
 | N14 Tags eines Songs ✅ | `audio/AudioPlayer.hpp` / `.cpp` | Entscheid Patrik S98: a. Die Zeilen in `AudioPlayer::load`, die aus einem Stream die `TrackInfo` bauen (Dauer, Titel mit dem Dateinamen als Ersatz, Künstler, Album, Jahr, Genre, Tracknummer, eingebettete Songtexte), werden zur freien Funktion `leseTrackInfo(engine, handle, pfad)`; `load` ruft sie auf, der Composer für den laufenden Song auch — die Tags entstehen an einer Stelle. **Belegt vor dem Bau** (`test_ComposerNahtMixer.cpp`, dritter Fall): an einer Quelle des Mixers liefert die echte `BassEngine` dieselben Tags, denselben Songtext und dieselbe Dauer wie am Stream des Players. Verworfen: dieselben Zeilen als Kopie im Composer | reine Umstellung — `load` liefert dieselbe `TrackInfo` wie zuvor | C5b |
-| N5 wächst: Anzeige (geplant) | `UI/panels/PlayerPanel.cpp` | Folge des Entscheids „das Panel zeigt die Komposition" (S97): führt der Composer Ton, nimmt das Panel Titel, Zeit und Balken vom Composer und übergeht dafür die drei Ereignisse des Players (`TrackChangedEvent`, `PlaybackStateEvent`, `PlaybackPositionEvent` — die braucht weiter der laufende Song für Karaoke und Tags); dazu fragen `onActivate`, `onProgressReleased` und `onLoopClicked` zuerst den Composer. Das sind mehr Stellen als bei jeder Naht bisher — vor dem Bau einzeln aufzählen | Composer führt keinen Ton → das Panel wie heute | C5b |
+| N5 wächst: Anzeige (geplant, **neu gefasst S98**) | `UI/panels/PlayerPanel.cpp` | Folge des Entscheids „das Panel zeigt den laufenden Song als ‚Composer - <Song>'" (S98, ersetzt S97): Titel, Stelle und „läuft" bekommt das Panel über die **bestehenden** Ereignisse (`TrackChangedEvent`, `PlaybackPositionEvent`, `PlaybackStateEvent`) — der Composer verschickt sie für den laufenden Song, das ist eigener Code. Am Panel bleiben **vier** Stellen (gelesen S98, vor dem Bau): (1) `onTrackChanged` — der Vorsatz „Composer - " vor dem Titel, solange der Composer Ton führt; (2) `onProgressReleased` — fragt zuerst den Composer (Sprung im laufenden Song); (3) `onActivate` — nimmt den Stand bei führendem Composer von ihm statt vom Player; (4) der Loop-Knopf — ausgegraut, solange der Composer Ton führt (eine Abfrage dort, wo das Panel die Ereignisse empfängt). **Offen (Frage an Patrik):** was der Play-Knopf in einer Lücke zeigt | Composer führt keinen Ton → das Panel wie heute | C5b |
 | — Lautstärke, Player schweigt ✅ | **keine Naht** | gebaut S98: der Composer liest Lautstärke und Mute des Players je Takt und setzt sie am Mixer (statt eines Abos auf `VolumeChangedEvent` — gleiche Wirkung, kein Bus nötig), hält den Player beim Übernehmen an und hängt die Playlist aus wie bisher; den laufenden Song meldet er über `TrackChangedEvent` und die statischen Wege des Renderers (`notifyPlayPosition`, `notifyPlayState`). **N7a (`setPegel`) ruft der Composer nicht mehr** — offen (Entscheid Patrik), ob die Naht zurückgenommen wird; ihr Beleg in `test_ComposerNahtTon.cpp` steht noch | — | C5b |
 
 Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
@@ -1056,6 +1065,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.31.0 | 2026-10-06 | Session 98 — **Entscheid zum Player-Panel geändert (Patrik), gebaut ist nichts.** Statt „das Panel zeigt die Komposition" (S97, b) gilt: **das Panel zeigt den laufenden Song als „Composer - <Song>"** — Künstler, Stelle im Song, Länge; ein Klick in den Balken springt im Song und damit in der Komposition; in einer Lücke bleibt der letzte Song stehen; der Loop-Knopf ist ausgegraut (§8, §11, §4). Naht „N5 wächst" neu gefasst (§12.2): Titel, Stelle und „läuft" kommen über die bestehenden Ereignisse, die der Composer für den laufenden Song verschickt; am Panel vier Stellen statt der drei übergangenen Ereignisse plus drei Abfragen. Offen: was der Play-Knopf in einer Lücke zeigt |
 | 0.30.0 | 2026-10-06 | Session 98 — **C5b Schritt 3: Naht N13, die Visuals sehen die Summe.** `MainWindow::onAudioUpdate` fragt nach `currentStream()` `composer::tonMixer` (neu in `AppAnbindung`): führt der Composer Ton, kommen Spektrum und Wellenform von seinem Mixer, sonst vom Stream des Players wie immer (§12.2). Belegt: `composer::tonMixer` am Sitzungs-Fall in `test_ComposerNahtTon.cpp`; Wellenform, Kanalzahl und Spektrum je Kanal am Mixer der echten `BassEngine` in `test_ComposerNahtMixer.cpp`. Die Zeile in `MainWindow` selbst deckt kein Unit-Test — ihr Beleg ist der Sichttest. Rückbau-Liste: Kennung von N14 (`6f87331`), Zeile für N13. 931 Cases. **Offen:** im Programm nichts gehört oder gesehen; Schritt 4 (Anzeige des Player-Panels) |
 | 0.29.0 | 2026-10-06 | Session 98 — **C5b Schritt 2: die Audio-Kanäle laufen im Mixer, die Uhr führt.** **Beleg vorab:** an einer Quelle des Mixers liefert die echte `BassEngine` dieselben Tags, denselben Songtext und dieselbe Dauer wie am Stream des Players (`test_ComposerNahtMixer.cpp`, dritter Fall, MP3 aus stillen Rahmen mit ID3v2). **Naht N14** (Entscheid Patrik: a): `leseTrackInfo` als freie Funktion in `audio/AudioPlayer`, `load` ruft sie auf (§12.2, vor dem Bau eingetragen). **Eigenes:** `Komposition::toeneBei` (alle Ton-Clips an der Stelle, mit Vorlauf) ersetzt `tonBei`; `Tonfuehrung` neu gegen `IAudioEngine` und `IAudioPlayer` — Mixer, je Clip eine Quelle, Stelle bei Einstieg / Sprung / Abweichung, Pegel je Takt, Lautstärke und Mute des Players am Mixer, der laufende Song nach der Pegelkurve; `Sitzung` meldet ihn als `TrackChangedEvent` und an den Renderer, `tonMixer()` für N13 (§4). `PappMischEngine` in `PappTon.hpp` (`PappEngine` bleibt ohne Mixer — der N12-Fall „Engine ohne Mixer" steht unverändert). Tests umgeschrieben: `test_ComposerTonfuehrung.cpp` (sieben Fälle), der Sitzungs-Fall in `test_ComposerNahtTon.cpp`, sechs Prüfungen in `test_ComposerBearbeiten.cpp`. **Von mir gesetzt:** Vorlauf 2 s, Abweichung 80 ms mit Schonfrist 500 ms, Player bleibt beim Freigeben angehalten (§4). Kein Vergleichslauf: die Bildberechnung ist nicht berührt. 931 Cases. **Offen:** im Programm nichts gehört; bis N13 reagiert das Bild bei führendem Composer nicht auf die Musik; N7a zurücknehmen oder nicht |
 | 0.28.1 | 2026-10-05 | Session 97, Abschluss — Rückbau-Liste: Kennungen der Commits von S97 eingetragen (Belege `72dfb06`, Build-System `b31b55a`, N12 `e7fe2d5` — Naht und Eigenes in einem Commit). Kopf: Stand der Stufen. **Stand:** die Engine kann mehrere Songs mischen, der Composer benutzt den Mixer noch nicht — im Programm überlagern sich die Audio-Kanäle weiter nicht. Nächster Schritt: `Tonfuehrung` auf den Mixer (die Uhr führt), der laufende Song, dann N13 und N5 |
