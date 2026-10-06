@@ -710,6 +710,19 @@ QWidget* SettingsPanel::createPanelsTab()
         connect(nachEinWeiter, &QCheckBox::toggled, this,
                 [](bool an) { Sitzung::setLaeuftNachEinWeiter(an); });
         layout->addRow(tr("Composer on:"), nachEinWeiter);
+
+        // Laenge eines hineingezogenen Bild-Clips (Wunsch Patrik S98)
+        auto* clipLaenge = new QSpinBox(widget);
+        clipLaenge->setObjectName(QStringLiteral("composerNewClipSeconds"));
+        clipLaenge->setRange(1, 600);
+        clipLaenge->setSuffix(tr(" s"));
+        clipLaenge->setValue(static_cast<int>(Sitzung::neuerClipMs() / 1000));
+        clipLaenge->setToolTip(
+            tr("How long a preset becomes when it is dragged into a composition.\n\n"
+               "In a gap it still ends at the next clip. Songs keep their own length."));
+        connect(clipLaenge, QOverload<int>::of(&QSpinBox::valueChanged), this,
+                [](int sekunden) { Sitzung::setNeuerClipSekunden(sekunden); });
+        layout->addRow(tr("New clip length:"), clipLaenge);
     }
 
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren
