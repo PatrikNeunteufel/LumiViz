@@ -169,6 +169,14 @@ void Zeitachse::setStelle(std::int64_t stelleMs)
     update();
 }
 
+void Zeitachse::setSchleife(bool schleife, std::int64_t zweiteMs)
+{
+    if (schleife == m_schleife && zweiteMs == m_zweiteMs) return;
+    m_schleife = schleife;
+    m_zweiteMs = zweiteMs;
+    update();
+}
+
 void Zeitachse::setAn(bool an)
 {
     if (an == m_an) return;
@@ -308,6 +316,21 @@ void Zeitachse::paintEvent(QPaintEvent*)
     {
         p.setPen(linie);
         p.drawLine(xEnde, 0, xEnde, unten);
+    }
+
+    // --- die Fenster der Ueberlappung (S99, Entscheid Patrik): bei Loop sind
+    //     die ersten und die letzten Sekunden getoent — was im vorderen laeuft,
+    //     laeuft zugleich mit dem im hinteren. Ein Strich an jeder Grenze.
+    const std::int64_t fensterMs = m_schleife ? m_komposition.ueberlappung() : 0;
+    if (fensterMs > 0)
+    {
+        QColor toenung(90, 200, 170);
+        toenung.setAlpha(34);
+        const int xVorn = xVon(fensterMs);
+        const int xHinten = xVon(m_komposition.umlaufMs());
+        const int xNull = xVon(0);
+        p.fillRect(QRect(xNull, 0, xVorn - xNull, unten), toenung);
+        p.fillRect(QRect(xHinten, 0, xEnde - xHinten, unten), toenung);
     }
 
     // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
@@ -523,7 +546,26 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.setBrush(Qt::NoBrush);
     }
 
-    // --- Abspielmarke
+    // --- die Grenzen der Fenster, ueber den Clips: dort endet das vordere und beginnt das hintere
+    if (fensterMs > 0)
+    {
+        p.setPen(QPen(QColor(90, 200, 170, 200), 1.0, Qt::DashLine));
+        const int xVorn = xVon(fensterMs);
+        const int xHinten = xVon(m_komposition.umlaufMs());
+        p.drawLine(xVorn, 0, xVorn, unten);
+        p.drawLine(xHinten, 0, xHinten, unten);
+    }
+
+    // --- Abspielmarke — und im Fenster der Ueberlappung eine zweite, blassere
+    //     an der Stelle des Endes, die zugleich laeuft
+    if (m_zweiteMs >= 0)
+    {
+        QPen zweite(QColor(255, 90, 70, 120), 2.0);
+        if (!m_an) zweite.setStyle(Qt::DashLine);
+        p.setPen(zweite);
+        const int xZweite = xVon(m_zweiteMs);
+        p.drawLine(xZweite, 0, xZweite, unten);
+    }
     const int x = xVon(m_stelleMs);
     QPen marke(QColor(255, 90, 70), 2.0);
     if (!m_an) marke.setStyle(Qt::DashLine);
@@ -1785,6 +1827,54 @@ void ComposerPanel::setupUI()
     fuss->addWidget(m_mischart);
     root->addLayout(fuss);
 
+    // --- die Schleife der Komposition (S99, Entscheide Patrik): die Werte
+    //     gehoeren zur Komposition und stehen in ihrer Datei
+    auto* schleifenZeile = new QHBoxLayout();
+    schleifenZeile->addStretch(1);
+    schleifenZeile->addWidget(new QLabel(tr("Loop overlap:"), this));
+    m_ueberlappung = new QDoubleSpinBox(this);
+    m_ueberlappung->setObjectName(QStringLiteral("composerLoopOverlap"));
+    m_ueberlappung->setDecimals(1);
+    m_ueberlappung->setSingleStep(1.0);
+    m_ueberlappung->setRange(0.0, 3600.0);
+    m_ueberlappung->setSuffix(tr(" s"));
+    m_ueberlappung->setKeyboardTracking(false);
+    m_ueberlappung->setToolTip(
+        tr("With Loop on, the composition starts again this long before its end: its last "
+           "seconds and its first seconds play together, picture and sound. Nothing is faded "
+           "for you — every clip keeps its own level curve, so shape the fades of the clips "
+           "at both ends.\n\n"
+           "The loop gets shorter by this time. On the very first run nothing plays into the "
+           "beginning yet. The two windows are tinted in the timeline while Loop is on; at most "
+           "half the length takes effect. 0 = the loop jumps from the end to the start.\n\n"
+           "Saved with the composition. Can be changed while Edit is on."));
+    schleifenZeile->addWidget(m_ueberlappung);
+    schleifenZeile->addSpacing(12);
+    m_songsDoppelt = new QCheckBox(tr("Songs overlap themselves"), this);
+    m_songsDoppelt->setObjectName(QStringLiteral("composerSongsTwice"));
+    m_songsDoppelt->setToolTip(
+        tr("For a song that lies in both windows of the loop overlap (one song over the whole "
+           "composition).\n\n"
+           "On: it plays twice in the window — its end fades away while its beginning already "
+           "plays.\n\n"
+           "Off: it plays once — it finishes its end and then jumps back inside the song.\n\n"
+           "Saved with the composition. Can be changed while Edit is on."));
+    schleifenZeile->addWidget(m_songsDoppelt);
+    root->addLayout(schleifenZeile);
+    connect(m_ueberlappung, &QDoubleSpinBox::valueChanged, this, [this](double sekunden) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.ueberlappungMs = static_cast<std::int64_t>(sekunden * 1000.0 + 0.5);
+        if (neu.ueberlappungMs == m_sitzung->komposition().ueberlappungMs) return;
+        bearbeite(neu, tr("Change the loop overlap"));
+    });
+    connect(m_songsDoppelt, &QCheckBox::clicked, this, [this](bool an) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.songsDoppelt = an;
+        bearbeite(neu, an ? tr("Let songs overlap themselves") : tr("Play songs once in the loop"));
+    });
+
     connect(m_edit, &QCheckBox::toggled, this, [this](bool an) {
         m_zeitachse->setBearbeiten(an);
         zeigeClip();
@@ -1983,6 +2073,13 @@ void ComposerPanel::zeigeEnde()
     m_endeZeit->setEnabled(bearbeiten && fest);
     const QSignalBlocker ruhe(m_endeZeit);
     m_endeZeit->setValue(geladen ? static_cast<double>(m_sitzung->laengeMs()) / 1000.0 : 0.1);
+    // die Schleife der Komposition (S99): der eingestellte Wert, auch wenn nur ein Teil wirkt
+    m_ueberlappung->setEnabled(bearbeiten);
+    m_songsDoppelt->setEnabled(bearbeiten);
+    const QSignalBlocker ruheSchleife(m_ueberlappung);
+    m_ueberlappung->setValue(geladen ? static_cast<double>(m_sitzung->komposition().ueberlappungMs) / 1000.0
+                                     : 0.0);
+    m_songsDoppelt->setChecked(!geladen || m_sitzung->komposition().songsDoppelt);
 }
 
 void ComposerPanel::zeigeDatei()
@@ -2074,6 +2171,7 @@ void ComposerPanel::zeigeStand()
                                                              zeitText(m_sitzung->laengeMs()))
                             : QString());
     m_zeitachse->setStelle(stelle);
+    m_zeitachse->setSchleife(schleife, geladen ? m_sitzung->zweiteStelleMs() : -1);
 }
 
 void ComposerPanel::zeigeClip()

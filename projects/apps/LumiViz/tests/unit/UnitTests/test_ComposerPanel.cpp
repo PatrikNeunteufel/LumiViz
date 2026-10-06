@@ -539,6 +539,56 @@ TEST_SUITE("ComposerPanel")
         CHECK_FALSE(endeFest->isChecked());
         CHECK_FALSE(sitzung->ungespeichert());
 
+        // --- die Schleife der Komposition (S99): Loop overlap und Songs overlap themselves
+        //     gehoeren zur Komposition, laufen ueber Undo, und die Zeitachse zeigt die Fenster
+        {
+            auto* ueberlappung = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerLoopOverlap"));
+            auto* songsDoppelt = panel.findChild<QCheckBox*>(QStringLiteral("composerSongsTwice"));
+            auto* achse = panel.findChild<Zeitachse*>();
+            REQUIRE(ueberlappung != nullptr);
+            REQUIRE(songsDoppelt != nullptr);
+            REQUIRE(achse != nullptr);
+            CHECK(ueberlappung->isEnabled());  // Edit ist an
+            CHECK(ueberlappung->value() == doctest::Approx(0.0));
+            CHECK(songsDoppelt->isChecked());
+            ueberlappung->setValue(12.5);
+            CHECK(sitzung->komposition().ueberlappungMs == 12500);
+            CHECK(sitzung->komposition().umlaufMs() == 47500);
+            CHECK(sitzung->ungespeichert());
+            songsDoppelt->click();
+            CHECK_FALSE(sitzung->komposition().songsDoppelt);
+            // die Zeitachse hat die geaenderte Komposition, und sie kennt den Schalter Loop
+            const bool schleifeVorher = sitzung->schleife();
+            sitzung->setSchleife(true);
+            QCoreApplication::processEvents();
+            QThread::msleep(80);  // ein Takt des Panels
+            QCoreApplication::processEvents();
+            CHECK(achse->schleife());
+            CHECK(achse->zweiteStelleMs() == -1);  // die Uhr steht vorn: kein Ende, das hineinspielt
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+            {
+                // fuer das Bild die zweite Marke von Hand: so sieht das Fenster im Lauf aus
+                achse->setStelle(4000);
+                achse->setSchleife(true, 51500);
+                CHECK(panel.grab().save(bild + QStringLiteral(".schleife.png")));
+            }
+            sitzung->setSchleife(schleifeVorher);
+            // Undo nimmt beides zurueck, die Felder folgen
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().songsDoppelt);
+            CHECK(songsDoppelt->isChecked());
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().ueberlappungMs == 0);
+            CHECK(ueberlappung->value() == doctest::Approx(0.0));
+            CHECK_FALSE(sitzung->ungespeichert());
+            // ohne Edit sind die Felder gesperrt
+            edit->click();
+            CHECK_FALSE(ueberlappung->isEnabled());
+            CHECK_FALSE(songsDoppelt->isEnabled());
+            edit->click();
+            CHECK(ueberlappung->isEnabled());
+        }
+
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
         REQUIRE(sitzung->lade(datei));
         REQUIRE(bus->canUndo());

@@ -531,6 +531,12 @@ std::int64_t Sitzung::stelleMs() const
     return q != nullptr ? q->standStelleMs() : m_stelleMs;
 }
 
+std::int64_t Sitzung::zweiteStelleMs() const
+{
+    const Bildquelle* q = quelle();
+    return q != nullptr ? q->standZweiteStelleMs() : -1;
+}
+
 void Sitzung::setSchleife(bool an)
 {
     if (an == m_schleife) return;

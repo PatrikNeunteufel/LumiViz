@@ -57,6 +57,14 @@ public:
     /// Was gezeigt wird; `geladen` false = der Hinweis „keine Komposition".
     void setKomposition(const Komposition& komposition, bool geladen);
     void setStelle(std::int64_t stelleMs);
+    /// Ueberlappung in der Schleife (S99, Entscheid Patrik: beide Fenster
+    /// zeigen). `schleife`: Loop ist an — dann sind die ersten und die letzten
+    /// Sekunden der Komposition getoent, so weit ihre Ueberlappung reicht.
+    /// `zweiteMs`: die Stelle im hinteren Fenster, die gerade mitlaeuft — eine
+    /// zweite, blassere Marke; -1 = keine.
+    void setSchleife(bool schleife, std::int64_t zweiteMs);
+    [[nodiscard]] bool schleife() const { return m_schleife; }
+    [[nodiscard]] std::int64_t zweiteStelleMs() const { return m_zweiteMs; }
     /// Der Composer ist aus: die Clips blasser, die Marke gestrichelt.
     void setAn(bool an);
     /// Bearbeiten (C3a, Schalter Edit): Clips lassen sich verschieben, an den
@@ -249,6 +257,8 @@ private:
     bool m_an = false;
     std::int64_t m_laengeMs = 0;
     std::int64_t m_stelleMs = 0;
+    bool m_schleife = false;         ///< Loop ist an: die Fenster der Ueberlappung zeigen
+    std::int64_t m_zweiteMs = -1;    ///< die Stelle im hinteren Fenster, -1 = keine
     int m_kanal = -1;
     int m_clip = -1;
     bool m_zieht = false;  ///< Maus im Lineal gedrueckt
@@ -399,6 +409,8 @@ private:
     QComboBox* m_mischart = nullptr;
     QCheckBox* m_endeFest = nullptr;
     QDoubleSpinBox* m_endeZeit = nullptr;
+    QDoubleSpinBox* m_ueberlappung = nullptr;  ///< Loop overlap (S99)
+    QCheckBox* m_songsDoppelt = nullptr;       ///< Songs overlap themselves (S99)
     int m_gezeigt = -1;  ///< was Schalter und Knoepfe zuletzt zeigten
 };
 

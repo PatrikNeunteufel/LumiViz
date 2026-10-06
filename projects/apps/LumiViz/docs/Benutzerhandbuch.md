@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.95.0
+> **Version:** 1.96.0
 > **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1997,6 +1997,37 @@ unten den Haken **Fixed end** und stell die Zeit daneben ein. Das feste Ende
 trägt im Lineal eine eigene, orange Marke; die leere Strecke zwischen dem
 letzten Clip und dem Ende ist schraffiert — dort ist das Bild schwarz.
 
+**Die Schleife mit Überlappung** (Feld **Loop overlap** unten im Panel, bei
+eingeschaltetem **Edit**): Mit **Loop** an beginnt die Komposition um diese
+Zeit **vor** ihrem Ende wieder von vorn — ihre letzten und ihre ersten
+Sekunden laufen zugleich, im Bild und im Ton. Die Runde wird dadurch um die
+Überlappung kürzer.
+
+- **Geblendet wird nichts von selbst.** Jeder Clip behält seine Pegelkurve:
+  blende die Clips am Ende aus und die am Anfang ein, dann ergibt die
+  Schleife eine Überblendung. Ohne Blenden liegen beide voll übereinander.
+- **Die Zeitachse zeigt beide Fenster**, solange Loop an ist: die ersten und
+  die letzten Sekunden sind getönt, mit einer gestrichelten Grenze. Was im
+  vorderen Fenster liegt, trifft auf das im hinteren. Läuft die Komposition
+  durch das Fenster, läuft die rote Marke vorn und eine zweite, blassere
+  hinten mit.
+- **Beim ersten Durchlauf** spielt noch kein Ende in den Anfang — erst ab
+  der zweiten Runde. Ein Klick ins **hintere** Fenster spielt beide; ein
+  Klick ins vordere nur den Anfang.
+- Es wirkt höchstens die halbe Länge der Komposition. **0** = die Schleife
+  springt wie bisher vom Ende an den Anfang.
+- **Songs overlap themselves** (Standard: an) betrifft einen Song, der in
+  beiden Fenstern liegt — etwa einen über die ganze Komposition. An: er
+  spielt im Fenster zweimal, sein Ende klingt aus, während sein Anfang schon
+  läuft. Aus: er spielt sein Ende zu Ende und springt dann im Song zurück.
+- Ein **Bild-Clip** in beiden Fenstern läuft einmal durch, ohne Neustart; im
+  Fenster gilt der höhere seiner zwei Pegel.
+
+Beide Werte gehören zur Komposition und stehen in ihrer Datei. Auch ohne
+Überlappung beginnt eine Schleife jetzt weicher: die ersten Clips sind beim
+Umschlag schon geladen, und ein Song über die ganze Länge setzt nahtlos neu
+an.
+
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
 nach einem neuen Namen und arbeitet dann mit dieser Datei weiter. Vor *Open
@@ -2101,6 +2132,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.96.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die Schleife mit Überlappung**: Feld **Loop overlap** (Ende und Anfang laufen in der Schleife zugleich, Bild und Ton; nichts wird von selbst geblendet; die Runde wird kürzer), die Zeitachse tönt beide Fenster und zeigt eine zweite Marke, Haken **Songs overlap themselves**; beide Werte in der `.lvcomp`. GEÄNDERT: auch ohne Überlappung sind die ersten Clips am Schleifenanfang schon geladen, ein Song über die ganze Länge setzt nahtlos neu an |
 | 1.95.0 | 2026-10-06 | Session 99. §15 Audio-Kanal, Absatz **Aus** ERGÄNZT: hat der Player keinen Titel geladen, zeigen Panel Player und Tag View nach Composer aus „No track loaded", der Songtext der Komposition verschwindet (vorher blieb der letzte Song der Komposition stehen) |
 | 1.94.0 | 2026-10-06 | Session 98. §15 Bearbeiten NEU **Einfügemarke** (Klick auf eine freie Stelle einer Kanalzeile), **Kopieren / Ausschneiden / Einfügen** von Clips (Ctrl+C / Ctrl+X / Ctrl+V, Rechtsklick), **Schatten beim Hineinziehen** (der Clip erscheint dort, wo er landen würde; in einer Zeile der anderen Art erscheint nichts), **Zeit unter dem Zeiger** im Lineal. §15 Einstellungen NEU **New clip length** |
 | 1.93.0 | 2026-10-06 | Session 98. §15 Einstellungen NEU **Composer off: Player resumes…** und **Composer on: Composition continues…** (beide Standard an) — der Player spielt nach Composer aus von selbst weiter, wenn er vorher spielte; die Komposition läuft nach Composer on weiter, wenn sie vorher lief |

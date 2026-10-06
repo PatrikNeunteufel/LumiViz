@@ -120,6 +120,9 @@ public:
 
     [[nodiscard]] bool laeuft() const;
     [[nodiscard]] std::int64_t stelleMs() const;
+    /// Die Stelle im hinteren Fenster, die in der Schleife mit Ueberlappung
+    /// zugleich laeuft (S99); -1 = keine, auch bei ausgeschaltetem Composer.
+    [[nodiscard]] std::int64_t zweiteStelleMs() const;
     [[nodiscard]] std::int64_t laengeMs() const { return m_geladen ? m_komposition.laenge() : 0; }
 
     /// Loop ueber die ganze Komposition; bleibt ueber den Neustart
