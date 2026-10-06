@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.91.1
-> **Datum:** 2026-10-05
+> **Version:** 1.92.0
+> **Datum:** 2026-10-06
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -1890,9 +1890,10 @@ Hinter dem Ende der Komposition zeigt die Zeitachse etwas Luft, damit sich
 dort etwas ablegen oder ein Clip darüber hinausziehen lässt.
 
 **Der Audio-Kanal — Musik in der Komposition.** Ein Audio-Kanal trägt Songs
-als Clips. Ist er eingeschaltet und der Composer an, **führt die Komposition
-den Player**: sie lädt und spielt die Songs zu ihren Zeiten, und die Playlist
-ruht so lange.
+als Clips. Ist einer eingeschaltet und der Composer an, **spielt die
+Komposition die Musik selbst**: die Songs laufen zu ihren Zeiten, mehrere
+zugleich, wo sie sich überlagern. Der Player schweigt so lange, und die
+Playlist ruht.
 
 - **Anlegen:** Rechtsklick in die Zeitachse → *Add audio channel* (er heißt
   A1, A2 …) — oder einen Song **unter die letzte Zeile** ziehen; dort steht
@@ -1910,22 +1911,44 @@ ruht so lange.
   dieselben Presets. Der Pegel ist hier die **Lautstärke**: voller Pegel ist
   so laut, wie der Regler im Panel Player steht; die Wellenform im Clip wird
   mit dem Pegel schmaler.
-- **Wer die Zeit führt:** Solange ein Song spielt, richtet sich die Uhr der
-  Komposition nach dem Ton — Bild und Musik bleiben zusammen. In einer Lücke
-  ohne Song läuft sie nach der Uhr weiter.
-- **Das Panel Player steuert dann die ganze Komposition:** Play / Pause und
-  Stop wirken auf den Composer (auch in einer Lücke), Next / Previous springen
-  zum nächsten bzw. vorigen Song der Komposition, und ein Griff in den
-  Fortschrittsbalken springt im Song — die Komposition springt mit.
-  Lautstärke und Mute bleiben, wie sie sind. Dasselbe gilt für die Kürzel und
-  das Menü. In einer Lücke zeigt das Panel Player „pausiert", obwohl die
-  Komposition läuft.
-- **Mehrere Audio-Kanäle** lassen sich anlegen, und alle eingeschalteten
-  zählen: an jeder Stelle spielt der Song des **obersten Kanals, der dort
-  einen hat**. Liegen zwei Songs übereinander, ist nur der obere zu hören —
-  zwei zugleich mischt LumiViz noch nicht.
-- **Aus:** Mit *Channel enabled* aus oder dem Composer aus gehört der Player
-  wieder der Playlist; ein gerade laufender Song spielt dabei weiter.
+- **Mehrere Audio-Kanäle — Songs überlagern und überblenden:** alle
+  eingeschalteten Audio-Kanäle spielen **zugleich**, jeder Song mit seiner
+  eigenen Pegelkurve. Liegt das Ende eines Songs in A1 über dem Anfang eines
+  Songs in A2, und blendet der eine aus, während der andere einblendet, ist
+  das eine **Überblendung**. Im selben Kanal liegen Songs nur hintereinander.
+- **Das Bild reagiert auf das, was zu hören ist:** die Visuals bekommen die
+  **Summe** aller gerade spielenden Songs, jeder mit seinem Pegel — ein Song,
+  der gerade leise eingeblendet wird, bewegt das Bild auch nur wenig.
+- **Der laufende Song:** Songtext (Karaoke-Ebene, Lyrics), Tags in
+  Text-Vorlagen, Tag View, die Markierung im Audio Browser und „bei
+  Songwechsel" im Host Switcher folgen **einem** Song — dem, dessen
+  Pegelkurve an der Stelle am höchsten steht. In einer Überblendung wechselt
+  das dort, wo sich die beiden Kurven kreuzen. Stehen zwei gleich hoch, bleibt
+  es beim bisherigen.
+- **Die Uhr führt:** die Zeit der Komposition läuft nach der Uhr, und die
+  Songs werden an ihr gehalten — Bild und Musik bleiben zusammen, auch nach
+  Pause, Sprung und in der Schleife. In einer Lücke ohne Song läuft die
+  Komposition still weiter.
+- **Das Panel Player** zeigt dann den laufenden Song als **„Composer -
+  <Titel>"**, mit Künstler, Stelle im Song und Länge:
+  - **Play / Pause** und **Stop** wirken auf die ganze Komposition — auch in
+    einer Lücke. Der Play-Knopf zeigt, ob die **Komposition** läuft.
+  - **Next / Previous** springen zum Anfang des nächsten bzw. vorigen Songs
+    der Komposition.
+  - Ein Griff in den **Fortschrittsbalken** springt im gezeigten Song; die
+    Komposition springt an die Stelle, an der das zu hören ist (höchstens bis
+    an den Anfang oder das Ende seines Clips).
+  - In einer **Lücke** bleiben der zuletzt gezeigte Song und der Balken
+    stehen.
+  - **Lautstärke** und **Mute** gelten für den ganzen Ton der Komposition.
+  - Der **Loop-Knopf** des Panels ist grau — die Schleife der Komposition
+    steht im Panel Composer.
+
+  Dasselbe gilt für die Kürzel und das Menü.
+- **Aus:** Mit dem letzten Audio-Kanal auf *Channel enabled* aus oder dem
+  Composer aus endet der Ton der Komposition, und der Player gehört wieder der
+  Playlist. Er steht dann **angehalten** auf seinem Titel — weiter geht es mit
+  Play.
 
 **Trifft der gezogene Clip auf einen Nachbarn im selben Kanal,** entscheidet
 die Taste, die du beim Ziehen hältst:
@@ -2050,6 +2073,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.92.0 | 2026-10-06 | Session 98. §15 Audio-Kanal GEÄNDERT: **Audio-Kanäle überlagern sich** — alle eingeschalteten spielen zugleich, jeder Song mit seiner Pegelkurve (Überblenden über zwei Kanäle); das Bild reagiert auf die Summe; NEU **der laufende Song** (höchster Pegel — ihm folgen Songtext, Tags, Tag View, Audio Browser, Songwechsel); die Uhr führt statt des Tons; das Panel Player zeigt „Composer - <Titel>", sein Play-Knopf folgt der Komposition, der Loop-Knopf ist grau; nach Composer aus steht der Player angehalten |
 | 1.91.1 | 2026-10-05 | Session 96. §15 Audio-Kanal GEÄNDERT: alle eingeschalteten Audio-Kanäle zählen, an jeder Stelle spielt der Song des obersten Kanals, der dort einen hat (zuvor nur der erste eingeschaltete Kanal — ein leerer Kanal oben machte die anderen stumm) |
 | 1.91.0 | 2026-10-05 | Session 96. §15 Composer NEU **der Audio-Kanal**: *Add audio channel*, Songs aus Audio Browser, Playlist oder Explorer hineinziehen, Wellenform im Clip, Kanten schneiden ab bzw. ändern den Einsatz, Ein- und Ausblenden als Lautstärke; die Komposition führt den Player, die Playlist ruht, das Panel Player steuert die ganze Komposition. Datei: Kanal `audio` mit `offset` und `sourceLength` |
 | 1.90.0 | 2026-10-05 | Session 96. §15 Composer GEÄNDERT Rechtsklick → *Fade in* / *Fade out* zeigt die **Blenden-Presets** (mitgelieferte und eigene) statt der festen Formenliste; NEU Rechtsklick auf ein Stück → *Shape* mit den Stück-Presets |
