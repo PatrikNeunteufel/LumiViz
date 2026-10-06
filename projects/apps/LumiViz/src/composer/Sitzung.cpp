@@ -244,7 +244,7 @@ void Sitzung::setAn(bool an)
         protokolliereMessung();
         {
             QMutexLocker halt(&m_widget.renderMutex());
-            m_stelleMs = quelle()->uhr().stelleMs();
+            m_stelleMs = quelle()->uhr().rueckkehrMs();  // im Fenster der Schleife die hintere Stelle
         }
         m_takt->stop();
         m_widget.setBildquelle(nullptr);
@@ -869,7 +869,7 @@ void Sitzung::sichereStand() const
     if (Bildquelle* q = quelle())
     {
         QMutexLocker halt(&m_widget.renderMutex());
-        stelle = q->uhr().stelleMs();
+        stelle = q->uhr().rueckkehrMs();  // im Fenster der Schleife die hintere Stelle
         lief = q->uhr().laeuft();
     }
     QSettings s;

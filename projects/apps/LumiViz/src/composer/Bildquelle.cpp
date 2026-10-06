@@ -113,6 +113,7 @@ void Bildquelle::setKomposition(Komposition komposition)
     komposition.richte(&m_richtBericht);
     m_uhr.stoppe();
     m_uhr.setLaengeMs(komposition.laenge());
+    m_uhr.setUeberlappungMs(komposition.ueberlappung());
     m_uhr.anDenAnfang();
     m_wartend = std::move(komposition);
     m_neueKomposition = true;
@@ -172,7 +173,8 @@ void Bildquelle::gibFrei()
 void Bildquelle::ersetzeKomposition(Komposition komposition)
 {
     const bool lief = m_uhr.laeuft();
-    const std::int64_t stelle = m_uhr.stelleMs();
+    // im Fenster der Schleife die hintere Stelle: danach laufen wieder beide
+    const std::int64_t stelle = m_uhr.rueckkehrMs();
     // Wartet schon eine ganz neue Komposition, bleibt es dabei: dann ist das
     // hier deren geaenderte Fassung, und alte Renderer gehoeren ihr nicht.
     const bool ganzNeu = m_neueKomposition && !m_nurErsetzen;

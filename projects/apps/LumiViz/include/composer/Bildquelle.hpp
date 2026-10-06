@@ -128,23 +128,46 @@ public:
         m_standAmEnde.store(m_uhr.amEnde());
         m_standLaenge.store(m_uhr.laengeMs());
         m_standSchleife.store(m_uhr.schleife());
+        m_standZweite.store(m_uhr.zweiteStelleMs());
+        m_standUeberlappung.store(m_uhr.ueberlappungMs());
+        m_standUmgelaufen.store(m_uhr.umgelaufen());
     }
     [[nodiscard]] std::int64_t standStelleMs() const { return m_standStelle.load(); }
+    /// Die Stelle im hinteren Fenster, die in der Schleife zugleich laeuft
+    /// (Ueberlappung, S99); -1 = keine.
+    [[nodiscard]] std::int64_t standZweiteStelleMs() const { return m_standZweite.load(); }
+    /// Laenge und wirksame Ueberlappung, wie die Uhr sie hat — fuer die Anzeige.
+    [[nodiscard]] std::int64_t standLaengeMs() const { return m_standLaenge.load(); }
+    [[nodiscard]] std::int64_t standUeberlappungMs() const { return m_standUeberlappung.load(); }
+    /// Beide Stellen JETZT, aus dem gespiegelten Stand hochgerechnet.
+    struct Stellen
+    {
+        std::int64_t stelleMs = 0;
+        std::int64_t zweiteMs = -1;
+    };
+    [[nodiscard]] Stellen standStellenJetzt() const
+    {
+        Stellen jetzt{m_standStelle.load(), m_standZweite.load()};
+        if (!m_standLaeuft.load()) return jetzt;
+        const std::int64_t roh = jetzt.stelleMs + std::max<std::int64_t>(0, wanduhrMs() - m_standStempel.load());
+        const std::int64_t laenge = m_standLaenge.load();
+        if (laenge <= 0) return {roh, -1};
+        if (!m_standSchleife.load()) return {std::min(roh, laenge), -1};
+        const std::int64_t fenster = m_standUeberlappung.load();
+        const std::int64_t umlauf = laenge - fenster;
+        jetzt.stelleMs = roh % umlauf;
+        // schlug die Schleife seit dem letzten Bild um, ist das Ende jetzt da
+        const bool endeDa = m_standUmgelaufen.load() || roh >= umlauf;
+        jetzt.zweiteMs = fenster > 0 && endeDa && jetzt.stelleMs < fenster ? jetzt.stelleMs + umlauf : -1;
+        return jetzt;
+    }
     /// Die Stelle der Uhr JETZT, aus dem gespiegelten Stand hochgerechnet —
     /// fuer den Ton (C5b). Der gespiegelte Stand ist so alt wie das letzte
     /// Bild; rechnet der Render-Thread ein langes (ein Preset laedt), laege
     /// die Stelle um dessen Dauer zurueck, und der Ton wuerde an eine
     /// veraltete Stelle gesetzt (Befund im Hoertest S98, im Log neben
     /// „RenderThread: render 139 ms"). Gilt fuer die Wanduhr der Vorgabe.
-    [[nodiscard]] std::int64_t standStelleJetztMs() const
-    {
-        std::int64_t stelle = m_standStelle.load();
-        if (!m_standLaeuft.load()) return stelle;
-        stelle += std::max<std::int64_t>(0, wanduhrMs() - m_standStempel.load());
-        const std::int64_t laenge = m_standLaenge.load();
-        if (laenge > 0) stelle = m_standSchleife.load() ? stelle % laenge : std::min(stelle, laenge);
-        return stelle;
-    }
+    [[nodiscard]] std::int64_t standStelleJetztMs() const { return standStellenJetzt().stelleMs; }
     [[nodiscard]] bool standLaeuft() const { return m_standLaeuft.load(); }
     /// Die Uhr ist am Ende von selbst zum Stehen gekommen.
     [[nodiscard]] bool standAmEnde() const { return m_standAmEnde.load(); }
@@ -231,6 +254,9 @@ private:
     std::atomic<std::int64_t> m_standStempel{0};
     std::atomic<std::int64_t> m_standLaenge{0};
     std::atomic<bool> m_standSchleife{false};
+    std::atomic<std::int64_t> m_standZweite{-1};
+    std::atomic<std::int64_t> m_standUeberlappung{0};
+    std::atomic<bool> m_standUmgelaufen{false};
     std::atomic<bool> m_standLaeuft{false};
     std::atomic<bool> m_standAmEnde{false};
     std::unique_ptr<Wiedergabe> m_wiedergabe;  ///< lebt zwischen initialize und cleanup

@@ -859,5 +859,43 @@ TEST_SUITE("ComposerBildquelle")
         const std::int64_t rund = q.standStelleJetztMs();
         CHECK(rund >= 90);
         CHECK(rund < 400);
+
+        // --- Ueberlappung in der Schleife (S99): beide Stellen, hochgerechnet
+        Bildquelle r;
+        r.uhr().setLaengeMs(10000);
+        r.uhr().setUeberlappungMs(2000);  // Umlauf 8 s
+        r.uhr().setSchleife(true);
+        // die Uhr steht im hinteren Fenster: beide Stellen, wie die Uhr sie nennt
+        r.uhr().springe(8500);
+        r.spiegleStand();
+        CHECK(r.standStelleMs() == 500);
+        CHECK(r.standZweiteStelleMs() == 8500);
+        CHECK(r.standUeberlappungMs() == 2000);
+        CHECK(r.standLaengeMs() == 10000);
+        CHECK(r.standStellenJetzt().stelleMs == 500);
+        CHECK(r.standStellenJetzt().zweiteMs == 8500);
+        // sie laeuft, niemand spiegelt: beide ruecken zusammen vor
+        r.uhr().starte();
+        r.spiegleStand();
+        QThread::msleep(150);
+        Bildquelle::Stellen beide = r.standStellenJetzt();
+        CHECK(beide.stelleMs >= 640);
+        CHECK(beide.stelleMs < 1000);
+        CHECK(beide.zweiteMs == beide.stelleMs + 8000);
+        CHECK(std::llabs(beide.stelleMs - r.uhr().stelleMs()) < 15);
+        // kurz vor dem Umschlag der ERSTEN Runde gespiegelt, danach gelesen: das Ende ist jetzt da
+        r.uhr().springe(7950);
+        r.spiegleStand();
+        CHECK(r.standZweiteStelleMs() == -1);  // erste Runde: noch kein Ende, das hineinspielt
+        QThread::msleep(150);
+        beide = r.standStellenJetzt();
+        CHECK(beide.stelleMs >= 90);
+        CHECK(beide.stelleMs < 400);
+        CHECK(beide.zweiteMs == beide.stelleMs + 8000);
+        // ein Sprung ins vordere Fenster: keine zweite Stelle
+        r.uhr().springe(300);
+        r.spiegleStand();
+        QThread::msleep(40);
+        CHECK(r.standStellenJetzt().zweiteMs == -1);
     }
 }

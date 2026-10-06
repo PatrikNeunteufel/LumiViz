@@ -463,6 +463,110 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(wand.stelleMs() == 0);
     }
 
+    TEST_CASE("Schleife S99, Uhr: mit Ueberlappung dauert ein Umlauf kuerzer, und im Fenster laufen zwei Stellen")
+    {
+        std::int64_t jetzt = 1000;
+        Uhr uhr([&jetzt] { return jetzt; });
+        uhr.setLaengeMs(60000);
+        uhr.setUeberlappungMs(10000);
+        CHECK(uhr.ueberlappungMs() == 10000);
+        CHECK(uhr.umlaufMs() == 50000);
+
+        // ohne Schleife wirkt die Ueberlappung nicht: die Uhr laeuft bis ans Ende und haelt
+        uhr.starte();
+        jetzt += 55000;
+        CHECK(uhr.stelleMs() == 55000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+        jetzt += 10000;
+        CHECK(uhr.stelleMs() == 60000);
+        CHECK_FALSE(uhr.laeuft());
+        uhr.stoppe();
+        uhr.anDenAnfang();
+
+        // Schleife: die erste Runde hat noch kein Ende, das hineinspielt
+        uhr.setSchleife(true);
+        uhr.starte();
+        jetzt += 4000;
+        CHECK(uhr.stelleMs() == 4000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+        CHECK_FALSE(uhr.umgelaufen());
+        // nach 50 s beginnt der Anfang — das Ende laeuft daneben weiter
+        jetzt += 46000;
+        CHECK(uhr.stelleMs() == 0);
+        CHECK(uhr.zweiteStelleMs() == 50000);
+        CHECK(uhr.umgelaufen());
+        jetzt += 9999;
+        CHECK(uhr.stelleMs() == 9999);
+        CHECK(uhr.zweiteStelleMs() == 59999);
+        // hinter dem Fenster nur noch eine Stelle
+        jetzt += 1;
+        CHECK(uhr.stelleMs() == 10000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+        // die naechste Runde schlaegt wieder nach 50 s um
+        jetzt += 43000;  // 53000 → 3000 im Fenster
+        CHECK(uhr.stelleMs() == 3000);
+        CHECK(uhr.zweiteStelleMs() == 53000);
+        CHECK(uhr.laeuft());
+
+        // Halt im Fenster: beide Stellen bleiben — und laufen nach Play zusammen weiter
+        uhr.stoppe();
+        jetzt += 7000;
+        CHECK(uhr.stelleMs() == 3000);
+        CHECK(uhr.zweiteStelleMs() == 53000);
+        CHECK(uhr.rueckkehrMs() == 53000);
+        uhr.starte();
+        jetzt += 2000;
+        CHECK(uhr.stelleMs() == 5000);
+        CHECK(uhr.zweiteStelleMs() == 55000);
+
+        // ein Sprung ins vordere Fenster: kein Ende, das hineinspielt
+        uhr.springe(2000);
+        CHECK(uhr.stelleMs() == 2000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+        // ein Sprung ins hintere Fenster: beide
+        uhr.springe(56000);
+        CHECK(uhr.stelleMs() == 6000);
+        CHECK(uhr.zweiteStelleMs() == 56000);
+        // ein Sprung dazwischen: eine
+        uhr.springe(30000);
+        CHECK(uhr.stelleMs() == 30000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+
+        // Schleife aus im Fenster: die Komposition spielt ihr Ende aus und haelt
+        uhr.springe(57000);
+        CHECK(uhr.stelleMs() == 7000);
+        uhr.setSchleife(false);
+        CHECK(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 57000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+        jetzt += 5000;
+        CHECK(uhr.stelleMs() == 60000);
+        CHECK_FALSE(uhr.laeuft());
+
+        // Schleife an im hinteren Bereich: der Anfang kommt dazu
+        uhr.stoppe();
+        uhr.springe(52000);
+        uhr.setSchleife(true);
+        CHECK_FALSE(uhr.laeuft());
+        CHECK(uhr.stelleMs() == 2000);
+        CHECK(uhr.zweiteStelleMs() == 52000);
+
+        // die Ueberlappung aendern im Fenster: die hintere Stelle bleibt
+        uhr.setUeberlappungMs(20000);  // Umlauf 40 s
+        CHECK(uhr.umlaufMs() == 40000);
+        CHECK(uhr.zweiteStelleMs() == 52000);
+        CHECK(uhr.stelleMs() == 12000);
+        // mehr als die halbe Laenge wirkt nicht
+        uhr.setUeberlappungMs(45000);
+        CHECK(uhr.ueberlappungMs() == 30000);
+        CHECK(uhr.umlaufMs() == 30000);
+        // ohne Ueberlappung ist alles wie bisher
+        uhr.setUeberlappungMs(0);
+        CHECK(uhr.umlaufMs() == 60000);
+        CHECK(uhr.stelleMs() == 52000);
+        CHECK(uhr.zweiteStelleMs() == -1);
+    }
+
     TEST_CASE("C2b Uhr: in der Schleife beginnt sie am Ende von vorn — und haelt wieder, wenn die Schleife aus ist")
     {
         std::int64_t jetzt = 70000;
