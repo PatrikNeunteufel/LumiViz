@@ -759,6 +759,14 @@ void Sitzung::gibTonFrei(bool melden)
             }
             MultiEffectVisualizer::notifyPlayPosition(player->positionMs());
         }
+        // Der Player hat keinen Titel (Entscheid Patrik S99: a): ein leerer
+        // Songwechsel — sonst zeigten Player-Panel, Tag View, Karaoke und Audio
+        // Browser weiter den letzten Song der Komposition. Nur, wenn ueberhaupt
+        // einer gemeldet war.
+        else if (bus != nullptr && m_tonStand.hatSong)
+        {
+            bus->publish(TrackChangedEvent{});
+        }
         // auch ohne Titel im Player: das Player-Panel erfaehrt, dass der
         // Composer den Ton nicht mehr fuehrt (Play-Knopf, Loop-Knopf)
         if (bus != nullptr)

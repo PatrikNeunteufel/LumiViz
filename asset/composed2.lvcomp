@@ -753,6 +753,154 @@
             "enabled": true,
             "kind": "audio",
             "name": "A3"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 1380000,
+                    "fadeIn": {
+                        "ms": 79000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 95000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - double chase.milk",
+                    "start": 1152000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH3"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 1231000,
+                    "fadeIn": {
+                        "ms": 59392,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 58000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - Gin Tonic on Ice 004.milk",
+                    "start": 1061608
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH4"
+        },
+        {
+            "clips": [
+                {
+                    "end": 1380000,
+                    "fadeIn": {
+                        "ms": 62640,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 103000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Groove Armada - Love Box/04-madder.mp3",
+                    "offset": 0,
+                    "sourceLength": 321640,
+                    "start": 1058360
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A4"
         }
     ],
     "format": "lumiviz-composition",

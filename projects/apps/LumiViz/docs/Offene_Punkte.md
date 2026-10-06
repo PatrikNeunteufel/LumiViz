@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.92.0
+> **Version:** 1.93.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2242,14 +2242,21 @@ Idee Preset-Warmup/Pre-Roll.
   gekürzt; der Tooltip nur im Lineal; kein Hinweis bei falscher Art.
   **Wellenform beim Kürzen eines Song-Clips:** wird abgeschnitten (Patrik
   S99) — erledigt.
+  **Lücke „Composer off ohne Titel im Player" geschlossen (S99, Entscheid
+  Patrik: a, Konzept 0.36.0):** die Sitzung meldet einen leeren
+  Songwechsel, das Panel Player geht in den Ruhezustand (Naht N5, Anzeige,
+  fünfte Stelle), Tag View zeigt „No track loaded". Vor dem Bau gezählt:
+  auch Tag View zeigte weiter den letzten Song.
   **Offen, in dieser Reihenfolge:**
-  - **Rest der ersten Liste (Patrik):** `Sichttests_S98.md` P13–P16,
-    Abschnitt S (Panel Player), Urteile R — noch nicht geprüft.
-  - **Bekannte Lücke:** nach „Composer off" ohne geladenen Titel im Player
-    bleibt im Panel Player der letzte „Composer - <Song>" stehen.
-  - **Von mir gesetzt, Urteil Patrik steht aus:** Vorlauf 2 s; Abweichung
-    80 ms vom Grundabstand, Schonfrist 500 ms (beide `Sichttests_S98.md`
-    Abschnitt R); Kopieren geht auch ohne Edit (in keiner Liste gefragt).
+  - **Sichttest S99 (Patrik):** `.claude/handover/Sichttests_S99.md` — der
+    Rest der ersten Liste, der im zweiten Test nicht vorkam (P13 bis P15,
+    Start nach dem Beenden, Panel Player: Balken, Sprung des Balkens, Klick
+    in der Überlagerung, Tag View ohne Vorsatz, Text-Vorlage `{title}`), das
+    Urteil zum Wechsel am Kreuzungspunkt, und die geschlossene Lücke im
+    Programm (auch Songtext und Host Switcher — per Test nicht belegt).
+  - **Von mir gesetzt, in keiner Liste gefragt:** Kopieren geht auch ohne
+    Edit. (Vorlauf 2 s und Abweichung 80 ms / Schonfrist 500 ms gelten als
+    im Hörtest bestätigt.)
   - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
     des Übergangs statt an den Song-Anfang.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
@@ -4152,6 +4159,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.93.0 | 2026-10-06 | Session 99 — **Composer:** Lücke „Composer off ohne Titel im Player" geschlossen (Entscheid Patrik: a — leerer Songwechsel, Panel Player im Ruhezustand; Konzept 0.36.0, Benutzerhandbuch 1.95.0); §7: offen der Sichttest S99 (Rest der ersten Liste, Urteil Kreuzungspunkt, die geschlossene Lücke im Programm); Vorlauf und Schwelle gelten als im Hörtest bestätigt |
 | 1.92.0 | 2026-10-06 | Session 99 — **Composer:** Patriks zweiter Test (`Sichttests_S98b`) ausgewertet — 33 von 33 bestanden, im Log kein Nachsetzen; §7 Block „Stand S98": gebilligte Vorgaben eingetragen (Weiterspielen, Einfügemarke, Kopie, Tooltip), Wellenform beim Kürzen erledigt (wird abgeschnitten); offen der Rest der ersten Liste (P13–P16, Panel Player, Urteile R), die Lücke im Panel Player, Vorlauf und Schwelle ohne Urteil (Konzept 0.35.0) |
 | 1.91.0 | 2026-10-06 | Session 98 — **Composer, Stufe C5b: alle fünf Schritte gebaut, das Überlagern im Programm gehört** (Mixer, die Uhr führt, laufender Song, Panel Player „Composer - <Song>", Nähte N13, N14, N15, N5 Anzeige, N9 wächst; N7a zurückgenommen); Korrekturen nach dem Hörtest (Tag View, Nachsetzen, Weiterspielen einstellbar); Bedienung der Zeitachse (Einfügemarke, Kopieren / Einfügen, Schatten, Tooltip, Vorgabelänge). §7: neuer Block „Composer, Stand S98" mit dem, was offen ist — Patriks zweiter Test, Wellenform beim Kürzen, bekannte Lücke im Panel Player, gesetzte Vorgaben ohne Urteil |
 | 1.90.0 | 2026-10-05 | Session 97 — **Composer, Stufe C5b (Audio-Kanäle überlagern):** vier Entscheide Patrik (Mixer in der Engine, Summe mit den Pegeln für die Visuals, laufender Song nach der Pegelkurve, Player-Panel zeigt die Komposition), Belege, Wechsel auf CMakeCraft v0.9.2 mit BASSmix als Pflichtpaket, Naht N12 gebaut (Konzept 0.28.1); §7 neuer Block „Stand S97" mit den offenen Schritten 2 bis 5, der vorgemerkten Überlagerung in der Schleife und dem Nebenbefund Lyrics Sync. Im Programm überlagern sich die Songs weiter nicht. 930 Cases |

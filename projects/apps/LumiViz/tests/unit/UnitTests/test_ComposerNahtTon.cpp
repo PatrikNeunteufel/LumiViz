@@ -474,11 +474,12 @@ TEST_SUITE("ComposerNahtTon")
         sitzung.setAn(false);
     }
 
-    // Beleg zur bekannten Luecke (S98, gezaehlt in S99): der Player hat KEINEN
-    // Titel, der Composer fuehrt den Ton und wird ausgeschaltet. Der Fall haelt
-    // fest, was heute geschieht — er wird umgeschrieben, sobald die Luecke
-    // geschlossen ist.
-    TEST_CASE("C5b Beleg: Composer off ohne Titel im Player — was die Panels danach zeigen")
+    // Die Luecke aus S98, geschlossen in S99 (Entscheid Patrik: a): der Player
+    // hat KEINEN Titel, der Composer fuehrt den Ton und wird ausgeschaltet. Die
+    // Sitzung meldet einen leeren Songwechsel, und das Player-Panel geht in
+    // seinen Ruhezustand (Naht N5, Anzeige — die fuenfte Stelle). Vor dem Bau
+    // gezaehlt: kein Songwechsel, beide Panels zeigten weiter den letzten Song.
+    TEST_CASE("C5b Sitzung: Composer off ohne Titel im Player — leerer Songwechsel, die Panels im Ruhezustand")
     {
         int argc = 1;
         char arg0[10] = "UnitTests";
@@ -562,25 +563,38 @@ TEST_SUITE("ComposerNahtTon")
         REQUIRE_FALSE(sitzung.fuehrtTon());
         const QStringList imPlayer = texte(panel);
         const QStringList imTagView = texte(tagView);
-        MESSAGE("Songwechsel beim Freigeben: " << (songwechsel - vorher));
-        MESSAGE("Panel Player danach:  " << imPlayer.join(QStringLiteral(" | ")).toStdString());
-        MESSAGE("Tag View danach:      " << imTagView.join(QStringLiteral(" | ")).toStdString());
-        // --- die Luecke, wie sie heute ist: niemand erfaehrt, dass kein Song mehr laeuft
-        CHECK(songwechsel == vorher);
-        CHECK(gemeldet == kEins);
-        CHECK(imPlayer.contains(QStringLiteral("Composer - eins")));
-        CHECK_FALSE(imPlayer.contains(QStringLiteral("No track loaded")));
-        CHECK(imTagView.contains(QDir::toNativeSeparators(kEins)));
+        // genau ein Songwechsel, und er ist leer
+        CHECK(songwechsel == vorher + 1);
+        CHECK(gemeldet.isEmpty());
+        // das Player-Panel: Ruhezustand, kein Vorsatz, kein „Unknown Title"
+        CHECK(imPlayer.contains(QStringLiteral("No track loaded")));
+        CHECK(imPlayer.contains(QStringLiteral("00:00 / 00:00")));
+        CHECK_FALSE(imPlayer.contains(QStringLiteral("Composer - eins")));
+        CHECK_FALSE(imPlayer.contains(QStringLiteral("Unknown Title")));
+        CHECK_FALSE(imPlayer.contains(QStringLiteral("Unknown Artist")));
+        for (const QSlider* s : panel.findChildren<QSlider*>())
+            if (s->maximum() == 1000) CHECK(s->value() == 0);
+        // Tag View: kein Titel mehr
+        CHECK(imTagView.contains(QStringLiteral("No track loaded")));
+        CHECK_FALSE(imTagView.contains(QDir::toNativeSeparators(kEins)));
 
-        // --- Weg „leerer Songwechsel": was die zwei Panels aus einem leeren Titel machen
-        bus->publish(TrackChangedEvent{});
+        // Composer on, ohne dass ein Song gemeldet wurde (die Uhr steht hinter dem
+        // letzten Song), und wieder aus: kein zweiter leerer Songwechsel
+        sitzung.pausiere();
+        sitzung.springe(80000);
+        sitzung.setAn(true);
+        REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
         QCoreApplication::processEvents();
-        MESSAGE("nach leerem Songwechsel, Panel Player: "
-                << texte(panel).join(QStringLiteral(" | ")).toStdString());
-        MESSAGE("nach leerem Songwechsel, Tag View:     "
-                << texte(tagView).join(QStringLiteral(" | ")).toStdString());
-        CHECK(texte(tagView).contains(QStringLiteral("No track loaded")));
-        CHECK_FALSE(texte(panel).contains(QStringLiteral("No track loaded")));
-        CHECK(texte(panel).contains(QStringLiteral("Unknown Title")));
+        const int dazwischen = songwechsel;
+        if (gemeldet.isEmpty())
+        {
+            sitzung.setAn(false);
+            QCoreApplication::processEvents();
+            CHECK(songwechsel == dazwischen);
+        }
+        else
+        {
+            sitzung.setAn(false);
+        }
     }
 }

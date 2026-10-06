@@ -1,0 +1,257 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 8000,
+                    "fadeIn": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - double chase.milk",
+                    "start": 0
+                },
+                {
+                    "blend": 0,
+                    "end": 22000,
+                    "fadeIn": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - on air 005 MilkDrop2077 Lazers.milk",
+                    "shapes": [
+                        {
+                            "flipped": false,
+                            "pos": 0.533375,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5,
+                                        "y": 0
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 4534
+                        }
+                    ],
+                    "start": 14000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 15000,
+                    "fadeIn": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - glassworks 3.milk",
+                    "start": 7000
+                },
+                {
+                    "blend": 0,
+                    "end": 29000,
+                    "fadeIn": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - riding the wave3b triangle.milk",
+                    "start": 21000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 23000,
+                    "file": "Milkdrop3/presets/martin - stratospheric turbulences.milk",
+                    "shapes": [
+                        {
+                            "flipped": true,
+                            "pos": 0.55575,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5,
+                                        "y": 0
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 4892
+                        }
+                    ],
+                    "start": 15000
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH3"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 2
+}
