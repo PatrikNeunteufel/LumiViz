@@ -198,17 +198,23 @@ public:
     /// Die Messung der laufenden Komposition samt Anlauf je Clip ins Log.
     void protokolliereMessung();
 
-    // --- Der Audiokanal (C5) ---------------------------------------------------
+    // --- Die Audio-Kanaele (C5, C5b) -------------------------------------------
     //
     // Ist der Composer an und hat die Komposition einen eingeschalteten
-    // Audio-Kanal, fuehrt die Sitzung den Player der App (`Tonfuehrung`): sie
-    // laedt und spielt die Songs der Ton-Clips, die Playlist ruht, und solange
-    // ein Song spielt, fuehrt der Ton die Uhr. Den Player holt sie sich aus den
-    // Diensten des Fensters (Naht N7b) — ohne Player bleibt alles, wie es war.
+    // Audio-Kanal, fuehrt die Sitzung den Ton (`Tonfuehrung`): die Songs der
+    // Ton-Clips laufen in einem Mixer der Audio-Engine und ueberlagern sich,
+    // die Uhr fuehrt, der Player schweigt und die Playlist ruht. Den laufenden
+    // Song meldet die Sitzung wie der Player (`TrackChangedEvent`, Stelle und
+    // „laeuft" an den Renderer). Engine, Player und Bus holt sie sich aus den
+    // Diensten des Fensters (Naht N7b) — fehlt Engine oder Player, oder hat
+    // die Engine keinen Mixer, bleibt alles, wie es war.
 
-    /// Fuehrt diese Sitzung gerade den Player?
+    /// Fuehrt diese Sitzung gerade den Ton?
     [[nodiscard]] bool fuehrtTon() const { return m_ton.fuehrt(); }
-    /// Die Sitzung, die den Player fuehrt — es gibt nur einen Player, also
+    /// Der Mixer, in dem die Songs der Komposition laufen — Spektrum und
+    /// Wellenform der Summe. 0 = die Sitzung fuehrt keinen Ton.
+    [[nodiscard]] std::uint32_t tonMixer() const { return m_ton.mixer(); }
+    /// Die Sitzung, die den Ton fuehrt — es gibt nur einen Player, also
     /// hoechstens eine. nullptr = keine.
     [[nodiscard]] static Sitzung* fuehrende();
     /// Zum Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition
@@ -240,13 +246,16 @@ private:
     void loeseKette();
     void meldeKette();
     void meldeNichts();
-    /// Je Takt: den Player uebernehmen oder freigeben, die Fuehrung takten und
-    /// die Uhr nachstellen, wenn der Ton fuehrt.
+    /// Je Takt: den Ton uebernehmen oder freigeben, die Fuehrung takten und
+    /// den laufenden Song melden.
     void fuehreTon(Bildquelle& q);
-    /// Den Player freigeben — die Playlist haengt wieder.
-    void gibTonFrei();
+    /// Den Ton freigeben — die Playlist haengt wieder. `melden`: der Titel
+    /// des Players gilt wieder als laufender Song (nicht beim Beenden).
+    void gibTonFrei(bool melden = true);
 
     Tonfuehrung m_ton;
+    bool m_tonVersagt = false;  ///< die Engine hat keinen Mixer: nicht je Takt neu versuchen
+    bool m_songLief = false;    ///< zuletzt an den Renderer gemeldet
 
     bool m_sync = false;
     int m_wahlKanal = -1;

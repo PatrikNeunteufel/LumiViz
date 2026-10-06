@@ -213,3 +213,101 @@ TEST_CASE("Naht N12: der Mixer der BassEngine — Quellen, Stelle, Pegel, Summe"
     engine.mixerRemoveSource(a);
     engine.freeStream(mixer);
 }
+
+namespace
+{
+
+/// Ein ID3v2.3-Rahmen mit Latin-1-Text.
+QByteArray id3Rahmen(const char* kennung, const QByteArray& inhalt)
+{
+    QByteArray r(kennung, 4);
+    const auto n = static_cast<quint32>(inhalt.size());
+    r.append(static_cast<char>(n >> 24)).append(static_cast<char>(n >> 16));
+    r.append(static_cast<char>(n >> 8)).append(static_cast<char>(n));
+    r.append(2, '\0');  // Flags
+    return r + inhalt;
+}
+
+/// Eine MP3 aus stillen Rahmen (MPEG-1 Layer III, 128 kbit/s, 44,1 kHz) mit
+/// ID3v2.3-Kopf: Titel, Kuenstler, Album, Jahr und ein Songtext (USLT).
+bool schreibeMp3MitTags(const QString& datei)
+{
+    QByteArray rahmen;
+    rahmen += id3Rahmen("TIT2", QByteArray(1, '\0') + "Titel der Quelle");
+    rahmen += id3Rahmen("TPE1", QByteArray(1, '\0') + "Kuenstler");
+    rahmen += id3Rahmen("TALB", QByteArray(1, '\0') + "Album");
+    rahmen += id3Rahmen("TYER", QByteArray(1, '\0') + "1999");
+    rahmen += id3Rahmen("USLT", QByteArray(1, '\0') + "eng" + QByteArray(1, '\0') + "erste Zeile\nzweite Zeile");
+    QByteArray kopf("ID3\x03\x00\x00", 6);
+    const auto n = static_cast<quint32>(rahmen.size());  // syncsafe: je Byte sieben Bit
+    kopf.append(static_cast<char>((n >> 21) & 0x7F)).append(static_cast<char>((n >> 14) & 0x7F));
+    kopf.append(static_cast<char>((n >> 7) & 0x7F)).append(static_cast<char>(n & 0x7F));
+
+    QByteArray still(417, '\0');  // 144 * 128000 / 44100, ohne Padding
+    still[0] = static_cast<char>(0xFF);
+    still[1] = static_cast<char>(0xFB);
+    still[2] = static_cast<char>(0x90);
+    still[3] = static_cast<char>(0x00);
+
+    QFile f(datei);
+    if (!f.open(QIODevice::WriteOnly)) return false;
+    f.write(kopf + rahmen);
+    for (int i = 0; i < 120; ++i) f.write(still);  // etwa drei Sekunden
+    return f.error() == QFile::NoError;
+}
+
+}  // namespace
+
+TEST_CASE("Naht N12: Tags und Songtext liest die Engine auch an einer Quelle des Mixers")
+{
+    // Beleg vor C5b Schritt 2: der laufende Song der Komposition bekommt seine
+    // Tags von der Quelle — dieselben, die ein Stream des Players traegt.
+    App app;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    const QString datei = ordner.filePath(QStringLiteral("mit_tags.mp3"));
+    REQUIRE(schreibeMp3MitTags(datei));
+
+    BassEngine bass;
+    if (!bass.initialize())
+    {
+        MESSAGE("kein Ausgabegeraet: nichts geprueft (" << bass.getLastError().toStdString() << ")");
+        return;
+    }
+    IAudioEngine& engine = bass;
+
+    // Voraussetzung: am Stream des Players stehen die Tags
+    const AudioStreamHandle stream = engine.createStream(datei);
+    REQUIRE(stream != INVALID_STREAM);
+    QString titel, kuenstler, album, jahr, genre, nummer, lrc, text;
+    REQUIRE(engine.getMetadata(stream, titel, kuenstler, album));
+    REQUIRE(titel == QStringLiteral("Titel der Quelle"));
+    (void)engine.getMetadataExtra(stream, jahr, genre, nummer);
+    REQUIRE(jahr == QStringLiteral("1999"));
+    REQUIRE(engine.getLyrics(stream, lrc, text));
+    const QString textAmStream = text;
+    REQUIRE(textAmStream.contains(QStringLiteral("zweite Zeile")));
+    const int dauer = engine.getDurationMs(stream);
+    engine.freeStream(stream);
+
+    // dieselbe Datei als Quelle im Mixer: dasselbe
+    const AudioStreamHandle mixer = engine.createMixer();
+    REQUIRE(mixer != INVALID_STREAM);
+    const AudioStreamHandle quelle = engine.mixerAddSource(mixer, datei);
+    REQUIRE(quelle != INVALID_STREAM);
+    titel.clear();
+    jahr.clear();
+    text.clear();
+    CHECK(engine.getMetadata(quelle, titel, kuenstler, album));
+    CHECK(titel == QStringLiteral("Titel der Quelle"));
+    CHECK(kuenstler == QStringLiteral("Kuenstler"));
+    CHECK(album == QStringLiteral("Album"));
+    (void)engine.getMetadataExtra(quelle, jahr, genre, nummer);
+    CHECK(jahr == QStringLiteral("1999"));
+    CHECK(engine.getLyrics(quelle, lrc, text));
+    CHECK(text == textAmStream);
+    CHECK(engine.getDurationMs(quelle) == doctest::Approx(dauer).epsilon(0.02));
+
+    engine.mixerRemoveSource(quelle);
+    engine.freeStream(mixer);
+}

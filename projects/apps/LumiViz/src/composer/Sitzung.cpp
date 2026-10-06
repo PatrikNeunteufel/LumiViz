@@ -6,6 +6,7 @@
 #include "composer/Sitzung.hpp"
 
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "audio/AudioEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "composer/Bearbeiten.hpp"
@@ -27,6 +28,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 
 namespace lumi::composer
 {
@@ -65,7 +67,7 @@ Sitzung::Sitzung(VisualizerWidget& widget) : QObject(&widget), m_widget(widget)
     // schon angehalten, die Bildquelle lebt noch.
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
         sichereStand();
-        gibTonFrei();  // solange der Player noch lebt: die Playlist haengt wieder
+        gibTonFrei(false);  // solange Player und Engine noch leben: die Playlist haengt wieder
         loeseKette();  // die Panels nicht an einem Clip haengen lassen, wenn alles abgebaut wird
         protokolliereMessung();
     });
@@ -597,36 +599,83 @@ Sitzung* Sitzung::fuehrende()
 void Sitzung::fuehreTon(Bildquelle& q)
 {
     IAudioPlayer* player = m_widget.dienste().tryResolve<IAudioPlayer>();
-    if (player == nullptr || m_komposition.tonKanal() < 0)
+    IAudioEngine* engine = m_widget.dienste().tryResolve<IAudioEngine>();
+    if (player == nullptr || engine == nullptr || m_komposition.tonKanal() < 0)
     {
-        gibTonFrei();  // kein Player oder kein eingeschalteter Audio-Kanal
+        gibTonFrei();  // kein Player, keine Engine oder kein eingeschalteter Audio-Kanal
         return;
     }
     if (!m_ton.fuehrt())
     {
         if (g_fuehrende != nullptr && g_fuehrende != this) return;  // eine andere Sitzung hat ihn
-        // der Pegel des Clips kommt auf die Lautstaerke des Players obendrauf (Naht N7a)
-        m_ton.setPegelSenke([player](float pegel) { player->setPegel(pegel); });
-        m_ton.uebernimm(*player);
+        if (m_tonVersagt) return;
+        if (!m_ton.uebernimm(*engine, *player))
+        {
+            m_tonVersagt = true;
+            BasicLogger::logWarning("Composer: the audio engine has no mixer — audio channels stay silent");
+            return;
+        }
         g_fuehrende = this;
-        BasicLogger::logInfo("Composer: the audio channel leads the player");
+        m_songLief = false;
+        BasicLogger::logInfo("Composer: the audio channels play through the mixer");
         Q_EMIT geaendert();
     }
-    // Die Stelle aus dem gespiegelten Stand — ohne auf den Render-Thread zu warten.
+    // Die Uhr fuehrt: die Stelle aus dem gespiegelten Stand — ohne auf den
+    // Render-Thread zu warten.
     const Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleMs(), q.standLaeuft());
-    if (!ergebnis.uhrStellen) return;
-    // der Ton fuehrt: die Uhr dorthin, wo zu hoeren ist
-    QMutexLocker halt(&m_widget.renderMutex());
-    q.uhr().springe(ergebnis.stelleMs);
-    q.spiegleStand();
+
+    // Der laufende Song geht dieselben Wege wie ein Titel des Players: der
+    // Songwechsel ueber den Bus (Tags, Songtext, Tag View, Audio Browser),
+    // Stelle und „laeuft" an den Renderer (Karaoke, Lyrics).
+    if (ergebnis.songGewechselt)
+    {
+        if (IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>())
+        {
+            TrackChangedEvent ereignis;
+            ereignis.track = ergebnis.song;
+            bus->publish(ereignis);
+        }
+        BasicLogger::logInfo("Composer: current song: " +
+                             QFileInfo(ergebnis.song.filePath).fileName().toStdString());
+    }
+    if (ergebnis.hatSong) MultiEffectVisualizer::notifyPlayPosition(ergebnis.songStelleMs);
+    if (ergebnis.songLaeuft != m_songLief || ergebnis.songGewechselt)
+    {
+        m_songLief = ergebnis.songLaeuft;
+        MultiEffectVisualizer::notifyPlayState(m_songLief);
+    }
 }
 
-void Sitzung::gibTonFrei()
+void Sitzung::gibTonFrei(bool melden)
 {
+    m_tonVersagt = false;
     if (!m_ton.fuehrt()) return;
+    const int nachgesetzt = m_ton.nachgesetzt();
     m_ton.gibFrei();
     if (g_fuehrende == this) g_fuehrende = nullptr;
-    BasicLogger::logInfo("Composer: the player is back with the playlist");
+    BasicLogger::logInfo("Composer: the player is back with the playlist (audio sources realigned " +
+                         std::to_string(nachgesetzt) + " times)");
+    // Von mir gesetzt (S98): der Player bleibt angehalten, und sein Titel gilt
+    // wieder als laufender Song — sonst zeigten Karaoke und Tag View weiter
+    // den letzten Song der Komposition.
+    if (melden)
+    {
+        IAudioPlayer* player = m_widget.dienste().tryResolve<IAudioPlayer>();
+        IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>();
+        if (player != nullptr && player->hasTrack())
+        {
+            if (bus != nullptr)
+            {
+                TrackChangedEvent ereignis;
+                ereignis.track = player->currentTrack();
+                ereignis.playlistIndex = player->playlistIndex();
+                bus->publish(ereignis);
+            }
+            MultiEffectVisualizer::notifyPlayPosition(player->positionMs());
+        }
+        MultiEffectVisualizer::notifyPlayState(player != nullptr && player->isPlaying());
+        m_songLief = false;
+    }
     Q_EMIT geaendert();
 }
 

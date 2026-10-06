@@ -251,18 +251,19 @@ int Komposition::tonKanal() const
     return -1;
 }
 
-const Clip* Komposition::tonBei(std::int64_t stelleMs) const
+std::vector<const Clip*> Komposition::toeneBei(std::int64_t stelleMs, std::int64_t vorlaufMs) const
 {
     // Alle eingeschalteten Audio-Kanaele zaehlen (Befund Patrik S96: ein leerer
-    // Kanal oben machte die darunter stumm). Liegen an der Stelle mehrere
-    // Clips, gewinnt der oberste Kanal — es spielt ein Stream.
+    // Kanal oben machte die darunter stumm) — und alle Clips an der Stelle
+    // spielen zugleich (C5b, Entscheid Patrik S97).
+    std::vector<const Clip*> toene;
     for (const Kanal& kanal : kanaele)
     {
         if (kanal.art != KanalArt::Audio || !kanal.an) continue;
         for (const Clip& c : kanal.clips)
-            if (stelleMs >= c.startMs && stelleMs < c.endeMs) return &c;
+            if (stelleMs >= c.startMs - vorlaufMs && stelleMs < c.endeMs) toene.push_back(&c);
     }
-    return nullptr;
+    return toene;
 }
 
 void Komposition::ergaenzeTon(const SongLaenge& laengeVon)

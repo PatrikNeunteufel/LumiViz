@@ -12,9 +12,10 @@
  *   (Naht N7a) wirkt neben der Lautstaerke und aendert sie nicht; und ohne
  *   Playlist (`setPlaylist(nullptr)`) spielt am Titelende nichts weiter — der
  *   Beleg dafuer, dass die Playlist ohne Naht ruhen kann.
- * - **Die Sitzung** mit einem Player aus Pappe in den Diensten des Fensters
- *   (Naht N7b): sie uebernimmt ihn, der Ton fuehrt die Uhr, und die Befehle des
- *   Player-Panels (Naht N5) steuern den ganzen Composer.
+ * - **Die Sitzung** mit Player und Audio-Engine aus Pappe in den Diensten des
+ *   Fensters (Naht N7b): sie uebernimmt den Ton (C5b: die Songs laufen im Mixer
+ *   der Engine, die Uhr fuehrt, der Player schweigt), meldet den laufenden Song,
+ *   und die Befehle des Player-Panels (Naht N5) steuern den ganzen Composer.
  *
  * Der letzte Fall oeffnet ein echtes Fenster (wie die anderen Composer-Tests
  * mit Fassade); ohne sichtbares Fenster ueberspringt er sich.
@@ -56,6 +57,7 @@
 using namespace lumi::multieffect;
 using namespace lumi::composer;
 using papp::PappEngine;
+using papp::PappMischEngine;
 using papp::PappPlayer;
 
 namespace
@@ -63,6 +65,7 @@ namespace
 
 const QString kEins = QStringLiteral("C:/musik/eins.mp3");
 const QString kZwei = QStringLiteral("C:/musik/zwei.mp3");
+const QString kListe = QStringLiteral("C:/musik/aus_der_playlist.mp3");
 
 /// Eigener QSettings-Bereich fuer die Dauer des Tests, danach leer.
 struct EigeneEinstellungen
@@ -218,7 +221,7 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(player.currentTrack().filePath == kZwei);
     }
 
-    TEST_CASE("C5 Sitzung: der Audiokanal fuehrt den Player — Zugang (N7b), der Ton fuehrt, Transport (N5)")
+    TEST_CASE("C5b Sitzung: die Audio-Kanaele im Mixer — Zugang (N7b), die Uhr fuehrt, laufender Song, Transport (N5)")
     {
         int argc = 1;
         char arg0[10] = "UnitTests";
@@ -251,14 +254,27 @@ TEST_SUITE("ComposerNahtTon")
         dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
         dienste.registerSingleton<IAudioPlayer>(
             [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new PappPlayer); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new PappMischEngine); });
         IEventBus* bus = dienste.tryResolve<IEventBus>();
         auto* player = dynamic_cast<PappPlayer*>(dienste.tryResolve<IAudioPlayer>());
+        auto* engine = dynamic_cast<PappMischEngine*>(dienste.tryResolve<IAudioEngine>());
         REQUIRE(bus != nullptr);
         REQUIRE(player != nullptr);
-        player->laengen = {{kEins, 300000}, {kZwei, 300000}};
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{kEins, 300000}, {kZwei, 300000}};
+        player->laengen = {{kListe, 300000}};
         int platz = 0;  // nie benutzt, nur weitergereicht: irgendeine Adresse genuegt als Playlist
         auto* liste = reinterpret_cast<IPlaylist*>(&platz);
         player->setPlaylist(liste);
+        // der laufende Song, wie ihn Karaoke, Tag View und Audio Browser erfahren
+        QString gemeldet;
+        const auto abo =
+            bus->subscribeScoped<TrackChangedEvent>([&](const TrackChangedEvent& e) { gemeldet = e.track.filePath; });
+        const auto quelle = [&](const QString& datei) -> const PappEngine::Stream* {
+            const AudioStreamHandle h = engine->quelle(datei);
+            return h != INVALID_STREAM ? &engine->stream(h) : nullptr;
+        };
 
         VisualizerWidget widget(dienste);
         widget.setFrameMode(RenderPacing::Unlimited, 60);
@@ -280,34 +296,46 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(Sitzung::fuehrende() == nullptr);
         CHECK(player->playlist() == liste);
         CHECK_FALSE(transport(TransportCommandEvent::Action::PlayPause));
+        // die Playlist spielt gerade einen Titel
+        REQUIRE(player->load(kListe));
+        player->play();
 
-        // Composer on: die Sitzung uebernimmt den Player, die Playlist ruht
+        // Composer on: die Sitzung uebernimmt den Ton — ein Mixer entsteht, der
+        // Player schweigt, die Playlist ruht
         sitzung.setAn(true);
         REQUIRE(sitzung.an());
         REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
         CHECK(Sitzung::fuehrende() == &sitzung);
         CHECK(player->playlist() == nullptr);
+        CHECK(player->isPaused());
+        CHECK(sitzung.tonMixer() == engine->mixer);
+        CHECK(sitzung.tonMixer() != INVALID_STREAM);
 
-        // Play: der erste Song wird geladen und spielt
+        // Play: der erste Song laeuft als Quelle im Mixer und ist als laufender Song gemeldet
+        // (die Quelle steht schon bei stehender Uhr bereit — zu hoeren ist sie erst, wenn der Mixer spielt)
         sitzung.spiele();
-        REQUIRE(warte([&] { return player->isPlaying(); }));
-        CHECK(player->currentTrack().filePath == kEins);
-        // der Ton fuehrt: der Player aus Pappe rueckt nicht vor — also bleibt auch die Uhr stehen
-        QThread::msleep(300);
+        REQUIRE(warte([&] { return quelle(kEins) != nullptr && !quelle(kEins)->haelt; }));
+        REQUIRE(warte([&] { return engine->stream(engine->mixer).spielt; }));
+        REQUIRE(warte([&] { return gemeldet == kEins; }));
+        // die Uhr fuehrt: die Engine aus Pappe rueckt nicht vor — die Uhr laeuft trotzdem,
+        // und die Quelle wird ihr nachgesetzt
+        QThread::msleep(700);
         QCoreApplication::processEvents();
         CHECK(sitzung.laeuft());
-        CHECK(sitzung.stelleMs() < 200);
-        // der Fortschrittsbalken im Player-Panel: der Ton springt, die Uhr geht mit
-        player->seek(30000);
-        REQUIRE(warte([&] { return std::llabs(sitzung.stelleMs() - 30000) < 150; }));
-        CHECK(player->positionMs() == 30000);  // der Player wurde nicht zurueckgeholt
-        // der Pegel des Clips geht an den Player (Naht N7a): nach der Einblendung voll ...
-        REQUIRE(warte([&] { return std::abs(player->pegel() - 1.0f) < 0.01f; }));
-        // ... und ein Sprung im Composer setzt den Player: mitten in die Einblendung
-        // (die Uhr laeuft — der Player landet ein paar Millisekunden hinter der Sekunde)
+        CHECK(sitzung.stelleMs() > 500);
+        REQUIRE(warte([&] { return quelle(kEins)->pos > 400; }));
+        // der Player bleibt, wie er ist: er spielt nicht und laedt nichts
+        CHECK(player->isPaused());
+        CHECK(player->currentTrack().filePath == kListe);
+        // der Pegel des Clips ist die Lautstaerke der Quelle: nach der Einblendung voll ...
+        sitzung.springe(30000);
+        REQUIRE(warte([&] { return std::abs(quelle(kEins)->lautstaerke - 1.0f) < 0.01f; }));
+        CHECK(std::abs(quelle(kEins)->pos - 30000) < 700);
+        // ... und ein Sprung im Composer setzt die Quelle: mitten in die Einblendung
+        // (die Uhr laeuft — die Quelle landet ein paar Millisekunden hinter der Sekunde)
         sitzung.springe(1000);
-        REQUIRE(warte([&] { return std::abs(player->positionMs() - 1000) < 150; }));
-        REQUIRE(warte([&] { return std::abs(player->pegel() - 0.5f) < 0.05f; }));
+        REQUIRE(warte([&] { return std::abs(quelle(kEins)->pos - 1000) < 150; }));
+        REQUIRE(warte([&] { return std::abs(quelle(kEins)->lautstaerke - 0.5f) < 0.05f; }));
 
         // --- Naht N5: die Befehle des Player-Panels steuern den ganzen Composer
         PlayerPanel panel(dienste);
@@ -315,25 +343,26 @@ TEST_SUITE("ComposerNahtTon")
         const auto befehl = [&](TransportCommandEvent::Action a) { bus->publish(TransportCommandEvent{a}); };
         befehl(TransportCommandEvent::Action::PlayPause);
         CHECK_FALSE(sitzung.laeuft());
-        REQUIRE(warte([&] { return player->isPaused(); }));
+        REQUIRE(warte([&] { return !engine->stream(engine->mixer).spielt; }));
         befehl(TransportCommandEvent::Action::PlayPause);
         CHECK(sitzung.laeuft());
-        REQUIRE(warte([&] { return player->isPlaying(); }));
+        REQUIRE(warte([&] { return engine->stream(engine->mixer).spielt; }));
         // Next: zum Anfang des zweiten Songs
         befehl(TransportCommandEvent::Action::Next);
-        REQUIRE(warte([&] { return player->currentTrack().filePath == kZwei && player->isPlaying(); }));
+        REQUIRE(warte([&] { return gemeldet == kZwei && quelle(kZwei) != nullptr && !quelle(kZwei)->haelt; }));
         CHECK(std::llabs(sitzung.stelleMs() - 70000) < 150);
+        CHECK(quelle(kEins) == nullptr);  // der erste Song ist aus dem Mixer
         // Previous in den ersten Sekunden eines Songs: zum Song davor
         befehl(TransportCommandEvent::Action::Previous);
-        REQUIRE(warte([&] { return player->currentTrack().filePath == kEins; }));
+        REQUIRE(warte([&] { return gemeldet == kEins; }));
         CHECK(sitzung.stelleMs() < 150);
         // Stop: die Komposition haelt am Anfang
         befehl(TransportCommandEvent::Action::Next);
-        REQUIRE(warte([&] { return player->currentTrack().filePath == kZwei; }));
+        REQUIRE(warte([&] { return gemeldet == kZwei; }));
         befehl(TransportCommandEvent::Action::Stop);
         CHECK_FALSE(sitzung.laeuft());
         CHECK(sitzung.stelleMs() == 0);
-        REQUIRE(warte([&] { return !player->isPlaying(); }));
+        REQUIRE(warte([&] { return !engine->stream(engine->mixer).spielt; }));
         // keiner dieser Befehle ging am Composer vorbei an den Player
         CHECK(player->zahl(QStringLiteral("toggle")) == 0);
         CHECK(player->zahl(QStringLiteral("stop")) == 0);
@@ -345,25 +374,35 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(player->zahl(QStringLiteral("mute")) == 1);
         CHECK(player->zahl(QStringLiteral("volume")) == 1);
 
-        // der Audio-Kanal aus: die Sitzung gibt den Player frei
+        // der Audio-Kanal aus: die Sitzung gibt den Ton frei — der Mixer geht,
+        // und der Titel des Players gilt wieder als laufender Song
+        const AudioStreamHandle ersterMixer = engine->mixer;
         Komposition stumm = sitzung.komposition();
         stumm.kanaele[1].an = false;
         sitzung.setzeKomposition(stumm);
         REQUIRE(warte([&] { return !sitzung.fuehrtTon(); }));
         CHECK(player->playlist() == liste);
+        CHECK(engine->stream(ersterMixer).frei);
+        CHECK(engine->quellenZahl() == 0);
+        CHECK(sitzung.tonMixer() == INVALID_STREAM);
+        CHECK(gemeldet == kListe);
         stumm.kanaele[1].an = true;
         sitzung.setzeKomposition(stumm);
         REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
+        CHECK(engine->mixer != ersterMixer);
 
-        // Composer aus: der Player gehoert wieder der Playlist, der Pegel steht auf voll,
-        // und die Befehle gehen wie immer an ihn
+        // Composer aus: der Player gehoert wieder der Playlist und bleibt angehalten,
+        // sein Pegel (Naht N7a) wurde nie angefasst, und die Befehle gehen wie immer an ihn
         sitzung.springe(1000);
-        REQUIRE(warte([&] { return std::abs(player->pegel() - 0.5f) < 0.05f; }));
+        REQUIRE(warte([&] { return gemeldet == kEins; }));
         sitzung.setAn(false);
         CHECK_FALSE(sitzung.fuehrtTon());
         CHECK(Sitzung::fuehrende() == nullptr);
         CHECK(player->playlist() == liste);
         CHECK(player->pegel() == doctest::Approx(1.0f));
+        CHECK(player->isPaused());
+        CHECK(gemeldet == kListe);
+        CHECK(engine->quellenZahl() == 0);
         player->protokoll.clear();
         befehl(TransportCommandEvent::Action::PlayPause);
         befehl(TransportCommandEvent::Action::Next);

@@ -146,13 +146,13 @@ struct Komposition
     /// Das Ende des letzten Clips, gleich ob eine Laenge gesetzt ist.
     [[nodiscard]] std::int64_t clipEnde() const;
     /// Der erste eingeschaltete Audio-Kanal; -1 = keiner — dann fuehrt die
-    /// Komposition den Player nicht.
+    /// Komposition keinen Ton.
     [[nodiscard]] int tonKanal() const;
-    /// Der Ton-Clip, der an der Stelle `stelleMs` spielt: ALLE eingeschalteten
-    /// Audio-Kanaele zaehlen; liegen dort mehrere Clips, gewinnt der oberste
-    /// Kanal (es spielt ein Stream — zwei Songs zugleich brauchen einen
-    /// zweiten). nullptr = dort ist Stille.
-    [[nodiscard]] const Clip* tonBei(std::int64_t stelleMs) const;
+    /// Die Ton-Clips, die an der Stelle `stelleMs` spielen — ALLE
+    /// eingeschalteten Audio-Kanaele zaehlen, die Songs ueberlagern sich (C5b).
+    /// Reihenfolge: der oberste Kanal zuerst. Mit `vorlaufMs` auch die Clips,
+    /// die innerhalb dieser Zeit beginnen. Leer = dort ist Stille.
+    [[nodiscard]] std::vector<const Clip*> toeneBei(std::int64_t stelleMs, std::int64_t vorlaufMs = 0) const;
     /// Fuer Ton-Clips ohne bekannte Song-Laenge die Laenge erfragen; ein Clip,
     /// der laenger ist als sein Song ab dem Einsatz, wird auf ihn gekuerzt.
     void ergaenzeTon(const SongLaenge& laengeVon);

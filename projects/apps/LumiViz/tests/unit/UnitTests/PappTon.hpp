@@ -104,9 +104,11 @@ public:
     }
     void seekFraction(float) override {}
     void seekRelative(int) override {}
-    [[nodiscard]] float volume() const override { return 1.0f; }
+    float laut = 1.0f;   ///< was `volume()` nennt — der Test stellt es
+    bool stumm = false;  ///< was `isMuted()` nennt
+    [[nodiscard]] float volume() const override { return laut; }
     void setVolume(float) override { protokoll << QStringLiteral("volume"); }
-    [[nodiscard]] bool isMuted() const override { return false; }
+    [[nodiscard]] bool isMuted() const override { return stumm; }
     void setMuted(bool) override {}
     void toggleMute() override { protokoll << QStringLiteral("mute"); }
     [[nodiscard]] float pegel() const override { return m_pegel; }
@@ -239,8 +241,98 @@ public:
     [[nodiscard]] QString getLastError() const override { return QStringLiteral("not found"); }
     [[nodiscard]] int getLastErrorCode() const override { return 0; }
 
-private:
+protected:
     std::vector<Stream> m_streams;
+};
+
+/// Die Engine aus Pappe mit einem Mixer (Naht N12, Stufe C5b): Quellen sind
+/// Streams, die `haelt` tragen, solange sie angehalten sind. Die Zeit dreht
+/// der Test mit `vor` weiter — nur wenn der Mixer spielt, und nur fuer
+/// Quellen, die laufen. `PappEngine` selbst bleibt ohne Mixer.
+class PappMischEngine : public PappEngine
+{
+public:
+    QStringList protokoll;  ///< was an Quellen und Mixer geschah, in seiner Reihenfolge
+    [[nodiscard]] int zahl(const QString& anfang) const
+    {
+        return static_cast<int>(std::count_if(protokoll.begin(), protokoll.end(),
+                                              [&](const QString& z) { return z.startsWith(anfang); }));
+    }
+    AudioStreamHandle mixer = INVALID_STREAM;  ///< der zuletzt angelegte Mixer
+    /// Die Quelle im Mixer, die diese Datei spielt; INVALID_STREAM = keine.
+    [[nodiscard]] AudioStreamHandle quelle(const QString& datei) const
+    {
+        for (const AudioStreamHandle h : m_quellen)
+            if (m_streams[h - 1].datei == datei) return h;
+        return INVALID_STREAM;
+    }
+    [[nodiscard]] int quellenZahl() const { return static_cast<int>(m_quellen.size()); }
+    /// Die Zeit weiterdrehen: laufende Quellen ruecken vor und halten an ihrem Ende.
+    void vor(int ms)
+    {
+        if (mixer == INVALID_STREAM || !m_streams[mixer - 1].spielt) return;
+        for (const AudioStreamHandle h : m_quellen)
+        {
+            Stream& s = m_streams[h - 1];
+            if (!s.haelt) s.pos = std::min(s.dauer, s.pos + ms);
+        }
+    }
+    /// Eine Quelle laeuft der Uhr davon (oder bleibt zurueck).
+    void verschiebe(AudioStreamHandle h, int ms) { m_streams[h - 1].pos += ms; }
+
+    [[nodiscard]] AudioStreamHandle createMixer() override
+    {
+        Stream s;
+        s.datei = QStringLiteral("<mixer>");
+        m_streams.push_back(s);
+        mixer = letzter();
+        protokoll << QStringLiteral("mixer");
+        return mixer;
+    }
+    [[nodiscard]] AudioStreamHandle mixerAddSource(AudioStreamHandle, const QString& filePath) override
+    {
+        protokoll << QStringLiteral("add ") + filePath;
+        const AudioStreamHandle h = createStream(filePath);
+        if (h == INVALID_STREAM) return h;
+        m_streams[h - 1].haelt = true;  // kommt angehalten
+        m_quellen.push_back(h);
+        return h;
+    }
+    void mixerRemoveSource(AudioStreamHandle source) override
+    {
+        protokoll << QStringLiteral("remove ") + m_streams[source - 1].datei;
+        m_quellen.erase(std::remove(m_quellen.begin(), m_quellen.end(), source), m_quellen.end());
+        m_streams[source - 1].frei = true;
+    }
+    [[nodiscard]] int getSourcePositionMs(AudioStreamHandle source) const override
+    {
+        return m_streams[source - 1].pos;
+    }
+    bool setSourcePositionMs(AudioStreamHandle source, int positionMs) override
+    {
+        protokoll << QStringLiteral("seek %1 %2").arg(m_streams[source - 1].datei).arg(positionMs);
+        m_streams[source - 1].pos = positionMs;
+        return true;
+    }
+    bool setSourcePaused(AudioStreamHandle source, bool paused) override
+    {
+        protokoll << (paused ? QStringLiteral("hold ") : QStringLiteral("run ")) + m_streams[source - 1].datei;
+        m_streams[source - 1].haelt = paused;
+        return true;
+    }
+    [[nodiscard]] bool isSourcePlaying(AudioStreamHandle source) const override
+    {
+        const Stream& s = m_streams[source - 1];
+        return !s.haelt && s.pos < s.dauer;
+    }
+    void freeStream(AudioStreamHandle h) override
+    {
+        if (h == mixer) protokoll << QStringLiteral("free mixer");
+        PappEngine::freeStream(h);
+    }
+
+private:
+    std::vector<AudioStreamHandle> m_quellen;
 };
 
 }  // namespace papp

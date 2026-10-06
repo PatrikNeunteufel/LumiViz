@@ -703,13 +703,14 @@ TEST_SUITE("ComposerBearbeiten")
 
         // welcher Kanal spielt, und was ist wo zu hoeren
         CHECK(k.tonKanal() == 1);
-        CHECK(k.tonBei(5000) == nullptr);  // Stille vor dem Song
-        REQUIRE(k.tonBei(10000) != nullptr);
-        CHECK(k.tonBei(70000)->songStelle(70000 - 10000) == 60000);
-        CHECK(k.tonBei(190000) == nullptr);  // das Ende gehoert nicht mehr dazu
+        CHECK(k.toeneBei(5000).empty());  // Stille vor dem Song
+        REQUIRE(k.toeneBei(10000).size() == 1);
+        CHECK(k.toeneBei(5000, 6000).size() == 1);  // mit Vorlauf: er beginnt gleich
+        CHECK(k.toeneBei(70000)[0]->songStelle(70000 - 10000) == 60000);
+        CHECK(k.toeneBei(190000).empty());  // das Ende gehoert nicht mehr dazu
         k.kanaele[1].an = false;
         CHECK(k.tonKanal() == 2);  // der naechste eingeschaltete
-        CHECK(k.tonBei(70000) == nullptr);
+        CHECK(k.toeneBei(70000).empty());
         k.kanaele[2].an = false;
         CHECK(k.tonKanal() == -1);
         k.kanaele[1].an = true;
@@ -726,7 +727,8 @@ TEST_SUITE("ComposerBearbeiten")
         CHECK(ton()[0].startMs == 40000);
         CHECK(ton()[0].einsatzMs == 30000);
         CHECK(ton()[0].endeMs == 190000);
-        CHECK(k.tonBei(70000)->songStelle(70000 - 40000) == 60000);  // wie zuvor
+        REQUIRE(k.toeneBei(70000).size() == 1);
+        CHECK(k.toeneBei(70000)[0]->songStelle(70000 - 40000) == 60000);  // wie zuvor
         // ... und wieder nach links, aber nicht vor den Anfang des Songs
         REQUIRE(zieheKante(k, 1, 0, true, 0) == 0);
         CHECK(ton()[0].startMs == 10000);
