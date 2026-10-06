@@ -639,7 +639,11 @@ void Sitzung::fuehreTon(Bildquelle& q)
     // hochgerechnet — ohne auf den Render-Thread zu warten, und ohne dass ein
     // langes Bild dort die Stelle veralten laesst.
     const bool laeuft = q.standLaeuft();
-    Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, q.standStelleJetztMs(), laeuft);
+    // In der Schleife mit Ueberlappung (S99) kommen die zweite Stelle und die
+    // Zeit bis zum Umschlag dazu.
+    const Bildquelle::Stellen stellen = q.standStellenJetzt();
+    Tonfuehrung::Ergebnis ergebnis = m_ton.takt(m_komposition, stellen.stelleMs, laeuft,
+                                                Schleifenlage{stellen.zweiteMs, stellen.umschlagInMs});
     IEventBus* bus = m_widget.dienste().tryResolve<IEventBus>();
     // Der Player hat dazwischengefunkt (etwa ein Doppelklick im Audio Browser)
     // und ist wieder angehalten: seine Meldungen gelten nicht — den laufenden

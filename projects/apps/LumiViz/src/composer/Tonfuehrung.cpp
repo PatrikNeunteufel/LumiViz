@@ -38,9 +38,7 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     m_laut = -1.0f;
     m_laufend = {};
     m_laufendDauerMs = 0;
-    m_ersterTakt = true;
     m_liefZuletzt = false;
-    m_letzteStelle = 0;
     m_nachgesetzt = 0;
     return true;
 }
@@ -67,7 +65,8 @@ int Tonfuehrung::quellen() const
                                           [](const Quelle& q) { return q.handle != INVALID_STREAM; }));
 }
 
-Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int64_t stelleMs, bool laeuft)
+Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int64_t stelleMs, bool laeuft,
+                                        Schleifenlage schleife)
 {
     Ergebnis ergebnis;
     if (!fuehrt()) return ergebnis;
@@ -86,62 +85,125 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         m_laut = laut;
     }
 
-    // --- ist die Uhr gesprungen (Lineal, Stop, Schleife)? Ein Schritt, wie ihn
-    //     kein Takt macht: rueckwaerts oder weit voraus — bei stehender oder
-    //     eben angelaufener Uhr jede Bewegung.
-    const std::int64_t schritt = stelleMs - m_letzteStelle;
-    const bool sprang = m_ersterTakt || (laeuft && m_liefZuletzt
-                                             ? (schritt < -kToleranzMs || schritt > kSprungMs)
-                                             : schritt != 0);
-    m_ersterTakt = false;
+    const bool liefZuletzt = m_liefZuletzt;
     m_liefZuletzt = laeuft;
-    m_letzteStelle = stelleMs;
 
-    // --- die Quellen des Mixers an die Clips angleichen, die hier spielen oder gleich beginnen
-    const std::vector<const Clip*> toene = komposition.toeneBei(stelleMs, kVorlaufMs);
-    const auto finde = [this](const Schluessel& s) {
-        return std::find_if(m_quellen.begin(), m_quellen.end(),
-                            [&s](const Quelle& q) { return q.schluessel == s; });
-    };
-    for (Quelle& q : m_quellen) q.gesehen = false;
-    for (const Clip* clip : toene)
+    // --- die Stimmen dieses Takts: jeder Ton-Clip, der spielt oder gleich
+    //     beginnt, an seiner Stelle der Zeitachse. Ausserhalb der Schleife ist
+    //     das die Stelle der Uhr; im Fenster der Ueberlappung (S99) kommen die
+    //     Clips der hinteren Stelle dazu, und vor dem Umschlag die ersten der
+    //     naechsten Runde (im Vorlauf, an einer Stelle vor null).
+    struct Stimme
     {
-        const Schluessel s{clip->datei, clip->startMs, clip->einsatzMs};
-        auto it = finde(s);
-        if (it == m_quellen.end())
+        const Clip* clip;
+        std::int64_t stelleMs;  ///< ihre Stelle auf der Zeitachse
+        std::int64_t sollMs;    ///< die Stelle im Song, die dort zu hoeren ist
+    };
+    std::vector<Stimme> stimmen;
+    const auto stimme = [](const Clip* clip, std::int64_t stelle) {
+        return Stimme{clip, stelle, clip->songStelle(std::max<std::int64_t>(0, stelle - clip->startMs))};
+    };
+    const auto hat = [&stimmen](const Clip* clip) {
+        return std::find_if(stimmen.begin(), stimmen.end(),
+                            [clip](const Stimme& s) { return s.clip == clip; });
+    };
+    for (const Clip* clip : komposition.toeneBei(stelleMs, kVorlaufMs)) stimmen.push_back(stimme(clip, stelleMs));
+    if (schleife.zweiteMs >= 0)
+    {
+        for (const Clip* clip : komposition.toeneBei(schleife.zweiteMs))
         {
-            Quelle q;
-            q.schluessel = s;
-            // laesst sie sich nicht oeffnen, bleibt der Eintrag: ein Versuch, dann Stille
-            q.handle = engine.mixerAddSource(m_mixer, clip->datei);
-            if (q.handle != INVALID_STREAM)
-            {
-                q.dauerMs = engine.getDurationMs(q.handle);
-                engine.setSourcePositionMs(q.handle, static_cast<int>(std::max<std::int64_t>(0, clip->einsatzMs)));
-            }
-            m_quellen.push_back(q);
-            it = std::prev(m_quellen.end());
+            const auto vorn = hat(clip);
+            if (vorn == stimmen.end() || komposition.songsDoppelt)
+                stimmen.push_back(stimme(clip, schleife.zweiteMs));
+            else
+                *vorn = stimme(clip, schleife.zweiteMs);  // ohne zweite Quelle spielt er sein Ende aus
         }
-        it->gesehen = true;
+    }
+    if (schleife.umschlagInMs >= 0 && schleife.umschlagInMs <= kVorlaufMs)
+    {
+        for (const Clip* clip : komposition.toeneBei(-schleife.umschlagInMs, kVorlaufMs))
+            if (hat(clip) == stimmen.end() || komposition.songsDoppelt)
+                stimmen.push_back(stimme(clip, -schleife.umschlagInMs));
+    }
+
+    // --- die Quellen des Mixers den Stimmen zuordnen. Eine Quelle bleibt bei
+    //     der Stimme ihres Clips, deren Stelle im Song ihr am naechsten liegt:
+    //     so spielt am Umschlag die laufende Quelle das Ende weiter, und der
+    //     Anfang bekommt eine frische — nichts wird dafuer neu gesetzt.
+    const auto schluesselVon = [](const Clip* clip) {
+        return Schluessel{clip->datei, clip->startMs, clip->einsatzMs};
+    };
+    struct Paar
+    {
+        std::int64_t abstand;
+        std::size_t quelle;
+        std::size_t stimme;
+    };
+    std::vector<Paar> paare;
+    for (std::size_t s = 0; s < stimmen.size(); ++s)
+        for (std::size_t q = 0; q < m_quellen.size(); ++q)
+            if (m_quellen[q].schluessel == schluesselVon(stimmen[s].clip))
+                paare.push_back({std::llabs(m_quellen[q].sollMs - stimmen[s].sollMs), q, s});
+    std::stable_sort(paare.begin(), paare.end(), [](const Paar& a, const Paar& b) { return a.abstand < b.abstand; });
+    constexpr std::size_t kKeine = static_cast<std::size_t>(-1);
+    std::vector<std::size_t> quelleVon(stimmen.size(), kKeine);
+    for (Quelle& q : m_quellen) q.vergeben = false;
+    for (const Paar& p : paare)
+    {
+        if (m_quellen[p.quelle].vergeben || quelleVon[p.stimme] != kKeine) continue;
+        m_quellen[p.quelle].vergeben = true;
+        quelleVon[p.stimme] = p.quelle;
+    }
+    std::vector<Quelle> quellen;  // danach: quellen[i] gehoert zu stimmen[i]
+    quellen.reserve(stimmen.size());
+    for (std::size_t s = 0; s < stimmen.size(); ++s)
+    {
+        if (quelleVon[s] != kKeine)
+        {
+            quellen.push_back(m_quellen[quelleVon[s]]);
+            continue;
+        }
+        const Clip* clip = stimmen[s].clip;
+        Quelle q;
+        q.schluessel = schluesselVon(clip);
+        q.sollMs = stimmen[s].sollMs;
+        // laesst sie sich nicht oeffnen, bleibt der Eintrag: ein Versuch, dann Stille
+        q.handle = engine.mixerAddSource(m_mixer, clip->datei);
+        if (q.handle != INVALID_STREAM)
+        {
+            q.dauerMs = engine.getDurationMs(q.handle);
+            engine.setSourcePositionMs(q.handle, static_cast<int>(std::max<std::int64_t>(0, clip->einsatzMs)));
+        }
+        quellen.push_back(q);
     }
     for (const Quelle& q : m_quellen)
-        if (!q.gesehen && q.handle != INVALID_STREAM) engine.mixerRemoveSource(q.handle);
-    m_quellen.erase(std::remove_if(m_quellen.begin(), m_quellen.end(), [](const Quelle& q) { return !q.gesehen; }),
-                    m_quellen.end());
+        if (!q.vergeben && q.handle != INVALID_STREAM) engine.mixerRemoveSource(q.handle);
+    m_quellen = std::move(quellen);
 
-    // --- je Clip: Pegel, Stelle, laufen — und wer der laufende Song ist
+    // --- je Stimme: Pegel, Stelle, laufen — und wer der laufende Song ist
     const Clip* bester = nullptr;
     const Quelle* besteQuelle = nullptr;
     double bestPegel = -1.0;
     std::int64_t besteStelle = 0;
     bool besterZuEnde = false;
     constexpr double kGleich = 1e-6;
-    for (const Clip* clip : toene)
+    for (std::size_t s = 0; s < stimmen.size(); ++s)
     {
-        Quelle& q = *finde(Schluessel{clip->datei, clip->startMs, clip->einsatzMs});
+        const Clip* clip = stimmen[s].clip;
+        Quelle& q = m_quellen[s];
+        const std::int64_t stimmStelle = stimmen[s].stelleMs;
+        const std::int64_t soll = stimmen[s].sollMs;
+        // Ist diese Stimme gesprungen (Lineal, Stop, ein Sprung im Song)? Ein
+        // Schritt im Song, wie ihn kein Takt macht: rueckwaerts oder weit
+        // voraus — bei stehender oder eben angelaufener Uhr jede Bewegung.
+        // Der Umschlag der Schleife ist keiner: die Stimme des Endes laeuft
+        // stetig weiter.
+        const std::int64_t schritt = soll - q.sollMs;
+        const bool sprang = laeuft && liefZuletzt ? (schritt < -kToleranzMs || schritt > kSprungMs)
+                                                  : schritt != 0;
+        q.sollMs = soll;
         if (q.handle == INVALID_STREAM) continue;
-        const std::int64_t imClip = stelleMs - clip->startMs;
-        const std::int64_t soll = clip->songStelle(std::max<std::int64_t>(0, imClip));
+        const std::int64_t imClip = stimmStelle - clip->startMs;
         // im Vorlauf, oder der Song ist vor dem Ende seines Clips aus: die Quelle haelt
         const bool zuEnde = q.dauerMs > 0 && soll >= q.dauerMs;
         if (imClip < 0 || zuEnde)
@@ -164,7 +226,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             }
             const bool einstieg = !q.imClip;
             bool setze = einstieg || sprang;
-            if (!setze && laeuft && std::llabs(stelleMs - q.gesetztBeiMs) >= kSchonfristMs)
+            if (!setze && laeuft && std::llabs(stimmStelle - q.gesetztBeiMs) >= kSchonfristMs)
             {
                 const std::int64_t daneben = engine.getSourcePositionMs(q.handle) - soll;
                 if (!q.hatGrund)
@@ -192,7 +254,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             if (setze)
             {
                 engine.setSourcePositionMs(q.handle, static_cast<int>(soll));
-                q.gesetztBeiMs = stelleMs;
+                q.gesetztBeiMs = stimmStelle;
                 q.hatGrund = false;  // nach dem Setzen neu messen
             }
             if (einstieg)

@@ -264,6 +264,15 @@ public:
         return INVALID_STREAM;
     }
     [[nodiscard]] int quellenZahl() const { return static_cast<int>(m_quellen.size()); }
+    /// Alle Quellen im Mixer, die diese Datei spielen — im Fenster einer
+    /// Schleife mit Ueberlappung koennen es zwei sein (S99).
+    [[nodiscard]] std::vector<AudioStreamHandle> quellenVon(const QString& datei) const
+    {
+        std::vector<AudioStreamHandle> alle;
+        for (const AudioStreamHandle h : m_quellen)
+            if (m_streams[h - 1].datei == datei) alle.push_back(h);
+        return alle;
+    }
     /// Die Zeit weiterdrehen: laufende Quellen ruecken vor und halten an ihrem Ende.
     void vor(int ms)
     {

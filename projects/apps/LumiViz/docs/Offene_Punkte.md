@@ -2283,12 +2283,15 @@ Idee Preset-Warmup/Pre-Roll.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
     `MainWindow::onAudioUpdate` (N13 — das Bild reagierte im Hörtest).
   - **Überlappung in der Schleife (Frage Patrik S97): entschieden in S99,
-    Schritte 1 bis 3 von 7 gebaut** (Konzept §4) — *Loop overlap* und
+    Schritte 1 bis 4 von 7 gebaut** (Konzept §4) — *Loop overlap* und
     *Fade in* / *Fade out* je Komposition, beide Fenster in der Zeitachse,
     zwei Haken für Clips in beiden Fenstern. Gebaut: Modell und Datei, Uhr
-    und Bildquelle, das Bild im Fenster samt Vorwärmen über den Umschlag
-    (Konzept 0.39.0).
-    Offen: Ton, Panel und Zeitachse, Blende der
+    und Bildquelle, das Bild im Fenster samt Vorwärmen über den Umschlag,
+    der Ton im Fenster samt zweiter Quelle (Konzept 0.40.0). **Schon jetzt
+    im Programm, nicht gesehen und nicht gehört:** im Loop — auch ohne
+    Überlappung — werden die ersten Clips vorgewärmt, und der Umschlag
+    setzt einen weiterlaufenden Song nicht mehr neu.
+    Offen: Panel und Zeitachse, Blende der
     ganzen Komposition, zuletzt *Visuals overlap themselves*. Im Programm
     wirkt noch nichts.
   - **Weiter offen aus S97:** Lyrics Sync bei führendem Composer; Songs

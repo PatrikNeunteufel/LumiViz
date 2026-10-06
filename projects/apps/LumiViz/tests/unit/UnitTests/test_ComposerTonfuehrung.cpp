@@ -292,6 +292,154 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK_FALSE(r.songGewechselt);  // es ist derselbe Song wie vor der Luecke
     }
 
+    TEST_CASE("Schleife S99: im Fenster spielen die Songs beider Stellen — ein Song in beiden bekommt eine zweite Quelle")
+    {
+        // Die Uhr der Schleife, wie `Uhr` sie rechnet: Laenge 60 s, Ueberlappung 10 s, Umlauf 50 s.
+        constexpr std::int64_t kUmlauf = 50000;
+        constexpr std::int64_t kFenster = 10000;
+        struct Lage
+        {
+            std::int64_t stelle;
+            Schleifenlage schleife;
+        };
+        const auto lage = [&](std::int64_t roh) {
+            const std::int64_t stelle = roh % kUmlauf;
+            Lage l{stelle, {}};
+            l.schleife.zweiteMs = roh >= kUmlauf && stelle < kFenster ? stelle + kUmlauf : -1;
+            l.schleife.umschlagInMs = kUmlauf - stelle;
+            return l;
+        };
+        const auto laufeRund = [&](Tonfuehrung& f, PappMischEngine& e, const Komposition& k, std::int64_t& roh,
+                                   std::int64_t bis) {
+            Tonfuehrung::Ergebnis letztes;
+            while (roh < bis)
+            {
+                const int schritt = static_cast<int>(std::min<std::int64_t>(33, bis - roh));
+                roh += schritt;
+                e.vor(schritt);
+                const Lage l = lage(roh);
+                letztes = f.takt(k, l.stelle, true, l.schleife);
+            }
+            return letztes;
+        };
+        const auto nah = [](double ist, double soll) { return std::abs(ist - soll) < 0.02; };
+
+        // --- ein Song ueber die ganze Laenge, 10 s ein- und ausgeblendet
+        Komposition k = neueKomposition();
+        (void)fuegeKanalEin(k, {}, KanalArt::Audio);
+        REQUIRE(fuegeSongEin(k, 1, kEins, 0, 60000) == 0);
+        k.kanaele[1].clips[0].setzeBlenden(10000, 10000);
+        k.ueberlappungMs = kFenster;
+        REQUIRE(k.umlaufMs() == kUmlauf);
+        REQUIRE(k.songsDoppelt);
+
+        PappPlayer p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+        std::int64_t roh = 40000;  // erste Runde, mitten im Song
+        Lage l = lage(roh);
+        Tonfuehrung::Ergebnis r = f.takt(k, l.stelle, true, l.schleife);
+        CHECK(r.songGewechselt);
+        REQUIRE(e.quellenVon(kEins).size() == 1);
+        const AudioStreamHandle erste = e.quellenVon(kEins)[0];
+        CHECK(e.stream(erste).pos == 40000);
+
+        // weit vor dem Umschlag bleibt es bei einer Quelle
+        (void)laufeRund(f, e, k, roh, 47000);
+        CHECK(e.quellenVon(kEins).size() == 1);
+        // im Vorlauf vor dem Umschlag: die zweite ist geoeffnet, steht am Anfang und haelt
+        (void)laufeRund(f, e, k, roh, 49000);
+        REQUIRE(e.quellenVon(kEins).size() == 2);
+        const AudioStreamHandle zweite = e.quellenVon(kEins)[1];
+        CHECK(zweite != erste);
+        CHECK(e.stream(zweite).haelt);
+        CHECK(e.stream(zweite).pos == 0);
+        CHECK(e.stream(erste).pos == 49000);
+        const int gesetztVorher = e.zahl(QStringLiteral("seek"));
+
+        // der Umschlag: die erste spielt ihr Ende weiter — ohne gesetzt zu werden —, die zweite beginnt
+        r = laufeRund(f, e, k, roh, 55000);
+        REQUIRE(e.quellenVon(kEins).size() == 2);
+        CHECK(e.stream(erste).pos == 55000);
+        CHECK_FALSE(e.stream(erste).haelt);
+        CHECK(e.stream(zweite).pos == 5000);
+        CHECK_FALSE(e.stream(zweite).haelt);
+        // gesetzt wurde nur die zweite, einmal, bei ihrem Einsatz
+        CHECK(e.zahl(QStringLiteral("seek")) == gesetztVorher + 1);
+        CHECK(f.nachgesetzt() == 0);
+        // jede mit ihrem Pegel aus der Kurve: das Ende blendet aus, der Anfang ein
+        CHECK(nah(e.stream(erste).lautstaerke, 0.5));
+        CHECK(nah(e.stream(zweite).lautstaerke, 0.5));
+        // derselbe Song laeuft weiter: kein Songwechsel am Umschlag
+        CHECK(r.hatSong);
+        CHECK_FALSE(r.songGewechselt);
+        // der laufende ist die Stimme mit dem hoeheren Pegel: spaeter im Fenster der Anfang
+        r = laufeRund(f, e, k, roh, 58000);
+        CHECK(nah(e.stream(erste).lautstaerke, 0.2));
+        CHECK(nah(e.stream(zweite).lautstaerke, 0.8));
+        CHECK(r.songStelleMs == 8000);
+
+        // hinter dem Fenster: das Ende ist aus dem Mixer, der Anfang laeuft ungestoert weiter
+        const int gesetztImFenster = e.zahl(QStringLiteral("seek"));
+        r = laufeRund(f, e, k, roh, 62000);
+        REQUIRE(e.quellenVon(kEins).size() == 1);
+        CHECK(e.quellenVon(kEins)[0] == zweite);
+        CHECK(e.stream(zweite).pos == 12000);
+        CHECK(e.zahl(QStringLiteral("seek")) == gesetztImFenster);
+        CHECK(e.zahl(QStringLiteral("remove ") + kEins) == 1);
+        CHECK_FALSE(r.songGewechselt);
+
+        // --- derselbe Song OHNE zweite Quelle (Songs overlap themselves aus): er spielt sein
+        //     Ende aus und springt hinter dem Fenster im Song zurueck
+        Komposition einfach = k;
+        einfach.songsDoppelt = false;
+        PappMischEngine e2;
+        e2.laengen = {{kEins, 300000}};
+        Tonfuehrung g;
+        REQUIRE(g.uebernimm(e2, p));
+        roh = 47000;
+        l = lage(roh);
+        (void)g.takt(einfach, l.stelle, true, l.schleife);
+        (void)laufeRund(g, e2, einfach, roh, 55000);
+        REQUIRE(e2.quellenVon(kEins).size() == 1);  // auch im Vorlauf und im Fenster nur eine
+        const AudioStreamHandle eine = e2.quellenVon(kEins)[0];
+        CHECK(e2.stream(eine).pos == 55000);         // sie spielt das Ende
+        CHECK(nah(e2.stream(eine).lautstaerke, 0.5));
+        (void)laufeRund(g, e2, einfach, roh, 60033);
+        CHECK(e2.stream(eine).pos == 10033);         // hinter dem Fenster: zurueck an die vordere Stelle
+        CHECK(e2.quellenVon(kEins).size() == 1);
+
+        // --- zwei verschiedene Songs: eins am Anfang (0–20 s), zwei am Ende (40–60 s)
+        Komposition zwei = neueKomposition();
+        (void)fuegeKanalEin(zwei, {}, KanalArt::Audio);
+        REQUIRE(fuegeSongEin(zwei, 1, kEins, 0, 20000) == 0);
+        REQUIRE(fuegeSongEin(zwei, 1, kZwei, 40000, 20000) == 1);
+        zwei.ueberlappungMs = kFenster;
+        PappMischEngine e3;
+        e3.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung h;
+        REQUIRE(h.uebernimm(e3, p));
+        roh = 45000;
+        l = lage(roh);
+        r = h.takt(zwei, l.stelle, true, l.schleife);
+        CHECK(r.song.filePath == kZwei);
+        (void)laufeRund(h, e3, zwei, roh, 49000);
+        REQUIRE(e3.quelle(kEins) != INVALID_STREAM);  // der erste Song der naechsten Runde wartet
+        CHECK(e3.stream(e3.quelle(kEins)).haelt);
+        const int gesetztZwei = e3.zahl(QStringLiteral("seek ") + kZwei);
+        r = laufeRund(h, e3, zwei, roh, 55000);
+        CHECK(e3.stream(e3.quelle(kZwei)).pos == 15000);  // zwei spielt im Fenster weiter ...
+        CHECK(e3.zahl(QStringLiteral("seek ") + kZwei) == gesetztZwei);  // ... ohne neu gesetzt zu werden
+        CHECK(e3.stream(e3.quelle(kEins)).pos == 5000);   // ... und eins spielt daneben
+        CHECK_FALSE(e3.stream(e3.quelle(kEins)).haelt);
+        CHECK(e3.quellenZahl() == 2);
+        (void)laufeRund(h, e3, zwei, roh, 61000);
+        CHECK(e3.quelle(kZwei) == INVALID_STREAM);  // hinter dem Fenster ist zwei aus dem Mixer
+        CHECK(e3.quellenZahl() == 1);
+    }
+
     TEST_CASE("Ein Song, der vor seinem Clip endet, und einer, der sich nicht oeffnen laesst")
     {
         PappPlayer p;

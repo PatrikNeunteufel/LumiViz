@@ -95,7 +95,16 @@ public:
         bool playerAngehalten = false;
     };
     /// Ein Takt: `stelleMs` ist die Stelle der Uhr, `laeuft`, ob sie laeuft.
-    Ergebnis takt(const Komposition& komposition, std::int64_t stelleMs, bool laeuft);
+    ///
+    /// `schleife` (Ueberlappung in der Schleife, S99): im Fenster spielen die
+    /// Songs der vorderen und der hinteren Stelle zugleich. Ein Song, der in
+    /// beiden liegt, bekommt eine zweite Quelle (`Komposition::songsDoppelt`)
+    /// — sonst spielt er sein Ende aus und springt danach. Vor dem Umschlag
+    /// werden die ersten Songs der naechsten Runde geoeffnet. Der Umschlag
+    /// selbst ist kein Sprung: eine Quelle, deren Song weiterlaeuft, wird
+    /// nicht neu gesetzt.
+    Ergebnis takt(const Komposition& komposition, std::int64_t stelleMs, bool laeuft,
+                  Schleifenlage schleife = {});
 
     /// Die Stelle der Komposition, an der im zuletzt gemeldeten laufenden Song
     /// der `anteil` (0…1) seiner Laenge zu hoeren ist — fuer den Klick in den
@@ -136,10 +145,14 @@ private:
         int dauerMs = 0;
         bool imClip = false;             ///< die Uhr stand im letzten Takt in seinem Clip
         float pegel = -1.0f;             ///< zuletzt gesetzt
-        std::int64_t gesetztBeiMs = 0;   ///< Stelle der Uhr beim letzten Setzen
+        /// Die Stelle im Song, an der die Quelle im letzten Takt sein sollte —
+        /// daran wird sie im naechsten wiedererkannt (zwei Quellen desselben
+        /// Songs im Fenster der Schleife) und ein Sprung bemerkt.
+        std::int64_t sollMs = 0;
+        std::int64_t gesetztBeiMs = 0;   ///< Stelle ihrer Stimme auf der Zeitachse beim letzten Setzen
         bool hatGrund = false;           ///< der Grundabstand ist seit dem letzten Setzen gemessen
         std::int64_t grundMs = 0;        ///< Stelle der Quelle minus Uhr, wie sie die Ausgabe-Latenz ergibt
-        bool gesehen = false;            ///< in diesem Takt noch gebraucht
+        bool vergeben = false;           ///< in diesem Takt einer Stimme zugeordnet
     };
 
     IAudioEngine* m_engine = nullptr;
@@ -152,9 +165,7 @@ private:
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts
     int m_laufendDauerMs = 0;         ///< seine Laenge
-    bool m_ersterTakt = true;
     bool m_liefZuletzt = false;       ///< die Uhr lief im letzten Takt
-    std::int64_t m_letzteStelle = 0;  ///< Stelle der Uhr im letzten Takt
     int m_nachgesetzt = 0;
 };
 

@@ -192,6 +192,22 @@ struct Komposition
     void richte(QStringList* bericht = nullptr);
 };
 
+/// Ueberlappung in der Schleife (S99): was Bild (`Wiedergabe::rendere`) und Ton
+/// (`Tonfuehrung::takt`) ausser der Stelle der Uhr ueber die Schleife wissen
+/// muessen. Im Fenster laufen die Clips der vorderen UND der hinteren Stelle;
+/// vor dem Umschlag werden die ersten Clips der naechsten Runde vorbereitet.
+/// (Eine eigene Struktur im Namensraum: als eingeschachtelte mit
+/// Mitglieds-Vorgaben taugt sie nicht zum Vorgabewert eines Parameters ihrer
+/// Klasse — clang lehnt das ab.)
+struct Schleifenlage
+{
+    /// Die Stelle im hinteren Fenster, die zugleich laeuft; -1 = keine.
+    std::int64_t zweiteMs = -1;
+    /// So lange dauert es, bis die Schleife umschlaegt und der Anfang
+    /// wieder beginnt; -1 = sie schlaegt nicht um (keine Schleife).
+    std::int64_t umschlagInMs = -1;
+};
+
 /// Die Komposition als JSON. `basisOrdner` nicht leer: Dateien darunter
 /// werden relativ geschrieben.
 [[nodiscard]] QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner = {});

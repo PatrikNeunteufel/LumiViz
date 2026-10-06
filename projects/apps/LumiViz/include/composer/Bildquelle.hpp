@@ -144,21 +144,23 @@ public:
     {
         std::int64_t stelleMs = 0;
         std::int64_t zweiteMs = -1;
+        std::int64_t umschlagInMs = -1;  ///< bis die Schleife umschlaegt; -1 = sie tut es nicht
     };
     [[nodiscard]] Stellen standStellenJetzt() const
     {
-        Stellen jetzt{m_standStelle.load(), m_standZweite.load()};
+        Stellen jetzt{m_standStelle.load(), m_standZweite.load(), -1};
         if (!m_standLaeuft.load()) return jetzt;
         const std::int64_t roh = jetzt.stelleMs + std::max<std::int64_t>(0, wanduhrMs() - m_standStempel.load());
         const std::int64_t laenge = m_standLaenge.load();
-        if (laenge <= 0) return {roh, -1};
-        if (!m_standSchleife.load()) return {std::min(roh, laenge), -1};
+        if (laenge <= 0) return {roh, -1, -1};
+        if (!m_standSchleife.load()) return {std::min(roh, laenge), -1, -1};
         const std::int64_t fenster = m_standUeberlappung.load();
         const std::int64_t umlauf = laenge - fenster;
         jetzt.stelleMs = roh % umlauf;
         // schlug die Schleife seit dem letzten Bild um, ist das Ende jetzt da
         const bool endeDa = m_standUmgelaufen.load() || roh >= umlauf;
         jetzt.zweiteMs = fenster > 0 && endeDa && jetzt.stelleMs < fenster ? jetzt.stelleMs + umlauf : -1;
+        jetzt.umschlagInMs = umlauf - jetzt.stelleMs;
         return jetzt;
     }
     /// Die Stelle der Uhr JETZT, aus dem gespiegelten Stand hochgerechnet —
