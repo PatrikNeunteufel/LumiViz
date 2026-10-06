@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.94.0
+> **Version:** 1.95.0
 > **Datum:** 2026-10-06 (Session 99)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,6 +2217,14 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S99 (Konzept 0.43.1), kurz:** der zweite Test der S98
+  ist ausgewertet (33 von 33); die Lücke „Composer off ohne Titel im Player"
+  ist geschlossen; die **Überlappung in der Schleife** und die **Blende der
+  ganzen Komposition** sind entschieden und gebaut. **Im Programm ist davon
+  nichts gesehen oder gehört** — als Nächstes Patriks Sichttest
+  `.claude/handover/Sichttests_S99.md` (52 Punkte, A bis G), danach der
+  Entscheid zu „Flipped und einfache Einblendung" und die Wünsche zur
+  Zeitachse. Die Einzelheiten stehen im folgenden Block.
 - **Composer, Stand S98 (Konzept 0.34.0) — Stufe C5b, Audio-Kanäle
   überlagern: alle fünf Schritte gebaut, das Überlagern im Programm
   gehört.** Die Songs aller eingeschalteten Audio-Kanäle laufen als Quellen
@@ -2278,6 +2286,12 @@ Idee Preset-Warmup/Pre-Roll.
     senkrecht, zusammen oder einzeln, mit Rollbalken; Mausrad mit
     verschiedenen Tasten; evtl. Schwenken mit linker / rechter Maustaste
     (Zoom der Zeitachse steht schon in Konzept §7 als fehlend).
+    (5) **Ein Icon für Composer-Dateien** (`.lvcomp`; Wunsch Patrik am Ende
+    von S99) — im Konzept als Teil der Naht N8 vorgesehen („Dateityp-Icon"),
+    nicht gebaut. Vorbild: die Icons der Preset-Arten (`PresetIconKind`,
+    `build_lvfx2_icons.py`). Vor dem Bau klären: wo es erscheinen soll
+    (Effect Browser, Dateidialoge, Explorer über eine Registrierung des
+    Dateityps) und wie es aussieht.
   - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
     des Übergangs statt an den Song-Anfang.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
@@ -4196,6 +4210,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.95.0 | 2026-10-06 | Session 99, Abschluss — **Composer:** die Überlappung in der Schleife (Loop overlap, beide Fenster in der Zeitachse, Songs / Visuals overlap themselves) und die Blende der ganzen Komposition (Fade in / Fade out) in sieben Schritten gebaut (Konzept 0.43.1, Benutzerhandbuch 1.98.0); im Programm nichts davon gesehen oder gehört — Sichttest S99 mit 52 Punkten; nicht gemessen: Bildzeit und Grafikspeicher von *Visuals overlap themselves*. Weiter offen: Entscheid „Flipped und einfache Einblendung", vier Wünsche zur Zeitachse und ein Icon für Composer-Dateien. 939 Cases |
 | 1.94.0 | 2026-10-06 | Session 99 — **Composer:** Überlappung in der Schleife entschieden (vier Entscheide Patrik), Schritt 1 von 7 gebaut — Modell und Datei (Konzept 0.37.0). §7 neu: Befund Patrik „Flipped und einfache Einblendung" (Zielbild bestätigt: unsichtbar einfahren, später einblenden, oben bleiben — Vorlage steht aus) und vier Wünsche zur Zeitachse (Kanalfarben einstellbar, Kanäle verschieben, sortieren nach Typ, Zoom und Schwenken) |
 | 1.93.0 | 2026-10-06 | Session 99 — **Composer:** Lücke „Composer off ohne Titel im Player" geschlossen (Entscheid Patrik: a — leerer Songwechsel, Panel Player im Ruhezustand; Konzept 0.36.0, Benutzerhandbuch 1.95.0); §7: offen der Sichttest S99 (Rest der ersten Liste, Urteil Kreuzungspunkt, die geschlossene Lücke im Programm); Vorlauf und Schwelle gelten als im Hörtest bestätigt |
 | 1.92.0 | 2026-10-06 | Session 99 — **Composer:** Patriks zweiter Test (`Sichttests_S98b`) ausgewertet — 33 von 33 bestanden, im Log kein Nachsetzen; §7 Block „Stand S98": gebilligte Vorgaben eingetragen (Weiterspielen, Einfügemarke, Kopie, Tooltip), Wellenform beim Kürzen erledigt (wird abgeschnitten); offen der Rest der ersten Liste (P13–P16, Panel Player, Urteile R), die Lücke im Panel Player, Vorlauf und Schwelle ohne Urteil (Konzept 0.35.0) |

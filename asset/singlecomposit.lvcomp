@@ -1,0 +1,44 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 207000,
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 207000,
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Groove Armada - Love Box/08-hands_of_time.mp3",
+                    "offset": 28000,
+                    "sourceLength": 262266,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        }
+    ],
+    "fade": {
+        "in": 5000,
+        "out": 6000
+    },
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "loop": {
+        "overlap": 4000,
+        "songsTwice": true,
+        "visualsTwice": false
+    },
+    "version": 2
+}

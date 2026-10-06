@@ -876,8 +876,8 @@
     "length": 0,
     "loop": {
         "overlap": 17000,
-        "songsTwice": false,
-        "visualsTwice": false
+        "songsTwice": true,
+        "visualsTwice": true
     },
     "version": 2
 }
