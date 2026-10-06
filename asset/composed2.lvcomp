@@ -311,7 +311,7 @@
                 },
                 {
                     "blend": 0,
-                    "end": 578000,
+                    "end": 611000,
                     "fadeIn": {
                         "ms": 13000,
                         "shape": {
@@ -319,6 +319,24 @@
                             "points": [
                                 {
                                     "curve": 2,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 21000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
                                     "x": 0,
                                     "y": 0
                                 },
@@ -382,55 +400,6 @@
                     "offset": 0,
                     "sourceLength": 220330,
                     "start": 0
-                },
-                {
-                    "end": 578000,
-                    "fadeIn": {
-                        "ms": 99594,
-                        "shape": {
-                            "kind": "fade",
-                            "points": [
-                                {
-                                    "bezier": [
-                                        0.22477064220183487,
-                                        1,
-                                        0.37155963302752293,
-                                        0.4074074074074074
-                                    ],
-                                    "curve": 6,
-                                    "x": 0,
-                                    "y": 0
-                                },
-                                {
-                                    "curve": 0,
-                                    "x": 1,
-                                    "y": 1
-                                }
-                            ]
-                        }
-                    },
-                    "fadeOut": {
-                        "ms": 35000,
-                        "shape": {
-                            "kind": "fade",
-                            "points": [
-                                {
-                                    "curve": 0,
-                                    "x": 0,
-                                    "y": 0
-                                },
-                                {
-                                    "curve": 0,
-                                    "x": 1,
-                                    "y": 1
-                                }
-                            ]
-                        }
-                    },
-                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - 3 Words/01. 3 Words (feat. Will.I.Am).mp3",
-                    "offset": 0,
-                    "sourceLength": 273594,
-                    "start": 304406
                 }
             ],
             "enabled": true,
@@ -440,9 +409,9 @@
         {
             "clips": [
                 {
-                    "end": 400600,
+                    "end": 422000,
                     "fadeIn": {
-                        "ms": 12600,
+                        "ms": 39330,
                         "shape": {
                             "kind": "fade",
                             "points": [
@@ -460,12 +429,12 @@
                         }
                     },
                     "fadeOut": {
-                        "ms": 12000,
+                        "ms": 39000,
                         "shape": {
                             "kind": "fade",
                             "points": [
                                 {
-                                    "curve": 1,
+                                    "curve": 0,
                                     "x": 0,
                                     "y": 0
                                 },
@@ -477,10 +446,10 @@
                             ]
                         }
                     },
-                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - A Million Lights (Super Deluxe Edition) (2012)/A Million Lights/05. A Million Lights.mp3",
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/David Guetta - One Love/110-david_guetta-one_love_(feat._estelle).mp3",
                     "offset": 0,
-                    "sourceLength": 203600,
-                    "start": 197000
+                    "sourceLength": 241000,
+                    "start": 181000
                 }
             ],
             "enabled": true,
@@ -489,6 +458,49 @@
         },
         {
             "clips": [
+                {
+                    "end": 611000,
+                    "fadeIn": {
+                        "ms": 30133,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 24000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/The xx - I See You (2017) (Dlx)/08. On Hold.mp3",
+                    "offset": 0,
+                    "sourceLength": 224133,
+                    "start": 386867
+                }
             ],
             "enabled": true,
             "kind": "audio",
