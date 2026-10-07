@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.123.0
+> **Version:** 1.124.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4566,6 +4566,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.124.0 | 2026-10-07 | Session 102, Abschluss — **Composer:** Stand am Ende der Sitzung: Zoom und Rollen der Zeitachse in sechs Schritten gebaut (acht Commits, `ed32789` bis `8e01648`), 966 Cases, im Programm nichts gesehen — Sichttest S102 mit 64 Punkten, zuerst Abschnitt G (kommen die Gesten am Gerät an?); offen das Urteil U1 zur Schwelle der Kurvenpunkte; `Changelog_Session102.md` |
 | 1.123.0 | 2026-10-07 | Session 102 — **Composer:** der Vergleichslauf nach den zwei Eingriffen an R2 (S101) entfällt (Entscheid Patrik VL1: a, mit Begründung: ungelesener Zähler, Faktor genau 1, die Harnesse rendern ohne Karaoke-Ebene); es bleibt der Vergleichslauf vor dem Holen nach `master` |
 | 1.122.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 6:** Benutzerhandbuch 1.111.0 (§15 Zoomen und Rollen), Rückbau-Liste im Konzept 0.68.0, Sichttest-Liste S102; das Vorhaben Zoom ist gebaut, im Programm nichts gesehen |
 | 1.121.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, die Naht N9 gebaut:** die Auswahl *Scroll with playhead* in Settings, Konzept 0.67.0; im Programm nicht gesehen |
