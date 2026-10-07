@@ -157,6 +157,10 @@ public:
     /// CH oben liegt im Bild zuunterst. Auswahl und Einfuegemarke folgen ihrem
     /// Kanal. Auch durch Ziehen am Kanalnamen in der linken Spalte.
     void kanalVerschieben(int von, int nach);
+    /// Die Kanaele nach ihrer Art ordnen (S100, Entscheid Patrik S1 a): Bild
+    /// zuerst oder Ton zuerst; innerhalb der Art bleibt die Reihenfolge, das
+    /// Bild aendert sich nicht. Auswahl und Einfuegemarke folgen ihrem Kanal.
+    void kanaeleSortieren(bool bildZuerst);
     /// Die Farbe des Kanals setzen (0xRRGGBB; S100, Entscheid Patrik K1 b).
     /// Unter null: zurueck auf die Reihe seiner Art — die erste Farbe, die
     /// kein anderer Kanal der Art traegt. Nur im Bearbeiten, ueber Undo.

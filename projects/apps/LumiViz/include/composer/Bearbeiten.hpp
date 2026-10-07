@@ -103,6 +103,15 @@ bool verschiebeKanal(Komposition& komposition, int von, int nach);
 /// Wo der Kanal `kanal` nach `verschiebeKanal(von, nach)` liegt.
 [[nodiscard]] int platzNachVerschieben(int kanal, int von, int nach);
 
+/// Die Kanaele nach ihrer Art ordnen (S100, Entscheid Patrik S1 a): erst alle
+/// Bild-Kanaele, dann alle Audio-Kanaele (`bildZuerst`) oder umgekehrt.
+/// Innerhalb jeder Art bleibt die Reihenfolge — der Stapel der Bild-Kanaele
+/// und damit das Bild aendern sich nicht. Liefert je altem Platz den neuen;
+/// leer = die Kanaele lagen schon so.
+std::vector<int> sortiereNachArt(Komposition& komposition, bool bildZuerst);
+/// Liegen die Kanaele schon so?
+[[nodiscard]] bool nachArtSortiert(const Komposition& komposition, bool bildZuerst);
+
 /// Eine neue, leere Komposition: ein Kanal „CH1", das Ende folgt den Clips.
 [[nodiscard]] Komposition neueKomposition();
 

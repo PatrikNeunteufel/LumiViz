@@ -800,6 +800,28 @@ TEST_SUITE("ComposerPanel")
             CHECK(namen() == vorher);
             for (int i = 0; i < 3; ++i) REQUIRE(bus->undo());  // zurueck, hin, der neue Kanal
             CHECK_FALSE(sitzung->ungespeichert());
+
+            // nach Art ordnen (Entscheid Patrik S1 a): ein Audio-Kanal nach oben gelegt,
+            // dann „Visuals first" — die Auswahl folgt, die Bild-Kanaele bleiben untereinander
+            achse->audioKanalHinzu();
+            const int ton = static_cast<int>(sitzung->komposition().kanaele.size()) - 1;
+            achse->kanalVerschieben(ton, 0);
+            REQUIRE(sitzung->komposition().kanaele[0].art == KanalArt::Audio);
+            const QStringList gemischt = namen();
+            zug(10000, 10000, 1);  // derselbe Clip, jetzt eine Zeile tiefer (der Klick auf den Namen hatte die Auswahl geloest)
+            REQUIRE(achse->gewaehlterKanal() == 1);
+            achse->kanaeleSortieren(true);
+            QStringList sortiert = gemischt;
+            sortiert.move(0, ton);
+            CHECK(namen() == sortiert);
+            CHECK(achse->gewaehlterKanal() == 0);
+            REQUIRE(achse->auswahl() != nullptr);
+            CHECK(achse->auswahl()->datei == dateiVorher);
+            achse->kanaeleSortieren(true);  // liegt schon so: kein Schritt
+            REQUIRE(bus->undo());
+            CHECK(namen() == gemischt);
+            for (int i = 0; i < 2; ++i) REQUIRE(bus->undo());  // das Verschieben, der Audio-Kanal
+            CHECK_FALSE(sitzung->ungespeichert());
         }
 
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr

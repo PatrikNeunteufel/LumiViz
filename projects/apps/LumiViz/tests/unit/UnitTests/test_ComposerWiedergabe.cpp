@@ -455,6 +455,26 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(g.kanaele[0].name == QStringLiteral("CH3"));
         CHECK(g.kanaele[3].name == QStringLiteral("CH1"));
         CHECK(g.kanaele[3].farbe == farbeCh1);
+
+        // nach Art ordnen (Entscheid Patrik S1 a): innerhalb der Art bleibt die Reihenfolge —
+        // der Stapel der Bild-Kanaele (CH3, CH2, CH1) aendert sich nicht
+        (void)fuegeKanalEin(k, QStringLiteral("A2"), KanalArt::Audio);  // CH3 A1 CH2 CH1 A2
+        CHECK_FALSE(nachArtSortiert(k, true));
+        CHECK_FALSE(nachArtSortiert(k, false));
+        const std::vector<int> bildVorn = sortiereNachArt(k, true);
+        CHECK(namen() == QStringLiteral("CH3 CH2 CH1 A1 A2"));
+        CHECK(bildVorn == std::vector<int>{0, 3, 1, 2, 4});  // je altem Platz der neue
+        CHECK(nachArtSortiert(k, true));
+        CHECK(sortiereNachArt(k, true).empty());  // lag schon so
+        const std::vector<int> tonVorn = sortiereNachArt(k, false);
+        CHECK(namen() == QStringLiteral("A1 A2 CH3 CH2 CH1"));
+        CHECK(tonVorn == std::vector<int>{2, 3, 4, 0, 1});
+        CHECK(nachArtSortiert(k, false));
+        // nur eine Art: liegt in beiden Richtungen schon richtig
+        Komposition nurBild = neueKomposition();
+        (void)fuegeKanalEin(nurBild);
+        CHECK(nachArtSortiert(nurBild, true));
+        CHECK(nachArtSortiert(nurBild, false));
     }
 
     TEST_CASE("Kurve der Komposition S100, Modell: Blenden mit Form, Grundpegel, Stuecke an fester Zeit — und die Datei")

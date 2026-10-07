@@ -1554,6 +1554,21 @@ void Zeitachse::kanalVerschieben(int von, int nach)
     Q_EMIT bearbeitet(neu, tr("Move channel"));
 }
 
+void Zeitachse::kanaeleSortieren(bool bildZuerst)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    Komposition neu = m_komposition;
+    const std::vector<int> platz = sortiereNachArt(neu, bildZuerst);
+    if (platz.empty()) return;  // lag schon so
+    const auto neuerPlatz = [&platz](int kanal) {
+        return kanal >= 0 && kanal < static_cast<int>(platz.size()) ? platz[static_cast<std::size_t>(kanal)]
+                                                                    : kanal;
+    };
+    m_markeKanal = neuerPlatz(m_markeKanal);
+    uebernimm(neu, neuerPlatz(m_kanal), m_clip);
+    Q_EMIT bearbeitet(neu, tr("Sort channels"));
+}
+
 void Zeitachse::kanalFaerben(int kanal, std::int32_t farbe)
 {
     if (!m_bearbeiten || !m_geladen) return;
@@ -1775,6 +1790,13 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
     }
     menu.addAction(tr("Add channel"), this, [this] { kanalHinzu(); });
     menu.addAction(tr("Add audio channel"), this, [this] { audioKanalHinzu(); });
+    // nach Art ordnen (S100, Entscheid Patrik S1 a): innerhalb der Art bleibt die
+    // Reihenfolge — das Bild aendert sich nicht. Grau, was schon so liegt.
+    QMenu* sortieren = menu.addMenu(tr("Sort channels"));
+    sortieren->addAction(tr("Visuals first"), this, [this] { kanaeleSortieren(true); })
+        ->setEnabled(!nachArtSortiert(m_komposition, true));
+    sortieren->addAction(tr("Audio first"), this, [this] { kanaeleSortieren(false); })
+        ->setEnabled(!nachArtSortiert(m_komposition, false));
     menu.exec(event->globalPos());
 }
 

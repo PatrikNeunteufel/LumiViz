@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.103.0
+> **Version:** 1.104.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1926,6 +1926,11 @@ unter `composer/fades` und `composer/shapes`.
   Bild-Kanal zu verschieben ändert also das Bild, wie in einem Ebenen-Stapel.
   Audio-Kanäle lassen sich frei dazwischen legen; für den Ton ändert sich
   dabei nichts. Farbe, Clips und Auswahl gehen mit dem Kanal.
+- **Kanäle nach Art ordnen:** Rechtsklick in die Zeitachse → **Sort channels**
+  → *Visuals first* oder *Audio first* legt alle Kanäle der einen Art nach
+  oben und die der anderen nach unten. Innerhalb jeder Art bleibt die
+  Reihenfolge, wie sie ist — das Bild ändert sich dadurch **nicht**. Ein
+  Eintrag ist grau, wenn die Kanäle schon so liegen.
 - **Kanalfarben:** Jeder Kanal hat seine eigene Farbe — Bild-Kanäle kühle
   Töne (Blau, Violett, Grün …), Audio-Kanäle warme (Orange, Rot, Gelb …), so
   bleibt die Art an der Farbe erkennbar. Ein neuer Kanal bekommt die nächste
@@ -2207,6 +2212,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.104.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle nach Art ordnen**: Rechtsklick → *Sort channels* → *Visuals first* / *Audio first*; innerhalb der Art bleibt die Reihenfolge, das Bild ändert sich nicht |
 | 1.103.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle verschieben**: am Kanalnamen ziehen oder Rechtsklick → *Move channel up* / *Move channel down*; die Reihenfolge der Bild-Kanäle ist die Mischreihenfolge (der oberste liegt im Bild zuunterst) |
 | 1.102.0 | 2026-10-07 | Session 100. §15 Composer, Zeile MASTER NEU **Das Ende ziehen**: bei *Fixed end* lässt sich die rechte Kante des Balkens ziehen |
 | 1.101.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanalfarben**: jeder Kanal trägt seine Farbe (Bild kühl, Ton warm, je Kanal ein eigener Ton), Rechtsklick → *Channel color...* / *Reset channel color*; die Farbe steht in der Datei. GEÄNDERT: Audio-Kanäle haben nicht mehr alle denselben Ton, Bild-Kanäle ab dem zweiten andere Farben als bisher |

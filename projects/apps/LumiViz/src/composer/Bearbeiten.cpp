@@ -386,6 +386,44 @@ bool verschiebeKanal(Komposition& komposition, int von, int nach)
     return true;
 }
 
+bool nachArtSortiert(const Komposition& komposition, bool bildZuerst)
+{
+    const KanalArt erste = bildZuerst ? KanalArt::Visual : KanalArt::Audio;
+    bool zweiteGesehen = false;
+    for (const Kanal& k : komposition.kanaele)
+    {
+        if (k.art != erste)
+            zweiteGesehen = true;
+        else if (zweiteGesehen)
+            return false;  // ein Kanal der ersten Art hinter einem der zweiten
+    }
+    return true;
+}
+
+std::vector<int> sortiereNachArt(Komposition& komposition, bool bildZuerst)
+{
+    if (nachArtSortiert(komposition, bildZuerst)) return {};
+    const KanalArt erste = bildZuerst ? KanalArt::Visual : KanalArt::Audio;
+    const int anzahl = static_cast<int>(komposition.kanaele.size());
+    // die alten Plaetze in der neuen Reihenfolge — stabil: innerhalb der Art bleibt alles
+    std::vector<int> reihenfolge(static_cast<std::size_t>(anzahl));
+    for (int i = 0; i < anzahl; ++i) reihenfolge[static_cast<std::size_t>(i)] = i;
+    std::stable_partition(reihenfolge.begin(), reihenfolge.end(), [&](int alt) {
+        return komposition.kanaele[static_cast<std::size_t>(alt)].art == erste;
+    });
+    std::vector<Kanal> neu;
+    neu.reserve(komposition.kanaele.size());
+    std::vector<int> platz(static_cast<std::size_t>(anzahl), -1);
+    for (int n = 0; n < anzahl; ++n)
+    {
+        const int alt = reihenfolge[static_cast<std::size_t>(n)];
+        platz[static_cast<std::size_t>(alt)] = n;
+        neu.push_back(std::move(komposition.kanaele[static_cast<std::size_t>(alt)]));
+    }
+    komposition.kanaele = std::move(neu);
+    return platz;
+}
+
 int platzNachVerschieben(int kanal, int von, int nach)
 {
     if (kanal < 0 || von == nach) return kanal;
