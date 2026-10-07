@@ -713,6 +713,25 @@ TEST_SUITE("ComposerPanel")
             kurven->close();
         }
 
+        // --- Kanalfarben (S100, Entscheid Patrik K1 b): die geladene Datei hat ihre Farben
+        //     bekommen, ohne als geaendert zu gelten; setzen und zuruecksetzen ueber Undo
+        {
+            REQUIRE_FALSE(sitzung->ungespeichert());
+            const std::int32_t vorher = sitzung->komposition().kanaele[0].farbe;
+            CHECK(vorher == reihenFarbe(sitzung->komposition().kanaele[0].art, 0));
+            achse->kanalFaerben(0, 0x20C040);
+            CHECK(sitzung->komposition().kanaele[0].farbe == 0x20C040);
+            CHECK(sitzung->ungespeichert());
+            achse->kanalFaerben(0, 0x20C040);  // dieselbe noch einmal: kein Schritt
+            achse->kanalFaerben(0, -1);        // zurueck auf die Reihe
+            CHECK(sitzung->komposition().kanaele[0].farbe == vorher);
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().kanaele[0].farbe == 0x20C040);
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().kanaele[0].farbe == vorher);
+            CHECK_FALSE(sitzung->ungespeichert());
+        }
+
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
         REQUIRE(sitzung->lade(datei));
         REQUIRE(bus->canUndo());

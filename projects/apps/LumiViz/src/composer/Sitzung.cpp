@@ -110,6 +110,10 @@ bool Sitzung::lade(const QString& pfad, QStringList* bericht)
         };
     if (!ladeKomposition(pfad, neu, bericht, laenge)) return false;
     neu.richte();  // was das Panel zeigt, ist was laeuft
+    // S100: eine Datei ohne Kanalfarben bekommt sie hier, nach der Reihenfolge
+    // der Kanaele — sie gilt damit nicht als geaendert, die Farben stehen beim
+    // naechsten Speichern in der Datei
+    neu.vergibFarben();
 
     setAn(false);
     m_komposition = std::move(neu);
@@ -173,6 +177,7 @@ void Sitzung::setzeKomposition(Komposition neu)
 {
     if (!m_geladen) return;
     neu.richte();
+    neu.vergibFarben();  // in der Sitzung hat jeder Kanal seine Farbe (S100), wie nach dem Laden
     if (gleich(neu, m_komposition)) return;
     m_komposition = std::move(neu);
     if (Bildquelle* q = quelle())

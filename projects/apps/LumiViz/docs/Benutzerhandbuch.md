@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.100.0
+> **Version:** 1.101.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1918,6 +1918,14 @@ unter `composer/fades` und `composer/shapes`.
 - **Rechtsklick** auf eine Zeile: *Rename channel...*, *Channel enabled*
   (ein ausgeschalteter Kanal trägt nichts zum Bild bei), *Delete channel*
   (samt seinen Clips), *Add channel*; auf einem Clip zusätzlich *Delete clip*.
+- **Kanalfarben:** Jeder Kanal hat seine eigene Farbe — Bild-Kanäle kühle
+  Töne (Blau, Violett, Grün …), Audio-Kanäle warme (Orange, Rot, Gelb …), so
+  bleibt die Art an der Farbe erkennbar. Ein neuer Kanal bekommt die nächste
+  freie Farbe seiner Reihe. Rechtsklick auf die Zeile → **Channel color...**
+  wählt eine beliebige andere, **Reset channel color** gibt ihm wieder eine
+  Farbe der Reihe. Die Farbe gehört dem Kanal und steht in der Datei: sie
+  bleibt, wenn ein anderer Kanal gelöscht wird. Eine ältere Komposition ohne
+  Farben bekommt sie beim Laden nach der Reihenfolge ihrer Kanäle.
 - Enthält eine hineingezogene Kette einen **Host Switcher**, sagt LumiViz das:
   der Switcher schaltet in seinem Clip weiter — dann wechseln zwei.
 
@@ -2187,6 +2195,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.101.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanalfarben**: jeder Kanal trägt seine Farbe (Bild kühl, Ton warm, je Kanal ein eigener Ton), Rechtsklick → *Channel color...* / *Reset channel color*; die Farbe steht in der Datei. GEÄNDERT: Audio-Kanäle haben nicht mehr alle denselben Ton, Bild-Kanäle ab dem zweiten andere Farben als bisher |
 | 1.100.0 | 2026-10-07 | Session 100. §15 Composer NEU Stück-Preset **Late fade in** und der Absatz **Unsichtbar einfahren, später einblenden**: ein Stück am Clip-Anfang, das den Pegel auf null hält und dann weich einblendet — ohne *Flipped* |
 | 1.99.0 | 2026-10-07 | Session 100. §15 Composer NEU **Die Zeile MASTER**: die Pegelkurve der ganzen Komposition unter dem Lineal, bedienbar wie die eines Clips (Griffe der Blenden, Formen und Presets per Rechtsklick, Stücke, Grundpegel, Curve Editor); ein Stück liegt an fester Zeit. GEÄNDERT: die Keile im Lineal entfallen — die Zeile MASTER zeigt die Blenden; überdecken sich *Fade in* und *Fade out*, teilen sie den Platz wie am Clip |
 | 1.98.0 | 2026-10-06 | Session 99. §15 Composer, Schleife mit Überlappung NEU Haken **Visuals overlap themselves** (Standard aus): ein Bild-Clip in beiden Fenstern läuft im Fenster zweimal, ein frisch gestartetes Exemplar über dem laufenden; kostet ein zweites Laden und doppelten Grafikspeicher im Fenster |

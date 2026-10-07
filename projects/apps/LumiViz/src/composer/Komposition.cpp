@@ -263,6 +263,52 @@ void Komposition::setzeKurveAusClip(const Clip& clip)
     gesamtStuecke = std::move(neu);
 }
 
+std::int32_t reihenFarbe(KanalArt art, int nr)
+{
+    // Bild: kuehl — Blau (die Farbe, die CH1 schon immer hatte), Violett,
+    // Gruen, Tuerkis, Magenta, Indigo. Ton: warm — Orange (der Ton aller
+    // Audio-Clips bis S99), Rot, Gelb, Rosa, Rotorange, Ocker.
+    static constexpr std::array<std::int32_t, kReihenFarben> bild = {0x5785A5, 0x8157A5, 0x57A57E,
+                                                                    0x57A5A5, 0xA557A5, 0x5757A5};
+    static constexpr std::array<std::int32_t, kReihenFarben> ton = {0x967855, 0x965555, 0x968D55,
+                                                                   0x96556B, 0x966755, 0x968555};
+    const auto platz = static_cast<std::size_t>(((nr % kReihenFarben) + kReihenFarben) % kReihenFarben);
+    return art == KanalArt::Audio ? ton[platz] : bild[platz];
+}
+
+std::int32_t Komposition::freieFarbe(KanalArt art) const
+{
+    int gleicheArt = 0;
+    for (const Kanal& k : kanaele)
+        if (k.art == art) ++gleicheArt;
+    for (int nr = 0; nr < kReihenFarben; ++nr)
+    {
+        const std::int32_t farbe = reihenFarbe(art, nr);
+        const bool vergeben = std::any_of(kanaele.begin(), kanaele.end(), [&](const Kanal& k) {
+            return k.art == art && k.farbe == farbe;
+        });
+        if (!vergeben) return farbe;
+    }
+    return reihenFarbe(art, gleicheArt);  // mehr Kanaele als Farben: die Reihe laeuft um
+}
+
+void Komposition::vergibFarben()
+{
+    for (Kanal& k : kanaele)
+        if (k.farbe < 0) k.farbe = freieFarbe(k.art);
+}
+
+std::int32_t Komposition::farbeVon(int kanal) const
+{
+    if (kanal < 0 || kanal >= static_cast<int>(kanaele.size())) return reihenFarbe(KanalArt::Visual, 0);
+    const Kanal& k = kanaele[static_cast<std::size_t>(kanal)];
+    if (k.farbe >= 0) return k.farbe;
+    int platz = 0;
+    for (int i = 0; i < kanal; ++i)
+        if (kanaele[static_cast<std::size_t>(i)].art == k.art) ++platz;
+    return reihenFarbe(k.art, platz);
+}
+
 std::int64_t Komposition::clipEnde() const
 {
     std::int64_t ende = 0;
@@ -394,6 +440,10 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                  kanal.art == KanalArt::Audio ? QStringLiteral("audio") : QStringLiteral("visual"));
         k.insert(QStringLiteral("name"), kanal.name);
         k.insert(QStringLiteral("enabled"), kanal.an);
+        // die Farbe des Kanals (S100), wenn er eine hat: "#rrggbb"
+        if (kanal.farbe >= 0)
+            k.insert(QStringLiteral("color"),
+                     QStringLiteral("#%1").arg(kanal.farbe & 0xFFFFFF, 6, 16, QLatin1Char('0')));
         QJsonArray clips;
         const bool ton = kanal.art == KanalArt::Audio;
         {
@@ -531,6 +581,14 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                         : KanalArt::Visual;
         kanal.name = k.value(QStringLiteral("name")).toString();
         kanal.an = k.value(QStringLiteral("enabled")).toBool(true);
+        // ohne lesbare Farbe (Dateien bis S99) bleibt -1: wer laedt, vergibt sie
+        if (const QString farbe = k.value(QStringLiteral("color")).toString();
+            farbe.size() == 7 && farbe.startsWith(QLatin1Char('#')))
+        {
+            bool ok = false;
+            const int wert = farbe.mid(1).toInt(&ok, 16);
+            if (ok) kanal.farbe = wert;
+        }
         const QJsonArray clips = k.value(QStringLiteral("clips")).toArray();
         for (const QJsonValue& cv : clips)
         {

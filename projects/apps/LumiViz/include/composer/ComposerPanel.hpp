@@ -152,6 +152,10 @@ public:
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
+    /// Die Farbe des Kanals setzen (0xRRGGBB; S100, Entscheid Patrik K1 b).
+    /// Unter null: zurueck auf die Reihe seiner Art — die erste Farbe, die
+    /// kein anderer Kanal der Art traegt. Nur im Bearbeiten, ueber Undo.
+    void kanalFaerben(int kanal, std::int32_t farbe);
     /// Der Kanal der Zeile unter `y`, -1 = keine Zeile (Lineal, freie Flaeche).
     [[nodiscard]] int kanalBei(int y) const;
 

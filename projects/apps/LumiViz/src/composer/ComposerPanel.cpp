@@ -29,6 +29,7 @@
 #include <QMenu>
 #include <QMimeData>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QDir>
 #include <QDoubleSpinBox>
@@ -59,18 +60,21 @@ namespace
 {
 const QString kKnopfAn = QStringLiteral("QPushButton { background-color: #4a6fa5; border-radius: 4px; }");
 
-/// Farbe der Clips eines Kanals — je Kanal ein eigener Ton.
-QColor kanalFarbe(int kanal, bool an)
+/// Eine Kanalfarbe (0xRRGGBB) zum Zeichnen — aus (Kanal aus oder Composer
+/// aus) derselbe Ton, blass.
+QColor zeichenFarbe(std::int32_t farbe, bool an)
 {
-    QColor f = QColor::fromHsv((205 + kanal * 67) % 360, 120, 165);
-    if (!an) f = QColor::fromHsv(f.hue(), 40, 110);
+    QColor f = QColor::fromRgb(static_cast<QRgb>(farbe) | 0xFF000000u);
+    if (!an) f = QColor::fromHsv(std::max(0, f.hue()), std::min(f.saturation(), 40), 110);
     return f;
 }
 
-/// Farbe der Ton-Clips: ein warmer Ton, den kein Bild-Kanal traegt.
-QColor tonFarbe(bool an)
+/// Farbe der Clips eines Kanals (S100, Entscheid Patrik K1 b): die Farbe, die
+/// der Kanal traegt — Bild-Kanaele kuehl, Audio-Kanaele warm, je Kanal ein
+/// eigener Ton, einstellbar per Rechtsklick.
+QColor kanalFarbe(const Komposition& in, int kanal, bool an)
 {
-    return an ? QColor::fromHsv(32, 110, 150) : QColor::fromHsv(32, 40, 105);
+    return zeichenFarbe(in.farbeVon(kanal), an);
 }
 
 /// Die Ablage fuer Kopieren / Einfuegen (S98): ein Clip samt allem, was er
@@ -396,8 +400,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const bool gewaehlt = k == m_kanal && c == m_clip;
             const bool ton = kanal.art == KanalArt::Audio;
             const QColor farbe = k == kMaster ? (m_an ? QColor(96, 100, 112) : QColor(74, 76, 84))
-                                 : ton        ? tonFarbe(m_an && kanal.an)
-                                              : kanalFarbe(k, m_an && kanal.an);
+                                              : kanalFarbe(m_komposition, k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
             p.drawRoundedRect(r, 4, 4);
@@ -548,7 +551,12 @@ void Zeitachse::paintEvent(QPaintEvent*)
             geist.startMs = s.startMs;
             geist.endeMs = s.endeMs;
             const QRect r = clipRechteck(s.kanal, geist);  // Zeile = Kanal, auch fuer den neuen unter der letzten
-            QColor farbe = m_fallTon ? tonFarbe(true) : kanalFarbe(s.kanal, true);
+            // die Farbe des Zielkanals — unter der letzten Zeile die, die der neue Kanal bekaeme
+            QColor farbe = s.kanal < zeilen
+                               ? kanalFarbe(m_komposition, s.kanal, true)
+                               : zeichenFarbe(m_komposition.freieFarbe(m_fallTon ? KanalArt::Audio
+                                                                                 : KanalArt::Visual),
+                                              true);
             farbe.setAlpha(120);
             p.setBrush(farbe);
             p.setPen(QPen(pal.color(QPalette::Highlight), 1.0, Qt::DashLine));
@@ -1465,6 +1473,22 @@ void Zeitachse::kanalUmbenennen(int kanal, const QString& name)
     Q_EMIT bearbeitet(neu, tr("Rename channel"));
 }
 
+void Zeitachse::kanalFaerben(int kanal, std::int32_t farbe)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
+    Komposition neu = m_komposition;
+    Kanal& k = neu.kanaele[static_cast<std::size_t>(kanal)];
+    // unter null: zurueck auf die Reihe — die erste Farbe seiner Art, die kein anderer traegt
+    k.farbe = -1;
+    k.farbe = farbe >= 0 ? (farbe & 0xFFFFFF) : neu.freieFarbe(k.art);
+    if (k.farbe == m_komposition.farbeVon(kanal) &&
+        m_komposition.kanaele[static_cast<std::size_t>(kanal)].farbe >= 0)
+        return;  // dieselbe Farbe: kein Schritt fuer Undo
+    uebernimm(neu, m_kanal, m_clip);
+    Q_EMIT bearbeitet(neu, farbe >= 0 ? tr("Change channel color") : tr("Reset channel color"));
+}
+
 void Zeitachse::kanalSchalten(int kanal, bool an)
 {
     if (!m_bearbeiten || !m_geladen) return;
@@ -1652,6 +1676,13 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         an->setCheckable(true);
         an->setChecked(k.an);
         connect(an, &QAction::triggered, this, [this, zeile](bool ein) { kanalSchalten(zeile, ein); });
+        // die Farbe des Kanals (S100, Entscheid Patrik K1 b)
+        menu.addAction(tr("Channel color..."), this, [this, zeile] {
+            const QColor jetzt = zeichenFarbe(m_komposition.farbeVon(zeile), true);
+            const QColor gewaehlt = QColorDialog::getColor(jetzt, this, tr("Channel Color"));
+            if (gewaehlt.isValid()) kanalFaerben(zeile, static_cast<std::int32_t>(gewaehlt.rgb() & 0xFFFFFFu));
+        });
+        menu.addAction(tr("Reset channel color"), this, [this, zeile] { kanalFaerben(zeile, -1); });
         menu.addAction(tr("Delete channel"), this, [this, zeile] { kanalLoeschen(zeile); });
         menu.addSeparator();
     }

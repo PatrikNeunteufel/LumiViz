@@ -361,6 +361,8 @@ int fuegeKanalEin(Komposition& komposition, const QString& name, KanalArt art)
             if (!vergeben) neu.name = kandidat;
         }
     }
+    // S100 (Entscheid Patrik K1 b): die naechste freie Farbe der Reihe seiner Art
+    neu.farbe = komposition.freieFarbe(art);
     komposition.kanaele.push_back(std::move(neu));
     return static_cast<int>(komposition.kanaele.size()) - 1;
 }

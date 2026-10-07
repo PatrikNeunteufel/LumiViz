@@ -119,11 +119,22 @@ enum class KanalArt : int
     Audio = 1,
 };
 
+/// Die Farbreihen der Kanaele (Entscheid Patrik S100, K1 b): Bild-Kanaele
+/// bekommen kuehle Toene, Audio-Kanaele warme — die Art bleibt an der Farbe
+/// erkennbar. `nr` zaehlt in der Reihe und laeuft um. Der Wert ist 0xRRGGBB.
+[[nodiscard]] std::int32_t reihenFarbe(KanalArt art, int nr);
+/// So viele Farben hat eine Reihe.
+inline constexpr int kReihenFarben = 6;
+
 struct Kanal
 {
     KanalArt art = KanalArt::Visual;
     QString name;
     bool an = true;
+    /// Die Farbe der Clips, 0xRRGGBB — sie gehoert dem Kanal und steht in der
+    /// Datei (S100): er behaelt sie, wenn er verschoben oder ein anderer
+    /// geloescht wird. -1 = noch keine vergeben (`Komposition::vergibFarben`).
+    std::int32_t farbe = -1;
     /// Bild- oder Ton-Clips, je nach `art`; nach Start sortiert, ueberlappungsfrei.
     std::vector<Clip> clips;
 };
@@ -205,6 +216,18 @@ struct Komposition
     /// wie die Pegelkurve eines Clips ueber [0, Laenge): ueberdecken sich
     /// Teile, werden sie gestaucht (bis S99: linear, der kleinere Wert galt).
     [[nodiscard]] double blendeBei(std::int64_t stelleMs) const;
+
+    // --- Kanalfarben (S100, Entscheid Patrik K1 b) ----------------------------
+    /// Die erste Farbe der Reihe dieser Art, die noch kein Kanal der Art
+    /// traegt; sind alle vergeben, zaehlt die Reihe von vorn weiter.
+    [[nodiscard]] std::int32_t freieFarbe(KanalArt art) const;
+    /// Jedem Kanal ohne Farbe eine geben, in der Reihenfolge der Kanaele.
+    /// Kanaele mit Farbe bleiben, wie sie sind.
+    void vergibFarben();
+    /// Die Farbe, in der die Clips des Kanals gezeichnet werden: seine eigene
+    /// — oder, solange er keine hat, die der Reihe nach seinem Platz unter
+    /// den Kanaelen seiner Art.
+    [[nodiscard]] std::int32_t farbeVon(int kanal) const;
 
     /// Die gesetzte Laenge, sonst das Ende des letzten Clips — Bild oder Ton.
     [[nodiscard]] std::int64_t laenge() const;

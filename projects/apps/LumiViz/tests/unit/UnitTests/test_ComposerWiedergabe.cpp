@@ -18,6 +18,7 @@
 
 #include <doctest.h>
 
+#include "composer/Bearbeiten.hpp"  // fuegeKanalEin, loescheKanal (Kanalfarben S100)
 #include "composer/Komposition.hpp"
 #include "composer/Uhr.hpp"
 #include "composer/Wiedergabe.hpp"
@@ -340,6 +341,79 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(h.ueberlappungMs == 0);
         CHECK(h.einblendeMs == 0);
         CHECK(h.ausblendeMs == 0);
+    }
+
+    TEST_CASE("Kanalfarben S100, Modell: zwei Reihen, die Farbe gehoert dem Kanal — und die Datei")
+    {
+        // ein neuer Kanal bekommt die naechste freie Farbe der Reihe seiner Art:
+        // Bild kuehl, Ton warm (Entscheid Patrik K1 b)
+        Komposition k;
+        REQUIRE(fuegeKanalEin(k) == 0);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeKanalEin(k) == 2);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 3);
+        CHECK(k.kanaele[0].farbe == reihenFarbe(KanalArt::Visual, 0));
+        CHECK(k.kanaele[1].farbe == reihenFarbe(KanalArt::Audio, 0));
+        CHECK(k.kanaele[2].farbe == reihenFarbe(KanalArt::Visual, 1));
+        CHECK(k.kanaele[3].farbe == reihenFarbe(KanalArt::Audio, 1));
+        CHECK(k.kanaele[0].farbe == 0x5785A5);  // CH1 wie bisher
+        CHECK(k.kanaele[1].farbe == 0x967855);  // der Ton aller Audio-Clips bis S99
+        // jede Farbe einer Reihe ist eine andere, und die Reihen teilen keine
+        for (int a = 0; a < kReihenFarben; ++a)
+        {
+            for (int b = 0; b < kReihenFarben; ++b)
+            {
+                if (a != b) CHECK(reihenFarbe(KanalArt::Visual, a) != reihenFarbe(KanalArt::Visual, b));
+                if (a != b) CHECK(reihenFarbe(KanalArt::Audio, a) != reihenFarbe(KanalArt::Audio, b));
+                CHECK(reihenFarbe(KanalArt::Visual, a) != reihenFarbe(KanalArt::Audio, b));
+            }
+        }
+        CHECK(reihenFarbe(KanalArt::Visual, kReihenFarben) == reihenFarbe(KanalArt::Visual, 0));  // laeuft um
+
+        // die Farbe gehoert dem Kanal: wird der erste geloescht, behalten die anderen ihre
+        const std::int32_t zweiterBild = k.kanaele[2].farbe;
+        REQUIRE(loescheKanal(k, 0));
+        CHECK(k.kanaele[1].farbe == zweiterBild);
+        CHECK(k.farbeVon(1) == zweiterBild);
+        // und ein neuer bekommt die frei gewordene
+        const int neu = fuegeKanalEin(k);
+        CHECK(k.kanaele[static_cast<std::size_t>(neu)].farbe == reihenFarbe(KanalArt::Visual, 0));
+
+        // die Datei traegt die Farbe als "#rrggbb"
+        k.kanaele[0].farbe = 0x0A1B2C;
+        const QJsonObject json = alsJson(k);
+        CHECK(json.value(QStringLiteral("channels")).toArray().at(0).toObject().value(QStringLiteral("color")).toString() ==
+              QStringLiteral("#0a1b2c"));
+        Komposition g;
+        REQUIRE(ausJson(json, g));
+        CHECK(g.kanaele[0].farbe == 0x0A1B2C);
+        CHECK(alsJson(g) == json);
+
+        // eine Datei ohne Farben (bis S99): keine vergeben — gezeichnet wird nach dem Platz
+        // unter den Kanaelen der Art, und `vergibFarben` schreibt genau das fest
+        Komposition alt;
+        alt.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {}));
+        alt.kanaele.push_back(visualKanal(QStringLiteral("CH2"), {}));
+        Kanal ton;
+        ton.art = KanalArt::Audio;
+        ton.name = QStringLiteral("A1");
+        alt.kanaele.push_back(ton);
+        CHECK_FALSE(alsJson(alt).value(QStringLiteral("channels")).toArray().at(0).toObject().contains(
+            QStringLiteral("color")));
+        Komposition gelesen;
+        REQUIRE(ausJson(alsJson(alt), gelesen));
+        CHECK(gelesen.kanaele[0].farbe == -1);
+        CHECK(gelesen.farbeVon(0) == reihenFarbe(KanalArt::Visual, 0));
+        CHECK(gelesen.farbeVon(1) == reihenFarbe(KanalArt::Visual, 1));
+        CHECK(gelesen.farbeVon(2) == reihenFarbe(KanalArt::Audio, 0));
+        gelesen.vergibFarben();
+        CHECK(gelesen.kanaele[0].farbe == reihenFarbe(KanalArt::Visual, 0));
+        CHECK(gelesen.kanaele[1].farbe == reihenFarbe(KanalArt::Visual, 1));
+        CHECK(gelesen.kanaele[2].farbe == reihenFarbe(KanalArt::Audio, 0));
+        // eine gesetzte Farbe bleibt dabei
+        gelesen.kanaele[1].farbe = 0x123456;
+        gelesen.vergibFarben();
+        CHECK(gelesen.kanaele[1].farbe == 0x123456);
     }
 
     TEST_CASE("Kurve der Komposition S100, Modell: Blenden mit Form, Grundpegel, Stuecke an fester Zeit — und die Datei")
