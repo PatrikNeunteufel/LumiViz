@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.107.0
+> **Version:** 1.108.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2115,6 +2115,28 @@ Verschieben, Kopieren und Löschen wie bei einem Clip gibt es an dieser Zeile
 nicht. Alles wirkt auf Bild **und** Ton, zusätzlich zu den Pegelkurven der
 Clips, und steht in der Datei der Komposition.
 
+**Die Zeilen VISUAL und AUDIO — nur das Bild, nur der Ton:** Unter MASTER
+liegen zwei weitere Zeilen derselben Art. **VISUAL** ist eine Pegelkurve nur
+für das Bild, **AUDIO** eine nur für den Ton. Beide lassen sich bedienen wie
+die Zeile MASTER: anklicken, Griffe der Blenden, Rechtsklick für Formen,
+Stücke und den Curve Editor, Grundpegel. Zwei Unterschiede: die Felder *Fade
+in* und *Fade out* unten im Panel gehören MASTER — an VISUAL und AUDIO zieht
+man die Blende am Griff —, und das feste Ende zieht man nur an MASTER.
+
+Die Kurven werden **malgenommen**: das Bild bekommt *Clip × MASTER × VISUAL*,
+der Ton *Clip × MASTER × AUDIO*. Damit geht, was MASTER allein nicht kann:
+
+- **Musik für einen Moment weg, das Bild läuft weiter** — ein Stück in der
+  Zeile AUDIO an der Stelle (etwa für eine Ansage, deren Zeitpunkt feststeht).
+- **Das Bild vor dem Ton** — in VISUAL eine kurze, in AUDIO eine lange
+  Einblendung (oder umgekehrt).
+- **Der Ton insgesamt leiser** als gemischt — Grundpegel der Zeile AUDIO.
+
+Die Visuals sehen den Ton, wie er zu hören ist: senkt die Zeile AUDIO die
+Musik ab, reagieren sie auch schwächer. Die drei Zeilen sind niedriger als
+ein Kanal; ohne eingestellte Kurve zeigt jede einen leeren Balken und ändert
+nichts.
+
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
 nach einem neuen Namen und arbeitet dann mit dieser Datei weiter. Vor *Open
@@ -2307,6 +2329,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.108.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeilen VISUAL und AUDIO**: je eine Pegelkurve nur für das Bild und nur für den Ton unter der Zeile MASTER, bedienbar wie sie; die Kurven werden malgenommen. GEÄNDERT: die Master-Zeilen sind niedriger als ein Kanal (60 %) |
 | 1.107.0 | 2026-10-07 | Session 101. **§17 NEU: Mit einer Datei starten — und immer nur ein LumiViz**: `LumiViz.exe <datei>` (Preset, Karaoke-Preset, Komposition); ein zweiter Start gibt seine Datei an das laufende LumiViz ab; die Regel gilt je Programmdatei, `--new-instance` startet bewusst ein weiteres; was mehrere LumiViz sich teilen. §16: Verweis auf *Öffnen mit* |
 | 1.106.0 | 2026-10-07 | Session 100. §16 NEU das Icon für Kompositionen `.lvcomp` (der Fächer mit Zeitstrahl) und das Icon der App; §15 Composer, Öffnen: der **Effect Browser** zeigt `.lvcomp`-Dateien, ein Doppelklick öffnet sie |
 | 1.105.0 | 2026-10-07 | Session 100. NEU **§16 Dateitypen und ihre Icons**: Tabelle aller Dateitypen mit ihrem Icon als Bild, wo sie in LumiViz erscheinen, und das Skript zum Eintragen der Icons im Windows-Explorer |

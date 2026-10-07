@@ -603,6 +603,101 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(u.gesamtStuecke[0].weiteMs == 0);
     }
 
+    TEST_CASE("Visual- und Audio-Master S101, Modell: je eine Kurve nur fuer Bild und nur fuer Ton, mal MASTER — und die Datei")
+    {
+        Komposition k;
+        k.laengeMs = 60000;
+        // ohne Kurven: genau 1 — Bild und Ton wie bisher
+        CHECK(k.bildPegelBei(30000) == 1.0);
+        CHECK(k.tonPegelBei(30000) == 1.0);
+        CHECK_FALSE(k.hatKurve(MasterArt::Bild));
+        CHECK_FALSE(k.hatKurve(MasterArt::Ton));
+
+        // der Audio-Master auf halbem Grundpegel: nur der Ton
+        k.tonKurve.grundpegel = 0.5;
+        CHECK(k.tonPegelBei(30000) == doctest::Approx(0.5));
+        CHECK(k.bildPegelBei(30000) == 1.0);
+        CHECK(k.blendeBei(30000) == 1.0);
+        CHECK(k.hatKurve(MasterArt::Ton));
+        CHECK_FALSE(k.hatKurve());  // die Kurve der Komposition (MASTER) ist eine andere
+
+        // der Visual-Master blendet 4 s ein: nur das Bild
+        k.bildKurve.einblendeMs = 4000;
+        CHECK(k.bildPegelBei(1000) == doctest::Approx(0.25));
+        CHECK(k.tonPegelBei(1000) == doctest::Approx(0.5));
+
+        // MASTER dazu: malgenommen, wie Clip mal MASTER
+        k.grundpegel = 0.8;
+        CHECK(k.bildPegelBei(1000) == doctest::Approx(0.2));
+        CHECK(k.bildPegelBei(30000) == doctest::Approx(0.8));
+        CHECK(k.tonPegelBei(30000) == doctest::Approx(0.4));
+
+        // ein Stueck im Audio-Master an fester Zeit (eine geplante Durchsage): dort ist der Ton weg
+        GesamtStueck durchsage;
+        durchsage.mitteMs = 30000;
+        durchsage.weiteMs = 10000;
+        k.tonKurve.stuecke.push_back(durchsage);
+        CHECK(k.tonPegelBei(30000) == doctest::Approx(0.0));
+        CHECK(k.tonPegelBei(20000) == doctest::Approx(0.4));
+        CHECK(k.bildPegelBei(30000) == doctest::Approx(0.8));
+
+        // als Clip und zurueck — wie die Kurve der Komposition, aber in die eigene Kurve
+        std::vector<int> herkunft;
+        Clip alsClip = k.kurveAlsClip(&herkunft, MasterArt::Ton);
+        CHECK(alsClip.dauerMs() == 60000);
+        CHECK(alsClip.grundpegel == doctest::Approx(0.5));
+        REQUIRE(alsClip.stuecke.size() == 1);
+        CHECK(alsClip.stuecke[0].lage == doctest::Approx(0.5));
+        alsClip.stuecke[0].lage = 0.75;
+        Komposition zurueck = k;
+        zurueck.setzeKurveAusClip(alsClip, MasterArt::Ton);
+        REQUIRE(zurueck.tonKurve.stuecke.size() == 1);
+        CHECK(zurueck.tonKurve.stuecke[0].mitteMs == 45000);
+        CHECK(zurueck.gesamtStuecke.empty());  // MASTER und VISUAL bleiben
+        CHECK(zurueck.grundpegel == doctest::Approx(0.8));
+        CHECK(zurueck.bildKurve.einblendeMs == 4000);
+        CHECK(k.kurveAlsClip(nullptr, MasterArt::Bild).ein.dauerMs == 4000);
+
+        // die Datei: je ein Objekt, Roundtrip
+        const QJsonObject json = alsJson(k);
+        const QJsonObject bild = json.value(QStringLiteral("visualMaster")).toObject();
+        const QJsonObject ton = json.value(QStringLiteral("audioMaster")).toObject();
+        CHECK(bild.value(QStringLiteral("in")).toDouble() == 4000);
+        CHECK_FALSE(bild.contains(QStringLiteral("inShape")));  // linear: nicht geschrieben
+        CHECK_FALSE(bild.contains(QStringLiteral("base")));
+        CHECK(ton.value(QStringLiteral("base")).toDouble() == doctest::Approx(0.5));
+        REQUIRE(ton.value(QStringLiteral("shapes")).toArray().size() == 1);
+        CHECK(ton.value(QStringLiteral("shapes")).toArray().at(0).toObject().value(QStringLiteral("at")).toDouble() ==
+              30000);
+        Komposition gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(alsJson(gelesen) == json);
+        for (const std::int64_t stelle : {0, 1000, 20000, 30000, 59000})
+        {
+            CHECK(gelesen.bildPegelBei(stelle) == doctest::Approx(k.bildPegelBei(stelle)));
+            CHECK(gelesen.tonPegelBei(stelle) == doctest::Approx(k.tonPegelBei(stelle)));
+        }
+
+        // ohne die zwei Kurven sieht die Datei aus wie bisher — und eine solche Datei liest sich ohne sie
+        const QJsonObject ohne = alsJson(Komposition{});
+        CHECK_FALSE(ohne.contains(QStringLiteral("visualMaster")));
+        CHECK_FALSE(ohne.contains(QStringLiteral("audioMaster")));
+        Komposition alt;
+        REQUIRE(ausJson(ohne, alt));
+        CHECK_FALSE(alt.hatKurve(MasterArt::Bild));
+        CHECK_FALSE(alt.hatKurve(MasterArt::Ton));
+
+        // Unsinn wird gerichtet
+        Komposition u = k;
+        u.tonKurve.grundpegel = 3.0;
+        u.tonKurve.stuecke[0].mitteMs = -5;
+        u.bildKurve.einblendeMs = -1;
+        u.richte();
+        CHECK(u.tonKurve.grundpegel == doctest::Approx(1.0));
+        CHECK(u.tonKurve.stuecke[0].mitteMs == 0);
+        CHECK(u.bildKurve.einblendeMs == 0);
+    }
+
     TEST_CASE("C1b Datei: .lvcomp — Roundtrip aller Felder, relative Pfade, fehlende Datei gemeldet")
     {
         QTemporaryDir dir;
@@ -1006,6 +1101,18 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(nah(c.red(), 192));
         CHECK(nah(c.blue(), 0));
         CHECK(w.gemischteClips() == 1);
+
+        // --- S101, Visual-Master: wirkt auf das Bild — der Audio-Master nicht
+        Komposition master = ohne;
+        master.tonKurve.grundpegel = 0.1;  // nur der Ton
+        w.setKomposition(master);
+        CHECK(nah(bei(2500).red(), 192));
+        master.bildKurve.grundpegel = 0.5;
+        w.setKomposition(master);
+        CHECK(nah(bei(2500).red(), 96));
+        master.grundpegel = 0.5;  // MASTER dazu: malgenommen
+        w.setKomposition(master);
+        CHECK(nah(bei(2500).red(), 48));
     }
 
     TEST_CASE("C1b GL: Vorwaermen und Entladen — Renderer gibt es nur fuer Clips, die laufen oder gleich dran sind")

@@ -215,8 +215,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             }
             if (imClip < 0) continue;
         }
-        // die Pegelkurve des Clips mal die Blende der ganzen Komposition an der Stelle der Stimme
-        const double pegelWert = clip->pegelBei(imClip) * komposition.blendeBei(stimmStelle);
+        // die Pegelkurve des Clips mal die Kurven der ganzen Komposition an der
+        // Stelle der Stimme — MASTER und, nur fuer den Ton, AUDIO (S101)
+        const double pegelWert = clip->pegelBei(imClip) * komposition.tonPegelBei(stimmStelle);
         if (!zuEnde)
         {
             const auto pegel = static_cast<float>(pegelWert);

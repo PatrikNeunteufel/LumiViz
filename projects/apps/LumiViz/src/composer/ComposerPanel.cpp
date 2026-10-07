@@ -196,11 +196,12 @@ const VisualClip* Zeitachse::auswahl() const
 
 const Clip* Zeitachse::clipIn(const Komposition& in, int kanal, int clip, Clip& ablage)
 {
-    if (kanal == kMaster)
+    if (istMaster(kanal))
     {
-        // die Kurve der ganzen Komposition (S100): ein Clip ueber [0, Laenge)
+        // eine Kurve der ganzen Komposition (S100; S101: MASTER, VISUAL oder
+        // AUDIO): ein Clip ueber [0, Laenge)
         if (clip != 0 || in.laenge() <= 0) return nullptr;
-        ablage = in.kurveAlsClip();
+        ablage = in.kurveAlsClip(nullptr, masterArt(kanal));
         return &ablage;
     }
     if (kanal < 0 || kanal >= static_cast<int>(in.kanaele.size())) return nullptr;
@@ -211,8 +212,8 @@ const Clip* Zeitachse::clipIn(const Komposition& in, int kanal, int clip, Clip& 
 
 void Zeitachse::schreibeClip(Komposition& in, int kanal, int clip, const Clip& neu)
 {
-    if (kanal == kMaster)
-        in.setzeKurveAusClip(neu);
+    if (istMaster(kanal))
+        in.setzeKurveAusClip(neu, masterArt(kanal));
     else
         in.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)] = neu;
 }
@@ -375,13 +376,19 @@ void Zeitachse::paintEvent(QPaintEvent*)
     p.setFont(font());
     // Zeile -1, unter dem Lineal: die Pegelkurve der ganzen Komposition (S100)
     // als ein Clip ueber die ganze Laenge — gezeichnet und bedient wie ein Clip.
-    Kanal gesamt;
-    gesamt.name = tr("MASTER");
-    if (Clip ablage; clipIn(m_komposition, kMaster, 0, ablage) != nullptr) gesamt.clips.push_back(ablage);
-    for (int zeile = -1; zeile < zeilen; ++zeile)
+    // S101: darunter VISUAL (nur das Bild) und AUDIO (nur der Ton), ebenso.
+    Kanal master[kMasterZeilen];
+    master[0].name = tr("MASTER");
+    master[1].name = tr("VISUAL");
+    master[2].name = tr("AUDIO");
+    for (int m = 0; m < kMasterZeilen; ++m)
+        if (Clip ablage; clipIn(m_komposition, masterVonZeile(m - kMasterZeilen), 0, ablage) != nullptr)
+            master[m].clips.push_back(ablage);
+    for (int zeile = -kMasterZeilen; zeile < zeilen; ++zeile)
     {
-        const int k = zeile < 0 ? kMaster : kanalVonZeile(zeile);
-        const Kanal& kanal = zeile < 0 ? gesamt : m_komposition.kanaele[static_cast<std::size_t>(k)];
+        const int k = zeile < 0 ? masterVonZeile(zeile) : kanalVonZeile(zeile);
+        const Kanal& kanal =
+            zeile < 0 ? master[zeile + kMasterZeilen] : m_komposition.kanaele[static_cast<std::size_t>(k)];
         const int oben = zeileOben(zeile);
         const int hoch = zeileHoch(zeile);  // die Zeile MASTER ist niedriger (M17)
         p.setPen(linie);
@@ -400,7 +407,12 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const QRect r = clipRechteck(zeile, clip);
             const bool gewaehlt = k == m_kanal && c == m_clip;
             const bool ton = kanal.art == KanalArt::Audio;
-            const QColor farbe = k == kMaster ? (m_an ? QColor(96, 100, 112) : QColor(74, 76, 84))
+            // die Master-Zeilen in Grau — VISUAL mit kuehlem, AUDIO mit warmem
+            // Stich, wie die zwei Farbreihen der Kanaele (von mir gesetzt)
+            const QColor masterFarbe = k == kMasterBild  ? QColor(84, 100, 124)
+                                       : k == kMasterTon ? QColor(120, 100, 84)
+                                                         : QColor(96, 100, 112);
+            const QColor farbe = istMaster(k) ? (m_an ? masterFarbe : masterFarbe.darker(130))
                                               : kanalFarbe(m_komposition, k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
@@ -728,12 +740,14 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
     if (ort.y() < kLinealHoehe) return Griff::Keiner;
     // die Zeile unter dem Lineal: die Kurve der ganzen Komposition (S100) — ein
     // Clip ueber die ganze Laenge, mit den Griffen der Kurve, ohne Kanten
+    // (S101: drei solche Zeilen — MASTER, VISUAL, AUDIO)
     const bool gesamt = ort.y() < kKanaeleOben;
-    const int zeile = gesamt ? -1 : (ort.y() - kKanaeleOben) / kZeilenHoehe;
+    const int zeile = gesamt ? std::min(-1, (ort.y() - kLinealHoehe) / kMasterHoehe - kMasterZeilen)
+                             : (ort.y() - kKanaeleOben) / kZeilenHoehe;
     if (!gesamt && zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
-    const int k = gesamt ? kMaster : kanalVonZeile(zeile);
+    const int k = gesamt ? masterVonZeile(zeile) : kanalVonZeile(zeile);
     std::vector<Clip> eine;
-    if (Clip ablage; gesamt && clipIn(m_komposition, kMaster, 0, ablage) != nullptr) eine.push_back(ablage);
+    if (Clip ablage; gesamt && clipIn(m_komposition, k, 0, ablage) != nullptr) eine.push_back(ablage);
     const auto& clips = gesamt ? eine : m_komposition.kanaele[static_cast<std::size_t>(k)].clips;
     for (int c = 0; c < static_cast<int>(clips.size()); ++c)
     {
@@ -774,8 +788,10 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
         // Die Kurve der Komposition laesst sich nicht verschieben. Ihre rechte
         // Kante ist das Ende der Komposition: steht es fest (Fixed end), laesst
         // es sich hier ziehen (Wunsch Patrik S100) — sonst folgt es dem letzten Clip.
+        // Nur an der Zeile MASTER — VISUAL und AUDIO haben keine Kante (S101).
         if (gesamt)
-            return m_komposition.laengeMs > 0 && r.right() - ort.x() <= 6 ? Griff::KanteRechts : Griff::Keiner;
+            return k == kMaster && m_komposition.laengeMs > 0 && r.right() - ort.x() <= 6 ? Griff::KanteRechts
+                                                                                         : Griff::Keiner;
         // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
         if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
         if (r.right() - ort.x() <= 6) return Griff::KanteRechts;
@@ -1298,7 +1314,7 @@ void Zeitachse::keyPressEvent(QKeyEvent* event)
 
 void Zeitachse::loescheAuswahl()
 {
-    if (m_kanal == kMaster) return;  // die Kurve der Komposition laesst sich nicht loeschen
+    if (istMaster(m_kanal)) return;  // eine Kurve der Komposition laesst sich nicht loeschen
     Komposition neu = m_komposition;
     if (!loescheClip(neu, m_kanal, m_clip)) return;
     uebernimm(neu, -1, -1);
@@ -1344,7 +1360,7 @@ void Zeitachse::leereAblage()
 bool Zeitachse::kopiere()
 {
     const VisualClip* clip = auswahl();
-    if (clip == nullptr || m_kanal == kMaster) return false;  // die Kurve der Komposition ist kein Clip
+    if (clip == nullptr || istMaster(m_kanal)) return false;  // eine Kurve der Komposition ist kein Clip
     g_ablage.voll = true;
     g_ablage.clip = *clip;
     g_ablage.art = m_komposition.kanaele[static_cast<std::size_t>(m_kanal)].art;
@@ -1371,7 +1387,7 @@ bool Zeitachse::fuegeEin()
         // Ohne Marke (von mir gesetzt, S98): hinter den angeklickten Clip, in
         // dessen Kanal — Kopieren und gleich Einfuegen verdoppelt ihn.
         const VisualClip* clip = auswahl();
-        if (clip == nullptr || m_kanal == kMaster) return false;
+        if (clip == nullptr || istMaster(m_kanal)) return false;
         kanal = m_kanal;
         start = clip->endeMs;
     }
@@ -1739,7 +1755,7 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
                            [this, kanal, clip, zeit] { stueckHinzu(kanal, clip, zeit); });
             menu.addSeparator();
         }
-        if (kanal != kMaster)  // die Kurve der Komposition ist kein Clip
+        if (!istMaster(kanal))  // eine Kurve der Komposition ist kein Clip
         {
             menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
             menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
@@ -2264,8 +2280,9 @@ void ComposerPanel::oeffneKurve(Teil teil)
             Komposition neu = m_sitzung->komposition();
             if (m_zeitachse->gesamtGewaehlt())
             {
-                // die Kurve der ganzen Komposition (S100): die Lage der Stuecke wird zur festen Zeit
-                neu.setzeKurveAusClip(clip);
+                // eine Kurve der ganzen Komposition (S100; S101: MASTER, VISUAL
+                // oder AUDIO): die Lage der Stuecke wird zur festen Zeit
+                neu.setzeKurveAusClip(clip, m_zeitachse->gewaehlteMasterArt());
                 bearbeite(neu, was);
                 return;
             }
@@ -2292,8 +2309,10 @@ void ComposerPanel::zeigeKurve()
     const VisualClip* clip = m_zeitachse->auswahl();
     m_kurven->zeige(clip, m_kurvenTeil,
                     clip == nullptr                 ? QString()
-                    : m_zeitachse->gesamtGewaehlt() ? tr("Composition")
-                                                    : QFileInfo(clip->datei).completeBaseName(),
+                    : !m_zeitachse->gesamtGewaehlt() ? QFileInfo(clip->datei).completeBaseName()
+                    : m_zeitachse->gewaehlteMasterArt() == MasterArt::Bild ? tr("Visual master")
+                    : m_zeitachse->gewaehlteMasterArt() == MasterArt::Ton  ? tr("Audio master")
+                                                                           : tr("Composition"),
                     m_zeitachse->bearbeiten());
     m_zeitachse->setTeil(m_kurven->isVisible() && m_kurven->hatKurve() ? m_kurvenTeil : Teil{});
 }
@@ -2493,6 +2512,22 @@ void ComposerPanel::zeigeClip()
     if (m_sitzung != nullptr)
         m_sitzung->waehleClip(clip != nullptr && !gesamt ? m_zeitachse->gewaehlterKanal() : -1,
                               clip != nullptr && !gesamt ? m_zeitachse->gewaehlterClip() : -1);
+    // S101: VISUAL und AUDIO — je eine eigene Kurve nur fuer das Bild bzw. den Ton
+    if (gesamt && m_sitzung != nullptr && m_zeitachse->gewaehlteMasterArt() != MasterArt::Gesamt)
+    {
+        const bool bildZeile = m_zeitachse->gewaehlteMasterArt() == MasterArt::Bild;
+        m_clipZeile->setText((bildZeile ? tr("VISUAL · level curve of the picture only · 0:00.0 – %1")
+                                        : tr("AUDIO · level curve of the sound only · 0:00.0 – %1"))
+                                 .arg(zeitText(clip->endeMs)));
+        m_clipZeile->setToolTip(
+            bildZeile ? tr("A level curve for the picture only, on top of MASTER and the level curves of the "
+                           "clips. The sound is not affected. Right-click the VISUAL row for fades, shapes "
+                           "and the Curve Editor.")
+                      : tr("A level curve for the sound only, on top of MASTER and the level curves of the "
+                           "clips. The picture is not affected — but the visuals see the quieter sound. "
+                           "Right-click the AUDIO row for fades, shapes and the Curve Editor."));
+        return;
+    }
     if (gesamt && m_sitzung != nullptr)
     {
         m_clipZeile->setText(tr("MASTER · level curve of the whole composition · 0:00.0 – %1")

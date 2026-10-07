@@ -548,6 +548,17 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(f.takt(k, 85133, true).playerAngehalten);
         CHECK(p.isPaused());
         CHECK_FALSE(f.takt(k, 85166, true).playerAngehalten);
+
+        // S101: der Audio-Master ist ein weiterer Faktor am Pegel der Quelle — der Visual-Master nicht
+        k.bildKurve.grundpegel = 0.1;
+        (void)f.takt(k, 85200, true);
+        CHECK(e.stream(e.quelle(kZwei)).lautstaerke == doctest::Approx(1.0f));
+        k.tonKurve.grundpegel = 0.5;
+        (void)f.takt(k, 85233, true);
+        CHECK(e.stream(e.quelle(kZwei)).lautstaerke == doctest::Approx(0.5f));
+        k.grundpegel = 0.5;  // MASTER dazu: malgenommen
+        (void)f.takt(k, 85266, true);
+        CHECK(e.stream(e.quelle(kZwei)).lautstaerke == doctest::Approx(0.25f));
     }
 
     TEST_CASE("Die Audio-Kanaele ueberlagern sich — der laufende Song ist der mit dem hoechsten Pegel")

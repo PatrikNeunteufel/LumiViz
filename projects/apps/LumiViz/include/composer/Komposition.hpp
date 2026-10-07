@@ -151,6 +151,34 @@ struct GesamtStueck
     Pegelform form = delle();
 };
 
+/// Die Kurven ueber die ganze Komposition (S101, Entscheid Patrik AM1: a):
+/// die der Komposition selbst wirkt auf Bild UND Ton (Zeile MASTER), dazu je
+/// eine nur fuer das Bild (VISUAL) und nur fuer den Ton (AUDIO).
+enum class MasterArt
+{
+    Gesamt,
+    Bild,
+    Ton
+};
+
+/// Eine Kurve ueber die ganze Komposition: Blenden mit Form, Grundpegel und
+/// Stuecke an fester Zeit — dieselben Teile wie die Kurve der Komposition.
+struct MasterKurve
+{
+    std::int64_t einblendeMs = 0;
+    std::int64_t ausblendeMs = 0;
+    Pegelform einblendeForm = einfacheBlende();
+    Pegelform ausblendeForm = einfacheBlende();
+    double grundpegel = 1.0;
+    std::vector<GesamtStueck> stuecke;
+
+    /// Wirkt sie ueberhaupt — eine Blende, ein Stueck, ein Grundpegel unter voll?
+    [[nodiscard]] bool wirkt() const
+    {
+        return einblendeMs > 0 || ausblendeMs > 0 || grundpegel < 1.0 || !stuecke.empty();
+    }
+};
+
 /// Liefert die Laenge eines Songs in Millisekunden, 0 = unbekannt. Das Modell
 /// kennt keine Audio-Engine — wer laedt, reicht die Auskunft herein.
 using SongLaenge = std::function<std::int64_t(const QString& datei)>;
@@ -195,14 +223,32 @@ struct Komposition
     /// rechnen `blendeBei`, die Zeitachse und der Curve Editor wie an einem
     /// Clip. `herkunft` (wenn gegeben): je Stueck des Clips der Index in
     /// `gesamtStuecke`.
-    [[nodiscard]] Clip kurveAlsClip(std::vector<int>* herkunft = nullptr) const;
+    /// `art`: welche der drei Kurven (Vorgabe: die der Komposition, MASTER).
+    [[nodiscard]] Clip kurveAlsClip(std::vector<int>* herkunft = nullptr,
+                                    MasterArt art = MasterArt::Gesamt) const;
     /// Die Kurve aus einem solchen Clip zuruecknehmen (nach dem Bearbeiten):
     /// Grundpegel, Blenden und Stuecke — die Lage wird zur festen Zeit. Stuecke
     /// hinter dem Ende, die der Clip nicht trug, bleiben.
-    void setzeKurveAusClip(const Clip& clip);
+    void setzeKurveAusClip(const Clip& clip, MasterArt art = MasterArt::Gesamt);
     /// Hat die Komposition ueberhaupt eine Kurve — eine Blende, ein Stueck
     /// oder einen Grundpegel unter voll?
-    [[nodiscard]] bool hatKurve() const;
+    [[nodiscard]] bool hatKurve(MasterArt art = MasterArt::Gesamt) const;
+
+    // --- Visual-Master und Audio-Master (S101, Entscheid Patrik AM1: a) -------
+    /// Je eine weitere Kurve nur fuer das Bild und nur fuer den Ton, mit allem,
+    /// was die Kurve der Komposition hat. Vorgabe: wirkt nicht.
+    MasterKurve bildKurve;
+    MasterKurve tonKurve;
+    /// Die Kurve einer Art als Wert; fuer `Gesamt` aus den Feldern oben.
+    [[nodiscard]] MasterKurve masterKurve(MasterArt art) const;
+    void setzeMasterKurve(MasterArt art, MasterKurve kurve);
+    /// Pegel einer der drei Kurven allein an der Stelle, 0…1.
+    [[nodiscard]] double masterBei(MasterArt art, std::int64_t stelleMs) const;
+    /// Was auf das Bild bzw. den Ton wirkt: die Kurve der Komposition MAL die
+    /// des Bilds bzw. des Tons — so, wie ein Clip seinen Pegel mit der Kurve
+    /// der Komposition malnimmt.
+    [[nodiscard]] double bildPegelBei(std::int64_t stelleMs) const;
+    [[nodiscard]] double tonPegelBei(std::int64_t stelleMs) const;
 
     /// Die Ueberlappung, die wirkt: hoechstens die halbe Laenge — die zwei
     /// Fenster beruehren sich dann, sie kreuzen sich nie.

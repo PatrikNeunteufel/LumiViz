@@ -200,27 +200,76 @@ std::int64_t Komposition::endStelleZu(std::int64_t stelleMs) const
 
 double Komposition::blendeBei(std::int64_t stelleMs) const
 {
-    if (!hatKurve() || laenge() <= 0) return 1.0;
-    return std::clamp(kurveAlsClip().pegelBei(stelleMs), 0.0, 1.0);
+    return masterBei(MasterArt::Gesamt, stelleMs);
 }
 
-bool Komposition::hatKurve() const
+double Komposition::masterBei(MasterArt art, std::int64_t stelleMs) const
 {
+    if (!hatKurve(art) || laenge() <= 0) return 1.0;
+    return std::clamp(kurveAlsClip(nullptr, art).pegelBei(stelleMs), 0.0, 1.0);
+}
+
+double Komposition::bildPegelBei(std::int64_t stelleMs) const
+{
+    return masterBei(MasterArt::Gesamt, stelleMs) * masterBei(MasterArt::Bild, stelleMs);
+}
+
+double Komposition::tonPegelBei(std::int64_t stelleMs) const
+{
+    return masterBei(MasterArt::Gesamt, stelleMs) * masterBei(MasterArt::Ton, stelleMs);
+}
+
+MasterKurve Komposition::masterKurve(MasterArt art) const
+{
+    switch (art)
+    {
+        case MasterArt::Bild: return bildKurve;
+        case MasterArt::Ton: return tonKurve;
+        case MasterArt::Gesamt: break;
+    }
+    return {einblendeMs, ausblendeMs, einblendeForm, ausblendeForm, grundpegel, gesamtStuecke};
+}
+
+void Komposition::setzeMasterKurve(MasterArt art, MasterKurve kurve)
+{
+    switch (art)
+    {
+        case MasterArt::Bild: bildKurve = std::move(kurve); return;
+        case MasterArt::Ton: tonKurve = std::move(kurve); return;
+        case MasterArt::Gesamt: break;
+    }
+    einblendeMs = kurve.einblendeMs;
+    ausblendeMs = kurve.ausblendeMs;
+    einblendeForm = std::move(kurve.einblendeForm);
+    ausblendeForm = std::move(kurve.ausblendeForm);
+    grundpegel = kurve.grundpegel;
+    gesamtStuecke = std::move(kurve.stuecke);
+}
+
+bool Komposition::hatKurve(MasterArt art) const
+{
+    switch (art)
+    {
+        case MasterArt::Bild: return bildKurve.wirkt();
+        case MasterArt::Ton: return tonKurve.wirkt();
+        case MasterArt::Gesamt: break;
+    }
     return einblendeMs > 0 || ausblendeMs > 0 || grundpegel < 1.0 || !gesamtStuecke.empty();
 }
 
-Clip Komposition::kurveAlsClip(std::vector<int>* herkunft) const
+Clip Komposition::kurveAlsClip(std::vector<int>* herkunft, MasterArt art) const
 {
+    const MasterKurve kurve = masterKurve(art);
     Clip c;
     c.startMs = 0;
     c.endeMs = laenge();
-    c.grundpegel = grundpegel;
-    c.ein = {einblendeMs, einblendeForm};
-    c.aus = {ausblendeMs, ausblendeForm};
+    c.grundpegel = kurve.grundpegel;
+    c.ein = {kurve.einblendeMs, kurve.einblendeForm};
+    c.aus = {kurve.ausblendeMs, kurve.ausblendeForm};
     if (herkunft != nullptr) herkunft->clear();
-    for (std::size_t i = 0; i < gesamtStuecke.size(); ++i)
+    for (std::size_t i = 0; i < kurve.stuecke.size(); ++i)
     {
-        const GesamtStueck& s = gesamtStuecke[i];
+        const GesamtStueck& s = kurve.stuecke[i];
         // hinter dem Ende wirkt ein Stueck nicht (Entscheid Patrik S100, F7-1 a)
         if (c.endeMs <= 0 || s.mitteMs >= c.endeMs) continue;
         ClipStueck t;
@@ -234,17 +283,18 @@ Clip Komposition::kurveAlsClip(std::vector<int>* herkunft) const
     return c;
 }
 
-void Komposition::setzeKurveAusClip(const Clip& clip)
+void Komposition::setzeKurveAusClip(const Clip& clip, MasterArt art)
 {
     const std::int64_t ende = laenge();
-    grundpegel = std::clamp(clip.grundpegel, 0.0, 1.0);
-    einblendeMs = std::max<std::int64_t>(0, clip.ein.dauerMs);
-    einblendeForm = clip.ein.form;
-    ausblendeMs = std::max<std::int64_t>(0, clip.aus.dauerMs);
-    ausblendeForm = clip.aus.form;
+    MasterKurve kurve = masterKurve(art);
+    kurve.grundpegel = std::clamp(clip.grundpegel, 0.0, 1.0);
+    kurve.einblendeMs = std::max<std::int64_t>(0, clip.ein.dauerMs);
+    kurve.einblendeForm = clip.ein.form;
+    kurve.ausblendeMs = std::max<std::int64_t>(0, clip.aus.dauerMs);
+    kurve.ausblendeForm = clip.aus.form;
     // was hinter dem Ende liegt, trug der Clip nicht — es bleibt
     std::vector<GesamtStueck> neu;
-    for (const GesamtStueck& s : gesamtStuecke)
+    for (const GesamtStueck& s : kurve.stuecke)
         if (ende <= 0 || s.mitteMs >= ende) neu.push_back(s);
     if (ende > 0)
     {
@@ -260,7 +310,8 @@ void Komposition::setzeKurveAusClip(const Clip& clip)
             neu.push_back(std::move(s));
         }
     }
-    gesamtStuecke = std::move(neu);
+    kurve.stuecke = std::move(neu);
+    setzeMasterKurve(art, std::move(kurve));
 }
 
 std::int32_t reihenFarbe(KanalArt art, int nr)
@@ -387,6 +438,25 @@ void Komposition::richte(QStringList* bericht)
         s.weiteMs = std::max<std::int64_t>(0, s.weiteMs);
         s.form.art = FormArt::Stueck;
         s.form.richte();
+    }
+    // Visual-Master und Audio-Master (S101): dieselben Regeln
+    for (MasterKurve* kurve : {&bildKurve, &tonKurve})
+    {
+        kurve->einblendeMs = std::max<std::int64_t>(0, kurve->einblendeMs);
+        kurve->ausblendeMs = std::max<std::int64_t>(0, kurve->ausblendeMs);
+        kurve->grundpegel = std::clamp(kurve->grundpegel, 0.0, 1.0);
+        for (Pegelform* f : {&kurve->einblendeForm, &kurve->ausblendeForm})
+        {
+            f->art = FormArt::Blende;
+            f->richte();
+        }
+        for (GesamtStueck& s : kurve->stuecke)
+        {
+            s.mitteMs = std::max<std::int64_t>(0, s.mitteMs);
+            s.weiteMs = std::max<std::int64_t>(0, s.weiteMs);
+            s.form.art = FormArt::Stueck;
+            s.form.richte();
+        }
     }
 }
 
@@ -536,6 +606,39 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
         if (!stuecke.isEmpty()) pegel.insert(QStringLiteral("shapes"), stuecke);
         wurzel.insert(QStringLiteral("level"), pegel);
     }
+    // Visual-Master und Audio-Master (S101): je ein Objekt, nur wenn die Kurve
+    // wirkt — eine Komposition ohne sie sieht in der Datei aus wie bisher
+    const auto master = [&wurzel](const QString& schluessel, const MasterKurve& kurve) {
+        if (!kurve.wirkt()) return;
+        QJsonObject o;
+        if (kurve.einblendeMs > 0)
+        {
+            o.insert(QStringLiteral("in"), static_cast<double>(kurve.einblendeMs));
+            if (!gleich(kurve.einblendeForm, einfacheBlende()))
+                o.insert(QStringLiteral("inShape"), formAlsJson(kurve.einblendeForm));
+        }
+        if (kurve.ausblendeMs > 0)
+        {
+            o.insert(QStringLiteral("out"), static_cast<double>(kurve.ausblendeMs));
+            if (!gleich(kurve.ausblendeForm, einfacheBlende()))
+                o.insert(QStringLiteral("outShape"), formAlsJson(kurve.ausblendeForm));
+        }
+        if (kurve.grundpegel < 1.0) o.insert(QStringLiteral("base"), kurve.grundpegel);
+        QJsonArray stuecke;
+        for (const GesamtStueck& s : kurve.stuecke)
+        {
+            QJsonObject so;
+            so.insert(QStringLiteral("at"), static_cast<double>(s.mitteMs));
+            so.insert(QStringLiteral("width"), static_cast<double>(s.weiteMs));
+            so.insert(QStringLiteral("flipped"), s.gekippt);
+            so.insert(QStringLiteral("shape"), formAlsJson(s.form));
+            stuecke.append(so);
+        }
+        if (!stuecke.isEmpty()) o.insert(QStringLiteral("shapes"), stuecke);
+        wurzel.insert(schluessel, o);
+    };
+    master(QStringLiteral("visualMaster"), komposition.bildKurve);
+    master(QStringLiteral("audioMaster"), komposition.tonKurve);
     wurzel.insert(QStringLiteral("channels"), kanaele);
     return wurzel;
 }
@@ -571,6 +674,30 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
         if (!formAusJson(so.value(QStringLiteral("shape")).toObject(), s.form)) s.form = delle();
         neu.gesamtStuecke.push_back(std::move(s));
     }
+    // Visual-Master und Audio-Master (S101); ohne Objekt (Dateien bis S100)
+    // bleibt die Vorgabe: wirkt nicht
+    const auto master = [&wurzel](const QString& schluessel, MasterKurve& kurve) {
+        const QJsonObject o = wurzel.value(schluessel).toObject();
+        kurve.einblendeMs = static_cast<std::int64_t>(o.value(QStringLiteral("in")).toDouble());
+        kurve.ausblendeMs = static_cast<std::int64_t>(o.value(QStringLiteral("out")).toDouble());
+        if (!formAusJson(o.value(QStringLiteral("inShape")).toObject(), kurve.einblendeForm))
+            kurve.einblendeForm = einfacheBlende();
+        if (!formAusJson(o.value(QStringLiteral("outShape")).toObject(), kurve.ausblendeForm))
+            kurve.ausblendeForm = einfacheBlende();
+        kurve.grundpegel = o.value(QStringLiteral("base")).toDouble(1.0);
+        for (const QJsonValue& sv : o.value(QStringLiteral("shapes")).toArray())
+        {
+            const QJsonObject so = sv.toObject();
+            GesamtStueck s;
+            s.mitteMs = static_cast<std::int64_t>(so.value(QStringLiteral("at")).toDouble());
+            s.weiteMs = static_cast<std::int64_t>(so.value(QStringLiteral("width")).toDouble());
+            s.gekippt = so.value(QStringLiteral("flipped")).toBool(false);
+            if (!formAusJson(so.value(QStringLiteral("shape")).toObject(), s.form)) s.form = delle();
+            kurve.stuecke.push_back(std::move(s));
+        }
+    };
+    master(QStringLiteral("visualMaster"), neu.bildKurve);
+    master(QStringLiteral("audioMaster"), neu.tonKurve);
     const QJsonArray kanaele = wurzel.value(QStringLiteral("channels")).toArray();
     for (const QJsonValue& kv : kanaele)
     {

@@ -279,9 +279,9 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
                     const std::int64_t vornIm = stelleMs - clip.startMs;
                     const std::int64_t hintenIm = zweiteMs - clip.startMs;
                     const double pegelVorn =
-                        vorn ? clip.pegelBei(vornIm) * m_komposition.blendeBei(stelleMs) : 0.0;
+                        vorn ? clip.pegelBei(vornIm) * m_komposition.bildPegelBei(stelleMs) : 0.0;
                     const double pegelHinten =
-                        hinten ? clip.pegelBei(hintenIm) * m_komposition.blendeBei(zweiteMs) : 0.0;
+                        hinten ? clip.pegelBei(hintenIm) * m_komposition.bildPegelBei(zweiteMs) : 0.0;
                     // Visuals overlap themselves (Haken der Komposition): im
                     // Fenster zwei Exemplare — das alte spielt das Ende, ein
                     // frisches darueber den Anfang, jedes mit seinem Pegel.

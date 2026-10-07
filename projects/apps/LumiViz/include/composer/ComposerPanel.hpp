@@ -228,11 +228,15 @@ public:
     /// Die Zeile MASTER ist niedriger als ein Kanal: 60 % (Urteil Patrik,
     /// Sichttest S100 M17 — gilt auch fuer kuenftige Master-Zeilen).
     static constexpr int kMasterHoehe = kZeilenHoehe * 60 / 100;
-    static constexpr int kKanaeleOben = kLinealHoehe + kMasterHoehe;
-    /// Oberkante und Hoehe einer Zeile; -1 = die Zeile MASTER unter dem Lineal.
+    /// Drei Master-Zeilen (S101, Entscheid Patrik AM1: a): MASTER, VISUAL, AUDIO.
+    static constexpr int kMasterZeilen = 3;
+    static constexpr int kKanaeleOben = kLinealHoehe + kMasterZeilen * kMasterHoehe;
+    /// Oberkante und Hoehe einer Zeile; negativ = eine Master-Zeile unter dem
+    /// Lineal (-3 MASTER, -2 VISUAL, -1 AUDIO).
     [[nodiscard]] static constexpr int zeileOben(int zeile)
     {
-        return zeile < 0 ? kLinealHoehe : kKanaeleOben + zeile * kZeilenHoehe;
+        return zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * kMasterHoehe
+                         : kKanaeleOben + zeile * kZeilenHoehe;
     }
     [[nodiscard]] static constexpr int zeileHoch(int zeile)
     {
@@ -247,8 +251,31 @@ public:
     // `kMaster`, ihr Clip 0 — ueberall, wo die Achse Kanal und Clip nimmt
     // (`blendenGriff`, `stueckGriff`, `oeffneKurve`, `stueckHinzu` …).
     // Verschieben, Kanten, Kopieren und Loeschen gibt es an ihr nicht.
+    //
+    // S101 (Entscheid Patrik AM1: a): darunter zwei weitere solche Zeilen,
+    // VISUAL (nur das Bild) und AUDIO (nur der Ton) — dieselben Wege, eigene
+    // „Kanaele". Das feste Ende zieht man nur an der Zeile MASTER.
     static constexpr int kMaster = -2;
-    [[nodiscard]] bool gesamtGewaehlt() const { return m_kanal == kMaster; }
+    static constexpr int kMasterBild = -3;
+    static constexpr int kMasterTon = -4;
+    [[nodiscard]] static constexpr bool istMaster(int kanal)
+    {
+        return kanal == kMaster || kanal == kMasterBild || kanal == kMasterTon;
+    }
+    [[nodiscard]] static constexpr MasterArt masterArt(int kanal)
+    {
+        return kanal == kMasterBild ? MasterArt::Bild
+               : kanal == kMasterTon ? MasterArt::Ton
+                                     : MasterArt::Gesamt;
+    }
+    /// Der „Kanal" einer Master-Zeile (-3, -2, -1).
+    [[nodiscard]] static constexpr int masterVonZeile(int zeile)
+    {
+        return zeile == -2 ? kMasterBild : zeile == -1 ? kMasterTon : kMaster;
+    }
+    /// Ist eine der drei Master-Zeilen angeklickt — und welche?
+    [[nodiscard]] bool gesamtGewaehlt() const { return istMaster(m_kanal); }
+    [[nodiscard]] MasterArt gewaehlteMasterArt() const { return masterArt(m_kanal); }
     /// Die Kurve der Komposition anklicken (wie ein Klick in ihre Zeile).
     void waehleGesamt();
 
@@ -293,7 +320,11 @@ private:
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
     /// Die Zeile eines Kanals; `kMaster` liegt in der Zeile -1, unter dem Lineal.
-    [[nodiscard]] static int zeileVon(int kanal) { return kanal == kMaster ? -1 : kanal; }
+    /// S101: MASTER in -3, VISUAL in -2, AUDIO in -1.
+    [[nodiscard]] static int zeileVon(int kanal)
+    {
+        return kanal == kMaster ? -3 : kanal == kMasterBild ? -2 : kanal == kMasterTon ? -1 : kanal;
+    }
     /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
     /// `kMaster` die Kurve der Komposition als Clip — sie wird dafuer in
     /// `ablage` gelegt.

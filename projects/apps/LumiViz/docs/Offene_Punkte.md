@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.109.0
+> **Version:** 1.110.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2255,7 +2255,31 @@ Idee Preset-Warmup/Pre-Roll.
     **Nachtest:** Composer on, im Panel Karaoke ein Preset laden und ein Feld
     verstellen — beides sofort im Bild; **Urteil:** ruckelt es beim Ziehen
     eines Reglers, reißt der Trail ab? (Nicht gemessen.)
-  - **Wunsch Patrik S100 (am Ende der Sitzung, nicht begonnen): Audio-Master
+  - **Audio-Master und Visual-Master, Schritt 1 gebaut, im Programm
+    ungesehen (S101, Entscheid Patrik AM1: a „um beide Optionen
+    freizuhalten"):** unter MASTER die Zeilen **VISUAL** und **AUDIO**, je
+    eine volle Kurve wie MASTER (Blenden mit Form, Grundpegel, Stücke an
+    fester Zeit, Curve Editor, Undo, Datei `.lvcomp`: `visualMaster`,
+    `audioMaster`). Malgenommen: Bild = Clip × MASTER × VISUAL, Ton = Clip ×
+    MASTER × AUDIO (`Komposition::bildPegelBei` / `tonPegelBei`). **Von mir
+    gesetzt (Urteile im Sichttest):** Namen und Reihenfolge der drei Zeilen;
+    immer sichtbar, nicht einklappbar (63 Pixel); VISUAL mit kühlem, AUDIO
+    mit warmem Grau; die Felder *Fade in* / *Fade out* gehören weiter nur
+    MASTER; das feste Ende zieht man nur an MASTER; die Texte des Curve
+    Editors sprechen weiter vom Clip. **Nicht geprüft:** ob die Griffe in
+    den 21 Pixel hohen Zeilen gut zu greifen sind.
+  - 🟡 **Schritt 2, offen — Mute-Knopf mit Mute-Profilen (Vorgabe Patrik
+    S101):** Durchsagen sind meist spontan, also ein Knopf „Mute" (ein Klick
+    auf die Zeile AUDIO wäre riskant). Mute-Profile, zu speichern und zu
+    laden, bestimmen: die Kurve des Ausblendens, die Kurve des Einblendens
+    und den Pegel, auf den abgesenkt wird (0 bis 100 % — also vielleicht
+    gar nicht ganz stumm). **Vor dem Bau einzeln vorlegen:** nur Ton oder
+    auch Bild; Dauer der zwei Blenden als Teil des Profils; wo der Knopf
+    sitzt und ob es ein Tastenkürzel gibt; ob Mute auch ohne Composer wirkt
+    (normaler Player); ob die Visuals die Absenkung sehen sollen (heute
+    sähen sie sie — der Pegel sitzt an den Quellen des Mixers); wo die
+    Profile liegen und welches gilt.
+  - **Wunsch Patrik S100 (ursprünglicher Wortlaut): Audio-Master
     und Visual-Master** neben der Zeile MASTER — je eine eigene Pegelkurve
     nur für den Ton und nur für das Bild, „da kann man z. B. einfach die
     Musik für einen Moment stummschalten für z. B. Mikro-Durchsagen". Heute
@@ -4398,6 +4422,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.110.0 | 2026-10-07 | Session 101 — **Composer:** Audio-Master und Visual-Master, Schritt 1 gebaut (Entscheid Patrik AM1: a — zwei volle Kurven, Zeilen VISUAL und AUDIO; Konzept 0.57.0, Benutzerhandbuch 1.108.0), im Programm ungesehen; Schritt 2 offen: Mute-Knopf mit Mute-Profilen (Vorgabe Patrik: Ausblend-Kurve, Einblend-Kurve, Zielpegel; speichern und laden), Fragen dazu eingetragen |
 | 1.109.0 | 2026-10-07 | Session 101 — **Composer:** Sichttest S100, erster Teil ausgewertet (23 bestanden, 1 mit Bemerkung, 0 durchgefallen, 46 offen); Urteil M17 umgesetzt — die Zeile MASTER ist 60 % so hoch wie ein Kanal (Konzept 0.56.0), im Programm ungesehen; Vorbehalt: während des Tests liefen Builds und Testläufe |
 | 1.108.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`, Schritt 2:** eine laufende App je Exe-Datei (Entscheid Patrik X1b: a, mit `--new-instance`; `core/EinzelInstanz`, Benutzerhandbuch 1.107.0 §17, Konzept 0.55.0 — N8 zweite Stelle), im Programm ungesehen; Sichttest in sechs Punkten eingetragen; offen Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.107.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`:** Entscheid Patrik X1: a (eine Instanz, die Datei geht an die laufende App); Schritt 1 gebaut — die Datei als Argument beim Start (`UI/StartDatei.hpp`, Naht N8 wächst um die `.lvcomp`; Konzept 0.54.0), im Programm ungesehen; offen die eine Instanz (Entscheid X1b), Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
