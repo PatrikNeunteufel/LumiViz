@@ -723,6 +723,21 @@ QWidget* SettingsPanel::createPanelsTab()
         connect(clipLaenge, QOverload<int>::of(&QSpinBox::valueChanged), this,
                 [](int sekunden) { Sitzung::setNeuerClipSekunden(sekunden); });
         layout->addRow(tr("New clip length:"), clipLaenge);
+
+        // Mitlaufen der Zeitachse mit der Abspielmarke (S102, Entscheid Patrik ZO6)
+        auto* mitlaufen = new QComboBox(widget);
+        mitlaufen->setObjectName(QStringLiteral("composerScrollWithPlayheadMode"));
+        mitlaufen->addItem(tr("Smooth"));
+        mitlaufen->addItem(tr("By page"));
+        mitlaufen->setCurrentIndex(Sitzung::mitlaufenSeitenweise() ? 1 : 0);
+        mitlaufen->setToolTip(
+            tr("How the Composer timeline follows the playhead while a composition plays and the "
+               "time is zoomed in (switch \"Scroll with playhead\" in the Composer panel).\n\n"
+               "Smooth: the playhead stays in the middle and the clips move under it.\n\n"
+               "By page: the view stands still until the playhead leaves it, then turns one page."));
+        connect(mitlaufen, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+                [](int index) { Sitzung::setMitlaufenSeitenweise(index == 1); });
+        layout->addRow(tr("Scroll with playhead:"), mitlaufen);
     }
 
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren

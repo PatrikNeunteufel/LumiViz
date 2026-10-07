@@ -22,6 +22,7 @@
 
 #include "PappTon.hpp"
 #include "TestFenster.hpp"
+#include "UI/panels/SettingsPanel.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/ComposerPanel.hpp"
@@ -2872,5 +2873,44 @@ TEST_SUITE("ComposerPanel")
         auto* schalter2 = zweites.findChild<QCheckBox*>(QStringLiteral("composerScrollWithPlayhead"));
         REQUIRE(schalter2 != nullptr);
         CHECK_FALSE(schalter2->isChecked());
+    }
+
+    // Naht N9 waechst (S102, Entscheid Patrik ZO6): die Art des Mitlaufens
+    // steht in Settings, im Block des Composers.
+    TEST_CASE("S102 Naht N9: Settings — Scroll with playhead, Smooth oder By page")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        ServiceContainer dienste;
+        {
+            SettingsPanel settings(dienste);
+            auto* wahl = settings.findChild<QComboBox*>(QStringLiteral("composerScrollWithPlayheadMode"));
+            REQUIRE(wahl != nullptr);
+            REQUIRE(wahl->count() == 2);
+            CHECK(wahl->itemText(0) == QStringLiteral("Smooth"));
+            CHECK(wahl->itemText(1) == QStringLiteral("By page"));
+            // Vorgabe: stetig
+            CHECK(wahl->currentIndex() == 0);
+            CHECK_FALSE(Sitzung::mitlaufenSeitenweise());
+            wahl->setCurrentIndex(1);
+            CHECK(Sitzung::mitlaufenSeitenweise());
+            // die Nachbarn im selben Block bleiben, wie sie waren
+            CHECK(settings.findChild<QWidget*>(QStringLiteral("composerNewClipSeconds")) != nullptr);
+            CHECK(settings.findChild<QWidget*>(QStringLiteral("composerAtEnd")) != nullptr);
+            CHECK(Sitzung::neuerClipMs() == 20000);
+        }
+        {
+            // ein neu geoeffnetes Settings-Panel zeigt die Wahl
+            SettingsPanel settings(dienste);
+            auto* wahl = settings.findChild<QComboBox*>(QStringLiteral("composerScrollWithPlayheadMode"));
+            REQUIRE(wahl != nullptr);
+            CHECK(wahl->currentIndex() == 1);
+            wahl->setCurrentIndex(0);
+            CHECK_FALSE(Sitzung::mitlaufenSeitenweise());
+        }
     }
 }
