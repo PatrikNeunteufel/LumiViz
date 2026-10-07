@@ -24,7 +24,32 @@ Windows).
 | `.lvcomp` (Komposition des Composers, S100) | **noch keins** — vorgesehen `lumiviz_lvcomp.ico`; das Aussehen ist nicht entschieden (vier Entwürfe, darunter der Fächer) | — | noch nicht; entschieden (Patrik S100): Effect Browser und Panel Composer |
 | **die App selbst** (`LumiViz.exe`) | `lumiviz.ico` — **noch nicht eingebaut** (s. u. „Das Icon der App") | Handarbeit | Fenster und Taskleiste zeigen das Standard-Icon |
 
-**Diese Tabelle ist die Liste der zugewiesenen Icons** (Stand S100, 2026-10-07).
+### Die Icons im Bild
+
+Vorschaubilder (64 px) aller `.ico` dieses Ordners. Sie liegen einmal, unter
+`projects/apps/LumiViz/docs/bilder/handbuch/icons/` — das Benutzerhandbuch (§16)
+zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
+`python asset/img/logo/icons/build_previews.py`.
+
+| Bild | Datei | Zugewiesen |
+|:---:|---|---|
+| ![lumiviz](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz.png) | `lumiviz.ico` | `.lvfx`; vorgesehen auch für die App |
+| ![lumiviz_lvfx2](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvfx2.png) | `lumiviz_lvfx2.ico` „Stapel" | `.lvfx2` |
+| ![lumiviz_karaoke](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_karaoke.png) | `lumiviz_karaoke.ico` | `.lvkar` |
+| ![lumiviz_trail](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_trail.png) | `lumiviz_trail.ico` | `.lvtrail` |
+| ![lumiviz_faecher](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_faecher.png) | `lumiviz_faecher.ico` „Fächer" | Reserve — Grundlage für `.lvcomp` (Entscheid Patrik S100: der Fächer; ob mit Zeitstrahl, ist offen) |
+| ![lumiviz_marke](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_marke.png) | `lumiviz_marke.ico` „Marke" | Reserve |
+| ![avs](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/avs.png) | `avs.ico` | `.avs` |
+| ![milkdrop](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/milkdrop.png) | `milkdrop.ico` | `.milk`, `.milk2` |
+| ![audio_mp3](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio_mp3.png) | `audio_mp3.ico` | `.mp3` |
+| ![audio_wav](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio_wav.png) | `audio_wav.ico` | `.wav`, `.aiff` |
+| ![audio_flac](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio_flac.png) | `audio_flac.ico` | `.flac` u. ä. |
+| ![audio_ogg](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio_ogg.png) | `audio_ogg.ico` | `.ogg`, `.opus` |
+| ![audio_m4a](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio_m4a.png) | `audio_m4a.ico` | `.m4a`, `.aac` |
+| ![audio](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/audio.png) | `audio.ico` | übrige Audioformate |
+| ![lyrics_lrc](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lyrics_lrc.png) | `lyrics_lrc.ico` | `.lrc` |
+
+**Diese Tabellen sind die Liste der zugewiesenen Icons** (Stand S100, 2026-10-07).
 Ohne eigenes Icon sind heute: Kurven-Presets des Composers (`.lvfade`,
 `.lvshape`), Farbverläufe (`.grad`), Knoten-Voreinstellungen (`.json`),
 Playlists (`.m3u8`).

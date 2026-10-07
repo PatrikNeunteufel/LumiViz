@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.104.0
+> **Version:** 1.105.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -32,6 +32,7 @@ Konfigurations-Panels steht im
 13. [Video & Kamera als Quelle](#13-video--kamera-als-quelle)
 14. [Stilfilter (Pixel Filter)](#14-stilfilter-pixel-filter)
 15. [Composer](#15-composer)
+16. [Dateitypen und ihre Icons](#16-dateitypen-und-ihre-icons)
 
 ---
 
@@ -2208,10 +2209,49 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 ---
 
+## 16. Dateitypen und ihre Icons
+
+LumiViz geht mit diesen Dateien um. Die Icons erscheinen **in der App** — im
+Effect Browser, im Panel Effect Chain und im Audio Browser. Im Windows-Explorer
+tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
+
+| Icon | Endung | Was es ist | Wo in LumiViz |
+|:---:|---|---|---|
+| ![lvfx](bilder/handbuch/icons/lumiviz.png) | `.lvfx` | LumiViz-Preset: eine Effektkette | Effect Browser |
+| ![lvfx2](bilder/handbuch/icons/lumiviz_lvfx2.png) | `.lvfx2` | Preset-Stapel: eine Kette mit Host-Gruppe | Effect Browser |
+| ![lvkar](bilder/handbuch/icons/lumiviz_karaoke.png) | `.lvkar` | Karaoke-Preset: der Stand der Karaoke-Ebene | Effect Browser |
+| ![lvtrail](bilder/handbuch/icons/lumiviz_trail.png) | `.lvtrail` | Trail-Preset der Karaoke-Ebene | Effect Chain, an jeder Effect List mit einem Lyrics Trail |
+| — | `.lvcomp` | Komposition des Composers (§15) | Icon noch nicht vergeben |
+| ![avs](bilder/handbuch/icons/avs.png) | `.avs` | AVS-Preset (Winamp) | Effect Browser |
+| ![milk](bilder/handbuch/icons/milkdrop.png) | `.milk`, `.milk2` | MilkDrop-Preset | Effect Browser |
+| ![mp3](bilder/handbuch/icons/audio_mp3.png) | `.mp3` | Musik | Audio Browser |
+| ![wav](bilder/handbuch/icons/audio_wav.png) | `.wav`, `.aiff` | Musik | Audio Browser |
+| ![flac](bilder/handbuch/icons/audio_flac.png) | `.flac` u. ä. | Musik | Audio Browser |
+| ![ogg](bilder/handbuch/icons/audio_ogg.png) | `.ogg`, `.opus` | Musik | Audio Browser |
+| ![m4a](bilder/handbuch/icons/audio_m4a.png) | `.m4a`, `.aac` | Musik | Audio Browser |
+| ![audio](bilder/handbuch/icons/audio.png) | übrige Audioformate | Musik | Audio Browser |
+| ![lrc](bilder/handbuch/icons/lyrics_lrc.png) | `.lrc` | Songtext mit Zeiten | noch nirgends als Icon |
+
+Ohne eigenes Icon sind die Kurven-Presets des Composers (`.lvfade`,
+`.lvshape`), Farbverläufe (`.grad`) und Playlists (`.m3u8`).
+
+**Im Windows-Explorer:** LumiViz trägt von sich aus nichts in Windows ein. Im
+Projektordner von LumiViz liegt dafür das Skript
+`asset\img\logo\icons\register_file_icons.ps1` (neben den Icon-Dateien). Ohne Schalter zeigt es nur, was
+es täte; mit `-Apply` trägt es die Icons der eigenen Endungen (`.lv…`) für den
+angemeldeten Benutzer ein, mit `-Apply -Foreign` auch die von `.avs`, `.milk`
+und `.lrc`, mit `-Remove` nimmt es seine Einträge wieder heraus. Audioformate
+fasst es nie an, und eine Endung, die schon einem anderen Programm gehört,
+lässt es in Ruhe. Es trägt nur das **Icon** ein: ein Doppelklick im Explorer
+öffnet die Datei noch nicht in LumiViz.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.105.0 | 2026-10-07 | Session 100. NEU **§16 Dateitypen und ihre Icons**: Tabelle aller Dateitypen mit ihrem Icon als Bild, wo sie in LumiViz erscheinen, und das Skript zum Eintragen der Icons im Windows-Explorer |
 | 1.104.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle nach Art ordnen**: Rechtsklick → *Sort channels* → *Visuals first* / *Audio first*; innerhalb der Art bleibt die Reihenfolge, das Bild ändert sich nicht |
 | 1.103.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle verschieben**: am Kanalnamen ziehen oder Rechtsklick → *Move channel up* / *Move channel down*; die Reihenfolge der Bild-Kanäle ist die Mischreihenfolge (der oberste liegt im Bild zuunterst) |
 | 1.102.0 | 2026-10-07 | Session 100. §15 Composer, Zeile MASTER NEU **Das Ende ziehen**: bei *Fixed end* lässt sich die rechte Kante des Balkens ziehen |
