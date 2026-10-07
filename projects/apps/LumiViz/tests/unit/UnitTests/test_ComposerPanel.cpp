@@ -47,7 +47,11 @@
 #include <QUrl>
 #include <QWheelEvent>
 #include <QElapsedTimer>
+#include <QHelpEvent>
 #include <QLabel>
+#include <QMainWindow>
+#include <QMenuBar>
+#include <QToolTip>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QScrollBar>
@@ -2233,6 +2237,275 @@ TEST_SUITE("ComposerPanel")
             achse->zoomeZeit(4.0, achse->xVon(8000));
             achse->zeigeZeitGanz();
             CHECK(achse->zeitGanz());
+        }
+    }
+
+    // S102, Entscheide Patrik ZO1: a (Alt+Rad die Zeilenhoehe, Ctrl+Alt+Rad
+    // beides), ZO2: a (Master-Zeilen immer 60 %), ZO3: a (50 % bis 300 %, in
+    // niedrigen Zeilen keine Punkte der Kurve), ZO5: a (um den Mauszeiger).
+    TEST_CASE("S102 Zeitachse: Hoehen-Zoom — Alt+Rad, Master-Zeilen 60 %, Grenzen, niedrige Zeilen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        for (int i = 0; i < 8; ++i)
+        {
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH%1").arg(i + 1);
+            VisualClip c = clip(QStringLiteral("x.lvfx"), 2000, 22000);
+            c.ein.dauerMs = 6000;  // eine Einblendung: ihr Griff sitzt oben im Clip
+            kanal.clips.push_back(c);
+            k.kanaele.push_back(kanal);
+        }
+
+        auto* achse = new Zeitachse;
+        ZeitachsenRahmen rahmen(achse);
+        achse->setKomposition(k, true);
+        rahmen.resize(700, 300);
+        testfenster::platziere(rahmen);
+        rahmen.show();
+        // acht Kanaele passen nicht in 300 Pixel: der Rollbalken erscheint und
+        // nimmt der Achse Breite — erst danach steht ihr Massstab fest
+        REQUIRE(warte([&] { return rahmen.isVisible() && achse->height() == 300 && achse->width() < 700; }));
+
+        const auto rad = [&](QPoint grad, Qt::KeyboardModifiers tasten, QPoint wo) {
+            const QPointF ort(wo);
+            QWheelEvent ereignis(ort, achse->mapToGlobal(ort), QPoint(), grad, Qt::NoButton, tasten,
+                                 Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(achse, &ereignis);
+        };
+        int gemeldet = 0;
+        QObject::connect(achse, &Zeitachse::zeilenProzentGeaendert, achse, [&gemeldet](int p) { gemeldet = p; });
+
+        SUBCASE("Normalhoehe: wie bis S101")
+        {
+            CHECK(achse->zeilenProzent() == 100);
+            CHECK(achse->kanalHoch() == Zeitachse::kZeilenHoehe);
+            CHECK(achse->masterHoch() == Zeitachse::kMasterHoehe);
+            CHECK(achse->zeileOben(0) == Zeitachse::kKanaeleOben);
+            CHECK(achse->kurvenpunkteZiehbar());
+        }
+
+        SUBCASE("die Grenzen 50 % und 300 %, die Master-Zeilen immer 60 % eines Kanals")
+        {
+            achse->setZeilenProzent(10);
+            CHECK(achse->zeilenProzent() == 50);
+            CHECK(gemeldet == 50);
+            CHECK(achse->kanalHoch() == 18);
+            CHECK(achse->masterHoch() == 18 * 60 / 100);
+            CHECK(achse->inhaltHoehe() ==
+                  Zeitachse::kLinealHoehe + 4 * achse->masterHoch() + 8 * achse->kanalHoch() + 4);
+            CHECK(achse->rollYMax() == 0);  // jetzt passen alle acht Kanaele ins Fenster
+            CHECK(achse->kanalBei(achse->yVonZeile(7)) == 7);
+            CHECK_FALSE(achse->grab().isNull());
+            // `LUMIVIZ_COMPOSER_ZOOM_BILD=<datei.png>` legt hier `<datei>_50.png` und `<datei>_300.png` ab
+            const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_ZOOM_BILD");
+            const auto ablegen = [&](const QString& zusatz) {
+                if (bild.isEmpty()) return;
+                QCoreApplication::processEvents();
+                CHECK(rahmen.grab().save(QString(bild).replace(QStringLiteral(".png"), zusatz + QStringLiteral(".png"))));
+            };
+            ablegen(QStringLiteral("_50"));
+
+            achse->setZeilenProzent(999);
+            CHECK(achse->zeilenProzent() == 300);
+            CHECK(achse->kanalHoch() == 108);
+            CHECK(achse->masterHoch() == 108 * 60 / 100);
+            CHECK(achse->rollYMax() == achse->inhaltHoehe() - 300);
+            CHECK_FALSE(achse->grab().isNull());
+            ablegen(QStringLiteral("_300"));
+        }
+
+        SUBCASE("Alt+Rad: zehn Prozent je Raste, um den Zeiger — auch wenn das System das Rad quer meldet")
+        {
+            const QPoint wo(300, achse->yVonZeile(1));
+            REQUIRE(wo.y() < achse->height());
+            rad(QPoint(0, 120), Qt::AltModifier, wo);
+            CHECK(achse->zeilenProzent() == 110);
+            CHECK(achse->kanalBei(wo.y()) == 1);
+            CHECK(std::abs(achse->yVonZeile(1) - wo.y()) <= 1);
+            rad(QPoint(120, 0), Qt::AltModifier, wo);  // so meldet Windows das Rad mit Alt
+            CHECK(achse->zeilenProzent() == 120);
+            for (int i = 0; i < 6; ++i) rad(QPoint(0, 120), Qt::AltModifier, wo);
+            CHECK(achse->zeilenProzent() == 180);
+            CHECK(achse->kanalBei(wo.y()) == 1);
+            CHECK(std::abs(achse->yVonZeile(1) - wo.y()) <= 2);
+            rad(QPoint(0, -240), Qt::AltModifier, wo);
+            CHECK(achse->zeilenProzent() == 160);
+            // ein feines Rad: zwei halbe Rasten sind ein Schritt
+            rad(QPoint(0, 60), Qt::AltModifier, wo);
+            CHECK(achse->zeilenProzent() == 160);
+            rad(QPoint(0, 60), Qt::AltModifier, wo);
+            CHECK(achse->zeilenProzent() == 170);
+            // die Zeit bleibt dabei, wie sie ist
+            CHECK(achse->zeitGanz());
+        }
+
+        SUBCASE("Ctrl+Alt+Rad: Zeit und Hoehe zusammen")
+        {
+            rad(QPoint(0, 120), Qt::ControlModifier | Qt::AltModifier, QPoint(300, 150));
+            CHECK(achse->zeilenProzent() == 110);
+            CHECK_FALSE(achse->zeitGanz());
+            rad(QPoint(0, -120), Qt::ControlModifier | Qt::AltModifier, QPoint(300, 150));
+            CHECK(achse->zeilenProzent() == 100);
+            CHECK(achse->zeitGanz());
+        }
+
+        SUBCASE("niedrige Zeilen: unter 24 Pixeln greift man keine Punkte der Kurve, der Clip laesst sich verschieben")
+        {
+            achse->setBearbeiten(true);
+            Komposition zuletzt;
+            QString was;
+            QObject::connect(achse, &Zeitachse::bearbeitet, achse, [&](const Komposition& neu, const QString& w) {
+                zuletzt = neu;
+                was = w;
+            });
+            const auto zieh = [&](QPoint von, QPoint nach) {
+                QMouseEvent druck(QEvent::MouseButtonPress, QPointF(von), QPointF(achse->mapToGlobal(von)),
+                                  Qt::LeftButton, Qt::LeftButton, Qt::AltModifier);
+                QCoreApplication::sendEvent(achse, &druck);
+                QMouseEvent weg(QEvent::MouseMove, QPointF(nach), QPointF(achse->mapToGlobal(nach)),
+                                Qt::NoButton, Qt::LeftButton, Qt::AltModifier);  // Alt: frei, ohne Einrasten
+                QCoreApplication::sendEvent(achse, &weg);
+                QMouseEvent los(QEvent::MouseButtonRelease, QPointF(nach), QPointF(achse->mapToGlobal(nach)),
+                                Qt::LeftButton, Qt::NoButton, Qt::AltModifier);
+                QCoreApplication::sendEvent(achse, &los);
+            };
+
+            // 70 %: 25 Pixel — der Griff der Einblendung laesst sich ziehen
+            achse->setZeilenProzent(70);
+            REQUIRE(achse->kurvenpunkteZiehbar());
+            QPoint griff = achse->blendenGriff(0, 0, true);
+            REQUIRE(griff.x() > 0);
+            zieh(griff, griff + QPoint(40, 0));
+            CHECK(was == QStringLiteral("Change fade"));
+            REQUIRE(zuletzt.kanaele.size() == 8);
+            CHECK(zuletzt.kanaele[0].clips[0].ein.dauerMs > 6000);
+            CHECK(zuletzt.kanaele[0].clips[0].startMs == 2000);
+
+            // 60 %: 21 Pixel — an derselben Stelle wird der Clip verschoben
+            achse->setKomposition(k, true);
+            achse->setZeilenProzent(60);
+            REQUIRE_FALSE(achse->kurvenpunkteZiehbar());
+            griff = achse->blendenGriff(0, 0, true);
+            REQUIRE(griff.x() > 0);
+            was.clear();
+            zieh(griff, griff + QPoint(40, 0));
+            CHECK(was == QStringLiteral("Move clip"));
+            CHECK(zuletzt.kanaele[0].clips[0].ein.dauerMs == 6000);
+            CHECK(zuletzt.kanaele[0].clips[0].startMs > 2000);
+        }
+
+        SUBCASE("ein Name, der nicht in seine Zeile passt, steht im Tooltip")
+        {
+            achse->setZeilenProzent(50);
+            const QPoint ort(20, achse->yVonZeile(-Zeitachse::kMasterZeilen));  // die Zeile MASTER, 10 Pixel hoch
+            QHelpEvent hilfe(QEvent::ToolTip, ort, achse->mapToGlobal(ort));
+            QCoreApplication::sendEvent(achse, &hilfe);
+            CHECK(QToolTip::text() == QStringLiteral("MASTER"));
+            QToolTip::hideText();
+        }
+    }
+
+    // Alt allein losgelassen schaltet unter Windows die Menueleiste auf die
+    // Tastatur. Nach Alt+Rad darf das nicht geschehen — sonst saesse nach jedem
+    // Hoehen-Zoom der Fokus im Menue.
+    TEST_CASE("S102 Zeitachse: nach Alt+Rad bleibt die Menueleiste in Ruhe")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        Kanal kanal;
+        kanal.clips.push_back(clip(QStringLiteral("x.lvfx"), 2000, 12000));
+        k.kanaele.push_back(kanal);
+
+        QMainWindow fenster;
+        fenster.menuBar()->addMenu(QStringLiteral("File"))->addAction(QStringLiteral("Open"));
+        auto* achse = new Zeitachse;
+        fenster.setCentralWidget(achse);
+        achse->setKomposition(k, true);
+        fenster.resize(700, 300);
+        testfenster::platziere(fenster);
+        fenster.show();
+        REQUIRE(warte([&] { return fenster.isVisible() && achse->height() > 100; }));
+        achse->setFocus();
+
+        const auto altDruck = [&] {
+            QKeyEvent vorab(QEvent::ShortcutOverride, Qt::Key_Alt, Qt::AltModifier);
+            QCoreApplication::sendEvent(&fenster, &vorab);
+            QKeyEvent druck(QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
+            QCoreApplication::sendEvent(&fenster, &druck);
+        };
+        const auto altLos = [&] {
+            QKeyEvent los(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
+            QCoreApplication::sendEvent(&fenster, &los);
+        };
+
+        // Gegenprobe: Alt allein schaltet die Menueleiste ein — sonst belegte der Fall nichts
+        altDruck();
+        altLos();
+        if (fenster.menuBar()->activeAction() == nullptr)
+        {
+            MESSAGE("Alt allein schaltet die Menueleiste hier nicht ein — der Fall belegt in dieser Umgebung nichts");
+            return;
+        }
+        altDruck();  // und wieder aus
+        altLos();
+        REQUIRE(fenster.menuBar()->activeAction() == nullptr);
+
+        // zweite Gegenprobe: ein Rad mit Alt, das niemand behandelt, haelt die
+        // Menueleiste NICHT ab — ohne den Eingriff der Zeitachse ginge sie an
+        const QPointF ort(300, 150);
+        {
+            altDruck();
+            QWheelEvent fremd(ort, fenster.mapToGlobal(ort), QPoint(), QPoint(120, 0), Qt::NoButton,
+                              Qt::AltModifier, Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(fenster.menuBar(), &fremd);
+            altLos();
+            CHECK(fenster.menuBar()->activeAction() != nullptr);
+            altDruck();
+            altLos();
+            REQUIRE(fenster.menuBar()->activeAction() == nullptr);
+        }
+
+        altDruck();
+        QWheelEvent rad(ort, achse->mapToGlobal(ort), QPoint(), QPoint(120, 0), Qt::NoButton, Qt::AltModifier,
+                        Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(achse, &rad);
+        altLos();
+        CHECK(achse->zeilenProzent() == 110);
+        CHECK(fenster.menuBar()->activeAction() == nullptr);
+    }
+
+    // S102, Entscheid Patrik ZO9: a — die Hoehe der Zeilen merkt die App.
+    TEST_CASE("S102 Panel: die Hoehe der Zeilen bleibt ueber den Neustart")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new papp::PappEngine); });
+        {
+            ComposerPanel panel(dienste);
+            CHECK(panel.zeitachse()->zeilenProzent() == 100);
+            panel.zeitachse()->setZeilenProzent(150);
+        }
+        CHECK(QSettings().value(QStringLiteral("composer/rowHeightPercent")).toInt() == 150);
+        {
+            ComposerPanel panel(dienste);
+            CHECK(panel.zeitachse()->zeilenProzent() == 150);
         }
     }
 }

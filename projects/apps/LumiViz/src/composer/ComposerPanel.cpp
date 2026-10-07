@@ -41,6 +41,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
+#include <QHelpEvent>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -95,6 +96,9 @@ struct Ablage
     KanalArt art = KanalArt::Visual;
 };
 Ablage g_ablage;
+
+/// Einstellung: die Hoehe der Zeilen in der Zeitachse, in Prozent (S102, ZO9).
+const QLatin1String kZeilenProzent("composer/rowHeightPercent");
 
 /// So fein wird die Huellkurve eines Songs geholt (ein Wert je 50 ms).
 constexpr int kHuelleMs = 50;
@@ -375,16 +379,62 @@ int Zeitachse::inhaltHoehe() const
     // im Bearbeiten eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht
     const int zeilen = std::max<int>(2, static_cast<int>(m_komposition.kanaele.size()) +
                                             (m_bearbeiten ? 1 : 0));
-    return kKanaeleOben + zeilen * kZeilenHoehe + 4;
+    return kLinealHoehe + kMasterZeilen * masterHoch() + zeilen * kanalHoch() + 4;
 }
 
 int Zeitachse::zeileBei(int y) const
 {
     if (y < kLinealHoehe) return kKeineZeile;
     const int imInhalt = y + m_rollY;
-    if (imInhalt < kKanaeleOben)
-        return std::clamp((imInhalt - kLinealHoehe) / kMasterHoehe, 0, kMasterZeilen - 1) - kMasterZeilen;
-    return (imInhalt - kKanaeleOben) / kZeilenHoehe;
+    const int kanaeleOben = kLinealHoehe + kMasterZeilen * masterHoch();
+    if (imInhalt < kanaeleOben)
+        return std::clamp((imInhalt - kLinealHoehe) / masterHoch(), 0, kMasterZeilen - 1) - kMasterZeilen;
+    return (imInhalt - kanaeleOben) / kanalHoch();
+}
+
+bool Zeitachse::namePasst(int hoch) const
+{
+    return hoch >= fontMetrics().ascent();  // die Unterlaengen duerfen ueberstehen
+}
+
+QString Zeitachse::versteckterName(QPoint ort) const
+{
+    if (!m_geladen) return {};
+    const int zeile = zeileBei(ort.y());
+    const int zeilen = static_cast<int>(m_komposition.kanaele.size());
+    if (zeile == kKeineZeile || zeile >= zeilen) return {};
+    if (ort.x() < kKopfBreite)
+    {
+        if (namePasst(zeileHoch(zeile))) return {};
+        static const std::array<const char*, kMasterZeilen> kMasterNamen = {"MASTER", "VISUAL", "AUDIO", "KARAOKE"};
+        return zeile < 0 ? tr(kMasterNamen[static_cast<std::size_t>(zeile + kMasterZeilen)])
+                         : m_komposition.kanaele[static_cast<std::size_t>(kanalVonZeile(zeile))].name;
+    }
+    if (zeile < 0) return {};  // die Kurven der Komposition tragen keinen Dateinamen
+    for (const VisualClip& clip : m_komposition.kanaele[static_cast<std::size_t>(kanalVonZeile(zeile))].clips)
+    {
+        const QRect r = clipRechteck(zeile, clip);
+        if (r.contains(ort)) return namePasst(r.height()) ? QString() : QFileInfo(clip.datei).completeBaseName();
+    }
+    return {};
+}
+
+void Zeitachse::setZeilenProzent(int prozent, int yFest)
+{
+    prozent = std::clamp(prozent, kHoeheMin, kHoeheMax);
+    if (prozent == m_zeilenProzent) return;
+    // der Festpunkt: welche Zeile unter `yFest` liegt, und wie weit in ihr
+    const int y = std::max(yFest, kLinealHoehe);
+    const int zeile = zeileBei(y);
+    const double anteil = static_cast<double>(y - zeileOben(zeile)) / zeileHoch(zeile);
+    m_zeilenProzent = prozent;
+    m_rollY = 0;  // `zeileOben` zaehlt jetzt vom Anfang des Inhalts
+    m_rollY = std::clamp(zeileOben(zeile) + static_cast<int>(anteil * zeileHoch(zeile) + 0.5) - y, 0,
+                         rollYMax());
+    updateGeometry();
+    update();
+    Q_EMIT rollenGeaendert();
+    Q_EMIT zeilenProzentGeaendert(m_zeilenProzent);
 }
 
 int Zeitachse::rollYMax() const
@@ -420,22 +470,42 @@ void Zeitachse::resizeEvent(QResizeEvent* event)
 void Zeitachse::wheelEvent(QWheelEvent* event)
 {
     // Entscheid Patrik ZO1: a (S102) — ohne Taste senkrecht rollen, Shift+Rad
-    // waagrecht, Ctrl+Rad die Zeit zoomen. (Alt+Rad und Ctrl+Alt+Rad: die
-    // Zeilenhoehe, Schritt 3.)
+    // waagrecht, Ctrl+Rad die Zeit zoomen, Alt+Rad die Zeilenhoehe,
+    // Ctrl+Alt+Rad beides.
     const QPoint grad = event->angleDelta();
     const Qt::KeyboardModifiers tasten =
         event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
     // mit einer Taste kann das System das Rad als waagrecht melden: es zaehlt die Achse, die sich bewegt
     const int rad = grad.y() != 0 ? grad.y() : grad.x();
 
-    if (tasten == Qt::ControlModifier)
+    const bool zeit = tasten == Qt::ControlModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    const bool hoehe = tasten == Qt::AltModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    if (zeit || hoehe)
     {
         if (!m_geladen || rad == 0)
         {
             event->ignore();
             return;
         }
-        zoomeZeit(std::pow(kZoomSchritt, rad / 120.0), static_cast<int>(event->position().x()));
+        if (zeit) zoomeZeit(std::pow(kZoomSchritt, rad / 120.0), static_cast<int>(event->position().x()));
+        if (hoehe)
+        {
+            // die Hoehe geht in ganzen Schritten: ein feines Rad sammelt, bis es eine Raste ist
+            m_radRest += rad;
+            const int rasten = m_radRest / 120;
+            m_radRest -= rasten * 120;
+            if (rasten != 0)
+                setZeilenProzent(m_zeilenProzent + rasten * kHoeheSchritt,
+                                 static_cast<int>(event->position().y()));
+            // Alt allein losgelassen schaltet unter Windows die Menueleiste auf
+            // die Tastatur. Qt laesst das, sobald sich zwischen Druck und
+            // Loslassen die Maus bewegt hat — das Rad zaehlt dabei nicht. Eine
+            // Mausbewegung an ein Objekt ohne Wirkung holt es nach.
+            QObject niemand;
+            QMouseEvent bewegung(QEvent::MouseMove, event->position(), event->globalPosition(), Qt::NoButton,
+                                 event->buttons(), event->modifiers());
+            QCoreApplication::sendEvent(&niemand, &bewegung);
+        }
         event->accept();  // auch am Anschlag: das Rad soll dann nichts anderes rollen
         return;
     }
@@ -630,8 +700,10 @@ void Zeitachse::paintEvent(QPaintEvent*)
         if (!kanal.an) name.setAlpha(110);
         p.setPen(name);
         const QString titel = kanal.an ? kanal.name : tr("%1 (off)").arg(kanal.name);
-        p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
-                   fontMetrics().elidedText(titel, Qt::ElideRight, kKopfBreite - 12));
+        // passt der Name nicht mehr in die Zeile, bleibt er weg (Entscheid Patrik ZO3: a)
+        if (namePasst(hoch))
+            p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
+                       fontMetrics().elidedText(titel, Qt::ElideRight, kKopfBreite - 12));
 
         p.setClipRect(zeilenZeit);
         for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
@@ -731,13 +803,14 @@ void Zeitachse::paintEvent(QPaintEvent*)
             // Anfang des Clips hinausgerollt ist (von mir gesetzt, S102)
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
             namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
-            p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
-                       fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
-                                                Qt::ElideRight, std::max(0, namensFeld.width())));
+            if (namePasst(r.height()))
+                p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
+                           fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
+                                                    Qt::ElideRight, std::max(0, namensFeld.width())));
 
             // Griffe der Blenden (C4), nur im Bearbeiten: oben im Clip je ein
             // Quadrat fuer die Laenge; am angeklickten Clip die Bézier-Anfasser
-            if (m_bearbeiten)
+            if (m_bearbeiten && kurvenpunkteZiehbar())
             {
                 for (const bool ein : {true, false})
                 {
@@ -1002,14 +1075,16 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
         // Blenden (C4): zuerst die Bézier-Anfasser des angeklickten Clips,
         // dann die Griffe oben im Clip — sie gehen den Kanten vor
         const auto nah = [&ort](QPoint p) { return p.x() >= 0 && (ort - p).manhattanLength() <= 8; };
-        if (k == m_kanal && c == m_clip)
+        // in zu niedrigen Zeilen gibt es keine Punkte der Kurve zu greifen (ZO3)
+        const bool punkte = kurvenpunkteZiehbar();
+        if (punkte && k == m_kanal && c == m_clip)
         {
             if (nah(bezierGriff(k, c, true, 0))) return Griff::BezierEin1;
             if (nah(bezierGriff(k, c, true, 1))) return Griff::BezierEin2;
             if (nah(bezierGriff(k, c, false, 0))) return Griff::BezierAus1;
             if (nah(bezierGriff(k, c, false, 1))) return Griff::BezierAus2;
         }
-        if (ort.y() <= r.top() + 11)
+        if (punkte && ort.y() <= r.top() + 11)
         {
             // Stuecke (C4 Teil 2): die Raute in der Mitte geht vor, dann die
             // Blenden, zuletzt die Kanten der Stuecke
@@ -1665,6 +1740,16 @@ bool Zeitachse::event(QEvent* event)
             return true;
         }
     }
+    // ein Name, der in seine niedrige Zeile nicht passt, steht im Tooltip (ZO3)
+    if (event->type() == QEvent::ToolTip)
+    {
+        auto* hilfe = static_cast<QHelpEvent*>(event);
+        if (const QString name = versteckterName(hilfe->pos()); !name.isEmpty())
+        {
+            QToolTip::showText(hilfe->globalPos(), name, this);
+            return true;
+        }
+    }
     return QWidget::event(event);
 }
 
@@ -2317,6 +2402,11 @@ void ComposerPanel::setupUI()
     //     stehen (S102, Entscheid Patrik ZO4: a); der Rahmen stellt den Rollbalken
     m_zeitachse = new Zeitachse(this);
     root->addWidget(new ZeitachsenRahmen(m_zeitachse, this), 1);
+    // die Hoehe der Zeilen merkt die App — fuer jede Komposition, ueber den
+    // Neustart (Entscheid Patrik ZO9: a); der Zeit-Zoom wird nicht gemerkt
+    m_zeitachse->setZeilenProzent(QSettings().value(kZeilenProzent, 100).toInt());
+    connect(m_zeitachse, &Zeitachse::zeilenProzentGeaendert, this,
+            [](int prozent) { QSettings().setValue(kZeilenProzent, prozent); });
 
     // --- der angeklickte Clip
     m_clipZeile = new QLabel(this);

@@ -239,17 +239,37 @@ public:
     /// Lineal (-4 MASTER, -3 VISUAL, -2 AUDIO, -1 KARAOKE) — siehe `zeileVon`.
     /// Im Fenster, also um `rollY` nach oben versetzt: eine Zeile kann unter
     /// dem Lineal oder unter dem Rand liegen. Die Konstanten oben gelten fuer
-    /// die nicht gerollte Achse.
+    /// die nicht gerollte Achse in Normalhoehe (100 %).
     [[nodiscard]] int zeileOben(int zeile) const
     {
-        return (zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * kMasterHoehe
-                          : kKanaeleOben + zeile * kZeilenHoehe) -
+        return (zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * masterHoch()
+                          : kLinealHoehe + kMasterZeilen * masterHoch() + zeile * kanalHoch()) -
                m_rollY;
     }
-    [[nodiscard]] int zeileHoch(int zeile) const
-    {
-        return zeile < 0 ? kMasterHoehe : kZeilenHoehe;
-    }
+    [[nodiscard]] int zeileHoch(int zeile) const { return zeile < 0 ? masterHoch() : kanalHoch(); }
+
+    // --- Hoehen-Zoom (S102, Entscheide Patrik ZO1: a, ZO2: a, ZO3: a, ZO9: a) --
+    //
+    // Die Hoehe der Zeilen in Prozent der Normalhoehe, 50 bis 300 — auch
+    // kleiner als bisher, um mehr Kanaele zu sehen (Zusatz Patrik). Die
+    // Master-Zeilen sind immer 60 % so hoch wie ein Kanal. Ein Name, der nicht
+    // mehr in seine Zeile passt, wird nicht gezeichnet (der Tooltip nennt ihn).
+    // Sind die Kanaele niedriger als 24 Pixel (unter 70 %), lassen sich die
+    // Punkte der Pegelkurve nicht ziehen — in keiner Zeile; verschieben und an
+    // den Kanten ziehen geht weiter. Die Hoehe merkt die App (das Panel).
+    static constexpr int kHoeheMin = 50;
+    static constexpr int kHoeheMax = 300;
+    static constexpr int kHoeheSchritt = 10;  ///< je Raste des Mausrads (von mir gesetzt)
+    [[nodiscard]] int zeilenProzent() const { return m_zeilenProzent; }
+    /// Die Hoehe setzen (auf 50…300 begrenzt). Die Stelle des Inhalts unter
+    /// `yFest` bleibt im Fenster stehen (ZO5: der Mauszeiger); -1 = die
+    /// Oberkante unter dem Lineal.
+    void setZeilenProzent(int prozent, int yFest = -1);
+    /// Die Hoehe eines Kanals und einer Master-Zeile in Pixeln.
+    [[nodiscard]] int kanalHoch() const { return kZeilenHoehe * m_zeilenProzent / 100; }
+    [[nodiscard]] int masterHoch() const { return kanalHoch() * 60 / 100; }
+    /// Lassen sich die Punkte der Pegelkurve (Blenden, Anfasser, Stuecke) ziehen?
+    [[nodiscard]] bool kurvenpunkteZiehbar() const { return kanalHoch() >= 24; }
     /// Die Zeile unter `y`: negativ = eine Master-Zeile, ab 0 ein Kanal — auch
     /// eine Zahl hinter dem letzten Kanal (die freie Flaeche darunter).
     /// `kKeineZeile` = das Lineal; es bleibt beim Rollen stehen und deckt die
@@ -359,6 +379,8 @@ Q_SIGNALS:
     void kurveOeffnen(lumi::composer::Teil teil);
     /// `rollY` oder `rollYMax` haben sich geaendert (fuer den Rollbalken).
     void rollenGeaendert();
+    /// Die Hoehe der Zeilen ist anders (das Panel merkt sie sich).
+    void zeilenProzentGeaendert(int prozent);
 
 protected:
     void wheelEvent(QWheelEvent* event) override;
@@ -392,6 +414,12 @@ private:
     void passeRollenAn();
     int m_rollY = 0;
     int m_rollX = 0;
+    int m_zeilenProzent = 100;
+    /// Passt eine Zeile Schrift in diese Hoehe? Sonst bleibt der Name weg.
+    [[nodiscard]] bool namePasst(int hoch) const;
+    /// Der Name, der an `ort` stuende, aber nicht gezeichnet ist (fuer den Tooltip); leer = keiner.
+    [[nodiscard]] QString versteckterName(QPoint ort) const;
+    int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
     double m_msJePixel = 0.0;  ///< der feste Massstab; 0 = die ganze Laenge auf der Breite
     /// Der Massstab, bei dem die ganze Laenge auf die Breite passt.
     [[nodiscard]] double msJePixelGanz() const;
