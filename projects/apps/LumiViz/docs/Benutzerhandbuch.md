@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.98.0
-> **Datum:** 2026-10-06
+> **Version:** 1.99.0
+> **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2039,11 +2039,36 @@ an.
 out** daneben, bei eingeschaltetem **Edit**): Die Komposition blendet über
 diese Zeit am Anfang ein und vor ihrem Ende aus — Bild **und** Ton, zusätzlich
 zu den Pegelkurven der Clips. Das gilt **immer**: beim ersten Start, in jeder
-Runde einer Schleife und ohne Loop. Im Lineal steht dafür unten je ein
-schmaler Keil. Zusammen mit *Loop overlap* ergibt das eine fertige
-Überblendung von Ende und Anfang, ohne dass du die Clips einzeln blenden
-musst. Die Karaoke-Ebene wird nicht mitgeblendet. Auch diese Werte stehen in
-der Datei der Komposition; **0** = keine Blende.
+Runde einer Schleife und ohne Loop. Zusammen mit *Loop overlap* ergibt das
+eine fertige Überblendung von Ende und Anfang, ohne dass du die Clips einzeln
+blenden musst. Die Karaoke-Ebene wird nicht mitgeblendet. Auch diese Werte
+stehen in der Datei der Komposition; **0** = keine Blende.
+
+**Die Zeile MASTER — die Pegelkurve der ganzen Komposition:** Direkt unter dem
+Lineal liegt die Zeile **MASTER**. Sie zeigt die Kurve, mit der die ganze
+Komposition gemischt wird, als einen Balken über ihre ganze Länge, und sie
+lässt sich bedienen **wie die Pegelkurve eines Clips**:
+
+- **Anklicken** wählt sie aus; die Zeile unter der Zeitachse nennt sie dann.
+- **Die Blenden:** oben im Balken sitzt je ein Griff für die Länge von *Fade
+  in* und *Fade out* — ziehen ändert dieselben Werte wie die zwei Felder.
+  Rechtsklick → *Fade in* / *Fade out* wählt die Form aus den Blenden-Presets,
+  *Edit fade in curve...* / *Edit fade out curve...* öffnet den **Curve
+  Editor**.
+- **Stücke:** Rechtsklick → *Add shape here* legt an dieser Stelle eine
+  Absenkung in die Kurve — etwa für eine Ansage oder einen ruhigen Übergang.
+  Die Raute verschiebt sie, die Striche an den Kanten ändern die Weite; im
+  Curve Editor lässt sie sich formen und mit **Flipped** zur Anhebung machen.
+- **Grundpegel:** im Curve Editor, Feld *Base level* — der Pegel der ganzen
+  Komposition zwischen den Teilen.
+
+Ein Unterschied zum Clip: Ein Stück der Zeile MASTER liegt an einer **festen
+Stelle der Zeitachse**. Wird die Komposition länger oder kürzer, bleibt es
+dort. Liegt es danach hinter dem Ende, wirkt es nicht — es bleibt aber
+gespeichert und ist wieder da, sobald die Komposition wieder so lang ist.
+Verschieben, Kopieren und Löschen wie bei einem Clip gibt es an dieser Zeile
+nicht. Alles wirkt auf Bild **und** Ton, zusätzlich zu den Pegelkurven der
+Clips, und steht in der Datei der Komposition.
 
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
@@ -2149,6 +2174,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.99.0 | 2026-10-07 | Session 100. §15 Composer NEU **Die Zeile MASTER**: die Pegelkurve der ganzen Komposition unter dem Lineal, bedienbar wie die eines Clips (Griffe der Blenden, Formen und Presets per Rechtsklick, Stücke, Grundpegel, Curve Editor); ein Stück liegt an fester Zeit. GEÄNDERT: die Keile im Lineal entfallen — die Zeile MASTER zeigt die Blenden; überdecken sich *Fade in* und *Fade out*, teilen sie den Platz wie am Clip |
 | 1.98.0 | 2026-10-06 | Session 99. §15 Composer, Schleife mit Überlappung NEU Haken **Visuals overlap themselves** (Standard aus): ein Bild-Clip in beiden Fenstern läuft im Fenster zweimal, ein frisch gestartetes Exemplar über dem laufenden; kostet ein zweites Laden und doppelten Grafikspeicher im Fenster |
 | 1.97.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die ganze Komposition ein- und ausblenden**: Felder **Fade in** / **Fade out** (Bild und Ton, zusätzlich zu den Pegelkurven der Clips; gilt immer, auch ohne Loop; Keile im Lineal; mit *Loop overlap* eine fertige Überblendung; die Karaoke-Ebene blendet nicht mit) |
 | 1.96.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die Schleife mit Überlappung**: Feld **Loop overlap** (Ende und Anfang laufen in der Schleife zugleich, Bild und Ton; nichts wird von selbst geblendet; die Runde wird kürzer), die Zeitachse tönt beide Fenster und zeigt eine zweite Marke, Haken **Songs overlap themselves**; beide Werte in der `.lvcomp`. GEÄNDERT: auch ohne Überlappung sind die ersten Clips am Schleifenanfang schon geladen, ein Song über die ganze Länge setzt nahtlos neu an |

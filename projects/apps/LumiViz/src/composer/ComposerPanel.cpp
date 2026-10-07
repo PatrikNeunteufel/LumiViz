@@ -186,10 +186,41 @@ void Zeitachse::setAn(bool an)
 
 const VisualClip* Zeitachse::auswahl() const
 {
-    if (m_kanal < 0 || m_kanal >= static_cast<int>(m_komposition.kanaele.size())) return nullptr;
-    const Kanal& kanal = m_komposition.kanaele[static_cast<std::size_t>(m_kanal)];
-    if (m_clip < 0 || m_clip >= static_cast<int>(kanal.clips.size())) return nullptr;
-    return &kanal.clips[static_cast<std::size_t>(m_clip)];
+    return clipIn(m_komposition, m_kanal, m_clip, m_gesamt);
+}
+
+const Clip* Zeitachse::clipIn(const Komposition& in, int kanal, int clip, Clip& ablage)
+{
+    if (kanal == kMaster)
+    {
+        // die Kurve der ganzen Komposition (S100): ein Clip ueber [0, Laenge)
+        if (clip != 0 || in.laenge() <= 0) return nullptr;
+        ablage = in.kurveAlsClip();
+        return &ablage;
+    }
+    if (kanal < 0 || kanal >= static_cast<int>(in.kanaele.size())) return nullptr;
+    const auto& clips = in.kanaele[static_cast<std::size_t>(kanal)].clips;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return nullptr;
+    return &clips[static_cast<std::size_t>(clip)];
+}
+
+void Zeitachse::schreibeClip(Komposition& in, int kanal, int clip, const Clip& neu)
+{
+    if (kanal == kMaster)
+        in.setzeKurveAusClip(neu);
+    else
+        in.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)] = neu;
+}
+
+void Zeitachse::waehleGesamt()
+{
+    Clip ablage;
+    if (!m_geladen || clipIn(m_komposition, kMaster, 0, ablage) == nullptr) return;
+    if (m_kanal == kMaster && m_clip == 0) return;
+    m_kanal = kMaster;
+    m_clip = 0;
+    update();
+    Q_EMIT auswahlGeaendert();
 }
 
 std::int64_t Zeitachse::anzeigeLaenge(const Komposition& komposition)
@@ -222,7 +253,7 @@ std::int64_t Zeitachse::stelleVon(int x) const
 
 int Zeitachse::yVonZeile(int zeile) const
 {
-    return kLinealHoehe + zeile * kZeilenHoehe + kZeilenHoehe / 2;
+    return kKanaeleOben + zeile * kZeilenHoehe + kZeilenHoehe / 2;
 }
 
 int Zeitachse::kanalVonZeile(int zeile) const
@@ -234,7 +265,7 @@ QRect Zeitachse::clipRechteck(int zeile, const VisualClip& clip) const
 {
     const int links = xVon(clip.startMs);
     const int rechts = xVon(clip.endeMs);
-    return {links, kLinealHoehe + zeile * kZeilenHoehe + 3, std::max(2, rechts - links),
+    return {links, kKanaeleOben + zeile * kZeilenHoehe + 3, std::max(2, rechts - links),
             kZeilenHoehe - 6};
 }
 
@@ -248,7 +279,7 @@ QSize Zeitachse::minimumSizeHint() const
     // im Bearbeiten eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht
     const int zeilen = std::max<int>(2, static_cast<int>(m_komposition.kanaele.size()) +
                                             (m_bearbeiten ? 1 : 0));
-    return {kKopfBreite + 160, kLinealHoehe + zeilen * kZeilenHoehe + 4};
+    return {kKopfBreite + 160, kKanaeleOben + zeilen * kZeilenHoehe + 4};
 }
 
 void Zeitachse::paintEvent(QPaintEvent*)
@@ -270,7 +301,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
     QColor linie = text;
     linie.setAlpha(50);
     const int zeilen = static_cast<int>(m_komposition.kanaele.size());
-    const int unten = kLinealHoehe + zeilen * kZeilenHoehe;
+    const int unten = kKanaeleOben + zeilen * kZeilenHoehe;
 
     // --- Lineal
     p.fillRect(QRect(0, 0, width(), kLinealHoehe), pal.color(QPalette::AlternateBase));
@@ -318,29 +349,8 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.drawLine(xEnde, 0, xEnde, unten);
     }
 
-    // --- die Blende der ganzen Komposition (S99): je ein schmaler Keil unten
-    //     im Lineal — so weit blendet sie am Anfang ein und am Ende aus. Auch
-    //     ohne Loop, sie gilt immer.
-    {
-        QColor keil = text;
-        keil.setAlpha(150);
-        p.setPen(Qt::NoPen);
-        p.setBrush(keil);
-        const int yUnten = kLinealHoehe - 1;
-        const int yOben = kLinealHoehe - 8;
-        if (m_komposition.einblendeMs > 0)
-        {
-            const int x0 = xVon(0);
-            const int x1 = xVon(std::min(m_komposition.einblendeMs, endeMs));
-            p.drawPolygon(QPolygon({QPoint(x0, yUnten), QPoint(x1, yUnten), QPoint(x1, yOben)}));
-        }
-        if (m_komposition.ausblendeMs > 0)
-        {
-            const int x0 = xVon(std::max<std::int64_t>(0, endeMs - m_komposition.ausblendeMs));
-            p.drawPolygon(QPolygon({QPoint(x0, yOben), QPoint(x0, yUnten), QPoint(xEnde, yUnten)}));
-        }
-        p.setBrush(Qt::NoBrush);
-    }
+    // (Die Blende der ganzen Komposition stand bis S99 als Keil im Lineal; seit
+    //  S100 zeigt die Zeile MASTER darunter die ganze Kurve.)
 
     // --- die Fenster der Ueberlappung (S99, Entscheid Patrik): bei Loop sind
     //     die ersten und die letzten Sekunden getoent — was im vorderen laeuft,
@@ -359,11 +369,16 @@ void Zeitachse::paintEvent(QPaintEvent*)
 
     // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
     p.setFont(font());
-    for (int zeile = 0; zeile < zeilen; ++zeile)
+    // Zeile -1, unter dem Lineal: die Pegelkurve der ganzen Komposition (S100)
+    // als ein Clip ueber die ganze Laenge — gezeichnet und bedient wie ein Clip.
+    Kanal gesamt;
+    gesamt.name = tr("MASTER");
+    if (Clip ablage; clipIn(m_komposition, kMaster, 0, ablage) != nullptr) gesamt.clips.push_back(ablage);
+    for (int zeile = -1; zeile < zeilen; ++zeile)
     {
-        const int k = kanalVonZeile(zeile);
-        const Kanal& kanal = m_komposition.kanaele[static_cast<std::size_t>(k)];
-        const int oben = kLinealHoehe + zeile * kZeilenHoehe;
+        const int k = zeile < 0 ? kMaster : kanalVonZeile(zeile);
+        const Kanal& kanal = zeile < 0 ? gesamt : m_komposition.kanaele[static_cast<std::size_t>(k)];
+        const int oben = kKanaeleOben + zeile * kZeilenHoehe;
         p.setPen(linie);
         p.drawLine(0, oben + kZeilenHoehe, width(), oben + kZeilenHoehe);
 
@@ -380,7 +395,9 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const QRect r = clipRechteck(zeile, clip);
             const bool gewaehlt = k == m_kanal && c == m_clip;
             const bool ton = kanal.art == KanalArt::Audio;
-            const QColor farbe = ton ? tonFarbe(m_an && kanal.an) : kanalFarbe(k, m_an && kanal.an);
+            const QColor farbe = k == kMaster ? (m_an ? QColor(96, 100, 112) : QColor(74, 76, 84))
+                                 : ton        ? tonFarbe(m_an && kanal.an)
+                                              : kanalFarbe(k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
             p.drawRoundedRect(r, 4, 4);
@@ -509,11 +526,11 @@ void Zeitachse::paintEvent(QPaintEvent*)
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
 
     // --- ein Drag von aussen: die Zeile, in die er faellt, und die Stelle
-    if (m_fallOrt.x() >= 0 && m_fallOrt.y() >= kLinealHoehe)
+    if (m_fallOrt.x() >= 0 && m_fallOrt.y() >= kKanaeleOben)
     {
         const int k = kanalBei(m_fallOrt.y());
         const int zeile = k >= 0 ? k : zeilen;  // unter der letzten Zeile: ein neuer Kanal
-        const QRect ziel(kKopfBreite, kLinealHoehe + zeile * kZeilenHoehe, width() - kKopfBreite,
+        const QRect ziel(kKopfBreite, kKanaeleOben + zeile * kZeilenHoehe, width() - kKopfBreite,
                          kZeilenHoehe);
         // Der Schatten (Wunsch Patrik S98): jeder Clip dort, wo er landen
         // wuerde — mit seinem Anfang als Strich. Faellt hier nichts (eine
@@ -557,7 +574,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
     //     mit einem Dreieck am Kopf — dorthin legt „Einfuegen" den Anfang
     if (m_bearbeiten && m_markeKanal >= 0 && m_markeKanal < zeilen)
     {
-        const int oben = kLinealHoehe + m_markeKanal * kZeilenHoehe;
+        const int oben = kKanaeleOben + m_markeKanal * kZeilenHoehe;
         QColor zeile = pal.color(QPalette::Highlight);
         zeile.setAlpha(28);
         p.fillRect(QRect(0, oben, width(), kZeilenHoehe), zeile);
@@ -662,12 +679,12 @@ std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int au
 
 QPoint Zeitachse::stueckGriff(int kanal, int clip, int stueck, int welcher) const
 {
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return {-1, -1};
-    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return {-1, -1};
-    const VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    const Clip* zeiger = clipIn(m_komposition, kanal, clip, ablage);
+    if (zeiger == nullptr) return {-1, -1};
+    const VisualClip& c = *zeiger;
     if (stueck < 0 || stueck >= static_cast<int>(c.stuecke.size())) return {-1, -1};
-    const QRect r = clipRechteck(kanal, c);  // Zeile = Kanal (CH1 oben)
+    const QRect r = clipRechteck(zeileVon(kanal), c);  // Zeile = Kanal (CH1 oben)
     if (r.width() < 24) return {-1, -1};     // zu schmal fuer Griffe
     // wo das Stueck gerade liegt — gestaucht, wenn der Platz nicht reicht
     const Bereich b = c.verteilung().stuecke[static_cast<std::size_t>(stueck)];
@@ -683,10 +700,16 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
     *kanal = -1;
     *clip = -1;
     if (stueck != nullptr) *stueck = -1;
-    const int zeile = ort.y() < kLinealHoehe ? -1 : (ort.y() - kLinealHoehe) / kZeilenHoehe;
-    if (zeile < 0 || zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
-    const int k = kanalVonZeile(zeile);
-    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(k)].clips;
+    if (ort.y() < kLinealHoehe) return Griff::Keiner;
+    // die Zeile unter dem Lineal: die Kurve der ganzen Komposition (S100) — ein
+    // Clip ueber die ganze Laenge, mit den Griffen der Kurve, ohne Kanten
+    const bool gesamt = ort.y() < kKanaeleOben;
+    const int zeile = gesamt ? -1 : (ort.y() - kKanaeleOben) / kZeilenHoehe;
+    if (!gesamt && zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
+    const int k = gesamt ? kMaster : kanalVonZeile(zeile);
+    std::vector<Clip> eine;
+    if (Clip ablage; gesamt && clipIn(m_komposition, kMaster, 0, ablage) != nullptr) eine.push_back(ablage);
+    const auto& clips = gesamt ? eine : m_komposition.kanaele[static_cast<std::size_t>(k)].clips;
     for (int c = 0; c < static_cast<int>(clips.size()); ++c)
     {
         const QRect r = clipRechteck(zeile, clips[static_cast<std::size_t>(c)]);
@@ -723,6 +746,8 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
             if (trifft(-1, Griff::StueckLinks) != Griff::Keiner) return Griff::StueckLinks;
             if (trifft(1, Griff::StueckRechts) != Griff::Keiner) return Griff::StueckRechts;
         }
+        // die Kurve der Komposition hat weder Kanten noch laesst sie sich verschieben
+        if (gesamt) return Griff::Keiner;
         // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
         if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
         if (r.right() - ort.x() <= 6) return Griff::KanteRechts;
@@ -734,14 +759,14 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
 bool Zeitachse::blendenBereich(int kanal, int clip, bool ein, QRect* clipRect, int* x0, int* x1,
                                Blenden* blenden) const
 {
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return false;
-    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return false;
-    const VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    const Clip* zeiger = clipIn(m_komposition, kanal, clip, ablage);
+    if (zeiger == nullptr) return false;
+    const VisualClip& c = *zeiger;
     // Die Laenge laesst sich an jeder Blende ziehen — auch an einer, deren Form
     // eigene Punkte hat (dann bleibt `blenden` fuer diese Seite ohne Form).
     (void)liesBlenden(c, *blenden);
-    *clipRect = clipRechteck(kanal, c);  // Zeile = Kanal (CH1 oben)
+    *clipRect = clipRechteck(zeileVon(kanal), c);  // Zeile = Kanal (CH1 oben)
     if (clipRect->width() < 24) return false;  // zu schmal fuer Griffe
     // wo die Blende gerade liegt — gestaucht, wenn der Platz nicht reicht
     const Verteilung v = c.verteilung();
@@ -768,8 +793,8 @@ QPoint Zeitachse::bezierGriff(int kanal, int clip, bool ein, int nr) const
     int x1 = 0;
     Blenden b;
     if (!blendenBereich(kanal, clip, ein, &r, &x0, &x1, &b)) return {-1, -1};
-    const VisualClip& c =
-        m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    const VisualClip& c = *clipIn(m_komposition, kanal, clip, ablage);  // es gibt ihn: `blendenBereich`
     // Anfasser hier nur fuer eine Blende mit EINEM Bézier-Abschnitt; eine Form
     // mit eigenen Punkten gehoert in den Curve Editor
     const ClipBlende& blende = ein ? c.ein : c.aus;
@@ -795,13 +820,15 @@ void Zeitachse::setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form)
     Blenden b;
     if (!blendenBereich(kanal, clip, ein, &r, &x0, &x1, &b)) return;
     Komposition neu = m_komposition;
-    VisualClip& c = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    VisualClip c = *clipIn(neu, kanal, clip, ablage);  // es gibt ihn: `blendenBereich`
     // nur diese Seite: die andere behaelt ihre Form, auch eine mit eigenen Punkten
     ClipBlende& blende = ein ? c.ein : c.aus;
     const BezierGriffe griffe =
         einfach(blende.form) ? blende.form.punkte.front().bezier : kBezierVorgabe;
     blende.form = einfacheBlende(form, griffe);
     if (blende.dauerMs <= 0) blende.dauerMs = std::min<std::int64_t>(2000, c.dauerMs() / 4);
+    schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Change fade shape"));
 }
@@ -809,16 +836,17 @@ void Zeitachse::setzeBlendenForm(int kanal, int clip, bool ein, Kurvenform form)
 void Zeitachse::setzeBlendenPreset(int kanal, int clip, bool ein, const QString& name)
 {
     if (!m_bearbeiten || !m_geladen) return;
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
     Komposition neu = m_komposition;
-    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
+    Clip ablage;
+    const Clip* zeiger = clipIn(neu, kanal, clip, ablage);
+    if (zeiger == nullptr) return;
     Pegelform form;
     if (!formpresets::lade(formpresets::finde(FormArt::Blende, name).pfad, FormArt::Blende, form)) return;
-    VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    VisualClip c = *zeiger;
     ClipBlende& blende = ein ? c.ein : c.aus;
     blende.form = form;
     if (blende.dauerMs <= 0) blende.dauerMs = std::min<std::int64_t>(2000, c.dauerMs() / 4);
+    schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Change fade shape"));
 }
@@ -826,15 +854,16 @@ void Zeitachse::setzeBlendenPreset(int kanal, int clip, bool ein, const QString&
 void Zeitachse::setzeStueckPreset(int kanal, int clip, int stueck, const QString& name)
 {
     if (!m_bearbeiten || !m_geladen) return;
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
     Komposition neu = m_komposition;
-    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
-    VisualClip& c = clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    const Clip* zeiger = clipIn(neu, kanal, clip, ablage);
+    if (zeiger == nullptr) return;
+    VisualClip c = *zeiger;
     if (stueck < 0 || stueck >= static_cast<int>(c.stuecke.size())) return;
     Pegelform form;
     if (!formpresets::lade(formpresets::finde(FormArt::Stueck, name).pfad, FormArt::Stueck, form)) return;
     c.stuecke[static_cast<std::size_t>(stueck)].form = form;
+    schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Change shape curve"));
 }
@@ -848,16 +877,17 @@ void Zeitachse::setTeil(Teil teil)
 
 void Zeitachse::oeffneKurve(int kanal, int clip, Teil teil)
 {
-    if (!m_geladen || kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
-    const auto& clips = m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
-    if (!hatTeil(clips[static_cast<std::size_t>(clip)], teil))
+    Clip ablage;
+    const Clip* zeiger = m_geladen ? clipIn(m_komposition, kanal, clip, ablage) : nullptr;
+    if (zeiger == nullptr) return;
+    if (!hatTeil(*zeiger, teil))
     {
         // eine Blende, die es noch nicht gibt, entsteht hier — sonst gaebe es nichts zu zeichnen
         if (!m_bearbeiten || (teil.art != TeilArt::Ein && teil.art != TeilArt::Aus)) return;
         Komposition neu = m_komposition;
-        VisualClip& c = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+        VisualClip c = *zeiger;
         (teil.art == TeilArt::Ein ? c.ein : c.aus).dauerMs = std::min<std::int64_t>(2000, c.dauerMs() / 4);
+        schreibeClip(neu, kanal, clip, c);
         uebernimm(neu, kanal, clip);
         Q_EMIT bearbeitet(neu, tr("Add fade"));
     }
@@ -874,11 +904,13 @@ void Zeitachse::oeffneKurve(int kanal, int clip, Teil teil)
 void Zeitachse::stueckHinzu(int kanal, int clip, std::int64_t zeitImClipMs)
 {
     if (!m_bearbeiten || !m_geladen) return;
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
     Komposition neu = m_komposition;
-    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
-    const int stueck = fuegeStueckEin(clips[static_cast<std::size_t>(clip)], zeitImClipMs);
+    Clip ablage;
+    const Clip* zeiger = clipIn(neu, kanal, clip, ablage);
+    if (zeiger == nullptr) return;
+    VisualClip c = *zeiger;
+    const int stueck = fuegeStueckEin(c, zeitImClipMs);
+    schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Add shape"));
     Q_EMIT kurveOeffnen({TeilArt::Stueck, stueck});
@@ -887,11 +919,13 @@ void Zeitachse::stueckHinzu(int kanal, int clip, std::int64_t zeitImClipMs)
 void Zeitachse::stueckLoeschen(int kanal, int clip, int stueck)
 {
     if (!m_bearbeiten || !m_geladen) return;
-    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
     Komposition neu = m_komposition;
-    auto& clips = neu.kanaele[static_cast<std::size_t>(kanal)].clips;
-    if (clip < 0 || clip >= static_cast<int>(clips.size())) return;
-    if (!loescheStueck(clips[static_cast<std::size_t>(clip)], stueck)) return;
+    Clip ablage;
+    const Clip* zeiger = clipIn(neu, kanal, clip, ablage);
+    if (zeiger == nullptr) return;
+    VisualClip c = *zeiger;
+    if (!loescheStueck(c, stueck)) return;
+    schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Delete shape"));
 }
@@ -906,7 +940,8 @@ void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
     if (clip < 0) return;
     // der erste Klick des Doppelklicks hat einen Zug vorbereitet — er gilt nicht
     brichZugAb();
-    const VisualClip& c = m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    Clip ablage;
+    const VisualClip& c = *clipIn(m_komposition, kanal, clip, ablage);  // `griffBei` hat ihn gefunden
     const Teil teil = teilBei(c, stelleVon(ort.x()) - c.startMs);
     if (teil.art != TeilArt::Keins) oeffneKurve(kanal, clip, teil);
 }
@@ -934,9 +969,8 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
         m_zugKanal = kanal;
         m_zugClip = clipIndex;
         m_vorZug = m_komposition;
-        m_zugVersatzMs =
-            stelleVon(ort.x()) -
-            m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clipIndex)].startMs;
+        Clip ablage;
+        m_zugVersatzMs = stelleVon(ort.x()) - clipIn(m_komposition, kanal, clipIndex, ablage)->startMs;
     }
     // Eine freie Stelle in einer Kanalzeile: dort steht ab jetzt die
     // Einfuegemarke (Entscheid Patrik S98) — eingerastet wie ein Clip, Alt frei.
@@ -972,8 +1006,10 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
     const auto gerastet = [&](std::int64_t zeit) {
         return frei ? zeit : raste(zeit, m_vorZug, m_zugKanal, m_zugClip);
     };
-    const VisualClip& alt =
-        m_vorZug.kanaele[static_cast<std::size_t>(m_zugKanal)].clips[static_cast<std::size_t>(m_zugClip)];
+    Clip ablage;
+    const Clip* zeiger = clipIn(m_vorZug, m_zugKanal, m_zugClip, ablage);
+    if (zeiger == nullptr) return;
+    const VisualClip& alt = *zeiger;
     const std::int64_t maus = stelleVon(ort.x());
 
     m_komposition = m_vorZug;
@@ -986,8 +1022,8 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
             // die Zeile unter der Maus: der Clip wechselt den Kanal — nur in
             // einen seiner Art (Bild zu Bild, Ton zu Ton)
             const int zeilen = static_cast<int>(m_vorZug.kanaele.size());
-            const int zeile = std::clamp((ort.y() - kLinealHoehe) / kZeilenHoehe, 0, zeilen - 1);
-            if (ort.y() >= kLinealHoehe &&
+            const int zeile = std::clamp((ort.y() - kKanaeleOben) / kZeilenHoehe, 0, zeilen - 1);
+            if (ort.y() >= kKanaeleOben &&
                 m_vorZug.kanaele[static_cast<std::size_t>(kanalVonZeile(zeile))].art ==
                     m_vorZug.kanaele[static_cast<std::size_t>(m_zugKanal)].art)
                 ziel = kanalVonZeile(zeile);
@@ -1031,7 +1067,7 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
                 // ein Bézier-Anfasser: seine Lage im Rechteck der Blende, je 0…1
                 const bool ein = m_griff == Griff::BezierEin1 || m_griff == Griff::BezierEin2;
                 const std::size_t nr = (m_griff == Griff::BezierEin2 || m_griff == Griff::BezierAus2) ? 1 : 0;
-                const QRect r = clipRechteck(m_zugKanal, alt);
+                const QRect r = clipRechteck(zeileVon(m_zugKanal), alt);
                 const Verteilung v = fest.verteilung();
                 const Bereich& bereich = ein ? v.ein : v.aus;
                 const int x0 = xVon(alt.startMs + bereich.vonMs);
@@ -1046,8 +1082,7 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
                 g[nr * 2] = ein ? x : 1.0 - x;  // die Ausblendung laeuft rueckwaerts
                 g[nr * 2 + 1] = pegel;
             }
-            m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
-                .clips[static_cast<std::size_t>(m_zugClip)] = fest;
+            schreibeClip(m_komposition, m_zugKanal, m_zugClip, fest);
             platz = m_zugClip;
             break;
         }
@@ -1071,8 +1106,7 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
                 const std::int64_t halb = imClip > mitte ? imClip - mitte : mitte - imClip;
                 if (!setzeStueckWeite(fest, m_zugStueck, 2 * halb)) return;
             }
-            m_komposition.kanaele[static_cast<std::size_t>(m_zugKanal)]
-                .clips[static_cast<std::size_t>(m_zugClip)] = fest;
+            schreibeClip(m_komposition, m_zugKanal, m_zugClip, fest);
             platz = m_zugClip;
             break;
         }
@@ -1185,6 +1219,7 @@ void Zeitachse::keyPressEvent(QKeyEvent* event)
 
 void Zeitachse::loescheAuswahl()
 {
+    if (m_kanal == kMaster) return;  // die Kurve der Komposition laesst sich nicht loeschen
     Komposition neu = m_komposition;
     if (!loescheClip(neu, m_kanal, m_clip)) return;
     uebernimm(neu, -1, -1);
@@ -1230,7 +1265,7 @@ void Zeitachse::leereAblage()
 bool Zeitachse::kopiere()
 {
     const VisualClip* clip = auswahl();
-    if (clip == nullptr) return false;
+    if (clip == nullptr || m_kanal == kMaster) return false;  // die Kurve der Komposition ist kein Clip
     g_ablage.voll = true;
     g_ablage.clip = *clip;
     g_ablage.art = m_komposition.kanaele[static_cast<std::size_t>(m_kanal)].art;
@@ -1257,7 +1292,7 @@ bool Zeitachse::fuegeEin()
         // Ohne Marke (von mir gesetzt, S98): hinter den angeklickten Clip, in
         // dessen Kanal — Kopieren und gleich Einfuegen verdoppelt ihn.
         const VisualClip* clip = auswahl();
-        if (clip == nullptr) return false;
+        if (clip == nullptr || m_kanal == kMaster) return false;
         kanal = m_kanal;
         start = clip->endeMs;
     }
@@ -1295,8 +1330,8 @@ bool Zeitachse::event(QEvent* event)
 
 int Zeitachse::kanalBei(int y) const
 {
-    if (y < kLinealHoehe) return -1;
-    const int zeile = (y - kLinealHoehe) / kZeilenHoehe;
+    if (y < kKanaeleOben) return -1;  // Lineal und die Zeile der Kurve der Komposition
+    const int zeile = (y - kKanaeleOben) / kZeilenHoehe;
     return zeile < static_cast<int>(m_komposition.kanaele.size()) ? kanalVonZeile(zeile) : -1;
 }
 
@@ -1342,7 +1377,7 @@ bool Zeitachse::legeDateien(Komposition& neu, QPoint ort, const QStringList& dat
                             QStringList* passendAus, std::vector<Schatten>* gelegt) const
 {
     if (!m_bearbeiten || !m_geladen || dateien.isEmpty() || m_griff != Griff::Keiner) return false;
-    if (ort.y() < kLinealHoehe) return false;
+    if (ort.y() < kKanaeleOben) return false;
     int kanal = kanalBei(ort.y());
 
     // Songs fallen nur in Audio-Kanaele, Presets nur in Visual-Kanaele (C5).
@@ -1460,7 +1495,7 @@ void Zeitachse::dragMoveEvent(QDragMoveEvent* event)
     m_fallOrt = event->position().toPoint();
     m_fallTasten = event->modifiers();
     // im Lineal faellt nichts — und nichts in eine Zeile der anderen Art
-    if (m_fallOrt.y() < kLinealHoehe || fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten).empty())
+    if (m_fallOrt.y() < kKanaeleOben || fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten).empty())
         event->ignore();
     else
         event->acceptProposedAction();
@@ -1502,9 +1537,9 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         }
         // Blenden (C4): die Form je Seite. Eine Form mit eigenen Punkten traegt
         // keinen Haken — eine Wahl hier ersetzt sie durch die einfache Form.
+        Clip ablage;  // traegt die Kurve der Komposition, wenn ihre Zeile gemeint ist (S100)
         {
-            const VisualClip& gewaehlt =
-                m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+            const VisualClip& gewaehlt = *clipIn(m_komposition, kanal, clip, ablage);
             // Die Liste sind die Blenden-Presets — mitgelieferte und eigene; der
             // Haken sitzt an dem, dessen Form die Blende gerade traegt.
             const std::vector<formpresets::Eintrag> presets = formpresets::liste(FormArt::Blende);
@@ -1546,8 +1581,7 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         }
         // die Kurven im Curve Editor (C4 Teil 2) und die Stuecke mitten im Clip
         {
-            const VisualClip& c =
-                m_komposition.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+            const VisualClip& c = *clipIn(m_komposition, kanal, clip, ablage);
             const std::int64_t zeit = stelleVon(ort.x()) - c.startMs;
             const Teil unter = teilBei(c, zeit);
             menu.addAction(tr("Edit fade in curve..."), this,
@@ -1584,10 +1618,13 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
                            [this, kanal, clip, zeit] { stueckHinzu(kanal, clip, zeit); });
             menu.addSeparator();
         }
-        menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
-        menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
-        menu.addAction(tr("Delete clip"), this, [this] { loescheAuswahl(); });
-        menu.addSeparator();
+        if (kanal != kMaster)  // die Kurve der Komposition ist kein Clip
+        {
+            menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
+            menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
+            menu.addAction(tr("Delete clip"), this, [this] { loescheAuswahl(); });
+            menu.addSeparator();
+        }
     }
     if (zeile >= 0)
     {
@@ -1932,15 +1969,17 @@ void ComposerPanel::setupUI()
            "level curves of the clips. It applies always: on the first start, in every round of "
            "a loop, and without Loop. With a loop overlap, fade in and fade out together make a "
            "crossfade. The karaoke layer is not faded. 0 = no fade.\n\n"
-           "Shown as a small wedge in the ruler. Saved with the composition. Can be changed "
-           "while Edit is on."));
+           "Shown in the MASTER row below the ruler — there the fade has a handle, a shape "
+           "(right-click) and the Curve Editor, like the fade of a clip. Saved with the "
+           "composition. Can be changed while Edit is on."));
     m_ausblende = blendenFeld(
         tr("Fade out:"), "composerFadeOut",
         tr("The whole composition fades out over this time before its end — picture and sound, "
            "on top of the level curves of the clips. It applies always, also without Loop. "
            "The karaoke layer is not faded. 0 = no fade.\n\n"
-           "Shown as a small wedge in the ruler. Saved with the composition. Can be changed "
-           "while Edit is on."));
+           "Shown in the MASTER row below the ruler — there the fade has a handle, a shape "
+           "(right-click) and the Curve Editor, like the fade of a clip. Saved with the "
+           "composition. Can be changed while Edit is on."));
     for (QDoubleSpinBox* feld : {m_einblende, m_ausblende})
     {
         connect(feld, &QDoubleSpinBox::valueChanged, this, [this, feld](double sekunden) {
@@ -1984,6 +2023,7 @@ void ComposerPanel::setupUI()
     connect(m_mischart, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
         const VisualClip* clip = m_zeitachse->auswahl();
         if (clip == nullptr || m_sitzung == nullptr || !m_zeitachse->bearbeiten()) return;
+        if (m_zeitachse->gesamtGewaehlt()) return;  // die Kurve der Komposition hat keine Mischart
         Komposition neu = m_sitzung->komposition();
         neu.kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())]
             .clips[static_cast<std::size_t>(m_zeitachse->gewaehlterClip())]
@@ -2073,6 +2113,13 @@ void ComposerPanel::oeffneKurve(Teil teil)
             const int k = m_zeitachse->gewaehlterKanal();
             const int c = m_zeitachse->gewaehlterClip();
             Komposition neu = m_sitzung->komposition();
+            if (m_zeitachse->gesamtGewaehlt())
+            {
+                // die Kurve der ganzen Komposition (S100): die Lage der Stuecke wird zur festen Zeit
+                neu.setzeKurveAusClip(clip);
+                bearbeite(neu, was);
+                return;
+            }
             if (k < 0 || k >= static_cast<int>(neu.kanaele.size())) return;
             auto& clips = neu.kanaele[static_cast<std::size_t>(k)].clips;
             if (c < 0 || c >= static_cast<int>(clips.size())) return;
@@ -2095,7 +2142,9 @@ void ComposerPanel::zeigeKurve()
     if (m_kurven == nullptr) return;
     const VisualClip* clip = m_zeitachse->auswahl();
     m_kurven->zeige(clip, m_kurvenTeil,
-                    clip != nullptr ? QFileInfo(clip->datei).completeBaseName() : QString(),
+                    clip == nullptr                 ? QString()
+                    : m_zeitachse->gesamtGewaehlt() ? tr("Composition")
+                                                    : QFileInfo(clip->datei).completeBaseName(),
                     m_zeitachse->bearbeiten());
     m_zeitachse->setTeil(m_kurven->isVisible() && m_kurven->hatKurve() ? m_kurvenTeil : Teil{});
 }
@@ -2283,15 +2332,26 @@ void ComposerPanel::zeigeClip()
     const VisualClip* clip = m_zeitachse->auswahl();
     zeigeKurve();   // der Curve Editor folgt dem angeklickten Clip
     ladeHuellen();  // C5: die Wellenform neuer Songs holen
+    // die Kurve der ganzen Komposition (S100) ist angeklickt: kein Clip eines Kanals
+    const bool gesamt = clip != nullptr && m_zeitachse->gesamtGewaehlt();
     // die Mischart gibt es nur am Bild
-    const bool bild = clip != nullptr &&
+    const bool bild = clip != nullptr && !gesamt &&
                       m_zeitachse->komposition().kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())].art ==
                           KanalArt::Visual;
     m_mischart->setEnabled(bild && m_zeitachse->bearbeiten());
     // Sync on Effect Chain (C3c) folgt dem angeklickten Clip
     if (m_sitzung != nullptr)
-        m_sitzung->waehleClip(clip != nullptr ? m_zeitachse->gewaehlterKanal() : -1,
-                              clip != nullptr ? m_zeitachse->gewaehlterClip() : -1);
+        m_sitzung->waehleClip(clip != nullptr && !gesamt ? m_zeitachse->gewaehlterKanal() : -1,
+                              clip != nullptr && !gesamt ? m_zeitachse->gewaehlterClip() : -1);
+    if (gesamt && m_sitzung != nullptr)
+    {
+        m_clipZeile->setText(tr("MASTER · level curve of the whole composition · 0:00.0 – %1")
+                                 .arg(zeitText(clip->endeMs)));
+        m_clipZeile->setToolTip(tr("The level curve of the whole composition — picture and sound, on top of the "
+                                   "level curves of the clips. Right-click the MASTER row for fades, shapes "
+                                   "and the Curve Editor."));
+        return;
+    }
     if (clip == nullptr || m_sitzung == nullptr)
     {
         QString zeile = m_sitzung != nullptr && m_sitzung->geladen() ? tr("No clip selected") : QString();

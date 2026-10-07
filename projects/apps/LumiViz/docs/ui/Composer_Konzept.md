@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.45.0
+> **Version:** 0.46.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -374,10 +374,24 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     Wert). **Von mir gesetzt:** ein Stück, das über den Anfang oder das Ende
     ragt, rückt hinein, und Teile, die sich überdecken, werden gestaucht —
     beides wie am Clip, damit Zeitachse und Curve Editor dasselbe zeigen,
-    was wirkt. **Gebaut ist Schritt 1 von 4 (Modell und Datei); im Panel
-    lässt sich davon noch nichts einstellen** — es folgen der Curve Editor
-    an der Kurve der Komposition, die Spur „MASTER" unter dem Lineal (die
-    Keile im Lineal entfallen dann) und das Handbuch.
+    was wirkt. **Gebaut, Schritt 1 (Modell und Datei).**
+    **Gebaut, Schritt 2 (Zeile MASTER, Griffe, Kontextmenü, Curve Editor,
+    Handbuch — die geplanten Schritte 2 bis 4 in einem, weil Curve Editor
+    und Griffe am angeklickten Clip der Zeitachse hängen):** unter dem
+    Lineal liegt die Zeile **MASTER** (`Zeitachse::kKanaeleOben`; die
+    Kanäle beginnen eine Zeile tiefer). Die Kurve ist dort EIN Clip über
+    die ganze Länge mit dem „Kanal" `Zeitachse::kMaster` und dem Clip 0:
+    `clipIn` / `schreibeClip` holen und schreiben ihn über `kurveAlsClip` /
+    `setzeKurveAusClip`, sodass Zeichnen, Griffe (Blenden, Bézier, Stücke),
+    Rechtsklick (Presets, *Edit … curve...*, *Add shape here*, *Delete
+    shape*), Doppelklick und der Curve Editor dieselben Wege gehen wie am
+    Clip. Nicht an ihr: Verschieben, Kanten, Kopieren, Ausschneiden,
+    Löschen, Mischart, Sync on Effect Chain. Die Felder *Fade in* / *Fade
+    out* bleiben und stellen dieselben Dauern; **die Keile im Lineal sind
+    entfallen**. **Von mir gesetzt:** Name „MASTER", Ort direkt unter dem
+    Lineal, immer sichtbar, so hoch wie eine Kanalzeile (das Panel braucht
+    36 Pixel mehr Höhe); der Curve Editor nennt sie „Composition" und sein
+    Feld weiter „Base level of the clip". **Im Programm nicht gesehen.**
     **Die Blende der ganzen Komposition (Schritt 6, gebaut S99):** der
     Pegel jedes Clips wird mit `Komposition::blendeBei` an seiner Stelle
     malgenommen — im Bild (`Wiedergabe::rendere`) und im Ton
@@ -1323,7 +1337,7 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | Freigeben ohne Titel im Player (S99) | keine neuen Dateien — der leere Songwechsel in `Sitzung::gibTonFrei` und der Fall „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` gehen mit den Dateien | **N5, Anzeige, fünfte Stelle** — `UI/panels/PlayerPanel.cpp` (`subscribeToEvents`, im Empfänger von `TrackChangedEvent`: ein Songwechsel ohne Datei setzt das Panel in den Ruhezustand), trägt `Composer-Naht N5, Anzeige`. Commit: **`3624e1f`** (nur Naht); Eigenes davor `e3043ae`. Nach dem eigenen Commit allein ist der neue Fall rot (er prüft das Panel), erst mit der Naht grün | — | vor dem Holen wie oben prüfen |
 | Überlappung in der Schleife und Blende der ganzen Komposition (S99, sieben Schritte) | keine neuen Dateien — `Komposition` (Werte, `Schleifenlage`, Datei), `Uhr`, `Bildquelle`, `Wiedergabe` (zweite Stelle, `m_frische`), `Tonfuehrung` (Stimmen), `Sitzung::zweiteStelleMs`, `ComposerPanel` / `Zeitachse` (Felder, Fenster, Keile) und die Tests gehen mit den Dateien | **keine Naht.** Commits, alle Eigenes: `fb412a7` (Modell und Datei), `1a1503d` (Uhr, Bildquelle), `14edf71` (Bild) mit `a2c49f7` (clang-Fix — **dazwischen baut der Stand mit clang nicht**), `37f9d4f` (Ton), `37f48bd` (Panel, Zeitachse), `f217900` (Blende), `c361dcf` (Visuals overlap themselves) | — | vor dem Holen wie oben prüfen. In `.lvcomp`-Dateien, die damit gespeichert wurden, bleiben die Schlüssel `loop` und `fade` — ein älterer Stand überliest sie |
 | Player-Panel wird nach dem Freigeben erst eingeblendet (S100, Sichttest S99 A2) | keine neuen Dateien — die Erweiterung des Falls „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` geht mit der Datei | **N5, Anzeige, sechste Stelle** — `UI/panels/PlayerPanel.cpp` / `.hpp` (`onActivate`: ohne Titel im Player und ohne führenden Composer der Ruhezustand; neue private Funktion `zeigeRuhezustand`, die auch der Empfänger von Stelle 5 ruft), trägt `Composer-Naht N5, Anzeige`. Commit: **`da5339f`** (Naht und Test in einem — ohne die Naht ist die Erweiterung des Falls rot) | — | vor dem Holen wie oben prüfen |
-| Pegelkurve der ganzen Komposition (S100, vier Schritte) | keine neuen Dateien — Schritt 1: `Komposition` (Formen der Blenden, Grundpegel, `GesamtStueck`, `kurveAlsClip`, Datei) und der Fall „Kurve der Komposition S100, Modell" in `test_ComposerWiedergabe.cpp` gehen mit den Dateien | keine Naht — eigener Code. Commits: Schritt 1 Kennung folgt | — | vor dem Holen wie oben prüfen. In `.lvcomp`-Dateien, die damit gespeichert wurden, bleiben `fade.inShape` / `fade.outShape` und der Schlüssel `level` — ein älterer Stand überliest sie |
+| Pegelkurve der ganzen Komposition (S100, zwei Schritte) | keine neuen Dateien — Schritt 1: `Komposition` (Formen der Blenden, Grundpegel, `GesamtStueck`, `kurveAlsClip`, Datei) und der Fall „Kurve der Komposition S100, Modell" in `test_ComposerWiedergabe.cpp`; Schritt 2: die Zeile MASTER in `Zeitachse` / `ComposerPanel` und die Erweiterung in `test_ComposerPanel.cpp` — alles geht mit den Dateien | keine Naht — eigener Code. Commits: Schritt 1 **`4150554`**, Schritt 2 Kennung folgt | — | vor dem Holen wie oben prüfen. In `.lvcomp`-Dateien, die damit gespeichert wurden, bleiben `fade.inShape` / `fade.outShape` und der Schlüssel `level` — ein älterer Stand überliest sie |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -1345,6 +1359,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.46.0 | 2026-10-07 | Session 100 — **Pegelkurve der ganzen Komposition, Schritt 2: die Zeile MASTER** (§4) — unter dem Lineal, anklickbar wie ein Clip (`Zeitachse::kMaster`, `kKanaeleOben`, `clipIn`, `schreibeClip`, `waehleGesamt`, `gesamtGewaehlt`); Griffe, Rechtsklick, Doppelklick und Curve Editor gehen die Wege des Clips; der Curve Editor schreibt über `setzeKurveAusClip` in die Komposition; die Keile im Lineal entfallen. Die geplanten Schritte 2 bis 4 in einem (Curve Editor und Griffe hängen am angeklickten Clip). Eigener Code, keine Naht. Erweiterung des Falls in `test_ComposerPanel.cpp`, Bild `.master.png` angesehen. Benutzerhandbuch 1.99.0. Rückbau-Liste: Kennung `4150554` von Schritt 1, Schritt 2 folgt |
 | 0.45.0 | 2026-10-07 | Session 100 — **Pegelkurve der ganzen Komposition** (Urteil Patrik F7: „gleich wie bei Clips, auch editierbar"; Entscheide F7 c — Blenden mit Kurve, Grundpegel und Stücke in einer eigenen Spur —, F7-1 a — ein Stück liegt an fester Zeit). **Gebaut, Schritt 1 von 4 (Modell und Datei, eigener Code, keine Naht):** `Komposition::einblendeForm` / `ausblendeForm` / `grundpegel` / `gesamtStuecke`, `GesamtStueck`, `kurveAlsClip`, `setzeKurveAusClip`, `hatKurve`; `blendeBei` rechnet wie die Pegelkurve eines Clips (geändert: sich überdeckende Blenden teilen den Platz, bisher galt der kleinere Wert); Datei `fade { inShape, outShape }` und `level { base, shapes }` (§4). Neuer Fall in `test_ComposerWiedergabe.cpp`. Im Panel noch nicht einstellbar. Rückbau-Liste: Kennung `da5339f` der Naht N5, sechste Stelle; Zeile „Pegelkurve der ganzen Komposition", Kennung folgt |
 | 0.44.0 | 2026-10-07 | Session 100 — **Sichttest S99, Befund A2** (Patrik: beim ersten Ausschalten wechselte das Panel Player nicht auf „No track loaded", beim zweiten schon). Per Test gezählt: der leere Songwechsel kommt, aber ein Player-Panel, das dabei nicht zu sehen ist, hat kein Abo am Bus und zeigt nach dem Einblenden weiter „Composer - <Song>" mit der alten Stelle. **Naht N5, Anzeige, wächst um eine sechste Stelle** (vor dem Bau eingetragen, §12.2): `PlayerPanel::onActivate` geht ohne Titel im Player und ohne führenden Composer in den Ruhezustand. Erweiterung des Falls in `test_ComposerNahtTon.cpp`. **Nicht belegt**, dass das Panel bei Patrik in jenem Augenblick verdeckt war — Indiz: die Stelle im Panel lag rund 3,6 s hinter der der Komposition. **Sichttest S99 sonst:** Abschnitt E (Überlappung) und F (Blende) im Programm gesehen und gehört, ohne Befund — damit gebilligt, was in §4 als „von mir gesetzt" steht: Reihenfolge im selben Kanal (E6), Sprung ins hintere / vordere Fenster (E7, E8), Halt im Fenster (E9), Loop aus im Fenster (E10), Vorwärmen und „kein Sprung" bei jeder Schleife (E14), die Karaoke-Ebene blendet nicht mit (F6). **Nicht gebilligt:** die lineare Form der Blende — Urteil Patrik F7: wie bei Clips, auch editierbar (Entscheid steht aus). Nicht gespielt: Abschnitt G (*Visuals overlap themselves*); dort bleibt „von mir gesetzt" stehen. Rückbau-Liste: Zeile S100, Kennung folgt |
 | 0.43.1 | 2026-10-06 | Session 99, Abschluss — Rückbau-Liste: Zeile „Überlappung in der Schleife und Blende der ganzen Komposition" mit den Kennungen der acht Commits (keine Naht; zwischen `14edf71` und `a2c49f7` baut der Stand mit clang nicht). Kopf: Stand der Stufen. **Stand:** die Überlappung, die Blende und die geschlossene Lücke im Panel Player sind gebaut und per Test belegt, im Programm nichts davon gesehen oder gehört — Sichttest S99 (52 Punkte) |

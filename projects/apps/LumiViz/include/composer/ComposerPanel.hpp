@@ -210,6 +210,22 @@ public:
     static constexpr int kRand = 10;         ///< frei rechts neben dem Ende
     static constexpr int kLinealHoehe = 24;
     static constexpr int kZeilenHoehe = 36;
+    /// Hier beginnt die Zeile des ersten Kanals: unter dem Lineal liegt die
+    /// Zeile der Pegelkurve der ganzen Komposition (S100).
+    static constexpr int kKanaeleOben = kLinealHoehe + kZeilenHoehe;
+
+    // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c) --
+    //
+    // Sie liegt als EIN Clip ueber die ganze Laenge in einer eigenen Zeile unter
+    // dem Lineal („MASTER") und laesst sich anklicken wie ein Clip: Griffe,
+    // Rechtsklick und Curve Editor gehen dieselben Wege. Ihr „Kanal" ist
+    // `kMaster`, ihr Clip 0 — ueberall, wo die Achse Kanal und Clip nimmt
+    // (`blendenGriff`, `stueckGriff`, `oeffneKurve`, `stueckHinzu` …).
+    // Verschieben, Kanten, Kopieren und Loeschen gibt es an ihr nicht.
+    static constexpr int kMaster = -2;
+    [[nodiscard]] bool gesamtGewaehlt() const { return m_kanal == kMaster; }
+    /// Die Kurve der Komposition anklicken (wie ein Klick in ihre Zeile).
+    void waehleGesamt();
 
 Q_SIGNALS:
     /// Klick oder Ziehen im Lineal.
@@ -251,6 +267,15 @@ private:
     void uebernimm(const Komposition& neu, int kanal, int clip);
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
+    /// Die Zeile eines Kanals; `kMaster` liegt in der Zeile -1, unter dem Lineal.
+    [[nodiscard]] static int zeileVon(int kanal) { return kanal == kMaster ? -1 : kanal; }
+    /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
+    /// `kMaster` die Kurve der Komposition als Clip — sie wird dafuer in
+    /// `ablage` gelegt.
+    [[nodiscard]] static const Clip* clipIn(const Komposition& in, int kanal, int clip, Clip& ablage);
+    /// Den (bearbeiteten) Clip an seinen Platz in `in` zurueckschreiben.
+    static void schreibeClip(Komposition& in, int kanal, int clip, const Clip& neu);
+    mutable Clip m_gesamt;  ///< die Kurve der Komposition als Clip, fuer `auswahl`
 
     Komposition m_komposition;
     bool m_geladen = false;

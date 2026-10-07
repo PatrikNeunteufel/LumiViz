@@ -616,6 +616,103 @@ TEST_SUITE("ComposerPanel")
             CHECK(ueberlappung->isEnabled());
         }
 
+        // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c): die Zeile
+        //     MASTER unter dem Lineal — anklickbar wie ein Clip, mit Griffen, Stuecken an
+        //     fester Zeit und dem Curve Editor; alles ueber Undo
+        {
+            const int master = Zeitachse::kMaster;
+            const auto ziehPunkt = [&](QPoint a, QPoint b) {
+                QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                                  Qt::LeftButton, Qt::LeftButton, Qt::AltModifier);
+                QCoreApplication::sendEvent(achse, &druck);
+                for (int i = 1; i <= 4; ++i)
+                {
+                    const QPoint m = a + (b - a) * i / 4;
+                    QMouseEvent bewegt(QEvent::MouseMove, QPointF(m), QPointF(achse->mapToGlobal(m)),
+                                       Qt::NoButton, Qt::LeftButton, Qt::AltModifier);  // Alt: ohne Einrasten
+                    QCoreApplication::sendEvent(achse, &bewegt);
+                }
+                QMouseEvent los(QEvent::MouseButtonRelease, QPointF(b), QPointF(achse->mapToGlobal(b)),
+                                Qt::LeftButton, Qt::NoButton, Qt::AltModifier);
+                QCoreApplication::sendEvent(achse, &los);
+            };
+            auto* einblende = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerFadeIn"));
+            REQUIRE(einblende != nullptr);
+            REQUIRE_FALSE(sitzung->komposition().hatKurve());
+            const int kanalZeileVorher = achse->yVonZeile(0);
+            CHECK(kanalZeileVorher > Zeitachse::kKanaeleOben);  // die Kanaele beginnen unter der Zeile MASTER
+
+            // ein Klick in die Zeile waehlt die Kurve — keinen Clip eines Kanals
+            const QPoint mitte(achse->xVon(30000), achse->yVonZeile(-1));
+            ziehPunkt(mitte, mitte);
+            CHECK(achse->gesamtGewaehlt());
+            REQUIRE(achse->auswahl() != nullptr);
+            CHECK(achse->auswahl()->dauerMs() == 60000);
+            CHECK_FALSE(mischart->isEnabled());
+            CHECK_FALSE(achse->kopiere());  // sie ist kein Clip
+            QKeyEvent entf(QEvent::KeyPress, Qt::Key_Delete, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &entf);  // Entf loescht nichts
+            CHECK(sitzung->laengeMs() == 60000);
+            CHECK_FALSE(sitzung->ungespeichert());
+            CHECK(achse->blendenGriff(master, 0, true).x() >= 0);  // der Griff sitzt am Anfang, auch ohne Blende
+
+            // das Feld Fade in: der Griff der Blende steht in der Zeile bei 6 s
+            einblende->setValue(6.0);
+            const QPoint griff = achse->blendenGriff(master, 0, true);
+            REQUIRE(griff.x() >= 0);
+            CHECK(std::abs(griff.x() - achse->xVon(6000)) <= 1);
+            CHECK(griff.y() < Zeitachse::kKanaeleOben);
+            CHECK(griff.y() > Zeitachse::kLinealHoehe);
+            // am Griff ziehen: die Dauer folgt, das Feld auch
+            ziehPunkt(griff, QPoint(achse->xVon(12000), griff.y()));
+            CHECK(std::llabs(sitzung->komposition().einblendeMs - 12000) <= 400);
+            CHECK(einblende->value() == doctest::Approx(sitzung->komposition().einblendeMs / 1000.0).epsilon(0.02));
+            CHECK(achse->gesamtGewaehlt());
+            // die Form (der Weg des Rechtsklicks)
+            achse->setzeBlendenForm(master, 0, true, Kurvenform::SKurve);
+            CHECK(sitzung->komposition().einblendeForm.punkte.front().form == Kurvenform::SKurve);
+
+            // ein Stueck bei 30 s: es liegt an fester Zeit, der Curve Editor geht auf
+            achse->stueckHinzu(master, 0, 30000);
+            REQUIRE(sitzung->komposition().gesamtStuecke.size() == 1);
+            CHECK(sitzung->komposition().gesamtStuecke[0].mitteMs == 30000);
+            CHECK(sitzung->komposition().blendeBei(30000) == doctest::Approx(0.0));
+            KurvenFenster* kurven = panel.kurvenFenster();
+            REQUIRE(kurven != nullptr);
+            CHECK(kurven->hatKurve());
+            CHECK(kurven->teil() == Teil{TeilArt::Stueck, 0});
+            // an der Raute ziehen: es wandert
+            const QPoint raute = achse->stueckGriff(master, 0, 0, 0);
+            REQUIRE(raute.x() >= 0);
+            CHECK(raute.y() < Zeitachse::kKanaeleOben);
+            ziehPunkt(raute, QPoint(achse->xVon(40000), raute.y()));
+            REQUIRE(sitzung->komposition().gesamtStuecke.size() == 1);
+            CHECK(std::llabs(sitzung->komposition().gesamtStuecke[0].mitteMs - 40000) <= 400);
+            // der Curve Editor aendert die Kurve der Komposition, nicht die eines Clips
+            REQUIRE(achse->auswahl() != nullptr);
+            Clip ausEditor = *achse->auswahl();
+            ausEditor.grundpegel = 0.5;
+            Q_EMIT kurven->clipGeaendert(ausEditor, QStringLiteral("Change base level"));
+            CHECK(sitzung->komposition().grundpegel == doctest::Approx(0.5));
+            CHECK(sitzung->komposition().gesamtStuecke.size() == 1);
+            CHECK(std::llabs(sitzung->komposition().gesamtStuecke[0].mitteMs - 40000) <= 400);
+            CHECK(ch1()[1].grundpegel == doctest::Approx(1.0));
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+            {
+                QCoreApplication::processEvents();
+                CHECK(panel.grab().save(bild + QStringLiteral(".master.png")));
+            }
+            // das Stueck loeschen
+            achse->stueckLoeschen(master, 0, 0);
+            CHECK(sitzung->komposition().gesamtStuecke.empty());
+            // Undo nimmt alles zurueck: sieben Schritte
+            for (int i = 0; i < 7; ++i) REQUIRE(bus->undo());
+            CHECK_FALSE(sitzung->komposition().hatKurve());
+            CHECK(einblende->value() == doctest::Approx(0.0));
+            CHECK_FALSE(sitzung->ungespeichert());
+            kurven->close();
+        }
+
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
         REQUIRE(sitzung->lade(datei));
         REQUIRE(bus->canUndo());
