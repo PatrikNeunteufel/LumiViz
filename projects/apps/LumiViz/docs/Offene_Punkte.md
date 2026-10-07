@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.105.0
-> **Datum:** 2026-10-07 (Session 100)
+> **Version:** 1.106.0
+> **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2225,6 +2225,17 @@ Idee Preset-Warmup/Pre-Roll.
   gesehen** — als Nächstes Patriks Sichttest
   `.claude/handover/Sichttests_S100.md` (70 Punkte). Die Einzelheiten stehen
   in den folgenden Blöcken.
+  - ⬜ **Befund Patrik S101, behoben, im Programm ungesehen: das Panel
+    Karaoke lud bei laufendem Composer nichts** („Could not load: <Pfad>",
+    ohne Grund; im Panel stand „works with the Multi Effect visualizer").
+    Ursache: bei Composer an und Sync aus meldet die Sitzung „kein
+    Visualizer", damit Effect Chain ruht — die Karaoke-Editoren hörten mit.
+    Entscheid KP1: a. Jetzt bleiben sie an der Ebene der App (Naht N16), und
+    der Composer setzt jede Änderung seinem Karaoke-Träger ein (R2 wächst um
+    `karaokeFassung`). Per Test gezählt (Fall S101, `test_ComposerSitzung.cpp`).
+    **Nachtest:** Composer on, im Panel Karaoke ein Preset laden und ein Feld
+    verstellen — beides sofort im Bild; **Urteil:** ruckelt es beim Ziehen
+    eines Reglers, reißt der Trail ab? (Nicht gemessen.)
   - **Wunsch Patrik S100 (am Ende der Sitzung, nicht begonnen): Audio-Master
     und Visual-Master** neben der Zeile MASTER — je eine eigene Pegelkurve
     nur für den Ton und nur für das Bild, „da kann man z. B. einfach die
@@ -4333,6 +4344,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.106.0 | 2026-10-07 | Session 101 — **Composer:** Befund Patrik, das Panel Karaoke lud bei laufendem Composer nichts; behoben (Entscheid KP1: a, Naht N16, R2 wächst; Konzept 0.53.0), per Test gezählt, im Programm ungesehen — Nachtest und Urteil zum Ruckeln eingetragen |
 | 1.105.0 | 2026-10-07 | Session 100, Abschluss — **Composer:** Stand am Ende der Sitzung (alles gebaut, im Programm nichts gesehen — Sichttest S100 mit 70 Punkten); neuer Wunsch Patrik: Audio-Master und Visual-Master neben der Zeile MASTER (etwa Musik stumm für eine Durchsage), nicht begonnen |
 | 1.104.0 | 2026-10-07 | Session 100 — **Icons:** Icon für `.lvcomp` gebaut (Fächer mit Zeitstrahl; Effect Browser mit Doppelklick, Panel Composer; Naht N8 wächst, Konzept 0.52.0), Icon der App als Ressource der Exe; Sichttest S100 mit Abschnitt I, 70 Punkte. Von den Wünschen zur Zeitachse offen: Zoom und Schwenken |
 | 1.103.0 | 2026-10-07 | Session 100 — **Icons:** Ziel Patrik: alle Datei-Icons im Explorer (vorerst Windows) — Liste der zugewiesenen Icons in `asset/img/logo/icons/README.md`, Skript `register_file_icons.ps1` (nur Anzeige-Modus gelaufen); offen: Icon der App (Exe-Ressource, Fenster-Icon), `LumiViz.exe <datei>`; zum Icon `.lvcomp` der Ort entschieden (I1: a), das Aussehen offen. Zoom der Zeitachse: Reset mit Ctrl+0 vorgemerkt |

@@ -199,6 +199,17 @@ bool Bildquelle::karaokeAufgelegt() const
     return m_wiedergabe != nullptr && m_wiedergabe->karaokeAufgelegt();
 }
 
+void Bildquelle::setzeKaraokeEbene(lumi::multieffect::ChainNode ebene)
+{
+    m_karaokeEbene = std::move(ebene);
+    m_karaokeEbeneNeu = true;
+}
+
+const MultiEffectVisualizer* Bildquelle::karaokeTraegerNurSehen() const
+{
+    return m_wiedergabe != nullptr ? m_wiedergabe->karaokeTraeger() : nullptr;
+}
+
 QStringList Bildquelle::anlaufText() const
 {
     QStringList z;
@@ -250,6 +261,7 @@ void Bildquelle::initialize()
 {
     m_wiedergabe = std::make_unique<Wiedergabe>();
     m_wiedergabe->setParkplatz(&m_park);
+    m_karaokeEbeneNeu = m_karaokeEbene.has_value();  // die neue Wiedergabe kennt sie noch nicht
     m_versorgt.clear();
     m_bildSteht = false;
     m_letzteStelle = -1;
@@ -301,6 +313,13 @@ void Bildquelle::render(float deltaTime)
             !m_park.adoptierbar)
             m_park.geparkt.reset();
         m_parkLeeren = false;
+    }
+
+    // Die Karaoke-Ebene der App (S101) geht an die Wiedergabe weiter.
+    if (m_karaokeEbeneNeu && m_karaokeEbene.has_value())
+    {
+        m_wiedergabe->setzeKaraokeEbene(*m_karaokeEbene);
+        m_karaokeEbeneNeu = false;
     }
 
     const int wunschNr = m_wunschNr.load();  // was dieses Bild verarbeitet

@@ -158,6 +158,9 @@ public:
     [[nodiscard]] Bindung bindung() const { return m_bindung; }
     /// Der Renderer, an dem Effect Chain haengt (nur bei `Bindung::Clip`).
     [[nodiscard]] MultiEffectVisualizer* gebundenerRenderer() const { return m_gebunden; }
+    /// Verschickt gerade eine Sitzung ihr `VisualizerChangedEvent` (Naht N16,
+    /// S101)? Die Editoren der Karaoke-Ebene uebergehen solche Meldungen.
+    [[nodiscard]] static bool meldetBindung();
 
     // --- Die Kette eines Clips speichern (C3c Schritt 2, Entscheid Patrik S95) --
     //
@@ -276,6 +279,10 @@ private:
     void loeseKette();
     void meldeKette();
     void meldeNichts();
+    /// Die Karaoke-Ebene (S101): hat sie sich am Renderer der App geaendert —
+    /// oder ist es ein anderer Renderer —, bekommt die Bildquelle eine Kopie
+    /// fuer ihren Karaoke-Traeger. Unter dem Render-Mutex rufen.
+    void gleicheKaraokeAb(Bildquelle& q);
     /// Je Takt: den Ton uebernehmen oder freigeben, die Fuehrung takten und
     /// den laufenden Song melden.
     void fuehreTon(Bildquelle& q);
@@ -298,6 +305,8 @@ private:
     MultiEffectVisualizer* m_gebunden = nullptr;
     bool m_bindungOffen = false;  ///< der Takt soll es noch einmal versuchen
     int m_festStand = -1;
+    const void* m_karaokeVon = nullptr;  ///< wessen Ebene die Bildquelle hat — nur zum Vergleichen
+    std::uint64_t m_karaokeFassung = 0;  ///< und in welcher Fassung
 
     VisualizerWidget& m_widget;
     Komposition m_komposition;

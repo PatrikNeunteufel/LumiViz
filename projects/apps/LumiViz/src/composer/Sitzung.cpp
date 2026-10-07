@@ -234,6 +234,12 @@ void Sitzung::setAn(bool an)
         if (m_liefVorAus && laeuftNachEinWeiter()) neu->uhr().starte();
         m_liefVorAus = false;
         neu->spiegleStand();
+        {
+            // die Karaoke-Ebene der App schon fuer das erste Bild (S101)
+            QMutexLocker halt(&m_widget.renderMutex());
+            m_karaokeVon = nullptr;
+            gleicheKaraokeAb(*neu);
+        }
         m_widget.setBildquelle(std::move(neu));
         if (!this->an()) return;  // das Fenster hat keinen Render-Thread
         m_takt->start();
@@ -292,10 +298,30 @@ void Sitzung::waehleClip(int kanal, int clip)
     m_bindungOffen = true;
 }
 
+namespace
+{
+int g_meldet = 0;  ///< > 0: eine Sitzung verschickt gerade ihre Bindung (Naht N16)
+
+/// Fuer die Dauer einer Meldung der Bindung — der Bus stellt sofort zu.
+struct MeldetBindung
+{
+    MeldetBindung() { ++g_meldet; }
+    ~MeldetBindung() { --g_meldet; }
+    MeldetBindung(const MeldetBindung&) = delete;
+    MeldetBindung& operator=(const MeldetBindung&) = delete;
+};
+}  // namespace
+
+bool Sitzung::meldetBindung()
+{
+    return g_meldet > 0;
+}
+
 void Sitzung::meldeKette()
 {
     if (g_bus == nullptr) return;
     IVisualizer* kette = m_widget.visualizer();
+    const MeldetBindung meldung;
     g_bus->publish(VisualizerChangedEvent{
         kette != nullptr ? kette->visualizerId().toStdString() : std::string(),
         kette != nullptr ? kette->visualizerName().toStdString() : std::string(),
@@ -305,8 +331,26 @@ void Sitzung::meldeKette()
 void Sitzung::meldeNichts()
 {
     if (g_bus == nullptr) return;
+    const MeldetBindung meldung;
     g_bus->publish(VisualizerChangedEvent{std::string(), std::string(), nullptr,
                                           &m_widget.renderMutex()});
+}
+
+void Sitzung::gleicheKaraokeAb(Bildquelle& q)
+{
+    // Die Ebene gehoert dem Renderer der App: an ihm haengt das Panel Karaoke,
+    // auch waehrend eine Komposition das Bild liefert. Ist es kein Multi
+    // Effect, gibt es keine Ebene zu reichen — der Traeger behaelt, was er hat.
+    const auto* app = dynamic_cast<const MultiEffectVisualizer*>(m_widget.visualizer());
+    if (app == nullptr)
+    {
+        m_karaokeVon = nullptr;
+        return;
+    }
+    if (app == m_karaokeVon && app->karaokeFassung() == m_karaokeFassung) return;
+    m_karaokeVon = app;
+    m_karaokeFassung = app->karaokeFassung();
+    q.setzeKaraokeEbene(app->karaokeKette());
 }
 
 void Sitzung::loeseKette()
@@ -388,6 +432,7 @@ void Sitzung::bindeKette()
         m_bindungOffen = true;
         return;
     }
+    const MeldetBindung meldung;
     g_bus->publish(VisualizerChangedEvent{renderer->visualizerId().toStdString(),
                                           renderer->visualizerName().toStdString(),
                                           static_cast<void*>(static_cast<IVisualizer*>(renderer)),
@@ -569,6 +614,7 @@ void Sitzung::beimTakt()
     if (m_widget.renderMutex().tryLock())
     {
         q->spiegleStand();
+        gleicheKaraokeAb(*q);  // S101: was im Panel Karaoke geschah, gilt auch hier
         m_widget.renderMutex().unlock();
     }
     // Effect Chain (C3c): nachholen, was noch offen ist — und folgen, wenn der

@@ -310,6 +310,11 @@ public:
     /// Frame nicht dran war. Der Renderer selbst ruft dasselbe am Ende seines
     /// Presents.
     void legeKaraokeEbeneAuf() { legeKaraokeAuf(); }
+    /// Composer-Naht R2 (waechst mit N16, S101): zaehlt jede Aenderung der
+    /// Karaoke-Ebene — jedes `recompileKaraoke()`. Der Composer liest daran
+    /// ab, ob er die Ebene seinem Karaoke-Traeger neu einsetzen muss. Unter
+    /// dem Render-Mutex lesen.
+    [[nodiscard]] std::uint64_t karaokeFassung() const { return m_karaokeFassung; }
 
     // ---- Movement-Tabelle in Scheiben (S94) --------------------------------
     // Der Knoten Movement wertet sein Skript je PIXEL aus und legt eine
@@ -1813,6 +1818,7 @@ private:
     bool m_glyphNurRastern = false;    ///< zeichneLyricsZeilen: rastern, nicht auflegen
     bool m_karaokeGezeichnet = false;  ///< die Ebene war in diesem Frame dran
     bool m_karaokeAuslassen = false;   ///< Composer-Naht R2: diese Instanz zeichnet die Ebene nie
+    std::uint64_t m_karaokeFassung = 0;  ///< Composer-Naht R2: zaehlt `recompileKaraoke()`
     unsigned int m_presentZiel = 0;    ///< Composer-Naht R1: Framebuffer des Presents (0 = Fenster)
     int m_movementImBau = 0;           ///< S94: Movement-Knoten, deren Tabelle in diesem Frame noch entsteht
     std::uint64_t m_movementBauFrame = 1;  ///< S94: zaehlt die Frames fuer den Bau in Scheiben

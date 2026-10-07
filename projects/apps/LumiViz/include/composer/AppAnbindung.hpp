@@ -139,6 +139,12 @@ struct TonStand
 /// fuehrt nicht; der Klick geht wie immer an den Player.
 [[nodiscard]] bool springeImSong(double anteil);
 
+/// Meldet der Composer gerade, woran Effect Chain haengt (Naht N16, S101)?
+/// Wahr nur waehrend die Sitzung ein `VisualizerChangedEvent` verschickt — an
+/// einen Clip, an nichts oder zurueck an die Kette. Die Editoren der
+/// Karaoke-Ebene uebergehen solche Meldungen: die Ebene gehoert der App.
+[[nodiscard]] bool meldetBindung();
+
 /// Der Weg des Menues: bei leerem Pfad nach der Datei fragen (letzter Ordner
 /// unter `composer/lastDir`), laden, Meldungen zeigen. false = abgebrochen
 /// oder nicht geladen.

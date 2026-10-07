@@ -244,6 +244,11 @@ bool fuehrtTon()
     return Sitzung::fuehrende() != nullptr;
 }
 
+bool meldetBindung()
+{
+    return Sitzung::meldetBindung();
+}
+
 TonStand tonStand()
 {
     TonStand stand;

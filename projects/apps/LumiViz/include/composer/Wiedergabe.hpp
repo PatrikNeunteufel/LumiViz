@@ -24,6 +24,7 @@
 
 #include "composer/Komposition.hpp"
 #include "composer/Mischer.hpp"
+#include "visualizers/multieffect/EffectChain.hpp"
 
 #include <QSize>
 #include <QStringList>
@@ -32,6 +33,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -154,6 +156,19 @@ public:
 
     /// Lag die Karaoke-Ebene im letzten Bild ueber dem Gemischten?
     [[nodiscard]] bool karaokeAufgelegt() const { return m_karaokeAufgelegt; }
+    /// Die Karaoke-Ebene der App (S101): der Traeger bekommt sie mit dem
+    /// naechsten Bild eingesetzt — und wieder, wenn er neu angelegt wird. Die
+    /// Knoten behalten ihre Ids, damit das Bild des Trails eine Einstellung
+    /// uebersteht. Ohne Aufruf zeigt der Traeger, was beim Anlegen in der
+    /// Ablage stand.
+    void setzeKaraokeEbene(lumi::multieffect::ChainNode ebene)
+    {
+        m_karaokeEbene = std::move(ebene);
+        m_karaokeEbeneNeu = true;
+    }
+    /// Der Renderer, der die Karaoke-Ebene rechnet — nur zum Ansehen (Tests);
+    /// nullptr, solange die Ebene aus ist.
+    [[nodiscard]] const MultiEffectVisualizer* karaokeTraeger() const { return m_karaokeTraeger.get(); }
     /// Was beim Anlegen der Renderer schiefging (fehlende / unlesbare Dateien).
     [[nodiscard]] const QStringList& bericht() const { return m_bericht; }
     /// Jeder angelegte Renderer dieser Komposition, in der Reihenfolge des
@@ -200,6 +215,8 @@ private:
     std::map<Schluessel, Lauf> m_frische;
     std::unique_ptr<MultiEffectVisualizer> m_karaokeTraeger;
     Leinwand m_karaokeLeinwand;
+    std::optional<lumi::multieffect::ChainNode> m_karaokeEbene;  ///< die Ebene der App (S101)
+    bool m_karaokeEbeneNeu = false;  ///< der Traeger hat sie noch nicht
     std::int64_t m_vorlaufMs = 2000;
     int m_gemischt = 0;
     bool m_karaokeAufgelegt = false;

@@ -209,6 +209,12 @@ public:
     [[nodiscard]] int gemischteClips() const;
     /// Lag die Karaoke-Ebene im letzten Bild ueber dem Gemischten?
     [[nodiscard]] bool karaokeAufgelegt() const;
+    /// Die Karaoke-Ebene der App (S101) — GUI unter dem Mutex. Der Traeger
+    /// der Wiedergabe bekommt sie mit dem naechsten Bild, auch nach einem
+    /// Verlust des GL-Kontexts wieder.
+    void setzeKaraokeEbene(lumi::multieffect::ChainNode ebene);
+    /// Der Renderer, der die Karaoke-Ebene rechnet — nur zum Ansehen (Tests).
+    [[nodiscard]] const MultiEffectVisualizer* karaokeTraegerNurSehen() const;
     /// Was beim Richten und beim Anlegen der Renderer auffiel.
     [[nodiscard]] QStringList bericht() const;
     /// Wie viele Bilder wirklich gerechnet wurden (nicht nur noch einmal gezeigt).
@@ -284,6 +290,8 @@ private:
     std::int64_t m_letzteStelle = -1;
     bool m_bildSteht = false;  ///< der Mischer haelt ein gueltiges Bild
     bool m_letzteKaraoke = false;  ///< lag die Karaoke-Ebene im letzten gerechneten Bild an?
+    std::optional<lumi::multieffect::ChainNode> m_karaokeEbene;  ///< die Ebene der App (S101)
+    bool m_karaokeEbeneNeu = false;  ///< die Wiedergabe hat sie noch nicht
     bool m_angelegt = false;
     int m_ziel = -1;
     int m_gerechnet = 0;

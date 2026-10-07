@@ -20,6 +20,7 @@
 #include "UI/widgets/DateiDrag.hpp"                       // Preset-Dateien im Drag (S84)
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "composer/AppAnbindung.hpp"                      // Composer-Naht N16
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
 #include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
@@ -1495,6 +1496,10 @@ void MultiEffectPanel::connectToActiveVisualizer()
     {
         m_eventSubscriptions.push_back(bus->subscribeScoped<VisualizerChangedEvent>(
             [this](const VisualizerChangedEvent& e) {
+                // Composer-Naht N16: die Karaoke-Ebene gehoert der App. Wohin
+                // der Composer Effect Chain haengt (an einen Clip, an nichts),
+                // geht ihre Editoren nichts an — sie bleiben, wo sie sind.
+                if (m_baum != Baum::Kette && lumi::composer::meldetBindung()) return;
                 setHost(dynamic_cast<MultiEffectVisualizer*>(
                             static_cast<IVisualizer*>(e.visualizerPtr)),
                         e.renderMutex);

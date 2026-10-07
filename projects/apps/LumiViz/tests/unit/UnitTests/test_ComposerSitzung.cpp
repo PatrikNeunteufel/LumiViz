@@ -21,6 +21,7 @@
 #include <doctest.h>
 
 #include "TestFenster.hpp"
+#include "UI/panels/KaraokePanel.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "composer/Bildquelle.hpp"
@@ -43,7 +44,9 @@
 #include <QTemporaryDir>
 #include <QThread>
 
+#include <climits>
 #include <functional>
+#include <variant>
 
 using namespace lumi::multieffect;
 using namespace lumi::composer;
@@ -467,6 +470,114 @@ TEST_SUITE("ComposerSitzung")
             for (int i = 0; i < 6; ++i) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
             CHECK(sitzung.bindung() == Sitzung::Bindung::Kette);
             CHECK(gemeldet.size() == vorher);
+            sitzung.entlade();
+        }
+
+        SUBCASE("S101 Karaoke-Panel bei laufendem Composer (Befund Patrik): es bleibt an der Ebene der App — und der Composer zieht nach")
+        {
+            using lumi::multieffect::LyricsParams;
+            MultiEffectVisualizer::setKaraokeAblage(dir.filePath(QStringLiteral("karaoke/current.lvkar")));
+            MultiEffectVisualizer::setKaraokeEbene(false);
+            struct Aufraeumen
+            {
+                ~Aufraeumen()
+                {
+                    Sitzung::setzeBus(nullptr);
+                    MultiEffectVisualizer::setKaraokeEbene(false);
+                    MultiEffectVisualizer::setKaraokeAblage(QString());
+                }
+            } aufraeumen;
+
+            // die Karaoke-Ebene gibt es nur am Multi Effect (das Fenster beginnt mit Pulsing)
+            REQUIRE(widget.setVisualizer(QStringLiteral("multieffect")));
+            REQUIRE(nimmAuf());
+            auto* const kette = dynamic_cast<MultiEffectVisualizer*>(widget.visualizer());
+            REQUIRE(kette != nullptr);
+            const auto yShiftVon = [&](const MultiEffectVisualizer* r) {
+                QMutexLocker halt(&widget.renderMutex());
+                return std::get<LyricsParams>(r->karaokeKette().children[0].params).yShift;
+            };
+            const int vorgabe = yShiftVon(kette);
+            // zwei Karaoke-Presets, am Feld „Y shift" zu unterscheiden
+            const auto presetMit = [&](const QString& name, int yShift) {
+                MultiEffectVisualizer v;
+                std::get<LyricsParams>(v.karaokeKette().children[0].params).yShift = yShift;
+                const QString pfad = dir.filePath(name);
+                REQUIRE(v.speichereKaraokeDatei(pfad));
+                return pfad;
+            };
+            const QString eins = presetMit(QStringLiteral("Eins.lvkar"), vorgabe - 20);
+            const QString zwei = presetMit(QStringLiteral("Zwei.lvkar"), vorgabe - 40);
+
+            // ein Bus fuer Panel und Composer, wie in der App
+            ServiceContainer panelDienste;
+            panelDienste.registerInstance<IEventBus>(std::make_unique<EventBus>());
+            IEventBus* const bus = panelDienste.tryResolve<IEventBus>();
+            Sitzung::setzeBus(bus);
+            KaraokePanel panel(panelDienste);
+            panel.resize(520, 700);
+            testfenster::platziere(panel);
+            panel.show();
+            bus->publish(VisualizerChangedEvent("multieffect", "Multi Effect", widget.visualizer(),
+                                                &widget.renderMutex()));
+            QCoreApplication::processEvents();
+
+            // Composer aus: laden geht, wie immer
+            REQUIRE(panel.ladeDatei(eins));
+            CHECK(yShiftVon(kette) == vorgabe - 20);
+
+            // Composer an, Sync aus: Effect Chain ruht — das Karaoke-Panel nicht
+            REQUIRE(sitzung.lade(lang));
+            sitzung.setAn(true);
+            CHECK(sitzung.bindung() == Sitzung::Bindung::Ruht);
+            // die Ebene an: der Composer rechnet sie in einem eigenen Renderer
+            // (dem Traeger) — er zeigt die Ebene der App
+            MultiEffectVisualizer::setKaraokeEbene(true);
+            const auto yShiftTraeger = [&]() {
+                QMutexLocker halt(&widget.renderMutex());
+                const auto* q = dynamic_cast<const Bildquelle*>(widget.bildquelle());
+                const MultiEffectVisualizer* t = q != nullptr ? q->karaokeTraegerNurSehen() : nullptr;
+                return t != nullptr ? std::get<LyricsParams>(t->karaokeKette().children[0].params).yShift
+                                    : INT_MIN;
+            };
+            REQUIRE(warte([&] { return yShiftTraeger() == vorgabe - 20; }));
+
+            CHECK(panel.ladeDatei(zwei));
+            CHECK(yShiftVon(kette) == vorgabe - 40);
+            CHECK(warte([&] { return yShiftTraeger() == vorgabe - 40; }));  // der Composer zieht nach
+
+            // eine Einstellung, wie sie der Editor des Panels macht — ohne Datei
+            {
+                QMutexLocker halt(&widget.renderMutex());
+                std::get<LyricsParams>(kette->karaokeKette().children[0].params).yShift = vorgabe - 60;
+                (void)kette->recompileKaraoke();
+                kette->merkeKaraokeStand();  // sonst fragt das naechste Laden nach dem Ungespeicherten
+            }
+            CHECK(warte([&] { return yShiftTraeger() == vorgabe - 60; }));
+
+            // Sync an einem Clip: Effect Chain haengt an seinem Renderer — das
+            // Karaoke-Panel weiter an der Ebene der App
+            sitzung.setSync(true);
+            sitzung.waehleClip(0, 0);
+            REQUIRE(warte([&] { return sitzung.bindung() == Sitzung::Bindung::Clip; }));
+            CHECK(panel.ladeDatei(eins));
+            CHECK(yShiftVon(kette) == vorgabe - 20);
+            CHECK(warte([&] { return yShiftTraeger() == vorgabe - 20; }));
+
+            // Ebene aus und wieder an: der neue Traeger beginnt mit der Ebene
+            // der App, nicht mit dem Stand der Ablage
+            {
+                QMutexLocker halt(&widget.renderMutex());
+                std::get<LyricsParams>(kette->karaokeKette().children[0].params).yShift = vorgabe - 80;
+                (void)kette->recompileKaraoke();
+            }
+            MultiEffectVisualizer::setKaraokeEbene(false);
+            REQUIRE(warte([&] { return yShiftTraeger() == INT_MIN; }));
+            MultiEffectVisualizer::setKaraokeEbene(true);
+            CHECK(warte([&] { return yShiftTraeger() == vorgabe - 80; }));
+
+            sitzung.setSync(false);
+            sitzung.setAn(false);
             sitzung.entlade();
         }
 

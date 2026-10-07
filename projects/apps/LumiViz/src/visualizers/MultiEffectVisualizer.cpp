@@ -3731,6 +3731,7 @@ CompileResult MultiEffectVisualizer::recompileKaraoke()
     // Laufzeiten der Ebene beissen sich nie mit denen der Kette, und ein
     // neuer Knoten traegt nie die Id eines entfernten (wie recompileChain).
     m_pendingRuntimePrune = true;
+    ++m_karaokeFassung;  // Composer-Naht R2: der Composer zieht seinen Traeger nach
     return compileChain(m_karaokeWurzel, &m_karaokeIdHochwasser);
 }
 

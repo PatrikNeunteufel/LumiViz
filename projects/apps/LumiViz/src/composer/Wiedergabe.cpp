@@ -424,6 +424,15 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
             m_karaokeTraeger = std::make_unique<MultiEffectVisualizer>();
             m_karaokeTraeger->initialize();
             m_karaokeTraeger->resize(groesse);
+            m_karaokeEbeneNeu = m_karaokeEbene.has_value();  // statt des Stands der Ablage
+        }
+        // Die Ebene der App (S101): was im Panel Karaoke geladen oder
+        // eingestellt wurde, gilt auch hier.
+        if (m_karaokeEbeneNeu && m_karaokeEbene.has_value())
+        {
+            m_karaokeTraeger->karaokeKette() = *m_karaokeEbene;
+            (void)m_karaokeTraeger->recompileKaraoke();
+            m_karaokeEbeneNeu = false;
         }
         // Der Traeger rechnet nur die Ebene; sein eigenes Bild wird verworfen.
         m_karaokeLeinwand.rendere(*m_karaokeTraeger, deltaSekunden, groesse);
