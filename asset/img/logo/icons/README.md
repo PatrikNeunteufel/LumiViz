@@ -21,6 +21,28 @@ Windows).
 | `.m4a`, `.aac` | `audio_m4a.svg` / `.ico` | erzeugt | Audio Browser |
 | übrige Audioformate | `audio.svg` / `.ico` | erzeugt | Audio Browser |
 | `.lrc` (Songtext) | `lyrics_lrc.svg` / `.ico` | erzeugt | noch nicht |
+| `.lvcomp` (Komposition des Composers, S100) | **noch keins** — vorgesehen `lumiviz_lvcomp.ico`; das Aussehen ist nicht entschieden (vier Entwürfe, darunter der Fächer) | — | noch nicht; entschieden (Patrik S100): Effect Browser und Panel Composer |
+| **die App selbst** (`LumiViz.exe`) | `lumiviz.ico` — **noch nicht eingebaut** (s. u. „Das Icon der App") | Handarbeit | Fenster und Taskleiste zeigen das Standard-Icon |
+
+**Diese Tabelle ist die Liste der zugewiesenen Icons** (Stand S100, 2026-10-07).
+Ohne eigenes Icon sind heute: Kurven-Presets des Composers (`.lvfade`,
+`.lvshape`), Farbverläufe (`.grad`), Knoten-Voreinstellungen (`.json`),
+Playlists (`.m3u8`).
+
+Was davon `register_file_icons.ps1` im **Explorer** einträgt (s. u. „Im Explorer
+eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
+
+| Endung | ProgID | Icon | eingetragen mit |
+|---|---|---|---|
+| `.lvfx` | `LumiViz.Preset` | `lumiviz.ico` | `-Apply` (eigene Endung) |
+| `.lvfx2` | `LumiViz.PresetStack` | `lumiviz_lvfx2.ico` | `-Apply` |
+| `.lvkar` | `LumiViz.Karaoke` | `lumiviz_karaoke.ico` | `-Apply` |
+| `.lvtrail` | `LumiViz.Trail` | `lumiviz_trail.ico` | `-Apply` |
+| `.lvcomp` | `LumiViz.Composition` | `lumiviz_lvcomp.ico` | `-Apply`, sobald die Datei da ist |
+| `.avs` | `LumiViz.Avs` | `avs.ico` | `-Apply -Foreign` (fremde Endung) |
+| `.milk`, `.milk2` | `LumiViz.MilkDrop` | `milkdrop.ico` | `-Apply -Foreign` |
+| `.lrc` | `LumiViz.Lyrics` | `lyrics_lrc.ico` | `-Apply -Foreign` |
+| Audioformate | — | — | nie |
 
 Für die drei von Hand gezeichneten Icons gibt es kein SVG; die aus
 `lumiviz.ico` abgeleiteten entstehen aus dessen Pixelbild (s. u.).
@@ -64,11 +86,59 @@ ihre Verwendung, nichts davon entschieden:
 - **Fächer** für eine künftige Datei der **Timeline** (mehrere Presets
   nebeneinander über die Zeit) oder für eine Visual-Playlist.
 
+## Im Explorer eintragen (Windows, Skript seit S100)
+
+Ziel (Patrik S100): alle Datei-Icons sollen im Explorer erscheinen, vorerst
+unter Windows. LumiViz selbst trägt nichts ein; dafür gibt es das Skript
+`register_file_icons.ps1` in diesem Ordner. Es schreibt nur unter
+`HKCU\Software\Classes` (je Benutzer, ohne Administratorrechte):
+
+```
+powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icons.ps1
+powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icons.ps1 -Apply
+powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icons.ps1 -Apply -Foreign
+powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icons.ps1 -Remove
+```
+
+- **Ohne Schalter** ändert es nichts und zeigt nur, was es täte.
+- **`-Apply`** trägt die eigenen Endungen ein (`.lvfx`, `.lvfx2`, `.lvkar`,
+  `.lvtrail`, `.lvcomp`), **`-Foreign`** dazu `.avs`, `.milk`, `.milk2`, `.lrc`.
+  Audioformate nie.
+- **`-Remove`** entfernt genau die eigenen Einträge (Schlüssel `LumiViz.*` und
+  Endungen, die auf einen davon zeigen).
+- Eine Endung, die schon einem anderen Programm gehört, bleibt unberührt und
+  wird gemeldet. Hat der Benutzer im Explorer „Öffnen mit … immer" gewählt,
+  gilt dessen Icon — das Skript meldet es.
+- Die Icons werden mit ihrem **Pfad** eingetragen (dieser Ordner). Zieht das
+  Repo oder eine Installation um: `-Remove`, dann am neuen Ort `-Apply`.
+- **Nur das Icon, kein „Öffnen mit LumiViz":** `LumiViz.exe <datei>` lädt heute
+  keine Datei (geprüft S100: die App wertet ihre Argumente nicht aus). Ein
+  Doppelklick im Explorer fragt deshalb weiter, womit geöffnet werden soll.
+  Sobald die App eine Datei als Argument öffnet, kommt
+  `shell\open\command` dazu.
+
+**Stand S100:** nur der Anzeige-Modus ist gelaufen; `-Apply` und `-Remove`
+sind **nicht ausgeführt** worden.
+
+## Das Icon der App (offen, Wunsch Patrik S100)
+
+`LumiViz.exe` zeigt im Explorer und in der Taskleiste heute das Standard-Icon:
+die Exe trägt keine Icon-Ressource, und das Fenster setzt kein Icon. Nötig sind
+zwei Dinge:
+
+1. **Icon-Ressource in der Exe** — eine `.rc`-Datei mit einer Zeile
+   (`IDI_ICON1 ICON "lumiviz.ico"`), die zu den Quellen der App gehört. Das
+   Icon der Exe im Explorer, in Verknüpfungen und in der Taskleiste kommt von
+   dort. Zu klären: ob CMakeCraft `.rc`-Dateien für Apps mitbaut (MSVC und
+   clang) — eine Lücke dort gehört nach CMakeCraft.
+2. **Fenster-Icon** — `QApplication::setWindowIcon` beim Start, damit auch
+   Titelleiste und Alt+Tab es zeigen (mit der Ressource aus 1 nimmt Qt es
+   unter Windows meist von selbst).
+
 ## Notiz für einen späteren Installer
 
-LumiViz registriert heute **keine** Dateitypen in Windows — die Icons erscheinen
-nur in der App. Ein Installer (oder ein Einrichtungsskript) sollte das
-**wählbar** machen, je Dateityp getrennt:
+Ein Installer sollte das Eintragen **wählbar** machen, je Dateityp getrennt
+(das Skript oben tut dasselbe von Hand):
 
 - **Eigene Formate** (`.lvfx`, `.lvfx2`): Icon **und** „Öffnen mit LumiViz" —
   unstrittig, die Endungen gehören LumiViz.

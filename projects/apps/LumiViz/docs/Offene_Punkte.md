@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.102.0
+> **Version:** 1.103.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2369,6 +2369,29 @@ Idee Preset-Warmup/Pre-Roll.
     `build_lvfx2_icons.py`). Vor dem Bau klären: wo es erscheinen soll
     (Effect Browser, Dateidialoge, Explorer über eine Registrierung des
     Dateityps) und wie es aussieht.
+    **Stand S100 zu (5):** entschieden ist der Ort (Patrik, I1: a — Effect
+    Browser zeigt `.lvcomp` mit Icon, Doppelklick öffnet die Komposition;
+    Icon vor dem Dateinamen im Panel Composer; die Naht N8 wächst). **Offen
+    der Entscheid zum Aussehen** (vier Entwürfe in
+    `.claude/handover/icon_entwuerfe_lvcomp.png`, darunter der vorhandene
+    Fächer); gebaut ist nichts.
+  - **Ziel Patrik S100: alle Datei-Icons im Explorer, vorerst Windows.**
+    Die Liste der zugewiesenen Icons steht in
+    `asset/img/logo/icons/README.md` (Tabelle oben, samt dem, was fehlt).
+    Dazu das Skript `asset/img/logo/icons/register_file_icons.ps1`: trägt
+    die Icons je Benutzer unter `HKCU\Software\Classes` ein (`-Apply`,
+    fremde Endungen nur mit `-Foreign`, Audio nie), nimmt sie wieder heraus
+    (`-Remove`), ohne Schalter zeigt es nur an. **Nur der Anzeige-Modus ist
+    gelaufen**, `-Apply` und `-Remove` sind nicht ausgeführt. Nur das Icon,
+    kein „Öffnen mit LumiViz": die App wertet ihre Argumente nicht aus —
+    offen: `LumiViz.exe <datei>` öffnet die Datei (Preset, Komposition,
+    Titel), danach `shell\open\command` ins Skript.
+  - **Das Icon der App (Wunsch Patrik S100, bei Gelegenheit):** `LumiViz.exe`
+    zeigt im Explorer und in der Taskleiste das Standard-Icon — die Exe trägt
+    keine Icon-Ressource, das Fenster setzt kein Icon. Nötig: eine `.rc` mit
+    `lumiviz.ico` in den Quellen der App und `setWindowIcon`. Vorher klären,
+    ob CMakeCraft `.rc`-Dateien für Apps mitbaut (MSVC und clang); eine Lücke
+    dort gehört nach CMakeCraft.
   - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
     des Übergangs statt an den Song-Anfang.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
@@ -4287,6 +4310,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.103.0 | 2026-10-07 | Session 100 — **Icons:** Ziel Patrik: alle Datei-Icons im Explorer (vorerst Windows) — Liste der zugewiesenen Icons in `asset/img/logo/icons/README.md`, Skript `register_file_icons.ps1` (nur Anzeige-Modus gelaufen); offen: Icon der App (Exe-Ressource, Fenster-Icon), `LumiViz.exe <datei>`; zum Icon `.lvcomp` der Ort entschieden (I1: a), das Aussehen offen. Zoom der Zeitachse: Reset mit Ctrl+0 vorgemerkt |
 | 1.102.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Sortieren nach Typ erledigt (Entscheid Patrik S1: a — nur nach Art, das Bild ändert sich nicht; Konzept 0.51.0); Sichttest S100 mit V7 und V8, 63 Punkte. Offen von den Wünschen zur Zeitachse: Zoom und Schwenken, Icon für `.lvcomp` |
 | 1.101.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Kanäle verschieben erledigt (Entscheid Patrik V1: a — die Reihenfolge bleibt die Mischreihenfolge; Konzept 0.50.0), dazu das feste Ende an der Zeile MASTER ziehen (Konzept 0.49.0); Sichttest S100 mit Abschnitt V und M24, 61 Punkte |
 | 1.100.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Kanalfarben erledigt (Entscheid Patrik K1: b) — zwei Farbreihen, die Farbe gehört dem Kanal, per Rechtsklick einstellbar (Konzept 0.48.0); Sichttest S100 mit Abschnitt K, 54 Punkte |

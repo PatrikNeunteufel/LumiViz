@@ -19,7 +19,7 @@
 Die Ergebnis-Spalte der Tabellen sagt je Zeile, **wodurch** sie belegt ist.
 Wo die Hand noch gefragt ist, steht das Feld leer.
 
-## Die Werkzeuge
+## Die Werkzeuge 
 
 | Werkzeug | Deckt ab | Aufruf |
 |---|---|---|
