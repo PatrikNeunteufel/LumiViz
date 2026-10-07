@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.110.0
+> **Version:** 1.111.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2268,7 +2268,33 @@ Idee Preset-Warmup/Pre-Roll.
     MASTER; das feste Ende zieht man nur an MASTER; die Texte des Curve
     Editors sprechen weiter vom Clip. **Nicht geprüft:** ob die Griffe in
     den 21 Pixel hohen Zeilen gut zu greifen sind.
-  - 🟡 **Schritt 2, offen — Mute-Knopf mit Mute-Profilen (Vorgabe Patrik
+  - **Schritt 2a gebaut (S101), ohne Knopf und ohne Ton: das Mute-Profil
+    und sein Verlauf** (`composer/Mute`): `MuteProfil` (Dauer und Form des
+    Ausblendens, Dauer und Form des Einblendens, Zielpegel), `MuteVerlauf`
+    (Faktor über der Zeit; mitten in einer Blende umgeschaltet geht es ohne
+    Sprung weiter, der Rest dauert anteilig), Profile als Dateien `.lvmute`
+    (mitgeliefert `asset/composer/mutes`: *Announcement* 20 %, *Soft mute*,
+    *Hard mute*; eigene im Benutzerordner), das gewählte Profil unter
+    `composer/muteProfile`. **Von mir gesetzt:** die Dauer gehört zum Profil;
+    die drei mitgelieferten Profile und ihre Werte; Vorgabe ohne Profil 0,4 s
+    aus, 0,8 s ein, auf 0 %. **Entschieden (Patrik S101, AM2: c):** der Mute
+    gehört dem Player und gilt immer — ein Knopf im Panel Player, derselbe
+    noch einmal im Panel Composer, beide schalten denselben Zustand.
+    **Befund zur nächsten Frage (aus `test_ComposerNahtMixer.cpp`, Zeile 137
+    und 166):** der Mixer läuft dort mit 3 % Lautstärke, und die Linie im
+    Spektrum liegt über 0,3 — die Lautstärke des Mixers ändert sein Spektrum
+    nicht. Ein Mute an der Lautstärke lässt die Visuals also weiter voll
+    reagieren; die Zeile AUDIO (Pegel an den Quellen) dämpft sie. Für den
+    Stream des normalen Players ist dasselbe **nicht** gemessen.
+  - 🟡 **Wunsch Patrik S101: Karaoke im Composer schalten** — ein Haken im
+    Panel Composer, gekoppelt mit *Karaoke on* des Panels Karaoke (wie der
+    Mute-Knopf an zwei Orten), „oder gleich auch eine Spur wie für die
+    Master — gleich bedienbar wäre am konsistentesten". Aus dem Code
+    gelesen: die Ebene wird im Composer über `legeKaraokeEbeneAuf` aufgelegt,
+    je Teil mit einer Stärke in Prozent — ein Pegel der ganzen Ebene ließe
+    sich dort als weiterer Faktor einsetzen (Naht R2 wüchse). Entscheid KS1
+    vorgelegt.
+  - 🟡 **Schritt 2b, offen — der Mute-Knopf selbst (Vorgabe Patrik
     S101):** Durchsagen sind meist spontan, also ein Knopf „Mute" (ein Klick
     auf die Zeile AUDIO wäre riskant). Mute-Profile, zu speichern und zu
     laden, bestimmen: die Kurve des Ausblendens, die Kurve des Einblendens
@@ -4422,6 +4448,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.111.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2a gebaut (Mute-Profil, Verlauf, Profile als `.lvmute`; Konzept 0.58.0) — noch ohne Knopf und ohne Ton; Entscheid Patrik AM2: c (der Mute gehört dem Player, Knopf in beiden Panels); Befund: die Lautstärke des Mixers ändert sein Spektrum nicht; neuer Wunsch Patrik: Karaoke im Composer schalten, als Haken oder als Spur (Entscheid KS1 vorgelegt) |
 | 1.110.0 | 2026-10-07 | Session 101 — **Composer:** Audio-Master und Visual-Master, Schritt 1 gebaut (Entscheid Patrik AM1: a — zwei volle Kurven, Zeilen VISUAL und AUDIO; Konzept 0.57.0, Benutzerhandbuch 1.108.0), im Programm ungesehen; Schritt 2 offen: Mute-Knopf mit Mute-Profilen (Vorgabe Patrik: Ausblend-Kurve, Einblend-Kurve, Zielpegel; speichern und laden), Fragen dazu eingetragen |
 | 1.109.0 | 2026-10-07 | Session 101 — **Composer:** Sichttest S100, erster Teil ausgewertet (23 bestanden, 1 mit Bemerkung, 0 durchgefallen, 46 offen); Urteil M17 umgesetzt — die Zeile MASTER ist 60 % so hoch wie ein Kanal (Konzept 0.56.0), im Programm ungesehen; Vorbehalt: während des Tests liefen Builds und Testläufe |
 | 1.108.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`, Schritt 2:** eine laufende App je Exe-Datei (Entscheid Patrik X1b: a, mit `--new-instance`; `core/EinzelInstanz`, Benutzerhandbuch 1.107.0 §17, Konzept 0.55.0 — N8 zweite Stelle), im Programm ungesehen; Sichttest in sechs Punkten eingetragen; offen Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |

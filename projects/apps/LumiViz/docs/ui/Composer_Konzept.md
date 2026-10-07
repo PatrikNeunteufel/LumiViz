@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.57.0
+> **Version:** 0.58.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1373,6 +1373,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.58.0 | 2026-10-07 | Session 101 — **Mute für spontane Durchsagen, Schritt 2a (Vorgabe Patrik: ein Knopf, Mute-Profile mit Ausblend-Kurve, Einblend-Kurve und Zielpegel, zu speichern und zu laden; Entscheid AM2: c — der Mute gehört dem Player, der Knopf sitzt in beiden Panels):** neu `composer/Mute.hpp` / `.cpp` — `MuteProfil`, `MuteVerlauf` (Faktor über der Zeit, ohne Sprung beim Umschalten mitten in einer Blende), `muteprofile` (Dateien `.lvmute`, mitgeliefert unter `asset/composer/mutes`, eigene im Benutzerordner; das gewählte unter `composer/muteProfile`); `test_ComposerMute.cpp`. Nur das Modell — **kein Knopf, kein Ton, keine Naht**; die Nähte am Player (ein Faktor neben der Lautstärke, der Knopf im Panel Player) kommen mit Schritt 2b und werden vorher eingetragen. Rückbau: die zwei Dateien, der Test, der Ordner `asset/composer/mutes`; zurück bleibt der Schlüssel `composer/muteProfile` |
 | 0.57.0 | 2026-10-07 | Session 101 — **Visual-Master und Audio-Master, Schritt 1 (Entscheid Patrik AM1: a — zwei volle Kurven; dazu als Schritt 2 ein Mute-Knopf mit Mute-Profilen, noch nicht gebaut):** `Komposition` bekommt `bildKurve` und `tonKurve` (`MasterKurve`: Blenden mit Form, Grundpegel, Stücke an fester Zeit), `kurveAlsClip` / `setzeKurveAusClip` / `hatKurve` nehmen die Art (`MasterArt`), `bildPegelBei` und `tonPegelBei` nehmen MASTER mit der jeweiligen Kurve mal — die Wiedergabe rechnet das Bild, die Tonführung den Ton damit; Datei: Objekte `visualMaster` und `audioMaster`, nur wenn die Kurve wirkt (ältere Dateien lesen sich ohne sie, ein älterer Stand überliest sie); Zeitachse: drei Master-Zeilen (MASTER, VISUAL, AUDIO) mit eigenen „Kanälen" `kMaster`, `kMasterBild`, `kMasterTon` — Griffe, Rechtsklick und Curve Editor gehen denselben Weg. Nur eigener Code, keine Naht. Im Programm nicht gesehen |
 | 0.56.0 | 2026-10-07 | Session 101 — Sichttest S100, erster Teil (Patrik): die Zeile MASTER in der Grundfunktion bestanden (M0 bis M9); **Urteil M17: Master-Zeilen auf 60 % der Kanalhöhe, auch ein künftiger Audio- und Visual-Master** — umgesetzt (`Zeitachse::kMasterHoehe`, `zeileOben` / `zeileHoch`; eigener Code, keine Naht); Rückbau-Liste: Kennung `313423c` der zweiten Stelle von N8. Im Programm nicht gesehen |
 | 0.55.0 | 2026-10-07 | Session 101 — `LumiViz.exe <datei>`, Schritt 2 (Entscheid Patrik X1b: a — eine Instanz je Exe-Datei): §12.2 **N8, zweite Stelle** (`MainWindow::oeffneUebergebeneDatei`: eine `.lvcomp`, die ein weiterer Start abgibt; vor dem Bau eingetragen); §12.4 Rückbau-Liste, Kennung `12c870b` von Schritt 1. Im Programm nicht gesehen |

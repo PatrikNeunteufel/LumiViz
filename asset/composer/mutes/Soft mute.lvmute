@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-mute",
+    "version": 1,
+    "level": 0,
+    "out": 600,
+    "outShape": {
+        "kind": "fade",
+        "points": [
+            {
+                "x": 0,
+                "y": 0,
+                "curve": 1
+            },
+            {
+                "x": 1,
+                "y": 1,
+                "curve": 0
+            }
+        ]
+    },
+    "in": 1200,
+    "inShape": {
+        "kind": "fade",
+        "points": [
+            {
+                "x": 0,
+                "y": 0,
+                "curve": 1
+            },
+            {
+                "x": 1,
+                "y": 1,
+                "curve": 0
+            }
+        ]
+    }
+}
