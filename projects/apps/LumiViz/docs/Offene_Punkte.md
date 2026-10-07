@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.114.0
+> **Version:** 1.115.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,6 +2217,21 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S101 am Ende (Konzept 0.61.1), kurz:** in S101 gebaut
+  und **im Programm weder gesehen noch gehört:** der Fix am Panel Karaoke
+  bei laufendem Composer, `LumiViz.exe <datei>` mit der einen Instanz je
+  Exe, die Master-Zeilen auf 60 %, die Zeilen VISUAL, AUDIO und KARAOKE,
+  der Haken Karaoke, der Mute für Durchsagen mit Mute-Profilen (Knopf im
+  Panel Player und im Panel Composer). **Als Nächstes Patriks Sichttest
+  `.claude/handover/Sichttests_S101.md` (67 Punkte, P, X, Z, Y, D)**; aus
+  `Sichttests_S100.md` sind 46 Punkte weiter offen. **Danach (Patrik):**
+  Zoom, nicht nur in der Zeitachse — Umfang zuerst klären. Offen dazu die
+  Entscheide zu `LumiViz.exe <datei>` (Öffnen-Befehl im Explorer-Skript,
+  Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer).
+  🔧 **Nachzuholen:** der Vergleichslauf nach den zwei Eingriffen am
+  Renderer (Naht R2: `karaokeFassung`, der Pegel beim Auflegen der
+  Karaoke-Ebene) — in S101 liefen nur die Unit-Tests.
+  Die Einzelheiten stehen in den Blöcken unter „Stand S100".
 - **Composer, Stand S100 am Ende (Konzept 0.52.1), kurz:** gebaut sind die
   Zeile MASTER (Pegelkurve der ganzen Komposition, samt Ziehen des festen
   Endes), das Preset *Late fade in*, Kanalfarben, Kanäle verschieben und
@@ -2498,8 +2513,11 @@ Idee Preset-Warmup/Pre-Roll.
     Offen bleiben (4) Zoom und Schwenken und (5) das Icon für `.lvcomp`.
     **Zu (4), Vorgabe Patrik S100:** der Zoom muss sich **zurücksetzen**
     lassen — **Ctrl+0** als bekanntes Kürzel (wieder die ganze Länge auf
-    der Breite, wie heute). Vor dem Bau die Urteile M17 des Sichttests S100
-    (Höhe der Zeile MASTER) abwarten: sie berühren den senkrechten Zoom.
+    der Breite, wie heute). Das Urteil M17 liegt vor (Master-Zeilen 60 %).
+    **Vorgabe Patrik S101, Abschluss — als Nächstes, in S102:** der Zoom
+    „soll nicht nur in der Zeitachse zoombar sein" — **was noch zoombar
+    sein soll, ist nicht gesagt** und wird zu Beginn von S102 mit Patrik
+    geklärt (zuerst sein Zielbild erfragen, dann erst Optionen).
     Die Wünsche lauteten:
     (1) **Kanalfarben** — heute hat jeder Bild-Kanal einen
     eigenen Ton, alle Audio-Kanäle denselben (`kanalFarbe` / `tonFarbe` in
@@ -4496,6 +4514,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.115.0 | 2026-10-07 | Session 101, Abschluss — **Composer:** Stand am Ende der Sitzung (alles aus S101 gebaut, im Programm weder gesehen noch gehört — Sichttest S101 mit 67 Punkten); Vorgabe Patrik für S102: Zoom, nicht nur in der Zeitachse — der Umfang wird zuerst geklärt |
 | 1.114.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2c gebaut — der Mute-Knopf im Panel Player (Naht N18) und im Panel Composer, Profil per Rechtsklick, Dialog der Mute-Profile (Konzept 0.61.0, Benutzerhandbuch 1.110.0); im Programm ungesehen und ungehört, Sichttest in sechs Punkten eingetragen |
 | 1.113.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2b gebaut (Entscheid Patrik AM3: c, Vorgabe „Visuals laufen weiter") — Naht N17 (Pegel am Player), `MuteSchalter`, der Composer folgt am Mixer, N13 wächst um den Faktor für die Visuals (Konzept 0.60.0); noch ohne Knopf, im Programm wirkt nichts; offen Entscheid AM4 (ein Mute-Knopf oder zwei im Panel Player) |
 | 1.112.0 | 2026-10-07 | Session 101 — **Composer:** Karaoke im Composer gebaut (Entscheid Patrik KS1: a) — Zeile KARAOKE mit voller Kurve und der Haken Karaoke, gekoppelt mit dem Panel Karaoke; Naht R2 wächst um den Pegel beim Auflegen (Konzept 0.59.0, Benutzerhandbuch 1.109.0); im Programm ungesehen |
