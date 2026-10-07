@@ -160,6 +160,16 @@ TEST_SUITE("ComposerFormPresets")
                     CHECK(form.wert(0.0) == doctest::Approx(0.0));
                     CHECK(form.wert(1.0) == doctest::Approx(1.0));
                 }
+                else if (e.name == QLatin1String("Late fade in"))
+                {
+                    // Entscheid Patrik S100 (a): gedacht fuer den Clip-ANFANG — es beginnt
+                    // unten (der Clip laeuft unsichtbar) und endet auf dem Grundpegel.
+                    // Mitten im Clip gaebe es an seinem Anfang einen Sprung auf null.
+                    CHECK(form.wert(0.0) == doctest::Approx(0.0));
+                    CHECK(form.wert(0.5) == doctest::Approx(0.0));
+                    CHECK(form.wert(0.8) == doctest::Approx(0.5));
+                    CHECK(form.wert(1.0) == doctest::Approx(1.0));
+                }
                 else
                 {
                     // ein Stueck beginnt und endet auf dem Grundpegel — kein Sprung an den Raendern
@@ -167,7 +177,7 @@ TEST_SUITE("ComposerFormPresets")
                     CHECK(form.wert(1.0) == doctest::Approx(1.0));
                 }
             }
-            CHECK(mitgeliefert == (art == FormArt::Blende ? 7 : 3));
+            CHECK(mitgeliefert == (art == FormArt::Blende ? 7 : 4));
         }
         // die sieben Formen aus C4 Teil 1 sind als Blenden da
         Pegelform bezier;

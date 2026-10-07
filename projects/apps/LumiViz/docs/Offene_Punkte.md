@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.98.0
+> **Version:** 1.99.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2263,9 +2263,10 @@ Idee Preset-Warmup/Pre-Roll.
     bis G6), D1 bis D4 (Text-Vorlage, Wechsel am Kreuzungspunkt, Kopieren
     ohne Edit), C2, C3, B5, A8, E1.
   - **Sichttest S100 (Patrik), als Nächstes:**
-    `.claude/handover/Sichttests_S100.md` — 45 Punkte: A (Nachtest Panel
+    `.claude/handover/Sichttests_S100.md` — 49 Punkte: A (Nachtest Panel
     Player, sichtbar und verdeckt), M (die Zeile MASTER, mit den Urteilen
-    zu dem, was ich gesetzt habe), G (*Visuals overlap themselves*) und R
+    zu dem, was ich gesetzt habe), L (Preset Late fade in),
+    G (*Visuals overlap themselves*) und R
     (der ungespielte Rest aus S99). Reihenfolge bei knapper Zeit: A1 bis
     A4, M1 bis M9, G2, G3.
 - **Composer, Stand S99 (Konzept 0.43.1), kurz:** der zweite Test der S98
@@ -2325,8 +2326,12 @@ Idee Preset-Warmup/Pre-Roll.
     auf voll und kehrt zum Grundpegel zurück; bei Grundpegel 100 % wirkt es
     gar nicht (so der CH3-Clip in `asset/singlecomp.lvcomp`). „Unsichtbar
     einfahren, später einblenden und oben bleiben" lässt sich damit nicht
-    ausdrücken. **Zielbild von Patrik bestätigt (S99)** — die Vorlage als
-    Entscheid steht aus.
+    ausdrücken. **Zielbild von Patrik bestätigt (S99).**
+    **Erledigt in S100 (Entscheid Patrik: a, Konzept 0.47.0):** per Test
+    belegt, dass es doch geht — mit einem Stück am Clip-Anfang, dessen Kurve
+    unten beginnt, ohne *Flipped*. Dafür das mitgelieferte Stück-Preset
+    **Late fade in** und ein Absatz im Benutzerhandbuch (1.100.0, §15).
+    Im Programm nicht gesehen; im Sichttest S100 Abschnitt L.
   - **Wünsche Patrik S99 zur Zeitachse (nicht begonnen, je als Entscheid
     vorlegen):** (1) **Kanalfarben** — heute hat jeder Bild-Kanal einen
     eigenen Ton, alle Audio-Kanäle denselben (`kanalFarbe` / `tonFarbe` in
@@ -4261,6 +4266,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.99.0 | 2026-10-07 | Session 100 — **Composer:** Befund „Flipped und einfache Einblendung" erledigt (Entscheid Patrik: a) — Stück-Preset Late fade in und Handbuch-Absatz, Rezept per Test belegt (Konzept 0.47.0); Sichttest S100 mit Abschnitt L, 49 Punkte |
 | 1.98.0 | 2026-10-07 | Session 100 — **Composer:** Pegelkurve der ganzen Komposition, Schritt 2 — die Zeile MASTER unter dem Lineal mit Griffen, Rechtsklick und Curve Editor wie am Clip (Konzept 0.46.0, Benutzerhandbuch 1.99.0); im Programm nicht gesehen |
 | 1.97.0 | 2026-10-07 | Session 100 — **Composer:** Pegelkurve der ganzen Komposition entschieden (Patrik: F7 c — alles, was ein Clip hat, in einer eigenen Spur; F7-1 a — ein Stück liegt an fester Zeit), Schritt 1 von 4 gebaut — Modell und Datei (Konzept 0.45.0). Im Panel noch nichts einstellbar; offen Curve Editor, Spur „MASTER", Handbuch |
 | 1.96.0 | 2026-10-07 | Session 100 — **Composer:** Sichttest S99 ausgewertet (31 bestanden, 3 mit Bemerkung, 1 durchgefallen, 17 offen): Überlappung in der Schleife und Blende der ganzen Komposition im Programm gesehen und gehört, ohne Befund; was im Fenster von mir gesetzt war, ist gebilligt. Befund A2 (Panel Player blieb beim ersten Ausschalten auf dem Song der Komposition) per Test nachgestellt und behoben — Naht N5, Anzeige, sechste Stelle (Konzept 0.44.0); im Programm nicht gesehen. Neuer Wunsch F7: Blende der Komposition wie bei Clips, editierbar. Nicht gespielt: Abschnitt G, D1 bis D4, C2, C3, B5, A8, E1 |

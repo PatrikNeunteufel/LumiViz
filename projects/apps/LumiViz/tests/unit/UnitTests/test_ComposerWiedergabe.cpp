@@ -192,6 +192,37 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(c.pegelBei(3000) == doctest::Approx(0.5));
         c.setzeBlenden(0, 0);
         CHECK(c.vollerPegel());
+
+        // Befund Patrik S99 („unsichtbar einfahren, spaeter einblenden, oben bleiben"),
+        // Beleg S100: das geht mit EINEM Stueck am Clip-Anfang, dessen Form unten
+        // beginnt — es haelt den Pegel auf null und hebt ihn dann auf den Grundpegel;
+        // dahinter gilt der Grundpegel, die Ausblendung wirkt wie gewohnt. Ohne Flipped.
+        Clip spaet = clip(QStringLiteral("a.lvfx"), 5000, 25000);  // 20 s
+        ClipStueck einfahren;
+        einfahren.weiteMs = 10000;
+        einfahren.lage = 0.25;  // Mitte bei 5 s: das Stueck liegt auf [0, 10 s)
+        einfahren.form.art = FormArt::Stueck;
+        einfahren.form.punkte = {FormPunkt{0.0, 0.0}, FormPunkt{0.6, 0.0}, FormPunkt{1.0, 1.0}};
+        einfahren.form.richte();
+        REQUIRE(einfahren.form.punkte.size() == 3);
+        CHECK(einfahren.form.punkte.front().y == doctest::Approx(0.0));  // `richte` laesst das Ende unten
+        spaet.stuecke.push_back(einfahren);
+        spaet.aus.dauerMs = 2000;
+        CHECK(spaet.pegelBei(0) == doctest::Approx(0.0));      // der Clip laeuft, unsichtbar
+        CHECK(spaet.pegelBei(3000) == doctest::Approx(0.0));
+        CHECK(spaet.pegelBei(6000) == doctest::Approx(0.0));
+        CHECK(spaet.pegelBei(8000) == doctest::Approx(0.5));   // spaeter einblenden
+        CHECK(spaet.pegelBei(10000) == doctest::Approx(1.0));
+        CHECK(spaet.pegelBei(15000) == doctest::Approx(1.0));  // oben bleiben
+        CHECK(spaet.pegelBei(19000) == doctest::Approx(0.5));  // die Ausblendung wie gewohnt
+        // die Datei traegt die Form unveraendert
+        Komposition mitSpaet;
+        mitSpaet.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {spaet}));
+        Komposition gelesen;
+        REQUIRE(ausJson(alsJson(mitSpaet), gelesen));
+        REQUIRE(gelesen.kanaele[0].clips.size() == 1);
+        CHECK(gelesen.kanaele[0].clips[0].pegelBei(3000) == doctest::Approx(0.0));
+        CHECK(gelesen.kanaele[0].clips[0].pegelBei(8000) == doctest::Approx(0.5));
     }
 
     TEST_CASE("C1b Modell: richte — sortiert, loest Ueberlappung im Kanal, meldet es; Laenge")

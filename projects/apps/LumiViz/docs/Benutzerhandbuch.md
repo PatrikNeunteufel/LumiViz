@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.99.0
+> **Version:** 1.100.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1875,8 +1875,21 @@ null: im Curve Editor ist oben der Grundpegel, unten null.
 - Doppelklick auf ein Stück oder Rechtsklick → *Edit shape curve...* öffnet
   seine Kurve, *Delete shape* nimmt es weg. Rechtsklick auf ein Stück →
   *Shape* zeigt die **Stück-Presets** (mitgeliefert Dip Soft, Dip Sharp, Dip
-  Flat, dazu deine eigenen); eine Wahl ersetzt nur die Form — Lage, Breite
-  und *Flipped* bleiben.
+  Flat und Late fade in, dazu deine eigenen); eine Wahl ersetzt nur die Form
+  — Lage, Breite und *Flipped* bleiben.
+- **Unsichtbar einfahren, später einblenden** (Preset **Late fade in**): Soll
+  ein Clip schon laufen, bevor man ihn sieht — damit sein Effekt eingefahren
+  ist, wenn er erscheint —, lege ein Stück an (Rechtsklick → *Add shape
+  here*), wähle per Rechtsklick auf das Stück → *Shape* → **Late fade in**,
+  mach es **zuerst** so breit, wie das Einfahren dauern soll (die Striche an
+  den Kanten oder *Width* im Curve Editor — am Rand des Clips lässt es sich
+  nicht mehr verbreitern, weil die Mitte dabei stehen bleibt), und ziehe es
+  **dann** mit der Raute ganz an den **Anfang des Clips**. Der Clip bleibt dann über den größten
+  Teil des Stücks unsichtbar, blendet in dessen letztem Teil weich ein und
+  bleibt oben; eine Ausblendung am Ende wirkt wie gewohnt. *Flipped* bleibt
+  dabei aus, eine eigene Einblendung braucht der Clip nicht. Das Preset
+  gehört an den Clip-Anfang: mitten im Clip spränge der Pegel an seinem
+  Anfang auf null.
 - Berühren sich Stücke und Blenden, weil der Clip zu kurz ist, werden die
   sich berührenden gleichmäßig gestaucht — wie bei den Blenden.
 
@@ -2174,6 +2187,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.100.0 | 2026-10-07 | Session 100. §15 Composer NEU Stück-Preset **Late fade in** und der Absatz **Unsichtbar einfahren, später einblenden**: ein Stück am Clip-Anfang, das den Pegel auf null hält und dann weich einblendet — ohne *Flipped* |
 | 1.99.0 | 2026-10-07 | Session 100. §15 Composer NEU **Die Zeile MASTER**: die Pegelkurve der ganzen Komposition unter dem Lineal, bedienbar wie die eines Clips (Griffe der Blenden, Formen und Presets per Rechtsklick, Stücke, Grundpegel, Curve Editor); ein Stück liegt an fester Zeit. GEÄNDERT: die Keile im Lineal entfallen — die Zeile MASTER zeigt die Blenden; überdecken sich *Fade in* und *Fade out*, teilen sie den Platz wie am Clip |
 | 1.98.0 | 2026-10-06 | Session 99. §15 Composer, Schleife mit Überlappung NEU Haken **Visuals overlap themselves** (Standard aus): ein Bild-Clip in beiden Fenstern läuft im Fenster zweimal, ein frisch gestartetes Exemplar über dem laufenden; kostet ein zweites Laden und doppelten Grafikspeicher im Fenster |
 | 1.97.0 | 2026-10-06 | Session 99. §15 Composer NEU **Die ganze Komposition ein- und ausblenden**: Felder **Fade in** / **Fade out** (Bild und Ton, zusätzlich zu den Pegelkurven der Clips; gilt immer, auch ohne Loop; Keile im Lineal; mit *Loop overlap* eine fertige Überblendung; die Karaoke-Ebene blendet nicht mit) |
