@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.104.0
+> **Version:** 1.105.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,6 +2217,25 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S100 am Ende (Konzept 0.52.1), kurz:** gebaut sind die
+  Zeile MASTER (Pegelkurve der ganzen Komposition, samt Ziehen des festen
+  Endes), das Preset *Late fade in*, Kanalfarben, Kanäle verschieben und
+  nach Art ordnen, das Icon für `.lvcomp` im Effect Browser und im Panel
+  Composer, dazu der Fix zum Befund A2. **Im Programm ist davon nichts
+  gesehen** — als Nächstes Patriks Sichttest
+  `.claude/handover/Sichttests_S100.md` (70 Punkte). Die Einzelheiten stehen
+  in den folgenden Blöcken.
+  - **Wunsch Patrik S100 (am Ende der Sitzung, nicht begonnen): Audio-Master
+    und Visual-Master** neben der Zeile MASTER — je eine eigene Pegelkurve
+    nur für den Ton und nur für das Bild, „da kann man z. B. einfach die
+    Musik für einen Moment stummschalten für z. B. Mikro-Durchsagen". Heute
+    wirkt die Zeile MASTER immer auf beides zugleich
+    (`Komposition::blendeBei` in `Wiedergabe::rendere` und
+    `Tonfuehrung::takt`). Vor dem Bau als Entscheid vorlegen: zwei weitere
+    Zeilen unter dem Lineal (die Höhe des Panels — Urteil M17 des Sichttests
+    S100 abwarten), ob sie sich einklappen lassen, wie sich die drei Kurven
+    verrechnen (malnehmen), und ob zum Stummschalten ein Schalter genügt
+    statt eines Stücks in der Kurve.
 - **Composer, Stand S100 (Konzept 0.44.0) — Sichttest S99 ausgewertet
   (Patrik, 06.10. abends):** von 52 Punkten 31 bestanden, 3 mit Bemerkung,
   1 durchgefallen, 17 offen. **Im Programm gesehen und gehört, ohne Befund:**
@@ -4314,6 +4333,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.105.0 | 2026-10-07 | Session 100, Abschluss — **Composer:** Stand am Ende der Sitzung (alles gebaut, im Programm nichts gesehen — Sichttest S100 mit 70 Punkten); neuer Wunsch Patrik: Audio-Master und Visual-Master neben der Zeile MASTER (etwa Musik stumm für eine Durchsage), nicht begonnen |
 | 1.104.0 | 2026-10-07 | Session 100 — **Icons:** Icon für `.lvcomp` gebaut (Fächer mit Zeitstrahl; Effect Browser mit Doppelklick, Panel Composer; Naht N8 wächst, Konzept 0.52.0), Icon der App als Ressource der Exe; Sichttest S100 mit Abschnitt I, 70 Punkte. Von den Wünschen zur Zeitachse offen: Zoom und Schwenken |
 | 1.103.0 | 2026-10-07 | Session 100 — **Icons:** Ziel Patrik: alle Datei-Icons im Explorer (vorerst Windows) — Liste der zugewiesenen Icons in `asset/img/logo/icons/README.md`, Skript `register_file_icons.ps1` (nur Anzeige-Modus gelaufen); offen: Icon der App (Exe-Ressource, Fenster-Icon), `LumiViz.exe <datei>`; zum Icon `.lvcomp` der Ort entschieden (I1: a), das Aussehen offen. Zoom der Zeitachse: Reset mit Ctrl+0 vorgemerkt |
 | 1.102.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Sortieren nach Typ erledigt (Entscheid Patrik S1: a — nur nach Art, das Bild ändert sich nicht; Konzept 0.51.0); Sichttest S100 mit V7 und V8, 63 Punkte. Offen von den Wünschen zur Zeitachse: Zoom und Schwenken, Icon für `.lvcomp` |
