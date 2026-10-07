@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.119.0
+> **Version:** 1.120.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,7 +2217,7 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
-- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.65.0 §7):**
+- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.66.0 §7):**
   neun Entscheide Patrik, ZO1 bis ZO9 (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe,
   Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis
   300 %; das Lineal bleibt oben stehen; Festpunkt Mauszeiger; Schalter
@@ -2239,9 +2239,13 @@ Idee Preset-Warmup/Pre-Roll.
   ✅ **Schritt 4 gebaut:** Schwenken mit der mittleren Maustaste, der Knopf
   *Fit*, Ctrl+0 im Panel, *Zoom* im Rechtsklick-Menü — **im Programm nicht
   gesehen**; am Gerät zu prüfen: ob Ctrl+0 im angedockten Panel ankommt ·
-  ⬜ Schritt 5 Mitlaufen (Naht N9
-  wächst; **zu messen:** was das stetige Mitlaufen neben dem Renderer
-  kostet) · ⬜ Schritt 6 Handbuch §15 und `Sichttests_S102.md`.
+  ✅ **Schritt 5, das Eigene, gebaut:** der Schalter *Scroll with
+  playhead* (rechts in der Datei-Zeile, daneben *Fit*), stetig oder
+  seitenweise, nur bei laufender Komposition — **im Programm nicht
+  gesehen**; gemessen im Test: rund 11 ms je Bild ohne, rund 10 ms mit
+  Mitlaufen (die Achse zeichnet ohnehin je Takt), neben dem Renderer im
+  Programm nicht gemessen · ⬜ Schritt 5, die Naht N9: die Auswahl in
+  Settings (bis dahin gilt stetig) · ⬜ Schritt 6 Handbuch §15 und `Sichttests_S102.md`.
   🔧 Weiter nachzuholen: der Vergleichslauf am Renderer (siehe unten;
   Patrik S102: später, das Vorgehen wird als eigene Frage vorgelegt — er
   braucht einen Build vom Stand vor den Eingriffen an R2).
@@ -4542,6 +4546,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.120.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, das Eigene gebaut:** Mitlaufen mit der Abspielmarke (Schalter *Scroll with playhead*, stetig oder seitenweise), Konzept 0.66.0; offen die Auswahl in Settings (Naht N9); im Programm nicht gesehen |
 | 1.119.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 4 gebaut:** Schwenken mit der mittleren Maustaste, der Knopf *Fit*, Ctrl+0 im Panel, *Zoom* im Rechtsklick-Menü, Konzept 0.65.0; im Programm nicht gesehen |
 | 1.118.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 3 gebaut:** der Höhen-Zoom (Alt+Rad, Ctrl+Alt+Rad beides, 50 % bis 300 %, Master-Zeilen immer 60 %, die Höhe bleibt über den Neustart), Konzept 0.64.0; am Gerät zu prüfen: Alt+Rad und die Menüleiste; im Programm nicht gesehen |
 | 1.117.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 2 gebaut:** der Zeit-Zoom (Ctrl+Rad um den Mauszeiger, Shift+Rad waagrecht, waagrechter Rollbalken, die Kanalnamen bleiben stehen), Konzept 0.63.0; im Programm nicht gesehen |

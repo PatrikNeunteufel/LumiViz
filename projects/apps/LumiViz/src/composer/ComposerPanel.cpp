@@ -191,7 +191,24 @@ void Zeitachse::setStelle(std::int64_t stelleMs)
 {
     if (stelleMs == m_stelleMs) return;
     m_stelleMs = stelleMs;
+    folgeDerMarke();
     update();
+}
+
+void Zeitachse::folgeDerMarke()
+{
+    if (m_mitlaufen == Mitlaufen::Aus || zeitGanz() || m_tasteUnten || m_balkenGehalten) return;
+    const int breite = zeitBreite();
+    const int imInhalt = static_cast<int>(std::floor(static_cast<double>(m_stelleMs) / msJePixel() + 0.5));
+    if (m_mitlaufen == Mitlaufen::Stetig)
+    {
+        // die Marke in der Mitte — am Anfang und am Ende der Komposition laeuft sie selbst
+        setRollX(imInhalt - breite / 2);
+        return;
+    }
+    // seitenweise: erst wenn die Marke den Ausschnitt verlaesst, dann steht sie links
+    const int imFenster = imInhalt - m_rollX;
+    if (imFenster < 0 || imFenster >= breite) setRollX(imInhalt);
 }
 
 void Zeitachse::setSchleife(bool schleife, std::int64_t zweiteMs)
@@ -1340,6 +1357,7 @@ void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
 
 void Zeitachse::mousePressEvent(QMouseEvent* event)
 {
+    m_tasteUnten = true;  // so lange laeuft der Ausschnitt nicht mit (ZO6)
     // Schwenken (S102, Entscheid Patrik ZO7: a): die mittlere Maustaste zieht
     // den Ausschnitt — nicht mitten in einem anderen Zug
     if (m_geladen && event->button() == Qt::MiddleButton && m_griff == Griff::Keiner && !m_zieht &&
@@ -1614,6 +1632,7 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 
 void Zeitachse::mouseReleaseEvent(QMouseEvent* event)
 {
+    m_tasteUnten = event->buttons() != Qt::NoButton;
     if (m_schwenkt)
     {
         if (event->button() != Qt::MiddleButton) return;  // eine andere Taste: das Schwenken laeuft weiter
@@ -2239,6 +2258,12 @@ ZeitachsenRahmen::ZeitachsenRahmen(Zeitachse* achse, QWidget* parent) : QWidget(
     connect(achse, &Zeitachse::rollenGeaendert, this, &ZeitachsenRahmen::gleicheAb);
     connect(m_senkrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollY);
     connect(m_waagrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollX);
+    // ein gezogener Balken haelt das Mitlaufen an — sonst zoege die Abspielmarke ihn zurueck
+    for (QScrollBar* balken : {m_senkrecht, m_waagrecht})
+    {
+        connect(balken, &QScrollBar::sliderPressed, achse, [achse] { achse->halteMitlaufen(true); });
+        connect(balken, &QScrollBar::sliderReleased, achse, [achse] { achse->halteMitlaufen(false); });
+    }
     gleicheAb();
 }
 
@@ -2425,13 +2450,25 @@ void ComposerPanel::setupUI()
     // Mute fuer Durchsagen (S101, Entscheid Patrik AM2: c): derselbe Knopf wie
     // im Panel Player — beide zeigen denselben Zustand
     kopf->addWidget(new MuteKnopf(services(), this));
+    // Scroll with playhead (S102, Entscheid Patrik ZO6): hineingezoomt folgt der
+    // Ausschnitt der laufenden Abspielmarke. Nicht „Follow player" — der koppelt
+    // Start und Stopp mit dem Player (Konzept §4).
+    m_mitlaufen = new QCheckBox(tr("Scroll with playhead"), this);
+    m_mitlaufen->setObjectName(QStringLiteral("composerScrollWithPlayhead"));
+    m_mitlaufen->setToolTip(
+        tr("Zoomed into the time, the timeline shows only a part of the composition.\n\n"
+           "On: while the composition plays, the view follows the playhead — smoothly, with the "
+           "playhead in the middle, or page by page (Settings → Panels → Scroll with playhead).\n"
+           "Off: the view stays where you put it.\n\n"
+           "While a mouse button is held down in the timeline, the view never moves by itself."));
+    m_mitlaufen->setChecked(Sitzung::mitlaufenAn());
+    connect(m_mitlaufen, &QCheckBox::toggled, this, [](bool an) { Sitzung::setMitlaufenAn(an); });
     // Fit (S102, Entscheid Patrik ZO8: a): setzt den Zoom zurueck, sein Tooltip nennt die Gesten
     auto* fit = new QPushButton(tr("Fit"), this);
     fit->setObjectName(QStringLiteral("composerFit"));
     fit->setToolTip(tr("Shows the whole composition again: its full length on the width, the rows at "
                        "normal height (Ctrl+0).\n\nIn the timeline:\n%1")
                         .arg(Zeitachse::zoomGesten().join(QLatin1Char('\n'))));
-    kopf->addWidget(fit);
     kopf->addStretch(1);
     root->addLayout(kopf);
 
@@ -2467,6 +2504,10 @@ void ComposerPanel::setupUI()
     m_datei->setObjectName(QStringLiteral("composerDatei"));
     kopf->addWidget(m_datei);
     kopf->addStretch(1);
+    // Scroll with playhead und Fit (S102) stehen rechts in dieser Zeile: in der
+    // ersten machten sie das Panel breiter (seine schmalste Breite bestimmt die erste)
+    kopf->addWidget(m_mitlaufen);
+    kopf->addWidget(fit);
     root->addLayout(kopf);
 
     // --- Zeitachse: sie rollt bei vielen Kanaelen selbst, das Lineal bleibt
@@ -2972,6 +3013,13 @@ void ComposerPanel::zeigeStand()
                         "the Composer off)"));
     }
 
+    // Mitlaufen (S102): nur, solange die Komposition laeuft — ein Sprung im
+    // Stand laesst den Ausschnitt, wo er ist. Die Art liest die Sitzung aus den
+    // Einstellungen; gefragt wird nur, wenn es etwas zu folgen gibt.
+    m_zeitachse->setMitlaufen(!laeuft || !m_mitlaufen->isChecked() || m_zeitachse->zeitGanz()
+                                  ? Zeitachse::Mitlaufen::Aus
+                                  : Sitzung::mitlaufenSeitenweise() ? Zeitachse::Mitlaufen::Seitenweise
+                                                                    : Zeitachse::Mitlaufen::Stetig);
     const std::int64_t stelle = geladen ? m_sitzung->stelleMs() : 0;
     m_zeit->setText(geladen ? QStringLiteral("%1 / %2").arg(zeitText(stelle),
                                                              zeitText(m_sitzung->laengeMs()))

@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.65.0
+> **Version:** 0.66.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -630,8 +630,10 @@ Naht N9):**
 **Zoom und Rollen der Zeitachse (Vorgabe Patrik S101 / S102: „Zoom in x und
 y, wobei beide zusammen wie auch einzeln gezoomt werden können"; neun
 Entscheide Patrik S102, ZO1 bis ZO9 — gebaut sind Schritt 1, das Rollen
-(ZO4), Schritt 2, der Zeit-Zoom, Schritt 3, der Höhen-Zoom, und Schritt 4,
-Schwenken und Zurücksetzen; im Programm nicht gesehen):**
+(ZO4), Schritt 2, der Zeit-Zoom, Schritt 3, der Höhen-Zoom, Schritt 4,
+Schwenken und Zurücksetzen, und von Schritt 5 das Eigene, das Mitlaufen —
+die Auswahl in Settings, Naht N9, folgt als eigener Commit; im Programm
+nicht gesehen):**
 
 - **Mausrad (ZO1: a):** Rad allein rollt senkrecht (wie bisher), Shift+Rad
   waagrecht. **Ctrl+Rad zoomt die Zeit, Alt+Rad die Zeilenhöhe, Ctrl+Alt+Rad
@@ -720,8 +722,30 @@ Schwenken und Zurücksetzen; im Programm nicht gesehen):**
   (erreicht die Marke den rechten Rand, blättert der Ausschnitt eine Seite
   weiter). Solange eine Maustaste in der Zeitachse gedrückt ist, steht der
   Ausschnitt. Die Einstellung ist die **Naht N9, sie wächst** (§12.2).
-  Offen: was das stetige Mitlaufen neben dem Renderer kostet — wird nach dem
-  Bau gemessen. Verworfen: ohne Schalter (b), gar nicht mitlaufen (d).
+  Verworfen: ohne Schalter (b), gar nicht mitlaufen (d).
+  **Gebaut S102 (Schritt 5, das Eigene):** `Zeitachse::setMitlaufen`
+  (`Aus`, `Stetig`, `Seitenweise`) — das Panel setzt es je Takt: `Aus`,
+  wenn der Schalter aus ist, nichts läuft oder die ganze Länge dasteht.
+  Gefolgt wird also **nur bei laufender Komposition**; ein Sprung im Stand
+  lässt den Ausschnitt, wo er ist. Stetig: die Marke in der Mitte, am
+  Anfang und am Ende der Komposition läuft sie selbst. Seitenweise:
+  verlässt die Marke den Ausschnitt, steht sie danach an seinem linken
+  Rand. Gehalten wird, solange eine Maustaste in der Achse gedrückt ist
+  **oder ein Rollbalken gezogen wird** (von mir ergänzt — die Marke zöge
+  ihn sonst zurück). Schalter und Art liest und schreibt `Sitzung`
+  (`composer/scrollWithPlayheadOn`, Vorgabe an; `composer/scrollWithPlayhead`,
+  0 = stetig); der Schalter bleibt über den Neustart (von mir gesetzt).
+  **Platz, anders als angekündigt:** *Scroll with playhead* und *Fit*
+  stehen rechts in der **Datei-Zeile** — in der ersten Zeile machten sie
+  das Panel breiter; seine schmalste Breite ist so 743 Pixel (gemessen im
+  Test). **Gemessen (die offene Frage zu ZO6):** die Achse zeichnet auch
+  ohne Mitlaufen je Takt neu, weil die Marke wandert — das Mitlaufen
+  kommt nicht dazu, es ersetzt nur, was sich bewegt. Im Test (1600 × 600
+  Pixel, zwölf Kanäle, acht davon Songs mit Wellenform, mit `grab`):
+  rund 11 ms je Bild ohne Mitlaufen, rund 10 ms stetig, bei 30 Takten je
+  Sekunde. Neben dem Renderer im Programm nicht gemessen. **Grenze:** der
+  Takt des Panels ist 30-mal je Sekunde — flüssiger als das läuft der
+  Ausschnitt nicht.
 - **Schwenken (ZO7: a):** mit gedrückter mittlerer Maustaste in beide
   Richtungen. Verworfen: linke Taste auf leerer Fläche (b), Alt + linke
   Taste (c), kein Schwenken (d); beide Tasten zusammen (Frage Patrik) —
@@ -734,7 +758,8 @@ Schwenken und Zurücksetzen; im Programm nicht gesehen):**
   Tooltip nennt die Gesten; dieselben Zeilen im Rechtsklick-Menü der
   Zeitachse unter *Zoom*. Verworfen: zwei Schieber (b), nichts im Kopf (c).
   **Gebaut S102 (Schritt 4):** `Zeitachse::setzeZoomZurueck` (die ganze
-  Länge, Normalhöhe); der Knopf **Fit** sitzt im Kopf hinter *Mute*, sein
+  Länge, Normalhöhe); der Knopf **Fit** sitzt rechts in der Datei-Zeile
+  (bis Schritt 5 kurz hinter *Mute* — dort machte er das Panel breiter), sein
   Tooltip trägt die sechs Zeilen aus `Zeitachse::zoomGesten`. **Ctrl+0**
   führt das Panel als `QShortcut` für sich und seine Kinder — es gilt,
   solange der Fokus irgendwo im Panel sitzt, und ist kein Kürzel des
@@ -1505,6 +1530,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.66.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 5, das Eigene — Mitlaufen mit der Abspielmarke (Entscheid Patrik ZO6):** §7 — `Zeitachse::setMitlaufen` (stetig mit der Marke in der Mitte, oder seitenweise), nur bei laufender Komposition, gehalten bei gedrückter Maustaste und gezogenem Rollbalken; der Schalter **Scroll with playhead** im Panel, über den Neustart gemerkt; `Sitzung::mitlaufenAn` / `mitlaufenSeitenweise`. Ohne die Auswahl in Settings (Naht N9, eigener Commit) gilt die Vorgabe stetig. *Scroll with playhead* und *Fit* stehen rechts in der Datei-Zeile (die erste Zeile wäre sonst breiter geworden). Gemessen: rund 11 ms je Bild ohne, rund 10 ms mit stetigem Mitlaufen — die Achse zeichnet ohnehin je Takt. Test: zwei neue Fälle (die Achse allein; am echten Panel mit laufender Komposition) |
 | 0.65.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 4 — Schwenken und Zurücksetzen (Entscheide Patrik ZO7: a, ZO8: a; Vorgabe S100: Ctrl+0):** §7 — die mittlere Maustaste zieht den Ausschnitt in beide Richtungen; `setzeZoomZurueck`; der Knopf **Fit** im Kopf mit den Gesten im Tooltip; Ctrl+0 als Kürzel des Panels für sich und seine Kinder; im Rechtsklick-Menü der Zeitachse das Untermenü *Zoom*. Eigenes, keine Naht berührt. Von mir gesetzt: das Rechtsklick-Menü gibt es auch ohne *Edit*, dann nur mit *Zoom*; der Platz von *Fit* hinter *Mute*. Test: neuer Fall „S102 Zeitachse: Schwenken", Fit und das Kürzel im Panel-Fall. Nicht belegt: der Weg der Taste Ctrl+0 durch das Hauptfenster, das Menü selbst. Offen: Schritte 5 und 6 |
 | 0.64.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 3 — der Höhen-Zoom (Entscheide Patrik ZO1: a, ZO2: a, ZO3: a mit Zusatz, ZO5: a, ZO9: a):** §7 — Alt+Rad ändert die Zeilenhöhe um 10 % je Raste um den Mauszeiger, Ctrl+Alt+Rad Zeit und Höhe zusammen; 50 % bis 300 %, die Master-Zeilen immer 60 % eines Kanals; Namen, die nicht passen, bleiben weg und stehen im Tooltip; bei Kanälen unter 24 Pixeln (50 % und 60 %) keine Punkte der Kurve; die Höhe merkt das Panel (`composer/rowHeightPercent`). Eigenes, keine Naht berührt. Abweichung vom Wortlaut von ZO3, von mir gesetzt: die Schwelle gilt für die Kanalhöhe und dann für alle Zeilen — sonst wären die Griffe der Master-Zeilen (seit S100) schon in Normalhöhe weg. Nach Alt+Rad bleibt die Menüleiste in Ruhe (Test mit Gegenprobe). Test: drei neue Fälle (Höhen-Zoom, Menüleiste, Höhe über den Neustart), Bilder bei 50 % und 300 % angesehen. Offen: Schritte 4 bis 6 |
 | 0.63.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 2 — der Zeit-Zoom (Entscheide Patrik ZO1: a, ZO5: a, ZO9: a):** §7 — Ctrl+Rad zoomt die Zeit um den Mauszeiger (Faktor 1,25 je Raste, von der ganzen Länge bis 1 Millisekunde je Pixel), Shift+Rad rollt waagrecht, waagrechter Rollbalken im `ZeitachsenRahmen`, die Spalte der Kanalnamen bleibt stehen, das Lineal teilt sich bis auf Zehntelsekunden, gezeichnet wird nur das sichtbare Stück; eine geladene Komposition beginnt ganz. Eigenes, keine Naht berührt. Von mir gesetzt: der Name eines Clips bleibt am linken Rand stehen; über der Spalte der Kanalnamen gilt die erste sichtbare Stelle. Test: neuer Fall „S102 Zeitachse: Zeit-Zoom" (72 Prüfungen), ein Bild der gezoomten Achse angesehen (`LUMIVIZ_COMPOSER_ZOOM_BILD`). Offen: Schritte 3 bis 6 |

@@ -43,6 +43,8 @@ const QLatin1String kAmEnde("composer/atEnd");
 const QLatin1String kPlayerWeiter("composer/playerResumes");
 const QLatin1String kNachEinWeiter("composer/resumesWhenSwitchedOn");
 const QLatin1String kNeuerClip("composer/newClipSeconds");
+const QLatin1String kMitlaufenAn("composer/scrollWithPlayheadOn");
+const QLatin1String kMitlaufenArt("composer/scrollWithPlayhead");
 const QLatin1String kSync("composer/syncEffectChain");
 // der Stand ueber den Neustart
 const QLatin1String kStandDatei("composer/session/file");
@@ -906,6 +908,26 @@ std::int64_t Sitzung::neuerClipMs()
 void Sitzung::setNeuerClipSekunden(int sekunden)
 {
     QSettings().setValue(kNeuerClip, std::clamp(sekunden, 1, 600));
+}
+
+bool Sitzung::mitlaufenAn()
+{
+    return QSettings().value(kMitlaufenAn, true).toBool();
+}
+
+void Sitzung::setMitlaufenAn(bool an)
+{
+    QSettings().setValue(kMitlaufenAn, an);
+}
+
+bool Sitzung::mitlaufenSeitenweise()
+{
+    return QSettings().value(kMitlaufenArt, 0).toInt() == 1;
+}
+
+void Sitzung::setMitlaufenSeitenweise(bool seitenweise)
+{
+    QSettings().setValue(kMitlaufenArt, seitenweise ? 1 : 0);
 }
 
 AmEnde Sitzung::amEnde()

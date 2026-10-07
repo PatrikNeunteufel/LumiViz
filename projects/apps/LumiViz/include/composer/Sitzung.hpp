@@ -204,6 +204,15 @@ public:
     /// Sekunden einstellbar (`composer/newClipSeconds`, Vorgabe 20, 1 bis 600).
     [[nodiscard]] static std::int64_t neuerClipMs();
     static void setNeuerClipSekunden(int sekunden);
+    /// Mitlaufen der Zeitachse mit der Abspielmarke (S102, Entscheid Patrik
+    /// ZO6): der Schalter „Scroll with playhead" des Panels
+    /// (`composer/scrollWithPlayheadOn`, Vorgabe an) und die Art
+    /// (`composer/scrollWithPlayhead`: 0 = stetig, die Vorgabe — die Marke
+    /// bleibt in der Mitte; 1 = seitenweise).
+    [[nodiscard]] static bool mitlaufenAn();
+    static void setMitlaufenAn(bool an);
+    [[nodiscard]] static bool mitlaufenSeitenweise();
+    static void setMitlaufenSeitenweise(bool seitenweise);
 
     // --- Ueber den Neustart (Konzept §8 „Der Start") --------------------------
 

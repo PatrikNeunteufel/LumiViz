@@ -2625,4 +2625,252 @@ TEST_SUITE("ComposerPanel")
             CHECK_FALSE(achse->zoomVerstellt());
         }
     }
+
+    // S102, Entscheid Patrik ZO6: der Ausschnitt folgt der Abspielmarke —
+    // stetig (die Vorgabe) oder seitenweise; eine gedrueckte Maustaste haelt ihn.
+    TEST_CASE("S102 Zeitachse: Mitlaufen mit der Abspielmarke — stetig, seitenweise, gehalten")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        for (int i = 0; i < 3; ++i)
+        {
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH%1").arg(i + 1);
+            kanal.clips.push_back(clip(QStringLiteral("x.lvfx"), 0, 100000));
+            k.kanaele.push_back(kanal);
+        }
+        auto* achse = new Zeitachse;
+        ZeitachsenRahmen rahmen(achse);
+        achse->setKomposition(k, true);
+        rahmen.resize(700, 300);
+        testfenster::platziere(rahmen);
+        rahmen.show();
+        REQUIRE(warte([&] { return rahmen.isVisible() && achse->width() == 700; }));
+        const int breite = achse->width() - Zeitachse::kKopfBreite - Zeitachse::kRand;
+        const int mitte = Zeitachse::kKopfBreite + breite / 2;
+        using Mitlaufen = Zeitachse::Mitlaufen;
+
+        SUBCASE("ohne Zoom oder ausgeschaltet bewegt sich nichts")
+        {
+            achse->setMitlaufen(Mitlaufen::Stetig);
+            achse->setStelle(60000);
+            CHECK(achse->rollX() == 0);  // die ganze Laenge steht da
+            achse->zoomeZeit(8.0, achse->xVon(0));
+            achse->setMitlaufen(Mitlaufen::Aus);
+            achse->setStelle(70000);
+            CHECK(achse->rollX() == 0);
+        }
+
+        SUBCASE("stetig: die Marke bleibt in der Mitte — am Anfang und am Ende laeuft sie selbst")
+        {
+            achse->zoomeZeit(8.0, achse->xVon(0));
+            achse->setMitlaufen(Mitlaufen::Stetig);
+            achse->setStelle(1000);
+            CHECK(achse->rollX() == 0);
+            CHECK(achse->xVon(1000) < mitte);
+            for (const std::int64_t ms : {std::int64_t{40000}, std::int64_t{40033}, std::int64_t{60000}})
+            {
+                achse->setStelle(ms);
+                CHECK(std::abs(achse->xVon(ms) - mitte) <= 1);
+            }
+            achse->setStelle(Zeitachse::anzeigeLaenge(k) - 100);
+            CHECK(achse->rollX() == achse->rollXMax());
+            // zurueck an den Anfang (Schleife): der Ausschnitt geht mit
+            achse->setStelle(0);
+            CHECK(achse->rollX() == 0);
+        }
+
+        SUBCASE("seitenweise: erst wenn die Marke den Ausschnitt verlaesst — dann steht sie links")
+        {
+            achse->zoomeZeit(8.0, achse->xVon(0));
+            achse->setMitlaufen(Mitlaufen::Seitenweise);
+            const std::int64_t rand = achse->stelleVon(achse->width() - Zeitachse::kRand - 1);
+            achse->setStelle(rand - 500);
+            CHECK(achse->rollX() == 0);
+            achse->setStelle(rand + 500);
+            CHECK(achse->rollX() > 0);
+            CHECK(std::abs(achse->xVon(rand + 500) - Zeitachse::kKopfBreite) <= 1);
+            const int seite = achse->rollX();
+            achse->setStelle(rand + 2000);  // innerhalb der neuen Seite: sie bleibt stehen
+            CHECK(achse->rollX() == seite);
+            achse->setStelle(0);  // die Schleife springt zurueck
+            CHECK(achse->rollX() == 0);
+        }
+
+        SUBCASE("eine gedrueckte Maustaste haelt den Ausschnitt, ein gezogener Rollbalken auch")
+        {
+            achse->zoomeZeit(8.0, achse->xVon(0));
+            achse->setMitlaufen(Mitlaufen::Stetig);
+            const QPoint frei(300, 280);  // unter den Kanaelen
+            QMouseEvent druck(QEvent::MouseButtonPress, QPointF(frei), QPointF(achse->mapToGlobal(frei)),
+                              Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &druck);
+            achse->setStelle(50000);
+            CHECK(achse->rollX() == 0);
+            QMouseEvent los(QEvent::MouseButtonRelease, QPointF(frei), QPointF(achse->mapToGlobal(frei)),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &los);
+            achse->setStelle(50033);
+            CHECK(std::abs(achse->xVon(50033) - mitte) <= 1);
+
+            QScrollBar* balken = rahmen.balkenWaagrecht();
+            Q_EMIT balken->sliderPressed();
+            balken->setValue(10);
+            achse->setStelle(60000);
+            CHECK(achse->rollX() == 10);
+            Q_EMIT balken->sliderReleased();
+            achse->setStelle(60033);
+            CHECK(std::abs(achse->xVon(60033) - mitte) <= 1);
+        }
+
+        SUBCASE("gemessen: so lange zeichnet die Achse ein Bild (zwoelf Kanaele, acht davon Songs mit Wellenform)")
+        {
+            Komposition gross;
+            std::vector<float> huelle(6000);  // fuenf Minuten, ein Wert je 50 ms
+            for (std::size_t i = 0; i < huelle.size(); ++i) huelle[i] = static_cast<float>((i * 37) % 100) / 100.0f;
+            for (int i = 0; i < 12; ++i)
+            {
+                Kanal kanal;
+                kanal.name = QStringLiteral("K%1").arg(i + 1);
+                kanal.art = i < 4 ? KanalArt::Visual : KanalArt::Audio;
+                for (int c = 0; c < 4; ++c)
+                {
+                    VisualClip teil = clip(i < 4 ? QStringLiteral("x.lvfx") : QStringLiteral("song.mp3"),
+                                           c * 300000, c * 300000 + 290000);
+                    teil.ein.dauerMs = 8000;
+                    teil.aus.dauerMs = 8000;
+                    kanal.clips.push_back(teil);
+                }
+                gross.kanaele.push_back(kanal);
+            }
+            achse->setKomposition(gross, true);
+            achse->setHuelle(QStringLiteral("song.mp3"), huelle, 50);
+            rahmen.resize(1600, 600);
+            REQUIRE(warte([&] { return achse->height() > 500; }));
+            achse->zoomeZeit(20.0, achse->xVon(0));
+            const auto messe = [&](Mitlaufen art) {
+                achse->setMitlaufen(art);
+                achse->setStelle(200000);
+                QElapsedTimer uhr;
+                uhr.start();
+                const int bilder = 60;
+                for (int i = 1; i <= bilder; ++i)
+                {
+                    achse->setStelle(200000 + i * 33);
+                    (void)achse->grab();
+                }
+                return static_cast<double>(uhr.elapsed()) / bilder;
+            };
+            // Gegenprobe: auch ohne Mitlaufen zeichnet die Achse je Takt neu — die Marke wandert
+            const double ohne = messe(Mitlaufen::Aus);
+            const double stetig = messe(Mitlaufen::Stetig);
+            MESSAGE("Zeitachse 1600 x 600, zwoelf Kanaele, ms je Bild (mit grab): ohne Mitlaufen "
+                    << ohne << ", stetig " << stetig);
+            CHECK(stetig < 33.0);  // der Takt des Panels: 30-mal je Sekunde
+        }
+    }
+
+    // Das Mitlaufen am echten Panel: der Schalter, und dass der Ausschnitt bei
+    // laufender Komposition folgt — im Stand nicht.
+    TEST_CASE("S102 Panel: Scroll with playhead — der Schalter, laufend folgt der Ausschnitt, im Stand nicht")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        // die Einstellungen: Vorgabe an und stetig
+        CHECK(Sitzung::mitlaufenAn());
+        CHECK_FALSE(Sitzung::mitlaufenSeitenweise());
+        Sitzung::setMitlaufenSeitenweise(true);
+        CHECK(Sitzung::mitlaufenSeitenweise());
+        Sitzung::setMitlaufenSeitenweise(false);
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        Komposition k;
+        Kanal kanal;
+        kanal.name = QStringLiteral("CH1");
+        kanal.clips = {clip(rot, 0, 120000)};
+        k.kanaele = {kanal};
+        const QString datei = dir.filePath(QStringLiteral("lang.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 300);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* schalter = panel.findChild<QCheckBox*>(QStringLiteral("composerScrollWithPlayhead"));
+        auto* an = panel.findChild<QCheckBox*>(QStringLiteral("composerAn"));
+        auto* spielen = panel.findChild<QPushButton*>(QStringLiteral("composerPlay"));
+        REQUIRE(schalter != nullptr);
+        REQUIRE(an != nullptr);
+        REQUIRE(spielen != nullptr);
+        CHECK(schalter->isChecked());
+
+        Sitzung::setOeffnenHaelt(true);
+        REQUIRE(sitzung->lade(datei));
+        an->click();
+        REQUIRE(sitzung->an());
+        if (sitzung->laeuft()) spielen->click();  // im Stand beginnen
+        REQUIRE(warte([&] { return !sitzung->laeuft(); }));
+        // (die Breite erst beim Pruefen lesen: das Fenster findet seine Breite nach dem ersten Bild)
+        const auto mitte = [&] {
+            return Zeitachse::kKopfBreite + (achse->width() - Zeitachse::kKopfBreite - Zeitachse::kRand) / 2;
+        };
+        MESSAGE("Panel Composer: schmalste Breite " << panel.minimumSizeHint().width() << " Pixel");
+
+        // hineingezoomt, im Stand: ein Sprung laesst den Ausschnitt, wo er ist
+        achse->zoomeZeit(16.0, achse->xVon(0));
+        REQUIRE(achse->rollXMax() > 1000);
+        sitzung->springe(60000);
+        REQUIRE(warte([&] { return achse->xVon(60000) != Zeitachse::kKopfBreite && sitzung->stelleMs() >= 60000; }));
+        QCoreApplication::processEvents();
+        CHECK(achse->rollX() == 0);
+
+        // laufend: der Ausschnitt folgt, die Marke steht in der Mitte
+        spielen->click();
+        REQUIRE(warte([&] { return sitzung->laeuft() && achse->rollX() > 0; }));
+        REQUIRE(warte([&] { return achse->stelleMs() > 60300; }));
+        // gemessen an der Stelle, die die Achse zeigt — ihr Takt hinkt der Uhr der Sitzung nach
+        CHECK(achse->mitlaufen() == Zeitachse::Mitlaufen::Stetig);
+        CHECK(std::abs(achse->xVon(achse->stelleMs()) - mitte()) <= 1);
+
+        // Schalter aus: der Ausschnitt bleibt stehen, die Einstellung ist gemerkt
+        schalter->click();
+        CHECK_FALSE(Sitzung::mitlaufenAn());
+        QCoreApplication::processEvents();
+        const int gerollt = achse->rollX();
+        const std::int64_t jetzt = achse->stelleMs();
+        REQUIRE(warte([&] { return achse->stelleMs() > jetzt + 300; }));
+        CHECK(achse->rollX() == gerollt);
+        spielen->click();
+
+        // ein neues Panel liest den Schalter aus den Einstellungen
+        ComposerPanel zweites(dienste);
+        auto* schalter2 = zweites.findChild<QCheckBox*>(QStringLiteral("composerScrollWithPlayhead"));
+        REQUIRE(schalter2 != nullptr);
+        CHECK_FALSE(schalter2->isChecked());
+    }
 }

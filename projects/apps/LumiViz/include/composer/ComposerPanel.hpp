@@ -61,6 +61,8 @@ public:
     /// Was gezeigt wird; `geladen` false = der Hinweis „keine Komposition".
     void setKomposition(const Komposition& komposition, bool geladen);
     void setStelle(std::int64_t stelleMs);
+    /// Die Stelle, an der die Abspielmarke gerade gezeichnet ist.
+    [[nodiscard]] std::int64_t stelleMs() const { return m_stelleMs; }
     /// Ueberlappung in der Schleife (S99, Entscheid Patrik: beide Fenster
     /// zeigen). `schleife`: Loop ist an — dann sind die ersten und die letzten
     /// Sekunden der Komposition getoent, so weit ihre Ueberlappung reicht.
@@ -284,6 +286,26 @@ public:
     [[nodiscard]] bool zoomVerstellt() const { return !zeitGanz() || m_zeilenProzent != 100; }
     /// Die Gesten der Zeitachse, eine je Zeile — fuer den Tooltip von „Fit".
     [[nodiscard]] static QStringList zoomGesten();
+
+    // --- Mitlaufen mit der Abspielmarke (S102, Entscheid Patrik ZO6) ----------
+    //
+    // Hineingezoomt zeigt die Achse nur einen Ausschnitt; laeuft die
+    // Wiedergabe, wandert die Abspielmarke hinaus. Mit Mitlaufen folgt der
+    // Ausschnitt ihr: stetig (die Marke bleibt in der Mitte, die Clips ziehen
+    // unter ihr durch) oder seitenweise (verlaesst die Marke den Ausschnitt,
+    // steht sie danach an seinem linken Rand). Solange eine Maustaste in der
+    // Achse oder an einem ihrer Rollbalken gedrueckt ist, steht der Ausschnitt.
+    enum class Mitlaufen
+    {
+        Aus,
+        Stetig,
+        Seitenweise,
+    };
+    /// Das Panel setzt es je Takt: `Aus`, wenn der Schalter aus ist oder nichts laeuft.
+    void setMitlaufen(Mitlaufen art) { m_mitlaufen = art; }
+    [[nodiscard]] Mitlaufen mitlaufen() const { return m_mitlaufen; }
+    /// Ein Rollbalken wird gezogen (oder losgelassen): so lange laeuft nichts mit.
+    void halteMitlaufen(bool halten) { m_balkenGehalten = halten; }
     /// Die Zeile unter `y`: negativ = eine Master-Zeile, ab 0 ein Kanal — auch
     /// eine Zahl hinter dem letzten Kanal (die freie Flaeche darunter).
     /// `kKeineZeile` = das Lineal; es bleibt beim Rollen stehen und deckt die
@@ -434,6 +456,11 @@ private:
     /// Der Name, der an `ort` stuende, aber nicht gezeichnet ist (fuer den Tooltip); leer = keiner.
     [[nodiscard]] QString versteckterName(QPoint ort) const;
     int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
+    Mitlaufen m_mitlaufen = Mitlaufen::Aus;
+    bool m_tasteUnten = false;      ///< irgendeine Maustaste ist in der Achse gedrueckt
+    bool m_balkenGehalten = false;  ///< ein Rollbalken wird gezogen
+    /// Den Ausschnitt der Abspielmarke nachfuehren, wenn Mitlaufen es verlangt.
+    void folgeDerMarke();
     bool m_schwenkt = false;  ///< die mittlere Maustaste ist gedrueckt
     QPoint m_schwenkStart;    ///< die Maus beim Druck
     QPoint m_schwenkRoll;     ///< `rollX` / `rollY` beim Druck
@@ -628,6 +655,7 @@ private:
     QCheckBox* m_edit = nullptr;
     QCheckBox* m_sync = nullptr;
     QCheckBox* m_karaoke = nullptr;  ///< gekoppelt mit „Karaoke on" des Panels Karaoke (S101)
+    QCheckBox* m_mitlaufen = nullptr;  ///< Scroll with playhead (S102, Entscheid Patrik ZO6)
     QPushButton* m_neu = nullptr;
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;
