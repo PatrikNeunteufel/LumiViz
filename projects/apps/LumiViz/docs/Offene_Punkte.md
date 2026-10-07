@@ -2349,6 +2349,10 @@ Idee Preset-Warmup/Pre-Roll.
     *Visuals first* / *Audio first*, innerhalb der Art bleibt die
     Reihenfolge; im Programm nicht gesehen, Sichttest S100 V7 und V8.
     Offen bleiben (4) Zoom und Schwenken und (5) das Icon für `.lvcomp`.
+    **Zu (4), Vorgabe Patrik S100:** der Zoom muss sich **zurücksetzen**
+    lassen — **Ctrl+0** als bekanntes Kürzel (wieder die ganze Länge auf
+    der Breite, wie heute). Vor dem Bau die Urteile M17 des Sichttests S100
+    (Höhe der Zeile MASTER) abwarten: sie berühren den senkrechten Zoom.
     Die Wünsche lauteten:
     (1) **Kanalfarben** — heute hat jeder Bild-Kanal einen
     eigenen Ton, alle Audio-Kanäle denselben (`kanalFarbe` / `tonFarbe` in
