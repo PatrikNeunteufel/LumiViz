@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.106.0
+> **Version:** 1.107.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2416,9 +2416,24 @@ Idee Preset-Warmup/Pre-Roll.
     fremde Endungen nur mit `-Foreign`, Audio nie), nimmt sie wieder heraus
     (`-Remove`), ohne Schalter zeigt es nur an. **Nur der Anzeige-Modus ist
     gelaufen**, `-Apply` und `-Remove` sind nicht ausgeführt. Nur das Icon,
-    kein „Öffnen mit LumiViz": die App wertet ihre Argumente nicht aus —
-    offen: `LumiViz.exe <datei>` öffnet die Datei (Preset, Komposition,
-    Titel), danach `shell\open\command` ins Skript.
+    kein „Öffnen mit LumiViz" — der Öffnen-Befehl (`shell\open\command`)
+    kommt erst ins Skript, wenn die Übergabe an die laufende App steht.
+  - **`LumiViz.exe <datei>` (S101, Entscheid Patrik X1: a — eine Instanz,
+    die Datei geht an die laufende App; Patrik arbeitet immer mit einem
+    Fenster). Schritt 1 gebaut, im Programm ungesehen:** beim Start gilt
+    die erste Angabe, die kein Schalter ist und eine vorhandene `.avs`,
+    `.milk`, `.lvfx`, `.lvfx2`, `.lvkar` oder `.lvcomp` benennt
+    (`UI/StartDatei.hpp`). Ein Preset läuft statt des zuletzt aktiven; ein
+    Karaoke-Preset und eine Komposition kommen nach dem Wiederherstellen
+    dazu (Komposition: Naht N8 wächst). Belegt per Test sind Auswahl, Art
+    und Ladeweg — **nicht** die Zeilen im Hauptfenster (es läuft in keinem
+    Unit-Test). **Offen:** (1) Schritt 2, die eine Instanz: Übergabe des
+    Pfads an die laufende App, Fenster nach vorn — davor der Entscheid X1b
+    (Ausweg für mehrere Instanzen, etwa Debug-App neben der Sichttest-Exe);
+    (2) 🟡 eine Audiodatei als Argument (spielen, anhängen, ersetzen?);
+    (3) 🟡 ein Preset als Argument, während *Resume after restart* den
+    Composer wieder einschaltet: heute liegt die Komposition dann über dem
+    Preset; (4) danach der Öffnen-Befehl im Skript und das Handbuch.
   - **Das Icon der App (Wunsch Patrik S100) — gebaut:** `LumiViz.exe` trägt
     eine Icon-Ressource (`projects/apps/LumiViz/main/LumiViz.rc` mit
     `lumiviz_app.ico`, eingetragen in `main/Source.cmake`, nur Windows). Am
@@ -4344,6 +4359,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.107.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`:** Entscheid Patrik X1: a (eine Instanz, die Datei geht an die laufende App); Schritt 1 gebaut — die Datei als Argument beim Start (`UI/StartDatei.hpp`, Naht N8 wächst um die `.lvcomp`; Konzept 0.54.0), im Programm ungesehen; offen die eine Instanz (Entscheid X1b), Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.106.0 | 2026-10-07 | Session 101 — **Composer:** Befund Patrik, das Panel Karaoke lud bei laufendem Composer nichts; behoben (Entscheid KP1: a, Naht N16, R2 wächst; Konzept 0.53.0), per Test gezählt, im Programm ungesehen — Nachtest und Urteil zum Ruckeln eingetragen |
 | 1.105.0 | 2026-10-07 | Session 100, Abschluss — **Composer:** Stand am Ende der Sitzung (alles gebaut, im Programm nichts gesehen — Sichttest S100 mit 70 Punkten); neuer Wunsch Patrik: Audio-Master und Visual-Master neben der Zeile MASTER (etwa Musik stumm für eine Durchsage), nicht begonnen |
 | 1.104.0 | 2026-10-07 | Session 100 — **Icons:** Icon für `.lvcomp` gebaut (Fächer mit Zeitstrahl; Effect Browser mit Doppelklick, Panel Composer; Naht N8 wächst, Konzept 0.52.0), Icon der App als Ressource der Exe; Sichttest S100 mit Abschnitt I, 70 Punkte. Von den Wünschen zur Zeitachse offen: Zoom und Schwenken |

@@ -28,6 +28,7 @@
 #include "UI/panels/KaraokePanel.hpp"                   // setzeKaraokeAn (KE4)
 #include "UI/PresetSpeichern.hpp"                       // Save gegen Save As (S89)
 #include "UI/PresetListen.hpp"                          // Favoriten / zuletzt (S89)
+#include "UI/StartDatei.hpp"                            // `LumiViz.exe <datei>` (S101)
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
 #include "services/ServiceContainer.hpp"
@@ -204,9 +205,23 @@ MainWindow::MainWindow(QWidget* parent)
     // Ereignisschleife, damit der Visualizer steht, wenn das Lade-Ereignis
     // kommt. Bis S93 tat das der Effect Browser aus seinem Konstruktor, mit
     // dem, was ER sich gemerkt hatte.
-    QTimer::singleShot(0, this, [this]() {
+    //
+    // S101 (`LumiViz.exe <datei>`, Entscheid Patrik X1): eine Datei als
+    // Argument geht vor. Ein Preset laeuft dann statt des zuletzt aktiven;
+    // Karaoke-Preset und Komposition kommen weiter unten dazu.
+    const QString startDatei =
+        lumi::ui::startdatei::ausArgumenten(QCoreApplication::arguments());
+    const lumi::ui::startdatei::Art startArt = lumi::ui::startdatei::art(startDatei);
+    if (!startDatei.isEmpty())
+        BasicLogger::logInfo("Start: file given as argument: " + startDatei.toStdString());
+    QTimer::singleShot(0, this, [this, startDatei, startArt]() {
         auto* bus = m_pServices->tryResolve<IEventBus>();
         if (bus == nullptr) return;
+        if (startArt == lumi::ui::startdatei::Art::Preset)
+        {
+            (void)lumi::ui::startdatei::oeffne(*bus, startDatei, /*beimStart=*/true);
+            return;
+        }
         const QString pfad = lumi::ui::startpreset::waehle(lumi::ui::startpreset::mitgeliefert());
         if (pfad.isEmpty()) return;
         BasicLogger::logInfo("Start: restoring last preset: " + pfad.toStdString());
@@ -219,6 +234,19 @@ MainWindow::MainWindow(QWidget* parent)
     QTimer::singleShot(0, this, [this]() {
         if (VisualizerWidget* widget = primaryVisualizer())
             (void)lumi::composer::stelleKompositionWiederHer(*widget);
+    });
+
+    // S101: die Datei als Argument, soweit sie kein Preset der Kette ist —
+    // nach dem Preset der Kette und dem Wiederherstellen der Komposition.
+    QTimer::singleShot(0, this, [this, startDatei, startArt]() {
+        auto* bus = m_pServices->tryResolve<IEventBus>();
+        if (bus == nullptr) return;
+        if (startArt == lumi::ui::startdatei::Art::Karaoke)
+            (void)lumi::ui::startdatei::oeffne(*bus, startDatei, /*beimStart=*/true);
+        // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S101): eine
+        // .lvcomp als Argument — derselbe Weg wie File → Open Composition
+        if (startArt == lumi::ui::startdatei::Art::Komposition)
+            bus->publish(lumi::composer::OpenCompositionEvent{startDatei.toStdString()});
     });
 
     // S88 „Resume playback" (Wunsch Patrik): wurde beim letzten Mal waehrend

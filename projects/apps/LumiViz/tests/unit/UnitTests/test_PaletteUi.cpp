@@ -31,6 +31,7 @@
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "composer/AppAnbindung.hpp"  // OpenCompositionEvent (.lvcomp im Effect Browser, S100)
 #include "UI/PresetListen.hpp"
+#include "UI/StartDatei.hpp"
 #include "UI/StartPreset.hpp"
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
@@ -2637,6 +2638,85 @@ TEST_CASE("PaletteUi S93: das laufende Preset ueber den Neustart — sichern, wa
     CHECK(wege[2] == QStringLiteral("milk+:C:/x/c.milk"));
 
     QSettings().remove(sp::schluessel());
+}
+
+// S101 (Entscheid Patrik X1): `LumiViz.exe <datei>` — welche Angabe als Datei
+// gilt und ueber welchen Ladeweg sie geht (UI/StartDatei.hpp). Das Hauptfenster
+// ruft das beim Start; es selbst laeuft in keinem Unit-Test.
+TEST_CASE("PaletteUi S101: eine Datei als Argument — Auswahl, Art und Ladeweg")
+{
+    UiUmgebung env;
+    namespace sd = lumi::ui::startdatei;
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    const QString kette = schreibeLvfx(dir, QStringLiteral("Mit Leerzeichen.lvfx"));
+    const QString karaoke = dir.filePath(QStringLiteral("Abend.lvkar"));
+    const QString komposition = dir.filePath(QStringLiteral("Set.LVCOMP"));
+    const QString fremd = dir.filePath(QStringLiteral("Notiz.txt"));
+    for (const QString& pfad : {karaoke, komposition, fremd})
+    {
+        QFile f(pfad);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write("x");
+    }
+    const QString exe = QStringLiteral("C:/x/LumiViz.exe");
+
+    // --- die Art haengt an der Endung, ohne Ruecksicht auf Gross und Klein
+    CHECK(sd::art(QStringLiteral("a.avs")) == sd::Art::Preset);
+    CHECK(sd::art(QStringLiteral("a.MILK")) == sd::Art::Preset);
+    CHECK(sd::art(QStringLiteral("a.lvfx2")) == sd::Art::Preset);
+    CHECK(sd::art(karaoke) == sd::Art::Karaoke);
+    CHECK(sd::art(komposition) == sd::Art::Komposition);
+    CHECK(sd::art(fremd) == sd::Art::Keine);
+    CHECK(sd::art(QString()) == sd::Art::Keine);
+
+    // --- ohne Angabe, nur Schalter, eine fehlende oder fremde Datei: keine
+    CHECK(sd::ausArgumenten({}).isEmpty());
+    CHECK(sd::ausArgumenten({exe}).isEmpty());
+    CHECK(sd::ausArgumenten({exe, QStringLiteral("-platform"), QStringLiteral("--x")}).isEmpty());
+    CHECK(sd::ausArgumenten({exe, dir.filePath(QStringLiteral("Fehlt.lvfx"))}).isEmpty());
+    CHECK(sd::ausArgumenten({exe, fremd}).isEmpty());
+    CHECK(sd::ausArgumenten({exe, dir.path()}).isEmpty());  // ein Ordner ist keine Datei
+    // der Programmname selbst zaehlt nie
+    CHECK(sd::ausArgumenten({kette}).isEmpty());
+
+    // --- die erste passende Angabe gilt, Schalter und Fremdes davor werden uebergangen
+    CHECK(QFileInfo(sd::ausArgumenten({exe, kette})) == QFileInfo(kette));
+    CHECK(QFileInfo(sd::ausArgumenten({exe, QStringLiteral("-style"), fremd, komposition, kette})) ==
+          QFileInfo(komposition));
+    CHECK(QFileInfo(sd::ausArgumenten({exe, kette})).isAbsolute());
+
+    // --- der Ladeweg: beim Start ohne Rueckfrage, sonst fragt der Empfaenger
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    QStringList wege;
+    auto a1 = bus->subscribeScoped<LoadEffectChainEvent>([&wege](const LoadEffectChainEvent& e) {
+        wege << QStringLiteral("kette:") + QString::fromStdString(e.path);
+    });
+    auto a2 = bus->subscribeScoped<ImportAvsPresetEvent>([&wege](const ImportAvsPresetEvent& e) {
+        wege << QString::fromLatin1(e.confirmed ? "avs+:" : "avs?:") + QString::fromStdString(e.path);
+    });
+    auto a3 = bus->subscribeScoped<ImportMilkPresetEvent>([&wege](const ImportMilkPresetEvent& e) {
+        wege << QString::fromLatin1(e.confirmed ? "milk+:" : "milk?:") + QString::fromStdString(e.path);
+    });
+    auto a4 = bus->subscribeScoped<LoadKaraokePresetEvent>([&wege](const LoadKaraokePresetEvent& e) {
+        wege << QStringLiteral("karaoke:") + QString::fromStdString(e.path);
+    });
+    CHECK(sd::oeffne(*bus, QStringLiteral("C:/x/a.lvfx"), true));
+    CHECK(sd::oeffne(*bus, QStringLiteral("C:/x/b.avs"), true));
+    CHECK(sd::oeffne(*bus, QStringLiteral("C:/x/b.avs"), false));
+    CHECK(sd::oeffne(*bus, QStringLiteral("C:/x/c.milk"), false));
+    CHECK(sd::oeffne(*bus, QStringLiteral("C:/x/d.lvkar"), true));
+    // eine Komposition oeffnet der Aufrufer (Composer-Naht N8), Fremdes niemand
+    CHECK_FALSE(sd::oeffne(*bus, QStringLiteral("C:/x/e.lvcomp"), true));
+    CHECK_FALSE(sd::oeffne(*bus, QStringLiteral("C:/x/f.txt"), true));
+    REQUIRE(wege.size() == 5);
+    CHECK(wege[0] == QStringLiteral("kette:C:/x/a.lvfx"));
+    CHECK(wege[1] == QStringLiteral("avs+:C:/x/b.avs"));
+    CHECK(wege[2] == QStringLiteral("avs?:C:/x/b.avs"));
+    CHECK(wege[3] == QStringLiteral("milk?:C:/x/c.milk"));
+    CHECK(wege[4] == QStringLiteral("karaoke:C:/x/d.lvkar"));
 }
 
 // S93 (Entscheid Patrik): der Effect Browser laedt beim Start nichts mehr und
