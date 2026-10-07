@@ -2262,6 +2262,12 @@ Idee Preset-Warmup/Pre-Roll.
   - **Nicht gespielt:** Abschnitt G ganz (*Visuals overlap themselves*, G1
     bis G6), D1 bis D4 (Text-Vorlage, Wechsel am Kreuzungspunkt, Kopieren
     ohne Edit), C2, C3, B5, A8, E1.
+  - **Sichttest S100 (Patrik), als Nächstes:**
+    `.claude/handover/Sichttests_S100.md` — 45 Punkte: A (Nachtest Panel
+    Player, sichtbar und verdeckt), M (die Zeile MASTER, mit den Urteilen
+    zu dem, was ich gesetzt habe), G (*Visuals overlap themselves*) und R
+    (der ungespielte Rest aus S99). Reihenfolge bei knapper Zeit: A1 bis
+    A4, M1 bis M9, G2, G3.
 - **Composer, Stand S99 (Konzept 0.43.1), kurz:** der zweite Test der S98
   ist ausgewertet (33 von 33); die Lücke „Composer off ohne Titel im Player"
   ist geschlossen; die **Überlappung in der Schleife** und die **Blende der
