@@ -119,7 +119,8 @@ void PlayerPanel::onActivate()
     // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §8, §12.2): fuehrt
     // der Composer den Ton, gilt sein Stand — der laufende Song der
     // Komposition und ob sie laeuft — statt dem des (angehaltenen) Players.
-    if (const lumi::composer::TonStand stand = lumi::composer::tonStand(); stand.fuehrt)
+    const lumi::composer::TonStand stand = lumi::composer::tonStand();
+    if (stand.fuehrt)
     {
         updatePlayButton(stand.laeuft);
         if (stand.hatSong)
@@ -127,6 +128,17 @@ void PlayerPanel::onActivate()
             onTrackChanged(stand.song.title, stand.song.artist, stand.song.durationMs);
             onPlaybackPositionChanged(stand.stelleMs, stand.song.durationMs);
         }
+    }
+
+    // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §12.2; Sichttest
+    // S99, A2): solange das Panel nicht zu sehen ist, hat es kein Abo und
+    // verpasst den leeren Songwechsel, mit dem der Composer den Ton abgibt. Hat
+    // jetzt weder der Player einen Titel noch der Composer einen laufenden
+    // Song, gilt der Ruhezustand — nicht, was vor dem Verdecken hier stand.
+    const auto* player = services().tryResolve<IAudioPlayer>();
+    if ((player == nullptr || !player->hasTrack()) && !(stand.fuehrt && stand.hatSong))
+    {
+        zeigeRuhezustand();
     }
 }
 
@@ -157,11 +169,7 @@ void PlayerPanel::subscribeToEvents()
             // Player hat keinen. Das Panel geht in seinen Ruhezustand.
             if (e.track.filePath.isEmpty())
             {
-                m_currentDurationMs = 0;
-                m_pTrackLabel->setText(tr("No track loaded"));
-                m_pArtistLabel->setText(QString());
-                m_pProgressSlider->setValue(0);
-                m_pTimeLabel->setText(QStringLiteral("00:00 / 00:00"));
+                zeigeRuhezustand();
                 return;
             }
             onTrackChanged(e.track.title, e.track.artist, e.track.durationMs);
@@ -361,6 +369,15 @@ void PlayerPanel::onTrackChanged(const QString& title, const QString& artist, in
     m_pTimeLabel->setText(formatTime(0) + " / " + formatTime(durationMs));
     
     BasicLogger::logInfo("PlayerPanel: Track changed - " + displayTitle.toStdString());
+}
+
+void PlayerPanel::zeigeRuhezustand()
+{
+    m_currentDurationMs = 0;
+    m_pTrackLabel->setText(tr("No track loaded"));
+    m_pArtistLabel->setText(QString());
+    m_pProgressSlider->setValue(0);
+    m_pTimeLabel->setText(QStringLiteral("00:00 / 00:00"));
 }
 
 void PlayerPanel::onPlaybackStateChanged(bool isPlaying, bool isPaused)

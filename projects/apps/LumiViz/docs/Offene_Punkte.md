@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.95.0
-> **Datum:** 2026-10-06 (Session 99)
+> **Version:** 1.96.0
+> **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2217,6 +2217,37 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Composer, Stand S100 (Konzept 0.44.0) — Sichttest S99 ausgewertet
+  (Patrik, 06.10. abends):** von 52 Punkten 31 bestanden, 3 mit Bemerkung,
+  1 durchgefallen, 17 offen. **Im Programm gesehen und gehört, ohne Befund:**
+  die Überlappung in der Schleife (E2 bis E15) und die Blende der ganzen
+  Komposition (F1 bis F6, F8), dazu A3 bis A7, B1 bis B3, C1. **Damit
+  gebilligt, was ich gesetzt hatte:** im selben Kanal liegt der Clip des
+  Anfangs über dem des Endes (E6); Sprung ins hintere Fenster mit beiden
+  Stellen, ins vordere ohne das Ende (E7, E8); Halt im Fenster hält beide
+  (E9); Loop aus im Fenster spielt das Ende aus (E10); Vorwärmen und „kein
+  Sprung" am Umschlag bei jeder Schleife (E14); die Karaoke-Ebene blendet
+  nicht mit (F6). `LumiViz.log` (fünf Läufe ab 22:21 Uhr, die Läufe zu
+  Abschnitt A und B stehen nicht mehr darin): keine Warnung, kein Fehler,
+  nach jedem Lauf „audio sources realigned 0 times".
+  - **A2, durchgefallen — behoben in S100, im Programm nicht gesehen:** beim
+    ersten Ausschalten blieb im Panel Player „Composer - <Song>" stehen, beim
+    zweiten kam „No track loaded" (A6). Per Test gezählt: ein Player-Panel,
+    das beim Ausschalten nicht zu sehen ist, hat kein Abo am Bus, verpasst den
+    leeren Songwechsel und zeigt nach dem Einblenden den alten Stand. Naht N5,
+    Anzeige, sechste Stelle: `PlayerPanel::onActivate` geht ohne Titel im
+    Player und ohne laufenden Song des Composers in den Ruhezustand.
+    **Nicht belegt, dass es bei Patrik dieser Weg war** — Indiz: die Stelle
+    im Panel (01:45) lag rund 3,6 s hinter der der Komposition (11:48,2).
+    Nachtest: A2 einmal mit sichtbarem, einmal mit verdecktem Panel Player.
+  - **F7, Urteil Patrik — neuer Wunsch:** die Blende der ganzen Komposition
+    soll **wie bei Clips** sein, auch editierbar (heute linear und fest). Als
+    Entscheid vorlegen.
+  - **B4:** Bemerkung „wurde doch überarbeitet" — die Erwartung der Liste
+    war schon in S99 berichtigt; kein Befund.
+  - **Nicht gespielt:** Abschnitt G ganz (*Visuals overlap themselves*, G1
+    bis G6), D1 bis D4 (Text-Vorlage, Wechsel am Kreuzungspunkt, Kopieren
+    ohne Edit), C2, C3, B5, A8, E1.
 - **Composer, Stand S99 (Konzept 0.43.1), kurz:** der zweite Test der S98
   ist ausgewertet (33 von 33); die Lücke „Composer off ohne Titel im Player"
   ist geschlossen; die **Überlappung in der Schleife** und die **Blende der
@@ -4210,6 +4241,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.96.0 | 2026-10-07 | Session 100 — **Composer:** Sichttest S99 ausgewertet (31 bestanden, 3 mit Bemerkung, 1 durchgefallen, 17 offen): Überlappung in der Schleife und Blende der ganzen Komposition im Programm gesehen und gehört, ohne Befund; was im Fenster von mir gesetzt war, ist gebilligt. Befund A2 (Panel Player blieb beim ersten Ausschalten auf dem Song der Komposition) per Test nachgestellt und behoben — Naht N5, Anzeige, sechste Stelle (Konzept 0.44.0); im Programm nicht gesehen. Neuer Wunsch F7: Blende der Komposition wie bei Clips, editierbar. Nicht gespielt: Abschnitt G, D1 bis D4, C2, C3, B5, A8, E1 |
 | 1.95.0 | 2026-10-06 | Session 99, Abschluss — **Composer:** die Überlappung in der Schleife (Loop overlap, beide Fenster in der Zeitachse, Songs / Visuals overlap themselves) und die Blende der ganzen Komposition (Fade in / Fade out) in sieben Schritten gebaut (Konzept 0.43.1, Benutzerhandbuch 1.98.0); im Programm nichts davon gesehen oder gehört — Sichttest S99 mit 52 Punkten; nicht gemessen: Bildzeit und Grafikspeicher von *Visuals overlap themselves*. Weiter offen: Entscheid „Flipped und einfache Einblendung", vier Wünsche zur Zeitachse und ein Icon für Composer-Dateien. 939 Cases |
 | 1.94.0 | 2026-10-06 | Session 99 — **Composer:** Überlappung in der Schleife entschieden (vier Entscheide Patrik), Schritt 1 von 7 gebaut — Modell und Datei (Konzept 0.37.0). §7 neu: Befund Patrik „Flipped und einfache Einblendung" (Zielbild bestätigt: unsichtbar einfahren, später einblenden, oben bleiben — Vorlage steht aus) und vier Wünsche zur Zeitachse (Kanalfarben einstellbar, Kanäle verschieben, sortieren nach Typ, Zoom und Schwenken) |
 | 1.93.0 | 2026-10-06 | Session 99 — **Composer:** Lücke „Composer off ohne Titel im Player" geschlossen (Entscheid Patrik: a — leerer Songwechsel, Panel Player im Ruhezustand; Konzept 0.36.0, Benutzerhandbuch 1.95.0); §7: offen der Sichttest S99 (Rest der ersten Liste, Urteil Kreuzungspunkt, die geschlossene Lücke im Programm); Vorlauf und Schwelle gelten als im Hörtest bestätigt |

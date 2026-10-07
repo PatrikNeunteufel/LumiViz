@@ -98,6 +98,10 @@ private:
     void onPlaybackPositionChanged(int positionMs, int durationMs);
     void onVolumeChangedEvent(float volume, bool muted);
 
+    /// @brief Kein Titel geladen: „No track loaded", Kuenstler leer, Balken und
+    ///        Zeit auf null (Composer-Naht N5, Anzeige).
+    void zeigeRuhezustand();
+
     /**
      * @brief Fuehrt einen Transport-Befehl aus (Hotkey, Menue oder eigener Knopf).
      *

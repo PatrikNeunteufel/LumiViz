@@ -596,5 +596,33 @@ TEST_SUITE("ComposerNahtTon")
         {
             sitzung.setAn(false);
         }
+
+        // Sichttest S99, A2: das Player-Panel ist nicht zu sehen (ein anderer
+        // Reiter liegt davor), waehrend der Composer ausgeschaltet wird — ohne
+        // Abo verpasst es den leeren Songwechsel. Beim Einblenden darf es nicht
+        // weiter den letzten Song der Komposition zeigen.
+        QCoreApplication::processEvents();
+        gemeldet.clear();
+        sitzung.springe(0);
+        sitzung.setAn(true);
+        REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
+        sitzung.spiele();
+        REQUIRE(warte([&] { return gemeldet == kEins; }));
+        QCoreApplication::processEvents();
+        REQUIRE(texte(panel).contains(QStringLiteral("Composer - eins")));
+        panel.hide();
+        QCoreApplication::processEvents();
+        sitzung.setAn(false);
+        QCoreApplication::processEvents();
+        REQUIRE_FALSE(sitzung.fuehrtTon());
+        CHECK(gemeldet.isEmpty());  // der leere Songwechsel kam — nur nicht beim Panel
+        panel.show();
+        QCoreApplication::processEvents();
+        const QStringList nachEinblenden = texte(panel);
+        CHECK(nachEinblenden.contains(QStringLiteral("No track loaded")));
+        CHECK(nachEinblenden.contains(QStringLiteral("00:00 / 00:00")));
+        CHECK_FALSE(nachEinblenden.contains(QStringLiteral("Composer - eins")));
+        for (const QSlider* s : panel.findChildren<QSlider*>())
+            if (s->maximum() == 1000) CHECK(s->value() == 0);
     }
 }
