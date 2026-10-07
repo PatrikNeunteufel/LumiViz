@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.64.0
+> **Version:** 0.65.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -630,8 +630,8 @@ Naht N9):**
 **Zoom und Rollen der Zeitachse (Vorgabe Patrik S101 / S102: „Zoom in x und
 y, wobei beide zusammen wie auch einzeln gezoomt werden können"; neun
 Entscheide Patrik S102, ZO1 bis ZO9 — gebaut sind Schritt 1, das Rollen
-(ZO4), Schritt 2, der Zeit-Zoom, und Schritt 3, der Höhen-Zoom; im Programm
-nicht gesehen):**
+(ZO4), Schritt 2, der Zeit-Zoom, Schritt 3, der Höhen-Zoom, und Schritt 4,
+Schwenken und Zurücksetzen; im Programm nicht gesehen):**
 
 - **Mausrad (ZO1: a):** Rad allein rollt senkrecht (wie bisher), Shift+Rad
   waagrecht. **Ctrl+Rad zoomt die Zeit, Alt+Rad die Zeilenhöhe, Ctrl+Alt+Rad
@@ -726,9 +726,22 @@ nicht gesehen):**
   Richtungen. Verworfen: linke Taste auf leerer Fläche (b), Alt + linke
   Taste (c), kein Schwenken (d); beide Tasten zusammen (Frage Patrik) —
   die zuerst gedrückte löst schon ihre eigene Wirkung aus.
+  **Gebaut S102 (Schritt 4):** der Inhalt folgt der Maus bis an die
+  Grenzen, der Zeiger zeigt die geschlossene Hand; mitten in einem Zug an
+  einem Clip, am Lineal oder an einem Kanalnamen schwenkt die mittlere
+  Taste nicht.
 - **Im Kopf (ZO8: a):** der Knopf **Fit** — setzt zurück wie Ctrl+0, sein
   Tooltip nennt die Gesten; dieselben Zeilen im Rechtsklick-Menü der
   Zeitachse unter *Zoom*. Verworfen: zwei Schieber (b), nichts im Kopf (c).
+  **Gebaut S102 (Schritt 4):** `Zeitachse::setzeZoomZurueck` (die ganze
+  Länge, Normalhöhe); der Knopf **Fit** sitzt im Kopf hinter *Mute*, sein
+  Tooltip trägt die sechs Zeilen aus `Zeitachse::zoomGesten`. **Ctrl+0**
+  führt das Panel als `QShortcut` für sich und seine Kinder — es gilt,
+  solange der Fokus irgendwo im Panel sitzt, und ist kein Kürzel des
+  Hauptfensters (keine Naht). Das Rechtsklick-Menü der Zeitachse hat das
+  Untermenü *Zoom* (*Fit* mit dem Kürzel, grau, wenn nichts verstellt
+  ist; darunter die Gesten zum Nachlesen, grau). **Von mir gesetzt:** das
+  Menü gibt es jetzt auch ohne *Edit* — dann nur mit *Zoom*.
 - **Was gemerkt wird (ZO9: a):** die Zeilenhöhe merkt die App (über den
   Neustart, für jede Komposition); der Zeit-Zoom nicht — nach dem Laden
   zeigt die Zeitachse die ganze Länge. In der `.lvcomp` steht nichts davon.
@@ -1492,6 +1505,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.65.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 4 — Schwenken und Zurücksetzen (Entscheide Patrik ZO7: a, ZO8: a; Vorgabe S100: Ctrl+0):** §7 — die mittlere Maustaste zieht den Ausschnitt in beide Richtungen; `setzeZoomZurueck`; der Knopf **Fit** im Kopf mit den Gesten im Tooltip; Ctrl+0 als Kürzel des Panels für sich und seine Kinder; im Rechtsklick-Menü der Zeitachse das Untermenü *Zoom*. Eigenes, keine Naht berührt. Von mir gesetzt: das Rechtsklick-Menü gibt es auch ohne *Edit*, dann nur mit *Zoom*; der Platz von *Fit* hinter *Mute*. Test: neuer Fall „S102 Zeitachse: Schwenken", Fit und das Kürzel im Panel-Fall. Nicht belegt: der Weg der Taste Ctrl+0 durch das Hauptfenster, das Menü selbst. Offen: Schritte 5 und 6 |
 | 0.64.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 3 — der Höhen-Zoom (Entscheide Patrik ZO1: a, ZO2: a, ZO3: a mit Zusatz, ZO5: a, ZO9: a):** §7 — Alt+Rad ändert die Zeilenhöhe um 10 % je Raste um den Mauszeiger, Ctrl+Alt+Rad Zeit und Höhe zusammen; 50 % bis 300 %, die Master-Zeilen immer 60 % eines Kanals; Namen, die nicht passen, bleiben weg und stehen im Tooltip; bei Kanälen unter 24 Pixeln (50 % und 60 %) keine Punkte der Kurve; die Höhe merkt das Panel (`composer/rowHeightPercent`). Eigenes, keine Naht berührt. Abweichung vom Wortlaut von ZO3, von mir gesetzt: die Schwelle gilt für die Kanalhöhe und dann für alle Zeilen — sonst wären die Griffe der Master-Zeilen (seit S100) schon in Normalhöhe weg. Nach Alt+Rad bleibt die Menüleiste in Ruhe (Test mit Gegenprobe). Test: drei neue Fälle (Höhen-Zoom, Menüleiste, Höhe über den Neustart), Bilder bei 50 % und 300 % angesehen. Offen: Schritte 4 bis 6 |
 | 0.63.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 2 — der Zeit-Zoom (Entscheide Patrik ZO1: a, ZO5: a, ZO9: a):** §7 — Ctrl+Rad zoomt die Zeit um den Mauszeiger (Faktor 1,25 je Raste, von der ganzen Länge bis 1 Millisekunde je Pixel), Shift+Rad rollt waagrecht, waagrechter Rollbalken im `ZeitachsenRahmen`, die Spalte der Kanalnamen bleibt stehen, das Lineal teilt sich bis auf Zehntelsekunden, gezeichnet wird nur das sichtbare Stück; eine geladene Komposition beginnt ganz. Eigenes, keine Naht berührt. Von mir gesetzt: der Name eines Clips bleibt am linken Rand stehen; über der Spalte der Kanalnamen gilt die erste sichtbare Stelle. Test: neuer Fall „S102 Zeitachse: Zeit-Zoom" (72 Prüfungen), ein Bild der gezoomten Achse angesehen (`LUMIVIZ_COMPOSER_ZOOM_BILD`). Offen: Schritte 3 bis 6 |
 | 0.62.0 | 2026-10-07 | Session 102 — **Zoom und Rollen der Zeitachse, neun Entscheide Patrik (ZO1 bis ZO9), gebaut ist Schritt 1:** §7 neuer Block (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe, Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis 300 %; das Lineal bleibt oben stehen, die Kanalnamen links, Rollbalken in beiden Richtungen; Festpunkt Mauszeiger; Schalter **Scroll with playhead**, die Art in Settings, Vorgabe stetig; Schwenken mit der mittleren Maustaste; Knopf **Fit**; die Höhe merkt die App, die Zeit beginnt ganz). §12.2 **Naht N9 wächst** (Auswahl Scroll with playhead in Settings), vor dem Bau eingetragen. **Gebaut: Schritt 1** — die Zeitachse rollt senkrecht selbst (`rollY`, `zeileBei`, Zeichnen in zwei Gängen, `ZeitachsenRahmen` mit dem Rollbalken statt der `QScrollArea`); eigener Code, keine Naht berührt; Test: neuer Fall „S102 Zeitachse: sie rollt selbst" (84 Prüfungen). Bauplan in sechs Schritten: (1) die Zeitachse führt ihr Rollen selbst, (2) Zeit-Zoom, (3) Höhen-Zoom, (4) Schwenken, Fit, Ctrl+0, (5) Mitlaufen mit der Naht, (6) Doku und Sichttest-Liste |

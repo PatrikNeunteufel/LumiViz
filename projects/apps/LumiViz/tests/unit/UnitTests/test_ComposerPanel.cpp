@@ -56,6 +56,7 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QSettings>
+#include <QShortcut>
 #include <QTemporaryDir>
 #include <QThread>
 
@@ -2506,6 +2507,122 @@ TEST_SUITE("ComposerPanel")
         {
             ComposerPanel panel(dienste);
             CHECK(panel.zeitachse()->zeilenProzent() == 150);
+
+            // S102, Entscheid Patrik ZO8: a — der Knopf Fit und Ctrl+0 setzen zurueck
+            auto* fit = panel.findChild<QPushButton*>(QStringLiteral("composerFit"));
+            REQUIRE(fit != nullptr);
+            CHECK(fit->toolTip().contains(QStringLiteral("Ctrl+0")));
+            for (const QString& geste : Zeitachse::zoomGesten()) CHECK(fit->toolTip().contains(geste));
+            fit->click();
+            CHECK(panel.zeitachse()->zeilenProzent() == 100);
+            CHECK(QSettings().value(QStringLiteral("composer/rowHeightPercent")).toInt() == 100);
+
+            // das Kuerzel: belegt ist die Verdrahtung, nicht der Weg der Taste durch das Fenster
+            auto* kuerzel = panel.findChild<QShortcut*>(QStringLiteral("composerFitShortcut"));
+            REQUIRE(kuerzel != nullptr);
+            CHECK(kuerzel->key() == QKeySequence(Qt::CTRL | Qt::Key_0));
+            CHECK(kuerzel->context() == Qt::WidgetWithChildrenShortcut);
+            panel.zeitachse()->setZeilenProzent(200);
+            Q_EMIT kuerzel->activated();
+            CHECK(panel.zeitachse()->zeilenProzent() == 100);
+        }
+    }
+
+    // S102, Entscheide Patrik ZO7: a (Schwenken mit der mittleren Maustaste)
+    // und ZO8: a (zuruecksetzen).
+    TEST_CASE("S102 Zeitachse: Schwenken mit der mittleren Maustaste, Zuruecksetzen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        for (int i = 0; i < 8; ++i)
+        {
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH%1").arg(i + 1);
+            kanal.clips.push_back(clip(QStringLiteral("x.lvfx"), 2000, 22000));
+            k.kanaele.push_back(kanal);
+        }
+        auto* achse = new Zeitachse;
+        ZeitachsenRahmen rahmen(achse);
+        achse->setKomposition(k, true);
+        rahmen.resize(700, 300);
+        testfenster::platziere(rahmen);
+        rahmen.show();
+        REQUIRE(warte([&] { return rahmen.isVisible() && achse->height() == 300 && achse->width() < 700; }));
+
+        const auto maus = [&](QEvent::Type art, QPoint ort, Qt::MouseButton taste, Qt::MouseButtons gedrueckt) {
+            QMouseEvent ereignis(art, QPointF(ort), QPointF(achse->mapToGlobal(ort)), taste, gedrueckt,
+                                 Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &ereignis);
+        };
+
+        SUBCASE("nichts verstellt: nichts zu schwenken, nichts zurueckzusetzen")
+        {
+            CHECK_FALSE(achse->zoomVerstellt());
+            const int yVorher = achse->rollY();
+            maus(QEvent::MouseButtonPress, QPoint(400, 150), Qt::MiddleButton, Qt::MiddleButton);
+            maus(QEvent::MouseMove, QPoint(300, 150), Qt::NoButton, Qt::MiddleButton);
+            maus(QEvent::MouseButtonRelease, QPoint(300, 150), Qt::MiddleButton, Qt::NoButton);
+            CHECK(achse->rollX() == 0);  // die ganze Laenge steht schon da
+            CHECK(achse->rollY() == yVorher);
+        }
+
+        SUBCASE("der Inhalt folgt der Maus, in beide Richtungen, bis an die Grenzen")
+        {
+            achse->zoomeZeit(4.0, achse->xVon(0));
+            REQUIRE(achse->rollXMax() > 200);
+            REQUIRE(achse->rollYMax() > 50);
+            CHECK(achse->zoomVerstellt());
+
+            maus(QEvent::MouseButtonPress, QPoint(400, 200), Qt::MiddleButton, Qt::MiddleButton);
+            maus(QEvent::MouseMove, QPoint(280, 160), Qt::NoButton, Qt::MiddleButton);
+            CHECK(achse->rollX() == 120);
+            CHECK(achse->rollY() == 40);
+            // zurueck ueber den Anfang hinaus: am Anfang ist Schluss
+            maus(QEvent::MouseMove, QPoint(600, 290), Qt::NoButton, Qt::MiddleButton);
+            CHECK(achse->rollX() == 0);
+            CHECK(achse->rollY() == 0);
+            maus(QEvent::MouseMove, QPoint(340, 180), Qt::NoButton, Qt::MiddleButton);
+            CHECK(achse->rollX() == 60);
+            CHECK(achse->rollY() == 20);
+            maus(QEvent::MouseButtonRelease, QPoint(340, 180), Qt::MiddleButton, Qt::NoButton);
+            // losgelassen: eine Bewegung ohne Taste schwenkt nicht mehr
+            maus(QEvent::MouseMove, QPoint(100, 100), Qt::NoButton, Qt::NoButton);
+            CHECK(achse->rollX() == 60);
+            CHECK(achse->rollY() == 20);
+            // und die mittlere Taste hat nichts angeklickt
+            CHECK(achse->gewaehlterKanal() == -1);
+
+            achse->setzeZoomZurueck();
+            CHECK_FALSE(achse->zoomVerstellt());
+            CHECK(achse->zeitGanz());
+            CHECK(achse->rollX() == 0);
+        }
+
+        SUBCASE("mitten in einem Zug am Clip schwenkt die mittlere Taste nicht")
+        {
+            achse->setBearbeiten(true);
+            achse->zoomeZeit(4.0, achse->xVon(0));
+            const QPoint imClip(achse->xVon(6000), achse->yVonZeile(0));
+            maus(QEvent::MouseButtonPress, imClip, Qt::LeftButton, Qt::LeftButton);
+            maus(QEvent::MouseButtonPress, imClip, Qt::MiddleButton, Qt::LeftButton | Qt::MiddleButton);
+            maus(QEvent::MouseMove, imClip + QPoint(-80, 0), Qt::NoButton, Qt::LeftButton | Qt::MiddleButton);
+            CHECK(achse->rollX() == 0);
+            maus(QEvent::MouseButtonRelease, imClip + QPoint(-80, 0), Qt::LeftButton, Qt::NoButton);
+        }
+
+        SUBCASE("zuruecksetzen: die ganze Laenge und die Normalhoehe")
+        {
+            achse->zoomeZeit(3.0, achse->xVon(8000));
+            achse->setZeilenProzent(220);
+            REQUIRE(achse->zoomVerstellt());
+            achse->setzeZoomZurueck();
+            CHECK(achse->zeitGanz());
+            CHECK(achse->zeilenProzent() == 100);
+            CHECK_FALSE(achse->zoomVerstellt());
         }
     }
 }

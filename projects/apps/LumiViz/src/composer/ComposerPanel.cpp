@@ -53,6 +53,7 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollBar>
+#include <QShortcut>
 #include <QSignalBlocker>
 #include <QStyle>
 #include <QToolTip>
@@ -335,6 +336,34 @@ void Zeitachse::zoomeZeit(double faktor, int xFest)
     }
     update();
     Q_EMIT rollenGeaendert();
+}
+
+void Zeitachse::setzeZoomZurueck()
+{
+    zeigeZeitGanz();
+    setZeilenProzent(100);
+}
+
+QStringList Zeitachse::zoomGesten()
+{
+    return {tr("Ctrl+Wheel — zoom the time"),
+            tr("Alt+Wheel — zoom the row height"),
+            tr("Ctrl+Alt+Wheel — zoom both"),
+            tr("Wheel — scroll up and down"),
+            tr("Shift+Wheel — scroll sideways"),
+            tr("Middle mouse button — drag the view")};
+}
+
+void Zeitachse::fuelleZoomMenue(QMenu& menu)
+{
+    QMenu* zoom = menu.addMenu(tr("Zoom"));
+    QAction* fit = zoom->addAction(tr("Fit"), this, [this] { setzeZoomZurueck(); });
+    fit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));  // nur als Anzeige — das Kuerzel fuehrt das Panel
+    fit->setShortcutVisibleInContextMenu(true);
+    fit->setEnabled(zoomVerstellt());
+    zoom->addSeparator();
+    // die Gesten zum Nachlesen (Entscheid Patrik ZO8: a) — grau, nichts zum Anklicken
+    for (const QString& geste : zoomGesten()) zoom->addAction(geste)->setEnabled(false);
 }
 
 void Zeitachse::zeigeZeitGanz()
@@ -1311,6 +1340,17 @@ void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
 
 void Zeitachse::mousePressEvent(QMouseEvent* event)
 {
+    // Schwenken (S102, Entscheid Patrik ZO7: a): die mittlere Maustaste zieht
+    // den Ausschnitt — nicht mitten in einem anderen Zug
+    if (m_geladen && event->button() == Qt::MiddleButton && m_griff == Griff::Keiner && !m_zieht &&
+        m_kanalZug < 0)
+    {
+        m_schwenkt = true;
+        m_schwenkStart = event->position().toPoint();
+        m_schwenkRoll = QPoint(m_rollX, m_rollY);
+        setCursor(Qt::ClosedHandCursor);
+        return;
+    }
     if (!m_geladen || event->button() != Qt::LeftButton) return;
     const QPoint ort = event->position().toPoint();
     if (ort.y() < kLinealHoehe)
@@ -1522,6 +1562,13 @@ void Zeitachse::brichZugAb()
 void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
+    if (m_schwenkt)
+    {
+        // der Inhalt folgt der Maus: nach rechts gezogen rollt er zurueck
+        setRollX(m_schwenkRoll.x() - (ort.x() - m_schwenkStart.x()));
+        setRollY(m_schwenkRoll.y() - (ort.y() - m_schwenkStart.y()));
+        return;
+    }
     // die Zeit unter dem Zeiger, solange er im Lineal steht (Wunsch Patrik S98)
     if (m_geladen && ort.y() < kLinealHoehe && ort.x() >= kKopfBreite)
         QToolTip::showText(event->globalPosition().toPoint(), ComposerPanel::zeitText(stelleVon(ort.x())), this,
@@ -1565,8 +1612,15 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
     }
 }
 
-void Zeitachse::mouseReleaseEvent(QMouseEvent*)
+void Zeitachse::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (m_schwenkt)
+    {
+        if (event->button() != Qt::MiddleButton) return;  // eine andere Taste: das Schwenken laeuft weiter
+        m_schwenkt = false;
+        unsetCursor();
+        return;
+    }
     m_zieht = false;
     if (m_kanalZug >= 0)
     {
@@ -1989,7 +2043,15 @@ void Zeitachse::dropEvent(QDropEvent* event)
 
 void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
 {
-    if (!m_bearbeiten || !m_geladen) return;
+    if (!m_geladen) return;
+    if (!m_bearbeiten)
+    {
+        // ohne Edit gibt es nichts zu aendern — der Zoom gehoert nicht dazu (S102)
+        QMenu nurZoom(this);
+        fuelleZoomMenue(nurZoom);
+        nurZoom.exec(event->globalPos());
+        return;
+    }
     const QPoint ort = event->pos();
     int kanal = -1;
     int clip = -1;
@@ -2148,6 +2210,8 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         ->setEnabled(!nachArtSortiert(m_komposition, true));
     sortieren->addAction(tr("Audio first"), this, [this] { kanaeleSortieren(false); })
         ->setEnabled(!nachArtSortiert(m_komposition, false));
+    menu.addSeparator();
+    fuelleZoomMenue(menu);
     menu.exec(event->globalPos());
 }
 
@@ -2361,6 +2425,13 @@ void ComposerPanel::setupUI()
     // Mute fuer Durchsagen (S101, Entscheid Patrik AM2: c): derselbe Knopf wie
     // im Panel Player — beide zeigen denselben Zustand
     kopf->addWidget(new MuteKnopf(services(), this));
+    // Fit (S102, Entscheid Patrik ZO8: a): setzt den Zoom zurueck, sein Tooltip nennt die Gesten
+    auto* fit = new QPushButton(tr("Fit"), this);
+    fit->setObjectName(QStringLiteral("composerFit"));
+    fit->setToolTip(tr("Shows the whole composition again: its full length on the width, the rows at "
+                       "normal height (Ctrl+0).\n\nIn the timeline:\n%1")
+                        .arg(Zeitachse::zoomGesten().join(QLatin1Char('\n'))));
+    kopf->addWidget(fit);
     kopf->addStretch(1);
     root->addLayout(kopf);
 
@@ -2407,6 +2478,13 @@ void ComposerPanel::setupUI()
     m_zeitachse->setZeilenProzent(QSettings().value(kZeilenProzent, 100).toInt());
     connect(m_zeitachse, &Zeitachse::zeilenProzentGeaendert, this,
             [](int prozent) { QSettings().setValue(kZeilenProzent, prozent); });
+    // Fit und Ctrl+0 (Vorgabe Patrik S100): das Kuerzel gilt, solange der
+    // Fokus irgendwo im Panel sitzt
+    connect(fit, &QPushButton::clicked, m_zeitachse, &Zeitachse::setzeZoomZurueck);
+    auto* fitKuerzel = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_0), this);
+    fitKuerzel->setObjectName(QStringLiteral("composerFitShortcut"));
+    fitKuerzel->setContext(Qt::WidgetWithChildrenShortcut);
+    connect(fitKuerzel, &QShortcut::activated, m_zeitachse, &Zeitachse::setzeZoomZurueck);
 
     // --- der angeklickte Clip
     m_clipZeile = new QLabel(this);

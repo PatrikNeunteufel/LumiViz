@@ -33,6 +33,7 @@
 #include <vector>
 
 class QCheckBox;
+class QMenu;
 class QMimeData;
 class QComboBox;
 class QDoubleSpinBox;
@@ -270,6 +271,19 @@ public:
     [[nodiscard]] int masterHoch() const { return kanalHoch() * 60 / 100; }
     /// Lassen sich die Punkte der Pegelkurve (Blenden, Anfasser, Stuecke) ziehen?
     [[nodiscard]] bool kurvenpunkteZiehbar() const { return kanalHoch() >= 24; }
+
+    // --- Zuruecksetzen und Schwenken (S102, Entscheide Patrik ZO7: a, ZO8: a) --
+    //
+    // Mit gedrueckter mittlerer Maustaste laesst sich der Ausschnitt in beide
+    // Richtungen verschieben. „Fit" im Kopf des Panels, Ctrl+0 und der Eintrag
+    // im Rechtsklick-Menue setzen den Zoom zurueck.
+
+    /// Die ganze Laenge auf der Breite, die Zeilen in Normalhoehe (Vorgabe Patrik S100).
+    void setzeZoomZurueck();
+    /// Ist der Zoom irgendwo verstellt?
+    [[nodiscard]] bool zoomVerstellt() const { return !zeitGanz() || m_zeilenProzent != 100; }
+    /// Die Gesten der Zeitachse, eine je Zeile — fuer den Tooltip von „Fit".
+    [[nodiscard]] static QStringList zoomGesten();
     /// Die Zeile unter `y`: negativ = eine Master-Zeile, ab 0 ein Kanal — auch
     /// eine Zahl hinter dem letzten Kanal (die freie Flaeche darunter).
     /// `kKeineZeile` = das Lineal; es bleibt beim Rollen stehen und deckt die
@@ -420,6 +434,11 @@ private:
     /// Der Name, der an `ort` stuende, aber nicht gezeichnet ist (fuer den Tooltip); leer = keiner.
     [[nodiscard]] QString versteckterName(QPoint ort) const;
     int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
+    bool m_schwenkt = false;  ///< die mittlere Maustaste ist gedrueckt
+    QPoint m_schwenkStart;    ///< die Maus beim Druck
+    QPoint m_schwenkRoll;     ///< `rollX` / `rollY` beim Druck
+    /// Das Untermenue „Zoom" an `menu` haengen.
+    void fuelleZoomMenue(QMenu& menu);
     double m_msJePixel = 0.0;  ///< der feste Massstab; 0 = die ganze Laenge auf der Breite
     /// Der Massstab, bei dem die ganze Laenge auf die Breite passt.
     [[nodiscard]] double msJePixelGanz() const;
