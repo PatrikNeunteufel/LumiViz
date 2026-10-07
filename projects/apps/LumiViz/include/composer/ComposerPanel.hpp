@@ -438,6 +438,7 @@ private:
     QPushButton* m_schleife = nullptr;
     QPushButton* m_resume = nullptr;
     QLabel* m_zeit = nullptr;
+    QLabel* m_dateiIcon = nullptr;  ///< das Datei-Icon der Komposition vor dem Namen (S100)
     QLabel* m_datei = nullptr;
     Zeitachse* m_zeitachse = nullptr;
     QLabel* m_clipZeile = nullptr;

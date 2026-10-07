@@ -12,6 +12,11 @@ set(_local_sources
     # (sources - *.c; *.cpp)
     "${CMAKE_CURRENT_LIST_DIR}/main.cpp"
 )
+# Icon-Ressource der Exe (S100) — nur unter Windows; CMake uebersetzt `.rc`
+# mit dem Ressourcen-Compiler des Toolsets (rc bzw. llvm-rc).
+if(WIN32)
+    list(APPEND _local_sources "${CMAKE_CURRENT_LIST_DIR}/LumiViz.rc")
+endif()
 set(_local_headers
     # (headers - *.h; *.hpp)
 )

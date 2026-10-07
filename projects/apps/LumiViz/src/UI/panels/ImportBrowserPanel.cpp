@@ -10,6 +10,7 @@
  */
 
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "composer/AppAnbindung.hpp"  // Composer-Naht N8: OpenCompositionEvent (Doppelklick auf .lvcomp)
 #include "UI/PresetListen.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"  // karaokeAblage (S92)
 #include "UI/widgets/DateiListe.hpp"
@@ -269,12 +270,15 @@ QStringList ImportBrowserPanel::currentNameFilters() const
         case Filter::Avs:  return {QStringLiteral("*.avs")};
         case Filter::Milk: return {QStringLiteral("*.milk")};
         case Filter::Lvfx:
-            return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
+            // `*.lvcomp`: Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S100)
+            return {QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar"),
+                    QStringLiteral("*.lvcomp")};
         case Filter::All:  break;
         case Filter::Favoriten: break;  // keine Ordneransicht — refreshFavoriten()
     }
     return {QStringLiteral("*.avs"), QStringLiteral("*.milk"),
-            QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar")};
+            QStringLiteral("*.lvfx"), QStringLiteral("*.lvfx2"), QStringLiteral("*.lvkar"),
+            QStringLiteral("*.lvcomp")};
 }
 
 int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
@@ -283,6 +287,7 @@ int ImportBrowserPanel::entryTypeForSuffix(const QString& suffix)
     if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
     if (suffix.compare(QStringLiteral("lvfx2"), Qt::CaseInsensitive) == 0) return Type_Lvfx;
     if (suffix.compare(QStringLiteral("lvkar"), Qt::CaseInsensitive) == 0) return Type_Karaoke;
+    if (suffix.compare(QStringLiteral("lvcomp"), Qt::CaseInsensitive) == 0) return Type_Komposition;
     return Type_Avs;
 }
 
@@ -357,14 +362,18 @@ void ImportBrowserPanel::refresh()
                                 : fileIcon;
         // S91: Favoriten tragen einen Stern vor dem Namen
         const int type = entryTypeForSuffix(fi.suffix());
-        const bool favorit = lumi::ui::PresetListen::istFavorit(
-            type == Type_Karaoke ? lumi::ui::PresetArt::Karaoke : lumi::ui::PresetArt::Kette,
-            fi.absoluteFilePath());
+        // eine Komposition (Composer-Naht N8) ist kein Preset: kein Favorit
+        const bool favorit = type != Type_Komposition &&
+                             lumi::ui::PresetListen::istFavorit(
+                                 type == Type_Karaoke ? lumi::ui::PresetArt::Karaoke : lumi::ui::PresetArt::Kette,
+                                 fi.absoluteFilePath());
         auto* item = new QListWidgetItem(
             icon, favorit ? QString::fromUtf8("★ ") + fi.fileName() : fi.fileName(), m_pListWidget);
         item->setData(Qt::UserRole, fi.absoluteFilePath());
         item->setData(Qt::UserRole + 1, type);
         item->setToolTip(fi.absoluteFilePath());
+        // eine Komposition laesst sich nicht in die Kette ziehen (Composer-Naht N8)
+        if (type == Type_Komposition) nichtZiehbar(item);
         ++presetCount;
     }
 
@@ -552,6 +561,18 @@ void ImportBrowserPanel::openEntry(int type, const QString& path)
             {
                 bus->publish(LoadKaraokePresetEvent{path.toStdString()});
                 setStatus(tr("↺ loading karaoke preset %1").arg(QFileInfo(path).fileName()));
+            }
+            return;
+
+        case Type_Komposition:
+            // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S100): derselbe
+            // Weg wie File → Open Composition — mit der Rueckfrage bei Ungespeichertem
+            if (auto* bus = eventBus())
+            {
+                lumi::composer::OpenCompositionEvent oeffnen;
+                oeffnen.path = path.toStdString();
+                bus->publish(oeffnen);
+                setStatus(tr("↺ opening composition %1").arg(QFileInfo(path).fileName()));
             }
             return;
 

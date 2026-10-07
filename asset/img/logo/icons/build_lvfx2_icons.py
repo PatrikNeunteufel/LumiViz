@@ -21,6 +21,12 @@ Erzeugt fuenf .ico (16–256 px) neben diesem Skript:
                         einen Lyrics Trail enthaelt.
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
+- `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
+                        Datei-Icon fuer Kompositionen des Composers `.lvcomp`
+                        (Session 100).
+- `lumiviz_app.ico`     das Icon der App: `lumiviz.ico` auf ein Quadrat gesetzt,
+                        in den ueblichen Stufen — fuer die Icon-Ressource der
+                        Exe (Session 100).
 
 Die Reserve-Icons sind noch ohne Verwendung (Ideen in `README.md`).
 `lumiviz.ico` selbst ist Handarbeit und wird nur gelesen.
@@ -146,6 +152,36 @@ def faecher(icon: Image.Image) -> Image.Image:
     return out
 
 
+def komposition(icon: Image.Image) -> Image.Image:
+    """Der Faecher, darueber ein Zeitstrahl mit Abspielmarke — das Datei-Icon
+    fuer Kompositionen des Composers `.lvcomp` (Session 100, Entscheide Patrik:
+    der Faecher, mit Zeitstrahl und Marke — die rote Marke bleibt auch klein
+    als eigener Farbpunkt stehen und trennt das Icon vom Stapel)."""
+    out = Image.new("RGBA", (K, K), (0, 0, 0, 0))
+    band = int(K * 0.20)  # oben frei fuer den Zeitstrahl
+    hoehe = K - band
+    teil = quadrat(icon, int(hoehe * 0.62))
+    sx = (K - teil.width) // 2
+    sy = (hoehe - teil.height) // 2
+    for i in range(3):  # links oben -> rechts unten, alle voll farbig
+        mit_schatten(out, teil, i * sx, band + i * sy, 16, 0.6)
+    d = ImageDraw.Draw(out)
+    hell, rot = (235, 235, 235, 255), (255, 90, 70, 255)
+    x0, x1, y = int(K * 0.04), int(K * 0.96), int(K * 0.10)
+    d.line([(x0, y), (x1, y)], fill=hell, width=26)
+    striche = 8
+    for i in range(striche + 1):
+        x = x0 + (x1 - x0) * i // striche
+        lang = int(K * 0.075) if i % 2 == 0 else int(K * 0.045)
+        d.line([(x, y), (x, y + lang)], fill=hell, width=26)
+    # die Abspielmarke: ein Dreieck ueber dem Strahl, ein Strich hindurch
+    mx = x0 + (x1 - x0) * 3 // striche
+    r = int(K * 0.05)
+    d.polygon([(mx - r, y - int(r * 1.9)), (mx + r, y - int(r * 1.9)), (mx, y - 6)], fill=rot)
+    d.line([(mx, y), (mx, y + int(K * 0.10))], fill=rot, width=22)
+    return out
+
+
 def als_ico(bild: Image.Image, name: str) -> None:
     stufen = [bild.resize((k, k), Image.LANCZOS) for k in GROESSEN]
     stufen[-1].save(ORDNER / name, format="ICO", sizes=[(k, k) for k in GROESSEN],
@@ -160,6 +196,11 @@ def main() -> int:
     als_ico(marke(icon, zeichen_mikrofon), "lumiviz_karaoke.ico")
     als_ico(marke(icon, zeichen_schweif), "lumiviz_trail.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
+    als_ico(komposition(icon), "lumiviz_lvcomp.ico")
+    # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein
+    # Quadrat gesetzt und in den sieben ueblichen Stufen — so nimmt es der
+    # Ressourcen-Compiler fuer die Exe (`projects/apps/LumiViz/main/LumiViz.rc`).
+    als_ico(quadrat(icon, K), "lumiviz_app.ico")
     return 0
 
 

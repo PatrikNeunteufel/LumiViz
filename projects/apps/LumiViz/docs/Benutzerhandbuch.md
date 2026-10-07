@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.105.0
+> **Version:** 1.106.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1698,6 +1698,11 @@ Pegelkurve für das Ein- und Ausblenden. Zusammen ergibt das eine
   ein und spielt sie sofort ab. Fehlt eine der Preset-Dateien oder musste
   etwas gerichtet werden (etwa zwei Clips, die sich im selben Kanal
   überlappen), nennt ein Hinweisfenster die Stellen; der Rest läuft.
+- Der **Effect Browser** zeigt `.lvcomp`-Dateien mit ihrem eigenen Icon (ein
+  Fächer mit Zeitstrahl), unter den Filtern *All* und *LumiViz*. Ein
+  **Doppelklick** öffnet die Komposition genauso wie *Open Composition...*.
+  Eine Komposition ist kein Preset: sie lässt sich nicht in die Effektkette
+  ziehen, nicht als Favorit merken und wird beim Blättern übersprungen.
 - ***File → Close Composition*** nimmt die Komposition weg — das Bild kommt
   wieder von der Effektkette.
 
@@ -2221,7 +2226,8 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvfx2](bilder/handbuch/icons/lumiviz_lvfx2.png) | `.lvfx2` | Preset-Stapel: eine Kette mit Host-Gruppe | Effect Browser |
 | ![lvkar](bilder/handbuch/icons/lumiviz_karaoke.png) | `.lvkar` | Karaoke-Preset: der Stand der Karaoke-Ebene | Effect Browser |
 | ![lvtrail](bilder/handbuch/icons/lumiviz_trail.png) | `.lvtrail` | Trail-Preset der Karaoke-Ebene | Effect Chain, an jeder Effect List mit einem Lyrics Trail |
-| — | `.lvcomp` | Komposition des Composers (§15) | Icon noch nicht vergeben |
+| ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
+| ![app](bilder/handbuch/icons/lumiviz_app.png) | `LumiViz.exe` | die App selbst | Explorer, Taskleiste, Fenster |
 | ![avs](bilder/handbuch/icons/avs.png) | `.avs` | AVS-Preset (Winamp) | Effect Browser |
 | ![milk](bilder/handbuch/icons/milkdrop.png) | `.milk`, `.milk2` | MilkDrop-Preset | Effect Browser |
 | ![mp3](bilder/handbuch/icons/audio_mp3.png) | `.mp3` | Musik | Audio Browser |
@@ -2251,6 +2257,7 @@ lässt es in Ruhe. Es trägt nur das **Icon** ein: ein Doppelklick im Explorer
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.106.0 | 2026-10-07 | Session 100. §16 NEU das Icon für Kompositionen `.lvcomp` (der Fächer mit Zeitstrahl) und das Icon der App; §15 Composer, Öffnen: der **Effect Browser** zeigt `.lvcomp`-Dateien, ein Doppelklick öffnet sie |
 | 1.105.0 | 2026-10-07 | Session 100. NEU **§16 Dateitypen und ihre Icons**: Tabelle aller Dateitypen mit ihrem Icon als Bild, wo sie in LumiViz erscheinen, und das Skript zum Eintragen der Icons im Windows-Explorer |
 | 1.104.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle nach Art ordnen**: Rechtsklick → *Sort channels* → *Visuals first* / *Audio first*; innerhalb der Art bleibt die Reihenfolge, das Bild ändert sich nicht |
 | 1.103.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle verschieben**: am Kanalnamen ziehen oder Rechtsklick → *Move channel up* / *Move channel down*; die Reihenfolge der Bild-Kanäle ist die Mischreihenfolge (der oberste liegt im Bild zuunterst) |

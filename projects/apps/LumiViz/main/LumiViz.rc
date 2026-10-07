@@ -1,0 +1,5 @@
+// Icon-Ressource der Exe (Session 100, Wunsch Patrik): das Icon, das Explorer,
+// Verknuepfungen und die Taskleiste fuer LumiViz.exe zeigen. Qt nimmt unter
+// Windows die Ressource IDI_ICON1 auch als Fenster-Icon.
+// Die Datei entsteht mit asset/img/logo/icons/build_lvfx2_icons.py.
+IDI_ICON1 ICON "../../../../asset/img/logo/icons/lumiviz_app.ico"

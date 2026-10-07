@@ -7,6 +7,7 @@
 
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"  // das Datei-Icon der Komposition (S100)
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "composer/AppAnbindung.hpp"
@@ -1963,6 +1964,14 @@ void ComposerPanel::setupUI()
     m_speichernUnter->setObjectName(QStringLiteral("composerSaveAs"));
     kopf->addWidget(m_speichernUnter);
     kopf->addSpacing(8);
+    // das Datei-Icon der Komposition vor dem Namen (S100, Entscheid Patrik I1 a)
+    m_dateiIcon = new QLabel(this);
+    m_dateiIcon->setObjectName(QStringLiteral("composerDateiIcon"));
+    if (!lumi::ui::presetIconDir().isEmpty())
+        m_dateiIcon->setPixmap(
+            lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Komposition).pixmap(18, 18));
+    m_dateiIcon->setVisible(false);
+    kopf->addWidget(m_dateiIcon);
     m_datei = new QLabel(this);
     m_datei->setObjectName(QStringLiteral("composerDatei"));
     kopf->addWidget(m_datei);
@@ -2385,6 +2394,7 @@ void ComposerPanel::zeigeDatei()
                                    (offen ? QStringLiteral(" *") : QString())
                              : QString());
     m_datei->setToolTip(geladen && !ohneDatei ? QDir::toNativeSeparators(m_sitzung->datei()) : QString());
+    m_dateiIcon->setVisible(geladen && !m_dateiIcon->pixmap().isNull());
     m_speichern->setEnabled(offen || ohneDatei);
     m_speichernUnter->setEnabled(geladen);
     m_edit->setEnabled(geladen);

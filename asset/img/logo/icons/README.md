@@ -21,8 +21,8 @@ Windows).
 | `.m4a`, `.aac` | `audio_m4a.svg` / `.ico` | erzeugt | Audio Browser |
 | übrige Audioformate | `audio.svg` / `.ico` | erzeugt | Audio Browser |
 | `.lrc` (Songtext) | `lyrics_lrc.svg` / `.ico` | erzeugt | noch nicht |
-| `.lvcomp` (Komposition des Composers, S100) | **noch keins** — vorgesehen `lumiviz_lvcomp.ico`; das Aussehen ist nicht entschieden (vier Entwürfe, darunter der Fächer) | — | noch nicht; entschieden (Patrik S100): Effect Browser und Panel Composer |
-| **die App selbst** (`LumiViz.exe`) | `lumiviz.ico` — **noch nicht eingebaut** (s. u. „Das Icon der App") | Handarbeit | Fenster und Taskleiste zeigen das Standard-Icon |
+| `.lvcomp` (Komposition des Composers, S100) | `lumiviz_lvcomp.ico` — der Fächer mit Zeitstrahl und Abspielmarke (Entscheide Patrik S100) | erzeugt aus `lumiviz.ico` | Effect Browser (Doppelklick öffnet die Komposition), Panel Composer vor dem Dateinamen |
+| **die App selbst** (`LumiViz.exe`, S100) | `lumiviz_app.ico` — `lumiviz.ico` auf ein Quadrat gesetzt, in den üblichen Stufen | erzeugt aus `lumiviz.ico` | Icon-Ressource der Exe (`projects/apps/LumiViz/main/LumiViz.rc`): Explorer, Verknüpfungen, Taskleiste, Fenster |
 
 ### Die Icons im Bild
 
@@ -37,7 +37,9 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 | ![lumiviz_lvfx2](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvfx2.png) | `lumiviz_lvfx2.ico` „Stapel" | `.lvfx2` |
 | ![lumiviz_karaoke](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_karaoke.png) | `lumiviz_karaoke.ico` | `.lvkar` |
 | ![lumiviz_trail](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_trail.png) | `lumiviz_trail.ico` | `.lvtrail` |
-| ![lumiviz_faecher](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_faecher.png) | `lumiviz_faecher.ico` „Fächer" | Reserve — Grundlage für `.lvcomp` (Entscheid Patrik S100: der Fächer; ob mit Zeitstrahl, ist offen) |
+| ![lumiviz_lvcomp](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvcomp.png) | `lumiviz_lvcomp.ico` — Fächer mit Zeitstrahl | `.lvcomp` |
+| ![lumiviz_app](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_app.png) | `lumiviz_app.ico` | die App (`LumiViz.exe`) |
+| ![lumiviz_faecher](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_faecher.png) | `lumiviz_faecher.ico` „Fächer" | Reserve — die Grundlage von `lumiviz_lvcomp.ico` |
 | ![lumiviz_marke](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_marke.png) | `lumiviz_marke.ico` „Marke" | Reserve |
 | ![avs](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/avs.png) | `avs.ico` | `.avs` |
 | ![milkdrop](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/milkdrop.png) | `milkdrop.ico` | `.milk`, `.milk2` |
@@ -63,7 +65,7 @@ eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
 | `.lvfx2` | `LumiViz.PresetStack` | `lumiviz_lvfx2.ico` | `-Apply` |
 | `.lvkar` | `LumiViz.Karaoke` | `lumiviz_karaoke.ico` | `-Apply` |
 | `.lvtrail` | `LumiViz.Trail` | `lumiviz_trail.ico` | `-Apply` |
-| `.lvcomp` | `LumiViz.Composition` | `lumiviz_lvcomp.ico` | `-Apply`, sobald die Datei da ist |
+| `.lvcomp` | `LumiViz.Composition` | `lumiviz_lvcomp.ico` | `-Apply` |
 | `.avs` | `LumiViz.Avs` | `avs.ico` | `-Apply -Foreign` (fremde Endung) |
 | `.milk`, `.milk2` | `LumiViz.MilkDrop` | `milkdrop.ico` | `-Apply -Foreign` |
 | `.lrc` | `LumiViz.Lyrics` | `lyrics_lrc.ico` | `-Apply -Foreign` |
@@ -145,20 +147,24 @@ powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icon
 **Stand S100:** nur der Anzeige-Modus ist gelaufen; `-Apply` und `-Remove`
 sind **nicht ausgeführt** worden.
 
-## Das Icon der App (offen, Wunsch Patrik S100)
+## Das Icon der App (S100, Wunsch Patrik)
 
-`LumiViz.exe` zeigt im Explorer und in der Taskleiste heute das Standard-Icon:
-die Exe trägt keine Icon-Ressource, und das Fenster setzt kein Icon. Nötig sind
-zwei Dinge:
+`LumiViz.exe` trägt seit S100 eine Icon-Ressource:
+`projects/apps/LumiViz/main/LumiViz.rc` mit der Zeile
+`IDI_ICON1 ICON "…/lumiviz_app.ico"`, eingetragen in `main/Source.cmake` (nur
+unter Windows). CMake übersetzt sie mit dem Ressourcen-Compiler des Toolsets;
+am Build-System war nichts zu ändern. Geprüft: beide Bauarten (MSVC, clang)
+bauen, und das aus der Exe gelesene Icon ist das LumiViz-Icon.
 
-1. **Icon-Ressource in der Exe** — eine `.rc`-Datei mit einer Zeile
-   (`IDI_ICON1 ICON "lumiviz.ico"`), die zu den Quellen der App gehört. Das
-   Icon der Exe im Explorer, in Verknüpfungen und in der Taskleiste kommt von
-   dort. Zu klären: ob CMakeCraft `.rc`-Dateien für Apps mitbaut (MSVC und
-   clang) — eine Lücke dort gehört nach CMakeCraft.
-2. **Fenster-Icon** — `QApplication::setWindowIcon` beim Start, damit auch
-   Titelleiste und Alt+Tab es zeigen (mit der Ressource aus 1 nimmt Qt es
-   unter Windows meist von selbst).
+`lumiviz_app.ico` entsteht aus `lumiviz.ico` (`build_lvfx2_icons.py`): auf ein
+Quadrat gesetzt, in den sieben üblichen Stufen. `lumiviz.ico` selbst ist nicht
+quadratisch und trägt nur eine sehr große Stufe.
+
+**Nicht geprüft:** Taskleiste, Titelleiste und Alt+Tab im laufenden Programm.
+Qt nimmt unter Windows `IDI_ICON1` auch als Fenster-Icon; zeigt das Fenster es
+nicht, fehlt ein `QApplication::setWindowIcon` beim Start. Der Explorer merkt
+sich Icons — nach einem Neubau zeigt er das neue unter Umständen erst nach
+einem Ab- und Anmelden.
 
 ## Notiz für einen späteren Installer
 

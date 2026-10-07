@@ -90,7 +90,12 @@ public:
         /// S89: Karaoke-Preset (.lvkar) — laedt in die Karaoke-Ebene, nicht in
         /// die Kette. Kein „Preset" im Sinn von nextPresetRow()/Zuletzt-geladen
         /// und nicht in die Kette ziehbar.
-        Type_Karaoke = 5
+        Type_Karaoke = 5,
+        /// Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S100): eine
+        /// Komposition (.lvcomp) — ein Doppelklick oeffnet sie im Composer.
+        /// Kein Preset: nicht im Blaettern, nicht bei den Favoriten, nicht in
+        /// die Kette ziehbar.
+        Type_Komposition = 6
     };
 
     /**

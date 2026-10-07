@@ -29,6 +29,7 @@
 #include "UI/panels/EffectPalette.hpp"
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
+#include "composer/AppAnbindung.hpp"  // OpenCompositionEvent (.lvcomp im Effect Browser, S100)
 #include "UI/PresetListen.hpp"
 #include "UI/StartPreset.hpp"
 #include "UI/panels/KaraokePanel.hpp"
@@ -2863,6 +2864,69 @@ TEST_CASE("Karaoke S89: .lvkar im Effect Browser — Doppelklick laedt in die Eb
     yShift = editor->findChild<QSpinBox*>(QStringLiteral("yShift"));
     REQUIRE(yShift != nullptr);
     CHECK(yShift->value() == -33);
+}
+
+// S100, Composer-Naht N8 (Entscheide Patrik I1 a, I2, I2b a): Kompositionen
+// (.lvcomp) im Effect Browser — eigene Art mit eigenem Icon (der Faecher mit
+// Zeitstrahl); ein Doppelklick meldet „Komposition oeffnen" mit dem Pfad. Eine
+// Komposition ist kein Preset: nicht im Blaettern, kein Favorit, nicht ziehbar.
+TEST_CASE("Composer S100: .lvcomp im Effect Browser — eigenes Icon, Doppelklick oeffnet, kein Preset")
+{
+    UiUmgebung env;
+    QTemporaryDir dir;
+    const QString lvfx = schreibeLvfx(dir, QStringLiteral("Intro.lvfx"));
+    const QString lvcomp = dir.filePath(QStringLiteral("Abend.lvcomp"));
+    {
+        QFile datei(lvcomp);
+        REQUIRE(datei.open(QIODevice::WriteOnly));
+        datei.write("{}");  // der Browser liest die Datei nicht, er listet sie nur
+    }
+
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    std::vector<std::string> geoeffnet;
+    int ketten = 0;
+    const auto abo1 = bus->subscribeScoped<lumi::composer::OpenCompositionEvent>(
+        [&](const lumi::composer::OpenCompositionEvent& e) { geoeffnet.push_back(e.path); });
+    const auto abo2 =
+        bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent&) { ++ketten; });
+
+    // --- Zuordnung: Icon-Datei, Endung, Blaettern
+    CHECK(QFileInfo::exists(lumi::ui::presetIconDir() + QStringLiteral("/lumiviz_lvcomp.ico")));
+    CHECK(&lumi::ui::presetTypeIconForSuffix(QStringLiteral("lvcomp")) ==
+          &lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Komposition));
+    CHECK(&lumi::ui::presetTypeIconForSuffix(QStringLiteral("LVCOMP")) !=
+          &lumi::ui::presetTypeIcon(lumi::ui::PresetIconKind::Native));
+    CHECK(ImportBrowserPanel::nextPresetRow(
+              {ImportBrowserPanel::Type_Komposition, ImportBrowserPanel::Type_Lvfx}, -1, 1) == 1);
+
+    ImportBrowserPanel browser(services);
+    zeigen(browser);
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("effectBrowserListe"));
+    REQUIRE(liste != nullptr);
+    QListWidgetItem* eintrag = nullptr;
+    for (int i = 0; i < liste->count(); ++i)
+        if (liste->item(i)->text() == QStringLiteral("Abend.lvcomp")) eintrag = liste->item(i);
+    REQUIRE(eintrag != nullptr);  // der Filter „All" zeigt die Datei
+    CHECK(eintrag->data(Qt::UserRole + 1).toInt() == ImportBrowserPanel::Type_Komposition);
+
+    // nicht in die Kette ziehbar, kein Favorit
+    std::unique_ptr<QMimeData> leer(liste->model()->mimeData({liste->indexFromItem(eintrag)}));
+    CHECK(leer == nullptr);
+    CHECK_FALSE(browser.schalteFavorit(liste->row(eintrag)));
+
+    // Doppelklick: „Komposition oeffnen" mit dem Pfad, KEIN Ketten-Laden
+    emit liste->itemDoubleClicked(eintrag);
+    REQUIRE(geoeffnet.size() == 1);
+    CHECK(QFileInfo(QString::fromStdString(geoeffnet[0])) == QFileInfo(lvcomp));
+    CHECK(ketten == 0);
 }
 
 // S92: die drei Entscheide zu den offenen Fragen aus S89 (1a, 2a, 4a).

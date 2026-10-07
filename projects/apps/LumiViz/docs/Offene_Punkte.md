@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.103.0
+> **Version:** 1.104.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2263,7 +2263,7 @@ Idee Preset-Warmup/Pre-Roll.
     bis G6), D1 bis D4 (Text-Vorlage, Wechsel am Kreuzungspunkt, Kopieren
     ohne Edit), C2, C3, B5, A8, E1.
   - **Sichttest S100 (Patrik), als Nächstes:**
-    `.claude/handover/Sichttests_S100.md` — 63 Punkte: A (Nachtest Panel
+    `.claude/handover/Sichttests_S100.md` — 70 Punkte (dazu Abschnitt I, Icons): A (Nachtest Panel
     Player, sichtbar und verdeckt), M (die Zeile MASTER, mit den Urteilen
     zu dem, was ich gesetzt habe), L (Preset Late fade in), K (Kanalfarben),
     V (Kanäle verschieben),
@@ -2371,10 +2371,13 @@ Idee Preset-Warmup/Pre-Roll.
     Dateityps) und wie es aussieht.
     **Stand S100 zu (5):** entschieden ist der Ort (Patrik, I1: a — Effect
     Browser zeigt `.lvcomp` mit Icon, Doppelklick öffnet die Komposition;
-    Icon vor dem Dateinamen im Panel Composer; die Naht N8 wächst). **Offen
-    der Entscheid zum Aussehen** (vier Entwürfe in
-    `.claude/handover/icon_entwuerfe_lvcomp.png`, darunter der vorhandene
-    Fächer); gebaut ist nichts.
+    Icon vor dem Dateinamen im Panel Composer; die Naht N8 wächst) und das
+    Aussehen (I2: der Fächer; I2b a: mit Zeitstrahl und Abspielmarke).
+    **(5) ist erledigt (S100, Konzept 0.52.0, Benutzerhandbuch 1.106.0):**
+    `lumiviz_lvcomp.ico`, im Effect Browser gelistet (Doppelklick öffnet),
+    Icon im Panel Composer; im Programm nicht gesehen, Sichttest S100
+    Abschnitt I. Von den Wünschen zur Zeitachse bleibt nur (4) Zoom und
+    Schwenken.
   - **Ziel Patrik S100: alle Datei-Icons im Explorer, vorerst Windows.**
     Die Liste der zugewiesenen Icons steht in
     `asset/img/logo/icons/README.md` (Tabelle oben, samt dem, was fehlt).
@@ -2386,12 +2389,13 @@ Idee Preset-Warmup/Pre-Roll.
     kein „Öffnen mit LumiViz": die App wertet ihre Argumente nicht aus —
     offen: `LumiViz.exe <datei>` öffnet die Datei (Preset, Komposition,
     Titel), danach `shell\open\command` ins Skript.
-  - **Das Icon der App (Wunsch Patrik S100, bei Gelegenheit):** `LumiViz.exe`
-    zeigt im Explorer und in der Taskleiste das Standard-Icon — die Exe trägt
-    keine Icon-Ressource, das Fenster setzt kein Icon. Nötig: eine `.rc` mit
-    `lumiviz.ico` in den Quellen der App und `setWindowIcon`. Vorher klären,
-    ob CMakeCraft `.rc`-Dateien für Apps mitbaut (MSVC und clang); eine Lücke
-    dort gehört nach CMakeCraft.
+  - **Das Icon der App (Wunsch Patrik S100) — gebaut:** `LumiViz.exe` trägt
+    eine Icon-Ressource (`projects/apps/LumiViz/main/LumiViz.rc` mit
+    `lumiviz_app.ico`, eingetragen in `main/Source.cmake`, nur Windows). Am
+    Build-System war nichts zu ändern; beide Bauarten bauen, das aus der Exe
+    gelesene Icon ist das LumiViz-Icon. **Nicht gesehen:** Taskleiste,
+    Titelleiste, Alt+Tab im laufenden Programm (Sichttest S100 I5) — zeigt
+    das Fenster das Icon nicht, fehlt `setWindowIcon` beim Start.
   - **Wunsch Patrik, optional (P7):** Next / Previous springt in die Mitte
     des Übergangs statt an den Song-Anfang.
   - **Nur im Programm prüfbar, noch nicht eigens gefragt:** die Zeile in
@@ -4310,6 +4314,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.104.0 | 2026-10-07 | Session 100 — **Icons:** Icon für `.lvcomp` gebaut (Fächer mit Zeitstrahl; Effect Browser mit Doppelklick, Panel Composer; Naht N8 wächst, Konzept 0.52.0), Icon der App als Ressource der Exe; Sichttest S100 mit Abschnitt I, 70 Punkte. Von den Wünschen zur Zeitachse offen: Zoom und Schwenken |
 | 1.103.0 | 2026-10-07 | Session 100 — **Icons:** Ziel Patrik: alle Datei-Icons im Explorer (vorerst Windows) — Liste der zugewiesenen Icons in `asset/img/logo/icons/README.md`, Skript `register_file_icons.ps1` (nur Anzeige-Modus gelaufen); offen: Icon der App (Exe-Ressource, Fenster-Icon), `LumiViz.exe <datei>`; zum Icon `.lvcomp` der Ort entschieden (I1: a), das Aussehen offen. Zoom der Zeitachse: Reset mit Ctrl+0 vorgemerkt |
 | 1.102.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Sortieren nach Typ erledigt (Entscheid Patrik S1: a — nur nach Art, das Bild ändert sich nicht; Konzept 0.51.0); Sichttest S100 mit V7 und V8, 63 Punkte. Offen von den Wünschen zur Zeitachse: Zoom und Schwenken, Icon für `.lvcomp` |
 | 1.101.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Kanäle verschieben erledigt (Entscheid Patrik V1: a — die Reihenfolge bleibt die Mischreihenfolge; Konzept 0.50.0), dazu das feste Ende an der Zeile MASTER ziehen (Konzept 0.49.0); Sichttest S100 mit Abschnitt V und M24, 61 Punkte |

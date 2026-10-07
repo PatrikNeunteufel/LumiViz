@@ -42,7 +42,11 @@ enum class PresetIconKind
     /// S92: `.lvtrail` = Trail-Preset der Karaoke-Ebene — die Marke mit
     /// Schweif im Kreis (`lumiviz_trail.ico`), sonst wie Native. Im Kettenbaum
     /// traegt es jede Effect List, die einen Lyrics Trail enthaelt.
-    Trail
+    Trail,
+    /// Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S100, Entscheide
+    /// Patrik): `.lvcomp` = Komposition des Composers — der Faecher mit
+    /// Zeitstrahl und Abspielmarke (`lumiviz_lvcomp.ico`), sonst wie Native.
+    Komposition
 };
 
 /// Icon-Verzeichnis (asset/img/logo/icons) — leer, wenn nicht gefunden.
@@ -82,8 +86,13 @@ inline const QIcon& presetTypeIcon(PresetIconKind kind)
         QFileInfo::exists(presetIconDir() + QStringLiteral("/lumiviz_trail.ico"))
             ? presetIconDir() + QStringLiteral("/lumiviz_trail.ico")
             : presetIconDir() + QStringLiteral("/lumiviz.ico"));
+    static const QIcon kKomposition(
+        QFileInfo::exists(presetIconDir() + QStringLiteral("/lumiviz_lvcomp.ico"))
+            ? presetIconDir() + QStringLiteral("/lumiviz_lvcomp.ico")
+            : presetIconDir() + QStringLiteral("/lumiviz.ico"));
     switch (kind)
     {
+        case PresetIconKind::Komposition: return kKomposition;
         case PresetIconKind::Karaoke: return kKaraoke;
         case PresetIconKind::Trail: return kTrail;
         case PresetIconKind::Avs: return kAvs;
@@ -105,6 +114,8 @@ inline const QIcon& presetTypeIconForSuffix(const QString& suffix)
         return presetTypeIcon(PresetIconKind::Karaoke);
     if (suffix.compare(QStringLiteral("lvtrail"), Qt::CaseInsensitive) == 0)
         return presetTypeIcon(PresetIconKind::Trail);
+    if (suffix.compare(QStringLiteral("lvcomp"), Qt::CaseInsensitive) == 0)  // Composer-Naht N8
+        return presetTypeIcon(PresetIconKind::Komposition);
     if (suffix.compare(QStringLiteral("lvfx"), Qt::CaseInsensitive) == 0)
         return presetTypeIcon(PresetIconKind::Native);
     return presetTypeIcon(PresetIconKind::Avs);
