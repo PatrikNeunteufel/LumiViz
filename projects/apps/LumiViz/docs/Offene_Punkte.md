@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.121.0
+> **Version:** 1.122.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,7 +2217,9 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
-- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.67.0 §7):**
+- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.68.0 §7;
+  alle sechs Schritte gebaut, im Programm nichts gesehen — Sichttest
+  `.claude/handover/Sichttests_S102.md`):**
   neun Entscheide Patrik, ZO1 bis ZO9 (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe,
   Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis
   300 %; das Lineal bleibt oben stehen; Festpunkt Mauszeiger; Schalter
@@ -2246,7 +2248,10 @@ Idee Preset-Warmup/Pre-Roll.
   Mitlaufen (die Achse zeichnet ohnehin je Takt), neben dem Renderer im
   Programm nicht gemessen · ✅ **Schritt 5, die Naht N9, gebaut:**
   Settings → Panels → *Scroll with playhead* (Smooth / By page) — **im
-  Programm nicht gesehen** · ⬜ Schritt 6 Handbuch §15 und `Sichttests_S102.md`.
+  Programm nicht gesehen** · ✅ **Schritt 6:** Benutzerhandbuch 1.111.0
+  (§15 Zoomen und Rollen), Rückbau-Liste im Konzept, `Sichttests_S102.md`.
+  **Nicht gebaut, als Grenze vermerkt:** beim Ziehen eines Clips an den
+  Rand rollt die Achse nicht von selbst mit; der Curve Editor zoomt nicht.
   🔧 Weiter nachzuholen: der Vergleichslauf am Renderer (siehe unten;
   Patrik S102: später, das Vorgehen wird als eigene Frage vorgelegt — er
   braucht einen Build vom Stand vor den Eingriffen an R2).
@@ -4547,6 +4552,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.122.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 6:** Benutzerhandbuch 1.111.0 (§15 Zoomen und Rollen), Rückbau-Liste im Konzept 0.68.0, Sichttest-Liste S102; das Vorhaben Zoom ist gebaut, im Programm nichts gesehen |
 | 1.121.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, die Naht N9 gebaut:** die Auswahl *Scroll with playhead* in Settings, Konzept 0.67.0; im Programm nicht gesehen |
 | 1.120.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, das Eigene gebaut:** Mitlaufen mit der Abspielmarke (Schalter *Scroll with playhead*, stetig oder seitenweise), Konzept 0.66.0; offen die Auswahl in Settings (Naht N9); im Programm nicht gesehen |
 | 1.119.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 4 gebaut:** Schwenken mit der mittleren Maustaste, der Knopf *Fit*, Ctrl+0 im Panel, *Zoom* im Rechtsklick-Menü, Konzept 0.65.0; im Programm nicht gesehen |

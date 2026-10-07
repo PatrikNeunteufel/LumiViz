@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.110.0
+> **Version:** 1.111.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1781,6 +1781,8 @@ Danach trägt die Komposition einen Stern: der neue Verweis steht erst in der
 | Zeilen | Die Kanäle in der Reihenfolge der Datei, **CH1 oben** — im Bild liegt der erste Kanal zuunterst, jeder weitere darüber. Ein ausgeschalteter Kanal trägt „(off)" |
 | Blöcke | Die Clips mit dem Namen ihres Presets; die helle Linie darin ist die Pegelkurve |
 | Zeile darunter | Der angeklickte Clip: Kanal · Datei · Start – Ende · Mischart |
+| **Scroll with playhead** | Hineingezoomt folgt der Ausschnitt der laufenden Abspielmarke — siehe *Zoomen und Rollen* |
+| **Fit** | Setzt den Zoom zurück (auch **Ctrl+0**) — siehe *Zoomen und Rollen* |
 
 **Geladen ist nicht an.** Nimmst du den Haken **Composer on** heraus, läuft
 wieder die Effektkette, die Komposition bleibt aber im Panel: die Clips
@@ -1790,6 +1792,71 @@ genau dort, angehalten.
 
 **Steht die Komposition, stehen ihre Clips** — bei Pause, in einer Lücke und
 am Ende. Die Karaoke-Ebene läuft dabei mit der Musik weiter.
+
+### Zoomen und Rollen
+
+Die Zeitachse zeigt zuerst die **ganze Länge** der Komposition auf ihrer
+Breite, die Zeilen in Normalhöhe. Beides lässt sich ändern — die Zeit und
+die Höhe der Zeilen, jede für sich oder beide zusammen.
+
+| Geste | Wirkung |
+|---|---|
+| **Ctrl + Mausrad** | Die **Zeit** zoomen. Die Stelle unter dem Mauszeiger bleibt stehen |
+| **Alt + Mausrad** | Die **Höhe der Zeilen** ändern, in Schritten von 10 %. Die Zeile unter dem Mauszeiger bleibt stehen |
+| **Ctrl + Alt + Mausrad** | Zeit und Höhe zusammen |
+| **Mausrad** | Nach oben und unten rollen |
+| **Shift + Mausrad** | Nach links und rechts rollen |
+| **Mittlere Maustaste** gedrückt ziehen | Den Ausschnitt in beide Richtungen verschieben |
+| **Fit** oder **Ctrl+0** | Zurück: die ganze Länge auf der Breite, die Zeilen in Normalhöhe |
+
+**Die Zeit:** Hinein geht es, bis ein Pixel eine Millisekunde ist; weiter
+heraus als die ganze Länge geht es nicht. Das Lineal teilt sich dabei immer
+feiner, zuletzt in Zehntelsekunden. Solange du hineingezoomt bist, bleibt
+der Maßstab, auch wenn die Komposition länger wird. Passt wieder alles ins
+Fenster — weil du herauszoomst oder das Panel breiter ziehst —, zeigt die
+Zeitachse von selbst wieder die ganze Länge. Eine frisch geladene
+Komposition beginnt immer mit der ganzen Länge.
+
+**Die Höhe:** von 50 % bis 300 %. Die Zeilen MASTER, VISUAL, AUDIO und
+KARAOKE sind immer 60 % so hoch wie ein Kanal. Kleine Zeilen zeigen mehr
+Kanäle auf einmal, hohe lassen die Pegelkurve feiner ziehen. Die gewählte
+Höhe bleibt über den Neustart und gilt für jede Komposition.
+
+- Passt ein Name nicht mehr in seine niedrige Zeile, wird er nicht
+  gezeichnet. Bleib mit der Maus darauf stehen — der Tooltip nennt ihn.
+- Bei **50 % und 60 %** lassen sich die Punkte der Pegelkurve (die Griffe
+  der Blenden und Stücke) nicht ziehen; sie sind dann auch nicht zu sehen.
+  Clips verschieben, an den Kanten ziehen und der Doppelklick in den Curve
+  Editor gehen in jeder Höhe.
+
+**Was stehen bleibt:** Beim Rollen nach unten bleibt das **Lineal** oben
+stehen, die Master-Zeilen rollen mit den Kanälen. Beim Rollen zur Seite
+bleibt die **Spalte der Kanalnamen** links stehen. Ist der Anfang eines
+Clips hinausgerollt, steht sein Name am linken Rand. Die Rollbalken
+erscheinen nur, wenn es etwas zu rollen gibt.
+
+**Fit** steht rechts in der Zeile mit *New*, *Load...* und *Save*; sein
+Tooltip zählt die Gesten auf. Dieselbe Liste steht im Rechtsklick-Menü der
+Zeitachse unter *Zoom* — das Menü öffnet sich dafür auch ohne **Edit**.
+**Ctrl+0** gilt, solange der Fokus im Panel Composer sitzt.
+
+**Scroll with playhead** (daneben, Standard: an): Hineingezoomt zeigt die
+Zeitachse nur einen Ausschnitt, und die Abspielmarke liefe hinaus. Mit dem
+Schalter folgt der Ausschnitt ihr, **solange die Komposition spielt** —
+ein Sprung im Stand lässt ihn, wo er ist.
+
+| Art (*Settings → Panels → Scroll with playhead*) | Verhalten |
+|---|---|
+| *Smooth* (Standard) | Die Abspielmarke bleibt in der Mitte, die Clips ziehen unter ihr durch. Am Anfang und am Ende der Komposition läuft die Marke selbst |
+| *By page* | Der Ausschnitt steht, bis die Marke ihn verlässt; dann blättert er weiter, und die Marke steht an seinem linken Rand |
+
+Solange du eine Maustaste in der Zeitachse gedrückt hältst oder an einem
+Rollbalken ziehst, bewegt sich der Ausschnitt nicht von selbst. Willst du
+bei laufender Komposition länger an einer anderen Stelle arbeiten, nimm den
+Haken heraus. Der Schalter bleibt über den Neustart.
+
+> **Grenze:** Ziehst du einen Clip an den Rand des Ausschnitts, rollt die
+> Zeitachse nicht von selbst mit. Das Mausrad rollt auch während des Ziehens.
 
 ### Bearbeiten
 
@@ -2206,8 +2273,11 @@ sofort; die Presets der Clips laufen dabei weiter.
 | **Composer off** | *Player resumes when the Composer hands the audio back* (Standard: an) | Spielte der Player, als eine Komposition mit Audio-Kanal übernahm, spielt er von selbst weiter, sobald der Composer den Ton wieder abgibt. Aus: er bleibt angehalten |
 | **Composer on** | *Composition continues when the Composer is switched on again* (Standard: an) | Lief die Komposition, als der Composer ausgeschaltet wurde, läuft sie beim Einschalten weiter. Aus: sie wartet an der gemerkten Stelle auf Play. Eine neu geladene Komposition folgt *Open Composition* |
 | **New clip length** | 1 bis 600 s (Standard: 20 s) | So lang wird ein Preset, das du in eine Komposition ziehst. In einer Lücke reicht es weiter höchstens bis zum nächsten Clip; Songs behalten ihre eigene Länge |
+| **Scroll with playhead** | *Smooth* (Standard) | Hineingezoomt bleibt die Abspielmarke in der Mitte der Zeitachse, die Clips ziehen unter ihr durch |
+| | *By page* | Der Ausschnitt steht, bis die Abspielmarke ihn verlässt, und blättert dann weiter |
 
-*End of a Composition* gilt nur, wenn **Loop** aus ist.
+*End of a Composition* gilt nur, wenn **Loop** aus ist. *Scroll with
+playhead* gilt nur, wenn der gleichnamige Schalter im Panel Composer an ist.
 
 ### Über den Neustart
 
@@ -2375,6 +2445,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.111.0 | 2026-10-07 | Session 102. §15 Composer NEU **Zoomen und Rollen**: Ctrl+Mausrad zoomt die Zeit, Alt+Mausrad die Höhe der Zeilen (50 % bis 300 %, über den Neustart gemerkt), Ctrl+Alt+Mausrad beides, Shift+Mausrad rollt zur Seite, die mittlere Maustaste verschiebt den Ausschnitt, **Fit** und Ctrl+0 setzen zurück; das Lineal und die Spalte der Kanalnamen bleiben stehen; der Schalter **Scroll with playhead** (Smooth oder By page). Tabelle *Das Panel Composer* um die zwei Elemente ergänzt, *Einstellungen* um *Scroll with playhead* |
 | 1.110.0 | 2026-10-07 | Session 101. §2 Player NEU **Mute für Durchsagen**: der Knopf *Mute* im Panel Player und im Panel Composer, Mute-Profile (Zielpegel, Kurve des Aus- und des Einblendens, *Visuals follow*), Rechtsklick wählt das Profil, Dialog *Mute Profiles* |
 | 1.109.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeile KARAOKE** (Pegelkurve der Karaoke-Ebene: wie stark der Songtext aufliegt) und der Haken **Karaoke** im Panel Composer, gekoppelt mit *Karaoke on* |
 | 1.108.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeilen VISUAL und AUDIO**: je eine Pegelkurve nur für das Bild und nur für den Ton unter der Zeile MASTER, bedienbar wie sie; die Kurven werden malgenommen. GEÄNDERT: die Master-Zeilen sind niedriger als ein Kanal (60 %) |
