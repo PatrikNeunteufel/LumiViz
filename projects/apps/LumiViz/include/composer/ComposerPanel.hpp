@@ -38,6 +38,7 @@ class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
 class QPushButton;
+class QScrollBar;
 class VisualizerWidget;
 
 namespace lumi::composer
@@ -46,7 +47,8 @@ namespace lumi::composer
 class Sitzung;
 
 /// Die Zeitachse: Lineal, Abspielmarke, Kanaele und Clips. Zeigt die ganze
-/// Laenge der Komposition auf ihrer Breite (ein Zoom kommt mit C3).
+/// Laenge der Komposition auf ihrer Breite (der Zoom kommt in S102, Konzept
+/// §7); senkrecht rollt sie selbst, das Lineal bleibt stehen.
 class Zeitachse : public QWidget
 {
     Q_OBJECT
@@ -234,15 +236,41 @@ public:
     static constexpr int kKanaeleOben = kLinealHoehe + kMasterZeilen * kMasterHoehe;
     /// Oberkante und Hoehe einer Zeile; negativ = eine Master-Zeile unter dem
     /// Lineal (-4 MASTER, -3 VISUAL, -2 AUDIO, -1 KARAOKE) — siehe `zeileVon`.
-    [[nodiscard]] static constexpr int zeileOben(int zeile)
+    /// Im Fenster, also um `rollY` nach oben versetzt: eine Zeile kann unter
+    /// dem Lineal oder unter dem Rand liegen. Die Konstanten oben gelten fuer
+    /// die nicht gerollte Achse.
+    [[nodiscard]] int zeileOben(int zeile) const
     {
-        return zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * kMasterHoehe
-                         : kKanaeleOben + zeile * kZeilenHoehe;
+        return (zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * kMasterHoehe
+                          : kKanaeleOben + zeile * kZeilenHoehe) -
+               m_rollY;
     }
-    [[nodiscard]] static constexpr int zeileHoch(int zeile)
+    [[nodiscard]] int zeileHoch(int zeile) const
     {
         return zeile < 0 ? kMasterHoehe : kZeilenHoehe;
     }
+    /// Die Zeile unter `y`: negativ = eine Master-Zeile, ab 0 ein Kanal — auch
+    /// eine Zahl hinter dem letzten Kanal (die freie Flaeche darunter).
+    /// `kKeineZeile` = das Lineal; es bleibt beim Rollen stehen und deckt die
+    /// Zeilen, die darunter geraten.
+    static constexpr int kKeineZeile = -1000;
+    [[nodiscard]] int zeileBei(int y) const;
+
+    // --- Rollen (S102, Entscheid Patrik ZO4: a) ------------------------------
+    //
+    // Die Achse fuehrt ihr Rollen selbst: das Lineal bleibt oben stehen, die
+    // Master-Zeilen und die Kanaele rollen darunter. Den Rollbalken stellt der
+    // `ZeitachsenRahmen`; ohne ihn rollt das Mausrad trotzdem.
+
+    /// So viele Pixel ist der Inhalt nach oben gerollt (0 = ganz oben).
+    [[nodiscard]] int rollY() const { return m_rollY; }
+    /// Der groesste Wert fuer `rollY`: so viel Inhalt passt nicht ins Fenster.
+    [[nodiscard]] int rollYMax() const;
+    /// Rollen; der Wert wird auf 0…`rollYMax` begrenzt.
+    void setRollY(int y);
+    /// Lineal, Master-Zeilen und alle Kanaele, nicht gerollt — im Bearbeiten
+    /// eine Zeile mehr (die Flaeche, auf der ein neuer Kanal entsteht).
+    [[nodiscard]] int inhaltHoehe() const;
 
     // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c) --
     //
@@ -301,8 +329,12 @@ Q_SIGNALS:
     void hineingezogen(const QStringList& dateien);
     /// Die Kurve dieses Teils des angeklickten Clips soll in den Curve Editor.
     void kurveOeffnen(lumi::composer::Teil teil);
+    /// `rollY` oder `rollYMax` haben sich geaendert (fuer den Rollbalken).
+    void rollenGeaendert();
 
 protected:
+    void wheelEvent(QWheelEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
     void dragLeaveEvent(QDragLeaveEvent* event) override;
@@ -327,6 +359,10 @@ private:
     void loescheAuswahl();
     /// Eine selbst erzeugte Fassung zeigen und die Auswahl setzen.
     void uebernimm(const Komposition& neu, int kanal, int clip);
+    /// Nach einer Aenderung von Inhalt oder Groesse: `rollY` in seine Grenzen
+    /// holen und `rollenGeaendert` melden.
+    void passeRollenAn();
+    int m_rollY = 0;
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
     /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
@@ -409,6 +445,24 @@ private:
     QStringList m_audioEndungen;
     SongLaenge m_songLaenge;
     QHash<QString, Huelle> m_huellen;
+};
+
+/// Die Zeitachse mit ihrem Rollbalken (S102, Entscheid Patrik ZO4: a): der
+/// Balken steht rechts neben der Achse und erscheint nur, wenn nicht alle
+/// Zeilen ins Fenster passen. Er und die Achse halten einander im Gleichstand.
+class ZeitachsenRahmen : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit ZeitachsenRahmen(Zeitachse* achse, QWidget* parent = nullptr);
+    [[nodiscard]] QScrollBar* balkenSenkrecht() const { return m_senkrecht; }
+
+private:
+    void gleicheAb();
+
+    Zeitachse* m_achse = nullptr;
+    QScrollBar* m_senkrecht = nullptr;
 };
 
 class KurvenFenster;

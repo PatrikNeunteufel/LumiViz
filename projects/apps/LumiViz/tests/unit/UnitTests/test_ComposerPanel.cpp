@@ -45,10 +45,12 @@
 #include <QKeyEvent>
 #include <QMimeData>
 #include <QUrl>
+#include <QWheelEvent>
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QSettings>
 #include <QTemporaryDir>
 #include <QThread>
@@ -1908,5 +1910,145 @@ TEST_SUITE("ComposerPanel")
         CHECK_FALSE(achse->fuegeEin());
         CHECK(kanaele()[1].clips.size() == 2);
         Zeitachse::leereAblage();
+    }
+
+    // S102, Entscheid Patrik ZO4: a — die Zeitachse fuehrt ihr Rollen selbst.
+    // Ohne Fassade: die Achse in ihrem Rahmen, acht Kanaele in einem Fenster,
+    // in das sie nicht passen.
+    TEST_CASE("S102 Zeitachse: sie rollt selbst — das Lineal bleibt stehen, die Zeilen rollen darunter")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        for (int i = 0; i < 8; ++i)
+        {
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH%1").arg(i + 1);
+            kanal.clips.push_back(clip(QStringLiteral("x.lvfx"), 2000, 12000));
+            k.kanaele.push_back(kanal);
+        }
+
+        auto* achse = new Zeitachse;
+        ZeitachsenRahmen rahmen(achse);
+        QScrollBar* balken = rahmen.balkenSenkrecht();
+        REQUIRE(balken != nullptr);
+        achse->setKomposition(k, true);
+        rahmen.resize(700, 200);
+        testfenster::platziere(rahmen);
+        rahmen.show();
+        REQUIRE(warte([&] { return rahmen.isVisible() && achse->height() == 200; }));
+
+        // Lineal, vier Master-Zeilen, acht Kanaele, vier Pixel Luft
+        const int inhalt = Zeitachse::kKanaeleOben + 8 * Zeitachse::kZeilenHoehe + 4;
+        CHECK(achse->inhaltHoehe() == inhalt);
+        CHECK(achse->rollYMax() == inhalt - 200);
+        CHECK(achse->rollY() == 0);
+        REQUIRE(warte([&] { return balken->isVisible(); }));
+        CHECK(balken->maximum() == achse->rollYMax());
+
+        int spruenge = 0;
+        QObject::connect(achse, &Zeitachse::sprung, achse, [&spruenge](qint64) { ++spruenge; });
+        const int xMitte = achse->xVon(5000);
+
+        SUBCASE("nicht gerollt liegt alles, wo es bis S101 lag")
+        {
+            CHECK(achse->yVonZeile(0) == Zeitachse::kKanaeleOben + Zeitachse::kZeilenHoehe / 2);
+            CHECK(achse->kanalBei(achse->yVonZeile(0)) == 0);
+            CHECK(achse->kanalBei(Zeitachse::kLinealHoehe + 2) == -1);  // eine Master-Zeile
+            CHECK(achse->zeileBei(Zeitachse::kLinealHoehe + 2) == -Zeitachse::kMasterZeilen);
+            CHECK(achse->zeileBei(Zeitachse::kLinealHoehe - 1) == Zeitachse::kKeineZeile);
+        }
+
+        SUBCASE("gerollt wandern die Zeilen nach oben, das Lineal nicht")
+        {
+            const int yVorher = achse->yVonZeile(0);
+            achse->setRollY(100);
+            CHECK(achse->rollY() == 100);
+            CHECK(balken->value() == 100);
+            CHECK(achse->yVonZeile(0) == yVorher - 100);
+
+            // ein Klick ins Lineal springt weiter — auch wenn darunter Zeilen liegen
+            klick(*achse, QPoint(xMitte, 10));
+            CHECK(spruenge == 1);
+            CHECK(achse->gewaehlterKanal() == -1);
+            CHECK(achse->kanalBei(10) == -1);
+
+            // CH1 liegt jetzt ganz unter dem Lineal: gleich darunter ist CH3 zu sehen
+            achse->setRollY(150);
+            CHECK(achse->yVonZeile(0) < Zeitachse::kLinealHoehe);
+            CHECK(achse->kanalBei(Zeitachse::kLinealHoehe + 6) == 2);
+
+            // ein Klick auf den Clip einer gerollten Zeile trifft ihn
+            REQUIRE(achse->yVonZeile(5) < achse->height());
+            klick(*achse, QPoint(xMitte, achse->yVonZeile(5)));
+            CHECK(achse->gewaehlterKanal() == 5);
+            CHECK(achse->gewaehlterClip() == 0);
+            CHECK(spruenge == 1);
+        }
+
+        SUBCASE("auch die Master-Zeilen rollen mit")
+        {
+            achse->setRollY(30);
+            const int zeileTon = Zeitachse::zeileVon(Zeitachse::kMasterTon);
+            REQUIRE(achse->yVonZeile(zeileTon) > Zeitachse::kLinealHoehe);
+            klick(*achse, QPoint(xMitte, achse->yVonZeile(zeileTon)));
+            CHECK(achse->gewaehlterKanal() == Zeitachse::kMasterTon);
+            // MASTER selbst liegt unter dem Lineal und ist dort nicht zu treffen
+            const int zeileMaster = Zeitachse::zeileVon(Zeitachse::kMaster);
+            CHECK(achse->yVonZeile(zeileMaster) < Zeitachse::kLinealHoehe);
+        }
+
+        SUBCASE("die Grenzen: nicht ueber den Anfang, nicht ueber das Ende")
+        {
+            achse->setRollY(9999);
+            CHECK(achse->rollY() == achse->rollYMax());
+            achse->setRollY(-5);
+            CHECK(achse->rollY() == 0);
+        }
+
+        SUBCASE("das Mausrad ohne Taste rollt, der Balken und die Achse halten Gleichstand")
+        {
+            const auto rad = [&](int raster, Qt::KeyboardModifiers tasten) {
+                const QPointF ort(xMitte, 100);
+                QWheelEvent ereignis(ort, achse->mapToGlobal(ort), QPoint(), QPoint(0, raster), Qt::NoButton,
+                                     tasten, Qt::NoScrollPhase, false);
+                QCoreApplication::sendEvent(achse, &ereignis);
+            };
+            rad(-120, Qt::NoModifier);
+            CHECK(achse->rollY() == 60);
+            CHECK(balken->value() == 60);
+            rad(120, Qt::NoModifier);
+            CHECK(achse->rollY() == 0);
+            // mit Ctrl rollt es nicht (das wird der Zeit-Zoom)
+            rad(-120, Qt::ControlModifier);
+            CHECK(achse->rollY() == 0);
+
+            balken->setValue(120);
+            CHECK(achse->rollY() == 120);
+        }
+
+        SUBCASE("passt alles ins Fenster, gibt es nichts zu rollen und keinen Balken")
+        {
+            achse->setRollY(150);
+            rahmen.resize(700, inhalt + 60);
+            REQUIRE(warte([&] { return achse->height() == inhalt + 60; }));
+            CHECK(achse->rollYMax() == 0);
+            CHECK(achse->rollY() == 0);
+            CHECK(warte([&] { return !balken->isVisible(); }));
+        }
+
+        SUBCASE("im Bearbeiten eine Zeile mehr; eine andere Komposition beginnt oben")
+        {
+            achse->setBearbeiten(true);
+            CHECK(achse->inhaltHoehe() == inhalt + Zeitachse::kZeilenHoehe);
+            CHECK(balken->maximum() == achse->rollYMax());
+            achse->setRollY(80);
+            achse->setKomposition(k, true);
+            CHECK(achse->rollY() == 0);
+            CHECK(balken->value() == 0);
+        }
     }
 }

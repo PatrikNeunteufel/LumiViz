@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.61.1
-> **Datum:** 2026-10-07 (Session 101)
+> **Version:** 0.62.0
+> **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -627,9 +627,82 @@ Naht N9):**
   zusammengeschoben (Patrik S99 zu D5) — die Beobachtung aus dem Hörtest
   S98 ist damit erledigt.
 
+**Zoom und Rollen der Zeitachse (Vorgabe Patrik S101 / S102: „Zoom in x und
+y, wobei beide zusammen wie auch einzeln gezoomt werden können"; neun
+Entscheide Patrik S102, ZO1 bis ZO9 — gebaut ist Schritt 1, das Rollen
+(ZO4), noch ohne Zoom; im Programm nicht gesehen):**
+
+- **Mausrad (ZO1: a):** Rad allein rollt senkrecht (wie bisher), Shift+Rad
+  waagrecht. **Ctrl+Rad zoomt die Zeit, Alt+Rad die Zeilenhöhe, Ctrl+Alt+Rad
+  beides.** **Ctrl+0** setzt beides zurück (Vorgabe Patrik S100) — die ganze
+  Länge auf der Breite, die Zeilen in Normalhöhe; das Kürzel gilt, solange
+  das Panel den Fokus hat. Verworfen: Ctrl+Rad als Lupe für beides (b), Rad
+  ohne Taste als Zeit-Zoom (c).
+- **Master-Zeilen (ZO2: a):** sie wachsen und schrumpfen mit den Kanälen,
+  immer 60 % der Kanalhöhe (das Urteil M17 ist ein Verhältnis). Verworfen:
+  feste Höhe (b), eigener Zoom (c).
+- **Bereich der Höhe (ZO3: a; Zusatz Patrik: die Höhe muss auch schrumpfen
+  können, um mehr Kanäle zu sehen):** 50 % bis 300 % (Kanal 18 bis 108
+  Pixel, Master-Zeile 11 bis 65). Passt ein Name nicht mehr in seine Zeile,
+  wird er nicht gezeichnet, der Tooltip nennt ihn weiter. In Zeilen unter 24
+  Pixeln lassen sich die Punkte der Pegelkurve nicht ziehen; Clips
+  verschieben und an den Kanten ziehen geht weiter. Verworfen: 25 % (b),
+  67 % (c).
+- **Was beim Rollen stehen bleibt (ZO4: a):** das Zeitlineal bleibt oben
+  stehen, die Master-Zeilen rollen mit den Kanälen; die Spalte mit den
+  Kanalnamen bleibt links stehen (von mir gesetzt). Rollbalken in beiden
+  Richtungen (Wunsch Patrik S99, bestätigt S102). Die Zeitachse führt ihr
+  Rollen dafür selbst, statt in einer `QScrollArea` zu liegen — eigener
+  Code, keine Naht. **Gebaut S102 (Schritt 1), senkrecht:** `Zeitachse`
+  trägt `rollY` / `setRollY` / `rollYMax` / `inhaltHoehe` und meldet
+  `rollenGeaendert`; jede Stelle, die eine Zeile aus der Höhe rechnet, geht
+  über `zeileBei` und `zeileOben` (das Lineal liefert `kKeineZeile` und
+  deckt, was darunter rollt). Gezeichnet wird in zwei Gängen mit je einem
+  Ausschnitt — erst die Zeilen, dann das Lineal. Der Rollbalken sitzt im
+  neuen `ZeitachsenRahmen` und erscheint nur, wenn nicht alle Zeilen ins
+  Fenster passen; das Mausrad ohne Taste rollt 60 Pixel je Raste. Eine
+  andere Komposition beginnt oben. **Offen bis Schritt 2:** waagrecht
+  rollt noch nichts, die Spalte der Kanalnamen steht also ohnehin.
+  **Grenze, nicht gebaut:** wird ein Clip an den Rand gezogen, rollt die
+  Achse nicht von selbst mit (das Mausrad rollt auch im Zug). Verworfen: auch die Master-Zeilen fest (b — bei 300 %
+  nähmen sie mit dem Lineal 284 Pixel), alles rollt wie bisher (c).
+- **Festpunkt (ZO5: a):** gezoomt wird um den Mauszeiger — die Zeit unter
+  dem Zeiger bleibt beim Zeit-Zoom an ihrer Stelle, die Zeile unter dem
+  Zeiger beim Höhen-Zoom. Verworfen: die Abspielmarke (b), je nach Ort des
+  Zeigers (c).
+- **Mitlaufen (ZO6: Patrik — „a und c einstellbar in den Settings, c
+  default"):** der Schalter **Scroll with playhead** im Kopf, Vorgabe an.
+  Die Art steht in Settings: **stetig** (Vorgabe — die Abspielmarke bleibt
+  in der Mitte, die Clips ziehen unter ihr durch) oder **seitenweise**
+  (erreicht die Marke den rechten Rand, blättert der Ausschnitt eine Seite
+  weiter). Solange eine Maustaste in der Zeitachse gedrückt ist, steht der
+  Ausschnitt. Die Einstellung ist die **Naht N9, sie wächst** (§12.2).
+  Offen: was das stetige Mitlaufen neben dem Renderer kostet — wird nach dem
+  Bau gemessen. Verworfen: ohne Schalter (b), gar nicht mitlaufen (d).
+- **Schwenken (ZO7: a):** mit gedrückter mittlerer Maustaste in beide
+  Richtungen. Verworfen: linke Taste auf leerer Fläche (b), Alt + linke
+  Taste (c), kein Schwenken (d); beide Tasten zusammen (Frage Patrik) —
+  die zuerst gedrückte löst schon ihre eigene Wirkung aus.
+- **Im Kopf (ZO8: a):** der Knopf **Fit** — setzt zurück wie Ctrl+0, sein
+  Tooltip nennt die Gesten; dieselben Zeilen im Rechtsklick-Menü der
+  Zeitachse unter *Zoom*. Verworfen: zwei Schieber (b), nichts im Kopf (c).
+- **Was gemerkt wird (ZO9: a):** die Zeilenhöhe merkt die App (über den
+  Neustart, für jede Komposition); der Zeit-Zoom nicht — nach dem Laden
+  zeigt die Zeitachse die ganze Länge. In der `.lvcomp` steht nichts davon.
+  Verworfen: beides in der Komposition (b), nichts merken (c).
+- **Von mir gesetzt, nicht entschieden** (als Urteile in den Sichttest
+  S102): Zeit-Zoom von „ganze Länge auf der Breite" bis 1 Millisekunde je
+  Pixel, Faktor 1,25 je Raste; Höhe in Schritten von 10 % je Raste; die
+  Schwelle von 24 Pixeln; die Teilung des Lineals verfeinert sich bis auf
+  Zehntelsekunden; die Namen **Scroll with playhead** (nicht **Follow
+  player** — der koppelt Start und Stopp, §4) und **Fit**, ihr Platz im
+  Kopf.
+- **Nicht dabei:** der Curve Editor bleibt, wie er ist.
+
 - **Kopf:** Schalter **Composer on**, Schalter **Lock**, Transport (Start,
-  Stopp, an den Anfang), Schalter **Follow player**, Stelle als Zeit, Zoom,
-  Datei-Zeile (New, Load…, Save, Save As…).
+  Stopp, an den Anfang), Schalter **Follow player**, Stelle als Zeit, Zoom
+  (S102: der Schalter **Scroll with playhead** und der Knopf **Fit**, siehe
+  oben), Datei-Zeile (New, Load…, Save, Save As…).
 - **Zeitlineal** mit Abspielmarke; Klick springt.
 - **Kanäle** als Zeilen, links je Kanal Name und an/aus — in der Reihenfolge
   der Datei, **CH1 oben** (Entscheid Patrik S95, wie Spur 1 in FL Studio); im
@@ -1291,7 +1364,7 @@ Die Bildberechnung des Renderers wird **nicht** berührt.
 | N7b Zugang ✅ | `UI/widgets/VisualizerWidget.hpp` | **ein** Getter, `dienste()`: das Fenster gibt den Dienste-Behälter heraus, den es im Konstruktor bekommt (in der Basisklasse ist `services()` nur für abgeleitete Klassen sichtbar). Die Sitzung holt sich darüber Player und Engine — auch wenn das Composer-Panel nie offen war (Entscheid Patrik S96: a) | reiner Lesezugriff — am Verhalten des Fensters ändert sich nichts | C5 |
 | — Playlist ruht ✅ | **keine Naht** | der Composer ruft die vorhandene `IAudioPlayer::setPlaylist(nullptr)` und hängt die Playlist beim Ausschalten wieder ein. **Belegt am echten `AudioPlayer`** (`test_ComposerNahtTon.cpp`, mit einer Audio-Engine aus Pappe): mit Playlist spielt am Titelende der nächste Song, ohne hält der Player und lädt nichts; `next`, `previous` und `playIndex` liefern false; der Composer kann dabei selbst laden und spielen | — | C5 |
 | N8 Anmeldung | Panel-Registrierung, Menü, `Source.cmake`, Dateityp-Icon | Einträge. **C2a (Entscheid Patrik S94: a):** Menü File bekommt **Open composition…** und **Close composition** (`MenuAutoReg.cpp`: eine Gruppe, zwei Einträge); `MainWindow` meldet zwei Ereignisse an und reicht sie an `composer/AppAnbindung` weiter. Open lädt eine `.lvcomp`, setzt die Bildquelle und startet die Uhr sofort; Close nimmt sie weg. **C2b (S95):** `UI/panels/PanelAutoReg.cpp` bekommt einen Include und eine Anmeldung — Panel `composer`, Titel „Composer", View → Panels, anfangs nicht sichtbar; die Klasse selbst ist eigener Code (`composer/ComposerPanel`). **Wächst S100 um das Dateityp-Icon (Entscheide Patrik S100: I1 a — Effect Browser und Panel Composer; I2 — der Fächer; I2b a — mit Zeitstrahl und Abspielmarke; eingetragen vor dem Bau):** (1) `include/UI/widgets/PresetTypeIcons.hpp` — `PresetIconKind::Komposition`, Endung `lvcomp` → `lumiviz_lvcomp.ico` (fehlt die Datei, das Icon der Familie); (2) `UI/panels/ImportBrowserPanel.hpp` / `.cpp` — der Effect Browser listet `*.lvcomp` (Filter *LumiViz* und *All*) als eigene Art `Type_Komposition`; ein Doppelklick meldet `composer::OpenCompositionEvent` mit dem Pfad (derselbe Weg wie File → Open Composition, samt Rückfrage bei Ungespeichertem); eine Komposition ist kein Preset — nicht im Blättern, nicht bei den Favoriten, nicht in die Kette ziehbar. Die Icon-Datei selbst liegt unter `asset/img/logo/icons` (kein Code). **Wächst S101 um die Datei beim Start (Entscheid Patrik X1: a; eingetragen vor dem Bau):** `UI/MainWindow.cpp` — wird LumiViz mit einer `.lvcomp` als Argument gestartet (`LumiViz.exe <datei>`, etwa per Doppelklick im Explorer), meldet das Hauptfenster nach dem Wiederherstellen (N4) `composer::OpenCompositionEvent` mit dem Pfad: derselbe Weg wie File → Open Composition. Die Auswahl des Arguments und die Presets sind kein Composer-Teil (`UI/StartDatei.hpp`); dort steht von der Komposition nur die Endung. **Zweite Stelle (S101, Schritt 2, Entscheid X1b: a; eingetragen vor dem Bau):** `MainWindow::oeffneUebergebeneDatei` — gibt ein zweiter Start seine Datei an die laufende App ab (`core/EinzelInstanz`, kein Composer-Teil) und ist sie eine `.lvcomp`, meldet das Hauptfenster dasselbe Ereignis, hier mit der Rückfrage bei Ungespeichertem | — (reine Zusätze); ohne Klick auf die Einträge wie heute; das Panel ist ohne Klick nicht zu sehen | C2a, C2b |
-| N9 Einstellung ✅ — **wächst S98** um zwei Haken im selben Block (Wunsch Patrik nach dem Hörtest, P9 / P10): **Composer off: Player resumes when the Composer hands the audio back** (`composer/playerResumes`) und **Composer on: Composition continues when the Composer is switched on again** (`composer/resumesWhenSwitchedOn`), beide Vorgabe an (von mir gesetzt, weil Patrik das Weiterspielen wünschte). **Erst nach dem Bau hier eingetragen** — gegen die Regel unter der Tabelle. **Wächst S98 ein zweites Mal** (Wunsch Patrik, vor dem Bau eingetragen): ein Zahlenfeld **New clip length** im selben Block — die Länge eines hineingezogenen Bild-Clips in Sekunden (`composer/newClipSeconds`, Vorgabe 20 wie bisher). Davor galt | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
+| N9 Einstellung ✅ — **wächst S102 (Entscheid Patrik ZO6; eingetragen vor dem Bau, noch nicht gebaut):** eine Auswahl **Scroll with playhead** im selben Block — „Smooth“ (Vorgabe: die Abspielmarke bleibt in der Mitte) oder „By page“ (`composer/scrollWithPlayhead`); ohne den Schlüssel gilt die Vorgabe, bei Composer aus wirkt sie nicht. **Wächst S98** um zwei Haken im selben Block (Wunsch Patrik nach dem Hörtest, P9 / P10): **Composer off: Player resumes when the Composer hands the audio back** (`composer/playerResumes`) und **Composer on: Composition continues when the Composer is switched on again** (`composer/resumesWhenSwitchedOn`), beide Vorgabe an (von mir gesetzt, weil Patrik das Weiterspielen wünschte). **Erst nach dem Bau hier eingetragen** — gegen die Regel unter der Tabelle. **Wächst S98 ein zweites Mal** (Wunsch Patrik, vor dem Bau eingetragen): ein Zahlenfeld **New clip length** im selben Block — die Länge eines hineingezogenen Bild-Clips in Sekunden (`composer/newClipSeconds`, Vorgabe 20 wie bisher). Davor galt | `UI/panels/SettingsPanel.cpp` (ein Include, ein Block im Reiter Panels, nach Movement Table) | zwei Auswahlen. **Open Composition**: „Starts playing" (Vorgabe) oder „Holds at the start" (`composer/openHolds`). **At the end of a composition**: „Hold at the end" (Vorgabe), „Return to the start", „Switch the Composer off" (`composer/atEnd`). Gelesen und geschrieben über `composer/Sitzung` | Vorgaben = startet sofort und hält am Ende, wie seit C2a | C2b |
 | N10 Beenden mit Ungespeichertem ✅ | `UI/MainWindow.cpp` (`closeEvent`, nach der Rückfrage zur Kette) | **ein** Aufruf von `composer/AppAnbindung`: hat die geladene Komposition ungespeicherte Änderungen, fragt ein Dialog Save / Discard / Cancel (Regel S89); Cancel hält das Fenster offen | ohne geänderte Komposition liefert der Aufruf sofort „weiter" — das Beenden wie heute | C3a |
 | N11 Speichern einer Clip-Kette ✅ | `UI/MainWindow.cpp` (der Empfänger von `SaveEffectChainEvent`) | eine Abfrage und ein Aufruf von `composer/AppAnbindung`: hängt Effect Chain an einem Clip (Sync on Effect Chain), speichert der Composer dessen Kette — immer als Speichern unter, der Clip wechselt auf die neue Datei (Entscheid Patrik S95). Das gilt für jedes Speichern von Hand: File → Save Effect Chain / Save As..., Ctrl+S, die Preset-Zeile. **Nicht** in `speichereKette` selbst (so zuerst gebaut, dann verlegt): die ruft auch die Rückfrage zu ungespeicherten Änderungen an der Kette der App, und die soll bei der Kette der App bleiben | hängt Effect Chain nicht an einem Clip, geht das Ereignis wie heute an `speichereKette` | C3c |
 | N12 Mixer ✅ | `audio/IAudioEngine.hpp`, `audio/BassEngine.hpp` / `.cpp`; `Solution.json` (`BASS_MIX` an App-Kern, Runner und Test-Target — schon mit dem Wechsel auf CMakeCraft v0.9.2 committet) | die Engine hat sieben Mixer-Aufrufe, im Interface mit Vorgabe „kann es nicht" (wie `setTempo`): `createMixer` (Stereo, Abtastrate der Engine, Puffer 0, läuft ohne Quellen mit Stille weiter), `mixerAddSource` (eine Datei als Quelle, kommt **angehalten** hinein), `mixerRemoveSource`, `getSourcePositionMs` / `setSourcePositionMs`, `setSourcePaused`, `isSourcePlaying`. Der Pegel einer Quelle ist das vorhandene `setVolume` auf ihrem Handle. Der Mixer selbst ist ein `AudioStreamHandle` — `play`, `pause`, `setVolume`, `getFFTData`, `freeStream` gelten unverändert. `BassEngine::loadPlugins` übergeht `bassmix.dll` (kein Decoder-Plugin). **Belegt** in `test_ComposerNahtMixer.cpp` an der echten `BassEngine`, nur über die Schnittstelle: Quellen angehalten, eigene Stelle, halber Pegel halbiert die Linie im Spektrum des Mixers, eine gehaltene Quelle fällt aus der Summe und ihre Stelle steht, der Mixer läuft ohne Quellen weiter, eine Quelle am Ende schweigt, bleibt aber im Mixer und spielt zurückgesetzt von selbst wieder; eine Engine ohne Mixer (`PappEngine`) meldet „kein Mixer". **Von mir gesetzt:** der Mixer läuft mit der Abtastrate der Engine (44100), damit sein Spektrum für Songs dieser Rate dieselben Linien hat wie der Stream des Players. **Entschieden (Patrik S97: b):** `BassEngine` linkt BASSmix fest, BASSmix ist damit Pflichtpaket wie `bassflac` (`externals/bass/SETUP.md` nachziehen). Der App-Kern ist eine statische Bibliothek, also braucht auch jede Test-Exe die DLL — und CMakeCraft v0.9.0 / v0.9.1 reicht `external_options` eines App-Tests nicht durch (`AppCreate.cmake:767`). **Voraussetzung für N12 war deshalb CMakeCraft v0.9.2** mit diesem Fix — **erledigt S97:** Pin auf v0.9.2, `BASS_MIX` steht an Kern, Runner und Test-Target, `bassmix.dll` liegt neben der Test-Exe (928 Cases grün). Bis N12 gebaut ist, warnt `BassEngine::loadPlugins` im Log einmal je Start über `bassmix.dll` (kein Decoder-Plugin, BASS-Fehler 41). Verworfen: BASSmix zur Laufzeit laden; DLL von Hand zum Test kopieren | niemand ruft die neuen Aufrufe → die Engine wie heute; eine Engine ohne Mixer liefert „kein Mixer" | C5b |
@@ -1376,6 +1449,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.62.0 | 2026-10-07 | Session 102 — **Zoom und Rollen der Zeitachse, neun Entscheide Patrik (ZO1 bis ZO9), gebaut ist Schritt 1:** §7 neuer Block (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe, Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis 300 %; das Lineal bleibt oben stehen, die Kanalnamen links, Rollbalken in beiden Richtungen; Festpunkt Mauszeiger; Schalter **Scroll with playhead**, die Art in Settings, Vorgabe stetig; Schwenken mit der mittleren Maustaste; Knopf **Fit**; die Höhe merkt die App, die Zeit beginnt ganz). §12.2 **Naht N9 wächst** (Auswahl Scroll with playhead in Settings), vor dem Bau eingetragen. **Gebaut: Schritt 1** — die Zeitachse rollt senkrecht selbst (`rollY`, `zeileBei`, Zeichnen in zwei Gängen, `ZeitachsenRahmen` mit dem Rollbalken statt der `QScrollArea`); eigener Code, keine Naht berührt; Test: neuer Fall „S102 Zeitachse: sie rollt selbst" (84 Prüfungen). Bauplan in sechs Schritten: (1) die Zeitachse führt ihr Rollen selbst, (2) Zeit-Zoom, (3) Höhen-Zoom, (4) Schwenken, Fit, Ctrl+0, (5) Mitlaufen mit der Naht, (6) Doku und Sichttest-Liste |
 | 0.61.1 | 2026-10-07 | Session 101, Abschluss — §12.4 Rückbau-Liste: eine Zeile für Master-Zeilen, Karaoke im Composer und Mute mit den Kennungen (`49d3cf6`, `39f8443`, `219087b`, `e1e6664` mit R2, `725c5cc` mit N17 und N13, `735062b` mit N18) — sie ersetzt die Vermerke „Kennung folgt" der Zeilen 0.59.0 bis 0.61.0 unten. Als Nächstes (Patrik): Zoom — nicht nur in der Zeitachse, Umfang wird in der nächsten Sitzung geklärt |
 | 0.61.0 | 2026-10-07 | Session 101 — **Mute, Schritt 2c — der Knopf (Entscheid Patrik AM2: c):** §12.2 **Naht N18** (`UI/panels/PlayerPanel.cpp`: ein Aufruf `composer::erzeugeMuteKnopf`, das Panel legt den Knopf hinter den Lautstärke-Regler), vor dem Bau eingetragen. Eigenes: `composer/MuteKnopf.hpp` / `.cpp` — `MuteKnopf` (schaltet `MuteSchalter`, Rechtsklick wählt das Profil) und `MuteProfilDialog`; derselbe Knopf im Panel Composer. Der Lautsprecher-Knopf des Panels Player bleibt das harte Mute. §12.4 Rückbau: die zwei Dateien, die Naht-Stelle im Panel Player (trägt `Composer-Naht N18`); Kennung folgt — der Commit trägt Naht und Eigenes zusammen. Im Programm nicht gesehen, nicht gehört |
 | 0.60.0 | 2026-10-07 | Session 101 — **Mute, Schritt 2b (Entscheid Patrik AM3: c — „Visuals follow" im Profil, Vorgabe aus):** §12.2 **Naht N17** (Pegel am Player — die frühere N7a, wieder eingesetzt; `onAudioUpdate`: N13 wächst um den Faktor für die Visuals), vor dem Bau eingetragen. Eigenes: `MuteSchalter` (der eine Mute der App, setzt den Pegel des Players nach dem Profil), `MuteProfil::visualsFolgen`, `composer::muteFaktorFuerVisuals`, `Tonfuehrung::takt` nimmt Lautstärke mal Pegel für den Mixer. §12.4 Rückbau: die Naht-Stellen in `audio/IAudioPlayer.hpp`, `audio/AudioPlayer.hpp` / `.cpp` (wie N7a: Block „Pegel", `laut()` an drei Stellen) und zwei Stellen in `UI/MainWindow.cpp` (`onAudioUpdate`), alle tragen `Composer-Naht N17` bzw. `N13`; Kennung folgt — der Commit trägt Naht und Eigenes zusammen. Noch ohne Knopf: im Programm wirkt nichts |

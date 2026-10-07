@@ -49,11 +49,13 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPushButton>
-#include <QScrollArea>
+#include <QResizeEvent>
+#include <QScrollBar>
 #include <QSignalBlocker>
 #include <QStyle>
 #include <QToolTip>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <array>
@@ -151,7 +153,7 @@ private:
 Zeitachse::Zeitachse(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("composerZeitachse"));
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // sie rollt selbst (S102)
     setFocusPolicy(Qt::StrongFocus);  // Entf und Esc im Bearbeiten
     setAcceptDrops(true);             // Presets aus dem Effect Browser (C3b)
     setMouseTracking(true);           // die Zeit unter dem Zeiger im Lineal; im Bearbeiten der Zeiger an den Kanten
@@ -166,7 +168,9 @@ void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
     m_clip = -1;
     m_stelleMs = 0;
     m_markeKanal = -1;
+    m_rollY = 0;  // eine andere Komposition beginnt oben
     updateGeometry();
+    passeRollenAn();
     update();
     Q_EMIT auswahlGeaendert();
 }
@@ -280,15 +284,73 @@ QRect Zeitachse::clipRechteck(int zeile, const VisualClip& clip) const
 
 QSize Zeitachse::sizeHint() const
 {
-    return {640, minimumSizeHint().height()};
+    return {640, inhaltHoehe()};
 }
 
 QSize Zeitachse::minimumSizeHint() const
 {
+    // das Lineal und zwei Zeilen: was nicht hineinpasst, rollt (S102)
+    return {kKopfBreite + 160, kLinealHoehe + 2 * kZeilenHoehe};
+}
+
+int Zeitachse::inhaltHoehe() const
+{
     // im Bearbeiten eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht
     const int zeilen = std::max<int>(2, static_cast<int>(m_komposition.kanaele.size()) +
                                             (m_bearbeiten ? 1 : 0));
-    return {kKopfBreite + 160, kKanaeleOben + zeilen * kZeilenHoehe + 4};
+    return kKanaeleOben + zeilen * kZeilenHoehe + 4;
+}
+
+int Zeitachse::zeileBei(int y) const
+{
+    if (y < kLinealHoehe) return kKeineZeile;
+    const int imInhalt = y + m_rollY;
+    if (imInhalt < kKanaeleOben)
+        return std::clamp((imInhalt - kLinealHoehe) / kMasterHoehe, 0, kMasterZeilen - 1) - kMasterZeilen;
+    return (imInhalt - kKanaeleOben) / kZeilenHoehe;
+}
+
+int Zeitachse::rollYMax() const
+{
+    return std::max(0, inhaltHoehe() - height());
+}
+
+void Zeitachse::setRollY(int y)
+{
+    y = std::clamp(y, 0, rollYMax());
+    if (y == m_rollY) return;
+    m_rollY = y;
+    update();
+    Q_EMIT rollenGeaendert();
+}
+
+void Zeitachse::passeRollenAn()
+{
+    m_rollY = std::clamp(m_rollY, 0, rollYMax());
+    Q_EMIT rollenGeaendert();
+}
+
+void Zeitachse::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    passeRollenAn();
+}
+
+void Zeitachse::wheelEvent(QWheelEvent* event)
+{
+    // ohne Taste: senkrecht rollen, 60 Pixel je Raste — etwa so weit wie die
+    // rollende Flaeche, in der die Achse bis S101 lag
+    if (event->modifiers() != Qt::NoModifier || rollYMax() <= 0 || event->angleDelta().y() == 0)
+    {
+        event->ignore();
+        return;
+    }
+    const int vorher = m_rollY;
+    setRollY(m_rollY - event->angleDelta().y() * 60 / 120);
+    if (m_rollY == vorher)
+        event->ignore();
+    else
+        event->accept();
 }
 
 void Zeitachse::paintEvent(QPaintEvent*)
@@ -310,71 +372,116 @@ void Zeitachse::paintEvent(QPaintEvent*)
     QColor linie = text;
     linie.setAlpha(50);
     const int zeilen = static_cast<int>(m_komposition.kanaele.size());
-    const int unten = kKanaeleOben + zeilen * kZeilenHoehe;
+    // die Unterkante der letzten Zeile im Fenster (gerollt kann sie ueber dem Rand liegen)
+    const int unten = std::max(kLinealHoehe, zeileOben(zeilen));
 
-    // --- Lineal
-    p.fillRect(QRect(0, 0, width(), kLinealHoehe), pal.color(QPalette::AlternateBase));
+    // S102 (Entscheid Patrik ZO4: a): das Lineal bleibt beim Rollen stehen, die
+    // Zeilen rollen darunter. Gezeichnet wird deshalb in zwei Gaengen mit je
+    // einem Ausschnitt — erst die Zeilen, dann das Lineal. Was senkrecht durch
+    // beide laeuft (Striche, Ende, Toenung, Marken), steht in `unterlage` und
+    // `auflage` und wird in beiden Gaengen gezeichnet; der Ausschnitt laesst
+    // jeweils nur seinen Teil durch.
+    const QRect linealFlaeche(0, 0, width(), kLinealHoehe);
+    const QRect zeilenFlaeche(0, kLinealHoehe, width(), std::max(0, height() - kLinealHoehe));
+
     const int schritt = strichSekunden(m_laengeMs, zeitBreite());
     QFont klein = font();
     klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
-    p.setFont(klein);
-    for (std::int64_t ms = 0; ms <= m_laengeMs; ms += static_cast<std::int64_t>(schritt) * 1000)
-    {
-        const int x = xVon(ms);
-        p.setPen(linie);
-        p.drawLine(x, kLinealHoehe - 6, x, unten);
-        p.setPen(text);
-        const QString marke = ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
-        // am rechten Rand steht die Beschriftung links vom Strich, sonst waere sie abgeschnitten
-        if (x + 6 + p.fontMetrics().horizontalAdvance(marke) > width())
-            p.drawText(QRect(x - 83, 0, 80, kLinealHoehe - 4), Qt::AlignRight | Qt::AlignVCenter, marke);
-        else
-            p.drawText(QRect(x + 3, 0, 80, kLinealHoehe - 4), Qt::AlignLeft | Qt::AlignVCenter, marke);
-    }
-    // --- das Ende: folgt es dem letzten Clip, eine duenne Linie; ist es fest
-    //     gesetzt, eine eigene Marke — und die leere Strecke davor schraffiert
     const std::int64_t endeMs = m_komposition.laenge();
     const int xEnde = xVon(endeMs);
-    if (m_komposition.laengeMs > 0)
-    {
-        const QColor fest(240, 170, 60);
-        const int xClips = xVon(std::min(m_komposition.clipEnde(), endeMs));
-        if (xEnde > xClips)
-        {
-            QColor strich = fest;
-            strich.setAlpha(90);
-            p.fillRect(QRect(xClips, kLinealHoehe, xEnde - xClips, unten - kLinealHoehe),
-                       QBrush(strich, Qt::BDiagPattern));
-        }
-        p.setPen(QPen(fest, 2.0));
-        p.drawLine(xEnde, 0, xEnde, unten);
-        p.setBrush(fest);
-        p.drawPolygon(QPolygon({QPoint(xEnde - 6, 0), QPoint(xEnde + 6, 0), QPoint(xEnde, 9)}));
-        p.setBrush(Qt::NoBrush);
-    }
-    else
-    {
-        p.setPen(linie);
-        p.drawLine(xEnde, 0, xEnde, unten);
-    }
-
-    // (Die Blende der ganzen Komposition stand bis S99 als Keil im Lineal; seit
-    //  S100 zeigt die Zeile MASTER darunter die ganze Kurve.)
-
-    // --- die Fenster der Ueberlappung (S99, Entscheid Patrik): bei Loop sind
-    //     die ersten und die letzten Sekunden getoent — was im vorderen laeuft,
-    //     laeuft zugleich mit dem im hinteren. Ein Strich an jeder Grenze.
     const std::int64_t fensterMs = m_schleife ? m_komposition.ueberlappung() : 0;
-    if (fensterMs > 0)
-    {
-        QColor toenung(90, 200, 170);
-        toenung.setAlpha(34);
-        const int xVorn = xVon(fensterMs);
-        const int xHinten = xVon(m_komposition.umlaufMs());
-        const int xNull = xVon(0);
-        p.fillRect(QRect(xNull, 0, xVorn - xNull, unten), toenung);
-        p.fillRect(QRect(xHinten, 0, xEnde - xHinten, unten), toenung);
-    }
+
+    const auto unterlage = [&] {
+        // --- die Striche des Lineals, mit ihrer Beschriftung
+        p.setFont(klein);
+        for (std::int64_t ms = 0; ms <= m_laengeMs; ms += static_cast<std::int64_t>(schritt) * 1000)
+        {
+            const int x = xVon(ms);
+            p.setPen(linie);
+            p.drawLine(x, kLinealHoehe - 6, x, unten);
+            p.setPen(text);
+            const QString marke = ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
+            // am rechten Rand steht die Beschriftung links vom Strich, sonst waere sie abgeschnitten
+            if (x + 6 + p.fontMetrics().horizontalAdvance(marke) > width())
+                p.drawText(QRect(x - 83, 0, 80, kLinealHoehe - 4), Qt::AlignRight | Qt::AlignVCenter, marke);
+            else
+                p.drawText(QRect(x + 3, 0, 80, kLinealHoehe - 4), Qt::AlignLeft | Qt::AlignVCenter, marke);
+        }
+        p.setFont(font());
+        // --- das Ende: folgt es dem letzten Clip, eine duenne Linie; ist es fest
+        //     gesetzt, eine eigene Marke — und die leere Strecke davor schraffiert
+        if (m_komposition.laengeMs > 0)
+        {
+            const QColor fest(240, 170, 60);
+            const int xClips = xVon(std::min(m_komposition.clipEnde(), endeMs));
+            if (xEnde > xClips)
+            {
+                QColor strich = fest;
+                strich.setAlpha(90);
+                p.fillRect(QRect(xClips, kLinealHoehe, xEnde - xClips, unten - kLinealHoehe),
+                           QBrush(strich, Qt::BDiagPattern));
+            }
+            p.setPen(QPen(fest, 2.0));
+            p.drawLine(xEnde, 0, xEnde, unten);
+            p.setBrush(fest);
+            p.drawPolygon(QPolygon({QPoint(xEnde - 6, 0), QPoint(xEnde + 6, 0), QPoint(xEnde, 9)}));
+            p.setBrush(Qt::NoBrush);
+        }
+        else
+        {
+            p.setPen(linie);
+            p.drawLine(xEnde, 0, xEnde, unten);
+        }
+
+        // (Die Blende der ganzen Komposition stand bis S99 als Keil im Lineal; seit
+        //  S100 zeigt die Zeile MASTER darunter die ganze Kurve.)
+
+        // --- die Fenster der Ueberlappung (S99, Entscheid Patrik): bei Loop sind
+        //     die ersten und die letzten Sekunden getoent — was im vorderen laeuft,
+        //     laeuft zugleich mit dem im hinteren. Ein Strich an jeder Grenze.
+        if (fensterMs > 0)
+        {
+            QColor toenung(90, 200, 170);
+            toenung.setAlpha(34);
+            const int xVorn = xVon(fensterMs);
+            const int xHinten = xVon(m_komposition.umlaufMs());
+            const int xNull = xVon(0);
+            p.fillRect(QRect(xNull, 0, xVorn - xNull, unten), toenung);
+            p.fillRect(QRect(xHinten, 0, xEnde - xHinten, unten), toenung);
+        }
+    };
+
+    const auto auflage = [&] {
+        // --- die Grenzen der Fenster, ueber den Clips: dort endet das vordere und beginnt das hintere
+        if (fensterMs > 0)
+        {
+            p.setPen(QPen(QColor(90, 200, 170, 200), 1.0, Qt::DashLine));
+            const int xVorn = xVon(fensterMs);
+            const int xHinten = xVon(m_komposition.umlaufMs());
+            p.drawLine(xVorn, 0, xVorn, unten);
+            p.drawLine(xHinten, 0, xHinten, unten);
+        }
+
+        // --- Abspielmarke — und im Fenster der Ueberlappung eine zweite, blassere
+        //     an der Stelle des Endes, die zugleich laeuft
+        if (m_zweiteMs >= 0)
+        {
+            QPen zweite(QColor(255, 90, 70, 120), 2.0);
+            if (!m_an) zweite.setStyle(Qt::DashLine);
+            p.setPen(zweite);
+            const int xZweite = xVon(m_zweiteMs);
+            p.drawLine(xZweite, 0, xZweite, unten);
+        }
+        const int x = xVon(m_stelleMs);
+        QPen marke(QColor(255, 90, 70), 2.0);
+        if (!m_an) marke.setStyle(Qt::DashLine);
+        p.setPen(marke);
+        p.drawLine(x, 0, x, unten);
+    };
+
+    // --- erster Gang: die Zeilen, unter dem Lineal
+    p.setClipRect(zeilenFlaeche);
+    unterlage();
 
     // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
     p.setFont(font());
@@ -396,6 +503,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             zeile < 0 ? master[zeile + kMasterZeilen] : m_komposition.kanaele[static_cast<std::size_t>(k)];
         const int oben = zeileOben(zeile);
         const int hoch = zeileHoch(zeile);  // die Zeile MASTER ist niedriger (M17)
+        if (oben + hoch < kLinealHoehe || oben > height()) continue;  // aus dem Fenster gerollt
         p.setPen(linie);
         p.drawLine(0, oben + hoch, width(), oben + hoch);
 
@@ -549,12 +657,11 @@ void Zeitachse::paintEvent(QPaintEvent*)
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
 
     // --- ein Drag von aussen: die Zeile, in die er faellt, und die Stelle
-    if (m_fallOrt.x() >= 0 && m_fallOrt.y() >= kKanaeleOben)
+    if (m_fallOrt.x() >= 0 && zeileBei(m_fallOrt.y()) >= 0)
     {
         const int k = kanalBei(m_fallOrt.y());
         const int zeile = k >= 0 ? k : zeilen;  // unter der letzten Zeile: ein neuer Kanal
-        const QRect ziel(kKopfBreite, kKanaeleOben + zeile * kZeilenHoehe, width() - kKopfBreite,
-                         kZeilenHoehe);
+        const QRect ziel(kKopfBreite, zeileOben(zeile), width() - kKopfBreite, zeileHoch(zeile));
         // Der Schatten (Wunsch Patrik S98): jeder Clip dort, wo er landen
         // wuerde — mit seinem Anfang als Strich. Faellt hier nichts (eine
         // Zeile der anderen Art), bleibt die Zeile dunkel.
@@ -592,7 +699,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
         if (k < 0 && !schatten.empty())
         {
             p.setPen(text);
-            p.drawText(QRect(8, ziel.top(), kKopfBreite - 12, kZeilenHoehe),
+            p.drawText(QRect(8, ziel.top(), kKopfBreite - 12, ziel.height()),
                        Qt::AlignLeft | Qt::AlignVCenter,
                        m_fallTon ? tr("New audio channel") : tr("New channel"));
         }
@@ -602,14 +709,15 @@ void Zeitachse::paintEvent(QPaintEvent*)
     //     mit einem Dreieck am Kopf — dorthin legt „Einfuegen" den Anfang
     if (m_bearbeiten && m_markeKanal >= 0 && m_markeKanal < zeilen)
     {
-        const int oben = kKanaeleOben + m_markeKanal * kZeilenHoehe;
+        const int oben = zeileOben(m_markeKanal);
+        const int hoch = zeileHoch(m_markeKanal);
         QColor zeile = pal.color(QPalette::Highlight);
         zeile.setAlpha(28);
-        p.fillRect(QRect(0, oben, width(), kZeilenHoehe), zeile);
+        p.fillRect(QRect(0, oben, width(), hoch), zeile);
         const int xMarke = xVon(m_markeMs);
         const QColor farbe = pal.color(QPalette::Highlight);
         p.setPen(QPen(farbe, 2.0));
-        p.drawLine(xMarke, oben, xMarke, oben + kZeilenHoehe);
+        p.drawLine(xMarke, oben, xMarke, oben + hoch);
         p.setBrush(farbe);
         p.drawPolygon(QPolygon({QPoint(xMarke - 5, oben), QPoint(xMarke + 5, oben), QPoint(xMarke, oben + 7)}));
         p.setBrush(Qt::NoBrush);
@@ -621,41 +729,24 @@ void Zeitachse::paintEvent(QPaintEvent*)
     {
         QColor hell = pal.color(QPalette::Highlight);
         hell.setAlpha(45);
-        p.fillRect(QRect(0, kKanaeleOben + m_kanalZug * kZeilenHoehe, width(), kZeilenHoehe), hell);
+        p.fillRect(QRect(0, zeileOben(m_kanalZug), width(), zeileHoch(m_kanalZug)), hell);
         if (m_kanalZiel != m_kanalZug)
         {
             // nach unten gezogen landet er UNTER der Zielzeile, nach oben ueber ihr
-            const int y = kKanaeleOben + (m_kanalZiel + (m_kanalZiel > m_kanalZug ? 1 : 0)) * kZeilenHoehe;
+            const int y = zeileOben(m_kanalZiel + (m_kanalZiel > m_kanalZug ? 1 : 0));
             p.setPen(QPen(pal.color(QPalette::Highlight), 3.0));
             p.drawLine(0, y, width(), y);
         }
     }
+    auflage();
 
-    // --- die Grenzen der Fenster, ueber den Clips: dort endet das vordere und beginnt das hintere
-    if (fensterMs > 0)
-    {
-        p.setPen(QPen(QColor(90, 200, 170, 200), 1.0, Qt::DashLine));
-        const int xVorn = xVon(fensterMs);
-        const int xHinten = xVon(m_komposition.umlaufMs());
-        p.drawLine(xVorn, 0, xVorn, unten);
-        p.drawLine(xHinten, 0, xHinten, unten);
-    }
-
-    // --- Abspielmarke — und im Fenster der Ueberlappung eine zweite, blassere
-    //     an der Stelle des Endes, die zugleich laeuft
-    if (m_zweiteMs >= 0)
-    {
-        QPen zweite(QColor(255, 90, 70, 120), 2.0);
-        if (!m_an) zweite.setStyle(Qt::DashLine);
-        p.setPen(zweite);
-        const int xZweite = xVon(m_zweiteMs);
-        p.drawLine(xZweite, 0, xZweite, unten);
-    }
-    const int x = xVon(m_stelleMs);
-    QPen marke(QColor(255, 90, 70), 2.0);
-    if (!m_an) marke.setStyle(Qt::DashLine);
-    p.setPen(marke);
-    p.drawLine(x, 0, x, unten);
+    // --- zweiter Gang: das Lineal, ueber allem, was darunter gerollt ist
+    p.setClipRect(linealFlaeche);
+    p.fillRect(linealFlaeche, pal.color(QPalette::AlternateBase));
+    unterlage();
+    p.setPen(linie);
+    p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
+    auflage();
 }
 
 void Zeitachse::setBearbeiten(bool an)
@@ -666,6 +757,7 @@ void Zeitachse::setBearbeiten(bool an)
     if (!an) unsetCursor();
     if (!an) m_markeKanal = -1;  // die Einfuegemarke gibt es nur im Bearbeiten
     updateGeometry();
+    passeRollenAn();
     update();
 }
 
@@ -683,6 +775,7 @@ void Zeitachse::zeigeBearbeitet(const Komposition& komposition)
     }
     if (m_markeKanal >= static_cast<int>(komposition.kanaele.size())) m_markeKanal = -1;
     updateGeometry();
+    passeRollenAn();
     update();
     Q_EMIT auswahlGeaendert();  // auch bei gleicher Auswahl: der Clip kann neue Zeiten haben
 }
@@ -744,13 +837,12 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
     *kanal = -1;
     *clip = -1;
     if (stueck != nullptr) *stueck = -1;
-    if (ort.y() < kLinealHoehe) return Griff::Keiner;
+    const int zeile = zeileBei(ort.y());
+    if (zeile == kKeineZeile) return Griff::Keiner;  // das Lineal
     // die Zeile unter dem Lineal: die Kurve der ganzen Komposition (S100) — ein
     // Clip ueber die ganze Laenge, mit den Griffen der Kurve, ohne Kanten
     // (S101: vier solche Zeilen — MASTER, VISUAL, AUDIO, KARAOKE)
-    const bool gesamt = ort.y() < kKanaeleOben;
-    const int zeile = gesamt ? std::min(-1, (ort.y() - kLinealHoehe) / kMasterHoehe - kMasterZeilen)
-                             : (ort.y() - kKanaeleOben) / kZeilenHoehe;
+    const bool gesamt = zeile < 0;
     if (!gesamt && zeile >= static_cast<int>(m_komposition.kanaele.size())) return Griff::Keiner;
     const int k = gesamt ? masterVonZeile(zeile) : kanalVonZeile(zeile);
     std::vector<Clip> eine;
@@ -1082,8 +1174,9 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
             // die Zeile unter der Maus: der Clip wechselt den Kanal — nur in
             // einen seiner Art (Bild zu Bild, Ton zu Ton)
             const int zeilen = static_cast<int>(m_vorZug.kanaele.size());
-            const int zeile = std::clamp((ort.y() - kKanaeleOben) / kZeilenHoehe, 0, zeilen - 1);
-            if (ort.y() >= kKanaeleOben &&
+            const int unterMaus = zeileBei(ort.y());
+            const int zeile = std::clamp(unterMaus, 0, zeilen - 1);
+            if (unterMaus >= 0 &&
                 m_vorZug.kanaele[static_cast<std::size_t>(kanalVonZeile(zeile))].art ==
                     m_vorZug.kanaele[static_cast<std::size_t>(m_zugKanal)].art)
                 ziel = kanalVonZeile(zeile);
@@ -1221,8 +1314,8 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
         // ein Kanal wird am Namen gezogen: er fiele auf die Zeile unter der Maus
         if (m_kanalZiel < 0 && (ort - m_kanalZugStart).manhattanLength() < 4) return;
         const int zeilen = static_cast<int>(m_komposition.kanaele.size());
-        m_kanalZiel = std::clamp((ort.y() - kKanaeleOben) / kZeilenHoehe, 0, std::max(0, zeilen - 1));
-        if (ort.y() < kKanaeleOben) m_kanalZiel = 0;
+        // ueber dem ersten Kanal (Master-Zeilen, Lineal): an den ersten Platz
+        m_kanalZiel = std::clamp(zeileBei(ort.y()), 0, std::max(0, zeilen - 1));
         setCursor(Qt::ClosedHandCursor);
         update();
         return;
@@ -1336,6 +1429,7 @@ void Zeitachse::uebernimm(const Komposition& neu, int kanal, int clip)
     m_clip = clip;
     if (m_markeKanal >= static_cast<int>(neu.kanaele.size())) m_markeKanal = -1;
     updateGeometry();
+    passeRollenAn();
     update();
     Q_EMIT auswahlGeaendert();
 }
@@ -1432,8 +1526,8 @@ bool Zeitachse::event(QEvent* event)
 
 int Zeitachse::kanalBei(int y) const
 {
-    if (y < kKanaeleOben) return -1;  // Lineal und die Zeile der Kurve der Komposition
-    const int zeile = (y - kKanaeleOben) / kZeilenHoehe;
+    const int zeile = zeileBei(y);
+    if (zeile < 0) return -1;  // Lineal und die Zeilen der Kurven der Komposition
     return zeile < static_cast<int>(m_komposition.kanaele.size()) ? kanalVonZeile(zeile) : -1;
 }
 
@@ -1479,7 +1573,7 @@ bool Zeitachse::legeDateien(Komposition& neu, QPoint ort, const QStringList& dat
                             QStringList* passendAus, std::vector<Schatten>* gelegt) const
 {
     if (!m_bearbeiten || !m_geladen || dateien.isEmpty() || m_griff != Griff::Keiner) return false;
-    if (ort.y() < kKanaeleOben) return false;
+    if (zeileBei(ort.y()) < 0) return false;  // Lineal und Master-Zeilen
     int kanal = kanalBei(ort.y());
 
     // Songs fallen nur in Audio-Kanaele, Presets nur in Visual-Kanaele (C5).
@@ -1639,7 +1733,7 @@ void Zeitachse::dragMoveEvent(QDragMoveEvent* event)
     m_fallOrt = event->position().toPoint();
     m_fallTasten = event->modifiers();
     // im Lineal faellt nichts — und nichts in eine Zeile der anderen Art
-    if (m_fallOrt.y() < kKanaeleOben || fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten).empty())
+    if (zeileBei(m_fallOrt.y()) < 0 || fallSchatten(m_fallOrt, m_fallDateien, m_fallTasten).empty())
         event->ignore();
     else
         event->acceptProposedAction();
@@ -1822,6 +1916,39 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
     sortieren->addAction(tr("Audio first"), this, [this] { kanaeleSortieren(false); })
         ->setEnabled(!nachArtSortiert(m_komposition, false));
     menu.exec(event->globalPos());
+}
+
+// =============================================================================
+// ZeitachsenRahmen
+// =============================================================================
+
+ZeitachsenRahmen::ZeitachsenRahmen(Zeitachse* achse, QWidget* parent) : QWidget(parent), m_achse(achse)
+{
+    setObjectName(QStringLiteral("composerZeitachsenRahmen"));
+    m_senkrecht = new QScrollBar(Qt::Vertical, this);
+    m_senkrecht->setObjectName(QStringLiteral("composerRollenSenkrecht"));
+    m_senkrecht->setSingleStep(20);
+    auto* reihe = new QHBoxLayout(this);
+    reihe->setContentsMargins(0, 0, 0, 0);
+    reihe->setSpacing(0);
+    reihe->addWidget(achse, 1);
+    reihe->addWidget(m_senkrecht);
+    connect(achse, &Zeitachse::rollenGeaendert, this, &ZeitachsenRahmen::gleicheAb);
+    connect(m_senkrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollY);
+    gleicheAb();
+}
+
+void ZeitachsenRahmen::gleicheAb()
+{
+    const int max = m_achse->rollYMax();
+    {
+        const QSignalBlocker ruhe(m_senkrecht);
+        m_senkrecht->setRange(0, max);
+        // eine Seite: was unter dem Lineal zu sehen ist
+        m_senkrecht->setPageStep(std::max(1, m_achse->height() - Zeitachse::kLinealHoehe));
+        m_senkrecht->setValue(m_achse->rollY());
+    }
+    m_senkrecht->setVisible(max > 0);  // nur, wenn nicht alle Zeilen ins Fenster passen
 }
 
 // =============================================================================
@@ -2021,14 +2148,10 @@ void ComposerPanel::setupUI()
     kopf->addStretch(1);
     root->addLayout(kopf);
 
-    // --- Zeitachse (scrollt bei vielen Kanaelen)
+    // --- Zeitachse: sie rollt bei vielen Kanaelen selbst, das Lineal bleibt
+    //     stehen (S102, Entscheid Patrik ZO4: a); der Rahmen stellt den Rollbalken
     m_zeitachse = new Zeitachse(this);
-    auto* rolle = new QScrollArea(this);
-    rolle->setWidgetResizable(true);
-    rolle->setFrameShape(QFrame::NoFrame);
-    rolle->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    rolle->setWidget(m_zeitachse);
-    root->addWidget(rolle, 1);
+    root->addWidget(new ZeitachsenRahmen(m_zeitachse, this), 1);
 
     // --- der angeklickte Clip
     m_clipZeile = new QLabel(this);
