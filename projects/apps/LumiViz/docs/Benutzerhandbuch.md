@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.101.0
+> **Version:** 1.102.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2082,6 +2082,10 @@ lässt sich bedienen **wie die Pegelkurve eines Clips**:
   Curve Editor lässt sie sich formen und mit **Flipped** zur Anhebung machen.
 - **Grundpegel:** im Curve Editor, Feld *Base level* — der Pegel der ganzen
   Komposition zwischen den Teilen.
+- **Das Ende ziehen:** Ist **Fixed end** angehakt, lässt sich die rechte Kante
+  des Balkens ziehen — das ändert das feste Ende, wie das Zeitfeld daneben. Es
+  rastet ein wie ein Clip (mit Alt frei). Ohne *Fixed end* folgt das Ende dem
+  letzten Clip, die Kante lässt sich dann nicht ziehen.
 
 Ein Unterschied zum Clip: Ein Stück der Zeile MASTER liegt an einer **festen
 Stelle der Zeitachse**. Wird die Komposition länger oder kürzer, bleibt es
@@ -2195,6 +2199,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.102.0 | 2026-10-07 | Session 100. §15 Composer, Zeile MASTER NEU **Das Ende ziehen**: bei *Fixed end* lässt sich die rechte Kante des Balkens ziehen |
 | 1.101.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanalfarben**: jeder Kanal trägt seine Farbe (Bild kühl, Ton warm, je Kanal ein eigener Ton), Rechtsklick → *Channel color...* / *Reset channel color*; die Farbe steht in der Datei. GEÄNDERT: Audio-Kanäle haben nicht mehr alle denselben Ton, Bild-Kanäle ab dem zweiten andere Farben als bisher |
 | 1.100.0 | 2026-10-07 | Session 100. §15 Composer NEU Stück-Preset **Late fade in** und der Absatz **Unsichtbar einfahren, später einblenden**: ein Stück am Clip-Anfang, das den Pegel auf null hält und dann weich einblendet — ohne *Flipped* |
 | 1.99.0 | 2026-10-07 | Session 100. §15 Composer NEU **Die Zeile MASTER**: die Pegelkurve der ganzen Komposition unter dem Lineal, bedienbar wie die eines Clips (Griffe der Blenden, Formen und Presets per Rechtsklick, Stücke, Grundpegel, Curve Editor); ein Stück liegt an fester Zeit. GEÄNDERT: die Keile im Lineal entfallen — die Zeile MASTER zeigt die Blenden; überdecken sich *Fade in* und *Fade out*, teilen sie den Platz wie am Clip |

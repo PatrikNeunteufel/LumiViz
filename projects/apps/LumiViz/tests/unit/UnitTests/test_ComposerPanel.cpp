@@ -711,6 +711,31 @@ TEST_SUITE("ComposerPanel")
             CHECK(einblende->value() == doctest::Approx(0.0));
             CHECK_FALSE(sitzung->ungespeichert());
             kurven->close();
+
+            // die rechte Kante der Zeile (Wunsch Patrik S100): bei Fixed end das Ende ziehen —
+            // ohne Fixed end folgt das Ende dem letzten Clip, die Kante laesst sich nicht ziehen
+            const auto kante = [&] {
+                return QPoint(achse->xVon(sitzung->laengeMs()) - 2, achse->yVonZeile(-1) + 6);
+            };
+            ziehPunkt(kante(), QPoint(achse->xVon(70000), kante().y()));
+            CHECK(sitzung->komposition().laengeMs == 0);
+            CHECK(sitzung->laengeMs() == 60000);
+            CHECK_FALSE(sitzung->ungespeichert());
+            auto* fest = panel.findChild<QCheckBox*>(QStringLiteral("composerFixedEnd"));
+            auto* zeit = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerEndTime"));
+            REQUIRE(fest != nullptr);
+            REQUIRE(zeit != nullptr);
+            fest->click();
+            REQUIRE(sitzung->komposition().laengeMs == 60000);
+            ziehPunkt(kante(), QPoint(achse->xVon(70000), kante().y()));
+            CHECK(std::llabs(sitzung->laengeMs() - 70000) <= 400);
+            CHECK(zeit->value() == doctest::Approx(sitzung->laengeMs() / 1000.0).epsilon(0.02));
+            CHECK(achse->gesamtGewaehlt());
+            REQUIRE(bus->undo());  // das Ziehen
+            CHECK(sitzung->laengeMs() == 60000);
+            REQUIRE(bus->undo());  // Fixed end
+            CHECK(sitzung->komposition().laengeMs == 0);
+            CHECK_FALSE(sitzung->ungespeichert());
         }
 
         // --- Kanalfarben (S100, Entscheid Patrik K1 b): die geladene Datei hat ihre Farben

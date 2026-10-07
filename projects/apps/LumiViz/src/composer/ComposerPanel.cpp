@@ -754,8 +754,11 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
             if (trifft(-1, Griff::StueckLinks) != Griff::Keiner) return Griff::StueckLinks;
             if (trifft(1, Griff::StueckRechts) != Griff::Keiner) return Griff::StueckRechts;
         }
-        // die Kurve der Komposition hat weder Kanten noch laesst sie sich verschieben
-        if (gesamt) return Griff::Keiner;
+        // Die Kurve der Komposition laesst sich nicht verschieben. Ihre rechte
+        // Kante ist das Ende der Komposition: steht es fest (Fixed end), laesst
+        // es sich hier ziehen (Wunsch Patrik S100) — sonst folgt es dem letzten Clip.
+        if (gesamt)
+            return m_komposition.laengeMs > 0 && r.right() - ort.x() <= 6 ? Griff::KanteRechts : Griff::Keiner;
         // Kanten: die aeusseren sechs Pixel — bei schmalen Clips nur rechts
         if (r.width() > 16 && ort.x() - r.left() <= 6) return Griff::KanteLinks;
         if (r.right() - ort.x() <= 6) return Griff::KanteRechts;
@@ -1048,6 +1051,13 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
             platz = zieheKante(m_komposition, m_zugKanal, m_zugClip, true, gerastet(maus), stoss);
             break;
         case Griff::KanteRechts:
+            if (m_zugKanal == kMaster)
+            {
+                // die rechte Kante der Zeile MASTER: das feste Ende der Komposition
+                m_komposition.laengeMs = std::max<std::int64_t>(100, gerastet(maus));
+                platz = m_zugClip;
+                break;
+            }
             platz = zieheKante(m_komposition, m_zugKanal, m_zugClip, false, gerastet(maus), stoss);
             break;
         case Griff::BlendeEin:
@@ -1194,7 +1204,7 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent*)
     {
         case Griff::Verschieben: was = tr("Move clip"); break;
         case Griff::KanteLinks:
-        case Griff::KanteRechts: was = tr("Resize clip"); break;
+        case Griff::KanteRechts: was = m_kanal == kMaster ? tr("Change the end") : tr("Resize clip"); break;
         case Griff::StueckLage: was = tr("Move shape"); break;
         case Griff::StueckLinks:
         case Griff::StueckRechts: was = tr("Change shape width"); break;
