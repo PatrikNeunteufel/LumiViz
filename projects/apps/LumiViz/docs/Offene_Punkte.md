@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.122.0
+> **Version:** 1.123.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2252,9 +2252,8 @@ Idee Preset-Warmup/Pre-Roll.
   (§15 Zoomen und Rollen), Rückbau-Liste im Konzept, `Sichttests_S102.md`.
   **Nicht gebaut, als Grenze vermerkt:** beim Ziehen eines Clips an den
   Rand rollt die Achse nicht von selbst mit; der Curve Editor zoomt nicht.
-  🔧 Weiter nachzuholen: der Vergleichslauf am Renderer (siehe unten;
-  Patrik S102: später, das Vorgehen wird als eigene Frage vorgelegt — er
-  braucht einen Build vom Stand vor den Eingriffen an R2).
+  ✅ **Der Vergleichslauf nach R2 (S101) entfällt** (Entscheid Patrik
+  S102, VL1: a) — siehe den Block darunter.
 - **Composer, Stand S101 am Ende (Konzept 0.61.1), kurz:** in S101 gebaut
   und **im Programm weder gesehen noch gehört:** der Fix am Panel Karaoke
   bei laufendem Composer, `LumiViz.exe <datei>` mit der einen Instanz je
@@ -2266,9 +2265,24 @@ Idee Preset-Warmup/Pre-Roll.
   Zoom, nicht nur in der Zeitachse — Umfang zuerst klären. Offen dazu die
   Entscheide zu `LumiViz.exe <datei>` (Öffnen-Befehl im Explorer-Skript,
   Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer).
-  🔧 **Nachzuholen:** der Vergleichslauf nach den zwei Eingriffen am
-  Renderer (Naht R2: `karaokeFassung`, der Pegel beim Auflegen der
-  Karaoke-Ebene) — in S101 liefen nur die Unit-Tests.
+  ✅ **Der Vergleichslauf nach den zwei Eingriffen am Renderer (Naht R2:
+  `karaokeFassung`, der Pegel beim Auflegen der Karaoke-Ebene) entfällt**
+  (Entscheid Patrik S102, VL1: a — schließen mit Begründung, ohne Lauf;
+  verworfen: der übliche Lauf alt gegen neu, weil er die geänderte Stelle
+  nicht ausführt, und ein gezielter Lauf mit Karaoke-Ebene, weil er einen
+  zweiten Build und einen Testfall in zwei Ständen kostet für etwas, das
+  die Rechnung deckt). Begründung: der Zähler `karaokeFassung` wird vom Renderer nicht gelesen (nur
+  von der Sitzung des Composers); der Faktor in `legeKaraokeAuf` ist auf
+  dem normalen Renderweg genau 1, und mal 1 ändert eine Gleitkommazahl
+  nicht; die Harnesse `compare_avsref.py` / `compare_milkref.py` rendern
+  über die Standalones ohne Karaoke-Ebene und erreichen die Stelle nicht;
+  sonst hat sich an den Quellen der Visualizer seit dem Stand vor S101
+  nichts geändert (`git diff --stat`). Die Wirkung des Pegels bleibt durch
+  den Test aus S101 belegt (Pegel 0,5 = 49,8 %). **Nicht geprüft:** dass
+  die Karaoke-Ebene in den Standalones aus ist, folgt aus der Suche im
+  Quelltext, kein Standalone lief dafür; ein Bildvergleich seit S100
+  liegt nicht vor. **Bleibt:** der Vergleichslauf vor dem Holen nach
+  `master` (Konzept §12.4) — er deckt dann alles seit S93.
   Die Einzelheiten stehen in den Blöcken unter „Stand S100".
 - **Composer, Stand S100 am Ende (Konzept 0.52.1), kurz:** gebaut sind die
   Zeile MASTER (Pegelkurve der ganzen Komposition, samt Ziehen des festen
@@ -4552,6 +4566,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.123.0 | 2026-10-07 | Session 102 — **Composer:** der Vergleichslauf nach den zwei Eingriffen an R2 (S101) entfällt (Entscheid Patrik VL1: a, mit Begründung: ungelesener Zähler, Faktor genau 1, die Harnesse rendern ohne Karaoke-Ebene); es bleibt der Vergleichslauf vor dem Holen nach `master` |
 | 1.122.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 6:** Benutzerhandbuch 1.111.0 (§15 Zoomen und Rollen), Rückbau-Liste im Konzept 0.68.0, Sichttest-Liste S102; das Vorhaben Zoom ist gebaut, im Programm nichts gesehen |
 | 1.121.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, die Naht N9 gebaut:** die Auswahl *Scroll with playhead* in Settings, Konzept 0.67.0; im Programm nicht gesehen |
 | 1.120.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 5, das Eigene gebaut:** Mitlaufen mit der Abspielmarke (Schalter *Scroll with playhead*, stetig oder seitenweise), Konzept 0.66.0; offen die Auswahl in Settings (Naht N9); im Programm nicht gesehen |
