@@ -47,8 +47,9 @@ namespace lumi::composer
 class Sitzung;
 
 /// Die Zeitachse: Lineal, Abspielmarke, Kanaele und Clips. Zeigt die ganze
-/// Laenge der Komposition auf ihrer Breite (der Zoom kommt in S102, Konzept
-/// §7); senkrecht rollt sie selbst, das Lineal bleibt stehen.
+/// Laenge der Komposition auf ihrer Breite — oder, in die Zeit hineingezoomt,
+/// einen Ausschnitt (S102, Konzept §7). Sie rollt selbst: das Lineal bleibt
+/// oben stehen, die Spalte der Kanalnamen links.
 class Zeitachse : public QWidget
 {
     Q_OBJECT
@@ -272,6 +273,33 @@ public:
     /// eine Zeile mehr (die Flaeche, auf der ein neuer Kanal entsteht).
     [[nodiscard]] int inhaltHoehe() const;
 
+    // --- Zeit-Zoom (S102, Entscheide Patrik ZO1: a, ZO5: a, ZO9: a) -----------
+    //
+    // Ohne Zoom zeigt die Achse die ganze Laenge auf ihrer Breite („ganz") —
+    // weiter heraus geht es nicht. Hineingezoomt steht der Massstab fest
+    // (Millisekunden je Pixel), auch wenn die Komposition waechst oder das
+    // Fenster breiter wird; passt dann wieder alles hinein, ist sie wieder
+    // „ganz". Die Spalte der Kanalnamen bleibt beim Rollen links stehen.
+    // Gemerkt wird der Zeit-Zoom nicht: eine geladene Komposition beginnt ganz.
+
+    /// Der feinste Massstab: eine Millisekunde je Pixel (von mir gesetzt).
+    static constexpr double kFeinsteMsJePixel = 1.0;
+    /// Ein Schritt des Mausrads: Faktor 1,25 (von mir gesetzt).
+    static constexpr double kZoomSchritt = 1.25;
+    /// Der Massstab, der gerade gilt.
+    [[nodiscard]] double msJePixel() const;
+    /// Zeigt die Achse die ganze Laenge auf ihrer Breite?
+    [[nodiscard]] bool zeitGanz() const { return m_msJePixel <= 0.0; }
+    /// Die Zeit zoomen: `faktor` ueber 1 = hinein. Die Zeit unter `xFest`
+    /// bleibt an ihrer Stelle im Fenster (ZO5: der Mauszeiger).
+    void zoomeZeit(double faktor, int xFest);
+    /// Zurueck auf die ganze Laenge.
+    void zeigeZeitGanz();
+    /// So viele Pixel ist die Zeit nach links gerollt (0 = der Anfang steht links).
+    [[nodiscard]] int rollX() const { return m_rollX; }
+    [[nodiscard]] int rollXMax() const;
+    void setRollX(int x);
+
     // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c) --
     //
     // Sie liegt als EIN Clip ueber die ganze Laenge in einer eigenen Zeile unter
@@ -363,6 +391,10 @@ private:
     /// holen und `rollenGeaendert` melden.
     void passeRollenAn();
     int m_rollY = 0;
+    int m_rollX = 0;
+    double m_msJePixel = 0.0;  ///< der feste Massstab; 0 = die ganze Laenge auf der Breite
+    /// Der Massstab, bei dem die ganze Laenge auf die Breite passt.
+    [[nodiscard]] double msJePixelGanz() const;
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
     /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
@@ -457,12 +489,15 @@ class ZeitachsenRahmen : public QWidget
 public:
     explicit ZeitachsenRahmen(Zeitachse* achse, QWidget* parent = nullptr);
     [[nodiscard]] QScrollBar* balkenSenkrecht() const { return m_senkrecht; }
+    /// Unter der Achse; erscheint nur, wenn in die Zeit hineingezoomt ist.
+    [[nodiscard]] QScrollBar* balkenWaagrecht() const { return m_waagrecht; }
 
 private:
     void gleicheAb();
 
     Zeitachse* m_achse = nullptr;
     QScrollBar* m_senkrecht = nullptr;
+    QScrollBar* m_waagrecht = nullptr;
 };
 
 class KurvenFenster;

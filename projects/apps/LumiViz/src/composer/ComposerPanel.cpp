@@ -40,6 +40,7 @@
 #include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -59,6 +60,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 namespace lumi::composer
 {
@@ -97,14 +99,17 @@ Ablage g_ablage;
 /// So fein wird die Huellkurve eines Songs geholt (ein Wert je 50 ms).
 constexpr int kHuelleMs = 50;
 
-/// Abstand der Striche im Lineal, in Sekunden: der kleinste, bei dem die
-/// Beschriftungen nicht zusammenstossen.
-int strichSekunden(std::int64_t laengeMs, int breite)
+/// Abstand der Striche im Lineal, in Millisekunden: der kleinste, bei dem die
+/// Beschriftungen nicht zusammenstossen (64 Pixel). Hineingezoomt bis auf
+/// Zehntelsekunden (S102).
+std::int64_t strichMs(double msJePixel)
 {
-    static constexpr std::array<int, 12> kStufen = {1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1800, 3600};
-    if (laengeMs <= 0 || breite <= 0) return 1;
-    for (int s : kStufen)
-        if (static_cast<double>(s) * 1000.0 / static_cast<double>(laengeMs) * breite >= 64.0) return s;
+    static constexpr std::array<std::int64_t, 15> kStufen = {100,    200,    500,    1000,    2000,
+                                                             5000,   10000,  15000,  30000,   60000,
+                                                             120000, 300000, 600000, 1800000, 3600000};
+    if (msJePixel <= 0.0) return 1000;
+    for (const std::int64_t s : kStufen)
+        if (static_cast<double>(s) / msJePixel >= 64.0) return s;
     return kStufen.back();
 }
 
@@ -168,7 +173,9 @@ void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
     m_clip = -1;
     m_stelleMs = 0;
     m_markeKanal = -1;
-    m_rollY = 0;  // eine andere Komposition beginnt oben
+    m_rollY = 0;  // eine andere Komposition beginnt oben —
+    m_rollX = 0;  // und mit der ganzen Laenge auf der Breite (Entscheid Patrik ZO9: a)
+    m_msJePixel = 0.0;
     updateGeometry();
     passeRollenAn();
     update();
@@ -253,16 +260,86 @@ int Zeitachse::zeitBreite() const
 int Zeitachse::xVon(std::int64_t stelleMs) const
 {
     if (m_laengeMs <= 0) return kKopfBreite;
-    return kKopfBreite + static_cast<int>(static_cast<double>(stelleMs) /
-                                          static_cast<double>(m_laengeMs) * zeitBreite() + 0.5);
+    if (zeitGanz())
+        return kKopfBreite + static_cast<int>(static_cast<double>(stelleMs) /
+                                              static_cast<double>(m_laengeMs) * zeitBreite() + 0.5);
+    // hineingezoomt (S102): der feste Massstab, um `rollX` nach links versetzt
+    return kKopfBreite + static_cast<int>(std::floor(static_cast<double>(stelleMs) / msJePixel() + 0.5)) -
+           m_rollX;
 }
 
 std::int64_t Zeitachse::stelleVon(int x) const
 {
     if (m_laengeMs <= 0) return 0;
-    const double anteil = static_cast<double>(x - kKopfBreite) / static_cast<double>(zeitBreite());
-    return std::clamp<std::int64_t>(static_cast<std::int64_t>(anteil * static_cast<double>(m_laengeMs) + 0.5),
-                                    0, m_laengeMs);
+    if (zeitGanz())
+    {
+        const double anteil = static_cast<double>(x - kKopfBreite) / static_cast<double>(zeitBreite());
+        return std::clamp<std::int64_t>(
+            static_cast<std::int64_t>(anteil * static_cast<double>(m_laengeMs) + 0.5), 0, m_laengeMs);
+    }
+    const double ms = static_cast<double>(x - kKopfBreite + m_rollX) * msJePixel();
+    return std::clamp<std::int64_t>(static_cast<std::int64_t>(std::floor(ms + 0.5)), 0, m_laengeMs);
+}
+
+double Zeitachse::msJePixelGanz() const
+{
+    return m_laengeMs > 0 ? static_cast<double>(m_laengeMs) / zeitBreite() : 1.0;
+}
+
+double Zeitachse::msJePixel() const
+{
+    const double ganz = msJePixelGanz();
+    return m_msJePixel > 0.0 ? std::min(m_msJePixel, ganz) : ganz;
+}
+
+int Zeitachse::rollXMax() const
+{
+    if (zeitGanz() || m_laengeMs <= 0) return 0;
+    const int inhalt = static_cast<int>(std::ceil(static_cast<double>(m_laengeMs) / msJePixel()));
+    return std::max(0, inhalt - zeitBreite());
+}
+
+void Zeitachse::setRollX(int x)
+{
+    x = std::clamp(x, 0, rollXMax());
+    if (x == m_rollX) return;
+    m_rollX = x;
+    update();
+    Q_EMIT rollenGeaendert();
+}
+
+void Zeitachse::zoomeZeit(double faktor, int xFest)
+{
+    if (!m_geladen || m_laengeMs <= 0 || faktor <= 0.0) return;
+    const double ganz = msJePixelGanz();
+    const double alt = msJePixel();
+    // der Festpunkt: die Zeit unter `xFest` — ueber der Spalte der Kanalnamen
+    // die an deren rechter Kante
+    const int x = std::max(xFest, kKopfBreite);
+    const double zeit = static_cast<double>(x - kKopfBreite + m_rollX) * alt;
+    const double neu = std::max(kFeinsteMsJePixel, alt / faktor);
+    if (neu >= ganz * 0.999)
+    {
+        // weiter heraus als die ganze Laenge geht es nicht
+        m_msJePixel = 0.0;
+        m_rollX = 0;
+    }
+    else
+    {
+        m_msJePixel = neu;
+        m_rollX = std::clamp(static_cast<int>(std::floor(zeit / neu + 0.5)) - (x - kKopfBreite), 0, rollXMax());
+    }
+    update();
+    Q_EMIT rollenGeaendert();
+}
+
+void Zeitachse::zeigeZeitGanz()
+{
+    if (zeitGanz()) return;
+    m_msJePixel = 0.0;
+    m_rollX = 0;
+    update();
+    Q_EMIT rollenGeaendert();
 }
 
 int Zeitachse::yVonZeile(int zeile) const
@@ -327,6 +404,10 @@ void Zeitachse::setRollY(int y)
 void Zeitachse::passeRollenAn()
 {
     m_rollY = std::clamp(m_rollY, 0, rollYMax());
+    // passt die ganze Laenge beim festen Massstab wieder auf die Breite (das
+    // Fenster ist breiter, die Komposition kuerzer geworden), ist sie „ganz"
+    if (m_msJePixel > 0.0 && m_msJePixel >= msJePixelGanz() * 0.999) m_msJePixel = 0.0;
+    m_rollX = std::clamp(m_rollX, 0, rollXMax());
     Q_EMIT rollenGeaendert();
 }
 
@@ -338,19 +419,45 @@ void Zeitachse::resizeEvent(QResizeEvent* event)
 
 void Zeitachse::wheelEvent(QWheelEvent* event)
 {
-    // ohne Taste: senkrecht rollen, 60 Pixel je Raste — etwa so weit wie die
-    // rollende Flaeche, in der die Achse bis S101 lag
-    if (event->modifiers() != Qt::NoModifier || rollYMax() <= 0 || event->angleDelta().y() == 0)
+    // Entscheid Patrik ZO1: a (S102) — ohne Taste senkrecht rollen, Shift+Rad
+    // waagrecht, Ctrl+Rad die Zeit zoomen. (Alt+Rad und Ctrl+Alt+Rad: die
+    // Zeilenhoehe, Schritt 3.)
+    const QPoint grad = event->angleDelta();
+    const Qt::KeyboardModifiers tasten =
+        event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
+    // mit einer Taste kann das System das Rad als waagrecht melden: es zaehlt die Achse, die sich bewegt
+    const int rad = grad.y() != 0 ? grad.y() : grad.x();
+
+    if (tasten == Qt::ControlModifier)
+    {
+        if (!m_geladen || rad == 0)
+        {
+            event->ignore();
+            return;
+        }
+        zoomeZeit(std::pow(kZoomSchritt, rad / 120.0), static_cast<int>(event->position().x()));
+        event->accept();  // auch am Anschlag: das Rad soll dann nichts anderes rollen
+        return;
+    }
+    // 60 Pixel je Raste — etwa so weit wie die rollende Flaeche, in der die Achse bis S101 lag
+    const bool quer = tasten == Qt::ShiftModifier ||
+                      (tasten == Qt::NoModifier && std::abs(grad.x()) > std::abs(grad.y()));
+    if (quer)
+    {
+        const int weg = tasten == Qt::ShiftModifier ? rad : grad.x();
+        const int vorher = m_rollX;
+        setRollX(m_rollX - weg * 60 / 120);
+        event->setAccepted(m_rollX != vorher);
+        return;
+    }
+    if (tasten != Qt::NoModifier || rollYMax() <= 0 || grad.y() == 0)
     {
         event->ignore();
         return;
     }
     const int vorher = m_rollY;
-    setRollY(m_rollY - event->angleDelta().y() * 60 / 120);
-    if (m_rollY == vorher)
-        event->ignore();
-    else
-        event->accept();
+    setRollY(m_rollY - grad.y() * 60 / 120);
+    event->setAccepted(m_rollY != vorher);
 }
 
 void Zeitachse::paintEvent(QPaintEvent*)
@@ -383,8 +490,16 @@ void Zeitachse::paintEvent(QPaintEvent*)
     // jeweils nur seinen Teil durch.
     const QRect linealFlaeche(0, 0, width(), kLinealHoehe);
     const QRect zeilenFlaeche(0, kLinealHoehe, width(), std::max(0, height() - kLinealHoehe));
+    // S102, Zeit-Zoom: die Spalte der Kanalnamen bleibt beim waagrechten Rollen
+    // stehen. Alles, was an einer Zeit haengt, wird deshalb nur rechts von ihr
+    // gezeichnet (ab ihrer Trennlinie — dort steht die Abspielmarke bei null).
+    const QRect linealZeit = linealFlaeche.adjusted(kKopfBreite - 1, 0, 0, 0);
+    const QRect zeilenZeit = zeilenFlaeche.adjusted(kKopfBreite - 1, 0, 0, 0);
 
-    const int schritt = strichSekunden(m_laengeMs, zeitBreite());
+    // die Striche nur im sichtbaren Stueck Zeit: hineingezoomt waeren es sonst Tausende
+    const std::int64_t schrittMs = strichMs(msJePixel());
+    const std::int64_t strichVon = stelleVon(kKopfBreite) / schrittMs * schrittMs;
+    const std::int64_t strichBis = std::min(m_laengeMs, stelleVon(width()) + schrittMs);
     QFont klein = font();
     klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
     const std::int64_t endeMs = m_komposition.laenge();
@@ -394,13 +509,16 @@ void Zeitachse::paintEvent(QPaintEvent*)
     const auto unterlage = [&] {
         // --- die Striche des Lineals, mit ihrer Beschriftung
         p.setFont(klein);
-        for (std::int64_t ms = 0; ms <= m_laengeMs; ms += static_cast<std::int64_t>(schritt) * 1000)
+        for (std::int64_t ms = strichVon; ms <= strichBis; ms += schrittMs)
         {
             const int x = xVon(ms);
             p.setPen(linie);
             p.drawLine(x, kLinealHoehe - 6, x, unten);
             p.setPen(text);
-            const QString marke = ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
+            // unter einer Sekunde Abstand mit der Zehntelsekunde
+            const QString marke = schrittMs < 1000
+                                      ? ComposerPanel::zeitText(ms)
+                                      : ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
             // am rechten Rand steht die Beschriftung links vom Strich, sonst waere sie abgeschnitten
             if (x + 6 + p.fontMetrics().horizontalAdvance(marke) > width())
                 p.drawText(QRect(x - 83, 0, 80, kLinealHoehe - 4), Qt::AlignRight | Qt::AlignVCenter, marke);
@@ -480,7 +598,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
     };
 
     // --- erster Gang: die Zeilen, unter dem Lineal
-    p.setClipRect(zeilenFlaeche);
+    p.setClipRect(zeilenZeit);
     unterlage();
 
     // --- Kanaele: in der Reihenfolge der Datei, CH1 oben
@@ -504,6 +622,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
         const int oben = zeileOben(zeile);
         const int hoch = zeileHoch(zeile);  // die Zeile MASTER ist niedriger (M17)
         if (oben + hoch < kLinealHoehe || oben > height()) continue;  // aus dem Fenster gerollt
+        p.setClipRect(zeilenFlaeche);
         p.setPen(linie);
         p.drawLine(0, oben + hoch, width(), oben + hoch);
 
@@ -514,10 +633,12 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
                    fontMetrics().elidedText(titel, Qt::ElideRight, kKopfBreite - 12));
 
+        p.setClipRect(zeilenZeit);
         for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
         {
             const VisualClip& clip = kanal.clips[static_cast<std::size_t>(c)];
             const QRect r = clipRechteck(zeile, clip);
+            if (r.right() < kKopfBreite || r.left() > width()) continue;  // aus dem Fenster gerollt
             const bool gewaehlt = k == m_kanal && c == m_clip;
             const bool ton = kanal.art == KanalArt::Audio;
             // die Master-Zeilen in Grau — VISUAL mit kuehlem, AUDIO mit warmem
@@ -531,7 +652,11 @@ void Zeitachse::paintEvent(QPaintEvent*)
                                               : kanalFarbe(m_komposition, k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
-            p.drawRoundedRect(r, 4, 4);
+            // hineingezoomt kann ein Clip viele tausend Pixel breit sein: gezeichnet
+            // wird nur, was im Fenster liegt (und etwas mehr, fuer die runden Ecken)
+            p.drawRoundedRect(r.intersected(QRect(kKopfBreite - 12, r.top(), width() - kKopfBreite + 24,
+                                                  r.height())),
+                              4, 4);
 
             // Ton (C5): die Wellenform des Songs — so hoch, wie der Pegel des
             // Clips sie laesst; man sieht die Blenden an ihr
@@ -544,14 +669,14 @@ void Zeitachse::paintEvent(QPaintEvent*)
                 const double mitte = r.center().y() + 0.5;
                 const auto werte = static_cast<std::int64_t>(huelle->werte.size());
                 const QColor welle(255, 255, 255, 95);
-                double pegel = 1.0;
-                for (int x = r.left() + 1; x < r.right(); ++x)
+                double pegel = -1.0;  // noch nicht gerechnet
+                for (int x = std::max(r.left() + 1, kKopfBreite - 1); x < std::min(r.right(), width()); ++x)
                 {
                     const double a0 = static_cast<double>(x - r.left()) / r.width();
                     const double a1 = static_cast<double>(x + 1 - r.left()) / r.width();
                     const auto imClip = static_cast<std::int64_t>(a0 * dauer);
                     // den Pegel nur alle vier Pixel neu rechnen
-                    if ((x - r.left()) % 4 == 1) pegel = clip.pegelBei(imClip);
+                    if (pegel < 0.0 || (x - r.left()) % 4 == 1) pegel = clip.pegelBei(imClip);
                     // der groesste Ausschlag in dem Stueck Song, das dieses Pixel zeigt
                     const std::int64_t von = clip.songStelle(imClip) / huelle->msProWert;
                     const std::int64_t bis = std::max(
@@ -568,10 +693,16 @@ void Zeitachse::paintEvent(QPaintEvent*)
             if (!clip.vollerPegel() && r.width() > 8 && clip.dauerMs() > 0)
             {
                 QPainterPath kurve;
-                const int stuetzen = std::clamp(r.width() / 3, 8, 200);
+                // nur das sichtbare Stueck des Clips, damit die Kurve auch
+                // hineingezoomt fein bleibt — ganz im Fenster: von 0 bis 1
+                const int sichtLinks = std::max(r.left(), kKopfBreite - 4);
+                const int sichtRechts = std::min(r.left() + r.width(), width() + 4);
+                const double a0 = static_cast<double>(sichtLinks - r.left()) / r.width();
+                const double a1 = static_cast<double>(sichtRechts - r.left()) / r.width();
+                const int stuetzen = std::clamp((sichtRechts - sichtLinks) / 3, 8, 200);
                 for (int i = 0; i <= stuetzen; ++i)
                 {
-                    const double anteil = static_cast<double>(i) / stuetzen;
+                    const double anteil = a0 + (a1 - a0) * static_cast<double>(i) / stuetzen;
                     const double pegel = clip.pegelBei(
                         static_cast<std::int64_t>(anteil * static_cast<double>(clip.dauerMs())));
                     const QPointF punkt(r.left() + anteil * r.width(),
@@ -596,9 +727,13 @@ void Zeitachse::paintEvent(QPaintEvent*)
             }
 
             p.setPen(Qt::white);
-            p.drawText(r.adjusted(6, 0, -4, 0), Qt::AlignLeft | Qt::AlignVCenter,
+            // der Name bleibt am linken Rand des Fensters stehen, wenn der
+            // Anfang des Clips hinausgerollt ist (von mir gesetzt, S102)
+            QRect namensFeld = r.adjusted(6, 0, -4, 0);
+            namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
+            p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
                        fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
-                                                Qt::ElideRight, std::max(0, r.width() - 10)));
+                                                Qt::ElideRight, std::max(0, namensFeld.width())));
 
             // Griffe der Blenden (C4), nur im Bearbeiten: oben im Clip je ein
             // Quadrat fuer die Laenge; am angeklickten Clip die Bézier-Anfasser
@@ -653,6 +788,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             }
         }
     }
+    p.setClipRect(zeilenFlaeche);
     p.setPen(linie);
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
 
@@ -672,6 +808,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             hell.setAlpha(40);
             p.fillRect(ziel, hell);
         }
+        p.setClipRect(zeilenZeit);
         for (const Schatten& s : schatten)
         {
             VisualClip geist;
@@ -696,6 +833,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             p.setPen(QPen(pal.color(QPalette::Highlight), 2.0));
             p.drawLine(xFall, ziel.top(), xFall, ziel.bottom());
         }
+        p.setClipRect(zeilenFlaeche);
         if (k < 0 && !schatten.empty())
         {
             p.setPen(text);
@@ -714,6 +852,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
         QColor zeile = pal.color(QPalette::Highlight);
         zeile.setAlpha(28);
         p.fillRect(QRect(0, oben, width(), hoch), zeile);
+        p.setClipRect(zeilenZeit);
         const int xMarke = xVon(m_markeMs);
         const QColor farbe = pal.color(QPalette::Highlight);
         p.setPen(QPen(farbe, 2.0));
@@ -721,6 +860,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.setBrush(farbe);
         p.drawPolygon(QPolygon({QPoint(xMarke - 5, oben), QPoint(xMarke + 5, oben), QPoint(xMarke, oben + 7)}));
         p.setBrush(Qt::NoBrush);
+        p.setClipRect(zeilenFlaeche);
     }
 
     // --- ein Kanal wird am Namen gezogen (S100): seine Zeile hervorgehoben, ein
@@ -738,14 +878,18 @@ void Zeitachse::paintEvent(QPaintEvent*)
             p.drawLine(0, y, width(), y);
         }
     }
+    p.setClipRect(zeilenZeit);
     auflage();
 
     // --- zweiter Gang: das Lineal, ueber allem, was darunter gerollt ist
     p.setClipRect(linealFlaeche);
     p.fillRect(linealFlaeche, pal.color(QPalette::AlternateBase));
+    p.setClipRect(linealZeit);
     unterlage();
+    p.setClipRect(linealFlaeche);
     p.setPen(linie);
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
+    p.setClipRect(linealZeit);
     auflage();
 }
 
@@ -785,7 +929,7 @@ std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int au
 {
     // so viele Millisekunden sind acht Pixel
     const std::int64_t nah =
-        m_laengeMs > 0 ? static_cast<std::int64_t>(8.0 * static_cast<double>(m_laengeMs) / zeitBreite())
+        m_laengeMs > 0 ? static_cast<std::int64_t>(8.0 * msJePixel())
                        : 0;
     std::int64_t beste = -1;
     std::int64_t abstand = nah + 1;
@@ -839,6 +983,7 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
     if (stueck != nullptr) *stueck = -1;
     const int zeile = zeileBei(ort.y());
     if (zeile == kKeineZeile) return Griff::Keiner;  // das Lineal
+    if (ort.x() < kKopfBreite) return Griff::Keiner; // die Spalte der Kanalnamen deckt, was darunter rollt
     // die Zeile unter dem Lineal: die Kurve der ganzen Komposition (S100) — ein
     // Clip ueber die ganze Laenge, mit den Griffen der Kurve, ohne Kanten
     // (S101: vier solche Zeilen — MASTER, VISUAL, AUDIO, KARAOKE)
@@ -1096,7 +1241,8 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
     if (ort.y() < kLinealHoehe)
     {
         m_zieht = true;
-        Q_EMIT sprung(stelleVon(ort.x()));
+        // ueber der Spalte der Kanalnamen: die erste sichtbare Stelle
+        Q_EMIT sprung(stelleVon(std::max(ort.x(), kKopfBreite)));
         return;
     }
     // Am Kanalnamen (linke Spalte) laesst sich der Kanal an einen anderen Platz
@@ -1291,6 +1437,7 @@ void Zeitachse::brichZugAb()
         m_kanal = m_zugKanal;
         m_clip = m_zugClip;
         m_laengeMs = anzeigeLaenge(m_komposition);
+        passeRollenAn();
     }
     m_griff = Griff::Keiner;
     m_zugLaeuft = false;
@@ -1306,7 +1453,7 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
                            QRect(ort.x(), 0, 1, kLinealHoehe));
     if (m_zieht)
     {
-        Q_EMIT sprung(stelleVon(ort.x()));
+        Q_EMIT sprung(stelleVon(std::max(ort.x(), kKopfBreite)));
         return;
     }
     if (m_kanalZug >= 0 && (event->buttons() & Qt::LeftButton))
@@ -1364,6 +1511,7 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent*)
     m_zugLaeuft = false;
     if (!gezogen) return;
     m_laengeMs = anzeigeLaenge(m_komposition);
+    passeRollenAn();
     update();
     if (gleich(m_komposition, m_vorZug)) return;
     Q_EMIT auswahlGeaendert();  // der Clip hat neue Zeiten
@@ -1593,7 +1741,7 @@ bool Zeitachse::legeDateien(Komposition& neu, QPoint ort, const QStringList& dat
     const Stoss stoss = !(tasten & Qt::ControlModifier) ? Stoss::Halten
                         : (tasten & Qt::ShiftModifier)  ? Stoss::Schieben
                                                         : Stoss::Kuerzen;
-    std::int64_t start = stelleVon(ort.x());
+    std::int64_t start = stelleVon(std::max(ort.x(), kKopfBreite));
     if (!(tasten & Qt::AltModifier)) start = raste(start, m_komposition, -1, -1);
     int platz = -1;
     for (const QString& datei : passend)  // mehrere Dateien: hintereinander
@@ -1928,13 +2076,20 @@ ZeitachsenRahmen::ZeitachsenRahmen(Zeitachse* achse, QWidget* parent) : QWidget(
     m_senkrecht = new QScrollBar(Qt::Vertical, this);
     m_senkrecht->setObjectName(QStringLiteral("composerRollenSenkrecht"));
     m_senkrecht->setSingleStep(20);
-    auto* reihe = new QHBoxLayout(this);
-    reihe->setContentsMargins(0, 0, 0, 0);
-    reihe->setSpacing(0);
-    reihe->addWidget(achse, 1);
-    reihe->addWidget(m_senkrecht);
+    m_waagrecht = new QScrollBar(Qt::Horizontal, this);
+    m_waagrecht->setObjectName(QStringLiteral("composerRollenWaagrecht"));
+    m_waagrecht->setSingleStep(20);
+    auto* gitter = new QGridLayout(this);
+    gitter->setContentsMargins(0, 0, 0, 0);
+    gitter->setSpacing(0);
+    gitter->addWidget(achse, 0, 0);
+    gitter->addWidget(m_senkrecht, 0, 1);
+    gitter->addWidget(m_waagrecht, 1, 0);
+    gitter->setRowStretch(0, 1);
+    gitter->setColumnStretch(0, 1);
     connect(achse, &Zeitachse::rollenGeaendert, this, &ZeitachsenRahmen::gleicheAb);
     connect(m_senkrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollY);
+    connect(m_waagrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollX);
     gleicheAb();
 }
 
@@ -1949,6 +2104,16 @@ void ZeitachsenRahmen::gleicheAb()
         m_senkrecht->setValue(m_achse->rollY());
     }
     m_senkrecht->setVisible(max > 0);  // nur, wenn nicht alle Zeilen ins Fenster passen
+
+    const int maxX = m_achse->rollXMax();
+    {
+        const QSignalBlocker ruhe(m_waagrecht);
+        m_waagrecht->setRange(0, maxX);
+        // eine Seite: die Zeit, die rechts der Kanalnamen zu sehen ist
+        m_waagrecht->setPageStep(std::max(1, m_achse->width() - Zeitachse::kKopfBreite));
+        m_waagrecht->setValue(m_achse->rollX());
+    }
+    m_waagrecht->setVisible(maxX > 0);  // nur, wenn in die Zeit hineingezoomt ist
 }
 
 // =============================================================================

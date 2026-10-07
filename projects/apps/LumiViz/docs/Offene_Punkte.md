@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.116.0
+> **Version:** 1.117.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2217,7 +2217,7 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
-- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.62.0 §7):**
+- **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.63.0 §7):**
   neun Entscheide Patrik, ZO1 bis ZO9 (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe,
   Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis
   300 %; das Lineal bleibt oben stehen; Festpunkt Mauszeiger; Schalter
@@ -2225,7 +2225,10 @@ Idee Preset-Warmup/Pre-Roll.
   mit der mittleren Maustaste; Knopf *Fit*; die Höhe merkt die App).
   Bauplan in sechs Schritten. ✅ **Schritt 1 gebaut:** die Zeitachse rollt
   senkrecht selbst, das Lineal bleibt stehen, Rollbalken rechts — **im
-  Programm nicht gesehen**. ⬜ Schritt 2 Zeit-Zoom · ⬜ Schritt 3 Höhen-Zoom
+  Programm nicht gesehen**. ✅ **Schritt 2 gebaut:** der Zeit-Zoom
+  (Ctrl+Rad um den Mauszeiger, Shift+Rad waagrecht, Rollbalken unten, die
+  Kanalnamen bleiben stehen, Lineal bis auf Zehntelsekunden) — **im
+  Programm nicht gesehen**, nur ein Bild aus dem Test. ⬜ Schritt 3 Höhen-Zoom
   (vorher per Test klären, wie Qt das Rad mit Alt unter Windows meldet) ·
   ⬜ Schritt 4 Schwenken, *Fit*, Ctrl+0 · ⬜ Schritt 5 Mitlaufen (Naht N9
   wächst; **zu messen:** was das stetige Mitlaufen neben dem Renderer
@@ -4530,6 +4533,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.117.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 2 gebaut:** der Zeit-Zoom (Ctrl+Rad um den Mauszeiger, Shift+Rad waagrecht, waagrechter Rollbalken, die Kanalnamen bleiben stehen), Konzept 0.63.0; im Programm nicht gesehen |
 | 1.116.0 | 2026-10-07 | Session 102 — **Composer, Zoom und Rollen der Zeitachse:** neun Entscheide Patrik (ZO1 bis ZO9, Konzept 0.62.0 §7), Bauplan in sechs Schritten; **Schritt 1 gebaut** (die Zeitachse rollt senkrecht selbst, das Lineal bleibt stehen, Rollbalken im `ZeitachsenRahmen`), im Programm nicht gesehen; der Vergleichslauf am Renderer bleibt nachzuholen (Patrik: später) |
 | 1.115.0 | 2026-10-07 | Session 101, Abschluss — **Composer:** Stand am Ende der Sitzung (alles aus S101 gebaut, im Programm weder gesehen noch gehört — Sichttest S101 mit 67 Punkten); Vorgabe Patrik für S102: Zoom, nicht nur in der Zeitachse — der Umfang wird zuerst geklärt |
 | 1.114.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2c gebaut — der Mute-Knopf im Panel Player (Naht N18) und im Panel Composer, Profil per Rechtsklick, Dialog der Mute-Profile (Konzept 0.61.0, Benutzerhandbuch 1.110.0); im Programm ungesehen und ungehört, Sichttest in sechs Punkten eingetragen |

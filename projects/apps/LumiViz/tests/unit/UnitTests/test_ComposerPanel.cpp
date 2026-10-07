@@ -2051,4 +2051,188 @@ TEST_SUITE("ComposerPanel")
             CHECK(balken->value() == 0);
         }
     }
+
+    // S102, Entscheide Patrik ZO1: a (Ctrl+Rad zoomt die Zeit, Shift+Rad rollt
+    // waagrecht), ZO5: a (um den Mauszeiger), ZO9: a (eine geladene Komposition
+    // beginnt ganz).
+    TEST_CASE("S102 Zeitachse: Zeit-Zoom — um den Zeiger, waagrecht rollen, die Kanalnamen bleiben stehen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Komposition k;
+        for (int i = 0; i < 3; ++i)
+        {
+            Kanal kanal;
+            kanal.name = QStringLiteral("CH%1").arg(i + 1);
+            kanal.clips.push_back(clip(QStringLiteral("x.lvfx"), 2000, 12000));
+            k.kanaele.push_back(kanal);
+        }
+
+        auto* achse = new Zeitachse;
+        ZeitachsenRahmen rahmen(achse);
+        QScrollBar* balken = rahmen.balkenWaagrecht();
+        REQUIRE(balken != nullptr);
+        achse->setKomposition(k, true);
+        rahmen.resize(700, 300);
+        testfenster::platziere(rahmen);
+        rahmen.show();
+        REQUIRE(warte([&] { return rahmen.isVisible() && achse->width() == 700; }));
+
+        const std::int64_t laenge = Zeitachse::anzeigeLaenge(k);  // 30 s: die Laenge und Luft dahinter
+        const int breite = achse->width() - Zeitachse::kKopfBreite - Zeitachse::kRand;
+        const double ganz = static_cast<double>(laenge) / breite;
+        const auto rad = [&](int raster, Qt::KeyboardModifiers tasten, int x, bool quer = false) {
+            const QPointF ort(x, 150);
+            QWheelEvent ereignis(ort, achse->mapToGlobal(ort), QPoint(),
+                                 quer ? QPoint(raster, 0) : QPoint(0, raster), Qt::NoButton, tasten,
+                                 Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(achse, &ereignis);
+        };
+        int spruenge = 0;
+        qint64 gesprungen = -1;
+        QObject::connect(achse, &Zeitachse::sprung, achse, [&](qint64 ms) {
+            ++spruenge;
+            gesprungen = ms;
+        });
+
+        SUBCASE("ohne Zoom: die ganze Laenge auf der Breite, wie bis S101")
+        {
+            CHECK(achse->zeitGanz());
+            CHECK(achse->msJePixel() == doctest::Approx(ganz));
+            CHECK(achse->rollXMax() == 0);
+            CHECK_FALSE(balken->isVisible());
+            for (const std::int64_t ms : {std::int64_t{0}, std::int64_t{5000}, std::int64_t{12000}, laenge})
+                CHECK(achse->xVon(ms) ==
+                      Zeitachse::kKopfBreite +
+                          static_cast<int>(static_cast<double>(ms) / static_cast<double>(laenge) * breite + 0.5));
+            // weiter heraus geht es nicht
+            rad(-120, Qt::ControlModifier, achse->xVon(5000));
+            CHECK(achse->zeitGanz());
+        }
+
+        SUBCASE("Ctrl+Rad zoomt um den Zeiger: die Zeit unter ihm bleibt stehen")
+        {
+            const int x = achse->xVon(8000);
+            rad(120, Qt::ControlModifier, x);
+            CHECK_FALSE(achse->zeitGanz());
+            CHECK(achse->msJePixel() == doctest::Approx(ganz / Zeitachse::kZoomSchritt));
+            CHECK(std::abs(achse->xVon(8000) - x) <= 1);
+            for (int i = 0; i < 8; ++i) rad(120, Qt::ControlModifier, x);
+            CHECK(achse->msJePixel() == doctest::Approx(ganz / std::pow(Zeitachse::kZoomSchritt, 9)));
+            CHECK(std::abs(achse->xVon(8000) - x) <= 1);
+            CHECK(std::abs(achse->stelleVon(x) - 8000) <= static_cast<std::int64_t>(achse->msJePixel()) + 1);
+            // der Balken erscheint und haelt Gleichstand
+            CHECK(achse->rollXMax() > 0);
+            REQUIRE(warte([&] { return balken->isVisible(); }));
+            CHECK(balken->maximum() == achse->rollXMax());
+            CHECK(balken->value() == achse->rollX());
+            // wieder heraus, bis alles hineinpasst: dann ist sie wieder „ganz"
+            for (int i = 0; i < 12; ++i) rad(-120, Qt::ControlModifier, x);
+            CHECK(achse->zeitGanz());
+            CHECK(achse->rollX() == 0);
+            CHECK(warte([&] { return !balken->isVisible(); }));
+        }
+
+        SUBCASE("der feinste Massstab: eine Millisekunde je Pixel")
+        {
+            achse->zoomeZeit(1e9, achse->xVon(8000));
+            CHECK(achse->msJePixel() == doctest::Approx(Zeitachse::kFeinsteMsJePixel));
+            CHECK(achse->rollXMax() == static_cast<int>(laenge) - breite);
+            // das Zeichnen laeuft auch dort durch (nur das sichtbare Stueck)
+            QElapsedTimer uhr;
+            uhr.start();
+            const QPixmap bild = achse->grab();
+            CHECK_FALSE(bild.isNull());
+            MESSAGE("Zeichnen beim feinsten Massstab: " << uhr.elapsed() << " ms");
+            CHECK(uhr.elapsed() < 500);
+        }
+
+        SUBCASE("Shift+Rad rollt waagrecht — auch wenn das System das Rad quer meldet")
+        {
+            achse->zoomeZeit(4.0, achse->xVon(0));
+            REQUIRE(achse->rollX() == 0);
+            rad(-120, Qt::ShiftModifier, 300);
+            CHECK(achse->rollX() == 60);
+            rad(-120, Qt::ShiftModifier, 300, true);
+            CHECK(achse->rollX() == 120);
+            rad(120, Qt::ShiftModifier, 300);
+            CHECK(achse->rollX() == 60);
+            // ein Rad, das von sich aus quer rollt (Touchpad), ohne Taste
+            rad(-120, Qt::NoModifier, 300, true);
+            CHECK(achse->rollX() == 120);
+            balken->setValue(30);
+            CHECK(achse->rollX() == 30);
+            achse->setRollX(999999);
+            CHECK(achse->rollX() == achse->rollXMax());
+        }
+
+        SUBCASE("gerollt: Clips werden getroffen, wo sie stehen — nicht unter der Spalte der Kanalnamen")
+        {
+            achse->zoomeZeit(4.0, achse->xVon(0));
+            // der Clip (2 bis 12 s) beginnt links ausserhalb, sein Ende ist zu sehen
+            achse->setRollX(static_cast<int>(6000.0 / achse->msJePixel()));
+            REQUIRE(achse->xVon(2000) < Zeitachse::kKopfBreite);
+            const int xImClip = achse->xVon(9000);
+            REQUIRE(xImClip > Zeitachse::kKopfBreite);
+            REQUIRE(xImClip < achse->width());
+            klick(*achse, QPoint(xImClip, achse->yVonZeile(1)));
+            CHECK(achse->gewaehlterKanal() == 1);
+            CHECK(achse->gewaehlterClip() == 0);
+            // dieselbe Zeile, ueber dem Kanalnamen: dort liegt der Clip nur darunter
+            klick(*achse, QPoint(Zeitachse::kKopfBreite - 20, achse->yVonZeile(2)));
+            CHECK(achse->gewaehlterKanal() == -1);
+
+            // ein Klick ins Lineal springt an die Zeit, die dort steht
+            klick(*achse, QPoint(xImClip, 10));
+            CHECK(spruenge == 1);
+            CHECK(std::abs(gesprungen - 9000) <= static_cast<qint64>(achse->msJePixel()) + 1);
+            // ueber der Spalte der Kanalnamen: die erste sichtbare Stelle
+            klick(*achse, QPoint(20, 10));
+            CHECK(spruenge == 2);
+            CHECK(gesprungen == achse->stelleVon(Zeitachse::kKopfBreite));
+            CHECK(gesprungen > 5000);
+
+            // `LUMIVIZ_COMPOSER_ZOOM_BILD=<datei.png>` legt ein Bild der gerollten Achse ab
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_ZOOM_BILD"); !bild.isEmpty())
+            {
+                achse->setStelle(8000);
+                CHECK(rahmen.grab().save(bild));
+            }
+        }
+
+        SUBCASE("wird das Fenster breiter, bis alles hineinpasst, ist die Achse wieder ganz")
+        {
+            achse->zoomeZeit(1.2, achse->xVon(5000));
+            REQUIRE_FALSE(achse->zeitGanz());
+            const double fest = achse->msJePixel();
+            rahmen.resize(760, 300);  // noch zu schmal: der Massstab bleibt
+            REQUIRE(warte([&] { return achse->width() >= 740; }));
+            CHECK_FALSE(achse->zeitGanz());
+            CHECK(achse->msJePixel() == doctest::Approx(fest));
+            rahmen.resize(1000, 300);
+            REQUIRE(warte([&] { return achse->width() == 1000; }));
+            CHECK(achse->zeitGanz());
+            CHECK(achse->rollX() == 0);
+        }
+
+        SUBCASE("eine geladene Komposition beginnt ganz; die bearbeitete Fassung behaelt den Zoom")
+        {
+            achse->zoomeZeit(4.0, achse->xVon(8000));
+            const double fest = achse->msJePixel();
+            const int gerollt = achse->rollX();
+            REQUIRE(gerollt > 0);
+            achse->zeigeBearbeitet(k);
+            CHECK(achse->msJePixel() == doctest::Approx(fest));
+            CHECK(achse->rollX() == gerollt);
+            achse->setKomposition(k, true);
+            CHECK(achse->zeitGanz());
+            CHECK(achse->rollX() == 0);
+            achse->zoomeZeit(4.0, achse->xVon(8000));
+            achse->zeigeZeitGanz();
+            CHECK(achse->zeitGanz());
+        }
+    }
 }

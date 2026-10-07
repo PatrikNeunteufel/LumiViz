@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.62.0
+> **Version:** 0.63.0
 > **Datum:** 2026-10-07 (Session 102)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -629,8 +629,8 @@ Naht N9):**
 
 **Zoom und Rollen der Zeitachse (Vorgabe Patrik S101 / S102: „Zoom in x und
 y, wobei beide zusammen wie auch einzeln gezoomt werden können"; neun
-Entscheide Patrik S102, ZO1 bis ZO9 — gebaut ist Schritt 1, das Rollen
-(ZO4), noch ohne Zoom; im Programm nicht gesehen):**
+Entscheide Patrik S102, ZO1 bis ZO9 — gebaut sind Schritt 1, das Rollen
+(ZO4), und Schritt 2, der Zeit-Zoom; im Programm nicht gesehen):**
 
 - **Mausrad (ZO1: a):** Rad allein rollt senkrecht (wie bisher), Shift+Rad
   waagrecht. **Ctrl+Rad zoomt die Zeit, Alt+Rad die Zeilenhöhe, Ctrl+Alt+Rad
@@ -661,8 +661,28 @@ Entscheide Patrik S102, ZO1 bis ZO9 — gebaut ist Schritt 1, das Rollen
   Ausschnitt — erst die Zeilen, dann das Lineal. Der Rollbalken sitzt im
   neuen `ZeitachsenRahmen` und erscheint nur, wenn nicht alle Zeilen ins
   Fenster passen; das Mausrad ohne Taste rollt 60 Pixel je Raste. Eine
-  andere Komposition beginnt oben. **Offen bis Schritt 2:** waagrecht
-  rollt noch nichts, die Spalte der Kanalnamen steht also ohnehin.
+  andere Komposition beginnt oben.
+  **Gebaut S102 (Schritt 2), der Zeit-Zoom:** ohne Zoom zeigt die Achse
+  die ganze Länge auf der Breite („ganz", `zeitGanz`) — gerechnet wie bis
+  S101. Hineingezoomt steht der Maßstab fest (`msJePixel`), auch wenn die
+  Komposition wächst oder das Fenster breiter wird; passt dann wieder
+  alles hinein, ist sie wieder ganz. **Ctrl+Rad** zoomt um den Mauszeiger
+  (`zoomeZeit`, Faktor 1,25 je Raste, bis 1 Millisekunde je Pixel),
+  **Shift+Rad** rollt waagrecht (60 Pixel je Raste; auch ein Rad, das von
+  sich aus quer rollt). `rollX` / `setRollX` / `rollXMax`; der waagrechte
+  Rollbalken sitzt unter der Achse im `ZeitachsenRahmen` und erscheint
+  nur hineingezoomt. Die Spalte der Kanalnamen bleibt stehen: alles, was
+  an einer Zeit hängt, wird nur rechts von ihr gezeichnet, und ein Clip,
+  der darunter gerollt ist, wird dort nicht getroffen. Gezeichnet wird nur
+  das sichtbare Stück (Striche, Clips, Wellenform, Pegelkurve) — beim
+  feinsten Maßstab im Test 6 ms. Das Lineal teilt sich bis auf
+  Zehntelsekunden und beschriftet dann mit der Zehntelsekunde. Eine
+  geladene Komposition beginnt ganz (ZO9), die bearbeitete Fassung (auch
+  nach Undo) behält den Zoom. **Von mir gesetzt:** der Name eines Clips
+  bleibt am linken Rand stehen, wenn sein Anfang hinausgerollt ist; ein
+  Klick ins Lineal über der Spalte der Kanalnamen springt an die erste
+  sichtbare Stelle (ohne Zoom wie bisher an den Anfang), ebenso das
+  Fallenlassen dort.
   **Grenze, nicht gebaut:** wird ein Clip an den Rand gezogen, rollt die
   Achse nicht von selbst mit (das Mausrad rollt auch im Zug). Verworfen: auch die Master-Zeilen fest (b — bei 300 %
   nähmen sie mit dem Lineal 284 Pixel), alles rollt wie bisher (c).
@@ -1449,6 +1469,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.63.0 | 2026-10-07 | Session 102 — **Zoom, Schritt 2 — der Zeit-Zoom (Entscheide Patrik ZO1: a, ZO5: a, ZO9: a):** §7 — Ctrl+Rad zoomt die Zeit um den Mauszeiger (Faktor 1,25 je Raste, von der ganzen Länge bis 1 Millisekunde je Pixel), Shift+Rad rollt waagrecht, waagrechter Rollbalken im `ZeitachsenRahmen`, die Spalte der Kanalnamen bleibt stehen, das Lineal teilt sich bis auf Zehntelsekunden, gezeichnet wird nur das sichtbare Stück; eine geladene Komposition beginnt ganz. Eigenes, keine Naht berührt. Von mir gesetzt: der Name eines Clips bleibt am linken Rand stehen; über der Spalte der Kanalnamen gilt die erste sichtbare Stelle. Test: neuer Fall „S102 Zeitachse: Zeit-Zoom" (72 Prüfungen), ein Bild der gezoomten Achse angesehen (`LUMIVIZ_COMPOSER_ZOOM_BILD`). Offen: Schritte 3 bis 6 |
 | 0.62.0 | 2026-10-07 | Session 102 — **Zoom und Rollen der Zeitachse, neun Entscheide Patrik (ZO1 bis ZO9), gebaut ist Schritt 1:** §7 neuer Block (Ctrl+Rad Zeit, Alt+Rad Zeilenhöhe, Ctrl+Alt+Rad beides, Ctrl+0; Master-Zeilen immer 60 %; Höhe 50 % bis 300 %; das Lineal bleibt oben stehen, die Kanalnamen links, Rollbalken in beiden Richtungen; Festpunkt Mauszeiger; Schalter **Scroll with playhead**, die Art in Settings, Vorgabe stetig; Schwenken mit der mittleren Maustaste; Knopf **Fit**; die Höhe merkt die App, die Zeit beginnt ganz). §12.2 **Naht N9 wächst** (Auswahl Scroll with playhead in Settings), vor dem Bau eingetragen. **Gebaut: Schritt 1** — die Zeitachse rollt senkrecht selbst (`rollY`, `zeileBei`, Zeichnen in zwei Gängen, `ZeitachsenRahmen` mit dem Rollbalken statt der `QScrollArea`); eigener Code, keine Naht berührt; Test: neuer Fall „S102 Zeitachse: sie rollt selbst" (84 Prüfungen). Bauplan in sechs Schritten: (1) die Zeitachse führt ihr Rollen selbst, (2) Zeit-Zoom, (3) Höhen-Zoom, (4) Schwenken, Fit, Ctrl+0, (5) Mitlaufen mit der Naht, (6) Doku und Sichttest-Liste |
 | 0.61.1 | 2026-10-07 | Session 101, Abschluss — §12.4 Rückbau-Liste: eine Zeile für Master-Zeilen, Karaoke im Composer und Mute mit den Kennungen (`49d3cf6`, `39f8443`, `219087b`, `e1e6664` mit R2, `725c5cc` mit N17 und N13, `735062b` mit N18) — sie ersetzt die Vermerke „Kennung folgt" der Zeilen 0.59.0 bis 0.61.0 unten. Als Nächstes (Patrik): Zoom — nicht nur in der Zeitachse, Umfang wird in der nächsten Sitzung geklärt |
 | 0.61.0 | 2026-10-07 | Session 101 — **Mute, Schritt 2c — der Knopf (Entscheid Patrik AM2: c):** §12.2 **Naht N18** (`UI/panels/PlayerPanel.cpp`: ein Aufruf `composer::erzeugeMuteKnopf`, das Panel legt den Knopf hinter den Lautstärke-Regler), vor dem Bau eingetragen. Eigenes: `composer/MuteKnopf.hpp` / `.cpp` — `MuteKnopf` (schaltet `MuteSchalter`, Rechtsklick wählt das Profil) und `MuteProfilDialog`; derselbe Knopf im Panel Composer. Der Lautsprecher-Knopf des Panels Player bleibt das harte Mute. §12.4 Rückbau: die zwei Dateien, die Naht-Stelle im Panel Player (trägt `Composer-Naht N18`); Kennung folgt — der Commit trägt Naht und Eigenes zusammen. Im Programm nicht gesehen, nicht gehört |
