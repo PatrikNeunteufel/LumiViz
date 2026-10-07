@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.96.0
+> **Version:** 1.97.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2241,8 +2241,20 @@ Idee Preset-Warmup/Pre-Roll.
     im Panel (01:45) lag rund 3,6 s hinter der der Komposition (11:48,2).
     Nachtest: A2 einmal mit sichtbarem, einmal mit verdecktem Panel Player.
   - **F7, Urteil Patrik — neuer Wunsch:** die Blende der ganzen Komposition
-    soll **wie bei Clips** sein, auch editierbar (heute linear und fest). Als
-    Entscheid vorlegen.
+    soll **wie bei Clips** sein, auch editierbar (heute linear und fest).
+    **Entschieden (Patrik S100): c — die ganze Pegelkurve wie am Clip:**
+    Ein- und Ausblendung mit Kurve, Grundpegel und Stücke an frei wählbaren
+    Stellen, in einer eigenen Spur unter dem Lineal, mit denselben Griffen
+    und demselben Curve Editor. **F7-1 (Patrik S100): a — ein Stück liegt
+    an fester Zeit**, hinter dem Ende wirkt es nicht und bleibt gespeichert.
+    **Gebaut: Schritt 1 von 4, Modell und Datei** (Konzept 0.45.0, §4) —
+    im Panel noch nichts einstellbar, im Programm ändert sich nur eines:
+    überdecken sich *Fade in* und *Fade out*, teilen sie den Platz wie am
+    Clip (bisher galt der kleinere Wert). Offen: Schritt 2 Curve Editor,
+    Schritt 3 Spur „MASTER" unter dem Lineal mit Griffen und Kontextmenü
+    (die Keile im Lineal entfallen), Schritt 4 Handbuch. Von mir gesetzt,
+    im nächsten Sichttest zu fragen: Name und Ort der Spur, Wegfall der
+    Keile, Hineinrücken am Rand und Stauchen wie am Clip.
   - **B4:** Bemerkung „wurde doch überarbeitet" — die Erwartung der Liste
     war schon in S99 berichtigt; kein Befund.
   - **Nicht gespielt:** Abschnitt G ganz (*Visuals overlap themselves*, G1
@@ -4241,6 +4253,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.97.0 | 2026-10-07 | Session 100 — **Composer:** Pegelkurve der ganzen Komposition entschieden (Patrik: F7 c — alles, was ein Clip hat, in einer eigenen Spur; F7-1 a — ein Stück liegt an fester Zeit), Schritt 1 von 4 gebaut — Modell und Datei (Konzept 0.45.0). Im Panel noch nichts einstellbar; offen Curve Editor, Spur „MASTER", Handbuch |
 | 1.96.0 | 2026-10-07 | Session 100 — **Composer:** Sichttest S99 ausgewertet (31 bestanden, 3 mit Bemerkung, 1 durchgefallen, 17 offen): Überlappung in der Schleife und Blende der ganzen Komposition im Programm gesehen und gehört, ohne Befund; was im Fenster von mir gesetzt war, ist gebilligt. Befund A2 (Panel Player blieb beim ersten Ausschalten auf dem Song der Komposition) per Test nachgestellt und behoben — Naht N5, Anzeige, sechste Stelle (Konzept 0.44.0); im Programm nicht gesehen. Neuer Wunsch F7: Blende der Komposition wie bei Clips, editierbar. Nicht gespielt: Abschnitt G, D1 bis D4, C2, C3, B5, A8, E1 |
 | 1.95.0 | 2026-10-06 | Session 99, Abschluss — **Composer:** die Überlappung in der Schleife (Loop overlap, beide Fenster in der Zeitachse, Songs / Visuals overlap themselves) und die Blende der ganzen Komposition (Fade in / Fade out) in sieben Schritten gebaut (Konzept 0.43.1, Benutzerhandbuch 1.98.0); im Programm nichts davon gesehen oder gehört — Sichttest S99 mit 52 Punkten; nicht gemessen: Bildzeit und Grafikspeicher von *Visuals overlap themselves*. Weiter offen: Entscheid „Flipped und einfache Einblendung", vier Wünsche zur Zeitachse und ein Icon für Composer-Dateien. 939 Cases |
 | 1.94.0 | 2026-10-06 | Session 99 — **Composer:** Überlappung in der Schleife entschieden (vier Entscheide Patrik), Schritt 1 von 7 gebaut — Modell und Datei (Konzept 0.37.0). §7 neu: Befund Patrik „Flipped und einfache Einblendung" (Zielbild bestätigt: unsichtbar einfahren, später einblenden, oben bleiben — Vorlage steht aus) und vier Wünsche zur Zeitachse (Kanalfarben einstellbar, Kanäle verschieben, sortieren nach Typ, Zoom und Schwenken) |

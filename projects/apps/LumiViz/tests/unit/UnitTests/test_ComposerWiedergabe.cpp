@@ -275,12 +275,13 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(k.blendeBei(52000) == doctest::Approx(1.0));
         CHECK(k.blendeBei(56000) == doctest::Approx(0.5));
         CHECK(k.blendeBei(60000) == doctest::Approx(0.0));
-        // ueberdecken sie sich, gilt der kleinere Wert
+        // ueberdecken sie sich, teilen sie den Platz wie am Clip (S100; bis S99 galt
+        // der kleinere Wert): jede bekommt die halbe Laenge
         k.einblendeMs = 60000;
         k.ausblendeMs = 60000;
-        CHECK(k.blendeBei(15000) == doctest::Approx(0.25));
-        CHECK(k.blendeBei(45000) == doctest::Approx(0.25));
-        CHECK(k.blendeBei(30000) == doctest::Approx(0.5));
+        CHECK(k.blendeBei(15000) == doctest::Approx(0.5));
+        CHECK(k.blendeBei(45000) == doctest::Approx(0.5));
+        CHECK(k.blendeBei(30000) == doctest::Approx(1.0));
 
         // die Datei traegt alle fuenf Werte, und Unsinn wird gerichtet
         k.ueberlappungMs = 7000;
@@ -308,6 +309,132 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(h.ueberlappungMs == 0);
         CHECK(h.einblendeMs == 0);
         CHECK(h.ausblendeMs == 0);
+    }
+
+    TEST_CASE("Kurve der Komposition S100, Modell: Blenden mit Form, Grundpegel, Stuecke an fester Zeit — und die Datei")
+    {
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {clip(QStringLiteral("a.lvfx"), 0, 60000)}));
+        CHECK_FALSE(k.hatKurve());
+        CHECK_FALSE(alsJson(k).contains(QStringLiteral("level")));
+
+        // eine Blende mit Form: derselbe Wert wie die Blende eines Clips
+        k.einblendeMs = 4000;
+        k.einblendeForm = einfacheBlende(Kurvenform::SKurve);
+        Clip vergleich = clip(QStringLiteral("a.lvfx"), 0, 60000);
+        vergleich.setzeBlenden(4000, 0, Kurvenform::SKurve);
+        CHECK(k.hatKurve());
+        CHECK(k.blendeBei(0) == doctest::Approx(0.0));
+        CHECK(k.blendeBei(1000) == doctest::Approx(vergleich.pegelBei(1000)));
+        CHECK(k.blendeBei(1000) < 0.25);  // nicht mehr linear
+        CHECK(k.blendeBei(2000) == doctest::Approx(0.5));
+        CHECK(k.blendeBei(4000) == doctest::Approx(1.0));
+
+        // der Grundpegel gilt zwischen den Teilen, die Blende laeuft bis zu ihm
+        k.grundpegel = 0.8;
+        CHECK(k.blendeBei(30000) == doctest::Approx(0.8));
+        CHECK(k.blendeBei(2000) == doctest::Approx(0.4));
+
+        // ein Stueck an fester Zeit: Delle um 30 s, 10 s weit — in der Mitte auf null
+        GesamtStueck delleBei30;
+        delleBei30.mitteMs = 30000;
+        delleBei30.weiteMs = 10000;
+        k.gesamtStuecke.push_back(delleBei30);
+        CHECK(k.blendeBei(24999) == doctest::Approx(0.8));
+        CHECK(k.blendeBei(30000) == doctest::Approx(0.0));
+        CHECK(k.blendeBei(35001) == doctest::Approx(0.8));
+        // gekippt hebt es vom Grundpegel auf voll
+        k.gesamtStuecke[0].gekippt = true;
+        CHECK(k.blendeBei(30000) == doctest::Approx(1.0));
+        k.gesamtStuecke[0].gekippt = false;
+
+        // die Laenge aendert sich: das Stueck bleibt an seiner Stelle (F7-1 a)
+        k.kanaele[0].clips.push_back(clip(QStringLiteral("b.lvfx"), 60000, 180000));
+        CHECK(k.laenge() == 180000);
+        CHECK(k.blendeBei(30000) == doctest::Approx(0.0));
+        CHECK(k.blendeBei(90000) == doctest::Approx(0.8));  // dort laege es als Anteil
+        // kuerzer als seine Stelle: es wirkt nicht — und bleibt gespeichert
+        k.kanaele[0].clips.pop_back();
+        k.kanaele[0].clips[0].endeMs = 20000;
+        CHECK(k.laenge() == 20000);
+        CHECK(k.blendeBei(10000) == doctest::Approx(0.8));
+        CHECK(k.blendeBei(19999) == doctest::Approx(0.8));
+        REQUIRE(k.gesamtStuecke.size() == 1);
+        std::vector<int> herkunft;
+        CHECK(k.kurveAlsClip(&herkunft).stuecke.empty());
+        CHECK(herkunft.empty());
+        // wird sie wieder laenger, ist es wieder da
+        k.kanaele[0].clips[0].endeMs = 60000;
+        CHECK(k.blendeBei(30000) == doctest::Approx(0.0));
+
+        // als Clip und zurueck: nichts aendert sich — auch ein Stueck hinter dem Ende bleibt
+        GesamtStueck hinten;
+        hinten.mitteMs = 90000;
+        hinten.weiteMs = 4000;
+        k.gesamtStuecke.push_back(hinten);
+        const Clip alsClip = k.kurveAlsClip(&herkunft);
+        CHECK(alsClip.dauerMs() == 60000);
+        REQUIRE(alsClip.stuecke.size() == 1);
+        REQUIRE(herkunft.size() == 1);
+        CHECK(herkunft[0] == 0);
+        CHECK(alsClip.stuecke[0].lage == doctest::Approx(0.5));
+        Komposition zurueck = k;
+        zurueck.setzeKurveAusClip(alsClip);
+        CHECK(zurueck.gesamtStuecke.size() == 2);
+        for (const std::int64_t stelle : {0, 1000, 2000, 27000, 30000, 33000, 59000})
+            CHECK(zurueck.blendeBei(stelle) == doctest::Approx(k.blendeBei(stelle)));
+        // bearbeitet: das Stueck im Clip auf drei Viertel geschoben = 45 s
+        Clip bearbeitet = alsClip;
+        bearbeitet.stuecke[0].lage = 0.75;
+        bearbeitet.grundpegel = 1.0;
+        zurueck.setzeKurveAusClip(bearbeitet);
+        CHECK(zurueck.grundpegel == doctest::Approx(1.0));
+        CHECK(zurueck.blendeBei(45000) == doctest::Approx(0.0));
+        CHECK(zurueck.blendeBei(30000) == doctest::Approx(1.0));
+        // ganz ans Ende geschoben: die Mitte bleibt vor dem Ende, das Stueck verschwindet nicht
+        bearbeitet.stuecke[0].lage = 1.0;
+        zurueck.setzeKurveAusClip(bearbeitet);
+        CHECK(zurueck.kurveAlsClip().stuecke.size() == 1);
+
+        // die Datei: Formen, Grundpegel und Stuecke (als feste Zeit), Roundtrip
+        k.ausblendeMs = 8000;
+        const QJsonObject json = alsJson(k);
+        const QJsonObject blende = json.value(QStringLiteral("fade")).toObject();
+        CHECK(blende.contains(QStringLiteral("inShape")));
+        CHECK_FALSE(blende.contains(QStringLiteral("outShape")));  // linear: wie bisher
+        const QJsonObject pegel = json.value(QStringLiteral("level")).toObject();
+        CHECK(pegel.value(QStringLiteral("base")).toDouble() == doctest::Approx(0.8));
+        REQUIRE(pegel.value(QStringLiteral("shapes")).toArray().size() == 2);
+        CHECK(pegel.value(QStringLiteral("shapes")).toArray().at(0).toObject().value(QStringLiteral("at")).toDouble() ==
+              30000);
+        Komposition g;
+        REQUIRE(ausJson(json, g));
+        CHECK(alsJson(g) == json);
+        for (const std::int64_t stelle : {0, 1000, 30000, 56000, 60000})
+            CHECK(g.blendeBei(stelle) == doctest::Approx(k.blendeBei(stelle)));
+
+        // eine Datei aus S99 (nur Dauern): lineare Blenden, kein Grundpegel, keine Stuecke
+        QJsonObject alt = alsJson(Komposition{});
+        QJsonObject nurDauern;
+        nurDauern.insert(QStringLiteral("in"), 4000.0);
+        nurDauern.insert(QStringLiteral("out"), 8000.0);
+        alt.insert(QStringLiteral("fade"), nurDauern);
+        Komposition a;
+        REQUIRE(ausJson(alt, a));
+        CHECK(a.einblendeMs == 4000);
+        CHECK(gleich(a.einblendeForm, einfacheBlende()));
+        CHECK(a.grundpegel == doctest::Approx(1.0));
+        CHECK(a.gesamtStuecke.empty());
+
+        // Unsinn wird gerichtet
+        Komposition u = k;
+        u.grundpegel = 3.0;
+        u.gesamtStuecke[0].mitteMs = -5;
+        u.gesamtStuecke[0].weiteMs = -5;
+        u.richte();
+        CHECK(u.grundpegel == doctest::Approx(1.0));
+        CHECK(u.gesamtStuecke[0].mitteMs == 0);
+        CHECK(u.gesamtStuecke[0].weiteMs == 0);
     }
 
     TEST_CASE("C1b Datei: .lvcomp — Roundtrip aller Felder, relative Pfade, fehlende Datei gemeldet")

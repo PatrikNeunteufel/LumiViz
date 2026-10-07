@@ -128,6 +128,18 @@ struct Kanal
     std::vector<Clip> clips;
 };
 
+/// Ein Stueck der Pegelkurve der GANZEN Komposition (Entscheid Patrik S100,
+/// F7 c). Wie `ClipStueck`, aber an einer festen Stelle der Zeitachse (F7-1 a):
+/// aendert sich die Laenge der Komposition, bleibt es dort. Liegt seine Mitte
+/// hinter dem Ende, wirkt es nicht — und bleibt gespeichert.
+struct GesamtStueck
+{
+    std::int64_t mitteMs = 0;  ///< Mitte des Stuecks, ab Anfang der Komposition
+    std::int64_t weiteMs = 0;  ///< eingestellt
+    bool gekippt = false;
+    Pegelform form = delle();
+};
+
 /// Liefert die Laenge eines Songs in Millisekunden, 0 = unbekannt. Das Modell
 /// kennt keine Audio-Engine — wer laedt, reicht die Auskunft herein.
 using SongLaenge = std::function<std::int64_t(const QString& datei)>;
@@ -157,6 +169,29 @@ struct Komposition
     /// Gilt immer — auch beim ersten Start und am Ende ohne Schleife.
     std::int64_t einblendeMs = 0;
     std::int64_t ausblendeMs = 0;
+    // --- die Pegelkurve der ganzen Komposition, wie am Clip (Entscheide Patrik
+    //     S100: F7 c, F7-1 a; Konzept §4) -------------------------------------
+    /// Die Formen der zwei Blenden; Vorgabe linear.
+    Pegelform einblendeForm = einfacheBlende();
+    Pegelform ausblendeForm = einfacheBlende();
+    /// Der Pegel zwischen den Teilen, 0…1 — Bild und Ton.
+    double grundpegel = 1.0;
+    /// Stuecke an festen Stellen der Zeitachse.
+    std::vector<GesamtStueck> gesamtStuecke;
+
+    /// Die Kurve als Clip ueber [0, Laenge): Grundpegel, Blenden und die
+    /// Stuecke, deren Mitte vor dem Ende liegt, mit der Lage als Anteil. Damit
+    /// rechnen `blendeBei`, die Zeitachse und der Curve Editor wie an einem
+    /// Clip. `herkunft` (wenn gegeben): je Stueck des Clips der Index in
+    /// `gesamtStuecke`.
+    [[nodiscard]] Clip kurveAlsClip(std::vector<int>* herkunft = nullptr) const;
+    /// Die Kurve aus einem solchen Clip zuruecknehmen (nach dem Bearbeiten):
+    /// Grundpegel, Blenden und Stuecke — die Lage wird zur festen Zeit. Stuecke
+    /// hinter dem Ende, die der Clip nicht trug, bleiben.
+    void setzeKurveAusClip(const Clip& clip);
+    /// Hat die Komposition ueberhaupt eine Kurve — eine Blende, ein Stueck
+    /// oder einen Grundpegel unter voll?
+    [[nodiscard]] bool hatKurve() const;
 
     /// Die Ueberlappung, die wirkt: hoechstens die halbe Laenge — die zwei
     /// Fenster beruehren sich dann, sie kreuzen sich nie.
@@ -166,8 +201,9 @@ struct Komposition
     /// Zu einer Stelle im vorderen Fenster die Stelle im hinteren, die in der
     /// Schleife zugleich laeuft; -1 = `stelleMs` liegt nicht im vorderen Fenster.
     [[nodiscard]] std::int64_t endStelleZu(std::int64_t stelleMs) const;
-    /// Pegel der Blende der ganzen Komposition an der Stelle, 0…1 (linear).
-    /// Ueberdecken sich Ein- und Ausblendung, gilt der kleinere Wert.
+    /// Pegel der Kurve der ganzen Komposition an der Stelle, 0…1 — gerechnet
+    /// wie die Pegelkurve eines Clips ueber [0, Laenge): ueberdecken sich
+    /// Teile, werden sie gestaucht (bis S99: linear, der kleinere Wert galt).
     [[nodiscard]] double blendeBei(std::int64_t stelleMs) const;
 
     /// Die gesetzte Laenge, sonst das Ende des letzten Clips — Bild oder Ton.

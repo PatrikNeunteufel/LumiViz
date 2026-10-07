@@ -13,6 +13,7 @@
 #include <QSaveFile>
 
 #include <algorithm>
+#include <cmath>
 
 namespace lumi::composer
 {
@@ -199,14 +200,67 @@ std::int64_t Komposition::endStelleZu(std::int64_t stelleMs) const
 
 double Komposition::blendeBei(std::int64_t stelleMs) const
 {
+    if (!hatKurve() || laenge() <= 0) return 1.0;
+    return std::clamp(kurveAlsClip().pegelBei(stelleMs), 0.0, 1.0);
+}
+
+bool Komposition::hatKurve() const
+{
+    return einblendeMs > 0 || ausblendeMs > 0 || grundpegel < 1.0 || !gesamtStuecke.empty();
+}
+
+Clip Komposition::kurveAlsClip(std::vector<int>* herkunft) const
+{
+    Clip c;
+    c.startMs = 0;
+    c.endeMs = laenge();
+    c.grundpegel = grundpegel;
+    c.ein = {einblendeMs, einblendeForm};
+    c.aus = {ausblendeMs, ausblendeForm};
+    if (herkunft != nullptr) herkunft->clear();
+    for (std::size_t i = 0; i < gesamtStuecke.size(); ++i)
+    {
+        const GesamtStueck& s = gesamtStuecke[i];
+        // hinter dem Ende wirkt ein Stueck nicht (Entscheid Patrik S100, F7-1 a)
+        if (c.endeMs <= 0 || s.mitteMs >= c.endeMs) continue;
+        ClipStueck t;
+        t.lage = static_cast<double>(s.mitteMs) / static_cast<double>(c.endeMs);
+        t.weiteMs = s.weiteMs;
+        t.gekippt = s.gekippt;
+        t.form = s.form;
+        c.stuecke.push_back(std::move(t));
+        if (herkunft != nullptr) herkunft->push_back(static_cast<int>(i));
+    }
+    return c;
+}
+
+void Komposition::setzeKurveAusClip(const Clip& clip)
+{
     const std::int64_t ende = laenge();
-    if (ende <= 0) return 1.0;
-    double pegel = 1.0;
-    if (einblendeMs > 0 && stelleMs < einblendeMs)
-        pegel = static_cast<double>(stelleMs) / static_cast<double>(einblendeMs);
-    if (ausblendeMs > 0 && stelleMs > ende - ausblendeMs)
-        pegel = std::min(pegel, static_cast<double>(ende - stelleMs) / static_cast<double>(ausblendeMs));
-    return std::clamp(pegel, 0.0, 1.0);
+    grundpegel = std::clamp(clip.grundpegel, 0.0, 1.0);
+    einblendeMs = std::max<std::int64_t>(0, clip.ein.dauerMs);
+    einblendeForm = clip.ein.form;
+    ausblendeMs = std::max<std::int64_t>(0, clip.aus.dauerMs);
+    ausblendeForm = clip.aus.form;
+    // was hinter dem Ende liegt, trug der Clip nicht — es bleibt
+    std::vector<GesamtStueck> neu;
+    for (const GesamtStueck& s : gesamtStuecke)
+        if (ende <= 0 || s.mitteMs >= ende) neu.push_back(s);
+    if (ende > 0)
+    {
+        for (const ClipStueck& t : clip.stuecke)
+        {
+            GesamtStueck s;
+            // die Mitte bleibt vor dem Ende — sonst waere das Stueck gleich wieder weg
+            s.mitteMs = std::clamp<std::int64_t>(
+                std::llround(std::clamp(t.lage, 0.0, 1.0) * static_cast<double>(ende)), 0, ende - 1);
+            s.weiteMs = std::max<std::int64_t>(0, t.weiteMs);
+            s.gekippt = t.gekippt;
+            s.form = t.form;
+            neu.push_back(std::move(s));
+        }
+    }
+    gesamtStuecke = std::move(neu);
 }
 
 std::int64_t Komposition::clipEnde() const
@@ -275,6 +329,19 @@ void Komposition::richte(QStringList* bericht)
     ueberlappungMs = std::max<std::int64_t>(0, ueberlappungMs);
     einblendeMs = std::max<std::int64_t>(0, einblendeMs);
     ausblendeMs = std::max<std::int64_t>(0, ausblendeMs);
+    grundpegel = std::clamp(grundpegel, 0.0, 1.0);
+    for (Pegelform* f : {&einblendeForm, &ausblendeForm})
+    {
+        f->art = FormArt::Blende;
+        f->richte();
+    }
+    for (GesamtStueck& s : gesamtStuecke)
+    {
+        s.mitteMs = std::max<std::int64_t>(0, s.mitteMs);
+        s.weiteMs = std::max<std::int64_t>(0, s.weiteMs);
+        s.form.art = FormArt::Stueck;
+        s.form.richte();
+    }
 }
 
 int Komposition::tonKanal() const
@@ -393,7 +460,31 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
         QJsonObject blende;
         blende.insert(QStringLiteral("in"), static_cast<double>(komposition.einblendeMs));
         blende.insert(QStringLiteral("out"), static_cast<double>(komposition.ausblendeMs));
+        // die Formen (S100) nur, wenn sie von der linearen Vorgabe abweichen
+        if (komposition.einblendeMs > 0 && !gleich(komposition.einblendeForm, einfacheBlende()))
+            blende.insert(QStringLiteral("inShape"), formAlsJson(komposition.einblendeForm));
+        if (komposition.ausblendeMs > 0 && !gleich(komposition.ausblendeForm, einfacheBlende()))
+            blende.insert(QStringLiteral("outShape"), formAlsJson(komposition.ausblendeForm));
         wurzel.insert(QStringLiteral("fade"), blende);
+    }
+    // Grundpegel und Stuecke der ganzen Komposition (S100): die Lage als feste
+    // Zeit (`at`), nicht als Anteil wie am Clip (`pos`)
+    if (komposition.grundpegel < 1.0 || !komposition.gesamtStuecke.empty())
+    {
+        QJsonObject pegel;
+        if (komposition.grundpegel < 1.0) pegel.insert(QStringLiteral("base"), komposition.grundpegel);
+        QJsonArray stuecke;
+        for (const GesamtStueck& s : komposition.gesamtStuecke)
+        {
+            QJsonObject so;
+            so.insert(QStringLiteral("at"), static_cast<double>(s.mitteMs));
+            so.insert(QStringLiteral("width"), static_cast<double>(s.weiteMs));
+            so.insert(QStringLiteral("flipped"), s.gekippt);
+            so.insert(QStringLiteral("shape"), formAlsJson(s.form));
+            stuecke.append(so);
+        }
+        if (!stuecke.isEmpty()) pegel.insert(QStringLiteral("shapes"), stuecke);
+        wurzel.insert(QStringLiteral("level"), pegel);
     }
     wurzel.insert(QStringLiteral("channels"), kanaele);
     return wurzel;
@@ -413,6 +504,23 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
     const QJsonObject blende = wurzel.value(QStringLiteral("fade")).toObject();
     neu.einblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("in")).toDouble());
     neu.ausblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("out")).toDouble());
+    // ohne Form (Dateien bis S99) bleibt die lineare Vorgabe
+    if (!formAusJson(blende.value(QStringLiteral("inShape")).toObject(), neu.einblendeForm))
+        neu.einblendeForm = einfacheBlende();
+    if (!formAusJson(blende.value(QStringLiteral("outShape")).toObject(), neu.ausblendeForm))
+        neu.ausblendeForm = einfacheBlende();
+    const QJsonObject pegel = wurzel.value(QStringLiteral("level")).toObject();
+    neu.grundpegel = pegel.value(QStringLiteral("base")).toDouble(1.0);
+    for (const QJsonValue& sv : pegel.value(QStringLiteral("shapes")).toArray())
+    {
+        const QJsonObject so = sv.toObject();
+        GesamtStueck s;
+        s.mitteMs = static_cast<std::int64_t>(so.value(QStringLiteral("at")).toDouble());
+        s.weiteMs = static_cast<std::int64_t>(so.value(QStringLiteral("width")).toDouble());
+        s.gekippt = so.value(QStringLiteral("flipped")).toBool(false);
+        if (!formAusJson(so.value(QStringLiteral("shape")).toObject(), s.form)) s.form = delle();
+        neu.gesamtStuecke.push_back(std::move(s));
+    }
     const QJsonArray kanaele = wurzel.value(QStringLiteral("channels")).toArray();
     for (const QJsonValue& kv : kanaele)
     {

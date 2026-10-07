@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.44.0
+> **Version:** 0.45.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -355,6 +355,29 @@ Der Composer hat **eine Zeitachse** in Millisekunden ab Null.
     Exemplare verloren und entstehen im Fenster neu. **Nicht gemessen:**
     was das zweite Laden kurz vor dem Umschlag an Bildzeit kostet, und der
     Grafikspeicher auf der schwächeren Karte.
+    **Die Pegelkurve der ganzen Komposition (Entscheide Patrik S100 nach
+    dem Sichttest S99, F7): c — alles, was ein Clip hat; F7-1 a — ein Stück
+    liegt an fester Zeit.** Die Komposition trägt zu den zwei Dauern je eine
+    Form der Blende (`einblendeForm`, `ausblendeForm`, Vorgabe linear),
+    einen `grundpegel` und `gesamtStuecke` (`GesamtStueck`: Mitte in
+    Millisekunden ab Anfang, Weite, gekippt, Form). Gerechnet wird wie am
+    Clip: `Komposition::kurveAlsClip` legt die Kurve als Clip über
+    [0, Länge) — die Lage eines Stücks wird dabei zum Anteil —, und
+    `blendeBei` fragt dessen `pegelBei`. Ein Stück, dessen Mitte hinter dem
+    Ende liegt, wirkt nicht und bleibt gespeichert; `setzeKurveAusClip`
+    nimmt eine bearbeitete Kurve zurück und lässt solche Stücke stehen. In
+    der Datei: `fade { inShape, outShape }` (nur wenn nicht linear) und
+    `level { base, shapes [ { at, width, flipped, shape } ] }` — ein älterer
+    Stand überliest beides, eine Datei aus S99 liest sich als lineare
+    Blenden. **Geändert gegenüber S99:** überdecken sich Ein- und
+    Ausblendung, teilen sie den Platz wie am Clip (bisher galt der kleinere
+    Wert). **Von mir gesetzt:** ein Stück, das über den Anfang oder das Ende
+    ragt, rückt hinein, und Teile, die sich überdecken, werden gestaucht —
+    beides wie am Clip, damit Zeitachse und Curve Editor dasselbe zeigen,
+    was wirkt. **Gebaut ist Schritt 1 von 4 (Modell und Datei); im Panel
+    lässt sich davon noch nichts einstellen** — es folgen der Curve Editor
+    an der Kurve der Komposition, die Spur „MASTER" unter dem Lineal (die
+    Keile im Lineal entfallen dann) und das Handbuch.
     **Die Blende der ganzen Komposition (Schritt 6, gebaut S99):** der
     Pegel jedes Clips wird mit `Komposition::blendeBei` an seiner Stelle
     malgenommen — im Bild (`Wiedergabe::rendere`) und im Ton
@@ -1299,7 +1322,8 @@ Kommt eine Naht dazu, kommt sie in diese Tabelle, bevor sie gebaut wird.
 | Bedienung der Zeitachse (S98): Einfügemarke, Kopieren / Einfügen, Schatten, Tooltip, Vorgabelänge | keine neuen Dateien — `Bearbeiten::fuegeKopieEin`, die Erweiterungen in `Zeitachse` / `ComposerPanel`, `Sitzung::neuerClipMs` und die Tests gehen mit den Dateien | **N9 wächst** — `UI/panels/SettingsPanel.cpp` (ein Zahlenfeld *New clip length* im Composer-Block). Commit: **`45ead4e`** (nur Naht); Eigenes davor `f08d6bb` | — | vor dem Holen wie oben prüfen. Zurück bleibt der Schlüssel `composer/newClipSeconds` |
 | Freigeben ohne Titel im Player (S99) | keine neuen Dateien — der leere Songwechsel in `Sitzung::gibTonFrei` und der Fall „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` gehen mit den Dateien | **N5, Anzeige, fünfte Stelle** — `UI/panels/PlayerPanel.cpp` (`subscribeToEvents`, im Empfänger von `TrackChangedEvent`: ein Songwechsel ohne Datei setzt das Panel in den Ruhezustand), trägt `Composer-Naht N5, Anzeige`. Commit: **`3624e1f`** (nur Naht); Eigenes davor `e3043ae`. Nach dem eigenen Commit allein ist der neue Fall rot (er prüft das Panel), erst mit der Naht grün | — | vor dem Holen wie oben prüfen |
 | Überlappung in der Schleife und Blende der ganzen Komposition (S99, sieben Schritte) | keine neuen Dateien — `Komposition` (Werte, `Schleifenlage`, Datei), `Uhr`, `Bildquelle`, `Wiedergabe` (zweite Stelle, `m_frische`), `Tonfuehrung` (Stimmen), `Sitzung::zweiteStelleMs`, `ComposerPanel` / `Zeitachse` (Felder, Fenster, Keile) und die Tests gehen mit den Dateien | **keine Naht.** Commits, alle Eigenes: `fb412a7` (Modell und Datei), `1a1503d` (Uhr, Bildquelle), `14edf71` (Bild) mit `a2c49f7` (clang-Fix — **dazwischen baut der Stand mit clang nicht**), `37f9d4f` (Ton), `37f48bd` (Panel, Zeitachse), `f217900` (Blende), `c361dcf` (Visuals overlap themselves) | — | vor dem Holen wie oben prüfen. In `.lvcomp`-Dateien, die damit gespeichert wurden, bleiben die Schlüssel `loop` und `fade` — ein älterer Stand überliest sie |
-| Player-Panel wird nach dem Freigeben erst eingeblendet (S100, Sichttest S99 A2) | keine neuen Dateien — die Erweiterung des Falls „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` geht mit der Datei | **N5, Anzeige, sechste Stelle** — `UI/panels/PlayerPanel.cpp` / `.hpp` (`onActivate`: ohne Titel im Player und ohne führenden Composer der Ruhezustand; neue private Funktion `zeigeRuhezustand`, die auch der Empfänger von Stelle 5 ruft), trägt `Composer-Naht N5, Anzeige`. Commit: Kennung folgt (Naht und Test in einem — ohne die Naht ist die Erweiterung des Falls rot) | — | vor dem Holen wie oben prüfen |
+| Player-Panel wird nach dem Freigeben erst eingeblendet (S100, Sichttest S99 A2) | keine neuen Dateien — die Erweiterung des Falls „Composer off ohne Titel im Player" in `test_ComposerNahtTon.cpp` geht mit der Datei | **N5, Anzeige, sechste Stelle** — `UI/panels/PlayerPanel.cpp` / `.hpp` (`onActivate`: ohne Titel im Player und ohne führenden Composer der Ruhezustand; neue private Funktion `zeigeRuhezustand`, die auch der Empfänger von Stelle 5 ruft), trägt `Composer-Naht N5, Anzeige`. Commit: **`da5339f`** (Naht und Test in einem — ohne die Naht ist die Erweiterung des Falls rot) | — | vor dem Holen wie oben prüfen |
+| Pegelkurve der ganzen Komposition (S100, vier Schritte) | keine neuen Dateien — Schritt 1: `Komposition` (Formen der Blenden, Grundpegel, `GesamtStueck`, `kurveAlsClip`, Datei) und der Fall „Kurve der Komposition S100, Modell" in `test_ComposerWiedergabe.cpp` gehen mit den Dateien | keine Naht — eigener Code. Commits: Schritt 1 Kennung folgt | — | vor dem Holen wie oben prüfen. In `.lvcomp`-Dateien, die damit gespeichert wurden, bleiben `fade.inShape` / `fade.outShape` und der Schlüssel `level` — ein älterer Stand überliest sie |
 
 „Rückbau geprüft" heißt: der Stand nach dem Rückbau baut, die Unit-Tests
 sind grün und der Vergleichslauf ist bitgleich.
@@ -1321,6 +1345,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.45.0 | 2026-10-07 | Session 100 — **Pegelkurve der ganzen Komposition** (Urteil Patrik F7: „gleich wie bei Clips, auch editierbar"; Entscheide F7 c — Blenden mit Kurve, Grundpegel und Stücke in einer eigenen Spur —, F7-1 a — ein Stück liegt an fester Zeit). **Gebaut, Schritt 1 von 4 (Modell und Datei, eigener Code, keine Naht):** `Komposition::einblendeForm` / `ausblendeForm` / `grundpegel` / `gesamtStuecke`, `GesamtStueck`, `kurveAlsClip`, `setzeKurveAusClip`, `hatKurve`; `blendeBei` rechnet wie die Pegelkurve eines Clips (geändert: sich überdeckende Blenden teilen den Platz, bisher galt der kleinere Wert); Datei `fade { inShape, outShape }` und `level { base, shapes }` (§4). Neuer Fall in `test_ComposerWiedergabe.cpp`. Im Panel noch nicht einstellbar. Rückbau-Liste: Kennung `da5339f` der Naht N5, sechste Stelle; Zeile „Pegelkurve der ganzen Komposition", Kennung folgt |
 | 0.44.0 | 2026-10-07 | Session 100 — **Sichttest S99, Befund A2** (Patrik: beim ersten Ausschalten wechselte das Panel Player nicht auf „No track loaded", beim zweiten schon). Per Test gezählt: der leere Songwechsel kommt, aber ein Player-Panel, das dabei nicht zu sehen ist, hat kein Abo am Bus und zeigt nach dem Einblenden weiter „Composer - <Song>" mit der alten Stelle. **Naht N5, Anzeige, wächst um eine sechste Stelle** (vor dem Bau eingetragen, §12.2): `PlayerPanel::onActivate` geht ohne Titel im Player und ohne führenden Composer in den Ruhezustand. Erweiterung des Falls in `test_ComposerNahtTon.cpp`. **Nicht belegt**, dass das Panel bei Patrik in jenem Augenblick verdeckt war — Indiz: die Stelle im Panel lag rund 3,6 s hinter der der Komposition. **Sichttest S99 sonst:** Abschnitt E (Überlappung) und F (Blende) im Programm gesehen und gehört, ohne Befund — damit gebilligt, was in §4 als „von mir gesetzt" steht: Reihenfolge im selben Kanal (E6), Sprung ins hintere / vordere Fenster (E7, E8), Halt im Fenster (E9), Loop aus im Fenster (E10), Vorwärmen und „kein Sprung" bei jeder Schleife (E14), die Karaoke-Ebene blendet nicht mit (F6). **Nicht gebilligt:** die lineare Form der Blende — Urteil Patrik F7: wie bei Clips, auch editierbar (Entscheid steht aus). Nicht gespielt: Abschnitt G (*Visuals overlap themselves*); dort bleibt „von mir gesetzt" stehen. Rückbau-Liste: Zeile S100, Kennung folgt |
 | 0.43.1 | 2026-10-06 | Session 99, Abschluss — Rückbau-Liste: Zeile „Überlappung in der Schleife und Blende der ganzen Komposition" mit den Kennungen der acht Commits (keine Naht; zwischen `14edf71` und `a2c49f7` baut der Stand mit clang nicht). Kopf: Stand der Stufen. **Stand:** die Überlappung, die Blende und die geschlossene Lücke im Panel Player sind gebaut und per Test belegt, im Programm nichts davon gesehen oder gehört — Sichttest S99 (52 Punkte) |
 | 0.43.0 | 2026-10-06 | Session 99 — **Überlappung in der Schleife, Schritt 7 von 7: Visuals overlap themselves — alle Schritte gebaut** (eigener Code, keine Naht; §4). `Wiedergabe`: zweite Exemplare (`m_frische`, `zweitRendererVon`), vorgewärmt vor dem Umschlag, im Fenster beide gemischt (das alte unten, das frische darüber, jedes mit seinem Pegel), dahinter läuft das Exemplar weiter, dessen letzte Stelle im Clip am nächsten liegt (`Lauf::imClipMs`); `rendererAnzahl` und `fuerJedenRenderer` zählen sie mit. Von mir gesetzt: der festgehaltene Clip läuft immer einmal, beim Bearbeiten gehen zweite Exemplare verloren. Panel: Haken **Visuals overlap themselves** (Vorgabe aus), die Blenden-Felder in einer eigenen Zeile (sonst wäre das Panel zu breit). Tests: Erweiterung des GL-Falls in `test_ComposerWiedergabe.cpp` (Vorwärmen, Mischung in Zahlen, welches Exemplar weiterläuft, Sprung ins Fenster, festgehaltener Clip), `test_ComposerPanel.cpp` (Haken, Undo). Benutzerhandbuch 1.98.0. Gebaut mit MSVC und clang. Nicht gemessen: Bildzeit des zweiten Ladens, Grafikspeicher. Im Programm nicht gesehen — Sichttest S99, Abschnitt G |
