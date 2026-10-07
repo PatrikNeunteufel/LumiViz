@@ -629,6 +629,11 @@ void PlayerPanel::setupUI()
     m_pVolumeSlider->setToolTip(tr("Volume"));
     buttonLayout->addWidget(m_pVolumeSlider);
 
+    // Composer-Naht N18 (docs/ui/Composer_Konzept.md §12.2; S101): der
+    // Mute-Knopf fuer Durchsagen — senkt den Ton nach dem gewaehlten
+    // Mute-Profil ab. Der Lautsprecher-Knopf oben bleibt das harte Mute.
+    buttonLayout->addWidget(lumi::composer::erzeugeMuteKnopf(services(), this));
+
     buttonLayout->addStretch();
     mainLayout->addLayout(buttonLayout);
 }

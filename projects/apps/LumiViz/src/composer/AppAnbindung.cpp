@@ -8,6 +8,7 @@
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bildquelle.hpp"
 #include "composer/Mute.hpp"
+#include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
 
 #include "UI/PresetSpeichern.hpp"
@@ -248,6 +249,11 @@ bool fuehrtTon()
 bool meldetBindung()
 {
     return Sitzung::meldetBindung();
+}
+
+QWidget* erzeugeMuteKnopf(ServiceContainer& dienste, QWidget* eltern)
+{
+    return new MuteKnopf(dienste, eltern);
 }
 
 float muteFaktorFuerVisuals()

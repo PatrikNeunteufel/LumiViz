@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.113.0
+> **Version:** 1.114.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2324,7 +2324,25 @@ Idee Preset-Warmup/Pre-Roll.
     `onAudioUpdate` (das Hauptfenster läuft in keinem Unit-Test); der Ton an
     der echten Engine; dass niemand den Player an den Schalter hängt —
     **das tut erst der Knopf**, bis dahin wirkt im Programm nichts.
-  - 🟡 **Schritt 2c, offen — der Mute-Knopf selbst (Vorgabe Patrik
+  - **Schritt 2c gebaut (S101), im Programm ungesehen und ungehört: der
+    Mute-Knopf** (`composer/MuteKnopf`) — im Panel Player (Naht N18: ein
+    Aufruf `composer::erzeugeMuteKnopf`) und im Panel Composer, beide zeigen
+    denselben Zustand; Rechtsklick wählt das Profil; Dialog *Mute Profiles*
+    (Zielpegel, Dauer und Form je Blende aus den Blenden-Presets, *Visuals
+    follow*, Save As..., Delete). **So gelesen, nicht eigens entschieden:**
+    ein NEUER Knopf neben dem Lautsprecher (AM2 c: „ein Knopf im Panel
+    Player") — der Lautsprecher bleibt das harte Mute. **Von mir gesetzt:**
+    Text „Mute", orange im gedrückten Zustand, kein Tastenkürzel, der
+    Zustand wird nicht gespeichert, nur der Ton (kein Bild-Mute).
+    **Sichttest:** (a) Playlist spielt, Mute drücken — der Ton geht weich
+    weg, noch einmal — er kommt zurück; (b) dasselbe bei laufender
+    Komposition; (c) Knopf im Panel Composer und im Panel Player zeigen
+    dasselbe; (d) Rechtsklick → *Announcement*: die Musik bleibt leise
+    hörbar; (e) ein eigenes Profil mit *Visuals follow* — das Bild beruhigt
+    sich, ohne den Haken nicht; (f) **Urteile:** Name und Platz des Knopfs
+    neben dem Lautsprecher, braucht es ein Tastenkürzel, die Werte der drei
+    mitgelieferten Profile.
+  - *Erledigt, zur Einordnung — die ursprüngliche Vorgabe:* **der Mute-Knopf selbst (Vorgabe Patrik
     S101):** Durchsagen sind meist spontan, also ein Knopf „Mute" (ein Klick
     auf die Zeile AUDIO wäre riskant). Mute-Profile, zu speichern und zu
     laden, bestimmen: die Kurve des Ausblendens, die Kurve des Einblendens
@@ -4478,6 +4496,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.114.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2c gebaut — der Mute-Knopf im Panel Player (Naht N18) und im Panel Composer, Profil per Rechtsklick, Dialog der Mute-Profile (Konzept 0.61.0, Benutzerhandbuch 1.110.0); im Programm ungesehen und ungehört, Sichttest in sechs Punkten eingetragen |
 | 1.113.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2b gebaut (Entscheid Patrik AM3: c, Vorgabe „Visuals laufen weiter") — Naht N17 (Pegel am Player), `MuteSchalter`, der Composer folgt am Mixer, N13 wächst um den Faktor für die Visuals (Konzept 0.60.0); noch ohne Knopf, im Programm wirkt nichts; offen Entscheid AM4 (ein Mute-Knopf oder zwei im Panel Player) |
 | 1.112.0 | 2026-10-07 | Session 101 — **Composer:** Karaoke im Composer gebaut (Entscheid Patrik KS1: a) — Zeile KARAOKE mit voller Kurve und der Haken Karaoke, gekoppelt mit dem Panel Karaoke; Naht R2 wächst um den Pegel beim Auflegen (Konzept 0.59.0, Benutzerhandbuch 1.109.0); im Programm ungesehen |
 | 1.111.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2a gebaut (Mute-Profil, Verlauf, Profile als `.lvmute`; Konzept 0.58.0) — noch ohne Knopf und ohne Ton; Entscheid Patrik AM2: c (der Mute gehört dem Player, Knopf in beiden Panels); Befund: die Lautstärke des Mixers ändert sein Spektrum nicht; neuer Wunsch Patrik: Karaoke im Composer schalten, als Haken oder als Spur (Entscheid KS1 vorgelegt) |

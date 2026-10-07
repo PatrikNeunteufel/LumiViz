@@ -30,7 +30,10 @@
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "composer/AppAnbindung.hpp"  // OpenCompositionEvent (.lvcomp im Effect Browser, S100)
+#include "PappTon.hpp"
+#include "audio/IAudioPlayer.hpp"
 #include "composer/ComposerPanel.hpp"  // der Haken Karaoke im Panel Composer (S101)
+#include "composer/MuteKnopf.hpp"      // der Mute-Knopf (S101)
 #include "composer/Sitzung.hpp"
 #include "UI/PresetListen.hpp"
 #include "UI/StartDatei.hpp"
@@ -2772,6 +2775,126 @@ TEST_CASE("PaletteUi S101: Karaoke im Composer — der Haken folgt dem Panel Kar
     }
     MultiEffectVisualizer::setKaraokeEbene(false);
     QSettings().setValue(QStringLiteral("karaoke/enabled"), vorher);
+}
+
+// S101 (Vorgabe Patrik, Entscheid AM2: c): der Mute-Knopf fuer Durchsagen — im
+// Panel Player und im Panel Composer derselbe Knopf, ein Zustand; das Profil
+// kommt aus dem Dialog der Mute-Profile.
+TEST_CASE("PaletteUi S101: der Mute-Knopf — zwei Knoepfe, ein Zustand, das Profil aus dem Dialog")
+{
+    UiUmgebung env;
+    using namespace lumi::composer;
+    struct PegelPlayer : papp::PappPlayer
+    {
+        float p = 1.0f;
+        [[nodiscard]] float pegel() const override { return p; }
+        void setPegel(float neu) override { p = neu; }
+    };
+    QTemporaryDir dir;
+    REQUIRE(dir.isValid());
+    muteprofile::setzeWurzelFuerTests(dir.path());
+    const QString vorher = muteprofile::gewaehlt();
+    muteprofile::setGewaehlt(QString());
+    MuteSchalter& schalter = MuteSchalter::instanz();
+    std::int64_t zeit = 0;
+    schalter.setUhrFuerTests([&zeit] { return zeit; });
+    schalter.ladeProfil();
+    {
+        ServiceContainer services;
+        services.registerInstance<IAudioPlayer>(std::make_unique<PegelPlayer>());
+        auto* player = dynamic_cast<PegelPlayer*>(services.tryResolve<IAudioPlayer>());
+        REQUIRE(player != nullptr);
+
+        // derselbe Knopf, wie ihn das Panel Player bekommt (Naht N18), und ein zweiter
+        QWidget* vomPanel = erzeugeMuteKnopf(services, nullptr);
+        auto* a = qobject_cast<MuteKnopf*>(vomPanel);
+        REQUIRE(a != nullptr);
+        MuteKnopf b(services);
+        CHECK(a->isCheckable());
+        CHECK_FALSE(a->isChecked());
+        CHECK_FALSE(b.isChecked());
+        CHECK(a->toolTip().contains(QStringLiteral("(default)")));
+
+        // einer gedrueckt: beide zeigen es, der Pegel des Players geht nach der Vorgabe
+        // (0,4 s auf 0 %) hinunter
+        a->click();
+        CHECK(a->isChecked());
+        CHECK(b.isChecked());
+        CHECK(schalter.stumm());
+        zeit = 200;
+        schalter.takt();
+        CHECK(player->p == doctest::Approx(0.5f));
+        zeit = 400;
+        schalter.takt();
+        CHECK(player->p == doctest::Approx(0.0f));
+        // am anderen geloest: beide gehen hoch, der Ton kommt in 0,8 s zurueck
+        b.click();
+        CHECK_FALSE(a->isChecked());
+        CHECK_FALSE(b.isChecked());
+        zeit = 1200;
+        schalter.takt();
+        CHECK(player->p == doctest::Approx(1.0f));
+
+        // der Dialog: ein Profil einstellen, speichern — es ist danach gewaehlt
+        MuteProfilDialog dialog;
+        auto* pegel = dialog.findChild<QDoubleSpinBox*>(QStringLiteral("mutePegel"));
+        auto* aus = dialog.findChild<QDoubleSpinBox*>(QStringLiteral("muteAus"));
+        auto* ein = dialog.findChild<QDoubleSpinBox*>(QStringLiteral("muteEin"));
+        auto* ausForm = dialog.findChild<QComboBox*>(QStringLiteral("muteAusForm"));
+        auto* visuals = dialog.findChild<QCheckBox*>(QStringLiteral("muteVisuals"));
+        auto* loeschen = dialog.findChild<QPushButton*>(QStringLiteral("muteDelete"));
+        REQUIRE(pegel != nullptr);
+        REQUIRE(aus != nullptr);
+        REQUIRE(ein != nullptr);
+        REQUIRE(ausForm != nullptr);
+        REQUIRE(visuals != nullptr);
+        REQUIRE(loeschen != nullptr);
+        // die Vorgabe steht in den Feldern; die Formen sind die Blenden-Presets
+        CHECK(pegel->value() == doctest::Approx(0.0));
+        CHECK(aus->value() == doctest::Approx(0.4));
+        CHECK(ein->value() == doctest::Approx(0.8));
+        CHECK(ausForm->findData(QStringLiteral("S-curve")) >= 0);
+        CHECK(ausForm->currentData().toString() == QStringLiteral("Linear"));
+        CHECK_FALSE(loeschen->isEnabled());
+        pegel->setValue(30.0);
+        aus->setValue(0.2);
+        ein->setValue(0.5);
+        ausForm->setCurrentIndex(ausForm->findData(QStringLiteral("S-curve")));
+        visuals->setChecked(true);
+        REQUIRE(dialog.speichereAls(QStringLiteral("Probe")));
+        CHECK(muteprofile::gewaehlt() == QStringLiteral("Probe"));
+        CHECK(loeschen->isEnabled());  // ein eigenes
+        MuteProfil gelesen;
+        REQUIRE(muteprofile::lade(muteprofile::finde(QStringLiteral("Probe")).pfad, gelesen));
+        CHECK(gelesen.zielPegel == doctest::Approx(0.3));
+        CHECK(gelesen.ausblendeMs == 200);
+        CHECK(gelesen.einblendeMs == 500);
+        CHECK(gelesen.visualsFolgen);
+        CHECK(gelesen.ausblendeForm.punkte.front().form == Kurvenform::SKurve);
+        CHECK(gleich(dialog.profil(), gelesen));
+
+        // der Knopf schaltet jetzt nach diesem Profil — und die Visuals gehen mit
+        MuteKnopf::waehleProfil(QStringLiteral("Probe"));
+        zeit = 5000;
+        b.click();
+        CHECK(a->toolTip().contains(QStringLiteral("Probe")));
+        zeit = 5200;
+        schalter.takt();
+        CHECK(player->p == doctest::Approx(0.3f));
+        CHECK(muteFaktorFuerVisuals() == doctest::Approx(0.3f));
+        a->click();
+        zeit = 5700;
+        schalter.takt();
+        CHECK(player->p == doctest::Approx(1.0f));
+        CHECK(muteFaktorFuerVisuals() == doctest::Approx(1.0f));
+
+        schalter.setPlayer(nullptr);
+        delete vomPanel;
+    }
+    schalter.setUhrFuerTests(nullptr);
+    muteprofile::setGewaehlt(vorher);
+    muteprofile::setzeWurzelFuerTests({});
+    schalter.ladeProfil();
 }
 
 // S101 (Entscheide Patrik X1: a, X1b: a): eine laufende App je Exe — der erste

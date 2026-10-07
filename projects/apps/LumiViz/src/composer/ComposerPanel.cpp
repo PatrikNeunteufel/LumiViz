@@ -18,6 +18,7 @@
 #include "composer/FormPresets.hpp"
 #include "composer/KurvenEditor.hpp"
 #include "composer/Mischer.hpp"
+#include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -1980,6 +1981,9 @@ void ComposerPanel::setupUI()
         m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeEnabledChangedEvent>(
             [this](const KaraokeEnabledChangedEvent& e) { m_karaoke->setChecked(e.enabled); }));
     kopf->addWidget(m_karaoke);
+    // Mute fuer Durchsagen (S101, Entscheid Patrik AM2: c): derselbe Knopf wie
+    // im Panel Player — beide zeigen denselben Zustand
+    kopf->addWidget(new MuteKnopf(services(), this));
     kopf->addStretch(1);
     root->addLayout(kopf);
 

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.109.0
+> **Version:** 1.110.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -71,9 +71,39 @@ Das **Player-Panel** steuert die Wiedergabe:
 | Resume-Taste (⏩) | **Resume playback**: nach dem Neustart dort weiterspielen (leuchtet bei aktiv) |
 | Fortschrittsbalken | Anfassen und ziehen = Spulen (Seek) |
 | 🔇 + Lautstärkeregler | Stummschalten / Lautstärke |
+| **Mute** | Den Ton für eine Durchsage absenken und zurückholen — nach einem Mute-Profil (siehe unten) |
 
 Musik kommt über die Playlist (§3) in die App — Titel dort doppelklicken
 startet die Wiedergabe.
+
+**Mute für Durchsagen:** Der Knopf **Mute** rechts neben dem Lautstärkeregler
+senkt den Ton weich ab; noch einmal gedrückt, kommt er weich zurück. Solange
+abgesenkt ist, leuchtet der Knopf. Es gibt ihn zweimal — hier und im Panel
+Composer (§15) —, beide zeigen denselben Zustand, und er wirkt auf alles, was
+zu hören ist: auf die Playlist ebenso wie auf eine laufende Komposition. Der
+Lautsprecher-Knopf (🔇) daneben bleibt das einfache, sofortige Stummschalten.
+
+Wie der Ton weggeht und wiederkommt, bestimmt das **Mute-Profil**:
+
+- **Level while muted** — worauf abgesenkt wird, 0 bis 100 %. 0 % ist stumm;
+  20 % lässt die Musik leise unter der Stimme weiterlaufen.
+- **Fade out** und **Fade in** — je die Dauer und die Kurvenform (dieselben
+  Formen wie die Blenden im Composer). 0 s = sofort.
+- **Visuals follow** — aus (Vorgabe): das Bild reagiert weiter auf die volle
+  Musik. An: es beruhigt sich mit dem Ton.
+
+**Rechtsklick auf den Knopf** wählt das Profil; mitgeliefert sind
+*Announcement* (auf 20 %), *Soft mute* (weich auf 0 %) und *Hard mute*
+(sofort). *Edit mute profiles...* öffnet den Dialog: Profil wählen, Werte
+einstellen, mit **Save As...** als eigenes Profil speichern (es ist danach
+gewählt), eigene mit **Delete** löschen. Ohne gewähltes Profil gilt die
+Vorgabe: in 0,4 s auf 0 %, in 0,8 s zurück. Ein gewechseltes Profil gilt ab
+dem nächsten Drücken. Wird mitten im Absenken wieder gedrückt, geht es ohne
+Sprung zurück.
+
+Der Mute wird nicht gespeichert: nach einem Neustart ist der Ton voll da. Für
+eine Absenkung an einer **festen Stelle** einer Komposition ist die Zeile
+AUDIO des Composers da (§15).
 
 **Resume playback** (auch unter **Settings → Audio**): Beendest du LumiViz,
 **während ein Titel läuft**, spielt der nächste Start denselben Titel an
@@ -2345,6 +2375,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.110.0 | 2026-10-07 | Session 101. §2 Player NEU **Mute für Durchsagen**: der Knopf *Mute* im Panel Player und im Panel Composer, Mute-Profile (Zielpegel, Kurve des Aus- und des Einblendens, *Visuals follow*), Rechtsklick wählt das Profil, Dialog *Mute Profiles* |
 | 1.109.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeile KARAOKE** (Pegelkurve der Karaoke-Ebene: wie stark der Songtext aufliegt) und der Haken **Karaoke** im Panel Composer, gekoppelt mit *Karaoke on* |
 | 1.108.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeilen VISUAL und AUDIO**: je eine Pegelkurve nur für das Bild und nur für den Ton unter der Zeile MASTER, bedienbar wie sie; die Kurven werden malgenommen. GEÄNDERT: die Master-Zeilen sind niedriger als ein Kanal (60 %) |
 | 1.107.0 | 2026-10-07 | Session 101. **§17 NEU: Mit einer Datei starten — und immer nur ein LumiViz**: `LumiViz.exe <datei>` (Preset, Karaoke-Preset, Komposition); ein zweiter Start gibt seine Datei an das laufende LumiViz ab; die Regel gilt je Programmdatei, `--new-instance` startet bewusst ein weiteres; was mehrere LumiViz sich teilen. §16: Verweis auf *Öffnen mit* |

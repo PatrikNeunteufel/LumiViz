@@ -27,6 +27,7 @@
 #include <string>
 
 class QWidget;
+class ServiceContainer;
 class VisualizerWidget;
 
 namespace lumi::composer
@@ -138,6 +139,12 @@ struct TonStand
 /// und hat den Klick genommen (auch wenn es noch keinen Song gab). false = er
 /// fuehrt nicht; der Klick geht wie immer an den Player.
 [[nodiscard]] bool springeImSong(double anteil);
+
+/// Der Mute-Knopf fuer das Panel Player (Naht N18, Entscheid Patrik S101,
+/// AM2: c): ein fertiger Knopf, der den Mute der App nach dem gewaehlten
+/// Mute-Profil schaltet — derselbe wie im Panel Composer. Der Aufrufer legt
+/// ihn in sein Layout.
+[[nodiscard]] QWidget* erzeugeMuteKnopf(ServiceContainer& dienste, QWidget* eltern);
 
 /// Der Faktor, mit dem Spektrum und Wellenform an die Visualizer gehen (Naht
 /// N13 / N17, S101): unter 1 nur, solange der Mute fuer Durchsagen absenkt
