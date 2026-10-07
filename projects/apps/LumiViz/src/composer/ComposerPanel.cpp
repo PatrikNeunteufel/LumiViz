@@ -258,7 +258,7 @@ std::int64_t Zeitachse::stelleVon(int x) const
 
 int Zeitachse::yVonZeile(int zeile) const
 {
-    return kKanaeleOben + zeile * kZeilenHoehe + kZeilenHoehe / 2;
+    return zeileOben(zeile) + zeileHoch(zeile) / 2;
 }
 
 int Zeitachse::kanalVonZeile(int zeile) const
@@ -270,8 +270,7 @@ QRect Zeitachse::clipRechteck(int zeile, const VisualClip& clip) const
 {
     const int links = xVon(clip.startMs);
     const int rechts = xVon(clip.endeMs);
-    return {links, kKanaeleOben + zeile * kZeilenHoehe + 3, std::max(2, rechts - links),
-            kZeilenHoehe - 6};
+    return {links, zeileOben(zeile) + 3, std::max(2, rechts - links), zeileHoch(zeile) - 6};
 }
 
 QSize Zeitachse::sizeHint() const
@@ -383,15 +382,16 @@ void Zeitachse::paintEvent(QPaintEvent*)
     {
         const int k = zeile < 0 ? kMaster : kanalVonZeile(zeile);
         const Kanal& kanal = zeile < 0 ? gesamt : m_komposition.kanaele[static_cast<std::size_t>(k)];
-        const int oben = kKanaeleOben + zeile * kZeilenHoehe;
+        const int oben = zeileOben(zeile);
+        const int hoch = zeileHoch(zeile);  // die Zeile MASTER ist niedriger (M17)
         p.setPen(linie);
-        p.drawLine(0, oben + kZeilenHoehe, width(), oben + kZeilenHoehe);
+        p.drawLine(0, oben + hoch, width(), oben + hoch);
 
         QColor name = text;
         if (!kanal.an) name.setAlpha(110);
         p.setPen(name);
         const QString titel = kanal.an ? kanal.name : tr("%1 (off)").arg(kanal.name);
-        p.drawText(QRect(8, oben, kKopfBreite - 12, kZeilenHoehe), Qt::AlignLeft | Qt::AlignVCenter,
+        p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
                    fontMetrics().elidedText(titel, Qt::ElideRight, kKopfBreite - 12));
 
         for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)

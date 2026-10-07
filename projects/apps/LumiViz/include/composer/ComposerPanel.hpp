@@ -225,7 +225,19 @@ public:
     static constexpr int kZeilenHoehe = 36;
     /// Hier beginnt die Zeile des ersten Kanals: unter dem Lineal liegt die
     /// Zeile der Pegelkurve der ganzen Komposition (S100).
-    static constexpr int kKanaeleOben = kLinealHoehe + kZeilenHoehe;
+    /// Die Zeile MASTER ist niedriger als ein Kanal: 60 % (Urteil Patrik,
+    /// Sichttest S100 M17 — gilt auch fuer kuenftige Master-Zeilen).
+    static constexpr int kMasterHoehe = kZeilenHoehe * 60 / 100;
+    static constexpr int kKanaeleOben = kLinealHoehe + kMasterHoehe;
+    /// Oberkante und Hoehe einer Zeile; -1 = die Zeile MASTER unter dem Lineal.
+    [[nodiscard]] static constexpr int zeileOben(int zeile)
+    {
+        return zeile < 0 ? kLinealHoehe : kKanaeleOben + zeile * kZeilenHoehe;
+    }
+    [[nodiscard]] static constexpr int zeileHoch(int zeile)
+    {
+        return zeile < 0 ? kMasterHoehe : kZeilenHoehe;
+    }
 
     // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c) --
     //

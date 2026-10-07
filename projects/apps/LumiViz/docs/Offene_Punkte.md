@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.108.0
+> **Version:** 1.109.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2225,6 +2225,25 @@ Idee Preset-Warmup/Pre-Roll.
   gesehen** — als Nächstes Patriks Sichttest
   `.claude/handover/Sichttests_S100.md` (70 Punkte). Die Einzelheiten stehen
   in den folgenden Blöcken.
+  - **Sichttest S100, erster Teil ausgewertet (Patrik, 07.10. 12:55 bis
+    13:15 Uhr, Exe von 12:22 Uhr):** von 70 Punkten 23 bestanden, 1 mit
+    Bemerkung, 0 durchgefallen, 46 offen. **Im Programm gesehen, ohne
+    Befund:** der Nachtest zum Player-Panel (A1 bis A4 — der Fix zu A2
+    trägt; A4 „kam der Befund so zustande?" ist ohne Bemerkung bestanden,
+    ich lese das als Ja), die Zeile MASTER in der Grundfunktion (M0 bis M9:
+    Zeile, Anklicken, Fade in / Fade out mit Feld und Griff, Form, Curve
+    Editor, ein Stück, zu sehen und zu hören), die Icons (I1 bis I6, samt
+    Doppelklick auf eine `.lvcomp` und Taskleiste), *Visuals overlap
+    themselves* (G2, G3 „ruckelt es?" — nein, G4). **Mit Bemerkung — M17,
+    die Höhe: „Master (auch künftige Audio und Visual Master) auf 60 %
+    reduzieren"** — umgesetzt in S101 (`Zeitachse::kMasterHoehe`, 21 statt
+    36 Pixel; im Programm ungesehen). **Vorbehalt:** während des Tests
+    liefen meine Builds und Unit-Test-Läufe (Last, leiser Ton); das Log
+    zeigt in der Zeit einzelne lange Bilder (bis 131 ms um 13:02, 88 und
+    98 ms um 13:10 / 13:11 bei G2 / G3) — ob vom Vorwärmen des zweiten
+    Exemplars oder von meiner Last, lässt sich daraus nicht trennen; nach
+    jedem Lauf „audio sources realigned 0 times", keine Warnung. **Offen:**
+    A0, A5, M10 bis M16, M18 bis M24, L, K, V, I7, G0, G1, G5, R.
   - ⬜ **Befund Patrik S101, behoben, im Programm ungesehen: das Panel
     Karaoke lud bei laufendem Composer nichts** („Could not load: <Pfad>",
     ohne Grund; im Panel stand „works with the Multi Effect visualizer").
@@ -2243,8 +2262,8 @@ Idee Preset-Warmup/Pre-Roll.
     wirkt die Zeile MASTER immer auf beides zugleich
     (`Komposition::blendeBei` in `Wiedergabe::rendere` und
     `Tonfuehrung::takt`). Vor dem Bau als Entscheid vorlegen: zwei weitere
-    Zeilen unter dem Lineal (die Höhe des Panels — Urteil M17 des Sichttests
-    S100 abwarten), ob sie sich einklappen lassen, wie sich die drei Kurven
+    Zeilen unter dem Lineal (**Urteil M17 liegt vor: Master-Zeilen auf 60 %
+    der Kanalhöhe, auch diese zwei**), ob sie sich einklappen lassen, wie sich die drei Kurven
     verrechnen (malnehmen), und ob zum Stummschalten ein Schalter genügt
     statt eines Stücks in der Kurve.
 - **Composer, Stand S100 (Konzept 0.44.0) — Sichttest S99 ausgewertet
@@ -4379,6 +4398,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.109.0 | 2026-10-07 | Session 101 — **Composer:** Sichttest S100, erster Teil ausgewertet (23 bestanden, 1 mit Bemerkung, 0 durchgefallen, 46 offen); Urteil M17 umgesetzt — die Zeile MASTER ist 60 % so hoch wie ein Kanal (Konzept 0.56.0), im Programm ungesehen; Vorbehalt: während des Tests liefen Builds und Testläufe |
 | 1.108.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`, Schritt 2:** eine laufende App je Exe-Datei (Entscheid Patrik X1b: a, mit `--new-instance`; `core/EinzelInstanz`, Benutzerhandbuch 1.107.0 §17, Konzept 0.55.0 — N8 zweite Stelle), im Programm ungesehen; Sichttest in sechs Punkten eingetragen; offen Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.107.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`:** Entscheid Patrik X1: a (eine Instanz, die Datei geht an die laufende App); Schritt 1 gebaut — die Datei als Argument beim Start (`UI/StartDatei.hpp`, Naht N8 wächst um die `.lvcomp`; Konzept 0.54.0), im Programm ungesehen; offen die eine Instanz (Entscheid X1b), Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.106.0 | 2026-10-07 | Session 101 — **Composer:** Befund Patrik, das Panel Karaoke lud bei laufendem Composer nichts; behoben (Entscheid KP1: a, Naht N16, R2 wächst; Konzept 0.53.0), per Test gezählt, im Programm ungesehen — Nachtest und Urteil zum Ruckeln eingetragen |
