@@ -374,6 +374,27 @@ bool loescheKanal(Komposition& komposition, int kanal)
     return true;
 }
 
+bool verschiebeKanal(Komposition& komposition, int von, int nach)
+{
+    const int anzahl = static_cast<int>(komposition.kanaele.size());
+    if (von < 0 || von >= anzahl || nach < 0 || nach >= anzahl || von == nach) return false;
+    auto& k = komposition.kanaele;
+    if (von < nach)
+        std::rotate(k.begin() + von, k.begin() + von + 1, k.begin() + nach + 1);
+    else
+        std::rotate(k.begin() + nach, k.begin() + von, k.begin() + von + 1);
+    return true;
+}
+
+int platzNachVerschieben(int kanal, int von, int nach)
+{
+    if (kanal < 0 || von == nach) return kanal;
+    if (kanal == von) return nach;
+    if (von < nach && kanal > von && kanal <= nach) return kanal - 1;
+    if (nach < von && kanal >= nach && kanal < von) return kanal + 1;
+    return kanal;
+}
+
 Komposition neueKomposition()
 {
     Komposition k;

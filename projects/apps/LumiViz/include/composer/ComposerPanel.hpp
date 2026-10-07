@@ -152,6 +152,11 @@ public:
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
+    /// Den Kanal an einen anderen Platz der Liste legen (S100, Entscheid
+    /// Patrik V1 a): die Reihenfolge ist die Mischreihenfolge der Bild-Kanaele,
+    /// CH oben liegt im Bild zuunterst. Auswahl und Einfuegemarke folgen ihrem
+    /// Kanal. Auch durch Ziehen am Kanalnamen in der linken Spalte.
+    void kanalVerschieben(int von, int nach);
     /// Die Farbe des Kanals setzen (0xRRGGBB; S100, Entscheid Patrik K1 b).
     /// Unter null: zurueck auf die Reihe seiner Art — die erste Farbe, die
     /// kein anderer Kanal der Art traegt. Nur im Bearbeiten, ueber Undo.
@@ -329,6 +334,9 @@ private:
     bool m_fallTon = false;          ///< der Drag traegt nur Songs
     QStringList m_fallDateien;       ///< was der Drag traegt
     Qt::KeyboardModifiers m_fallTasten = Qt::NoModifier;
+    int m_kanalZug = -1;             ///< der Kanal, der am Namen gezogen wird (-1 = keiner)
+    int m_kanalZiel = -1;            ///< der Platz, auf den er fiele
+    QPoint m_kanalZugStart;
     int m_markeKanal = -1;           ///< die Einfuegemarke: Kanal (-1 = keine)
     std::int64_t m_markeMs = 0;      ///< und Stelle
 

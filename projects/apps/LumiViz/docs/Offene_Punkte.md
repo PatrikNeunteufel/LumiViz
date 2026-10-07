@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.100.0
+> **Version:** 1.101.0
 > **Datum:** 2026-10-07 (Session 100)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2263,9 +2263,10 @@ Idee Preset-Warmup/Pre-Roll.
     bis G6), D1 bis D4 (Text-Vorlage, Wechsel am Kreuzungspunkt, Kopieren
     ohne Edit), C2, C3, B5, A8, E1.
   - **Sichttest S100 (Patrik), als Nächstes:**
-    `.claude/handover/Sichttests_S100.md` — 54 Punkte: A (Nachtest Panel
+    `.claude/handover/Sichttests_S100.md` — 61 Punkte: A (Nachtest Panel
     Player, sichtbar und verdeckt), M (die Zeile MASTER, mit den Urteilen
     zu dem, was ich gesetzt habe), L (Preset Late fade in), K (Kanalfarben),
+    V (Kanäle verschieben),
     G (*Visuals overlap themselves*) und R
     (der ungespielte Rest aus S99). Reihenfolge bei knapper Zeit: A1 bis
     A4, M1 bis M9, G2, G3.
@@ -2337,7 +2338,13 @@ Idee Preset-Warmup/Pre-Roll.
     0.48.0, Benutzerhandbuch 1.101.0):** zwei Farbreihen (Bild kühl, Ton
     warm), die Farbe gehört dem Kanal und steht in der Datei, Rechtsklick →
     *Channel color...* / *Reset channel color*; im Programm nicht gesehen,
-    Sichttest S100 Abschnitt K. Der Wunsch lautete:
+    Sichttest S100 Abschnitt K. **(2) ist erledigt (S100, Entscheid Patrik
+    V1: a, Konzept 0.50.0, Benutzerhandbuch 1.103.0):** Kanäle am Namen
+    ziehen oder per Rechtsklick *Move channel up / down*; die Reihenfolge
+    bleibt die Mischreihenfolge der Bild-Kanäle; im Programm nicht gesehen,
+    Sichttest S100 Abschnitt V. **Dazu (Wunsch Patrik S100):** bei *Fixed
+    end* das Ende an der rechten Kante der Zeile MASTER ziehen — gebaut,
+    Sichttest M24. Offen bleiben (3) bis (5). Die Wünsche lauteten:
     (1) **Kanalfarben** — heute hat jeder Bild-Kanal einen
     eigenen Ton, alle Audio-Kanäle denselben (`kanalFarbe` / `tonFarbe` in
     `ComposerPanel.cpp`); gewünscht: beide Arten gleich behandelt, die Farbe
@@ -4271,6 +4278,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.101.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Kanäle verschieben erledigt (Entscheid Patrik V1: a — die Reihenfolge bleibt die Mischreihenfolge; Konzept 0.50.0), dazu das feste Ende an der Zeile MASTER ziehen (Konzept 0.49.0); Sichttest S100 mit Abschnitt V und M24, 61 Punkte |
 | 1.100.0 | 2026-10-07 | Session 100 — **Composer:** Wunsch Kanalfarben erledigt (Entscheid Patrik K1: b) — zwei Farbreihen, die Farbe gehört dem Kanal, per Rechtsklick einstellbar (Konzept 0.48.0); Sichttest S100 mit Abschnitt K, 54 Punkte |
 | 1.99.0 | 2026-10-07 | Session 100 — **Composer:** Befund „Flipped und einfache Einblendung" erledigt (Entscheid Patrik: a) — Stück-Preset Late fade in und Handbuch-Absatz, Rezept per Test belegt (Konzept 0.47.0); Sichttest S100 mit Abschnitt L, 49 Punkte |
 | 1.98.0 | 2026-10-07 | Session 100 — **Composer:** Pegelkurve der ganzen Komposition, Schritt 2 — die Zeile MASTER unter dem Lineal mit Griffen, Rechtsklick und Curve Editor wie am Clip (Konzept 0.46.0, Benutzerhandbuch 1.99.0); im Programm nicht gesehen |

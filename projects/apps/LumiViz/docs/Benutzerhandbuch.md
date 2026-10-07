@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.102.0
+> **Version:** 1.103.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1918,6 +1918,14 @@ unter `composer/fades` und `composer/shapes`.
 - **Rechtsklick** auf eine Zeile: *Rename channel...*, *Channel enabled*
   (ein ausgeschalteter Kanal trägt nichts zum Bild bei), *Delete channel*
   (samt seinen Clips), *Add channel*; auf einem Clip zusätzlich *Delete clip*.
+- **Kanäle verschieben:** Zieh einen Kanal an seinem **Namen** (linke Spalte)
+  nach oben oder unten — ein Strich zeigt, wo er landet; Esc bricht ab. Oder
+  Rechtsklick auf die Zeile → **Move channel up** / **Move channel down**.
+  Die Reihenfolge der Bild-Kanäle ist die Reihenfolge, in der gemischt wird:
+  der oberste liegt im Bild **zuunterst**, jeder weitere darüber. Einen
+  Bild-Kanal zu verschieben ändert also das Bild, wie in einem Ebenen-Stapel.
+  Audio-Kanäle lassen sich frei dazwischen legen; für den Ton ändert sich
+  dabei nichts. Farbe, Clips und Auswahl gehen mit dem Kanal.
 - **Kanalfarben:** Jeder Kanal hat seine eigene Farbe — Bild-Kanäle kühle
   Töne (Blau, Violett, Grün …), Audio-Kanäle warme (Orange, Rot, Gelb …), so
   bleibt die Art an der Farbe erkennbar. Ein neuer Kanal bekommt die nächste
@@ -2199,6 +2207,7 @@ Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.103.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle verschieben**: am Kanalnamen ziehen oder Rechtsklick → *Move channel up* / *Move channel down*; die Reihenfolge der Bild-Kanäle ist die Mischreihenfolge (der oberste liegt im Bild zuunterst) |
 | 1.102.0 | 2026-10-07 | Session 100. §15 Composer, Zeile MASTER NEU **Das Ende ziehen**: bei *Fixed end* lässt sich die rechte Kante des Balkens ziehen |
 | 1.101.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanalfarben**: jeder Kanal trägt seine Farbe (Bild kühl, Ton warm, je Kanal ein eigener Ton), Rechtsklick → *Channel color...* / *Reset channel color*; die Farbe steht in der Datei. GEÄNDERT: Audio-Kanäle haben nicht mehr alle denselben Ton, Bild-Kanäle ab dem zweiten andere Farben als bisher |
 | 1.100.0 | 2026-10-07 | Session 100. §15 Composer NEU Stück-Preset **Late fade in** und der Absatz **Unsichtbar einfahren, später einblenden**: ein Stück am Clip-Anfang, das den Pegel auf null hält und dann weich einblendet — ohne *Flipped* |

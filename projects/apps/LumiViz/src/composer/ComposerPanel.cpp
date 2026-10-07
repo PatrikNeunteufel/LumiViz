@@ -595,6 +595,22 @@ void Zeitachse::paintEvent(QPaintEvent*)
         p.setBrush(Qt::NoBrush);
     }
 
+    // --- ein Kanal wird am Namen gezogen (S100): seine Zeile hervorgehoben, ein
+    //     Strich an der Kante der Zeile, an der er landet
+    if (m_kanalZug >= 0 && m_kanalZiel >= 0 && m_kanalZug < zeilen)
+    {
+        QColor hell = pal.color(QPalette::Highlight);
+        hell.setAlpha(45);
+        p.fillRect(QRect(0, kKanaeleOben + m_kanalZug * kZeilenHoehe, width(), kZeilenHoehe), hell);
+        if (m_kanalZiel != m_kanalZug)
+        {
+            // nach unten gezogen landet er UNTER der Zielzeile, nach oben ueber ihr
+            const int y = kKanaeleOben + (m_kanalZiel + (m_kanalZiel > m_kanalZug ? 1 : 0)) * kZeilenHoehe;
+            p.setPen(QPen(pal.color(QPalette::Highlight), 3.0));
+            p.drawLine(0, y, width(), y);
+        }
+    }
+
     // --- die Grenzen der Fenster, ueber den Clips: dort endet das vordere und beginnt das hintere
     if (fensterMs > 0)
     {
@@ -967,6 +983,15 @@ void Zeitachse::mousePressEvent(QMouseEvent* event)
         Q_EMIT sprung(stelleVon(ort.x()));
         return;
     }
+    // Am Kanalnamen (linke Spalte) laesst sich der Kanal an einen anderen Platz
+    // ziehen (S100, Entscheid Patrik V1 a) — vorbereitet wird es hier, gezogen
+    // erst, wenn die Maus sich bewegt.
+    if (m_bearbeiten && ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+    {
+        m_kanalZug = kanalBei(ort.y());
+        m_kanalZiel = -1;
+        m_kanalZugStart = ort;
+    }
     int kanal = -1;
     int clipIndex = -1;
     int stueck = -1;
@@ -1140,6 +1165,8 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
 
 void Zeitachse::brichZugAb()
 {
+    m_kanalZug = -1;  // auch ein Kanal, der gerade am Namen gezogen wird, bleibt, wo er war
+    m_kanalZiel = -1;
     if (m_griff == Griff::Keiner) return;
     if (m_zugLaeuft)
     {
@@ -1165,6 +1192,17 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
         Q_EMIT sprung(stelleVon(ort.x()));
         return;
     }
+    if (m_kanalZug >= 0 && (event->buttons() & Qt::LeftButton))
+    {
+        // ein Kanal wird am Namen gezogen: er fiele auf die Zeile unter der Maus
+        if (m_kanalZiel < 0 && (ort - m_kanalZugStart).manhattanLength() < 4) return;
+        const int zeilen = static_cast<int>(m_komposition.kanaele.size());
+        m_kanalZiel = std::clamp((ort.y() - kKanaeleOben) / kZeilenHoehe, 0, std::max(0, zeilen - 1));
+        if (ort.y() < kKanaeleOben) m_kanalZiel = 0;
+        setCursor(Qt::ClosedHandCursor);
+        update();
+        return;
+    }
     if (m_griff != Griff::Keiner && (event->buttons() & Qt::LeftButton))
     {
         if (!m_zugLaeuft && (ort - m_zugStart).manhattanLength() < 4) return;
@@ -1177,7 +1215,9 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
         int kanal = -1;
         int clip = -1;
         const Griff griff = griffBei(ort, &kanal, &clip);
-        if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
+        if (ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+            setCursor(Qt::OpenHandCursor);  // am Kanalnamen: der Kanal laesst sich verschieben
+        else if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
             setCursor(Qt::SizeHorCursor);
         else if (griff != Griff::Keiner && griff != Griff::Verschieben)
             setCursor(Qt::PointingHandCursor);  // ein Griff der Blende
@@ -1189,6 +1229,17 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 void Zeitachse::mouseReleaseEvent(QMouseEvent*)
 {
     m_zieht = false;
+    if (m_kanalZug >= 0)
+    {
+        // der Kanal faellt auf seinen neuen Platz — ohne Bewegung war es nur ein Klick
+        const int von = m_kanalZug;
+        const int nach = m_kanalZiel;
+        m_kanalZug = -1;
+        m_kanalZiel = -1;
+        unsetCursor();
+        update();
+        if (nach >= 0 && nach != von) kanalVerschieben(von, nach);
+    }
     if (m_griff == Griff::Keiner) return;
     const Griff griff = m_griff;
     const bool gezogen = m_zugLaeuft;
@@ -1215,6 +1266,15 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent*)
 
 void Zeitachse::keyPressEvent(QKeyEvent* event)
 {
+    if (m_bearbeiten && event->key() == Qt::Key_Escape && m_kanalZug >= 0)
+    {
+        // einen Kanal gezogen: Esc laesst ihn, wo er war
+        m_kanalZug = -1;
+        m_kanalZiel = -1;
+        unsetCursor();
+        update();
+        return;
+    }
     if (m_bearbeiten && event->key() == Qt::Key_Escape && m_griff != Griff::Keiner)
     {
         brichZugAb();
@@ -1483,6 +1543,17 @@ void Zeitachse::kanalUmbenennen(int kanal, const QString& name)
     Q_EMIT bearbeitet(neu, tr("Rename channel"));
 }
 
+void Zeitachse::kanalVerschieben(int von, int nach)
+{
+    if (!m_bearbeiten || !m_geladen) return;
+    Komposition neu = m_komposition;
+    if (!verschiebeKanal(neu, von, nach)) return;
+    // Auswahl und Einfuegemarke bleiben bei ihrem Kanal (die Kurve der Komposition bleibt, was sie ist)
+    if (m_markeKanal >= 0) m_markeKanal = platzNachVerschieben(m_markeKanal, von, nach);
+    uebernimm(neu, m_kanal >= 0 ? platzNachVerschieben(m_kanal, von, nach) : m_kanal, m_clip);
+    Q_EMIT bearbeitet(neu, tr("Move channel"));
+}
+
 void Zeitachse::kanalFaerben(int kanal, std::int32_t farbe)
 {
     if (!m_bearbeiten || !m_geladen) return;
@@ -1686,6 +1757,12 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         an->setCheckable(true);
         an->setChecked(k.an);
         connect(an, &QAction::triggered, this, [this, zeile](bool ein) { kanalSchalten(zeile, ein); });
+        // den Kanal verschieben (S100, Entscheid Patrik V1 a) — auch durch Ziehen am Namen
+        const int letzter = static_cast<int>(m_komposition.kanaele.size()) - 1;
+        menu.addAction(tr("Move channel up"), this, [this, zeile] { kanalVerschieben(zeile, zeile - 1); })
+            ->setEnabled(zeile > 0);
+        menu.addAction(tr("Move channel down"), this, [this, zeile] { kanalVerschieben(zeile, zeile + 1); })
+            ->setEnabled(zeile < letzter);
         // die Farbe des Kanals (S100, Entscheid Patrik K1 b)
         menu.addAction(tr("Channel color..."), this, [this, zeile] {
             const QColor jetzt = zeichenFarbe(m_komposition.farbeVon(zeile), true);

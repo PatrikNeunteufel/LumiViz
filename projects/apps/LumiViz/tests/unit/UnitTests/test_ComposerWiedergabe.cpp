@@ -416,6 +416,47 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(gelesen.kanaele[1].farbe == 0x123456);
     }
 
+    TEST_CASE("Kanaele verschieben S100, Modell: die Reihenfolge ist die Mischreihenfolge — Plaetze, Farben, Datei")
+    {
+        Komposition k;
+        for (const char* name : {"CH1", "A1", "CH2", "CH3"})
+            (void)fuegeKanalEin(k, QString::fromLatin1(name),
+                                name[0] == 'A' ? KanalArt::Audio : KanalArt::Visual);
+        const auto namen = [&k] {
+            QStringList alle;
+            for (const Kanal& kanal : k.kanaele) alle << kanal.name;
+            return alle.join(QLatin1Char(' '));
+        };
+        const std::int32_t farbeCh1 = k.kanaele[0].farbe;
+        // nach unten: die dazwischen ruecken auf
+        REQUIRE(verschiebeKanal(k, 0, 2));
+        CHECK(namen() == QStringLiteral("A1 CH2 CH1 CH3"));
+        CHECK(k.kanaele[2].farbe == farbeCh1);  // die Farbe geht mit dem Kanal
+        CHECK(platzNachVerschieben(0, 0, 2) == 2);
+        CHECK(platzNachVerschieben(1, 0, 2) == 0);
+        CHECK(platzNachVerschieben(2, 0, 2) == 1);
+        CHECK(platzNachVerschieben(3, 0, 2) == 3);
+        // nach oben
+        REQUIRE(verschiebeKanal(k, 3, 0));
+        CHECK(namen() == QStringLiteral("CH3 A1 CH2 CH1"));
+        CHECK(platzNachVerschieben(3, 3, 0) == 0);
+        CHECK(platzNachVerschieben(0, 3, 0) == 1);
+        CHECK(platzNachVerschieben(2, 3, 0) == 3);
+        CHECK(platzNachVerschieben(-1, 3, 0) == -1);  // keine Auswahl bleibt keine
+        // was es nicht gibt, aendert nichts
+        CHECK_FALSE(verschiebeKanal(k, 1, 1));
+        CHECK_FALSE(verschiebeKanal(k, -1, 2));
+        CHECK_FALSE(verschiebeKanal(k, 0, 4));
+        CHECK(namen() == QStringLiteral("CH3 A1 CH2 CH1"));
+        // die Datei traegt die neue Reihenfolge — sie ist der Stapel der Bild-Kanaele, unten zuerst
+        Komposition g;
+        REQUIRE(ausJson(alsJson(k), g));
+        REQUIRE(g.kanaele.size() == 4);
+        CHECK(g.kanaele[0].name == QStringLiteral("CH3"));
+        CHECK(g.kanaele[3].name == QStringLiteral("CH1"));
+        CHECK(g.kanaele[3].farbe == farbeCh1);
+    }
+
     TEST_CASE("Kurve der Komposition S100, Modell: Blenden mit Form, Grundpegel, Stuecke an fester Zeit — und die Datei")
     {
         Komposition k;

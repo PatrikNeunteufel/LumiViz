@@ -94,6 +94,15 @@ int fuegeKanalEin(Komposition& komposition, const QString& name = {}, KanalArt a
 /// Den Kanal samt seinen Clips entfernen. false = es gibt ihn nicht.
 bool loescheKanal(Komposition& komposition, int kanal);
 
+/// Den Kanal `von` an den Platz `nach` legen; die Kanaele dazwischen ruecken
+/// um einen Platz (S100, Entscheid Patrik V1 a). Die Reihenfolge ist die
+/// Mischreihenfolge der Bild-Kanaele (unten zuerst) — das Verschieben eines
+/// Bild-Kanals aendert also das Bild. false = einen der Plaetze gibt es nicht,
+/// oder es ist derselbe.
+bool verschiebeKanal(Komposition& komposition, int von, int nach);
+/// Wo der Kanal `kanal` nach `verschiebeKanal(von, nach)` liegt.
+[[nodiscard]] int platzNachVerschieben(int kanal, int von, int nach);
+
 /// Eine neue, leere Komposition: ein Kanal „CH1", das Ende folgt den Clips.
 [[nodiscard]] Komposition neueKomposition();
 

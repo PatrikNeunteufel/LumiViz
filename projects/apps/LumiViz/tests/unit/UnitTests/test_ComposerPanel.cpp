@@ -757,6 +757,51 @@ TEST_SUITE("ComposerPanel")
             CHECK_FALSE(sitzung->ungespeichert());
         }
 
+        // --- Kanaele verschieben (S100, Entscheid Patrik V1 a): per Aufruf (der Weg des
+        //     Rechtsklicks) und durch Ziehen am Kanalnamen; die Auswahl folgt ihrem Kanal
+        {
+            const auto namen = [&] {
+                QStringList alle;
+                for (const Kanal& k : sitzung->komposition().kanaele) alle << k.name;
+                return alle;
+            };
+            achse->kanalHinzu();  // damit es sicher zwei gibt
+            const QStringList vorher = namen();
+            const int letzter = static_cast<int>(vorher.size()) - 1;
+            REQUIRE(letzter >= 1);
+            zug(10000, 10000, 0);  // ein Klick auf den ersten Clip von CH1
+            REQUIRE(achse->gewaehlterKanal() == 0);
+            const int clipVorher = achse->gewaehlterClip();
+            REQUIRE(clipVorher >= 0);
+            const QString dateiVorher = achse->auswahl()->datei;
+
+            achse->kanalVerschieben(0, letzter);
+            QStringList erwartet = vorher;
+            erwartet.move(0, letzter);
+            CHECK(namen() == erwartet);
+            CHECK(achse->gewaehlterKanal() == letzter);  // die Auswahl ist mitgegangen
+            CHECK(achse->gewaehlterClip() == clipVorher);
+            REQUIRE(achse->auswahl() != nullptr);
+            CHECK(achse->auswahl()->datei == dateiVorher);
+            achse->kanalVerschieben(0, 0);    // derselbe Platz: kein Schritt
+            achse->kanalVerschieben(0, 99);   // einen solchen Platz gibt es nicht
+            CHECK(namen() == erwartet);
+            REQUIRE(bus->undo());
+            CHECK(namen() == vorher);
+
+            // am Namen ziehen: von der ersten auf die letzte Zeile
+            zug(0, 0, 0, Qt::NoModifier, -50, letzter);
+            CHECK(namen() == erwartet);
+            // und zurueck nach oben
+            zug(0, 0, letzter, Qt::NoModifier, -50, 0);
+            CHECK(namen() == vorher);
+            // ein Klick auf den Namen ohne Bewegung verschiebt nichts
+            zug(0, 0, 0, Qt::NoModifier, -50, 0);
+            CHECK(namen() == vorher);
+            for (int i = 0; i < 3; ++i) REQUIRE(bus->undo());  // zurueck, hin, der neue Kanal
+            CHECK_FALSE(sitzung->ungespeichert());
+        }
+
         // --- eine andere Ladung: die alten Undo-Schritte tun nichts mehr
         REQUIRE(sitzung->lade(datei));
         REQUIRE(bus->canUndo());
