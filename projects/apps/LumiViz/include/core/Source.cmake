@@ -15,6 +15,7 @@ set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/GpuInfo.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/GpuPreference.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/EinzelInstanz.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

@@ -162,6 +162,15 @@ public slots:
     void setFrameModeOnAllVisualizers(int mode, int targetFps);
 
     /**
+     * @brief Ein weiterer Start von LumiViz hat seine Datei abgegeben (S101).
+     *
+     * Holt das Fenster nach vorn und oeffnet die Datei ueber den Ladeweg
+     * ihrer Endung — wie der Doppelklick im Effect Browser, mit dessen
+     * Rueckfragen. Leer = nur das Fenster nach vorn.
+     */
+    void oeffneUebergebeneDatei(const QString& datei);
+
+    /**
      * @brief Toggles fullscreen mode.
      */
     void toggleFullscreen();

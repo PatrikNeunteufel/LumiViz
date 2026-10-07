@@ -1748,3 +1748,29 @@ void MainWindow::closeEvent(QCloseEvent* event)
     QMainWindow::closeEvent(event);
     QCoreApplication::quit();
 }
+
+// =============================================================================
+// Eine Datei von einem weiteren Start (S101, core/EinzelInstanz)
+// =============================================================================
+
+void MainWindow::oeffneUebergebeneDatei(const QString& datei)
+{
+    // nach vorn — auch aus dem minimierten Zustand
+    setWindowState((windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+    show();
+    raise();
+    activateWindow();
+
+    if (datei.isEmpty()) return;
+    BasicLogger::logInfo("File handed over by another start: " + datei.toStdString());
+    auto* bus = m_pServices->tryResolve<IEventBus>();
+    if (bus == nullptr) return;
+    // Composer-Naht N8 (docs/ui/Composer_Konzept.md §12.2; S101): eine .lvcomp —
+    // derselbe Weg wie File → Open Composition, mit der Rueckfrage bei Ungespeichertem
+    if (lumi::ui::startdatei::art(datei) == lumi::ui::startdatei::Art::Komposition)
+    {
+        bus->publish(lumi::composer::OpenCompositionEvent{datei.toStdString()});
+        return;
+    }
+    (void)lumi::ui::startdatei::oeffne(*bus, datei, /*beimStart=*/false);
+}

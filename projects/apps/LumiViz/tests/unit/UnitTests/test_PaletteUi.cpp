@@ -33,6 +33,14 @@
 #include "UI/PresetListen.hpp"
 #include "UI/StartDatei.hpp"
 #include "UI/StartPreset.hpp"
+#include "core/EinzelInstanz.hpp"
+
+#include <QElapsedTimer>
+#include <QLockFile>
+#include <QUuid>
+
+#include <atomic>
+#include <thread>
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
 #include "UI/managers/ShortcutManager.hpp"
@@ -2717,6 +2725,91 @@ TEST_CASE("PaletteUi S101: eine Datei als Argument — Auswahl, Art und Ladeweg"
     CHECK(wege[2] == QStringLiteral("avs?:C:/x/b.avs"));
     CHECK(wege[3] == QStringLiteral("milk?:C:/x/c.milk"));
     CHECK(wege[4] == QStringLiteral("karaoke:C:/x/d.lvkar"));
+}
+
+// S101 (Entscheide Patrik X1: a, X1b: a): eine laufende App je Exe — der erste
+// Start nimmt die Sperre und lauscht, jeder weitere gibt seine Datei ab
+// (core/EinzelInstanz). Der zweite Start laeuft hier in einem eigenen Thread:
+// derselbe Kanal und dieselbe Sperrdatei wie zwischen zwei Prozessen, nur dass
+// es ein Prozess ist.
+TEST_CASE("PaletteUi S101: eine laufende App je Exe — der zweite Start gibt seine Datei ab")
+{
+    UiUmgebung env;
+    using lumi::core::EinzelInstanz;
+
+    // --- der Name haengt an Exe und Benutzer, nicht an der Schreibweise des Pfads
+    const QString a = EinzelInstanz::nameFuer(QStringLiteral("C:/Build/Release/LumiViz.exe"));
+    CHECK(a == EinzelInstanz::nameFuer(QStringLiteral("c:\\build\\RELEASE\\lumiviz.exe")));
+    CHECK(a == EinzelInstanz::nameFuer(QStringLiteral("C:/Build/Debug/../Release/LumiViz.exe")));
+    CHECK(a != EinzelInstanz::nameFuer(QStringLiteral("C:/Build/Debug/LumiViz.exe")));
+    CHECK(a.startsWith(QStringLiteral("LumiViz-")));
+
+    // --- der Schalter: nur hinter dem Programmnamen
+    CHECK(EinzelInstanz::neueInstanzVerlangt({QStringLiteral("x.exe"), QStringLiteral("a.lvfx"),
+                                              QStringLiteral("--new-instance")}));
+    CHECK_FALSE(EinzelInstanz::neueInstanzVerlangt({QStringLiteral("x.exe"), QStringLiteral("a.lvfx")}));
+    CHECK_FALSE(EinzelInstanz::neueInstanzVerlangt({QStringLiteral("--new-instance")}));
+
+    const QString name =
+        QStringLiteral("LumiVizTest-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    QStringList empfangen;
+    const auto zweiterStart = [&](const QString& datei, int geduldMs) {
+        std::atomic<bool> fertig{false};
+        EinzelInstanz::Rolle rolle = EinzelInstanz::Rolle::Erste;
+        const qsizetype vorher = empfangen.size();
+        std::thread start([&] {
+            EinzelInstanz zweite;
+            rolle = zweite.starte(name, datei, geduldMs);
+            fertig = true;
+        });
+        QElapsedTimer uhr;
+        uhr.start();
+        // die laufende App antwortet aus ihrer Ereignisschleife
+        while ((!fertig || (rolle == EinzelInstanz::Rolle::Uebergeben && empfangen.size() == vorher)) &&
+               uhr.elapsed() < 10000)
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+        start.join();
+        return rolle;
+    };
+
+    {
+        // --- der erste Start: die laufende App
+        EinzelInstanz erste;
+        QObject::connect(&erste, &EinzelInstanz::dateiUebergeben,
+                         [&empfangen](const QString& datei) { empfangen << datei; });
+        REQUIRE(erste.starte(name, QString(), 200) == EinzelInstanz::Rolle::Erste);
+        CHECK(QFile::exists(EinzelInstanz::sperrDatei(name)));
+        CHECK(empfangen.isEmpty());
+
+        // --- ein zweiter Start mit Datei (Leerzeichen, Umlaut): sie kommt an, er endet
+        const QString datei = QStringLiteral("C:/Presets/Mein Ordner/Größe 2.lvfx");
+        CHECK(zweiterStart(datei, 3000) == EinzelInstanz::Rolle::Uebergeben);
+        REQUIRE(empfangen.size() == 1);
+        CHECK(empfangen[0] == datei);
+
+        // --- ohne Datei: nur die Nachricht „nach vorn" (leer)
+        CHECK(zweiterStart(QString(), 3000) == EinzelInstanz::Rolle::Uebergeben);
+        REQUIRE(empfangen.size() == 2);
+        CHECK(empfangen[1].isEmpty());
+    }
+
+    // --- die erste App ist beendet: der naechste Start ist wieder die laufende
+    {
+        EinzelInstanz naechste;
+        CHECK(naechste.starte(name, QStringLiteral("C:/x/a.lvfx"), 200) == EinzelInstanz::Rolle::Erste);
+    }
+    CHECK(empfangen.size() == 2);
+
+    // --- jemand haelt die Sperre, lauscht aber nicht (haengt, oder faehrt erst hoch):
+    //     nach der Geduld laeuft der neue Start fuer sich
+    {
+        QLockFile sperre(EinzelInstanz::sperrDatei(name));
+        sperre.setStaleLockTime(0);
+        REQUIRE(sperre.tryLock(0));
+        CHECK(zweiterStart(QStringLiteral("C:/x/a.lvfx"), 400) == EinzelInstanz::Rolle::Allein);
+    }
+    CHECK(empfangen.size() == 2);
+    QFile::remove(EinzelInstanz::sperrDatei(name));
 }
 
 // S93 (Entscheid Patrik): der Effect Browser laedt beim Start nichts mehr und

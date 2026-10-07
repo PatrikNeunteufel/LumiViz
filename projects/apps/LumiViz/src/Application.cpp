@@ -28,6 +28,8 @@
 #include "Application.hpp"
 #include "AppInfo.hpp"  // Name/Version aus Solution.json (S73)
 #include "UI/MainWindow.hpp"
+#include "UI/StartDatei.hpp"       // `LumiViz.exe <datei>` (S101)
+#include "core/EinzelInstanz.hpp"  // eine laufende App je Exe (S101)
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
 #include "services/LiveVideoFeed.hpp"    // Feed-Stopp nach GL-Abbau (S70)
@@ -132,6 +134,9 @@ struct Application::Impl
     std::unique_ptr<QApplication> pQtApp;
     std::unique_ptr<MainWindow> pMainWindow;
     QTimer* pFrameTimer{nullptr};  // Owned by QApplication (parent-child)
+    /// S101: Sperre und Kanal der einen laufenden App; leer mit `--new-instance`
+    std::unique_ptr<lumi::core::EinzelInstanz> pInstanz;
+    bool handedOver{false};  ///< S101: dieser Start hat an die laufende App abgegeben
 
     // -------------------------------------------------------------------------
     // GPU Selection
@@ -339,6 +344,44 @@ bool Application::init(int argc, char* argv[])
     m_impl->pQtApp->setApplicationVersion(QString::fromStdString(m_impl->version));
     m_impl->pQtApp->setOrganizationName(QStringLiteral("LumiViz Project"));
 
+    // -------------------------------------------------------------------------
+    // Eine laufende App je Exe (S101, Entscheide Patrik X1: a, X1b: a)
+    // -------------------------------------------------------------------------
+    // Laeuft diese Exe schon, bekommt sie die Datei dieses Starts (etwa vom
+    // Doppelklick im Explorer) und holt ihr Fenster nach vorn; dieser Start
+    // endet hier. VOR allem, was Einstellungen, Ton oder das Fenster anfasst.
+    // `--new-instance` startet bewusst eine weitere App.
+    {
+        const QStringList argumente = QCoreApplication::arguments();
+        if (lumi::core::EinzelInstanz::neueInstanzVerlangt(argumente))
+        {
+            BasicLogger::logInfo("Single instance: --new-instance given, starting a further app");
+        }
+        else
+        {
+            m_impl->pInstanz = std::make_unique<lumi::core::EinzelInstanz>();
+            const QString name =
+                lumi::core::EinzelInstanz::nameFuer(QCoreApplication::applicationFilePath());
+            const QString datei = lumi::ui::startdatei::ausArgumenten(argumente);
+            switch (m_impl->pInstanz->starte(name, datei))
+            {
+                case lumi::core::EinzelInstanz::Rolle::Uebergeben:
+                    BasicLogger::logInfo("Single instance: LumiViz is already running — handed over" +
+                                         (datei.isEmpty() ? std::string(" (no file)")
+                                                          : ": " + datei.toStdString()));
+                    m_impl->pInstanz.reset();
+                    m_impl->handedOver = true;
+                    return false;
+                case lumi::core::EinzelInstanz::Rolle::Allein:
+                    BasicLogger::logWarning("Single instance: another LumiViz holds the lock but did "
+                                            "not answer — starting on its own");
+                    break;
+                case lumi::core::EinzelInstanz::Rolle::Erste:
+                    break;
+            }
+        }
+    }
+
     // Einstellungen aus der MyViz-Zeit uebernehmen (S73, einmalig).
     //
     // Organisation und Anwendungsname bilden den QSettings-Pfad. Mit der
@@ -383,6 +426,11 @@ bool Application::init(int argc, char* argv[])
     BasicLogger::logDebug("Creating MainWindow...");
     m_impl->pMainWindow = std::make_unique<MainWindow>();
     m_impl->pMainWindow->show();
+
+    // S101: gibt ein weiterer Start seine Datei ab, oeffnet sie das Hauptfenster
+    if (m_impl->pInstanz != nullptr)
+        QObject::connect(m_impl->pInstanz.get(), &lumi::core::EinzelInstanz::dateiUebergeben,
+                         m_impl->pMainWindow.get(), &MainWindow::oeffneUebergebeneDatei);
 
     // -------------------------------------------------------------------------
     // GPU Mismatch Check
@@ -523,6 +571,8 @@ void Application::shutdown()
     // verhinderte das Prozessende — der LiveVideoFeed arbeitet jetzt per
     // Vorgabe auf dem Main-Thread (s. dort, sowie Lebenszyklus-Vertrag 6.6).
 
+    m_impl->pInstanz.reset();  // S101: Sperre frei, Kanal zu — vor der QApplication
+
     BasicLogger::logDebug("Destroying QApplication...");
     m_impl->pQtApp.reset();
 
@@ -615,6 +665,11 @@ const std::string& Application::version() const noexcept
 bool Application::isInitialized() const noexcept
 {
     return m_initialized;
+}
+
+bool Application::handedOver() const noexcept
+{
+    return m_impl->handedOver;
 }
 
 bool Application::isRunning() const noexcept

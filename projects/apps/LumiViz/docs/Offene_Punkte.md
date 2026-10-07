@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.107.0
+> **Version:** 1.108.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2427,13 +2427,33 @@ Idee Preset-Warmup/Pre-Roll.
     Karaoke-Preset und eine Komposition kommen nach dem Wiederherstellen
     dazu (Komposition: Naht N8 wächst). Belegt per Test sind Auswahl, Art
     und Ladeweg — **nicht** die Zeilen im Hauptfenster (es läuft in keinem
-    Unit-Test). **Offen:** (1) Schritt 2, die eine Instanz: Übergabe des
-    Pfads an die laufende App, Fenster nach vorn — davor der Entscheid X1b
-    (Ausweg für mehrere Instanzen, etwa Debug-App neben der Sichttest-Exe);
-    (2) 🟡 eine Audiodatei als Argument (spielen, anhängen, ersetzen?);
-    (3) 🟡 ein Preset als Argument, während *Resume after restart* den
-    Composer wieder einschaltet: heute liegt die Komposition dann über dem
-    Preset; (4) danach der Öffnen-Befehl im Skript und das Handbuch.
+    Unit-Test). **Schritt 2 gebaut, im Programm ungesehen (Entscheid X1b:
+    a — eine Instanz je Exe-Datei, Schalter `--new-instance`, kein Haken in
+    den Settings; „muss dokumentiert werden": Benutzerhandbuch §17):**
+    `core/EinzelInstanz` — der erste Start nimmt eine Sperrdatei im
+    Temp-Ordner und lauscht auf einem lokalen Kanal, jeder weitere gibt
+    seinen Pfad ab und endet (Exit 0); das Hauptfenster kommt nach vorn und
+    lädt mit den Rückfragen des Effect Browsers. Per Test belegt (zweiter
+    Start in einem eigenen Thread): Übergabe mit und ohne Datei, Pfad mit
+    Leerzeichen und Umlaut, nächster Start nach dem Ende, Sperre ohne
+    Antwort → läuft für sich. **Nicht belegt:** zwei echte Prozesse; dass
+    das Fenster unter Windows wirklich nach vorn kommt; Start und Ende der
+    App mit der Sperre. **Grenzen, im Handbuch genannt:** antwortet die
+    laufende App drei Sekunden nicht, startet der neue Aufruf für sich;
+    kommt eine zweite Datei während des Hochfahrens, ist nicht festgelegt,
+    welche danach läuft. **Offen:** (1) ⬜ Sichttest (unten); (2) 🟡 eine
+    Audiodatei als Argument (spielen, anhängen, ersetzen?); (3) 🟡 ein
+    Preset als Argument, während *Resume after restart* den Composer wieder
+    einschaltet: heute liegt die Komposition dann über dem Preset; (4) der
+    Öffnen-Befehl (`shell\open\command`) im Explorer-Skript — braucht den
+    Pfad der Exe, die gelten soll.
+    **Sichttest:** (a) Exe läuft, im Explorer eine `.lvfx` auf die Exe
+    ziehen → kein zweites Fenster, das laufende kommt nach vorn und zeigt
+    das Preset; (b) dasselbe mit `.lvkar` und `.lvcomp`; (c) Exe läuft
+    nicht, Datei auf die Exe ziehen → startet mit ihr; (d) Exe ein zweites
+    Mal ohne Datei → nur nach vorn, auch aus dem minimierten Zustand; (e)
+    `LumiViz.exe --new-instance` → zweites Fenster; (f) Debug-App aus
+    Visual Studio neben der Sichttest-Exe → beide laufen.
   - **Das Icon der App (Wunsch Patrik S100) — gebaut:** `LumiViz.exe` trägt
     eine Icon-Ressource (`projects/apps/LumiViz/main/LumiViz.rc` mit
     `lumiviz_app.ico`, eingetragen in `main/Source.cmake`, nur Windows). Am
@@ -4359,6 +4379,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.108.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`, Schritt 2:** eine laufende App je Exe-Datei (Entscheid Patrik X1b: a, mit `--new-instance`; `core/EinzelInstanz`, Benutzerhandbuch 1.107.0 §17, Konzept 0.55.0 — N8 zweite Stelle), im Programm ungesehen; Sichttest in sechs Punkten eingetragen; offen Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.107.0 | 2026-10-07 | Session 101 — **`LumiViz.exe <datei>`:** Entscheid Patrik X1: a (eine Instanz, die Datei geht an die laufende App); Schritt 1 gebaut — die Datei als Argument beim Start (`UI/StartDatei.hpp`, Naht N8 wächst um die `.lvcomp`; Konzept 0.54.0), im Programm ungesehen; offen die eine Instanz (Entscheid X1b), Audiodatei als Argument, Preset gegen wieder eingeschalteten Composer, Öffnen-Befehl im Skript |
 | 1.106.0 | 2026-10-07 | Session 101 — **Composer:** Befund Patrik, das Panel Karaoke lud bei laufendem Composer nichts; behoben (Entscheid KP1: a, Naht N16, R2 wächst; Konzept 0.53.0), per Test gezählt, im Programm ungesehen — Nachtest und Urteil zum Ruckeln eingetragen |
 | 1.105.0 | 2026-10-07 | Session 100, Abschluss — **Composer:** Stand am Ende der Sitzung (alles gebaut, im Programm nichts gesehen — Sichttest S100 mit 70 Punkten); neuer Wunsch Patrik: Audio-Master und Visual-Master neben der Zeile MASTER (etwa Musik stumm für eine Durchsage), nicht begonnen |

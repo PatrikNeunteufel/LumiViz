@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.106.0
+> **Version:** 1.107.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -33,6 +33,7 @@ Konfigurations-Panels steht im
 14. [Stilfilter (Pixel Filter)](#14-stilfilter-pixel-filter)
 15. [Composer](#15-composer)
 16. [Dateitypen und ihre Icons](#16-dateitypen-und-ihre-icons)
+17. [Mit einer Datei starten — und immer nur ein LumiViz](#17-mit-einer-datei-starten--und-immer-nur-ein-lumiviz)
 
 ---
 
@@ -2249,7 +2250,56 @@ angemeldeten Benutzer ein, mit `-Apply -Foreign` auch die von `.avs`, `.milk`
 und `.lrc`, mit `-Remove` nimmt es seine Einträge wieder heraus. Audioformate
 fasst es nie an, und eine Endung, die schon einem anderen Programm gehört,
 lässt es in Ruhe. Es trägt nur das **Icon** ein: ein Doppelklick im Explorer
-öffnet die Datei noch nicht in LumiViz.
+öffnet die Datei noch nicht in LumiViz. Von Hand geht es schon — über
+*Öffnen mit* im Explorer, oder indem man die Datei auf `LumiViz.exe` zieht
+(§17).
+
+---
+
+## 17. Mit einer Datei starten — und immer nur ein LumiViz
+
+**Eine Datei mitgeben.** LumiViz lässt sich mit einer Datei starten:
+`LumiViz.exe <datei>`. So ruft auch Windows ein Programm auf, wenn man im
+Explorer *Öffnen mit* wählt oder eine Datei auf die Exe zieht. Was dann
+geschieht, hängt an der Endung:
+
+| Datei | Was LumiViz tut |
+|---|---|
+| `.avs`, `.milk`, `.lvfx`, `.lvfx2` | das Preset läuft — beim Start **statt** des zuletzt aktiven |
+| `.lvkar` | das Karaoke-Preset kommt in die Karaoke-Ebene, die Ebene geht an; das Preset der Kette bleibt |
+| `.lvcomp` | die Komposition wird geöffnet wie mit *File → Open Composition...* (§15) |
+| alles andere | wird übergangen — LumiViz startet wie ohne Datei |
+
+Es gilt die erste Angabe, die eine vorhandene Datei dieser Arten nennt. Eine
+Musikdatei wird noch nicht angenommen.
+
+**Immer nur ein LumiViz.** Läuft LumiViz schon und wird es noch einmal
+gestartet, entsteht **kein zweites Fenster**: der neue Start gibt seine Datei
+an das laufende LumiViz ab und beendet sich. Das laufende LumiViz kommt nach
+vorn und lädt die Datei — wie beim Doppelklick im Effect Browser, also mit
+der Rückfrage, wenn an der Kette, der Karaoke-Ebene oder der Komposition etwas
+ungespeichert ist. Ohne Datei gestartet, kommt nur das Fenster nach vorn.
+
+**Wenn doch ein zweites gebraucht wird:**
+
+- Die Regel gilt **je Programmdatei**. Liegt LumiViz an zwei Orten (zwei
+  Installationen, oder beim Entwickeln ein Debug- und ein Release-Build),
+  läuft von jedem Ort eines — nebeneinander.
+- Mit dem Schalter `--new-instance` startet bewusst ein weiteres LumiViz
+  derselben Programmdatei: `LumiViz.exe --new-instance`, auch zusammen mit
+  einer Datei. Einen Haken dafür in den Settings gibt es absichtlich nicht.
+
+Mehrere LumiViz zugleich teilen sich alles, was gespeichert wird: die
+Einstellungen, die Fensteranordnung, die laufende Karaoke-Ebene, die Playlist
+der Sitzung und das Log. Es gilt jeweils, was zuletzt geschrieben wurde — beim
+Beenden also der Stand des LumiViz, das als letztes geschlossen wird. Beide
+spielen ihren Ton auf dasselbe Ausgabegerät.
+
+**Zwei Randfälle.** Antwortet das laufende LumiViz nicht (es hängt), startet
+der neue Aufruf nach etwa drei Sekunden doch als eigenes Fenster. Und wird
+LumiViz ein zweites Mal gestartet, während das erste noch hochfährt, kommt die
+zweite Datei an, sobald es bereit ist — welche der beiden Dateien danach
+läuft, ist in diesem Fall nicht festgelegt.
 
 ---
 
@@ -2257,6 +2307,7 @@ lässt es in Ruhe. Es trägt nur das **Icon** ein: ein Doppelklick im Explorer
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.107.0 | 2026-10-07 | Session 101. **§17 NEU: Mit einer Datei starten — und immer nur ein LumiViz**: `LumiViz.exe <datei>` (Preset, Karaoke-Preset, Komposition); ein zweiter Start gibt seine Datei an das laufende LumiViz ab; die Regel gilt je Programmdatei, `--new-instance` startet bewusst ein weiteres; was mehrere LumiViz sich teilen. §16: Verweis auf *Öffnen mit* |
 | 1.106.0 | 2026-10-07 | Session 100. §16 NEU das Icon für Kompositionen `.lvcomp` (der Fächer mit Zeitstrahl) und das Icon der App; §15 Composer, Öffnen: der **Effect Browser** zeigt `.lvcomp`-Dateien, ein Doppelklick öffnet sie |
 | 1.105.0 | 2026-10-07 | Session 100. NEU **§16 Dateitypen und ihre Icons**: Tabelle aller Dateitypen mit ihrem Icon als Bild, wo sie in LumiViz erscheinen, und das Skript zum Eintragen der Icons im Windows-Explorer |
 | 1.104.0 | 2026-10-07 | Session 100. §15 Composer NEU **Kanäle nach Art ordnen**: Rechtsklick → *Sort channels* → *Visuals first* / *Audio first*; innerhalb der Art bleibt die Reihenfolge, das Bild ändert sich nicht |

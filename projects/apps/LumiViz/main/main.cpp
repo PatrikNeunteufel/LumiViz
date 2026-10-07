@@ -41,7 +41,9 @@ int commonMain(int argc, char* argv[])
     // Initialization (Qt, Audio, Config, etc.)
     if (!app.init(argc, argv))
     {
-        return 1;
+        // S101: LumiViz laeuft schon und hat die Datei dieses Starts bekommen —
+        // kein Fehler
+        return app.handedOver() ? 0 : 1;
     }
 
     // Main loop (Qt: exec(), Console: custom loop)

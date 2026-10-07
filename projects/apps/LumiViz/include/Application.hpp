@@ -251,6 +251,15 @@ public:
      */
     [[nodiscard]] bool isRunning() const noexcept;
 
+    /**
+     * @brief Did init() end because LumiViz is already running (S101)?
+     *
+     * Then this start has handed its file over to the running app; init()
+     * returned false, and the process ends without an error.
+     * @return true if handed over
+     */
+    [[nodiscard]] bool handedOver() const noexcept;
+
 private:
     // =========================================================================
     // Private Implementation (Pimpl)
