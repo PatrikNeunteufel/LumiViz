@@ -309,7 +309,9 @@ public:
     /// gemischte Bild zeichnen kann. Tut nichts, wenn die Ebene in diesem
     /// Frame nicht dran war. Der Renderer selbst ruft dasselbe am Ende seines
     /// Presents.
-    void legeKaraokeEbeneAuf() { legeKaraokeAuf(); }
+    /// `pegel` (S101, Zeile KARAOKE des Composers): ein Faktor 0…1 auf die
+    /// Staerke jedes Teils; 1 (Vorgabe) = wie bisher.
+    void legeKaraokeEbeneAuf(float pegel = 1.0f) { legeKaraokeAuf(pegel); }
     /// Composer-Naht R2 (waechst mit N16, S101): zaehlt jede Aenderung der
     /// Karaoke-Ebene — jedes `recompileKaraoke()`. Der Composer liest daran
     /// ab, ob er die Ebene seinem Karaoke-Traeger neu einsetzen muss. Unter
@@ -1801,7 +1803,9 @@ private:
     // --- Karaoke-Ebene (S88, KE1)
     void baueKaraokeEbene();     ///< die festen Knoten der Ebene anlegen (Konstruktor)
     void rechneKaraokeEbene();   ///< nach dem Ketten-Walk: Zeile rastern, Trail-Liste rechnen
-    void legeKaraokeAuf();       ///< auf den gebundenen Framebuffer: Trail additiv, Zeile mit Alpha
+    /// auf den gebundenen Framebuffer: Trail additiv, Zeile mit Alpha;
+    /// `pegel` = Composer-Naht R2: Faktor auf die Staerke jedes Teils
+    void legeKaraokeAuf(float pegel = 1.0f);
     /// Baum der Ebene (nicht in m_root): Kind 0 = Lyrics-Knoten, Kind 1 = Liste
     /// (Drift, Fadeout, Lyrics Trail). Die Wurzel selbst wird nie gerendert.
     lumi::multieffect::ChainNode m_karaokeWurzel;

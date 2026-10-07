@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.111.0
+> **Version:** 1.112.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2286,7 +2286,21 @@ Idee Preset-Warmup/Pre-Roll.
     nicht. Ein Mute an der Lautstärke lässt die Visuals also weiter voll
     reagieren; die Zeile AUDIO (Pegel an den Quellen) dämpft sie. Für den
     Stream des normalen Players ist dasselbe **nicht** gemessen.
-  - 🟡 **Wunsch Patrik S101: Karaoke im Composer schalten** — ein Haken im
+  - **Karaoke im Composer, gebaut, im Programm ungesehen (S101, Entscheid
+    Patrik KS1: a — Spur und Haken):** vierte Master-Zeile **KARAOKE** mit
+    voller Kurve (`Komposition::karaokeKurve`, Datei `karaokeMaster`); die
+    Wiedergabe legt die Ebene mit dem Pegel der Kurve an der laufenden
+    Stelle auf (Naht R2 wächst: `legeKaraokeEbeneAuf(pegel)`, vor dem Bau
+    eingetragen). Dazu der Haken **Karaoke** im Panel Composer, gekoppelt
+    mit *Karaoke on*. **Gemessen im GL-Test:** bei Pegel 0,5 ist der
+    Abstand zum Bild ohne Text 49,8 % dessen bei Pegel 1; bei 0 liegt
+    nichts auf. **Von mir gesetzt:** die Kurve steht für sich (MASTER und
+    VISUAL blenden den Songtext nicht mit, wie seit S99); Name, Platz als
+    unterste Master-Zeile, grünliches Grau; vier Zeilen = 84 Pixel.
+    **Grenze:** ein Teil mit Mischart XOR kennt keine Stärke — voll da, bis
+    die Kurve null erreicht. **Urteil im Sichttest:** nehmen vier
+    Master-Zeilen zu viel Platz — einklappbar machen?
+  - *Erledigt, zur Einordnung:* **Wunsch Patrik S101: Karaoke im Composer schalten** — ein Haken im
     Panel Composer, gekoppelt mit *Karaoke on* des Panels Karaoke (wie der
     Mute-Knopf an zwei Orten), „oder gleich auch eine Spur wie für die
     Master — gleich bedienbar wäre am konsistentesten". Aus dem Code
@@ -4448,6 +4462,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.112.0 | 2026-10-07 | Session 101 — **Composer:** Karaoke im Composer gebaut (Entscheid Patrik KS1: a) — Zeile KARAOKE mit voller Kurve und der Haken Karaoke, gekoppelt mit dem Panel Karaoke; Naht R2 wächst um den Pegel beim Auflegen (Konzept 0.59.0, Benutzerhandbuch 1.109.0); im Programm ungesehen |
 | 1.111.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2a gebaut (Mute-Profil, Verlauf, Profile als `.lvmute`; Konzept 0.58.0) — noch ohne Knopf und ohne Ton; Entscheid Patrik AM2: c (der Mute gehört dem Player, Knopf in beiden Panels); Befund: die Lautstärke des Mixers ändert sein Spektrum nicht; neuer Wunsch Patrik: Karaoke im Composer schalten, als Haken oder als Spur (Entscheid KS1 vorgelegt) |
 | 1.110.0 | 2026-10-07 | Session 101 — **Composer:** Audio-Master und Visual-Master, Schritt 1 gebaut (Entscheid Patrik AM1: a — zwei volle Kurven, Zeilen VISUAL und AUDIO; Konzept 0.57.0, Benutzerhandbuch 1.108.0), im Programm ungesehen; Schritt 2 offen: Mute-Knopf mit Mute-Profilen (Vorgabe Patrik: Ausblend-Kurve, Einblend-Kurve, Zielpegel; speichern und laden), Fragen dazu eingetragen |
 | 1.109.0 | 2026-10-07 | Session 101 — **Composer:** Sichttest S100, erster Teil ausgewertet (23 bestanden, 1 mit Bemerkung, 0 durchgefallen, 46 offen); Urteil M17 umgesetzt — die Zeile MASTER ist 60 % so hoch wie ein Kanal (Konzept 0.56.0), im Programm ungesehen; Vorbehalt: während des Tests liefen Builds und Testläufe |

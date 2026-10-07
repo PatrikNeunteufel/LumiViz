@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.108.0
+> **Version:** 1.109.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2133,9 +2133,25 @@ der Ton *Clip × MASTER × AUDIO*. Damit geht, was MASTER allein nicht kann:
 - **Der Ton insgesamt leiser** als gemischt — Grundpegel der Zeile AUDIO.
 
 Die Visuals sehen den Ton, wie er zu hören ist: senkt die Zeile AUDIO die
-Musik ab, reagieren sie auch schwächer. Die drei Zeilen sind niedriger als
-ein Kanal; ohne eingestellte Kurve zeigt jede einen leeren Balken und ändert
-nichts.
+Musik ab, reagieren sie auch schwächer.
+
+**Die Zeile KARAOKE — der Songtext über der Zeit:** Die vierte Zeile ist die
+Pegelkurve der **Karaoke-Ebene**: sie bestimmt, wie stark der Songtext über
+dem Bild liegt. Bedient wird sie wie die anderen — Blenden am Griff, Stücke,
+Curve Editor. So lässt sich der Text für ein Solo ausblenden, erst mit der
+ersten Strophe einblenden oder die ganze Komposition über halb durchsichtig
+halten. Sie steht für sich: MASTER und VISUAL blenden den Songtext **nicht**
+mit — wer Bild und Text zusammen ausblenden will, zieht beide Kurven.
+
+Die Zeile wirkt nur, wenn die Karaoke-Ebene **an** ist. Dafür sitzt oben im
+Panel der Haken **Karaoke** — derselbe Schalter wie *Karaoke on* im Panel
+Karaoke, *View → Karaoke* und Ctrl+K; wo immer man schaltet, zeigen es alle.
+Die Kurve ist für Geplantes, der Haken für den Moment. Ein Teil des Songtexts
+mit der Mischart *XOR* kennt keine Stärke: er ist voll da, bis die Kurve null
+erreicht.
+
+Die vier Zeilen sind niedriger als ein Kanal; ohne eingestellte Kurve zeigt
+jede einen leeren Balken und ändert nichts.
 
 **Speichern:** Ein Stern hinter dem Dateinamen zeigt ungespeicherte
 Änderungen. **Save** schreibt sie in die geladene Datei, **Save As...** fragt
@@ -2329,6 +2345,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.109.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeile KARAOKE** (Pegelkurve der Karaoke-Ebene: wie stark der Songtext aufliegt) und der Haken **Karaoke** im Panel Composer, gekoppelt mit *Karaoke on* |
 | 1.108.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeilen VISUAL und AUDIO**: je eine Pegelkurve nur für das Bild und nur für den Ton unter der Zeile MASTER, bedienbar wie sie; die Kurven werden malgenommen. GEÄNDERT: die Master-Zeilen sind niedriger als ein Kanal (60 %) |
 | 1.107.0 | 2026-10-07 | Session 101. **§17 NEU: Mit einer Datei starten — und immer nur ein LumiViz**: `LumiViz.exe <datei>` (Preset, Karaoke-Preset, Komposition); ein zweiter Start gibt seine Datei an das laufende LumiViz ab; die Regel gilt je Programmdatei, `--new-instance` startet bewusst ein weiteres; was mehrere LumiViz sich teilen. §16: Verweis auf *Öffnen mit* |
 | 1.106.0 | 2026-10-07 | Session 100. §16 NEU das Icon für Kompositionen `.lvcomp` (der Fächer mit Zeitstrahl) und das Icon der App; §15 Composer, Öffnen: der **Effect Browser** zeigt `.lvcomp`-Dateien, ein Doppelklick öffnet sie |

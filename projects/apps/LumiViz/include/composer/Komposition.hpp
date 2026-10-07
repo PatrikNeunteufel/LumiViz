@@ -154,11 +154,13 @@ struct GesamtStueck
 /// Die Kurven ueber die ganze Komposition (S101, Entscheid Patrik AM1: a):
 /// die der Komposition selbst wirkt auf Bild UND Ton (Zeile MASTER), dazu je
 /// eine nur fuer das Bild (VISUAL) und nur fuer den Ton (AUDIO).
+/// Dazu eine fuer die Karaoke-Ebene (KARAOKE, Entscheid Patrik KS1: a).
 enum class MasterArt
 {
     Gesamt,
     Bild,
-    Ton
+    Ton,
+    Karaoke
 };
 
 /// Eine Kurve ueber die ganze Komposition: Blenden mit Form, Grundpegel und
@@ -239,6 +241,14 @@ struct Komposition
     /// was die Kurve der Komposition hat. Vorgabe: wirkt nicht.
     MasterKurve bildKurve;
     MasterKurve tonKurve;
+    /// Die Kurve der Karaoke-Ebene (S101, Entscheid Patrik KS1: a): wie stark
+    /// der Songtext ueber dem Gemischten liegt. Sie steht fuer sich — MASTER
+    /// und VISUAL blenden die Ebene nicht mit (wie seit S99).
+    MasterKurve karaokeKurve;
+    [[nodiscard]] double karaokePegelBei(std::int64_t stelleMs) const
+    {
+        return masterBei(MasterArt::Karaoke, stelleMs);
+    }
     /// Die Kurve einer Art als Wert; fuer `Gesamt` aus den Feldern oben.
     [[nodiscard]] MasterKurve masterKurve(MasterArt art) const;
     void setzeMasterKurve(MasterArt art, MasterKurve kurve);

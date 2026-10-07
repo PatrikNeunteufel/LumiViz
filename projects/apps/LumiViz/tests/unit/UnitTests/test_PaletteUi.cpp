@@ -30,6 +30,8 @@
 #include "UI/panels/EffectPaletteWindow.hpp"
 #include "UI/panels/ImportBrowserPanel.hpp"
 #include "composer/AppAnbindung.hpp"  // OpenCompositionEvent (.lvcomp im Effect Browser, S100)
+#include "composer/ComposerPanel.hpp"  // der Haken Karaoke im Panel Composer (S101)
+#include "composer/Sitzung.hpp"
 #include "UI/PresetListen.hpp"
 #include "UI/StartDatei.hpp"
 #include "UI/StartPreset.hpp"
@@ -2725,6 +2727,51 @@ TEST_CASE("PaletteUi S101: eine Datei als Argument — Auswahl, Art und Ladeweg"
     CHECK(wege[2] == QStringLiteral("avs?:C:/x/b.avs"));
     CHECK(wege[3] == QStringLiteral("milk?:C:/x/c.milk"));
     CHECK(wege[4] == QStringLiteral("karaoke:C:/x/d.lvkar"));
+}
+
+// S101 (Entscheid Patrik KS1: a): der Haken „Karaoke" im Panel Composer ist
+// derselbe Schalter wie „Karaoke on" im Panel Karaoke — gekoppelt ueber das
+// Ereignis, das jeder Weg des Schaltens meldet.
+TEST_CASE("PaletteUi S101: Karaoke im Composer — der Haken folgt dem Panel Karaoke und umgekehrt")
+{
+    UiUmgebung env;
+    MultiEffectVisualizer::setKaraokeAblage(QString());
+    const bool vorher = QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool();
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    QSettings().setValue(QStringLiteral("karaoke/enabled"), false);
+    {
+        ServiceContainer services;
+        services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+        IEventBus* bus = services.tryResolve<IEventBus>();
+        KaraokePanel karaokePanel(services);
+        lumi::composer::ComposerPanel composer(services);
+        auto* imKaraoke = karaokePanel.findChild<QCheckBox*>(QStringLiteral("karaokeSchalter"));
+        auto* imComposer = composer.findChild<QCheckBox*>(QStringLiteral("composerKaraoke"));
+        REQUIRE(imKaraoke != nullptr);
+        REQUIRE(imComposer != nullptr);
+        CHECK_FALSE(imKaraoke->isChecked());
+        CHECK_FALSE(imComposer->isChecked());
+
+        // im Composer angehakt: die Ebene ist an, das Panel Karaoke zeigt es
+        imComposer->click();
+        CHECK(MultiEffectVisualizer::karaokeEbene());
+        CHECK(imKaraoke->isChecked());
+        CHECK(QSettings().value(QStringLiteral("karaoke/enabled")).toBool());
+
+        // im Panel Karaoke ausgeschaltet: der Haken im Composer geht mit
+        imKaraoke->click();
+        CHECK_FALSE(MultiEffectVisualizer::karaokeEbene());
+        CHECK_FALSE(imComposer->isChecked());
+
+        // Menue und Tastenkuerzel gehen denselben Weg
+        KaraokePanel::setzeKaraokeAn(bus, true);
+        CHECK(imComposer->isChecked());
+        CHECK(imKaraoke->isChecked());
+        KaraokePanel::setzeKaraokeAn(bus, false);
+        lumi::composer::Sitzung::setzeBus(nullptr);  // das Composer-Panel hatte ihn gesetzt
+    }
+    MultiEffectVisualizer::setKaraokeEbene(false);
+    QSettings().setValue(QStringLiteral("karaoke/enabled"), vorher);
 }
 
 // S101 (Entscheide Patrik X1: a, X1b: a): eine laufende App je Exe — der erste

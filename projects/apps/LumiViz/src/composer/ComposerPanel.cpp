@@ -5,10 +5,13 @@
 
 #include "composer/ComposerPanel.hpp"
 
+#include "UI/panels/KaraokePanel.hpp"  // der eine Weg, die Karaoke-Ebene zu schalten (S101)
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiDrag.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"  // das Datei-Icon der Komposition (S100)
 #include "UI/widgets/VisualizerWidget.hpp"
+#include "services/events/UIEvents.hpp"            // KaraokeEnabledChangedEvent (S101)
+#include "visualizers/MultiEffectVisualizer.hpp"  // der Schalter der Karaoke-Ebene (S101)
 #include "audio/IAudioEngine.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "composer/Bearbeiten.hpp"
@@ -381,6 +384,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
     master[0].name = tr("MASTER");
     master[1].name = tr("VISUAL");
     master[2].name = tr("AUDIO");
+    master[3].name = tr("KARAOKE");  // Entscheid Patrik KS1: a — die Karaoke-Ebene
     for (int m = 0; m < kMasterZeilen; ++m)
         if (Clip ablage; clipIn(m_komposition, masterVonZeile(m - kMasterZeilen), 0, ablage) != nullptr)
             master[m].clips.push_back(ablage);
@@ -409,9 +413,11 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const bool ton = kanal.art == KanalArt::Audio;
             // die Master-Zeilen in Grau — VISUAL mit kuehlem, AUDIO mit warmem
             // Stich, wie die zwei Farbreihen der Kanaele (von mir gesetzt)
-            const QColor masterFarbe = k == kMasterBild  ? QColor(84, 100, 124)
-                                       : k == kMasterTon ? QColor(120, 100, 84)
-                                                         : QColor(96, 100, 112);
+            // — KARAOKE mit einem Stich ins Gruene
+            const QColor masterFarbe = k == kMasterBild      ? QColor(84, 100, 124)
+                                       : k == kMasterTon     ? QColor(120, 100, 84)
+                                       : k == kMasterKaraoke ? QColor(88, 112, 96)
+                                                             : QColor(96, 100, 112);
             const QColor farbe = istMaster(k) ? (m_an ? masterFarbe : masterFarbe.darker(130))
                                               : kanalFarbe(m_komposition, k, m_an && kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
@@ -740,7 +746,7 @@ Zeitachse::Griff Zeitachse::griffBei(QPoint ort, int* kanal, int* clip, int* stu
     if (ort.y() < kLinealHoehe) return Griff::Keiner;
     // die Zeile unter dem Lineal: die Kurve der ganzen Komposition (S100) — ein
     // Clip ueber die ganze Laenge, mit den Griffen der Kurve, ohne Kanten
-    // (S101: drei solche Zeilen — MASTER, VISUAL, AUDIO)
+    // (S101: vier solche Zeilen — MASTER, VISUAL, AUDIO, KARAOKE)
     const bool gesamt = ort.y() < kKanaeleOben;
     const int zeile = gesamt ? std::min(-1, (ort.y() - kLinealHoehe) / kMasterHoehe - kMasterZeilen)
                              : (ort.y() - kKanaeleOben) / kZeilenHoehe;
@@ -1957,6 +1963,23 @@ void ComposerPanel::setupUI()
            "Off: the Effect Chain panel rests.\n\n"
            "With the Composer off, Effect Chain shows the chain of the app as always."));
     kopf->addWidget(m_sync);
+    // Karaoke (S101, Entscheid Patrik KS1: a): derselbe Schalter wie „Karaoke
+    // on" im Panel Karaoke, im Menue View und auf Ctrl+K — hier noch einmal,
+    // weil die Zeile KARAOKE nur wirkt, wenn die Ebene an ist.
+    m_karaoke = new QCheckBox(tr("Karaoke"), this);
+    m_karaoke->setObjectName(QStringLiteral("composerKaraoke"));
+    m_karaoke->setToolTip(
+        tr("Switches the karaoke layer on and off — the same switch as \"Karaoke on\" in the Karaoke "
+           "panel, View → Karaoke and Ctrl+K.\n\n"
+           "On: the lyrics lie over the composition, as strongly as the KARAOKE row says.\n"
+           "Off: no lyrics; the KARAOKE row has no effect."));
+    m_karaoke->setChecked(MultiEffectVisualizer::karaokeEbene());
+    connect(m_karaoke, &QCheckBox::clicked, this,
+            [this](bool an) { KaraokePanel::setzeKaraokeAn(eventBus(), an); });
+    if (IEventBus* bus = eventBus())
+        m_eventSubscriptions.push_back(bus->subscribeScoped<KaraokeEnabledChangedEvent>(
+            [this](const KaraokeEnabledChangedEvent& e) { m_karaoke->setChecked(e.enabled); }));
+    kopf->addWidget(m_karaoke);
     kopf->addStretch(1);
     root->addLayout(kopf);
 
@@ -2312,7 +2335,8 @@ void ComposerPanel::zeigeKurve()
                     : !m_zeitachse->gesamtGewaehlt() ? QFileInfo(clip->datei).completeBaseName()
                     : m_zeitachse->gewaehlteMasterArt() == MasterArt::Bild ? tr("Visual master")
                     : m_zeitachse->gewaehlteMasterArt() == MasterArt::Ton  ? tr("Audio master")
-                                                                           : tr("Composition"),
+                    : m_zeitachse->gewaehlteMasterArt() == MasterArt::Karaoke ? tr("Karaoke master")
+                                                                              : tr("Composition"),
                     m_zeitachse->bearbeiten());
     m_zeitachse->setTeil(m_kurven->isVisible() && m_kurven->hatKurve() ? m_kurvenTeil : Teil{});
 }
@@ -2513,6 +2537,18 @@ void ComposerPanel::zeigeClip()
         m_sitzung->waehleClip(clip != nullptr && !gesamt ? m_zeitachse->gewaehlterKanal() : -1,
                               clip != nullptr && !gesamt ? m_zeitachse->gewaehlterClip() : -1);
     // S101: VISUAL und AUDIO — je eine eigene Kurve nur fuer das Bild bzw. den Ton
+    if (gesamt && m_sitzung != nullptr && m_zeitachse->gewaehlteMasterArt() == MasterArt::Karaoke)
+    {
+        // KARAOKE (Entscheid Patrik KS1: a): wie stark die Karaoke-Ebene aufliegt
+        m_clipZeile->setText(tr("KARAOKE · level curve of the karaoke layer · 0:00.0 – %1")
+                                 .arg(zeitText(clip->endeMs)));
+        m_clipZeile->setToolTip(
+            tr("How strongly the karaoke layer lies over the picture — the lyrics fade with this curve. "
+               "It stands for itself: MASTER and VISUAL do not fade the lyrics. The layer must be on "
+               "(the Karaoke check box); with the layer off this row shows nothing. Right-click the "
+               "KARAOKE row for fades, shapes and the Curve Editor."));
+        return;
+    }
     if (gesamt && m_sitzung != nullptr && m_zeitachse->gewaehlteMasterArt() != MasterArt::Gesamt)
     {
         const bool bildZeile = m_zeitachse->gewaehlteMasterArt() == MasterArt::Bild;

@@ -436,10 +436,13 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
         }
         // Der Traeger rechnet nur die Ebene; sein eigenes Bild wird verworfen.
         m_karaokeLeinwand.rendere(*m_karaokeTraeger, deltaSekunden, groesse);
-        if (m_karaokeTraeger->debugKaraokeGezeichnet())
+        // Die Zeile KARAOKE (S101, Entscheid Patrik KS1: a): der Pegel ihrer
+        // Kurve an der laufenden Stelle; bei null liegt nichts auf.
+        const auto pegel = static_cast<float>(m_komposition.karaokePegelBei(stelleMs));
+        if (m_karaokeTraeger->debugKaraokeGezeichnet() && pegel > 0.0f)
         {
             m_mischer.binde();
-            m_karaokeTraeger->legeKaraokeEbeneAuf();
+            m_karaokeTraeger->legeKaraokeEbeneAuf(pegel);
             m_karaokeAufgelegt = true;
         }
     }

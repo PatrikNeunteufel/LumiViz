@@ -658,6 +658,19 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(zurueck.bildKurve.einblendeMs == 4000);
         CHECK(k.kurveAlsClip(nullptr, MasterArt::Bild).ein.dauerMs == 4000);
 
+        // die Karaoke-Kurve (Entscheid Patrik KS1: a) steht fuer sich: weder MASTER noch
+        // VISUAL nehmen den Songtext mit, und sie laesst Bild und Ton in Ruhe
+        CHECK(k.karaokePegelBei(1000) == 1.0);
+        CHECK_FALSE(k.hatKurve(MasterArt::Karaoke));
+        k.karaokeKurve.ausblendeMs = 10000;
+        CHECK(k.karaokePegelBei(55000) == doctest::Approx(0.5));
+        CHECK(k.karaokePegelBei(30000) == doctest::Approx(1.0));  // nicht mal MASTER (0,8)
+        CHECK(k.bildPegelBei(55000) == doctest::Approx(0.8));
+        CHECK(k.kurveAlsClip(nullptr, MasterArt::Karaoke).aus.dauerMs == 10000);
+        CHECK(alsJson(k).value(QStringLiteral("karaokeMaster")).toObject().value(QStringLiteral("out")).toDouble() ==
+              10000);
+        CHECK_FALSE(alsJson(Komposition{}).contains(QStringLiteral("karaokeMaster")));
+
         // die Datei: je ein Objekt, Roundtrip
         const QJsonObject json = alsJson(k);
         const QJsonObject bild = json.value(QStringLiteral("visualMaster")).toObject();
@@ -1464,6 +1477,45 @@ TEST_SUITE("ComposerWiedergabe")
         MESSAGE("Karaoke ueber zwei Clips: " << text << " Pixel, ein Renderer allein: " << textAllein);
         // einmal, nicht je Clip: genau so viele Pixel wie bei einem Renderer allein
         CHECK(text == textAllein);
+
+        // --- S101, die Zeile KARAOKE (Entscheid Patrik KS1: a): ihr Pegel bestimmt, wie
+        //     stark die Ebene aufliegt — VISUAL und MASTER blenden den Songtext nicht mit
+        const auto abstand = [&bildOhne](const QImage& bild) {
+            const QImage a = bild.convertToFormat(QImage::Format_ARGB32);
+            const QImage b = bildOhne.convertToFormat(QImage::Format_ARGB32);
+            std::int64_t summe = 0;
+            for (int y = 0; y < a.height(); ++y)
+                for (int x = 0; x < a.width(); ++x)
+                {
+                    const QColor p = a.pixelColor(x, y);
+                    const QColor q = b.pixelColor(x, y);
+                    summe += std::abs(p.red() - q.red()) + std::abs(p.green() - q.green()) +
+                             std::abs(p.blue() - q.blue());
+                }
+            return summe;
+        };
+        const std::int64_t voll = abstand(mit.mischer().bild());
+        REQUIRE(voll > 0);
+        Komposition halb = k;
+        halb.karaokeKurve.grundpegel = 0.5;
+        halb.bildKurve.grundpegel = 1.0;
+        mit.ersetzeKomposition(halb);
+        for (int i = 0; i < 3; ++i) REQUIRE(mit.rendere(1000, 1.0f / 60.0f, groesse));
+        CHECK(mit.karaokeAufgelegt());
+        const std::int64_t halbAbstand = abstand(mit.mischer().bild());
+        MESSAGE("Karaoke bei Pegel 1: " << voll << ", bei Pegel 0,5: " << halbAbstand);
+        CHECK(halbAbstand > 0);
+        CHECK(halbAbstand < voll * 0.8);
+        CHECK(halbAbstand > voll * 0.2);
+        Komposition weg = k;
+        weg.karaokeKurve.grundpegel = 0.0;
+        mit.ersetzeKomposition(weg);
+        for (int i = 0; i < 3; ++i) REQUIRE(mit.rendere(1000, 1.0f / 60.0f, groesse));
+        CHECK_FALSE(mit.karaokeAufgelegt());
+        CHECK(abstand(mit.mischer().bild()) == 0);
+        mit.ersetzeKomposition(k);
+        for (int i = 0; i < 3; ++i) REQUIRE(mit.rendere(1000, 1.0f / 60.0f, groesse));
+        CHECK(mit.karaokeAufgelegt());
 
         // in der Luecke: schwarz mit Songtext
         for (int i = 0; i < 3; ++i) REQUIRE(mit.rendere(9000, 1.0f / 60.0f, groesse));

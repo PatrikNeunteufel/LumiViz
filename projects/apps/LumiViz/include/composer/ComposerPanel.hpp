@@ -228,11 +228,12 @@ public:
     /// Die Zeile MASTER ist niedriger als ein Kanal: 60 % (Urteil Patrik,
     /// Sichttest S100 M17 — gilt auch fuer kuenftige Master-Zeilen).
     static constexpr int kMasterHoehe = kZeilenHoehe * 60 / 100;
-    /// Drei Master-Zeilen (S101, Entscheid Patrik AM1: a): MASTER, VISUAL, AUDIO.
-    static constexpr int kMasterZeilen = 3;
+    /// Vier Master-Zeilen (S101, Entscheide Patrik AM1: a, KS1: a): MASTER,
+    /// VISUAL, AUDIO, KARAOKE.
+    static constexpr int kMasterZeilen = 4;
     static constexpr int kKanaeleOben = kLinealHoehe + kMasterZeilen * kMasterHoehe;
     /// Oberkante und Hoehe einer Zeile; negativ = eine Master-Zeile unter dem
-    /// Lineal (-3 MASTER, -2 VISUAL, -1 AUDIO).
+    /// Lineal (-4 MASTER, -3 VISUAL, -2 AUDIO, -1 KARAOKE) — siehe `zeileVon`.
     [[nodiscard]] static constexpr int zeileOben(int zeile)
     {
         return zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * kMasterHoehe
@@ -258,20 +259,29 @@ public:
     static constexpr int kMaster = -2;
     static constexpr int kMasterBild = -3;
     static constexpr int kMasterTon = -4;
+    /// KARAOKE (Entscheid Patrik KS1: a): wie stark die Karaoke-Ebene aufliegt.
+    static constexpr int kMasterKaraoke = -5;
     [[nodiscard]] static constexpr bool istMaster(int kanal)
     {
-        return kanal == kMaster || kanal == kMasterBild || kanal == kMasterTon;
+        return kanal <= kMaster && kanal >= kMasterKaraoke;
     }
     [[nodiscard]] static constexpr MasterArt masterArt(int kanal)
     {
-        return kanal == kMasterBild ? MasterArt::Bild
-               : kanal == kMasterTon ? MasterArt::Ton
-                                     : MasterArt::Gesamt;
+        return kanal == kMasterBild      ? MasterArt::Bild
+               : kanal == kMasterTon     ? MasterArt::Ton
+               : kanal == kMasterKaraoke ? MasterArt::Karaoke
+                                         : MasterArt::Gesamt;
     }
-    /// Der „Kanal" einer Master-Zeile (-3, -2, -1).
+    /// Die Zeile eines Kanals: CH1 in 0; MASTER in -4, VISUAL in -3, AUDIO
+    /// in -2, KARAOKE in -1 (unter dem Lineal).
+    [[nodiscard]] static constexpr int zeileVon(int kanal)
+    {
+        return istMaster(kanal) ? kMaster - kanal - kMasterZeilen : kanal;
+    }
+    /// Der „Kanal" einer Master-Zeile (negativ).
     [[nodiscard]] static constexpr int masterVonZeile(int zeile)
     {
-        return zeile == -2 ? kMasterBild : zeile == -1 ? kMasterTon : kMaster;
+        return kMaster - (zeile + kMasterZeilen);
     }
     /// Ist eine der drei Master-Zeilen angeklickt — und welche?
     [[nodiscard]] bool gesamtGewaehlt() const { return istMaster(m_kanal); }
@@ -319,12 +329,6 @@ private:
     void uebernimm(const Komposition& neu, int kanal, int clip);
     [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
-    /// Die Zeile eines Kanals; `kMaster` liegt in der Zeile -1, unter dem Lineal.
-    /// S101: MASTER in -3, VISUAL in -2, AUDIO in -1.
-    [[nodiscard]] static int zeileVon(int kanal)
-    {
-        return kanal == kMaster ? -3 : kanal == kMasterBild ? -2 : kanal == kMasterTon ? -1 : kanal;
-    }
     /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
     /// `kMaster` die Kurve der Komposition als Clip — sie wird dafuer in
     /// `ablage` gelegt.
@@ -487,6 +491,7 @@ private:
     QLabel* m_clipZeile = nullptr;
     QCheckBox* m_edit = nullptr;
     QCheckBox* m_sync = nullptr;
+    QCheckBox* m_karaoke = nullptr;  ///< gekoppelt mit „Karaoke on" des Panels Karaoke (S101)
     QPushButton* m_neu = nullptr;
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;

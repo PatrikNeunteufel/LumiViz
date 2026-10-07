@@ -225,6 +225,7 @@ MasterKurve Komposition::masterKurve(MasterArt art) const
     {
         case MasterArt::Bild: return bildKurve;
         case MasterArt::Ton: return tonKurve;
+        case MasterArt::Karaoke: return karaokeKurve;
         case MasterArt::Gesamt: break;
     }
     return {einblendeMs, ausblendeMs, einblendeForm, ausblendeForm, grundpegel, gesamtStuecke};
@@ -236,6 +237,7 @@ void Komposition::setzeMasterKurve(MasterArt art, MasterKurve kurve)
     {
         case MasterArt::Bild: bildKurve = std::move(kurve); return;
         case MasterArt::Ton: tonKurve = std::move(kurve); return;
+        case MasterArt::Karaoke: karaokeKurve = std::move(kurve); return;
         case MasterArt::Gesamt: break;
     }
     einblendeMs = kurve.einblendeMs;
@@ -252,6 +254,7 @@ bool Komposition::hatKurve(MasterArt art) const
     {
         case MasterArt::Bild: return bildKurve.wirkt();
         case MasterArt::Ton: return tonKurve.wirkt();
+        case MasterArt::Karaoke: return karaokeKurve.wirkt();
         case MasterArt::Gesamt: break;
     }
     return einblendeMs > 0 || ausblendeMs > 0 || grundpegel < 1.0 || !gesamtStuecke.empty();
@@ -440,7 +443,7 @@ void Komposition::richte(QStringList* bericht)
         s.form.richte();
     }
     // Visual-Master und Audio-Master (S101): dieselben Regeln
-    for (MasterKurve* kurve : {&bildKurve, &tonKurve})
+    for (MasterKurve* kurve : {&bildKurve, &tonKurve, &karaokeKurve})
     {
         kurve->einblendeMs = std::max<std::int64_t>(0, kurve->einblendeMs);
         kurve->ausblendeMs = std::max<std::int64_t>(0, kurve->ausblendeMs);
@@ -639,6 +642,7 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
     };
     master(QStringLiteral("visualMaster"), komposition.bildKurve);
     master(QStringLiteral("audioMaster"), komposition.tonKurve);
+    master(QStringLiteral("karaokeMaster"), komposition.karaokeKurve);
     wurzel.insert(QStringLiteral("channels"), kanaele);
     return wurzel;
 }
@@ -698,6 +702,7 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
     };
     master(QStringLiteral("visualMaster"), neu.bildKurve);
     master(QStringLiteral("audioMaster"), neu.tonKurve);
+    master(QStringLiteral("karaokeMaster"), neu.karaokeKurve);
     const QJsonArray kanaele = wurzel.value(QStringLiteral("channels")).toArray();
     for (const QJsonValue& kv : kanaele)
     {

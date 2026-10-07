@@ -32,6 +32,7 @@
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QApplication>
@@ -643,7 +644,7 @@ TEST_SUITE("ComposerPanel")
             CHECK(kanalZeileVorher > Zeitachse::kKanaeleOben);  // die Kanaele beginnen unter der Zeile MASTER
 
             // ein Klick in die Zeile waehlt die Kurve — keinen Clip eines Kanals
-            const QPoint mitte(achse->xVon(30000), achse->yVonZeile(-3));  // MASTER, die oberste der drei
+            const QPoint mitte(achse->xVon(30000), achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMaster)));  // MASTER, die oberste der drei
             ziehPunkt(mitte, mitte);
             CHECK(achse->gesamtGewaehlt());
             REQUIRE(achse->auswahl() != nullptr);
@@ -715,7 +716,7 @@ TEST_SUITE("ComposerPanel")
             // die rechte Kante der Zeile (Wunsch Patrik S100): bei Fixed end das Ende ziehen —
             // ohne Fixed end folgt das Ende dem letzten Clip, die Kante laesst sich nicht ziehen
             const auto kante = [&] {
-                return QPoint(achse->xVon(sitzung->laengeMs()) - 2, achse->yVonZeile(-3) + 6);
+                return QPoint(achse->xVon(sitzung->laengeMs()) - 2, achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMaster)) + 6);
             };
             ziehPunkt(kante(), QPoint(achse->xVon(70000), kante().y()));
             CHECK(sitzung->komposition().laengeMs == 0);
@@ -739,10 +740,10 @@ TEST_SUITE("ComposerPanel")
 
             // --- S101 (Entscheid Patrik AM1: a): unter MASTER die Zeilen VISUAL und AUDIO —
             //     dieselben Wege, je eine eigene Kurve
-            CHECK(achse->yVonZeile(-3) < achse->yVonZeile(-2));
-            CHECK(achse->yVonZeile(-2) < achse->yVonZeile(-1));
-            CHECK(achse->yVonZeile(-1) < Zeitachse::kKanaeleOben);
-            const QPoint tonMitte(achse->xVon(30000), achse->yVonZeile(-1));
+            CHECK(achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMaster)) < achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterBild)));
+            CHECK(achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterBild)) < achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)));
+            CHECK(achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)) < Zeitachse::kKanaeleOben);
+            const QPoint tonMitte(achse->xVon(30000), achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)));
             ziehPunkt(tonMitte, tonMitte);
             CHECK(achse->gesamtGewaehlt());
             CHECK(achse->gewaehlteMasterArt() == MasterArt::Ton);
@@ -757,13 +758,13 @@ TEST_SUITE("ComposerPanel")
             CHECK(sitzung->komposition().bildPegelBei(30000) == doctest::Approx(1.0));
             CHECK(sitzung->komposition().gesamtStuecke.empty());
             // der Griff der Einblendung im Visual-Master: ziehen macht eine Blende nur fuers Bild
-            const QPoint bildMitte(achse->xVon(30000), achse->yVonZeile(-2));
+            const QPoint bildMitte(achse->xVon(30000), achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterBild)));
             ziehPunkt(bildMitte, bildMitte);
             CHECK(achse->gewaehlteMasterArt() == MasterArt::Bild);
             const QPoint bildGriff = achse->blendenGriff(Zeitachse::kMasterBild, 0, true);
             REQUIRE(bildGriff.x() >= 0);
-            CHECK(bildGriff.y() > achse->yVonZeile(-3));
-            CHECK(bildGriff.y() < achse->yVonZeile(-1));
+            CHECK(bildGriff.y() > achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMaster)));
+            CHECK(bildGriff.y() < achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)));
             ziehPunkt(bildGriff, QPoint(achse->xVon(10000), bildGriff.y()));
             CHECK(std::llabs(sitzung->komposition().bildKurve.einblendeMs - 10000) <= 400);
             CHECK(sitzung->komposition().einblendeMs == 0);
@@ -771,7 +772,7 @@ TEST_SUITE("ComposerPanel")
             CHECK(einblende->value() == doctest::Approx(0.0));  // das Feld Fade in gehoert MASTER
             // das feste Ende laesst sich nur an MASTER ziehen
             fest->click();
-            const QPoint tonKante(achse->xVon(sitzung->laengeMs()) - 2, achse->yVonZeile(-1) + 4);
+            const QPoint tonKante(achse->xVon(sitzung->laengeMs()) - 2, achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)) + 4);
             ziehPunkt(tonKante, QPoint(achse->xVon(70000), tonKante.y()));
             CHECK(sitzung->laengeMs() == 60000);
             REQUIRE(bus->undo());  // Fixed end
@@ -785,6 +786,36 @@ TEST_SUITE("ComposerPanel")
             CHECK_FALSE(sitzung->komposition().hatKurve(MasterArt::Bild));
             CHECK_FALSE(sitzung->komposition().hatKurve(MasterArt::Ton));
             CHECK_FALSE(sitzung->ungespeichert());
+
+            // --- S101 (Entscheid Patrik KS1: a): die vierte Zeile, KARAOKE — und der Haken
+            const int zeileKaraoke = Zeitachse::zeileVon(Zeitachse::kMasterKaraoke);
+            CHECK(zeileKaraoke == -1);  // die unterste der Master-Zeilen
+            CHECK(Zeitachse::zeileVon(Zeitachse::kMaster) == -Zeitachse::kMasterZeilen);
+            CHECK(achse->yVonZeile(Zeitachse::zeileVon(Zeitachse::kMasterTon)) < achse->yVonZeile(zeileKaraoke));
+            CHECK(achse->yVonZeile(zeileKaraoke) < Zeitachse::kKanaeleOben);
+            const QPoint karaokeMitte(achse->xVon(30000), achse->yVonZeile(zeileKaraoke));
+            ziehPunkt(karaokeMitte, karaokeMitte);
+            CHECK(achse->gewaehlteMasterArt() == MasterArt::Karaoke);
+            achse->stueckHinzu(Zeitachse::kMasterKaraoke, 0, 30000);
+            REQUIRE(sitzung->komposition().karaokeKurve.stuecke.size() == 1);
+            CHECK(sitzung->komposition().karaokePegelBei(30000) == doctest::Approx(0.0));
+            CHECK(sitzung->komposition().karaokePegelBei(10000) == doctest::Approx(1.0));
+            CHECK(sitzung->komposition().bildPegelBei(30000) == doctest::Approx(1.0));
+            CHECK(sitzung->komposition().tonPegelBei(30000) == doctest::Approx(1.0));
+            REQUIRE(bus->undo());
+            CHECK_FALSE(sitzung->komposition().hatKurve(MasterArt::Karaoke));
+            // der Haken Karaoke schaltet die Ebene (der Weg des Panels Karaoke). Dass er
+            // dessen Haken folgt, prueft der Fall „Karaoke im Composer" in test_PaletteUi.cpp —
+            // hier gibt es keinen Ereignis-Bus.
+            auto* karaoke = panel.findChild<QCheckBox*>(QStringLiteral("composerKaraoke"));
+            REQUIRE(karaoke != nullptr);
+            const bool warAn = MultiEffectVisualizer::karaokeEbene();
+            CHECK(karaoke->isChecked() == warAn);
+            karaoke->click();
+            CHECK(MultiEffectVisualizer::karaokeEbene() == !warAn);
+            karaoke->click();
+            CHECK(MultiEffectVisualizer::karaokeEbene() == warAn);
+            QSettings().remove(QStringLiteral("karaoke/enabled"));
             if (KurvenFenster* offen = panel.kurvenFenster()) offen->close();
         }
 

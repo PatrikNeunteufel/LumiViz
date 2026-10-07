@@ -3891,9 +3891,12 @@ void MultiEffectVisualizer::rechneKaraokeEbene()
     bindActive();
 }
 
-void MultiEffectVisualizer::legeKaraokeAuf()
+void MultiEffectVisualizer::legeKaraokeAuf(float pegel)
 {
     if (!m_karaokeGezeichnet || m_overlayShader == nullptr) return;
+    // Composer-Naht R2 (S101): der Pegel der Zeile KARAOKE — 1 = wie bisher
+    pegel = std::clamp(pegel, 0.0f, 1.0f);
+    if (pegel <= 0.0f) return;
     if (m_karaokeTrailTex == 0 && m_karaokeLagen.empty()) return;
     auto* f = QOpenGLContext::currentContext()->functions();
     GLint srcRgb = GL_ONE, dstRgb = GL_ZERO, srcA = GL_ONE, dstA = GL_ZERO;
@@ -3919,7 +3922,7 @@ void MultiEffectVisualizer::legeKaraokeAuf()
         m_overlayShader->setUniformValue("uFlip", flip);
         m_overlayShader->setUniformValue("uSchluessel", schluessel);
         m_overlayShader->setUniformValue("uModus", modus);
-        m_overlayShader->setUniformValue("uStaerke", static_cast<float>(staerkeProzent) / 100.0f);
+        m_overlayShader->setUniformValue("uStaerke", static_cast<float>(staerkeProzent) / 100.0f * pegel);
         // XOR: Logik-Operation statt Blending. `glLogicOp` gehoert nicht zum
         // ES-Satz von QOpenGLFunctions und opengl32 ist nicht gelinkt — die
         // Funktion kommt deshalb vom Kontext. Fehlt sie, faellt XOR auf
