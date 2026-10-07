@@ -17,6 +17,8 @@
 
 #include <doctest.h>
 
+#include "PappTon.hpp"
+#include "composer/AppAnbindung.hpp"
 #include "composer/Mute.hpp"
 
 #include <QCoreApplication>
@@ -271,6 +273,112 @@ TEST_SUITE("ComposerMute")
         // das eigene ist weg, das mitgelieferte gleichen Namens wieder zu sehen
         CHECK_FALSE(namen().contains(QStringLiteral("Meine Ansage")));
         CHECK(namen().contains(QStringLiteral("[meine ansage]")));
+    }
+
+    TEST_CASE("Der Schalter der App: setzt den Pegel am Player nach dem Profil — und sagt, was die Visuals sehen")
+    {
+        struct PegelPlayer : papp::PappPlayer
+        {
+            float p = 1.0f;
+            int gesetzt = 0;
+            [[nodiscard]] float pegel() const override { return p; }
+            void setPegel(float neu) override
+            {
+                p = neu;
+                ++gesetzt;
+            }
+        } player;
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const Wurzel wurzel(dir.path());
+        const QString org = QCoreApplication::organizationName();
+        const QString name = QCoreApplication::applicationName();
+        {
+            int argc = 1;
+            char arg0[10] = "UnitTests";
+            char* argv[2] = {arg0, nullptr};
+            QCoreApplication app(argc, argv);
+            QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+            QCoreApplication::setApplicationName(QStringLiteral("ComposerMute"));
+            QSettings().clear();
+
+            MuteProfil profil;
+            profil.ausblendeMs = 400;
+            profil.einblendeMs = 1000;
+            profil.zielPegel = 0.2;
+            REQUIRE(muteprofile::speichere(QStringLiteral("Ansage"), profil));
+            muteprofile::setGewaehlt(QStringLiteral("Ansage"));
+
+            CHECK(MuteSchalter::vorhanden() == nullptr);
+            CHECK(muteFaktorFuerVisuals() == 1.0f);  // ohne Schalter: nichts wird angefasst
+            MuteSchalter& schalter = MuteSchalter::instanz();
+            CHECK(MuteSchalter::vorhanden() == &schalter);
+            std::int64_t zeit = 0;
+            schalter.setUhrFuerTests([&zeit] { return zeit; });
+            schalter.ladeProfil();
+            schalter.setPlayer(&player);
+            CHECK(player.p == doctest::Approx(1.0f));
+            int gemeldet = 0;
+            QObject::connect(&schalter, &MuteSchalter::geschaltet, &app, [&gemeldet](bool) { ++gemeldet; });
+
+            // stumm: der Pegel des Players geht nach dem Profil hinunter
+            schalter.schalte(true);
+            CHECK(schalter.stumm());
+            CHECK(gemeldet == 1);
+            zeit = 200;
+            schalter.takt();
+            CHECK(player.p == doctest::Approx(0.6f));
+            zeit = 400;
+            schalter.takt();
+            CHECK(player.p == doctest::Approx(0.2f));
+            // die Visuals sehen davon nichts (Vorgabe des Profils)
+            CHECK(schalter.faktorFuerVisuals() == 1.0);
+            CHECK(muteFaktorFuerVisuals() == 1.0f);
+            schalter.schalte(true);  // derselbe Zustand: nichts geschieht
+            CHECK(gemeldet == 1);
+
+            // und wieder hinauf
+            schalter.schalte(false);
+            CHECK(gemeldet == 2);
+            zeit = 900;
+            schalter.takt();
+            CHECK(player.p == doctest::Approx(0.6f));
+            zeit = 1400;
+            schalter.takt();
+            CHECK(player.p == doctest::Approx(1.0f));
+
+            // ein Profil mit „Visuals follow": Spektrum und Wellenform gehen mit —
+            // die ganze Absenkung lang, auch waehrend der Ton zurueckkommt
+            profil.visualsFolgen = true;
+            REQUIRE(muteprofile::speichere(QStringLiteral("Ansage"), profil));
+            schalter.ladeProfil();
+            zeit = 5000;
+            schalter.schalte(true);
+            zeit = 5200;
+            CHECK(schalter.faktorFuerVisuals() == doctest::Approx(0.6));
+            CHECK(muteFaktorFuerVisuals() == doctest::Approx(0.6f));
+            zeit = 6000;
+            CHECK(schalter.faktorFuerVisuals() == doctest::Approx(0.2));
+            schalter.schalte(false);
+            zeit = 6500;
+            CHECK(schalter.faktorFuerVisuals() == doctest::Approx(0.6));
+            zeit = 7000;
+            CHECK(schalter.faktorFuerVisuals() == doctest::Approx(1.0));
+
+            // ein Player, der spaeter dazukommt, bekommt den Pegel, der gerade gilt
+            schalter.schalte(true);
+            zeit = 9000;
+            PegelPlayer spaeter;
+            schalter.setPlayer(&spaeter);
+            CHECK(spaeter.p == doctest::Approx(0.2f));
+            schalter.setPlayer(nullptr);
+            schalter.setUhrFuerTests(nullptr);
+            QSettings().clear();
+        }
+        // mit der QApplication geht auch der Schalter
+        CHECK(MuteSchalter::vorhanden() == nullptr);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(name);
     }
 
     TEST_CASE("Jedes mitgelieferte Mute-Profil laedt")

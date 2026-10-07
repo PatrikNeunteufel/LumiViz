@@ -5,7 +5,9 @@ einer spontanen Durchsage weggeht und wiederkommt. Ein Profil traegt
 
 - `level` — den Pegel, auf den abgesenkt wird (0 = stumm, 1 = voll),
 - `out` und `outShape` — Dauer (ms) und Kurvenform des Ausblendens,
-- `in` und `inShape` — Dauer (ms) und Kurvenform des Einblendens.
+- `in` und `inShape` — Dauer (ms) und Kurvenform des Einblendens,
+- `visualsFollow` — ob die Visuals die Absenkung sehen (fehlt = nein: das Bild
+  reagiert weiter auf die volle Musik).
 
 Die Kurvenformen sind dieselben wie in den Blenden-Presets (`../fades`).
 Eigene Profile liegen im Benutzerordner `<AppData>/composer/mutes/` und

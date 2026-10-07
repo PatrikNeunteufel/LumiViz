@@ -31,11 +31,17 @@
 #include "composer/FormPresets.hpp"
 #include "composer/Pegelform.hpp"
 
+#include <QElapsedTimer>
 #include <QJsonObject>
+#include <QObject>
 #include <QString>
 
 #include <cstdint>
+#include <functional>
 #include <vector>
+
+class IAudioPlayer;
+class QTimer;
 
 namespace lumi::composer
 {
@@ -47,6 +53,9 @@ struct MuteProfil
     std::int64_t einblendeMs = 800;  ///< vom Zielpegel zurueck auf voll
     Pegelform einblendeForm = einfacheBlende();
     double zielPegel = 0.0;  ///< 0…1 — worauf abgesenkt wird
+    /// Sehen die Visuals die Absenkung (Entscheid Patrik S101, AM3: c)? Vorgabe
+    /// nein: das Bild reagiert weiter auf die volle Musik.
+    bool visualsFolgen = false;
 
     /// Dauern nicht negativ, Zielpegel 0…1, Formen als Blenden gerichtet.
     void richte();
@@ -85,6 +94,63 @@ private:
     std::int64_t m_dauerMs = 0;  ///< 0 = keine Blende, es gilt `m_ziel`
     double m_von = 1.0;
     double m_ziel = 1.0;
+};
+
+/**
+ * Der EINE Mute der App (Entscheid Patrik S101, AM2: c): er gehoert dem
+ * Player und gilt immer — ob die Playlist spielt oder der Composer den Ton
+ * fuehrt. Jeder Knopf (Panel Player, Panel Composer) schaltet diesen Zustand.
+ *
+ * Der Schalter setzt den Faktor am Player (`IAudioPlayer::setPegel`, Naht
+ * N17) — waehrend einer Blende in einem eigenen Takt. Der Composer liest ihn
+ * dort je Takt mit der Lautstaerke. Lebt als Kind der QApplication.
+ */
+class MuteSchalter : public QObject
+{
+    Q_OBJECT
+
+public:
+    /// Der Schalter der App; beim ersten Aufruf angelegt (braucht eine
+    /// QCoreApplication).
+    [[nodiscard]] static MuteSchalter& instanz();
+    /// Gibt es ihn schon? Wer nur lesen will, legt ihn nicht an.
+    [[nodiscard]] static MuteSchalter* vorhanden();
+
+    /// Wessen Ton geschaltet wird — einmal gesetzt (nullptr = keiner).
+    void setPlayer(IAudioPlayer* player);
+
+    /// Umschalten nach dem gewaehlten Profil (`muteprofile::gewaehltesProfil`).
+    void schalte(bool stumm);
+    [[nodiscard]] bool stumm() const { return m_verlauf.stumm(); }
+    /// Das Profil wurde gewechselt oder geaendert: es gilt ab dem naechsten
+    /// Umschalten.
+    void ladeProfil();
+
+    /// Der Faktor am Ton jetzt.
+    [[nodiscard]] double faktor() const;
+    /// Der Faktor fuer Spektrum und Wellenform der Visuals jetzt: 1, solange
+    /// das Profil der laufenden Absenkung „Visuals follow" nicht traegt.
+    [[nodiscard]] double faktorFuerVisuals() const;
+
+    /// Test-Haken: die Zeit von aussen (Millisekunden); nullptr = die Uhr.
+    void setUhrFuerTests(std::function<std::int64_t()> uhr);
+    /// Den Takt einmal von Hand ausloesen (Test).
+    void takt();
+
+Q_SIGNALS:
+    /// Der Zustand „stumm" hat gewechselt.
+    void geschaltet(bool stumm);
+
+private:
+    explicit MuteSchalter(QObject* parent);
+    [[nodiscard]] std::int64_t jetzt() const;
+
+    MuteVerlauf m_verlauf;
+    bool m_visualsFolgen = false;  ///< aus dem Profil der laufenden Absenkung
+    IAudioPlayer* m_player = nullptr;
+    QTimer* m_takt = nullptr;
+    QElapsedTimer m_uhr;
+    std::function<std::int64_t()> m_testUhr;
 };
 
 /// Mute-Profile als Dateien — derselbe Zuschnitt wie `formpresets`.

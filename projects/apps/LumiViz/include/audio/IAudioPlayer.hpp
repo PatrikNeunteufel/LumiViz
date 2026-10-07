@@ -188,6 +188,21 @@ public:
     virtual void setTempo(float /*tempo*/) {}
 
     // =========================================================================
+    // Pegel (Composer-Naht N17, docs/ui/Composer_Konzept.md §12.2)
+    // =========================================================================
+
+    /**
+     * @brief Ein zweiter Faktor neben der Lautstaerke, 0…1; Vorgabe 1.
+     *
+     * Der Mute fuer Durchsagen (Mute-Profile, S101) blendet damit den Ton ab
+     * und wieder auf: zu hoeren ist Lautstaerke × Pegel. `volume()`, der
+     * Regler des Player-Panels, die gespeicherte Lautstaerke und das harte
+     * Mute bleiben unberuehrt; es gibt dazu kein Ereignis.
+     */
+    [[nodiscard]] virtual float pegel() const { return 1.0f; }
+    virtual void setPegel(float /*pegel*/) {}
+
+    // =========================================================================
     // State Queries
     // =========================================================================
 

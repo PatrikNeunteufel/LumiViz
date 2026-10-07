@@ -561,6 +561,45 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(e.stream(e.quelle(kZwei)).lautstaerke == doctest::Approx(0.25f));
     }
 
+    TEST_CASE("S101 Mute: der Pegel des Players (Naht N17) gilt am Mixer — die Quellen bleiben, wie sie sind")
+    {
+        // ein Player mit dem zweiten Faktor neben der Lautstaerke, wie der echte
+        struct PegelPlayer : PappPlayer
+        {
+            float p = 1.0f;
+            [[nodiscard]] float pegel() const override { return p; }
+            void setPegel(float neu) override { p = neu; }
+        } p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        const Komposition k = probe();
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+        (void)f.takt(k, 30000, true);
+        const AudioStreamHandle a = e.quelle(kEins);
+        REQUIRE(a != INVALID_STREAM);
+        const float quelle = e.stream(a).lautstaerke;
+        CHECK(e.stream(e.mixer).lautstaerke == doctest::Approx(1.0f));
+
+        // der Mute senkt ab: der Mixer folgt je Takt, die Quelle nicht — das
+        // Spektrum des Mixers (was die Visuals sehen) bleibt damit voll
+        p.setPegel(0.2f);
+        (void)f.takt(k, 30033, true);
+        CHECK(e.stream(e.mixer).lautstaerke == doctest::Approx(0.2f));
+        CHECK(e.stream(a).lautstaerke == doctest::Approx(quelle));
+        // mit der Lautstaerke malgenommen; das harte Mute des Players gewinnt
+        p.laut = 0.5f;
+        (void)f.takt(k, 30066, true);
+        CHECK(e.stream(e.mixer).lautstaerke == doctest::Approx(0.1f));
+        p.stumm = true;
+        (void)f.takt(k, 30100, true);
+        CHECK(e.stream(e.mixer).lautstaerke == doctest::Approx(0.0f));
+        p.stumm = false;
+        p.setPegel(1.0f);
+        (void)f.takt(k, 30133, true);
+        CHECK(e.stream(e.mixer).lautstaerke == doctest::Approx(0.5f));
+    }
+
     TEST_CASE("Die Audio-Kanaele ueberlagern sich — der laufende Song ist der mit dem hoechsten Pegel")
     {
         // wie in composer_demo_audio.lvcomp: A1 leer, A2 ein Song 0–210 s, A3 einer 193–397 s;

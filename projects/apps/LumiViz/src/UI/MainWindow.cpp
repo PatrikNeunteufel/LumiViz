@@ -1310,7 +1310,19 @@ void MainWindow::onAudioUpdate()
                     
                     bool hasSpectrum = pEngine->getFFTData(stream, spectrum.data(), FFT_SIZE);
                     bool hasWaveform = pEngine->getWaveformData(stream, waveform.data(), WAVEFORM_SIZE);
-                    
+
+                    // Composer-Naht N13, waechst mit N17 (S101): der Mute fuer
+                    // Durchsagen sitzt an der Lautstaerke, und die aendert das
+                    // Spektrum nicht. Traegt das Mute-Profil „Visuals follow",
+                    // gehen Spektrum und Wellenform hier mit dem Ton zurueck —
+                    // sonst ist der Faktor 1 und nichts wird angefasst.
+                    const float muteSicht = lumi::composer::muteFaktorFuerVisuals();
+                    if (muteSicht < 1.0f)
+                    {
+                        for (float& wert : spectrum) wert *= muteSicht;
+                        for (float& wert : waveform) wert *= muteSicht;
+                    }
+
                     if (hasSpectrum || hasWaveform)
                     {
                         // Debug: Log first few updates
@@ -1354,6 +1366,9 @@ void MainWindow::onAudioUpdate()
                                 stream, specI.data(), FFT_SIZE);
                             if (hasStereoFFT)
                             {
+                                // Composer-Naht N13 / N17: wie oben
+                                if (muteSicht < 1.0f)
+                                    for (float& wert : specI) wert *= muteSicht;
                                 for (auto* pViz : visualizers())
                                 {
                                     if (pViz != nullptr)

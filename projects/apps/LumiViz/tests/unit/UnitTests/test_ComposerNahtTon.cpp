@@ -167,6 +167,55 @@ TEST_SUITE("ComposerNahtTon")
         CHECK(player.currentTrack().filePath == kZwei);
     }
 
+    TEST_CASE("Naht N17: der Pegel des echten Players — ein zweiter Faktor neben der Lautstaerke (Mute fuer Durchsagen)")
+    {
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString kEins = dir.filePath(QStringLiteral("eins.mp3"));
+        const QString kZwei = dir.filePath(QStringLiteral("zwei.mp3"));
+        for (const QString& pfad : {kEins, kZwei})
+        {
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+        }
+        EventBus bus;
+        PappEngine engine;
+        engine.laengen = {{kEins, 60000}, {kZwei, 60000}};
+        AudioPlayer player(engine, bus);
+        int lautstaerkeGemeldet = 0;
+        bus.subscribe<VolumeChangedEvent>([&](const VolumeChangedEvent&) { ++lautstaerkeGemeldet; });
+
+        // Vorgabe 1: die Lautstaerke geht an die Engine wie immer
+        CHECK(player.pegel() == doctest::Approx(1.0f));
+        player.setVolume(0.8f);
+        REQUIRE(player.load(kEins));
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.8f));
+        const int gemeldet = lautstaerkeGemeldet;
+
+        // der Pegel: zu hoeren ist Lautstaerke mal Pegel — der Regler bleibt, kein Ereignis
+        player.setPegel(0.25f);
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.2f));
+        CHECK(player.volume() == doctest::Approx(0.8f));
+        CHECK(lautstaerkeGemeldet == gemeldet);
+        // die Lautstaerke aendern, waehrend abgesenkt ist: beides zusammen
+        player.setVolume(0.4f);
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.1f));
+        // das harte Mute gewinnt — und gibt beim Aufheben den abgesenkten Stand zurueck
+        player.setMuted(true);
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.0f));
+        player.setPegel(0.5f);  // im harten Mute: nichts zu hoeren, gemerkt wird er
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.0f));
+        player.setMuted(false);
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.2f));
+        // ein neu geladener Titel beginnt mit dem Pegel, der gilt
+        REQUIRE(player.load(kZwei));
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.2f));
+        // geklemmt
+        player.setPegel(7.0f);
+        CHECK(player.pegel() == doctest::Approx(1.0f));
+        CHECK(engine.getVolume(engine.letzter()) == doctest::Approx(0.4f));
+    }
+
     TEST_CASE("C5b Sitzung: die Audio-Kanaele im Mixer — Zugang (N7b), die Uhr fuehrt, laufender Song, Transport (N5)")
     {
         int argc = 1;

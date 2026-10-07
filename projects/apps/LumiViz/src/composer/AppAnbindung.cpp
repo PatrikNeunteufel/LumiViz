@@ -7,6 +7,7 @@
 
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bildquelle.hpp"
+#include "composer/Mute.hpp"
 #include "composer/Sitzung.hpp"
 
 #include "UI/PresetSpeichern.hpp"
@@ -247,6 +248,12 @@ bool fuehrtTon()
 bool meldetBindung()
 {
     return Sitzung::meldetBindung();
+}
+
+float muteFaktorFuerVisuals()
+{
+    const MuteSchalter* schalter = MuteSchalter::vorhanden();
+    return schalter != nullptr ? static_cast<float>(schalter->faktorFuerVisuals()) : 1.0f;
 }
 
 TonStand tonStand()

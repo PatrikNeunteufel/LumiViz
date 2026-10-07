@@ -5,9 +5,12 @@
 
 #include "composer/Mute.hpp"
 
+#include "audio/IAudioPlayer.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QCoreApplication>
+#include <QPointer>
+#include <QTimer>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -58,6 +61,7 @@ QJsonObject profilAlsJson(const MuteProfil& profil)
     o.insert(QStringLiteral("outShape"), formAlsJson(p.ausblendeForm));
     o.insert(QStringLiteral("in"), static_cast<double>(p.einblendeMs));
     o.insert(QStringLiteral("inShape"), formAlsJson(p.einblendeForm));
+    o.insert(QStringLiteral("visualsFollow"), p.visualsFolgen);
     return o;
 }
 
@@ -68,6 +72,7 @@ bool profilAusJson(const QJsonObject& objekt, MuteProfil& profil)
     p.zielPegel = objekt.value(QStringLiteral("level")).toDouble(0.0);
     p.ausblendeMs = static_cast<std::int64_t>(objekt.value(QStringLiteral("out")).toDouble(0.0));
     p.einblendeMs = static_cast<std::int64_t>(objekt.value(QStringLiteral("in")).toDouble(0.0));
+    p.visualsFolgen = objekt.value(QStringLiteral("visualsFollow")).toBool(false);
     // ohne Form: linear
     if (!formAusJson(objekt.value(QStringLiteral("outShape")).toObject(), p.ausblendeForm))
         p.ausblendeForm = einfacheBlende();
@@ -124,6 +129,96 @@ double MuteVerlauf::faktorBei(std::int64_t jetztMs) const
 bool MuteVerlauf::blendet(std::int64_t jetztMs) const
 {
     return m_dauerMs > 0 && jetztMs < m_startMs + m_dauerMs;
+}
+
+// =============================================================================
+// Der Schalter der App
+// =============================================================================
+
+namespace
+{
+QPointer<MuteSchalter>& derSchalter()
+{
+    static QPointer<MuteSchalter> schalter;  // wird null, wenn die QApplication ihn loescht
+    return schalter;
+}
+constexpr int kTaktMs = 16;
+}  // namespace
+
+MuteSchalter::MuteSchalter(QObject* parent) : QObject(parent)
+{
+    m_uhr.start();
+    m_takt = new QTimer(this);
+    m_takt->setInterval(kTaktMs);
+    connect(m_takt, &QTimer::timeout, this, &MuteSchalter::takt);
+    // Beim Beenden: kein Takt mehr auf einen Player, den es gleich nicht mehr gibt
+    if (QCoreApplication* app = QCoreApplication::instance())
+        connect(app, &QCoreApplication::aboutToQuit, this, [this] {
+            m_takt->stop();
+            m_player = nullptr;
+        });
+    ladeProfil();
+}
+
+MuteSchalter& MuteSchalter::instanz()
+{
+    if (derSchalter().isNull()) derSchalter() = new MuteSchalter(QCoreApplication::instance());
+    return *derSchalter();
+}
+
+MuteSchalter* MuteSchalter::vorhanden()
+{
+    return derSchalter().data();
+}
+
+void MuteSchalter::setPlayer(IAudioPlayer* player)
+{
+    m_player = player;
+    if (m_player != nullptr) m_player->setPegel(static_cast<float>(faktor()));
+}
+
+std::int64_t MuteSchalter::jetzt() const
+{
+    return m_testUhr ? m_testUhr() : m_uhr.elapsed();
+}
+
+void MuteSchalter::setUhrFuerTests(std::function<std::int64_t()> uhr)
+{
+    m_testUhr = std::move(uhr);
+}
+
+void MuteSchalter::ladeProfil()
+{
+    m_verlauf.setProfil(muteprofile::gewaehltesProfil());
+}
+
+void MuteSchalter::schalte(bool stumm)
+{
+    if (stumm == m_verlauf.stumm()) return;
+    // „Visuals follow" gilt fuer die ganze Absenkung, auch fuer ihr Einblenden:
+    // was beim Stummschalten galt, gilt bis der Ton wieder voll ist.
+    if (stumm) m_visualsFolgen = m_verlauf.profil().visualsFolgen;
+    m_verlauf.schalte(stumm, jetzt());
+    takt();
+    if (m_verlauf.blendet(jetzt())) m_takt->start();
+    Q_EMIT geschaltet(stumm);
+}
+
+double MuteSchalter::faktor() const
+{
+    return m_verlauf.faktorBei(jetzt());
+}
+
+double MuteSchalter::faktorFuerVisuals() const
+{
+    return m_visualsFolgen ? faktor() : 1.0;
+}
+
+void MuteSchalter::takt()
+{
+    const std::int64_t zeit = jetzt();
+    if (m_player != nullptr) m_player->setPegel(static_cast<float>(m_verlauf.faktorBei(zeit)));
+    if (!m_verlauf.blendet(zeit)) m_takt->stop();
 }
 
 // =============================================================================

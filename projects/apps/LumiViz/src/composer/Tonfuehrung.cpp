@@ -78,7 +78,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         m_player->pause();
         ergebnis.playerAngehalten = true;
     }
-    const float laut = m_player->isMuted() ? 0.0f : m_player->volume();
+    // Lautstaerke und Mute des Players — und sein Pegel (Naht N17): der Mute
+    // fuer Durchsagen gilt so auch, wenn der Composer den Ton fuehrt (S101)
+    const float laut = m_player->isMuted() ? 0.0f : m_player->volume() * m_player->pegel();
     if (laut != m_laut)
     {
         engine.setVolume(m_mixer, laut);

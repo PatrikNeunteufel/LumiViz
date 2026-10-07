@@ -139,6 +139,11 @@ struct TonStand
 /// fuehrt nicht; der Klick geht wie immer an den Player.
 [[nodiscard]] bool springeImSong(double anteil);
 
+/// Der Faktor, mit dem Spektrum und Wellenform an die Visualizer gehen (Naht
+/// N13 / N17, S101): unter 1 nur, solange der Mute fuer Durchsagen absenkt
+/// UND sein Profil „Visuals follow" traegt. Sonst genau 1.
+[[nodiscard]] float muteFaktorFuerVisuals();
+
 /// Meldet der Composer gerade, woran Effect Chain haengt (Naht N16, S101)?
 /// Wahr nur waehrend die Sitzung ein `VisualizerChangedEvent` verschickt — an
 /// einen Clip, an nichts oder zurueck an die Kette. Die Editoren der

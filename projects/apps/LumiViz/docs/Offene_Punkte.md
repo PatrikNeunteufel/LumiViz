@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.112.0
+> **Version:** 1.113.0
 > **Datum:** 2026-10-07 (Session 101)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2308,7 +2308,23 @@ Idee Preset-Warmup/Pre-Roll.
     je Teil mit einer Stärke in Prozent — ein Pegel der ganzen Ebene ließe
     sich dort als weiterer Faktor einsetzen (Naht R2 wüchse). Entscheid KS1
     vorgelegt.
-  - 🟡 **Schritt 2b, offen — der Mute-Knopf selbst (Vorgabe Patrik
+  - **Schritt 2b gebaut (S101), noch ohne Knopf: der Mute wirkt am Ton**
+    (Entscheid Patrik AM3: c — ob die Visuals den Mute sehen, steht im
+    Profil; Vorgabe nein). **Naht N17** (vor dem Bau eingetragen): der
+    Player hat wieder einen zweiten Faktor neben der Lautstärke (`setPegel`,
+    die frühere N7a); `MuteSchalter` (der eine Zustand der App, Kind der
+    QApplication) setzt ihn nach dem gewählten Profil, in einem eigenen Takt
+    während der Blende; der Composer liest ihn je Takt mit der Lautstärke
+    und setzt beides an seinem Mixer. **N13 wächst:** `onAudioUpdate` nimmt
+    Spektrum und Wellenform mit `composer::muteFaktorFuerVisuals()` mal —
+    unter 1 nur bei einem Profil mit *Visuals follow* (`visualsFollow`).
+    Belegt: Verlauf am Papp-Player, Mixer folgt und die Quellen bleiben, der
+    echte `AudioPlayer` (Regler bleibt, kein Ereignis, hartes Mute gewinnt,
+    neuer Titel beginnt abgesenkt). **Nicht belegt:** die Zeilen in
+    `onAudioUpdate` (das Hauptfenster läuft in keinem Unit-Test); der Ton an
+    der echten Engine; dass niemand den Player an den Schalter hängt —
+    **das tut erst der Knopf**, bis dahin wirkt im Programm nichts.
+  - 🟡 **Schritt 2c, offen — der Mute-Knopf selbst (Vorgabe Patrik
     S101):** Durchsagen sind meist spontan, also ein Knopf „Mute" (ein Klick
     auf die Zeile AUDIO wäre riskant). Mute-Profile, zu speichern und zu
     laden, bestimmen: die Kurve des Ausblendens, die Kurve des Einblendens
@@ -4462,6 +4478,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.113.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2b gebaut (Entscheid Patrik AM3: c, Vorgabe „Visuals laufen weiter") — Naht N17 (Pegel am Player), `MuteSchalter`, der Composer folgt am Mixer, N13 wächst um den Faktor für die Visuals (Konzept 0.60.0); noch ohne Knopf, im Programm wirkt nichts; offen Entscheid AM4 (ein Mute-Knopf oder zwei im Panel Player) |
 | 1.112.0 | 2026-10-07 | Session 101 — **Composer:** Karaoke im Composer gebaut (Entscheid Patrik KS1: a) — Zeile KARAOKE mit voller Kurve und der Haken Karaoke, gekoppelt mit dem Panel Karaoke; Naht R2 wächst um den Pegel beim Auflegen (Konzept 0.59.0, Benutzerhandbuch 1.109.0); im Programm ungesehen |
 | 1.111.0 | 2026-10-07 | Session 101 — **Composer:** Mute, Schritt 2a gebaut (Mute-Profil, Verlauf, Profile als `.lvmute`; Konzept 0.58.0) — noch ohne Knopf und ohne Ton; Entscheid Patrik AM2: c (der Mute gehört dem Player, Knopf in beiden Panels); Befund: die Lautstärke des Mixers ändert sein Spektrum nicht; neuer Wunsch Patrik: Karaoke im Composer schalten, als Haken oder als Spur (Entscheid KS1 vorgelegt) |
 | 1.110.0 | 2026-10-07 | Session 101 — **Composer:** Audio-Master und Visual-Master, Schritt 1 gebaut (Entscheid Patrik AM1: a — zwei volle Kurven, Zeilen VISUAL und AUDIO; Konzept 0.57.0, Benutzerhandbuch 1.108.0), im Programm ungesehen; Schritt 2 offen: Mute-Knopf mit Mute-Profilen (Vorgabe Patrik: Ausblend-Kurve, Einblend-Kurve, Zielpegel; speichern und laden), Fragen dazu eingetragen |
