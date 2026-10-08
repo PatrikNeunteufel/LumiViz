@@ -1,0 +1,75 @@
+{
+    "format": "lumiviz-composition",
+    "version": 2,
+    "length": 0,
+    "gridSeconds": 1,
+    "loop": {
+        "overlap": 5000,
+        "songsTwice": true,
+        "visualsTwice": false
+    },
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Fontaene.lvfx",
+                    "start": 0,
+                    "end": 30000,
+                    "blend": 0,
+                    "fadeIn": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/07_kick_60bpm_30s.mp3",
+                    "start": 0,
+                    "end": 30000,
+                    "offset": 0
+                }
+            ]
+        }
+    ]
+}

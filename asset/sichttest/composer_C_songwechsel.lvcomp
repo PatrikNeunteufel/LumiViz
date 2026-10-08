@@ -1,0 +1,107 @@
+{
+    "format": "lumiviz-composition",
+    "version": 2,
+    "length": 0,
+    "gridSeconds": 1,
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 0,
+                    "end": 120000,
+                    "blend": 0
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/02_sinus440_mono_30s.mp3",
+                    "start": 10000,
+                    "end": 40000,
+                    "offset": 0,
+                    "fadeOut": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "file": "audio/13_rauschen_rosa_30s.mp3",
+                    "start": 70000,
+                    "end": 100000,
+                    "offset": 0,
+                    "fadeIn": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/08_kick_120bpm_30s.mp3",
+                    "start": 30000,
+                    "end": 60000,
+                    "offset": 0,
+                    "fadeIn": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

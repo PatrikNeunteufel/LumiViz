@@ -1,0 +1,76 @@
+{
+    "format": "lumiviz-composition",
+    "version": 2,
+    "length": 0,
+    "gridSeconds": 1,
+    "level": {
+        "shapes": [
+            {
+                "at": 30000,
+                "width": 10000,
+                "flipped": false,
+                "shape": {
+                    "kind": "shape",
+                    "points": [
+                        {
+                            "curve": 1,
+                            "x": 0,
+                            "y": 1
+                        },
+                        {
+                            "curve": 1,
+                            "x": 0.5,
+                            "y": 0
+                        },
+                        {
+                            "curve": 0,
+                            "x": 1,
+                            "y": 1
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 0,
+                    "end": 60000,
+                    "blend": 0
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Sternenfeld.lvfx",
+                    "start": 10000,
+                    "end": 50000,
+                    "blend": 1
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/15_pseudo_musik_120bpm_60s.mp3",
+                    "start": 0,
+                    "end": 50000,
+                    "offset": 0
+                }
+            ]
+        }
+    ]
+}

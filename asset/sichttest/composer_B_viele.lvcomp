@@ -1,0 +1,241 @@
+{
+    "format": "lumiviz-composition",
+    "version": 2,
+    "length": 0,
+    "gridSeconds": 1,
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 0,
+                    "end": 180000,
+                    "blend": 0
+                },
+                {
+                    "file": "presets/Ring.lvfx",
+                    "start": 190000,
+                    "end": 360000,
+                    "blend": 0
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Sternenfeld.lvfx",
+                    "start": 0,
+                    "end": 180000,
+                    "blend": 0
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/14_amplituden_rampe_60s.mp3",
+                    "start": 0,
+                    "end": 60000,
+                    "offset": 0
+                },
+                {
+                    "file": "audio/05_sweep_log_20-20k_60s.mp3",
+                    "start": 60000,
+                    "end": 120000,
+                    "offset": 0
+                },
+                {
+                    "file": "audio/15_pseudo_musik_120bpm_60s.mp3",
+                    "start": 120000,
+                    "end": 180000,
+                    "offset": 0
+                },
+                {
+                    "file": "audio/14_amplituden_rampe_60s.mp3",
+                    "start": 180000,
+                    "end": 240000,
+                    "offset": 0
+                },
+                {
+                    "file": "audio/05_sweep_log_20-20k_60s.mp3",
+                    "start": 240000,
+                    "end": 300000,
+                    "offset": 0
+                },
+                {
+                    "file": "audio/15_pseudo_musik_120bpm_60s.mp3",
+                    "start": 300000,
+                    "end": 360000,
+                    "offset": 0
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH3",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Dreiecke.lvfx",
+                    "start": 30000,
+                    "end": 90000,
+                    "blend": 1,
+                    "fadeIn": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH4",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Fontaene.lvfx",
+                    "start": 60000,
+                    "end": 120000,
+                    "blend": 1
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH5",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Punktgitter.lvfx",
+                    "start": 120000,
+                    "end": 240000,
+                    "blend": 1
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH6",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Teilchen.lvfx",
+                    "start": 240000,
+                    "end": 300000,
+                    "blend": 1
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/07_kick_60bpm_30s.mp3",
+                    "start": 10000,
+                    "end": 40000,
+                    "offset": 0,
+                    "base": 0.3
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A3",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/08_kick_120bpm_30s.mp3",
+                    "start": 60000,
+                    "end": 90000,
+                    "offset": 0,
+                    "base": 0.3
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A4",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/02_sinus440_mono_30s.mp3",
+                    "start": 120000,
+                    "end": 150000,
+                    "offset": 0,
+                    "base": 0.3
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A5",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/13_rauschen_rosa_30s.mp3",
+                    "start": 180000,
+                    "end": 210000,
+                    "offset": 0,
+                    "base": 0.3
+                }
+            ]
+        },
+        {
+            "kind": "audio",
+            "name": "A6",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "audio/07_kick_60bpm_30s.mp3",
+                    "start": 300000,
+                    "end": 330000,
+                    "offset": 0,
+                    "base": 0.3
+                }
+            ]
+        }
+    ]
+}
