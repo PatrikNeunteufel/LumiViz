@@ -100,6 +100,21 @@ std::vector<VorlagenZusage> zusagen()
         {"composer_E_karaoke.lvcomp", 60000,
          {{"CH1", B, {{"Sternenfeld", 0, 60000}}},
           {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 60000}}}}},
+        {"composer_F_kurven.lvcomp", 60000,
+         {{"CH1", B, {{"Stern", 0, 20000}, {"Ring", 30000, 50000}}},
+          {"CH2", B, {{"Sternenfeld", 10000, 30000}, {"Dreiecke", 40000, 60000}}},
+          {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 60000}}}}},
+        {"composer_G_altformat.lvcomp", 50000,
+         {{"CH1", B, {{"Stern", 0, 20000}, {"Sternenfeld", 30000, 50000}}},
+          {"CH2", B, {{"Drehsterne", 15000, 35000}}}}},
+        {"composer_H_dreimal.lvcomp", 60000,
+         {{"CH1", B, {{"Stern", 0, 20000}, {"Stern", 30000, 50000}}},
+          {"CH2", B, {{"Stern", 10000, 30000}, {"Ring", 40000, 60000}}}}},
+        {"composer_I_luecke.lvcomp", 60000,
+         {{"CH1", B, {{"Sternenfeld", 0, 20000}, {"Sternenfeld", 40000, 60000}}},
+          {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 60000}}}}},
+        {"composer_J_einrasten.lvcomp", 20500,
+         {{"CH1", B, {{"Stern", 0, 20500}}}, {"CH2", B, {{"Ring", 5000, 15000}}}}},
     };
 }
 
@@ -236,6 +251,58 @@ TEST_SUITE("ComposerVorlagen")
             CHECK_FALSE(k.bilderDoppelt);
             CHECK(k.kanaele[0].clips[0].ein.dauerMs == 5000);
             CHECK(k.kanaele[0].clips[0].aus.dauerMs == 5000);
+        }
+
+        SUBCASE("F Kurven: Clips von 20 s, mit und ohne Blenden")
+        {
+            const Komposition k = lade(QStringLiteral("composer_F_kurven.lvcomp"));
+            const Clip& stern = k.kanaele[0].clips[0];
+            CHECK(stern.ein.dauerMs == 5000);
+            CHECK(stern.aus.dauerMs == 5000);
+            // Liste 8, B1: auf 6 s gekuerzt treffen sich die zwei Blenden bei 0:03
+            Clip kurz = stern;
+            kurz.endeMs = 6000;
+            CHECK(kurz.pegelBei(3000) == doctest::Approx(1.0).epsilon(0.02));
+            CHECK(kurz.pegelBei(1500) == doctest::Approx(0.5).epsilon(0.02));
+            CHECK(kurz.pegelBei(4500) == doctest::Approx(0.5).epsilon(0.02));
+            CHECK(k.kanaele[0].clips[1].vollerPegel());  // Ring: keine Blende, kein Stueck
+            const Clip& feld = k.kanaele[1].clips[0];
+            CHECK(feld.ein.dauerMs == 5000);
+            CHECK(feld.aus.dauerMs == 0);
+            CHECK(k.kanaele[1].clips[1].vollerPegel());
+        }
+
+        SUBCASE("G altes Format: die Punktliste wird zu Blenden — 3 s / 5 s, 5 s / 3 s, 5 s / 5 s")
+        {
+            const Komposition k = lade(QStringLiteral("composer_G_altformat.lvcomp"));
+            CHECK(k.kanaele[0].clips[0].ein.dauerMs == 3000);
+            CHECK(k.kanaele[0].clips[0].aus.dauerMs == 5000);
+            CHECK(k.kanaele[0].clips[1].ein.dauerMs == 5000);
+            CHECK(k.kanaele[0].clips[1].aus.dauerMs == 3000);
+            CHECK(k.kanaele[1].clips[0].ein.dauerMs == 5000);
+            CHECK(k.kanaele[1].clips[0].aus.dauerMs == 5000);
+            for (const Kanal& kanal : k.kanaele)
+                for (const Clip& c : kanal.clips) CHECK(c.stuecke.empty());
+        }
+
+        SUBCASE("H dreimal: dasselbe Preset in drei Clips, ein anderes im vierten")
+        {
+            const Komposition k = lade(QStringLiteral("composer_H_dreimal.lvcomp"));
+            const QString stern = k.kanaele[0].clips[0].datei;
+            CHECK(k.kanaele[0].clips[1].datei == stern);
+            CHECK(k.kanaele[1].clips[0].datei == stern);
+            CHECK(k.kanaele[1].clips[1].datei != stern);
+        }
+
+        SUBCASE("die Datei mit dem fehlenden Preset meldet genau dieses")
+        {
+            Komposition k;
+            QStringList bericht;
+            REQUIRE(ladeKomposition(ordner.filePath(QStringLiteral("fehlt_ein_preset.lvcomp")), k, &bericht));
+            REQUIRE(bericht.size() == 1);
+            CHECK(bericht.first().startsWith(QStringLiteral("File not found: ")));
+            CHECK(bericht.first().contains(QStringLiteral("Gibt_es_nicht.lvfx")));
+            CHECK(k.kanaele.size() == 2);
         }
 
         SUBCASE("E Karaoke: der Songtext liegt neben dem Song, elf Zeilen im Abstand von 5 s")

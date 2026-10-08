@@ -1,0 +1,46 @@
+{
+    "format": "lumiviz-composition",
+    "version": 2,
+    "length": 0,
+    "gridSeconds": 1,
+    "channels": [
+        {
+            "kind": "visual",
+            "name": "CH1",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 0,
+                    "end": 20000,
+                    "blend": 0
+                },
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 30000,
+                    "end": 50000,
+                    "blend": 0
+                }
+            ]
+        },
+        {
+            "kind": "visual",
+            "name": "CH2",
+            "enabled": true,
+            "clips": [
+                {
+                    "file": "presets/Stern.lvfx",
+                    "start": 10000,
+                    "end": 30000,
+                    "blend": 1
+                },
+                {
+                    "file": "presets/Ring.lvfx",
+                    "start": 40000,
+                    "end": 60000,
+                    "blend": 1
+                }
+            ]
+        }
+    ]
+}

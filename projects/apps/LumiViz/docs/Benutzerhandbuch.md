@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.111.0
+> **Version:** 1.112.0
 > **Datum:** 2026-10-07
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2348,8 +2348,21 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `levels` | **Alt (bis Version 1):** die Pegelkurve als Punkte mit `t` (Millisekunden ab Clip-Start) und `level`. Wird beim Laden übersetzt — eine einfache Ein- / Ausblendung in `fadeIn` / `fadeOut`, jede andere Kurve in ein Stück über den ganzen Clip; der Verlauf bleibt derselbe. Geschrieben wird das Feld nicht mehr |
 | `bezier` | Nur bei `curve` 6: die zwei Anfasser als `[x1, y1, x2, y2]`, je 0 … 1 — x ist der Anteil der Zeit, y der Anteil des Wegs (wie `cubic-bezier` in CSS). Ohne Angabe eine weiche S-Kurve |
 | `length` | Festes Ende in Millisekunden (optional). Ohne Angabe, mit 0 oder genau am Ende des letzten Clips folgt das Ende dem letzten Clip |
+| `gridSeconds` | Das Raster beim Ziehen in Sekunden (ohne Angabe 1) |
+| `color` (am Kanal) | Die Farbe der Clips des Kanals als `"#rrggbb"`, freiwillig. Ohne Angabe vergibt LumiViz beim Laden eine Farbe seiner Reihe (kühl für Bild, warm für Ton) |
+| `loop` | Die Schleife, freiwillig: `overlap` (Millisekunden, um die der Anfang vor dem Ende beginnt — *Loop overlap*), `songsTwice` (*Songs overlap themselves*, ohne Angabe an) und `visualsTwice` (*Visuals overlap themselves*, ohne Angabe aus) |
+| `fade` | Die Blenden der Zeile MASTER, freiwillig: `in` und `out` in Millisekunden (*Fade in*, *Fade out*), dazu wahlweise `inShape` und `outShape` mit einer Form wie bei `fadeIn` |
+| `level` | Grundpegel und Stücke der Zeile MASTER, freiwillig: `base` (0 … 1, ohne Angabe 1) und `shapes` wie am Clip — nur dass ein Stück hier `at` trägt statt `pos`: seine Mitte als **feste Zeit** in Millisekunden. Wird die Komposition länger oder kürzer, bleibt es an dieser Zeit; ein Stück im Clip wandert dagegen anteilig mit |
+| `visualMaster`, `audioMaster`, `karaokeMaster` | Die Kurven der Zeilen VISUAL, AUDIO und KARAOKE, jede freiwillig und mit denselben Feldern: `in`, `out`, `inShape`, `outShape`, `base`, `shapes` (mit `at`) |
 
 Eine Lücke — eine Stelle, an der kein Clip liegt — ist schwarz.
+
+Fertige Beispiele mit runden Zeiten liegen unter `asset\sichttest\` (die
+Vorlagen der Sichttests, `composer_A_kurz.lvcomp` bis
+`composer_J_einrasten.lvcomp`): kurz mit Bild und Ton, mit einem Stück in
+der Zeile MASTER, mit zwölf Kanälen, mit Songwechsel, mit Schleife, mit
+Songtext, im alten Format. Sie sind als Ausgangslage für Tests gedacht —
+zum Ausprobieren eine Kopie nehmen.
 
 ---
 
@@ -2445,6 +2458,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.112.0 | 2026-10-08 | Session 103. §15 *Eine Komposition von Hand schreiben*: die Felder aus den Sessions 99 bis 101 nachgetragen — `gridSeconds`, `color` am Kanal, `loop` (`overlap`, `songsTwice`, `visualsTwice`), `fade` (`in`, `out`, `inShape`, `outShape`), `level` (`base`, `shapes` mit `at` als fester Zeit — der Unterschied zu `pos` am Clip), `visualMaster` / `audioMaster` / `karaokeMaster`; Hinweis auf die fertigen Beispiele unter `asset\sichttest\` |
 | 1.111.0 | 2026-10-07 | Session 102. §15 Composer NEU **Zoomen und Rollen**: Ctrl+Mausrad zoomt die Zeit, Alt+Mausrad die Höhe der Zeilen (50 % bis 300 %, über den Neustart gemerkt), Ctrl+Alt+Mausrad beides, Shift+Mausrad rollt zur Seite, die mittlere Maustaste verschiebt den Ausschnitt, **Fit** und Ctrl+0 setzen zurück; das Lineal und die Spalte der Kanalnamen bleiben stehen; der Schalter **Scroll with playhead** (Smooth oder By page). Tabelle *Das Panel Composer* um die zwei Elemente ergänzt, *Einstellungen* um *Scroll with playhead* |
 | 1.110.0 | 2026-10-07 | Session 101. §2 Player NEU **Mute für Durchsagen**: der Knopf *Mute* im Panel Player und im Panel Composer, Mute-Profile (Zielpegel, Kurve des Aus- und des Einblendens, *Visuals follow*), Rechtsklick wählt das Profil, Dialog *Mute Profiles* |
 | 1.109.0 | 2026-10-07 | Session 101. §15 Composer NEU **Die Zeile KARAOKE** (Pegelkurve der Karaoke-Ebene: wie stark der Songtext aufliegt) und der Haken **Karaoke** im Panel Composer, gekoppelt mit *Karaoke on* |

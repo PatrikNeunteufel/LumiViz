@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.124.0
-> **Datum:** 2026-10-07 (Session 102)
+> **Version:** 1.125.0
+> **Datum:** 2026-10-08 (Session 103)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2217,6 +2217,73 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- **Sichttests, S103 — neu gefasst, mit festen Vorlagen (Anlass Patrik: „ich
+  habe die Sichttests aufgegeben, sie sind zum Teil etwas unklar
+  beschrieben"):**
+  - **Abgleich aller Listen S88 bis S102** (845 Punkte, nur gelesen): 542
+    gelten noch, 178 sind bestanden, der Rest ersetzt oder überholt. Woran die
+    alten Texte krankten: kein festes Material („etwa", „eine eigene"),
+    Arbeitsdateien als Vorlage (`composed2*.lvcomp` haben sich seit S98
+    geändert, `singlecomp.lvcomp` hat keinen Ton), mehrere Handlungen je
+    Punkt, Zustand aus früheren Punkten, Ergebnisse ohne Maß, interne Wörter
+    statt der Namen im Programm, Prüfung und Urteil vermischt.
+  - **Der Befund S100 M11 („die shape sollte sich proportional verschieben")
+    war kein Befund am Programm:** die zwei Bilder zeigen das Stück eines
+    Clips, das anteilig mitwandert, wie gebaut. Gemeint war das Stück der
+    Zeile MASTER (feste Zeit, Entscheid F7-1 a) — der Text des Punkts sagte
+    das nicht. Neu gefragt in Liste 1, M2 bis M4, mit Gegenprobe und dem
+    **Urteil, ob die feste Zeit an der Zeile MASTER recht ist** (offen).
+  - **Neu, im Repo:** der Ordner `asset/sichttest/` — elf Vorlagen
+    `composer_A_kurz.lvcomp` bis `composer_J_einrasten.lvcomp` mit runden
+    Zeiten, acht Presets unter sprechenden Namen, sieben Testsignale als MP3
+    (Entscheid Patrik: der Ton liegt im Repo), ein Songtext `.lrc`, dessen
+    Zeilen ihre eigene Zeit nennen; und `test_ComposerVorlagen.cpp`, das jede
+    Vorlage lädt und gegen die Zusagen der Listen prüft.
+  - **Neu, lokal** (`.claude/handover/`): neun Listen
+    `Sichttest_Composer_1_…` bis `_9_…` nach Thema (394 Punkte, davon 41
+    „Vorbereiten"): Master-Zeilen · Zoom und Rollen · Kanäle · Songwechsel
+    und Schleife · Karaoke · Mute · Start und Dateien · Curve Editor und
+    Pegelkurve · Bauen und Sync. Je Abschnitt ein Punkt *Vorbereiten* mit
+    Vorlage, je Punkt *Tun* und *Erwartet*, Urteile getrennt, die alte
+    Kennung in Klammern. Sie ersetzen die offenen Composer-Punkte aus S94b
+    bis S102; die alten Listen S98 bis S102 liegen in `sichttests-alt/`.
+    **Im Programm ist davon nichts gesehen.**
+  - **Aus dem Code gelesen, nicht gesehen** (steht im Kopf der Listen): ein
+    Song ohne Titel-Tag erscheint als Dateiname ohne Endung (Liste 4); der
+    Composer nimmt den Songtext aus der `.lrc` neben dem Song (Liste 5); wo
+    ein Preset landet, das auf einen Clip gezogen wird (Liste 9, B4).
+  - **Offen — die Listen außerhalb des Composers, rund 246 Punkte** (S88 bis
+    S93: Karaoke-Ebene, Lyrics-Knoten, Lyrics Sync, Trail, Effektkette Save /
+    Save As, Effect Chain, Sprite, Browser). Dafür fehlt Material: Songs mit
+    synchronem und unsynchronem Songtext, Wort-Zeiten, Tags. Reihenfolge
+    Patrik: zuerst die Abstimmung zur Steuerung (nächster Punkt), danach
+    diese.
+  - **Offen — Patriks Wort:** die 19 Punkte der Liste S95 gelten laut Report
+    pauschal als „ohne Werkzeug: alles in Ordnung", ohne Lauf — zählen sie
+    als bestanden? Dazu zwei alte Befunde ohne Antwort: S94b B1 (liegt das
+    Original näher an Render Scale 1 oder 4?) und S95b D3 (die Wirkung der
+    Mischart war mit der Demo nicht zu sehen). Weiter offen aus S98: der
+    Wunsch zu Next / Previous (Liste 4, S13) und „Wirkung schwach" bei leisem
+    Ton (Liste 4, N1, N2).
+  - **Der Tester soll die App steuern** (Vorlage laden, Panel holen, Zustand
+    herstellen — wie im Comm Studio): als eigener Schritt, abgestimmt über
+    den Sync `…\cmake\sync_sichttest` (SH SichtTest_Helper, LV, CS Comm
+    Studio, CC CMakeCraft). Richtung Patrik: das Werkzeug wird in
+    `SichtTest_Helper` entwickelt, bleibt ein eigenes Programm; der Helper
+    baut eine **DLL** mit der ganzen Schnittstelle, die Anwendungen binden
+    sie ein; der ganze Tester wird nicht als Bibliothek eingebunden. Die
+    Abstimmung führt eine eigene LV-Sitzung. **In LumiViz ist dafür nichts
+    gebaut**; eine Einbindung wäre im Zweig `composer` eine Naht und vor dem
+    Bau im Konzept einzutragen. Folgen hier: die Kopie
+    `projects/exec/Sichttest` entfällt, sobald der Bezug steht; die Blöcke
+    *Vorbereiten* der Listen sind gleich gebaut, damit der Tester sie später
+    ausführen kann.
+  - **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
+    S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets" fiel in
+    zwei von vier vollen Läufen um (`combo->itemText(0) == "Abend"`); in S96
+    zweimal, in S97 bis S102 über 44 Läufe nie. Von S103 nicht berührt;
+    während der Läufe arbeiteten mehrere andere Sitzungen auf dem Rechner —
+    ob die Last mitspielt, ist eine Vermutung. **Ursache nicht untersucht.**
 - **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.68.0 §7;
   alle sechs Schritte gebaut, im Programm nichts gesehen — Sichttest
   `.claude/handover/Sichttests_S102.md`):**
@@ -4566,6 +4633,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.125.0 | 2026-10-08 | Session 103 — **Sichttests neu gefasst:** Abgleich aller Listen S88 bis S102 (542 von 845 Punkten gelten noch); der Befund S100 M11 war ein Fehler der Beschreibung, kein Fehler am Programm; neu im Repo `asset/sichttest/` (elf Vorlagen, Presets, Testsignale, Songtext) und `test_ComposerVorlagen.cpp`; lokal neun Listen nach Thema (394 Punkte) für alle offenen Composer-Punkte aus S94b bis S102; offen die rund 246 Punkte außerhalb des Composers, Patriks Wort zu S95 und zwei alten Befunden; die Steuerung der App durch den Tester läuft als eigener Schritt über den Sync `sync_sichttest` (DLL als Gegenstelle); `test_PaletteUi.cpp:765` fiel in zwei von vier vollen Läufen um, Ursache nicht untersucht; 967 Cases; `Changelog_Session103.md` |
 | 1.124.0 | 2026-10-07 | Session 102, Abschluss — **Composer:** Stand am Ende der Sitzung: Zoom und Rollen der Zeitachse in sechs Schritten gebaut (acht Commits, `ed32789` bis `8e01648`), 966 Cases, im Programm nichts gesehen — Sichttest S102 mit 64 Punkten, zuerst Abschnitt G (kommen die Gesten am Gerät an?); offen das Urteil U1 zur Schwelle der Kurvenpunkte; `Changelog_Session102.md` |
 | 1.123.0 | 2026-10-07 | Session 102 — **Composer:** der Vergleichslauf nach den zwei Eingriffen an R2 (S101) entfällt (Entscheid Patrik VL1: a, mit Begründung: ungelesener Zähler, Faktor genau 1, die Harnesse rendern ohne Karaoke-Ebene); es bleibt der Vergleichslauf vor dem Holen nach `master` |
 | 1.122.0 | 2026-10-07 | Session 102 — **Composer, Zoom Schritt 6:** Benutzerhandbuch 1.111.0 (§15 Zoomen und Rollen), Rückbau-Liste im Konzept 0.68.0, Sichttest-Liste S102; das Vorhaben Zoom ist gebaut, im Programm nichts gesehen |
