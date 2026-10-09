@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.125.0
-> **Datum:** 2026-10-08 (Session 103)
+> **Version:** 1.126.0
+> **Datum:** 2026-10-09 (Session 104)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2272,12 +2272,38 @@ Idee Preset-Warmup/Pre-Roll.
     `SichtTest_Helper` entwickelt, bleibt ein eigenes Programm; der Helper
     baut eine **DLL** mit der ganzen Schnittstelle, die Anwendungen binden
     sie ein; der ganze Tester wird nicht als Bibliothek eingebunden. Die
-    Abstimmung führt eine eigene LV-Sitzung. **In LumiViz ist dafür nichts
-    gebaut**; eine Einbindung wäre im Zweig `composer` eine Naht und vor dem
-    Bau im Konzept einzutragen. Folgen hier: die Kopie
-    `projects/exec/Sichttest` entfällt, sobald der Bezug steht; die Blöcke
+    Abstimmung führt eine eigene LV-Sitzung. Folgen hier: die Kopie
+    `projects/exec/Sichttest` entfällt, sobald die Steuerung läuft; die Blöcke
     *Vorbereiten* der Listen sind gleich gebaut, damit der Tester sie später
     ausführen kann.
+    **Stand S104 — der Bezug steht, benutzt wird er noch nicht:** External
+    `sichttest` (CMakeCraft v0.10.0, Art `archive`) an Kern und Runner,
+    `sichttest.pin` auf das Release `v0.2.0`; neben `LumiViz.exe` liegen
+    `SichttestSteuerung1.dll` und `sichttest\`. Naht N19 (Composer_Konzept
+    §12.2), Commit `5d49259`. Gebaut in Release-clang, Testing-MSVC und
+    Debug-MSVC; **kein Kopf eingebunden, die DLL nie geladen, die App nicht
+    gestartet, Unit-Tests nicht ausgeführt.**
+    **Entscheide Patrik S104:** Z1 a (Zweig `composer`); **W1 a, vorerst** —
+    `--testing` ändert den Start nicht, LumiViz stellt alles wieder her wie
+    immer (fünf der neun Listen prüfen einen Neustart); offen bleibt, ob es
+    später einen eigenen Zwischenspeicher für Tests gibt wie im Comm Studio;
+    P1 a — die Projektdatei wird versioniert; **P2 a** — sie liegt in jedem
+    Projekt unter `.sichttest/sichttest.projekt.json` im Root, Pfade ab Root
+    (ändert Konzept der Steuerung §7 und die Suche im Tester — liegt bei SH).
+    **Als Nächstes:** Antwort von SH zu P2 abwarten; per Test belegen, dass
+    die Aktionen unter *Vorbereiten* aus jedem wiederhergestellten
+    Startzustand denselben Stand erreichen, und nachsehen, ob die App sich
+    beim Beenden die Test-Komposition merkt; dann die Nähte für `--testing`
+    und die Aktionen eintragen und bauen (zuerst `komposition_laden`,
+    `composer`, `edit`, `fit`).
+  - **🔧 Bauen, aufgefallen in S104 (nicht vom Paket):** `LumiViz.rc` baut
+    mit clang nur in der Umgebung von Visual Studio (`vcvars64`), sonst
+    scheitert die Ressource ohne Meldung; im Debug-Bau mit MSVC bricht
+    `LumiViz.UnitTests` mit C1128 ab (`/bigobj` fehlt — bei CMakeCraft als
+    eigener Punkt vorgemerkt: `compile_options` für App-Tests). Nach einem
+    Wechsel der Paketversion die Exe neu bauen: die Kopie von DLL und Ordner
+    läuft nur beim Bau der Exe (Entscheid Patrik: behoben in der nächsten
+    CMakeCraft-Version).
   - **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
     S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets" fiel in
     zwei von vier vollen Läufen um (`combo->itemText(0) == "Abend"`); in S96
@@ -4633,6 +4659,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.126.0 | 2026-10-09 | Session 104 — **Sichttest-Steuerung, Bezug:** External `sichttest` und `sichttest.pin` (Release `v0.2.0`), CMakeCraft v0.10.0, Naht N19, Commit `5d49259`; gebaut in drei Presets, benutzt wird das Paket noch nicht; Entscheide Patrik Z1 a, W1 a (vorerst), P1 a, P2 a (`.sichttest/sichttest.projekt.json`); drei Bau-Befunde (clang und `LumiViz.rc`, C1128 im Debug-Bau der Tests, Kopie nur beim Bau der Exe) |
 | 1.125.0 | 2026-10-08 | Session 103 — **Sichttests neu gefasst:** Abgleich aller Listen S88 bis S102 (542 von 845 Punkten gelten noch); der Befund S100 M11 war ein Fehler der Beschreibung, kein Fehler am Programm; neu im Repo `asset/sichttest/` (elf Vorlagen, Presets, Testsignale, Songtext) und `test_ComposerVorlagen.cpp`; lokal neun Listen nach Thema (394 Punkte) für alle offenen Composer-Punkte aus S94b bis S102; offen die rund 246 Punkte außerhalb des Composers, Patriks Wort zu S95 und zwei alten Befunden; die Steuerung der App durch den Tester läuft als eigener Schritt über den Sync `sync_sichttest` (DLL als Gegenstelle); `test_PaletteUi.cpp:765` fiel in zwei von vier vollen Läufen um, Ursache nicht untersucht; 967 Cases; `Changelog_Session103.md` |
 | 1.124.0 | 2026-10-07 | Session 102, Abschluss — **Composer:** Stand am Ende der Sitzung: Zoom und Rollen der Zeitachse in sechs Schritten gebaut (acht Commits, `ed32789` bis `8e01648`), 966 Cases, im Programm nichts gesehen — Sichttest S102 mit 64 Punkten, zuerst Abschnitt G (kommen die Gesten am Gerät an?); offen das Urteil U1 zur Schwelle der Kurvenpunkte; `Changelog_Session102.md` |
 | 1.123.0 | 2026-10-07 | Session 102 — **Composer:** der Vergleichslauf nach den zwei Eingriffen an R2 (S101) entfällt (Entscheid Patrik VL1: a, mit Begründung: ungelesener Zähler, Faktor genau 1, die Harnesse rendern ohne Karaoke-Ebene); es bleibt der Vergleichslauf vor dem Holen nach `master` |
