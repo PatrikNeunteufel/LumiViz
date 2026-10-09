@@ -31,6 +31,8 @@
 #include "UI/StartDatei.hpp"                            // `LumiViz.exe <datei>` (S101)
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
+#include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
+#include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -261,6 +263,31 @@ MainWindow::MainWindow(QWidget* parent)
             BasicLogger::logInfo("Resume playback: " + stand.datei.toStdString() + " at " +
                                  std::to_string(stand.positionMs / 1000) + " s");
     });
+
+    // Composer-Naht N20 (docs/ui/Composer_Konzept.md §12.2): nur mit
+    // `--testing` die Sichttest-Steuerung laden und mit dem Tester verbinden —
+    // NACH allem oben, damit keine Aktion vom wiederhergestellten Startzustand
+    // ueberdeckt wird (Entscheid Patrik W1: der Start selbst bleibt, wie er ist).
+    if (lumi::sichttest::verlangt(QCoreApplication::arguments()))
+        QTimer::singleShot(0, this, [this]() {
+            QString grund;
+            m_pSichttest =
+                lumi::sichttest::Anbindung::lade(QCoreApplication::applicationVersion(), &grund);
+            if (m_pSichttest == nullptr)
+            {
+                BasicLogger::logWarning("Sichttest: --testing given, but no control: " +
+                                        grund.toStdString());
+                return;
+            }
+            // Composer-Naht N21: die Aktionen, die Composer-Code rufen
+            if (VisualizerWidget* widget = primaryVisualizer())
+                lumi::composer::meldeSichttestAktionen(*m_pSichttest, *widget);
+            BasicLogger::logInfo("Sichttest: --testing, " +
+                                 std::to_string(m_pSichttest->aktionen().size()) +
+                                 " actions registered, project root " +
+                                 QDir::toNativeSeparators(m_pSichttest->root()).toStdString());
+            (void)m_pSichttest->verbinde();
+        });
 
     // -------------------------------------------------------------------------
     // Audio Update Timer

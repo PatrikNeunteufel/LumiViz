@@ -30,6 +30,7 @@
 #include "UI/MainWindow.hpp"
 #include "UI/StartDatei.hpp"       // `LumiViz.exe <datei>` (S101)
 #include "core/EinzelInstanz.hpp"  // eine laufende App je Exe (S101)
+#include "sichttest/Anbindung.hpp"  // Composer-Naht N20: `--testing` bei laufender App
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
 #include "services/LiveVideoFeed.hpp"    // Feed-Stopp nach GL-Abbau (S70)
@@ -40,6 +41,8 @@
 
 // Qt includes
 #include <QApplication>
+#include <QLockFile>    // Composer-Naht N20
+#include <QMessageBox>  // Composer-Naht N20
 #include <QSettings>  // Uebernahme der MyViz-Einstellungen (S73)
 #include <QDir>
 #include <QStandardPaths>
@@ -359,9 +362,28 @@ bool Application::init(int argc, char* argv[])
         }
         else
         {
-            m_impl->pInstanz = std::make_unique<lumi::core::EinzelInstanz>();
             const QString name =
                 lumi::core::EinzelInstanz::nameFuer(QCoreApplication::applicationFilePath());
+            // Composer-Naht N20 (docs/ui/Composer_Konzept.md §12.2; Entscheid
+            // Patrik LV-5: a): mit `--testing` gibt dieser Start nichts an eine
+            // laufende App ab — sie haette die Sichttest-Steuerung nicht
+            // geladen. Er sagt es und endet mit Rueckgabe 1.
+            if (lumi::sichttest::verlangt(argumente))
+            {
+                QLockFile probe(lumi::core::EinzelInstanz::sperrDatei(name));
+                probe.setStaleLockTime(0);  // verwaist = der Prozess lebt nicht mehr
+                if (!probe.tryLock(0))
+                {
+                    BasicLogger::logWarning("Sichttest: --testing given, but LumiViz is already "
+                                            "running — this start ends");
+                    QMessageBox::warning(nullptr, QStringLiteral("LumiViz"),
+                                         QObject::tr("LumiViz is already running. Close it and "
+                                                     "start again with --testing."));
+                    return false;
+                }
+                probe.unlock();
+            }
+            m_impl->pInstanz = std::make_unique<lumi::core::EinzelInstanz>();
             const QString datei = lumi::ui::startdatei::ausArgumenten(argumente);
             switch (m_impl->pInstanz->starte(name, datei))
             {

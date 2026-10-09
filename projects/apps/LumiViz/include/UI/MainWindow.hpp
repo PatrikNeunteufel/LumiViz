@@ -70,6 +70,7 @@ class DialogManager;
 class ScreenshotManager;
 class VisualizerWidget;
 class ServiceContainer;
+namespace lumi::sichttest { class Anbindung; }  // Composer-Naht N20
 
 /**
  * @class MainWindow
@@ -329,6 +330,8 @@ private:
     std::unique_ptr<MenuManager> m_pMenuManager;
     std::unique_ptr<DialogManager> m_pDialogManager;
     std::unique_ptr<ScreenshotManager> m_pScreenshotManager;
+    /// Composer-Naht N20: die Sichttest-Steuerung — nur mit `--testing`, sonst leer
+    std::unique_ptr<lumi::sichttest::Anbindung> m_pSichttest;
     QLabel* m_pFpsLabel{nullptr};  // Owned by status bar (Qt parent-child)
     QTimer* m_pAudioUpdateTimer{nullptr};  // Owned by this (Qt parent-child)
     
