@@ -236,7 +236,9 @@
               "external_options": {
                 "bass": { "BASS_MIX": true },
                 "lua54": { "LUA_EMBEDDED": false }
-              }
+              },
+              "//compile_options": "Composer-Naht N22 (S105): die Testdateien sprengen unter MSVC die Grenze der Objektdatei (C1128 im Debug-Bau). Braucht CMakeCraft ab v0.11.0.",
+              "compile_options": [ "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>" ]
             },
             {
               "name": "x_integralTest",
