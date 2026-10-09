@@ -33,6 +33,7 @@
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
 #include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
 #include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
+#include "sichttest/AppAktionen.hpp"                    // Composer-Naht N20
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/EventBus.hpp"
@@ -281,7 +282,11 @@ MainWindow::MainWindow(QWidget* parent)
             }
             // Composer-Naht N21: die Aktionen, die Composer-Code rufen
             if (VisualizerWidget* widget = primaryVisualizer())
+            {
                 lumi::composer::meldeSichttestAktionen(*m_pSichttest, *widget);
+                // Composer-Naht N20: Panels, Karaoke-Ebene, Playlist und Player
+                lumi::sichttest::meldeAppAktionen(*m_pSichttest, *widget);
+            }
             BasicLogger::logInfo("Sichttest: --testing, " +
                                  std::to_string(m_pSichttest->aktionen().size()) +
                                  " actions registered, project root " +
