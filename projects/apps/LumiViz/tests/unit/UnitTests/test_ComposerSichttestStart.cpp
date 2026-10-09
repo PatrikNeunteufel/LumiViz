@@ -48,6 +48,7 @@
 #include "services/EventBus.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
 #include "sichttest/Anbindung.hpp"
 #include "sichttest/AppAktionen.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
@@ -666,8 +667,49 @@ TEST_SUITE("ComposerSichttestStart")
         const QString song = QStringLiteral("asset\\sichttest\\audio\\07_kick_60bpm_30s.mp3");
         CHECK(aktion::titelLaden(lauf.widget, root(), mit("datei", song)).status == Ergebnis::Status::Fehler);
         CHECK(aktion::player(lauf.widget, wert("start")).status == Ergebnis::Status::Fehler);
+        const QString kette = QStringLiteral("asset\\sichttest\\presets\\Stern.lvfx");
+        CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", kette)).status == Ergebnis::Status::Fehler);
 
         lauf.dienste.registerInstance<IEventBus>(std::make_unique<EventBus>());
+
+        // --- preset_laden: jede Endung ueber ihren Ladeweg, und immer „schon gefragt" (Naht N24)
+        {
+            IEventBus* bus = lauf.dienste.tryResolve<IEventBus>();
+            QStringList gemeldet;
+            const auto a1 = bus->subscribeScoped<LoadEffectChainEvent>([&](const LoadEffectChainEvent& e) {
+                gemeldet << QStringLiteral("kette %1 %2").arg(e.confirmed).arg(QString::fromStdString(e.path));
+            });
+            const auto a2 = bus->subscribeScoped<ImportAvsPresetEvent>([&](const ImportAvsPresetEvent& e) {
+                gemeldet << QStringLiteral("avs %1 %2").arg(e.confirmed).arg(QString::fromStdString(e.path));
+            });
+            const auto a3 = bus->subscribeScoped<ImportMilkPresetEvent>([&](const ImportMilkPresetEvent& e) {
+                gemeldet << QStringLiteral("milk %1 %2").arg(e.confirmed).arg(QString::fromStdString(e.path));
+            });
+            // die Vorgabe des Ereignisses bleibt „fragen": alle bestehenden Absender fragen wie bisher
+            CHECK_FALSE(LoadEffectChainEvent{}.confirmed);
+            CHECK_FALSE(LoadEffectChainEvent{std::string("x.lvfx")}.confirmed);
+            CHECK(LoadEffectChainEvent{std::string("x.lvfx"), true}.confirmed);
+
+            CHECK(aktion::presetLaden(lauf.widget, root(), QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+            CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", QStringLiteral("asset/nirgends.lvfx"))).status ==
+                  Ergebnis::Status::Ungueltig);
+            CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", QStringLiteral("Solution.json"))).status ==
+                  Ergebnis::Status::Ungueltig);
+            CHECK(gemeldet.isEmpty());
+
+            CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", kette)).status == Ergebnis::Status::Ok);
+            REQUIRE(gemeldet.size() == 1);
+            CHECK(gemeldet.last() ==
+                  QStringLiteral("kette 1 ") + QDir(root()).filePath(QStringLiteral("asset/sichttest/presets/Stern.lvfx")));
+            const QString milk = QStringLiteral("asset/Milkdrop3/presets/Blank.milk");
+            CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", milk)).status == Ergebnis::Status::Ok);
+            REQUIRE(gemeldet.size() == 2);
+            CHECK(gemeldet.last() == QStringLiteral("milk 1 ") + QDir(root()).filePath(milk));
+            const QString avs = QStringLiteral("asset/calibration/avs/matrix/00_simple/01_default.avs");
+            CHECK(aktion::presetLaden(lauf.widget, root(), mit("datei", avs)).status == Ergebnis::Status::Ok);
+            REQUIRE(gemeldet.size() == 3);
+            CHECK(gemeldet.last() == QStringLiteral("avs 1 ") + QDir(root()).filePath(avs));
+        }
         {
             auto liste = std::make_unique<Playlist>(*lauf.dienste.tryResolve<IEventBus>());
             lauf.dienste.registerInstance<IPlaylist>(std::move(liste));
@@ -743,7 +785,8 @@ TEST_SUITE("ComposerSichttestStart")
                           QStringLiteral("edit"), QStringLiteral("fit"), QStringLiteral("abspielmarke"),
                           QStringLiteral("wiedergabe"), QStringLiteral("schleife"),
                           QStringLiteral("sync_kette"), QStringLiteral("komposition_schliessen"),
-                          QStringLiteral("panel_zeigen"), QStringLiteral("karaoke"),
+                          QStringLiteral("panel_zeigen"), QStringLiteral("preset_laden"),
+                          QStringLiteral("karaoke"),
                           QStringLiteral("karaoke_laden"), QStringLiteral("titel_laden"),
                           QStringLiteral("player")});
         // derselbe Name ein zweites Mal wird abgelehnt

@@ -30,6 +30,13 @@ namespace appaktion
 /// holen (`composer`, `karaoke`, `player`, `playlist` … oder der Titel, wie er
 /// im Programm steht, etwa „Effect Chain"). Gross und klein spielt keine Rolle.
 [[nodiscard]] Ergebnis panelZeigen(const QJsonObject& argumente);
+/// `preset_laden datei=<pfad>` — ein Preset (`.avs`, `.milk`, `.lvfx`,
+/// `.lvfx2`) in die Effektkette laden, ueber den Ladeweg seiner Endung und
+/// ohne Rueckfrage zur ungespeicherten Kette (Schalter `FragtNach`; Naht N24).
+/// Die Aktion gibt den Auftrag ab: scheitert das Laden selbst, meldet LumiViz
+/// das wie immer in einem eigenen Dialog — die Antwort an den Tester sagt es nicht.
+[[nodiscard]] Ergebnis presetLaden(VisualizerWidget& fenster, const QString& root,
+                                   const QJsonObject& argumente);
 /// `karaoke an|aus` — der Schalter Karaoke on (derselbe wie im Panel Karaoke,
 /// in View → Karaoke und auf Ctrl+K).
 [[nodiscard]] Ergebnis karaoke(VisualizerWidget& fenster, const QJsonObject& argumente);

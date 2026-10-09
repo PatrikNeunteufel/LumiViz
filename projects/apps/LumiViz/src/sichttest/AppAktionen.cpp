@@ -13,12 +13,16 @@
 #include "audio/IPlaylist.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 
 #include <DockWidget.h>
 
 #include <QApplication>
 #include <QDir>
+#include <QFileInfo>
+
+#include <string>
 #include <QPointer>
 #include <QStringList>
 
@@ -63,6 +67,33 @@ Ergebnis panelZeigen(const QJsonObject& argumente)
         return fehler(QStringLiteral("The panel '%1' is not docked.").arg(gefunden->panelId()));
     dock->toggleView(true);
     dock->raise();
+    return ok();
+}
+
+Ergebnis presetLaden(VisualizerWidget& fenster, const QString& root, const QJsonObject& argumente)
+{
+    const QString angabe = argument(argumente, QStringLiteral("datei"));
+    if (angabe.isEmpty()) return ungueltig(QStringLiteral("Argument datei=<path> is missing."));
+    const QString datei = loeseAuf(angabe, root);
+    if (datei.isEmpty())
+        return ungueltig(QStringLiteral("File not found: %1 (relative paths start at %2)")
+                             .arg(QDir::toNativeSeparators(angabe), QDir::toNativeSeparators(root)));
+    auto* bus = fenster.dienste().tryResolve<IEventBus>();
+    if (bus == nullptr) return fehler(QStringLiteral("There is no event bus."));
+
+    // Jede Endung ueber ihren Ladeweg; die Frage nach der ungespeicherten
+    // Kette hat der Tester schon gestellt (`confirmed`).
+    const QString endung = QFileInfo(datei).suffix().toLower();
+    const std::string pfad = datei.toStdString();
+    if (endung == QLatin1String("avs"))
+        bus->publish(ImportAvsPresetEvent{pfad, true});
+    else if (endung == QLatin1String("milk"))
+        bus->publish(ImportMilkPresetEvent{pfad, true});
+    else if (endung == QLatin1String("lvfx") || endung == QLatin1String("lvfx2"))
+        bus->publish(LoadEffectChainEvent{pfad, true});
+    else
+        return ungueltig(QStringLiteral("Not a preset (.avs, .milk, .lvfx, .lvfx2): %1")
+                             .arg(QDir::toNativeSeparators(datei)));
     return ok();
 }
 
@@ -162,6 +193,14 @@ void meldeAppAktionen(Anbindung& anbindung, VisualizerWidget& fenster)
     anbindung.aktion(QStringLiteral("panel_zeigen"), QStringLiteral("Opens a panel and brings it to the front"),
                      QStringLiteral("name=<id or title>"),
                      [](const QJsonObject& argumente) { return appaktion::panelZeigen(argumente); });
+    anbindung.aktion(
+        QStringLiteral("preset_laden"),
+        QStringLiteral("Loads a preset (.avs, .milk, .lvfx, .lvfx2) into the effect chain, without asking about unsaved changes"),
+        QStringLiteral("datei=<path>"),
+        [ziel, root, ohneFenster](const QJsonObject& argumente) -> Ergebnis {
+            return ziel != nullptr ? appaktion::presetLaden(*ziel, root, argumente) : ohneFenster();
+        },
+        FragtNach);
     anbindung.aktion(QStringLiteral("karaoke"), QStringLiteral("Switch Karaoke on"), QStringLiteral("an|aus"),
                      [ziel, ohneFenster](const QJsonObject& argumente) -> Ergebnis {
                          return ziel != nullptr ? appaktion::karaoke(*ziel, argumente) : ohneFenster();
