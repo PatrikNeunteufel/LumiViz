@@ -101,6 +101,8 @@ std::unique_ptr<Anbindung> Anbindung::lade(const QString& version, QString* grun
     }
     std::unique_ptr<Anbindung> neu(new Anbindung);
     neu->m->steuerung = std::move(steuerung);
+    BasicLogger::logInfo("Sichttest: control DLL " + neu->dllFassung().toStdString() + " loaded from " +
+                         dll.toStdString());
     neu->m->root = wurzel(exeOrdner);
     if (neu->m->root.isEmpty())
     {
@@ -227,6 +229,21 @@ QString Anbindung::letzterFehler() const
 {
 #ifdef SICHTTEST_VORHANDEN
     return m->steuerung->letzterFehler();
+#else
+    return {};
+#endif
+}
+
+QString Anbindung::dllFassung() const
+{
+#ifdef SICHTTEST_VORHANDEN
+    const ::sichttest::Fassung f = m->steuerung->fassung();
+    return QStringLiteral("%1 (interface S %2.%3, protocol P %4 to %5)")
+        .arg(QString::fromStdString(f.produkt))
+        .arg(f.sMajor)
+        .arg(f.sMinor)
+        .arg(f.pMin)
+        .arg(f.pMax);
 #else
     return {};
 #endif

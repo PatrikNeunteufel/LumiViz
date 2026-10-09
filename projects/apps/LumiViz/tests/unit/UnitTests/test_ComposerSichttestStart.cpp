@@ -556,6 +556,10 @@ TEST_SUITE("ComposerSichttestStart")
             lumi::sichttest::Anbindung::lade(QStringLiteral("0.0.0-probe"), &grund, ordner);
         REQUIRE_MESSAGE(steuerung != nullptr, grund.toStdString());
         CHECK(steuerung->root() == root());
+        // die DLL nennt ihre Fassung (Koepfe ab Paket v0.3.1); die Schnittstelle ist S 1
+        MESSAGE("DLL: " << steuerung->dllFassung().toStdString());
+        CHECK(steuerung->dllFassung().contains(QStringLiteral("interface S 1.")));
+        CHECK_FALSE(steuerung->dllFassung().startsWith(QLatin1Char(' ')));  // das Produkt ist nicht leer
         CHECK(steuerung->zustand() == lumi::sichttest::Anbindung::Zustand::Getrennt);
 
         lumi::composer::meldeSichttestAktionen(*steuerung, lauf.widget);

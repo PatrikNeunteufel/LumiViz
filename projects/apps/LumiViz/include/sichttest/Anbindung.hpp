@@ -117,6 +117,9 @@ public:
     bool verbinde();
     [[nodiscard]] Zustand zustand() const;
     [[nodiscard]] QString letzterFehler() const;
+    /// Was die geladene DLL ueber sich sagt, als ein Satz fuer das Log:
+    /// Produktversion, Fassung der Schnittstelle, Spanne des Protokolls.
+    [[nodiscard]] QString dllFassung() const;
     /// Der Root des Projekts, ab dem die Aktionen ihre Dateien suchen.
     [[nodiscard]] const QString& root() const;
 
