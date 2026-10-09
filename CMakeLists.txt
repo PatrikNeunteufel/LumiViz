@@ -152,3 +152,28 @@ elseif(NOT TARGET LumiViz)
 else()
     message(WARNING "[Presets] ${_lumi_presets_src} fehlt — Presets werden NICHT kopiert")
 endif()
+
+# ------------------------------------------------------------------------------
+# Verknuepfung "LumiViz.exe - Testing" neben der Exe
+# ------------------------------------------------------------------------------
+# Composer-Naht N25 (projects/apps/LumiViz/docs/ui/Composer_Konzept.md §12.2;
+# S105, Wunsch Patrik): nach jedem Bau der Exe liegt neben ihr eine
+# Verknuepfung, die LumiViz mit `--testing` startet — also mit der
+# Sichttest-Steuerung, die den Tester Sichttest.exe mitbringt. Sie entsteht in
+# jedem Build-Ordner neu und zeigt auf die Exe ihres Ordners.
+#
+# Nur Windows (eine .lnk gibt es nur dort; das Paket der Steuerung auch).
+# Scheitert das Anlegen, warnt das Skript und der Bau laeuft weiter.
+# ------------------------------------------------------------------------------
+
+set(_lumi_testing_lnk "${CMAKE_CURRENT_LIST_DIR}/tools/sichttest/TestingVerknuepfung.ps1")
+
+if(WIN32 AND TARGET LumiViz AND EXISTS "${_lumi_testing_lnk}")
+    add_custom_command(TARGET LumiViz POST_BUILD
+        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+                -File "${_lumi_testing_lnk}"
+                -Exe "$<TARGET_FILE:LumiViz>"
+        COMMENT "[Sichttest] LumiViz.exe - Testing.lnk"
+        VERBATIM)
+    message(STATUS "[Sichttest] Verknuepfung 'LumiViz.exe - Testing' wird nach dem Build angelegt")
+endif()
