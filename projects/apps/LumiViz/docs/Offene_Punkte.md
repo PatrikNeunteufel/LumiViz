@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.127.0
+> **Version:** 1.128.0
 > **Datum:** 2026-10-09 (Session 105)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2315,7 +2315,7 @@ Idee Preset-Warmup/Pre-Roll.
     `composer`, `edit`, `fit`).
     **Stand S105 — die Steuerung läuft:** `LumiViz.exe --testing` lädt nach
     dem Startzustand die DLL, meldet **fünfzehn Aktionen** an und verbindet
-    mit dem Tester (Nähte N20 bis N25, Composer_Konzept §12.2; eigener Code
+    mit dem Tester (Nähte N20 bis N26, Composer_Konzept §12.2; eigener Code
     unter `sichttest/` und `composer/SichttestAktionen`). Pins:
     `sichttest.pin` **v0.3.3**, `cmakecraft.pin` **v0.11.0**. Projektdatei
     `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
@@ -2338,8 +2338,9 @@ Idee Preset-Warmup/Pre-Roll.
     **Im Programm gesehen (Patrik, 09.10.):** der Tester kommt hoch und zeigt
     die neun Listen; ▶ Ausführen an Liste 2 G0 und T0 samt Rückfrage; der
     Stand danach wie zugesagt. **Nicht gesehen:** elf der fünfzehn Aktionen
-    im Programm; der gute Weg von `panel_zeigen` und `karaoke_laden` (auch
-    im Test nur die Fehlerwege); ob nach `preset_laden` wirklich das Preset
+    im Programm (der gute Weg von `panel_zeigen` und `karaoke_laden` ist
+    seit dem Abend per Test belegt: echte Docks, Visualizer Multi Effect —
+    974 Cases); ob nach `preset_laden` wirklich das Preset
     läuft; die Meldung bei laufender Instanz; Trennen und Wiederverbinden;
     der Haken und der Hinweis im Tester v0.3.2; die Verknüpfung per
     Doppelklick; die Stücke der Listen 1 und 3 bis 9 im Tester.
@@ -4731,6 +4732,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.128.0 | 2026-10-09 | Session 105, Nachtrag — `sichttest.pin` v0.3.3; die neun Listen tragen 156 `aktion:`-Stücke, jede Vorbereitung mit Vorlage setzt Edit, Loop und Sync on Effect Chain ausdrücklich; der gute Weg von `panel_zeigen` und `karaoke_laden` per Test belegt (Naht N26: `qt-ads` am Test-Target), **974 Cases**; Bauen: clang mit `--parallel 4`, wenn alle Tests neu übersetzen |
 | 1.127.0 | 2026-10-09 | Session 105 — **Die Sichttest-Steuerung läuft:** `LumiViz.exe --testing`, fünfzehn Aktionen, Projektdatei, Verknüpfung „LumiViz.exe - Testing", Pins `sichttest.pin` v0.3.2 und `cmakecraft.pin` v0.11.0, Nähte N20 bis N25; die Kopie `projects/exec/Sichttest` entfernt; Entscheide Patrik L1 a, C1 a, LV2 a, P1 a; im Programm von Patrik gesehen: Liste 2 G0 und T0; was ungesehen und was offen ist, steht im Block. **Entscheid M1: a** — `composer` wird nach `master` überführt, die Rückbau-Regeln gelten danach als abgeschlossen (Git-Schritte bei Patrik). §3 neu: **MilkDrop-Presets stocken manchmal** (Beobachtung Patrik, vorgemerkt für später). Bauen: Release-clang braucht die Umgebung von Visual Studio 18; `test_PaletteUi.cpp:765` einmal in zwölf Läufen |
 | 1.126.0 | 2026-10-09 | Session 104 — **Sichttest-Steuerung, Bezug:** External `sichttest` und `sichttest.pin` (Release `v0.2.0`), CMakeCraft v0.10.0, Naht N19, Commit `5d49259`; gebaut in drei Presets, benutzt wird das Paket noch nicht; Entscheide Patrik Z1 a, W1 a (vorerst), P1 a, P2 a (`.sichttest/sichttest.projekt.json`); drei Bau-Befunde (clang und `LumiViz.rc`, C1128 im Debug-Bau der Tests, Kopie nur beim Bau der Exe) |
 | 1.125.0 | 2026-10-08 | Session 103 — **Sichttests neu gefasst:** Abgleich aller Listen S88 bis S102 (542 von 845 Punkten gelten noch); der Befund S100 M11 war ein Fehler der Beschreibung, kein Fehler am Programm; neu im Repo `asset/sichttest/` (elf Vorlagen, Presets, Testsignale, Songtext) und `test_ComposerVorlagen.cpp`; lokal neun Listen nach Thema (394 Punkte) für alle offenen Composer-Punkte aus S94b bis S102; offen die rund 246 Punkte außerhalb des Composers, Patriks Wort zu S95 und zwei alten Befunden; die Steuerung der App durch den Tester läuft als eigener Schritt über den Sync `sync_sichttest` (DLL als Gegenstelle); `test_PaletteUi.cpp:765` fiel in zwei von vier vollen Läufen um, Ursache nicht untersucht; 967 Cases; `Changelog_Session103.md` |
