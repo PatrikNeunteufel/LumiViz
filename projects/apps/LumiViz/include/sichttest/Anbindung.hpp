@@ -78,6 +78,15 @@ enum Schalter : unsigned
 [[nodiscard]] std::optional<bool> anOderAus(const QJsonObject& argumente,
                                             const QString& schluessel = QStringLiteral("wert"));
 
+/// Eine Zeit aus den Argumenten, in Millisekunden: `m:ss`, `m:ss.z` (wie die
+/// Listen und das Panel Composer sie schreiben) oder Sekunden als Zahl
+/// (`20`, `20.5`). Leer = keine Zeit oder negativ.
+[[nodiscard]] std::optional<qint64> zeitMs(const QString& angabe);
+
+/// Der erste nicht leere Wert unter den Schluesseln — `schluessel`, sonst
+/// `wert` (ein einzelner Wert ohne Schluessel kommt als `wert` an).
+[[nodiscard]] QString argument(const QJsonObject& argumente, const QString& schluessel);
+
 class Anbindung
 {
 public:

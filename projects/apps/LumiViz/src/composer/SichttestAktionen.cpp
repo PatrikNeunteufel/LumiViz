@@ -99,6 +99,68 @@ Ergebnis fit(VisualizerWidget& fenster)
     return ok();
 }
 
+Ergebnis kompositionSchliessen(VisualizerWidget& fenster)
+{
+    (void)panelFuer(fenster);
+    if (Sitzung* sitzung = Sitzung::finde(fenster)) sitzung->entlade();
+    return ok();
+}
+
+Ergebnis abspielmarke(VisualizerWidget& fenster, const QJsonObject& argumente)
+{
+    const std::optional<qint64> zeit =
+        lumi::sichttest::zeitMs(lumi::sichttest::argument(argumente, QStringLiteral("zeit")));
+    if (!zeit.has_value()) return ungueltig(QStringLiteral("Expected: abspielmarke zeit=<m:ss>"));
+    Sitzung& sitzung = Sitzung::fuer(fenster);
+    if (!sitzung.geladen()) return fehler(QStringLiteral("No composition is loaded."));
+    sitzung.springe(*zeit);
+    return *zeit > sitzung.laengeMs()
+               ? ok(QStringLiteral("The composition ends at %1; the playhead stands there.")
+                        .arg(ComposerPanel::zeitText(sitzung.laengeMs())))
+               : ok();
+}
+
+Ergebnis wiedergabe(VisualizerWidget& fenster, const QJsonObject& argumente)
+{
+    const QString was = lumi::sichttest::argument(argumente, QStringLiteral("wert")).toLower();
+    Sitzung& sitzung = Sitzung::fuer(fenster);
+    if (was == QLatin1String("start"))
+    {
+        if (!sitzung.geladen()) return fehler(QStringLiteral("No composition is loaded."));
+        sitzung.spiele();
+        return sitzung.laeuft() ? ok() : fehler(QStringLiteral("The composition does not play."));
+    }
+    if (was == QLatin1String("pause"))
+    {
+        sitzung.pausiere();
+        return ok();
+    }
+    if (was == QLatin1String("stopp") || was == QLatin1String("stop"))
+    {
+        sitzung.stoppe();
+        return ok();
+    }
+    return ungueltig(QStringLiteral("Expected: wiedergabe start|pause|stopp"));
+}
+
+Ergebnis schleife(VisualizerWidget& fenster, const QJsonObject& argumente)
+{
+    const std::optional<bool> an = lumi::sichttest::anOderAus(argumente);
+    if (!an.has_value()) return ungueltig(QStringLiteral("Expected: schleife an|aus"));
+    (void)panelFuer(fenster);
+    Sitzung::fuer(fenster).setSchleife(*an);
+    return ok();
+}
+
+Ergebnis syncKette(VisualizerWidget& fenster, const QJsonObject& argumente)
+{
+    const std::optional<bool> an = lumi::sichttest::anOderAus(argumente);
+    if (!an.has_value()) return ungueltig(QStringLiteral("Expected: sync_kette an|aus"));
+    (void)panelFuer(fenster);
+    Sitzung::fuer(fenster).setSync(*an);
+    return ok();
+}
+
 }  // namespace sichttestaktion
 
 void meldeSichttestAktionen(lumi::sichttest::Anbindung& anbindung, VisualizerWidget& fenster)
@@ -136,6 +198,30 @@ void meldeSichttestAktionen(lumi::sichttest::Anbindung& anbindung, VisualizerWid
                      [ziel, ohneFenster](const QJsonObject&) -> Ergebnis {
                          return ziel != nullptr ? sichttestaktion::fit(*ziel) : ohneFenster();
                      });
+
+    // --- die weiteren Schalter und der Transport (S105)
+    using Mit = Ergebnis (*)(VisualizerWidget&, const QJsonObject&);
+    const auto melde = [&anbindung, ziel, ohneFenster](const char* name, const char* beschreibung,
+                                                        const char* parameter, Mit aktion) {
+        anbindung.aktion(QString::fromLatin1(name), QString::fromLatin1(beschreibung),
+                         QString::fromLatin1(parameter),
+                         [ziel, ohneFenster, aktion](const QJsonObject& argumente) -> Ergebnis {
+                             return ziel != nullptr ? aktion(*ziel, argumente) : ohneFenster();
+                         });
+    };
+    melde("abspielmarke", "Moves the playhead of the Composer", "zeit=<m:ss>",
+          &sichttestaktion::abspielmarke);
+    melde("wiedergabe", "Transport of the Composer", "start|pause|stopp", &sichttestaktion::wiedergabe);
+    melde("schleife", "Switch Loop of the Composer", "an|aus", &sichttestaktion::schleife);
+    melde("sync_kette", "Switch Sync on Effect Chain", "an|aus", &sichttestaktion::syncKette);
+    anbindung.aktion(
+        QStringLiteral("komposition_schliessen"),
+        QStringLiteral("Switches the Composer off and removes the composition, without any dialog"),
+        QString(),
+        [ziel, ohneFenster](const QJsonObject&) -> Ergebnis {
+            return ziel != nullptr ? sichttestaktion::kompositionSchliessen(*ziel) : ohneFenster();
+        },
+        lumi::sichttest::FragtNach | lumi::sichttest::NurErstlauf);
 }
 
 }  // namespace lumi::composer

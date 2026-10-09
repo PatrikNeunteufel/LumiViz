@@ -68,6 +68,31 @@ std::optional<bool> anOderAus(const QJsonObject& argumente, const QString& schlu
     return std::nullopt;
 }
 
+std::optional<qint64> zeitMs(const QString& angabe)
+{
+    const QString text = angabe.trimmed();
+    if (text.isEmpty()) return std::nullopt;
+    const qsizetype doppelpunkt = text.indexOf(QLatin1Char(':'));
+    bool ok = false;
+    if (doppelpunkt < 0)
+    {
+        const double sekunden = text.toDouble(&ok);
+        if (!ok || sekunden < 0.0) return std::nullopt;
+        return static_cast<qint64>(sekunden * 1000.0 + 0.5);
+    }
+    const int minuten = text.left(doppelpunkt).toInt(&ok);
+    if (!ok || minuten < 0) return std::nullopt;
+    const double sekunden = text.mid(doppelpunkt + 1).toDouble(&ok);
+    if (!ok || sekunden < 0.0 || sekunden >= 60.0) return std::nullopt;
+    return static_cast<qint64>(minuten) * 60000 + static_cast<qint64>(sekunden * 1000.0 + 0.5);
+}
+
+QString argument(const QJsonObject& argumente, const QString& schluessel)
+{
+    const QString wert = argumente.value(schluessel).toString().trimmed();
+    return !wert.isEmpty() ? wert : argumente.value(QStringLiteral("wert")).toString().trimmed();
+}
+
 struct Anbindung::Innen
 {
     QString root;

@@ -49,6 +49,26 @@ namespace sichttestaktion
 /// `fit` — wie der Knopf Fit: die ganze Laenge auf der Breite, die Zeilen in Normalhoehe.
 [[nodiscard]] lumi::sichttest::Ergebnis fit(VisualizerWidget& fenster);
 
+/// `komposition_schliessen` — Composer aus und die Komposition aus dem Panel,
+/// ohne Rueckfrage (Schalter `FragtNach` und `NurErstlauf`). Ist nichts
+/// geladen, ist das erledigt.
+[[nodiscard]] lumi::sichttest::Ergebnis kompositionSchliessen(VisualizerWidget& fenster);
+/// `abspielmarke zeit=<m:ss>` — an eine Stelle springen (auf die Laenge
+/// begrenzt); ob die Komposition laeuft, bleibt.
+[[nodiscard]] lumi::sichttest::Ergebnis abspielmarke(VisualizerWidget& fenster,
+                                                     const QJsonObject& argumente);
+/// `wiedergabe start|pause|stopp` — der Transport des Composers. `start`
+/// schaltet den Composer ein, wenn er aus ist; `stopp` haelt an und springt
+/// an den Anfang.
+[[nodiscard]] lumi::sichttest::Ergebnis wiedergabe(VisualizerWidget& fenster,
+                                                   const QJsonObject& argumente);
+/// `schleife an|aus` — Loop des Composers (bleibt ueber den Neustart).
+[[nodiscard]] lumi::sichttest::Ergebnis schleife(VisualizerWidget& fenster,
+                                                 const QJsonObject& argumente);
+/// `sync_kette an|aus` — Sync on Effect Chain (bleibt ueber den Neustart).
+[[nodiscard]] lumi::sichttest::Ergebnis syncKette(VisualizerWidget& fenster,
+                                                  const QJsonObject& argumente);
+
 /// Das Panel Composer zu diesem Fenster — im selben Fenster oder abgedockt.
 /// nullptr = es gibt keines.
 [[nodiscard]] ComposerPanel* panelFuer(VisualizerWidget& fenster);

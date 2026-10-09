@@ -41,8 +41,16 @@
 #include "composer/Komposition.hpp"
 #include "composer/SichttestAktionen.hpp"
 #include "composer/Sitzung.hpp"
+#include "PappTon.hpp"
+#include "audio/IAudioPlayer.hpp"
+#include "audio/IPlaylist.hpp"
+#include "audio/Playlist.hpp"
+#include "services/EventBus.hpp"
+#include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "sichttest/Anbindung.hpp"
+#include "sichttest/AppAktionen.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -52,6 +60,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonObject>
+#include <QPushButton>
 #include <QSet>
 #include <QSettings>
 #include <QStringList>
@@ -440,6 +449,23 @@ TEST_SUITE("ComposerSichttestStart")
         CHECK_FALSE(anOderAus(wert("vielleicht")).has_value());
         CHECK_FALSE(anOderAus(QJsonObject{}).has_value());
 
+        // Zeiten, wie die Listen sie schreiben
+        CHECK(zeitMs(QStringLiteral("0:20")) == std::optional<qint64>(20000));
+        CHECK(zeitMs(QStringLiteral("1:23.4")) == std::optional<qint64>(83400));
+        CHECK(zeitMs(QStringLiteral(" 14:40 ")) == std::optional<qint64>(880000));
+        CHECK(zeitMs(QStringLiteral("20")) == std::optional<qint64>(20000));
+        CHECK(zeitMs(QStringLiteral("0.5")) == std::optional<qint64>(500));
+        CHECK_FALSE(zeitMs(QStringLiteral("0:60")).has_value());
+        CHECK_FALSE(zeitMs(QStringLiteral("-1")).has_value());
+        CHECK_FALSE(zeitMs(QStringLiteral("bald")).has_value());
+        CHECK_FALSE(zeitMs(QString()).has_value());
+
+        // ein Argument unter seinem Schluessel — oder als einzelner Wert
+        CHECK(argument(QJsonObject{{QStringLiteral("zeit"), QStringLiteral("0:20")}}, QStringLiteral("zeit")) ==
+              QStringLiteral("0:20"));
+        CHECK(argument(wert("0:20"), QStringLiteral("zeit")) == QStringLiteral("0:20"));
+        CHECK(argument(QJsonObject{}, QStringLiteral("zeit")).isEmpty());
+
         // ohne die DLL im Ordner gibt es keine Steuerung — und einen Satz dazu
         QTemporaryDir leer;
         REQUIRE(leer.isValid());
@@ -513,6 +539,63 @@ TEST_SUITE("ComposerSichttestStart")
         CHECK(aktion::composer(lauf.widget, wert("aus")).status == Ergebnis::Status::Ok);
         CHECK_FALSE(s.an());
 
+        // --- Abspielmarke: auch bei Composer aus, auf die Laenge begrenzt (Vorlage B: 6:00)
+        const auto zeit = [](const char* text) {
+            return QJsonObject{{QStringLiteral("zeit"), QString::fromLatin1(text)}};
+        };
+        CHECK(aktion::abspielmarke(lauf.widget, zeit("0:20")).status == Ergebnis::Status::Ok);
+        CHECK(s.stelleMs() == 20000);
+        CHECK(aktion::abspielmarke(lauf.widget, wert("2:00.5")).status == Ergebnis::Status::Ok);
+        CHECK(s.stelleMs() == 120500);
+        const Ergebnis zuWeit = aktion::abspielmarke(lauf.widget, zeit("9:00"));
+        CHECK(zuWeit.status == Ergebnis::Status::Ok);
+        CHECK_FALSE(zuWeit.text.isEmpty());
+        CHECK(s.stelleMs() == 360000);
+        CHECK(aktion::abspielmarke(lauf.widget, zeit("bald")).status == Ergebnis::Status::Ungueltig);
+        CHECK(aktion::abspielmarke(lauf.widget, QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+
+        // --- Transport: start schaltet den Composer ein, pause haelt, stopp geht an den Anfang
+        CHECK(aktion::abspielmarke(lauf.widget, zeit("0:30")).status == Ergebnis::Status::Ok);
+        CHECK(aktion::wiedergabe(lauf.widget, wert("start")).status == Ergebnis::Status::Ok);
+        CHECK(s.an());
+        CHECK(s.laeuft());
+        CHECK(warte([&] { return s.stelleMs() > 30300; }));
+        CHECK(aktion::wiedergabe(lauf.widget, wert("pause")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(s.laeuft());
+        CHECK(s.stelleMs() > 30000);
+        CHECK(aktion::wiedergabe(lauf.widget, wert("stopp")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(s.laeuft());
+        CHECK(s.stelleMs() == 0);
+        CHECK(aktion::wiedergabe(lauf.widget, wert("weiter")).status == Ergebnis::Status::Ungueltig);
+
+        // --- Loop und Sync on Effect Chain: die Sitzung und die Schalter des Panels
+        CHECK(aktion::schleife(lauf.widget, wert("an")).status == Ergebnis::Status::Ok);
+        CHECK(s.schleife());
+        CHECK(lauf.panel.findChild<QPushButton*>(QStringLiteral("composerLoop"))->isChecked());
+        CHECK(aktion::schleife(lauf.widget, wert("aus")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(s.schleife());
+        CHECK(aktion::schleife(lauf.widget, QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+        CHECK(aktion::syncKette(lauf.widget, wert("an")).status == Ergebnis::Status::Ok);
+        CHECK(s.sync());
+        CHECK(lauf.haken("composerSync")->isChecked());
+        CHECK(aktion::syncKette(lauf.widget, wert("aus")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(s.sync());
+        CHECK_FALSE(lauf.haken("composerSync")->isChecked());
+        CHECK(aktion::composer(lauf.widget, wert("aus")).status == Ergebnis::Status::Ok);
+
+        // --- schliessen: ohne Rueckfrage, auch mit Ungespeichertem; ein zweites Mal ist auch erledigt
+        {
+            Komposition anders = s.komposition();
+            anders.kanaele[0].clips[0].endeMs -= 5000;
+            s.setzeKomposition(anders);
+            CHECK(s.ungespeichert());
+        }
+        CHECK(aktion::kompositionSchliessen(lauf.widget).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(s.geladen());
+        CHECK(aktion::kompositionSchliessen(lauf.widget).status == Ergebnis::Status::Ok);
+        CHECK(aktion::abspielmarke(lauf.widget, zeit("0:20")).status == Ergebnis::Status::Fehler);
+        CHECK(aktion::wiedergabe(lauf.widget, wert("start")).status == Ergebnis::Status::Fehler);
+
         // --- ein fehlendes Preset: geladen, die Bemerkung kommt als Text der Antwort
         const Ergebnis bemerkt = aktion::kompositionLaden(
             lauf.widget, root(),
@@ -531,6 +614,97 @@ TEST_SUITE("ComposerSichttestStart")
         CHECK(aktion::kompositionLaden(lauf.widget, root(), vorlage).status == Ergebnis::Status::Ok);
         CHECK_FALSE(s.an());
         CHECK(s.stelleMs() == 0);
+    }
+
+    TEST_CASE("S105 Aktionen der App: Panel, Karaoke, Playlist und Player")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        using lumi::sichttest::Ergebnis;
+        namespace aktion = lumi::sichttest::appaktion;
+        const auto mit = [](const char* schluessel, const QString& text) {
+            return QJsonObject{{QString::fromLatin1(schluessel), text}};
+        };
+
+        Lauf lauf;
+        if (!lauf.steht())
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+
+        // --- Panel: der Name fehlt, gibt es nicht — und das Panel dieses Tests
+        //     ist ein eigenes Fenster, kein Dock (im Programm sitzt jedes in einem)
+        CHECK(aktion::panelZeigen(QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+        const Ergebnis keines = aktion::panelZeigen(mit("name", QStringLiteral("gibt es nicht")));
+        CHECK(keines.status == Ergebnis::Status::Fehler);
+        CHECK(keines.text.contains(lauf.panel.panelId()));  // die Antwort nennt, was es gibt
+        CHECK(aktion::panelZeigen(mit("name", lauf.panel.panelId().toUpper())).status == Ergebnis::Status::Fehler);
+        CHECK(aktion::panelZeigen(mit("name", lauf.panel.panelTitle())).text.contains(QStringLiteral("not docked")));
+
+        // --- Karaoke on: der Schalter der App
+        const bool vorher = MultiEffectVisualizer::karaokeEbene();
+        CHECK(aktion::karaoke(lauf.widget, wert("an")).status == Ergebnis::Status::Ok);
+        CHECK(MultiEffectVisualizer::karaokeEbene());
+        CHECK(aktion::karaoke(lauf.widget, wert("aus")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(MultiEffectVisualizer::karaokeEbene());
+        CHECK(aktion::karaoke(lauf.widget, QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+        MultiEffectVisualizer::setKaraokeEbene(vorher);
+
+        // --- karaoke_laden: die Datei fehlt; und das Fenster dieses Tests zeigt nicht „Multi Effect"
+        CHECK(aktion::karaokeLaden(lauf.widget, root(), QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+        CHECK(aktion::karaokeLaden(lauf.widget, root(), mit("datei", QStringLiteral("asset/nirgends.lvkar"))).status ==
+              Ergebnis::Status::Ungueltig);
+        if (dynamic_cast<MultiEffectVisualizer*>(lauf.widget.visualizer()) == nullptr)
+            CHECK(aktion::karaokeLaden(lauf.widget, root(), mit("datei", QStringLiteral("Solution.json"))).status ==
+                  Ergebnis::Status::Fehler);
+
+        // --- Playlist und Player: ohne die Dienste sagt die Aktion es
+        const QString song = QStringLiteral("asset\\sichttest\\audio\\07_kick_60bpm_30s.mp3");
+        CHECK(aktion::titelLaden(lauf.widget, root(), mit("datei", song)).status == Ergebnis::Status::Fehler);
+        CHECK(aktion::player(lauf.widget, wert("start")).status == Ergebnis::Status::Fehler);
+
+        lauf.dienste.registerInstance<IEventBus>(std::make_unique<EventBus>());
+        {
+            auto liste = std::make_unique<Playlist>(*lauf.dienste.tryResolve<IEventBus>());
+            lauf.dienste.registerInstance<IPlaylist>(std::move(liste));
+        }
+        lauf.dienste.registerInstance<IAudioPlayer>(std::make_unique<papp::PappPlayer>());
+        auto* playlist = lauf.dienste.tryResolve<IPlaylist>();
+        auto* spieler = dynamic_cast<papp::PappPlayer*>(lauf.dienste.tryResolve<IAudioPlayer>());
+        REQUIRE(playlist != nullptr);
+        REQUIRE(spieler != nullptr);
+
+        CHECK(aktion::titelLaden(lauf.widget, root(), QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+        CHECK(aktion::titelLaden(lauf.widget, root(), mit("datei", QStringLiteral("asset/nirgends.mp3"))).status ==
+              Ergebnis::Status::Ungueltig);
+        CHECK(playlist->count() == 0);
+        CHECK(aktion::titelLaden(lauf.widget, root(), mit("datei", song)).status == Ergebnis::Status::Ok);
+        CHECK(playlist->count() == 1);
+        // wiederholbar: derselbe Titel steht danach nicht zweimal in der Playlist
+        CHECK(aktion::titelLaden(lauf.widget, root(), mit("datei", song)).status == Ergebnis::Status::Ok);
+        CHECK(playlist->count() == 1);
+        QJsonObject spielen = mit("datei", song);
+        spielen.insert(QStringLiteral("spielen"), QStringLiteral("vielleicht"));
+        CHECK(aktion::titelLaden(lauf.widget, root(), spielen).status == Ergebnis::Status::Ungueltig);
+        // der Player aus Pappe spielt keinen Platz der Playlist: die Aktion meldet es
+        spielen.insert(QStringLiteral("spielen"), QStringLiteral("ja"));
+        CHECK(aktion::titelLaden(lauf.widget, root(), spielen).status == Ergebnis::Status::Fehler);
+
+        // --- Transport des Players
+        CHECK(aktion::player(lauf.widget, wert("start")).status == Ergebnis::Status::Fehler);  // kein Titel
+        spieler->laengen.insert(QStringLiteral("x.mp3"), 30000);
+        REQUIRE(spieler->load(QStringLiteral("x.mp3")));
+        CHECK(aktion::player(lauf.widget, wert("start")).status == Ergebnis::Status::Ok);
+        CHECK(spieler->isPlaying());
+        CHECK(aktion::player(lauf.widget, wert("pause")).status == Ergebnis::Status::Ok);
+        CHECK(spieler->isPaused());
+        CHECK(aktion::player(lauf.widget, wert("stopp")).status == Ergebnis::Status::Ok);
+        CHECK(spieler->isStopped());
+        CHECK(aktion::player(lauf.widget, wert("lauter")).status == Ergebnis::Status::Ungueltig);
     }
 
     TEST_CASE("S105 Steuerung: die DLL laden, Aktionen anmelden, mit dem Tester verbinden (nur auf Wunsch)")
@@ -563,9 +737,15 @@ TEST_SUITE("ComposerSichttestStart")
         CHECK(steuerung->zustand() == lumi::sichttest::Anbindung::Zustand::Getrennt);
 
         lumi::composer::meldeSichttestAktionen(*steuerung, lauf.widget);
+        lumi::sichttest::meldeAppAktionen(*steuerung, lauf.widget);
         CHECK(steuerung->aktionen() ==
               QStringList{QStringLiteral("komposition_laden"), QStringLiteral("composer"),
-                          QStringLiteral("edit"), QStringLiteral("fit")});
+                          QStringLiteral("edit"), QStringLiteral("fit"), QStringLiteral("abspielmarke"),
+                          QStringLiteral("wiedergabe"), QStringLiteral("schleife"),
+                          QStringLiteral("sync_kette"), QStringLiteral("komposition_schliessen"),
+                          QStringLiteral("panel_zeigen"), QStringLiteral("karaoke"),
+                          QStringLiteral("karaoke_laden"), QStringLiteral("titel_laden"),
+                          QStringLiteral("player")});
         // derselbe Name ein zweites Mal wird abgelehnt
         CHECK_FALSE(steuerung->aktion(QStringLiteral("fit"), QStringLiteral("x"), QString(),
                                       [](const QJsonObject&) { return lumi::sichttest::ok(); }));
