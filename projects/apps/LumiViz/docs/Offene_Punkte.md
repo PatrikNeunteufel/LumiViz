@@ -2317,11 +2317,13 @@ Idee Preset-Warmup/Pre-Roll.
     dem Startzustand die DLL, meldet **fünfzehn Aktionen** an und verbindet
     mit dem Tester (Nähte N20 bis N25, Composer_Konzept §12.2; eigener Code
     unter `sichttest/` und `composer/SichttestAktionen`). Pins:
-    `sichttest.pin` **v0.3.2**, `cmakecraft.pin` **v0.11.0**. Projektdatei
+    `sichttest.pin` **v0.3.3**, `cmakecraft.pin` **v0.11.0**. Projektdatei
     `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
     ist entfernt; neben der Exe entsteht bei jedem Bau die Verknüpfung
     „LumiViz.exe - Testing". Die neun Listen `Sichttest_Composer_1…9`
-    (lokal) tragen 122 `aktion:`-Stücke an ihren Punkten *Vorbereiten*.
+    (lokal) tragen 156 `aktion:`-Stücke an ihren Punkten *Vorbereiten*;
+    jede Vorbereitung, die eine Vorlage lädt, setzt Edit, Loop und Sync on
+    Effect Chain ausdrücklich (wo der Text nichts sagt: aus).
     **Belegt per Test** (`test_ComposerSichttestStart.cpp`): aus neun
     wiederhergestellten Startzuständen führen Load, Composer on, Edit, Fit
     zum selben Stand; die App merkt sich beim Beenden die Test-Komposition
@@ -2341,10 +2343,10 @@ Idee Preset-Warmup/Pre-Roll.
     läuft; die Meldung bei laufender Instanz; Trennen und Wiederverbinden;
     der Haken und der Hinweis im Tester v0.3.2; die Verknüpfung per
     Doppelklick; die Stücke der Listen 1 und 3 bis 9 im Tester.
-    **Offen:** Loop, Sync on Effect Chain und Scroll with playhead kommen
-    aus den Einstellungen durch, wenn ein Punkt *Vorbereiten* sie nicht
-    setzt; wo der Text Edit nicht nennt, bleibt Edit, wie der Abschnitt
-    davor es hinterließ; Liste 8 B0 und Liste 9 F0 nennen kein „Composer
+    **Offen:** Scroll with playhead kommt aus den Einstellungen durch (dafür
+    gibt es keine Aktion); die Vorbereitungen ohne Vorlage (Liste 4 T0,
+    Liste 6 D0, Liste 9 B0) setzen Edit, Loop und Sync nicht; Liste 8 B0
+    und Liste 9 F0 nennen kein „Composer
     on" — nach der Aktion ist er dort aus, von Hand wäre er nach Load an;
     ein gescheitertes Laden nach `preset_laden` meldet LumiViz in einem
     eigenen Dialog, der Tester erfährt es nicht; ein eigener
@@ -2367,8 +2369,8 @@ Idee Preset-Warmup/Pre-Roll.
     Paketwechsel (eigenes Ziel `LumiViz_deploy_sichttest`, CMakeCraft
     v0.11.0). Ein Wechsel der Paketversion übersetzt Kern und Exe trotzdem
     neu: der Include-Pfad trägt die Version. In `.externals/` lagen in S105
-    dreimal Pakete, bevor LumiViz sie selbst geholt hatte (v0.3.0, v0.3.1,
-    v0.3.2) — jedes Mal beiseitegelegt, neu geholt und inhaltsgleich
+    viermal Pakete, bevor LumiViz sie selbst geholt hatte (v0.3.0, v0.3.1,
+    v0.3.2, v0.3.3) — jedes Mal beiseitegelegt, neu geholt und inhaltsgleich
     gefunden; woher sie kamen, ist nicht geklärt.
   - **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
     S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets" fiel in

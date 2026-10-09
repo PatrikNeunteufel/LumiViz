@@ -32,7 +32,7 @@
 
 ## Geändert
 
-- **Paket der Sichttest-Steuerung** 0.3.2 (vorher 0.2.0); **Build-System**
+- **Paket der Sichttest-Steuerung** 0.3.3 (vorher 0.2.0); **Build-System**
   CMakeCraft v0.11.0 (vorher v0.10.0): DLL und Tester werden jetzt bei jedem
   Bau neben die Exe gelegt, nicht nur beim Linken.
 - **Das Werkzeug Sichttest baut LumiViz nicht mehr selbst:**
