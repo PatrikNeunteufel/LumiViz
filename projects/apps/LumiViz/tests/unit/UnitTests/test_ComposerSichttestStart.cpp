@@ -34,6 +34,7 @@
 #include <doctest.h>
 
 #include "TestFenster.hpp"
+#include "UI/panels/KaraokePanel.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "composer/Bearbeiten.hpp"
@@ -53,6 +54,9 @@
 #include "sichttest/AppAktionen.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 
+#include <DockManager.h>
+#include <DockWidget.h>
+
 #include <QApplication>
 #include <QCheckBox>
 #include <QCoreApplication>
@@ -61,6 +65,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonObject>
+#include <QMainWindow>
+#include <QMutexLocker>
 #include <QPushButton>
 #include <QSet>
 #include <QSettings>
@@ -747,6 +753,128 @@ TEST_SUITE("ComposerSichttestStart")
         CHECK(aktion::player(lauf.widget, wert("stopp")).status == Ergebnis::Status::Ok);
         CHECK(spieler->isStopped());
         CHECK(aktion::player(lauf.widget, wert("lauter")).status == Ergebnis::Status::Ungueltig);
+    }
+
+    TEST_CASE("S105 panel_zeigen: ein geschlossenes Panel in seinem Dock kommt wieder — ueber Kennung und Titel")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        using lumi::sichttest::Ergebnis;
+        namespace aktion = lumi::sichttest::appaktion;
+
+        // Wie im Programm (PanelManager::createDockWidget): das Panel sitzt in
+        // einem Dock des Hauptfensters; ein Panel mit eigenen Rollflaechen ohne
+        // die von Qt-ADS, ein anderes mit ihr (dann liegt das Dock zwei Eltern hoeher).
+        ServiceContainer dienste;
+        QMainWindow haupt;
+        testfenster::platziere(haupt);
+        haupt.resize(900, 500);
+        auto* docks = new ads::CDockManager(&haupt);
+        auto* composer = new ComposerPanel(dienste);
+        ads::CDockWidget* dockComposer = docks->createDockWidget(composer->panelTitle());
+        dockComposer->setWidget(composer, ads::CDockWidget::ForceNoScrollArea);
+        docks->addDockWidget(ads::BottomDockWidgetArea, dockComposer);
+        auto* karaoke = new KaraokePanel(dienste);
+        ads::CDockWidget* dockKaraoke = docks->createDockWidget(karaoke->panelTitle());
+        dockKaraoke->setWidget(karaoke, ads::CDockWidget::ForceScrollArea);
+        docks->addDockWidget(ads::RightDockWidgetArea, dockKaraoke);
+        haupt.show();
+        if (!warte([&] { return haupt.isVisible(); }))
+        {
+            MESSAGE("Kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        const auto mit = [](const QString& name) { return QJsonObject{{QStringLiteral("name"), name}}; };
+
+        // --- geschlossen (wie View → Panels abgehakt): die Aktion oeffnet es wieder
+        dockComposer->toggleView(false);
+        dockKaraoke->toggleView(false);
+        REQUIRE(dockComposer->isClosed());
+        REQUIRE(dockKaraoke->isClosed());
+        CHECK(aktion::panelZeigen(mit(composer->panelId())).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(dockComposer->isClosed());
+        CHECK(dockKaraoke->isClosed());  // nur das genannte
+        // ueber den Titel, wie er im Programm steht, Gross und klein egal — und unter der Rollflaeche
+        CHECK(aktion::panelZeigen(mit(karaoke->panelTitle().toUpper())).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(dockKaraoke->isClosed());
+        CHECK(warte([&] { return karaoke->isVisible() && composer->isVisible(); }));
+        // ein offenes Panel bleibt offen (die Vorbereitung ist wiederholbar)
+        CHECK(aktion::panelZeigen(mit(composer->panelTitle())).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(dockComposer->isClosed());
+        // ein einzelner Wert ohne Schluessel
+        dockComposer->toggleView(false);
+        CHECK(aktion::panelZeigen(wert("composer")).status == Ergebnis::Status::Ok);
+        CHECK_FALSE(dockComposer->isClosed());
+        // was es nicht gibt, nennt die bekannten Kennungen
+        const Ergebnis keines = aktion::panelZeigen(mit(QStringLiteral("Effect Chain")));
+        CHECK(keines.status == Ergebnis::Status::Fehler);
+        CHECK(keines.text.contains(QStringLiteral("composer")));
+        CHECK(keines.text.contains(QStringLiteral("karaoke")));
+    }
+
+    TEST_CASE("S105 karaoke_laden: ein Karaoke-Preset kommt ohne Dialog in die Ebene und schaltet sie ein")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        using lumi::sichttest::Ergebnis;
+        namespace aktion = lumi::sichttest::appaktion;
+
+        // Die Ablage der laufenden Ebene in einen eigenen Ordner — nie die der App
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString ablageVorher = MultiEffectVisualizer::karaokeAblage();
+        const bool ebeneVorher = MultiEffectVisualizer::karaokeEbene();
+        const QString ablage = dir.filePath(QStringLiteral("laufend.lvkar"));
+        MultiEffectVisualizer::setKaraokeAblage(ablage);
+        MultiEffectVisualizer::setKaraokeEbene(false);
+        struct Zurueck
+        {
+            QString ablage;
+            bool ebene;
+            ~Zurueck()
+            {
+                MultiEffectVisualizer::setKaraokeAblage(ablage);
+                MultiEffectVisualizer::setKaraokeEbene(ebene);
+            }
+        } zurueck{ablageVorher, ebeneVorher};
+
+        Lauf lauf;
+        if (!lauf.steht())
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        REQUIRE(lauf.widget.setVisualizer(QStringLiteral("multieffect")));
+        auto* host = dynamic_cast<MultiEffectVisualizer*>(lauf.widget.visualizer());
+        REQUIRE(host != nullptr);
+        const auto knoten = [&] {
+            QMutexLocker halt(&lauf.widget.renderMutex());
+            return host->karaokeKette().children.size();
+        };
+        const std::size_t leer = knoten();
+
+        const QJsonObject preset{{QStringLiteral("datei"), QStringLiteral("asset\\karaoke\\Karaoke.lvkar")}};
+        REQUIRE(QFileInfo(QDir(root()).filePath(QStringLiteral("asset/karaoke/Karaoke.lvkar"))).isFile());
+        const Ergebnis geladen = aktion::karaokeLaden(lauf.widget, root(), preset);
+        CHECK_MESSAGE(geladen.status == Ergebnis::Status::Ok, geladen.text.toStdString());
+        CAPTURE(leer);
+        CHECK(knoten() > 0);                              // die Ebene traegt jetzt das Preset
+        CHECK(MultiEffectVisualizer::karaokeEbene());     // und ist eingeschaltet
+        CHECK(QFileInfo::exists(ablage));                 // die Ablage ist die des Tests
+        // wiederholbar: ein zweites Mal ist auch erledigt, die Ebene bleibt an
+        CHECK(aktion::karaokeLaden(lauf.widget, root(), preset).status == Ergebnis::Status::Ok);
+        CHECK(MultiEffectVisualizer::karaokeEbene());
+        // eine Datei, die kein Karaoke-Preset ist: gescheitert, mit dem Namen in der Antwort
+        const Ergebnis falsch = aktion::karaokeLaden(
+            lauf.widget, root(), QJsonObject{{QStringLiteral("datei"), QStringLiteral("Solution.json")}});
+        CHECK(falsch.status == Ergebnis::Status::Fehler);
+        CHECK(falsch.text.contains(QStringLiteral("Solution.json")));
     }
 
     TEST_CASE("S105 Steuerung: die DLL laden, Aktionen anmelden, mit dem Tester verbinden (nur auf Wunsch)")
