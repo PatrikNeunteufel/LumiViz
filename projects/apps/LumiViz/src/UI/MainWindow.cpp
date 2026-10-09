@@ -1017,7 +1017,8 @@ void MainWindow::setupEventHandlers()
 
     pEventBus->subscribe<LoadEffectChainEvent>(
         [this, findMultiEffect, pEventBus](const LoadEffectChainEvent& ev) {
-            if (!darfKetteErsetzen(tr("Load Effect Chain"))) return;  // ungespeichert? (S89)
+            // ungespeichert? (S89) — Composer-Naht N24: ausser die Frage ist schon gestellt
+            if (!ev.confirmed && !darfKetteErsetzen(tr("Load Effect Chain"))) return;
             QString path = QString::fromStdString(ev.path);
             if (path.isEmpty())
             {

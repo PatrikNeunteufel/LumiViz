@@ -321,10 +321,15 @@ struct LoadEffectChainEvent : public Event
     /// S91: the dialog also offers .avs and .milk and hands such a file on to
     /// the matching import ("Load…" of the chain panel — one way to any preset).
     bool anyPreset = false;
+    /// Composer-Naht N24 (docs/ui/Composer_Konzept.md §12.2; S105): the
+    /// question about unsaved changes has already been asked elsewhere (the
+    /// Sichttest tester asks before its action `preset_laden`) — do not ask
+    /// again. Same meaning as in ImportAvsPresetEvent.
+    bool confirmed = false;
 
     LoadEffectChainEvent() = default;
-    explicit LoadEffectChainEvent(std::string p)
-        : path(std::move(p))
+    explicit LoadEffectChainEvent(std::string p, bool alreadyConfirmed = false)
+        : path(std::move(p)), confirmed(alreadyConfirmed)
     {}
 };
 
