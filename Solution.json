@@ -222,7 +222,8 @@
               "timeout": 120,
               "labels": [ "unit", "core", "fast" ],
               "dependencies": [ "LumiViz.Core", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
-              "externals": [ "Qt6", "bass", "lua54" ],
+              "//externals": "Composer-Naht N26 (S105): qt-ads fuer den Testfall mit echtem Dock (panel_zeigen in test_ComposerSichttestStart.cpp).",
+              "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
               "external_options": {
                 "bass": { "BASS_MIX": true },
                 "lua54": { "LUA_EMBEDDED": false }
