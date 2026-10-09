@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.129.0
-> **Datum:** 2026-10-09 (Session 105)
+> **Version:** 1.130.0
+> **Datum:** 2026-10-10 (Session 105)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1457,6 +1457,26 @@ eigenen Sitzung nach dem Sichttest-Helper. Dann zuerst das Log und eine
 Messung, keine Ursache annehmen — offen ist, ob das Preset allein stockt
 (Kette ohne Composer), ob das Mischen zweier Kanäle oder der Anlauf eines
 Nachbar-Clips der Anlass ist, und auf welcher Grafikkarte die Exe lief.
+
+**Zweite Beobachtung, mit Zahlen aus dem Log (2026-10-09 gegen 23:52, beim
+Aufnehmen der Bilder für die README):** LumiViz (Release-clang) wurde zehnmal
+gestartet, je an einer anderen Stelle von `asset/composed2.lvcomp` (über Resume
+after restart), und lief je rund 20 s. Patrik sah das Stocken in **drei** der zehn
+Läufe — und genau diese drei melden im `LumiViz.log` neben der Exe viele lange
+Bilder (`RenderThread: render … ms`), gezählt ab 6 s nach dem Start, also nach
+dem Anlauf:
+
+| Stelle | Clips an der Stelle | lange Bilder nach 6 s | längstes |
+|---|---|---|---|
+| 6:00 | *martin - glassworks 3* (CH1) | **25** | 179 ms |
+| 13:30 | *martin - glassworks 3* (CH2) | **33** | 139 ms |
+| 19:30 | *martin - double chase* (CH3) + *martin - Gin Tonic on Ice 004* (CH4) | **25** | 434 ms |
+| die sieben übrigen (1:00, 2:50, 4:30, 7:20, 8:45, 11:00, 16:30) | verschiedene | je 1 bis 2 | höchstens 142 ms |
+
+Belegt ist damit nur: das Stocken ist im Log zählbar, es hängt an der Stelle der
+Komposition und kam bei *glassworks 3* in beiden Kanälen. **Nicht** belegt: die
+Ursache; ob es auch ohne Composer und ohne Karaoke-Ebene auftritt; ob es über die
+Laufzeit anhält (die Läufe waren kurz und begannen den Clip frisch).
 
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
@@ -4733,6 +4753,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.130.0 | 2026-10-10 | Session 105, Nachtrag — §3 *MilkDrop-Presets stocken manchmal*: zweite Beobachtung Patrik beim Aufnehmen der README-Bilder, im Log zählbar — in drei von zehn Läufen 25 bis 33 lange Bilder (glassworks 3 an zwei Stellen; double chase + Gin Tonic), in den übrigen je 1 bis 2; Ursache weiter nicht untersucht |
 | 1.129.0 | 2026-10-09 | Session 105, Nachtrag — **`composer` ist nach `master` überführt** (M1: a; Vorspulen auf `ec836c6`, Marke `vor-composer` auf `93d0be4`); gearbeitet wird auf `master`, die Rückbau-Regeln sind abgeschlossen (Composer_Konzept 0.81.0) |
 | 1.128.0 | 2026-10-09 | Session 105, Nachtrag — `sichttest.pin` v0.3.3; die neun Listen tragen 156 `aktion:`-Stücke, jede Vorbereitung mit Vorlage setzt Edit, Loop und Sync on Effect Chain ausdrücklich; der gute Weg von `panel_zeigen` und `karaoke_laden` per Test belegt (Naht N26: `qt-ads` am Test-Target), **974 Cases**; Bauen: clang mit `--parallel 4`, wenn alle Tests neu übersetzen |
 | 1.127.0 | 2026-10-09 | Session 105 — **Die Sichttest-Steuerung läuft:** `LumiViz.exe --testing`, fünfzehn Aktionen, Projektdatei, Verknüpfung „LumiViz.exe - Testing", Pins `sichttest.pin` v0.3.2 und `cmakecraft.pin` v0.11.0, Nähte N20 bis N25; die Kopie `projects/exec/Sichttest` entfernt; Entscheide Patrik L1 a, C1 a, LV2 a, P1 a; im Programm von Patrik gesehen: Liste 2 G0 und T0; was ungesehen und was offen ist, steht im Block. **Entscheid M1: a** — `composer` wird nach `master` überführt, die Rückbau-Regeln gelten danach als abgeschlossen (Git-Schritte bei Patrik). §3 neu: **MilkDrop-Presets stocken manchmal** (Beobachtung Patrik, vorgemerkt für später). Bauen: Release-clang braucht die Umgebung von Visual Studio 18; `test_PaletteUi.cpp:765` einmal in zwölf Läufen |

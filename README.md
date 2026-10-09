@@ -6,7 +6,9 @@ LumiViz spielt Musik ab und rechnet dazu Bilder: klassische Visualisierungen
 (Equalizer, Oszilloskop, Superscope, Waveform, Pulsing) und ein Knoten-basierter
 Multieffekt-Host, der **AVS-** und **MilkDrop**-Presets importiert und
 nachrechnet. Dazu kommen Shader-Knoten für **Shadertoy**-GLSL und das
-**Interactive Shader Format (ISF)**.
+**Interactive Shader Format (ISF)**, ein **Composer**, der Visuals und Songs
+über der Zeit anordnet, und eine **Karaoke-Ebene**, die den Songtext über
+jedes Bild legt.
 
 > **Status:** aktiv in Entwicklung, Einzelentwickler-Projekt. Fertige Binaries
 > liegen unter [Releases](../../releases) für Windows x64; wer selbst bauen
@@ -35,6 +37,23 @@ und zwar buchstäblich: die Bilder entstanden zu einem echten Musikstück, nicht
 zu einem Testton. Die gezeigten Presets liegen im Repository und werden beim
 Bauen neben die Anwendung gelegt; du kannst sie also sofort selbst starten.
 
+**Composer mit Karaoke-Ebene** — sechs Stellen aus einer Komposition von 23 Minuten:
+
+| | |
+|:--:|:--:|
+| ![Komposition, Stelle 6:00](asset/img/screenshots/composer/glassworks.png) | ![Komposition, Stelle 7:20](asset/img/screenshots/composer/juggernaut.png) |
+| ![Komposition, Stelle 8:45 — zwei Presets gemischt](asset/img/screenshots/composer/liquid-circuitry-cyberpunk-rain.png) | ![Komposition, Stelle 16:30](asset/img/screenshots/composer/stratospheric-turbulences.png) |
+| ![Komposition, Stelle 19:30 — zwei Presets gemischt](asset/img/screenshots/composer/double-chase-gin-tonic.png) | ![Komposition, Stelle 1:00 — zwei Presets gemischt](asset/img/screenshots/composer/ghosts-frosty-caves.png) |
+
+Hier laufen dreizehn Bild-Clips in vier Kanälen und sechs Songs in vier Audio-Kanälen;
+wo sich Clips überlagern, mischt der Composer sie, und die Songs blenden
+ineinander. Die Zeilen unten im Bild schreibt die Karaoke-Ebene: die laufende
+Zeile des Songtexts, das gesungene Wort hervorgehoben, darunter die nächste.
+**Diese sechs Bilder zeigen fremde Werke:** die MilkDrop-Presets stammen aus der
+MilkDrop3-Sammlung (Autoren u. a. martin, cope, shifter, MilkDrop2077, Flexi),
+die Musik und ihre Texte von den jeweiligen Künstlern. Weder Presets noch
+Musik liegen im Repository — siehe [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ---
 
 ## Was es kann
@@ -48,8 +67,23 @@ in dem sich Effekt-Knoten zu Ketten verschalten lassen — Renderer, Transformat
 Puffer-Rückkopplung, Skript-Knoten. Skripte laufen in EEL-Schreibweise
 (nach Lua übersetzt) oder direkt in Lua, in einer abgeschotteten Umgebung.
 
+**Composer.** Eine Komposition (`.lvcomp`) ordnet Presets als Clips in
+Bild-Kanälen und Songs in Audio-Kanälen über der Zeit an — wie das Arrangement
+in einem Sequenzer. Clips überlagern sich mit wählbarer Mischart, jeder hat
+Blenden und eine Pegelkurve (Curve Editor), die ganze Komposition ihre eigenen
+Master-Zeilen für Bild, Ton und Karaoke; die Schleife kann Ende und Anfang
+überlappen. Bearbeitet wird auf einer Zeitachse mit Zoom, Einrasten und Undo.
+
+**Songtext und Karaoke.** LumiViz liest Songtexte mit Zeitmarken (`.lrc`, auch
+Wort für Wort) und stellt sie den Presets als Knoten und in Skripten zur
+Verfügung. Die **Karaoke-Ebene** legt den Text über jedes laufende Bild — auch
+über eine Komposition — und ist selbst eine Effektkette, die sich als
+Karaoke-Preset (`.lvkar`) speichern lässt.
+
 **Oberfläche.** Andockbare Panels (Qt Advanced Docking System), frei belegbare
-Hotkeys, Vollbildmodus, Screenshot-Ablage, gespeicherte Layouts.
+Hotkeys, Vollbildmodus, Screenshot-Ablage, gespeicherte Layouts. Wird LumiViz mit
+einem Preset oder einer Komposition als Datei gestartet und läuft schon, öffnet
+das laufende LumiViz sie.
 
 ---
 
@@ -88,7 +122,7 @@ Vidvox-Bibliothek übersetzen und linken 321.
 
 ### Was mitgeliefert wird — und was nicht
 
-Im Repository liegt eine **kleine Auswahl eigener Presets** (10 AVS, 19
+Im Repository liegt eine **kleine Auswahl eigener Presets** (10 AVS, 22
 MilkDrop), die beim Bauen neben die Anwendung kopiert wird. Damit hat LumiViz
 sofort etwas zu zeigen.
 
@@ -149,6 +183,7 @@ Vorbereitungsschritte.
 | `projects/libs/` | wiederverwendbare Header-only-Bibliotheken: `EelTranspiler`, `AvsParser`, `MilkParser`, `HlslTranspiler`, `BasicLogger` |
 | `projects/apps/LumiViz/docs/` | Architektur- und Anwenderdokumentation, Einstieg: [`docs/INDEX.md`](projects/apps/LumiViz/docs/INDEX.md) |
 | `tools/AvsRef`, `tools/MilkdropRef` | Referenz-Renderer der Originale, dienen als Vergleichsmaßstab der Kalibrierung |
+| `.sichttest/`, `asset/sichttest/` | Projektdatei und festes Material (Vorlagen, Presets, Testsignale) für die Sichttests |
 | `asset/` | eigene Presets, Effektketten, Shader und Kalibrier-Material |
 | `externals/` | mitgelieferte Fremdbibliotheken (doctest, glad) |
 | `Solution.json` | Beschreibung der Solution: Targets, Abhängigkeiten, Externals |
@@ -164,9 +199,18 @@ JSON-gesteuerter CMake-Aufbau, der beim Konfigurieren automatisch in der in
 ctest --preset ctest-vs-x64-Testing -R UnitTests
 ```
 
-593 doctest-Fälle über Service-Fundament, Skript-Übersetzer, Parser, Preset-Persistenz
-und OpenGL-Rauchtests. Voraussetzung: Konfiguration mit dem Testing-Preset
-(siehe [BUILDING.md](BUILDING.md)).
+974 doctest-Fälle über Service-Fundament, Skript-Übersetzer, Parser, Preset-Persistenz,
+Composer und OpenGL-Rauchtests. Voraussetzung: Konfiguration mit dem Testing-Preset
+(siehe [BUILDING.md](BUILDING.md)). Einige Fälle öffnen ein Fenster oder spielen
+ein paar Sekunden sehr leisen Ton.
+
+Was sich nur ansehen und anhören lässt, prüfen **Sichttests**: Listen von
+Prüfpunkten, die das Werkzeug
+[Sichttest](https://github.com/PatrikNeunteufel/SichtTest_Helper) anzeigt. Mit
+`LumiViz.exe --testing` verbindet sich LumiViz mit ihm, und der Tester stellt den
+Ausgangszustand eines Abschnitts selbst her (Vorlage laden, Composer einschalten,
+Panels zeigen). Beschrieben im
+[Benutzerhandbuch](projects/apps/LumiViz/docs/Benutzerhandbuch.md), Abschnitt 18.
 
 ---
 
