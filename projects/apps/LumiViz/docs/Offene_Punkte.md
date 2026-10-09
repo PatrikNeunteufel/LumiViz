@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.128.0
+> **Version:** 1.129.0
 > **Datum:** 2026-10-09 (Session 105)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2354,13 +2354,14 @@ Idee Preset-Warmup/Pre-Roll.
     Zwischenspeicher für Tests (W1) ist weiter nicht entschieden; die
     Gegenrichtung beim Beenden (LumiViz reagiert auf das Ende des Testers)
     bräuchte eine neue Fassung der Schnittstelle.
-  - **🟡 `composer` nach `master` (Entscheid Patrik S105, M1: a):** der Zweig
-    wird überführt (Vorspulen; `master` trug seit `93d0be4` keinen eigenen
-    Commit), davor bekommt `master` die Marke `vor-composer`. Danach wird
-    auf `master` gearbeitet; die Rückbau-Regeln aus Composer_Konzept §12
-    gelten als abgeschlossen — die Nahtliste bleibt als Beschreibung, neue
-    Nähte werden nicht mehr eingetragen, Commits nicht mehr getrennt. **Die
-    Git-Schritte macht Patrik; bis dahin steht alles auf `composer`.**
+  - **✅ `composer` ist nach `master` überführt (Entscheid Patrik S105, M1: a;
+    geschehen am 09.10.2026):** Vorspulen auf `ec836c6`, `master` trug seit
+    `93d0be4` keinen eigenen Commit; dieser Stand trägt die Marke
+    `vor-composer`. **Gearbeitet wird auf `master`.** Die Rückbau-Regeln aus
+    Composer_Konzept §12 sind abgeschlossen — die Nahtliste bleibt als
+    Beschreibung, neue Nähte werden nicht mehr eingetragen, Commits nicht
+    mehr getrennt. Offen: der Push von `master` und ob der Zweig `composer`
+    stehen bleibt (beides bei Patrik).
   - **🔧 Bauen (S104, S105):** Release mit clang baut nur in der Umgebung
     von **Visual Studio 18** (`vcvars64.bat` von dort, CMake von dort) —
     ohne sie scheitert `LumiViz.rc` ohne Meldung, mit der Umgebung von
@@ -4732,6 +4733,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.129.0 | 2026-10-09 | Session 105, Nachtrag — **`composer` ist nach `master` überführt** (M1: a; Vorspulen auf `ec836c6`, Marke `vor-composer` auf `93d0be4`); gearbeitet wird auf `master`, die Rückbau-Regeln sind abgeschlossen (Composer_Konzept 0.81.0) |
 | 1.128.0 | 2026-10-09 | Session 105, Nachtrag — `sichttest.pin` v0.3.3; die neun Listen tragen 156 `aktion:`-Stücke, jede Vorbereitung mit Vorlage setzt Edit, Loop und Sync on Effect Chain ausdrücklich; der gute Weg von `panel_zeigen` und `karaoke_laden` per Test belegt (Naht N26: `qt-ads` am Test-Target), **974 Cases**; Bauen: clang mit `--parallel 4`, wenn alle Tests neu übersetzen |
 | 1.127.0 | 2026-10-09 | Session 105 — **Die Sichttest-Steuerung läuft:** `LumiViz.exe --testing`, fünfzehn Aktionen, Projektdatei, Verknüpfung „LumiViz.exe - Testing", Pins `sichttest.pin` v0.3.2 und `cmakecraft.pin` v0.11.0, Nähte N20 bis N25; die Kopie `projects/exec/Sichttest` entfernt; Entscheide Patrik L1 a, C1 a, LV2 a, P1 a; im Programm von Patrik gesehen: Liste 2 G0 und T0; was ungesehen und was offen ist, steht im Block. **Entscheid M1: a** — `composer` wird nach `master` überführt, die Rückbau-Regeln gelten danach als abgeschlossen (Git-Schritte bei Patrik). §3 neu: **MilkDrop-Presets stocken manchmal** (Beobachtung Patrik, vorgemerkt für später). Bauen: Release-clang braucht die Umgebung von Visual Studio 18; `test_PaletteUi.cpp:765` einmal in zwölf Läufen |
 | 1.126.0 | 2026-10-09 | Session 104 — **Sichttest-Steuerung, Bezug:** External `sichttest` und `sichttest.pin` (Release `v0.2.0`), CMakeCraft v0.10.0, Naht N19, Commit `5d49259`; gebaut in drei Presets, benutzt wird das Paket noch nicht; Entscheide Patrik Z1 a, W1 a (vorerst), P1 a, P2 a (`.sichttest/sichttest.projekt.json`); drei Bau-Befunde (clang und `LumiViz.rc`, C1128 im Debug-Bau der Tests, Kopie nur beim Bau der Exe) |

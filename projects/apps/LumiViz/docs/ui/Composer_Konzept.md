@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.80.0
+> **Version:** 0.81.0
 > **Datum:** 2026-10-09 (Session 105)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1399,6 +1399,15 @@ Composer-Commits nach §12.4 zurücknehmen.
 
 ## 12. Rückbau
 
+> **Abgeschlossen (Entscheid Patrik S105, M1: a — 2026-10-09).** Der Zweig `composer` ist nach
+> `master` überführt (Vorspulen auf `ec836c6`; der Stand davor trägt die Marke `vor-composer`,
+> `93d0be4`). Seither wird auf `master` gearbeitet, und die Regeln dieses Abschnitts gelten nicht
+> mehr als Bauvorschrift: neue Berührungen von Bestehendem werden **nicht** mehr als Naht
+> eingetragen, Naht und Eigenes nicht mehr getrennt committet. Die Listen in 12.2 und 12.4
+> bleiben als Beschreibung dessen stehen, was der Composer (N1 bis N18) und die
+> Sichttest-Steuerung (N19 bis N26) am Bestand geändert haben — Stand Session 105, nicht
+> weitergeführt. Die Vermerke `Composer-Naht` im Code bleiben als Wegweiser.
+
 **Vorgabe Patrik (S93):** Der Composer muss sich mit einem Rollback wieder
 ausbauen lassen, falls etwas schiefgeht. Das ist keine Notiz für den
 Ernstfall, sondern eine Bauregel für jede Stufe.
@@ -1546,6 +1555,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.81.0 | 2026-10-09 | Session 105 — §12: **Rückbau-Regeln abgeschlossen** (Entscheid Patrik M1: a): `composer` ist nach `master` überführt, Marke `vor-composer` auf dem Stand davor; die Nahtlisten bleiben als Beschreibung, werden aber nicht weitergeführt |
 | 0.80.0 | 2026-10-09 | Session 105 — §12.2 neue Naht **N26** (`qt-ads` in den `externals` des Test-Targets, für den Testfall mit echtem Dock; eingetragen vor dem Bau), §12.4 Rückbau-Liste |
 | 0.79.0 | 2026-10-09 | Session 105 — §12.2 und §12.4: **Naht N19 wächst** (eingetragen vor dem Bau): `sichttest.pin` auf v0.3.3 (nur der Tester: Block `steuerung` im Testlog) |
 | 0.78.0 | 2026-10-09 | Session 105 — §12.2 neue Naht **N25** (Verknüpfung „LumiViz.exe - Testing" neben der Exe nach jedem Bau, Wunsch Patrik, eingetragen vor dem Bau), §12.4 Rückbau-Liste |
