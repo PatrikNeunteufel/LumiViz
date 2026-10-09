@@ -46,6 +46,7 @@ const QLatin1String kNeuerClip("composer/newClipSeconds");
 const QLatin1String kMitlaufenAn("composer/scrollWithPlayheadOn");
 const QLatin1String kMitlaufenArt("composer/scrollWithPlayhead");
 const QLatin1String kSync("composer/syncEffectChain");
+const QLatin1String kSichttestSpielt("composer/sichttestPlaysAfterLoad");
 // der Stand ueber den Neustart
 const QLatin1String kStandDatei("composer/session/file");
 const QLatin1String kStandAn("composer/session/on");
@@ -928,6 +929,16 @@ bool Sitzung::mitlaufenSeitenweise()
 void Sitzung::setMitlaufenSeitenweise(bool seitenweise)
 {
     QSettings().setValue(kMitlaufenArt, seitenweise ? 1 : 0);
+}
+
+bool Sitzung::sichttestSpieltNachLaden()
+{
+    return QSettings().value(kSichttestSpielt, false).toBool();
+}
+
+void Sitzung::setSichttestSpieltNachLaden(bool an)
+{
+    QSettings().setValue(kSichttestSpielt, an);
 }
 
 AmEnde Sitzung::amEnde()

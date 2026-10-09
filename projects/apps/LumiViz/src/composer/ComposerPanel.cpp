@@ -2790,6 +2790,16 @@ KurvenFenster* ComposerPanel::kurvenFenster() const
     return m_kurven;
 }
 
+void ComposerPanel::setBearbeiten(bool an)
+{
+    m_edit->setChecked(an);
+}
+
+bool ComposerPanel::bearbeiten() const
+{
+    return m_edit->isChecked();
+}
+
 void ComposerPanel::oeffneKurve(Teil teil)
 {
     m_kurvenTeil = teil;

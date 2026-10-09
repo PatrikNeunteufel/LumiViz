@@ -73,6 +73,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/composer/Source.cmake")  # Composer (rueckbau
 include("${CMAKE_CURRENT_LIST_DIR}/core/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/scripting/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/services/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/sichttest/Source.cmake")  # Sichttest-Steuerung (rueckbaubar, Konzept §12)
 include("${CMAKE_CURRENT_LIST_DIR}/UI/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/visualizers/Source.cmake")
 

@@ -597,6 +597,10 @@ public:
     [[nodiscard]] Zeitachse* zeitachse() const { return m_zeitachse; }
     /// Das Fenster Curve Editor; nullptr, solange noch keine Kurve geoeffnet wurde.
     [[nodiscard]] KurvenFenster* kurvenFenster() const;
+    /// Der Schalter Edit — setzen wie ein Klick auf den Haken (S105, fuer die
+    /// Aktion `edit` der Sichttest-Steuerung).
+    void setBearbeiten(bool an);
+    [[nodiscard]] bool bearbeiten() const;
 
     /// Eine Stelle als Text: Minuten, Sekunden, Zehntel („1:23.4").
     [[nodiscard]] static QString zeitText(std::int64_t ms);

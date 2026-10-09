@@ -213,6 +213,12 @@ public:
     static void setMitlaufenAn(bool an);
     [[nodiscard]] static bool mitlaufenSeitenweise();
     static void setMitlaufenSeitenweise(bool seitenweise);
+    /// Sichttest-Steuerung (S105, Entscheid Patrik L1: a mit Einstellung): die
+    /// Aktion `komposition_laden` haelt am Anfang, Composer aus — die Vorgabe.
+    /// An: sie schaltet den Composer ein und spielt ab
+    /// (`composer/sichttestPlaysAfterLoad`).
+    [[nodiscard]] static bool sichttestSpieltNachLaden();
+    static void setSichttestSpieltNachLaden(bool an);
 
     // --- Ueber den Neustart (Konzept §8 „Der Start") --------------------------
 

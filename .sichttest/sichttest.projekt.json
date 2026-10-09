@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "anwendung": "LumiViz",
+  "start": {
+    "exe": "out/build/windows-ninja-release-clang/exec/LumiViz/bin/Release/LumiViz.exe",
+    "argumente": ["--testing"]
+  },
+  "listen": [
+    { "ordner": ".claude/handover", "muster": "Sichttest_Composer_*.md" }
+  ]
+}
