@@ -2900,6 +2900,9 @@ TEST_SUITE("ComposerPanel")
             CHECK(Sitzung::mitlaufenSeitenweise());
             // die Nachbarn im selben Block bleiben, wie sie waren
             CHECK(settings.findChild<QWidget*>(QStringLiteral("composerNewClipSeconds")) != nullptr);
+            // S105: der Haken zum Sichttest erscheint nur, wenn die Steuerung neben der
+            // Exe liegt — neben der Test-Exe liegt sie nicht (wie im Release-Paket)
+            CHECK(settings.findChild<QWidget*>(QStringLiteral("composerSichttestPlaysAfterLoad")) == nullptr);
             CHECK(settings.findChild<QWidget*>(QStringLiteral("composerAtEnd")) != nullptr);
             CHECK(Sitzung::neuerClipMs() == 20000);
         }

@@ -63,6 +63,12 @@ enum Schalter : unsigned
 /// Steht `--testing` unter den Argumenten?
 [[nodiscard]] bool verlangt(const QStringList& argumente);
 
+/// Liegt die DLL der Steuerung neben der Exe? Im Release-Paket fehlt sie —
+/// dann gibt es keinen Tester, und was nur ihm dient (eine Einstellung),
+/// bleibt unsichtbar. Ohne das Paket gebaut: immer false.
+/// `exeOrdner`: leer = der Ordner dieser Exe (nur Tests nennen einen anderen).
+[[nodiscard]] bool vorhanden(const QString& exeOrdner = {});
+
 /// Der Root des Projekts: von `ab` aufwaerts der erste Ordner, der
 /// `.sichttest/sichttest.projekt.json` enthaelt — dieselbe Regel wie im
 /// Tester. Leer = keiner gefunden.

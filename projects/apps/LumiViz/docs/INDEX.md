@@ -1,7 +1,7 @@
 # LumiViz — Dokumentations-Index
 
-> **Version:** 2.2.0
-> **Datum:** 2026-08-04
+> **Version:** 2.3.0
+> **Datum:** 2026-10-10
 > **Typ:** Index
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -18,6 +18,11 @@ welches Programm wofür (App · Standalones · Referenz-Renderer) und die sieben
 die schon Arbeitszeit gekostet haben: Debug statt Release (Faktor 20), fehlender
 Render-Scale-Divisor im Standalone, GPU-Vorgabe am EXE-Pfad, Pfade mit Leerzeichen,
 Fenster nicht schließen, echte Musik im Referenzvergleich.
+
+**Sichttests mit dem Tester fahren:** [**Sichttest-Steuerung**](Sichttest_Steuerung.md) —
+`LumiViz.exe --testing`, die fünfzehn Aktionen, die der Tester auslöst, wo der Code
+liegt, wie das Paket bezogen wird. Für Entwickler; nicht im Benutzerhandbuch und
+nicht im Release-Paket.
 
 **Treue gegen das Original nachweisen:** [**Kalibrierung**](kalibrierung/INDEX.md) —
 formatübergreifender Einstieg (AVS · MilkDrop · Shadertoy · ISF): die fünf

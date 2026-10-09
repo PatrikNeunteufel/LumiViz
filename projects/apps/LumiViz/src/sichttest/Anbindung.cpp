@@ -36,6 +36,18 @@ bool verlangt(const QStringList& argumente)
     return argumente.mid(1).contains(kSchalter);
 }
 
+bool vorhanden(const QString& exeOrdner)
+{
+#ifdef SICHTTEST_VORHANDEN
+    const QString ordner = exeOrdner.isEmpty() ? QCoreApplication::applicationDirPath() : exeOrdner;
+    return QFileInfo(QDir(ordner).filePath(QStringLiteral("SichttestSteuerung%1.dll").arg(STS_S_MAJOR)))
+        .isFile();
+#else
+    (void)exeOrdner;
+    return false;
+#endif
+}
+
 QString wurzel(const QString& ab)
 {
     QDir ordner(ab);

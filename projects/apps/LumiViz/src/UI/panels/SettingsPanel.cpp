@@ -25,6 +25,7 @@
 #include "UI/dialogs/LyricsAlternativesDialog.hpp"  // Sperrliste der Songtexte (S87)
 #include "visualizers/MultiEffectVisualizer.hpp"    // Schalter der Karaoke-Ebene (S88)
 #include "composer/Sitzung.hpp"                     // Composer-Naht N9
+#include "sichttest/Anbindung.hpp"                  // der Haken zum Sichttest nur mit Steuerung
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -739,19 +740,24 @@ QWidget* SettingsPanel::createPanelsTab()
                 [](int index) { Sitzung::setMitlaufenSeitenweise(index == 1); });
         layout->addRow(tr("Scroll with playhead:"), mitlaufen);
 
-        // Sichttest-Steuerung (S105, Entscheid Patrik L1: a mit Einstellung, Vorgabe aus)
-        auto* sichttestSpielt = new QCheckBox(tr("A loaded template starts playing"), widget);
-        sichttestSpielt->setObjectName(QStringLiteral("composerSichttestPlaysAfterLoad"));
-        sichttestSpielt->setChecked(Sitzung::sichttestSpieltNachLaden());
-        sichttestSpielt->setToolTip(
-            tr("Only for LumiViz started with --testing, when the tester Sichttest loads a "
-               "composition for a test section.\n\n"
-               "Off: the composition is loaded and waits — Composer off, position zero, nothing "
-               "plays. Every test section starts from the same state.\n\n"
-               "On: after loading, the Composer is switched on and the composition plays at once."));
-        connect(sichttestSpielt, &QCheckBox::toggled, this,
-                [](bool an) { Sitzung::setSichttestSpieltNachLaden(an); });
-        layout->addRow(tr("Sichttest:"), sichttestSpielt);
+        // Sichttest-Steuerung (S105, Entscheid Patrik L1: a mit Einstellung, Vorgabe aus).
+        // Nur, wenn die Steuerung neben der Exe liegt: im Release-Paket fehlt der
+        // Tester, der Haken haette dort keine Wirkung (Entscheid Patrik S105).
+        if (lumi::sichttest::vorhanden())
+        {
+            auto* sichttestSpielt = new QCheckBox(tr("A loaded template starts playing"), widget);
+            sichttestSpielt->setObjectName(QStringLiteral("composerSichttestPlaysAfterLoad"));
+            sichttestSpielt->setChecked(Sitzung::sichttestSpieltNachLaden());
+            sichttestSpielt->setToolTip(
+                tr("Only for LumiViz started with --testing, when the tester Sichttest loads a "
+                   "composition for a test section.\n\n"
+                   "Off: the composition is loaded and waits — Composer off, position zero, nothing "
+                   "plays. Every test section starts from the same state.\n\n"
+                   "On: after loading, the Composer is switched on and the composition plays at once."));
+            connect(sichttestSpielt, &QCheckBox::toggled, this,
+                    [](bool an) { Sitzung::setSichttestSpieltNachLaden(an); });
+            layout->addRow(tr("Sichttest:"), sichttestSpielt);
+        }
     }
 
     // MilkDrop-Puffer-Wechsel (S66): App-Default fuer Milkdrop-Nodes, deren

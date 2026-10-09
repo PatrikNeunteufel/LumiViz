@@ -21,7 +21,8 @@
   Composer ist danach aus, die Stelle steht bei 0:00, nichts läuft. Neue
   Einstellung **Settings → Panels**, Block Composer, Zeile **Sichttest:
   A loaded template starts playing** (Vorgabe aus) — an: nach dem Laden
-  Composer on und Abspielen.
+  Composer on und Abspielen. Die Zeile erscheint nur, wenn die Steuerung
+  neben der Exe liegt; im Release-Paket fehlt sie.
 - **Läuft LumiViz schon,** zeigt ein Start mit `--testing` die Meldung
   „LumiViz is already running. Close it and start again with --testing." und
   endet; das laufende LumiViz bleibt unberührt.
@@ -32,6 +33,7 @@
 
 ## Geändert
 
+- **Version der App: 0.12.0** (vorher 0.4.0, seit August unverändert).
 - **Paket der Sichttest-Steuerung** 0.3.3 (vorher 0.2.0); **Build-System**
   CMakeCraft v0.11.0 (vorher v0.10.0): DLL und Tester werden jetzt bei jedem
   Bau neben die Exe gelegt, nicht nur beim Linken.
@@ -54,8 +56,9 @@
 
 ## Doku
 
-- `Benutzerhandbuch.md` 1.113.0 — §18 NEU *LumiViz vom Sichttest steuern
-  lassen*.
+- `Sichttest_Steuerung.md` 1.0.0 (neu, für Entwickler) — Start mit `--testing`,
+  die fünfzehn Aktionen, Code-Orte, Bezug des Pakets, Tests. Das
+  Benutzerhandbuch (1.114.0) beschreibt den Tester nicht.
 - `Composer_Konzept.md` 0.78.0 — §12.2 Nähte N20 bis N25, N19 und N9 wachsen;
   §12.4 Rückbau-Liste.
 - `Offene_Punkte.md` 1.127.0 — Stand der Sichttest-Steuerung, Entscheid zum

@@ -209,8 +209,8 @@ Prüfpunkten, die das Werkzeug
 [Sichttest](https://github.com/PatrikNeunteufel/SichtTest_Helper) anzeigt. Mit
 `LumiViz.exe --testing` verbindet sich LumiViz mit ihm, und der Tester stellt den
 Ausgangszustand eines Abschnitts selbst her (Vorlage laden, Composer einschalten,
-Panels zeigen). Beschrieben im
-[Benutzerhandbuch](projects/apps/LumiViz/docs/Benutzerhandbuch.md), Abschnitt 18.
+Panels zeigen). Beschrieben für Entwickler in
+[Sichttest_Steuerung.md](projects/apps/LumiViz/docs/Sichttest_Steuerung.md).
 
 ---
 

@@ -479,6 +479,17 @@ TEST_SUITE("ComposerSichttestStart")
         QString grund;
         CHECK(Anbindung::lade(QStringLiteral("0.0.0"), &grund, leer.path()) == nullptr);
         CHECK_FALSE(grund.isEmpty());
+
+        // „vorhanden": die DLL liegt im Ordner — im Release-Paket fehlt sie, und
+        // der Haken zum Sichttest in den Settings bleibt dann weg
+        CHECK_FALSE(vorhanden(leer.path()));
+        {
+            QFile attrappe(QDir(leer.path()).filePath(QStringLiteral("SichttestSteuerung1.dll")));
+            REQUIRE(attrappe.open(QIODevice::WriteOnly));
+            attrappe.write("x");
+        }
+        CHECK(vorhanden(leer.path()));
+        CHECK_FALSE(vorhanden(QDir(leer.path()).filePath(QStringLiteral("gibt_es_nicht"))));
     }
 
     TEST_CASE("S105 Aktionen des Composers: Argumente, Fehler und die Einstellung zum Abspielen")
