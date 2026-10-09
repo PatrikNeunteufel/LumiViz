@@ -10,9 +10,9 @@
 # ab v0.10.0.
 # ==============================================================================
 
-set(SICHTTEST_VERSION "v0.3.0")
+set(SICHTTEST_VERSION "v0.3.1")
 set(SICHTTEST_URL     "https://github.com/PatrikNeunteufel/SichtTest_Helper/releases/download/${SICHTTEST_VERSION}/sichttest-${SICHTTEST_VERSION}-win64.zip")
-set(SICHTTEST_SHA256  "d2541860214e33ce53c708e8de774ff34814d99a3e07a281deb458d8d66ab7d5")
+set(SICHTTEST_SHA256  "eaf4a8ba79e1722e3e96116292bda4859b005288ede055f063943bf98aafbb2d")
 
 # Fallback-Quellen, wenn die URL nicht erreichbar ist. Relative Pfade gelten ab
 # dem Ordner dieser Datei.
