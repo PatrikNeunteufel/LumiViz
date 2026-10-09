@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.130.0
+> **Version:** 1.131.0
 > **Datum:** 2026-10-10 (Session 105)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2382,6 +2382,22 @@ Idee Preset-Warmup/Pre-Roll.
     Beschreibung, neue Nähte werden nicht mehr eingetragen, Commits nicht
     mehr getrennt. Offen: der Push von `master` und ob der Zweig `composer`
     stehen bleibt (beides bei Patrik).
+  - **✅ Release v0.12.0 (S105, 2026-10-10):** Version der App 0.12.0 in
+    `Solution.json` (vorher 0.4.0, seit August unverändert); die Marke `v0.12.0`
+    steht auf `f2faeee`, `master` ist gepusht. Paket
+    `LumiViz-v0.12.0-win-x64.zip` aus dem Release-clang-Bau, **ohne** Tester,
+    `SichttestSteuerung1.dll` und Verknüpfung, mit den 32 eigenen Presets;
+    aus dem entpackten Zip gestartet, meldet sich als v0.12.0. Das
+    Benutzerhandbuch beschreibt den Tester nicht mehr — er ist ein Werkzeug
+    für Entwickler (`Sichttest_Steuerung.md`); die Zeile *Sichttest* in den
+    Settings erscheint nur, wenn die Steuerung neben der Exe liegt.
+    **Geschnürt wird von Hand** (der Ordner neben der Exe ohne `sichttest\`,
+    die DLL, die `.lnk` und `LumiViz.log`) — ein Ziel im Bau gibt es dafür
+    nicht. **Nicht gesehen:** das Paket auf einem Rechner ohne Qt und Visual
+    Studio; die Settings-Zeile im Programm (mit und ohne Steuerung).
+    README: Block „Composer mit Karaoke-Ebene" mit sechs Bildern aus
+    `asset/composed2.lvcomp` — sie zeigen fremde Presets und Songtexte, mit
+    Hinweis (Entscheid Patrik R1: b).
   - **🔧 Bauen (S104, S105):** Release mit clang baut nur in der Umgebung
     von **Visual Studio 18** (`vcvars64.bat` von dort, CMake von dort) —
     ohne sie scheitert `LumiViz.rc` ohne Meldung, mit der Umgebung von
@@ -4753,6 +4769,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.131.0 | 2026-10-10 | Session 105, Abschluss — **Release v0.12.0**: Version der App 0.12.0, Marke auf `f2faeee`, Paket ohne Tester geschnürt und aus dem Zip gestartet; der Tester steht nicht mehr im Benutzerhandbuch, sondern in `Sichttest_Steuerung.md`; die Settings-Zeile *Sichttest* nur mit Steuerung neben der Exe; README mit Composer, Karaoke und sechs Bildern |
 | 1.130.0 | 2026-10-10 | Session 105, Nachtrag — §3 *MilkDrop-Presets stocken manchmal*: zweite Beobachtung Patrik beim Aufnehmen der README-Bilder, im Log zählbar — in drei von zehn Läufen 25 bis 33 lange Bilder (glassworks 3 an zwei Stellen; double chase + Gin Tonic), in den übrigen je 1 bis 2; Ursache weiter nicht untersucht |
 | 1.129.0 | 2026-10-09 | Session 105, Nachtrag — **`composer` ist nach `master` überführt** (M1: a; Vorspulen auf `ec836c6`, Marke `vor-composer` auf `93d0be4`); gearbeitet wird auf `master`, die Rückbau-Regeln sind abgeschlossen (Composer_Konzept 0.81.0) |
 | 1.128.0 | 2026-10-09 | Session 105, Nachtrag — `sichttest.pin` v0.3.3; die neun Listen tragen 156 `aktion:`-Stücke, jede Vorbereitung mit Vorlage setzt Edit, Loop und Sync on Effect Chain ausdrücklich; der gute Weg von `panel_zeigen` und `karaoke_laden` per Test belegt (Naht N26: `qt-ads` am Test-Target), **974 Cases**; Bauen: clang mit `--parallel 4`, wenn alle Tests neu übersetzen |
