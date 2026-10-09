@@ -173,16 +173,6 @@
           "lua54": { "LUA_EMBEDDED": false }
         },
         "platforms": [ "windows", "linux", "macos" ]
-      },
-      {
-        "name": "Sichttest",
-        "description": "Fenster zum Abhaken einer Sichttest-Liste (Session 93, Vorbild: Abnahme-Protokoll des UART-Studios): liest Markdown-Checklisten und *.testprotokoll.json, schreibt Testlog, Report und Screenshots neben die Liste. Kennt die App nicht",
-        "skip": false,
-        "type": "GUI",
-        "path": "projects/exec/Sichttest/src",
-        "dependencies": [],
-        "externals": [ "Qt6" ],
-        "platforms": [ "windows", "linux", "macos" ]
       }
     ],
     "apps": [
