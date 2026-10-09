@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.126.0
-> **Datum:** 2026-10-09 (Session 104)
+> **Version:** 1.127.0
+> **Datum:** 2026-10-09 (Session 105)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1441,6 +1441,23 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
+### ⬜ MilkDrop-Presets stocken manchmal (Beobachtung Patrik S105 — erst nach dem Sichttest-Helper)
+
+**Beobachtung Patrik (2026-10-09, im Programm, Release-clang, Komposition
+`asset/composed2b.lvcomp`):** manche MilkDrop-Presets ruckeln zeitweise und
+laufen dann plötzlich wieder flüssiger. Stärkstes Beispiel
+`asset\Milkdrop3\presets\martin - glassworks 3.milk` — dort fällt die Bildrate
+auf etwa 35 fps, **aber nur manchmal**; gesehen an beiden Stellen, an denen das
+Preset in der Komposition liegt (CH1 5:15–6:54 und CH2 11:36–15:40), um etwa
+5:30 und um etwa 14:40, „nicht so eng mit der Zeit". AVS hat er dabei nicht
+betrachtet.
+
+**Nichts gemessen, nichts untersucht.** Auftrag Patrik: später, in einer
+eigenen Sitzung nach dem Sichttest-Helper. Dann zuerst das Log und eine
+Messung, keine Ursache annehmen — offen ist, ob das Preset allein stockt
+(Kette ohne Composer), ob das Mischen zweier Kanäle oder der Anlauf eines
+Nachbar-Clips der Anlass ist, und auf welcher Grafikkarte die Exe lief.
+
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
 **Befund Patrik (S80):** Neue Kette → Milkdrop → eine Custom Shape
@@ -2296,20 +2313,73 @@ Idee Preset-Warmup/Pre-Roll.
     beim Beenden die Test-Komposition merkt; dann die Nähte für `--testing`
     und die Aktionen eintragen und bauen (zuerst `komposition_laden`,
     `composer`, `edit`, `fit`).
-  - **🔧 Bauen, aufgefallen in S104 (nicht vom Paket):** `LumiViz.rc` baut
-    mit clang nur in der Umgebung von Visual Studio (`vcvars64`), sonst
-    scheitert die Ressource ohne Meldung; im Debug-Bau mit MSVC bricht
-    `LumiViz.UnitTests` mit C1128 ab (`/bigobj` fehlt — bei CMakeCraft als
-    eigener Punkt vorgemerkt: `compile_options` für App-Tests). Nach einem
-    Wechsel der Paketversion die Exe neu bauen: die Kopie von DLL und Ordner
-    läuft nur beim Bau der Exe (Entscheid Patrik: behoben in der nächsten
-    CMakeCraft-Version).
+    **Stand S105 — die Steuerung läuft:** `LumiViz.exe --testing` lädt nach
+    dem Startzustand die DLL, meldet **fünfzehn Aktionen** an und verbindet
+    mit dem Tester (Nähte N20 bis N25, Composer_Konzept §12.2; eigener Code
+    unter `sichttest/` und `composer/SichttestAktionen`). Pins:
+    `sichttest.pin` **v0.3.2**, `cmakecraft.pin` **v0.11.0**. Projektdatei
+    `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
+    ist entfernt; neben der Exe entsteht bei jedem Bau die Verknüpfung
+    „LumiViz.exe - Testing". Die neun Listen `Sichttest_Composer_1…9`
+    (lokal) tragen 122 `aktion:`-Stücke an ihren Punkten *Vorbereiten*.
+    **Belegt per Test** (`test_ComposerSichttestStart.cpp`): aus neun
+    wiederhergestellten Startzuständen führen Load, Composer on, Edit, Fit
+    zum selben Stand; die App merkt sich beim Beenden die Test-Komposition
+    (`composer/session/file`) und lädt sie beim nächsten Start.
+    **Entscheide Patrik S105:** **L1 a** — `komposition_laden` lädt und
+    hält (Composer aus, 0:00), dazu die Einstellung *Sichttest: A loaded
+    template starts playing*, Vorgabe aus; **C1 a** — `/bigobj` am
+    Test-Target (N22); **LV2 a** — die Kopie des Testers entfällt (N23);
+    **P1 a** — `LoadEffectChainEvent` bekommt `confirmed` (N24); bei
+    SichtTest_Helper entschieden: Haken „In dieser Sitzung nicht mehr
+    fragen" und Hinweis mit Knopf „Tester beenden" (im Paket v0.3.2).
+    **Im Programm gesehen (Patrik, 09.10.):** der Tester kommt hoch und zeigt
+    die neun Listen; ▶ Ausführen an Liste 2 G0 und T0 samt Rückfrage; der
+    Stand danach wie zugesagt. **Nicht gesehen:** elf der fünfzehn Aktionen
+    im Programm; der gute Weg von `panel_zeigen` und `karaoke_laden` (auch
+    im Test nur die Fehlerwege); ob nach `preset_laden` wirklich das Preset
+    läuft; die Meldung bei laufender Instanz; Trennen und Wiederverbinden;
+    der Haken und der Hinweis im Tester v0.3.2; die Verknüpfung per
+    Doppelklick; die Stücke der Listen 1 und 3 bis 9 im Tester.
+    **Offen:** Loop, Sync on Effect Chain und Scroll with playhead kommen
+    aus den Einstellungen durch, wenn ein Punkt *Vorbereiten* sie nicht
+    setzt; wo der Text Edit nicht nennt, bleibt Edit, wie der Abschnitt
+    davor es hinterließ; Liste 8 B0 und Liste 9 F0 nennen kein „Composer
+    on" — nach der Aktion ist er dort aus, von Hand wäre er nach Load an;
+    ein gescheitertes Laden nach `preset_laden` meldet LumiViz in einem
+    eigenen Dialog, der Tester erfährt es nicht; ein eigener
+    Zwischenspeicher für Tests (W1) ist weiter nicht entschieden; die
+    Gegenrichtung beim Beenden (LumiViz reagiert auf das Ende des Testers)
+    bräuchte eine neue Fassung der Schnittstelle.
+  - **🟡 `composer` nach `master` (Entscheid Patrik S105, M1: a):** der Zweig
+    wird überführt (Vorspulen; `master` trug seit `93d0be4` keinen eigenen
+    Commit), davor bekommt `master` die Marke `vor-composer`. Danach wird
+    auf `master` gearbeitet; die Rückbau-Regeln aus Composer_Konzept §12
+    gelten als abgeschlossen — die Nahtliste bleibt als Beschreibung, neue
+    Nähte werden nicht mehr eingetragen, Commits nicht mehr getrennt. **Die
+    Git-Schritte macht Patrik; bis dahin steht alles auf `composer`.**
+  - **🔧 Bauen (S104, S105):** Release mit clang baut nur in der Umgebung
+    von **Visual Studio 18** (`vcvars64.bat` von dort, CMake von dort) —
+    ohne sie scheitert `LumiViz.rc` ohne Meldung, mit der Umgebung von
+    Visual Studio 2022 scheitert das Linken an fehlenden STL-Symbolen
+    (`__std_find_end_1` …). Erledigt in S105: C1128 im Debug-Bau der
+    Unit-Tests (`/bigobj`, N22) und die Kopie von DLL und Ordner nach einem
+    Paketwechsel (eigenes Ziel `LumiViz_deploy_sichttest`, CMakeCraft
+    v0.11.0). Ein Wechsel der Paketversion übersetzt Kern und Exe trotzdem
+    neu: der Include-Pfad trägt die Version. In `.externals/` lagen in S105
+    dreimal Pakete, bevor LumiViz sie selbst geholt hatte (v0.3.0, v0.3.1,
+    v0.3.2) — jedes Mal beiseitegelegt, neu geholt und inhaltsgleich
+    gefunden; woher sie kamen, ist nicht geklärt.
   - **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
     S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets" fiel in
     zwei von vier vollen Läufen um (`combo->itemText(0) == "Abend"`); in S96
     zweimal, in S97 bis S102 über 44 Läufe nie. Von S103 nicht berührt;
     während der Läufe arbeiteten mehrere andere Sitzungen auf dem Rechner —
     ob die Last mitspielt, ist eine Vermutung. **Ursache nicht untersucht.**
+    **S105:** in zwölf vollen Läufen einmal umgefallen — im ersten
+    Lauf, nachdem der neue Fall „Aktionen der App" dazukam (er schaltet
+    Karaoke on um und stellt es zurück); die fünf Läufe danach grün. Ein
+    Zusammenhang ist weder gezeigt noch ausgeschlossen.
 - **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.68.0 §7;
   alle sechs Schritte gebaut, im Programm nichts gesehen — Sichttest
   `.claude/handover/Sichttests_S102.md`):**
@@ -4659,6 +4729,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.127.0 | 2026-10-09 | Session 105 — **Die Sichttest-Steuerung läuft:** `LumiViz.exe --testing`, fünfzehn Aktionen, Projektdatei, Verknüpfung „LumiViz.exe - Testing", Pins `sichttest.pin` v0.3.2 und `cmakecraft.pin` v0.11.0, Nähte N20 bis N25; die Kopie `projects/exec/Sichttest` entfernt; Entscheide Patrik L1 a, C1 a, LV2 a, P1 a; im Programm von Patrik gesehen: Liste 2 G0 und T0; was ungesehen und was offen ist, steht im Block. **Entscheid M1: a** — `composer` wird nach `master` überführt, die Rückbau-Regeln gelten danach als abgeschlossen (Git-Schritte bei Patrik). §3 neu: **MilkDrop-Presets stocken manchmal** (Beobachtung Patrik, vorgemerkt für später). Bauen: Release-clang braucht die Umgebung von Visual Studio 18; `test_PaletteUi.cpp:765` einmal in zwölf Läufen |
 | 1.126.0 | 2026-10-09 | Session 104 — **Sichttest-Steuerung, Bezug:** External `sichttest` und `sichttest.pin` (Release `v0.2.0`), CMakeCraft v0.10.0, Naht N19, Commit `5d49259`; gebaut in drei Presets, benutzt wird das Paket noch nicht; Entscheide Patrik Z1 a, W1 a (vorerst), P1 a, P2 a (`.sichttest/sichttest.projekt.json`); drei Bau-Befunde (clang und `LumiViz.rc`, C1128 im Debug-Bau der Tests, Kopie nur beim Bau der Exe) |
 | 1.125.0 | 2026-10-08 | Session 103 — **Sichttests neu gefasst:** Abgleich aller Listen S88 bis S102 (542 von 845 Punkten gelten noch); der Befund S100 M11 war ein Fehler der Beschreibung, kein Fehler am Programm; neu im Repo `asset/sichttest/` (elf Vorlagen, Presets, Testsignale, Songtext) und `test_ComposerVorlagen.cpp`; lokal neun Listen nach Thema (394 Punkte) für alle offenen Composer-Punkte aus S94b bis S102; offen die rund 246 Punkte außerhalb des Composers, Patriks Wort zu S95 und zwei alten Befunden; die Steuerung der App durch den Tester läuft als eigener Schritt über den Sync `sync_sichttest` (DLL als Gegenstelle); `test_PaletteUi.cpp:765` fiel in zwei von vier vollen Läufen um, Ursache nicht untersucht; 967 Cases; `Changelog_Session103.md` |
 | 1.124.0 | 2026-10-07 | Session 102, Abschluss — **Composer:** Stand am Ende der Sitzung: Zoom und Rollen der Zeitachse in sechs Schritten gebaut (acht Commits, `ed32789` bis `8e01648`), 966 Cases, im Programm nichts gesehen — Sichttest S102 mit 64 Punkten, zuerst Abschnitt G (kommen die Gesten am Gerät an?); offen das Urteil U1 zur Schwelle der Kurvenpunkte; `Changelog_Session102.md` |

@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.112.0
-> **Datum:** 2026-10-07
+> **Version:** 1.113.0
+> **Datum:** 2026-10-09
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -34,6 +34,7 @@ Konfigurations-Panels steht im
 15. [Composer](#15-composer)
 16. [Dateitypen und ihre Icons](#16-dateitypen-und-ihre-icons)
 17. [Mit einer Datei starten — und immer nur ein LumiViz](#17-mit-einer-datei-starten--und-immer-nur-ein-lumiviz)
+18. [LumiViz vom Sichttest steuern lassen](#18-lumiviz-vom-sichttest-steuern-lassen)
 
 ---
 
@@ -2454,10 +2455,59 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 ---
 
+## 18. LumiViz vom Sichttest steuern lassen
+
+*Für alle, die LumiViz mit den Sichttest-Listen prüfen. Wer nur Musik sehen
+will, braucht diesen Abschnitt nicht.*
+
+Das Werkzeug **Sichttest** zeigt eine Liste von Prüfpunkten und merkt sich die
+Urteile. Viele Abschnitte beginnen mit denselben Handgriffen — eine Vorlage
+laden, den Composer einschalten, Edit setzen, Fit drücken. Mit dem Schalter
+`--testing` übernimmt der Tester diese Handgriffe.
+
+**So startest du:**
+
+- Neben `LumiViz.exe` liegt die Verknüpfung **LumiViz.exe - Testing** — ein
+  Doppelklick genügt. Sie startet `LumiViz.exe --testing`.
+- LumiViz fährt hoch wie immer, mit allem, was es sich gemerkt hat. Danach
+  verbindet es sich mit dem Tester; läuft noch keiner, öffnet er sich von
+  selbst und zeigt die Sichttest-Listen des Projekts.
+- Im Tester steht an jedem Punkt **Vorbereiten** der Knopf **▶ Ausführen**.
+
+**Was dabei geschieht:**
+
+- Bevor der Tester etwas lädt, das Ungespeichertes ersetzt, fragt er einmal
+  nach. Mit dem Haken *In dieser Sitzung nicht mehr fragen* bleibt die Frage
+  aus, bis der Tester geschlossen wird.
+- Eine geladene Vorlage **hält am Anfang**: der Composer ist aus, die Stelle
+  steht bei 0:00, nichts läuft — jeder Abschnitt beginnt im selben Zustand.
+  Soll sie nach dem Laden gleich spielen: **Settings → Panels**, Block
+  Composer, Zeile **Sichttest**, Haken **A loaded template starts playing**.
+- Die Vorlage **ersetzt, was geladen war.** Beim Beenden merkt sich LumiViz
+  die Vorlage als zuletzt geladene Komposition; die eigene musst du danach
+  wieder öffnen.
+- Schließt du LumiViz, zeigt der Tester „Die Anwendung wurde beendet" mit dem
+  Knopf **Tester beenden**. Er schließt nicht von selbst — manche Prüfpunkte
+  verlangen gerade einen Neustart von LumiViz.
+
+**Wenn es nicht verbindet:**
+
+- Läuft LumiViz schon ohne `--testing`, meldet der neue Start „LumiViz is
+  already running. Close it and start again with --testing." und endet. Das
+  laufende LumiViz schließen, dann noch einmal.
+- Im Log (`LumiViz.log`) stehen die Zeilen mit **Sichttest:** — welche
+  Fassung der Steuerung geladen ist, ob die Verbindung steht, und jede
+  ausgelöste Aktion mit ihrem Ergebnis.
+
+Ohne `--testing` lädt LumiViz nichts davon und öffnet keinen Tester.
+
+---
+
 ## Changelog
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.113.0 | 2026-10-09 | Session 105. **§18 NEU: LumiViz vom Sichttest steuern lassen** — Start mit `--testing` oder der Verknüpfung *LumiViz.exe - Testing*, ▶ Ausführen an den Punkten *Vorbereiten*, die Rückfrage mit Haken, eine geladene Vorlage hält am Anfang (Einstellung **Sichttest: A loaded template starts playing**, Vorgabe aus), die Vorlage ersetzt die geladene Komposition, die Meldung bei schon laufendem LumiViz. |
 | 1.112.0 | 2026-10-08 | Session 103. §15 *Eine Komposition von Hand schreiben*: die Felder aus den Sessions 99 bis 101 nachgetragen — `gridSeconds`, `color` am Kanal, `loop` (`overlap`, `songsTwice`, `visualsTwice`), `fade` (`in`, `out`, `inShape`, `outShape`), `level` (`base`, `shapes` mit `at` als fester Zeit — der Unterschied zu `pos` am Clip), `visualMaster` / `audioMaster` / `karaokeMaster`; Hinweis auf die fertigen Beispiele unter `asset\sichttest\` |
 | 1.111.0 | 2026-10-07 | Session 102. §15 Composer NEU **Zoomen und Rollen**: Ctrl+Mausrad zoomt die Zeit, Alt+Mausrad die Höhe der Zeilen (50 % bis 300 %, über den Neustart gemerkt), Ctrl+Alt+Mausrad beides, Shift+Mausrad rollt zur Seite, die mittlere Maustaste verschiebt den Ausschnitt, **Fit** und Ctrl+0 setzen zurück; das Lineal und die Spalte der Kanalnamen bleiben stehen; der Schalter **Scroll with playhead** (Smooth oder By page). Tabelle *Das Panel Composer* um die zwei Elemente ergänzt, *Einstellungen* um *Scroll with playhead* |
 | 1.110.0 | 2026-10-07 | Session 101. §2 Player NEU **Mute für Durchsagen**: der Knopf *Mute* im Panel Player und im Panel Composer, Mute-Profile (Zielpegel, Kurve des Aus- und des Einblendens, *Visuals follow*), Rechtsklick wählt das Profil, Dialog *Mute Profiles* |
