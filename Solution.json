@@ -97,8 +97,18 @@
       "skip": true,
       "system": true,
       "package": "onnxruntime"
+    },
+    "sichttest": {
+      "description": "Sichttest-Steuerung (SichtTest_Helper): fertiges Paket mit Koepfen, SichttestSteuerung1.dll und dem Tester im Ordner sichttest; es wird nichts gelinkt. Composer_Konzept §12.2 Naht N19",
+      "skip": false,
+      "archive": true,
+      "pin": "sichttest.pin",
+      "platforms": [ "windows" ],
+      "include_dirs": [ "include" ],
+      "define": "SICHTTEST_VORHANDEN",
+      "runtime": { "files": [ "bin/SichttestSteuerung1.dll" ], "dirs": [ "sichttest" ] }
     }
-    
+
   },
     "libraries": [
       {
@@ -186,7 +196,7 @@
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
-          "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
@@ -196,7 +206,7 @@
         "runner": {
           "type": "GUI",
           "dependencies": [ "BasicLogger" ],
-          "externals": [ "Qt6", "qt-ads", "bass", "lua54" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }
