@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.137.0
-> **Datum:** 2026-10-10 (Session 106)
+> **Version:** 1.138.0
+> **Datum:** 2026-10-10 (Session 107)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1441,7 +1441,7 @@ Winamp-Komfort).
 
 ## 3. MilkDrop
 
-### ⬜ MilkDrop-Presets stocken manchmal (Beobachtung Patrik S105 — erst nach dem Sichttest-Helper)
+### ✅ MilkDrop-Presets stocken manchmal (Beobachtung Patrik S105 — S107: Ursache außerhalb der App)
 
 **Beobachtung Patrik (2026-10-09, im Programm, Release-clang, Komposition
 `asset/composed2b.lvcomp`):** manche MilkDrop-Presets ruckeln zeitweise und
@@ -1621,6 +1621,18 @@ Drosselung durch die Firmware (Kernel-Processor-Power, nur Kennung 55); es
 nennt als unterste Drosselstufe 17 % der Nennfrequenz, was zur Größe des
 Einbruchs passt — ein Indiz, kein Beleg. Temperatur und Takt wurden nicht
 gemessen (der Zähler dafür lieferte nichts).
+
+**Abschluss S107 — Ursache außerhalb der App:** es drosselt der
+Temperaturschutz des Prozessors am Entwicklungsrechner. Tctl steht an
+100 °C, danach fällt der Kerntakt für 1 bis 3 s auf rund ein Zehntel, alle
+10 bis 11 s (Temperatur und Takt je Sekunde aus dem Libre Hardware Monitor,
+daneben eine Taktprobe). In einem Lauf mit *glassworks 3* und zwei
+rechnenden Nebenprozessen (60 s) lagen sechs Einbrüche und 108 Bilder über
+40 ms in denselben Sekunden; ein Bild dauert darin 90 bis 96 ms statt 10 bis
+11 ms. **An der App ist dafür nichts zu tun.** Für künftige
+Leistungsbefunde: zuerst Temperatur und Takt des Rechners prüfen; die
+Trace-Zeile `langesBild` zeigt die Sekunden. Offen bleibt aus diesem Punkt
+nur Stufe 3 (siehe unten).
 
 **Shapes billiger, Stufe 1 und 2 (S106, Entscheid Patrik) — gebaut:** die
 Stufe shapes vorher im Einzelnen (Mittel über rund 980 normale Bilder, zwei
@@ -4959,6 +4971,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.138.0 | 2026-10-10 | Session 107 — §3 *MilkDrop-Presets stocken manchmal*: geschlossen, Ursache außerhalb der App — es drosselt der Temperaturschutz des Prozessors am Entwicklungsrechner (Tctl an 100 °C, danach der Kerntakt für 1 bis 3 s auf rund ein Zehntel, alle 10 bis 11 s); in einem Lauf mit *glassworks 3* liegen sechs Einbrüche und 108 lange Bilder in denselben Sekunden; an der App nichts zu tun, offen bleibt nur Stufe 3 |
 | 1.137.0 | 2026-10-10 | Session 106 — §3: *glassworks 3* in zwei Kanälen gemessen (neuer Stand) — ein Kanal 59,0 bis 59,4, zwei Kanäle 33,5 bis 45,4 Bilder je Sekunde (Mittel 21,5 bis 29,1 ms je Bild, je Instanz rund 10 ms); zwei solche Presets halten auch nach dem Umbau keine 60; vor dem Umbau nicht gemessen |
 | 1.136.0 | 2026-10-10 | Session 106 — §3: MilkDrop-Shapes billiger, Stufe 1 und 2 gebaut (Flächen ohne Textur und Rand in einem Zeichenaufruf; Randfarbe einmal je Instanz) — 3856 Bild-Hashes aus 16 Presets alt gegen neu gleich, *glassworks 3* 10,0 bis 11,4 ms je Bild statt 13,6; Stufe 3 (Übergabe ans Skript) zurückgestellt, Entscheid Patrik; das Stocken bleibt eine Drosselung des Rechners |
 | 1.135.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: Messung im Renderer (neue Trace-Zeile `langesBild`, Schwelle über `LUMIVIZ_MILKDROP_LANG_MS`) — im Einbruch werden alle Stufen gleich stark langsamer, der Thread rechnet durch, und ein unabhängiger Prozess wird in denselben Sekunden 7- bis 12-mal langsamer: der Prozessor wird für rund 3 s gedrosselt, die App bremst nicht selbst; wer drosselt, ist nicht belegt; offen, ob *glassworks 3* billiger werden kann (1350 Shape-Instanzen) |
