@@ -59,7 +59,10 @@ struct Loop
     int schritteJeSchlag = 4;
     /// 0…1: verzoegert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt.
     double swing = 0.0;
-    double laut = 1.0;  ///< 0…1, die Lautstaerke des ganzen Loops
+    /// 0…1, die Lautstaerke des ganzen Loops. Die Vorgabe laesst Luft nach
+    /// oben: die Spuren addieren sich, begrenzt wird nichts (Entscheid Patrik
+    /// S108, L6 a).
+    double laut = 0.5;
 
     std::vector<Spur> spuren;
     std::vector<Muster> muster;

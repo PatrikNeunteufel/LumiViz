@@ -84,6 +84,31 @@ using AudioStreamHandle = std::uint32_t;
 constexpr AudioStreamHandle INVALID_STREAM = 0;
 
 // =============================================================================
+// Audio Generator
+// =============================================================================
+
+/**
+ * @class IAudioGenerator
+ * @brief Eine Quelle, die ihren Ton selbst rechnet (Loop,
+ *        docs/audio/Loop_Konzept.md §6) — als Quelle im Mixer, siehe
+ *        `IAudioEngine::mixerAddGenerator`.
+ */
+class IAudioGenerator
+{
+public:
+    virtual ~IAudioGenerator() = default;
+
+    /**
+     * @brief `frames` Abtastwerte nach `out` schreiben: Stereo, float, links
+     *        und rechts im Wechsel, in der Abtastrate der Engine.
+     *
+     * Laeuft im **Ton-Thread** der Engine, in Bloecken wechselnder Groesse:
+     * keinen Speicher holen, keine Datei lesen, nicht warten.
+     */
+    virtual void render(float* out, int frames) = 0;
+};
+
+// =============================================================================
 // IAudioEngine Interface
 // =============================================================================
 
@@ -309,6 +334,35 @@ public:
 
     /** @brief Liefert die Quelle gerade Ton in den Mixer (nicht angehalten, nicht am Ende)? */
     [[nodiscard]] virtual bool isSourcePlaying(AudioStreamHandle /*source*/) const { return false; }
+
+    /**
+     * @brief Eine selbst rechnende Quelle in den Mixer haengen (Loop,
+     *        docs/audio/Loop_Konzept.md §6). Sie ist **angehalten** — erst
+     *        `setSourcePaused(…, false)` laesst den Mixer bei ihr Ton holen.
+     *
+     * Der Mixer ruft `generator->render` im Ton-Thread. Die Stelle fuehrt der
+     * Generator selbst: `setSourcePositionMs` aendert an ihm nichts. Der
+     * Generator gehoert dem Aufrufer und muss leben, bis `mixerRemoveSource`
+     * zurueck ist.
+     * @return Handle der Quelle oder INVALID_STREAM
+     */
+    [[nodiscard]] virtual AudioStreamHandle mixerAddGenerator(AudioStreamHandle /*mixer*/,
+                                                              IAudioGenerator* /*generator*/)
+    {
+        return INVALID_STREAM;
+    }
+
+    /**
+     * @brief Eine Datei ganz dekodieren: Stereo, float, links und rechts im
+     *        Wechsel, umgerechnet auf `sampleRate`; hoechstens `maxSeconds`.
+     *        Fuer kurze Klaenge (Samples des Loops), nicht fuer Songs.
+     *        Leer = nicht lesbar, oder die Engine kann es nicht.
+     */
+    [[nodiscard]] virtual std::vector<float> decodeStereo(const QString& /*filePath*/, int /*sampleRate*/,
+                                                          double /*maxSeconds*/ = 30.0)
+    {
+        return {};
+    }
 
     // =========================================================================
     // FFT / Audio Analysis

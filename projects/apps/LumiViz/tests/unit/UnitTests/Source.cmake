@@ -81,6 +81,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerNahtMixer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopBelegeTon.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGestaltung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_NseelZufall.cpp"

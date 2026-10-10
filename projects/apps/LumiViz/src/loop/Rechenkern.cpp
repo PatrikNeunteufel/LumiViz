@@ -19,6 +19,7 @@ Ablauf plane(const Loop& loop, int rate)
     if (rate <= 0 || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ablauf;
 
     const double schrittFrames = rate * 60.0 / loop.bpm / loop.schritteJeSchlag;
+    ablauf.schrittFrames = schrittFrames;
     const double swingFrames = loop.swing * 0.5 * schrittFrames;
     std::int64_t schrittDavor = 0;  // Schritte der Muster, die in der Abfolge schon liegen
     for (const Muster* muster : loop.ablaufMuster())

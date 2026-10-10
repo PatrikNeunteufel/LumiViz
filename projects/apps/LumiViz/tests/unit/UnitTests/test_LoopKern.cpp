@@ -44,6 +44,7 @@ constexpr int kKernRate = 44100;
 Loop beispielLoop(const QString& clapDatei)
 {
     Loop loop;
+    loop.laut = 1.0;  // wie im Beispiel; die Vorgabe eines neuen Loops ist 0.5
     loop.spuren = {
         {QStringLiteral("Kick"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
         {QStringLiteral("Snare"), QStringLiteral("kit:snare"), 0.9, 0.0, false},
@@ -86,6 +87,7 @@ Loop beispielLoop(const QString& clapDatei)
 Loop einSchlagLoop(std::vector<double> zeile)
 {
     Loop loop;
+    loop.laut = 1.0;
     loop.schlaegeJeTakt = 1;
     loop.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 1.0, 0.0, false}};
     Muster m;
@@ -279,6 +281,15 @@ TEST_CASE("Loop Datei: das Beispiel aus dem Konzept wird so gelesen, wie es dort
         Loop nochmal;
         REQUIRE(ausJson(alsJson(gelesen), nochmal));
         CHECK(nochmal == gelesen);
+    }
+    SUBCASE("ohne das Feld volume gilt die Vorgabe eines neuen Loops: Luft nach oben")
+    {
+        QJsonObject ohne = doc.object();
+        ohne.remove(QStringLiteral("volume"));
+        Loop leiser;
+        REQUIRE(ausJson(ohne, leiser));
+        CHECK(leiser.laut == 0.5);
+        CHECK(Loop{}.laut == 0.5);
     }
     SUBCASE("ein anderes Format ist kein Loop, der Loop bleibt, wie er war")
     {

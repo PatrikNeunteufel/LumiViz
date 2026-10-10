@@ -631,6 +631,80 @@ bool BassEngine::isSourcePlaying(AudioStreamHandle source) const
     return BASS_Mixer_ChannelIsActive(static_cast<DWORD>(source)) == BASS_ACTIVE_PLAYING;
 }
 
+namespace
+{
+
+/// Rueckruf einer selbst rechnenden Quelle — laeuft im Ton-Thread von BASS.
+DWORD CALLBACK generatorProc(HSTREAM /*handle*/, void* buffer, DWORD length, void* user)
+{
+    const int frames = static_cast<int>(length / (2 * sizeof(float)));
+    static_cast<IAudioGenerator*>(user)->render(static_cast<float*>(buffer), frames);
+    return static_cast<DWORD>(frames * 2 * sizeof(float));
+}
+
+}  // namespace
+
+AudioStreamHandle BassEngine::mixerAddGenerator(AudioStreamHandle mixer, IAudioGenerator* generator)
+{
+    if (!m_impl->initialized || mixer == INVALID_STREAM || generator == nullptr) return INVALID_STREAM;
+
+    const HSTREAM source = BASS_StreamCreate(static_cast<DWORD>(m_impl->sampleRate), 2,
+                                             BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT, &generatorProc, generator);
+    if (source == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BasicLogger::logError("Failed to create generator source: " + m_impl->lastErrorMsg.toStdString());
+        return INVALID_STREAM;
+    }
+    // NORAMPIN: der Mixer blendet den Anfang einer Quelle sonst ein — der
+    // erste Schlag verloere seinen Einsatz.
+    if (BASS_Mixer_StreamAddChannel(static_cast<HSTREAM>(mixer), source,
+                                    BASS_MIXER_CHAN_PAUSE | BASS_MIXER_CHAN_NORAMPIN) == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BASS_StreamFree(source);
+        return INVALID_STREAM;
+    }
+    return static_cast<AudioStreamHandle>(source);
+}
+
+std::vector<float> BassEngine::decodeStereo(const QString& filePath, int sampleRate, double maxSeconds)
+{
+    if (!m_impl->initialized || sampleRate <= 0 || maxSeconds <= 0.0) return {};
+
+    const std::string path = filePath.toLocal8Bit().constData();
+    const HSTREAM source = BASS_StreamCreateFile(
+        FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN);
+    if (source == 0) return {};
+    // Ein dekodierender Mixer rechnet auf Stereo und auf die Abtastrate um;
+    // END: er endet mit seiner Quelle.
+    const HSTREAM mixer = BASS_Mixer_StreamCreate(static_cast<DWORD>(sampleRate), 2,
+                                                  BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_MIXER_END);
+    if (mixer == 0 || BASS_Mixer_StreamAddChannel(mixer, source, BASS_MIXER_CHAN_NORAMPIN) == 0)
+    {
+        if (mixer != 0) BASS_StreamFree(mixer);
+        BASS_StreamFree(source);
+        return {};
+    }
+
+    const auto hoechstens = static_cast<std::size_t>(maxSeconds * sampleRate) * 2;
+    std::vector<float> daten;
+    std::vector<float> block(16384);
+    while (daten.size() < hoechstens)
+    {
+        const DWORD gelesen = BASS_ChannelGetData(
+            mixer, block.data(), static_cast<DWORD>(block.size() * sizeof(float)) | BASS_DATA_FLOAT);
+        if (gelesen == static_cast<DWORD>(-1) || gelesen == 0) break;
+        daten.insert(daten.end(), block.begin(), block.begin() + static_cast<std::ptrdiff_t>(gelesen / sizeof(float)));
+    }
+    if (daten.size() > hoechstens) daten.resize(hoechstens);
+    BASS_StreamFree(mixer);
+    BASS_StreamFree(source);
+    return daten;
+}
+
 // =============================================================================
 // FFT / Audio Analysis
 // =============================================================================

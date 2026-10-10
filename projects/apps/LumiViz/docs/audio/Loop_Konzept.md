@@ -1,10 +1,10 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Datum:** 2026-10-10 (Session 108)
-> **Typ:** Konzept — Entscheide L1 bis L5 gefallen (Patrik S108); gebaut sind
-> der Beleg (Stufe 2) und der Kern ohne Ton (Stufe 3) — zu hören ist noch
-> nichts
+> **Typ:** Konzept — Entscheide L1 bis L6 gefallen (Patrik S108); gebaut sind
+> Beleg, Kern, Kit und der Unterbau der Wiedergabe (Stufen 2 bis 5a) — in der
+> App ist noch nichts zu hören
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Composer_Konzept.md](../ui/Composer_Konzept.md) §4 (Uhr,
@@ -59,6 +59,7 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **L3 c** | **Eine Datei enthält Kit, Muster und Abfolge.** Der Clip spielt die Abfolge und wiederholt sie. Der `Clip` und die `.lvcomp` bleiben unverändert. |
 | **L4 a** | **Wer spielt, hat den Ton — Rangfolge Composer, Loop-Panel, Player.** Play im Loop-Panel hält den Player an und gibt ihn bei Stop zurück; die Visuals reagieren auf den Loop. Hat der Composer den Ton, schweigt das Loop-Panel. |
 | **L5 a** | **Das mitgelieferte Kit wird gerechnet**, nicht bezogen: ein Skript erzeugt die WAV-Dateien, sie liegen unter `asset/`. Jede Spur kann stattdessen eine eigene Sample-Datei laden. |
+| **L6 a** | **Luft nach oben statt Begrenzer.** Die Spuren addieren sich, der Kern begrenzt nicht — wie zwei Songs im Mixer des Composers. Ein neuer Loop beginnt mit Lautstärke 0,5; das Panel bekommt eine Anzeige, die rot wird, sobald die Summe über 1 geht (Stufe 6). |
 
 ### 3.1 Verworfen, mit Grund
 
@@ -73,6 +74,11 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
   Audio-Kanälen.
 - **Freies Sample-Paket aus dem Netz** (L5 b): Lizenz je Paket zu prüfen;
   bleibt offen, falls das gerechnete Kit nicht gefällt.
+- **Weiches Begrenzen im Kern** (L6 b): färbt den Klang ungefragt, und die
+  Summe aus Loop und Song kann im Mixer trotzdem über 1 gehen. Als
+  abschaltbarer Effekt später denkbar.
+- **Selbsttätig angleichen** (L6 c): jede neue Spur machte den ganzen Loop
+  leiser.
 
 ### 3.2 Zurückgestellt (Patrik S108)
 
@@ -83,6 +89,8 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 
 ### 3.3 Noch offen
 
+- **Das Kit ist klein** (Patrik S108: klingt gut, ist aber noch eine kleine
+  Sammlung): weitere Klänge mit demselben Skript — welche, nennt Patrik.
 - Was der Play-Knopf des Loop-Panels zeigt, solange der Composer den Ton hat
   (das Player-Panel steuert in dieser Lage den Composer mit).
 - Das Aussehen des Panels — vor Stufe 6 als Skizze.
@@ -124,7 +132,7 @@ englisch wie in `.lvcomp`:
 | `bpm` | Tempo | 20 bis 400 |
 | `beatsPerBar`, `stepsPerBeat` | Raster der ganzen Datei; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
 | `swing` | verzögert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt | 0 bis 1 |
-| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips | 0 bis 1 |
+| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips; Vorgabe 0,5 (L6 a) | 0 bis 1 |
 | `tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
 | `tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
 | `patterns[].bars` | Länge des Musters in Takten; Muster dürfen verschieden lang sein | 1 bis 16 |
@@ -165,6 +173,38 @@ Spur.
 
 ---
 
+## 4a. Wiedergabe: Naht, Klangerzeuger, Kit (gebaut, Stufe 5a)
+
+- **Naht in der Engine** (`IAudioEngine.hpp`): `IAudioGenerator` mit
+  `render(out, frames)` — im Ton-Thread gerufen; `mixerAddGenerator(mixer,
+  generator)` hängt ihn **angehalten** in den Mixer, mit
+  `BASS_MIXER_CHAN_NORAMPIN`; angehalten, fortgesetzt und entfernt wird er wie
+  jede Quelle (`setSourcePaused`, `mixerRemoveSource`). `decodeStereo(datei,
+  rate, maxSekunden)` dekodiert eine Datei ganz, Stereo, auf die Abtastrate
+  umgerechnet.
+- **`Klangerzeuger`** (`loop/Klangerzeuger.hpp`): hält ein **Programm**
+  (übersetzter Loop und seine Klänge, unveränderlich) und die **Stelle**.
+  Ein neues Programm gilt ab dem nächsten Block. Ändert sich das Tempo, bleibt
+  die Stelle im Takt (auf die neue Schrittlänge umgerechnet). Der Ton-Thread
+  wartet nie auf das Panel; das abgelöste Programm wird nicht im Ton-Thread
+  freigegeben.
+- **`Kit`** (`loop/Kit.hpp`): `kit:<Name>` wird zu
+  `asset/loop/kit/<Name>.wav`, der Ordner vom Programmordner aufwärts gesucht
+  (Anker `asset/loop/README.md`, wie die anderen Asset-Ordner); erlaubt sind
+  a–z, 0–9 und `_`. `ladeKlaenge` lädt je Spur ihren Klang, höchstens 30 s;
+  was sich nicht laden lässt, steht als `Sound not loaded: …` im Bericht, die
+  Spur schweigt.
+
+**Gemessen** (S108, ein Lauf): der Klangerzeuger stand nach 1210 ms bei
+1210 ms Ton; `kick.wav` kommt bei 44100 Hz mit 22050 Abtastwerten an, bei
+48000 Hz mit 24000.
+
+**Nicht geprüft:** dass `mixerRemoveSource` wartet, bis ein laufender Rückruf
+fertig ist — der Test sieht nur, dass danach niemand mehr ruft. Das Kit im
+Release-Paket: `asset/` liegt dort nicht neben der Exe.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -172,8 +212,9 @@ Spur.
 | 1 | Dieses Konzept | S108 |
 | 2 | **Beleg:** BASS nimmt eine selbst rechnende Quelle im Mixer an, die Schläge kommen auf das Sample genau (`test_LoopBelegeTon.cpp`). Scheitert er, kommt L1 noch einmal auf den Tisch. | S108, siehe §6 |
 | 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut, §4; `test_LoopKern.cpp`, elf Fälle |
-| 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; **noch nicht gehört** |
-| 5 | **Wiedergabe allein:** neue Naht in `IAudioEngine`, Rangfolge aus L4, die Visuals lesen vom Loop | offen |
+| 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; an einer Hörprobe gehört (Patrik: klingt gut) |
+| 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
+| 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | offen |
 | 6 | **Loop-Panel:** Raster, Spuren, Muster, Abfolge, Play, Datei-Zeile | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips | offen |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
@@ -240,14 +281,16 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
   S108 liegt es vor (`asset/loop/README.md`); Patriks Urteil steht aus.
 - **Die Summe übersteuert leicht** (S108, an der Hörprobe gerechnet): das
   Beispiel mit sechs Spuren erreicht bei Lautstärke 0,8 des Loops einen
-  Betrag von 1,45, bei 0,5 sind es 0,91. Der Kern begrenzt nicht (§4). Ob der
-  Loop Luft nach oben bekommt (leisere Vorgabe) oder einen Begrenzer, ist vor
-  Stufe 5 zu entscheiden.
+  Betrag von 1,45, bei 0,5 sind es 0,91. Der Kern begrenzt nicht (§4).
+  Entschieden mit L6 a: Luft nach oben, Anzeige im Panel.
 
 ---
 
 ## 8. Changelog
 
+- **0.4.0** (S108, 2026-10-10): Entscheid L6 a (Luft nach oben, Vorgabe
+  0,5); Stufe 5 geteilt, 5a gebaut (§4a); „das Kit ist klein" als offener
+  Punkt.
 - **0.3.0** (S108, 2026-10-10): Stufe 4 (Kit und Beispiel unter
   `asset/loop`) eingetragen; Risiko „die Summe übersteuert" mit Zahlen.
 - **0.2.0** (S108, 2026-10-10): Stufe 2 (Beleg, §6) und Stufe 3 (Kern, §4)

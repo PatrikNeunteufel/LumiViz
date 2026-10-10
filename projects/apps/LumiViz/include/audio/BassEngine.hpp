@@ -106,6 +106,11 @@ public:
     bool setSourcePositionMs(AudioStreamHandle source, int positionMs) override;
     bool setSourcePaused(AudioStreamHandle source, bool paused) override;
     [[nodiscard]] bool isSourcePlaying(AudioStreamHandle source) const override;
+    // Loop (docs/audio/Loop_Konzept.md §6)
+    [[nodiscard]] AudioStreamHandle mixerAddGenerator(AudioStreamHandle mixer,
+                                                      IAudioGenerator* generator) override;
+    [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int sampleRate,
+                                                  double maxSeconds) override;
 
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;

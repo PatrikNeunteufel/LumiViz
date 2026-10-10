@@ -89,7 +89,7 @@ void Loop::richte(QStringList* bericht)
     schlaegeJeTakt = std::clamp(schlaegeJeTakt, 1, kRasterMax);
     schritteJeSchlag = std::clamp(schritteJeSchlag, 1, kRasterMax);
     swing = inGrenzen(swing, 0.0, 1.0, 0.0);
-    laut = inGrenzen(laut, 0.0, 1.0, 1.0);
+    laut = inGrenzen(laut, 0.0, 1.0, 0.5);
     for (Spur& spur : spuren)
     {
         spur.laut = inGrenzen(spur.laut, 0.0, 1.0, 1.0);

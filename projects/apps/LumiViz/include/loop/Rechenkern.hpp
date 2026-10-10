@@ -59,6 +59,7 @@ struct Schlag
 struct Ablauf
 {
     int rate = 0;
+    double schrittFrames = 0.0;               ///< Laenge eines Schritts in Abtastwerten (nicht ganzzahlig)
     std::int64_t durchlaufFrames = 0;         ///< Laenge eines Durchlaufs; 0 = nichts zu spielen
     std::vector<std::vector<Schlag>> spuren;  ///< je Spur des Loops, nach Stelle aufsteigend
 };
