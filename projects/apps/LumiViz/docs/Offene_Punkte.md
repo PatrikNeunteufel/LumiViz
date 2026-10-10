@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.138.0
+> **Version:** 1.139.0
 > **Datum:** 2026-10-10 (Session 107)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2539,7 +2539,10 @@ Idee Preset-Warmup/Pre-Roll.
     dem Startzustand die DLL, meldet **fünfzehn Aktionen** an und verbindet
     mit dem Tester (Nähte N20 bis N26, Composer_Konzept §12.2; eigener Code
     unter `sichttest/` und `composer/SichttestAktionen`). Pins:
-    `sichttest.pin` **v0.3.3**, `cmakecraft.pin` **v0.11.0**. Projektdatei
+    `sichttest.pin` **v0.3.4** (seit S107; in S105 v0.3.3 — v0.3.4 bringt im
+    Tester: ein abgeschlossener Lauf wird nicht fortgesetzt, Zeitstempel der
+    Exe als ISO, `build` aus `hallo`; im Programm ungesehen),
+    `cmakecraft.pin` **v0.11.0**. Projektdatei
     `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
     ist entfernt; neben der Exe entsteht bei jedem Bau die Verknüpfung
     „LumiViz.exe - Testing". Die neun Listen `Sichttest_Composer_1…9`
@@ -4971,6 +4974,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.139.0 | 2026-10-10 | Session 107, Abschluss — Block „Stand S105": `sichttest.pin` steht auf v0.3.4 (Bezug, zwei Bauarten, 974 / 974, Probe der DLL verbunden; im Programm ungesehen); der Sichttest mit dem Tester hat auch in S107 nicht stattgefunden |
 | 1.138.0 | 2026-10-10 | Session 107 — §3 *MilkDrop-Presets stocken manchmal*: geschlossen, Ursache außerhalb der App — es drosselt der Temperaturschutz des Prozessors am Entwicklungsrechner (Tctl an 100 °C, danach der Kerntakt für 1 bis 3 s auf rund ein Zehntel, alle 10 bis 11 s); in einem Lauf mit *glassworks 3* liegen sechs Einbrüche und 108 lange Bilder in denselben Sekunden; an der App nichts zu tun, offen bleibt nur Stufe 3 |
 | 1.137.0 | 2026-10-10 | Session 106 — §3: *glassworks 3* in zwei Kanälen gemessen (neuer Stand) — ein Kanal 59,0 bis 59,4, zwei Kanäle 33,5 bis 45,4 Bilder je Sekunde (Mittel 21,5 bis 29,1 ms je Bild, je Instanz rund 10 ms); zwei solche Presets halten auch nach dem Umbau keine 60; vor dem Umbau nicht gemessen |
 | 1.136.0 | 2026-10-10 | Session 106 — §3: MilkDrop-Shapes billiger, Stufe 1 und 2 gebaut (Flächen ohne Textur und Rand in einem Zeichenaufruf; Randfarbe einmal je Instanz) — 3856 Bild-Hashes aus 16 Presets alt gegen neu gleich, *glassworks 3* 10,0 bis 11,4 ms je Bild statt 13,6; Stufe 3 (Übergabe ans Skript) zurückgestellt, Entscheid Patrik; das Stocken bleibt eine Drosselung des Rechners |
