@@ -3488,6 +3488,29 @@ void MilkdropVisualizer::drawCustomShapes()
     QElapsedTimer messUhr;
     messUhr.start();
 
+    // Sammeln (S106): aufeinanderfolgende Instanzen OHNE Textur und OHNE Rand
+    // gehen als eine Dreiecksliste in EINEN Zeichenaufruf statt in je einen —
+    // bei Presets mit Hunderten Instanzen war das die Haelfte der Stufe. Die
+    // Reihenfolge bleibt: eine Instanz mit Textur oder Rand, oder ein Wechsel
+    // der Mischart, zeichnet zuerst alles bis dahin Gesammelte.
+    std::vector<float> sammlung;  // pos2+col4 je Eckpunkt, drei Eckpunkte je Dreieck
+    bool sammlungAdditiv = false;
+    const auto zeichneSammlung = [&] {
+        if (sammlung.empty()) return;
+        const qint64 beginn = messUhr.nsecsElapsed();
+        f->glEnable(GL_BLEND);
+        f->glBlendFunc(GL_SRC_ALPHA, sammlungAdditiv ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
+        drawColorQuads(sammlung.data(), static_cast<int>(sammlung.size() / 6), GL_TRIANGLES);
+        f->glDisable(GL_BLEND);
+        sammlung.clear();
+        g_shapeMessung.zeichnenMs +=
+            static_cast<double>(messUhr.nsecsElapsed() - beginn) * 1e-6;
+    };
+    // je Bild einmal angelegt statt je Instanz
+    std::vector<float> fan;
+    std::vector<std::pair<double, double>> ring;
+    std::vector<SuperscopePoint> outline;
+
     for (ShapeRuntime& rt : m_shapeRt)
     {
         const int instances = std::clamp(rt.def.instances, 1, 1024);
@@ -3566,11 +3589,15 @@ void MilkdropVisualizer::drawCustomShapes()
             g_shapeMessung.flaeche += std::min(
                 1.0, 0.5 * sides * std::sin(6.283185307 / sides) * rad * rad * m_aspectY / 4.0);
 
-            f->glEnable(GL_BLEND);
-            f->glBlendFunc(GL_SRC_ALPHA, additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
+            // Der Rand entscheidet mit, ob die Instanz gesammelt werden darf —
+            // deshalb hier gelesen und nicht erst nach dem Zeichnen der Flaeche.
+            const float borderAlpha =
+                static_cast<float>(clampd(e.number("border_a"), 0.0, 1.0));
+            const bool mitRand = borderAlpha > 0.001f;
+            const bool sammelbar = !textured && !mitRand;
 
             // triangle fan: center (rgba) -> ring (r2g2b2a2); ring angle base +45°
-            std::vector<float> fan;  // textured: pos2+uv2+col4; untextured: pos2+col4
+            fan.clear();  // textured: pos2+uv2+col4; untextured: pos2+col4
             const int stride = textured ? 8 : 6;
             fan.reserve(static_cast<std::size_t>((sides + 2) * stride));
             const auto pushVert = [&](double px, double py, double tu, double tv, float r,
@@ -3588,7 +3615,7 @@ void MilkdropVisualizer::drawCustomShapes()
                 fan.push_back(a);
             };
             pushVert(cxN, cyN, 0.5, 0.5, cr, cg, cb, ca);
-            std::vector<std::pair<double, double>> ring(static_cast<std::size_t>(sides + 1));
+            ring.resize(static_cast<std::size_t>(sides + 1));
             for (int j = 0; j <= sides; ++j)
             {
                 const double t = static_cast<double>(j % sides) / sides;
@@ -3605,6 +3632,29 @@ void MilkdropVisualizer::drawCustomShapes()
                     0.5 + 0.5 * std::sin(t * 6.283185307 + texAng + 0.785398163) / texZoom;
                 pushVert(px, py, tu, tv, er, eg, eb, ea);
             }
+
+            if (sammelbar)
+            {
+                // dieselben Dreiecke wie der Faecher, in derselben Reihenfolge:
+                // (Mitte, Ring j, Ring j+1) — nur als Liste statt als Faecher
+                if (!sammlung.empty() && sammlungAdditiv != additive) zeichneSammlung();
+                sammlungAdditiv = additive;
+                const float* v = fan.data();
+                for (int j = 0; j < sides; ++j)
+                {
+                    sammlung.insert(sammlung.end(), v, v + 6);
+                    sammlung.insert(sammlung.end(), v + (1 + j) * 6, v + (3 + j) * 6);
+                }
+                g_shapeMessung.zeichnenMs +=
+                    static_cast<double>(messUhr.nsecsElapsed() - messSkript) * 1e-6;
+                continue;
+            }
+
+            // Textur oder Rand: einzeln zeichnen, und alles Gesammelte VORHER —
+            // sonst aenderte sich, was was ueberdeckt
+            zeichneSammlung();
+            f->glEnable(GL_BLEND);
+            f->glBlendFunc(GL_SRC_ALPHA, additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
 
             if (textured)
             {
@@ -3631,18 +3681,20 @@ void MilkdropVisualizer::drawCustomShapes()
             }
 
             // border outline (line strip around the ring, thickOutline = 4x)
-            const float borderAlpha =
-                static_cast<float>(clampd(e.number("border_a"), 0.0, 1.0));
-            if (borderAlpha > 0.001f)
+            if (mitRand)
             {
-                std::vector<SuperscopePoint> outline(ring.size());
+                // Farbe einmal je Instanz lesen, nicht je Eckpunkt (S106)
+                const float randR = static_cast<float>(clampd(e.number("border_r"), 0.0, 1.0));
+                const float randG = static_cast<float>(clampd(e.number("border_g"), 0.0, 1.0));
+                const float randB = static_cast<float>(clampd(e.number("border_b"), 0.0, 1.0));
+                outline.assign(ring.size(), SuperscopePoint{});
                 for (std::size_t j = 0; j < ring.size(); ++j)
                 {
                     outline[j].x = static_cast<float>(ring[j].first);
                     outline[j].y = static_cast<float>(ring[j].second);
-                    outline[j].r = static_cast<float>(clampd(e.number("border_r"), 0.0, 1.0));
-                    outline[j].g = static_cast<float>(clampd(e.number("border_g"), 0.0, 1.0));
-                    outline[j].b = static_cast<float>(clampd(e.number("border_b"), 0.0, 1.0));
+                    outline[j].r = randR;
+                    outline[j].g = randG;
+                    outline[j].b = randB;
                     outline[j].a = borderAlpha;
                 }
                 lumi::render::ScopeRenderer::Params params;
@@ -3666,6 +3718,7 @@ void MilkdropVisualizer::drawCustomShapes()
                 static_cast<double>(messUhr.nsecsElapsed() - messSkript) * 1e-6;
         }
     }
+    zeichneSammlung();
 }
 
 // =============================================================================================

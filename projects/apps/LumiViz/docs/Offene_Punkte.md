@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.135.0
+> **Version:** 1.136.0
 > **Datum:** 2026-10-10 (Session 106)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1620,9 +1620,35 @@ Firmware, Energiesparplan „Turbo"). Das Ereignisprotokoll nennt keine
 Drosselung durch die Firmware (Kernel-Processor-Power, nur Kennung 55); es
 nennt als unterste Drosselstufe 17 % der Nennfrequenz, was zur Größe des
 Einbruchs passt — ein Indiz, kein Beleg. Temperatur und Takt wurden nicht
-gemessen (der Zähler dafür lieferte nichts). **Offen für LumiViz:** ob
-*glassworks 3* billiger werden kann — 1350 Shape-Instanzen kosten je Bild rund
-5 ms Skript-Übergabe und 7 ms für 1350 einzelne Zeichenaufrufe.
+gemessen (der Zähler dafür lieferte nichts).
+
+**Shapes billiger, Stufe 1 und 2 (S106, Entscheid Patrik) — gebaut:** die
+Stufe shapes vorher im Einzelnen (Mittel über rund 980 normale Bilder, zwei
+Läufe): Eingabe der 51 Variablen je Instanz 1,5 ms, Lauf des Skripts samt
+Abgleich der q- und reg-Werte 2,4 ms, Zurücklesen 0,5 ms, Fächer bauen 0,5 ms,
+1350 einzelne Zeichenaufrufe 3,2 ms, 500 Umrisse 2,9 ms.
+- **Stufe 1:** `drawCustomShapes` sammelt aufeinanderfolgende Instanzen ohne
+  Textur und ohne Rand zu einer Dreiecksliste und zeichnet sie in einem Aufruf.
+  Eine Instanz mit Textur oder Rand, oder ein Wechsel der Mischart, zeichnet
+  zuerst das Gesammelte — die Reihenfolge bleibt.
+- **Stufe 2:** die Farbe des Rands wird einmal je Instanz gelesen statt je
+  Eckpunkt; die Puffer für Fächer, Ring und Umriss entstehen einmal je Bild.
+  Die Umrisse laufen **weiter** einzeln über den Scope-Renderer — ihn zu
+  umgehen hätte die Pixelgleichheit gefährdet, das ist nicht gebaut.
+- **Vergleich alt gegen neu:** 16 Presets (Flächen, Ränder, Texturen, bis 3150
+  Instanzen), je 241 Bilder in 960 × 540 mit `MilkdropStandalone --ab`: alle
+  3856 Bild-Hashes gleich; der alte Stand zweimal gefahren, ebenfalls gleich.
+- **Wirkung an *glassworks 3*** (Kurzläufe wie oben): Zeichnen 3,4 bis 4,4 ms
+  statt 6,6 ms, ein Bild 10,0 bis 11,4 ms statt 13,6 ms. Das Skript unverändert
+  rund 4,3 ms. Die Schätzung für Stufe 2 (1 bis 1,5 ms) ist nicht erreicht,
+  weil die Umrisse einzeln bleiben.
+- **Das Stocken behebt es nicht:** gedrosselt dauert ein Bild weiter über 50 ms.
+- **Zurückgestellt (Entscheid Patrik S106): Stufe 3** — die Übergabe ans Skript
+  über vorbereitete Schlüssel statt über Namen (`LuaScriptEngine`, träfe alle
+  Visualizer); geschätzt 1 bis 1,5 ms an diesem Preset. Erst messen, ob es an
+  weiteren Presets ins Gewicht fällt.
+- **Nicht gemessen:** zwei solche Presets zugleich in zwei Kanälen; andere
+  Presets als *glassworks 3*; die 610M.
 
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
@@ -4915,6 +4941,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.136.0 | 2026-10-10 | Session 106 — §3: MilkDrop-Shapes billiger, Stufe 1 und 2 gebaut (Flächen ohne Textur und Rand in einem Zeichenaufruf; Randfarbe einmal je Instanz) — 3856 Bild-Hashes aus 16 Presets alt gegen neu gleich, *glassworks 3* 10,0 bis 11,4 ms je Bild statt 13,6; Stufe 3 (Übergabe ans Skript) zurückgestellt, Entscheid Patrik; das Stocken bleibt eine Drosselung des Rechners |
 | 1.135.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: Messung im Renderer (neue Trace-Zeile `langesBild`, Schwelle über `LUMIVIZ_MILKDROP_LANG_MS`) — im Einbruch werden alle Stufen gleich stark langsamer, der Thread rechnet durch, und ein unabhängiger Prozess wird in denselben Sekunden 7- bis 12-mal langsamer: der Prozessor wird für rund 3 s gedrosselt, die App bremst nicht selbst; wer drosselt, ist nicht belegt; offen, ob *glassworks 3* billiger werden kann (1350 Shape-Instanzen) |
 | 1.134.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: sechs weitere Kurzläufe ohne Last (Start 6:00 und 5:50) ohne Einbruch — die Trennung „Stelle der Musik" gegen „Abstand zum Start" ist nicht gelungen; über den Tag 2 von 9 Kurzläufen ohne Last mit Einbruch, beide unmittelbar nach einem Lauf mit Last; weiter nur mit einer Messung im Renderer |
 | 1.133.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: zwei Läufe von Patrik (mit und ohne Composer, 83 s und rund 140 s) ohne Einbruch; acht Kurzläufe bei 6:00 unter Last von außen — der Einbruch kommt in zwei von drei Läufen **ohne** Last, CPU- und GPU-Last bremsen dagegen gleichmäßig; *glassworks 3* kostet für sich 12,8 ms je Bild; offen, ob es an der Stelle der Musik oder an den Zufallswerten des Presets hängt |
