@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.139.0
-> **Datum:** 2026-10-10 (Session 107)
+> **Version:** 1.140.0
+> **Datum:** 2026-10-11 (Session 108)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2281,6 +2281,40 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | ~~[Config_Pipeline_Umsetzungsplan](visuals/Config_Pipeline_Umsetzungsplan.md)~~ | ✅ **entschieden + umgesetzt (S60):** die Abnahme-Tabellen A1–A8/N1–N7 sind **als erledigt gestrichen** (Vermerk im Dokument; die `⬜` bleiben als Historie stehen) — Schritte 0–7 ✅ seit S30, Sichttests 5.1–5.5 abgenommen | ✅ |
 
 ## 6. Konzept-Phasen, noch nicht begonnen
+
+- 🟡 **Loop — Drums und später Instrumente als Arrangement in Takten** (Wunsch
+  Patrik S108, **im Bau**). Steuerdokument:
+  [Loop_Konzept.md](audio/Loop_Konzept.md) — Entscheide L1 bis L8, Stufen,
+  Beleg. Im Loop-Panel legt man Kanäle an, darin Drumkit-Clips; die Editoren
+  sind eigene Fenster; die Datei `.lvloop` ist das ganze Arrangement und
+  lässt sich als Clip in einen Audio-Kanal des Composers legen. **Stand
+  S108:** gebaut sind der Beleg (BASS nimmt eine selbst rechnende Quelle im
+  Mixer an, auf den Abtastwert genau), Modell und Datei in Fassung 2, der
+  Rechenkern, das gerechnete Kit (`asset/loop/kit`, sechs Klänge), die Naht
+  in der Audio-Engine, der Klangerzeuger, der Spieler mit der Rangfolge
+  Composer, Loop-Panel, Player und ein erstes Panel *Loop*, das nur lädt
+  und spielt. **Im Programm nicht gehört und nicht gesehen.** Offen, in
+  dieser Reihenfolge:
+  - **6a** Loop-Panel als Arrangement (Kanäle, Zeitachse in Takten, Clips
+    anlegen, verschieben, verlängern, kürzen, kopieren; New, Save, Save As;
+    Undo) — Skizze gebilligt (Patrik S108)
+  - **6b** Drum-Editor als eigenes Fenster (Raster gebilligt), „Basis
+    bearbeiten" und „in neue Basis umwandeln", Anzeige der Summe; offen
+    daraus: wohin mit dem Panorama je Spur, lange Muster rollen oder stauchen
+  - **6c** Audio Browser zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel
+    (Wunsch Patrik S108)
+  - **7** `.lvloop` als Clip im Composer — dabei mit Messung klären, was das
+    Nachsetzen der Tonführung (ab 80 ms) für Drums bedeutet
+  - **8** Benutzerhandbuch, `Audio_System.md`, Vorlage für den Sichttest
+  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne)
+  - ⬜ der erste Hörtest: View → Panels → Loop, `asset\loop\drums_demo.lvloop`
+    laden, Play — spielt der Loop, reagieren die Visuals, schweigt der
+    Player, ist Play bei führendem Composer gesperrt?
+  - 🟡 das Kit ist klein (Patrik S108: klingt gut, aber eine kleine
+    Sammlung) — welche Klänge dazukommen, nennt Patrik
+  - 🔧 das Kit liegt unter `asset/`, im Release-Paket nicht neben der Exe;
+    Debug-MSVC nicht gebaut; ob `mixerRemoveSource` auf einen laufenden
+    Rückruf wartet, ist nicht geprüft
 
 - 🟡 **Block F — Modulparameter auf dem generischen Weg skriptbar machen**
   (angesetzt direkt nach S83, Entscheid Patrik E2b: kein Einzel-Nachtrag in
@@ -4974,6 +5008,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.140.0 | 2026-10-11 | Session 108, Abschluss — §6 neu: **Loop** (Wunsch Patrik), im Bau nach [Loop_Konzept.md](audio/Loop_Konzept.md); gebaut Beleg, Modell und Datei `.lvloop` in Fassung 2 (Arrangement aus Kanälen und Clips), Rechenkern, gerechnetes Kit, Naht in der Audio-Engine, Klangerzeuger, Spieler mit Rangfolge, erstes Panel; offen 6a bis 9, der erste Hörtest, das Kit im Release-Paket; 1002 / 1002; der Sichttest mit dem Tester hat auch in S108 nicht stattgefunden |
 | 1.139.0 | 2026-10-10 | Session 107, Abschluss — Block „Stand S105": `sichttest.pin` steht auf v0.3.4 (Bezug, zwei Bauarten, 974 / 974, Probe der DLL verbunden; im Programm ungesehen); der Sichttest mit dem Tester hat auch in S107 nicht stattgefunden |
 | 1.138.0 | 2026-10-10 | Session 107 — §3 *MilkDrop-Presets stocken manchmal*: geschlossen, Ursache außerhalb der App — es drosselt der Temperaturschutz des Prozessors am Entwicklungsrechner (Tctl an 100 °C, danach der Kerntakt für 1 bis 3 s auf rund ein Zehntel, alle 10 bis 11 s); in einem Lauf mit *glassworks 3* liegen sechs Einbrüche und 108 lange Bilder in denselben Sekunden; an der App nichts zu tun, offen bleibt nur Stufe 3 |
 | 1.137.0 | 2026-10-10 | Session 106 — §3: *glassworks 3* in zwei Kanälen gemessen (neuer Stand) — ein Kanal 59,0 bis 59,4, zwei Kanäle 33,5 bis 45,4 Bilder je Sekunde (Mittel 21,5 bis 29,1 ms je Bild, je Instanz rund 10 ms); zwei solche Presets halten auch nach dem Umbau keine 60; vor dem Umbau nicht gemessen |
