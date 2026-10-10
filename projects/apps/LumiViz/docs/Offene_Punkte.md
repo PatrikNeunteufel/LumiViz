@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.132.0
+> **Version:** 1.133.0
 > **Datum:** 2026-10-10 (Session 106)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1517,6 +1517,47 @@ Chain, Composer aus, etwa 60 s, dann das Log lesen (ohne Code); (2) eine
 Diagnosezeile je langem Bild im MilkDrop-Renderer, nach Stufen aufgeteilt, samt
 dem `fps`-Wert, den das Preset sieht; (3) das einzelne lange Bild bei 5 s
 getrennt davon.
+
+**Zwei Läufe von Patrik (S106, 2026-10-10, 13:12 und 13:20; Release-clang,
+RTX 4090, 1836 × 909, mit Ton) — kein Einbruch, auch nicht gesehen:**
+
+| Lauf | Was lief | Dauer | `FPS (render thread)` | lange Bilder nach dem Anlauf |
+|---|---|---|---|---|
+| 13:12 | Composer an ab 6:36 in `composed2.lvcomp`: *glassworks 3* (CH1) bis 7:39, daneben *juggernaut brighter* (CH2) | 83 s | 59 bis 61 | eines, 57 ms am Clip-Wechsel 7:39 |
+| 13:20 | Composer nach 3 s aus, danach die Kette der App (beim Start war *glassworks 3* als letztes Preset wiederhergestellt, ein Wechsel steht nicht im Log) | rund 140 s | 59 bis 62 | zwei, 51 und 67 ms |
+
+Das einzelne lange Bild rund 5 s nach der Wiederaufnahme fehlt in beiden.
+
+**Acht Kurzläufe unter Last (S106, 13:36 bis 13:41; von Claude gefahren):** wie
+am 09.10. ein frischer Start über Resume bei 6:00 in `composed2.lvcomp`, je rund
+20 s, dazu teils Last von außen — CPU: 16 oder 32 rechnende Prozesse (der
+Rechner hat 32 logische Kerne); GPU: zwei `MilkdropStandalone` in 3840 × 2160
+(einer allein lastete die 4090 in der Probe zu rund 50 % aus). Die Auslastung
+der CPU während der Läufe ist **nicht** gemessen (die Abfrage lieferte 0).
+
+| Lauf | Last | Bilder je Sekunde | Mittel `compute` | Bild |
+|---|---|---|---|---|
+| 13:36 | keine | 58,8 | 12,8 ms | kein Einbruch |
+| 13:38 | keine | 51,0 | 18,0 ms | **Einbruch** 6:08,6 bis 6:09,4 und 6:10,9 bis 6:11,5 (15 Bilder, 50 bis 239 ms) |
+| 13:40 | keine | 43,8 | 20,7 ms | **Einbruch** ab 6:07,0 und noch einmal ab etwa 6:17 (44 Bilder, 52 bis 145 ms) |
+| 13:37 | CPU 16 | 29,5 | 32,7 ms | gleichmäßig langsam (28 bis 30), kein Einbruch |
+| 13:38, 13:39 | CPU 32 | 0,3 | über 3 s | steht praktisch: sechs Bilder in 20 s |
+| 13:37 | GPU 2 | 24,9 | 39,1 ms | gleichmäßig langsam (23 bis 37) |
+| 13:39 | GPU 2 | 17,1 | 57,1 ms | gleichmäßig langsam (18 bis 19), 120 Bilder zu 51 bis 105 ms |
+
+- **Der Einbruch kommt ohne jede Last von außen** — in zwei von drei Läufen an
+  derselben Stelle wie am 09.10. (dort ab 6:08,7), im dritten nicht.
+- **Last von außen sieht anders aus:** sie bremst gleichmäßig über den ganzen
+  Lauf, statt für 1 bis 4 s einzubrechen und sich zu erholen.
+- **Das Preset ist für sich schon teuer:** ohne Einbruch 12,8 ms je Bild im
+  Mittel (die anderen Presets am 09.10.: 2,7 bis 5,3 ms) — bei 60 Bildern je
+  Sekunde bleiben 16,7 ms.
+- **Offen, nicht geprüft:** Patriks Lauf von 13:12 begann erst bei 6:36, also
+  **hinter** den Stellen 6:07 bis 6:20 — ob der Einbruch an der Stelle der
+  Musik hängt statt am Abstand zum Start, trennen diese Läufe nicht. Das Preset
+  würfelt beim Start (`per_frame_init`: `rand` für `nstab`, `r1`, `sax1` …);
+  das könnte erklären, warum derselbe Lauf einmal einbricht und einmal nicht —
+  **Vermutung, nicht gemessen.**
 
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
@@ -4809,6 +4850,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.133.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: zwei Läufe von Patrik (mit und ohne Composer, 83 s und rund 140 s) ohne Einbruch; acht Kurzläufe bei 6:00 unter Last von außen — der Einbruch kommt in zwei von drei Läufen **ohne** Last, CPU- und GPU-Last bremsen dagegen gleichmäßig; *glassworks 3* kostet für sich 12,8 ms je Bild; offen, ob es an der Stelle der Musik oder an den Zufallswerten des Presets hängt |
 | 1.132.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: das Log der zehn Läufe genauer gelesen — der Einbruch ist kurz (rund 2 bis 4 s, etwa 8 Bilder je Sekunde, Beginn 7,8 bis 8,6 s nach der Wiederaufnahme), die Zeit liegt im `render()` der Bildquelle, bei *glassworks 3* lief nur ein Renderer; zweites Muster: ein einzelnes langes Bild rund 5 s nach der Wiederaufnahme in den acht übrigen Läufen; Ursache weiter offen, Reihenfolge der Messung vorgeschlagen. Sichttest-Listen 8 B0 und 9 F0 nennen „Composer on" (Entscheid Patrik V1: a) |
 | 1.131.0 | 2026-10-10 | Session 105, Abschluss — **Release v0.12.0**: Version der App 0.12.0, Marke auf `f2faeee`, Paket ohne Tester geschnürt und aus dem Zip gestartet; der Tester steht nicht mehr im Benutzerhandbuch, sondern in `Sichttest_Steuerung.md`; die Settings-Zeile *Sichttest* nur mit Steuerung neben der Exe; README mit Composer, Karaoke und sechs Bildern |
 | 1.130.0 | 2026-10-10 | Session 105, Nachtrag — §3 *MilkDrop-Presets stocken manchmal*: zweite Beobachtung Patrik beim Aufnehmen der README-Bilder, im Log zählbar — in drei von zehn Läufen 25 bis 33 lange Bilder (glassworks 3 an zwei Stellen; double chase + Gin Tonic), in den übrigen je 1 bis 2; Ursache weiter nicht untersucht |
