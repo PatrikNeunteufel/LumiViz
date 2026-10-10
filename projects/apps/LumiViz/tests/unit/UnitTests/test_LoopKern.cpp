@@ -21,6 +21,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -340,6 +341,37 @@ TEST_CASE("Loop Datei: speichern und laden, Sample-Pfade relativ zur Datei")
         f.close();
         CHECK(!ladeLoop(kaputt, gelesen));
         CHECK(!ladeLoop(ordner.filePath(QStringLiteral("gibtsnicht.lvloop")), gelesen));
+    }
+}
+
+TEST_CASE("Loop Datei: das Beispiel in asset/loop laedt ohne Bericht, seine Klaenge liegen im Kit")
+{
+    // .../projects/apps/LumiViz/tests/unit/UnitTests -> Wurzel des Repos
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QDir ordner(wurzel.filePath(QStringLiteral("asset/loop")));
+    REQUIRE_MESSAGE(ordner.exists(), ordner.path().toStdString());
+
+    Loop loop;
+    QStringList bericht;
+    REQUIRE(ladeLoop(ordner.filePath(QStringLiteral("drums_demo.lvloop")), loop, &bericht));
+    CHECK(bericht.isEmpty());
+    CHECK(loop.spuren.size() == 6u);
+    CHECK(loop.muster.size() == 3u);
+    CHECK(loop.durchlaufSchritte() == 128);
+    for (const Spur& spur : loop.spuren)
+    {
+        REQUIRE_MESSAGE(istKitKlang(spur.klang), spur.klang.toStdString());
+        const QString datei = QStringLiteral("kit/%1.wav").arg(spur.klang.mid(4));
+        CHECK_MESSAGE(ordner.exists(datei), datei.toStdString());
+    }
+    // jeder Klang des Kits kommt im Beispiel vor
+    for (const QString& datei : QDir(ordner.filePath(QStringLiteral("kit"))).entryList({QStringLiteral("*.wav")}))
+    {
+        const QString klang = QStringLiteral("kit:") + QFileInfo(datei).completeBaseName();
+        const bool benutzt = std::any_of(loop.spuren.begin(), loop.spuren.end(),
+                                         [&klang](const Spur& spur) { return spur.klang == klang; });
+        CHECK_MESSAGE(benutzt, klang.toStdString());
     }
 }
 

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-10-10 (Session 108)
 > **Typ:** Konzept — Entscheide L1 bis L5 gefallen (Patrik S108); gebaut sind
 > der Beleg (Stufe 2) und der Kern ohne Ton (Stufe 3) — zu hören ist noch
@@ -172,7 +172,7 @@ Spur.
 | 1 | Dieses Konzept | S108 |
 | 2 | **Beleg:** BASS nimmt eine selbst rechnende Quelle im Mixer an, die Schläge kommen auf das Sample genau (`test_LoopBelegeTon.cpp`). Scheitert er, kommt L1 noch einmal auf den Tisch. | S108, siehe §6 |
 | 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut, §4; `test_LoopKern.cpp`, elf Fälle |
-| 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | offen |
+| 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; **noch nicht gehört** |
 | 5 | **Wiedergabe allein:** neue Naht in `IAudioEngine`, Rangfolge aus L4, die Visuals lesen vom Loop | offen |
 | 6 | **Loop-Panel:** Raster, Spuren, Muster, Abfolge, Play, Datei-Zeile | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips | offen |
@@ -236,12 +236,20 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 - **Der Entwicklungsrechner drosselt** (S107, Temperaturschutz): in den
   Einbrüchen kann der Ton aussetzen. Das ist dann kein Befund am Loop —
   zuerst die Taktprobe daneben.
-- **Klang des gerechneten Kits:** erst zu beurteilen, wenn es da ist.
+- **Klang des gerechneten Kits:** erst zu beurteilen, wenn es da ist. Seit
+  S108 liegt es vor (`asset/loop/README.md`); Patriks Urteil steht aus.
+- **Die Summe übersteuert leicht** (S108, an der Hörprobe gerechnet): das
+  Beispiel mit sechs Spuren erreicht bei Lautstärke 0,8 des Loops einen
+  Betrag von 1,45, bei 0,5 sind es 0,91. Der Kern begrenzt nicht (§4). Ob der
+  Loop Luft nach oben bekommt (leisere Vorgabe) oder einen Begrenzer, ist vor
+  Stufe 5 zu entscheiden.
 
 ---
 
 ## 8. Changelog
 
+- **0.3.0** (S108, 2026-10-10): Stufe 4 (Kit und Beispiel unter
+  `asset/loop`) eingetragen; Risiko „die Summe übersteuert" mit Zahlen.
 - **0.2.0** (S108, 2026-10-10): Stufe 2 (Beleg, §6) und Stufe 3 (Kern, §4)
   eingetragen; §4 von der Skizze zum gebauten Format.
 - **0.1.0** (S108, 2026-10-10): angelegt — Ziel, Bestand, Entscheide L1 bis
