@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.136.0
+> **Version:** 1.137.0
 > **Datum:** 2026-10-10 (Session 106)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1647,8 +1647,26 @@ Abgleich der q- und reg-Werte 2,4 ms, Zurücklesen 0,5 ms, Fächer bauen 0,5 ms,
   über vorbereitete Schlüssel statt über Namen (`LuaScriptEngine`, träfe alle
   Visualizer); geschätzt 1 bis 1,5 ms an diesem Preset. Erst messen, ob es an
   weiteren Presets ins Gewicht fällt.
-- **Nicht gemessen:** zwei solche Presets zugleich in zwei Kanälen; andere
-  Presets als *glassworks 3*; die 610M.
+- **Zwei Kanäle gemessen (S106, 14:40 bis 14:45, neuer Stand):** eine
+  Mess-Komposition mit *glassworks 3* 0:00–3:00 in CH1 und CH2 und einem Song
+  (im Scratchpad der Sitzung, nicht im Repo), Start bei 0:05, je rund 30 s,
+  Release-clang, RTX 4090, ohne Last.
+
+  | Kanäle | Läufe | Bilder je Sekunde | Mittel `compute` |
+  |---|---|---|---|
+  | 1 | 2 | 59,0 und 59,4 | 10,7 und 11,2 ms |
+  | 2 | 5 | 45,4 · 33,5 · 40,9 · 42,3 · 41,8 | 21,5 · 29,1 · 23,9 · 23,1 · 23,4 ms |
+
+  Je Instanz im Betrieb mit zwei Kanälen 10,0 bis 10,4 ms (Skript 4,1 bis 4,2,
+  Zeichnen 3,7 bis 4,0); die übrigen rund 3 ms je Bild sind das Mischen und der
+  Rest der Bildquelle. **Zwei solche Presets halten also auch nach dem Umbau
+  keine 60 Bilder je Sekunde**, sie laufen mit rund 41 bis 45. Der Lauf mit
+  33,5 lief über 20 s gleichmäßig mit 35 bis 36 und hatte zusätzlich einen
+  Einbruch; warum er langsamer war, ist nicht untersucht. Vor dem Umbau ist der
+  Fall **nicht** gemessen (gerechnet rund 30 ms, also etwa 33 Bilder je
+  Sekunde). Für 60 müsste eine Instanz unter rund 6,8 ms kommen — Stufe 3
+  allein (geschätzt 1 bis 1,5 ms) reicht dafür nicht.
+- **Nicht gemessen:** andere Presets als *glassworks 3*; die 610M.
 
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
@@ -4941,6 +4959,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.137.0 | 2026-10-10 | Session 106 — §3: *glassworks 3* in zwei Kanälen gemessen (neuer Stand) — ein Kanal 59,0 bis 59,4, zwei Kanäle 33,5 bis 45,4 Bilder je Sekunde (Mittel 21,5 bis 29,1 ms je Bild, je Instanz rund 10 ms); zwei solche Presets halten auch nach dem Umbau keine 60; vor dem Umbau nicht gemessen |
 | 1.136.0 | 2026-10-10 | Session 106 — §3: MilkDrop-Shapes billiger, Stufe 1 und 2 gebaut (Flächen ohne Textur und Rand in einem Zeichenaufruf; Randfarbe einmal je Instanz) — 3856 Bild-Hashes aus 16 Presets alt gegen neu gleich, *glassworks 3* 10,0 bis 11,4 ms je Bild statt 13,6; Stufe 3 (Übergabe ans Skript) zurückgestellt, Entscheid Patrik; das Stocken bleibt eine Drosselung des Rechners |
 | 1.135.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: Messung im Renderer (neue Trace-Zeile `langesBild`, Schwelle über `LUMIVIZ_MILKDROP_LANG_MS`) — im Einbruch werden alle Stufen gleich stark langsamer, der Thread rechnet durch, und ein unabhängiger Prozess wird in denselben Sekunden 7- bis 12-mal langsamer: der Prozessor wird für rund 3 s gedrosselt, die App bremst nicht selbst; wer drosselt, ist nicht belegt; offen, ob *glassworks 3* billiger werden kann (1350 Shape-Instanzen) |
 | 1.134.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: sechs weitere Kurzläufe ohne Last (Start 6:00 und 5:50) ohne Einbruch — die Trennung „Stelle der Musik" gegen „Abstand zum Start" ist nicht gelungen; über den Tag 2 von 9 Kurzläufen ohne Last mit Einbruch, beide unmittelbar nach einem Lauf mit Last; weiter nur mit einer Messung im Renderer |
