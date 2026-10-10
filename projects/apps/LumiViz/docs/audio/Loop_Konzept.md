@@ -1,9 +1,10 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.1.0
+> **Version:** 0.2.0
 > **Datum:** 2026-10-10 (Session 108)
-> **Typ:** Konzept — Entscheide L1 bis L5 gefallen (Patrik S108); gebaut ist
-> nur der Beleg aus Stufe 2
+> **Typ:** Konzept — Entscheide L1 bis L5 gefallen (Patrik S108); gebaut sind
+> der Beleg (Stufe 2) und der Kern ohne Ton (Stufe 3) — zu hören ist noch
+> nichts
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Composer_Konzept.md](../ui/Composer_Konzept.md) §4 (Uhr,
@@ -90,19 +91,77 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 
 ---
 
-## 4. Datei `.lvloop` (Skizze, vor Stufe 3 nicht fest)
+## 4. Datei `.lvloop` und Rechenkern (gebaut, Stufe 3)
 
-- **Kopf:** Version des Formats, BPM, Swing, Schritte je Takt.
-- **Spuren:** je Spur ein Klang — ein fester Name aus dem mitgelieferten Kit
-  **oder** ein Pfad zu einer Sample-Datei (Regel wie in `.lvcomp`) —, dazu
-  Lautstärke und Panorama.
-- **Muster:** benannt; je Spur die Schritte, je Schritt eine Lautstärke
-  (0 = aus).
-- **Abfolge:** eine Liste von Musternamen. Ihre Länge mal die Länge eines
-  Musters ist ein Durchlauf; der Clip wiederholt ihn.
+Format gebilligt (Patrik S108), gebaut in `include/loop` und `src/loop`
+(`Loop.hpp`, `Rechenkern.hpp`), Namensraum `lumi::loop`. JSON, Schlüssel
+englisch wie in `.lvcomp`:
 
-Der Klang des mitgelieferten Kits wird über den Namen gefunden, nicht über
-einen Pfad: eine Datei klingt so auf jedem Rechner gleich.
+```json
+{
+  "format": "lumiviz-loop",
+  "version": 1,
+  "bpm": 120.0,
+  "beatsPerBar": 4,
+  "stepsPerBeat": 4,
+  "swing": 0.0,
+  "volume": 1.0,
+  "tracks": [
+    { "name": "Kick",    "sound": "kit:kick",         "volume": 1.0, "pan":  0.0, "mute": false },
+    { "name": "My Clap", "sound": "samples/clap.wav", "volume": 0.8, "pan": -0.2, "mute": false }
+  ],
+  "patterns": [
+    { "name": "Grund", "bars": 1, "rows": [
+        [1,0,0,0,  1,0,0,0,  1,0,0,0,  1,0,0,0],
+        [0,0,0,0,  0,0,0,0,  0,0,0,0,  1,0,0.5,0] ] }
+  ],
+  "sequence": ["Grund", "Grund", "Grund", "Grund"]
+}
+```
+
+| Feld | Bedeutung | Grenzen |
+|---|---|---|
+| `bpm` | Tempo | 20 bis 400 |
+| `beatsPerBar`, `stepsPerBeat` | Raster der ganzen Datei; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
+| `swing` | verzögert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt | 0 bis 1 |
+| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips | 0 bis 1 |
+| `tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
+| `tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
+| `patterns[].bars` | Länge des Musters in Takten; Muster dürfen verschieden lang sein | 1 bis 16 |
+| `patterns[].rows` | je Spur eine Zeile in der Reihenfolge von `tracks`, je Schritt eine Lautstärke, 0 = aus | 0 bis 1 |
+| `sequence` | Musternamen der Reihe nach: ein Durchlauf, den der Clip wiederholt | — |
+
+**Beim Laden** (`Loop::richte`): Werte kommen in ihre Grenzen, jede Zeile auf
+volle Länge, ein Muster ohne Namen heißt „Pattern N". Im Bericht steht:
+`File not found: …` (Sample fehlt, die Spur bleibt stumm), `Pattern not
+found: …` (Name in der Abfolge ohne Muster — zählt als ein Takt Stille),
+`Pattern name used twice: …` (das erste gilt). Ohne Abfolge spielt das erste
+Muster; ein leerer Loop ist ein Takt Stille.
+
+**Rechenkern:**
+
+- `plane(loop, rate)` übersetzt den Loop in einen `Ablauf`: je Spur die
+  Schläge eines Durchlaufs mit Stelle in Abtastwerten und Lautstärke links
+  und rechts. Ändert sich der Loop, entsteht ein neuer Ablauf.
+- `rechne(ablauf, klaenge, von, frames, aus)` füllt einen Block. **Ohne
+  Gedächtnis:** derselbe Bereich ergibt dieselben Werte, gleich in welchen
+  Blöcken und von wo gerechnet wird — so lässt sich die Stelle frei setzen
+  (§6). Kein Speicher, keine Datei: darf im Ton-Thread laufen.
+- Die Klänge bekommt der Kern fertig in der Abtastrate des Ablaufs
+  (`Klang`, Stereo). Sample-Dateien lesen und umrechnen ist Stufe 5.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- Ein neuer Schlag schneidet den klingenden **derselben Spur** ab, mit einer
+  Blende über 64 Abtastwerte (`kSchnittFrames`) — wie eine Drum-Maschine.
+- Vor dem Abtastwert 0 gibt es nichts: der erste Durchlauf beginnt ohne
+  Ausklang eines früheren; ab dem zweiten reicht der Ausklang über die Grenze.
+- Die Summe mehrerer Spuren wird nicht begrenzt; sie kann über 1 liegen.
+
+**Bewusst nicht drin** (das Format trägt eine Versionsnummer): Tonhöhe je
+Spur oder Schritt, Abschneiden zwischen Spuren (offene Hi-Hat),
+Wahrscheinlichkeit je Schritt, Solo, Effekte, verschiedene Schrittzahlen je
+Spur.
 
 ---
 
@@ -112,7 +171,7 @@ einen Pfad: eine Datei klingt so auf jedem Rechner gleich.
 |---|---|---|
 | 1 | Dieses Konzept | S108 |
 | 2 | **Beleg:** BASS nimmt eine selbst rechnende Quelle im Mixer an, die Schläge kommen auf das Sample genau (`test_LoopBelegeTon.cpp`). Scheitert er, kommt L1 noch einmal auf den Tisch. | S108, siehe §6 |
-| 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | offen |
+| 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut, §4; `test_LoopKern.cpp`, elf Fälle |
 | 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | offen |
 | 5 | **Wiedergabe allein:** neue Naht in `IAudioEngine`, Rangfolge aus L4, die Visuals lesen vom Loop | offen |
 | 6 | **Loop-Panel:** Raster, Spuren, Muster, Abfolge, Play, Datei-Zeile | offen |
@@ -183,5 +242,7 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.2.0** (S108, 2026-10-10): Stufe 2 (Beleg, §6) und Stufe 3 (Kern, §4)
+  eingetragen; §4 von der Skizze zum gebauten Format.
 - **0.1.0** (S108, 2026-10-10): angelegt — Ziel, Bestand, Entscheide L1 bis
   L5, Skizze der Datei, Stufen, Risiken.
