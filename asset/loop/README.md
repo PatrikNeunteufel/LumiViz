@@ -33,7 +33,12 @@ aufgenommen.
 
 ## drums_demo.lvloop
 
-Das Beispiel aus dem Konzept mit allen sechs Klängen des Kits: drei Muster
-(Grund, Fill, Break), Abfolge über acht Takte, 120 BPM.
+Ein Beispiel mit allen sechs Klängen des Kits, 120 BPM, 16 Takte (32 s):
+
+- Kanal **Drums:** die Muster Grund, Fill, Grund, Break, je vier Takte.
+- Kanal **Percussion:** das Muster Claps (Clap und Tom) ab Takt 9, zweimal.
+
+Lautstärke des Loops 0,35: die Summe erreicht damit höchstens 0,84.
 `test_LoopKern.cpp` liest die Datei und prüft, dass jeder ihrer Klänge im
-Kit liegt.
+Kit liegt; `test_LoopWiedergabe.cpp` rechnet einen Durchlauf und prüft, dass
+die Summe unter 1 bleibt.

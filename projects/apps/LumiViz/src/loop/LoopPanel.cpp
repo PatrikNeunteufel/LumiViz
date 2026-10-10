@@ -182,11 +182,10 @@ void LoopPanel::zeigeDatei()
     m_dateiZeile->setText(QFileInfo(m_datei).fileName());
     m_dateiZeile->setToolTip(QDir::toNativeSeparators(m_datei));
     const Loop& loop = m_spieler.loop();
-    const int takte = loop.durchlaufSchritte() / loop.schritteJeTakt();
-    m_info->setText(tr("%1 BPM · tracks: %2 · bars: %3 · %4 s")
+    m_info->setText(tr("%1 BPM · channels: %2 · bars: %3 · %4 s")
                         .arg(loop.bpm, 0, 'f', loop.bpm == std::floor(loop.bpm) ? 0 : 1)
-                        .arg(loop.spuren.size())
-                        .arg(takte)
+                        .arg(loop.kanaele.size())
+                        .arg(loop.durchlaufTakte())
                         .arg(loop.durchlaufMs() / 1000.0, 0, 'f', 1));
 }
 

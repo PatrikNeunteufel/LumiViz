@@ -35,10 +35,11 @@ namespace lumi::loop
 /// So lang darf ein Sample hoechstens sein; was laenger ist, wird abgeschnitten.
 inline constexpr double kKlangMaxSekunden = 30.0;
 
-/// Je Spur des Loops ihren Klang laden, in `rate`. Eine Spur, deren Klang
-/// sich nicht laden laesst, bekommt einen leeren Klang (sie schweigt) und eine
+/// Die Klaenge zu den Namen laden (`Loop::klangNamen`, `Ablauf::klangNamen`),
+/// in `rate` — je Name einer, in derselben Reihenfolge. Ein Klang, der sich
+/// nicht laden laesst, bleibt leer (seine Spuren schweigen) und bekommt eine
 /// Zeile im `bericht`.
-[[nodiscard]] std::vector<Klang> ladeKlaenge(const Loop& loop, IAudioEngine& engine, int rate,
+[[nodiscard]] std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate,
                                              QStringList* bericht = nullptr);
 
 }  // namespace lumi::loop

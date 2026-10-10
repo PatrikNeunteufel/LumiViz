@@ -54,13 +54,12 @@ QString klangDatei(const QString& klang)
     return QDir(ordner).filePath(name + QStringLiteral(".wav"));
 }
 
-std::vector<Klang> ladeKlaenge(const Loop& loop, IAudioEngine& engine, int rate, QStringList* bericht)
+std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate, QStringList* bericht)
 {
-    std::vector<Klang> klaenge(loop.spuren.size());
-    for (std::size_t i = 0; i < loop.spuren.size(); ++i)
+    std::vector<Klang> klaenge(static_cast<std::size_t>(namen.size()));
+    for (std::size_t i = 0; i < klaenge.size(); ++i)
     {
-        const QString& klang = loop.spuren[i].klang;
-        if (klang.isEmpty()) continue;  // eine Spur ohne Klang ist kein Fehler
+        const QString& klang = namen[static_cast<qsizetype>(i)];
         const QString datei = klangDatei(klang);
         if (!datei.isEmpty()) klaenge[i].daten = engine.decodeStereo(datei, rate, kKlangMaxSekunden);
         if (klaenge[i].daten.empty() && bericht != nullptr)

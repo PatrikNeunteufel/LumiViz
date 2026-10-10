@@ -77,17 +77,20 @@ public:
     }
 };
 
-/// Ein Loop mit einer Spur (Sample-Datei, kein Kit) und vier Schritten je Durchlauf.
+/// Ein Loop mit einem Kanal, einem Clip und einem Muster von vier Takten zu
+/// je einem Schlag (16 Schritte je Durchlauf), mit einer Spur (Sample-Datei,
+/// kein Kit).
 Loop spielLoop(std::vector<double> zeile, const QString& klang = QStringLiteral("C:/s/a.wav"))
 {
     Loop loop;
     loop.laut = 1.0;
     loop.schlaegeJeTakt = 1;
-    loop.spuren = {{QStringLiteral("A"), klang, 1.0, 0.0, false}};
     Muster m;
     m.name = QStringLiteral("M");
+    m.spuren = {{QStringLiteral("A"), klang, 1.0, 0.0, false}};
     m.zeilen = {std::move(zeile)};
     loop.muster = {m};
+    loop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("M"), 0, 1}}}};
     return loop;
 }
 
@@ -185,8 +188,9 @@ TEST_CASE("Loop Panel: laden, Play und Stop, und der zuletzt geladene Loop kommt
         REQUIRE(panel.lade(beispiel));
         CHECK(datei->text() == QStringLiteral("drums_demo.lvloop"));
         CHECK(info->text().startsWith(QStringLiteral("120 BPM")));
-        CHECK(info->text().contains(QStringLiteral("tracks: 6")));
-        CHECK(info->text().contains(QStringLiteral("bars: 8")));
+        CHECK(info->text().contains(QStringLiteral("channels: 2")));
+        CHECK(info->text().contains(QStringLiteral("bars: 16")));
+        CHECK(info->text().contains(QStringLiteral("32.0 s")));
         CHECK(play->isEnabled());
         CHECK(play->text() == QStringLiteral("Play"));
         CHECK(bericht->text().isEmpty());
@@ -386,9 +390,8 @@ TEST_CASE("Loop Spieler: die Stelle in Schritten, und Play beginnt von vorn")
     std::vector<float> block(2 * 11025);
     engine.generator->render(block.data(), 11025);
     CHECK(spieler.stelleSchritte() == doctest::Approx(2.0));
-    // ueber den Durchlauf (vier Schritte) hinaus zaehlt sie wieder von vorn
-    engine.generator->render(block.data(), 11025);
-    engine.generator->render(block.data(), 11025);
+    // ueber den Durchlauf (16 Schritte) hinaus zaehlt sie wieder von vorn
+    for (int i = 0; i < 8; ++i) engine.generator->render(block.data(), 11025);
     CHECK(spieler.stelleSchritte() == doctest::Approx(2.0));
 
     REQUIRE(spieler.starte(engine, player));  // spielt schon: von vorn, kein zweiter Mixer

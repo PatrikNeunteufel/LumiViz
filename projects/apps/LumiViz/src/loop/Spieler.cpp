@@ -48,12 +48,11 @@ void Spieler::setzeLoop(const Loop& loop)
 void Spieler::ladeProgramm()
 {
     const int rate = m_engine->getSampleRate();
-    QStringList namen;
-    for (const Spur& spur : m_loop.spuren) namen << spur.klang;
+    const QStringList namen = m_loop.klangNamen();
     if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate)
     {
         m_bericht.clear();
-        m_klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(m_loop, *m_engine, rate, &m_bericht));
+        m_klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(namen, *m_engine, rate, &m_bericht));
         m_klangNamen = namen;
         m_klangRate = rate;
     }

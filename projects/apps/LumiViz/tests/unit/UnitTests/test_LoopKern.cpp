@@ -1,8 +1,8 @@
 /**
  ****************************************************************************************
  * @file   test_LoopKern.cpp
- * @brief  Loop, Stufe 3: Modell, Datei `.lvloop` und Rechenkern
- *         (docs/audio/Loop_Konzept.md §4 und §5)
+ * @brief  Loop: Modell, Datei `.lvloop` und Rechenkern
+ *         (docs/audio/Loop_Konzept.md §4)
  *
  * @author Patrik Neunteufel
  * @date   October 2026
@@ -11,6 +11,10 @@
  * Ohne Ton und ohne Fenster. Die Faelle zum Rechenkern zaehlen die gerechneten
  * Abtastwerte nach — bei 44100 Hz, 120 BPM und vier Schritten je Schlag ist
  * ein Schritt 5512,5 Abtastwerte lang.
+ *
+ * Die kleinen Loops hier haben einen Schlag je Takt: ein Muster von vier
+ * Takten (die kuerzeste Laenge) hat dann 16 Schritte und dauert 88200
+ * Abtastwerte.
  ****************************************************************************************
  */
 
@@ -22,6 +26,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -39,64 +44,109 @@ namespace
 {
 
 constexpr int kKernRate = 44100;
+constexpr std::int64_t kKlein = 88200;  ///< ein Durchlauf des kleinen Loops
 
-/// Das Beispiel aus dem Konzept: drei Muster, Abfolge ueber acht Takte.
-Loop beispielLoop(const QString& clapDatei)
-{
-    Loop loop;
-    loop.laut = 1.0;  // wie im Beispiel; die Vorgabe eines neuen Loops ist 0.5
-    loop.spuren = {
-        {QStringLiteral("Kick"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
-        {QStringLiteral("Snare"), QStringLiteral("kit:snare"), 0.9, 0.0, false},
-        {QStringLiteral("Hi-Hat"), QStringLiteral("kit:hat_closed"), 0.6, 0.2, false},
-        {QStringLiteral("My Clap"), clapDatei, 0.8, -0.2, false},
-    };
-    Muster grund;
-    grund.name = QStringLiteral("Grund");
-    grund.zeilen = {
-        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-        {1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    };
-    Muster fill;
-    fill.name = QStringLiteral("Fill");
-    fill.zeilen = {
-        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.6, 0.7, 0.8, 0.9, 1, 1},
-        {1, 0, 0.5, 0, 1, 0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    };
-    Muster pause;
-    pause.name = QStringLiteral("Break");
-    pause.zeilen = {
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-        {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    };
-    loop.muster = {grund, fill, pause};
-    loop.abfolge = {QStringLiteral("Grund"), QStringLiteral("Grund"), QStringLiteral("Grund"),
-                    QStringLiteral("Fill"),  QStringLiteral("Grund"), QStringLiteral("Grund"),
-                    QStringLiteral("Grund"), QStringLiteral("Break")};
-    return loop;
-}
-
-/// Ein Loop mit EINER Spur und einem Muster von einem Schlag (vier Schritte):
-/// ein Durchlauf ist 22050 Abtastwerte lang.
-Loop einSchlagLoop(std::vector<double> zeile)
+/// Ein Loop mit einem Kanal, einem Clip und einem Muster von vier Takten zu
+/// je einem Schlag (16 Schritte), mit EINER Spur. `zeile` nennt die ersten
+/// Schritte, der Rest ist aus.
+Loop kleinLoop(std::vector<double> zeile, const QString& klang = QStringLiteral("a.wav"))
 {
     Loop loop;
     loop.laut = 1.0;
     loop.schlaegeJeTakt = 1;
-    loop.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 1.0, 0.0, false}};
     Muster m;
     m.name = QStringLiteral("M");
+    m.spuren = {{QStringLiteral("A"), klang, 1.0, 0.0, false}};
     m.zeilen = {std::move(zeile)};
     loop.muster = {m};
+    loop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("M"), 0, 1}}}};
     loop.richte();
     return loop;
 }
+
+/// Ein Drumkit im Vier-Viertel-Takt: vier Spuren, zwei davon mit demselben Klang.
+Loop drumLoop()
+{
+    Loop loop;
+    loop.laut = 1.0;
+    Muster m;
+    m.name = QStringLiteral("Drums");
+    m.spuren = {
+        {QStringLiteral("Kick"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
+        {QStringLiteral("Snare"), QStringLiteral("kit:snare"), 0.9, 0.0, false},
+        {QStringLiteral("Hi-Hat"), QStringLiteral("kit:hat_closed"), 0.6, 0.2, false},
+        {QStringLiteral("Kick 2"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
+    };
+    m.zeilen = {
+        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
+        {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+        {1, 0, 0.5, 0},
+        std::vector<double>(64, 0.0),
+    };
+    m.zeilen[3][63] = 1.0;  // der letzte Schritt des Musters
+    loop.muster = {m};
+    loop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("Drums"), 0, 1}}}};
+    loop.richte();
+    return loop;
+}
+
+/// Der Loop aus der Datei im Fall „wird so gelesen, wie es dort steht".
+Loop dateiLoop(const QString& clapDatei)
+{
+    Loop loop;
+    loop.bpm = 97.5;
+    loop.schlaegeJeTakt = 1;
+    loop.swing = 0.25;
+    loop.laut = 0.8;
+    Muster m;
+    m.name = QStringLiteral("A");
+    m.spuren = {
+        {QStringLiteral("Kick"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
+        {QStringLiteral("My Clap"), clapDatei, 0.8, -0.2, true},
+    };
+    m.zeilen = {
+        {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0},
+        {0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0},
+    };
+    loop.muster = {m};
+    loop.kanaele = {
+        {QStringLiteral("Drums"), true, {{QStringLiteral("A"), 0, 2}, {QStringLiteral("A"), 12, 1}}},
+        {QStringLiteral("Off"), false, {}},
+    };
+    loop.richte();
+    return loop;
+}
+
+const char* const kDateiText = R"json({
+  "format": "lumiviz-loop",
+  "version": 2,
+  "bpm": 97.5,
+  "beatsPerBar": 1,
+  "stepsPerBeat": 4,
+  "swing": 0.25,
+  "volume": 0.8,
+  "patterns": [
+    {
+      "name": "A",
+      "kind": "drumkit",
+      "bars": 4,
+      "tracks": [
+        { "name": "Kick",    "sound": "kit:kick",         "volume": 1.0, "pan":  0.0, "mute": false },
+        { "name": "My Clap", "sound": "samples/clap.wav", "volume": 0.8, "pan": -0.2, "mute": true }
+      ],
+      "rows": [
+        [1, 0, 0, 0,   1, 0, 0, 0,   1, 0, 0, 0,   1, 0, 0.5, 0],
+        [0, 0, 1, 0,   0, 0, 1, 0,   0, 0, 1, 0,   0, 0, 1, 0]
+      ]
+    }
+  ],
+  "channels": [
+    { "name": "Drums", "enabled": true, "clips": [
+        { "pattern": "A", "start": 0,  "repeat": 2 },
+        { "pattern": "A", "start": 12, "repeat": 1 } ] },
+    { "name": "Off", "enabled": false, "clips": [] }
+  ]
+})json";
 
 Klang gleichKlang(int frames, float wert)
 {
@@ -138,53 +188,45 @@ float linksBei(const std::vector<float>& block, std::int64_t frame)
 // Modell und Datei
 // =============================================================================
 
-TEST_CASE("Loop Modell: Raster, Durchlauf und Abfolge")
+TEST_CASE("Loop Modell: Kanaele, Clips und die Laenge eines Durchlaufs")
 {
-    Loop loop = beispielLoop(QStringLiteral("kit:clap"));
-    QStringList bericht;
-    loop.richte(&bericht);
-    CHECK(bericht.isEmpty());
-    CHECK(loop.schritteJeTakt() == 16);
-    CHECK(loop.durchlaufSchritte() == 128);
-    CHECK(loop.durchlaufMs() == doctest::Approx(16000.0));
-    CHECK(loop.ablaufMuster().size() == 8u);
-    CHECK(loop.ablaufMuster()[3] == loop.findeMuster(QStringLiteral("Fill")));
+    Loop loop = dateiLoop(QStringLiteral("kit:clap"));
+    CHECK(loop.schritteJeTakt() == 4);
+    REQUIRE(loop.kanaele.size() == 2u);
+    REQUIRE(loop.kanaele[0].clips.size() == 2u);
+    // ein Clip ist immer ein Vielfaches seines Musters lang
+    CHECK(loop.clipTakte(loop.kanaele[0].clips[0]) == 8);
+    CHECK(loop.clipTakte(loop.kanaele[0].clips[1]) == 4);
+    // der Durchlauf endet mit dem letzten Clip; die Luecke davor ist Stille
+    CHECK(loop.durchlaufTakte() == 16);
+    CHECK(loop.durchlaufSchritte() == 64);
+    CHECK(loop.durchlaufMs() == doctest::Approx(64 * 60000.0 / 97.5 / 4));
+    CHECK(loop.klangNamen() == QStringList{QStringLiteral("kit:kick"), QStringLiteral("kit:clap")});
 
-    SUBCASE("ohne Abfolge spielt das erste Muster")
+    SUBCASE("ein Kanal, der aus ist, zaehlt fuer die Laenge mit")
     {
-        loop.abfolge.clear();
-        REQUIRE(loop.ablaufMuster().size() == 1u);
-        CHECK(loop.ablaufMuster()[0] == &loop.muster[0]);
-        CHECK(loop.durchlaufSchritte() == 16);
-    }
-    SUBCASE("ein Name, den es nicht gibt, ist ein Takt Stille und steht im Bericht")
-    {
-        loop.abfolge = {QStringLiteral("Grund"), QStringLiteral("Gibtsnicht")};
-        loop.richte(&bericht);
-        REQUIRE(bericht.size() == 1);
-        CHECK(bericht[0] == QStringLiteral("Pattern not found: Gibtsnicht"));
-        CHECK(loop.ablaufMuster()[1] == nullptr);
-        CHECK(loop.durchlaufSchritte() == 32);
+        loop.kanaele[1].clips = {{QStringLiteral("A"), 16, 1}};
+        CHECK(loop.durchlaufTakte() == 20);
     }
     SUBCASE("ein leerer Loop ist ein Takt Stille")
     {
         Loop leer;
         leer.richte();
-        REQUIRE(leer.ablaufMuster().size() == 1u);
-        CHECK(leer.ablaufMuster()[0] == nullptr);
+        CHECK(leer.durchlaufTakte() == 1);
         CHECK(leer.durchlaufSchritte() == 16);
         CHECK(leer.durchlaufMs() == doctest::Approx(2000.0));
+        CHECK(leer.klangNamen().isEmpty());
+        CHECK(leer.laut == 0.5);  // die Vorgabe laesst Luft nach oben
     }
-    SUBCASE("ein Muster ueber zwei Takte im Dreivierteltakt mit Triolen")
+    SUBCASE("jeder Klang einmal, Spuren ohne Klang zaehlen nicht")
     {
-        loop.schlaegeJeTakt = 3;
-        loop.schritteJeSchlag = 3;
-        loop.muster[0].takte = 2;
-        loop.abfolge = {QStringLiteral("Grund")};
-        loop.richte();
-        CHECK(loop.schritteJeTakt() == 9);
-        CHECK(loop.durchlaufSchritte() == 18);
-        CHECK(loop.muster[0].zeilen[0].size() == 18u);
+        Muster zwei = loop.muster[0];
+        zwei.name = QStringLiteral("B");
+        zwei.spuren[0].klang.clear();
+        zwei.spuren.push_back({QStringLiteral("Tom"), QStringLiteral("kit:tom"), 1.0, 0.0, false});
+        loop.muster.push_back(zwei);
+        CHECK(loop.klangNamen() == QStringList{QStringLiteral("kit:kick"), QStringLiteral("kit:clap"),
+                                               QStringLiteral("kit:tom")});
     }
 }
 
@@ -196,14 +238,20 @@ TEST_CASE("Loop Modell: richte bringt Unsinn in Ordnung")
     loop.schritteJeSchlag = 99;
     loop.swing = 2.0;
     loop.laut = -1.0;
-    loop.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 7.0, -3.0, false},
-                   {QStringLiteral("B"), QStringLiteral("kit:b"), 1.0, 0.0, false}};
     Muster ohneName;
-    ohneName.takte = 0;
+    ohneName.takte = 1;  // kuerzer als die kuerzeste Laenge
+    ohneName.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 7.0, -3.0, false},
+                       {QStringLiteral("B"), QStringLiteral("kit:b"), 1.0, 0.0, false}};
     ohneName.zeilen = {{3.0, -1.0, 0.5}};  // eine Zeile zu wenig, zu kurz, Werte ausserhalb
     Muster doppelt;
     doppelt.name = QStringLiteral("Pattern 1");
+    doppelt.takte = 999;
     loop.muster = {ohneName, doppelt};
+    loop.kanaele = {{QStringLiteral("K"),
+                     true,
+                     {{QStringLiteral("Pattern 1"), 6, 0},      // spaeter, ohne Wiederholung
+                      {QStringLiteral("Gibtsnicht"), 2, 1},     // ohne Muster
+                      {QStringLiteral("Pattern 1"), -3, 2}}}};  // vor dem Anfang, ueberlappt den ersten
     QStringList bericht;
     loop.richte(&bericht);
 
@@ -212,69 +260,42 @@ TEST_CASE("Loop Modell: richte bringt Unsinn in Ordnung")
     CHECK(loop.schritteJeSchlag == kRasterMax);
     CHECK(loop.swing == 1.0);
     CHECK(loop.laut == 0.0);
-    CHECK(loop.spuren[0].laut == 1.0);
-    CHECK(loop.spuren[0].pan == -1.0);
     CHECK(loop.muster[0].name == QStringLiteral("Pattern 1"));
-    CHECK(loop.muster[0].takte == 1);
+    CHECK(loop.muster[0].takte == kTakteMin);
+    CHECK(loop.muster[1].takte == kTakteMax);
+    CHECK(loop.muster[0].spuren[0].laut == 1.0);
+    CHECK(loop.muster[0].spuren[0].pan == -1.0);
     REQUIRE(loop.muster[0].zeilen.size() == 2u);
-    REQUIRE(loop.muster[0].zeilen[0].size() == 16u);
+    REQUIRE(loop.muster[0].zeilen[0].size() == static_cast<std::size_t>(kTakteMin * kRasterMax));
     CHECK(loop.muster[0].zeilen[0][0] == 1.0);
     CHECK(loop.muster[0].zeilen[0][1] == 0.0);
     CHECK(loop.muster[0].zeilen[0][2] == 0.5);
     CHECK(loop.muster[0].zeilen[0][3] == 0.0);
-    CHECK(loop.muster[0].zeilen[1].size() == 16u);
-    REQUIRE(bericht.size() == 1);
+    CHECK(loop.muster[0].zeilen[1].size() == loop.muster[0].zeilen[0].size());
+
+    // der Clip ohne Muster ist weg; die beiden anderen: sortiert, ab Takt 0,
+    // der spaetere beginnt, wo der fruehere endet (2 x 4 Takte)
+    REQUIRE(loop.kanaele[0].clips.size() == 2u);
+    CHECK(loop.kanaele[0].clips[0] == LoopClip{QStringLiteral("Pattern 1"), 0, 2});
+    CHECK(loop.kanaele[0].clips[1] == LoopClip{QStringLiteral("Pattern 1"), 8, 1});
+    REQUIRE(bericht.size() == 2);
     CHECK(bericht[0] == QStringLiteral("Pattern name used twice: Pattern 1"));
+    CHECK(bericht[1] == QStringLiteral("Pattern not found: Gibtsnicht"));
 
     loop.bpm = std::numeric_limits<double>::quiet_NaN();
     loop.richte();
     CHECK(loop.bpm == 120.0);
 }
 
-TEST_CASE("Loop Datei: das Beispiel aus dem Konzept wird so gelesen, wie es dort steht")
+TEST_CASE("Loop Datei: eine Datei wird so gelesen, wie sie dasteht")
 {
-    const char* text = R"json({
-      "format": "lumiviz-loop",
-      "version": 1,
-      "bpm": 120.0,
-      "beatsPerBar": 4,
-      "stepsPerBeat": 4,
-      "swing": 0.0,
-      "volume": 1.0,
-      "tracks": [
-        { "name": "Kick",    "sound": "kit:kick",         "volume": 1.0, "pan":  0.0, "mute": false },
-        { "name": "Snare",   "sound": "kit:snare",        "volume": 0.9, "pan":  0.0, "mute": false },
-        { "name": "Hi-Hat",  "sound": "kit:hat_closed",   "volume": 0.6, "pan":  0.2, "mute": false },
-        { "name": "My Clap", "sound": "samples/clap.wav", "volume": 0.8, "pan": -0.2, "mute": false }
-      ],
-      "patterns": [
-        { "name": "Grund", "bars": 1, "rows": [
-            [1,0,0,0,  1,0,0,0,  1,0,0,0,  1,0,0,0],
-            [0,0,0,0,  1,0,0,0,  0,0,0,0,  1,0,0,0],
-            [1,0,0.5,0,  1,0,0.5,0,  1,0,0.5,0,  1,0,0.5,0],
-            [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0] ] },
-        { "name": "Fill", "bars": 1, "rows": [
-            [1,0,0,0,  1,0,0,0,  1,0,0,0,  0,0,0,0],
-            [0,0,0,0,  1,0,0,0,  0,0,0.6,0.7,  0.8,0.9,1,1],
-            [1,0,0.5,0,  1,0,0.5,0,  0,0,0,0,  0,0,0,0],
-            [0,0,0,0,  0,0,0,0,  0,0,0,0,  1,0,0,0] ] },
-        { "name": "Break", "bars": 1, "rows": [
-            [1,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-            [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0],
-            [1,0,1,0,  1,0,1,0,  1,0,1,0,  1,0,1,0],
-            [0,0,0,0,  0,0,0,0,  0,0,0,0,  0,0,0,0] ] }
-      ],
-      "sequence": ["Grund", "Grund", "Grund", "Fill", "Grund", "Grund", "Grund", "Break"]
-    })json";
     QJsonParseError fehler;
-    const QJsonDocument doc = QJsonDocument::fromJson(QByteArray(text), &fehler);
+    const QJsonDocument doc = QJsonDocument::fromJson(QByteArray(kDateiText), &fehler);
     REQUIRE(fehler.error == QJsonParseError::NoError);
 
     Loop gelesen;
     REQUIRE(ausJson(doc.object(), gelesen));
-    Loop soll = beispielLoop(QStringLiteral("samples/clap.wav"));
-    soll.richte();
-    CHECK(gelesen == soll);
+    CHECK(gelesen == dateiLoop(QStringLiteral("samples/clap.wav")));
 
     SUBCASE("und kommt aus dem eigenen JSON gleich wieder zurueck")
     {
@@ -289,16 +310,35 @@ TEST_CASE("Loop Datei: das Beispiel aus dem Konzept wird so gelesen, wie es dort
         Loop leiser;
         REQUIRE(ausJson(ohne, leiser));
         CHECK(leiser.laut == 0.5);
-        CHECK(Loop{}.laut == 0.5);
     }
-    SUBCASE("ein anderes Format ist kein Loop, der Loop bleibt, wie er war")
+    SUBCASE("ein anderes Format oder die Fassung 1 ist kein Loop, der Loop bleibt, wie er war")
     {
-        QJsonObject fremd = doc.object();
-        fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-composition");
         Loop bleibt = gelesen;
         bleibt.bpm = 99.0;
+        QJsonObject fremd = doc.object();
+        fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-composition");
         CHECK(!ausJson(fremd, bleibt));
+        QJsonObject alt = doc.object();
+        alt[QStringLiteral("version")] = 1;
+        CHECK(!ausJson(alt, bleibt));
         CHECK(bleibt.bpm == 99.0);
+    }
+    SUBCASE("ein Muster unbekannter Art bleibt weg, seine Clips auch — beides steht im Bericht")
+    {
+        QJsonObject neuer = doc.object();
+        QJsonArray muster = neuer.value(QStringLiteral("patterns")).toArray();
+        QJsonObject erstes = muster[0].toObject();
+        erstes[QStringLiteral("kind")] = QStringLiteral("instrument");
+        muster[0] = erstes;
+        neuer[QStringLiteral("patterns")] = muster;
+        Loop ohne;
+        QStringList bericht;
+        REQUIRE(ausJson(neuer, ohne, {}, &bericht));
+        CHECK(ohne.muster.empty());
+        CHECK(ohne.kanaele[0].clips.empty());
+        REQUIRE(bericht.size() >= 2);
+        CHECK(bericht[0] == QStringLiteral("Unknown pattern kind 'instrument': A"));
+        CHECK(bericht.contains(QStringLiteral("Pattern not found: A")));
     }
 }
 
@@ -312,11 +352,7 @@ TEST_CASE("Loop Datei: speichern und laden, Sample-Pfade relativ zur Datei")
         QFile f(clap);
         REQUIRE(f.open(QIODevice::WriteOnly));
     }
-    Loop loop = beispielLoop(clap);
-    loop.bpm = 97.5;
-    loop.swing = 0.25;
-    loop.spuren[1].stumm = true;
-    loop.richte();
+    const Loop loop = dateiLoop(clap);
     const QString pfad = ordner.filePath(QStringLiteral("drums.lvloop"));
     REQUIRE(speichereLoop(loop, pfad));
 
@@ -327,13 +363,15 @@ TEST_CASE("Loop Datei: speichern und laden, Sample-Pfade relativ zur Datei")
     CHECK(inhalt.contains("\"samples/clap.wav\""));
     CHECK(inhalt.contains("\"kit:kick\""));
     CHECK(!inhalt.contains(ordner.path().toUtf8()));
+    // die Schritte einer Spur stehen auf EINER Zeile
+    CHECK(inhalt.contains("[1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0]"));
 
     Loop gelesen;
     QStringList bericht;
     REQUIRE(ladeLoop(pfad, gelesen, &bericht));
     CHECK(bericht.isEmpty());
     CHECK(gelesen == loop);
-    CHECK(gelesen.spuren[3].klang == clap);
+    CHECK(gelesen.muster[0].spuren[1].klang == clap);
 
     SUBCASE("fehlt das Sample, steht es im Bericht — geladen wird trotzdem")
     {
@@ -367,22 +405,22 @@ TEST_CASE("Loop Datei: das Beispiel in asset/loop laedt ohne Bericht, seine Klae
     QStringList bericht;
     REQUIRE(ladeLoop(ordner.filePath(QStringLiteral("drums_demo.lvloop")), loop, &bericht));
     CHECK(bericht.isEmpty());
-    CHECK(loop.spuren.size() == 6u);
-    CHECK(loop.muster.size() == 3u);
-    CHECK(loop.durchlaufSchritte() == 128);
-    for (const Spur& spur : loop.spuren)
+    CHECK(loop.muster.size() == 4u);
+    CHECK(loop.kanaele.size() == 2u);
+    CHECK(loop.durchlaufTakte() == 16);
+    const QStringList namen = loop.klangNamen();
+    CHECK(namen.size() == 6);
+    for (const QString& klang : namen)
     {
-        REQUIRE_MESSAGE(istKitKlang(spur.klang), spur.klang.toStdString());
-        const QString datei = QStringLiteral("kit/%1.wav").arg(spur.klang.mid(4));
+        REQUIRE_MESSAGE(istKitKlang(klang), klang.toStdString());
+        const QString datei = QStringLiteral("kit/%1.wav").arg(klang.mid(4));
         CHECK_MESSAGE(ordner.exists(datei), datei.toStdString());
     }
     // jeder Klang des Kits kommt im Beispiel vor
     for (const QString& datei : QDir(ordner.filePath(QStringLiteral("kit"))).entryList({QStringLiteral("*.wav")}))
     {
         const QString klang = QStringLiteral("kit:") + QFileInfo(datei).completeBaseName();
-        const bool benutzt = std::any_of(loop.spuren.begin(), loop.spuren.end(),
-                                         [&klang](const Spur& spur) { return spur.klang == klang; });
-        CHECK_MESSAGE(benutzt, klang.toStdString());
+        CHECK_MESSAGE(namen.contains(klang), klang.toStdString());
     }
 }
 
@@ -390,94 +428,144 @@ TEST_CASE("Loop Datei: das Beispiel in asset/loop laedt ohne Bericht, seine Klae
 // Rechenkern: der Ablauf
 // =============================================================================
 
-TEST_CASE("Loop Ablauf: Stellen und Lautstaerken der Schlaege")
+TEST_CASE("Loop Ablauf: Stimmen, Stellen und Lautstaerken der Schlaege")
 {
-    Loop loop = beispielLoop(QStringLiteral("kit:clap"));
-    loop.abfolge = {QStringLiteral("Grund")};
-    loop.richte();
+    Loop loop = drumLoop();
     const Ablauf ablauf = plane(loop, kKernRate);
 
     CHECK(ablauf.rate == kKernRate);
-    CHECK(ablauf.durchlaufFrames == 88200);
-    REQUIRE(ablauf.spuren.size() == 4u);
-    // Kick auf 1, 5, 9, 13
-    REQUIRE(ablauf.spuren[0].size() == 4u);
-    CHECK(ablauf.spuren[0][0].frame == 0);
-    CHECK(ablauf.spuren[0][1].frame == 22050);
-    CHECK(ablauf.spuren[0][2].frame == 44100);
-    CHECK(ablauf.spuren[0][3].frame == 66150);
-    CHECK(ablauf.spuren[0][0].links == 1.0f);
-    CHECK(ablauf.spuren[0][0].rechts == 1.0f);
+    CHECK(ablauf.schrittFrames == doctest::Approx(5512.5));
+    CHECK(ablauf.durchlaufFrames == 352800);  // vier Takte zu 16 Schritten
+    CHECK(ablauf.klangNamen == QStringList{QStringLiteral("kit:kick"), QStringLiteral("kit:snare"),
+                                           QStringLiteral("kit:hat_closed")});
+    // je Spur eine Stimme; zwei Spuren teilen sich den Klang, nicht die Stimme
+    REQUIRE(ablauf.stimmen.size() == 4u);
+    CHECK(ablauf.stimmen[0].klang == 0);
+    CHECK(ablauf.stimmen[1].klang == 1);
+    CHECK(ablauf.stimmen[2].klang == 2);
+    CHECK(ablauf.stimmen[3].klang == 0);
+    // Kick auf 1, 5, 9, 13 des ersten Takts
+    const std::vector<Schlag>& kick = ablauf.stimmen[0].schlaege;
+    REQUIRE(kick.size() == 4u);
+    CHECK(kick[0].frame == 0);
+    CHECK(kick[1].frame == 22050);
+    CHECK(kick[2].frame == 44100);
+    CHECK(kick[3].frame == 66150);
+    CHECK(kick[0].links == 1.0f);
+    CHECK(kick[0].rechts == 1.0f);
     // Snare: Spur 0.9
-    REQUIRE(ablauf.spuren[1].size() == 2u);
-    CHECK(ablauf.spuren[1][0].links == doctest::Approx(0.9f));
+    REQUIRE(ablauf.stimmen[1].schlaege.size() == 2u);
+    CHECK(ablauf.stimmen[1].schlaege[0].links == doctest::Approx(0.9f));
     // Hi-Hat: Spur 0.6, Panorama 0.2 nach rechts — links faellt ab, rechts bleibt
-    REQUIRE(ablauf.spuren[2].size() == 8u);
-    CHECK(ablauf.spuren[2][0].links == doctest::Approx(0.48f));
-    CHECK(ablauf.spuren[2][0].rechts == doctest::Approx(0.6f));
-    CHECK(ablauf.spuren[2][1].frame == 11025);  // Schritt 3
-    CHECK(ablauf.spuren[2][1].links == doctest::Approx(0.24f));
-    CHECK(ablauf.spuren[2][1].rechts == doctest::Approx(0.3f));
-    // die Spur ohne Schritte
-    CHECK(ablauf.spuren[3].empty());
+    const std::vector<Schlag>& hat = ablauf.stimmen[2].schlaege;
+    REQUIRE(hat.size() == 2u);
+    CHECK(hat[0].links == doctest::Approx(0.48f));
+    CHECK(hat[0].rechts == doctest::Approx(0.6f));
+    CHECK(hat[1].frame == 11025);  // Schritt 3
+    CHECK(hat[1].links == doctest::Approx(0.24f));
+    CHECK(hat[1].rechts == doctest::Approx(0.3f));
+    // der letzte Schritt des Musters: 63 x 5512,5 = 347287,5
+    REQUIRE(ablauf.stimmen[3].schlaege.size() == 1u);
+    CHECK(ablauf.stimmen[3].schlaege[0].frame == 347288);
 
     SUBCASE("die Lautstaerke des Loops gilt fuer alle Spuren")
     {
         loop.laut = 0.5;
         const Ablauf leiser = plane(loop, kKernRate);
-        CHECK(leiser.spuren[0][0].links == 0.5f);
-        CHECK(leiser.spuren[2][0].rechts == doctest::Approx(0.3f));
+        CHECK(leiser.stimmen[0].schlaege[0].links == 0.5f);
+        CHECK(leiser.stimmen[2].schlaege[0].rechts == doctest::Approx(0.3f));
     }
-    SUBCASE("eine stumme Spur hat keine Schlaege")
+    SUBCASE("eine stumme Spur hat keine Stimme")
     {
-        loop.spuren[0].stumm = true;
+        loop.muster[0].spuren[0].stumm = true;
         const Ablauf ohneKick = plane(loop, kKernRate);
-        CHECK(ohneKick.spuren[0].empty());
-        CHECK(ohneKick.spuren[1].size() == 2u);
+        REQUIRE(ohneKick.stimmen.size() == 3u);
+        CHECK(ohneKick.stimmen[0].klang == 1);
+        CHECK(ohneKick.durchlaufFrames == 352800);
     }
-    SUBCASE("die Abfolge reiht die Muster hintereinander")
+    SUBCASE("ein Kanal, der aus ist, hat keine Stimmen — der Durchlauf bleibt gleich lang")
     {
-        loop.abfolge = {QStringLiteral("Break"), QStringLiteral("Gibtsnicht"), QStringLiteral("Grund")};
-        const Ablauf folge = plane(loop, kKernRate);
-        CHECK(folge.durchlaufFrames == 3 * 88200);
-        // Kick: einmal im Break, nichts im Takt Stille, viermal im Grund
-        REQUIRE(folge.spuren[0].size() == 5u);
-        CHECK(folge.spuren[0][0].frame == 0);
-        CHECK(folge.spuren[0][1].frame == 2 * 88200);
-        CHECK(folge.spuren[0][4].frame == 2 * 88200 + 66150);
+        loop.kanaele[0].an = false;
+        const Ablauf still = plane(loop, kKernRate);
+        CHECK(still.stimmen.empty());
+        CHECK(still.durchlaufFrames == 352800);
+    }
+    SUBCASE("ein Clip wiederholt sein Muster")
+    {
+        loop.kanaele[0].clips[0].wiederholungen = 2;
+        const Ablauf doppelt = plane(loop, kKernRate);
+        CHECK(doppelt.durchlaufFrames == 2 * 352800);
+        REQUIRE(doppelt.stimmen.size() == 4u);  // dieselben Stimmen, mehr Schlaege
+        REQUIRE(doppelt.stimmen[0].schlaege.size() == 8u);
+        CHECK(doppelt.stimmen[0].schlaege[4].frame == 352800);
+        CHECK(doppelt.stimmen[0].schlaege[7].frame == 352800 + 66150);
+    }
+    SUBCASE("ein Clip beginnt an seinem Takt, davor ist Stille")
+    {
+        loop.kanaele[0].clips[0].startTakt = 4;
+        const Ablauf spaeter = plane(loop, kKernRate);
+        CHECK(spaeter.durchlaufFrames == 2 * 352800);
+        CHECK(spaeter.stimmen[0].schlaege[0].frame == 352800);
+    }
+    SUBCASE("zwei Clips desselben Musters im Kanal sind dieselben Stimmen")
+    {
+        loop.kanaele[0].clips.push_back({QStringLiteral("Drums"), 8, 1});
+        const Ablauf zwei = plane(loop, kKernRate);
+        CHECK(zwei.durchlaufFrames == 3 * 352800);
+        REQUIRE(zwei.stimmen.size() == 4u);
+        REQUIRE(zwei.stimmen[0].schlaege.size() == 8u);
+        CHECK(zwei.stimmen[0].schlaege[4].frame == 2 * 352800);
+    }
+    SUBCASE("dasselbe Muster in einem zweiten Kanal sind eigene Stimmen")
+    {
+        loop.kanaele.push_back({QStringLiteral("K2"), true, {{QStringLiteral("Drums"), 0, 1}}});
+        const Ablauf zwei = plane(loop, kKernRate);
+        CHECK(zwei.stimmen.size() == 8u);
+        CHECK(zwei.durchlaufFrames == 352800);
     }
     SUBCASE("das Tempo und die Abtastrate bestimmen die Stellen")
     {
         loop.bpm = 60.0;
-        CHECK(plane(loop, kKernRate).spuren[0][1].frame == 44100);
-        CHECK(plane(loop, 48000).spuren[0][1].frame == 48000);
-        CHECK(plane(loop, 48000).durchlaufFrames == 4 * 48000);
+        CHECK(plane(loop, kKernRate).stimmen[0].schlaege[1].frame == 44100);
+        CHECK(plane(loop, 48000).stimmen[0].schlaege[1].frame == 48000);
+        CHECK(plane(loop, 48000).durchlaufFrames == 16 * 48000);
         CHECK(plane(loop, 0).durchlaufFrames == 0);
+        CHECK(plane(loop, 0).stimmen.empty());
+    }
+    SUBCASE("eine Spur ohne Klang hat eine Stimme, die schweigt")
+    {
+        loop.muster[0].spuren[1].klang.clear();
+        const Ablauf ohne = plane(loop, kKernRate);
+        CHECK(ohne.klangNamen.size() == 2);
+        CHECK(ohne.stimmen[1].klang == -1);
     }
 }
 
 TEST_CASE("Loop Ablauf: Swing verzoegert jeden zweiten Schritt")
 {
-    Loop loop = einSchlagLoop({1, 1, 1, 1});
+    Loop loop = kleinLoop({1, 1, 1, 1});
     {
         const Ablauf gerade = plane(loop, kKernRate);
-        REQUIRE(gerade.spuren[0].size() == 4u);
-        CHECK(gerade.durchlaufFrames == 22050);
-        CHECK(gerade.spuren[0][1].frame == 5513);   // 5512,5 gerundet
-        CHECK(gerade.spuren[0][2].frame == 11025);
-        CHECK(gerade.spuren[0][3].frame == 16538);  // 16537,5 gerundet
+        REQUIRE(gerade.stimmen.size() == 1u);
+        const std::vector<Schlag>& s = gerade.stimmen[0].schlaege;
+        REQUIRE(s.size() == 4u);
+        CHECK(gerade.durchlaufFrames == kKlein);
+        CHECK(s[1].frame == 5513);   // 5512,5 gerundet
+        CHECK(s[2].frame == 11025);
+        CHECK(s[3].frame == 16538);  // 16537,5 gerundet
     }
     loop.swing = 1.0;  // ein halber Schritt
     {
         const Ablauf voll = plane(loop, kKernRate);
-        CHECK(voll.durchlaufFrames == 22050);
-        CHECK(voll.spuren[0][0].frame == 0);
-        CHECK(voll.spuren[0][1].frame == 8269);   // 1,5 Schritte = 8268,75
-        CHECK(voll.spuren[0][2].frame == 11025);  // der dritte bleibt
-        CHECK(voll.spuren[0][3].frame == 19294);  // 3,5 Schritte = 19293,75
+        const std::vector<Schlag>& s = voll.stimmen[0].schlaege;
+        CHECK(voll.durchlaufFrames == kKlein);
+        CHECK(s[0].frame == 0);
+        CHECK(s[1].frame == 8269);   // 1,5 Schritte = 8268,75
+        CHECK(s[2].frame == 11025);  // der dritte bleibt
+        CHECK(s[3].frame == 19294);  // 3,5 Schritte = 19293,75
     }
     loop.swing = 0.5;
-    CHECK(plane(loop, kKernRate).spuren[0][1].frame == 6891);  // 1,25 Schritte = 6890,625
+    CHECK(plane(loop, kKernRate).stimmen[0].schlaege[1].frame == 6891);  // 1,25 Schritte = 6890,625
 }
 
 // =============================================================================
@@ -486,11 +574,10 @@ TEST_CASE("Loop Ablauf: Swing verzoegert jeden zweiten Schritt")
 
 TEST_CASE("Loop Rechenkern: jeder Schlag liegt auf dem Abtastwert, mit seiner Lautstaerke")
 {
-    const Loop loop = einSchlagLoop({1, 0, 0.5, 0});
-    const Ablauf ablauf = plane(loop, kKernRate);
+    const Ablauf ablauf = plane(kleinLoop({1, 0, 0.5, 0}), kKernRate);
     Klang klang;
     klang.daten = {0.1f, -0.1f, 0.2f, -0.2f, 0.3f, -0.3f};  // drei Abtastwerte, rechts gespiegelt
-    const std::vector<float> block = rechneBereich(ablauf, {klang}, 0, 2 * 22050);
+    const std::vector<float> block = rechneBereich(ablauf, {klang}, 0, static_cast<int>(2 * kKlein));
 
     int klingt = 0;
     for (std::size_t i = 0; i < block.size(); i += 2)
@@ -505,23 +592,41 @@ TEST_CASE("Loop Rechenkern: jeder Schlag liegt auf dem Abtastwert, mit seiner La
     CHECK(linksBei(block, 11025) == 0.1f * 0.5f);
     CHECK(linksBei(block, 11027) == 0.3f * 0.5f);
     // der zweite Durchlauf
-    CHECK(linksBei(block, 22049) == 0.0f);
-    CHECK(linksBei(block, 22050) == 0.1f);
-    CHECK(linksBei(block, 22050 + 11026) == 0.2f * 0.5f);
+    CHECK(linksBei(block, kKlein - 1) == 0.0f);
+    CHECK(linksBei(block, kKlein) == 0.1f);
+    CHECK(linksBei(block, kKlein + 11026) == 0.2f * 0.5f);
 }
 
 TEST_CASE("Loop Rechenkern: dieselben Werte, gleich in welchen Bloecken und von wo gerechnet wird")
 {
-    Loop loop = beispielLoop(QStringLiteral("kit:clap"));
-    loop.abfolge = {QStringLiteral("Grund"), QStringLiteral("Fill")};
+    // zwei Kanaele, zwei Muster, ein wiederholter Clip, Swing; drei Klaenge
+    Loop loop;
+    loop.laut = 1.0;
+    loop.schlaegeJeTakt = 1;
     loop.swing = 0.3;
+    Muster eins;
+    eins.name = QStringLiteral("P1");
+    eins.spuren = {{QStringLiteral("A"), QStringLiteral("a.wav"), 1.0, 0.0, false},
+                   {QStringLiteral("B"), QStringLiteral("b.wav"), 0.8, -0.4, false},
+                   {QStringLiteral("C"), QStringLiteral("a.wav"), 0.5, 0.5, false}};
+    eins.zeilen = {{1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0},
+                   {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0.5, 0, 0, 0, 1, 1},
+                   {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
+    Muster zwei;
+    zwei.name = QStringLiteral("P2");
+    zwei.spuren = {{QStringLiteral("D"), QStringLiteral("c.wav"), 1.0, 0.0, false}};
+    zwei.zeilen = {{0.7, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 1}};
+    loop.muster = {eins, zwei};
+    loop.kanaele = {{QStringLiteral("K1"), true, {{QStringLiteral("P1"), 0, 2}}},
+                    {QStringLiteral("K2"), true, {{QStringLiteral("P2"), 4, 1}}}};
     loop.richte();
     const Ablauf ablauf = plane(loop, kKernRate);
-    REQUIRE(ablauf.durchlaufFrames == 2 * 88200);
+    REQUIRE(ablauf.durchlaufFrames == 2 * kKlein);
+    REQUIRE(ablauf.klangNamen.size() == 3);
+    REQUIRE(ablauf.stimmen.size() == 4u);
     // Klaenge verschieden lang: kuerzer und laenger als der Abstand der Schlaege
-    const std::vector<Klang> klaenge = {bunterKlang(3000, 1), bunterKlang(9000, 2), bunterKlang(700, 3),
-                                        bunterKlang(20000, 4)};
-    const int gesamt = 3 * 2 * 88200;  // drei Durchlaeufe
+    const std::vector<Klang> klaenge = {bunterKlang(3000, 1), bunterKlang(9000, 2), bunterKlang(20000, 4)};
+    const int gesamt = static_cast<int>(3 * 2 * kKlein);  // drei Durchlaeufe
     const std::vector<float> amStueck = rechneBereich(ablauf, klaenge, 0, gesamt);
 
     SUBCASE("in ungleichen Bloecken")
@@ -539,7 +644,7 @@ TEST_CASE("Loop Rechenkern: dieselben Werte, gleich in welchen Bloecken und von 
     }
     SUBCASE("mitten hinein, auch ueber die Grenze eines Durchlaufs")
     {
-        for (const std::int64_t von : {std::int64_t{200000}, std::int64_t{2 * 88200 - 2500}, std::int64_t{88200 + 5513}})
+        for (const std::int64_t von : {std::int64_t{200000}, 2 * kKlein - 2500, kKlein + 5513})
         {
             const std::vector<float> teil = rechneBereich(ablauf, klaenge, von, 5000);
             CHECK(std::memcmp(teil.data(), amStueck.data() + 2 * von, teil.size() * sizeof(float)) == 0);
@@ -553,42 +658,63 @@ TEST_CASE("Loop Rechenkern: dieselben Werte, gleich in welchen Bloecken und von 
         const std::vector<float> ganzDavor = rechneBereich(ablauf, klaenge, -500, 100);
         CHECK(std::all_of(ganzDavor.begin(), ganzDavor.end(), [](float w) { return w == 0.0f; }));
     }
-    SUBCASE("es klingt ueberhaupt etwas")
+    SUBCASE("es klingt ueberhaupt etwas, in beiden Haelften des Durchlaufs")
     {
-        CHECK(std::any_of(amStueck.begin(), amStueck.end(), [](float w) { return w != 0.0f; }));
+        const auto klingt = [&](std::int64_t von, std::int64_t bis) {
+            return std::any_of(amStueck.begin() + 2 * von, amStueck.begin() + 2 * bis,
+                               [](float w) { return w != 0.0f; });
+        };
+        CHECK(klingt(0, kKlein));
+        CHECK(klingt(kKlein, 2 * kKlein));
     }
 }
 
-TEST_CASE("Loop Rechenkern: ein neuer Schlag schneidet den klingenden derselben Spur ab")
+TEST_CASE("Loop Rechenkern: ein neuer Schlag schneidet den klingenden derselben Stimme ab")
 {
     // zwei Schlaege im Abstand von 5513 Abtastwerten, der Klang ist 10000 lang
-    const Ablauf ablauf = plane(einSchlagLoop({1, 1, 0, 0}), kKernRate);
+    const Ablauf ablauf = plane(kleinLoop({1, 1, 0, 0}), kKernRate);
     const std::vector<float> block = rechneBereich(ablauf, {gleichKlang(10000, 1.0f)}, 0, 22050);
 
-    CHECK(linksBei(block, 5512) == 1.0f);                       // der erste allein
-    CHECK(linksBei(block, 5513) == 2.0f);                       // der zweite setzt ein, der erste noch voll
-    CHECK(linksBei(block, 5513 + 32) == 1.5f);                  // der erste auf halbem Weg
+    CHECK(linksBei(block, 5512) == 1.0f);                   // der erste allein
+    CHECK(linksBei(block, 5513) == 2.0f);                   // der zweite setzt ein, der erste noch voll
+    CHECK(linksBei(block, 5513 + 32) == 1.5f);              // der erste auf halbem Weg
     CHECK(linksBei(block, 5513 + 63) == 1.0f + 1.0f / 64.0f);
-    CHECK(linksBei(block, 5513 + kSchnittFrames) == 1.0f);      // der erste ist weg
+    CHECK(linksBei(block, 5513 + kSchnittFrames) == 1.0f);  // der erste ist weg
     CHECK(linksBei(block, 9999) == 1.0f);
-    CHECK(linksBei(block, 10000) == 1.0f);                      // ohne Schnitt endete der erste hier
-    CHECK(linksBei(block, 5513 + 9999) == 1.0f);                // der zweite klingt aus
+    CHECK(linksBei(block, 10000) == 1.0f);                  // ohne Schnitt endete der erste hier
+    CHECK(linksBei(block, 5513 + 9999) == 1.0f);            // der zweite klingt aus
     CHECK(linksBei(block, 5513 + 10000) == 0.0f);
+
+    SUBCASE("verschiedene Stimmen schneiden einander nicht — sie addieren sich")
+    {
+        Loop loop = kleinLoop({1, 0, 0, 0});
+        loop.muster[0].spuren.push_back({QStringLiteral("B"), QStringLiteral("a.wav"), 1.0, 0.0, false});
+        loop.muster[0].zeilen.push_back({0, 1, 0, 0});
+        loop.richte();
+        const std::vector<float> beide =
+            rechneBereich(plane(loop, kKernRate), {gleichKlang(10000, 1.0f)}, 0, 22050);
+        CHECK(linksBei(beide, 5513 + 200) == 2.0f);  // weit hinter jeder Blende: beide voll
+        CHECK(linksBei(beide, 9999) == 2.0f);
+        CHECK(linksBei(beide, 10000) == 1.0f);       // der erste ist ausgeklungen
+    }
 }
 
 TEST_CASE("Loop Rechenkern: der Ausklang reicht in den naechsten Durchlauf, vor dem ersten gibt es keinen")
 {
-    // ein Schlag auf dem letzten Schritt (16538), der Klang ist 10000 lang
-    const Ablauf ablauf = plane(einSchlagLoop({0, 0, 0, 1}), kKernRate);
-    const std::vector<float> block = rechneBereich(ablauf, {gleichKlang(10000, 1.0f)}, 0, 2 * 22050);
+    // ein Schlag auf dem letzten Schritt (15 x 5512,5 = 82687,5), der Klang ist 10000 lang
+    std::vector<double> zeile(16, 0.0);
+    zeile[15] = 1.0;
+    const Ablauf ablauf = plane(kleinLoop(zeile), kKernRate);
+    const std::vector<float> block =
+        rechneBereich(ablauf, {gleichKlang(10000, 1.0f)}, 0, static_cast<int>(2 * kKlein));
 
     CHECK(linksBei(block, 0) == 0.0f);  // kein Ausklang eines Durchlaufs davor
-    CHECK(linksBei(block, 16537) == 0.0f);
-    CHECK(linksBei(block, 16538) == 1.0f);
-    CHECK(linksBei(block, 22050) == 1.0f);  // ueber die Grenze hinweg
-    CHECK(linksBei(block, 26537) == 1.0f);
-    CHECK(linksBei(block, 26538) == 0.0f);
-    CHECK(linksBei(block, 22050 + 16538) == 1.0f);
+    CHECK(linksBei(block, 82687) == 0.0f);
+    CHECK(linksBei(block, 82688) == 1.0f);
+    CHECK(linksBei(block, kKlein) == 1.0f);  // ueber die Grenze hinweg
+    CHECK(linksBei(block, 92687) == 1.0f);
+    CHECK(linksBei(block, 92688) == 0.0f);
+    CHECK(linksBei(block, kKlein + 82688) == 1.0f);
 }
 
 TEST_CASE("Loop Rechenkern: wo nichts zu spielen ist, ist Stille")
@@ -601,18 +727,20 @@ TEST_CASE("Loop Rechenkern: wo nichts zu spielen ist, ist Stille")
         Loop leer;
         leer.richte();
         const Ablauf ablauf = plane(leer, kKernRate);
-        CHECK(ablauf.durchlaufFrames == 88200);
+        CHECK(ablauf.durchlaufFrames == kKlein);  // ein Takt zu 16 Schritten
         CHECK(still(rechneBereich(ablauf, {}, 0, 1000)));
     }
-    SUBCASE("eine Spur ohne Klang")
+    SUBCASE("eine Stimme ohne Klang")
     {
-        const Ablauf ablauf = plane(einSchlagLoop({1, 1, 1, 1}), kKernRate);
+        const Ablauf ablauf = plane(kleinLoop({1, 1, 1, 1}), kKernRate);
         CHECK(still(rechneBereich(ablauf, {}, 0, 1000)));
         CHECK(still(rechneBereich(ablauf, {Klang{}}, 0, 1000)));
+        const Ablauf ohneKlang = plane(kleinLoop({1, 1, 1, 1}, QString()), kKernRate);
+        CHECK(still(rechneBereich(ohneKlang, {gleichKlang(100, 1.0f)}, 0, 1000)));
     }
     SUBCASE("ein Ablauf ohne Rate")
     {
-        const Ablauf ablauf = plane(einSchlagLoop({1, 1, 1, 1}), 0);
+        const Ablauf ablauf = plane(kleinLoop({1, 1, 1, 1}), 0);
         CHECK(still(rechneBereich(ablauf, {gleichKlang(100, 1.0f)}, 0, 1000)));
     }
 }

@@ -61,18 +61,20 @@ struct SpielApp
     }
 };
 
-/// Ein Loop mit einer Spur und einem Muster von einem Schlag (vier Schritte).
+/// Ein Loop mit einem Kanal, einem Clip und einem Muster von vier Takten zu
+/// je einem Schlag (16 Schritte, bei 120 BPM 88200 Abtastwerte), mit einer Spur.
 Loop schlagLoop(std::vector<double> zeile, double bpm = 120.0)
 {
     Loop loop;
     loop.laut = 1.0;
     loop.bpm = bpm;
     loop.schlaegeJeTakt = 1;
-    loop.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 1.0, 0.0, false}};
     Muster m;
     m.name = QStringLiteral("M");
+    m.spuren = {{QStringLiteral("A"), QStringLiteral("a.wav"), 1.0, 0.0, false}};
     m.zeilen = {std::move(zeile)};
     loop.muster = {m};
+    loop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("M"), 0, 1}}}};
     loop.richte();
     return loop;
 }
@@ -119,22 +121,22 @@ bool ladeBeispiel(Loop& loop)
 TEST_CASE("Loop Klangerzeuger: rechnet sein Programm Block fuer Block und zaehlt die Stelle")
 {
     const auto programm = baueProgramm(schlagLoop({1, 0, 0.5, 1}), kSpielRate, einKlang(9000, 0.25f));
-    REQUIRE(programm->ablauf.durchlaufFrames == 22050);
+    REQUIRE(programm->ablauf.durchlaufFrames == 88200);
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(programm);
     CHECK(erzeuger.programm() == programm);
     CHECK(erzeuger.stelle() == 0);
 
     std::int64_t stelle = 0;
-    for (const int frames : {441, 220, 8167, 3, 30000})
+    for (const int frames : {441, 220, 8167, 3, 30000, 60000})
     {
         CHECK(gleich(rendere(erzeuger, frames), sollWerte(*programm, stelle, frames)));
         stelle += frames;
         CHECK(erzeuger.stelle() == stelle);
     }
     // ueber den ersten Durchlauf hinaus
-    CHECK(erzeuger.stelle() == 38831);
-    CHECK(erzeuger.stelleImDurchlauf() == 38831 - 22050);
+    CHECK(erzeuger.stelle() == 98831);
+    CHECK(erzeuger.stelleImDurchlauf() == 98831 - 88200);
 
     SUBCASE("die Stelle laesst sich setzen")
     {
@@ -148,8 +150,8 @@ TEST_CASE("Loop Klangerzeuger: rechnet sein Programm Block fuer Block und zaehlt
     {
         const auto anderes = baueProgramm(schlagLoop({1, 1, 1, 1}), kSpielRate, einKlang(9000, 0.5f));
         erzeuger.setzeProgramm(anderes);
-        CHECK(erzeuger.stelle() == 38831);  // gleiches Tempo: nichts umgerechnet
-        CHECK(gleich(rendere(erzeuger, 4000), sollWerte(*anderes, 38831, 4000)));
+        CHECK(erzeuger.stelle() == 98831);  // gleiches Tempo: nichts umgerechnet
+        CHECK(gleich(rendere(erzeuger, 4000), sollWerte(*anderes, 98831, 4000)));
     }
 }
 
@@ -181,12 +183,12 @@ TEST_CASE("Loop Klangerzeuger: ein anderes Tempo laesst die Stelle im Takt, nich
 
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(bei120);
-    erzeuger.setzeStelle(3 * 22050 + 11025);  // dritter Durchlauf, auf dem dritten Schritt
+    erzeuger.setzeStelle(3 * 88200 + 11025);  // vierter Durchlauf, auf dem dritten Schritt
     erzeuger.setzeProgramm(bei60);
-    CHECK(erzeuger.stelle() == 2 * (3 * 22050 + 11025));
+    CHECK(erzeuger.stelle() == 2 * (3 * 88200 + 11025));
     CHECK(erzeuger.stelleImDurchlauf() == 22050);  // wieder der dritte Schritt
     erzeuger.setzeProgramm(bei120);
-    CHECK(erzeuger.stelle() == 3 * 22050 + 11025);
+    CHECK(erzeuger.stelle() == 3 * 88200 + 11025);
 }
 
 // =============================================================================
@@ -245,25 +247,41 @@ TEST_CASE("Loop Kit: die Engine dekodiert die Klaenge — Stereo, in der verlang
     CHECK(engine.decodeStereo(QStringLiteral("C:/gibts/nicht.wav"), 44100, 30.0).empty());
     CHECK(engine.decodeStereo(kick, 0, 30.0).empty());
 
-    SUBCASE("ladeKlaenge: je Spur ein Klang, was fehlt, steht im Bericht")
+    SUBCASE("ladeKlaenge: je Name ein Klang, was fehlt, steht im Bericht")
     {
         Loop loop;
         REQUIRE(ladeBeispiel(loop));
+        QStringList namen = loop.klangNamen();
+        REQUIRE(namen.size() == 6);
+        REQUIRE(namen[0] == QStringLiteral("kit:kick"));
         QStringList bericht;
-        std::vector<Klang> klaenge = ladeKlaenge(loop, engine, 44100, &bericht);
+        std::vector<Klang> klaenge = ladeKlaenge(namen, engine, 44100, &bericht);
         CHECK(bericht.isEmpty());
         REQUIRE(klaenge.size() == 6u);
         for (const Klang& k : klaenge) CHECK(k.frames() > 3000);
         CHECK(klaenge[0].frames() == 22050);
 
-        loop.spuren[1].klang = QStringLiteral("kit:gibtsnicht");
-        loop.spuren[2].klang.clear();  // eine Spur ohne Klang ist kein Fehler
-        klaenge = ladeKlaenge(loop, engine, 44100, &bericht);
+        namen[1] = QStringLiteral("kit:gibtsnicht");
+        klaenge = ladeKlaenge(namen, engine, 44100, &bericht);
         REQUIRE(bericht.size() == 1);
         CHECK(bericht[0] == QStringLiteral("Sound not loaded: kit:gibtsnicht"));
         CHECK(klaenge[1].frames() == 0);
-        CHECK(klaenge[2].frames() == 0);
-        CHECK(klaenge[3].frames() > 3000);
+        CHECK(klaenge[2].frames() > 3000);
+    }
+    SUBCASE("das Beispiel uebersteuert nicht: die Summe bleibt unter 1")
+    {
+        Loop loop;
+        REQUIRE(ladeBeispiel(loop));
+        const Ablauf ablauf = plane(loop, 44100);
+        const std::vector<Klang> klaenge = ladeKlaenge(ablauf.klangNamen, engine, 44100);
+        std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
+        rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
+        float groesster = 0.0f;
+        for (const float wert : alles) groesster = std::max(groesster, std::abs(wert));
+        MESSAGE("drums_demo.lvloop: ein Durchlauf " << ablauf.durchlaufFrames << " Abtastwerte, groesster Betrag "
+                                                    << std::to_string(groesster));
+        CHECK(groesster > 0.3f);
+        CHECK(groesster < 1.0f);
     }
 }
 
@@ -284,7 +302,8 @@ TEST_CASE("Loop Wiedergabe: der Klangerzeuger spielt das Beispiel im Mixer der B
     Loop loop;
     REQUIRE(ladeBeispiel(loop));
     QStringList bericht;
-    const auto klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(loop, engine, rate, &bericht));
+    const auto klaenge =
+        std::make_shared<const std::vector<Klang>>(ladeKlaenge(loop.klangNamen(), engine, rate, &bericht));
     REQUIRE(bericht.isEmpty());
 
     Klangerzeuger erzeuger;  // lebt laenger als seine Quelle im Mixer

@@ -1,9 +1,10 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.5.0
-> **Datum:** 2026-10-10 (Session 108)
-> **Typ:** Konzept — Entscheide L1 bis L7 gefallen (Patrik S108); gebaut sind
-> Beleg, Kern, Kit und die Wiedergabe mit einem ersten Panel (Stufen 2 bis
+> **Version:** 0.6.0
+> **Datum:** 2026-10-11 (Session 108)
+> **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
+> Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
+> Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
 > 5b) — im Programm noch nicht gehört und nicht gesehen
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -15,23 +16,39 @@
 
 ## 1. Ziel
 
-Ein **Loop-Panel** nach Art des Channel Rack von FL Studio: Spuren
-untereinander, Schritte nebeneinander, es spielt Drums im Kreis. Was dort
-entsteht, liegt als Datei `.lvloop` vor und lässt sich als **Clip in einen
-Audio-Kanal des Composers** legen.
+Ein **Loop** ist ein kleines Arrangement in Takten, gebaut im **Loop-Panel**:
+Kanäle untereinander, darin Clips. Ein Clip spielt ein Muster, das in einem
+eigenen Editor-Fenster entsteht — für Drums ein Schritt-Raster nach Art des
+Channel Rack von FL Studio. Was dort entsteht, liegt als Datei `.lvloop` vor
+und lässt sich als **Clip in einen Audio-Kanal des Composers** legen.
 
 Vorgaben (Patrik S108):
 
-- **Klangquelle:** ein mitgeliefertes Kit **und** eigene Samples je Spur.
-- **Raster:** alles einstellbar — Schritte je Takt, Lautstärke je Schritt,
-  Swing, mehrere Muster.
-- **Tempo:** einstellbar, in BPM.
-- **Als Clip:** wird der Clip länger gezogen, wiederholt sich der Loop bis
-  zum Clip-Ende.
+- **Loop-Panel:** Kanäle anlegen wie im Composer. Im Kanal entsteht ein
+  leerer **Drumkit-Clip**, zu Beginn in der kürzesten Länge von 4 Takten.
+  **Edit** öffnet seinen Editor; wird das Muster dort länger, wird es der
+  Clip auch.
+- **Sequenz:** Clips verlängern, kürzen, kopieren, verschieben. Ein Clip ist
+  immer ein **Vielfaches seines Musters** lang.
+- **Kopien bleiben verbunden** (L8 a): der Rechtsklick auf einen Clip bietet
+  an, **die Basis zu bearbeiten** (gilt für alle verbundenen Clips) oder den
+  Clip **in eine neue Basis umzuwandeln** (das Muster wird kopiert, das
+  Original bleibt).
+- **Später weitere Arten von Clips:** ein **Instrument-Clip**, dessen Editor
+  je Zeile eine Tonhöhe hat und in dem jede Note ihre eigene Länge trägt —
+  für Melodien (Piano und anderes).
+- **Klangquelle der Drums:** ein mitgeliefertes Kit **und** eigene Samples je
+  Spur.
+- **Raster:** einstellbar — Schläge je Takt, Schritte je Schlag, Lautstärke
+  je Schritt, Swing.
+- **Tempo:** einstellbar, in BPM, für den ganzen Loop.
+- **Als Clip im Composer:** die `.lvloop` spielt ihr ganzes Arrangement; wird
+  der Clip länger gezogen, wiederholt es sich bis zum Clip-Ende.
 - **Zweck:** eine Erweiterung für **eigene Songs**. Drums sind der Anfang;
-  später Funktionsgeneratoren, Modulation, möglicherweise MIDI.
+  später Instrumente, Funktionsgeneratoren, Modulation, möglicherweise MIDI.
 - **Allein spielbar:** das Panel hat ein eigenes Play.
-- **Ablage:** eigene Datei `.lvloop`, in mehreren Kompositionen verwendbar.
+- **Ablage:** die `.lvloop` ist **das ganze Arrangement** mit allen
+  Einstellungen aus den Editoren — nicht ein einzelner Clip.
 
 ---
 
@@ -56,7 +73,8 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 |---|---|
 | **L1 a** | **Lebender Klangerzeuger als Quelle im Mixer.** Der Loop rechnet seinen Ton blockweise im Ton-Thread, jeder Schlag sitzt auf das Sample genau, eine Änderung im Panel gilt ab dem nächsten Block. Der Rechenkern ist eine reine Funktion „Muster plus Stelle ergibt Samples". |
 | **L2 b** | **Das BPM steht in der `.lvloop`.** Der Clip spielt die Datei ab wie einen eigenen Song; der Composer kennt kein Tempo. Zwei Loops laufen zusammen, wenn in beiden dasselbe BPM steht. |
-| **L3 c** | **Eine Datei enthält Kit, Muster und Abfolge.** Der Clip spielt die Abfolge und wiederholt sie. Der `Clip` und die `.lvcomp` bleiben unverändert. |
+| **L3 neu** | **Die Datei ist ein Arrangement in Takten:** Kanäle, darin Clips; ein Clip spielt ein Muster und ist immer ein Vielfaches davon lang. Das Muster trägt sein Kit und seine Schritte. Der Clip im Composer spielt das ganze Arrangement und wiederholt es; der `Clip` des Composers und die `.lvcomp` bleiben unverändert. (Löst L3 c vom selben Tag ab: „Kit, Muster und Abfolge als Liste".) |
+| **L8 a** | **Kopien eines Clips bleiben verbunden.** Das Muster liegt einmal in der Datei, die Clips nennen es beim Namen. Der Rechtsklick auf einen Clip bietet beides: die Basis bearbeiten (gilt für alle) oder den Clip in eine neue Basis umwandeln (das Muster wird kopiert, das Original bleibt). |
 | **L4 a** | **Wer spielt, hat den Ton — Rangfolge Composer, Loop-Panel, Player.** Play im Loop-Panel hält den Player an und gibt ihn bei Stop zurück; die Visuals reagieren auf den Loop. Hat der Composer den Ton, schweigt das Loop-Panel. |
 | **L5 a** | **Das mitgelieferte Kit wird gerechnet**, nicht bezogen: ein Skript erzeugt die WAV-Dateien, sie liegen unter `asset/`. Jede Spur kann stattdessen eine eigene Sample-Datei laden. |
 | **L7 a** | **Play im Loop-Panel ist gesperrt, solange der Composer den Ton hat**, und sagt, warum. Liegt der Loop als Clip in der Komposition, ist jede Änderung über den Composer zu hören. Spielte das Loop-Panel gerade allein, hält es an. |
@@ -84,89 +102,127 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 ### 3.2 Zurückgestellt (Patrik S108)
 
 - **Tempo der Komposition** (L2 a): später zuschaltbar, an der Komposition.
-- **Musterwahl am Clip** (L3 a): als Zugabe zu L3 c möglich; bräuchte ein
-  Feld am `Clip`.
+- **Instrument-Clip** mit Piano-Rolle und einem Klangerzeuger für Töne: eine
+  eigene Stufe nach den Drums.
 - Funktionsgeneratoren, Modulation, MIDI.
 
 ### 3.3 Noch offen
 
 - **Das Kit ist klein** (Patrik S108: klingt gut, ist aber noch eine kleine
   Sammlung): weitere Klänge mit demselben Skript — welche, nennt Patrik.
-- Das Aussehen des Panels mit Raster — vor Stufe 6 als Skizze.
+- **Der Drum-Editor** als eigenes Fenster: das Raster ist als Skizze
+  gebilligt (Patrik S108: „der pattern editor passt so"). Offen daraus:
+  wohin mit dem Panorama je Spur; lange Muster rollen oder stauchen.
+- **Das Loop-Panel mit Kanälen und Clips** — vor dem Bau als Skizze.
+- **Der Audio Browser zeigt auch `.lvloop`** (Wunsch Patrik S108): Doppelklick
+  lädt ins Loop-Panel, Ziehen in einen Audio-Kanal des Composers legt einen
+  Clip an.
 
 ---
 
-## 4. Datei `.lvloop` und Rechenkern (gebaut, Stufe 3)
+## 4. Datei `.lvloop` und Rechenkern (gebaut)
 
-Format gebilligt (Patrik S108), gebaut in `include/loop` und `src/loop`
-(`Loop.hpp`, `Rechenkern.hpp`), Namensraum `lumi::loop`. JSON, Schlüssel
-englisch wie in `.lvcomp`:
+Gebaut in `include/loop` und `src/loop` (`Loop.hpp`, `Rechenkern.hpp`),
+Namensraum `lumi::loop`. **Fassung 2** (S108): das Arrangement aus Kanälen
+und Clips, das Kit im Muster. Fassung 1 (Kit am Loop, Abfolge als Liste) gab
+es nur einen Tag; sie wird nicht gelesen. JSON, Schlüssel englisch wie in
+`.lvcomp`:
 
 ```json
 {
   "format": "lumiviz-loop",
-  "version": 1,
-  "bpm": 120.0,
+  "version": 2,
+  "bpm": 120,
   "beatsPerBar": 4,
   "stepsPerBeat": 4,
-  "swing": 0.0,
-  "volume": 1.0,
-  "tracks": [
-    { "name": "Kick",    "sound": "kit:kick",         "volume": 1.0, "pan":  0.0, "mute": false },
-    { "name": "My Clap", "sound": "samples/clap.wav", "volume": 0.8, "pan": -0.2, "mute": false }
-  ],
+  "swing": 0,
+  "volume": 0.5,
   "patterns": [
-    { "name": "Grund", "bars": 1, "rows": [
-        [1,0,0,0,  1,0,0,0,  1,0,0,0,  1,0,0,0],
-        [0,0,0,0,  0,0,0,0,  0,0,0,0,  1,0,0.5,0] ] }
+    {
+      "name": "Grund",
+      "kind": "drumkit",
+      "bars": 4,
+      "tracks": [
+        { "name": "Kick",    "sound": "kit:kick",         "volume": 1,   "pan": 0,    "mute": false },
+        { "name": "My Clap", "sound": "samples/clap.wav", "volume": 0.8, "pan": -0.2, "mute": false }
+      ],
+      "rows": [
+        [1, 0, 0, 0, 1, 0, 0, 0, "… 64 Schritte, je Spur eine Zeile"],
+        [0, 0, 0, 0, 1, 0, 0, 0, "…"]
+      ]
+    }
   ],
-  "sequence": ["Grund", "Grund", "Grund", "Grund"]
+  "channels": [
+    { "name": "Drums", "enabled": true, "clips": [
+        { "pattern": "Grund", "start": 0, "repeat": 3 },
+        { "pattern": "Grund", "start": 16, "repeat": 1 } ] }
+  ]
 }
 ```
 
 | Feld | Bedeutung | Grenzen |
 |---|---|---|
-| `bpm` | Tempo | 20 bis 400 |
-| `beatsPerBar`, `stepsPerBeat` | Raster der ganzen Datei; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
+| `bpm` | Tempo des ganzen Loops | 20 bis 400 |
+| `beatsPerBar`, `stepsPerBeat` | Raster des ganzen Loops; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
 | `swing` | verzögert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt | 0 bis 1 |
-| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips; Vorgabe 0,5 (L6 a) | 0 bis 1 |
-| `tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
-| `tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
-| `patterns[].bars` | Länge des Musters in Takten; Muster dürfen verschieden lang sein | 1 bis 16 |
-| `patterns[].rows` | je Spur eine Zeile in der Reihenfolge von `tracks`, je Schritt eine Lautstärke, 0 = aus | 0 bis 1 |
-| `sequence` | Musternamen der Reihe nach: ein Durchlauf, den der Clip wiederholt | — |
+| `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips im Composer; Vorgabe 0,5 (L6 a) | 0 bis 1 |
+| `patterns[]` | die Muster („Basen"): Name, Art, Länge und alles, was ihr Editor einstellt | — |
+| `patterns[].kind` | Art des Musters, bestimmt den Editor; heute nur `drumkit` | — |
+| `patterns[].bars` | Länge in Takten | 4 bis 64 |
+| `patterns[].tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
+| `patterns[].tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
+| `patterns[].rows` | je Spur eine Zeile, je Schritt eine Lautstärke, 0 = aus | 0 bis 1 |
+| `channels[]` | Kanäle mit Name und Schalter; ein Kanal nimmt Clips jeder Art auf | — |
+| `channels[].clips[]` | `pattern` = Name des Musters, `start` = Takt (0 = der erste), `repeat` = wie oft hintereinander | `repeat` ab 1 |
+
+Die Datei schreibt die Schritte einer Spur auf **eine Zeile** (Qt setzte
+sonst jede Zahl auf eine eigene).
+
+**Verbunden** (L8 a): Clips nennen ihr Muster beim Namen. Zwei Clips mit
+demselben Namen spielen dasselbe Muster; wer es ändert, ändert beide. „In
+eine neue Basis umwandeln" kopiert das Muster unter einem neuen Namen.
+
+**Ein Durchlauf** endet am Ende des letzten Clips, gleich ob sein Kanal an
+ist; Lücken sind Stille. Ohne Clips ist er ein Takt lang.
 
 **Beim Laden** (`Loop::richte`): Werte kommen in ihre Grenzen, jede Zeile auf
-volle Länge, ein Muster ohne Namen heißt „Pattern N". Im Bericht steht:
-`File not found: …` (Sample fehlt, die Spur bleibt stumm), `Pattern not
-found: …` (Name in der Abfolge ohne Muster — zählt als ein Takt Stille),
-`Pattern name used twice: …` (das erste gilt). Ohne Abfolge spielt das erste
-Muster; ein leerer Loop ist ein Takt Stille.
+volle Länge, ein Muster ohne Namen heißt „Pattern N"; Clips werden nach Start
+sortiert, bei Überlappung im selben Kanal beginnt der spätere, wo der frühere
+endet. Im Bericht steht: `File not found: …` (Sample fehlt, die Spur bleibt
+stumm), `Pattern not found: …` (ein Clip ohne Muster — er wird entfernt),
+`Pattern name used twice: …` (das erste gilt), `Unknown pattern kind …` (ein
+Muster einer Art, die diese Fassung nicht kennt — es bleibt weg).
 
 **Rechenkern:**
 
-- `plane(loop, rate)` übersetzt den Loop in einen `Ablauf`: je Spur die
+- `plane(loop, rate)` übersetzt den Loop in einen `Ablauf`: je **Stimme** die
   Schläge eines Durchlaufs mit Stelle in Abtastwerten und Lautstärke links
-  und rechts. Ändert sich der Loop, entsteht ein neuer Ablauf.
+  und rechts. Eine Stimme ist eine Spur eines Musters in einem Kanal. Der
+  Ablauf nennt die Klänge, die er braucht (`klangNamen`), jeden einmal.
+  Ändert sich der Loop, entsteht ein neuer Ablauf.
 - `rechne(ablauf, klaenge, von, frames, aus)` füllt einen Block. **Ohne
   Gedächtnis:** derselbe Bereich ergibt dieselben Werte, gleich in welchen
   Blöcken und von wo gerechnet wird — so lässt sich die Stelle frei setzen
   (§6). Kein Speicher, keine Datei: darf im Ton-Thread laufen.
 - Die Klänge bekommt der Kern fertig in der Abtastrate des Ablaufs
-  (`Klang`, Stereo). Sample-Dateien lesen und umrechnen ist Stufe 5.
+  (`Klang`, Stereo), je Name einen.
 
 **Von mir gesetzt, nicht entschieden:**
 
-- Ein neuer Schlag schneidet den klingenden **derselben Spur** ab, mit einer
-  Blende über 64 Abtastwerte (`kSchnittFrames`) — wie eine Drum-Maschine.
+- Ein neuer Schlag schneidet den klingenden **derselben Stimme** ab, mit
+  einer Blende über 64 Abtastwerte (`kSchnittFrames`) — wie eine
+  Drum-Maschine; auch über die Wiederholungen eines Clips und über Clips
+  desselben Musters im Kanal hinweg. Verschiedene Stimmen addieren sich.
 - Vor dem Abtastwert 0 gibt es nichts: der erste Durchlauf beginnt ohne
   Ausklang eines früheren; ab dem zweiten reicht der Ausklang über die Grenze.
-- Die Summe mehrerer Spuren wird nicht begrenzt; sie kann über 1 liegen.
+- Die Summe wird nicht begrenzt (L6 a); sie kann über 1 liegen.
+- Ein Muster ist höchstens 64 Takte lang.
+- Ein Kanal hat Name und Schalter, noch keine eigene Lautstärke.
 
 **Bewusst nicht drin** (das Format trägt eine Versionsnummer): Tonhöhe je
 Spur oder Schritt, Abschneiden zwischen Spuren (offene Hi-Hat),
 Wahrscheinlichkeit je Schritt, Solo, Effekte, verschiedene Schrittzahlen je
-Spur.
+Spur, ein eigenes Raster je Muster.
 
 ---
 
@@ -240,13 +296,16 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 |---|---|---|
 | 1 | Dieses Konzept | S108 |
 | 2 | **Beleg:** BASS nimmt eine selbst rechnende Quelle im Mixer an, die Schläge kommen auf das Sample genau (`test_LoopBelegeTon.cpp`). Scheitert er, kommt L1 noch einmal auf den Tisch. | S108, siehe §6 |
-| 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut, §4; `test_LoopKern.cpp`, elf Fälle |
+| 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut; **am selben Tag auf das Arrangement umgebaut** (Fassung 2, §4); `test_LoopKern.cpp`, zwölf Fälle |
 | 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; an einer Hörprobe gehört (Patrik: klingt gut) |
 | 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
 | 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
-| 6 | **Loop-Panel:** Raster, Spuren, Muster, Abfolge, Play, Datei-Zeile | offen |
-| 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips | offen |
+| 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | offen — zuerst die Skizze |
+| 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | offen |
+| 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | offen |
+| 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
+| 9 | **Instrument-Clip:** Piano-Rolle, Klangerzeuger für Töne | später |
 
 ---
 
@@ -317,6 +376,10 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.6.0** (S108, 2026-10-11): das Zielbild neu gefasst (Patrik): der Loop
+  ist ein Arrangement in Takten — Kanäle mit Clips, Editoren als eigene
+  Fenster, später Instrument-Clips; L3 neu, L8 a; §1 und §4 neu, Datei in
+  Fassung 2; Stufe 6 geteilt, Stufe 9 dazu; Audio Browser als Wunsch.
 - **0.5.0** (S108, 2026-10-10): Entscheid L7 a; Stufe 5b gebaut (§4b):
   Spieler mit Rangfolge, Visuals lesen vom Loop, erstes Panel.
 - **0.4.0** (S108, 2026-10-10): Entscheid L6 a (Luft nach oben, Vorgabe
