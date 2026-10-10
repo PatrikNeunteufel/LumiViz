@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.134.0
+> **Version:** 1.135.0
 > **Datum:** 2026-10-10 (Session 106)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1572,6 +1572,57 @@ Start ebenfalls. Über den Tag: Einbruch in 2 von 9 Kurzläufen ohne Last; am
 mit Einbruch von heute folgten unmittelbar auf einen Lauf mit Last (GPU 2,
 CPU 32). **Ohne Messung im Renderer selbst ist hier nichts mehr zu holen** —
 weiter mit Schritt (2) der Reihenfolge oben.
+
+**Messung im Renderer (S106, 13:52 bis 14:10) — der Rechner bremst, nicht die
+App:** `MilkdropVisualizer::onRender` schreibt für jedes Bild über der Schwelle
+(50 ms; `LUMIVIZ_MILKDROP_LANG_MS=<ms>` setzt sie) **eine** Zeile `langesBild`
+in die Trace-Datei `<TEMP>/lumiviz_milkdrop_trace.log`: Dauer, `dt` und `fps`
+wie das Preset sie sieht, Bildgröße, die Anteile der dreizehn Stufen, für die
+Shapes Skript gegen Zeichnen samt bedeckter Fläche, und für den Thread die
+verbrauchten Prozessorzyklen und den Kern. Damit an Kurzläufen wie oben
+(Start bei 6:00, *glassworks 3*, 1836 × 909, Schwelle 14 ms):
+
+| | normales Bild | Bild im Einbruch |
+|---|---|---|
+| Dauer | 14 bis 17 ms | 100 bis 155 ms |
+| Stufe shapes (1350 Instanzen) | 11 bis 14 ms | 87 bis 128 ms |
+| davon Skript / Zeichnen | 4 bis 6 / 7 bis 10 ms | 36 bis 54 / 49 bis 73 ms |
+| `per_frame`, Mesh, Waves | 0,5 bis 1,7 ms | 3,6 bis 15,6 ms |
+| bedeckte Fläche der Shapes | 0,9 bis 5 Bildschirme | 0,9 bis 1,3 Bildschirme |
+| Zyklen des Threads je Millisekunde | 2,41 bis 2,46 Mio | 2,33 bis 2,42 Mio |
+
+- **Alle Stufen werden im selben Verhältnis langsamer** (rund sieben- bis
+  achtfach), Lua-Skript und GL-Aufrufe gleichermaßen; die Arbeit je Bild ist
+  dieselbe (gleiche Instanzen, gleiche Fläche). Füllrate ist es nicht: das
+  zweite Bild eines Laufs bedeckte 307 Bildschirme und brauchte 15 ms.
+- **Der Thread rechnet durch und wartet nicht:** die Zyklen je Millisekunde
+  sind im Einbruch dieselben. Er braucht für dieselbe Arbeit die sieben- bis
+  achtfache Zeit am Prozessor.
+- **Gegenprobe außerhalb der App:** ein eigener Prozess, der neben LumiViz alle
+  20 ms dasselbe kleine Stück rechnet (Median 5,0 ms), wurde in **genau
+  denselben Sekunden** 7- bis 12-mal langsamer — viermal in 62 s, je rund 3 s
+  lang, im Abstand von 10 bis 11 s (14:09:34–37, 14:09:44–47, 14:10:05–08,
+  14:10:16–19); die langen Bilder von LumiViz liegen in denselben Sekunden.
+  Zwischen den zwei Läufen, ohne LumiViz, blieb die Probe 17 s lang ruhig.
+- **Häufigkeit über den Tag** (Kurzläufe ohne Last, in der Reihenfolge der
+  Serien): 2 von 3, 0 von 6, 2 von 4, 1 von 4, 0 von 5, 4 von 5, 2 von 2 — kein
+  klarer Verlauf, es kommt in Schüben.
+- **Das „35 fps" der ersten Beobachtung** ist der geglättete `fps`-Wert, der im
+  Einbruch von 55 auf 24 bis 31 fällt; das einzelne Bild dauert dabei rund 110 ms.
+
+**Schluss:** der Einbruch ist eine Drosselung des Prozessors für rund 3 s, die
+auch einen fremden Prozess trifft; in der Gegenprobe kam sie nur, während
+LumiViz lief (eine Probe, 62 s). *glassworks 3*
+macht sie sichtbar, weil es mit 13 bis 15 ms je Bild fast das ganze Budget
+braucht; ein Preset mit 3 ms bliebe auch achtfach gebremst unter 50 ms.
+**Nicht belegt:** wer drosselt und warum (Temperatur, Leistungsgrenze der
+Firmware, Energiesparplan „Turbo"). Das Ereignisprotokoll nennt keine
+Drosselung durch die Firmware (Kernel-Processor-Power, nur Kennung 55); es
+nennt als unterste Drosselstufe 17 % der Nennfrequenz, was zur Größe des
+Einbruchs passt — ein Indiz, kein Beleg. Temperatur und Takt wurden nicht
+gemessen (der Zähler dafür lieferte nichts). **Offen für LumiViz:** ob
+*glassworks 3* billiger werden kann — 1350 Shape-Instanzen kosten je Bild rund
+5 ms Skript-Übergabe und 7 ms für 1350 einzelne Zeichenaufrufe.
 
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
@@ -4864,6 +4915,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.135.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: Messung im Renderer (neue Trace-Zeile `langesBild`, Schwelle über `LUMIVIZ_MILKDROP_LANG_MS`) — im Einbruch werden alle Stufen gleich stark langsamer, der Thread rechnet durch, und ein unabhängiger Prozess wird in denselben Sekunden 7- bis 12-mal langsamer: der Prozessor wird für rund 3 s gedrosselt, die App bremst nicht selbst; wer drosselt, ist nicht belegt; offen, ob *glassworks 3* billiger werden kann (1350 Shape-Instanzen) |
 | 1.134.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: sechs weitere Kurzläufe ohne Last (Start 6:00 und 5:50) ohne Einbruch — die Trennung „Stelle der Musik" gegen „Abstand zum Start" ist nicht gelungen; über den Tag 2 von 9 Kurzläufen ohne Last mit Einbruch, beide unmittelbar nach einem Lauf mit Last; weiter nur mit einer Messung im Renderer |
 | 1.133.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: zwei Läufe von Patrik (mit und ohne Composer, 83 s und rund 140 s) ohne Einbruch; acht Kurzläufe bei 6:00 unter Last von außen — der Einbruch kommt in zwei von drei Läufen **ohne** Last, CPU- und GPU-Last bremsen dagegen gleichmäßig; *glassworks 3* kostet für sich 12,8 ms je Bild; offen, ob es an der Stelle der Musik oder an den Zufallswerten des Presets hängt |
 | 1.132.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: das Log der zehn Läufe genauer gelesen — der Einbruch ist kurz (rund 2 bis 4 s, etwa 8 Bilder je Sekunde, Beginn 7,8 bis 8,6 s nach der Wiederaufnahme), die Zeit liegt im `render()` der Bildquelle, bei *glassworks 3* lief nur ein Renderer; zweites Muster: ein einzelnes langes Bild rund 5 s nach der Wiederaufnahme in den acht übrigen Läufen; Ursache weiter offen, Reihenfolge der Messung vorgeschlagen. Sichttest-Listen 8 B0 und 9 F0 nennen „Composer on" (Entscheid Patrik V1: a) |

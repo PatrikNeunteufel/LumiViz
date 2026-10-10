@@ -31,6 +31,7 @@
 #include <HlslTranspiler.hpp>
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QOpenGLContext>
@@ -45,7 +46,20 @@
 // beide Seiten eines Referenzvergleichs im selben Startzustand beginnen.
 #include "visualizers/KaltstartSaat.hpp"
 
+#ifdef Q_OS_WIN
+// Diagnose S106: Zyklen und Kern des Render-Threads. Bewusst OHNE <windows.h> —
+// dessen Makros (rad2, near, far ...) treffen Namen in dieser Datei.
+extern "C"
+{
+__declspec(dllimport) void* __stdcall GetCurrentThread(void);
+__declspec(dllimport) int __stdcall QueryThreadCycleTime(void* thread,
+                                                         unsigned long long* cycles);
+__declspec(dllimport) unsigned long __stdcall GetCurrentProcessorNumber(void);
+}
+#endif
+
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 #include <utility>
@@ -63,6 +77,42 @@ namespace trace = lumi::milkdrop::trace;
 
 namespace
 {
+
+// Diagnose (S106, "MilkDrop-Presets stocken manchmal"): was drawCustomShapes im
+// laufenden Bild gebraucht hat — onRender liest es fuer die Zeile "langesBild".
+// Je Render-Thread, weil mehrere Instanzen (Kanaele des Composers) nacheinander
+// im selben Thread rechnen.
+struct ShapeMessung
+{
+    double skriptMs = 0.0;    ///< Variablen setzen, Skript, Werte lesen
+    double zeichnenMs = 0.0;  ///< Puffer fuellen und GL-Aufrufe
+    double flaeche = 0.0;     ///< bedeckte Flaeche in Bildschirmen (Summe)
+    double radMax = 0.0;      ///< groesster Radius einer Instanz
+    int instanzen = 0;
+};
+thread_local ShapeMessung g_shapeMessung;
+
+/// Prozessorzyklen, die der laufende Thread bisher verbraucht hat (nur Windows,
+/// sonst 0). Zaehlt nur, solange der Thread wirklich rechnet: wenige Zyklen bei
+/// langer Dauer heissen "hat gewartet", viele heissen "hat gerechnet".
+std::uint64_t threadZyklen()
+{
+#ifdef Q_OS_WIN
+    unsigned long long zyklen = 0;
+    if (QueryThreadCycleTime(GetCurrentThread(), &zyklen)) return zyklen;
+#endif
+    return 0;
+}
+
+/// Nummer des logischen Prozessors, auf dem der Thread gerade laeuft (-1: unbekannt)
+int threadKern()
+{
+#ifdef Q_OS_WIN
+    return static_cast<int>(GetCurrentProcessorNumber());
+#else
+    return -1;
+#endif
+}
 
 // -----------------------------------------------------------------------------------------
 // Shaders (GLSL 330 core, matching the project's other visualizers)
@@ -2622,6 +2672,34 @@ void MilkdropVisualizer::onRender(float deltaTime)
 {
     QOpenGLContext* ctx = QOpenGLContext::currentContext();
     if (ctx == nullptr) return;
+
+    // Diagnose (S106, Befund "MilkDrop-Presets stocken manchmal"): dauert ein
+    // Bild laenger als die Schwelle, nennt EINE Trace-Zeile die Anteile der
+    // Stufen — sonst nichts. Gemessen ist die CPU-Seite: was die GPU spaeter
+    // abarbeitet, faellt der Stufe zu, in der der Treiber darauf wartet.
+    // LUMIVIZ_MILKDROP_LANG_MS=<ms> setzt die Schwelle (Vorgabe 50, wie der
+    // Render-Thread).
+    static const double kLangMs = [] {
+        const double ms = qEnvironmentVariable("LUMIVIZ_MILKDROP_LANG_MS").toDouble();
+        return ms > 0.0 ? ms : 50.0;
+    }();
+    enum Stufe
+    {
+        kVorlauf, kAudio, kPerFrame, kProgramme, kMesh, kBlur, kWarp, kVektoren,
+        kShapes, kWaves, kWelleRand, kComp, kRest, kStufen
+    };
+    std::array<double, kStufen> stufeMs{};
+    QElapsedTimer bildUhr;
+    bildUhr.start();
+    const std::uint64_t zyklenBeginn = threadZyklen();
+    const int kernBeginn = threadKern();
+    qint64 stufeMarke = 0;
+    const auto stufe = [&](Stufe s) {
+        const qint64 jetzt = bildUhr.nsecsElapsed();
+        stufeMs[s] += static_cast<double>(jetzt - stufeMarke) * 1e-6;
+        stufeMarke = jetzt;
+    };
+
     {
         // Composite-Ziel VOR allen eigenen FBO-Wechseln erfassen (N1): das hier
         // gebundene Draw-FBO gehoert dem Aufrufer (Qt-Fenster ODER Chain-Buffer)
@@ -2714,9 +2792,11 @@ void MilkdropVisualizer::onRender(float deltaTime)
         m_pendingFeedbackErbe = -1.0;
     }
     if (!wasReady) m_erbeAusblendRest = 0.0;
+    stufe(kVorlauf);
 
     updateAudio(deltaTime);
     if (!m_initRan) runPerFrameInit();
+    stufe(kAudio);
 
     // --- per_frame (M2 q contract: init snapshot -> run -> frame snapshot) ----------------
     FrameVars fv;
@@ -2746,6 +2826,7 @@ void MilkdropVisualizer::onRender(float deltaTime)
     }
     pullFrameOutputs(fv);
     if (m_context != nullptr) m_context->captureFrameSnapshot();
+    stufe(kPerFrame);
 
     // --- warp + drawing into the current buffer -------------------------------------------
     // order per RenderFrame (milkdropfs.cpp:1054-1057): shapes first ("better
@@ -2798,8 +2879,11 @@ void MilkdropVisualizer::onRender(float deltaTime)
         }
     }
 
+    stufe(kProgramme);
     computeWarpMesh(fv);
+    stufe(kMesh);
     runBlurPasses(fv);  // sources the previous frame; own FBOs (before beginFrame)
+    stufe(kBlur);
     m_feedback.beginFrame();
     f->glViewport(0, 0, w, h);
     f->glDisable(GL_DEPTH_TEST);
@@ -2864,12 +2948,17 @@ void MilkdropVisualizer::onRender(float deltaTime)
             trace::log(QStringLiteral("feedbackAusblenden: abgeschlossen"));
         }
     }
+    stufe(kWarp);
     drawMotionVectors(fv);
+    stufe(kVektoren);
     drawCustomShapes();
+    stufe(kShapes);
     drawCustomWaves();
+    stufe(kWaves);
     if (m_state.basicWaveEnabled) drawBasicWave(fv);
     drawBorders(fv);
     if (fv.darkenCenter) drawDarkenCenter();
+    stufe(kWelleRand);
     if (m_frame < 6 && qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_DUMP_WARP"))
     {
         std::vector<unsigned char> px(static_cast<std::size_t>(w) * h * 4);
@@ -2882,6 +2971,7 @@ void MilkdropVisualizer::onRender(float deltaTime)
 
     // --- present (single vertical flip lives here) -----------------------------------------
     compositeToScreen(fv);
+    stufe(kComp);
     // Sprites NACH dem Composite (Referenz: DrawUserSprites auf den Backbuffer,
     // plugin.cpp:1131); burn-in zeichnet zusaetzlich in den Feedback-Buffer
     drawUserSprites();
@@ -2929,6 +3019,43 @@ void MilkdropVisualizer::onRender(float deltaTime)
                         static_cast<unsigned long long>(stand - m_randLogStand),
                         static_cast<unsigned long long>(stand));
         m_randLogStand = stand;
+    }
+
+    stufe(kRest);
+    const double bildMs = static_cast<double>(bildUhr.nsecsElapsed()) * 1e-6;
+    if (bildMs > kLangMs)
+    {
+        static const char* const kNamen[kStufen] = {
+            "vorlauf", "audio", "per_frame", "programme", "mesh", "blur", "warp",
+            "vektoren", "shapes", "waves", "welle+rand", "comp", "rest"};
+        QStringList teile;
+        for (int i = 0; i < kStufen; ++i)
+        {
+            const double ms = stufeMs[static_cast<std::size_t>(i)];
+            if (ms >= 0.5)
+                teile << QStringLiteral("%1 %2").arg(QLatin1String(kNamen[i])).arg(ms, 0, 'f', 1);
+        }
+        const ShapeMessung& sm = g_shapeMessung;
+        trace::log(QStringLiteral("langesBild f%1 '%2': %3 ms (dt=%4 fps=%5 %6x%7) | %8 || "
+                                  "shapes: %9 Instanzen, Skript %10 ms, Zeichnen %11 ms, "
+                                  "Flaeche %12 Bildschirme, rad max %13 || Thread: "
+                                  "%14 Mio Zyklen, Kern %15 -> %16")
+                       .arg(m_frame)
+                       .arg(QString::fromStdString(m_state.name))
+                       .arg(bildMs, 0, 'f', 1)
+                       .arg(deltaTime, 0, 'f', 4)
+                       .arg(m_fps, 0, 'f', 1)
+                       .arg(w)
+                       .arg(h)
+                       .arg(teile.join(QStringLiteral(" | ")))
+                       .arg(sm.instanzen)
+                       .arg(sm.skriptMs, 0, 'f', 1)
+                       .arg(sm.zeichnenMs, 0, 'f', 1)
+                       .arg(sm.flaeche, 0, 'f', 1)
+                       .arg(sm.radMax, 0, 'f', 3)
+                       .arg(static_cast<double>(threadZyklen() - zyklenBeginn) * 1e-6, 0, 'f', 1)
+                       .arg(kernBeginn)
+                       .arg(threadKern()));
     }
 
     ++m_frame;
@@ -3355,14 +3482,18 @@ void MilkdropVisualizer::drawMotionVectors(const FrameVars& fv, bool erzwungen)
 
 void MilkdropVisualizer::drawCustomShapes()
 {
+    g_shapeMessung = {};
     if (m_shapeRt.empty() || m_context == nullptr) return;
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
+    QElapsedTimer messUhr;
+    messUhr.start();
 
     for (ShapeRuntime& rt : m_shapeRt)
     {
         const int instances = std::clamp(rt.def.instances, 1, 1024);
         for (int inst = 0; inst < instances; ++inst)
         {
+            const qint64 messBeginn = messUhr.nsecsElapsed();
             // q = post-per_frame values; t1-t8 = post-init (NOT persistent)
             m_context->restoreFrameSnapshot();
             auto& e = rt.script->engine();
@@ -3425,6 +3556,15 @@ void MilkdropVisualizer::drawCustomShapes()
             const float eg = static_cast<float>(clampd(e.number("g2"), 0.0, 1.0));
             const float eb = static_cast<float>(clampd(e.number("b2"), 0.0, 1.0));
             const float ea = static_cast<float>(clampd(e.number("a2"), 0.0, 1.0));
+
+            // Diagnose (S106): Skript gegen Zeichnen, dazu die bedeckte Flaeche
+            // in Bildschirmen (NDC-Flaeche 4; je Instanz hoechstens einer)
+            const qint64 messSkript = messUhr.nsecsElapsed();
+            g_shapeMessung.skriptMs += static_cast<double>(messSkript - messBeginn) * 1e-6;
+            g_shapeMessung.instanzen += 1;
+            g_shapeMessung.radMax = std::max(g_shapeMessung.radMax, std::abs(rad));
+            g_shapeMessung.flaeche += std::min(
+                1.0, 0.5 * sides * std::sin(6.283185307 / sides) * rad * rad * m_aspectY / 4.0);
 
             f->glEnable(GL_BLEND);
             f->glBlendFunc(GL_SRC_ALPHA, additive ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA);
@@ -3522,6 +3662,8 @@ void MilkdropVisualizer::drawCustomShapes()
                 }
             }
             f->glDisable(GL_BLEND);
+            g_shapeMessung.zeichnenMs +=
+                static_cast<double>(messUhr.nsecsElapsed() - messSkript) * 1e-6;
         }
     }
 }
