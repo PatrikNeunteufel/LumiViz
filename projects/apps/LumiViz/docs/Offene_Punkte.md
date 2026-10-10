@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.131.0
-> **Datum:** 2026-10-10 (Session 105)
+> **Version:** 1.132.0
+> **Datum:** 2026-10-10 (Session 106)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -1478,6 +1478,46 @@ Komposition und kam bei *glassworks 3* in beiden Kanälen. **Nicht** belegt: die
 Ursache; ob es auch ohne Composer und ohne Karaoke-Ebene auftritt; ob es über die
 Laufzeit anhält (die Läufe waren kurz und begannen den Clip frisch).
 
+**Dasselbe Log genauer gelesen (S106, 2026-10-10 — nur gelesen, nichts gebaut,
+nichts gestartet):** alle zehn Läufe liefen auf der RTX 4090 bei 1836 × 909. Die
+Zeiten stammen aus der Zusammenfassung des Composers am Ende jedes Laufs
+(`Composer: summary` samt Folgezeilen); ihre Liste der langen Bilder bricht nach
+rund zwanzig Einträgen ab, die Anzahl davor ist vollständig.
+
+| Stelle | Bilder je Sekunde über den Lauf | Mittel `compute (CPU side)` | Einbruch beginnt | Renderer zugleich |
+|---|---|---|---|---|
+| 6:00 | 50,5 | 16,6 ms | 8,6 s nach der Wiederaufnahme | 1 |
+| 13:30 | 46,6 | 19,5 ms | 7,8 s | 1 |
+| 19:30 | 50,5 | 9,5 ms | 7,8 s | 2 |
+| die sieben übrigen | 58,5 bis 59,1 | 2,7 bis 5,3 ms | keiner | 1 oder 2 |
+
+- **Form:** die langen Bilder folgen lückenlos aufeinander, je 100 bis 139 ms
+  (am Rand 52 bis 99; einzelne 179 und 434 ms), über rund 2 bis 4 s; danach läuft
+  es von selbst wieder mit 60. Die Zeile `FPS (render thread)` meldet für das
+  5-s-Fenster des Einbruchs 7 bis 10. Es ist also ein kurzer Einbruch auf etwa
+  8 Bilder je Sekunde, kein Dauerlauf mit 35.
+- **Wo die Zeit liegt:** im `render()` der Bildquelle (`compute (CPU side)`);
+  `present` kostet im Mittel 0,01 ms.
+- **Nicht das Mischen zweier Kanäle, nicht der Anlauf eines Nachbar-Clips:** in
+  beiden Läufen mit *glassworks 3* lief höchstens ein Renderer, und während des
+  Einbruchs steht keine andere Zeile im Log (auch keine `start-up`-Zeile).
+- **Zweites Muster:** in den acht Läufen ohne *glassworks 3* steht genau ein
+  langes Bild 5,1 bis 5,4 s nach der Wiederaufnahme (113 bis 175 ms); in den
+  zwei Läufen mit *glassworks 3* fehlt es. Der feste Abstand ist beobachtet,
+  nicht erklärt.
+- **Im Preset nachgerechnet, erklärt es nicht:** *glassworks 3* hat in
+  `per_frame` Schleifen, deren Schrittzahl von `1/fps` abhängt (`EC_Steps`);
+  bei 8 Bildern je Sekunde sind das höchstens rund 500 Durchläufe je Bild.
+
+**Weiter nicht belegt:** die Ursache; ob es ohne Composer auftritt; welche Stufe
+des MilkDrop-Renderers die Zeit verbraucht. Die erste Beobachtung (um 5:30 und
+um 14:40) lag 15 s und rund 3 min nach Clip-Beginn — es hängt also nicht nur am
+Anlauf. **Vorgeschlagene Reihenfolge:** (1) *glassworks 3* allein in der Effect
+Chain, Composer aus, etwa 60 s, dann das Log lesen (ohne Code); (2) eine
+Diagnosezeile je langem Bild im MilkDrop-Renderer, nach Stufen aufgeteilt, samt
+dem `fps`-Wert, den das Preset sieht; (3) das einzelne lange Bild bei 5 s
+getrennt davon.
+
 ### ✅ Blanke Pipeline blendete aus und driftete nach oben links (Befund S80, behoben S80)
 
 **Befund Patrik (S80):** Neue Kette → Milkdrop → eine Custom Shape
@@ -2366,9 +2406,9 @@ Idee Preset-Warmup/Pre-Roll.
     Doppelklick; die Stücke der Listen 1 und 3 bis 9 im Tester.
     **Offen:** Scroll with playhead kommt aus den Einstellungen durch (dafür
     gibt es keine Aktion); die Vorbereitungen ohne Vorlage (Liste 4 T0,
-    Liste 6 D0, Liste 9 B0) setzen Edit, Loop und Sync nicht; Liste 8 B0
-    und Liste 9 F0 nennen kein „Composer
-    on" — nach der Aktion ist er dort aus, von Hand wäre er nach Load an;
+    Liste 6 D0, Liste 9 B0) setzen Edit, Loop und Sync nicht; (Liste 8 B0
+    und Liste 9 F0 nennen seit S106 „Composer on" in Text und Aktionen —
+    Entscheid Patrik V1: a; im Tester nicht gesehen;)
     ein gescheitertes Laden nach `preset_laden` meldet LumiViz in einem
     eigenen Dialog, der Tester erfährt es nicht; ein eigener
     Zwischenspeicher für Tests (W1) ist weiter nicht entschieden; die
@@ -4769,6 +4809,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.132.0 | 2026-10-10 | Session 106 — §3 *MilkDrop-Presets stocken manchmal*: das Log der zehn Läufe genauer gelesen — der Einbruch ist kurz (rund 2 bis 4 s, etwa 8 Bilder je Sekunde, Beginn 7,8 bis 8,6 s nach der Wiederaufnahme), die Zeit liegt im `render()` der Bildquelle, bei *glassworks 3* lief nur ein Renderer; zweites Muster: ein einzelnes langes Bild rund 5 s nach der Wiederaufnahme in den acht übrigen Läufen; Ursache weiter offen, Reihenfolge der Messung vorgeschlagen. Sichttest-Listen 8 B0 und 9 F0 nennen „Composer on" (Entscheid Patrik V1: a) |
 | 1.131.0 | 2026-10-10 | Session 105, Abschluss — **Release v0.12.0**: Version der App 0.12.0, Marke auf `f2faeee`, Paket ohne Tester geschnürt und aus dem Zip gestartet; der Tester steht nicht mehr im Benutzerhandbuch, sondern in `Sichttest_Steuerung.md`; die Settings-Zeile *Sichttest* nur mit Steuerung neben der Exe; README mit Composer, Karaoke und sechs Bildern |
 | 1.130.0 | 2026-10-10 | Session 105, Nachtrag — §3 *MilkDrop-Presets stocken manchmal*: zweite Beobachtung Patrik beim Aufnehmen der README-Bilder, im Log zählbar — in drei von zehn Läufen 25 bis 33 lange Bilder (glassworks 3 an zwei Stellen; double chase + Gin Tonic), in den übrigen je 1 bis 2; Ursache weiter nicht untersucht |
 | 1.129.0 | 2026-10-09 | Session 105, Nachtrag — **`composer` ist nach `master` überführt** (M1: a; Vorspulen auf `ec836c6`, Marke `vor-composer` auf `93d0be4`); gearbeitet wird auf `master`, die Rückbau-Regeln sind abgeschlossen (Composer_Konzept 0.81.0) |
