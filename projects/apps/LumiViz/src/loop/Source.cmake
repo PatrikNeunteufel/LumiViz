@@ -3,7 +3,7 @@
 # CMake Architecture V2 - App-Container Template
 # ==============================================================================
 # Loop (docs/audio/Loop_Konzept.md): Modell, Datei `.lvloop`, Rechenkern,
-# Klangerzeuger (die Quelle im Mixer), Kit.
+# Klangerzeuger (die Quelle im Mixer), Kit, Spieler (der Loop allein), Panel.
 # ==============================================================================
 
 dbg(DBG_OFTEN
@@ -15,13 +15,17 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Kit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Klangerzeuger.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Loop.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LoopPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Rechenkern.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Spieler.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Kit.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Klangerzeuger.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Loop.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/LoopPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Rechenkern.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Spieler.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

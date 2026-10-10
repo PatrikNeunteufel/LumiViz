@@ -56,6 +56,7 @@
 #include "UI/panels/SettingsPanel.hpp"
 #include "UI/panels/VisualSelectPanel.hpp"
 #include "composer/ComposerPanel.hpp"  // Composer-Naht N8
+#include "loop/LoopPanel.hpp"
 
 // =============================================================================
 // initPanelDefaults - Called by PanelRegistry::instance() on first access
@@ -267,6 +268,24 @@ void initPanelDefaults(PanelRegistry& registry)
         },
         [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
             return std::make_unique<lumi::composer::ComposerPanel>(svc);
+        },
+        false);
+
+    // =========================================================================
+    // LOOP PANEL (docs/audio/Loop_Konzept.md) — ein Loop aus einer `.lvloop`:
+    // laden und abspielen; das Raster folgt
+    // =========================================================================
+
+    registry.registerPanel(
+        PanelDescriptor{
+            "loop",             // id
+            "Loop",             // title
+            335,                // order (nach dem Composer)
+            false,              // defaultVisible (hidden by default)
+            "View/Panels"       // menuPath
+        },
+        [](ServiceContainer& svc) -> std::unique_ptr<QWidget> {
+            return std::make_unique<lumi::loop::LoopPanel>(svc);
         },
         false);
 

@@ -31,6 +31,7 @@
 #include "UI/StartDatei.hpp"                            // `LumiViz.exe <datei>` (S101)
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
+#include "loop/Spieler.hpp"                             // Loop: Ton fuer die Visuals
 #include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
 #include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
 #include "sichttest/AppAktionen.hpp"                    // Composer-Naht N20
@@ -1329,6 +1330,14 @@ void MainWindow::onAudioUpdate()
                     mixer != INVALID_STREAM)
                 {
                     stream = mixer;
+                }
+                // Loop (docs/audio/Loop_Konzept.md, L4): spielt das Loop-Panel
+                // allein, kommen Spektrum und Wellenform von seinem Mixer. Der
+                // Composer steht darueber — fuehrt er, spielt der Loop nicht.
+                else if (const AudioStreamHandle loopMixer = lumi::loop::tonMixer();
+                         loopMixer != INVALID_STREAM)
+                {
+                    stream = loopMixer;
                 }
 
                 if (stream != 0)  // Valid stream

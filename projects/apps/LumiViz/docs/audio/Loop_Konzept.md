@@ -1,10 +1,10 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Datum:** 2026-10-10 (Session 108)
-> **Typ:** Konzept — Entscheide L1 bis L6 gefallen (Patrik S108); gebaut sind
-> Beleg, Kern, Kit und der Unterbau der Wiedergabe (Stufen 2 bis 5a) — in der
-> App ist noch nichts zu hören
+> **Typ:** Konzept — Entscheide L1 bis L7 gefallen (Patrik S108); gebaut sind
+> Beleg, Kern, Kit und die Wiedergabe mit einem ersten Panel (Stufen 2 bis
+> 5b) — im Programm noch nicht gehört und nicht gesehen
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Composer_Konzept.md](../ui/Composer_Konzept.md) §4 (Uhr,
@@ -59,6 +59,7 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **L3 c** | **Eine Datei enthält Kit, Muster und Abfolge.** Der Clip spielt die Abfolge und wiederholt sie. Der `Clip` und die `.lvcomp` bleiben unverändert. |
 | **L4 a** | **Wer spielt, hat den Ton — Rangfolge Composer, Loop-Panel, Player.** Play im Loop-Panel hält den Player an und gibt ihn bei Stop zurück; die Visuals reagieren auf den Loop. Hat der Composer den Ton, schweigt das Loop-Panel. |
 | **L5 a** | **Das mitgelieferte Kit wird gerechnet**, nicht bezogen: ein Skript erzeugt die WAV-Dateien, sie liegen unter `asset/`. Jede Spur kann stattdessen eine eigene Sample-Datei laden. |
+| **L7 a** | **Play im Loop-Panel ist gesperrt, solange der Composer den Ton hat**, und sagt, warum. Liegt der Loop als Clip in der Komposition, ist jede Änderung über den Composer zu hören. Spielte das Loop-Panel gerade allein, hält es an. |
 | **L6 a** | **Luft nach oben statt Begrenzer.** Die Spuren addieren sich, der Kern begrenzt nicht — wie zwei Songs im Mixer des Composers. Ein neuer Loop beginnt mit Lautstärke 0,5; das Panel bekommt eine Anzeige, die rot wird, sobald die Summe über 1 geht (Stufe 6). |
 
 ### 3.1 Verworfen, mit Grund
@@ -91,11 +92,7 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 
 - **Das Kit ist klein** (Patrik S108: klingt gut, ist aber noch eine kleine
   Sammlung): weitere Klänge mit demselben Skript — welche, nennt Patrik.
-- Was der Play-Knopf des Loop-Panels zeigt, solange der Composer den Ton hat
-  (das Player-Panel steuert in dieser Lage den Composer mit).
-- Das Aussehen des Panels — vor Stufe 6 als Skizze.
-- Wie der Composer von außen angehalten und fortgesetzt wird (für L4 noch
-  nicht gelesen).
+- Das Aussehen des Panels mit Raster — vor Stufe 6 als Skizze.
 
 ---
 
@@ -205,6 +202,38 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 
 ---
 
+## 4b. Der Loop allein in der App (gebaut, Stufe 5b)
+
+- **`Spieler`** (`loop/Spieler.hpp`): übernimmt den Ton für das Loop-Panel —
+  ein eigener Mixer, darin der Klangerzeuger. **Rangfolge Composer,
+  Loop-Panel, Player** (L4): führt der Composer den Ton, lehnt `starte` ab,
+  und ein laufender Loop hält im nächsten Takt an. Solange der Loop spielt,
+  schweigt der Player; beim Anhalten spielt er weiter, wenn er vorher spielte.
+  Lautstärke, Mute und Pegel des Players gelten für den Mixer des Loops.
+- **Die Visuals** lesen Spektrum und Wellenform vom Mixer des Loops, solange
+  er spielt (`MainWindow.cpp`, neben der Composer-Naht N13;
+  `lumi::loop::tonMixer()`).
+- **Panel „Loop"** (`loop/LoopPanel.hpp`, View → Panels → Loop): eine
+  Datei-Zeile mit **Load…**, **Play / Stop**, eine Zeile mit BPM, Spuren,
+  Takten und Dauer, die Stelle als „Bar · Step", darunter der Bericht. Der
+  zuletzt geladene Loop steht nach dem Neustart wieder im Panel; gespielt
+  wird nicht von selbst. Führt der Composer den Ton, ist Play gesperrt und
+  sagt, warum (L7 a).
+- **Play beginnt immer von vorn.** Ein geänderter Loop gilt ab dem nächsten
+  Block; die Klänge werden nur neu geladen, wenn sich die Klänge der Spuren
+  ändern.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- Startet jemand den Player, während der Loop spielt, hält der Loop ihn im
+  nächsten Takt wieder an (wie der Composer es tut) — der Loop hört nicht auf.
+- Übernimmt der Composer, während der Loop spielt, spielt der Player nach dem
+  Ausschalten des Composers nicht von selbst weiter.
+- Der Spieler hängt die Playlist nicht aus (der Composer tut es): ein
+  angehaltener Player wechselt den Titel nicht.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -214,7 +243,7 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 | 3 | **Kern ohne Ton und ohne Fenster:** Modell, Lesen und Schreiben der `.lvloop`, Rechenkern; Unit-Tests über die gerechneten Samples | S108 gebaut, §4; `test_LoopKern.cpp`, elf Fälle |
 | 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; an einer Hörprobe gehört (Patrik: klingt gut) |
 | 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
-| 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | offen |
+| 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
 | 6 | **Loop-Panel:** Raster, Spuren, Muster, Abfolge, Play, Datei-Zeile | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips | offen |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
@@ -288,6 +317,8 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.5.0** (S108, 2026-10-10): Entscheid L7 a; Stufe 5b gebaut (§4b):
+  Spieler mit Rangfolge, Visuals lesen vom Loop, erstes Panel.
 - **0.4.0** (S108, 2026-10-10): Entscheid L6 a (Luft nach oben, Vorgabe
   0,5); Stufe 5 geteilt, 5a gebaut (§4a); „das Kit ist klein" als offener
   Punkt.
