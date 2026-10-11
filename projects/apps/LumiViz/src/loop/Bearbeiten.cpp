@@ -5,6 +5,8 @@
 
 #include "loop/Bearbeiten.hpp"
 
+#include "loop/Instrument.hpp"
+
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
@@ -81,13 +83,14 @@ int basisNutzer(const Loop& loop, const QString& muster)
     return zahl;
 }
 
-int neuerClip(Loop& loop, int kanal, int startTakt)
+int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art)
 {
     if (!istFrei(loop, kanal, startTakt, kTakteMin)) return -1;
     Muster basis;
     basis.name = freierName(QStringLiteral("Pattern"),
                             [&loop](const QString& name) { return loop.findeMuster(name) != nullptr; });
-    basis.art = MusterArt::Drumkit;
+    basis.art = art;
+    if (art == MusterArt::Instrument) basis.instrument = instrumente().front().name;
     basis.takte = kTakteMin;
     loop.muster.push_back(basis);
     LoopClip clip;
@@ -259,6 +262,23 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
     if (schlaege == alteSchlaege && schritte == alteSchritte) return false;
     for (Muster& m : loop.muster)
     {
+        // Noten: der Einsatz bleibt an seiner Stelle im Takt, wo das neue Raster
+        // sie kennt — sonst geht die Note; die Laenge bleibt dieselbe Zeit, auf
+        // ganze Schritte gerundet
+        std::vector<Note> noten;
+        for (const Note& note : m.noten)
+        {
+            const int takt = note.schritt / (alteSchlaege * alteSchritte);
+            const int imTakt = note.schritt % (alteSchlaege * alteSchritte);
+            const int schlag = imTakt / alteSchritte;
+            const int teil = imTakt % alteSchritte;
+            if (schlag >= schlaege || (teil * schritte) % alteSchritte != 0) continue;
+            Note neu = note;
+            neu.schritt = (takt * schlaege + schlag) * schritte + teil * schritte / alteSchritte;
+            neu.laenge = std::max(1, (note.laenge * schritte + alteSchritte / 2) / alteSchritte);
+            noten.push_back(neu);
+        }
+        m.noten = std::move(noten);
         for (std::vector<double>& zeile : m.zeilen)
         {
             std::vector<double> neu(static_cast<std::size_t>(m.takte * schlaege * schritte), 0.0);
@@ -278,6 +298,7 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
     }
     loop.schlaegeJeTakt = schlaege;
     loop.schritteJeSchlag = schritte;
+    loop.richte();  // eine Note, die jetzt ueber das Ende ihres Musters reichte, wird kuerzer
     return true;
 }
 

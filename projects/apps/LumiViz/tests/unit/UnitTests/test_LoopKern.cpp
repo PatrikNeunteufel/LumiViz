@@ -328,7 +328,8 @@ TEST_CASE("Loop Datei: eine Datei wird so gelesen, wie sie dasteht")
         QJsonObject neuer = doc.object();
         QJsonArray muster = neuer.value(QStringLiteral("patterns")).toArray();
         QJsonObject erstes = muster[0].toObject();
-        erstes[QStringLiteral("kind")] = QStringLiteral("instrument");
+        // `instrument` kennt das Programm seit S110 (Stufe 9a) — eine Art, die es nicht gibt
+        erstes[QStringLiteral("kind")] = QStringLiteral("vocals");
         muster[0] = erstes;
         neuer[QStringLiteral("patterns")] = muster;
         Loop ohne;
@@ -337,7 +338,7 @@ TEST_CASE("Loop Datei: eine Datei wird so gelesen, wie sie dasteht")
         CHECK(ohne.muster.empty());
         CHECK(ohne.kanaele[0].clips.empty());
         REQUIRE(bericht.size() >= 2);
-        CHECK(bericht[0] == QStringLiteral("Unknown pattern kind 'instrument': A"));
+        CHECK(bericht[0] == QStringLiteral("Unknown pattern kind 'vocals': A"));
         CHECK(bericht.contains(QStringLiteral("Pattern not found: A")));
     }
 }

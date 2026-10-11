@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.14.0
+> **Version:** 0.15.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -191,7 +191,7 @@ es nur einen Tag; sie wird nicht gelesen. JSON, Schlüssel englisch wie in
 | `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips im Composer; Vorgabe 0,5 (L6 a) | 0 bis 1 |
 | `tags` | die Tags des Loops, dasselbe Schema wie bei einem Song (T2): `title`, `artist`, `album`, `year`, `genre`, `track`, `lyrics` (Songtext, darf LRC-Zeitmarken tragen). Alle freiwillig; der Block fehlt, wenn keins gesetzt ist. Ohne Titel gilt der Dateiname. | — |
 | `patterns[]` | die Muster („Basen"): Name, Art, Länge und alles, was ihr Editor einstellt | — |
-| `patterns[].kind` | Art des Musters, bestimmt den Editor; heute nur `drumkit` | — |
+| `patterns[].kind` | Art des Musters, bestimmt den Editor: `drumkit` oder `instrument` (Noten statt Spuren, §4f) | — |
 | `patterns[].bars` | Länge in Takten | 4 bis 64 |
 | `patterns[].tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
 | `patterns[].tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
@@ -500,6 +500,138 @@ als Song; ein Cover.
 
 ---
 
+## 4f. Der Instrument-Clip (Stufe 9)
+
+Entscheid I1 c: Instrumente sind gerechnet oder kommen aus einem Sample —
+zuerst gerechnet. **Gebaut ist 9a:** Modell, Datei, die gerechneten
+Instrumente und der Rechenkern. Der Editor (9b) fehlt noch: ein
+Instrument-Muster lässt sich laden und spielen, im Panel aber nicht anlegen
+und nicht bearbeiten.
+
+### Der Instrument-Editor (Skizze gebilligt, Patrik S110 — noch nicht gebaut)
+
+Ein eigenes Fenster wie der Drum-Editor, geöffnet über **Edit base** an einem
+Instrument-Clip oder mit einem Doppelklick auf ihn; es heißt „Instrument
+pattern: <Basis>".
+
+- **Kopf:** die Basis und wie viele Clips sie spielen; **Bars**; **Play
+  pattern**; **Peak** — wie im Drum-Editor.
+- **Instrument-Zeile:** die Auswahl **Instrument** (Piano, Strings, Violin,
+  Guitar, Bass, Organ, Lead), daneben **Volume**, **Pan** und **M** (stumm).
+  Ein Muster spielt genau ein Instrument, mehrere Töne zugleich.
+- **Klaviatur und Raster:** links die Tasten (schwarze dunkel, die C
+  beschriftet), rechts die Schritte des Loops mit den Takten im Kopf. Eine
+  Note ist ein Balken in der Zeile ihrer Tonhöhe, so lang wie sie dauert.
+  Das Raster rollt waagrecht (lange Muster) und senkrecht: **sechs Oktaven,
+  C1 bis C7** (Patrik S110: mehrere Oktaven); das Fenster geht bei C3 bis C5
+  auf.
+- **Note volume:** unter dem Raster die Lautstärke je Note als Balken, wie
+  Step volume im Drum-Editor.
+
+| Geste | Wirkung |
+|---|---|
+| Klick auf eine freie Stelle | eine Note von einem Schritt Länge |
+| Rechte Kante einer Note ziehen | ihre Länge, in ganzen Schritten |
+| Note ziehen | verschieben in Zeit und Tonhöhe |
+| Rechtsklick auf eine Note, Entf | löschen |
+| Klick auf eine Taste | spielt den Ton an |
+| In der Zeile Note volume klicken oder ziehen | die Lautstärke der Note |
+
+Im Loop-Panel bietet der Rechtsklick auf eine freie Stelle neben **New
+drumkit clip** auch **New instrument clip**.
+
+### Modell und Datei (gebaut, 9a)
+
+Ein Muster der Art `instrument` trägt statt Spuren und Zeilen:
+
+```json
+{
+  "name": "Melody",
+  "kind": "instrument",
+  "bars": 4,
+  "instrument": "piano",
+  "volume": 1,
+  "pan": 0.1,
+  "mute": false,
+  "notes": [
+    [0, 4, 76, 0.9],
+    [4, 2, 72, 0.7]
+  ]
+}
+```
+
+| Feld | Bedeutung | Grenzen |
+|---|---|---|
+| `instrument` | Kennung eines mitgelieferten Instruments: `piano`, `strings`, `violin`, `guitar`, `bass`, `organ`, `lead`; fehlt sie, gilt `piano` | — |
+| `volume`, `pan`, `mute` | für das ganze Muster, wie bei einer Spur | 0 bis 1, -1 bis 1 |
+| `notes[]` | je Note eine Zeile: **Schritt** (0 = der erste des Musters), **Länge** in Schritten, **Tonhöhe** als MIDI-Nummer (60 = C4, 69 = A4), **Lautstärke** | Länge ab 1, Tonhöhe 24 bis 96 (C1 bis C7), Lautstärke über 0 bis 1 |
+
+Die Fassung der Datei bleibt 2: eine ältere LumiViz-Fassung meldet „Unknown
+pattern kind 'instrument'" und lässt das Muster weg.
+
+**Beim Laden** (`Loop::richte`): Noten kommen in ihre Grenzen und stehen nach
+Schritt, dann Tonhöhe sortiert; je Schritt und Tonhöhe bleibt eine; eine
+Note, die über das Ende des Musters reicht, wird kürzer; eine, die dahinter
+beginnt oder keine Lautstärke hat, geht. Ein unbekanntes Instrument bleibt in
+der Datei stehen und schweigt: „Instrument not found: …" im Bericht.
+
+**Raster ändern** (`setzeRaster`): der Einsatz einer Note bleibt an seiner
+Stelle im Takt, wo das neue Raster sie kennt — sonst geht die Note; ihre
+Länge bleibt dieselbe Zeit, auf ganze Schritte gerundet.
+
+### Die gerechneten Instrumente (gebaut, 9a)
+
+`loop/Instrument.hpp`. Ein Instrument ist ein Satz Einstellungen — das, was
+der Instrument-Creator (Stufe 10) später offenlegt:
+
+| Baustein | Einstellungen |
+|---|---|
+| **Schwingung** (der Funktionsgenerator) | Sinus mit frei gesetzten Obertönen, Dreieck, Säge, Rechteck — als Wellenzug ohne Teiltöne über der halben Abtastrate; oder die **gezupfte Saite** (Karplus-Strong) |
+| **Stimmen** | eine bis drei gleiche Schwingungen, leicht gegeneinander verstimmt |
+| **Hüllkurve** | Anstieg, Abfall, Halten, Ausklang |
+| **Filter** | Tiefpass, dessen Grenze der Tonhöhe folgt; die Hüllkurve kann ihn öffnen |
+| **Vibrato** | Geschwindigkeit, Tiefe, Einsatz |
+
+| Instrument | Wie gerechnet |
+|---|---|
+| Piano | Sinus mit fünf Obertönen, harter Einsatz, klingt über anderthalb Sekunden ab — klingt nach E-Piano |
+| Strings | drei verstimmte Sägen, weicher Einsatz, langer Ausklang, leichtes Vibrato |
+| Violin | eine Säge, heller, mit deutlichem Vibrato, das nach dem Einsatz anwächst |
+| Guitar | die gezupfte Saite |
+| Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |
+| Organ | Sinus mit Obertönen wie Zugriegel, steht, solange die Note dauert |
+| Lead | Rechteck mit Vibrato |
+
+**Im Rechenkern:** jede Note wird **vorab** in einen Klang gerechnet
+(`rendereTon`: so lang wie die Note, danach der Ausklang, am Ende bei null)
+und vom Kern gespielt wie der Schlag eines Drumkits — der Kern bleibt ohne
+Gedächtnis, obwohl Filter und Saite eines haben. Ein Ton heißt unter den
+Klängen `inst:<Instrument>:<Tonhöhe>:<Dauer in ms>`; je Tonhöhe und Dauer
+gibt es einen. Jeder Ton ist eine eigene Stimme: ein Akkord klingt zusammen,
+nur derselbe Ton schneidet sich selbst ab. Die Dauer hängt am Tempo — ändert
+sich das BPM, werden die Töne neu gerechnet.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- Der Umfang C1 bis C7; ein Ton ist höchstens 30 s lang.
+- Die Einstellungen der sieben Instrumente — nach Rechnung, **nicht nach
+  Gehör**: ich höre sie nicht. Hörproben schreibt der Test mit
+  `LUMIVIZ_INSTRUMENT_WAV=<Ordner>`.
+- Eine Note endet spätestens am Ende ihres Musters; nur ihr Ausklang reicht
+  darüber.
+- Beide Seiten eines Tons sind gleich (kein Stereo im Instrument); das
+  Panorama gilt für das ganze Muster.
+- Der Pegel eines Tons liegt bei höchstens rund 0,5: Akkorde addieren sich
+  (L6 a).
+
+**Nicht gemessen:** wie lange das Rechnen der Töne bei einem großen Muster
+dauert (es läuft im UI-Thread, bei jedem geänderten Tempo neu).
+
+**Beispiel:** `asset/loop/instrument_demo.lvloop` — Drums, Strings-Akkorde,
+Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -515,7 +647,8 @@ als Song; ein Cover.
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | S109 gebaut (§3.3); ein Fall in `test_PaletteUi.cpp`, einer in `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen** |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser; dazu Tags (T2) und die Verbindung zum Loop-Panel (L7 a) | S109 gebaut, §4e, Messung §6a; zwei Fälle in `test_LoopSpieler.cpp` (ohne Ton), zwei in `test_LoopWiedergabe.cpp` (mit sehr leisem Ton), dazu Tags und Verbindung im Panel-Fall von `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | S109: Benutzerhandbuch 1.115.0 (§16 Loop neu, Audio Browser, Loops als Clips), `Audio_System.md` 1.3.0 (§6a Mixer und wer den Ton hat), Vorlage `asset/sichttest/composer_K_loop.lvcomp` mit `asset/sichttest/loop/beat_A.lvloop` (an `test_ComposerVorlagen.cpp` gebunden), Liste `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte). S110: die Rückfrage beim Beenden (§4c) und drei Aktionen der Sichttest-Steuerung für das Panel Loop (`loop_laden`, `loop_wiedergabe`, `loop_editor`; `loop/SichttestAktionen`, ein Fall in `test_LoopSpieler.cpp`). Offen: ein eigenes Icon für `.lvloop`; das Kit im Release-Paket |
-| 9 | **Instrument-Clip:** Piano-Rolle, Klangerzeuger für Töne — zuerst die gerechneten Instrumente (I1 c), mit einigen Charakteren (Strings, Violine, Piano, Gitarre …; Wunsch Patrik S110). Davor die Skizze | offen |
+| 9a | **Instrument-Clip, Kern:** Noten im Modell und in der Datei, sieben gerechnete Instrumente (I1 c; Strings, Violine, Piano, Gitarre …, Wunsch Patrik S110), Noten im Rechenkern | S110 gebaut, §4f; `test_LoopInstrument.cpp`, sechs Fälle ohne Ton; Beispiel `asset/loop/instrument_demo.lvloop`; **nicht gehört** — die Instrumente sind nach Rechnung eingestellt |
+| 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel | offen |
 | 10 | **Instrument-Creator:** ein Fenster, das die Bausteine eines gerechneten Instruments offenlegt und als eigenes Instrument speichert (I1 c) | später |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
 
@@ -613,6 +746,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.15.0** (S110, 2026-10-11): Stufe 9 geteilt, 9a gebaut — §4f neu: die
+  gebilligte Skizze des Instrument-Editors (sechs Oktaven), Noten in Modell
+  und Datei, sieben gerechnete Instrumente, Noten im Rechenkern.
 - **0.14.0** (S110, 2026-10-11): Entscheid I1 c — Instrumente gerechnet
   oder aus Samples, zuerst gerechnet; Stufen 10 (Instrument-Creator) und 11
   (Samples) dazu; drei Aktionen der Sichttest-Steuerung für das Panel Loop.

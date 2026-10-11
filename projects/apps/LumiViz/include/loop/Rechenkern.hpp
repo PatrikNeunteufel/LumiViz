@@ -8,7 +8,9 @@
  * - `plane` uebersetzt einen Loop fuer eine Abtastrate in einen `Ablauf`: je
  *   **Stimme** die Schlaege eines Durchlaufs, jeder mit seiner Stelle in
  *   Abtastwerten und seiner Lautstaerke links und rechts. Eine Stimme ist
- *   eine Spur eines Musters in einem Kanal.
+ *   eine Spur eines Musters in einem Kanal — oder, bei einem
+ *   Instrument-Muster, ein Ton (Tonhoehe und Dauer): seine Noten sind die
+ *   Schlaege, sein Klang ist vorab gerechnet (`loop/Instrument.hpp`).
  * - `rechne` fuellt einen Block: was der Ablauf, endlos wiederholt, an den
  *   Abtastwerten `[von, von + frames)` hoeren laesst.
  *

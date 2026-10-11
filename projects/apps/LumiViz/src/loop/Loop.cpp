@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QSet>
 
 #include <algorithm>
 #include <cmath>
@@ -28,6 +29,9 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 constexpr int kVersion = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
+const QString kArtInstrument = QStringLiteral("instrument");
+const QString kTonVorsatz = QStringLiteral("inst:");
+const QString kInstrumentVorgabe = QStringLiteral("piano");
 
 // Pfade wie in der `.lvcomp` (composer/Komposition.cpp): relativ zum Ordner
 // der Datei, wenn das Sample darunter liegt, sonst absolut.
@@ -84,6 +88,32 @@ bool istKitKlang(const QString& klang)
     return klang.startsWith(kKitVorsatz);
 }
 
+bool istTon(const QString& klang)
+{
+    return klang.startsWith(kTonVorsatz);
+}
+
+QString tonKlang(const QString& instrument, int hoehe, int dauerMs)
+{
+    return QStringLiteral("%1%2:%3:%4").arg(kTonVorsatz, instrument).arg(hoehe).arg(dauerMs);
+}
+
+bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs)
+{
+    if (!istTon(klang)) return false;
+    const QStringList teile = klang.mid(kTonVorsatz.size()).split(QLatin1Char(':'));
+    if (teile.size() != 3 || teile[0].isEmpty()) return false;
+    bool hoeheOk = false;
+    bool dauerOk = false;
+    const int h = teile[1].toInt(&hoeheOk);
+    const int ms = teile[2].toInt(&dauerOk);
+    if (!hoeheOk || !dauerOk || ms <= 0) return false;
+    instrument = teile[0];
+    hoehe = h;
+    dauerMs = ms;
+    return true;
+}
+
 const Muster* Loop::findeMuster(const QString& name) const
 {
     const auto it = std::find_if(muster.begin(), muster.end(), [&name](const Muster& m) { return m.name == name; });
@@ -113,10 +143,26 @@ double Loop::durchlaufMs() const
 QStringList Loop::klangNamen() const
 {
     QStringList namen;
+    QSet<QString> gesehen;
+    const auto nimm = [&](const QString& klang) {
+        if (klang.isEmpty() || gesehen.contains(klang)) return;
+        gesehen.insert(klang);
+        namen << klang;
+    };
     for (const Muster& m : muster)
-        for (const Spur& spur : m.spuren)
-            if (!spur.klang.isEmpty() && !namen.contains(spur.klang)) namen << spur.klang;
+    {
+        if (m.art == MusterArt::Instrument)
+            for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
+        else
+            for (const Spur& spur : m.spuren) nimm(spur.klang);
+    }
     return namen;
+}
+
+int Loop::notenMs(const Note& note) const
+{
+    if (bpm <= 0.0 || schritteJeSchlag <= 0) return 1;
+    return std::max(1, static_cast<int>(std::lround(note.laenge * 60000.0 / bpm / schritteJeSchlag)));
 }
 
 void Loop::richte(QStringList* bericht)
@@ -139,6 +185,41 @@ void Loop::richte(QStringList* bericht)
         else
             namen.append(m.name);
         m.takte = std::clamp(m.takte, kTakteMin, kTakteMax);
+        if (m.art == MusterArt::Instrument)
+        {
+            // ein Instrument hat keine Spuren; seine Noten bleiben im Muster
+            m.spuren.clear();
+            m.zeilen.clear();
+            if (m.instrument.isEmpty()) m.instrument = kInstrumentVorgabe;
+            m.laut = inGrenzen(m.laut, 0.0, 1.0, 1.0);
+            m.pan = inGrenzen(m.pan, -1.0, 1.0, 0.0);
+            const int schritte = m.takte * schritteJeTakt();
+            for (Note& note : m.noten)
+            {
+                note.hoehe = std::clamp(note.hoehe, kHoeheMin, kHoeheMax);
+                note.laenge = std::clamp(note.laenge, 1, std::max(1, schritte - note.schritt));
+                note.laut = inGrenzen(note.laut, 0.0, 1.0, 1.0);
+            }
+            m.noten.erase(std::remove_if(m.noten.begin(), m.noten.end(),
+                                         [schritte](const Note& n) {
+                                             return n.schritt < 0 || n.schritt >= schritte || n.laut <= 0.0;
+                                         }),
+                          m.noten.end());
+            std::stable_sort(m.noten.begin(), m.noten.end(), [](const Note& a, const Note& b) {
+                return a.schritt != b.schritt ? a.schritt < b.schritt : a.hoehe < b.hoehe;
+            });
+            m.noten.erase(std::unique(m.noten.begin(), m.noten.end(),
+                                      [](const Note& a, const Note& b) {
+                                          return a.schritt == b.schritt && a.hoehe == b.hoehe;
+                                      }),
+                          m.noten.end());
+            continue;
+        }
+        m.instrument.clear();
+        m.noten.clear();
+        m.laut = 1.0;
+        m.pan = 0.0;
+        m.stumm = false;
         for (Spur& spur : m.spuren)
         {
             spur.laut = inGrenzen(spur.laut, 0.0, 1.0, 1.0);
@@ -208,8 +289,23 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
     {
         QJsonObject o;
         o[QStringLiteral("name")] = m.name;
-        o[QStringLiteral("kind")] = kArtDrumkit;
         o[QStringLiteral("bars")] = m.takte;
+        if (m.art == MusterArt::Instrument)
+        {
+            o[QStringLiteral("kind")] = kArtInstrument;
+            o[QStringLiteral("instrument")] = m.instrument;
+            o[QStringLiteral("volume")] = m.laut;
+            o[QStringLiteral("pan")] = m.pan;
+            o[QStringLiteral("mute")] = m.stumm;
+            // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke
+            QJsonArray noten;
+            for (const Note& note : m.noten)
+                noten.append(QJsonArray{note.schritt, note.laenge, note.hoehe, note.laut});
+            o[QStringLiteral("notes")] = noten;
+            muster.append(o);
+            continue;
+        }
+        o[QStringLiteral("kind")] = kArtDrumkit;
         QJsonArray spuren;
         for (const Spur& spur : m.spuren)
         {
@@ -287,13 +383,35 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
         m.name = o.value(QStringLiteral("name")).toString();
         // eine Art, die diese Fassung nicht kennt: das Muster bleibt weg,
         // seine Clips meldet `richte`
-        if (const QString art = o.value(QStringLiteral("kind")).toString(kArtDrumkit); art != kArtDrumkit)
+        const QString art = o.value(QStringLiteral("kind")).toString(kArtDrumkit);
+        if (art != kArtDrumkit && art != kArtInstrument)
         {
             if (bericht != nullptr)
                 bericht->append(QStringLiteral("Unknown pattern kind '%1': %2").arg(art, m.name));
             continue;
         }
         m.takte = o.value(QStringLiteral("bars")).toInt(kTakteMin);
+        if (art == kArtInstrument)
+        {
+            m.art = MusterArt::Instrument;
+            m.instrument = o.value(QStringLiteral("instrument")).toString();
+            m.laut = o.value(QStringLiteral("volume")).toDouble(1.0);
+            m.pan = o.value(QStringLiteral("pan")).toDouble(0.0);
+            m.stumm = o.value(QStringLiteral("mute")).toBool(false);
+            for (const QJsonValue& nv : o.value(QStringLiteral("notes")).toArray())
+            {
+                const QJsonArray werte = nv.toArray();
+                if (werte.size() < 3) continue;
+                Note note;
+                note.schritt = werte[0].toInt();
+                note.laenge = werte[1].toInt(1);
+                note.hoehe = werte[2].toInt(60);
+                note.laut = werte.size() > 3 ? werte[3].toDouble(1.0) : 1.0;
+                m.noten.push_back(note);
+            }
+            neu.muster.push_back(std::move(m));
+            continue;
+        }
         for (const QJsonValue& sv : o.value(QStringLiteral("tracks")).toArray())
         {
             const QJsonObject s = sv.toObject();

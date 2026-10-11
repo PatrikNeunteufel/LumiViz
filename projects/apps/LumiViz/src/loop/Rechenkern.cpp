@@ -5,6 +5,8 @@
 
 #include "loop/Rechenkern.hpp"
 
+#include <QHash>
+
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -24,16 +26,54 @@ Ablauf plane(const Loop& loop, int rate)
     ablauf.schrittFrames = schrittFrames;
     const double swingFrames = loop.swing * 0.5 * schrittFrames;
     const int jeTakt = loop.schritteJeTakt();
+    QHash<QString, int> klangVon;
+    for (int i = 0; i < ablauf.klangNamen.size(); ++i) klangVon.insert(ablauf.klangNamen[i], i);
 
     for (const Kanal& kanal : loop.kanaele)
     {
         if (!kanal.an) continue;
         // je Kanal: (Muster, Spur) -> Stimme
         std::map<std::pair<const Muster*, std::size_t>, std::size_t> stimmeVon;
+        // je Kanal: (Instrument-Muster, Ton) -> Stimme. Jeder Ton — Tonhoehe
+        // und Dauer — ist eine eigene Stimme: ein Akkord klingt zusammen, und
+        // nur derselbe Ton schneidet sich selbst ab.
+        std::map<std::pair<const Muster*, int>, std::size_t> tonStimmeVon;
         for (const LoopClip& clip : kanal.clips)
         {
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
+            if (muster->art == MusterArt::Instrument)
+            {
+                if (muster->stumm) continue;
+                const double lautMuster = muster->laut * loop.laut;
+                for (int runde = 0; runde < clip.wiederholungen; ++runde)
+                {
+                    const std::int64_t schrittDavor =
+                        static_cast<std::int64_t>(clip.startTakt + runde * muster->takte) * jeTakt;
+                    for (const Note& note : muster->noten)
+                    {
+                        const int klang = klangVon.value(
+                            tonKlang(muster->instrument, note.hoehe, loop.notenMs(note)), -1);
+                        const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
+                        if (neu)
+                        {
+                            Stimme stimme;
+                            stimme.klang = klang;
+                            ablauf.stimmen.push_back(std::move(stimme));
+                        }
+                        const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
+                        const double stelle = static_cast<double>(schrittDavor + note.schritt) * schrittFrames +
+                                              (versetzt ? swingFrames : 0.0);
+                        const double laut = note.laut * lautMuster;
+                        Schlag schlag;
+                        schlag.frame = std::llround(stelle);
+                        schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - muster->pan));
+                        schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
+                        ablauf.stimmen[ort->second].schlaege.push_back(schlag);
+                    }
+                }
+                continue;
+            }
             const int schritte = muster->takte * jeTakt;
             const std::size_t zeilen = std::min(muster->zeilen.size(), muster->spuren.size());
             for (int runde = 0; runde < clip.wiederholungen; ++runde)

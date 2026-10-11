@@ -5,6 +5,8 @@
 
 #include "loop/Kit.hpp"
 
+#include "loop/Instrument.hpp"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -57,6 +59,7 @@ QStringList kitKlaenge()
 
 QString klangDatei(const QString& klang)
 {
+    if (istTon(klang)) return {};  // ein gerechneter Ton hat keine Datei
     if (!istKitKlang(klang)) return klang;
     const QString name = klang.mid(kKitVorsatzLaenge);
     const bool erlaubt = !name.isEmpty() && std::all_of(name.begin(), name.end(), [](QChar z) {
@@ -74,6 +77,23 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
     for (std::size_t i = 0; i < klaenge.size(); ++i)
     {
         const QString& klang = namen[static_cast<qsizetype>(i)];
+        if (istTon(klang))
+        {
+            // der Ton eines gerechneten Instruments: er entsteht hier, nicht aus einer Datei
+            QString instrument;
+            int hoehe = 0;
+            int dauerMs = 0;
+            const Instrument* gefunden =
+                zerlegeTon(klang, instrument, hoehe, dauerMs) ? findeInstrument(instrument) : nullptr;
+            if (gefunden != nullptr)
+                klaenge[i] = rendereTon(*gefunden, hoehe, dauerMs, rate);
+            else if (bericht != nullptr)
+            {
+                const QString zeile = QStringLiteral("Instrument not found: %1").arg(instrument.isEmpty() ? klang : instrument);
+                if (!bericht->contains(zeile)) bericht->append(zeile);
+            }
+            continue;
+        }
         const QString datei = klangDatei(klang);
         if (!datei.isEmpty()) klaenge[i].daten = engine.decodeStereo(datei, rate, kKlangMaxSekunden);
         if (klaenge[i].daten.empty() && bericht != nullptr)

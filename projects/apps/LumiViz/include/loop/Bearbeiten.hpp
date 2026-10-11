@@ -34,7 +34,9 @@ namespace lumi::loop
 /// Einen leeren Drumkit-Clip anlegen (Vorgabe Patrik S108): eine neue Basis
 /// „Pattern N", `kTakteMin` Takte lang, ohne Spuren. Liegt dort schon ein Clip
 /// oder reicht der Platz bis zum naechsten nicht: -1, nichts geaendert.
-int neuerClip(Loop& loop, int kanal, int startTakt);
+/// Mit `MusterArt::Instrument` ein leerer Instrument-Clip (Stufe 9): dieselbe
+/// Laenge, ohne Noten, das Instrument ist das erste der Auswahl.
+int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art = MusterArt::Drumkit);
 
 /// Den Clip nach `zielKanal` an `startTakt` legen. Ist dort kein Platz, rueckt
 /// er an die naechste freie Stelle — an die Kante des Clips, der im Weg liegt,

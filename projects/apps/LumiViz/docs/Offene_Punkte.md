@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.143.0
+> **Version:** 1.144.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2333,10 +2333,17 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   - 🔧 `Composer_Konzept.md` nennt weder die Basis `Achse` noch den Loop-Clip
     in der Tonführung; der Composer hängt jetzt am Namensraum `loop` und
     umgekehrt
-  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne) — als
-    Nächstes, davor die Skizze. **Entscheid I1 c (Patrik S110):** Instrumente
-    gerechnet oder aus Samples, zuerst gerechnet, gleich mit einigen
-    Charakteren (Strings, Violine, Piano, Gitarre …); danach **10**
+  - 🟡 **9 Instrument-Clip** — **Entscheid I1 c (Patrik S110):** Instrumente
+    gerechnet oder aus Samples, zuerst gerechnet. **9a gebaut (S110):** Noten
+    in Modell und Datei, sieben gerechnete Instrumente (Piano, Strings,
+    Violin, Guitar, Bass, Organ, Lead), Noten im Rechenkern, Beispiel
+    `asset/loop/instrument_demo.lvloop` (Konzept §4f). **Nicht gehört:** die
+    Instrumente sind nach Rechnung eingestellt — ⬜ Patriks Urteil an den
+    Hörproben (`LUMIVIZ_INSTRUMENT_WAV=<Ordner>` am Fall „instrument_demo")
+    oder im Panel Loop mit dem Beispiel. **Offen 9b:** der Instrument-Editor
+    (Skizze gebilligt, sechs Oktaven) und **New instrument clip**; bis dahin
+    lässt sich ein Instrument-Muster laden und spielen, aber nicht anlegen
+    und nicht bearbeiten (Edit base tut an ihm nichts). Danach **10**
     Instrument-Creator und **11** Instrumente aus Samples
   - 🟡 das Kit ist klein (Patrik S108: klingt gut, aber eine kleine
     Sammlung) — welche Klänge dazukommen, nennt Patrik

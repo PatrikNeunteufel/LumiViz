@@ -514,7 +514,11 @@ DrumEditor* LoopPanel::editor() const
 
 bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
 {
-    if (!m_geladen || m_loop.findeMuster(muster) == nullptr) return false;
+    const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
+    if (basis == nullptr) return false;
+    // der Editor eines Instrument-Musters (die Piano-Rolle) folgt in Stufe 9b;
+    // im Drum-Editor haette es nichts zu zeigen
+    if (basis->art != MusterArt::Drumkit) return false;
     if (m_editor == nullptr)
     {
         m_editor = new DrumEditor(this);

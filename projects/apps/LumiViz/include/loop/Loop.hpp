@@ -11,7 +11,8 @@
  * Ein Muster traegt alles, was sein Editor einstellt: bei einem Drumkit die
  * Spuren (das Kit) und je Spur die Schritte. Eine Spur verweist auf einen
  * Klang: einen Namen aus dem mitgelieferten Kit (`kit:<Name>`) oder eine
- * Sample-Datei — eingebettet wird nichts.
+ * Sample-Datei — eingebettet wird nichts. Bei einem Instrument (Stufe 9,
+ * Entscheid I1 c) sind es das Instrument und die Noten.
  *
  * Tempo und Raster stehen im Loop und gelten fuer alles darin (L2 b). Die
  * Datei `.lvloop` ist das ganze Arrangement. Kein Qt-Widget, keine
@@ -51,24 +52,63 @@ struct Spur
     [[nodiscard]] bool operator==(const Spur&) const = default;
 };
 
-/// Die Art eines Musters — sie bestimmt seinen Editor. Instrument-Muster
-/// (Tonhoehen, Notenlaengen) kommen spaeter.
+/// Die Art eines Musters — sie bestimmt seinen Editor: ein Drumkit (Spuren und
+/// Schritte) oder ein Instrument (Noten mit Tonhoehe und Laenge, Stufe 9).
 enum class MusterArt : int
 {
     Drumkit = 0,
+    Instrument = 1,
 };
 
-/// Ein Muster, die „Basis" eines oder mehrerer Clips: das Kit und je Spur
-/// eine Zeile, je Schritt eine Lautstaerke (0 = aus).
+/// Die Tonhoehen einer Note, als MIDI-Nummer: C1 bis C7, sechs Oktaven
+/// (60 = C4, 69 = A4 mit 440 Hz).
+inline constexpr int kHoeheMin = 24;
+inline constexpr int kHoeheMax = 96;
+
+/// Eine Note eines Instrument-Musters: ab einem Schritt, so viele Schritte
+/// lang, in einer Tonhoehe.
+struct Note
+{
+    int schritt = 0;    ///< 0 = der erste Schritt des Musters
+    int laenge = 1;     ///< in Schritten, mindestens 1
+    int hoehe = 60;     ///< MIDI-Nummer, `kHoeheMin` … `kHoeheMax`
+    double laut = 1.0;  ///< 0…1 (groesser als 0 — eine Note ohne Lautstaerke gibt es nicht)
+
+    [[nodiscard]] bool operator==(const Note&) const = default;
+};
+
+/// Der Vorsatz eines gerechneten Tons unter den Klaengen: `inst:piano:60:500`
+/// — Instrument, Tonhoehe, Dauer in Millisekunden.
+[[nodiscard]] bool istTon(const QString& klang);
+/// Der Name des Klangs zu einem Ton eines Instruments.
+[[nodiscard]] QString tonKlang(const QString& instrument, int hoehe, int dauerMs);
+/// Den Namen wieder zerlegen. false = kein Ton.
+bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs);
+
+/// Ein Muster, die „Basis" eines oder mehrerer Clips. Ein **Drumkit** traegt
+/// das Kit und je Spur eine Zeile, je Schritt eine Lautstaerke (0 = aus). Ein
+/// **Instrument** traegt den Namen seines Instruments, Lautstaerke und
+/// Panorama und seine Noten; es spielt mehrere Toene zugleich.
 struct Muster
 {
     QString name;
     MusterArt art = MusterArt::Drumkit;
     int takte = kTakteMin;
+
+    // --- Drumkit ---
     std::vector<Spur> spuren;
     /// `zeilen[spur][schritt]`, 0…1; nach `Loop::richte` je Spur eine Zeile
     /// mit `takte * schritteJeTakt()` Schritten.
     std::vector<std::vector<double>> zeilen;
+
+    // --- Instrument ---
+    QString instrument;  ///< Kennung des Instruments (`loop/Instrument.hpp`), etwa `piano`
+    double laut = 1.0;   ///< 0…1
+    double pan = 0.0;    ///< -1 (links) … 1 (rechts)
+    bool stumm = false;
+    /// Nach `Loop::richte` nach Schritt, dann Tonhoehe sortiert; je Schritt
+    /// und Tonhoehe hoechstens eine, keine reicht ueber das Ende des Musters.
+    std::vector<Note> noten;
 
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };
@@ -147,7 +187,12 @@ struct Loop
     [[nodiscard]] double durchlaufMs() const;
     /// Die Klaenge aller Spuren aller Muster, jeder einmal, in der
     /// Reihenfolge ihres ersten Auftretens; Spuren ohne Klang zaehlen nicht.
+    /// Dazu je Instrument-Muster die Toene seiner Noten (`tonKlang`): je
+    /// Tonhoehe und Dauer einer — die Dauer haengt am Tempo.
     [[nodiscard]] QStringList klangNamen() const;
+    /// Die Dauer einer Note in Millisekunden, gerundet — wie sie im Namen
+    /// ihres Tons steht.
+    [[nodiscard]] int notenMs(const Note& note) const;
 
     /// Unsinn richten: Werte in ihre Grenzen, je Muster eine Zeile je Spur in
     /// voller Laenge, Muster ohne Namen benennen; Clips nach Start sortieren,

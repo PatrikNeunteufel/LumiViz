@@ -42,3 +42,19 @@ Lautstärke des Loops 0,35: die Summe erreicht damit höchstens 0,84.
 `test_LoopKern.cpp` liest die Datei und prüft, dass jeder ihrer Klänge im
 Kit liegt; `test_LoopWiedergabe.cpp` rechnet einen Durchlauf und prüft, dass
 die Summe unter 1 bleibt.
+
+## instrument_demo.lvloop
+
+Ein Beispiel mit Instrument-Mustern (Konzept §4f, seit S110), 100 BPM,
+16 Takte (38,4 s), Akkorde Am – F – C – G:
+
+- Kanal **Chords:** Strings, über alle 16 Takte.
+- Kanal **Drums** und Kanal **Bass:** ab Takt 5.
+- Kanal **Lead:** nacheinander Piano (Melody), Guitar (Pluck), Violin (Solo),
+  je vier Takte ab Takt 5.
+
+Die Töne sind gerechnet (`loop/Instrument.hpp`), in der Datei stehen nur die
+Noten. `test_LoopInstrument.cpp` lädt die Datei, rechnet einen Durchlauf und
+prüft, dass die Summe unter 1 bleibt; mit `LUMIVIZ_INSTRUMENT_WAV=<Ordner>`
+legt der Fall Hörproben ab — das Beispiel und je Instrument eine Tonleiter
+mit Akkord.
