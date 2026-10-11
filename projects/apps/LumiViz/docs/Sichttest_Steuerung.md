@@ -1,6 +1,6 @@
 # LumiViz — Sichttest-Steuerung (für Entwickler)
 
-> **Version:** 1.1.0
+> **Version:** 1.1.1
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Wegleitung (**umgesetzt**, Session 105)
 > **Zielgruppe:** App-Entwickler — **kein Teil des Benutzerhandbuchs**, das
@@ -90,7 +90,7 @@ Keine öffnet einen Dialog. Eine relative Datei gilt ab dem Root des Projekts
 | `player start\|pause\|stopp` | Transport des Players | — |
 | `loop_laden datei=<pfad>` | lädt eine `.lvloop` ins Panel Loop und **hält**: ein spielender Loop wird angehalten | fragt vorher |
 | `loop_wiedergabe start\|stopp` | Play und Stop des Panels Loop; `start` spielt den ganzen Loop von vorn. Hat der Composer den Ton, scheitert `start` und sagt es | — |
-| `loop_editor basis=<Name>` | öffnet den Drum-Editor dieser Basis, wie **Edit base** am Clip | — |
+| `loop_editor basis=<Name>` | öffnet den Editor dieser Basis, wie **Edit base** am Clip: den Drum-Editor oder, bei einem Instrument-Muster, den Instrument-Editor | — |
 
 `preset_laden` gibt den Auftrag nur ab: scheitert das Laden selbst, meldet
 LumiViz das in einem eigenen Dialog, die Antwort an den Tester sagt es nicht.
@@ -170,5 +170,6 @@ liegen `SichttestSteuerung1.dll` und der Ordner `sichttest\`.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.1.1 | 2026-10-11 | Session 110. §3 `loop_editor` öffnet auch den Instrument-Editor. |
 | 1.1.0 | 2026-10-11 | Session 110. §3 drei Aktionen für das Panel Loop: `loop_laden`, `loop_wiedergabe`, `loop_editor`; §4 und §6 nachgezogen. |
 | 1.0.0 | 2026-10-10 | Session 105. Erstfassung — aus dem Benutzerhandbuch (§18, dort entfernt: der Tester ist ein Werkzeug für Entwickler) und ergänzt um Aktionen, Code-Orte, Bezug des Pakets und Tests. |

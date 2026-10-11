@@ -102,7 +102,7 @@ void meldeSichttestAktionen(lumi::sichttest::Anbindung& anbindung)
                      QStringLiteral("start|stopp"), [mitPanel](const QJsonObject& argumente) -> Ergebnis {
                          return mitPanel([&](LoopPanel& panel) { return sichttestaktion::wiedergabe(panel, argumente); });
                      });
-    anbindung.aktion(QStringLiteral("loop_editor"), QStringLiteral("Opens the drum editor of a base of the loaded loop"),
+    anbindung.aktion(QStringLiteral("loop_editor"), QStringLiteral("Opens the editor of a base of the loaded loop (drum editor or instrument editor)"),
                      QStringLiteral("basis=<name>"), [mitPanel](const QJsonObject& argumente) -> Ergebnis {
                          return mitPanel([&](LoopPanel& panel) { return sichttestaktion::editor(panel, argumente); });
                      });

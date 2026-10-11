@@ -342,6 +342,11 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     CHECK(panel.loop().muster[1].art == MusterArt::Drumkit);
 
     CHECK(panel.instrumentEditor() == nullptr);
+    // auch die Aktion der Sichttest-Steuerung waehlt den Editor nach der Art der Basis
+    CHECK(lumi::loop::sichttestaktion::editor(panel, QJsonObject{{QStringLiteral("basis"), noten}}, false).status ==
+          lumi::sichttest::Ergebnis::Status::Ok);
+    CHECK(panel.instrumentEditor() != nullptr);
+    CHECK(panel.editor() == nullptr);
     REQUIRE(panel.oeffneEditor(noten, false));
     InstrumentEditor* editor = panel.instrumentEditor();
     REQUIRE(editor != nullptr);

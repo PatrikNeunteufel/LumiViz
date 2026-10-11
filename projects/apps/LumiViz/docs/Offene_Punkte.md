@@ -2298,8 +2298,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   **Im Programm nicht gehört und nicht gesehen — keine der Stufen seit S108.**
   Offen:
   - ⬜ **der erste Blick ins Programm:** Liste
-    `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte: Panel Loop,
-    Drum-Editor, Audio Browser, Loop als Clip, acht Urteile). Die Liste ist
+    `Sichttest_Composer_10_Loop.md` (lokal, seit S110 87 Punkte: Panel Loop,
+    Drum-Editor, Instrument-Clips, Audio Browser, Loop als Clip, 15 Urteile). Die Liste ist
     aus dem Code geschrieben, nicht aus dem laufenden Programm — stimmt ein
     „Erwartet" nicht, kann es an der Liste liegen. Der erste Hörtest ist
     dort Punkt L3
@@ -2345,7 +2345,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Oktaven, Noten setzen, verlängern, verschieben, löschen, Lautstärke je
     Note, eine Taste spielt den Ton an) und **New instrument clip**;
     Benutzerhandbuch §16. **Im Programm nicht gesehen und nicht gehört** —
-    ⬜ Sichttest-Punkte dafür fehlen in Liste 10; von Claude gesetzt und als
+    ⬜ Liste 10, Abschnitt I (22 Punkte, I2 ist der erste Hörtest der
+    Instrumente) und die Urteile U9 bis U15; von Claude gesetzt und als
     Urteile offen (Konzept §4f): das Anspielen pausiert den Player, die Zeile
     unten stellt alle Noten eines Schritts, kein Zoom, das Raster des Loops
     steht nur im Drum-Editor. 🟠 Ungemessen: beim Bearbeiten im laufenden

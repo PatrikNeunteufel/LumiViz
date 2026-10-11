@@ -37,8 +37,9 @@ namespace sichttestaktion
 /// spielt den ganzen Loop von vorn; hat der Composer den Ton, scheitert es
 /// und sagt, warum (Entscheid L7 a).
 [[nodiscard]] lumi::sichttest::Ergebnis wiedergabe(LoopPanel& panel, const QJsonObject& argumente);
-/// `loop_editor basis=<Name>` — den Drum-Editor dieser Basis oeffnen, wie
-/// **Edit base** am Clip. Gibt es die Basis nicht, nennt die Antwort die, die
+/// `loop_editor basis=<Name>` — den Editor dieser Basis oeffnen, wie **Edit
+/// base** am Clip: den Drum-Editor oder, bei einem Instrument-Muster, den
+/// Instrument-Editor. Gibt es die Basis nicht, nennt die Antwort die, die
 /// es gibt. `zeigen` false fuellt den Editor nur (fuer Tests ohne Fenster).
 [[nodiscard]] lumi::sichttest::Ergebnis editor(LoopPanel& panel, const QJsonObject& argumente,
                                                bool zeigen = true);
