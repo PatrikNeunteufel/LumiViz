@@ -22,6 +22,7 @@
 #include <doctest.h>
 
 #include "composer/Komposition.hpp"
+#include "loop/Loop.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -115,6 +116,11 @@ std::vector<VorlagenZusage> zusagen()
           {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 60000}}}}},
         {"composer_J_einrasten.lvcomp", 20500,
          {{"CH1", B, {{"Stern", 0, 20500}}}, {"CH2", B, {{"Ring", 5000, 15000}}}}},
+        // S109, Liste `Sichttest_Composer_10_Loop.md`: ein Loop als Clip, daneben ein Song
+        {"composer_K_loop.lvcomp", 60000,
+         {{"CH1", B, {{"Ring", 0, 60000}}},
+          {"A1", T, {{"beat_A", 0, 50000}}},
+          {"A2", T, {{"15_pseudo_musik_120bpm_60s", 36000, 60000}}}}},
     };
 }
 
@@ -185,6 +191,27 @@ TEST_SUITE("ComposerVorlagen")
                     }
                 }
             }
+        }
+
+        SUBCASE("K loop: der Clip in A1 ist ein Loop mit Tags, 32 s je Durchlauf, er blendet aus, waehrend der Song einblendet")
+        {
+            const Komposition k = lade(QStringLiteral("composer_K_loop.lvcomp"));
+            const Clip& loopClip = k.kanaele[1].clips[0];
+            CHECK(istLoop(loopClip.datei));
+            CHECK(loopClip.quellMs == 0);  // ein Loop hat kein Ende
+            CHECK(loopClip.aus.dauerMs == 10000);
+            CHECK(k.kanaele[2].clips[0].ein.dauerMs == 10000);
+            CHECK_FALSE(istLoop(k.kanaele[2].clips[0].datei));
+            lumi::loop::Loop loop;
+            QStringList bericht;
+            REQUIRE(lumi::loop::ladeLoop(loopClip.datei, loop, &bericht));
+            CHECK(bericht.isEmpty());
+            CHECK(loop.tags.titel == QStringLiteral("Sichttest Beat"));
+            CHECK(loop.tags.kuenstler == QStringLiteral("LumiViz"));
+            CHECK(loop.durchlaufTakte() == 16);
+            CHECK(loop.durchlaufMs() == doctest::Approx(32000.0));
+            // der Clip (50 s) laeuft ueber das Ende des Durchlaufs hinaus: er wiederholt sich
+            CHECK(loopClip.dauerMs() > static_cast<std::int64_t>(loop.durchlaufMs()));
         }
 
         SUBCASE("A kurz: nur CH1 reicht bis ans Ende, CH2 blendet je 5 s, keine Master-Kurve")

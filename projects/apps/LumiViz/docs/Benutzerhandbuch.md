@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.114.0
-> **Datum:** 2026-10-10
+> **Version:** 1.115.0
+> **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -32,8 +32,9 @@ Konfigurations-Panels steht im
 13. [Video & Kamera als Quelle](#13-video--kamera-als-quelle)
 14. [Stilfilter (Pixel Filter)](#14-stilfilter-pixel-filter)
 15. [Composer](#15-composer)
-16. [Dateitypen und ihre Icons](#16-dateitypen-und-ihre-icons)
-17. [Mit einer Datei starten — und immer nur ein LumiViz](#17-mit-einer-datei-starten--und-immer-nur-ein-lumiviz)
+16. [Loop](#16-loop)
+17. [Dateitypen und ihre Icons](#17-dateitypen-und-ihre-icons)
+18. [Mit einer Datei starten — und immer nur ein LumiViz](#18-mit-einer-datei-starten--und-immer-nur-ein-lumiviz)
 
 ---
 
@@ -172,6 +173,11 @@ Ordner bleibt dabei bedienbar. Ogg/Opus-Cover werden noch nicht gelesen.
   schon drin: dorthin springen).
 - **Ziehen** — in die Playlist (an die Stelle), auf Player oder
   Visualisierung (abspielen). Mehrfachauswahl geht.
+- **Loops** (`.lvloop`, §16) stehen hinter den Songs, mit einem Kreispfeil als
+  Icon. Ein **Doppelklick** lädt den Loop ins Panel **Loop** und holt es nach
+  vorn — in die Playlist kommt er nicht, er ist kein Song. **Ziehen** lässt er
+  sich in einen Audio-Kanal des Composers (§15); Playlist, Player und
+  Visualisierung nehmen ihn nicht an.
 - Der zuletzt geöffnete Ordner wird gemerkt; beim ersten Mal öffnet der
   Musik-Ordner von Windows.
 - **Der laufende Titel** ist markiert, wenn der Browser seinen Ordner zeigt.
@@ -2067,6 +2073,17 @@ Playlist ruht.
   den Song **später einsetzen**; was bleibt, ist an derselben Stelle zu hören.
   Länger als der Song lässt sich der Clip nicht ziehen. Die Clip-Zeile unten
   nennt die Stelle im Song, an der er einsetzt.
+- **Loops als Clips:** auch ein Loop (`.lvloop`, §16) fällt in einen
+  Audio-Kanal — aus dem Audio Browser oder dem Explorer. Der neue Clip ist
+  **einen Durchlauf** lang und hat kein Ende: länger gezogen **wiederholt** er
+  sich, bis der Clip endet. Statt einer Wellenform steht ein gestrichelter
+  Strich an jeder Stelle, an der der Loop von vorn beginnt. Die linke Kante
+  lässt ihn mitten im ersten Durchlauf einsetzen. Alles andere gilt wie für
+  einen Song: Pegelkurve, Blenden, Überlagern, und er zählt als **laufender
+  Song** — mit dem Titel und den übrigen Tags aus seiner Datei, als Länge
+  zeigt das Panel Player einen Durchlauf. Hat das Panel Loop dieselbe Datei
+  gerade offen, spielt der Clip, was dort steht — **auch Ungespeichertes** —,
+  und jede Änderung dort ist sofort in der Komposition zu hören.
 - **Ein- und Ausblenden:** wie am Bild — Griffe, Formen, Curve Editor, Stücke,
   dieselben Presets. Der Pegel ist hier die **Lautstärke**: voller Pegel ist
   so laut, wie der Regler im Panel Player steht; die Wellenform im Clip wird
@@ -2366,7 +2383,112 @@ zum Ausprobieren eine Kopie nehmen.
 
 ---
 
-## 16. Dateitypen und ihre Icons
+## 16. Loop
+
+Ein **Loop** ist ein kleines Arrangement in Takten — Drums, später auch
+Instrumente —, das im Kreis spielt. Er entsteht im Panel **Loop**, liegt als
+Datei `.lvloop` vor und lässt sich als Clip in einen Audio-Kanal des Composers
+legen (§15).
+
+Ein Loop besteht aus **Kanälen**, darin **Clips**. Ein Clip spielt ein
+**Muster** und wiederholt es; das Muster heißt seine **Basis**. Mehrere Clips
+können dieselbe Basis spielen: wer die Basis ändert, ändert sie alle. Tempo
+und Raster gelten für den ganzen Loop.
+
+Zum Ausprobieren liegt im Projektordner ein Beispiel:
+`asset\loop\drums_demo.lvloop`, dazu sechs Klänge (Kick, Snare, zwei Hi-Hats,
+Clap, Tom) unter `asset\loop\kit`.
+
+### Das Panel Loop
+
+**View → Panels → Loop.**
+
+| Element | Wirkung |
+|---|---|
+| Dateiname | Der geladene Loop; ein Stern heißt: es gibt Ungespeichertes. „untitled" = noch nie gespeichert |
+| **Tags...** | Titel, Künstler, Album, Jahr, Genre, Nummer und Songtext des Loops — was das Panel Player zeigt, wenn der Loop als Clip im Composer läuft. Ohne Titel gilt der Dateiname |
+| **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New und Load fragen nach, wenn Ungespeichertes verloren ginge. Der zuletzt geladene Loop steht nach dem Neustart wieder da |
+| **Play** / **Stop** | Spielt den Loop von vorn, im Kreis |
+| **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
+| Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
+| **Fit** | Zeigt den ganzen Loop, die Zeilen in normaler Höhe (auch Ctrl+0) |
+| Achse | Lineal mit Taktnummern, je Kanal eine Zeile, die Clips als Blöcke; unten die Zeile *New channel* |
+| Clip-Zeile | Zum angeklickten Clip: Basis, Takte, Wiederholungen und wie viele Clips die Basis spielen |
+
+**Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
+oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
+an; bei **Stop** spielt er weiter, wenn er vorher spielte. Lautstärke und Mute
+des Players gelten auch für den Loop, und die Visuals reagieren auf ihn.
+Hat der **Composer** den Ton, ist Play im Panel Loop grau.
+
+### Clips und Kanäle
+
+Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
+
+| Geste | Wirkung |
+|---|---|
+| Rechtsklick auf eine freie Stelle im Kanal → **New drumkit clip** | Ein leerer Clip über 4 Takte mit einer neuen Basis „Pattern N". Grau, wenn dort keine 4 Takte frei sind |
+| Clip anklicken | Er ist gewählt (heller Rand); die Clip-Zeile nennt ihn |
+| Clip ziehen | Verschieben in ganzen Takten — auch in einen anderen Kanal. Liegt dort schon ein Clip, rückt der gezogene an dessen Kante |
+| Kante eines Clips ziehen | Länger und kürzer in **ganzen Mustern**; der Name zählt mit („Grund × 3"), ein gestrichelter Strich steht an jeder Wiederholung. Links gezogen bleibt das Ende stehen |
+| Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis |
+| → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
+| → **Delete** (auch Entf) | Entfernt den Clip. Spielt danach kein Clip mehr die Basis, geht sie mit |
+| → **Edit base** (auch Doppelklick) | Öffnet den Drum-Editor für die Basis |
+| → **Make new base and edit** | Löst den Clip von seinen Kopien: er bekommt eine eigene Basis „<Name> 2" und der Editor öffnet sich dafür |
+| Rechtsklick auf eine freie Stelle → **Add channel** | Ein neuer Kanal „Channel N" |
+| Rechtsklick auf einen Kanalnamen | **Rename channel...**, **Turn channel off** / **on**, **Delete channel** |
+| Esc beim Ziehen | Bricht den Zug ab |
+
+Clips einer Basis tragen **dieselbe Farbe** — so sind verbundene Kopien zu
+erkennen. Ein Kanal, der aus ist, steht mit „(off)" da, seine Clips sind
+grau; die Länge des Loops bleibt. Ein **Durchlauf** endet am Ende des letzten
+Clips.
+
+**Zoomen und Rollen** wie im Composer (§15): Ctrl+Mausrad zoomt die Zeit um
+den Mauszeiger, Alt+Mausrad die Höhe der Zeilen, Shift+Mausrad rollt zur
+Seite, die mittlere Maustaste verschiebt den Ausschnitt, **Fit** setzt zurück.
+Beim Spielen blättert ein vergrößerter Ausschnitt mit der Abspielmarke weiter.
+
+Jede Änderung lässt sich mit **Ctrl+Z** zurücknehmen und ist beim Spielen
+sofort zu hören.
+
+### Der Drum-Editor
+
+**Edit base** oder ein Doppelklick auf einen Clip öffnet ein eigenes Fenster
+mit dem Schritt-Raster der Basis. Es gibt ein solches Fenster; eine andere
+Basis wechselt in ihm.
+
+| Element | Wirkung |
+|---|---|
+| **Base** | Die Basis und wie viele Clips sie spielen |
+| **Bars** | Länge des Musters, 4 bis 64 Takte. Länger hängt Stille an, kürzer schneidet hinten ab. Die Clips der Basis werden mit ihr länger; ein Clip dahinter rückt nach hinten |
+| **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster |
+| **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
+| **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
+| **M** | Die Spur ist stumm |
+| Klang | Ein Klang des mitgelieferten Kits — oder **Sample file...** für eine eigene Datei |
+| Zwei Schieber | Lautstärke und Panorama der Spur |
+| Schritte | Ein Klick schaltet einen Schritt an oder aus. Mit gedrückter Taste weitergezogen bekommen die überfahrenen Schritte denselben Zustand. Jeder zweite Schlag ist heller unterlegt |
+| **Step volume** | Die Lautstärke je Schritt der angeklickten Spur: an einem Balken ziehen. Ganz unten ist der Schritt aus |
+| **Add track** | Eine neue Spur „Track N" |
+| Rechtsklick auf eine Spur | **Rename track...**, **Remove track** |
+
+Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
+kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
+Stelle mehr gibt — Ctrl+Z holt sie zurück.
+
+### Eine Loop-Datei von Hand
+
+`.lvloop` ist eine Textdatei (JSON). Die Felder stehen in der Entwickler-Doku
+`docs\audio\Loop_Konzept.md` §4; das Beispiel `asset\loop\drums_demo.lvloop`
+zeigt alles in Gebrauch. Ein Klang heißt `kit:<Name>` für einen Klang des
+Kits oder ist der Pfad einer eigenen Datei — relativ, wenn sie unter dem
+Ordner der `.lvloop` liegt.
+
+---
+
+## 17. Dateitypen und ihre Icons
 
 LumiViz geht mit diesen Dateien um. Die Icons erscheinen **in der App** — im
 Effect Browser, im Panel Effect Chain und im Audio Browser. Im Windows-Explorer
@@ -2391,7 +2513,9 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lrc](bilder/handbuch/icons/lyrics_lrc.png) | `.lrc` | Songtext mit Zeiten | noch nirgends als Icon |
 
 Ohne eigenes Icon sind die Kurven-Presets des Composers (`.lvfade`,
-`.lvshape`), Farbverläufe (`.grad`) und Playlists (`.m3u8`).
+`.lvshape`), Farbverläufe (`.grad`) und Playlists (`.m3u8`). Loops
+(`.lvloop`, §16) stehen im Audio Browser mit einem Kreispfeil; ein eigenes
+Icon haben sie noch nicht.
 
 **Im Windows-Explorer:** LumiViz trägt von sich aus nichts in Windows ein. Im
 Projektordner von LumiViz liegt dafür das Skript
@@ -2403,11 +2527,11 @@ fasst es nie an, und eine Endung, die schon einem anderen Programm gehört,
 lässt es in Ruhe. Es trägt nur das **Icon** ein: ein Doppelklick im Explorer
 öffnet die Datei noch nicht in LumiViz. Von Hand geht es schon — über
 *Öffnen mit* im Explorer, oder indem man die Datei auf `LumiViz.exe` zieht
-(§17).
+(§18).
 
 ---
 
-## 17. Mit einer Datei starten — und immer nur ein LumiViz
+## 18. Mit einer Datei starten — und immer nur ein LumiViz
 
 **Eine Datei mitgeben.** LumiViz lässt sich mit einer Datei starten:
 `LumiViz.exe <datei>`. So ruft auch Windows ein Programm auf, wenn man im
@@ -2458,6 +2582,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.115.0 | 2026-10-11 | Session 109. **§16 NEU: Loop** — das Panel Loop (Datei-Zeile mit Tags, New, Load, Save; Play, BPM, Fit; die Achse in Takten), Clips und Kanäle (New drumkit clip, verschieben, in ganzen Mustern länger und kürzer, verbundene Kopien, Basis umbenennen, Kanäle), der Drum-Editor (Bars, Play pattern, Peak, Raster des Loops, Spuren, Schritte, Step volume), wer den Ton hat (Composer, Loop, Player). §3 Audio Browser: Loops in der Liste, Doppelklick lädt ins Panel Loop. §15 Audio-Kanal: **Loops als Clips** — ein Durchlauf lang, wiederholt sich, zählt als laufender Song, folgt dem Panel Loop. Die bisherigen §16 und §17 sind jetzt §17 und §18 |
 | 1.114.0 | 2026-10-10 | Session 105. **§18 wieder entfernt:** der Tester ist ein Werkzeug für Entwickler der App, kein Teil der Bedienung — der Inhalt steht jetzt in `Sichttest_Steuerung.md` (Entwickler-Doku, nicht im Release-Paket). |
 | 1.113.0 | 2026-10-09 | Session 105. **§18 NEU: LumiViz vom Sichttest steuern lassen** — Start mit `--testing` oder der Verknüpfung *LumiViz.exe - Testing*, ▶ Ausführen an den Punkten *Vorbereiten*, die Rückfrage mit Haken, eine geladene Vorlage hält am Anfang (Einstellung **Sichttest: A loaded template starts playing**, Vorgabe aus), die Vorlage ersetzt die geladene Komposition, die Meldung bei schon laufendem LumiViz. |
 | 1.112.0 | 2026-10-08 | Session 103. §15 *Eine Komposition von Hand schreiben*: die Felder aus den Sessions 99 bis 101 nachgetragen — `gridSeconds`, `color` am Kanal, `loop` (`overlap`, `songsTwice`, `visualsTwice`), `fade` (`in`, `out`, `inShape`, `outShape`), `level` (`base`, `shapes` mit `at` als fester Zeit — der Unterschied zu `pos` am Clip), `visualMaster` / `audioMaster` / `karaokeMaster`; Hinweis auf die fertigen Beispiele unter `asset\sichttest\` |

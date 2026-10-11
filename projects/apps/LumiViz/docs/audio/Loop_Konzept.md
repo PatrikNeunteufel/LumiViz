@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.11.0
+> **Version:** 0.12.0
 > **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -507,7 +507,7 @@ als Song; ein Cover.
 | 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | S109 gebaut, §4d; `test_LoopDrumEditor.cpp`, sieben Fälle, dazu zwei in `test_LoopSpieler.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | S109 gebaut (§3.3); ein Fall in `test_PaletteUi.cpp`, einer in `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen** |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser; dazu Tags (T2) und die Verbindung zum Loop-Panel (L7 a) | S109 gebaut, §4e, Messung §6a; zwei Fälle in `test_LoopSpieler.cpp` (ohne Ton), zwei in `test_LoopWiedergabe.cpp` (mit sehr leisem Ton), dazu Tags und Verbindung im Panel-Fall von `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
-| 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
+| 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | S109: Benutzerhandbuch 1.115.0 (§16 Loop neu, Audio Browser, Loops als Clips), `Audio_System.md` 1.3.0 (§6a Mixer und wer den Ton hat), Vorlage `asset/sichttest/composer_K_loop.lvcomp` mit `asset/sichttest/loop/beat_A.lvloop` (an `test_ComposerVorlagen.cpp` gebunden), Liste `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte). Offen: Aktionen der Sichttest-Steuerung für das Panel Loop; ein eigenes Icon für `.lvloop`; das Kit im Release-Paket |
 | 9 | **Instrument-Clip:** Piano-Rolle, Klangerzeuger für Töne | später |
 
 ---
@@ -604,6 +604,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.12.0** (S109, 2026-10-11): Stufe 8 — Benutzerhandbuch, `Audio_System.md`,
+  Vorlage und Liste für den Sichttest.
 - **0.11.0** (S109, 2026-10-11): Stufe 7 gebaut — der Loop als Clip im
   Composer (§4e neu), Messung §6a; Entscheide T1 a (an der Uhr wie ein Song)
   und T2 (zählt als laufender Song, Tags in der `.lvloop`); L7 a umgesetzt.
