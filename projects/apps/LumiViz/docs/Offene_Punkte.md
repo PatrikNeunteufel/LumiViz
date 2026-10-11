@@ -2330,9 +2330,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   - 🔧 ein Loop, der allein im Loop-Panel spielt, meldet sich nicht als Song;
     der Editor merkt Größe und Lage nicht; kein eigenes Icon für `.lvloop`;
     Kanäle und Spuren lassen sich nicht umsortieren
-  - 🔧 `Composer_Konzept.md` nennt weder die Basis `Achse` noch den Loop-Clip
-    in der Tonführung; der Composer hängt jetzt am Namensraum `loop` und
-    umgekehrt
+  - ✅ `Composer_Konzept.md` nachgezogen (S110, §9f): die Basis `Achse`, der
+    Loop-Clip in der Tonführung. 🔧 Offen bleibt: der Composer hängt am
+    Namensraum `loop` und umgekehrt — nicht entschieden, ob das so bleibt
+  - ✅ **Haken Karaoke im Composer nach dem Start leer, obwohl die Ebene an
+    war** (Befund Patrik S110): das Hauptfenster setzt den Schalter jetzt vor
+    dem Aufbau der Panels. Aus der Reihenfolge im Code gelesen und behoben,
+    im Programm nicht nachgeprüft
   - 🟡 **9 Instrument-Clip** — **Entscheid I1 c (Patrik S110):** Instrumente
     gerechnet oder aus Samples, zuerst gerechnet. **9a gebaut (S110):** Noten
     in Modell und Datei, sieben gerechnete Instrumente (Piano, Strings,

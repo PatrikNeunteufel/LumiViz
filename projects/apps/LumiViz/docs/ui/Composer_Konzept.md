@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.81.0
-> **Datum:** 2026-10-09 (Session 105)
+> **Version:** 0.82.0
+> **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -23,7 +23,8 @@
 > Blende der ganzen Komposition entschieden und in sieben Schritten gebaut,
 > die Lücke „Composer off ohne Titel im Player" geschlossen; im Programm
 > nichts davon gesehen oder gehört (Sichttest S99)** — dazu Entscheide aus S95 und S96
-> in §4 bis §9e; im Zweig `composer`, noch nicht nach `master` geholt
+> in §4 bis §9e; seit S105 auf `master` (§12) — **S109 / S110: die gemeinsame
+> Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)**
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
 > erst nach `master` geholt wird, wenn der Composer sauber läuft
@@ -98,6 +99,11 @@ Skript).
 | **Laufendes Preset** (S93) | sichert und lädt das Hauptfenster (`UI/StartPreset.hpp`) | der Start kennt künftig auch eine Komposition (C7) |
 | **Preset-Zeile** (S89) | Dropdown, ★, Load…, Save, Save As… | Vorbild für die Datei-Zeile des Panels |
 | **Sperre von Kürzeln** (S92) | `notWhileTyping` in der Kürzel-Tabelle | Vorbild für die Sperre |
+
+Seit S109 in die andere Richtung — der Composer **gibt ab** und **nimmt auf**
+(§9f): die Zeitachse teilt Maßstab, Zoom und Rollen mit dem Loop-Panel
+(`lumi::ui::Achse`), und ein Audio-Kanal nimmt neben Songs auch Loops
+(`.lvloop`) auf.
 
 ---
 
@@ -1191,6 +1197,66 @@ Modul nötig ist, damit ein Preset die Variablen sieht, oder nur die Vorgaben
 trägt. Technisch günstig: jeder Clip hat seinen eigenen Renderer, die
 Variablen eines Clips stören keinen anderen.
 
+### 9f. Nachtrag S109 / S110 — die gemeinsame Achse, der Loop als Clip, der Haken Karaoke
+
+Drei Dinge haben den Composer berührt, ohne dass dieses Dokument sie nannte.
+Maßgebend für den Loop bleibt [Loop_Konzept.md](../audio/Loop_Konzept.md);
+hier steht nur, was sich **am Composer** geändert hat.
+
+**Die gemeinsame Basis `lumi::ui::Achse`** (S109, Loop-Konzept Entscheid
+W1 b; `UI/widgets/Achse.hpp`). Maßstab, Zeit-Zoom, Zeilenhöhe, Rollen,
+Mausrad, Schwenken mit der mittleren Taste und das Mitlaufen mit der
+Abspielmarke — alles, was §7 unter ZO1 bis ZO9 beschreibt — liegen nicht mehr
+in der `Zeitachse` des Composers, sondern in dieser Basis; die `Zeitachse`
+erbt davon (rund 320 Zeilen sind gewandert), ebenso die `Taktachse` des
+Loop-Panels. Die Basis rechnet in **Ticks**: für den Composer ist ein Tick
+eine Millisekunde, für den Loop der 960. Teil eines Takts. Am Verhalten des
+Composers hat sich nichts geändert: 33 Bilder der Zeitachse und ihre
+Geometrie in Zahlen waren vor und nach dem Umbau bytegleich
+(`test_AchseBilder.cpp`; `LUMIVIZ_ACHSE_BILDER=<Ordner>` legt sie ab). **Wer
+an Zoom oder Rollen etwas ändert, ändert es für beide Panels** — und fährt
+vorher und nachher den Bildvergleich.
+
+**Der Loop als Clip im Audio-Kanal** (S109, Loop-Konzept §4e; Entscheide
+T1 a und T2).
+
+- **Modell und Datei unverändert:** ein Loop-Clip ist ein gewöhnlicher `Clip`
+  in einem Audio-Kanal, dessen Datei auf `.lvloop` endet
+  (`composer::istLoop`). Die `.lvcomp` kennt kein neues Feld.
+- **Kein Ende:** ein Loop trägt nie eine Song-Länge (`quellMs` 0) — er lässt
+  sich beliebig lang ziehen und wiederholt sich; ein neuer Clip ist einen
+  Durchlauf lang. In der Zeitachse steht statt einer Wellenform ein
+  gestrichelter Strich an jeder Stelle, an der der Loop von vorn beginnt.
+- **Tonführung** (§4): je Loop-Clip hängt ein eigener **Klangerzeuger** als
+  Quelle im Mixer (`IAudioEngine::mixerAddGenerator`), statt einer Datei. Er
+  wird zwei Sekunden vor dem Einsatz angehalten eingehängt, seine Klänge
+  werden dabei geladen (bei Instrument-Mustern: gerechnet). `setSourcePositionMs`
+  der Engine wirkt auf eine solche Quelle nicht — die Stelle wird am
+  Klangerzeuger selbst gesetzt und verglichen, im Kreis des Durchlaufs;
+  nachgesetzt wird wie bei einem Song ab 80 ms (T1 a).
+- **Laufender Song** (§8): ein Loop-Clip zählt als laufender Song (T2). Das
+  Player-Panel zeigt „Composer - <Titel>" aus den Tags der `.lvloop` (ohne
+  Titel den Dateinamen); Länge und Stelle sind die eines Durchlaufs.
+- **Verbunden mit dem Loop-Panel:** hat das Panel dieselbe Datei offen
+  (`loop/Offen.hpp`), spielt der Clip dessen Fassung — auch die
+  ungespeicherte — und folgt jeder Änderung. Play im Loop-Panel ist gesperrt,
+  solange der Composer den Ton hat (Rangfolge Composer, Loop-Panel, Player).
+- **Abhängigkeit in beide Richtungen:** `composer/Tonfuehrung` nimmt
+  `loop/Klangerzeuger`, `loop/Kit` und `loop/Offen`; das Loop-Panel fragt
+  `composer::fuehrtTon`, seine Achse nimmt `composer::reihenFarbe`. Nicht
+  entschieden, ob das so bleiben soll.
+- **Nicht drin:** ein Tempo der Komposition, an dem Loop-Clips einrasten
+  (Loop-Konzept L2 a, zurückgestellt) — ein Loop-Clip rastet wie ein Song, an
+  Kanten und am Raster in Sekunden.
+
+**Der Haken Karaoke im Kopf des Panels** (S110, Befund Patrik): er war nach
+dem Start leer, obwohl die Karaoke-Ebene an war, bis jemand sie schaltete.
+Ursache war die Reihenfolge beim Start: das Panel liest den Schalter beim
+Aufbau aus dem Renderer (`MultiEffectVisualizer::karaokeEbene`), der ihn erst
+danach aus den Einstellungen bekam; Panel Karaoke und Menü lesen die
+Einstellung selbst und stimmten. Seit S110 setzt das Hauptfenster den
+Schalter **vor** dem Aufbau der Panels (`MainWindow::setupUi`).
+
 ### 9a. Stand C0 — ✅ erledigt (S93): Host-Gruppen, verworfen
 
 `tests/unit/UnitTests/test_ComposerBelege.cpp`, Suite `ComposerBelege`,
@@ -1555,6 +1621,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.82.0 | 2026-10-11 | Session 110 — **§9f neu** (Nachtrag zu S109 und S110): die gemeinsame Basis `lumi::ui::Achse` für Zeitachse und Loop-Panel, der Loop als Clip im Audio-Kanal (Klangerzeuger in der Tonführung, kein Ende, laufender Song aus den Tags, Verbindung zum Loop-Panel), der Haken Karaoke stimmt nach dem Start; §3 und Kopf nachgezogen |
 | 0.81.0 | 2026-10-09 | Session 105 — §12: **Rückbau-Regeln abgeschlossen** (Entscheid Patrik M1: a): `composer` ist nach `master` überführt, Marke `vor-composer` auf dem Stand davor; die Nahtlisten bleiben als Beschreibung, werden aber nicht weitergeführt |
 | 0.80.0 | 2026-10-09 | Session 105 — §12.2 neue Naht **N26** (`qt-ads` in den `externals` des Test-Targets, für den Testfall mit echtem Dock; eingetragen vor dem Bau), §12.4 Rückbau-Liste |
 | 0.79.0 | 2026-10-09 | Session 105 — §12.2 und §12.4: **Naht N19 wächst** (eingetragen vor dem Bau): `sichttest.pin` auf v0.3.3 (nur der Tester: Block `steuerung` im Testlog) |

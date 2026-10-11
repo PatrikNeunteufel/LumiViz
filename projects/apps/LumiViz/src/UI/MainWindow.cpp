@@ -491,6 +491,14 @@ void MainWindow::setupUi()
 
     BasicLogger::logDebug("  Window size: 1280x720 (min: 800x600)");
 
+    // Der Schalter der Karaoke-Ebene aus den Einstellungen — VOR dem Aufbau der
+    // Panels (S110, Befund Patrik): das Panel Composer liest ihn beim Aufbau
+    // aus dem Renderer. Bis S110 stand das in setupEventHandlers, also danach —
+    // der Haken Karaoke im Composer blieb leer, obwohl die Ebene an war, bis
+    // jemand sie schaltete (Panel Karaoke und Menue lesen die Einstellung selbst).
+    MultiEffectVisualizer::setKaraokeEbene(
+        QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
+
     // -------------------------------------------------------------------------
     // Create Dock Manager
     // -------------------------------------------------------------------------
@@ -889,9 +897,9 @@ void MainWindow::setupEventHandlers()
     // gespeichert und gilt nur, wenn derselbe Titel noch laeuft.
     // S88 (KE1): Karaoke-Ebene — Songtext ueber jedem Preset; Schalter,
     // Mischart und Staerke stehen seit S89 im Karaoke-Panel (die Mischart in
-    // den Knoten der Ebene, s. Application: uebernehmeAlteKaraokeMischung)
-    MultiEffectVisualizer::setKaraokeEbene(
-        QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool());
+    // den Knoten der Ebene, s. Application: uebernehmeAlteKaraokeMischung).
+    // Der Schalter selbst kommt schon in setupUi aus den Einstellungen — vor
+    // dem Aufbau der Panels (S110).
     auto* songtextOnline = new lumi::audio::SongtextOnline(this);
     auto laufenderSong = std::make_shared<QString>();
     connect(songtextOnline, &lumi::audio::SongtextOnline::gefunden, this,

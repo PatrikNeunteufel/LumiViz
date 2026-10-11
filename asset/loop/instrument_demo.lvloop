@@ -1,57 +1,103 @@
 {
-    "format": "lumiviz-loop",
-    "version": 2,
-    "bpm": 100,
     "beatsPerBar": 4,
-    "stepsPerBeat": 4,
-    "swing": 0,
-    "volume": 0.35,
-    "tags": {
-        "title": "Instrument demo",
-        "artist": "LumiViz"
-    },
-    "patterns": [
+    "bpm": 100,
+    "channels": [
         {
-            "name": "Beat",
-            "kind": "drumkit",
-            "bars": 4,
-            "tracks": [
+            "clips": [
                 {
-                    "name": "Kick",
-                    "sound": "kit:kick",
-                    "volume": 1,
-                    "pan": 0,
-                    "mute": false
-                },
-                {
-                    "name": "Snare",
-                    "sound": "kit:snare",
-                    "volume": 0.8,
-                    "pan": 0,
-                    "mute": false
-                },
-                {
-                    "name": "Hi-Hat",
-                    "sound": "kit:hat_closed",
-                    "volume": 0.5,
-                    "pan": 0.2,
-                    "mute": false
+                    "pattern": "Beat",
+                    "repeat": 3,
+                    "start": 4
                 }
             ],
+            "enabled": true,
+            "name": "Drums"
+        },
+        {
+            "clips": [
+                {
+                    "pattern": "Chords",
+                    "repeat": 4,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "name": "Chords"
+        },
+        {
+            "clips": [
+                {
+                    "pattern": "Bassline",
+                    "repeat": 3,
+                    "start": 4
+                }
+            ],
+            "enabled": true,
+            "name": "Bass"
+        },
+        {
+            "clips": [
+                {
+                    "pattern": "Melody",
+                    "repeat": 1,
+                    "start": 4
+                },
+                {
+                    "pattern": "Pluck",
+                    "repeat": 1,
+                    "start": 8
+                },
+                {
+                    "pattern": "Solo",
+                    "repeat": 1,
+                    "start": 12
+                }
+            ],
+            "enabled": true,
+            "name": "Lead"
+        }
+    ],
+    "format": "lumiviz-loop",
+    "patterns": [
+        {
+            "bars": 4,
+            "kind": "drumkit",
+            "name": "Beat",
             "rows": [
                 [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.7, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.7, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.7, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0.7, 0],
                 [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
                 [1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0, 1, 0, 0.5, 0]
+            ],
+            "tracks": [
+                {
+                    "mute": false,
+                    "name": "Kick",
+                    "pan": 0,
+                    "sound": "kit:kick",
+                    "volume": 1
+                },
+                {
+                    "mute": false,
+                    "name": "Snare",
+                    "pan": 0,
+                    "sound": "kit:snare",
+                    "volume": 0.8
+                },
+                {
+                    "mute": false,
+                    "name": "Hi-Hat",
+                    "pan": 0.2,
+                    "sound": "kit:hat_closed",
+                    "volume": 0.5
+                }
             ]
         },
         {
-            "name": "Chords",
             "bars": 4,
-            "kind": "instrument",
             "instrument": "strings",
-            "volume": 0.9,
-            "pan": -0.2,
+            "kind": "instrument",
             "mute": false,
+            "name": "Chords",
             "notes": [
                 [0, 16, 57, 0.7],
                 [0, 16, 60, 0.7],
@@ -65,16 +111,16 @@
                 [48, 16, 55, 0.7],
                 [48, 16, 59, 0.7],
                 [48, 16, 62, 0.7]
-            ]
+            ],
+            "pan": -0.2,
+            "volume": 0.9
         },
         {
-            "name": "Bassline",
             "bars": 4,
-            "kind": "instrument",
             "instrument": "bass",
-            "volume": 1.0,
-            "pan": 0.0,
+            "kind": "instrument",
             "mute": false,
+            "name": "Bassline",
             "notes": [
                 [0, 2, 33, 0.9],
                 [4, 2, 33, 0.7],
@@ -92,16 +138,16 @@
                 [52, 2, 31, 0.7],
                 [56, 2, 31, 0.9],
                 [60, 2, 31, 0.7]
-            ]
+            ],
+            "pan": 0,
+            "volume": 1
         },
         {
-            "name": "Melody",
             "bars": 4,
-            "kind": "instrument",
             "instrument": "piano",
-            "volume": 1.0,
-            "pan": 0.1,
+            "kind": "instrument",
             "mute": false,
+            "name": "Melody",
             "notes": [
                 [0, 4, 76, 0.9],
                 [4, 2, 72, 0.7],
@@ -119,16 +165,16 @@
                 [48, 4, 74, 0.9],
                 [52, 4, 71, 0.8],
                 [56, 8, 67, 0.9]
-            ]
+            ],
+            "pan": 0.1,
+            "volume": 1
         },
         {
-            "name": "Pluck",
             "bars": 4,
-            "kind": "instrument",
             "instrument": "guitar",
-            "volume": 0.9,
-            "pan": 0.3,
+            "kind": "instrument",
             "mute": false,
+            "name": "Pluck",
             "notes": [
                 [0, 2, 57, 0.8],
                 [2, 2, 60, 0.8],
@@ -162,79 +208,33 @@
                 [58, 2, 74, 0.8],
                 [60, 2, 67, 0.8],
                 [62, 2, 71, 0.8]
-            ]
+            ],
+            "pan": 0.3,
+            "volume": 0.9
         },
         {
-            "name": "Solo",
             "bars": 4,
-            "kind": "instrument",
             "instrument": "violin",
-            "volume": 0.8,
-            "pan": -0.1,
+            "kind": "instrument",
             "mute": false,
+            "name": "Solo",
             "notes": [
                 [0, 16, 76, 0.8],
                 [16, 16, 77, 0.8],
                 [32, 12, 79, 0.8],
                 [44, 4, 76, 0.7],
                 [48, 16, 74, 0.8]
-            ]
+            ],
+            "pan": -0.1,
+            "volume": 0.8
         }
     ],
-    "channels": [
-        {
-            "name": "Drums",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Beat",
-                    "start": 4,
-                    "repeat": 3
-                }
-            ]
-        },
-        {
-            "name": "Chords",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Chords",
-                    "start": 0,
-                    "repeat": 4
-                }
-            ]
-        },
-        {
-            "name": "Bass",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Bassline",
-                    "start": 4,
-                    "repeat": 3
-                }
-            ]
-        },
-        {
-            "name": "Lead",
-            "enabled": true,
-            "clips": [
-                {
-                    "pattern": "Melody",
-                    "start": 4,
-                    "repeat": 1
-                },
-                {
-                    "pattern": "Pluck",
-                    "start": 8,
-                    "repeat": 1
-                },
-                {
-                    "pattern": "Solo",
-                    "start": 12,
-                    "repeat": 1
-                }
-            ]
-        }
-    ]
+    "stepsPerBeat": 4,
+    "swing": 0,
+    "tags": {
+        "artist": "LumiViz",
+        "title": "Instrument demo"
+    },
+    "version": 2,
+    "volume": 0.35
 }
