@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.28.0
+> **Version:** 0.29.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1327,7 +1327,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **Offen:** der volle Testlauf (seit 12d nur die Loop-Fälle, Vorgabe Patrik), 12e Doku und Sichttest-Liste |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut — im Programm nicht gesehen und nicht gehört.** Offen aus der Stufe: Patriks Blick und Ohr (Liste 10, Abschnitt F); die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1425,6 +1425,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.29.0** (S113, 2026-10-11): 12e — Benutzerhandbuch und Sichttest-Liste
+  nachgezogen, voller Testlauf; Stufe 12 ist gebaut.
 
 - **0.28.0** (S113, 2026-10-11): 12d gebaut — das Fenster „Clip effects"
   und Effects... im Menü des Clips (§4g).

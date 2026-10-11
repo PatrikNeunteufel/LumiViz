@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.121.0
+> **Version:** 1.122.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2430,12 +2430,16 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 |---|---|
 | Rechtsklick auf eine freie Stelle im Kanal → **New drumkit clip** | Ein leerer Clip über 4 Takte mit einer neuen Basis „Pattern N". Grau, wenn dort keine 4 Takte frei sind |
 | → **New instrument clip** | Dasselbe für ein Instrument: ein leerer Clip über 4 Takte, zunächst mit dem Piano |
-| Clip anklicken | Er ist gewählt (heller Rand); die Clip-Zeile nennt ihn |
+| Clip anklicken | Er ist markiert (Rand in der Markierfarbe); die Clip-Zeile nennt ihn |
+| **Ctrl+Klick** auf einen Clip | Nimmt ihn zu den markierten dazu — oder wieder heraus |
+| Auf freier Fläche einen **Rahmen** ziehen | Markiert jeden Clip, den der Rahmen berührt; mit Ctrl kommen sie zu den schon markierten dazu. **Ctrl+A** (oder Rechtsklick auf eine freie Stelle → **Select all clips**) markiert alle |
 | Clip ziehen | Verschieben in ganzen Takten — auch in einen anderen Kanal. Liegt dort schon ein Clip, rückt der gezogene an dessen Kante |
-| Kante eines Clips ziehen | Länger und kürzer in **ganzen Mustern**; der Name zählt mit („Grund × 3"), ein gestrichelter Strich steht an jeder Wiederholung. Links gezogen bleibt das Ende stehen |
-| Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis |
+| Einen von mehreren markierten ziehen | Alle markierten rücken zusammen, um dieselben Takte und Kanäle. Ist für einen von ihnen kein Platz, bleibt die Gruppe an der letzten Stelle stehen, an der Platz war |
+| Kante eines Clips ziehen | Länger und kürzer in **ganzen Mustern**; der Name zählt mit („Grund × 3"), ein gestrichelter Strich steht an jeder Wiederholung. Links gezogen bleibt das Ende stehen. Eine Kante gehört immer einem Clip — danach ist nur er markiert |
+| Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis. Bei mehreren markierten („Duplicate n clips") die ganze Gruppe, an die erste Stelle dahinter, an der alle Kopien Platz haben; markiert sind danach die Kopien |
+| → **Effects...** | Öffnet das Fenster **Clip effects** für die markierten Clips — siehe „Effekte am Clip" |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
-| → **Delete** (auch Entf) | Entfernt den Clip. Spielt danach kein Clip mehr die Basis, geht sie mit |
+| → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
 | → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
 | → **Make new base and edit** | Löst den Clip von seinen Kopien: er bekommt eine eigene Basis „<Name> 2" und der Editor öffnet sich dafür |
 | Rechtsklick auf eine freie Stelle → **Add channel** | Ein neuer Kanal „Channel N" |
@@ -2454,6 +2458,57 @@ Beim Spielen blättert ein vergrößerter Ausschnitt mit der Abspielmarke weiter
 
 Jede Änderung lässt sich mit **Ctrl+Z** zurücknehmen und ist beim Spielen
 sofort zu hören.
+
+Sind mehrere Clips markiert, nennt die Clip-Zeile ihre Zahl und wie viele
+davon Effekte haben. **Edit base**, **Make new base and edit** und **Rename
+base...** sind dann grau: eine Basis gehört zu einem Clip. Ein Klick auf einen
+der markierten lässt nur ihn markiert.
+
+### Effekte am Clip
+
+Jeder Clip kann eigene Effekte tragen — **Distortion**, **Echo** und
+**Reverb** —, gleich ob er ein Drumkit oder ein Instrument spielt. Sie
+gehören zum Clip, nicht zur Basis: zwei Clips derselben Basis können
+verschieden klingen, etwa nur der letzte vor einem Wechsel mit Hall. Ein Clip
+mit einem eingeschalteten Effekt trägt rechts die Marke **fx**.
+
+Einen oder mehrere Clips markieren, Rechtsklick → **Effects...**: das Fenster
+**Clip effects** öffnet sich. Es bleibt offen und zeigt immer die Clips, die
+gerade markiert sind.
+
+| Element | Wirkung |
+|---|---|
+| Kopf | Wie viele Clips, welche (Basis und Takt), rechts **Peak** — die Spitze der Summe beim Spielen, mit Effekten; über 1 steht sie rot |
+| Haken an **Distortion**, **Echo**, **Reverb** | Schaltet den Effekt für die markierten Clips ein oder aus. Zeigt er „teils an", schaltet ein Klick alle an |
+| **Distortion** — **Drive**, **Tone**, **Mix** | Verzerrt den Clip als Ganzes: Stärke, Klangfarbe (dunkel bis hell), Anteil. Ein Akkord wird dabei rauer als mit **Drive** im Instrument, das je Ton verzerrt |
+| **Echo** — **Time**, **Feedback**, **Damping**, **Mix** | Wiederholungen im Takt: **Time** ist ein Notenwert (1/16 bis 1/2) und folgt dem BPM des Loops, daneben stehen die Millisekunden. **Feedback** bestimmt, wie viele Wiederholungen nachkommen (bis 90 %), **Damping** macht jede dunkler |
+| **Reverb** — **Size**, **Decay**, **Damping**, **Mix** | Ein Raum: seine Größe, wie lange er nachklingt (0,2 bis 8 Sekunden), wie schnell die Höhen im Nachklang verschwinden |
+| **Mix** | Der Anteil des bearbeiteten Tons. Bei 0 % klingt der Clip unverändert, bei 100 % ist bei Echo und Reverb nur noch der Effekt zu hören |
+| **mixed** an einem Regler | Die markierten Clips haben dort verschiedene Werte. Wer den Regler bewegt, setzt den Wert für alle |
+| **Copy** / **Paste** | Merkt die Effekte des ersten gezeigten Clips und setzt sie auf alle markierten — so überträgst du eine Einstellung auf andere Clips |
+| **Reset** | Schaltet alle Effekte der markierten Clips aus und stellt die Regler auf ihre Vorgabe |
+
+Die Reihenfolge ist fest: erst Distortion, dann Echo, dann Reverb. Echo und
+Reverb klingen über das Ende des Clips hinaus aus. Ein Schieber wirkt beim
+Loslassen; die Änderung ist beim Spielen sofort zu hören und lässt sich mit
+**Ctrl+Z** zurücknehmen. **Duplicate** nimmt die Effekte mit; danach sind die
+beiden Clips in den Effekten unabhängig, im Muster weiter verbunden.
+
+Gut zu wissen:
+
+- **Play pattern** in den Editoren spielt das Muster **ohne** die Effekte —
+  eine Basis kann mehrere Clips mit verschiedenen Effekten haben.
+- Ein Effekt trifft den ganzen Clip. Soll im Schlagzeug nur die Snare Hall
+  bekommen, leg sie in ein eigenes Muster in einem zweiten Kanal.
+- Springst du im Composer weit in einen Loop-Clip hinein, beginnt der
+  Nachklang dort neu: was vor der Stelle gespielt hätte, klingt nicht nach.
+- Änderst du **Time**, **Size** oder das BPM, während ein Clip nachklingt,
+  bricht der Nachklang dieses Effekts ab.
+- Ein Loop mit Effekten wird in einem neueren Dateiformat gespeichert. Ein
+  älteres LumiViz spielt ihn ohne Effekte und meldet „File was written by a
+  newer version".
+
+Das Beispiel `asset\loop\effects_demo.lvloop` zeigt alle drei Effekte.
 
 ### Der Drum-Editor
 
@@ -2553,8 +2608,8 @@ Format mit Schichten, das eine ältere Fassung nicht richtig liest. Trägt eine
 Datei ein Format, das dieses LumiViz noch nicht kennt, schweigt das Muster,
 und das Panel Loop meldet „Instrument needs a newer LumiViz".
 
-Hall und Echo gibt es noch nicht — sie kommen später ans Muster, nicht ins
-Instrument.
+Hall und Echo gehören nicht ins Instrument, sondern an den **Clip** im Panel
+Loop — siehe „Effekte am Clip" weiter oben.
 
 ### Beispiele
 
@@ -2565,6 +2620,7 @@ Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
 | `drums_demo.lvloop` | Das Drumkit |
 | `instrument_demo.lvloop` | Piano, Strings, Violin, Guitar, Bass |
 | `house_demo.lvloop` | Die sieben Instrumente für House |
+| `effects_demo.lvloop` | Dasselbe mit Effekten an fünf Clips: Hall auf dem letzten Schlagzeug-Clip und den Stabs, Echo auf Piano und Arpeggio, Distortion auf dem Acid Bass — zum Vergleich mit `house_demo` |
 | `bells_demo.lvloop` | Bell, Kalimba, Marimba, Fifth Pad |
 | `synthwave_demo.lvloop` | Super Saw, Brass, Tine Piano |
 | `rock_demo.lvloop` | Overdrive Guitar, Growl Bass, Organ, Lead |
@@ -2701,6 +2757,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.122.0 | 2026-10-11 | Session 113. §16 Loop NEU **Effekte am Clip**: das Fenster **Clip effects** (Rechtsklick auf einen Clip → **Effects...**) mit Distortion, Echo und Reverb je Clip, „mixed" bei mehreren, Copy, Paste, Reset, die Marke **fx** am Clip; **Clips und Kanäle** GEÄNDERT: mehrere Clips markieren (Ctrl+Klick, Rahmen, Ctrl+A, **Select all clips**), als Gruppe ziehen, kopieren und löschen; Beispiel `asset\loop\effects_demo.lvloop`; der Satz „Hall und Echo gibt es noch nicht" im Abschnitt Instrument-Creator ersetzt |
 | 1.121.0 | 2026-10-11 | Session 111. §16 Loop — **Beispiele** um neunzehn Loops nach Genre unter `asset\loop\genres` erweitert (Trance, Funk, Disco, Reggae, Ska, Reggaeton, Hip-Hop, Trap, Drum and Bass, Techno, Bossa Nova, Blues, Jazz Waltz, Lo-Fi, Synth-Pop, Afrobeat, Metal); neunzehn Instrumente dazu (neunundvierzig insgesamt) |
 | 1.120.0 | 2026-10-11 | Session 111. §16 Loop — **Instrumente aus Schichten**: im Instrument-Creator die Liste **Layers** (Add layer, Add layer from instrument..., Duplicate, Remove, hinauf, hinunter, Haken für stumm), je Schicht Name, Level, Transpose, Start offset und **Drive**, oben Level für das ganze Instrument, zwei Kurven je Bild, **Selected layer only**; sechzehn neue Instrumente (dreißig insgesamt), sieben davon ungewöhnlich; NEU **Beispiele** mit fünf neuen Loops |
 | 1.119.0 | 2026-10-11 | Session 110. §16 Loop NEU **Eigene Instrumente: der Instrument-Creator** — **Edit instrument...** und **Load instrument...** im Instrument-Editor, das Fenster mit Waveform, Voices, Detune, Obertönen, Damping, Hüllkurve, Filter, Vibrato, Level, den zwei Bildern und der Klaviatur zum Anspielen; Save und Save as... schreiben eine Datei `.lvinst` |
