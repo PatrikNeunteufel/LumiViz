@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.24.0
+> **Version:** 0.25.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -89,9 +89,21 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **E1 a** (S111) | **Der Verzerrer gehört zum Instrument, Hall und Echo gehören ans Muster.** Der Verzerrer formt nur den Augenblickswert um und passt in den vorab gerechneten Ton: ein Regler **Drive** je Schicht, gebaut mit Stufe 10c. Hall und Echo klingen nach und stehen am Muster neben Volume und Pan — sie gelten damit auch für Drum-Muster; dafür bekommt der Rechenkern erstmals ein Gedächtnis. Das ist eine eigene Stufe nach 10c mit eigener Skizze (Stufe 12); ob sie je Muster oder je Kanal des Loop-Panels sitzen, klärt jene Skizze. **Mit E2 b (S113) überholt, was den Ort angeht:** Hall und Echo sitzen am Clip, nicht am Muster. |
 | **E2 b** (S113) | **Jeder Clip im Loop-Panel trägt eigene Effekte mit allen Einstellungen** — für Drumkit- und Instrument-Clips gleich; ein Fenster für den ganzen Loop gibt es nicht. Patrik: „im Loop soll jeder Clip für sich selbst Effekte erhalten können, nicht der ganze Loop"; dafür lassen sich mehrere Clips zugleich markieren. Die Effekte sind **Reverb**, **Echo** und **Distortion**, später **Autotune** (§3.2). Skizze und Beschreibung in §4g. |
 | **F2 a** (S113) | **Die Effekte stehen als Feld `effects` am Clip, die `.lvloop` trägt Fassung 3.** Je Effekt ein Eintrag mit `on` und seinen Werten (`distortion`, `echo`, `reverb`); ein Clip ohne Effekte trägt das Feld nicht. Fassung 2 wird weiter gelesen, gespeichert wird immer Fassung 3. Ein älteres LumiViz spielt eine solche Datei ohne Effekte und meldet „File was written by a newer version". Verworfen: b — die Fassung bleibt 2 (eine Datei ohne Effekte bliebe bytegleich, aber ein älteres Programm spielte einen Loop mit Effekten trocken, ohne es zu sagen). |
+| **G1 b** (S113) | **Die Effekte eines Clips rechnen im Ton-Thread mit, Block für Block.** Jeder gerade klingende Clip mit Effekten hat im Klangerzeuger einen eigenen Verzerrer, ein eigenes Echo und einen eigenen Hall. Eine Änderung am Muster oder an den Effekten gilt ab dem nächsten Block. Springt die Stelle um weniger als 200 ms (das Nachsetzen nach T1 a), klingt der Nachklang unverändert weiter; springt sie weiter, werden Echo und Hall geleert — der Nachklang der Schläge davor fehlt, bis er sich neu aufgebaut hat, längstens so lange wie Decay. Der Rechenkern selbst bleibt ohne Gedächtnis; es sitzt in den Effekten. Grund (Patrik): wer gerade am Muster eines Clips arbeitet, soll nicht auf ein Neurechnen warten. Die 200 ms sind von mir gesetzt. |
 | **P1 a** (S113) | **Instrumente wählt man in einem Palettenfenster wie bei der Effektkette**, nicht mehr in einer Dropdown-Liste: ein Baum nach Art, Suchfeld, Favorites, Recently used, ein Satz Beschreibung, Anspielen per Klick. Dazu Patrik: auch **Sortieren oder Filtern nach Genre** muss gehen. Beschrieben in §4h; eigene Stufe 14. |
 
 ### 3.1 Verworfen, mit Grund
+
+- **Jeden Clip mit Effekten vorab als fertigen Klang rechnen** (G1 a, meine
+  erste Empfehlung): der Nachklang stimmte nach jedem Sprung auf den
+  Abtastwert, und der Ton-Thread rechnete keinen Hall — aber jede Änderung am
+  Muster rechnete alle Clips der Basis neu, die Effekte haben; beim
+  Bearbeiten im laufenden Loop käme die Änderung verzögert (Einwand Patrik).
+  Die Last im Ton-Thread, gegen die a gedacht war, ist gemessen klein (§4g).
+- **Im Ton-Thread rechnen und nach einem Sprung vorrechnen** (G1 c): bei 8 s
+  Decay wären acht Sekunden Ton auf einmal im Ton-Thread zu rechnen. Als
+  Nachrüstung außerhalb des Ton-Threads bleibt es möglich, falls der fehlende
+  Nachklang nach einem weiten Sprung stört.
 
 - **Ein Hall und ein Echo für den ganzen Loop, Anteile je Clip oder je
   Muster und Drum-Spur** (E2 a, meine Empfehlung in zwei Fassungen): alles
@@ -1054,17 +1066,62 @@ Clip; gespeicherte Effekt-Vorlagen; Effekte je Kanal oder je Drum-Spur.
   reiben die Töne aneinander; **Drive** je Schicht im Instrument (E1 a)
   bleibt daneben und verzerrt je Ton.
 
-**Offen vor dem Bau:**
+**Vor dem Bau geklärt:** das Dateiformat (F2 a, §4) und wo gerechnet wird
+(G1 b, §3).
 
-- **Das Dateiformat:** wo und wie die Effekte in der `.lvloop` stehen, und
-  was eine ältere Programmfassung mit einer solchen Datei tut — eigener
-  Entscheid.
-- **Das Gedächtnis des Rechenkerns:** `rechne` ist heute ohne Gedächtnis,
-  deshalb lässt sich die Stelle frei setzen (§4). Mit Hall und Echo fehlt
-  nach einem Sprung der Nachklang der Schläge davor, bis er sich neu
-  aufgebaut hat — betroffen sind der Einstieg mitten in einen Loop-Clip im
-  Composer und das Nachsetzen nach T1 a. Ob man es hört und ob der Kern dafür
-  ein Stück vorrechnen soll: eigene Frage beim Bau, keine stille Regel.
+### Die Rechenbausteine (gebaut, 12b Teil 1)
+
+`loop/Effekte.hpp`: `Verzerrer`, `EchoEffekt`, `HallEffekt` und die
+`EffektKette` eines Clips (Verzerrer, dann Echo, dann Hall). Sie kennen weder
+den Loop noch die Engine; **im Klangerzeuger hängen sie noch nicht** — zu
+hören ist nichts. `rechne` und `leere` holen keinen Speicher und dürfen im
+Ton-Thread laufen, `richteEin` nicht. Dieselbe Eingabe ergibt dieselbe
+Ausgabe, gleich in welchen Blöcken gerechnet wird (geprüft mit Blöcken von 1
+bis 8167 Abtastwerten).
+
+- **Verzerrer:** die Kennlinie von Drive je Schicht
+  (`tanh(8·Drive·x) / tanh(8·Drive)`), danach ein Tiefpass für **Tone** (0 =
+  800 Hz, 1 = 18 kHz). Leises wird lauter, eine Spitze bis 1 bleibt bis 1.
+- **Echo:** eine Verzögerung je Seite, so lang wie der Notenwert im Tempo des
+  Loops; jede Wiederholung um Feedback leiser; **Damping** legt einen Tiefpass
+  in die Rückführung (0 = offen, 1 = 1 kHz).
+- **Hall:** die Bauart von Freeverb (acht gedämpfte Kammfilter, vier
+  Allpässe je Seite; gemeinfrei). **Decay** bestimmt die Rückführung jedes
+  Kamms so, dass er nach dieser Zeit um 60 dB gefallen ist; **Size** streckt
+  die Längen (0,6- bis 1,4-fach); **Damping** nimmt die Höhen im Nachklang.
+- **Mix** blendet bei allen dreien zwischen unbearbeitet und bearbeitet: bei
+  100 % ist nur der bearbeitete Ton zu hören, bei Echo und Hall also kein
+  direkter mehr.
+- `nachklangSekunden`: wie lange ein Clip nach seinem letzten Ton noch klingt
+  — Decay, dazu beim Echo so viele Wiederholungen, bis sie um 60 dB gefallen
+  sind.
+
+**Von mir gesetzt, nicht entschieden:** die Bauart des Halls, die
+Frequenzen hinter Tone und Damping, die Streckung hinter Size, und dass Mix
+überblendet statt dazumischt. Alles nach Rechnung, **nichts gehört**.
+
+**Gemessen** (S113, `test_LoopEffekte.cpp`, Fall „Loop Effekte Messung": 5 s
+Rauschen in Blöcken von 441 Abtastwerten, 44100 Hz, je drei Läufe, die
+Taktprobe davor und danach ruhig bei rund 10 ms — der Rechner drosselte
+nicht):
+
+| Bauart | nur Hall | Verzerrer, Echo und Hall |
+|---|---|---|
+| Release-clang | 0,93 bis 0,97 ms je Sekunde Ton (rund 0,1 % eines Kerns) | 1,9 bis 2,4 ms (rund 0,2 %) |
+| Testing-MSVC | 5,6 ms (rund 0,6 %) | 7,4 bis 7,8 ms (rund 0,8 %) |
+
+Der Hall fällt in der eingestellten Zeit: bei Decay 2 s liegen zwischen zwei
+Fenstern im Abstand von 2 s 59,9 bis 60,1 dB (Size 0, 0,5 und 1).
+**Nicht gemessen:** ein Lauf, in dem der Rechner drosselt (auf ein Achtel
+gerechnet wären es unter Release-clang rund 2 % je Clip — gerechnet, nicht
+gemessen); mehrere Ketten zugleich; die Kette im Ton-Thread selbst;
+Debug-MSVC.
+
+**Offen für 12b Teil 2** (die Ketten in den Klangerzeuger): der Rechenkern
+liefert je Clip mit Effekten einen eigenen trockenen Ton; die Regel für den
+Sprung aus G1 b; was mit dem Gedächtnis geschieht, wenn sich die Werte eines
+Effekts ändern, während er klingt; wie der Nachklang über das Clip-Ende und
+über das Ende des Durchlaufs läuft.
 
 ---
 
@@ -1138,7 +1195,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **Offen:** 12b Rechnen der Effekte im Kern (mit der Frage zum Gedächtnis und der Messung der Last), 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; noch nicht im Klangerzeuger. **Offen:** 12b Teil 2 die Ketten im Klangerzeuger, 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1236,6 +1293,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.25.0** (S113, 2026-10-11): Entscheid G1 b (die Effekte rechnen im
+  Ton-Thread mit, mit einer Regel für den Sprung), a und c verworfen; 12b
+  Teil 1 gebaut — die Rechenbausteine Verzerrer, Echo, Hall und die Messung
+  ihrer Last (§4g).
 
 - **0.24.0** (S113, 2026-10-11): Entscheid F2 a (Feld `effects` am Clip,
   Fassung 3 der `.lvloop`), b verworfen; Stufe 12a gebaut — die Effekte im
