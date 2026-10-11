@@ -20,6 +20,7 @@ Ablauf plane(const Loop& loop, int rate)
     Ablauf ablauf;
     ablauf.rate = rate;
     ablauf.klangNamen = loop.klangNamen();
+    ablauf.bpm = loop.bpm;
     if (rate <= 0 || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ablauf;
 
     const double schrittFrames = rate * 60.0 / loop.bpm / loop.schritteJeSchlag;
@@ -29,8 +30,9 @@ Ablauf plane(const Loop& loop, int rate)
     QHash<QString, int> klangVon;
     for (int i = 0; i < ablauf.klangNamen.size(); ++i) klangVon.insert(ablauf.klangNamen[i], i);
 
-    for (const Kanal& kanal : loop.kanaele)
+    for (std::size_t kanalNr = 0; kanalNr < loop.kanaele.size(); ++kanalNr)
     {
+        const Kanal& kanal = loop.kanaele[kanalNr];
         if (!kanal.an) continue;
         // je Kanal: (Muster, Spur) -> Stimme
         std::map<std::pair<const Muster*, std::size_t>, std::size_t> stimmeVon;
@@ -42,6 +44,13 @@ Ablauf plane(const Loop& loop, int rate)
         {
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
+            // ein Clip mit Effekten: seine Schlaege gehen in einen eigenen Bus
+            int bus = -1;
+            if (clip.effekte.einerAn())
+            {
+                bus = static_cast<int>(ablauf.busse.size());
+                ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte});
+            }
             if (muster->art == MusterArt::Instrument)
             {
                 if (muster->stumm) continue;
@@ -69,6 +78,7 @@ Ablauf plane(const Loop& loop, int rate)
                         schlag.frame = std::llround(stelle);
                         schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - muster->pan));
                         schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
+                        schlag.bus = bus;
                         ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                     }
                 }
@@ -105,6 +115,7 @@ Ablauf plane(const Loop& loop, int rate)
                         schlag.frame = std::llround(stelle);
                         schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - spur.pan));
                         schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + spur.pan));
+                        schlag.bus = bus;
                         ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                     }
                 }
@@ -115,10 +126,14 @@ Ablauf plane(const Loop& loop, int rate)
     return ablauf;
 }
 
-void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus)
+void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus,
+            float* const* busAus)
 {
     if (frames <= 0) return;
     std::fill(aus, aus + 2 * static_cast<std::ptrdiff_t>(frames), 0.0f);
+    if (busAus != nullptr)
+        for (std::size_t b = 0; b < ablauf.busse.size(); ++b)
+            std::fill(busAus[b], busAus[b] + 2 * static_cast<std::ptrdiff_t>(frames), 0.0f);
     const std::int64_t durchlauf = ablauf.durchlaufFrames;
     const std::int64_t bis = von + frames;
     if (durchlauf <= 0 || bis <= 0) return;
@@ -153,14 +168,16 @@ void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_
             const std::int64_t naechster = beginn(g + 1);
             const std::int64_t ende = std::min(start + laenge, naechster + kSchnittFrames);
             const Schlag& schlag = schlaege[static_cast<std::size_t>(g % anzahl)];
+            // auch die Schnitt-Blende eines Schlags bleibt in seinem Bus
+            float* const ziel = busAus != nullptr && schlag.bus >= 0 ? busAus[schlag.bus] : aus;
             for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)
             {
                 const float blende =
                     f < naechster ? 1.0f : 1.0f - static_cast<float>(f - naechster) / kSchnittFrames;
                 const std::int64_t imKlang = f - start;
                 const std::int64_t imBlock = f - von;
-                aus[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende;
-                aus[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende;
+                ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende;
+                ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende;
             }
         }
     }

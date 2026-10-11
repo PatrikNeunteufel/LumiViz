@@ -22,6 +22,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
+#include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
 
@@ -850,6 +851,53 @@ TEST_SUITE("LoopInstrument")
         {
             REQUIRE(QDir().mkpath(ordner));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("house_demo.wav")), alles, kRate));
+        }
+    }
+
+    TEST_CASE("Loop Instrument: das Beispiel effects_demo spielt fuenf Clips mit Effekten und bleibt unter 1")
+    {
+        // Stufe 12b (S113): house_demo mit Effekten an fuenf Clips — durch den
+        // Klangerzeuger gerechnet, denn die Effekte sitzen dort (G1 b)
+        const InstrumentApp app;
+        const QString pfad = repoWurzel().filePath(QStringLiteral("asset/loop/effects_demo.lvloop"));
+        Loop loop;
+        QStringList bericht;
+        REQUIRE(ladeLoop(pfad, loop, &bericht));
+        CHECK(bericht.isEmpty());
+        CHECK(loop.tags.titel == QStringLiteral("Effects demo"));
+        CHECK(loop.durchlaufTakte() == 24);
+        // dieselbe Basis zweimal im Kanal Drums, nur der zweite Clip mit Hall
+        REQUIRE(loop.kanaele[0].clips.size() == 2u);
+        CHECK(loop.kanaele[0].clips[0].muster == loop.kanaele[0].clips[1].muster);
+        CHECK(!loop.kanaele[0].clips[0].effekte.einerAn());
+        CHECK(loop.kanaele[0].clips[1].effekte.hall.an);
+
+        const Ablauf ablauf = plane(loop, kRate);
+        CHECK(ablauf.busse.size() == 5u);
+        const auto klaenge = std::make_shared<const std::vector<Klang>>(klaengeOhneEngine(ablauf));
+        const int frames = static_cast<int>(ablauf.durchlaufFrames);
+        std::vector<float> trocken(static_cast<std::size_t>(frames) * 2);
+        rechne(ablauf, *klaenge, 0, frames, trocken.data());
+
+        Klangerzeuger erzeuger;
+        erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge));
+        std::vector<float> alles(static_cast<std::size_t>(frames) * 2);
+        for (int stelle = 0; stelle < frames; stelle += 441)
+            erzeuger.render(alles.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(441, frames - stelle));
+        const float groesster = spitze(alles);
+        MESSAGE("effects_demo.lvloop: fuenf Clips mit Effekten, ein Durchlauf " << frames << " Abtastwerte, groesster Betrag "
+                                                                               << std::to_string(groesster) << " (ohne Effekte "
+                                                                               << std::to_string(spitze(trocken)) << ")");
+        CHECK(groesster > 0.2f);
+        CHECK(groesster < 1.0f);
+        CHECK(alles != trocken);
+        // die ersten vier Takte spielen nur Clips ohne Effekte: dort aendert sich nichts
+        const auto vierTakte = static_cast<std::ptrdiff_t>(2 * std::llround(4 * 16 * ablauf.schrittFrames));
+        CHECK(std::equal(alles.begin(), alles.begin() + vierTakte, trocken.begin()));
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_WAV"); !ordner.isEmpty())
+        {
+            REQUIRE(QDir().mkpath(ordner));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("effects_demo.wav")), alles, kRate));
         }
     }
 

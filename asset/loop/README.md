@@ -146,6 +146,28 @@ Ein Beispiel mit den sieben Instrumenten für House, 124 BPM, 24 Takte
 Lautstärke des Loops 0,3: die Summe erreicht höchstens 0,52
 (`test_LoopInstrument.cpp` rechnet einen Durchlauf).
 
+## effects_demo.lvloop
+
+Das Beispiel `house_demo.lvloop` mit **Effekten an fünf Clips** (S113, Stufe
+12b) — Fassung 3 der `.lvloop`. Muster, Instrumente und Lautstärken sind
+dieselben; zum Vergleich beide nacheinander laden.
+
+| Kanal | Clip | Effekt |
+|---|---|---|
+| Drums | Beat, Takt 1 bis 20 | keiner |
+| Drums | Beat, Takt 21 bis 24 (dieselbe Basis) | Reverb: Size 0,4, Decay 1,2 s, Mix 20 % |
+| Bass | Acid, Takt 17 bis 24 | Distortion: Drive 0,5, Tone 0,6, Mix 70 % |
+| Keys | Piano stabs, Takt 5 bis 12 | Echo: punktierte Achtel, Feedback 0,45, Mix 30 % |
+| Keys | Stabs, Takt 13 bis 24 | Reverb: Size 0,7, Decay 2,5 s, Mix 30 % |
+| Lead | Arp, Takt 17 bis 24 | Echo: Achtel, Feedback 0,5, Mix 30 %; Reverb: Decay 1,8 s, Mix 20 % |
+
+Von Hand aus `house_demo.lvloop` abgeleitet, nicht aus einem der
+Erzeuger-Skripte. Die Werte sind **nach Rechnung gesetzt, nicht gehört**. Die
+Summe erreicht höchstens 0,52 (`test_LoopInstrument.cpp` rechnet einen
+Durchlauf durch den Klangerzeuger; die ersten vier Takte sind auf den Wert
+gleich wie ohne Effekte). `LUMIVIZ_INSTRUMENT_WAV=<Ordner>` legt
+`effects_demo.wav` ab.
+
 ## Fünf Beispiele mit den Instrumenten aus Schichten (S111)
 
 Erzeugt mit `make_examples.py` (Python 3, ohne weitere Pakete); je 16 Takte.

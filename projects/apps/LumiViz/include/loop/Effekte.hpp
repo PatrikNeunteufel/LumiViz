@@ -40,6 +40,7 @@ public:
     void richteEin(const ClipVerzerrung& werte, int rate);
     void leere();
     void rechne(float* stereo, int frames);
+    void uebernimm(Verzerrer& alt) { m_zustand = alt.m_zustand; }
 
 private:
     bool m_an = false;
@@ -61,6 +62,9 @@ public:
     void rechne(float* stereo, int frames);
     /// Die Verzoegerung in Abtastwerten; 0 = aus.
     [[nodiscard]] int verzoegerung() const { return m_an ? m_laenge : 0; }
+    /// Das Gedaechtnis von `alt` uebernehmen, wenn es passt (dieselbe
+    /// Verzoegerung); `alt` hat danach dieses. Holt keinen Speicher.
+    void uebernimm(EchoEffekt& alt);
 
 private:
     bool m_an = false;
@@ -82,6 +86,8 @@ public:
     void richteEin(const ClipHall& werte, int rate);
     void leere();
     void rechne(float* stereo, int frames);
+    /// Wie beim Echo: nur, wenn alle Laengen gleich sind (dieselbe Groesse).
+    void uebernimm(HallEffekt& alt);
 
 private:
     static constexpr int kKaemme = 8;
@@ -119,6 +125,12 @@ public:
     /// Einen Block am Ort umrechnen (Stereo, `2 * frames` Werte).
     void rechne(float* stereo, int frames);
     [[nodiscard]] bool an() const { return m_an; }
+    /// Von der Kette desselben Clips aus dem Programm davor uebernehmen, was
+    /// an Gedaechtnis passt: aendert jemand nur Mix, Feedback, Decay oder
+    /// Damping — oder das Muster —, reisst der Nachklang nicht ab. Aendert
+    /// sich die Echo-Zeit, das Tempo oder die Groesse des Raums, beginnt
+    /// dieser Effekt leer. Im Ton-Thread erlaubt.
+    void uebernimm(EffektKette& alt);
 
 private:
     bool m_an = false;

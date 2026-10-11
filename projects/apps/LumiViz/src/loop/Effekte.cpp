@@ -232,6 +232,49 @@ void EffektKette::richteEin(const ClipEffekte& effekte, int rate, double bpm)
     m_an = effekte.einerAn();
 }
 
+void EchoEffekt::uebernimm(EchoEffekt& alt)
+{
+    if (!m_an || !alt.m_an || m_laenge != alt.m_laenge || m_speicher.size() != alt.m_speicher.size()) return;
+    m_speicher.swap(alt.m_speicher);
+    m_stelle = alt.m_stelle;
+    m_zustand = alt.m_zustand;
+}
+
+void HallEffekt::uebernimm(HallEffekt& alt)
+{
+    if (!m_an || !alt.m_an) return;
+    for (std::size_t seite = 0; seite < 2; ++seite)
+    {
+        for (std::size_t i = 0; i < m_kaemme[seite].size(); ++i)
+            if (m_kaemme[seite][i].speicher.size() != alt.m_kaemme[seite][i].speicher.size()) return;
+        for (std::size_t i = 0; i < m_allpaesse[seite].size(); ++i)
+            if (m_allpaesse[seite][i].speicher.size() != alt.m_allpaesse[seite][i].speicher.size()) return;
+    }
+    for (std::size_t seite = 0; seite < 2; ++seite)
+    {
+        for (std::size_t i = 0; i < m_kaemme[seite].size(); ++i)
+        {
+            Kamm& kamm = m_kaemme[seite][i];
+            Kamm& vorher = alt.m_kaemme[seite][i];
+            kamm.speicher.swap(vorher.speicher);
+            kamm.stelle = vorher.stelle;
+            kamm.zustand = vorher.zustand;
+        }
+        for (std::size_t i = 0; i < m_allpaesse[seite].size(); ++i)
+        {
+            m_allpaesse[seite][i].speicher.swap(alt.m_allpaesse[seite][i].speicher);
+            m_allpaesse[seite][i].stelle = alt.m_allpaesse[seite][i].stelle;
+        }
+    }
+}
+
+void EffektKette::uebernimm(EffektKette& alt)
+{
+    m_verzerrer.uebernimm(alt.m_verzerrer);
+    m_echo.uebernimm(alt.m_echo);
+    m_hall.uebernimm(alt.m_hall);
+}
+
 void EffektKette::leere()
 {
     m_verzerrer.leere();

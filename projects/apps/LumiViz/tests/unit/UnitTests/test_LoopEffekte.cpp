@@ -18,6 +18,8 @@
 #include <doctest.h>
 
 #include "loop/Effekte.hpp"
+#include "loop/Klangerzeuger.hpp"
+#include "loop/Rechenkern.hpp"
 
 #include <QByteArray>
 #include <QString>
@@ -248,6 +250,215 @@ TEST_CASE("Loop Effekte: wie lange ein Clip nachklingt")
     // Viertel bei 120 BPM = 0,5 s; Feedback 0,5 braucht zehn Wiederholungen bis -60 dB
     effekte.echo = {true, EchoZeit::Viertel, 0.5, 0.0, 0.5};
     CHECK(nachklangSekunden(effekte, 120.0) == doctest::Approx(0.5 * 11 + 1.8));
+}
+
+// --- Die Ketten im Klangerzeuger (12b Teil 2) ---
+//
+// Der kleine Loop: ein Schlag je Takt, 120 BPM — ein Muster von vier Takten
+// dauert 88200 Abtastwerte. Kanal K spielt „M" (ein Schlag am Anfang, mit
+// den Effekten) und danach „L" (leer): ein Durchlauf ist 176400 lang. Der
+// Klang ist 2000 Abtastwerte lang und hat ueberall den Wert 0,5.
+
+namespace
+{
+
+Loop effektLoop(const ClipEffekte& effekte, double ersterSchritt = 1.0)
+{
+    Loop loop;
+    loop.laut = 1.0;
+    loop.schlaegeJeTakt = 1;
+    Muster m;
+    m.name = QStringLiteral("M");
+    m.spuren = {{QStringLiteral("A"), QStringLiteral("a.wav"), 1.0, 0.0, false}};
+    m.zeilen = {{ersterSchritt}};
+    Muster leer = m;
+    leer.name = QStringLiteral("L");
+    leer.zeilen = {{}};
+    loop.muster = {m, leer};
+    loop.kanaele = {
+        {QStringLiteral("K"), true, {LoopClip{QStringLiteral("M"), 0, 1, effekte}, LoopClip{QStringLiteral("L"), 4, 1}}}};
+    loop.richte();
+    return loop;
+}
+
+std::shared_ptr<const std::vector<Klang>> effektKlang()
+{
+    auto klaenge = std::make_shared<std::vector<Klang>>(1);
+    (*klaenge)[0].daten.assign(2 * 2000, 0.5f);
+    return klaenge;
+}
+
+/// `frames` Abtastwerte aus dem Klangerzeuger holen, in Bloecken wie der Mixer.
+std::vector<float> spiele(Klangerzeuger& erzeuger, int frames, int block = 441)
+{
+    std::vector<float> werte(2 * static_cast<std::size_t>(frames));
+    for (int stelle = 0; stelle < frames; stelle += block)
+        erzeuger.render(werte.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(block, frames - stelle));
+    return werte;
+}
+
+float groessterBetrag(const std::vector<float>& werte)
+{
+    float spitze = 0.0f;
+    for (const float wert : werte) spitze = std::max(spitze, std::abs(wert));
+    return spitze;
+}
+
+ClipEffekte nurEcho(double feedback = 0.8, double mix = 0.5, EchoZeit zeit = EchoZeit::Viertel)
+{
+    ClipEffekte effekte;
+    effekte.echo = {true, zeit, feedback, 0.0, mix};
+    return effekte;
+}
+
+}  // namespace
+
+TEST_CASE("Loop Effekte im Klangerzeuger: ein Clip mit Effekten klingt wie sein Ton durch die Kette")
+{
+    ClipEffekte effekte = nurEcho(0.5);
+    effekte.verzerrung = {true, 0.5, 0.8, 1.0};
+    effekte.hall = {true, 0.5, 0.6, 0.3, 0.3};
+    const Loop loop = effektLoop(effekte);
+    const auto klaenge = effektKlang();
+    const int frames = 176400;
+
+    Klangerzeuger erzeuger;
+    const auto programm = baueProgramm(loop, kEffektRate, klaenge);
+    REQUIRE(programm->ablauf.busse.size() == 1u);
+    REQUIRE(programm->effekte != nullptr);
+    erzeuger.setzeProgramm(programm);
+    const std::vector<float> gespielt = spiele(erzeuger, frames);
+
+    // dasselbe von Hand: der Ton ohne Effekte, dann die Kette darueber
+    std::vector<float> vonHand(2 * static_cast<std::size_t>(frames));
+    rechne(programm->ablauf, *klaenge, 0, frames, vonHand.data());
+    const std::vector<float> trocken = vonHand;
+    EffektKette kette;
+    kette.richteEin(effekte, kEffektRate, 120.0);
+    kette.rechne(vonHand.data(), frames);
+
+    float abstand = 0.0f;
+    for (std::size_t i = 0; i < gespielt.size(); ++i) abstand = std::max(abstand, std::abs(gespielt[i] - vonHand[i]));
+    MESSAGE("groesster Abstand zwischen Klangerzeuger und Kette von Hand: " << abstand << " (Spitze "
+                                                                            << groessterBetrag(gespielt) << ")");
+    // nicht null: der Klangerzeuger hoert auf zu rechnen, wenn ein Clip um 60 dB verklungen ist
+    CHECK(abstand < 0.001f);
+    CHECK(gespielt != trocken);
+}
+
+TEST_CASE("Loop Effekte im Klangerzeuger: die Effekte treffen nur ihren Clip und klingen ueber sein Ende hinaus")
+{
+    const auto klaenge = effektKlang();
+    Klangerzeuger erzeuger;
+
+    SUBCASE("ein zweiter Clip derselben Basis ohne Effekte bleibt, wie er ist")
+    {
+        // der Verzerrer klingt nicht nach: beim zweiten Clip ist der erste vorbei
+        ClipEffekte verzerrt;
+        verzerrt.verzerrung = {true, 0.8, 0.5, 1.0};
+        Loop loop = effektLoop(verzerrt);
+        loop.kanaele[0].clips[1].muster = QStringLiteral("M");
+        loop.richte();
+        const auto programm = baueProgramm(loop, kEffektRate, klaenge);
+        REQUIRE(programm->ablauf.busse.size() == 1u);
+        erzeuger.setzeProgramm(programm);
+        const std::vector<float> gespielt = spiele(erzeuger, 100000);
+        std::vector<float> trocken(2 * 100000);
+        rechne(programm->ablauf, *klaenge, 0, 100000, trocken.data());
+        // der erste Clip (Schlag bei 0) ist verzerrt, der zweite (Schlag bei 88200) auf den Wert gleich
+        CHECK(gespielt[2 * 1000] != trocken[2 * 1000]);
+        CHECK(std::equal(gespielt.begin() + 2 * 88000, gespielt.end(), trocken.begin() + 2 * 88000));
+        CHECK(trocken[2 * 88300] == 0.5f);
+    }
+    SUBCASE("das Echo eines Clips klingt weiter, wenn der Clip zu Ende ist")
+    {
+        const auto programm = baueProgramm(effektLoop(nurEcho(0.8)), kEffektRate, klaenge);
+        erzeuger.setzeProgramm(programm);
+        const std::vector<float> gespielt = spiele(erzeuger, 100000);
+        // der Clip endet bei 88200; die vierte Wiederholung kommt genau dort:
+        // Mix 0,5 * Klang 0,5 * Feedback 0,8 hoch 3
+        CHECK(gespielt[2 * 88300] == doctest::Approx(0.128));
+        std::vector<float> trocken(2 * 100000);
+        rechne(programm->ablauf, *klaenge, 0, 100000, trocken.data());
+        CHECK(trocken[2 * 88300] == 0.0f);
+    }
+}
+
+TEST_CASE("Loop Effekte im Klangerzeuger: nach einem weiten Sprung beginnt der Nachklang neu, nach einem kurzen nicht")
+{
+    // Entscheid Patrik S113, G1 b; die Grenze von 200 ms ist von Claude gesetzt
+    const auto klaenge = effektKlang();
+    const auto programm = baueProgramm(effektLoop(nurEcho(0.8)), kEffektRate, klaenge);
+    Klangerzeuger erzeuger;
+    erzeuger.setzeProgramm(programm);
+    (void)spiele(erzeuger, 30000);  // der Schlag und seine erste Wiederholung (bei 22050) sind durch
+
+    SUBCASE("weit: die zweite Wiederholung bleibt aus, wie bei einem frischen Klangerzeuger")
+    {
+        erzeuger.setzeStelle(44000);  // 14000 weiter als erwartet = 317 ms
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(groessterBetrag(danach) == 0.0f);
+    }
+    SUBCASE("kurz: der Nachklang laeuft weiter")
+    {
+        erzeuger.setzeStelle(30000 + 4410);  // 100 ms
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        // die zweite Wiederholung: 22050 Abtastwerte nach der ersten, gezaehlt in gerechneten Bloecken
+        CHECK(danach[2 * (44100 - 30000 + 100)] == doctest::Approx(0.2));
+    }
+    SUBCASE("ohne Sprung ebenso")
+    {
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(danach[2 * (44100 - 30000 + 100)] == doctest::Approx(0.2));
+    }
+}
+
+TEST_CASE("Loop Effekte im Klangerzeuger: ein neues Programm nimmt den Nachklang mit, wo er passt")
+{
+    const auto klaenge = effektKlang();
+    Klangerzeuger erzeuger;
+    const auto erstes = baueProgramm(effektLoop(nurEcho(0.8)), kEffektRate, klaenge);
+    erzeuger.setzeProgramm(erstes);
+    (void)spiele(erzeuger, 30000);
+    const std::size_t zweite = 2 * (44100 - 30000 + 100);  // die zweite Wiederholung, nach 30000 gespielten
+
+    SUBCASE("der Schritt im Muster wird geloescht: was schon klang, klingt aus")
+    {
+        erzeuger.setzeProgramm(baueProgramm(effektLoop(nurEcho(0.8), 0.0), kEffektRate, klaenge));
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(danach[zweite] == doctest::Approx(0.2));
+    }
+    SUBCASE("nur Mix aendert sich: der Nachklang bleibt und kommt mit dem neuen Mix")
+    {
+        erzeuger.setzeProgramm(baueProgramm(effektLoop(nurEcho(0.8, 0.25)), kEffektRate, klaenge));
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(danach[zweite] == doctest::Approx(0.1));
+    }
+    SUBCASE("die Echo-Zeit aendert sich: dieses Echo beginnt leer")
+    {
+        erzeuger.setzeProgramm(baueProgramm(effektLoop(nurEcho(0.8, 0.5, EchoZeit::Achtel)), kEffektRate, klaenge));
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(groessterBetrag(danach) < 1.0e-6f);
+    }
+    SUBCASE("der Clip liegt in einem anderen Takt: er gilt als anderer Clip")
+    {
+        Loop verschoben = effektLoop(nurEcho(0.8), 0.0);
+        verschoben.kanaele[0].clips = {LoopClip{QStringLiteral("L"), 0, 1}, LoopClip{QStringLiteral("M"), 4, 1, nurEcho(0.8)}};
+        verschoben.richte();
+        erzeuger.setzeProgramm(baueProgramm(verschoben, kEffektRate, klaenge));
+        const std::vector<float> danach = spiele(erzeuger, 20000);
+        CHECK(groessterBetrag(danach) == 0.0f);
+    }
+    SUBCASE("ein abgeloestes Programm gibt der Klangerzeuger wieder her")
+    {
+        // der Ton-Thread laesst es nicht selbst los, sondern gibt es ab; das
+        // naechste setzeProgramm raeumt es weg
+        erzeuger.setzeProgramm(baueProgramm(effektLoop(nurEcho(0.8)), kEffektRate, klaenge));
+        (void)spiele(erzeuger, 441);
+        CHECK(erstes.use_count() > 1);
+        erzeuger.setzeProgramm(baueProgramm(effektLoop(nurEcho(0.8)), kEffektRate, klaenge));
+        CHECK(erstes.use_count() == 1);
+    }
 }
 
 TEST_CASE("Loop Effekte Messung: die Rechenzeit einer Kette gegen die Dauer des Tons")

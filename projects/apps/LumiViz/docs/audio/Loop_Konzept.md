@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.25.0
+> **Version:** 0.26.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1117,11 +1117,59 @@ gerechnet wären es unter Release-clang rund 2 % je Clip — gerechnet, nicht
 gemessen); mehrere Ketten zugleich; die Kette im Ton-Thread selbst;
 Debug-MSVC.
 
-**Offen für 12b Teil 2** (die Ketten in den Klangerzeuger): der Rechenkern
-liefert je Clip mit Effekten einen eigenen trockenen Ton; die Regel für den
-Sprung aus G1 b; was mit dem Gedächtnis geschieht, wenn sich die Werte eines
-Effekts ändern, während er klingt; wie der Nachklang über das Clip-Ende und
-über das Ende des Durchlaufs läuft.
+### Die Ketten im Klangerzeuger (gebaut, 12b Teil 2)
+
+Ein Clip mit Effekten ist jetzt zu hören — im Loop-Panel wie als Clip im
+Composer (beide spielen über den Klangerzeuger). Einstellen lässt er sich
+noch nur in der Datei; Beispiel: `asset/loop/effects_demo.lvloop`.
+
+- **Rechenkern** (`Rechenkern.hpp`): `plane` legt je Clip mit eingeschaltetem
+  Effekt in einem Kanal, der an ist, einen **Bus** an (`Ablauf::busse`: Kanal,
+  Takt, Effekte); jeder Schlag nennt seinen Bus. `rechne` schreibt mit
+  `busAus` die Schläge eines solchen Clips unbearbeitet in dessen eigenen
+  Block statt in die Summe — auch die Schnitt-Blende eines Schlags bleibt in
+  seinem Bus. Ohne `busAus` rechnet `rechne` wie bisher alles trocken in die
+  Summe; der Kern bleibt ohne Gedächtnis.
+- **Klangerzeuger:** ein Programm trägt das Gedächtnis seiner Effekte
+  (`EffektZustand`: je Bus eine Kette und ein Block), angelegt mit dem
+  Programm außerhalb des Ton-Threads. `render` rechnet in Stücken von
+  höchstens 1024 Abtastwerten, schickt jeden Bus durch seine Kette und mischt
+  ihn zur Summe. Ohne Clip mit Effekten läuft der Weg von vorher, auf den
+  Wert gleich.
+- **Verklungen:** kam in einen Bus so lange kein Ton, wie sein Nachklang
+  dauert (`nachklangSekunden`), wird er nicht mehr gerechnet, bis wieder Ton
+  kommt. Ein Clip kostet also nur, solange er klingt oder nachklingt.
+- **Über das Clip-Ende und das Ende des Durchlaufs** klingt der Nachklang
+  weiter: der Bus rechnet, solange etwas zu hören ist, gleich wo die Stelle
+  steht. Ein Nachklang, der länger ist als ein Durchlauf, ist damit kein
+  Sonderfall.
+- **Sprung** (G1 b): weicht der Anfang eines Blocks um mehr als 200 ms
+  (`kSprungMs`) von dem ab, was auf den letzten folgte, werden alle Ketten
+  geleert. Play im Loop-Panel beginnt von vorn und ist ein solcher Sprung —
+  ein Rest vom letzten Abspielen ist dann weg.
+- **Neues Programm** (jede Änderung am Loop): der Ton-Thread übergibt je Clip,
+  den es vorher schon gab — erkannt an Kanal und Takt —, das Gedächtnis an
+  die neue Kette. Was passt, geht mit: ändert sich nur das Muster, Mix,
+  Feedback, Decay oder Damping, reißt der Nachklang nicht ab. Ändert sich die
+  Echo-Zeit oder das Tempo, beginnt das Echo leer; ändert sich Size, der Hall.
+  Ein Clip, der verschoben wird, gilt als neuer Clip.
+- **Freigeben:** das abgelöste Programm lässt der Ton-Thread nicht selbst
+  los, er gibt es ab (`m_abgegeben`); das nächste `setzeProgramm` räumt es
+  weg.
+
+**Von mir gesetzt, nicht entschieden:** woran ein Clip wiedererkannt wird
+(Kanal und Takt); dass ein verschobener Clip seinen Nachklang verliert; dass
+ein Regler, der die Länge einer Verzögerung ändert (Echo-Zeit, Size, Tempo),
+den Nachklang dieses Effekts abschneidet; dass ein Bus nach seinem Nachklang
+(60 dB) hart aufhört; die Stückgröße 1024.
+
+**Nicht gemessen:** die Last im Ton-Thread selbst und mit vielen Clips
+zugleich (die Zahlen oben gelten je Kette, außerhalb); ob das Abschneiden
+eines Nachklangs bei 60 dB oder bei einer Änderung von Size zu hören ist.
+**Nicht geprüft:** der Weg über den Composer mit Effekten (derselbe
+Klangerzeuger, aber kein eigener Fall); zwei Wechsel des Programms innerhalb
+eines Blocks. **Nichts gehört** — auch `effects_demo.lvloop` ist nach
+Rechnung gesetzt.
 
 ---
 
@@ -1195,7 +1243,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; noch nicht im Klangerzeuger. **Offen:** 12b Teil 2 die Ketten im Klangerzeuger, 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **Offen:** 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1293,6 +1341,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.26.0** (S113, 2026-10-11): 12b Teil 2 gebaut — Busse im Rechenkern,
+  die Ketten im Klangerzeuger (§4g): Clips mit Effekten sind zu hören;
+  Beispiel `asset/loop/effects_demo.lvloop`.
 
 - **0.25.0** (S113, 2026-10-11): Entscheid G1 b (die Effekte rechnen im
   Ton-Thread mit, mit einer Regel für den Sprung), a und c verworfen; 12b

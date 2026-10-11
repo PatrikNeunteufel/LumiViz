@@ -58,6 +58,18 @@ struct Schlag
     std::int64_t frame = 0;  ///< Stelle im Durchlauf
     float links = 0.0f;      ///< Lautstaerke: Schritt mal Spur mal Loop, mit Panorama
     float rechts = 0.0f;
+    /// Index in `Ablauf::busse`, wenn der Clip des Schlags Effekte hat; -1 =
+    /// der Schlag geht unbearbeitet in die Summe.
+    int bus = -1;
+};
+
+/// Ein Clip mit eingeschalteten Effekten (Stufe 12, G1 b): seine Schlaege
+/// kommen getrennt von der Summe heraus, damit seine Effekte nur ihn treffen.
+struct Bus
+{
+    int kanal = 0;      ///< Index des Kanals im Loop
+    int startTakt = 0;  ///< zusammen mit dem Kanal: welcher Clip
+    ClipEffekte effekte;
 };
 
 /// Eine Spur eines Musters in einem Kanal, mit allen ihren Schlaegen.
@@ -78,6 +90,11 @@ struct Ablauf
     /// ruft, reicht sie in dieser Reihenfolge herein.
     QStringList klangNamen;
     std::vector<Stimme> stimmen;        ///< nur Stimmen mit Schlaegen
+    double bpm = 0.0;                   ///< das Tempo des Loops — die Echo-Zeit haengt daran
+    /// Je Clip mit eingeschalteten Effekten in einem Kanal, der an ist, einer
+    /// — auch wenn der Clip gerade keinen Schlag hat: sein Nachklang soll
+    /// nicht abreissen, wenn jemand den letzten Schritt loescht.
+    std::vector<Bus> busse;
 };
 
 /// Den Loop uebersetzen. Er muss gerichtet sein (`Loop::richte`). Kanaele,
@@ -89,6 +106,12 @@ struct Ablauf
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
 /// Werte; der Block wird ueberschrieben). `klaenge[i]` ist der Klang zu
 /// `ablauf.klangNamen[i]`; fehlt er oder ist er leer, schweigt die Stimme.
-void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus);
+///
+/// `busAus`: je Eintrag in `ablauf.busse` ein eigener Block derselben Groesse
+/// (auch er wird ueberschrieben) — die Schlaege eines Clips mit Effekten
+/// landen dann dort statt in `aus`, unbearbeitet; wer ruft, rechnet die
+/// Effekte und mischt dazu. Ohne `busAus` geht alles unbearbeitet nach `aus`.
+void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus,
+            float* const* busAus = nullptr);
 
 }  // namespace lumi::loop
