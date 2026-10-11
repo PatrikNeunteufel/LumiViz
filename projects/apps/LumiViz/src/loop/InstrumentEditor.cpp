@@ -10,6 +10,8 @@
 #include "loop/Instrument.hpp"
 
 #include <QComboBox>
+#include <QDir>
+#include <QFileInfo>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
@@ -675,9 +677,19 @@ void InstrumentEditor::zeigeAlles()
         m_takte->setValue(ziel->takte);
         m_instrument->clear();
         for (const Instrument& instrument : instrumente()) m_instrument->addItem(instrument.titel, instrument.name);
-        // ein Instrument, das dieses Programm nicht kennt, bleibt stehen — es schweigt
+        // eine eigene Datei steht mit ihrem Titel da; was sich nicht finden
+        // laesst, bleibt stehen — es schweigt
         if (m_instrument->findData(ziel->instrument) < 0)
-            m_instrument->addItem(tr("%1 (not found)").arg(ziel->instrument), ziel->instrument);
+        {
+            Instrument eigenes;
+            const bool datei = istInstrumentDatei(ziel->instrument);
+            const QString kurz = datei ? QFileInfo(ziel->instrument).fileName() : ziel->instrument;
+            m_instrument->addItem(holeInstrument(ziel->instrument, eigenes) ? tr("%1 (%2)").arg(eigenes.titel, kurz)
+                                                                             : tr("%1 (not found)").arg(kurz),
+                                  ziel->instrument);
+        }
+        m_instrument->setToolTip(istInstrumentDatei(ziel->instrument) ? QDir::toNativeSeparators(ziel->instrument)
+                                                                      : QString());
         m_instrument->setCurrentIndex(m_instrument->findData(ziel->instrument));
         if (!m_laut->isSliderDown()) m_laut->setValue(static_cast<int>(std::lround(ziel->laut * 100.0)));
         if (!m_pan->isSliderDown()) m_pan->setValue(static_cast<int>(std::lround(ziel->pan * 100.0)));

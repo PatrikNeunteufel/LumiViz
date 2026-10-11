@@ -5,6 +5,15 @@
 
 #include "loop/Instrument.hpp"
 
+#include "loop/Kit.hpp"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QSaveFile>
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -20,119 +29,6 @@ constexpr double kPi = 3.14159265358979323846;
 constexpr int kTafel = 2048;        ///< Abtastwerte eines Wellenzugs
 constexpr int kTeiltoeneMax = 512;  ///< mehr traegt die Tafel nicht sauber
 constexpr double kPegel = 0.5;      ///< Luft nach oben: ein Akkord addiert sich (Entscheid L6 a)
-
-Instrument piano()
-{
-    Instrument i;
-    i.name = QStringLiteral("piano");
-    i.titel = QStringLiteral("Piano");
-    i.schwingung = Schwingung::Sinus;
-    i.obertoene = {0.45, 0.22, 0.10, 0.06, 0.03};
-    i.anstiegMs = 2.0;
-    i.abfallMs = 1500.0;
-    i.halten = 0.06;
-    i.ausklangMs = 220.0;
-    return i;
-}
-
-Instrument strings()
-{
-    Instrument i;
-    i.name = QStringLiteral("strings");
-    i.titel = QStringLiteral("Strings");
-    i.schwingung = Schwingung::Saege;
-    i.stimmen = 3;
-    i.verstimmungCent = 9.0;
-    i.anstiegMs = 160.0;
-    i.abfallMs = 400.0;
-    i.halten = 0.85;
-    i.ausklangMs = 420.0;
-    i.filterTeilton = 6.0;
-    i.vibratoHz = 5.0;
-    i.vibratoCent = 6.0;
-    i.vibratoEinsatzMs = 300.0;
-    i.laut = 0.7;
-    return i;
-}
-
-Instrument violin()
-{
-    Instrument i;
-    i.name = QStringLiteral("violin");
-    i.titel = QStringLiteral("Violin");
-    i.schwingung = Schwingung::Saege;
-    i.anstiegMs = 60.0;
-    i.abfallMs = 200.0;
-    i.halten = 0.9;
-    i.ausklangMs = 160.0;
-    i.filterTeilton = 9.0;
-    i.vibratoHz = 5.6;
-    i.vibratoCent = 22.0;
-    i.vibratoEinsatzMs = 220.0;
-    i.laut = 0.7;
-    return i;
-}
-
-Instrument guitar()
-{
-    Instrument i;
-    i.name = QStringLiteral("guitar");
-    i.titel = QStringLiteral("Guitar");
-    i.schwingung = Schwingung::Saite;
-    i.anstiegMs = 1.0;
-    i.ausklangMs = 120.0;
-    i.saiteDaempfung = 0.996;
-    return i;
-}
-
-Instrument bass()
-{
-    Instrument i;
-    i.name = QStringLiteral("bass");
-    i.titel = QStringLiteral("Bass");
-    i.schwingung = Schwingung::Saege;
-    i.anstiegMs = 3.0;
-    i.abfallMs = 260.0;
-    i.halten = 0.45;
-    i.ausklangMs = 90.0;
-    i.filterTeilton = 2.5;
-    i.filterHuelle = 5.0;
-    i.laut = 0.9;
-    return i;
-}
-
-Instrument organ()
-{
-    Instrument i;
-    i.name = QStringLiteral("organ");
-    i.titel = QStringLiteral("Organ");
-    i.schwingung = Schwingung::Sinus;
-    i.obertoene = {0.8, 0.5, 0.3, 0.0, 0.2};
-    i.anstiegMs = 8.0;
-    i.abfallMs = 50.0;
-    i.halten = 1.0;
-    i.ausklangMs = 60.0;
-    i.laut = 0.8;
-    return i;
-}
-
-Instrument lead()
-{
-    Instrument i;
-    i.name = QStringLiteral("lead");
-    i.titel = QStringLiteral("Lead");
-    i.schwingung = Schwingung::Rechteck;
-    i.anstiegMs = 4.0;
-    i.abfallMs = 120.0;
-    i.halten = 0.7;
-    i.ausklangMs = 90.0;
-    i.filterTeilton = 10.0;
-    i.vibratoHz = 6.0;
-    i.vibratoCent = 12.0;
-    i.vibratoEinsatzMs = 250.0;
-    i.laut = 0.6;
-    return i;
-}
 
 /// Der Anteil des k-ten Teiltons (k ab 1) an der Schwingung.
 double teilton(const Instrument& instrument, int k)
@@ -326,10 +222,166 @@ void rechneSaite(const Instrument& instrument, int hoehe, double hz, const Huell
 
 }  // namespace
 
+// =============================================================================
+// Die Datei `.lvinst`
+// =============================================================================
+
+namespace
+{
+
+const QString kFormat = QStringLiteral("lumiviz-instrument");
+constexpr int kVersion = 1;
+
+struct Wellenname
+{
+    Schwingung schwingung;
+    const char* name;
+};
+constexpr std::array<Wellenname, 5> kWellen = {{{Schwingung::Sinus, "sine"},
+                                                {Schwingung::Dreieck, "triangle"},
+                                                {Schwingung::Saege, "saw"},
+                                                {Schwingung::Rechteck, "square"},
+                                                {Schwingung::Saite, "string"}}};
+
+double inGrenzen(double wert, double von, double bis, double ersatz)
+{
+    return std::isfinite(wert) ? std::clamp(wert, von, bis) : ersatz;
+}
+
+std::uint64_t& fassung()
+{
+    static std::uint64_t eine = 0;
+    return eine;
+}
+
+}  // namespace
+
+QJsonObject alsJson(const Instrument& instrument)
+{
+    QJsonObject o;
+    o[QStringLiteral("format")] = kFormat;
+    o[QStringLiteral("version")] = kVersion;
+    o[QStringLiteral("title")] = instrument.titel;
+    for (const Wellenname& welle : kWellen)
+        if (welle.schwingung == instrument.schwingung) o[QStringLiteral("waveform")] = QLatin1String(welle.name);
+    QJsonArray obertoene;
+    for (const double anteil : instrument.obertoene) obertoene.append(anteil);
+    o[QStringLiteral("harmonics")] = obertoene;
+    o[QStringLiteral("voices")] = instrument.stimmen;
+    o[QStringLiteral("detune")] = instrument.verstimmungCent;
+    o[QStringLiteral("attack")] = instrument.anstiegMs;
+    o[QStringLiteral("decay")] = instrument.abfallMs;
+    o[QStringLiteral("sustain")] = instrument.halten;
+    o[QStringLiteral("release")] = instrument.ausklangMs;
+    o[QStringLiteral("filterCutoff")] = instrument.filterTeilton;
+    o[QStringLiteral("filterEnvelope")] = instrument.filterHuelle;
+    o[QStringLiteral("vibratoRate")] = instrument.vibratoHz;
+    o[QStringLiteral("vibratoDepth")] = instrument.vibratoCent;
+    o[QStringLiteral("vibratoDelay")] = instrument.vibratoEinsatzMs;
+    o[QStringLiteral("damping")] = instrument.saiteDaempfung;
+    o[QStringLiteral("level")] = instrument.laut;
+    return o;
+}
+
+bool ausJson(const QJsonObject& wurzel, Instrument& instrument)
+{
+    if (wurzel.value(QStringLiteral("format")).toString() != kFormat) return false;
+    const Instrument vorgabe;
+    Instrument neu;
+    neu.name = instrument.name;
+    neu.titel = wurzel.value(QStringLiteral("title")).toString();
+    const QString wellenName = wurzel.value(QStringLiteral("waveform")).toString();
+    for (const Wellenname& welle : kWellen)
+        if (wellenName == QLatin1String(welle.name)) neu.schwingung = welle.schwingung;
+    for (const QJsonValue& anteil : wurzel.value(QStringLiteral("harmonics")).toArray())
+    {
+        if (neu.obertoene.size() >= static_cast<std::size_t>(kObertoeneMax)) break;
+        neu.obertoene.push_back(inGrenzen(anteil.toDouble(), -1.0, 1.0, 0.0));
+    }
+    const auto zahl = [&wurzel](const char* schluessel, double ersatz, double von, double bis) {
+        return inGrenzen(wurzel.value(QLatin1String(schluessel)).toDouble(ersatz), von, bis, ersatz);
+    };
+    neu.stimmen = std::clamp(wurzel.value(QStringLiteral("voices")).toInt(vorgabe.stimmen), 1, 3);
+    neu.verstimmungCent = zahl("detune", vorgabe.verstimmungCent, 0.0, 100.0);
+    neu.anstiegMs = zahl("attack", vorgabe.anstiegMs, 0.0, 5000.0);
+    neu.abfallMs = zahl("decay", vorgabe.abfallMs, 0.0, 10000.0);
+    neu.halten = zahl("sustain", vorgabe.halten, 0.0, 1.0);
+    neu.ausklangMs = zahl("release", vorgabe.ausklangMs, 0.0, 5000.0);
+    neu.filterTeilton = zahl("filterCutoff", vorgabe.filterTeilton, 0.0, 64.0);
+    neu.filterHuelle = zahl("filterEnvelope", vorgabe.filterHuelle, 0.0, 64.0);
+    neu.vibratoHz = zahl("vibratoRate", vorgabe.vibratoHz, 0.0, 20.0);
+    neu.vibratoCent = zahl("vibratoDepth", vorgabe.vibratoCent, 0.0, 100.0);
+    neu.vibratoEinsatzMs = zahl("vibratoDelay", vorgabe.vibratoEinsatzMs, 0.0, 5000.0);
+    neu.saiteDaempfung = zahl("damping", vorgabe.saiteDaempfung, 0.9, 0.9999);
+    neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
+    instrument = std::move(neu);
+    return true;
+}
+
+bool speichereInstrument(const Instrument& instrument, const QString& pfad)
+{
+    QSaveFile datei(pfad);
+    if (!datei.open(QIODevice::WriteOnly)) return false;
+    if (datei.write(QJsonDocument(alsJson(instrument)).toJson(QJsonDocument::Indented)) < 0 || !datei.commit())
+        return false;
+    ++fassung();  // wer Toene dieses Instruments gerechnet hat, rechnet neu
+    return true;
+}
+
+bool ladeInstrument(const QString& pfad, Instrument& instrument)
+{
+    QFile datei(pfad);
+    if (!datei.open(QIODevice::ReadOnly)) return false;
+    QJsonParseError fehler;
+    const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
+    if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
+    Instrument neu;
+    if (!ausJson(doc.object(), neu)) return false;
+    neu.name = pfad;
+    if (neu.titel.isEmpty()) neu.titel = QFileInfo(pfad).completeBaseName();
+    instrument = std::move(neu);
+    return true;
+}
+
+std::uint64_t instrumentFassung()
+{
+    return fassung();
+}
+
+QString instrumentOrdner()
+{
+    const QString kit = kitOrdner();
+    return kit.isEmpty() ? QString() : QDir::cleanPath(kit + QStringLiteral("/../instruments"));
+}
+
 const std::vector<Instrument>& instrumente()
 {
-    static const std::vector<Instrument> kAlle = {piano(), strings(), violin(), guitar(), bass(), organ(), lead()};
-    return kAlle;
+    // einmal gelesen und gemerkt — aber nur, wenn der Ordner da war
+    static std::vector<Instrument> alle;
+    if (!alle.empty()) return alle;
+    const QString ordner = instrumentOrdner();
+    if (ordner.isEmpty()) return alle;
+    const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.lvinst")}, QDir::Files, QDir::Name);
+    for (const QString& datei : dateien)
+    {
+        Instrument instrument;
+        if (!ladeInstrument(QDir(ordner).filePath(datei), instrument)) continue;
+        instrument.name = QFileInfo(datei).completeBaseName();  // ein mitgeliefertes heisst wie seine Datei
+        alle.push_back(std::move(instrument));
+    }
+    std::stable_sort(alle.begin(), alle.end(), [](const Instrument& a, const Instrument& b) {
+        return a.titel.compare(b.titel, Qt::CaseInsensitive) < 0;
+    });
+    return alle;
+}
+
+bool holeInstrument(const QString& nennung, Instrument& instrument)
+{
+    if (istInstrumentDatei(nennung)) return ladeInstrument(nennung, instrument);
+    const Instrument* gefunden = findeInstrument(nennung);
+    if (gefunden == nullptr) return false;
+    instrument = *gefunden;
+    return true;
 }
 
 const Instrument* findeInstrument(const QString& name)

@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Sub Bass",
+    "waveform": "sine",
+    "harmonics": [0.08],
+    "voices": 1,
+    "detune": 0,
+    "attack": 4,
+    "decay": 200,
+    "sustain": 0.9,
+    "release": 80,
+    "filterCutoff": 0,
+    "filterEnvelope": 0,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 1.0
+}

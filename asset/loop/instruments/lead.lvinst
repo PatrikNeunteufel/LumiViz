@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Lead",
+    "waveform": "square",
+    "harmonics": [],
+    "voices": 1,
+    "detune": 0,
+    "attack": 4,
+    "decay": 120,
+    "sustain": 0.7,
+    "release": 90,
+    "filterCutoff": 10,
+    "filterEnvelope": 0,
+    "vibratoRate": 6,
+    "vibratoDepth": 12,
+    "vibratoDelay": 250,
+    "damping": 0.996,
+    "level": 0.6
+}

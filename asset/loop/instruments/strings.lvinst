@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Strings",
+    "waveform": "saw",
+    "harmonics": [],
+    "voices": 3,
+    "detune": 9,
+    "attack": 160,
+    "decay": 400,
+    "sustain": 0.85,
+    "release": 420,
+    "filterCutoff": 6,
+    "filterEnvelope": 0,
+    "vibratoRate": 5,
+    "vibratoDepth": 6,
+    "vibratoDelay": 300,
+    "damping": 0.996,
+    "level": 0.7
+}

@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Violin",
+    "waveform": "saw",
+    "harmonics": [],
+    "voices": 1,
+    "detune": 0,
+    "attack": 60,
+    "decay": 200,
+    "sustain": 0.9,
+    "release": 160,
+    "filterCutoff": 9,
+    "filterEnvelope": 0,
+    "vibratoRate": 5.6,
+    "vibratoDepth": 22,
+    "vibratoDelay": 220,
+    "damping": 0.996,
+    "level": 0.7
+}

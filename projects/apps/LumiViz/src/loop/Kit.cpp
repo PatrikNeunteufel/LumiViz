@@ -12,6 +12,9 @@
 #include <QFileInfo>
 
 #include <algorithm>
+#include <map>
+#include <optional>
+#include <utility>
 
 namespace lumi::loop
 {
@@ -74,6 +77,7 @@ QString klangDatei(const QString& klang)
 std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate, QStringList* bericht)
 {
     std::vector<Klang> klaenge(static_cast<std::size_t>(namen.size()));
+    std::map<QString, std::optional<Instrument>> geholt;
     for (std::size_t i = 0; i < klaenge.size(); ++i)
     {
         const QString& klang = namen[static_cast<qsizetype>(i)];
@@ -83,13 +87,25 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
             QString instrument;
             int hoehe = 0;
             int dauerMs = 0;
-            const Instrument* gefunden =
-                zerlegeTon(klang, instrument, hoehe, dauerMs) ? findeInstrument(instrument) : nullptr;
+            const Instrument* gefunden = nullptr;
+            if (zerlegeTon(klang, instrument, hoehe, dauerMs))
+            {
+                // je Instrument einmal holen — eine eigene Datei wird dabei gelesen
+                auto ort = geholt.find(instrument);
+                if (ort == geholt.end())
+                {
+                    Instrument neu;
+                    const bool da = holeInstrument(instrument, neu);
+                    ort = geholt.emplace(instrument, da ? std::optional<Instrument>(std::move(neu)) : std::nullopt).first;
+                }
+                if (ort->second.has_value()) gefunden = &*ort->second;
+            }
             if (gefunden != nullptr)
                 klaenge[i] = rendereTon(*gefunden, hoehe, dauerMs, rate);
             else if (bericht != nullptr)
             {
-                const QString zeile = QStringLiteral("Instrument not found: %1").arg(instrument.isEmpty() ? klang : instrument);
+                const QString zeile = QStringLiteral("Instrument not found: %1")
+                                          .arg(instrument.isEmpty() ? klang : QDir::toNativeSeparators(instrument));
                 if (!bericht->contains(zeile)) bericht->append(zeile);
             }
             continue;

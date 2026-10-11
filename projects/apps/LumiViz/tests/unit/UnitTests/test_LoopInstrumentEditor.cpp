@@ -229,8 +229,10 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(editor.findChild<QLabel*>(QStringLiteral("instrumentUsers"))->text() == QStringLiteral("· used by 2 clips"));
         auto* auswahl = editor.findChild<QComboBox*>(QStringLiteral("instrumentSound"));
         REQUIRE(auswahl != nullptr);
-        REQUIRE(auswahl->count() == 7);
-        CHECK(auswahl->itemText(0) == QStringLiteral("Piano"));
+        const int mitgeliefert = static_cast<int>(instrumente().size());
+        REQUIRE(mitgeliefert >= 7);
+        REQUIRE(auswahl->count() == mitgeliefert);
+        CHECK(auswahl->itemText(0) == instrumente().front().titel);  // nach Titel sortiert
         CHECK(auswahl->currentData().toString() == QStringLiteral("piano"));
 
         // --- Instrument, Lautstaerke, Panorama, Stumm, Takte
@@ -307,10 +309,10 @@ TEST_SUITE("LoopInstrumentEditor")
         Loop fremd = loop;
         musterIn(fremd, QStringLiteral("Mel"))->instrument = QStringLiteral("tuba");
         editor.setLoop(fremd);
-        CHECK(auswahl->count() == 8);
+        CHECK(auswahl->count() == mitgeliefert + 1);
         CHECK(auswahl->currentText() == QStringLiteral("tuba (not found)"));
         editor.setLoop(loop);
-        CHECK(auswahl->count() == 7);
+        CHECK(auswahl->count() == mitgeliefert);
 
         // --- die Basis wird umbenannt: der Editor folgt; es gibt sie nicht mehr: er ist leer
         Loop umbenannt = loop;

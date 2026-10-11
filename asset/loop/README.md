@@ -1,4 +1,4 @@
-# asset/loop — Kit und Beispiel für den Loop
+# asset/loop — Kit, Instrumente und Beispiele für den Loop
 
 Konzept: `projects/apps/LumiViz/docs/audio/Loop_Konzept.md` (Entscheid L5 a:
 das mitgelieferte Kit wird gerechnet, nicht bezogen).
@@ -31,6 +31,40 @@ Dateien im Repo, nicht ein neuer Lauf.
 An den Klängen gibt es keine fremden Rechte: sie sind gerechnet, nicht
 aufgenommen.
 
+## instruments/
+
+Die vierzehn mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
+Dateiname ist der Name im Loop: `piano.lvinst` ist das Instrument `piano`.
+Im Programm steht kein Instrument — maßgebend sind diese Dateien (Entscheide
+Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
+
+| Datei | Titel | Wie gerechnet |
+|---|---|---|
+| `bass.lvinst` | Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |
+| `guitar.lvinst` | Guitar | die gezupfte Saite |
+| `lead.lvinst` | Lead | Rechteck mit Vibrato |
+| `organ.lvinst` | Organ | Sinus mit Obertönen, steht, solange die Note dauert |
+| `piano.lvinst` | Piano | Sinus mit fünf Obertönen, harter Einsatz, klingt ab — wie ein E-Piano |
+| `strings.lvinst` | Strings | drei verstimmte Sägen, weicher Einsatz, leichtes Vibrato |
+| `violin.lvinst` | Violin | eine Säge, heller, mit deutlichem Vibrato |
+
+Dazu sieben für **House** (Wunsch Patrik S110) — wie alle nach Rechnung
+eingestellt, nicht nach Gehör:
+
+| Datei | Titel | Wie gerechnet | Wofür |
+|---|---|---|---|
+| `house_piano.lvinst` | House Piano | Sinus mit sieben Obertönen, harter Einsatz, klingt in gut einer halben Sekunde aus | Akkord-Stabs |
+| `house_organ.lvinst` | House Organ | Sinus mit Oktave und Quinte, perkussiv | Basslinien, kurze Akkorde |
+| `chord_stab.lvinst` | Chord Stab | drei verstimmte Sägen, der Filter schnappt mit dem Anschlag auf und zu | Akkord-Stabs |
+| `warm_pad.lvinst` | Warm Pad | drei verstimmte Sägen, sehr weicher Einsatz, langer Ausklang | Flächen |
+| `sub_bass.lvinst` | Sub Bass | fast reiner Sinus | der Bass unter allem |
+| `acid_bass.lvinst` | Acid Bass | Säge, deren Filter mit jeder Note zugeht — ohne Resonanz, die kann der Filter nicht | Basslinien in Sechzehnteln |
+| `pluck.lvinst` | Pluck | Rechteck, kurz und spitz | Arpeggios |
+
+Ein eigenes Instrument ist eine solche Datei an beliebigem Ort; ein Muster
+nennt sie beim Pfad statt beim Namen. `test_LoopInstrument.cpp` liest den
+Ordner, rechnet je Instrument einen Ton und prüft Tonhöhe und Länge.
+
 ## drums_demo.lvloop
 
 Ein Beispiel mit allen sechs Klängen des Kits, 120 BPM, 16 Takte (32 s):
@@ -42,6 +76,21 @@ Lautstärke des Loops 0,35: die Summe erreicht damit höchstens 0,84.
 `test_LoopKern.cpp` liest die Datei und prüft, dass jeder ihrer Klänge im
 Kit liegt; `test_LoopWiedergabe.cpp` rechnet einen Durchlauf und prüft, dass
 die Summe unter 1 bleibt.
+
+## house_demo.lvloop
+
+Ein Beispiel mit den sieben Instrumenten für House, 124 BPM, 24 Takte
+(46,5 s), Akkorde Am – Am – F – G:
+
+- Kanal **Drums:** Kick auf jedem Schlag, Clap auf 2 und 4, Hi-Hat dazwischen.
+- Kanal **Bass:** House Organ (Takt 1 bis 12), Sub Bass (13 bis 16), Acid
+  Bass (17 bis 24).
+- Kanal **Keys:** House Piano (Takt 5 bis 12), Chord Stab (13 bis 24).
+- Kanal **Pad:** Warm Pad ab Takt 9.
+- Kanal **Lead:** Pluck als Arpeggio ab Takt 17.
+
+Lautstärke des Loops 0,3: die Summe erreicht höchstens 0,52
+(`test_LoopInstrument.cpp` rechnet einen Durchlauf).
 
 ## instrument_demo.lvloop
 

@@ -6,6 +6,7 @@
 #include "loop/Spieler.hpp"
 
 #include "audio/IAudioPlayer.hpp"
+#include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 
 namespace lumi::loop
@@ -49,12 +50,15 @@ void Spieler::ladeProgramm()
 {
     const int rate = m_engine->getSampleRate();
     const QStringList namen = m_loop.klangNamen();
-    if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate)
+    // auch wenn eine Instrument-Datei neu gespeichert wurde: ihre Toene sind dann andere
+    const std::uint64_t instrumente = instrumentFassung();
+    if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate || instrumente != m_instrumentFassung)
     {
         m_bericht.clear();
         m_klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(namen, *m_engine, rate, &m_bericht));
         m_klangNamen = namen;
         m_klangRate = rate;
+        m_instrumentFassung = instrumente;
     }
     m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge));
 }

@@ -25,6 +25,7 @@
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -44,6 +45,16 @@ namespace
 {
 
 constexpr int kRate = 44100;
+
+/// Qt-Anwendung fuer einen Fall: der Programmordner, von dem aus das Programm
+/// `asset/loop` sucht (das Kit und die mitgelieferten Instrumente).
+struct InstrumentApp
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QCoreApplication app{argc, argv};
+};
 
 /// .../projects/apps/LumiViz/tests/unit/UnitTests -> Wurzel des Repos
 QDir repoWurzel()
@@ -388,15 +399,30 @@ TEST_SUITE("LoopInstrument")
         CHECK(tonName(kHoeheMin) == QStringLiteral("C1"));
         CHECK(tonName(kHoeheMax) == QStringLiteral("C7"));
 
+        // die mitgelieferten Instrumente: die Dateien unter asset/loop/instruments, nach Titel sortiert
+        const InstrumentApp app;  // der Programmordner fuer die Suche nach dem Ordner
+        CHECK(QDir(instrumentOrdner()).dirName() == QStringLiteral("instruments"));
         const std::vector<Instrument>& alle = instrumente();
-        REQUIRE(alle.size() == 7);
-        QStringList titel;
-        for (const Instrument& i : alle) titel << i.titel;
-        CHECK(titel == QStringList{QStringLiteral("Piano"), QStringLiteral("Strings"), QStringLiteral("Violin"),
-                                   QStringLiteral("Guitar"), QStringLiteral("Bass"), QStringLiteral("Organ"),
-                                   QStringLiteral("Lead")});
-        CHECK(findeInstrument(QStringLiteral("guitar")) == &alle[3]);
+        // sieben allgemeine und sieben fuer House (Wunsch Patrik S110)
+        REQUIRE(alle.size() == 14);
+        for (std::size_t i = 1; i < alle.size(); ++i)
+            CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
+        CHECK(alle.front().titel == QStringLiteral("Acid Bass"));
+        CHECK(alle.back().titel == QStringLiteral("Warm Pad"));
+        for (const char* name : {"bass", "guitar", "lead", "organ", "piano", "strings", "violin", "acid_bass",
+                                 "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad"})
+        {
+            CAPTURE(name);
+            const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
+            REQUIRE(gefunden != nullptr);
+            CHECK(gefunden->name == QString::fromLatin1(name));  // ein mitgeliefertes heisst wie seine Datei
+            CHECK_FALSE(gefunden->titel.isEmpty());
+        }
+        CHECK(findeInstrument(QStringLiteral("house_piano"))->titel == QStringLiteral("House Piano"));
         CHECK(findeInstrument(QStringLiteral("tuba")) == nullptr);
+        CHECK(findeInstrument(instrumentVorgabe()) != nullptr);  // das Instrument eines neuen Musters gibt es
+        CHECK(findeInstrument(QStringLiteral("guitar"))->schwingung == Schwingung::Saite);
+        CHECK(findeInstrument(QStringLiteral("strings"))->stimmen == 3);
 
         for (const Instrument& instrument : alle)
         {
@@ -450,26 +476,174 @@ TEST_SUITE("LoopInstrument")
         CHECK(rendereTon(alle[0], 60, 0.0, kRate).frames() == 0);
         CHECK(rendereTon(alle[0], 60, 500.0, 0).frames() == 0);
         // hoechstens `kTonMaxSekunden`
-        CHECK(rendereTon(alle[5], 60, 60000.0, 8000).frames() == static_cast<std::int64_t>(kTonMaxSekunden * 8000));
+        CHECK(rendereTon(*findeInstrument(QStringLiteral("organ")), 60, 60000.0, 8000).frames() ==
+              static_cast<std::int64_t>(kTonMaxSekunden * 8000));
+    }
+
+    TEST_CASE("Loop Instrument: die Datei .lvinst — hin und zurueck — und ein Muster nennt sie beim Pfad")
+    {
+        const InstrumentApp app;
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+
+        // --- jedes mitgelieferte Instrument uebersteht JSON und Datei
+        for (const Instrument& instrument : instrumente())
+        {
+            CAPTURE(instrument.name.toStdString());
+            Instrument gelesen;
+            gelesen.name = instrument.name;
+            REQUIRE(ausJson(alsJson(instrument), gelesen));
+            CHECK(gelesen == instrument);
+        }
+        Instrument eigenes = *findeInstrument(QStringLiteral("organ"));
+        eigenes.titel = QStringLiteral("My organ");
+        eigenes.obertoene = {1.0, 0.0, 0.5};
+        eigenes.ausklangMs = 300.0;
+        const QString pfad = ordner.filePath(QStringLiteral("my_organ.lvinst"));
+        const std::uint64_t fassung = instrumentFassung();
+        REQUIRE(speichereInstrument(eigenes, pfad));
+        CHECK(instrumentFassung() == fassung + 1);  // wer Toene gerechnet hat, sieht: neu rechnen
+        Instrument ausDatei;
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        CHECK(ausDatei.name == pfad);  // eine eigene Datei heisst wie ihr Pfad
+        ausDatei.name = eigenes.name;
+        CHECK(ausDatei == eigenes);
+
+        // --- Werte ausserhalb kommen in ihre Grenzen; ein fremdes Format ist kein Instrument
+        QJsonObject wild = alsJson(eigenes);
+        wild[QStringLiteral("voices")] = 9;
+        wild[QStringLiteral("sustain")] = 5.0;
+        wild[QStringLiteral("waveform")] = QStringLiteral("gibt es nicht");
+        Instrument gezaehmt;
+        REQUIRE(ausJson(wild, gezaehmt));
+        CHECK(gezaehmt.stimmen == 3);
+        CHECK(gezaehmt.halten == doctest::Approx(1.0));
+        CHECK(gezaehmt.schwingung == Schwingung::Sinus);  // die Vorgabe
+        QJsonObject fremd = alsJson(eigenes);
+        fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-loop");
+        CHECK_FALSE(ausJson(fremd, gezaehmt));
+        CHECK_FALSE(ladeInstrument(ordner.filePath(QStringLiteral("fehlt.lvinst")), gezaehmt));
+
+        // --- holen: ein mitgeliefertes beim Namen, ein eigenes beim Pfad
+        CHECK(istInstrumentDatei(pfad));
+        CHECK_FALSE(istInstrumentDatei(QStringLiteral("piano")));
+        Instrument geholt;
+        REQUIRE(holeInstrument(QStringLiteral("piano"), geholt));
+        CHECK(geholt.titel == QStringLiteral("Piano"));
+        REQUIRE(holeInstrument(pfad, geholt));
+        CHECK(geholt.titel == QStringLiteral("My organ"));
+        CHECK_FALSE(holeInstrument(QStringLiteral("tuba"), geholt));
+        CHECK_FALSE(holeInstrument(ordner.filePath(QStringLiteral("fehlt.lvinst")), geholt));
+
+        // --- der Name eines Tons traegt den Pfad, auch mit Doppelpunkt
+        const QString ton = tonKlang(pfad, 60, 250);
+        QString instrument;
+        int hoehe = 0;
+        int ms = 0;
+        REQUIRE(zerlegeTon(ton, instrument, hoehe, ms));
+        CHECK(instrument == pfad);
+        CHECK(hoehe == 60);
+        CHECK(ms == 250);
+
+        // --- im Loop: der Pfad steht relativ zur Datei, wie der eines Samples
+        Loop loop = notenLoop({{0, 4, 60, 1.0}}, pfad);
+        CHECK(loop.klangNamen() == QStringList{tonKlang(pfad, 60, 500)});
+        const QJsonObject json = alsJson(loop, ordner.path());
+        CHECK(json.value(QStringLiteral("patterns")).toArray().at(0).toObject().value(QStringLiteral("instrument")).toString() ==
+              QStringLiteral("my_organ.lvinst"));
+        Loop gelesen;
+        QStringList bericht;
+        REQUIRE(ausJson(json, gelesen, ordner.path(), &bericht));
+        CHECK(bericht.isEmpty());
+        CHECK(QFileInfo(gelesen.muster[0].instrument) == QFileInfo(pfad));
+        // fehlt die Datei, steht es im Bericht
+        REQUIRE(QFile::remove(pfad));
+        bericht.clear();
+        REQUIRE(ausJson(json, gelesen, ordner.path(), &bericht));
+        REQUIRE(bericht.size() == 1);
+        CHECK(bericht[0].startsWith(QStringLiteral("File not found: ")));
     }
 
     TEST_CASE("Loop Instrument: ladeKlaenge rechnet die Toene — ein unbekanntes Instrument steht im Bericht")
     {
+        const InstrumentApp app;
         papp::PappMischEngine engine;  // wird fuer Toene nicht gefragt
+        // ein eigenes Instrument als Datei
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const QString pfad = ordner.filePath(QStringLiteral("eigen.lvinst"));
+        Instrument eigenes = *findeInstrument(QStringLiteral("lead"));
+        REQUIRE(speichereInstrument(eigenes, pfad));
+        const QString fehlt = ordner.filePath(QStringLiteral("fehlt.lvinst"));
+
         QStringList bericht;
         const QStringList namen = {QStringLiteral("inst:piano:60:250"), QStringLiteral("inst:tuba:60:250"),
-                                   QStringLiteral("inst:guitar:45:500"), QStringLiteral("inst:tuba:62:250")};
+                                   QStringLiteral("inst:guitar:45:500"), QStringLiteral("inst:tuba:62:250"),
+                                   tonKlang(pfad, 60, 250), tonKlang(fehlt, 60, 250)};
         const std::vector<Klang> klaenge = ladeKlaenge(namen, engine, kRate, &bericht);
-        REQUIRE(klaenge.size() == 4);
+        REQUIRE(klaenge.size() == 6);
         CHECK(klaenge[0].frames() > 11025);
         CHECK(klaenge[1].frames() == 0);
         CHECK(klaenge[2].frames() > 22050);
-        CHECK(bericht == QStringList{QStringLiteral("Instrument not found: tuba")});  // einmal, nicht je Ton
+        // die eigene Datei klingt wie das Instrument, aus dem sie gespeichert wurde
+        CHECK(klaenge[4].daten == rendereTon(eigenes, 60, 250.0, kRate).daten);
+        CHECK(klaenge[5].frames() == 0);
+        // einmal je Instrument, nicht je Ton
+        CHECK(bericht == QStringList{QStringLiteral("Instrument not found: tuba"),
+                                     QStringLiteral("Instrument not found: ") + QDir::toNativeSeparators(fehlt)});
         CHECK(klangDatei(namen[0]).isEmpty());  // ein Ton hat keine Datei
+    }
+
+    TEST_CASE("Loop Instrument: das Beispiel house_demo laedt ohne Bericht und bleibt unter 1")
+    {
+        const InstrumentApp app;
+        const QString pfad = repoWurzel().filePath(QStringLiteral("asset/loop/house_demo.lvloop"));
+        Loop loop;
+        QStringList bericht;
+        REQUIRE(ladeLoop(pfad, loop, &bericht));
+        CHECK(bericht.isEmpty());
+        CHECK(loop.tags.titel == QStringLiteral("House demo"));
+        CHECK(loop.bpm == doctest::Approx(124.0));
+        CHECK(loop.durchlaufTakte() == 24);
+        QStringList gespielt;
+        for (const Muster& m : loop.muster)
+        {
+            if (m.art != MusterArt::Instrument) continue;
+            CAPTURE(m.instrument.toStdString());
+            CHECK(findeInstrument(m.instrument) != nullptr);
+            CHECK_FALSE(m.noten.empty());
+            gespielt << m.instrument;
+        }
+        gespielt.sort();
+        // jedes der sieben Instrumente fuer House kommt vor
+        CHECK(gespielt == QStringList{QStringLiteral("acid_bass"), QStringLiteral("chord_stab"),
+                                      QStringLiteral("house_organ"), QStringLiteral("house_piano"),
+                                      QStringLiteral("pluck"), QStringLiteral("sub_bass"), QStringLiteral("warm_pad")});
+
+        const Ablauf ablauf = plane(loop, kRate);
+        const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+        for (std::size_t i = 0; i < klaenge.size(); ++i)
+        {
+            CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
+            CHECK(klaenge[i].frames() > 0);
+        }
+        std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
+        rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
+        const float groesster = spitze(alles);
+        MESSAGE("house_demo.lvloop: " << ablauf.klangNamen.size() << " Klaenge, ein Durchlauf " << ablauf.durchlaufFrames
+                                      << " Abtastwerte, groesster Betrag " << std::to_string(groesster));
+        CHECK(groesster > 0.2f);
+        CHECK(groesster < 1.0f);
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_WAV"); !ordner.isEmpty())
+        {
+            REQUIRE(QDir().mkpath(ordner));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("house_demo.wav")), alles, kRate));
+        }
     }
 
     TEST_CASE("Loop Instrument: das Beispiel instrument_demo laedt ohne Bericht und bleibt unter 1")
     {
+        const InstrumentApp app;
         const QString pfad = repoWurzel().filePath(QStringLiteral("asset/loop/instrument_demo.lvloop"));
         Loop loop;
         QStringList bericht;
@@ -522,7 +696,7 @@ TEST_SUITE("LoopInstrument")
         // je Instrument: eine Tonleiter ueber zwei Oktaven, dann ein Akkord
         for (const Instrument& instrument : instrumente())
         {
-            const int grund = instrument.name == QStringLiteral("bass") ? 36 : 60;
+            const int grund = instrument.name.contains(QStringLiteral("bass")) ? 36 : 60;
             std::vector<Note> noten;
             const int stufen[] = {0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24};
             int schritt = 0;

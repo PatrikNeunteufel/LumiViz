@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Chord Stab",
+    "waveform": "saw",
+    "harmonics": [],
+    "voices": 3,
+    "detune": 14,
+    "attack": 2,
+    "decay": 180,
+    "sustain": 0.12,
+    "release": 130,
+    "filterCutoff": 3,
+    "filterEnvelope": 9,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 0.7
+}

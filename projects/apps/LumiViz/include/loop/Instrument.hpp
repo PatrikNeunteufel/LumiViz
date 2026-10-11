@@ -20,9 +20,11 @@
 
 #include "loop/Rechenkern.hpp"
 
+#include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
+#include <cstdint>
 #include <vector>
 
 namespace lumi::loop
@@ -42,7 +44,10 @@ enum class Schwingung : int
 
 struct Instrument
 {
-    QString name;   ///< Kennung in der Datei: a–z, 0–9, `_`
+    /// Wie ein Muster es nennt: der Name eines mitgelieferten Instruments
+    /// (`piano` — die Datei `asset/loop/instruments/piano.lvinst`) oder der
+    /// Pfad einer eigenen Datei `.lvinst`. Steht nicht in der Datei.
+    QString name;
     QString titel;  ///< wie es im Programm steht
 
     Schwingung schwingung = Schwingung::Sinus;
@@ -68,13 +73,43 @@ struct Instrument
 
     double saiteDaempfung = 0.996;  ///< nur Saite: 0.9…0.9999, groesser klingt laenger
     double laut = 1.0;              ///< Ausgleich zwischen den Instrumenten
+
+    [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
 
-/// Die mitgelieferten Instrumente, in der Reihenfolge der Auswahl:
-/// Piano, Strings, Violin, Guitar, Bass, Organ, Lead.
+// --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a) --------------
+// Ein Instrument ist eine Datei, abgelegt wie die Klaenge des Kits: die
+// mitgelieferten unter `asset/loop/instruments`, eigene irgendwo. Im Programm
+// steht kein Instrument mehr.
+
+/// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
+[[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
+/// Liest ein Instrument, Werte in ihren Grenzen. false = kein Instrument
+/// (falsches Format); `instrument` bleibt dann, wie es war. `name` bleibt.
+bool ausJson(const QJsonObject& wurzel, Instrument& instrument);
+bool speichereInstrument(const Instrument& instrument, const QString& pfad);
+/// Liest die Datei; `name` wird der Pfad. Ohne Titel in der Datei gilt ihr Name.
+bool ladeInstrument(const QString& pfad, Instrument& instrument);
+
+/// Der Ordner der mitgelieferten Instrumente: `asset/loop/instruments`, neben
+/// dem Kit (`kitOrdner`). Leer = nicht gefunden.
+[[nodiscard]] QString instrumentOrdner();
+/// Die mitgelieferten Instrumente — was im Ordner als `.lvinst` liegt, nach
+/// Titel sortiert; `name` ist der Dateiname ohne Endung. Einmal gelesen und
+/// gemerkt. Leer = der Ordner ist nicht da.
 [[nodiscard]] const std::vector<Instrument>& instrumente();
-/// Das mitgelieferte Instrument mit dieser Kennung; nullptr = keins.
+/// Das mitgelieferte Instrument mit diesem Namen; nullptr = keins.
 [[nodiscard]] const Instrument* findeInstrument(const QString& name);
+/// Das Instrument, das ein Muster nennt: ein mitgeliefertes beim Namen oder
+/// eine eigene Datei beim Pfad (`istInstrumentDatei`). false = nicht gefunden
+/// oder nicht lesbar.
+bool holeInstrument(const QString& nennung, Instrument& instrument);
+/// Zaehlt jede gespeicherte Instrument-Datei (`speichereInstrument`): wer
+/// Toene gerechnet hat und sich die Zahl merkt, sieht, ob er neu rechnen muss.
+[[nodiscard]] std::uint64_t instrumentFassung();
+
+/// So viele Obertoene traegt ein Instrument hoechstens (der 2. bis 17. Teilton).
+inline constexpr int kObertoeneMax = 16;
 
 /// Die Frequenz einer Tonhoehe (MIDI-Nummer): 69 = 440 Hz.
 [[nodiscard]] double tonHz(int hoehe);

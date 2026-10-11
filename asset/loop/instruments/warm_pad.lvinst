@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Warm Pad",
+    "waveform": "saw",
+    "harmonics": [],
+    "voices": 3,
+    "detune": 12,
+    "attack": 420,
+    "decay": 600,
+    "sustain": 0.9,
+    "release": 900,
+    "filterCutoff": 3.5,
+    "filterEnvelope": 0,
+    "vibratoRate": 4.5,
+    "vibratoDepth": 5,
+    "vibratoDelay": 500,
+    "damping": 0.996,
+    "level": 0.6
+}

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.117.0
+> **Version:** 1.118.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2397,8 +2397,8 @@ und Raster gelten für den ganzen Loop.
 
 Zum Ausprobieren liegt im Projektordner ein Beispiel:
 `asset\loop\drums_demo.lvloop`, dazu sechs Klänge (Kick, Snare, zwei Hi-Hats,
-Clap, Tom) unter `asset\loop\kit`. Ein zweites Beispiel mit Instrumenten:
-`asset\loop\instrument_demo.lvloop`.
+Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
+`asset\loop\instrument_demo.lvloop` und `asset\loop\house_demo.lvloop`.
 
 ### Das Panel Loop
 
@@ -2491,7 +2491,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Element | Wirkung |
 |---|---|
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
-| **Instrument** | Piano, Strings, Violin, Guitar, Bass, Organ oder Lead. Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano |
+| **Instrument** | Vierzehn mitgelieferte, nach Namen sortiert: Piano, Strings, Violin, Guitar, Bass, Organ, Lead — und für House: House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck. Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
 | Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
@@ -2611,6 +2611,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.118.0 | 2026-10-11 | Session 110. §16 Loop: sieben Instrumente für House (House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck) und das Beispiel `asset\loop\house_demo.lvloop`; die Instrumente sind Dateien `.lvinst` unter `asset\loop\instruments`, die Auswahl ist nach Namen sortiert; Instrument-Editor: Mauszeiger an der Kante einer Note, Hinweis bei stummen Tasten |
 | 1.117.0 | 2026-10-11 | Session 110. §16 Loop NEU **Instrument-Clips**: **New instrument clip** im Panel Loop, der Abschnitt **Der Instrument-Editor** (Klaviatur über sechs Oktaven, Noten setzen, verlängern, verschieben, löschen, Zeile *Note vol.*, sieben gerechnete Instrumente, eine Taste spielt den Ton an), das Beispiel `asset\loop\instrument_demo.lvloop` |
 | 1.116.0 | 2026-10-11 | Session 110. §16 Loop GEÄNDERT: das Panel Loop fragt jetzt auch **beim Beenden von LumiViz** nach Ungespeichertem; die Rückfrage bietet überall **Save / Discard / Cancel** wie im Composer (vorher bei New und Load nur Discard / Cancel) |
 | 1.115.0 | 2026-10-11 | Session 109. **§16 NEU: Loop** — das Panel Loop (Datei-Zeile mit Tags, New, Load, Save; Play, BPM, Fit; die Achse in Takten), Clips und Kanäle (New drumkit clip, verschieben, in ganzen Mustern länger und kürzer, verbundene Kopien, Basis umbenennen, Kanäle), der Drum-Editor (Bars, Play pattern, Peak, Raster des Loops, Spuren, Schritte, Step volume), wer den Ton hat (Composer, Loop, Player). §3 Audio Browser: Loops in der Liste, Doppelklick lädt ins Panel Loop. §15 Audio-Kanal: **Loops als Clips** — ein Durchlauf lang, wiederholt sich, zählt als laufender Song, folgt dem Panel Loop. Die bisherigen §16 und §17 sind jetzt §17 und §18 |

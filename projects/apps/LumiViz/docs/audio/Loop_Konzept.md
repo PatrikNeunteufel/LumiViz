@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.17.0
+> **Version:** 0.18.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -83,7 +83,8 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **T1 a** (S109) | **Ein Loop-Clip bleibt an der Uhr wie ein Song.** Gesetzt wird er beim Einstieg, nach einem Sprung der Uhr und bei mehr als 80 ms Abweichung — verglichen wird die Stelle des Klangerzeugers selbst. So folgen alle Quellen einem Herrn: nach einem Aussetzer landen Songs und Loops wieder an derselben Uhr. Gemessen (§6a): der Abstand schwankt um wenige Millisekunden, aus Drift wären 80 ms erst nach 40 bis 90 Minuten erreicht. |
 | **T2** (S109) | **Ein Loop-Clip zählt als laufender Song**, und die `.lvloop` trägt dasselbe Tag-Schema wie ein Song (Titel, Künstler, Album, Jahr, Genre, Nummer, Songtext) — das Player-Panel, die Text-Vorlagen und Karaoke lesen dort, was sie bei einer MP3 aus der Datei lesen. |
 | **I1 c** (S110) | **Der Klang eines Instrument-Clips kommt aus beiden Quellen: gerechnet oder aus einem Sample — zuerst gerechnet.** Ein gerechnetes Instrument ist ein Satz Einstellungen für einen Klangerzeuger: Schwingung (der Funktionsgenerator), Hüllkurve, Filter, Vibrato, Verstimmung, dazu eine gezupfte Saite als eigene Art. Ein Instrument aus einem Sample ist eine Tondatei, die je Note in der Tonhöhe umgerechnet wird. Die Piano-Rolle ist für beide dieselbe. Der **Instrument-Creator** ist der Editor der gerechneten Art; ein Funktionsgenerator allein ist nur deren erster Baustein. |
-| **I2 b** (S110) | **Ein eigenes Instrument ist eine eigene Datei `.lvinst`** — abgelegt wie die Klänge des Kits (Patrik: „wie die Kit"). Das Muster nennt sie, wie eine Spur ihren Klang nennt: den Namen eines mitgelieferten Instruments oder den Pfad einer Datei, relativ unter dem Ordner der `.lvloop`, sonst absolut. Fehlt die Datei, schweigt das Muster, und der Bericht sagt es. (Patrik hatte zuerst a gesagt und es im selben Zug berichtigt.) **Noch offen:** ob auch die sieben mitgelieferten Instrumente als Dateien unter `asset/loop` liegen sollen wie das Kit, oder im Programm bleiben. |
+| **I2 b** (S110) | **Ein eigenes Instrument ist eine eigene Datei `.lvinst`** — abgelegt wie die Klänge des Kits (Patrik: „wie die Kit"). Das Muster nennt sie, wie eine Spur ihren Klang nennt: den Namen eines mitgelieferten Instruments oder den Pfad einer Datei, relativ unter dem Ordner der `.lvloop`, sonst absolut. Fehlt die Datei, schweigt das Muster, und der Bericht sagt es. (Patrik hatte zuerst a gesagt und es im selben Zug berichtigt.) |
+| **I3 a** (S110) | **Auch die sieben mitgelieferten Instrumente sind Dateien**: `asset/loop/instruments/<name>.lvinst`, wie die Klänge unter `asset/loop/kit`. Das Programm liest den Ordner; im Code steht kein Instrument mehr. Ein Muster nennt ein mitgeliefertes beim Namen (`piano`), ein eigenes beim Pfad. Verworfen: b — die mitgelieferten bleiben im Code (sie klängen auch ohne den Ordner `asset`, aber es gäbe zwei Arten von Instrumenten). **Folge:** fehlt `asset/loop` neben der Exe — wie heute im Release-Paket —, schweigen alle Instrument-Clips; dieselbe offene Aufgabe wie beim Kit. |
 
 ### 3.1 Verworfen, mit Grund
 
@@ -634,7 +635,7 @@ Ein Muster der Art `instrument` trägt statt Spuren und Zeilen:
 
 | Feld | Bedeutung | Grenzen |
 |---|---|---|
-| `instrument` | Kennung eines mitgelieferten Instruments: `piano`, `strings`, `violin`, `guitar`, `bass`, `organ`, `lead`; fehlt sie, gilt `piano` | — |
+| `instrument` | der Name eines mitgelieferten Instruments (`piano`, `strings`, `violin`, `guitar`, `bass`, `organ`, `lead` — die Dateien unter `asset/loop/instruments`) **oder** der Pfad einer eigenen Datei `.lvinst`, relativ, wenn sie unter dem Ordner der `.lvloop` liegt, sonst absolut (I2 b); fehlt die Angabe, gilt `piano` | — |
 | `volume`, `pan`, `mute` | für das ganze Muster, wie bei einer Spur | 0 bis 1, -1 bis 1 |
 | `notes[]` | je Note eine Zeile: **Schritt** (0 = der erste des Musters), **Länge** in Schritten, **Tonhöhe** als MIDI-Nummer (60 = C4, 69 = A4), **Lautstärke** | Länge ab 1, Tonhöhe 24 bis 96 (C1 bis C7), Lautstärke über 0 bis 1 |
 
@@ -654,7 +655,48 @@ Länge bleibt dieselbe Zeit, auf ganze Schritte gerundet.
 ### Die gerechneten Instrumente (gebaut, 9a)
 
 `loop/Instrument.hpp`. Ein Instrument ist ein Satz Einstellungen — das, was
-der Instrument-Creator (Stufe 10) später offenlegt:
+der Instrument-Creator (Stufe 10b) offenlegt — und seit Stufe 10a **eine
+Datei `.lvinst`** (I2 b, I3 a):
+
+```json
+{
+  "format": "lumiviz-instrument",
+  "version": 1,
+  "title": "Strings",
+  "waveform": "saw",
+  "harmonics": [],
+  "voices": 3,
+  "detune": 9,
+  "attack": 160, "decay": 400, "sustain": 0.85, "release": 420,
+  "filterCutoff": 6, "filterEnvelope": 0,
+  "vibratoRate": 5, "vibratoDepth": 6, "vibratoDelay": 300,
+  "damping": 0.996,
+  "level": 0.7
+}
+```
+
+| Feld | Bedeutung | Grenzen |
+|---|---|---|
+| `title` | wie das Instrument im Programm steht; ohne Titel der Dateiname | — |
+| `waveform` | `sine`, `triangle`, `saw`, `square` oder `string` (die gezupfte Saite) | — |
+| `harmonics` | nur `sine`: die Anteile des 2., 3., … Teiltons | höchstens 16, je -1 bis 1 |
+| `voices`, `detune` | gleiche Schwingungen übereinander; so viele Cent liegen die äußeren daneben | 1 bis 3; 0 bis 100 |
+| `attack`, `decay`, `release` | Hüllkurve, in Millisekunden | 0 bis 5000, `decay` bis 10000 |
+| `sustain` | Pegel, solange die Note dauert | 0 bis 1 |
+| `filterCutoff`, `filterEnvelope` | Tiefpass als Vielfaches des Grundtons (0 = offen); so viele Vielfache öffnet die Hüllkurve dazu | 0 bis 64 |
+| `vibratoRate`, `vibratoDepth`, `vibratoDelay` | Hertz, Cent, Millisekunden bis zur vollen Tiefe | 0 bis 20; 0 bis 100; 0 bis 5000 |
+| `damping` | nur `string`: größer klingt länger | 0,9 bis 0,9999 |
+| `level` | Ausgleich zwischen den Instrumenten | 0 bis 1 |
+
+Die mitgelieferten liest das Programm einmal aus `asset/loop/instruments`
+(nach Titel sortiert); eine eigene Datei liest es jedes Mal, wenn Klänge
+geladen werden. Wird eine Instrument-Datei im Programm gespeichert
+(`speichereInstrument`), zählt `instrumentFassung()` weiter — Spieler und
+Tonführung rechnen die Töne dann neu, auch wenn die Noten gleich blieben.
+Eine von außen geänderte Datei bemerkt das Programm erst beim nächsten Laden
+der Klänge.
+
+Die Bausteine:
 
 | Baustein | Einstellungen |
 |---|---|
@@ -673,6 +715,13 @@ der Instrument-Creator (Stufe 10) später offenlegt:
 | Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |
 | Organ | Sinus mit Obertönen wie Zugriegel, steht, solange die Note dauert |
 | Lead | Rechteck mit Vibrato |
+
+Dazu sieben Instrumente für **House** (Wunsch Patrik S110, als Dateien
+dazugelegt — am Programm war dafür nichts zu ändern): House Piano, House
+Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck; Beschreibung in
+`asset/loop/README.md`, Beispiel `asset/loop/house_demo.lvloop` (124 BPM,
+24 Takte). Der Acid Bass hat **keine Resonanz** — der Filter des
+Klangerzeugers kennt keine; das wäre ein neuer Baustein.
 
 **Im Rechenkern:** jede Note wird **vorab** in einen Klang gerechnet
 (`rendereTon`: so lang wie die Note, danach der Ausklang, am Ende bei null)
@@ -721,7 +770,8 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | S109: Benutzerhandbuch 1.115.0 (§16 Loop neu, Audio Browser, Loops als Clips), `Audio_System.md` 1.3.0 (§6a Mixer und wer den Ton hat), Vorlage `asset/sichttest/composer_K_loop.lvcomp` mit `asset/sichttest/loop/beat_A.lvloop` (an `test_ComposerVorlagen.cpp` gebunden), Liste `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte). S110: die Rückfrage beim Beenden (§4c) und drei Aktionen der Sichttest-Steuerung für das Panel Loop (`loop_laden`, `loop_wiedergabe`, `loop_editor`; `loop/SichttestAktionen`, ein Fall in `test_LoopSpieler.cpp`). Offen: ein eigenes Icon für `.lvloop`; das Kit im Release-Paket |
 | 9a | **Instrument-Clip, Kern:** Noten im Modell und in der Datei, sieben gerechnete Instrumente (I1 c; Strings, Violine, Piano, Gitarre …, Wunsch Patrik S110), Noten im Rechenkern | S110 gebaut, §4f; `test_LoopInstrument.cpp`, sechs Fälle ohne Ton; Beispiel `asset/loop/instrument_demo.lvloop`; **nicht gehört** — die Instrumente sind nach Rechnung eingestellt |
 | 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel, eine Taste spielt den Ton an | S110 gebaut, §4f; `test_LoopInstrumentEditor.cpp` (zwei Fälle ohne Fenster; `LUMIVIZ_INSTRUMENT_EDITOR_BILD=<datei.png>` legt ein Bild ab), ein Fall in `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
-| 10 | **Instrument-Creator:** ein Fenster, das die Bausteine eines gerechneten Instruments offenlegt und als eigenes Instrument speichert (I1 c) | später |
+| 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
+| 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | offen |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
 
 ---
@@ -818,6 +868,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.18.0** (S110, 2026-10-11): Entscheid I3 a (auch die mitgelieferten
+  Instrumente sind Dateien); Stufe 10 geteilt, 10a gebaut — das Format
+  `.lvinst` (§4f), `asset/loop/instruments`; sieben Instrumente für House
+  und das Beispiel `house_demo.lvloop`.
 - **0.17.0** (S110, 2026-10-11): Entscheid I2 b (ein eigenes Instrument ist
   eine eigene Datei `.lvinst`, wie die Klänge des Kits); die gebilligte Skizze des
   Instrument-Creators in §4f; Instrument-Editor nachgebessert (Griff,

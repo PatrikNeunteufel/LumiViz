@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Bass",
+    "waveform": "saw",
+    "harmonics": [],
+    "voices": 1,
+    "detune": 0,
+    "attack": 3,
+    "decay": 260,
+    "sustain": 0.45,
+    "release": 90,
+    "filterCutoff": 2.5,
+    "filterEnvelope": 5,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 0.9
+}

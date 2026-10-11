@@ -77,8 +77,14 @@ struct Note
     [[nodiscard]] bool operator==(const Note&) const = default;
 };
 
+/// Nennt ein Muster sein Instrument beim Pfad einer eigenen Datei (`.lvinst`)
+/// — statt beim Namen eines mitgelieferten?
+[[nodiscard]] bool istInstrumentDatei(const QString& nennung);
+/// Das Instrument eines neuen Musters und eines Musters ohne Angabe: `piano`.
+[[nodiscard]] QString instrumentVorgabe();
+
 /// Der Vorsatz eines gerechneten Tons unter den Klaengen: `inst:piano:60:500`
-/// — Instrument, Tonhoehe, Dauer in Millisekunden.
+/// — Instrument (Name oder Pfad), Tonhoehe, Dauer in Millisekunden.
 [[nodiscard]] bool istTon(const QString& klang);
 /// Der Name des Klangs zu einem Ton eines Instruments.
 [[nodiscard]] QString tonKlang(const QString& instrument, int hoehe, int dauerMs);
@@ -102,7 +108,9 @@ struct Muster
     std::vector<std::vector<double>> zeilen;
 
     // --- Instrument ---
-    QString instrument;  ///< Kennung des Instruments (`loop/Instrument.hpp`), etwa `piano`
+    /// Das Instrument (`loop/Instrument.hpp`): der Name eines mitgelieferten,
+    /// etwa `piano`, oder der Pfad einer eigenen Datei `.lvinst` (absolut).
+    QString instrument;
     double laut = 1.0;   ///< 0…1
     double pan = 0.0;    ///< -1 (links) … 1 (rechts)
     bool stumm = false;

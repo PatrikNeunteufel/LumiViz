@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "House Piano",
+    "waveform": "sine",
+    "harmonics": [0.7, 0.45, 0.3, 0.2, 0.12, 0.08, 0.05],
+    "voices": 1,
+    "detune": 0,
+    "attack": 1,
+    "decay": 600,
+    "sustain": 0.0,
+    "release": 140,
+    "filterCutoff": 0,
+    "filterEnvelope": 0,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 0.8
+}

@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Guitar",
+    "waveform": "string",
+    "harmonics": [],
+    "voices": 1,
+    "detune": 0,
+    "attack": 1,
+    "decay": 200,
+    "sustain": 0.7,
+    "release": 120,
+    "filterCutoff": 0,
+    "filterEnvelope": 0,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 1
+}

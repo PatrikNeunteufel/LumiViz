@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Piano",
+    "waveform": "sine",
+    "harmonics": [0.45, 0.22, 0.1, 0.06, 0.03],
+    "voices": 1,
+    "detune": 0,
+    "attack": 2,
+    "decay": 1500,
+    "sustain": 0.06,
+    "release": 220,
+    "filterCutoff": 0,
+    "filterEnvelope": 0,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 1
+}

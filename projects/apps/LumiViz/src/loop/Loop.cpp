@@ -32,6 +32,7 @@ const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
 const QString kTonVorsatz = QStringLiteral("inst:");
 const QString kInstrumentVorgabe = QStringLiteral("piano");
+const QString kInstrumentEndung = QStringLiteral(".lvinst");
 
 // Pfade wie in der `.lvcomp` (composer/Komposition.cpp): relativ zum Ordner
 // der Datei, wenn das Sample darunter liegt, sonst absolut.
@@ -98,17 +99,31 @@ QString tonKlang(const QString& instrument, int hoehe, int dauerMs)
     return QStringLiteral("%1%2:%3:%4").arg(kTonVorsatz, instrument).arg(hoehe).arg(dauerMs);
 }
 
+QString instrumentVorgabe()
+{
+    return kInstrumentVorgabe;
+}
+
+bool istInstrumentDatei(const QString& nennung)
+{
+    return nennung.endsWith(kInstrumentEndung, Qt::CaseInsensitive);
+}
+
 bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs)
 {
     if (!istTon(klang)) return false;
-    const QStringList teile = klang.mid(kTonVorsatz.size()).split(QLatin1Char(':'));
-    if (teile.size() != 3 || teile[0].isEmpty()) return false;
+    // von hinten: Dauer, Tonhoehe — davor das Instrument, das als Pfad selbst
+    // einen Doppelpunkt tragen kann (C:/…)
+    const QString rest = klang.mid(kTonVorsatz.size());
+    const qsizetype vorDauer = rest.lastIndexOf(QLatin1Char(':'));
+    const qsizetype vorHoehe = vorDauer > 0 ? rest.lastIndexOf(QLatin1Char(':'), vorDauer - 1) : -1;
+    if (vorHoehe <= 0) return false;
     bool hoeheOk = false;
     bool dauerOk = false;
-    const int h = teile[1].toInt(&hoeheOk);
-    const int ms = teile[2].toInt(&dauerOk);
+    const int h = rest.mid(vorHoehe + 1, vorDauer - vorHoehe - 1).toInt(&hoeheOk);
+    const int ms = rest.mid(vorDauer + 1).toInt(&dauerOk);
     if (!hoeheOk || !dauerOk || ms <= 0) return false;
-    instrument = teile[0];
+    instrument = rest.left(vorHoehe);
     hoehe = h;
     dauerMs = ms;
     return true;
@@ -293,7 +308,9 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         if (m.art == MusterArt::Instrument)
         {
             o[QStringLiteral("kind")] = kArtInstrument;
-            o[QStringLiteral("instrument")] = m.instrument;
+            // ein mitgeliefertes beim Namen, eine eigene Datei beim Pfad — wie ein Sample
+            o[QStringLiteral("instrument")] =
+                istInstrumentDatei(m.instrument) ? fuerDatei(m.instrument, basisOrdner) : m.instrument;
             o[QStringLiteral("volume")] = m.laut;
             o[QStringLiteral("pan")] = m.pan;
             o[QStringLiteral("mute")] = m.stumm;
@@ -395,6 +412,16 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
         {
             m.art = MusterArt::Instrument;
             m.instrument = o.value(QStringLiteral("instrument")).toString();
+            if (istInstrumentDatei(m.instrument))
+            {
+                m.instrument = ausDatei(m.instrument, basisOrdner);
+                if (bericht != nullptr && !QFileInfo::exists(m.instrument))
+                {
+                    const QString zeile =
+                        QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(m.instrument));
+                    if (!bericht->contains(zeile)) bericht->append(zeile);
+                }
+            }
             m.laut = o.value(QStringLiteral("volume")).toDouble(1.0);
             m.pan = o.value(QStringLiteral("pan")).toDouble(0.0);
             m.stumm = o.value(QStringLiteral("mute")).toBool(false);

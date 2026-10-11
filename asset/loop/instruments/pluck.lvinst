@@ -1,0 +1,20 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 1,
+    "title": "Pluck",
+    "waveform": "square",
+    "harmonics": [],
+    "voices": 1,
+    "detune": 0,
+    "attack": 1,
+    "decay": 140,
+    "sustain": 0.0,
+    "release": 110,
+    "filterCutoff": 3,
+    "filterEnvelope": 8,
+    "vibratoRate": 0,
+    "vibratoDepth": 0,
+    "vibratoDelay": 0,
+    "damping": 0.996,
+    "level": 0.6
+}

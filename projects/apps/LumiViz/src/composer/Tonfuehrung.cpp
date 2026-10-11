@@ -7,6 +7,7 @@
 
 #include "audio/AudioPlayer.hpp"  // leseTrackInfo (Naht N14)
 #include "audio/IAudioPlayer.hpp"
+#include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
@@ -37,6 +38,7 @@ struct Tonfuehrung::LoopQuelle
     std::uint64_t gesehen = 0;           ///< `offenFassung` beim letzten Blick ins Loop-Panel
     std::shared_ptr<const std::vector<lumi::loop::Klang>> klaenge;
     QStringList klangNamen;              ///< die Klaenge, zu denen `klaenge` gehoert
+    std::uint64_t instrumente = 0;       ///< `instrumentFassung()` beim Laden der Klaenge
     int rate = 0;
     double durchlaufMs = 0.0;            ///< ein Durchlauf, wie der Klangerzeuger ihn spielt
 
@@ -58,11 +60,14 @@ struct Tonfuehrung::LoopQuelle
     {
         rate = engine.getSampleRate();
         const QStringList namen = loop.klangNamen();
-        if (klaenge == nullptr || namen != klangNamen)
+        // auch wenn eine Instrument-Datei neu gespeichert wurde
+        const std::uint64_t fassung = lumi::loop::instrumentFassung();
+        if (klaenge == nullptr || namen != klangNamen || fassung != instrumente)
         {
             klaenge = std::make_shared<const std::vector<lumi::loop::Klang>>(
                 lumi::loop::ladeKlaenge(namen, engine, rate));
             klangNamen = namen;
+            instrumente = fassung;
         }
         const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;

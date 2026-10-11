@@ -5,8 +5,6 @@
 
 #include "loop/Bearbeiten.hpp"
 
-#include "loop/Instrument.hpp"
-
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
@@ -106,7 +104,7 @@ int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art)
     basis.name = freierName(QStringLiteral("Pattern"),
                             [&loop](const QString& name) { return loop.findeMuster(name) != nullptr; });
     basis.art = art;
-    if (art == MusterArt::Instrument) basis.instrument = instrumente().front().name;
+    if (art == MusterArt::Instrument) basis.instrument = instrumentVorgabe();
     basis.takte = kTakteMin;
     loop.muster.push_back(basis);
     LoopClip clip;

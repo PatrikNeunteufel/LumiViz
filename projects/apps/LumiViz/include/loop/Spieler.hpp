@@ -93,6 +93,7 @@ private:
     std::shared_ptr<const std::vector<Klang>> m_klaenge;
     QStringList m_klangNamen;  ///< die Klaenge der Spuren, zu denen `m_klaenge` gehoert
     int m_klangRate = 0;
+    std::uint64_t m_instrumentFassung = 0;  ///< `instrumentFassung()` beim Laden der Klaenge
     QStringList m_bericht;
 
     IAudioEngine* m_engine = nullptr;
