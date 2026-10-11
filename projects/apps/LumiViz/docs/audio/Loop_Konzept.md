@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.10.0
+> **Version:** 0.11.0
 > **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -80,9 +80,16 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **L7 a** | **Play im Loop-Panel ist gesperrt, solange der Composer den Ton hat**, und sagt, warum. Liegt der Loop als Clip in der Komposition, ist jede Änderung über den Composer zu hören. Spielte das Loop-Panel gerade allein, hält es an. |
 | **L6 a** | **Luft nach oben statt Begrenzer.** Die Spuren addieren sich, der Kern begrenzt nicht — wie zwei Songs im Mixer des Composers. Ein neuer Loop beginnt mit Lautstärke 0,5; das Panel bekommt eine Anzeige, die rot wird, sobald die Summe über 1 geht (Stufe 6). |
 | **W1 b** (S109) | **Das Loop-Panel und der Composer teilen sich die Achse.** Maßstab, Zoom, Rollen, Mausrad, Schwenken und Mitlaufen liegen in einer gemeinsamen Basis (`lumi::ui::Achse`, `UI/widgets/Achse.hpp`), herausgezogen aus der `Zeitachse` des Composers; die Achse des Loop-Panels erbt davon und rechnet in Takten. Grund (Patrik): kurz sind nur die Drums — Instrumente werden länger, und kommt Gesang dazu, sind es mehrere Minuten; dafür braucht das Panel den vollen Zoom. |
+| **T1 a** (S109) | **Ein Loop-Clip bleibt an der Uhr wie ein Song.** Gesetzt wird er beim Einstieg, nach einem Sprung der Uhr und bei mehr als 80 ms Abweichung — verglichen wird die Stelle des Klangerzeugers selbst. So folgen alle Quellen einem Herrn: nach einem Aussetzer landen Songs und Loops wieder an derselben Uhr. Gemessen (§6a): der Abstand schwankt um wenige Millisekunden, aus Drift wären 80 ms erst nach 40 bis 90 Minuten erreicht. |
+| **T2** (S109) | **Ein Loop-Clip zählt als laufender Song**, und die `.lvloop` trägt dasselbe Tag-Schema wie ein Song (Titel, Künstler, Album, Jahr, Genre, Nummer, Songtext) — das Player-Panel, die Text-Vorlagen und Karaoke lesen dort, was sie bei einer MP3 aus der Datei lesen. |
 
 ### 3.1 Verworfen, mit Grund
 
+- **Ein Loop-Clip wird nie wegen Abweichung nachgesetzt** (T1 b): kein
+  Stolperer aus Drift, und zwei Loop-Clips blieben auf den Abtastwert genau
+  zueinander. Aber ein Song daneben wird nach einem Aussetzer nachgesetzt und
+  der Loop nicht — die zwei blieben für den Rest der Komposition versetzt.
+- **Nachsetzen erst ab 250 ms** (T1 c): seltener, aber dreimal so groß.
 - **Eigene Achse für das Loop-Panel, der Composer bleibt unberührt** (W1 a):
   Geometrie, Zoom und Rollen entstünden ein zweites Mal — tragbar nur,
   solange ein Loop kurz bleibt.
@@ -181,6 +188,7 @@ es nur einen Tag; sie wird nicht gelesen. JSON, Schlüssel englisch wie in
 | `beatsPerBar`, `stepsPerBeat` | Raster des ganzen Loops; ihr Produkt sind die Schritte je Takt | je 1 bis 16 |
 | `swing` | verzögert jeden zweiten Schritt eines Schlags, bei 1 um einen halben Schritt | 0 bis 1 |
 | `volume` | Lautstärke des ganzen Loops, vor dem Pegel des Clips im Composer; Vorgabe 0,5 (L6 a) | 0 bis 1 |
+| `tags` | die Tags des Loops, dasselbe Schema wie bei einem Song (T2): `title`, `artist`, `album`, `year`, `genre`, `track`, `lyrics` (Songtext, darf LRC-Zeitmarken tragen). Alle freiwillig; der Block fehlt, wenn keins gesetzt ist. Ohne Titel gilt der Dateiname. | — |
 | `patterns[]` | die Muster („Basen"): Name, Art, Länge und alles, was ihr Editor einstellt | — |
 | `patterns[].kind` | Art des Musters, bestimmt den Editor; heute nur `drumkit` | — |
 | `patterns[].bars` | Länge in Takten | 4 bis 64 |
@@ -440,6 +448,51 @@ Kopieren von Takten; mehrere Editor-Fenster.
 
 ---
 
+## 4e. Der Loop als Clip im Composer (gebaut, Stufe 7)
+
+Eine `.lvloop` liegt in einem **Audio-Kanal** des Composers wie ein Song: aus
+dem Audio Browser hineingezogen, verschoben, an den Kanten gezogen, mit
+Pegelkurve und Blenden. `Clip` und `.lvcomp` sind unverändert (L3) — was ein
+Clip ist, sagt die Endung seiner Datei (`composer::istLoop`).
+
+- **Länge:** ein neuer Loop-Clip ist einen Durchlauf lang. Er hat kein Ende:
+  länger gezogen wiederholt er sich, bis der Clip endet. Er trägt deshalb nie
+  eine Song-Länge (`quellMs` 0); die linke Kante verschiebt den Einsatz im
+  ersten Durchlauf.
+- **Im Mixer** (`composer/Tonfuehrung`): je Loop-Clip ein eigener
+  Klangerzeuger als Quelle, zwei Sekunden vor dem Einsatz angehalten
+  eingehängt; seine Klänge werden dabei geladen. Der Pegel des Clips ist die
+  Lautstärke der Quelle, wie bei einem Song.
+- **An der Uhr** (T1 a): gesetzt wird die Stelle des Klangerzeugers selbst —
+  auf den Abtastwert genau, im Kreis des Durchlaufs gerechnet.
+- **Laufender Song** (T2): der Loop meldet sich mit den Tags seiner Datei;
+  seine Länge ist ein Durchlauf, seine Stelle die im laufenden Durchlauf.
+- **Mit dem Loop-Panel verbunden** (L7 a, `loop/Offen.hpp`): hat das Panel
+  dieselbe Datei offen, spielt der Clip dessen Fassung — auch die
+  ungespeicherte — und folgt jeder Änderung ab dem nächsten Takt. Ändert sich
+  die Länge des Durchlaufs (Tempo, Clips), wird der Loop neu an die Uhr
+  gesetzt; ändern sich die Tags, wird der Song neu gemeldet. Play im
+  Loop-Panel bleibt gesperrt, solange der Composer den Ton hat.
+- **In der Zeitachse:** statt einer Wellenform steht ein gestrichelter Strich
+  an jeder Stelle, an der der Loop von vorn beginnt.
+- **Tags bearbeiten:** Knopf **Tags…** in der Datei-Zeile des Loop-Panels,
+  über Undo.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- Ein Loop-Clip rastet in der Zeitachse wie ein Song (Kanten anderer Clips,
+  Raster in Sekunden) — nicht auf die Takte des Loops.
+- Der Klangerzeuger einer entfernten Quelle lebt noch vier Takte weiter, weil
+  nicht belegt ist, dass `mixerRemoveSource` auf einen laufenden Rückruf wartet.
+- Der Composer hängt jetzt am Namensraum `loop` und umgekehrt (das Loop-Panel
+  fragt, ob der Composer den Ton hat; die Taktachse nimmt seine Farbreihen).
+
+**Nicht drin:** ein Tempo der Komposition, an dem Loops einrasten (L2 a,
+zurückgestellt); ein Loop, der allein im Loop-Panel spielt, meldet sich nicht
+als Song; ein Cover.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -453,7 +506,7 @@ Kopieren von Takten; mehrere Editor-Fenster.
 | 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109 gebaut, §4c: die gemeinsame Basis `Achse` (W1 b; 33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`), darauf `Taktachse`, `Bearbeiten` und das Panel; `test_LoopArrangement.cpp`, sieben Fälle; **im Programm noch nicht gesehen** |
 | 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | S109 gebaut, §4d; `test_LoopDrumEditor.cpp`, sieben Fälle, dazu zwei in `test_LoopSpieler.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | S109 gebaut (§3.3); ein Fall in `test_PaletteUi.cpp`, einer in `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen** |
-| 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
+| 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser; dazu Tags (T2) und die Verbindung zum Loop-Panel (L7 a) | S109 gebaut, §4e, Messung §6a; zwei Fälle in `test_LoopSpieler.cpp` (ohne Ton), zwei in `test_LoopWiedergabe.cpp` (mit sehr leisem Ton), dazu Tags und Verbindung im Panel-Fall von `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
 | 9 | **Instrument-Clip:** Piano-Rolle, Klangerzeuger für Töne | später |
 
@@ -503,12 +556,37 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ---
 
+## 6a. Messung aus Stufe 7: der Klangerzeuger gegen die Wanduhr
+
+`test_LoopWiedergabe.cpp`, Fall „Loop Messung" (S109, Testing-MSVC, das
+Ausgabegerät des Rechners, 44100 Hz). Je 33 ms: gerechneter Ton minus
+Wanduhr. `LUMIVIZ_LOOP_MESSUNG_S=<Sekunden>` misst länger.
+
+| Lauf | Grundabstand | kleinster / größter | größter Schritt | Drift | Proben über 80 ms |
+|---|---|---|---|---|---|
+| 6 s | −1,1 ms | −6,4 / +3,5 ms | 7,0 ms | −144 ppm | 0 |
+| 60 s | −1,0 ms | −7,9 / +3,8 ms | 7,0 ms | −14 ppm | 0 |
+| 60 s | −1,1 ms | −7,6 / +3,5 ms | 7,0 ms | −35 ppm | 0 |
+
+Der Abstand ist ruhig und liegt weit unter der Toleranz der Tonführung; bei
+14 bis 35 ppm wären 80 ms erst nach rund 40 bis 90 Minuten erreicht (die
+144 ppm des kurzen Laufs sind Rauschen der kurzen Strecke). Über die
+Tonführung selbst, mit dem Beispiel als Clip: 40 s, kein Nachsetzen.
+
+**Nicht gemessen:** ein Lauf, in dem der Rechner drosselt (in keinem kam der
+Messfaden länger als 35 ms nicht dran); ein anderes Ausgabegerät (über Funk
+ist die Latenz ein Vielfaches); Release-clang.
+
+---
+
 ## 7. Risiken
 
 - **Nachsetzen der Tonführung:** eine Quelle wird nachgesetzt, wenn sie mehr
   als 80 ms von der Uhr abweicht (`Tonfuehrung::kToleranzMs`). Bei einem Song
-  ist das ein Ruck, bei Drums ein Stolperer. Kommt in Stufe 7 mit einer
-  Messung auf den Tisch.
+  ist das ein Ruck, bei Drums ein Stolperer. Gemessen in Stufe 7 (§6a) und
+  entschieden mit T1 a: aus Drift selten; offen bleibt, wie oft es in den
+  Schüben vorkommt, in denen der Rechner drosselt. Wäre es zu hören, ist der
+  nächste Schritt, nur an einer Durchlauf-Grenze nachzusetzen.
 - **Code im Ton-Thread:** der erste in der App. Was das Panel ändert, muss
   ohne Sperre in den Rechenkern gelangen; der Kern darf im Rückruf weder
   Speicher holen noch Dateien lesen.
@@ -526,6 +604,9 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.11.0** (S109, 2026-10-11): Stufe 7 gebaut — der Loop als Clip im
+  Composer (§4e neu), Messung §6a; Entscheide T1 a (an der Uhr wie ein Song)
+  und T2 (zählt als laufender Song, Tags in der `.lvloop`); L7 a umgesetzt.
 - **0.10.0** (S109, 2026-10-11): Stufe 6c gebaut — der Audio Browser zeigt
   `.lvloop`, der Doppelklick lädt ins Loop-Panel.
 - **0.9.0** (S109, 2026-10-11): Stufe 6b gebaut — der Drum-Editor (§4d

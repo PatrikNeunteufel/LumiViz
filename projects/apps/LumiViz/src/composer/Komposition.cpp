@@ -486,6 +486,11 @@ std::vector<const Clip*> Komposition::toeneBei(std::int64_t stelleMs, std::int64
     return toene;
 }
 
+bool istLoop(const QString& datei)
+{
+    return datei.endsWith(QStringLiteral(".lvloop"), Qt::CaseInsensitive);
+}
+
 void Komposition::ergaenzeTon(const SongLaenge& laengeVon)
 {
     for (Kanal& kanal : kanaele)
@@ -493,6 +498,11 @@ void Komposition::ergaenzeTon(const SongLaenge& laengeVon)
         if (kanal.art != KanalArt::Audio) continue;
         for (Clip& c : kanal.clips)
         {
+            if (istLoop(c.datei))
+            {
+                c.quellMs = 0;  // ein Loop hat kein Ende: er wiederholt sich, bis sein Clip endet
+                continue;
+            }
             if (c.quellMs <= 0 && laengeVon) c.quellMs = std::max<std::int64_t>(0, laengeVon(c.datei));
             if (c.quellMs <= 0) continue;  // unbekannt: der Clip bleibt, wie er ist
             // der Einsatz liegt im Song, und der Clip hoert spaetestens mit ihm auf
@@ -739,7 +749,10 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                 {
                     c.einsatzMs = static_cast<std::int64_t>(o.value(QStringLiteral("offset")).toDouble());
                     c.quellMs = static_cast<std::int64_t>(o.value(QStringLiteral("sourceLength")).toDouble());
-                    if (c.quellMs <= 0 && laengeVon) c.quellMs = laengeVon(datei);
+                    if (istLoop(datei))
+                        c.quellMs = 0;  // ein Loop hat kein Ende (siehe `istLoop`)
+                    else if (c.quellMs <= 0 && laengeVon)
+                        c.quellMs = laengeVon(datei);
                     // Bis S95 hatte ein Ton-Clip kein Ende: er reicht bis zum
                     // Schluss seines Songs (ohne bekannte Laenge gibt `richte`
                     // ihm eine Sekunde und meldet es).

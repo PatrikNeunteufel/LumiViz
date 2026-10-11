@@ -189,6 +189,19 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
     wurzel[QStringLiteral("stepsPerBeat")] = loop.schritteJeSchlag;
     wurzel[QStringLiteral("swing")] = loop.swing;
     wurzel[QStringLiteral("volume")] = loop.laut;
+    // die Tags: nur, was gesetzt ist — ein Loop ohne Tags traegt den Block nicht
+    QJsonObject tags;
+    const auto tag = [&tags](const char* name, const QString& wert) {
+        if (!wert.isEmpty()) tags[QLatin1String(name)] = wert;
+    };
+    tag("title", loop.tags.titel);
+    tag("artist", loop.tags.kuenstler);
+    tag("album", loop.tags.album);
+    tag("year", loop.tags.jahr);
+    tag("genre", loop.tags.genre);
+    tag("track", loop.tags.nummer);
+    tag("lyrics", loop.tags.text);
+    if (!tags.isEmpty()) wurzel[QStringLiteral("tags")] = tags;
 
     QJsonArray muster;
     for (const Muster& m : loop.muster)
@@ -258,6 +271,14 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
     neu.schritteJeSchlag = wurzel.value(QStringLiteral("stepsPerBeat")).toInt(neu.schritteJeSchlag);
     neu.swing = wurzel.value(QStringLiteral("swing")).toDouble(neu.swing);
     neu.laut = wurzel.value(QStringLiteral("volume")).toDouble(neu.laut);
+    const QJsonObject tags = wurzel.value(QStringLiteral("tags")).toObject();
+    neu.tags.titel = tags.value(QStringLiteral("title")).toString();
+    neu.tags.kuenstler = tags.value(QStringLiteral("artist")).toString();
+    neu.tags.album = tags.value(QStringLiteral("album")).toString();
+    neu.tags.jahr = tags.value(QStringLiteral("year")).toString();
+    neu.tags.genre = tags.value(QStringLiteral("genre")).toString();
+    neu.tags.nummer = tags.value(QStringLiteral("track")).toString();
+    neu.tags.text = tags.value(QStringLiteral("lyrics")).toString();
 
     for (const QJsonValue& mv : wurzel.value(QStringLiteral("patterns")).toArray())
     {

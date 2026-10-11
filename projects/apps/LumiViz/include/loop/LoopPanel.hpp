@@ -77,6 +77,9 @@ public:
     void bearbeite(const Loop& neu, const QString& was);
     /// Die Fassung setzen, ohne Undo (das tun die Befehle des CommandBus).
     void setzeLoop(const Loop& loop);
+    /// Die Tags des Loops setzen (Titel, Kuenstler … — dasselbe Schema wie bei
+    /// einem Song), ueber Undo.
+    void setzeTags(const LoopTags& tags);
     /// Zaehlt jedes New und Load: ein Schritt fuer Undo gilt nur fuer die
     /// Ladung, in der er entstand.
     [[nodiscard]] int ladung() const { return m_ladung; }
@@ -104,6 +107,9 @@ public:
 private:
     void setupUI();
     void frageNachDatei();
+    void frageNachTags();
+    /// Datei und Fassung dem Rest des Programms melden (`loop/Offen.hpp`).
+    void meldeStand();
     void speichereMitDialog(bool unter);
     /// Vor New und Load: gibt es Ungespeichertes, fragt das Panel. false = bleiben.
     [[nodiscard]] bool darfVerwerfen();
@@ -134,6 +140,7 @@ private:
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
+    QPushButton* m_tags = nullptr;
     QPushButton* m_play = nullptr;
     QDoubleSpinBox* m_bpm = nullptr;
     QLabel* m_info = nullptr;

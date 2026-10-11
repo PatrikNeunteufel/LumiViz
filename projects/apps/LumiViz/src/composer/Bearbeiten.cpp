@@ -286,9 +286,11 @@ int fuegeClipEin(Komposition& komposition, int kanal, const QString& datei, std:
 int fuegeSongEin(Komposition& komposition, int kanal, const QString& datei, std::int64_t startMs,
                  std::int64_t songMs, Stoss stoss)
 {
-    // ohne bekannte Laenge: so lang wie ein neuer Bild-Clip
-    return fuegeEin(komposition, kanal, KanalArt::Audio, datei, startMs,
-                    songMs > 0 ? songMs : kNeuerClipMs, std::max<std::int64_t>(0, songMs), stoss);
+    // ohne bekannte Laenge: so lang wie ein neuer Bild-Clip. Ein Loop ist zu
+    // Beginn einen Durchlauf lang (`songMs`) und laesst sich beliebig laenger
+    // ziehen: er traegt keine Song-Laenge.
+    return fuegeEin(komposition, kanal, KanalArt::Audio, datei, startMs, songMs > 0 ? songMs : kNeuerClipMs,
+                    istLoop(datei) ? 0 : std::max<std::int64_t>(0, songMs), stoss);
 }
 
 namespace

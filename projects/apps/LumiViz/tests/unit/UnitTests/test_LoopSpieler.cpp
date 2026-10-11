@@ -17,7 +17,12 @@
 #include <doctest.h>
 
 #include "PappTon.hpp"
+#include "composer/Bearbeiten.hpp"
+#include "composer/Komposition.hpp"
+#include "composer/Tonfuehrung.hpp"
+#include "loop/Klangerzeuger.hpp"
 #include "loop/LoopPanel.hpp"
+#include "loop/Offen.hpp"
 #include "loop/Spieler.hpp"
 #include "services/ServiceContainer.hpp"
 
@@ -527,4 +532,251 @@ TEST_CASE("Loop Panel: Play pattern spielt ein Muster allein, Play wieder den ga
     CHECK(panel.soloMuster().isEmpty());
     CHECK(panel.spieler().loop() == panel.loop());
     panel.halte();
+}
+
+// =============================================================================
+// Stufe 7: ein Loop als Clip im Audio-Kanal des Composers (Loop_Konzept §4e)
+// =============================================================================
+
+namespace
+{
+
+/// Eine Komposition mit einem Audio-Kanal und einem Clip dieser Datei.
+lumi::composer::Komposition mitClip(const QString& datei, std::int64_t start, std::int64_t ende,
+                                    std::int64_t einsatz = 0)
+{
+    lumi::composer::Clip clip;
+    clip.datei = datei;
+    clip.startMs = start;
+    clip.endeMs = ende;
+    clip.einsatzMs = einsatz;
+    lumi::composer::Kanal kanal;
+    kanal.art = lumi::composer::KanalArt::Audio;
+    kanal.name = QStringLiteral("A1");
+    kanal.clips = {clip};
+    lumi::composer::Komposition k;
+    k.kanaele = {kanal};
+    return k;
+}
+
+/// Die Stelle des Klangerzeugers im Durchlauf, in Millisekunden.
+double stelleMs(const LoopPappEngine& engine)
+{
+    const auto* erzeuger = dynamic_cast<const Klangerzeuger*>(engine.generator);
+    REQUIRE(erzeuger != nullptr);
+    return 1000.0 * static_cast<double>(erzeuger->stelleImDurchlauf()) / engine.getSampleRate();
+}
+
+}  // namespace
+
+TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiederholt sich und zaehlt als Song")
+{
+    using lumi::composer::Tonfuehrung;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    // 4 Takte zu einem Schlag, 4 Schritte je Schlag, 120 BPM: ein Durchlauf dauert 2000 ms
+    Loop loop = spielLoop({1, 0, 0, 0});
+    loop.tags.titel = QStringLiteral("Mein Beat");
+    loop.tags.kuenstler = QStringLiteral("Ich");
+    loop.tags.album = QStringLiteral("Erste Loops");
+    loop.tags.jahr = QStringLiteral("2026");
+    loop.tags.text = QStringLiteral("la la");
+    const QString pfad = ordner.filePath(QStringLiteral("beat.lvloop"));
+    REQUIRE(speichereLoop(loop, pfad));
+
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Tonfuehrung fuehrung;
+    REQUIRE(fuehrung.uebernimm(engine, player));
+    // der Clip laeuft von 1000 bis 6000: zweieinhalb Durchlaeufe
+    const lumi::composer::Komposition k = mitClip(pfad, 1000, 6000);
+
+    SUBCASE("Vorlauf, Einstieg, Sprung ueber den Durchlauf hinaus, Ende")
+    {
+        // im Vorlauf: die Quelle steht schon im Mixer, angehalten — einen Song meldet noch niemand
+        Tonfuehrung::Ergebnis e = fuehrung.takt(k, 0, true);
+        CHECK(fuehrung.quellen() == 1);
+        CHECK(fuehrung.loops() == 1);
+        REQUIRE(engine.generator != nullptr);
+        CHECK(engine.stream(engine.generatorQuelle).haelt);
+        CHECK_FALSE(e.hatSong);
+        CHECK(engine.zahl(QStringLiteral("generator")) == 1);
+        CHECK(engine.dekodiert == QStringList{QStringLiteral("C:/s/a.wav")});  // sein Klang ist geladen
+
+        // der Einstieg: sie laeuft, von vorn — und ist der laufende Song, mit den Tags der Datei
+        e = fuehrung.takt(k, 1000, true);
+        CHECK_FALSE(engine.stream(engine.generatorQuelle).haelt);
+        CHECK(stelleMs(engine) == doctest::Approx(0.0));
+        REQUIRE(e.hatSong);
+        REQUIRE(e.songGewechselt);
+        CHECK(e.song.filePath == pfad);
+        CHECK(e.song.title == QStringLiteral("Mein Beat"));
+        CHECK(e.song.artist == QStringLiteral("Ich"));
+        CHECK(e.song.album == QStringLiteral("Erste Loops"));
+        CHECK(e.song.year == QStringLiteral("2026"));
+        CHECK(e.song.lyricsPlain == QStringLiteral("la la"));
+        CHECK(e.song.durationMs == 2000);
+        CHECK(e.songDauerMs == 2000);
+        CHECK(e.songStelleMs == 0);
+        CHECK(e.songLaeuft);
+
+        // derselbe Song im naechsten Takt: nicht noch einmal gemeldet
+        e = fuehrung.takt(k, 1033, true);
+        CHECK(e.hatSong);
+        CHECK_FALSE(e.songGewechselt);
+
+        // ein Sprung der Uhr in den zweiten Durchlauf: 3500 ms im Clip sind 1500 ms im Loop
+        e = fuehrung.takt(k, 4500, true);
+        CHECK(stelleMs(engine) == doctest::Approx(1500.0).epsilon(0.001));
+        CHECK(e.songStelleMs == 1500);
+        CHECK(e.songDauerMs == 2000);
+        CHECK(fuehrung.nachgesetzt() == 0);  // ein Sprung ist kein Davonlaufen
+
+        // hinter dem Clip: die Quelle geht
+        e = fuehrung.takt(k, 6100, true);
+        CHECK(fuehrung.quellen() == 0);
+        CHECK(engine.generator == nullptr);
+        CHECK_FALSE(e.hatSong);
+    }
+
+    SUBCASE("laeuft der Klangerzeuger der Uhr davon, wird er nachgesetzt wie ein Song (T1 a)")
+    {
+        (void)fuehrung.takt(k, 1000, true);
+        // die Engine aus Pappe rechnet nichts: der Klangerzeuger bleibt stehen, die Uhr laeuft
+        for (std::int64_t stelle = 1033; stelle <= 1490; stelle += 33) (void)fuehrung.takt(k, stelle, true);
+        CHECK(fuehrung.nachgesetzt() == 0);  // in der Schonfrist wird nicht geprueft
+        for (std::int64_t stelle = 1500; stelle <= 1800; stelle += 33) (void)fuehrung.takt(k, stelle, true);
+        CHECK(fuehrung.nachgesetzt() >= 1);
+        // gesetzt wurde auf die Stelle der Uhr im Loop
+        CHECK(stelleMs(engine) > 500.0);
+        CHECK(stelleMs(engine) <= 800.0);
+    }
+
+    SUBCASE("der Einsatz: der Clip beginnt mitten im Durchlauf")
+    {
+        const lumi::composer::Komposition mitEinsatz = mitClip(pfad, 1000, 6000, 500);
+        Tonfuehrung::Ergebnis e = fuehrung.takt(mitEinsatz, 1000, true);
+        CHECK(stelleMs(engine) == doctest::Approx(500.0).epsilon(0.001));
+        CHECK(e.songStelleMs == 500);
+        // nach 1700 ms im Clip: 2200 ms im Loop, also 200 ms im zweiten Durchlauf
+        e = fuehrung.takt(mitEinsatz, 1000, false);
+        e = fuehrung.takt(mitEinsatz, 2700, false);
+        CHECK(stelleMs(engine) == doctest::Approx(200.0).epsilon(0.001));
+        CHECK(e.songStelleMs == 200);
+        CHECK_FALSE(e.songLaeuft);  // die Uhr steht
+    }
+
+    SUBCASE("hat das Loop-Panel die Datei offen, spielt der Clip dessen Fassung und folgt ihr (L7 a)")
+    {
+        Tonfuehrung::Ergebnis e = fuehrung.takt(k, 1000, true);
+        REQUIRE(e.songGewechselt);
+        e = fuehrung.takt(k, 1400, true);
+        CHECK_FALSE(e.songGewechselt);
+
+        // das Panel meldet eine Fassung mit anderem Titel und doppeltem Tempo (Durchlauf 1000 ms)
+        Loop offen = loop;
+        offen.tags.titel = QStringLiteral("Neuer Titel");
+        offen.bpm = 240.0;
+        meldeOffen(pfad, offen);
+        e = fuehrung.takt(k, 1433, true);
+        REQUIRE(e.songGewechselt);  // er heisst jetzt anders: neu gemeldet
+        CHECK(e.song.title == QStringLiteral("Neuer Titel"));
+        CHECK(e.song.durationMs == 1000);
+        CHECK(e.songDauerMs == 1000);
+        // dieselbe Stelle der Uhr liegt woanders im Loop: 433 ms im Clip sind 433 ms im kuerzeren Durchlauf
+        CHECK(stelleMs(engine) == doctest::Approx(433.0).epsilon(0.01));
+        CHECK(engine.zahl(QStringLiteral("generator")) == 1);  // dieselbe Quelle, kein neuer Klangerzeuger
+        CHECK(engine.dekodiert.size() == 1);                   // die Klaenge sind dieselben: nichts neu geladen
+
+        // eine Meldung ohne Aenderung, und eine fuer eine andere Datei: nichts geschieht
+        meldeOffen(pfad, offen);
+        e = fuehrung.takt(k, 1466, true);
+        CHECK_FALSE(e.songGewechselt);
+        Loop fremd = loop;
+        fremd.tags.titel = QStringLiteral("Fremd");
+        meldeOffen(ordner.filePath(QStringLiteral("anderer.lvloop")), fremd);
+        e = fuehrung.takt(k, 1500, true);
+        CHECK_FALSE(e.songGewechselt);
+        meldeOffen({}, {});  // aufraeumen: die Ablage gilt fuer das ganze Programm
+
+        // eine neue Quelle (nach einem Ende) liest wieder die Datei
+        (void)fuehrung.takt(k, 9000, true);
+        CHECK(engine.generator == nullptr);
+        e = fuehrung.takt(k, 2000, true);
+        REQUIRE(e.songGewechselt);
+        CHECK(e.song.title == QStringLiteral("Mein Beat"));
+        CHECK(e.song.durationMs == 2000);
+    }
+
+    SUBCASE("eine Datei, die kein Loop ist oder fehlt: ein Versuch, dann Stille")
+    {
+        const lumi::composer::Komposition fehlt = mitClip(ordner.filePath(QStringLiteral("fehlt.lvloop")), 0, 4000);
+        Tonfuehrung::Ergebnis e = fuehrung.takt(fehlt, 100, true);
+        CHECK(fuehrung.quellen() == 0);
+        CHECK(fuehrung.loops() == 0);
+        CHECK(engine.generator == nullptr);
+        e = fuehrung.takt(fehlt, 133, true);
+        CHECK(engine.zahl(QStringLiteral("generator")) == 0);
+    }
+
+    SUBCASE("ohne Titel in den Tags gilt der Dateiname")
+    {
+        Loop ohne = spielLoop({1, 0, 0, 0});
+        const QString namenlos = ordner.filePath(QStringLiteral("Drums am Abend.lvloop"));
+        REQUIRE(speichereLoop(ohne, namenlos));
+        const Tonfuehrung::Ergebnis e = fuehrung.takt(mitClip(namenlos, 0, 4000), 0, true);
+        REQUIRE(e.songGewechselt);
+        CHECK(e.song.title == QStringLiteral("Drums am Abend"));
+        CHECK(e.song.artist.isEmpty());
+    }
+
+    fuehrung.gibFrei();
+    CHECK(engine.generator == nullptr);
+}
+
+TEST_CASE("Loop im Composer: ein Loop-Clip hat kein Ende — die Komposition laesst ihm seine Laenge")
+{
+    using namespace lumi::composer;
+    // ein Loop und ein Song, beide laenger als ihre Quelle (2000 ms)
+    Komposition k = mitClip(QStringLiteral("C:/x/beat.lvloop"), 0, 9000);
+    Clip song;
+    song.datei = QStringLiteral("C:/x/lied.mp3");
+    song.startMs = 10000;
+    song.endeMs = 19000;
+    k.kanaele[0].clips.push_back(song);
+    CHECK(istLoop(QStringLiteral("C:/x/beat.lvloop")));
+    CHECK(istLoop(QStringLiteral("C:/x/BEAT.LVLOOP")));
+    CHECK_FALSE(istLoop(QStringLiteral("C:/x/lied.mp3")));
+
+    k.ergaenzeTon([](const QString&) -> std::int64_t { return 2000; });
+    // der Song wird auf seine Laenge gekuerzt, der Loop bleibt und traegt keine Song-Laenge
+    CHECK(k.kanaele[0].clips[0].endeMs == 9000);
+    CHECK(k.kanaele[0].clips[0].quellMs == 0);
+    CHECK(k.kanaele[0].clips[1].endeMs == 12000);
+    CHECK(k.kanaele[0].clips[1].quellMs == 2000);
+
+    // ein neuer Loop-Clip ist einen Durchlauf lang und laesst sich beliebig laenger ziehen
+    lumi::composer::Kanal leer;
+    leer.art = KanalArt::Audio;
+    k.kanaele.push_back(leer);
+    REQUIRE(fuegeSongEin(k, 1, QStringLiteral("C:/x/beat.lvloop"), 3000, 2000) == 0);
+    CHECK(k.kanaele[1].clips[0].startMs == 3000);
+    CHECK(k.kanaele[1].clips[0].endeMs == 5000);
+    CHECK(k.kanaele[1].clips[0].quellMs == 0);
+    REQUIRE(zieheKante(k, 1, 0, false, 30000) == 0);
+    CHECK(k.kanaele[1].clips[0].endeMs == 30000);
+    // ein Song daneben haelt an seiner Laenge an
+    REQUIRE(fuegeSongEin(k, 1, QStringLiteral("C:/x/lied.mp3"), 40000, 2000) == 1);
+    REQUIRE(zieheKante(k, 1, 1, false, 60000) == 1);
+    CHECK(k.kanaele[1].clips[1].endeMs == 42000);
+    k.kanaele.pop_back();
+
+    // ueber die Datei: dasselbe
+    const QJsonObject json = alsJson(k);
+    Komposition gelesen;
+    REQUIRE(ausJson(json, gelesen, {}, nullptr, [](const QString&) -> std::int64_t { return 2000; }));
+    REQUIRE(gelesen.kanaele.size() == 1);
+    REQUIRE(gelesen.kanaele[0].clips.size() == 2);
+    CHECK(gelesen.kanaele[0].clips[0].endeMs == 9000);
+    CHECK(gelesen.kanaele[0].clips[0].quellMs == 0);
 }

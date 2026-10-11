@@ -94,8 +94,29 @@ struct Kanal
     [[nodiscard]] bool operator==(const Kanal&) const = default;
 };
 
+/// Die Tags eines Loops — dasselbe Schema wie bei einem Song (Vorgabe Patrik
+/// S109): liegt der Loop als Clip im Composer, zaehlt er als laufender Song,
+/// und Player-Panel, Text-Vorlagen und Karaoke lesen hier, was sie bei einer
+/// MP3 aus der Datei lesen. Alle Felder sind freiwillig; ohne Titel gilt der
+/// Dateiname.
+struct LoopTags
+{
+    QString titel;
+    QString kuenstler;
+    QString album;
+    QString jahr;
+    QString genre;
+    QString nummer;  ///< Titelnummer
+    /// Songtext wie in den Tags einer Datei abgelegt — er darf selbst
+    /// LRC-Zeitmarken tragen.
+    QString text;
+
+    [[nodiscard]] bool operator==(const LoopTags&) const = default;
+};
+
 struct Loop
 {
+    LoopTags tags;
     double bpm = 120.0;
     int schlaegeJeTakt = 4;
     int schritteJeSchlag = 4;

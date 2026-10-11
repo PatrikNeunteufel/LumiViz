@@ -18,6 +18,17 @@
  *   oberste Kanal. Die Fuehrung nennt ihn im Ergebnis des Takts — wer taktet,
  *   meldet ihn weiter (Karaoke, Tags, Tag View …).
  *
+ * **Loops** (`.lvloop`, S109, docs/audio/Loop_Konzept.md §4e): ein Loop liegt
+ * als Clip im Audio-Kanal wie ein Song. Seine Quelle ist keine Datei, sondern
+ * ein eigener Klangerzeuger im Mixer; er wiederholt sich, bis der Clip endet.
+ * An der Uhr bleibt er nach derselben Regel wie ein Song (Entscheid Patrik
+ * S109, T1 a) — verglichen und gesetzt wird die Stelle des Klangerzeugers
+ * selbst. Hat das Loop-Panel dieselbe Datei offen, spielt der Clip dessen
+ * Fassung, auch die ungespeicherte, und folgt jeder Aenderung (L7 a). Ein
+ * Loop zaehlt als laufender Song wie jeder andere (Entscheid Patrik S109):
+ * Titel und die uebrigen Tags stehen in der `.lvloop` (`LoopTags`), seine
+ * Laenge ist ein Durchlauf.
+ *
  * Solange die Fuehrung den Ton hat, schweigt der Player und die Playlist
  * ruht: sie wird am Player ausgehaengt (`setPlaylist(nullptr)`) und beim
  * Freigeben wieder eingehaengt.
@@ -36,6 +47,7 @@
 #include <QString>
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 class IAudioPlayer;
@@ -117,6 +129,8 @@ public:
     [[nodiscard]] int nachgesetzt() const { return m_nachgesetzt; }
     /// Wie viele Quellen der Mixer gerade hat (auch die im Vorlauf).
     [[nodiscard]] int quellen() const;
+    /// Wie viele davon Loops sind.
+    [[nodiscard]] int loops() const;
 
     /// Der Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition,
     /// von `stelleMs` aus — fuer Next / Previous. Zurueck: mitten in einem
@@ -137,11 +151,15 @@ private:
             return datei == o.datei && startMs == o.startMs && einsatzMs == o.einsatzMs;
         }
     };
+    /// Was ein Loop-Clip ausser dem Handle braucht: sein Klangerzeuger, sein
+    /// Loop und dessen Klaenge (in der .cpp).
+    struct LoopQuelle;
     /// Ein Ton-Clip im Mixer.
     struct Quelle
     {
         Schluessel schluessel;
         AudioStreamHandle handle = INVALID_STREAM;  ///< INVALID_STREAM = liess sich nicht oeffnen
+        std::shared_ptr<LoopQuelle> loop;           ///< nur bei einem Loop-Clip
         int dauerMs = 0;
         bool imClip = false;             ///< die Uhr stand im letzten Takt in seinem Clip
         float pegel = -1.0f;             ///< zuletzt gesetzt
@@ -161,6 +179,15 @@ private:
     bool m_playerSpielte = false;     ///< er spielte, als die Fuehrung ihn anhielt
     AudioStreamHandle m_mixer = INVALID_STREAM;
     std::vector<Quelle> m_quellen;
+    /// Loops, deren Quelle eben aus dem Mixer genommen wurde: ihr Klangerzeuger
+    /// lebt noch ein paar Takte — ein Rueckruf des Ton-Threads, der beim
+    /// Entfernen schon lief, soll ihn nicht ohne Boden finden.
+    struct Abgeloest
+    {
+        std::shared_ptr<LoopQuelle> loop;
+        int takte = 0;
+    };
+    std::vector<Abgeloest> m_abgeloest;
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts

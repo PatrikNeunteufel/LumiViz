@@ -20,6 +20,8 @@
 #include "composer/Mischer.hpp"
 #include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
+#include "loop/Loop.hpp"   // ein Loop als Clip im Audio-Kanal (S109)
+#include "loop/Offen.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
@@ -500,6 +502,24 @@ void Zeitachse::paintEvent(QPaintEvent*)
                         spitze = std::max(spitze, huelle->werte[static_cast<std::size_t>(i)]);
                     const double hoch = std::max(0.5, spitze * pegel * halb);
                     p.fillRect(QRectF(x, mitte - hoch, 1.0, 2.0 * hoch), welle);
+                }
+            }
+
+            // Ein Loop (S109): statt einer Wellenform ein gestrichelter Strich an
+            // jeder Stelle, an der er von vorn beginnt — nur, solange die
+            // Striche nicht zusammenlaufen
+            if (ton && istLoop(clip.datei) && r.width() > 8)
+            {
+                const std::int64_t durchlauf = songLaenge(clip.datei);
+                if (durchlauf > 0 && static_cast<double>(durchlauf) / msJePixel() >= 6.0)
+                {
+                    p.setPen(QPen(QColor(255, 255, 255, 150), 1.0, Qt::DashLine));
+                    for (std::int64_t imClip = durchlauf - clip.einsatzMs % durchlauf; imClip < clip.dauerMs();
+                         imClip += durchlauf)
+                    {
+                        const int x = xVon(clip.startMs + imClip);
+                        if (x >= kKopfBreite && x <= width()) p.drawLine(x, r.top() + 2, x, r.bottom() - 1);
+                    }
                 }
             }
 
@@ -1529,6 +1549,17 @@ int Zeitachse::kanalBei(int y) const
 
 std::int64_t Zeitachse::songLaenge(const QString& datei) const
 {
+    // Ein Loop, den das Loop-Panel offen hat: seine Laenge aendert sich beim
+    // Bearbeiten — sie wird nicht gemerkt, sondern dort erfragt (S109).
+    if (istLoop(datei))
+    {
+        lumi::loop::Loop offen;
+        if (lumi::loop::offenerLoop(datei, offen))
+        {
+            offen.richte();
+            return static_cast<std::int64_t>(std::llround(offen.durchlaufMs()));
+        }
+    }
     if (!m_songLaenge) return 0;
     const auto gemerkt = m_songLaengen.constFind(datei);
     if (gemerkt != m_songLaengen.constEnd()) return *gemerkt;
@@ -1963,7 +1994,8 @@ void ComposerPanel::ladeHuellen()
     {
         if (kanal.art != KanalArt::Audio) continue;
         for (const Clip& clip : kanal.clips)
-            if (!m_zeitachse->hatHuelle(clip.datei) && clip.datei != m_huellLaeuft &&
+            // ein Loop ist keine Tondatei, die sich dekodieren liesse: er hat keine Wellenform
+            if (!istLoop(clip.datei) && !m_zeitachse->hatHuelle(clip.datei) && clip.datei != m_huellLaeuft &&
                 !m_huellWarten.contains(clip.datei))
                 m_huellWarten << clip.datei;
     }
@@ -2423,11 +2455,19 @@ void ComposerPanel::setupUI()
     connect(m_zeitachse, &Zeitachse::kurveOeffnen, this, [this](Teil teil) { oeffneKurve(teil); });
 
     // Audiokanal (C5): was die Zeitachse ueber Songs wissen muss, kommt von der Audio-Engine
-    m_zeitachse->setAudioEndungen(lumi::ui::audioEndungen(services()));
-    if (auto* engine = services().tryResolve<IAudioEngine>())
-        m_zeitachse->setSongLaenge([engine](const QString& datei) {
-            return static_cast<std::int64_t>(engine->probeDurationMs(datei));
-        });
+    // — dazu die Loops (S109, Loop_Konzept §4e): eine `.lvloop` faellt in einen
+    // Audio-Kanal wie ein Song; ihre Laenge ist ein Durchlauf, die kennt die Datei.
+    m_zeitachse->setAudioEndungen(lumi::ui::audioEndungen(services()) << QStringLiteral("lvloop"));
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    m_zeitachse->setSongLaenge([engine](const QString& datei) -> std::int64_t {
+        if (istLoop(datei))
+        {
+            lumi::loop::Loop loop;
+            return lumi::loop::ladeLoop(datei, loop) ? static_cast<std::int64_t>(std::llround(loop.durchlaufMs()))
+                                                     : 0;
+        }
+        return engine != nullptr ? static_cast<std::int64_t>(engine->probeDurationMs(datei)) : 0;
+    });
 }
 
 KurvenFenster* ComposerPanel::kurvenFenster() const

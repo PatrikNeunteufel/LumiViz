@@ -103,6 +103,12 @@ struct Clip
     [[nodiscard]] std::int64_t songStelle(std::int64_t zeitImClipMs) const { return einsatzMs + zeitImClipMs; }
 };
 
+/// Ist die Datei ein Loop (`.lvloop`, docs/audio/Loop_Konzept.md §4e)? Ein
+/// Loop liegt als Clip im Audio-Kanal wie ein Song — aber er hat kein Ende:
+/// er wiederholt sich, bis sein Clip endet. Seine `quellMs` ist deshalb immer
+/// 0, und `einsatzMs` ist die Stelle in seinem ersten Durchlauf.
+[[nodiscard]] bool istLoop(const QString& datei);
+
 /// Die Namen aus der Zeit, als Bild und Ton zwei Typen waren.
 using VisualClip = Clip;
 using AudioClip = Clip;

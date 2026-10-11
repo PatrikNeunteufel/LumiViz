@@ -14,6 +14,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
+#include "loop/Offen.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/CommandBus.hpp"
 #include "services/EventBus.hpp"
@@ -575,10 +576,52 @@ TEST_SUITE("LoopArrangement")
             CHECK(panel.loop() == gespeichert);
         }
 
+        // --- die Tags: dasselbe Schema wie bei einem Song (S109), ueber Undo und in der Datei
+        CHECK_FALSE(alsJson(panel.loop()).contains(QStringLiteral("tags")));  // ohne Tags kein Block
+        LoopTags tags;
+        tags.titel = QStringLiteral("Mein Beat");
+        tags.kuenstler = QStringLiteral("Ich");
+        tags.album = QStringLiteral("Erste Loops");
+        tags.jahr = QStringLiteral("2026");
+        tags.genre = QStringLiteral("Drums");
+        tags.nummer = QStringLiteral("3");
+        tags.text = QStringLiteral("[00:01.00]la la");
+        panel.setzeTags(tags);
+        CHECK(panel.loop().tags == tags);
+        CHECK(bus->undoDescription() == "Edit tags");
+        CHECK(panel.ungespeichert());
+        REQUIRE(bus->undo());
+        CHECK(panel.loop().tags == LoopTags{});
+        REQUIRE(bus->redo());
+        REQUIRE(panel.speichere(pfad));
+        Loop mitTags;
+        REQUIRE(ladeLoop(pfad, mitTags));
+        CHECK(mitTags.tags == tags);
+        CHECK(mitTags == panel.loop());
+        const Loop gespeichertMitTags = panel.loop();
+
+        // --- was das Panel offen hat, sehen die anderen (L7 a): auch die ungespeicherte Fassung
+        Loop offen;
+        REQUIRE(offenerLoop(pfad, offen));
+        CHECK(offen == panel.loop());
+        const std::uint64_t fassung = offenFassung();
+        achse->kanalHinzu();
+        CHECK(offenFassung() != fassung);
+        REQUIRE(offenerLoop(pfad, offen));
+        CHECK(offen == panel.loop());
+        CHECK_FALSE(offen == gespeichertMitTags);
+        CHECK_FALSE(offenerLoop(ordner.filePath(QStringLiteral("anderer.lvloop")), offen));
+        REQUIRE(bus->undo());
+
         // ein neues Panel: der zuletzt gespeicherte Loop steht wieder da
         LoopPanel wieder(dienste);
         CHECK(wieder.datei() == pfad);
-        CHECK(wieder.loop() == gespeichert);
+        CHECK(wieder.loop() == gespeichertMitTags);
+        // ein Loop ohne Datei kann nirgends als Clip liegen: er ist nicht „offen"
+        wieder.neu();
+        CHECK_FALSE(offenerLoop(pfad, offen));
+        REQUIRE(wieder.lade(pfad));
+        CHECK(offenerLoop(pfad, offen));
 
         // `LUMIVIZ_LOOP_PANEL_BILD=<datei.png>` legt ein Bild des Panels mit dem Probe-Loop ab
         if (const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_PANEL_BILD"); !bild.isEmpty())

@@ -12,6 +12,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/DrumEditor.hpp"
 #include "loop/Kit.hpp"
+#include "loop/Offen.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -19,8 +20,13 @@
 
 #include <DockWidget.h>
 
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QDoubleSpinBox>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -122,6 +128,60 @@ LoopPanel::~LoopPanel()
 {
     // die Audio-Engine lebt laenger als die Panels: hier noch freigeben
     m_spieler.halte(false);
+    meldeOffen({}, {});  // niemand hat mehr einen Loop offen
+}
+
+void LoopPanel::meldeStand()
+{
+    // Wer dieselbe Datei spielt — ein Clip im Composer —, hoert die Fassung
+    // des Panels, auch die ungespeicherte (Entscheid Patrik S108, L7 a). Ein
+    // Loop ohne Datei kann nirgends als Clip liegen.
+    meldeOffen(m_geladen ? m_datei : QString(), m_loop);
+}
+
+void LoopPanel::setzeTags(const LoopTags& tags)
+{
+    if (!m_geladen) return;
+    Loop neuer = m_loop;
+    neuer.tags = tags;
+    bearbeite(neuer, tr("Edit tags"));
+}
+
+void LoopPanel::frageNachTags()
+{
+    if (!m_geladen) return;
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Loop tags"));
+    auto* formular = new QFormLayout(&dialog);
+    const auto feld = [&](const QString& name, const QString& wert) {
+        auto* eingabe = new QLineEdit(wert, &dialog);
+        formular->addRow(name, eingabe);
+        return eingabe;
+    };
+    QLineEdit* titel = feld(tr("Title"), m_loop.tags.titel);
+    titel->setPlaceholderText(m_datei.isEmpty() ? QString() : QFileInfo(m_datei).completeBaseName());
+    QLineEdit* kuenstler = feld(tr("Artist"), m_loop.tags.kuenstler);
+    QLineEdit* album = feld(tr("Album"), m_loop.tags.album);
+    QLineEdit* jahr = feld(tr("Year"), m_loop.tags.jahr);
+    QLineEdit* genre = feld(tr("Genre"), m_loop.tags.genre);
+    QLineEdit* nummer = feld(tr("Track"), m_loop.tags.nummer);
+    auto* text = new QPlainTextEdit(m_loop.tags.text, &dialog);
+    text->setPlaceholderText(tr("Lyrics — plain text or LRC with time tags"));
+    formular->addRow(tr("Lyrics"), text);
+    auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    formular->addRow(knoepfe);
+    connect(knoepfe, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(knoepfe, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted) return;
+    LoopTags tags;
+    tags.titel = titel->text().trimmed();
+    tags.kuenstler = kuenstler->text().trimmed();
+    tags.album = album->text().trimmed();
+    tags.jahr = jahr->text().trimmed();
+    tags.genre = genre->text().trimmed();
+    tags.nummer = nummer->text().trimmed();
+    tags.text = text->toPlainText();
+    setzeTags(tags);
 }
 
 void LoopPanel::setupUI()
@@ -142,7 +202,12 @@ void LoopPanel::setupUI()
     m_speichern->setObjectName(QStringLiteral("loopSave"));
     m_speichernUnter = new QPushButton(tr("Save As..."), this);
     m_speichernUnter->setObjectName(QStringLiteral("loopSaveAs"));
+    m_tags = new QPushButton(tr("Tags..."), this);
+    m_tags->setObjectName(QStringLiteral("loopTags"));
+    m_tags->setToolTip(tr("Title, artist and the other tags of the loop — what the player shows "
+                          "while the loop runs as a clip in the Composer"));
     dateiReihe->addWidget(m_dateiZeile, 1);
+    dateiReihe->addWidget(m_tags);
     dateiReihe->addWidget(m_neu);
     dateiReihe->addWidget(m_laden);
     dateiReihe->addWidget(m_speichern);
@@ -200,6 +265,7 @@ void LoopPanel::setupUI()
         if (darfVerwerfen()) neu();
     });
     connect(m_laden, &QPushButton::clicked, this, &LoopPanel::frageNachDatei);
+    connect(m_tags, &QPushButton::clicked, this, &LoopPanel::frageNachTags);
     connect(m_speichern, &QPushButton::clicked, this, [this] { speichereMitDialog(false); });
     connect(m_speichernUnter, &QPushButton::clicked, this, [this] { speichereMitDialog(true); });
     connect(m_play, &QPushButton::clicked, this, [this] {
@@ -473,7 +539,9 @@ void LoopPanel::zeigeDatei()
 {
     m_speichern->setEnabled(m_geladen && (ungespeichert() || m_datei.isEmpty()));
     m_speichernUnter->setEnabled(m_geladen);
+    m_tags->setEnabled(m_geladen);
     m_bpm->setEnabled(m_geladen);
+    meldeStand();  // jede Aenderung an Loop oder Datei kommt hier vorbei
     if (!m_geladen)
     {
         m_dateiZeile->setText(tr("No loop loaded"));
