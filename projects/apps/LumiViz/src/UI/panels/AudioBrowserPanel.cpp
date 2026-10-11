@@ -13,6 +13,7 @@
 #include "audio/IAudioPlayer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
 
 #include <QIcon>
 #include <QImage>
@@ -153,6 +154,19 @@ void AudioBrowserPanel::refresh()
         coverPfade.append(fi.absoluteFilePath());
     }
 
+    // S109 (Wunsch Patrik): die Loops des Ordners, hinter den Songs — der
+    // Doppelklick laedt sie ins Loop-Panel.
+    const QIcon loopIcon = style()->standardIcon(QStyle::SP_BrowserReload);
+    const QFileInfoList loops = m_dir.entryInfoList({QStringLiteral("*.") + QLatin1String(kLoopEndung)}, QDir::Files,
+                                                    QDir::Name | QDir::IgnoreCase);
+    for (const QFileInfo& fi : loops)
+    {
+        auto* item = new QListWidgetItem(loopIcon, fi.fileName(), m_pListWidget);
+        item->setData(Qt::UserRole, fi.absoluteFilePath());
+        item->setData(Qt::UserRole + 1, Type_Loop);
+        item->setToolTip(tr("%1\nDouble-click: load into the Loop panel").arg(fi.absoluteFilePath()));
+    }
+
     // Cover im Hintergrund nachladen, von oben nach unten; ein neuer Auftrag
     // bricht den alten ab. Doppelte Kante: scharf auf HiDPI-Schirmen.
     m_coverAuftrag = m_coverLader->lade(coverPfade, kIconKante * 2);
@@ -160,7 +174,11 @@ void AudioBrowserPanel::refresh()
     onSearchChanged(m_pSearchEdit->text());
     // Den laufenden Titel markieren, sooft die Liste neu entsteht (S93).
     markiereAktuellenTitel();
-    setStatus(tr("%1 audio file(s) · %2 folder(s)").arg(files.size()).arg(dirs.size()));
+    setStatus(loops.isEmpty() ? tr("%1 audio file(s) · %2 folder(s)").arg(files.size()).arg(dirs.size())
+                              : tr("%1 audio file(s) · %2 loop(s) · %3 folder(s)")
+                                    .arg(files.size())
+                                    .arg(loops.size())
+                                    .arg(dirs.size()));
 }
 
 void AudioBrowserPanel::merkeAktuellenTitel(const QString& pfad)
@@ -241,6 +259,14 @@ void AudioBrowserPanel::onItemDoubleClicked(QListWidgetItem* item)
                 setStatus(tr("▶ %1").arg(QFileInfo(path).fileName()));
             else
                 setStatus(tr("✗ %1 — could not be played").arg(QFileInfo(path).fileName()));
+            return;
+        case Type_Loop:
+            // S109: ins Loop-Panel — es fragt selbst nach Ungespeichertem und kommt nach vorn
+            if (auto* bus = eventBus())
+            {
+                bus->publish(LoadLoopEvent{path.toStdString()});
+                setStatus(tr("↺ loading loop %1").arg(QFileInfo(path).fileName()));
+            }
             return;
         default: return;
     }
@@ -323,9 +349,9 @@ void AudioBrowserPanel::setupUI()
     // Ziehen: in die Playlist, auf Player oder Visualisierung (S84).
     auto* liste = new lumi::ui::DateiListe(this);
     liste->pfadZumZiehen = [](const QListWidgetItem* item) {
-        return item->data(Qt::UserRole + 1).toInt() == Type_Audio
-                   ? item->data(Qt::UserRole).toString()
-                   : QString();
+        // auch ein Loop reist als Datei-URL: wer ihn nicht kennt, nimmt ihn nicht an
+        const int typ = item->data(Qt::UserRole + 1).toInt();
+        return typ == Type_Audio || typ == Type_Loop ? item->data(Qt::UserRole).toString() : QString();
     };
     m_pListWidget = liste;
     m_pListWidget->setObjectName(QStringLiteral("audioBrowserListe"));
@@ -334,7 +360,7 @@ void AudioBrowserPanel::setupUI()
     m_pListWidget->setIconSize(QSize(kIconKante, kIconKante));
     m_pListWidget->setToolTip(
         tr("Double-click: add to the playlist and play. Drag: into the playlist, "
-           "onto the player or the visualization."));
+           "onto the player or the visualization. A loop (.lvloop) loads into the Loop panel."));
     mainLayout->addWidget(m_pListWidget, 1);
 
     m_pStatusLabel = new QLabel(this);

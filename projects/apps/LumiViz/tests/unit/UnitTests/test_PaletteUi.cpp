@@ -3845,6 +3845,64 @@ TEST_CASE("PaletteUi S84: Audio Browser — Icons, Drag als Datei-URL, Doppelkli
     schnappschuss(browser, "S84_audio_browser");
 }
 
+TEST_CASE("PaletteUi S109: Audio Browser zeigt die Loops des Ordners, der Doppelklick schickt sie ans Loop-Panel")
+{
+    UiUmgebung env;
+    AudioUmgebung a;
+    const QString lied = a.datei(QStringLiteral("lied.mp3"));
+    const QString loop = a.datei(QStringLiteral("beat.lvloop"));
+    IEventBus* bus = a.services.tryResolve<IEventBus>();
+    REQUIRE(bus != nullptr);
+    QStringList verlangt;
+    const IEventBus::SubscriberHandle abo = bus->subscribeScoped<LoadLoopEvent>(
+        [&verlangt](const LoadLoopEvent& e) { verlangt << QString::fromStdString(e.path); });
+
+    AudioBrowserPanel browser(a.services);
+    zeigen(browser);
+    QLineEdit* pfad = nullptr;
+    for (QLineEdit* e : browser.findChildren<QLineEdit*>())
+        if (e->placeholderText().startsWith(QStringLiteral("Folder path"))) pfad = e;
+    REQUIRE(pfad != nullptr);
+    pfad->setText(a.dir.path());
+    emit pfad->returnPressed();
+    auto* liste = browser.findChild<QListWidget*>(QStringLiteral("audioBrowserListe"));
+    REQUIRE(liste != nullptr);
+
+    QListWidgetItem* song = nullptr;
+    QListWidgetItem* eintrag = nullptr;
+    for (int i = 0; i < liste->count(); ++i)
+    {
+        if (liste->item(i)->text() == QStringLiteral("lied.mp3")) song = liste->item(i);
+        if (liste->item(i)->text() == QStringLiteral("beat.lvloop")) eintrag = liste->item(i);
+    }
+    REQUIRE(song != nullptr);
+    REQUIRE(eintrag != nullptr);
+    CHECK(liste->row(eintrag) > liste->row(song));  // die Loops stehen hinter den Songs
+    CHECK(eintrag->data(Qt::UserRole + 1).toInt() == AudioBrowserPanel::Type_Loop);
+    CHECK(QFileInfo(eintrag->data(Qt::UserRole).toString()) == QFileInfo(loop));
+    CHECK_FALSE(eintrag->icon().isNull());
+    CHECK(eintrag->toolTip().contains(QStringLiteral("Loop panel")));
+    bool statusNenntLoop = false;
+    for (const QLabel* label : browser.findChildren<QLabel*>())
+        statusNenntLoop = statusNenntLoop || label->text().contains(QStringLiteral("1 loop(s)"));
+    CHECK(statusNenntLoop);
+
+    // er reist als Datei-URL — ein Song ist er nicht
+    CHECK(eintrag->flags().testFlag(Qt::ItemIsDragEnabled));
+    std::unique_ptr<QMimeData> data(liste->model()->mimeData({liste->indexFromItem(eintrag)}));
+    REQUIRE(data != nullptr);
+    REQUIRE(data->urls().size() == 1);
+    CHECK(QFileInfo(data->urls().first().toLocalFile()) == QFileInfo(loop));
+    CHECK(lumi::ui::audioDateien(data.get(), a.services).isEmpty());
+
+    // der Doppelklick: ans Loop-Panel, nicht in die Playlist
+    emit liste->itemDoubleClicked(eintrag);
+    REQUIRE(verlangt.size() == 1);
+    CHECK(QFileInfo(verlangt.first()) == QFileInfo(loop));
+    CHECK(playlistPfade(*a.playlist).isEmpty());
+    CHECK(a.player->gespielt.isEmpty());
+}
+
 TEST_CASE("PaletteUi S84: Audio Browser zeigt das eingebettete Cover, sonst das Typ-Icon")
 {
     UiUmgebung env;

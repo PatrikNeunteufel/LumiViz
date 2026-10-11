@@ -16,12 +16,16 @@
 #include "loop/LoopPanel.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/CommandBus.hpp"
+#include "services/EventBus.hpp"
 #include "services/ICommandBus.hpp"
+#include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDoubleSpinBox>
+#include <QFile>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMouseEvent>
@@ -588,5 +592,51 @@ TEST_SUITE("LoopArrangement")
             wieder.resize(900, 300);
             CHECK(wieder.grab().save(bild));
         }
+    }
+
+    TEST_CASE("Loop Panel: ein Loop aus dem Audio Browser (LoadLoopEvent) wird geladen")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
+        IEventBus* bus = dienste.tryResolve<IEventBus>();
+        REQUIRE(bus != nullptr);
+
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const QString pfad = ordner.filePath(QStringLiteral("beat.lvloop"));
+        REQUIRE(speichereLoop(probe(), pfad));
+        const QString fremd = ordner.filePath(QStringLiteral("fremd.lvloop"));
+        {
+            QFile f(fremd);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write("{ \"format\": \"etwas anderes\" }");
+        }
+
+        LoopPanel panel(dienste);  // nicht gezeigt und nie sichtbar gewesen: das Abo steht trotzdem
+        auto* bericht = panel.findChild<QLabel*>(QStringLiteral("loopReport"));
+        REQUIRE(bericht != nullptr);
+        CHECK_FALSE(panel.geladen());
+
+        bus->publish(LoadLoopEvent{pfad.toStdString()});
+        CHECK(panel.geladen());
+        CHECK(panel.datei() == pfad);
+        REQUIRE(panel.loop().kanaele.size() == 2);
+        CHECK(panel.loop().kanaele[0].name == QStringLiteral("Drums"));
+        CHECK(panel.taktachse()->loop() == panel.loop());
+        CHECK_FALSE(panel.ungespeichert());
+
+        // eine Datei, die kein Loop ist: es bleibt, was geladen war, und der Bericht sagt es
+        bus->publish(LoadLoopEvent{fremd.toStdString()});
+        CHECK(panel.datei() == pfad);
+        CHECK(bericht->text().contains(QStringLiteral("Not a loop file")));
+        CHECK_FALSE(panel.oeffne(fremd));
+        CHECK(panel.oeffne(pfad));
+        CHECK(bericht->text().isEmpty());
     }
 }

@@ -16,7 +16,10 @@
  * - **Doppelklick** = an die Playlist haengen und abspielen (steht die Datei
  *   schon drin: zu diesem Eintrag springen);
  * - **Ziehen** = Datei-URL: in die Playlist (an die Stelle), auf Player oder
- *   Visualisierung (abspielen), spaeter in die Timeline.
+ *   Visualisierung (abspielen), spaeter in die Timeline;
+ * - dazu die **Loops** des Ordners (`.lvloop`, S109, Wunsch Patrik): der
+ *   Doppelklick laedt einen ins Loop-Panel (`LoadLoopEvent`) — in die Playlist
+ *   kommt er nicht, er ist kein Song.
  *
  * Der Ordner wird bei jedem Wechsel gemerkt (nicht erst in saveState).
  ****************************************************************************************
@@ -66,8 +69,11 @@ public:
     {
         Type_Up = 0,
         Type_Dir = 1,
-        Type_Audio = 2
+        Type_Audio = 2,
+        Type_Loop = 3  ///< eine `.lvloop` (S109)
     };
+    /// Die Endung der Loop-Dateien (klein, ohne Punkt).
+    static constexpr const char* kLoopEndung = "lvloop";
 
     /// Der laufende Titel, wie der Player ihn gemeldet hat (leer = keiner).
     [[nodiscard]] const QString& aktuellerTitel() const { return m_aktuell; }

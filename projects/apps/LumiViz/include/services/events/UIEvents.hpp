@@ -394,6 +394,23 @@ struct LoadKaraokePresetEvent : public Event
 };
 
 /**
+ * @brief Request to load a loop file (.lvloop) into the Loop panel and bring
+ *        the panel to the front (Audio Browser double-click, S109). The panel
+ *        asks first if it holds unsaved changes.
+ */
+struct LoadLoopEvent : public Event
+{
+    EVENT_TYPE_NAME("LoadLoopEvent")
+
+    std::string path;
+
+    LoadLoopEvent() = default;
+    explicit LoadLoopEvent(std::string p)
+        : path(std::move(p))
+    {}
+};
+
+/**
  * @brief Request to switch the karaoke layer on/off (menu View → Karaoke,
  *        shortcut `view.karaoke`). The main window toggles and announces the
  *        new state with KaraokeEnabledChangedEvent.

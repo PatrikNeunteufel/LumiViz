@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.9.0
+> **Version:** 0.10.0
 > **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -126,9 +126,12 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
   lange Muster rollen, sie stauchen nicht.
 - **Das Loop-Panel mit Kanälen und Clips:** die Skizze ist gebilligt
   (Patrik S109), gebaut in Stufe 6a (§4c) — im Programm noch nicht gesehen.
-- **Der Audio Browser zeigt auch `.lvloop`** (Wunsch Patrik S108): Doppelklick
-  lädt ins Loop-Panel, Ziehen in einen Audio-Kanal des Composers legt einen
-  Clip an.
+- **Der Audio Browser zeigt auch `.lvloop`** (Wunsch Patrik S108): gebaut in
+  Stufe 6c — die Loops des Ordners stehen hinter den Songs, der Doppelklick
+  lädt ins Loop-Panel (`LoadLoopEvent`; das Panel fragt nach Ungespeichertem
+  und kommt nach vorn). Ein Loop lässt sich schon ziehen (als Datei-URL);
+  **annehmen** wird ihn erst der Audio-Kanal des Composers (Stufe 7) —
+  Playlist, Player und Visualisierung nehmen ihn nicht, er ist kein Song.
 
 ---
 
@@ -449,7 +452,7 @@ Kopieren von Takten; mehrere Editor-Fenster.
 | 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
 | 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109 gebaut, §4c: die gemeinsame Basis `Achse` (W1 b; 33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`), darauf `Taktachse`, `Bearbeiten` und das Panel; `test_LoopArrangement.cpp`, sieben Fälle; **im Programm noch nicht gesehen** |
 | 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | S109 gebaut, §4d; `test_LoopDrumEditor.cpp`, sieben Fälle, dazu zwei in `test_LoopSpieler.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
-| 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | offen |
+| 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | S109 gebaut (§3.3); ein Fall in `test_PaletteUi.cpp`, einer in `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen** |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
 | 9 | **Instrument-Clip:** Piano-Rolle, Klangerzeuger für Töne | später |
@@ -523,6 +526,8 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.10.0** (S109, 2026-10-11): Stufe 6c gebaut — der Audio Browser zeigt
+  `.lvloop`, der Doppelklick lädt ins Loop-Panel.
 - **0.9.0** (S109, 2026-10-11): Stufe 6b gebaut — der Drum-Editor (§4d
   neu): Schritt-Raster, Spuren, Raster des Loops, Play pattern, Peak.
 - **0.8.0** (S109, 2026-10-11): Stufe 6a gebaut — das Loop-Panel als

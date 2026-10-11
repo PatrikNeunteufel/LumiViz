@@ -22,6 +22,7 @@
 #include "UI/panels/PanelBase.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
+#include "services/IEventBus.hpp"
 
 #include <QPointer>
 #include <QString>
@@ -57,6 +58,11 @@ public:
     /// Eine `.lvloop` laden. false = die Datei ist kein Loop; es bleibt alles,
     /// wie es war. Spielt gerade ein Loop, spielt der neue weiter.
     bool lade(const QString& pfad);
+    /// Eine `.lvloop` von aussen oeffnen (Doppelklick im Audio Browser,
+    /// `LoadLoopEvent`): erst die Rueckfrage zu Ungespeichertem, dann laden —
+    /// und das Panel kommt nach vorn. false = abgebrochen oder kein Loop (das
+    /// steht dann im Bericht des Panels).
+    bool oeffne(const QString& pfad);
     /// Den Loop in die Datei schreiben; sie ist danach die Datei des Panels.
     bool speichere(const QString& pfad);
     [[nodiscard]] const QString& datei() const { return m_datei; }
@@ -109,6 +115,8 @@ private:
     /// Loop aus einem Kanal mit einem Clip dieses Musters.
     [[nodiscard]] Loop spielFassung();
 
+    /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
+    IEventBus::SubscriberHandle m_ladeSubscription;
     QPointer<DrumEditor> m_editor;
     QString m_solo;         ///< das Muster, das allein spielt; leer = der ganze Loop
     float m_spitze = 0.0f;  ///< der groesste Betrag der Summe seit Play oder der letzten Aenderung

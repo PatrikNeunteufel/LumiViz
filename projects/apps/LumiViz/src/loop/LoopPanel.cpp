@@ -15,6 +15,9 @@
 #include "loop/Taktachse.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
+
+#include <DockWidget.h>
 
 #include <QDir>
 #include <QDoubleSpinBox>
@@ -104,6 +107,10 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     zeigeDatei();
     zeigeClip();
     zeigeStand();
+
+    if (auto* bus = eventBus())
+        m_ladeSubscription = bus->subscribeScoped<LoadLoopEvent>(
+            [this](const LoadLoopEvent& e) { (void)oeffne(QString::fromStdString(e.path)); });
 
     m_takt = new QTimer(this);
     m_takt->setInterval(kTaktMs);
@@ -304,6 +311,29 @@ bool LoopPanel::lade(const QString& pfad)
     zeigeClip();
     zeigeStand();
     return true;
+}
+
+bool LoopPanel::oeffne(const QString& pfad)
+{
+    if (!darfVerwerfen()) return false;
+    const bool geladen = lade(pfad);
+    if (!geladen)
+    {
+        // was geladen war, bleibt; die Meldung steht, bis wieder etwas geladen wird
+        m_ladeBericht = {tr("Not a loop file: %1").arg(QDir::toNativeSeparators(pfad))};
+        zeigeStand();
+    }
+    else
+        QSettings().setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
+    // das Dock, in dem das Panel sitzt (auch unter einer Rollflaeche): nach vorn
+    for (QWidget* w = this; w != nullptr; w = w->parentWidget())
+        if (auto* dock = qobject_cast<ads::CDockWidget*>(w))
+        {
+            dock->toggleView(true);
+            dock->raise();
+            break;
+        }
+    return geladen;
 }
 
 bool LoopPanel::speichere(const QString& pfad)
