@@ -729,6 +729,10 @@ void LoopPanel::zeigeStand()
         m_instrumentEditor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_instrumentEditor->muster(),
                                       m_spieler.stelleSchritte());
         m_instrumentEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
+        // warum ein Klick auf eine Taste gerade nichts hoeren laesst
+        m_instrumentEditor->setHinweis(!darf     ? tr("The Composer plays the audio — keys and Play pattern are silent")
+                                       : spielt ? tr("Keys are silent while the loop plays")
+                                                : QString());
     }
 
     QStringList zeilen = m_ladeBericht;

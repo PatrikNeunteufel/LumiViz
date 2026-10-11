@@ -2493,9 +2493,9 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
 | **Instrument** | Piano, Strings, Violin, Guitar, Bass, Organ oder Lead. Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
-| Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an — nur, solange sonst nichts spielt |
+| Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
-| Rechte Kante einer Note ziehen | Länger und kürzer, in ganzen Schritten |
+| Rechte Kante einer Note ziehen | Länger und kürzer, in ganzen Schritten. Der Mauszeiger wird dort zum Doppelpfeil |
 | Note ziehen | Verschiebt sie in Zeit und Tonhöhe |
 | Rechtsklick auf eine Note, oder anklicken und Entf | Löscht sie |
 | Zeile **Note vol.** unten | Die Lautstärke der Note, die an dem Schritt beginnt: klicken oder ziehen. Beginnen dort mehrere, gilt es für alle — außer eine von ihnen ist angeklickt |

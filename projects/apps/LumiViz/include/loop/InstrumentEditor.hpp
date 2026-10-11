@@ -77,7 +77,11 @@ public:
     static constexpr int kZeilenHoehe = 14;   ///< je Tonhoehe
     static constexpr int kSchrittBreite = 16;
     static constexpr int kLautHoehe = 56;     ///< die Lautstaerke je Note, unten
-    static constexpr int kKante = 5;          ///< so breit ist der Griff am Ende einer Note
+    static constexpr int kKante = 5;          ///< so breit ist der Griff am Ende einer Note mindestens
+    static constexpr int kKanteMax = 9;       ///< und hoechstens (ein Drittel der Note, dazwischen)
+    /// Liegt `x` auf dem Griff am Ende dieser Note? Dort zieht man ihre Laenge;
+    /// der Mauszeiger zeigt es.
+    [[nodiscard]] bool anKante(const Note& note, int x) const;
     [[nodiscard]] int xVonSchritt(int schritt) const { return kTastenBreite + schritt * kSchrittBreite - m_rollX; }
     /// Der Schritt unter `x`; -1 = keiner (die Klaviatur, hinter dem Ende).
     [[nodiscard]] int schrittBei(int x) const;
@@ -136,6 +140,10 @@ private:
     int m_griffSchritt = 0;  ///< beim Verschieben: so weit hinter dem Einsatz wurde die Note gegriffen
     Muster m_vorZug;
     bool m_neu = false;      ///< der Zug begann mit einer neuen Note
+    int m_taste = -1;        ///< die Taste der Klaviatur, die gerade gedrueckt ist; -1 = keine
+    /// Den Mauszeiger setzen: an der Kante einer Note der Doppelpfeil, auf ihr
+    /// das Kreuz, auf der Klaviatur die Hand.
+    void zeigeZeiger(QPoint ort);
 };
 
 class InstrumentEditor : public QWidget
@@ -160,6 +168,9 @@ public:
     void setSpielt(bool spielt, double schritt);
     /// Die Spitze der Summe, solange etwas spielt; unter null = keine Anzeige.
     void setSpitze(double spitze);
+    /// Ein Satz unter der Instrument-Zeile: warum die Tasten gerade stumm
+    /// bleiben (der Composer hat den Ton, der Loop spielt). Leer = kein Hinweis.
+    void setHinweis(const QString& text);
 
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
     void setzeTakte(int takte);
@@ -201,6 +212,7 @@ private:
     QSlider* m_laut = nullptr;
     QSlider* m_pan = nullptr;
     QToolButton* m_stumm = nullptr;
+    QLabel* m_hinweis = nullptr;
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;
     QScrollBar* m_rollY = nullptr;

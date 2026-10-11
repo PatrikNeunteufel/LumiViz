@@ -126,6 +126,11 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(raster.hoeheBei(5) == -1);                         // der Kopf
         CHECK(raster.hoeheBei(raster.lautOben() + 5) == -1);     // die Zeile der Lautstaerken
         CHECK(raster.noteBei(ort(4, 60)) == -1);
+        // der Griff am Ende einer Note: ein Drittel von ihr, mindestens 5 und hoechstens 9 Pixel
+        CHECK(raster.anKante(Note{4, 1, 60, 1.0}, raster.xVonSchritt(5) - 5));
+        CHECK_FALSE(raster.anKante(Note{4, 1, 60, 1.0}, raster.xVonSchritt(5) - 6));
+        CHECK(raster.anKante(Note{8, 4, 64, 1.0}, raster.xVonSchritt(12) - 9));
+        CHECK_FALSE(raster.anKante(Note{8, 4, 64, 1.0}, raster.xVonSchritt(12) - 10));
 
         // --- ein Klick auf eine freie Stelle: eine Note von einem Schritt, sie ist gewaehlt
         klick(raster, ort(4, 60));
@@ -284,6 +289,13 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(play->text() == QStringLiteral("Play pattern"));
         klick(*raster, QPoint(10, raster->yVonHoehe(64) + 5));
         CHECK(verlangt == QStringList{QStringLiteral("an"), QStringLiteral("aus"), QStringLiteral("64")});
+        // der Hinweis, warum die Tasten stumm bleiben
+        auto* hinweis = editor.findChild<QLabel*>(QStringLiteral("instrumentHint"));
+        REQUIRE(hinweis != nullptr);
+        CHECK(hinweis->text().isEmpty());
+        editor.setHinweis(QStringLiteral("Keys are silent while the loop plays"));
+        CHECK(hinweis->text() == QStringLiteral("Keys are silent while the loop plays"));
+        editor.setHinweis(QString());
         // die Spitze: ohne Wiedergabe ein Strich
         auto* spitze = editor.findChild<QLabel*>(QStringLiteral("instrumentPeak"));
         editor.setSpitze(0.42);

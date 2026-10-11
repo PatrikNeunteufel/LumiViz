@@ -404,8 +404,13 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     CHECK(panel.spieler().loop() == panel.loop());
     CHECK(play->text() == QStringLiteral("Stop"));
     CHECK_FALSE(panel.spieleTon(noten, 60));
+    // der Editor sagt, warum die Tasten jetzt stumm bleiben
+    auto* hinweis = editor->findChild<QLabel*>(QStringLiteral("instrumentHint"));
+    REQUIRE(hinweis != nullptr);
+    CHECK(hinweis->text() == QStringLiteral("Keys are silent while the loop plays"));
     play->click();
     CHECK_FALSE(panel.spieler().spielt());
+    CHECK(hinweis->text().isEmpty());
 
     // --- Play pattern im Instrument-Editor spielt nur das Muster
     auto* playMuster = editor->findChild<QPushButton*>(QStringLiteral("instrumentPlay"));

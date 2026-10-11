@@ -60,6 +60,23 @@ NotenRaster::NotenRaster(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("loopNotes"));
     setFocusPolicy(Qt::StrongFocus);
+    setMouseTracking(true);  // der Mauszeiger zeigt, was ein Klick taete
+}
+
+bool NotenRaster::anKante(const Note& note, int x) const
+{
+    const int griff = std::clamp(note.laenge * kSchrittBreite / 3, kKante, kKanteMax);
+    return x >= xVonSchritt(note.schritt + note.laenge) - griff;
+}
+
+void NotenRaster::zeigeZeiger(QPoint ort)
+{
+    Qt::CursorShape form = Qt::ArrowCursor;
+    if (const int platz = noteBei(ort); platz >= 0)
+        form = anKante(m_muster.noten[static_cast<std::size_t>(platz)], ort.x()) ? Qt::SizeHorCursor : Qt::SizeAllCursor;
+    else if (ort.x() < kTastenBreite && hoeheBei(ort.y()) >= 0)
+        form = Qt::PointingHandCursor;
+    if (cursor().shape() != form) setCursor(form);
 }
 
 void NotenRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schritteJeSchlag)
@@ -236,7 +253,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         if (y + kZeilenHoehe < oben || y > unten) continue;
         const QRect taste(0, y, kTastenBreite - 1, kZeilenHoehe);
         const bool schwarz = schwarzeTaste(hoehe);
-        p.fillRect(taste, schwarz ? QColor(40, 40, 44) : QColor(232, 232, 228));
+        p.fillRect(taste, hoehe == m_taste ? an : schwarz ? QColor(40, 40, 44) : QColor(232, 232, 228));
         p.setPen(QColor(120, 120, 120));
         p.drawLine(0, y + kZeilenHoehe - 1, kTastenBreite - 1, y + kZeilenHoehe - 1);
         if (hoehe % 12 == 0)
@@ -357,6 +374,8 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
     if (hoehe < 0) return;
     if (ort.x() < kTastenBreite)
     {
+        m_taste = hoehe;  // sie leuchtet, solange die Maus gedrueckt ist
+        update();
         Q_EMIT tonVerlangt(hoehe);
         return;
     }
@@ -371,7 +390,7 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         m_wahlHoehe = note.hoehe;
         m_neu = false;
         m_griffSchritt = schritt - note.schritt;
-        m_zug = ort.x() >= xVonSchritt(note.schritt + note.laenge) - kKante ? Zug::Laenge : Zug::Verschieben;
+        m_zug = anKante(note, ort.x()) ? Zug::Laenge : Zug::Verschieben;
     }
     else
     {
@@ -387,11 +406,19 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
 
 void NotenRaster::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_zug != Zug::Keiner && (event->buttons() & Qt::LeftButton)) zieheBei(event->position().toPoint());
+    if (m_zug != Zug::Keiner && (event->buttons() & Qt::LeftButton))
+        zieheBei(event->position().toPoint());
+    else if (event->buttons() == Qt::NoButton)
+        zeigeZeiger(event->position().toPoint());
 }
 
 void NotenRaster::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (event->button() == Qt::LeftButton && m_taste >= 0)
+    {
+        m_taste = -1;
+        update();
+    }
     if (event->button() != Qt::LeftButton || m_zug == Zug::Keiner) return;
     const Zug zug = m_zug;
     m_zug = Zug::Keiner;
@@ -498,6 +525,11 @@ void InstrumentEditor::setupUI()
     zeile->addWidget(new QLabel(tr("Pan"), this));
     zeile->addWidget(m_pan);
     zeile->addWidget(m_stumm);
+    m_hinweis = new QLabel(this);
+    m_hinweis->setObjectName(QStringLiteral("instrumentHint"));
+    m_hinweis->setEnabled(false);  // grau: eine Auskunft
+    zeile->addSpacing(12);
+    zeile->addWidget(m_hinweis);
     zeile->addStretch(1);
     aussen->addLayout(zeile);
 
@@ -663,6 +695,11 @@ void InstrumentEditor::setSpielt(bool spielt, double schritt)
         m_play->setText(spielt ? tr("Stop") : tr("Play pattern"));
     }
     m_raster->setMarke(spielt ? schritt : -1.0);
+}
+
+void InstrumentEditor::setHinweis(const QString& text)
+{
+    if (m_hinweis->text() != text) m_hinweis->setText(text);
 }
 
 void InstrumentEditor::setSpitze(double spitze)

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.16.0
+> **Version:** 0.17.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -83,9 +83,16 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **T1 a** (S109) | **Ein Loop-Clip bleibt an der Uhr wie ein Song.** Gesetzt wird er beim Einstieg, nach einem Sprung der Uhr und bei mehr als 80 ms Abweichung — verglichen wird die Stelle des Klangerzeugers selbst. So folgen alle Quellen einem Herrn: nach einem Aussetzer landen Songs und Loops wieder an derselben Uhr. Gemessen (§6a): der Abstand schwankt um wenige Millisekunden, aus Drift wären 80 ms erst nach 40 bis 90 Minuten erreicht. |
 | **T2** (S109) | **Ein Loop-Clip zählt als laufender Song**, und die `.lvloop` trägt dasselbe Tag-Schema wie ein Song (Titel, Künstler, Album, Jahr, Genre, Nummer, Songtext) — das Player-Panel, die Text-Vorlagen und Karaoke lesen dort, was sie bei einer MP3 aus der Datei lesen. |
 | **I1 c** (S110) | **Der Klang eines Instrument-Clips kommt aus beiden Quellen: gerechnet oder aus einem Sample — zuerst gerechnet.** Ein gerechnetes Instrument ist ein Satz Einstellungen für einen Klangerzeuger: Schwingung (der Funktionsgenerator), Hüllkurve, Filter, Vibrato, Verstimmung, dazu eine gezupfte Saite als eigene Art. Ein Instrument aus einem Sample ist eine Tondatei, die je Note in der Tonhöhe umgerechnet wird. Die Piano-Rolle ist für beide dieselbe. Der **Instrument-Creator** ist der Editor der gerechneten Art; ein Funktionsgenerator allein ist nur deren erster Baustein. |
+| **I2 b** (S110) | **Ein eigenes Instrument ist eine eigene Datei `.lvinst`** — abgelegt wie die Klänge des Kits (Patrik: „wie die Kit"). Das Muster nennt sie, wie eine Spur ihren Klang nennt: den Namen eines mitgelieferten Instruments oder den Pfad einer Datei, relativ unter dem Ordner der `.lvloop`, sonst absolut. Fehlt die Datei, schweigt das Muster, und der Bericht sagt es. (Patrik hatte zuerst a gesagt und es im selben Zug berichtigt.) **Noch offen:** ob auch die sieben mitgelieferten Instrumente als Dateien unter `asset/loop` liegen sollen wie das Kit, oder im Programm bleiben. |
 
 ### 3.1 Verworfen, mit Grund
 
+- **Ein eigenes Instrument in der `.lvloop` selbst**, mit Export und Import
+  (I2 a, meine Empfehlung): der Loop bliebe allein spielbar — aber ein
+  Instrument lebte nicht von selbst in mehreren Loops, und es läge anders ab
+  als die Klänge des Kits.
+- **Eine Sammlung des Programms** (I2 c): derselbe Loop klänge auf zwei
+  Rechnern verschieden, ohne dass die Datei es verrät.
 - **Ein Loop-Clip wird nie wegen Abweichung nachgesetzt** (T1 b): kein
   Stolperer aus Drift, und zwei Loop-Clips blieben auf den Abtastwert genau
   zueinander. Aber ein Song daneben wird nach einem Aussetzer nachgesetzt und
@@ -567,12 +574,43 @@ drumkit clip** auch **New instrument clip**.
   Drum-Editor.
 - Größe und Lage des Fensters merkt die App nicht.
 
+**Nachgebessert (S110, Rückmeldung Patrik nach dem ersten Blick: Tasten
+anspielen und Notenlängen ziehen):** beides war gebaut, aber schwer zu
+finden. Der Griff am Ende einer Note ist jetzt ein Drittel der Note breit
+(mindestens 5, höchstens 9 Pixel) und der Mauszeiger zeigt ihn (Doppelpfeil
+an der Kante, Kreuz auf der Note, Hand auf der Klaviatur); eine gedrückte
+Taste leuchtet; und neben **M** steht, warum die Tasten gerade stumm bleiben
+(„The Composer plays the audio — keys and Play pattern are silent", „Keys are
+silent while the loop plays"). Ob es bei Patrik daran lag, ist nicht
+geklärt — im Programm nicht nachgestellt.
+
 **Nicht drin:** mehrere Noten zugleich wählen; Kopieren und Einfügen; ein
 Zoom; Vorhören beim Setzen; die Abspielmarke rollt den Ausschnitt nicht mit.
 
 **Nicht gemessen:** beim Bearbeiten im laufenden Loop lädt der Spieler bei
 jeder Änderung, die einen neuen Ton braucht, **alle** Klänge neu (auch die
 des Kits) — ob das zu hören ist, weiß ich nicht.
+
+### Der Instrument-Creator (Stufe 10 — Skizze gebilligt, Patrik S110; noch nicht gebaut)
+
+Ein eigenes Fenster „Instrument: <Name>", geöffnet im Instrument-Editor über
+**Edit instrument...** neben der Auswahl. Ein mitgeliefertes Instrument wird
+dabei zur Vorlage einer eigenen Kopie. Ablage nach I2 b: eine Datei
+`.lvinst`, die das Muster beim Pfad nennt.
+
+- **Kopf:** **Name**; „based on <Vorlage>"; **Reset** (zurück auf die
+  Vorlage); **Save as...** (schreibt die `.lvinst`); **Peak**.
+- **Oscillator:** **Waveform** (Sine, Triangle, Saw, Square, Plucked string),
+  **Voices** (1 bis 3), **Detune**. Bei Sine stehen statt Voices und Detune
+  die Regler der Obertöne, bei Plucked string ein Regler **Damping**.
+- **Envelope:** **Attack**, **Decay**, **Sustain**, **Release**.
+- **Filter:** **Cutoff** (als Vielfaches des Grundtons), **Envelope** (wie
+  weit die Hüllkurve ihn öffnet).
+- **Vibrato:** **Rate**, **Depth**, **Delay**; darunter **Level**.
+- **Rechts:** „One cycle" — das Bild einer Schwingung; „Envelope of a note" —
+  die Hüllkurve mit der Stelle, an der die Note endet; darunter eine kleine
+  Klaviatur (C3 bis C5): ein Klick spielt den Ton mit den Einstellungen, wie
+  sie gerade stehen.
 
 ### Modell und Datei (gebaut, 9a)
 
@@ -780,6 +818,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.17.0** (S110, 2026-10-11): Entscheid I2 b (ein eigenes Instrument ist
+  eine eigene Datei `.lvinst`, wie die Klänge des Kits); die gebilligte Skizze des
+  Instrument-Creators in §4f; Instrument-Editor nachgebessert (Griff,
+  Mauszeiger, Hinweis bei stummen Tasten).
 - **0.16.0** (S110, 2026-10-11): Stufe 9b gebaut — der Instrument-Editor,
   New instrument clip, Anspielen einer Taste (§4f).
 - **0.15.0** (S110, 2026-10-11): Stufe 9 geteilt, 9a gebaut — §4f neu: die
