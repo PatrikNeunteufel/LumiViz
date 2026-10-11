@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.22.0
-> **Datum:** 2026-10-11 (Session 111)
+> **Version:** 0.23.0
+> **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -86,9 +86,26 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **I2 b** (S110) | **Ein eigenes Instrument ist eine eigene Datei `.lvinst`** — abgelegt wie die Klänge des Kits (Patrik: „wie die Kit"). Das Muster nennt sie, wie eine Spur ihren Klang nennt: den Namen eines mitgelieferten Instruments oder den Pfad einer Datei, relativ unter dem Ordner der `.lvloop`, sonst absolut. Fehlt die Datei, schweigt das Muster, und der Bericht sagt es. (Patrik hatte zuerst a gesagt und es im selben Zug berichtigt.) |
 | **I3 a** (S110) | **Auch die sieben mitgelieferten Instrumente sind Dateien**: `asset/loop/instruments/<name>.lvinst`, wie die Klänge unter `asset/loop/kit`. Das Programm liest den Ordner; im Code steht kein Instrument mehr. Ein Muster nennt ein mitgeliefertes beim Namen (`piano`), ein eigenes beim Pfad. Verworfen: b — die mitgelieferten bleiben im Code (sie klängen auch ohne den Ordner `asset`, aber es gäbe zwei Arten von Instrumenten). **Folge:** fehlt `asset/loop` neben der Exe — wie heute im Release-Paket —, schweigen alle Instrument-Clips; dieselbe offene Aufgabe wie beim Kit. |
 | **F1 a** (S111) | **Schichten stehen in der `.lvinst` als Liste `layers`, die Datei trägt Fassung 2.** Oben stehen nur noch Titel und Level des ganzen Instruments; jede Schicht ist ein Eintrag mit den bisherigen Feldern, dazu `name`, `on`, `transpose`, `startOffset`, `drive`. Fassung 1 liest das Programm als Instrument mit einer Schicht; gespeichert wird immer Fassung 2; eine höhere Fassung als die eigene lehnt es ab und sagt es im Bericht. |
-| **E1 a** (S111) | **Der Verzerrer gehört zum Instrument, Hall und Echo gehören ans Muster.** Der Verzerrer formt nur den Augenblickswert um und passt in den vorab gerechneten Ton: ein Regler **Drive** je Schicht, gebaut mit Stufe 10c. Hall und Echo klingen nach und stehen am Muster neben Volume und Pan — sie gelten damit auch für Drum-Muster; dafür bekommt der Rechenkern erstmals ein Gedächtnis. Das ist eine eigene Stufe nach 10c mit eigener Skizze (Stufe 12); ob sie je Muster oder je Kanal des Loop-Panels sitzen, klärt jene Skizze. |
+| **E1 a** (S111) | **Der Verzerrer gehört zum Instrument, Hall und Echo gehören ans Muster.** Der Verzerrer formt nur den Augenblickswert um und passt in den vorab gerechneten Ton: ein Regler **Drive** je Schicht, gebaut mit Stufe 10c. Hall und Echo klingen nach und stehen am Muster neben Volume und Pan — sie gelten damit auch für Drum-Muster; dafür bekommt der Rechenkern erstmals ein Gedächtnis. Das ist eine eigene Stufe nach 10c mit eigener Skizze (Stufe 12); ob sie je Muster oder je Kanal des Loop-Panels sitzen, klärt jene Skizze. **Mit E2 b (S113) überholt, was den Ort angeht:** Hall und Echo sitzen am Clip, nicht am Muster. |
+| **E2 b** (S113) | **Jeder Clip im Loop-Panel trägt eigene Effekte mit allen Einstellungen** — für Drumkit- und Instrument-Clips gleich; ein Fenster für den ganzen Loop gibt es nicht. Patrik: „im Loop soll jeder Clip für sich selbst Effekte erhalten können, nicht der ganze Loop"; dafür lassen sich mehrere Clips zugleich markieren. Die Effekte sind **Reverb**, **Echo** und **Distortion**, später **Autotune** (§3.2). Skizze und Beschreibung in §4g. |
+| **P1 a** (S113) | **Instrumente wählt man in einem Palettenfenster wie bei der Effektkette**, nicht mehr in einer Dropdown-Liste: ein Baum nach Art, Suchfeld, Favorites, Recently used, ein Satz Beschreibung, Anspielen per Klick. Dazu Patrik: auch **Sortieren oder Filtern nach Genre** muss gehen. Beschrieben in §4h; eigene Stufe 14. |
 
 ### 3.1 Verworfen, mit Grund
+
+- **Ein Hall und ein Echo für den ganzen Loop, Anteile je Clip oder je
+  Muster und Drum-Spur** (E2 a, meine Empfehlung in zwei Fassungen): alles
+  klänge in einem Raum, eine Drum-Spur könnte trocken bleiben, und der
+  Ton-Thread rechnete jeden Effekt nur einmal — aber Patrik will, dass ein
+  Clip einen eigenen Raum und eine eigene Echo-Zeit haben kann, unabhängig
+  vom Rest des Loops.
+- **Effekte je Muster** (erste Fassung, b): ein Muster nähme seinen Klang
+  mit — aber zwei Clips derselben Basis klängen immer gleich.
+- **Effekte je Kanal des Loop-Panels** (erste Fassung, c): der Nachklang
+  liefe über Clip-Grenzen im Kanal von selbst weiter — aber ein Drum- und
+  ein Instrument-Clip im selben Kanal teilten sich ungefragt die Einstellung.
+- **Die Dropdown-Liste der Instrumente bleibt, mit Gruppen** (P1 b): kostet
+  fast nichts und öffnet kein weiteres Fenster — aber 49 Einträge lassen sich
+  so weder suchen noch anspielen, und die Liste wächst.
 
 - **Die erste Schicht bleibt flach, weitere kommen in `layers` dazu** (F1 b):
   eine ältere Programmfassung spielte noch die erste Schicht — aber die erste
@@ -151,6 +168,13 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 - **Instrument-Clip** mit Piano-Rolle und einem Klangerzeuger für Töne: eine
   eigene Stufe nach den Drums.
 - Funktionsgeneratoren, Modulation, MIDI.
+- **Autotune als Effekt am Clip** (Patrik S113: darf warten): es braucht eine
+  einzelne erkennbare Tonhöhe — bei einem Drumkit-Clip oder einem Akkord gibt
+  es keine, und ein Instrument-Clip aus Noten ist schon gestimmt. Es kommt
+  mit den **Wave-Clips** (Tonspuren wie Gesang, Wunsch Patrik S113), Stufe 15.
+  Die Liste der Effekte am Clip wird so angelegt, dass es ohne Umbau
+  dazukommt; die Messung des Grundtons teilt es mit **Detect** der
+  Sample-Instrumente (§4h).
 
 ### 3.3 Noch offen
 
@@ -923,6 +947,139 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 
 ---
 
+## 4g. Effekte am Clip (Stufe 12 — Skizze gebilligt, Patrik S113; nicht gebaut)
+
+Entscheid **E2 b**: jeder Clip im Loop-Panel trägt eigene Effekte, gleich ob
+Drumkit oder Instrument. Die Skizze (zweite Fassung; die erste zeigte einen
+Raum für den ganzen Loop und ist verworfen, §3.1):
+
+**Loop-Panel:**
+
+- **Markieren:** ein Klick markiert einen Clip, **Ctrl+Klick** nimmt einen
+  dazu oder heraus, Ziehen auf freier Fläche spannt einen Rahmen auf.
+  Markierte Clips tragen einen Rand.
+- **Rechtsklick auf einen markierten Clip:** das Menü bekommt **Effects...**
+  (zwischen Make new base and edit und Duplicate). Es öffnet das Fenster
+  „Clip effects" für alle markierten Clips.
+- **Marke „fx":** ein Clip, an dem ein Effekt eingeschaltet ist, zeigt sie
+  rechts in seinem Block.
+- **Clip-Zeile unten:** bei mehreren markierten Clips steht dort ihre Zahl
+  und welche Effekte sie haben — bei verschiedenen Ständen „Effects: mixed".
+
+**Fenster „Clip effects":**
+
+- **Kopf:** wie viele Clips, welche (Basis und Takt), rechts **Peak**.
+- **Distortion:** **Drive**, **Tone** (dunkler bis heller), **Mix**.
+- **Echo:** **Time** als Notenwert (1/16, 1/8, 1/8 dotted, 1/4, 1/2 — folgt
+  dem BPM des Loops), **Feedback** (wie viel jede Wiederholung an die nächste
+  weitergibt), **Damping**, **Mix**.
+- **Reverb:** **Size** (Größe des Raums), **Decay** (Nachklang in Sekunden),
+  **Damping** (wie schnell die Höhen im Nachklang verschwinden), **Mix**.
+- **Haken je Gruppe:** schaltet den Effekt für die markierten Clips ein oder
+  aus.
+- **Mix:** der Anteil des bearbeiteten Tons; bei 0 % klingt der Clip
+  unverändert.
+- **„mixed"** steht an einem Regler, wenn die markierten Clips dort
+  verschiedene Werte haben; wer ihn bewegt, setzt den Wert für alle.
+- **Unten:** die Zeile „Order: Distortion, Echo, Reverb"; **Copy**, **Paste**
+  (die Einstellungen eines Clips auf andere übertragen), **Reset** (alles
+  aus).
+
+Die Namen sind Reverb, Echo und Distortion; „Delay" kommt nicht vor (in S111
+wurde es als Echo gelesen, wo ein später Einsatz gemeint war).
+
+**Mit der Skizze gebilligt (von mir gesetzt):**
+
+- Die Reihenfolge ist fest: Distortion, dann Echo, dann Reverb. Autotune
+  käme später davor.
+- Die Effekte gehören zum **Clip**, nicht zur Basis. **Duplicate** nimmt sie
+  mit; danach sind die zwei Clips in den Effekten unabhängig, im Muster
+  weiter verbunden (L8 a).
+- Echo und Hall klingen über das Ende des Clips hinaus aus.
+- **Play pattern** im Editor spielt das Muster **ohne** Clip-Effekte — eine
+  Basis kann mehrere Clips mit verschiedenen Effekten haben.
+- Jede Änderung läuft über dasselbe Undo wie das Arrangement.
+- Verschieben, Löschen und Duplicate gelten für alle markierten Clips
+  zugleich; eine Kante ziehen bleibt bei einem Clip.
+- Die Wertebereiche in der Skizze sind Platzhalter.
+
+**Nicht drin:** freie Reihenfolge der Effekte; ein Effekt zweimal am selben
+Clip; gespeicherte Effekt-Vorlagen; Effekte je Kanal oder je Drum-Spur.
+
+**Folgen von E2 b** (Patrik mit der Skizze vorgelegt):
+
+- „Kick trocken, Snare mit Hall" geht innerhalb eines Drumkit-Clips nicht:
+  der Effekt trifft den ganzen Clip. Der Weg dahin sind zwei Muster in zwei
+  Kanälen.
+- Jeder gerade klingende Clip mit Effekt rechnet seinen eigenen Hall im
+  Ton-Thread. **Nicht gemessen** — beim Bau zu messen und vorzulegen.
+- **Distortion am Clip** verzerrt die Summe des Clips, bei einem Akkord
+  reiben die Töne aneinander; **Drive** je Schicht im Instrument (E1 a)
+  bleibt daneben und verzerrt je Ton.
+
+**Offen vor dem Bau:**
+
+- **Das Dateiformat:** wo und wie die Effekte in der `.lvloop` stehen, und
+  was eine ältere Programmfassung mit einer solchen Datei tut — eigener
+  Entscheid.
+- **Das Gedächtnis des Rechenkerns:** `rechne` ist heute ohne Gedächtnis,
+  deshalb lässt sich die Stelle frei setzen (§4). Mit Hall und Echo fehlt
+  nach einem Sprung der Nachklang der Schläge davor, bis er sich neu
+  aufgebaut hat — betroffen sind der Einstieg mitten in einen Loop-Clip im
+  Composer und das Nachsetzen nach T1 a. Ob man es hört und ob der Kern dafür
+  ein Stück vorrechnen soll: eigene Frage beim Bau, keine stille Regel.
+
+---
+
+## 4h. Vorgemerkt (S113, nichts davon gebaut, noch ohne Skizze)
+
+### Instrumente aus Samples (Stufe 11) — Idee, von Patrik nicht verworfen
+
+Patrik: Instrumente sollen sich auch aus Samples erstellen lassen, „es muss
+einfach die Tonlage richtig eingestellt werden können".
+
+- Ein Sample ist eine weitere **Art von Schicht** im Instrument-Creator:
+  neben Sine, Triangle, Saw, Square und Plucked string steht **Sample**. Es
+  lässt sich so mit gerechneten Schichten mischen; Envelope, Filter und Drive
+  gelten weiter.
+- Für die Tonlage zwei Felder: **Root note** (welcher Ton die Aufnahme ist)
+  und **Fine tune** in Cent. Eine Note spielt das Sample um den Abstand zur
+  Root note schneller oder langsamer.
+- Die Root note stellt man auf drei Wegen ein: **Detect** (das Programm misst
+  den Grundton und schlägt vor, etwa „A3 +12 ct"; ohne klaren Ton sagt es
+  das), **nach Gehör** (die Klaviatur spielt das Sample, ein Haken
+  **Reference tone** legt einen Sinus derselben Note daneben), oder von Hand.
+- Dazu **Start** (ab wo in der Datei) und **Loop** mit einem Bereich für
+  gehaltene Töne — ein Sample wird bei hohen Noten kürzer.
+- **Multisamples** (Patrik S113: gut notieren, bei Bedarf vorziehen): weiter
+  als etwa eine Oktave von der Root note klingt ein Sample verfärbt. Abhilfe
+  sind mehrere Samples je Tonbereich in einer Schicht. Im ersten Schritt
+  nicht drin; **Tests an Sample-Instrumenten sollen zeigen, ob ein Sample
+  über mehrere Oktaven trägt** — wenn nicht, werden Multisamples vorgezogen.
+  Die „eine Oktave" ist eine Faustregel, nicht gemessen.
+
+### Die Palette der Instrumente (Stufe 14, P1 a)
+
+Im Instrument-Editor steht neben dem Namen des Instruments **Browse...** und
+öffnet das Fenster „Instruments" — gebaut nach dem Vorbild des
+Palettenfensters der Effektkette (`UI/panels/EffectPaletteWindow.hpp`, S79).
+Es bleibt offen und zeigt die Instrumente als Baum nach Art (vorgeschlagen:
+Keys, Bass, Lead, Pads and strings, Plucked, Wind, Percussion, Unusual, My
+files), mit Suchfeld, Favorites, Recently used und einem Satz Beschreibung.
+Ein Klick spielt das Instrument an, Doppelklick oder **Use** setzt es in das
+Muster des offenen Instrument-Editors. **Dazu Patrik:** Sortieren oder
+Filtern nach **Genre**. Nicht nachgesehen: welche Felder die `.lvinst` dafür
+schon trägt — Art, Genre und Kurztext kämen wohl dazu. Die Skizze steht aus.
+
+### Mehrfachauswahl in den Editoren (Stufe 13, Wunsch Patrik S113)
+
+Im Drum-Editor und im Instrument-Editor mehrere Schritte oder Noten zugleich
+markieren, die Auswahl kopieren und als Teilmuster an anderer Stelle
+einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
+§4f unter „Nicht drin". Die Skizze steht aus.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -943,8 +1100,11 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 | 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
-| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
-| 12 | **Hall und Echo am Muster** (E1 a), auch für Drum-Muster; der Rechenkern bekommt dafür ein Gedächtnis | später, davor die Skizze (je Muster oder je Kanal) |
+| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g); **als Nächstes** — davor der Entscheid zum Dateiformat |
+| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
+| 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
+| 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
 ---
 
@@ -1039,6 +1199,14 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.23.0** (S113, 2026-10-11): Entscheid E2 b — jeder Clip trägt eigene
+  Effekte (Reverb, Echo, Distortion), a und die Fassungen je Muster und je
+  Kanal verworfen; die gebilligte Skizze für Stufe 12 (§4g neu). Entscheid
+  P1 a — Palettenfenster für Instrumente, mit Genre. Autotune zurückgestellt
+  bis zu den Wave-Clips (§3.2). Vorgemerkt in §4h neu: Samples als Schicht
+  mit Root note und Detect, Multisamples, Mehrfachauswahl in den Editoren.
+  Stufen 11 und 12 neu gefasst, 13 bis 15 dazu. Nichts gebaut.
 
 - **0.22.0** (S111, 2026-10-11): neunzehn Beispiel-Loops nach Genre unter
   `asset/loop/genres` und neunzehn Instrumente dazu (Wunsch Patrik),
