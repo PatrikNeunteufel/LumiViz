@@ -32,6 +32,7 @@
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
 #include "loop/Offen.hpp"                               // Loop: Rueckfrage vor dem Beenden
+#include "loop/SichttestAktionen.hpp"                   // Loop: Aktionen der Sichttest-Steuerung
 #include "loop/Spieler.hpp"                             // Loop: Ton fuer die Visuals
 #include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
 #include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
@@ -289,6 +290,8 @@ MainWindow::MainWindow(QWidget* parent)
                 // Composer-Naht N20: Panels, Karaoke-Ebene, Playlist und Player
                 lumi::sichttest::meldeAppAktionen(*m_pSichttest, *widget);
             }
+            // das Panel Loop: laden, Play und Stop, Drum-Editor
+            lumi::loop::meldeSichttestAktionen(*m_pSichttest);
             BasicLogger::logInfo("Sichttest: --testing, " +
                                  std::to_string(m_pSichttest->aktionen().size()) +
                                  " actions registered, project root " +

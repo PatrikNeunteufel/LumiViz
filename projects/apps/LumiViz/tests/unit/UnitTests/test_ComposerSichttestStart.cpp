@@ -42,6 +42,7 @@
 #include "composer/Komposition.hpp"
 #include "composer/SichttestAktionen.hpp"
 #include "composer/Sitzung.hpp"
+#include "loop/SichttestAktionen.hpp"
 #include "PappTon.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "audio/IPlaylist.hpp"
@@ -919,6 +920,7 @@ TEST_SUITE("ComposerSichttestStart")
 
         lumi::composer::meldeSichttestAktionen(*steuerung, lauf.widget);
         lumi::sichttest::meldeAppAktionen(*steuerung, lauf.widget);
+        lumi::loop::meldeSichttestAktionen(*steuerung);
         CHECK(steuerung->aktionen() ==
               QStringList{QStringLiteral("komposition_laden"), QStringLiteral("composer"),
                           QStringLiteral("edit"), QStringLiteral("fit"), QStringLiteral("abspielmarke"),
@@ -927,7 +929,8 @@ TEST_SUITE("ComposerSichttestStart")
                           QStringLiteral("panel_zeigen"), QStringLiteral("preset_laden"),
                           QStringLiteral("karaoke"),
                           QStringLiteral("karaoke_laden"), QStringLiteral("titel_laden"),
-                          QStringLiteral("player")});
+                          QStringLiteral("player"), QStringLiteral("loop_laden"),
+                          QStringLiteral("loop_wiedergabe"), QStringLiteral("loop_editor")});
         // derselbe Name ein zweites Mal wird abgelehnt
         CHECK_FALSE(steuerung->aktion(QStringLiteral("fit"), QStringLiteral("x"), QString(),
                                       [](const QJsonObject&) { return lumi::sichttest::ok(); }));

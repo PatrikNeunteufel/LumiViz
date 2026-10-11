@@ -23,6 +23,7 @@
 #include "loop/Klangerzeuger.hpp"
 #include "loop/LoopPanel.hpp"
 #include "loop/Offen.hpp"
+#include "loop/SichttestAktionen.hpp"
 #include "loop/Spieler.hpp"
 #include "services/ServiceContainer.hpp"
 
@@ -30,6 +31,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonObject>
 #include <QLabel>
 #include <QPushButton>
 #include <QSettings>
@@ -224,6 +226,81 @@ TEST_CASE("Loop Panel: laden, Play und Stop, und der zuletzt geladene Loop kommt
     CHECK(wieder.datei() == beispiel);
     CHECK(!wieder.spieler().spielt());
     CHECK(wieder.findChild<QPushButton*>(QStringLiteral("loopPlay"))->isEnabled());
+}
+
+TEST_CASE("Loop Sichttest-Aktionen: loop_laden haelt und laedt ohne Frage; loop_wiedergabe; loop_editor")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+    using lumi::sichttest::Ergebnis;
+    namespace aktion = lumi::loop::sichttestaktion;
+    const auto mit = [](const char* schluessel, const QString& text) {
+        return QJsonObject{{QString::fromLatin1(schluessel), text}};
+    };
+
+    // .../projects/apps/LumiViz/tests/unit/UnitTests -> Wurzel des Repos: dort beginnen relative Dateien
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString root = wurzel.absolutePath();
+    const QString beispiel = QStringLiteral("asset\\loop\\drums_demo.lvloop");
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+
+    CHECK(aktion::panel() == nullptr);  // noch gibt es keines
+    LoopPanel panel(dienste);           // nicht gezeigt: kein Fenster
+    CHECK(aktion::panel() == &panel);
+
+    // --- ohne Loop
+    CHECK(aktion::wiedergabe(panel, mit("wert", QStringLiteral("start"))).status == Ergebnis::Status::Fehler);
+    CHECK(aktion::editor(panel, mit("basis", QStringLiteral("Grund")), false).status == Ergebnis::Status::Fehler);
+
+    // --- loop_laden: die Datei fehlt, gibt es nicht, ist kein Loop
+    CHECK(aktion::loopLaden(panel, root, QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+    CHECK(aktion::loopLaden(panel, root, mit("datei", QStringLiteral("asset/nirgends.lvloop"))).status ==
+          Ergebnis::Status::Ungueltig);
+    CHECK(aktion::loopLaden(panel, root, mit("datei", QStringLiteral("Solution.json"))).status ==
+          Ergebnis::Status::Fehler);
+    CHECK_FALSE(panel.geladen());
+
+    CHECK(aktion::loopLaden(panel, root, mit("datei", beispiel)).status == Ergebnis::Status::Ok);
+    CHECK(QFileInfo(panel.datei()) == QFileInfo(wurzel.filePath(beispiel)));
+    CHECK_FALSE(panel.ungespeichert());
+
+    // --- loop_wiedergabe
+    CHECK(aktion::wiedergabe(panel, QJsonObject{}).status == Ergebnis::Status::Ungueltig);
+    CHECK(aktion::wiedergabe(panel, mit("wert", QStringLiteral("lauter"))).status == Ergebnis::Status::Ungueltig);
+    CHECK(aktion::wiedergabe(panel, mit("wert", QStringLiteral("start"))).status == Ergebnis::Status::Ok);
+    CHECK(panel.spieler().spielt());
+    CHECK(aktion::wiedergabe(panel, mit("wert", QStringLiteral("stopp"))).status == Ergebnis::Status::Ok);
+    CHECK_FALSE(panel.spieler().spielt());
+    CHECK(aktion::wiedergabe(panel, mit("wert", QStringLiteral("stopp"))).status == Ergebnis::Status::Ok);  // schon aus
+
+    // --- loop_laden haelt einen spielenden Loop an und verwirft Ungespeichertes ohne Frage
+    Loop geaendert = panel.loop();
+    geaendert.bpm = 99.0;
+    panel.bearbeite(geaendert, QStringLiteral("Change tempo"));
+    REQUIRE(panel.ungespeichert());
+    REQUIRE(panel.spiele());
+    CHECK(aktion::loopLaden(panel, root, mit("datei", beispiel)).status == Ergebnis::Status::Ok);
+    CHECK_FALSE(panel.spieler().spielt());
+    CHECK_FALSE(panel.ungespeichert());
+    CHECK(panel.loop().bpm == doctest::Approx(120.0));
+
+    // --- loop_editor: die Basis fehlt, gibt es nicht (die Antwort nennt, was es gibt), gibt es
+    CHECK(aktion::editor(panel, QJsonObject{}, false).status == Ergebnis::Status::Ungueltig);
+    const Ergebnis keine = aktion::editor(panel, mit("basis", QStringLiteral("gibt es nicht")), false);
+    CHECK(keine.status == Ergebnis::Status::Fehler);
+    CHECK(keine.text.contains(QStringLiteral("Grund")));
+    CHECK(panel.editor() == nullptr);
+    CHECK(aktion::editor(panel, mit("basis", QStringLiteral("Grund")), false).status == Ergebnis::Status::Ok);
+    CHECK(panel.editor() != nullptr);
 }
 
 TEST_CASE("Loop Spieler: uebernimmt den Ton, der Player schweigt und spielt danach weiter")

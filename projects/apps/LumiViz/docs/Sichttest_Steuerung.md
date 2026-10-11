@@ -1,7 +1,7 @@
 # LumiViz — Sichttest-Steuerung (für Entwickler)
 
-> **Version:** 1.0.0
-> **Datum:** 2026-10-10 (Session 105)
+> **Version:** 1.1.0
+> **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Wegleitung (**umgesetzt**, Session 105)
 > **Zielgruppe:** App-Entwickler — **kein Teil des Benutzerhandbuchs**, das
 > Release-Paket enthält weder Tester noch Steuerung
@@ -9,7 +9,7 @@
 > Spezifikation der Schnittstelle, eigenes Repository) ·
 > [Composer_Konzept.md](ui/Composer_Konzept.md) §12.2, Nähte N19 bis N26 ·
 > `include/sichttest/Anbindung.hpp` · `include/sichttest/AppAktionen.hpp` ·
-> `include/composer/SichttestAktionen.hpp`
+> `include/composer/SichttestAktionen.hpp` · `include/loop/SichttestAktionen.hpp`
 > **Sprache:** Deutsch
 
 ---
@@ -88,6 +88,9 @@ Keine öffnet einen Dialog. Eine relative Datei gilt ab dem Root des Projekts
 | `karaoke_laden datei=<pfad>` | `.lvkar` in die Karaoke-Ebene, schaltet sie ein | fragt vorher |
 | `titel_laden datei=<pfad> [spielen=ja]` | Titel in die Playlist, ohne Doppeleintrag | — |
 | `player start\|pause\|stopp` | Transport des Players | — |
+| `loop_laden datei=<pfad>` | lädt eine `.lvloop` ins Panel Loop und **hält**: ein spielender Loop wird angehalten | fragt vorher |
+| `loop_wiedergabe start\|stopp` | Play und Stop des Panels Loop; `start` spielt den ganzen Loop von vorn. Hat der Composer den Ton, scheitert `start` und sagt es | — |
+| `loop_editor basis=<Name>` | öffnet den Drum-Editor dieser Basis, wie **Edit base** am Clip | — |
 
 `preset_laden` gibt den Auftrag nur ab: scheitert das Laden selbst, meldet
 LumiViz das in einem eigenen Dialog, die Antwort an den Tester sagt es nicht.
@@ -114,6 +117,7 @@ ohne Schlüssel (`composer an`) kommt als Argument `wert` an.
 | Laden der DLL, Anmelden, Pfade — **die eine** Datei mit den Köpfen des Pakets, hinter `SICHTTEST_VORHANDEN` | `src/sichttest/Anbindung.cpp` |
 | Aktionen der App (Panel, Preset, Karaoke, Playlist, Player) | `src/sichttest/AppAktionen.cpp` |
 | Aktionen des Composers | `src/composer/SichttestAktionen.cpp` |
+| Aktionen des Panels Loop | `src/loop/SichttestAktionen.cpp` |
 | Start mit `--testing` nach dem Startzustand; Meldung bei laufender Instanz | `src/UI/MainWindow.cpp`, `src/Application.cpp` (Vermerk `Composer-Naht N20`, `N21`) |
 | Projektdatei für den Tester | `.sichttest/sichttest.projekt.json` |
 | Verknüpfung nach dem Bau | `CMakeLists.txt` (Block `[Sichttest]`), `tools/sichttest/TestingVerknuepfung.ps1` |
@@ -154,6 +158,8 @@ liegen `SichttestSteuerung1.dll` und der Ordner `sichttest\`.
   Zeiten;
 - `panel_zeigen` an echten Docks, `karaoke_laden` mit dem Visualizer Multi
   Effect;
+- die Aktionen des Panels Loop stehen in `test_LoopSpieler.cpp` (Fall „Loop
+  Sichttest-Aktionen", gegen die Engine aus Pappe, ohne Ton und ohne Fenster);
 - **die Probe der DLL** (laden, anmelden, mit dem Tester verbinden) läuft nur
   mit `LUMIVIZ_SICHTTEST_PROBE=<Ordner mit LumiViz.exe>` — sie startet den
   Tester und verbindet sich mit einem schon laufenden.
@@ -164,4 +170,5 @@ liegen `SichttestSteuerung1.dll` und der Ordner `sichttest\`.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.1.0 | 2026-10-11 | Session 110. §3 drei Aktionen für das Panel Loop: `loop_laden`, `loop_wiedergabe`, `loop_editor`; §4 und §6 nachgezogen. |
 | 1.0.0 | 2026-10-10 | Session 105. Erstfassung — aus dem Benutzerhandbuch (§18, dort entfernt: der Tester ist ein Werkzeug für Entwickler) und ergänzt um Aktionen, Code-Orte, Bezug des Pakets und Tests. |

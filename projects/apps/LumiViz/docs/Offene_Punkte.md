@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.142.0
+> **Version:** 1.143.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2319,8 +2319,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     kein Nachsetzen in 40 s; Konzept §6a). Was in den Schüben geschieht, in
     denen der Rechner drosselt, ist ungemessen; wäre es zu hören, ist der
     nächste Schritt, nur an einer Durchlauf-Grenze nachzusetzen
-  - 🔧 **Aktionen der Sichttest-Steuerung für das Panel Loop** (Loop laden,
-    spielen) fehlen — in der Liste bleibt das Vorbereiten Handarbeit
+  - ✅ **Aktionen der Sichttest-Steuerung für das Panel Loop** (S110):
+    `loop_laden`, `loop_wiedergabe`, `loop_editor`
+    ([Sichttest_Steuerung.md](Sichttest_Steuerung.md) §3); Liste 10 nutzt sie
+    in L0 und E0. Mit dem Tester noch nicht ausgelöst. Handarbeit bleibt: den
+    Ordner im Audio Browser wählen (B0)
   - 🔧 Menüs, Dialoge (Tags, Umbenennen) und das Ziehen an den Schiebern des
     Editors sind ohne Test, ebenso das Hineinziehen eines Loops über das
     echte Composer-Panel und die Anzeige der Tags in Player-Panel und Karaoke
@@ -2330,7 +2333,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   - 🔧 `Composer_Konzept.md` nennt weder die Basis `Achse` noch den Loop-Clip
     in der Tonführung; der Composer hängt jetzt am Namensraum `loop` und
     umgekehrt
-  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne) — später
+  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne) — als
+    Nächstes, davor die Skizze. **Entscheid I1 c (Patrik S110):** Instrumente
+    gerechnet oder aus Samples, zuerst gerechnet, gleich mit einigen
+    Charakteren (Strings, Violine, Piano, Gitarre …); danach **10**
+    Instrument-Creator und **11** Instrumente aus Samples
   - 🟡 das Kit ist klein (Patrik S108: klingt gut, aber eine kleine
     Sammlung) — welche Klänge dazukommen, nennt Patrik
   - 🔧 das Kit liegt unter `asset/`, im Release-Paket nicht neben der Exe;
