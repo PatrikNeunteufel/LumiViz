@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.150.0
+> **Version:** 1.151.0
 > **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2660,9 +2660,13 @@ Idee Preset-Warmup/Pre-Roll.
     dem Startzustand die DLL, meldet **fünfzehn Aktionen** an und verbindet
     mit dem Tester (Nähte N20 bis N26, Composer_Konzept §12.2; eigener Code
     unter `sichttest/` und `composer/SichttestAktionen`). Pins:
-    `sichttest.pin` **v0.3.4** (seit S107; in S105 v0.3.3 — v0.3.4 bringt im
-    Tester: ein abgeschlossener Lauf wird nicht fortgesetzt, Zeitstempel der
-    Exe als ISO, `build` aus `hallo`; im Programm ungesehen),
+    `sichttest.pin` **v0.4.0** (seit S111, Entscheid Patrik 11.10.; in S107
+    v0.3.4, in S105 v0.3.3 — v0.4.0 bringt die Köpfe S 1.1 mit
+    `meldeZustand` und `wenn=<zustand>`, die LumiViz nicht nutzt, und im
+    Tester die Ergebnis-Datenbank `testergebnisse.sqlite` je Ablage; beide
+    Bauarten gebaut, DLL und Tester bytegleich mit dem Paket, die Probe
+    meldet „0.4.0 (interface S 1.1, protocol P 1 to 1)" und verbindet;
+    ⬜ `LumiViz.exe --testing` mit dem Tester v0.4.0 im Programm ungesehen),
     `cmakecraft.pin` **v0.11.0**. Projektdatei
     `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
     ist entfernt; neben der Exe entsteht bei jedem Bau die Verknüpfung
