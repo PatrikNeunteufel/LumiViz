@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.23.0
+> **Version:** 0.24.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -88,6 +88,7 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **F1 a** (S111) | **Schichten stehen in der `.lvinst` als Liste `layers`, die Datei trägt Fassung 2.** Oben stehen nur noch Titel und Level des ganzen Instruments; jede Schicht ist ein Eintrag mit den bisherigen Feldern, dazu `name`, `on`, `transpose`, `startOffset`, `drive`. Fassung 1 liest das Programm als Instrument mit einer Schicht; gespeichert wird immer Fassung 2; eine höhere Fassung als die eigene lehnt es ab und sagt es im Bericht. |
 | **E1 a** (S111) | **Der Verzerrer gehört zum Instrument, Hall und Echo gehören ans Muster.** Der Verzerrer formt nur den Augenblickswert um und passt in den vorab gerechneten Ton: ein Regler **Drive** je Schicht, gebaut mit Stufe 10c. Hall und Echo klingen nach und stehen am Muster neben Volume und Pan — sie gelten damit auch für Drum-Muster; dafür bekommt der Rechenkern erstmals ein Gedächtnis. Das ist eine eigene Stufe nach 10c mit eigener Skizze (Stufe 12); ob sie je Muster oder je Kanal des Loop-Panels sitzen, klärt jene Skizze. **Mit E2 b (S113) überholt, was den Ort angeht:** Hall und Echo sitzen am Clip, nicht am Muster. |
 | **E2 b** (S113) | **Jeder Clip im Loop-Panel trägt eigene Effekte mit allen Einstellungen** — für Drumkit- und Instrument-Clips gleich; ein Fenster für den ganzen Loop gibt es nicht. Patrik: „im Loop soll jeder Clip für sich selbst Effekte erhalten können, nicht der ganze Loop"; dafür lassen sich mehrere Clips zugleich markieren. Die Effekte sind **Reverb**, **Echo** und **Distortion**, später **Autotune** (§3.2). Skizze und Beschreibung in §4g. |
+| **F2 a** (S113) | **Die Effekte stehen als Feld `effects` am Clip, die `.lvloop` trägt Fassung 3.** Je Effekt ein Eintrag mit `on` und seinen Werten (`distortion`, `echo`, `reverb`); ein Clip ohne Effekte trägt das Feld nicht. Fassung 2 wird weiter gelesen, gespeichert wird immer Fassung 3. Ein älteres LumiViz spielt eine solche Datei ohne Effekte und meldet „File was written by a newer version". Verworfen: b — die Fassung bleibt 2 (eine Datei ohne Effekte bliebe bytegleich, aber ein älteres Programm spielte einen Loop mit Effekten trocken, ohne es zu sagen). |
 | **P1 a** (S113) | **Instrumente wählt man in einem Palettenfenster wie bei der Effektkette**, nicht mehr in einer Dropdown-Liste: ein Baum nach Art, Suchfeld, Favorites, Recently used, ein Satz Beschreibung, Anspielen per Klick. Dazu Patrik: auch **Sortieren oder Filtern nach Genre** muss gehen. Beschrieben in §4h; eigene Stufe 14. |
 
 ### 3.1 Verworfen, mit Grund
@@ -200,8 +201,10 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 Gebaut in `include/loop` und `src/loop` (`Loop.hpp`, `Rechenkern.hpp`),
 Namensraum `lumi::loop`. **Fassung 2** (S108): das Arrangement aus Kanälen
 und Clips, das Kit im Muster. Fassung 1 (Kit am Loop, Abfolge als Liste) gab
-es nur einen Tag; sie wird nicht gelesen. JSON, Schlüssel englisch wie in
-`.lvcomp`:
+es nur einen Tag; sie wird nicht gelesen. **Fassung 3** (S113, F2 a): die
+Effekte am Clip, siehe unter der Tabelle; Fassung 2 wird weiter gelesen,
+geschrieben wird immer 3 — das Beispiel hier zeigt den Stand der Fassung 2.
+JSON, Schlüssel englisch wie in `.lvcomp`:
 
 ```json
 {
@@ -253,6 +256,40 @@ es nur einen Tag; sie wird nicht gelesen. JSON, Schlüssel englisch wie in
 
 Die Datei schreibt die Schritte einer Spur auf **eine Zeile** (Qt setzte
 sonst jede Zahl auf eine eigene).
+
+**Effekte am Clip** (Fassung 3, gebaut in Stufe 12a — Modell und Datei;
+gerechnet wird davon noch nichts):
+
+```json
+{ "pattern": "Grund", "start": 12, "repeat": 1,
+  "effects": {
+    "distortion": { "on": true,  "drive": 0.7, "tone": 0.2, "mix": 0.5 },
+    "echo":       { "on": true,  "time": "1/4", "feedback": 0.6, "damping": 0.1, "mix": 0.8 },
+    "reverb":     { "on": false, "size": 0.5, "decay": 3.5, "damping": 0.4, "mix": 0.25 }
+  } }
+```
+
+| Feld | Bedeutung | Grenzen, Vorgabe |
+|---|---|---|
+| `distortion.drive`, `tone`, `mix` | Stärke, Klangfarbe (0 dunkel, 1 hell), Anteil | je 0 bis 1; 0,3 · 0,5 · 1 |
+| `echo.time` | Notenwert: `1/16`, `1/8`, `1/8d` (punktiert), `1/4`, `1/2` | Vorgabe `1/8d` |
+| `echo.feedback`, `damping`, `mix` | was jede Wiederholung weitergibt, Abdunkeln, Anteil | 0 bis 0,9 · 0 bis 1 · 0 bis 1; 0,4 · 0,3 · 0,35 |
+| `reverb.size`, `decay`, `damping`, `mix` | Raumgröße, Nachklang in Sekunden, Abdunkeln, Anteil | 0 bis 1 · 0,2 bis 8 · 0 bis 1 · 0 bis 1; 0,5 · 1,8 · 0,4 · 0,25 |
+| `on` | je Effekt; fehlt es, ist er aus | — |
+
+Geschrieben wird nur, was von der Vorgabe abweicht: ein Clip ohne Effekte
+trägt `effects` nicht, ein Effekt in Vorgabe-Stellung seinen Eintrag nicht;
+ein **ausgeschalteter** Effekt mit eigenen Werten behält sie. Beim Laden
+kommen die Werte in ihre Grenzen; eine unbekannte Echo-Zeit wird zur Vorgabe
+und steht als `Unknown echo time '…'` im Bericht. **Von mir gesetzt, nicht
+entschieden:** alle Grenzen und Vorgaben dieser Tabelle (die Skizze nannte
+Platzhalter), auch die Obergrenze 0,9 für Feedback — darüber klänge ein Echo
+nie aus. Die mitgelieferten Loops und ihre Erzeuger (`make_examples.py`,
+`make_genres.py`) bleiben bei Fassung 2.
+
+Im Code ist `LoopClip` seit 12a kein Aggregat mehr, sondern hat einen
+Konstruktor (Muster, Start, Wiederholungen, Effekte freiwillig) — sonst
+warnte clang an jeder Stelle, die einen Clip aus drei Werten anlegt.
 
 **Verbunden** (L8 a): Clips nennen ihr Muster beim Namen. Zwei Clips mit
 demselben Namen spielen dasselbe Muster; wer es ändert, ändert beide. „In
@@ -1101,7 +1138,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g); **als Nächstes** — davor der Entscheid zum Dateiformat |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **Offen:** 12b Rechnen der Effekte im Kern (mit der Frage zum Gedächtnis und der Messung der Last), 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1199,6 +1236,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.24.0** (S113, 2026-10-11): Entscheid F2 a (Feld `effects` am Clip,
+  Fassung 3 der `.lvloop`), b verworfen; Stufe 12a gebaut — die Effekte im
+  Modell und in der Datei (§4), Grenzen und Vorgaben von mir gesetzt; Stufe
+  12 in 12a bis 12e geteilt.
 
 - **0.23.0** (S113, 2026-10-11): Entscheid E2 b — jeder Clip trägt eigene
   Effekte (Reverb, Echo, Distortion), a und die Fassungen je Muster und je

@@ -24,6 +24,7 @@
 #include <QString>
 #include <QStringList>
 
+#include <utility>
 #include <vector>
 
 namespace lumi::loop
@@ -121,6 +122,73 @@ struct Muster
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };
 
+// --- Effekte am Clip (Stufe 12, Entscheide Patrik S113: E2 b, F2 a) ---
+// Jeder Clip traegt seine eigenen Effekte mit allen Einstellungen, gleich ob
+// Drumkit oder Instrument; die Reihenfolge ist fest: Verzerrer, Echo, Hall.
+// Hier steht nur das Modell — gerechnet wird noch nichts davon.
+
+inline constexpr double kEchoFeedbackMax = 0.9;  ///< darueber klaenge ein Echo nie aus
+inline constexpr double kHallSekMin = 0.2;
+inline constexpr double kHallSekMax = 8.0;
+
+/// Die Zeit eines Echos als Notenwert — sie folgt dem Tempo des Loops.
+enum class EchoZeit : int
+{
+    Sechzehntel = 0,
+    Achtel = 1,
+    AchtelPunktiert = 2,
+    Viertel = 3,
+    Halbe = 4,
+};
+
+/// Die Laenge eines Notenwerts in Schlaegen (eine Viertel = 1).
+[[nodiscard]] double echoSchlaege(EchoZeit zeit);
+
+/// Distortion: verzerrt die Summe des Clips (Drive je Schicht im Instrument
+/// bleibt daneben und verzerrt je Ton).
+struct ClipVerzerrung
+{
+    bool an = false;
+    double drive = 0.3;  ///< 0…1
+    double ton = 0.5;    ///< 0 (dunkel) … 1 (hell)
+    double mix = 1.0;    ///< 0…1, der Anteil des bearbeiteten Tons
+
+    [[nodiscard]] bool operator==(const ClipVerzerrung&) const = default;
+};
+
+struct ClipEcho
+{
+    bool an = false;
+    EchoZeit zeit = EchoZeit::AchtelPunktiert;
+    double feedback = 0.4;   ///< 0…`kEchoFeedbackMax`: was jede Wiederholung an die naechste weitergibt
+    double daempfung = 0.3;  ///< 0…1: wie schnell die Wiederholungen dunkler werden
+    double mix = 0.35;       ///< 0…1
+
+    [[nodiscard]] bool operator==(const ClipEcho&) const = default;
+};
+
+struct ClipHall
+{
+    bool an = false;
+    double groesse = 0.5;    ///< 0…1, die Groesse des Raums
+    double sekunden = 1.8;   ///< der Nachklang, `kHallSekMin` … `kHallSekMax`
+    double daempfung = 0.4;  ///< 0…1: wie schnell die Hoehen im Nachklang verschwinden
+    double mix = 0.25;       ///< 0…1
+
+    [[nodiscard]] bool operator==(const ClipHall&) const = default;
+};
+
+struct ClipEffekte
+{
+    ClipVerzerrung verzerrung;
+    ClipEcho echo;
+    ClipHall hall;
+
+    [[nodiscard]] bool operator==(const ClipEffekte&) const = default;
+    /// Ist einer eingeschaltet? Dann zeigt der Clip die Marke „fx".
+    [[nodiscard]] bool einerAn() const { return verzerrung.an || echo.an || hall.an; }
+};
+
 /// Ein Clip im Kanal: ein Muster ab einem Takt, einmal oder mehrfach
 /// hintereinander. Seine Laenge ist immer ein Vielfaches der Musterlaenge.
 struct LoopClip
@@ -128,6 +196,17 @@ struct LoopClip
     QString muster;          ///< Name des Musters
     int startTakt = 0;       ///< 0 = der erste Takt
     int wiederholungen = 1;  ///< mindestens 1
+    /// Gehoeren zum Clip, nicht zum Muster: zwei Clips derselben Basis
+    /// koennen verschieden klingen.
+    ClipEffekte effekte;
+
+    // Mit Konstruktor statt als Aggregat: `{muster, start, wiederholungen}`
+    // steht an vielen Stellen und soll ohne die Effekte gueltig bleiben.
+    LoopClip() = default;
+    LoopClip(QString musterName, int start, int wieOft, ClipEffekte clipEffekte = {})
+        : muster(std::move(musterName)), startTakt(start), wiederholungen(wieOft), effekte(clipEffekte)
+    {
+    }
 
     [[nodiscard]] bool operator==(const LoopClip&) const = default;
 };

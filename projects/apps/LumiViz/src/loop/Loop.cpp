@@ -26,7 +26,10 @@ namespace
 const QString kFormat = QStringLiteral("lumiviz-loop");
 // 2 (S108): ein Arrangement — Kanaele mit Clips, das Kit im Muster. Fassung 1
 // (Kit am Loop, Abfolge als Liste) gab es nur einen Tag und wird nicht gelesen.
-constexpr int kVersion = 2;
+// 3 (S113, Entscheid F2 a): die Effekte am Clip. Fassung 2 wird weiter
+// gelesen, geschrieben wird immer 3.
+constexpr int kVersion = 3;
+constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
@@ -82,7 +85,137 @@ QByteArray zahlenreihenAufEineZeile(const QByteArray& json)
     return aus.toUtf8();
 }
 
+// --- Effekte am Clip ---
+
+struct ZeitName
+{
+    EchoZeit zeit;
+    const char* name;
+};
+constexpr ZeitName kEchoZeiten[] = {
+    {EchoZeit::Sechzehntel, "1/16"}, {EchoZeit::Achtel, "1/8"}, {EchoZeit::AchtelPunktiert, "1/8d"},
+    {EchoZeit::Viertel, "1/4"},      {EchoZeit::Halbe, "1/2"},
+};
+
+QString echoZeitName(EchoZeit zeit)
+{
+    for (const ZeitName& z : kEchoZeiten)
+        if (z.zeit == zeit) return QLatin1String(z.name);
+    return QLatin1String(kEchoZeiten[2].name);
+}
+
+void richteEffekte(ClipEffekte& e)
+{
+    const ClipEffekte vorgabe;
+    e.verzerrung.drive = inGrenzen(e.verzerrung.drive, 0.0, 1.0, vorgabe.verzerrung.drive);
+    e.verzerrung.ton = inGrenzen(e.verzerrung.ton, 0.0, 1.0, vorgabe.verzerrung.ton);
+    e.verzerrung.mix = inGrenzen(e.verzerrung.mix, 0.0, 1.0, vorgabe.verzerrung.mix);
+    if (e.echo.zeit < EchoZeit::Sechzehntel || e.echo.zeit > EchoZeit::Halbe) e.echo.zeit = vorgabe.echo.zeit;
+    e.echo.feedback = inGrenzen(e.echo.feedback, 0.0, kEchoFeedbackMax, vorgabe.echo.feedback);
+    e.echo.daempfung = inGrenzen(e.echo.daempfung, 0.0, 1.0, vorgabe.echo.daempfung);
+    e.echo.mix = inGrenzen(e.echo.mix, 0.0, 1.0, vorgabe.echo.mix);
+    e.hall.groesse = inGrenzen(e.hall.groesse, 0.0, 1.0, vorgabe.hall.groesse);
+    e.hall.sekunden = inGrenzen(e.hall.sekunden, kHallSekMin, kHallSekMax, vorgabe.hall.sekunden);
+    e.hall.daempfung = inGrenzen(e.hall.daempfung, 0.0, 1.0, vorgabe.hall.daempfung);
+    e.hall.mix = inGrenzen(e.hall.mix, 0.0, 1.0, vorgabe.hall.mix);
+}
+
+/// Nur, was von der Vorgabe abweicht: ein Clip ohne Effekte traegt das Feld
+/// nicht, ein ausgeschalteter Effekt mit eigenen Werten behaelt sie.
+QJsonObject effekteAlsJson(const ClipEffekte& e)
+{
+    const ClipEffekte vorgabe;
+    QJsonObject o;
+    if (e.verzerrung != vorgabe.verzerrung)
+    {
+        QJsonObject v;
+        v[QStringLiteral("on")] = e.verzerrung.an;
+        v[QStringLiteral("drive")] = e.verzerrung.drive;
+        v[QStringLiteral("tone")] = e.verzerrung.ton;
+        v[QStringLiteral("mix")] = e.verzerrung.mix;
+        o[QStringLiteral("distortion")] = v;
+    }
+    if (e.echo != vorgabe.echo)
+    {
+        QJsonObject v;
+        v[QStringLiteral("on")] = e.echo.an;
+        v[QStringLiteral("time")] = echoZeitName(e.echo.zeit);
+        v[QStringLiteral("feedback")] = e.echo.feedback;
+        v[QStringLiteral("damping")] = e.echo.daempfung;
+        v[QStringLiteral("mix")] = e.echo.mix;
+        o[QStringLiteral("echo")] = v;
+    }
+    if (e.hall != vorgabe.hall)
+    {
+        QJsonObject v;
+        v[QStringLiteral("on")] = e.hall.an;
+        v[QStringLiteral("size")] = e.hall.groesse;
+        v[QStringLiteral("decay")] = e.hall.sekunden;
+        v[QStringLiteral("damping")] = e.hall.daempfung;
+        v[QStringLiteral("mix")] = e.hall.mix;
+        o[QStringLiteral("reverb")] = v;
+    }
+    return o;
+}
+
+ClipEffekte effekteAusJson(const QJsonObject& o, QStringList* bericht)
+{
+    ClipEffekte e;
+    if (const QJsonValue wert = o.value(QStringLiteral("distortion")); wert.isObject())
+    {
+        const QJsonObject v = wert.toObject();
+        e.verzerrung.an = v.value(QStringLiteral("on")).toBool(false);
+        e.verzerrung.drive = v.value(QStringLiteral("drive")).toDouble(e.verzerrung.drive);
+        e.verzerrung.ton = v.value(QStringLiteral("tone")).toDouble(e.verzerrung.ton);
+        e.verzerrung.mix = v.value(QStringLiteral("mix")).toDouble(e.verzerrung.mix);
+    }
+    if (const QJsonValue wert = o.value(QStringLiteral("echo")); wert.isObject())
+    {
+        const QJsonObject v = wert.toObject();
+        e.echo.an = v.value(QStringLiteral("on")).toBool(false);
+        if (const QJsonValue zeit = v.value(QStringLiteral("time")); !zeit.isUndefined())
+        {
+            const QString name = zeit.toString();
+            const auto* treffer = std::find_if(std::begin(kEchoZeiten), std::end(kEchoZeiten),
+                                               [&name](const ZeitName& z) { return name == QLatin1String(z.name); });
+            if (treffer != std::end(kEchoZeiten))
+                e.echo.zeit = treffer->zeit;
+            else if (bericht != nullptr)
+            {
+                const QString zeile = QStringLiteral("Unknown echo time '%1'").arg(name);
+                if (!bericht->contains(zeile)) bericht->append(zeile);
+            }
+        }
+        e.echo.feedback = v.value(QStringLiteral("feedback")).toDouble(e.echo.feedback);
+        e.echo.daempfung = v.value(QStringLiteral("damping")).toDouble(e.echo.daempfung);
+        e.echo.mix = v.value(QStringLiteral("mix")).toDouble(e.echo.mix);
+    }
+    if (const QJsonValue wert = o.value(QStringLiteral("reverb")); wert.isObject())
+    {
+        const QJsonObject v = wert.toObject();
+        e.hall.an = v.value(QStringLiteral("on")).toBool(false);
+        e.hall.groesse = v.value(QStringLiteral("size")).toDouble(e.hall.groesse);
+        e.hall.sekunden = v.value(QStringLiteral("decay")).toDouble(e.hall.sekunden);
+        e.hall.daempfung = v.value(QStringLiteral("damping")).toDouble(e.hall.daempfung);
+        e.hall.mix = v.value(QStringLiteral("mix")).toDouble(e.hall.mix);
+    }
+    return e;
+}
+
 }  // namespace
+
+double echoSchlaege(EchoZeit zeit)
+{
+    switch (zeit)
+    {
+        case EchoZeit::Sechzehntel: return 0.25;
+        case EchoZeit::Achtel: return 0.5;
+        case EchoZeit::AchtelPunktiert: return 0.75;
+        case EchoZeit::Viertel: return 1.0;
+        case EchoZeit::Halbe: return 2.0;
+    }
+    return 0.75;
+}
 
 bool istKitKlang(const QString& klang)
 {
@@ -262,6 +395,7 @@ void Loop::richte(QStringList* bericht)
         {
             clip.startTakt = std::max(0, clip.startTakt);
             clip.wiederholungen = std::max(1, clip.wiederholungen);
+            richteEffekte(clip.effekte);
         }
         std::stable_sort(kanal.clips.begin(), kanal.clips.end(),
                          [](const LoopClip& a, const LoopClip& b) { return a.startTakt < b.startTakt; });
@@ -361,6 +495,8 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             c[QStringLiteral("pattern")] = clip.muster;
             c[QStringLiteral("start")] = clip.startTakt;
             c[QStringLiteral("repeat")] = clip.wiederholungen;
+            if (const QJsonObject effekte = effekteAlsJson(clip.effekte); !effekte.isEmpty())
+                c[QStringLiteral("effects")] = effekte;
             clips.append(c);
         }
         k[QStringLiteral("clips")] = clips;
@@ -374,7 +510,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
 {
     if (wurzel.value(QStringLiteral("format")).toString() != kFormat) return false;
     const int version = wurzel.value(QStringLiteral("version")).toInt(kVersion);
-    if (version < kVersion) return false;
+    if (version < kVersionAelteste) return false;
     if (bericht != nullptr && version > kVersion)
         bericht->append(QStringLiteral("File was written by a newer version"));
 
@@ -480,6 +616,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             clip.muster = c.value(QStringLiteral("pattern")).toString();
             clip.startTakt = c.value(QStringLiteral("start")).toInt(0);
             clip.wiederholungen = c.value(QStringLiteral("repeat")).toInt(1);
+            clip.effekte = effekteAusJson(c.value(QStringLiteral("effects")).toObject(), bericht);
             kanal.clips.push_back(std::move(clip));
         }
         neu.kanaele.push_back(std::move(kanal));
