@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.147.0
+> **Version:** 1.148.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2288,6 +2288,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Beleg. Im Loop-Panel legt man Kanäle an, darin Drumkit-Clips; die Editoren
   sind eigene Fenster; die Datei `.lvloop` ist das ganze Arrangement und
   lässt sich als Clip in einen Audio-Kanal des Composers legen. **Stand
+  S110: dazu die Stufen 9a bis 10b** — Instrument-Clips, Instrument-Editor,
+  Instrumente als Dateien, Instrument-Creator (Konzept 0.19.0, unten je
+  Stufe); Patrik hat den Loop aus S108 / S109 im Programm gesehen („sieht
+  gut aus"), ohne Testlog — alles aus S110 ist ungesehen. **Stand
   S109: die Stufen 6a bis 8 sind gebaut** (Konzept 0.12.0) — die gemeinsame
   Basis `lumi::ui::Achse` aus der Zeitachse des Composers (Entscheid W1 b),
   das Loop-Panel als Arrangement mit Undo (6a), der Drum-Editor als eigenes
@@ -2370,6 +2374,17 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Einstellungen aller vierzehn Instrumente sind gerechnet, nicht abgehört.
     Nicht drin: hören, was man einstellt, während das Muster spielt; eine
     Resonanz am Filter (der Acid Bass hat keine)
+  - 🟡 **10c Instrumente aus mehreren Schichten** (Wunsch Patrik S110:
+    mehrere Charakteristiken überlagern) — heute ist ein Instrument ein
+    einziger Satz Einstellungen. Gedacht: mehrere Sätze, jeder mit
+    Lautstärke und Versatz in Halbtönen, beim Rechnen addiert; berührt das
+    Format `.lvinst` und das Fenster des Creators. **Nächster Schritt: die
+    Skizze** (Auftrag Patrik für die nächste Session), dann der Entscheid
+    zum Format
+  - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
+    und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
+    Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht
+    geklärt, woran es lag** — nachfragen
   - 🔧 das Kit **und seit S110 die Instrumente** liegen unter `asset/`, im
     Release-Paket nicht neben der Exe — dort schwiegen alle Loops;
     Debug-MSVC seit S108 nicht gebaut, der volle Lauf nie unter clang; ob
