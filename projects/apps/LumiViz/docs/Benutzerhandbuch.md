@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.122.0
+> **Version:** 1.123.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2536,6 +2536,34 @@ Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
 kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
 Stelle mehr gibt — Ctrl+Z holt sie zurück.
 
+**Mehrere Schritte zugleich.** Ein Teil des Musters lässt sich markieren,
+kopieren und an anderer Stelle einfügen — auch in einer anderen Basis: das
+Kopierte bleibt gemerkt, wenn der Editor ein anderes Muster zeigt. Die Tasten
+gelten, sobald einmal ins Raster geklickt wurde. Unter dem Raster steht, wie
+viel markiert ist und was die Tasten tun.
+
+| Geste | Wirkung |
+|---|---|
+| **Shift+Ziehen** | Markiert einen Bereich, auch über mehrere Spuren. Der ganze Bereich zählt, auch seine leeren Schritte. Markierte Schritte tragen einen hellen Rand |
+| **Ctrl+Klick** auf einen Schritt | Nimmt ihn dazu oder heraus. So lassen sich auch einzelne, verstreute Schritte markieren |
+| **Ctrl+A**, **Esc** | Alle Schritte markieren; die Marken aufheben |
+| Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** (gestrichelte Linie mit einem kleinen Dreieck). Dort fügt Ctrl+V ein |
+| **Ctrl+C**, **Ctrl+X** | Kopieren; ausschneiden |
+| **Ctrl+V** | Fügt an der Einfügemarke ein, in der Spur, in der die kopierte Auswahl begann — und **ersetzt** dort: wo die Kopie einen Schritt hat, steht danach einer, wo sie leer ist, ist es danach leer. Die Marke rückt um die eingefügte Länge weiter, mehrmaliges Ctrl+V füllt so mehrere Takte |
+| **Ctrl+Shift+V** | Legt nur dazu: was am Ziel schon gesetzt ist, bleibt |
+| **Ctrl+D** | Fügt die Auswahl direkt hinter sich selbst noch einmal ein |
+| Pfeiltasten | Verschieben die markierten Schritte: links und rechts um einen Schritt, hinauf und hinunter um eine Spur. Stößt einer an den Rand, bewegt sich nichts. Was die Auswahl unterwegs überfährt, ist danach wieder da |
+| **Alt+Pfeil links / rechts** | Dreht die markierten Schritte **im Kreis**: was hinten über das Ende des Musters geht, kommt vorn wieder herein. Mit Ctrl+A davor dreht sich das ganze Muster |
+| **Entf** | Leert die markierten Schritte |
+| Rechtsklick ins Raster | Ein Menü mit **Copy**, **Cut**, **Paste here** (an der Stelle unter der Maus), **Paste and keep existing steps**, **Duplicate**, **Clear steps** — ohne Marken **Clear this step** für den Schritt unter der Maus — und **Select all** |
+| Haken **Right-click deletes** | An: der Rechtsklick schaltet den Schritt unter der Maus sofort aus, statt das Menü zu öffnen. Die Stellung bleibt gemerkt |
+
+Bei verstreuten Schritten zählen nur die markierten: was zwischen ihnen
+liegt, bleibt beim Einfügen unberührt. Passt beim Einfügen etwas nicht mehr
+ins Muster, wird es abgeschnitten — unter dem Raster steht dann, wie viele
+Schritte keinen Platz hatten. Ein Klick ohne Taste setzt weiter einen
+Schritt; die Marken bleiben dabei stehen.
+
 ### Der Instrument-Editor
 
 **Edit base** oder ein Doppelklick auf einen **Instrument-Clip** öffnet ein
@@ -2552,7 +2580,8 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
 | Rechte Kante einer Note ziehen | Länger und kürzer, in ganzen Schritten. Der Mauszeiger wird dort zum Doppelpfeil |
 | Note ziehen | Verschiebt sie in Zeit und Tonhöhe |
-| Rechtsklick auf eine Note, oder anklicken und Entf | Löscht sie |
+| Note anklicken und Entf | Löscht sie |
+| Rechtsklick auf eine Note | Markiert sie und öffnet ein Menü, in dem **Delete** steht. Mit dem Haken **Right-click deletes** löscht der Rechtsklick die Note sofort (so war es bisher immer); die Stellung des Hakens bleibt gemerkt |
 | Zeile **Note vol.** unten | Die Lautstärke der Note, die an dem Schritt beginnt: klicken oder ziehen. Beginnen dort mehrere, gilt es für alle — außer eine von ihnen ist angeklickt |
 | Mausrad | Rollt die Tonhöhen; mit Shift die Zeit. Dazu die Rollbalken am Rand |
 
@@ -2560,6 +2589,27 @@ Das Raster (Schläge je Takt, Schritte je Schlag, Swing) gilt für den ganzen
 Loop und wird im Drum-Editor gestellt. Wird es gröber, gehen Noten verloren,
 deren Einsatz es nicht mehr gibt; die Länge einer Note bleibt dieselbe Zeit.
 Eine Note endet spätestens am Ende ihres Musters.
+
+**Mehrere Noten zugleich.** Wie im Drum-Editor lassen sich mehrere Noten
+markieren, kopieren, einfügen und zusammen bewegen; auch hier bleibt das
+Kopierte gemerkt, wenn der Editor ein anderes Muster zeigt.
+
+| Geste | Wirkung |
+|---|---|
+| **Shift+Ziehen** | Zieht einen Rahmen; markiert ist jede Note, die er berührt (heller Rand). Ohne Shift setzt ein Klick auf eine freie Stelle weiter eine Note |
+| **Ctrl+Klick** auf eine Note | Nimmt sie dazu oder heraus |
+| **Ctrl+A**, **Esc** | Alle Noten markieren; die Marken aufheben |
+| Eine von mehreren markierten ziehen | Alle markierten gehen in Zeit und Tonhöhe mit. Ist für eine kein Platz mehr, bleibt die Gruppe an der letzten Stelle stehen, an der Platz war. Ein Klick ohne Ziehen lässt nur die angeklickte markiert |
+| Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** |
+| **Ctrl+C**, **Ctrl+X**, **Ctrl+V** | Kopieren, ausschneiden, an der Einfügemarke einfügen — in den Tonhöhen der Kopie. Die Noten kommen dazu; nur eine Note auf demselben Schritt und derselben Tonhöhe wird ersetzt. Die Marke rückt um die eingefügte Länge weiter. Die eingefügten Noten sind danach markiert und lassen sich als Gruppe an ihren Platz ziehen |
+| **Ctrl+D** | Fügt die Auswahl direkt hinter sich selbst noch einmal ein |
+| Pfeiltasten | Links und rechts um einen Schritt, hinauf und hinunter um einen Halbton, mit **Shift** um eine Oktave. Stößt eine Note an den Rand (Anfang, Ende, C1, C7), bewegt sich nichts |
+| **Alt+Pfeil links / rechts** | Dreht die markierten Noten in der Zeit **im Kreis**. Eine Note, die danach über das Ende des Musters reichte, wird dort gekürzt; zurückgedreht bekommt sie ihre Länge wieder |
+| **Entf** | Löscht alle markierten Noten |
+| Rechtsklick auf eine freie Stelle oder eine von mehreren markierten | Ein Menü mit **Copy**, **Cut**, **Paste here** (ab dem Schritt unter der Maus), **Duplicate**, **Delete** und **Select all** |
+
+Passt beim Einfügen etwas nicht mehr ins Muster, steht unter dem Raster, wie
+viele Noten keinen Platz hatten und wie viele am Ende gekürzt wurden.
 
 ### Eigene Instrumente: der Instrument-Creator
 
@@ -2757,6 +2807,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.123.0 | 2026-10-11 | Session 113. §16 Loop — **Der Drum-Editor** und **Der Instrument-Editor** NEU je der Abschnitt „Mehrere Schritte / Noten zugleich": markieren mit Shift+Ziehen und Ctrl+Klick, Ctrl+C / X / V an der **Einfügemarke** (Klick in die Zeile der Takte), Ctrl+Shift+V legt im Drum-Editor nur dazu, Ctrl+D, Entf, Pfeiltasten, **Alt+Pfeil** dreht im Kreis, im Instrument-Editor mehrere Noten als Gruppe ziehen; das Menü des Rechtsklicks; NEU der Haken **Right-click deletes** in beiden Editoren. GEÄNDERT: im Instrument-Editor löscht der Rechtsklick auf eine Note nur noch mit diesem Haken — sonst markiert er sie und öffnet das Menü |
 | 1.122.0 | 2026-10-11 | Session 113. §16 Loop NEU **Effekte am Clip**: das Fenster **Clip effects** (Rechtsklick auf einen Clip → **Effects...**) mit Distortion, Echo und Reverb je Clip, „mixed" bei mehreren, Copy, Paste, Reset, die Marke **fx** am Clip; **Clips und Kanäle** GEÄNDERT: mehrere Clips markieren (Ctrl+Klick, Rahmen, Ctrl+A, **Select all clips**), als Gruppe ziehen, kopieren und löschen; Beispiel `asset\loop\effects_demo.lvloop`; der Satz „Hall und Echo gibt es noch nicht" im Abschnitt Instrument-Creator ersetzt |
 | 1.121.0 | 2026-10-11 | Session 111. §16 Loop — **Beispiele** um neunzehn Loops nach Genre unter `asset\loop\genres` erweitert (Trance, Funk, Disco, Reggae, Ska, Reggaeton, Hip-Hop, Trap, Drum and Bass, Techno, Bossa Nova, Blues, Jazz Waltz, Lo-Fi, Synth-Pop, Afrobeat, Metal); neunzehn Instrumente dazu (neunundvierzig insgesamt) |
 | 1.120.0 | 2026-10-11 | Session 111. §16 Loop — **Instrumente aus Schichten**: im Instrument-Creator die Liste **Layers** (Add layer, Add layer from instrument..., Duplicate, Remove, hinauf, hinunter, Haken für stumm), je Schicht Name, Level, Transpose, Start offset und **Drive**, oben Level für das ganze Instrument, zwei Kurven je Bild, **Selected layer only**; sechzehn neue Instrumente (dreißig insgesamt), sieben davon ungewöhnlich; NEU **Beispiele** mit fünf neuen Loops |

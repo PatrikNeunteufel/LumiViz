@@ -26,6 +26,7 @@
 
 #include <vector>
 
+class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
@@ -94,6 +95,13 @@ public:
     bool drehe(int schrittVersatz);
     /// Was beim letzten Einfuegen nicht gepasst hat; leer = alles.
     [[nodiscard]] const QString& meldung() const { return m_meldung; }
+    /// Der Haken „Right-click deletes" (Wunsch Patrik S113): an = der
+    /// Rechtsklick auf einen gesetzten Schritt schaltet ihn sofort aus; aus =
+    /// er oeffnet immer das Menue, in dem es dafuer einen Eintrag gibt.
+    void setRechtsklickLoescht(bool an) { m_rechtsLoescht = an; }
+    [[nodiscard]] bool rechtsklickLoescht() const { return m_rechtsLoescht; }
+    /// Einen Schritt ausschalten (das Menue: „Clear this step"). false = er war aus.
+    bool leereSchritt(SchrittOrt ort);
 
     // --- Geometrie (auch fuer Tests) ----------------------------------------
     static constexpr int kKopfHoehe = 18;    ///< die Zeile mit den Takten
@@ -158,6 +166,8 @@ private:
     int m_zugSpur = -1;
     Muster m_vorZug;
 
+    bool m_rechtsLoescht = false;
+    bool m_rechtsGeloescht = false;  ///< der Rechtsklick hat eben einen Schritt geleert: kein Menue dazu
     std::vector<SchrittOrt> m_marken;
     std::vector<SchrittOrt> m_vorRahmen;  ///< die Marken beim Druck (mit Ctrl bleiben sie)
     SchrittOrt m_rahmenStart;
@@ -263,6 +273,7 @@ private:
     QLabel* m_lautName = nullptr;
     QLabel* m_leerHinweis = nullptr;  ///< steht da, solange das Muster keine Spur hat
     QLabel* m_auswahlZeile = nullptr; ///< wie man markiert — oder was markiert ist und was die Tasten tun
+    QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
     void zeigeAuswahl();
     QScrollArea* m_rollen = nullptr;
     SchrittRaster* m_raster = nullptr;

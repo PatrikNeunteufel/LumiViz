@@ -199,7 +199,16 @@ TEST_SUITE("LoopInstrumentEditor")
         klick(raster, QPoint(10, raster.yVonHoehe(62) + 5));
         CHECK(toene == std::vector<int>{62});
 
-        // --- Rechtsklick loescht die Note darunter, Entf die gewaehlte
+        // --- Rechtsklick loescht die Note darunter, Entf die gewaehlte.
+        // Seit S113 nur mit dem Haken „Right-click deletes": ohne ihn markiert
+        // der Rechtsklick die Note (das Menue hat dann „Delete") und loescht nicht.
+        const auto vorRechtsklick = gemeldet.size();
+        CHECK_FALSE(raster.rechtsklickLoescht());
+        maus(raster, QEvent::MouseButtonPress, ort(13, 67), Qt::RightButton, Qt::RightButton);
+        CHECK(gemeldet.size() == vorRechtsklick);
+        REQUIRE(muster.noten.size() == 3);
+        CHECK(raster.markierte().size() == 1u);
+        raster.setRechtsklickLoescht(true);
         maus(raster, QEvent::MouseButtonPress, ort(13, 67), Qt::RightButton, Qt::RightButton);
         CHECK(gemeldet.last() == QStringLiteral("Delete note"));
         REQUIRE(muster.noten.size() == 2);
@@ -668,6 +677,10 @@ TEST_SUITE("LoopInstrumentEditor")
         raster.zeigeHoehe(66);  // C4 bis C5 liegen im Ausschnitt
         auto* zeile = editor.findChild<QLabel*>(QStringLiteral("instrumentSelection"));
         REQUIRE(zeile != nullptr);
+        // der Haken „Right-click deletes" steht im Editor; seine Stellung merkt die App —
+        // hier gilt, was der Fall selbst setzt (der Haken selbst wird im Drum-Editor geprueft)
+        CHECK(editor.findChild<QCheckBox*>(QStringLiteral("instrumentRightClickDeletes")) != nullptr);
+        raster.setRechtsklickLoescht(false);
 
         const auto note = [&loop](int schritt, int hoehe) -> const Note* {
             const int platz = findeNote(loop.muster[0], {schritt, hoehe});
@@ -835,7 +848,14 @@ TEST_SUITE("LoopInstrumentEditor")
             taste(Qt::Key_X, Qt::ControlModifier);
             CHECK(raster.hatKopie());
             CHECK(note(4, 67) == nullptr);
-            // der Rechtsklick auf eine einzelne Note loescht sie wie bisher
+            // ohne den Haken „Right-click deletes" markiert der Rechtsklick die Note nur
+            // (das Menue hat „Delete"); mit ihm loescht er sie sofort
+            const auto vorRechtsklick = gemeldet.size();
+            maus(raster, QEvent::MouseButtonPress, auf(0, 60), Qt::RightButton, Qt::RightButton);
+            CHECK(gemeldet.size() == vorRechtsklick);
+            CHECK(note(0, 60) != nullptr);
+            CHECK(raster.markierte() == std::vector<NotenOrt>{{0, 60}});
+            raster.setRechtsklickLoescht(true);
             maus(raster, QEvent::MouseButtonPress, auf(0, 60), Qt::RightButton, Qt::RightButton);
             CHECK(gemeldet.last() == QStringLiteral("Delete note"));
             CHECK(note(0, 60) == nullptr);

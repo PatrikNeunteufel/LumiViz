@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.33.0
+> **Version:** 0.34.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1461,10 +1461,10 @@ markierten ziehen bewegt alle in Zeit und Tonhöhe; Pfeiltasten (hinauf und
 hinunter ein Halbton, mit Shift eine Oktave), Alt+Pfeil dreht im Kreis.
 **Dazu von mir gesetzt, nicht entschieden:**
 
-- **Der Rechtsklick auf eine Note löscht sie weiter**, wie seit S110. Das
-  Menü (Copy, Cut, Paste here, Duplicate, Delete, Select all) öffnet sich
-  beim Rechtsklick auf eine freie Stelle — oder auf eine von **mehreren**
-  markierten Noten.
+- **Der Rechtsklick auf eine Note** löschte sie in 13c weiter wie seit S110,
+  das Menü (Copy, Cut, Paste here, Duplicate, Delete, Select all) öffnete
+  sich nur auf einer freien Stelle oder einer von mehreren markierten Noten.
+  **Mit 13d abgelöst** durch den Haken „Right-click deletes", siehe unten.
 - **Ein Klick auf eine Note markiert nur sie**; ein Klick auf eine freie
   Stelle setzt weiter eine neue Note, die danach markiert ist.
 - **Ein Klick ohne Zug** auf eine von mehreren markierten lässt beim
@@ -1492,6 +1492,34 @@ Maus und Tasten am Raster); `LUMIVIZ_INSTRUMENT_MARKEN_BILD=<datei.png>` legt
 ein Bild des Rasters mit drei markierten Noten und der Einfügemarke ab —
 angesehen. **Nicht geprüft:** das Menü selbst; die Tasten im gezeigten
 Fenster. **Im Programm nicht gesehen.**
+
+### Der Haken „Right-click deletes" (gebaut, 13d — Wunsch Patrik S113)
+
+Beim Bau von 13c stieß die Skizze (Einträge im Menü des Rechtsklicks) auf das
+Verhalten seit S110 (der Rechtsklick auf eine Note löscht sie). Patrik: ein
+Haken im Editor schaltet das Löschen mit Rechtsklick ein; sonst steht im Menü
+ein Eintrag dafür — in beiden Editoren.
+
+- **Haken aus (Vorgabe):** der Rechtsklick öffnet immer das Menü. Im
+  Instrument-Editor markiert er dabei die Note unter der Maus, das Menü hat
+  **Delete**. Im Drum-Editor hat es **Clear steps** für die markierten — und
+  ohne Marken **Clear this step** für den Schritt unter der Maus.
+- **Haken an:** der Rechtsklick löscht die Note oder leert den gesetzten
+  Schritt unter der Maus sofort, ohne Menü. Auf einer von mehreren markierten
+  und auf einer freien Stelle öffnet sich weiter das Menü.
+- Der Haken steht rechts neben der Hinweiszeile unter dem Raster
+  (`drumRightClickDeletes`, `instrumentRightClickDeletes`).
+
+**Von mir gesetzt, nicht entschieden:** anfangs aus — damit löscht der
+Rechtsklick im Instrument-Editor **nicht mehr von selbst**, anders als seit
+S110; die App merkt die Stellung **je Editor** (`loop/drumRightClickDeletes`,
+`loop/notesRightClickDeletes`), nicht für beide gemeinsam.
+
+Geprüft: der Haken, seine Wirkung und das Merken in `test_LoopDrumEditor.cpp`
+(ein Teil mehr im Fall zu den Marken); im Instrument-Editor die Wirkung am
+Raster in zwei Fällen von `test_LoopInstrumentEditor.cpp` — der Haken selbst
+dort nur auf sein Dasein (der Fall hat keine eigenen Einstellungen und soll
+die des Rechners nicht verstellen).
 
 **Vor dem Bau geklärt** (Patrik S113):
 
@@ -1533,7 +1561,7 @@ Fenster. **Im Programm nicht gesehen.**
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
-| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **Offen:** 13d Doku und Sichttest-Liste, der volle Testlauf |
+| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
@@ -1630,6 +1658,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.34.0** (S113, 2026-10-11): 13d — der Haken „Right-click deletes" in
+  Drum- und Instrument-Editor (Wunsch Patrik; im Instrument-Editor löscht der
+  Rechtsklick nur noch mit ihm); Benutzerhandbuch und Sichttest-Liste
+  nachgezogen, voller Testlauf; Stufe 13 ist gebaut.
 
 - **0.33.0** (S113, 2026-10-11): 13c gebaut — Mehrfachauswahl, Kopieren,
   Einfügen, Ziehen als Gruppe, Versetzen und Drehen im Instrument-Editor

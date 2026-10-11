@@ -7,6 +7,7 @@
 
 #include "loop/Bearbeiten.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QContextMenuEvent>
 #include <QDir>
@@ -47,6 +48,7 @@ namespace
 /// Der Eintrag der Klang-Auswahl, der nach einer Sample-Datei fragt.
 const QString kDateiWahl = QStringLiteral("?file");
 const char* const kSampleOrdner = "loop/lastSampleDir";
+const char* const kRechtsLoescht = "loop/drumRightClickDeletes";
 const char* const kSpurNr = "spur";
 constexpr int kSpaltenBreite = 316;  ///< die Kopfzeilen der Spuren, links vom Raster
 constexpr int kRand = 4;             ///< vor dem ersten und hinter dem letzten Schritt
@@ -476,8 +478,34 @@ bool SchrittRaster::drehe(int schrittVersatz)
     return bewege(0, schrittVersatz, true);
 }
 
+bool SchrittRaster::leereSchritt(SchrittOrt ort)
+{
+    Muster neu = m_muster;
+    if (!leereSchritte(neu, {ort})) return false;
+    m_meldung.clear();
+    m_schiebeGilt = false;
+    uebernimm(neu, m_marken, tr("Clear step"));
+    return true;
+}
+
 void SchrittRaster::mousePressEvent(QMouseEvent* event)
 {
+    if (event->button() == Qt::RightButton)
+    {
+        // Mit dem Haken „Right-click deletes" schaltet der Rechtsklick einen
+        // gesetzten Schritt sofort aus. Sonst — und auf einem von mehreren
+        // markierten oder einem leeren Schritt — oeffnet sich das Menue.
+        m_rechtsGeloescht = false;
+        setFocus(Qt::MouseFocusReason);
+        const QPoint wo = event->position().toPoint();
+        if (!m_rechtsLoescht || wo.y() < kKopfHoehe || wo.y() >= lautOben()) return;
+        const int spur = (wo.y() - kKopfHoehe) / kZeilenHoehe;
+        const int schritt = schrittBei(wo.x());
+        if (spur >= static_cast<int>(m_muster.spuren.size()) || schritt < 0) return;
+        if (m_marken.size() > 1 && istMarkiert(spur, schritt)) return;
+        m_rechtsGeloescht = leereSchritt({spur, schritt});
+        return;
+    }
     if (event->button() != Qt::LeftButton) return;
     setFocus(Qt::MouseFocusReason);
     const QPoint ort = event->position().toPoint();
@@ -631,10 +659,17 @@ void SchrittRaster::keyPressEvent(QKeyEvent* event)
 
 void SchrittRaster::contextMenuEvent(QContextMenuEvent* event)
 {
+    // der Rechtsklick hat gerade einen Schritt geleert: kein Menue dazu
+    if (m_rechtsGeloescht)
+    {
+        m_rechtsGeloescht = false;
+        return;
+    }
     const int spur = spurNahe(event->pos().y());
     if (spur < 0) return;
     const SchrittOrt hier{spur, schrittNahe(event->pos().x())};
     const bool etwas = !m_marken.empty();
+    const bool gesetzt = m_muster.zeilen[static_cast<std::size_t>(hier.spur)][static_cast<std::size_t>(hier.schritt)] > 0.0;
     QMenu menu(this);
     menu.addAction(tr("Copy"), QKeySequence(Qt::CTRL | Qt::Key_C), this, [this] { (void)kopiere(); })->setEnabled(etwas);
     menu.addAction(tr("Cut"), QKeySequence(Qt::CTRL | Qt::Key_X), this, [this] { (void)schneideAus(); })
@@ -644,8 +679,11 @@ void SchrittRaster::contextMenuEvent(QContextMenuEvent* event)
         ->setEnabled(hatKopie());
     menu.addAction(tr("Duplicate"), QKeySequence(Qt::CTRL | Qt::Key_D), this, [this] { (void)dupliziere(); })
         ->setEnabled(etwas);
-    menu.addAction(tr("Clear steps"), QKeySequence(Qt::Key_Delete), this, [this] { (void)leereMarkierte(); })
-        ->setEnabled(etwas);
+    // loeschen: die markierten — ohne Marken der Schritt unter der Maus
+    if (etwas)
+        menu.addAction(tr("Clear steps"), QKeySequence(Qt::Key_Delete), this, [this] { (void)leereMarkierte(); });
+    else
+        menu.addAction(tr("Clear this step"), this, [this, hier] { (void)leereSchritt(hier); })->setEnabled(gesetzt);
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
     menu.exec(event->globalPos());
@@ -783,7 +821,17 @@ void DrumEditor::setupUI()
     m_auswahlZeile->setObjectName(QStringLiteral("drumSelection"));
     m_auswahlZeile->setEnabled(false);
     m_auswahlZeile->setWordWrap(true);
-    aussen->addWidget(m_auswahlZeile);
+    // „Right-click deletes" (Wunsch Patrik S113): an = der Rechtsklick leert den
+    // Schritt sofort; aus = er oeffnet das Menue. Die App merkt die Stellung.
+    m_rechtsLoescht = new QCheckBox(tr("Right-click deletes"), this);
+    m_rechtsLoescht->setObjectName(QStringLiteral("drumRightClickDeletes"));
+    m_rechtsLoescht->setToolTip(tr("On: a right-click turns the step under the mouse off at once. Off: it opens the "
+                                   "menu, which has an entry for that"));
+    m_rechtsLoescht->setChecked(QSettings().value(QLatin1String(kRechtsLoescht), false).toBool());
+    auto* auswahlReihe = new QHBoxLayout;
+    auswahlReihe->addWidget(m_auswahlZeile, 1);
+    auswahlReihe->addWidget(m_rechtsLoescht, 0, Qt::AlignTop);
+    aussen->addLayout(auswahlReihe);
     // was das Fenster hoeher ist als sein Inhalt, bleibt unten frei — sonst
     // verteilt das Layout die Luft zwischen Kopf, Raster-Zeile und Spuren
     aussen->addStretch(1);
@@ -796,6 +844,11 @@ void DrumEditor::setupUI()
     connect(m_spurNeu, &QPushButton::clicked, this, [this] { spurHinzu(); });
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
     connect(m_raster, &SchrittRaster::auswahlGeaendert, this, &DrumEditor::zeigeAuswahl);
+    m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
+    connect(m_rechtsLoescht, &QCheckBox::toggled, this, [this](bool an) {
+        m_raster->setRechtsklickLoescht(an);
+        QSettings().setValue(QLatin1String(kRechtsLoescht), an);
+    });
     connect(m_raster, &SchrittRaster::geaendert, this, [this](const Muster& neu, const QString& was) {
         Loop fassung = m_loop;
         Muster* ziel = musterIn(fassung, m_muster);

@@ -10,6 +10,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QContextMenuEvent>
 #include <QDir>
@@ -45,6 +46,7 @@ namespace
 {
 
 const char* const kInstrumentOrdner = "loop/lastInstrumentDir";
+const char* const kRechtsLoescht = "loop/notesRightClickDeletes";
 constexpr int kHoehen = kHoeheMax - kHoeheMin + 1;
 constexpr double kLautMin = 0.05;  ///< leiser wird eine Note nicht — ohne Lautstaerke gaebe es sie nicht
 
@@ -677,14 +679,20 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
     setFocus(Qt::MouseFocusReason);
     if (event->button() == Qt::RightButton)
     {
-        // Der Rechtsklick auf eine Note loescht sie, wie bisher. Trifft er eine
-        // von mehreren markierten oder eine freie Stelle, oeffnet sich das Menue
-        // (`contextMenuEvent`).
+        // Mit dem Haken „Right-click deletes" loescht der Rechtsklick die Note
+        // darunter sofort. Sonst — und auf einer von mehreren markierten oder
+        // einer freien Stelle — oeffnet sich das Menue (`contextMenuEvent`);
+        // eine einzelne Note wird dafuer markiert, damit „Delete" sie trifft.
         m_rechtsGeloescht = false;
         const int platz = noteBei(ort);
         if (platz < 0 || m_zug != Zug::Keiner) return;
         const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
         if (m_marken.size() > 1 && istMarkiert(note)) return;
+        if (!m_rechtsLoescht)
+        {
+            markiere({{note.schritt, note.hoehe}});
+            return;
+        }
         m_wahlSchritt = note.schritt;
         m_wahlHoehe = note.hoehe;
         m_marken = {{note.schritt, note.hoehe}};
@@ -1049,7 +1057,17 @@ void InstrumentEditor::setupUI()
     m_auswahlZeile->setObjectName(QStringLiteral("instrumentSelection"));
     m_auswahlZeile->setEnabled(false);
     m_auswahlZeile->setWordWrap(true);
-    aussen->addWidget(m_auswahlZeile);
+    // „Right-click deletes" (Wunsch Patrik S113): an = der Rechtsklick loescht
+    // die Note sofort; aus = er oeffnet das Menue. Die App merkt die Stellung.
+    m_rechtsLoescht = new QCheckBox(tr("Right-click deletes"), this);
+    m_rechtsLoescht->setObjectName(QStringLiteral("instrumentRightClickDeletes"));
+    m_rechtsLoescht->setToolTip(tr("On: a right-click deletes the note under the mouse at once. Off: it opens the "
+                                   "menu, which has an entry for that"));
+    m_rechtsLoescht->setChecked(QSettings().value(QLatin1String(kRechtsLoescht), false).toBool());
+    auto* auswahlReihe = new QHBoxLayout;
+    auswahlReihe->addWidget(m_auswahlZeile, 1);
+    auswahlReihe->addWidget(m_rechtsLoescht, 0, Qt::AlignTop);
+    aussen->addLayout(auswahlReihe);
 
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
@@ -1097,6 +1115,11 @@ void InstrumentEditor::setupUI()
     });
     connect(m_raster, &NotenRaster::tonVerlangt, this, &InstrumentEditor::tonVerlangt);
     connect(m_raster, &NotenRaster::auswahlGeaendert, this, &InstrumentEditor::zeigeAuswahl);
+    m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
+    connect(m_rechtsLoescht, &QCheckBox::toggled, this, [this](bool an) {
+        m_raster->setRechtsklickLoescht(an);
+        QSettings().setValue(QLatin1String(kRechtsLoescht), an);
+    });
     connect(m_raster, &NotenRaster::gerollt, this, &InstrumentEditor::passeRollbalkenAn);
     connect(m_rollX, &QScrollBar::valueChanged, this, [this](int x) { m_raster->setRollen(x, m_raster->rollY()); });
     connect(m_rollY, &QScrollBar::valueChanged, this, [this](int y) { m_raster->setRollen(m_raster->rollX(), y); });

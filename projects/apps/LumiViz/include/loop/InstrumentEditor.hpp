@@ -27,6 +27,7 @@
 
 #include <vector>
 
+class QCheckBox;
 class QComboBox;
 class QLabel;
 class QPushButton;
@@ -97,6 +98,12 @@ public:
     bool drehe(int schrittVersatz);
     /// Was beim letzten Einfuegen oder Drehen nicht ganz passte; leer = alles.
     [[nodiscard]] const QString& meldung() const { return m_meldung; }
+    /// Der Haken „Right-click deletes" (Wunsch Patrik S113): an = der
+    /// Rechtsklick auf eine Note loescht sie sofort (so war es seit S110
+    /// immer); aus = er markiert sie und oeffnet das Menue, in dem „Delete"
+    /// steht.
+    void setRechtsklickLoescht(bool an) { m_rechtsLoescht = an; }
+    [[nodiscard]] bool rechtsklickLoescht() const { return m_rechtsLoescht; }
 
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
@@ -192,6 +199,7 @@ private:
     [[nodiscard]] int schrittUnter(int x) const;
     [[nodiscard]] int hoeheUnter(int y) const;
     bool m_rechtsGeloescht = false;  ///< der Rechtsklick hat eben eine Note geloescht: kein Menue dazu
+    bool m_rechtsLoescht = false;
 
     std::vector<NotenOrt> m_marken;
     std::vector<NotenOrt> m_vorMarken;  ///< die Marken beim Druck
@@ -309,6 +317,7 @@ private:
     QToolButton* m_stumm = nullptr;
     QLabel* m_hinweis = nullptr;
     QLabel* m_auswahlZeile = nullptr;  ///< wie man markiert — oder was markiert ist und was die Tasten tun
+    QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
     void zeigeAuswahl();
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;

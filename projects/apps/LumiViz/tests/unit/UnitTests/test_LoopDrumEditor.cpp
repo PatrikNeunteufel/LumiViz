@@ -22,6 +22,7 @@
 #include "services/ServiceContainer.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QCoreApplication>
 #include <QImage>
 #include <QKeyEvent>
@@ -521,6 +522,48 @@ TEST_SUITE("LoopDrumEditor")
             CHECK(snare(13) == 0.0);  // die leise Snare auf 13 lag im Ziel und ist ersetzt
             CHECK(raster.markierte().size() == 8u);
             CHECK(raster.istMarkiert(1, 8));
+        }
+        SUBCASE("der Haken Right-click deletes: aus oeffnet der Rechtsklick das Menue, an leert er den Schritt")
+        {
+            // Wunsch Patrik S113; die App merkt die Stellung
+            auto* haken = editor.findChild<QCheckBox*>(QStringLiteral("drumRightClickDeletes"));
+            REQUIRE(haken != nullptr);
+            CHECK_FALSE(haken->isChecked());  // frische Einstellungen: aus
+            CHECK_FALSE(raster.rechtsklickLoescht());
+            const auto rechts = [&](QPoint wo) {
+                QMouseEvent ereignis(QEvent::MouseButtonPress, QPointF(wo), QPointF(raster.mapToGlobal(wo)),
+                                     Qt::RightButton, Qt::RightButton, Qt::NoModifier);
+                QCoreApplication::sendEvent(&raster, &ereignis);
+            };
+            rechts(ort(0, 0));
+            CHECK(aenderungen == 0);  // aus: der Rechtsklick leert nichts
+            CHECK(kick(0) == 1.0);
+            // was das Menue fuer den Schritt unter der Maus tut
+            REQUIRE(raster.leereSchritt({0, 0}));
+            CHECK(zuletzt == QStringLiteral("Clear step"));
+            CHECK(kick(0) == 0.0);
+            CHECK_FALSE(raster.leereSchritt({0, 0}));  // schon aus
+
+            haken->setChecked(true);
+            CHECK(raster.rechtsklickLoescht());
+            CHECK(QSettings().value(QStringLiteral("loop/drumRightClickDeletes")).toBool());
+            rechts(ort(0, 8));
+            CHECK(kick(8) == 0.0);
+            CHECK(zuletzt == QStringLiteral("Clear step"));
+            const int vorher = aenderungen;
+            rechts(ort(0, 9));  // ein leerer Schritt: nichts zu leeren
+            CHECK(aenderungen == vorher);
+            // auf einem von mehreren markierten leert er nicht (dort oeffnet sich das Menue)
+            raster.markiere({{1, 4}, {1, 13}});
+            rechts(ort(1, 4));
+            CHECK(aenderungen == vorher);
+            CHECK(snare(4) == 1.0);
+            // ein neues Fenster kennt die Stellung
+            DrumEditor zweiter;
+            auto* zweiterHaken = zweiter.findChild<QCheckBox*>(QStringLiteral("drumRightClickDeletes"));
+            REQUIRE(zweiterHaken != nullptr);
+            CHECK(zweiterHaken->isChecked());
+            CHECK(zweiter.raster()->rechtsklickLoescht());
         }
         SUBCASE("das Bild: markierte Schritte tragen einen Rand, die Einfuegemarke steht im Kopf")
         {
