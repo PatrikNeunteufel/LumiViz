@@ -11,13 +11,16 @@
 #include "loop/InstrumentCreator.hpp"
 
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QKeySequence>
 #include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
@@ -91,9 +94,237 @@ void NotenRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schrit
     m_schlaege = std::max(1, schlaegeJeTakt);
     m_jeSchlag = std::max(1, schritteJeSchlag);
     m_zug = Zug::Keiner;
+    m_rahmen = {};
     if (auswahl() < 0) m_wahlSchritt = m_wahlHoehe = -1;
+    richteMarken();  // was es nicht mehr gibt, faellt aus den Marken
+    m_einfuegen = std::clamp(m_einfuegen, 0, schritte());
+    // kommt nicht die Fassung zurueck, die das Verschieben erzeugt hat, beginnt es neu
+    if (m_schiebeGilt && m_muster.noten != m_schiebeErgebnis.noten) m_schiebeGilt = false;
     setRollen(m_rollX, m_rollY);  // das Muster kann kuerzer geworden sein
     update();
+}
+
+int NotenRaster::schrittUnter(int x) const
+{
+    return teileAb(x - kTastenBreite + m_rollX, kSchrittBreite);
+}
+
+int NotenRaster::hoeheUnter(int y) const
+{
+    return kHoeheMax - teileAb(y - kKopfHoehe + m_rollY, kZeilenHoehe);
+}
+
+void NotenRaster::richteMarken()
+{
+    std::vector<NotenOrt> gibtEs;
+    for (const NotenOrt& ort : m_marken)
+        if (findeNote(m_muster, ort) >= 0 && std::find(gibtEs.begin(), gibtEs.end(), ort) == gibtEs.end())
+            gibtEs.push_back(ort);
+    if (gibtEs.size() <= 1)
+    {
+        // eine einzelne Marke folgt der gewaehlten Note
+        m_marken.clear();
+        if (auswahl() >= 0) m_marken.push_back({m_wahlSchritt, m_wahlHoehe});
+        return;
+    }
+    m_marken = std::move(gibtEs);
+    // die gewaehlte gehoert zu den markierten — sonst wird es die erste von ihnen
+    if (std::find(m_marken.begin(), m_marken.end(), NotenOrt{m_wahlSchritt, m_wahlHoehe}) == m_marken.end())
+    {
+        m_wahlSchritt = m_marken.front().schritt;
+        m_wahlHoehe = m_marken.front().hoehe;
+    }
+}
+
+bool NotenRaster::istMarkiert(const Note& note) const
+{
+    return std::find(m_marken.begin(), m_marken.end(), NotenOrt{note.schritt, note.hoehe}) != m_marken.end();
+}
+
+void NotenRaster::markiere(const std::vector<NotenOrt>& orte)
+{
+    std::vector<NotenOrt> neu;
+    for (const NotenOrt& ort : orte)
+        if (findeNote(m_muster, ort) >= 0 && std::find(neu.begin(), neu.end(), ort) == neu.end()) neu.push_back(ort);
+    // die gewaehlte Note: bleibt, wenn sie dabei ist — sonst die erste
+    const bool dabei = std::find(neu.begin(), neu.end(), NotenOrt{m_wahlSchritt, m_wahlHoehe}) != neu.end();
+    if (!dabei)
+    {
+        m_wahlSchritt = neu.empty() ? -1 : neu.front().schritt;
+        m_wahlHoehe = neu.empty() ? -1 : neu.front().hoehe;
+    }
+    if (neu == m_marken && dabei) return;
+    m_marken = std::move(neu);
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void NotenRaster::markiereUm(NotenOrt ort)
+{
+    if (findeNote(m_muster, ort) < 0) return;
+    std::vector<NotenOrt> neu = m_marken;
+    const auto platz = std::find(neu.begin(), neu.end(), ort);
+    if (platz == neu.end())
+    {
+        neu.push_back(ort);
+        m_wahlSchritt = ort.schritt;  // die zuletzt dazugenommene ist die gewaehlte
+        m_wahlHoehe = ort.hoehe;
+    }
+    else
+    {
+        neu.erase(platz);
+        m_wahlSchritt = neu.empty() ? -1 : neu.back().schritt;
+        m_wahlHoehe = neu.empty() ? -1 : neu.back().hoehe;
+    }
+    m_marken = std::move(neu);
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void NotenRaster::markiereAlle()
+{
+    std::vector<NotenOrt> alle;
+    for (const Note& note : m_muster.noten) alle.push_back({note.schritt, note.hoehe});
+    markiere(alle);
+}
+
+void NotenRaster::setzeEinfuegemarke(int schritt)
+{
+    const int neu = std::clamp(schritt, 0, schritte());
+    if (neu == m_einfuegen) return;
+    m_einfuegen = neu;
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void NotenRaster::uebernimm(const Muster& neu, const std::vector<NotenOrt>& marken, const QString& was)
+{
+    const bool anders = neu.noten != m_muster.noten;
+    m_muster = neu;
+    m_marken = marken;
+    m_wahlSchritt = marken.empty() ? -1 : marken.front().schritt;
+    m_wahlHoehe = marken.empty() ? -1 : marken.front().hoehe;
+    update();
+    Q_EMIT auswahlGeaendert();
+    if (anders) Q_EMIT geaendert(m_muster, was);
+}
+
+void NotenRaster::setzeMeldung(const NotenRest& rest)
+{
+    // nichts still weglassen: sagen, was nicht gepasst hat
+    QStringList teile;
+    if (rest.weg > 0) teile << tr("%n note(s) did not fit into the pattern", nullptr, rest.weg);
+    if (rest.gekuerzt > 0) teile << tr("%n note(s) shortened at the end of the pattern", nullptr, rest.gekuerzt);
+    m_meldung = teile.join(QStringLiteral(", "));
+}
+
+bool NotenRaster::kopiere()
+{
+    const NotenKopie kopie = kopiereNoten(m_muster, m_marken);
+    if (kopie.leer()) return false;
+    m_kopie = kopie;
+    m_meldung.clear();
+    Q_EMIT auswahlGeaendert();  // Paste ist jetzt moeglich
+    return true;
+}
+
+bool NotenRaster::schneideAus()
+{
+    if (!kopiere()) return false;
+    return loescheAuswahl();
+}
+
+bool NotenRaster::fuegeEinBei(int schritt)
+{
+    if (m_kopie.leer() || m_zug != Zug::Keiner) return false;
+    Muster neu = m_muster;
+    std::vector<NotenOrt> eingefuegt;
+    setzeMeldung(fuegeNotenEin(neu, m_kopie, schritt, schritte(), &eingefuegt));
+    m_schiebeGilt = false;
+    if (eingefuegt.empty())
+    {
+        Q_EMIT auswahlGeaendert();
+        return false;
+    }
+    uebernimm(neu, eingefuegt, tr("Paste notes"));
+    return true;
+}
+
+bool NotenRaster::fuegeEin()
+{
+    if (!fuegeEinBei(m_einfuegen)) return false;
+    // die Marke rueckt weiter: noch einmal Ctrl+V fuellt den naechsten Abschnitt
+    setzeEinfuegemarke(m_einfuegen + m_kopie.schritte);
+    return true;
+}
+
+bool NotenRaster::dupliziere()
+{
+    if (m_zug != Zug::Keiner) return false;
+    const NotenKopie kopie = kopiereNoten(m_muster, m_marken);
+    if (kopie.leer()) return false;
+    int erster = m_marken.front().schritt;
+    for (const NotenOrt& ort : m_marken) erster = std::min(erster, ort.schritt);
+    Muster neu = m_muster;
+    std::vector<NotenOrt> eingefuegt;
+    setzeMeldung(fuegeNotenEin(neu, kopie, erster + kopie.schritte, schritte(), &eingefuegt));
+    m_schiebeGilt = false;
+    if (eingefuegt.empty())
+    {
+        Q_EMIT auswahlGeaendert();
+        return false;
+    }
+    uebernimm(neu, eingefuegt, tr("Duplicate notes"));
+    return true;
+}
+
+bool NotenRaster::bewege(int schrittVersatz, int hoeheVersatz, bool imKreis)
+{
+    if (m_marken.empty() || m_zug != Zug::Keiner) return false;
+    // eine Folge von Tasten zaehlt vom Stand beim ersten Druck: so bleibt
+    // stehen, was die Auswahl unterwegs ueberdeckt
+    if (!m_schiebeGilt || m_schiebeImKreis != imKreis || m_marken != m_schiebeMarken ||
+        m_muster.noten != m_schiebeErgebnis.noten)
+    {
+        m_schiebeBasis = m_muster;
+        m_schiebeOrte = m_marken;
+        m_schiebeSchritt = 0;
+        m_schiebeHoehe = 0;
+        m_schiebeImKreis = imKreis;
+    }
+    const int zahl = schritte();
+    const int schrittGanz =
+        imKreis ? (m_schiebeSchritt + schrittVersatz) % std::max(1, zahl) : m_schiebeSchritt + schrittVersatz;
+    const int hoeheGanz = m_schiebeHoehe + hoeheVersatz;
+    Muster neu = m_schiebeBasis;
+    std::vector<NotenOrt> orte = m_schiebeOrte;
+    int gekuerzt = 0;
+    if (schrittGanz != 0 || hoeheGanz != 0)
+    {
+        const bool ging = imKreis ? dreheNoten(neu, orte, schrittGanz, zahl, &gekuerzt)
+                                  : versetzeNoten(neu, orte, schrittGanz, hoeheGanz, zahl);
+        if (!ging) return false;  // am Rand: nichts bewegt sich (V3 a)
+    }
+    m_schiebeSchritt = schrittGanz;
+    m_schiebeHoehe = hoeheGanz;
+    m_schiebeErgebnis = neu;
+    m_schiebeMarken = orte;
+    m_schiebeGilt = true;
+    NotenRest rest;
+    rest.gekuerzt = gekuerzt;
+    setzeMeldung(rest);
+    uebernimm(neu, orte, imKreis ? tr("Rotate notes") : tr("Move notes"));
+    return true;
+}
+
+bool NotenRaster::versetze(int schrittVersatz, int hoeheVersatz)
+{
+    return bewege(schrittVersatz, hoeheVersatz, false);
+}
+
+bool NotenRaster::drehe(int schrittVersatz)
+{
+    return bewege(schrittVersatz, 0, true);
 }
 
 void NotenRaster::setMarke(double schritt)
@@ -116,9 +347,20 @@ bool NotenRaster::loescheAuswahl()
 {
     const int platz = auswahl();
     if (platz < 0 || m_zug != Zug::Keiner) return false;
+    m_schiebeGilt = false;
+    m_meldung.clear();
+    if (m_marken.size() > 1)
+    {
+        Muster neu = m_muster;
+        if (!loescheNoten(neu, m_marken)) return false;
+        uebernimm(neu, {}, tr("Delete notes"));
+        return true;
+    }
     m_muster.noten.erase(m_muster.noten.begin() + platz);
     m_wahlSchritt = m_wahlHoehe = -1;
+    m_marken.clear();
     update();
+    Q_EMIT auswahlGeaendert();
     Q_EMIT geaendert(m_muster, tr("Delete note"));
     return true;
 }
@@ -244,11 +486,31 @@ void NotenRaster::paintEvent(QPaintEvent*)
                       kZeilenHoehe - 2);
         QColor farbe = m_muster.stumm ? text : an;
         farbe.setAlphaF((m_muster.stumm ? 0.2 : 0.4) + (m_muster.stumm ? 0.25 : 0.6) * note.laut);
-        p.setPen(i == gewaehlt ? QPen(text, 1.0) : Qt::NoPen);
+        // markierte Noten tragen einen Rand (die gewaehlte gehoert dazu)
+        p.setPen(i == gewaehlt || istMarkiert(note) ? QPen(text, m_marken.size() > 1 ? 1.6 : 1.0) : Qt::NoPen);
         p.setBrush(farbe);
         p.drawRoundedRect(r, 2, 2);
     }
     p.setBrush(Qt::NoBrush);
+    // --- der Rahmen, der Noten markiert
+    if (m_zug == Zug::Rahmen && !m_rahmen.isEmpty())
+    {
+        QColor flaeche = an;
+        p.setPen(QPen(flaeche, 1.0, Qt::DashLine));
+        flaeche.setAlpha(40);
+        p.setBrush(flaeche);
+        p.drawRect(m_rahmen);
+        p.setBrush(Qt::NoBrush);
+    }
+    // --- die Einfuegemarke: dort landet Ctrl+V
+    {
+        const int x = xVonSchritt(m_einfuegen);
+        if (x >= kTastenBreite && x <= width())
+        {
+            p.setPen(QPen(an.lighter(150), 1.4, Qt::DashLine));
+            p.drawLine(x, oben, x, unten);
+        }
+    }
 
     // --- die Klaviatur
     p.setClipRect(QRect(0, oben, kTastenBreite, unten - oben));
@@ -275,6 +537,15 @@ void NotenRaster::paintEvent(QPaintEvent*)
     for (int takt = 0; takt < m_muster.takte; ++takt)
         p.drawText(QRect(xVonSchritt(takt * jeTakt) + 3, 0, 80, kKopfHoehe), Qt::AlignLeft | Qt::AlignVCenter,
                    tr("Bar %1").arg(takt + 1));
+    {
+        // die Einfuegemarke im Kopf: ein kleines Dreieck
+        const int x = xVonSchritt(m_einfuegen);
+        p.setPen(Qt::NoPen);
+        p.setBrush(an.lighter(150));
+        const QPoint spitze[3] = {QPoint(x - 4, 1), QPoint(x + 4, 1), QPoint(x, 7)};
+        p.drawPolygon(spitze, 3);
+        p.setBrush(Qt::NoBrush);
+    }
 
     // --- unten: die Lautstaerke je Note, an ihrem Einsatz
     p.setClipRect(QRect(kTastenBreite, unten, sichtBreite(), kLautHoehe));
@@ -332,6 +603,53 @@ void NotenRaster::zieheBei(QPoint ort)
         update();
         return;
     }
+    if (m_zug == Zug::Rahmen)
+    {
+        // was der Rahmen beruehrt — mit Ctrl zu dem dazu, was schon markiert war
+        m_rahmen = QRect(m_rahmenStart, ort).normalized();
+        std::vector<NotenOrt> orte = m_vorMarken;
+        for (const Note& note : m_muster.noten)
+        {
+            const QRect r(xVonSchritt(note.schritt), yVonHoehe(note.hoehe), note.laenge * kSchrittBreite, kZeilenHoehe);
+            if (r.intersects(m_rahmen)) orte.push_back({note.schritt, note.hoehe});
+        }
+        markiere(orte);
+        update();
+        return;
+    }
+    if (m_zug == Zug::Gruppe)
+    {
+        // Alle markierten um dieselben Schritte und Halbtoene. Ist dort fuer
+        // eine kein Platz mehr (ein Rand), bleibt die Gruppe an der letzten
+        // Stelle, an der Platz war.
+        const NotenOrt gezogen{m_wahlSchritt, m_wahlHoehe};
+        const auto nr = std::find(m_marken.begin(), m_marken.end(), gezogen) - m_marken.begin();
+        const auto versuche = [this, zahl](int schrittV, int hoeheV) {
+            Muster probe = m_vorZug;
+            std::vector<NotenOrt> orte = m_vorMarken;
+            if ((schrittV != 0 || hoeheV != 0) && !versetzeNoten(probe, orte, schrittV, hoeheV, zahl)) return false;
+            m_muster = std::move(probe);
+            m_marken = std::move(orte);
+            return true;
+        };
+        const int schrittV = schrittUnter(ort.x()) - m_griffStelle;
+        const int hoeheV = hoeheUnter(ort.y()) - m_griffHoehe;
+        if (versuche(schrittV, hoeheV))
+        {
+            m_gutSchritt = schrittV;
+            m_gutHoehe = hoeheV;
+        }
+        else
+            (void)versuche(m_gutSchritt, m_gutHoehe);
+        // die gegriffene Note bleibt die gewaehlte
+        if (nr < static_cast<std::ptrdiff_t>(m_marken.size()))
+        {
+            m_wahlSchritt = m_marken[static_cast<std::size_t>(nr)].schritt;
+            m_wahlHoehe = m_marken[static_cast<std::size_t>(nr)].hoehe;
+        }
+        update();
+        return;
+    }
     const int platz = auswahl();
     if (platz < 0) return;
     Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
@@ -348,6 +666,7 @@ void NotenRaster::zieheBei(QPoint ort)
         note.hoehe = hoehe;
         m_wahlSchritt = schritt;
         m_wahlHoehe = hoehe;
+        m_marken = {{schritt, hoehe}};  // die Marke geht mit der Note
     }
     update();
 }
@@ -358,15 +677,52 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
     setFocus(Qt::MouseFocusReason);
     if (event->button() == Qt::RightButton)
     {
+        // Der Rechtsklick auf eine Note loescht sie, wie bisher. Trifft er eine
+        // von mehreren markierten oder eine freie Stelle, oeffnet sich das Menue
+        // (`contextMenuEvent`).
+        m_rechtsGeloescht = false;
         const int platz = noteBei(ort);
         if (platz < 0 || m_zug != Zug::Keiner) return;
         const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+        if (m_marken.size() > 1 && istMarkiert(note)) return;
         m_wahlSchritt = note.schritt;
         m_wahlHoehe = note.hoehe;
-        (void)loescheAuswahl();
+        m_marken = {{note.schritt, note.hoehe}};
+        m_rechtsGeloescht = loescheAuswahl();
         return;
     }
     if (event->button() != Qt::LeftButton) return;
+    const bool shift = (event->modifiers() & Qt::ShiftModifier) != 0;
+    const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
+    m_klickSammelt = false;
+    if (ort.y() < kKopfHoehe)
+    {
+        // die Zeile der Takte: hier steht die Einfuegemarke
+        if (ort.x() >= kTastenBreite) setzeEinfuegemarke(std::clamp(schrittUnter(ort.x() + kSchrittBreite / 2), 0, schritte()));
+        return;
+    }
+    if (shift && ort.x() >= kTastenBreite && ort.y() < lautOben())
+    {
+        // ein Rahmen: markiert die Noten, die er beruehrt
+        m_zug = Zug::Rahmen;
+        m_neu = false;
+        m_rahmenStart = ort;
+        m_rahmen = {};
+        m_vorZug = m_muster;
+        m_vorMarken = ctrl ? m_marken : std::vector<NotenOrt>{};
+        markiere(m_vorMarken);
+        return;
+    }
+    if (ctrl && ort.x() >= kTastenBreite && ort.y() < lautOben())
+    {
+        // eine Note dazu oder heraus; gesetzt und gezogen wird dabei nichts
+        if (const int platz = noteBei(ort); platz >= 0)
+        {
+            const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+            markiereUm({note.schritt, note.hoehe});
+        }
+        return;
+    }
     if (ort.y() >= lautOben())
     {
         if (ort.x() < kTastenBreite) return;
@@ -392,11 +748,29 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
     if (platz >= 0)
     {
         const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+        const bool kante = anKante(note, ort.x());
+        const bool inGruppe = m_marken.size() > 1 && istMarkiert(note);
         m_wahlSchritt = note.schritt;
         m_wahlHoehe = note.hoehe;
         m_neu = false;
         m_griffSchritt = schritt - note.schritt;
-        m_zug = anKante(note, ort.x()) ? Zug::Laenge : Zug::Verschieben;
+        if (inGruppe && !kante)
+        {
+            // eine von mehreren markierten: die Marken bleiben, die Gruppe laesst sich ziehen
+            m_zug = Zug::Gruppe;
+            m_klickSammelt = true;
+            m_vorMarken = m_marken;
+            m_griffStelle = schrittUnter(ort.x());
+            m_griffHoehe = hoeheUnter(ort.y());
+            m_gutSchritt = 0;
+            m_gutHoehe = 0;
+        }
+        else
+        {
+            // die Kante gehoert einer Note: danach ist nur sie markiert
+            m_marken = {{note.schritt, note.hoehe}};
+            m_zug = kante ? Zug::Laenge : Zug::Verschieben;
+        }
     }
     else
     {
@@ -404,10 +778,13 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         m_muster.noten.push_back({schritt, 1, hoehe, 1.0});
         m_wahlSchritt = schritt;
         m_wahlHoehe = hoehe;
+        m_marken = {{schritt, hoehe}};
         m_neu = true;
         m_zug = Zug::Laenge;
     }
+    m_schiebeGilt = false;
     update();
+    Q_EMIT auswahlGeaendert();
 }
 
 void NotenRaster::mouseMoveEvent(QMouseEvent* event)
@@ -427,19 +804,126 @@ void NotenRaster::mouseReleaseEvent(QMouseEvent* event)
     }
     if (event->button() != Qt::LeftButton || m_zug == Zug::Keiner) return;
     const Zug zug = m_zug;
+    const bool sammelt = m_klickSammelt;
     m_zug = Zug::Keiner;
-    if (m_muster == m_vorZug) return;
+    m_klickSammelt = false;
+    if (zug == Zug::Rahmen)
+    {
+        m_rahmen = {};  // markieren aendert das Muster nicht
+        update();
+        return;
+    }
+    if (m_muster == m_vorZug)
+    {
+        // ein Klick ohne Zug auf eine von mehreren markierten: nur sie bleibt
+        if (zug == Zug::Gruppe && sammelt) markiere({{m_wahlSchritt, m_wahlHoehe}});
+        return;
+    }
+    Q_EMIT auswahlGeaendert();
     const QString was = m_neu                       ? tr("Add note")
                         : zug == Zug::Laenge        ? tr("Change note length")
                         : zug == Zug::Verschieben   ? tr("Move note")
+                        : zug == Zug::Gruppe        ? tr("Move notes")
                                                     : tr("Change note volume");
     Q_EMIT geaendert(m_muster, was);
 }
 
 void NotenRaster::keyPressEvent(QKeyEvent* event)
 {
-    if ((event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) && loescheAuswahl()) return;
+    const Qt::KeyboardModifiers tasten = event->modifiers() & ~Qt::KeypadModifier;
+    const bool nurCtrl = tasten == Qt::ControlModifier;
+    switch (event->key())
+    {
+        case Qt::Key_Delete:
+        case Qt::Key_Backspace:
+            if (loescheAuswahl()) return;
+            break;
+        case Qt::Key_C:
+            if (nurCtrl && kopiere()) return;
+            break;
+        case Qt::Key_X:
+            if (nurCtrl && schneideAus()) return;
+            break;
+        case Qt::Key_V:
+            if (nurCtrl)
+            {
+                (void)fuegeEin();
+                return;
+            }
+            break;
+        case Qt::Key_D:
+            if (nurCtrl)
+            {
+                (void)dupliziere();
+                return;
+            }
+            break;
+        case Qt::Key_A:
+            if (nurCtrl)
+            {
+                markiereAlle();
+                return;
+            }
+            break;
+        case Qt::Key_Escape:
+            if (!m_marken.empty() && m_zug == Zug::Keiner)
+            {
+                markiere({});
+                return;
+            }
+            break;
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        {
+            if (m_marken.empty()) break;
+            const int richtung = event->key() == Qt::Key_Left ? -1 : 1;
+            if (tasten == Qt::AltModifier)
+                (void)drehe(richtung);  // im Kreis (Wunsch Patrik S113)
+            else if (tasten == Qt::NoModifier)
+                (void)versetze(richtung, 0);
+            else
+                break;
+            return;
+        }
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        {
+            // ein Halbton, mit Shift eine Oktave
+            if (m_marken.empty() || (tasten != Qt::NoModifier && tasten != Qt::ShiftModifier)) break;
+            const int halbtoene = (tasten == Qt::ShiftModifier ? 12 : 1) * (event->key() == Qt::Key_Up ? 1 : -1);
+            (void)versetze(0, halbtoene);
+            return;
+        }
+        default:
+            break;
+    }
     QWidget::keyPressEvent(event);
+}
+
+void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
+{
+    // der Rechtsklick hat gerade eine Note geloescht: kein Menue dazu
+    if (m_rechtsGeloescht)
+    {
+        m_rechtsGeloescht = false;
+        return;
+    }
+    const QPoint ort = event->pos();
+    if (ort.x() < kTastenBreite || ort.y() < kKopfHoehe || ort.y() >= lautOben()) return;
+    const int hier = std::clamp(schrittUnter(ort.x()), 0, std::max(0, schritte() - 1));
+    const bool etwas = !m_marken.empty();
+    QMenu menu(this);
+    menu.addAction(tr("Copy"), QKeySequence(Qt::CTRL | Qt::Key_C), this, [this] { (void)kopiere(); })->setEnabled(etwas);
+    menu.addAction(tr("Cut"), QKeySequence(Qt::CTRL | Qt::Key_X), this, [this] { (void)schneideAus(); })
+        ->setEnabled(etwas);
+    menu.addAction(tr("Paste here"), this, [this, hier] { (void)fuegeEinBei(hier); })->setEnabled(hatKopie());
+    menu.addAction(tr("Duplicate"), QKeySequence(Qt::CTRL | Qt::Key_D), this, [this] { (void)dupliziere(); })
+        ->setEnabled(etwas);
+    menu.addAction(tr("Delete"), QKeySequence(Qt::Key_Delete), this, [this] { (void)loescheAuswahl(); })
+        ->setEnabled(etwas);
+    menu.addSeparator();
+    menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
+    menu.exec(event->globalPos());
 }
 
 void NotenRaster::wheelEvent(QWheelEvent* event)
@@ -560,6 +1044,12 @@ void InstrumentEditor::setupUI()
     koerper->setRowStretch(0, 1);
     koerper->setColumnStretch(0, 1);
     aussen->addLayout(koerper, 1);
+    // wie man mehrere Noten markiert — oder was markiert ist und was die Tasten tun
+    m_auswahlZeile = new QLabel(this);
+    m_auswahlZeile->setObjectName(QStringLiteral("instrumentSelection"));
+    m_auswahlZeile->setEnabled(false);
+    m_auswahlZeile->setWordWrap(true);
+    aussen->addWidget(m_auswahlZeile);
 
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
@@ -606,6 +1096,7 @@ void InstrumentEditor::setupUI()
         Q_EMIT bearbeitet(fassung, was);
     });
     connect(m_raster, &NotenRaster::tonVerlangt, this, &InstrumentEditor::tonVerlangt);
+    connect(m_raster, &NotenRaster::auswahlGeaendert, this, &InstrumentEditor::zeigeAuswahl);
     connect(m_raster, &NotenRaster::gerollt, this, &InstrumentEditor::passeRollbalkenAn);
     connect(m_rollX, &QScrollBar::valueChanged, this, [this](int x) { m_raster->setRollen(x, m_raster->rollY()); });
     connect(m_rollY, &QScrollBar::valueChanged, this, [this](int y) { m_raster->setRollen(m_raster->rollX(), y); });
@@ -723,6 +1214,27 @@ void InstrumentEditor::zeigeAlles()
     }
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     passeRollbalkenAn();
+    zeigeAuswahl();
+}
+
+void InstrumentEditor::zeigeAuswahl()
+{
+    const auto zahl = m_raster->markierte().size();
+    QString text;
+    if (zahl == 0)
+        // sonst findet es niemand: sagen, wie man markiert
+        text = tr("Shift+drag selects notes · Ctrl+click adds or removes one · a click in the bar row sets the paste "
+                  "marker");
+    else if (zahl == 1)
+        text = tr("1 note selected · Ctrl+C copy · Ctrl+V paste at the marker · Ctrl+D duplicate · arrow keys move · "
+                  "Shift+drag selects several");
+    else
+        text = tr("%1 notes selected · drag moves them together · Ctrl+C copy · Ctrl+X cut · Ctrl+V paste at the "
+                  "marker · Ctrl+D duplicate · arrow keys move, Shift+Up / Down an octave · Alt+Left / Right rotate · "
+                  "Del deletes")
+                   .arg(zahl);
+    if (!m_raster->meldung().isEmpty()) text = m_raster->meldung() + QStringLiteral(" · ") + text;
+    m_auswahlZeile->setText(text);
 }
 
 void InstrumentEditor::setSpielt(bool spielt, double schritt)

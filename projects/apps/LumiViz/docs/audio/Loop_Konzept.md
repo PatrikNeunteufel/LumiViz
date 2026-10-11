@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.32.0
+> **Version:** 0.33.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1450,6 +1450,49 @@ geprüft:** das Menü des Rechtsklicks; ob die Tasten im gezeigten Fenster beim
 Raster ankommen (es bekommt den Fokus mit dem Klick). **Im Programm nicht
 gesehen.**
 
+### Im Instrument-Editor (gebaut, 13c)
+
+`NotenRaster` in `loop/InstrumentEditor.hpp` trägt die Marken, die
+Einfügemarke und das Gemerkte; der Editor zeigt darunter die Hinweiszeile
+(`instrumentSelection`). Gebaut wie die Skizze: Shift+Ziehen zieht einen
+Rahmen, Ctrl+Klick nimmt eine Note dazu oder heraus, Ctrl+A, Esc; Ctrl+C,
+Ctrl+X, Ctrl+V an der Einfügemarke, Ctrl+D, Entf; eine von mehreren
+markierten ziehen bewegt alle in Zeit und Tonhöhe; Pfeiltasten (hinauf und
+hinunter ein Halbton, mit Shift eine Oktave), Alt+Pfeil dreht im Kreis.
+**Dazu von mir gesetzt, nicht entschieden:**
+
+- **Der Rechtsklick auf eine Note löscht sie weiter**, wie seit S110. Das
+  Menü (Copy, Cut, Paste here, Duplicate, Delete, Select all) öffnet sich
+  beim Rechtsklick auf eine freie Stelle — oder auf eine von **mehreren**
+  markierten Noten.
+- **Ein Klick auf eine Note markiert nur sie**; ein Klick auf eine freie
+  Stelle setzt weiter eine neue Note, die danach markiert ist.
+- **Ein Klick ohne Zug** auf eine von mehreren markierten lässt beim
+  Loslassen nur sie markiert; die Kante einer Note gehört immer ihr allein.
+- **Gruppe ziehen:** ist für eine der Noten kein Platz mehr (ein Rand),
+  bleibt die Gruppe an der letzten Stelle, an der Platz war. Eine nicht
+  markierte Note auf demselben Schritt und derselben Tonhöhe wird ersetzt.
+- **Mehrere Pfeiltasten hintereinander** rechnen vom Stand beim ersten Druck:
+  eine Note, die die Auswahl unterwegs überdeckt, ist danach wieder da.
+- **Paste here** fügt ab dem Schritt unter der Maus ein, in den Tonhöhen der
+  Kopie.
+- Die Meldung nennt beides getrennt: „n note(s) did not fit into the
+  pattern" und „n note(s) shortened at the end of the pattern" — auch nach
+  dem Drehen, wenn eine Note am Ende gekürzt wurde. Zurückgedreht bekommt sie
+  ihre Länge wieder, solange dieselbe Auswahl gedreht wird.
+- Bei einer einzelnen markierten Note nennt die Hinweiszeile auch
+  „Shift+drag selects several".
+
+**Nicht drin:** die Lautstärke aller markierten Noten auf einmal (die Zeile
+Note vol. gilt weiter der gewählten Note oder allen an einem Schritt); der
+Rahmen rollt den Ausschnitt nicht mit.
+
+Geprüft in `test_LoopInstrumentEditor.cpp` (ein Fall mit sechs Teilen, über
+Maus und Tasten am Raster); `LUMIVIZ_INSTRUMENT_MARKEN_BILD=<datei.png>` legt
+ein Bild des Rasters mit drei markierten Noten und der Einfügemarke ab —
+angesehen. **Nicht geprüft:** das Menü selbst; die Tasten im gezeigten
+Fenster. **Im Programm nicht gesehen.**
+
 **Vor dem Bau geklärt** (Patrik S113):
 
 - **V2 a — verstreute Schritte:** kopiert werden genau die markierten
@@ -1490,7 +1533,7 @@ gesehen.**
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
-| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **Offen:** 13c Instrument-Editor, 13d Doku und Sichttest-Liste, der volle Testlauf |
+| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **Offen:** 13d Doku und Sichttest-Liste, der volle Testlauf |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
@@ -1587,6 +1630,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.33.0** (S113, 2026-10-11): 13c gebaut — Mehrfachauswahl, Kopieren,
+  Einfügen, Ziehen als Gruppe, Versetzen und Drehen im Instrument-Editor
+  (§4i).
 
 - **0.32.0** (S113, 2026-10-11): 13b gebaut — Mehrfachauswahl, Kopieren,
   Einfügen, Versetzen und Drehen im Drum-Editor (§4i).

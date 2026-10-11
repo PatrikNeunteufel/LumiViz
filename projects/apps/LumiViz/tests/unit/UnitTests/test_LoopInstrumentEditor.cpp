@@ -30,6 +30,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QListWidget>
@@ -639,6 +640,221 @@ TEST_SUITE("LoopInstrumentEditor")
             gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
             QCoreApplication::processEvents();
             CHECK(gezeigt.grab().save(bild));
+        }
+    }
+
+    TEST_CASE("Instrument-Editor: mehrere Noten markieren — kopieren und einfuegen — ziehen und versetzen und drehen")
+    {
+        // Stufe 13c (S113), Skizze §4i; Entscheid V3 a und das Drehen im Kreis.
+        // Die Noten: C4 ab 0 (2 lang), E4 ab 2 (1), G4 ab 4 (4), C5 ab 60 (4, bis ans Ende der 64 Schritte)
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        InstrumentEditor editor;  // nicht gezeigt: kein Fenster
+        Loop loop = probe();
+        loop.muster[0].noten = {{0, 2, 60, 1.0}, {2, 1, 64, 0.5}, {4, 4, 67, 0.8}, {60, 4, 72, 1.0}};
+        loop.richte();
+        QStringList gemeldet;
+        QObject::connect(&editor, &InstrumentEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            gemeldet << was;
+            loop = neu;
+            editor.setLoop(loop);  // wie das Panel: die Fassung gilt
+        });
+        REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
+        NotenRaster& raster = *editor.raster();
+        raster.resize(kBreite, kHoehe);
+        raster.zeigeHoehe(66);  // C4 bis C5 liegen im Ausschnitt
+        auto* zeile = editor.findChild<QLabel*>(QStringLiteral("instrumentSelection"));
+        REQUIRE(zeile != nullptr);
+
+        const auto note = [&loop](int schritt, int hoehe) -> const Note* {
+            const int platz = findeNote(loop.muster[0], {schritt, hoehe});
+            return platz < 0 ? nullptr : &loop.muster[0].noten[static_cast<std::size_t>(platz)];
+        };
+        const auto auf = [&raster](int schritt, int hoehe) {
+            return QPoint(raster.xVonSchritt(schritt) + 4, raster.yVonHoehe(hoehe) + 7);
+        };
+        const auto mausMit = [&raster](QEvent::Type art, QPoint wo, Qt::MouseButtons tasten, Qt::KeyboardModifiers dazu) {
+            QMouseEvent ereignis(art, QPointF(wo), QPointF(raster.mapToGlobal(wo)),
+                                 art == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton, tasten, dazu);
+            QCoreApplication::sendEvent(&raster, &ereignis);
+        };
+        const auto taste = [&raster](int key, Qt::KeyboardModifiers dazu = Qt::NoModifier) {
+            QKeyEvent ereignis(QEvent::KeyPress, key, dazu);
+            QCoreApplication::sendEvent(&raster, &ereignis);
+        };
+        const auto ctrlKlick = [&](QPoint wo) {
+            mausMit(QEvent::MouseButtonPress, wo, Qt::LeftButton, Qt::ControlModifier);
+            mausMit(QEvent::MouseButtonRelease, wo, Qt::NoButton, Qt::ControlModifier);
+        };
+
+        CHECK(zeile->text().startsWith(QStringLiteral("Shift+drag selects notes")));
+        CHECK(raster.einfuegemarke() == 0);
+
+        SUBCASE("Shift+Ziehen zieht einen Rahmen, Ctrl+Klick nimmt eine Note dazu oder heraus")
+        {
+            // von links oben (in der Zeile von G4) bis rechts unten (C4, Schritt 7)
+            mausMit(QEvent::MouseButtonPress, QPoint(raster.xVonSchritt(0) + 2, raster.yVonHoehe(67) + 2), Qt::LeftButton,
+                    Qt::ShiftModifier);
+            mausMit(QEvent::MouseMove, QPoint(raster.xVonSchritt(7) + 8, raster.yVonHoehe(60) + 10), Qt::LeftButton,
+                    Qt::ShiftModifier);
+            CHECK(raster.markierte().size() == 3u);  // im Zug schon zu sehen
+            mausMit(QEvent::MouseButtonRelease, QPoint(raster.xVonSchritt(7) + 8, raster.yVonHoehe(60) + 10), Qt::NoButton,
+                    Qt::ShiftModifier);
+            CHECK(raster.markierte().size() == 3u);
+            CHECK(gemeldet.isEmpty());  // markieren setzt keine Note und aendert nichts
+            CHECK(loop.muster[0].noten.size() == 4u);
+            CHECK(zeile->text().startsWith(QStringLiteral("3 notes selected")));
+
+            ctrlKlick(auf(60, 72));
+            CHECK(raster.markierte().size() == 4u);
+            ctrlKlick(auf(2, 64));
+            CHECK(raster.markierte().size() == 3u);
+            CHECK_FALSE(raster.istMarkiert(*note(2, 64)));
+            ctrlKlick(QPoint(raster.xVonSchritt(20) + 4, raster.yVonHoehe(62) + 7));  // ins Leere: nichts
+            CHECK(loop.muster[0].noten.size() == 4u);
+
+            // ein Klick auf eine von mehreren markierten: beim Druck bleiben alle, beim Loslassen nur sie
+            maus(raster, QEvent::MouseButtonPress, auf(4, 67), Qt::LeftButton, Qt::LeftButton);
+            CHECK(raster.markierte().size() == 3u);
+            maus(raster, QEvent::MouseButtonRelease, auf(4, 67), Qt::LeftButton, Qt::NoButton);
+            CHECK(raster.markierte() == std::vector<NotenOrt>{{4, 67}});
+            CHECK(zeile->text().startsWith(QStringLiteral("1 note selected")));
+            taste(Qt::Key_Escape);
+            CHECK(raster.markierte().empty());
+            taste(Qt::Key_A, Qt::ControlModifier);
+            CHECK(raster.markierte().size() == 4u);
+            CHECK(gemeldet.isEmpty());
+        }
+        SUBCASE("Ctrl+C und Ctrl+V: die Noten kommen an der Einfuegemarke dazu, die Marke rueckt weiter")
+        {
+            raster.markiere({{0, 60}, {2, 64}});
+            taste(Qt::Key_C, Qt::ControlModifier);
+            CHECK(raster.hatKopie());
+            klick(raster, QPoint(raster.xVonSchritt(16) + 1, 5));  // ein Klick in die Zeile der Takte
+            CHECK(raster.einfuegemarke() == 16);
+            taste(Qt::Key_V, Qt::ControlModifier);
+            CHECK(gemeldet.last() == QStringLiteral("Paste notes"));
+            REQUIRE(note(16, 60) != nullptr);
+            CHECK(note(16, 60)->laenge == 2);  // dieselbe Tonhoehe, dieselbe Laenge
+            REQUIRE(note(18, 64) != nullptr);
+            CHECK(note(18, 64)->laut == doctest::Approx(0.5));  // die Lautstaerke geht mit
+            CHECK(loop.muster[0].noten.size() == 6u);
+            CHECK(raster.einfuegemarke() == 19);  // drei Schritte lang war die Kopie
+            CHECK(raster.markierte() == std::vector<NotenOrt>{{16, 60}, {18, 64}});
+
+            // am Ende: was hinter dem Muster begaenne, bleibt weg — und der Editor sagt es
+            raster.setzeEinfuegemarke(62);
+            taste(Qt::Key_V, Qt::ControlModifier);
+            CHECK(note(62, 60) != nullptr);
+            CHECK(raster.meldung() == QStringLiteral("1 note(s) did not fit into the pattern"));
+            CHECK(zeile->text().startsWith(QStringLiteral("1 note(s) did not fit into the pattern")));
+            raster.setzeEinfuegemarke(63);
+            taste(Qt::Key_V, Qt::ControlModifier);
+            REQUIRE(note(63, 60) != nullptr);
+            CHECK(note(63, 60)->laenge == 1);
+            CHECK(raster.meldung() == QStringLiteral("1 note(s) did not fit into the pattern, 1 note(s) shortened at the "
+                                                     "end of the pattern"));
+        }
+        SUBCASE("eine von mehreren markierten ziehen: alle gehen in Zeit und Tonhoehe mit")
+        {
+            raster.markiere({{0, 60}, {2, 64}});
+            maus(raster, QEvent::MouseButtonPress, auf(0, 60), Qt::LeftButton, Qt::LeftButton);
+            maus(raster, QEvent::MouseMove, auf(4, 62), Qt::NoButton, Qt::LeftButton);
+            maus(raster, QEvent::MouseButtonRelease, auf(4, 62), Qt::LeftButton, Qt::NoButton);
+            CHECK(gemeldet.last() == QStringLiteral("Move notes"));
+            CHECK(note(4, 62) != nullptr);
+            CHECK(note(6, 66) != nullptr);
+            CHECK(note(0, 60) == nullptr);
+            CHECK(note(4, 67) != nullptr);  // die nicht markierte G4 bleibt
+            CHECK(raster.markierte() == std::vector<NotenOrt>{{4, 62}, {6, 66}});
+
+            // zurueck und ueber den Anfang hinaus: die Gruppe bleibt, wo zuletzt Platz war
+            maus(raster, QEvent::MouseButtonPress, auf(4, 62), Qt::LeftButton, Qt::LeftButton);
+            maus(raster, QEvent::MouseMove, auf(0, 62), Qt::NoButton, Qt::LeftButton);
+            maus(raster, QEvent::MouseMove, QPoint(NotenRaster::kTastenBreite - 40, raster.yVonHoehe(62) + 7), Qt::NoButton,
+                 Qt::LeftButton);
+            maus(raster, QEvent::MouseButtonRelease, QPoint(NotenRaster::kTastenBreite - 40, raster.yVonHoehe(62) + 7),
+                 Qt::LeftButton, Qt::NoButton);
+            CHECK(note(0, 62) != nullptr);
+            CHECK(note(2, 66) != nullptr);
+            CHECK(loop.muster[0].noten.size() == 4u);
+        }
+        SUBCASE("die Pfeiltasten versetzen — was unterwegs ueberdeckt wird, bleibt; am Rand ist Schluss; Alt dreht")
+        {
+            raster.markiere({{0, 60}});
+            for (int i = 0; i < 4; ++i) taste(Qt::Key_Up);
+            CHECK(gemeldet.last() == QStringLiteral("Move notes"));
+            CHECK(note(0, 64) != nullptr);
+            taste(Qt::Key_Right);
+            taste(Qt::Key_Right);
+            REQUIRE(note(2, 64) != nullptr);
+            CHECK(note(2, 64)->laenge == 2);  // liegt jetzt auf der E4 und ersetzt sie
+            taste(Qt::Key_Right);
+            REQUIRE(note(2, 64) != nullptr);
+            CHECK(note(2, 64)->laenge == 1);  // die ueberdeckte E4 ist wieder da
+            CHECK(note(3, 64) != nullptr);
+            taste(Qt::Key_Up, Qt::ShiftModifier);
+            CHECK(note(3, 76) != nullptr);  // eine Oktave
+            CHECK(loop.muster[0].noten.size() == 4u);
+
+            // am Rand (V3 a): C5 reicht schon bis ans Ende
+            raster.markiere({{60, 72}});
+            const auto vorher = gemeldet.size();
+            taste(Qt::Key_Right);
+            CHECK(gemeldet.size() == vorher);
+            CHECK(note(60, 72) != nullptr);
+            // Alt+Pfeil dreht im Kreis: die Note wird am Ende gekuerzt — und bekommt zurueckgedreht ihre Laenge wieder
+            taste(Qt::Key_Right, Qt::AltModifier);
+            CHECK(gemeldet.last() == QStringLiteral("Rotate notes"));
+            REQUIRE(note(61, 72) != nullptr);
+            CHECK(note(61, 72)->laenge == 3);
+            CHECK(raster.meldung() == QStringLiteral("1 note(s) shortened at the end of the pattern"));
+            taste(Qt::Key_Left, Qt::AltModifier);
+            REQUIRE(note(60, 72) != nullptr);
+            CHECK(note(60, 72)->laenge == 4);
+            CHECK(raster.meldung().isEmpty());
+        }
+        SUBCASE("Ctrl+D haengt die Auswahl an, Entf loescht alle markierten, der Rechtsklick loescht weiter eine Note")
+        {
+            raster.markiere({{0, 60}, {2, 64}});
+            taste(Qt::Key_D, Qt::ControlModifier);
+            CHECK(gemeldet.last() == QStringLiteral("Duplicate notes"));
+            CHECK(note(3, 60) != nullptr);
+            CHECK(note(5, 64) != nullptr);
+            CHECK(loop.muster[0].noten.size() == 6u);
+            CHECK(raster.markierte() == std::vector<NotenOrt>{{3, 60}, {5, 64}});
+            taste(Qt::Key_Delete);
+            CHECK(gemeldet.last() == QStringLiteral("Delete notes"));
+            CHECK(loop.muster[0].noten.size() == 4u);
+            CHECK(raster.markierte().empty());
+
+            raster.markiere({{4, 67}});
+            taste(Qt::Key_X, Qt::ControlModifier);
+            CHECK(raster.hatKopie());
+            CHECK(note(4, 67) == nullptr);
+            // der Rechtsklick auf eine einzelne Note loescht sie wie bisher
+            maus(raster, QEvent::MouseButtonPress, auf(0, 60), Qt::RightButton, Qt::RightButton);
+            CHECK(gemeldet.last() == QStringLiteral("Delete note"));
+            CHECK(note(0, 60) == nullptr);
+            CHECK(loop.muster[0].noten.size() == 2u);
+            // auf eine von mehreren markierten loescht er nicht (dort oeffnet sich das Menue)
+            raster.markiereAlle();
+            const auto vorher = gemeldet.size();
+            maus(raster, QEvent::MouseButtonPress, auf(2, 64), Qt::RightButton, Qt::RightButton);
+            CHECK(gemeldet.size() == vorher);
+            CHECK(loop.muster[0].noten.size() == 2u);
+        }
+        SUBCASE("das Bild: markierte Noten tragen einen Rand, die Einfuegemarke steht im Kopf")
+        {
+            raster.markiere({{0, 60}, {2, 64}, {4, 67}});
+            raster.setzeEinfuegemarke(16);
+            const QImage bild = raster.grab().toImage();
+            CHECK_FALSE(bild.isNull());
+            if (const QString datei = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_MARKEN_BILD"); !datei.isEmpty())
+                CHECK(bild.save(datei));
         }
     }
 

@@ -16,12 +16,16 @@
  */
 #pragma once
 
+#include "loop/Auswahl.hpp"
 #include "loop/Loop.hpp"
 
 #include <QPoint>
 #include <QPointer>
+#include <QRect>
 #include <QString>
 #include <QWidget>
+
+#include <vector>
 
 class QComboBox;
 class QLabel;
@@ -59,7 +63,40 @@ public:
     void setMarke(double schritt);
     /// Die gewaehlte Note (Platz in `muster().noten`); -1 = keine.
     [[nodiscard]] int auswahl() const;
+    /// Die gewaehlte Note loeschen — sind mehrere markiert, alle.
     bool loescheAuswahl();
+
+    // --- Mehrere Noten zugleich (Stufe 13c, Skizze §4i) -----------------------
+    // Markiert wird mit Shift+Ziehen (ein Rahmen) und Ctrl+Klick (eine Note
+    // dazu oder heraus); ein Klick auf eine Note markiert nur sie. Zieht man
+    // eine von mehreren markierten, gehen alle mit. Ein Klick in die Zeile der
+    // Takte setzt die Einfuegemarke.
+    [[nodiscard]] const std::vector<NotenOrt>& markierte() const { return m_marken; }
+    [[nodiscard]] bool istMarkiert(const Note& note) const;
+    void markiere(const std::vector<NotenOrt>& orte);
+    void markiereUm(NotenOrt ort);
+    void markiereAlle();
+    void setzeEinfuegemarke(int schritt);
+    [[nodiscard]] int einfuegemarke() const { return m_einfuegen; }
+    [[nodiscard]] bool hatKopie() const { return !m_kopie.leer(); }
+    bool kopiere();
+    bool schneideAus();
+    /// Das Gemerkte an der Einfuegemarke einfuegen, in seinen Tonhoehen; die
+    /// Marke rueckt um die eingefuegte Laenge weiter. Markiert sind danach
+    /// die eingefuegten Noten.
+    bool fuegeEin();
+    /// Dasselbe ab einem bestimmten Schritt („Paste here"); die Marke bleibt.
+    bool fuegeEinBei(int schritt);
+    /// Die markierten direkt hinter sich selbst noch einmal einfuegen.
+    bool dupliziere();
+    /// Die markierten versetzen; am Rand haelt die ganze Auswahl an
+    /// (Entscheid Patrik S113, V3 a). Mehrere Schritte hintereinander gehen
+    /// von der Stelle aus, an der die Auswahl beim ersten stand.
+    bool versetze(int schrittVersatz, int hoeheVersatz);
+    /// Die markierten in der Zeit im Kreis versetzen (Alt+Pfeil).
+    bool drehe(int schrittVersatz);
+    /// Was beim letzten Einfuegen oder Drehen nicht ganz passte; leer = alles.
+    [[nodiscard]] const QString& meldung() const { return m_meldung; }
 
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
@@ -105,6 +142,8 @@ Q_SIGNALS:
     void tonVerlangt(int hoehe);
     /// Das Rad hat gerollt (die Rollbalken des Fensters ziehen nach).
     void gerollt();
+    /// Marken, Einfuegemarke oder Meldung haben sich geaendert.
+    void auswahlGeaendert();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -112,6 +151,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
@@ -138,7 +178,42 @@ private:
         Laenge,       ///< die rechte Kante der gewaehlten Note
         Verschieben,  ///< die gewaehlte Note in Zeit und Tonhoehe
         Laut,         ///< die Lautstaerke der Noten unter der Maus
+        Rahmen,       ///< mit Shift: ein Rahmen, der Noten markiert
+        Gruppe,       ///< mehrere markierte Noten zusammen in Zeit und Tonhoehe
     };
+    /// Eine eigene Aenderung uebernehmen: zeigen, die Marken setzen, melden.
+    void uebernimm(const Muster& neu, const std::vector<NotenOrt>& marken, const QString& was);
+    bool bewege(int schrittVersatz, int hoeheVersatz, bool imKreis);
+    /// Die Marken in Ordnung bringen: was es nicht mehr gibt, faellt heraus;
+    /// die gewaehlte Note gehoert dazu.
+    void richteMarken();
+    void setzeMeldung(const NotenRest& rest);
+    /// Schritt und Tonhoehe unter dem Punkt, auch ausserhalb des Rasters.
+    [[nodiscard]] int schrittUnter(int x) const;
+    [[nodiscard]] int hoeheUnter(int y) const;
+    bool m_rechtsGeloescht = false;  ///< der Rechtsklick hat eben eine Note geloescht: kein Menue dazu
+
+    std::vector<NotenOrt> m_marken;
+    std::vector<NotenOrt> m_vorMarken;  ///< die Marken beim Druck
+    QPoint m_rahmenStart;
+    QRect m_rahmen;          ///< der Rahmen, solange er gezogen wird
+    bool m_klickSammelt = false;  ///< der Druck traf eine von mehreren markierten: ohne Zug bleibt nur sie
+    int m_griffHoehe = 0;    ///< beim Ziehen der Gruppe: die Tonhoehe unter der Maus beim Druck
+    int m_griffStelle = 0;   ///< und der Schritt
+    int m_gutSchritt = 0;    ///< der letzte Versatz der Gruppe, der Platz hatte
+    int m_gutHoehe = 0;
+    int m_einfuegen = 0;
+    NotenKopie m_kopie;
+    QString m_meldung;
+    // mehrere Pfeiltasten hintereinander: gerechnet wird vom Stand beim ersten Druck
+    Muster m_schiebeBasis;
+    std::vector<NotenOrt> m_schiebeOrte;
+    Muster m_schiebeErgebnis;
+    std::vector<NotenOrt> m_schiebeMarken;
+    int m_schiebeSchritt = 0;
+    int m_schiebeHoehe = 0;
+    bool m_schiebeImKreis = false;
+    bool m_schiebeGilt = false;
     Zug m_zug = Zug::Keiner;
     int m_griffSchritt = 0;  ///< beim Verschieben: so weit hinter dem Einsatz wurde die Note gegriffen
     Muster m_vorZug;
@@ -233,6 +308,8 @@ private:
     QSlider* m_pan = nullptr;
     QToolButton* m_stumm = nullptr;
     QLabel* m_hinweis = nullptr;
+    QLabel* m_auswahlZeile = nullptr;  ///< wie man markiert — oder was markiert ist und was die Tasten tun
+    void zeigeAuswahl();
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;
     QScrollBar* m_rollY = nullptr;
