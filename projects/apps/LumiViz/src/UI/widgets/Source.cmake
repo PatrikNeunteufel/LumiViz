@@ -10,6 +10,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     # (no sources - *.c; *.cpp)
+    "${CMAKE_CURRENT_LIST_DIR}/Achse.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PresetZeile.cpp"

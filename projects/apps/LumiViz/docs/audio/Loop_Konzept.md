@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.6.0
-> **Datum:** 2026-10-11 (Session 108)
+> **Version:** 0.7.0
+> **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -79,8 +79,18 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **L5 a** | **Das mitgelieferte Kit wird gerechnet**, nicht bezogen: ein Skript erzeugt die WAV-Dateien, sie liegen unter `asset/`. Jede Spur kann stattdessen eine eigene Sample-Datei laden. |
 | **L7 a** | **Play im Loop-Panel ist gesperrt, solange der Composer den Ton hat**, und sagt, warum. Liegt der Loop als Clip in der Komposition, ist jede Änderung über den Composer zu hören. Spielte das Loop-Panel gerade allein, hält es an. |
 | **L6 a** | **Luft nach oben statt Begrenzer.** Die Spuren addieren sich, der Kern begrenzt nicht — wie zwei Songs im Mixer des Composers. Ein neuer Loop beginnt mit Lautstärke 0,5; das Panel bekommt eine Anzeige, die rot wird, sobald die Summe über 1 geht (Stufe 6). |
+| **W1 b** (S109) | **Das Loop-Panel und der Composer teilen sich die Achse.** Maßstab, Zoom, Rollen, Mausrad, Schwenken und Mitlaufen liegen in einer gemeinsamen Basis (`lumi::ui::Achse`, `UI/widgets/Achse.hpp`), herausgezogen aus der `Zeitachse` des Composers; die Achse des Loop-Panels erbt davon und rechnet in Takten. Grund (Patrik): kurz sind nur die Drums — Instrumente werden länger, und kommt Gesang dazu, sind es mehrere Minuten; dafür braucht das Panel den vollen Zoom. |
 
 ### 3.1 Verworfen, mit Grund
+
+- **Eigene Achse für das Loop-Panel, der Composer bleibt unberührt** (W1 a):
+  Geometrie, Zoom und Rollen entstünden ein zweites Mal — tragbar nur,
+  solange ein Loop kurz bleibt.
+- **Die `Zeitachse` selbst benutzen und den Loop in eine `Komposition`
+  übersetzen** (W1 c): ein Clip hat dort eine freie Länge in Millisekunden,
+  der Loop verlangt ganze Vielfache eines Musters; jede Geste wäre
+  zurückzuübersetzen, und die Achse bekäme Schalter für alles, was der Loop
+  nicht hat (Master-Zeilen, Kurven, Stoß-Arten).
 
 - **Schläge einzeln aus dem Zeitgeber des Composers auslösen** (L1 c): der
   Zeitgeber läuft mit 33 ms im UI-Thread; bei 120 BPM dauert ein Sechzehntel
@@ -300,7 +310,7 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 | 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; an einer Hörprobe gehört (Patrik: klingt gut) |
 | 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
 | 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
-| 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | offen — zuerst die Skizze |
+| 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109, Schritt 1 gebaut: die gemeinsame Basis `Achse` (W1 b) — am Composer ändert sich nichts (33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`). Offen: die Achse des Loop-Panels auf der Basis — zuerst die Skizze |
 | 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | offen |
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
@@ -376,6 +386,9 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.7.0** (S109, 2026-10-11): Entscheid W1 b — Loop-Panel und Composer
+  teilen sich die Achse (`lumi::ui::Achse`); W1 a und c verworfen (§3.1);
+  Stufe 6a, Schritt 1 gebaut.
 - **0.6.0** (S108, 2026-10-11): das Zielbild neu gefasst (Patrik): der Loop
   ist ein Arrangement in Takten — Kanäle mit Clips, Editoren als eigene
   Fenster, später Instrument-Clips; L3 neu, L8 a; §1 und §4 neu, Datei in

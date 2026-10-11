@@ -17,6 +17,7 @@
 #pragma once
 
 #include "UI/panels/PanelBase.hpp"
+#include "UI/widgets/Achse.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 
@@ -51,7 +52,12 @@ class Sitzung;
 /// Laenge der Komposition auf ihrer Breite — oder, in die Zeit hineingezoomt,
 /// einen Ausschnitt (S102, Konzept §7). Sie rollt selbst: das Lineal bleibt
 /// oben stehen, die Spalte der Kanalnamen links.
-class Zeitachse : public QWidget
+///
+/// Massstab, Zoom, Rollen, Mausrad, Schwenken und Mitlaufen kommen seit S109
+/// aus der Basis `lumi::ui::Achse` (dieselbe Bedienung bekommt das
+/// Loop-Panel); die Einheit der Basis ist hier die Millisekunde. Die Namen
+/// mit „Ms" und „master" unten sind die der Basis, fuer diese Achse benannt.
+class Zeitachse : public lumi::ui::Achse
 {
     Q_OBJECT
 
@@ -60,9 +66,8 @@ public:
 
     /// Was gezeigt wird; `geladen` false = der Hinweis „keine Komposition".
     void setKomposition(const Komposition& komposition, bool geladen);
-    void setStelle(std::int64_t stelleMs);
     /// Die Stelle, an der die Abspielmarke gerade gezeichnet ist.
-    [[nodiscard]] std::int64_t stelleMs() const { return m_stelleMs; }
+    [[nodiscard]] std::int64_t stelleMs() const { return stelle(); }
     /// Ueberlappung in der Schleife (S99, Entscheid Patrik: beide Fenster
     /// zeigen). `schleife`: Loop ist an — dann sind die ersten und die letzten
     /// Sekunden der Komposition getoent, so weit ihre Ueberlappung reicht.
@@ -217,39 +222,24 @@ public:
     [[nodiscard]] const VisualClip* auswahl() const;
 
     // --- Geometrie (auch fuer Tests) ----------------------------------------
-    [[nodiscard]] int xVon(std::int64_t stelleMs) const;
-    [[nodiscard]] std::int64_t stelleVon(int x) const;
-    /// Mitte der Zeile des Kanals (0 = oberste Zeile).
-    [[nodiscard]] int yVonZeile(int zeile) const;
+    //
+    // `xVon`, `stelleVon`, `yVonZeile`, `zeileOben`, `zeileHoch`, `zeileBei`,
+    // Zoom und Rollen: siehe `lumi::ui::Achse`.
+
     /// Kanal einer Zeile: die Reihenfolge der Datei, der erste Kanal zuoberst
     /// (Entscheid Patrik S95) — im Bild liegt er zuunterst, spaetere darueber.
     [[nodiscard]] int kanalVonZeile(int zeile) const;
 
-    static constexpr int kKopfBreite = 96;   ///< Spalte mit den Kanalnamen
-    static constexpr int kRand = 10;         ///< frei rechts neben dem Ende
-    static constexpr int kLinealHoehe = 24;
-    static constexpr int kZeilenHoehe = 36;
     /// Hier beginnt die Zeile des ersten Kanals: unter dem Lineal liegt die
     /// Zeile der Pegelkurve der ganzen Komposition (S100).
     /// Die Zeile MASTER ist niedriger als ein Kanal: 60 % (Urteil Patrik,
     /// Sichttest S100 M17 — gilt auch fuer kuenftige Master-Zeilen).
     static constexpr int kMasterHoehe = kZeilenHoehe * 60 / 100;
     /// Vier Master-Zeilen (S101, Entscheide Patrik AM1: a, KS1: a): MASTER,
-    /// VISUAL, AUDIO, KARAOKE.
+    /// VISUAL, AUDIO, KARAOKE — die Kopfzeilen der Basis, als Zeilen -4
+    /// (MASTER) bis -1 (KARAOKE), siehe `zeileVon`.
     static constexpr int kMasterZeilen = 4;
     static constexpr int kKanaeleOben = kLinealHoehe + kMasterZeilen * kMasterHoehe;
-    /// Oberkante und Hoehe einer Zeile; negativ = eine Master-Zeile unter dem
-    /// Lineal (-4 MASTER, -3 VISUAL, -2 AUDIO, -1 KARAOKE) — siehe `zeileVon`.
-    /// Im Fenster, also um `rollY` nach oben versetzt: eine Zeile kann unter
-    /// dem Lineal oder unter dem Rand liegen. Die Konstanten oben gelten fuer
-    /// die nicht gerollte Achse in Normalhoehe (100 %).
-    [[nodiscard]] int zeileOben(int zeile) const
-    {
-        return (zeile < 0 ? kLinealHoehe + (zeile + kMasterZeilen) * masterHoch()
-                          : kLinealHoehe + kMasterZeilen * masterHoch() + zeile * kanalHoch()) -
-               m_rollY;
-    }
-    [[nodiscard]] int zeileHoch(int zeile) const { return zeile < 0 ? masterHoch() : kanalHoch(); }
 
     // --- Hoehen-Zoom (S102, Entscheide Patrik ZO1: a, ZO2: a, ZO3: a, ZO9: a) --
     //
@@ -260,101 +250,20 @@ public:
     // Sind die Kanaele niedriger als 24 Pixel (unter 70 %), lassen sich die
     // Punkte der Pegelkurve nicht ziehen — in keiner Zeile; verschieben und an
     // den Kanten ziehen geht weiter. Die Hoehe merkt die App (das Panel).
-    static constexpr int kHoeheMin = 50;
-    static constexpr int kHoeheMax = 300;
-    static constexpr int kHoeheSchritt = 10;  ///< je Raste des Mausrads (von mir gesetzt)
-    [[nodiscard]] int zeilenProzent() const { return m_zeilenProzent; }
-    /// Die Hoehe setzen (auf 50…300 begrenzt). Die Stelle des Inhalts unter
-    /// `yFest` bleibt im Fenster stehen (ZO5: der Mauszeiger); -1 = die
-    /// Oberkante unter dem Lineal.
-    void setZeilenProzent(int prozent, int yFest = -1);
-    /// Die Hoehe eines Kanals und einer Master-Zeile in Pixeln.
-    [[nodiscard]] int kanalHoch() const { return kZeilenHoehe * m_zeilenProzent / 100; }
-    [[nodiscard]] int masterHoch() const { return kanalHoch() * 60 / 100; }
+
+    /// Die Hoehe einer Master-Zeile in Pixeln.
+    [[nodiscard]] int masterHoch() const { return kopfHoch(); }
     /// Lassen sich die Punkte der Pegelkurve (Blenden, Anfasser, Stuecke) ziehen?
     [[nodiscard]] bool kurvenpunkteZiehbar() const { return kanalHoch() >= 24; }
 
-    // --- Zuruecksetzen und Schwenken (S102, Entscheide Patrik ZO7: a, ZO8: a) --
-    //
-    // Mit gedrueckter mittlerer Maustaste laesst sich der Ausschnitt in beide
-    // Richtungen verschieben. „Fit" im Kopf des Panels, Ctrl+0 und der Eintrag
-    // im Rechtsklick-Menue setzen den Zoom zurueck.
-
-    /// Die ganze Laenge auf der Breite, die Zeilen in Normalhoehe (Vorgabe Patrik S100).
-    void setzeZoomZurueck();
-    /// Ist der Zoom irgendwo verstellt?
-    [[nodiscard]] bool zoomVerstellt() const { return !zeitGanz() || m_zeilenProzent != 100; }
-    /// Die Gesten der Zeitachse, eine je Zeile — fuer den Tooltip von „Fit".
-    [[nodiscard]] static QStringList zoomGesten();
-
-    // --- Mitlaufen mit der Abspielmarke (S102, Entscheid Patrik ZO6) ----------
-    //
-    // Hineingezoomt zeigt die Achse nur einen Ausschnitt; laeuft die
-    // Wiedergabe, wandert die Abspielmarke hinaus. Mit Mitlaufen folgt der
-    // Ausschnitt ihr: stetig (die Marke bleibt in der Mitte, die Clips ziehen
-    // unter ihr durch) oder seitenweise (verlaesst die Marke den Ausschnitt,
-    // steht sie danach an seinem linken Rand). Solange eine Maustaste in der
-    // Achse oder an einem ihrer Rollbalken gedrueckt ist, steht der Ausschnitt.
-    enum class Mitlaufen
-    {
-        Aus,
-        Stetig,
-        Seitenweise,
-    };
-    /// Das Panel setzt es je Takt: `Aus`, wenn der Schalter aus ist oder nichts laeuft.
-    void setMitlaufen(Mitlaufen art) { m_mitlaufen = art; }
-    [[nodiscard]] Mitlaufen mitlaufen() const { return m_mitlaufen; }
-    /// Ein Rollbalken wird gezogen (oder losgelassen): so lange laeuft nichts mit.
-    void halteMitlaufen(bool halten) { m_balkenGehalten = halten; }
-    /// Die Zeile unter `y`: negativ = eine Master-Zeile, ab 0 ein Kanal — auch
-    /// eine Zahl hinter dem letzten Kanal (die freie Flaeche darunter).
-    /// `kKeineZeile` = das Lineal; es bleibt beim Rollen stehen und deckt die
-    /// Zeilen, die darunter geraten.
-    static constexpr int kKeineZeile = -1000;
-    [[nodiscard]] int zeileBei(int y) const;
-
-    // --- Rollen (S102, Entscheid Patrik ZO4: a) ------------------------------
-    //
-    // Die Achse fuehrt ihr Rollen selbst: das Lineal bleibt oben stehen, die
-    // Master-Zeilen und die Kanaele rollen darunter. Den Rollbalken stellt der
-    // `ZeitachsenRahmen`; ohne ihn rollt das Mausrad trotzdem.
-
-    /// So viele Pixel ist der Inhalt nach oben gerollt (0 = ganz oben).
-    [[nodiscard]] int rollY() const { return m_rollY; }
-    /// Der groesste Wert fuer `rollY`: so viel Inhalt passt nicht ins Fenster.
-    [[nodiscard]] int rollYMax() const;
-    /// Rollen; der Wert wird auf 0…`rollYMax` begrenzt.
-    void setRollY(int y);
-    /// Lineal, Master-Zeilen und alle Kanaele, nicht gerollt — im Bearbeiten
-    /// eine Zeile mehr (die Flaeche, auf der ein neuer Kanal entsteht).
-    [[nodiscard]] int inhaltHoehe() const;
-
     // --- Zeit-Zoom (S102, Entscheide Patrik ZO1: a, ZO5: a, ZO9: a) -----------
     //
-    // Ohne Zoom zeigt die Achse die ganze Laenge auf ihrer Breite („ganz") —
-    // weiter heraus geht es nicht. Hineingezoomt steht der Massstab fest
-    // (Millisekunden je Pixel), auch wenn die Komposition waechst oder das
-    // Fenster breiter wird; passt dann wieder alles hinein, ist sie wieder
-    // „ganz". Die Spalte der Kanalnamen bleibt beim Rollen links stehen.
     // Gemerkt wird der Zeit-Zoom nicht: eine geladene Komposition beginnt ganz.
 
     /// Der feinste Massstab: eine Millisekunde je Pixel (von mir gesetzt).
     static constexpr double kFeinsteMsJePixel = 1.0;
-    /// Ein Schritt des Mausrads: Faktor 1,25 (von mir gesetzt).
-    static constexpr double kZoomSchritt = 1.25;
     /// Der Massstab, der gerade gilt.
-    [[nodiscard]] double msJePixel() const;
-    /// Zeigt die Achse die ganze Laenge auf ihrer Breite?
-    [[nodiscard]] bool zeitGanz() const { return m_msJePixel <= 0.0; }
-    /// Die Zeit zoomen: `faktor` ueber 1 = hinein. Die Zeit unter `xFest`
-    /// bleibt an ihrer Stelle im Fenster (ZO5: der Mauszeiger).
-    void zoomeZeit(double faktor, int xFest);
-    /// Zurueck auf die ganze Laenge.
-    void zeigeZeitGanz();
-    /// So viele Pixel ist die Zeit nach links gerollt (0 = der Anfang steht links).
-    [[nodiscard]] int rollX() const { return m_rollX; }
-    [[nodiscard]] int rollXMax() const;
-    void setRollX(int x);
+    [[nodiscard]] double msJePixel() const { return einheitJePixel(); }
 
     // --- die Pegelkurve der ganzen Komposition (S100, Entscheid Patrik F7 c) --
     //
@@ -413,14 +322,12 @@ Q_SIGNALS:
     void hineingezogen(const QStringList& dateien);
     /// Die Kurve dieses Teils des angeklickten Clips soll in den Curve Editor.
     void kurveOeffnen(lumi::composer::Teil teil);
-    /// `rollY` oder `rollYMax` haben sich geaendert (fuer den Rollbalken).
-    void rollenGeaendert();
-    /// Die Hoehe der Zeilen ist anders (das Panel merkt sie sich).
-    void zeilenProzentGeaendert(int prozent);
 
 protected:
-    void wheelEvent(QWheelEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
+    [[nodiscard]] bool istGeladen() const override { return m_geladen; }
+    /// Die Kanaele — im Bearbeiten eine Zeile mehr (die Flaeche, auf der ein
+    /// neuer Kanal entsteht), mindestens zwei.
+    [[nodiscard]] int zeilenZahl() const override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
     void dragLeaveEvent(QDragLeaveEvent* event) override;
@@ -433,8 +340,6 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     bool event(QEvent* event) override;
-    [[nodiscard]] QSize sizeHint() const override;
-    [[nodiscard]] QSize minimumSizeHint() const override;
 
 public:
     /// So viel Zeit zeigt die Achse fuer diese Komposition: ihre Laenge und
@@ -445,31 +350,8 @@ private:
     void loescheAuswahl();
     /// Eine selbst erzeugte Fassung zeigen und die Auswahl setzen.
     void uebernimm(const Komposition& neu, int kanal, int clip);
-    /// Nach einer Aenderung von Inhalt oder Groesse: `rollY` in seine Grenzen
-    /// holen und `rollenGeaendert` melden.
-    void passeRollenAn();
-    int m_rollY = 0;
-    int m_rollX = 0;
-    int m_zeilenProzent = 100;
-    /// Passt eine Zeile Schrift in diese Hoehe? Sonst bleibt der Name weg.
-    [[nodiscard]] bool namePasst(int hoch) const;
     /// Der Name, der an `ort` stuende, aber nicht gezeichnet ist (fuer den Tooltip); leer = keiner.
     [[nodiscard]] QString versteckterName(QPoint ort) const;
-    int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
-    Mitlaufen m_mitlaufen = Mitlaufen::Aus;
-    bool m_tasteUnten = false;      ///< irgendeine Maustaste ist in der Achse gedrueckt
-    bool m_balkenGehalten = false;  ///< ein Rollbalken wird gezogen
-    /// Den Ausschnitt der Abspielmarke nachfuehren, wenn Mitlaufen es verlangt.
-    void folgeDerMarke();
-    bool m_schwenkt = false;  ///< die mittlere Maustaste ist gedrueckt
-    QPoint m_schwenkStart;    ///< die Maus beim Druck
-    QPoint m_schwenkRoll;     ///< `rollX` / `rollY` beim Druck
-    /// Das Untermenue „Zoom" an `menu` haengen.
-    void fuelleZoomMenue(QMenu& menu);
-    double m_msJePixel = 0.0;  ///< der feste Massstab; 0 = die ganze Laenge auf der Breite
-    /// Der Massstab, bei dem die ganze Laenge auf die Breite passt.
-    [[nodiscard]] double msJePixelGanz() const;
-    [[nodiscard]] int zeitBreite() const;
     [[nodiscard]] QRect clipRechteck(int zeile, const VisualClip& clip) const;
     /// Der Clip an (Kanal, Clip) in `in`, nullptr = gibt es nicht. Fuer
     /// `kMaster` die Kurve der Komposition als Clip — sie wird dafuer in
@@ -482,9 +364,7 @@ private:
     Komposition m_komposition;
     bool m_geladen = false;
     bool m_an = false;
-    std::int64_t m_laengeMs = 0;
-    std::int64_t m_stelleMs = 0;
-    bool m_schleife = false;         ///< Loop ist an: die Fenster der Ueberlappung zeigen
+    bool m_schleife = false;        ///< Loop ist an: die Fenster der Ueberlappung zeigen
     std::int64_t m_zweiteMs = -1;    ///< die Stelle im hinteren Fenster, -1 = keine
     int m_kanal = -1;
     int m_clip = -1;
@@ -553,25 +433,14 @@ private:
     QHash<QString, Huelle> m_huellen;
 };
 
-/// Die Zeitachse mit ihrem Rollbalken (S102, Entscheid Patrik ZO4: a): der
-/// Balken steht rechts neben der Achse und erscheint nur, wenn nicht alle
-/// Zeilen ins Fenster passen. Er und die Achse halten einander im Gleichstand.
-class ZeitachsenRahmen : public QWidget
+/// Die Zeitachse mit ihren Rollbalken (S102, Entscheid Patrik ZO4: a) — der
+/// `lumi::ui::AchsenRahmen` mit den Objektnamen des Composers.
+class ZeitachsenRahmen : public lumi::ui::AchsenRahmen
 {
     Q_OBJECT
 
 public:
     explicit ZeitachsenRahmen(Zeitachse* achse, QWidget* parent = nullptr);
-    [[nodiscard]] QScrollBar* balkenSenkrecht() const { return m_senkrecht; }
-    /// Unter der Achse; erscheint nur, wenn in die Zeit hineingezoomt ist.
-    [[nodiscard]] QScrollBar* balkenWaagrecht() const { return m_waagrecht; }
-
-private:
-    void gleicheAb();
-
-    Zeitachse* m_achse = nullptr;
-    QScrollBar* m_senkrecht = nullptr;
-    QScrollBar* m_waagrecht = nullptr;
 };
 
 class KurvenFenster;

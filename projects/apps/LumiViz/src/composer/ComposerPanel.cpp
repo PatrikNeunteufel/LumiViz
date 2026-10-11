@@ -160,7 +160,7 @@ private:
 // Zeitachse
 // =============================================================================
 
-Zeitachse::Zeitachse(QWidget* parent) : QWidget(parent)
+Zeitachse::Zeitachse(QWidget* parent) : lumi::ui::Achse(kMasterZeilen, kFeinsteMsJePixel, parent)
 {
     setObjectName(QStringLiteral("composerZeitachse"));
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);  // sie rollt selbst (S102)
@@ -173,42 +173,17 @@ void Zeitachse::setKomposition(const Komposition& komposition, bool geladen)
 {
     m_komposition = komposition;
     m_geladen = geladen;
-    m_laengeMs = geladen ? anzeigeLaenge(komposition) : 0;
+    setzeLaenge(geladen ? anzeigeLaenge(komposition) : 0);
     m_kanal = -1;
     m_clip = -1;
-    m_stelleMs = 0;
     m_markeKanal = -1;
-    m_rollY = 0;  // eine andere Komposition beginnt oben —
-    m_rollX = 0;  // und mit der ganzen Laenge auf der Breite (Entscheid Patrik ZO9: a)
-    m_msJePixel = 0.0;
+    // eine andere Komposition beginnt am Anfang, oben und mit der ganzen
+    // Laenge auf der Breite (Entscheid Patrik ZO9: a)
+    beginneNeu();
     updateGeometry();
     passeRollenAn();
     update();
     Q_EMIT auswahlGeaendert();
-}
-
-void Zeitachse::setStelle(std::int64_t stelleMs)
-{
-    if (stelleMs == m_stelleMs) return;
-    m_stelleMs = stelleMs;
-    folgeDerMarke();
-    update();
-}
-
-void Zeitachse::folgeDerMarke()
-{
-    if (m_mitlaufen == Mitlaufen::Aus || zeitGanz() || m_tasteUnten || m_balkenGehalten) return;
-    const int breite = zeitBreite();
-    const int imInhalt = static_cast<int>(std::floor(static_cast<double>(m_stelleMs) / msJePixel() + 0.5));
-    if (m_mitlaufen == Mitlaufen::Stetig)
-    {
-        // die Marke in der Mitte — am Anfang und am Ende der Komposition laeuft sie selbst
-        setRollX(imInhalt - breite / 2);
-        return;
-    }
-    // seitenweise: erst wenn die Marke den Ausschnitt verlaesst, dann steht sie links
-    const int imFenster = imInhalt - m_rollX;
-    if (imFenster < 0 || imFenster >= breite) setRollX(imInhalt);
 }
 
 void Zeitachse::setSchleife(bool schleife, std::int64_t zweiteMs)
@@ -274,129 +249,6 @@ std::int64_t Zeitachse::anzeigeLaenge(const Komposition& komposition)
     return std::max<std::int64_t>(30000, laenge + std::max<std::int64_t>(10000, laenge / 5));
 }
 
-int Zeitachse::zeitBreite() const
-{
-    return std::max(1, width() - kKopfBreite - kRand);
-}
-
-int Zeitachse::xVon(std::int64_t stelleMs) const
-{
-    if (m_laengeMs <= 0) return kKopfBreite;
-    if (zeitGanz())
-        return kKopfBreite + static_cast<int>(static_cast<double>(stelleMs) /
-                                              static_cast<double>(m_laengeMs) * zeitBreite() + 0.5);
-    // hineingezoomt (S102): der feste Massstab, um `rollX` nach links versetzt
-    return kKopfBreite + static_cast<int>(std::floor(static_cast<double>(stelleMs) / msJePixel() + 0.5)) -
-           m_rollX;
-}
-
-std::int64_t Zeitachse::stelleVon(int x) const
-{
-    if (m_laengeMs <= 0) return 0;
-    if (zeitGanz())
-    {
-        const double anteil = static_cast<double>(x - kKopfBreite) / static_cast<double>(zeitBreite());
-        return std::clamp<std::int64_t>(
-            static_cast<std::int64_t>(anteil * static_cast<double>(m_laengeMs) + 0.5), 0, m_laengeMs);
-    }
-    const double ms = static_cast<double>(x - kKopfBreite + m_rollX) * msJePixel();
-    return std::clamp<std::int64_t>(static_cast<std::int64_t>(std::floor(ms + 0.5)), 0, m_laengeMs);
-}
-
-double Zeitachse::msJePixelGanz() const
-{
-    return m_laengeMs > 0 ? static_cast<double>(m_laengeMs) / zeitBreite() : 1.0;
-}
-
-double Zeitachse::msJePixel() const
-{
-    const double ganz = msJePixelGanz();
-    return m_msJePixel > 0.0 ? std::min(m_msJePixel, ganz) : ganz;
-}
-
-int Zeitachse::rollXMax() const
-{
-    if (zeitGanz() || m_laengeMs <= 0) return 0;
-    const int inhalt = static_cast<int>(std::ceil(static_cast<double>(m_laengeMs) / msJePixel()));
-    return std::max(0, inhalt - zeitBreite());
-}
-
-void Zeitachse::setRollX(int x)
-{
-    x = std::clamp(x, 0, rollXMax());
-    if (x == m_rollX) return;
-    m_rollX = x;
-    update();
-    Q_EMIT rollenGeaendert();
-}
-
-void Zeitachse::zoomeZeit(double faktor, int xFest)
-{
-    if (!m_geladen || m_laengeMs <= 0 || faktor <= 0.0) return;
-    const double ganz = msJePixelGanz();
-    const double alt = msJePixel();
-    // der Festpunkt: die Zeit unter `xFest` — ueber der Spalte der Kanalnamen
-    // die an deren rechter Kante
-    const int x = std::max(xFest, kKopfBreite);
-    const double zeit = static_cast<double>(x - kKopfBreite + m_rollX) * alt;
-    const double neu = std::max(kFeinsteMsJePixel, alt / faktor);
-    if (neu >= ganz * 0.999)
-    {
-        // weiter heraus als die ganze Laenge geht es nicht
-        m_msJePixel = 0.0;
-        m_rollX = 0;
-    }
-    else
-    {
-        m_msJePixel = neu;
-        m_rollX = std::clamp(static_cast<int>(std::floor(zeit / neu + 0.5)) - (x - kKopfBreite), 0, rollXMax());
-    }
-    update();
-    Q_EMIT rollenGeaendert();
-}
-
-void Zeitachse::setzeZoomZurueck()
-{
-    zeigeZeitGanz();
-    setZeilenProzent(100);
-}
-
-QStringList Zeitachse::zoomGesten()
-{
-    return {tr("Ctrl+Wheel — zoom the time"),
-            tr("Alt+Wheel — zoom the row height"),
-            tr("Ctrl+Alt+Wheel — zoom both"),
-            tr("Wheel — scroll up and down"),
-            tr("Shift+Wheel — scroll sideways"),
-            tr("Middle mouse button — drag the view")};
-}
-
-void Zeitachse::fuelleZoomMenue(QMenu& menu)
-{
-    QMenu* zoom = menu.addMenu(tr("Zoom"));
-    QAction* fit = zoom->addAction(tr("Fit"), this, [this] { setzeZoomZurueck(); });
-    fit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_0));  // nur als Anzeige — das Kuerzel fuehrt das Panel
-    fit->setShortcutVisibleInContextMenu(true);
-    fit->setEnabled(zoomVerstellt());
-    zoom->addSeparator();
-    // die Gesten zum Nachlesen (Entscheid Patrik ZO8: a) — grau, nichts zum Anklicken
-    for (const QString& geste : zoomGesten()) zoom->addAction(geste)->setEnabled(false);
-}
-
-void Zeitachse::zeigeZeitGanz()
-{
-    if (zeitGanz()) return;
-    m_msJePixel = 0.0;
-    m_rollX = 0;
-    update();
-    Q_EMIT rollenGeaendert();
-}
-
-int Zeitachse::yVonZeile(int zeile) const
-{
-    return zeileOben(zeile) + zeileHoch(zeile) / 2;
-}
-
 int Zeitachse::kanalVonZeile(int zeile) const
 {
     return zeile;  // CH1 oben (Entscheid Patrik S95) — im Stapel liegt er zuunterst
@@ -409,38 +261,10 @@ QRect Zeitachse::clipRechteck(int zeile, const VisualClip& clip) const
     return {links, zeileOben(zeile) + 3, std::max(2, rechts - links), zeileHoch(zeile) - 6};
 }
 
-QSize Zeitachse::sizeHint() const
-{
-    return {640, inhaltHoehe()};
-}
-
-QSize Zeitachse::minimumSizeHint() const
-{
-    // das Lineal und zwei Zeilen: was nicht hineinpasst, rollt (S102)
-    return {kKopfBreite + 160, kLinealHoehe + 2 * kZeilenHoehe};
-}
-
-int Zeitachse::inhaltHoehe() const
+int Zeitachse::zeilenZahl() const
 {
     // im Bearbeiten eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht
-    const int zeilen = std::max<int>(2, static_cast<int>(m_komposition.kanaele.size()) +
-                                            (m_bearbeiten ? 1 : 0));
-    return kLinealHoehe + kMasterZeilen * masterHoch() + zeilen * kanalHoch() + 4;
-}
-
-int Zeitachse::zeileBei(int y) const
-{
-    if (y < kLinealHoehe) return kKeineZeile;
-    const int imInhalt = y + m_rollY;
-    const int kanaeleOben = kLinealHoehe + kMasterZeilen * masterHoch();
-    if (imInhalt < kanaeleOben)
-        return std::clamp((imInhalt - kLinealHoehe) / masterHoch(), 0, kMasterZeilen - 1) - kMasterZeilen;
-    return (imInhalt - kanaeleOben) / kanalHoch();
-}
-
-bool Zeitachse::namePasst(int hoch) const
-{
-    return hoch >= fontMetrics().ascent();  // die Unterlaengen duerfen ueberstehen
+    return std::max<int>(2, static_cast<int>(m_komposition.kanaele.size()) + (m_bearbeiten ? 1 : 0));
 }
 
 QString Zeitachse::versteckterName(QPoint ort) const
@@ -463,117 +287,6 @@ QString Zeitachse::versteckterName(QPoint ort) const
         if (r.contains(ort)) return namePasst(r.height()) ? QString() : QFileInfo(clip.datei).completeBaseName();
     }
     return {};
-}
-
-void Zeitachse::setZeilenProzent(int prozent, int yFest)
-{
-    prozent = std::clamp(prozent, kHoeheMin, kHoeheMax);
-    if (prozent == m_zeilenProzent) return;
-    // der Festpunkt: welche Zeile unter `yFest` liegt, und wie weit in ihr
-    const int y = std::max(yFest, kLinealHoehe);
-    const int zeile = zeileBei(y);
-    const double anteil = static_cast<double>(y - zeileOben(zeile)) / zeileHoch(zeile);
-    m_zeilenProzent = prozent;
-    m_rollY = 0;  // `zeileOben` zaehlt jetzt vom Anfang des Inhalts
-    m_rollY = std::clamp(zeileOben(zeile) + static_cast<int>(anteil * zeileHoch(zeile) + 0.5) - y, 0,
-                         rollYMax());
-    updateGeometry();
-    update();
-    Q_EMIT rollenGeaendert();
-    Q_EMIT zeilenProzentGeaendert(m_zeilenProzent);
-}
-
-int Zeitachse::rollYMax() const
-{
-    return std::max(0, inhaltHoehe() - height());
-}
-
-void Zeitachse::setRollY(int y)
-{
-    y = std::clamp(y, 0, rollYMax());
-    if (y == m_rollY) return;
-    m_rollY = y;
-    update();
-    Q_EMIT rollenGeaendert();
-}
-
-void Zeitachse::passeRollenAn()
-{
-    m_rollY = std::clamp(m_rollY, 0, rollYMax());
-    // passt die ganze Laenge beim festen Massstab wieder auf die Breite (das
-    // Fenster ist breiter, die Komposition kuerzer geworden), ist sie „ganz"
-    if (m_msJePixel > 0.0 && m_msJePixel >= msJePixelGanz() * 0.999) m_msJePixel = 0.0;
-    m_rollX = std::clamp(m_rollX, 0, rollXMax());
-    Q_EMIT rollenGeaendert();
-}
-
-void Zeitachse::resizeEvent(QResizeEvent* event)
-{
-    QWidget::resizeEvent(event);
-    passeRollenAn();
-}
-
-void Zeitachse::wheelEvent(QWheelEvent* event)
-{
-    // Entscheid Patrik ZO1: a (S102) — ohne Taste senkrecht rollen, Shift+Rad
-    // waagrecht, Ctrl+Rad die Zeit zoomen, Alt+Rad die Zeilenhoehe,
-    // Ctrl+Alt+Rad beides.
-    const QPoint grad = event->angleDelta();
-    const Qt::KeyboardModifiers tasten =
-        event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
-    // mit einer Taste kann das System das Rad als waagrecht melden: es zaehlt die Achse, die sich bewegt
-    const int rad = grad.y() != 0 ? grad.y() : grad.x();
-
-    const bool zeit = tasten == Qt::ControlModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
-    const bool hoehe = tasten == Qt::AltModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
-    if (zeit || hoehe)
-    {
-        if (!m_geladen || rad == 0)
-        {
-            event->ignore();
-            return;
-        }
-        if (zeit) zoomeZeit(std::pow(kZoomSchritt, rad / 120.0), static_cast<int>(event->position().x()));
-        if (hoehe)
-        {
-            // die Hoehe geht in ganzen Schritten: ein feines Rad sammelt, bis es eine Raste ist
-            m_radRest += rad;
-            const int rasten = m_radRest / 120;
-            m_radRest -= rasten * 120;
-            if (rasten != 0)
-                setZeilenProzent(m_zeilenProzent + rasten * kHoeheSchritt,
-                                 static_cast<int>(event->position().y()));
-            // Alt allein losgelassen schaltet unter Windows die Menueleiste auf
-            // die Tastatur. Qt laesst das, sobald sich zwischen Druck und
-            // Loslassen die Maus bewegt hat — das Rad zaehlt dabei nicht. Eine
-            // Mausbewegung an ein Objekt ohne Wirkung holt es nach.
-            QObject niemand;
-            QMouseEvent bewegung(QEvent::MouseMove, event->position(), event->globalPosition(), Qt::NoButton,
-                                 event->buttons(), event->modifiers());
-            QCoreApplication::sendEvent(&niemand, &bewegung);
-        }
-        event->accept();  // auch am Anschlag: das Rad soll dann nichts anderes rollen
-        return;
-    }
-    // 60 Pixel je Raste — etwa so weit wie die rollende Flaeche, in der die Achse bis S101 lag
-    const bool quer = tasten == Qt::ShiftModifier ||
-                      (tasten == Qt::NoModifier && std::abs(grad.x()) > std::abs(grad.y()));
-    if (quer)
-    {
-        const int weg = tasten == Qt::ShiftModifier ? rad : grad.x();
-        const int vorher = m_rollX;
-        setRollX(m_rollX - weg * 60 / 120);
-        event->setAccepted(m_rollX != vorher);
-        return;
-    }
-    if (tasten != Qt::NoModifier || rollYMax() <= 0 || grad.y() == 0)
-    {
-        event->ignore();
-        return;
-    }
-    const int vorher = m_rollY;
-    setRollY(m_rollY - grad.y() * 60 / 120);
-    event->setAccepted(m_rollY != vorher);
 }
 
 void Zeitachse::paintEvent(QPaintEvent*)
@@ -604,44 +317,27 @@ void Zeitachse::paintEvent(QPaintEvent*)
     // beide laeuft (Striche, Ende, Toenung, Marken), steht in `unterlage` und
     // `auflage` und wird in beiden Gaengen gezeichnet; der Ausschnitt laesst
     // jeweils nur seinen Teil durch.
-    const QRect linealFlaeche(0, 0, width(), kLinealHoehe);
-    const QRect zeilenFlaeche(0, kLinealHoehe, width(), std::max(0, height() - kLinealHoehe));
+    const Flaechen ausschnitte = flaechen();
+    const QRect& linealFlaeche = ausschnitte.lineal;
+    const QRect& zeilenFlaeche = ausschnitte.zeilen;
     // S102, Zeit-Zoom: die Spalte der Kanalnamen bleibt beim waagrechten Rollen
     // stehen. Alles, was an einer Zeit haengt, wird deshalb nur rechts von ihr
     // gezeichnet (ab ihrer Trennlinie — dort steht die Abspielmarke bei null).
-    const QRect linealZeit = linealFlaeche.adjusted(kKopfBreite - 1, 0, 0, 0);
-    const QRect zeilenZeit = zeilenFlaeche.adjusted(kKopfBreite - 1, 0, 0, 0);
+    const QRect& linealZeit = ausschnitte.linealZeit;
+    const QRect& zeilenZeit = ausschnitte.zeilenZeit;
 
-    // die Striche nur im sichtbaren Stueck Zeit: hineingezoomt waeren es sonst Tausende
     const std::int64_t schrittMs = strichMs(msJePixel());
-    const std::int64_t strichVon = stelleVon(kKopfBreite) / schrittMs * schrittMs;
-    const std::int64_t strichBis = std::min(m_laengeMs, stelleVon(width()) + schrittMs);
-    QFont klein = font();
-    klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
     const std::int64_t endeMs = m_komposition.laenge();
     const int xEnde = xVon(endeMs);
     const std::int64_t fensterMs = m_schleife ? m_komposition.ueberlappung() : 0;
 
     const auto unterlage = [&] {
         // --- die Striche des Lineals, mit ihrer Beschriftung
-        p.setFont(klein);
-        for (std::int64_t ms = strichVon; ms <= strichBis; ms += schrittMs)
-        {
-            const int x = xVon(ms);
-            p.setPen(linie);
-            p.drawLine(x, kLinealHoehe - 6, x, unten);
-            p.setPen(text);
+        zeichneLinealStriche(p, schrittMs, unten, [schrittMs](std::int64_t ms) {
             // unter einer Sekunde Abstand mit der Zehntelsekunde
-            const QString marke = schrittMs < 1000
-                                      ? ComposerPanel::zeitText(ms)
-                                      : ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
-            // am rechten Rand steht die Beschriftung links vom Strich, sonst waere sie abgeschnitten
-            if (x + 6 + p.fontMetrics().horizontalAdvance(marke) > width())
-                p.drawText(QRect(x - 83, 0, 80, kLinealHoehe - 4), Qt::AlignRight | Qt::AlignVCenter, marke);
-            else
-                p.drawText(QRect(x + 3, 0, 80, kLinealHoehe - 4), Qt::AlignLeft | Qt::AlignVCenter, marke);
-        }
-        p.setFont(font());
+            return schrittMs < 1000 ? ComposerPanel::zeitText(ms)
+                                    : ComposerPanel::zeitText(ms).section(QLatin1Char('.'), 0, 0);
+        });
         // --- das Ende: folgt es dem letzten Clip, eine duenne Linie; ist es fest
         //     gesetzt, eine eigene Marke — und die leere Strecke davor schraffiert
         if (m_komposition.laengeMs > 0)
@@ -706,7 +402,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
             const int xZweite = xVon(m_zweiteMs);
             p.drawLine(xZweite, 0, xZweite, unten);
         }
-        const int x = xVon(m_stelleMs);
+        const int x = xVon(stelle());
         QPen marke(QColor(255, 90, 70), 2.0);
         if (!m_an) marke.setStyle(Qt::DashLine);
         p.setPen(marke);
@@ -1029,8 +725,8 @@ void Zeitachse::zeigeBearbeitet(const Komposition& komposition)
     m_griff = Griff::Keiner;
     m_zugLaeuft = false;
     m_komposition = komposition;
-    m_laengeMs = anzeigeLaenge(komposition);
-    m_stelleMs = std::min(m_stelleMs, komposition.laenge());
+    setzeLaenge(anzeigeLaenge(komposition));
+    setzeStelleStill(std::min(stelle(), komposition.laenge()));
     if (auswahl() == nullptr)  // den Clip gibt es nicht mehr
     {
         m_kanal = -1;
@@ -1048,7 +744,7 @@ std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int au
 {
     // so viele Millisekunden sind acht Pixel
     const std::int64_t nah =
-        m_laengeMs > 0 ? static_cast<std::int64_t>(8.0 * msJePixel())
+        laenge() > 0 ? static_cast<std::int64_t>(8.0 * msJePixel())
                        : 0;
     std::int64_t beste = -1;
     std::int64_t abstand = nah + 1;
@@ -1070,7 +766,7 @@ std::int64_t Zeitachse::raste(std::int64_t zeitMs, const Komposition& in, int au
             pruefe(clips[static_cast<std::size_t>(c)].endeMs);
         }
     }
-    pruefe(m_stelleMs);
+    pruefe(stelle());
     if (beste >= 0) return beste;
     const auto raster = static_cast<std::int64_t>(in.rasterSekunden * 1000.0 + 0.5);
     if (raster <= 0) return zeitMs;
@@ -1357,16 +1053,13 @@ void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
 
 void Zeitachse::mousePressEvent(QMouseEvent* event)
 {
-    m_tasteUnten = true;  // so lange laeuft der Ausschnitt nicht mit (ZO6)
+    merkeTaste(true);  // so lange laeuft der Ausschnitt nicht mit (ZO6)
     // Schwenken (S102, Entscheid Patrik ZO7: a): die mittlere Maustaste zieht
     // den Ausschnitt — nicht mitten in einem anderen Zug
     if (m_geladen && event->button() == Qt::MiddleButton && m_griff == Griff::Keiner && !m_zieht &&
         m_kanalZug < 0)
     {
-        m_schwenkt = true;
-        m_schwenkStart = event->position().toPoint();
-        m_schwenkRoll = QPoint(m_rollX, m_rollY);
-        setCursor(Qt::ClosedHandCursor);
+        beginneSchwenken(event->position().toPoint());
         return;
     }
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -1554,7 +1247,7 @@ void Zeitachse::zieheZu(QPoint ort, Qt::KeyboardModifiers tasten)
     }
     m_kanal = ziel;
     m_clip = platz;
-    // m_laengeMs bleibt im Zug, wie es war: aenderte sich der Massstab unter
+    // die Laenge der Achse bleibt im Zug, wie sie war: aenderte sich der Massstab unter
     // der Maus, liefe der Clip ihr davon. Neu gemessen wird beim Loslassen.
     update();
 }
@@ -1569,7 +1262,7 @@ void Zeitachse::brichZugAb()
         m_komposition = m_vorZug;
         m_kanal = m_zugKanal;
         m_clip = m_zugClip;
-        m_laengeMs = anzeigeLaenge(m_komposition);
+        setzeLaenge(anzeigeLaenge(m_komposition));
         passeRollenAn();
     }
     m_griff = Griff::Keiner;
@@ -1580,11 +1273,9 @@ void Zeitachse::brichZugAb()
 void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
-    if (m_schwenkt)
+    if (schwenkt())
     {
-        // der Inhalt folgt der Maus: nach rechts gezogen rollt er zurueck
-        setRollX(m_schwenkRoll.x() - (ort.x() - m_schwenkStart.x()));
-        setRollY(m_schwenkRoll.y() - (ort.y() - m_schwenkStart.y()));
+        schwenkeZu(ort);
         return;
     }
     // die Zeit unter dem Zeiger, solange er im Lineal steht (Wunsch Patrik S98)
@@ -1632,12 +1323,11 @@ void Zeitachse::mouseMoveEvent(QMouseEvent* event)
 
 void Zeitachse::mouseReleaseEvent(QMouseEvent* event)
 {
-    m_tasteUnten = event->buttons() != Qt::NoButton;
-    if (m_schwenkt)
+    merkeTaste(event->buttons() != Qt::NoButton);
+    if (schwenkt())
     {
         if (event->button() != Qt::MiddleButton) return;  // eine andere Taste: das Schwenken laeuft weiter
-        m_schwenkt = false;
-        unsetCursor();
+        beendeSchwenken();
         return;
     }
     m_zieht = false;
@@ -1658,7 +1348,7 @@ void Zeitachse::mouseReleaseEvent(QMouseEvent* event)
     m_griff = Griff::Keiner;
     m_zugLaeuft = false;
     if (!gezogen) return;
-    m_laengeMs = anzeigeLaenge(m_komposition);
+    setzeLaenge(anzeigeLaenge(m_komposition));
     passeRollenAn();
     update();
     if (gleich(m_komposition, m_vorZug)) return;
@@ -1720,7 +1410,7 @@ void Zeitachse::loescheAuswahl()
 void Zeitachse::uebernimm(const Komposition& neu, int kanal, int clip)
 {
     m_komposition = neu;
-    m_laengeMs = anzeigeLaenge(neu);
+    setzeLaenge(anzeigeLaenge(neu));
     m_kanal = kanal;
     m_clip = clip;
     if (m_markeKanal >= static_cast<int>(neu.kanaele.size())) m_markeKanal = -1;
@@ -2238,56 +1928,11 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
 // ZeitachsenRahmen
 // =============================================================================
 
-ZeitachsenRahmen::ZeitachsenRahmen(Zeitachse* achse, QWidget* parent) : QWidget(parent), m_achse(achse)
+ZeitachsenRahmen::ZeitachsenRahmen(Zeitachse* achse, QWidget* parent) : lumi::ui::AchsenRahmen(achse, parent)
 {
     setObjectName(QStringLiteral("composerZeitachsenRahmen"));
-    m_senkrecht = new QScrollBar(Qt::Vertical, this);
-    m_senkrecht->setObjectName(QStringLiteral("composerRollenSenkrecht"));
-    m_senkrecht->setSingleStep(20);
-    m_waagrecht = new QScrollBar(Qt::Horizontal, this);
-    m_waagrecht->setObjectName(QStringLiteral("composerRollenWaagrecht"));
-    m_waagrecht->setSingleStep(20);
-    auto* gitter = new QGridLayout(this);
-    gitter->setContentsMargins(0, 0, 0, 0);
-    gitter->setSpacing(0);
-    gitter->addWidget(achse, 0, 0);
-    gitter->addWidget(m_senkrecht, 0, 1);
-    gitter->addWidget(m_waagrecht, 1, 0);
-    gitter->setRowStretch(0, 1);
-    gitter->setColumnStretch(0, 1);
-    connect(achse, &Zeitachse::rollenGeaendert, this, &ZeitachsenRahmen::gleicheAb);
-    connect(m_senkrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollY);
-    connect(m_waagrecht, &QScrollBar::valueChanged, achse, &Zeitachse::setRollX);
-    // ein gezogener Balken haelt das Mitlaufen an — sonst zoege die Abspielmarke ihn zurueck
-    for (QScrollBar* balken : {m_senkrecht, m_waagrecht})
-    {
-        connect(balken, &QScrollBar::sliderPressed, achse, [achse] { achse->halteMitlaufen(true); });
-        connect(balken, &QScrollBar::sliderReleased, achse, [achse] { achse->halteMitlaufen(false); });
-    }
-    gleicheAb();
-}
-
-void ZeitachsenRahmen::gleicheAb()
-{
-    const int max = m_achse->rollYMax();
-    {
-        const QSignalBlocker ruhe(m_senkrecht);
-        m_senkrecht->setRange(0, max);
-        // eine Seite: was unter dem Lineal zu sehen ist
-        m_senkrecht->setPageStep(std::max(1, m_achse->height() - Zeitachse::kLinealHoehe));
-        m_senkrecht->setValue(m_achse->rollY());
-    }
-    m_senkrecht->setVisible(max > 0);  // nur, wenn nicht alle Zeilen ins Fenster passen
-
-    const int maxX = m_achse->rollXMax();
-    {
-        const QSignalBlocker ruhe(m_waagrecht);
-        m_waagrecht->setRange(0, maxX);
-        // eine Seite: die Zeit, die rechts der Kanalnamen zu sehen ist
-        m_waagrecht->setPageStep(std::max(1, m_achse->width() - Zeitachse::kKopfBreite));
-        m_waagrecht->setValue(m_achse->rollX());
-    }
-    m_waagrecht->setVisible(maxX > 0);  // nur, wenn in die Zeit hineingezoomt ist
+    balkenSenkrecht()->setObjectName(QStringLiteral("composerRollenSenkrecht"));
+    balkenWaagrecht()->setObjectName(QStringLiteral("composerRollenWaagrecht"));
 }
 
 // =============================================================================
