@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.8.0
+> **Version:** 0.9.0
 > **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -120,9 +120,10 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 
 - **Das Kit ist klein** (Patrik S108: klingt gut, ist aber noch eine kleine
   Sammlung): weitere Klänge mit demselben Skript — welche, nennt Patrik.
-- **Der Drum-Editor** als eigenes Fenster: das Raster ist als Skizze
-  gebilligt (Patrik S108: „der pattern editor passt so"). Offen daraus:
-  wohin mit dem Panorama je Spur; lange Muster rollen oder stauchen.
+- **Der Drum-Editor** als eigenes Fenster: die Skizze ist gebilligt (Patrik
+  S109), gebaut in Stufe 6b (§4d) — im Programm noch nicht gesehen. Mit der
+  Skizze entschieden: das Panorama als zweiter Schieber in jeder Spurzeile;
+  lange Muster rollen, sie stauchen nicht.
 - **Das Loop-Panel mit Kanälen und Clips:** die Skizze ist gebilligt
   (Patrik S109), gebaut in Stufe 6a (§4c) — im Programm noch nicht gesehen.
 - **Der Audio Browser zeigt auch `.lvloop`** (Wunsch Patrik S108): Doppelklick
@@ -322,7 +323,8 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 | Geste | Wirkung |
 |---|---|
 | Rechtsklick auf eine freie Stelle im Kanal | **New drumkit clip** — eine neue, leere Basis „Pattern N", 4 Takte; grau, wenn dort keine 4 Takte frei sind. Dazu **Add channel** und **Zoom** |
-| Rechtsklick auf einen Clip | **Edit base**, **Make new base and edit** (beide grau bis Stufe 6b), **Duplicate**, **Rename base…**, **Delete** |
+| Rechtsklick auf einen Clip | **Edit base**, **Make new base and edit** (beide öffnen den Editor, §4d), **Duplicate**, **Rename base…**, **Delete** |
+| Doppelklick auf einen Clip | wie **Edit base** |
 | Rechtsklick auf einen Kanalnamen | **Rename channel…**, **Turn channel off / on**, **Delete channel** |
 | Clip ziehen | verschieben in ganzen Takten, auch in einen anderen Kanal |
 | Kante eines Clips ziehen | verlängern und kürzen in ganzen Mustern; links bleibt das Ende stehen |
@@ -361,9 +363,77 @@ Datei: wer zurück auf diesen Stand geht, hat nichts Ungespeichertes mehr.
 - Ein neuer Kanal heißt „Channel N", New legt einen an.
 - Beim Schließen der App fragt das Panel **nicht** nach Ungespeichertem.
 
-**Nicht drin:** die Editoren (6b); Kanäle am Namen umsortieren; Kopieren und
+**Nicht drin:** Kanäle am Namen umsortieren; Kopieren und
 Einfügen über die Ablage; mehrere Clips zugleich wählen; ein Tooltip für
 Namen, die nicht in ihre Zeile passen.
+
+---
+
+## 4d. Der Drum-Editor (gebaut, Stufe 6b)
+
+Ein eigenes Fenster (`loop/DrumEditor.hpp`), geöffnet über **Edit base** am
+Clip oder mit einem Doppelklick auf ihn. Es gibt **ein** Editor-Fenster: eine
+andere Basis wechselt in ihm.
+
+**Aufbau** (Skizze gebilligt, Patrik S109):
+
+- **Kopf:** die Basis und wie viele Clips sie spielen; **Bars** (4 bis 64);
+  **Play pattern**; **Peak**.
+- **Grid of the whole loop:** Beats per bar, Steps per beat, Swing — sie
+  gelten für alle Muster des Loops.
+- **Spuren:** je Spur Stumm (M), Name, Klang (ein Klang des Kits oder
+  „Sample file…"), Lautstärke, Panorama — und rechts ihre Schritte, jeder
+  zweite Schlag heller, die Takte im Kopf. Lange Muster rollen.
+- **Step volume:** unter den Spuren die Lautstärke je Schritt der
+  angeklickten Spur, als Balken.
+
+**Bedienung:**
+
+| Geste | Wirkung |
+|---|---|
+| Klick auf einen Schritt | an (volle Lautstärke) oder aus |
+| Mit gedrückter Taste weiterziehen | die überfahrenen Schritte derselben Spur bekommen denselben Zustand; gemeldet wird einmal, beim Loslassen |
+| In der Zeile Step volume klicken oder ziehen | die Lautstärke des Schritts; ganz unten ist er aus, ein freier Schritt geht dabei an |
+| Klick in eine Spurzeile | wählt die Spur (ihre Lautstärken stehen unten) |
+| Rechtsklick auf eine Spur | **Rename track…**, **Remove track** |
+| **Add track** | eine Spur „Track N" mit dem ersten Klang des Kits, den das Muster noch nicht spielt |
+| **Play pattern** | spielt nur dieses Muster im Kreis; Play im Loop-Panel spielt wieder den ganzen Loop |
+
+Jede Änderung läuft über dasselbe Undo wie im Loop-Panel und gilt beim
+Spielen ab dem nächsten Block. Ein Schieber meldet beim Loslassen.
+
+**Make new base and edit** (L8 a): das Muster wird unter „<Name> 2" (der
+ersten freien Zahl) kopiert, der Clip spielt die Kopie, der Editor zeigt sie.
+Spielt nur dieser eine Clip die Basis, öffnet sich einfach ihr Editor.
+
+**Regeln** (`loop/Bearbeiten.hpp`):
+
+- **Bars:** länger hängt Stille an, kürzer schneidet hinten ab (Undo holt es
+  zurück). Die Clips der Basis werden mit ihr länger; ein Clip dahinter, in
+  den einer hineinwüchse, rückt nach hinten.
+- **Raster:** jeder Schritt bleibt an seiner Stelle im Takt, wo das neue
+  Raster sie kennt. Ein Schlag, den es nicht mehr gibt, und ein Schritt, der
+  zwischen zwei neue fällt, gehen verloren.
+- **Peak** (L6 a): der größte Betrag der Summe, seit Play gedrückt oder
+  zuletzt etwas geändert wurde — vor der Lautstärke des Players, gemessen im
+  Klangerzeuger. Über 1 steht er rot. Ohne Wiedergabe steht ein Strich.
+- Wird die Basis im Arrangement umbenannt, folgt der Editor ihr; gibt es sie
+  nicht mehr (ihr letzter Clip gelöscht, ein anderer Loop geladen), schließt
+  er sich.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- Die Lautstärke je Schritt steht in einer eigenen Zeile unten, nicht im
+  Schritt selbst; im Raster ist die Helligkeit des Schritts seine Lautstärke.
+- „Play pattern" spielt einen Loop aus einem Kanal mit einem Clip des
+  Musters; die Abspielmarke läuft dann im Editor, nicht im Arrangement.
+- Der Editor ist ein Werkzeugfenster über dem Hauptfenster; seine Größe und
+  Lage merkt die App **nicht**.
+- Die Spitze misst nur, was gerade spielt: bei „Play pattern" das eine
+  Muster, nicht den ganzen Loop.
+
+**Nicht drin:** Spuren umsortieren; ein Schritt zum Vorhören beim Klick;
+Kopieren von Takten; mehrere Editor-Fenster.
 
 ---
 
@@ -378,7 +448,7 @@ Namen, die nicht in ihre Zeile passen.
 | 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
 | 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
 | 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109 gebaut, §4c: die gemeinsame Basis `Achse` (W1 b; 33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`), darauf `Taktachse`, `Bearbeiten` und das Panel; `test_LoopArrangement.cpp`, sieben Fälle; **im Programm noch nicht gesehen** |
-| 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | offen |
+| 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | S109 gebaut, §4d; `test_LoopDrumEditor.cpp`, sieben Fälle, dazu zwei in `test_LoopSpieler.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | offen |
@@ -453,6 +523,8 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.9.0** (S109, 2026-10-11): Stufe 6b gebaut — der Drum-Editor (§4d
+  neu): Schritt-Raster, Spuren, Raster des Loops, Play pattern, Peak.
 - **0.8.0** (S109, 2026-10-11): Stufe 6a gebaut — das Loop-Panel als
   Arrangement (§4c neu): Taktachse, Regeln des Arrangements, Datei-Zeile,
   BPM, Undo.

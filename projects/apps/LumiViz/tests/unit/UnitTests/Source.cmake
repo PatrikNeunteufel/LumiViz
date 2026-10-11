@@ -85,6 +85,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopArrangement.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopDrumEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_MilkdropGestaltung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_NseelZufall.cpp"

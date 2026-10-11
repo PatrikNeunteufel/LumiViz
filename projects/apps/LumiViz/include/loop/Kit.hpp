@@ -32,6 +32,10 @@ namespace lumi::loop
 /// (erlaubt: a–z, 0–9, `_`), oder das Kit ist nicht da.
 [[nodiscard]] QString klangDatei(const QString& klang);
 
+/// Die Klaenge des mitgelieferten Kits als `kit:<Name>`, nach Namen sortiert —
+/// was im Ordner des Kits als WAV liegt. Leer = das Kit ist nicht da.
+[[nodiscard]] QStringList kitKlaenge();
+
 /// So lang darf ein Sample hoechstens sein; was laenger ist, wird abgeschnitten.
 inline constexpr double kKlangMaxSekunden = 30.0;
 

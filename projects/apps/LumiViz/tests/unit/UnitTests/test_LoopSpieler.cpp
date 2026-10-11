@@ -443,3 +443,88 @@ TEST_CASE("Loop Spieler: es gibt nur einen Ton — und wer geht, gibt ihn frei")
     CHECK(engine.generator == nullptr);
     CHECK(engine.zahl(QStringLiteral("free mixer")) == 2);
 }
+
+TEST_CASE("Loop Spieler: die Spitze der Summe — der groesste Betrag seit der letzten Frage")
+{
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Spieler spieler;
+    spieler.setzeLoop(spielLoop({1, 0, 0, 0}));
+    CHECK(spieler.nimmSpitze() == 0.0f);  // er spielt nicht
+    REQUIRE(spieler.starte(engine, player));
+    REQUIRE(engine.generator != nullptr);
+    CHECK(spieler.nimmSpitze() == 0.0f);  // noch kein Block gerechnet
+    CHECK(ersterWert(engine.generator) == 0.5f);
+    CHECK(spieler.nimmSpitze() == 0.5f);
+    CHECK(spieler.nimmSpitze() == 0.0f);  // die Frage setzt sie zurueck
+
+    // zwei Spuren auf demselben Schlag addieren sich: die Summe geht ueber 1 (L6 a)
+    Loop laut = spielLoop({1, 0, 0, 0});
+    laut.muster[0].spuren.push_back({QStringLiteral("B"), QStringLiteral("C:/s/b.wav"), 1.0, 0.0, false});
+    laut.muster[0].spuren.push_back({QStringLiteral("C"), QStringLiteral("C:/s/c.wav"), 1.0, 0.0, false});
+    laut.muster[0].zeilen = {{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
+    spieler.setzeLoop(laut);
+    REQUIRE(spieler.starte(engine, player));  // von vorn
+    (void)ersterWert(engine.generator);
+    CHECK(spieler.nimmSpitze() == doctest::Approx(1.5f));
+}
+
+TEST_CASE("Loop Panel: Play pattern spielt ein Muster allein, Play wieder den ganzen Loop")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString beispiel = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+    REQUIRE(QFileInfo::exists(beispiel));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+    IAudioPlayer* player = dienste.tryResolve<IAudioPlayer>();
+    REQUIRE(player != nullptr);
+    player->play();
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    REQUIRE(panel.lade(beispiel));
+    auto* play = panel.findChild<QPushButton*>(QStringLiteral("loopPlay"));
+    REQUIRE(play != nullptr);
+    REQUIRE(panel.loop().muster.size() >= 2);
+    const Muster basis = panel.loop().muster[0];
+
+    CHECK_FALSE(panel.spieleMuster(QStringLiteral("gibt es nicht")));
+    CHECK_FALSE(panel.spieler().spielt());
+
+    REQUIRE(panel.spieleMuster(basis.name));
+    CHECK(panel.spieler().spielt());
+    CHECK(panel.soloMuster() == basis.name);
+    CHECK(play->text() == QStringLiteral("Stop"));
+    CHECK_FALSE(player->isPlaying());
+    // gespielt wird ein Loop aus einem Kanal mit einem Clip dieses Musters, so lang wie das Muster
+    const Loop& allein = panel.spieler().loop();
+    REQUIRE(allein.muster.size() == 1);
+    CHECK(allein.muster[0] == basis);
+    REQUIRE(allein.kanaele.size() == 1);
+    REQUIRE(allein.kanaele[0].clips.size() == 1);
+    CHECK(allein.durchlaufTakte() == basis.takte);
+    CHECK(allein.bpm == panel.loop().bpm);
+    CHECK(panel.loop().kanaele.size() == 2);  // der Loop des Panels bleibt, wie er ist
+
+    // Play im Panel haelt an; danach spielt Play den ganzen Loop
+    play->click();
+    CHECK_FALSE(panel.spieler().spielt());
+    CHECK(panel.soloMuster().isEmpty());
+    CHECK(panel.spieler().loop() == panel.loop());
+    CHECK(player->isPlaying());
+    REQUIRE(panel.spieleMuster(basis.name));
+    REQUIRE(panel.spiele());
+    CHECK(panel.soloMuster().isEmpty());
+    CHECK(panel.spieler().loop() == panel.loop());
+    panel.halte();
+}

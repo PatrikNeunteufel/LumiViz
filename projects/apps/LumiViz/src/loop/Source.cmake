@@ -13,6 +13,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Bearbeiten.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DrumEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Kit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Klangerzeuger.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Loop.cpp"
@@ -23,6 +24,7 @@ set(_local_sources
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bearbeiten.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/DrumEditor.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Taktachse.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Kit.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Klangerzeuger.hpp"

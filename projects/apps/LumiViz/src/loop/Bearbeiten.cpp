@@ -212,6 +212,108 @@ bool benenneBasisUm(Loop& loop, const QString& alt, const QString& neu)
     return true;
 }
 
+Muster* musterIn(Loop& loop, const QString& name)
+{
+    const auto it =
+        std::find_if(loop.muster.begin(), loop.muster.end(), [&name](const Muster& m) { return m.name == name; });
+    return it == loop.muster.end() ? nullptr : &*it;
+}
+
+QString neueBasisAus(Loop& loop, int kanal, int clip)
+{
+    if (!gibtClip(loop, kanal, clip)) return {};
+    LoopClip& ziel = loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    const Muster* basis = loop.findeMuster(ziel.muster);
+    if (basis == nullptr) return {};
+    Muster kopie = *basis;
+    kopie.name = QString();
+    for (int nr = 2; kopie.name.isEmpty(); ++nr)
+    {
+        const QString name = QStringLiteral("%1 %2").arg(basis->name).arg(nr);
+        if (loop.findeMuster(name) == nullptr) kopie.name = name;
+    }
+    const QString alt = ziel.muster;
+    ziel.muster = kopie.name;
+    loop.muster.push_back(kopie);  // `basis` zeigt ab hier nicht mehr sicher auf das Original
+    const QString neu = loop.muster.back().name;
+    if (basisNutzer(loop, alt) == 0) raeumeBasen(loop);  // der Clip war der einzige: das Original geht
+    return neu;
+}
+
+bool setzeMusterTakte(Loop& loop, const QString& muster, int takte)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr) return false;
+    ziel->takte = std::clamp(takte, kTakteMin, kTakteMax);
+    // Zeilen auf die neue Laenge, und Clips, die jetzt ineinander reichten, ruecken nach hinten
+    loop.richte();
+    return true;
+}
+
+bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
+{
+    const int schlaege = std::clamp(schlaegeJeTakt, 1, kRasterMax);
+    const int schritte = std::clamp(schritteJeSchlag, 1, kRasterMax);
+    const int alteSchlaege = loop.schlaegeJeTakt;
+    const int alteSchritte = loop.schritteJeSchlag;
+    if (schlaege == alteSchlaege && schritte == alteSchritte) return false;
+    for (Muster& m : loop.muster)
+    {
+        for (std::vector<double>& zeile : m.zeilen)
+        {
+            std::vector<double> neu(static_cast<std::size_t>(m.takte * schlaege * schritte), 0.0);
+            for (int takt = 0; takt < m.takte; ++takt)
+                for (int schlag = 0; schlag < std::min(schlaege, alteSchlaege); ++schlag)
+                    for (int teil = 0; teil < schritte; ++teil)
+                    {
+                        // derselbe Bruchteil des Schlags — nur, wenn das alte Raster ihn kannte
+                        if ((teil * alteSchritte) % schritte != 0) continue;
+                        const auto alt = static_cast<std::size_t>((takt * alteSchlaege + schlag) * alteSchritte +
+                                                                  teil * alteSchritte / schritte);
+                        if (alt < zeile.size())
+                            neu[static_cast<std::size_t>((takt * schlaege + schlag) * schritte + teil)] = zeile[alt];
+                    }
+            zeile = std::move(neu);
+        }
+    }
+    loop.schlaegeJeTakt = schlaege;
+    loop.schritteJeSchlag = schritte;
+    return true;
+}
+
+int spurHinzu(Loop& loop, const QString& muster, const QStringList& kitKlaenge)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr) return -1;
+    Spur spur;
+    spur.name = freierName(QStringLiteral("Track"), [ziel](const QString& name) {
+        return std::any_of(ziel->spuren.begin(), ziel->spuren.end(), [&name](const Spur& s) { return s.name == name; });
+    });
+    for (const QString& klang : kitKlaenge)
+    {
+        const bool vergeben = std::any_of(ziel->spuren.begin(), ziel->spuren.end(),
+                                          [&klang](const Spur& s) { return s.klang == klang; });
+        if (!vergeben)
+        {
+            spur.klang = klang;
+            break;
+        }
+    }
+    ziel->spuren.push_back(spur);
+    ziel->zeilen.resize(ziel->spuren.size());
+    ziel->zeilen.back().assign(static_cast<std::size_t>(ziel->takte * loop.schritteJeTakt()), 0.0);
+    return static_cast<int>(ziel->spuren.size()) - 1;
+}
+
+bool spurLoeschen(Loop& loop, const QString& muster, int spur)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr || spur < 0 || spur >= static_cast<int>(ziel->spuren.size())) return false;
+    ziel->spuren.erase(ziel->spuren.begin() + spur);
+    if (spur < static_cast<int>(ziel->zeilen.size())) ziel->zeilen.erase(ziel->zeilen.begin() + spur);
+    return true;
+}
+
 int kanalHinzu(Loop& loop)
 {
     Kanal kanal;

@@ -10,6 +10,7 @@
 #include "audio/IAudioPlayer.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/DrumEditor.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/ICommandBus.hpp"
@@ -30,6 +31,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -212,6 +214,7 @@ void LoopPanel::setupUI()
 
     connect(m_achse, &Taktachse::bearbeitet, this, &LoopPanel::bearbeite);
     connect(m_achse, &Taktachse::auswahlGeaendert, this, &LoopPanel::zeigeClip);
+    connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
             [](int prozent) { QSettings().setValue(QLatin1String(kZeilenProzent), prozent); });
 }
@@ -272,8 +275,10 @@ void LoopPanel::neu()
     m_geladen = true;
     ++m_ladung;
     m_ladeBericht.clear();
+    m_solo.clear();
     m_spieler.setzeLoop(m_loop);
     m_achse->setLoop(m_loop, true);
+    if (m_editor != nullptr) m_editor->setLoop(m_loop);  // seine Basis gibt es nicht mehr: er schliesst sich
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -290,8 +295,10 @@ bool LoopPanel::lade(const QString& pfad)
     m_geladen = true;
     ++m_ladung;
     m_ladeBericht = bericht;
+    m_solo.clear();
     m_spieler.setzeLoop(m_loop);
     m_achse->setLoop(m_loop, true);
+    if (m_editor != nullptr) m_editor->setLoop(m_loop);  // gibt es seine Basis hier nicht, schliesst er sich
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     zeigeDatei();
     zeigeClip();
@@ -321,11 +328,27 @@ void LoopPanel::bearbeite(const Loop& neu, const QString& was)
 void LoopPanel::setzeLoop(const Loop& loop)
 {
     m_loop = loop;
-    m_spieler.setzeLoop(m_loop);  // spielt er, gilt die Fassung ab dem naechsten Block
+    m_spieler.setzeLoop(spielFassung());  // spielt er, gilt die Fassung ab dem naechsten Block
+    m_spitze = 0.0f;                      // die Spitze der Fassung davor sagt nichts mehr
     m_achse->zeigeBearbeitet(m_loop);
+    if (m_editor != nullptr) m_editor->setLoop(m_loop);
     zeigeDatei();
     zeigeClip();
     zeigeStand();
+}
+
+Loop LoopPanel::spielFassung()
+{
+    const Muster* solo = m_solo.isEmpty() ? nullptr : m_loop.findeMuster(m_solo);
+    if (solo == nullptr)
+    {
+        m_solo.clear();  // das Muster gibt es nicht mehr: wieder der ganze Loop
+        return m_loop;
+    }
+    Loop allein = m_loop;
+    allein.muster = {*solo};
+    allein.kanaele = {Kanal{QStringLiteral("Solo"), true, {LoopClip{m_solo, 0, 1}}}};
+    return allein;
 }
 
 bool LoopPanel::spiele()
@@ -334,7 +357,29 @@ bool LoopPanel::spiele()
     IAudioEngine* engine = services().tryResolve<IAudioEngine>();
     IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
     if (engine == nullptr || player == nullptr) return false;
+    m_solo.clear();
+    m_spieler.setzeLoop(m_loop);
+    m_spitze = 0.0f;
     const bool spielt = m_spieler.starte(*engine, *player);
+    zeigeStand();
+    return spielt;
+}
+
+bool LoopPanel::spieleMuster(const QString& muster)
+{
+    if (!m_geladen || m_loop.findeMuster(muster) == nullptr) return false;
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
+    if (engine == nullptr || player == nullptr) return false;
+    m_solo = muster;
+    m_spieler.setzeLoop(spielFassung());
+    m_spitze = 0.0f;
+    const bool spielt = m_spieler.starte(*engine, *player);
+    if (!spielt)
+    {
+        m_solo.clear();
+        m_spieler.setzeLoop(m_loop);
+    }
     zeigeStand();
     return spielt;
 }
@@ -342,13 +387,56 @@ bool LoopPanel::spiele()
 void LoopPanel::halte()
 {
     m_spieler.halte(true);
+    if (!m_solo.isEmpty())
+    {
+        m_solo.clear();
+        m_spieler.setzeLoop(m_loop);
+    }
     zeigeStand();
+}
+
+DrumEditor* LoopPanel::editor() const
+{
+    return m_editor;
+}
+
+bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
+{
+    if (!m_geladen || m_loop.findeMuster(muster) == nullptr) return false;
+    if (m_editor == nullptr)
+    {
+        m_editor = new DrumEditor(this);
+        m_editor->setKitKlaenge(kitKlaenge());
+        connect(m_editor, &DrumEditor::bearbeitet, this, &LoopPanel::bearbeite);
+        connect(m_editor, &DrumEditor::spielenVerlangt, this, [this](bool spielen) {
+            if (spielen && m_editor != nullptr)
+                (void)spieleMuster(m_editor->muster());
+            else
+                halte();
+        });
+    }
+    if (!m_editor->zeige(m_loop, muster)) return false;
+    if (zeigen)
+    {
+        m_editor->show();
+        m_editor->raise();
+        m_editor->activateWindow();
+    }
+    zeigeStand();
+    return true;
 }
 
 void LoopPanel::beimTakt()
 {
     m_spieler.takt();
-    if (isVisible()) zeigeStand();
+    // der Composer kann den Ton uebernommen haben: dann spielt auch kein Muster mehr allein
+    if (!m_spieler.spielt() && !m_solo.isEmpty())
+    {
+        m_solo.clear();
+        m_spieler.setzeLoop(m_loop);
+    }
+    m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
+    if (isVisible() || (m_editor != nullptr && m_editor->isVisible())) zeigeStand();
 }
 
 void LoopPanel::zeigeDatei()
@@ -416,9 +504,15 @@ void LoopPanel::zeigeStand()
     m_fit->setEnabled(m_achse->zoomVerstellt());
 
     // die Abspielmarke; hineingezoomt blaettert der Ausschnitt mit ihr weiter
-    m_achse->setSpielt(spielt);
     m_achse->setMitlaufen(spielt ? lumi::ui::Achse::Mitlaufen::Seitenweise : lumi::ui::Achse::Mitlaufen::Aus);
-    if (spielt) m_achse->setStelleSchritte(m_spieler.stelleSchritte());
+    // spielt ein Muster allein, laeuft die Marke im Editor — im Arrangement gibt es dafuer keine Stelle
+    m_achse->setSpielt(spielt && m_solo.isEmpty());
+    if (spielt && m_solo.isEmpty()) m_achse->setStelleSchritte(m_spieler.stelleSchritte());
+    if (m_editor != nullptr)
+    {
+        m_editor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_editor->muster(), m_spieler.stelleSchritte());
+        m_editor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
+    }
 
     QStringList zeilen = m_ladeBericht;
     zeilen << m_spieler.bericht();

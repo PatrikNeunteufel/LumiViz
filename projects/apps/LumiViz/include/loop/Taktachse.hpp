@@ -69,6 +69,13 @@ public:
     bool loescheAuswahl();
     /// Die Basis des angeklickten Clips umbenennen (fuer alle seine Kopien).
     bool benenneBasisUm(const QString& name);
+    /// „Edit base": den Editor der Basis des angeklickten Clips verlangen
+    /// (auch der Doppelklick auf einen Clip).
+    bool bearbeiteBasis();
+    /// „Make new base and edit" (Entscheid Patrik S108, L8 a): den angeklickten
+    /// Clip von seiner Basis loesen — er spielt eine Kopie unter neuem Namen —
+    /// und deren Editor verlangen.
+    bool neueBasisUndBearbeiten();
     void kanalHinzu();
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
@@ -95,8 +102,11 @@ Q_SIGNALS:
     void auswahlGeaendert();
     /// Eine Aenderung ist fertig: die neue Fassung und ein Wort dazu fuer Undo.
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
+    /// Der Editor dieser Basis soll sich oeffnen.
+    void editorVerlangt(const QString& muster);
 
 protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     [[nodiscard]] bool istGeladen() const override { return m_geladen; }
     /// Die Kanaele und eine Zeile mehr: die Flaeche, auf der ein neuer Kanal entsteht.
     [[nodiscard]] int zeilenZahl() const override;

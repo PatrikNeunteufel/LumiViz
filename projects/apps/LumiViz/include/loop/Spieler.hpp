@@ -74,6 +74,9 @@ public:
     /// Die Stelle im laufenden Durchlauf, in Schritten (mit Bruchteil); 0,
     /// wenn er nicht spielt.
     [[nodiscard]] double stelleSchritte() const;
+    /// Der groesste Betrag der Summe seit dem letzten Aufruf — vor der
+    /// Lautstaerke des Players. Ueber 1 uebersteuert der Loop (L6 a).
+    [[nodiscard]] float nimmSpitze() { return m_erzeuger.nimmSpitze(); }
     /// Was beim letzten Laden der Klaenge auffiel (`Sound not loaded: …`).
     [[nodiscard]] const QStringList& bericht() const { return m_bericht; }
 

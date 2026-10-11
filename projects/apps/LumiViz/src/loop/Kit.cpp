@@ -41,6 +41,20 @@ QString kitOrdner()
     return kOrdner;
 }
 
+QStringList kitKlaenge()
+{
+    const QString ordner = kitOrdner();
+    if (ordner.isEmpty()) return {};
+    QStringList klaenge;
+    const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.wav")}, QDir::Files, QDir::Name);
+    for (const QString& datei : dateien)
+    {
+        const QString klang = QStringLiteral("kit:") + QFileInfo(datei).completeBaseName();
+        if (!klangDatei(klang).isEmpty()) klaenge << klang;  // nur Namen, die `klangDatei` auch annimmt
+    }
+    return klaenge;
+}
+
 QString klangDatei(const QString& klang)
 {
     if (!istKitKlang(klang)) return klang;

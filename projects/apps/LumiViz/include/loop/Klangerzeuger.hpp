@@ -66,7 +66,13 @@ public:
     /// weiterzaehlen. Ohne Programm Stille; die Stelle bleibt dann stehen.
     void render(float* out, int frames) override;
 
+    /// Der groesste Betrag der Summe seit dem letzten Aufruf (Entscheid Patrik
+    /// S108, L6 a: der Kern begrenzt nicht — ueber 1 uebersteuert sie); setzt
+    /// ihn auf null zurueck.
+    [[nodiscard]] float nimmSpitze() { return m_spitze.exchange(0.0f); }
+
 private:
+    std::atomic<float> m_spitze{0.0f};
     std::atomic<std::shared_ptr<const Programm>> m_programm;
     /// Das zuletzt abgeloeste Programm: haelt es am Leben, damit sein Speicher
     /// nicht im Ton-Thread frei wird, der es noch einen Block lang benutzt.

@@ -23,6 +23,7 @@
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
 
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 
@@ -34,6 +35,7 @@ class QTimer;
 namespace lumi::loop
 {
 
+class DrumEditor;
 class Taktachse;
 
 class LoopPanel : public PanelBase
@@ -80,6 +82,19 @@ public:
     [[nodiscard]] const Spieler& spieler() const { return m_spieler; }
     [[nodiscard]] Taktachse* taktachse() const { return m_achse; }
 
+    // --- der Drum-Editor (Stufe 6b) -------------------------------------------
+    /// Den Editor dieser Basis zeigen (er entsteht beim ersten Mal). Es gibt
+    /// ein Editor-Fenster: eine andere Basis wechselt in ihm. false = die
+    /// Basis gibt es nicht. `zeigen` false fuellt ihn nur (fuer Tests ohne Fenster).
+    bool oeffneEditor(const QString& muster, bool zeigen = true);
+    /// Das Fenster des Editors; nullptr, solange noch keine Basis geoeffnet wurde.
+    [[nodiscard]] DrumEditor* editor() const;
+    /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,
+    /// was man gerade aendert. Play im Panel spielt wieder den ganzen Loop.
+    bool spieleMuster(const QString& muster);
+    /// Das Muster, das gerade allein spielt; leer = keins.
+    [[nodiscard]] const QString& soloMuster() const { return m_solo; }
+
 private:
     void setupUI();
     void frageNachDatei();
@@ -90,6 +105,13 @@ private:
     void zeigeClip();
     void zeigeStand();
     void beimTakt();
+    /// Was der Spieler spielt: der ganze Loop — oder, bei „Play pattern", ein
+    /// Loop aus einem Kanal mit einem Clip dieses Musters.
+    [[nodiscard]] Loop spielFassung();
+
+    QPointer<DrumEditor> m_editor;
+    QString m_solo;         ///< das Muster, das allein spielt; leer = der ganze Loop
+    float m_spitze = 0.0f;  ///< der groesste Betrag der Summe seit Play oder der letzten Aenderung
 
     Spieler m_spieler;
     Loop m_loop;         ///< was das Panel zeigt und spielt

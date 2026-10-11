@@ -61,6 +61,12 @@ void Klangerzeuger::render(float* out, int frames)
     }
     std::int64_t von = m_stelle.load();
     rechne(p->ablauf, p->klaenge != nullptr ? *p->klaenge : kKeineKlaenge, von, frames, out);
+    // die Spitze des Blocks fuer die Anzeige im Editor (L6 a)
+    float spitze = 0.0f;
+    for (std::ptrdiff_t i = 0; i < 2 * static_cast<std::ptrdiff_t>(frames); ++i)
+        spitze = std::max(spitze, std::abs(out[i]));
+    float bisher = m_spitze.load();
+    while (spitze > bisher && !m_spitze.compare_exchange_weak(bisher, spitze)) {}
     // weiterzaehlen — ausser jemand hat die Stelle inzwischen gesetzt
     m_stelle.compare_exchange_strong(von, von + frames);
 }

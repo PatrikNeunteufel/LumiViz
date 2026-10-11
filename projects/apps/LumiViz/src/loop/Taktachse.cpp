@@ -549,6 +549,39 @@ bool Taktachse::benenneBasisUm(const QString& name)
     return true;
 }
 
+bool Taktachse::bearbeiteBasis()
+{
+    const LoopClip* clip = auswahl();
+    if (clip == nullptr || m_griff != Griff::Keiner) return false;
+    Q_EMIT editorVerlangt(clip->muster);
+    return true;
+}
+
+bool Taktachse::neueBasisUndBearbeiten()
+{
+    const LoopClip* clip = auswahl();
+    if (clip == nullptr || m_griff != Griff::Keiner) return false;
+    // spielt nur dieser Clip die Basis, gibt es nichts zu loesen: sie ist schon seine eigene
+    if (basisNutzer(m_loop, clip->muster) <= 1) return bearbeiteBasis();
+    Loop neu = m_loop;
+    const QString name = neueBasisAus(neu, m_kanal, m_clip);
+    if (name.isEmpty()) return false;
+    uebernimm(neu, m_kanal, m_clip, tr("Make new base"));
+    Q_EMIT editorVerlangt(name);
+    return true;
+}
+
+void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    if (!m_geladen || event->button() != Qt::LeftButton) return;
+    int kanal = -1;
+    int clip = -1;
+    if (griffBei(event->position().toPoint(), &kanal, &clip) == Griff::Keiner) return;
+    brichZugAb();  // der zweite Druck hat einen Zug vorbereitet
+    waehle(kanal, clip);
+    (void)bearbeiteBasis();
+}
+
 void Taktachse::kanalHinzu()
 {
     if (!m_geladen || m_griff != Griff::Keiner) return;
@@ -616,9 +649,8 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
     if (griffBei(ort, &clipKanal, &clip) != Griff::Keiner)
     {
         waehle(clipKanal, clip);
-        // die Editoren kommen mit Stufe 6b: bis dahin stehen die Eintraege grau
-        menu.addAction(tr("Edit base"))->setEnabled(false);
-        menu.addAction(tr("Make new base and edit"))->setEnabled(false);
+        menu.addAction(tr("Edit base"), this, [this] { (void)bearbeiteBasis(); });
+        menu.addAction(tr("Make new base and edit"), this, [this] { (void)neueBasisUndBearbeiten(); });
         menu.addSeparator();
         menu.addAction(tr("Duplicate"), this, [this] { (void)dupliziereAuswahl(); });
         menu.addAction(tr("Rename base..."), this, [this] {
