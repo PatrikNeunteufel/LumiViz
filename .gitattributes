@@ -4,6 +4,14 @@
 * text=auto
 
 ###############################################################################
+# Batch files need CRLF in the working tree, whatever core.autocrlf says:
+# cmd.exe misreads a batch file with bare LF (S112: tools/bau_clang.bat printed
+# "Der Befehl ... ist entweder falsch geschrieben" for its rem lines).
+###############################################################################
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+###############################################################################
 # Set default behavior for command prompt diff.
 #
 # This is need for earlier builds of msysgit that does not have it on by
