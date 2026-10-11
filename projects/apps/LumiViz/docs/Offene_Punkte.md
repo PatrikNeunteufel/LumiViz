@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.140.0
-> **Datum:** 2026-10-11 (Session 108)
+> **Version:** 1.141.0
+> **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2288,33 +2288,53 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Beleg. Im Loop-Panel legt man Kanäle an, darin Drumkit-Clips; die Editoren
   sind eigene Fenster; die Datei `.lvloop` ist das ganze Arrangement und
   lässt sich als Clip in einen Audio-Kanal des Composers legen. **Stand
-  S108:** gebaut sind der Beleg (BASS nimmt eine selbst rechnende Quelle im
-  Mixer an, auf den Abtastwert genau), Modell und Datei in Fassung 2, der
-  Rechenkern, das gerechnete Kit (`asset/loop/kit`, sechs Klänge), die Naht
-  in der Audio-Engine, der Klangerzeuger, der Spieler mit der Rangfolge
-  Composer, Loop-Panel, Player und ein erstes Panel *Loop*, das nur lädt
-  und spielt. **Im Programm nicht gehört und nicht gesehen.** Offen, in
-  dieser Reihenfolge:
-  - **6a** Loop-Panel als Arrangement (Kanäle, Zeitachse in Takten, Clips
-    anlegen, verschieben, verlängern, kürzen, kopieren; New, Save, Save As;
-    Undo) — Skizze gebilligt (Patrik S108)
-  - **6b** Drum-Editor als eigenes Fenster (Raster gebilligt), „Basis
-    bearbeiten" und „in neue Basis umwandeln", Anzeige der Summe; offen
-    daraus: wohin mit dem Panorama je Spur, lange Muster rollen oder stauchen
-  - **6c** Audio Browser zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel
-    (Wunsch Patrik S108)
-  - **7** `.lvloop` als Clip im Composer — dabei mit Messung klären, was das
-    Nachsetzen der Tonführung (ab 80 ms) für Drums bedeutet
-  - **8** Benutzerhandbuch, `Audio_System.md`, Vorlage für den Sichttest
-  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne)
-  - ⬜ der erste Hörtest: View → Panels → Loop, `asset\loop\drums_demo.lvloop`
-    laden, Play — spielt der Loop, reagieren die Visuals, schweigt der
-    Player, ist Play bei führendem Composer gesperrt?
+  S109: die Stufen 6a bis 8 sind gebaut** (Konzept 0.12.0) — die gemeinsame
+  Basis `lumi::ui::Achse` aus der Zeitachse des Composers (Entscheid W1 b),
+  das Loop-Panel als Arrangement mit Undo (6a), der Drum-Editor als eigenes
+  Fenster mit *Play pattern* und *Peak* (6b), der Audio Browser zeigt
+  `.lvloop` (6c), der Loop als Clip im Composer mit Tags und Verbindung zum
+  Loop-Panel (7; Entscheide T1 a und T2), Benutzerhandbuch §16,
+  `Audio_System.md` §6a und eine Sichttest-Vorlage (8). Tests 1025 / 1025.
+  **Im Programm nicht gehört und nicht gesehen — keine der Stufen seit S108.**
+  Offen:
+  - ⬜ **der erste Blick ins Programm:** Liste
+    `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte: Panel Loop,
+    Drum-Editor, Audio Browser, Loop als Clip, acht Urteile). Die Liste ist
+    aus dem Code geschrieben, nicht aus dem laufenden Programm — stimmt ein
+    „Erwartet" nicht, kann es an der Liste liegen. Der erste Hörtest ist
+    dort Punkt L3
+  - 🟡 **von Claude gesetzt, nicht entschieden** (Konzept §4c, §4d, §4e;
+    als Urteile in der Liste): Farbe je Basis statt je Kanal; ein Clip
+    springt beim Verschieben über einen anderen; die Lautstärke je Schritt
+    in eigener Zeile; *Play pattern* spielt nur das Muster; das Player-Panel
+    zeigt einen Durchlauf als Länge; ein Loop-Clip rastet wie ein Song,
+    nicht auf Takte
+  - 🟡 **beim Beenden fragt das Loop-Panel nicht nach Ungespeichertem** —
+    New und Load fragen. Dort kann heute Arbeit verloren gehen
+  - 🟠 **Nachsetzen der Tonführung bei gedrosseltem Rechner:** gemessen ist
+    nur der ruhige Fall (Abstand zur Uhr −8 bis +4 ms, Drift 14 bis 35 ppm,
+    kein Nachsetzen in 40 s; Konzept §6a). Was in den Schüben geschieht, in
+    denen der Rechner drosselt, ist ungemessen; wäre es zu hören, ist der
+    nächste Schritt, nur an einer Durchlauf-Grenze nachzusetzen
+  - 🔧 **Aktionen der Sichttest-Steuerung für das Panel Loop** (Loop laden,
+    spielen) fehlen — in der Liste bleibt das Vorbereiten Handarbeit
+  - 🔧 Menüs, Dialoge (Tags, Umbenennen) und das Ziehen an den Schiebern des
+    Editors sind ohne Test, ebenso das Hineinziehen eines Loops über das
+    echte Composer-Panel und die Anzeige der Tags in Player-Panel und Karaoke
+  - 🔧 ein Loop, der allein im Loop-Panel spielt, meldet sich nicht als Song;
+    der Editor merkt Größe und Lage nicht; kein eigenes Icon für `.lvloop`;
+    Kanäle und Spuren lassen sich nicht umsortieren
+  - 🔧 `Composer_Konzept.md` nennt weder die Basis `Achse` noch den Loop-Clip
+    in der Tonführung; der Composer hängt jetzt am Namensraum `loop` und
+    umgekehrt
+  - **9** Instrument-Clip (Piano-Rolle, Klangerzeuger für Töne) — später
   - 🟡 das Kit ist klein (Patrik S108: klingt gut, aber eine kleine
     Sammlung) — welche Klänge dazukommen, nennt Patrik
   - 🔧 das Kit liegt unter `asset/`, im Release-Paket nicht neben der Exe;
-    Debug-MSVC nicht gebaut; ob `mixerRemoveSource` auf einen laufenden
-    Rückruf wartet, ist nicht geprüft
+    Debug-MSVC seit S108 nicht gebaut, der volle Lauf nie unter clang; ob
+    `mixerRemoveSource` auf einen laufenden Rückruf wartet, ist nicht
+    geprüft (die Tonführung lässt den Klangerzeuger deshalb vier Takte
+    weiterleben)
 
 - 🟡 **Block F — Modulparameter auf dem generischen Weg skriptbar machen**
   (angesetzt direkt nach S83, Entscheid Patrik E2b: kein Einzel-Nachtrag in
@@ -3058,7 +3078,8 @@ Idee Preset-Warmup/Pre-Roll.
     und Ladeweg — **nicht** die Zeilen im Hauptfenster (es läuft in keinem
     Unit-Test). **Schritt 2 gebaut, im Programm ungesehen (Entscheid X1b:
     a — eine Instanz je Exe-Datei, Schalter `--new-instance`, kein Haken in
-    den Settings; „muss dokumentiert werden": Benutzerhandbuch §17):**
+    den Settings; „muss dokumentiert werden": Benutzerhandbuch §18, bis
+    S108 §17):**
     `core/EinzelInstanz` — der erste Start nimmt eine Sperrdatei im
     Temp-Ordner und lauscht auf einem lokalen Kanal, jeder weitere gibt
     seinen Pfad ab und endet (Exit 0); das Hauptfenster kommt nach vorn und
@@ -5008,6 +5029,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.141.0 | 2026-10-11 | Session 109, Abschluss — §6 **Loop:** die Stufen 6a bis 8 gebaut (gemeinsame Basis `Achse`, Loop-Panel als Arrangement, Drum-Editor, Audio Browser, Loop als Clip im Composer mit Tags, Benutzerhandbuch §16, `Audio_System.md` §6a, Sichttest-Vorlage); Entscheide W1 b, T1 a, T2; offen der erste Blick ins Programm (Liste `Sichttest_Composer_10_Loop.md`, 56 Punkte), die gesetzten Regeln als Urteile, die Rückfrage beim Beenden, das Nachsetzen bei gedrosseltem Rechner, Aktionen der Steuerung für das Panel Loop; 1025 / 1025; im Programm ist seit S108 nichts davon gesehen oder gehört; der Sichttest mit dem Tester hat auch in S109 nicht stattgefunden. Verweis auf das Benutzerhandbuch §17 auf §18 nachgezogen |
 | 1.140.0 | 2026-10-11 | Session 108, Abschluss — §6 neu: **Loop** (Wunsch Patrik), im Bau nach [Loop_Konzept.md](audio/Loop_Konzept.md); gebaut Beleg, Modell und Datei `.lvloop` in Fassung 2 (Arrangement aus Kanälen und Clips), Rechenkern, gerechnetes Kit, Naht in der Audio-Engine, Klangerzeuger, Spieler mit Rangfolge, erstes Panel; offen 6a bis 9, der erste Hörtest, das Kit im Release-Paket; 1002 / 1002; der Sichttest mit dem Tester hat auch in S108 nicht stattgefunden |
 | 1.139.0 | 2026-10-10 | Session 107, Abschluss — Block „Stand S105": `sichttest.pin` steht auf v0.3.4 (Bezug, zwei Bauarten, 974 / 974, Probe der DLL verbunden; im Programm ungesehen); der Sichttest mit dem Tester hat auch in S107 nicht stattgefunden |
 | 1.138.0 | 2026-10-10 | Session 107 — §3 *MilkDrop-Presets stocken manchmal*: geschlossen, Ursache außerhalb der App — es drosselt der Temperaturschutz des Prozessors am Entwicklungsrechner (Tctl an 100 °C, danach der Kerntakt für 1 bis 3 s auf rund ein Zehntel, alle 10 bis 11 s); in einem Lauf mit *glassworks 3* liegen sechs Einbrüche und 108 lange Bilder in denselben Sekunden; an der App nichts zu tun, offen bleibt nur Stufe 3 |
