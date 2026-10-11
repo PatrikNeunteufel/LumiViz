@@ -1,0 +1,248 @@
+/**
+ * @file Bearbeiten.cpp
+ * @brief Loop: das Arrangement bearbeiten
+ */
+
+#include "loop/Bearbeiten.hpp"
+
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+
+namespace lumi::loop
+{
+
+namespace
+{
+
+bool gibtKanal(const Loop& loop, int kanal)
+{
+    return kanal >= 0 && kanal < static_cast<int>(loop.kanaele.size());
+}
+
+bool gibtClip(const Loop& loop, int kanal, int clip)
+{
+    return gibtKanal(loop, kanal) &&
+           clip >= 0 && clip < static_cast<int>(loop.kanaele[static_cast<std::size_t>(kanal)].clips.size());
+}
+
+/// Die Clips des Kanals nach Start sortieren; gibt den Platz des Clips zurueck,
+/// der bei `startTakt` beginnt.
+int ordne(Kanal& kanal, int startTakt)
+{
+    std::stable_sort(kanal.clips.begin(), kanal.clips.end(),
+                     [](const LoopClip& a, const LoopClip& b) { return a.startTakt < b.startTakt; });
+    for (std::size_t i = 0; i < kanal.clips.size(); ++i)
+        if (kanal.clips[i].startTakt == startTakt) return static_cast<int>(i);
+    return -1;
+}
+
+/// Basen entfernen, die kein Clip mehr spielt.
+void raeumeBasen(Loop& loop)
+{
+    loop.muster.erase(std::remove_if(loop.muster.begin(), loop.muster.end(),
+                                     [&loop](const Muster& m) { return basisNutzer(loop, m.name) == 0; }),
+                      loop.muster.end());
+}
+
+/// Der erste Name aus `vorsatz` und einer Zahl ab 1, den `vergeben` nicht kennt.
+template <typename Vergeben>
+QString freierName(const QString& vorsatz, Vergeben vergeben)
+{
+    for (int nr = 1;; ++nr)
+    {
+        const QString name = QStringLiteral("%1 %2").arg(vorsatz).arg(nr);
+        if (!vergeben(name)) return name;
+    }
+}
+
+}  // namespace
+
+bool istFrei(const Loop& loop, int kanal, int startTakt, int takte, int ausser)
+{
+    if (!gibtKanal(loop, kanal) || startTakt < 0 || takte <= 0) return false;
+    const auto& clips = loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+    {
+        if (c == ausser) continue;
+        const LoopClip& anderer = clips[static_cast<std::size_t>(c)];
+        if (startTakt < anderer.startTakt + loop.clipTakte(anderer) && anderer.startTakt < startTakt + takte)
+            return false;
+    }
+    return true;
+}
+
+int basisNutzer(const Loop& loop, const QString& muster)
+{
+    int zahl = 0;
+    for (const Kanal& kanal : loop.kanaele)
+        for (const LoopClip& clip : kanal.clips)
+            if (clip.muster == muster) ++zahl;
+    return zahl;
+}
+
+int neuerClip(Loop& loop, int kanal, int startTakt)
+{
+    if (!istFrei(loop, kanal, startTakt, kTakteMin)) return -1;
+    Muster basis;
+    basis.name = freierName(QStringLiteral("Pattern"),
+                            [&loop](const QString& name) { return loop.findeMuster(name) != nullptr; });
+    basis.art = MusterArt::Drumkit;
+    basis.takte = kTakteMin;
+    loop.muster.push_back(basis);
+    LoopClip clip;
+    clip.muster = basis.name;
+    clip.startTakt = startTakt;
+    Kanal& ziel = loop.kanaele[static_cast<std::size_t>(kanal)];
+    ziel.clips.push_back(clip);
+    return ordne(ziel, startTakt);
+}
+
+int versetzeClip(Loop& loop, int kanal, int clip, int zielKanal, int startTakt)
+{
+    if (!gibtClip(loop, kanal, clip) || !gibtKanal(loop, zielKanal)) return -1;
+    const LoopClip bewegt = loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    const int takte = loop.clipTakte(bewegt);
+    const int wunsch = std::max(0, startTakt);
+    const int ausser = zielKanal == kanal ? clip : -1;
+
+    // der Wunsch selbst — und die Kanten der Clips im Zielkanal, davor und dahinter
+    std::vector<int> stellen = {wunsch};
+    const auto& andere = loop.kanaele[static_cast<std::size_t>(zielKanal)].clips;
+    for (int c = 0; c < static_cast<int>(andere.size()); ++c)
+    {
+        if (c == ausser) continue;
+        const LoopClip& anderer = andere[static_cast<std::size_t>(c)];
+        stellen.push_back(anderer.startTakt + loop.clipTakte(anderer));
+        stellen.push_back(anderer.startTakt - takte);
+    }
+    int beste = -1;
+    for (const int stelle : stellen)
+    {
+        if (!istFrei(loop, zielKanal, stelle, takte, ausser)) continue;
+        if (beste < 0 || std::abs(stelle - wunsch) < std::abs(beste - wunsch)) beste = stelle;
+    }
+    if (beste < 0) return -1;
+
+    auto& quelle = loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    quelle.erase(quelle.begin() + clip);
+    LoopClip neu = bewegt;
+    neu.startTakt = beste;
+    Kanal& ziel = loop.kanaele[static_cast<std::size_t>(zielKanal)];
+    ziel.clips.push_back(neu);
+    return ordne(ziel, beste);
+}
+
+int setzeEnde(Loop& loop, int kanal, int clip, int endeTakt)
+{
+    if (!gibtClip(loop, kanal, clip)) return -1;
+    auto& clips = loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    LoopClip& ziel = clips[static_cast<std::size_t>(clip)];
+    const Muster* basis = loop.findeMuster(ziel.muster);
+    if (basis == nullptr) return -1;
+    const int takte = basis->takte;
+    // so oft, dass das Ende moeglichst nah an der Maus liegt
+    int mal = (endeTakt - ziel.startTakt + takte / 2) / takte;
+    if (clip + 1 < static_cast<int>(clips.size()))
+        mal = std::min(mal, (clips[static_cast<std::size_t>(clip) + 1].startTakt - ziel.startTakt) / takte);
+    ziel.wiederholungen = std::max(1, mal);
+    return clip;
+}
+
+int setzeAnfang(Loop& loop, int kanal, int clip, int startTakt)
+{
+    if (!gibtClip(loop, kanal, clip)) return -1;
+    auto& clips = loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    LoopClip& ziel = clips[static_cast<std::size_t>(clip)];
+    const Muster* basis = loop.findeMuster(ziel.muster);
+    if (basis == nullptr) return -1;
+    const int takte = basis->takte;
+    const int ende = ziel.startTakt + loop.clipTakte(ziel);
+    const int davor = clip > 0 ? clips[static_cast<std::size_t>(clip) - 1].startTakt +
+                                     loop.clipTakte(clips[static_cast<std::size_t>(clip) - 1])
+                               : 0;
+    int mal = (ende - startTakt + takte / 2) / takte;
+    mal = std::clamp(mal, 1, std::max(1, (ende - davor) / takte));
+    ziel.wiederholungen = mal;
+    ziel.startTakt = ende - mal * takte;
+    return clip;
+}
+
+int dupliziere(Loop& loop, int kanal, int clip)
+{
+    if (!gibtClip(loop, kanal, clip)) return -1;
+    Kanal& ziel = loop.kanaele[static_cast<std::size_t>(kanal)];
+    const LoopClip vorlage = ziel.clips[static_cast<std::size_t>(clip)];
+    const int takte = loop.clipTakte(vorlage);
+    // hinter der Vorlage — oder hinter dem ersten spaeteren Clip, nach dem sie passt
+    int stelle = -1;
+    for (int c = clip; c < static_cast<int>(ziel.clips.size()) && stelle < 0; ++c)
+    {
+        const LoopClip& nach = ziel.clips[static_cast<std::size_t>(c)];
+        const int kante = nach.startTakt + loop.clipTakte(nach);
+        if (istFrei(loop, kanal, kante, takte)) stelle = kante;
+    }
+    if (stelle < 0) return -1;
+    LoopClip kopie = vorlage;
+    kopie.startTakt = stelle;
+    ziel.clips.push_back(kopie);
+    return ordne(ziel, stelle);
+}
+
+bool loescheClip(Loop& loop, int kanal, int clip)
+{
+    if (!gibtClip(loop, kanal, clip)) return false;
+    auto& clips = loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    clips.erase(clips.begin() + clip);
+    raeumeBasen(loop);
+    return true;
+}
+
+bool benenneBasisUm(Loop& loop, const QString& alt, const QString& neu)
+{
+    const QString name = neu.trimmed();
+    if (name.isEmpty() || name == alt || loop.findeMuster(name) != nullptr) return false;
+    const auto basis =
+        std::find_if(loop.muster.begin(), loop.muster.end(), [&alt](const Muster& m) { return m.name == alt; });
+    if (basis == loop.muster.end()) return false;
+    basis->name = name;
+    for (Kanal& kanal : loop.kanaele)
+        for (LoopClip& clip : kanal.clips)
+            if (clip.muster == alt) clip.muster = name;
+    return true;
+}
+
+int kanalHinzu(Loop& loop)
+{
+    Kanal kanal;
+    kanal.name = freierName(QStringLiteral("Channel"), [&loop](const QString& name) {
+        return std::any_of(loop.kanaele.begin(), loop.kanaele.end(),
+                           [&name](const Kanal& k) { return k.name == name; });
+    });
+    loop.kanaele.push_back(kanal);
+    return static_cast<int>(loop.kanaele.size()) - 1;
+}
+
+bool kanalLoeschen(Loop& loop, int kanal)
+{
+    if (!gibtKanal(loop, kanal)) return false;
+    loop.kanaele.erase(loop.kanaele.begin() + kanal);
+    raeumeBasen(loop);
+    return true;
+}
+
+bool kanalUmbenennen(Loop& loop, int kanal, const QString& name)
+{
+    if (!gibtKanal(loop, kanal) || name.trimmed().isEmpty()) return false;
+    loop.kanaele[static_cast<std::size_t>(kanal)].name = name.trimmed();
+    return true;
+}
+
+bool kanalSchalten(Loop& loop, int kanal, bool an)
+{
+    if (!gibtKanal(loop, kanal)) return false;
+    loop.kanaele[static_cast<std::size_t>(kanal)].an = an;
+    return true;
+}
+
+}  // namespace lumi::loop

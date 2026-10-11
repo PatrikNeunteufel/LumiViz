@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.7.0
+> **Version:** 0.8.0
 > **Datum:** 2026-10-11 (Session 109)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -123,7 +123,8 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 - **Der Drum-Editor** als eigenes Fenster: das Raster ist als Skizze
   gebilligt (Patrik S108: „der pattern editor passt so"). Offen daraus:
   wohin mit dem Panorama je Spur; lange Muster rollen oder stauchen.
-- **Das Loop-Panel mit Kanälen und Clips** — vor dem Bau als Skizze.
+- **Das Loop-Panel mit Kanälen und Clips:** die Skizze ist gebilligt
+  (Patrik S109), gebaut in Stufe 6a (§4c) — im Programm noch nicht gesehen.
 - **Der Audio Browser zeigt auch `.lvloop`** (Wunsch Patrik S108): Doppelklick
   lädt ins Loop-Panel, Ziehen in einen Audio-Kanal des Composers legt einen
   Clip an.
@@ -300,6 +301,72 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 
 ---
 
+## 4c. Das Loop-Panel als Arrangement (gebaut, Stufe 6a)
+
+**Aufbau** (Skizze gebilligt, Patrik S109):
+
+- **Datei-Zeile:** Name der Datei, mit Stern bei Ungespeichertem
+  („untitled", solange nie gespeichert), **New**, **Load…**, **Save**,
+  **Save As…**. New und Load fragen nach, wenn Ungespeichertes verloren ginge.
+- **Abspiel-Zeile:** **Play / Stop**, **BPM** als Feld, die Zeile mit Kanälen,
+  Takten und Dauer, die Stelle als „Bar · Step", **Fit** (auch Ctrl+0).
+- **Achse** (`loop/Taktachse.hpp`): Lineal in Takten, Kanäle als Zeilen, Clips
+  als Blöcke, darunter eine Zeile „New channel". Zoom, Rollen, Mausrad,
+  Schwenken und Mitlaufen wie im Composer (W1 b, Basis `lumi::ui::Achse`); die
+  Zeilenhöhe merkt die App.
+- **Clip-Zeile:** Basis, Takte, Wiederholungen und wie viele Clips die Basis
+  spielen.
+
+**Bedienung:**
+
+| Geste | Wirkung |
+|---|---|
+| Rechtsklick auf eine freie Stelle im Kanal | **New drumkit clip** — eine neue, leere Basis „Pattern N", 4 Takte; grau, wenn dort keine 4 Takte frei sind. Dazu **Add channel** und **Zoom** |
+| Rechtsklick auf einen Clip | **Edit base**, **Make new base and edit** (beide grau bis Stufe 6b), **Duplicate**, **Rename base…**, **Delete** |
+| Rechtsklick auf einen Kanalnamen | **Rename channel…**, **Turn channel off / on**, **Delete channel** |
+| Clip ziehen | verschieben in ganzen Takten, auch in einen anderen Kanal |
+| Kante eines Clips ziehen | verlängern und kürzen in ganzen Mustern; links bleibt das Ende stehen |
+| Entf, Ctrl+D, Esc | Clip löschen, verbundene Kopie anlegen, einen Zug abbrechen |
+
+Jede Änderung läuft über den CommandBus der App (**Undo / Redo**) und gilt
+beim Spielen ab dem nächsten Block. Der Stern vergleicht mit dem Stand der
+Datei: wer zurück auf diesen Stand geht, hat nichts Ungespeichertes mehr.
+
+**Regeln des Arrangements** (`loop/Bearbeiten.hpp`, reine Funktionen):
+
+- Clips liegen auf ganzen Takten und überlappen sich im Kanal nicht.
+- **Verschieben:** ist am Wunsch kein Platz, rückt der Clip an die nächste
+  freie Kante eines Clips, der im Weg liegt — davor oder dahinter, was näher
+  liegt. Er kann so über einen Clip hinwegspringen.
+- **Kanten:** die Länge rastet auf das nächste Vielfache des Musters,
+  mindestens eins, höchstens bis zum Nachbarn.
+- **Duplicate:** die Kopie liegt hinter dem Clip, an der ersten Stelle, an die
+  sie passt, und bleibt verbunden (L8 a).
+- **Delete:** spielt danach kein Clip mehr die Basis, geht sie mit — sie wäre
+  im Panel nicht mehr zu erreichen. Dasselbe beim Löschen eines Kanals.
+- **Rename base:** gilt für alle Clips der Basis; ein vergebener Name wird
+  abgelehnt.
+
+**Von mir gesetzt, nicht entschieden:**
+
+- **Farbe je Basis** statt je Kanal: verbundene Kopien tragen eine Farbe
+  (zwölf Töne, die Farbreihen des Composers). In der Skizze gebilligt.
+- Kein Schalter Edit: das Panel ist immer bearbeitbar.
+- Ein Klick ins Lineal setzt nichts — Play beginnt immer von vorn.
+- Beim Spielen blättert der Ausschnitt seitenweise mit der Abspielmarke; einen
+  Schalter dafür gibt es nicht.
+- Ein Tick der Achse ist der 960. Teil eines Takts; der feinste Maßstab sind
+  240 Pixel je Takt.
+- Die Achse zeigt mindestens 16 Takte und hinter dem Ende ein Viertel Luft.
+- Ein neuer Kanal heißt „Channel N", New legt einen an.
+- Beim Schließen der App fragt das Panel **nicht** nach Ungespeichertem.
+
+**Nicht drin:** die Editoren (6b); Kanäle am Namen umsortieren; Kopieren und
+Einfügen über die Ablage; mehrere Clips zugleich wählen; ein Tooltip für
+Namen, die nicht in ihre Zeile passen.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -310,7 +377,7 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 | 4 | **Kit:** Skript und WAV-Dateien unter `asset/` | S108: `asset/loop/kit/` (sechs Klänge, `make_kit.py`), Beispiel `asset/loop/drums_demo.lvloop`; an einer Hörprobe gehört (Patrik: klingt gut) |
 | 5a | **Wiedergabe, Unterbau:** Naht in `IAudioEngine` (`IAudioGenerator`, `mixerAddGenerator`, `decodeStereo`), `Klangerzeuger` (die Quelle im Mixer), `Kit` (Klänge finden und laden) | S108 gebaut, §4a; `test_LoopWiedergabe.cpp`, sechs Fälle; in der App noch nicht zu hören |
 | 5b | **Wiedergabe in der App:** der Loop übernimmt den Ton (Rangfolge aus L4), die Visuals lesen von ihm; dazu ein erstes Panel mit Laden und Play | S108 gebaut, §4b; `test_LoopSpieler.cpp`, acht Fälle; **im Programm noch nicht gehört und nicht gesehen** |
-| 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109, Schritt 1 gebaut: die gemeinsame Basis `Achse` (W1 b) — am Composer ändert sich nichts (33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`). Offen: die Achse des Loop-Panels auf der Basis — zuerst die Skizze |
+| 6a | **Loop-Panel als Arrangement:** Kanäle, Zeitachse in Takten, Drumkit-Clips anlegen, verschieben, verlängern, kürzen, kopieren; Datei-Zeile mit New, Save, Save As; Undo | S109 gebaut, §4c: die gemeinsame Basis `Achse` (W1 b; 33 Bilder der Zeitachse vor und nach dem Umbau bytegleich, `test_AchseBilder.cpp`), darauf `Taktachse`, `Bearbeiten` und das Panel; `test_LoopArrangement.cpp`, sieben Fälle; **im Programm noch nicht gesehen** |
 | 6b | **Drum-Editor als eigenes Fenster:** das Raster, Kit je Muster, Lautstärke je Schritt; „Basis bearbeiten" und „in neue Basis umwandeln" (L8 a); Anzeige der Summe (L6 a) | offen |
 | 6c | **Audio Browser** zeigt `.lvloop`, Doppelklick lädt ins Loop-Panel | offen |
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser | offen |
@@ -386,6 +453,9 @@ für die 48 ms; Release-clang (dort nur gebaut, nicht gelaufen).
 
 ## 8. Changelog
 
+- **0.8.0** (S109, 2026-10-11): Stufe 6a gebaut — das Loop-Panel als
+  Arrangement (§4c neu): Taktachse, Regeln des Arrangements, Datei-Zeile,
+  BPM, Undo.
 - **0.7.0** (S109, 2026-10-11): Entscheid W1 b — Loop-Panel und Composer
   teilen sich die Achse (`lumi::ui::Achse`); W1 a und c verworfen (§3.1);
   Stufe 6a, Schritt 1 gebaut.

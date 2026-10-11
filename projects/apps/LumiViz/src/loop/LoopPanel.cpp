@@ -1,27 +1,38 @@
 /**
  * @file LoopPanel.cpp
- * @brief Loop: das Panel — in Stufe 5b nur Laden und Abspielen
+ * @brief Loop: das Panel — das Arrangement eines Loops (Stufe 6a)
  */
 
 #include "loop/LoopPanel.hpp"
 
+#include "UI/widgets/Achse.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "composer/AppAnbindung.hpp"
+#include "loop/Bearbeiten.hpp"
 #include "loop/Kit.hpp"
+#include "loop/Taktachse.hpp"
+#include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMessageBox>
+#include <QPointer>
 #include <QPushButton>
 #include <QSettings>
+#include <QShortcut>
+#include <QSignalBlocker>
 #include <QTimer>
 #include <QVBoxLayout>
 
 #include <cmath>
+#include <memory>
+#include <string>
 
 namespace lumi::loop
 {
@@ -31,12 +42,51 @@ namespace
 
 const char* const kLetzterOrdner = "loop/lastDir";
 const char* const kLetzteDatei = "loop/lastFile";
+/// Einstellung: die Hoehe der Zeilen in der Achse, in Prozent.
+const char* const kZeilenProzent = "loop/rowHeightPercent";
 constexpr int kTaktMs = 33;
 
 void setzeText(QLabel* label, const QString& text)
 {
     if (label->text() != text) label->setText(text);
 }
+
+/// Ein Schritt des Bearbeitens fuer Undo / Redo: die Fassung davor und danach.
+/// Gilt nur fuer die Ladung, in der er entstand — nach New oder Load tut er
+/// nichts mehr.
+class LoopBefehl : public ICommand
+{
+public:
+    LoopBefehl(LoopPanel& panel, Loop nachher, const QString& was)
+        : m_panel(&panel),
+          m_ladung(panel.ladung()),
+          m_vorher(panel.loop()),
+          m_nachher(std::move(nachher)),
+          m_was(was.toStdString())
+    {
+    }
+
+    bool execute() override
+    {
+        if (!gilt() || m_vorher == m_nachher) return false;
+        m_panel->setzeLoop(m_nachher);
+        return true;
+    }
+    void undo() override
+    {
+        if (gilt()) m_panel->setzeLoop(m_vorher);
+    }
+    [[nodiscard]] std::string description() const override { return m_was; }
+
+private:
+    [[nodiscard]] bool gilt() const { return m_panel != nullptr && m_panel->ladung() == m_ladung; }
+
+    QPointer<LoopPanel> m_panel;
+    int m_ladung;
+    Loop m_vorher;
+    Loop m_nachher;
+    std::string m_was;
+};
 
 }  // namespace
 
@@ -50,6 +100,7 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     const QString letzte = QSettings().value(QLatin1String(kLetzteDatei)).toString();
     if (!letzte.isEmpty() && QFileInfo::exists(letzte)) lade(letzte);
     zeigeDatei();
+    zeigeClip();
     zeigeStand();
 
     m_takt = new QTimer(this);
@@ -72,24 +123,56 @@ void LoopPanel::setupUI()
     m_dateiZeile = new QLabel(this);
     m_dateiZeile->setObjectName(QStringLiteral("loopFile"));
     m_dateiZeile->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_neu = new QPushButton(tr("New"), this);
+    m_neu->setObjectName(QStringLiteral("loopNew"));
+    m_neu->setToolTip(tr("Start an empty loop"));
     m_laden = new QPushButton(tr("Load..."), this);
     m_laden->setObjectName(QStringLiteral("loopLoad"));
     m_laden->setToolTip(tr("Load a loop file (.lvloop)"));
+    m_speichern = new QPushButton(tr("Save"), this);
+    m_speichern->setObjectName(QStringLiteral("loopSave"));
+    m_speichernUnter = new QPushButton(tr("Save As..."), this);
+    m_speichernUnter->setObjectName(QStringLiteral("loopSaveAs"));
     dateiReihe->addWidget(m_dateiZeile, 1);
+    dateiReihe->addWidget(m_neu);
     dateiReihe->addWidget(m_laden);
+    dateiReihe->addWidget(m_speichern);
+    dateiReihe->addWidget(m_speichernUnter);
     aussen->addLayout(dateiReihe);
 
     auto* spielReihe = new QHBoxLayout;
     m_play = new QPushButton(tr("Play"), this);
     m_play->setObjectName(QStringLiteral("loopPlay"));
+    auto* bpmName = new QLabel(tr("BPM"), this);
+    m_bpm = new QDoubleSpinBox(this);
+    m_bpm->setObjectName(QStringLiteral("loopBpm"));
+    m_bpm->setRange(kBpmMin, kBpmMax);
+    m_bpm->setDecimals(1);
+    m_bpm->setKeyboardTracking(false);  // erst die fertige Zahl gilt — nicht jede Ziffer ein Schritt fuer Undo
+    m_bpm->setToolTip(tr("Tempo of the whole loop, in beats per minute"));
     m_info = new QLabel(this);
     m_info->setObjectName(QStringLiteral("loopInfo"));
     m_stelle = new QLabel(this);
     m_stelle->setObjectName(QStringLiteral("loopPosition"));
+    m_fit = new QPushButton(tr("Fit"), this);
+    m_fit->setObjectName(QStringLiteral("loopFit"));
+    m_fit->setToolTip(tr("Show the whole loop, rows in normal height (Ctrl+0)") + QLatin1Char('\n') +
+                      lumi::ui::Achse::zoomGesten().join(QLatin1Char('\n')));
     spielReihe->addWidget(m_play);
+    spielReihe->addWidget(bpmName);
+    spielReihe->addWidget(m_bpm);
     spielReihe->addWidget(m_info, 1);
     spielReihe->addWidget(m_stelle);
+    spielReihe->addWidget(m_fit);
     aussen->addLayout(spielReihe);
+
+    m_achse = new Taktachse(this);
+    m_achse->setZeilenProzent(QSettings().value(QLatin1String(kZeilenProzent), 100).toInt());
+    aussen->addWidget(new lumi::ui::AchsenRahmen(m_achse, this), 1);
+
+    m_clipZeile = new QLabel(this);
+    m_clipZeile->setObjectName(QStringLiteral("loopClip"));
+    aussen->addWidget(m_clipZeile);
 
     m_hinweis = new QLabel(tr("The Composer plays the audio — start it in the Composer panel"), this);
     m_hinweis->setObjectName(QStringLiteral("loopHint"));
@@ -103,19 +186,48 @@ void LoopPanel::setupUI()
     m_bericht->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_bericht->hide();
     aussen->addWidget(m_bericht);
-    aussen->addStretch(1);
 
+    connect(m_neu, &QPushButton::clicked, this, [this] {
+        if (darfVerwerfen()) neu();
+    });
     connect(m_laden, &QPushButton::clicked, this, &LoopPanel::frageNachDatei);
+    connect(m_speichern, &QPushButton::clicked, this, [this] { speichereMitDialog(false); });
+    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { speichereMitDialog(true); });
     connect(m_play, &QPushButton::clicked, this, [this] {
         if (m_spieler.spielt())
             halte();
         else
             spiele();
     });
+    connect(m_bpm, &QDoubleSpinBox::valueChanged, this, [this](double bpm) {
+        if (!m_geladen) return;
+        Loop neuer = m_loop;
+        neuer.bpm = bpm;
+        bearbeite(neuer, tr("Change tempo"));
+    });
+    connect(m_fit, &QPushButton::clicked, m_achse, &Taktachse::setzeZoomZurueck);
+    auto* fitKuerzel = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_0), this);
+    fitKuerzel->setContext(Qt::WidgetWithChildrenShortcut);
+    connect(fitKuerzel, &QShortcut::activated, m_achse, &Taktachse::setzeZoomZurueck);
+
+    connect(m_achse, &Taktachse::bearbeitet, this, &LoopPanel::bearbeite);
+    connect(m_achse, &Taktachse::auswahlGeaendert, this, &LoopPanel::zeigeClip);
+    connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
+            [](int prozent) { QSettings().setValue(QLatin1String(kZeilenProzent), prozent); });
+}
+
+bool LoopPanel::darfVerwerfen()
+{
+    if (!ungespeichert()) return true;
+    const QString name = m_datei.isEmpty() ? tr("untitled") : QFileInfo(m_datei).fileName();
+    return QMessageBox::question(this, tr("Loop"), tr("Discard the changes to %1?").arg(name),
+                                 QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel) ==
+           QMessageBox::Discard;
 }
 
 void LoopPanel::frageNachDatei()
 {
+    if (!darfVerwerfen()) return;
     QSettings einstellungen;
     QString ordner = einstellungen.value(QLatin1String(kLetzterOrdner)).toString();
     // beim ersten Mal: der Ordner mit dem mitgelieferten Beispiel
@@ -132,19 +244,88 @@ void LoopPanel::frageNachDatei()
     }
 }
 
+void LoopPanel::speichereMitDialog(bool unter)
+{
+    if (!m_geladen) return;
+    QString pfad = m_datei;
+    if (unter || pfad.isEmpty())
+    {
+        QSettings einstellungen;
+        const QString ordner = m_datei.isEmpty() ? einstellungen.value(QLatin1String(kLetzterOrdner)).toString()
+                                                 : m_datei;
+        pfad = QFileDialog::getSaveFileName(this, tr("Save loop"), ordner, tr("Loop (*.lvloop)"));
+        if (pfad.isEmpty()) return;
+        if (QFileInfo(pfad).suffix().isEmpty()) pfad += QStringLiteral(".lvloop");
+        einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
+    }
+    if (!speichere(pfad))
+        QMessageBox::warning(this, tr("Loop"), tr("Could not write %1").arg(QDir::toNativeSeparators(pfad)));
+}
+
+void LoopPanel::neu()
+{
+    Loop leer;
+    (void)kanalHinzu(leer);
+    m_loop = leer;
+    m_gespeichert = leer;
+    m_datei.clear();
+    m_geladen = true;
+    ++m_ladung;
+    m_ladeBericht.clear();
+    m_spieler.setzeLoop(m_loop);
+    m_achse->setLoop(m_loop, true);
+    zeigeDatei();
+    zeigeClip();
+    zeigeStand();
+}
+
 bool LoopPanel::lade(const QString& pfad)
 {
     Loop loop;
     QStringList bericht;
     if (!ladeLoop(pfad, loop, &bericht)) return false;
+    m_loop = loop;
+    m_gespeichert = loop;
     m_datei = pfad;
     m_geladen = true;
+    ++m_ladung;
     m_ladeBericht = bericht;
-    m_spieler.setzeLoop(loop);
+    m_spieler.setzeLoop(m_loop);
+    m_achse->setLoop(m_loop, true);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     zeigeDatei();
+    zeigeClip();
     zeigeStand();
     return true;
+}
+
+bool LoopPanel::speichere(const QString& pfad)
+{
+    if (!m_geladen || pfad.isEmpty() || !speichereLoop(m_loop, pfad)) return false;
+    m_datei = pfad;
+    m_gespeichert = m_loop;
+    QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
+    zeigeDatei();
+    return true;
+}
+
+void LoopPanel::bearbeite(const Loop& neu, const QString& was)
+{
+    if (!m_geladen) return;
+    if (auto* bus = services().tryResolve<ICommandBus>())
+        (void)bus->execute(std::make_unique<LoopBefehl>(*this, neu, was));
+    else
+        setzeLoop(neu);
+}
+
+void LoopPanel::setzeLoop(const Loop& loop)
+{
+    m_loop = loop;
+    m_spieler.setzeLoop(m_loop);  // spielt er, gilt die Fassung ab dem naechsten Block
+    m_achse->zeigeBearbeitet(m_loop);
+    zeigeDatei();
+    zeigeClip();
+    zeigeStand();
 }
 
 bool LoopPanel::spiele()
@@ -172,6 +353,9 @@ void LoopPanel::beimTakt()
 
 void LoopPanel::zeigeDatei()
 {
+    m_speichern->setEnabled(m_geladen && (ungespeichert() || m_datei.isEmpty()));
+    m_speichernUnter->setEnabled(m_geladen);
+    m_bpm->setEnabled(m_geladen);
     if (!m_geladen)
     {
         m_dateiZeile->setText(tr("No loop loaded"));
@@ -179,14 +363,39 @@ void LoopPanel::zeigeDatei()
         m_info->clear();
         return;
     }
-    m_dateiZeile->setText(QFileInfo(m_datei).fileName());
-    m_dateiZeile->setToolTip(QDir::toNativeSeparators(m_datei));
-    const Loop& loop = m_spieler.loop();
+    // der Stern wie im Composer: es gibt Ungespeichertes
+    m_dateiZeile->setText((m_datei.isEmpty() ? tr("untitled") : QFileInfo(m_datei).fileName()) +
+                          (ungespeichert() ? QStringLiteral(" *") : QString()));
+    m_dateiZeile->setToolTip(m_datei.isEmpty() ? QString() : QDir::toNativeSeparators(m_datei));
+    {
+        const QSignalBlocker ruhe(m_bpm);
+        m_bpm->setValue(m_loop.bpm);
+    }
     m_info->setText(tr("%1 BPM · channels: %2 · bars: %3 · %4 s")
-                        .arg(loop.bpm, 0, 'f', loop.bpm == std::floor(loop.bpm) ? 0 : 1)
-                        .arg(loop.kanaele.size())
-                        .arg(loop.durchlaufTakte())
-                        .arg(loop.durchlaufMs() / 1000.0, 0, 'f', 1));
+                        .arg(m_loop.bpm, 0, 'f', m_loop.bpm == std::floor(m_loop.bpm) ? 0 : 1)
+                        .arg(m_loop.kanaele.size())
+                        .arg(m_loop.durchlaufTakte())
+                        .arg(m_loop.durchlaufMs() / 1000.0, 0, 'f', 1));
+}
+
+void LoopPanel::zeigeClip()
+{
+    const LoopClip* clip = m_achse->auswahl();
+    if (clip == nullptr)
+    {
+        m_clipZeile->setText(m_geladen ? tr("Right-click a channel to add a clip") : QString());
+        return;
+    }
+    const Loop& gezeigt = m_achse->loop();
+    const Muster* basis = gezeigt.findeMuster(clip->muster);
+    const int takte = basis != nullptr ? basis->takte : 0;
+    m_clipZeile->setText(tr("Clip: %1 · bars %2 to %3 · %4 × %5 bars · base used by %6 clips")
+                             .arg(clip->muster)
+                             .arg(clip->startTakt + 1)
+                             .arg(clip->startTakt + gezeigt.clipTakte(*clip))
+                             .arg(clip->wiederholungen)
+                             .arg(takte)
+                             .arg(basisNutzer(gezeigt, clip->muster)));
 }
 
 void LoopPanel::zeigeStand()
@@ -195,9 +404,8 @@ void LoopPanel::zeigeStand()
     const bool darf = m_spieler.darfSpielen();
     setzeText(m_stelle, [&]() -> QString {
         if (!spielt) return {};
-        const Loop& loop = m_spieler.loop();
         const int schritt = static_cast<int>(m_spieler.stelleSchritte());
-        return tr("Bar %1 · Step %2").arg(schritt / loop.schritteJeTakt() + 1).arg(schritt % loop.schritteJeTakt() + 1);
+        return tr("Bar %1 · Step %2").arg(schritt / m_loop.schritteJeTakt() + 1).arg(schritt % m_loop.schritteJeTakt() + 1);
     }());
     const QString knopf = spielt ? tr("Stop") : tr("Play");
     if (m_play->text() != knopf) m_play->setText(knopf);
@@ -205,6 +413,12 @@ void LoopPanel::zeigeStand()
     m_play->setToolTip(darf ? tr("Play the loop from the start; the player pauses meanwhile")
                             : tr("The Composer plays the audio — start it in the Composer panel"));
     m_hinweis->setVisible(!darf);
+    m_fit->setEnabled(m_achse->zoomVerstellt());
+
+    // die Abspielmarke; hineingezoomt blaettert der Ausschnitt mit ihr weiter
+    m_achse->setSpielt(spielt);
+    m_achse->setMitlaufen(spielt ? lumi::ui::Achse::Mitlaufen::Seitenweise : lumi::ui::Achse::Mitlaufen::Aus);
+    if (spielt) m_achse->setStelleSchritte(m_spieler.stelleSchritte());
 
     QStringList zeilen = m_ladeBericht;
     zeilen << m_spieler.bericht();
