@@ -97,6 +97,9 @@ public:
     /// Clip von seiner Basis loesen — er spielt eine Kopie unter neuem Namen —
     /// und deren Editor verlangen.
     bool neueBasisUndBearbeiten();
+    /// „Effects...": das Fenster der Effekte fuer die markierten Clips
+    /// verlangen (Stufe 12d). false = kein Clip markiert.
+    bool verlangeEffekte();
     void kanalHinzu();
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
@@ -125,6 +128,8 @@ Q_SIGNALS:
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// Der Editor dieser Basis soll sich oeffnen.
     void editorVerlangt(const QString& muster);
+    /// Das Fenster „Clip effects" soll sich fuer die markierten Clips oeffnen.
+    void effekteVerlangt();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;

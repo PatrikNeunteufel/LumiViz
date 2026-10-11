@@ -823,6 +823,13 @@ bool Taktachse::neueBasisUndBearbeiten()
     return true;
 }
 
+bool Taktachse::verlangeEffekte()
+{
+    if (m_gruppe.empty() || m_griff != Griff::Keiner) return false;
+    Q_EMIT effekteVerlangt();
+    return true;
+}
+
 void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -923,6 +930,9 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         menu.addAction(tr("Edit base"), this, [this] { (void)bearbeiteBasis(); })->setEnabled(!gruppe);
         menu.addAction(tr("Make new base and edit"), this, [this] { (void)neueBasisUndBearbeiten(); })
             ->setEnabled(!gruppe);
+        // die Effekte gelten fuer alle markierten (Entscheid Patrik S113, E2 b)
+        menu.addAction(gruppe ? tr("Effects of %1 clips...").arg(zahl) : tr("Effects..."), this,
+                       [this] { (void)verlangeEffekte(); });
         menu.addSeparator();
         menu.addAction(gruppe ? tr("Duplicate %1 clips").arg(zahl) : tr("Duplicate"), this,
                        [this] { (void)dupliziereAuswahl(); });

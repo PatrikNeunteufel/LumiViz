@@ -10,6 +10,7 @@
 #include "audio/IAudioPlayer.hpp"
 #include "composer/AppAnbindung.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/ClipEffektFenster.hpp"
 #include "loop/DrumEditor.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
@@ -292,6 +293,7 @@ void LoopPanel::setupUI()
     connect(m_achse, &Taktachse::bearbeitet, this, &LoopPanel::bearbeite);
     connect(m_achse, &Taktachse::auswahlGeaendert, this, &LoopPanel::zeigeClip);
     connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
+    connect(m_achse, &Taktachse::effekteVerlangt, this, [this] { (void)oeffneEffekte(); });
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
             [](int prozent) { QSettings().setValue(QLatin1String(kZeilenProzent), prozent); });
 }
@@ -527,6 +529,30 @@ InstrumentEditor* LoopPanel::instrumentEditor() const
     return m_instrumentEditor;
 }
 
+ClipEffektFenster* LoopPanel::effektFenster() const
+{
+    return m_effekte;
+}
+
+bool LoopPanel::oeffneEffekte(bool zeigen)
+{
+    if (!m_geladen) return false;
+    if (m_effekte == nullptr)
+    {
+        m_effekte = new ClipEffektFenster(this);
+        connect(m_effekte, &ClipEffektFenster::bearbeitet, this, &LoopPanel::bearbeite);
+    }
+    m_effekte->zeige(m_achse->loop(), m_achse->markierte());
+    if (zeigen)
+    {
+        m_effekte->show();
+        m_effekte->raise();
+        m_effekte->activateWindow();
+    }
+    zeigeStand();
+    return true;
+}
+
 bool LoopPanel::spieleTon(const QString& muster, int hoehe)
 {
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
@@ -666,7 +692,8 @@ void LoopPanel::beimTakt()
     }
     m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
     if (isVisible() || (m_editor != nullptr && m_editor->isVisible()) ||
-        (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()))
+        (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()) ||
+        (m_effekte != nullptr && m_effekte->isVisible()))
         zeigeStand();
 }
 
@@ -701,6 +728,8 @@ void LoopPanel::zeigeDatei()
 
 void LoopPanel::zeigeClip()
 {
+    // das Fenster der Effekte folgt den Marken — und jeder neuen Fassung
+    if (m_effekte != nullptr) m_effekte->zeige(m_achse->loop(), m_achse->markierte());
     const LoopClip* clip = m_achse->auswahl();
     if (clip == nullptr)
     {
@@ -762,6 +791,7 @@ void LoopPanel::zeigeStand()
     // spielt ein Muster allein, laeuft die Marke im Editor — im Arrangement gibt es dafuer keine Stelle
     m_achse->setSpielt(spielt && m_solo.isEmpty());
     if (spielt && m_solo.isEmpty()) m_achse->setStelleSchritte(m_spieler.stelleSchritte());
+    if (m_effekte != nullptr) m_effekte->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     if (m_editor != nullptr)
     {
         m_editor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_editor->muster(), m_spieler.stelleSchritte());

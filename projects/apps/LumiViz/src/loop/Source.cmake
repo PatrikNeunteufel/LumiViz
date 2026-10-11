@@ -13,6 +13,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Bearbeiten.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ClipEffektFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DrumEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Effekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Instrument.cpp"
@@ -30,6 +31,7 @@ set(_local_sources
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bearbeiten.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/ClipEffektFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Offen.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/DrumEditor.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Effekte.hpp"

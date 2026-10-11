@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.27.0
+> **Version:** 0.28.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1112,6 +1112,46 @@ Bild der Achse mit zwei markierten Clips und einer Marke fx ab — angesehen.
 **Nicht geprüft:** das Menü des Rechtsklicks (es öffnet ein Fenster); die
 Clip-Zeile des Panels bei mehreren. **Im Programm nicht gesehen.**
 
+### Das Fenster „Clip effects" (gebaut, 12d)
+
+`loop/ClipEffektFenster.hpp`, ein Werkzeugfenster wie die Editoren. Geöffnet
+über **Effects...** im Menü eines Clips (bei mehreren markierten „Effects of
+n clips..."; `Taktachse::verlangeEffekte`, `LoopPanel::oeffneEffekte`).
+Gebaut wie die Skizze: Kopf mit Zahl, Clips (Basis und Takt) und Peak; die
+drei Gruppen mit Haken und Reglern; „mixed"; unten die Reihenfolge, **Copy**,
+**Paste**, **Reset**. Jede Änderung läuft als „Clip effects" über das Undo
+des Panels und gilt beim Spielen ab dem nächsten Block.
+
+**Dazu von mir gesetzt, nicht entschieden:**
+
+- Das Fenster **folgt den Marken**, solange es offen ist: wer einen anderen
+  Clip anklickt, sieht dessen Effekte. Ohne markierten Clip ist es gesperrt
+  („No clip selected — Select one or more clips in the Loop panel").
+- Ein Haken, der bei mehreren Clips „teils an" zeigt, schaltet beim Klick
+  alle an.
+- Ein Schieber meldet beim Loslassen; im Zug läuft nur seine Anzeige mit.
+  Tasten, Mausrad und ein Klick in die Bahn melden sofort.
+- Die Regler: Drive, Tone, Mix, Damping und Size in Prozent; Feedback bis
+  90 %; Decay 0,2 bis 8,0 s in Zehnteln; **Time** als Auswahl (1/16, 1/8,
+  1/8 dotted, 1/4, 1/2) mit den Millisekunden im Tempo des Loops daneben.
+- **Copy** merkt die Effekte des **ersten** gezeigten Clips, nur für dieses
+  Fenster und bis es geschlossen wird — nicht in der Ablage des Systems.
+  **Reset** stellt alle drei Effekte der markierten Clips auf die Vorgabe
+  (aus).
+- Ein Regler wirkt auch, wenn sein Effekt aus ist: der Wert steht dann
+  bereit, zu hören ist nichts.
+- Größe und Lage des Fensters merkt die App nicht (wie bei den Editoren).
+
+**Nicht drin:** Vorhören eines einzelnen Clips aus dem Fenster; die Effekte
+eines einzelnen Clips in der Clip-Zeile des Panels (dort steht nur bei
+mehreren, wie viele Effekte haben).
+
+Geprüft in `test_LoopClipEffekte.cpp` (ein Fall zum Fenster mit fünf Teilen,
+einer zum Weg durchs Panel mit Undo); `LUMIVIZ_CLIP_EFFEKTE_BILD=<datei.png>`
+legt ein Bild des Fensters ab — angesehen. **Nicht geprüft:** das Menü des
+Rechtsklicks selbst; das gezeigte Fenster (Fokus, Lage über dem Panel).
+**Im Programm nicht gesehen und nicht gehört.**
+
 ### Die Rechenbausteine (gebaut, 12b Teil 1)
 
 `loop/Effekte.hpp`: `Verzerrer`, `EchoEffekt`, `HallEffekt` und die
@@ -1164,7 +1204,8 @@ Debug-MSVC.
 
 Ein Clip mit Effekten ist jetzt zu hören — im Loop-Panel wie als Clip im
 Composer (beide spielen über den Klangerzeuger). Einstellen lässt er sich
-noch nur in der Datei; Beispiel: `asset/loop/effects_demo.lvloop`.
+noch nur in der Datei; Beispiel: `asset/loop/effects_demo.lvloop`. (Seit
+12d über das Fenster „Clip effects".)
 
 - **Rechenkern** (`Rechenkern.hpp`): `plane` legt je Clip mit eingeschaltetem
   Effekt in einem Kanal, der an ist, einen **Bus** an (`Ablauf::busse`: Kanal,
@@ -1286,7 +1327,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **Offen:** 12d Fenster Clip effects und Effects... im Menü, 12e Doku und Sichttest-Liste |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **Offen:** der volle Testlauf (seit 12d nur die Loop-Fälle, Vorgabe Patrik), 12e Doku und Sichttest-Liste |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1384,6 +1425,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.28.0** (S113, 2026-10-11): 12d gebaut — das Fenster „Clip effects"
+  und Effects... im Menü des Clips (§4g).
 
 - **0.27.0** (S113, 2026-10-11): 12c gebaut — mehrere Clips markieren
   (Ctrl+Klick, Rahmen, Ctrl+A), als Gruppe ziehen, kopieren und löschen, die

@@ -82,6 +82,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerNahtMixer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopBelegeTon.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopInstrument.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopClipEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopInstrumentEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"

@@ -38,6 +38,7 @@ class QTimer;
 namespace lumi::loop
 {
 
+class ClipEffektFenster;
 class DrumEditor;
 class InstrumentEditor;
 class Taktachse;
@@ -136,6 +137,14 @@ public:
     /// Das Muster, das gerade allein spielt; leer = keins.
     [[nodiscard]] const QString& soloMuster() const { return m_solo; }
 
+    // --- die Effekte am Clip (Stufe 12d) --------------------------------------
+    /// Das Fenster „Clip effects" fuer die markierten Clips zeigen (es
+    /// entsteht beim ersten Mal und folgt danach den Marken). false = kein
+    /// Loop geladen. `zeigen` false fuellt es nur (fuer Tests ohne Fenster).
+    bool oeffneEffekte(bool zeigen = true);
+    /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] ClipEffektFenster* effektFenster() const;
+
 private:
     void setupUI();
     void frageNachDatei();
@@ -161,6 +170,7 @@ private:
     IEventBus::SubscriberHandle m_ladeSubscription;
     QPointer<DrumEditor> m_editor;
     QPointer<InstrumentEditor> m_instrumentEditor;
+    QPointer<ClipEffektFenster> m_effekte;
     int m_vorhoeren = 0;    ///< die Nummer des Tons, der gerade angespielt wird; 0 = keiner
     int m_vorhoerNr = 0;
     QString m_solo;        ///< das Muster, das allein spielt; leer = der ganze Loop
