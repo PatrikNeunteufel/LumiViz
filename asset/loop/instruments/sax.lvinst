@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Sax",
+    "level": 0.65,
+    "layers": [
+        {
+            "name": "Reed",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0.25,
+            "waveform": "square",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 35,
+            "decay": 200,
+            "sustain": 0.85,
+            "release": 110,
+            "filterCutoff": 3,
+            "filterEnvelope": 3,
+            "vibratoRate": 5.5,
+            "vibratoDepth": 14,
+            "vibratoDelay": 250,
+            "damping": 0.996
+        },
+        {
+            "name": "Breath",
+            "on": true,
+            "level": 0.35,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 50,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 110,
+            "filterCutoff": 5,
+            "filterEnvelope": 0,
+            "vibratoRate": 5.5,
+            "vibratoDepth": 14,
+            "vibratoDelay": 250,
+            "damping": 0.996
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Round Bass",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Round",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [0.25, 0.08],
+            "voices": 1,
+            "detune": 0,
+            "attack": 4,
+            "decay": 400,
+            "sustain": 0.5,
+            "release": 90,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Finger",
+            "on": true,
+            "level": 0.3,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "triangle",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 70,
+            "sustain": 0,
+            "release": 40,
+            "filterCutoff": 3,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

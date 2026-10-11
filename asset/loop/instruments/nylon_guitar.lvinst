@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Nylon Guitar",
+    "level": 0.75,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 3,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 110,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.994
+        },
+        {
+            "name": "Warmth",
+            "on": true,
+            "level": 0.4,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "triangle",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 3,
+            "decay": 300,
+            "sustain": 0.1,
+            "release": 110,
+            "filterCutoff": 3,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

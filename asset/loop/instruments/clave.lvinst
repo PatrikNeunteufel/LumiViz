@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Clave",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Wood",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [0.2],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 45,
+            "sustain": 0,
+            "release": 30,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Tick",
+            "on": true,
+            "level": 0.4,
+            "transpose": 12,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "triangle",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 18,
+            "sustain": 0,
+            "release": 15,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

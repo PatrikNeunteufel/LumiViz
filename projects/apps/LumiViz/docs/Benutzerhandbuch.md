@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.120.0
+> **Version:** 1.121.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2491,7 +2491,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Element | Wirkung |
 |---|---|
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
-| **Instrument** | Dreißig mitgelieferte, nach Namen sortiert: Piano, Strings, Violin, Guitar, Bass, Organ, Lead — für House: House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck — aus mehreren Schichten: Bell, Tine Piano, Brass, Flute, Super Saw, Fifth Pad, Overdrive Guitar, Kalimba, Marimba — und sieben ungewöhnliche: Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Growl Bass, Reverse Swell (schwillt an und bricht ab). Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
+| **Instrument** | Neunundvierzig mitgelieferte, nach Namen sortiert — darunter seit den Genre-Beispielen Trance Lead, Trance Pluck, Rolling Bass, Hoover, Clavinet, Slap Bass, Clean Guitar, Muted Guitar, Round Bass, 808 Bass, Reese Bass, Upright Bass, Nylon Guitar, Sax, Vibraphone, Steel Drum und als Schlagwerk Cowbell, Conga, Clave (bei ihnen ist die Tonhöhe der Note die Tonhöhe des Schlags). Dazu: Piano, Strings, Violin, Guitar, Bass, Organ, Lead — für House: House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck — aus mehreren Schichten: Bell, Tine Piano, Brass, Flute, Super Saw, Fifth Pad, Overdrive Guitar, Kalimba, Marimba — und sieben ungewöhnliche: Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Growl Bass, Reverse Swell (schwillt an und bricht ab). Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
 | Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
@@ -2570,6 +2570,31 @@ Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
 | `rock_demo.lvloop` | Overdrive Guitar, Growl Bass, Organ, Lead |
 | `strange_demo.lvloop` | Die ungewöhnlichen: Broken Radio, Siren, Alien Choir, Cascade, Growl Bass |
 | `ambient_demo.lvloop` | Ohne Schlagzeug: Reverse Swell, Ghost, Fifth Pad, Flute, Bell, Cascade |
+
+Im Unterordner `asset\loop\genres` liegen neunzehn Beispiele nach Genre —
+gerechnet, nicht nach Gehör eingestellt:
+
+| Datei | Titel | Genre | BPM | Was spielt |
+|---|---|---|---|---|
+| `trance_uplifting.lvloop` | Sunrise | Trance | 138 | 32 Takte mit Breakdown und Wirbel: Rolling Bass auf den Offbeats, Trance Pluck in Sechzehnteln, gegatete Super-Saw-Akkorde, Warm Pad, Trance Lead |
+| `trance_acid.lvloop` | Acid line | Acid Trance | 140 | Acid Bass in Sechzehnteln, Rolling Bass, Hoover, Siren als Steigerung |
+| `trance_psy.lvloop` | Full on | Psytrance | 145 | Bass auf den drei Sechzehnteln nach jeder Kick, phrygische Linie, Broken Radio, Alien Choir, Cascade |
+| `funk.lvloop` | Pocket | Funk | 104 | Slap Bass, Clavinet, Muted Guitar, Bläser-Einwürfe; leichter Swing |
+| `disco.lvloop` | Mirror ball | Disco | 120 | Oktav-Bass, Clean Guitar, Tine Piano, Strings, Bläser-Melodie |
+| `reggae.lvloop` | One drop | Reggae | 76 | Kick und Rim nur auf der Drei, Round Bass, Gitarre auf Zwei und Vier, Orgel dazwischen, Bläser, eine Dub-Sirene |
+| `ska.lvloop` | Rude step | Ska | 152 | Gitarre und Piano auf jedem Offbeat, laufender Kontrabass, Bläser, Sax |
+| `reggaeton.lvloop` | Dembow | Reggaeton | 94 | der Dembow-Rhythmus, 808 Bass, Nylon Guitar, Steel Drum, Warm Pad, Cowbell |
+| `hiphop.lvloop` | Boom bap | Hip-Hop | 90 | Kontrabass, Tine Piano mit Septakkorden, Vibraphone; starker Swing |
+| `trap.lvloop` | Half time | Trap | 140 | Snare nur auf der Drei, Hi-Hat-Wirbel, 808 Bass, Bell, Kalimba, Ghost |
+| `dnb.lvloop` | Roller | Drum and Bass | 174 | Breakbeat, Reese Bass, Warm Pad, Tine Piano, Vibraphone |
+| `techno.lvloop` | Warehouse | Techno | 130 | Rolling Bass, Chord Stab, Broken Radio, Hoover, Toms |
+| `bossa.lvloop` | Praia | Bossa Nova | 132 | Clave über zwei Takte, Kontrabass, Nylon Guitar, Flute |
+| `blues.lvloop` | Twelve bars | Blues | 96 | zwölf Takte in A im Dreier-Raster (drei Schritte je Schlag): Boogie auf Bass und Gitarre, Orgel, Sax |
+| `waltz.lvloop` | Three steps | Jazz Waltz | 138 | drei Schläge je Takt: Kontrabass auf der Eins, Nylon Guitar auf Zwei und Drei, Vibraphone, Flute |
+| `lofi.lvloop` | Rainy window | Lo-Fi | 78 | Tine Piano mit Septakkorden, Round Bass, Vibraphone, Kalimba; Swing |
+| `synthpop.lvloop` | Neon heart | Synth-Pop | 118 | Bass in Achteln, Super Saw, Pluck-Arpeggio, Lead, Bläser-Motiv |
+| `afrobeat.lvloop` | Lagos night | Afrobeat | 108 | Cowbell und Congas als Instrumente, Round Bass, Clean Guitar, Orgel, Bläser |
+| `metal.lvloop` | Iron road | Metal | 160 | Doppel-Kick in Sechzehnteln, Overdrive Guitar, Growl Bass, Strings, Solo in harmonisch Moll |
 
 ### Eine Loop-Datei von Hand
 
@@ -2676,6 +2701,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.121.0 | 2026-10-11 | Session 111. §16 Loop — **Beispiele** um neunzehn Loops nach Genre unter `asset\loop\genres` erweitert (Trance, Funk, Disco, Reggae, Ska, Reggaeton, Hip-Hop, Trap, Drum and Bass, Techno, Bossa Nova, Blues, Jazz Waltz, Lo-Fi, Synth-Pop, Afrobeat, Metal); neunzehn Instrumente dazu (neunundvierzig insgesamt) |
 | 1.120.0 | 2026-10-11 | Session 111. §16 Loop — **Instrumente aus Schichten**: im Instrument-Creator die Liste **Layers** (Add layer, Add layer from instrument..., Duplicate, Remove, hinauf, hinunter, Haken für stumm), je Schicht Name, Level, Transpose, Start offset und **Drive**, oben Level für das ganze Instrument, zwei Kurven je Bild, **Selected layer only**; sechzehn neue Instrumente (dreißig insgesamt), sieben davon ungewöhnlich; NEU **Beispiele** mit fünf neuen Loops |
 | 1.119.0 | 2026-10-11 | Session 110. §16 Loop NEU **Eigene Instrumente: der Instrument-Creator** — **Edit instrument...** und **Load instrument...** im Instrument-Editor, das Fenster mit Waveform, Voices, Detune, Obertönen, Damping, Hüllkurve, Filter, Vibrato, Level, den zwei Bildern und der Klaviatur zum Anspielen; Save und Save as... schreiben eine Datei `.lvinst` |
 | 1.118.0 | 2026-10-11 | Session 110. §16 Loop: sieben Instrumente für House (House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck) und das Beispiel `asset\loop\house_demo.lvloop`; die Instrumente sind Dateien `.lvinst` unter `asset\loop\instruments`, die Auswahl ist nach Namen sortiert; Instrument-Editor: Mauszeiger an der Kante einer Note, Hinweis bei stummen Tasten |

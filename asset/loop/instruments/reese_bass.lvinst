@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Reese Bass",
+    "level": 0.6,
+    "layers": [
+        {
+            "name": "Reese",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 3,
+            "detune": 40,
+            "attack": 10,
+            "decay": 300,
+            "sustain": 0.9,
+            "release": 120,
+            "filterCutoff": 2.5,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Sub",
+            "on": true,
+            "level": 0.6,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 10,
+            "decay": 300,
+            "sustain": 0.9,
+            "release": 120,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "808 Bass",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Boom",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0.45,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 900,
+            "sustain": 0.3,
+            "release": 180,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Click",
+            "on": true,
+            "level": 0.3,
+            "transpose": 12,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "triangle",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 30,
+            "sustain": 0,
+            "release": 20,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Vibraphone",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Bar",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [0, 0, 0.18],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 1400,
+            "sustain": 0.05,
+            "release": 600,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 4.5,
+            "vibratoDepth": 5,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Strike",
+            "on": true,
+            "level": 0.2,
+            "transpose": 24,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 60,
+            "sustain": 0,
+            "release": 40,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

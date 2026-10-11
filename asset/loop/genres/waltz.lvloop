@@ -1,0 +1,193 @@
+{
+    "format": "lumiviz-loop",
+    "version": 2,
+    "bpm": 138,
+    "beatsPerBar": 3,
+    "stepsPerBeat": 4,
+    "swing": 0.0,
+    "volume": 0.3,
+    "tags": {
+        "title": "Three steps",
+        "artist": "LumiViz",
+        "genre": "Jazz Waltz"
+    },
+    "patterns": [
+        {
+            "name": "Brushes",
+            "kind": "drumkit",
+            "bars": 4,
+            "tracks": [
+                {
+                    "name": "Kick",
+                    "sound": "kit:kick",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false
+                },
+                {
+                    "name": "Hi-Hat",
+                    "sound": "kit:hat_closed",
+                    "volume": 0.45,
+                    "pan": 0.25,
+                    "mute": false
+                },
+                {
+                    "name": "Snare",
+                    "sound": "kit:snare",
+                    "volume": 0.3,
+                    "pan": 0.0,
+                    "mute": false
+                }
+            ],
+            "rows": [
+                [1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.4, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.4, 0, 0.7, 0]
+            ]
+        },
+        {
+            "name": "Bass",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "upright_bass",
+            "volume": 1.0,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 8, 36, 0.9],
+                [12, 4, 33, 0.9],
+                [20, 4, 40, 0.6],
+                [24, 8, 26, 0.9],
+                [36, 4, 31, 0.9],
+                [44, 4, 38, 0.6]
+            ]
+        },
+        {
+            "name": "Guitar",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "nylon_guitar",
+            "volume": 0.7,
+            "pan": 0.3,
+            "mute": false,
+            "notes": [
+                [4, 3, 60, 0.7],
+                [4, 3, 64, 0.7],
+                [4, 3, 67, 0.7],
+                [8, 3, 60, 0.7],
+                [8, 3, 64, 0.7],
+                [8, 3, 67, 0.7],
+                [16, 3, 57, 0.7],
+                [16, 3, 60, 0.7],
+                [16, 3, 64, 0.7],
+                [20, 3, 57, 0.7],
+                [20, 3, 60, 0.7],
+                [20, 3, 64, 0.7],
+                [28, 3, 50, 0.7],
+                [28, 3, 53, 0.7],
+                [28, 3, 57, 0.7],
+                [32, 3, 50, 0.7],
+                [32, 3, 53, 0.7],
+                [32, 3, 57, 0.7],
+                [40, 3, 55, 0.7],
+                [40, 3, 59, 0.7],
+                [40, 3, 62, 0.7],
+                [44, 3, 55, 0.7],
+                [44, 3, 59, 0.7],
+                [44, 3, 62, 0.7]
+            ]
+        },
+        {
+            "name": "Vibes",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "vibraphone",
+            "volume": 0.7,
+            "pan": -0.2,
+            "mute": false,
+            "notes": [
+                [0, 8, 76, 0.8],
+                [8, 4, 79, 0.7],
+                [12, 12, 81, 0.8],
+                [24, 4, 77, 0.8],
+                [28, 4, 76, 0.7],
+                [32, 4, 74, 0.7],
+                [36, 12, 71, 0.8]
+            ]
+        },
+        {
+            "name": "Flute",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "flute",
+            "volume": 0.6,
+            "pan": 0.1,
+            "mute": false,
+            "notes": [
+                [0, 12, 84, 0.7],
+                [12, 8, 81, 0.7],
+                [20, 4, 79, 0.6],
+                [24, 12, 77, 0.7],
+                [36, 8, 79, 0.7],
+                [44, 4, 83, 0.6]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Drums",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Brushes",
+                    "start": 0,
+                    "repeat": 4
+                }
+            ]
+        },
+        {
+            "name": "Bass",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Bass",
+                    "start": 0,
+                    "repeat": 4
+                }
+            ]
+        },
+        {
+            "name": "Guitar",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Guitar",
+                    "start": 0,
+                    "repeat": 4
+                }
+            ]
+        },
+        {
+            "name": "Vibes",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Vibes",
+                    "start": 4,
+                    "repeat": 3
+                }
+            ]
+        },
+        {
+            "name": "Flute",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Flute",
+                    "start": 8,
+                    "repeat": 2
+                }
+            ]
+        }
+    ]
+}

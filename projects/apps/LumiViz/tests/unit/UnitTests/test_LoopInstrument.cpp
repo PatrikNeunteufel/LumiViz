@@ -405,17 +405,21 @@ TEST_SUITE("LoopInstrument")
         CHECK(QDir(instrumentOrdner()).dirName() == QStringLiteral("instruments"));
         const std::vector<Instrument>& alle = instrumente();
         // sieben allgemeine und sieben fuer House (Wunsch Patrik S110), dazu sechzehn aus
-        // Schichten, sieben davon ungewoehnlich (Wunsch Patrik S111)
-        REQUIRE(alle.size() == 30);
+        // Schichten, sieben davon ungewoehnlich, und neunzehn fuer die Genre-Beispiele
+        // (Wunsch Patrik S111)
+        REQUIRE(alle.size() == 49);
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
-        CHECK(alle.front().titel == QStringLiteral("Acid Bass"));
+        CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
         CHECK(alle.back().titel == QStringLiteral("Warm Pad"));
         for (const char* name : {"bass", "guitar", "lead", "organ", "piano", "strings", "violin", "acid_bass",
                                  "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad",
                                  "bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
                                  "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
-                                 "growl_bass", "reverse_swell"})
+                                 "growl_bass", "reverse_swell",
+                                 "trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
+                                 "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
+                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -895,6 +899,64 @@ TEST_SUITE("LoopInstrument")
         for (const char* name : {"bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
                                  "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
                                  "growl_bass", "reverse_swell"})
+        {
+            CAPTURE(name);
+            CHECK(gespielt.contains(QLatin1String(name)));
+        }
+    }
+
+    TEST_CASE("Loop Instrument: die Genre-Beispiele unter asset/loop/genres laden ohne Bericht und bleiben unter 1")
+    {
+        const InstrumentApp app;
+        const QDir ordner(repoWurzel().filePath(QStringLiteral("asset/loop/genres")));
+        const QStringList dateien = ordner.entryList({QStringLiteral("*.lvloop")}, QDir::Files, QDir::Name);
+        // neunzehn aus `asset/loop/make_genres.py`; wer eines dazulegt, braucht hier nichts zu aendern
+        CHECK(dateien.size() >= 19);
+        QStringList gespielt;
+        for (const QString& datei : dateien)
+        {
+            CAPTURE(datei.toStdString());
+            Loop loop;
+            QStringList bericht;
+            REQUIRE(ladeLoop(ordner.filePath(datei), loop, &bericht));
+            CHECK(bericht.isEmpty());
+            CHECK_FALSE(loop.tags.titel.isEmpty());
+            CHECK_FALSE(loop.tags.genre.isEmpty());
+            CHECK(loop.durchlaufTakte() >= 12);
+            for (const Muster& m : loop.muster)
+            {
+                if (m.art != MusterArt::Instrument) continue;
+                CAPTURE(m.instrument.toStdString());
+                CHECK(findeInstrument(m.instrument) != nullptr);
+                CHECK_FALSE(m.noten.empty());
+                gespielt << m.instrument;
+            }
+            const Ablauf ablauf = plane(loop, kRate);
+            const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+            for (std::size_t i = 0; i < klaenge.size(); ++i)
+            {
+                CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
+                CHECK(klaenge[i].frames() > 0);
+            }
+            std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
+            rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
+            const float groesster = spitze(alles);
+            MESSAGE(datei.toStdString() << ": " << loop.bpm << " BPM, " << loop.durchlaufTakte() << " Takte, "
+                                        << ablauf.klangNamen.size() << " Klaenge, groesster Betrag "
+                                        << std::to_string(groesster));
+            CHECK(groesster > 0.3f);
+            CHECK(groesster < 0.9f);
+            if (const QString ziel = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_WAV"); !ziel.isEmpty())
+            {
+                REQUIRE(QDir().mkpath(ziel + QStringLiteral("/genres")));
+                CHECK(schreibeWav(QDir(ziel + QStringLiteral("/genres")).filePath(QFileInfo(datei).completeBaseName() + QStringLiteral(".wav")),
+                                  alles, kRate));
+            }
+        }
+        // jedes der neunzehn Instrumente aus `make_genres.py` kommt in einem der Beispiele vor
+        for (const char* name : {"trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
+                                 "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
+                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave"})
         {
             CAPTURE(name);
             CHECK(gespielt.contains(QLatin1String(name)));

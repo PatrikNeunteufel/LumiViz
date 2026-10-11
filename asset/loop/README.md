@@ -33,7 +33,7 @@ aufgenommen.
 
 ## instruments/
 
-Die dreißig mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
+Die neunundvierzig mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
 Dateiname ist der Name im Loop: `piano.lvinst` ist das Instrument `piano`.
 Im Programm steht kein Instrument — maßgebend sind diese Dateien (Entscheide
 Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
@@ -88,6 +88,32 @@ Sieben davon sind **ungewöhnlich**:
 | `ghost.lvinst` | Ghost | Wail, Breath | setzt in knapp einer Sekunde ein, schwankt langsam und weit, klingt anderthalb Sekunden nach |
 | `growl_bass.lvinst` | Growl Bass | Growl, Grit, Sub | verzerrte Säge mit schnellem Vibrato, ein verzerrtes Rechteck darüber, ein Sinus darunter |
 | `reverse_swell.lvinst` | Reverse Swell | Swell, Shine | schwillt in 0,8 s an, der Filter geht dabei auf, und bricht mit dem Ende der Note ab — wie rückwärts gespielt |
+
+Neunzehn weitere kamen mit den **Genre-Beispielen** (S111, Wunsch Patrik:
+fehlende Instrumente dazu) — erzeugt mit `make_genres.py`, nach Rechnung
+eingestellt, nicht nach Gehör:
+
+| Datei | Titel | Schichten | Wie gerechnet |
+|---|---|---|---|
+| `trance_lead.lvinst` | Trance Lead | Main, Octave, Bite | sechs verstimmte Sägen über zwei Oktaven, dazu ein kurzes verzerrtes Rechteck |
+| `trance_pluck.lvinst` | Trance Pluck | Pluck, Shine, Body | Sägen, deren Filter mit dem Anschlag zuschnappt; ein Sinus darunter |
+| `rolling_bass.lvinst` | Rolling Bass | Roll, Sub | sehr kurze, leicht verzerrte Säge über einem Sinus |
+| `hoover.lvinst` | Hoover | Howl, High, Edge | weit verstimmte, verzerrte Sägen mit Vibrato, eine Oktave darüber, ein Rechteck |
+| `clavinet.lvinst` | Clavinet | String, Bark | kurze, verzerrte Saite und ein Rechteck, dessen Filter zuschnappt |
+| `slap_bass.lvinst` | Slap Bass | String, Thump, Pop | Saite, Sinus darunter, ein Knall eine Oktave höher |
+| `clean_guitar.lvinst` | Clean Guitar | String, Shimmer | zwei Saiten, die zweite eine Oktave höher und 10 ms später |
+| `muted_guitar.lvinst` | Muted Guitar | Mute, Thud | stark gedämpfte Saite und ein Dreieck von 50 ms |
+| `round_bass.lvinst` | Round Bass | Round, Finger | Sinus mit zwei Obertönen, ein kurzes Dreieck als Anschlag |
+| `bass_808.lvinst` | 808 Bass | Boom, Click | verzerrter Sinus, der fast eine Sekunde ausklingt |
+| `reese_bass.lvinst` | Reese Bass | Reese, Sub | drei weit verstimmte Sägen mit tiefem Filter über einem Sinus |
+| `upright_bass.lvinst` | Upright Bass | String, Wood | Saite und ein Sinus, der mitschwingt |
+| `nylon_guitar.lvinst` | Nylon Guitar | String, Warmth | Saite und ein gefiltertes Dreieck |
+| `sax.lvinst` | Sax | Reed, Breath | leicht verzerrtes Rechteck und eine Säge, gefiltert, mit spätem Vibrato |
+| `vibraphone.lvinst` | Vibraphone | Bar, Strike | Sinus mit dem vierten Teilton, klingt lange aus, leichtes Vibrato |
+| `steel_drum.lvinst` | Steel Drum | Pan, Ring, Hit | Sinus mit Oktave und viertem Teilton, eine Schwebung darüber |
+| `cowbell.lvinst` | Cowbell | Low, High | zwei kurze Rechtecke im Abstand einer Quinte — Schlagwerk: die Tonhöhe der Note ist die des Schlags |
+| `conga.lvinst` | Conga | Skin, Slap | kurzer Sinus und eine sehr kurze Saite — Schlagwerk |
+| `clave.lvinst` | Clave | Wood, Tick | Sinus von 45 ms — Schlagwerk |
 
 Ein eigenes Instrument ist eine solche Datei an beliebigem Ort; ein Muster
 nennt sie beim Pfad statt beim Namen. `test_LoopInstrument.cpp` liest den
@@ -144,6 +170,46 @@ python asset/loop/make_examples.py
 
 Maßgebend sind die Dateien im Repo, nicht ein neuer Lauf des Skripts: wer ein
 Instrument im Creator nachstellt und speichert, ändert die Datei.
+
+## genres/ — neunzehn Beispiele nach Genre (S111)
+
+Wunsch Patrik: Loops für Trance, Funk, Reggaeton, Reggae und viele mehr.
+Erzeugt mit `make_genres.py`. Rhythmus, Tonart und Besetzung folgen dem, was
+das Genre üblicherweise ausmacht — **gerechnet, nicht gehört**: ob es so
+klingt, muss ein Mensch hören. Das Kit hat nur sechs Klänge; Cowbell, Congas
+und Clave sind deshalb Instrumente.
+
+| Datei | Titel | Genre | BPM | Was spielt |
+|---|---|---|---|---|
+| `trance_uplifting.lvloop` | Sunrise | Trance | 138 | 32 Takte mit Breakdown und Wirbel: Rolling Bass auf den Offbeats, Trance Pluck in Sechzehnteln, gegatete Super-Saw-Akkorde, Warm Pad, Trance Lead |
+| `trance_acid.lvloop` | Acid line | Acid Trance | 140 | Acid Bass in Sechzehnteln, Rolling Bass, Hoover, Siren als Steigerung |
+| `trance_psy.lvloop` | Full on | Psytrance | 145 | Bass auf den drei Sechzehnteln nach jeder Kick, phrygische Linie, Broken Radio, Alien Choir, Cascade |
+| `funk.lvloop` | Pocket | Funk | 104 | Slap Bass, Clavinet, Muted Guitar, Bläser-Einwürfe; leichter Swing |
+| `disco.lvloop` | Mirror ball | Disco | 120 | Oktav-Bass, Clean Guitar, Tine Piano, Strings, Bläser-Melodie |
+| `reggae.lvloop` | One drop | Reggae | 76 | Kick und Rim nur auf der Drei, Round Bass, Gitarre auf Zwei und Vier, Orgel dazwischen, Bläser, eine Dub-Sirene |
+| `ska.lvloop` | Rude step | Ska | 152 | Gitarre und Piano auf jedem Offbeat, laufender Kontrabass, Bläser, Sax |
+| `reggaeton.lvloop` | Dembow | Reggaeton | 94 | der Dembow-Rhythmus, 808 Bass, Nylon Guitar, Steel Drum, Warm Pad, Cowbell |
+| `hiphop.lvloop` | Boom bap | Hip-Hop | 90 | Kontrabass, Tine Piano mit Septakkorden, Vibraphone; starker Swing |
+| `trap.lvloop` | Half time | Trap | 140 | Snare nur auf der Drei, Hi-Hat-Wirbel, 808 Bass, Bell, Kalimba, Ghost |
+| `dnb.lvloop` | Roller | Drum and Bass | 174 | Breakbeat, Reese Bass, Warm Pad, Tine Piano, Vibraphone |
+| `techno.lvloop` | Warehouse | Techno | 130 | Rolling Bass, Chord Stab, Broken Radio, Hoover, Toms |
+| `bossa.lvloop` | Praia | Bossa Nova | 132 | Clave über zwei Takte, Kontrabass, Nylon Guitar, Flute |
+| `blues.lvloop` | Twelve bars | Blues | 96 | zwölf Takte in A im Dreier-Raster (drei Schritte je Schlag): Boogie auf Bass und Gitarre, Orgel, Sax |
+| `waltz.lvloop` | Three steps | Jazz Waltz | 138 | drei Schläge je Takt: Kontrabass auf der Eins, Nylon Guitar auf Zwei und Drei, Vibraphone, Flute |
+| `lofi.lvloop` | Rainy window | Lo-Fi | 78 | Tine Piano mit Septakkorden, Round Bass, Vibraphone, Kalimba; Swing |
+| `synthpop.lvloop` | Neon heart | Synth-Pop | 118 | Bass in Achteln, Super Saw, Pluck-Arpeggio, Lead, Bläser-Motiv |
+| `afrobeat.lvloop` | Lagos night | Afrobeat | 108 | Cowbell und Congas als Instrumente, Round Bass, Clean Guitar, Orgel, Bläser |
+| `metal.lvloop` | Iron road | Metal | 160 | Doppel-Kick in Sechzehnteln, Overdrive Guitar, Growl Bass, Strings, Solo in harmonisch Moll |
+
+Je 16 Takte, außer Sunrise (32) und dem Blues (12). `test_LoopInstrument.cpp`
+lädt jede `.lvloop` des Ordners, rechnet einen Durchlauf und prüft, dass die
+Summe zwischen 0,3 und 0,9 bleibt (gerechnet: 0,35 bis 0,58); mit
+`LUMIVIZ_INSTRUMENT_WAV=<Ordner>` legt der Fall je Beispiel eine Hörprobe
+unter `<Ordner>/genres` ab.
+
+```
+python asset/loop/make_genres.py
+```
 
 ## instrument_demo.lvloop
 

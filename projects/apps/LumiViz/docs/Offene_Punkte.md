@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.149.0
+> **Version:** 1.150.0
 > **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2383,7 +2383,12 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Schichten (sieben ungewöhnliche) und fünf Beispiel-Loops (Wunsch Patrik
     S111). **Im Programm nicht gesehen und nicht gehört** — ⬜ Liste 10,
     Abschnitt S und Urteile U19 bis U23; alle Einstellungen gerechnet, nicht
-    abgehört. Nicht gemessen: die Rechenzeit mit vier Schichten
+    abgehört. Nicht gemessen: die Rechenzeit mit vier Schichten. Dazu
+    **neunzehn Beispiel-Loops nach Genre** (`asset/loop/genres`, Trance bis
+    Metal) und neunzehn Instrumente dafür (neunundvierzig insgesamt) —
+    ⬜ Liste 10, S19 bis S21 und U24; das Kit hat nur sechs Klänge, Cowbell,
+    Conga und Clave sind deshalb Instrumente (🔧 ein größeres Kit wäre der
+    sauberere Weg)
   - 🟡 **12 Hall und Echo am Muster** (E1 a, Frage Patrik S111) — auch für
     Drum-Muster; der Rechenkern bekommt dafür ein Gedächtnis. **Nächster
     Schritt: die Skizze** (je Muster oder je Kanal des Loop-Panels)

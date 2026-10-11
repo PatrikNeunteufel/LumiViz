@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Rolling Bass",
+    "level": 0.7,
+    "layers": [
+        {
+            "name": "Roll",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0.3,
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 90,
+            "sustain": 0.15,
+            "release": 40,
+            "filterCutoff": 2,
+            "filterEnvelope": 6,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Sub",
+            "on": true,
+            "level": 0.7,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 110,
+            "sustain": 0.3,
+            "release": 40,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

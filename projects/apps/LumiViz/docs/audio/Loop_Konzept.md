@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.21.1
+> **Version:** 0.22.0
 > **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -714,6 +714,12 @@ ganz ungewöhnliche) liegen unter `asset/loop/instruments`, dazu fünf
 Beispiel-Loops; erzeugt von `asset/loop/make_examples.py`, beschrieben in
 `asset/loop/README.md`. Wie alle nach Rechnung eingestellt, nicht nach Gehör.
 
+**Neunzehn Beispiel-Loops nach Genre** (Wunsch Patrik S111) liegen unter
+`asset/loop/genres`, mit **neunzehn weiteren Instrumenten** — darunter
+Cowbell, Conga und Clave als Schlagwerk, weil das Kit nur sechs Klänge hat;
+erzeugt von `asset/loop/make_genres.py`. Mitgeliefert sind damit
+neunundvierzig Instrumente.
+
 Die Skizze — das Fenster des Instrument-Creators, links um eine Spalte
 erweitert:
 
@@ -1034,6 +1040,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.22.0** (S111, 2026-10-11): neunzehn Beispiel-Loops nach Genre unter
+  `asset/loop/genres` und neunzehn Instrumente dazu (Wunsch Patrik),
+  erzeugt von `asset/loop/make_genres.py`, beschrieben in
+  `asset/loop/README.md`; am Programm war dafür nichts zu ändern. Der Blues
+  nutzt drei Schritte je Schlag, der Walzer drei Schläge je Takt.
 - **0.21.1** (S111, 2026-10-11): Drum-Editor (§4d) — Befund Patrik: bei
   einem Muster ohne Spuren und hohem Fenster standen Kopf, Raster-Zeile und
   Spuren weit auseinander. Die Luft bleibt jetzt unten; ein leeres Muster
