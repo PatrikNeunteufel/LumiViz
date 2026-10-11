@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.152.0
-> **Datum:** 2026-10-11 (Session 112)
+> **Version:** 1.153.0
+> **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2389,9 +2389,48 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ⬜ Liste 10, S19 bis S21 und U24; das Kit hat nur sechs Klänge, Cowbell,
     Conga und Clave sind deshalb Instrumente (🔧 ein größeres Kit wäre der
     sauberere Weg)
-  - 🟡 **12 Hall und Echo am Muster** (E1 a, Frage Patrik S111) — auch für
-    Drum-Muster; der Rechenkern bekommt dafür ein Gedächtnis. **Nächster
-    Schritt: die Skizze** (je Muster oder je Kanal des Loop-Panels)
+  - ✅ **12 Effekte am Clip** (S113; aus „Hall und Echo am Muster", E1 a) —
+    **gebaut:** Entscheide **E2 b** (jeder Clip im Loop-Panel trägt eigene
+    Effekte, für Drumkit- und Instrument-Clips gleich), **F2 a** (Feld
+    `effects` am Clip, `.lvloop` in Fassung 3), **G1 b** (die Effekte rechnen
+    im Ton-Thread mit; nach einem Sprung über 200 ms beginnt der Nachklang
+    neu). Distortion, Echo, Reverb je Clip; das Fenster **Clip effects**
+    (Rechtsklick → Effects...), die Marke **fx**; mehrere Clips markieren
+    (Ctrl+Klick, Rahmen, Ctrl+A), als Gruppe ziehen, kopieren, löschen;
+    Beispiel `asset/loop/effects_demo.lvloop`. **Im Programm:** Patrik hat
+    F0 bis F4 der Liste 10 geprüft — „alle ok" (im Gespräch, ohne Testlog).
+    ⬜ Liste 10, F5 bis F17 und Urteile U25 bis U31. Alle Werte der Effekte
+    und des Beispiels sind gerechnet, nicht abgehört. 🔧 Nicht gemessen: die
+    Last im Ton-Thread selbst und mit vielen Clips (gemessen ist eine Kette
+    außerhalb: rund 0,2 % eines Kerns unter Release-clang); nicht geprüft:
+    ein Loop-Clip mit Effekten im Composer (kein eigener Testfall, in der
+    Liste F17), die Menüs des Rechtsklicks. Von Claude gesetzt und nicht
+    entschieden: alle Grenzen und Vorgaben, die Bauart des Halls (Freeverb),
+    Mix blendet über statt dazuzumischen, ein verschobener Clip verliert
+    seinen Nachklang — steht in `Loop_Konzept.md` §4 und §4g
+  - ✅ **13 Mehrfachauswahl in Drum- und Instrument-Editor** (Wunsch Patrik
+    S113) — **gebaut:** Entscheide **V1 a** (Einfügen im Drum-Editor
+    ersetzt), **V2 a** (nur die markierten Schritte zählen), **V3 a**
+    (Pfeiltasten halten am Rand an), dazu Alt+Pfeil dreht im Kreis.
+    Shift+Ziehen und Ctrl+Klick markieren, Ctrl+C / X / V an der
+    Einfügemarke, Ctrl+D, Entf, Pfeiltasten; im Instrument-Editor mehrere
+    Noten als Gruppe ziehen; in beiden der Haken **Right-click deletes**
+    (anfangs aus — **im Instrument-Editor löscht der Rechtsklick seither
+    nicht mehr von selbst**). **Im Programm nicht gesehen** — ⬜ Liste 10,
+    Abschnitt M (M0 bis M16) und Urteile U32 bis U36; Patrik will M0 bis M4,
+    M12 und M13 vor der nächsten Sitzung prüfen. 🔧 Nicht geprüft: die Menüs
+    des Rechtsklicks, ob die Tasten im gezeigten Fenster beim Raster ankommen
+  - 🟡 **11 Instrumente aus Samples** — als Art von Schicht, mit Root note,
+    Fine tune und Detect (Idee S113, von Patrik nicht verworfen;
+    `Loop_Konzept.md` §4h). **Multisamples** vorgemerkt: vorziehen, wenn Tests
+    an Sample-Instrumenten zeigen, dass ein Sample über mehrere Oktaven nicht
+    trägt (Patrik S113). Nächster Schritt: die Skizze
+  - 🟡 **14 Palette der Instrumente** (Entscheid **P1 a**, S113): ein Fenster
+    wie das Palettenfenster der Effektkette statt der Dropdown-Liste, mit
+    Sortieren oder Filtern nach **Genre** (Patrik). Nächster Schritt: die
+    Skizze
+  - ⚪ **15 Wave-Clips (Tonspuren wie Gesang) und Autotune am Clip** —
+    zurückgestellt (Patrik S113: Autotune darf warten, bis es Wave-Clips gibt)
   - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
     und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
     Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht
@@ -2760,6 +2799,17 @@ Idee Preset-Warmup/Pre-Roll.
     alle 81 Fälle `PaletteUi*` grün, der zweite volle Lauf grün. Am Code war
     nichts geändert. **Ursache nicht untersucht**; ein zweiter Fall dieser
     Art neben `:765`.
+  - **🔧 Ein voller Lauf brach ab (S113):** der erste volle Lauf nach Stufe
+    13 endete nach 267 Fällen — ein Fall fehlgeschlagen, **keine**
+    fehlgeschlagene Prüfung, die übrigen 801 nicht mehr gefahren; das sieht
+    nach einem Abbruch mitten in einem Fall aus. Welcher es war, wurde nicht
+    mitgeschnitten; nach der Reihenfolge der Testliste liegt die Stelle bei
+    den Composer-Fällen „S102 Zeitachse" (Nr. 265 bis 271, Höhen-Zoom mit
+    Alt+Rad), die ein echtes Fenster auf Bildschirm 2 öffnen. Die neun Fälle
+    `*S102 *` danach einzeln fünfmal grün, der zweite volle Lauf 1068 / 1068.
+    Am Composer war in S113 nichts geändert; die Loop-Fälle waren im ersten
+    Lauf noch nicht an der Reihe. **Ursache nicht untersucht.** Kommt es
+    wieder: den Lauf mit voller Ausgabe mitschneiden.
 - **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.68.0 §7;
   alle sechs Schritte gebaut, im Programm nichts gesehen — Sichttest
   `.claude/handover/Sichttests_S102.md`):**
@@ -5110,6 +5160,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.153.0 | 2026-10-11 | Session 113 — §6 Loop: Stufe 12 (Effekte am Clip; E2 b, F2 a, G1 b) und Stufe 13 (Mehrfachauswahl in den Editoren; V1 a, V2 a, V3 a, der Haken Right-click deletes) gebaut; von Stufe 12 hat Patrik F0 bis F4 geprüft, Stufe 13 ist ungesehen; neu vorgemerkt Stufe 11 (Samples als Schicht, Multisamples), 14 (Palette der Instrumente, P1 a), 15 (Wave-Clips und Autotune, zurückgestellt); ein voller Testlauf brach einmal bei den Composer-Fällen „S102 Zeitachse" ab, Ursache nicht untersucht |
 | 1.152.0 | 2026-10-11 | Session 112 — §6 Sichttest-Steuerung: `cmakecraft.pin` v0.11.1; ein neuer Wackler in `test_PaletteUi.cpp:1609` (A10/A11, einmal `3 == 2`, Ursache nicht untersucht) |
 | 1.141.0 | 2026-10-11 | Session 109, Abschluss — §6 **Loop:** die Stufen 6a bis 8 gebaut (gemeinsame Basis `Achse`, Loop-Panel als Arrangement, Drum-Editor, Audio Browser, Loop als Clip im Composer mit Tags, Benutzerhandbuch §16, `Audio_System.md` §6a, Sichttest-Vorlage); Entscheide W1 b, T1 a, T2; offen der erste Blick ins Programm (Liste `Sichttest_Composer_10_Loop.md`, 56 Punkte), die gesetzten Regeln als Urteile, die Rückfrage beim Beenden, das Nachsetzen bei gedrosseltem Rechner, Aktionen der Steuerung für das Panel Loop; 1025 / 1025; im Programm ist seit S108 nichts davon gesehen oder gehört; der Sichttest mit dem Tester hat auch in S109 nicht stattgefunden. Verweis auf das Benutzerhandbuch §17 auf §18 nachgezogen |
 | 1.140.0 | 2026-10-11 | Session 108, Abschluss — §6 neu: **Loop** (Wunsch Patrik), im Bau nach [Loop_Konzept.md](audio/Loop_Konzept.md); gebaut Beleg, Modell und Datei `.lvloop` in Fassung 2 (Arrangement aus Kanälen und Clips), Rechenkern, gerechnetes Kit, Naht in der Audio-Engine, Klangerzeuger, Spieler mit Rangfolge, erstes Panel; offen 6a bis 9, der erste Hörtest, das Kit im Release-Paket; 1002 / 1002; der Sichttest mit dem Tester hat auch in S108 nicht stattgefunden |

@@ -114,6 +114,7 @@
                     "start": 14000
                 }
             ],
+            "color": "#5785a5",
             "enabled": true,
             "kind": "visual",
             "name": "CH1"
@@ -164,7 +165,7 @@
                 },
                 {
                     "blend": 0,
-                    "end": 29000,
+                    "end": 30000,
                     "fadeIn": {
                         "ms": 1000,
                         "shape": {
@@ -201,10 +202,11 @@
                             ]
                         }
                     },
-                    "file": "Milkdrop3/presets/martin - riding the wave3b triangle.milk",
-                    "start": 21000
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "start": 22000
                 }
             ],
+            "color": "#8157a5",
             "enabled": true,
             "kind": "visual",
             "name": "CH2"
@@ -243,8 +245,51 @@
                         }
                     ],
                     "start": 15000
+                },
+                {
+                    "blend": 0,
+                    "end": 37000,
+                    "fadeIn": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 1000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - riding the wave3b triangle.milk",
+                    "start": 29000
                 }
             ],
+            "color": "#57a57e",
             "enabled": true,
             "kind": "visual",
             "name": "CH3"
