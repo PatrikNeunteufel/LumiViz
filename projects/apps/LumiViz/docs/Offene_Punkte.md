@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.144.0
+> **Version:** 1.145.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2340,10 +2340,16 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     `asset/loop/instrument_demo.lvloop` (Konzept §4f). **Nicht gehört:** die
     Instrumente sind nach Rechnung eingestellt — ⬜ Patriks Urteil an den
     Hörproben (`LUMIVIZ_INSTRUMENT_WAV=<Ordner>` am Fall „instrument_demo")
-    oder im Panel Loop mit dem Beispiel. **Offen 9b:** der Instrument-Editor
-    (Skizze gebilligt, sechs Oktaven) und **New instrument clip**; bis dahin
-    lässt sich ein Instrument-Muster laden und spielen, aber nicht anlegen
-    und nicht bearbeiten (Edit base tut an ihm nichts). Danach **10**
+    oder im Panel Loop mit dem Beispiel. **9b gebaut (S110):** der
+    Instrument-Editor nach der gebilligten Skizze (Klaviatur über sechs
+    Oktaven, Noten setzen, verlängern, verschieben, löschen, Lautstärke je
+    Note, eine Taste spielt den Ton an) und **New instrument clip**;
+    Benutzerhandbuch §16. **Im Programm nicht gesehen und nicht gehört** —
+    ⬜ Sichttest-Punkte dafür fehlen in Liste 10; von Claude gesetzt und als
+    Urteile offen (Konzept §4f): das Anspielen pausiert den Player, die Zeile
+    unten stellt alle Noten eines Schritts, kein Zoom, das Raster des Loops
+    steht nur im Drum-Editor. 🟠 Ungemessen: beim Bearbeiten im laufenden
+    Loop lädt der Spieler bei jedem neuen Ton alle Klänge neu. Danach **10**
     Instrument-Creator und **11** Instrumente aus Samples
   - 🟡 das Kit ist klein (Patrik S108: klingt gut, aber eine kleine
     Sammlung) — welche Klänge dazukommen, nennt Patrik

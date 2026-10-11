@@ -62,8 +62,9 @@ public:
     void waehle(int kanal, int clip);
 
     // --- Bearbeiten: was Rechtsklick und Tasten ausloesen (auch fuer Tests) ---
-    /// Einen leeren Drumkit-Clip (4 Takte) an den Takt legen. false = kein Platz.
-    bool neuerClip(int kanal, int takt);
+    /// Einen leeren Clip (4 Takte) an den Takt legen — ein Drumkit oder, mit
+    /// `MusterArt::Instrument`, ein Instrument. false = kein Platz.
+    bool neuerClip(int kanal, int takt, MusterArt art = MusterArt::Drumkit);
     /// Eine verbundene Kopie hinter den angeklickten Clip legen.
     bool dupliziereAuswahl();
     bool loescheAuswahl();

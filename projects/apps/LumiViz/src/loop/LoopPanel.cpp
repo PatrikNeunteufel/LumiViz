@@ -11,6 +11,7 @@
 #include "composer/AppAnbindung.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/DrumEditor.hpp"
+#include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Offen.hpp"
 #include "loop/Taktachse.hpp"
@@ -272,7 +273,7 @@ void LoopPanel::setupUI()
     connect(m_speichern, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(false); });
     connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(true); });
     connect(m_play, &QPushButton::clicked, this, [this] {
-        if (m_spieler.spielt())
+        if (m_spieler.spielt() && !hoertVor())
             halte();
         else
             spiele();
@@ -356,6 +357,7 @@ bool LoopPanel::speichereMitDialog(bool unter)
 
 void LoopPanel::neu()
 {
+    beendeVorhoeren();
     Loop leer;
     (void)kanalHinzu(leer);
     m_loop = leer;
@@ -368,6 +370,7 @@ void LoopPanel::neu()
     m_spieler.setzeLoop(m_loop);
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // seine Basis gibt es nicht mehr: er schliesst sich
+    if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -378,6 +381,7 @@ bool LoopPanel::lade(const QString& pfad)
     Loop loop;
     QStringList bericht;
     if (!ladeLoop(pfad, loop, &bericht)) return false;
+    beendeVorhoeren();
     m_loop = loop;
     m_gespeichert = loop;
     m_datei = pfad;
@@ -388,6 +392,7 @@ bool LoopPanel::lade(const QString& pfad)
     m_spieler.setzeLoop(m_loop);
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // gibt es seine Basis hier nicht, schliesst er sich
+    if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     zeigeDatei();
     zeigeClip();
@@ -439,11 +444,13 @@ void LoopPanel::bearbeite(const Loop& neu, const QString& was)
 
 void LoopPanel::setzeLoop(const Loop& loop)
 {
+    beendeVorhoeren();  // sonst spielte statt des angespielten Tons ploetzlich der Loop
     m_loop = loop;
     m_spieler.setzeLoop(spielFassung());  // spielt er, gilt die Fassung ab dem naechsten Block
     m_spitze = 0.0f;                      // die Spitze der Fassung davor sagt nichts mehr
     m_achse->zeigeBearbeitet(m_loop);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);
+    if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -469,6 +476,7 @@ bool LoopPanel::spiele()
     IAudioEngine* engine = services().tryResolve<IAudioEngine>();
     IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
     if (engine == nullptr || player == nullptr) return false;
+    m_vorhoeren = 0;  // ein angespielter Ton weicht: sein Zeitgeber haelt nichts mehr an
     m_solo.clear();
     m_spieler.setzeLoop(m_loop);
     m_spitze = 0.0f;
@@ -483,6 +491,7 @@ bool LoopPanel::spieleMuster(const QString& muster)
     IAudioEngine* engine = services().tryResolve<IAudioEngine>();
     IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
     if (engine == nullptr || player == nullptr) return false;
+    m_vorhoeren = 0;
     m_solo = muster;
     m_spieler.setzeLoop(spielFassung());
     m_spitze = 0.0f;
@@ -499,9 +508,10 @@ bool LoopPanel::spieleMuster(const QString& muster)
 void LoopPanel::halte()
 {
     m_spieler.halte(true);
-    if (!m_solo.isEmpty())
+    if (!m_solo.isEmpty() || m_vorhoeren != 0)
     {
         m_solo.clear();
+        m_vorhoeren = 0;
         m_spieler.setzeLoop(m_loop);
     }
     zeigeStand();
@@ -512,13 +522,92 @@ DrumEditor* LoopPanel::editor() const
     return m_editor;
 }
 
+InstrumentEditor* LoopPanel::instrumentEditor() const
+{
+    return m_instrumentEditor;
+}
+
+bool LoopPanel::spieleTon(const QString& muster, int hoehe)
+{
+    const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
+    if (basis == nullptr || basis->art != MusterArt::Instrument) return false;
+    if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
+    // spielt der Loop oder ein Muster, hoert man es schon — das Anspielen wuerde es unterbrechen
+    if (m_spieler.spielt() && m_vorhoeren == 0) return false;
+    IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+    IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
+    if (engine == nullptr || player == nullptr) return false;
+
+    // ein Loop aus einem Muster mit dieser einen Note, einen Schlag lang
+    Muster ton = *basis;
+    ton.name = QStringLiteral("Preview");
+    ton.takte = kTakteMin;
+    ton.stumm = false;
+    ton.noten = {{0, m_loop.schritteJeSchlag, hoehe, 1.0}};
+    Loop allein = m_loop;
+    allein.muster = {ton};
+    allein.kanaele = {Kanal{QStringLiteral("Preview"), true, {LoopClip{ton.name, 0, 1}}}};
+    m_solo.clear();
+    m_spieler.setzeLoop(allein);
+    m_spitze = 0.0f;
+    if (!m_spieler.starte(*engine, *player))
+    {
+        m_vorhoeren = 0;
+        m_spieler.setzeLoop(m_loop);
+        zeigeStand();
+        return false;
+    }
+    const int nummer = ++m_vorhoerNr;
+    m_vorhoeren = nummer;
+    // nach dem Ton und seinem Ausklang haelt der Spieler wieder — ausser ein neuerer Ton laeuft
+    const int dauerMs = allein.notenMs(ton.noten.front()) + 600;
+    QTimer::singleShot(dauerMs, this, [this, nummer] {
+        if (m_vorhoeren == nummer) beendeVorhoeren();
+    });
+    zeigeStand();
+    return true;
+}
+
+void LoopPanel::beendeVorhoeren()
+{
+    if (m_vorhoeren == 0) return;
+    m_vorhoeren = 0;
+    m_spieler.halte(true);
+    m_spieler.setzeLoop(m_loop);
+    zeigeStand();
+}
+
 bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
 {
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
     if (basis == nullptr) return false;
-    // der Editor eines Instrument-Musters (die Piano-Rolle) folgt in Stufe 9b;
-    // im Drum-Editor haette es nichts zu zeigen
-    if (basis->art != MusterArt::Drumkit) return false;
+    // die Art der Basis bestimmt den Editor (Stufe 9b): je Art ein Fenster
+    if (basis->art == MusterArt::Instrument)
+    {
+        if (m_instrumentEditor == nullptr)
+        {
+            m_instrumentEditor = new InstrumentEditor(this);
+            connect(m_instrumentEditor, &InstrumentEditor::bearbeitet, this, &LoopPanel::bearbeite);
+            connect(m_instrumentEditor, &InstrumentEditor::spielenVerlangt, this, [this](bool spielen) {
+                if (spielen && m_instrumentEditor != nullptr)
+                    (void)spieleMuster(m_instrumentEditor->muster());
+                else
+                    halte();
+            });
+            connect(m_instrumentEditor, &InstrumentEditor::tonVerlangt, this, [this](int hoehe) {
+                if (m_instrumentEditor != nullptr) (void)spieleTon(m_instrumentEditor->muster(), hoehe);
+            });
+        }
+        if (!m_instrumentEditor->zeige(m_loop, muster)) return false;
+        if (zeigen)
+        {
+            m_instrumentEditor->show();
+            m_instrumentEditor->raise();
+            m_instrumentEditor->activateWindow();
+        }
+        zeigeStand();
+        return true;
+    }
     if (m_editor == nullptr)
     {
         m_editor = new DrumEditor(this);
@@ -546,13 +635,16 @@ void LoopPanel::beimTakt()
 {
     m_spieler.takt();
     // der Composer kann den Ton uebernommen haben: dann spielt auch kein Muster mehr allein
-    if (!m_spieler.spielt() && !m_solo.isEmpty())
+    if (!m_spieler.spielt() && (!m_solo.isEmpty() || m_vorhoeren != 0))
     {
         m_solo.clear();
+        m_vorhoeren = 0;
         m_spieler.setzeLoop(m_loop);
     }
     m_spitze = std::max(m_spitze, m_spieler.nimmSpitze());
-    if (isVisible() || (m_editor != nullptr && m_editor->isVisible())) zeigeStand();
+    if (isVisible() || (m_editor != nullptr && m_editor->isVisible()) ||
+        (m_instrumentEditor != nullptr && m_instrumentEditor->isVisible()))
+        zeigeStand();
 }
 
 void LoopPanel::zeigeDatei()
@@ -606,7 +698,8 @@ void LoopPanel::zeigeClip()
 
 void LoopPanel::zeigeStand()
 {
-    const bool spielt = m_spieler.spielt();
+    // ein angespielter Ton zaehlt nicht als Spielen: Play bleibt Play, keine Marke laeuft
+    const bool spielt = m_spieler.spielt() && m_vorhoeren == 0;
     const bool darf = m_spieler.darfSpielen();
     setzeText(m_stelle, [&]() -> QString {
         if (!spielt) return {};
@@ -630,6 +723,12 @@ void LoopPanel::zeigeStand()
     {
         m_editor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_editor->muster(), m_spieler.stelleSchritte());
         m_editor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
+    }
+    if (m_instrumentEditor != nullptr)
+    {
+        m_instrumentEditor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_instrumentEditor->muster(),
+                                      m_spieler.stelleSchritte());
+        m_instrumentEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     }
 
     QStringList zeilen = m_ladeBericht;

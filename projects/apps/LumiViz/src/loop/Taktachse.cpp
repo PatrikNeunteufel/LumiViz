@@ -510,11 +510,11 @@ void Taktachse::uebernimm(const Loop& neu, int kanal, int clip, const QString& w
     Q_EMIT bearbeitet(neu, was);
 }
 
-bool Taktachse::neuerClip(int kanal, int takt)
+bool Taktachse::neuerClip(int kanal, int takt, MusterArt art)
 {
     if (!m_geladen || m_griff != Griff::Keiner) return false;
     Loop neu = m_loop;
-    const int platz = lumi::loop::neuerClip(neu, kanal, takt);
+    const int platz = lumi::loop::neuerClip(neu, kanal, takt, art);
     if (platz < 0) return false;
     uebernimm(neu, kanal, platz, tr("New clip"));
     return true;
@@ -670,6 +670,10 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             const int takt = taktBei(ort.x());
             QAction* neu = menu.addAction(tr("New drumkit clip"), this, [this, kanal, takt] { (void)neuerClip(kanal, takt); });
             neu->setEnabled(istFrei(m_loop, kanal, takt, kTakteMin));
+            QAction* instrument = menu.addAction(tr("New instrument clip"), this, [this, kanal, takt] {
+                (void)neuerClip(kanal, takt, MusterArt::Instrument);
+            });
+            instrument->setEnabled(neu->isEnabled());
             menu.addSeparator();
         }
         menu.addAction(tr("Add channel"), this, [this] { kanalHinzu(); });

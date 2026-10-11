@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.116.0
+> **Version:** 1.117.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2385,7 +2385,7 @@ zum Ausprobieren eine Kopie nehmen.
 
 ## 16. Loop
 
-Ein **Loop** ist ein kleines Arrangement in Takten — Drums, später auch
+Ein **Loop** ist ein kleines Arrangement in Takten — Drums und
 Instrumente —, das im Kreis spielt. Er entsteht im Panel **Loop**, liegt als
 Datei `.lvloop` vor und lässt sich als Clip in einen Audio-Kanal des Composers
 legen (§15).
@@ -2397,7 +2397,8 @@ und Raster gelten für den ganzen Loop.
 
 Zum Ausprobieren liegt im Projektordner ein Beispiel:
 `asset\loop\drums_demo.lvloop`, dazu sechs Klänge (Kick, Snare, zwei Hi-Hats,
-Clap, Tom) unter `asset\loop\kit`.
+Clap, Tom) unter `asset\loop\kit`. Ein zweites Beispiel mit Instrumenten:
+`asset\loop\instrument_demo.lvloop`.
 
 ### Das Panel Loop
 
@@ -2428,13 +2429,14 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | Geste | Wirkung |
 |---|---|
 | Rechtsklick auf eine freie Stelle im Kanal → **New drumkit clip** | Ein leerer Clip über 4 Takte mit einer neuen Basis „Pattern N". Grau, wenn dort keine 4 Takte frei sind |
+| → **New instrument clip** | Dasselbe für ein Instrument: ein leerer Clip über 4 Takte, zunächst mit dem Piano |
 | Clip anklicken | Er ist gewählt (heller Rand); die Clip-Zeile nennt ihn |
 | Clip ziehen | Verschieben in ganzen Takten — auch in einen anderen Kanal. Liegt dort schon ein Clip, rückt der gezogene an dessen Kante |
 | Kante eines Clips ziehen | Länger und kürzer in **ganzen Mustern**; der Name zählt mit („Grund × 3"), ein gestrichelter Strich steht an jeder Wiederholung. Links gezogen bleibt das Ende stehen |
 | Rechtsklick auf einen Clip → **Duplicate** (auch Ctrl+D) | Eine **verbundene** Kopie dahinter: sie spielt dieselbe Basis |
 | → **Rename base...** | Benennt die Basis um — für alle Clips, die sie spielen |
 | → **Delete** (auch Entf) | Entfernt den Clip. Spielt danach kein Clip mehr die Basis, geht sie mit |
-| → **Edit base** (auch Doppelklick) | Öffnet den Drum-Editor für die Basis |
+| → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
 | → **Make new base and edit** | Löst den Clip von seinen Kopien: er bekommt eine eigene Basis „<Name> 2" und der Editor öffnet sich dafür |
 | Rechtsklick auf eine freie Stelle → **Add channel** | Ein neuer Kanal „Channel N" |
 | Rechtsklick auf einen Kanalnamen | **Rename channel...**, **Turn channel off** / **on**, **Delete channel** |
@@ -2457,7 +2459,8 @@ sofort zu hören.
 
 **Edit base** oder ein Doppelklick auf einen Clip öffnet ein eigenes Fenster
 mit dem Schritt-Raster der Basis. Es gibt ein solches Fenster; eine andere
-Basis wechselt in ihm.
+Basis wechselt in ihm. (Für Instrument-Clips gibt es ein zweites Fenster,
+siehe unten.)
 
 | Element | Wirkung |
 |---|---|
@@ -2478,11 +2481,37 @@ Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
 kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
 Stelle mehr gibt — Ctrl+Z holt sie zurück.
 
+### Der Instrument-Editor
+
+**Edit base** oder ein Doppelklick auf einen **Instrument-Clip** öffnet ein
+eigenes Fenster: links eine Klaviatur, rechts das Raster der Schritte. Eine
+**Note** ist ein Balken in der Zeile ihrer Tonhöhe, so lang, wie sie klingt.
+Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
+
+| Element | Wirkung |
+|---|---|
+| **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
+| **Instrument** | Piano, Strings, Violin, Guitar, Bass, Organ oder Lead. Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano |
+| **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
+| Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an — nur, solange sonst nichts spielt |
+| Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
+| Rechte Kante einer Note ziehen | Länger und kürzer, in ganzen Schritten |
+| Note ziehen | Verschiebt sie in Zeit und Tonhöhe |
+| Rechtsklick auf eine Note, oder anklicken und Entf | Löscht sie |
+| Zeile **Note vol.** unten | Die Lautstärke der Note, die an dem Schritt beginnt: klicken oder ziehen. Beginnen dort mehrere, gilt es für alle — außer eine von ihnen ist angeklickt |
+| Mausrad | Rollt die Tonhöhen; mit Shift die Zeit. Dazu die Rollbalken am Rand |
+
+Das Raster (Schläge je Takt, Schritte je Schlag, Swing) gilt für den ganzen
+Loop und wird im Drum-Editor gestellt. Wird es gröber, gehen Noten verloren,
+deren Einsatz es nicht mehr gibt; die Länge einer Note bleibt dieselbe Zeit.
+Eine Note endet spätestens am Ende ihres Musters.
+
 ### Eine Loop-Datei von Hand
 
 `.lvloop` ist eine Textdatei (JSON). Die Felder stehen in der Entwickler-Doku
-`docs\audio\Loop_Konzept.md` §4; das Beispiel `asset\loop\drums_demo.lvloop`
-zeigt alles in Gebrauch. Ein Klang heißt `kit:<Name>` für einen Klang des
+`docs\audio\Loop_Konzept.md` §4 und §4f; die Beispiele
+`asset\loop\drums_demo.lvloop` und `asset\loop\instrument_demo.lvloop`
+zeigen alles in Gebrauch. Ein Klang heißt `kit:<Name>` für einen Klang des
 Kits oder ist der Pfad einer eigenen Datei — relativ, wenn sie unter dem
 Ordner der `.lvloop` liegt.
 
@@ -2582,6 +2611,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.117.0 | 2026-10-11 | Session 110. §16 Loop NEU **Instrument-Clips**: **New instrument clip** im Panel Loop, der Abschnitt **Der Instrument-Editor** (Klaviatur über sechs Oktaven, Noten setzen, verlängern, verschieben, löschen, Zeile *Note vol.*, sieben gerechnete Instrumente, eine Taste spielt den Ton an), das Beispiel `asset\loop\instrument_demo.lvloop` |
 | 1.116.0 | 2026-10-11 | Session 110. §16 Loop GEÄNDERT: das Panel Loop fragt jetzt auch **beim Beenden von LumiViz** nach Ungespeichertem; die Rückfrage bietet überall **Save / Discard / Cancel** wie im Composer (vorher bei New und Load nur Discard / Cancel) |
 | 1.115.0 | 2026-10-11 | Session 109. **§16 NEU: Loop** — das Panel Loop (Datei-Zeile mit Tags, New, Load, Save; Play, BPM, Fit; die Achse in Takten), Clips und Kanäle (New drumkit clip, verschieben, in ganzen Mustern länger und kürzer, verbundene Kopien, Basis umbenennen, Kanäle), der Drum-Editor (Bars, Play pattern, Peak, Raster des Loops, Spuren, Schritte, Step volume), wer den Ton hat (Composer, Loop, Player). §3 Audio Browser: Loops in der Liste, Doppelklick lädt ins Panel Loop. §15 Audio-Kanal: **Loops als Clips** — ein Durchlauf lang, wiederholt sich, zählt als laufender Song, folgt dem Panel Loop. Die bisherigen §16 und §17 sind jetzt §17 und §18 |
 | 1.114.0 | 2026-10-10 | Session 105. **§18 wieder entfernt:** der Tester ist ein Werkzeug für Entwickler der App, kein Teil der Bedienung — der Inhalt steht jetzt in `Sichttest_Steuerung.md` (Entwickler-Doku, nicht im Release-Paket). |

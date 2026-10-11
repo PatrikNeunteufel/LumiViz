@@ -30,6 +30,11 @@ namespace lumi::loop
 [[nodiscard]] bool istFrei(const Loop& loop, int kanal, int startTakt, int takte, int ausser = -1);
 /// So viele Clips aller Kanaele spielen dieses Muster.
 [[nodiscard]] int basisNutzer(const Loop& loop, const QString& muster);
+/// Wo steht die Basis `name` aus `alt` in der Fassung `neu`? Ihr Name, wenn es
+/// sie dort noch gibt; der neue Name, wenn sie umbenannt wurde (eine Basis,
+/// die `alt` nicht kennt, mit demselben Inhalt); leer = es gibt sie nicht mehr.
+/// So folgt ein Editor-Fenster seiner Basis.
+[[nodiscard]] QString folgeBasis(const Loop& alt, const QString& name, const Loop& neu);
 
 /// Einen leeren Drumkit-Clip anlegen (Vorgabe Patrik S108): eine neue Basis
 /// „Pattern N", `kTakteMin` Takte lang, ohne Spuren. Liegt dort schon ein Clip

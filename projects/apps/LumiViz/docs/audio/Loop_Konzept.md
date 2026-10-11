@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.15.0
+> **Version:** 0.16.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -503,12 +503,16 @@ als Song; ein Cover.
 ## 4f. Der Instrument-Clip (Stufe 9)
 
 Entscheid I1 c: Instrumente sind gerechnet oder kommen aus einem Sample —
-zuerst gerechnet. **Gebaut ist 9a:** Modell, Datei, die gerechneten
-Instrumente und der Rechenkern. Der Editor (9b) fehlt noch: ein
-Instrument-Muster lässt sich laden und spielen, im Panel aber nicht anlegen
-und nicht bearbeiten.
+zuerst gerechnet. **Gebaut sind 9a** (Modell, Datei, die gerechneten
+Instrumente, der Rechenkern) **und 9b** (der Editor und **New instrument
+clip**) — im Programm noch nicht gesehen und nicht gehört.
 
-### Der Instrument-Editor (Skizze gebilligt, Patrik S110 — noch nicht gebaut)
+### Der Instrument-Editor (Skizze gebilligt, Patrik S110 — gebaut, 9b)
+
+`loop/InstrumentEditor.hpp`: das `NotenRaster` (es rollt selbst, Klaviatur,
+Kopf und die Zeile der Lautstärken bleiben stehen) und das Fenster
+`InstrumentEditor`. Das Loop-Panel wählt den Editor nach der Art der Basis
+(`LoopPanel::oeffneEditor`).
 
 Ein eigenes Fenster wie der Drum-Editor, geöffnet über **Edit base** an einem
 Instrument-Clip oder mit einem Doppelklick auf ihn; es heißt „Instrument
@@ -539,6 +543,36 @@ pattern: <Basis>".
 
 Im Loop-Panel bietet der Rechtsklick auf eine freie Stelle neben **New
 drumkit clip** auch **New instrument clip**.
+
+**Gebaut wie die Skizze, dazu von mir gesetzt, nicht entschieden:**
+
+- Beim Setzen einer Note weitergezogen wird sie gleich länger.
+- Eine neue Note hat volle Lautstärke; leiser als 0,05 wird keine (ohne
+  Lautstärke gäbe es sie nicht).
+- Die Zeile unten stellt alle Noten, die an dem Schritt beginnen — außer eine
+  von ihnen ist angeklickt, dann nur sie. Sie heißt im Fenster „Note vol.":
+  die Spalte der Klaviatur ist für „Note volume" zu schmal.
+- Das Mausrad rollt die Tonhöhen, mit Shift die Zeit; zoomen lässt sich das
+  Raster nicht (ein Schritt ist 16 Pixel breit, eine Tonhöhe 14 hoch).
+- Eine Note lässt sich nicht auf den Einsatz einer anderen derselben Tonhöhe
+  schieben; überlappen dürfen sich zwei Noten einer Tonhöhe.
+- **Anspielen einer Taste:** der Spieler des Panels spielt für einen Schlag
+  einen Loop aus dieser einen Note — der Player pausiert so lange, wie bei
+  Play. Spielt gerade der Loop oder ein Muster, oder hat der Composer den
+  Ton, geschieht nichts. Beim Setzen oder Verschieben einer Note klingt
+  nichts.
+- Je Art gibt es **ein** Editor-Fenster: Drum-Editor und Instrument-Editor
+  können zugleich offen sein.
+- Das Raster des ganzen Loops (Schläge, Schritte, Swing) steht nur im
+  Drum-Editor.
+- Größe und Lage des Fensters merkt die App nicht.
+
+**Nicht drin:** mehrere Noten zugleich wählen; Kopieren und Einfügen; ein
+Zoom; Vorhören beim Setzen; die Abspielmarke rollt den Ausschnitt nicht mit.
+
+**Nicht gemessen:** beim Bearbeiten im laufenden Loop lädt der Spieler bei
+jeder Änderung, die einen neuen Ton braucht, **alle** Klänge neu (auch die
+des Kits) — ob das zu hören ist, weiß ich nicht.
 
 ### Modell und Datei (gebaut, 9a)
 
@@ -648,7 +682,7 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 | 7 | **Composer:** `.lvloop` als Clip im Audio-Kanal, Wiederholen bis zum Clip-Ende, Zeichnung des Clips, Ziehen aus dem Audio Browser; dazu Tags (T2) und die Verbindung zum Loop-Panel (L7 a) | S109 gebaut, §4e, Messung §6a; zwei Fälle in `test_LoopSpieler.cpp` (ohne Ton), zwei in `test_LoopWiedergabe.cpp` (mit sehr leisem Ton), dazu Tags und Verbindung im Panel-Fall von `test_LoopArrangement.cpp`; **im Programm noch nicht gesehen und nicht gehört** |
 | 8 | **Abschluss:** Doku, Benutzerhandbuch, Vorlage für den Sichttest | S109: Benutzerhandbuch 1.115.0 (§16 Loop neu, Audio Browser, Loops als Clips), `Audio_System.md` 1.3.0 (§6a Mixer und wer den Ton hat), Vorlage `asset/sichttest/composer_K_loop.lvcomp` mit `asset/sichttest/loop/beat_A.lvloop` (an `test_ComposerVorlagen.cpp` gebunden), Liste `Sichttest_Composer_10_Loop.md` (lokal, 56 Punkte). S110: die Rückfrage beim Beenden (§4c) und drei Aktionen der Sichttest-Steuerung für das Panel Loop (`loop_laden`, `loop_wiedergabe`, `loop_editor`; `loop/SichttestAktionen`, ein Fall in `test_LoopSpieler.cpp`). Offen: ein eigenes Icon für `.lvloop`; das Kit im Release-Paket |
 | 9a | **Instrument-Clip, Kern:** Noten im Modell und in der Datei, sieben gerechnete Instrumente (I1 c; Strings, Violine, Piano, Gitarre …, Wunsch Patrik S110), Noten im Rechenkern | S110 gebaut, §4f; `test_LoopInstrument.cpp`, sechs Fälle ohne Ton; Beispiel `asset/loop/instrument_demo.lvloop`; **nicht gehört** — die Instrumente sind nach Rechnung eingestellt |
-| 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel | offen |
+| 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel, eine Taste spielt den Ton an | S110 gebaut, §4f; `test_LoopInstrumentEditor.cpp` (zwei Fälle ohne Fenster; `LUMIVIZ_INSTRUMENT_EDITOR_BILD=<datei.png>` legt ein Bild ab), ein Fall in `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10 | **Instrument-Creator:** ein Fenster, das die Bausteine eines gerechneten Instruments offenlegt und als eigenes Instrument speichert (I1 c) | später |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
 
@@ -746,6 +780,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.16.0** (S110, 2026-10-11): Stufe 9b gebaut — der Instrument-Editor,
+  New instrument clip, Anspielen einer Taste (§4f).
 - **0.15.0** (S110, 2026-10-11): Stufe 9 geteilt, 9a gebaut — §4f neu: die
   gebilligte Skizze des Instrument-Editors (sechs Oktaven), Noten in Modell
   und Datei, sieben gerechnete Instrumente, Noten im Rechenkern.

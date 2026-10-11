@@ -437,29 +437,17 @@ bool DrumEditor::zeige(const Loop& loop, const QString& muster)
 void DrumEditor::setLoop(const Loop& loop)
 {
     if (m_muster.isEmpty()) return;
-    if (loop.findeMuster(m_muster) == nullptr)
-    {
-        // umbenannt? Dann gibt es im neuen Loop eine Basis mit neuem Namen und demselben Inhalt
-        QString folge;
-        if (const Muster* alt = basis())
-            for (const Muster& m : loop.muster)
-            {
-                if (m_loop.findeMuster(m.name) != nullptr) continue;
-                Muster gleich = m;
-                gleich.name = alt->name;
-                if (gleich == *alt) folge = m.name;
-            }
-        if (folge.isEmpty())
-        {
-            // die Basis gibt es nicht mehr (ihr letzter Clip ist geloescht, ein anderer Loop geladen)
-            m_loop = loop;
-            m_muster.clear();
-            close();
-            return;
-        }
-        m_muster = folge;
-    }
+    // umbenannt? Dann gibt es im neuen Loop eine Basis mit neuem Namen und demselben Inhalt
+    const QString folge = folgeBasis(m_loop, m_muster, loop);
     m_loop = loop;
+    if (folge.isEmpty())
+    {
+        // die Basis gibt es nicht mehr (ihr letzter Clip ist geloescht, ein anderer Loop geladen)
+        m_muster.clear();
+        close();
+        return;
+    }
+    m_muster = folge;
     zeigeAlles();
 }
 

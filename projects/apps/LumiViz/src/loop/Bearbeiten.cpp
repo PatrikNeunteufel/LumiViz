@@ -83,6 +83,22 @@ int basisNutzer(const Loop& loop, const QString& muster)
     return zahl;
 }
 
+QString folgeBasis(const Loop& alt, const QString& name, const Loop& neu)
+{
+    if (neu.findeMuster(name) != nullptr) return name;
+    const Muster* davor = alt.findeMuster(name);
+    if (davor == nullptr) return {};
+    QString folge;
+    for (const Muster& m : neu.muster)
+    {
+        if (alt.findeMuster(m.name) != nullptr) continue;
+        Muster gleich = m;
+        gleich.name = davor->name;
+        if (gleich == *davor) folge = m.name;
+    }
+    return folge;
+}
+
 int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art)
 {
     if (!istFrei(loop, kanal, startTakt, kTakteMin)) return -1;

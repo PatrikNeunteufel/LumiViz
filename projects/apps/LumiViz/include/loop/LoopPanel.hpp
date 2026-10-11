@@ -39,6 +39,7 @@ namespace lumi::loop
 {
 
 class DrumEditor;
+class InstrumentEditor;
 class Taktachse;
 
 /// Die Antwort auf die Rueckfrage bei Ungespeichertem.
@@ -114,6 +115,17 @@ public:
     bool oeffneEditor(const QString& muster, bool zeigen = true);
     /// Das Fenster des Editors; nullptr, solange noch keine Basis geoeffnet wurde.
     [[nodiscard]] DrumEditor* editor() const;
+    /// Das Fenster des Instrument-Editors (Stufe 9b) — `oeffneEditor` waehlt
+    /// nach der Art der Basis; nullptr, solange noch kein Instrument-Muster
+    /// geoeffnet wurde. Je Art gibt es ein Fenster.
+    [[nodiscard]] InstrumentEditor* instrumentEditor() const;
+    /// Einen Ton des Instruments dieser Basis anspielen, einen Schlag lang
+    /// (ein Klick auf eine Taste des Instrument-Editors). Spielt gerade der
+    /// Loop oder ein Muster, geschieht nichts — man hoert es schon. false =
+    /// nicht angespielt.
+    bool spieleTon(const QString& muster, int hoehe);
+    /// Wird gerade ein Ton angespielt?
+    [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }
     /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,
     /// was man gerade aendert. Play im Panel spielt wieder den ganzen Loop.
     bool spieleMuster(const QString& muster);
@@ -132,6 +144,8 @@ private:
     void zeigeClip();
     void zeigeStand();
     void beimTakt();
+    /// Das Anspielen beenden (falls eines laeuft): der Spieler haelt und bekommt den Loop zurueck.
+    void beendeVorhoeren();
     /// Was der Spieler spielt: der ganze Loop — oder, bei „Play pattern", ein
     /// Loop aus einem Kanal mit einem Clip dieses Musters.
     [[nodiscard]] Loop spielFassung();
@@ -139,7 +153,10 @@ private:
     /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
     IEventBus::SubscriberHandle m_ladeSubscription;
     QPointer<DrumEditor> m_editor;
-    QString m_solo;         ///< das Muster, das allein spielt; leer = der ganze Loop
+    QPointer<InstrumentEditor> m_instrumentEditor;
+    int m_vorhoeren = 0;    ///< die Nummer des Tons, der gerade angespielt wird; 0 = keiner
+    int m_vorhoerNr = 0;
+    QString m_solo;        ///< das Muster, das allein spielt; leer = der ganze Loop
     float m_spitze = 0.0f;  ///< der groesste Betrag der Summe seit Play oder der letzten Aenderung
 
     Spieler m_spieler;

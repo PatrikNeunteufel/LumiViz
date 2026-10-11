@@ -20,8 +20,11 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Tonfuehrung.hpp"
+#include "loop/DrumEditor.hpp"
+#include "loop/InstrumentEditor.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/LoopPanel.hpp"
+#include "loop/Taktachse.hpp"
 #include "loop/Offen.hpp"
 #include "loop/SichttestAktionen.hpp"
 #include "loop/Spieler.hpp"
@@ -29,6 +32,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonObject>
@@ -301,6 +305,112 @@ TEST_CASE("Loop Sichttest-Aktionen: loop_laden haelt und laedt ohne Frage; loop_
     CHECK(panel.editor() == nullptr);
     CHECK(aktion::editor(panel, mit("basis", QStringLiteral("Grund")), false).status == Ergebnis::Status::Ok);
     CHECK(panel.editor() != nullptr);
+}
+
+TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Taste spielt den Ton an")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+    auto* engine = dynamic_cast<LoopPappEngine*>(dienste.tryResolve<IAudioEngine>());
+    IAudioPlayer* player = dienste.tryResolve<IAudioPlayer>();
+    REQUIRE(engine != nullptr);
+    player->play();
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    panel.neu();
+    Taktachse* achse = panel.taktachse();
+    auto* play = panel.findChild<QPushButton*>(QStringLiteral("loopPlay"));
+    REQUIRE(play != nullptr);
+
+    // --- ein Instrument-Clip und ein Drumkit-Clip: je Art ein Editor
+    REQUIRE(achse->neuerClip(0, 0, MusterArt::Instrument));
+    REQUIRE(achse->neuerClip(0, 4));
+    REQUIRE(panel.loop().muster.size() == 2);
+    const QString noten = panel.loop().muster[0].name;
+    const QString drums = panel.loop().muster[1].name;
+    CHECK(panel.loop().muster[0].art == MusterArt::Instrument);
+    CHECK(panel.loop().muster[0].instrument == QStringLiteral("piano"));
+    CHECK(panel.loop().muster[1].art == MusterArt::Drumkit);
+
+    CHECK(panel.instrumentEditor() == nullptr);
+    REQUIRE(panel.oeffneEditor(noten, false));
+    InstrumentEditor* editor = panel.instrumentEditor();
+    REQUIRE(editor != nullptr);
+    CHECK(panel.editor() == nullptr);  // der Drum-Editor ist ein anderes Fenster
+    CHECK(editor->muster() == noten);
+    REQUIRE(panel.oeffneEditor(drums, false));
+    REQUIRE(panel.editor() != nullptr);
+    CHECK(panel.editor()->muster() == drums);
+    CHECK(editor->muster() == noten);  // jeder bleibt bei seiner Basis
+
+    // --- eine Aenderung im Editor: das Panel fuehrt sie aus, alle zeigen sie
+    editor->setzeInstrument(QStringLiteral("organ"));
+    CHECK(panel.loop().findeMuster(noten)->instrument == QStringLiteral("organ"));
+    CHECK(editor->loop() == panel.loop());
+    CHECK(achse->loop() == panel.loop());
+    CHECK(panel.ungespeichert());
+
+    // --- eine Taste spielt den Ton an: einen Schlag lang, dann haelt der Spieler wieder
+    CHECK_FALSE(panel.spieleTon(drums, 60));               // ein Drumkit hat keine Toene
+    CHECK_FALSE(panel.spieleTon(noten, kHoeheMax + 1));
+    CHECK_FALSE(panel.spieleTon(QStringLiteral("gibt es nicht"), 60));
+    REQUIRE(panel.spieleTon(noten, 60));
+    CHECK(panel.hoertVor());
+    CHECK(panel.spieler().spielt());
+    CHECK(engine->generator != nullptr);
+    CHECK(!player->isPlaying());
+    CHECK(play->text() == QStringLiteral("Play"));  // Anspielen zaehlt nicht als Spielen
+    REQUIRE(panel.spieler().loop().muster.size() == 1);
+    CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{{0, 4, 60, 1.0}});
+    CHECK(panel.spieler().loop().muster[0].instrument == QStringLiteral("organ"));
+    // eine zweite Taste loest die erste ab
+    REQUIRE(panel.spieleTon(noten, 64));
+    CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{{0, 4, 64, 1.0}});
+    // nach dem Ton und seinem Ausklang (ein Schlag bei 120 BPM, dazu 600 ms) ist es still
+    QElapsedTimer uhr;
+    uhr.start();
+    while (panel.hoertVor() && uhr.elapsed() < 4000) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    CHECK_FALSE(panel.hoertVor());
+    CHECK(uhr.elapsed() >= 1000);
+    CHECK_FALSE(panel.spieler().spielt());
+    CHECK(player->isPlaying());                     // der Player spielt weiter
+    CHECK(panel.spieler().loop() == panel.loop());  // und der Spieler hat den Loop wieder
+
+    // --- eine Aenderung beendet das Anspielen sofort — sonst spielte ploetzlich der Loop
+    REQUIRE(panel.spieleTon(noten, 60));
+    editor->setzeInstrument(QStringLiteral("lead"));
+    CHECK_FALSE(panel.hoertVor());
+    CHECK_FALSE(panel.spieler().spielt());
+
+    // --- Play waehrend eines angespielten Tons spielt den Loop; spielt er, wird nichts angespielt
+    REQUIRE(panel.spieleTon(noten, 60));
+    play->click();
+    CHECK_FALSE(panel.hoertVor());
+    CHECK(panel.spieler().spielt());
+    CHECK(panel.spieler().loop() == panel.loop());
+    CHECK(play->text() == QStringLiteral("Stop"));
+    CHECK_FALSE(panel.spieleTon(noten, 60));
+    play->click();
+    CHECK_FALSE(panel.spieler().spielt());
+
+    // --- Play pattern im Instrument-Editor spielt nur das Muster
+    auto* playMuster = editor->findChild<QPushButton*>(QStringLiteral("instrumentPlay"));
+    REQUIRE(playMuster != nullptr);
+    playMuster->click();
+    CHECK(panel.soloMuster() == noten);
+    CHECK(playMuster->text() == QStringLiteral("Stop"));
+    playMuster->click();
+    CHECK(panel.soloMuster().isEmpty());
+    CHECK_FALSE(panel.spieler().spielt());
 }
 
 TEST_CASE("Loop Spieler: uebernimmt den Ton, der Player schweigt und spielt danach weiter")
