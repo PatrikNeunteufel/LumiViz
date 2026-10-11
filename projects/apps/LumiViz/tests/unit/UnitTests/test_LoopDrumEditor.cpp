@@ -23,6 +23,8 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QImage>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -319,6 +321,216 @@ TEST_SUITE("LoopDrumEditor")
 
         raster.setMarke(17.5);
         CHECK_FALSE(raster.grab().isNull());
+    }
+
+    TEST_CASE("Drum-Editor: mehrere Schritte markieren, kopieren, einfuegen, versetzen und drehen")
+    {
+        // Stufe 13b (S113), Skizze §4i; Entscheide V1 a, V2 a, V3 a.
+        // probe(): je Takt Kick auf Schritt 0 (1,0) und 8 (0,5), Snare auf 4 (1,0) und 13 (0,7)
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        DrumEditor editor;  // nicht gezeigt: kein Fenster
+        int aenderungen = 0;
+        QString zuletzt;
+        QObject::connect(&editor, &DrumEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            ++aenderungen;
+            zuletzt = was;
+            editor.setLoop(neu);  // wie das Panel: die Fassung kommt zurueck
+        });
+        REQUIRE(editor.zeige(probe(), QStringLiteral("Grund")));
+        SchrittRaster& raster = *editor.raster();
+        auto* zeile = editor.findChild<QLabel*>(QStringLiteral("drumSelection"));
+        REQUIRE(zeile != nullptr);
+        const auto kick = [&editor](int schritt) {
+            return editor.loop().findeMuster(QStringLiteral("Grund"))->zeilen[0][static_cast<std::size_t>(schritt)];
+        };
+        const auto snare = [&editor](int schritt) {
+            return editor.loop().findeMuster(QStringLiteral("Grund"))->zeilen[1][static_cast<std::size_t>(schritt)];
+        };
+        const auto ort = [&raster](int spur, int schritt) {
+            return QPoint(raster.xVonSchritt(schritt) + 3, raster.yVonSpur(spur) + 10);
+        };
+        const auto mausMit = [&raster](QEvent::Type art, QPoint wo, Qt::MouseButtons tasten, Qt::KeyboardModifiers dazu) {
+            QMouseEvent ereignis(art, QPointF(wo), QPointF(raster.mapToGlobal(wo)),
+                                 art == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton, tasten, dazu);
+            QCoreApplication::sendEvent(&raster, &ereignis);
+        };
+        const auto taste = [&raster](int key, Qt::KeyboardModifiers dazu = Qt::NoModifier) {
+            QKeyEvent ereignis(QEvent::KeyPress, key, dazu);
+            QCoreApplication::sendEvent(&raster, &ereignis);
+        };
+        const auto rahmen = [&](int spurVon, int schrittVon, int spurBis, int schrittBis) {
+            mausMit(QEvent::MouseButtonPress, ort(spurVon, schrittVon), Qt::LeftButton, Qt::ShiftModifier);
+            mausMit(QEvent::MouseMove, ort(spurBis, schrittBis), Qt::LeftButton, Qt::ShiftModifier);
+            mausMit(QEvent::MouseButtonRelease, ort(spurBis, schrittBis), Qt::NoButton, Qt::ShiftModifier);
+        };
+
+        // ohne Auswahl sagt die Zeile, wie man markiert
+        CHECK(zeile->text().startsWith(QStringLiteral("Shift+drag selects steps")));
+        CHECK(raster.einfuegemarke() == 0);
+
+        SUBCASE("Shift+Ziehen markiert einen Bereich, Ctrl+Klick einen Schritt, nichts davon aendert das Muster")
+        {
+            rahmen(0, 0, 1, 15);
+            CHECK(raster.markierte().size() == 32u);  // der ganze Bereich, auch die leeren Schritte
+            CHECK(raster.istMarkiert(1, 7));
+            CHECK(zeile->text().startsWith(QStringLiteral("32 steps in 2 tracks selected")));
+            // von rechts unten nach links oben gezogen ist es derselbe Bereich
+            rahmen(1, 15, 0, 0);
+            CHECK(raster.markierte().size() == 32u);
+            // Ctrl+Klick nimmt einen heraus und einen dazu
+            mausMit(QEvent::MouseButtonPress, ort(0, 3), Qt::LeftButton, Qt::ControlModifier);
+            mausMit(QEvent::MouseButtonRelease, ort(0, 3), Qt::NoButton, Qt::ControlModifier);
+            CHECK(raster.markierte().size() == 31u);
+            CHECK_FALSE(raster.istMarkiert(0, 3));
+            mausMit(QEvent::MouseButtonPress, ort(1, 40), Qt::LeftButton, Qt::ControlModifier);
+            mausMit(QEvent::MouseButtonRelease, ort(1, 40), Qt::NoButton, Qt::ControlModifier);
+            CHECK(raster.istMarkiert(1, 40));
+            CHECK(aenderungen == 0);
+            CHECK(kick(3) == 0.0);  // der Ctrl+Klick hat den Schritt nicht gesetzt
+            // ein Klick ohne Taste setzt weiter einen Schritt — die Marken bleiben
+            klick(raster, ort(0, 3));
+            CHECK(kick(3) == 1.0);
+            CHECK(raster.markierte().size() == 32u);
+            taste(Qt::Key_Escape);
+            CHECK(raster.markierte().empty());
+            taste(Qt::Key_A, Qt::ControlModifier);
+            CHECK(raster.markierte().size() == 128u);
+        }
+        SUBCASE("Ctrl+C und Ctrl+V: die Kopie ersetzt den Bereich an der Einfuegemarke, die Marke rueckt weiter")
+        {
+            klick(raster, ort(0, 33));  // im dritten Takt ein Schritt, den der erste nicht hat
+            REQUIRE(kick(33) == 1.0);
+            rahmen(0, 0, 1, 15);
+            taste(Qt::Key_C, Qt::ControlModifier);
+            CHECK(raster.hatKopie());
+            // ein Klick in die Zeile der Takte setzt die Marke
+            klick(raster, QPoint(raster.xVonSchritt(32) + 3, 5));
+            CHECK(raster.einfuegemarke() == 32);
+            const int vorher = aenderungen;
+            taste(Qt::Key_V, Qt::ControlModifier);
+            CHECK(aenderungen == vorher + 1);
+            CHECK(zuletzt == QStringLiteral("Paste steps"));
+            CHECK(kick(33) == 0.0);  // V1 a: wo die Kopie leer ist, ist es danach leer
+            CHECK(kick(32) == 1.0);
+            CHECK(snare(45) == 0.7);
+            CHECK(raster.einfuegemarke() == 48);
+            CHECK(raster.markierte().size() == 32u);  // markiert ist, was eingefuegt wurde
+            CHECK(raster.istMarkiert(0, 32));
+            CHECK(inOrdnung(editor.loop()));
+            // hinter dem Ende passt nichts mehr: der Editor sagt es
+            klick(raster, QPoint(raster.xVonSchritt(63) + SchrittRaster::kSchrittBreite + 2, 5));
+            CHECK(raster.einfuegemarke() == 64);
+            taste(Qt::Key_V, Qt::ControlModifier);
+            CHECK(aenderungen == vorher + 1);
+            CHECK(raster.meldung() == QStringLiteral("4 step(s) did not fit into the pattern"));
+            CHECK(zeile->text().startsWith(QStringLiteral("4 step(s) did not fit into the pattern")));
+            // halb ueber das Ende: der vordere Teil kommt, der Rest wird gezaehlt
+            raster.setzeEinfuegemarke(56);
+            taste(Qt::Key_V, Qt::ControlModifier);
+            CHECK(kick(56) == 1.0);
+            CHECK(raster.meldung() == QStringLiteral("2 step(s) did not fit into the pattern"));
+        }
+        SUBCASE("dazulegen laesst stehen, was am Ziel gesetzt ist; Ctrl+X leert die Quelle")
+        {
+            klick(raster, ort(0, 33));
+            rahmen(0, 0, 0, 15);  // nur die Kick im ersten Takt
+            taste(Qt::Key_X, Qt::ControlModifier);
+            CHECK(zuletzt == QStringLiteral("Clear steps"));
+            CHECK(kick(0) == 0.0);
+            CHECK(kick(8) == 0.0);
+            // die Kopie (Kick auf 0 und 8) zwei Schritte hinter den Taktanfang: auf 34 und 42
+            raster.setzeEinfuegemarke(34);
+            taste(Qt::Key_V, Qt::ControlModifier | Qt::ShiftModifier);
+            CHECK(zuletzt == QStringLiteral("Paste steps, keep existing"));
+            CHECK(kick(34) == 1.0);
+            CHECK(kick(42) == 0.5);
+            CHECK(kick(33) == 1.0);  // lag im Bereich der Kopie auf einem leeren Schritt — und bleibt
+            CHECK(kick(40) == 0.5);
+            CHECK(snare(36) == 1.0); // die Snare war nicht in der Kopie
+        }
+        SUBCASE("verstreute Schritte: nur ihre Stellen werden geschrieben (V2 a)")
+        {
+            raster.markiere({{0, 0}, {0, 8}});
+            REQUIRE(raster.kopiere());
+            klick(raster, ort(0, 20));  // zwischen den Zielen ein Schritt
+            REQUIRE(raster.fuegeEinBei({0, 17}, true));
+            CHECK(kick(17) == 1.0);
+            CHECK(kick(25) == 0.5);
+            CHECK(kick(20) == 1.0);  // unberuehrt
+            CHECK(raster.markierte() == std::vector<SchrittOrt>{{0, 17}, {0, 25}});
+            // Paste here in eine andere Spur
+            REQUIRE(raster.fuegeEinBei({1, 0}, true));
+            CHECK(snare(0) == 1.0);
+            CHECK(snare(8) == 0.5);
+        }
+        SUBCASE("die Pfeiltasten versetzen — was unterwegs ueberfahren wird, bleibt; am Rand ist Schluss")
+        {
+            raster.markiere({{0, 0}});
+            for (int i = 0; i < 8; ++i) taste(Qt::Key_Right);
+            CHECK(zuletzt == QStringLiteral("Move steps"));
+            CHECK(aenderungen == 8);
+            CHECK(kick(0) == 0.0);
+            CHECK(kick(8) == 1.0);  // liegt jetzt auf der leisen Kick von Schritt 8
+            taste(Qt::Key_Right);
+            CHECK(kick(9) == 1.0);
+            CHECK(kick(8) == 0.5);  // die ueberfahrene ist wieder da
+            CHECK(raster.markierte() == std::vector<SchrittOrt>{{0, 9}});
+            taste(Qt::Key_Down);
+            CHECK(snare(9) == 1.0);
+            CHECK(kick(9) == 0.0);
+            // am Rand: unter der Snare ist keine Spur mehr (V3 a)
+            const int vorher = aenderungen;
+            taste(Qt::Key_Down);
+            CHECK(aenderungen == vorher);
+            CHECK(snare(9) == 1.0);
+            // links am Anfang ebenso, fuer die ganze Auswahl
+            raster.markiere({{0, 16}, {1, 20}, {1, 0}});
+            taste(Qt::Key_Left);
+            CHECK(aenderungen == vorher);
+            CHECK(kick(16) == 1.0);
+            CHECK(inOrdnung(editor.loop()));
+        }
+        SUBCASE("Alt+Pfeil dreht im Kreis, Entf leert, Ctrl+D haengt die Auswahl noch einmal an")
+        {
+            raster.markiere({{1, 61}});  // die leise Snare im letzten Takt
+            for (int i = 0; i < 3; ++i) taste(Qt::Key_Right, Qt::AltModifier);
+            CHECK(zuletzt == QStringLiteral("Rotate steps"));
+            CHECK(snare(61) == 0.0);
+            CHECK(snare(0) == 0.7);  // hinten hinaus, vorn herein
+            taste(Qt::Key_Left, Qt::AltModifier);
+            CHECK(snare(63) == 0.7);
+            CHECK(snare(0) == 0.0);
+
+            raster.markiere({{0, 0}, {0, 8}});
+            taste(Qt::Key_Delete);
+            CHECK(zuletzt == QStringLiteral("Clear steps"));
+            CHECK(kick(0) == 0.0);
+            CHECK(kick(8) == 0.0);
+
+            rahmen(1, 0, 1, 7);  // die Snare, erste Takthaelfte (ein Schlag auf 4)
+            klick(raster, ort(1, 9));  // dahinter ein Schritt, den die Kopie ersetzt
+            taste(Qt::Key_D, Qt::ControlModifier);
+            CHECK(zuletzt == QStringLiteral("Duplicate steps"));
+            CHECK(snare(12) == 1.0);
+            CHECK(snare(9) == 0.0);
+            CHECK(snare(13) == 0.0);  // die leise Snare auf 13 lag im Ziel und ist ersetzt
+            CHECK(raster.markierte().size() == 8u);
+            CHECK(raster.istMarkiert(1, 8));
+        }
+        SUBCASE("das Bild: markierte Schritte tragen einen Rand, die Einfuegemarke steht im Kopf")
+        {
+            rahmen(0, 0, 1, 15);
+            raster.setzeEinfuegemarke(24);  // im sichtbaren Teil: Takt 2, dritter Schlag
+            const QImage bild = editor.grab().toImage();
+            CHECK_FALSE(bild.isNull());
+            if (const QString datei = qEnvironmentVariable("LUMIVIZ_DRUM_MARKEN_BILD"); !datei.isEmpty())
+                CHECK(bild.save(datei));
+        }
     }
 
     TEST_CASE("Drum-Editor: zeigt eine Basis, jede Aenderung ist eine neue Fassung des Loops")

@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include "loop/Auswahl.hpp"
 #include "loop/Loop.hpp"
 
 #include <QPoint>
@@ -57,6 +58,43 @@ public:
     /// Die Abspielmarke: der Schritt im Muster (mit Bruchteil); unter null = keine.
     void setMarke(double schritt);
 
+    // --- Mehrere Schritte zugleich (Stufe 13b, Skizze §4i) -------------------
+    // Markiert wird mit Shift+Ziehen (ein Bereich, auch ueber mehrere Spuren)
+    // und Ctrl+Klick (ein Schritt dazu oder heraus). Ein Klick in die Zeile
+    // der Takte setzt die Einfuegemarke. Alles Folgende loesen auch Tasten und
+    // das Menue des Rechtsklicks aus.
+    [[nodiscard]] const std::vector<SchrittOrt>& markierte() const { return m_marken; }
+    [[nodiscard]] bool istMarkiert(int spur, int schritt) const;
+    void markiere(const std::vector<SchrittOrt>& orte);
+    void markiereUm(int spur, int schritt);
+    void markiereAlle();
+    /// Der Schritt, an dem Ctrl+V einfuegt (0 bis zur Laenge des Musters).
+    void setzeEinfuegemarke(int schritt);
+    [[nodiscard]] int einfuegemarke() const { return m_einfuegen; }
+    [[nodiscard]] bool hatKopie() const { return !m_kopie.leer(); }
+    /// Die markierten Schritte merken. false = nichts markiert.
+    bool kopiere();
+    /// Merken und leeren.
+    bool schneideAus();
+    /// Das Gemerkte an der Einfuegemarke einfuegen, in der Spur, in der die
+    /// kopierte Auswahl begann; die Marke rueckt um die eingefuegte Laenge
+    /// weiter. `ersetzen` (Entscheid Patrik S113, V1 a) schreibt auch die
+    /// leeren Schritte der Kopie; false legt nur dazu.
+    bool fuegeEin(bool ersetzen = true);
+    /// Dasselbe an einer bestimmten Stelle („Paste here"); die Marke bleibt.
+    bool fuegeEinBei(SchrittOrt ziel, bool ersetzen = true);
+    /// Die markierten Schritte direkt hinter sich selbst noch einmal einfuegen.
+    bool dupliziere();
+    bool leereMarkierte();
+    /// Die markierten versetzen; am Rand haelt die ganze Auswahl an (V3 a).
+    /// Mehrere Schritte hintereinander gehen von der Stelle aus, an der die
+    /// Auswahl beim ersten stand: was sie unterwegs ueberfaehrt, bleibt.
+    bool versetze(int spurVersatz, int schrittVersatz);
+    /// Die markierten in der Zeit im Kreis versetzen (Alt+Pfeil).
+    bool drehe(int schrittVersatz);
+    /// Was beim letzten Einfuegen nicht gepasst hat; leer = alles.
+    [[nodiscard]] const QString& meldung() const { return m_meldung; }
+
     // --- Geometrie (auch fuer Tests) ----------------------------------------
     static constexpr int kKopfHoehe = 18;    ///< die Zeile mit den Takten
     static constexpr int kZeilenHoehe = 26;  ///< je Spur — so hoch wie ihre Kopfzeile links
@@ -78,16 +116,28 @@ Q_SIGNALS:
     void spurGewaehlt(int spur);
     /// Die Schritte sind geaendert: das Muster danach und ein Wort fuer Undo.
     void geaendert(const lumi::loop::Muster& neu, const QString& was);
+    /// Marken, Einfuegemarke oder Meldung haben sich geaendert.
+    void auswahlGeaendert();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     [[nodiscard]] int schritte() const;
     void maleBei(QPoint ort);
+    /// Der Schritt, der `x` am naechsten liegt — auch in einer Luecke und am Rand.
+    [[nodiscard]] int schrittNahe(int x) const;
+    /// Die Spur unter `y`, auf die vorhandenen begrenzt; -1 = es gibt keine.
+    [[nodiscard]] int spurNahe(int y) const;
+    void rahmeBis(QPoint ort);
+    /// Eine eigene Aenderung uebernehmen: zeigen, melden, die Marken setzen.
+    void uebernimm(const Muster& neu, const std::vector<SchrittOrt>& marken, const QString& was);
+    bool bewege(int spurVersatz, int schrittVersatz, bool imKreis);
 
     Muster m_muster;
     int m_schlaege = 4;
@@ -102,10 +152,29 @@ private:
         Setzen,   ///< Schritte anschalten
         Loeschen, ///< Schritte ausschalten
         Laut,     ///< die Lautstaerke je Schritt ziehen
+        Rahmen,   ///< mit Shift: einen Bereich markieren
     };
     Zug m_zug = Zug::Keiner;
     int m_zugSpur = -1;
     Muster m_vorZug;
+
+    std::vector<SchrittOrt> m_marken;
+    std::vector<SchrittOrt> m_vorRahmen;  ///< die Marken beim Druck (mit Ctrl bleiben sie)
+    SchrittOrt m_rahmenStart;
+    int m_einfuegen = 0;
+    SchrittKopie m_kopie;
+    int m_kopieSpur = 0;  ///< die Spur, in der die kopierte Auswahl begann
+    QString m_meldung;
+    // Mehrere Pfeiltasten hintereinander: gerechnet wird vom Stand beim ersten
+    // Druck, mit dem ganzen Versatz seither.
+    Muster m_schiebeBasis;
+    std::vector<SchrittOrt> m_schiebeOrte;
+    Muster m_schiebeErgebnis;
+    std::vector<SchrittOrt> m_schiebeMarken;
+    int m_schiebeSpur = 0;
+    int m_schiebeSchritt = 0;
+    bool m_schiebeImKreis = false;
+    bool m_schiebeGilt = false;
 };
 
 class DrumEditor : public QWidget
@@ -193,6 +262,8 @@ private:
     QPushButton* m_spurNeu = nullptr;
     QLabel* m_lautName = nullptr;
     QLabel* m_leerHinweis = nullptr;  ///< steht da, solange das Muster keine Spur hat
+    QLabel* m_auswahlZeile = nullptr; ///< wie man markiert — oder was markiert ist und was die Tasten tun
+    void zeigeAuswahl();
     QScrollArea* m_rollen = nullptr;
     SchrittRaster* m_raster = nullptr;
 };

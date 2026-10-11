@@ -8,6 +8,7 @@
 #include "loop/Bearbeiten.hpp"
 
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QDir>
 #include <QDoubleSpinBox>
 #include <QEvent>
@@ -15,6 +16,8 @@
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QInputDialog>
+#include <QKeyEvent>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
@@ -57,6 +60,7 @@ constexpr int kRand = 4;             ///< vor dem ersten und hinter dem letzten 
 SchrittRaster::SchrittRaster(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("loopSteps"));
+    setFocusPolicy(Qt::StrongFocus);  // Ctrl+C, Pfeiltasten: die Tasten gelten dem Raster
 }
 
 void SchrittRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schritteJeSchlag)
@@ -65,6 +69,17 @@ void SchrittRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schr
     m_schlaege = std::max(1, schlaegeJeTakt);
     m_jeSchlag = std::max(1, schritteJeSchlag);
     m_zug = Zug::Keiner;
+    // die Marken bleiben, wo es ihre Schritte noch gibt (kuerzeres Muster, weniger Spuren)
+    const int zahl = schritte();
+    const int spurZahl = static_cast<int>(m_muster.spuren.size());
+    m_marken.erase(std::remove_if(m_marken.begin(), m_marken.end(),
+                                  [zahl, spurZahl](const SchrittOrt& ort) {
+                                      return ort.spur >= spurZahl || ort.schritt >= zahl;
+                                  }),
+                   m_marken.end());
+    m_einfuegen = std::clamp(m_einfuegen, 0, zahl);
+    // kommt nicht die Fassung zurueck, die das Verschieben erzeugt hat, beginnt es neu
+    if (m_schiebeGilt && m_muster.zeilen != m_schiebeErgebnis.zeilen) m_schiebeGilt = false;
     if (m_spur >= static_cast<int>(m_muster.spuren.size())) m_spur = static_cast<int>(m_muster.spuren.size()) - 1;
     if (m_spur < 0 && !m_muster.spuren.empty()) m_spur = 0;
     resize(sizeHint());
@@ -176,6 +191,31 @@ void SchrittRaster::paintEvent(QPaintEvent*)
         }
     }
 
+    // --- die Marken: ein heller Rand um jeden markierten Schritt
+    if (!m_marken.empty())
+    {
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(text, 1.6));
+        for (const SchrittOrt& ort : m_marken)
+            p.drawRoundedRect(QRect(xVonSchritt(ort.schritt), yVonSpur(ort.spur) + 4, kSchrittBreite, kZeilenHoehe - 8)
+                                  .adjusted(-1, -1, 1, 1),
+                              2, 2);
+        p.setPen(Qt::NoPen);
+    }
+
+    // --- die Einfuegemarke: dort landet Ctrl+V
+    if (spuren > 0)
+    {
+        const int x = xVonSchritt(m_einfuegen) - 2;
+        QColor marke = an.lighter(150);
+        p.setPen(QPen(marke, 1.4, Qt::DashLine));
+        p.drawLine(x, 2, x, yVonSpur(spuren));
+        p.setPen(Qt::NoPen);
+        p.setBrush(marke);
+        const QPoint spitze[3] = {QPoint(x - 4, 1), QPoint(x + 4, 1), QPoint(x, 7)};
+        p.drawPolygon(spitze, 3);
+    }
+
     // --- die Lautstaerke je Schritt der angeklickten Spur
     const int oben = lautOben();
     p.setPen(leise);
@@ -226,17 +266,224 @@ void SchrittRaster::maleBei(QPoint ort)
             wert = hoehe < 0.04 ? 0.0 : std::clamp(std::round(hoehe * 100.0) / 100.0, 0.0, 1.0);
             break;
         }
+        case Zug::Rahmen:  // markiert nur, malt nicht
         case Zug::Keiner:
             return;
     }
     update();
 }
 
+int SchrittRaster::schrittNahe(int x) const
+{
+    const int zahl = schritte();
+    if (zahl <= 0) return 0;
+    for (int i = 0; i < zahl; ++i)
+        if (x < xVonSchritt(i) + kSchrittBreite + kSchrittLuft) return i;
+    return zahl - 1;
+}
+
+int SchrittRaster::spurNahe(int y) const
+{
+    const int spuren = static_cast<int>(m_muster.spuren.size());
+    if (spuren == 0) return -1;
+    return std::clamp((y - kKopfHoehe) / kZeilenHoehe, 0, spuren - 1);
+}
+
+bool SchrittRaster::istMarkiert(int spur, int schritt) const
+{
+    return std::find(m_marken.begin(), m_marken.end(), SchrittOrt{spur, schritt}) != m_marken.end();
+}
+
+void SchrittRaster::markiere(const std::vector<SchrittOrt>& orte)
+{
+    const int zahl = schritte();
+    const int spuren = static_cast<int>(m_muster.spuren.size());
+    std::vector<SchrittOrt> neu;
+    for (const SchrittOrt& ort : orte)
+        if (ort.spur >= 0 && ort.spur < spuren && ort.schritt >= 0 && ort.schritt < zahl &&
+            std::find(neu.begin(), neu.end(), ort) == neu.end())
+            neu.push_back(ort);
+    if (neu == m_marken) return;
+    m_marken = std::move(neu);
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void SchrittRaster::markiereUm(int spur, int schritt)
+{
+    std::vector<SchrittOrt> neu = m_marken;
+    const auto platz = std::find(neu.begin(), neu.end(), SchrittOrt{spur, schritt});
+    if (platz == neu.end())
+        neu.push_back({spur, schritt});
+    else
+        neu.erase(platz);
+    markiere(neu);
+}
+
+void SchrittRaster::markiereAlle()
+{
+    std::vector<SchrittOrt> alle;
+    for (int spur = 0; spur < static_cast<int>(m_muster.spuren.size()); ++spur)
+        for (int schritt = 0; schritt < schritte(); ++schritt) alle.push_back({spur, schritt});
+    markiere(alle);
+}
+
+void SchrittRaster::setzeEinfuegemarke(int schritt)
+{
+    const int neu = std::clamp(schritt, 0, schritte());
+    if (neu == m_einfuegen) return;
+    m_einfuegen = neu;
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void SchrittRaster::rahmeBis(QPoint ort)
+{
+    const int spur = spurNahe(ort.y());
+    if (spur < 0) return;
+    const int schritt = schrittNahe(ort.x());
+    std::vector<SchrittOrt> orte = m_vorRahmen;
+    for (int s = std::min(spur, m_rahmenStart.spur); s <= std::max(spur, m_rahmenStart.spur); ++s)
+        for (int i = std::min(schritt, m_rahmenStart.schritt); i <= std::max(schritt, m_rahmenStart.schritt); ++i)
+            orte.push_back({s, i});
+    markiere(orte);
+}
+
+void SchrittRaster::uebernimm(const Muster& neu, const std::vector<SchrittOrt>& marken, const QString& was)
+{
+    const bool anders = neu.zeilen != m_muster.zeilen;
+    m_muster = neu;
+    m_marken = marken;
+    update();
+    Q_EMIT auswahlGeaendert();
+    if (anders) Q_EMIT geaendert(m_muster, was);
+}
+
+bool SchrittRaster::kopiere()
+{
+    const SchrittKopie kopie = kopiereSchritte(m_muster, m_marken);
+    if (kopie.leer()) return false;
+    m_kopie = kopie;
+    m_kopieSpur = anfangVon(m_marken).spur;
+    m_meldung.clear();
+    Q_EMIT auswahlGeaendert();  // Paste ist jetzt moeglich
+    return true;
+}
+
+bool SchrittRaster::schneideAus()
+{
+    if (!kopiere()) return false;
+    return leereMarkierte();
+}
+
+bool SchrittRaster::leereMarkierte()
+{
+    Muster neu = m_muster;
+    if (!leereSchritte(neu, m_marken)) return false;
+    m_meldung.clear();
+    m_schiebeGilt = false;
+    uebernimm(neu, m_marken, tr("Clear steps"));
+    return true;
+}
+
+bool SchrittRaster::fuegeEinBei(SchrittOrt ziel, bool ersetzen)
+{
+    if (m_kopie.leer()) return false;
+    Muster neu = m_muster;
+    std::vector<SchrittOrt> eingefuegt;
+    const int ohnePlatz = fuegeSchritteEin(neu, m_kopie, ziel, ersetzen, &eingefuegt);
+    // nichts still weglassen: sagen, was nicht gepasst hat
+    m_meldung = ohnePlatz > 0 ? tr("%n step(s) did not fit into the pattern", nullptr, ohnePlatz) : QString();
+    m_schiebeGilt = false;
+    if (eingefuegt.empty())
+    {
+        Q_EMIT auswahlGeaendert();
+        return false;
+    }
+    uebernimm(neu, eingefuegt, ersetzen ? tr("Paste steps") : tr("Paste steps, keep existing"));
+    return true;
+}
+
+bool SchrittRaster::fuegeEin(bool ersetzen)
+{
+    if (!fuegeEinBei({m_kopieSpur, m_einfuegen}, ersetzen)) return false;
+    // die Marke rueckt weiter: noch einmal Ctrl+V fuellt den naechsten Abschnitt
+    setzeEinfuegemarke(m_einfuegen + m_kopie.schritte);
+    return true;
+}
+
+bool SchrittRaster::dupliziere()
+{
+    const SchrittKopie kopie = kopiereSchritte(m_muster, m_marken);
+    if (kopie.leer()) return false;
+    const SchrittOrt anfang = anfangVon(m_marken);
+    Muster neu = m_muster;
+    std::vector<SchrittOrt> eingefuegt;
+    const int ohnePlatz = fuegeSchritteEin(neu, kopie, {anfang.spur, anfang.schritt + kopie.schritte}, true, &eingefuegt);
+    m_meldung = ohnePlatz > 0 ? tr("%n step(s) did not fit into the pattern", nullptr, ohnePlatz) : QString();
+    m_schiebeGilt = false;
+    if (eingefuegt.empty())
+    {
+        Q_EMIT auswahlGeaendert();
+        return false;
+    }
+    uebernimm(neu, eingefuegt, tr("Duplicate steps"));
+    return true;
+}
+
+bool SchrittRaster::bewege(int spurVersatz, int schrittVersatz, bool imKreis)
+{
+    if (m_marken.empty()) return false;
+    // eine Folge von Tasten zaehlt vom Stand beim ersten Druck: so bleibt
+    // stehen, was die Auswahl unterwegs ueberfaehrt
+    if (!m_schiebeGilt || m_schiebeImKreis != imKreis || m_marken != m_schiebeMarken ||
+        m_muster.zeilen != m_schiebeErgebnis.zeilen)
+    {
+        m_schiebeBasis = m_muster;
+        m_schiebeOrte = m_marken;
+        m_schiebeSpur = 0;
+        m_schiebeSchritt = 0;
+        m_schiebeImKreis = imKreis;
+    }
+    const int spurGanz = m_schiebeSpur + spurVersatz;
+    const int schrittGanz = imKreis ? (m_schiebeSchritt + schrittVersatz) % std::max(1, schritte())
+                                    : m_schiebeSchritt + schrittVersatz;
+    Muster neu = m_schiebeBasis;
+    std::vector<SchrittOrt> orte = m_schiebeOrte;
+    if (spurGanz != 0 || schrittGanz != 0)
+    {
+        const bool ging = imKreis ? dreheSchritte(neu, orte, schrittGanz, schritte())
+                                  : versetzeSchritte(neu, orte, spurGanz, schrittGanz);
+        if (!ging) return false;  // am Rand: nichts bewegt sich (V3 a)
+    }
+    m_schiebeSpur = spurGanz;
+    m_schiebeSchritt = schrittGanz;
+    m_schiebeErgebnis = neu;
+    m_schiebeMarken = orte;
+    m_schiebeGilt = true;
+    m_meldung.clear();
+    uebernimm(neu, orte, imKreis ? tr("Rotate steps") : tr("Move steps"));
+    return true;
+}
+
+bool SchrittRaster::versetze(int spurVersatz, int schrittVersatz)
+{
+    return bewege(spurVersatz, schrittVersatz, false);
+}
+
+bool SchrittRaster::drehe(int schrittVersatz)
+{
+    return bewege(0, schrittVersatz, true);
+}
+
 void SchrittRaster::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() != Qt::LeftButton) return;
+    setFocus(Qt::MouseFocusReason);
     const QPoint ort = event->position().toPoint();
     const int spuren = static_cast<int>(m_muster.spuren.size());
+    const bool shift = (event->modifiers() & Qt::ShiftModifier) != 0;
+    const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
     if (ort.y() >= lautOben())
     {
         if (m_spur < 0 || m_spur >= spuren) return;
@@ -246,9 +493,33 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
         maleBei(ort);
         return;
     }
-    if (ort.y() < kKopfHoehe) return;
+    if (ort.y() < kKopfHoehe)
+    {
+        // die Zeile der Takte: hier steht die Einfuegemarke
+        const int zahl = schritte();
+        setzeEinfuegemarke(zahl > 0 && ort.x() >= xVonSchritt(zahl - 1) + kSchrittBreite ? zahl : schrittNahe(ort.x()));
+        return;
+    }
     const int spur = (ort.y() - kKopfHoehe) / kZeilenHoehe;
-    if (spur >= spuren) return;
+    if (spur >= spuren)
+    {
+        markiere({});  // ein Klick ins Leere hebt die Marken auf
+        return;
+    }
+    if (shift)
+    {
+        // ein Rahmen: der ganze Bereich ist markiert, auch seine leeren Schritte
+        m_zug = Zug::Rahmen;
+        m_rahmenStart = {spur, schrittNahe(ort.x())};
+        m_vorRahmen = ctrl ? m_marken : std::vector<SchrittOrt>{};
+        rahmeBis(ort);
+        return;
+    }
+    if (ctrl)
+    {
+        if (const int schritt = schrittBei(ort.x()); schritt >= 0) markiereUm(spur, schritt);
+        return;
+    }
     if (spur != m_spur)
     {
         m_spur = spur;
@@ -267,7 +538,11 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
 
 void SchrittRaster::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_zug != Zug::Keiner && (event->buttons() & Qt::LeftButton)) maleBei(event->position().toPoint());
+    if (m_zug == Zug::Keiner || !(event->buttons() & Qt::LeftButton)) return;
+    if (m_zug == Zug::Rahmen)
+        rahmeBis(event->position().toPoint());
+    else
+        maleBei(event->position().toPoint());
 }
 
 void SchrittRaster::mouseReleaseEvent(QMouseEvent* event)
@@ -275,8 +550,105 @@ void SchrittRaster::mouseReleaseEvent(QMouseEvent* event)
     if (event->button() != Qt::LeftButton || m_zug == Zug::Keiner) return;
     const Zug zug = m_zug;
     m_zug = Zug::Keiner;
+    if (zug == Zug::Rahmen) return;  // markieren aendert das Muster nicht
     if (m_muster == m_vorZug) return;
+    m_schiebeGilt = false;
     Q_EMIT geaendert(m_muster, zug == Zug::Laut ? tr("Change step volume") : tr("Edit steps"));
+}
+
+void SchrittRaster::keyPressEvent(QKeyEvent* event)
+{
+    const Qt::KeyboardModifiers tasten = event->modifiers() & ~Qt::KeypadModifier;
+    const bool nurCtrl = tasten == Qt::ControlModifier;
+    switch (event->key())
+    {
+        case Qt::Key_C:
+            if (nurCtrl && kopiere()) return;
+            break;
+        case Qt::Key_X:
+            if (nurCtrl && schneideAus()) return;
+            break;
+        case Qt::Key_V:
+            // mit Shift dazu: nur dazulegen, was am Ziel gesetzt ist, bleibt
+            if (nurCtrl || tasten == (Qt::ControlModifier | Qt::ShiftModifier))
+            {
+                (void)fuegeEin(nurCtrl);
+                return;
+            }
+            break;
+        case Qt::Key_D:
+            if (nurCtrl)
+            {
+                (void)dupliziere();
+                return;
+            }
+            break;
+        case Qt::Key_A:
+            if (nurCtrl)
+            {
+                markiereAlle();
+                return;
+            }
+            break;
+        case Qt::Key_Delete:
+        case Qt::Key_Backspace:
+            if (!m_marken.empty())
+            {
+                (void)leereMarkierte();
+                return;
+            }
+            break;
+        case Qt::Key_Escape:
+            if (!m_marken.empty())
+            {
+                markiere({});
+                return;
+            }
+            break;
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        {
+            if (m_marken.empty()) break;
+            const int richtung = event->key() == Qt::Key_Left ? -1 : 1;
+            if (tasten == Qt::AltModifier)
+                (void)drehe(richtung);  // im Kreis (Wunsch Patrik S113)
+            else if (tasten == Qt::NoModifier)
+                (void)versetze(0, richtung);
+            else
+                break;
+            return;
+        }
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+            if (m_marken.empty() || tasten != Qt::NoModifier) break;
+            (void)versetze(event->key() == Qt::Key_Up ? -1 : 1, 0);
+            return;
+        default:
+            break;
+    }
+    QWidget::keyPressEvent(event);
+}
+
+void SchrittRaster::contextMenuEvent(QContextMenuEvent* event)
+{
+    const int spur = spurNahe(event->pos().y());
+    if (spur < 0) return;
+    const SchrittOrt hier{spur, schrittNahe(event->pos().x())};
+    const bool etwas = !m_marken.empty();
+    QMenu menu(this);
+    menu.addAction(tr("Copy"), QKeySequence(Qt::CTRL | Qt::Key_C), this, [this] { (void)kopiere(); })->setEnabled(etwas);
+    menu.addAction(tr("Cut"), QKeySequence(Qt::CTRL | Qt::Key_X), this, [this] { (void)schneideAus(); })
+        ->setEnabled(etwas);
+    menu.addAction(tr("Paste here"), this, [this, hier] { (void)fuegeEinBei(hier, true); })->setEnabled(hatKopie());
+    menu.addAction(tr("Paste and keep existing steps"), this, [this, hier] { (void)fuegeEinBei(hier, false); })
+        ->setEnabled(hatKopie());
+    menu.addAction(tr("Duplicate"), QKeySequence(Qt::CTRL | Qt::Key_D), this, [this] { (void)dupliziere(); })
+        ->setEnabled(etwas);
+    menu.addAction(tr("Clear steps"), QKeySequence(Qt::Key_Delete), this, [this] { (void)leereMarkierte(); })
+        ->setEnabled(etwas);
+    menu.addSeparator();
+    menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
+    menu.exec(event->globalPos());
 }
 
 // =============================================================================
@@ -406,6 +778,12 @@ void DrumEditor::setupUI()
     m_leerHinweis->setEnabled(false);
     m_leerHinweis->hide();
     aussen->addWidget(m_leerHinweis);
+    // wie man mehrere Schritte markiert — oder was markiert ist und was die Tasten tun
+    m_auswahlZeile = new QLabel(this);
+    m_auswahlZeile->setObjectName(QStringLiteral("drumSelection"));
+    m_auswahlZeile->setEnabled(false);
+    m_auswahlZeile->setWordWrap(true);
+    aussen->addWidget(m_auswahlZeile);
     // was das Fenster hoeher ist als sein Inhalt, bleibt unten frei — sonst
     // verteilt das Layout die Luft zwischen Kopf, Raster-Zeile und Spuren
     aussen->addStretch(1);
@@ -417,6 +795,7 @@ void DrumEditor::setupUI()
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
     connect(m_spurNeu, &QPushButton::clicked, this, [this] { spurHinzu(); });
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
+    connect(m_raster, &SchrittRaster::auswahlGeaendert, this, &DrumEditor::zeigeAuswahl);
     connect(m_raster, &SchrittRaster::geaendert, this, [this](const Muster& neu, const QString& was) {
         Loop fassung = m_loop;
         Muster* ziel = musterIn(fassung, m_muster);
@@ -483,6 +862,31 @@ void DrumEditor::zeigeAlles()
     baueSpuren(*ziel);
     m_leerHinweis->setVisible(ziel->spuren.empty());
     waehleSpur(m_raster->spur());
+    zeigeAuswahl();
+}
+
+void DrumEditor::zeigeAuswahl()
+{
+    const std::vector<SchrittOrt>& marken = m_raster->markierte();
+    const Muster* ziel = basis();
+    m_auswahlZeile->setVisible(ziel != nullptr && !ziel->spuren.empty());
+    QString text;
+    if (marken.empty())
+        // sonst findet es niemand: sagen, wie man markiert
+        text = tr("Shift+drag selects steps · Ctrl+click adds or removes one · a click in the bar row sets the paste "
+                  "marker");
+    else
+    {
+        std::vector<int> spuren;
+        for (const SchrittOrt& ort : marken)
+            if (std::find(spuren.begin(), spuren.end(), ort.spur) == spuren.end()) spuren.push_back(ort.spur);
+        text = tr("%1 steps in %2 tracks selected · Ctrl+C copy · Ctrl+X cut · Ctrl+V paste at the marker · Ctrl+D "
+                  "duplicate · arrow keys move · Alt+Left / Right rotate · Del clears")
+                   .arg(marken.size())
+                   .arg(spuren.size());
+    }
+    if (!m_raster->meldung().isEmpty()) text = m_raster->meldung() + QStringLiteral(" · ") + text;
+    m_auswahlZeile->setText(text);
 }
 
 void DrumEditor::fuelleKlang(QComboBox* auswahl, const QString& klang) const

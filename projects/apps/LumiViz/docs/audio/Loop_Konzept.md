@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.31.0
+> **Version:** 0.32.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1411,6 +1411,45 @@ eine nicht markierte auf demselben Schritt und derselben Tonhöhe.
 
 Geprüft in `test_LoopAuswahl.cpp`, fünf Fälle ohne Fenster.
 
+### Im Drum-Editor (gebaut, 13b)
+
+`SchrittRaster` in `loop/DrumEditor.hpp` trägt die Marken, die Einfügemarke
+und das Gemerkte; der Editor zeigt darunter die Hinweiszeile
+(`drumSelection`). Gebaut wie die Skizze. **Dazu von mir gesetzt, nicht
+entschieden:**
+
+- **Die Einfügemarke gibt es immer** (am Anfang auf Takt 1): eine
+  gestrichelte Linie mit einem kleinen Dreieck im Kopf. Ein Klick in die
+  Zeile der Takte setzt sie auf den Schritt unter der Maus, hinter dem
+  letzten Schritt auf das Ende.
+- **Eingefügt wird in der Spur, in der die kopierte Auswahl begann** — auch
+  nach dem Wechsel in eine andere Basis. **Paste here** nimmt die Spur und
+  den Schritt unter der Maus.
+- **Ein Klick ohne Taste setzt weiter einen Schritt; die Marken bleiben
+  dabei stehen.** Aufgehoben werden sie mit Esc oder einem Klick unter die
+  Spuren.
+- **Ctrl+Shift+V** legt dazu, wie **Paste and keep existing steps** im Menü.
+- **Mehrere Pfeiltasten hintereinander** rechnen von der Stelle, an der die
+  Auswahl beim ersten Druck stand: ein Schritt, den sie unterwegs überfährt,
+  ist danach wieder da. Nur wo sie am Ende liegt, ersetzt sie. Jeder
+  Tastendruck ist ein Schritt für Undo.
+- Die Meldung „n step(s) did not fit into the pattern" steht vorn in der
+  Hinweiszeile, bis die nächste Aktion sie ablöst.
+- Mit Shift gezogen kommt bei gehaltener Ctrl-Taste der Rahmen zu den Marken
+  dazu.
+- Ändert sich das Muster von außen (Bars, Raster, Undo), bleiben die Marken,
+  wo es ihre Schritte noch gibt — sie wandern nicht mit dem Inhalt.
+
+**Nicht drin:** Shift+Ziehen in der Zeile Step volume; die Marken nach Undo
+dorthin zurücksetzen, wo sie vorher standen.
+
+Geprüft in `test_LoopDrumEditor.cpp` (ein Fall mit sieben Teilen, über Maus
+und Tasten am Raster); `LUMIVIZ_DRUM_MARKEN_BILD=<datei.png>` legt ein Bild
+des Editors mit markiertem Bereich und Einfügemarke ab — angesehen. **Nicht
+geprüft:** das Menü des Rechtsklicks; ob die Tasten im gezeigten Fenster beim
+Raster ankommen (es bekommt den Fokus mit dem Klick). **Im Programm nicht
+gesehen.**
+
 **Vor dem Bau geklärt** (Patrik S113):
 
 - **V2 a — verstreute Schritte:** kopiert werden genau die markierten
@@ -1451,7 +1490,7 @@ Geprüft in `test_LoopAuswahl.cpp`, fünf Fälle ohne Fenster.
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
-| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; in den Editoren noch nicht. **Offen:** 13b Drum-Editor, 13c Instrument-Editor, 13d Doku und Sichttest-Liste |
+| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **Offen:** 13c Instrument-Editor, 13d Doku und Sichttest-Liste, der volle Testlauf |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
@@ -1548,6 +1587,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.32.0** (S113, 2026-10-11): 13b gebaut — Mehrfachauswahl, Kopieren,
+  Einfügen, Versetzen und Drehen im Drum-Editor (§4i).
 
 - **0.31.0** (S113, 2026-10-11): Entscheide V2 a (nur die markierten
   Schritte zählen) und V3 a (Pfeiltasten halten am Rand an), dazu das Drehen
