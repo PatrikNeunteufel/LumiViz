@@ -78,6 +78,7 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
 {
     std::vector<Klang> klaenge(static_cast<std::size_t>(namen.size()));
     std::map<QString, std::optional<Instrument>> geholt;
+    QStringList zuNeu;  // Dateien einer Fassung, die dieses Programm nicht kennt
     for (std::size_t i = 0; i < klaenge.size(); ++i)
     {
         const QString& klang = namen[static_cast<qsizetype>(i)];
@@ -95,7 +96,9 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
                 if (ort == geholt.end())
                 {
                     Instrument neu;
-                    const bool da = holeInstrument(instrument, neu);
+                    bool neuer = false;
+                    const bool da = holeInstrument(instrument, neu, &neuer);
+                    if (neuer) zuNeu << instrument;
                     ort = geholt.emplace(instrument, da ? std::optional<Instrument>(std::move(neu)) : std::nullopt).first;
                 }
                 if (ort->second.has_value()) gefunden = &*ort->second;
@@ -104,7 +107,8 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
                 klaenge[i] = rendereTon(*gefunden, hoehe, dauerMs, rate);
             else if (bericht != nullptr)
             {
-                const QString zeile = QStringLiteral("Instrument not found: %1")
+                const QString zeile = (zuNeu.contains(instrument) ? QStringLiteral("Instrument needs a newer LumiViz: %1")
+                                                                  : QStringLiteral("Instrument not found: %1"))
                                           .arg(instrument.isEmpty() ? klang : QDir::toNativeSeparators(instrument));
                 if (!bericht->contains(zeile)) bericht->append(zeile);
             }

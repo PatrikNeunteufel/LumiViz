@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.19.0
-> **Datum:** 2026-10-11 (Session 110)
+> **Version:** 0.21.0
+> **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -85,8 +85,28 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **I1 c** (S110) | **Der Klang eines Instrument-Clips kommt aus beiden Quellen: gerechnet oder aus einem Sample — zuerst gerechnet.** Ein gerechnetes Instrument ist ein Satz Einstellungen für einen Klangerzeuger: Schwingung (der Funktionsgenerator), Hüllkurve, Filter, Vibrato, Verstimmung, dazu eine gezupfte Saite als eigene Art. Ein Instrument aus einem Sample ist eine Tondatei, die je Note in der Tonhöhe umgerechnet wird. Die Piano-Rolle ist für beide dieselbe. Der **Instrument-Creator** ist der Editor der gerechneten Art; ein Funktionsgenerator allein ist nur deren erster Baustein. |
 | **I2 b** (S110) | **Ein eigenes Instrument ist eine eigene Datei `.lvinst`** — abgelegt wie die Klänge des Kits (Patrik: „wie die Kit"). Das Muster nennt sie, wie eine Spur ihren Klang nennt: den Namen eines mitgelieferten Instruments oder den Pfad einer Datei, relativ unter dem Ordner der `.lvloop`, sonst absolut. Fehlt die Datei, schweigt das Muster, und der Bericht sagt es. (Patrik hatte zuerst a gesagt und es im selben Zug berichtigt.) |
 | **I3 a** (S110) | **Auch die sieben mitgelieferten Instrumente sind Dateien**: `asset/loop/instruments/<name>.lvinst`, wie die Klänge unter `asset/loop/kit`. Das Programm liest den Ordner; im Code steht kein Instrument mehr. Ein Muster nennt ein mitgeliefertes beim Namen (`piano`), ein eigenes beim Pfad. Verworfen: b — die mitgelieferten bleiben im Code (sie klängen auch ohne den Ordner `asset`, aber es gäbe zwei Arten von Instrumenten). **Folge:** fehlt `asset/loop` neben der Exe — wie heute im Release-Paket —, schweigen alle Instrument-Clips; dieselbe offene Aufgabe wie beim Kit. |
+| **F1 a** (S111) | **Schichten stehen in der `.lvinst` als Liste `layers`, die Datei trägt Fassung 2.** Oben stehen nur noch Titel und Level des ganzen Instruments; jede Schicht ist ein Eintrag mit den bisherigen Feldern, dazu `name`, `on`, `transpose`, `startOffset`, `drive`. Fassung 1 liest das Programm als Instrument mit einer Schicht; gespeichert wird immer Fassung 2; eine höhere Fassung als die eigene lehnt es ab und sagt es im Bericht. |
+| **E1 a** (S111) | **Der Verzerrer gehört zum Instrument, Hall und Echo gehören ans Muster.** Der Verzerrer formt nur den Augenblickswert um und passt in den vorab gerechneten Ton: ein Regler **Drive** je Schicht, gebaut mit Stufe 10c. Hall und Echo klingen nach und stehen am Muster neben Volume und Pan — sie gelten damit auch für Drum-Muster; dafür bekommt der Rechenkern erstmals ein Gedächtnis. Das ist eine eigene Stufe nach 10c mit eigener Skizze (Stufe 12); ob sie je Muster oder je Kanal des Loop-Panels sitzen, klärt jene Skizze. |
 
 ### 3.1 Verworfen, mit Grund
+
+- **Die erste Schicht bleibt flach, weitere kommen in `layers` dazu** (F1 b):
+  eine ältere Programmfassung spielte noch die erste Schicht — aber die erste
+  hätte eine Sonderrolle, jedes Umsortieren, Löschen und Stummschalten müsste
+  Felder zwischen oben und Liste umschichten, und die zwei Level fielen für
+  sie in ein Feld zusammen. Eine ältere Fassung, die `.lvinst` kennt, gibt es
+  außer dem Stand aus S110 nicht.
+- **Eine Schicht weiter flach als Fassung 1 schreiben** (F1 c): die
+  mitgelieferten Dateien blieben beim Speichern unverändert — dafür zwei
+  Schreibweisen, beide zu testen.
+- **Alle Effekte im Instrument** (E1 b): ein Instrument klänge fertig, wo
+  immer man es lädt — aber Hall je Instrument ergibt in einem Loop mit fünf
+  Instrumenten fünf Räume, jeder Ton wäre um die Hallfahne länger zu rechnen,
+  ein Echo kennt das Tempo des Loops nicht, und die Drums blieben ohne.
+- **Alle Effekte am Muster, auch der Verzerrer** (E1 c): eine Stelle für
+  alles — aber der Verzerrer fehlte als Klangfarbe einer einzelnen Schicht;
+  auf dem ganzen Muster reiben die Töne eines Akkords aneinander, je Ton
+  bleibt er sauber.
 
 - **Ein eigenes Instrument in der `.lvloop` selbst**, mit Export und Import
   (I2 a, meine Empfehlung): der Loop bliebe allein spielbar — aber ein
@@ -650,6 +670,90 @@ dabei zur Vorlage einer eigenen Kopie. Ablage nach I2 b: eine Datei
   Klaviatur (C3 bis C5): ein Klick spielt den Ton mit den Einstellungen, wie
   sie gerade stehen.
 
+### Instrumente aus Schichten (Stufe 10c — Skizze gebilligt, Patrik S111; gebaut)
+
+Wunsch Patrik S110: mehrere Charakteristiken in einem Instrument überlagern.
+Ein Instrument trägt dafür **Schichten** — jede ein voller Satz der heutigen
+Einstellungen; beim Rechnen eines Tons werden sie addiert. Das Format
+`.lvinst` dazu: Entscheid **F1 a** (§3), beschrieben unter „Die gerechneten
+Instrumente".
+
+**Gebaut wie die Skizze, dazu von mir gesetzt, nicht entschieden:**
+
+- **Drive** steht in der Gruppe Filter, unter Envelope; 0 ist aus, der Regler
+  reicht bis 100 %. Gerechnet als `tanh(8·Drive·x) / tanh(8·Drive)` auf dem
+  Wert nach dem Filter und vor der Hüllkurve: der Betrag wächst nicht, der
+  Klang wird dichter. Er gilt auch für die gezupfte Saite.
+- **Transpose** −24 bis +24 Halbtöne; **Start offset** 0 bis 1000 ms, der
+  Regler in Schritten von 5 ms.
+- Eine Schicht mit Start offset **endet mit der Note**: sie klingt um den
+  Versatz kürzer. Ist die Note kürzer als der Versatz, bleibt von der Schicht
+  ein Anschlag von einer Millisekunde und ihr Ausklang.
+- Der Klang ist so lang wie die längste Schicht. Ist **keine** Schicht an,
+  ist er still und so lang wie die Note.
+- **Add layer from instrument...** öffnet ein Menü: die mitgelieferten
+  Instrumente, darunter **From file...**. Eine Schicht ohne Namen bekommt den
+  Titel ihres Instruments; die Lautstärke des ganzen Quell-Instruments wandert
+  in die Lautstärke der Schicht. Was über vier Schichten ginge, bleibt weg.
+- Bei vier Schichten sind Add layer, Add layer from instrument... und
+  Duplicate grau; bei einer ist Remove grau.
+- Die Legende unter den Bildern („Solid: all layers · dashed: selected
+  layer") und der Haken Selected layer only stehen nur bei mehr als einer
+  Schicht zur Verfügung. Beide Kurven teilen sich einen Maßstab.
+- In der Liste steht eine Schicht ohne Namen als „Layer n", mit Namen als
+  „n Name".
+- Der Regler **Level** der Schicht behält die Kennung `creatorLevel`; der des
+  ganzen Instruments heißt `creatorMasterLevel`.
+
+**Nicht gemessen:** die Rechenzeit — jede Schicht wird je Ton einzeln
+gerechnet, ein Instrument mit vier Schichten kostet beim Laden der Klänge
+rund das Vierfache.
+
+**Sechzehn Instrumente aus Schichten** (Wunsch Patrik S111: weitere, auch
+ganz ungewöhnliche) liegen unter `asset/loop/instruments`, dazu fünf
+Beispiel-Loops; erzeugt von `asset/loop/make_examples.py`, beschrieben in
+`asset/loop/README.md`. Wie alle nach Rechnung eingestellt, nicht nach Gehör.
+
+Die Skizze — das Fenster des Instrument-Creators, links um eine Spalte
+erweitert:
+
+- **Kopf:** wie heute Name, „based on <Vorlage>", Reset, Save, Save as...;
+  dazu **Level** für das ganze Instrument neben **Peak**. Peak gilt für die
+  Summe aller eingeschalteten Schichten.
+- **Links, „Layers":** die Liste der Schichten. Je Zeile ein **Haken**
+  (schaltet die Schicht stumm, ohne sie zu löschen), Nummer und **Name**, die
+  Schwingung, darunter Lautstärke und Versatz („Level 35 % · +12 st"). Ein
+  Klick auf eine Zeile wählt die Schicht; die Mitte zeigt ihre Regler.
+  Darunter:
+  - **Add layer** — eine neue Schicht mit Grundeinstellung (Sine, eine
+    Stimme).
+  - **Add layer from instrument...** — die Einstellungen eines vorhandenen
+    Instruments als neue Schicht, aus der Liste der mitgelieferten oder aus
+    einer `.lvinst`. Kopiert, nicht verbunden; hat das gewählte Instrument
+    selbst mehrere Schichten, kommen alle dazu.
+  - **Duplicate**, **Remove** (grau bei nur einer Schicht), **▲ ▼** für die
+    Reihenfolge.
+- **Mitte, „Layer n":** was nur die Schicht betrifft — **Name**, **Level**,
+  **Transpose** (−24 bis +24 Halbtöne), **Start offset** (die Schicht setzt
+  so viele Millisekunden nach dem Anschlag ein; kein Echo). Darunter die
+  heutigen Gruppen Oscillator, Envelope, Filter, Vibrato unverändert, jetzt
+  je Schicht; dazu **Drive** (der Verzerrer, E1 a).
+- **Rechts:** „One cycle" und „Envelope of a note" zeigen die **Summe** aller
+  Schichten als Linie und die gewählte Schicht gestrichelt, mit Legende
+  („all layers", „selected"). Die Klaviatur C3 bis C5 spielt alle
+  eingeschalteten Schichten; der Haken **Selected layer only** darunter lässt
+  die gewählte allein hören.
+
+**Mit der Skizze gebilligt (von mir vorgeschlagen):** Start offset je
+Schicht; höchstens **vier** Schichten (jede wird je Ton einzeln gerechnet —
+die Rechenzeit ist nicht gemessen); kein Fein-Versatz in Cent je Schicht
+(Detune gibt es innerhalb einer Schicht); kein Panorama je Schicht; ein
+Instrument mit einer Schicht sieht aus wie heute, nur mit der Liste links,
+und die vierzehn mitgelieferten klingen wie vorher.
+
+**Nicht in der Skizze gezeigt, mit E1 a dazugekommen:** der Regler Drive —
+wo er in der Mitte steht und wie weit er reicht, setze ich beim Bau.
+
 ### Modell und Datei (gebaut, 9a)
 
 Ein Muster der Art `instrument` trägt statt Spuren und Zeilen:
@@ -691,30 +795,53 @@ Länge bleibt dieselbe Zeit, auf ganze Schritte gerundet.
 
 ### Die gerechneten Instrumente (gebaut, 9a)
 
-`loop/Instrument.hpp`. Ein Instrument ist ein Satz Einstellungen — das, was
-der Instrument-Creator (Stufe 10b) offenlegt — und seit Stufe 10a **eine
-Datei `.lvinst`** (I2 b, I3 a):
+`loop/Instrument.hpp`. Ein Instrument besteht aus einer bis vier
+**Schichten** (`Schicht`, Stufe 10c); jede ist ein Satz Einstellungen — das,
+was der Instrument-Creator offenlegt. Seit Stufe 10a ist es **eine Datei
+`.lvinst`** (I2 b, I3 a), seit 10c in **Fassung 2** (F1 a):
 
 ```json
 {
   "format": "lumiviz-instrument",
-  "version": 1,
-  "title": "Strings",
-  "waveform": "saw",
-  "harmonics": [],
-  "voices": 3,
-  "detune": 9,
-  "attack": 160, "decay": 400, "sustain": 0.85, "release": 420,
-  "filterCutoff": 6, "filterEnvelope": 0,
-  "vibratoRate": 5, "vibratoDepth": 6, "vibratoDelay": 300,
-  "damping": 0.996,
-  "level": 0.7
+  "version": 2,
+  "title": "House Piano Wide",
+  "level": 0.8,
+  "layers": [
+    {
+      "name": "Body", "on": true, "level": 1, "transpose": 0, "startOffset": 0, "drive": 0,
+      "waveform": "saw",
+      "harmonics": [],
+      "voices": 3,
+      "detune": 9,
+      "attack": 160, "decay": 400, "sustain": 0.85, "release": 420,
+      "filterCutoff": 6, "filterEnvelope": 0,
+      "vibratoRate": 5, "vibratoDepth": 6, "vibratoDelay": 300,
+      "damping": 0.996
+    }
+  ]
 }
 ```
+
+**Fassung 1** trägt die Felder einer Schicht flach auf oberster Ebene, ohne
+`layers`. Das Programm liest sie als Instrument mit **einer** Schicht; ihr
+`level` wird die Lautstärke der Schicht, das Instrument selbst steht auf 1 —
+der Klang ist zahlengleich. Die vierzehn Instrumente aus S110 liegen weiter
+in Fassung 1 vor. **Geschrieben wird immer Fassung 2.** Eine **höhere**
+Fassung als die eigene liest das Programm nicht: das Muster schweigt, im
+Bericht steht „Instrument needs a newer LumiViz: …" (`kInstrumentFassung`).
+Das Programm aus S110 prüfte die Nummer nicht — es spielt eine Datei der
+Fassung 2 ohne Meldung als reinen Sinus.
 
 | Feld | Bedeutung | Grenzen |
 |---|---|---|
 | `title` | wie das Instrument im Programm steht; ohne Titel der Dateiname | — |
+| `level` (oben) | Lautstärke des ganzen Instruments | 0 bis 1 |
+| `layers[]` | die Schichten; fehlt die Liste, gilt eine mit Grundeinstellung | 1 bis 4, weitere bleiben weg |
+| `name` | wie die Schicht in der Liste steht; leer = „Layer n" | — |
+| `on` | aus = stumm, bleibt im Instrument | — |
+| `transpose` | so viele Halbtöne liegt die Schicht neben der Note | -24 bis 24 |
+| `startOffset` | so viele Millisekunden nach dem Anschlag setzt sie ein | 0 bis 1000 |
+| `drive` | der Verzerrer (E1 a), 0 = aus | 0 bis 1 |
 | `waveform` | `sine`, `triangle`, `saw`, `square` oder `string` (die gezupfte Saite) | — |
 | `harmonics` | nur `sine`: die Anteile des 2., 3., … Teiltons | höchstens 16, je -1 bis 1 |
 | `voices`, `detune` | gleiche Schwingungen übereinander; so viele Cent liegen die äußeren daneben | 1 bis 3; 0 bis 100 |
@@ -723,7 +850,7 @@ Datei `.lvinst`** (I2 b, I3 a):
 | `filterCutoff`, `filterEnvelope` | Tiefpass als Vielfaches des Grundtons (0 = offen); so viele Vielfache öffnet die Hüllkurve dazu | 0 bis 64 |
 | `vibratoRate`, `vibratoDepth`, `vibratoDelay` | Hertz, Cent, Millisekunden bis zur vollen Tiefe | 0 bis 20; 0 bis 100; 0 bis 5000 |
 | `damping` | nur `string`: größer klingt länger | 0,9 bis 0,9999 |
-| `level` | Ausgleich zwischen den Instrumenten | 0 bis 1 |
+| `level` (in der Schicht) | Lautstärke der Schicht | 0 bis 1 |
 
 Die mitgelieferten liest das Programm einmal aus `asset/loop/instruments`
 (nach Titel sortiert); eine eigene Datei liest es jedes Mal, wenn Klänge
@@ -809,7 +936,9 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 | 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel, eine Taste spielt den Ton an | S110 gebaut, §4f; `test_LoopInstrumentEditor.cpp` (zwei Fälle ohne Fenster; `LUMIVIZ_INSTRUMENT_EDITOR_BILD=<datei.png>` legt ein Bild ab), ein Fall in `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
+| 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
+| 12 | **Hall und Echo am Muster** (E1 a), auch für Drum-Muster; der Rechenkern bekommt dafür ein Gedächtnis | später, davor die Skizze (je Muster oder je Kanal) |
 
 ---
 
@@ -905,6 +1034,13 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.21.0** (S111, 2026-10-11): Entscheid F1 a (Fassung 2 der `.lvinst`
+  mit der Liste `layers`), b und c verworfen; Stufe 10c gebaut — Schichten
+  in Modell, Datei, Rechnen und Creator, Drive (§4f); sechzehn Instrumente
+  aus Schichten, fünf Beispiel-Loops.
+- **0.20.0** (S111, 2026-10-11): die gebilligte Skizze für Stufe 10c —
+  Instrumente aus Schichten (§4f); Entscheid E1 a (Verzerrer im Instrument,
+  Hall und Echo am Muster), b und c verworfen; Stufen 10c und 12.
 - **0.19.0** (S110, 2026-10-11): Stufe 10b gebaut — der Instrument-Creator,
   Edit instrument..., Load instrument... (§4f).
 - **0.18.0** (S110, 2026-10-11): Entscheid I3 a (auch die mitgelieferten

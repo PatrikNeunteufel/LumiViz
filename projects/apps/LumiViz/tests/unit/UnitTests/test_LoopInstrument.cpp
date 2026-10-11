@@ -30,6 +30,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
 
@@ -403,14 +404,18 @@ TEST_SUITE("LoopInstrument")
         const InstrumentApp app;  // der Programmordner fuer die Suche nach dem Ordner
         CHECK(QDir(instrumentOrdner()).dirName() == QStringLiteral("instruments"));
         const std::vector<Instrument>& alle = instrumente();
-        // sieben allgemeine und sieben fuer House (Wunsch Patrik S110)
-        REQUIRE(alle.size() == 14);
+        // sieben allgemeine und sieben fuer House (Wunsch Patrik S110), dazu sechzehn aus
+        // Schichten, sieben davon ungewoehnlich (Wunsch Patrik S111)
+        REQUIRE(alle.size() == 30);
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("Acid Bass"));
         CHECK(alle.back().titel == QStringLiteral("Warm Pad"));
         for (const char* name : {"bass", "guitar", "lead", "organ", "piano", "strings", "violin", "acid_bass",
-                                 "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad"})
+                                 "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad",
+                                 "bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
+                                 "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
+                                 "growl_bass", "reverse_swell"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -421,16 +426,29 @@ TEST_SUITE("LoopInstrument")
         CHECK(findeInstrument(QStringLiteral("house_piano"))->titel == QStringLiteral("House Piano"));
         CHECK(findeInstrument(QStringLiteral("tuba")) == nullptr);
         CHECK(findeInstrument(instrumentVorgabe()) != nullptr);  // das Instrument eines neuen Musters gibt es
-        CHECK(findeInstrument(QStringLiteral("guitar"))->schwingung == Schwingung::Saite);
-        CHECK(findeInstrument(QStringLiteral("strings"))->stimmen == 3);
+        CHECK(findeInstrument(QStringLiteral("guitar"))->schichten[0].schwingung == Schwingung::Saite);
+        CHECK(findeInstrument(QStringLiteral("strings"))->schichten[0].stimmen == 3);
 
         for (const Instrument& instrument : alle)
         {
             CAPTURE(instrument.name.toStdString());
             CHECK(findeInstrument(instrument.name) == &instrument);
-            // A4, eine halbe Sekunde gehalten
+            // eine bis vier Schichten, alle an; die erste liegt auf der Note und setzt gleich ein
+            REQUIRE_FALSE(instrument.schichten.empty());
+            CHECK(instrument.schichten.size() <= static_cast<std::size_t>(kSchichtenMax));
+            CHECK(instrument.schichten[0].versatzHalbtoene == 0);
+            CHECK(instrument.schichten[0].einsatzMs == 0.0);
+            double laengsterAusklang = 0.0;
+            double vibrato = 0.0;
+            for (const Schicht& schicht : instrument.schichten)
+            {
+                CHECK(schicht.an);
+                laengsterAusklang = std::max(laengsterAusklang, schicht.ausklangMs);
+                vibrato = std::max(vibrato, schicht.vibratoCent);
+            }
+            // A4, eine halbe Sekunde gehalten: so lang wie die Note und der laengste Ausklang
             const Klang ton = rendereTon(instrument, 69, 500.0, kRate);
-            const std::int64_t ausklang = std::llround(std::max(5.0, instrument.ausklangMs) * kRate / 1000.0);
+            const std::int64_t ausklang = std::llround(std::max(5.0, laengsterAusklang) * kRate / 1000.0);
             CHECK(ton.frames() == 22050 + ausklang);
             const float groesster = spitze(ton.daten);
             MESSAGE(instrument.titel.toStdString() << ": A4, " << ton.frames() << " Abtastwerte, Spitze "
@@ -448,15 +466,17 @@ TEST_SUITE("LoopInstrument")
             CHECK(beideGleich);
             // der Klang endet bei null: kein Knacken am Ende
             CHECK(std::abs(ton.daten[ton.daten.size() - 2]) < 0.002f);
-            // die Tonhoehe: 440 Hz sind 100,2 Abtastwerte je Schwingung
+            // die Tonhoehe: 440 Hz sind 100,2 Abtastwerte je Schwingung — mit Vibrato schwankt
+            // sie um so viele Cent, wie das Instrument angibt (die Sirene: 100)
+            const double schwankung = std::exp2(std::max(vibrato, 20.0) / 1200.0);
             const int p = periode(ton, 6000, 4000, 80, 125);
-            CHECK(p >= 98);  // mit Vibrato schwankt sie um gut ein Prozent
-            CHECK(p <= 103);
+            CHECK(p >= std::floor(100.2 / schwankung) - 1);
+            CHECK(p <= std::ceil(100.2 * schwankung) + 1);
             // eine Oktave tiefer die doppelte Periode
             const Klang tief = rendereTon(instrument, 57, 500.0, kRate);
             const int pTief = periode(tief, 6000, 4000, 160, 250);
-            CHECK(pTief >= 197);
-            CHECK(pTief <= 204);
+            CHECK(pTief >= std::floor(200.5 / schwankung) - 1);
+            CHECK(pTief <= std::ceil(200.5 * schwankung) + 1);
             // derselbe Aufruf ergibt dieselben Werte
             CHECK(rendereTon(instrument, 69, 500.0, kRate).daten == ton.daten);
             // die Raender des Umfangs und eine andere Abtastrate rechnen ohne Unsinn
@@ -497,8 +517,8 @@ TEST_SUITE("LoopInstrument")
         }
         Instrument eigenes = *findeInstrument(QStringLiteral("organ"));
         eigenes.titel = QStringLiteral("My organ");
-        eigenes.obertoene = {1.0, 0.0, 0.5};
-        eigenes.ausklangMs = 300.0;
+        eigenes.schichten[0].obertoene = {1.0, 0.0, 0.5};
+        eigenes.schichten[0].ausklangMs = 300.0;
         const QString pfad = ordner.filePath(QStringLiteral("my_organ.lvinst"));
         const std::uint64_t fassung = instrumentFassung();
         REQUIRE(speichereInstrument(eigenes, pfad));
@@ -511,14 +531,25 @@ TEST_SUITE("LoopInstrument")
 
         // --- Werte ausserhalb kommen in ihre Grenzen; ein fremdes Format ist kein Instrument
         QJsonObject wild = alsJson(eigenes);
-        wild[QStringLiteral("voices")] = 9;
-        wild[QStringLiteral("sustain")] = 5.0;
-        wild[QStringLiteral("waveform")] = QStringLiteral("gibt es nicht");
+        QJsonObject wildeSchicht = wild.value(QStringLiteral("layers")).toArray().at(0).toObject();
+        wildeSchicht[QStringLiteral("voices")] = 9;
+        wildeSchicht[QStringLiteral("sustain")] = 5.0;
+        wildeSchicht[QStringLiteral("waveform")] = QStringLiteral("gibt es nicht");
+        wildeSchicht[QStringLiteral("transpose")] = 99;
+        wildeSchicht[QStringLiteral("startOffset")] = -5.0;
+        wildeSchicht[QStringLiteral("drive")] = 7.0;
+        wild[QStringLiteral("layers")] = QJsonArray{wildeSchicht};
+        wild[QStringLiteral("level")] = 3.0;
         Instrument gezaehmt;
         REQUIRE(ausJson(wild, gezaehmt));
-        CHECK(gezaehmt.stimmen == 3);
-        CHECK(gezaehmt.halten == doctest::Approx(1.0));
-        CHECK(gezaehmt.schwingung == Schwingung::Sinus);  // die Vorgabe
+        REQUIRE(gezaehmt.schichten.size() == 1);
+        CHECK(gezaehmt.laut == doctest::Approx(1.0));
+        CHECK(gezaehmt.schichten[0].stimmen == 3);
+        CHECK(gezaehmt.schichten[0].halten == doctest::Approx(1.0));
+        CHECK(gezaehmt.schichten[0].schwingung == Schwingung::Sinus);  // die Vorgabe
+        CHECK(gezaehmt.schichten[0].versatzHalbtoene == 24);
+        CHECK(gezaehmt.schichten[0].einsatzMs == doctest::Approx(0.0));
+        CHECK(gezaehmt.schichten[0].verzerrung == doctest::Approx(1.0));
         QJsonObject fremd = alsJson(eigenes);
         fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-loop");
         CHECK_FALSE(ausJson(fremd, gezaehmt));
@@ -562,6 +593,183 @@ TEST_SUITE("LoopInstrument")
         REQUIRE(ausJson(json, gelesen, ordner.path(), &bericht));
         REQUIRE(bericht.size() == 1);
         CHECK(bericht[0].startsWith(QStringLiteral("File not found: ")));
+    }
+
+    TEST_CASE("Loop Instrument: Schichten — die Datei der Fassung 2 und der Ton als Summe")
+    {
+        const InstrumentApp app;
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const Instrument orgel = *findeInstrument(QStringLiteral("organ"));
+        const Instrument saege = *findeInstrument(QStringLiteral("lead"));
+
+        // --- die Datei: Fassung 2 mit der Liste `layers`; hin und zurueck
+        Instrument zwei = orgel;
+        zwei.titel = QStringLiteral("Two");
+        zwei.laut = 0.8;
+        zwei.schichten[0].name = QStringLiteral("Body");
+        Schicht oben = saege.schichten[0];
+        oben.name = QStringLiteral("Shimmer");
+        oben.laut = 0.35;
+        oben.versatzHalbtoene = 12;
+        oben.einsatzMs = 40.0;
+        oben.verzerrung = 0.5;
+        zwei.schichten.push_back(oben);
+        const QJsonObject json = alsJson(zwei);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
+        CHECK(kInstrumentFassung == 2);
+        CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
+        CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
+        REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
+        const QJsonObject zweite = json.value(QStringLiteral("layers")).toArray().at(1).toObject();
+        CHECK(zweite.value(QStringLiteral("name")).toString() == QStringLiteral("Shimmer"));
+        CHECK(zweite.value(QStringLiteral("transpose")).toInt() == 12);
+        CHECK(zweite.value(QStringLiteral("startOffset")).toDouble() == doctest::Approx(40.0));
+        CHECK(zweite.value(QStringLiteral("drive")).toDouble() == doctest::Approx(0.5));
+        CHECK(zweite.value(QStringLiteral("on")).toBool());
+        Instrument gelesen;
+        gelesen.name = zwei.name;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen == zwei);
+        const QString pfad = ordner.filePath(QStringLiteral("two.lvinst"));
+        REQUIRE(speichereInstrument(zwei, pfad));
+        Instrument ausDatei;
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        ausDatei.name = zwei.name;
+        CHECK(ausDatei == zwei);
+
+        // --- Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
+        QJsonObject flach;
+        flach[QStringLiteral("format")] = QStringLiteral("lumiviz-instrument");
+        flach[QStringLiteral("version")] = 1;
+        flach[QStringLiteral("title")] = QStringLiteral("Flat");
+        flach[QStringLiteral("waveform")] = QStringLiteral("saw");
+        flach[QStringLiteral("voices")] = 2;
+        flach[QStringLiteral("level")] = 0.6;
+        Instrument alt;
+        REQUIRE(ausJson(flach, alt));
+        REQUIRE(alt.schichten.size() == 1);
+        CHECK(alt.laut == 1.0);
+        CHECK(alt.schichten[0].laut == doctest::Approx(0.6));
+        CHECK(alt.schichten[0].schwingung == Schwingung::Saege);
+        CHECK(alt.schichten[0].stimmen == 2);
+        CHECK(alt.schichten[0].versatzHalbtoene == 0);
+        CHECK(alt.schichten[0].verzerrung == 0.0);
+        flach.remove(QStringLiteral("version"));  // ohne Nummer: Fassung 1
+        REQUIRE(ausJson(flach, alt));
+        CHECK(alt.schichten[0].schwingung == Schwingung::Saege);
+
+        // --- mehr als vier Schichten: die uebrigen bleiben weg; ohne Liste eine mit Grundeinstellung
+        QJsonObject viele = json;
+        QJsonArray sechs;
+        for (int i = 0; i < 6; ++i) sechs.append(zweite);
+        viele[QStringLiteral("layers")] = sechs;
+        Instrument gekuerzt;
+        REQUIRE(ausJson(viele, gekuerzt));
+        CHECK(gekuerzt.schichten.size() == static_cast<std::size_t>(kSchichtenMax));
+        viele.remove(QStringLiteral("layers"));
+        REQUIRE(ausJson(viele, gekuerzt));
+        REQUIRE(gekuerzt.schichten.size() == 1);
+        CHECK(gekuerzt.schichten[0] == Schicht{});
+
+        // --- eine Fassung von morgen liest das Programm nicht — und sagt es
+        QJsonObject morgen = json;
+        morgen[QStringLiteral("version")] = kInstrumentFassung + 1;
+        bool zuNeu = false;
+        Instrument bleibt = orgel;
+        CHECK_FALSE(ausJson(morgen, bleibt, &zuNeu));
+        CHECK(zuNeu);
+        CHECK(bleibt == orgel);
+        QJsonObject fremd = json;
+        fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-loop");
+        CHECK_FALSE(ausJson(fremd, bleibt, &zuNeu));
+        CHECK_FALSE(zuNeu);
+        const QString pfadMorgen = ordner.filePath(QStringLiteral("morgen.lvinst"));
+        {
+            QFile datei(pfadMorgen);
+            REQUIRE(datei.open(QIODevice::WriteOnly));
+            datei.write(QJsonDocument(morgen).toJson());
+        }
+        CHECK_FALSE(holeInstrument(pfadMorgen, bleibt, &zuNeu));
+        CHECK(zuNeu);
+        papp::PappMischEngine engine;
+        QStringList bericht;
+        const std::vector<Klang> stumm = ladeKlaenge({tonKlang(pfadMorgen, 60, 250), tonKlang(pfadMorgen, 62, 250)}, engine, kRate, &bericht);
+        CHECK(stumm[0].frames() == 0);
+        CHECK(bericht == QStringList{QStringLiteral("Instrument needs a newer LumiViz: ") + QDir::toNativeSeparators(pfadMorgen)});
+
+        // --- der Ton: die Summe der Schichten, jede an ihrer Tonhoehe und ab ihrem Einsatz
+        Instrument unten = orgel;  // nur die erste Schicht
+        Instrument nurOben = orgel;
+        nurOben.schichten = {oben};
+        nurOben.schichten[0].einsatzMs = 0.0;
+        Instrument summe = orgel;
+        summe.schichten.push_back(oben);
+        const Klang a = rendereTon(unten, 57, 500.0, kRate);
+        const Klang b = rendereTon(nurOben, 57, 460.0, kRate);  // 40 ms spaeter, endet mit der Note
+        const Klang beide = rendereTon(summe, 57, 500.0, kRate);
+        const auto versatz = static_cast<std::size_t>(2 * std::llround(40.0 * kRate / 1000.0));
+        REQUIRE(beide.daten.size() == std::max(a.daten.size(), versatz + b.daten.size()));
+        bool gleich = true;
+        for (std::size_t i = 0; i < beide.daten.size(); ++i)
+        {
+            float soll = i < a.daten.size() ? a.daten[i] : 0.0f;
+            if (i >= versatz && i - versatz < b.daten.size()) soll += b.daten[i - versatz];
+            if (beide.daten[i] != soll) gleich = false;
+        }
+        CHECK(gleich);
+        CHECK(std::abs(beide.daten[beide.daten.size() - 2]) < 0.002f);  // endet bei null
+        // die obere Schicht liegt eine Oktave hoeher: A3 plus 12 ist A4, 100 Abtastwerte je Schwingung
+        const int p = periode(b, 6000, 4000, 80, 125);
+        CHECK(p >= 98);
+        CHECK(p <= 103);
+        // der Versatz gilt auch fuer die Saite
+        Instrument gezupft = *findeInstrument(QStringLiteral("guitar"));
+        gezupft.schichten[0].versatzHalbtoene = -12;
+        const int pSaite = periode(rendereTon(gezupft, 69, 500.0, kRate), 2000, 4000, 160, 250);
+        CHECK(pSaite >= 197);
+        CHECK(pSaite <= 204);
+
+        // --- eine stumme Schicht zaehlt nicht; ist keine an, ist der Ton still und so lang wie die Note
+        Instrument halb = summe;
+        halb.schichten[1].an = false;
+        CHECK(rendereTon(halb, 57, 500.0, kRate).daten == a.daten);
+        halb.schichten[0].an = false;
+        const Klang still = rendereTon(halb, 57, 500.0, kRate);
+        CHECK(still.frames() == 22050);
+        CHECK(spitze(still.daten) == 0.0f);
+
+        // --- Level des ganzen Instruments
+        Instrument leiser = unten;
+        leiser.laut = 0.5;
+        CHECK(spitze(rendereTon(leiser, 57, 500.0, kRate).daten) == doctest::Approx(0.5f * spitze(a.daten)));
+
+        // --- Drive: 0 ist aus (dieselben Werte), mehr formt um und bleibt unter dem alten Betrag
+        Instrument sinus;
+        sinus.schichten[0].halten = 1.0;
+        const Klang rein = rendereTon(sinus, 57, 500.0, kRate);
+        Instrument verzerrt = sinus;
+        verzerrt.schichten[0].verzerrung = 1.0;
+        const Klang hart = rendereTon(verzerrt, 57, 500.0, kRate);
+        REQUIRE(hart.daten.size() == rein.daten.size());
+        CHECK(hart.daten != rein.daten);
+        CHECK(spitze(hart.daten) <= spitze(rein.daten) + 0.001f);
+        // die Flaeche waechst: der Sinus wird zum Rechteck hin gedrueckt
+        double flaecheRein = 0.0;
+        double flaecheHart = 0.0;
+        for (std::size_t i = 2 * 4000; i < 2 * 12000; i += 2)
+        {
+            flaecheRein += std::abs(rein.daten[i]);
+            flaecheHart += std::abs(hart.daten[i]);
+        }
+        CHECK(flaecheHart > 1.3 * flaecheRein);
+        const int pHart = periode(hart, 6000, 4000, 160, 250);  // die Tonhoehe bleibt
+        CHECK(pHart >= 198);
+        CHECK(pHart <= 203);
+        // hoechstens `kTonMaxSekunden`, auch mit Einsatz
+        Instrument lang = summe;
+        lang.schichten[1].einsatzMs = 1000.0;
+        CHECK(rendereTon(lang, 60, 60000.0, 8000).frames() == static_cast<std::int64_t>(kTonMaxSekunden * 8000));
     }
 
     TEST_CASE("Loop Instrument: ladeKlaenge rechnet die Toene — ein unbekanntes Instrument steht im Bericht")
@@ -638,6 +846,58 @@ TEST_SUITE("LoopInstrument")
         {
             REQUIRE(QDir().mkpath(ordner));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("house_demo.wav")), alles, kRate));
+        }
+    }
+
+    TEST_CASE("Loop Instrument: die fuenf Beispiele aus S111 laden ohne Bericht und bleiben unter 1")
+    {
+        const InstrumentApp app;
+        QStringList gespielt;
+        for (const char* name : {"bells_demo", "synthwave_demo", "rock_demo", "strange_demo", "ambient_demo"})
+        {
+            CAPTURE(name);
+            const QString pfad = repoWurzel().filePath(QStringLiteral("asset/loop/%1.lvloop").arg(QLatin1String(name)));
+            Loop loop;
+            QStringList bericht;
+            REQUIRE(ladeLoop(pfad, loop, &bericht));
+            CHECK(bericht.isEmpty());
+            CHECK_FALSE(loop.tags.titel.isEmpty());
+            CHECK(loop.durchlaufTakte() == 16);
+            for (const Muster& m : loop.muster)
+            {
+                if (m.art != MusterArt::Instrument) continue;
+                CAPTURE(m.instrument.toStdString());
+                CHECK(findeInstrument(m.instrument) != nullptr);
+                CHECK_FALSE(m.noten.empty());
+                gespielt << m.instrument;
+            }
+            const Ablauf ablauf = plane(loop, kRate);
+            const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+            for (std::size_t i = 0; i < klaenge.size(); ++i)
+            {
+                CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
+                CHECK(klaenge[i].frames() > 0);
+            }
+            std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
+            rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
+            const float groesster = spitze(alles);
+            MESSAGE(std::string(name) << ".lvloop: " << ablauf.klangNamen.size() << " Klaenge, ein Durchlauf " << ablauf.durchlaufFrames
+                         << " Abtastwerte, groesster Betrag " << std::to_string(groesster));
+            CHECK(groesster > 0.2f);
+            CHECK(groesster < 1.0f);
+            if (const QString ordner = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_WAV"); !ordner.isEmpty())
+            {
+                REQUIRE(QDir().mkpath(ordner));
+                CHECK(schreibeWav(QDir(ordner).filePath(QLatin1String(name) + QStringLiteral(".wav")), alles, kRate));
+            }
+        }
+        // jedes der sechzehn Instrumente aus Schichten kommt in einem der Beispiele vor
+        for (const char* name : {"bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
+                                 "kalimba", "marimba", "cascade", "siren", "alien_choir", "broken_radio", "ghost",
+                                 "growl_bass", "reverse_swell"})
+        {
+            CAPTURE(name);
+            CHECK(gespielt.contains(QLatin1String(name)));
         }
     }
 

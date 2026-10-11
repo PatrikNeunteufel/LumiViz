@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Marimba",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Bar",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [0, 0, 0.3],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 380,
+            "sustain": 0,
+            "release": 200,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Mallet",
+            "on": true,
+            "level": 0.25,
+            "transpose": 24,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "triangle",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 40,
+            "sustain": 0,
+            "release": 30,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

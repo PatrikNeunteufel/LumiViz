@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.148.0
-> **Datum:** 2026-10-11 (Session 110)
+> **Version:** 1.149.0
+> **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2374,13 +2374,19 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Einstellungen aller vierzehn Instrumente sind gerechnet, nicht abgehört.
     Nicht drin: hören, was man einstellt, während das Muster spielt; eine
     Resonanz am Filter (der Acid Bass hat keine)
-  - 🟡 **10c Instrumente aus mehreren Schichten** (Wunsch Patrik S110:
-    mehrere Charakteristiken überlagern) — heute ist ein Instrument ein
-    einziger Satz Einstellungen. Gedacht: mehrere Sätze, jeder mit
-    Lautstärke und Versatz in Halbtönen, beim Rechnen addiert; berührt das
-    Format `.lvinst` und das Fenster des Creators. **Nächster Schritt: die
-    Skizze** (Auftrag Patrik für die nächste Session), dann der Entscheid
-    zum Format
+  - ✅ **10c Instrumente aus mehreren Schichten** (Wunsch Patrik S110) —
+    **S111 gebaut:** Skizze gebilligt, Entscheide **F1 a** (Fassung 2 der
+    `.lvinst` mit der Liste `layers`) und **E1 a** (Verzerrer im Instrument,
+    Hall und Echo am Muster); eine bis vier Schichten, je Schicht Level,
+    Transpose, Start offset und Drive, im Creator die Liste Layers, zwei
+    Kurven je Bild, Selected layer only; dazu sechzehn Instrumente aus
+    Schichten (sieben ungewöhnliche) und fünf Beispiel-Loops (Wunsch Patrik
+    S111). **Im Programm nicht gesehen und nicht gehört** — ⬜ Liste 10,
+    Abschnitt S und Urteile U19 bis U23; alle Einstellungen gerechnet, nicht
+    abgehört. Nicht gemessen: die Rechenzeit mit vier Schichten
+  - 🟡 **12 Hall und Echo am Muster** (E1 a, Frage Patrik S111) — auch für
+    Drum-Muster; der Rechenkern bekommt dafür ein Gedächtnis. **Nächster
+    Schritt: die Skizze** (je Muster oder je Kanal des Loop-Panels)
   - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
     und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
     Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht

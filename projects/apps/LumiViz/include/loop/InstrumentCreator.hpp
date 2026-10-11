@@ -5,11 +5,19 @@
  *        (docs/audio/Loop_Konzept.md §4f, Stufe 10b; Skizze gebilligt,
  *        Patrik S110; Entscheide I2 b und I3 a)
  *
- * **Kopf:** Name, die Vorlage, Reset, Save, Save as..., Peak.
- * **Links:** Oscillator (Waveform, Voices, Detune — bei Sine die Obertoene,
- * bei Plucked string Damping), Envelope, Filter, Vibrato, Level.
- * **Rechts:** das Bild einer Schwingung, die Huellkurve einer Note und eine
- * kleine Klaviatur zum Anspielen.
+ * **Kopf:** Name, die Vorlage, Reset, Save, Save as..., Level des ganzen
+ * Instruments, Peak.
+ * **Links (Stufe 10c; Skizze gebilligt, Patrik S111):** die Liste der
+ * Schichten — Haken (an oder stumm), Name, Schwingung, Lautstaerke und
+ * Versatz; darunter Add layer, Add layer from instrument..., Duplicate,
+ * Remove, hinauf und hinunter.
+ * **Mitte:** die gewaehlte Schicht — Name, Level, Transpose, Start offset;
+ * Oscillator (Waveform, Voices, Detune — bei Sine die Obertoene, bei Plucked
+ * string Damping), Envelope, Filter, Drive, Vibrato.
+ * **Rechts:** das Bild einer Schwingung und die Huellkurve einer Note — die
+ * Summe aller Schichten als Linie, die gewaehlte gestrichelt — und eine
+ * kleine Klaviatur zum Anspielen; „Selected layer only" laesst die gewaehlte
+ * allein hoeren.
  *
  * Der Creator arbeitet an einer Kopie. Erst **Save** schreibt die Datei
  * `.lvinst` — ein mitgeliefertes Instrument laesst sich nur unter neuem Namen
@@ -21,16 +29,19 @@
 #include "loop/Instrument.hpp"
 
 #include <QPoint>
+#include <QPolygonF>
 #include <QString>
 #include <QWidget>
 
 #include <functional>
 #include <vector>
 
+class QCheckBox;
 class QComboBox;
 class QGridLayout;
 class QLabel;
 class QLineEdit;
+class QListWidget;
 class QPushButton;
 class QSlider;
 
@@ -49,13 +60,19 @@ public:
     /// `marke`: 0 bis 1 = ein Strich an dieser Stelle der Breite; unter null = keiner.
     void setWerte(std::vector<float> werte, bool nurOben, double marke = -1.0, const QString& markenText = {});
     [[nodiscard]] const std::vector<float>& werte() const { return m_werte; }
+    /// Eine zweite Kurve, gestrichelt unter der ersten; leer = keine.
+    void setZweite(std::vector<float> werte);
+    [[nodiscard]] const std::vector<float>& zweite() const { return m_zweite; }
     [[nodiscard]] QSize sizeHint() const override { return {260, 96}; }
 
 protected:
     void paintEvent(QPaintEvent* event) override;
 
 private:
+    [[nodiscard]] QPolygonF linie(const std::vector<float>& werte) const;
+
     std::vector<float> m_werte;
+    std::vector<float> m_zweite;
     bool m_nurOben = false;
     double m_marke = -1.0;
     QString m_markenText;
@@ -110,6 +127,33 @@ public:
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
     /// Die Kopie aendern; Bilder, Regler und Titel ziehen nach.
     void aendere(const std::function<void(Instrument&)>& tu);
+
+    // --- die Schichten (Stufe 10c) --------------------------------------------
+    /// Der Platz der gewaehlten Schicht; ihre Regler stehen in der Mitte.
+    [[nodiscard]] int gewaehlt() const { return m_gewaehlt; }
+    [[nodiscard]] const Schicht& schicht() const { return m_instrument.schichten[static_cast<std::size_t>(m_gewaehlt)]; }
+    void waehle(int platz);
+    /// Die gewaehlte Schicht aendern.
+    void aendereSchicht(const std::function<void(Schicht&)>& tu);
+    /// Eine neue Schicht mit Grundeinstellung, sie ist danach gewaehlt.
+    /// false = das Instrument traegt schon `kSchichtenMax`.
+    bool neueSchicht();
+    /// Die Schichten eines anderen Instruments dazunehmen — kopiert, nicht
+    /// verbunden; eine ohne Namen heisst wie das Instrument. So viele kamen
+    /// dazu (was ueber `kSchichtenMax` geht, bleibt weg); die erste davon ist
+    /// danach gewaehlt.
+    int schichtenAus(const Instrument& quelle);
+    /// Die gewaehlte Schicht noch einmal, gleich dahinter. false = kein Platz.
+    bool verdopple();
+    /// Die gewaehlte Schicht entfernen. false = es ist die einzige.
+    bool entferne();
+    /// Die gewaehlte Schicht einen Platz hinauf (-1) oder hinunter (+1).
+    bool schiebe(int richtung);
+    /// Anspielen nur mit der gewaehlten Schicht — auch wenn sie stumm ist.
+    void setNurGewaehlte(bool an);
+    [[nodiscard]] bool nurGewaehlte() const { return m_nurGewaehlte; }
+    /// Wie eine Schicht in der Liste heisst: „2 Shimmer" oder „Layer 2".
+    [[nodiscard]] static QString schichtTitel(const Schicht& schicht, int platz);
     /// Zurueck auf das, was geoeffnet oder zuletzt gespeichert wurde.
     void setzeZurueck();
     /// In die eigene Datei schreiben. false = es gibt keine, oder das
@@ -141,14 +185,21 @@ private:
         QLabel* name = nullptr;
         QSlider* schieber = nullptr;
         QLabel* wert = nullptr;
-        std::function<int(const Instrument&)> lese;
-        std::function<QString(const Instrument&)> text;
+        std::function<int(const Schicht&)> lese;
+        std::function<QString(const Schicht&)> text;
     };
     void setupUI();
+    /// Ein Regler der gewaehlten Schicht.
     Regler& regler(QGridLayout* gitter, const QString& name, const char* kennung, int von, int bis,
-                   std::function<int(const Instrument&)> lese, std::function<void(Instrument&, int)> schreibe,
-                   std::function<QString(const Instrument&)> text);
+                   std::function<int(const Schicht&)> lese, std::function<void(Schicht&, int)> schreibe,
+                   std::function<QString(const Schicht&)> text);
     void frageNachDatei();
+    /// Das Menue hinter „Add layer from instrument...".
+    void zeigeQuellen();
+    void zeigeListe();
+    /// Die Kopie fuer die Bilder: je Schicht eine Stimme ohne Vibrato;
+    /// `nurGewaehlte` = nur die gewaehlte Schicht, eingeschaltet.
+    [[nodiscard]] Instrument fuerBild(bool nurGewaehlte) const;
     /// Regler, Sichtbarkeit, Bilder, Titel aus `m_instrument`.
     void zeigeAlles();
     void zeigeBilder();
@@ -157,7 +208,22 @@ private:
     Instrument m_vorlage;   ///< wie geoeffnet oder zuletzt gespeichert
     QString m_datei;
     QString m_herkunft;     ///< „based on …"
+    int m_gewaehlt = 0;
+    bool m_nurGewaehlte = false;
 
+    QListWidget* m_liste = nullptr;
+    QPushButton* m_neu = nullptr;
+    QPushButton* m_neuAus = nullptr;
+    QPushButton* m_doppelt = nullptr;
+    QPushButton* m_weg = nullptr;
+    QPushButton* m_hinauf = nullptr;
+    QPushButton* m_hinunter = nullptr;
+    QLabel* m_schichtKopf = nullptr;
+    QLineEdit* m_schichtName = nullptr;
+    QSlider* m_gesamt = nullptr;      ///< Level des ganzen Instruments
+    QLabel* m_gesamtWert = nullptr;
+    QLabel* m_legende = nullptr;
+    QCheckBox* m_nurWahl = nullptr;
     QLineEdit* m_titel = nullptr;
     QLabel* m_herkunftZeile = nullptr;
     QPushButton* m_zurueck = nullptr;

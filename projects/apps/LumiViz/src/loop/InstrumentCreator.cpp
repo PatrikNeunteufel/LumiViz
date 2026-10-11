@@ -5,6 +5,8 @@
 
 #include "loop/InstrumentCreator.hpp"
 
+#include <QAction>
+#include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDir>
@@ -14,6 +16,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
+#include <QMenu>
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
@@ -72,6 +76,28 @@ void KurvenBild::setWerte(std::vector<float> werte, bool nurOben, double marke, 
     update();
 }
 
+void KurvenBild::setZweite(std::vector<float> werte)
+{
+    m_zweite = std::move(werte);
+    update();
+}
+
+QPolygonF KurvenBild::linie(const std::vector<float>& werte) const
+{
+    const int rand = 6;
+    const double breite = width() - 2.0 * rand;
+    const double hoch = height() - 2.0 * rand;
+    const double null = m_nurOben ? rand + hoch : rand + hoch / 2.0;
+    QPolygonF punkte;
+    for (std::size_t i = 0; i < werte.size(); ++i)
+    {
+        const double x = rand + breite * static_cast<double>(i) / static_cast<double>(werte.size() - 1);
+        const double wert = std::clamp(static_cast<double>(werte[i]), -1.0, 1.0);
+        punkte << QPointF(x, m_nurOben ? null - wert * hoch : null - wert * hoch / 2.0);
+    }
+    return punkte;
+}
+
 void KurvenBild::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
@@ -95,16 +121,17 @@ void KurvenBild::paintEvent(QPaintEvent*)
         p.setPen(leise);
         p.drawText(QRectF(x + 4, rand, 120, 16), Qt::AlignLeft | Qt::AlignVCenter, m_markenText);
     }
-    if (m_werte.size() < 2) return;
-    QPolygonF linie;
-    for (std::size_t i = 0; i < m_werte.size(); ++i)
+    if (m_zweite.size() >= 2)
     {
-        const double x = rand + breite * static_cast<double>(i) / static_cast<double>(m_werte.size() - 1);
-        const double wert = std::clamp(static_cast<double>(m_werte[i]), -1.0, 1.0);
-        linie << QPointF(x, m_nurOben ? null - wert * hoch : null - wert * hoch / 2.0);
+        // die gewaehlte Schicht: gestrichelt, unter der Summe
+        QColor zweite = pal.color(QPalette::Text);
+        zweite.setAlpha(170);
+        p.setPen(QPen(zweite, 1.2, Qt::DashLine));
+        p.drawPolyline(linie(m_zweite));
     }
+    if (m_werte.size() < 2) return;
     p.setPen(QPen(pal.color(QPalette::Highlight), 1.8));
-    p.drawPolyline(linie);
+    p.drawPolyline(linie(m_werte));
 }
 
 // =============================================================================
@@ -211,9 +238,9 @@ QString InstrumentCreator::vorhoerDatei()
 }
 
 InstrumentCreator::Regler& InstrumentCreator::regler(QGridLayout* gitter, const QString& name, const char* kennung,
-                                                     int von, int bis, std::function<int(const Instrument&)> lese,
-                                                     std::function<void(Instrument&, int)> schreibe,
-                                                     std::function<QString(const Instrument&)> text)
+                                                     int von, int bis, std::function<int(const Schicht&)> lese,
+                                                     std::function<void(Schicht&, int)> schreibe,
+                                                     std::function<QString(const Schicht&)> text)
 {
     Regler r;
     r.name = new QLabel(name, this);
@@ -230,7 +257,7 @@ InstrumentCreator::Regler& InstrumentCreator::regler(QGridLayout* gitter, const 
     gitter->addWidget(r.schieber, zeile, 1);
     gitter->addWidget(r.wert, zeile, 2);
     connect(r.schieber, &QSlider::valueChanged, this, [this, schreibe = std::move(schreibe)](int wert) {
-        aendere([&](Instrument& i) { schreibe(i, wert); });
+        aendereSchicht([&](Schicht& s) { schreibe(s, wert); });
     });
     m_regler.push_back(std::move(r));
     return m_regler.back();
@@ -264,11 +291,63 @@ void InstrumentCreator::setupUI()
     kopf->addWidget(m_zurueck);
     kopf->addWidget(m_speichern);
     kopf->addWidget(m_speichernUnter);
+    m_gesamt = new QSlider(Qt::Horizontal, this);
+    m_gesamt->setObjectName(QStringLiteral("creatorMasterLevel"));
+    m_gesamt->setRange(0, 100);
+    m_gesamt->setFixedWidth(90);
+    m_gesamt->setToolTip(tr("Level of the whole instrument"));
+    m_gesamtWert = new QLabel(this);
+    m_gesamtWert->setMinimumWidth(40);
+    m_gesamtWert->setEnabled(false);
+    kopf->addWidget(new QLabel(tr("Level"), this));
+    kopf->addWidget(m_gesamt);
+    kopf->addWidget(m_gesamtWert);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
     aussen->addLayout(kopf);
 
     auto* koerper = new QHBoxLayout;
+
+    // --- links: die Schichten
+    auto* links = new QVBoxLayout;
+    {
+        auto* zeile = new QLabel(tr("Layers"), this);
+        QFont fett = zeile->font();
+        fett.setBold(true);
+        zeile->setFont(fett);
+        links->addWidget(zeile);
+    }
+    m_liste = new QListWidget(this);
+    m_liste->setObjectName(QStringLiteral("creatorLayers"));
+    m_liste->setToolTip(tr("Click a layer to edit it; the check mark mutes it"));
+    links->addWidget(m_liste, 1);
+    const auto knopf = [this](const QString& text, const char* kennung, const QString& hilfe) {
+        auto* k = new QPushButton(text, this);
+        k->setObjectName(QLatin1String(kennung));
+        k->setToolTip(hilfe);
+        return k;
+    };
+    m_neu = knopf(tr("Add layer"), "creatorAddLayer", tr("A new layer: sine, one voice (up to %1 layers)").arg(kSchichtenMax));
+    m_neuAus = knopf(tr("Add layer from instrument..."), "creatorAddLayerFrom",
+                     tr("Copy the layers of another instrument into this one"));
+    m_doppelt = knopf(tr("Duplicate"), "creatorDuplicateLayer", tr("The selected layer once more"));
+    m_weg = knopf(tr("Remove"), "creatorRemoveLayer", tr("Remove the selected layer"));
+    m_hinauf = knopf(QStringLiteral("▲"), "creatorLayerUp", tr("Move the selected layer up"));
+    m_hinunter = knopf(QStringLiteral("▼"), "creatorLayerDown", tr("Move the selected layer down"));
+    m_hinauf->setFixedWidth(30);
+    m_hinunter->setFixedWidth(30);
+    links->addWidget(m_neu);
+    links->addWidget(m_neuAus);
+    {
+        auto* zeile = new QHBoxLayout;
+        zeile->addWidget(m_doppelt);
+        zeile->addWidget(m_weg);
+        zeile->addWidget(m_hinauf);
+        zeile->addWidget(m_hinunter);
+        links->addLayout(zeile);
+    }
+    koerper->addLayout(links, 3);
+
     auto* gitter = new QGridLayout;
     gitter->setColumnStretch(1, 1);
     const auto titel = [&](const QString& text) {
@@ -279,6 +358,33 @@ void InstrumentCreator::setupUI()
         gitter->addWidget(zeile, gitter->rowCount(), 0, 1, 3);
     };
     const auto ms = [](double wert) { return QStringLiteral("%1 ms").arg(gerundet(wert)); };
+
+    // --- die gewaehlte Schicht: was nur sie betrifft
+    m_schichtKopf = new QLabel(this);
+    m_schichtKopf->setObjectName(QStringLiteral("creatorLayerTitle"));
+    {
+        QFont fett = m_schichtKopf->font();
+        fett.setBold(true);
+        m_schichtKopf->setFont(fett);
+        gitter->addWidget(m_schichtKopf, gitter->rowCount(), 0, 1, 3);
+        m_schichtName = new QLineEdit(this);
+        m_schichtName->setObjectName(QStringLiteral("creatorLayerName"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(new QLabel(tr("Name"), this), zeile, 0);
+        gitter->addWidget(m_schichtName, zeile, 1, 1, 2);
+    }
+    regler(gitter, tr("Level"), "creatorLevel", 0, 100, [](const Schicht& i) { return gerundet(i.laut * 100.0); },
+           [](Schicht& i, int w) { i.laut = w / 100.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.laut * 100.0)); });
+    regler(gitter, tr("Transpose"), "creatorTranspose", -24, 24, [](const Schicht& i) { return i.versatzHalbtoene; },
+           [](Schicht& i, int w) { i.versatzHalbtoene = w; },
+           [](const Schicht& i) {
+               return QStringLiteral("%1%2 st").arg(i.versatzHalbtoene > 0 ? QStringLiteral("+") : QString()).arg(i.versatzHalbtoene);
+           })
+        .schieber->setToolTip(tr("The layer sounds this many semitones above or below the note"));
+    regler(gitter, tr("Start offset"), "creatorStartOffset", 0, 200, [](const Schicht& i) { return gerundet(i.einsatzMs / 5.0); },
+           [](Schicht& i, int w) { i.einsatzMs = w * 5.0; }, [ms](const Schicht& i) { return ms(i.einsatzMs); })
+        .schieber->setToolTip(tr("The layer starts this long after the note begins (not an echo)"));
 
     // --- Oscillator
     titel(tr("Oscillator"));
@@ -296,83 +402,86 @@ void InstrumentCreator::setupUI()
     }
     connect(m_welle, &QComboBox::activated, this, [this](int index) {
         const auto welle = static_cast<Schwingung>(m_welle->itemData(index).toInt());
-        aendere([welle](Instrument& i) { i.schwingung = welle; });
+        aendereSchicht([welle](Schicht& s) { s.schwingung = welle; });
     });
-    regler(gitter, tr("Voices"), "creatorVoices", 1, 3, [](const Instrument& i) { return i.stimmen; },
-           [](Instrument& i, int w) { i.stimmen = w; }, [](const Instrument& i) { return QString::number(i.stimmen); });
+    regler(gitter, tr("Voices"), "creatorVoices", 1, 3, [](const Schicht& i) { return i.stimmen; },
+           [](Schicht& i, int w) { i.stimmen = w; }, [](const Schicht& i) { return QString::number(i.stimmen); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Detune"), "creatorDetune", 0, 50, [](const Instrument& i) { return gerundet(i.verstimmungCent); },
-           [](Instrument& i, int w) { i.verstimmungCent = w; },
-           [](const Instrument& i) { return QStringLiteral("%1 ct").arg(gerundet(i.verstimmungCent)); });
+    regler(gitter, tr("Detune"), "creatorDetune", 0, 50, [](const Schicht& i) { return gerundet(i.verstimmungCent); },
+           [](Schicht& i, int w) { i.verstimmungCent = w; },
+           [](const Schicht& i) { return QStringLiteral("%1 ct").arg(gerundet(i.verstimmungCent)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
     for (int k = 0; k < kObertonRegler; ++k)
     {
         const auto platz = static_cast<std::size_t>(k);
-        const auto anteil = [platz](const Instrument& i) { return platz < i.obertoene.size() ? i.obertoene[platz] : 0.0; };
+        const auto anteil = [platz](const Schicht& i) { return platz < i.obertoene.size() ? i.obertoene[platz] : 0.0; };
         const QByteArray kennung = QByteArrayLiteral("creatorHarmonic") + QByteArray::number(k + 2);
         regler(gitter, tr("Harmonic %1").arg(k + 2), kennung.constData(), 0, 100,
-               [anteil](const Instrument& i) { return gerundet(anteil(i) * 100.0); },
-               [platz](Instrument& i, int w) {
+               [anteil](const Schicht& i) { return gerundet(anteil(i) * 100.0); },
+               [platz](Schicht& i, int w) {
                    if (i.obertoene.size() <= platz) i.obertoene.resize(platz + 1, 0.0);
                    i.obertoene[platz] = w / 100.0;
                },
-               [anteil](const Instrument& i) { return QStringLiteral("%1 %").arg(gerundet(anteil(i) * 100.0)); });
+               [anteil](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(anteil(i) * 100.0)); });
         m_nurSinus.push_back(m_regler.size() - 1);
     }
     regler(gitter, tr("Damping"), "creatorDamping", 0, 100,
-           [](const Instrument& i) {
+           [](const Schicht& i) {
                return gerundet((i.saiteDaempfung - kDaempfungVon) / (kDaempfungBis - kDaempfungVon) * 100.0);
            },
-           [](Instrument& i, int w) { i.saiteDaempfung = kDaempfungVon + (kDaempfungBis - kDaempfungVon) * w / 100.0; },
-           [](const Instrument& i) { return QString::number(i.saiteDaempfung, 'f', 4); });
+           [](Schicht& i, int w) { i.saiteDaempfung = kDaempfungVon + (kDaempfungBis - kDaempfungVon) * w / 100.0; },
+           [](const Schicht& i) { return QString::number(i.saiteDaempfung, 'f', 4); });
     m_daempfung = m_regler.size() - 1;
 
     // --- Envelope
     titel(tr("Envelope"));
-    regler(gitter, tr("Attack"), "creatorAttack", 0, 1000, [](const Instrument& i) { return gerundet(i.anstiegMs); },
-           [](Instrument& i, int w) { i.anstiegMs = w; }, [ms](const Instrument& i) { return ms(i.anstiegMs); });
-    regler(gitter, tr("Decay"), "creatorDecay", 0, 500, [](const Instrument& i) { return gerundet(i.abfallMs / 10.0); },
-           [](Instrument& i, int w) { i.abfallMs = w * 10.0; }, [ms](const Instrument& i) { return ms(i.abfallMs); });
+    regler(gitter, tr("Attack"), "creatorAttack", 0, 1000, [](const Schicht& i) { return gerundet(i.anstiegMs); },
+           [](Schicht& i, int w) { i.anstiegMs = w; }, [ms](const Schicht& i) { return ms(i.anstiegMs); });
+    regler(gitter, tr("Decay"), "creatorDecay", 0, 500, [](const Schicht& i) { return gerundet(i.abfallMs / 10.0); },
+           [](Schicht& i, int w) { i.abfallMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.abfallMs); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Sustain"), "creatorSustain", 0, 100, [](const Instrument& i) { return gerundet(i.halten * 100.0); },
-           [](Instrument& i, int w) { i.halten = w / 100.0; },
-           [](const Instrument& i) { return QStringLiteral("%1 %").arg(gerundet(i.halten * 100.0)); });
+    regler(gitter, tr("Sustain"), "creatorSustain", 0, 100, [](const Schicht& i) { return gerundet(i.halten * 100.0); },
+           [](Schicht& i, int w) { i.halten = w / 100.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.halten * 100.0)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Release"), "creatorRelease", 0, 300, [](const Instrument& i) { return gerundet(i.ausklangMs / 10.0); },
-           [](Instrument& i, int w) { i.ausklangMs = w * 10.0; }, [ms](const Instrument& i) { return ms(i.ausklangMs); });
+    regler(gitter, tr("Release"), "creatorRelease", 0, 300, [](const Schicht& i) { return gerundet(i.ausklangMs / 10.0); },
+           [](Schicht& i, int w) { i.ausklangMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.ausklangMs); });
 
     // --- Filter
     titel(tr("Filter"));
-    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Instrument& i) { return gerundet(i.filterTeilton * 10.0); },
-           [](Instrument& i, int w) { i.filterTeilton = w / 10.0; },
-           [this](const Instrument& i) {
+    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filterTeilton * 10.0); },
+           [](Schicht& i, int w) { i.filterTeilton = w / 10.0; },
+           [this](const Schicht& i) {
                return i.filterTeilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filterTeilton, 0, 'f', 1);
            });
     m_nichtSaite.push_back(m_regler.size() - 1);
     regler(gitter, tr("Envelope"), "creatorFilterEnvelope", 0, 320,
-           [](const Instrument& i) { return gerundet(i.filterHuelle * 10.0); },
-           [](Instrument& i, int w) { i.filterHuelle = w / 10.0; },
-           [](const Instrument& i) { return QStringLiteral("+ %1").arg(i.filterHuelle, 0, 'f', 1); });
+           [](const Schicht& i) { return gerundet(i.filterHuelle * 10.0); },
+           [](Schicht& i, int w) { i.filterHuelle = w / 10.0; },
+           [](const Schicht& i) { return QStringLiteral("+ %1").arg(i.filterHuelle, 0, 'f', 1); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [](const Schicht& i) { return gerundet(i.verzerrung * 100.0); },
+           [](Schicht& i, int w) { i.verzerrung = w / 100.0; },
+           [this](const Schicht& i) {
+               return i.verzerrung <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(i.verzerrung * 100.0));
+           })
+        .schieber->setToolTip(tr("Distortion of this layer"));
 
     // --- Vibrato
     titel(tr("Vibrato"));
-    regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Instrument& i) { return gerundet(i.vibratoHz * 10.0); },
-           [](Instrument& i, int w) { i.vibratoHz = w / 10.0; },
-           [](const Instrument& i) { return QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1); });
+    regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
+           [](Schicht& i, int w) { i.vibratoHz = w / 10.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Depth"), "creatorVibratoDepth", 0, 50, [](const Instrument& i) { return gerundet(i.vibratoCent); },
-           [](Instrument& i, int w) { i.vibratoCent = w; },
-           [](const Instrument& i) { return QStringLiteral("%1 ct").arg(gerundet(i.vibratoCent)); });
+    regler(gitter, tr("Depth"), "creatorVibratoDepth", 0, 50, [](const Schicht& i) { return gerundet(i.vibratoCent); },
+           [](Schicht& i, int w) { i.vibratoCent = w; },
+           [](const Schicht& i) { return QStringLiteral("%1 ct").arg(gerundet(i.vibratoCent)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
     regler(gitter, tr("Delay"), "creatorVibratoDelay", 0, 100,
-           [](const Instrument& i) { return gerundet(i.vibratoEinsatzMs / 10.0); },
-           [](Instrument& i, int w) { i.vibratoEinsatzMs = w * 10.0; },
-           [ms](const Instrument& i) { return ms(i.vibratoEinsatzMs); });
+           [](const Schicht& i) { return gerundet(i.vibratoEinsatzMs / 10.0); },
+           [](Schicht& i, int w) { i.vibratoEinsatzMs = w * 10.0; },
+           [ms](const Schicht& i) { return ms(i.vibratoEinsatzMs); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Level"), "creatorLevel", 0, 100, [](const Instrument& i) { return gerundet(i.laut * 100.0); },
-           [](Instrument& i, int w) { i.laut = w / 100.0; },
-           [](const Instrument& i) { return QStringLiteral("%1 %").arg(gerundet(i.laut * 100.0)); });
     gitter->setRowStretch(gitter->rowCount(), 1);
     koerper->addLayout(gitter, 5);
 
@@ -386,9 +495,17 @@ void InstrumentCreator::setupUI()
     m_huellBild = new KurvenBild(this);
     m_huellBild->setObjectName(QStringLiteral("creatorEnvelope"));
     rechts->addWidget(m_huellBild, 1);
+    m_legende = new QLabel(tr("Solid: all layers · dashed: selected layer"), this);
+    m_legende->setObjectName(QStringLiteral("creatorLegend"));
+    m_legende->setEnabled(false);
+    rechts->addWidget(m_legende);
     rechts->addWidget(new QLabel(tr("Click a key to hear it"), this));
     m_tasten = new Tastenleiste(this);
     rechts->addWidget(m_tasten);
+    m_nurWahl = new QCheckBox(tr("Selected layer only"), this);
+    m_nurWahl->setObjectName(QStringLiteral("creatorSelectedOnly"));
+    m_nurWahl->setToolTip(tr("The keys play the selected layer alone, even if it is muted"));
+    rechts->addWidget(m_nurWahl);
     rechts->addStretch(1);
     koerper->addLayout(rechts, 4);
     aussen->addLayout(koerper, 1);
@@ -404,13 +521,151 @@ void InstrumentCreator::setupUI()
     });
     connect(m_speichernUnter, &QPushButton::clicked, this, &InstrumentCreator::frageNachDatei);
     connect(m_tasten, &Tastenleiste::taste, this, [this](int hoehe) { (void)spieleAn(hoehe); });
-    resize(760, 620);
+    connect(m_gesamt, &QSlider::valueChanged, this, [this](int wert) {
+        aendere([wert](Instrument& i) { i.laut = wert / 100.0; });
+    });
+    connect(m_schichtName, &QLineEdit::editingFinished, this, [this] {
+        const QString name = m_schichtName->text().trimmed();
+        if (name != schicht().name) aendereSchicht([&name](Schicht& s) { s.name = name; });
+    });
+    connect(m_liste, &QListWidget::currentRowChanged, this, [this](int zeile) { waehle(zeile); });
+    connect(m_liste, &QListWidget::itemChanged, this, [this](QListWidgetItem* eintrag) {
+        // der Haken: die Schicht an oder stumm
+        const int zeile = m_liste->row(eintrag);
+        const bool an = eintrag->checkState() == Qt::Checked;
+        aendere([zeile, an](Instrument& i) {
+            if (zeile >= 0 && zeile < static_cast<int>(i.schichten.size())) i.schichten[static_cast<std::size_t>(zeile)].an = an;
+        });
+    });
+    connect(m_neu, &QPushButton::clicked, this, [this] { (void)neueSchicht(); });
+    connect(m_neuAus, &QPushButton::clicked, this, &InstrumentCreator::zeigeQuellen);
+    connect(m_doppelt, &QPushButton::clicked, this, [this] { (void)verdopple(); });
+    connect(m_weg, &QPushButton::clicked, this, [this] { (void)entferne(); });
+    connect(m_hinauf, &QPushButton::clicked, this, [this] { (void)schiebe(-1); });
+    connect(m_hinunter, &QPushButton::clicked, this, [this] { (void)schiebe(1); });
+    connect(m_nurWahl, &QCheckBox::toggled, this, [this](bool an) { m_nurGewaehlte = an; });
+    resize(1000, 680);
+}
+
+// =============================================================================
+// Die Schichten
+// =============================================================================
+
+QString InstrumentCreator::schichtTitel(const Schicht& schicht, int platz)
+{
+    return schicht.name.isEmpty() ? tr("Layer %1").arg(platz + 1) : QStringLiteral("%1 %2").arg(platz + 1).arg(schicht.name);
+}
+
+void InstrumentCreator::waehle(int platz)
+{
+    if (platz < 0 || platz >= static_cast<int>(m_instrument.schichten.size()) || platz == m_gewaehlt) return;
+    m_gewaehlt = platz;
+    zeigeAlles();
+}
+
+void InstrumentCreator::aendereSchicht(const std::function<void(Schicht&)>& tu)
+{
+    const auto platz = static_cast<std::size_t>(m_gewaehlt);
+    aendere([&tu, platz](Instrument& i) { tu(i.schichten[platz]); });
+}
+
+bool InstrumentCreator::neueSchicht()
+{
+    if (m_instrument.schichten.size() >= static_cast<std::size_t>(kSchichtenMax)) return false;
+    m_gewaehlt = static_cast<int>(m_instrument.schichten.size());
+    aendere([](Instrument& i) { i.schichten.push_back(Schicht{}); });
+    return true;
+}
+
+int InstrumentCreator::schichtenAus(const Instrument& quelle)
+{
+    const std::size_t vorher = m_instrument.schichten.size();
+    const std::size_t frei = static_cast<std::size_t>(kSchichtenMax) - std::min(vorher, static_cast<std::size_t>(kSchichtenMax));
+    const std::size_t zahl = std::min(frei, quelle.schichten.size());
+    if (zahl == 0) return 0;
+    m_gewaehlt = static_cast<int>(vorher);
+    aendere([&quelle, zahl](Instrument& i) {
+        for (std::size_t s = 0; s < zahl; ++s)
+        {
+            Schicht neu = quelle.schichten[s];
+            if (neu.name.isEmpty()) neu.name = quelle.titel;
+            // die Lautstaerke des ganzen Instruments wandert in die Schicht
+            neu.laut = std::clamp(neu.laut * quelle.laut, 0.0, 1.0);
+            i.schichten.push_back(std::move(neu));
+        }
+    });
+    return static_cast<int>(zahl);
+}
+
+bool InstrumentCreator::verdopple()
+{
+    if (m_instrument.schichten.size() >= static_cast<std::size_t>(kSchichtenMax)) return false;
+    const int platz = m_gewaehlt;
+    m_gewaehlt = platz + 1;
+    aendere([platz](Instrument& i) { i.schichten.insert(i.schichten.begin() + platz + 1, i.schichten[static_cast<std::size_t>(platz)]); });
+    return true;
+}
+
+bool InstrumentCreator::entferne()
+{
+    if (m_instrument.schichten.size() <= 1) return false;
+    const int platz = m_gewaehlt;
+    m_gewaehlt = std::min(platz, static_cast<int>(m_instrument.schichten.size()) - 2);
+    aendere([platz](Instrument& i) { i.schichten.erase(i.schichten.begin() + platz); });
+    return true;
+}
+
+bool InstrumentCreator::schiebe(int richtung)
+{
+    const int platz = m_gewaehlt;
+    const int ziel = platz + (richtung < 0 ? -1 : 1);
+    if (ziel < 0 || ziel >= static_cast<int>(m_instrument.schichten.size())) return false;
+    m_gewaehlt = ziel;
+    aendere([platz, ziel](Instrument& i) {
+        std::swap(i.schichten[static_cast<std::size_t>(platz)], i.schichten[static_cast<std::size_t>(ziel)]);
+    });
+    if (m_gewaehlt == ziel) zeigeAlles();  // zwei gleiche Schichten getauscht: nur die Wahl wandert
+    return true;
+}
+
+void InstrumentCreator::setNurGewaehlte(bool an)
+{
+    m_nurWahl->setChecked(an);
+    m_nurGewaehlte = an;
+}
+
+void InstrumentCreator::zeigeQuellen()
+{
+    QMenu menue(this);
+    for (const Instrument& quelle : instrumente())
+        connect(menue.addAction(quelle.titel), &QAction::triggered, this, [this, name = quelle.name] {
+            if (const Instrument* gefunden = findeInstrument(name)) (void)schichtenAus(*gefunden);
+        });
+    menue.addSeparator();
+    connect(menue.addAction(tr("From file...")), &QAction::triggered, this, [this] {
+        QSettings einstellungen;
+        const QString pfad = QFileDialog::getOpenFileName(this, tr("Add layer from instrument"),
+                                                          einstellungen.value(QLatin1String(kLetzterOrdner)).toString(),
+                                                          tr("Instrument (*.lvinst)"));
+        if (pfad.isEmpty()) return;
+        Instrument quelle;
+        if (!ladeInstrument(pfad, quelle))
+        {
+            QMessageBox::warning(this, tr("Instrument"), tr("Could not read %1").arg(QDir::toNativeSeparators(pfad)));
+            return;
+        }
+        einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
+        (void)schichtenAus(quelle);
+    });
+    menue.exec(m_neuAus->mapToGlobal(QPoint(0, m_neuAus->height())));
 }
 
 void InstrumentCreator::oeffne(const Instrument& instrument)
 {
     m_instrument = instrument;
-    m_vorlage = instrument;
+    if (m_instrument.schichten.empty()) m_instrument.schichten.push_back(Schicht{});
+    m_vorlage = m_instrument;
+    m_gewaehlt = 0;
     if (istInstrumentDatei(instrument.name))
     {
         m_datei = instrument.name;
@@ -434,6 +689,7 @@ void InstrumentCreator::aendere(const std::function<void(Instrument&)>& tu)
 {
     Instrument neu = m_instrument;
     tu(neu);
+    if (neu.schichten.empty()) neu.schichten.push_back(Schicht{});
     if (neu == m_instrument) return;
     m_instrument = std::move(neu);
     zeigeAlles();
@@ -443,6 +699,7 @@ void InstrumentCreator::setzeZurueck()
 {
     if (!geaendert()) return;
     m_instrument = m_vorlage;
+    m_gewaehlt = std::min(m_gewaehlt, static_cast<int>(m_instrument.schichten.size()) - 1);
     zeigeAlles();
 }
 
@@ -483,7 +740,14 @@ bool InstrumentCreator::spieleAn(int hoehe)
 {
     // die Kopie, wie sie gerade steht — auch ungespeichert — in die Vorhoer-Datei
     const QString datei = vorhoerDatei();
-    if (!speichereInstrument(m_instrument, datei)) return false;
+    Instrument zuHoeren = m_instrument;
+    if (m_nurGewaehlte)
+    {
+        // die gewaehlte Schicht allein — auch wenn sie in der Liste stumm ist
+        zuHoeren.schichten = {schicht()};
+        zuHoeren.schichten[0].an = true;
+    }
+    if (!speichereInstrument(zuHoeren, datei)) return false;
     Q_EMIT tonVerlangt(datei, hoehe);
     return true;
 }
@@ -513,9 +777,61 @@ void InstrumentCreator::closeEvent(QCloseEvent* event)
             }
         }
         else
+        {
             m_instrument = m_vorlage;
+            m_gewaehlt = std::min(m_gewaehlt, static_cast<int>(m_instrument.schichten.size()) - 1);
+        }
     }
     QWidget::closeEvent(event);
+}
+
+void InstrumentCreator::zeigeListe()
+{
+    // die Zeilen an Ort und Stelle nachziehen: die Liste meldet gerade
+    // vielleicht selbst einen Haken, ihre Eintraege muessen bleiben
+    const QSignalBlocker ruhe(m_liste);
+    const int zahl = static_cast<int>(m_instrument.schichten.size());
+    while (m_liste->count() > zahl) delete m_liste->takeItem(m_liste->count() - 1);
+    while (m_liste->count() < zahl)
+    {
+        auto* eintrag = new QListWidgetItem(m_liste);
+        eintrag->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+    }
+    for (int platz = 0; platz < zahl; ++platz)
+    {
+        const Schicht& s = m_instrument.schichten[static_cast<std::size_t>(platz)];
+        QListWidgetItem* eintrag = m_liste->item(platz);
+        eintrag->setText(tr("%1 · %2\nLevel %3 % · %4%5 st")
+                             .arg(schichtTitel(s, platz), m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung))))
+                             .arg(gerundet(s.laut * 100.0))
+                             .arg(s.versatzHalbtoene > 0 ? QStringLiteral("+") : QString())
+                             .arg(s.versatzHalbtoene));
+        eintrag->setCheckState(s.an ? Qt::Checked : Qt::Unchecked);
+    }
+    m_liste->setCurrentRow(m_gewaehlt);
+    const bool platzFrei = zahl < kSchichtenMax;
+    m_neu->setEnabled(platzFrei);
+    m_neuAus->setEnabled(platzFrei);
+    m_doppelt->setEnabled(platzFrei);
+    m_weg->setEnabled(zahl > 1);
+    m_hinauf->setEnabled(m_gewaehlt > 0);
+    m_hinunter->setEnabled(m_gewaehlt < zahl - 1);
+}
+
+Instrument InstrumentCreator::fuerBild(bool nurGewaehlte) const
+{
+    Instrument bild = m_instrument;
+    if (nurGewaehlte)
+    {
+        bild.schichten = {schicht()};
+        bild.schichten[0].an = true;
+    }
+    for (Schicht& s : bild.schichten)
+    {
+        s.stimmen = 1;
+        s.vibratoCent = 0.0;
+    }
+    return bild;
 }
 
 void InstrumentCreator::zeigeAlles()
@@ -528,21 +844,34 @@ void InstrumentCreator::zeigeAlles()
     m_speichern->setEnabled(!m_datei.isEmpty() && geaendert());
     m_speichern->setToolTip(m_datei.isEmpty() ? tr("A built-in instrument cannot be overwritten — use Save as...")
                                               : QDir::toNativeSeparators(m_datei));
+    m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
+    const Schicht& gewaehlte = schicht();
+    {
+        const QSignalBlocker ruhe(m_gesamt);
+        m_gesamt->setValue(gerundet(m_instrument.laut * 100.0));
+        m_gesamtWert->setText(QStringLiteral("%1 %").arg(gerundet(m_instrument.laut * 100.0)));
+    }
+    zeigeListe();
+    m_schichtKopf->setText(tr("Layer %1").arg(m_gewaehlt + 1));
+    if (!m_schichtName->hasFocus()) m_schichtName->setText(gewaehlte.name);
+    m_schichtName->setPlaceholderText(tr("Layer %1").arg(m_gewaehlt + 1));
+    m_legende->setVisible(m_instrument.schichten.size() > 1);
+    m_nurWahl->setEnabled(m_instrument.schichten.size() > 1);
     {
         const QSignalBlocker ruhe(m_welle);
-        m_welle->setCurrentIndex(m_welle->findData(static_cast<int>(m_instrument.schwingung)));
+        m_welle->setCurrentIndex(m_welle->findData(static_cast<int>(gewaehlte.schwingung)));
     }
     for (Regler& r : m_regler)
     {
         // den Regler nur setzen, wenn er etwas anderes zeigt, als der Wert verlangt —
         // ein Wert zwischen zwei Stellungen bleibt, bis jemand am Regler zieht
         const QSignalBlocker ruhe(r.schieber);
-        r.schieber->setValue(std::clamp(r.lese(m_instrument), r.schieber->minimum(), r.schieber->maximum()));
-        r.wert->setText(r.text(m_instrument));
+        r.schieber->setValue(std::clamp(r.lese(gewaehlte), r.schieber->minimum(), r.schieber->maximum()));
+        r.wert->setText(r.text(gewaehlte));
     }
     // was die Schwingung nicht kennt, bleibt weg
-    const bool saite = m_instrument.schwingung == Schwingung::Saite;
-    const bool sinus = m_instrument.schwingung == Schwingung::Sinus;
+    const bool saite = gewaehlte.schwingung == Schwingung::Saite;
+    const bool sinus = gewaehlte.schwingung == Schwingung::Sinus;
     const auto zeige = [this](std::size_t platz, bool an) {
         Regler& r = m_regler[platz];
         r.name->setVisible(an);
@@ -559,52 +888,80 @@ void InstrumentCreator::zeigeBilder()
 {
     // Die Bilder zeigen eine Stimme ohne Vibrato: mehrere verstimmte Stimmen
     // schweben, und im Bild saehe man die Schwebung statt Wellenzug und Huellkurve.
-    Instrument bild = m_instrument;
-    bild.stimmen = 1;
-    bild.vibratoCent = 0.0;
+    // Die Linie ist die Summe aller eingeschalteten Schichten; bei mehreren
+    // kommt die gewaehlte Schicht gestrichelt dazu, im selben Massstab.
+    const Instrument bild = fuerBild(false);
+    const bool mitGewaehlter = m_instrument.schichten.size() > 1;
+    const Instrument einzeln = mitGewaehlter ? fuerBild(true) : Instrument{};
+    const auto teile = [](std::vector<float>& werte, float durch) {
+        if (durch > 0.0f)
+            for (float& wert : werte) wert /= durch;
+    };
     // --- eine Schwingung: aus einem gerechneten Ton (C3), nach dem Einsatz
     {
         const int hoehe = 48;
         const Klang ton = rendereTon(bild, hoehe, 400.0, kBildRate);
         const auto periode = static_cast<std::int64_t>(std::lround(kBildRate / tonHz(hoehe)));
-        // hinter dem Anstieg, aber noch in der Note
-        const std::int64_t ab = std::min<std::int64_t>(
-            static_cast<std::int64_t>((std::min(m_instrument.anstiegMs, 250.0) + 20.0) * kBildRate / 1000.0),
-            std::max<std::int64_t>(0, ton.frames() - periode - 1));
-        std::vector<float> werte;
+        // hinter Einsatz und Anstieg der spaetesten Schicht, aber noch in der Note
+        double hinterMs = 0.0;
+        for (const Schicht& s : m_instrument.schichten)
+            if (s.an) hinterMs = std::max(hinterMs, s.einsatzMs + std::min(s.anstiegMs, 250.0));
+        const std::int64_t ab = std::min<std::int64_t>(static_cast<std::int64_t>((hinterMs + 20.0) * kBildRate / 1000.0),
+                                                       std::max<std::int64_t>(0, ton.frames() - periode - 1));
+        const auto ausschnitt = [ab, periode](const Klang& klang) {
+            std::vector<float> werte;
+            for (std::int64_t f = ab; f < ab + periode; ++f)
+                werte.push_back(f < klang.frames() ? klang.daten[static_cast<std::size_t>(2 * f)] : 0.0f);
+            return werte;
+        };
+        std::vector<float> werte = ausschnitt(ton);
         float groesster = 0.0f;
-        for (std::int64_t f = ab; f < ab + periode && f < ton.frames(); ++f)
+        for (const float wert : werte) groesster = std::max(groesster, std::abs(wert));
+        std::vector<float> zweite;
+        if (mitGewaehlter)
         {
-            werte.push_back(ton.daten[static_cast<std::size_t>(2 * f)]);
-            groesster = std::max(groesster, std::abs(werte.back()));
+            zweite = ausschnitt(rendereTon(einzeln, hoehe, 400.0, kBildRate));
+            for (const float wert : zweite) groesster = std::max(groesster, std::abs(wert));
+            teile(zweite, groesster);
         }
-        if (groesster > 0.0f)
-            for (float& wert : werte) wert /= groesster;
+        teile(werte, groesster);
         m_wellenBild->setWerte(std::move(werte), false);
+        m_wellenBild->setZweite(std::move(zweite));
     }
     // --- die Huellkurve einer Note (C4, 600 ms): der groesste Betrag je Stueck
     {
         const double dauerMs = 600.0;
         const Klang ton = rendereTon(bild, 60, dauerMs, kBildRate);
         constexpr int kStuecke = 160;
-        std::vector<float> werte(kStuecke, 0.0f);
-        float groesster = 0.0f;
         const std::int64_t frames = ton.frames();
-        for (std::int64_t f = 0; f < frames; ++f)
-        {
-            const auto stueck = static_cast<std::size_t>(f * kStuecke / std::max<std::int64_t>(1, frames));
-            werte[stueck] = std::max(werte[stueck], std::abs(ton.daten[static_cast<std::size_t>(2 * f)]));
-        }
+        const auto stuecke = [frames](const Klang& klang) {
+            std::vector<float> werte(kStuecke, 0.0f);
+            for (std::int64_t f = 0; f < klang.frames() && f < frames; ++f)
+            {
+                const auto stueck = static_cast<std::size_t>(f * kStuecke / std::max<std::int64_t>(1, frames));
+                werte[stueck] = std::max(werte[stueck], std::abs(klang.daten[static_cast<std::size_t>(2 * f)]));
+            }
+            return werte;
+        };
+        std::vector<float> werte = stuecke(ton);
+        float groesster = 0.0f;
         for (const float wert : werte) groesster = std::max(groesster, wert);
+        std::vector<float> zweite;
+        if (mitGewaehlter)
+        {
+            zweite = stuecke(rendereTon(einzeln, 60, dauerMs, kBildRate));
+            for (const float wert : zweite) groesster = std::max(groesster, wert);
+            teile(zweite, groesster);
+        }
         // Peak dagegen gilt fuer den Ton, wie er klingt — mit allen Stimmen
         float spitze = 0.0f;
         for (const float wert : rendereTon(m_instrument, 60, dauerMs, kBildRate).daten)
             spitze = std::max(spitze, std::abs(wert));
         m_spitze->setText(QString::number(spitze, 'f', 2));
-        if (groesster > 0.0f)
-            for (float& wert : werte) wert /= groesster;
+        teile(werte, groesster);
         const double ende = frames > 0 ? dauerMs * kBildRate / 1000.0 / static_cast<double>(frames) : -1.0;
         m_huellBild->setWerte(std::move(werte), true, ende, tr("note ends"));
+        m_huellBild->setZweite(std::move(zweite));
     }
 }
 

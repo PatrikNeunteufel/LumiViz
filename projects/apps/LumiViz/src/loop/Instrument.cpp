@@ -31,13 +31,13 @@ constexpr int kTeiltoeneMax = 512;  ///< mehr traegt die Tafel nicht sauber
 constexpr double kPegel = 0.5;      ///< Luft nach oben: ein Akkord addiert sich (Entscheid L6 a)
 
 /// Der Anteil des k-ten Teiltons (k ab 1) an der Schwingung.
-double teilton(const Instrument& instrument, int k)
+double teilton(const Schicht& schicht, int k)
 {
-    switch (instrument.schwingung)
+    switch (schicht.schwingung)
     {
     case Schwingung::Sinus:
         if (k == 1) return 1.0;
-        return k - 2 < static_cast<int>(instrument.obertoene.size()) ? instrument.obertoene[static_cast<std::size_t>(k - 2)]
+        return k - 2 < static_cast<int>(schicht.obertoene.size()) ? schicht.obertoene[static_cast<std::size_t>(k - 2)]
                                                                      : 0.0;
     case Schwingung::Dreieck:
         return k % 2 == 1 ? ((k / 2) % 2 == 0 ? 1.0 : -1.0) / (static_cast<double>(k) * k) : 0.0;
@@ -53,12 +53,12 @@ double teilton(const Instrument& instrument, int k)
 
 /// Ein Wellenzug der Schwingung, ohne Teiltoene ueber `hoechsterTeilton`, auf
 /// den Betrag 1 gebracht. Ein Wert mehr als `kTafel`: der erste noch einmal.
-std::vector<float> wellenzug(const Instrument& instrument, int hoechsterTeilton)
+std::vector<float> wellenzug(const Schicht& schicht, int hoechsterTeilton)
 {
     std::vector<double> summe(kTafel, 0.0);
     for (int k = 1; k <= hoechsterTeilton; ++k)
     {
-        const double anteil = teilton(instrument, k);
+        const double anteil = teilton(schicht, k);
         if (anteil == 0.0) continue;
         for (int i = 0; i < kTafel; ++i) summe[static_cast<std::size_t>(i)] += anteil * std::sin(2.0 * kPi * k * i / kTafel);
     }
@@ -96,39 +96,55 @@ struct Huelle
     }
 };
 
-Huelle huelleFuer(const Instrument& instrument, double dauerMs, int rate)
+Huelle huelleFuer(const Schicht& schicht, double dauerMs, int rate)
 {
     const double jeMs = rate / 1000.0;
     Huelle h;
-    h.anstieg = std::max(1.0, instrument.anstiegMs * jeMs);
-    h.abfall = std::max(1.0, instrument.abfallMs * jeMs / 3.0);
-    h.halten = std::clamp(instrument.halten, 0.0, 1.0);
+    h.anstieg = std::max(1.0, schicht.anstiegMs * jeMs);
+    h.abfall = std::max(1.0, schicht.abfallMs * jeMs / 3.0);
+    h.halten = std::clamp(schicht.halten, 0.0, 1.0);
     h.ende = std::max<std::int64_t>(1, std::llround(dauerMs * jeMs));
-    h.aus = std::max<std::int64_t>(1, std::llround(std::max(5.0, instrument.ausklangMs) * jeMs));
+    h.aus = std::max<std::int64_t>(1, std::llround(std::max(5.0, schicht.ausklangMs) * jeMs));
     h.ausklang = std::max(1.0, static_cast<double>(h.aus) / 4.0);
     return h;
 }
 
-void rechneSchwingung(const Instrument& instrument, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+/// Der Verzerrer: formt den Augenblickswert um, ohne Gedaechtnis. Der Betrag
+/// bleibt bei hoechstens 1; mit `staerke` gegen 0 geht er in nichts ueber.
+struct Verzerrer
+{
+    double staerke = 0.0;  ///< 0 = aus
+    double norm = 1.0;
+
+    explicit Verzerrer(double verzerrung)
+    {
+        staerke = 8.0 * std::clamp(verzerrung, 0.0, 1.0);
+        if (staerke > 0.0) norm = 1.0 / std::tanh(staerke);
+    }
+    [[nodiscard]] double bei(double wert) const { return staerke > 0.0 ? std::tanh(staerke * wert) * norm : wert; }
+};
+
+void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     // Vibrato und Verstimmung heben den Ton leicht: etwas Abstand zur halben Abtastrate
     const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06)), 1, kTeiltoeneMax);
-    const std::vector<float> tafel = wellenzug(instrument, hoechster);
+    const std::vector<float> tafel = wellenzug(schicht, hoechster);
+    const Verzerrer verzerrer(schicht.verzerrung);
 
-    const int stimmen = std::clamp(instrument.stimmen, 1, 3);
+    const int stimmen = std::clamp(schicht.stimmen, 1, 3);
     std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
     std::array<double, 3> phase = {0.0, 0.33, 0.67};  // fest: derselbe Ton ergibt dieselben Werte
-    if (stimmen == 2) verhaeltnis = {std::exp2(-instrument.verstimmungCent / 1200.0), std::exp2(instrument.verstimmungCent / 1200.0), 1.0};
-    if (stimmen == 3) verhaeltnis = {1.0, std::exp2(-instrument.verstimmungCent / 1200.0), std::exp2(instrument.verstimmungCent / 1200.0)};
+    if (stimmen == 2) verhaeltnis = {std::exp2(-schicht.verstimmungCent / 1200.0), std::exp2(schicht.verstimmungCent / 1200.0), 1.0};
+    if (stimmen == 3) verhaeltnis = {1.0, std::exp2(-schicht.verstimmungCent / 1200.0), std::exp2(schicht.verstimmungCent / 1200.0)};
     const double jeStimme = 1.0 / std::sqrt(static_cast<double>(stimmen));
 
-    const double einsatz = std::max(1.0, instrument.vibratoEinsatzMs * rate / 1000.0);
-    const bool vibrato = instrument.vibratoHz > 0.0 && instrument.vibratoCent > 0.0;
-    const bool filter = instrument.filterTeilton > 0.0;
+    const double einsatz = std::max(1.0, schicht.vibratoEinsatzMs * rate / 1000.0);
+    const bool vibrato = schicht.vibratoHz > 0.0 && schicht.vibratoCent > 0.0;
+    const bool filter = schicht.filterTeilton > 0.0;
     double f1 = 0.0;
     double f2 = 0.0;
-    const double pegel = kPegel * instrument.laut;
+    const double pegel = kPegel * schicht.laut;
 
     for (std::int64_t t = 0; t < frames; ++t)
     {
@@ -136,8 +152,8 @@ void rechneSchwingung(const Instrument& instrument, double hz, const Huelle& hue
         double schritt = hz / rate;
         if (vibrato)
         {
-            const double tiefe = instrument.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
-            schritt *= std::exp2(tiefe * std::sin(2.0 * kPi * instrument.vibratoHz * static_cast<double>(t) / rate) / 1200.0);
+            const double tiefe = schicht.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
+            schritt *= std::exp2(tiefe * std::sin(2.0 * kPi * schicht.vibratoHz * static_cast<double>(t) / rate) / 1200.0);
         }
         double wert = 0.0;
         for (int s = 0; s < stimmen; ++s)
@@ -154,12 +170,13 @@ void rechneSchwingung(const Instrument& instrument, double hz, const Huelle& hue
         if (filter)
         {
             const double grenze =
-                std::clamp(hz * (instrument.filterTeilton + instrument.filterHuelle * h), 40.0, rate * 0.45);
+                std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
             const double a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
             f1 += a * (wert - f1);
             f2 += a * (f1 - f2);
             wert = f2;
         }
+        wert = verzerrer.bei(wert);
         const auto aus = static_cast<float>(wert * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
@@ -169,10 +186,11 @@ void rechneSchwingung(const Instrument& instrument, double hz, const Huelle& hue
 /// Die gezupfte Saite (Karplus-Strong): ein Stoss Rauschen laeuft durch eine
 /// Verzoegerung von einer Schwingung Laenge und wird bei jedem Umlauf weicher
 /// und leiser.
-void rechneSaite(const Instrument& instrument, int hoehe, double hz, const Huelle& huelle, int rate,
+void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate,
                  std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    const Verzerrer verzerrer(schicht.verzerrung);
     // das Mitteln zweier Werte verzoegert um einen halben Abtastwert
     const double verzug = std::max(2.0, rate / hz - 0.5);
     const auto groesse = static_cast<std::size_t>(verzug) + 4;
@@ -189,10 +207,10 @@ void rechneSaite(const Instrument& instrument, int hoehe, double hz, const Huell
     }
     // der Verlust je Umlauf so, dass alle Tonhoehen aehnlich lang klingen
     // (`saiteDaempfung` gilt bei 220 Hz)
-    const double daempfung = std::clamp(instrument.saiteDaempfung, 0.9, 0.9999);
+    const double daempfung = std::clamp(schicht.saiteDaempfung, 0.9, 0.9999);
     const double jeUmlauf = std::exp(std::log(daempfung) * 220.0 / hz);
-    const double pegel = kPegel * instrument.laut;
-    const double anstieg = std::max(1.0, instrument.anstiegMs * rate / 1000.0);
+    const double pegel = kPegel * schicht.laut;
+    const double anstieg = std::max(1.0, schicht.anstiegMs * rate / 1000.0);
 
     std::size_t schreib = 0;
     double davor = 0.0;
@@ -214,7 +232,7 @@ void rechneSaite(const Instrument& instrument, int hoehe, double hz, const Huell
             const double nach = static_cast<double>(t - huelle.ende);
             h *= std::exp(-nach / huelle.ausklang) * std::max(0.0, 1.0 - nach / static_cast<double>(huelle.aus));
         }
-        const auto aus = static_cast<float>(y * h * pegel);
+        const auto aus = static_cast<float>(verzerrer.bei(y) * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -230,7 +248,6 @@ namespace
 {
 
 const QString kFormat = QStringLiteral("lumiviz-instrument");
-constexpr int kVersion = 1;
 
 struct Wellenname
 {
@@ -256,40 +273,47 @@ std::uint64_t& fassung()
 
 }  // namespace
 
-QJsonObject alsJson(const Instrument& instrument)
+namespace
+{
+
+QJsonObject schichtAlsJson(const Schicht& schicht)
 {
     QJsonObject o;
-    o[QStringLiteral("format")] = kFormat;
-    o[QStringLiteral("version")] = kVersion;
-    o[QStringLiteral("title")] = instrument.titel;
+    o[QStringLiteral("name")] = schicht.name;
+    o[QStringLiteral("on")] = schicht.an;
+    o[QStringLiteral("transpose")] = schicht.versatzHalbtoene;
+    o[QStringLiteral("startOffset")] = schicht.einsatzMs;
+    o[QStringLiteral("drive")] = schicht.verzerrung;
     for (const Wellenname& welle : kWellen)
-        if (welle.schwingung == instrument.schwingung) o[QStringLiteral("waveform")] = QLatin1String(welle.name);
+        if (welle.schwingung == schicht.schwingung) o[QStringLiteral("waveform")] = QLatin1String(welle.name);
     QJsonArray obertoene;
-    for (const double anteil : instrument.obertoene) obertoene.append(anteil);
+    for (const double anteil : schicht.obertoene) obertoene.append(anteil);
     o[QStringLiteral("harmonics")] = obertoene;
-    o[QStringLiteral("voices")] = instrument.stimmen;
-    o[QStringLiteral("detune")] = instrument.verstimmungCent;
-    o[QStringLiteral("attack")] = instrument.anstiegMs;
-    o[QStringLiteral("decay")] = instrument.abfallMs;
-    o[QStringLiteral("sustain")] = instrument.halten;
-    o[QStringLiteral("release")] = instrument.ausklangMs;
-    o[QStringLiteral("filterCutoff")] = instrument.filterTeilton;
-    o[QStringLiteral("filterEnvelope")] = instrument.filterHuelle;
-    o[QStringLiteral("vibratoRate")] = instrument.vibratoHz;
-    o[QStringLiteral("vibratoDepth")] = instrument.vibratoCent;
-    o[QStringLiteral("vibratoDelay")] = instrument.vibratoEinsatzMs;
-    o[QStringLiteral("damping")] = instrument.saiteDaempfung;
-    o[QStringLiteral("level")] = instrument.laut;
+    o[QStringLiteral("voices")] = schicht.stimmen;
+    o[QStringLiteral("detune")] = schicht.verstimmungCent;
+    o[QStringLiteral("attack")] = schicht.anstiegMs;
+    o[QStringLiteral("decay")] = schicht.abfallMs;
+    o[QStringLiteral("sustain")] = schicht.halten;
+    o[QStringLiteral("release")] = schicht.ausklangMs;
+    o[QStringLiteral("filterCutoff")] = schicht.filterTeilton;
+    o[QStringLiteral("filterEnvelope")] = schicht.filterHuelle;
+    o[QStringLiteral("vibratoRate")] = schicht.vibratoHz;
+    o[QStringLiteral("vibratoDepth")] = schicht.vibratoCent;
+    o[QStringLiteral("vibratoDelay")] = schicht.vibratoEinsatzMs;
+    o[QStringLiteral("damping")] = schicht.saiteDaempfung;
+    o[QStringLiteral("level")] = schicht.laut;
     return o;
 }
 
-bool ausJson(const QJsonObject& wurzel, Instrument& instrument)
+/// Eine Schicht lesen: aus einem Eintrag von `layers` — oder aus der Wurzel
+/// einer Datei der Fassung 1, die dieselben Felder flach traegt.
+Schicht schichtAusJson(const QJsonObject& wurzel)
 {
-    if (wurzel.value(QStringLiteral("format")).toString() != kFormat) return false;
-    const Instrument vorgabe;
-    Instrument neu;
-    neu.name = instrument.name;
-    neu.titel = wurzel.value(QStringLiteral("title")).toString();
+    const Schicht vorgabe;
+    Schicht neu;
+    neu.name = wurzel.value(QStringLiteral("name")).toString();
+    neu.an = wurzel.value(QStringLiteral("on")).toBool(true);
+    neu.versatzHalbtoene = std::clamp(wurzel.value(QStringLiteral("transpose")).toInt(0), -24, 24);
     const QString wellenName = wurzel.value(QStringLiteral("waveform")).toString();
     for (const Wellenname& welle : kWellen)
         if (wellenName == QLatin1String(welle.name)) neu.schwingung = welle.schwingung;
@@ -314,6 +338,56 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument)
     neu.vibratoEinsatzMs = zahl("vibratoDelay", vorgabe.vibratoEinsatzMs, 0.0, 5000.0);
     neu.saiteDaempfung = zahl("damping", vorgabe.saiteDaempfung, 0.9, 0.9999);
     neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
+    neu.einsatzMs = zahl("startOffset", vorgabe.einsatzMs, 0.0, 1000.0);
+    neu.verzerrung = zahl("drive", vorgabe.verzerrung, 0.0, 1.0);
+    return neu;
+}
+
+}  // namespace
+
+QJsonObject alsJson(const Instrument& instrument)
+{
+    QJsonObject o;
+    o[QStringLiteral("format")] = kFormat;
+    o[QStringLiteral("version")] = kInstrumentFassung;
+    o[QStringLiteral("title")] = instrument.titel;
+    o[QStringLiteral("level")] = instrument.laut;
+    QJsonArray schichten;
+    for (const Schicht& schicht : instrument.schichten) schichten.append(schichtAlsJson(schicht));
+    o[QStringLiteral("layers")] = schichten;
+    return o;
+}
+
+bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
+{
+    if (zuNeu != nullptr) *zuNeu = false;
+    if (wurzel.value(QStringLiteral("format")).toString() != kFormat) return false;
+    const int fassung = wurzel.value(QStringLiteral("version")).toInt(1);
+    if (fassung > kInstrumentFassung)
+    {
+        // eine Fassung von morgen: lieber schweigen als etwas anderes spielen
+        if (zuNeu != nullptr) *zuNeu = true;
+        return false;
+    }
+    Instrument neu;
+    neu.name = instrument.name;
+    neu.titel = wurzel.value(QStringLiteral("title")).toString();
+    neu.schichten.clear();
+    if (fassung < 2)
+    {
+        // Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
+        neu.schichten.push_back(schichtAusJson(wurzel));
+    }
+    else
+    {
+        neu.laut = inGrenzen(wurzel.value(QStringLiteral("level")).toDouble(1.0), 0.0, 1.0, 1.0);
+        for (const QJsonValue& schicht : wurzel.value(QStringLiteral("layers")).toArray())
+        {
+            if (neu.schichten.size() >= static_cast<std::size_t>(kSchichtenMax)) break;
+            neu.schichten.push_back(schichtAusJson(schicht.toObject()));
+        }
+    }
+    if (neu.schichten.empty()) neu.schichten.push_back(Schicht{});
     instrument = std::move(neu);
     return true;
 }
@@ -328,15 +402,16 @@ bool speichereInstrument(const Instrument& instrument, const QString& pfad)
     return true;
 }
 
-bool ladeInstrument(const QString& pfad, Instrument& instrument)
+bool ladeInstrument(const QString& pfad, Instrument& instrument, bool* zuNeu)
 {
+    if (zuNeu != nullptr) *zuNeu = false;
     QFile datei(pfad);
     if (!datei.open(QIODevice::ReadOnly)) return false;
     QJsonParseError fehler;
     const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
     if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
     Instrument neu;
-    if (!ausJson(doc.object(), neu)) return false;
+    if (!ausJson(doc.object(), neu, zuNeu)) return false;
     neu.name = pfad;
     if (neu.titel.isEmpty()) neu.titel = QFileInfo(pfad).completeBaseName();
     instrument = std::move(neu);
@@ -375,9 +450,10 @@ const std::vector<Instrument>& instrumente()
     return alle;
 }
 
-bool holeInstrument(const QString& nennung, Instrument& instrument)
+bool holeInstrument(const QString& nennung, Instrument& instrument, bool* zuNeu)
 {
-    if (istInstrumentDatei(nennung)) return ladeInstrument(nennung, instrument);
+    if (zuNeu != nullptr) *zuNeu = false;
+    if (istInstrumentDatei(nennung)) return ladeInstrument(nennung, instrument, zuNeu);
     const Instrument* gefunden = findeInstrument(nennung);
     if (gefunden == nullptr) return false;
     instrument = *gefunden;
@@ -408,19 +484,50 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
 {
     Klang klang;
     if (rate <= 0 || dauerMs <= 0.0) return klang;
-    const double hz = tonHz(hoehe);
-    Huelle huelle = huelleFuer(instrument, dauerMs, rate);
     const auto hoechstens = static_cast<std::int64_t>(kTonMaxSekunden * rate);
-    if (huelle.ende + huelle.aus > hoechstens)
+    std::vector<float> eine;
+    bool erste = true;
+    for (const Schicht& schicht : instrument.schichten)
     {
-        huelle.ende = std::max<std::int64_t>(1, hoechstens - huelle.aus);
+        if (!schicht.an) continue;
+        // die Schicht setzt spaeter ein und endet mit der Note; ist die Note
+        // kuerzer als der Einsatz, bleibt ein kurzer Anschlag
+        const double einsatzMs = std::clamp(schicht.einsatzMs, 0.0, 1000.0);
+        const auto einsatz = std::min<std::int64_t>(std::llround(einsatzMs * rate / 1000.0), hoechstens - 2);
+        const int ton = hoehe + std::clamp(schicht.versatzHalbtoene, -24, 24);
+        const double hz = tonHz(ton);
+        Huelle huelle = huelleFuer(schicht, std::max(1.0, dauerMs - einsatzMs), rate);
+        huelle.aus = std::min<std::int64_t>(huelle.aus, hoechstens - einsatz - 1);
+        if (einsatz + huelle.ende + huelle.aus > hoechstens)
+            huelle.ende = std::max<std::int64_t>(1, hoechstens - einsatz - huelle.aus);
+        const std::int64_t frames = huelle.ende + huelle.aus;
+        eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
+        if (schicht.schwingung == Schwingung::Saite)
+            rechneSaite(schicht, ton, hz, huelle, rate, eine);
+        else
+            rechneSchwingung(schicht, hz, huelle, rate, eine);
+        if (erste && einsatz == 0)
+        {
+            klang.daten.swap(eine);  // eine Schicht allein: ihre Werte, unveraendert
+            erste = false;
+            continue;
+        }
+        erste = false;
+        const auto ab = static_cast<std::size_t>(2 * einsatz);
+        if (klang.daten.size() < ab + eine.size()) klang.daten.resize(ab + eine.size(), 0.0f);
+        for (std::size_t i = 0; i < eine.size(); ++i) klang.daten[ab + i] += eine[i];
     }
-    const std::int64_t frames = huelle.ende + huelle.aus;
-    klang.daten.assign(static_cast<std::size_t>(2 * frames), 0.0f);
-    if (instrument.schwingung == Schwingung::Saite)
-        rechneSaite(instrument, hoehe, hz, huelle, rate, klang.daten);
-    else
-        rechneSchwingung(instrument, hz, huelle, rate, klang.daten);
+    if (klang.daten.empty())
+    {
+        // keine Schicht an: so lang wie die Note, still
+        const std::int64_t frames = std::min<std::int64_t>(std::max<std::int64_t>(1, std::llround(dauerMs * rate / 1000.0)), hoechstens);
+        klang.daten.assign(static_cast<std::size_t>(2 * frames), 0.0f);
+    }
+    if (instrument.laut != 1.0)
+    {
+        const auto laut = static_cast<float>(std::clamp(instrument.laut, 0.0, 1.0));
+        for (float& wert : klang.daten) wert *= laut;
+    }
     return klang;
 }
 

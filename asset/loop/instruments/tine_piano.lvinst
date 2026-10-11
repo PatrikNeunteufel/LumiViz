@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Tine Piano",
+    "level": 0.75,
+    "layers": [
+        {
+            "name": "Body",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0.25,
+            "waveform": "sine",
+            "harmonics": [0.35, 0.1, 0.05],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 1400,
+            "sustain": 0.15,
+            "release": 280,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Tine",
+            "on": true,
+            "level": 0.3,
+            "transpose": 24,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 180,
+            "sustain": 0,
+            "release": 120,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

@@ -4,7 +4,8 @@
  *        Tonhoehe wird ein Ton (docs/audio/Loop_Konzept.md §4f, Stufe 9,
  *        Entscheid I1 c)
  *
- * Ein Instrument ist ein Satz Einstellungen fuer einen Klangerzeuger:
+ * Ein Instrument besteht aus einer bis vier Schichten (Stufe 10c); jede ist
+ * ein Satz Einstellungen fuer einen Klangerzeuger:
  * Schwingung (der Funktionsgenerator), Huellkurve, Filter, Vibrato,
  * Verstimmung — dazu die gezupfte Saite als eigene Art. `rendereTon` rechnet
  * daraus einen Ton von gegebener Dauer **vorab** in einen `Klang`; der
@@ -42,13 +43,17 @@ enum class Schwingung : int
     Saite,
 };
 
-struct Instrument
+/// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
+/// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze
+/// gebilligt, Patrik S111). Die Schichten eines Instruments werden beim
+/// Rechnen eines Tons addiert.
+struct Schicht
 {
-    /// Wie ein Muster es nennt: der Name eines mitgelieferten Instruments
-    /// (`piano` — die Datei `asset/loop/instruments/piano.lvinst`) oder der
-    /// Pfad einer eigenen Datei `.lvinst`. Steht nicht in der Datei.
-    QString name;
-    QString titel;  ///< wie es im Programm steht
+    QString name;                ///< wie sie in der Liste steht; leer = „Layer n"
+    bool an = true;              ///< aus = stumm, bleibt aber im Instrument
+    int versatzHalbtoene = 0;    ///< -24…24: so weit liegt die Schicht neben der Note
+    double einsatzMs = 0.0;      ///< 0…1000: so lange nach dem Anschlag setzt sie ein (kein Echo)
+    double verzerrung = 0.0;     ///< 0…1: der Verzerrer (Drive), 0 = aus (Entscheid E1 a)
 
     Schwingung schwingung = Schwingung::Sinus;
     /// Nur Sinus: die Anteile des 2., 3., … Teiltons (der Grundton zaehlt 1).
@@ -72,24 +77,49 @@ struct Instrument
     double vibratoEinsatzMs = 0.0;  ///< so lange waechst es an
 
     double saiteDaempfung = 0.996;  ///< nur Saite: 0.9…0.9999, groesser klingt laenger
-    double laut = 1.0;              ///< Ausgleich zwischen den Instrumenten
+    double laut = 1.0;              ///< die Lautstaerke der Schicht
+
+    [[nodiscard]] bool operator==(const Schicht&) const = default;
+};
+
+/// So viele Schichten traegt ein Instrument hoechstens: jede wird je Ton
+/// einzeln gerechnet.
+inline constexpr int kSchichtenMax = 4;
+
+struct Instrument
+{
+    /// Wie ein Muster es nennt: der Name eines mitgelieferten Instruments
+    /// (`piano` — die Datei `asset/loop/instruments/piano.lvinst`) oder der
+    /// Pfad einer eigenen Datei `.lvinst`. Steht nicht in der Datei.
+    QString name;
+    QString titel;      ///< wie es im Programm steht
+    double laut = 1.0;  ///< die Lautstaerke des ganzen Instruments
+    /// Mindestens eine, hoechstens `kSchichtenMax`.
+    std::vector<Schicht> schichten = {Schicht{}};
 
     [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
 
-// --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a) --------------
+// --- die Datei `.lvinst` (Entscheide Patrik S110, I2 b und I3 a; S111, F1 a) --
 // Ein Instrument ist eine Datei, abgelegt wie die Klaenge des Kits: die
 // mitgelieferten unter `asset/loop/instruments`, eigene irgendwo. Im Programm
 // steht kein Instrument mehr.
+//
+// Fassung 2 traegt die Schichten als Liste `layers`; Fassung 1 ist flach und
+// wird als Instrument mit einer Schicht gelesen. Geschrieben wird Fassung 2.
+
+/// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
+inline constexpr int kInstrumentFassung = 2;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
 /// Liest ein Instrument, Werte in ihren Grenzen. false = kein Instrument
-/// (falsches Format); `instrument` bleibt dann, wie es war. `name` bleibt.
-bool ausJson(const QJsonObject& wurzel, Instrument& instrument);
+/// (falsches Format) oder eine Fassung, die dieses Programm nicht kennt — dann
+/// ist `zuNeu` gesetzt; `instrument` bleibt, wie es war. `name` bleibt.
+bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu = nullptr);
 bool speichereInstrument(const Instrument& instrument, const QString& pfad);
 /// Liest die Datei; `name` wird der Pfad. Ohne Titel in der Datei gilt ihr Name.
-bool ladeInstrument(const QString& pfad, Instrument& instrument);
+bool ladeInstrument(const QString& pfad, Instrument& instrument, bool* zuNeu = nullptr);
 
 /// Der Ordner der mitgelieferten Instrumente: `asset/loop/instruments`, neben
 /// dem Kit (`kitOrdner`). Leer = nicht gefunden.
@@ -102,8 +132,9 @@ bool ladeInstrument(const QString& pfad, Instrument& instrument);
 [[nodiscard]] const Instrument* findeInstrument(const QString& name);
 /// Das Instrument, das ein Muster nennt: ein mitgeliefertes beim Namen oder
 /// eine eigene Datei beim Pfad (`istInstrumentDatei`). false = nicht gefunden
-/// oder nicht lesbar.
-bool holeInstrument(const QString& nennung, Instrument& instrument);
+/// oder nicht lesbar; `zuNeu` = die Datei traegt eine Fassung, die dieses
+/// Programm nicht kennt.
+bool holeInstrument(const QString& nennung, Instrument& instrument, bool* zuNeu = nullptr);
 /// Zaehlt jede gespeicherte Instrument-Datei (`speichereInstrument`): wer
 /// Toene gerechnet hat und sich die Zahl merkt, sieht, ob er neu rechnen muss.
 [[nodiscard]] std::uint64_t instrumentFassung();
@@ -121,7 +152,9 @@ inline constexpr double kTonMaxSekunden = 30.0;
 
 /// Einen Ton rechnen: `dauerMs` lang gehalten, danach der Ausklang des
 /// Instruments; der Klang endet bei null. Stereo, beide Seiten gleich.
-/// Leer = `rate` oder `dauerMs` nicht groesser als 0.
+/// Die eingeschalteten Schichten werden addiert — jede an ihrer Tonhoehe und
+/// ab ihrem Einsatz; der Klang ist so lang wie die laengste. Ist keine an,
+/// ist er still. Leer = `rate` oder `dauerMs` nicht groesser als 0.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate);
 
 }  // namespace lumi::loop

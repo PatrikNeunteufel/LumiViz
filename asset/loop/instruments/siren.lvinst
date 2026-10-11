@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 2,
+    "title": "Siren",
+    "level": 0.5,
+    "layers": [
+        {
+            "name": "Wail",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "square",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 30,
+            "decay": 0,
+            "sustain": 1.0,
+            "release": 200,
+            "filterCutoff": 6,
+            "filterEnvelope": 0,
+            "vibratoRate": 1.6,
+            "vibratoDepth": 100,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        },
+        {
+            "name": "Shadow",
+            "on": true,
+            "level": 0.4,
+            "transpose": 0,
+            "startOffset": 150,
+            "drive": 0,
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 2,
+            "detune": 30,
+            "attack": 30,
+            "decay": 0,
+            "sustain": 1.0,
+            "release": 200,
+            "filterCutoff": 4,
+            "filterEnvelope": 0,
+            "vibratoRate": 1.6,
+            "vibratoDepth": 100,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ]
+}

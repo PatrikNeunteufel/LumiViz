@@ -24,6 +24,7 @@
 #include "loop/Loop.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
@@ -31,6 +32,7 @@
 #include <QFileInfo>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QListWidget>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QSlider>
@@ -267,7 +269,7 @@ TEST_SUITE("LoopInstrumentEditor")
 
         // --- ein Regler stellt die Kopie; der Titel traegt einen Stern; Reset nimmt es zurueck
         schieber("creatorAttack")->setValue(300);
-        CHECK(creator.instrument().anstiegMs == doctest::Approx(300.0));
+        CHECK(creator.schicht().anstiegMs == doctest::Approx(300.0));
         CHECK(creator.geaendert());
         CHECK(creator.windowTitle() == QStringLiteral("Instrument: Strings *"));
         CHECK(reset->isEnabled());
@@ -281,20 +283,21 @@ TEST_SUITE("LoopInstrumentEditor")
         // ein Regler, an dem niemand zieht, rundet nichts: die Violine hat 5,6 Hz Vibrato
         creator.oeffne(*findeInstrument(QStringLiteral("violin")));
         schieber("creatorLevel")->setValue(50);
-        CHECK(creator.instrument().vibratoHz == doctest::Approx(5.6));
-        CHECK(creator.instrument().laut == doctest::Approx(0.5));
+        CHECK(creator.schicht().vibratoHz == doctest::Approx(5.6));
+        CHECK(creator.schicht().laut == doctest::Approx(0.5));
+        CHECK(creator.instrument().laut == doctest::Approx(1.0));  // das ganze Instrument hat seinen eigenen Regler
 
         // --- die Schwingung bestimmt, welche Regler es gibt
         creator.oeffne(*strings);
         CHECK_FALSE(schieber("creatorVoices")->isHidden());
         CHECK(schieber("creatorHarmonic2")->isHidden());
         CHECK(schieber("creatorDamping")->isHidden());
-        creator.aendere([](Instrument& i) { i.schwingung = Schwingung::Sinus; });
+        creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });
         CHECK_FALSE(schieber("creatorHarmonic2")->isHidden());
         schieber("creatorHarmonic3")->setValue(40);
-        REQUIRE(creator.instrument().obertoene.size() == 2);
-        CHECK(creator.instrument().obertoene[1] == doctest::Approx(0.4));
-        creator.aendere([](Instrument& i) { i.schwingung = Schwingung::Saite; });
+        REQUIRE(creator.schicht().obertoene.size() == 2);
+        CHECK(creator.schicht().obertoene[1] == doctest::Approx(0.4));
+        creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Saite; });
         CHECK(schieber("creatorVoices")->isHidden());
         CHECK(schieber("creatorCutoff")->isHidden());
         CHECK(schieber("creatorHarmonic2")->isHidden());
@@ -309,7 +312,7 @@ TEST_SUITE("LoopInstrumentEditor")
         creator.oeffne(*strings);
         creator.aendere([](Instrument& i) {
             i.titel = QStringLiteral("My strings");
-            i.verstimmungCent = 20.0;
+            i.schichten[0].verstimmungCent = 20.0;
         });
         const QString pfad = ordner.filePath(QStringLiteral("my_strings.lvinst"));
         const std::uint64_t fassung = instrumentFassung();
@@ -322,8 +325,9 @@ TEST_SUITE("LoopInstrumentEditor")
         Instrument ausDatei;
         REQUIRE(ladeInstrument(pfad, ausDatei));
         CHECK(ausDatei == creator.instrument());
-        CHECK(ausDatei.verstimmungCent == doctest::Approx(20.0));
-        CHECK(findeInstrument(QStringLiteral("strings"))->verstimmungCent == doctest::Approx(9.0));  // das Original bleibt
+        CHECK(ausDatei.schichten[0].verstimmungCent == doctest::Approx(20.0));
+        // das Original bleibt
+        CHECK(findeInstrument(QStringLiteral("strings"))->schichten[0].verstimmungCent == doctest::Approx(9.0));
 
         // --- Save: in die eigene Datei
         schieber("creatorSustain")->setValue(50);
@@ -332,7 +336,7 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(gespeichert.size() == 2);
         CHECK_FALSE(creator.geaendert());
         REQUIRE(ladeInstrument(pfad, ausDatei));
-        CHECK(ausDatei.halten == doctest::Approx(0.5));
+        CHECK(ausDatei.schichten[0].halten == doctest::Approx(0.5));
         // eine eigene Datei oeffnen: Save geht gleich
         creator.oeffne(ausDatei);
         CHECK(creator.datei() == pfad);
@@ -345,9 +349,9 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(toene == QStringList{QStringLiteral("60 ") + InstrumentCreator::vorhoerDatei()});
         Instrument vorgehoert;
         REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
-        CHECK(vorgehoert.ausklangMs == doctest::Approx(70.0));
+        CHECK(vorgehoert.schichten[0].ausklangMs == doctest::Approx(70.0));
         REQUIRE(ladeInstrument(pfad, ausDatei));
-        CHECK(ausDatei.ausklangMs != doctest::Approx(70.0));  // die eigene Datei bleibt, bis Save
+        CHECK(ausDatei.schichten[0].ausklangMs != doctest::Approx(70.0));  // die eigene Datei bleibt, bis Save
         // die Klaviatur: C3 bis C5, schwarze Tasten liegen oben
         auto* tasten = creator.findChild<Tastenleiste*>(QStringLiteral("creatorKeys"));
         REQUIRE(tasten != nullptr);
@@ -357,6 +361,197 @@ TEST_SUITE("LoopInstrumentEditor")
         klick(*tasten, tasten->ortVon(61));
         CHECK(toene.last().startsWith(QStringLiteral("61 ")));
         creator.setzeZurueck();  // nichts Ungespeichertes zurueckbleiben lassen
+        QFile::remove(InstrumentCreator::vorhoerDatei());
+    }
+
+    TEST_CASE("Instrument-Creator: Schichten — anlegen und waehlen und ordnen — die Regler gelten der gewaehlten")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        const auto schieber = [&](const char* kennung) {
+            auto* s = creator.findChild<QSlider*>(QString::fromLatin1(kennung));
+            REQUIRE(s != nullptr);
+            return s;
+        };
+        const auto knopf = [&](const char* kennung) {
+            auto* k = creator.findChild<QPushButton*>(QString::fromLatin1(kennung));
+            REQUIRE(k != nullptr);
+            return k;
+        };
+        auto* liste = creator.findChild<QListWidget*>(QStringLiteral("creatorLayers"));
+        auto* kopf = creator.findChild<QLabel*>(QStringLiteral("creatorLayerTitle"));
+        auto* legende = creator.findChild<QLabel*>(QStringLiteral("creatorLegend"));
+        auto* nurWahl = creator.findChild<QCheckBox*>(QStringLiteral("creatorSelectedOnly"));
+        auto* welle = creator.findChild<KurvenBild*>(QStringLiteral("creatorCycle"));
+        auto* huelle = creator.findChild<KurvenBild*>(QStringLiteral("creatorEnvelope"));
+        auto* spitze = creator.findChild<QLabel*>(QStringLiteral("creatorPeak"));
+        REQUIRE(liste != nullptr);
+        REQUIRE(kopf != nullptr);
+        REQUIRE(legende != nullptr);
+        REQUIRE(nurWahl != nullptr);
+        REQUIRE(welle != nullptr);
+        REQUIRE(huelle != nullptr);
+
+        // --- ein Instrument mit einer Schicht: wie bisher, nur mit der Liste
+        const Instrument* organ = findeInstrument(QStringLiteral("organ"));
+        REQUIRE(organ != nullptr);
+        creator.oeffne(*organ);
+        REQUIRE(liste->count() == 1);
+        CHECK(liste->item(0)->text() == QStringLiteral("Layer 1 · Sine\nLevel %1 % · 0 st").arg(qRound(organ->schichten[0].laut * 100.0)));
+        CHECK(liste->item(0)->checkState() == Qt::Checked);
+        CHECK(liste->currentRow() == 0);
+        CHECK(kopf->text() == QStringLiteral("Layer 1"));
+        CHECK(legende->isHidden());
+        CHECK_FALSE(nurWahl->isEnabled());
+        CHECK_FALSE(knopf("creatorRemoveLayer")->isEnabled());
+        CHECK_FALSE(knopf("creatorLayerUp")->isEnabled());
+        CHECK_FALSE(knopf("creatorLayerDown")->isEnabled());
+        CHECK(knopf("creatorAddLayer")->isEnabled());
+        CHECK(welle->zweite().empty());  // eine Schicht: keine zweite Kurve
+        CHECK_FALSE(creator.entferne());
+        CHECK_FALSE(creator.schiebe(1));
+        CHECK(schieber("creatorMasterLevel")->value() == 100);
+        const QString spitzeEine = spitze->text();
+
+        // --- Add layer: Grundeinstellung, gewaehlt; die Regler zeigen jetzt sie
+        knopf("creatorAddLayer")->click();
+        REQUIRE(creator.instrument().schichten.size() == 2);
+        CHECK(creator.gewaehlt() == 1);
+        CHECK(creator.schicht() == Schicht{});
+        CHECK(creator.geaendert());
+        CHECK(liste->count() == 2);
+        CHECK(liste->currentRow() == 1);
+        CHECK(kopf->text() == QStringLiteral("Layer 2"));
+        CHECK_FALSE(legende->isHidden());
+        CHECK(nurWahl->isEnabled());
+        CHECK(knopf("creatorRemoveLayer")->isEnabled());
+        CHECK(knopf("creatorLayerUp")->isEnabled());
+        CHECK(schieber("creatorLevel")->value() == 100);
+        CHECK(schieber("creatorTranspose")->value() == 0);
+        CHECK(welle->zweite().size() == welle->werte().size());  // die gewaehlte gestrichelt
+        CHECK(huelle->zweite().size() == 160);
+        CHECK(spitze->text() != spitzeEine);  // Peak gilt fuer die Summe
+
+        // --- die Regler der Schicht: Transpose, Start offset, Drive, Level, Name
+        schieber("creatorTranspose")->setValue(12);
+        schieber("creatorStartOffset")->setValue(8);  // 40 ms
+        schieber("creatorDrive")->setValue(30);
+        schieber("creatorLevel")->setValue(35);
+        creator.aendereSchicht([](Schicht& s) { s.name = QStringLiteral("Shimmer"); });
+        CHECK(creator.schicht().versatzHalbtoene == 12);
+        CHECK(creator.schicht().einsatzMs == doctest::Approx(40.0));
+        CHECK(creator.schicht().verzerrung == doctest::Approx(0.3));
+        CHECK(creator.schicht().laut == doctest::Approx(0.35));
+        CHECK(liste->item(1)->text() == QStringLiteral("2 Shimmer · Sine\nLevel 35 % · +12 st"));
+        CHECK(InstrumentCreator::schichtTitel(creator.schicht(), 1) == QStringLiteral("2 Shimmer"));
+        CHECK(creator.instrument().schichten[0] == organ->schichten[0]);  // die erste blieb, wie sie war
+        // der Regler des ganzen Instruments
+        schieber("creatorMasterLevel")->setValue(80);
+        CHECK(creator.instrument().laut == doctest::Approx(0.8));
+        CHECK(creator.schicht().laut == doctest::Approx(0.35));
+
+        // --- waehlen: ein Klick in der Liste; die Mitte zeigt die andere Schicht
+        liste->setCurrentRow(0);
+        CHECK(creator.gewaehlt() == 0);
+        CHECK(kopf->text() == QStringLiteral("Layer 1"));
+        CHECK(schieber("creatorTranspose")->value() == 0);
+        CHECK(schieber("creatorLevel")->value() == qRound(organ->schichten[0].laut * 100.0));
+        CHECK(creator.instrument().schichten[1].versatzHalbtoene == 12);  // nichts verstellt beim Wechseln
+        CHECK_FALSE(knopf("creatorLayerUp")->isEnabled());
+        CHECK(knopf("creatorLayerDown")->isEnabled());
+
+        // --- der Haken schaltet stumm; Peak faellt auf die andere Schicht
+        const QString spitzeBeide = spitze->text();
+        liste->item(0)->setCheckState(Qt::Unchecked);
+        CHECK_FALSE(creator.instrument().schichten[0].an);
+        CHECK(creator.instrument().schichten[1].an);
+        CHECK(spitze->text() != spitzeBeide);
+        liste->item(0)->setCheckState(Qt::Checked);
+        CHECK(creator.instrument().schichten[0].an);
+
+        // --- Add layer from instrument: kopiert, heisst wie das Instrument
+        const Instrument* strings = findeInstrument(QStringLiteral("strings"));
+        REQUIRE(creator.schichtenAus(*strings) == 1);
+        REQUIRE(creator.instrument().schichten.size() == 3);
+        CHECK(creator.gewaehlt() == 2);
+        CHECK(creator.schicht().name == QStringLiteral("Strings"));
+        CHECK(creator.schicht().stimmen == 3);
+        CHECK(schieber("creatorVoices")->value() == 3);
+        CHECK(findeInstrument(QStringLiteral("strings"))->schichten[0].name.isEmpty());  // das Original bleibt
+
+        // --- Duplicate, ordnen, Remove
+        creator.waehle(1);
+        knopf("creatorDuplicateLayer")->click();
+        REQUIRE(creator.instrument().schichten.size() == 4);
+        CHECK(creator.gewaehlt() == 2);
+        CHECK(creator.instrument().schichten[2] == creator.instrument().schichten[1]);
+        CHECK(creator.instrument().schichten[3].name == QStringLiteral("Strings"));
+        // vier sind das Ende
+        CHECK_FALSE(knopf("creatorAddLayer")->isEnabled());
+        CHECK_FALSE(knopf("creatorAddLayerFrom")->isEnabled());
+        CHECK_FALSE(knopf("creatorDuplicateLayer")->isEnabled());
+        CHECK_FALSE(creator.neueSchicht());
+        CHECK_FALSE(creator.verdopple());
+        CHECK(creator.schichtenAus(*strings) == 0);
+        creator.waehle(3);
+        knopf("creatorLayerUp")->click();
+        CHECK(creator.gewaehlt() == 2);
+        CHECK(creator.instrument().schichten[2].name == QStringLiteral("Strings"));
+        CHECK(creator.instrument().schichten[3].name == QStringLiteral("Shimmer"));
+        knopf("creatorLayerDown")->click();
+        CHECK(creator.gewaehlt() == 3);
+        CHECK(creator.instrument().schichten[3].name == QStringLiteral("Strings"));
+        CHECK_FALSE(creator.schiebe(1));
+        knopf("creatorRemoveLayer")->click();
+        REQUIRE(creator.instrument().schichten.size() == 3);
+        CHECK(creator.gewaehlt() == 2);  // die letzte ging: die davor ist gewaehlt
+        CHECK(creator.schicht().name == QStringLiteral("Shimmer"));
+        CHECK(liste->count() == 3);
+        CHECK(knopf("creatorAddLayer")->isEnabled());
+
+        // --- anspielen: alle eingeschalteten — oder die gewaehlte allein, auch wenn sie stumm ist
+        creator.aendereSchicht([](Schicht& s) { s.an = false; });
+        REQUIRE(creator.spieleAn(60));
+        Instrument vorgehoert;
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        REQUIRE(vorgehoert.schichten.size() == 3);
+        CHECK_FALSE(vorgehoert.schichten[2].an);
+        nurWahl->setChecked(true);
+        CHECK(creator.nurGewaehlte());
+        REQUIRE(creator.spieleAn(60));
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        REQUIRE(vorgehoert.schichten.size() == 1);
+        CHECK(vorgehoert.schichten[0].name == QStringLiteral("Shimmer"));
+        CHECK(vorgehoert.schichten[0].an);
+        CHECK(vorgehoert.laut == doctest::Approx(0.8));
+        creator.setNurGewaehlte(false);
+        CHECK_FALSE(nurWahl->isChecked());
+
+        // --- Save as schreibt alle Schichten; Reset stellt sie wieder her
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const QString pfad = ordner.filePath(QStringLiteral("layered.lvinst"));
+        REQUIRE(creator.speichereUnter(pfad));
+        Instrument ausDatei;
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        CHECK(ausDatei == creator.instrument());
+        CHECK(ausDatei.schichten.size() == 3);
+        REQUIRE(creator.entferne());
+        REQUIRE(creator.entferne());
+        CHECK(creator.instrument().schichten.size() == 1);
+        creator.setzeZurueck();
+        CHECK(creator.instrument().schichten.size() == 3);
+        CHECK(creator.gewaehlt() == 0);
+        CHECK_FALSE(creator.geaendert());
+        // ein anderes Instrument oeffnen: die Wahl steht wieder vorn
+        creator.waehle(2);
+        creator.oeffne(*organ);
+        CHECK(creator.gewaehlt() == 0);
+        CHECK(liste->count() == 1);
         QFile::remove(InstrumentCreator::vorhoerDatei());
     }
 
@@ -404,7 +599,7 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(auswahl->count() == static_cast<int>(instrumente().size()) + 1);
 
         // noch einmal Save in dieselbe Datei: am Loop aendert sich nichts, gemeldet wird es trotzdem
-        creator->aendere([](Instrument& i) { i.halten = 0.3; });
+        creator->aendereSchicht([](Schicht& s) { s.halten = 0.3; });
         REQUIRE(creator->speichere());
         CHECK(gemeldet.size() == 1);
         CHECK(gespeichert == 2);
@@ -416,7 +611,7 @@ TEST_SUITE("LoopInstrumentEditor")
         // Edit instrument noch einmal: jetzt mit der eigenen Datei
         REQUIRE(editor.oeffneCreator(false));
         CHECK(creator->datei() == pfad);
-        CHECK(creator->instrument().halten == doctest::Approx(0.3));
+        CHECK(creator->schicht().halten == doctest::Approx(0.3));
 
         // ein Instrument, das es nicht gibt, laesst sich nicht bearbeiten
         editor.setzeInstrument(QStringLiteral("tuba"));
@@ -426,8 +621,20 @@ TEST_SUITE("LoopInstrumentEditor")
         // `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild des Creators ab
         if (const QString bild = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_CREATOR_BILD"); !bild.isEmpty())
         {
+            // drei Schichten, die dritte stumm: so sieht man Liste, Haken und beide Kurven
             InstrumentCreator gezeigt;
-            gezeigt.oeffne(*findeInstrument(QStringLiteral("strings")));
+            gezeigt.oeffne(*findeInstrument(QStringLiteral("house_piano")));
+            gezeigt.aendereSchicht([](Schicht& s) { s.name = QStringLiteral("Body"); });
+            (void)gezeigt.schichtenAus(*findeInstrument(QStringLiteral("strings")));
+            gezeigt.aendereSchicht([](Schicht& s) {
+                s.name = QStringLiteral("Shimmer");
+                s.laut = 0.35;
+                s.versatzHalbtoene = 12;
+                s.einsatzMs = 60.0;
+            });
+            (void)gezeigt.schichtenAus(*findeInstrument(QStringLiteral("guitar")));
+            gezeigt.aendereSchicht([](Schicht& s) { s.an = false; });
+            gezeigt.waehle(1);
             gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
             gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
             QCoreApplication::processEvents();

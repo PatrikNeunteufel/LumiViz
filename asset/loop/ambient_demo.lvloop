@@ -1,0 +1,191 @@
+{
+    "format": "lumiviz-loop",
+    "version": 2,
+    "bpm": 72,
+    "beatsPerBar": 4,
+    "stepsPerBeat": 4,
+    "swing": 0.0,
+    "volume": 0.5,
+    "tags": {
+        "title": "Slow tide",
+        "artist": "LumiViz",
+        "genre": "Ambient"
+    },
+    "patterns": [
+        {
+            "name": "Pad",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "fifth_pad",
+            "volume": 0.7,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 16, 50, 0.7],
+                [0, 16, 57, 0.5],
+                [16, 16, 46, 0.7],
+                [16, 16, 53, 0.5],
+                [32, 16, 41, 0.7],
+                [32, 16, 48, 0.5],
+                [48, 16, 36, 0.7],
+                [48, 16, 43, 0.5]
+            ]
+        },
+        {
+            "name": "Swell",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "reverse_swell",
+            "volume": 0.6,
+            "pan": -0.3,
+            "mute": false,
+            "notes": [
+                [4, 12, 58, 0.6],
+                [4, 12, 62, 0.8],
+                [20, 12, 53, 0.6],
+                [20, 12, 57, 0.8],
+                [36, 12, 48, 0.6],
+                [36, 12, 52, 0.8],
+                [52, 12, 62, 0.6],
+                [52, 12, 65, 0.8]
+            ]
+        },
+        {
+            "name": "Ghost",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "ghost",
+            "volume": 0.6,
+            "pan": 0.3,
+            "mute": false,
+            "notes": [
+                [0, 30, 74, 0.7],
+                [32, 30, 72, 0.7]
+            ]
+        },
+        {
+            "name": "Flute",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "flute",
+            "volume": 0.8,
+            "pan": 0.15,
+            "mute": false,
+            "notes": [
+                [0, 6, 77, 0.8],
+                [6, 2, 76, 0.6],
+                [8, 8, 74, 0.8],
+                [16, 8, 74, 0.8],
+                [24, 4, 77, 0.7],
+                [28, 4, 82, 0.8],
+                [32, 6, 81, 0.8],
+                [38, 2, 77, 0.6],
+                [40, 8, 72, 0.8],
+                [48, 4, 76, 0.7],
+                [52, 4, 79, 0.8],
+                [56, 8, 76, 0.8]
+            ]
+        },
+        {
+            "name": "Bells",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "bell",
+            "volume": 0.7,
+            "pan": -0.2,
+            "mute": false,
+            "notes": [
+                [0, 16, 81, 0.8],
+                [24, 8, 70, 0.6],
+                [32, 16, 72, 0.8],
+                [56, 8, 60, 0.6]
+            ]
+        },
+        {
+            "name": "Cascade",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "cascade",
+            "volume": 0.6,
+            "pan": 0.35,
+            "mute": false,
+            "notes": [
+                [24, 8, 58, 0.7],
+                [56, 8, 48, 0.7]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Pad",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Pad",
+                    "start": 0,
+                    "repeat": 4
+                }
+            ]
+        },
+        {
+            "name": "Swell",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Swell",
+                    "start": 4,
+                    "repeat": 3
+                }
+            ]
+        },
+        {
+            "name": "Ghost",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Ghost",
+                    "start": 8,
+                    "repeat": 2
+                }
+            ]
+        },
+        {
+            "name": "Flute",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Flute",
+                    "start": 4,
+                    "repeat": 2
+                }
+            ]
+        },
+        {
+            "name": "Bells",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Bells",
+                    "start": 0,
+                    "repeat": 1
+                },
+                {
+                    "pattern": "Bells",
+                    "start": 12,
+                    "repeat": 1
+                }
+            ]
+        },
+        {
+            "name": "Cascade",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Cascade",
+                    "start": 8,
+                    "repeat": 2
+                }
+            ]
+        }
+    ]
+}
