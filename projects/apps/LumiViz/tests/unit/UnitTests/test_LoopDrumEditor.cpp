@@ -421,6 +421,45 @@ TEST_SUITE("LoopDrumEditor")
         CHECK(zuletzt == QStringLiteral("Remove track"));
         CHECK(editor.loop().findeMuster(QStringLiteral("Grund"))->spuren.size() == 2);
 
+        // ein Muster ohne Spuren (Befund Patrik S111: der leere Editor sah zerrissen aus):
+        // ein Hinweis steht da, und ein hohes Fenster laesst die Luft unten, nicht zwischen den Zeilen
+        {
+            auto* hinweis = editor.findChild<QLabel*>(QStringLiteral("drumEmptyHint"));
+            REQUIRE(hinweis != nullptr);
+            CHECK(hinweis->isHidden());
+            Loop leerLoop;
+            Muster leer;
+            leer.name = QStringLiteral("Leer");
+            leerLoop.muster = {leer};
+            leerLoop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("Leer"), 0, 1}}}};
+            leerLoop.richte();
+            DrumEditor leerer;
+            REQUIRE(leerer.zeige(leerLoop, QStringLiteral("Leer")));
+            auto* leerHinweis = leerer.findChild<QLabel*>(QStringLiteral("drumEmptyHint"));
+            REQUIRE(leerHinweis != nullptr);
+            CHECK_FALSE(leerHinweis->isHidden());
+            leerer.resize(1230, 900);
+            leerer.setAttribute(Qt::WA_DontShowOnScreen);
+            leerer.show();
+            QCoreApplication::processEvents();
+            auto* takteFeld = leerer.findChild<QSpinBox*>(QStringLiteral("drumBars"));
+            auto* neu = leerer.findChild<QPushButton*>(QStringLiteral("drumAddTrack"));
+            if (takteFeld != nullptr && neu != nullptr)
+            {
+                // Kopf, Raster-Zeile und Spuren stehen dicht untereinander, oben im Fenster
+                const int kopfY = takteFeld->mapTo(&leerer, QPoint(0, 0)).y();
+                const int neuY = neu->mapTo(&leerer, QPoint(0, 0)).y();
+                CHECK(kopfY < 40);
+                CHECK(neuY < 200);
+                CHECK(leerHinweis->mapTo(&leerer, QPoint(0, 0)).y() < 320);
+            }
+            else
+                MESSAGE("drumBars oder drumAddTrack nicht gefunden — Lage nicht geprueft");
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_DRUM_EDITOR_BILD"); !bild.isEmpty())
+                CHECK(leerer.grab().save(bild + QStringLiteral(".leer.png")));
+            leerer.spurHinzu();
+        }
+
         // Play pattern und die Spitze
         int verlangt = 0;
         bool spielen = false;

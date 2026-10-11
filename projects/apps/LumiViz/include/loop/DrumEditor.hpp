@@ -192,6 +192,7 @@ private:
     std::vector<SpurZeile> m_spuren;
     QPushButton* m_spurNeu = nullptr;
     QLabel* m_lautName = nullptr;
+    QLabel* m_leerHinweis = nullptr;  ///< steht da, solange das Muster keine Spur hat
     QScrollArea* m_rollen = nullptr;
     SchrittRaster* m_raster = nullptr;
 };

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.21.0
+> **Version:** 0.21.1
 > **Datum:** 2026-10-11 (Session 111)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1034,6 +1034,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.21.1** (S111, 2026-10-11): Drum-Editor (§4d) — Befund Patrik: bei
+  einem Muster ohne Spuren und hohem Fenster standen Kopf, Raster-Zeile und
+  Spuren weit auseinander. Die Luft bleibt jetzt unten; ein leeres Muster
+  zeigt den Hinweis „This pattern has no tracks yet — Add track creates one."
 - **0.21.0** (S111, 2026-10-11): Entscheid F1 a (Fassung 2 der `.lvinst`
   mit der Liste `layers`), b und c verworfen; Stufe 10c gebaut — Schichten
   in Modell, Datei, Rechnen und Creator, Drive (§4f); sechzehn Instrumente

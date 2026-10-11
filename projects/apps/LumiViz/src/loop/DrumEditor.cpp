@@ -398,8 +398,17 @@ void DrumEditor::setupUI()
     m_rollen->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     m_rollen->setWidget(m_raster);
     koerper->addWidget(spalte, 0, Qt::AlignTop);
-    koerper->addWidget(m_rollen, 1);
-    aussen->addLayout(koerper, 1);
+    koerper->addWidget(m_rollen, 1, Qt::AlignTop);
+    aussen->addLayout(koerper);
+    // ein Muster ohne Spuren: sagen, wie es weitergeht
+    m_leerHinweis = new QLabel(tr("This pattern has no tracks yet — Add track creates one."), this);
+    m_leerHinweis->setObjectName(QStringLiteral("drumEmptyHint"));
+    m_leerHinweis->setEnabled(false);
+    m_leerHinweis->hide();
+    aussen->addWidget(m_leerHinweis);
+    // was das Fenster hoeher ist als sein Inhalt, bleibt unten frei — sonst
+    // verteilt das Layout die Luft zwischen Kopf, Raster-Zeile und Spuren
+    aussen->addStretch(1);
 
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
     connect(m_schlaege, &QSpinBox::valueChanged, this, [this](int schlaege) { setzeRaster(schlaege, m_jeSchlag->value()); });
@@ -472,6 +481,7 @@ void DrumEditor::zeigeAlles()
     // das Raster in voller Hoehe, darunter Platz fuer den Rollbalken
     m_rollen->setFixedHeight(m_raster->sizeHint().height() + style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 2);
     baueSpuren(*ziel);
+    m_leerHinweis->setVisible(ziel->spuren.empty());
     waehleSpur(m_raster->spur());
 }
 
