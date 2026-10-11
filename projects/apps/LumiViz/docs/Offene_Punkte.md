@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.151.0
-> **Datum:** 2026-10-11 (Session 111)
+> **Version:** 1.152.0
+> **Datum:** 2026-10-11 (Session 112)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2667,7 +2667,10 @@ Idee Preset-Warmup/Pre-Roll.
     Bauarten gebaut, DLL und Tester bytegleich mit dem Paket, die Probe
     meldet „0.4.0 (interface S 1.1, protocol P 1 to 1)" und verbindet;
     ⬜ `LumiViz.exe --testing` mit dem Tester v0.4.0 im Programm ungesehen),
-    `cmakecraft.pin` **v0.11.0**. Projektdatei
+    `cmakecraft.pin` **v0.11.1** (seit S112; die Paketdatei 1.1.1 nimmt dem
+    Deploy-Ziel unter den Visual-Studio-Generatoren die Recipe-Datei — bei
+    LumiViz am Bau nichts geändert, beide Bauarten gebaut; ob die Warnung
+    hier je auftrat, ist nicht gemessen). Projektdatei
     `.sichttest/sichttest.projekt.json`; die Kopie `projects/exec/Sichttest`
     ist entfernt; neben der Exe entsteht bei jedem Bau die Verknüpfung
     „LumiViz.exe - Testing". Die neun Listen `Sichttest_Composer_1…9`
@@ -2750,6 +2753,13 @@ Idee Preset-Warmup/Pre-Roll.
     Lauf, nachdem der neue Fall „Aktionen der App" dazukam (er schaltet
     Karaoke on um und stellt es zurück); die fünf Läufe danach grün. Ein
     Zusammenhang ist weder gezeigt noch ausgeschlossen.
+  - **🔧 `test_PaletteUi.cpp:1609` fiel einmal um (S112):** der Fall
+    „PaletteUi Panel A10/A11: Add aus dem Palettenfenster" meldete im ersten
+    vollen Lauf nach dem Pin auf CMakeCraft v0.11.1 `3 == 2` — ein Klick auf
+    **Add** legte zwei Knoten in die Liste statt einem. Einzeln fünfmal grün,
+    alle 81 Fälle `PaletteUi*` grün, der zweite volle Lauf grün. Am Code war
+    nichts geändert. **Ursache nicht untersucht**; ein zweiter Fall dieser
+    Art neben `:765`.
 - **Composer, S102 — Zoom und Rollen der Zeitachse (Konzept 0.68.0 §7;
   alle sechs Schritte gebaut, im Programm nichts gesehen — Sichttest
   `.claude/handover/Sichttests_S102.md`):**
@@ -5100,6 +5110,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.152.0 | 2026-10-11 | Session 112 — §6 Sichttest-Steuerung: `cmakecraft.pin` v0.11.1; ein neuer Wackler in `test_PaletteUi.cpp:1609` (A10/A11, einmal `3 == 2`, Ursache nicht untersucht) |
 | 1.141.0 | 2026-10-11 | Session 109, Abschluss — §6 **Loop:** die Stufen 6a bis 8 gebaut (gemeinsame Basis `Achse`, Loop-Panel als Arrangement, Drum-Editor, Audio Browser, Loop als Clip im Composer mit Tags, Benutzerhandbuch §16, `Audio_System.md` §6a, Sichttest-Vorlage); Entscheide W1 b, T1 a, T2; offen der erste Blick ins Programm (Liste `Sichttest_Composer_10_Loop.md`, 56 Punkte), die gesetzten Regeln als Urteile, die Rückfrage beim Beenden, das Nachsetzen bei gedrosseltem Rechner, Aktionen der Steuerung für das Panel Loop; 1025 / 1025; im Programm ist seit S108 nichts davon gesehen oder gehört; der Sichttest mit dem Tester hat auch in S109 nicht stattgefunden. Verweis auf das Benutzerhandbuch §17 auf §18 nachgezogen |
 | 1.140.0 | 2026-10-11 | Session 108, Abschluss — §6 neu: **Loop** (Wunsch Patrik), im Bau nach [Loop_Konzept.md](audio/Loop_Konzept.md); gebaut Beleg, Modell und Datei `.lvloop` in Fassung 2 (Arrangement aus Kanälen und Clips), Rechenkern, gerechnetes Kit, Naht in der Audio-Engine, Klangerzeuger, Spieler mit Rangfolge, erstes Panel; offen 6a bis 9, der erste Hörtest, das Kit im Release-Paket; 1002 / 1002; der Sichttest mit dem Tester hat auch in S108 nicht stattgefunden |
 | 1.139.0 | 2026-10-10 | Session 107, Abschluss — Block „Stand S105": `sichttest.pin` steht auf v0.3.4 (Bezug, zwei Bauarten, 974 / 974, Probe der DLL verbunden; im Programm ungesehen); der Sichttest mit dem Tester hat auch in S107 nicht stattgefunden |
