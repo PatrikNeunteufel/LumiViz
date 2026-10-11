@@ -412,6 +412,17 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     CHECK_FALSE(panel.spieler().spielt());
     CHECK(hinweis->text().isEmpty());
 
+    // --- der Instrument-Creator spielt sein Instrument an: beim Namen oder beim Pfad einer Datei
+    REQUIRE(panel.spieleInstrumentTon(QStringLiteral("strings"), 62));
+    CHECK(panel.hoertVor());
+    CHECK(panel.spieler().loop().muster[0].instrument == QStringLiteral("strings"));
+    CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{{0, 4, 62, 1.0}});
+    CHECK_FALSE(panel.spieleInstrumentTon(QString(), 62));
+    CHECK_FALSE(panel.spieleInstrumentTon(QStringLiteral("strings"), 5));
+    panel.halte();
+    CHECK_FALSE(panel.hoertVor());
+    CHECK(panel.spieler().loop() == panel.loop());
+
     // --- Play pattern im Instrument-Editor spielt nur das Muster
     auto* playMuster = editor->findChild<QPushButton*>(QStringLiteral("instrumentPlay"));
     REQUIRE(playMuster != nullptr);

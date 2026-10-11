@@ -19,6 +19,7 @@
 #include "loop/Loop.hpp"
 
 #include <QPoint>
+#include <QPointer>
 #include <QString>
 #include <QWidget>
 
@@ -32,6 +33,8 @@ class QToolButton;
 
 namespace lumi::loop
 {
+
+class InstrumentCreator;
 
 /// Das Raster der Noten. Es rollt selbst — waagrecht (lange Muster) und
 /// senkrecht (sechs Oktaven): Klaviatur, Kopf und die Zeile der Lautstaerken
@@ -179,7 +182,21 @@ public:
     void setzePan(double pan);
     void setzeStumm(bool stumm);
 
+    // --- der Instrument-Creator (Stufe 10b) -----------------------------------
+    /// „Edit instrument...": den Creator mit dem Instrument dieser Basis
+    /// oeffnen (er entsteht beim ersten Mal). Speichert er, nennt die Basis
+    /// danach seine Datei. false = das Instrument laesst sich nicht finden.
+    /// `zeigen` false fuellt ihn nur (fuer Tests ohne Fenster).
+    bool oeffneCreator(bool zeigen = true);
+    /// Das Fenster des Creators; nullptr, solange er noch nie geoeffnet wurde.
+    [[nodiscard]] InstrumentCreator* creator() const;
+
 Q_SIGNALS:
+    /// Der Creator will einen Ton hoeren: das Instrument beim Pfad seiner
+    /// Vorhoer-Datei.
+    void instrumentTonVerlangt(const QString& nennung, int hoehe);
+    /// Der Creator hat eine Instrument-Datei geschrieben: wer spielt, rechnet neu.
+    void instrumentGespeichert();
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// „Play pattern" / „Stop": dieses Muster allein spielen, oder anhalten.
@@ -209,6 +226,9 @@ private:
     QPushButton* m_play = nullptr;
     QLabel* m_spitze = nullptr;
     QComboBox* m_instrument = nullptr;
+    QPushButton* m_instrumentBearbeiten = nullptr;
+    QPushButton* m_instrumentLaden = nullptr;
+    QPointer<InstrumentCreator> m_creator;
     QSlider* m_laut = nullptr;
     QSlider* m_pan = nullptr;
     QToolButton* m_stumm = nullptr;

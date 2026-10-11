@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.118.0
+> **Version:** 1.119.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2506,6 +2506,37 @@ Loop und wird im Drum-Editor gestellt. Wird es gröber, gehen Noten verloren,
 deren Einsatz es nicht mehr gibt; die Länge einer Note bleibt dieselbe Zeit.
 Eine Note endet spätestens am Ende ihres Musters.
 
+### Eigene Instrumente: der Instrument-Creator
+
+Ein Instrument ist eine Datei `.lvinst`. Die mitgelieferten liegen unter
+`asset\loop\instruments`; ein eigenes entsteht im **Instrument-Creator** und
+liegt, wo du es speicherst.
+
+| Im Instrument-Editor | Wirkung |
+|---|---|
+| **Edit instrument...** | Öffnet den Creator mit dem Instrument des Musters. Ein mitgeliefertes wird dabei zur Vorlage: es selbst bleibt, wie es ist |
+| **Load instrument...** | Nimmt eine Datei `.lvinst` für dieses Muster. In der Auswahl steht sie als „Titel (Dateiname)" |
+
+| Im Creator | Wirkung |
+|---|---|
+| **Name** | Der Titel des Instruments |
+| **Reset** | Zurück auf den Stand beim Öffnen oder nach dem letzten Speichern |
+| **Save** / **Save as...** | Schreibt die Datei; danach spielt das Muster dieses Instrument. Save geht nur bei einer eigenen Datei — eine Vorlage speicherst du mit Save as... unter neuem Namen |
+| **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen |
+| **Waveform** | Sine, Triangle, Saw, Square oder Plucked string (eine gezupfte Saite) |
+| **Voices**, **Detune** | Eine bis drei gleiche Schwingungen übereinander, leicht gegeneinander verstimmt — das macht den Klang breit |
+| **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
+| **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
+| **Attack**, **Decay**, **Sustain**, **Release** | Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
+| **Cutoff**, **Envelope** (Filter) | Ein Tiefpass, der mit der Tonhöhe mitgeht: Cutoff ganz links ist offen, sonst die Grenze als Vielfaches des Grundtons. Envelope öffnet ihn mit dem Anschlag |
+| **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst |
+| **Level** | Lautstärke des Instruments gegen die anderen |
+| **One cycle**, **Envelope of a note** | Das Bild einer Schwingung und der Hüllkurve — beide zeigen eine einzelne Stimme ohne Vibrato |
+| Klaviatur | Ein Klick spielt den Ton mit den Einstellungen, wie sie gerade stehen — auch ungespeichert. Nur, solange sonst nichts spielt |
+
+Ein laufendes Muster klingt erst nach **Save** mit den neuen Einstellungen.
+Schließt du den Creator mit Ungespeichertem, fragt er nach.
+
 ### Eine Loop-Datei von Hand
 
 `.lvloop` ist eine Textdatei (JSON). Die Felder stehen in der Entwickler-Doku
@@ -2611,6 +2642,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.119.0 | 2026-10-11 | Session 110. §16 Loop NEU **Eigene Instrumente: der Instrument-Creator** — **Edit instrument...** und **Load instrument...** im Instrument-Editor, das Fenster mit Waveform, Voices, Detune, Obertönen, Damping, Hüllkurve, Filter, Vibrato, Level, den zwei Bildern und der Klaviatur zum Anspielen; Save und Save as... schreiben eine Datei `.lvinst` |
 | 1.118.0 | 2026-10-11 | Session 110. §16 Loop: sieben Instrumente für House (House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck) und das Beispiel `asset\loop\house_demo.lvloop`; die Instrumente sind Dateien `.lvinst` unter `asset\loop\instruments`, die Auswahl ist nach Namen sortiert; Instrument-Editor: Mauszeiger an der Kante einer Note, Hinweis bei stummen Tasten |
 | 1.117.0 | 2026-10-11 | Session 110. §16 Loop NEU **Instrument-Clips**: **New instrument clip** im Panel Loop, der Abschnitt **Der Instrument-Editor** (Klaviatur über sechs Oktaven, Noten setzen, verlängern, verschieben, löschen, Zeile *Note vol.*, sieben gerechnete Instrumente, eine Taste spielt den Ton an), das Beispiel `asset\loop\instrument_demo.lvloop` |
 | 1.116.0 | 2026-10-11 | Session 110. §16 Loop GEÄNDERT: das Panel Loop fragt jetzt auch **beim Beenden von LumiViz** nach Ungespeichertem; die Rückfrage bietet überall **Save / Discard / Cancel** wie im Composer (vorher bei New und Load nur Discard / Cancel) |

@@ -8,9 +8,11 @@
 
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/InstrumentCreator.hpp"
 
 #include <QComboBox>
 #include <QDir>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -21,6 +23,7 @@
 #include <QPalette>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QSettings>
 #include <QShowEvent>
 #include <QSignalBlocker>
 #include <QSlider>
@@ -38,6 +41,7 @@ namespace lumi::loop
 namespace
 {
 
+const char* const kInstrumentOrdner = "loop/lastInstrumentDir";
 constexpr int kHoehen = kHoeheMax - kHoeheMin + 1;
 constexpr double kLautMin = 0.05;  ///< leiser wird eine Note nicht — ohne Lautstaerke gaebe es sie nicht
 
@@ -520,8 +524,17 @@ void InstrumentEditor::setupUI()
     m_stumm->setText(QStringLiteral("M"));
     m_stumm->setCheckable(true);
     m_stumm->setToolTip(tr("Mute this pattern"));
+    m_instrumentBearbeiten = new QPushButton(tr("Edit instrument..."), this);
+    m_instrumentBearbeiten->setObjectName(QStringLiteral("instrumentEdit"));
+    m_instrumentBearbeiten->setToolTip(
+        tr("Open the instrument creator; a built-in instrument becomes the template of your own file"));
+    m_instrumentLaden = new QPushButton(tr("Load instrument..."), this);
+    m_instrumentLaden->setObjectName(QStringLiteral("instrumentLoad"));
+    m_instrumentLaden->setToolTip(tr("Use an instrument file (.lvinst) for this pattern"));
     zeile->addWidget(new QLabel(tr("Instrument"), this));
     zeile->addWidget(m_instrument);
+    zeile->addWidget(m_instrumentBearbeiten);
+    zeile->addWidget(m_instrumentLaden);
     zeile->addWidget(new QLabel(tr("Volume"), this));
     zeile->addWidget(m_laut);
     zeile->addWidget(new QLabel(tr("Pan"), this));
@@ -553,6 +566,16 @@ void InstrumentEditor::setupUI()
     connect(m_instrument, &QComboBox::activated, this,
             [this](int index) { setzeInstrument(m_instrument->itemData(index).toString()); });
     connect(m_stumm, &QToolButton::toggled, this, [this](bool stumm) { setzeStumm(stumm); });
+    connect(m_instrumentBearbeiten, &QPushButton::clicked, this, [this] { (void)oeffneCreator(); });
+    connect(m_instrumentLaden, &QPushButton::clicked, this, [this] {
+        QSettings einstellungen;
+        const QString pfad = QFileDialog::getOpenFileName(
+            this, tr("Load instrument"), einstellungen.value(QLatin1String(kInstrumentOrdner)).toString(),
+            tr("Instrument (*.lvinst);;All files (*)"));
+        if (pfad.isEmpty()) return;
+        einstellungen.setValue(QLatin1String(kInstrumentOrdner), QFileInfo(pfad).absolutePath());
+        setzeInstrument(pfad);
+    });
     // ein Schieber meldet beim Loslassen — nicht jeden Pixel als Schritt fuer Undo
     const auto schieber = [this](QSlider* regler, bool pan) {
         const auto melde = [this, regler, pan] {
@@ -638,6 +661,9 @@ bool InstrumentEditor::zeige(const Loop& loop, const QString& muster)
     const Muster* ziel = loop.findeMuster(muster);
     if (ziel == nullptr || ziel->art != MusterArt::Instrument) return false;
     const bool andere = muster != m_muster;
+    // der Creator gehoert zum Instrument der Basis, die gerade gezeigt wird:
+    // bei einer anderen Basis schliesst er sich (und fragt nach Ungespeichertem)
+    if (andere && m_creator != nullptr && m_creator->isVisible() && !m_creator->close()) return false;
     m_loop = loop;
     m_muster = muster;
     zeigeAlles();
@@ -707,6 +733,37 @@ void InstrumentEditor::setSpielt(bool spielt, double schritt)
         m_play->setText(spielt ? tr("Stop") : tr("Play pattern"));
     }
     m_raster->setMarke(spielt ? schritt : -1.0);
+}
+
+InstrumentCreator* InstrumentEditor::creator() const
+{
+    return m_creator;
+}
+
+bool InstrumentEditor::oeffneCreator(bool zeigen)
+{
+    const Muster* ziel = basis();
+    Instrument instrument;
+    if (ziel == nullptr || !holeInstrument(ziel->instrument, instrument)) return false;
+    if (m_creator == nullptr)
+    {
+        m_creator = new InstrumentCreator(this);
+        // gespeichert: die Basis nennt jetzt diese Datei (bei Save in dieselbe
+        // Datei aendert sich am Loop nichts — nur der Klang)
+        connect(m_creator, &InstrumentCreator::gespeichert, this, [this](const QString& pfad) {
+            setzeInstrument(pfad);
+            Q_EMIT instrumentGespeichert();
+        });
+        connect(m_creator, &InstrumentCreator::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
+    }
+    m_creator->oeffne(instrument);
+    if (zeigen)
+    {
+        m_creator->show();
+        m_creator->raise();
+        m_creator->activateWindow();
+    }
+    return true;
 }
 
 void InstrumentEditor::setHinweis(const QString& text)

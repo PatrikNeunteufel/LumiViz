@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.146.0
+> **Version:** 1.147.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2362,8 +2362,14 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Instrument ist eine Datei `.lvinst`), I3 a (auch die sieben
     mitgelieferten, unter `asset/loop/instruments`), Skizze gebilligt.
     **10a gebaut:** das Format, die Dateien, ein Muster nennt ein eigenes
-    beim Pfad. **Offen 10b:** das Fenster, *Edit instrument...*, *Load
-    instrument...*
+    beim Pfad, dazu sieben Instrumente für House (Wunsch Patrik) mit dem
+    Beispiel `asset/loop/house_demo.lvloop`. **10b gebaut:** das Fenster,
+    *Edit instrument...*, *Load instrument...*, Anspielen aus dem Creator;
+    Benutzerhandbuch §16. **Im Programm nicht gesehen und nicht gehört** —
+    ⬜ Liste 10, Abschnitt K (Creator) und Urteile U16 bis U18; die
+    Einstellungen aller vierzehn Instrumente sind gerechnet, nicht abgehört.
+    Nicht drin: hören, was man einstellt, während das Muster spielt; eine
+    Resonanz am Filter (der Acid Bass hat keine)
   - 🔧 das Kit **und seit S110 die Instrumente** liegen unter `asset/`, im
     Release-Paket nicht neben der Exe — dort schwiegen alle Loops;
     Debug-MSVC seit S108 nicht gebaut, der volle Lauf nie unter clang; ob

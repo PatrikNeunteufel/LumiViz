@@ -124,6 +124,10 @@ public:
     /// Loop oder ein Muster, geschieht nichts — man hoert es schon. false =
     /// nicht angespielt.
     bool spieleTon(const QString& muster, int hoehe);
+    /// Dasselbe mit einem Instrument, das beim Namen oder beim Pfad seiner
+    /// Datei genannt wird — so spielt der Instrument-Creator an, was er gerade
+    /// einstellt (Stufe 10b).
+    bool spieleInstrumentTon(const QString& nennung, int hoehe);
     /// Wird gerade ein Ton angespielt?
     [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }
     /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,
@@ -146,6 +150,9 @@ private:
     void beimTakt();
     /// Das Anspielen beenden (falls eines laeuft): der Spieler haelt und bekommt den Loop zurueck.
     void beendeVorhoeren();
+    /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
+    /// `vorlage` mit dieser einen Note.
+    bool spieleVor(const Muster& vorlage, int hoehe);
     /// Was der Spieler spielt: der ganze Loop — oder, bei „Play pattern", ein
     /// Loop aus einem Kanal mit einem Clip dieses Musters.
     [[nodiscard]] Loop spielFassung();

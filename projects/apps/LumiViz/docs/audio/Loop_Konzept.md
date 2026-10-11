@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.18.0
+> **Version:** 0.19.0
 > **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -592,7 +592,44 @@ Zoom; Vorhören beim Setzen; die Abspielmarke rollt den Ausschnitt nicht mit.
 jeder Änderung, die einen neuen Ton braucht, **alle** Klänge neu (auch die
 des Kits) — ob das zu hören ist, weiß ich nicht.
 
-### Der Instrument-Creator (Stufe 10 — Skizze gebilligt, Patrik S110; noch nicht gebaut)
+### Der Instrument-Creator (Stufe 10b — Skizze gebilligt, Patrik S110; gebaut)
+
+`loop/InstrumentCreator.hpp`. Der Creator arbeitet an einer **Kopie**; erst
+**Save** schreibt die Datei. Speichert er, nennt die Basis des
+Instrument-Editors danach seine Datei (ein Schritt für Undo: „Change
+instrument"); wer den Loop gerade spielt, rechnet die Töne neu.
+
+**Gebaut wie die Skizze, dazu von mir gesetzt, nicht entschieden:**
+
+- **Save** neben Save as...: es schreibt in die eigene Datei und ist grau,
+  solange es keine gibt — ein mitgeliefertes Instrument lässt sich nur unter
+  neuem Namen speichern.
+- Bei **Sine** stehen die Regler der Obertöne (2. bis 9. Teilton) **neben**
+  Voices und Detune, nicht statt ihrer: der Klangerzeuger kennt beides
+  zugleich. Bei **Plucked string** bleiben nur Attack, Release, Damping und
+  Level — den Rest kennt die Saite nicht.
+- Die zwei Bilder zeigen **eine** Stimme ohne Vibrato: drei verstimmte
+  Stimmen schweben, im Bild sähe man die Schwebung statt Wellenzug und
+  Hüllkurve. **Peak** gilt für den Ton, wie er klingt (C4, 600 ms).
+- **Anspielen:** die Kopie kommt — auch ungespeichert — in eine
+  Vorhör-Datei im Ordner für Zwischendateien, und der Spieler des Panels
+  spielt sie einen Schlag lang (wie die Tasten des Instrument-Editors: der
+  Player pausiert so lange; spielt der Loop, bleibt es stumm).
+- Im Creator gibt es kein Undo, nur **Reset**. Beim Schließen mit
+  Ungespeichertem fragt er (Save / Discard / Cancel).
+- Zeigt der Instrument-Editor eine andere Basis, schließt sich der Creator.
+- Die Regler reichen weniger weit als die Datei erlaubt (Attack bis 1 s,
+  Decay bis 5 s, Release bis 3 s, Cutoff bis zum 32-fachen); ein Wert
+  außerhalb oder zwischen zwei Stellungen bleibt stehen, bis jemand an
+  seinem Regler zieht.
+- **Load instrument...** im Instrument-Editor nimmt eine `.lvinst` für die
+  Basis; in der Auswahl steht sie als „Titel (Dateiname)".
+
+**Nicht drin:** hören, was man einstellt, **während** das Muster spielt (die
+Töne des laufenden Loops ändern sich erst mit Save); eine Resonanz am
+Filter; ein eigener Ordner des Benutzers in der Auswahl.
+
+Die Skizze:
 
 Ein eigenes Fenster „Instrument: <Name>", geöffnet im Instrument-Editor über
 **Edit instrument...** neben der Auswahl. Ein mitgeliefertes Instrument wird
@@ -771,7 +808,7 @@ Bass, dazu nacheinander Piano, Guitar und Violin; 100 BPM, 16 Takte.
 | 9a | **Instrument-Clip, Kern:** Noten im Modell und in der Datei, sieben gerechnete Instrumente (I1 c; Strings, Violine, Piano, Gitarre …, Wunsch Patrik S110), Noten im Rechenkern | S110 gebaut, §4f; `test_LoopInstrument.cpp`, sechs Fälle ohne Ton; Beispiel `asset/loop/instrument_demo.lvloop`; **nicht gehört** — die Instrumente sind nach Rechnung eingestellt |
 | 9b | **Instrument-Editor:** die Piano-Rolle als eigenes Fenster (Skizze gebilligt, §4f), **New instrument clip** im Loop-Panel, eine Taste spielt den Ton an | S110 gebaut, §4f; `test_LoopInstrumentEditor.cpp` (zwei Fälle ohne Fenster; `LUMIVIZ_INSTRUMENT_EDITOR_BILD=<datei.png>` legt ein Bild ab), ein Fall in `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
-| 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | offen |
+| 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c) | später |
 
 ---
@@ -868,6 +905,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.19.0** (S110, 2026-10-11): Stufe 10b gebaut — der Instrument-Creator,
+  Edit instrument..., Load instrument... (§4f).
 - **0.18.0** (S110, 2026-10-11): Entscheid I3 a (auch die mitgelieferten
   Instrumente sind Dateien); Stufe 10 geteilt, 10a gebaut — das Format
   `.lvinst` (§4f), `asset/loop/instruments`; sieben Instrumente für House

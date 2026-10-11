@@ -19,6 +19,7 @@
 
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Loop.hpp"
 
@@ -26,12 +27,15 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QSlider>
 #include <QStringList>
+#include <QTemporaryDir>
 
 #include <vector>
 
@@ -204,6 +208,231 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(muster.noten[0] == Note{20, 1, 67, 1.0});
         CHECK(raster.auswahl() == -1);
         CHECK_FALSE(raster.loescheAuswahl());
+    }
+
+    TEST_CASE("Instrument-Creator: Regler stellen die Kopie — Save as schreibt die Datei — eine Taste spielt an")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        QStringList gespeichert;
+        QObject::connect(&creator, &InstrumentCreator::gespeichert, &creator,
+                         [&](const QString& pfad) { gespeichert << pfad; });
+        QStringList toene;
+        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator, [&](const QString& nennung, int hoehe) {
+            toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung);
+        });
+        const auto schieber = [&](const char* kennung) {
+            auto* s = creator.findChild<QSlider*>(QString::fromLatin1(kennung));
+            REQUIRE(s != nullptr);
+            return s;
+        };
+
+        // --- ein mitgeliefertes Instrument: eine Kopie, Save geht nicht, nur Save as
+        const Instrument* strings = findeInstrument(QStringLiteral("strings"));
+        REQUIRE(strings != nullptr);
+        creator.oeffne(*strings);
+        CHECK(creator.windowTitle() == QStringLiteral("Instrument: Strings"));
+        CHECK(creator.instrument() == *strings);
+        CHECK_FALSE(creator.geaendert());
+        CHECK(creator.datei().isEmpty());
+        CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorBasedOn"))->text() == QStringLiteral("based on Strings"));
+        auto* save = creator.findChild<QPushButton*>(QStringLiteral("creatorSave"));
+        auto* reset = creator.findChild<QPushButton*>(QStringLiteral("creatorReset"));
+        REQUIRE(save != nullptr);
+        REQUIRE(reset != nullptr);
+        CHECK_FALSE(save->isEnabled());
+        CHECK_FALSE(reset->isEnabled());
+        CHECK_FALSE(creator.speichere());
+        // die Regler zeigen das Instrument
+        CHECK(schieber("creatorVoices")->value() == 3);
+        CHECK(schieber("creatorDetune")->value() == 9);
+        CHECK(schieber("creatorAttack")->value() == 160);
+        CHECK(schieber("creatorCutoff")->value() == 60);  // das Sechsfache des Grundtons
+        // die Bilder: eine Schwingung und die Huellkurve einer Note
+        auto* welle = creator.findChild<KurvenBild*>(QStringLiteral("creatorCycle"));
+        auto* huelle = creator.findChild<KurvenBild*>(QStringLiteral("creatorEnvelope"));
+        REQUIRE(welle != nullptr);
+        REQUIRE(huelle != nullptr);
+        CHECK(welle->werte().size() > 300);  // C3 an 44100 Hz: 337 Abtastwerte
+        CHECK(huelle->werte().size() == 160);
+        CHECK(huelle->werte().front() < 0.2f);  // weicher Einsatz
+        CHECK(huelle->werte().back() < 0.05f);  // der Klang endet bei null
+        CHECK_FALSE(creator.findChild<QLabel*>(QStringLiteral("creatorPeak"))->text().isEmpty());
+
+        // --- ein Regler stellt die Kopie; der Titel traegt einen Stern; Reset nimmt es zurueck
+        schieber("creatorAttack")->setValue(300);
+        CHECK(creator.instrument().anstiegMs == doctest::Approx(300.0));
+        CHECK(creator.geaendert());
+        CHECK(creator.windowTitle() == QStringLiteral("Instrument: Strings *"));
+        CHECK(reset->isEnabled());
+        CHECK_FALSE(save->isEnabled());  // weiter ohne eigene Datei
+        const std::vector<float> weich = huelle->werte();
+        schieber("creatorAttack")->setValue(0);
+        CHECK(huelle->werte() != weich);  // das Bild zieht nach
+        reset->click();
+        CHECK(creator.instrument() == *strings);
+        CHECK_FALSE(creator.geaendert());
+        // ein Regler, an dem niemand zieht, rundet nichts: die Violine hat 5,6 Hz Vibrato
+        creator.oeffne(*findeInstrument(QStringLiteral("violin")));
+        schieber("creatorLevel")->setValue(50);
+        CHECK(creator.instrument().vibratoHz == doctest::Approx(5.6));
+        CHECK(creator.instrument().laut == doctest::Approx(0.5));
+
+        // --- die Schwingung bestimmt, welche Regler es gibt
+        creator.oeffne(*strings);
+        CHECK_FALSE(schieber("creatorVoices")->isHidden());
+        CHECK(schieber("creatorHarmonic2")->isHidden());
+        CHECK(schieber("creatorDamping")->isHidden());
+        creator.aendere([](Instrument& i) { i.schwingung = Schwingung::Sinus; });
+        CHECK_FALSE(schieber("creatorHarmonic2")->isHidden());
+        schieber("creatorHarmonic3")->setValue(40);
+        REQUIRE(creator.instrument().obertoene.size() == 2);
+        CHECK(creator.instrument().obertoene[1] == doctest::Approx(0.4));
+        creator.aendere([](Instrument& i) { i.schwingung = Schwingung::Saite; });
+        CHECK(schieber("creatorVoices")->isHidden());
+        CHECK(schieber("creatorCutoff")->isHidden());
+        CHECK(schieber("creatorHarmonic2")->isHidden());
+        CHECK_FALSE(schieber("creatorDamping")->isHidden());
+        CHECK_FALSE(schieber("creatorAttack")->isHidden());
+        auto* wellenWahl = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
+        REQUIRE(wellenWahl != nullptr);
+        CHECK(wellenWahl->currentText() == QStringLiteral("Plucked string"));
+        CHECK(wellenWahl->count() == 5);
+
+        // --- Save as: die Datei entsteht, sie ist jetzt die Datei des Creators
+        creator.oeffne(*strings);
+        creator.aendere([](Instrument& i) {
+            i.titel = QStringLiteral("My strings");
+            i.verstimmungCent = 20.0;
+        });
+        const QString pfad = ordner.filePath(QStringLiteral("my_strings.lvinst"));
+        const std::uint64_t fassung = instrumentFassung();
+        REQUIRE(creator.speichereUnter(pfad));
+        CHECK(gespeichert == QStringList{pfad});
+        CHECK(creator.datei() == pfad);
+        CHECK_FALSE(creator.geaendert());
+        CHECK(creator.windowTitle() == QStringLiteral("Instrument: My strings"));
+        CHECK(instrumentFassung() > fassung);
+        Instrument ausDatei;
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        CHECK(ausDatei == creator.instrument());
+        CHECK(ausDatei.verstimmungCent == doctest::Approx(20.0));
+        CHECK(findeInstrument(QStringLiteral("strings"))->verstimmungCent == doctest::Approx(9.0));  // das Original bleibt
+
+        // --- Save: in die eigene Datei
+        schieber("creatorSustain")->setValue(50);
+        CHECK(save->isEnabled());
+        save->click();
+        CHECK(gespeichert.size() == 2);
+        CHECK_FALSE(creator.geaendert());
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        CHECK(ausDatei.halten == doctest::Approx(0.5));
+        // eine eigene Datei oeffnen: Save geht gleich
+        creator.oeffne(ausDatei);
+        CHECK(creator.datei() == pfad);
+        CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorBasedOn"))->text() == QStringLiteral("my_strings.lvinst"));
+
+        // --- anspielen: die Kopie — auch ungespeichert — steht in der Vorhoer-Datei
+        schieber("creatorRelease")->setValue(7);  // 70 ms
+        REQUIRE(creator.geaendert());
+        REQUIRE(creator.spieleAn(60));
+        CHECK(toene == QStringList{QStringLiteral("60 ") + InstrumentCreator::vorhoerDatei()});
+        Instrument vorgehoert;
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        CHECK(vorgehoert.ausklangMs == doctest::Approx(70.0));
+        REQUIRE(ladeInstrument(pfad, ausDatei));
+        CHECK(ausDatei.ausklangMs != doctest::Approx(70.0));  // die eigene Datei bleibt, bis Save
+        // die Klaviatur: C3 bis C5, schwarze Tasten liegen oben
+        auto* tasten = creator.findChild<Tastenleiste*>(QStringLiteral("creatorKeys"));
+        REQUIRE(tasten != nullptr);
+        tasten->resize(300, 48);
+        for (const int hoehe : {48, 49, 60, 61, 71, 72}) CHECK(tasten->hoeheBei(tasten->ortVon(hoehe)) == hoehe);
+        CHECK(tasten->hoeheBei(QPoint(-5, 10)) == -1);
+        klick(*tasten, tasten->ortVon(61));
+        CHECK(toene.last().startsWith(QStringLiteral("61 ")));
+        creator.setzeZurueck();  // nichts Ungespeichertes zurueckbleiben lassen
+        QFile::remove(InstrumentCreator::vorhoerDatei());
+    }
+
+    TEST_CASE("Instrument-Editor: Edit instrument oeffnet den Creator — gespeichert nennt die Basis seine Datei")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+
+        InstrumentEditor editor;  // nicht gezeigt: kein Fenster
+        Loop loop = probe();
+        QStringList gemeldet;
+        QObject::connect(&editor, &InstrumentEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            gemeldet << was;
+            loop = neu;
+            editor.setLoop(loop);
+        });
+        int gespeichert = 0;
+        QObject::connect(&editor, &InstrumentEditor::instrumentGespeichert, &editor, [&] { ++gespeichert; });
+        QStringList toene;
+        QObject::connect(&editor, &InstrumentEditor::instrumentTonVerlangt, &editor,
+                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+
+        CHECK_FALSE(editor.oeffneCreator(false));  // noch keine Basis
+        REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
+        CHECK(editor.creator() == nullptr);
+        REQUIRE(editor.oeffneCreator(false));
+        InstrumentCreator* creator = editor.creator();
+        REQUIRE(creator != nullptr);
+        CHECK(creator->instrument() == *findeInstrument(QStringLiteral("piano")));
+
+        // der Creator speichert eine eigene Datei: die Basis nennt sie jetzt
+        creator->aendere([](Instrument& i) { i.titel = QStringLiteral("My piano"); });
+        const QString pfad = ordner.filePath(QStringLiteral("my_piano.lvinst"));
+        REQUIRE(creator->speichereUnter(pfad));
+        CHECK(gemeldet == QStringList{QStringLiteral("Change instrument")});
+        CHECK(loop.muster[0].instrument == pfad);
+        CHECK(gespeichert == 1);
+        auto* auswahl = editor.findChild<QComboBox*>(QStringLiteral("instrumentSound"));
+        REQUIRE(auswahl != nullptr);
+        CHECK(auswahl->currentText() == QStringLiteral("My piano (my_piano.lvinst)"));
+        CHECK(auswahl->count() == static_cast<int>(instrumente().size()) + 1);
+
+        // noch einmal Save in dieselbe Datei: am Loop aendert sich nichts, gemeldet wird es trotzdem
+        creator->aendere([](Instrument& i) { i.halten = 0.3; });
+        REQUIRE(creator->speichere());
+        CHECK(gemeldet.size() == 1);
+        CHECK(gespeichert == 2);
+
+        // der Ton des Creators geht weiter
+        REQUIRE(creator->spieleAn(64));
+        CHECK(toene == QStringList{QStringLiteral("64 ") + InstrumentCreator::vorhoerDatei()});
+
+        // Edit instrument noch einmal: jetzt mit der eigenen Datei
+        REQUIRE(editor.oeffneCreator(false));
+        CHECK(creator->datei() == pfad);
+        CHECK(creator->instrument().halten == doctest::Approx(0.3));
+
+        // ein Instrument, das es nicht gibt, laesst sich nicht bearbeiten
+        editor.setzeInstrument(QStringLiteral("tuba"));
+        CHECK_FALSE(editor.oeffneCreator(false));
+        QFile::remove(InstrumentCreator::vorhoerDatei());
+
+        // `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild des Creators ab
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_CREATOR_BILD"); !bild.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(*findeInstrument(QStringLiteral("strings")));
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(bild));
+        }
     }
 
     TEST_CASE("Instrument-Editor: zeigt eine Basis — jede Aenderung ist eine neue Fassung des Loops")

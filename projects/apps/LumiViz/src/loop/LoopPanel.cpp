@@ -531,6 +531,21 @@ bool LoopPanel::spieleTon(const QString& muster, int hoehe)
 {
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
     if (basis == nullptr || basis->art != MusterArt::Instrument) return false;
+    // mit Lautstaerke und Panorama des Musters
+    return spieleVor(*basis, hoehe);
+}
+
+bool LoopPanel::spieleInstrumentTon(const QString& nennung, int hoehe)
+{
+    if (!m_geladen || nennung.isEmpty()) return false;
+    Muster ton;
+    ton.art = MusterArt::Instrument;
+    ton.instrument = nennung;
+    return spieleVor(ton, hoehe);
+}
+
+bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe)
+{
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
     // spielt der Loop oder ein Muster, hoert man es schon — das Anspielen wuerde es unterbrechen
     if (m_spieler.spielt() && m_vorhoeren == 0) return false;
@@ -539,7 +554,7 @@ bool LoopPanel::spieleTon(const QString& muster, int hoehe)
     if (engine == nullptr || player == nullptr) return false;
 
     // ein Loop aus einem Muster mit dieser einen Note, einen Schlag lang
-    Muster ton = *basis;
+    Muster ton = vorlage;
     ton.name = QStringLiteral("Preview");
     ton.takte = kTakteMin;
     ton.stumm = false;
@@ -596,6 +611,14 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             });
             connect(m_instrumentEditor, &InstrumentEditor::tonVerlangt, this, [this](int hoehe) {
                 if (m_instrumentEditor != nullptr) (void)spieleTon(m_instrumentEditor->muster(), hoehe);
+            });
+            // der Instrument-Creator (Stufe 10b): er spielt sein Instrument an, auch ungespeichert
+            connect(m_instrumentEditor, &InstrumentEditor::instrumentTonVerlangt, this,
+                    [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
+            // eine Instrument-Datei ist neu geschrieben: wer sie spielt, rechnet ihre Toene neu
+            connect(m_instrumentEditor, &InstrumentEditor::instrumentGespeichert, this, [this] {
+                if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
+                meldeStand();  // auch ein Clip im Composer, der diesen Loop spielt
             });
         }
         if (!m_instrumentEditor->zeige(m_loop, muster)) return false;
