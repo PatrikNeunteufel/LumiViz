@@ -22,6 +22,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <vector>
+
 namespace lumi::loop
 {
 
@@ -64,6 +66,35 @@ bool loescheClip(Loop& loop, int kanal, int clip);
 /// Die Basis umbenennen — fuer alle Clips, die sie spielen. false = der Name
 /// ist leer oder schon vergeben.
 bool benenneBasisUm(Loop& loop, const QString& alt, const QString& neu);
+
+// --- Mehrere Clips zugleich (Stufe 12c) --------------------------------------
+
+/// Ein Clip, benannt nach Kanal und Starttakt — im Kanal eindeutig, und
+/// anders als sein Platz in der Liste bleibt es gueltig, wenn andere Clips
+/// dazukommen oder gehen.
+struct ClipOrt
+{
+    int kanal = -1;
+    int startTakt = 0;
+
+    [[nodiscard]] bool operator==(const ClipOrt&) const = default;
+};
+
+/// Der Platz des Clips in seinem Kanal; -1 = es gibt ihn nicht.
+[[nodiscard]] int findeClip(const Loop& loop, ClipOrt ort);
+/// Alle genannten Clips um dieselben Takte und Kanaele versetzen — ihre Lage
+/// zueinander bleibt. Der Versatz wird so weit gekuerzt, dass kein Clip vor
+/// Takt 0 oder ausserhalb der Kanaele landet. Anders als ein einzelner Clip
+/// rueckt die Gruppe nicht an eine freie Kante: liegt an einem der Ziele ein
+/// anderer Clip, geschieht nichts. true = versetzt, `orte` nennt die neuen
+/// Stellen; false = nichts geaendert (auch bei Versatz null).
+bool versetzeClips(Loop& loop, std::vector<ClipOrt>& orte, int kanalVersatz, int taktVersatz);
+/// Verbundene Kopien aller genannten Clips anlegen, als Gruppe nach hinten
+/// versetzt: an die erste Stelle hinter der Gruppe, an der alle Kopien Platz
+/// haben. `orte` nennt danach die Kopien. Die Effekte eines Clips gehen mit.
+bool dupliziereClips(Loop& loop, std::vector<ClipOrt>& orte);
+/// Alle genannten Clips entfernen; Basen ohne Clip gehen mit.
+bool loescheClips(Loop& loop, const std::vector<ClipOrt>& orte);
 
 // --- Muster: was der Drum-Editor aendert (Stufe 6b) --------------------------
 

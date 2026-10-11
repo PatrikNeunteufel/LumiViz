@@ -1,0 +1,43 @@
+{
+    "beatsPerBar": 4,
+    "bpm": 120,
+    "channels": [
+        {
+            "clips": [
+                {
+                    "pattern": "Pattern 1",
+                    "repeat": 1,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "name": "Channel 1"
+        }
+    ],
+    "format": "lumiviz-loop",
+    "patterns": [
+        {
+            "bars": 4,
+            "instrument": "strings",
+            "kind": "instrument",
+            "mute": false,
+            "name": "Pattern 1",
+            "notes": [
+                [0, 16, 59, 1],
+                [4, 4, 62, 1],
+                [16, 16, 62, 1],
+                [20, 4, 65, 1],
+                [32, 16, 57, 1],
+                [36, 4, 60, 1],
+                [48, 16, 59, 1],
+                [52, 4, 62, 1]
+            ],
+            "pan": 0,
+            "volume": 1
+        }
+    ],
+    "stepsPerBeat": 4,
+    "swing": 0,
+    "version": 3,
+    "volume": 0.5
+}

@@ -73,9 +73,10 @@ bool inOrdnung(const Loop& loop)
     return bericht.isEmpty() && gerichtet == loop;
 }
 
-void maus(QWidget& ziel, QEvent::Type art, QPoint ort, Qt::MouseButton taste, Qt::MouseButtons tasten)
+void maus(QWidget& ziel, QEvent::Type art, QPoint ort, Qt::MouseButton taste, Qt::MouseButtons tasten,
+          Qt::KeyboardModifiers dazu = Qt::NoModifier)
 {
-    QMouseEvent ereignis(art, QPointF(ort), QPointF(ziel.mapToGlobal(ort)), taste, tasten, Qt::NoModifier);
+    QMouseEvent ereignis(art, QPointF(ort), QPointF(ziel.mapToGlobal(ort)), taste, tasten, dazu);
     QCoreApplication::sendEvent(&ziel, &ereignis);
 }
 
@@ -270,6 +271,230 @@ TEST_SUITE("LoopArrangement")
         CHECK(loop.findeMuster(QStringLiteral("A")) != nullptr);
         CHECK_FALSE(kanalLoeschen(loop, 3));
         CHECK(inOrdnung(loop));
+    }
+
+    TEST_CASE("Loop bearbeiten: mehrere Clips zugleich versetzen, kopieren und loeschen")
+    {
+        // Stufe 12c (S113). probe(): Drums A 0 bis 8, B 8 bis 16; Perc A 4 bis 8
+        Loop loop = probe();
+        loop.kanaele[1].clips[0].effekte.echo.an = true;
+        const Loop vorher = loop;
+        CHECK(findeClip(loop, {0, 8}) == 1);
+        CHECK(findeClip(loop, {0, 9}) == -1);
+        CHECK(findeClip(loop, {7, 0}) == -1);
+
+        SUBCASE("versetzen: alle um dieselben Takte, die Lage zueinander bleibt")
+        {
+            std::vector<ClipOrt> orte = {{0, 0}, {1, 4}};
+            REQUIRE(versetzeClips(loop, orte, 0, 16));
+            CHECK(orte == std::vector<ClipOrt>{{0, 16}, {1, 20}});
+            CHECK(clipIn(loop, 0, 1) == LoopClip{QStringLiteral("A"), 16, 2});
+            CHECK(clipIn(loop, 1, 0).startTakt == 20);
+            CHECK(clipIn(loop, 1, 0).effekte.echo.an);  // die Effekte reisen mit
+            CHECK(inOrdnung(loop));
+        }
+        SUBCASE("liegt an einem der Ziele ein anderer Clip, geschieht nichts")
+        {
+            std::vector<ClipOrt> orte = {{0, 0}, {1, 4}};
+            CHECK_FALSE(versetzeClips(loop, orte, 0, 4));  // A kaeme auf 4 bis 12, dort liegt B
+            CHECK(loop == vorher);
+            CHECK(orte == std::vector<ClipOrt>{{0, 0}, {1, 4}});
+            // die Gruppe darf dabei ueber sich selbst rutschen
+            std::vector<ClipOrt> beide = {{0, 0}, {0, 8}};
+            REQUIRE(versetzeClips(loop, beide, 0, 4));
+            CHECK(clipIn(loop, 0, 0).startTakt == 4);
+            CHECK(clipIn(loop, 0, 1).startTakt == 12);
+            CHECK(inOrdnung(loop));
+        }
+        SUBCASE("der Versatz wird gekuerzt: nicht vor Takt 0, nicht aus den Kanaelen")
+        {
+            std::vector<ClipOrt> perc = {{1, 4}};
+            REQUIRE(versetzeClips(loop, perc, 0, -100));
+            CHECK(perc == std::vector<ClipOrt>{{1, 0}});
+            std::vector<ClipOrt> b = {{0, 8}};
+            REQUIRE(versetzeClips(loop, b, 5, 0));  // nur ein Kanal weiter gibt es
+            CHECK(b == std::vector<ClipOrt>{{1, 8}});
+            CHECK(inOrdnung(loop));
+            // bleibt vom Versatz nichts uebrig, ist nichts geaendert
+            std::vector<ClipOrt> vorn = {{0, 0}};
+            CHECK_FALSE(versetzeClips(loop, vorn, -3, -3));
+            std::vector<ClipOrt> fehlt = {{0, 3}};
+            CHECK_FALSE(versetzeClips(loop, fehlt, 0, 4));
+        }
+        SUBCASE("kopieren: die Gruppe als Ganzes an die erste Stelle dahinter, an der alle Platz haben")
+        {
+            std::vector<ClipOrt> orte = {{0, 0}, {1, 4}};
+            REQUIRE(dupliziereClips(loop, orte));
+            // direkt dahinter (ab Takt 8) laege die Kopie von A auf B: erst ab 16 passt es
+            CHECK(orte == std::vector<ClipOrt>{{0, 16}, {1, 20}});
+            CHECK(loop.kanaele[0].clips.size() == 3u);
+            CHECK(loop.kanaele[1].clips.size() == 2u);
+            CHECK(clipIn(loop, 0, 0) == clipIn(vorher, 0, 0));  // die Vorlagen bleiben
+            CHECK(clipIn(loop, 1, 1).effekte.echo.an);          // die Kopie nimmt die Effekte mit
+            CHECK(clipIn(loop, 1, 1).muster == QStringLiteral("A"));  // und bleibt verbunden
+            CHECK(inOrdnung(loop));
+        }
+        SUBCASE("loeschen: alle genannten, eine Basis ohne Clip geht mit")
+        {
+            REQUIRE(loescheClips(loop, {{0, 0}, {1, 4}}));
+            CHECK(loop.kanaele[0].clips.size() == 1u);
+            CHECK(loop.kanaele[1].clips.empty());
+            CHECK(loop.findeMuster(QStringLiteral("A")) == nullptr);
+            CHECK(loop.findeMuster(QStringLiteral("B")) != nullptr);
+            CHECK_FALSE(loescheClips(loop, {{0, 0}}));  // den gibt es nicht mehr
+            CHECK_FALSE(loescheClips(loop, {}));
+        }
+    }
+
+    TEST_CASE("Taktachse: mehrere Clips markieren — Ctrl+Klick, Rahmen, und was dann fuer alle gilt")
+    {
+        // Stufe 12c (S113), Skizze §4g
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        Taktachse achse;
+        achse.resize(900, 260);
+        Loop loop = probe();
+        loop.kanaele[1].clips[0].effekte.hall.an = true;  // traegt die Marke fx
+        achse.setLoop(loop, true);
+
+        int aenderungen = 0;
+        QString zuletzt;
+        QObject::connect(&achse, &Taktachse::bearbeitet, &achse, [&](const Loop& neu, const QString& was) {
+            ++aenderungen;
+            zuletzt = was;
+            achse.zeigeBearbeitet(neu);
+        });
+        const auto klick = [&achse](QPoint ort, Qt::KeyboardModifiers dazu = Qt::NoModifier) {
+            maus(achse, QEvent::MouseButtonPress, ort, Qt::LeftButton, Qt::LeftButton, dazu);
+            maus(achse, QEvent::MouseButtonRelease, ort, Qt::LeftButton, Qt::NoButton, dazu);
+        };
+        const QPoint drumsA = achse.clipRechteck(0, 0).center();
+        const QPoint drumsB = achse.clipRechteck(0, 1).center();
+        const QPoint percA = achse.clipRechteck(1, 0).center();
+        const int jeTakt = achse.xVonTakt(1) - achse.xVonTakt(0);
+
+        SUBCASE("Ctrl+Klick nimmt einen Clip dazu und wieder heraus")
+        {
+            klick(drumsA);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 0}});
+            klick(percA, Qt::ControlModifier);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 0}, {1, 4}});
+            CHECK(achse.istMarkiert(0, 0));
+            CHECK(achse.istMarkiert(1, 0));
+            CHECK_FALSE(achse.istMarkiert(0, 1));
+            // der zuletzt angeklickte ist der Clip der Auswahl
+            CHECK(achse.gewaehlterKanal() == 1);
+            klick(percA, Qt::ControlModifier);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 0}});
+            CHECK(achse.gewaehlterKanal() == 0);
+            klick(drumsA, Qt::ControlModifier);
+            CHECK(achse.markierte().empty());
+            CHECK(achse.auswahl() == nullptr);
+            CHECK(aenderungen == 0);
+        }
+        SUBCASE("ein Rahmen auf freier Flaeche markiert, was er beruehrt")
+        {
+            // von der freien Flaeche hinter Perc A hinauf bis in Drums B
+            const QPoint frei(achse.xVonTakt(10), achse.yVonZeile(1));
+            ziehe(achse, frei, QPoint(achse.xVonTakt(6), achse.yVonZeile(0)));
+            CHECK(achse.markierte().size() == 3u);  // Drums A (bis 8), Drums B (ab 8), Perc A (bis 8)
+            // ein Rahmen, der nichts trifft, nimmt die Marken weg
+            ziehe(achse, QPoint(achse.xVonTakt(17), achse.yVonZeile(1)), QPoint(achse.xVonTakt(19), achse.yVonZeile(1) + 6));
+            CHECK(achse.markierte().empty());
+            // mit Ctrl kommt der Rahmen zu den Marken dazu
+            klick(drumsA);
+            maus(achse, QEvent::MouseButtonPress, frei, Qt::LeftButton, Qt::LeftButton, Qt::ControlModifier);
+            maus(achse, QEvent::MouseMove, QPoint(achse.xVonTakt(7), achse.yVonZeile(1)), Qt::NoButton, Qt::LeftButton,
+                 Qt::ControlModifier);
+            maus(achse, QEvent::MouseButtonRelease, QPoint(achse.xVonTakt(7), achse.yVonZeile(1)), Qt::LeftButton,
+                 Qt::NoButton, Qt::ControlModifier);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 0}, {1, 4}});
+            CHECK(aenderungen == 0);
+            // Ctrl+A markiert alle
+            taste(achse, Qt::Key_A, Qt::ControlModifier);
+            CHECK(achse.markierte().size() == 3u);
+        }
+        SUBCASE("ein Klick auf einen von mehreren markierten laesst nur ihn uebrig")
+        {
+            achse.markiere({{0, 0}, {1, 4}});
+            maus(achse, QEvent::MouseButtonPress, percA, Qt::LeftButton, Qt::LeftButton);
+            CHECK(achse.markierte().size() == 2u);  // beim Druck noch beide: es koennte ein Zug werden
+            maus(achse, QEvent::MouseButtonRelease, percA, Qt::LeftButton, Qt::NoButton);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{1, 4}});
+        }
+        SUBCASE("ziehen bewegt alle markierten zusammen — und bleibt stehen, wo kein Platz ist")
+        {
+            achse.markiere({{0, 8}, {1, 4}});  // Drums B und Perc A
+            // vier Takte nach rechts: B auf 12 bis 20, Perc A auf 8 bis 12
+            ziehe(achse, drumsB, drumsB + QPoint(4 * jeTakt, 0));
+            CHECK(aenderungen == 1);
+            CHECK(zuletzt == QStringLiteral("Move clips"));
+            CHECK(clipIn(achse.loop(), 0, 1).startTakt == 12);
+            CHECK(clipIn(achse.loop(), 1, 0).startTakt == 8);
+            CHECK(clipIn(achse.loop(), 1, 0).effekte.hall.an);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 12}, {1, 8}});
+            CHECK(inOrdnung(achse.loop()));
+            // zurueck nach links ueber Drums A hinweg geht nicht: die Gruppe bleibt an der
+            // letzten Stelle, an der Platz war (B direkt hinter A)
+            // (die Maus kommt auf dem Weg an vier Takten vorbei, dort ist Platz; bei zehn nicht mehr)
+            // Der Loop ist laenger geworden, die Achse zeigt mehr Takte: der Massstab ist neu.
+            const QPoint jetzt = achse.clipRechteck(0, 1).center();
+            const QPoint vier(achse.xVonTakt(12) - achse.xVonTakt(8), 0);
+            const QPoint zehn(achse.xVonTakt(12) - achse.xVonTakt(2), 0);
+            maus(achse, QEvent::MouseButtonPress, jetzt, Qt::LeftButton, Qt::LeftButton);
+            maus(achse, QEvent::MouseMove, jetzt - vier, Qt::NoButton, Qt::LeftButton);
+            CHECK(clipIn(achse.loop(), 0, 1).startTakt == 8);
+            maus(achse, QEvent::MouseMove, jetzt - zehn, Qt::NoButton, Qt::LeftButton);
+            maus(achse, QEvent::MouseButtonRelease, jetzt - zehn, Qt::LeftButton, Qt::NoButton);
+            CHECK(clipIn(achse.loop(), 0, 1).startTakt == 8);
+            CHECK(clipIn(achse.loop(), 1, 0).startTakt == 4);
+            CHECK(inOrdnung(achse.loop()));
+            // Esc im Zug: alles wie vorher, auch die Marken
+            const Loop davor = achse.loop();
+            const QPoint wieder = achse.clipRechteck(0, 1).center();
+            ziehe(achse, wieder, wieder + QPoint(achse.xVonTakt(4) - achse.xVonTakt(0), 0), false);
+            CHECK(clipIn(achse.loop(), 0, 1).startTakt == 12);  // im Zug schon zu sehen
+            taste(achse, Qt::Key_Escape);
+            maus(achse, QEvent::MouseButtonRelease, wieder, Qt::LeftButton, Qt::NoButton);
+            CHECK(achse.loop() == davor);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 8}, {1, 4}});
+        }
+        SUBCASE("Ctrl+D kopiert alle markierten, Entf loescht sie")
+        {
+            achse.markiere({{0, 0}, {1, 4}});
+            taste(achse, Qt::Key_D, Qt::ControlModifier);
+            CHECK(zuletzt == QStringLiteral("Duplicate clips"));
+            CHECK(achse.loop().kanaele[0].clips.size() == 3u);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 16}, {1, 20}});  // markiert sind die Kopien
+            taste(achse, Qt::Key_Delete);
+            CHECK(zuletzt == QStringLiteral("Delete clips"));
+            CHECK(achse.loop() == loop);
+            CHECK(achse.markierte().empty());
+            CHECK(aenderungen == 2);
+        }
+        SUBCASE("eine Kante gehoert einem Clip: der Zug an ihr laesst nur ihn markiert")
+        {
+            achse.markiere({{0, 0}, {1, 4}});
+            const QRect r = achse.clipRechteck(1, 0);
+            ziehe(achse, QPoint(r.right() - 2, r.center().y()), QPoint(r.right() - 2 + 4 * jeTakt, r.center().y()));
+            CHECK(zuletzt == QStringLiteral("Resize clip"));
+            CHECK(clipIn(achse.loop(), 1, 0).wiederholungen == 2);
+            CHECK(achse.markierte() == std::vector<ClipOrt>{{1, 4}});
+            CHECK(clipIn(achse.loop(), 0, 0) == clipIn(loop, 0, 0));
+        }
+        SUBCASE("das Bild: markierte Clips tragen einen Rand, ein Clip mit Effekt die Marke fx")
+        {
+            achse.markiere({{0, 8}, {1, 4}});
+            const QImage bild = achse.grab().toImage();
+            CHECK_FALSE(bild.isNull());
+            achse.markiere({});
+            CHECK(achse.grab().toImage() != bild);  // ohne Marken sieht es anders aus
+            if (const QString datei = qEnvironmentVariable("LUMIVIZ_LOOP_MARKEN_BILD"); !datei.isEmpty())
+                CHECK(bild.save(datei));
+        }
     }
 
     TEST_CASE("Taktachse: Geometrie in Takten, Auswahl, Ziehen und die Aktionen des Rechtsklicks")

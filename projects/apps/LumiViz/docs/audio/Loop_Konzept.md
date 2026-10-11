@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.26.0
+> **Version:** 0.27.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1069,6 +1069,49 @@ Clip; gespeicherte Effekt-Vorlagen; Effekte je Kanal oder je Drum-Spur.
 **Vor dem Bau geklärt:** das Dateiformat (F2 a, §4) und wo gerechnet wird
 (G1 b, §3).
 
+### Mehrere Clips markieren (gebaut, 12c)
+
+`loop/Taktachse` und, als reine Regeln, `loop/Bearbeiten.hpp` (`ClipOrt`,
+`versetzeClips`, `dupliziereClips`, `loescheClips`). Gebaut wie die Skizze:
+Klick, **Ctrl+Klick**, Rahmen auf freier Fläche; markierte Clips tragen den
+Rand in der Markierfarbe; die Marke **fx** an jedem Clip mit eingeschaltetem
+Effekt; die Clip-Zeile nennt bei mehreren ihre Zahl und wie viele davon
+Effekte haben. **Effects...** im Menü fehlt noch (12d).
+
+**Dazu von mir gesetzt, nicht entschieden:**
+
+- **Gruppe ziehen:** alle markierten rücken um dieselben Takte und Kanäle,
+  ihre Lage zueinander bleibt. Anders als ein einzelner Clip springt die
+  Gruppe **nicht** an eine freie Kante: ist unter der Maus für einen von
+  ihnen kein Platz, bleibt sie an der letzten Stelle stehen, an der Platz
+  war. Der Versatz endet an Takt 1 und am ersten und letzten Kanal.
+- **Duplicate** bei mehreren: die Gruppe als Ganzes, an die erste Stelle
+  hinter ihr, an der alle Kopien Platz haben; markiert sind danach die
+  Kopien. Die Effekte gehen mit, die Kopien bleiben verbunden.
+- **Ein Klick** auf einen von mehreren markierten lässt beim Loslassen nur
+  ihn markiert; wird stattdessen gezogen, zieht die Gruppe.
+- **Mit Ctrl** kommt auch ein Rahmen zu den Marken dazu. **Ctrl+A** und
+  **Select all clips** im Menü der freien Fläche markieren alle.
+- **Der Rechtsklick** auf einen von mehreren markierten lässt die Marken
+  stehen; das Menü nennt dann „Duplicate n clips" und „Delete n clips",
+  **Edit base**, **Make new base and edit** und **Rename base...** sind grau
+  — eine Basis gehört zu einem Clip.
+- Ohne Auswahl sagt die Clip-Zeile, wie man mehrere markiert („Ctrl+click or
+  drag a frame on empty space to select several clips").
+- Ein Clip gilt im Programm als „derselbe" über Kanal und Starttakt
+  (`ClipOrt`). Ändert eine Bearbeitung von außen die Lage markierter Clips
+  (etwa **Bars** im Editor, das Clips nach hinten schiebt), fallen sie aus
+  den Marken.
+
+**Nicht drin:** Shift+Klick für einen Bereich; die Gruppe an den Kanten
+gemeinsam verlängern; Kopieren und Einfügen über die Ablage.
+
+Geprüft in `test_LoopArrangement.cpp` (ein Fall zu den Regeln, einer zur
+Achse mit sieben Teilen); `LUMIVIZ_LOOP_MARKEN_BILD=<datei.png>` legt ein
+Bild der Achse mit zwei markierten Clips und einer Marke fx ab — angesehen.
+**Nicht geprüft:** das Menü des Rechtsklicks (es öffnet ein Fenster); die
+Clip-Zeile des Panels bei mehreren. **Im Programm nicht gesehen.**
+
 ### Die Rechenbausteine (gebaut, 12b Teil 1)
 
 `loop/Effekte.hpp`: `Verzerrer`, `EchoEffekt`, `HallEffekt` und die
@@ -1243,7 +1286,7 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **Offen:** 12c Markieren mehrerer Clips, 12d Fenster Clip effects und Marke fx, 12e Doku und Sichttest-Liste |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **Offen:** 12d Fenster Clip effects und Effects... im Menü, 12e Doku und Sichttest-Liste |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
@@ -1341,6 +1384,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.27.0** (S113, 2026-10-11): 12c gebaut — mehrere Clips markieren
+  (Ctrl+Klick, Rahmen, Ctrl+A), als Gruppe ziehen, kopieren und löschen, die
+  Marke fx (§4g).
 
 - **0.26.0** (S113, 2026-10-11): 12b Teil 2 gebaut — Busse im Rechenkern,
   die Ketten im Klangerzeuger (§4g): Clips mit Effekten sind zu hören;

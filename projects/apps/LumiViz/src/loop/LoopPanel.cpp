@@ -704,7 +704,27 @@ void LoopPanel::zeigeClip()
     const LoopClip* clip = m_achse->auswahl();
     if (clip == nullptr)
     {
-        m_clipZeile->setText(m_geladen ? tr("Right-click a channel to add a clip") : QString());
+        // sagt auch, wie man mehrere markiert — sonst findet es niemand
+        m_clipZeile->setText(m_geladen ? tr("Right-click a channel to add a clip · Ctrl+click or drag a frame on "
+                                            "empty space to select several clips")
+                                       : QString());
+        return;
+    }
+    if (const auto zahl = m_achse->markierte().size(); zahl > 1)
+    {
+        int mitEffekt = 0;
+        for (const ClipOrt& ort : m_achse->markierte())
+        {
+            const int platz = findeClip(m_achse->loop(), ort);
+            if (platz >= 0 && m_achse->loop().kanaele[static_cast<std::size_t>(ort.kanal)]
+                                  .clips[static_cast<std::size_t>(platz)]
+                                  .effekte.einerAn())
+                ++mitEffekt;
+        }
+        m_clipZeile->setText(tr("%1 clips selected · %2 with effects · drag moves them together, Del deletes, "
+                                "Ctrl+D duplicates")
+                                 .arg(zahl)
+                                 .arg(mitEffekt));
         return;
     }
     const Loop& gezeigt = m_achse->loop();

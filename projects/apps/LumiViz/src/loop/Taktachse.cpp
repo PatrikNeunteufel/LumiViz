@@ -76,6 +76,8 @@ void Taktachse::setLoop(const Loop& loop, bool geladen)
     setzeLaenge(geladen ? anzeigeTakte(loop) * kTicksJeTakt : 0);
     m_kanal = -1;
     m_clip = -1;
+    m_gruppe.clear();
+    m_rahmen = {};
     beginneNeu();
     updateGeometry();
     passeRollenAn();
@@ -89,15 +91,112 @@ void Taktachse::zeigeBearbeitet(const Loop& loop)
     m_zugLaeuft = false;
     m_loop = loop;
     setzeLaenge(anzeigeTakte(loop) * kTicksJeTakt);
-    if (auswahl() == nullptr)  // den Clip gibt es nicht mehr
-    {
-        m_kanal = -1;
-        m_clip = -1;
-    }
+    m_rahmen = {};
+    richteGruppe();  // was es nicht mehr gibt, faellt aus den Marken
     updateGeometry();
     passeRollenAn();
     update();
     Q_EMIT auswahlGeaendert();  // auch bei gleicher Auswahl: der Clip kann neue Takte haben
+}
+
+ClipOrt Taktachse::ortVon(int kanal, int clip) const
+{
+    if (kanal < 0 || kanal >= static_cast<int>(m_loop.kanaele.size())) return {};
+    const auto& clips = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips;
+    if (clip < 0 || clip >= static_cast<int>(clips.size())) return {};
+    return {kanal, clips[static_cast<std::size_t>(clip)].startTakt};
+}
+
+void Taktachse::richteGruppe()
+{
+    if (m_gruppe.size() <= 1)
+    {
+        // ein einzelner Clip: die Marke folgt dem angeklickten
+        m_gruppe.clear();
+        if (auswahl() != nullptr)
+            m_gruppe.push_back(ortVon(m_kanal, m_clip));
+        else
+        {
+            m_kanal = -1;
+            m_clip = -1;
+        }
+        return;
+    }
+    std::vector<ClipOrt> gibtEs;
+    for (const ClipOrt& ort : m_gruppe)
+        if (findeClip(m_loop, ort) >= 0 && std::find(gibtEs.begin(), gibtEs.end(), ort) == gibtEs.end())
+            gibtEs.push_back(ort);
+    m_gruppe = std::move(gibtEs);
+    // der angeklickte gehoert zu den markierten — sonst wird es der erste von ihnen
+    if (auswahl() == nullptr ||
+        std::find(m_gruppe.begin(), m_gruppe.end(), ortVon(m_kanal, m_clip)) == m_gruppe.end())
+    {
+        m_kanal = m_gruppe.empty() ? -1 : m_gruppe.front().kanal;
+        m_clip = m_gruppe.empty() ? -1 : findeClip(m_loop, m_gruppe.front());
+    }
+}
+
+bool Taktachse::istMarkiert(int kanal, int clip) const
+{
+    if (kanal < 0 || clip < 0) return false;
+    const ClipOrt ort = ortVon(kanal, clip);
+    return ort.kanal >= 0 && std::find(m_gruppe.begin(), m_gruppe.end(), ort) != m_gruppe.end();
+}
+
+void Taktachse::markiereUm(int kanal, int clip)
+{
+    const ClipOrt ort = ortVon(kanal, clip);
+    if (ort.kanal < 0) return;
+    const auto platz = std::find(m_gruppe.begin(), m_gruppe.end(), ort);
+    if (platz == m_gruppe.end())
+    {
+        m_gruppe.push_back(ort);
+        m_kanal = kanal;
+        m_clip = clip;
+    }
+    else
+    {
+        m_gruppe.erase(platz);
+        // der angeklickte ist jetzt der zuletzt dazugenommene, der noch markiert ist
+        m_kanal = m_gruppe.empty() ? -1 : m_gruppe.back().kanal;
+        m_clip = m_gruppe.empty() ? -1 : findeClip(m_loop, m_gruppe.back());
+    }
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void Taktachse::markiere(const std::vector<ClipOrt>& orte)
+{
+    m_gruppe.clear();
+    for (const ClipOrt& ort : orte)
+        if (findeClip(m_loop, ort) >= 0 && std::find(m_gruppe.begin(), m_gruppe.end(), ort) == m_gruppe.end())
+            m_gruppe.push_back(ort);
+    m_kanal = m_gruppe.empty() ? -1 : m_gruppe.front().kanal;
+    m_clip = m_gruppe.empty() ? -1 : findeClip(m_loop, m_gruppe.front());
+    update();
+    Q_EMIT auswahlGeaendert();
+}
+
+void Taktachse::markiereAlle()
+{
+    std::vector<ClipOrt> alle;
+    for (int k = 0; k < static_cast<int>(m_loop.kanaele.size()); ++k)
+        for (const LoopClip& clip : m_loop.kanaele[static_cast<std::size_t>(k)].clips)
+            alle.push_back({k, clip.startTakt});
+    markiere(alle);
+}
+
+std::vector<ClipOrt> Taktachse::clipsIm(const QRect& rahmen) const
+{
+    std::vector<ClipOrt> treffer;
+    for (int k = 0; k < static_cast<int>(m_loop.kanaele.size()); ++k)
+    {
+        const auto& clips = m_loop.kanaele[static_cast<std::size_t>(k)].clips;
+        for (int c = 0; c < static_cast<int>(clips.size()); ++c)
+            if (clipRechteck(k, c).intersects(rahmen))
+                treffer.push_back({k, clips[static_cast<std::size_t>(c)].startTakt});
+    }
+    return treffer;
 }
 
 void Taktachse::setSpielt(bool spielt)
@@ -123,14 +222,11 @@ const LoopClip* Taktachse::auswahl() const
 
 void Taktachse::waehle(int kanal, int clip)
 {
-    if (kanal == m_kanal && clip == m_clip) return;
+    if (kanal == m_kanal && clip == m_clip && m_gruppe.size() <= 1) return;
     m_kanal = kanal;
     m_clip = clip;
-    if (auswahl() == nullptr)
-    {
-        m_kanal = -1;
-        m_clip = -1;
-    }
+    m_gruppe.clear();  // nur noch dieser eine
+    richteGruppe();
     update();
     Q_EMIT auswahlGeaendert();
 }
@@ -262,7 +358,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             const LoopClip& clip = kanal.clips[static_cast<std::size_t>(c)];
             const QRect r = clipRechteck(k, c);
             if (r.right() < kKopfBreite || r.left() > width()) continue;  // aus dem Fenster gerollt
-            const bool gewaehlt = k == m_kanal && c == m_clip;
+            const bool gewaehlt = istMarkiert(k, c);
             const QColor farbe = basisFarbe(clip.muster, kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
@@ -289,6 +385,20 @@ void Taktachse::paintEvent(QPaintEvent*)
             // Anfang des Clips hinausgerollt ist
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
             namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
+            // die Marke „fx": an diesem Clip ist ein Effekt eingeschaltet (Stufe 12)
+            if (clip.effekte.einerAn() && r.width() >= 48 && namePasst(r.height()))
+            {
+                const QString marke = QStringLiteral("fx");
+                const int breit = fontMetrics().horizontalAdvance(marke) + 8;
+                const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
+                const QRect feld(r.right() - breit - 3, r.center().y() - markeHoch / 2, breit, markeHoch);
+                p.setPen(QPen(Qt::white, 1.0));
+                p.setBrush(QColor(0, 0, 0, 70));
+                p.drawRoundedRect(feld, 3, 3);
+                p.setBrush(Qt::NoBrush);
+                p.drawText(feld, Qt::AlignCenter, marke);
+                namensFeld.setRight(feld.left() - 4);
+            }
             const QString beschriftung = clip.wiederholungen > 1
                                              ? tr("%1 × %2").arg(clip.muster).arg(clip.wiederholungen)
                                              : clip.muster;
@@ -301,6 +411,16 @@ void Taktachse::paintEvent(QPaintEvent*)
     p.setPen(linie);
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
     p.setClipRect(ausschnitte.zeilenZeit);
+    if (m_griff == Griff::Rahmen && m_zugLaeuft)
+    {
+        // der Rahmen, der Clips markiert
+        QColor flaeche = pal.color(QPalette::Highlight);
+        p.setPen(QPen(flaeche, 1.0, Qt::DashLine));
+        flaeche.setAlpha(40);
+        p.setBrush(flaeche);
+        p.drawRect(m_rahmen);
+        p.setBrush(Qt::NoBrush);
+    }
     auflage();
 
     // --- zweiter Gang: das Lineal, ueber allem, was darunter gerollt ist
@@ -354,27 +474,109 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
     int kanal = -1;
     int clip = -1;
     const Griff griff = griffBei(ort, &kanal, &clip);
-    if (griff != Griff::Keiner)
+    const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
+    m_klickSammelt = false;
+    if (griff == Griff::Keiner)
     {
-        m_griff = griff;
-        m_zugLaeuft = false;
-        m_zugStart = ort;
-        m_zugKanal = kanal;
-        m_zugClip = clip;
-        m_vorZug = m_loop;
-        m_zugVersatz = stelleVon(ort.x()) -
-                       m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)].startTakt *
-                           kTicksJeTakt;
+        // freie Flaeche: von hier laesst sich ein Rahmen aufziehen; mit Ctrl
+        // kommt, was er trifft, zu den Marken dazu
+        if (ort.x() >= kKopfBreite)
+        {
+            m_griff = Griff::Rahmen;
+            m_zugLaeuft = false;
+            m_zugStart = ort;
+            m_rahmen = {};
+            m_vorZug = m_loop;
+            m_vorGruppe = ctrl ? m_gruppe : std::vector<ClipOrt>{};
+        }
+        if (!ctrl) waehle(-1, -1);
+        return;
     }
-    waehle(kanal, clip);
+    if (ctrl)
+    {
+        markiereUm(kanal, clip);  // dazu oder heraus; gezogen wird dabei nichts
+        return;
+    }
+    // Ein Druck auf einen von mehreren markierten Clips laesst die Marken
+    // stehen: so laesst sich die Gruppe ziehen. Eine Kante gehoert immer nur
+    // einem Clip.
+    if (griff == Griff::Verschieben && m_gruppe.size() > 1 && istMarkiert(kanal, clip))
+    {
+        m_klickSammelt = true;
+        m_kanal = kanal;
+        m_clip = clip;
+        update();
+        Q_EMIT auswahlGeaendert();
+    }
+    else
+        waehle(kanal, clip);
+    m_griff = griff;
+    m_zugLaeuft = false;
+    m_zugStart = ort;
+    m_zugKanal = kanal;
+    m_zugClip = clip;
+    m_vorZug = m_loop;
+    m_vorGruppe = m_gruppe;
+    m_gutKanal = 0;
+    m_gutTakt = 0;
+    m_zugVersatz = stelleVon(ort.x()) -
+                   m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)].startTakt *
+                       kTicksJeTakt;
 }
 
 void Taktachse::zieheZu(QPoint ort)
 {
+    if (m_griff == Griff::Rahmen)
+    {
+        m_rahmen = QRect(m_zugStart, ort).normalized();
+        update();
+        return;
+    }
+    const std::int64_t maus = stelleVon(ort.x());
+    if (m_griff == Griff::Verschieben && m_vorGruppe.size() > 1)
+    {
+        // Die Gruppe als Ganzes: alle um dieselben Takte und Kanaele. Ist an
+        // der Stelle unter der Maus kein Platz, bleibt sie an der letzten, an
+        // der Platz war.
+        const auto& vorher = m_vorZug.kanaele[static_cast<std::size_t>(m_zugKanal)].clips;
+        const ClipOrt gezogen{m_zugKanal, vorher[static_cast<std::size_t>(m_zugClip)].startTakt};
+        const int kanaele = static_cast<int>(m_vorZug.kanaele.size());
+        const int kanalVersatz = std::clamp(zeileBei(ort.y()), 0, kanaele - 1) - m_zugKanal;
+        const int taktVersatz = naechsterTakt(maus - m_zugVersatz) - gezogen.startTakt;
+        const auto versuche = [this](int kanalV, int taktV) {
+            Loop probe = m_vorZug;
+            std::vector<ClipOrt> orte = m_vorGruppe;
+            if (kanalV == 0 && taktV == 0)
+            {
+                m_loop = m_vorZug;
+                m_gruppe = m_vorGruppe;
+                return true;
+            }
+            if (!versetzeClips(probe, orte, kanalV, taktV)) return false;
+            m_loop = std::move(probe);
+            m_gruppe = std::move(orte);
+            return true;
+        };
+        if (versuche(kanalVersatz, taktVersatz))
+        {
+            m_gutKanal = kanalVersatz;
+            m_gutTakt = taktVersatz;
+        }
+        else
+            (void)versuche(m_gutKanal, m_gutTakt);
+        // der gezogene Clip bleibt der angeklickte
+        const auto nr = std::find(m_vorGruppe.begin(), m_vorGruppe.end(), gezogen) - m_vorGruppe.begin();
+        if (nr < static_cast<std::ptrdiff_t>(m_gruppe.size()))
+        {
+            m_kanal = m_gruppe[static_cast<std::size_t>(nr)].kanal;
+            m_clip = findeClip(m_loop, m_gruppe[static_cast<std::size_t>(nr)]);
+        }
+        update();
+        return;
+    }
     m_loop = m_vorZug;
     int ziel = m_zugKanal;
     int platz = m_zugClip;
-    const std::int64_t maus = stelleVon(ort.x());
     switch (m_griff)
     {
         case Griff::Verschieben:
@@ -396,11 +598,14 @@ void Taktachse::zieheZu(QPoint ort)
         case Griff::KanteRechts:
             platz = setzeEnde(m_loop, m_zugKanal, m_zugClip, naechsterTakt(maus));
             break;
+        case Griff::Rahmen:
         case Griff::Keiner:
             return;
     }
     m_kanal = ziel;
     m_clip = platz;
+    m_gruppe.clear();
+    richteGruppe();
     // die Laenge der Achse bleibt im Zug, wie sie war: aenderte sich der
     // Massstab unter der Maus, liefe der Clip ihr davon. Neu gemessen wird
     // beim Loslassen.
@@ -410,14 +615,18 @@ void Taktachse::zieheZu(QPoint ort)
 void Taktachse::brichZugAb()
 {
     if (m_griff == Griff::Keiner) return;
-    if (m_zugLaeuft)
+    if (m_griff == Griff::Rahmen)
+        m_rahmen = {};
+    else if (m_zugLaeuft)
     {
         m_loop = m_vorZug;
         m_kanal = m_zugKanal;
         m_clip = m_zugClip;
+        m_gruppe = m_vorGruppe;
     }
     m_griff = Griff::Keiner;
     m_zugLaeuft = false;
+    m_klickSammelt = false;
     update();
 }
 
@@ -458,15 +667,37 @@ void Taktachse::mouseReleaseEvent(QMouseEvent* event)
     if (m_griff == Griff::Keiner) return;
     const Griff griff = m_griff;
     const bool gezogen = m_zugLaeuft;
+    const bool sammelt = m_klickSammelt;
     m_griff = Griff::Keiner;
     m_zugLaeuft = false;
-    if (!gezogen) return;
+    m_klickSammelt = false;
+    if (griff == Griff::Rahmen)
+    {
+        if (gezogen)
+        {
+            // was der Rahmen beruehrt — mit Ctrl zu dem dazu, was schon markiert war
+            std::vector<ClipOrt> orte = m_vorGruppe;
+            for (const ClipOrt& ort : clipsIm(m_rahmen)) orte.push_back(ort);
+            m_rahmen = {};
+            markiere(orte);
+        }
+        update();
+        return;
+    }
+    if (!gezogen)
+    {
+        // ein Klick ohne Zug auf einen von mehreren markierten: nur er bleibt
+        if (sammelt) waehle(m_kanal, m_clip);
+        return;
+    }
     setzeLaenge(anzeigeTakte(m_loop) * kTicksJeTakt);
     passeRollenAn();
     update();
     if (m_loop == m_vorZug) return;
     Q_EMIT auswahlGeaendert();  // der Clip hat neue Takte
-    Q_EMIT bearbeitet(m_loop, griff == Griff::Verschieben ? tr("Move clip") : tr("Resize clip"));
+    Q_EMIT bearbeitet(m_loop, griff != Griff::Verschieben ? tr("Resize clip")
+                              : m_gruppe.size() > 1       ? tr("Move clips")
+                                                          : tr("Move clip"));
 }
 
 void Taktachse::keyPressEvent(QKeyEvent* event)
@@ -474,6 +705,12 @@ void Taktachse::keyPressEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Escape && m_griff != Griff::Keiner)
     {
         brichZugAb();
+        return;
+    }
+    if (m_griff == Griff::Keiner && m_geladen && event->key() == Qt::Key_A &&
+        event->modifiers() == Qt::ControlModifier)
+    {
+        markiereAlle();
         return;
     }
     if (m_griff == Griff::Keiner && auswahl() != nullptr)
@@ -498,11 +735,7 @@ void Taktachse::uebernimm(const Loop& neu, int kanal, int clip, const QString& w
     setzeLaenge(anzeigeTakte(neu) * kTicksJeTakt);
     m_kanal = kanal;
     m_clip = clip;
-    if (auswahl() == nullptr)
-    {
-        m_kanal = -1;
-        m_clip = -1;
-    }
+    richteGruppe();
     updateGeometry();
     passeRollenAn();
     update();
@@ -516,6 +749,7 @@ bool Taktachse::neuerClip(int kanal, int takt, MusterArt art)
     Loop neu = m_loop;
     const int platz = lumi::loop::neuerClip(neu, kanal, takt, art);
     if (platz < 0) return false;
+    m_gruppe.clear();  // markiert ist danach der neue Clip
     uebernimm(neu, kanal, platz, tr("New clip"));
     return true;
 }
@@ -524,8 +758,18 @@ bool Taktachse::dupliziereAuswahl()
 {
     if (auswahl() == nullptr || m_griff != Griff::Keiner) return false;
     Loop neu = m_loop;
+    if (m_gruppe.size() > 1)
+    {
+        // die Gruppe als Ganzes; markiert sind danach die Kopien
+        std::vector<ClipOrt> orte = m_gruppe;
+        if (!dupliziereClips(neu, orte)) return false;
+        m_gruppe = orte;
+        uebernimm(neu, orte.front().kanal, findeClip(neu, orte.front()), tr("Duplicate clips"));
+        return true;
+    }
     const int platz = dupliziere(neu, m_kanal, m_clip);
     if (platz < 0) return false;
+    m_gruppe.clear();
     uebernimm(neu, m_kanal, platz, tr("Duplicate clip"));
     return true;
 }
@@ -534,7 +778,15 @@ bool Taktachse::loescheAuswahl()
 {
     if (auswahl() == nullptr || m_griff != Griff::Keiner) return false;
     Loop neu = m_loop;
+    if (m_gruppe.size() > 1)
+    {
+        if (!loescheClips(neu, m_gruppe)) return false;
+        m_gruppe.clear();
+        uebernimm(neu, -1, -1, tr("Delete clips"));
+        return true;
+    }
     if (!loescheClip(neu, m_kanal, m_clip)) return false;
+    m_gruppe.clear();
     uebernimm(neu, -1, -1, tr("Delete clip"));
     return true;
 }
@@ -595,6 +847,12 @@ void Taktachse::kanalLoeschen(int kanal)
     if (!m_geladen || m_griff != Griff::Keiner) return;
     Loop neu = m_loop;
     if (!lumi::loop::kanalLoeschen(neu, kanal)) return;
+    // die Marken folgen ihren Kanaelen; was im geloeschten lag, faellt
+    m_gruppe.erase(std::remove_if(m_gruppe.begin(), m_gruppe.end(),
+                                  [kanal](const ClipOrt& ort) { return ort.kanal == kanal; }),
+                   m_gruppe.end());
+    for (ClipOrt& ort : m_gruppe)
+        if (ort.kanal > kanal) --ort.kanal;
     // die Auswahl folgt ihrem Kanal; lag sie im geloeschten, faellt sie
     const int gewaehlt = m_kanal == kanal ? -1 : m_kanal > kanal ? m_kanal - 1 : m_kanal;
     uebernimm(neu, gewaehlt, gewaehlt < 0 ? -1 : m_clip, tr("Delete channel"));
@@ -648,12 +906,27 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
     int clip = -1;
     if (griffBei(ort, &clipKanal, &clip) != Griff::Keiner)
     {
-        waehle(clipKanal, clip);
-        menu.addAction(tr("Edit base"), this, [this] { (void)bearbeiteBasis(); });
-        menu.addAction(tr("Make new base and edit"), this, [this] { (void)neueBasisUndBearbeiten(); });
+        // der Rechtsklick auf einen von mehreren markierten Clips laesst die
+        // Marken stehen: Duplicate und Delete gelten dann fuer alle
+        const bool gruppe = m_gruppe.size() > 1 && istMarkiert(clipKanal, clip);
+        if (gruppe)
+        {
+            m_kanal = clipKanal;
+            m_clip = clip;
+            update();
+            Q_EMIT auswahlGeaendert();
+        }
+        else
+            waehle(clipKanal, clip);
+        const int zahl = static_cast<int>(m_gruppe.size());
+        // die Basis gehoert einem Clip: bei mehreren sind diese Eintraege grau
+        menu.addAction(tr("Edit base"), this, [this] { (void)bearbeiteBasis(); })->setEnabled(!gruppe);
+        menu.addAction(tr("Make new base and edit"), this, [this] { (void)neueBasisUndBearbeiten(); })
+            ->setEnabled(!gruppe);
         menu.addSeparator();
-        menu.addAction(tr("Duplicate"), this, [this] { (void)dupliziereAuswahl(); });
-        menu.addAction(tr("Rename base..."), this, [this] {
+        menu.addAction(gruppe ? tr("Duplicate %1 clips").arg(zahl) : tr("Duplicate"), this,
+                       [this] { (void)dupliziereAuswahl(); });
+        QAction* umbenennen = menu.addAction(tr("Rename base..."), this, [this] {
             const LoopClip* gewaehlt = auswahl();
             if (gewaehlt == nullptr) return;
             bool ok = false;
@@ -661,7 +934,9 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
                                                       gewaehlt->muster, &ok);
             if (ok) (void)benenneBasisUm(neu);
         });
-        menu.addAction(tr("Delete"), this, [this] { (void)loescheAuswahl(); });
+        umbenennen->setEnabled(!gruppe);
+        menu.addAction(gruppe ? tr("Delete %1 clips").arg(zahl) : tr("Delete"), this,
+                       [this] { (void)loescheAuswahl(); });
     }
     else
     {
@@ -677,6 +952,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             menu.addSeparator();
         }
         menu.addAction(tr("Add channel"), this, [this] { kanalHinzu(); });
+        menu.addAction(tr("Select all clips"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
     }
     fuelleZoomMenue(menu);
     menu.exec(event->globalPos());

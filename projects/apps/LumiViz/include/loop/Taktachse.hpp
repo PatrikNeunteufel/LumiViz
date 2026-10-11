@@ -18,6 +18,7 @@
 #pragma once
 
 #include "UI/widgets/Achse.hpp"
+#include "loop/Bearbeiten.hpp"
 #include "loop/Loop.hpp"
 
 #include <QColor>
@@ -26,6 +27,7 @@
 #include <QString>
 
 #include <cstdint>
+#include <vector>
 
 namespace lumi::loop
 {
@@ -59,14 +61,32 @@ public:
     [[nodiscard]] int gewaehlterClip() const { return m_clip; }
     /// Der angeklickte Clip, nullptr = keiner.
     [[nodiscard]] const LoopClip* auswahl() const;
+    /// Genau diesen Clip markieren (-1, -1 = keinen).
     void waehle(int kanal, int clip);
+
+    // --- Mehrere Clips markieren (Stufe 12c) --------------------------------
+    // Markiert wird mit Klick (einer), Ctrl+Klick (dazu oder heraus) und einem
+    // Rahmen auf freier Flaeche. Der zuletzt angeklickte ist der Clip, den
+    // `auswahl` nennt — fuer ihn gelten Edit base und Rename base.
+    /// Alle markierten Clips; der angeklickte ist darunter.
+    [[nodiscard]] const std::vector<ClipOrt>& markierte() const { return m_gruppe; }
+    [[nodiscard]] bool istMarkiert(int kanal, int clip) const;
+    /// Den Clip dazunehmen oder herausnehmen (Ctrl+Klick).
+    void markiereUm(int kanal, int clip);
+    /// Genau diese Clips markieren; der erste wird der angeklickte.
+    void markiere(const std::vector<ClipOrt>& orte);
+    void markiereAlle();
+    /// Die Clips, die der Rahmen beruehrt (in Fensterpunkten).
+    [[nodiscard]] std::vector<ClipOrt> clipsIm(const QRect& rahmen) const;
 
     // --- Bearbeiten: was Rechtsklick und Tasten ausloesen (auch fuer Tests) ---
     /// Einen leeren Clip (4 Takte) an den Takt legen — ein Drumkit oder, mit
     /// `MusterArt::Instrument`, ein Instrument. false = kein Platz.
     bool neuerClip(int kanal, int takt, MusterArt art = MusterArt::Drumkit);
-    /// Eine verbundene Kopie hinter den angeklickten Clip legen.
+    /// Eine verbundene Kopie hinter den angeklickten Clip legen — sind mehrere
+    /// markiert, Kopien von allen, als Gruppe dahinter.
     bool dupliziereAuswahl();
+    /// Den angeklickten Clip loeschen — oder alle markierten.
     bool loescheAuswahl();
     /// Die Basis des angeklickten Clips umbenennen (fuer alle seine Kopien).
     bool benenneBasisUm(const QString& name);
@@ -126,7 +146,13 @@ private:
         Verschieben,
         KanteLinks,
         KanteRechts,
+        Rahmen,  ///< auf freier Flaeche: ein Rahmen, der Clips markiert
     };
+    /// Die Marken in Ordnung bringen, nachdem sich der Loop oder der
+    /// angeklickte Clip geaendert hat: was es nicht mehr gibt, faellt heraus;
+    /// der angeklickte gehoert immer dazu.
+    void richteGruppe();
+    [[nodiscard]] ClipOrt ortVon(int kanal, int clip) const;
     [[nodiscard]] Griff griffBei(QPoint ort, int* kanal, int* clip) const;
     void zieheZu(QPoint ort);
     void brichZugAb();
@@ -146,6 +172,15 @@ private:
     int m_zugKanal = -1;            ///< Kanal und
     int m_zugClip = -1;             ///< Platz des Clips in `m_vorZug`
     Loop m_vorZug;                  ///< der Stand beim Druck
+
+    std::vector<ClipOrt> m_gruppe;     ///< alle markierten Clips
+    std::vector<ClipOrt> m_vorGruppe;  ///< die Marken beim Druck
+    /// Der Druck traf einen von mehreren markierten Clips: wird nicht gezogen,
+    /// bleibt beim Loslassen nur er markiert.
+    bool m_klickSammelt = false;
+    int m_gutKanal = 0;  ///< der letzte Versatz der Gruppe, an dem Platz war
+    int m_gutTakt = 0;
+    QRect m_rahmen;      ///< der Rahmen, solange er gezogen wird
 };
 
 }  // namespace lumi::loop

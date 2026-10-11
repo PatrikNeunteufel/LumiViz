@@ -215,6 +215,128 @@ bool loescheClip(Loop& loop, int kanal, int clip)
     return true;
 }
 
+int findeClip(const Loop& loop, ClipOrt ort)
+{
+    if (!gibtKanal(loop, ort.kanal)) return -1;
+    const auto& clips = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips;
+    for (std::size_t c = 0; c < clips.size(); ++c)
+        if (clips[c].startTakt == ort.startTakt) return static_cast<int>(c);
+    return -1;
+}
+
+namespace
+{
+
+/// Die genannten Clips aus dem Loop nehmen (jeden einmal); false = einen gibt
+/// es nicht. `orte` und `clips` laufen danach gleich.
+bool nimmHeraus(Loop& loop, std::vector<ClipOrt>& orte, std::vector<LoopClip>& clips)
+{
+    std::vector<ClipOrt> einmal;
+    for (const ClipOrt& ort : orte)
+        if (std::find(einmal.begin(), einmal.end(), ort) == einmal.end()) einmal.push_back(ort);
+    clips.clear();
+    for (const ClipOrt& ort : einmal)
+    {
+        const int platz = findeClip(loop, ort);
+        if (platz < 0) return false;
+        auto& liste = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips;
+        clips.push_back(liste[static_cast<std::size_t>(platz)]);
+        liste.erase(liste.begin() + platz);
+    }
+    orte = std::move(einmal);
+    return true;
+}
+
+/// Die Clips an ihre Orte legen; false = an einem ist kein Platz.
+bool legeHinein(Loop& loop, const std::vector<ClipOrt>& orte, const std::vector<LoopClip>& clips)
+{
+    for (std::size_t i = 0; i < orte.size(); ++i)
+    {
+        if (!istFrei(loop, orte[i].kanal, orte[i].startTakt, loop.clipTakte(clips[i]))) return false;
+        LoopClip clip = clips[i];
+        clip.startTakt = orte[i].startTakt;
+        Kanal& ziel = loop.kanaele[static_cast<std::size_t>(orte[i].kanal)];
+        ziel.clips.push_back(clip);
+        (void)ordne(ziel, clip.startTakt);
+    }
+    return true;
+}
+
+}  // namespace
+
+bool versetzeClips(Loop& loop, std::vector<ClipOrt>& orte, int kanalVersatz, int taktVersatz)
+{
+    if (orte.empty()) return false;
+    Loop probe = loop;
+    std::vector<ClipOrt> ziele = orte;
+    std::vector<LoopClip> clips;
+    if (!nimmHeraus(probe, ziele, clips)) return false;
+    // der Versatz, so weit er fuer alle geht
+    int ersterTakt = ziele.front().startTakt;
+    int ersterKanal = ziele.front().kanal;
+    int letzterKanal = ziele.front().kanal;
+    for (const ClipOrt& ort : ziele)
+    {
+        ersterTakt = std::min(ersterTakt, ort.startTakt);
+        ersterKanal = std::min(ersterKanal, ort.kanal);
+        letzterKanal = std::max(letzterKanal, ort.kanal);
+    }
+    const int kanaele = static_cast<int>(loop.kanaele.size());
+    taktVersatz = std::max(taktVersatz, -ersterTakt);
+    kanalVersatz = std::clamp(kanalVersatz, -ersterKanal, kanaele - 1 - letzterKanal);
+    if (taktVersatz == 0 && kanalVersatz == 0) return false;
+    for (ClipOrt& ort : ziele)
+    {
+        ort.kanal += kanalVersatz;
+        ort.startTakt += taktVersatz;
+    }
+    if (!legeHinein(probe, ziele, clips)) return false;
+    loop = std::move(probe);
+    orte = std::move(ziele);
+    return true;
+}
+
+bool dupliziereClips(Loop& loop, std::vector<ClipOrt>& orte)
+{
+    if (orte.empty()) return false;
+    Loop ohne = loop;
+    std::vector<ClipOrt> vorlagen = orte;
+    std::vector<LoopClip> clips;
+    if (!nimmHeraus(ohne, vorlagen, clips)) return false;
+    int anfang = vorlagen.front().startTakt;
+    int ende = 0;
+    for (std::size_t i = 0; i < vorlagen.size(); ++i)
+    {
+        anfang = std::min(anfang, vorlagen[i].startTakt);
+        ende = std::max(ende, vorlagen[i].startTakt + loop.clipTakte(clips[i]));
+    }
+    // hinter dem Ende des ganzen Loops ist immer Platz: dort endet die Suche
+    const int weitester = std::max(ende, loop.durchlaufTakte()) - anfang;
+    for (int versatz = ende - anfang; versatz <= weitester; ++versatz)
+    {
+        Loop probe = loop;
+        std::vector<ClipOrt> kopien = vorlagen;
+        for (ClipOrt& ort : kopien) ort.startTakt += versatz;
+        if (!legeHinein(probe, kopien, clips)) continue;
+        loop = std::move(probe);
+        orte = std::move(kopien);
+        return true;
+    }
+    return false;
+}
+
+bool loescheClips(Loop& loop, const std::vector<ClipOrt>& orte)
+{
+    if (orte.empty()) return false;
+    Loop probe = loop;
+    std::vector<ClipOrt> weg = orte;
+    std::vector<LoopClip> clips;
+    if (!nimmHeraus(probe, weg, clips)) return false;
+    raeumeBasen(probe);
+    loop = std::move(probe);
+    return true;
+}
+
 bool benenneBasisUm(Loop& loop, const QString& alt, const QString& neu)
 {
     const QString name = neu.trimmed();
