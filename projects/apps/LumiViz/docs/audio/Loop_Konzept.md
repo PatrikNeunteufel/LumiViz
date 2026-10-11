@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.29.0
+> **Version:** 0.30.0
 > **Datum:** 2026-10-11 (Session 113)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -90,9 +90,15 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
 | **E2 b** (S113) | **Jeder Clip im Loop-Panel trägt eigene Effekte mit allen Einstellungen** — für Drumkit- und Instrument-Clips gleich; ein Fenster für den ganzen Loop gibt es nicht. Patrik: „im Loop soll jeder Clip für sich selbst Effekte erhalten können, nicht der ganze Loop"; dafür lassen sich mehrere Clips zugleich markieren. Die Effekte sind **Reverb**, **Echo** und **Distortion**, später **Autotune** (§3.2). Skizze und Beschreibung in §4g. |
 | **F2 a** (S113) | **Die Effekte stehen als Feld `effects` am Clip, die `.lvloop` trägt Fassung 3.** Je Effekt ein Eintrag mit `on` und seinen Werten (`distortion`, `echo`, `reverb`); ein Clip ohne Effekte trägt das Feld nicht. Fassung 2 wird weiter gelesen, gespeichert wird immer Fassung 3. Ein älteres LumiViz spielt eine solche Datei ohne Effekte und meldet „File was written by a newer version". Verworfen: b — die Fassung bleibt 2 (eine Datei ohne Effekte bliebe bytegleich, aber ein älteres Programm spielte einen Loop mit Effekten trocken, ohne es zu sagen). |
 | **G1 b** (S113) | **Die Effekte eines Clips rechnen im Ton-Thread mit, Block für Block.** Jeder gerade klingende Clip mit Effekten hat im Klangerzeuger einen eigenen Verzerrer, ein eigenes Echo und einen eigenen Hall. Eine Änderung am Muster oder an den Effekten gilt ab dem nächsten Block. Springt die Stelle um weniger als 200 ms (das Nachsetzen nach T1 a), klingt der Nachklang unverändert weiter; springt sie weiter, werden Echo und Hall geleert — der Nachklang der Schläge davor fehlt, bis er sich neu aufgebaut hat, längstens so lange wie Decay. Der Rechenkern selbst bleibt ohne Gedächtnis; es sitzt in den Effekten. Grund (Patrik): wer gerade am Muster eines Clips arbeitet, soll nicht auf ein Neurechnen warten. Die 200 ms sind von mir gesetzt. |
+| **V1 a** (S113) | **Einfügen im Drum-Editor ersetzt den Bereich.** Ctrl+V überschreibt am Ziel genau den kopierten Bereich — wo die Kopie einen Schritt hat, steht danach einer, wo sie leer ist, ist es danach leer. Im Menü des Rechtsklicks zusätzlich **Paste and keep existing steps**, das nur dazulegt. Grund: wer Takt 1 nach Takt 3 kopiert, erwartet dort dasselbe, keine Mischung. Skizze der Stufe 13 in §4i. |
 | **P1 a** (S113) | **Instrumente wählt man in einem Palettenfenster wie bei der Effektkette**, nicht mehr in einer Dropdown-Liste: ein Baum nach Art, Suchfeld, Favorites, Recently used, ein Satz Beschreibung, Anspielen per Klick. Dazu Patrik: auch **Sortieren oder Filtern nach Genre** muss gehen. Beschrieben in §4h; eigene Stufe 14. |
 
 ### 3.1 Verworfen, mit Grund
+
+- **Einfügen im Drum-Editor legt dazu** (V1 b): nichts ginge verloren, was man
+  nicht gesehen hat, und zwei Figuren ließen sich übereinanderlegen — aber
+  ein kopierter Takt ergäbe am Ziel eine Mischung, und Undo holt das
+  Überschriebene bei a zurück. Als zweiter Eintrag im Menü bleibt es.
 
 - **Jeden Clip mit Effekten vorab als fertigen Klang rechnen** (G1 a, meine
   erste Empfehlung): der Nachklang stimmte nach jedem Sprung auf den
@@ -1299,10 +1305,86 @@ schon trägt — Art, Genre und Kurztext kämen wohl dazu. Die Skizze steht aus.
 
 ### Mehrfachauswahl in den Editoren (Stufe 13, Wunsch Patrik S113)
 
-Im Drum-Editor und im Instrument-Editor mehrere Schritte oder Noten zugleich
-markieren, die Auswahl kopieren und als Teilmuster an anderer Stelle
-einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
-§4f unter „Nicht drin". Die Skizze steht aus.
+Die Skizze ist gebilligt und steht in §4i.
+
+---
+
+## 4i. Mehrfachauswahl in den Editoren (Stufe 13 — Skizze gebilligt, Patrik S113; nicht gebaut)
+
+Wunsch Patrik S113: im Drum-Editor und im Instrument-Editor mehrere Schritte
+oder Noten zugleich markieren, kopieren, das Teilmuster an anderer Stelle
+einfügen, oder mehrere zusammen verschieben. Bisher stand beides in §4d und
+§4f unter „Nicht drin".
+
+**Das Markieren.** Im Loop-Panel zieht man den Rahmen auf freier Fläche; in
+den Editoren setzt ein Klick dort schon einen Schritt oder eine Note, und
+Ziehen malt Schritte oder verlängert die neue Note. Deshalb:
+
+| Geste | Drum-Editor | Instrument-Editor |
+|---|---|---|
+| **Shift+Ziehen** | ein Rahmen über Schritte, auch über mehrere Spuren; markiert ist der ganze Bereich, auch seine leeren Schritte | ein Rahmen über Noten; markiert sind die Noten, die er berührt |
+| **Ctrl+Klick** | nimmt einen Schritt dazu oder heraus | nimmt eine Note dazu oder heraus |
+| **Ctrl+A** | alle Schritte des Musters | alle Noten |
+| **Esc**, Klick ins Leere | hebt die Marken auf | hebt die Marken auf |
+
+Markierte Schritte und Noten tragen den Rand in der Markierfarbe. Unter dem
+Raster steht eine Zeile: ohne Auswahl, wie man markiert („Shift+drag
+selects"); mit Auswahl, wie viel markiert ist und was die Tasten tun — im
+Drum-Editor etwa „16 steps in 2 tracks selected · Ctrl+C copy · Ctrl+V paste
+at the marker · arrow keys move", im Instrument-Editor „3 notes selected ·
+drag moves them together · Ctrl+C copy · Ctrl+V paste at the marker · Ctrl+D
+duplicate".
+
+**Was mit dem Markierten geht:**
+
+- **Ctrl+C**, **Ctrl+X**, **Ctrl+V** — kopieren, ausschneiden, einfügen; dazu
+  Einträge im Menü des Rechtsklicks.
+- **Die Einfügemarke:** ein Klick in die Kopfzeile mit den Taktnummern setzt
+  eine gestrichelte Marke (in der Skizze mit „paste" beschriftet). Ctrl+V
+  fügt dort ein; die Marke rückt danach um die eingefügte Länge weiter —
+  mehrmaliges Ctrl+V füllt so mehrere Takte. Im Menü des Rechtsklicks
+  außerdem **Paste here** für die Stelle unter der Maus.
+- **Ctrl+D** — die Auswahl direkt hinter sich selbst noch einmal einfügen.
+- **Verschieben:** im Instrument-Editor eine der markierten Noten ziehen —
+  alle gehen in Zeit und Tonhöhe mit. In beiden Editoren die Pfeiltasten:
+  links und rechts um einen Schritt, hinauf und hinunter um eine Spur oder
+  einen Halbton, mit Shift um eine Oktave.
+- **Entf** — löscht die markierten Noten oder leert die markierten Schritte.
+- **Zwischen Mustern:** das Kopierte bleibt gemerkt, wenn der Editor eine
+  andere Basis zeigt — so kommt ein Teilmuster von einer Basis in eine andere.
+- Die **Lautstärken** je Schritt und je Note gehen mit.
+- Jede dieser Aktionen ist **ein Schritt für Undo**.
+
+**Einfügen im Drum-Editor — Entscheid V1 a (§3):** Ctrl+V **ersetzt** am Ziel
+genau den kopierten Bereich: wo die Kopie einen Schritt hat, steht danach
+einer; wo sie leer ist, ist es danach leer. Im Menü des Rechtsklicks
+zusätzlich **Paste and keep existing steps**, das nur dazulegt. Im
+Instrument-Editor kommen Noten dazu; nur eine Note auf demselben Schritt und
+derselben Tonhöhe wird ersetzt.
+
+**Mit der Skizze gebilligt (von mir vorgeschlagen):**
+
+- Im Drum-Editor wird nach **Spurplatz** eingefügt: die erste kopierte Spur
+  landet in der Spur, in der die Auswahl begann. Hat das Zielmuster weniger
+  Spuren, fallen die überzähligen weg.
+- Im Instrument-Editor behalten eingefügte Noten ihre **Tonhöhe**; sie sind
+  danach markiert und lassen sich als Gruppe ziehen.
+- Was über das Ende des Musters hinausreicht, wird abgeschnitten — der
+  Editor **sagt dann, wie viel nicht gepasst hat**, statt es still
+  wegzulassen.
+- Die Einfügemarke ist nur eine Stelle im Fenster; sie steht nicht in der
+  Datei.
+
+**Nicht drin:** Kopieren in die Ablage des Systems (also nicht zwischen zwei
+LumiViz-Fenstern); einen Bereich von Schritten im Drum-Editor mit der Maus
+verschieben (dort nur Pfeiltasten — Ziehen malt); die Lautstärke aller
+markierten Noten auf einmal stellen.
+
+**Offen vor dem Bau** (von mir, nicht gefragt): wie ein Ctrl+Klick-Schritt
+außerhalb eines Rechtecks kopiert wird (einzelne, verstreute Schritte statt
+eines Bereichs — beim Einfügen als Bereich mit Lücken oder nur die
+markierten); was die Pfeiltasten am Rand des Musters tun (anhalten oder
+abschneiden).
 
 ---
 
@@ -1327,8 +1409,8 @@ einfügen, oder mehrere zusammen verschieben. Heute steht beides in §4d und
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
-| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut — im Programm nicht gesehen und nicht gehört.** Offen aus der Stufe: Patriks Blick und Ohr (Liste 10, Abschnitt F); die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
-| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4h) | später, davor die Skizze |
+| 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
+| 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheid V1 a; **als Nächstes** — zwei kleine Fragen vor dem Bau stehen dort |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | später, davor die Skizze |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
@@ -1425,6 +1507,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.30.0** (S113, 2026-10-11): Patrik hat F0 bis F4 der Liste 10 geprüft
+  („alle ok", §5 Stufe 12). Die gebilligte Skizze für Stufe 13 —
+  Mehrfachauswahl, Kopieren und Einfügen in Drum- und Instrument-Editor
+  (§4i neu); Entscheid V1 a (Einfügen im Drum-Editor ersetzt), b verworfen.
 
 - **0.29.0** (S113, 2026-10-11): 12e — Benutzerhandbuch und Sichttest-Liste
   nachgezogen, voller Testlauf; Stufe 12 ist gebaut.
