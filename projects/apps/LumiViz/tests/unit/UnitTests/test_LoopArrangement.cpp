@@ -637,6 +637,82 @@ TEST_SUITE("LoopArrangement")
         }
     }
 
+    TEST_CASE("Loop Panel: die Rueckfrage bei Ungespeichertem vor New und Load und vor dem Beenden der App")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        ServiceContainer dienste;
+        const QString titel = QStringLiteral("Quit LumiViz");
+
+        // --- die Ablage: ohne Panel fragt niemand; wer geht, nimmt nur die eigene Frage mit
+        CHECK(darfBeenden(titel));
+        {
+            const int einer = 0;
+            const int anderer = 0;
+            QString gesehen;
+            meldeBeendenFrage(&einer, [&gesehen](const QString& t) {
+                gesehen = t;
+                return false;
+            });
+            CHECK_FALSE(darfBeenden(titel));
+            CHECK(gesehen == titel);
+            vergissBeendenFrage(&anderer);
+            CHECK_FALSE(darfBeenden(titel));
+            vergissBeendenFrage(&einer);
+            CHECK(darfBeenden(titel));
+        }
+
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+        const QString pfad = ordner.filePath(QStringLiteral("beat.lvloop"));
+        REQUIRE(speichereLoop(probe(), pfad));
+        {
+            LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster, die Antwort kommt vom Test
+            REQUIRE(panel.lade(pfad));
+            const Loop geladen = panel.loop();
+            int gefragt = 0;
+            const auto antwort = [&gefragt](Rueckfrage r) {
+                return [&gefragt, r] {
+                    ++gefragt;
+                    return r;
+                };
+            };
+
+            // nichts geaendert: keine Frage — auch nicht ueber die Ablage, wie das Hauptfenster fragt
+            CHECK(panel.darfErsetzen(titel, antwort(Rueckfrage::Bleiben)));
+            CHECK(gefragt == 0);
+            CHECK(darfBeenden(titel));
+
+            panel.taktachse()->kanalHinzu();
+            REQUIRE(panel.ungespeichert());
+
+            // Cancel: bleiben, nichts geschieht
+            CHECK_FALSE(panel.darfErsetzen(titel, antwort(Rueckfrage::Bleiben)));
+            CHECK(gefragt == 1);
+            CHECK(panel.ungespeichert());
+
+            // Discard: es darf weitergehen, die Datei bleibt, wie sie war
+            CHECK(panel.darfErsetzen(titel, antwort(Rueckfrage::Verwerfen)));
+            CHECK(gefragt == 2);
+            Loop inDatei;
+            REQUIRE(ladeLoop(pfad, inDatei));
+            CHECK(inDatei == geladen);
+
+            // Save: in die eigene Datei, ohne Dialog — danach gibt es nichts Ungespeichertes
+            CHECK(panel.darfErsetzen(titel, antwort(Rueckfrage::Speichern)));
+            CHECK(gefragt == 3);
+            CHECK_FALSE(panel.ungespeichert());
+            REQUIRE(ladeLoop(pfad, inDatei));
+            CHECK(inDatei == panel.loop());
+            CHECK(inDatei.kanaele.size() == geladen.kanaele.size() + 1);
+            CHECK(darfBeenden(titel));
+        }
+        CHECK(darfBeenden(titel));  // das Panel ist weg
+    }
+
     TEST_CASE("Loop Panel: ein Loop aus dem Audio Browser (LoadLoopEvent) wird geladen")
     {
         int argc = 1;

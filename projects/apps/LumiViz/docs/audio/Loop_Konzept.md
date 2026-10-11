@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.12.0
-> **Datum:** 2026-10-11 (Session 109)
+> **Version:** 0.13.0
+> **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -319,7 +319,11 @@ Release-Paket: `asset/` liegt dort nicht neben der Exe.
 
 - **Datei-Zeile:** Name der Datei, mit Stern bei Ungespeichertem
   („untitled", solange nie gespeichert), **New**, **Load…**, **Save**,
-  **Save As…**. New und Load fragen nach, wenn Ungespeichertes verloren ginge.
+  **Save As…**. New, Load und das Beenden der App fragen nach, wenn
+  Ungespeichertes verloren ginge — **Save / Discard / Cancel**, dieselbe
+  Frage wie im Composer (`LoopPanel::darfErsetzen`; das Hauptfenster fragt
+  über `loop/Offen.hpp`, `darfBeenden`). Save schreibt in die Datei des
+  Loops, bei „untitled" mit dem Dialog von Save As.
 - **Abspiel-Zeile:** **Play / Stop**, **BPM** als Feld, die Zeile mit Kanälen,
   Takten und Dauer, die Stelle als „Bar · Step", **Fit** (auch Ctrl+0).
 - **Achse** (`loop/Taktachse.hpp`): Lineal in Takten, Kanäle als Zeilen, Clips
@@ -372,7 +376,9 @@ Datei: wer zurück auf diesen Stand geht, hat nichts Ungespeichertes mehr.
   240 Pixel je Takt.
 - Die Achse zeigt mindestens 16 Takte und hinter dem Ende ein Viertel Luft.
 - Ein neuer Kanal heißt „Channel N", New legt einen an.
-- Beim Schließen der App fragt das Panel **nicht** nach Ungespeichertem.
+- Die Rückfrage bietet seit S110 auch vor New und Load **Save** an (vorher
+  nur Discard und Cancel) — angeglichen an den Composer, als die Frage beim
+  Beenden dazukam.
 
 **Nicht drin:** Kanäle am Namen umsortieren; Kopieren und
 Einfügen über die Ablage; mehrere Clips zugleich wählen; ein Tooltip für
@@ -604,6 +610,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.13.0** (S110, 2026-10-11): das Loop-Panel fragt beim Beenden der App
+  nach Ungespeichertem (§4c); die Rückfrage überall Save / Discard / Cancel.
 - **0.12.0** (S109, 2026-10-11): Stufe 8 — Benutzerhandbuch, `Audio_System.md`,
   Vorlage und Liste für den Sichttest.
 - **0.11.0** (S109, 2026-10-11): Stufe 7 gebaut — der Loop als Clip im

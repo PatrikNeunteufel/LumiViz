@@ -18,6 +18,7 @@
 #include <QString>
 
 #include <cstdint>
+#include <functional>
 
 namespace lumi::loop
 {
@@ -30,5 +31,17 @@ void meldeOffen(const QString& datei, const Loop& loop);
 /// Die offene Fassung dieser Datei. false = das Panel hat sie nicht offen;
 /// `loop` bleibt dann, wie er war.
 bool offenerLoop(const QString& datei, Loop& loop);
+
+// --- vor dem Beenden der App --------------------------------------------------
+
+/// Das Loop-Panel traegt hier ein, wie es vor dem Beenden nach Ungespeichertem
+/// fragt (`wer` = das Panel selbst). Ein zweites Panel loest das erste ab.
+void meldeBeendenFrage(const void* wer, std::function<bool(const QString& titel)> frage);
+/// Das Panel geht: seine Frage gilt nicht mehr. Die eines anderen Panels bleibt.
+void vergissBeendenFrage(const void* wer);
+/// Darf die App beenden? true = es gibt kein Panel, nichts Ungespeichertes, oder
+/// es ist gespeichert oder verworfen; false = bleiben. `titel` ist der Titel
+/// der Rueckfrage.
+[[nodiscard]] bool darfBeenden(const QString& titel);
 
 }  // namespace lumi::loop

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.115.0
+> **Version:** 1.116.0
 > **Datum:** 2026-10-11
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2407,7 +2407,7 @@ Clap, Tom) unter `asset\loop\kit`.
 |---|---|
 | Dateiname | Der geladene Loop; ein Stern heißt: es gibt Ungespeichertes. „untitled" = noch nie gespeichert |
 | **Tags...** | Titel, Künstler, Album, Jahr, Genre, Nummer und Songtext des Loops — was das Panel Player zeigt, wenn der Loop als Clip im Composer läuft. Ohne Titel gilt der Dateiname |
-| **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New und Load fragen nach, wenn Ungespeichertes verloren ginge. Der zuletzt geladene Loop steht nach dem Neustart wieder da |
+| **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New, Load und das Beenden von LumiViz fragen nach, wenn Ungespeichertes verloren ginge (Save / Discard / Cancel). Der zuletzt geladene Loop steht nach dem Neustart wieder da |
 | **Play** / **Stop** | Spielt den Loop von vorn, im Kreis |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
 | Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
@@ -2582,6 +2582,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.116.0 | 2026-10-11 | Session 110. §16 Loop GEÄNDERT: das Panel Loop fragt jetzt auch **beim Beenden von LumiViz** nach Ungespeichertem; die Rückfrage bietet überall **Save / Discard / Cancel** wie im Composer (vorher bei New und Load nur Discard / Cancel) |
 | 1.115.0 | 2026-10-11 | Session 109. **§16 NEU: Loop** — das Panel Loop (Datei-Zeile mit Tags, New, Load, Save; Play, BPM, Fit; die Achse in Takten), Clips und Kanäle (New drumkit clip, verschieben, in ganzen Mustern länger und kürzer, verbundene Kopien, Basis umbenennen, Kanäle), der Drum-Editor (Bars, Play pattern, Peak, Raster des Loops, Spuren, Schritte, Step volume), wer den Ton hat (Composer, Loop, Player). §3 Audio Browser: Loops in der Liste, Doppelklick lädt ins Panel Loop. §15 Audio-Kanal: **Loops als Clips** — ein Durchlauf lang, wiederholt sich, zählt als laufender Song, folgt dem Panel Loop. Die bisherigen §16 und §17 sind jetzt §17 und §18 |
 | 1.114.0 | 2026-10-10 | Session 105. **§18 wieder entfernt:** der Tester ist ein Werkzeug für Entwickler der App, kein Teil der Bedienung — der Inhalt steht jetzt in `Sichttest_Steuerung.md` (Entwickler-Doku, nicht im Release-Paket). |
 | 1.113.0 | 2026-10-09 | Session 105. **§18 NEU: LumiViz vom Sichttest steuern lassen** — Start mit `--testing` oder der Verknüpfung *LumiViz.exe - Testing*, ▶ Ausführen an den Punkten *Vorbereiten*, die Rückfrage mit Haken, eine geladene Vorlage hält am Anfang (Einstellung **Sichttest: A loaded template starts playing**, Vorgabe aus), die Vorlage ersetzt die geladene Komposition, die Meldung bei schon laufendem LumiViz. |

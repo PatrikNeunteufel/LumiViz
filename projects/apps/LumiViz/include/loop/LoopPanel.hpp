@@ -28,6 +28,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <functional>
+
 class QDoubleSpinBox;
 class QLabel;
 class QPushButton;
@@ -38,6 +40,14 @@ namespace lumi::loop
 
 class DrumEditor;
 class Taktachse;
+
+/// Die Antwort auf die Rueckfrage bei Ungespeichertem.
+enum class Rueckfrage
+{
+    Speichern,
+    Verwerfen,
+    Bleiben
+};
 
 class LoopPanel : public PanelBase
 {
@@ -69,6 +79,12 @@ public:
     [[nodiscard]] bool geladen() const { return m_geladen; }
     /// Gibt es Aenderungen, die nicht in der Datei stehen?
     [[nodiscard]] bool ungespeichert() const { return m_geladen && !(m_loop == m_gespeichert); }
+    /// Bevor der Loop des Panels verloren ginge — New, Load, das Beenden der App
+    /// (`loop/Offen.hpp`, `darfBeenden`): gibt es Ungespeichertes, fragt das
+    /// Panel mit Save, Discard und Cancel, wie der Composer. false = bleiben
+    /// (Cancel, oder das Speichern gelang nicht). `frage` ersetzt den Dialog
+    /// (fuer Tests ohne Fenster).
+    [[nodiscard]] bool darfErsetzen(const QString& titel, const std::function<Rueckfrage()>& frage = {});
 
     /// Der Loop, den das Panel zeigt und spielt.
     [[nodiscard]] const Loop& loop() const { return m_loop; }
@@ -110,9 +126,8 @@ private:
     void frageNachTags();
     /// Datei und Fassung dem Rest des Programms melden (`loop/Offen.hpp`).
     void meldeStand();
-    void speichereMitDialog(bool unter);
-    /// Vor New und Load: gibt es Ungespeichertes, fragt das Panel. false = bleiben.
-    [[nodiscard]] bool darfVerwerfen();
+    /// false = abgebrochen oder nicht geschrieben (dann mit Meldung).
+    bool speichereMitDialog(bool unter);
     void zeigeDatei();
     void zeigeClip();
     void zeigeStand();

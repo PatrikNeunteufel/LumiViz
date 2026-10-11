@@ -7,6 +7,8 @@
 
 #include <QFileInfo>
 
+#include <utility>
+
 namespace lumi::loop
 {
 
@@ -48,6 +50,39 @@ bool offenerLoop(const QString& datei, Loop& loop)
     if (a.datei.isEmpty() || datei.isEmpty() || QFileInfo(a.datei) != QFileInfo(datei)) return false;
     loop = a.loop;
     return true;
+}
+
+namespace
+{
+
+struct BeendenFrage
+{
+    const void* wer = nullptr;
+    std::function<bool(const QString&)> frage;
+};
+
+BeendenFrage& beendenFrage()
+{
+    static BeendenFrage eine;
+    return eine;
+}
+
+}  // namespace
+
+void meldeBeendenFrage(const void* wer, std::function<bool(const QString& titel)> frage)
+{
+    beendenFrage() = {wer, std::move(frage)};
+}
+
+void vergissBeendenFrage(const void* wer)
+{
+    if (beendenFrage().wer == wer) beendenFrage() = {};
+}
+
+bool darfBeenden(const QString& titel)
+{
+    const BeendenFrage& b = beendenFrage();
+    return !b.frage || b.frage(titel);
 }
 
 }  // namespace lumi::loop

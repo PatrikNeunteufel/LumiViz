@@ -117,6 +117,8 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     if (auto* bus = eventBus())
         m_ladeSubscription = bus->subscribeScoped<LoadLoopEvent>(
             [this](const LoadLoopEvent& e) { (void)oeffne(QString::fromStdString(e.path)); });
+    // vor dem Beenden der App fragt das Hauptfenster hier nach (MainWindow::closeEvent)
+    meldeBeendenFrage(this, [this](const QString& titel) { return darfErsetzen(titel); });
 
     m_takt = new QTimer(this);
     m_takt->setInterval(kTaktMs);
@@ -128,6 +130,7 @@ LoopPanel::~LoopPanel()
 {
     // die Audio-Engine lebt laenger als die Panels: hier noch freigeben
     m_spieler.halte(false);
+    vergissBeendenFrage(this);
     meldeOffen({}, {});  // niemand hat mehr einen Loop offen
 }
 
@@ -262,12 +265,12 @@ void LoopPanel::setupUI()
     aussen->addWidget(m_bericht);
 
     connect(m_neu, &QPushButton::clicked, this, [this] {
-        if (darfVerwerfen()) neu();
+        if (darfErsetzen(tr("New Loop"))) neu();
     });
     connect(m_laden, &QPushButton::clicked, this, &LoopPanel::frageNachDatei);
     connect(m_tags, &QPushButton::clicked, this, &LoopPanel::frageNachTags);
-    connect(m_speichern, &QPushButton::clicked, this, [this] { speichereMitDialog(false); });
-    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { speichereMitDialog(true); });
+    connect(m_speichern, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(false); });
+    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(true); });
     connect(m_play, &QPushButton::clicked, this, [this] {
         if (m_spieler.spielt())
             halte();
@@ -292,18 +295,30 @@ void LoopPanel::setupUI()
             [](int prozent) { QSettings().setValue(QLatin1String(kZeilenProzent), prozent); });
 }
 
-bool LoopPanel::darfVerwerfen()
+bool LoopPanel::darfErsetzen(const QString& titel, const std::function<Rueckfrage()>& frage)
 {
     if (!ungespeichert()) return true;
-    const QString name = m_datei.isEmpty() ? tr("untitled") : QFileInfo(m_datei).fileName();
-    return QMessageBox::question(this, tr("Loop"), tr("Discard the changes to %1?").arg(name),
-                                 QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Cancel) ==
-           QMessageBox::Discard;
+    Rueckfrage wahl = Rueckfrage::Bleiben;
+    if (frage)
+        wahl = frage();
+    else
+    {
+        // dieselbe Frage wie im Composer (`composer::darfKompositionErsetzen`)
+        const QString name = m_datei.isEmpty() ? tr("untitled") : QFileInfo(m_datei).fileName();
+        const QMessageBox::StandardButton knopf =
+            QMessageBox::question(this, titel, tr("The loop '%1' has unsaved changes.").arg(name),
+                                  QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel, QMessageBox::Save);
+        if (knopf == QMessageBox::Save) wahl = Rueckfrage::Speichern;
+        else if (knopf == QMessageBox::Discard) wahl = Rueckfrage::Verwerfen;
+    }
+    if (wahl == Rueckfrage::Bleiben) return false;
+    if (wahl == Rueckfrage::Verwerfen) return true;
+    return speichereMitDialog(false);
 }
 
 void LoopPanel::frageNachDatei()
 {
-    if (!darfVerwerfen()) return;
+    if (!darfErsetzen(tr("Load Loop"))) return;
     QSettings einstellungen;
     QString ordner = einstellungen.value(QLatin1String(kLetzterOrdner)).toString();
     // beim ersten Mal: der Ordner mit dem mitgelieferten Beispiel
@@ -320,9 +335,9 @@ void LoopPanel::frageNachDatei()
     }
 }
 
-void LoopPanel::speichereMitDialog(bool unter)
+bool LoopPanel::speichereMitDialog(bool unter)
 {
-    if (!m_geladen) return;
+    if (!m_geladen) return false;
     QString pfad = m_datei;
     if (unter || pfad.isEmpty())
     {
@@ -330,12 +345,13 @@ void LoopPanel::speichereMitDialog(bool unter)
         const QString ordner = m_datei.isEmpty() ? einstellungen.value(QLatin1String(kLetzterOrdner)).toString()
                                                  : m_datei;
         pfad = QFileDialog::getSaveFileName(this, tr("Save loop"), ordner, tr("Loop (*.lvloop)"));
-        if (pfad.isEmpty()) return;
+        if (pfad.isEmpty()) return false;
         if (QFileInfo(pfad).suffix().isEmpty()) pfad += QStringLiteral(".lvloop");
         einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
     }
-    if (!speichere(pfad))
-        QMessageBox::warning(this, tr("Loop"), tr("Could not write %1").arg(QDir::toNativeSeparators(pfad)));
+    if (speichere(pfad)) return true;
+    QMessageBox::warning(this, tr("Loop"), tr("Could not write %1").arg(QDir::toNativeSeparators(pfad)));
+    return false;
 }
 
 void LoopPanel::neu()
@@ -381,7 +397,7 @@ bool LoopPanel::lade(const QString& pfad)
 
 bool LoopPanel::oeffne(const QString& pfad)
 {
-    if (!darfVerwerfen()) return false;
+    if (!darfErsetzen(tr("Load Loop"))) return false;
     const bool geladen = lade(pfad);
     if (!geladen)
     {

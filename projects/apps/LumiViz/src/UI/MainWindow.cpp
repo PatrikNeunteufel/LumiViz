@@ -31,6 +31,7 @@
 #include "UI/StartDatei.hpp"                            // `LumiViz.exe <datei>` (S101)
 #include "UI/StartPreset.hpp"                           // laufendes Preset ueber den Neustart (S93)
 #include "composer/AppAnbindung.hpp"                    // Composer-Naht N8
+#include "loop/Offen.hpp"                               // Loop: Rueckfrage vor dem Beenden
 #include "loop/Spieler.hpp"                             // Loop: Ton fuer die Visuals
 #include "composer/SichttestAktionen.hpp"               // Composer-Naht N21
 #include "sichttest/Anbindung.hpp"                      // Composer-Naht N20
@@ -1791,6 +1792,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
     if (VisualizerWidget* widget = primaryVisualizer();
         widget != nullptr &&
         !lumi::composer::darfKompositionErsetzen(*widget, this, tr("Quit LumiViz")))
+    {
+        event->ignore();
+        return;
+    }
+    // und fuer einen bearbeiteten Loop im Loop-Panel (docs/audio/Loop_Konzept.md §4c)
+    if (!lumi::loop::darfBeenden(tr("Quit LumiViz")))
     {
         event->ignore();
         return;

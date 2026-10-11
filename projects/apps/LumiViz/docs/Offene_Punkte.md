@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.141.0
-> **Datum:** 2026-10-11 (Session 109)
+> **Version:** 1.142.0
+> **Datum:** 2026-10-11 (Session 110)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2309,8 +2309,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     in eigener Zeile; *Play pattern* spielt nur das Muster; das Player-Panel
     zeigt einen Durchlauf als Länge; ein Loop-Clip rastet wie ein Song,
     nicht auf Takte
-  - 🟡 **beim Beenden fragt das Loop-Panel nicht nach Ungespeichertem** —
-    New und Load fragen. Dort kann heute Arbeit verloren gehen
+  - ✅ **beim Beenden fragt das Loop-Panel nach Ungespeichertem** (S110) —
+    Save / Discard / Cancel wie im Composer, dieselbe Frage jetzt auch vor
+    New und Load (vorher nur Discard / Cancel); ein Fall in
+    `test_LoopArrangement.cpp`. Den Dialog selbst hat noch niemand gesehen
+    (Liste 10, L17 und L18)
   - 🟠 **Nachsetzen der Tonführung bei gedrosseltem Rechner:** gemessen ist
     nur der ruhige Fall (Abstand zur Uhr −8 bis +4 ms, Drift 14 bis 35 ppm,
     kein Nachsetzen in 40 s; Konzept §6a). Was in den Schüben geschieht, in
