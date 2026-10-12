@@ -326,7 +326,67 @@ TEST_SUITE("LoopInstrumentEditor")
         auto* wellenWahl = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
         REQUIRE(wellenWahl != nullptr);
         CHECK(wellenWahl->currentText() == QStringLiteral("Plucked string"));
-        CHECK(wellenWahl->count() == 6);  // seit S115 dazu Sample
+        CHECK(wellenWahl->count() == 7);  // seit S115 dazu Sample, seit S116 Noise
+
+        // --- Stufe 11d: Pitch sweep und Sweep time; die Schwingung Noise
+        {
+            const auto steht = [&creator](const QString& text) {
+                for (const QLabel* feld : creator.findChildren<QLabel*>())
+                    if (!feld->isHidden() && feld->text() == text) return true;
+                return false;
+            };
+            CHECK(schieber("creatorPitchSweep")->isHidden());  // die Saite kennt ihn nicht
+            CHECK(schieber("creatorSweepTime")->isHidden());
+            creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });
+            QSlider* weg = schieber("creatorPitchSweep");
+            QSlider* zeit = schieber("creatorSweepTime");
+            CHECK_FALSE(weg->isHidden());
+            CHECK(weg->minimum() == -24);
+            CHECK(weg->maximum() == 48);
+            CHECK(weg->value() == 0);
+            CHECK(steht(QStringLiteral("off")));
+            CHECK_FALSE(zeit->isEnabled());  // ohne Weg keine Zeit
+            weg->setValue(22);
+            CHECK(creator.schicht().tonhoeheStartHt == 22.0);
+            CHECK(steht(QString::fromUtf8("↓ 22 st")));  // sie faellt
+            CHECK(zeit->isEnabled());
+            CHECK(zeit->value() == 20);  // vorbelegt 100 ms
+            zeit->setValue(21);
+            CHECK(creator.schicht().tonhoeheZeitMs == doctest::Approx(105.0));
+            CHECK(steht(QStringLiteral("105 ms")));
+            weg->setValue(-12);
+            CHECK(creator.schicht().tonhoeheStartHt == -12.0);
+            CHECK(steht(QString::fromUtf8("↑ 12 st")));  // sie steigt
+            // auch eine Sample-Schicht hat ihn (N2 a)
+            creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sample; });
+            CHECK_FALSE(weg->isHidden());
+            CHECK(schieber("creatorVoices")->isHidden());
+            // Noise: keine Tonhoehe — Voices, Detune, Harmonics, Vibrato und Pitch sweep fehlen
+            creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Rauschen; });
+            CHECK(wellenWahl->currentText() == QStringLiteral("Noise"));
+            for (const char* weg2 : {"creatorPitchSweep", "creatorSweepTime", "creatorVoices", "creatorDetune", "creatorHarmonic2",
+                                     "creatorVibratoRate", "creatorDamping", "creatorFineTune"})
+            {
+                CAPTURE(weg2);
+                CHECK(schieber(weg2)->isHidden());
+            }
+            for (const char* da : {"creatorAttack", "creatorDecay", "creatorSustain", "creatorRelease", "creatorCutoff", "creatorDrive"})
+            {
+                CAPTURE(da);
+                CHECK_FALSE(schieber(da)->isHidden());
+            }
+            CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorCycleTitle"))->text() == QStringLiteral("Noise"));
+            // `LUMIVIZ_INSTRUMENT_NOISE_BILD=<datei.png>` legt ein Bild des Creators mit einer Noise-Schicht ab
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_NOISE_BILD"); !bild.isEmpty())
+            {
+                CHECK(creator.grab().save(bild));
+                creator.aendereSchicht([](Schicht& s) {
+                    s.schwingung = Schwingung::Sinus;
+                    s.tonhoeheStartHt = 22.0;
+                });
+                CHECK(creator.grab().save(bild + QStringLiteral(".sweep.png")));
+            }
+        }
 
         // --- Save as: die Datei entsteht, sie ist jetzt die Datei des Creators
         creator.oeffne(*strings);

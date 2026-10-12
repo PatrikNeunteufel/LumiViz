@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.52.0
+> **Version:** 0.53.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1597,6 +1597,81 @@ eine solche Schicht Abtastwert für Abtastwert die Datei ergibt, belegt
 `test_LoopDrumQuellen` aus Schritt 1); ein Klang des Kits bei einer anderen
 Abtastrate als 48000 Hz.
 
+**Stufe 11d — Rauschen und Pitch sweep (S116).** Skizze gezeigt und
+**gebilligt (Patrik, S116)**: die mittlere Spalte des Creators, zweimal.
+Links eine Sinus-Schicht „a kick body": in der Gruppe Oscillator unter
+Waveform, Voices und Detune zwei neue Zeilen — ein Regler für den Weg der
+Tonhöhe (in der Skizze „Pitch drop", +22 st) und einer für seine Zeit („Drop
+time", 105 ms), darunter die Obertöne und die Hüllkurve mit Decay 480 ms und
+Sustain 0. Rechts eine Schicht „the click": in Waveform der neue Eintrag
+**Noise** vor Sine, Triangle, Saw, Square, Plucked string, Sample; darunter
+der Satz, dass Rauschen keine Tonhöhe hat und Voices, Detune, der neue
+Regler, Harmonics und Vibrato fehlen; dann Hüllkurve (Decay 10 ms) und
+Filter mit Drive. Das Bild oben rechts heißt bei Noise „Noise" und zeigt ein
+kurzes Stück.
+**Entscheid N1 (Patrik, S116) — beide Richtungen, gleich:** die Note darf
+über ihrer Tonhöhe beginnen und fallen oder darunter beginnen und steigen.
+Vorgelegt war a (nur fallend, „Pitch drop", 0 bis +48 st) und b (beide,
+−24 bis +48 st); Patrik erst a mit dem Kern für beide Richtungen, dann auf
+seine Frage „warum nicht gleich" b. Zum Namen (Patrik: „negativer drop wäre
+ja kein drop"): die Zeile heißt **Pitch sweep**, die zweite **Sweep time**;
+der Wert zeigt die Richtung als Pfeil („↓ 22 st" fällt, „↑ 12 st" steigt,
+„off") — von Claude gesetzt, nachdem „falls 22 st" für die Spalte der Werte
+zu breit war (im Bild aus dem Test gesehen).
+**Entscheid N2 a (Patrik, S116) — auch für eine Sample-Schicht:** die
+Aufnahme läuft am Anfang entsprechend schneller oder langsamer. Verworfen:
+b (nur gerechnete Schwingungen). Plucked string und Noise kennen den Regler
+nicht.
+**Gebaut — 11d (S116):**
+- **Modell:** `Schwingung::Rauschen`; an jeder Schicht `tonhoeheStartHt`
+  (−24 bis +48 Halbtöne, 0 = aus) und `tonhoeheZeitMs` (0 bis 2000,
+  vorbelegt 100).
+- **Rechnen:** der Weg ist linear in der Frequenz, wie der Gleitton des Kits
+  (`make_kit.py`): `f = ziel + (start − ziel) · e^(−t/τ)`, τ ein Drittel der
+  Zeit — nach Sweep time fehlt noch ein Zwanzigstel des Wegs, dieselbe Regel
+  wie bei Decay. Für Sinus, Dreieck, Säge, Rechteck (`rechneSchwingung`; die
+  Tafel trägt nur Teiltöne, die auch am höchsten Punkt unter der halben
+  Abtastrate bleiben — eine Säge mit großem Weg ist deshalb auch nach der
+  Ankunft etwas dumpfer) und für Sample (`rechneSample`: der Schritt durch
+  die Aufnahme folgt demselben Verlauf; sie ist dadurch früher oder später
+  zu Ende). Der Filter folgt weiter der Note, nicht dem Weg.
+- **Rauschen** (`rechneRauschen`): gleichverteilt, aus dem Zählwerk des Kits
+  mit fester Saat — bei jeder Note dieselbe Folge, derselbe Ton ergibt
+  dieselben Werte; zwei Rauschen-Schichten tragen dieselbe Folge (wie die
+  vier Schläge des Clap im Kit). Halb ausgesteuert wie jede gerechnete
+  Schwingung; danach Filter, Drive, Hüllkurve, Level. Die Note (mit
+  Transpose) bewegt nur den Filter.
+- **Datei:** `.lvinst` in **Fassung 5** — `waveform: noise`, an jeder
+  Schicht `pitchStart` und `pitchTime`. Fassung 1 bis 4 lesen weiter (ohne
+  die Felder: kein Weg). Die 49 mitgelieferten bleiben, wie sie sind
+  (Fassung 3).
+- **Creator:** in Waveform **Noise** zwischen Square und Plucked string;
+  unter Detune **Pitch sweep** (−24 bis +48 st) und **Sweep time** (0 bis
+  500 ms in Schritten von 5; grau bei „off"). Bei einer Sample-Schicht stehen
+  die beiden unter Loop to (N2 nannte „unter Fine tune" — die Zeilen stehen
+  für alle Schwingungen an einer Stelle des Gitters). Bei Noise fehlen
+  Voices, Detune, Pitch sweep, Sweep time, Harmonics, Vibrato. Das Bild
+  „One cycle" heißt bei Noise „Noise"; die Bilder zeigen eine Schicht ohne
+  Pitch sweep (den Ton, auf dem die Note ankommt).
+Von Claude gesetzt, nicht entschieden: der Verlauf (linear in der Frequenz,
+Zeit = 3 τ); die Vorgabe 100 ms; die Saat und dass alle Rauschen-Schichten
+dieselbe Folge tragen; der Platz von Noise in der Liste; jede `.lvinst` wird
+als Fassung 5 geschrieben; die Pfeile im Wert. Beim Aufräumen: drei
+Warnungen von clang im Creator behoben (eine neue, zwei alte — `this` in
+einer Lambda, die es nicht braucht).
+Nicht angefasst: Decay bleibt bei Schritten von 10 ms — der Klick der Kick
+(3,6 ms im Kit) lässt sich am Regler nicht genau stellen, nur in der Datei.
+**Hörproben** (lokal, `.claude/handover/hoerproben_11d/`, aus dem Test mit
+`LUMIVIZ_11D_WAV`): eine Kick (Sinus, ↓ 22 st in 105 ms, dazu Rauschen als
+Klick), dieselbe mit Drive, ein Tom (↓ 10 st in 120 ms), ein steigender Ton
+(Säge, ↑ 24 st), Rauschen allein. Gerechnet, **nicht gehört**.
+Nicht geprüft: alles im Programm; ob die Kick aus dem Creator klingt wie die
+des Kits (der Rechenversuch aus S115 war ein Modell in Python — verglichen
+gegen den Rechenkern ist hier nichts); das Fenster ist mit einer
+Sinus-Schicht zwei Zeilen höher geworden (im Bild aus dem Test bei 150 %
+rund 1400 Bildpunkte hoch, zuvor rund 1325) — ob es auf Patriks Bildschirm
+passt, ist nicht gesehen.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2332,6 +2407,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.53.0** (S116, 2026-10-12): Stufe 11d gebaut — die Schwingung Noise,
+  Pitch sweep und Sweep time (Skizze gebilligt; Entscheide N1: beide
+  Richtungen, N2 a: auch für Sample), `.lvinst` Fassung 5; Hörproben lokal
+  (§4h).
 
 - **0.52.0** (S116, 2026-10-12): 11c Schritt 3 gebaut, 11c damit gebaut —
   Edit sound... im Menü der Spur (aus Kit-Klang, Sample oder Datei wird ein

@@ -622,7 +622,7 @@ TEST_SUITE("LoopInstrument")
         eins.genres = {QStringLiteral("Funk"), QStringLiteral("Disco")};
         eins.beschreibung = QStringLiteral("A plucked string with a thump.");
         const QJsonObject json = alsJson(eins);
-        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste (seit S115: 4)
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste (seit S116: 5)
         CHECK(json.value(QStringLiteral("category")).toString() == QStringLiteral("bass"));
         CHECK(json.value(QStringLiteral("genres")).toArray().size() == 2);
         CHECK(json.value(QStringLiteral("description")).toString() == eins.beschreibung);
@@ -795,7 +795,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 4);  // seit S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 5);  // seit S116: Rauschen und Pitch sweep; S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
@@ -1258,6 +1258,215 @@ TEST_SUITE("LoopInstrument")
             rechne(a, k, 0, static_cast<int>(a.durchlaufFrames), werte.data());
             MESSAGE(instrument.titel.toStdString() << ": Hoerprobe, groesster Betrag " << std::to_string(spitze(werte)));
             CHECK(schreibeWav(QDir(ordner).filePath(instrument.name + QStringLiteral(".wav")), werte, kRate));
+        }
+    }
+
+    // Stufe 11d (Skizze gebilligt, Entscheide N1 und N2, Patrik S116). Ohne Qt-Anwendung.
+    TEST_CASE("Loop Instrument 11d: Rauschen — eine feste Folge ohne Tonhoehe; Pitch sweep — die Note faellt oder steigt auf ihren Ton")
+    {
+        // so oft wechselt das Vorzeichen zwischen zwei Abtastwerten
+        const auto wechsel = [](const Klang& klang, std::int64_t von, std::int64_t bis) {
+            int zahl = 0;
+            for (std::int64_t t = von + 1; t < bis && t < klang.frames(); ++t)
+                if (klang.daten[static_cast<std::size_t>(2 * (t - 1))] * klang.daten[static_cast<std::size_t>(2 * t)] < 0.0f) ++zahl;
+            return zahl;
+        };
+        const auto staerke = [](const Klang& klang) {
+            double summe = 0.0;
+            for (const float wert : klang.daten) summe += static_cast<double>(wert) * wert;
+            return std::sqrt(summe / static_cast<double>(std::max<std::size_t>(1, klang.daten.size())));
+        };
+        const auto gehalten = [](Schwingung welle) {
+            Instrument instrument;
+            Schicht& s = instrument.schichten[0];
+            s.schwingung = welle;
+            s.anstiegMs = 0.0;
+            s.halten = 1.0;
+            s.ausklangMs = 20.0;
+            return instrument;
+        };
+
+        // --- Rauschen: bei jeder Note dieselben Werte, beide Seiten gleich, halb ausgesteuert wie jede Schwingung
+        Instrument rausch = gehalten(Schwingung::Rauschen);
+        const Klang tief = rendereTon(rausch, 48, 200.0, kRate);
+        const Klang hoch = rendereTon(rausch, 72, 200.0, kRate);
+        REQUIRE(tief.frames() == 8820 + 882);
+        CHECK(tief.daten == hoch.daten);                                // keine Tonhoehe
+        CHECK(rendereTon(rausch, 48, 200.0, kRate).daten == tief.daten);  // derselbe Ton, dieselben Werte
+        CHECK(spitze(tief.daten) <= 0.5f);
+        CHECK(spitze(tief.daten) > 0.49f);
+        {
+            // das Zaehlwerk des Kits (`rauschen` in asset/loop/kit/make_kit.py), ab der Saat 22222;
+            // der erste Abtastwert ist still (die Huellkurve beginnt bei null), der zweite voll
+            std::uint32_t folge = 22222u;
+            folge = folge * 1664525u + 1013904223u;
+            folge = folge * 1664525u + 1013904223u;
+            const double zweiter = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
+            CHECK(tief.daten[0] == 0.0f);
+            CHECK(tief.daten[2] == doctest::Approx(0.5 * zweiter).epsilon(1e-5));
+            CHECK(tief.daten[3] == tief.daten[2]);
+        }
+        // weisses Rauschen: das Vorzeichen wechselt bei rund jedem zweiten Abtastwert, der Mittelwert liegt bei null
+        const int w = wechsel(tief, 1000, 5000);
+        CHECK(w > 1800);
+        CHECK(w < 2200);
+        double mittel = 0.0;
+        for (std::int64_t t = 0; t < 8820; ++t) mittel += tief.daten[static_cast<std::size_t>(2 * t)];
+        CHECK(std::abs(mittel / 8820.0) < 0.01);
+        // Transpose bewegt ohne Filter nichts; der Filter folgt der Note — tiefer ist dumpfer und leiser
+        rausch.schichten[0].versatzHalbtoene = 12;
+        CHECK(rendereTon(rausch, 48, 200.0, kRate).daten == tief.daten);
+        rausch.schichten[0].versatzHalbtoene = 0;
+        rausch.schichten[0].filterTeilton = 4.0;
+        const Klang dumpf = rendereTon(rausch, 48, 200.0, kRate);
+        const Klang hell = rendereTon(rausch, 72, 200.0, kRate);
+        CHECK(dumpf.daten != hell.daten);
+        CHECK(staerke(dumpf) < staerke(hell));
+        CHECK(staerke(hell) < staerke(tief));
+        CHECK(wechsel(dumpf, 1000, 5000) < wechsel(hell, 1000, 5000));
+        // Pitch sweep kennt das Rauschen nicht
+        rausch.schichten[0].filterTeilton = 0.0;
+        rausch.schichten[0].tonhoeheStartHt = 24.0;
+        CHECK(rendereTon(rausch, 48, 200.0, kRate).daten == tief.daten);
+
+        // --- Pitch sweep an einem Sinus: A3, 220 Hz — in 20 ms knapp neun Nulldurchgaenge
+        Instrument ton = gehalten(Schwingung::Sinus);
+        const Klang gerade = rendereTon(ton, 57, 600.0, kRate);
+        const int anfang = 882;  // 20 ms
+        CHECK(wechsel(gerade, 0, anfang) >= 8);
+        CHECK(wechsel(gerade, 0, anfang) <= 9);
+        // eine Oktave darueber beginnen, nach 90 ms angekommen: am Anfang deutlich mehr Durchgaenge
+        ton.schichten[0].tonhoeheStartHt = 12.0;
+        ton.schichten[0].tonhoeheZeitMs = 90.0;
+        const Klang faellt = rendereTon(ton, 57, 600.0, kRate);
+        REQUIRE(faellt.frames() == gerade.frames());
+        CHECK(wechsel(faellt, 0, anfang) >= 14);
+        CHECK(wechsel(faellt, 0, anfang) <= 16);
+        // und nach 400 ms auf dem Ton: in 100 ms 44 Durchgaenge, wie ohne
+        CHECK(wechsel(faellt, 17640, 22050) >= 43);
+        CHECK(wechsel(faellt, 17640, 22050) <= 45);
+        CHECK(wechsel(gerade, 17640, 22050) >= 43);
+        CHECK(wechsel(gerade, 17640, 22050) <= 45);
+        CHECK(spitze(faellt.daten) == doctest::Approx(spitze(gerade.daten)).epsilon(0.01));  // nicht lauter
+        // eine Oktave darunter beginnen: sie steigt — am Anfang weniger Durchgaenge
+        ton.schichten[0].tonhoeheStartHt = -12.0;
+        const Klang steigt = rendereTon(ton, 57, 600.0, kRate);
+        CHECK(wechsel(steigt, 0, anfang) >= 5);
+        CHECK(wechsel(steigt, 0, anfang) <= 6);
+        CHECK(wechsel(steigt, 17640, 22050) >= 43);
+        CHECK(wechsel(steigt, 17640, 22050) <= 45);
+        // 0 st oder keine Zeit: Abtastwert fuer Abtastwert wie ohne
+        ton.schichten[0].tonhoeheStartHt = 0.0;
+        ton.schichten[0].tonhoeheZeitMs = 500.0;
+        CHECK(rendereTon(ton, 57, 600.0, kRate).daten == gerade.daten);
+        ton.schichten[0].tonhoeheStartHt = 12.0;
+        ton.schichten[0].tonhoeheZeitMs = 0.0;
+        CHECK(rendereTon(ton, 57, 600.0, kRate).daten == gerade.daten);
+        // was ueber die Grenzen geht, gilt wie die Grenze
+        ton.schichten[0].tonhoeheZeitMs = 90.0;
+        ton.schichten[0].tonhoeheStartHt = kTonhoeheStartMax;
+        const Klang ganzOben = rendereTon(ton, 57, 600.0, kRate);
+        ton.schichten[0].tonhoeheStartHt = 500.0;
+        CHECK(rendereTon(ton, 57, 600.0, kRate).daten == ganzOben.daten);
+        // eine Saege mit Pitch sweep bleibt unter der halben Abtastrate: kein Wert ueber dem Pegel
+        Instrument saege = gehalten(Schwingung::Saege);
+        saege.schichten[0].tonhoeheStartHt = 36.0;
+        saege.schichten[0].tonhoeheZeitMs = 90.0;
+        CHECK(spitze(rendereTon(saege, 72, 300.0, kRate).daten) <= 0.5f);
+        // die gezupfte Saite kennt ihn nicht
+        Instrument saite = gehalten(Schwingung::Saite);
+        const Klang gezupft = rendereTon(saite, 57, 300.0, kRate);
+        saite.schichten[0].tonhoeheStartHt = 12.0;
+        CHECK(rendereTon(saite, 57, 300.0, kRate).daten == gezupft.daten);
+
+        // --- die Datei: Fassung 5 mit `noise`, `pitchStart`, `pitchTime`
+        Instrument beides = gehalten(Schwingung::Rauschen);
+        beides.titel = QStringLiteral("Zap");
+        beides.schichten.push_back(Schicht{});
+        beides.schichten[1].tonhoeheStartHt = -7.0;
+        beides.schichten[1].tonhoeheZeitMs = 250.0;
+        const QJsonObject json = alsJson(beides);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 5);
+        const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        REQUIRE(schichten.size() == 2);
+        CHECK(schichten.at(0).toObject().value(QStringLiteral("waveform")).toString() == QStringLiteral("noise"));
+        CHECK(schichten.at(1).toObject().value(QStringLiteral("pitchStart")).toDouble() == doctest::Approx(-7.0));
+        CHECK(schichten.at(1).toObject().value(QStringLiteral("pitchTime")).toDouble() == doctest::Approx(250.0));
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen == beides);
+        // Werte in ihren Grenzen
+        QJsonObject wild = json;
+        QJsonObject schicht = schichten.at(1).toObject();
+        schicht[QStringLiteral("pitchStart")] = 99.0;
+        schicht[QStringLiteral("pitchTime")] = -5.0;
+        QJsonObject tiefer = schicht;
+        tiefer[QStringLiteral("pitchStart")] = -99.0;
+        tiefer[QStringLiteral("pitchTime")] = 99999.0;
+        wild[QStringLiteral("layers")] = QJsonArray{schicht, tiefer};
+        REQUIRE(ausJson(wild, gelesen));
+        CHECK(gelesen.schichten[0].tonhoeheStartHt == kTonhoeheStartMax);
+        CHECK(gelesen.schichten[0].tonhoeheZeitMs == 0.0);
+        CHECK(gelesen.schichten[1].tonhoeheStartHt == kTonhoeheStartMin);
+        CHECK(gelesen.schichten[1].tonhoeheZeitMs == kTonhoeheZeitMaxMs);
+        // eine Datei der Fassung 4 kennt die Felder nicht: kein Pitch sweep
+        QJsonObject alt = json;
+        alt[QStringLiteral("version")] = 4;
+        QJsonObject ohne = schichten.at(1).toObject();
+        ohne.remove(QStringLiteral("pitchStart"));
+        ohne.remove(QStringLiteral("pitchTime"));
+        alt[QStringLiteral("layers")] = QJsonArray{ohne};
+        REQUIRE(ausJson(alt, gelesen));
+        CHECK(gelesen.schichten[0].tonhoeheStartHt == 0.0);
+        CHECK(gelesen.schichten[0] == Schicht{});
+
+        // --- `LUMIVIZ_11D_WAV=<Ordner>` legt Hoerproben ab: eine Kick und ein Tom aus den neuen Bausteinen
+        //     (Werte wie im Rechenversuch zum Kit, Loop_Konzept §4h; Decay des Klicks 10 ms, kuerzer
+        //     stellt der Regler nicht), dazu ein steigender Ton
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_11D_WAV"); !ordner.isEmpty())
+        {
+            REQUIRE(QDir().mkpath(ordner));
+            const auto schlag = [](Schwingung welle, double laut, double decayMs) {
+                Schicht s;
+                s.schwingung = welle;
+                s.laut = laut;
+                s.anstiegMs = 0.0;
+                s.abfallMs = decayMs;
+                s.halten = 0.0;
+                s.ausklangMs = 30.0;
+                return s;
+            };
+            const auto viermal = [](const Instrument& instrument, int hoehe, double dauerMs) {
+                const Klang einer = rendereTon(instrument, hoehe, dauerMs, kRate);
+                std::vector<float> alle;
+                for (int i = 0; i < 4; ++i)
+                {
+                    alle.insert(alle.end(), einer.daten.begin(), einer.daten.end());
+                    alle.resize(alle.size() + static_cast<std::size_t>(2 * kRate / 4), 0.0f);  // eine Viertelsekunde Pause
+                }
+                return alle;
+            };
+            Instrument kick;
+            kick.schichten = {schlag(Schwingung::Sinus, 1.0, 480.0), schlag(Schwingung::Rauschen, 0.25, 10.0)};
+            kick.schichten[0].tonhoeheStartHt = 22.0;
+            kick.schichten[0].tonhoeheZeitMs = 105.0;
+            Instrument kickDrive = kick;
+            kickDrive.schichten[0].verzerrung = 0.19;
+            Instrument tomtom;
+            tomtom.schichten = {schlag(Schwingung::Sinus, 1.0, 420.0), schlag(Schwingung::Rauschen, 0.15, 10.0)};
+            tomtom.schichten[0].tonhoeheStartHt = 10.0;
+            tomtom.schichten[0].tonhoeheZeitMs = 120.0;
+            Instrument zap;
+            zap.schichten = {schlag(Schwingung::Saege, 0.7, 300.0)};
+            zap.schichten[0].tonhoeheStartHt = -24.0;
+            zap.schichten[0].tonhoeheZeitMs = 250.0;
+            Instrument klick;
+            klick.schichten = {schlag(Schwingung::Rauschen, 1.0, 60.0)};
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("kick_sinus_faellt_22st_und_klick.wav")), viermal(kick, 30, 450.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("kick_dasselbe_mit_drive.wav")), viermal(kickDrive, 30, 450.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("tom_sinus_faellt_10st_und_klick.wav")), viermal(tomtom, 45, 400.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("zap_saege_steigt_24st.wav")), viermal(zap, 60, 350.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("rauschen_allein_decay_60ms.wav")), viermal(klick, 60, 200.0), kRate));
         }
     }
 }

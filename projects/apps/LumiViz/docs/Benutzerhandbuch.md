@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.136.0
+> **Version:** 1.137.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2722,15 +2722,18 @@ die Klaviatur des Editors.
 | **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
 | **Start offset** | Die Schicht setzt so viele Millisekunden nach dem Anschlag ein. Kein Echo — sie beginnt nur später |
-| **Waveform** | Sine, Triangle, Saw, Square, Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
+| **Waveform** | Sine, Triangle, Saw, Square, **Noise** (Rauschen, siehe unten), Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
 | **Voices**, **Detune** | Eine bis drei gleiche Schwingungen übereinander, leicht gegeneinander verstimmt — das macht den Klang breit |
+| **Pitch sweep** | Jede Note beginnt so viele Halbtöne neben ihrer Tonhöhe und kommt auf sie. Nach rechts beginnt sie darüber und **fällt** (der Wert zeigt „↓ 22 st") — so entsteht eine Kick oder ein Tom. Nach links beginnt sie darunter und **steigt** („↑ 12 st"). In der Mitte steht „off". Bei Sine, Triangle, Saw, Square und Sample; bei einer Aufnahme läuft sie am Anfang entsprechend schneller oder langsamer |
+| **Sweep time** | Nach dieser Zeit ist die Note auf ihrer Tonhöhe angekommen. Grau, solange Pitch sweep auf „off" steht |
 | **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
 | **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
 | **Attack**, **Decay**, **Sustain**, **Release** | Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
 | **Cutoff**, **Envelope** (Filter) | Ein Tiefpass, der mit der Tonhöhe mitgeht: Cutoff ganz links ist offen, sonst die Grenze als Vielfaches des Grundtons. Envelope öffnet ihn mit dem Anschlag |
 | **Drive** | Ein Verzerrer für diese Schicht: ganz links aus, weiter rechts rauer und lauter im Eindruck |
 | **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst |
-| **One cycle**, **Envelope of a note** | Das Bild einer Schwingung und der Hüllkurve — je Schicht eine einzelne Stimme ohne Vibrato. Die Linie ist die Summe aller eingeschalteten Schichten; bei mehreren zeigt die gestrichelte die gewählte allein |
+| **Noise** (Waveform) | Rauschen hat keine Tonhöhe: jede Taste spielt dasselbe, und Voices, Detune, Pitch sweep, die Obertöne und Vibrato fehlen. Geformt wird es mit Hüllkurve, Filter und Drive — kurz und ungefiltert ist es der Klick eines Schlags, länger der Teppich einer Snare. Der Filter geht weiter mit der Note mit: mit Cutoff klingt eine tiefere Taste dumpfer. Das Bild oben heißt dann **Noise** und zeigt ein kurzes Stück |
+| **One cycle**, **Envelope of a note** | Das Bild einer Schwingung und der Hüllkurve — je Schicht eine einzelne Stimme ohne Vibrato und ohne Pitch sweep. Die Linie ist die Summe aller eingeschalteten Schichten; bei mehreren zeigt die gestrichelte die gewählte allein |
 | Klaviatur | Ein Klick spielt den Ton mit den Einstellungen, wie sie gerade stehen — auch ungespeichert. Nur, solange sonst nichts spielt |
 | **Selected layer only** | Die Klaviatur spielt nur die gewählte Schicht — auch wenn sie in der Liste stumm ist |
 
@@ -2933,6 +2936,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.137.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU die Schwingung **Noise** und die Regler **Pitch sweep** (die Note fällt oder steigt auf ihre Tonhöhe) und **Sweep time**; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |
 | 1.136.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Edit sound...** im Rechtsklick auf eine Spur: aus Kit-Klang, eigenem Sample oder Tondatei wird ein Instrument der Art Drums mit einer Sample-Schicht; der Loop ändert sich erst mit Save im Creator |
 | 1.135.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Der Klang einer Spur**: die Auswahl **Sound** mit Kit, My samples, **Instrument...**, **Sample file...** (fragt jetzt wie der Creator, ob kopiert wird), **Record sample...**; an einer Instrument-Spur der Knopf **…** mit **Note**, **Length**, **Play**, **Browse...**, **Edit instrument...** |
 | 1.134.0 | 2026-10-12 | Session 116. §16 Loop, Fenster Instruments: GEÄNDERT der Knopf für Favoriten heißt **★** (zuvor „Favorite"), die Überschrift **★ Favorites** — wie in der Modul-Palette; dort und in der Preset-Zeile steht jetzt „Favorites" statt „Favourites" |

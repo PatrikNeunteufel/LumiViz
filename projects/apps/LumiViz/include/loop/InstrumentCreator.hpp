@@ -380,6 +380,8 @@ private:
     // --- nur Sample (Stufe 11a)
     std::vector<std::size_t> m_nurSample;    ///< Plaetze: Fine tune, Sample start, Loop from, Loop to
     std::vector<std::size_t> m_nichtSample;  ///< was eine Aufnahme nicht kennt: Voices, Detune, Vibrato
+    std::vector<std::size_t> m_nurTonweg;    ///< Pitch sweep, Sweep time: nicht bei Saite und Rauschen (Stufe 11d)
+    std::size_t m_reglerWegZeit = 0;         ///< Platz von Sweep time: grau, solange Pitch sweep auf 0 steht
     std::size_t m_reglerStart = 0;
     std::size_t m_reglerVon = 0;
     std::size_t m_reglerBis = 0;

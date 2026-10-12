@@ -355,8 +355,8 @@ TEST_SUITE("Loop Sample")
         instrument.schichten.push_back(Schicht{});  // dazu ein Sinus
 
         const QJsonObject json = alsJson(instrument);
-        CHECK(kInstrumentFassung == 4);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 4);
+        CHECK(kInstrumentFassung >= 4);  // die Felder gibt es seit Fassung 4; geschrieben wird die juengste
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
         const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
         REQUIRE(schichten.size() == 2);
         const QJsonObject erste = schichten.at(0).toObject();
@@ -399,7 +399,7 @@ TEST_SUITE("Loop Sample")
 
         // --- eine Fassung von morgen bleibt ungelesen
         QJsonObject morgen = json;
-        morgen[QStringLiteral("version")] = 5;
+        morgen[QStringLiteral("version")] = kInstrumentFassung + 1;
         bool zuNeu = false;
         CHECK_FALSE(ausJson(morgen, gelesen, &zuNeu));
         CHECK(zuNeu);
@@ -449,5 +449,45 @@ TEST_SUITE("Loop Sample")
         CHECK(bericht == QStringList{QStringLiteral("Sample not loaded: ") + QDir::toNativeSeparators(fehlt),
                                      QStringLiteral("Sample not loaded: (none)"),
                                      QStringLiteral("Sample not loaded: user:gibt_es_nicht")});
+    }
+
+    // Stufe 11d (Entscheid N2 a, Patrik S116): Pitch sweep gilt auch fuer eine Sample-Schicht
+    TEST_CASE("Loop Sample 11d: Pitch sweep — die Aufnahme laeuft am Anfang schneller und ist frueher zu Ende")
+    {
+        const SampleOrdner u;
+        // die Aufnahme: A4 (440 Hz), eine Sekunde
+        const QString nennung = QStringLiteral("frei:a4_sweep");
+        merkeSampleDaten(nennung, 48000, sinus(440.0, 1.0, 48000));
+        Instrument instrument = sampleInstrument(nennung);
+        const Klang gerade = rendereTon(instrument, 69, 1500.0, kRate);
+        CHECK(spitze(gerade, 42000, 44000) > 0.9f);  // bis kurz vor einer Sekunde klingt sie
+
+        // eine Oktave darueber beginnen, nach 300 ms angekommen
+        instrument.schichten[0].tonhoeheStartHt = 12.0;
+        instrument.schichten[0].tonhoeheZeitMs = 300.0;
+        const Klang faellt = rendereTon(instrument, 69, 1500.0, kRate);
+        REQUIRE(faellt.frames() == gerade.frames());
+        // am Anfang fast 880 Hz: rund 50 Abtastwerte je Schwingung statt 100
+        const int pAnfang = periode(faellt, 0, 300, 40, 75);
+        CHECK(pAnfang >= 49);
+        CHECK(pAnfang <= 57);
+        // nach 600 ms auf dem Ton
+        const int pSpaeter = periode(faellt, 26460, 4000, 80, 125);
+        CHECK(pSpaeter >= 99);
+        CHECK(pSpaeter <= 102);
+        // der schnellere Anfang hat rund 100 ms der Aufnahme mehr verbraucht: sie endet bei rund 900 ms
+        CHECK(spitze(faellt, 38000, 39000) > 0.9f);
+        CHECK(spitze(faellt, 40500, 44100) == 0.0f);
+
+        // darunter beginnen: sie steigt, und laeuft am Anfang langsamer
+        instrument.schichten[0].tonhoeheStartHt = -12.0;
+        const Klang steigt = rendereTon(instrument, 69, 1500.0, kRate);
+        const int pTief = periode(steigt, 0, 600, 150, 230);
+        CHECK(pTief >= 170);  // fast 440 / 2 Hz: bis zu 200 Abtastwerte je Schwingung
+        CHECK(spitze(steigt, 44100, 45500) > 0.9f);  // nach einer Sekunde klingt sie noch
+
+        // 0 st: die Zeit zaehlt nicht — Abtastwert fuer Abtastwert wie ohne
+        instrument.schichten[0].tonhoeheStartHt = 0.0;
+        CHECK(rendereTon(instrument, 69, 1500.0, kRate).daten == gerade.daten);
     }
 }

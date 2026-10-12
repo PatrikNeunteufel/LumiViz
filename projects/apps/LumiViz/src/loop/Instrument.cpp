@@ -50,7 +50,8 @@ double teilton(const Schicht& schicht, int k)
         return k % 2 == 1 ? 1.0 / k : 0.0;
     case Schwingung::Saite:
     case Schwingung::Sample:
-        break;  // kein Wellenzug: die Saite und die Aufnahme rechnen eigens
+    case Schwingung::Rauschen:
+        break;  // kein Wellenzug: die Saite, die Aufnahme und das Rauschen rechnen eigens
     }
     return 0.0;
 }
@@ -128,11 +129,41 @@ struct Verzerrer
     [[nodiscard]] double bei(double wert) const { return staerke > 0.0 ? std::tanh(staerke * wert) * norm : wert; }
 };
 
+/// Pitch sweep (Stufe 11d): das Verhaeltnis zur Tonhoehe der Note, je
+/// Abtastwert. Die Frequenz laeuft von ihrem Start auf die der Note zu —
+/// `f = ziel + (start − ziel) · e^(−t/τ)`, wie der Gleitton des Kits
+/// (`asset/loop/kit/make_kit.py`); τ ist ein Drittel der Zeit, wie bei Decay.
+struct Tonweg
+{
+    double mehr = 0.0;  ///< um so viel liegt der Start ueber der Note, als Anteil; 0 = aus
+    double tau = 1.0;   ///< in Abtastwerten
+
+    Tonweg(const Schicht& schicht, int rate)
+    {
+        const double start = inBereich(schicht.tonhoeheStartHt, kTonhoeheStartMin, kTonhoeheStartMax);
+        const double zeitMs = inBereich(schicht.tonhoeheZeitMs, 0.0, kTonhoeheZeitMaxMs);
+        if (start == 0.0 || zeitMs <= 0.0) return;
+        mehr = std::exp2(start / 12.0) - 1.0;
+        tau = std::max(1.0, zeitMs * rate / 1000.0 / 3.0);
+    }
+    [[nodiscard]] double bei(std::int64_t t) const
+    {
+        return mehr == 0.0 ? 1.0 : 1.0 + mehr * std::exp(-static_cast<double>(t) / tau);
+    }
+    /// Das groesste Verhaeltnis, das vorkommt (am Anfang einer fallenden Note).
+    [[nodiscard]] double hoechstes() const { return std::max(1.0, 1.0 + mehr); }
+
+private:
+    static double inBereich(double wert, double von, double bis) { return std::isfinite(wert) ? std::clamp(wert, von, bis) : 0.0; }
+};
+
 void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    // Vibrato und Verstimmung heben den Ton leicht: etwas Abstand zur halben Abtastrate
-    const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06)), 1, kTeiltoeneMax);
+    const Tonweg weg(schicht, rate);
+    // Vibrato und Verstimmung heben den Ton leicht: etwas Abstand zur halben Abtastrate.
+    // Eine fallende Note beginnt hoeher: die Tafel traegt nur, was auch dort darunter bleibt.
+    const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06 * weg.hoechstes())), 1, kTeiltoeneMax);
     const std::vector<float> tafel = wellenzug(schicht, hoechster);
     const Verzerrer verzerrer(schicht.verzerrung);
 
@@ -153,7 +184,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
     for (std::int64_t t = 0; t < frames; ++t)
     {
         const double h = huelle.bei(t);
-        double schritt = hz / rate;
+        double schritt = hz / rate * weg.bei(t);
         if (vibrato)
         {
             const double tiefe = schicht.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
@@ -242,6 +273,39 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
     }
 }
 
+/// Das Rauschen (Stufe 11d): gleichverteilt, aus einem festen Zaehlwerk —
+/// dasselbe wie im Kit (`rauschen` in `make_kit.py`) und bei jeder Note
+/// dieselbe Folge: derselbe Ton ergibt dieselben Werte. Es hat keine
+/// Tonhoehe; die Note (mit Transpose) bewegt nur den Filter, der ihr folgt.
+/// Zwei Rauschen-Schichten eines Instruments tragen dieselbe Folge.
+void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+{
+    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    const Verzerrer verzerrer(schicht.verzerrung);
+    const bool filter = schicht.filterTeilton > 0.0;
+    double f1 = 0.0;
+    double f2 = 0.0;
+    const double pegel = kPegel * schicht.laut;
+    std::uint32_t folge = 22222u;
+    for (std::int64_t t = 0; t < frames; ++t)
+    {
+        const double h = huelle.bei(t);
+        folge = folge * 1664525u + 1013904223u;
+        double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
+        if (filter)
+        {
+            const double grenze = std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
+            const double a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
+            f1 += a * (wert - f1);
+            f2 += a * (f1 - f2);
+            wert = f2;
+        }
+        const auto aus = static_cast<float>(verzerrer.bei(wert) * h * pegel);
+        daten[static_cast<std::size_t>(2 * t)] = aus;
+        daten[static_cast<std::size_t>(2 * t + 1)] = aus;
+    }
+}
+
 /// So lang blendet ein Sustain loop an seiner Naht hoechstens ueber.
 constexpr double kNahtMs = 10.0;
 
@@ -287,6 +351,9 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
     std::array<double, 2> f1 = {0.0, 0.0};
     std::array<double, 2> f2 = {0.0, 0.0};
     const double pegel = schicht.laut;
+    // Pitch sweep (N2 a): die Aufnahme laeuft am Anfang schneller (oder langsamer) und kommt
+    // auf ihr Tempo — der Sustain loop rechnet mit jedem Schritt
+    const Tonweg weg(schicht, rate);
 
     for (std::int64_t t = 0; t < frames; ++t)
     {
@@ -313,7 +380,7 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
             }
             daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(verzerrer.bei(wert) * h * pegel);
         }
-        ort += schritt;
+        ort += schritt * weg.bei(t);
         if (gehalten && ort >= bis) ort -= bis - von;
     }
 }
@@ -334,12 +401,13 @@ struct Wellenname
     Schwingung schwingung;
     const char* name;
 };
-constexpr std::array<Wellenname, 6> kWellen = {{{Schwingung::Sinus, "sine"},
+constexpr std::array<Wellenname, 7> kWellen = {{{Schwingung::Sinus, "sine"},
                                                 {Schwingung::Dreieck, "triangle"},
                                                 {Schwingung::Saege, "saw"},
                                                 {Schwingung::Rechteck, "square"},
                                                 {Schwingung::Saite, "string"},
-                                                {Schwingung::Sample, "sample"}}};
+                                                {Schwingung::Sample, "sample"},
+                                                {Schwingung::Rauschen, "noise"}}};
 
 double inGrenzen(double wert, double von, double bis, double ersatz)
 {
@@ -383,6 +451,9 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("vibratoDelay")] = schicht.vibratoEinsatzMs;
     o[QStringLiteral("damping")] = schicht.saiteDaempfung;
     o[QStringLiteral("level")] = schicht.laut;
+    // seit Fassung 5 (Pitch sweep): Halbtoene neben der Note, und die Zeit des Wegs
+    o[QStringLiteral("pitchStart")] = schicht.tonhoeheStartHt;
+    o[QStringLiteral("pitchTime")] = schicht.tonhoeheZeitMs;
     if (schicht.schwingung == Schwingung::Sample)
     {
         // seit Fassung 4; nur eine Sample-Schicht traegt sie
@@ -441,6 +512,9 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.schleife = wurzel.value(QStringLiteral("sustainLoop")).toBool(false);
     neu.schleifeVonMs = zahl("loopFrom", vorgabe.schleifeVonMs, 0.0, laengsteMs);
     neu.schleifeBisMs = zahl("loopTo", vorgabe.schleifeBisMs, 0.0, laengsteMs);
+    // seit Fassung 5; in einer aelteren Datei fehlen sie — dann kein Pitch sweep
+    neu.tonhoeheStartHt = zahl("pitchStart", vorgabe.tonhoeheStartHt, kTonhoeheStartMin, kTonhoeheStartMax);
+    neu.tonhoeheZeitMs = zahl("pitchTime", vorgabe.tonhoeheZeitMs, 0.0, kTonhoeheZeitMaxMs);
     return neu;
 }
 
@@ -772,6 +846,8 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
             rechneSaite(schicht, ton, hz, huelle, rate, eine);
         else if (schicht.schwingung == Schwingung::Sample)
             rechneSample(schicht, ton, hz, huelle, rate, eine);
+        else if (schicht.schwingung == Schwingung::Rauschen)
+            rechneRauschen(schicht, hz, huelle, rate, eine);
         else
             rechneSchwingung(schicht, hz, huelle, rate, eine);
         if (erste && einsatz == 0)

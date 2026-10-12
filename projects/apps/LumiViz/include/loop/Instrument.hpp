@@ -34,7 +34,8 @@ namespace lumi::loop
 /// Die Schwingung eines Instruments. Die vier ersten sind ein Wellenzug ohne
 /// Teiltoene ueber der halben Abtastrate; die Saite ist eine gezupfte Saite
 /// (Karplus-Strong), die von selbst ausklingt. Das Sample ist eine Aufnahme,
-/// je Note schneller oder langsamer abgespielt (Stufe 11a).
+/// je Note schneller oder langsamer abgespielt (Stufe 11a). Das Rauschen hat
+/// keine Tonhoehe: eine feste Folge, bei jeder Note dieselbe (Stufe 11d).
 enum class Schwingung : int
 {
     Sinus = 0,
@@ -43,7 +44,15 @@ enum class Schwingung : int
     Rechteck,
     Saite,
     Sample,
+    Rauschen,
 };
+
+/// Pitch sweep (Stufe 11d, Entscheid N1): so weit neben ihrer Tonhoehe darf
+/// eine Note beginnen, in Halbtoenen — darueber (sie faellt) oder darunter
+/// (sie steigt) — und so lang darf der Weg dauern.
+inline constexpr double kTonhoeheStartMin = -24.0;
+inline constexpr double kTonhoeheStartMax = 48.0;
+inline constexpr double kTonhoeheZeitMaxMs = 2000.0;
 
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
 /// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze
@@ -91,6 +100,16 @@ struct Schicht
     bool schleife = false;          ///< Sustain loop: ein Stueck wiederholt sich, solange die Note dauert
     double schleifeVonMs = 0.0;     ///< Loop from, in der Aufnahme
     double schleifeBisMs = 0.0;     ///< Loop to; nicht groesser als von = keine Schleife
+
+    // --- Pitch sweep (Stufe 11d; Entscheide N1 und N2, Patrik S116) ---
+    // Fuer Sinus, Dreieck, Saege, Rechteck und Sample; Saite und Rauschen kennen ihn nicht.
+    /// So viele Halbtoene neben ihrer Tonhoehe beginnt jede Note: groesser als
+    /// null darueber (sie faellt auf den Ton), kleiner darunter (sie steigt);
+    /// 0 = aus. `kTonhoeheStartMin` … `kTonhoeheStartMax`.
+    double tonhoeheStartHt = 0.0;
+    /// Nach dieser Zeit ist die Tonhoehe angekommen (bis auf ein Zwanzigstel
+    /// des Wegs, wie Decay); 0 = kein Weg, die Note beginnt auf ihrem Ton.
+    double tonhoeheZeitMs = 100.0;
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 };
@@ -148,10 +167,14 @@ struct Instrument
 // duerfen fehlen. Fassung 4 (S115, Stufe 11a) kennt die Schwingung `sample`
 // mit `sample`, `rootNote`, `fineTune`, `sampleStart`, `sustainLoop`,
 // `loopFrom`, `loopTo` — eine eigene Fassung, weil ein aelteres Programm eine
-// solche Schicht sonst still als Sinus spielte. Geschrieben wird Fassung 4.
+// solche Schicht sonst still als Sinus spielte. Fassung 5 (S116, Stufe 11d)
+// kennt die Schwingung `noise` und an jeder Schicht `pitchStart` (Halbtoene)
+// und `pitchTime` (ms) — aus demselben Grund eine eigene Fassung: ein aelteres
+// Programm spielte Rauschen als Sinus und einen fallenden Ton gerade.
+// Geschrieben wird Fassung 5.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 4;
+inline constexpr int kInstrumentFassung = 5;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

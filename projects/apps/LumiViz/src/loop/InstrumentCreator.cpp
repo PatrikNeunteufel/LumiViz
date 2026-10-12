@@ -603,6 +603,7 @@ void InstrumentCreator::setupUI()
     m_welle->addItem(tr("Triangle"), static_cast<int>(Schwingung::Dreieck));
     m_welle->addItem(tr("Saw"), static_cast<int>(Schwingung::Saege));
     m_welle->addItem(tr("Square"), static_cast<int>(Schwingung::Rechteck));
+    m_welle->addItem(tr("Noise"), static_cast<int>(Schwingung::Rauschen));  // Stufe 11d
     m_welle->addItem(tr("Plucked string"), static_cast<int>(Schwingung::Saite));
     m_welle->addItem(tr("Sample"), static_cast<int>(Schwingung::Sample));
     {
@@ -727,6 +728,26 @@ void InstrumentCreator::setupUI()
            [](const Schicht& i) { return QStringLiteral("%1 ct").arg(gerundet(i.verstimmungCent)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
     m_nichtSample.push_back(m_regler.size() - 1);
+    // --- Pitch sweep (Stufe 11d; Skizze gebilligt, Entscheide N1 und N2, Patrik S116): jede Note
+    //     beginnt neben ihrer Tonhoehe und kommt auf sie — darueber faellt sie, darunter steigt sie
+    regler(gitter, tr("Pitch sweep"), "creatorPitchSweep", static_cast<int>(kTonhoeheStartMin), static_cast<int>(kTonhoeheStartMax),
+           [](const Schicht& i) { return gerundet(i.tonhoeheStartHt); }, [](Schicht& i, int w) { i.tonhoeheStartHt = w; },
+           [](const Schicht& i) {
+               // ein Pfeil sagt die Richtung — die Worte dazu waren fuer die Spalte zu breit
+               const int st = gerundet(i.tonhoeheStartHt);
+               return st > 0   ? QString::fromUtf8("↓ %1 st").arg(st)
+                      : st < 0 ? QString::fromUtf8("↑ %1 st").arg(-st)
+                               : tr("off");
+           })
+        .schieber->setToolTip(tr("Every note starts this many semitones away from its pitch and glides onto it: to the "
+                                 "right it starts above and falls (↓ — a kick, a tom), to the left it starts below and "
+                                 "rises (↑)"));
+    m_nurTonweg.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Sweep time"), "creatorSweepTime", 0, 100, [](const Schicht& i) { return gerundet(i.tonhoeheZeitMs / 5.0); },
+           [](Schicht& i, int w) { i.tonhoeheZeitMs = w * 5.0; }, [ms](const Schicht& i) { return ms(i.tonhoeheZeitMs); })
+        .schieber->setToolTip(tr("After this time the note has reached its pitch"));
+    m_reglerWegZeit = m_regler.size() - 1;
+    m_nurTonweg.push_back(m_reglerWegZeit);
     for (int k = 0; k < kObertonRegler; ++k)
     {
         const auto platz = static_cast<std::size_t>(k);
@@ -767,7 +788,7 @@ void InstrumentCreator::setupUI()
     titel(tr("Filter"));
     regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filterTeilton * 10.0); },
            [](Schicht& i, int w) { i.filterTeilton = w / 10.0; },
-           [this](const Schicht& i) {
+           [](const Schicht& i) {
                return i.filterTeilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filterTeilton, 0, 'f', 1);
            });
     m_nichtSaite.push_back(m_regler.size() - 1);
@@ -778,7 +799,7 @@ void InstrumentCreator::setupUI()
     m_nichtSaite.push_back(m_regler.size() - 1);
     regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [](const Schicht& i) { return gerundet(i.verzerrung * 100.0); },
            [](Schicht& i, int w) { i.verzerrung = w / 100.0; },
-           [this](const Schicht& i) {
+           [](const Schicht& i) {
                return i.verzerrung <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(i.verzerrung * 100.0));
            })
         .schieber->setToolTip(tr("Distortion of this layer"));
@@ -1336,6 +1357,7 @@ Instrument InstrumentCreator::fuerBild(bool nurGewaehlte) const
     {
         s.stimmen = 1;
         s.vibratoCent = 0.0;
+        s.tonhoeheStartHt = 0.0;  // ohne Pitch sweep: das Bild zeigt den Ton, auf dem die Note ankommt
     }
     return bild;
 }
@@ -1430,10 +1452,15 @@ void InstrumentCreator::zeigeAlles()
         r.schieber->setVisible(an);
         r.wert->setVisible(an);
     };
+    // Rauschen (Stufe 11d) hat keine Tonhoehe: Voices, Detune, Vibrato und Pitch sweep fehlen
+    const bool rauschen = gewaehlte.schwingung == Schwingung::Rauschen;
     for (const std::size_t platz : m_nichtSaite) zeige(platz, !saite);
-    for (const std::size_t platz : m_nichtSample) zeige(platz, !saite && !sample);
+    for (const std::size_t platz : m_nichtSample) zeige(platz, !saite && !sample && !rauschen);
     for (const std::size_t platz : m_nurSinus) zeige(platz, sinus);
     for (const std::size_t platz : m_nurSample) zeige(platz, sample);
+    for (const std::size_t platz : m_nurTonweg) zeige(platz, !saite && !rauschen);
+    // ohne Weg gibt es keine Zeit zu stellen
+    m_regler[m_reglerWegZeit].schieber->setEnabled(gerundet(gewaehlte.tonhoeheStartHt) != 0);
     for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
     {
         // Detect: das Ergebnis gilt fuer die Schicht und die Aufnahme, an der gemessen wurde
@@ -1446,7 +1473,7 @@ void InstrumentCreator::zeigeAlles()
                                                       : tr("No clear pitch found"));
         m_referenz->setVisible(sample);
     }
-    m_vibratoTitel->setVisible(!saite && !sample);  // eine Ueberschrift ohne Regler darunter bleibt weg
+    m_vibratoTitel->setVisible(!saite && !sample && !rauschen);  // eine Ueberschrift ohne Regler darunter bleibt weg
     zeige(m_daempfung, saite);
     zeigeBilder();
 }
@@ -1678,7 +1705,8 @@ void InstrumentCreator::zeigeBilder()
     }
     else
     {
-        m_wellenTitel->setText(tr("One cycle"));
+        // Rauschen hat keine Schwingung, die sich wiederholt: das Bild zeigt ein kurzes Stueck davon
+        m_wellenTitel->setText(gewaehlte.schwingung == Schwingung::Rauschen ? tr("Noise") : tr("One cycle"));
         m_wellenBild->setGespiegelt(false);
         m_wellenBild->setGriffe(-1.0, -1.0, -1.0);
     }
