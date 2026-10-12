@@ -840,6 +840,40 @@ bool loescheEigenes(const QString& name)
     return true;
 }
 
+QString nimmZuEigenenInstrumenten(const QString& quelle)
+{
+    const QFileInfo info(quelle);
+    const QString ordner = eigenerInstrumentOrdner();
+    Instrument instrument;
+    if (!info.isFile() || ordner.isEmpty() || !ladeInstrument(quelle, instrument)) return {};
+    // der Name der Datei — und wenn daraus keiner wird, der Titel des Instruments
+    QString grund = eigenerName(info.completeBaseName());
+    if (grund.isEmpty()) grund = eigenerName(instrument.titel);
+    if (grund.isEmpty()) return {};
+    const auto inhaltVon = [](const QString& pfad) {
+        QFile datei(pfad);
+        return datei.open(QIODevice::ReadOnly) ? datei.readAll() : QByteArray();
+    };
+    const QByteArray inhalt = inhaltVon(quelle);
+    if (inhalt.isEmpty() || !QDir().mkpath(ordner)) return {};
+
+    for (int zahl = 1; zahl < 1000; ++zahl)
+    {
+        const QString name = zahl == 1 ? grund : grund.left(60) + QLatin1Char('_') + QString::number(zahl);
+        const QString ziel = eigeneDatei(name);
+        if (ziel.isEmpty()) return {};
+        if (!QFileInfo::exists(ziel))
+        {
+            if (!QFile::copy(quelle, ziel)) return {};
+            ++fassung();  // ein eigenes ist dazugekommen
+            return QLatin1String(kEigenVorsatz) + name;
+        }
+        // dieselbe Datei liegt schon da (auch: sie wurde aus dem Ordner selbst gewaehlt)
+        if (inhaltVon(ziel) == inhalt) return QLatin1String(kEigenVorsatz) + name;
+    }
+    return {};
+}
+
 QStringList bekannteGenres()
 {
     QStringList alle;

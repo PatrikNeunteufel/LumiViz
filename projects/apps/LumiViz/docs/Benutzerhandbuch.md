@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.141.0
+> **Version:** 1.142.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2693,7 +2693,7 @@ gespeichert wurde.
 |---|---|
 | **Browse...** | Öffnet das Fenster **Instruments** (siehe unten). Der Name des Instruments steht fett davor — bei einem eigenen „Titel (My files)", bei einer Datei „Titel (Dateiname)" |
 | **Edit instrument...** | Öffnet den Creator mit dem Instrument des Musters. Ein mitgeliefertes wird dabei zur Vorlage: es selbst bleibt, wie es ist |
-| **Load instrument...** | Nimmt eine Datei `.lvinst` von einem beliebigen Ort für dieses Muster |
+| **Load instrument...** | Nimmt eine Datei `.lvinst` von einem beliebigen Ort für dieses Muster und fragt, wo sie bleiben soll: **Copy the file to My files (recommended)** legt eine Kopie zu deinen eigenen Instrumenten — sie steht danach unter My files, geht mit einem Export und bleibt, wenn das Original verschwindet; gibt es den Namen dort schon mit anderem Inhalt, bekommt die Kopie eine Zahl. **Use it where it is** lässt die Datei, wo sie ist; das Muster nennt dann ihren Pfad. Der Dialog beginnt beim ersten Mal in deinen Dokumenten, danach im zuletzt benutzten Ordner |
 
 **Das Fenster Instruments** bleibt offen, während du arbeitest, und wählt immer für
 das Muster, das der Instrument-Editor gerade zeigt („For pattern: …").
@@ -2949,6 +2949,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.142.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Editor GEÄNDERT: **Load instrument...** fragt nach der Wahl, ob die Datei zu den eigenen Instrumenten kopiert wird (vorbelegt) oder am Ort bleibt; vorher stand immer der Pfad im Muster |
 | 1.141.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Creator GEÄNDERT: **Save as...** fragt nur noch nach einem Namen und legt die Kopie zu den eigenen Dateien (vorher ein Dateidialog an beliebigem Ort); der Dialog **Save instrument** sagt bei einem mitgelieferten Instrument, dass Originale nicht überschrieben werden |
 | 1.140.0 | 2026-10-12 | Session 116. §8 Settings GEÄNDERT: statt eines **Image Search Folder** eine Liste **Image and Texture Search Folders** — sie gilt jetzt auch für die Texturen und Sprites von MilkDrop-Presets und für AVI; der bisher gesetzte Ordner steht als erster Eintrag darin |
 | 1.139.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU **Repeat note** mit **every … beats**: der angeklickte Ton spielt immer wieder, die Taste ist dabei hervorgehoben, der Abstand ist einstellbar |

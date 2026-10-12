@@ -264,6 +264,11 @@ public:
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
     void setzeTakte(int takte);
     void setzeInstrument(const QString& name);
+    /// Was Load instrument... nach der Rueckfrage tut (Entscheid E3 a, S117):
+    /// die Datei zu den eigenen kopieren und als `user:<name>` ins Muster
+    /// setzen — oder sie am Ort lassen, dann steht ihr Pfad im Muster.
+    /// false = nicht zu lesen oder nicht zu kopieren; das Muster bleibt.
+    bool nimmInstrumentDatei(const QString& pfad, bool kopieren);
     void setzeLaut(double laut);
     void setzePan(double pan);
     void setzeStumm(bool stumm);

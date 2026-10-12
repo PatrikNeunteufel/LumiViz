@@ -1760,6 +1760,94 @@ TEST_SUITE("LoopInstrumentEditor")
         }
     }
 
+    TEST_CASE("Instrument-Editor: Load instrument — die Datei kommt zu den eigenen oder bleibt am Ort")
+    {
+        // Entscheid E3 a (Patrik S117). Die Rueckfrage selbst (ein QMessageBox) wird nicht gezeigt:
+        // geprueft ist, was nach ihrer Antwort geschieht. Der Benutzerordner ist ein Wegwerf-Ordner.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        // zwei fremde Dateien mit demselben Namen an zwei Orten, mit verschiedenem Inhalt
+        REQUIRE(QDir(tmp.path()).mkpath(QStringLiteral("a")));
+        REQUIRE(QDir(tmp.path()).mkpath(QStringLiteral("b")));
+        const QString fremd = QDir(tmp.path()).filePath(QStringLiteral("a/Fremd Klang.lvinst"));
+        const QString anders = QDir(tmp.path()).filePath(QStringLiteral("b/Fremd Klang.lvinst"));
+        Instrument eins = *findeInstrument(QStringLiteral("strings"));
+        eins.titel = QStringLiteral("Fremder Klang");
+        REQUIRE(speichereInstrument(eins, fremd));
+        Instrument zwei = *findeInstrument(QStringLiteral("organ"));
+        zwei.titel = QStringLiteral("Anderer Klang");
+        REQUIRE(speichereInstrument(zwei, anders));
+
+        InstrumentEditor editor;  // nicht gezeigt: kein Fenster
+        Loop loop = probe();
+        QStringList gemeldet;
+        QObject::connect(&editor, &InstrumentEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            gemeldet << was;
+            loop = neu;
+            editor.setLoop(loop);
+        });
+        REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
+        auto* auswahl = editor.findChild<QLabel*>(QStringLiteral("instrumentSound"));
+        REQUIRE(auswahl != nullptr);
+
+        // --- kopieren: der Ordner entsteht, die Datei heisst nach ihrer Datei, das Muster nennt user:<name>
+        CHECK_FALSE(QFileInfo::exists(eigenerInstrumentOrdner()));
+        REQUIRE(editor.nimmInstrumentDatei(fremd, true));
+        CHECK(loop.muster[0].instrument == QStringLiteral("user:fremd_klang"));
+        CHECK(gemeldet == QStringList{QStringLiteral("Change instrument")});
+        CHECK(QFileInfo::exists(eigeneDatei(QStringLiteral("fremd_klang"))));
+        CHECK(QFileInfo::exists(fremd));  // das Original bleibt
+        CHECK(auswahl->text().startsWith(QStringLiteral("Fremder Klang")));
+        Instrument geholt;
+        REQUIRE(holeInstrument(QStringLiteral("user:fremd_klang"), geholt));
+        CHECK(geholt.schichten == eins.schichten);
+
+        // --- dieselbe Datei noch einmal: keine zweite Kopie, nichts aendert sich
+        REQUIRE(editor.nimmInstrumentDatei(fremd, true));
+        CHECK(gemeldet.size() == 1);
+        CHECK_FALSE(QFileInfo::exists(eigeneDatei(QStringLiteral("fremd_klang_2"))));
+        // ... auch aus dem Ordner der eigenen selbst gewaehlt
+        CHECK(nimmZuEigenenInstrumenten(eigeneDatei(QStringLiteral("fremd_klang"))) == QStringLiteral("user:fremd_klang"));
+
+        // --- eine andere Datei mit demselben Namen: sie bekommt eine Zahl, die erste bleibt
+        REQUIRE(editor.nimmInstrumentDatei(anders, true));
+        CHECK(loop.muster[0].instrument == QStringLiteral("user:fremd_klang_2"));
+        REQUIRE(holeInstrument(QStringLiteral("user:fremd_klang"), geholt));
+        CHECK(geholt.titel == QStringLiteral("Fremder Klang"));
+        REQUIRE(holeInstrument(QStringLiteral("user:fremd_klang_2"), geholt));
+        CHECK(geholt.titel == QStringLiteral("Anderer Klang"));
+        CHECK(eigeneInstrumente().size() == 2);
+
+        // --- am Ort lassen: im Muster steht der Pfad, kopiert wird nichts
+        REQUIRE(editor.nimmInstrumentDatei(fremd, false));
+        CHECK(loop.muster[0].instrument == fremd);
+        CHECK(eigeneInstrumente().size() == 2);
+
+        // --- was kein Instrument ist, wird nicht kopiert, und das Muster bleibt
+        const QString unsinn = QDir(tmp.path()).filePath(QStringLiteral("unsinn.lvinst"));
+        {
+            QFile datei(unsinn);
+            REQUIRE(datei.open(QIODevice::WriteOnly));
+            datei.write("kein Instrument");
+        }
+        const int vorher = static_cast<int>(gemeldet.size());
+        CHECK_FALSE(editor.nimmInstrumentDatei(unsinn, true));
+        CHECK_FALSE(editor.nimmInstrumentDatei(QDir(tmp.path()).filePath(QStringLiteral("fehlt.lvinst")), true));
+        CHECK(gemeldet.size() == vorher);
+        CHECK(loop.muster[0].instrument == fremd);
+        CHECK(eigeneInstrumente().size() == 2);
+    }
+
     TEST_CASE("Instrument-Editor: zeigt eine Basis — jede Aenderung ist eine neue Fassung des Loops")
     {
         int argc = 1;

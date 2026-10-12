@@ -23,6 +23,7 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
@@ -33,6 +34,7 @@
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QSpinBox>
+#include <QStandardPaths>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWheelEvent>
@@ -1089,12 +1091,39 @@ void InstrumentEditor::setupUI()
     connect(m_instrumentBearbeiten, &QPushButton::clicked, this, [this] { (void)oeffneCreator(); });
     connect(m_instrumentLaden, &QPushButton::clicked, this, [this] {
         QSettings einstellungen;
-        const QString pfad = QFileDialog::getOpenFileName(
-            this, tr("Load instrument"), einstellungen.value(QLatin1String(kInstrumentOrdner)).toString(),
-            tr("Instrument (*.lvinst);;All files (*)"));
+        // beim ersten Mal: die eigenen Dokumente — eine fremde Datei liegt irgendwo
+        QString ordner = einstellungen.value(QLatin1String(kInstrumentOrdner)).toString();
+        if (ordner.isEmpty() || !QFileInfo(ordner).isDir())
+            ordner = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        const QString pfad =
+            QFileDialog::getOpenFileName(this, tr("Load instrument"), ordner, tr("Instrument (*.lvinst);;All files (*)"));
         if (pfad.isEmpty()) return;
         einstellungen.setValue(QLatin1String(kInstrumentOrdner), QFileInfo(pfad).absolutePath());
-        setzeInstrument(pfad);
+        // Entscheid E3 a (S117): zu den eigenen kopieren oder am Ort lassen. Liegt
+        // die Datei schon bei den eigenen, ist nichts zu fragen.
+        bool kopieren = QDir::cleanPath(QFileInfo(pfad).absolutePath())
+                            .compare(QDir::cleanPath(eigenerInstrumentOrdner()), Qt::CaseInsensitive) == 0;
+        if (!kopieren)
+        {
+            QMessageBox frage(this);
+            frage.setObjectName(QStringLiteral("instrumentCopyDialog"));
+            frage.setWindowTitle(tr("Instrument"));
+            frage.setIcon(QMessageBox::Question);
+            frage.setText(tr("Where should %1 be kept?").arg(QFileInfo(pfad).fileName()));
+            frage.setInformativeText(tr("A copy in My files goes along with an export and stays when the original moves. "
+                                        "Without a copy the pattern names the file at\n%1")
+                                         .arg(QDir::toNativeSeparators(pfad)));
+            QPushButton* zuEigenen = frage.addButton(tr("Copy the file to My files (recommended)"), QMessageBox::AcceptRole);
+            QPushButton* amOrt = frage.addButton(tr("Use it where it is"), QMessageBox::ActionRole);
+            frage.addButton(QMessageBox::Cancel);
+            frage.setDefaultButton(zuEigenen);
+            frage.exec();
+            if (frage.clickedButton() != zuEigenen && frage.clickedButton() != amOrt) return;
+            kopieren = frage.clickedButton() == zuEigenen;
+        }
+        if (!nimmInstrumentDatei(pfad, kopieren))
+            QMessageBox::warning(this, tr("Instrument"),
+                                 tr("Could not copy %1 to My files").arg(QDir::toNativeSeparators(pfad)));
     });
     // ein Schieber meldet beim Loslassen — nicht jeden Pixel als Schritt fuer Undo
     const auto schieber = [this](QSlider* regler, bool pan) {
@@ -1392,6 +1421,20 @@ void InstrumentEditor::setzeInstrument(const QString& name)
     ziel->instrument = name;
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change instrument"));
+}
+
+bool InstrumentEditor::nimmInstrumentDatei(const QString& pfad, bool kopieren)
+{
+    const QString nennung = kopieren ? nimmZuEigenenInstrumenten(pfad) : pfad;
+    if (nennung.isEmpty()) return false;
+    setzeInstrument(nennung);
+    // ein neues eigenes: das Fenster „Instruments" zeigt es gleich
+    if (kopieren && m_palette != nullptr)
+    {
+        m_palette->liesNeu();
+        (void)m_palette->waehle(nennung);
+    }
+    return true;
 }
 
 void InstrumentEditor::setzeLaut(double laut)

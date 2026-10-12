@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.175.0
+> **Version:** 1.176.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2443,9 +2443,11 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     grau), Save as... bleibt für einen freien Ort (**S117 GEÄNDERT**,
     Entscheide E1 a und E1b c: Save as... fragt nur nach dem Namen und
     schreibt nach `instruments`; ein Original wird nie überschrieben, der
-    Dialog sagt es. Im Programm nicht gesehen. **Offen:** drei lose
-    `.lvinst` in der Wurzel von Patriks Benutzerordner — Vorlage E2; ob
-    Load instrument... in `instruments` beginnt — E3). Im Programm nicht
+    Dialog sagt es. E2 a: die drei losen `.lvinst` aus der Wurzel von
+    Patriks Benutzerordner liegen unter `instruments`. E3 a: Load
+    instrument... fragt, ob die Datei zu den eigenen kopiert wird oder am
+    Ort bleibt. Alles aus S117 im Programm nicht gesehen — Liste 10, K9,
+    K9b, K9c). Im Programm nicht
     gesehen; nicht geprüft: der Dialog „Save instrument" und die Vorschläge
     der Genres im gezeigten Fenster. **Gebaut 14c** — das Fenster
     **Instruments** (`loop/InstrumentPalette`): Suche, Filter nach Genre,
@@ -5234,6 +5236,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.176.0 | 2026-10-12 | Session 117. Loop, Instrument-Editor: **Load instrument...** fragt, ob die Datei zu den eigenen kopiert wird oder am Ort bleibt (E3 a) — im Programm nicht gesehen; E2 a erledigt (die drei losen `.lvinst` liegen unter `instruments`) |
 | 1.175.0 | 2026-10-12 | Session 117. Loop, Instrument-Creator: **Save as...** fragt nur nach dem Namen und schreibt nach `instruments` (E1 a), ein Original wird nie überschrieben (E1b c) — im Programm nicht gesehen; offen E2 (drei lose `.lvinst` in der Wurzel des Benutzerordners) und E3 (Startordner von Load instrument...) |
 | 1.174.0 | 2026-10-12 | Abschluss Session 116 — **Loop: Stufe 11c fertig, 11d und 11e gebaut** (Drum-Spur mit Klangliste, „…“ und Edit sound...; im Creator Noise, Pitch sweep, der Filter mit Type und Resonance), dazu auf Wunsch Patrik: Gruppen einklappen, Repeat note mit „every … beats“, die Suchordner für AVS und MilkDrop; `.lvinst` in Fassung 6; „Favorites“ überall; behoben: der Creator wuchs über den Bildschirm; voller Lauf 1140 / 1140; im Programm gesehen nur das Einklappen — lokale Liste 10, Abschnitte T, N, H; offen **11f** (nächste Sitzung), die Hörproben zu 11d und 11e, was bei MilkDrop zeitweise nichts zeigte, die Vorlage zur Kette für Filter und Effekte; Changelog `sessions/Changelog_Session116.md` |
 | 1.173.0 | 2026-10-12 | Session 116 — **Suchordner für Bilder und Texturen als Liste** (Wunsch Patrik): Settings „Image and Texture Search Folders“ mit Add..., Remove, ▲ ▼; neu `core/Suchordner.hpp` (`import/searchDirs`), der AVS-Import (Picture, Texer, Texer II, AVI) und MilkDrop (Texturen, Sprites) suchen dort, wenn beim Preset nichts liegt; voller Lauf 1140 / 1140; ⬜ im Programm ungesehen. **Anlass, untersucht und nicht als Fehler im Code bestätigt:** Patrik meldete, AVS sähen zum Teil anders aus und MilkDrop zeige meist nichts (später: MilkDrop wieder gut). Befunde: seit dem 9.10. hat außer `MilkdropVisualizer.cpp` (S106) kein Commit Render-Code geändert, zwischen heute 13:03 (`4f4a95f7`) und jetzt keiner; die Kopien neben der Exe (Datenablage, S114) sind Datei für Datei gleich dem Repo; 20 MilkDrop-Presets im Einzelprogramm: keines schwarz, kein GL-Fehler; die AVS-Presets unter `asset\avs\Community Picks` nennen Texer-Bilder, die nur in `VisualsPresets\avs` liegen (82 Bilder), ein Suchordner war nicht gesetzt; „AVS Import Render Scale“ steht seit dem 5.10. auf window / 4. 🔧 offen: was genau bei MilkDrop zeitweise nichts zeigte — nicht nachgestellt |

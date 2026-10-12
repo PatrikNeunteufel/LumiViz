@@ -253,6 +253,12 @@ void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
 bool speichereEigenes(Instrument& instrument, const QString& name);
 /// Ein eigenes Instrument loeschen. false = es gab keins.
 bool loescheEigenes(const QString& name);
+/// Eine `.lvinst` von irgendwo zu den eigenen kopieren (Entscheid E3 a, S117;
+/// Vorbild `nimmZuEigenen` der Samples): sie heisst nach ihrer Datei, bei
+/// einem vergebenen Namen mit einer Zahl dahinter; liegt dieselbe Datei schon
+/// da — auch: sie wurde aus dem Ordner selbst gewaehlt —, wird nichts kopiert.
+/// Zurueck kommt `user:<name>`; leer = nicht zu lesen oder nicht zu schreiben.
+[[nodiscard]] QString nimmZuEigenenInstrumenten(const QString& quelle);
 
 /// Jedes Genre, das ein mitgeliefertes oder eigenes Instrument traegt — einmal,
 /// nach dem Alphabet. Fuer den Filter im Fenster und die Vorschlaege im Creator.

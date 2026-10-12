@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.56.0
+> **Version:** 0.57.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2088,6 +2088,26 @@ mitgeliefert, schon eine eigene Datei), `frageNachDatei` entfällt,
 Wortlaut der Sätze und des Tooltips („Save a copy to My files under a new
 name"). Im Programm nicht gesehen.
 
+**Entscheid E2 a (Patrik S117):** die drei losen Dateien liegen jetzt unter
+`instruments` (von Hand verschoben, kein Code). **Entscheid E3 a (Patrik
+S117) — Load instrument... holt die Datei zu den eigenen:** der Dateidialog
+bleibt (eine fremde Datei liegt irgendwo; beim ersten Mal beginnt er in den
+Dokumenten), danach die Frage „Where should <datei> be kept?" mit **Copy
+the file to My files (recommended)** (vorbelegt), **Use it where it is**,
+**Cancel** — dieselbe wie bei Sample file... (S2 a). Kopieren:
+`nimmZuEigenenInstrumenten` legt die Datei Byte für Byte unter `instruments`
+ab, sie heißt nach ihrer Datei, bei vergebenem Namen mit `_2`, `_3` …; liegt
+dieselbe Datei schon da, entsteht keine zweite; das Muster nennt
+`user:<name>`. Am Ort lassen: wie bisher der Pfad im Muster. Liegt die
+gewählte Datei schon im Ordner der eigenen, wird nicht gefragt.
+`InstrumentEditor::nimmInstrumentDatei`. Verworfen: b (nur der Startordner
+`instruments` — den zeigt Browse... schon, und der Pfad im Muster bliebe),
+c (nichts). Von Claude gesetzt, nicht entschieden: kein „Don't ask again"
+wie bei den Samples; der Wortlaut; From file... im Creator bleibt ohne
+Frage (es liest nur eine Schicht heraus); was kein Instrument ist, wird
+nicht kopiert. Nicht geprüft: die Frage im gezeigten Fenster. Im Programm
+nicht gesehen.
+
 **Gebaut — 14a (S114), das Modell:** `Instrument` trägt `art`, `genres`,
 `beschreibung`; `kInstrumentFassung` 3 (1 und 2 werden gelesen, die Felder
 dürfen fehlen; eine unbekannte Art gilt als `unusual`, bleibt in der Datei
@@ -2532,6 +2552,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.57.0** (S117, 2026-10-12): §4h — **Load instrument...** fragt, ob die
+  Datei zu den eigenen kopiert wird oder am Ort bleibt (E3 a); die drei
+  losen Dateien liegen unter `instruments` (E2 a)
 - **0.56.0** (S117, 2026-10-12): §4h GEÄNDERT — **Save as...** im Creator
   fragt nur nach dem Namen und schreibt nach `instruments` (E1 a); ein
   mitgeliefertes Instrument wird nie überschrieben, der Dialog sagt es
