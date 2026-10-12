@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.43.0
+> **Version:** 0.44.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1477,6 +1477,27 @@ lauterem zweitem Teilton, die gezupfte Saite, einen Sägezahn, Rauschen);
 ein Akkord. Die Messung des Grundtons ist dieselbe, die später das Autotune
 (§3.2) braucht.
 
+**Beleg vor 11b (S115) — BASS nimmt auf** (`test_LoopBelegeAufnahme.cpp`,
+gebaut ist nichts): an Patriks Rechner nennt BASS drei Eingänge — „Default",
+„Microphone Array (Realtek(R) Audio)" und „Lautsprecher (Realtek(R) Audio)"
+als **Mitschnitt der Ausgabe** (`BASS_DEVICE_LOOPBACK`). Neben der laufenden
+`BassEngine` (sie hält ihr Ausgabegerät) öffnet `BASS_RecordInit(-1)` den
+Standard-Eingang; `BASS_RecordStart` mit 48000 Hz, Stereo, float liefert
+genau dieses Format, der Rückruf läuft in einem eigenen Thread, die Blöcke
+sind 4800 Abtastwerte (100 ms), in einer Sekunde kamen 48000 Abtastwerte an
+(zwei Läufe, größter Betrag 0,07 und 0,04 — der Eingang liefert Ton); nach
+dem Stop kommt nichts mehr. Bis zum ersten Block vergehen rund 200 ms
+(1204 und 1248 ms Wanduhr für 1000 ms Ton). Festgestellt dabei: der Stop
+gibt einen Aufnahme-Kanal frei — nach `BASS_ChannelStop` gibt
+`BASS_ChannelGetInfo` keine Auskunft mehr. **Folge für 11b:** die Aufnahme
+geht über BASS, ohne weitere Bibliothek; der Pegel im Fenster kann höchstens
+alle 100 ms neu kommen, wenn die Blockgröße bleibt (ein kürzerer Takt lässt
+sich bei `BASS_RecordStart` verlangen — nicht erprobt); der Mitschnitt der
+Ausgabe steht von selbst in der Liste der Eingänge. Der zweite Fall nimmt
+auf und läuft deshalb nur mit `LUMIVIZ_AUFNAHME_BELEG=1`. Nicht erprobt:
+ein Rechner ohne Eingang, ein von Windows gesperrtes Mikrofon, das Aufnehmen
+vom Mitschnitt, während das Programm selbst spielt.
+
 ### Die Palette der Instrumente (Stufe 14, P1 a)
 
 Im Instrument-Editor steht neben dem Namen des Instruments **Browse...** und
@@ -1998,6 +2019,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.44.0** (S115, 2026-10-12): Beleg vor 11b — BASS nimmt neben der
+  laufenden Engine auf, 48000 Hz Stereo float, Blöcke von 100 ms; drei
+  Eingänge, darunter der Mitschnitt der Ausgabe (§4h).
 
 - **0.43.0** (S115, 2026-10-12): 11a Schritt 3 gebaut — Detect (neu
   `loop/Grundton`) und Reference tone; 11a ist damit gebaut (§4h).
