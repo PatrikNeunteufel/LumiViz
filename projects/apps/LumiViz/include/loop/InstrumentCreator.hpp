@@ -99,6 +99,15 @@ public:
     [[nodiscard]] Griff griffBei(int x) const;
     /// So weit neben einem Griff greift die Maus ihn noch.
     static constexpr int kGriffWeite = 6;
+    /// Der Bereich als Zuschnitt (Fenster „Record sample", Stufe 11b): nicht
+    /// das Innere ist hinterlegt, sondern was ausserhalb liegt ist grau, und
+    /// die beiden Griffe sind rot.
+    void setAussenGrau(bool an);
+    [[nodiscard]] bool aussenGrau() const { return m_aussenGrau; }
+    /// Eine blaue Linie an einer Stelle (0 bis 1) — wo gerade gespielt wird;
+    /// unter null = keine. Sie laesst sich nicht greifen.
+    void setZeiger(double stelle);
+    [[nodiscard]] double zeiger() const { return m_zeiger; }
 
 Q_SIGNALS:
     /// Ein Griff wird gezogen: er soll an diese Stelle (0 bis 1).
@@ -119,6 +128,8 @@ private:
     double m_marke = -1.0;
     QString m_markenText;
     bool m_gespiegelt = false;
+    bool m_aussenGrau = false;
+    double m_zeiger = -1.0;
     double m_griffe[3] = {-1.0, -1.0, -1.0};
     Griff m_gezogen = KeinGriff;
 };

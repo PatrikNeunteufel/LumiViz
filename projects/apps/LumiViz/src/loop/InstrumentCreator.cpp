@@ -167,7 +167,7 @@ void KurvenBild::paintEvent(QPaintEvent*)
     }
     // der Bereich liegt unter der Kurve, die Griffe darueber
     const bool bereich = m_griffe[GriffVon] >= 0.0 && m_griffe[GriffBis] > m_griffe[GriffVon];
-    if (bereich)
+    if (bereich && !m_aussenGrau)
     {
         QColor flaeche = kGriffBlau;
         flaeche.setAlpha(46);
@@ -198,12 +198,39 @@ void KurvenBild::paintEvent(QPaintEvent*)
         // eine Fahne oben: daran sieht man, dass sich der Strich greifen laesst
         p.fillRect(QRectF(x - 5.0, 1.0, 10.0, 8.0), farbe);
     };
+    if (bereich && m_aussenGrau)
+    {
+        // ein Zuschnitt: was ausserhalb liegt, faellt weg — grau ueber der Kurve
+        QColor grau = pal.color(QPalette::Base);
+        grau.setAlpha(175);
+        p.fillRect(QRectF(QPointF(rand, rand), QPointF(xVon(m_griffe[GriffVon]), rand + hoch)), grau);
+        p.fillRect(QRectF(QPointF(xVon(m_griffe[GriffBis]), rand), QPointF(rand + breite, rand + hoch)), grau);
+    }
+    if (m_zeiger >= 0.0 && m_zeiger <= 1.0)
+    {
+        p.setPen(QPen(kGriffBlau, 1.2));
+        p.drawLine(QPointF(xVon(m_zeiger), rand), QPointF(xVon(m_zeiger), rand + hoch));
+    }
     if (bereich)
     {
-        zeichneGriff(GriffVon, kGriffBlau);
-        zeichneGriff(GriffBis, kGriffBlau);
+        zeichneGriff(GriffVon, m_aussenGrau ? kGriffRot : kGriffBlau);
+        zeichneGriff(GriffBis, m_aussenGrau ? kGriffRot : kGriffBlau);
     }
     zeichneGriff(GriffStart, kGriffRot);
+}
+
+void KurvenBild::setAussenGrau(bool an)
+{
+    if (m_aussenGrau == an) return;
+    m_aussenGrau = an;
+    update();
+}
+
+void KurvenBild::setZeiger(double stelle)
+{
+    if (m_zeiger == stelle) return;
+    m_zeiger = stelle;
+    update();
 }
 
 void KurvenBild::setGespiegelt(bool an)
