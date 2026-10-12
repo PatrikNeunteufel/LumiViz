@@ -68,6 +68,11 @@ public:
     /// Ein Instrument waehlen, ohne es anzuspielen. false = es steht nicht im
     /// Fenster (oder ist gerade weggefiltert).
     bool waehle(const QString& nennung);
+    /// Das Fenster auf eine Art stellen (Entscheid K3 a: aus einer Drum-Spur
+    /// geoeffnet steht es auf „Drums"): ihr Kopf ist aufgeklappt und steht
+    /// oben im Baum; die anderen Arten bleiben, wo sie sind. false = unter
+    /// dieser Art steht gerade nichts (der Kopf fehlt dann).
+    bool zeigeArt(const QString& art);
     /// Das gewaehlte Instrument, wie ein Muster es nennt; leer = keins.
     [[nodiscard]] QString gewaehlt() const;
     /// Die Tonhoehe, mit der angespielt wird.

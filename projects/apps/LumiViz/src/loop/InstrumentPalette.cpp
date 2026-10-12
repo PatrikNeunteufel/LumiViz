@@ -371,6 +371,20 @@ void InstrumentPalette::zeigeVorn()
     m_suche->selectAll();
 }
 
+bool InstrumentPalette::zeigeArt(const QString& art)
+{
+    const QString titel = artTitel(art);
+    for (int i = 0; i < m_baum->topLevelItemCount(); ++i)
+    {
+        QTreeWidgetItem* kopf = m_baum->topLevelItem(i);
+        if (kopf->isHidden() || kopf->data(0, kRolleKopf).toString() != titel) continue;
+        kopf->setExpanded(true);
+        m_baum->scrollToItem(kopf, QAbstractItemView::PositionAtTop);
+        return true;
+    }
+    return false;
+}
+
 void InstrumentPalette::setzeSuche(const QString& text)
 {
     m_suche->setText(text);  // filtert ueber textChanged

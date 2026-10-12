@@ -55,6 +55,8 @@ namespace lumi::loop
 class AufnahmeFenster;
 class InstrumentCreator;
 class InstrumentPalette;
+struct Instrument;
+struct Schicht;
 
 /// Das Raster: je Spur eine Zeile Schritte, darunter die Lautstaerke je Schritt
 /// der angeklickten Spur. Ein Klick schaltet einen Schritt an (volle
@@ -271,6 +273,18 @@ public:
     /// die Spur spielt kein Instrument, oder es laesst sich nicht finden.
     bool oeffneCreator(int spur, bool zeigen = true);
     [[nodiscard]] InstrumentCreator* creator() const;
+    /// **Edit sound...** (Stufe 11c, Schritt 3; Entscheid K1 a): aus dem, was
+    /// die Spur spielt, ein Instrument machen und im Creator oeffnen. Ein
+    /// Klang des Kits, ein eigenes Sample oder eine Tondatei wird ein neues
+    /// Instrument der Art Drums mit einer Sample-Schicht (`instrumentAusKlang`)
+    /// — am Loop aendert sich nichts, bis der Creator speichert: dann spielt
+    /// die Spur das Instrument, die Note auf dem Root note der Schicht, Length
+    /// so lang wie die Aufnahme (K2 a). Spielt die Spur schon ein Instrument,
+    /// ist es dasselbe wie Edit instrument.... false = die Spur spielt nichts.
+    bool bearbeiteKlang(int spur, bool zeigen = true);
+    /// Das Instrument, das „Edit sound..." aus einem Klang macht: eine
+    /// Sample-Schicht, die die Aufnahme bei C4 spielt, wie sie ist.
+    [[nodiscard]] static Instrument instrumentAusKlang(const QString& klang);
     /// Wer die Audio-Engine nennt, ueber die „Record sample" aufnimmt — hier
     /// und im Creator.
     void setEngineGeber(std::function<IAudioEngine*()> geber);
@@ -354,6 +368,15 @@ private:
     QPointer<AufnahmeFenster> m_aufnahme;
     int m_paletteSpur = -1;   ///< fuer diese Spur waehlt das Fenster Instruments; -1 = keine
     int m_creatorSpur = -1;   ///< das Instrument dieser Spur ist im Creator offen
+    /// „Edit sound..." hat fuer diese Spur ein neues Instrument geoeffnet: beim
+    /// ersten Save wird sie zur Instrument-Spur — wenn sie dann noch
+    /// `m_wandelKlang` spielt. -1 = nichts steht aus.
+    int m_wandelSpur = -1;
+    QString m_wandelKlang;
+    /// Den Creator anlegen, wenn es ihn noch nicht gibt.
+    void stelleCreator();
+    /// So lang ist die Aufnahme einer Sample-Schicht ab Sample start, in den Grenzen von Length.
+    [[nodiscard]] int aufnahmeMs(const Schicht& schicht);
     int m_aufnahmeSpur = -1;  ///< fuer diese Spur nimmt „Record sample" auf
     QWidget* m_detail = nullptr;  ///< das Feld hinter „…"
     int m_detailSpur = -1;

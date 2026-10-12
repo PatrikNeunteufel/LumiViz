@@ -1071,8 +1071,10 @@ QStringList InstrumentCreator::genresAus(const QString& text)
 QString InstrumentCreator::vorschlagTitel() const
 {
     const QString titel = m_instrument.titel.trimmed();
-    // schon umbenannt und der Name ist frei: so heisst die Kopie
-    if (titel != m_vorlage.titel && !QFileInfo::exists(eigeneDatei(eigenerName(titel)))) return titel;
+    // schon umbenannt — oder ein neues ohne Vorlage (aus „Edit sound..." im Drum-Editor) — und
+    // der Name ist frei: so heisst es
+    if ((titel != m_vorlage.titel || m_vorlage.name.isEmpty()) && !QFileInfo::exists(eigeneDatei(eigenerName(titel))))
+        return titel;
     for (int zahl = 2;; ++zahl)
     {
         const QString versuch = QStringLiteral("%1 %2").arg(titel).arg(zahl);

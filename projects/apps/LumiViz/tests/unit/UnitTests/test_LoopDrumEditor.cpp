@@ -1110,6 +1110,66 @@ TEST_SUITE("LoopDrumEditor")
         editor.setEngineGeber({});
         aufnahme->setEngine(nullptr);  // die Engine aus Pappe geht vor dem Fenster
 
+        // --- Edit sound... (Schritt 3, K1 a): aus dem Klang wird ein Instrument mit einer Sample-Schicht;
+        //     am Loop aendert sich nichts, bis der Creator speichert
+        {
+            // wer die Audio-Engine hat, dekodiert — hier gibt der Test die Daten heraus: 100 ms
+            QObject::connect(&editor, &DrumEditor::sampleVerlangt, &editor, [](const QString& nennung) {
+                merkeSampleDaten(nennung, 48000, std::vector<float>(2 * 4800, 0.1f));
+            });
+            const Instrument aus = DrumEditor::instrumentAusKlang(QStringLiteral("user:knock"));
+            CHECK(aus.name.isEmpty());  // noch keine Datei
+            CHECK(aus.titel == QStringLiteral("Knock"));
+            CHECK(aus.art == QStringLiteral("drums"));  // K3 a
+            REQUIRE(aus.schichten.size() == 1);
+            CHECK(aus.schichten[0].schwingung == Schwingung::Sample);
+            CHECK(aus.schichten[0].sample == QStringLiteral("user:knock"));
+            CHECK(aus.schichten[0].grundton == 60);
+            CHECK(aus.schichten[0].anstiegMs == 0.0);
+            CHECK(aus.schichten[0].halten == 1.0);
+            CHECK(DrumEditor::instrumentAusKlang(QStringLiteral("kit:hat_closed")).titel == QStringLiteral("Hat closed"));
+            CHECK(DrumEditor::instrumentAusKlang(QStringLiteral("C:/x/Big Tom.wav")).titel == QStringLiteral("Big Tom"));
+
+            editor.setzeKlang(1, QStringLiteral("user:knock"));
+            const int davor = aenderungen;
+            REQUIRE(editor.bearbeiteKlang(1, false));
+            CHECK(aenderungen == davor);  // nichts aendert sich vor Save
+            CHECK(spur(1).instrument.isEmpty());
+            CHECK(creator->instrument().titel == QStringLiteral("Knock"));
+            CHECK(creator->datei().isEmpty());
+            CHECK(creator->vorschlagTitel() == QStringLiteral("Knock"));  // ein neues: sein Titel, keine Zahl dahinter
+            creator->aendereSchicht([](Schicht& s) { s.grundton = 48; });
+            REQUIRE(creator->speichereAlsEigenes(QStringLiteral("Mein Knock")));
+            CHECK(zuletzt == QStringLiteral("Edit sound"));
+            CHECK(spur(1).instrument == QStringLiteral("user:mein_knock"));
+            CHECK(spur(1).klang == QStringLiteral("user:knock"));  // bleibt daneben stehen
+            CHECK(spur(1).hoehe == 48);     // K2 a: der Root note der Schicht
+            CHECK(spur(1).dauerMs == 100);  // und die Laenge der Aufnahme
+            CHECK(spur(1).spielt() == tonKlang(QStringLiteral("user:mein_knock"), 48, 100));
+            CHECK(klang1->currentText() == QStringLiteral("Mein Knock (My files)"));
+            CHECK_FALSE(mehr1->isHidden());
+            // noch einmal gespeichert: Note und Length bleiben, wie sie jetzt stehen
+            editor.setzeNote(1, 50);
+            REQUIRE(creator->speichere());
+            CHECK(spur(1).hoehe == 50);
+            // an einer Instrument-Spur ist Edit sound... dasselbe wie Edit instrument...
+            REQUIRE(editor.bearbeiteKlang(1, false));
+            CHECK(creator->instrument().name == QStringLiteral("user:mein_knock"));
+            // die Spur spielt beim Save etwas anderes als beim Edit sound...: sie bleibt dabei
+            editor.setzeKlang(1, QStringLiteral("kit:kick"));
+            REQUIRE(editor.bearbeiteKlang(1, false));
+            CHECK(creator->instrument().titel == QStringLiteral("Kick"));
+            editor.setzeKlang(1, QStringLiteral("kit:snare"));
+            REQUIRE(creator->speichereAlsEigenes(QStringLiteral("Kick eigen")));
+            CHECK(spur(1).instrument.isEmpty());
+            CHECK(spur(1).klang == QStringLiteral("kit:snare"));
+            // eine Spur ohne Klang: nichts zu bearbeiten
+            editor.setzeKlang(1, QString());
+            CHECK_FALSE(editor.bearbeiteKlang(1, false));
+            CHECK_FALSE(editor.bearbeiteKlang(9, false));
+            editor.setzeKlang(1, QStringLiteral("kit:kick"));
+        }
+
         // --- eine Spur weniger: die Nummern verrutschen — das Fenster Instruments waehlt fuer keine mehr
         REQUIRE(editor.oeffnePalette(1, false));
         CHECK(ziel->text() == QStringLiteral("For track: Snare (Grund)"));

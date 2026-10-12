@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.51.0
+> **Version:** 0.52.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1558,6 +1558,45 @@ Drums stellt (Schritt 3). Nicht geprüft: alles im Programm — die Liste, das
 Feld, die drei Fenster aus dem Drum-Editor und das Anspielen sind nur in
 Tests ohne Fenster und gegen die Engine aus Pappe gelaufen.
 
+**Gebaut — 11c, Schritt 3 (S116), Edit sound... und Instruments auf Drums;
+11c ist damit gebaut:**
+- **Edit sound...** steht im Menü des Rechtsklicks auf eine Spur, über
+  Rename track... und Remove track; grau, wenn die Spur nichts spielt. Der
+  Hinweis darauf steht im Tooltip der Auswahl Sound.
+- Spielt die Spur einen Klang des Kits, ein eigenes Sample oder eine
+  Tondatei, öffnet sich der Creator mit einem **neuen Instrument**
+  (`DrumEditor::instrumentAusKlang`): der Titel aus dem Namen des Klangs
+  („table_knock" wird „Table knock"), die Art Drums (K3 a), eine
+  Sample-Schicht mit dieser Aufnahme — Root note C4, Attack 0, Sustain 100 %,
+  sodass sie klingt wie die Datei. **Am Loop ändert sich nichts**, bis der
+  Creator speichert. Save fragt nach dem Namen und schlägt den Titel vor
+  (ohne Zahl dahinter — es gibt keine Vorlage, die so heißt).
+- Beim ersten Save wird die Spur zur Instrument-Spur: **Note** steht auf dem
+  Root note der Sample-Schicht, **Length** auf der Länge der Aufnahme ab
+  Sample start, aufgerundet auf Millisekunden (K2 a). Der Klang bleibt
+  daneben stehen. Für Undo heißt der Schritt „Edit sound". Spielt die Spur
+  beim Save etwas anderes als beim Edit sound... (inzwischen umgestellt),
+  bleibt sie dabei — das Instrument ist trotzdem gespeichert.
+- An einer Spur, die schon ein Instrument spielt, ist Edit sound... dasselbe
+  wie Edit instrument....
+- **Instruments aus einer Drum-Spur:** spielt die Spur noch kein Instrument,
+  stellt sich das Fenster auf **Drums** — der Kopf klappt auf und steht oben
+  im Baum (`InstrumentPalette::zeigeArt`), die anderen Arten bleiben, wo sie
+  sind. **Heute ist davon nichts zu sehen:** unter Drums steht noch kein
+  mitgeliefertes Instrument (das bringt 11f), ein Kopf ohne Einträge fehlt im
+  Baum, und eigene Instrumente — auch die aus Edit sound... — stehen nur
+  unter My files (so gesetzt in S114).
+Von Claude gesetzt, nicht entschieden: der Ort von Edit sound... (das Menü
+des Rechtsklicks — die Skizze der Klangliste nannte ihn nicht); der Titel des
+neuen Instruments; Length aus der Länge ab Sample start, ohne Fine tune zu
+rechnen; fehlt der Schicht beim Save die Aufnahme, gelten 250 ms; hat das
+Instrument beim Save keine Sample-Schicht mehr, gelten C4 und 250 ms.
+Nicht geprüft: alles im Programm; eine echte Aufnahme durch Edit sound...
+gegen die Datei gehört (im Test steht nur, was die Spur danach nennt — dass
+eine solche Schicht Abtastwert für Abtastwert die Datei ergibt, belegt
+`test_LoopDrumQuellen` aus Schritt 1); ein Klang des Kits bei einer anderen
+Abtastrate als 48000 Hz.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2293,6 +2332,13 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.52.0** (S116, 2026-10-12): 11c Schritt 3 gebaut, 11c damit gebaut —
+  Edit sound... im Menü der Spur (aus Kit-Klang, Sample oder Datei wird ein
+  Instrument der Art Drums mit einer Sample-Schicht; nichts ändert sich vor
+  Save; danach Note auf dem Root note, Length so lang wie die Aufnahme); das
+  Fenster Instruments stellt sich aus einer Drum-Spur auf Drums — zu sehen
+  erst mit 11f (§4h).
 
 - **0.51.0** (S116, 2026-10-12): 11c Schritt 2 gebaut — die Klangliste im
   Drum-Editor (Kit, My samples, Instrument..., Sample file..., Record

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.135.0
+> **Version:** 1.136.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2552,7 +2552,7 @@ siehe unten.)
 | Schritte | Ein Klick schaltet einen Schritt an oder aus. Mit gedrückter Taste weitergezogen bekommen die überfahrenen Schritte denselben Zustand. Jeder zweite Schlag ist heller unterlegt |
 | **Step volume** | Die Lautstärke je Schritt der angeklickten Spur: an einem Balken ziehen. Ganz unten ist der Schritt aus |
 | **Add track** | Eine neue Spur „Track N" |
-| Rechtsklick auf eine Spur | **Rename track...**, **Remove track** |
+| Rechtsklick auf eine Spur | **Edit sound...** (siehe unten), **Rename track...**, **Remove track** |
 
 Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
 kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
@@ -2584,6 +2584,17 @@ erscheint der Knopf **…**. Er öffnet ein kleines Feld:
 
 Ein Klick neben das Feld schließt es. Wer in **Sound** wieder einen Klang
 wählt, nimmt der Spur ihr Instrument; Ctrl+Z holt es zurück.
+
+**Edit sound...** (Rechtsklick auf eine Spur) macht aus dem, was die Spur
+spielt, ein Instrument, das sich im Instrument-Creator bearbeiten lässt — mit
+Hüllkurve, Filter, Drive und weiteren Schichten. Aus einem Klang des Kits,
+einem eigenen Sample oder einer Tondatei wird ein neues Instrument der Art
+**Drums** mit einer Schicht **Sample**, die die Aufnahme spielt, wie sie ist.
+Der Loop ändert sich dabei noch nicht: erst **Save** im Creator legt das
+Instrument unter **My files** ab, und die Spur spielt es von da an — **Note**
+auf dem Root note der Schicht, **Length** so lang wie die Aufnahme. Das Kit
+selbst bleibt, wie es ist. An einer Spur, die schon ein Instrument spielt,
+öffnet Edit sound... dieses Instrument.
 
 **Mehrere Schritte zugleich.** Ein Teil des Musters lässt sich markieren,
 kopieren und an anderer Stelle einfügen — auch in einer anderen Basis: das
@@ -2922,6 +2933,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.136.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Edit sound...** im Rechtsklick auf eine Spur: aus Kit-Klang, eigenem Sample oder Tondatei wird ein Instrument der Art Drums mit einer Sample-Schicht; der Loop ändert sich erst mit Save im Creator |
 | 1.135.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Der Klang einer Spur**: die Auswahl **Sound** mit Kit, My samples, **Instrument...**, **Sample file...** (fragt jetzt wie der Creator, ob kopiert wird), **Record sample...**; an einer Instrument-Spur der Knopf **…** mit **Note**, **Length**, **Play**, **Browse...**, **Edit instrument...** |
 | 1.134.0 | 2026-10-12 | Session 116. §16 Loop, Fenster Instruments: GEÄNDERT der Knopf für Favoriten heißt **★** (zuvor „Favorite"), die Überschrift **★ Favorites** — wie in der Modul-Palette; dort und in der Preset-Zeile steht jetzt „Favorites" statt „Favourites" |
 | 1.133.0 | 2026-10-12 | Session 115. §16 Loop: die Art **Drums** im Fenster Instruments und in Type des Creators; GEÄNDERT: eine Sample-Schicht spielt die Aufnahme so laut wie die Datei (zuvor halb so laut) |

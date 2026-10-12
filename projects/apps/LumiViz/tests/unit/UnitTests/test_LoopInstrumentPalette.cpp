@@ -146,6 +146,24 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     REQUIRE(play != nullptr);
     REQUIRE(favorit != nullptr);
 
+    // --- das Fenster auf eine Art stellen (K3 a: aus einer Drum-Spur steht es auf Drums): ihr Kopf
+    //     klappt auf; eine Art, unter der nichts steht, hat keinen Kopf
+    {
+        auto* baum = fenster.findChild<QTreeWidget*>(QStringLiteral("instrumentPaletteTree"));
+        REQUIRE(baum != nullptr);
+        QTreeWidgetItem* bass = nullptr;
+        for (int i = 0; i < baum->topLevelItemCount(); ++i)
+            if (baum->topLevelItem(i)->text(0).startsWith(QStringLiteral("Bass"))) bass = baum->topLevelItem(i);
+        REQUIRE(bass != nullptr);
+        bass->setExpanded(false);
+        CHECK(fenster.zeigeArt(QStringLiteral("bass")));
+        CHECK(bass->isExpanded());
+        fenster.setzeSuche(QStringLiteral("gibt es ganz sicher nicht"));
+        CHECK_FALSE(fenster.zeigeArt(QStringLiteral("bass")));
+        fenster.setzeSuche(QString());
+        CHECK(fenster.gewaehlt().isEmpty());  // stellen waehlt nichts
+    }
+
     // --- nichts gewaehlt, kein Muster offen
     CHECK(fenster.gewaehlt().isEmpty());
     CHECK_FALSE(play->isEnabled());

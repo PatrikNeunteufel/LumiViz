@@ -1028,8 +1028,12 @@ void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QString
         auswahl->setToolTip(tr("Plays the instrument %1 — note %2, held %3 ms. The button … next to it changes that")
                                 .arg(InstrumentEditor::instrumentAnzeige(spur.instrument), tonName(spur.hoehe))
                                 .arg(spur.dauerMs));
+    else if (klang.isEmpty())
+        auswahl->setToolTip(QString());
     else
-        auswahl->setToolTip(istKitKlang(klang) || istEigenerKlang(klang) ? klang : QDir::toNativeSeparators(klang));
+        // sonst findet es niemand: sagen, wo Edit sound... steht
+        auswahl->setToolTip(tr("%1\nRight-click the track: Edit sound... makes an instrument of it")
+                                .arg(istKitKlang(klang) || istEigenerKlang(klang) ? klang : QDir::toNativeSeparators(klang)));
 }
 
 QStringList DrumEditor::klangZeilen(int spur) const
@@ -1185,6 +1189,19 @@ void DrumEditor::spurMenue(int spur, QPoint ort)
     if (ziel == nullptr || spur < 0 || spur >= static_cast<int>(ziel->spuren.size())) return;
     waehleSpur(spur);
     QMenu menu(this);
+    menu.setToolTipsVisible(true);
+    {
+        // Edit sound... (K1 a): aus dem, was die Spur spielt, wird ein Instrument
+        const Spur& gewaehlte = ziel->spuren[static_cast<std::size_t>(spur)];
+        QAction* klang = menu.addAction(tr("Edit sound..."), this, [this, spur] { (void)bearbeiteKlang(spur); });
+        klang->setObjectName(QStringLiteral("drumTrackEditSound"));
+        klang->setEnabled(!gewaehlte.spielt().isEmpty());
+        klang->setToolTip(gewaehlte.instrument.isEmpty()
+                              ? tr("Opens what this track plays as an instrument in the creator. Nothing changes until "
+                                   "you save there — then the track plays your instrument")
+                              : tr("Opens the instrument of this track in the creator"));
+        menu.addSeparator();
+    }
     menu.addAction(tr("Rename track..."), this, [this, spur, name = ziel->spuren[static_cast<std::size_t>(spur)].name] {
         bool ok = false;
         const QString neu = QInputDialog::getText(this, tr("Rename track"), tr("Name:"), QLineEdit::Normal, name, &ok);
@@ -1407,8 +1424,12 @@ bool DrumEditor::oeffnePalette(int spur, bool zeigen)
         m_palette->zeigeVorn();
     else
         m_palette->liesNeu();
-    // das Instrument der Spur ist gewaehlt — ohne es anzuspielen
-    if (!ziel->instrument.isEmpty()) (void)m_palette->waehle(ziel->instrument);
+    // das Instrument der Spur ist gewaehlt — ohne es anzuspielen; spielt sie noch keins,
+    // steht das Fenster auf Drums (K3 a), die anderen Arten bleiben waehlbar
+    if (!ziel->instrument.isEmpty())
+        (void)m_palette->waehle(ziel->instrument);
+    else
+        (void)m_palette->zeigeArt(QStringLiteral("drums"));
     return true;
 }
 
@@ -1422,25 +1443,107 @@ bool DrumEditor::oeffneCreator(int spur, bool zeigen)
     const Spur* ziel = spurBei(spur);
     Instrument instrument;
     if (ziel == nullptr || ziel->instrument.isEmpty() || !holeInstrument(ziel->instrument, instrument)) return false;
-    if (m_creator == nullptr)
-    {
-        m_creator = new InstrumentCreator(this);
-        // gespeichert: die Spur nennt jetzt, was der Creator geschrieben hat — wenn sie noch
-        // ein Instrument spielt (bei Save in dieselbe Datei aendert sich am Loop nichts)
-        connect(m_creator, &InstrumentCreator::gespeichert, this, [this](const QString& nennung) {
-            (void)aendereSpur(m_creatorSpur, tr("Change sound"), [&nennung](Spur& s) {
-                if (!s.instrument.isEmpty()) s.instrument = nennung;
-            });
-            Q_EMIT klaengeGeaendert();
-            if (m_palette != nullptr) m_palette->liesNeu();  // ein neues eigenes steht gleich im Fenster
-            zeigeAlles();  // der Titel kann sich geaendert haben, auch wenn die Nennung blieb
-        });
-        connect(m_creator, &InstrumentCreator::tonVerlangt, this, &DrumEditor::instrumentTonVerlangt);
-        connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &DrumEditor::sampleVerlangt);
-        m_creator->setEngineGeber(m_engineGeber);
-    }
+    stelleCreator();
     m_creatorSpur = spur;
+    m_wandelSpur = -1;  // ein „Edit sound...", das nie gespeichert wurde, gilt nicht mehr
     m_creator->oeffne(instrument);
+    if (zeigen)
+    {
+        m_creator->show();
+        m_creator->raise();
+        m_creator->activateWindow();
+    }
+    return true;
+}
+
+void DrumEditor::stelleCreator()
+{
+    if (m_creator != nullptr) return;
+    m_creator = new InstrumentCreator(this);
+    // gespeichert: die Spur nennt jetzt, was der Creator geschrieben hat — wenn sie noch
+    // ein Instrument spielt (bei Save in dieselbe Datei aendert sich am Loop nichts). Nach
+    // „Edit sound..." macht das erste Save die Spur zur Instrument-Spur.
+    connect(m_creator, &InstrumentCreator::gespeichert, this, [this](const QString& nennung) {
+        const bool wandeln = m_wandelSpur >= 0 && m_wandelSpur == m_creatorSpur;
+        const QString klang = m_wandelKlang;
+        m_wandelSpur = -1;
+        // K2 a: die Note auf dem Root note der Sample-Schicht, Length so lang wie die Aufnahme
+        int hoehe = Spur().hoehe;
+        int dauerMs = kSpurDauerMs;
+        if (wandeln)
+            for (const Schicht& schicht : m_creator->instrument().schichten)
+                if (schicht.schwingung == Schwingung::Sample)
+                {
+                    hoehe = std::clamp(schicht.grundton, 0, 127);
+                    dauerMs = aufnahmeMs(schicht);
+                    break;
+                }
+        (void)aendereSpur(m_creatorSpur, wandeln ? tr("Edit sound") : tr("Change sound"), [&](Spur& s) {
+            if (!s.instrument.isEmpty())
+            {
+                s.instrument = nennung;
+                return;
+            }
+            // die Spur spielt inzwischen etwas anderes als beim „Edit sound...": sie bleibt dabei
+            if (!wandeln || s.klang != klang) return;
+            s.instrument = nennung;
+            s.hoehe = hoehe;
+            s.dauerMs = dauerMs;
+        });
+        Q_EMIT klaengeGeaendert();
+        if (m_palette != nullptr) m_palette->liesNeu();  // ein neues eigenes steht gleich im Fenster
+        zeigeAlles();  // der Titel kann sich geaendert haben, auch wenn die Nennung blieb
+    });
+    connect(m_creator, &InstrumentCreator::tonVerlangt, this, &DrumEditor::instrumentTonVerlangt);
+    connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &DrumEditor::sampleVerlangt);
+    m_creator->setEngineGeber(m_engineGeber);
+}
+
+int DrumEditor::aufnahmeMs(const Schicht& schicht)
+{
+    std::shared_ptr<const SampleDaten> daten = sampleDaten(schicht.sample);
+    if (daten == nullptr)
+    {
+        // dekodieren kann nur, wer die Audio-Engine hat — er merkt die Daten noch im Signal
+        Q_EMIT sampleVerlangt(schicht.sample);
+        daten = sampleDaten(schicht.sample);
+    }
+    if (daten == nullptr || daten->rate <= 0) return kSpurDauerMs;
+    const double ms = 1000.0 * static_cast<double>(daten->klang.frames()) / daten->rate - schicht.sampleStartMs;
+    return std::clamp(static_cast<int>(std::ceil(ms)), kSpurDauerMinMs, kSpurDauerMaxMs);
+}
+
+Instrument DrumEditor::instrumentAusKlang(const QString& klang)
+{
+    Instrument neu;
+    // der Titel aus dem Namen des Klangs: „table_knock" wird „Table knock"
+    QString titel = QFileInfo(sampleTitel(klang)).completeBaseName();
+    titel.replace(QLatin1Char('_'), QLatin1Char(' '));
+    if (!titel.isEmpty()) titel[0] = titel.at(0).toUpper();
+    neu.titel = titel.isEmpty() ? QStringLiteral("Sound") : titel;
+    neu.art = QStringLiteral("drums");  // K3 a
+    Schicht& schicht = neu.schichten[0];
+    schicht.schwingung = Schwingung::Sample;
+    schicht.sample = klang;
+    // bei ihrem Grundton, ohne Anstieg und voll gehalten spielt die Schicht die Aufnahme, wie sie ist
+    schicht.grundton = 60;
+    schicht.anstiegMs = 0.0;
+    schicht.halten = 1.0;
+    return neu;
+}
+
+bool DrumEditor::bearbeiteKlang(int spur, bool zeigen)
+{
+    const Spur* ziel = spurBei(spur);
+    if (ziel == nullptr) return false;
+    if (!ziel->instrument.isEmpty()) return oeffneCreator(spur, zeigen);  // schon ein Instrument
+    if (ziel->klang.isEmpty()) return false;
+    stelleCreator();
+    m_creatorSpur = spur;
+    // am Loop aendert sich nichts — erst wenn der Creator speichert
+    m_wandelSpur = spur;
+    m_wandelKlang = ziel->klang;
+    m_creator->oeffne(instrumentAusKlang(ziel->klang));
     if (zeigen)
     {
         m_creator->show();
