@@ -483,6 +483,7 @@ void InstrumentCreator::setupUI()
     m_speichern->setObjectName(QStringLiteral("creatorSave"));
     m_speichernUnter = new QPushButton(tr("Save as..."), this);
     m_speichernUnter->setObjectName(QStringLiteral("creatorSaveAs"));
+    m_speichernUnter->setToolTip(tr("Save a copy to My files under a new name"));
     m_spitze = new QLabel(this);
     m_spitze->setObjectName(QStringLiteral("creatorPeak"));
     m_spitze->setToolTip(tr("Peak of one note (C4) with these settings"));
@@ -1011,7 +1012,8 @@ void InstrumentCreator::setupUI()
         if (!speichere())
             QMessageBox::warning(this, tr("Instrument"), tr("Could not write %1").arg(QDir::toNativeSeparators(m_datei)));
     });
-    connect(m_speichernUnter, &QPushButton::clicked, this, &InstrumentCreator::frageNachDatei);
+    // Save as...: immer eine Kopie unter neuem Namen in den Benutzerordner — kein Dateidialog (Entscheid E1 a, S117)
+    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)frageNachNamen(); });
     connect(m_tasten, &Tastenleiste::taste, this, [this](int hoehe) {
         m_wiederholHoehe = hoehe;  // auch ohne Repeat: mit ihm beginnt es spaeter
         (void)spieleAn(hoehe);
@@ -1290,19 +1292,27 @@ bool InstrumentCreator::speichereAlsEigenes(const QString& titel)
     return true;
 }
 
+QString InstrumentCreator::kopieSatz() const
+{
+    // ein neues ohne Vorlage (aus „Edit sound..." im Drum-Editor)
+    if (m_vorlage.name.isEmpty()) return tr("Your instrument is saved to My files and used by this pattern.");
+    // schon eine eigene Datei — im Benutzerordner oder an freiem Ort: Save as... legt eine Kopie daneben
+    if (!m_datei.isEmpty())
+        return tr("A copy is saved to My files under this name and used by this pattern; %1 stays as it is.")
+            .arg(QFileInfo(m_datei).fileName());
+    // ein mitgeliefertes: nur der Hinweis — ersetzen laesst es sich nicht (Entscheid E1b c, S117)
+    return tr("%1 is an original LumiViz instrument. Originals are not overwritten: your copy is saved to "
+              "My files and used by this pattern. Keep the suggested name or type your own.")
+        .arg(m_vorlage.titel);
+}
+
 bool InstrumentCreator::frageNachNamen()
 {
     QDialog dialog(this);
     dialog.setObjectName(QStringLiteral("creatorSaveDialog"));
     dialog.setWindowTitle(tr("Save instrument"));
     auto* aussen = new QVBoxLayout(&dialog);
-    auto* satz = new QLabel(
-        m_vorlage.name.isEmpty()
-            ? tr("Your instrument is saved to My files and used by this pattern.")
-            : tr("%1 is a built-in instrument. Your copy is saved to My files and used by this pattern; "
-                 "the built-in one stays as it is.")
-                  .arg(m_vorlage.titel),
-        &dialog);
+    auto* satz = new QLabel(kopieSatz(), &dialog);
     satz->setWordWrap(true);
     satz->setEnabled(false);
     aussen->addWidget(satz);
@@ -1354,21 +1364,6 @@ bool InstrumentCreator::frageNachNamen()
     return true;
 }
 
-void InstrumentCreator::frageNachDatei()
-{
-    QSettings einstellungen;
-    const QString vorschlag =
-        !m_datei.isEmpty() ? m_datei
-                           : einstellungen.value(QLatin1String(kLetzterOrdner)).toString() + QLatin1Char('/') +
-                                 m_instrument.titel.toLower().replace(QLatin1Char(' '), QLatin1Char('_')) +
-                                 QStringLiteral(".lvinst");
-    QString pfad = QFileDialog::getSaveFileName(this, tr("Save instrument"), vorschlag, tr("Instrument (*.lvinst)"));
-    if (pfad.isEmpty()) return;
-    if (!pfad.endsWith(QStringLiteral(".lvinst"), Qt::CaseInsensitive)) pfad += QStringLiteral(".lvinst");
-    einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(pfad).absolutePath());
-    if (!speichereUnter(pfad))
-        QMessageBox::warning(this, tr("Instrument"), tr("Could not write %1").arg(QDir::toNativeSeparators(pfad)));
-}
 
 bool InstrumentCreator::spieleAn(int hoehe)
 {

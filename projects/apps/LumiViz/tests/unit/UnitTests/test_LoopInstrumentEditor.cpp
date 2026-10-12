@@ -957,20 +957,45 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(holeInstrument(QStringLiteral("user:house_piano_2"), geholt));
         CHECK(geholt.beschreibung == QStringLiteral("Changed."));
 
+        // --- Save as... bei einem eigenen (Entscheid E1 a, S117): kein Dateidialog — der Dialog mit dem
+        //     Namen, und eine Kopie daneben im Benutzerordner; das erste bleibt
+        auto* saveAs = creator.findChild<QPushButton*>(QStringLiteral("creatorSaveAs"));
+        REQUIRE(saveAs != nullptr);
+        CHECK(saveAs->toolTip() == QStringLiteral("Save a copy to My files under a new name"));
+        CHECK(creator.kopieSatz().startsWith(QStringLiteral("A copy is saved to My files")));
+        CHECK(creator.kopieSatz().contains(QStringLiteral("house_piano_2.lvinst stays as it is")));
+        CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 2 2"));
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Zweites Klavier")));
+        CHECK(creator.nennung() == QStringLiteral("user:zweites_klavier"));
+        CHECK(gespeichert.back() == QStringLiteral("user:zweites_klavier"));
+        CHECK(QFileInfo(creator.datei()).absolutePath() == QFileInfo(eigenerInstrumentOrdner()).absoluteFilePath());
+        CHECK(QFileInfo::exists(eigeneDatei(QStringLiteral("house_piano_2"))));
+        REQUIRE(holeInstrument(QStringLiteral("user:house_piano_2"), geholt));
+        CHECK(geholt.titel == QStringLiteral("House Piano 2"));
+
         // --- der Vorschlag weicht einem vergebenen Namen aus; ein eigener, freier Titel gilt, wie er ist
         creator.oeffne(mitgeliefert);
+        CHECK(creator.kopieSatz().startsWith(QStringLiteral("House Piano is an original LumiViz instrument. Originals are not overwritten")));
         CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 3"));
         creator.aendere([](Instrument& i) { i.titel = QStringLiteral("Mein Klavier"); });
         CHECK(creator.vorschlagTitel() == QStringLiteral("Mein Klavier"));
         creator.aendere([](Instrument& i) { i.titel = QStringLiteral("House Piano 2"); });
         CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 2 2"));
 
-        // --- Save as an freien Ort: dann heisst es wieder wie seine Datei
+        // --- eine Datei an freiem Ort (kein Knopf fuehrt mehr dorthin, eine geladene gibt es weiter):
+        //     dann heisst es wie seine Datei
         const QString frei = QDir(tmp.path()).filePath(QStringLiteral("frei.lvinst"));
         REQUIRE(creator.speichereUnter(frei));
         CHECK(creator.nennung() == frei);
         CHECK(gespeichert.back() == frei);
         CHECK(creator.instrument().name == frei);
+
+        // --- Save as... von dort: die Kopie kommt in den Benutzerordner, die Datei bleibt
+        CHECK(creator.kopieSatz().contains(QStringLiteral("frei.lvinst stays as it is")));
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral("Aus Datei")));
+        CHECK(creator.nennung() == QStringLiteral("user:aus_datei"));
+        CHECK(QFileInfo::exists(eigeneDatei(QStringLiteral("aus_datei"))));
+        CHECK(QFileInfo::exists(frei));
     }
 
     TEST_CASE("Instrument-Creator: Sample als Schicht — File und Root note — Sample start und Sustain loop im Bild der Aufnahme")

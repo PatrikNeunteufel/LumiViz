@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.55.0
+> **Version:** 0.56.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2064,6 +2064,30 @@ färbte jeden Loop um, auch nach einem Import auf einem anderen Rechner).
 einem mitgelieferten **Replace the built-in one for all loops** — nur dann
 verdrängt dieses eine; nicht gebaut.
 
+**GEÄNDERT — Entscheide E1 a und E1b c (Patrik S117):** Anlass: drei
+Instrumente lagen nach **Save as...** lose in der Wurzel des Benutzerordners,
+der Dateidialog hatte dort begonnen, und „My files" zeigte sie nicht.
+**E1 a:** Save as... fragt nur noch nach dem Namen — derselbe Dialog „Save
+instrument" wie Save bei einem mitgelieferten — und schreibt immer eine Kopie
+nach `instruments` (der Ordner wird angelegt); das Muster nennt danach
+`user:<name>`. Einen Dateidialog zum Speichern gibt es im Creator nicht mehr;
+der Satz „Save as... mit Dateidialog bleibt" oben gilt nicht mehr. Lesen
+bleibt: Load instrument... und From file... nehmen eine Datei von jedem Ort,
+und **Save** schreibt eine so geladene an ihren Ort. **E1b c:** ein
+mitgeliefertes Instrument wird nie überschrieben und nicht verdrängt — der
+Dialog sagt es nur („… is an original LumiViz instrument. Originals are not
+overwritten …"), die Kopie kommt zu My files, der vorgeschlagene Name lässt
+sich behalten oder ändern. Verworfen bei E1b: a (ersetzen über eine Fassung
+unter `instruments\replaced` mit Restore original — Patrik: „wollen wir, dass
+das Original überschrieben wird? eigentlich nicht") und b (die Datei neben
+der Exe schreiben — jeder Bau stellte sie wieder her). Der vorgemerkte
+Schalter **Replace the built-in one for all loops** ist damit **nicht** mehr
+vorgemerkt. Gebaut S117: `InstrumentCreator::kopieSatz` (drei Sätze: neu,
+mitgeliefert, schon eine eigene Datei), `frageNachDatei` entfällt,
+`speichereUnter` bleibt für die geladene Datei. Von Claude gesetzt: der
+Wortlaut der Sätze und des Tooltips („Save a copy to My files under a new
+name"). Im Programm nicht gesehen.
+
 **Gebaut — 14a (S114), das Modell:** `Instrument` trägt `art`, `genres`,
 `beschreibung`; `kInstrumentFassung` 3 (1 und 2 werden gelesen, die Felder
 dürfen fehlen; eine unbekannte Art gilt als `unusual`, bleibt in der Datei
@@ -2094,7 +2118,8 @@ eigenen Instrument schreibt es an seinen Ort (im Benutzerordner bleibt es
 mitgelieferte bleibt; das Feld **Name** mit dem Vorschlag; darunter „File:
 <name>.lvinst", mit „— replaces the one in My files", wenn es den Namen
 schon gibt; **Cancel**, **Save**; danach bei vergebenem Namen die Rückfrage
-„Replace it?". **Save as...** bleibt der Weg an einen freien Ort. In der
+„Replace it?". **Save as...** bleibt der Weg an einen freien Ort (seit S117
+nicht mehr: derselbe Dialog, siehe E1 a oben). In der
 ersten Zeile steht nach dem Speichern „My files: <datei>". Der Creator
 meldet `gespeichert(nennung)` — `user:<name>` oder den Pfad —, der Editor
 setzt sie ins Muster. **GEÄNDERT gegenüber S110:** Save war bei einem
@@ -2506,6 +2531,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.56.0** (S117, 2026-10-12): §4h GEÄNDERT — **Save as...** im Creator
+  fragt nur nach dem Namen und schreibt nach `instruments` (E1 a); ein
+  mitgeliefertes Instrument wird nie überschrieben, der Dialog sagt es
+  (E1b c); der Schalter „Replace the built-in one" ist nicht mehr vorgemerkt
 
 - **0.55.0** (S116, 2026-10-12): im Creator **Repeat note** mit der Auswahl
   every 1 / 2 / 4 / 8 / 16 beats — der angeklickte Ton spielt immer wieder

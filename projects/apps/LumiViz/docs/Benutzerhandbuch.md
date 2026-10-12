@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.140.0
+> **Version:** 1.141.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2682,10 +2682,12 @@ viele Noten keinen Platz hatten und wie viele am Ende gekürzt wurden.
 
 Ein Instrument ist eine Datei `.lvinst`. Die mitgelieferten liegen unter
 `asset\loop\instruments`; ein eigenes entsteht im **Instrument-Creator**. **Save**
-legt es zu deinen eigenen Dateien (im Benutzerordner unter `instruments`, Settings →
-Panels → User Data: Open Folder), **Save as...** an einen Ort deiner Wahl. Ein eigenes
-verdrängt nie ein mitgeliefertes, auch wenn beide gleich heißen: ein Loop spielt immer
-das Instrument, mit dem er gespeichert wurde.
+und **Save as...** legen es zu deinen eigenen Dateien (im Benutzerordner unter
+`instruments`, Settings → Panels → User Data: Open Folder) — beide fragen nur nach
+einem Namen, den Ordner wählst du nicht; fehlt er, wird er angelegt. Ein
+mitgeliefertes Instrument wird nie überschrieben, und ein eigenes verdrängt es nicht,
+auch wenn beide gleich heißen: ein Loop spielt immer das Instrument, mit dem er
+gespeichert wurde.
 
 | Im Instrument-Editor | Wirkung |
 |---|---|
@@ -2717,8 +2719,8 @@ die Klaviatur des Editors.
 | **Name** | Der Titel des Instruments |
 | **Reset** | Zurück auf den Stand beim Öffnen oder nach dem letzten Speichern |
 | **Type**, **Genres**, **Description** | Die zweite Zeile: wo das Instrument einsortiert ist (eine von neun Arten), zu welchen Genres es gehört (mit Kommas getrennt; beim Tippen schlägt das Feld die vorhandenen vor) und ein Satz dazu |
-| **Save** | Wählbar, sobald etwas geändert ist. Bei einem eigenen Instrument schreibt es ohne Rückfrage an seinen Ort. Bei einem mitgelieferten fragt es nach einem **Namen** und legt deine Kopie zu deinen eigenen Dateien — der Dialog zeigt, wie die Datei heißen wird, und warnt, wenn es den Namen schon gibt. Danach spielt das Muster die Kopie |
-| **Save as...** | Schreibt eine Datei an einen Ort deiner Wahl; danach spielt das Muster diese Datei |
+| **Save** | Wählbar, sobald etwas geändert ist. Bei einem eigenen Instrument schreibt es ohne Rückfrage an seinen Ort. Bei einem mitgelieferten sagt der Dialog **Save instrument**, dass Originale nicht überschrieben werden, und fragt nach einem **Namen** für deine Kopie — der vorgeschlagene lässt sich behalten oder ändern. Der Dialog zeigt, wie die Datei heißen wird, und warnt, wenn es den Namen unter deinen eigenen schon gibt. Danach spielt das Muster die Kopie |
+| **Save as...** | Derselbe Dialog, bei jedem Instrument: eine Kopie unter einem neuen Namen zu deinen eigenen Dateien; das bisherige bleibt, wie es ist, und das Muster spielt danach die Kopie. Einen Ort wählst du nicht (GEÄNDERT in 1.141.0: vorher ein Dateidialog an beliebigem Ort). Eine `.lvinst` für jemand anderen holst du aus dem Ordner oder über den Export deiner Daten |
 | **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
 | **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen — mit allen eingeschalteten Schichten |
 | **Layers** | Die Schichten des Instruments, eine bis vier. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen |
@@ -2947,6 +2949,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.141.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Creator GEÄNDERT: **Save as...** fragt nur noch nach einem Namen und legt die Kopie zu den eigenen Dateien (vorher ein Dateidialog an beliebigem Ort); der Dialog **Save instrument** sagt bei einem mitgelieferten Instrument, dass Originale nicht überschrieben werden |
 | 1.140.0 | 2026-10-12 | Session 116. §8 Settings GEÄNDERT: statt eines **Image Search Folder** eine Liste **Image and Texture Search Folders** — sie gilt jetzt auch für die Texturen und Sprites von MilkDrop-Presets und für AVI; der bisher gesetzte Ordner steht als erster Eintrag darin |
 | 1.139.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU **Repeat note** mit **every … beats**: der angeklickte Ton spielt immer wieder, die Taste ist dabei hervorgehoben, der Abstand ist einstellbar |
 | 1.138.1 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator BEHOBEN: das Fenster wuchs mit jeder aufgeklappten Gruppe, bis über den Bildschirm — die Regler der Schicht stehen jetzt in einer Liste mit Rollbalken; GEÄNDERT: das Mausrad über einem Regler dort rollt die Liste |

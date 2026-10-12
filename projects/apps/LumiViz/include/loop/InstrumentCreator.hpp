@@ -229,8 +229,14 @@ public:
     /// keine (ein mitgeliefertes: `speichereAlsEigenes`), oder das Schreiben
     /// gelang nicht.
     bool speichere();
-    /// Als neue Datei an freiem Ort schreiben; sie ist danach die Datei des Creators.
+    /// Als neue Datei an freiem Ort schreiben; sie ist danach die Datei des
+    /// Creators. Seit S117 fuehrt kein Knopf mehr hierher (Save as... fragt
+    /// nach dem Namen); `speichere` schreibt so eine geladene Datei an ihren Ort.
     bool speichereUnter(const QString& pfad);
+    /// Der Satz im Dialog „Save instrument": wohin die Kopie kommt und was
+    /// bleibt, wie es ist — je nachdem, ob das Instrument neu, mitgeliefert
+    /// oder schon eine eigene Datei ist.
+    [[nodiscard]] QString kopieSatz() const;
     /// Unter diesem Titel als eigenes Instrument in den Benutzerordner
     /// schreiben (Stufe 14b, Entscheid P2 a): die Datei heisst
     /// `eigenerName(titel)`, das Instrument danach `user:<name>`; ein
@@ -367,9 +373,9 @@ private:
     Regler& regler(QGridLayout* gitter, const QString& name, const char* kennung, int von, int bis,
                    std::function<int(const Schicht&)> lese, std::function<void(Schicht&, int)> schreibe,
                    std::function<QString(const Schicht&)> text);
-    void frageNachDatei();
-    /// Save bei einem mitgelieferten oder neuen Instrument: nach dem Namen
-    /// der eigenen Kopie fragen und sie schreiben. false = abgebrochen.
+    /// Save bei einem mitgelieferten oder neuen Instrument und Save as... bei
+    /// jedem (Entscheid E1 a, S117): nach dem Namen der eigenen Kopie fragen
+    /// und sie in den Benutzerordner schreiben. false = abgebrochen.
     bool frageNachNamen();
     /// Das Menue hinter „Add layer from instrument...".
     void zeigeQuellen();
