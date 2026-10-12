@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.58.0
-> **Datum:** 2026-10-12 (Session 114)
+> **Version:** 0.59.0
+> **Datum:** 2026-10-13 (Session 117)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -2482,6 +2482,116 @@ die des Rechners nicht verstellen).
 
 ---
 
+## 4j. Signal path: Filter und Effekte als Kette (Stufe 16 — Skizzen gezeigt, Entscheide K1 a bis K4 a, Patrik S117; nicht gebaut)
+
+Anlass: Wunsch Patrik S115 (§4h, „die Kaskade als Kette, in einer Art
+Node-Editor, auch für die Effekte"). Vorgelegt in S117 mit zwei Skizzen aus
+dem Zeichenwerkzeug; Patrik hat zu jeder der vier Fragen Option a genommen.
+Ein ausdrückliches „Skizze gebilligt" gibt es nicht — vor dem Bau des
+Creators (16c) noch einmal zeigen.
+
+**Befund zum Unterbau der Effect Chain der Visuals** (Köpfe gelesen:
+`EffectChain.hpp`, `MultiEffectPanel.hpp`; nicht der ganze Code): sie ist ein
+Baum (`ChainTreeWidget`) mit Ziehen und Ablegen, kein Graph — eine Fläche mit
+Knoten und Leitungen gibt es im Programm nirgends. Ihr Modell (Parametersätze
+je Bild-Modul, Zeichnen mit OpenGL) ist für Ton nicht übertragbar; übertragbar
+ist das Bedienmuster (aus einer Palette holen, per Ziehen umordnen, die Regler
+des gewählten Bausteins daneben, Undo über denselben Weg).
+
+**Entscheid K1 a — die Form: eine Reihe von Bausteinen.** Kein freier Graph
+mit Leitungen (b), kein Baum wie im Panel Effect Chain (c). Verworfen b, weil
+das Nebeneinander schon die Schichten leisten und jeder Effekt einen
+Mix-Regler hat, und weil es eine neue Zeichenfläche, ein neues Rechenmodell
+und den Umbau der gebilligten Schichten-Liste verlangte; eine Reihe ist ein
+Graph ohne Abzweigung, b bleibt möglich. Verworfen c, weil im Creator die
+Höhe knapp ist und eine waagrechte Reihe sich als Weg des Tons liest.
+
+**Die Skizze als Beschreibung — Creator, je Schicht:** eine Zeile **Signal
+path — Layer n "Name"**. Von links nach rechts Kästen, mit Pfeilen
+verbunden: fest und grau **Source** (zweite Zeile: die Waveform, etwa
+„Noise" oder „Sine ↓ 22 st"), dann die Bausteine — je ein Kasten mit Name und
+einer Zeile Kurzwert („Filter / High-pass ×2.3", „Drive / 40 %", „Envelope /
+Decay 210 ms") —, dann der Knopf **+ Add**, dann fest und grau **Level**
+(„100 %"). Der gewählte Baustein trägt einen kräftigen Rand; **unter der
+Reihe** stehen seine Regler (bei Filter: Type, Cutoff, Resonance) und drei
+Knöpfe **← Move**, **Move →**, **Remove**. Ziehen ordnet um. Envelope ist
+gestrichelt umrandet. Hinter Add: **Filter**, **Drive**, und grau **Envelope
+— already in the path**.
+
+**Die Skizze als Beschreibung — Fenster Clip effects:** dieselbe Zeile,
+**Signal path — 2 clips: Beat (bar 21), Mel (bar 21)**: fest **Clip**
+(„dry"), die Bausteine („Echo / 1/8 dotted · 35 %", „Distortion / Drive 30 %",
+„Reverb / 1.8 s · 25 %"), **+ Add**, fest **Out** („Peak 0.62"). Sie ersetzt
+die drei festen Gruppen und die Zeile „Order: Distortion, Echo, Reverb".
+
+**Entscheid K2 a — die Bausteine einer Schicht:** **Source** (fest): alles,
+was den Ton erzeugt — Waveform, Voices, Detune, Harmonics, Damping, die
+Sample-Felder, Pitch sweep, Vibrato, dazu Transpose und Start offset.
+**Filter** beliebig oft (Type, Cutoff, Resonance, Filter envelope — sie folgt
+weiter der Hüllkurve der Schicht). **Drive** beliebig oft. **Envelope** genau
+einmal, verschiebbar, nicht entfernbar. **Level** (fest). Eine alte Datei
+öffnet als Filter → Drive → Envelope und klingt Wert für Wert wie bisher; ein
+Filter mit Cutoff „open" und ein Drive mit 0 % erscheinen nicht als Baustein;
+eine neue Schicht hat nur Envelope. Damit sind zwei der drei vorgemerkten
+Drum-Bausteine (§4h) Stellungen der Reihe: zwei Filter (Clap), Envelope vor
+Drive (Kick). Verworfen b (Envelope fest am Ende, Drive mit Haken „After
+envelope" — die Reihe zeigte dann nicht, was gerechnet wird), c (auch Pitch
+sweep und Vibrato als Bausteine — sie sind keine Stationen des Tons). Die
+Gruppen Envelope und Filter des Creators fallen weg, Oscillator und Vibrato
+werden zu den Reglern von Source. Die Schwingung aus sechs Rechtecken
+(Hi-Hats) ist kein Glied der Kette, sondern eine Waveform — weiter offen,
+nach Patriks Ohr.
+
+**Entscheid K3 a — die Bausteine am Clip:** **Filter**, **Distortion**,
+**Echo**, **Reverb**, jeder beliebig oft, in freier Reihenfolge. Der Filter
+am Clip hat Type und Resonance wie an der Schicht, aber **Cutoff in Hertz**
+(40 Hz bis 18 kHz) und keinen Filter envelope. An der Schicht gibt es Echo
+und Reverb nicht; Drive (Schicht) und Distortion (Clip) bleiben zwei
+Bausteine. Autotune käme später als weiterer Baustein am Clip. Verworfen b
+(ein Satz für beide Stellen: Echo und Reverb je Schicht, Drive und Distortion
+vereint — nicht gemessen, was ein Nachklang von bis zu acht Sekunden an jedem
+vorgerechneten Ton kostet; nicht geprüft, ob ein alter Drive als Distortion
+gleich klingt; lässt sich später aufsetzen), c (kein Filter am Clip). Der
+Haken je Effekt bleibt als Haken am Baustein: ausgeschaltet steht er in der
+Reihe und wird übersprungen. Copy, Paste und Reset gelten für die ganze
+Reihe.
+
+**Entscheid K4 a — die Obergrenze:** höchstens **acht** Bausteine je Reihe,
+an Schicht und Clip gleich (`kBausteineMax`); Envelope zählt mit,
+ausgeschaltete auch. Ab sechs bricht die Reihe in eine zweite Zeile um; bei
+acht ist Add grau („8 of 8"); eine Datei mit mehr wird nach dem achten
+abgeschnitten. Grundlage: am Clip kostet Hall rund 1 ms je Sekunde Ton
+(§4g, gemessen S113) — acht davon gerechnet unter 1 % eines Kerns; an der
+Schicht ist nichts gemessen. Verworfen b (fünf und sechs, was in eine Zeile
+passt), c (keine Grenze). Die vier Schichten je Instrument bleiben.
+
+**Von Claude gesetzt, nicht entschieden:** der Name **Signal path** („Effect
+Chain" heißt schon das Panel der Visuals); Source und Level fest an den
+Enden; die Regler unter der Reihe; der Bereich von Cutoff am Clip; dass ein
+Filter vor oder hinter Envelope kaum anders klingt, steht als Satz im
+Handbuch.
+
+**Baustufen — vorgelegt S117, von Patrik noch nicht freigegeben:**
+
+| Stufe | Inhalt | Beleg |
+|---|---|---|
+| 16a | **Modell und Dateien, ohne Klang und ohne Fenster:** die Schicht trägt eine Reihe von Bausteinen statt der festen Felder für Filter und Drive; der Clip eine Reihe statt dreier fester Effekte. `.lvinst` Fassung 7, `.lvloop` Fassung 5; Fassungen davor lesen als die heutige Reihenfolge | jede mitgelieferte `.lvinst` und `.lvloop` liest zu derselben Reihe, die sie heute fest hat; Schreiben und Lesen ergeben dasselbe |
+| 16b | **Der Klangerzeuger rechnet die Reihe:** an der Schicht für Schwingung, Rauschen und Sample; am Clip in freier Reihenfolge, mit dem Filter in Hertz | **vor dem Umbau** je mitgeliefertem Instrument und Beispiel-Loop die gerechneten Werte festhalten — danach dieselben Werte; Messung der Last: eine Schicht mit acht Bausteinen, ein Clip mit acht |
+| 16c | **Creator:** die Zeile Signal path je Schicht, die Regler darunter, Add, Move, Remove, Ziehen; die Gruppen Envelope und Filter entfallen | die Skizze vorher noch einmal zeigen; das Bild aus dem Test ansehen; Ziehen mit Zeigerwechsel und Hinweis (Bedienung auffindbar) |
+| 16d | **Fenster Clip effects:** die Zeile statt der drei Gruppen, Filter als vierter Baustein | davor **K5** entscheiden (unten); Bild aus dem Test |
+| 16e | **Die Drums nachziehen und Abschluss:** Kick mit Drive hinter Envelope, Clap mit zwei Filtern — neu gegen das Kit gemessen, neue Hörproben; Benutzerhandbuch, Sichttest-Liste, voller Lauf | die Tabelle aus 11f mit den neuen Zahlen daneben |
+
+**Offen, vor dem jeweiligen Schritt zu entscheiden:**
+- **K5 (vor 16d):** mehrere markierte Clips mit **verschiedenen Reihen** —
+  heute steht je Regler „mixed"; bei verschiedener Zahl oder Reihenfolge der
+  Bausteine gibt es keinen gemeinsamen Regler mehr. Vorlage mit Skizze.
+- **Die Hi-Hat-Schwingung** und ob die gerechneten Drums so laut sein sollen
+  wie das Kit — nach Patriks Ohr (Liste 10, U64, U65).
+- **Reihenfolge der Stufen:** 16e setzt 16b voraus, nicht 16c und 16d — die
+  Drums ließen sich vorziehen, wenn Patrik sie zuerst hören will.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -2507,6 +2617,7 @@ die des Rechners nicht verstellen).
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; Baustufen 16a bis 16e vorgelegt, **nicht freigegeben, nichts gebaut**; offen K5 |
 
 ---
 
@@ -2602,6 +2713,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.59.0** (S117, 2026-10-13): neu §4j **Signal path** — Filter und Effekte
+  als Reihe von Bausteinen: Befund zum Unterbau der Effect Chain, die zwei
+  Skizzen als Beschreibung, Entscheide K1 a bis K4 a, die Baustufen 16a bis
+  16e (vorgelegt, nicht freigegeben), offen K5; §5 Stufe 16
 - **0.58.0** (S117, 2026-10-12): §4h — **Stufe 11f gebaut:** sechs gerechnete
   Drum-Instrumente unter Drums, für die Note C2, gegen das Kit gemessen (die
   Tabelle), leiser als das Kit; nicht gehört
