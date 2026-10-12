@@ -9,6 +9,8 @@
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QCompleter>
+#include <QDialog>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -26,6 +28,7 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSlider>
+#include <QStringListModel>
 #include <QVBoxLayout>
 
 #include <algorithm>
@@ -40,6 +43,35 @@ namespace
 {
 
 const char* const kLetzterOrdner = "loop/lastInstrumentDir";
+
+/// Vorschlaege fuer das Feld Genres: es traegt mehrere, mit Kommas getrennt —
+/// vorgeschlagen wird fuer das Stueck hinter dem letzten Komma, und die Wahl
+/// ersetzt nur dieses Stueck.
+class GenreVorschlag : public QCompleter
+{
+public:
+    explicit GenreVorschlag(QLineEdit* feld) : QCompleter(feld), m_feld(feld)
+    {
+        setModel(new QStringListModel(bekannteGenres(), this));
+        setCaseSensitivity(Qt::CaseInsensitive);
+    }
+    void liesNeu() { static_cast<QStringListModel*>(model())->setStringList(bekannteGenres()); }
+
+protected:
+    [[nodiscard]] QStringList splitPath(const QString& pfad) const override
+    {
+        return {pfad.mid(pfad.lastIndexOf(QLatin1Char(',')) + 1).trimmed()};
+    }
+    [[nodiscard]] QString pathFromIndex(const QModelIndex& index) const override
+    {
+        const QString text = m_feld->text();
+        const int komma = text.lastIndexOf(QLatin1Char(','));
+        return (komma < 0 ? QString() : text.left(komma + 1) + QLatin1Char(' ')) + QCompleter::pathFromIndex(index);
+    }
+
+private:
+    QLineEdit* m_feld;
+};
 constexpr int kBildRate = 44100;
 constexpr int kObertonRegler = 8;         ///< der 2. bis 9. Teilton als Regler
 constexpr double kDaempfungVon = 0.98;    ///< der Regler Damping reicht von hier …
@@ -306,6 +338,32 @@ void InstrumentCreator::setupUI()
     kopf->addWidget(m_spitze);
     aussen->addLayout(kopf);
 
+    // --- die zweite Zeile (Stufe 14b; Skizze gebilligt, Patrik S114): was das
+    // Fenster „Instruments" von einem Instrument zeigt und wonach es filtert
+    auto* angaben = new QHBoxLayout;
+    m_art = new QComboBox(this);
+    m_art->setObjectName(QStringLiteral("creatorType"));
+    m_art->setToolTip(tr("Where the instrument is listed in the Instruments window"));
+    for (const InstrumentArt& art : instrumentArten())
+        m_art->addItem(QLatin1String(art.titel), QLatin1String(art.schluessel));
+    m_genres = new QLineEdit(this);
+    m_genres->setObjectName(QStringLiteral("creatorGenres"));
+    m_genres->setMinimumWidth(150);
+    m_genres->setPlaceholderText(tr("Funk, Disco"));
+    m_genres->setToolTip(tr("Genres, separated by commas — the Instruments window filters by them"));
+    m_genres->setCompleter(new GenreVorschlag(m_genres));
+    m_beschreibung = new QLineEdit(this);
+    m_beschreibung->setObjectName(QStringLiteral("creatorDescription"));
+    m_beschreibung->setPlaceholderText(tr("One sentence about the instrument"));
+    m_beschreibung->setMaxLength(200);
+    angaben->addWidget(new QLabel(tr("Type"), this));
+    angaben->addWidget(m_art);
+    angaben->addWidget(new QLabel(tr("Genres"), this));
+    angaben->addWidget(m_genres);
+    angaben->addWidget(new QLabel(tr("Description"), this));
+    angaben->addWidget(m_beschreibung, 1);
+    aussen->addLayout(angaben);
+
     auto* koerper = new QHBoxLayout;
 
     // --- links: die Schichten
@@ -514,8 +572,26 @@ void InstrumentCreator::setupUI()
         const QString titel = m_titel->text().trimmed();
         if (!titel.isEmpty() && titel != m_instrument.titel) aendere([&titel](Instrument& i) { i.titel = titel; });
     });
+    connect(m_art, &QComboBox::activated, this, [this](int index) {
+        const QString art = m_art->itemData(index).toString();
+        if (art != gueltigeArt(m_instrument.art)) aendere([&art](Instrument& i) { i.art = art; });
+    });
+    connect(m_genres, &QLineEdit::editingFinished, this, [this] {
+        const QStringList genres = genresAus(m_genres->text());
+        if (genres != m_instrument.genres) aendere([&genres](Instrument& i) { i.genres = genres; });
+    });
+    connect(m_beschreibung, &QLineEdit::editingFinished, this, [this] {
+        const QString text = m_beschreibung->text().trimmed();
+        if (text != m_instrument.beschreibung) aendere([&text](Instrument& i) { i.beschreibung = text; });
+    });
     connect(m_zurueck, &QPushButton::clicked, this, &InstrumentCreator::setzeZurueck);
     connect(m_speichern, &QPushButton::clicked, this, [this] {
+        // ein mitgeliefertes oder neues: eine eigene Kopie unter einem Namen
+        if (m_datei.isEmpty())
+        {
+            (void)frageNachNamen();
+            return;
+        }
         if (!speichere())
             QMessageBox::warning(this, tr("Instrument"), tr("Could not write %1").arg(QDir::toNativeSeparators(m_datei)));
     });
@@ -666,18 +742,57 @@ void InstrumentCreator::oeffne(const Instrument& instrument)
     if (m_instrument.schichten.empty()) m_instrument.schichten.push_back(Schicht{});
     m_vorlage = m_instrument;
     m_gewaehlt = 0;
-    if (istInstrumentDatei(instrument.name))
+    m_eigenerName.clear();
+    // die Vorschlaege fuer Genres: auch was seit dem letzten Oeffnen dazukam
+    static_cast<GenreVorschlag*>(m_genres->completer())->liesNeu();
+    if (istEigenesInstrument(instrument.name))
+    {
+        // ein eigenes aus dem Benutzerordner: Save schreibt an seinen Platz
+        m_eigenerName = instrument.name.mid(static_cast<int>(qstrlen(kEigenVorsatz)));
+        m_datei = eigeneDatei(m_eigenerName);
+        m_herkunft = tr("My files: %1").arg(QFileInfo(m_datei).fileName());
+    }
+    else if (istInstrumentDatei(instrument.name))
     {
         m_datei = instrument.name;
         m_herkunft = QFileInfo(m_datei).fileName();
     }
     else
     {
-        // ein mitgeliefertes: es bleibt, wie es ist — gespeichert wird eine eigene Datei
+        // ein mitgeliefertes: es bleibt, wie es ist — gespeichert wird eine eigene Kopie
         m_datei.clear();
         m_herkunft = tr("based on %1").arg(instrument.titel);
     }
     zeigeAlles();
+}
+
+QString InstrumentCreator::nennung() const
+{
+    if (!m_eigenerName.isEmpty()) return QLatin1String(kEigenVorsatz) + m_eigenerName;
+    return m_datei;
+}
+
+QStringList InstrumentCreator::genresAus(const QString& text)
+{
+    QStringList genres;
+    for (const QString& stueck : text.split(QLatin1Char(',')))
+    {
+        const QString genre = stueck.trimmed();
+        if (!genre.isEmpty() && !genres.contains(genre, Qt::CaseInsensitive)) genres << genre;
+    }
+    return genres;
+}
+
+QString InstrumentCreator::vorschlagTitel() const
+{
+    const QString titel = m_instrument.titel.trimmed();
+    // schon umbenannt und der Name ist frei: so heisst die Kopie
+    if (titel != m_vorlage.titel && !QFileInfo::exists(eigeneDatei(eigenerName(titel)))) return titel;
+    for (int zahl = 2;; ++zahl)
+    {
+        const QString versuch = QStringLiteral("%1 %2").arg(titel).arg(zahl);
+        if (!QFileInfo::exists(eigeneDatei(eigenerName(versuch)))) return versuch;
+    }
 }
 
 bool InstrumentCreator::geaendert() const
@@ -705,18 +820,111 @@ void InstrumentCreator::setzeZurueck()
 
 bool InstrumentCreator::speichere()
 {
-    return !m_datei.isEmpty() && speichereUnter(m_datei);
+    if (m_datei.isEmpty()) return false;
+    // ein eigenes bleibt ein eigenes: es heisst weiter `user:<name>`, nicht wie sein Pfad
+    if (!m_eigenerName.isEmpty())
+    {
+        if (!speichereEigenes(m_instrument, m_eigenerName)) return false;
+        m_vorlage = m_instrument;
+        zeigeAlles();
+        Q_EMIT gespeichert(nennung());
+        return true;
+    }
+    return speichereUnter(m_datei);
 }
 
 bool InstrumentCreator::speichereUnter(const QString& pfad)
 {
     if (pfad.isEmpty() || !speichereInstrument(m_instrument, pfad)) return false;
     m_datei = pfad;
+    m_eigenerName.clear();
     m_instrument.name = pfad;  // es heisst jetzt wie seine Datei
     m_vorlage = m_instrument;
     m_herkunft = QFileInfo(pfad).fileName();
     zeigeAlles();
     Q_EMIT gespeichert(pfad);
+    return true;
+}
+
+bool InstrumentCreator::speichereAlsEigenes(const QString& titel)
+{
+    const QString sauber = titel.trimmed();
+    const QString name = eigenerName(sauber);
+    if (name.isEmpty()) return false;
+    Instrument kopie = m_instrument;
+    kopie.titel = sauber;
+    if (!speichereEigenes(kopie, name)) return false;
+    m_instrument = std::move(kopie);  // heisst jetzt `user:<name>`
+    m_eigenerName = name;
+    m_datei = eigeneDatei(name);
+    m_vorlage = m_instrument;
+    m_herkunft = tr("My files: %1").arg(QFileInfo(m_datei).fileName());
+    zeigeAlles();
+    Q_EMIT gespeichert(nennung());
+    return true;
+}
+
+bool InstrumentCreator::frageNachNamen()
+{
+    QDialog dialog(this);
+    dialog.setObjectName(QStringLiteral("creatorSaveDialog"));
+    dialog.setWindowTitle(tr("Save instrument"));
+    auto* aussen = new QVBoxLayout(&dialog);
+    auto* satz = new QLabel(
+        m_vorlage.name.isEmpty()
+            ? tr("Your instrument is saved to My files and used by this pattern.")
+            : tr("%1 is a built-in instrument. Your copy is saved to My files and used by this pattern; "
+                 "the built-in one stays as it is.")
+                  .arg(m_vorlage.titel),
+        &dialog);
+    satz->setWordWrap(true);
+    satz->setEnabled(false);
+    aussen->addWidget(satz);
+    auto* name = new QLineEdit(vorschlagTitel(), &dialog);
+    name->setObjectName(QStringLiteral("creatorSaveName"));
+    auto* zeile = new QHBoxLayout;
+    zeile->addWidget(new QLabel(tr("Name"), &dialog));
+    zeile->addWidget(name, 1);
+    aussen->addLayout(zeile);
+    auto* datei = new QLabel(&dialog);
+    datei->setObjectName(QStringLiteral("creatorSaveFile"));
+    datei->setEnabled(false);
+    aussen->addWidget(datei);
+    auto* abbrechen = new QPushButton(tr("Cancel"), &dialog);
+    auto* sichern = new QPushButton(tr("Save"), &dialog);
+    sichern->setDefault(true);
+    auto* fuss = new QHBoxLayout;
+    fuss->addStretch(1);
+    fuss->addWidget(abbrechen);
+    fuss->addWidget(sichern);
+    aussen->addLayout(fuss);
+    const auto zeige = [name, datei, sichern] {
+        const QString kurz = eigenerName(name->text());
+        datei->setText(kurz.isEmpty() ? tr("Type a name with letters or digits")
+                                      : tr("File: %1.lvinst%2")
+                                            .arg(kurz, QFileInfo::exists(eigeneDatei(kurz)) ? tr(" — replaces the one in My files")
+                                                                                         : QString()));
+        sichern->setEnabled(!kurz.isEmpty());
+    };
+    connect(name, &QLineEdit::textChanged, &dialog, zeige);
+    connect(abbrechen, &QPushButton::clicked, &dialog, &QDialog::reject);
+    connect(sichern, &QPushButton::clicked, &dialog, &QDialog::accept);
+    zeige();
+    dialog.resize(420, dialog.sizeHint().height());
+    if (dialog.exec() != QDialog::Accepted) return false;
+
+    const QString titel = name->text().trimmed();
+    if (QFileInfo::exists(eigeneDatei(eigenerName(titel))) &&
+        QMessageBox::question(this, tr("Save instrument"),
+                              tr("My files already holds %1.lvinst.\nReplace it?").arg(eigenerName(titel))) !=
+            QMessageBox::Yes)
+        return false;
+    if (!speichereAlsEigenes(titel))
+    {
+        QMessageBox::warning(this, tr("Instrument"),
+                             tr("Could not write %1").arg(QDir::toNativeSeparators(eigeneDatei(eigenerName(titel)))));
+        return false;
+    }
     return true;
 }
 
@@ -767,7 +975,7 @@ void InstrumentCreator::closeEvent(QCloseEvent* event)
         if (wahl == QMessageBox::Save)
         {
             if (m_datei.isEmpty())
-                frageNachDatei();
+                (void)frageNachNamen();  // eine eigene Kopie unter einem Namen (Stufe 14b)
             else
                 (void)speichere();
             if (geaendert())  // abgebrochen oder nicht geschrieben: das Fenster bleibt
@@ -841,9 +1049,18 @@ void InstrumentCreator::zeigeAlles()
     m_herkunftZeile->setText(m_herkunft);
     m_herkunftZeile->setToolTip(m_datei.isEmpty() ? QString() : QDir::toNativeSeparators(m_datei));
     m_zurueck->setEnabled(geaendert());
-    m_speichern->setEnabled(!m_datei.isEmpty() && geaendert());
-    m_speichern->setToolTip(m_datei.isEmpty() ? tr("A built-in instrument cannot be overwritten — use Save as...")
-                                              : QDir::toNativeSeparators(m_datei));
+    // Save ist waehlbar, sobald etwas geaendert ist (Stufe 14b): bei einem
+    // mitgelieferten fragt es nach dem Namen der eigenen Kopie
+    m_speichern->setEnabled(geaendert());
+    m_speichern->setToolTip(m_datei.isEmpty()
+                                ? tr("Save your copy to My files under a name — the built-in instrument stays as it is")
+                                : QDir::toNativeSeparators(m_datei));
+    {
+        const QSignalBlocker ruhe(m_art);
+        m_art->setCurrentIndex(m_art->findData(gueltigeArt(m_instrument.art)));
+    }
+    if (!m_genres->hasFocus()) m_genres->setText(m_instrument.genres.join(QStringLiteral(", ")));
+    if (!m_beschreibung->hasFocus()) m_beschreibung->setText(m_instrument.beschreibung);
     m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
     const Schicht& gewaehlte = schicht();
     {

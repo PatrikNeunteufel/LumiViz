@@ -156,11 +156,28 @@ public:
     [[nodiscard]] static QString schichtTitel(const Schicht& schicht, int platz);
     /// Zurueck auf das, was geoeffnet oder zuletzt gespeichert wurde.
     void setzeZurueck();
-    /// In die eigene Datei schreiben. false = es gibt keine, oder das
-    /// Schreiben gelang nicht.
+    /// In die eigene Datei schreiben — ein eigenes Instrument an seinen Platz
+    /// im Benutzerordner, eine Datei an freiem Ort dorthin. false = es gibt
+    /// keine (ein mitgeliefertes: `speichereAlsEigenes`), oder das Schreiben
+    /// gelang nicht.
     bool speichere();
-    /// Als neue Datei schreiben; sie ist danach die Datei des Creators.
+    /// Als neue Datei an freiem Ort schreiben; sie ist danach die Datei des Creators.
     bool speichereUnter(const QString& pfad);
+    /// Unter diesem Titel als eigenes Instrument in den Benutzerordner
+    /// schreiben (Stufe 14b, Entscheid P2 a): die Datei heisst
+    /// `eigenerName(titel)`, das Instrument danach `user:<name>`; ein
+    /// vorhandenes mit dem Namen wird ersetzt. false = aus dem Titel wird
+    /// kein Name, oder das Schreiben gelang nicht.
+    bool speichereAlsEigenes(const QString& titel);
+    /// Der Titel, den Save fuer eine eigene Kopie vorschlaegt: der eigene —
+    /// oder mit einer Zahl dahinter, wenn er noch der der Vorlage ist
+    /// („House Piano 2", die erste, die es unter den eigenen nicht gibt).
+    [[nodiscard]] QString vorschlagTitel() const;
+    /// Wie das Instrument nach dem Speichern heisst: `user:<name>` oder der
+    /// Pfad seiner Datei; leer = noch nie gespeichert.
+    [[nodiscard]] QString nennung() const;
+    /// Die Genres aus einem Text mit Kommas — ohne Leeres, ohne Doppelte.
+    [[nodiscard]] static QStringList genresAus(const QString& text);
     /// Einen Ton mit den Einstellungen anspielen, wie sie gerade stehen: die
     /// Kopie kommt in die Vorhoer-Datei, `tonVerlangt` nennt sie. false = die
     /// Datei liess sich nicht schreiben.
@@ -169,8 +186,9 @@ public:
     [[nodiscard]] static QString vorhoerDatei();
 
 Q_SIGNALS:
-    /// Das Instrument steht jetzt in dieser Datei (Save, Save as...).
-    void gespeichert(const QString& pfad);
+    /// Das Instrument ist gespeichert und heisst jetzt so: `user:<name>` oder
+    /// der Pfad seiner Datei (Save, Save as...).
+    void gespeichert(const QString& nennung);
     /// Einen Ton anspielen: das Instrument beim Pfad seiner Vorhoer-Datei.
     void tonVerlangt(const QString& nennung, int hoehe);
 
@@ -194,6 +212,9 @@ private:
                    std::function<int(const Schicht&)> lese, std::function<void(Schicht&, int)> schreibe,
                    std::function<QString(const Schicht&)> text);
     void frageNachDatei();
+    /// Save bei einem mitgelieferten oder neuen Instrument: nach dem Namen
+    /// der eigenen Kopie fragen und sie schreiben. false = abgebrochen.
+    bool frageNachNamen();
     /// Das Menue hinter „Add layer from instrument...".
     void zeigeQuellen();
     void zeigeListe();
@@ -207,6 +228,7 @@ private:
     Instrument m_instrument;
     Instrument m_vorlage;   ///< wie geoeffnet oder zuletzt gespeichert
     QString m_datei;
+    QString m_eigenerName;  ///< der Name im Benutzerordner; leer = kein eigenes (`user:<name>`)
     QString m_herkunft;     ///< „based on …"
     int m_gewaehlt = 0;
     bool m_nurGewaehlte = false;
@@ -230,6 +252,10 @@ private:
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
     QLabel* m_spitze = nullptr;
+    // die zweite Zeile im Kopf (Stufe 14b): fuer das Fenster „Instruments"
+    QComboBox* m_art = nullptr;
+    QLineEdit* m_genres = nullptr;
+    QLineEdit* m_beschreibung = nullptr;
     QComboBox* m_welle = nullptr;
     std::vector<Regler> m_regler;
     std::vector<std::size_t> m_nurSinus;     ///< Plaetze in `m_regler`: die Obertoene

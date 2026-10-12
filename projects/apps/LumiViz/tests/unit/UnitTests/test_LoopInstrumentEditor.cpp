@@ -33,6 +33,7 @@
 #include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -245,7 +246,7 @@ TEST_SUITE("LoopInstrumentEditor")
             return s;
         };
 
-        // --- ein mitgeliefertes Instrument: eine Kopie, Save geht nicht, nur Save as
+        // --- ein mitgeliefertes Instrument: eine Kopie; ohne Aenderung ist Save aus
         const Instrument* strings = findeInstrument(QStringLiteral("strings"));
         REQUIRE(strings != nullptr);
         creator.oeffne(*strings);
@@ -283,7 +284,10 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.geaendert());
         CHECK(creator.windowTitle() == QStringLiteral("Instrument: Strings *"));
         CHECK(reset->isEnabled());
-        CHECK_FALSE(save->isEnabled());  // weiter ohne eigene Datei
+        // seit 14b (S114): Save ist auch ohne eigene Datei waehlbar, sobald etwas
+        // geaendert ist — der Knopf fragt dann nach dem Namen der eigenen Kopie
+        CHECK(save->isEnabled());
+        CHECK(creator.datei().isEmpty());
         const std::vector<float> weich = huelle->werte();
         schieber("creatorAttack")->setValue(0);
         CHECK(huelle->werte() != weich);  // das Bild zieht nach
@@ -563,6 +567,134 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.gewaehlt() == 0);
         CHECK(liste->count() == 1);
         QFile::remove(InstrumentCreator::vorhoerDatei());
+    }
+
+    TEST_CASE("Instrument-Creator: Type und Genres und Description — Save legt eine eigene Kopie in den Benutzerordner")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        QStringList gespeichert;
+        QObject::connect(&creator, &InstrumentCreator::gespeichert, &creator,
+                         [&](const QString& nennung) { gespeichert << nennung; });
+        const Instrument mitgeliefert = *findeInstrument(QStringLiteral("house_piano"));
+        creator.oeffne(mitgeliefert);
+
+        auto* art = creator.findChild<QComboBox*>(QStringLiteral("creatorType"));
+        auto* genres = creator.findChild<QLineEdit*>(QStringLiteral("creatorGenres"));
+        auto* satz = creator.findChild<QLineEdit*>(QStringLiteral("creatorDescription"));
+        auto* save = creator.findChild<QPushButton*>(QStringLiteral("creatorSave"));
+        REQUIRE(art != nullptr);
+        REQUIRE(genres != nullptr);
+        REQUIRE(satz != nullptr);
+        REQUIRE(save != nullptr);
+
+        // --- die zweite Zeile zeigt, was das Instrument traegt
+        CHECK(art->count() == 8);
+        CHECK(art->itemText(3) == QStringLiteral("Pads and strings"));
+        CHECK(art->currentData().toString() == QStringLiteral("keys"));
+        CHECK(genres->text() == QStringLiteral("House"));
+        CHECK(satz->text() == mitgeliefert.beschreibung);
+        CHECK_FALSE(save->isEnabled());  // nichts geaendert
+
+        // --- aendern: wie jede andere Aenderung — Stern, Reset, und Save ist auch
+        //     bei einem mitgelieferten waehlbar (fragt dann nach dem Namen)
+        art->setCurrentIndex(art->findData(QStringLiteral("bass")));
+        Q_EMIT art->activated(art->currentIndex());
+        CHECK(creator.instrument().art == QStringLiteral("bass"));
+        CHECK(creator.geaendert());
+        CHECK(creator.windowTitle().endsWith(QStringLiteral(" *")));
+        CHECK(save->isEnabled());
+        CHECK(creator.datei().isEmpty());
+        CHECK_FALSE(creator.speichere());  // ohne Namen keine Datei
+
+        genres->setText(QStringLiteral(" Funk, disco ,Funk,, "));
+        Q_EMIT genres->editingFinished();
+        CHECK(creator.instrument().genres == QStringList{QStringLiteral("Funk"), QStringLiteral("disco")});
+        CHECK(genres->text() == QStringLiteral("Funk, disco"));
+        satz->setText(QStringLiteral("  My own sentence.  "));
+        Q_EMIT satz->editingFinished();
+        CHECK(creator.instrument().beschreibung == QStringLiteral("My own sentence."));
+        CHECK(InstrumentCreator::genresAus(QString()).isEmpty());
+        CHECK(InstrumentCreator::genresAus(QStringLiteral("House")) == QStringList{QStringLiteral("House")});
+
+        creator.setzeZurueck();
+        CHECK(creator.instrument() == mitgeliefert);
+        CHECK(art->currentData().toString() == QStringLiteral("keys"));
+        CHECK(genres->text() == QStringLiteral("House"));
+
+        // --- der vorgeschlagene Name: der Titel mit einer Zahl, solange er der der Vorlage ist
+        CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 2"));
+        creator.aendere([](Instrument& i) {
+            i.art = QStringLiteral("bass");
+            i.genres = {QStringLiteral("Funk")};
+        });
+
+        // --- als eigenes speichern: in den Benutzerordner, es heisst danach user:<name>
+        CHECK_FALSE(creator.speichereAlsEigenes(QStringLiteral("???")));  // daraus wird kein Name
+        CHECK(gespeichert.isEmpty());
+        REQUIRE(creator.speichereAlsEigenes(QStringLiteral(" House Piano 2 ")));
+        CHECK(gespeichert == QStringList{QStringLiteral("user:house_piano_2")});
+        CHECK(creator.nennung() == QStringLiteral("user:house_piano_2"));
+        CHECK(QFileInfo(creator.datei()) == QFileInfo(eigeneDatei(QStringLiteral("house_piano_2"))));
+        CHECK(QFileInfo::exists(creator.datei()));
+        CHECK(creator.instrument().titel == QStringLiteral("House Piano 2"));
+        CHECK(creator.instrument().name == QStringLiteral("user:house_piano_2"));
+        CHECK_FALSE(creator.geaendert());
+        CHECK(creator.windowTitle() == QStringLiteral("Instrument: House Piano 2"));
+        CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorBasedOn"))->text() ==
+              QStringLiteral("My files: house_piano_2.lvinst"));
+        Instrument geholt;
+        REQUIRE(holeInstrument(QStringLiteral("user:house_piano_2"), geholt));
+        CHECK(geholt.art == QStringLiteral("bass"));
+        CHECK(geholt.genres == QStringList{QStringLiteral("Funk")});
+        CHECK(geholt.schichten == mitgeliefert.schichten);
+        // das mitgelieferte bleibt, wie es ist
+        CHECK(*findeInstrument(QStringLiteral("house_piano")) == mitgeliefert);
+
+        // --- Save schreibt jetzt ohne Frage an seinen Platz; es bleibt user:<name>
+        creator.aendere([](Instrument& i) { i.laut = 0.5; });
+        CHECK(save->isEnabled());
+        REQUIRE(creator.speichere());
+        CHECK(gespeichert.size() == 2);
+        CHECK(gespeichert.back() == QStringLiteral("user:house_piano_2"));
+        CHECK(creator.instrument().name == QStringLiteral("user:house_piano_2"));
+        REQUIRE(holeInstrument(QStringLiteral("user:house_piano_2"), geholt));
+        CHECK(geholt.laut == doctest::Approx(0.5));
+
+        // --- ein eigenes oeffnen: Save kennt seinen Platz
+        creator.oeffne(geholt);
+        CHECK(creator.nennung() == QStringLiteral("user:house_piano_2"));
+        CHECK_FALSE(creator.datei().isEmpty());
+        creator.aendere([](Instrument& i) { i.beschreibung = QStringLiteral("Changed."); });
+        REQUIRE(creator.speichere());
+        REQUIRE(holeInstrument(QStringLiteral("user:house_piano_2"), geholt));
+        CHECK(geholt.beschreibung == QStringLiteral("Changed."));
+
+        // --- der Vorschlag weicht einem vergebenen Namen aus; ein eigener, freier Titel gilt, wie er ist
+        creator.oeffne(mitgeliefert);
+        CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 3"));
+        creator.aendere([](Instrument& i) { i.titel = QStringLiteral("Mein Klavier"); });
+        CHECK(creator.vorschlagTitel() == QStringLiteral("Mein Klavier"));
+        creator.aendere([](Instrument& i) { i.titel = QStringLiteral("House Piano 2"); });
+        CHECK(creator.vorschlagTitel() == QStringLiteral("House Piano 2 2"));
+
+        // --- Save as an freien Ort: dann heisst es wieder wie seine Datei
+        const QString frei = QDir(tmp.path()).filePath(QStringLiteral("frei.lvinst"));
+        REQUIRE(creator.speichereUnter(frei));
+        CHECK(creator.nennung() == frei);
+        CHECK(gespeichert.back() == frei);
+        CHECK(creator.instrument().name == frei);
     }
 
     TEST_CASE("Instrument-Editor: Edit instrument oeffnet den Creator — gespeichert nennt die Basis seine Datei")

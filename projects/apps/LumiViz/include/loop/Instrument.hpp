@@ -194,6 +194,10 @@ void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
 bool speichereEigenes(Instrument& instrument, const QString& name);
 /// Ein eigenes Instrument loeschen. false = es gab keins.
 bool loescheEigenes(const QString& name);
+
+/// Jedes Genre, das ein mitgeliefertes oder eigenes Instrument traegt — einmal,
+/// nach dem Alphabet. Fuer den Filter im Fenster und die Vorschlaege im Creator.
+[[nodiscard]] QStringList bekannteGenres();
 /// Zaehlt jede gespeicherte Instrument-Datei (`speichereInstrument`): wer
 /// Toene gerechnet hat und sich die Zahl merkt, sieht, ob er neu rechnen muss.
 [[nodiscard]] std::uint64_t instrumentFassung();

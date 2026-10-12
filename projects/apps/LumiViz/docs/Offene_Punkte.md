@@ -2437,8 +2437,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     `asset/loop/instrument_katalog.py` (Art und Beschreibung nach Titel und
     Aufbau, Genres aus den Loops gezählt; Guitar und Violin ohne Genre),
     eigene Instrumente im Modell (damit auch Datenablage A3 im Kern). Im
-    Programm nichts zu sehen. **Offen:** 14b Creator (Type, Genres,
-    Description, Save mit Namen), 14c das Fenster und Browse...
+    Programm nichts zu sehen. **Gebaut 14b** — im Creator die zweite Zeile
+    Type, Genres, Description; **Save** legt bei einem mitgelieferten eine
+    eigene Kopie unter einem Namen in den Benutzerordner (GEÄNDERT: war
+    grau), Save as... bleibt für einen freien Ort. Im Programm nicht
+    gesehen; nicht geprüft: der Dialog „Save instrument" und die Vorschläge
+    der Genres im gezeigten Fenster. **Offen:** 14c das Fenster und
+    Browse...
   - 🟡 **Datenablage** (S114; Steuerdokument
     [Datenablage_Konzept.md](core-services/Datenablage_Konzept.md), Entscheide
     D1 b bis D10): **gebaut A1** — eine Stelle für den Ordner eines

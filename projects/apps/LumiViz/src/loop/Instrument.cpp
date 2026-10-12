@@ -588,6 +588,19 @@ bool loescheEigenes(const QString& name)
     return true;
 }
 
+QStringList bekannteGenres()
+{
+    QStringList alle;
+    const auto nimm = [&alle](const Instrument& instrument) {
+        for (const QString& genre : instrument.genres)
+            if (!alle.contains(genre, Qt::CaseInsensitive)) alle << genre;
+    };
+    for (const Instrument& instrument : instrumente()) nimm(instrument);
+    for (const Instrument& instrument : eigeneInstrumente()) nimm(instrument);
+    alle.sort(Qt::CaseInsensitive);
+    return alle;
+}
+
 bool holeInstrument(const QString& nennung, Instrument& instrument, bool* zuNeu)
 {
     if (zuNeu != nullptr) *zuNeu = false;

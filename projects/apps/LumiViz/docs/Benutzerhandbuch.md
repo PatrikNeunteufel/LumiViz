@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.125.0
+> **Version:** 1.126.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2632,8 +2632,11 @@ viele Noten keinen Platz hatten und wie viele am Ende gekürzt wurden.
 ### Eigene Instrumente: der Instrument-Creator
 
 Ein Instrument ist eine Datei `.lvinst`. Die mitgelieferten liegen unter
-`asset\loop\instruments`; ein eigenes entsteht im **Instrument-Creator** und
-liegt, wo du es speicherst.
+`asset\loop\instruments`; ein eigenes entsteht im **Instrument-Creator**. **Save**
+legt es zu deinen eigenen Dateien (im Benutzerordner unter `instruments`, Settings →
+Panels → User Data: Open Folder), **Save as...** an einen Ort deiner Wahl. Ein eigenes
+verdrängt nie ein mitgeliefertes, auch wenn beide gleich heißen: ein Loop spielt immer
+das Instrument, mit dem er gespeichert wurde.
 
 | Im Instrument-Editor | Wirkung |
 |---|---|
@@ -2644,7 +2647,9 @@ liegt, wo du es speicherst.
 |---|---|
 | **Name** | Der Titel des Instruments |
 | **Reset** | Zurück auf den Stand beim Öffnen oder nach dem letzten Speichern |
-| **Save** / **Save as...** | Schreibt die Datei; danach spielt das Muster dieses Instrument. Save geht nur bei einer eigenen Datei — eine Vorlage speicherst du mit Save as... unter neuem Namen |
+| **Type**, **Genres**, **Description** | Die zweite Zeile: wo das Instrument einsortiert ist (eine von acht Arten), zu welchen Genres es gehört (mit Kommas getrennt; beim Tippen schlägt das Feld die vorhandenen vor) und ein Satz dazu |
+| **Save** | Wählbar, sobald etwas geändert ist. Bei einem eigenen Instrument schreibt es ohne Rückfrage an seinen Ort. Bei einem mitgelieferten fragt es nach einem **Namen** und legt deine Kopie zu deinen eigenen Dateien — der Dialog zeigt, wie die Datei heißen wird, und warnt, wenn es den Namen schon gibt. Danach spielt das Muster die Kopie |
+| **Save as...** | Schreibt eine Datei an einen Ort deiner Wahl; danach spielt das Muster diese Datei |
 | **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
 | **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen — mit allen eingeschalteten Schichten |
 | **Layers** | Die Schichten des Instruments, eine bis vier. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen |
@@ -2825,6 +2830,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.126.0 | 2026-10-12 | Session 114. §16 Loop, Instrument-Creator: die zweite Zeile **Type**, **Genres**, **Description**; **Save** legt eine eigene Kopie unter einem Namen zu den eigenen Dateien (GEÄNDERT: bei einem mitgelieferten Instrument war Save grau), **Save as...** bleibt für einen freien Ort; ein eigenes Instrument verdrängt kein mitgeliefertes |
 | 1.125.0 | 2026-10-12 | Settings, Panels (Session 114): **Export...** und **Import...** der eigenen Daten als eine Datei `.lvdata` — Bereiche wählen, vier Regeln bei gleichem Namen, die Liste „Let me decide for each file" |
 | 1.124.0 | 2026-10-12 | §Settings, Panels (Session 114): neben der Exe liegt jetzt der Ordner `asset/` mit dem, was das Programm selbst liest (Voreinstellungen, Vorlagen, Blenden, Kit, Instrumente, Beispiel-Loops, Datei-Icons) |
 | 1.123.0 | 2026-10-11 | Session 113. §16 Loop — **Der Drum-Editor** und **Der Instrument-Editor** NEU je der Abschnitt „Mehrere Schritte / Noten zugleich": markieren mit Shift+Ziehen und Ctrl+Klick, Ctrl+C / X / V an der **Einfügemarke** (Klick in die Zeile der Takte), Ctrl+Shift+V legt im Drum-Editor nur dazu, Ctrl+D, Entf, Pfeiltasten, **Alt+Pfeil** dreht im Kreis, im Instrument-Editor mehrere Noten als Gruppe ziehen; das Menü des Rechtsklicks; NEU der Haken **Right-click deletes** in beiden Editoren. GEÄNDERT: im Instrument-Editor löscht der Rechtsklick auf eine Note nur noch mit diesem Haken — sonst markiert er sie und öffnet das Menü |

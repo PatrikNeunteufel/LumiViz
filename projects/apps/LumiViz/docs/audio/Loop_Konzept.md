@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.36.0
+> **Version:** 0.37.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1386,8 +1386,29 @@ Guitar und Violin stehen in keinem Loop und tragen keins). Die vierzehn
 Dateien aus S110 waren noch Fassung 1 (flach) und sind dabei zu einer
 Schicht geworden — gegen den Stand im Repo geprüft: Titel, Lautstärke und
 jeder Wert jeder Schicht gleich. Im Programm ist davon nichts zu sehen.
-Offen: 14b der Creator (Type, Genres, Description, Save mit Namen), 14c das
-Fenster und **Browse...**.
+
+**Gebaut — 14b (S114), der Creator; Skizze gebilligt, Patrik S114:** unter
+der Kopfzeile eine zweite: **Type** (Auswahl der acht Arten), **Genres**
+(Textfeld, mit Kommas getrennt; es schlägt beim Tippen die vorhandenen
+Genres für das Stück hinter dem letzten Komma vor), **Description** (ein
+Satz, höchstens 200 Zeichen). Eine Änderung dort zählt wie jede andere
+(Stern, Reset). **Save** ist wählbar, sobald etwas geändert ist: bei einem
+eigenen Instrument schreibt es an seinen Ort (im Benutzerordner bleibt es
+`user:<name>`); bei einem mitgelieferten oder neuen öffnet es den Dialog
+„Save instrument" — ein Satz, dass die Kopie zu „My files" kommt und das
+mitgelieferte bleibt; das Feld **Name** mit dem Vorschlag; darunter „File:
+<name>.lvinst", mit „— replaces the one in My files", wenn es den Namen
+schon gibt; **Cancel**, **Save**; danach bei vergebenem Namen die Rückfrage
+„Replace it?". **Save as...** bleibt der Weg an einen freien Ort. In der
+ersten Zeile steht nach dem Speichern „My files: <datei>". Der Creator
+meldet `gespeichert(nennung)` — `user:<name>` oder den Pfad —, der Editor
+setzt sie ins Muster. **GEÄNDERT gegenüber S110:** Save war bei einem
+mitgelieferten Instrument grau. Von Claude gesetzt: der Vorschlag ist der
+Titel mit der ersten freien Zahl, solange er der der Vorlage ist; ein
+umbenannter, freier Titel gilt, wie er ist; beim Schließen mit
+Ungespeichertem führt **Save** bei einem mitgelieferten jetzt in denselben
+Dialog (vorher der Dateidialog). Nicht geprüft: der Dialog selbst und die
+Vorschläge im gezeigten Fenster. Offen: 14c das Fenster und **Browse...**.
 
 ### Mehrfachauswahl in den Editoren (Stufe 13, Wunsch Patrik S113)
 
@@ -1648,7 +1669,7 @@ die des Rechners nicht verstellen).
 | 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
-| 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente); offen 14b Creator, 14c Fenster |
+| 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie); offen 14c Fenster |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 
 ---
@@ -1744,6 +1765,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.37.0** (S114, 2026-10-12): 14b gebaut — im Creator die Zeile Type,
+  Genres, Description und Save als eigene Kopie in den Benutzerordner (§4h).
 
 - **0.36.0** (S114, 2026-10-12): Entscheid P2 a (eigene Instrumente als
   `user:<name>` im Benutzerordner, nichts wird verdrängt; ein Schalter dafür
