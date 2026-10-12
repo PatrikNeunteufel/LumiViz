@@ -1,20 +1,28 @@
 {
     "format": "lumiviz-instrument",
-    "version": 1,
+    "version": 3,
     "title": "Guitar",
-    "waveform": "string",
-    "harmonics": [],
-    "voices": 1,
-    "detune": 0,
-    "attack": 1,
-    "decay": 200,
-    "sustain": 0.7,
-    "release": 120,
-    "filterCutoff": 0,
-    "filterEnvelope": 0,
-    "vibratoRate": 0,
-    "vibratoDepth": 0,
-    "vibratoDelay": 0,
-    "damping": 0.996,
-    "level": 1
+    "category": "plucked",
+    "genres": [],
+    "description": "A single plucked string.",
+    "level": 1.0,
+    "layers": [
+        {
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 120,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "level": 1
+        }
+    ]
 }

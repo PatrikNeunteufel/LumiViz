@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Bell",
+    "category": "percussion",
+    "genres": ["Ambient", "Trap"],
+    "description": "A long sine strike with detuned partials a twelfth and two octaves above.",
     "level": 0.7,
     "layers": [
         {

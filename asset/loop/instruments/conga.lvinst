@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Conga",
+    "category": "percussion",
+    "genres": ["Afrobeat"],
+    "description": "A short sine skin with a damped string slap; the note sets the pitch of the hit.",
     "level": 0.85,
     "layers": [
         {

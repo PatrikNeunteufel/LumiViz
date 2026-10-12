@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Reverse Swell",
+    "category": "unusual",
+    "genres": ["Ambient"],
+    "description": "Detuned saws that swell for a second and then stop at once.",
     "level": 0.7,
     "layers": [
         {

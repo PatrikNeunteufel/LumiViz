@@ -1,20 +1,28 @@
 {
     "format": "lumiviz-instrument",
-    "version": 1,
+    "version": 3,
     "title": "Acid Bass",
-    "waveform": "saw",
-    "harmonics": [],
-    "voices": 1,
-    "detune": 0,
-    "attack": 2,
-    "decay": 170,
-    "sustain": 0.2,
-    "release": 60,
-    "filterCutoff": 1.5,
-    "filterEnvelope": 11,
-    "vibratoRate": 0,
-    "vibratoDepth": 0,
-    "vibratoDelay": 0,
-    "damping": 0.996,
-    "level": 0.8
+    "category": "bass",
+    "genres": ["Acid Trance", "House", "Psytrance"],
+    "description": "A saw through a low filter with a strong sweep.",
+    "level": 1.0,
+    "layers": [
+        {
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 170,
+            "sustain": 0.2,
+            "release": 60,
+            "filterCutoff": 1.5,
+            "filterEnvelope": 11,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "level": 0.8
+        }
+    ]
 }

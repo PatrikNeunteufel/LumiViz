@@ -39,6 +39,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <map>
 #include <vector>
 
 using namespace lumi::loop;
@@ -600,6 +601,178 @@ TEST_SUITE("LoopInstrument")
         CHECK(bericht[0].startsWith(QStringLiteral("File not found: ")));
     }
 
+    TEST_CASE("Loop Instrument: Fassung 3 — Art, Genres und Beschreibung; aeltere Dateien lesen sich ohne sie")
+    {
+        // --- die acht Arten, in der Reihenfolge des Fensters; was es nicht gibt, ist „Unusual"
+        const auto& arten = instrumentArten();
+        REQUIRE(arten.size() == 8);
+        CHECK(QLatin1String(arten.front().schluessel) == QLatin1String("keys"));
+        CHECK(QLatin1String(arten.back().schluessel) == QLatin1String("unusual"));
+        CHECK(gueltigeArt(QStringLiteral("bass")) == QStringLiteral("bass"));
+        CHECK(gueltigeArt(QStringLiteral("BASS")) == QStringLiteral("bass"));
+        CHECK(gueltigeArt(QString()) == QStringLiteral("unusual"));
+        CHECK(gueltigeArt(QStringLiteral("tuba section")) == QStringLiteral("unusual"));
+        CHECK(artTitel(QStringLiteral("pads")) == QStringLiteral("Pads and strings"));
+        CHECK(artTitel(QStringLiteral("gibt es nicht")) == QStringLiteral("Unusual"));
+
+        // --- hin und zurueck
+        Instrument eins;
+        eins.titel = QStringLiteral("My bass");
+        eins.art = QStringLiteral("bass");
+        eins.genres = {QStringLiteral("Funk"), QStringLiteral("Disco")};
+        eins.beschreibung = QStringLiteral("A plucked string with a thump.");
+        const QJsonObject json = alsJson(eins);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 3);
+        CHECK(json.value(QStringLiteral("category")).toString() == QStringLiteral("bass"));
+        CHECK(json.value(QStringLiteral("genres")).toArray().size() == 2);
+        CHECK(json.value(QStringLiteral("description")).toString() == eins.beschreibung);
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen == eins);
+
+        // --- die Felder duerfen fehlen; Genres ohne Doppelte und ohne Leeres; eine fremde Art bleibt stehen
+        QJsonObject karg = json;
+        karg.remove(QStringLiteral("category"));
+        karg.remove(QStringLiteral("genres"));
+        karg.remove(QStringLiteral("description"));
+        REQUIRE(ausJson(karg, gelesen));
+        CHECK(gelesen.art.isEmpty());
+        CHECK(gelesen.genres.isEmpty());
+        CHECK(gelesen.beschreibung.isEmpty());
+        CHECK(gueltigeArt(gelesen.art) == QStringLiteral("unusual"));
+        QJsonObject unsauber = json;
+        unsauber[QStringLiteral("genres")] =
+            QJsonArray{QStringLiteral(" Funk "), QStringLiteral("funk"), QString(), 7, QStringLiteral("House")};
+        unsauber[QStringLiteral("category")] = QStringLiteral("tuba section");
+        REQUIRE(ausJson(unsauber, gelesen));
+        CHECK(gelesen.genres == QStringList{QStringLiteral("Funk"), QStringLiteral("House")});
+        CHECK(gelesen.art == QStringLiteral("tuba section"));
+
+        // --- eine Datei der Fassung 2 (ohne die Felder) liest sich wie bisher
+        QJsonObject zwei = karg;
+        zwei[QStringLiteral("version")] = 2;
+        REQUIRE(ausJson(zwei, gelesen));
+        CHECK(gelesen.titel == QStringLiteral("My bass"));
+        CHECK(gelesen.schichten == eins.schichten);
+
+        // --- jedes mitgelieferte Instrument traegt eine der acht Arten und einen Satz
+        const InstrumentApp app;
+        int ohneGenre = 0;
+        std::map<QString, int> jeArt;
+        for (const Instrument& instrument : instrumente())
+        {
+            CAPTURE(instrument.name.toStdString());
+            CHECK(gueltigeArt(instrument.art) == instrument.art);
+            CHECK(instrument.beschreibung.size() > 10);
+            CHECK(instrument.beschreibung.endsWith(QLatin1Char('.')));
+            if (instrument.genres.isEmpty()) ++ohneGenre;
+            ++jeArt[instrument.art];
+        }
+        // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
+        CHECK(jeArt[QStringLiteral("keys")] == 7);
+        CHECK(jeArt[QStringLiteral("bass")] == 10);
+        CHECK(jeArt[QStringLiteral("lead")] == 4);
+        CHECK(jeArt[QStringLiteral("pads")] == 4);
+        CHECK(jeArt[QStringLiteral("plucked")] == 7);
+        CHECK(jeArt[QStringLiteral("wind")] == 3);
+        CHECK(jeArt[QStringLiteral("percussion")] == 8);
+        CHECK(jeArt[QStringLiteral("unusual")] == 6);
+        // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem
+        CHECK(ohneGenre == 2);
+        CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
+        CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
+    }
+
+    TEST_CASE("Loop Instrument: eigene im Benutzerordner — user:<name>, ein eigener Raum (P2 a)")
+    {
+        const InstrumentApp app;
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString ordner = QDir(tmp.path()).filePath(QStringLiteral("instruments"));
+        setzeEigenenInstrumentOrdnerFuerTests(ordner);
+        struct Zurueck
+        {
+            ~Zurueck() { setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+        } zurueck;
+
+        // --- der Name: klein, a–z, Ziffern, `_`
+        CHECK(eigenerName(QStringLiteral("Mein Bass 2")) == QStringLiteral("mein_bass_2"));
+        CHECK(eigenerName(QStringLiteral("  Glühen -- (warm)  ")) == QStringLiteral("gl_hen_warm"));
+        CHECK(eigenerName(QStringLiteral("../../raus")) == QStringLiteral("raus"));
+        CHECK(eigenerName(QStringLiteral("???")).isEmpty());
+        CHECK(istEigenerName(QStringLiteral("mein_bass_2")));
+        for (const char* nein : {"", "Mein Bass", "a/b", "..", "a..b", "_a", "a_", "a__b", "c:x"})
+        {
+            CAPTURE(nein);
+            CHECK_FALSE(istEigenerName(QString::fromLatin1(nein)));
+        }
+        CHECK(istEigenesInstrument(QStringLiteral("user:mein_bass")));
+        CHECK_FALSE(istEigenesInstrument(QStringLiteral("piano")));
+        CHECK_FALSE(istInstrumentDatei(QStringLiteral("user:mein_bass")));
+
+        // --- ohne Ordner: leer, kein Fehler
+        CHECK(eigeneInstrumente().empty());
+        Instrument geholt;
+        CHECK_FALSE(holeInstrument(QStringLiteral("user:mein_bass"), geholt));
+
+        // --- speichern legt den Ordner an; das Instrument heisst danach user:<name>
+        Instrument bass = *findeInstrument(QStringLiteral("slap_bass"));
+        bass.titel = QStringLiteral("Mein Bass");
+        bass.genres = {QStringLiteral("Funk")};
+        const std::uint64_t vorher = instrumentFassung();
+        REQUIRE(speichereEigenes(bass, QStringLiteral("mein_bass")));
+        CHECK(bass.name == QStringLiteral("user:mein_bass"));
+        CHECK(QFileInfo::exists(QDir(ordner).filePath(QStringLiteral("mein_bass.lvinst"))));
+        CHECK(instrumentFassung() > vorher);  // wer Toene gerechnet hat, rechnet neu
+        CHECK_FALSE(speichereEigenes(bass, QStringLiteral("../raus")));
+        CHECK_FALSE(QFileInfo::exists(QDir(tmp.path()).filePath(QStringLiteral("raus.lvinst"))));
+
+        REQUIRE(holeInstrument(QStringLiteral("user:mein_bass"), geholt));
+        CHECK(geholt == bass);
+        // ein Muster kann nichts ausserhalb des Ordners nennen
+        CHECK_FALSE(holeInstrument(QStringLiteral("user:../instruments/mein_bass"), geholt));
+        CHECK_FALSE(holeInstrument(QStringLiteral("user:"), geholt));
+
+        // --- ein eigenes `piano` verdraengt das mitgelieferte nicht
+        Instrument meinPiano = *findeInstrument(QStringLiteral("organ"));
+        meinPiano.titel = QStringLiteral("Piano");
+        REQUIRE(speichereEigenes(meinPiano, QStringLiteral("piano")));
+        REQUIRE(holeInstrument(QStringLiteral("piano"), geholt));
+        CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
+        REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
+        CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
+        CHECK(instrumente().size() == 49);  // die mitgelieferten bleiben, wie sie sind
+
+        // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
+        {
+            QFile fremd(QDir(ordner).filePath(QStringLiteral("Von Hand.lvinst")));
+            REQUIRE(fremd.open(QIODevice::WriteOnly));
+            fremd.write(QJsonDocument(alsJson(bass)).toJson());
+        }
+        const std::vector<Instrument> eigene = eigeneInstrumente();
+        REQUIRE(eigene.size() == 2);
+        CHECK(eigene[0].titel == QStringLiteral("Mein Bass"));
+        CHECK(eigene[0].name == QStringLiteral("user:mein_bass"));
+        CHECK(eigene[1].name == QStringLiteral("user:piano"));
+
+        // --- im Loop steht der Name, wie er ist; fehlt das Instrument, sagt es der Bericht des Kits
+        Loop loop = notenLoop({{0, 4, 40, 1.0}}, QStringLiteral("user:mein_bass"));
+        const QJsonObject json = alsJson(loop, tmp.path());
+        CHECK(json.value(QStringLiteral("patterns")).toArray().at(0).toObject().value(QStringLiteral("instrument")).toString() ==
+              QStringLiteral("user:mein_bass"));
+        Loop gelesen;
+        QStringList bericht;
+        REQUIRE(ausJson(json, gelesen, tmp.path(), &bericht));
+        CHECK(bericht.isEmpty());
+        CHECK(gelesen.muster[0].instrument == QStringLiteral("user:mein_bass"));
+
+        // --- loeschen
+        REQUIRE(loescheEigenes(QStringLiteral("mein_bass")));
+        CHECK_FALSE(loescheEigenes(QStringLiteral("mein_bass")));
+        CHECK_FALSE(holeInstrument(QStringLiteral("user:mein_bass"), geholt));
+        CHECK(eigeneInstrumente().size() == 1);
+    }
+
     TEST_CASE("Loop Instrument: Schichten — die Datei der Fassung 2 und der Ton als Summe")
     {
         const InstrumentApp app;
@@ -622,7 +795,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 2);
+        CHECK(kInstrumentFassung == 3);  // seit S114: Art, Genres, Beschreibung (eigener Fall unten)
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);

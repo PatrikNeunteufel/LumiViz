@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Overdrive Guitar",
+    "category": "plucked",
+    "genres": ["Metal", "Rock"],
+    "description": "Three driven plucked strings: the note, a fifth and an octave.",
     "level": 0.5,
     "layers": [
         {

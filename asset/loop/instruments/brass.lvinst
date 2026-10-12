@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Brass",
+    "category": "wind",
+    "genres": ["Afrobeat", "Disco", "Funk", "Reggae", "Ska", "Synth-Pop", "Synthwave"],
+    "description": "Two detuned saws with a filter that opens on the attack, and a square edge.",
     "level": 0.7,
     "layers": [
         {

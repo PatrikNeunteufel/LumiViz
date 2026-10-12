@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Upright Bass",
+    "category": "bass",
+    "genres": ["Blues", "Bossa Nova", "Hip-Hop", "Jazz Waltz", "Ska"],
+    "description": "A plucked string with a woody sine body.",
     "level": 0.85,
     "layers": [
         {

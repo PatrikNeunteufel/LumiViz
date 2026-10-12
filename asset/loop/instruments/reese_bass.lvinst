@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Reese Bass",
+    "category": "bass",
+    "genres": ["Drum and Bass"],
+    "description": "Three widely detuned saws over a sine sub.",
     "level": 0.6,
     "layers": [
         {

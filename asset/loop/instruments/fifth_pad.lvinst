@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Fifth Pad",
+    "category": "pads",
+    "genres": ["Ambient"],
+    "description": "Detuned saws on the note and a fifth above, over a sine an octave below.",
     "level": 0.55,
     "layers": [
         {

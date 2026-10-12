@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Sax",
+    "category": "wind",
+    "genres": ["Blues", "Ska"],
+    "description": "A lightly driven square with vibrato and a breathy saw.",
     "level": 0.65,
     "layers": [
         {

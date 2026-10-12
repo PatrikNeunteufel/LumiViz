@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Broken Radio",
+    "category": "unusual",
+    "genres": ["Experimental", "Psytrance", "Techno"],
+    "description": "A fully driven square with wild vibrato, a driven string and a hum.",
     "level": 0.45,
     "layers": [
         {

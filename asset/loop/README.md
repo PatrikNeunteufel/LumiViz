@@ -38,6 +38,18 @@ Dateiname ist der Name im Loop: `piano.lvinst` ist das Instrument `piano`.
 Im Programm steht kein Instrument — maßgebend sind diese Dateien (Entscheide
 Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
 
+Seit S114 stehen alle neunundvierzig in **Fassung 3** und tragen `category`
+(eine von acht Arten), `genres` und `description` — für das Fenster
+„Instruments" (Konzept §4h, Entscheid F3 b). Die drei Angaben pflegt
+**`instrument_katalog.py`**: Art und Beschreibung stehen dort in einer Tabelle
+(nach Titel und Aufbau gesetzt, nicht nach Gehör), die Genres zählt es aus den
+mitgelieferten Loops — ein Instrument trägt das Genre jedes Loops, in dem es
+steht (Guitar und Violin stehen in keinem). Wer ein Instrument dazulegt, trägt
+es dort ein und ruft `python asset/loop/instrument_katalog.py`;
+`make_examples.py` und `make_genres.py` rufen es von selbst. Eigene
+Instrumente gehören nicht hierher: sie liegen im Benutzerordner der App unter
+`instruments` und heißen im Loop `user:<name>` (Entscheid P2 a).
+
 | Datei | Titel | Wie gerechnet |
 |---|---|---|
 | `bass.lvinst` | Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |

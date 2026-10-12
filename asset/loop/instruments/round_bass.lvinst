@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Round Bass",
+    "category": "bass",
+    "genres": ["Afrobeat", "Lo-Fi", "Reggae"],
+    "description": "A soft sine with two overtones and a short finger noise.",
     "level": 0.85,
     "layers": [
         {

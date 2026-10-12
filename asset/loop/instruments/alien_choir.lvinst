@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Alien Choir",
+    "category": "unusual",
+    "genres": ["Experimental", "Psytrance"],
+    "description": "Slow, detuned sines and triangles with deep vibrato in three registers.",
     "level": 0.6,
     "layers": [
         {

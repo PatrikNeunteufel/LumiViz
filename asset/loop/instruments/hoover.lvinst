@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Hoover",
+    "category": "lead",
+    "genres": ["Acid Trance", "Techno"],
+    "description": "Widely detuned, driven saws in two octaves with vibrato and a square edge.",
     "level": 0.45,
     "layers": [
         {

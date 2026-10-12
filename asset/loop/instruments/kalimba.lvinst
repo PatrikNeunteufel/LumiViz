@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Kalimba",
+    "category": "percussion",
+    "genres": ["Ambient", "Lo-Fi", "Trap"],
+    "description": "A short sine tine with a knock and a detuned ring two octaves above.",
     "level": 0.8,
     "layers": [
         {

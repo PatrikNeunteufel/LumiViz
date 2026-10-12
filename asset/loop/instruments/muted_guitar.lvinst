@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Muted Guitar",
+    "category": "plucked",
+    "genres": ["Funk"],
+    "description": "A heavily damped plucked string with a short thud.",
     "level": 0.8,
     "layers": [
         {

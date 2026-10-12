@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Nylon Guitar",
+    "category": "plucked",
+    "genres": ["Bossa Nova", "Jazz Waltz", "Reggaeton"],
+    "description": "A plucked string with a warm triangle underneath.",
     "level": 0.75,
     "layers": [
         {

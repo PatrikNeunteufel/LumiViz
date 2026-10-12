@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Vibraphone",
+    "category": "percussion",
+    "genres": ["Drum and Bass", "Hip-Hop", "Jazz Waltz", "Lo-Fi"],
+    "description": "A long sine bar with slow vibrato and a short strike.",
     "level": 0.8,
     "layers": [
         {

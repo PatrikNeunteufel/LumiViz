@@ -1,20 +1,28 @@
 {
     "format": "lumiviz-instrument",
-    "version": 1,
+    "version": 3,
     "title": "Bass",
-    "waveform": "saw",
-    "harmonics": [],
-    "voices": 1,
-    "detune": 0,
-    "attack": 3,
-    "decay": 260,
-    "sustain": 0.45,
-    "release": 90,
-    "filterCutoff": 2.5,
-    "filterEnvelope": 5,
-    "vibratoRate": 0,
-    "vibratoDepth": 0,
-    "vibratoDelay": 0,
-    "damping": 0.996,
-    "level": 0.9
+    "category": "bass",
+    "genres": ["Disco", "Synth-Pop", "Synthwave"],
+    "description": "A filtered saw with a short filter sweep.",
+    "level": 1.0,
+    "layers": [
+        {
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 3,
+            "decay": 260,
+            "sustain": 0.45,
+            "release": 90,
+            "filterCutoff": 2.5,
+            "filterEnvelope": 5,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "level": 0.9
+        }
+    ]
 }

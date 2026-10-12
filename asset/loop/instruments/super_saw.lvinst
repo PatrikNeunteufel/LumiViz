@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Super Saw",
+    "category": "lead",
+    "genres": ["Synth-Pop", "Synthwave", "Trance"],
+    "description": "Nine saws in three layers, wide, tight and an octave up.",
     "level": 0.5,
     "layers": [
         {

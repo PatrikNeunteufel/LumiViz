@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Clean Guitar",
+    "category": "plucked",
+    "genres": ["Afrobeat", "Blues", "Disco", "Reggae", "Ska"],
+    "description": "A plucked string with a quieter one an octave above.",
     "level": 0.7,
     "layers": [
         {

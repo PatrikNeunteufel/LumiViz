@@ -38,6 +38,8 @@ def schicht(name, waveform, **werte):
 
 
 def instrument(titel, level, *schichten):
+    # Art, Genres und Beschreibung (Fassung 3, S114) kommen beim Schreiben dazu:
+    # instrument_katalog.ergaenze
     return {"format": "lumiviz-instrument", "version": 2, "title": titel, "level": level, "layers": list(schichten)}
 
 
@@ -330,10 +332,14 @@ def als_text(daten):
 
 
 def main():
-    for name, daten in INSTRUMENTE.items():
-        (HIER / "instruments" / (name + ".lvinst")).write_text(als_text(daten), encoding="utf-8", newline="\n")
+    # erst die Loops: die Genres eines Instruments werden aus ihnen gezaehlt
     for name, bau in LOOPS.items():
         (HIER / (name + ".lvloop")).write_text(als_text(bau()), encoding="utf-8", newline="\n")
+    from instrument_katalog import ergaenze, genres_aus_loops
+    genres = genres_aus_loops()
+    for name, daten in INSTRUMENTE.items():
+        (HIER / "instruments" / (name + ".lvinst")).write_text(als_text(ergaenze(name, daten, genres)),
+                                                               encoding="utf-8", newline="\n")
     print(len(INSTRUMENTE), "Instrumente,", len(LOOPS), "Loops")
 
 

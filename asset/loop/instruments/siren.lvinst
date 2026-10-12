@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Siren",
+    "category": "unusual",
+    "genres": ["Acid Trance", "Experimental", "Psytrance", "Reggae"],
+    "description": "A square and detuned saws with the deepest vibrato there is.",
     "level": 0.5,
     "layers": [
         {

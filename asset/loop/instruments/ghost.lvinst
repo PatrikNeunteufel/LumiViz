@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Ghost",
+    "category": "unusual",
+    "genres": ["Ambient", "Trap"],
+    "description": "Widely detuned sines and triangles that take a second to arrive and longer to leave.",
     "level": 0.7,
     "layers": [
         {

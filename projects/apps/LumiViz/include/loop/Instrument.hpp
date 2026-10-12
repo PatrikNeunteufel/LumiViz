@@ -86,16 +86,39 @@ struct Schicht
 /// einzeln gerechnet.
 inline constexpr int kSchichtenMax = 4;
 
+/// Eine Art von Instrument: so ist das Fenster „Instruments" gegliedert
+/// (Stufe 14, Entscheid P1 a; Skizze gebilligt, Patrik S114).
+struct InstrumentArt
+{
+    const char* schluessel;  ///< steht in der Datei (`category`)
+    const char* titel;       ///< wie es im Programm steht
+};
+
+/// Die acht Arten in der Reihenfolge des Fensters; die letzte ist „Unusual".
+[[nodiscard]] const std::vector<InstrumentArt>& instrumentArten();
+/// Der Schluessel einer Art — oder `unusual`, wenn es `art` nicht gibt (auch leer).
+[[nodiscard]] QString gueltigeArt(const QString& art);
+/// Der Titel einer Art („Pads and strings").
+[[nodiscard]] QString artTitel(const QString& art);
+
 struct Instrument
 {
     /// Wie ein Muster es nennt: der Name eines mitgelieferten Instruments
-    /// (`piano` — die Datei `asset/loop/instruments/piano.lvinst`) oder der
-    /// Pfad einer eigenen Datei `.lvinst`. Steht nicht in der Datei.
+    /// (`piano` — die Datei `asset/loop/instruments/piano.lvinst`), ein
+    /// eigenes aus dem Benutzerordner (`user:mein_bass`, Entscheid P2 a) oder
+    /// der Pfad einer Datei `.lvinst` an freiem Ort. Steht nicht in der Datei.
     QString name;
     QString titel;      ///< wie es im Programm steht
     double laut = 1.0;  ///< die Lautstaerke des ganzen Instruments
     /// Mindestens eine, hoechstens `kSchichtenMax`.
     std::vector<Schicht> schichten = {Schicht{}};
+    // --- seit Fassung 3 (Entscheid F3 b): fuer das Fenster „Instruments"
+    /// Die Art (`keys`, `bass`, …). Leer oder unbekannt gilt als `unusual` —
+    /// in der Datei bleibt stehen, was dort stand.
+    QString art;
+    /// Wo es hingehoert („Funk", „Disco"); leer = nur unter „All".
+    QStringList genres;
+    QString beschreibung;  ///< ein Satz
 
     [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
@@ -106,10 +129,12 @@ struct Instrument
 // steht kein Instrument mehr.
 //
 // Fassung 2 traegt die Schichten als Liste `layers`; Fassung 1 ist flach und
-// wird als Instrument mit einer Schicht gelesen. Geschrieben wird Fassung 2.
+// wird als Instrument mit einer Schicht gelesen. Fassung 3 (S114, Entscheid
+// F3 b) traegt dazu `category`, `genres` und `description`; alle drei
+// duerfen fehlen. Geschrieben wird Fassung 3.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 2;
+inline constexpr int kInstrumentFassung = 3;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
@@ -130,11 +155,45 @@ bool ladeInstrument(const QString& pfad, Instrument& instrument, bool* zuNeu = n
 [[nodiscard]] const std::vector<Instrument>& instrumente();
 /// Das mitgelieferte Instrument mit diesem Namen; nullptr = keins.
 [[nodiscard]] const Instrument* findeInstrument(const QString& name);
-/// Das Instrument, das ein Muster nennt: ein mitgeliefertes beim Namen oder
-/// eine eigene Datei beim Pfad (`istInstrumentDatei`). false = nicht gefunden
-/// oder nicht lesbar; `zuNeu` = die Datei traegt eine Fassung, die dieses
-/// Programm nicht kennt.
+/// Das Instrument, das ein Muster nennt: ein mitgeliefertes beim Namen, ein
+/// eigenes als `user:<name>` oder eine Datei beim Pfad (`istInstrumentDatei`).
+/// false = nicht gefunden oder nicht lesbar; `zuNeu` = die Datei traegt eine
+/// Fassung, die dieses Programm nicht kennt.
 bool holeInstrument(const QString& nennung, Instrument& instrument, bool* zuNeu = nullptr);
+
+// --- eigene Instrumente im Benutzerordner (Entscheid P2 a, Patrik S114) -----
+// Ein eigenes Instrument liegt als `<name>.lvinst` im Benutzerordner der App
+// unter `instruments`, und ein Muster nennt es als `user:<name>`. Das ist ein
+// eigener Raum: ein eigenes `piano` verdraengt das mitgelieferte nicht, ein
+// Loop klingt weiter, wie er gespeichert wurde. Eine Datei an freiem Ort
+// steht wie bisher beim Pfad im Muster.
+
+inline constexpr const char* kEigenVorsatz = "user:";
+
+/// Nennt `nennung` ein eigenes Instrument (`user:<name>`)?
+[[nodiscard]] bool istEigenesInstrument(const QString& nennung);
+/// Der Ordner der eigenen Instrumente (wird nicht angelegt); leer = Qt nennt
+/// keinen Benutzerordner.
+[[nodiscard]] QString eigenerInstrumentOrdner();
+/// Nur fuer Tests: ein anderer Ordner; leer = wieder der echte.
+void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
+/// Aus einem Titel der Name einer eigenen Datei: klein, `a`–`z`, Ziffern und
+/// `_` („Mein Bass 2" -> `mein_bass_2`). Leer = daraus wird kein Name.
+[[nodiscard]] QString eigenerName(const QString& titel);
+/// Ist `name` ein Name, wie `eigenerName` ihn bildet? Nur solche werden im
+/// Benutzerordner gesucht — ein Muster kann so nichts ausserhalb nennen.
+[[nodiscard]] bool istEigenerName(const QString& name);
+/// Die Datei eines eigenen Instruments; leer = kein gueltiger Name oder kein Ordner.
+[[nodiscard]] QString eigeneDatei(const QString& name);
+/// Die eigenen Instrumente, nach Titel sortiert; `name` ist `user:<name>`.
+/// Jedes Mal neu gelesen — der Ordner aendert sich, waehrend das Programm laeuft.
+[[nodiscard]] std::vector<Instrument> eigeneInstrumente();
+/// Ein eigenes Instrument in den Benutzerordner schreiben (legt ihn an).
+/// `instrument.name` wird `user:<name>`. false = kein gueltiger Name oder
+/// nicht zu schreiben.
+bool speichereEigenes(Instrument& instrument, const QString& name);
+/// Ein eigenes Instrument loeschen. false = es gab keins.
+bool loescheEigenes(const QString& name);
 /// Zaehlt jede gespeicherte Instrument-Datei (`speichereInstrument`): wer
 /// Toene gerechnet hat und sich die Zahl merkt, sieht, ob er neu rechnen muss.
 [[nodiscard]] std::uint64_t instrumentFassung();

@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Clave",
+    "category": "percussion",
+    "genres": ["Bossa Nova"],
+    "description": "A very short sine with a tick an octave above; the note sets the pitch of the hit.",
     "level": 0.8,
     "layers": [
         {

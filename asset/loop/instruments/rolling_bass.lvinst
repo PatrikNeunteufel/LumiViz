@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Rolling Bass",
+    "category": "bass",
+    "genres": ["Acid Trance", "Psytrance", "Techno", "Trance"],
+    "description": "A short, driven saw with a sine sub, made for fast repeated notes.",
     "level": 0.7,
     "layers": [
         {

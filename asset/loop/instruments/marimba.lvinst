@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Marimba",
+    "category": "percussion",
+    "genres": ["Ambient"],
+    "description": "A short sine bar with a mallet click two octaves above.",
     "level": 0.85,
     "layers": [
         {

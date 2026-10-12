@@ -1,20 +1,28 @@
 {
     "format": "lumiviz-instrument",
-    "version": 1,
+    "version": 3,
     "title": "Organ",
-    "waveform": "sine",
-    "harmonics": [0.8, 0.5, 0.3, 0.0, 0.2],
-    "voices": 1,
-    "detune": 0,
-    "attack": 8,
-    "decay": 50,
-    "sustain": 1,
-    "release": 60,
-    "filterCutoff": 0,
-    "filterEnvelope": 0,
-    "vibratoRate": 0,
-    "vibratoDepth": 0,
-    "vibratoDelay": 0,
-    "damping": 0.996,
-    "level": 0.8
+    "category": "keys",
+    "genres": ["Afrobeat", "Blues", "Reggae", "Rock"],
+    "description": "A sine with five overtones that holds at full level while the key is down.",
+    "level": 1.0,
+    "layers": [
+        {
+            "waveform": "sine",
+            "harmonics": [0.8, 0.5, 0.3, 0.0, 0.2],
+            "voices": 1,
+            "detune": 0,
+            "attack": 8,
+            "decay": 50,
+            "sustain": 1,
+            "release": 60,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "level": 0.8
+        }
+    ]
 }

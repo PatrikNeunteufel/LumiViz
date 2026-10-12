@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Trance Pluck",
+    "category": "plucked",
+    "genres": ["Trance"],
+    "description": "Detuned saws in two octaves through a snapping filter, over a short sine.",
     "level": 0.75,
     "layers": [
         {

@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Slap Bass",
+    "category": "bass",
+    "genres": ["Funk"],
+    "description": "A plucked string with a thump below and a short pop an octave above.",
     "level": 0.75,
     "layers": [
         {

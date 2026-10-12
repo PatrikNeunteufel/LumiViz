@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "Cowbell",
+    "category": "percussion",
+    "genres": ["Afrobeat", "Reggaeton"],
+    "description": "Two short squares a fifth apart; the note sets the pitch of the hit.",
     "level": 0.6,
     "layers": [
         {

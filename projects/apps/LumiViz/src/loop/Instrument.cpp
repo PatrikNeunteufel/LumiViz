@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QSaveFile>
+#include <QStandardPaths>
 
 #include <algorithm>
 #include <array>
@@ -351,6 +352,9 @@ QJsonObject alsJson(const Instrument& instrument)
     o[QStringLiteral("format")] = kFormat;
     o[QStringLiteral("version")] = kInstrumentFassung;
     o[QStringLiteral("title")] = instrument.titel;
+    o[QStringLiteral("category")] = instrument.art;
+    o[QStringLiteral("genres")] = QJsonArray::fromStringList(instrument.genres);
+    o[QStringLiteral("description")] = instrument.beschreibung;
     o[QStringLiteral("level")] = instrument.laut;
     QJsonArray schichten;
     for (const Schicht& schicht : instrument.schichten) schichten.append(schichtAlsJson(schicht));
@@ -372,6 +376,14 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     Instrument neu;
     neu.name = instrument.name;
     neu.titel = wurzel.value(QStringLiteral("title")).toString();
+    // seit Fassung 3; in einer aelteren Datei fehlen sie einfach
+    neu.art = wurzel.value(QStringLiteral("category")).toString().trimmed();
+    for (const QJsonValue& genre : wurzel.value(QStringLiteral("genres")).toArray())
+    {
+        const QString text = genre.toString().trimmed();
+        if (!text.isEmpty() && !neu.genres.contains(text, Qt::CaseInsensitive)) neu.genres << text;
+    }
+    neu.beschreibung = wurzel.value(QStringLiteral("description")).toString().trimmed();
     neu.schichten.clear();
     if (fassung < 2)
     {
@@ -450,9 +462,144 @@ const std::vector<Instrument>& instrumente()
     return alle;
 }
 
+// --- die Arten ---------------------------------------------------------------
+
+const std::vector<InstrumentArt>& instrumentArten()
+{
+    static const std::vector<InstrumentArt> kArten = {
+        {"keys", "Keys"},
+        {"bass", "Bass"},
+        {"lead", "Lead"},
+        {"pads", "Pads and strings"},
+        {"plucked", "Plucked"},
+        {"wind", "Wind"},
+        {"percussion", "Percussion"},
+        {"unusual", "Unusual"},
+    };
+    return kArten;
+}
+
+QString gueltigeArt(const QString& art)
+{
+    for (const InstrumentArt& eine : instrumentArten())
+        if (art.compare(QLatin1String(eine.schluessel), Qt::CaseInsensitive) == 0)
+            return QLatin1String(eine.schluessel);
+    return QLatin1String(instrumentArten().back().schluessel);
+}
+
+QString artTitel(const QString& art)
+{
+    const QString schluessel = gueltigeArt(art);
+    for (const InstrumentArt& eine : instrumentArten())
+        if (schluessel == QLatin1String(eine.schluessel)) return QLatin1String(eine.titel);
+    return {};
+}
+
+// --- eigene Instrumente im Benutzerordner -----------------------------------
+
+namespace
+{
+QString& eigenerOrdnerImTest()
+{
+    static QString ordner;
+    return ordner;
+}
+}  // namespace
+
+bool istEigenesInstrument(const QString& nennung)
+{
+    return nennung.startsWith(QLatin1String(kEigenVorsatz));
+}
+
+QString eigenerInstrumentOrdner()
+{
+    if (!eigenerOrdnerImTest().isEmpty()) return eigenerOrdnerImTest();
+    const QString basis = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    return basis.isEmpty() ? QString() : QDir(basis).filePath(QStringLiteral("instruments"));
+}
+
+void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner)
+{
+    eigenerOrdnerImTest() = ordner;
+}
+
+QString eigenerName(const QString& titel)
+{
+    QString name;
+    for (const QChar zeichen : titel.trimmed().toLower())
+    {
+        if ((zeichen >= QLatin1Char('a') && zeichen <= QLatin1Char('z')) ||
+            (zeichen >= QLatin1Char('0') && zeichen <= QLatin1Char('9')))
+            name.append(zeichen);
+        else if (!name.isEmpty() && !name.endsWith(QLatin1Char('_')))
+            name.append(QLatin1Char('_'));  // alles andere wird ein Trenner, nie zwei hintereinander
+    }
+    while (name.endsWith(QLatin1Char('_'))) name.chop(1);
+    return name.left(64);
+}
+
+bool istEigenerName(const QString& name)
+{
+    return !name.isEmpty() && eigenerName(name) == name;
+}
+
+QString eigeneDatei(const QString& name)
+{
+    const QString ordner = eigenerInstrumentOrdner();
+    if (ordner.isEmpty() || !istEigenerName(name)) return {};
+    return QDir(ordner).filePath(name + QStringLiteral(".lvinst"));
+}
+
+std::vector<Instrument> eigeneInstrumente()
+{
+    std::vector<Instrument> alle;
+    const QString ordner = eigenerInstrumentOrdner();
+    if (ordner.isEmpty() || !QFileInfo(ordner).isDir()) return alle;
+    const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.lvinst")}, QDir::Files, QDir::Name);
+    for (const QString& datei : dateien)
+    {
+        const QString name = QFileInfo(datei).completeBaseName();
+        if (!istEigenerName(name)) continue;  // von Hand hineingelegt, mit einem Namen, den kein Muster nennen kann
+        Instrument instrument;
+        if (!ladeInstrument(QDir(ordner).filePath(datei), instrument)) continue;
+        instrument.name = QLatin1String(kEigenVorsatz) + name;
+        alle.push_back(std::move(instrument));
+    }
+    std::stable_sort(alle.begin(), alle.end(), [](const Instrument& a, const Instrument& b) {
+        return a.titel.compare(b.titel, Qt::CaseInsensitive) < 0;
+    });
+    return alle;
+}
+
+bool speichereEigenes(Instrument& instrument, const QString& name)
+{
+    const QString pfad = eigeneDatei(name);
+    if (pfad.isEmpty() || !QDir().mkpath(QFileInfo(pfad).absolutePath())) return false;
+    if (!speichereInstrument(instrument, pfad)) return false;
+    instrument.name = QLatin1String(kEigenVorsatz) + name;
+    return true;
+}
+
+bool loescheEigenes(const QString& name)
+{
+    const QString pfad = eigeneDatei(name);
+    if (pfad.isEmpty() || !QFile::remove(pfad)) return false;
+    ++fassung();  // wer Toene dieses Instruments gerechnet hat, rechnet neu
+    return true;
+}
+
 bool holeInstrument(const QString& nennung, Instrument& instrument, bool* zuNeu)
 {
     if (zuNeu != nullptr) *zuNeu = false;
+    if (istEigenesInstrument(nennung))
+    {
+        const QString pfad = eigeneDatei(nennung.mid(static_cast<int>(qstrlen(kEigenVorsatz))));
+        Instrument eigenes;
+        if (pfad.isEmpty() || !ladeInstrument(pfad, eigenes, zuNeu)) return false;
+        eigenes.name = nennung;
+        instrument = std::move(eigenes);
+        return true;
+    }
     if (istInstrumentDatei(nennung)) return ladeInstrument(nennung, instrument, zuNeu);
     const Instrument* gefunden = findeInstrument(nennung);
     if (gefunden == nullptr) return false;

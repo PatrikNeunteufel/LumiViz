@@ -1,7 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 2,
+    "version": 3,
     "title": "808 Bass",
+    "category": "bass",
+    "genres": ["Reggaeton", "Trap"],
+    "description": "A driven sine with a long decay and a short click.",
     "level": 0.8,
     "layers": [
         {

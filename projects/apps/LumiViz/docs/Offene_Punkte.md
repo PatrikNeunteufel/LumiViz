@@ -2430,10 +2430,15 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     wie das Palettenfenster der Effektkette statt der Dropdown-Liste, mit
     Filtern nach **Genre**. **Skizze gebilligt (Patrik S114)**, Entscheid
     **F3 b**: Art, Genres und Beschreibung als Felder in der `.lvinst`,
-    Fassung 3. **Wartet auf die Datenablage** (Entscheid D1 b: erst die
-    Ablage, dann Stufe 14; eigene Instrumente im Benutzerordner — siehe Block
-    Datenablage unten). Skizze und F3 b stehen noch nicht in
-    `Loop_Konzept.md` — vor dem Bau eintragen
+    Fassung 3; **P2 a**: eigene Instrumente als `user:<name>` im
+    Benutzerordner, nichts wird verdrängt (ein Schalter „Replace the
+    built-in one for all loops" vorgemerkt, nicht gebaut). **Gebaut 14a** —
+    das Modell, Fassung 3, die 49 Dateien über
+    `asset/loop/instrument_katalog.py` (Art und Beschreibung nach Titel und
+    Aufbau, Genres aus den Loops gezählt; Guitar und Violin ohne Genre),
+    eigene Instrumente im Modell (damit auch Datenablage A3 im Kern). Im
+    Programm nichts zu sehen. **Offen:** 14b Creator (Type, Genres,
+    Description, Save mit Namen), 14c das Fenster und Browse...
   - 🟡 **Datenablage** (S114; Steuerdokument
     [Datenablage_Konzept.md](core-services/Datenablage_Konzept.md), Entscheide
     D1 b bis D10): **gebaut A1** — eine Stelle für den Ordner eines
