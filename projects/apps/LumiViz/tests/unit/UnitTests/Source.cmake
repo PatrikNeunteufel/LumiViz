@@ -108,6 +108,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_Mitgeliefert.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ZipArchiv.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Datensicherung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_DatensicherungDialoge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShadertoyWrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVertrag.cpp"

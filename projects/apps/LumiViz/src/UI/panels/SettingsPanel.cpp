@@ -10,6 +10,7 @@
  */
 
 #include "UI/panels/SettingsPanel.hpp"
+#include "UI/dialogs/DatensicherungDialoge.hpp"
 #include "UI/managers/ShortcutManager.hpp"
 #include "scripting/ScriptFormatter.hpp"  // FormatOptions-Defaults (Editor-Tab, S69)
 #include "core/GpuInfo.hpp"
@@ -861,7 +862,25 @@ QWidget* SettingsPanel::createPanelsTab()
     m_pOpenAppDataButton->setToolTip(
         tr("Open the folder holding your own data (node presets, …) in the file "
            "manager. It is created if it does not exist yet."));
-    layout->addRow(tr("User Data:"), m_pOpenAppDataButton);
+    // Export und Import der eigenen Daten (Datenablage_Konzept.md §4a, S114):
+    // die drei Knoepfe stehen in einer Zeile.
+    m_pExportDataButton = new QPushButton(tr("Export..."), widget);
+    m_pExportDataButton->setObjectName(QStringLiteral("userDataExport"));
+    m_pExportDataButton->setToolTip(
+        tr("Write your own presets, templates, trails and fades — all or some — into one file "
+           "(.lvdata) to keep or to carry to another computer."));
+    m_pImportDataButton = new QPushButton(tr("Import..."), widget);
+    m_pImportDataButton->setObjectName(QStringLiteral("userDataImport"));
+    m_pImportDataButton->setToolTip(
+        tr("Read a .lvdata file. You choose what to take and what happens when a name already exists."));
+    auto* userDataRow = new QWidget(widget);
+    auto* userDataLayout = new QHBoxLayout(userDataRow);
+    userDataLayout->setContentsMargins(0, 0, 0, 0);
+    userDataLayout->addWidget(m_pOpenAppDataButton);
+    userDataLayout->addWidget(m_pExportDataButton);
+    userDataLayout->addWidget(m_pImportDataButton);
+    userDataLayout->addStretch(1);
+    layout->addRow(tr("User Data:"), userDataRow);
 
     // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe
     // (Datenablage_Konzept.md, D9 a mit Schalter; Patrik S114). Die Zeile gibt
@@ -1299,6 +1318,8 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onOpenAppDataDir);
     connect(m_pImageSearchDirButton, &QPushButton::clicked,
             this, &SettingsPanel::onChooseImageSearchDir);
+    connect(m_pExportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenExport(this); });
+    connect(m_pImportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenImport(this); });
     if (m_pBundledFromProjectCheckBox != nullptr)
         connect(m_pBundledFromProjectCheckBox, &QCheckBox::toggled, this,
                 [](bool checked) { lumi::core::mitgeliefert::setzeProjektZuerst(checked); });

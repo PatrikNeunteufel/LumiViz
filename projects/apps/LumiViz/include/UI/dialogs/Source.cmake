@@ -17,6 +17,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/DialogBase.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/GradientEditorDialog.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/LyricsAlternativesDialog.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/DatensicherungDialoge.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

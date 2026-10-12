@@ -2450,9 +2450,16 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     3.1.2 als lokales External mit eigener `Include.cmake` im Projekt
     (E2 b), `core/ZipArchiv`, `core/Datensicherung` (neun Bereiche, vier
     Regeln bei gleichem Namen, feste Liste der Einstellungen, E1 a); im
-    Programm ist davon nichts zu sehen. **Offen:** A3 eigene Instrumente im
-    Benutzerordner (mit Stufe 14), **A4b die Dialoge** (Skizze und das Bild
-    der Liste „Let me decide for each file" gebilligt). 🟠 **Befund:** in
+    und **A4b** — die Dialoge: im Settings-Panel **User Data: Open Folder,
+    Export..., Import...**, „Export your data", „Import data" und die Liste
+    „Let me decide for each file". **Im Programm nicht gesehen** — ⬜ lokale
+    Liste `Sichttest_Datenablage.md` (D0 bis D14). 🔧 Offene Listen lesen
+    nach einem Import nicht von selbst neu (nicht geprüft, welche es doch
+    tun); ganze Spalten in der Liste über drei Knöpfe statt Haken im Kopf.
+    **Offen:** A3 eigene Instrumente im Benutzerordner (mit Stufe 14).
+    🔧 Vorgemerkt (Frage Patrik S114): ein Instrument trägt höchstens vier
+    Schichten (`kSchichtenMax`, von Claude in S111 gesetzt, nicht gemessen)
+    — vor einem Anheben die Rechenzeit je Ton mit vier, sechs, acht messen. 🟠 **Befund:** in
     der Konfiguration Testing unter MSVC fehlt `/MD` bei LumiViz, Core und
     miniz — die Objektdateien verlangen `LIBCMT`, Qt ist `/MD`; seit miniz
     meldet der Linker es an `LumiViz.exe` (LNK4098, LNK4217). Bestand

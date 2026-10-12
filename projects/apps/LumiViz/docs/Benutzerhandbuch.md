@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.124.0
+> **Version:** 1.125.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -263,7 +263,22 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
   Bildauswahl in der Effektkette · **User Data: Open Folder** (Benutzerdaten-Ordner) — dort liegen
   deine eigenen Knoten-Voreinstellungen (`nodepresets/<typ>/`); der Ordner wird
-  beim ersten Öffnen angelegt · **MilkDrop Preset Switch** + **MilkDrop Fade
+  beim ersten Öffnen angelegt · daneben **Export...** und **Import...**: deine eigenen Daten
+  in **eine Datei** (`.lvdata`) schreiben und wieder einlesen — zum Sichern oder für einen
+  anderen Rechner. *Export your data* zeigt die Bereiche mit der Zahl deiner Dateien
+  (Visualizer presets, Gradients, Module presets, Shader templates, Karaoke presets and
+  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments); abgesetzt
+  darunter und anfangs aus stehen *Settings* (Tastenkürzel, Favoriten, Optionen — nie die
+  Fensterlage, gemerkte Ordner oder der Shadertoy-Schlüssel) und *Downloaded lyrics* (die
+  geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
+  steckt, und wie viele Namen es bei dir schon gibt; darunter wählst du, was dann geschieht:
+  **Keep mine** (Vorgabe), **Replace mine**, **Keep both** (die importierte Datei bekommt
+  eine Zahl an den Namen) oder **Let me decide for each file** — eine Liste mit beiden
+  Dateien je Name, Datum und Größe, in der du anhakst, was bleibt. Eine importierte Datei,
+  die deiner Byte für Byte gleicht, zählt nicht. Importierte *Settings* ersetzen deine und
+  gelten nach einem Neustart. Nicht im Export: Loops, Kompositionen und Ketten, die du
+  selbst irgendwo gespeichert hast, und die Testaufnahmen der Kamera. Die Datei ist ein
+  Zip — umbenannt in `.zip` lässt sie sich mit jedem Werkzeug ansehen · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
@@ -2810,6 +2825,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.125.0 | 2026-10-12 | Settings, Panels (Session 114): **Export...** und **Import...** der eigenen Daten als eine Datei `.lvdata` — Bereiche wählen, vier Regeln bei gleichem Namen, die Liste „Let me decide for each file" |
 | 1.124.0 | 2026-10-12 | §Settings, Panels (Session 114): neben der Exe liegt jetzt der Ordner `asset/` mit dem, was das Programm selbst liest (Voreinstellungen, Vorlagen, Blenden, Kit, Instrumente, Beispiel-Loops, Datei-Icons) |
 | 1.123.0 | 2026-10-11 | Session 113. §16 Loop — **Der Drum-Editor** und **Der Instrument-Editor** NEU je der Abschnitt „Mehrere Schritte / Noten zugleich": markieren mit Shift+Ziehen und Ctrl+Klick, Ctrl+C / X / V an der **Einfügemarke** (Klick in die Zeile der Takte), Ctrl+Shift+V legt im Drum-Editor nur dazu, Ctrl+D, Entf, Pfeiltasten, **Alt+Pfeil** dreht im Kreis, im Instrument-Editor mehrere Noten als Gruppe ziehen; das Menü des Rechtsklicks; NEU der Haken **Right-click deletes** in beiden Editoren. GEÄNDERT: im Instrument-Editor löscht der Rechtsklick auf eine Note nur noch mit diesem Haken — sonst markiert er sie und öffnet das Menü |
 | 1.122.0 | 2026-10-11 | Session 113. §16 Loop NEU **Effekte am Clip**: das Fenster **Clip effects** (Rechtsklick auf einen Clip → **Effects...**) mit Distortion, Echo und Reverb je Clip, „mixed" bei mehreren, Copy, Paste, Reset, die Marke **fx** am Clip; **Clips und Kanäle** GEÄNDERT: mehrere Clips markieren (Ctrl+Klick, Rahmen, Ctrl+A, **Select all clips**), als Gruppe ziehen, kopieren und löschen; Beispiel `asset\loop\effects_demo.lvloop`; der Satz „Hall und Echo gibt es noch nicht" im Abschnitt Instrument-Creator ersetzt |

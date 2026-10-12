@@ -140,6 +140,9 @@ private:
     // Panels Tab
     QPushButton* m_pResetImportDirButton = nullptr;
     QPushButton* m_pOpenAppDataButton = nullptr;
+    /// Export und Import der eigenen Daten (UI/dialogs/DatensicherungDialoge.hpp, S114)
+    QPushButton* m_pExportDataButton = nullptr;
+    QPushButton* m_pImportDataButton = nullptr;
     /// Mitgeliefertes aus dem Projektordner zuerst (core/Mitgeliefert.hpp,
     /// S114) — nullptr ausserhalb des Entwicklungsbaums: die Zeile fehlt dann.
     QCheckBox* m_pBundledFromProjectCheckBox = nullptr;
