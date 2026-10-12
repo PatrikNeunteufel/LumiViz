@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.163.0
+> **Version:** 1.164.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5229,6 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.164.0 | 2026-10-12 | Session 115 — Loop, Stufe 11c ff.: **Entscheide K1 a** (Drum-Spur nennt Kit-Klang, eigenes Sample oder Instrument; Edit sound... macht aus jedem Klang ein Instrument; dazu als Plan 11d Rauschen und fallende Tonhöhe, 11e Hochpass und Bandpass, 11f sechs gerechnete Drum-Instrumente) und **K2 a** (Note und Length in ms); **Rechenversuch:** Tom und Snare lassen sich damit vollständig bauen, für Kick (Drive hinter der Hüllkurve), Clap (zwei Filter hintereinander) und Hi-Hats (sechs Rechtecke in einer Schicht) fehlt je ein weiterer Baustein — ⬜ Patrik hört die Hörproben unter `.claude/handover/hoerproben_drumkit/`; die Skizze der Klangliste ist noch nicht gebilligt; nichts gebaut |
 | 1.163.0 | 2026-10-12 | Session 115 — Loop **11b Schritt 3 gebaut**: **Record...** im Instrument-Creator öffnet das Fenster „Record sample“, Save and use setzt die Aufnahme in die Sample-Schicht; **11b ist damit gebaut** und im Programm erreichbar, **nicht gesehen und nicht gehört** — ⬜ lokale Liste 10, Abschnitt R (R0 bis R9); voller Testlauf 1128 / 1128; offen 11c (Drum-Editor) mit dem Entscheid davor (Drum-Ausbau A, B, C) |
 | 1.162.0 | 2026-10-12 | Session 115 — Loop **11b Schritt 2 gebaut**: das Fenster „Record sample“ (`loop/AufnahmeFenster`) nach der gebilligten Skizze — Input und Pegel, Record und Stop, das Bild mit zwei Griffen, Play mit Repeat, Trim silence, Normalize, Name, Save and use; **noch öffnet es niemand** — Schritt 3 (Record... im Creator) steht aus; nicht geprüft: das Fenster mit der echten Engine |
 | 1.161.0 | 2026-10-12 | Session 115 — Loop **11b Schritt 1 gebaut**: der Kern ohne Fenster — die Aufnahme in `IAudioEngine` und `BassEngine` (Eingänge, starten, Pegel, stoppen; endet von selbst), neu `loop/Aufnahme` (Stille an den Rändern, ausschneiden mit Blende, Normalize, 16-Bit-WAV, speichern unter den eigenen Samples); im Programm nichts zu sehen; offen Schritt 2 (das Fenster) und 3 (Record... im Creator) |

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.47.0
+> **Version:** 0.49.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1375,6 +1375,89 @@ B — Rauschen als Schwingung und eine fallende Tonhöhe; C — Hochpass und
 Bandpass. Nicht bekannt: ob ein im Creator nachgebautes Kit klingt wie das
 heutige, das Patrik in S108 für gut befand.
 
+**Entscheid K1 a (Patrik, S115) — Drums und Creator, „gleich das ganze":**
+eine Drum-Spur nennt einen Klang des Kits, ein eigenes Sample oder ein
+Instrument; an jeder Spur macht **Edit sound...** aus dem, was sie spielt,
+ein Instrument (ein Kit-Klang oder Sample wird ein eigenes Instrument mit
+einer Sample-Schicht) und öffnet den Creator. Das Kit bleibt als WAV, alte
+Loops lesen weiter. Dazu gehören — nicht als Möglichkeit für später, sondern
+als Plan — die Stufen **11d** (Rauschen, fallende Tonhöhe), **11e**
+(Hochpass, Bandpass) und **11f** (sechs gerechnete Drum-Instrumente neben
+dem Kit, mit Hörprobe gegen das heutige). Verworfen: die drei Quellen ohne
+Edit sound..., nur eigene Samples, und „ganz eins" (nur noch Instrumente,
+das WAV-Kit ersetzt). Skizze der Klangliste gezeigt (Kit, My samples,
+Instrument..., Sample file..., Record sample...; an einer Instrument-Spur
+ein Knopf „…" mit Note, Length, Play, Browse..., Edit instrument...) —
+**Skizze gebilligt (Patrik, S115).** Dafür noch zu lösen, nicht geprüft: eine
+Sample-Schicht spielt halb so laut wie die Datei (L6 a), das Umwandeln muss
+das ausgleichen; eine Sample-Schicht kann noch keinen Klang des Kits nennen
+(`kit:<name>` käme als dritte Art dazu). Die `.lvloop` bekäme Fassung 4.
+
+**Entscheid K2 a (Patrik, S115) — Note und Länge einer Instrument-Spur:**
+jede solche Spur trägt **Note** und **Length** in Millisekunden; vorbelegt
+die Note nach der Art des Instruments (Bass C2, sonst C4) und die Länge mit
+250 ms; Edit sound... stellt die Note auf den Root note der Schicht und die
+Länge auf die der Aufnahme. Ein Schlag klingt bei jedem Tempo gleich.
+Verworfen: b (Länge in Schritten), c (keine Länge, der Klang spielt aus).
+
+**Rechenversuch (S115, auf Patriks Frage: lassen sich alle Klänge des Kits
+im Creator bauen?)** — ein Modell in Python, nicht der Code des Programms
+(lokal: `.claude/handover/hoerproben_drumkit/kit_aus_creator.py`, daneben
+die Hörproben). Jeder Klang aus `make_kit.py` wurde aus Schichten
+nachgebaut, wie der Creator sie heute hat, dazu Rauschen, fallende Tonhöhe,
+Hochpass und Bandpass. Verglichen sind die Hüllkurve (Korrelation) und der
+Pegel in 27 Drittel-Oktaven (Abstand in dB); zur Einordnung: die Snare gegen
+sich selbst mit anderem Rauschen ergibt 0,997 und 0,4 dB.
+
+| Klang | Aufbau | Hüllkurve | Bänder, mittel / größter Abstand |
+|---|---|---|---|
+| tom | Sinus mit fallender Tonhöhe, Rauschen als Klick | 1,000 | 0,0 / 0,0 dB |
+| snare | zwei Sinus (F#3 und Transpose +10), Rauschen mit Hochpass | 1,000 | 0,0 / 0,6 dB |
+| kick | wie tom, mit Drive | 0,990 | 5,6 / 15,2 dB |
+| kick, Drive hinter der Hüllkurve | gibt es nicht | 0,998 | 0,6 / 1,5 dB |
+| clap | vier Schichten Rauschen mit Bandpass, je später einsetzend | 0,998 | 6,9 / 29,0 dB |
+| clap, Hochpass und Bandpass hintereinander | gibt es nicht | 0,999 | 0,0 / 0,0 dB |
+| hat, nur Rauschen mit Hochpass | eine Schicht | 0,996 | 4,2 / 10,1 dB (offen 3,7 / 9,0) |
+| hat, drei Rechtecke und Rauschen | vier Schichten | 0,998 | 4,3 / 13,2 dB (offen 4,0 / 11,2) |
+| hat, sechs Rechtecke in einer Schicht | gibt es nicht | 0,999 | 0,1 / 0,2 dB |
+
+(Die Hüllkurve der Kick ist in Stücken von 25 ms gemessen; in Stücken von
+2 ms ergibt sie 0,82 bis 0,87 — ein Stück ist dann kürzer als eine
+Schwingung von 45 Hz, und der Wert folgt der Phase.)
+**Ergebnis:** Tom und Snare gehen mit 11d und 11e vollständig. Für die
+übrigen drei fehlt je ein Baustein, der in 11d und 11e nicht vorgesehen
+war: **Drive hinter der Hüllkurve** (Kick — der Verzerrer des Creators
+wirkt vor der Hüllkurve und lässt deshalb nicht mit dem Ton nach), **zwei
+Filter hintereinander** (Clap — ohne den Hochpass vor dem Bandpass sind die
+Tiefen bis 29 dB zu laut), **sechs unharmonische Rechtecke in einer
+Schicht** oder mehr als vier Schichten (Hi-Hats). Dazu Kleineres: die Kick
+endet bei 45 Hz, zwischen zwei Halbtönen (46,2 Hz im Nachbau); die Regler
+Decay und Attack stehen in Schritten von 10 ms bzw. 1 ms, ein Klick von
+3,6 ms oder ein Schlag von 12 ms lässt sich in der Datei, aber nicht am
+Regler stellen. **Nicht bekannt:** wie die Abstände klingen — die Zahlen
+sagen, wo es abweicht, nicht ob es stört; dafür sind die Hörproben da.
+
+**Entscheid K3 a (Patrik, S115) — eine neunte Art „Drums":** das Fenster
+Instruments und der Creator bekommen die Art **Drums**, zwischen Percussion
+und Unusual; Edit sound... legt neue Instrumente mit dieser Art an; öffnet
+eine Drum-Spur das Fenster, steht es auf Drums, die anderen Arten bleiben
+wählbar; Preview note für Drums ist C2. Verworfen: b (unter Percussion),
+c (keine eigene Art).
+
+**Vorgemerkt (Patrik, S115: „kann man das, was als fehlt gelistet ist, noch
+hinzufügen? vielleicht später?") — drei Bausteine über 11d und 11e hinaus,
+entschieden wird nach den Hörproben:**
+- **Ein zweiter Filter je Schicht**, hinter dem ersten (für den Clap:
+  Hochpass, dann Bandpass). Patrik: eine Kaskade von Filtern oder Effekten
+  wäre ein Add-on. Gemeint ist ein Filter in der Schicht des Instruments —
+  nicht die Effekte am Clip (Distortion, Echo, Reverb, Stufe 12), die den
+  fertigen Clip bearbeiten.
+- **Drive hinter der Hüllkurve** als Wahl neben dem heutigen Drive davor
+  (für die Kick: der Verzerrer lässt dann mit dem Ton nach).
+- **Eine Schwingung aus sechs Rechtecken in unharmonischem Abstand** (für
+  die Hi-Hats) — verwandt mit den Harmonics des Sinus, aber mit festen,
+  nicht ganzzahligen Verhältnissen, deshalb ohne klare Tonhöhe, metallisch.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2110,6 +2193,16 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.49.0** (S115, 2026-10-12): Entscheid K3 a (Art „Drums"), die Skizze
+  der Klangliste gebilligt; vorgemerkt: zweiter Filter je Schicht, Drive
+  hinter der Hüllkurve, eine Schwingung aus sechs Rechtecken (§4h).
+
+- **0.48.0** (S115, 2026-10-12): Entscheide K1 a (Drum-Spur mit drei
+  Quellen und Edit sound..., dazu 11d, 11e, 11f) und K2 a (Note und Length in
+  Millisekunden); Rechenversuch, ob das Kit im Creator baubar ist — Tom und
+  Snare ja, für Kick, Clap und Hi-Hats fehlt je ein weiterer Baustein (§4h).
+  Nichts gebaut.
 
 - **0.47.0** (S115, 2026-10-12): 11b Schritt 3 gebaut — Record... im
   Creator öffnet das Fenster „Record sample", Save and use setzt die Aufnahme
