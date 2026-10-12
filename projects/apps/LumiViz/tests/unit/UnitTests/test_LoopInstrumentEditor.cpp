@@ -44,6 +44,7 @@
 #include <QTemporaryDir>
 
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 using namespace lumi::loop;
@@ -860,6 +861,37 @@ TEST_SUITE("LoopInstrumentEditor")
         schieber("creatorFineTune")->setValue(12);
         CHECK(creator.schicht().feinCent == doctest::Approx(12.0));
 
+        // --- Detect (Schritt 3): messen und vorschlagen — uebernommen wird erst mit Apply
+        auto* detect = creator.findChild<QPushButton*>(QStringLiteral("creatorDetect"));
+        auto* gemessenText = creator.findChild<QLabel*>(QStringLiteral("creatorDetected"));
+        auto* apply = creator.findChild<QPushButton*>(QStringLiteral("creatorDetectApply"));
+        auto* referenz = creator.findChild<QCheckBox*>(QStringLiteral("creatorReferenceTone"));
+        REQUIRE(detect != nullptr);
+        REQUIRE(gemessenText != nullptr);
+        REQUIRE(apply != nullptr);
+        REQUIRE(referenz != nullptr);
+        CHECK_FALSE(detect->isHidden());
+        CHECK(detect->isEnabled());
+        CHECK(gemessenText->isHidden());  // noch nichts gemessen
+        CHECK(apply->isHidden());
+        CHECK_FALSE(creator.gemessen().gefunden);
+        CHECK_FALSE(creator.uebernimmGemessenes());
+        creator.aendereSchicht([](Schicht& s) { s.grundton = 60; });  // absichtlich falsch gestellt
+        detect->click();
+        REQUIRE(creator.gemessen().gefunden);
+        CHECK(creator.gemessen().hoehe == 57);  // die Aufnahme des Tests: 220 Hz
+        CHECK_FALSE(gemessenText->isHidden());
+        CHECK(gemessenText->text() == QStringLiteral("Detected: A3"));
+        CHECK_FALSE(apply->isHidden());
+        CHECK(creator.schicht().grundton == 60);  // gemessen ist noch nicht uebernommen
+        CHECK(creator.schicht().feinCent == doctest::Approx(12.0));
+        apply->click();
+        CHECK(creator.schicht().grundton == 57);
+        CHECK(creator.schicht().feinCent == doctest::Approx(0.0));
+        CHECK(grundton->currentText() == QStringLiteral("A3"));
+        CHECK(schieber("creatorFineTune")->value() == 0);
+        CHECK(gemessenText->text() == QStringLiteral("Detected: A3"));  // das Ergebnis bleibt stehen
+
         // --- Sample start: am Regler und im Bild (der rote Griff)
         schieber("creatorSampleStart")->setValue(500);
         CHECK(creator.schicht().sampleStartMs == doctest::Approx(500.0));
@@ -910,6 +942,39 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
         CHECK(vorgehoert.schichten[0] == creator.schicht());
 
+        // --- Reference tone: die Sample-Schicht allein, dazu ein Sinus derselben Note
+        CHECK_FALSE(referenz->isHidden());
+        CHECK_FALSE(creator.referenzton());
+        creator.aendere([](Instrument& i) { i.schichten.push_back(Schicht{}); });  // eine zweite Schicht: sie spielt nicht mit
+        creator.aendereSchicht([](Schicht& s) { s.versatzHalbtoene = 12; });
+        referenz->setChecked(true);
+        CHECK(creator.referenzton());
+        REQUIRE(creator.spieleAn(57));
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        REQUIRE(vorgehoert.schichten.size() == 2);
+        CHECK(vorgehoert.schichten[0] == creator.schicht());
+        CHECK(vorgehoert.schichten[1].name == QStringLiteral("Reference tone"));
+        CHECK(vorgehoert.schichten[1].schwingung == Schwingung::Sinus);
+        CHECK(vorgehoert.schichten[1].versatzHalbtoene == 12);  // die Note, die die Schicht spielen soll
+        CHECK(vorgehoert.schichten[1].obertoene.empty());
+        // bei einer gerechneten Schicht gibt es ihn nicht: der Haken ist weg und gilt nicht
+        creator.waehle(1);
+        CHECK(referenz->isHidden());
+        CHECK(detect->isHidden());
+        CHECK(gemessenText->isHidden());
+        REQUIRE(creator.spieleAn(57));
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        CHECK(vorgehoert.schichten.size() == 2);
+        CHECK(vorgehoert.schichten[1].name.isEmpty());  // das Instrument, wie es ist
+        creator.waehle(0);
+        CHECK_FALSE(gemessenText->isHidden());  // zurueck bei der Schicht, an der gemessen wurde
+        creator.setReferenzton(false);
+        CHECK_FALSE(referenz->isChecked());
+        creator.aendere([](Instrument& i) { i.schichten.resize(1); });  // die zweite Schicht wieder weg
+        creator.aendereSchicht([](Schicht& s) { s.versatzHalbtoene = 0; });
+        REQUIRE(creator.instrument().schichten.size() == 1);
+        REQUIRE(creator.schicht().schwingung == Schwingung::Sample);
+
         // --- gespeichert und wieder geoeffnet: alles ist noch da
         const QString pfad = QDir(tmp.path()).filePath(QStringLiteral("cello.lvinst"));
         REQUIRE(creator.speichereUnter(pfad));
@@ -934,6 +999,31 @@ TEST_SUITE("LoopInstrumentEditor")
         // was sich nicht kopieren laesst
         CHECK_FALSE(creator.nimmSampleDatei(QDir(tmp.path()).filePath(QStringLiteral("fehlt.wav")), true));
         CHECK(creator.schicht().sample == andere);
+        // was an der vorigen Aufnahme gemessen wurde, gilt fuer diese nicht
+        CHECK(gemessenText->isHidden());
+        CHECK(apply->isHidden());
+        CHECK_FALSE(creator.gemessen().gefunden);
+
+        // --- Detect ohne klaren Ton: Rauschen — es steht da, zu uebernehmen gibt es nichts
+        const QString rausch = datei(QStringLiteral("quelle/rauschen.wav"), "CC");
+        {
+            std::vector<float> daten(2 * 48000);
+            std::uint32_t x = 4711u;
+            for (std::size_t t = 0; t < 48000; ++t)
+            {
+                x = x * 1664525u + 1013904223u;
+                daten[2 * t] = daten[2 * t + 1] = static_cast<float>(0.8 * (static_cast<double>(x >> 8) / 8388608.0 - 1.0));
+            }
+            merkeSampleDaten(rausch, 48000, std::move(daten));
+        }
+        REQUIRE(creator.nimmSampleDatei(rausch, false));
+        CHECK_FALSE(creator.messe());
+        CHECK_FALSE(gemessenText->isHidden());
+        CHECK(gemessenText->text() == QStringLiteral("No clear pitch found"));
+        CHECK(apply->isHidden());
+        CHECK_FALSE(creator.uebernimmGemessenes());
+        CHECK(creator.schicht().grundton == 57);
+        REQUIRE(creator.nimmSampleDatei(andere, false));
 
         // --- ein Sample, das es nicht gibt: die Zeile sagt es, gefragt wird einmal
         verlangt.clear();
@@ -942,6 +1032,8 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(bildTitel->text() == QStringLiteral("The sample (not found)"));
         CHECK(bild->werte().empty());
         CHECK_FALSE(schleife->isEnabled());
+        CHECK_FALSE(detect->isEnabled());  // ohne Aufnahme nichts zu messen
+        CHECK_FALSE(creator.messe());
         CHECK(creator.sampleLaengeMs() == 0.0);
         schieber("creatorFineTune")->setValue(-5);  // ein Zug an einem Regler fragt nicht wieder
         CHECK(verlangt == QStringList{QStringLiteral("user:gibt_es_nicht")});
@@ -999,6 +1091,7 @@ TEST_SUITE("LoopInstrumentEditor")
             koerper.name = QStringLiteral("Body");
             cello.schichten.push_back(koerper);
             gezeigt.oeffne(cello);
+            (void)gezeigt.messe();  // damit das Ergebnis von Detect im Bild steht
             gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
             gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
             QCoreApplication::processEvents();

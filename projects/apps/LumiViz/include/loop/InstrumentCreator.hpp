@@ -32,6 +32,7 @@
  */
 #pragma once
 
+#include "loop/Grundton.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Sample.hpp"
 
@@ -245,6 +246,23 @@ public:
     /// Einschalten liegt er auf dem mittleren Teil der Aufnahme.
     void setzeSchleife(bool an);
 
+    // --- Detect und Reference tone (Stufe 11a, Schritt 3) ----------------------
+    /// **Detect:** den Grundton der Aufnahme der gewaehlten Schicht messen, ab
+    /// Sample start. Das Ergebnis steht danach unter Root note („Detected: A3
+    /// +12 ct" oder „No clear pitch found") — uebernommen wird erst mit Apply.
+    /// false = kein klarer Ton, oder keine Aufnahme geladen.
+    bool messe();
+    /// Was zuletzt fuer die gewaehlte Schicht und ihre Aufnahme gemessen wurde;
+    /// `gefunden` ist false, wenn nichts gemessen oder nichts gefunden ist.
+    [[nodiscard]] Grundton gemessen() const;
+    /// **Apply:** das Gemessene uebernehmen — Root note und Fine tune. false =
+    /// es gibt nichts zu uebernehmen.
+    bool uebernimmGemessenes();
+    /// **Reference tone:** die Klaviatur spielt die gewaehlte Sample-Schicht
+    /// allein und dazu einen Sinus derselben Note — zum Stimmen nach Gehoer.
+    void setReferenzton(bool an);
+    [[nodiscard]] bool referenzton() const { return m_referenzton; }
+
 Q_SIGNALS:
     /// Die Daten dieser Aufnahme werden gebraucht (fuer das Bild und die
     /// Laenge): wer eine Audio-Engine hat, dekodiert sie und merkt sie
@@ -347,6 +365,16 @@ private:
     QLabel* m_wellenTitel = nullptr;
     QLabel* m_bildHinweis = nullptr;
     QString m_sampleVersucht;                ///< diese Aufnahme liess sich nicht laden: nicht bei jedem Zug neu fragen
+    // --- Detect und Reference tone (Schritt 3)
+    /// Fuer welche Schicht und Aufnahme `m_gemessen` gilt (`messSchluessel`); leer = nichts gemessen.
+    QString m_gemessenFuer;
+    Grundton m_gemessen;
+    [[nodiscard]] QString messSchluessel() const;
+    QPushButton* m_detect = nullptr;
+    QLabel* m_detectText = nullptr;
+    QPushButton* m_detectApply = nullptr;
+    QCheckBox* m_referenz = nullptr;
+    bool m_referenzton = false;
     KurvenBild* m_wellenBild = nullptr;
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;

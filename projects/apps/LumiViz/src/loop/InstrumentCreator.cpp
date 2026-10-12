@@ -615,6 +615,23 @@ void InstrumentCreator::setupUI()
         gitter->addWidget(m_grundton, zweite, 1);
         m_sampleZeilen.push_back(grundton);
         m_sampleZeilen.push_back(m_grundton);
+        // Detect (Schritt 3): messen, vorschlagen — uebernommen wird erst mit Apply
+        m_detect = new QPushButton(tr("Detect"), this);
+        m_detect->setObjectName(QStringLiteral("creatorDetect"));
+        m_detect->setToolTip(tr("Measure the pitch of the recording, from Sample start on, and suggest Root note and Fine tune"));
+        gitter->addWidget(m_detect, zweite, 2);
+        m_sampleZeilen.push_back(m_detect);
+        m_detectText = new QLabel(this);
+        m_detectText->setObjectName(QStringLiteral("creatorDetected"));
+        m_detectText->setEnabled(false);  // grau: eine Auskunft
+        m_detectApply = new QPushButton(tr("Apply"), this);
+        m_detectApply->setObjectName(QStringLiteral("creatorDetectApply"));
+        m_detectApply->setToolTip(tr("Set Root note and Fine tune to the measured pitch"));
+        const int dritte = gitter->rowCount();
+        gitter->addWidget(m_detectText, dritte, 1);
+        gitter->addWidget(m_detectApply, dritte, 2);
+        connect(m_detect, &QPushButton::clicked, this, [this] { (void)messe(); });
+        connect(m_detectApply, &QPushButton::clicked, this, [this] { (void)uebernimmGemessenes(); });
         connect(m_grundton, &QComboBox::activated, this, [this](int index) {
             const int hoehe = m_grundton->itemData(index).toInt();
             aendereSchicht([hoehe](Schicht& s) { s.grundton = hoehe; });
@@ -782,6 +799,12 @@ void InstrumentCreator::setupUI()
     m_nurWahl->setObjectName(QStringLiteral("creatorSelectedOnly"));
     m_nurWahl->setToolTip(tr("The keys play the selected layer alone, even if it is muted"));
     rechts->addWidget(m_nurWahl);
+    // nur bei einer Sample-Schicht (Schritt 3): zum Stimmen nach Gehoer
+    m_referenz = new QCheckBox(tr("Reference tone"), this);
+    m_referenz->setObjectName(QStringLiteral("creatorReferenceTone"));
+    m_referenz->setToolTip(tr("The keys play the selected sample layer alone, and a sine of the same note next to it — "
+                              "tune Root note and Fine tune until both sound as one"));
+    rechts->addWidget(m_referenz);
     rechts->addStretch(1);
     koerper->addLayout(rechts, 4);
     aussen->addLayout(koerper, 1);
@@ -838,6 +861,7 @@ void InstrumentCreator::setupUI()
     connect(m_hinauf, &QPushButton::clicked, this, [this] { (void)schiebe(-1); });
     connect(m_hinunter, &QPushButton::clicked, this, [this] { (void)schiebe(1); });
     connect(m_nurWahl, &QCheckBox::toggled, this, [this](bool an) { m_nurGewaehlte = an; });
+    connect(m_referenz, &QCheckBox::toggled, this, [this](bool an) { m_referenzton = an; });
     resize(1000, 680);
 }
 
@@ -1167,11 +1191,22 @@ bool InstrumentCreator::spieleAn(int hoehe)
     // die Kopie, wie sie gerade steht — auch ungespeichert — in die Vorhoer-Datei
     const QString datei = vorhoerDatei();
     Instrument zuHoeren = m_instrument;
-    if (m_nurGewaehlte)
+    // Reference tone gilt nur fuer eine Sample-Schicht: sie allein, dazu ein Sinus derselben Note
+    const bool referenz = m_referenzton && schicht().schwingung == Schwingung::Sample;
+    if (m_nurGewaehlte || referenz)
     {
         // die gewaehlte Schicht allein — auch wenn sie in der Liste stumm ist
         zuHoeren.schichten = {schicht()};
         zuHoeren.schichten[0].an = true;
+    }
+    if (referenz)
+    {
+        Schicht ton;
+        ton.name = QStringLiteral("Reference tone");
+        ton.versatzHalbtoene = schicht().versatzHalbtoene;  // die Note, die die Schicht spielen soll
+        ton.halten = 1.0;
+        ton.laut = 0.5;
+        zuHoeren.schichten.push_back(ton);
     }
     if (!speichereInstrument(zuHoeren, datei)) return false;
     Q_EMIT tonVerlangt(datei, hoehe);
@@ -1355,6 +1390,17 @@ void InstrumentCreator::zeigeAlles()
     for (const std::size_t platz : m_nurSinus) zeige(platz, sinus);
     for (const std::size_t platz : m_nurSample) zeige(platz, sample);
     for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
+    {
+        // Detect: das Ergebnis gilt fuer die Schicht und die Aufnahme, an der gemessen wurde
+        const bool gemessenDa = sample && !m_gemessenFuer.isEmpty() && m_gemessenFuer == messSchluessel();
+        m_detect->setEnabled(sample && sampleLaengeMs() > 0.0);
+        m_detectText->setVisible(gemessenDa);
+        m_detectApply->setVisible(gemessenDa && m_gemessen.gefunden);
+        if (gemessenDa)
+            m_detectText->setText(m_gemessen.gefunden ? tr("Detected: %1").arg(grundtonText(m_gemessen))
+                                                      : tr("No clear pitch found"));
+        m_referenz->setVisible(sample);
+    }
     m_vibratoTitel->setVisible(!saite && !sample);  // eine Ueberschrift ohne Regler darunter bleibt weg
     zeige(m_daempfung, saite);
     zeigeBilder();
@@ -1407,6 +1453,45 @@ bool InstrumentCreator::nimmSampleDatei(const QString& pfad, bool kopieren)
     if (nennung.isEmpty()) return false;
     setzeSample(nennung);
     return true;
+}
+
+QString InstrumentCreator::messSchluessel() const
+{
+    return QStringLiteral("%1|%2").arg(m_gewaehlt).arg(schicht().sample);
+}
+
+bool InstrumentCreator::messe()
+{
+    if (schicht().schwingung != Schwingung::Sample) return false;
+    const std::shared_ptr<const SampleDaten> daten = holeSample(schicht().sample);
+    if (daten == nullptr) return false;
+    const auto ab = static_cast<std::int64_t>(std::max(0.0, schicht().sampleStartMs) * daten->rate / 1000.0);
+    m_gemessen = messeGrundton(daten->klang.daten, daten->rate, ab);
+    m_gemessenFuer = messSchluessel();
+    zeigeAlles();
+    return m_gemessen.gefunden;
+}
+
+Grundton InstrumentCreator::gemessen() const
+{
+    return !m_gemessenFuer.isEmpty() && m_gemessenFuer == messSchluessel() ? m_gemessen : Grundton{};
+}
+
+bool InstrumentCreator::uebernimmGemessenes()
+{
+    const Grundton ton = gemessen();
+    if (!ton.gefunden) return false;
+    aendereSchicht([&ton](Schicht& s) {
+        s.grundton = std::clamp(ton.hoehe, 0, 127);
+        s.feinCent = std::round(ton.cent);
+    });
+    return true;
+}
+
+void InstrumentCreator::setReferenzton(bool an)
+{
+    m_referenz->setChecked(an);
+    m_referenzton = an;
 }
 
 void InstrumentCreator::setzeSchleife(bool an)

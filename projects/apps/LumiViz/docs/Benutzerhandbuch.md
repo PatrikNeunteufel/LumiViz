@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.130.0
+> **Version:** 1.131.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2708,9 +2708,11 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 | **File** und **File...** | Die Aufnahme: eines deiner eigenen Samples (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
 | Die Frage nach „From file..." | **Copy the file to My samples (recommended)** legt eine Kopie in deinen Benutzerordner (`samples`) — sie geht mit einem Export mit und bleibt, wenn das Original verschoben wird. **Use it where it is** lässt die Datei, wo sie ist; das Instrument nennt dann ihren Pfad. „Don't ask again" merkt die Wahl; ändern lässt sie sich unter Settings → Panels, **Chosen Sample Files** |
 | **Root note** | Welcher Ton die Aufnahme ist. Bei dieser Note klingt sie, wie sie aufgenommen wurde |
+| **Detect** und **Apply** | Detect misst den Ton der Aufnahme, ab Sample start, und schreibt ihn darunter: „Detected: A3 +12 ct“. Erst **Apply** stellt Root note und Fine tune danach. Bei einem Schlag, Rauschen oder einem Akkord steht dort „No clear pitch found“ — dann stellst du nach Gehör |
 | **Fine tune** | Wie weit die Aufnahme über (+) oder unter dem Root note liegt, in Cent |
 | **Sample start** | Eine Note beginnt so weit in der Aufnahme — die rote Marke im Bild |
 | **Sustain loop**, **Loop from**, **Loop to** | Eine Aufnahme wird bei hohen Noten kürzer. Mit dem Haken wiederholt sich das Stück zwischen Loop from und Loop to, solange die Note dauert; danach läuft die Aufnahme zu Ende. Im Bild der blaue Bereich |
+| **Reference tone** | Zum Stimmen nach Gehör: mit dem Haken spielen die Tasten die gewählte Sample-Schicht allein und dazu einen reinen Ton derselben Note. Root note und Fine tune stimmen, wenn beide wie ein Ton klingen und nichts schwebt |
 | **The sample** | Das obere Bild zeigt bei einer Sample-Schicht die Aufnahme. Die rote Marke und die beiden Ränder des blauen Bereichs lassen sich mit der Maus ziehen |
 
 Fehlt die Datei einer Aufnahme, steht in der Zeile File „(not found)", und die Schicht
@@ -2872,6 +2874,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.131.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator, Sample-Schicht NEU **Detect** mit **Apply** (misst den Ton der Aufnahme und schlägt Root note und Fine tune vor) und **Reference tone** (ein reiner Ton derselben Note neben der Aufnahme) |
 | 1.130.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator NEU **Waveform: Sample** — eine Schicht aus einer Aufnahme: File..., die Frage „kopieren oder am Ort lassen", Root note, Fine tune, Sample start, Sustain loop mit Loop from und Loop to, das Bild der Aufnahme mit ziehbaren Marken; Settings → Panels NEU **Chosen Sample Files** |
 | 1.129.0 | 2026-10-12 | Session 115. Settings, Export und Import: neuer Bereich **Samples** (der Ordner `samples` im Benutzerordner; im Programm füllt ihn noch nichts — Loop, Stufe 11a, erst der Kern) |
 | 1.128.0 | 2026-10-12 | Session 115. §16 Loop, Fenster Instruments: **Ctrl+Z und Ctrl+Y gelten im Fenster selbst** (Befund Patrik, P5: nach Use kam Ctrl+Z nicht an, erst nach einem Klick ins Panel Loop) |
