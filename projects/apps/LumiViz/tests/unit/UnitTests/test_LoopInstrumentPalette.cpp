@@ -14,6 +14,10 @@
 #include "loop/InstrumentEditor.hpp"
 #include "loop/InstrumentPalette.hpp"
 #include "loop/Loop.hpp"
+#include "loop/LoopPanel.hpp"
+#include "services/CommandBus.hpp"
+#include "services/ICommandBus.hpp"
+#include "services/ServiceContainer.hpp"
 
 #include <QApplication>
 #include <QComboBox>
@@ -23,9 +27,12 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSettings>
+#include <QShortcut>
 #include <QTemporaryDir>
 #include <QToolButton>
 #include <QTreeWidget>
+
+#include <memory>
 
 using namespace lumi::loop;
 
@@ -394,4 +401,61 @@ TEST_CASE("Loop Instruments-Fenster im Editor: Browse oeffnet es fuer die Basis 
     editor.oeffnePalette(false);
     CHECK(fenster->gewaehlt() == QStringLiteral("bass"));
     CHECK(editor.palette() == fenster);  // dasselbe Fenster, kein zweites
+}
+
+TEST_CASE("Loop Instruments-Fenster im Panel: Ctrl+Z und Ctrl+Y gelten im Fenster — Undo und Redo des Programms")
+{
+    // Befund Patrik S115 (Liste 10, P5): nach Use ist das Fenster das aktive, das
+    // Kuerzel von Edit → Undo im Hauptfenster kam dort nicht an. Entscheid Z1 a.
+    // Ohne gezeigtes Fenster: geprueft ist der Weg vom Kuerzel bis zum Loop, nicht
+    // die Taste selbst.
+    Umgebung u;
+    ServiceContainer dienste;
+    dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+    ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+    REQUIRE(bus != nullptr);
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    panel.neu();
+    panel.setzeLoop(probe());
+    REQUIRE(panel.oeffneEditor(QStringLiteral("Mel"), false));
+    InstrumentEditor* editor = panel.instrumentEditor();
+    REQUIRE(editor != nullptr);
+    editor->oeffnePalette(false);
+    InstrumentPalette* fenster = editor->palette();
+    REQUIRE(fenster != nullptr);
+    auto* zeile = editor->findChild<QLabel*>(QStringLiteral("instrumentSound"));
+    REQUIRE(zeile != nullptr);
+    const auto instrument = [&] { return panel.loop().findeMuster(QStringLiteral("Mel"))->instrument; };
+
+    REQUIRE(fenster->waehle(QStringLiteral("strings")));
+    REQUIRE(fenster->verwende());
+    CHECK(instrument() == QStringLiteral("strings"));
+    CHECK(bus->undoDescription() == "Change instrument");
+
+    // --- zurueck und wieder vor, vom Fenster aus
+    fenster->nimmZurueck();
+    CHECK(instrument() == QStringLiteral("piano"));
+    CHECK(zeile->text() == QStringLiteral("Piano"));
+    fenster->stelleWiederHer();
+    CHECK(instrument() == QStringLiteral("strings"));
+    CHECK(zeile->text() == QStringLiteral("Strings"));
+
+    // --- die beiden Kuerzel am Fenster: Ctrl+Z und Ctrl+Y, sie loesen dasselbe aus
+    auto* zurueck = fenster->findChild<QShortcut*>(QStringLiteral("instrumentPaletteUndo"));
+    auto* vor = fenster->findChild<QShortcut*>(QStringLiteral("instrumentPaletteRedo"));
+    REQUIRE(zurueck != nullptr);
+    REQUIRE(vor != nullptr);
+    CHECK(zurueck->keys().contains(QKeySequence(Qt::CTRL | Qt::Key_Z)));
+    CHECK(vor->keys().contains(QKeySequence(Qt::CTRL | Qt::Key_Y)));
+    Q_EMIT zurueck->activated();
+    CHECK(instrument() == QStringLiteral("piano"));
+    Q_EMIT vor->activated();
+    CHECK(instrument() == QStringLiteral("strings"));
+
+    // --- nichts mehr zurueckzunehmen: es geschieht nichts
+    fenster->nimmZurueck();
+    fenster->nimmZurueck();
+    fenster->nimmZurueck();
+    CHECK(instrument() == QStringLiteral("piano"));
 }

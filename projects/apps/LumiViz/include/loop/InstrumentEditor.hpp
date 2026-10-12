@@ -293,6 +293,9 @@ Q_SIGNALS:
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
     /// Der Creator hat eine Instrument-Datei geschrieben: wer spielt, rechnet neu.
     void instrumentGespeichert();
+    /// Das Fenster „Instruments" bittet um Undo (false) oder Redo (true) — es
+    /// ist ein eigenes Fenster, das Kuerzel des Hauptfensters gilt dort nicht.
+    void rueckgaengigVerlangt(bool wiederholen);
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// „Play pattern" / „Stop": dieses Muster allein spielen, oder anhalten.

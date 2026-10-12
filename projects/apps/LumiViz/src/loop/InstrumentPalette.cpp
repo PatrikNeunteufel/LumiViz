@@ -21,6 +21,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
+#include <QShortcut>
 #include <QSignalBlocker>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -60,6 +61,16 @@ InstrumentPalette::InstrumentPalette(QWidget* parent) : QWidget(parent, Qt::Wind
 {
     setObjectName(QStringLiteral("instrumentPalette"));
     setWindowTitle(tr("Instruments"));
+
+    // Ctrl+Z / Ctrl+Y (Z1 a, S115): das Fenster ist ein eigenes — das Kuerzel von
+    // Edit → Undo im Hauptfenster gilt hier nicht, und nach Use ist dieses Fenster
+    // das aktive. In der Suche nimmt das Eingabefeld die Tasten selbst.
+    auto* zurueck = new QShortcut(QKeySequence::Undo, this);
+    zurueck->setObjectName(QStringLiteral("instrumentPaletteUndo"));
+    connect(zurueck, &QShortcut::activated, this, &InstrumentPalette::nimmZurueck);
+    auto* vor = new QShortcut(QKeySequence::Redo, this);
+    vor->setObjectName(QStringLiteral("instrumentPaletteRedo"));
+    connect(vor, &QShortcut::activated, this, &InstrumentPalette::stelleWiederHer);
 
     auto* aussen = new QVBoxLayout(this);
 
@@ -521,6 +532,16 @@ void InstrumentPalette::zeigeMenue(QPoint ort)
         });
     }
     menue.exec(m_baum->viewport()->mapToGlobal(ort));
+}
+
+void InstrumentPalette::nimmZurueck()
+{
+    Q_EMIT rueckgaengigVerlangt(false);
+}
+
+void InstrumentPalette::stelleWiederHer()
+{
+    Q_EMIT rueckgaengigVerlangt(true);
 }
 
 void InstrumentPalette::hideEvent(QHideEvent* event)

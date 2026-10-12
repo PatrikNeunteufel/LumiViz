@@ -646,6 +646,11 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
                 meldeStand();  // auch ein Clip im Composer, der diesen Loop spielt
             });
+            // Ctrl+Z / Ctrl+Y im Fenster „Instruments" (Z1 a, S115): derselbe Undo wie Edit → Undo
+            connect(m_instrumentEditor, &InstrumentEditor::rueckgaengigVerlangt, this, [this](bool wiederholen) {
+                if (auto* bus = services().tryResolve<ICommandBus>())
+                    (void)(wiederholen ? bus->redo() : bus->undo());
+            });
         }
         if (!m_instrumentEditor->zeige(m_loop, muster)) return false;
         if (zeigen)

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.38.0
+> **Version:** 0.39.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1439,6 +1439,23 @@ gewählt. Nicht gebaut: der Schalter aus P2 c. Nicht geprüft: das Menü, die
 Tasten und das Fenster neben dem Editor im Programm. **Stufe 14 ist damit
 gebaut.**
 
+**Befund und Entscheid Z1 a (Patrik, S115) — Ctrl+Z im Fenster:** im
+Programm nahm Ctrl+Z nach **Use** nichts zurück, erst nach einem Klick ins
+Panel Loop. Ursache: Ctrl+Z ist das Kürzel von Edit → Undo im Hauptfenster
+und gilt nur, solange dieses aktiv ist; das Fenster Instruments ist ein
+eigenes Fenster (`Qt::Window`) und nach Use das aktive. Gebaut: das Fenster
+trägt selbst zwei Kürzel (Undo: Ctrl+Z; Redo: Ctrl+Y, Ctrl+Shift+Z) und
+bittet über `rueckgaengigVerlangt` den Editor, der das Panel, das Panel
+ruft Undo bzw. Redo des Programms (`ICommandBus`) — denselben Schritt wie
+Edit → Undo, also den letzten des ganzen Programms, nicht nur den am Loop.
+In der Suche gehören die Tasten dem Eingabefeld. Verworfen: b (das Fenster
+als Werkzeugfenster am Hauptfenster — reicht alle Kürzel durch, ändert aber
+das Verhalten des Fensters), c (nur beschreiben). Die Wahl im Fenster folgt
+einem Undo nicht: markiert bleibt, was zuletzt angeklickt war. Nicht
+geprüft: die Taste im gezeigten Fenster (der Test löst das Kürzel aus, er
+drückt es nicht); ob Ctrl+Z im Instrument-Creator ankommt, der genauso am
+Editor hängt.
+
 ### Mehrfachauswahl in den Editoren (Stufe 13, Wunsch Patrik S113)
 
 Die Skizze ist gebilligt und steht in §4i.
@@ -1794,6 +1811,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.39.0** (S115, 2026-10-12): Befund aus dem Programm (P5) und Entscheid
+  Z1 a — Ctrl+Z und Ctrl+Y gelten im Fenster „Instruments" selbst (§4h).
 
 - **0.38.0** (S114, 2026-10-12): 14c gebaut — das Fenster „Instruments" und
   Browse... im Instrument-Editor (§4h); voller Testlauf 1105 / 1105; Stufe 14

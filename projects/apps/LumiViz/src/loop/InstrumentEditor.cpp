@@ -1270,6 +1270,8 @@ void InstrumentEditor::oeffnePalette(bool zeigen)
         connect(m_palette, &InstrumentPalette::verwenden, this, &InstrumentEditor::setzeInstrument);
         // ein Klick im Fenster spielt das Instrument an — auf demselben Weg wie der Creator
         connect(m_palette, &InstrumentPalette::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
+        // Ctrl+Z / Ctrl+Y im Fenster: weiter ans Panel, dort liegt Undo
+        connect(m_palette, &InstrumentPalette::rueckgaengigVerlangt, this, &InstrumentEditor::rueckgaengigVerlangt);
     }
     m_palette->setzeZiel(m_muster);
     if (zeigen)

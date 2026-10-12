@@ -80,6 +80,12 @@ public:
     /// Das gewaehlte eigene Instrument loeschen (ohne Rueckfrage — die stellt
     /// das Menue). false = es ist kein eigenes.
     bool loescheGewaehltes();
+    /// Ctrl+Z bzw. Ctrl+Y im Fenster (Entscheid Z1 a, Patrik S115): den
+    /// letzten Schritt am Loop zuruecknehmen bzw. wiederherstellen. Das Fenster
+    /// bittet nur (`rueckgaengigVerlangt`) — Undo selbst fuehrt das Panel aus.
+    /// In der Suche gehoeren die Tasten weiter dem getippten Text.
+    void nimmZurueck();
+    void stelleWiederHer();
 
     /// Was der Baum gerade zeigt, von oben nach unten: je Zeile die Nennung;
     /// die Koepfe als `[Favorites]`, `[Keys]`, … Was der Filter verbirgt, fehlt.
@@ -100,6 +106,8 @@ Q_SIGNALS:
     void verwenden(const QString& nennung);
     /// Einen Ton dieses Instruments anspielen.
     void tonVerlangt(const QString& nennung, int hoehe);
+    /// Den letzten Schritt am Loop zuruecknehmen (false) oder wiederherstellen (true).
+    void rueckgaengigVerlangt(bool wiederholen);
 
 protected:
     void hideEvent(QHideEvent* event) override;

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.127.0
+> **Version:** 1.128.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2656,7 +2656,8 @@ das Muster, das der Instrument-Editor gerade zeigt („For pattern: …").
 | **Preview note** | Die Tonhöhe des Anspielens. Sie stellt sich bei jedem Instrument auf seine Art (ein Bass spielt tief, C2; alles andere C4) und lässt sich von C1 bis C6 ändern |
 | **Play** | Spielt den Ton noch einmal |
 | **Favorite** | Legt das gewählte unter Favorites, oder nimmt es wieder heraus |
-| Doppelklick, Enter, **Use** | Setzt das Instrument ins Muster (Ctrl+Z nimmt es zurück). Ohne offenes Instrument-Muster ist Use grau |
+| Doppelklick, Enter, **Use** | Setzt das Instrument ins Muster. Ohne offenes Instrument-Muster ist Use grau |
+| Ctrl+Z, Ctrl+Y | Gelten gleich im Fenster, ohne Klick ins Hauptfenster: Ctrl+Z nimmt den letzten Schritt zurück (etwa das eben gesetzte Instrument), Ctrl+Y oder Ctrl+Shift+Z stellt ihn wieder her — dasselbe wie Edit → Undo und Redo. Steht die Schreibmarke in **Search**, gehören die Tasten dem getippten Text |
 | Rechtsklick | Use, Play, Favorit; bei einem eigenen Instrument dazu **Show in folder** und **Delete** — ein gelöschtes fehlt jedem Muster, das es nennt |
 
 Die Tasten schweigen, solange der Composer den Ton hat oder der Loop spielt — wie
@@ -2849,6 +2850,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.128.0 | 2026-10-12 | Session 115. §16 Loop, Fenster Instruments: **Ctrl+Z und Ctrl+Y gelten im Fenster selbst** (Befund Patrik, P5: nach Use kam Ctrl+Z nicht an, erst nach einem Klick ins Panel Loop) |
 | 1.127.0 | 2026-10-12 | Session 114. §16 Loop NEU **das Fenster Instruments**: **Browse...** im Instrument-Editor, Suche, Filter nach Genre, die Arten als Liste, Favorites, Recently used, My files, Anspielen per Klick mit Preview note, Use (GEÄNDERT: die Dropdown-Liste der Instrumente gibt es nicht mehr) |
 | 1.126.0 | 2026-10-12 | Session 114. §16 Loop, Instrument-Creator: die zweite Zeile **Type**, **Genres**, **Description**; **Save** legt eine eigene Kopie unter einem Namen zu den eigenen Dateien (GEÄNDERT: bei einem mitgelieferten Instrument war Save grau), **Save as...** bleibt für einen freien Ort; ein eigenes Instrument verdrängt kein mitgeliefertes |
 | 1.125.0 | 2026-10-12 | Settings, Panels (Session 114): **Export...** und **Import...** der eigenen Daten als eine Datei `.lvdata` — Bereiche wählen, vier Regeln bei gleichem Namen, die Liste „Let me decide for each file" |
