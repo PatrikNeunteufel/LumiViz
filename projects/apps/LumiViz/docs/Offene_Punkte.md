@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.166.0
+> **Version:** 1.167.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5229,6 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.167.0 | 2026-10-12 | Session 116 — **„Favorites“ angeglichen** (Entscheid Patrik 12.10.): im Fenster Instruments heißt der Knopf „★“ und die Überschrift „★ Favorites“, wie in der Effect Palette; Effect Palette und Preset-Zeile schreiben „Favorites“ statt „Favourites“; im Programm ungesehen |
 | 1.166.0 | 2026-10-12 | Abschluss Session 115 — **Stufe 11 des Loops:** 11a (Sample als Schicht, Detect, Reference tone) und 11b (Record sample) gebaut, 11c begonnen (Schritt 1, der Kern der Drum-Spur mit drei Arten von Klang); `.lvinst` und `.lvloop` in Fassung 4; davor Befund P5 behoben (Ctrl+Z im Fenster Instruments); alles aus Stufe 11 im Programm ungesehen und ungehört — lokale Liste 10, Abschnitte Q und R; voller Lauf 1132 / 1132; offen 11c Schritt 2 und 3, die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte, 11d bis 11f; 🔧 Frage Patrik: der Knopf für Favoriten im Fenster Instruments trägt Text statt des Sterns der Effect Palette — angleichen; entschieden: überall „Favorites“ (die Effect Palette schreibt heute „Favourites“); Changelog `sessions/Changelog_Session115.md` |
 | 1.165.0 | 2026-10-12 | Session 115 — Loop **11c Schritt 1 gebaut**: der Kern ohne Fenster — eine Drum-Spur nennt einen Klang des Kits, ein eigenes Sample (`user:<name>`) oder ein Instrument mit Note und Length, `.lvloop` Fassung 4, `kit:` in der Sample-Schicht, die Art Drums; **GEÄNDERT:** eine Sample-Schicht spielt die Aufnahme in ihrer Lautstärke (nach 11a halb so laut); offen 11c Schritt 2 (Drum-Editor) und 3 (Edit sound...); 🔧 vorgemerkt auf Wunsch Patrik: Filter je Schicht und Effekte am Clip als Kette, „in einer Art Node-Editor“ — Vorlage mit Skizze nach 11c |
 | 1.164.0 | 2026-10-12 | Session 115 — Loop, Stufe 11c ff.: **Entscheide K1 a** (Drum-Spur nennt Kit-Klang, eigenes Sample oder Instrument; Edit sound... macht aus jedem Klang ein Instrument; dazu als Plan 11d Rauschen und fallende Tonhöhe, 11e Hochpass und Bandpass, 11f sechs gerechnete Drum-Instrumente) und **K2 a** (Note und Length in ms); **Rechenversuch:** Tom und Snare lassen sich damit vollständig bauen, für Kick (Drive hinter der Hüllkurve), Clap (zwei Filter hintereinander) und Hi-Hats (sechs Rechtecke in einer Schicht) fehlt je ein weiterer Baustein — ⬜ Patrik hört die Hörproben unter `.claude/handover/hoerproben_drumkit/`; die Skizze der Klangliste ist noch nicht gebilligt; nichts gebaut |

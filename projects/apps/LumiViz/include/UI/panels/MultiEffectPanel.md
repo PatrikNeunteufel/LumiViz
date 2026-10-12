@@ -29,7 +29,7 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
   - **Filter-Chips** Herkunft (AVS · APE · MilkDrop · LumiViz) und Rolle
     (Draws · Transforms · Colour · Control) — ODER innerhalb, UND zwischen den
     Gruppen; keine Chip gedrückt = kein Filter.
-  - **★ Favourites** und **Recently used** (8) oben, gemerkt **über den Namen**
+  - **★ Favorites** und **Recently used** (8) oben, gemerkt **über den Namen**
     (`effectPalette/favorites|recent`), damit sie Palettenumbauten überleben.
   - **Detailzeile:** Herkunft · Rolle · Originalname, Kurzbeschreibung, ob das
     Modul Formelfelder hat (Zahl der Variablen aus `ScriptVariables.hpp`).

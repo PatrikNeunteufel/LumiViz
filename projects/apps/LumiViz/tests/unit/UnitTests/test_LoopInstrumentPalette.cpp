@@ -204,6 +204,14 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(fenster.unter(QStringLiteral("Favorites")) == QStringList{QStringLiteral("piano")});
     CHECK(fenster.zeilen().first() == QStringLiteral("[Favorites]"));
     CHECK(favorit->isChecked());
+    // Knopf und Ueberschrift tragen den Stern, wie in der Effect Palette (S116)
+    CHECK(favorit->text() == QString::fromUtf8("★"));
+    {
+        auto* baum = fenster.findChild<QTreeWidget*>(QStringLiteral("instrumentPaletteTree"));
+        REQUIRE(baum != nullptr);
+        CHECK(baum->topLevelItem(0)->text(0) == QString::fromUtf8("★ Favorites  (1)"));
+        CHECK(baum->topLevelItem(1)->text(0) == QStringLiteral("Recently used  (2)"));
+    }
     REQUIRE(fenster.waehle(QStringLiteral("strings")));
     CHECK_FALSE(favorit->isChecked());
     fenster.setzeFavorit(true);

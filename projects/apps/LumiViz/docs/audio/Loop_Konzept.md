@@ -1740,11 +1740,11 @@ Filtern nach **Genre**.
 - **Das Fenster „Instruments"** ist nicht modal und bleibt offen. Oben
   **Search** und rechts **Genre** (Auswahlfeld, „All" und die Genres).
   Darunter die Zeile „For pattern: <Name des Musters>". Dann der Baum:
-  **Favorites**, **Recently used**, die Arten mit Zahl (Keys, Bass, Lead,
+  **★ Favorites**, **Recently used**, die Arten mit Zahl (Keys, Bass, Lead,
   Pads and strings, Plucked, Wind, Percussion, Unusual) und **My files**.
   Unten der Detailbereich: Titel, Art und Genres in einer Zeile, ein Satz
   Beschreibung, dann **Preview note** (Auswahl der Tonhöhe), **Play**,
-  **Favorite** und rechts **Use**; darunter der Hinweis „Click plays the
+  **★** (Favorit; bis S115 „Favorite") und rechts **Use**; darunter der Hinweis „Click plays the
   instrument · double-click uses it in the pattern".
 - **Klick** spielt einen Ton, einen Schlag lang; **Play** noch einmal.
   **Preview note** stellt sich je Art vor (Bass tief, sonst C4).

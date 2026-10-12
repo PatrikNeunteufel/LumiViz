@@ -62,7 +62,7 @@ PresetZeile::PresetZeile(PresetArt art, QWidget* parent)
     m_combo->setObjectName(QStringLiteral("presetZeileCombo"));
     m_combo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     m_combo->setMinimumContentsLength(14);
-    m_combo->setToolTip(tr("The running preset, your favourites and the ten presets used last. "
+    m_combo->setToolTip(tr("The running preset, your favorites and the ten presets used last. "
                            "Choosing one loads it at once."));
     // das Mausrad darf nichts laden (Entscheid 1a)
     m_combo->setFocusPolicy(Qt::StrongFocus);
@@ -73,7 +73,7 @@ PresetZeile::PresetZeile(PresetArt art, QWidget* parent)
     m_stern->setObjectName(QStringLiteral("presetZeileStern"));
     m_stern->setText(QString::fromUtf8("★"));
     m_stern->setCheckable(true);
-    m_stern->setToolTip(tr("Favourite: keep the running preset in this list"));
+    m_stern->setToolTip(tr("Favorite: keep the running preset in this list"));
     oben->addWidget(m_stern);
 
     auto* laden = new QPushButton(tr("Load…"), this);
@@ -222,7 +222,7 @@ void PresetZeile::baueListe()
     const QStringList favoriten = PresetListen::favoriten(m_art);
     if (!favoriten.isEmpty())
     {
-        kopfzeile(m_combo, tr("— Favourites —"));
+        kopfzeile(m_combo, tr("— Favorites —"));
         eintraege(favoriten);
     }
     const QStringList zuletzt = PresetListen::zuletzt(m_art);

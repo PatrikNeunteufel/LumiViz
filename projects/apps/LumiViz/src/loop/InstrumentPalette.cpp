@@ -129,8 +129,8 @@ InstrumentPalette::InstrumentPalette(QWidget* parent) : QWidget(parent, Qt::Wind
     m_favorit = new QToolButton(this);
     m_favorit->setObjectName(QStringLiteral("instrumentPaletteFavorite"));
     m_favorit->setCheckable(true);
-    m_favorit->setText(tr("Favorite"));
-    m_favorit->setToolTip(tr("Keep this instrument under Favorites"));
+    m_favorit->setText(QString::fromUtf8("★"));  // wie in der Effect Palette
+    m_favorit->setToolTip(tr("Favorite (shown at the top)"));
     m_use = new QPushButton(tr("Use"), this);
     m_use->setObjectName(QStringLiteral("instrumentPaletteUse"));
     m_use->setDefault(true);
@@ -297,7 +297,9 @@ void InstrumentPalette::filtere()
             eintrag->setHidden(!zeigen);
             if (zeigen) ++sichtbar;
         }
-        const QString name = kopf->data(0, kRolleKopf).toString();
+        // die Favoriten tragen den Stern des Knopfs, wie in der Effect Palette
+        const QString kopfName = kopf->data(0, kRolleKopf).toString();
+        const QString name = kopfName == kKopfFavoriten ? QString::fromUtf8("★ ") + kopfName : kopfName;
         kopf->setText(0, sichtbar > 0 ? QStringLiteral("%1  (%2)").arg(name).arg(sichtbar) : name);
         // ein Kopf ohne Treffer verschwindet — nur „My files" bleibt ohne Filter stehen und sagt, wie man es fuellt
         kopf->setHidden(sichtbar == 0 && !(platzhalter && !gefiltert));

@@ -181,7 +181,7 @@ EffectPaletteWindow::EffectPaletteWindow(QWidget* parent)
     m_favButton = new QToolButton(this);
     m_favButton->setText(QString::fromUtf8("★"));
     m_favButton->setCheckable(true);
-    m_favButton->setToolTip(tr("Favourite (shown at the top)"));
+    m_favButton->setToolTip(tr("Favorite (shown at the top)"));
     connect(m_favButton, &QToolButton::clicked, this, [this] { toggleFavorite(); });
     buttons->addWidget(m_favButton);
     buttons->addStretch();
@@ -249,7 +249,7 @@ void EffectPaletteWindow::buildTree()
         return item;
     };
 
-    m_favSection = makeSection(QString::fromUtf8("★ ") + tr("Favourites"));
+    m_favSection = makeSection(QString::fromUtf8("★ ") + tr("Favorites"));
     for (int i : m_favorites) makeLeaf(m_favSection, i);
     m_recentSection = makeSection(tr("Recently used"));
     for (int i : m_recent) makeLeaf(m_recentSection, i);

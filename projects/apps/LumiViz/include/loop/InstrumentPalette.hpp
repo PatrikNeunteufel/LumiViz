@@ -9,10 +9,10 @@
  * Vorbild ist das Palettenfenster der Effektkette (`EffectPaletteWindow`).
  *
  * Das Fenster ist nicht modal und bleibt offen. Oben **Search** und **Genre**,
- * darunter „For pattern: <Muster>". Der Baum: **Favorites**, **Recently used**,
+ * darunter „For pattern: <Muster>". Der Baum: **★ Favorites**, **Recently used**,
  * die acht Arten mit ihrer Zahl, **My files** (die eigenen aus dem
  * Benutzerordner, `user:<name>`). Unten Titel, Art und Genres, ein Satz
- * Beschreibung, **Preview note**, **Play**, **Favorite** und **Use**.
+ * Beschreibung, **Preview note**, **Play**, **★** (Favorit) und **Use**.
  *
  *  - ein Klick spielt einen Ton (`tonVerlangt`);
  *  - Doppelklick, Enter oder **Use** setzt das Instrument ins Muster
