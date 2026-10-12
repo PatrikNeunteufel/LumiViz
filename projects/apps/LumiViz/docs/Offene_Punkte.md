@@ -2446,10 +2446,18 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     (421 Dateien, unverändert rund eine Sekunde, einmal gemessen).
     **Im Programm nicht gesehen:** ob LumiViz die Kopie liest (Log-Zeile
     „Bundled data …" beim Start), die Zeile „Bundled Data" im Settings-Panel.
-    **Offen:** A3 eigene Instrumente im Benutzerordner (mit Stufe 14), **A4
-    Export und Import** (`.lvdata` als Zip über miniz, Skizze gebilligt;
-    vorher die Liste der Einstellungen „geht mit / geht nicht mit" vorlegen
-    und ein Bild der Liste „Let me decide for each file"). 🔧 Im Nachgang,
+    **Gebaut A4a** — der Kern von Export und Import ohne Fenster: miniz
+    3.1.2 als lokales External mit eigener `Include.cmake` im Projekt
+    (E2 b), `core/ZipArchiv`, `core/Datensicherung` (neun Bereiche, vier
+    Regeln bei gleichem Namen, feste Liste der Einstellungen, E1 a); im
+    Programm ist davon nichts zu sehen. **Offen:** A3 eigene Instrumente im
+    Benutzerordner (mit Stufe 14), **A4b die Dialoge** (Skizze und das Bild
+    der Liste „Let me decide for each file" gebilligt). 🟠 **Befund:** in
+    der Konfiguration Testing unter MSVC fehlt `/MD` bei LumiViz, Core und
+    miniz — die Objektdateien verlangen `LIBCMT`, Qt ist `/MD`; seit miniz
+    meldet der Linker es an `LumiViz.exe` (LNK4098, LNK4217). Bestand
+    vorher, Ursache nicht untersucht (die Schalter der Konfiguration
+    Testing sind leer, auch ohne Optimierung) — an CMakeCraft melden. 🔧 Im Nachgang,
     ohne Priorität: Beispiele aus `examples`, `composits`, `shadertoys`,
     `effectchain` neben die Exe (je Ordner erst die Herkunft prüfen); Icons
     für `.lvloop`, `.lvinst`, `.lvdata`; Wunsch an CMakeCraft: Daten-Ordner

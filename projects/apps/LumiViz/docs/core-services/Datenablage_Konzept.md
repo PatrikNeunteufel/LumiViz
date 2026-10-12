@@ -1,6 +1,6 @@
 # LumiViz — Datenablage (Konzept)
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheid D1 b gefallen (Patrik S114): die Ablage wird
 > als Ganzes geklärt und gebaut, bevor Stufe 14 des Loops (Palette der
@@ -143,10 +143,13 @@ und README; `StartPreset.hpp` nennt den Ort fest).
 **Entschieden — D5 a (Patrik S114):** der Export ist eine Zip-Datei mit der
 Endung `.lvdata`; darin die Unterordner wie im Benutzerordner und eine
 `manifest.json` (Fassung, LumiViz-Version, Datum, die enthaltenen Bereiche
-mit Zahl). Geschrieben und gelesen mit **miniz** als weiteres External unter
-`externals/`, mit Eintrag in `THIRD_PARTY_NOTICES.md` — Lizenz und Umfang vor
-dem Einbinden an der Quelle prüfen (bisher aus dem Gedächtnis: eine
-Quelldatei, MIT). Verworfen b (private Zip-Klassen von Qt 6.10.1,
+mit Zahl). Geschrieben und gelesen mit **miniz** unter `externals/miniz`,
+mit Eintrag in `THIRD_PARTY_NOTICES.md` (voller Vermerk, weil miniz in die
+Exe gelinkt wird). **E2 b (Patrik S114):** als lokales External mit einer
+eigenen `Include.cmake` im Projekt, die `Solution.json` über das Feld
+`include` nennt; verworfen a (das Zip selbst schreiben, ohne Kompression,
+ohne fremden Code — liest nur Eigenes), c (als Bibliothek unter
+`projects/libs`). Verworfen b (private Zip-Klassen von Qt 6.10.1,
 `qzipwriter_p.h`: ohne Zusage), c (ein Ordner), d (eine JSON-Datei mit allem
 als Text). **Vorgemerkt (Patrik):** `.lvdata` bekommt ein eigenes Icon wie
 die anderen Formate — so gelesen von Claude, bei Patrik nachgefragt.
@@ -239,6 +242,66 @@ die Listen im Programm zeigen das Neue ohne Neustart (nicht geprüft, ob das
 Nicht im Export: die Werke am frei gewählten Ort (`.lvloop`, `.lvcomp`,
 `.lvfx`, `.lvkar`) und die Testaufnahmen der Kamera.
 
+**Die Liste „Let me decide for each file" (Bild gebilligt, Patrik S114):**
+ein Dialog mit dem Titel „n names already exist" und dem Satz „Tick what you
+want to keep. Both ticked: the imported file gets a number added to its
+name." Darunter eine Tabelle mit drei Spalten: **Name**, **Mine**,
+**Imported**; in den Köpfen von Mine und Imported je ein Haken, der die
+ganze Spalte setzt. Die Zeilen sind nach Bereich gruppiert (eine graue
+Zeile „Visualizer presets · equalizer"). Je Zeile der Name, dann für beide
+Dateien ein Haken, Datum und Größe; die jüngere trägt „newer". Unten eine
+Zeile, die mitzählt („Keeps 5 of yours, replaces 1, adds 1 under a new
+name"), **Back** und **Import**. Von Claude gesetzt: sind in einer Zeile
+beide Haken aus, bleibt die eigene (es wird nichts gelöscht).
+
+### Die Einstellungen im Export (Liste gebilligt, Patrik S114)
+
+Der Export führt eine **feste Liste** dessen, was mitgeht; ein neuer
+Schlüssel geht erst mit, wenn er dort eingetragen wird.
+
+| Geht mit | Schlüssel |
+|---|---|
+| Tastenkürzel | `shortcuts/*` |
+| Palette der Effekte | `effectPalette/favorites`, `effectPalette/recent` |
+| Favoriten der Presets (**E1 a**) | `presets/chain/favorites`, `presets/karaoke/favorites` — volle Dateipfade, sie gehen mit, wie sie sind; ein Eintrag ohne Datei am Ziel bleibt stehen. Verworfen b (bleiben draußen), c (tote Einträge fallen beim Import weg) |
+| Player | `player/shuffle`, `player/repeatMode`, `player/resumePlayback` |
+| Composer | `composer/atEnd`, `loop`, `resume`, `playerResumes`, `resumesWhenSwitchedOn`, `newClipSeconds`, `rowHeightPercent`, `syncEffectChain`, `muteProfile` |
+| Import und MilkDrop | `import/avsRenderScaleDivisor`, `milkdrop/*` |
+| Editor | `editor/indentWidth`, `spaceAroundOperators`, `maxBlankLines` |
+| Lyrics und Karaoke | `lyrics/onlineSearch`, `lyrics/saveLocation`, `lyricsSync/prerollMs`, `karaoke/enabled` |
+| Loop | `loop/drumRightClickDeletes`, `loop/notesRightClickDeletes` |
+| Sonstiges | `kamera/aufnahmeDauer`, `configpanel/preview/*` |
+
+| Geht nicht mit | Schlüssel |
+|---|---|
+| Fensterlage | `DockManager/*`, alle `…/geometry`, alle `…Splitter` |
+| Gemerkte Ordner und Dateien | alle `…/lastDir`, `loop/lastFile`, `effectPalette/presetGroupDir`, `editor/shaderFileDir/*`, `import/imageSearchDir`, `screenshot/baseDir`, `panels/import_browser/lastPreset`, `filter` |
+| Stand der letzten Sitzung | `player/resumeFile`, `resumeIndex`, `resumePositionMs`, `resumeWasPlaying`, `composer/session/*`, `playlist/sessionIndex`, `presets/chain/current`, `karaoke/currentPreset`, `karaoke/currentTrailPreset`, `ui/lastVisualizer` |
+| Zuletzt geladene Presets | `presets/chain/recent`, `presets/karaoke/recent` |
+| **Geheimnis** | `shadertoy/apiKey` — ein Zugangsschlüssel, geht in keinen Export |
+| Entwicklung | `data/bundledFromProjectFirst` |
+
+Quelle der Liste: die Schlüssel im Code (Suche nach `value(` und
+`setValue(`) und die 82 Schlüssel in Patriks Registry, nur die Namen. Nicht
+erfasst: Schlüssel, die über eine Konstante statt über ein Literal gesetzt
+werden und bei Patrik nie gesetzt waren — beim Bau gegenprüfen.
+
+**Dazu nachgesehen (S114):** die Versätze der Songtexte liegen als
+`lyrics/offsets.json` im Benutzerordner und gehen mit „Downloaded lyrics"
+mit; `lyrics/notfound.json` (gemerkte Fehlsuchen) und `session.m3u8` (die
+Sitzungs-Playlist) gehen nicht mit. Im Benutzerordner `karaoke` liegen auch
+Karaoke-Presets, nicht nur Trails: der Bereich heißt „Karaoke presets and
+trails", `current.lvkar` (der laufende Stand) bleibt draußen. Die Favoriten
+der Effekt-Palette sind Nummern in der Modulliste — zwischen zwei Fassungen
+mit verschiedener Liste können sie verrutschen (nicht geprüft).
+
+**miniz, an der Quelle (S114):** die Lizenzdatei
+(`richgel999/miniz`, `LICENSE`) beginnt mit „Copyright 2013-2014 RAD Game
+Tools and Valve Software" und „Permission is hereby granted, free of charge,
+…" — der Wortlaut der MIT-Lizenz, der Name steht nicht in der Datei. Neuestes
+Release laut GitHub: 3.1.2 vom 01.07.2026, eine Datei `miniz-3.1.2.zip`
+(101 958 Byte); ihr Inhalt ist nicht angesehen.
+
 ## 5. Stufen (Vorschlag)
 
 | Stufe | Inhalt | Stand |
@@ -246,9 +309,24 @@ Nicht im Export: die Werke am frei gewählten Ort (`.lvloop`, `.lvcomp`,
 | A1 | Eine Stelle für „Ordner eines mitgelieferten Bereichs"; die sieben Sucher rufen sie | **gebaut (S114):** `core/Mitgeliefert.hpp/.cpp` — `suche` (rein), `ordner` (mit Einstellung und einer Log-Zeile je Bereich), der Schalter „Bundled Data: Read from the project folder first" im Settings-Panel (nur im Entwicklungsbaum zu sehen). Aufrufer: `NodePresetStore`, `ShaderVorlagen`, `TrailPresetStore`, `FormPresets`, `Mute`, `Kit` (damit auch die Instrumente), `PresetTypeIcons`. `PresetSpeichern` blieb: der Programmordner zählt dort schon als mitgeliefert. Sechs Fälle in `test_Mitgeliefert.cpp`. **Im Programm nicht gesehen** |
 | A2 | `asset/Asset.cmake`: die Bereiche bei jedem Bau als `asset/…` neben die Exe, `presets` über dasselbe Ziel (D2 a, D3 a, D4 a) | **gebaut (S114):** `asset/Asset.cmake` (die Liste), `asset/AssetAbgleich.cmake` (führt sie aus), das Ziel `LumiViz_Assets` im `CMakeLists.txt`, von dem `LumiViz` abhängt. 421 Dateien; ein Lauf ohne Änderung rund 1,1 s, der erste rund 2,2 s (je einmal gemessen, gegen einen Wegwerf-Ordner). Belegt: in beiden Bau-Ordnern liegen alle Bereiche. Nicht belegt: eine weitergegebene Exe an einem Ort ohne Projekt darüber |
 | A3 | Eigene Instrumente im Benutzerordner (mit Stufe 14 des Loops) | offen |
-| A4 | Export und Import (D5 a, D6 a, D7 a, §4a): miniz als External, Dialoge, die Liste der Einstellungen | offen; vorher die Liste der Schlüssel vorlegen und ein Bild der Liste „Let me decide for each file" |
+| A4a | Export und Import, der Kern ohne Fenster (D5 a, D6 a, D7 a, E1 a, E2 b) | **gebaut (S114):** miniz 3.1.2 als lokales External mit eigener `externals/miniz/Include.cmake` im Projekt (`Solution.json`, Feld `include` — trägt in v0.11.1, belegt in beiden Compilern); `core/ZipArchiv` (die einzige Stelle, die miniz kennt; nur über Speicher, `MINIZ_NO_STDIO`); `core/Datensicherung` — neun Bereiche, `sammle`, `exportiere`, `oeffne`, `importiere` mit den vier Regeln, `nameMitZahl`, die feste Liste der Einstellungen. Ein Archiv schreibt nur in die Ordner der Bereiche (Pfade mit `..`, Laufwerk, `\` oder außerhalb werden gezählt und ausgelassen). 17 Fälle in `test_ZipArchiv.cpp` und `test_Datensicherung.cpp`; das geschriebene Archiv mit dem Zip-Werkzeug von Windows entpackt (Namen mit Umlauten, Zeit der Dateien stimmen). Von Claude gesetzt: „Visualizer presets" nimmt auch `presets/smoothing` und `presets/audio`; „Composer" den ganzen Ordner `composer`; das importierte Datum der Datei wird gesetzt; beim zweiten „Keep both" derselben Datei entsteht eine weitere Kopie mit der nächsten Zahl. **Im Programm ist nichts zu sehen** |
+| A4b | Die Dialoge (§4a): Zeile User data im Settings-Panel, Export your data, Import data, die Liste „Let me decide for each file"; die Listen im Programm neu lesen | offen |
 
 ## 6. Changelog
+
+- **0.3.0** (S114): Entscheide E1 a (Favoriten der Presets gehen mit) und
+  E2 b (miniz als lokales External mit eigener `Include.cmake` im Projekt —
+  Patrik: so können es auch Anwender ohne Zugriff auf CMakeCraft; passt es,
+  geht die Anleitung dorthin); das Bild der Liste „Let me decide for each
+  file" und die Liste der Einstellungen gebilligt; Stufe A4a gebaut.
+  Richtiggestellt: „ein weiteres lokales External braucht eine Änderung in
+  CMakeCraft" war falsch — das Feld `include` gibt es (Schema §5.2).
+  **Befund am Rand:** in der Konfiguration Testing (MSVC) tragen weder
+  LumiViz noch Core noch miniz `/MD` — die Objektdateien verlangen `LIBCMT`
+  (mit `dumpbin` an `Mitgeliefert.obj` und `miniz.obj` nachgesehen), Qt ist
+  `/MD`. Seit miniz dabei ist, meldet der Linker das an `LumiViz.exe`
+  (LNK4098, LNK4217); der Zustand selbst bestand vorher. Nicht behoben —
+  gehört zu den Presets oder zu CMakeCraft (`Offene_Punkte.md`).
 
 - **0.2.0** (S114): Entscheide D2 a, D3 a (mit `asset/Asset.cmake`), D4 a,
   D5 a, D6 a, D7 a (mit „Let me decide for each file"), D9 a (mit Schalter),

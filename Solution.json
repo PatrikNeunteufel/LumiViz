@@ -98,6 +98,12 @@
       "system": true,
       "package": "onnxruntime"
     },
+    "miniz": {
+      "description": "Zip lesen und schreiben (Export und Import der eigenen Daten, .lvdata). Lokales External mit EIGENER Include.cmake im Projekt (Feld include) — CMakeCraft kennt miniz nicht. Datenablage_Konzept.md, E2 b (S114); Herkunft und Pruefsumme: externals/miniz/README.md",
+      "skip": false,
+      "path": "externals/miniz",
+      "include": "externals/miniz/Include.cmake"
+    },
     "sichttest": {
       "description": "Sichttest-Steuerung (SichtTest_Helper): fertiges Paket mit Koepfen, SichttestSteuerung1.dll und dem Tester im Ordner sichttest; es wird nichts gelinkt. Composer_Konzept §12.2 Naht N19",
       "skip": false,
@@ -186,7 +192,7 @@
 
         "core": {
           "dependencies": [ "BasicLogger", "EelTranspiler", "AvsParser", "MilkParser", "HlslTranspiler" ],
-          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest" ],
+          "externals": [ "Qt6", "qt-ads", "bass", "lua54", "sichttest", "miniz" ],
           "external_options": {
             "bass": { "BASS_FLAC": true, "BASS_MIX": true },
             "lua54": { "LUA_EMBEDDED": false }

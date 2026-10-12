@@ -101,6 +101,46 @@ Der Generator steht unter MIT; der erzeugte Ladecode ist gemeinfrei.
 
 > Copyright (c) 2008-2018 The Khronos Group Inc. — **MIT-artig (Khronos)**
 
+### miniz 3.1.2 — `externals/miniz/`
+
+Zip lesen und schreiben, für den Export und Import der eigenen Daten
+(`.lvdata`). `miniz.c` und `miniz.h` liegen unverändert im Repository und
+werden **in die Exe gelinkt** — der Vermerk unten gehört deshalb zu jedem
+weitergegebenen Binärpaket; diese Datei liegt nach jedem Bau neben der Exe.
+Herkunft, Fassung und Prüfsumme: `externals/miniz/README.md`; der Lizenztext
+im Original: `externals/miniz/LICENSE`.
+
+> <https://github.com/richgel999/miniz>
+
+```
+Copyright 2013-2014 RAD Game Tools and Valve Software
+Copyright 2010-2014 Rich Geldreich and Tenacious Software LLC
+
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+Der Wortlaut ist der der MIT-Lizenz; der Name steht in der Lizenzdatei nicht.
+Im Kopf von `miniz.h` steht zusätzlich „public domain … See ‚unlicense'
+statement at the end of this file".
+
 ---
 
 ## 2. Portierter Fremdcode in LumiViz-Dateien
@@ -176,6 +216,7 @@ Build-Ordners:
 | `Qt6*.dll` und die Plugin-Ordner | **Qt 6** | LGPL-3.0 (s. o.) |
 | `bass.dll`, `bassflac.dll` | **BASS** (un4seen) | proprietär, nicht-kommerziell frei (s. u.) |
 | `lua54.dll` | **Lua 5.4** | MIT |
+| (in `LumiViz.exe`) | **miniz 3.1.2**, statisch gelinkt | MIT-Wortlaut, Vermerk in §1 |
 
 **Qt Advanced Docking System wird STATISCH gelinkt** — es steckt also in der
 Exe, nicht in einer eigenen DLL. Die LGPL-2.1 verlangt in dem Fall, dass
