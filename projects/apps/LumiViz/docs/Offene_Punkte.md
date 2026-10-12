@@ -2450,7 +2450,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Patrik geprüft (S115, im Gespräch, ohne Testlog): **P0 bis P3 ok**;
     **P5 Befund** — Ctrl+Z nahm nach Use nichts zurück, erst nach einem Klick
     ins Panel Loop; behoben nach Entscheid Z1 a (Ctrl+Z und Ctrl+Y gelten im
-    Fenster selbst), ⬜ P5 neu prüfen. Alles andere ungesehen — ⬜ Liste 10,
+    Fenster selbst), **P5 danach von Patrik neu geprüft: ok**. Alles andere
+    ungesehen — ⬜ Liste 10,
     Abschnitt P (P4, P6 bis P14) und Urteile U37 bis U41; ⬜ ob Ctrl+Z im
     Instrument-Creator ankommt (hängt genauso am Editor, nicht geprüft).
     Nicht geprüft: das Menü des Rechtsklicks, die
@@ -5228,7 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 1.156.0 | 2026-10-12 | Session 115 — von Patrik im Programm geprüft: Datenablage D1 und D3 ok, Liste 10 P0 bis P3 ok; **Befund P5** (Ctrl+Z kam im Fenster Instruments nicht an), behoben nach Entscheid Z1 a, P5 neu zu prüfen; offen daneben: Ctrl+Z im Instrument-Creator |
+| 1.156.0 | 2026-10-12 | Session 115 — von Patrik im Programm geprüft: Datenablage D1 und D3 ok, Liste 10 P0 bis P3 ok; **Befund P5** (Ctrl+Z kam im Fenster Instruments nicht an), behoben nach Entscheid Z1 a, P5 danach neu geprüft: ok; offen daneben: Ctrl+Z im Instrument-Creator |
 | 1.155.0 | 2026-10-12 | Abschluss Session 114 — **Datenablage gebaut** (A1 bis A4b, A3): Mitgeliefertes neben der Exe über `asset/Asset.cmake`, Export und Import der eigenen Daten als `.lvdata` mit miniz; **Stufe 14 des Loops gebaut** (14a bis 14c): `.lvinst` in Fassung 3, eigene Instrumente als `user:<name>`, das Fenster Instruments mit Browse...; alles im Programm ungesehen — lokale Listen `Sichttest_Datenablage.md` und Liste 10 Abschnitt P; Befund `/MD` in der Konfiguration Testing; vorgemerkt: Schalter aus P2 c, Beispiele neben die Exe, Icons, mehr als vier Schichten |
 | 1.154.0 | 2026-10-12 | Session 114 — Loop: M0 bis M4, M12, M13 der Liste 10 von Patrik geprüft (ok); neu der Block **Datenablage** (Steuerdokument `core-services/Datenablage_Konzept.md`, Entscheide D1 b bis D10): Stufe A1 (eine Stelle für mitgelieferte Bereiche, Schalter in den Settings) und A2 (`asset/Asset.cmake`, Abgleich bei jedem Bau) gebaut, A3 (eigene Instrumente) und A4 (Export und Import) offen; der Kleinkram „Kit und Instrumente fehlen neben der Exe" ist damit erledigt; Stufe 14 des Loops wartet auf A4 (D1 b), F3 b notiert |
 | 1.153.0 | 2026-10-11 | Session 113 — §6 Loop: Stufe 12 (Effekte am Clip; E2 b, F2 a, G1 b) und Stufe 13 (Mehrfachauswahl in den Editoren; V1 a, V2 a, V3 a, der Haken Right-click deletes) gebaut; von Stufe 12 hat Patrik F0 bis F4 geprüft, Stufe 13 ist ungesehen; neu vorgemerkt Stufe 11 (Samples als Schicht, Multisamples), 14 (Palette der Instrumente, P1 a), 15 (Wave-Clips und Autotune, zurückgestellt); ein voller Testlauf brach einmal bei den Composer-Fällen „S102 Zeitachse" ab, Ursache nicht untersucht |
