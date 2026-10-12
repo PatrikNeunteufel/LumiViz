@@ -54,6 +54,16 @@ inline constexpr double kTonhoeheStartMin = -24.0;
 inline constexpr double kTonhoeheStartMax = 48.0;
 inline constexpr double kTonhoeheZeitMaxMs = 2000.0;
 
+/// Die Art des Filters einer Schicht (Stufe 11e; Skizze gebilligt, Patrik
+/// S116). Der Tiefpass laesst durch, was unter der Grenze liegt, der Hochpass,
+/// was darueber liegt, der Bandpass, was um sie herum liegt.
+enum class FilterArt : int
+{
+    Tiefpass = 0,
+    Hochpass,
+    Bandpass,
+};
+
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
 /// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze
 /// gebilligt, Patrik S111). Die Schichten eines Instruments werden beim
@@ -110,6 +120,13 @@ struct Schicht
     /// Nach dieser Zeit ist die Tonhoehe angekommen (bis auf ein Zwanzigstel
     /// des Wegs, wie Decay); 0 = kein Weg, die Note beginnt auf ihrem Ton.
     double tonhoeheZeitMs = 100.0;
+
+    // --- Art und Resonanz des Filters (Stufe 11e; Entscheid H1 b, Patrik S116) ---
+    FilterArt filterArt = FilterArt::Tiefpass;
+    /// Resonance, 0…1: die Betonung an der Grenze; beim Bandpass die Breite
+    /// (mehr = schmaler). Ein Tiefpass mit 0 ist der Filter bis Stufe 11d,
+    /// unveraendert — darueber rechnet er wie Hochpass und Bandpass.
+    double filterResonanz = 0.0;
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 };
@@ -171,10 +188,12 @@ struct Instrument
 // kennt die Schwingung `noise` und an jeder Schicht `pitchStart` (Halbtoene)
 // und `pitchTime` (ms) — aus demselben Grund eine eigene Fassung: ein aelteres
 // Programm spielte Rauschen als Sinus und einen fallenden Ton gerade.
-// Geschrieben wird Fassung 5.
+// Fassung 6 (S116, Stufe 11e) kennt an jeder Schicht `filterType` (`lowpass`,
+// `highpass`, `bandpass`) und `filterResonance` — ein aelteres Programm
+// spielte einen Hochpass als Tiefpass. Geschrieben wird Fassung 6.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 5;
+inline constexpr int kInstrumentFassung = 6;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

@@ -129,6 +129,95 @@ struct Verzerrer
     [[nodiscard]] double bei(double wert) const { return staerke > 0.0 ? std::tanh(staerke * wert) * norm : wert; }
 };
 
+/// Der Filter einer Schicht fuer eine Seite des Tons (Stufe 11e).
+///
+/// Ein **Tiefpass ohne Resonanz** ist der Filter bis Stufe 11d, unveraendert:
+/// zwei Stufen erster Ordnung hintereinander — jedes Instrument von frueher
+/// ergibt dieselben Werte. Alles andere rechnet ein Biquad (die Formeln des
+/// Kits, `make_kit.py`): Hochpass, Bandpass mit gleichbleibender Spitze, und
+/// der Tiefpass mit Resonanz. Die Guete waechst mit `filterResonanz` von 0,707
+/// (keine Betonung) bis rund 11; bei Tiefpass und Hochpass wird der Ton dabei
+/// leiser gestellt, damit die Spitze an der Grenze nicht davonlaeuft.
+struct Filter
+{
+    Filter(const Schicht& schicht, int rate)
+        : m_art(schicht.filterArt), m_rate(rate), m_an(schicht.filterTeilton > 0.0)
+    {
+        const double resonanz = std::isfinite(schicht.filterResonanz) ? std::clamp(schicht.filterResonanz, 0.0, 1.0) : 0.0;
+        m_alt = m_art == FilterArt::Tiefpass && resonanz <= 0.0;
+        m_guete = kGueteOhne * std::exp2(4.0 * resonanz);
+        if (m_art != FilterArt::Bandpass) m_laut = 1.0 / std::sqrt(m_guete / kGueteOhne);
+    }
+    [[nodiscard]] bool an() const { return m_an; }
+    /// Ein Abtastwert durch den Filter; `grenzeHz` darf sich von Wert zu Wert aendern.
+    [[nodiscard]] double bei(double wert, double grenzeHz)
+    {
+        if (m_alt)
+        {
+            const double a = 1.0 - std::exp(-2.0 * kPi * grenzeHz / m_rate);
+            m_f1 += a * (wert - m_f1);
+            m_f2 += a * (m_f1 - m_f2);
+            return m_f2;
+        }
+        if (grenzeHz != m_grenze)
+        {
+            // nur neu rechnen, wenn die Grenze sich bewegt hat (Envelope)
+            m_grenze = grenzeHz;
+            const double w = 2.0 * kPi * grenzeHz / m_rate;
+            const double alpha = std::sin(w) / (2.0 * m_guete);
+            const double c = std::cos(w);
+            const double a0 = 1.0 + alpha;
+            switch (m_art)
+            {
+            case FilterArt::Tiefpass:
+                m_b0 = (1.0 - c) / 2.0 / a0;
+                m_b1 = (1.0 - c) / a0;
+                m_b2 = m_b0;
+                break;
+            case FilterArt::Hochpass:
+                m_b0 = (1.0 + c) / 2.0 / a0;
+                m_b1 = -(1.0 + c) / a0;
+                m_b2 = m_b0;
+                break;
+            case FilterArt::Bandpass:
+                m_b0 = alpha / a0;
+                m_b1 = 0.0;
+                m_b2 = -alpha / a0;
+                break;
+            }
+            m_a1 = -2.0 * c / a0;
+            m_a2 = (1.0 - alpha) / a0;
+        }
+        const double aus = m_b0 * wert + m_b1 * m_x1 + m_b2 * m_x2 - m_a1 * m_y1 - m_a2 * m_y2;
+        m_x2 = m_x1;
+        m_x1 = wert;
+        m_y2 = m_y1;
+        m_y1 = aus;
+        return aus * m_laut;
+    }
+
+private:
+    static constexpr double kGueteOhne = 0.70710678118654752;
+    FilterArt m_art;
+    int m_rate;
+    bool m_an;
+    bool m_alt = true;
+    double m_guete = kGueteOhne;
+    double m_laut = 1.0;
+    double m_f1 = 0.0;
+    double m_f2 = 0.0;
+    double m_grenze = -1.0;
+    double m_b0 = 0.0;
+    double m_b1 = 0.0;
+    double m_b2 = 0.0;
+    double m_a1 = 0.0;
+    double m_a2 = 0.0;
+    double m_x1 = 0.0;
+    double m_x2 = 0.0;
+    double m_y1 = 0.0;
+    double m_y2 = 0.0;
+};
+
 /// Pitch sweep (Stufe 11d): das Verhaeltnis zur Tonhoehe der Note, je
 /// Abtastwert. Die Frequenz laeuft von ihrem Start auf die der Note zu —
 /// `f = ziel + (start − ziel) · e^(−t/τ)`, wie der Gleitton des Kits
@@ -176,9 +265,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
 
     const double einsatz = std::max(1.0, schicht.vibratoEinsatzMs * rate / 1000.0);
     const bool vibrato = schicht.vibratoHz > 0.0 && schicht.vibratoCent > 0.0;
-    const bool filter = schicht.filterTeilton > 0.0;
-    double f1 = 0.0;
-    double f2 = 0.0;
+    Filter filter(schicht, rate);
     const double pegel = kPegel * schicht.laut;
 
     for (std::int64_t t = 0; t < frames; ++t)
@@ -202,15 +289,8 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
             p -= std::floor(p);
         }
         wert *= jeStimme;
-        if (filter)
-        {
-            const double grenze =
-                std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
-            const double a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
-            f1 += a * (wert - f1);
-            f2 += a * (f1 - f2);
-            wert = f2;
-        }
+        if (filter.an())
+            wert = filter.bei(wert, std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45));
         wert = verzerrer.bei(wert);
         const auto aus = static_cast<float>(wert * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
@@ -282,9 +362,7 @@ void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     const Verzerrer verzerrer(schicht.verzerrung);
-    const bool filter = schicht.filterTeilton > 0.0;
-    double f1 = 0.0;
-    double f2 = 0.0;
+    Filter filter(schicht, rate);
     const double pegel = kPegel * schicht.laut;
     std::uint32_t folge = 22222u;
     for (std::int64_t t = 0; t < frames; ++t)
@@ -292,14 +370,8 @@ void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int
         const double h = huelle.bei(t);
         folge = folge * 1664525u + 1013904223u;
         double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
-        if (filter)
-        {
-            const double grenze = std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
-            const double a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
-            f1 += a * (wert - f1);
-            f2 += a * (f1 - f2);
-            wert = f2;
-        }
+        if (filter.an())
+            wert = filter.bei(wert, std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45));
         const auto aus = static_cast<float>(verzerrer.bei(wert) * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
@@ -347,9 +419,7 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
     };
 
     const Verzerrer verzerrer(schicht.verzerrung);
-    const bool filter = schicht.filterTeilton > 0.0;
-    std::array<double, 2> f1 = {0.0, 0.0};
-    std::array<double, 2> f2 = {0.0, 0.0};
+    std::array<Filter, 2> filter = {Filter(schicht, rate), Filter(schicht, rate)};  // je Seite einer
     const double pegel = schicht.laut;
     // Pitch sweep (N2 a): die Aufnahme laeuft am Anfang schneller (oder langsamer) und kommt
     // auf ihr Tempo — der Sustain loop rechnet mit jedem Schritt
@@ -362,22 +432,13 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         const bool gehalten = schleife && t < huelle.ende;
         // an der Naht: was gleich wieder beginnt, kommt schon dazu
         const double blende = gehalten && naht > 0.0 && ort > bis - naht ? (ort - (bis - naht)) / naht : 0.0;
-        double a = 0.0;
-        if (filter)
-        {
-            const double grenze = std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
-            a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
-        }
+        const double grenze =
+            filter[0].an() ? std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45) : 0.0;
         for (std::size_t seite = 0; seite < 2; ++seite)
         {
             double wert = lies(ort, seite);
             if (blende > 0.0) wert = wert * (1.0 - blende) + lies(ort - (bis - von), seite) * blende;
-            if (filter)
-            {
-                f1[seite] += a * (wert - f1[seite]);
-                f2[seite] += a * (f1[seite] - f2[seite]);
-                wert = f2[seite];
-            }
+            if (filter[seite].an()) wert = filter[seite].bei(wert, grenze);
             daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(verzerrer.bei(wert) * h * pegel);
         }
         ort += schritt * weg.bei(t);
@@ -454,6 +515,11 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     // seit Fassung 5 (Pitch sweep): Halbtoene neben der Note, und die Zeit des Wegs
     o[QStringLiteral("pitchStart")] = schicht.tonhoeheStartHt;
     o[QStringLiteral("pitchTime")] = schicht.tonhoeheZeitMs;
+    // seit Fassung 6: Art und Resonanz des Filters
+    o[QStringLiteral("filterType")] = QLatin1String(schicht.filterArt == FilterArt::Hochpass   ? "highpass"
+                                                    : schicht.filterArt == FilterArt::Bandpass ? "bandpass"
+                                                                                               : "lowpass");
+    o[QStringLiteral("filterResonance")] = schicht.filterResonanz;
     if (schicht.schwingung == Schwingung::Sample)
     {
         // seit Fassung 4; nur eine Sample-Schicht traegt sie
@@ -515,6 +581,12 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     // seit Fassung 5; in einer aelteren Datei fehlen sie — dann kein Pitch sweep
     neu.tonhoeheStartHt = zahl("pitchStart", vorgabe.tonhoeheStartHt, kTonhoeheStartMin, kTonhoeheStartMax);
     neu.tonhoeheZeitMs = zahl("pitchTime", vorgabe.tonhoeheZeitMs, 0.0, kTonhoeheZeitMaxMs);
+    // seit Fassung 6; fehlt die Art oder ist sie unbekannt, gilt der Tiefpass
+    const QString filterArt = wurzel.value(QStringLiteral("filterType")).toString();
+    neu.filterArt = filterArt == QLatin1String("highpass")   ? FilterArt::Hochpass
+                    : filterArt == QLatin1String("bandpass") ? FilterArt::Bandpass
+                                                             : FilterArt::Tiefpass;
+    neu.filterResonanz = zahl("filterResonance", vorgabe.filterResonanz, 0.0, 1.0);
     return neu;
 }
 

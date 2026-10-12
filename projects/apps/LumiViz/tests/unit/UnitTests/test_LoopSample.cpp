@@ -489,5 +489,16 @@ TEST_SUITE("Loop Sample")
         // 0 st: die Zeit zaehlt nicht — Abtastwert fuer Abtastwert wie ohne
         instrument.schichten[0].tonhoeheStartHt = 0.0;
         CHECK(rendereTon(instrument, 69, 1500.0, kRate).daten == gerade.daten);
+
+        // --- Stufe 11e: auch die Aufnahme geht durch Hochpass und Bandpass, je Seite ein Filter
+        instrument.schichten[0].filterTeilton = 8.0;  // 3520 Hz, die Aufnahme liegt bei 440 Hz
+        instrument.schichten[0].filterArt = FilterArt::Hochpass;
+        const Klang duenn = rendereTon(instrument, 69, 1500.0, kRate);
+        CHECK(spitze(duenn, 8820, 30000) < 0.03f);
+        CHECK(spitze(duenn, 8820, 30000, 1) < 0.015f);  // rechts halb so laut, wie die Aufnahme
+        CHECK(spitze(duenn, 8820, 30000, 1) > 0.0f);
+        instrument.schichten[0].filterArt = FilterArt::Bandpass;
+        instrument.schichten[0].filterTeilton = 1.0;
+        CHECK(spitze(rendereTon(instrument, 69, 1500.0, kRate), 8820, 30000) == doctest::Approx(1.0f).epsilon(0.03));
     }
 }

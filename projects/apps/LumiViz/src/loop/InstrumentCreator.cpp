@@ -33,6 +33,7 @@
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QStringListModel>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 #include <algorithm>
@@ -48,6 +49,14 @@ namespace
 
 const char* const kLetzterOrdner = "loop/lastInstrumentDir";
 const char* const kLetzterSampleOrdner = "loop/lastSampleDir";
+const char* const kGruppeZu = "loop/creatorFolded/";  ///< dahinter der Schluessel der Gruppe
+
+/// Wird die Stellung der Gruppen gelesen und gemerkt? (Tests schalten es ab.)
+bool& gruppenMerken()
+{
+    static bool an = true;
+    return an;
+}
 
 const QColor kGriffRot(216, 90, 48);    ///< Sample start
 const QColor kGriffBlau(55, 138, 221);  ///< Sustain loop
@@ -557,14 +566,30 @@ void InstrumentCreator::setupUI()
     koerper->addLayout(links, 3);
 
     auto* gitter = new QGridLayout;
+    m_gitter = gitter;
     gitter->setColumnStretch(1, 1);
-    const auto titel = [&](const QString& text) {
-        auto* zeile = new QLabel(text, this);
-        QFont fett = zeile->font();
+    // Die Ueberschrift einer Gruppe ist ein Knopf: ein Klick klappt ihre Zeilen ein und aus
+    // (Wunsch Patrik S116 — das Fenster ist mit jeder Stufe hoeher geworden). Zur Gruppe
+    // gehoert, was im Gitter zwischen ihr und der naechsten Ueberschrift steht.
+    const auto titel = [&](const QString& text, const char* schluessel) {
+        auto* kopf = new QToolButton(this);
+        kopf->setObjectName(QStringLiteral("creatorGroup_") + QLatin1String(schluessel));
+        kopf->setText(text);
+        kopf->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        kopf->setArrowType(Qt::DownArrow);
+        kopf->setAutoRaise(true);
+        kopf->setCursor(Qt::PointingHandCursor);
+        kopf->setToolTip(tr("Click to fold or unfold this group"));
+        QFont fett = kopf->font();
         fett.setBold(true);
-        zeile->setFont(fett);
-        gitter->addWidget(zeile, gitter->rowCount(), 0, 1, 3);
-        return zeile;
+        kopf->setFont(fett);
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(kopf, zeile, 0, 1, 3, Qt::AlignLeft);
+        const QString name = QLatin1String(schluessel);
+        const bool zu = gruppenMerken() && QSettings().value(QLatin1String(kGruppeZu) + name, false).toBool();
+        m_gruppen.push_back(Gruppe{name, kopf, zeile, zu});
+        connect(kopf, &QToolButton::clicked, this, [this, name] { setzeGruppeZu(name, !gruppeZu(name)); });
+        return kopf;
     };
     const auto ms = [](double wert) { return QStringLiteral("%1 ms").arg(gerundet(wert)); };
 
@@ -596,7 +621,7 @@ void InstrumentCreator::setupUI()
         .schieber->setToolTip(tr("The layer starts this long after the note begins (not an echo)"));
 
     // --- Oscillator
-    titel(tr("Oscillator"));
+    titel(tr("Oscillator"), "oscillator");
     m_welle = new QComboBox(this);
     m_welle->setObjectName(QStringLiteral("creatorWaveform"));
     m_welle->addItem(tr("Sine"), static_cast<int>(Schwingung::Sinus));
@@ -771,7 +796,7 @@ void InstrumentCreator::setupUI()
     m_daempfung = m_regler.size() - 1;
 
     // --- Envelope
-    titel(tr("Envelope"));
+    titel(tr("Envelope"), "envelope");
     regler(gitter, tr("Attack"), "creatorAttack", 0, 1000, [](const Schicht& i) { return gerundet(i.anstiegMs); },
            [](Schicht& i, int w) { i.anstiegMs = w; }, [ms](const Schicht& i) { return ms(i.anstiegMs); });
     regler(gitter, tr("Decay"), "creatorDecay", 0, 500, [](const Schicht& i) { return gerundet(i.abfallMs / 10.0); },
@@ -785,13 +810,39 @@ void InstrumentCreator::setupUI()
            [](Schicht& i, int w) { i.ausklangMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.ausklangMs); });
 
     // --- Filter
-    titel(tr("Filter"));
+    titel(tr("Filter"), "filter");
+    // --- Type (Stufe 11e; Skizze gebilligt, Patrik S116): Low-pass ist der Filter von frueher
+    {
+        m_filterArtName = new QLabel(tr("Type"), this);
+        m_filterArt = new QComboBox(this);
+        m_filterArt->setObjectName(QStringLiteral("creatorFilterType"));
+        m_filterArt->addItem(tr("Low-pass"), static_cast<int>(FilterArt::Tiefpass));
+        m_filterArt->addItem(tr("High-pass"), static_cast<int>(FilterArt::Hochpass));
+        m_filterArt->addItem(tr("Band-pass"), static_cast<int>(FilterArt::Bandpass));
+        m_filterArt->setToolTip(tr("Low-pass keeps what lies below Cutoff, High-pass what lies above it, Band-pass what "
+                                   "lies around it. With Cutoff at \"open\" there is no filter"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(m_filterArtName, zeile, 0);
+        gitter->addWidget(m_filterArt, zeile, 1, 1, 2);
+        connect(m_filterArt, &QComboBox::activated, this, [this](int index) {
+            const auto art = static_cast<FilterArt>(m_filterArt->itemData(index).toInt());
+            aendereSchicht([art](Schicht& s) { s.filterArt = art; });
+        });
+    }
     regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filterTeilton * 10.0); },
            [](Schicht& i, int w) { i.filterTeilton = w / 10.0; },
            [](const Schicht& i) {
                return i.filterTeilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filterTeilton, 0, 'f', 1);
            });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    // Resonance (Entscheid H1 b): an allen drei Arten
+    regler(gitter, tr("Resonance"), "creatorResonance", 0, 100, [](const Schicht& i) { return gerundet(i.filterResonanz * 100.0); },
+           [](Schicht& i, int w) { i.filterResonanz = w / 100.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.filterResonanz * 100.0)); })
+        .schieber->setToolTip(tr("Emphasis at Cutoff: further right the filter rings at its edge. With Band-pass it sets "
+                                 "the width — further right the band gets narrower"));
+    m_reglerResonanz = m_regler.size() - 1;
+    m_nichtSaite.push_back(m_reglerResonanz);
     regler(gitter, tr("Envelope"), "creatorFilterEnvelope", 0, 320,
            [](const Schicht& i) { return gerundet(i.filterHuelle * 10.0); },
            [](Schicht& i, int w) { i.filterHuelle = w / 10.0; },
@@ -805,7 +856,7 @@ void InstrumentCreator::setupUI()
         .schieber->setToolTip(tr("Distortion of this layer"));
 
     // --- Vibrato
-    m_vibratoTitel = titel(tr("Vibrato"));
+    m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
            [](Schicht& i, int w) { i.vibratoHz = w / 10.0; },
            [](const Schicht& i) { return QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1); });
@@ -1443,6 +1494,18 @@ void InstrumentCreator::zeigeAlles()
         r.schieber->setValue(std::clamp(r.lese(gewaehlte), r.schieber->minimum(), r.schieber->maximum()));
         r.wert->setText(r.text(gewaehlte));
     }
+    // erst alles in den Gruppen zeigen — dann blendet aus, was die Schwingung nicht kennt,
+    // und zuletzt, was eingeklappt ist (`klappeGruppen`)
+    for (int i = 0; i < m_gitter->count() && !m_gruppen.empty(); ++i)
+    {
+        int zeile = 0;
+        int spalte = 0;
+        int hoch = 0;
+        int breit = 0;
+        m_gitter->getItemPosition(i, &zeile, &spalte, &hoch, &breit);
+        if (QWidget* teil = m_gitter->itemAt(i)->widget(); teil != nullptr && zeile >= m_gruppen.front().zeile)
+            teil->setVisible(true);
+    }
     // was die Schwingung nicht kennt, bleibt weg
     const bool saite = gewaehlte.schwingung == Schwingung::Saite;
     const bool sinus = gewaehlte.schwingung == Schwingung::Sinus;
@@ -1461,6 +1524,15 @@ void InstrumentCreator::zeigeAlles()
     for (const std::size_t platz : m_nurTonweg) zeige(platz, !saite && !rauschen);
     // ohne Weg gibt es keine Zeit zu stellen
     m_regler[m_reglerWegZeit].schieber->setEnabled(gerundet(gewaehlte.tonhoeheStartHt) != 0);
+    // der Filter (Stufe 11e): die Saite hat keinen; steht Cutoff auf „open", ist nichts zu stellen
+    {
+        const QSignalBlocker ruhe(m_filterArt);
+        m_filterArt->setCurrentIndex(m_filterArt->findData(static_cast<int>(gewaehlte.filterArt)));
+    }
+    m_filterArtName->setVisible(!saite);
+    m_filterArt->setVisible(!saite);
+    m_filterArt->setEnabled(gewaehlte.filterTeilton > 0.0);
+    m_regler[m_reglerResonanz].schieber->setEnabled(gewaehlte.filterTeilton > 0.0);
     for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
     {
         // Detect: das Ergebnis gilt fuer die Schicht und die Aufnahme, an der gemessen wurde
@@ -1475,7 +1547,56 @@ void InstrumentCreator::zeigeAlles()
     }
     m_vibratoTitel->setVisible(!saite && !sample && !rauschen);  // eine Ueberschrift ohne Regler darunter bleibt weg
     zeige(m_daempfung, saite);
+    klappeGruppen();
     zeigeBilder();
+}
+
+// --- Gruppen ein- und ausklappen (Wunsch Patrik S116) ---------------------------
+
+void InstrumentCreator::klappeGruppen()
+{
+    for (std::size_t g = 0; g < m_gruppen.size(); ++g)
+    {
+        const Gruppe& gruppe = m_gruppen[g];
+        gruppe.kopf->setArrowType(gruppe.zu ? Qt::RightArrow : Qt::DownArrow);
+        if (!gruppe.zu) continue;
+        // ihre Zeilen: bis zur naechsten Ueberschrift, die letzte bis ans Ende des Gitters
+        const int bis = g + 1 < m_gruppen.size() ? m_gruppen[g + 1].zeile : m_gitter->rowCount();
+        for (int i = 0; i < m_gitter->count(); ++i)
+        {
+            int zeile = 0;
+            int spalte = 0;
+            int hoch = 0;
+            int breit = 0;
+            m_gitter->getItemPosition(i, &zeile, &spalte, &hoch, &breit);
+            if (QWidget* teil = m_gitter->itemAt(i)->widget(); teil != nullptr && zeile > gruppe.zeile && zeile < bis)
+                teil->setVisible(false);
+        }
+    }
+}
+
+bool InstrumentCreator::gruppeZu(const QString& schluessel) const
+{
+    for (const Gruppe& gruppe : m_gruppen)
+        if (gruppe.schluessel == schluessel) return gruppe.zu;
+    return false;
+}
+
+void InstrumentCreator::setzeGruppeZu(const QString& schluessel, bool zu)
+{
+    for (Gruppe& gruppe : m_gruppen)
+    {
+        if (gruppe.schluessel != schluessel || gruppe.zu == zu) continue;
+        gruppe.zu = zu;
+        if (gruppenMerken()) QSettings().setValue(QLatin1String(kGruppeZu) + schluessel, zu);
+        zeigeAlles();
+        return;
+    }
+}
+
+void InstrumentCreator::setzeGruppenMerken(bool an)
+{
+    gruppenMerken() = an;
 }
 
 // =============================================================================

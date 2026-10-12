@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.137.0
+> **Version:** 1.138.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2709,7 +2709,7 @@ die Klaviatur des Editors.
 |---|---|
 | **Name** | Der Titel des Instruments |
 | **Reset** | Zurück auf den Stand beim Öffnen oder nach dem letzten Speichern |
-| **Type**, **Genres**, **Description** | Die zweite Zeile: wo das Instrument einsortiert ist (eine von acht Arten), zu welchen Genres es gehört (mit Kommas getrennt; beim Tippen schlägt das Feld die vorhandenen vor) und ein Satz dazu |
+| **Type**, **Genres**, **Description** | Die zweite Zeile: wo das Instrument einsortiert ist (eine von neun Arten), zu welchen Genres es gehört (mit Kommas getrennt; beim Tippen schlägt das Feld die vorhandenen vor) und ein Satz dazu |
 | **Save** | Wählbar, sobald etwas geändert ist. Bei einem eigenen Instrument schreibt es ohne Rückfrage an seinen Ort. Bei einem mitgelieferten fragt es nach einem **Namen** und legt deine Kopie zu deinen eigenen Dateien — der Dialog zeigt, wie die Datei heißen wird, und warnt, wenn es den Namen schon gibt. Danach spielt das Muster die Kopie |
 | **Save as...** | Schreibt eine Datei an einen Ort deiner Wahl; danach spielt das Muster diese Datei |
 | **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
@@ -2718,6 +2718,7 @@ die Klaviatur des Editors.
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
 | **Add layer from instrument...** | Nimmt die Schichten eines anderen Instruments dazu — aus der Liste der mitgelieferten oder über **From file...** aus einer `.lvinst`. Es ist eine Kopie: das andere Instrument bleibt, wie es ist |
 | **Duplicate**, **Remove**, **▲**, **▼** | Die gewählte Schicht noch einmal, entfernen, hinauf, hinunter |
+| Die Überschriften **Oscillator**, **Envelope**, **Filter**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten) — so wird das Fenster niedriger. Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts |
 | **Name** (Layer) | Wie die Schicht in der Liste heißt |
 | **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
@@ -2729,7 +2730,9 @@ die Klaviatur des Editors.
 | **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
 | **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
 | **Attack**, **Decay**, **Sustain**, **Release** | Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
-| **Cutoff**, **Envelope** (Filter) | Ein Tiefpass, der mit der Tonhöhe mitgeht: Cutoff ganz links ist offen, sonst die Grenze als Vielfaches des Grundtons. Envelope öffnet ihn mit dem Anschlag |
+| **Type** (Filter) | Die Art des Filters. **Low-pass** lässt durch, was unter Cutoff liegt (dumpfer) — der Filter jedes Instruments von früher. **High-pass** lässt durch, was darüber liegt (dünner, heller): der Teppich einer Snare, eine Hi-Hat aus Rauschen. **Band-pass** lässt durch, was um Cutoff herum liegt: ein Clap |
+| **Cutoff**, **Envelope** (Filter) | Die Grenze des Filters; sie geht mit der Tonhöhe mit. Cutoff ganz links ist „open" (kein Filter, Type und Resonance sind dann grau), sonst die Grenze als Vielfaches des Grundtons. Envelope verschiebt sie mit dem Anschlag nach oben |
+| **Resonance** | Betont die Stelle an der Grenze: weiter rechts klingt der Filter dort mit, bis er fast pfeift — mit Envelope zusammen der typische Klang eines Synthesizer-Basses. Beim Band-pass stellt sie die Breite: weiter rechts wird das Band schmaler. Mit mehr Resonance wird der übrige Ton leiser. Ein Low-pass mit 0 % ist genau der Filter von früher; schon bei 1 % ist er etwas heller |
 | **Drive** | Ein Verzerrer für diese Schicht: ganz links aus, weiter rechts rauer und lauter im Eindruck |
 | **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst |
 | **Noise** (Waveform) | Rauschen hat keine Tonhöhe: jede Taste spielt dasselbe, und Voices, Detune, Pitch sweep, die Obertöne und Vibrato fehlen. Geformt wird es mit Hüllkurve, Filter und Drive — kurz und ungefiltert ist es der Klick eines Schlags, länger der Teppich einer Snare. Der Filter geht weiter mit der Note mit: mit Cutoff klingt eine tiefere Taste dumpfer. Das Bild oben heißt dann **Noise** und zeigt ein kurzes Stück |
@@ -2936,6 +2939,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.138.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU der Filter mit **Type** (Low-pass, High-pass, Band-pass) und **Resonance**; NEU die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an ihrer Überschrift ein- und ausklappen; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |
 | 1.137.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU die Schwingung **Noise** und die Regler **Pitch sweep** (die Note fällt oder steigt auf ihre Tonhöhe) und **Sweep time**; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |
 | 1.136.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Edit sound...** im Rechtsklick auf eine Spur: aus Kit-Klang, eigenem Sample oder Tondatei wird ein Instrument der Art Drums mit einer Sample-Schicht; der Loop ändert sich erst mit Save im Creator |
 | 1.135.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Der Klang einer Spur**: die Auswahl **Sound** mit Kit, My samples, **Instrument...**, **Sample file...** (fragt jetzt wie der Creator, ob kopiert wird), **Record sample...**; an einer Instrument-Spur der Knopf **…** mit **Note**, **Length**, **Play**, **Browse...**, **Edit instrument...** |

@@ -795,7 +795,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 5);  // seit S116: Rauschen und Pitch sweep; S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 6);  // seit S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
@@ -1261,6 +1261,200 @@ TEST_SUITE("LoopInstrument")
         }
     }
 
+    // Stufe 11e (Skizze gebilligt, Entscheid H1 b, Patrik S116). Ohne Qt-Anwendung. Gemessen wird an einem
+    // gehaltenen Sinus: was der Filter von ihm uebrig laesst, ist seine Wirkung bei dieser einen Frequenz.
+    TEST_CASE("Loop Instrument 11e: der Filter — Hochpass, Bandpass und Resonanz; der Tiefpass ohne Resonanz bleibt, wie er war")
+    {
+        const auto sinus = [](double cutoff, FilterArt art, double resonanz) {
+            Instrument instrument;
+            Schicht& s = instrument.schichten[0];
+            s.anstiegMs = 0.0;
+            s.halten = 1.0;
+            s.ausklangMs = 20.0;
+            s.filterTeilton = cutoff;
+            s.filterArt = art;
+            s.filterResonanz = resonanz;
+            return instrument;
+        };
+        // der groesste Betrag, nachdem der Filter eingeschwungen ist (ab 200 ms); A3, 220 Hz
+        const auto bleibt = [](const Instrument& instrument) {
+            const Klang klang = rendereTon(instrument, 57, 500.0, kRate);
+            float groesster = 0.0f;
+            for (std::int64_t t = 8820; t < 22050; ++t) groesster = std::max(groesster, std::abs(klang.daten[static_cast<std::size_t>(2 * t)]));
+            return static_cast<double>(groesster);
+        };
+        const double offen = bleibt(sinus(0.0, FilterArt::Tiefpass, 0.0));
+        CHECK(offen == doctest::Approx(0.5).epsilon(0.001));
+        // Cutoff auf „open": die Art zaehlt nicht — Abtastwert fuer Abtastwert derselbe Ton
+        CHECK(rendereTon(sinus(0.0, FilterArt::Hochpass, 0.7), 57, 300.0, kRate).daten ==
+              rendereTon(sinus(0.0, FilterArt::Tiefpass, 0.0), 57, 300.0, kRate).daten);
+
+        // --- der Tiefpass ohne Resonanz ist der von frueher: zwei Stufen erster Ordnung, an der Grenze die Haelfte
+        {
+            const Instrument alt = sinus(1.0, FilterArt::Tiefpass, 0.0);
+            const Klang klang = rendereTon(alt, 57, 300.0, kRate);
+            // nachgerechnet, wie der Rechenkern es bis Stufe 11d tat
+            const double a = 1.0 - std::exp(-2.0 * 3.14159265358979323846 * tonHz(57) / kRate);
+            double f1 = 0.0;
+            double f2 = 0.0;
+            double groessteAbweichung = 0.0;
+            const Klang roh = rendereTon(sinus(0.0, FilterArt::Tiefpass, 0.0), 57, 300.0, kRate);
+            for (std::int64_t t = 0; t < 4410; ++t)  // im gehaltenen Teil: die Huellkurve steht auf 1
+            {
+                const double wert = t == 0 ? 0.0 : static_cast<double>(roh.daten[static_cast<std::size_t>(2 * t)]) / 0.5;
+                f1 += a * (wert - f1);
+                f2 += a * (f1 - f2);
+                if (t > 0) groessteAbweichung = std::max(groessteAbweichung, std::abs(f2 * 0.5 - klang.daten[static_cast<std::size_t>(2 * t)]));
+            }
+            CHECK(groessteAbweichung < 2e-4);  // bis auf die Rundung der Werte auf float
+            CHECK(bleibt(alt) < 0.3);
+            CHECK(bleibt(alt) > 0.2);
+        }
+
+        // --- Hochpass: weit unter der Grenze bleibt fast nichts, weit darueber alles
+        CHECK(bleibt(sinus(8.0, FilterArt::Hochpass, 0.0)) < 0.012);   // 220 Hz gegen 1760 Hz: ein Vierundsechzigstel
+        CHECK(bleibt(sinus(8.0, FilterArt::Hochpass, 0.0)) > 0.004);
+        CHECK(bleibt(sinus(0.2, FilterArt::Hochpass, 0.0)) == doctest::Approx(0.5).epsilon(0.03));
+        // der Tiefpass dagegen laesst denselben Ton unter derselben Grenze durch
+        CHECK(bleibt(sinus(8.0, FilterArt::Tiefpass, 0.0)) > 0.45);
+
+        // --- Bandpass: an der Grenze voll, daneben weniger — und mit Resonanz wird das Band schmaler
+        CHECK(bleibt(sinus(1.0, FilterArt::Bandpass, 0.0)) == doctest::Approx(0.5).epsilon(0.03));
+        const double breit = bleibt(sinus(8.0, FilterArt::Bandpass, 0.0));
+        const double schmal = bleibt(sinus(8.0, FilterArt::Bandpass, 1.0));
+        CHECK(breit == doctest::Approx(0.5 * 0.177).epsilon(0.08));  // Guete 0,707, ein Achtel der Grenze
+        CHECK(schmal < breit / 10.0);
+        CHECK(bleibt(sinus(1.0, FilterArt::Bandpass, 1.0)) == doctest::Approx(0.5).epsilon(0.03));  // die Spitze bleibt
+
+        // --- Resonanz am Tiefpass: an der Grenze betont, darunter leiser gestellt (die Spitze laeuft nicht davon)
+        const double betont = bleibt(sinus(1.0, FilterArt::Tiefpass, 1.0));
+        CHECK(betont == doctest::Approx(0.5 * 2.83).epsilon(0.05));  // Guete 11,3, um ein Viertel leiser gestellt
+        CHECK(bleibt(sinus(8.0, FilterArt::Tiefpass, 1.0)) == doctest::Approx(0.5 * 0.25).epsilon(0.05));
+        CHECK(bleibt(sinus(1.0, FilterArt::Tiefpass, 0.5)) > bleibt(sinus(1.0, FilterArt::Tiefpass, 0.25)));
+        // ein Hauch Resonanz ist ein anderer Tiefpass als keiner: an der Grenze 0,707 statt der Haelfte
+        CHECK(bleibt(sinus(1.0, FilterArt::Tiefpass, 0.01)) > bleibt(sinus(1.0, FilterArt::Tiefpass, 0.0)) + 0.05);
+        // am Hochpass genauso
+        CHECK(bleibt(sinus(1.0, FilterArt::Hochpass, 1.0)) == doctest::Approx(0.5 * 2.83).epsilon(0.05));
+
+        // --- Rauschen durch den Hochpass: die Tiefen fehlen — das Vorzeichen wechselt oefter
+        {
+            Instrument rausch = sinus(0.0, FilterArt::Tiefpass, 0.0);
+            rausch.schichten[0].schwingung = Schwingung::Rauschen;
+            const auto wechsel = [](const Klang& klang) {
+                int zahl = 0;
+                for (std::int64_t t = 1001; t < 5000; ++t)
+                    if (klang.daten[static_cast<std::size_t>(2 * (t - 1))] * klang.daten[static_cast<std::size_t>(2 * t)] < 0.0f) ++zahl;
+                return zahl;
+            };
+            const int weiss = wechsel(rendereTon(rausch, 81, 200.0, kRate));
+            rausch.schichten[0].filterTeilton = 8.0;  // A5 mal acht: 7040 Hz
+            rausch.schichten[0].filterArt = FilterArt::Hochpass;
+            const Klang hell = rendereTon(rausch, 81, 200.0, kRate);
+            CHECK(wechsel(hell) > weiss + 300);  // gemessen: 2449 gegen 1953
+            rausch.schichten[0].filterArt = FilterArt::Tiefpass;
+            CHECK(wechsel(rendereTon(rausch, 81, 200.0, kRate)) < weiss - 300);
+        }
+
+        // --- die Datei: Fassung 6 mit `filterType` und `filterResonance`
+        Instrument instrument = sinus(4.6, FilterArt::Bandpass, 0.15);
+        instrument.schichten.push_back(Schicht{});
+        instrument.schichten[1].filterArt = FilterArt::Hochpass;
+        const QJsonObject json = alsJson(instrument);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 6);
+        const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        REQUIRE(schichten.size() == 2);
+        CHECK(schichten.at(0).toObject().value(QStringLiteral("filterType")).toString() == QStringLiteral("bandpass"));
+        CHECK(schichten.at(0).toObject().value(QStringLiteral("filterResonance")).toDouble() == doctest::Approx(0.15));
+        CHECK(schichten.at(1).toObject().value(QStringLiteral("filterType")).toString() == QStringLiteral("highpass"));
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen == instrument);
+        // Werte in ihren Grenzen; eine unbekannte Art ist der Tiefpass
+        QJsonObject wild = json;
+        QJsonObject schicht = schichten.at(0).toObject();
+        schicht[QStringLiteral("filterType")] = QStringLiteral("notch");
+        schicht[QStringLiteral("filterResonance")] = 7.0;
+        wild[QStringLiteral("layers")] = QJsonArray{schicht};
+        REQUIRE(ausJson(wild, gelesen));
+        CHECK(gelesen.schichten[0].filterArt == FilterArt::Tiefpass);
+        CHECK(gelesen.schichten[0].filterResonanz == 1.0);
+        // eine Datei der Fassung 5 kennt die Felder nicht: der Tiefpass von frueher
+        QJsonObject alt = json;
+        alt[QStringLiteral("version")] = 5;
+        QJsonObject ohne = schichten.at(0).toObject();
+        ohne.remove(QStringLiteral("filterType"));
+        ohne.remove(QStringLiteral("filterResonance"));
+        alt[QStringLiteral("layers")] = QJsonArray{ohne};
+        REQUIRE(ausJson(alt, gelesen));
+        CHECK(gelesen.schichten[0].filterArt == FilterArt::Tiefpass);
+        CHECK(gelesen.schichten[0].filterResonanz == 0.0);
+        CHECK(gelesen.schichten[0].filterTeilton == doctest::Approx(4.6));
+
+        // --- `LUMIVIZ_11E_WAV=<Ordner>` legt Hoerproben ab: Snare, Clap und Hi-Hat aus Rauschen mit Filter,
+        //     ein Bass mit Resonanz und Filter-Huellkurve
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_11E_WAV"); !ordner.isEmpty())
+        {
+            REQUIRE(QDir().mkpath(ordner));
+            const auto schlag = [](Schwingung welle, double laut, double decayMs) {
+                Schicht s;
+                s.schwingung = welle;
+                s.laut = laut;
+                s.anstiegMs = 0.0;
+                s.abfallMs = decayMs;
+                s.halten = 0.0;
+                s.ausklangMs = 30.0;
+                return s;
+            };
+            const auto mitFilter = [](Schicht s, FilterArt art, double cutoff, double resonanz) {
+                s.filterArt = art;
+                s.filterTeilton = cutoff;
+                s.filterResonanz = resonanz;
+                return s;
+            };
+            const auto viermal = [](const Instrument& i, int hoehe, double dauerMs) {
+                const Klang einer = rendereTon(i, hoehe, dauerMs, kRate);
+                std::vector<float> alle;
+                for (int n = 0; n < 4; ++n)
+                {
+                    alle.insert(alle.end(), einer.daten.begin(), einer.daten.end());
+                    alle.resize(alle.size() + static_cast<std::size_t>(2 * kRate / 4), 0.0f);
+                }
+                return alle;
+            };
+            // Snare bei F#3 (185 Hz): zwei Sinus und Rauschen ueber 1800 Hz (mal 9,7)
+            Instrument snare;
+            snare.schichten = {schlag(Schwingung::Sinus, 0.6, 180.0), schlag(Schwingung::Sinus, 0.35, 110.0),
+                               mitFilter(schlag(Schwingung::Rauschen, 0.9, 250.0), FilterArt::Hochpass, 9.7, 0.0)};
+            snare.schichten[1].versatzHalbtoene = 10;
+            // Clap bei C4 (262 Hz): Rauschen um 1200 Hz (mal 4,6), drei kurze Schlaege und der Ausklang
+            Instrument clap;
+            clap.schichten.clear();
+            for (const auto& [einsatz, decay] : {std::pair{0.0, 10.0}, std::pair{10.0, 10.0}, std::pair{20.0, 10.0}, std::pair{30.0, 210.0}})
+            {
+                Schicht s = mitFilter(schlag(Schwingung::Rauschen, 1.0, decay), FilterArt::Bandpass, 4.6, 0.15);
+                s.einsatzMs = einsatz;
+                clap.schichten.push_back(s);
+            }
+            // Hi-Hat bei C5 (523 Hz): Rauschen ueber 7000 Hz (mal 13,4)
+            Instrument hat;
+            hat.schichten = {mitFilter(schlag(Schwingung::Rauschen, 1.0, 70.0), FilterArt::Hochpass, 13.4, 0.0)};
+            Instrument hatOffen = hat;
+            hatOffen.schichten[0].abfallMs = 450.0;
+            // ein Bass: Saege, Tiefpass mit Resonanz, die Huellkurve oeffnet ihn
+            Instrument bass;
+            bass.schichten = {mitFilter(schlag(Schwingung::Saege, 0.8, 300.0), FilterArt::Tiefpass, 2.0, 0.7)};
+            bass.schichten[0].filterHuelle = 14.0;
+            Instrument bassOhne = bass;
+            bassOhne.schichten[0].filterResonanz = 0.0;
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("snare_zwei_sinus_und_rauschen_hochpass.wav")), viermal(snare, 54, 280.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("clap_rauschen_bandpass_vier_schichten.wav")), viermal(clap, 60, 330.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("hat_zu_rauschen_hochpass.wav")), viermal(hat, 72, 90.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("hat_offen_rauschen_hochpass.wav")), viermal(hatOffen, 72, 480.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("bass_saege_tiefpass_resonanz_70.wav")), viermal(bass, 36, 320.0), kRate));
+            CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("bass_dasselbe_ohne_resonanz.wav")), viermal(bassOhne, 36, 320.0), kRate));
+        }
+    }
+
     // Stufe 11d (Skizze gebilligt, Entscheide N1 und N2, Patrik S116). Ohne Qt-Anwendung.
     TEST_CASE("Loop Instrument 11d: Rauschen — eine feste Folge ohne Tonhoehe; Pitch sweep — die Note faellt oder steigt auf ihren Ton")
     {
@@ -1386,7 +1580,7 @@ TEST_SUITE("LoopInstrument")
         beides.schichten[1].tonhoeheStartHt = -7.0;
         beides.schichten[1].tonhoeheZeitMs = 250.0;
         const QJsonObject json = alsJson(beides);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 5);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // die Felder gibt es seit Fassung 5
         const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
         REQUIRE(schichten.size() == 2);
         CHECK(schichten.at(0).toObject().value(QStringLiteral("waveform")).toString() == QStringLiteral("noise"));

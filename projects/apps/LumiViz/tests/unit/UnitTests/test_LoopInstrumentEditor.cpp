@@ -41,6 +41,7 @@
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QSettings>
+#include <QToolButton>
 #include <QSlider>
 #include <QStringList>
 #include <QTemporaryDir>
@@ -53,6 +54,12 @@ using namespace lumi::loop;
 
 namespace
 {
+
+// Die Gruppen des Creators lassen sich einklappen, und das Programm merkt die Stellung
+// (S116). In den Tests wird sie weder gelesen noch gemerkt — sonst hinge ihr Ausgang an dem,
+// was jemand im Programm eingeklappt hat. Gilt fuer die ganze Test-Exe, auch fuer Creator,
+// die Editoren in anderen Dateien anlegen.
+const bool kGruppenNichtMerken = (InstrumentCreator::setzeGruppenMerken(false), true);
 
 void maus(QWidget& ziel, QEvent::Type art, QPoint ort, Qt::MouseButton taste, Qt::MouseButtons tasten)
 {
@@ -376,10 +383,104 @@ TEST_SUITE("LoopInstrumentEditor")
                 CHECK_FALSE(schieber(da)->isHidden());
             }
             CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorCycleTitle"))->text() == QStringLiteral("Noise"));
-            // `LUMIVIZ_INSTRUMENT_NOISE_BILD=<datei.png>` legt ein Bild des Creators mit einer Noise-Schicht ab
+
+            // --- Stufe 11e: Type und Resonance in der Gruppe Filter
+            auto* art = creator.findChild<QComboBox*>(QStringLiteral("creatorFilterType"));
+            REQUIRE(art != nullptr);
+            QSlider* resonanz = schieber("creatorResonance");
+            CHECK(art->count() == 3);
+            CHECK(art->currentText() == QStringLiteral("Low-pass"));  // jede Schicht von frueher
+            CHECK_FALSE(art->isHidden());
+            CHECK_FALSE(resonanz->isHidden());
+            schieber("creatorCutoff")->setValue(0);  // „open": kein Filter, nichts zu stellen
+            CHECK_FALSE(art->isEnabled());
+            CHECK_FALSE(resonanz->isEnabled());
+            schieber("creatorCutoff")->setValue(46);
+            CHECK(art->isEnabled());
+            CHECK(resonanz->isEnabled());
+            art->setCurrentIndex(art->findText(QStringLiteral("Band-pass")));
+            Q_EMIT art->activated(art->currentIndex());
+            CHECK(creator.schicht().filterArt == FilterArt::Bandpass);
+            resonanz->setValue(15);
+            CHECK(creator.schicht().filterResonanz == doctest::Approx(0.15));
+            CHECK(steht(QStringLiteral("15 %")));
+            creator.aendereSchicht([](Schicht& s) { s.filterArt = FilterArt::Hochpass; });
+            CHECK(art->currentText() == QStringLiteral("High-pass"));  // die Auswahl folgt
+            // die Saite hat keinen Filter
+            creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Saite; });
+            CHECK(art->isHidden());
+            CHECK(resonanz->isHidden());
+
+            // --- Gruppen ein- und ausklappen (Wunsch Patrik S116): ein Klick auf die Ueberschrift
+            auto* kopfHuelle = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_envelope"));
+            auto* schwinger = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_oscillator"));
+            auto* vibrato = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_vibrato"));
+            REQUIRE(kopfHuelle != nullptr);
+            REQUIRE(schwinger != nullptr);
+            REQUIRE(vibrato != nullptr);
+            REQUIRE(creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_filter")) != nullptr);
+            CHECK(kopfHuelle->text() == QStringLiteral("Envelope"));
+            CHECK_FALSE(creator.gruppeZu(QStringLiteral("envelope")));
+            CHECK(kopfHuelle->arrowType() == Qt::DownArrow);
+            kopfHuelle->click();
+            CHECK(creator.gruppeZu(QStringLiteral("envelope")));
+            CHECK(kopfHuelle->arrowType() == Qt::RightArrow);
+            CHECK_FALSE(kopfHuelle->isHidden());  // die Ueberschrift bleibt
+            CHECK(schieber("creatorAttack")->isHidden());
+            CHECK(schieber("creatorRelease")->isHidden());
+            CHECK_FALSE(schieber("creatorDamping")->isHidden());  // die anderen Gruppen bleiben offen
+            CHECK_FALSE(schieber("creatorDrive")->isHidden());
+            // eine Aenderung an der Schicht klappt nichts auf
+            creator.aendereSchicht([](Schicht& s) { s.laut = 0.6; });
+            CHECK(schieber("creatorAttack")->isHidden());
+            // die Gruppe Oscillator: zu ist alles weg; wieder auf fehlt weiter, was die Saite nicht kennt
+            schwinger->click();
+            CHECK(wellenWahl->isHidden());
+            CHECK(schieber("creatorDamping")->isHidden());
+            schwinger->click();
+            CHECK_FALSE(wellenWahl->isHidden());
+            CHECK_FALSE(schieber("creatorDamping")->isHidden());
+            CHECK(schieber("creatorVoices")->isHidden());
+            CHECK(vibrato->isHidden());  // die Saite hat kein Vibrato: auch keine Ueberschrift
+            kopfHuelle->click();
+            CHECK_FALSE(creator.gruppeZu(QStringLiteral("envelope")));
+            CHECK_FALSE(schieber("creatorAttack")->isHidden());
+            // die Stellung wird gemerkt und gilt fuer das naechste Fenster (in eigenen Einstellungen)
+            {
+                const QString org = QCoreApplication::organizationName();
+                const QString name = QCoreApplication::applicationName();
+                QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+                QCoreApplication::setApplicationName(QStringLiteral("LoopCreatorGroups"));
+                QSettings().clear();
+                InstrumentCreator::setzeGruppenMerken(true);
+                {
+                    InstrumentCreator erster;
+                    erster.setzeGruppeZu(QStringLiteral("filter"), true);
+                }
+                {
+                    InstrumentCreator zweiter;
+                    CHECK(zweiter.gruppeZu(QStringLiteral("filter")));
+                    CHECK_FALSE(zweiter.gruppeZu(QStringLiteral("envelope")));
+                    zweiter.oeffne(*strings);
+                    CHECK(zweiter.findChild<QSlider*>(QStringLiteral("creatorCutoff"))->isHidden());
+                    CHECK_FALSE(zweiter.findChild<QSlider*>(QStringLiteral("creatorAttack"))->isHidden());
+                }
+                InstrumentCreator::setzeGruppenMerken(false);
+                QSettings().clear();
+                QCoreApplication::setOrganizationName(org);
+                QCoreApplication::setApplicationName(name);
+            }
+            creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Rauschen; });
+            // `LUMIVIZ_INSTRUMENT_NOISE_BILD=<datei.png>` legt ein Bild des Creators mit einer Noise-Schicht ab,
+            // eines mit eingeklappten Gruppen und eines mit Pitch sweep
             if (const QString bild = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_NOISE_BILD"); !bild.isEmpty())
             {
                 CHECK(creator.grab().save(bild));
+                creator.setzeGruppeZu(QStringLiteral("envelope"), true);
+                creator.setzeGruppeZu(QStringLiteral("oscillator"), true);
+                CHECK(creator.grab().save(bild + QStringLiteral(".zu.png")));
+                creator.setzeGruppeZu(QStringLiteral("envelope"), false);
+                creator.setzeGruppeZu(QStringLiteral("oscillator"), false);
                 creator.aendereSchicht([](Schicht& s) {
                     s.schwingung = Schwingung::Sinus;
                     s.tonhoeheStartHt = 22.0;

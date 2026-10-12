@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.53.0
+> **Version:** 0.54.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1672,6 +1672,67 @@ Sinus-Schicht zwei Zeilen höher geworden (im Bild aus dem Test bei 150 %
 rund 1400 Bildpunkte hoch, zuvor rund 1325) — ob es auf Patriks Bildschirm
 passt, ist nicht gesehen.
 
+**Stufe 11e — Hochpass, Bandpass, Resonanz (S116).** Skizze gezeigt und
+**gebilligt (Patrik, S116)**: die Gruppe Filter des Creators, zweimal. Links
+„a layer as today": oben neu die Auswahl **Type** (Low-pass, High-pass,
+Band-pass), darunter wie bisher Cutoff (× 6.0), Envelope, Drive; dazu der
+Satz, dass Low-pass der Filter von heute ist und jedes vorhandene Instrument
+sich damit öffnet. Rechts „a noise layer — a clap": Type Band-pass, Cutoff
+× 4.6, darunter ein weiterer Regler für die Breite (in der Skizze „Width",
+60 %), dann Envelope und Drive.
+**Entscheid H1 b (Patrik, S116) — Resonance an allen drei Arten:** unter
+Cutoff steht bei jeder Art **Resonance**; beim Bandpass bestimmt sie die
+Breite (mehr = schmaler). Bei 0 ist der Tiefpass der von früher. Vorgelegt
+und verworfen: a (nur „Width" am Bandpass; meine Empfehlung, wegen der Höhe
+des Fensters). Patrik dazu: die Gruppen lassen sich ja einklappen — siehe
+unten —, und während des Baus: „tiefpass und resonanz jetzt".
+**Gebaut — 11e (S116):**
+- **Modell:** an jeder Schicht `filterArt` (Tiefpass, Hochpass, Bandpass)
+  und `filterResonanz` (0 bis 1).
+- **Rechnen** (`Filter` in `Instrument.cpp`, je Seite des Tons einer): ein
+  Tiefpass ohne Resonanz ist der Filter bis 11d, unverändert — zwei Stufen
+  erster Ordnung, dieselben Werte wie zuvor (im Test nachgerechnet). Alles
+  andere rechnet ein Biquad mit den Formeln des Kits (`make_kit.py`):
+  Hochpass, Bandpass mit gleichbleibender Spitze, Tiefpass mit Resonanz. Die
+  Güte wächst von 0,707 (Resonance 0) auf rund 11 (100 %); bei Tiefpass und
+  Hochpass wird der Ton dabei leiser gestellt (um die Wurzel des Zuwachses),
+  damit die Spitze an der Grenze nicht davonläuft — bei 100 % ist sie rund
+  2,8-fach, der Rest ein Viertel so laut. Für Schwingungen, Noise und Sample;
+  die Saite hat keinen Filter. Cutoff und Envelope wie bisher (Vielfache der
+  Note); Cutoff auf „open" heißt: kein Filter, gleich welcher Art.
+- **Datei:** `.lvinst` in **Fassung 6** — je Schicht `filterType`
+  (`lowpass`, `highpass`, `bandpass`; unbekannt gilt als Tiefpass) und
+  `filterResonance`. Fassung 1 bis 5 lesen weiter.
+- **Creator:** in der Gruppe Filter oben **Type**, unter Cutoff
+  **Resonance** (0 bis 100 %); beide grau, solange Cutoff auf „open" steht,
+  und weg bei Plucked string.
+Von Claude gesetzt, nicht entschieden: der Bereich der Güte und das
+Leiserstellen; ein Regler in Prozent statt einer Güte; „unbekannt gilt als
+Tiefpass"; jede `.lvinst` wird als Fassung 6 geschrieben. **Der Haken an
+H1 b, wie vorgelegt:** zwischen Resonance 0 und 1 % wechselt der Tiefpass
+die Rechnung — an der Grenze lässt er dann 0,71 statt der Hälfte durch (im
+Test gemessen). Es bleibt bei einem Filter je Schicht; Hochpass und Bandpass
+hintereinander (der Clap des Kits) gehören zur vorgemerkten Kette.
+**Hörproben** (lokal, `.claude/handover/hoerproben_11e/`, aus dem Test mit
+`LUMIVIZ_11E_WAV`): Snare (zwei Sinus und Rauschen durch den Hochpass), Clap
+(vier Schichten Rauschen durch den Bandpass), Hi-Hat zu und offen (Rauschen
+durch den Hochpass), ein Bass mit Säge, Tiefpass, 70 % Resonanz und
+Filter-Hüllkurve, derselbe ohne Resonanz. Gerechnet, **nicht gehört**.
+
+**Gruppen ein- und ausklappen (Wunsch Patrik, S116; gebaut mit 11e):** die
+Überschriften Oscillator, Envelope, Filter und Vibrato sind Knöpfe mit einem
+Pfeil; ein Klick klappt die Zeilen der Gruppe ein (Pfeil nach rechts) und
+wieder aus (Pfeil nach unten). Die Stellung merkt das Programm
+(`loop/creatorFolded/<gruppe>`); sie gilt für jede Schicht und jedes
+Instrument, nicht je Schicht. Was die Schwingung nicht kennt, bleibt auch in
+einer offenen Gruppe weg. Ohne Skizze gebaut, nach Patriks Beschreibung; im
+Bild aus dem Test gesehen. Von Claude gesetzt: eine Stellung für alle
+Schichten; die Zeilen über Oscillator (Name, Level, Transpose, Start offset)
+gehören zu keiner Gruppe und bleiben immer stehen; das Fenster wird beim
+Einklappen nicht von selbst kleiner. In den Tests wird die Stellung weder
+gelesen noch gemerkt (`InstrumentCreator::setzeGruppenMerken`).
+Nicht geprüft: alles im Programm.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2407,6 +2468,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.54.0** (S116, 2026-10-12): Stufe 11e gebaut — der Filter mit Type
+  (Low-pass, High-pass, Band-pass) und Resonance (Skizze gebilligt; Entscheid
+  H1 b), `.lvinst` Fassung 6; im Creator lassen sich die Gruppen ein- und
+  ausklappen (Wunsch Patrik); Hörproben lokal (§4h).
 
 - **0.53.0** (S116, 2026-10-12): Stufe 11d gebaut — die Schwingung Noise,
   Pitch sweep und Sweep time (Skizze gebilligt; Entscheide N1: beide

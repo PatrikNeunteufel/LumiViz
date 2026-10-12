@@ -54,6 +54,7 @@ class QLineEdit;
 class QListWidget;
 class QPushButton;
 class QSlider;
+class QToolButton;
 
 namespace lumi::loop
 {
@@ -277,6 +278,16 @@ public:
     void setReferenzton(bool an);
     [[nodiscard]] bool referenzton() const { return m_referenzton; }
 
+    // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) -----------------------
+    /// Die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an
+    /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
+    /// (`loop/creatorFolded/<schluessel>`), sie gilt fuer jede Schicht und jedes
+    /// Instrument. `schluessel`: `oscillator`, `envelope`, `filter`, `vibrato`.
+    void setzeGruppeZu(const QString& schluessel, bool zu);
+    [[nodiscard]] bool gruppeZu(const QString& schluessel) const;
+    /// Nur fuer Tests: aus = die Stellung wird weder gelesen noch gemerkt.
+    static void setzeGruppenMerken(bool an);
+
     // --- Record... (Stufe 11b, Schritt 3) --------------------------------------
     /// Wer die Audio-Engine nennt, ueber die das Fenster „Record sample"
     /// aufnimmt und spielt — gefragt wird, wenn es sich oeffnet. Ohne ihn (oder
@@ -382,6 +393,9 @@ private:
     std::vector<std::size_t> m_nichtSample;  ///< was eine Aufnahme nicht kennt: Voices, Detune, Vibrato
     std::vector<std::size_t> m_nurTonweg;    ///< Pitch sweep, Sweep time: nicht bei Saite und Rauschen (Stufe 11d)
     std::size_t m_reglerWegZeit = 0;         ///< Platz von Sweep time: grau, solange Pitch sweep auf 0 steht
+    QLabel* m_filterArtName = nullptr;       ///< „Type" in der Gruppe Filter (Stufe 11e)
+    QComboBox* m_filterArt = nullptr;        ///< Low-pass, High-pass, Band-pass
+    std::size_t m_reglerResonanz = 0;        ///< Platz von Resonance: grau, solange Cutoff auf „open" steht
     std::size_t m_reglerStart = 0;
     std::size_t m_reglerVon = 0;
     std::size_t m_reglerBis = 0;
@@ -390,7 +404,19 @@ private:
     QPushButton* m_sampleWahl = nullptr;
     QComboBox* m_grundton = nullptr;
     QCheckBox* m_schleife = nullptr;
-    QLabel* m_vibratoTitel = nullptr;        ///< die Ueberschrift Vibrato: weg, wenn kein Regler darunter steht
+    QWidget* m_vibratoTitel = nullptr;       ///< die Ueberschrift Vibrato: weg, wenn kein Regler darunter steht
+    /// Eine Gruppe von Zeilen unter einer Ueberschrift, die sich einklappen laesst.
+    struct Gruppe
+    {
+        QString schluessel;         ///< `oscillator`, `envelope`, `filter`, `vibrato`
+        QToolButton* kopf = nullptr;
+        int zeile = 0;              ///< die Zeile der Ueberschrift im Gitter
+        bool zu = false;
+    };
+    std::vector<Gruppe> m_gruppen;
+    QGridLayout* m_gitter = nullptr;
+    /// Was eingeklappt ist, ausblenden; die Pfeile der Ueberschriften stellen.
+    void klappeGruppen();
     QLabel* m_wellenTitel = nullptr;
     QLabel* m_bildHinweis = nullptr;
     QString m_sampleVersucht;                ///< diese Aufnahme liess sich nicht laden: nicht bei jedem Zug neu fragen
