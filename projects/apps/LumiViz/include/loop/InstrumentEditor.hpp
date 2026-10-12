@@ -293,6 +293,9 @@ Q_SIGNALS:
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
     /// Der Creator hat eine Instrument-Datei geschrieben: wer spielt, rechnet neu.
     void instrumentGespeichert();
+    /// Der Creator braucht die Daten einer Aufnahme (Sample-Schicht, Stufe
+    /// 11a): dekodieren und merken (`merkeSampleDaten`), noch im Signal.
+    void sampleVerlangt(const QString& nennung);
     /// Das Fenster „Instruments" bittet um Undo (false) oder Redo (true) — es
     /// ist ein eigenes Fenster, das Kuerzel des Hauptfensters gilt dort nicht.
     void rueckgaengigVerlangt(bool wiederholen);

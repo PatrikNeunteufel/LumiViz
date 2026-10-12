@@ -18,6 +18,12 @@
  * Summe aller Schichten als Linie, die gewaehlte gestrichelt — und eine
  * kleine Klaviatur zum Anspielen; „Selected layer only" laesst die gewaehlte
  * allein hoeren.
+ * **Eine Schicht der Art Sample (Stufe 11a; Skizze gebilligt, Patrik S115):**
+ * unter Waveform stehen File mit **File...**, Root note, Fine tune, Sample
+ * start und der Sustain loop mit Loop from und Loop to; Voices, Detune und
+ * Vibrato fehlen. Rechts zeigt das obere Bild die Aufnahme, mit einer roten
+ * Marke fuer Sample start und einem blauen Bereich fuer den Sustain loop —
+ * beide lassen sich im Bild ziehen.
  *
  * Der Creator arbeitet an einer Kopie. Erst **Save** schreibt die Datei
  * `.lvinst` — ein mitgeliefertes Instrument laesst sich nur unter neuem Namen
@@ -27,6 +33,7 @@
 #pragma once
 
 #include "loop/Instrument.hpp"
+#include "loop/Sample.hpp"
 
 #include <QPoint>
 #include <QPolygonF>
@@ -34,6 +41,7 @@
 #include <QWidget>
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 class QCheckBox;
@@ -65,8 +73,41 @@ public:
     [[nodiscard]] const std::vector<float>& zweite() const { return m_zweite; }
     [[nodiscard]] QSize sizeHint() const override { return {260, 96}; }
 
+    /// Die Werte als Flaeche zeichnen, gespiegelt um die Nulllinie — so sieht
+    /// eine Aufnahme aus (die Werte sind dann Betraege, 0 bis 1).
+    void setGespiegelt(bool an);
+    [[nodiscard]] bool gespiegelt() const { return m_gespiegelt; }
+
+    // --- Griffe zum Ziehen (Stufe 11a: das Bild einer Aufnahme) ---------------
+    /// Welcher Griff: der Anfang (rot), der Bereich von und bis (blau).
+    enum Griff : int
+    {
+        KeinGriff = -1,
+        GriffStart = 0,
+        GriffVon,
+        GriffBis,
+    };
+    /// Die Griffe als Stellen der Breite, 0 bis 1; unter null = diesen gibt es
+    /// nicht. Der Bereich zwischen `von` und `bis` ist hinterlegt.
+    void setGriffe(double start, double von, double bis);
+    [[nodiscard]] double griff(Griff welcher) const;
+    /// Die Stelle (0 bis 1) unter einem x, und das x einer Stelle.
+    [[nodiscard]] double stelleBei(int x) const;
+    [[nodiscard]] int xVon(double stelle) const;
+    /// Der Griff unter einem x; `KeinGriff` = keiner in Reichweite.
+    [[nodiscard]] Griff griffBei(int x) const;
+    /// So weit neben einem Griff greift die Maus ihn noch.
+    static constexpr int kGriffWeite = 6;
+
+Q_SIGNALS:
+    /// Ein Griff wird gezogen: er soll an diese Stelle (0 bis 1).
+    void griffGezogen(int welcher, double stelle);
+
 protected:
     void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
     [[nodiscard]] QPolygonF linie(const std::vector<float>& werte) const;
@@ -76,6 +117,9 @@ private:
     bool m_nurOben = false;
     double m_marke = -1.0;
     QString m_markenText;
+    bool m_gespiegelt = false;
+    double m_griffe[3] = {-1.0, -1.0, -1.0};
+    Griff m_gezogen = KeinGriff;
 };
 
 /// Zwei Oktaven Tasten, C3 bis C5: ein Klick verlangt den Ton.
@@ -185,7 +229,27 @@ public:
     /// Die Vorhoer-Datei (im Ordner fuer Zwischendateien).
     [[nodiscard]] static QString vorhoerDatei();
 
+    // --- die Aufnahme einer Sample-Schicht (Stufe 11a) -------------------------
+    /// Die Aufnahme der gewaehlten Schicht setzen: ein eigenes Sample
+    /// (`user:<name>`) oder der Pfad einer Tondatei. Eine andere Aufnahme
+    /// beginnt von vorn: Sample start 0, kein Sustain loop.
+    void setzeSample(const QString& nennung);
+    /// Eine gewaehlte Tondatei nehmen (Entscheid S2 a): zu den eigenen Samples
+    /// kopiert (`user:<name>`) oder am Ort gelassen (ihr Pfad). false = die
+    /// Kopie gelang nicht.
+    bool nimmSampleDatei(const QString& pfad, bool kopieren);
+    /// So lang ist die Aufnahme der gewaehlten Schicht, in Millisekunden;
+    /// 0 = keine genannt oder nicht zu laden.
+    [[nodiscard]] double sampleLaengeMs();
+    /// Der Sustain loop der gewaehlten Schicht an oder aus; beim ersten
+    /// Einschalten liegt er auf dem mittleren Teil der Aufnahme.
+    void setzeSchleife(bool an);
+
 Q_SIGNALS:
+    /// Die Daten dieser Aufnahme werden gebraucht (fuer das Bild und die
+    /// Laenge): wer eine Audio-Engine hat, dekodiert sie und merkt sie
+    /// (`merkeSampleDaten`, Sample.hpp) — noch waehrend des Signals.
+    void sampleVerlangt(const QString& nennung);
     /// Das Instrument ist gespeichert und heisst jetzt so: `user:<name>` oder
     /// der Pfad seiner Datei (Save, Save as...).
     void gespeichert(const QString& nennung);
@@ -224,6 +288,12 @@ private:
     /// Regler, Sichtbarkeit, Bilder, Titel aus `m_instrument`.
     void zeigeAlles();
     void zeigeBilder();
+    /// Das Menue hinter „File...": die eigenen Samples und „From file...".
+    void zeigeSampleWahl();
+    /// „From file...": die Datei waehlen und nach S2 a fragen.
+    void frageNachSampleDatei();
+    /// Die gemerkten Daten einer Aufnahme; fehlen sie, einmal verlangen.
+    [[nodiscard]] std::shared_ptr<const SampleDaten> holeSample(const QString& nennung);
 
     Instrument m_instrument;
     Instrument m_vorlage;   ///< wie geoeffnet oder zuletzt gespeichert
@@ -262,6 +332,21 @@ private:
     /// Was die gezupfte Saite nicht kennt: Voices, Detune, Decay, Sustain, Filter, Vibrato.
     std::vector<std::size_t> m_nichtSaite;
     std::size_t m_daempfung = 0;             ///< Platz des Reglers Damping (nur Saite)
+    // --- nur Sample (Stufe 11a)
+    std::vector<std::size_t> m_nurSample;    ///< Plaetze: Fine tune, Sample start, Loop from, Loop to
+    std::vector<std::size_t> m_nichtSample;  ///< was eine Aufnahme nicht kennt: Voices, Detune, Vibrato
+    std::size_t m_reglerStart = 0;
+    std::size_t m_reglerVon = 0;
+    std::size_t m_reglerBis = 0;
+    std::vector<QWidget*> m_sampleZeilen;    ///< was sonst nur bei Sample zu sehen ist
+    QLabel* m_sampleName = nullptr;
+    QPushButton* m_sampleWahl = nullptr;
+    QComboBox* m_grundton = nullptr;
+    QCheckBox* m_schleife = nullptr;
+    QLabel* m_vibratoTitel = nullptr;        ///< die Ueberschrift Vibrato: weg, wenn kein Regler darunter steht
+    QLabel* m_wellenTitel = nullptr;
+    QLabel* m_bildHinweis = nullptr;
+    QString m_sampleVersucht;                ///< diese Aufnahme liess sich nicht laden: nicht bei jedem Zug neu fragen
     KurvenBild* m_wellenBild = nullptr;
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;

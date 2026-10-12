@@ -43,6 +43,10 @@ namespace
 {
 
 const char* const kLetzterOrdner = "loop/lastInstrumentDir";
+const char* const kLetzterSampleOrdner = "loop/lastSampleDir";
+
+const QColor kGriffRot(216, 90, 48);    ///< Sample start
+const QColor kGriffBlau(55, 138, 221);  ///< Sustain loop
 
 /// Vorschlaege fuer das Feld Genres: es traegt mehrere, mit Kommas getrennt —
 /// vorgeschlagen wird fuer das Stueck hinter dem letzten Komma, und die Wahl
@@ -161,9 +165,124 @@ void KurvenBild::paintEvent(QPaintEvent*)
         p.setPen(QPen(zweite, 1.2, Qt::DashLine));
         p.drawPolyline(linie(m_zweite));
     }
-    if (m_werte.size() < 2) return;
-    p.setPen(QPen(pal.color(QPalette::Highlight), 1.8));
-    p.drawPolyline(linie(m_werte));
+    // der Bereich liegt unter der Kurve, die Griffe darueber
+    const bool bereich = m_griffe[GriffVon] >= 0.0 && m_griffe[GriffBis] > m_griffe[GriffVon];
+    if (bereich)
+    {
+        QColor flaeche = kGriffBlau;
+        flaeche.setAlpha(46);
+        p.fillRect(QRectF(QPointF(xVon(m_griffe[GriffVon]), rand), QPointF(xVon(m_griffe[GriffBis]), rand + hoch)), flaeche);
+    }
+    if (m_werte.size() >= 2 && m_gespiegelt)
+    {
+        // eine Aufnahme: die Betraege als Flaeche um die Nulllinie
+        QPolygonF flaeche = linie(m_werte);
+        for (qsizetype i = flaeche.size() - 1; i >= 0; --i) flaeche << QPointF(flaeche[i].x(), 2.0 * null - flaeche[i].y());
+        QColor farbe = pal.color(QPalette::Highlight);
+        farbe.setAlpha(190);
+        p.setPen(Qt::NoPen);
+        p.setBrush(farbe);
+        p.drawPolygon(flaeche);
+        p.setBrush(Qt::NoBrush);
+    }
+    else if (m_werte.size() >= 2)
+    {
+        p.setPen(QPen(pal.color(QPalette::Highlight), 1.8));
+        p.drawPolyline(linie(m_werte));
+    }
+    const auto zeichneGriff = [&](Griff welcher, const QColor& farbe) {
+        if (m_griffe[welcher] < 0.0) return;
+        const double x = xVon(m_griffe[welcher]);
+        p.setPen(QPen(farbe, 2.0));
+        p.drawLine(QPointF(x, rand), QPointF(x, rand + hoch));
+        // eine Fahne oben: daran sieht man, dass sich der Strich greifen laesst
+        p.fillRect(QRectF(x - 5.0, 1.0, 10.0, 8.0), farbe);
+    };
+    if (bereich)
+    {
+        zeichneGriff(GriffVon, kGriffBlau);
+        zeichneGriff(GriffBis, kGriffBlau);
+    }
+    zeichneGriff(GriffStart, kGriffRot);
+}
+
+void KurvenBild::setGespiegelt(bool an)
+{
+    if (m_gespiegelt == an) return;
+    m_gespiegelt = an;
+    update();
+}
+
+void KurvenBild::setGriffe(double start, double von, double bis)
+{
+    m_griffe[GriffStart] = start;
+    m_griffe[GriffVon] = von;
+    m_griffe[GriffBis] = bis;
+    // die Maus zeigt, wo sich greifen laesst — auch ohne gedrueckte Taste
+    setMouseTracking(start >= 0.0 || von >= 0.0);
+    if (start < 0.0 && von < 0.0) unsetCursor();
+    update();
+}
+
+double KurvenBild::griff(Griff welcher) const
+{
+    return welcher >= GriffStart && welcher <= GriffBis ? m_griffe[welcher] : -1.0;
+}
+
+double KurvenBild::stelleBei(int x) const
+{
+    const int rand = 6;
+    const double breite = std::max(1.0, width() - 2.0 * rand);
+    return std::clamp((x - rand) / breite, 0.0, 1.0);
+}
+
+int KurvenBild::xVon(double stelle) const
+{
+    const int rand = 6;
+    return gerundet(rand + std::clamp(stelle, 0.0, 1.0) * (width() - 2.0 * rand));
+}
+
+KurvenBild::Griff KurvenBild::griffBei(int x) const
+{
+    Griff naechster = KeinGriff;
+    int abstand = kGriffWeite + 1;
+    const bool bereich = m_griffe[GriffVon] >= 0.0 && m_griffe[GriffBis] > m_griffe[GriffVon];
+    for (const Griff welcher : {GriffStart, GriffVon, GriffBis})
+    {
+        if (m_griffe[welcher] < 0.0 || (welcher != GriffStart && !bereich)) continue;
+        const int weit = std::abs(x - xVon(m_griffe[welcher]));
+        if (weit < abstand)  // bei gleichem Abstand gilt der Anfang
+        {
+            abstand = weit;
+            naechster = welcher;
+        }
+    }
+    return naechster;
+}
+
+void KurvenBild::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() != Qt::LeftButton) return;
+    m_gezogen = griffBei(event->position().toPoint().x());
+}
+
+void KurvenBild::mouseMoveEvent(QMouseEvent* event)
+{
+    const int x = event->position().toPoint().x();
+    if (m_gezogen == KeinGriff)
+    {
+        if (griffBei(x) != KeinGriff)
+            setCursor(Qt::SizeHorCursor);
+        else
+            unsetCursor();
+        return;
+    }
+    Q_EMIT griffGezogen(m_gezogen, stelleBei(x));
+}
+
+void KurvenBild::mouseReleaseEvent(QMouseEvent*)
+{
+    m_gezogen = KeinGriff;
 }
 
 // =============================================================================
@@ -414,6 +533,7 @@ void InstrumentCreator::setupUI()
         fett.setBold(true);
         zeile->setFont(fett);
         gitter->addWidget(zeile, gitter->rowCount(), 0, 1, 3);
+        return zeile;
     };
     const auto ms = [](double wert) { return QStringLiteral("%1 ms").arg(gerundet(wert)); };
 
@@ -453,6 +573,7 @@ void InstrumentCreator::setupUI()
     m_welle->addItem(tr("Saw"), static_cast<int>(Schwingung::Saege));
     m_welle->addItem(tr("Square"), static_cast<int>(Schwingung::Rechteck));
     m_welle->addItem(tr("Plucked string"), static_cast<int>(Schwingung::Saite));
+    m_welle->addItem(tr("Sample"), static_cast<int>(Schwingung::Sample));
     {
         const int zeile = gitter->rowCount();
         gitter->addWidget(new QLabel(tr("Waveform"), this), zeile, 0);
@@ -460,15 +581,92 @@ void InstrumentCreator::setupUI()
     }
     connect(m_welle, &QComboBox::activated, this, [this](int index) {
         const auto welle = static_cast<Schwingung>(m_welle->itemData(index).toInt());
-        aendereSchicht([welle](Schicht& s) { s.schwingung = welle; });
+        aendereSchicht([welle](Schicht& s) {
+            // zum ersten Mal eine Aufnahme: sie klingt, wie sie ist — voll gehalten
+            if (welle == Schwingung::Sample && s.schwingung != Schwingung::Sample && s.sample.isEmpty()) s.halten = 1.0;
+            s.schwingung = welle;
+        });
     });
+
+    // --- nur Sample (Stufe 11a; Skizze gebilligt, Patrik S115)
+    {
+        auto* name = new QLabel(tr("File"), this);
+        m_sampleName = new QLabel(this);
+        m_sampleName->setObjectName(QStringLiteral("creatorSampleFile"));
+        m_sampleName->setEnabled(false);  // grau: eine Auskunft
+        m_sampleWahl = new QPushButton(tr("File..."), this);
+        m_sampleWahl->setObjectName(QStringLiteral("creatorSampleBrowse"));
+        m_sampleWahl->setToolTip(tr("Choose the recording: one of your samples, or a sound file"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_sampleName, zeile, 1);
+        gitter->addWidget(m_sampleWahl, zeile, 2);
+        m_sampleZeilen = {name, m_sampleName, m_sampleWahl};
+        connect(m_sampleWahl, &QPushButton::clicked, this, &InstrumentCreator::zeigeSampleWahl);
+
+        auto* grundton = new QLabel(tr("Root note"), this);
+        m_grundton = new QComboBox(this);
+        m_grundton->setObjectName(QStringLiteral("creatorRootNote"));
+        m_grundton->setToolTip(tr("The note the recording plays — at this note it sounds as recorded"));
+        m_grundton->setMaxVisibleItems(24);
+        for (int hoehe = 0; hoehe <= 127; ++hoehe) m_grundton->addItem(tonName(hoehe), hoehe);
+        const int zweite = gitter->rowCount();
+        gitter->addWidget(grundton, zweite, 0);
+        gitter->addWidget(m_grundton, zweite, 1);
+        m_sampleZeilen.push_back(grundton);
+        m_sampleZeilen.push_back(m_grundton);
+        connect(m_grundton, &QComboBox::activated, this, [this](int index) {
+            const int hoehe = m_grundton->itemData(index).toInt();
+            aendereSchicht([hoehe](Schicht& s) { s.grundton = hoehe; });
+        });
+    }
+    regler(gitter, tr("Fine tune"), "creatorFineTune", -100, 100, [](const Schicht& i) { return gerundet(i.feinCent); },
+           [](Schicht& i, int w) { i.feinCent = w; },
+           [](const Schicht& i) {
+               return QStringLiteral("%1%2 ct").arg(i.feinCent > 0.0 ? QStringLiteral("+") : QString()).arg(gerundet(i.feinCent));
+           })
+        .schieber->setToolTip(tr("How far the recording lies above (+) or below the root note"));
+    m_nurSample.push_back(m_regler.size() - 1);
+    // die drei Stellen in der Aufnahme: ihr Bereich ist die Laenge der Aufnahme (`zeigeAlles`)
+    regler(gitter, tr("Sample start"), "creatorSampleStart", 0, 1, [](const Schicht& i) { return gerundet(i.sampleStartMs); },
+           [](Schicht& i, int w) { i.sampleStartMs = w; }, [ms](const Schicht& i) { return ms(i.sampleStartMs); })
+        .schieber->setToolTip(tr("A note starts this far into the recording — the red marker in the picture"));
+    m_reglerStart = m_regler.size() - 1;
+    m_nurSample.push_back(m_reglerStart);
+    {
+        auto* name = new QLabel(tr("Sustain loop"), this);
+        m_schleife = new QCheckBox(tr("repeat a part while the note is held"), this);
+        m_schleife->setObjectName(QStringLiteral("creatorSustainLoop"));
+        m_schleife->setToolTip(tr("A recording gets shorter at higher notes. With a sustain loop the part between "
+                                  "Loop from and Loop to repeats as long as the note lasts — the blue range in the picture"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_schleife, zeile, 1, 1, 2);
+        m_sampleZeilen.push_back(name);
+        m_sampleZeilen.push_back(m_schleife);
+        connect(m_schleife, &QCheckBox::toggled, this, &InstrumentCreator::setzeSchleife);
+    }
+    const auto sekunden = [](double wertMs) { return QStringLiteral("%1 s").arg(wertMs / 1000.0, 0, 'f', 2); };
+    regler(gitter, tr("Loop from"), "creatorLoopFrom", 0, 1, [](const Schicht& i) { return gerundet(i.schleifeVonMs); },
+           [](Schicht& i, int w) { i.schleifeVonMs = std::min<double>(w, std::max(0.0, i.schleifeBisMs - 1.0)); },
+           [sekunden](const Schicht& i) { return sekunden(i.schleifeVonMs); });
+    m_reglerVon = m_regler.size() - 1;
+    m_nurSample.push_back(m_reglerVon);
+    regler(gitter, tr("Loop to"), "creatorLoopTo", 0, 1, [](const Schicht& i) { return gerundet(i.schleifeBisMs); },
+           [](Schicht& i, int w) { i.schleifeBisMs = std::max<double>(w, i.schleifeVonMs + 1.0); },
+           [sekunden](const Schicht& i) { return sekunden(i.schleifeBisMs); });
+    m_reglerBis = m_regler.size() - 1;
+    m_nurSample.push_back(m_reglerBis);
+
     regler(gitter, tr("Voices"), "creatorVoices", 1, 3, [](const Schicht& i) { return i.stimmen; },
            [](Schicht& i, int w) { i.stimmen = w; }, [](const Schicht& i) { return QString::number(i.stimmen); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    m_nichtSample.push_back(m_regler.size() - 1);
     regler(gitter, tr("Detune"), "creatorDetune", 0, 50, [](const Schicht& i) { return gerundet(i.verstimmungCent); },
            [](Schicht& i, int w) { i.verstimmungCent = w; },
            [](const Schicht& i) { return QStringLiteral("%1 ct").arg(gerundet(i.verstimmungCent)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    m_nichtSample.push_back(m_regler.size() - 1);
     for (int k = 0; k < kObertonRegler; ++k)
     {
         const auto platz = static_cast<std::size_t>(k);
@@ -526,29 +724,49 @@ void InstrumentCreator::setupUI()
         .schieber->setToolTip(tr("Distortion of this layer"));
 
     // --- Vibrato
-    titel(tr("Vibrato"));
+    m_vibratoTitel = titel(tr("Vibrato"));
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
            [](Schicht& i, int w) { i.vibratoHz = w / 10.0; },
            [](const Schicht& i) { return QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    m_nichtSample.push_back(m_regler.size() - 1);
     regler(gitter, tr("Depth"), "creatorVibratoDepth", 0, 50, [](const Schicht& i) { return gerundet(i.vibratoCent); },
            [](Schicht& i, int w) { i.vibratoCent = w; },
            [](const Schicht& i) { return QStringLiteral("%1 ct").arg(gerundet(i.vibratoCent)); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    m_nichtSample.push_back(m_regler.size() - 1);
     regler(gitter, tr("Delay"), "creatorVibratoDelay", 0, 100,
            [](const Schicht& i) { return gerundet(i.vibratoEinsatzMs / 10.0); },
            [](Schicht& i, int w) { i.vibratoEinsatzMs = w * 10.0; },
            [ms](const Schicht& i) { return ms(i.vibratoEinsatzMs); });
     m_nichtSaite.push_back(m_regler.size() - 1);
+    m_nichtSample.push_back(m_regler.size() - 1);
     gitter->setRowStretch(gitter->rowCount(), 1);
     koerper->addLayout(gitter, 5);
 
     // --- rechts: die Bilder und die Klaviatur
     auto* rechts = new QVBoxLayout;
-    rechts->addWidget(new QLabel(tr("One cycle"), this));
+    m_wellenTitel = new QLabel(tr("One cycle"), this);
+    m_wellenTitel->setObjectName(QStringLiteral("creatorCycleTitle"));
+    rechts->addWidget(m_wellenTitel);
     m_wellenBild = new KurvenBild(this);
     m_wellenBild->setObjectName(QStringLiteral("creatorCycle"));
     rechts->addWidget(m_wellenBild, 1);
+    // nur bei einer Sample-Schicht: sonst findet niemand, dass sich die Marken ziehen lassen
+    m_bildHinweis = new QLabel(tr("Red: sample start · blue: sustain loop — drag them"), this);
+    m_bildHinweis->setObjectName(QStringLiteral("creatorSampleHint"));
+    m_bildHinweis->setEnabled(false);
+    rechts->addWidget(m_bildHinweis);
+    connect(m_wellenBild, &KurvenBild::griffGezogen, this, [this](int welcher, double stelle) {
+        const double laenge = sampleLaengeMs();
+        if (laenge <= 0.0 || schicht().schwingung != Schwingung::Sample) return;
+        const double ort = std::round(stelle * laenge);
+        aendereSchicht([welcher, ort](Schicht& s) {
+            if (welcher == KurvenBild::GriffStart) s.sampleStartMs = ort;
+            if (welcher == KurvenBild::GriffVon) s.schleifeVonMs = std::min(ort, std::max(0.0, s.schleifeBisMs - 1.0));
+            if (welcher == KurvenBild::GriffBis) s.schleifeBisMs = std::max(ort, s.schleifeVonMs + 1.0);
+        });
+    });
     rechts->addWidget(new QLabel(tr("Envelope of a note"), this));
     m_huellBild = new KurvenBild(this);
     m_huellBild->setObjectName(QStringLiteral("creatorEnvelope"));
@@ -1078,6 +1296,43 @@ void InstrumentCreator::zeigeAlles()
         const QSignalBlocker ruhe(m_welle);
         m_welle->setCurrentIndex(m_welle->findData(static_cast<int>(gewaehlte.schwingung)));
     }
+    // --- nur Sample: die Datei, der Grundton, und die drei Stellen reichen so weit wie die Aufnahme
+    const bool sample = gewaehlte.schwingung == Schwingung::Sample;
+    if (sample)
+    {
+        const double laengeMs = sampleLaengeMs();
+        const QString datei = sampleDatei(gewaehlte.sample);
+        QString text = tr("(none)");
+        if (!gewaehlte.sample.isEmpty())
+        {
+            if (datei.isEmpty() || !QFileInfo::exists(datei))
+                text = tr("%1 (not found)").arg(sampleTitel(gewaehlte.sample));
+            else
+            {
+                text = QFileInfo(datei).fileName();
+                if (laengeMs > 0.0) text += QStringLiteral(" · %1 s").arg(laengeMs / 1000.0, 0, 'f', 1);
+                if (istEigenesSample(gewaehlte.sample)) text += tr(" · My samples");
+            }
+        }
+        m_sampleName->setText(text);
+        m_sampleName->setToolTip(datei.isEmpty() ? QString() : QDir::toNativeSeparators(datei));
+        {
+            const QSignalBlocker ruhe(m_grundton);
+            m_grundton->setCurrentIndex(m_grundton->findData(std::clamp(gewaehlte.grundton, 0, 127)));
+        }
+        {
+            const QSignalBlocker ruhe(m_schleife);
+            m_schleife->setChecked(gewaehlte.schleife);
+            m_schleife->setEnabled(laengeMs > 0.0);
+        }
+        const int bis = std::max(1, gerundet(laengeMs));
+        for (const std::size_t platz : {m_reglerStart, m_reglerVon, m_reglerBis})
+        {
+            const QSignalBlocker ruhe(m_regler[platz].schieber);
+            m_regler[platz].schieber->setRange(0, bis);
+            m_regler[platz].schieber->setEnabled(laengeMs > 0.0 && (platz == m_reglerStart || gewaehlte.schleife));
+        }
+    }
     for (Regler& r : m_regler)
     {
         // den Regler nur setzen, wenn er etwas anderes zeigt, als der Wert verlangt —
@@ -1096,9 +1351,135 @@ void InstrumentCreator::zeigeAlles()
         r.wert->setVisible(an);
     };
     for (const std::size_t platz : m_nichtSaite) zeige(platz, !saite);
+    for (const std::size_t platz : m_nichtSample) zeige(platz, !saite && !sample);
     for (const std::size_t platz : m_nurSinus) zeige(platz, sinus);
+    for (const std::size_t platz : m_nurSample) zeige(platz, sample);
+    for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
+    m_vibratoTitel->setVisible(!saite && !sample);  // eine Ueberschrift ohne Regler darunter bleibt weg
     zeige(m_daempfung, saite);
     zeigeBilder();
+}
+
+// =============================================================================
+// Die Aufnahme einer Sample-Schicht (Stufe 11a)
+// =============================================================================
+
+std::shared_ptr<const SampleDaten> InstrumentCreator::holeSample(const QString& nennung)
+{
+    if (nennung.isEmpty()) return nullptr;
+    std::shared_ptr<const SampleDaten> daten = sampleDaten(nennung);
+    if (daten == nullptr && nennung != m_sampleVersucht)
+    {
+        // wer eine Audio-Engine hat, dekodiert und merkt — noch im Signal
+        m_sampleVersucht = nennung;
+        Q_EMIT sampleVerlangt(nennung);
+        daten = sampleDaten(nennung);
+    }
+    if (daten != nullptr && nennung == m_sampleVersucht) m_sampleVersucht.clear();
+    return daten;
+}
+
+double InstrumentCreator::sampleLaengeMs()
+{
+    if (schicht().schwingung != Schwingung::Sample) return 0.0;
+    const std::shared_ptr<const SampleDaten> daten = holeSample(schicht().sample);
+    return daten != nullptr && daten->rate > 0 ? 1000.0 * static_cast<double>(daten->klang.frames()) / daten->rate : 0.0;
+}
+
+void InstrumentCreator::setzeSample(const QString& nennung)
+{
+    m_sampleVersucht.clear();  // ein neuer Versuch, auch mit derselben Nennung
+    aendereSchicht([&nennung](Schicht& s) {
+        if (s.sample == nennung) return;
+        s.sample = nennung;
+        // eine andere Aufnahme beginnt von vorn
+        s.sampleStartMs = 0.0;
+        s.schleife = false;
+        s.schleifeVonMs = 0.0;
+        s.schleifeBisMs = 0.0;
+    });
+    zeigeAlles();  // dieselbe Nennung, aber vielleicht jetzt zu laden
+}
+
+bool InstrumentCreator::nimmSampleDatei(const QString& pfad, bool kopieren)
+{
+    const QString nennung = kopieren ? nimmZuEigenen(pfad) : pfad;
+    if (nennung.isEmpty()) return false;
+    setzeSample(nennung);
+    return true;
+}
+
+void InstrumentCreator::setzeSchleife(bool an)
+{
+    const double laenge = sampleLaengeMs();
+    aendereSchicht([an, laenge](Schicht& s) {
+        s.schleife = an;
+        // zum ersten Mal an: der mittlere Teil der Aufnahme
+        if (an && s.schleifeBisMs <= s.schleifeVonMs && laenge > 0.0)
+        {
+            s.schleifeVonMs = std::round(laenge * 0.25);
+            s.schleifeBisMs = std::round(laenge * 0.75);
+        }
+    });
+}
+
+void InstrumentCreator::zeigeSampleWahl()
+{
+    const QStringList eigene = eigeneSamples();
+    if (eigene.isEmpty())
+    {
+        frageNachSampleDatei();
+        return;
+    }
+    QMenu menue(this);
+    menue.addSection(tr("My samples"));
+    for (const QString& nennung : eigene)
+        connect(menue.addAction(sampleTitel(nennung)), &QAction::triggered, this, [this, nennung] { setzeSample(nennung); });
+    menue.addSeparator();
+    connect(menue.addAction(tr("From file...")), &QAction::triggered, this, &InstrumentCreator::frageNachSampleDatei);
+    menue.exec(m_sampleWahl->mapToGlobal(QPoint(0, m_sampleWahl->height())));
+}
+
+void InstrumentCreator::frageNachSampleDatei()
+{
+    QSettings einstellungen;
+    QStringList muster;
+    for (const QString& endung : sampleEndungen()) muster << QStringLiteral("*.") + endung;
+    const QString pfad = QFileDialog::getOpenFileName(this, tr("Choose a sample"),
+                                                      einstellungen.value(QLatin1String(kLetzterSampleOrdner)).toString(),
+                                                      tr("Sound files (%1)").arg(muster.join(QLatin1Char(' '))));
+    if (pfad.isEmpty()) return;
+    einstellungen.setValue(QLatin1String(kLetzterSampleOrdner), QFileInfo(pfad).absolutePath());
+
+    // Entscheid S2 a: kopieren oder am Ort lassen — gefragt wird, bis die Wahl gemerkt ist.
+    // Liegt die Datei schon bei den eigenen Samples, ist nichts zu fragen.
+    SampleKopie wahl = sampleKopieWahl();
+    const bool schonEigen = QDir::cleanPath(QFileInfo(pfad).absolutePath()).compare(QDir::cleanPath(eigenerSampleOrdner()), Qt::CaseInsensitive) == 0;
+    if (schonEigen)
+        wahl = SampleKopie::Kopieren;
+    else if (wahl == SampleKopie::Fragen)
+    {
+        QMessageBox frage(this);
+        frage.setObjectName(QStringLiteral("creatorSampleCopyDialog"));
+        frage.setWindowTitle(tr("Sample"));
+        frage.setIcon(QMessageBox::Question);
+        frage.setText(tr("Where should %1 be kept?").arg(QFileInfo(pfad).fileName()));
+        frage.setInformativeText(tr("A copy in My samples goes along with an export and stays when the original moves. "
+                                    "Without a copy the instrument names the file at\n%1")
+                                     .arg(QDir::toNativeSeparators(pfad)));
+        QPushButton* kopieren = frage.addButton(tr("Copy the file to My samples (recommended)"), QMessageBox::AcceptRole);
+        QPushButton* amOrt = frage.addButton(tr("Use it where it is"), QMessageBox::ActionRole);
+        frage.addButton(QMessageBox::Cancel);
+        frage.setDefaultButton(kopieren);
+        auto* merken = new QCheckBox(tr("Don't ask again (Settings → Panels changes it)"), &frage);
+        frage.setCheckBox(merken);
+        frage.exec();
+        if (frage.clickedButton() != kopieren && frage.clickedButton() != amOrt) return;
+        wahl = frage.clickedButton() == kopieren ? SampleKopie::Kopieren : SampleKopie::AmOrt;
+        if (merken->isChecked()) setzeSampleKopieWahl(wahl);
+    }
+    if (!nimmSampleDatei(pfad, wahl == SampleKopie::Kopieren))
+        QMessageBox::warning(this, tr("Sample"), tr("Could not copy %1 to My samples").arg(QDir::toNativeSeparators(pfad)));
 }
 
 void InstrumentCreator::zeigeBilder()
@@ -1114,7 +1495,58 @@ void InstrumentCreator::zeigeBilder()
         if (durch > 0.0f)
             for (float& wert : werte) wert /= durch;
     };
+    // --- eine Sample-Schicht ist gewaehlt: oben die Aufnahme selbst, mit den Griffen fuer
+    //     Sample start (rot) und den Sustain loop (blau)
+    const Schicht& gewaehlte = schicht();
+    const bool sample = gewaehlte.schwingung == Schwingung::Sample;
+    m_bildHinweis->setVisible(sample);
+    if (sample)
+    {
+        const std::shared_ptr<const SampleDaten> daten = holeSample(gewaehlte.sample);
+        std::vector<float> werte;
+        double start = -1.0;
+        double von = -1.0;
+        double bis = -1.0;
+        if (daten != nullptr && daten->klang.frames() > 1)
+        {
+            // je Stueck der groesste Betrag beider Seiten
+            constexpr std::int64_t kStuecke = 400;
+            const std::int64_t frames = daten->klang.frames();
+            werte.assign(static_cast<std::size_t>(kStuecke), 0.0f);
+            float groesster = 0.0f;
+            for (std::int64_t f = 0; f < frames; ++f)
+            {
+                const auto stueck = static_cast<std::size_t>(f * kStuecke / frames);
+                const float wert = std::max(std::abs(daten->klang.daten[static_cast<std::size_t>(2 * f)]),
+                                            std::abs(daten->klang.daten[static_cast<std::size_t>(2 * f + 1)]));
+                werte[stueck] = std::max(werte[stueck], wert);
+                groesster = std::max(groesster, wert);
+            }
+            teile(werte, groesster);
+            const double laengeMs = 1000.0 * static_cast<double>(frames) / daten->rate;
+            start = std::clamp(gewaehlte.sampleStartMs / laengeMs, 0.0, 1.0);
+            if (gewaehlte.schleife && gewaehlte.schleifeBisMs > gewaehlte.schleifeVonMs)
+            {
+                von = std::clamp(gewaehlte.schleifeVonMs / laengeMs, 0.0, 1.0);
+                bis = std::clamp(gewaehlte.schleifeBisMs / laengeMs, 0.0, 1.0);
+            }
+        }
+        m_wellenTitel->setText(daten != nullptr           ? tr("The sample")
+                               : gewaehlte.sample.isEmpty() ? tr("The sample — choose a file")
+                                                            : tr("The sample (not found)"));
+        m_wellenBild->setGespiegelt(true);
+        m_wellenBild->setWerte(std::move(werte), false);
+        m_wellenBild->setZweite({});
+        m_wellenBild->setGriffe(start, von, bis);
+    }
+    else
+    {
+        m_wellenTitel->setText(tr("One cycle"));
+        m_wellenBild->setGespiegelt(false);
+        m_wellenBild->setGriffe(-1.0, -1.0, -1.0);
+    }
     // --- eine Schwingung: aus einem gerechneten Ton (C3), nach dem Einsatz
+    if (!sample)
     {
         const int hoehe = 48;
         const Klang ton = rendereTon(bild, hoehe, 400.0, kBildRate);

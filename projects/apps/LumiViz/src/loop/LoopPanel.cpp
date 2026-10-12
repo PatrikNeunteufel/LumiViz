@@ -15,6 +15,7 @@
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Offen.hpp"
+#include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -645,6 +646,13 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             connect(m_instrumentEditor, &InstrumentEditor::instrumentGespeichert, this, [this] {
                 if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
                 meldeStand();  // auch ein Clip im Composer, der diesen Loop spielt
+            });
+            // der Creator zeigt die Aufnahme einer Sample-Schicht (Stufe 11a): hier wird sie dekodiert
+            connect(m_instrumentEditor, &InstrumentEditor::sampleVerlangt, this, [this](const QString& nennung) {
+                IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+                const QString datei = sampleDatei(nennung);
+                if (engine != nullptr && !datei.isEmpty())
+                    merkeSampleDaten(nennung, kSampleRate, engine->decodeStereo(datei, kSampleRate, kKlangMaxSekunden));
             });
             // Ctrl+Z / Ctrl+Y im Fenster „Instruments" (Z1 a, S115): derselbe Undo wie Edit → Undo
             connect(m_instrumentEditor, &InstrumentEditor::rueckgaengigVerlangt, this, [this](bool wiederholen) {

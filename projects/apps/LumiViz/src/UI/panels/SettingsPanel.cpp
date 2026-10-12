@@ -16,6 +16,7 @@
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
 #include "core/Mitgeliefert.hpp"
+#include "loop/Sample.hpp"  // „Chosen Sample Files": kopieren oder am Ort lassen (S115)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/LiveVideoFeed.hpp"  // Kamera-Tab: Freigabe + Testaufnahmen-Ordner (S70)
@@ -881,6 +882,27 @@ QWidget* SettingsPanel::createPanelsTab()
     userDataLayout->addWidget(m_pImportDataButton);
     userDataLayout->addStretch(1);
     layout->addRow(tr("User Data:"), userDataRow);
+
+    // Loop, Stufe 11a (Entscheid S2 a, Patrik S115): was mit einer Tondatei
+    // geschieht, die im Instrument-Creator ueber „File..." gewaehlt wird. Der
+    // Dialog dort merkt die Wahl mit „Don't ask again" — hier laesst sie sich
+    // aendern und zuruecknehmen.
+    {
+        auto* wahl = new QComboBox(widget);
+        wahl->setObjectName(QStringLiteral("sampleCopyChoice"));
+        wahl->addItem(tr("Ask each time"), static_cast<int>(lumi::loop::SampleKopie::Fragen));
+        wahl->addItem(tr("Copy to My samples"), static_cast<int>(lumi::loop::SampleKopie::Kopieren));
+        wahl->addItem(tr("Use it where it is"), static_cast<int>(lumi::loop::SampleKopie::AmOrt));
+        wahl->setCurrentIndex(wahl->findData(static_cast<int>(lumi::loop::sampleKopieWahl())));
+        wahl->setToolTip(
+            tr("What happens to a sound file chosen with File... in the Instrument Creator. A copy "
+               "in My samples goes along with an export and stays when the original moves; without "
+               "a copy the instrument names the file where it lies."));
+        connect(wahl, QOverload<int>::of(&QComboBox::activated), widget, [wahl](int index) {
+            lumi::loop::setzeSampleKopieWahl(static_cast<lumi::loop::SampleKopie>(wahl->itemData(index).toInt()));
+        });
+        layout->addRow(tr("Chosen Sample Files:"), wahl);
+    }
 
     // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe
     // (Datenablage_Konzept.md, D9 a mit Schalter; Patrik S114). Die Zeile gibt

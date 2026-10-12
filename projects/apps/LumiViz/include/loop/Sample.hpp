@@ -63,6 +63,18 @@ void setzeEigenenSampleOrdnerFuerTests(const QString& ordner);
 /// Ein eigenes Sample loeschen. false = es gab keins.
 bool loescheEigenesSample(const QString& name);
 
+/// Was mit einer ueber „File..." gewaehlten Tondatei geschieht (Entscheid
+/// S2 a): gefragt wird, bis „Don't ask again" die Wahl merkt
+/// (`loop/sampleCopyChoice`); in den Settings laesst sie sich aendern.
+enum class SampleKopie : int
+{
+    Fragen = 0,
+    Kopieren,  ///< zu den eigenen Samples, `user:<name>`
+    AmOrt,     ///< die Datei bleibt, wo sie ist, und steht beim Pfad
+};
+[[nodiscard]] SampleKopie sampleKopieWahl();
+void setzeSampleKopieWahl(SampleKopie wahl);
+
 // --- die geladenen Daten ------------------------------------------------------
 
 /// In dieser Abtastrate werden Samples dekodiert und gemerkt.

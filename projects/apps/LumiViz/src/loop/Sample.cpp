@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSettings>
 #include <QStandardPaths>
 
 #include <map>
@@ -22,6 +23,8 @@ namespace lumi::loop
 
 namespace
 {
+
+const char* const kKopieWahl = "loop/sampleCopyChoice";
 
 QString& sampleOrdnerImTest()
 {
@@ -184,6 +187,24 @@ bool loescheEigenesSample(const QString& name)
     if (!QFile::remove(pfad)) return false;
     zaehleInstrumentFassung();
     return true;
+}
+
+SampleKopie sampleKopieWahl()
+{
+    const QString wahl = QSettings().value(QLatin1String(kKopieWahl)).toString();
+    if (wahl == QLatin1String("copy")) return SampleKopie::Kopieren;
+    if (wahl == QLatin1String("keep")) return SampleKopie::AmOrt;
+    return SampleKopie::Fragen;
+}
+
+void setzeSampleKopieWahl(SampleKopie wahl)
+{
+    QSettings einstellungen;
+    if (wahl == SampleKopie::Fragen)
+        einstellungen.remove(QLatin1String(kKopieWahl));
+    else
+        einstellungen.setValue(QLatin1String(kKopieWahl),
+                               wahl == SampleKopie::Kopieren ? QStringLiteral("copy") : QStringLiteral("keep"));
 }
 
 std::shared_ptr<const SampleDaten> sampleDaten(const QString& nennung)

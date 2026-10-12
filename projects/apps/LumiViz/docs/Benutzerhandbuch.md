@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.129.0
+> **Version:** 1.130.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -278,7 +278,10 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   die deiner Byte für Byte gleicht, zählt nicht. Importierte *Settings* ersetzen deine und
   gelten nach einem Neustart. Nicht im Export: Loops, Kompositionen und Ketten, die du
   selbst irgendwo gespeichert hast, und die Testaufnahmen der Kamera. Die Datei ist ein
-  Zip — umbenannt in `.zip` lässt sie sich mit jedem Werkzeug ansehen · **MilkDrop Preset Switch** + **MilkDrop Fade
+  Zip — umbenannt in `.zip` lässt sie sich mit jedem Werkzeug ansehen · **Chosen Sample
+  Files** — was mit einer Tondatei geschieht, die du im Instrument-Creator über File...
+  wählst: *Ask each time* (Vorgabe), *Copy to My samples* oder *Use it where it is*
+  (§16, Instrument-Creator) · **MilkDrop Preset Switch** + **MilkDrop Fade
   Amount** — der App-Standard dafür, was beim MilkDrop-Preset-Wechsel mit dem
   geerbten Bild passiert (Details und die Regeln je Node: §11,
   „Preset-Wechsel: das geerbte Bild").
@@ -2680,7 +2683,7 @@ die Klaviatur des Editors.
 | **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
 | **Start offset** | Die Schicht setzt so viele Millisekunden nach dem Anschlag ein. Kein Echo — sie beginnt nur später |
-| **Waveform** | Sine, Triangle, Saw, Square oder Plucked string (eine gezupfte Saite) |
+| **Waveform** | Sine, Triangle, Saw, Square, Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
 | **Voices**, **Detune** | Eine bis drei gleiche Schwingungen übereinander, leicht gegeneinander verstimmt — das macht den Klang breit |
 | **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
 | **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
@@ -2694,6 +2697,25 @@ die Klaviatur des Editors.
 
 Ein laufendes Muster klingt erst nach **Save** mit den neuen Einstellungen.
 Schließt du den Creator mit Ungespeichertem, fragt er nach.
+
+**Eine Schicht aus einer Aufnahme (Waveform: Sample).** Statt einer gerechneten
+Schwingung spielt die Schicht eine Tondatei — je Note schneller oder langsamer, also höher
+oder tiefer. Sie mischt sich mit gerechneten Schichten wie jede andere; Envelope, Filter
+und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
+
+| Bei Waveform: Sample | Wirkung |
+|---|---|
+| **File** und **File...** | Die Aufnahme: eines deiner eigenen Samples (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
+| Die Frage nach „From file..." | **Copy the file to My samples (recommended)** legt eine Kopie in deinen Benutzerordner (`samples`) — sie geht mit einem Export mit und bleibt, wenn das Original verschoben wird. **Use it where it is** lässt die Datei, wo sie ist; das Instrument nennt dann ihren Pfad. „Don't ask again" merkt die Wahl; ändern lässt sie sich unter Settings → Panels, **Chosen Sample Files** |
+| **Root note** | Welcher Ton die Aufnahme ist. Bei dieser Note klingt sie, wie sie aufgenommen wurde |
+| **Fine tune** | Wie weit die Aufnahme über (+) oder unter dem Root note liegt, in Cent |
+| **Sample start** | Eine Note beginnt so weit in der Aufnahme — die rote Marke im Bild |
+| **Sustain loop**, **Loop from**, **Loop to** | Eine Aufnahme wird bei hohen Noten kürzer. Mit dem Haken wiederholt sich das Stück zwischen Loop from und Loop to, solange die Note dauert; danach läuft die Aufnahme zu Ende. Im Bild der blaue Bereich |
+| **The sample** | Das obere Bild zeigt bei einer Sample-Schicht die Aufnahme. Die rote Marke und die beiden Ränder des blauen Bereichs lassen sich mit der Maus ziehen |
+
+Fehlt die Datei einer Aufnahme, steht in der Zeile File „(not found)", und die Schicht
+schweigt. Eine andere Aufnahme beginnt von vorn: Sample start steht wieder auf 0, der
+Sustain loop ist aus.
 
 Ein Instrument mit einer Schicht verhält sich wie bisher. Dateien aus einer
 früheren LumiViz-Fassung liest das Programm weiter; gespeichert wird im neuen
@@ -2850,6 +2872,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.130.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator NEU **Waveform: Sample** — eine Schicht aus einer Aufnahme: File..., die Frage „kopieren oder am Ort lassen", Root note, Fine tune, Sample start, Sustain loop mit Loop from und Loop to, das Bild der Aufnahme mit ziehbaren Marken; Settings → Panels NEU **Chosen Sample Files** |
 | 1.129.0 | 2026-10-12 | Session 115. Settings, Export und Import: neuer Bereich **Samples** (der Ordner `samples` im Benutzerordner; im Programm füllt ihn noch nichts — Loop, Stufe 11a, erst der Kern) |
 | 1.128.0 | 2026-10-12 | Session 115. §16 Loop, Fenster Instruments: **Ctrl+Z und Ctrl+Y gelten im Fenster selbst** (Befund Patrik, P5: nach Use kam Ctrl+Z nicht an, erst nach einem Klick ins Panel Loop) |
 | 1.127.0 | 2026-10-12 | Session 114. §16 Loop NEU **das Fenster Instruments**: **Browse...** im Instrument-Editor, Suche, Filter nach Genre, die Arten als Liste, Favorites, Recently used, My files, Anspielen per Klick mit Preview note, Use (GEÄNDERT: die Dropdown-Liste der Instrumente gibt es nicht mehr) |

@@ -22,6 +22,7 @@
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Sample.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -37,10 +38,12 @@
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QSettings>
 #include <QSlider>
 #include <QStringList>
 #include <QTemporaryDir>
 
+#include <cmath>
 #include <vector>
 
 using namespace lumi::loop;
@@ -320,7 +323,7 @@ TEST_SUITE("LoopInstrumentEditor")
         auto* wellenWahl = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
         REQUIRE(wellenWahl != nullptr);
         CHECK(wellenWahl->currentText() == QStringLiteral("Plucked string"));
-        CHECK(wellenWahl->count() == 5);
+        CHECK(wellenWahl->count() == 6);  // seit S115 dazu Sample
 
         // --- Save as: die Datei entsteht, sie ist jetzt die Datei des Creators
         creator.oeffne(*strings);
@@ -695,6 +698,312 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.nennung() == frei);
         CHECK(gespeichert.back() == frei);
         CHECK(creator.instrument().name == frei);
+    }
+
+    TEST_CASE("Instrument-Creator: Sample als Schicht — File und Root note — Sample start und Sustain loop im Bild der Aufnahme")
+    {
+        // Stufe 11a, Schritt 2 (Skizze gebilligt, Patrik S115; Entscheide S1 a, S2 a). Ohne Engine:
+        // was der Creator an Daten verlangt, gibt der Test heraus — zwei Sekunden Sinus.
+        // `LUMIVIZ_INSTRUMENT_SAMPLE_BILD=<datei.png>` legt ein Bild des Creators mit einer Sample-Schicht ab.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        const QString org = QCoreApplication::organizationName();
+        const QString name = QCoreApplication::applicationName();
+        QCoreApplication::setOrganizationName(QStringLiteral("LumiVizTest"));
+        QCoreApplication::setApplicationName(QStringLiteral("LoopSampleCreator"));
+        QSettings().clear();
+        setzeEigenenSampleOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("samples")));
+        vergissSampleDaten();
+        struct Zurueck
+        {
+            QString org;
+            QString name;
+            ~Zurueck()
+            {
+                QSettings().clear();
+                QCoreApplication::setOrganizationName(org);
+                QCoreApplication::setApplicationName(name);
+                setzeEigenenSampleOrdnerFuerTests(QString());
+                vergissSampleDaten();
+                QFile::remove(InstrumentCreator::vorhoerDatei());
+            }
+        } zurueck{org, name};
+        const auto datei = [&tmp](const QString& rel, const QByteArray& inhalt) {
+            const QString pfad = QDir(tmp.path()).filePath(rel);
+            REQUIRE(QDir().mkpath(QFileInfo(pfad).absolutePath()));
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write(inhalt);
+            return pfad;
+        };
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        QStringList verlangt;
+        QObject::connect(&creator, &InstrumentCreator::sampleVerlangt, &creator, [&](const QString& nennung) {
+            verlangt << nennung;
+            if (!QFileInfo::exists(sampleDatei(nennung))) return;
+            std::vector<float> daten(2 * 96000);  // zwei Sekunden in 48000
+            for (std::size_t t = 0; t < 96000; ++t)
+                daten[2 * t] = daten[2 * t + 1] = static_cast<float>(std::sin(2.0 * 3.14159265358979 * 220.0 * static_cast<double>(t) / 48000.0));
+            merkeSampleDaten(nennung, 48000, std::move(daten));
+        });
+        const auto schieber = [&](const char* kennung) {
+            auto* s = creator.findChild<QSlider*>(QString::fromLatin1(kennung));
+            REQUIRE(s != nullptr);
+            return s;
+        };
+        auto* welle = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
+        auto* dateiZeile = creator.findChild<QLabel*>(QStringLiteral("creatorSampleFile"));
+        auto* wahl = creator.findChild<QPushButton*>(QStringLiteral("creatorSampleBrowse"));
+        auto* grundton = creator.findChild<QComboBox*>(QStringLiteral("creatorRootNote"));
+        auto* schleife = creator.findChild<QCheckBox*>(QStringLiteral("creatorSustainLoop"));
+        auto* bild = creator.findChild<KurvenBild*>(QStringLiteral("creatorCycle"));
+        auto* bildTitel = creator.findChild<QLabel*>(QStringLiteral("creatorCycleTitle"));
+        auto* hinweis = creator.findChild<QLabel*>(QStringLiteral("creatorSampleHint"));
+        REQUIRE(welle != nullptr);
+        REQUIRE(dateiZeile != nullptr);
+        REQUIRE(wahl != nullptr);
+        REQUIRE(grundton != nullptr);
+        REQUIRE(schleife != nullptr);
+        REQUIRE(bild != nullptr);
+        REQUIRE(bildTitel != nullptr);
+        REQUIRE(hinweis != nullptr);
+
+        Instrument neu;
+        neu.titel = QStringLiteral("My Cello");
+        creator.oeffne(neu);
+
+        // --- eine gerechnete Schicht: von den Zeilen der Aufnahme ist nichts zu sehen
+        CHECK(dateiZeile->isHidden());
+        CHECK(wahl->isHidden());
+        CHECK(grundton->isHidden());
+        CHECK(schleife->isHidden());
+        CHECK(schieber("creatorFineTune")->isHidden());
+        CHECK(schieber("creatorSampleStart")->isHidden());
+        CHECK(schieber("creatorLoopFrom")->isHidden());
+        CHECK_FALSE(schieber("creatorVoices")->isHidden());
+        CHECK(bildTitel->text() == QStringLiteral("One cycle"));
+        CHECK(hinweis->isHidden());
+        CHECK(bild->griff(KurvenBild::GriffStart) < 0.0);
+
+        // --- Waveform: Sample — die Zeilen kommen, Voices, Detune und Vibrato gehen
+        const int alsSample = welle->findData(static_cast<int>(Schwingung::Sample));
+        REQUIRE(alsSample >= 0);
+        CHECK(welle->itemText(alsSample) == QStringLiteral("Sample"));
+        welle->setCurrentIndex(alsSample);
+        Q_EMIT welle->activated(alsSample);
+        CHECK(creator.schicht().schwingung == Schwingung::Sample);
+        CHECK(creator.schicht().halten == 1.0);  // eine Aufnahme klingt zuerst, wie sie ist
+        CHECK_FALSE(dateiZeile->isHidden());
+        CHECK_FALSE(wahl->isHidden());
+        CHECK_FALSE(grundton->isHidden());
+        CHECK_FALSE(schleife->isHidden());
+        CHECK_FALSE(schieber("creatorFineTune")->isHidden());
+        CHECK_FALSE(schieber("creatorSampleStart")->isHidden());
+        CHECK_FALSE(schieber("creatorLoopFrom")->isHidden());
+        CHECK_FALSE(schieber("creatorLoopTo")->isHidden());
+        for (const char* weg : {"creatorVoices", "creatorDetune", "creatorVibratoRate", "creatorVibratoDepth",
+                                "creatorVibratoDelay", "creatorDamping", "creatorHarmonic2"})
+        {
+            CAPTURE(weg);
+            CHECK(schieber(weg)->isHidden());
+        }
+        for (const char* bleibt : {"creatorLevel", "creatorTranspose", "creatorStartOffset", "creatorAttack", "creatorDecay",
+                                   "creatorSustain", "creatorRelease", "creatorCutoff", "creatorDrive"})
+        {
+            CAPTURE(bleibt);
+            CHECK_FALSE(schieber(bleibt)->isHidden());
+        }
+        CHECK(dateiZeile->text() == QStringLiteral("(none)"));
+        CHECK(bildTitel->text() == QStringLiteral("The sample — choose a file"));
+        CHECK_FALSE(hinweis->isHidden());
+        CHECK(bild->werte().empty());
+        CHECK_FALSE(schleife->isEnabled());
+        CHECK_FALSE(schieber("creatorSampleStart")->isEnabled());
+        CHECK(verlangt.isEmpty());  // nichts genannt: nichts zu laden
+        CHECK(creator.sampleLaengeMs() == 0.0);
+        auto* liste = creator.findChild<QListWidget*>(QStringLiteral("creatorLayers"));
+        REQUIRE(liste != nullptr);
+        CHECK(liste->item(0)->text().startsWith(QStringLiteral("Layer 1 · Sample")));
+
+        // --- File..., kopiert (S2 a): das Sample liegt bei den eigenen und heisst user:<name>
+        const QString quelle = datei(QStringLiteral("quelle/Cello A3.wav"), "AAAA");
+        REQUIRE(creator.nimmSampleDatei(quelle, true));
+        CHECK(creator.schicht().sample == QStringLiteral("user:cello_a3"));
+        CHECK(QFileInfo::exists(QDir(tmp.path()).filePath(QStringLiteral("samples/cello_a3.wav"))));
+        CHECK(verlangt == QStringList{QStringLiteral("user:cello_a3")});  // einmal verlangt, dann gemerkt
+        CHECK(creator.sampleLaengeMs() == doctest::Approx(2000.0));
+        CHECK(dateiZeile->text() == QStringLiteral("cello_a3.wav · 2.0 s · My samples"));
+        CHECK(bildTitel->text() == QStringLiteral("The sample"));
+        CHECK(bild->werte().size() == 400);
+        CHECK(bild->griff(KurvenBild::GriffStart) == doctest::Approx(0.0));
+        CHECK(bild->griff(KurvenBild::GriffVon) < 0.0);  // noch kein Sustain loop
+        CHECK(schieber("creatorSampleStart")->isEnabled());
+        CHECK(schieber("creatorSampleStart")->maximum() == 2000);
+        CHECK(schieber("creatorLoopTo")->maximum() == 2000);
+        CHECK_FALSE(schieber("creatorLoopFrom")->isEnabled());  // erst mit dem Haken
+        CHECK(schleife->isEnabled());
+        CHECK(creator.geaendert());
+
+        // --- Root note und Fine tune
+        CHECK(grundton->currentData().toInt() == 60);
+        CHECK(grundton->currentText() == QStringLiteral("C4"));
+        const int a3 = grundton->findData(57);
+        grundton->setCurrentIndex(a3);
+        Q_EMIT grundton->activated(a3);
+        CHECK(creator.schicht().grundton == 57);
+        CHECK(grundton->currentText() == QStringLiteral("A3"));
+        schieber("creatorFineTune")->setValue(12);
+        CHECK(creator.schicht().feinCent == doctest::Approx(12.0));
+
+        // --- Sample start: am Regler und im Bild (der rote Griff)
+        schieber("creatorSampleStart")->setValue(500);
+        CHECK(creator.schicht().sampleStartMs == doctest::Approx(500.0));
+        CHECK(bild->griff(KurvenBild::GriffStart) == doctest::Approx(0.25));
+        bild->resize(260, 96);
+        CHECK(bild->griffBei(bild->xVon(0.25)) == KurvenBild::GriffStart);
+        CHECK(bild->griffBei(bild->xVon(0.25) + KurvenBild::kGriffWeite) == KurvenBild::GriffStart);
+        CHECK(bild->griffBei(bild->xVon(0.25) + KurvenBild::kGriffWeite + 2) == KurvenBild::KeinGriff);
+        ziehe(*bild, QPoint(bild->xVon(0.25), 40), QPoint(bild->xVon(0.5), 40));
+        CHECK(creator.schicht().sampleStartMs == doctest::Approx(1000.0).epsilon(0.02));
+        CHECK(schieber("creatorSampleStart")->value() == static_cast<int>(creator.schicht().sampleStartMs));
+        // daneben gegriffen: nichts geschieht
+        ziehe(*bild, QPoint(bild->xVon(0.9), 40), QPoint(bild->xVon(0.1), 40));
+        CHECK(creator.schicht().sampleStartMs == doctest::Approx(1000.0).epsilon(0.02));
+
+        // --- Sustain loop: beim ersten Einschalten der mittlere Teil; von bleibt unter bis
+        schleife->setChecked(true);
+        CHECK(creator.schicht().schleife);
+        CHECK(creator.schicht().schleifeVonMs == doctest::Approx(500.0));
+        CHECK(creator.schicht().schleifeBisMs == doctest::Approx(1500.0));
+        CHECK(schieber("creatorLoopFrom")->isEnabled());
+        CHECK(bild->griff(KurvenBild::GriffVon) == doctest::Approx(0.25));
+        CHECK(bild->griff(KurvenBild::GriffBis) == doctest::Approx(0.75));
+        schieber("creatorLoopFrom")->setValue(1800);
+        CHECK(creator.schicht().schleifeVonMs == doctest::Approx(1499.0));
+        CHECK(schieber("creatorLoopFrom")->value() == 1499);
+        schieber("creatorLoopFrom")->setValue(400);
+        schieber("creatorLoopTo")->setValue(100);
+        CHECK(creator.schicht().schleifeBisMs == doctest::Approx(401.0));
+        schieber("creatorLoopTo")->setValue(1500);
+        // der blaue Griff rechts, im Bild gezogen
+        ziehe(*bild, QPoint(bild->xVon(0.75), 40), QPoint(bild->xVon(0.9), 40));
+        CHECK(creator.schicht().schleifeBisMs == doctest::Approx(1800.0).epsilon(0.02));
+        CHECK(creator.schicht().schleifeVonMs == doctest::Approx(400.0));
+        // aus und wieder an: die Stellen bleiben
+        schleife->setChecked(false);
+        CHECK_FALSE(creator.schicht().schleife);
+        CHECK(bild->griff(KurvenBild::GriffVon) < 0.0);
+        schleife->setChecked(true);
+        CHECK(creator.schicht().schleifeVonMs == doctest::Approx(400.0));
+
+        // --- Anspielen: die Vorhoer-Datei traegt die Schicht, wie sie steht
+        QStringList toene;
+        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator,
+                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+        REQUIRE(creator.spieleAn(57));
+        Instrument vorgehoert;
+        REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+        CHECK(vorgehoert.schichten[0] == creator.schicht());
+
+        // --- gespeichert und wieder geoeffnet: alles ist noch da
+        const QString pfad = QDir(tmp.path()).filePath(QStringLiteral("cello.lvinst"));
+        REQUIRE(creator.speichereUnter(pfad));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(pfad, gelesen));
+        CHECK(gelesen.schichten[0] == creator.schicht());
+        creator.oeffne(gelesen);
+        CHECK(dateiZeile->text() == QStringLiteral("cello_a3.wav · 2.0 s · My samples"));
+        CHECK(grundton->currentText() == QStringLiteral("A3"));
+        CHECK(schleife->isChecked());
+
+        // --- File..., am Ort gelassen: die Schicht nennt den Pfad; eine andere Aufnahme beginnt von vorn
+        const QString andere = datei(QStringLiteral("quelle/andere.wav"), "BBBBBB");
+        REQUIRE(creator.nimmSampleDatei(andere, false));
+        CHECK(creator.schicht().sample == andere);
+        CHECK(creator.schicht().sampleStartMs == 0.0);
+        CHECK_FALSE(creator.schicht().schleife);
+        CHECK(creator.schicht().grundton == 57);  // der Grundton bleibt, bis man ihn stellt
+        CHECK(dateiZeile->text() == QStringLiteral("andere.wav · 2.0 s"));
+        CHECK(QDir(tmp.path()).filePath(QStringLiteral("samples")) == eigenerSampleOrdner());
+        CHECK(QDir(eigenerSampleOrdner()).entryList(QDir::Files).size() == 1);  // nichts dazukopiert
+        // was sich nicht kopieren laesst
+        CHECK_FALSE(creator.nimmSampleDatei(QDir(tmp.path()).filePath(QStringLiteral("fehlt.wav")), true));
+        CHECK(creator.schicht().sample == andere);
+
+        // --- ein Sample, das es nicht gibt: die Zeile sagt es, gefragt wird einmal
+        verlangt.clear();
+        creator.setzeSample(QStringLiteral("user:gibt_es_nicht"));
+        CHECK(dateiZeile->text() == QStringLiteral("gibt_es_nicht (not found)"));
+        CHECK(bildTitel->text() == QStringLiteral("The sample (not found)"));
+        CHECK(bild->werte().empty());
+        CHECK_FALSE(schleife->isEnabled());
+        CHECK(creator.sampleLaengeMs() == 0.0);
+        schieber("creatorFineTune")->setValue(-5);  // ein Zug an einem Regler fragt nicht wieder
+        CHECK(verlangt == QStringList{QStringLiteral("user:gibt_es_nicht")});
+
+        // --- die Wahl aus S2 a wird gemerkt und laesst sich zuruecknehmen
+        CHECK(sampleKopieWahl() == SampleKopie::Fragen);
+        setzeSampleKopieWahl(SampleKopie::Kopieren);
+        CHECK(sampleKopieWahl() == SampleKopie::Kopieren);
+        setzeSampleKopieWahl(SampleKopie::AmOrt);
+        CHECK(sampleKopieWahl() == SampleKopie::AmOrt);
+        setzeSampleKopieWahl(SampleKopie::Fragen);
+        CHECK(sampleKopieWahl() == SampleKopie::Fragen);
+
+        // --- zurueck zu einer gerechneten Schicht: die Zeilen gehen wieder
+        const int alsSinus = welle->findData(static_cast<int>(Schwingung::Sinus));
+        welle->setCurrentIndex(alsSinus);
+        Q_EMIT welle->activated(alsSinus);
+        CHECK(dateiZeile->isHidden());
+        CHECK_FALSE(schieber("creatorVoices")->isHidden());
+        CHECK(bildTitel->text() == QStringLiteral("One cycle"));
+        CHECK(bild->griff(KurvenBild::GriffStart) < 0.0);
+        CHECK(bild->werte().size() > 300);
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_SAMPLE_BILD"); !ziel.isEmpty())
+        {
+            // wie in der Skizze: eine Sample-Schicht mit Sustain loop, darunter ein Sinus
+            vergissSampleDaten();  // fuer das Bild eine Aufnahme, die ausklingt
+            InstrumentCreator gezeigt;
+            QObject::connect(&gezeigt, &InstrumentCreator::sampleVerlangt, &gezeigt, [](const QString& nennung) {
+                std::vector<float> daten(2 * 115200);  // 2,4 Sekunden, klingt aus
+                for (std::size_t t = 0; t < 115200; ++t)
+                    daten[2 * t] = daten[2 * t + 1] =
+                        static_cast<float>(std::sin(2.0 * 3.14159265358979 * 220.0 * static_cast<double>(t) / 48000.0) *
+                                           std::exp(-static_cast<double>(t) / 60000.0) * std::min(1.0, static_cast<double>(t) / 2400.0));
+                merkeSampleDaten(nennung, 48000, std::move(daten));
+            });
+            Instrument cello;
+            cello.titel = QStringLiteral("My Cello");
+            cello.art = QStringLiteral("strings");
+            cello.genres = {QStringLiteral("Ambient")};
+            cello.beschreibung = QStringLiteral("One recorded cello note");
+            Schicht& s = cello.schichten[0];
+            s.name = QStringLiteral("Cello");
+            s.schwingung = Schwingung::Sample;
+            s.sample = QStringLiteral("user:cello_a3");
+            s.grundton = 57;
+            s.feinCent = 12.0;
+            s.sampleStartMs = 20.0;
+            s.schleife = true;
+            s.schleifeVonMs = 1100.0;
+            s.schleifeBisMs = 1850.0;
+            s.halten = 1.0;
+            s.ausklangMs = 300.0;
+            Schicht koerper;
+            koerper.name = QStringLiteral("Body");
+            cello.schichten.push_back(koerper);
+            gezeigt.oeffne(cello);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(ziel));
+        }
     }
 
     TEST_CASE("Instrument-Editor: Edit instrument oeffnet den Creator — gespeichert nennt die Basis seine Datei")
