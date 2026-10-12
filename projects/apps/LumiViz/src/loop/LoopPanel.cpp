@@ -562,25 +562,28 @@ bool LoopPanel::spieleTon(const QString& muster, int hoehe)
     return spieleVor(*basis, hoehe);
 }
 
-bool LoopPanel::spieleInstrumentTon(const QString& nennung, int hoehe)
+bool LoopPanel::spieleInstrumentTon(const QString& nennung, int hoehe, int klingtMs)
 {
     if (!m_geladen || nennung.isEmpty()) return false;
     Muster ton;
     ton.art = MusterArt::Instrument;
     ton.instrument = nennung;
-    return spieleVor(ton, hoehe);
+    return spieleVor(ton, hoehe, klingtMs);
 }
 
-bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe)
+bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe, int klingtMs)
 {
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
     // ein Muster mit dieser einen Note, einen Schlag lang
     Muster ton = vorlage;
-    ton.takte = kTakteMin;
     ton.stumm = false;
     ton.noten = {{0, m_loop.schritteJeSchlag, hoehe, 1.0}};
-    // der Ton und sein Ausklang
-    return spieleAllein(ton, m_loop.notenMs(ton.noten.front()) + 600);
+    // der Ton und sein Ausklang — oder so lang, wie „Repeat note" ihn klingen laesst
+    const int dauerMs = klingtMs > 0 ? klingtMs : m_loop.notenMs(ton.noten.front()) + 600;
+    // so viele Takte, dass das Muster nicht von vorn beginnt, bevor die Zeit um ist
+    const double taktMs = 60000.0 / m_loop.bpm * m_loop.schlaegeJeTakt;
+    ton.takte = std::clamp(static_cast<int>(std::ceil(dauerMs / taktMs)) + 1, kTakteMin, kTakteMax);
+    return spieleAllein(ton, dauerMs);
 }
 
 bool LoopPanel::spieleSpur(const QString& muster, int spur)
@@ -671,6 +674,9 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             // der Instrument-Creator (Stufe 10b): er spielt sein Instrument an, auch ungespeichert
             connect(m_instrumentEditor, &InstrumentEditor::instrumentTonVerlangt, this,
                     [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
+            // „Repeat note" im Creator: der Ton darf bis zum naechsten klingen
+            connect(m_instrumentEditor, &InstrumentEditor::instrumentTonLangVerlangt, this,
+                    [this](const QString& nennung, int hoehe, int klingtMs) { (void)spieleInstrumentTon(nennung, hoehe, klingtMs); });
             // eine Instrument-Datei ist neu geschrieben: wer sie spielt, rechnet ihre Toene neu
             connect(m_instrumentEditor, &InstrumentEditor::instrumentGespeichert, this, [this] {
                 if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
@@ -718,6 +724,8 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 [this](const QString& basisName, int spur) { (void)spieleSpur(basisName, spur); });
         connect(m_editor, &DrumEditor::instrumentTonVerlangt, this,
                 [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
+        connect(m_editor, &DrumEditor::instrumentTonLangVerlangt, this,
+                [this](const QString& nennung, int hoehe, int klingtMs) { (void)spieleInstrumentTon(nennung, hoehe, klingtMs); });
         connect(m_editor, &DrumEditor::klaengeGeaendert, this, [this] {
             if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
             meldeStand();

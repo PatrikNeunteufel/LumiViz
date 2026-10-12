@@ -34,6 +34,7 @@
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QStringListModel>
+#include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -380,7 +381,8 @@ void Tastenleiste::paintEvent(QPaintEvent*)
         if (schwarz(h)) continue;
         const QRect r = tastenRect(h);
         p.setPen(QColor(120, 120, 120));
-        p.setBrush(h == m_gedrueckt ? an : QColor(232, 232, 228));
+        // gedrueckt: die Farbe der Auswahl; hervorgehoben (Repeat note): dieselbe, heller
+        p.setBrush(h == m_gedrueckt ? an : h == m_gewaehlt ? an.lighter(150) : QColor(232, 232, 228));
         p.drawRect(r);
         if (h % 12 == 0)
         {
@@ -392,9 +394,17 @@ void Tastenleiste::paintEvent(QPaintEvent*)
     {
         if (!schwarz(h)) continue;
         p.setPen(Qt::NoPen);
-        p.setBrush(h == m_gedrueckt ? an : QColor(40, 40, 44));
+        p.setBrush(h == m_gedrueckt ? an : h == m_gewaehlt ? an.lighter(150) : QColor(40, 40, 44));
         p.drawRect(tastenRect(h));
     }
+}
+
+void Tastenleiste::setGewaehlt(int hoehe)
+{
+    const int neu = hoehe >= kTief && hoehe <= kHoch ? hoehe : -1;
+    if (neu == m_gewaehlt) return;
+    m_gewaehlt = neu;
+    update();
 }
 
 void Tastenleiste::mousePressEvent(QMouseEvent* event)
@@ -935,6 +945,31 @@ void InstrumentCreator::setupUI()
     rechts->addWidget(new QLabel(tr("Click a key to hear it"), this));
     m_tasten = new Tastenleiste(this);
     rechts->addWidget(m_tasten);
+    // Repeat note (Wunsch Patrik S116): der angeklickte Ton spielt immer wieder
+    m_wiederholen = new QCheckBox(tr("Repeat note"), this);
+    m_wiederholen->setObjectName(QStringLiteral("creatorRepeat"));
+    m_wiederholen->setToolTip(tr("Plays the note again and again while you turn the controls. Click a key to choose "
+                                 "the note — it stays highlighted while this is on"));
+    // every n beats: so weit liegen die Toene auseinander — und so lang darf einer klingen
+    m_wiederholAbstand = new QComboBox(this);
+    m_wiederholAbstand->setObjectName(QStringLiteral("creatorRepeatEvery"));
+    for (const int schlaege : {1, 2, 4, 8, 16})
+        m_wiederholAbstand->addItem(schlaege == 1 ? tr("every beat") : tr("every %1 beats").arg(schlaege), schlaege);
+    m_wiederholAbstand->setCurrentIndex(m_wiederholAbstand->findData(m_wiederholSchlaege));
+    m_wiederholAbstand->setToolTip(tr("How far apart the repeated notes are, in beats of the loop. Each note may ring "
+                                      "until the next one — choose more beats to hear a long release to its end"));
+    {
+        auto* reihe = new QHBoxLayout;
+        reihe->addWidget(m_wiederholen);
+        reihe->addWidget(m_wiederholAbstand);
+        reihe->addStretch(1);
+        rechts->addLayout(reihe);
+    }
+    connect(m_wiederholAbstand, &QComboBox::activated, this,
+            [this](int index) { setzeWiederholSchlaege(m_wiederholAbstand->itemData(index).toInt()); });
+    m_wiederholTakt = new QTimer(this);
+    connect(m_wiederholTakt, &QTimer::timeout, this, [this] { (void)spieleAn(m_wiederholHoehe); });
+    connect(m_wiederholen, &QCheckBox::toggled, this, &InstrumentCreator::setzeWiederholen);
     m_nurWahl = new QCheckBox(tr("Selected layer only"), this);
     m_nurWahl->setObjectName(QStringLiteral("creatorSelectedOnly"));
     m_nurWahl->setToolTip(tr("The keys play the selected layer alone, even if it is muted"));
@@ -977,7 +1012,14 @@ void InstrumentCreator::setupUI()
             QMessageBox::warning(this, tr("Instrument"), tr("Could not write %1").arg(QDir::toNativeSeparators(m_datei)));
     });
     connect(m_speichernUnter, &QPushButton::clicked, this, &InstrumentCreator::frageNachDatei);
-    connect(m_tasten, &Tastenleiste::taste, this, [this](int hoehe) { (void)spieleAn(hoehe); });
+    connect(m_tasten, &Tastenleiste::taste, this, [this](int hoehe) {
+        m_wiederholHoehe = hoehe;  // auch ohne Repeat: mit ihm beginnt es spaeter
+        (void)spieleAn(hoehe);
+        if (!wiederholt()) return;
+        // mit Repeat: die Taste ist die neue Tonhoehe, und der Takt beginnt mit ihr von vorn
+        m_tasten->setGewaehlt(hoehe);
+        m_wiederholTakt->start(wiederholMs());
+    });
     connect(m_gesamt, &QSlider::valueChanged, this, [this](int wert) {
         aendere([wert](Instrument& i) { i.laut = wert / 100.0; });
     });
@@ -1351,7 +1393,11 @@ bool InstrumentCreator::spieleAn(int hoehe)
         zuHoeren.schichten.push_back(ton);
     }
     if (!speichereInstrument(zuHoeren, datei)) return false;
-    Q_EMIT tonVerlangt(datei, hoehe);
+    // mit Repeat note darf der Ton bis zum naechsten klingen
+    if (wiederholt())
+        Q_EMIT tonLangVerlangt(datei, hoehe, wiederholMs());
+    else
+        Q_EMIT tonVerlangt(datei, hoehe);
     return true;
 }
 
@@ -1574,6 +1620,61 @@ void InstrumentCreator::zeigeAlles()
     zeige(m_daempfung, saite);
     klappeGruppen();
     zeigeBilder();
+}
+
+// --- Repeat note (Wunsch Patrik S116) ---------------------------------------------
+
+void InstrumentCreator::setzeWiederholen(bool an)
+{
+    {
+        const QSignalBlocker ruhe(m_wiederholen);
+        m_wiederholen->setChecked(an);
+    }
+    if (an == m_wiederholTakt->isActive()) return;
+    if (!an)
+    {
+        m_wiederholTakt->stop();
+        m_tasten->setGewaehlt(-1);  // hervorgehoben ist die Taste nur, solange es laeuft
+        return;
+    }
+    m_tasten->setGewaehlt(m_wiederholHoehe);
+    m_wiederholTakt->start(wiederholMs());
+    (void)spieleAn(m_wiederholHoehe);  // gleich, nicht erst nach dem ersten Abstand
+}
+
+bool InstrumentCreator::wiederholt() const
+{
+    return m_wiederholTakt->isActive();
+}
+
+void InstrumentCreator::setzeSchlagMs(double ms)
+{
+    if (!std::isfinite(ms) || ms <= 0.0) return;
+    m_schlagMs = ms;
+    if (wiederholt()) m_wiederholTakt->setInterval(wiederholMs());
+}
+
+void InstrumentCreator::setzeWiederholSchlaege(int schlaege)
+{
+    const int index = m_wiederholAbstand->findData(schlaege);
+    if (index < 0) return;  // nur, was die Auswahl nennt
+    m_wiederholSchlaege = schlaege;
+    {
+        const QSignalBlocker ruhe(m_wiederholAbstand);
+        m_wiederholAbstand->setCurrentIndex(index);
+    }
+    if (wiederholt()) m_wiederholTakt->setInterval(wiederholMs());
+}
+
+int InstrumentCreator::wiederholMs() const
+{
+    return std::max(250, gerundet(m_wiederholSchlaege * m_schlagMs));
+}
+
+void InstrumentCreator::hideEvent(QHideEvent* event)
+{
+    setzeWiederholen(false);
+    QWidget::hideEvent(event);
 }
 
 bool InstrumentCreator::eventFilter(QObject* objekt, QEvent* ereignis)

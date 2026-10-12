@@ -420,6 +420,12 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{{0, 4, 62, 1.0}});
     CHECK_FALSE(panel.spieleInstrumentTon(QString(), 62));
     CHECK_FALSE(panel.spieleInstrumentTon(QStringLiteral("strings"), 5));
+    // „Repeat note" im Creator (S116): der Ton darf neun Sekunden klingen — das Muster ist so lang,
+    // dass es nicht vorher von vorn beginnt (bei 120 BPM dauert ein Takt zwei Sekunden)
+    REQUIRE(panel.spieleInstrumentTon(QStringLiteral("strings"), 62, 9000));
+    CHECK(panel.hoertVor());
+    CHECK(panel.spieler().loop().muster[0].takte == 6);
+    CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{{0, 4, 62, 1.0}});  // die Note selbst bleibt ein Schlag
     panel.halte();
     CHECK_FALSE(panel.hoertVor());
     CHECK(panel.spieler().loop() == panel.loop());

@@ -1446,6 +1446,7 @@ bool DrumEditor::oeffneCreator(int spur, bool zeigen)
     stelleCreator();
     m_creatorSpur = spur;
     m_wandelSpur = -1;  // ein „Edit sound...", das nie gespeichert wurde, gilt nicht mehr
+    m_creator->setzeSchlagMs(60000.0 / m_loop.bpm);  // „Repeat note" im Tempo des Loops
     m_creator->oeffne(instrument);
     if (zeigen)
     {
@@ -1495,6 +1496,7 @@ void DrumEditor::stelleCreator()
         zeigeAlles();  // der Titel kann sich geaendert haben, auch wenn die Nennung blieb
     });
     connect(m_creator, &InstrumentCreator::tonVerlangt, this, &DrumEditor::instrumentTonVerlangt);
+    connect(m_creator, &InstrumentCreator::tonLangVerlangt, this, &DrumEditor::instrumentTonLangVerlangt);
     connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &DrumEditor::sampleVerlangt);
     m_creator->setEngineGeber(m_engineGeber);
 }
@@ -1543,6 +1545,7 @@ bool DrumEditor::bearbeiteKlang(int spur, bool zeigen)
     // am Loop aendert sich nichts — erst wenn der Creator speichert
     m_wandelSpur = spur;
     m_wandelKlang = ziel->klang;
+    m_creator->setzeSchlagMs(60000.0 / m_loop.bpm);
     m_creator->oeffne(instrumentAusKlang(ziel->klang));
     if (zeigen)
     {

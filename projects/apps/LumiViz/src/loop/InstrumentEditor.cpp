@@ -1345,10 +1345,12 @@ bool InstrumentEditor::oeffneCreator(bool zeigen)
             zeigeAlles();  // der Titel in der Zeile kann sich geaendert haben, auch wenn die Nennung blieb
         });
         connect(m_creator, &InstrumentCreator::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
+        connect(m_creator, &InstrumentCreator::tonLangVerlangt, this, &InstrumentEditor::instrumentTonLangVerlangt);
         // die Aufnahme einer Sample-Schicht (Stufe 11a): dekodieren kann nur, wer die Audio-Engine hat
         connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &InstrumentEditor::sampleVerlangt);
         m_creator->setEngineGeber(m_engineGeber);  // fuer „Record..." (Stufe 11b)
     }
+    m_creator->setzeSchlagMs(60000.0 / m_loop.bpm);  // „Repeat note" im Tempo des Loops
     m_creator->oeffne(instrument);
     if (zeigen)
     {

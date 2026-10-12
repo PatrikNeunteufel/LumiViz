@@ -315,6 +315,8 @@ Q_SIGNALS:
     void spurTonVerlangt(const QString& muster, int spur);
     /// Creator und Fenster Instruments wollen einen Ton eines Instruments hoeren.
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
+    /// Dasselbe von „Repeat note" im Creator: der Ton darf `klingtMs` lang klingen.
+    void instrumentTonLangVerlangt(const QString& nennung, int hoehe, int klingtMs);
     /// Eine Datei, die ein Klang nennt, ist neu geschrieben (ein Instrument im
     /// Creator, eine Aufnahme unter demselben Namen): wer spielt, laedt neu.
     void klaengeGeaendert();

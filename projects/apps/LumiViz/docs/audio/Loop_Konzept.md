@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.54.1
+> **Version:** 0.55.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1745,6 +1745,32 @@ gesetzt: sonst verstellte man beim Rollen den Regler unter dem Zeiger).
 Nicht geprüft: das Rollen mit dem Mausrad im Programm (der Test belegt nur,
 dass der Regler das Rad nicht nimmt).
 
+**Repeat note im Creator (Wunsch Patrik, S116; gebaut):** unter der
+Klaviatur der Haken **Repeat note** und daneben die Auswahl **every beat /
+every 2 / 4 / 8 / 16 beats** (vorbelegt 2). Mit dem Haken spielt der zuletzt
+angeklickte Ton (anfangs C4) immer wieder, mit den Einstellungen, wie sie
+gerade stehen — was ein Regler ändert, ist beim nächsten Ton zu hören. Ein
+Klick auf eine Taste wechselt die Tonhöhe und spielt sie sofort; die Taste
+ist auf der Klaviatur **hervorgehoben, solange Repeat läuft**, sonst nicht.
+Die Dauer (Patrik während des Baus: „vielleicht sollte da auch eine Dauer
+einstellbar sein, bei delay usw will man etwas mehr hören"): der Abstand
+zählt in Schlägen im Tempo des Loops (der Editor nennt es dem Creator), nie
+dichter als 250 ms — und **so lang darf der Ton klingen**: das Anspielen
+hält dann nicht 600 ms nach dem Ende der Note, sondern erst, wenn der
+nächste Ton kommt (`tonLangVerlangt`, `LoopPanel::spieleInstrumentTon` mit
+`klingtMs`; das Muster des Anspielens ist so lang, dass es nicht vorher von
+vorn beginnt). Die Note selbst bleibt einen Schlag lang. Es endet, wenn der
+Haken herausgenommen wird oder das Fenster zugeht. Spielt der Loop, bleibt
+es stumm und setzt danach wieder ein (zuvor angekündigt: „es hört auf, wenn
+der Loop zu spielen beginnt" — der Creator erfährt davon nichts, das
+Anspielen wird in der Zeit nur nicht ausgeführt). Ohne Skizze gebaut, nach
+Patriks Beschreibung; das Bild aus dem Test angesehen. Von Claude gesetzt:
+die fünf Abstände in Schlägen statt Sekunden; die Auswahl wird nicht
+gemerkt; die Farbe der hervorgehobenen Taste (die der Auswahl, heller).
+Nicht geprüft: alles im Programm — auch, ob die Effekte am Clip (Echo, Hall)
+beim Anspielen aus dem Creator überhaupt zu hören sind: der Creator spielt
+ein Instrument an, kein Clip mit seinen Effekten.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2480,6 +2506,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.55.0** (S116, 2026-10-12): im Creator **Repeat note** mit der Auswahl
+  every 1 / 2 / 4 / 8 / 16 beats — der angeklickte Ton spielt immer wieder
+  und darf bis zum nächsten klingen, die Taste ist dabei hervorgehoben
+  (Wunsch Patrik, §4h).
 
 - **0.54.1** (S116, 2026-10-12): Befund Patrik behoben — der Creator wuchs
   mit jeder aufgeklappten Gruppe über den Bildschirm; die Regler der Schicht

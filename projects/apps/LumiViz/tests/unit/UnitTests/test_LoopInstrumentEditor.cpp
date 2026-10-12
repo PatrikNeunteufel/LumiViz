@@ -29,6 +29,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QElapsedTimer>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -584,6 +585,71 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(tasten->hoeheBei(QPoint(-5, 10)) == -1);
         klick(*tasten, tasten->ortVon(61));
         CHECK(toene.last().startsWith(QStringLiteral("61 ")));
+
+        // --- Repeat note (Wunsch Patrik S116): der angeklickte Ton spielt immer wieder, die Taste ist
+        //     dabei hervorgehoben; „every n beats" stellt den Abstand — so lang darf der Ton klingen
+        {
+            auto* wiederholen = creator.findChild<QCheckBox*>(QStringLiteral("creatorRepeat"));
+            auto* abstand = creator.findChild<QComboBox*>(QStringLiteral("creatorRepeatEvery"));
+            REQUIRE(wiederholen != nullptr);
+            REQUIRE(abstand != nullptr);
+            QStringList lang;
+            QObject::connect(&creator, &InstrumentCreator::tonLangVerlangt, &creator, [&](const QString&, int hoehe, int klingtMs) {
+                lang << QStringLiteral("%1 %2").arg(hoehe).arg(klingtMs);
+            });
+            CHECK_FALSE(creator.wiederholt());
+            CHECK(tasten->gewaehlt() == -1);        // ohne Repeat ist keine Taste hervorgehoben
+            CHECK(creator.wiederholHoehe() == 61);  // die zuletzt angeklickte
+            CHECK(abstand->count() == 5);
+            CHECK(abstand->currentText() == QStringLiteral("every 2 beats"));
+            CHECK(creator.wiederholMs() == 1000);   // zwei Schlaege bei 120 BPM
+            creator.setzeSchlagMs(100.0);           // ein schnelles Tempo, damit der Test nicht wartet
+            CHECK(creator.wiederholMs() == 250);    // nie dichter als 250 ms
+            creator.setzeWiederholSchlaege(4);
+            CHECK(abstand->currentText() == QStringLiteral("every 4 beats"));
+            CHECK(creator.wiederholMs() == 400);
+            creator.setzeWiederholSchlaege(3);      // nennt die Auswahl nicht: bleibt
+            CHECK(creator.wiederholSchlaege() == 4);
+            const int kurz = static_cast<int>(toene.size());
+
+            wiederholen->setChecked(true);
+            CHECK(creator.wiederholt());
+            CHECK(tasten->gewaehlt() == 61);
+            CHECK(lang == QStringList{QStringLiteral("61 400")});  // gleich, und mit der Zeit bis zum naechsten
+            QElapsedTimer uhr;
+            uhr.start();
+            while (lang.size() < 3 && uhr.elapsed() < 3000) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            CHECK(lang.size() >= 3);
+            CHECK(uhr.elapsed() >= 700);  // zwei weitere im Abstand von 400 ms
+            // eine andere Taste: sie spielt sofort, ist hervorgehoben, und der Abstand zaehlt von ihr an
+            klick(*tasten, tasten->ortVon(64));
+            CHECK(lang.last() == QStringLiteral("64 400"));
+            CHECK(tasten->gewaehlt() == 64);
+            CHECK(creator.wiederholHoehe() == 64);
+            // was ein Regler aendert, ist beim naechsten Ton zu hoeren: die Vorhoer-Datei traegt es
+            schieber("creatorRelease")->setValue(9);
+            const int davor = static_cast<int>(lang.size());
+            uhr.restart();
+            while (lang.size() == davor && uhr.elapsed() < 3000) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
+            CHECK(vorgehoert.schichten[0].ausklangMs == doctest::Approx(90.0));
+            // ein anderer Abstand gilt gleich
+            abstand->setCurrentIndex(abstand->findData(1));
+            Q_EMIT abstand->activated(abstand->currentIndex());
+            CHECK(creator.wiederholMs() == 250);
+            // aus: es endet, die Taste ist nicht mehr hervorgehoben, ein Klick spielt wieder kurz
+            wiederholen->setChecked(false);
+            CHECK_FALSE(creator.wiederholt());
+            CHECK(tasten->gewaehlt() == -1);
+            const int ende = static_cast<int>(lang.size());
+            uhr.restart();
+            while (uhr.elapsed() < 600) QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+            CHECK(lang.size() == ende);
+            CHECK(toene.size() == kurz);  // waehrend Repeat ging nichts ueber den kurzen Weg
+            klick(*tasten, tasten->ortVon(60));
+            CHECK(toene.size() == kurz + 1);
+            creator.setzeSchlagMs(500.0);
+        }
         creator.setzeZurueck();  // nichts Ungespeichertes zurueckbleiben lassen
         QFile::remove(InstrumentCreator::vorhoerDatei());
     }

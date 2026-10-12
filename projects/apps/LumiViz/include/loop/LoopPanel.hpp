@@ -128,7 +128,9 @@ public:
     /// Dasselbe mit einem Instrument, das beim Namen oder beim Pfad seiner
     /// Datei genannt wird — so spielt der Instrument-Creator an, was er gerade
     /// einstellt (Stufe 10b).
-    bool spieleInstrumentTon(const QString& nennung, int hoehe);
+    /// `klingtMs` groesser als null („Repeat note" im Creator): so lang darf der
+    /// Ton im Ganzen klingen, statt einen Schlag und 600 ms.
+    bool spieleInstrumentTon(const QString& nennung, int hoehe, int klingtMs = 0);
     /// Einen Schlag einer Spur eines Drum-Musters anspielen, mit Lautstaerke
     /// und Panorama der Spur (Play im Feld hinter „…" des Drum-Editors, Stufe
     /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.
@@ -166,7 +168,7 @@ private:
     void beendeVorhoeren();
     /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
     /// `vorlage` mit dieser einen Note.
-    bool spieleVor(const Muster& vorlage, int hoehe);
+    bool spieleVor(const Muster& vorlage, int hoehe, int klingtMs = 0);
     /// Einen Loop aus einem Muster „Preview" einmal anspielen; nach `dauerMs`
     /// haelt der Spieler wieder und bekommt den Loop des Panels zurueck.
     bool spieleAllein(const Muster& muster, int dauerMs);

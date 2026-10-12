@@ -52,9 +52,11 @@ class QGridLayout;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QHideEvent;
 class QPushButton;
 class QScrollArea;
 class QSlider;
+class QTimer;
 class QToolButton;
 
 namespace lumi::loop
@@ -153,6 +155,10 @@ public:
     /// Ein Punkt auf der Taste dieser Tonhoehe (fuer Tests).
     [[nodiscard]] QPoint ortVon(int hoehe) const;
     [[nodiscard]] QSize sizeHint() const override { return {260, 48}; }
+    /// Eine Taste hervorheben — die Tonhoehe, die „Repeat note" gerade spielt
+    /// (Wunsch Patrik S116); -1 = keine.
+    void setGewaehlt(int hoehe);
+    [[nodiscard]] int gewaehlt() const { return m_gewaehlt; }
 
 Q_SIGNALS:
     void taste(int hoehe);
@@ -165,6 +171,7 @@ protected:
 private:
     [[nodiscard]] QRect tastenRect(int hoehe) const;
     int m_gedrueckt = -1;
+    int m_gewaehlt = -1;
 };
 
 class InstrumentCreator : public QWidget
@@ -279,6 +286,27 @@ public:
     void setReferenzton(bool an);
     [[nodiscard]] bool referenzton() const { return m_referenzton; }
 
+    // --- Repeat note (Wunsch Patrik S116) ----------------------------------------
+    /// **Repeat note:** an = der zuletzt angeklickte Ton (anfangs C4) spielt
+    /// immer wieder, mit den Einstellungen, wie sie gerade stehen — so hoert
+    /// man jede Aenderung beim naechsten Schlag. Ein Klick auf eine Taste
+    /// wechselt die Tonhoehe; sie ist auf der Klaviatur hervorgehoben, solange
+    /// es laeuft. Endet, wenn das Fenster zugeht.
+    void setzeWiederholen(bool an);
+    [[nodiscard]] bool wiederholt() const;
+    /// Die Tonhoehe, die wiederholt wird (auch die zuletzt angeklickte ohne Repeat).
+    [[nodiscard]] int wiederholHoehe() const { return m_wiederholHoehe; }
+    /// So lang ist ein Schlag im Tempo des Loops, in Millisekunden — der
+    /// Editor nennt es.
+    void setzeSchlagMs(double ms);
+    /// **every n beats** (Wunsch Patrik S116: „bei delay usw will man etwas
+    /// mehr hoeren"): der Abstand zwischen zwei Toenen in Schlaegen — 1, 2, 4,
+    /// 8 oder 16, vorbelegt 2. So lang darf der Ton auch klingen.
+    void setzeWiederholSchlaege(int schlaege);
+    [[nodiscard]] int wiederholSchlaege() const { return m_wiederholSchlaege; }
+    /// Der Abstand in Millisekunden: die Schlaege im Tempo des Loops, mindestens 250 ms.
+    [[nodiscard]] int wiederholMs() const;
+
     // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) -----------------------
     /// Die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an
     /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
@@ -312,10 +340,15 @@ Q_SIGNALS:
     void gespeichert(const QString& nennung);
     /// Einen Ton anspielen: das Instrument beim Pfad seiner Vorhoer-Datei.
     void tonVerlangt(const QString& nennung, int hoehe);
+    /// Dasselbe von „Repeat note": der Ton darf `klingtMs` lang klingen — bis
+    /// der naechste kommt —, damit ein langer Ausklang ganz zu hoeren ist.
+    void tonLangVerlangt(const QString& nennung, int hoehe, int klingtMs);
 
 protected:
     /// Das Mausrad ueber einem Regler der Schicht rollt das Feld, statt ihn zu verstellen.
     bool eventFilter(QObject* objekt, QEvent* ereignis) override;
+    /// Das Fenster ist zu: „Repeat note" endet.
+    void hideEvent(QHideEvent* event) override;
     /// Ungespeichertes: Save, Discard oder Cancel.
     void closeEvent(QCloseEvent* event) override;
 
@@ -419,6 +452,12 @@ private:
     std::vector<Gruppe> m_gruppen;
     QGridLayout* m_gitter = nullptr;
     QScrollArea* m_rollen = nullptr;  ///< die Regler der Schicht: rollt, wenn sie nicht ins Fenster passen
+    QCheckBox* m_wiederholen = nullptr;  ///< „Repeat note"
+    QComboBox* m_wiederholAbstand = nullptr;  ///< „every n beats"
+    int m_wiederholSchlaege = 2;
+    QTimer* m_wiederholTakt = nullptr;
+    int m_wiederholHoehe = 60;           ///< C4, bis eine Taste angeklickt wird
+    double m_schlagMs = 500.0;           ///< ein Schlag bei 120 BPM
     /// Was eingeklappt ist, ausblenden; die Pfeile der Ueberschriften stellen.
     void klappeGruppen();
     QLabel* m_wellenTitel = nullptr;

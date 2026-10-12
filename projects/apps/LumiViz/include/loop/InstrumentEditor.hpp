@@ -296,6 +296,8 @@ Q_SIGNALS:
     /// Der Creator will einen Ton hoeren: das Instrument beim Pfad seiner
     /// Vorhoer-Datei.
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
+    /// Dasselbe von „Repeat note" im Creator: der Ton darf `klingtMs` lang klingen.
+    void instrumentTonLangVerlangt(const QString& nennung, int hoehe, int klingtMs);
     /// Der Creator hat eine Instrument-Datei geschrieben: wer spielt, rechnet neu.
     void instrumentGespeichert();
     /// Der Creator braucht die Daten einer Aufnahme (Sample-Schicht, Stufe
