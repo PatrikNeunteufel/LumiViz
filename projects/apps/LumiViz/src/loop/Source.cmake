@@ -27,6 +27,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/LoopPanel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Offen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Rechenkern.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Sample.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SichttestAktionen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Spieler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Taktachse.cpp"
@@ -48,6 +49,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Loop.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/LoopPanel.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Rechenkern.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Sample.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/SichttestAktionen.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Spieler.hpp"
 )

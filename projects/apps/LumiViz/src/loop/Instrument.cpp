@@ -6,6 +6,7 @@
 #include "loop/Instrument.hpp"
 
 #include "loop/Kit.hpp"
+#include "loop/Sample.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -19,6 +20,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 
 namespace lumi::loop
 {
@@ -47,7 +49,8 @@ double teilton(const Schicht& schicht, int k)
     case Schwingung::Rechteck:
         return k % 2 == 1 ? 1.0 / k : 0.0;
     case Schwingung::Saite:
-        break;
+    case Schwingung::Sample:
+        break;  // kein Wellenzug: die Saite und die Aufnahme rechnen eigens
     }
     return 0.0;
 }
@@ -239,6 +242,79 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
     }
 }
 
+/// So lang blendet ein Sustain loop an seiner Naht hoechstens ueber.
+constexpr double kNahtMs = 10.0;
+
+/// Eine Aufnahme, je Note schneller oder langsamer abgespielt (Stufe 11a):
+/// der Abstand zum Grundton bestimmt das Tempo, zwischen den Abtastwerten
+/// wird geradlinig gelesen. Solange die Note dauert, wiederholt sich der
+/// Sustain loop — an seiner Naht kurz ueberblendet; danach laeuft die
+/// Aufnahme weiter bis an ihr Ende. Ist zu `schicht.sample` nichts gemerkt,
+/// bleibt die Schicht still. Die beiden Seiten der Aufnahme bleiben getrennt.
+void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+{
+    const std::shared_ptr<const SampleDaten> quelle = sampleDaten(schicht.sample);
+    if (quelle == nullptr || quelle->rate <= 0 || quelle->klang.frames() < 2) return;
+    const std::vector<float>& roh = quelle->klang.daten;
+    const auto laenge = static_cast<double>(quelle->klang.frames());
+    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    const double jeMs = quelle->rate / 1000.0;
+
+    const double abstand = (hoehe - std::clamp(schicht.grundton, 0, 127)) / 12.0 -
+                           std::clamp(schicht.feinCent, -100.0, 100.0) / 1200.0;
+    const double schritt = std::exp2(abstand) * quelle->rate / rate;
+    double ort = std::clamp(schicht.sampleStartMs * jeMs, 0.0, laenge - 1.0);
+
+    const double von = std::clamp(schicht.schleifeVonMs * jeMs, 0.0, laenge - 1.0);
+    const double bis = std::clamp(schicht.schleifeBisMs * jeMs, 0.0, laenge - 1.0);
+    const bool schleife = schicht.schleife && bis - von >= 2.0;
+    const double naht = schleife ? std::min({kNahtMs * jeMs, (bis - von) / 4.0, von}) : 0.0;
+
+    const auto lies = [&roh, laenge](double p, std::size_t seite) {
+        if (p < 0.0 || p >= laenge - 1.0) return 0.0;
+        const auto i = static_cast<std::size_t>(p);
+        const double rest = p - static_cast<double>(i);
+        const double a = roh[2 * i + seite];
+        const double b = roh[2 * i + 2 + seite];
+        return a + (b - a) * rest;
+    };
+
+    const Verzerrer verzerrer(schicht.verzerrung);
+    const bool filter = schicht.filterTeilton > 0.0;
+    std::array<double, 2> f1 = {0.0, 0.0};
+    std::array<double, 2> f2 = {0.0, 0.0};
+    const double pegel = kPegel * schicht.laut;
+
+    for (std::int64_t t = 0; t < frames; ++t)
+    {
+        if (ort >= laenge - 1.0) break;  // die Aufnahme ist zu Ende: der Rest bleibt still
+        const double h = huelle.bei(t);
+        const bool gehalten = schleife && t < huelle.ende;
+        // an der Naht: was gleich wieder beginnt, kommt schon dazu
+        const double blende = gehalten && naht > 0.0 && ort > bis - naht ? (ort - (bis - naht)) / naht : 0.0;
+        double a = 0.0;
+        if (filter)
+        {
+            const double grenze = std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45);
+            a = 1.0 - std::exp(-2.0 * kPi * grenze / rate);
+        }
+        for (std::size_t seite = 0; seite < 2; ++seite)
+        {
+            double wert = lies(ort, seite);
+            if (blende > 0.0) wert = wert * (1.0 - blende) + lies(ort - (bis - von), seite) * blende;
+            if (filter)
+            {
+                f1[seite] += a * (wert - f1[seite]);
+                f2[seite] += a * (f1[seite] - f2[seite]);
+                wert = f2[seite];
+            }
+            daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(verzerrer.bei(wert) * h * pegel);
+        }
+        ort += schritt;
+        if (gehalten && ort >= bis) ort -= bis - von;
+    }
+}
+
 }  // namespace
 
 // =============================================================================
@@ -255,11 +331,12 @@ struct Wellenname
     Schwingung schwingung;
     const char* name;
 };
-constexpr std::array<Wellenname, 5> kWellen = {{{Schwingung::Sinus, "sine"},
+constexpr std::array<Wellenname, 6> kWellen = {{{Schwingung::Sinus, "sine"},
                                                 {Schwingung::Dreieck, "triangle"},
                                                 {Schwingung::Saege, "saw"},
                                                 {Schwingung::Rechteck, "square"},
-                                                {Schwingung::Saite, "string"}}};
+                                                {Schwingung::Saite, "string"},
+                                                {Schwingung::Sample, "sample"}}};
 
 double inGrenzen(double wert, double von, double bis, double ersatz)
 {
@@ -303,6 +380,17 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("vibratoDelay")] = schicht.vibratoEinsatzMs;
     o[QStringLiteral("damping")] = schicht.saiteDaempfung;
     o[QStringLiteral("level")] = schicht.laut;
+    if (schicht.schwingung == Schwingung::Sample)
+    {
+        // seit Fassung 4; nur eine Sample-Schicht traegt sie
+        o[QStringLiteral("sample")] = schicht.sample;
+        o[QStringLiteral("rootNote")] = schicht.grundton;
+        o[QStringLiteral("fineTune")] = schicht.feinCent;
+        o[QStringLiteral("sampleStart")] = schicht.sampleStartMs;
+        o[QStringLiteral("sustainLoop")] = schicht.schleife;
+        o[QStringLiteral("loopFrom")] = schicht.schleifeVonMs;
+        o[QStringLiteral("loopTo")] = schicht.schleifeBisMs;
+    }
     return o;
 }
 
@@ -341,6 +429,15 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
     neu.einsatzMs = zahl("startOffset", vorgabe.einsatzMs, 0.0, 1000.0);
     neu.verzerrung = zahl("drive", vorgabe.verzerrung, 0.0, 1.0);
+    // seit Fassung 4; in einer aelteren Datei und an anderen Schichten fehlen sie
+    const double laengsteMs = kKlangMaxSekunden * 1000.0;
+    neu.sample = wurzel.value(QStringLiteral("sample")).toString();
+    neu.grundton = std::clamp(wurzel.value(QStringLiteral("rootNote")).toInt(vorgabe.grundton), 0, 127);
+    neu.feinCent = zahl("fineTune", vorgabe.feinCent, -100.0, 100.0);
+    neu.sampleStartMs = zahl("sampleStart", vorgabe.sampleStartMs, 0.0, laengsteMs);
+    neu.schleife = wurzel.value(QStringLiteral("sustainLoop")).toBool(false);
+    neu.schleifeVonMs = zahl("loopFrom", vorgabe.schleifeVonMs, 0.0, laengsteMs);
+    neu.schleifeBisMs = zahl("loopTo", vorgabe.schleifeBisMs, 0.0, laengsteMs);
     return neu;
 }
 
@@ -428,6 +525,11 @@ bool ladeInstrument(const QString& pfad, Instrument& instrument, bool* zuNeu)
     if (neu.titel.isEmpty()) neu.titel = QFileInfo(pfad).completeBaseName();
     instrument = std::move(neu);
     return true;
+}
+
+void zaehleInstrumentFassung()
+{
+    ++fassung();
 }
 
 std::uint64_t instrumentFassung()
@@ -664,6 +766,8 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
         eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
         if (schicht.schwingung == Schwingung::Saite)
             rechneSaite(schicht, ton, hz, huelle, rate, eine);
+        else if (schicht.schwingung == Schwingung::Sample)
+            rechneSample(schicht, ton, hz, huelle, rate, eine);
         else
             rechneSchwingung(schicht, hz, huelle, rate, eine);
         if (erste && einsatz == 0)

@@ -223,7 +223,9 @@ zwei Knöpfe: **Export...** und **Import...**.
 Darunter eine Liste mit Haken, je Zeile ein Bereich und rechts die Zahl der
 eigenen Dateien: Visualizer presets, Gradients, Module presets, Shader
 templates, Karaoke trails, Composer fades, shapes, mutes, Shadertoy imports,
-Instruments (ab Stufe 14 des Loops). Anfangs alle angehakt. Abgesetzt
+Instruments (ab Stufe 14 des Loops), Samples (seit S115, Loop Stufe 11a,
+Entscheid S1 a: der Ordner `samples`, eigene Samples heißen `user:<name>`).
+Anfangs alle angehakt. Abgesetzt
 darunter, anfangs aus: **Settings (favorites, recent lists, options)** und
 **Downloaded lyrics** mit Zahl (D6 a). Unten der Zielpfad mit einem Namen aus
 dem Datum (`LumiViz_2026-10-12.lvdata`) und **Browse...**; eine Zeile „39

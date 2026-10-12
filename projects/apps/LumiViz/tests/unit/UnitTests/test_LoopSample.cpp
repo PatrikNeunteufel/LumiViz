@@ -1,0 +1,453 @@
+/**
+ * @file test_LoopSample.cpp
+ * @brief Loop, Stufe 11a: Samples — der Ordner `samples` im Benutzerordner,
+ *        die gemerkten Daten, das Sample als Schicht eines Instruments
+ *        (docs/audio/Loop_Konzept.md §4h; Entscheide S1 a und S2 a, Patrik S115)
+ *
+ * Ohne Ton, ohne Fenster: die Aufnahme ist ein gerechneter Sinus, die Engine
+ * aus Pappe gibt ihn beim Dekodieren heraus. Eigene Samples liegen in einem
+ * Wegwerf-Ordner (`setzeEigenenSampleOrdnerFuerTests`).
+ */
+
+#include <doctest.h>
+
+#include "PappTon.hpp"
+#include "loop/Instrument.hpp"
+#include "loop/Kit.hpp"
+#include "loop/Loop.hpp"
+#include "loop/Rechenkern.hpp"
+#include "loop/Sample.hpp"
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QTemporaryDir>
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+using namespace lumi::loop;
+
+namespace
+{
+
+constexpr int kRate = 44100;
+constexpr double kPi = 3.14159265358979323846;
+
+/// Eigene Samples in einem Wegwerf-Ordner; nach dem Fall ist nichts gemerkt.
+struct SampleOrdner
+{
+    QTemporaryDir tmp;
+    QString ordner;
+
+    SampleOrdner()
+    {
+        REQUIRE(tmp.isValid());
+        ordner = QDir(tmp.path()).filePath(QStringLiteral("samples"));
+        setzeEigenenSampleOrdnerFuerTests(ordner);
+        vergissSampleDaten();
+    }
+    ~SampleOrdner()
+    {
+        setzeEigenenSampleOrdnerFuerTests(QString());
+        vergissSampleDaten();
+    }
+    /// Eine Datei mit diesem Inhalt; ihr Pfad.
+    [[nodiscard]] QString datei(const QString& rel, const QByteArray& inhalt) const
+    {
+        const QString pfad = QDir(tmp.path()).filePath(rel);
+        REQUIRE(QDir().mkpath(QFileInfo(pfad).absolutePath()));
+        QFile f(pfad);
+        REQUIRE(f.open(QIODevice::WriteOnly));
+        f.write(inhalt);
+        return pfad;
+    }
+};
+
+/// Ein Sinus als Aufnahme: `hz`, `sekunden` lang, in `rate`; rechts halb so laut.
+std::vector<float> sinus(double hz, double sekunden, int rate)
+{
+    const auto frames = static_cast<std::size_t>(sekunden * rate);
+    std::vector<float> daten(2 * frames);
+    for (std::size_t t = 0; t < frames; ++t)
+    {
+        const auto wert = static_cast<float>(std::sin(2.0 * kPi * hz * static_cast<double>(t) / rate));
+        daten[2 * t] = wert;
+        daten[2 * t + 1] = 0.5f * wert;
+    }
+    return daten;
+}
+
+/// Ein Instrument mit einer Sample-Schicht: voll gehalten, kurzer Ausklang.
+Instrument sampleInstrument(const QString& sample, int grundton = 69)
+{
+    Instrument instrument;
+    instrument.titel = QStringLiteral("Probe");
+    Schicht& s = instrument.schichten[0];
+    s.schwingung = Schwingung::Sample;
+    s.sample = sample;
+    s.grundton = grundton;
+    s.anstiegMs = 0.0;
+    s.halten = 1.0;
+    s.ausklangMs = 20.0;
+    return instrument;
+}
+
+float spitze(const Klang& klang, std::int64_t von, std::int64_t bis, std::size_t seite = 0)
+{
+    float groesster = 0.0f;
+    for (std::int64_t t = von; t < bis && t < klang.frames(); ++t)
+        groesster = std::max(groesster, std::abs(klang.daten[static_cast<std::size_t>(2 * t) + seite]));
+    return groesster;
+}
+
+/// Die Periode in Abtastwerten: die Verschiebung mit der groessten Uebereinstimmung.
+int periode(const Klang& klang, int ab, int laenge, int von, int bis)
+{
+    int beste = von;
+    double bestWert = -1e30;
+    for (int lag = von; lag <= bis; ++lag)
+    {
+        double summe = 0.0;
+        for (int i = 0; i < laenge; ++i)
+            summe += static_cast<double>(klang.daten[static_cast<std::size_t>(2 * (ab + i))]) *
+                     klang.daten[static_cast<std::size_t>(2 * (ab + i + lag))];
+        if (summe > bestWert)
+        {
+            bestWert = summe;
+            beste = lag;
+        }
+    }
+    return beste;
+}
+
+/// Die Engine aus Pappe dekodiert: sie gibt einen Sinus heraus und merkt, wonach gefragt wurde.
+class DekodierEngine : public papp::PappMischEngine
+{
+public:
+    QStringList gefragt;
+    [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int sampleRate, double) override
+    {
+        gefragt << filePath;
+        return QFileInfo::exists(filePath) ? sinus(440.0, 1.0, sampleRate) : std::vector<float>{};
+    }
+};
+
+}  // namespace
+
+TEST_SUITE("Loop Sample")
+{
+    TEST_CASE("Loop Sample: der Ordner samples — nennen, auflisten, dazukopieren, loeschen")
+    {
+        const SampleOrdner u;
+
+        // --- ohne Ordner: leer, kein Fehler
+        CHECK(eigeneSamples().isEmpty());
+        CHECK(sampleDatei(QStringLiteral("user:table_knock")).isEmpty());
+        CHECK(sampleDatei(QString()).isEmpty());
+        CHECK(istEigenesSample(QStringLiteral("user:table_knock")));
+        CHECK_FALSE(istEigenesSample(QStringLiteral("C:/x/knock.wav")));
+
+        // --- dazukopieren: der Name aus dem Dateinamen, die Endung bleibt
+        const QString quelle = u.datei(QStringLiteral("quelle/Table Knock.wav"), "AAAA");
+        const std::uint64_t vorher = instrumentFassung();
+        CHECK(nimmZuEigenen(quelle) == QStringLiteral("user:table_knock"));
+        CHECK(QFileInfo::exists(QDir(u.ordner).filePath(QStringLiteral("table_knock.wav"))));
+        CHECK(instrumentFassung() > vorher);  // wer Toene gerechnet hat, rechnet neu
+        CHECK(sampleDatei(QStringLiteral("user:table_knock")) == QDir(u.ordner).filePath(QStringLiteral("table_knock.wav")));
+        CHECK(sampleTitel(QStringLiteral("user:table_knock")) == QStringLiteral("table_knock"));
+        CHECK(sampleTitel(quelle) == QStringLiteral("Table Knock.wav"));
+        CHECK(sampleDatei(quelle) == quelle);  // eine Datei an freiem Ort steht beim Pfad
+
+        // dieselbe Datei noch einmal: dieselbe Nennung, keine zweite Kopie
+        CHECK(nimmZuEigenen(quelle) == QStringLiteral("user:table_knock"));
+        CHECK(QDir(u.ordner).entryList(QDir::Files).size() == 1);
+        // aus dem Ordner selbst gewaehlt: sie ist es schon
+        CHECK(nimmZuEigenen(QDir(u.ordner).filePath(QStringLiteral("table_knock.wav"))) == QStringLiteral("user:table_knock"));
+        CHECK(QDir(u.ordner).entryList(QDir::Files).size() == 1);
+        // derselbe Name, anderer Inhalt: eine Zahl dahinter
+        const QString andere = u.datei(QStringLiteral("woanders/table knock.wav"), "BBBBBB");
+        CHECK(nimmZuEigenen(andere) == QStringLiteral("user:table_knock_2"));
+        CHECK(nimmZuEigenen(andere) == QStringLiteral("user:table_knock_2"));
+        // eine andere Endung bleibt, der Name ist ohne sie eindeutig
+        const QString mp3 = u.datei(QStringLiteral("quelle/Table Knock.MP3"), "CCC");
+        CHECK(nimmZuEigenen(mp3) == QStringLiteral("user:table_knock_3"));
+        CHECK(QFileInfo::exists(QDir(u.ordner).filePath(QStringLiteral("table_knock_3.mp3"))));
+        // was kein Sample ist, was fehlt, woraus kein Name wird
+        CHECK(nimmZuEigenen(u.datei(QStringLiteral("quelle/notiz.txt"), "x")).isEmpty());
+        CHECK(nimmZuEigenen(QDir(u.tmp.path()).filePath(QStringLiteral("fehlt.wav"))).isEmpty());
+        CHECK(nimmZuEigenen(u.datei(QStringLiteral("quelle/###.wav"), "x")).isEmpty());
+
+        // --- die Liste: nach Namen; was keine Schicht nennen kann, fehlt
+        (void)u.datei(QStringLiteral("samples/Von Hand.wav"), "x");
+        (void)u.datei(QStringLiteral("samples/liesmich.txt"), "x");
+        CHECK(eigeneSamples() == QStringList{QStringLiteral("user:table_knock"), QStringLiteral("user:table_knock_2"),
+                                             QStringLiteral("user:table_knock_3")});
+        // eine Schicht kann nichts ausserhalb des Ordners nennen
+        CHECK(sampleDatei(QStringLiteral("user:../quelle/Table Knock")).isEmpty());
+        CHECK(sampleDatei(QStringLiteral("user:")).isEmpty());
+
+        // --- loeschen
+        REQUIRE(loescheEigenesSample(QStringLiteral("table_knock_2")));
+        CHECK_FALSE(loescheEigenesSample(QStringLiteral("table_knock_2")));
+        CHECK(eigeneSamples().size() == 2);
+    }
+
+    TEST_CASE("Loop Sample: die gemerkten Daten — geteilt je Datei, vergessen, wenn sie eine andere wird")
+    {
+        const SampleOrdner u;
+        const QString pfad = u.datei(QStringLiteral("samples/ton.wav"), "AAAA");
+
+        CHECK(sampleDaten(QStringLiteral("user:ton")) == nullptr);
+        merkeSampleDaten(QStringLiteral("user:ton"), 48000, sinus(440.0, 0.1, 48000));
+        const auto daten = sampleDaten(QStringLiteral("user:ton"));
+        REQUIRE(daten != nullptr);
+        CHECK(daten->rate == 48000);
+        CHECK(daten->klang.frames() == 4800);
+        CHECK(sampleDaten(pfad) == daten);  // dieselbe Datei beim Pfad genannt: dieselben Daten
+
+        // Leeres wird nicht gemerkt
+        merkeSampleDaten(QStringLiteral("frei:leer"), 48000, {});
+        CHECK(sampleDaten(QStringLiteral("frei:leer")) == nullptr);
+        merkeSampleDaten(QStringLiteral("frei:ohne_rate"), 0, sinus(440.0, 0.1, 48000));
+        CHECK(sampleDaten(QStringLiteral("frei:ohne_rate")) == nullptr);
+
+        // die Datei wird eine andere: was gemerkt war, gilt nicht mehr
+        (void)u.datei(QStringLiteral("samples/ton.wav"), "BBBBBBBB");
+        CHECK(sampleDaten(QStringLiteral("user:ton")) == nullptr);
+        CHECK(daten->klang.frames() == 4800);  // wer sie noch haelt, behaelt sie
+
+        // ohne Datei gemerkt (ein Test, eine Aufnahme vor dem Speichern)
+        merkeSampleDaten(QStringLiteral("frei:probe"), 44100, sinus(440.0, 0.1, 44100));
+        REQUIRE(sampleDaten(QStringLiteral("frei:probe")) != nullptr);
+        vergissSampleDaten(QStringLiteral("frei:probe"));
+        CHECK(sampleDaten(QStringLiteral("frei:probe")) == nullptr);
+    }
+
+    TEST_CASE("Loop Sample als Schicht: die Tonhoehe aus dem Abstand zum Grundton, Sample start, Sustain loop")
+    {
+        const SampleOrdner u;
+        // die Aufnahme: A4 (440 Hz), eine Sekunde, in 48000 — gerechnet wird in 44100
+        const QString nennung = QStringLiteral("frei:a4");
+        merkeSampleDaten(nennung, 48000, sinus(440.0, 1.0, 48000));
+        const Instrument instrument = sampleInstrument(nennung);
+
+        // --- am Grundton: 440 Hz, rund 100 Abtastwerte je Schwingung; die Seiten bleiben verschieden
+        const Klang a4 = rendereTon(instrument, 69, 500.0, kRate);
+        REQUIRE(a4.frames() == 22050 + 882);  // die Note und 20 ms Ausklang
+        const int p = periode(a4, 4000, 4000, 80, 125);
+        CHECK(p >= 99);
+        CHECK(p <= 102);
+        CHECK(spitze(a4, 2000, 20000) == doctest::Approx(0.5f).epsilon(0.02));         // Luft nach oben, wie gerechnete Schichten
+        CHECK(spitze(a4, 2000, 20000, 1) == doctest::Approx(0.25f).epsilon(0.02));     // rechts halb so laut
+        CHECK(std::abs(a4.daten[a4.daten.size() - 2]) < 0.002f);                       // endet bei null
+
+        // --- eine Oktave hoeher: halbe Periode, und die Aufnahme ist nach einer halben Sekunde zu Ende
+        const Klang a5 = rendereTon(instrument, 81, 1000.0, kRate);
+        const int pHoch = periode(a5, 4000, 4000, 40, 62);
+        CHECK(pHoch >= 49);
+        CHECK(pHoch <= 51);
+        CHECK(spitze(a5, 2000, 20000) > 0.4f);
+        CHECK(spitze(a5, 23000, 44100) == 0.0f);
+        // eine Oktave tiefer: doppelte Periode
+        const int pTief = periode(rendereTon(instrument, 57, 500.0, kRate), 4000, 6000, 160, 250);
+        CHECK(pTief >= 198);
+        CHECK(pTief <= 203);
+
+        // --- Fine tune: die Aufnahme liegt ueber dem Grundton — G#4 und +100 ct ist wieder A4
+        Instrument verstimmt = sampleInstrument(nennung, 68);
+        verstimmt.schichten[0].feinCent = 100.0;
+        const Klang gleich = rendereTon(verstimmt, 69, 500.0, kRate);
+        REQUIRE(gleich.daten.size() == a4.daten.size());
+        double abweichung = 0.0;
+        for (std::size_t i = 0; i < a4.daten.size(); ++i)
+            abweichung = std::max(abweichung, static_cast<double>(std::abs(gleich.daten[i] - a4.daten[i])));
+        CHECK(abweichung < 1e-4);
+        // Transpose der Schicht gilt wie bei jeder anderen
+        Instrument versetzt = instrument;
+        versetzt.schichten[0].versatzHalbtoene = 12;
+        CHECK(rendereTon(versetzt, 69, 1000.0, kRate).daten == a5.daten);
+
+        // --- laenger als die Aufnahme: danach ist es still, der Klang bleibt so lang wie die Note
+        const Klang lang = rendereTon(instrument, 69, 2000.0, kRate);
+        CHECK(lang.frames() == 88200 + 882);
+        CHECK(spitze(lang, 40000, 44000) > 0.4f);
+        CHECK(spitze(lang, 44200, lang.frames()) == 0.0f);
+
+        // --- Sample start: ab der Mitte bleibt eine halbe Sekunde
+        Instrument spaeter = instrument;
+        spaeter.schichten[0].sampleStartMs = 500.0;
+        const Klang halb = rendereTon(spaeter, 69, 2000.0, kRate);
+        CHECK(spitze(halb, 2000, 21000) > 0.4f);
+        CHECK(spitze(halb, 22200, halb.frames()) == 0.0f);
+
+        // --- Sustain loop: solange die Note dauert, wiederholt sich das Stueck; danach laeuft es aus
+        Instrument gehalten = instrument;
+        gehalten.schichten[0].schleife = true;
+        gehalten.schichten[0].schleifeVonMs = 200.0;
+        gehalten.schichten[0].schleifeBisMs = 700.0;
+        const Klang schleife = rendereTon(gehalten, 69, 2000.0, kRate);
+        CHECK(spitze(schleife, 44200, 88000) > 0.4f);  // wo es ohne Schleife still war
+        CHECK(spitze(schleife, 44200, 88000) < 0.52f);  // an der Naht wird nichts lauter
+        const int pSchleife = periode(schleife, 60000, 4000, 80, 125);
+        CHECK(pSchleife >= 99);
+        CHECK(pSchleife <= 102);
+        CHECK(std::abs(schleife.daten[schleife.daten.size() - 2]) < 0.002f);
+        // bis nicht groesser als von: keine Schleife
+        gehalten.schichten[0].schleifeBisMs = 100.0;
+        CHECK(rendereTon(gehalten, 69, 2000.0, kRate).daten == lang.daten);
+        // der Haken aus: die Zahlen zaehlen nicht
+        gehalten.schichten[0].schleifeBisMs = 700.0;
+        gehalten.schichten[0].schleife = false;
+        CHECK(rendereTon(gehalten, 69, 2000.0, kRate).daten == lang.daten);
+
+        // --- derselbe Aufruf ergibt dieselben Werte
+        CHECK(rendereTon(instrument, 69, 500.0, kRate).daten == a4.daten);
+
+        // --- Filter und Drive gelten: ein enger Filter macht leiser, Drive formt um
+        Instrument dumpf = instrument;
+        dumpf.schichten[0].filterTeilton = 0.25;  // Grenze bei einem Viertel des Tons
+        CHECK(spitze(rendereTon(dumpf, 69, 500.0, kRate), 4000, 20000) < 0.2f);
+        Instrument hart = instrument;
+        hart.schichten[0].verzerrung = 1.0;
+        const Klang verzerrt = rendereTon(hart, 69, 500.0, kRate);
+        CHECK(verzerrt.daten != a4.daten);
+        CHECK(spitze(verzerrt, 2000, 20000) <= 0.501f);
+
+        // --- nichts gemerkt oder nichts genannt: die Schicht schweigt, der Ton ist so lang wie sonst
+        const Klang stumm = rendereTon(sampleInstrument(QStringLiteral("frei:fehlt")), 69, 500.0, kRate);
+        CHECK(stumm.frames() == a4.frames());
+        CHECK(spitze(stumm, 0, stumm.frames()) == 0.0f);
+        CHECK(spitze(rendereTon(sampleInstrument(QString()), 69, 500.0, kRate), 0, 30000) == 0.0f);
+
+        // --- gemischt mit einer gerechneten Schicht: die Summe
+        Instrument gemischt = instrument;
+        Schicht sinusSchicht;
+        sinusSchicht.halten = 1.0;
+        sinusSchicht.anstiegMs = 0.0;
+        sinusSchicht.ausklangMs = 20.0;
+        gemischt.schichten.push_back(sinusSchicht);
+        Instrument nurSinus = gemischt;
+        nurSinus.schichten.erase(nurSinus.schichten.begin());
+        const Klang summe = rendereTon(gemischt, 69, 500.0, kRate);
+        const Klang zweite = rendereTon(nurSinus, 69, 500.0, kRate);
+        REQUIRE(summe.daten.size() == a4.daten.size());
+        REQUIRE(zweite.daten.size() == a4.daten.size());
+        bool stimmt = true;
+        for (std::size_t i = 0; i < summe.daten.size(); ++i)
+            if (summe.daten[i] != a4.daten[i] + zweite.daten[i]) stimmt = false;
+        CHECK(stimmt);
+    }
+
+    TEST_CASE("Loop Sample in der Datei: Fassung 4 — nur die Sample-Schicht traegt die Felder, Fassung 3 liest weiter")
+    {
+        Instrument instrument = sampleInstrument(QStringLiteral("user:cello_a3"), 57);
+        Schicht& s = instrument.schichten[0];
+        s.name = QStringLiteral("Cello");
+        s.feinCent = 12.0;
+        s.sampleStartMs = 20.0;
+        s.schleife = true;
+        s.schleifeVonMs = 1100.0;
+        s.schleifeBisMs = 1850.0;
+        instrument.schichten.push_back(Schicht{});  // dazu ein Sinus
+
+        const QJsonObject json = alsJson(instrument);
+        CHECK(kInstrumentFassung == 4);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 4);
+        const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        REQUIRE(schichten.size() == 2);
+        const QJsonObject erste = schichten.at(0).toObject();
+        CHECK(erste.value(QStringLiteral("waveform")).toString() == QStringLiteral("sample"));
+        CHECK(erste.value(QStringLiteral("sample")).toString() == QStringLiteral("user:cello_a3"));
+        CHECK(erste.value(QStringLiteral("rootNote")).toInt() == 57);
+        CHECK(erste.value(QStringLiteral("fineTune")).toDouble() == doctest::Approx(12.0));
+        CHECK(erste.value(QStringLiteral("sampleStart")).toDouble() == doctest::Approx(20.0));
+        CHECK(erste.value(QStringLiteral("sustainLoop")).toBool());
+        CHECK(erste.value(QStringLiteral("loopFrom")).toDouble() == doctest::Approx(1100.0));
+        CHECK(erste.value(QStringLiteral("loopTo")).toDouble() == doctest::Approx(1850.0));
+        const QJsonObject zweite = schichten.at(1).toObject();
+        CHECK_FALSE(zweite.contains(QStringLiteral("sample")));
+        CHECK_FALSE(zweite.contains(QStringLiteral("rootNote")));
+
+        Instrument gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen == instrument);
+
+        // --- Werte in ihren Grenzen
+        QJsonObject wild = json;
+        QJsonObject schicht = erste;
+        schicht[QStringLiteral("rootNote")] = 300;
+        schicht[QStringLiteral("fineTune")] = -500.0;
+        schicht[QStringLiteral("sampleStart")] = -3.0;
+        wild[QStringLiteral("layers")] = QJsonArray{schicht};
+        REQUIRE(ausJson(wild, gelesen));
+        CHECK(gelesen.schichten[0].grundton == 127);
+        CHECK(gelesen.schichten[0].feinCent == doctest::Approx(-100.0));
+        CHECK(gelesen.schichten[0].sampleStartMs == 0.0);
+
+        // --- eine Datei der Fassung 3 kennt die Felder nicht: Grundeinstellung
+        QJsonObject alt = json;
+        alt[QStringLiteral("version")] = 3;
+        alt[QStringLiteral("layers")] = QJsonArray{zweite};
+        REQUIRE(ausJson(alt, gelesen));
+        CHECK(gelesen.schichten[0] == Schicht{});
+        CHECK(gelesen.schichten[0].sample.isEmpty());
+        CHECK(gelesen.schichten[0].grundton == 60);
+
+        // --- eine Fassung von morgen bleibt ungelesen
+        QJsonObject morgen = json;
+        morgen[QStringLiteral("version")] = 5;
+        bool zuNeu = false;
+        CHECK_FALSE(ausJson(morgen, gelesen, &zuNeu));
+        CHECK(zuNeu);
+    }
+
+    TEST_CASE("Loop Sample: ladeKlaenge dekodiert die Aufnahme einmal — fehlt sie, steht es im Bericht")
+    {
+        const SampleOrdner u;
+        DekodierEngine engine;
+
+        // ein eigenes Sample und ein Instrument an freiem Ort, das es nennt
+        (void)u.datei(QStringLiteral("samples/ton.wav"), "AAAA");
+        const QString pfad = QDir(u.tmp.path()).filePath(QStringLiteral("probe.lvinst"));
+        REQUIRE(speichereInstrument(sampleInstrument(QStringLiteral("user:ton")), pfad));
+
+        QStringList bericht;
+        const std::vector<Klang> klaenge =
+            ladeKlaenge({tonKlang(pfad, 69, 250), tonKlang(pfad, 71, 250)}, engine, kRate, &bericht);
+        REQUIRE(klaenge.size() == 2);
+        CHECK(bericht.isEmpty());
+        CHECK(engine.gefragt == QStringList{QDir(u.ordner).filePath(QStringLiteral("ton.wav"))});  // einmal, nicht je Ton
+        CHECK(spitze(klaenge[0], 1000, 10000) > 0.4f);
+        CHECK(spitze(klaenge[1], 1000, 10000) > 0.4f);
+        const int p = periode(klaenge[0], 2000, 4000, 80, 125);
+        CHECK(p >= 99);
+        CHECK(p <= 102);
+        REQUIRE(sampleDaten(QStringLiteral("user:ton")) != nullptr);
+        CHECK(sampleDaten(QStringLiteral("user:ton"))->rate == kSampleRate);
+
+        // noch einmal laden: die Daten sind gemerkt
+        (void)ladeKlaenge({tonKlang(pfad, 69, 250)}, engine, kRate, &bericht);
+        CHECK(engine.gefragt.size() == 1);
+
+        // --- die Aufnahme fehlt, oder die Schicht nennt keine: der Ton ist still, der Bericht sagt es einmal
+        const QString fehlt = QDir(u.tmp.path()).filePath(QStringLiteral("fehlt.wav"));
+        const QString pfadFehlt = QDir(u.tmp.path()).filePath(QStringLiteral("ohne.lvinst"));
+        Instrument ohne = sampleInstrument(fehlt);
+        ohne.schichten.push_back(sampleInstrument(QString()).schichten[0]);
+        ohne.schichten.push_back(sampleInstrument(QStringLiteral("user:gibt_es_nicht")).schichten[0]);
+        ohne.schichten.push_back(sampleInstrument(QStringLiteral("user:ton")).schichten[0]);
+        ohne.schichten[3].an = false;  // eine stumme Schicht wird nicht geladen
+        REQUIRE(speichereInstrument(ohne, pfadFehlt));
+        const std::vector<Klang> stumm =
+            ladeKlaenge({tonKlang(pfadFehlt, 69, 250), tonKlang(pfadFehlt, 71, 250)}, engine, kRate, &bericht);
+        CHECK(stumm[0].frames() > 0);
+        CHECK(spitze(stumm[0], 0, stumm[0].frames()) == 0.0f);
+        CHECK(bericht == QStringList{QStringLiteral("Sample not loaded: ") + QDir::toNativeSeparators(fehlt),
+                                     QStringLiteral("Sample not loaded: (none)"),
+                                     QStringLiteral("Sample not loaded: user:gibt_es_nicht")});
+    }
+}

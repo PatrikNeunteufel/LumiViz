@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.39.0
+> **Version:** 0.41.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1290,6 +1290,116 @@ einfach die Tonlage richtig eingestellt werden können".
   über mehrere Oktaven trägt** — wenn nicht, werden Multisamples vorgezogen.
   Die „eine Oktave" ist eine Faustregel, nicht gemessen.
 
+**Skizze gebilligt (Patrik, S115) — der Creator mit einer Sample-Schicht.**
+Nichts davon ist gebaut. Der Creator bleibt, wie er ist; neu ist nur, was
+eine Schicht der Art Sample braucht:
+
+- In **Waveform** steht als sechster Eintrag **Sample**. In der Liste der
+  Schichten heißt sie „1 Cello · Sample".
+- Unter Waveform, nur bei Sample: **File** (Name der Datei und ihre Länge,
+  „cello_a3.wav · 2.4 s") mit dem Knopf **File...**; **Root note** (Auswahl
+  der Tonhöhe) mit dem Knopf **Detect**, darunter das Ergebnis „Detected: A3
+  +12 ct" mit **Apply** — erst Apply übernimmt Note und Fine tune; ohne
+  klaren Ton steht dort „No clear pitch found"; **Fine tune** in Cent;
+  **Sample start** in Millisekunden; der Haken **Sustain loop** („repeat a
+  part while the note is held") mit **Loop from** und **Loop to** in
+  Sekunden.
+- Bei einer Sample-Schicht ausgeblendet: Voices, Detune, Harmonics, Damping,
+  Vibrato. Level, Transpose, Start offset, Envelope, Filter und Drive gelten
+  weiter.
+- Rechts oben zeigt das Bild statt „One cycle" die Aufnahme („The sample"):
+  eine rote Marke für Sample start, ein blau hinterlegter Bereich für den
+  Sustain loop; beide lassen sich im Bild ziehen und stehen zugleich als
+  Regler in der Mitte. Darunter wie bisher die Hüllkurve einer Note, die
+  Klaviatur und „Selected layer only".
+- Neu unter der Klaviatur der Haken **Reference tone**: beim Anspielen
+  erklingt ein Sinus derselben Note neben dem Sample, zum Stimmen nach Gehör.
+
+**Namen, von Claude gesetzt und mit der Skizze gebilligt:** „Sustain loop"
+statt „Loop" (Loop heißt im Programm das Panel und die Datei), „Sample
+start" statt „Start" („Start offset" gibt es an der Schicht schon und meint
+den späteren Einsatz).
+
+**Entscheid S1 a (Patrik, S115) — wo eigene Samples liegen:** als
+`<name>.wav` im Benutzerordner unter `samples`; eine Schicht oder eine
+Drum-Spur nennt sie als `user:<name>` — dieselbe Regel wie bei den eigenen
+Instrumenten (P2 a). Export und Import bekommen einen Bereich „Samples".
+Eine Datei an freiem Ort bleibt möglich und steht beim Pfad. Verworfen: b
+(das Sample liegt in einem Ordner beim Instrument — für Drum-Spuren gäbe es
+keinen Ort), c (kein fester Ort, Save fragt nach der Datei).
+
+**Entscheid S2 a (Patrik, S115) — eine über File... gewählte Datei:** ein
+kleiner Dialog fragt „Copy the file to My samples (recommended)" oder „Use
+it where it is"; die Kopie heißt `user:<name>`, bei einem vergebenen Namen
+mit anderem Inhalt mit einer Zahl dahinter; ein Haken „Don't ask again"
+merkt die Wahl, in den Settings zurückzustellen. Dasselbe gilt für „Sample
+file..." im Drum-Editor (dort nachzuziehen). Verworfen: b (immer kopieren),
+c (nie kopieren, wie heute bei den Drums).
+
+**Idee Patrik (S115) — „Record sample":** ein Sample aufnehmen, in
+Dauerschleife anhören und zuschneiden, bis es passt; gespeichert wird unter
+`samples`. Auch für Drum-Spuren. Skizze gezeigt, **noch nicht gebilligt**:
+ein Fenster „Record sample" mit **Input** (Auswahl des Eingangs) und Pegel,
+**Record** und **Stop** („3.2 s recorded · up to 30 s"), dem Wellenbild mit
+zwei Griffen für Anfang und Ende (das Graue fällt beim Speichern weg),
+**Play** mit dem Haken **Repeat**, „Trimmed: 0.46 s to 2.33 s · 1.87 s",
+den Haken **Trim silence at both ends** und **Normalize level**, **Name**,
+darunter „File: My files · samples · table_knock.wav", **Cancel** und
+**Save and use**. Geöffnet aus dem Creator (**Record...** neben File...)
+und aus dem Drum-Editor (in der Klangliste einer Spur **Record sample...**,
+dazu ein Eintrag **My samples** mit den eigenen). Befund dazu: Ton aufnehmen
+kann das Programm heute nicht (nur die Kamera-Testaufnahme); dass BASS es
+kann, ist hier nicht belegt — vor dem Bau ein Beleg-Test.
+
+**Skizze „Record sample" gebilligt (Patrik, S115)** — das Fenster und der
+Weg aus dem Creator. **Offen ist der Teil zum Drum-Editor:** Patrik fragt,
+ob der Drum-Editor nicht dem Creator angepasst werden oder beide „gar eins
+werden" sollen, „mit etwas unterschiedlichen Optionen". Vor 11c als
+Entscheid mit Skizze vorzulegen; bis dahin wird am Drum-Editor nichts
+gebaut.
+
+**Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
+Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
+und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
+sample (Beleg-Test davor); 11c der Drum-Editor (nach dem Entscheid oben).
+
+**Gebaut — 11a, Schritt 1 (S115), der Kern ohne Fenster:**
+`loop/Sample` — der Ordner `samples` im Benutzerordner
+(`eigenerSampleOrdner`), `user:<name>` (`istEigenesSample`,
+`eigeneSampleDatei`, `eigeneSamples`, `sampleDatei`, `sampleTitel`), das
+Dazukopieren für S2 a (`nimmZuEigenen`: Name aus dem Dateinamen, dieselbe
+Datei wird wiedergenommen, bei anderem Inhalt eine Zahl dahinter),
+`loescheEigenesSample`; die dekodierten Daten einmal gemerkt, in 48000 Hz
+Stereo (`sampleDaten`, `merkeSampleDaten`, `vergissSampleDaten`) — sie
+gelten nicht mehr, sobald die Datei eine andere ist. `Schwingung::Sample`
+und an der Schicht `sample`, `grundton`, `feinCent`, `sampleStartMs`,
+`schleife`, `schleifeVonMs`, `schleifeBisMs`. `rendereTon` spielt die
+Aufnahme je Note schneller oder langsamer (Abstand zum Grundton, Fine tune
+abgezogen, geradlinig zwischen den Abtastwerten gelesen); Sample start;
+der Sustain loop wiederholt sein Stück, solange die Note dauert, und
+blendet an der Naht bis 10 ms über, danach läuft die Aufnahme bis an ihr
+Ende; Envelope, Filter und Drive gelten, Voices, Detune und Vibrato nicht;
+Stereo bleibt Stereo. Ist nichts gemerkt, schweigt die Schicht.
+`ladeKlaenge` dekodiert die Aufnahmen der eingeschalteten Sample-Schichten
+einmal über die Audio-Engine; fehlt eine, steht „Sample not loaded: …" im
+Bericht. **`.lvinst` in Fassung 4** (`waveform: sample`, dazu `sample`,
+`rootNote`, `fineTune`, `sampleStart`, `sustainLoop`, `loopFrom`,
+`loopTo`, nur an einer Sample-Schicht geschrieben); Fassung 1 bis 3 lesen
+weiter. Export und Import: neuer Bereich „Samples".
+Von Claude gesetzt, nicht entschieden: eine hineinkopierte Datei behält
+ihre Endung (S1 a nannte `<name>.wav` — das gilt für Aufnahmen), der Name
+ohne Endung ist im Ordner eindeutig; als Sample gelten wav, flac, mp3, ogg,
+aiff, aif; eine Datei an freiem Ort steht mit vollem Pfad in der `.lvinst`
+(nicht relativ zu ihr); jedes Instrument wird als Fassung 4 geschrieben,
+auch ohne Sample-Schicht — ein älteres LumiViz liest es dann nicht mehr;
+die Überblendung an der Naht und ihre 10 ms; der Pegel einer Sample-Schicht
+ist wie bei gerechneten halbiert (L6 a).
+Nicht gebaut: alles im Creator (er bietet Sample noch nicht an), Detect,
+Reference tone, die Frage aus S2 a, relative Pfade. Nicht geprüft: eine
+echte Tondatei durch die BassEngine in eine Sample-Schicht (die Tests
+nehmen einen gerechneten Sinus und die Engine aus Pappe). Im Programm ist
+nichts zu sehen außer der Zeile „Samples" im Export-Dialog.
+
 ### Die Palette der Instrumente (Stufe 14, P1 a)
 
 Im Instrument-Editor steht neben dem Namen des Instruments **Browse...** und
@@ -1712,7 +1822,7 @@ die des Rechners nicht verstellen).
 | 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
-| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | später, davor die Skizze; Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
+| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | Skizze gebilligt (S115), S1 a, S2 a; **11a Schritt 1 gebaut** (der Kern ohne Fenster, `.lvinst` Fassung 4); offen 11a Schritt 2 (Creator) und 3 (Detect, Reference tone), 11b Record sample, 11c Drum-Editor (Entscheid davor); Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
@@ -1811,6 +1921,17 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.41.0** (S115, 2026-10-12): 11a Schritt 1 gebaut — der Kern ohne
+  Fenster: `loop/Sample`, Sample als Schicht im Rechnen eines Tons, `.lvinst`
+  Fassung 4, Bereich „Samples" im Export; Skizze „Record sample" gebilligt,
+  der Teil zum Drum-Editor offen (§4h).
+
+- **0.40.0** (S115, 2026-10-12): Stufe 11 — Skizze des Creators mit einer
+  Sample-Schicht gebilligt und beschrieben, Entscheide S1 a (Ordner
+  `samples`, `user:<name>`) und S2 a (File... fragt: kopieren oder am Ort
+  lassen); Idee „Record sample" mit gezeigter Skizze notiert (§4h). Nichts
+  gebaut.
 
 - **0.39.0** (S115, 2026-10-12): Befund aus dem Programm (P5) und Entscheid
   Z1 a — Ctrl+Z und Ctrl+Y gelten im Fenster „Instruments" selbst (§4h).

@@ -7,6 +7,7 @@
 
 #include "core/Mitgeliefert.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/Sample.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -95,6 +96,24 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
                     bool neuer = false;
                     const bool da = holeInstrument(instrument, neu, &neuer);
                     if (neuer) zuNeu << instrument;
+                    // die Aufnahmen seiner Sample-Schichten: einmal dekodiert und gemerkt (Stufe 11a)
+                    if (da)
+                        for (const Schicht& schicht : neu.schichten)
+                        {
+                            if (schicht.schwingung != Schwingung::Sample || !schicht.an) continue;
+                            if (sampleDaten(schicht.sample) != nullptr) continue;
+                            const QString datei = sampleDatei(schicht.sample);
+                            if (!datei.isEmpty())
+                                merkeSampleDaten(schicht.sample, kSampleRate,
+                                                 engine.decodeStereo(datei, kSampleRate, kKlangMaxSekunden));
+                            if (sampleDaten(schicht.sample) == nullptr && bericht != nullptr)
+                            {
+                                const QString zeile = QStringLiteral("Sample not loaded: %1")
+                                                          .arg(schicht.sample.isEmpty() ? QStringLiteral("(none)")
+                                                                                        : QDir::toNativeSeparators(schicht.sample));
+                                if (!bericht->contains(zeile)) bericht->append(zeile);
+                            }
+                        }
                     ort = geholt.emplace(instrument, da ? std::optional<Instrument>(std::move(neu)) : std::nullopt).first;
                 }
                 if (ort->second.has_value()) gefunden = &*ort->second;

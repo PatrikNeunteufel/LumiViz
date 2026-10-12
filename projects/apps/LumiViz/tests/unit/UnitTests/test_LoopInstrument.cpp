@@ -622,7 +622,7 @@ TEST_SUITE("LoopInstrument")
         eins.genres = {QStringLiteral("Funk"), QStringLiteral("Disco")};
         eins.beschreibung = QStringLiteral("A plucked string with a thump.");
         const QJsonObject json = alsJson(eins);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 3);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // geschrieben wird die juengste (seit S115: 4)
         CHECK(json.value(QStringLiteral("category")).toString() == QStringLiteral("bass"));
         CHECK(json.value(QStringLiteral("genres")).toArray().size() == 2);
         CHECK(json.value(QStringLiteral("description")).toString() == eins.beschreibung);
@@ -795,7 +795,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 3);  // seit S114: Art, Genres, Beschreibung (eigener Fall unten)
+        CHECK(kInstrumentFassung == 4);  // seit S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);

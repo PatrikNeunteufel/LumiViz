@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.128.0
+> **Version:** 1.129.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -267,7 +267,7 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   in **eine Datei** (`.lvdata`) schreiben und wieder einlesen — zum Sichern oder für einen
   anderen Rechner. *Export your data* zeigt die Bereiche mit der Zahl deiner Dateien
   (Visualizer presets, Gradients, Module presets, Shader templates, Karaoke presets and
-  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments); abgesetzt
+  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Samples); abgesetzt
   darunter und anfangs aus stehen *Settings* (Tastenkürzel, Favoriten, Optionen — nie die
   Fensterlage, gemerkte Ordner oder der Shadertoy-Schlüssel) und *Downloaded lyrics* (die
   geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
@@ -2850,6 +2850,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.129.0 | 2026-10-12 | Session 115. Settings, Export und Import: neuer Bereich **Samples** (der Ordner `samples` im Benutzerordner; im Programm füllt ihn noch nichts — Loop, Stufe 11a, erst der Kern) |
 | 1.128.0 | 2026-10-12 | Session 115. §16 Loop, Fenster Instruments: **Ctrl+Z und Ctrl+Y gelten im Fenster selbst** (Befund Patrik, P5: nach Use kam Ctrl+Z nicht an, erst nach einem Klick ins Panel Loop) |
 | 1.127.0 | 2026-10-12 | Session 114. §16 Loop NEU **das Fenster Instruments**: **Browse...** im Instrument-Editor, Suche, Filter nach Genre, die Arten als Liste, Favorites, Recently used, My files, Anspielen per Klick mit Preview note, Use (GEÄNDERT: die Dropdown-Liste der Instrumente gibt es nicht mehr) |
 | 1.126.0 | 2026-10-12 | Session 114. §16 Loop, Instrument-Creator: die zweite Zeile **Type**, **Genres**, **Description**; **Save** legt eine eigene Kopie unter einem Namen zu den eigenen Dateien (GEÄNDERT: bei einem mitgelieferten Instrument war Save grau), **Save as...** bleibt für einen freien Ort; ein eigenes Instrument verdrängt kein mitgeliefertes |

@@ -33,7 +33,8 @@ namespace lumi::loop
 
 /// Die Schwingung eines Instruments. Die vier ersten sind ein Wellenzug ohne
 /// Teiltoene ueber der halben Abtastrate; die Saite ist eine gezupfte Saite
-/// (Karplus-Strong), die von selbst ausklingt.
+/// (Karplus-Strong), die von selbst ausklingt. Das Sample ist eine Aufnahme,
+/// je Note schneller oder langsamer abgespielt (Stufe 11a).
 enum class Schwingung : int
 {
     Sinus = 0,
@@ -41,6 +42,7 @@ enum class Schwingung : int
     Saege,
     Rechteck,
     Saite,
+    Sample,
 };
 
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
@@ -78,6 +80,17 @@ struct Schicht
 
     double saiteDaempfung = 0.996;  ///< nur Saite: 0.9…0.9999, groesser klingt laenger
     double laut = 1.0;              ///< die Lautstaerke der Schicht
+
+    // --- nur Sample (Stufe 11a; Skizze gebilligt, Patrik S115) ---
+    /// Die Aufnahme: ein eigenes Sample (`user:<name>`, Sample.hpp) oder der
+    /// Pfad einer Tondatei; leer = keine, die Schicht schweigt.
+    QString sample;
+    int grundton = 60;              ///< Root note: dieser Ton ist die Aufnahme (0…127)
+    double feinCent = 0.0;          ///< Fine tune, -100…100: so weit liegt die Aufnahme ueber dem Grundton
+    double sampleStartMs = 0.0;     ///< Sample start: ab hier in der Aufnahme
+    bool schleife = false;          ///< Sustain loop: ein Stueck wiederholt sich, solange die Note dauert
+    double schleifeVonMs = 0.0;     ///< Loop from, in der Aufnahme
+    double schleifeBisMs = 0.0;     ///< Loop to; nicht groesser als von = keine Schleife
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 };
@@ -131,10 +144,13 @@ struct Instrument
 // Fassung 2 traegt die Schichten als Liste `layers`; Fassung 1 ist flach und
 // wird als Instrument mit einer Schicht gelesen. Fassung 3 (S114, Entscheid
 // F3 b) traegt dazu `category`, `genres` und `description`; alle drei
-// duerfen fehlen. Geschrieben wird Fassung 3.
+// duerfen fehlen. Fassung 4 (S115, Stufe 11a) kennt die Schwingung `sample`
+// mit `sample`, `rootNote`, `fineTune`, `sampleStart`, `sustainLoop`,
+// `loopFrom`, `loopTo` — eine eigene Fassung, weil ein aelteres Programm eine
+// solche Schicht sonst still als Sinus spielte. Geschrieben wird Fassung 4.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 3;
+inline constexpr int kInstrumentFassung = 4;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
@@ -201,6 +217,9 @@ bool loescheEigenes(const QString& name);
 /// Zaehlt jede gespeicherte Instrument-Datei (`speichereInstrument`): wer
 /// Toene gerechnet hat und sich die Zahl merkt, sieht, ob er neu rechnen muss.
 [[nodiscard]] std::uint64_t instrumentFassung();
+/// Weiterzaehlen, ohne ein Instrument zu schreiben: ein Sample ist dazugekommen,
+/// ersetzt oder geloescht (Sample.hpp) — Toene, die es spielen, sind neu zu rechnen.
+void zaehleInstrumentFassung();
 
 /// So viele Obertoene traegt ein Instrument hoechstens (der 2. bis 17. Teilton).
 inline constexpr int kObertoeneMax = 16;
@@ -218,6 +237,9 @@ inline constexpr double kTonMaxSekunden = 30.0;
 /// Die eingeschalteten Schichten werden addiert — jede an ihrer Tonhoehe und
 /// ab ihrem Einsatz; der Klang ist so lang wie die laengste. Ist keine an,
 /// ist er still. Leer = `rate` oder `dauerMs` nicht groesser als 0.
+/// Eine Sample-Schicht spielt, was zu ihrer Aufnahme gemerkt ist
+/// (`sampleDaten`, Sample.hpp) — ist nichts gemerkt, schweigt sie. Sind
+/// Sample-Schichten dabei, koennen die beiden Seiten verschieden sein.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate);
 
 }  // namespace lumi::loop
