@@ -53,6 +53,7 @@ class QLabel;
 class QLineEdit;
 class QListWidget;
 class QPushButton;
+class QScrollArea;
 class QSlider;
 class QToolButton;
 
@@ -313,6 +314,8 @@ Q_SIGNALS:
     void tonVerlangt(const QString& nennung, int hoehe);
 
 protected:
+    /// Das Mausrad ueber einem Regler der Schicht rollt das Feld, statt ihn zu verstellen.
+    bool eventFilter(QObject* objekt, QEvent* ereignis) override;
     /// Ungespeichertes: Save, Discard oder Cancel.
     void closeEvent(QCloseEvent* event) override;
 
@@ -415,6 +418,7 @@ private:
     };
     std::vector<Gruppe> m_gruppen;
     QGridLayout* m_gitter = nullptr;
+    QScrollArea* m_rollen = nullptr;  ///< die Regler der Schicht: rollt, wenn sie nicht ins Fenster passen
     /// Was eingeklappt ist, ausblenden; die Pfeile der Ueberschriften stellen.
     void klappeGruppen();
     QLabel* m_wellenTitel = nullptr;

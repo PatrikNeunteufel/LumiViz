@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.171.0
+> **Version:** 1.171.1
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5229,6 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.171.1 | 2026-10-12 | Session 116 — **Befund Patrik behoben** (im Programm gesehen): der Instrument-Creator wuchs mit jeder aufgeklappten Gruppe, bis über die Höhe des Bildschirms; die Regler der Schicht stehen jetzt in einem Feld mit Rollbalken, das Fenster behält seine Größe; das Mausrad über einem Regler rollt das Feld; ⬜ im Programm nachsehen (Liste 10, H1 und H8); 🔧 Wunsch Patrik, als Nächstes: im Creator ein Haken, mit dem ein Ton periodisch spielt — die Tonhöhe wählt man auf der Klaviatur, die Taste ist dabei hervorgehoben |
 | 1.171.0 | 2026-10-12 | Session 116 — Loop **Stufe 11e gebaut**: der Filter einer Schicht mit **Type** (Low-pass, High-pass, Band-pass) und **Resonance** an allen drei Arten (Entscheid Patrik H1 b), `.lvinst` in Fassung 6; dazu auf Wunsch Patrik: die Gruppen Oscillator, Envelope, Filter und Vibrato des Creators lassen sich **ein- und ausklappen**, die Stellung wird gemerkt; voller Lauf 1137 / 1137; **im Programm ungesehen und ungehört** — lokale Liste 10, Abschnitt H, und sechs Hörproben unter `.claude/handover/hoerproben_11e/`; 🔧 der Tiefpass wechselt zwischen Resonance 0 und 1 % die Rechnung (ein kleiner Sprung in der Helligkeit, vorgelegt); im Creator heißen jetzt zwei Felder „Type“ (die Art des Instruments, die Art des Filters); offen 11f (sechs gerechnete Drum-Instrumente), die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte |
 | 1.170.0 | 2026-10-12 | Session 116 — Loop **Stufe 11d gebaut**: im Instrument-Creator die Schwingung **Noise** und die Regler **Pitch sweep** (die Note fällt oder steigt auf ihre Tonhöhe, −24 bis +48 st) und **Sweep time**, auch für eine Sample-Schicht; `.lvinst` in Fassung 5; Entscheide Patrik N1 (beide Richtungen) und N2 a; voller Lauf 1136 / 1136; **im Programm ungesehen und ungehört** — lokale Liste 10, Abschnitt N, und fünf Hörproben unter `.claude/handover/hoerproben_11d/`; nicht angefasst: Decay in Schritten von 10 ms (der Klick der Kick lässt sich am Regler nicht genau stellen); offen 11e (Hochpass, Bandpass), 11f, die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte |
 | 1.169.0 | 2026-10-12 | Session 116 — Loop **11c Schritt 3 gebaut, 11c damit gebaut**: **Edit sound...** im Rechtsklick auf eine Drum-Spur (aus Kit-Klang, eigenem Sample oder Tondatei wird ein Instrument der Art Drums mit einer Sample-Schicht; am Loop ändert sich nichts vor Save; danach Note auf dem Root note, Length so lang wie die Aufnahme); das Fenster Instruments stellt sich aus einer Drum-Spur auf Drums — **zu sehen erst mit 11f**, heute steht unter Drums nichts; voller Lauf 1134 / 1134; **im Programm ungesehen und ungehört** — lokale Liste 10, Abschnitt T (T12 bis T15, U54); offen die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte, 11d bis 11f |

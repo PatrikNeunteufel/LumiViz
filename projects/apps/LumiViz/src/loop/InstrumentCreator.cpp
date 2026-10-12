@@ -29,6 +29,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSlider>
@@ -874,7 +875,31 @@ void InstrumentCreator::setupUI()
     m_nichtSaite.push_back(m_regler.size() - 1);
     m_nichtSample.push_back(m_regler.size() - 1);
     gitter->setRowStretch(gitter->rowCount(), 1);
-    koerper->addLayout(gitter, 5);
+    // Die Regler der Schicht stehen in einem Feld, das rollt (Befund Patrik S116: mit jeder
+    // aufgeklappten Gruppe wuchs das Fenster, bis ueber die Hoehe des Bildschirms). So bestimmt
+    // die Spalte die Hoehe des Fensters nicht mehr; was nicht hineinpasst, erreicht der Rollbalken.
+    {
+        auto* inhalt = new QWidget;
+        inhalt->setObjectName(QStringLiteral("creatorLayerControls"));
+        gitter->setContentsMargins(0, 0, 6, 0);  // etwas Luft vor dem Rollbalken
+        inhalt->setLayout(gitter);
+        m_rollen = new QScrollArea(this);
+        m_rollen->setObjectName(QStringLiteral("creatorLayerScroll"));
+        m_rollen->setFrameShape(QFrame::NoFrame);
+        m_rollen->setWidgetResizable(true);
+        m_rollen->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        m_rollen->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        m_rollen->setWidget(inhalt);
+        m_rollen->setMinimumWidth(380);  // Name, Regler und Wert einer Zeile
+        // wie das Fenster, nicht wie ein Eingabefeld
+        m_rollen->viewport()->setAutoFillBackground(false);
+        inhalt->setAutoFillBackground(false);
+        koerper->addWidget(m_rollen, 5);
+        // das Mausrad rollt das Feld — es verstellt keinen Regler und keine Auswahl, ueber die
+        // der Zeiger gerade faehrt (`eventFilter`)
+        for (QSlider* schieber : inhalt->findChildren<QSlider*>()) schieber->installEventFilter(this);
+        for (QComboBox* auswahl : inhalt->findChildren<QComboBox*>()) auswahl->installEventFilter(this);
+    }
 
     // --- rechts: die Bilder und die Klaviatur
     auto* rechts = new QVBoxLayout;
@@ -1551,6 +1576,19 @@ void InstrumentCreator::zeigeAlles()
     zeigeBilder();
 }
 
+bool InstrumentCreator::eventFilter(QObject* objekt, QEvent* ereignis)
+{
+    // im rollenden Feld gehoert das Mausrad dem Rollen: der Regler nimmt es nicht, das Ereignis
+    // geht an das Feld weiter
+    if (ereignis->type() == QEvent::Wheel && m_rollen != nullptr)
+        if (const auto* teil = qobject_cast<QWidget*>(objekt); teil != nullptr && m_rollen->widget()->isAncestorOf(teil))
+        {
+            ereignis->ignore();
+            return true;
+        }
+    return QWidget::eventFilter(objekt, ereignis);
+}
+
 // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) ---------------------------
 
 void InstrumentCreator::klappeGruppen()
@@ -1572,6 +1610,13 @@ void InstrumentCreator::klappeGruppen()
             if (QWidget* teil = m_gitter->itemAt(i)->widget(); teil != nullptr && zeile > gruppe.zeile && zeile < bis)
                 teil->setVisible(false);
         }
+    }
+    // Das rollende Feld behaelt die Hoehe, die seine Zeilen brauchen: sonst drueckte das Fenster
+    // sie zusammen, bevor der Rollbalken kaeme (im Bild aus dem Test gesehen).
+    if (m_rollen != nullptr)
+    {
+        m_gitter->invalidate();
+        m_rollen->widget()->setMinimumHeight(m_gitter->sizeHint().height());
     }
 }
 

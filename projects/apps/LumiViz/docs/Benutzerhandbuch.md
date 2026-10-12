@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.138.0
+> **Version:** 1.138.1
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2718,7 +2718,7 @@ die Klaviatur des Editors.
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
 | **Add layer from instrument...** | Nimmt die Schichten eines anderen Instruments dazu — aus der Liste der mitgelieferten oder über **From file...** aus einer `.lvinst`. Es ist eine Kopie: das andere Instrument bleibt, wie es ist |
 | **Duplicate**, **Remove**, **▲**, **▼** | Die gewählte Schicht noch einmal, entfernen, hinauf, hinunter |
-| Die Überschriften **Oscillator**, **Envelope**, **Filter**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten) — so wird das Fenster niedriger. Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts |
+| Die Überschriften **Oscillator**, **Envelope**, **Filter**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten). Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts. Das Fenster behält dabei seine Größe: passen die Regler nicht alle hinein, erscheint rechts von ihnen ein Rollbalken. Das Mausrad über einem Regler rollt die Liste und verstellt ihn nicht |
 | **Name** (Layer) | Wie die Schicht in der Liste heißt |
 | **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
@@ -2939,6 +2939,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.138.1 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator BEHOBEN: das Fenster wuchs mit jeder aufgeklappten Gruppe, bis über den Bildschirm — die Regler der Schicht stehen jetzt in einer Liste mit Rollbalken; GEÄNDERT: das Mausrad über einem Regler dort rollt die Liste |
 | 1.138.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU der Filter mit **Type** (Low-pass, High-pass, Band-pass) und **Resonance**; NEU die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an ihrer Überschrift ein- und ausklappen; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |
 | 1.137.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU die Schwingung **Noise** und die Regler **Pitch sweep** (die Note fällt oder steigt auf ihre Tonhöhe) und **Sweep time**; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |
 | 1.136.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Edit sound...** im Rechtsklick auf eine Spur: aus Kit-Klang, eigenem Sample oder Tondatei wird ein Instrument der Art Drums mit einer Sample-Schicht; der Loop ändert sich erst mit Save im Creator |

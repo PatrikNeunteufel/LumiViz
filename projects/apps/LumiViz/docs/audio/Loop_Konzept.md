@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.54.0
+> **Version:** 0.54.1
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1731,7 +1731,19 @@ Schichten; die Zeilen über Oscillator (Name, Level, Transpose, Start offset)
 gehören zu keiner Gruppe und bleiben immer stehen; das Fenster wird beim
 Einklappen nicht von selbst kleiner. In den Tests wird die Stellung weder
 gelesen noch gemerkt (`InstrumentCreator::setzeGruppenMerken`).
-Nicht geprüft: alles im Programm.
+**Befund Patrik (S116, im Programm gesehen) — behoben:** mit jeder
+aufgeklappten Gruppe wuchs der Creator, bis über die Höhe des Bildschirms.
+Ursache: die Spalte der Regler bestimmte die Mindesthöhe des Fensters. Die
+Regler der Schicht stehen jetzt in einem **Feld, das rollt**
+(`creatorLayerScroll`): das Fenster behält seine Größe, gleich was auf- oder
+zugeklappt ist; passt nicht alles hinein, erscheint rechts der Rollbalken.
+Das Feld behält dabei die Höhe, die seine Zeilen brauchen — beim ersten
+Anlauf drückte das Fenster die Zeilen zusammen, statt zu rollen (im Bild aus
+dem Test gesehen und nachgestellt). Das **Mausrad** über einem Regler oder
+einer Auswahl im Feld rollt das Feld und verstellt nichts mehr (von Claude
+gesetzt: sonst verstellte man beim Rollen den Regler unter dem Zeiger).
+Nicht geprüft: das Rollen mit dem Mausrad im Programm (der Test belegt nur,
+dass der Regler das Rad nicht nimmt).
 
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
@@ -2468,6 +2480,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.54.1** (S116, 2026-10-12): Befund Patrik behoben — der Creator wuchs
+  mit jeder aufgeklappten Gruppe über den Bildschirm; die Regler der Schicht
+  stehen jetzt in einem Feld, das rollt (§4h).
 
 - **0.54.0** (S116, 2026-10-12): Stufe 11e gebaut — der Filter mit Type
   (Low-pass, High-pass, Band-pass) und Resonance (Skizze gebilligt; Entscheid

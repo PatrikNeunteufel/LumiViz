@@ -40,8 +40,11 @@
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QPushButton>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QSettings>
 #include <QToolButton>
+#include <QWheelEvent>
 #include <QSlider>
 #include <QStringList>
 #include <QTemporaryDir>
@@ -469,6 +472,46 @@ TEST_SUITE("LoopInstrumentEditor")
                 QSettings().clear();
                 QCoreApplication::setOrganizationName(org);
                 QCoreApplication::setApplicationName(name);
+            }
+            // --- Befund Patrik S116: mit jeder aufgeklappten Gruppe wuchs das Fenster, bis ueber den
+            //     Bildschirm. Die Regler der Schicht stehen jetzt in einem Feld, das rollt — das Fenster
+            //     behaelt seine Groesse, gleich was auf- oder zugeklappt ist
+            {
+                auto* rollen = creator.findChild<QScrollArea*>(QStringLiteral("creatorLayerScroll"));
+                REQUIRE(rollen != nullptr);
+                creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });  // die meisten Zeilen
+                CHECK(creator.minimumSizeHint().height() < 600);  // die Spalte bestimmt die Hoehe nicht mehr
+                creator.setAttribute(Qt::WA_DontShowOnScreen);
+                creator.resize(1000, 500);
+                creator.show();
+                QCoreApplication::processEvents();
+                CHECK(creator.size() == QSize(1000, 500));
+                CHECK(rollen->verticalScrollBar()->maximum() > 0);  // es passt nicht alles: der Rollbalken ist da
+                const int weit = rollen->verticalScrollBar()->maximum();
+                // die Zeilen sind nicht zusammengedrueckt: jede hat die Hoehe, die sie braucht
+                CHECK(weit > 300);
+                CHECK(wellenWahl->height() >= wellenWahl->sizeHint().height());
+                CHECK(schieber("creatorAttack")->height() >= schieber("creatorAttack")->sizeHint().height());
+                for (const char* gruppe : {"oscillator", "envelope", "filter", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), true);
+                QCoreApplication::processEvents();
+                CHECK(creator.size() == QSize(1000, 500));
+                CHECK(rollen->verticalScrollBar()->maximum() == 0);  // alles eingeklappt: nichts zu rollen
+                for (const char* gruppe : {"oscillator", "envelope", "filter", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), false);
+                QCoreApplication::processEvents();
+                CHECK(creator.size() == QSize(1000, 500));  // wieder aufgeklappt: das Fenster ist nicht gewachsen
+                CHECK(rollen->verticalScrollBar()->maximum() == weit);
+                // das Mausrad ueber einem Regler rollt das Feld und verstellt ihn nicht
+                QSlider* laut = schieber("creatorLevel");
+                const int vorher = laut->value();
+                QWheelEvent rad(QPointF(5, 5), laut->mapToGlobal(QPointF(5, 5)), QPoint(), QPoint(0, -120), Qt::NoButton,
+                                Qt::NoModifier, Qt::NoScrollPhase, false);
+                QCoreApplication::sendEvent(laut, &rad);
+                CHECK(laut->value() == vorher);
+                CHECK_FALSE(rad.isAccepted());  // er nimmt es nicht: ein echtes Rad-Ereignis geht damit ans Feld weiter
+                // (dass das Feld dabei rollt, laesst sich hier nicht pruefen — Qt reicht nur ein Ereignis
+                //  vom System an das umgebende Fenster weiter, kein von Hand geschicktes)
+                creator.hide();
+                creator.resize(1000, 680);
             }
             creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Rauschen; });
             // `LUMIVIZ_INSTRUMENT_NOISE_BILD=<datei.png>` legt ein Bild des Creators mit einer Noise-Schicht ab,
