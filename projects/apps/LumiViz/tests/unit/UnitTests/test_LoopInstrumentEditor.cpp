@@ -17,6 +17,8 @@
 
 #include <doctest.h>
 
+#include "PappAufnahme.hpp"
+#include "loop/AufnahmeFenster.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
@@ -1025,6 +1027,54 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.schicht().grundton == 57);
         REQUIRE(creator.nimmSampleDatei(andere, false));
 
+        // --- Record... (Stufe 11b): das Fenster „Record sample" — Save and use setzt die Aufnahme in die Schicht
+        auto* recordKnopf = creator.findChild<QPushButton*>(QStringLiteral("creatorSampleRecord"));
+        REQUIRE(recordKnopf != nullptr);
+        CHECK_FALSE(recordKnopf->isHidden());
+        CHECK(creator.aufnahmeFenster() == nullptr);
+        // ohne Engine: das Fenster oeffnet sich und sagt, dass es nicht aufnehmen kann
+        REQUIRE(creator.oeffneAufnahme(false));
+        AufnahmeFenster* aufnahme = creator.aufnahmeFenster();
+        REQUIRE(aufnahme != nullptr);
+        CHECK(aufnahme->findChild<QLabel*>(QStringLiteral("recordState"))->text() ==
+              QStringLiteral("No audio engine — recording is not available"));
+        // mit Engine: gefragt wird beim Oeffnen
+        papp::AufnahmeEngine aufnahmeEngine;
+        aufnahmeEngine.eingaenge = {papp::eingang(0, QStringLiteral("Default"), true)};
+        creator.setEngineGeber([&aufnahmeEngine]() -> IAudioEngine* { return &aufnahmeEngine; });
+        REQUIRE(creator.oeffneAufnahme(false));
+        CHECK(creator.aufnahmeFenster() == aufnahme);  // dasselbe Fenster, kein zweites
+        CHECK(aufnahme->findChild<QPushButton*>(QStringLiteral("recordStart"))->isEnabled());
+        CHECK(aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->text() == QStringLiteral("Recording"));
+        {
+            std::vector<float> ton(2 * 48000);  // eine Sekunde
+            for (std::size_t t = 0; t < 48000; ++t)
+                ton[2 * t] = ton[2 * t + 1] = static_cast<float>(0.5 * std::sin(2.0 * 3.14159265358979 * 220.0 * static_cast<double>(t) / 48000.0));
+            aufnahme->setzeAufnahme(std::move(ton), 48000);
+        }
+        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("Mein Ton"));
+        verlangt.clear();
+        creator.aendereSchicht([](Schicht& s) { s.sampleStartMs = 100.0; });
+        CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton"));
+        CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));
+        CHECK(creator.schicht().sampleStartMs == 0.0);  // eine andere Aufnahme beginnt von vorn
+        CHECK(QFileInfo(QDir(eigenerSampleOrdner()).filePath(QStringLiteral("mein_ton.wav"))).size() == 44 + 4 * 48000);
+        CHECK(verlangt == QStringList{QStringLiteral("user:mein_ton")});  // das Bild verlangt die neue Aufnahme
+        CHECK(dateiZeile->text().startsWith(QStringLiteral("mein_ton.wav · ")));
+        CHECK(dateiZeile->text().endsWith(QStringLiteral(" · My samples")));
+        CHECK(gemessenText->isHidden());  // was gemessen war, galt der Aufnahme davor
+        // Record... noch einmal: von vorn, mit dem naechsten freien Namen
+        REQUIRE(creator.oeffneAufnahme(false));
+        CHECK(aufnahme->frames() == 0);
+        CHECK(aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->text() == QStringLiteral("Recording"));
+        // unter demselben Namen neu aufgenommen: die Schicht nennt dasselbe, die Daten werden neu verlangt
+        aufnahme->setzeAufnahme(std::vector<float>(2 * 24000, 0.25f), 48000);
+        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("mein ton"));
+        verlangt.clear();
+        CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton"));
+        CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));
+        CHECK(verlangt == QStringList{QStringLiteral("user:mein_ton")});
+
         // --- ein Sample, das es nicht gibt: die Zeile sagt es, gefragt wird einmal
         verlangt.clear();
         creator.setzeSample(QStringLiteral("user:gibt_es_nicht"));
@@ -1056,6 +1106,8 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(bildTitel->text() == QStringLiteral("One cycle"));
         CHECK(bild->griff(KurvenBild::GriffStart) < 0.0);
         CHECK(bild->werte().size() > 300);
+        CHECK(recordKnopf->isHidden());
+        CHECK_FALSE(creator.oeffneAufnahme(false));  // Record... gibt es nur bei einer Sample-Schicht
 
         if (const QString ziel = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_SAMPLE_BILD"); !ziel.isEmpty())
         {

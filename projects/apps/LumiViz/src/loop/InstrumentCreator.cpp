@@ -5,6 +5,9 @@
 
 #include "loop/InstrumentCreator.hpp"
 
+#include "audio/IAudioEngine.hpp"
+#include "loop/AufnahmeFenster.hpp"
+
 #include <QAction>
 #include <QCheckBox>
 #include <QCloseEvent>
@@ -624,12 +627,24 @@ void InstrumentCreator::setupUI()
         m_sampleWahl = new QPushButton(tr("File..."), this);
         m_sampleWahl->setObjectName(QStringLiteral("creatorSampleBrowse"));
         m_sampleWahl->setToolTip(tr("Choose the recording: one of your samples, or a sound file"));
+        // Record... (Stufe 11b): eine Aufnahme statt einer Datei
+        m_sampleAufnahme = new QPushButton(tr("Record..."), this);
+        m_sampleAufnahme->setObjectName(QStringLiteral("creatorSampleRecord"));
+        m_sampleAufnahme->setToolTip(tr("Record a sample, trim it and use it for this layer"));
         const int zeile = gitter->rowCount();
         gitter->addWidget(name, zeile, 0);
-        gitter->addWidget(m_sampleName, zeile, 1);
-        gitter->addWidget(m_sampleWahl, zeile, 2);
-        m_sampleZeilen = {name, m_sampleName, m_sampleWahl};
+        gitter->addWidget(m_sampleName, zeile, 1, 1, 2);
+        auto* knoepfe = new QWidget(this);
+        auto* reihe = new QHBoxLayout(knoepfe);
+        reihe->setContentsMargins(0, 0, 0, 0);
+        reihe->addWidget(m_sampleWahl);
+        reihe->addWidget(m_sampleAufnahme);
+        reihe->addStretch(1);
+        gitter->addWidget(knoepfe, gitter->rowCount(), 1, 1, 2);
+        // auch die Knoepfe selbst: wer nach ihnen fragt, soll sehen, dass sie weg sind
+        m_sampleZeilen = {name, m_sampleName, knoepfe, m_sampleWahl, m_sampleAufnahme};
         connect(m_sampleWahl, &QPushButton::clicked, this, &InstrumentCreator::zeigeSampleWahl);
+        connect(m_sampleAufnahme, &QPushButton::clicked, this, [this] { (void)oeffneAufnahme(true); });
 
         auto* grundton = new QLabel(tr("Root note"), this);
         m_grundton = new QComboBox(this);
@@ -1459,9 +1474,38 @@ double InstrumentCreator::sampleLaengeMs()
     return daten != nullptr && daten->rate > 0 ? 1000.0 * static_cast<double>(daten->klang.frames()) / daten->rate : 0.0;
 }
 
+void InstrumentCreator::setEngineGeber(std::function<IAudioEngine*()> geber)
+{
+    m_engineGeber = std::move(geber);
+}
+
+bool InstrumentCreator::oeffneAufnahme(bool zeigen)
+{
+    if (schicht().schwingung != Schwingung::Sample) return false;
+    if (m_aufnahme == nullptr)
+    {
+        m_aufnahme = new AufnahmeFenster(this);
+        // Save and use: die Aufnahme ist die der Schicht, die jetzt gewaehlt ist
+        connect(m_aufnahme, &AufnahmeFenster::gespeichert, this, [this](const QString& nennung) {
+            if (schicht().schwingung == Schwingung::Sample) setzeSample(nennung);
+        });
+    }
+    // die Engine, wie sie jetzt ist — sie kann seit dem letzten Mal eine andere sein
+    m_aufnahme->setEngine(m_engineGeber ? m_engineGeber() : nullptr);
+    m_aufnahme->beginne();
+    if (zeigen)
+    {
+        m_aufnahme->show();
+        m_aufnahme->raise();
+        m_aufnahme->activateWindow();
+    }
+    return true;
+}
+
 void InstrumentCreator::setzeSample(const QString& nennung)
 {
     m_sampleVersucht.clear();  // ein neuer Versuch, auch mit derselben Nennung
+    m_gemessenFuer.clear();    // was gemessen wurde, galt der Aufnahme davor — auch unter demselben Namen
     aendereSchicht([&nennung](Schicht& s) {
         if (s.sample == nennung) return;
         s.sample = nennung;

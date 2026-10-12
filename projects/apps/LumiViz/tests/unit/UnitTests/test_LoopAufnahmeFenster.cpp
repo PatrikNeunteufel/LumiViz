@@ -12,7 +12,7 @@
 
 #include <doctest.h>
 
-#include "PappTon.hpp"
+#include "PappAufnahme.hpp"
 #include "loop/Aufnahme.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/InstrumentCreator.hpp"  // KurvenBild
@@ -44,62 +44,8 @@ namespace
 
 constexpr double kPi = 3.14159265358979323846;
 
-/// Die Engine aus Pappe nimmt auf: `aufnahme` ist, was der Eingang liefert;
-/// `recordStop` gibt davon heraus, was bis dahin „angekommen" ist (`angekommen`).
-class AufnahmeEngine : public papp::PappMischEngine
-{
-public:
-    std::vector<AudioDeviceInfo> eingaenge;
-    std::vector<float> aufnahme;       ///< Stereo
-    std::int64_t angekommen = 0;       ///< so viele Abtastwerte je Seite sind schon da
-    float pegel = 0.0f;
-    bool laeuft = false;
-    bool oeffnet = true;               ///< false = der Eingang laesst sich nicht oeffnen
-    QStringList rufe;
-    IAudioGenerator* generator = nullptr;
-
-    [[nodiscard]] std::vector<AudioDeviceInfo> getRecordDevices() const override { return eingaenge; }
-    bool recordStart(int deviceId, int sampleRate, double maxSeconds) override
-    {
-        rufe << QStringLiteral("start %1 %2 %3").arg(deviceId).arg(sampleRate).arg(maxSeconds);
-        if (!oeffnet) return false;
-        laeuft = true;
-        angekommen = 0;
-        return true;
-    }
-    [[nodiscard]] bool isRecording() const override { return laeuft; }
-    [[nodiscard]] std::int64_t recordedFrames() const override { return angekommen; }
-    [[nodiscard]] float recordLevel() override { return pegel; }
-    [[nodiscard]] std::vector<float> recordStop() override
-    {
-        rufe << QStringLiteral("stop");
-        laeuft = false;
-        const auto zahl = static_cast<std::size_t>(2 * std::min<std::int64_t>(angekommen, static_cast<std::int64_t>(aufnahme.size() / 2)));
-        return std::vector<float>(aufnahme.begin(), aufnahme.begin() + static_cast<std::ptrdiff_t>(zahl));
-    }
-    [[nodiscard]] AudioStreamHandle mixerAddGenerator(AudioStreamHandle, IAudioGenerator* quelle) override
-    {
-        generator = quelle;
-        Stream s;
-        s.datei = QStringLiteral("<generator>");
-        s.dauer = 1000000;
-        s.haelt = true;
-        m_streams.push_back(s);
-        protokoll << QStringLiteral("add generator");
-        return letzter();
-    }
-    [[nodiscard]] int getSampleRate() const override { return 48000; }
-};
-
-AudioDeviceInfo eingang(int id, const QString& name, bool standard, bool mitschnitt = false)
-{
-    AudioDeviceInfo info;
-    info.id = id;
-    info.name = name;
-    info.isDefault = standard;
-    info.isLoopback = mitschnitt;
-    return info;
-}
+using papp::AufnahmeEngine;
+using papp::eingang;
 
 /// 0,3 s Stille, 1,5 s Ton, 0,2 s Stille — zwei Sekunden in 48000; rechts halb so laut.
 std::vector<float> probe(float pegel = 0.4f)

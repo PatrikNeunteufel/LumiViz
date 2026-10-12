@@ -1257,6 +1257,12 @@ QString InstrumentEditor::instrumentAnzeige(const QString& nennung)
     return datei ? tr("%1 (%2)").arg(instrument.titel, kurz) : instrument.titel;
 }
 
+void InstrumentEditor::setEngineGeber(std::function<IAudioEngine*()> geber)
+{
+    m_engineGeber = std::move(geber);
+    if (m_creator != nullptr) m_creator->setEngineGeber(m_engineGeber);
+}
+
 InstrumentPalette* InstrumentEditor::palette() const
 {
     return m_palette;
@@ -1341,6 +1347,7 @@ bool InstrumentEditor::oeffneCreator(bool zeigen)
         connect(m_creator, &InstrumentCreator::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
         // die Aufnahme einer Sample-Schicht (Stufe 11a): dekodieren kann nur, wer die Audio-Engine hat
         connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &InstrumentEditor::sampleVerlangt);
+        m_creator->setEngineGeber(m_engineGeber);  // fuer „Record..." (Stufe 11b)
     }
     m_creator->oeffne(instrument);
     if (zeigen)

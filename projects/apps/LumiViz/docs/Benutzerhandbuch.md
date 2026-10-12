@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.131.0
+> **Version:** 1.132.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2707,6 +2707,7 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 |---|---|
 | **File** und **File...** | Die Aufnahme: eines deiner eigenen Samples (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
 | Die Frage nach „From file..." | **Copy the file to My samples (recommended)** legt eine Kopie in deinen Benutzerordner (`samples`) — sie geht mit einem Export mit und bleibt, wenn das Original verschoben wird. **Use it where it is** lässt die Datei, wo sie ist; das Instrument nennt dann ihren Pfad. „Don't ask again" merkt die Wahl; ändern lässt sie sich unter Settings → Panels, **Chosen Sample Files** |
+| **Record...** | Öffnet das Fenster **Record sample** (siehe unten): selbst aufnehmen statt eine Datei wählen. Was du dort speicherst, ist danach die Aufnahme dieser Schicht |
 | **Root note** | Welcher Ton die Aufnahme ist. Bei dieser Note klingt sie, wie sie aufgenommen wurde |
 | **Detect** und **Apply** | Detect misst den Ton der Aufnahme, ab Sample start, und schreibt ihn darunter: „Detected: A3 +12 ct“. Erst **Apply** stellt Root note und Fine tune danach. Bei einem Schlag, Rauschen oder einem Akkord steht dort „No clear pitch found“ — dann stellst du nach Gehör |
 | **Fine tune** | Wie weit die Aufnahme über (+) oder unter dem Root note liegt, in Cent |
@@ -2718,6 +2719,25 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 Fehlt die Datei einer Aufnahme, steht in der Zeile File „(not found)", und die Schicht
 schweigt. Eine andere Aufnahme beginnt von vorn: Sample start steht wieder auf 0, der
 Sustain loop ist aus.
+
+**Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
+Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
+eigenen Samples (`samples` im Benutzerordner).
+
+| Im Fenster Record sample | Wirkung |
+|---|---|
+| **Input**, **Level** | Woher aufgenommen wird — ein Mikrofon oder ein anderer Eingang. Ein Eintrag mit „— what the computer plays“ nimmt auf, was der Rechner gerade ausgibt. Level zeigt beim Aufnehmen den Pegel |
+| **● Record**, **Stop** | Record beginnt eine neue Aufnahme und ersetzt die im Bild. Höchstens 30 Sekunden, dann endet sie von selbst. Daneben steht, wie viel aufgenommen ist |
+| Das Bild | Die Aufnahme. Die beiden roten Griffe sind Anfang und Ende dessen, was gespeichert wird — zieh sie mit der Maus; was grau überdeckt ist, fällt weg. Die blaue Linie zeigt, wo gerade gespielt wird |
+| **▶ Play**, **Repeat** | Spielt, was gespeichert würde. Mit Repeat läuft der Ausschnitt in Dauerschleife, und die Griffe lassen sich dabei ziehen |
+| **Trim silence at both ends** | Stellt die Griffe an den Anfang und das Ende des Tons. Anfangs an: nach jeder Aufnahme stehen sie schon dort. Aus: die ganze Aufnahme |
+| **Normalize level** | Hebt das gespeicherte Sample auf die Lautstärke der mitgelieferten Klänge |
+| **Name**, die Zeile File | Wie das Sample heißt und welche Datei daraus wird. Gibt es den Namen schon, steht dort „replaces the one there“ |
+| **Save and use** | Speichert den Ausschnitt und setzt ihn in die Schicht. Vor dem Ersetzen fragt es nach — Instrumente, die das Sample benutzen, spielen dann die neue Aufnahme |
+
+Lässt sich ein Eingang nicht öffnen, steht es in der Zeile neben Record. Bei einem Mikrofon
+liegt das meist an Windows: Einstellungen → Datenschutz und Sicherheit → Mikrofon → „Desktop-Apps
+den Zugriff erlauben“. Spielt gerade Musik über die Lautsprecher, nimmt ein Mikrofon sie mit auf.
 
 Ein Instrument mit einer Schicht verhält sich wie bisher. Dateien aus einer
 früheren LumiViz-Fassung liest das Programm weiter; gespeichert wird im neuen
@@ -2874,6 +2894,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.132.0 | 2026-10-12 | Session 115. §16 Loop NEU **Record sample**: im Instrument-Creator bei einer Sample-Schicht **Record...** — das Fenster nimmt auf, lässt zuschneiden (zwei Griffe, Trim silence), in Dauerschleife anhören (Play, Repeat) und speichert mit Save and use zu den eigenen Samples |
 | 1.131.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator, Sample-Schicht NEU **Detect** mit **Apply** (misst den Ton der Aufnahme und schlägt Root note und Fine tune vor) und **Reference tone** (ein reiner Ton derselben Note neben der Aufnahme) |
 | 1.130.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator NEU **Waveform: Sample** — eine Schicht aus einer Aufnahme: File..., die Frage „kopieren oder am Ort lassen", Root note, Fine tune, Sample start, Sustain loop mit Loop from und Loop to, das Bild der Aufnahme mit ziehbaren Marken; Settings → Panels NEU **Chosen Sample Files** |
 | 1.129.0 | 2026-10-12 | Session 115. Settings, Export und Import: neuer Bereich **Samples** (der Ordner `samples` im Benutzerordner; im Programm füllt ihn noch nichts — Loop, Stufe 11a, erst der Kern) |

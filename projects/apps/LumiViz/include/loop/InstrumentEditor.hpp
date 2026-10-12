@@ -25,8 +25,10 @@
 #include <QString>
 #include <QWidget>
 
+#include <functional>
 #include <vector>
 
+class IAudioEngine;
 class QCheckBox;
 class QComboBox;
 class QLabel;
@@ -274,6 +276,9 @@ public:
     bool oeffneCreator(bool zeigen = true);
     /// Das Fenster des Creators; nullptr, solange er noch nie geoeffnet wurde.
     [[nodiscard]] InstrumentCreator* creator() const;
+    /// Wer die Audio-Engine nennt, ueber die der Creator ein Sample aufnimmt
+    /// („Record...", Stufe 11b) — der Editor reicht es an den Creator weiter.
+    void setEngineGeber(std::function<IAudioEngine*()> geber);
 
     // --- das Fenster „Instruments" (Stufe 14c) --------------------------------
     /// „Browse...": das Fenster oeffnen (es entsteht beim ersten Mal) und das
@@ -332,6 +337,7 @@ private:
     QPushButton* m_instrumentBearbeiten = nullptr;
     QPushButton* m_instrumentLaden = nullptr;
     QPointer<InstrumentCreator> m_creator;
+    std::function<IAudioEngine*()> m_engineGeber;
     QPointer<InstrumentPalette> m_palette;
     QSlider* m_laut = nullptr;
     QSlider* m_pan = nullptr;

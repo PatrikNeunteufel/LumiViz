@@ -654,6 +654,8 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 if (engine != nullptr && !datei.isEmpty())
                     merkeSampleDaten(nennung, kSampleRate, engine->decodeStereo(datei, kSampleRate, kKlangMaxSekunden));
             });
+            // „Record..." im Creator (Stufe 11b): die Engine, wie sie beim Oeffnen des Fensters ist
+            m_instrumentEditor->setEngineGeber([this] { return services().tryResolve<IAudioEngine>(); });
             // Ctrl+Z / Ctrl+Y im Fenster „Instruments" (Z1 a, S115): derselbe Undo wie Edit → Undo
             connect(m_instrumentEditor, &InstrumentEditor::rueckgaengigVerlangt, this, [this](bool wiederholen) {
                 if (auto* bus = services().tryResolve<ICommandBus>())

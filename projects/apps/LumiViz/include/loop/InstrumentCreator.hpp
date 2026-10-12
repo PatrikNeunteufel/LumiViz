@@ -45,6 +45,7 @@
 #include <memory>
 #include <vector>
 
+class IAudioEngine;
 class QCheckBox;
 class QComboBox;
 class QGridLayout;
@@ -56,6 +57,8 @@ class QSlider;
 
 namespace lumi::loop
 {
+
+class AufnahmeFenster;
 
 /// Eine Kurve als Bild: Werte von -1 bis 1 (oder 0 bis 1), ueber die Breite
 /// verteilt; auf Wunsch ein senkrechter Strich an einer Stelle.
@@ -274,6 +277,19 @@ public:
     void setReferenzton(bool an);
     [[nodiscard]] bool referenzton() const { return m_referenzton; }
 
+    // --- Record... (Stufe 11b, Schritt 3) --------------------------------------
+    /// Wer die Audio-Engine nennt, ueber die das Fenster „Record sample"
+    /// aufnimmt und spielt — gefragt wird, wenn es sich oeffnet. Ohne ihn (oder
+    /// nennt er keine) sagt das Fenster, dass es nicht aufnehmen kann.
+    void setEngineGeber(std::function<IAudioEngine*()> geber);
+    /// **Record...:** das Fenster „Record sample" oeffnen (von vorn: keine
+    /// Aufnahme, ein neuer Name). Was dort mit Save and use gespeichert wird,
+    /// ist danach die Aufnahme der gewaehlten Schicht. false = die gewaehlte
+    /// Schicht ist keine Sample-Schicht.
+    bool oeffneAufnahme(bool zeigen = true);
+    /// Das Fenster „Record sample"; nullptr, solange Record... noch nie gedrueckt wurde.
+    [[nodiscard]] AufnahmeFenster* aufnahmeFenster() const { return m_aufnahme; }
+
 Q_SIGNALS:
     /// Die Daten dieser Aufnahme werden gebraucht (fuer das Bild und die
     /// Laenge): wer eine Audio-Engine hat, dekodiert sie und merkt sie
@@ -386,6 +402,10 @@ private:
     QPushButton* m_detectApply = nullptr;
     QCheckBox* m_referenz = nullptr;
     bool m_referenzton = false;
+    // --- Record... (Stufe 11b)
+    QPushButton* m_sampleAufnahme = nullptr;
+    AufnahmeFenster* m_aufnahme = nullptr;
+    std::function<IAudioEngine*()> m_engineGeber;
     KurvenBild* m_wellenBild = nullptr;
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;
