@@ -12,6 +12,7 @@ dbg(DBG_OFTEN
 
 # Set local lists for this directory
 set(_local_sources
+    "${CMAKE_CURRENT_LIST_DIR}/Aufnahme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Auswahl.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bearbeiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/ClipEffektFenster.cpp"
@@ -34,6 +35,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Taktachse.cpp"
 )
 set(_local_headers
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Aufnahme.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Auswahl.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bearbeiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/ClipEffektFenster.hpp"

@@ -365,6 +365,41 @@ public:
     }
 
     // =========================================================================
+    // Aufnahme (Loop, Stufe 11b: „Record sample"; docs/audio/Loop_Konzept.md §4h)
+    // =========================================================================
+    // Eine Aufnahme zur Zeit: Stereo, float, links und rechts im Wechsel. Die
+    // Engine sammelt, was der Eingang liefert, bis `recordStop` es abholt.
+    // Vorgabe ueberall: die Engine kann es nicht.
+
+    /** @brief Die Eingaenge. `isLoopback` = ein Mitschnitt der Ausgabe. */
+    [[nodiscard]] virtual std::vector<AudioDeviceInfo> getRecordDevices() const { return {}; }
+
+    /**
+     * @brief Eine Aufnahme beginnen: von `deviceId` (-1 = der Standard-Eingang),
+     *        in `sampleRate`, hoechstens `maxSeconds` — danach endet sie von
+     *        selbst (`isRecording` wird false, das Aufgenommene bleibt bis
+     *        `recordStop`). Eine laufende Aufnahme wird verworfen.
+     * @return false = kein Eingang, er laesst sich nicht oeffnen, oder die
+     *         Engine kann es nicht
+     */
+    virtual bool recordStart(int /*deviceId*/, int /*sampleRate*/, double /*maxSeconds*/) { return false; }
+
+    /** @brief Laeuft eine Aufnahme? */
+    [[nodiscard]] virtual bool isRecording() const { return false; }
+
+    /** @brief So viele Abtastwerte (je Seite) sind bisher aufgenommen. */
+    [[nodiscard]] virtual std::int64_t recordedFrames() const { return 0; }
+
+    /** @brief Der groesste Betrag seit dem letzten Aufruf — fuer eine Pegelanzeige. */
+    [[nodiscard]] virtual float recordLevel() { return 0.0f; }
+
+    /**
+     * @brief Die Aufnahme beenden und abholen. Der Eingang wird freigegeben.
+     * @return das Aufgenommene; leer = es lief keine, oder es kam nichts an
+     */
+    [[nodiscard]] virtual std::vector<float> recordStop() { return {}; }
+
+    // =========================================================================
     // FFT / Audio Analysis
     // =========================================================================
 

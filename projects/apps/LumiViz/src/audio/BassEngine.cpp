@@ -27,6 +27,8 @@
 
 #include <cmath>
 #include <algorithm>
+#include <atomic>
+#include <mutex>
 
 // =============================================================================
 // Private Implementation
@@ -45,6 +47,15 @@ struct BassEngine::Impl
     
     // Supported extensions (built-in + plugins)
     QStringList extensions = {"mp3", "wav", "ogg", "aiff"};
+
+    // --- Aufnahme (Loop, Stufe 11b) — der Rueckruf laeuft in einem Thread von BASS
+    std::mutex recMutex;                 ///< schuetzt `recData`
+    std::vector<float> recData;          ///< Stereo, links und rechts im Wechsel
+    std::size_t recMax = 0;              ///< so viele Werte hoechstens (`maxSeconds`)
+    std::atomic<bool> recActive{false};  ///< der Rueckruf sammelt noch
+    std::atomic<float> recPeak{0.0f};    ///< der groesste Betrag seit `recordLevel`
+    HRECORD recChannel = 0;
+    bool recOpen = false;                ///< `BASS_RecordInit` gelang und ist noch nicht freigegeben
 };
 
 // =============================================================================
@@ -208,6 +219,8 @@ bool BassEngine::initialize(int deviceId, int sampleRate)
 
 void BassEngine::shutdown()
 {
+    // eine Aufnahme laeuft auch ohne Ausgabegeraet: zuerst den Eingang freigeben
+    (void)recordStop();
     if (!m_impl->initialized)
     {
         return;
@@ -702,6 +715,131 @@ std::vector<float> BassEngine::decodeStereo(const QString& filePath, int sampleR
     if (daten.size() > hoechstens) daten.resize(hoechstens);
     BASS_StreamFree(mixer);
     BASS_StreamFree(source);
+    return daten;
+}
+
+// =============================================================================
+// Aufnahme (Loop, Stufe 11b) — Beleg: test_LoopBelegeAufnahme.cpp
+// =============================================================================
+
+namespace
+{
+
+/// So oft liefert BASS einen Block, in Millisekunden (Vorgabe von BASS: 100).
+/// Kuerzer, damit eine Pegelanzeige fluessig folgt.
+constexpr DWORD kRecPeriodMs = 25;
+
+}  // namespace
+
+std::vector<AudioDeviceInfo> BassEngine::getRecordDevices() const
+{
+    std::vector<AudioDeviceInfo> devices;
+    BASS_DEVICEINFO info;
+    for (DWORD i = 0; BASS_RecordGetDeviceInfo(i, &info) != 0; ++i)
+    {
+        AudioDeviceInfo device;
+        device.id = static_cast<int>(i);
+        device.name = QString::fromLocal8Bit(info.name != nullptr ? info.name : "");
+        device.driver = QString::fromLocal8Bit(info.driver != nullptr ? info.driver : "");
+        device.isDefault = (info.flags & BASS_DEVICE_DEFAULT) != 0;
+        device.isEnabled = (info.flags & BASS_DEVICE_ENABLED) != 0;
+        device.isLoopback = (info.flags & BASS_DEVICE_LOOPBACK) != 0;
+        device.sampleRate = m_impl->sampleRate;
+        device.channels = 2;
+        devices.push_back(device);
+    }
+    return devices;
+}
+
+bool BassEngine::recordStart(int deviceId, int sampleRate, double maxSeconds)
+{
+    (void)recordStop();  // eine laufende Aufnahme wird verworfen
+    if (sampleRate <= 0 || maxSeconds <= 0.0) return false;
+
+    if (BASS_RecordInit(deviceId) == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BasicLogger::logWarning("BASS_RecordInit failed: " + m_impl->lastErrorMsg.toStdString());
+        return false;
+    }
+    m_impl->recOpen = true;
+    {
+        const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+        m_impl->recData.clear();
+        m_impl->recMax = static_cast<std::size_t>(maxSeconds * sampleRate) * 2;
+    }
+    m_impl->recPeak.store(0.0f);
+    m_impl->recActive.store(true);
+
+    // der Rueckruf: anhaengen, bis `recMax` voll ist — dann endet die Aufnahme von selbst
+    RECORDPROC* proc = [](HRECORD, const void* buffer, DWORD length, void* user) -> BOOL {
+        auto* impl = static_cast<Impl*>(user);
+        const auto* werte = static_cast<const float*>(buffer);
+        std::size_t zahl = length / sizeof(float);
+        zahl -= zahl % 2;
+        float peak = impl->recPeak.load();
+        for (std::size_t i = 0; i < zahl; ++i) peak = std::max(peak, std::abs(werte[i]));
+        impl->recPeak.store(peak);
+        const std::lock_guard<std::mutex> lock(impl->recMutex);
+        if (!impl->recActive.load()) return FALSE;
+        const std::size_t frei = impl->recMax > impl->recData.size() ? impl->recMax - impl->recData.size() : 0;
+        const std::size_t nimm = std::min(zahl, frei);
+        impl->recData.insert(impl->recData.end(), werte, werte + nimm);
+        if (nimm < zahl || impl->recData.size() >= impl->recMax)
+        {
+            impl->recActive.store(false);
+            return FALSE;  // voll: BASS beendet die Aufnahme
+        }
+        return TRUE;
+    };
+    m_impl->recChannel = BASS_RecordStart(static_cast<DWORD>(sampleRate), 2,
+                                          MAKELONG(BASS_SAMPLE_FLOAT, kRecPeriodMs), proc, m_impl.get());
+    if (m_impl->recChannel == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        BasicLogger::logWarning("BASS_RecordStart failed: " + m_impl->lastErrorMsg.toStdString());
+        m_impl->recActive.store(false);
+        BASS_RecordFree();
+        m_impl->recOpen = false;
+        return false;
+    }
+    return true;
+}
+
+bool BassEngine::isRecording() const
+{
+    return m_impl->recActive.load();
+}
+
+std::int64_t BassEngine::recordedFrames() const
+{
+    const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+    return static_cast<std::int64_t>(m_impl->recData.size() / 2);
+}
+
+float BassEngine::recordLevel()
+{
+    return m_impl->recPeak.exchange(0.0f);
+}
+
+std::vector<float> BassEngine::recordStop()
+{
+    if (!m_impl->recOpen) return {};
+    {
+        // ab hier nimmt der Rueckruf nichts mehr an
+        const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+        m_impl->recActive.store(false);
+    }
+    // der Stop gibt den Kanal frei; nach einem Ende von selbst ist er es schon (dann schlaegt der Aufruf fehl — recht so)
+    if (m_impl->recChannel != 0) BASS_ChannelStop(m_impl->recChannel);
+    m_impl->recChannel = 0;
+    BASS_RecordFree();  // den Eingang freigeben: das Mikrofon-Zeichen von Windows geht aus
+    m_impl->recOpen = false;
+    const std::lock_guard<std::mutex> lock(m_impl->recMutex);
+    std::vector<float> daten = std::move(m_impl->recData);
+    m_impl->recData.clear();
     return daten;
 }
 

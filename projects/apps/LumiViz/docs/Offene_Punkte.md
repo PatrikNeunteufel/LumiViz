@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.160.0
+> **Version:** 1.161.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5229,6 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.161.0 | 2026-10-12 | Session 115 — Loop **11b Schritt 1 gebaut**: der Kern ohne Fenster — die Aufnahme in `IAudioEngine` und `BassEngine` (Eingänge, starten, Pegel, stoppen; endet von selbst), neu `loop/Aufnahme` (Stille an den Rändern, ausschneiden mit Blende, Normalize, 16-Bit-WAV, speichern unter den eigenen Samples); im Programm nichts zu sehen; offen Schritt 2 (das Fenster) und 3 (Record... im Creator) |
 | 1.160.0 | 2026-10-12 | Session 115 — Loop, **Beleg vor 11b**: BASS nimmt neben der laufenden Engine auf (48000 Hz Stereo float, Blöcke von 100 ms), drei Eingänge an Patriks Rechner, darunter der Mitschnitt der Ausgabe; `test_LoopBelegeAufnahme.cpp`, der aufnehmende Fall nur mit `LUMIVIZ_AUFNAHME_BELEG=1`; gebaut ist an 11b nichts |
 | 1.159.0 | 2026-10-12 | Session 115 — Loop **11a Schritt 3 gebaut**: Detect mit Apply (neu `loop/Grundton`, misst den Grundton einer Aufnahme) und Reference tone im Instrument-Creator; **11a ist damit gebaut**, im Programm nicht gesehen und nicht gehört — ⬜ lokale Liste 10, Abschnitt Q (Q0 bis Q12); nicht geprüft: Detect an einer echten Aufnahme; offen 11b (Record sample, Beleg-Test davor) und 11c (Drum-Editor, Entscheid davor) |
 | 1.158.0 | 2026-10-12 | Session 115 — Loop **11a Schritt 2 gebaut**: der Instrument-Creator mit Waveform: Sample (File..., die Frage aus S2 a, Root note, Fine tune, Sample start, Sustain loop, das Bild der Aufnahme mit ziehbaren Marken), Settings → Panels: Chosen Sample Files; **im Programm nicht gesehen und nicht gehört** — ⬜ lokale Liste 10, Abschnitt Q (Q0 bis Q9); vorgemerkt zu den Drums (Patrik fragt, ob Drum-Editor und Creator eins werden): Drum-Ausbau A (Drum-Spur nennt ein Instrument), B (Rauschen, fallende Tonhöhe), C (Hochpass, Bandpass) — Entscheid vor 11c |

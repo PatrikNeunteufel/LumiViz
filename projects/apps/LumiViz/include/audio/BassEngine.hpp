@@ -111,6 +111,13 @@ public:
                                                       IAudioGenerator* generator) override;
     [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int sampleRate,
                                                   double maxSeconds) override;
+    // Aufnahme (Loop, Stufe 11b) — laeuft neben der Ausgabe, mit oder ohne `initialize`
+    [[nodiscard]] std::vector<AudioDeviceInfo> getRecordDevices() const override;
+    bool recordStart(int deviceId, int sampleRate, double maxSeconds) override;
+    [[nodiscard]] bool isRecording() const override;
+    [[nodiscard]] std::int64_t recordedFrames() const override;
+    [[nodiscard]] float recordLevel() override;
+    [[nodiscard]] std::vector<float> recordStop() override;
 
     // FFT / Audio Analysis
     bool getFFTData(AudioStreamHandle stream, float* data, int size) override;

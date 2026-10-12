@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.44.0
+> **Version:** 0.45.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1498,6 +1498,38 @@ auf und läuft deshalb nur mit `LUMIVIZ_AUFNAHME_BELEG=1`. Nicht erprobt:
 ein Rechner ohne Eingang, ein von Windows gesperrtes Mikrofon, das Aufnehmen
 vom Mitschnitt, während das Programm selbst spielt.
 
+**Gebaut — 11b, Schritt 1 (S115), der Kern ohne Fenster:**
+`IAudioEngine` bekommt die Aufnahme — `getRecordDevices` (die Eingänge,
+`isLoopback` = Mitschnitt der Ausgabe), `recordStart(deviceId, sampleRate,
+maxSeconds)` (Stereo, float; endet von selbst, wenn die Menge voll ist),
+`isRecording`, `recordedFrames`, `recordLevel` (der größte Betrag seit dem
+letzten Aufruf, für die Pegelanzeige), `recordStop` (beendet, gibt den
+Eingang frei und liefert das Aufgenommene). Vorgabe überall: die Engine
+kann es nicht. Die `BassEngine` setzt es mit `BASS_RecordInit`,
+`BASS_RecordStart` und einem Rückruf um, der unter einem Schloss sammelt;
+die Blöcke kommen alle 20 ms (verlangt 25 ms, gemessen 960 Abtastwerte an
+48000 Hz). Eine Aufnahme läuft neben der Ausgabe, mit oder ohne
+`initialize`; `shutdown` gibt einen offenen Eingang frei.
+Neu `loop/Aufnahme` — `ohneStille` (der Ausschnitt ohne die Stille an den
+Rändern: still ist, was unter 2 % der Spitze liegt; 5 ms davor und 30 ms
+danach bleiben stehen), `spitzeIn`, `schneideAus` (der Ausschnitt mit 2 ms
+Blende an beiden Enden, auf Wunsch auf einen größten Betrag von 0,9
+gehoben), `schreibeWav` (Stereo, 16 Bit), `vorschlagAufnahmeTitel`
+(„Recording", „Recording 2", …), `speichereAufnahme` (als `<name>.wav` zu
+den eigenen Samples; ein vorhandenes Sample des Namens wird ersetzt, was
+dazu gemerkt war, ist vergessen, Töne werden neu gerechnet).
+Gemessen mit `LUMIVIZ_AUFNAHME_BELEG=1`: eine halbe Sekunde verlangt, zu
+Ende nach 504 ms mit genau 24000 Abtastwerten; nach 300 ms abgebrochen:
+14400; eine geschriebene WAV liest die BassEngine auf 16 Bit genau wieder
+(größte Abweichung 0,00003).
+Von Claude gesetzt, nicht entschieden: die Aufnahme wird als 16-Bit-WAV
+geschrieben (das liest jedes Programm; die Engine nimmt in float auf); die
+Schwelle für Stille und die Luft davor und danach; die Blende von 2 ms;
+Normalize hebt auf 0,9 wie die Klänge des Kits; ein vorhandenes Sample
+desselben Namens wird ohne Frage ersetzt — die Rückfrage gehört ins Fenster
+(Schritt 2). Nicht gebaut: das Fenster, Play und Repeat, Record... im
+Creator. Im Programm ist nichts zu sehen.
+
 ### Die Palette der Instrumente (Stufe 14, P1 a)
 
 Im Instrument-Editor steht neben dem Namen des Instruments **Browse...** und
@@ -1920,7 +1952,7 @@ die des Rechners nicht verstellen).
 | 10a | **Instrumente als Dateien** (I2 b, I3 a): das Format `.lvinst`, die sieben mitgelieferten unter `asset/loop/instruments`, ein Muster nennt ein eigenes beim Pfad | S110 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall dazu, die übrigen lesen jetzt die Dateien); die Hörproben und das Beispiel klingen wie vorher — die Werte sind dieselben |
 | 10b | **Instrument-Creator:** das Fenster, das die Bausteine offenlegt (Skizze gebilligt, §4f), **Edit instrument...** und **Load instrument...** im Instrument-Editor | S110 gebaut, §4f; zwei Fälle in `test_LoopInstrumentEditor.cpp` (ohne Fenster; `LUMIVIZ_INSTRUMENT_CREATOR_BILD=<datei.png>` legt ein Bild ab), dazu das Anspielen im Panel-Fall von `test_LoopSpieler.cpp`; Benutzerhandbuch §16; **im Programm noch nicht gesehen und nicht gehört** |
 | 10c | **Instrumente aus Schichten** (Wunsch Patrik S110): mehrere Sätze Einstellungen in einem Instrument, je Schicht Level, Transpose, Start offset und Drive (E1 a); die Spalte Layers im Creator; Fassung 2 der `.lvinst` (F1 a) | S111 gebaut, §4f; `test_LoopInstrument.cpp` (ein Fall zu Schichten und Fassung 2, einer zu den fünf Beispielen), `test_LoopInstrumentEditor.cpp` (ein Fall zum Creator mit Schichten); sechzehn Instrumente aus Schichten und fünf Beispiel-Loops (`asset/loop/make_examples.py`); **im Programm noch nicht gesehen und nicht gehört** |
-| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | Skizze gebilligt (S115), S1 a, S2 a; **11a Schritt 1 gebaut** (der Kern ohne Fenster, `.lvinst` Fassung 4), **Schritt 2 gebaut** (der Creator: Waveform Sample, File..., das Bild der Aufnahme) — im Programm noch nicht gesehen und nicht gehört, **Schritt 3 gebaut** (Detect, Reference tone) — **11a ist gebaut**, Liste 10 Abschnitt Q; offen 11b Record sample, 11c Drum-Editor (Entscheid davor); Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
+| 11 | **Instrumente aus Samples:** eine Tondatei, je Note in der Tonhöhe umgerechnet (I1 c); als Art von Schicht, mit Root note, Fine tune und Detect (§4h) | Skizze gebilligt (S115), S1 a, S2 a; **11a Schritt 1 gebaut** (der Kern ohne Fenster, `.lvinst` Fassung 4), **Schritt 2 gebaut** (der Creator: Waveform Sample, File..., das Bild der Aufnahme) — im Programm noch nicht gesehen und nicht gehört, **Schritt 3 gebaut** (Detect, Reference tone) — **11a ist gebaut**, Liste 10 Abschnitt Q; **11b Schritt 1 gebaut** (aufnehmen über die Engine, zuschneiden, WAV — ohne Fenster); offen 11b Schritt 2 (das Fenster Record sample) und 3 (Record... im Creator), 11b Record sample, 11c Drum-Editor (Entscheid davor); Multisamples vorgemerkt — vorziehen, wenn Tests an Sample-Instrumenten es verlangen |
 | 12 | **Effekte am Clip** (E2 b): Reverb, Echo, Distortion je Clip, für Drumkit- und Instrument-Clips; mehrere Clips markieren; der Rechenkern bekommt dafür ein Gedächtnis | S113: Skizze gebilligt (§4g), Format entschieden (F2 a). **12a gebaut:** Modell und Datei in Fassung 3 (§4), ein Fall mit sechs Teilen in `test_LoopKern.cpp`; nichts davon zu hören oder zu sehen. **12b Teil 1 gebaut:** die Rechenbausteine `loop/Effekte` und die Messung ihrer Last (G1 b, §4g), `test_LoopEffekte.cpp`, sieben Fälle ohne Ton; **12b Teil 2 gebaut:** Busse im Rechenkern, die Ketten im Klangerzeuger mit Sprung-Regel und Übergabe des Nachklangs (§4g), fünf Fälle dazu in `test_LoopEffekte.cpp`, das Beispiel `asset/loop/effects_demo.lvloop` mit einem Fall in `test_LoopInstrument.cpp`; **zu hören, aber nicht gehört** — einstellen lässt es sich noch nur in der Datei. **12c gebaut:** mehrere Clips markieren, als Gruppe ziehen, kopieren, löschen, die Marke fx (§4g), zwei Fälle in `test_LoopArrangement.cpp`; **im Programm nicht gesehen**. **12d gebaut:** das Fenster Clip effects und Effects... im Menü (§4g), `test_LoopClipEffekte.cpp`, zwei Fälle; **im Programm nicht gesehen und nicht gehört**. **12e gemacht:** Benutzerhandbuch 1.122.0 (§16: Effekte am Clip, mehrere Clips markieren, das Beispiel), die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt F (F0 bis F17) und U25 bis U31; voller Lauf 1061 / 1061, 0 Skips (Testing-MSVC). **Stufe 12 ist gebaut.** Im Programm: Patrik hat F0 bis F4 der Liste 10 geprüft (S113) — „sind alle ok": die Marke fx, der Loop mit und ohne Effekte gehört, das Fenster Clip effects, ein Regler im Lauf. Im Gespräch gemeldet, ohne Testlog; mehr als dieses Wort ist nicht belegt. **F5 bis F17 und die Urteile U25 bis U31 sind offen.** Offen aus der Stufe außerdem: die Last im Ton-Thread mit vielen Clips; der Loop-Clip mit Effekten im Composer ohne eigenen Testfall. |
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
@@ -2019,6 +2051,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.45.0** (S115, 2026-10-12): 11b Schritt 1 gebaut — die Aufnahme in
+  `IAudioEngine` und `BassEngine`, neu `loop/Aufnahme` (Stille an den
+  Rändern, ausschneiden, Normalize, WAV, speichern unter den eigenen
+  Samples) (§4h).
 
 - **0.44.0** (S115, 2026-10-12): Beleg vor 11b — BASS nimmt neben der
   laufenden Engine auf, 48000 Hz Stereo float, Blöcke von 100 ms; drei
