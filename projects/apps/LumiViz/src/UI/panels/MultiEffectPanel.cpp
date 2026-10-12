@@ -21,6 +21,7 @@
 #include "UI/widgets/GradientPresetDelegate.hpp"          // gradient combo previews
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/AppAnbindung.hpp"                      // Composer-Naht N16
+#include "core/Suchordner.hpp"                            // Suchordner fuer Bilder (S116)
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/modules/SuperscopeModule.hpp"      // figure preset library (SSOT)
 #include "visualizers/modules/ColorGradientModule.hpp"   // fractal palette presets
@@ -239,15 +240,13 @@ uint32_t u32FromColor(const QColor& c)
            (static_cast<uint32_t>(c.green()) << 8) | static_cast<uint32_t>(c.blue());
 }
 
-/// Startordner des Bild-Dialogs: der in den Einstellungen gesetzte Suchordner
-/// (SSOT-Schluessel `import/imageSearchDir`, dort auch vom Import benutzt),
-/// sonst der zuletzt benutzte bzw. das Heimverzeichnis.
+/// Startordner des Bild-Dialogs: der erste Suchordner aus den Einstellungen,
+/// den es gibt (core/Suchordner.hpp — dieselbe Liste benutzt der Import),
+/// sonst das Heimverzeichnis.
 QString imageStartDir()
 {
-    QSettings settings;
-    const QString dir =
-        settings.value(QStringLiteral("import/imageSearchDir")).toString();
-    if (!dir.isEmpty() && QFileInfo::exists(dir)) return dir;
+    for (const QString& dir : lumi::core::suchordner::liste())
+        if (QFileInfo(dir).isDir()) return dir;
     return QDir::homePath();
 }
 

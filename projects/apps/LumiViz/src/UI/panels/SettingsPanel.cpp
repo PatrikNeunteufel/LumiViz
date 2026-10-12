@@ -16,6 +16,7 @@
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
 #include "core/Mitgeliefert.hpp"
+#include "core/Suchordner.hpp"
 #include "loop/Sample.hpp"  // „Chosen Sample Files": kopieren oder am Ort lassen (S115)
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
@@ -322,27 +323,66 @@ void SettingsPanel::onResetImportBrowserDir()
     }
 }
 
-void SettingsPanel::updateImageSearchDirButton()
+void SettingsPanel::fuelleSuchordner(int waehle)
 {
-    if (m_pImageSearchDirButton == nullptr) return;
-    QSettings settings;
-    const QString dir =
-        settings.value(QStringLiteral("import/imageSearchDir")).toString();
-    m_pImageSearchDirButton->setText(dir.isEmpty() ? tr("(none) — choose…") : dir);
+    if (m_pSearchDirList == nullptr) return;
+    const QStringList ordner = lumi::core::suchordner::liste();
+    {
+        const QSignalBlocker ruhe(m_pSearchDirList);
+        m_pSearchDirList->clear();
+        for (const QString& einer : ordner)
+        {
+            auto* eintrag = new QListWidgetItem(QDir::toNativeSeparators(einer), m_pSearchDirList);
+            // ein Ordner, den es gerade nicht gibt (ein Laufwerk fehlt), bleibt stehen — und sagt es
+            if (!QFileInfo(einer).isDir())
+            {
+                eintrag->setText(tr("%1  (not found)").arg(QDir::toNativeSeparators(einer)));
+                eintrag->setForeground(palette().color(QPalette::Disabled, QPalette::Text));
+            }
+            eintrag->setData(Qt::UserRole, einer);
+        }
+        if (waehle >= 0 && waehle < m_pSearchDirList->count()) m_pSearchDirList->setCurrentRow(waehle);
+    }
+    const int zeile = m_pSearchDirList->currentRow();
+    m_pSearchDirRemoveButton->setEnabled(zeile >= 0);
+    m_pSearchDirUpButton->setEnabled(zeile > 0);
+    m_pSearchDirDownButton->setEnabled(zeile >= 0 && zeile < m_pSearchDirList->count() - 1);
 }
 
-void SettingsPanel::onChooseImageSearchDir()
+void SettingsPanel::onAddSearchDir()
 {
-    QSettings settings;
-    const QString current =
-        settings.value(QStringLiteral("import/imageSearchDir")).toString();
-    const QString dir = QFileDialog::getExistingDirectory(
-        this, tr("Image search folder"), current.isEmpty() ? QDir::homePath() : current);
-    if (dir.isEmpty()) return;  // abgebrochen — bestehende Wahl bleibt
-    settings.setValue(QStringLiteral("import/imageSearchDir"), dir);
-    updateImageSearchDirButton();
-    BasicLogger::logInfo("SettingsPanel: image search folder set (" +
-                         dir.toStdString() + ")");
+    QStringList ordner = lumi::core::suchordner::liste();
+    const QString start = ordner.isEmpty() ? QDir::homePath() : ordner.last();
+    const QString dir = QFileDialog::getExistingDirectory(this, tr("Add search folder"), start);
+    if (dir.isEmpty()) return;  // abgebrochen — die Liste bleibt
+    ordner << dir;
+    lumi::core::suchordner::setzeListe(ordner);
+    const QStringList neu = lumi::core::suchordner::liste();
+    fuelleSuchordner(static_cast<int>(neu.indexOf(QDir::cleanPath(dir), 0, Qt::CaseInsensitive)));
+    BasicLogger::logInfo("SettingsPanel: search folder added (" + dir.toStdString() + "), " +
+                         std::to_string(neu.size()) + " in the list");
+}
+
+void SettingsPanel::onRemoveSearchDir()
+{
+    const int zeile = m_pSearchDirList->currentRow();
+    QStringList ordner = lumi::core::suchordner::liste();
+    if (zeile < 0 || zeile >= ordner.size()) return;
+    const QString weg = ordner.takeAt(zeile);
+    lumi::core::suchordner::setzeListe(ordner);
+    fuelleSuchordner(std::min(zeile, static_cast<int>(ordner.size()) - 1));
+    BasicLogger::logInfo("SettingsPanel: search folder removed (" + weg.toStdString() + ")");
+}
+
+void SettingsPanel::onMoveSearchDir(int richtung)
+{
+    const int zeile = m_pSearchDirList->currentRow();
+    QStringList ordner = lumi::core::suchordner::liste();
+    const int ziel = zeile + richtung;
+    if (zeile < 0 || zeile >= ordner.size() || ziel < 0 || ziel >= ordner.size()) return;
+    ordner.swapItemsAt(zeile, ziel);
+    lumi::core::suchordner::setzeListe(ordner);
+    fuelleSuchordner(ziel);
 }
 
 void SettingsPanel::onOpenAppDataDir()
@@ -848,13 +888,44 @@ QWidget* SettingsPanel::createPanelsTab()
     // AVS-Wurzelverzeichnis ab, die Presets aber in Unterordnern. Der Import
     // sucht bereits drei Ebenen aufwaerts — dieser Ordner ist die letzte
     // Zuflucht, wenn die Bilder ganz woanders liegen.
-    m_pImageSearchDirButton = new QPushButton(widget);
-    m_pImageSearchDirButton->setToolTip(
-        tr("Extra folder searched for Picture/Texer images when the import finds "
-           "none next to the preset. Also the starting folder of the image "
-           "chooser in the Effect Chain editor."));
-    updateImageSearchDirButton();
-    layout->addRow(tr("Image Search Folder:"), m_pImageSearchDirButton);
+    // Seit S116 (Wunsch Patrik) eine Liste, und sie gilt auch fuer MilkDrop:
+    // Texturen und Sprites, die beim Preset nicht liegen (core/Suchordner.hpp).
+    {
+        auto* feld = new QWidget(widget);
+        auto* spalte = new QVBoxLayout(feld);
+        spalte->setContentsMargins(0, 0, 0, 0);
+        m_pSearchDirList = new QListWidget(feld);
+        m_pSearchDirList->setObjectName(QStringLiteral("settingsSearchDirs"));
+        m_pSearchDirList->setMaximumHeight(m_pSearchDirList->fontMetrics().lineSpacing() * 5 + 8);
+        m_pSearchDirList->setToolTip(
+            tr("Folders searched for the images of AVS presets (Texer, Picture, AVI) and for the textures "
+               "and sprites of MilkDrop presets, when they are not found next to the preset or in the "
+               "folders above it. Searched from top to bottom; in each folder also in \"textures\" and "
+               "\"sprites\" for MilkDrop. Takes effect the next time a preset is loaded. The first folder "
+               "is also where the image chooser of the Effect Chain editor starts."));
+        spalte->addWidget(m_pSearchDirList);
+        auto* reihe = new QHBoxLayout;
+        m_pSearchDirAddButton = new QPushButton(tr("Add..."), feld);
+        m_pSearchDirAddButton->setObjectName(QStringLiteral("settingsSearchDirAdd"));
+        m_pSearchDirRemoveButton = new QPushButton(tr("Remove"), feld);
+        m_pSearchDirRemoveButton->setObjectName(QStringLiteral("settingsSearchDirRemove"));
+        m_pSearchDirUpButton = new QPushButton(QStringLiteral("▲"), feld);
+        m_pSearchDirUpButton->setObjectName(QStringLiteral("settingsSearchDirUp"));
+        m_pSearchDirUpButton->setToolTip(tr("Search this folder earlier"));
+        m_pSearchDirUpButton->setFixedWidth(30);
+        m_pSearchDirDownButton = new QPushButton(QStringLiteral("▼"), feld);
+        m_pSearchDirDownButton->setObjectName(QStringLiteral("settingsSearchDirDown"));
+        m_pSearchDirDownButton->setToolTip(tr("Search this folder later"));
+        m_pSearchDirDownButton->setFixedWidth(30);
+        reihe->addWidget(m_pSearchDirAddButton);
+        reihe->addWidget(m_pSearchDirRemoveButton);
+        reihe->addWidget(m_pSearchDirUpButton);
+        reihe->addWidget(m_pSearchDirDownButton);
+        reihe->addStretch(1);
+        spalte->addLayout(reihe);
+        fuelleSuchordner();
+        layout->addRow(tr("Image and Texture Search Folders:"), feld);
+    }
 
     // Benutzerdaten-Ordner im Dateimanager oeffnen. Dort landen die eigenen
     // Knoten-Voreinstellungen (`nodepresets/<typkey>/`, S53) — ohne diesen Knopf
@@ -1338,8 +1409,17 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onResetImportBrowserDir);
     connect(m_pOpenAppDataButton, &QPushButton::clicked,
             this, &SettingsPanel::onOpenAppDataDir);
-    connect(m_pImageSearchDirButton, &QPushButton::clicked,
-            this, &SettingsPanel::onChooseImageSearchDir);
+    connect(m_pSearchDirAddButton, &QPushButton::clicked, this, &SettingsPanel::onAddSearchDir);
+    connect(m_pSearchDirRemoveButton, &QPushButton::clicked, this, &SettingsPanel::onRemoveSearchDir);
+    connect(m_pSearchDirUpButton, &QPushButton::clicked, this, [this] { onMoveSearchDir(-1); });
+    connect(m_pSearchDirDownButton, &QPushButton::clicked, this, [this] { onMoveSearchDir(1); });
+    // eine andere Zeile gewaehlt: nur die Knoepfe nachziehen (die Liste nicht neu fuellen —
+    // sie meldet gerade selbst)
+    connect(m_pSearchDirList, &QListWidget::currentRowChanged, this, [this](int zeile) {
+        m_pSearchDirRemoveButton->setEnabled(zeile >= 0);
+        m_pSearchDirUpButton->setEnabled(zeile > 0);
+        m_pSearchDirDownButton->setEnabled(zeile >= 0 && zeile < m_pSearchDirList->count() - 1);
+    });
     connect(m_pExportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenExport(this); });
     connect(m_pImportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenImport(this); });
     if (m_pBundledFromProjectCheckBox != nullptr)

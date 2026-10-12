@@ -278,7 +278,7 @@ Schlüssel geht erst mit, wenn er dort eingetragen wird.
 | Geht nicht mit | Schlüssel |
 |---|---|
 | Fensterlage | `DockManager/*`, alle `…/geometry`, alle `…Splitter` |
-| Gemerkte Ordner und Dateien | alle `…/lastDir`, `loop/lastFile`, `effectPalette/presetGroupDir`, `editor/shaderFileDir/*`, `import/imageSearchDir`, `screenshot/baseDir`, `panels/import_browser/lastPreset`, `filter` |
+| Gemerkte Ordner und Dateien | alle `…/lastDir`, `loop/lastFile`, `effectPalette/presetGroupDir`, `editor/shaderFileDir/*`, `import/imageSearchDir`, `import/searchDirs` (seit S116 die Liste der Suchordner), `screenshot/baseDir`, `panels/import_browser/lastPreset`, `filter` |
 | Stand der letzten Sitzung | `player/resumeFile`, `resumeIndex`, `resumePositionMs`, `resumeWasPlaying`, `composer/session/*`, `playlist/sessionIndex`, `presets/chain/current`, `karaoke/currentPreset`, `karaoke/currentTrailPreset`, `ui/lastVisualizer` |
 | Zuletzt geladene Presets | `presets/chain/recent`, `presets/karaoke/recent` |
 | **Geheimnis** | `shadertoy/apiKey` — ein Zugangsschlüssel, geht in keinen Export |

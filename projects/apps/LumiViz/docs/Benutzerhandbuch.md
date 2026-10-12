@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.139.0
+> **Version:** 1.140.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -259,9 +259,16 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   `asset/` mit dem, was das Programm selbst liest: mitgelieferte Voreinstellungen, Shader-Vorlagen,
   Blenden, das Kit und die Instrumente des Loops, die Beispiel-Loops unter `asset/loop/` und die
   Datei-Icons — beide Ordner gehören zur App, eigene Dateien legt man dort nicht ab) · Render-Scale-Divisor
-  für AVS-Importe · **Image Search Folder** (Bilder-Suchordner) — wird beim Import durchsucht, wenn
-  neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
-  Bildauswahl in der Effektkette · **User Data: Open Folder** (Benutzerdaten-Ordner) — dort liegen
+  für AVS-Importe · **Image and Texture Search Folders** (Suchordner für Bilder und Texturen) — eine
+  Liste von Ordnern mit **Add...**, **Remove** und **▲ ▼**. Sie werden durchsucht, wenn die Bilder
+  eines AVS-Presets (Picture, Texer, Texer II, AVI) oder die Texturen und Sprites eines
+  MilkDrop-Presets nicht beim Preset und nicht in den Ordnern darüber liegen — von oben nach unten,
+  bei MilkDrop in jedem Ordner auch unter `textures` und `sprites`. So findet ein Preset aus einer
+  kleinen Auswahl die Bilder einer großen Sammlung an anderem Ort (meldet der Import „Texer II:
+  image not found", fehlt hier der Ordner der Sammlung). Was beim Preset liegt, gilt immer zuerst.
+  Eine Änderung wirkt beim nächsten Laden eines Presets. Ein Ordner, den es gerade nicht gibt, steht
+  grau mit „(not found)" da. Der erste Ordner ist auch der Startordner der Bildauswahl in der
+  Effektkette · **User Data: Open Folder** (Benutzerdaten-Ordner) — dort liegen
   deine eigenen Knoten-Voreinstellungen (`nodepresets/<typ>/`); der Ordner wird
   beim ersten Öffnen angelegt · daneben **Export...** und **Import...**: deine eigenen Daten
   in **eine Datei** (`.lvdata`) schreiben und wieder einlesen — zum Sichern oder für einen
@@ -2940,6 +2947,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.140.0 | 2026-10-12 | Session 116. §8 Settings GEÄNDERT: statt eines **Image Search Folder** eine Liste **Image and Texture Search Folders** — sie gilt jetzt auch für die Texturen und Sprites von MilkDrop-Presets und für AVI; der bisher gesetzte Ordner steht als erster Eintrag darin |
 | 1.139.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU **Repeat note** mit **every … beats**: der angeklickte Ton spielt immer wieder, die Taste ist dabei hervorgehoben, der Abstand ist einstellbar |
 | 1.138.1 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator BEHOBEN: das Fenster wuchs mit jeder aufgeklappten Gruppe, bis über den Bildschirm — die Regler der Schicht stehen jetzt in einer Liste mit Rollbalken; GEÄNDERT: das Mausrad über einem Regler dort rollt die Liste |
 | 1.138.0 | 2026-10-12 | Session 116. §16 Loop, Instrument-Creator NEU der Filter mit **Type** (Low-pass, High-pass, Band-pass) und **Resonance**; NEU die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an ihrer Überschrift ein- und ausklappen; eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr |

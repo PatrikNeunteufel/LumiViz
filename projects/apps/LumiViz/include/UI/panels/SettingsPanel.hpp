@@ -75,10 +75,14 @@ private Q_SLOTS:
     void onResetImportBrowserDir();
     /// Oeffnet den Benutzerdaten-Ordner (AppDataLocation) im Dateimanager.
     void onOpenAppDataDir();
-    /// Waehlt den Bilder-Suchordner (`import/imageSearchDir`, S50-Vorgabe).
-    void onChooseImageSearchDir();
-    /// Beschriftet den Suchordner-Knopf mit dem aktuellen Pfad.
-    void updateImageSearchDirButton();
+    /// Die Suchordner fuer Bilder und Texturen importierter Presets
+    /// (`import/searchDirs`, core/Suchordner.hpp; bis S116 ein einzelner
+    /// Ordner): einen hinzufuegen, den gewaehlten entfernen oder verschieben.
+    void onAddSearchDir();
+    void onRemoveSearchDir();
+    void onMoveSearchDir(int richtung);
+    /// Die Liste aus den Einstellungen zeigen; `waehle` ist danach gewaehlt.
+    void fuelleSuchordner(int waehle = -1);
 
 private:
     void setupUI();
@@ -146,7 +150,11 @@ private:
     /// Mitgeliefertes aus dem Projektordner zuerst (core/Mitgeliefert.hpp,
     /// S114) — nullptr ausserhalb des Entwicklungsbaums: die Zeile fehlt dann.
     QCheckBox* m_pBundledFromProjectCheckBox = nullptr;
-    QPushButton* m_pImageSearchDirButton = nullptr;
+    QListWidget* m_pSearchDirList = nullptr;      ///< die Suchordner, in der Reihenfolge der Suche
+    QPushButton* m_pSearchDirAddButton = nullptr;
+    QPushButton* m_pSearchDirRemoveButton = nullptr;
+    QPushButton* m_pSearchDirUpButton = nullptr;
+    QPushButton* m_pSearchDirDownButton = nullptr;
     /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
     /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)
     QSpinBox* m_pAvsRenderScaleSpinBox = nullptr;

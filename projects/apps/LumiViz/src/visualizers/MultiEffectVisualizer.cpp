@@ -22,6 +22,7 @@
 #include "visualizers/multieffect/IsfImport.hpp"            // passGroesse (PASSES, S72)
 #include "visualizers/multieffect/ScriptVariables.hpp"      // Schalter Script active (S83)
 #include "visualizers/multieffect/FieldBindings.hpp"        // Feldtabelle (Block F, S84)
+#include "core/Suchordner.hpp"  // Suchordner fuer Bilder und Videos importierter Presets (S116)
 #include "visualizers/milkdrop/MilkdropSerializer.hpp"
 #include "visualizers/modules/ColorGradientModule.hpp"
 #include "services/LiveVideoFeed.hpp"  // videoSource: Kamera/Streaming (S70)
@@ -3148,27 +3149,17 @@ void embedOneImage(std::string& filename, std::string& imageData, const char* la
         if (!imageData.empty() || !dir.cdUp()) break;
     }
 
-    // Zuletzt der in den Einstellungen gesetzte Bilder-Suchordner (S50-Vorgabe,
-    // umgesetzt S53). Er greift NUR, wenn neben dem Preset nichts gefunden wurde
-    // — ein Bild beim Preset bleibt also immer das massgebliche.
+    // Zuletzt die Suchordner aus den Einstellungen (S50-Vorgabe, umgesetzt S53
+    // mit einem Ordner; seit S116 eine Liste, core/Suchordner.hpp). Sie greifen
+    // NUR, wenn neben dem Preset nichts gefunden wurde — ein Bild beim Preset
+    // bleibt also immer das massgebliche.
     if (imageData.empty())
     {
-        QSettings settings;
-        const QString extra =
-            settings.value(QStringLiteral("import/imageSearchDir")).toString();
-        if (!extra.isEmpty())
+        const QString gefunden = lumi::core::suchordner::findeDatei(fname);
+        if (!gefunden.isEmpty())
         {
-            QDir sd(extra);
-            for (const QString& cand : {sd.filePath(fname), sd.filePath(bare)})
-            {
-                if (!QFileInfo::exists(cand)) continue;
-                QFile file(cand);
-                if (file.open(QIODevice::ReadOnly))
-                {
-                    imageData = file.readAll().toBase64().toStdString();
-                    break;
-                }
-            }
+            QFile file(gefunden);
+            if (file.open(QIODevice::ReadOnly)) imageData = file.readAll().toBase64().toStdString();
         }
     }
 
@@ -3212,6 +3203,9 @@ void resolveAviPaths(ChainNode& node, const QString& baseDir, QStringList* repor
                 }
                 if (!dir.cdUp()) break;
             }
+            // und in den Suchordnern der Einstellungen (S116)
+            if (p->resolvedPath.empty())
+                p->resolvedPath = lumi::core::suchordner::findeDatei(fname).toStdString();
             if (p->resolvedPath.empty() && report != nullptr)
                 report->append(QStringLiteral("AVI: video not found: %1")
                                    .arg(QString::fromStdString(p->filename)));

@@ -125,9 +125,10 @@ Baum-Editor für die Effektkette des [MultiEffectVisualizer](../../visualizers/M
 - **Bild-Zeile (`addImageRow`, Session 53 — S50-Vorgabe):** Picture · Picture II ·
   Texer · Texer II zeigten bisher nur, **ob** das Bild eingebettet ist. Jetzt
   „Choose…" (Datei wird base64 eingebettet, die Kette bleibt damit
-  selbsttragend) und „Clear". Startordner ist der **Bilder-Suchordner** aus den
-  Einstellungen (`import/imageSearchDir`) — denselben Schlüssel liest der Import
-  als letzte Zuflucht, wenn neben dem Preset nichts liegt.
+  selbsttragend) und „Clear". Startordner ist der **erste Suchordner** aus den
+  Einstellungen (`import/searchDirs`, `core/Suchordner.hpp`; bis S116 der eine
+  Ordner `import/imageSearchDir`) — dieselbe Liste liest der Import als letzte
+  Zuflucht, wenn neben dem Preset nichts liegt.
 - **Kernel-Gitter (`addKernelGrid`) und Gradient-Stopps (`addGradientStops`),
   Session 53:** `Convolution` bekommt sein 7×7-Gitter (Mitte hervorgehoben,
   Knopf „Identity"), `ColorMap` seine Stützstellen (Position 0–255 + Farbe,

@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "core/Suchordner.hpp"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QString>
@@ -26,19 +28,26 @@
 
 namespace lumi::milkdrop {
 
-/// Suchordner vom Preset-Ordner aufwaerts (leer, wenn presetDir leer ist)
+/// Suchordner: vom Preset-Ordner aufwaerts — und danach die Suchordner aus den
+/// Einstellungen (S116, core/Suchordner.hpp), je mit `textures/`, `sprites/`
+/// und dem Ordner selbst. Was beim Preset liegt, gilt zuerst. Ohne presetDir
+/// bleiben die aus den Einstellungen.
 [[nodiscard]] inline QStringList textureSearchDirs(const QString& presetDir)
 {
     QStringList dirs;
-    if (presetDir.isEmpty()) return dirs;
-    QDir walk(presetDir);
-    for (int up = 0; up <= 4; ++up)
+    if (!presetDir.isEmpty())
     {
-        const QString base = walk.absolutePath();
-        dirs << base + QStringLiteral("/textures") << base + QStringLiteral("/sprites")
-             << base;
-        if (!walk.cdUp()) break;
+        QDir walk(presetDir);
+        for (int up = 0; up <= 4; ++up)
+        {
+            const QString base = walk.absolutePath();
+            dirs << base + QStringLiteral("/textures") << base + QStringLiteral("/sprites")
+                 << base;
+            if (!walk.cdUp()) break;
+        }
     }
+    for (const QString& base : lumi::core::suchordner::liste())
+        dirs << base + QStringLiteral("/textures") << base + QStringLiteral("/sprites") << base;
     return dirs;
 }
 
@@ -77,12 +86,9 @@ namespace lumi::milkdrop {
     // es gilt ohne Suche, auch an einem Knoten ohne Preset-Ordner.
     if (!rel.isEmpty() && QFileInfo(rel).isAbsolute())
         return QFileInfo::exists(rel) ? rel : QString();
-    if (presetDir.isEmpty()) return {};
+    if (rel.isEmpty()) return {};
     const QString fileName = QFileInfo(rel).fileName();
-    QDir walk(presetDir);
-    for (int up = 0; up <= 4; ++up)
-    {
-        const QString base = walk.absolutePath();
+    const auto in = [&rel, &fileName](const QString& base) -> QString {
         const QString candidates[3] = {
             base + QLatin1Char('/') + rel,
             base + QStringLiteral("/sprites/") + fileName,
@@ -91,8 +97,20 @@ namespace lumi::milkdrop {
         {
             if (QFileInfo::exists(c)) return c;
         }
-        if (!walk.cdUp()) break;
+        return {};
+    };
+    if (!presetDir.isEmpty())
+    {
+        QDir walk(presetDir);
+        for (int up = 0; up <= 4; ++up)
+        {
+            if (const QString treffer = in(walk.absolutePath()); !treffer.isEmpty()) return treffer;
+            if (!walk.cdUp()) break;
+        }
     }
+    // danach die Suchordner aus den Einstellungen (S116)
+    for (const QString& base : lumi::core::suchordner::liste())
+        if (const QString treffer = in(base); !treffer.isEmpty()) return treffer;
     return {};
 }
 

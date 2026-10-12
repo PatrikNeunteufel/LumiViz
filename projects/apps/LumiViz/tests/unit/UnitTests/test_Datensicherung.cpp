@@ -459,7 +459,7 @@ TEST_CASE("Datensicherung: die Einstellungen — nur was mitgehen darf, hin und 
     }
     for (const char* ohne : {"shadertoy/apiKey", "DockManager/State", "panels/loop/geometry", "effectPalette/geometry",
                              "karaoke/trailSplitter", "loop/lastDir", "loop/lastFile", "composer/lastDir",
-                             "effectPalette/presetGroupDir", "editor/shaderFileDir/isffilter", "import/imageSearchDir",
+                             "effectPalette/presetGroupDir", "editor/shaderFileDir/isffilter", "import/imageSearchDir", "import/searchDirs",
                              "screenshot/baseDir", "player/resumeFile", "player/resumePositionMs",
                              "composer/session/file", "playlist/sessionIndex", "presets/chain/current",
                              "presets/chain/recent", "karaoke/currentPreset", "ui/lastVisualizer",

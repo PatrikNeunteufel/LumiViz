@@ -113,6 +113,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_BeatEstimator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_GpuPreference.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Mitgeliefert.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_Suchordner.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ZipArchiv.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_Datensicherung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_DatensicherungDialoge.cpp"
