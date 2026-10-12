@@ -129,6 +129,11 @@ public:
     /// Datei genannt wird — so spielt der Instrument-Creator an, was er gerade
     /// einstellt (Stufe 10b).
     bool spieleInstrumentTon(const QString& nennung, int hoehe);
+    /// Einen Schlag einer Spur eines Drum-Musters anspielen, mit Lautstaerke
+    /// und Panorama der Spur (Play im Feld hinter „…" des Drum-Editors, Stufe
+    /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.
+    /// false = die Spur gibt es nicht, sie spielt nichts, oder der Loop spielt.
+    bool spieleSpur(const QString& muster, int spur);
     /// Wird gerade ein Ton angespielt?
     [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }
     /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,
@@ -162,6 +167,9 @@ private:
     /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
     /// `vorlage` mit dieser einen Note.
     bool spieleVor(const Muster& vorlage, int hoehe);
+    /// Einen Loop aus einem Muster „Preview" einmal anspielen; nach `dauerMs`
+    /// haelt der Spieler wieder und bekommt den Loop des Panels zurueck.
+    bool spieleAllein(const Muster& muster, int dauerMs);
     /// Was der Spieler spielt: der ganze Loop — oder, bei „Play pattern", ein
     /// Loop aus einem Kanal mit einem Clip dieses Musters.
     [[nodiscard]] Loop spielFassung();

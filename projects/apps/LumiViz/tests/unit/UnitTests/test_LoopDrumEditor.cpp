@@ -12,10 +12,16 @@
 
 #include <doctest.h>
 
+#include "PappAufnahme.hpp"
+#include "loop/AufnahmeFenster.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/DrumEditor.hpp"
+#include "loop/Instrument.hpp"
+#include "loop/InstrumentCreator.hpp"
+#include "loop/InstrumentPalette.hpp"
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
+#include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -23,16 +29,24 @@
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QSettings>
 #include <QSpinBox>
+#include <QTemporaryDir>
+#include <QToolButton>
 
 #include <memory>
+#include <vector>
 
 using namespace lumi::loop;
 
@@ -826,5 +840,330 @@ TEST_SUITE("LoopDrumEditor")
         panel.neu();
         CHECK(editor->muster().isEmpty());
         (void)verlangt;
+    }
+
+    // Stufe 11c, Schritt 2 (Entscheid K1 a, Skizze gebilligt S115): die Auswahl „Sound" einer
+    // Spur nennt Kit, My samples und darunter Instrument..., Sample file..., Record sample...;
+    // an einer Instrument-Spur der Knopf „…" mit Note, Length, Play, Browse..., Edit instrument...
+    TEST_CASE("Drum-Editor: der Klang einer Spur — Kit, eigene Samples, Instrument mit Note und Length, Datei, Aufnahme")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenSampleOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("samples")));
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        vergissSampleDaten();
+        struct Zurueck
+        {
+            ~Zurueck()
+            {
+                setzeEigenenSampleOrdnerFuerTests(QString());
+                setzeEigenenInstrumentOrdnerFuerTests(QString());
+                vergissSampleDaten();
+            }
+        } zurueck;
+        const auto datei = [&tmp](const QString& rel, const QByteArray& inhalt) {
+            const QString pfad = QDir(tmp.path()).filePath(rel);
+            REQUIRE(QDir().mkpath(QFileInfo(pfad).absolutePath()));
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+            f.write(inhalt);
+            return pfad;
+        };
+        (void)datei(QStringLiteral("samples/knock.wav"), QByteArray("eins"));
+
+        DrumEditor editor;  // nicht gezeigt: kein Fenster
+        editor.setKitKlaenge({QStringLiteral("kit:clap"), QStringLiteral("kit:kick"), QStringLiteral("kit:snare")});
+        int aenderungen = 0;
+        QString zuletzt;
+        QObject::connect(&editor, &DrumEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            ++aenderungen;
+            zuletzt = was;
+            editor.setLoop(neu);
+        });
+        int neuGeladen = 0;
+        QObject::connect(&editor, &DrumEditor::klaengeGeaendert, &editor, [&] { ++neuGeladen; });
+        REQUIRE(editor.zeige(probe(), QStringLiteral("Grund")));
+        const auto spur = [&editor](int nr) -> const Spur& {
+            return editor.loop().findeMuster(editor.muster())->spuren[static_cast<std::size_t>(nr)];
+        };
+        auto* klang0 = editor.findChild<QComboBox*>(QStringLiteral("drumTrackSound0"));
+        auto* klang1 = editor.findChild<QComboBox*>(QStringLiteral("drumTrackSound1"));
+        auto* mehr0 = editor.findChild<QToolButton*>(QStringLiteral("drumTrackMore0"));
+        auto* mehr1 = editor.findChild<QToolButton*>(QStringLiteral("drumTrackMore1"));
+        REQUIRE(klang0 != nullptr);
+        REQUIRE(klang1 != nullptr);
+        REQUIRE(mehr0 != nullptr);
+        REQUIRE(mehr1 != nullptr);
+
+        // --- die Auswahl: Kit, My samples, darunter die drei Wege
+        const QStringList wege{QStringLiteral("Instrument..."), QStringLiteral("Sample file..."),
+                               QStringLiteral("Record sample...")};
+        CHECK(editor.klangZeilen(0) == QStringList{QStringLiteral("[Kit]"), QStringLiteral("kit:clap"), QStringLiteral("kit:kick"),
+                                                    QStringLiteral("kit:snare"), QStringLiteral("[My samples]"),
+                                                    QStringLiteral("user:knock")} + wege);
+        CHECK(klang0->currentText() == QStringLiteral("kick"));
+        CHECK(mehr0->isHidden());  // „…" gibt es nur an einer Instrument-Spur
+        CHECK(mehr1->isHidden());
+        CHECK(editor.klangZeilen(7).isEmpty());
+        // eine Ueberschrift laesst sich nicht waehlen
+        CHECK_FALSE(klang0->model()->index(0, 0).flags().testFlag(Qt::ItemIsEnabled));
+        CHECK(klang0->model()->index(1, 0).flags().testFlag(Qt::ItemIsEnabled));
+
+        // --- ein eigenes Sample als Klang
+        editor.setzeKlang(0, QStringLiteral("user:knock"));
+        CHECK(zuletzt == QStringLiteral("Change sound"));
+        CHECK(spur(0).klang == QStringLiteral("user:knock"));
+        CHECK(spur(0).spielt() == QStringLiteral("user:knock"));
+        CHECK(klang0->currentText() == QStringLiteral("knock"));
+        const int vorher = aenderungen;
+        editor.setzeKlang(0, QStringLiteral("user:knock"));  // dasselbe noch einmal: kein Schritt fuer Undo
+        CHECK(aenderungen == vorher);
+        // ein eigenes, das es nicht mehr gibt, bleibt stehen und sagt es
+        editor.setzeKlang(0, QStringLiteral("user:weg"));
+        CHECK(klang0->currentText() == QStringLiteral("weg (not found)"));
+        CHECK(editor.klangZeilen(0).contains(QStringLiteral("user:weg")));
+        // eine Datei an freiem Ort steht unter „File"
+        editor.setzeKlang(0, QStringLiteral("C:/samples/hand.wav"));
+        CHECK(klang0->currentText() == QStringLiteral("hand.wav"));
+        CHECK(editor.klangZeilen(0).contains(QStringLiteral("[File]")));
+        CHECK_FALSE(editor.klangZeilen(1).contains(QStringLiteral("[File]")));
+
+        // --- Sample file...: kopiert zu den eigenen (S2 a) oder am Ort gelassen
+        const QString fremd = datei(QStringLiteral("fremd/Hand Clap.wav"), QByteArray("zwei"));
+        REQUIRE(editor.nimmSampleDatei(0, fremd, true));
+        CHECK(spur(0).klang == QStringLiteral("user:hand_clap"));
+        CHECK(QFileInfo::exists(QDir(eigenerSampleOrdner()).filePath(QStringLiteral("hand_clap.wav"))));
+        CHECK(editor.klangZeilen(0).contains(QStringLiteral("user:hand_clap")));  // steht gleich unter My samples
+        REQUIRE(editor.nimmSampleDatei(0, fremd, false));
+        CHECK(spur(0).klang == fremd);
+        CHECK_FALSE(editor.nimmSampleDatei(0, QDir(tmp.path()).filePath(QStringLiteral("gibt/es/nicht.wav")), true));
+        CHECK(spur(0).klang == fremd);
+
+        // --- ein Instrument: die Note nach seiner Art, Length 250 ms; der Klang bleibt daneben stehen
+        editor.setzeSpurInstrument(1, QStringLiteral("slap_bass"));
+        CHECK(zuletzt == QStringLiteral("Change sound"));
+        CHECK(spur(1).instrument == QStringLiteral("slap_bass"));
+        CHECK(spur(1).klang == QStringLiteral("kit:snare"));
+        CHECK(spur(1).hoehe == 36);  // ein Bass: C2
+        CHECK(spur(1).dauerMs == kSpurDauerMs);
+        CHECK(spur(1).spielt() == tonKlang(QStringLiteral("slap_bass"), 36, 250));
+        CHECK(klang1->currentText() == QStringLiteral("Slap Bass"));
+        CHECK(editor.klangZeilen(1).first() == QStringLiteral("instrument:slap_bass"));
+        CHECK_FALSE(mehr1->isHidden());
+        CHECK(mehr0->isHidden());
+        CHECK(inOrdnung(editor.loop()));
+
+        // --- „…": Note, Length, Play
+        CHECK(editor.detail() == nullptr);
+        CHECK_FALSE(editor.oeffneDetail(0, false));  // die Spur spielt kein Instrument
+        REQUIRE(editor.oeffneDetail(1, false));
+        REQUIRE(editor.detail() != nullptr);
+        CHECK(editor.detailSpur() == 1);
+        auto* note = editor.detail()->findChild<QComboBox*>(QStringLiteral("drumTrackNote"));
+        auto* dauer = editor.detail()->findChild<QSpinBox*>(QStringLiteral("drumTrackLength"));
+        auto* play = editor.detail()->findChild<QPushButton*>(QStringLiteral("drumTrackPlay"));
+        auto* titel = editor.detail()->findChild<QLabel*>(QStringLiteral("drumTrackDetailTitle"));
+        REQUIRE(note != nullptr);
+        REQUIRE(dauer != nullptr);
+        REQUIRE(play != nullptr);
+        REQUIRE(titel != nullptr);
+        CHECK(editor.detail()->findChild<QPushButton*>(QStringLiteral("drumTrackBrowse")) != nullptr);
+        CHECK(editor.detail()->findChild<QPushButton*>(QStringLiteral("drumTrackEditInstrument")) != nullptr);
+        CHECK(titel->text() == QStringLiteral("Snare plays Slap Bass"));
+        CHECK(note->currentText() == QStringLiteral("C2"));
+        CHECK(note->count() == kHoeheMax - kHoeheMin + 1);
+        CHECK(dauer->value() == 250);
+        dauer->setValue(120);
+        CHECK(zuletzt == QStringLiteral("Change length"));
+        CHECK(spur(1).dauerMs == 120);
+        editor.setzeNote(1, 40);
+        CHECK(zuletzt == QStringLiteral("Change note"));
+        CHECK(spur(1).hoehe == 40);
+        CHECK(note->currentData().toInt() == 40);  // das Feld folgt
+        editor.setzeDauer(1, 0);
+        CHECK(spur(1).dauerMs == kSpurDauerMinMs);
+        editor.setzeDauer(1, 99999);
+        CHECK(spur(1).dauerMs == kSpurDauerMaxMs);
+        editor.setzeNote(1, 200);
+        CHECK(spur(1).hoehe == kHoeheMax);
+        editor.setzeNote(1, 40);
+        editor.setzeDauer(1, 120);
+        {
+            const int davor = aenderungen;
+            editor.setzeNote(0, 50);  // keine Instrument-Spur: nichts
+            editor.setzeDauer(0, 50);
+            CHECK(aenderungen == davor);
+        }
+        QStringList gespielt;
+        QObject::connect(&editor, &DrumEditor::spurTonVerlangt, &editor,
+                         [&](const QString& basis, int nr) { gespielt << QStringLiteral("%1 %2").arg(basis).arg(nr); });
+        play->click();
+        CHECK(gespielt == QStringList{QStringLiteral("Grund 1")});
+        CHECK_FALSE(editor.spieleSpur(0));
+        CHECK(gespielt.size() == 1);
+        // `LUMIVIZ_DRUM_KLANG_BILD=<datei.png>` legt ein Bild des Editors und eines des Felds ab
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_DRUM_KLANG_BILD"); !bild.isEmpty())
+        {
+            CHECK(editor.grab().save(bild));
+            editor.detail()->adjustSize();
+            CHECK(editor.detail()->grab().save(bild + QStringLiteral(".feld.png")));
+        }
+
+        // --- Browse... / Instrument...: das Fenster Instruments waehlt fuer die Spur
+        CHECK(editor.palette() == nullptr);
+        CHECK_FALSE(editor.oeffnePalette(9, false));
+        REQUIRE(editor.oeffnePalette(1, false));
+        InstrumentPalette* palette = editor.palette();
+        REQUIRE(palette != nullptr);
+        auto* ziel = palette->findChild<QLabel*>(QStringLiteral("instrumentPaletteTarget"));
+        REQUIRE(ziel != nullptr);
+        CHECK(ziel->text() == QStringLiteral("For track: Snare (Grund)"));
+        CHECK(palette->gewaehlt() == QStringLiteral("slap_bass"));  // das Instrument der Spur ist gewaehlt
+        REQUIRE(palette->waehle(QStringLiteral("piano")));
+        REQUIRE(palette->verwende());
+        CHECK(spur(1).instrument == QStringLiteral("piano"));
+        CHECK(spur(1).hoehe == 40);    // ein anderes Instrument: Note und Length bleiben
+        CHECK(spur(1).dauerMs == 120);
+        CHECK(titel->text() == QStringLiteral("Snare plays Piano"));
+        // ein Klick im Fenster spielt das Instrument an — der Editor reicht es weiter
+        QStringList toene;
+        QObject::connect(&editor, &DrumEditor::instrumentTonVerlangt, &editor,
+                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(nennung).arg(hoehe); });
+        REQUIRE(palette->spieleAn());
+        CHECK(toene == QStringList{QStringLiteral("piano 60")});
+        // fuer eine Spur ohne Instrument: Use macht sie zur Instrument-Spur
+        REQUIRE(editor.oeffnePalette(0, false));
+        CHECK(ziel->text() == QStringLiteral("For track: Kick (Grund)"));
+        REQUIRE(palette->waehle(QStringLiteral("strings")));
+        REQUIRE(palette->verwende());
+        CHECK(spur(0).instrument == QStringLiteral("strings"));
+        CHECK(spur(0).hoehe == 60);
+        CHECK(spur(0).klang == fremd);
+        CHECK_FALSE(mehr0->isHidden());
+        // die Spur heisst anders: die Zeile im Fenster folgt
+        editor.spurUmbenennen(0, QStringLiteral("Pad"));
+        CHECK(ziel->text() == QStringLiteral("For track: Pad (Grund)"));
+
+        // --- Edit instrument...: der Creator; was er speichert, nennt die Spur danach
+        CHECK(editor.creator() == nullptr);
+        REQUIRE(editor.oeffneCreator(1, false));
+        InstrumentCreator* creator = editor.creator();
+        REQUIRE(creator != nullptr);
+        CHECK(creator->instrument().titel == QStringLiteral("Piano"));
+        REQUIRE(creator->speichereAlsEigenes(QStringLiteral("Mein Schlag")));
+        CHECK(spur(1).instrument == QStringLiteral("user:mein_schlag"));
+        CHECK(zuletzt == QStringLiteral("Change sound"));
+        CHECK(neuGeladen == 1);
+        CHECK(klang1->currentText() == QStringLiteral("Mein Schlag (My files)"));
+        CHECK(spur(1).hoehe == 40);
+        // eine Spur, die inzwischen wieder einen Klang spielt, bleibt dabei
+        editor.setzeKlang(1, QStringLiteral("kit:snare"));
+        REQUIRE(creator->speichere());
+        CHECK(spur(1).instrument.isEmpty());
+        CHECK(neuGeladen == 2);
+        editor.setzeSpurInstrument(1, QStringLiteral("user:mein_schlag"));
+
+        // --- ein Klang aus der Auswahl: die Spur spielt kein Instrument mehr, das Feld schliesst
+        REQUIRE(editor.oeffneDetail(1, false));
+        editor.setzeKlang(1, QStringLiteral("kit:kick"));
+        CHECK(spur(1).instrument.isEmpty());
+        CHECK(spur(1).klang == QStringLiteral("kit:kick"));
+        CHECK(spur(1).hoehe == Spur().hoehe);
+        CHECK(spur(1).dauerMs == kSpurDauerMs);
+        CHECK(spur(1).spielt() == QStringLiteral("kit:kick"));
+        CHECK(mehr1->isHidden());
+        CHECK(editor.detailSpur() == -1);
+        CHECK_FALSE(editor.oeffneCreator(1, false));  // kein Instrument: nichts zu bearbeiten
+
+        // --- Record sample...: Save and use setzt die Aufnahme als Klang der Spur
+        CHECK(editor.aufnahmeFenster() == nullptr);
+        CHECK_FALSE(editor.oeffneAufnahme(9, false));
+        papp::AufnahmeEngine aufnahmeEngine;
+        aufnahmeEngine.eingaenge = {papp::eingang(0, QStringLiteral("Default"), true)};
+        editor.setEngineGeber([&aufnahmeEngine]() -> IAudioEngine* { return &aufnahmeEngine; });
+        REQUIRE(editor.oeffneAufnahme(0, false));
+        AufnahmeFenster* aufnahme = editor.aufnahmeFenster();
+        REQUIRE(aufnahme != nullptr);
+        CHECK(aufnahme->findChild<QPushButton*>(QStringLiteral("recordStart"))->isEnabled());
+        aufnahme->setzeAufnahme(std::vector<float>(2 * 24000, 0.25f), 48000);
+        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("Tisch"));
+        const int geladenVorher = neuGeladen;
+        CHECK(aufnahme->speichere() == QStringLiteral("user:tisch"));
+        CHECK(spur(0).klang == QStringLiteral("user:tisch"));
+        CHECK(spur(0).instrument.isEmpty());  // die Spur spielte „strings": jetzt die Aufnahme
+        CHECK(mehr0->isHidden());
+        CHECK(klang0->currentText() == QStringLiteral("tisch"));
+        CHECK(neuGeladen == geladenVorher + 1);
+        // unter demselben Namen neu aufgenommen: am Loop aendert sich nichts, aber wer spielt, laedt neu
+        REQUIRE(editor.oeffneAufnahme(0, false));
+        aufnahme->setzeAufnahme(std::vector<float>(2 * 12000, 0.5f), 48000);
+        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("tisch"));
+        const int schritte = aenderungen;
+        CHECK(aufnahme->speichere() == QStringLiteral("user:tisch"));
+        CHECK(aenderungen == schritte);
+        CHECK(neuGeladen == geladenVorher + 2);
+        editor.setEngineGeber({});
+        aufnahme->setEngine(nullptr);  // die Engine aus Pappe geht vor dem Fenster
+
+        // --- eine Spur weniger: die Nummern verrutschen — das Fenster Instruments waehlt fuer keine mehr
+        REQUIRE(editor.oeffnePalette(1, false));
+        CHECK(ziel->text() == QStringLiteral("For track: Snare (Grund)"));
+        editor.spurLoeschen(0);
+        CHECK(palette->ziel().isEmpty());
+        REQUIRE(palette->waehle(QStringLiteral("piano")));
+        CHECK_FALSE(palette->verwende());
+        CHECK(spur(0).instrument.isEmpty());
+        CHECK(inOrdnung(editor.loop()));
+    }
+
+    TEST_CASE("Loop Panel: der Klang einer Drum-Spur laeuft ueber Undo")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        REQUIRE(bus != nullptr);
+
+        LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+        panel.neu();
+        panel.setzeLoop(probe());
+        REQUIRE(panel.oeffneEditor(QStringLiteral("Grund"), false));
+        DrumEditor* editor = panel.editor();
+        REQUIRE(editor != nullptr);
+        const Loop vorher = panel.loop();
+
+        editor->setzeSpurInstrument(1, QStringLiteral("slap_bass"));
+        CHECK(panel.loop().findeMuster(QStringLiteral("Grund"))->spuren[1].instrument == QStringLiteral("slap_bass"));
+        CHECK(bus->undoDescription() == "Change sound");
+        editor->setzeNote(1, 43);
+        CHECK(bus->undoDescription() == "Change note");
+        REQUIRE(bus->undo());
+        CHECK(panel.loop().findeMuster(QStringLiteral("Grund"))->spuren[1].hoehe == 36);
+        REQUIRE(bus->undo());
+        CHECK(panel.loop() == vorher);
+        CHECK(editor->loop() == vorher);
+        CHECK(editor->klangZeilen(1).first() == QStringLiteral("[Kit]"));  // die Auswahl zeigt wieder den Klang
+        REQUIRE(bus->redo());
+        CHECK(editor->klangZeilen(1).first() == QStringLiteral("instrument:slap_bass"));
+
+        // Ctrl+Z im Fenster Instruments, geoeffnet aus dem Drum-Editor: derselbe Undo
+        REQUIRE(editor->oeffnePalette(1, false));
+        editor->palette()->nimmZurueck();
+        CHECK(panel.loop() == vorher);
+        editor->palette()->stelleWiederHer();
+        CHECK(panel.loop().findeMuster(QStringLiteral("Grund"))->spuren[1].instrument == QStringLiteral("slap_bass"));
+
+        // ohne Audio-Engine wird nichts angespielt
+        CHECK_FALSE(panel.spieleSpur(QStringLiteral("Grund"), 1));
     }
 }

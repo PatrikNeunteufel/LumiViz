@@ -10,6 +10,15 @@
  * **Spuren:** je Spur Stumm, Name, Klang, Lautstaerke, Panorama und ihre
  * Schritte; darunter die Lautstaerke je Schritt der angeklickten Spur.
  *
+ * **Der Klang einer Spur** (Stufe 11c, Schritt 2; Entscheid K1 a, Skizze
+ * gebilligt S115): die Auswahl nennt die Klaenge des **Kit**, die eigenen
+ * Samples unter **My samples**, und darunter **Instrument...** (das Fenster
+ * Instruments), **Sample file...** (mit der Frage aus S2 a) und **Record
+ * sample...** (das Fenster Record sample). Spielt die Spur ein Instrument,
+ * steht sein Titel in der Auswahl, und der Knopf **…** daneben oeffnet ein
+ * kleines Feld mit **Note**, **Length**, **Play**, **Browse...** und **Edit
+ * instrument...**.
+ *
  * Der Editor aendert den Loop nicht selbst: er meldet die neue Fassung mit
  * `bearbeitet`, das Loop-Panel fuehrt sie ueber Undo aus und gibt sie mit
  * `setLoop` zurueck.
@@ -20,12 +29,15 @@
 #include "loop/Loop.hpp"
 
 #include <QPoint>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
 
+#include <functional>
 #include <vector>
 
+class IAudioEngine;
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
@@ -39,6 +51,10 @@ class QVBoxLayout;
 
 namespace lumi::loop
 {
+
+class AufnahmeFenster;
+class InstrumentCreator;
+class InstrumentPalette;
 
 /// Das Raster: je Spur eine Zeile Schritte, darunter die Lautstaerke je Schritt
 /// der angeklickten Spur. Ein Klick schaltet einen Schritt an (volle
@@ -219,16 +235,79 @@ public:
     void spurHinzu();
     void spurLoeschen(int spur);
     void spurUmbenennen(int spur, const QString& name);
+    /// Die Spur spielt diesen Klang: `kit:<Name>`, `user:<name>` oder der Pfad
+    /// einer Tondatei. Spielte sie ein Instrument, spielt sie es danach nicht
+    /// mehr — Note und Length stehen wieder auf ihrer Vorgabe.
     void setzeKlang(int spur, const QString& klang);
     void setzeLaut(int spur, double laut);
     void setzePan(int spur, double pan);
     void setzeStumm(int spur, bool stumm);
+
+    // --- der Klang einer Spur: Instrument, Datei, Aufnahme (Stufe 11c, Schritt 2) ---
+    /// Die Spur spielt dieses Instrument (genannt wie in einem Muster). Spielte
+    /// sie bisher keins, steht die Note nach seiner Art (Bass und Drums C2,
+    /// sonst C4) und Length auf 250 ms (K2 a); spielte sie schon eins, bleiben
+    /// beide. Der Klang der Spur bleibt daneben stehen.
+    void setzeSpurInstrument(int spur, const QString& nennung);
+    /// **Note** und **Length** einer Instrument-Spur; bei einer anderen Spur geschieht nichts.
+    void setzeNote(int spur, int hoehe);
+    void setzeDauer(int spur, int ms);
+    /// Eine gewaehlte Tondatei nehmen (Entscheid S2 a): zu den eigenen Samples
+    /// kopiert (`user:<name>`) oder am Ort gelassen (ihr Pfad). false = die
+    /// Kopie gelang nicht.
+    bool nimmSampleDatei(int spur, const QString& pfad, bool kopieren);
+    /// **Play** im Feld hinter „…": einen Schlag der Spur anspielen
+    /// (`spurTonVerlangt`). false = die Spur spielt kein Instrument.
+    bool spieleSpur(int spur);
+    /// **Instrument...** und **Browse...**: das Fenster Instruments fuer diese
+    /// Spur oeffnen (es entsteht beim ersten Mal); **Use** dort setzt das
+    /// Instrument in die Spur. `zeigen` false fuellt es nur (fuer Tests).
+    /// false = die Spur gibt es nicht.
+    bool oeffnePalette(int spur, bool zeigen = true);
+    /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] InstrumentPalette* palette() const;
+    /// **Edit instrument...**: den Creator mit dem Instrument der Spur oeffnen.
+    /// Speichert er, nennt die Spur danach, was er gespeichert hat. false =
+    /// die Spur spielt kein Instrument, oder es laesst sich nicht finden.
+    bool oeffneCreator(int spur, bool zeigen = true);
+    [[nodiscard]] InstrumentCreator* creator() const;
+    /// Wer die Audio-Engine nennt, ueber die „Record sample" aufnimmt — hier
+    /// und im Creator.
+    void setEngineGeber(std::function<IAudioEngine*()> geber);
+    /// **Record sample...**: das Fenster oeffnen (von vorn); was dort mit Save
+    /// and use gespeichert wird, ist danach der Klang der Spur. false = die
+    /// Spur gibt es nicht.
+    bool oeffneAufnahme(int spur, bool zeigen = true);
+    [[nodiscard]] AufnahmeFenster* aufnahmeFenster() const;
+    /// Der Knopf **…** einer Instrument-Spur: das Feld mit Note, Length, Play,
+    /// Browse..., Edit instrument.... false = die Spur spielt kein Instrument.
+    bool oeffneDetail(int spur, bool zeigen = true);
+    /// Das Feld; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] QWidget* detail() const { return m_detail; }
+    /// Die Spur, fuer die das Feld gerade gilt; -1 = keine.
+    [[nodiscard]] int detailSpur() const { return m_detailSpur; }
+    /// Was die Auswahl „Sound" einer Spur anbietet, von oben nach unten: je
+    /// Klang seine Nennung, die Ueberschriften als `[Kit]`, `[My samples]`,
+    /// die drei Wege darunter bei ihrem Text; das Instrument einer Spur als
+    /// `instrument:<Nennung>`. Trennlinien fehlen.
+    [[nodiscard]] QStringList klangZeilen(int spur) const;
 
 Q_SIGNALS:
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// „Play pattern" / „Stop": dieses Muster allein spielen, oder anhalten.
     void spielenVerlangt(bool spielen);
+    /// Einen Schlag dieser Spur des Musters anspielen (Play im Feld hinter „…").
+    void spurTonVerlangt(const QString& muster, int spur);
+    /// Creator und Fenster Instruments wollen einen Ton eines Instruments hoeren.
+    void instrumentTonVerlangt(const QString& nennung, int hoehe);
+    /// Eine Datei, die ein Klang nennt, ist neu geschrieben (ein Instrument im
+    /// Creator, eine Aufnahme unter demselben Namen): wer spielt, laedt neu.
+    void klaengeGeaendert();
+    /// Der Creator braucht die Daten einer Aufnahme: dekodieren und merken, noch im Signal.
+    void sampleVerlangt(const QString& nennung);
+    /// Das Fenster Instruments bittet um Undo (false) oder Redo (true).
+    void rueckgaengigVerlangt(bool wiederholen);
 
 protected:
     /// Ein Klick in die Kopfzeile einer Spur waehlt sie.
@@ -242,6 +321,7 @@ private:
         QToolButton* stumm = nullptr;
         QLabel* name = nullptr;
         QComboBox* klang = nullptr;
+        QToolButton* mehr = nullptr;  ///< „…": nur an einer Instrument-Spur zu sehen
         QSlider* laut = nullptr;
         QSlider* pan = nullptr;
     };
@@ -249,15 +329,37 @@ private:
     /// Kopf, Raster und Spuren aus `m_loop` neu fuellen.
     void zeigeAlles();
     void baueSpuren(const Muster& muster);
-    void fuelleKlang(QComboBox* auswahl, const QString& klang) const;
+    void fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene) const;
+    /// Was in der Auswahl gewaehlt wurde: ein Klang — oder einer der drei Wege darunter.
+    void klangGewaehlt(int spur, const QString& wahl);
+    void frageNachSampleDatei(int spur);
     void spurMenue(int spur, QPoint ort);
     void waehleSpur(int spur);
+    /// Das Feld hinter „…" aus der Spur fuellen; spielt sie kein Instrument mehr, schliesst es.
+    void zeigeDetail();
     [[nodiscard]] const Muster* basis() const { return m_loop.findeMuster(m_muster); }
+    /// Die Spur des gezeigten Musters; nullptr = es gibt sie nicht.
+    [[nodiscard]] const Spur* spurBei(int spur) const;
+    /// Eine Spur aendern und die neue Fassung melden. false = es gibt sie
+    /// nicht, oder es hat sich nichts geaendert.
+    bool aendereSpur(int spur, const QString& was, const std::function<void(Spur&)>& tu);
 
     Loop m_loop;
     QString m_muster;
     QStringList m_kitKlaenge;
     bool m_spielt = false;
+    std::function<IAudioEngine*()> m_engineGeber;
+    QPointer<InstrumentPalette> m_palette;
+    QPointer<InstrumentCreator> m_creator;
+    QPointer<AufnahmeFenster> m_aufnahme;
+    int m_paletteSpur = -1;   ///< fuer diese Spur waehlt das Fenster Instruments; -1 = keine
+    int m_creatorSpur = -1;   ///< das Instrument dieser Spur ist im Creator offen
+    int m_aufnahmeSpur = -1;  ///< fuer diese Spur nimmt „Record sample" auf
+    QWidget* m_detail = nullptr;  ///< das Feld hinter „…"
+    int m_detailSpur = -1;
+    QComboBox* m_detailNote = nullptr;
+    QSpinBox* m_detailDauer = nullptr;
+    QLabel* m_detailTitel = nullptr;
 
     QLabel* m_basisName = nullptr;
     QLabel* m_nutzer = nullptr;

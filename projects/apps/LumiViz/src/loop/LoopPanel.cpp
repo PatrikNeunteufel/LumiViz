@@ -574,18 +574,48 @@ bool LoopPanel::spieleInstrumentTon(const QString& nennung, int hoehe)
 bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe)
 {
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
+    // ein Muster mit dieser einen Note, einen Schlag lang
+    Muster ton = vorlage;
+    ton.takte = kTakteMin;
+    ton.stumm = false;
+    ton.noten = {{0, m_loop.schritteJeSchlag, hoehe, 1.0}};
+    // der Ton und sein Ausklang
+    return spieleAllein(ton, m_loop.notenMs(ton.noten.front()) + 600);
+}
+
+bool LoopPanel::spieleSpur(const QString& muster, int spur)
+{
+    const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
+    if (basis == nullptr || basis->art != MusterArt::Drumkit || spur < 0 || spur >= static_cast<int>(basis->spuren.size()))
+        return false;
+    Spur eine = basis->spuren[static_cast<std::size_t>(spur)];
+    if (eine.spielt().isEmpty()) return false;
+    eine.stumm = false;
+    // ein Instrument klingt Length lang und klingt dann aus; ein Klang ist so lang wie seine Datei —
+    // angespielt werden davon hoechstens zwei Sekunden
+    const int dauerMs = (eine.instrument.isEmpty() ? 2000 : eine.dauerMs) + 600;
+    // ein Muster mit dieser Spur und einem Schlag am Anfang — so lang, dass es nicht von vorn
+    // beginnt, bevor der Schlag verklungen ist
+    const double taktMs = 60000.0 / m_loop.bpm * m_loop.schlaegeJeTakt;
+    Muster schlag;
+    schlag.art = MusterArt::Drumkit;
+    schlag.takte = std::clamp(static_cast<int>(std::ceil(dauerMs / taktMs)) + 1, kTakteMin, kTakteMax);
+    schlag.spuren = {eine};
+    schlag.zeilen = {std::vector<double>(static_cast<std::size_t>(schlag.takte * m_loop.schritteJeTakt()), 0.0)};
+    schlag.zeilen[0][0] = 1.0;
+    return spieleAllein(schlag, dauerMs);
+}
+
+bool LoopPanel::spieleAllein(const Muster& muster, int dauerMs)
+{
     // spielt der Loop oder ein Muster, hoert man es schon — das Anspielen wuerde es unterbrechen
     if (m_spieler.spielt() && m_vorhoeren == 0) return false;
     IAudioEngine* engine = services().tryResolve<IAudioEngine>();
     IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
     if (engine == nullptr || player == nullptr) return false;
 
-    // ein Loop aus einem Muster mit dieser einen Note, einen Schlag lang
-    Muster ton = vorlage;
+    Muster ton = muster;
     ton.name = QStringLiteral("Preview");
-    ton.takte = kTakteMin;
-    ton.stumm = false;
-    ton.noten = {{0, m_loop.schritteJeSchlag, hoehe, 1.0}};
     Loop allein = m_loop;
     allein.muster = {ton};
     allein.kanaele = {Kanal{QStringLiteral("Preview"), true, {LoopClip{ton.name, 0, 1}}}};
@@ -602,7 +632,6 @@ bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe)
     const int nummer = ++m_vorhoerNr;
     m_vorhoeren = nummer;
     // nach dem Ton und seinem Ausklang haelt der Spieler wieder — ausser ein neuerer Ton laeuft
-    const int dauerMs = allein.notenMs(ton.noten.front()) + 600;
     QTimer::singleShot(dauerMs, this, [this, nummer] {
         if (m_vorhoeren == nummer) beendeVorhoeren();
     });
@@ -682,6 +711,26 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 (void)spieleMuster(m_editor->muster());
             else
                 halte();
+        });
+        // der Klang einer Spur (Stufe 11c, Schritt 2): Play im Feld hinter „…", das Fenster
+        // Instruments, der Creator und „Record sample" — dieselben Wege wie beim Instrument-Editor
+        connect(m_editor, &DrumEditor::spurTonVerlangt, this,
+                [this](const QString& basisName, int spur) { (void)spieleSpur(basisName, spur); });
+        connect(m_editor, &DrumEditor::instrumentTonVerlangt, this,
+                [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
+        connect(m_editor, &DrumEditor::klaengeGeaendert, this, [this] {
+            if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
+            meldeStand();
+        });
+        connect(m_editor, &DrumEditor::sampleVerlangt, this, [this](const QString& nennung) {
+            IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+            const QString datei = sampleDatei(nennung);
+            if (engine != nullptr && !datei.isEmpty())
+                merkeSampleDaten(nennung, kSampleRate, engine->decodeStereo(datei, kSampleRate, kKlangMaxSekunden));
+        });
+        m_editor->setEngineGeber([this] { return services().tryResolve<IAudioEngine>(); });
+        connect(m_editor, &DrumEditor::rueckgaengigVerlangt, this, [this](bool wiederholen) {
+            if (auto* bus = services().tryResolve<ICommandBus>()) (void)(wiederholen ? bus->redo() : bus->undo());
         });
     }
     if (!m_editor->zeige(m_loop, muster)) return false;

@@ -49,11 +49,14 @@ public:
     explicit InstrumentPalette(QWidget* parent = nullptr);
 
     /// Fuer welches Muster das Fenster gerade waehlt; leer = es ist kein
-    /// Instrument-Muster offen, **Use** ist dann aus.
-    void setzeZiel(const QString& muster);
+    /// Instrument-Muster offen, **Use** ist dann aus. Waehlt das Fenster fuer
+    /// eine Spur eines Drum-Musters (Stufe 11c), nennt `spur` sie: die Zeile
+    /// heisst dann „For track: <Spur> (<Muster>)".
+    void setzeZiel(const QString& muster, const QString& spur = {});
     [[nodiscard]] const QString& ziel() const { return m_ziel; }
     /// Die Instrumente neu lesen — die eigenen aendern sich, waehrend das
-    /// Programm laeuft (Save im Creator, ein Import).
+    /// Programm laeuft (Save im Creator, ein Import). Auch Favoriten und
+    /// „Recently used" kommen neu aus den Einstellungen.
     void liesNeu();
     /// Oeffnen bzw. nach vorn holen, die Schreibmarke in der Suche.
     void zeigeVorn();

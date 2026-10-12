@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.167.0
+> **Version:** 1.168.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5229,6 +5229,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.168.0 | 2026-10-12 | Session 116 — Loop **11c Schritt 2 gebaut**: im Drum-Editor die Klangliste (Kit, My samples, Instrument..., Sample file... mit der Frage aus S2 a, Record sample...) und an einer Instrument-Spur der Knopf „…“ mit Note, Length, Play, Browse..., Edit instrument...; **im Programm ungesehen und ungehört** — lokale Liste 10, Abschnitt T; offen 11c Schritt 3 (Edit sound..., das Fenster Instruments auf Drums gestellt), die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte, 11d bis 11f |
 | 1.167.0 | 2026-10-12 | Session 116 — **„Favorites“ angeglichen** (Entscheid Patrik 12.10.): im Fenster Instruments heißt der Knopf „★“ und die Überschrift „★ Favorites“, wie in der Effect Palette; Effect Palette und Preset-Zeile schreiben „Favorites“ statt „Favourites“; im Programm ungesehen |
 | 1.166.0 | 2026-10-12 | Abschluss Session 115 — **Stufe 11 des Loops:** 11a (Sample als Schicht, Detect, Reference tone) und 11b (Record sample) gebaut, 11c begonnen (Schritt 1, der Kern der Drum-Spur mit drei Arten von Klang); `.lvinst` und `.lvloop` in Fassung 4; davor Befund P5 behoben (Ctrl+Z im Fenster Instruments); alles aus Stufe 11 im Programm ungesehen und ungehört — lokale Liste 10, Abschnitte Q und R; voller Lauf 1132 / 1132; offen 11c Schritt 2 und 3, die Hörproben zum Kit, die Vorlage zur Kette für Filter und Effekte, 11d bis 11f; 🔧 Frage Patrik: der Knopf für Favoriten im Fenster Instruments trägt Text statt des Sterns der Effect Palette — angleichen; entschieden: überall „Favorites“ (die Effect Palette schreibt heute „Favourites“); Changelog `sessions/Changelog_Session115.md` |
 | 1.165.0 | 2026-10-12 | Session 115 — Loop **11c Schritt 1 gebaut**: der Kern ohne Fenster — eine Drum-Spur nennt einen Klang des Kits, ein eigenes Sample (`user:<name>`) oder ein Instrument mit Note und Length, `.lvloop` Fassung 4, `kit:` in der Sample-Schicht, die Art Drums; **GEÄNDERT:** eine Sample-Schicht spielt die Aufnahme in ihrer Lautstärke (nach 11a halb so laut); offen 11c Schritt 2 (Drum-Editor) und 3 (Edit sound...); 🔧 vorgemerkt auf Wunsch Patrik: Filter je Schicht und Effekte am Clip als Kette, „in einer Art Node-Editor“ — Vorlage mit Skizze nach 11c |

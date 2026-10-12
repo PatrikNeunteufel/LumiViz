@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.134.0
+> **Version:** 1.135.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2546,7 +2546,8 @@ siehe unten.)
 | **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
 | **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
 | **M** | Die Spur ist stumm |
-| Klang | Ein Klang des mitgelieferten Kits — oder **Sample file...** für eine eigene Datei |
+| **Sound** | Was die Spur spielt — siehe „Der Klang einer Spur" unten |
+| **…** | Nur an einer Spur, die ein Instrument spielt: Note, Length, Play, Browse..., Edit instrument... |
 | Zwei Schieber | Lautstärke und Panorama der Spur |
 | Schritte | Ein Klick schaltet einen Schritt an oder aus. Mit gedrückter Taste weitergezogen bekommen die überfahrenen Schritte denselben Zustand. Jeder zweite Schlag ist heller unterlegt |
 | **Step volume** | Die Lautstärke je Schritt der angeklickten Spur: an einem Balken ziehen. Ganz unten ist der Schritt aus |
@@ -2556,6 +2557,33 @@ siehe unten.)
 Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
 kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
 Stelle mehr gibt — Ctrl+Z holt sie zurück.
+
+**Der Klang einer Spur.** Eine Spur spielt bei jedem Schlag einen Klang des
+Kits, ein eigenes Sample, eine Tondatei — oder einen Ton eines Instruments.
+Die Auswahl **Sound** bietet:
+
+| Eintrag | Wirkung |
+|---|---|
+| unter **Kit** | Die Klänge des mitgelieferten Kits |
+| unter **My samples** | Deine eigenen Samples (kopierte Dateien und Aufnahmen). Die Überschrift fehlt, solange es keine gibt |
+| unter **File** | Die Tondatei an freiem Ort, die die Spur gerade nennt |
+| **Instrument...** | Öffnet das Fenster **Instruments** für diese Spur. **Use** dort setzt das Instrument in die Spur |
+| **Sample file...** | Fragt nach einer Tondatei — und danach, ob sie zu **My samples** kopiert wird oder bleibt, wo sie ist (dieselbe Frage wie im Instrument-Creator, mit **Don't ask again**) |
+| **Record sample...** | Öffnet das Fenster **Record sample**; **Save and use** setzt die Aufnahme als Klang der Spur |
+
+Spielt die Spur ein Instrument, steht sein Name in der Auswahl, und daneben
+erscheint der Knopf **…**. Er öffnet ein kleines Feld:
+
+| Element | Wirkung |
+|---|---|
+| **Note** | Die Tonhöhe jedes Schlags, C1 bis C7. Vorbelegt nach der Art des Instruments: C2 bei Bass und Drums, sonst C4 |
+| **Length** | So lang wird jeder Schlag gehalten, in Millisekunden (1 bis 30000, vorbelegt 250); danach klingt er aus. Die Länge hängt nicht am Tempo |
+| **Play** | Spielt einen Schlag der Spur, mit ihrer Lautstärke und ihrem Panorama. Stumm, solange der Loop spielt |
+| **Browse...** | Das Fenster Instruments: ein anderes Instrument wählen. Note und Length bleiben |
+| **Edit instrument...** | Öffnet das Instrument im Instrument-Creator. Was dort gespeichert wird, spielt die Spur danach |
+
+Ein Klick neben das Feld schließt es. Wer in **Sound** wieder einen Klang
+wählt, nimmt der Spur ihr Instrument; Ctrl+Z holt es zurück.
 
 **Mehrere Schritte zugleich.** Ein Teil des Musters lässt sich markieren,
 kopieren und an anderer Stelle einfügen — auch in einer anderen Basis: das
@@ -2894,6 +2922,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.135.0 | 2026-10-12 | Session 116. §16 Loop, Drum-Editor NEU **Der Klang einer Spur**: die Auswahl **Sound** mit Kit, My samples, **Instrument...**, **Sample file...** (fragt jetzt wie der Creator, ob kopiert wird), **Record sample...**; an einer Instrument-Spur der Knopf **…** mit **Note**, **Length**, **Play**, **Browse...**, **Edit instrument...** |
 | 1.134.0 | 2026-10-12 | Session 116. §16 Loop, Fenster Instruments: GEÄNDERT der Knopf für Favoriten heißt **★** (zuvor „Favorite"), die Überschrift **★ Favorites** — wie in der Modul-Palette; dort und in der Preset-Zeile steht jetzt „Favorites" statt „Favourites" |
 | 1.133.0 | 2026-10-12 | Session 115. §16 Loop: die Art **Drums** im Fenster Instruments und in Type des Creators; GEÄNDERT: eine Sample-Schicht spielt die Aufnahme so laut wie die Datei (zuvor halb so laut) |
 | 1.132.0 | 2026-10-12 | Session 115. §16 Loop NEU **Record sample**: im Instrument-Creator bei einer Sample-Schicht **Record...** — das Fenster nimmt auf, lässt zuschneiden (zwei Griffe, Trim silence), in Dauerschleife anhören (Play, Repeat) und speichert mit Save and use zu den eigenen Samples |

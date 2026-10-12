@@ -199,6 +199,13 @@ QTreeWidgetItem* InstrumentPalette::blatt(QTreeWidgetItem* kopf, const Instrumen
 
 void InstrumentPalette::liesNeu()
 {
+    {
+        // Favoriten und Zuletzt, wie sie jetzt gemerkt sind: das Fenster gibt es je Editor
+        // einmal (Instrument-Editor, Drum-Editor) — das andere kann sie geaendert haben
+        QSettings einstellungen;
+        m_favoriten = einstellungen.value(QLatin1String(kFavoriten)).toStringList();
+        m_zuletzt = einstellungen.value(QLatin1String(kZuletzt)).toStringList();
+    }
     m_alle = instrumente();
     for (Instrument& eigenes : eigeneInstrumente()) m_alle.push_back(std::move(eigenes));
     {
@@ -345,11 +352,12 @@ QStringList InstrumentPalette::unter(const QString& kopfName) const
 
 // --- was die Bedienelemente ausloesen ----------------------------------------
 
-void InstrumentPalette::setzeZiel(const QString& muster)
+void InstrumentPalette::setzeZiel(const QString& muster, const QString& spur)
 {
     m_ziel = muster;
     m_zielZeile->setText(muster.isEmpty() ? tr("Open an instrument pattern to use an instrument")
-                                          : tr("For pattern: %1").arg(muster));
+                         : spur.isEmpty() ? tr("For pattern: %1").arg(muster)
+                                          : tr("For track: %1 (%2)").arg(spur, muster));
     zeigeDetail();
 }
 

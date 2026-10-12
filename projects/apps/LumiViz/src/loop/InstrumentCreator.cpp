@@ -7,6 +7,7 @@
 
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
+#include "loop/SampleFrage.hpp"
 
 #include <QAction>
 #include <QCheckBox>
@@ -1607,33 +1608,11 @@ void InstrumentCreator::frageNachSampleDatei()
     if (pfad.isEmpty()) return;
     einstellungen.setValue(QLatin1String(kLetzterSampleOrdner), QFileInfo(pfad).absolutePath());
 
-    // Entscheid S2 a: kopieren oder am Ort lassen — gefragt wird, bis die Wahl gemerkt ist.
-    // Liegt die Datei schon bei den eigenen Samples, ist nichts zu fragen.
-    SampleKopie wahl = sampleKopieWahl();
-    const bool schonEigen = QDir::cleanPath(QFileInfo(pfad).absolutePath()).compare(QDir::cleanPath(eigenerSampleOrdner()), Qt::CaseInsensitive) == 0;
-    if (schonEigen)
-        wahl = SampleKopie::Kopieren;
-    else if (wahl == SampleKopie::Fragen)
-    {
-        QMessageBox frage(this);
-        frage.setObjectName(QStringLiteral("creatorSampleCopyDialog"));
-        frage.setWindowTitle(tr("Sample"));
-        frage.setIcon(QMessageBox::Question);
-        frage.setText(tr("Where should %1 be kept?").arg(QFileInfo(pfad).fileName()));
-        frage.setInformativeText(tr("A copy in My samples goes along with an export and stays when the original moves. "
-                                    "Without a copy the instrument names the file at\n%1")
-                                     .arg(QDir::toNativeSeparators(pfad)));
-        QPushButton* kopieren = frage.addButton(tr("Copy the file to My samples (recommended)"), QMessageBox::AcceptRole);
-        QPushButton* amOrt = frage.addButton(tr("Use it where it is"), QMessageBox::ActionRole);
-        frage.addButton(QMessageBox::Cancel);
-        frage.setDefaultButton(kopieren);
-        auto* merken = new QCheckBox(tr("Don't ask again (Settings → Panels changes it)"), &frage);
-        frage.setCheckBox(merken);
-        frage.exec();
-        if (frage.clickedButton() != kopieren && frage.clickedButton() != amOrt) return;
-        wahl = frage.clickedButton() == kopieren ? SampleKopie::Kopieren : SampleKopie::AmOrt;
-        if (merken->isChecked()) setzeSampleKopieWahl(wahl);
-    }
+    // Entscheid S2 a: kopieren oder am Ort lassen — gefragt wird, bis die Wahl gemerkt ist
+    // (dieselbe Frage stellt der Drum-Editor, `SampleFrage.hpp`)
+    const SampleKopie wahl = waehleSampleKopie(this, pfad, tr("Without a copy the instrument names the file at"),
+                                               QStringLiteral("creatorSampleCopyDialog"));
+    if (wahl == SampleKopie::Fragen) return;  // abgebrochen
     if (!nimmSampleDatei(pfad, wahl == SampleKopie::Kopieren))
         QMessageBox::warning(this, tr("Sample"), tr("Could not copy %1 to My samples").arg(QDir::toNativeSeparators(pfad)));
 }

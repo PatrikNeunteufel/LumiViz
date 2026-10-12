@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.50.0
+> **Version:** 0.51.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1506,6 +1506,58 @@ Datei des Kits durch eine Sample-Schicht bei einer anderen Abtastrate als
 dieselben wie beim direkten Dekodieren). Im Programm ist nur die Art Drums
 zu sehen: in der Liste Type des Creators.
 
+**Gebaut — 11c, Schritt 2 (S116), der Drum-Editor:** die Auswahl **Sound**
+einer Spur ist jetzt die Klangliste der gebilligten Skizze. Von oben nach
+unten: die Überschrift **Kit** mit den Klängen des Kits; **My samples** mit
+den eigenen Samples (nur wenn es welche gibt; ein genanntes, das fehlt, steht
+als „<name> (not found)" da); **File** mit der Tondatei an freiem Ort, wenn
+die Spur eine nennt; nach einer Trennlinie die drei Wege **Instrument...**,
+**Sample file...**, **Record sample...**. Die Überschriften sind grau und
+lassen sich nicht wählen. Spielt die Spur ein Instrument, steht ganz oben
+sein Titel (wie im Instrument-Editor, etwa „Slap Bass" oder „Mein Schlag (My
+files)"), und er ist gewählt.
+- **Instrument...** öffnet das Fenster Instruments für diese Spur; die Zeile
+  dort heißt „For track: <Spur> (<Muster>)". **Use** setzt das Instrument in
+  die Spur: die Note nach seiner Art (Bass und Drums C2, sonst C4), Length
+  250 ms (K2 a). Hatte die Spur schon ein Instrument, bleiben Note und Length.
+- **Sample file...** fragt nach einer Tondatei und dann wie der Creator, ob
+  sie kopiert wird oder am Ort bleibt (S2 a; dieselbe gemerkte Wahl). Die
+  Frage steht jetzt einmal in `loop/SampleFrage`, Creator und Drum-Editor
+  stellen sie beide.
+- **Record sample...** öffnet das Fenster Record sample; **Save and use**
+  setzt die Aufnahme als Klang der Spur.
+- Wer einen Klang aus der Liste wählt, nimmt der Spur ihr Instrument: sie
+  spielt wieder den Klang, Note und Length stehen auf ihrer Vorgabe.
+- **Der Knopf „…"** steht nur an einer Spur, die ein Instrument spielt (sein
+  Platz bleibt sonst frei, damit die Regler in einer Flucht stehen). Er
+  öffnet ein kleines Feld unter sich: oben „<Spur> plays <Instrument>",
+  darunter **Note** (C1 bis C7), **Length** (1 bis 30000 ms, in Schritten von
+  10) und **Play**, darunter **Browse...** (das Fenster Instruments) und
+  **Edit instrument...** (der Creator; was er speichert, nennt die Spur
+  danach — wenn sie dann noch ein Instrument spielt). Ein Klick daneben
+  schließt das Feld.
+- **Play** spielt einen Schlag der Spur: das Panel baut ein Muster aus dieser
+  einen Spur mit einem Schlag am Anfang (`LoopPanel::spieleSpur`), mit ihrer
+  Lautstärke und ihrem Panorama, so lang, dass es nicht von vorn beginnt,
+  bevor der Ton verklungen ist. Spielt der Loop, bleibt Play stumm.
+- Der Drum-Editor hat sein eigenes Fenster Instruments, seinen eigenen
+  Creator und sein eigenes Fenster Record sample — wie der Instrument-Editor
+  die seinen. Favorites und Recently used liest ein Fenster Instruments
+  deshalb bei jedem Öffnen neu aus den Einstellungen.
+- Fällt eine Spur weg (auch durch Undo), gelten die offenen Fenster keiner
+  Spur mehr: Use im Fenster Instruments ist grau, das Feld schließt.
+Von Claude gesetzt, nicht entschieden: das Feld hinter „…" als Feld, das sich
+bei einem Klick daneben schließt (die Skizze nannte nur den Knopf und seinen
+Inhalt); die Überschrift **File**; „(not found)"; Note im Feld nur C1 bis C7
+(die Datei erlaubt 0 bis 127 — eine Note von außerhalb steht da, wie sie ist);
+ein anderes Instrument lässt Note und Length stehen; die Spalte Sound ist
+124 statt 100 Punkte breit, das Fenster entsprechend breiter; die Wörter für
+Undo („Change sound", „Change note", „Change length"). Nicht gebaut: **Edit
+sound...** und das Fenster Instruments, das sich aus einer Drum-Spur auf
+Drums stellt (Schritt 3). Nicht geprüft: alles im Programm — die Liste, das
+Feld, die drei Fenster aus dem Drum-Editor und das Anspielen sind nur in
+Tests ohne Fenster und gegen die Engine aus Pappe gelaufen.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2241,6 +2293,12 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.51.0** (S116, 2026-10-12): 11c Schritt 2 gebaut — die Klangliste im
+  Drum-Editor (Kit, My samples, Instrument..., Sample file..., Record
+  sample...) und der Knopf „…" mit Note, Length, Play, Browse..., Edit
+  instrument...; die Frage aus S2 a steht einmal für Creator und Drum-Editor;
+  davor: im Fenster Instruments der Knopf „★" und „★ Favorites" (§4h).
 
 - **0.50.0** (S115, 2026-10-12): 11c Schritt 1 gebaut — die Spur mit drei
   Arten von Klang (Kit, eigenes Sample, Instrument mit Note und Length),

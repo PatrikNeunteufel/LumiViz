@@ -41,6 +41,7 @@
 #include <QSettings>
 #include <QTemporaryDir>
 
+#include <algorithm>
 #include <climits>
 #include <memory>
 #include <vector>
@@ -422,6 +423,40 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     panel.halte();
     CHECK_FALSE(panel.hoertVor());
     CHECK(panel.spieler().loop() == panel.loop());
+
+    // --- der Drum-Editor spielt einen Schlag einer Instrument-Spur an (Stufe 11c, Schritt 2):
+    //     ein Muster aus dieser einen Spur mit einem Schlag am Anfang, mit ihrer Note und Length
+    {
+        DrumEditor* drumEditor = panel.editor();
+        REQUIRE(drumEditor != nullptr);
+        drumEditor->spurHinzu();
+        const int spur = static_cast<int>(panel.loop().findeMuster(drums)->spuren.size()) - 1;
+        REQUIRE(spur >= 0);
+        CHECK_FALSE(drumEditor->spieleSpur(spur));  // noch ein Klang des Kits: Play gibt es nur am Instrument
+        drumEditor->setzeSpurInstrument(spur, QStringLiteral("slap_bass"));
+        drumEditor->setzeDauer(spur, 120);
+        const Spur& gesetzt = panel.loop().findeMuster(drums)->spuren[static_cast<std::size_t>(spur)];
+        CHECK(gesetzt.instrument == QStringLiteral("slap_bass"));
+        CHECK(gesetzt.hoehe == 36);  // ein Bass spielt tief (K2 a)
+        CHECK(gesetzt.dauerMs == 120);
+        CHECK_FALSE(panel.spieleSpur(drums, spur + 1));
+        CHECK_FALSE(panel.spieleSpur(noten, 0));  // ein Instrument-Muster hat keine Spuren
+        CHECK_FALSE(panel.spieleSpur(QStringLiteral("gibt es nicht"), 0));
+        REQUIRE(drumEditor->spieleSpur(spur));  // das Signal des Editors: das Panel spielt
+        CHECK(panel.hoertVor());
+        CHECK(panel.spieler().spielt());
+        REQUIRE(panel.spieler().loop().muster.size() == 1);
+        const Muster& schlag = panel.spieler().loop().muster[0];
+        CHECK(schlag.art == MusterArt::Drumkit);
+        REQUIRE(schlag.spuren.size() == 1);
+        CHECK(schlag.spuren[0].spielt() == tonKlang(QStringLiteral("slap_bass"), 36, 120));
+        REQUIRE(schlag.zeilen.size() == 1);
+        CHECK(schlag.zeilen[0][0] == 1.0);
+        CHECK(std::count_if(schlag.zeilen[0].begin(), schlag.zeilen[0].end(), [](double laut) { return laut > 0.0; }) == 1);
+        panel.halte();
+        CHECK_FALSE(panel.hoertVor());
+        CHECK(panel.spieler().loop() == panel.loop());
+    }
 
     // --- Play pattern im Instrument-Editor spielt nur das Muster
     auto* playMuster = editor->findChild<QPushButton*>(QStringLiteral("instrumentPlay"));
