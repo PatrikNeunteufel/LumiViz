@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.176.0
+> **Version:** 1.177.0
 > **Datum:** 2026-10-12 (Session 115)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5236,6 +5236,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.177.0 | 2026-10-12 | Session 117. Loop **Stufe 11f gebaut:** sechs gerechnete Drum-Instrumente unter Drums (`asset/loop/make_drums.py`), für die Note C2, gegen das Kit gemessen (`Loop_Konzept.md` §4h, Tabelle), leiser als das Kit (Spitze 0,42 bis 0,58 gegen 0,9) — im Programm nicht gesehen und nicht gehört. **Offen:** Patriks Ohr an `.claude/handover/hoerproben_11f/vergleich_*.wav` (dazu die aus 11d, 11e und `hoerproben_drumkit`) — daran hängt, ob Drive hinter der Hüllkurve (Kick), zwei Filter (Clap) und die Hi-Hat-Schwingung gebaut werden; ob die gerechneten so laut sein sollen wie das Kit (ginge nur mit einer Änderung am Klangerzeuger); die Vorlage zur Kette für Filter und Effekte |
 | 1.176.0 | 2026-10-12 | Session 117. Loop, Instrument-Editor: **Load instrument...** fragt, ob die Datei zu den eigenen kopiert wird oder am Ort bleibt (E3 a) — im Programm nicht gesehen; E2 a erledigt (die drei losen `.lvinst` liegen unter `instruments`) |
 | 1.175.0 | 2026-10-12 | Session 117. Loop, Instrument-Creator: **Save as...** fragt nur nach dem Namen und schreibt nach `instruments` (E1 a), ein Original wird nie überschrieben (E1b c) — im Programm nicht gesehen; offen E2 (drei lose `.lvinst` in der Wurzel des Benutzerordners) und E3 (Startordner von Load instrument...) |
 | 1.174.0 | 2026-10-12 | Abschluss Session 116 — **Loop: Stufe 11c fertig, 11d und 11e gebaut** (Drum-Spur mit Klangliste, „…“ und Edit sound...; im Creator Noise, Pitch sweep, der Filter mit Type und Resonance), dazu auf Wunsch Patrik: Gruppen einklappen, Repeat note mit „every … beats“, die Suchordner für AVS und MilkDrop; `.lvinst` in Fassung 6; „Favorites“ überall; behoben: der Creator wuchs über den Bildschirm; voller Lauf 1140 / 1140; im Programm gesehen nur das Einklappen — lokale Liste 10, Abschnitte T, N, H; offen **11f** (nächste Sitzung), die Hörproben zu 11d und 11e, was bei MilkDrop zeitweise nichts zeigte, die Vorlage zur Kette für Filter und Effekte; Changelog `sessions/Changelog_Session116.md` |

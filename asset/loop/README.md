@@ -33,20 +33,26 @@ aufgenommen.
 
 ## instruments/
 
-Die neunundvierzig mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
+Die fünfundfünfzig mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
 Dateiname ist der Name im Loop: `piano.lvinst` ist das Instrument `piano`.
 Im Programm steht kein Instrument — maßgebend sind diese Dateien (Entscheide
 Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
 
-Seit S114 stehen alle neunundvierzig in **Fassung 3** und tragen `category`
-(eine von acht Arten), `genres` und `description` — für das Fenster
+**Sechs davon sind Drums** (`drum_kick`, `drum_tom`, `drum_snare`, `drum_clap`,
+`drum_hat_closed`, `drum_hat_open`; S117, Stufe 11f): gerechnete Schläge neben
+dem Kit, erzeugt mit `make_drums.py`, Fassung 6. Sie sind **für die Note C2
+gebaut** — eine andere Note verschiebt den ganzen Schlag — und leiser als ein
+Klang des Kits. Gegen das Kit gemessen, nicht gehört (Konzept §4h).
+
+Seit S114 stehen die übrigen neunundvierzig in **Fassung 3**, und alle tragen `category`
+(eine von neun Arten), `genres` und `description` — für das Fenster
 „Instruments" (Konzept §4h, Entscheid F3 b). Die drei Angaben pflegt
 **`instrument_katalog.py`**: Art und Beschreibung stehen dort in einer Tabelle
 (nach Titel und Aufbau gesetzt, nicht nach Gehör), die Genres zählt es aus den
 mitgelieferten Loops — ein Instrument trägt das Genre jedes Loops, in dem es
 steht (Guitar und Violin stehen in keinem). Wer ein Instrument dazulegt, trägt
 es dort ein und ruft `python asset/loop/instrument_katalog.py`;
-`make_examples.py` und `make_genres.py` rufen es von selbst. Eigene
+`make_examples.py`, `make_genres.py` und `make_drums.py` rufen es von selbst. Eigene
 Instrumente gehören nicht hierher: sie liegen im Benutzerordner der App unter
 `instruments` und heißen im Loop `user:<name>` (Entscheid P2 a).
 

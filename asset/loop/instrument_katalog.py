@@ -81,6 +81,13 @@ KATALOG = {
     "clave": ("percussion", "A very short sine with a tick an octave above; the note sets the pitch of the hit."),
     "conga": ("percussion", "A short sine skin with a damped string slap; the note sets the pitch of the hit."),
     "cowbell": ("percussion", "Two short squares a fifth apart; the note sets the pitch of the hit."),
+    # --- Drums (S117, Stufe 11f: `make_drums.py`; alle fuer die Note C2 gebaut)
+    "drum_kick": ("drums", "A driven sine that drops almost two octaves, with a short noise click. Built for the note C2."),
+    "drum_tom": ("drums", "A sine that drops ten semitones, with a short noise click. Built for the note C2."),
+    "drum_snare": ("drums", "Two short sines, one with a strong overtone, under high-passed noise. Built for the note C2."),
+    "drum_clap": ("drums", "Four layers of driven, band-passed noise, three short hits and a tail. Built for the note C2."),
+    "drum_hat_closed": ("drums", "A very short burst of high-passed noise. Built for the note C2."),
+    "drum_hat_open": ("drums", "High-passed noise that rings for half a second. Built for the note C2."),
     # --- Unusual
     "alien_choir": ("unusual", "Slow, detuned sines and triangles with deep vibrato in three registers."),
     "cascade": ("unusual", "Four sines that enter one after the other, each higher than the last."),
@@ -124,7 +131,8 @@ def ergaenze(name, daten, genres=None):
         # Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
         level, schichten = 1.0, [{k: v for k, v in daten.items() if k not in _KOPF or k == "level"}]
     return {
-        "format": "lumiviz-instrument", "version": 3, "title": daten["title"],
+        # mindestens 3; eine Datei mit Feldern einer spaeteren Fassung (Drums: 6) behaelt ihre Zahl
+        "format": "lumiviz-instrument", "version": max(3, int(daten.get("version", 1))), "title": daten["title"],
         "category": art, "genres": genres.get(name, []), "description": beschreibung,
         "level": level, "layers": schichten,
     }

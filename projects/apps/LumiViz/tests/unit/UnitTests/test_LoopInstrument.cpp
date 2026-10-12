@@ -408,8 +408,8 @@ TEST_SUITE("LoopInstrument")
         const std::vector<Instrument>& alle = instrumente();
         // sieben allgemeine und sieben fuer House (Wunsch Patrik S110), dazu sechzehn aus
         // Schichten, sieben davon ungewoehnlich, und neunzehn fuer die Genre-Beispiele
-        // (Wunsch Patrik S111)
-        REQUIRE(alle.size() == 49);
+        // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117)
+        REQUIRE(alle.size() == 55);
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -421,7 +421,8 @@ TEST_SUITE("LoopInstrument")
                                  "growl_bass", "reverse_swell",
                                  "trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
-                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave"})
+                                 "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave",
+                                 "drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -442,7 +443,10 @@ TEST_SUITE("LoopInstrument")
             // eine bis vier Schichten, alle an; die erste liegt auf der Note und setzt gleich ein
             REQUIRE_FALSE(instrument.schichten.empty());
             CHECK(instrument.schichten.size() <= static_cast<std::size_t>(kSchichtenMax));
-            CHECK(instrument.schichten[0].versatzHalbtoene == 0);
+            // (die sechs Drums aus Stufe 11f nicht: sie sind fuer die Note C2 gebaut und tragen, wohin
+            // der Schlag gehoert, als Transpose — ihre Tonhoehe prueft der Fall „Loop Instrument 11f")
+            const bool schlag = instrument.art == QStringLiteral("drums");
+            if (!schlag) CHECK(instrument.schichten[0].versatzHalbtoene == 0);
             CHECK(instrument.schichten[0].einsatzMs == 0.0);
             double laengsterAusklang = 0.0;
             double vibrato = 0.0;
@@ -475,14 +479,17 @@ TEST_SUITE("LoopInstrument")
             // die Tonhoehe: 440 Hz sind 100,2 Abtastwerte je Schwingung — mit Vibrato schwankt
             // sie um so viele Cent, wie das Instrument angibt (die Sirene: 100)
             const double schwankung = std::exp2(std::max(vibrato, 20.0) / 1200.0);
-            const int p = periode(ton, 6000, 4000, 80, 125);
-            CHECK(p >= std::floor(100.2 / schwankung) - 1);
-            CHECK(p <= std::ceil(100.2 * schwankung) + 1);
-            // eine Oktave tiefer die doppelte Periode
-            const Klang tief = rendereTon(instrument, 57, 500.0, kRate);
-            const int pTief = periode(tief, 6000, 4000, 160, 250);
-            CHECK(pTief >= std::floor(200.5 / schwankung) - 1);
-            CHECK(pTief <= std::ceil(200.5 * schwankung) + 1);
+            if (!schlag)
+            {
+                const int p = periode(ton, 6000, 4000, 80, 125);
+                CHECK(p >= std::floor(100.2 / schwankung) - 1);
+                CHECK(p <= std::ceil(100.2 * schwankung) + 1);
+                // eine Oktave tiefer die doppelte Periode
+                const Klang tief = rendereTon(instrument, 57, 500.0, kRate);
+                const int pTief = periode(tief, 6000, 4000, 160, 250);
+                CHECK(pTief >= std::floor(200.5 / schwankung) - 1);
+                CHECK(pTief <= std::ceil(200.5 * schwankung) + 1);
+            }
             // derselbe Aufruf ergibt dieselben Werte
             CHECK(rendereTon(instrument, 69, 500.0, kRate).daten == ton.daten);
             // die Raender des Umfangs und eine andere Abtastrate rechnen ohne Unsinn
@@ -676,9 +683,11 @@ TEST_SUITE("LoopInstrument")
         CHECK(jeArt[QStringLiteral("plucked")] == 7);
         CHECK(jeArt[QStringLiteral("wind")] == 3);
         CHECK(jeArt[QStringLiteral("percussion")] == 8);
+        CHECK(jeArt[QStringLiteral("drums")] == 6);  // Stufe 11f
         CHECK(jeArt[QStringLiteral("unusual")] == 6);
-        // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem
-        CHECK(ohneGenre == 2);
+        // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem,
+        // die sechs Drums auch nicht
+        CHECK(ohneGenre == 8);
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
     }
@@ -741,7 +750,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 49);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 55);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {
@@ -1661,6 +1670,89 @@ TEST_SUITE("LoopInstrument")
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("tom_sinus_faellt_10st_und_klick.wav")), viermal(tomtom, 45, 400.0), kRate));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("zap_saege_steigt_24st.wav")), viermal(zap, 60, 350.0), kRate));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("rauschen_allein_decay_60ms.wav")), viermal(klick, 60, 200.0), kRate));
+        }
+    }
+
+    // Stufe 11f (Entscheid K1 a, Patrik S115): sechs gerechnete Drum-Instrumente neben dem Kit
+    // (`asset/loop/make_drums.py`). Gerechnet wie eine Drum-Spur sie spielt: Note C2, Length 250 ms.
+    // `LUMIVIZ_11F_WAV=<Ordner>` legt je Instrument einen Schlag ab (`<name>.wav`) — den vergleicht
+    // `.claude/handover/hoerproben_11f/vergleich.py` mit dem Klang des Kits.
+    TEST_CASE("Loop Instrument 11f: sechs gerechnete Drum-Instrumente — Art Drums, fuer die Note C2 gebaut")
+    {
+        const InstrumentApp app;
+        // so oft wechselt das Vorzeichen in der ersten Zehntelsekunde: tief wenig, Rauschen oft
+        const auto wechsel = [](const Klang& klang) {
+            int zahl = 0;
+            const std::int64_t bis = std::min<std::int64_t>(klang.frames(), kRate / 10);
+            for (std::int64_t t = 1; t < bis; ++t)
+                if ((klang.daten[static_cast<std::size_t>(2 * t)] < 0.0f) != (klang.daten[static_cast<std::size_t>(2 * (t - 1))] < 0.0f))
+                    ++zahl;
+            return zahl;
+        };
+        // die Zeit, nach der der Schlag unter ein Zehntel seiner Spitze gefallen ist und dort bleibt
+        const auto klingtMs = [](const Klang& klang) {
+            const float grenze = 0.1f * spitze(klang.daten);
+            std::int64_t letzter = 0;
+            for (std::int64_t t = 0; t < klang.frames(); ++t)
+                if (std::abs(klang.daten[static_cast<std::size_t>(2 * t)]) > grenze) letzter = t;
+            return static_cast<double>(letzter) * 1000.0 / kRate;
+        };
+        const int note = 36;  // C2: was eine Drum-Spur einem Instrument der Art Drums vorbelegt
+        std::map<QString, Klang> klang;
+        for (const char* name : {"drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open"})
+        {
+            const std::string welches = name;
+            CAPTURE(welches);
+            const Instrument* instrument = findeInstrument(QString::fromLatin1(name));
+            REQUIRE(instrument != nullptr);
+            CHECK(instrument->art == QStringLiteral("drums"));
+            CHECK(instrument->beschreibung.contains(QStringLiteral("C2")));
+            // nur Bausteine des Creators: keine Aufnahme, keine Saite
+            for (const Schicht& schicht : instrument->schichten)
+            {
+                CHECK(schicht.schwingung != Schwingung::Sample);
+                CHECK(schicht.halten == 0.0);
+                CHECK(schicht.abfallMs >= 10.0);  // kuerzer stellt der Regler nicht
+            }
+            Klang einer = rendereTon(*instrument, note, kSpurDauerMs, kRate);
+            REQUIRE(einer.frames() > 0);
+            // etwa gleich laut untereinander (gemessen 0,42 bis 0,58) — leiser als ein Klang des Kits (0,9)
+            CHECK(spitze(einer.daten) > 0.35f);
+            CHECK(spitze(einer.daten) < 0.7f);
+            CHECK(rendereTon(*instrument, note, kSpurDauerMs, kRate).daten == einer.daten);  // kein Zufall
+            klang[QString::fromLatin1(name)] = std::move(einer);
+        }
+        // tief gegen hoch: Kick und Tom schwingen langsam, die Hi-Hats sind Rauschen ueber 7 kHz
+        CHECK(wechsel(klang[QStringLiteral("drum_kick")]) < 60);
+        CHECK(wechsel(klang[QStringLiteral("drum_tom")]) < 120);
+        CHECK(wechsel(klang[QStringLiteral("drum_kick")]) < wechsel(klang[QStringLiteral("drum_tom")]));
+        CHECK(wechsel(klang[QStringLiteral("drum_hat_closed")]) > 1200);
+        CHECK(wechsel(klang[QStringLiteral("drum_snare")]) > wechsel(klang[QStringLiteral("drum_tom")]));
+        // kurz gegen lang
+        CHECK(klingtMs(klang[QStringLiteral("drum_hat_closed")]) < 80.0);
+        CHECK(klingtMs(klang[QStringLiteral("drum_hat_open")]) > 2.5 * klingtMs(klang[QStringLiteral("drum_hat_closed")]));
+        CHECK(klingtMs(klang[QStringLiteral("drum_kick")]) > 150.0);
+        // der Clap setzt dreimal neu an, bevor er ausklingt: nach 5 ms leiser als nach 12 ms
+        {
+            const Klang& clap = klang[QStringLiteral("drum_clap")];
+            const auto pegel = [&clap](double vonMs, double bisMs) {
+                float groesster = 0.0f;
+                for (auto t = static_cast<std::int64_t>(vonMs * kRate / 1000.0); t < static_cast<std::int64_t>(bisMs * kRate / 1000.0); ++t)
+                    groesster = std::max(groesster, std::abs(clap.daten[static_cast<std::size_t>(2 * t)]));
+                return groesster;
+            };
+            CHECK(pegel(7.0, 9.5) < pegel(10.5, 14.0));
+            CHECK(pegel(17.0, 19.5) < pegel(20.5, 24.0));
+        }
+        // eine andere Note verschiebt den Schlag — die Instrumente sind fuer C2 gebaut
+        CHECK(wechsel(rendereTon(*findeInstrument(QStringLiteral("drum_kick")), note + 12, kSpurDauerMs, kRate)) >
+              wechsel(klang[QStringLiteral("drum_kick")]));
+
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_11F_WAV"); !ordner.isEmpty())
+        {
+            REQUIRE(QDir().mkpath(ordner));
+            for (const auto& [name, einer] : klang)
+                CHECK(schreibeWav(QDir(ordner).filePath(name + QStringLiteral(".wav")), einer.daten, kRate));
         }
     }
 }

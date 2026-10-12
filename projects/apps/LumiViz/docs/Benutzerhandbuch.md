@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.142.0
+> **Version:** 1.143.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2592,6 +2592,20 @@ erscheint der Knopf **…**. Er öffnet ein kleines Feld:
 Ein Klick neben das Feld schließt es. Wer in **Sound** wieder einen Klang
 wählt, nimmt der Spur ihr Instrument; Ctrl+Z holt es zurück.
 
+**Sechs gerechnete Drums** stehen im Fenster Instruments unter **Drums**:
+**Kick**, **Tom**, **Snare**, **Clap**, **Hi-Hat Closed**, **Hi-Hat Open**. Sie
+sind den Klängen des Kits nachgebaut, aber keine Aufnahmen: jeder besteht aus
+Schichten, die sich im Instrument-Creator ansehen und ändern lassen (Save legt
+dann deine Kopie unter My files ab). Drei Dinge dazu:
+
+- Sie sind **für die Note C2 gebaut** — das ist die Note, die eine Drum-Spur
+  vorbelegt. Eine andere **Note** verschiebt den ganzen Schlag: höher wird er
+  heller und dünner, tiefer dumpfer.
+- Sie sind **leiser als die Klänge des Kits** (etwa zwei Drittel). In einem
+  Muster, das beides mischt, die Lautstärke der Spuren angleichen.
+- Sie klingen nicht gleich wie das Kit: am nächsten sind Tom, Snare und die
+  Hi-Hats, der Kick ist kürzer, der Clap etwas anders gefärbt.
+
 **Edit sound...** (Rechtsklick auf eine Spur) macht aus dem, was die Spur
 spielt, ein Instrument, das sich im Instrument-Creator bearbeiten lässt — mit
 Hüllkurve, Filter, Drive und weiteren Schichten. Aus einem Klang des Kits,
@@ -2949,6 +2963,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.143.0 | 2026-10-12 | Session 117. §16 Loop NEU: sechs gerechnete Drum-Instrumente unter **Drums** im Fenster Instruments (Kick, Tom, Snare, Clap, Hi-Hat Closed, Hi-Hat Open) — für die Note C2 gebaut, leiser als das Kit |
 | 1.142.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Editor GEÄNDERT: **Load instrument...** fragt nach der Wahl, ob die Datei zu den eigenen Instrumenten kopiert wird (vorbelegt) oder am Ort bleibt; vorher stand immer der Pfad im Muster |
 | 1.141.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Creator GEÄNDERT: **Save as...** fragt nur noch nach einem Namen und legt die Kopie zu den eigenen Dateien (vorher ein Dateidialog an beliebigem Ort); der Dialog **Save instrument** sagt bei einem mitgelieferten Instrument, dass Originale nicht überschrieben werden |
 | 1.140.0 | 2026-10-12 | Session 116. §8 Settings GEÄNDERT: statt eines **Image Search Folder** eine Liste **Image and Texture Search Folders** — sie gilt jetzt auch für die Texturen und Sprites von MilkDrop-Presets und für AVI; der bisher gesetzte Ordner steht als erster Eintrag darin |

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 6,
+    "title": "Hi-Hat Closed",
+    "category": "drums",
+    "genres": [],
+    "description": "A very short burst of high-passed noise. Built for the note C2.",
+    "level": 1.0,
+    "layers": [
+        {
+            "name": "Noise",
+            "on": true,
+            "level": 1.0,
+            "transpose": 24,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "noise",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 0,
+            "decay": 70,
+            "sustain": 0,
+            "release": 60,
+            "filterCutoff": 22,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "filterType": "highpass",
+            "filterResonance": 0
+        }
+    ]
+}

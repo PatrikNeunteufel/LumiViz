@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.57.0
+> **Version:** 0.58.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1393,6 +1393,56 @@ Sample-Schicht spielt halb so laut wie die Datei (L6 a), das Umwandeln muss
 das ausgleichen; eine Sample-Schicht kann noch keinen Klang des Kits nennen
 (`kit:<name>` käme als dritte Art dazu). Die `.lvloop` bekäme Fassung 4.
 
+**Gebaut — 11f (S117): sechs gerechnete Drum-Instrumente neben dem Kit.**
+`asset/loop/instruments/drum_kick`, `drum_tom`, `drum_snare`, `drum_clap`,
+`drum_hat_closed`, `drum_hat_open` (`.lvinst` Fassung 6, Art `drums`),
+geschrieben von `asset/loop/make_drums.py`; im Fenster Instruments stehen sie
+unter **Drums** — der Kopf erscheint damit zum ersten Mal. Gebaut nur aus dem,
+was eine Schicht des Creators kann; Vorbild sind die sechs Klänge des Kits.
+**Alle sechs sind für die Note C2 gebaut** (was eine Drum-Spur der Art Drums
+vorbelegt, K2 a): wohin der Schlag gehört, steht als Transpose in der Schicht,
+weil der Filter der Tonhöhe folgt und bei C2 selbst nur bis 4,2 kHz reichte.
+Eine andere Note verschiebt den ganzen Schlag. Aufbau: Kick — Sinus bei F#1,
+fällt aus 22 Halbtönen in 80 ms, Drive 19 %, dazu ein Klick aus Rauschen;
+Tom — Sinus bei A2, fällt aus 10 Halbtönen in 120 ms, Klick; Snare — Sinus bei
+185 Hz, ein zweiter bei 165 Hz mit seinem zweiten Teilton (330 Hz), Rauschen
+über 1,8 kHz; Clap — vier Schichten Rauschen durch einen Bandpass um 1,7 kHz,
+je 10 ms später, die letzte klingt aus, Drive 40 % hebt den Pegel; Hi-Hats —
+eine Schicht Rauschen über 5,8 kHz, Decay 70 und 450 ms. Die langen Schläge
+tragen ein großes Release (bis 1 s), damit sie nach den 250 ms der Spur
+ausklingen statt abzubrechen.
+**Gegen das Kit gemessen, nicht gehört** (das Programm rechnet den Schlag bei
+C2 und 250 ms, `.claude/handover/hoerproben_11f/vergleich.py` misst gegen
+`asset/loop/kit/*.wav`; Hüllkurve: 1 = gleicher Verlauf; Bänder: Abstand der
+Pegel in Drittel-Oktaven, mittel / größter):
+
+| | Hüllkurve | Bänder | klingt (Kit / Instrument) |
+|---|---|---|---|
+| Kick | 0,91 | 4,9 / 15,2 dB | 439 / 360 ms |
+| Tom | 0,94 | 0,6 / 1,3 dB | 315 / 308 ms |
+| Snare | 1,00 | 1,6 / 13,6 dB | 182 / 163 ms |
+| Clap | 0,97 | 4,7 / 12,5 dB | 200 / 186 ms |
+| Hi-Hat Closed | 1,00 | 3,6 / 6,1 dB | 50 / 56 ms |
+| Hi-Hat Open | 1,00 | 3,3 / 6,0 dB | 398 / 387 ms |
+
+Die Werte sind aus Reihen gewählt (Kick 18, Tom 18, Snare 6, Clap 54, Hi-Hats
+21 Varianten), nach diesen Zahlen. **Leiser als das Kit:** die Spitze eines
+Schlags liegt bei 0,42 bis 0,58, die eines Kit-Klangs bei 0,9 — eine Schicht
+bei vollem Level kommt nicht höher. **Anders als das Kit, weil eine Schicht es
+nicht kann:** der Kick klingt kürzer und ist in den Bändern am weitesten weg;
+der Clap hat einen Filter statt zwei; die Hi-Hats sind Rauschen allein, ohne
+die sechs Rechtecke (deren Frequenzen liegen von C2 aus außerhalb von
+Transpose); der Klick dauert 10 ms statt 3,6. Ob dafür die drei vorgemerkten
+Bausteine nötig sind (Drive hinter der Hüllkurve, zwei Filter, die
+Hi-Hat-Schwingung), hängt weiter an Patriks Ohr — Hörproben unter
+`.claude/handover/hoerproben_11f/` (`vergleich_<klang>.wav`: zweimal das Kit,
+zweimal das Instrument, auf dieselbe Spitze gebracht). Von Claude gesetzt,
+nicht entschieden: Namen (`drum_…`) und Titel (Kick, Tom, Snare, Clap, Hi-Hat
+Closed, Hi-Hat Open), alle für C2, Snare mit Level 60 % (sonst fast doppelt so
+laut wie die anderen), die Beschreibungen. Die mitgelieferten Loops spielen
+weiter das Kit. `instrument_katalog.py` lässt einer Datei jetzt ihre Fassung,
+wenn sie über 3 liegt. Im Programm nicht gesehen und nicht gehört.
+
 **Entscheid K2 a (Patrik, S115) — Note und Länge einer Instrument-Spur:**
 jede solche Spur trägt **Note** und **Length** in Millisekunden; vorbelegt
 die Note nach der Art des Instruments (Bass C2, sonst C4) und die Länge mit
@@ -1582,10 +1632,10 @@ Tests ohne Fenster und gegen die Engine aus Pappe gelaufen.
 - **Instruments aus einer Drum-Spur:** spielt die Spur noch kein Instrument,
   stellt sich das Fenster auf **Drums** — der Kopf klappt auf und steht oben
   im Baum (`InstrumentPalette::zeigeArt`), die anderen Arten bleiben, wo sie
-  sind. **Heute ist davon nichts zu sehen:** unter Drums steht noch kein
-  mitgeliefertes Instrument (das bringt 11f), ein Kopf ohne Einträge fehlt im
-  Baum, und eigene Instrumente — auch die aus Edit sound... — stehen nur
-  unter My files (so gesetzt in S114).
+  sind. **Bis S116 war davon nichts zu sehen** (kein mitgeliefertes
+  Instrument unter Drums, ein Kopf ohne Einträge fehlt im Baum); **seit 11f
+  (S117) stehen dort sechs.** Eigene Instrumente — auch die aus Edit
+  sound... — stehen weiter nur unter My files (so gesetzt in S114).
 Von Claude gesetzt, nicht entschieden: der Ort von Edit sound... (das Menü
 des Rechtsklicks — die Skizze der Klangliste nannte ihn nicht); der Titel des
 neuen Instruments; Length aus der Länge ab Sample start, ohne Fine tune zu
@@ -2552,6 +2602,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.58.0** (S117, 2026-10-12): §4h — **Stufe 11f gebaut:** sechs gerechnete
+  Drum-Instrumente unter Drums, für die Note C2, gegen das Kit gemessen (die
+  Tabelle), leiser als das Kit; nicht gehört
 - **0.57.0** (S117, 2026-10-12): §4h — **Load instrument...** fragt, ob die
   Datei zu den eigenen kopiert wird oder am Ort bleibt (E3 a); die drei
   losen Dateien liegen unter `instruments` (E2 a)
