@@ -7,6 +7,7 @@
 
 #include "visualizers/multieffect/TrailPresetStore.hpp"
 
+#include "core/Mitgeliefert.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QCoreApplication>
@@ -59,18 +60,9 @@ QString assetDir()
 {
     if (!testRoot().isEmpty()) return QDir(testRoot()).filePath(QStringLiteral("asset"));
 
-    // Aufwaertssuche ab dem Programmordner wie bei den Knoten-Voreinstellungen;
-    // einmal aufgeloest und gemerkt. Anker ist die README des Ordners.
-    static const QString kDir = [] {
-        QDir dir(QCoreApplication::applicationDirPath());
-        for (int i = 0; i < 12; ++i)
-        {
-            const QString candidate = dir.filePath(QStringLiteral("asset/karaoke/trails"));
-            if (QFileInfo::exists(candidate + QStringLiteral("/README.md"))) return candidate;
-            if (!dir.cdUp()) break;
-        }
-        return QString();
-    }();
+    // neben der Exe oder im Projektordner (core/Mitgeliefert.hpp, S114);
+    // einmal aufgeloest und gemerkt
+    static const QString kDir = lumi::core::mitgeliefert::ordner(QStringLiteral("karaoke/trails"));
     return kDir;
 }
 

@@ -13,6 +13,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/GpuInfo.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GpuPreference.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/EinzelInstanz.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Mitgeliefert.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

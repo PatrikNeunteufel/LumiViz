@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "core/Mitgeliefert.hpp"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -52,18 +54,9 @@ enum class PresetIconKind
 /// Icon-Verzeichnis (asset/img/logo/icons) — leer, wenn nicht gefunden.
 inline QString presetIconDir()
 {
-    static const QString kDir = [] {
-        QDir dir(QCoreApplication::applicationDirPath());
-        for (int i = 0; i < 12; ++i)
-        {
-            const QString candidate =
-                dir.filePath(QStringLiteral("asset/img/logo/icons"));
-            if (QFileInfo::exists(candidate + QStringLiteral("/lumiviz.ico")))
-                return candidate;
-            if (!dir.cdUp()) break;
-        }
-        return QString();
-    }();
+    // neben der Exe oder im Projektordner (core/Mitgeliefert.hpp, S114)
+    static const QString kDir = lumi::core::mitgeliefert::ordner(
+        QStringLiteral("img/logo/icons"), QStringLiteral("lumiviz.ico"));
     return kDir;
 }
 

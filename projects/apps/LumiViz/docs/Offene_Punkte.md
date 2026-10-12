@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.153.0
-> **Datum:** 2026-10-11 (Session 113)
+> **Version:** 1.154.0
+> **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2416,9 +2416,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Einfügemarke, Ctrl+D, Entf, Pfeiltasten; im Instrument-Editor mehrere
     Noten als Gruppe ziehen; in beiden der Haken **Right-click deletes**
     (anfangs aus — **im Instrument-Editor löscht der Rechtsklick seither
-    nicht mehr von selbst**). **Im Programm nicht gesehen** — ⬜ Liste 10,
-    Abschnitt M (M0 bis M16) und Urteile U32 bis U36; Patrik will M0 bis M4,
-    M12 und M13 vor der nächsten Sitzung prüfen. 🔧 Nicht geprüft: die Menüs
+    nicht mehr von selbst**). **Im Programm:** Patrik hat M0 bis M4, M12 und
+    M13 der Liste 10 geprüft — „sind ok" (S114, im Gespräch, ohne Testlog).
+    ⬜ Liste 10, M5 bis M11, M14 bis M16 und Urteile U32 bis U36. 🔧 Nicht
+    geprüft: die Menüs
     des Rechtsklicks, ob die Tasten im gezeigten Fenster beim Raster ankommen
   - 🟡 **11 Instrumente aus Samples** — als Art von Schicht, mit Root note,
     Fine tune und Detect (Idee S113, von Patrik nicht verworfen;
@@ -2427,17 +2428,41 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     trägt (Patrik S113). Nächster Schritt: die Skizze
   - 🟡 **14 Palette der Instrumente** (Entscheid **P1 a**, S113): ein Fenster
     wie das Palettenfenster der Effektkette statt der Dropdown-Liste, mit
-    Sortieren oder Filtern nach **Genre** (Patrik). Nächster Schritt: die
-    Skizze
+    Filtern nach **Genre**. **Skizze gebilligt (Patrik S114)**, Entscheid
+    **F3 b**: Art, Genres und Beschreibung als Felder in der `.lvinst`,
+    Fassung 3. **Wartet auf die Datenablage** (Entscheid D1 b: erst die
+    Ablage, dann Stufe 14; eigene Instrumente im Benutzerordner — siehe Block
+    Datenablage unten). Skizze und F3 b stehen noch nicht in
+    `Loop_Konzept.md` — vor dem Bau eintragen
+  - 🟡 **Datenablage** (S114; Steuerdokument
+    [Datenablage_Konzept.md](core-services/Datenablage_Konzept.md), Entscheide
+    D1 b bis D10): **gebaut A1** — eine Stelle für den Ordner eines
+    mitgelieferten Bereichs (`core/Mitgeliefert`), sieben Sucher rufen sie;
+    zuerst die Kopie neben der Exe, in den Settings umschaltbar auf den
+    Projektordner (nur im Entwicklungsbaum sichtbar, gilt nach Neustart) —
+    und **A2** — `asset/Asset.cmake` listet, was neben die Exe kommt
+    (`nodepresets`, `shadertemplates`, `karaoke`, `composer`, `loop`,
+    `img/logo/icons`, `presets`), der Abgleich läuft bei jedem Bau von LumiViz
+    (421 Dateien, unverändert rund eine Sekunde, einmal gemessen).
+    **Im Programm nicht gesehen:** ob LumiViz die Kopie liest (Log-Zeile
+    „Bundled data …" beim Start), die Zeile „Bundled Data" im Settings-Panel.
+    **Offen:** A3 eigene Instrumente im Benutzerordner (mit Stufe 14), **A4
+    Export und Import** (`.lvdata` als Zip über miniz, Skizze gebilligt;
+    vorher die Liste der Einstellungen „geht mit / geht nicht mit" vorlegen
+    und ein Bild der Liste „Let me decide for each file"). 🔧 Im Nachgang,
+    ohne Priorität: Beispiele aus `examples`, `composits`, `shadertoys`,
+    `effectchain` neben die Exe (je Ordner erst die Herkunft prüfen); Icons
+    für `.lvloop`, `.lvinst`, `.lvdata`; Wunsch an CMakeCraft: Daten-Ordner
+    einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
+    `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
   - ⚪ **15 Wave-Clips (Tonspuren wie Gesang) und Autotune am Clip** —
     zurückgestellt (Patrik S113: Autotune darf warten, bis es Wave-Clips gibt)
   - 🟠 **Rückmeldung Patrik zum Instrument-Editor (S110):** Tasten anspielen
     und Notenlängen ziehen gingen bei ihm nicht — beides war gebaut.
     Nachgebessert (Griff, Mauszeiger, Hinweis bei stummen Tasten); **nicht
     geklärt, woran es lag** — nachfragen
-  - 🔧 das Kit **und seit S110 die Instrumente** liegen unter `asset/`, im
-    Release-Paket nicht neben der Exe — dort schwiegen alle Loops;
-    Debug-MSVC seit S108 nicht gebaut, der volle Lauf nie unter clang; ob
+  - ✅ das Kit und die Instrumente liegen seit S114 als `asset/loop` neben
+    der Exe (Datenablage A2). 🔧 Weiter offen: Debug-MSVC seit S108 nicht gebaut, der volle Lauf nie unter clang; ob
     `mixerRemoveSource` auf einen laufenden Rückruf wartet, ist nicht
     geprüft (die Tonführung lässt den Klangerzeuger deshalb vier Takte
     weiterleben)
@@ -5160,6 +5185,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.154.0 | 2026-10-12 | Session 114 — Loop: M0 bis M4, M12, M13 der Liste 10 von Patrik geprüft (ok); neu der Block **Datenablage** (Steuerdokument `core-services/Datenablage_Konzept.md`, Entscheide D1 b bis D10): Stufe A1 (eine Stelle für mitgelieferte Bereiche, Schalter in den Settings) und A2 (`asset/Asset.cmake`, Abgleich bei jedem Bau) gebaut, A3 (eigene Instrumente) und A4 (Export und Import) offen; der Kleinkram „Kit und Instrumente fehlen neben der Exe" ist damit erledigt; Stufe 14 des Loops wartet auf A4 (D1 b), F3 b notiert |
 | 1.153.0 | 2026-10-11 | Session 113 — §6 Loop: Stufe 12 (Effekte am Clip; E2 b, F2 a, G1 b) und Stufe 13 (Mehrfachauswahl in den Editoren; V1 a, V2 a, V3 a, der Haken Right-click deletes) gebaut; von Stufe 12 hat Patrik F0 bis F4 geprüft, Stufe 13 ist ungesehen; neu vorgemerkt Stufe 11 (Samples als Schicht, Multisamples), 14 (Palette der Instrumente, P1 a), 15 (Wave-Clips und Autotune, zurückgestellt); ein voller Testlauf brach einmal bei den Composer-Fällen „S102 Zeitachse" ab, Ursache nicht untersucht |
 | 1.152.0 | 2026-10-11 | Session 112 — §6 Sichttest-Steuerung: `cmakecraft.pin` v0.11.1; ein neuer Wackler in `test_PaletteUi.cpp:1609` (A10/A11, einmal `3 == 2`, Ursache nicht untersucht) |
 | 1.141.0 | 2026-10-11 | Session 109, Abschluss — §6 **Loop:** die Stufen 6a bis 8 gebaut (gemeinsame Basis `Achse`, Loop-Panel als Arrangement, Drum-Editor, Audio Browser, Loop als Clip im Composer mit Tags, Benutzerhandbuch §16, `Audio_System.md` §6a, Sichttest-Vorlage); Entscheide W1 b, T1 a, T2; offen der erste Blick ins Programm (Liste `Sichttest_Composer_10_Loop.md`, 56 Punkte), die gesetzten Regeln als Urteile, die Rückfrage beim Beenden, das Nachsetzen bei gedrosseltem Rechner, Aktionen der Steuerung für das Panel Loop; 1025 / 1025; im Programm ist seit S108 nichts davon gesehen oder gehört; der Sichttest mit dem Tester hat auch in S109 nicht stattgefunden. Verweis auf das Benutzerhandbuch §17 auf §18 nachgezogen |

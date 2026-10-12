@@ -5,6 +5,7 @@
 
 #include "loop/Kit.hpp"
 
+#include "core/Mitgeliefert.hpp"
 #include "loop/Instrument.hpp"
 
 #include <QCoreApplication>
@@ -24,17 +25,12 @@ namespace
 
 constexpr int kKitVorsatzLaenge = 4;  // "kit:"
 
-/// Aufwaertssuche ab dem Programmordner; Anker ist die README des Ordners.
+/// `asset/loop/kit` — neben der Exe oder im Projektordner
+/// (core/Mitgeliefert.hpp, S114).
 QString sucheKit()
 {
-    QDir dir(QCoreApplication::applicationDirPath());
-    for (int i = 0; i < 12; ++i)
-    {
-        const QString kandidat = dir.filePath(QStringLiteral("asset/loop"));
-        if (QFileInfo::exists(kandidat + QStringLiteral("/README.md"))) return kandidat + QStringLiteral("/kit");
-        if (!dir.cdUp()) break;
-    }
-    return {};
+    const QString loop = lumi::core::mitgeliefert::ordner(QStringLiteral("loop"));
+    return loop.isEmpty() ? QString() : loop + QStringLiteral("/kit");
 }
 
 }  // namespace

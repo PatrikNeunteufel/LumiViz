@@ -105,6 +105,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ScriptModules.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_BeatEstimator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_GpuPreference.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_Mitgeliefert.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShadertoyWrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVertrag.cpp"

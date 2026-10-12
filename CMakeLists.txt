@@ -51,36 +51,37 @@ foreach(_t IN ITEMS "${_lumi_app_name}" "${_lumi_app_name}.Core")
 endforeach()
 
 # ==============================================================================
-# Mitgelieferte Presets (S73)
+# Mitgeliefertes neben die Exe (S73 Presets; seit S114 alle Bereiche)
 # ==============================================================================
 #
-# `asset/presets/` wandert nach jedem Build neben die Exe, damit die Anwendung
-# ohne Vorbereitung etwas zu zeigen hat. Die Auswahl ist bewusst klein und
-# besteht ausschliesslich aus EIGENEN Werken — fremde Presets duerfen hier
-# nicht hinein (siehe THIRD_PARTY_NOTICES.md, "Nicht enthaltene Inhalte").
+# WAS neben die Exe kommt, steht in asset/Asset.cmake — dort eintragen, nicht
+# hier. Steuerdokument: projects/apps/LumiViz/docs/core-services/
+# Datenablage_Konzept.md (Entscheide Patrik S114).
 #
-# WEITERE PRESETS AUFNEHMEN: Anleitung in asset/presets/README.md.
-# Diese Datei muss dafuer NICHT angefasst werden — es wird der ganze Ordner
-# kopiert, ein neuer Unterordner genuegt.
+# Das Ziel LumiViz_Assets gleicht bei JEDEM Bau von LumiViz ab (kopiert
+# Geaendertes, entfernt am Ziel, was nicht mehr dazugehoert). Bis S114 lief
+# die Kopie von asset/presets als Schritt nach dem Bau — also nur, wenn die
+# Exe neu gelinkt wurde.
 #
-# Warum POST_BUILD und nicht install(): der uebliche Weg ist Starten aus dem
-# Build-Ordner; install() liefe dabei nie.
+# Mitgeliefert werden ausschliesslich EIGENE Werke (THIRD_PARTY_NOTICES.md,
+# "Nicht enthaltene Inhalte").
+#
+# Warum ein Ziel im Bau und nicht install(): der uebliche Weg ist Starten aus
+# dem Build-Ordner; install() liefe dabei nie.
 # ------------------------------------------------------------------------------
 
-set(_lumi_presets_src "${CMAKE_CURRENT_LIST_DIR}/asset/presets")
+set(_lumi_asset_liste "${CMAKE_CURRENT_LIST_DIR}/asset/Asset.cmake")
 
-if(TARGET LumiViz AND EXISTS "${_lumi_presets_src}")
-    add_custom_command(TARGET LumiViz POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${_lumi_presets_src}"
-                "$<TARGET_FILE_DIR:LumiViz>/presets"
-        # Die Pflegenotiz richtet sich an Mitwirkende, nicht an Anwender —
-        # neben der Exe hat sie nichts zu suchen.
-        COMMAND ${CMAKE_COMMAND} -E rm -f
-                "$<TARGET_FILE_DIR:LumiViz>/presets/README.md"
-        COMMENT "[Presets] asset/presets -> $<TARGET_FILE_DIR:LumiViz>/presets"
+if(TARGET LumiViz AND EXISTS "${_lumi_asset_liste}")
+    add_custom_target(LumiViz_Assets
+        COMMAND ${CMAKE_COMMAND}
+                "-DLUMI_ASSET_QUELLE=${CMAKE_CURRENT_LIST_DIR}/asset"
+                "-DLUMI_ASSET_ZIEL=$<TARGET_FILE_DIR:LumiViz>"
+                -P "${CMAKE_CURRENT_LIST_DIR}/asset/AssetAbgleich.cmake"
+        COMMENT "[Asset] asset/Asset.cmake -> $<TARGET_FILE_DIR:LumiViz>"
         VERBATIM)
-    message(STATUS "[Presets] Mitgelieferte Presets werden nach dem Build kopiert")
+    add_dependencies(LumiViz LumiViz_Assets)
+    message(STATUS "[Asset] Mitgeliefertes wird bei jedem Bau von LumiViz abgeglichen (asset/Asset.cmake)")
 
     # --------------------------------------------------------------------------
     # Anwender-Dokumentation neben die Exe (S73)
@@ -148,9 +149,9 @@ if(TARGET LumiViz AND EXISTS "${_lumi_presets_src}")
     endforeach()
     message(STATUS "[Lizenz] Lizenzdateien werden nach dem Build kopiert")
 elseif(NOT TARGET LumiViz)
-    message(WARNING "[Presets] Target LumiViz nicht gefunden — Presets werden NICHT kopiert")
+    message(WARNING "[Asset] Target LumiViz nicht gefunden — Mitgeliefertes wird NICHT kopiert")
 else()
-    message(WARNING "[Presets] ${_lumi_presets_src} fehlt — Presets werden NICHT kopiert")
+    message(WARNING "[Asset] ${_lumi_asset_liste} fehlt — Mitgeliefertes wird NICHT kopiert")
 endif()
 
 # ------------------------------------------------------------------------------

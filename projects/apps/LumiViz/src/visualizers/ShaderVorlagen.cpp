@@ -7,6 +7,7 @@
 
 #include "visualizers/multieffect/ShaderVorlagen.hpp"
 
+#include "core/Mitgeliefert.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"  // sanitize: dieselbe Namensregel
 
 #include <QCoreApplication>
@@ -27,23 +28,14 @@ QString& testRoot()
 }
 
 /**
- * Wurzel der mitgelieferten Vorlagen — Aufwaertssuche ab dem Programmordner wie
- * bei den Knoten-Voreinstellungen; Anker ist `asset/shadertemplates/README.md`.
+ * Wurzel der mitgelieferten Vorlagen — neben der Exe oder im Projektordner
+ * (core/Mitgeliefert.hpp, S114); einmal aufgeloest und gemerkt.
  */
 QString assetRoot()
 {
     if (!testRoot().isEmpty()) return QDir(testRoot()).filePath(QStringLiteral("asset"));
 
-    static const QString kRoot = [] {
-        QDir dir(QCoreApplication::applicationDirPath());
-        for (int i = 0; i < 12; ++i)
-        {
-            const QString candidate = dir.filePath(QStringLiteral("asset/shadertemplates"));
-            if (QFileInfo::exists(candidate + QStringLiteral("/README.md"))) return candidate;
-            if (!dir.cdUp()) break;
-        }
-        return QString();
-    }();
+    static const QString kRoot = lumi::core::mitgeliefert::ordner(QStringLiteral("shadertemplates"));
     return kRoot;
 }
 

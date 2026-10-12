@@ -7,6 +7,7 @@
 
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
+#include "core/Mitgeliefert.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QCoreApplication>
@@ -33,26 +34,16 @@ QString& testRoot()
 }
 
 /**
- * Wurzel der mitgelieferten Voreinstellungen — Aufwaertssuche ab dem Programmordner
- * wie bei den Format-Icons (PresetTypeIcons.hpp). Einmal aufgeloest und gemerkt;
- * leer, wenn `asset/nodepresets/README.md` nirgends liegt.
+ * Wurzel der mitgelieferten Voreinstellungen — neben der Exe oder im
+ * Projektordner (core/Mitgeliefert.hpp, S114). Einmal aufgeloest und gemerkt;
+ * leer, wenn `asset/nodepresets` nirgends liegt.
  */
 QString assetRoot()
 {
     if (!testRoot().isEmpty())
         return QDir(testRoot()).filePath(QStringLiteral("asset"));
 
-    static const QString kRoot = [] {
-        QDir dir(QCoreApplication::applicationDirPath());
-        for (int i = 0; i < 12; ++i)
-        {
-            const QString candidate = dir.filePath(QStringLiteral("asset/nodepresets"));
-            if (QFileInfo::exists(candidate + QStringLiteral("/README.md")))
-                return candidate;
-            if (!dir.cdUp()) break;
-        }
-        return QString();
-    }();
+    static const QString kRoot = lumi::core::mitgeliefert::ordner(QStringLiteral("nodepresets"));
     return kRoot;
 }
 

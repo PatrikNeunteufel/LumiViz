@@ -14,6 +14,7 @@
 #include "scripting/ScriptFormatter.hpp"  // FormatOptions-Defaults (Editor-Tab, S69)
 #include "core/GpuInfo.hpp"
 #include "core/GpuPreference.hpp"
+#include "core/Mitgeliefert.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/IEventBus.hpp"
 #include "services/LiveVideoFeed.hpp"  // Kamera-Tab: Freigabe + Testaufnahmen-Ordner (S70)
@@ -862,6 +863,23 @@ QWidget* SettingsPanel::createPanelsTab()
            "manager. It is created if it does not exist yet."));
     layout->addRow(tr("User Data:"), m_pOpenAppDataButton);
 
+    // Mitgeliefertes aus dem Projektordner statt aus der Kopie neben der Exe
+    // (Datenablage_Konzept.md, D9 a mit Schalter; Patrik S114). Die Zeile gibt
+    // es nur im Entwicklungsbaum: neben einer weitergegebenen Exe liegt kein
+    // Projekt, beide Reihenfolgen laesen dasselbe.
+    if (lumi::core::mitgeliefert::projektVorhanden())
+    {
+        m_pBundledFromProjectCheckBox = new QCheckBox(tr("Read from the project folder first"), widget);
+        m_pBundledFromProjectCheckBox->setObjectName(QStringLiteral("bundledFromProjectFirst"));
+        m_pBundledFromProjectCheckBox->setToolTip(
+            tr("Off (default): built-in presets, templates, instruments and icons are read from the "
+               "copy next to the executable — what a shipped build reads; a file changed under "
+               "asset/ needs a build first. On: they are read straight from the project folder. "
+               "Takes effect after a restart."));
+        m_pBundledFromProjectCheckBox->setChecked(lumi::core::mitgeliefert::projektZuerst());
+        layout->addRow(tr("Bundled Data:"), m_pBundledFromProjectCheckBox);
+    }
+
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
     return widget;
@@ -1281,6 +1299,9 @@ void SettingsPanel::setupConnections()
             this, &SettingsPanel::onOpenAppDataDir);
     connect(m_pImageSearchDirButton, &QPushButton::clicked,
             this, &SettingsPanel::onChooseImageSearchDir);
+    if (m_pBundledFromProjectCheckBox != nullptr)
+        connect(m_pBundledFromProjectCheckBox, &QCheckBox::toggled, this,
+                [](bool checked) { lumi::core::mitgeliefert::setzeProjektZuerst(checked); });
     connect(m_pAvsRenderScaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             this, [](int value) {
                 QSettings settings;

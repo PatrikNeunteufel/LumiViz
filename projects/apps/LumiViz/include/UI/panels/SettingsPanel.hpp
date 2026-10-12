@@ -140,6 +140,9 @@ private:
     // Panels Tab
     QPushButton* m_pResetImportDirButton = nullptr;
     QPushButton* m_pOpenAppDataButton = nullptr;
+    /// Mitgeliefertes aus dem Projektordner zuerst (core/Mitgeliefert.hpp,
+    /// S114) — nullptr ausserhalb des Entwicklungsbaums: die Zeile fehlt dann.
+    QCheckBox* m_pBundledFromProjectCheckBox = nullptr;
     QPushButton* m_pImageSearchDirButton = nullptr;
     /// AVS-Import: Render-Scale-Divisor des automatisch eingefuegten Knotens
     /// (QSettings "import/avsRenderScaleDivisor", 1 = neutral — S47)

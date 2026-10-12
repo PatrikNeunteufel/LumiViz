@@ -1,8 +1,10 @@
 # Mitgelieferte Presets
 
-Was in diesem Ordner liegt, wird **nach jedem Build neben die Exe kopiert** —
-nach `<Build-Ordner>/presets/`. Damit hat die Anwendung sofort etwas zu zeigen,
-ohne dass jemand erst eine Sammlung beschaffen muss.
+Was in diesem Ordner liegt, wird **bei jedem Bau von LumiViz neben die Exe
+abgeglichen** — nach `<Build-Ordner>/presets/`. Damit hat die Anwendung sofort
+etwas zu zeigen, ohne dass jemand erst eine Sammlung beschaffen muss. Was
+insgesamt neben die Exe kommt, listet [`asset/Asset.cmake`](../Asset.cmake)
+(seit S114).
 
 ## Was aktuell mitgeliefert wird
 
@@ -45,27 +47,28 @@ mitgeliefert werden soll. Diese Datei wird beim Build **nicht** mitkopiert.
    dem Set. Der Ordnername taucht in der Anwendung so auf, wie er hier heißt.
 2. **Dateien hineinlegen.**
 3. **In die `Source.cmake` eintragen?** Nein — Presets sind keine Quelldateien.
-   Es wird der **ganze Ordner** kopiert (`copy_directory` im Root-`CMakeLists.txt`);
-   ein neuer Unterordner wird ohne weiteres Zutun mitgenommen.
-4. **Neu konfigurieren ist nicht nötig**, ein Build genügt. Nur wenn `asset/presets/`
-   vorher gar nicht existierte, muss einmal neu konfiguriert werden — die Kopie
-   wird beim Konfigurieren verdrahtet.
+   Es wird der **ganze Ordner** abgeglichen (Eintrag `presets` in
+   `asset/Asset.cmake`); ein neuer Unterordner wird ohne weiteres Zutun mitgenommen.
+4. **Neu konfigurieren ist nicht nötig**, ein Bau von LumiViz genügt — der
+   Abgleich läuft bei jedem Bau, auch wenn die Exe nicht neu gelinkt wird.
 5. **Diese Datei ergänzen** — die Tabelle oben ist die Übersicht.
 
 ### Wenn nichts ankommt
 
-Die Kopie meldet sich beim Konfigurieren:
+Der Abgleich meldet sich beim Konfigurieren und bei jedem Bau:
 
 ```
--- [Presets] Mitgelieferte Presets werden nach dem Build kopiert
+-- [Asset] Mitgeliefertes wird bei jedem Bau von LumiViz abgeglichen (asset/Asset.cmake)
+-- [Asset] 421 Dateien neben der Exe, 0 kopiert, 0 entfernt
 ```
 
 Fehlt die Zeile oder steht dort eine Warnung, greift die Verdrahtung nicht —
-dann im Root-`CMakeLists.txt` nachsehen (Abschnitt „Mitgelieferte Presets").
+dann im Root-`CMakeLists.txt` nachsehen (Abschnitt „Mitgeliefertes neben die
+Exe") und in `asset/AssetAbgleich.cmake`.
 
-`copy_directory` **überschreibt, löscht aber nicht**: eine hier entfernte Datei
-bleibt im Build-Ordner liegen, bis der Ordner geleert wird. Beim Aufräumen also
-`<Build-Ordner>/presets/` von Hand löschen und neu bauen.
+Der Abgleich **entfernt** seit S114 auch: eine hier gelöschte Datei
+verschwindet beim nächsten Bau aus `<Build-Ordner>/presets/`. Dort also nichts
+von Hand ablegen.
 
 ## ⚠️ Nur eigene Werke
 

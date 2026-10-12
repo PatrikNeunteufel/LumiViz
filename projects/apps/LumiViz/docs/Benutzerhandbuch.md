@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.123.0
-> **Datum:** 2026-10-11
+> **Version:** 1.124.0
+> **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -255,7 +255,10 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   Prozessstart, deshalb **startet die App bei einer Änderung sofort neu**.
   Darunter zeigt *Active GPU* die tatsächlich benutzte Karte.
 - **Panels:** **Effect Browser: Reset Start Folder** (Startordner zurücksetzen) — er springt danach in
-  den **Programmordner**, wo der mitgelieferte Ordner `presets/` liegt · Render-Scale-Divisor
+  den **Programmordner**, wo der mitgelieferte Ordner `presets/` liegt (daneben liegt der Ordner
+  `asset/` mit dem, was das Programm selbst liest: mitgelieferte Voreinstellungen, Shader-Vorlagen,
+  Blenden, das Kit und die Instrumente des Loops, die Beispiel-Loops unter `asset/loop/` und die
+  Datei-Icons — beide Ordner gehören zur App, eigene Dateien legt man dort nicht ab) · Render-Scale-Divisor
   für AVS-Importe · **Image Search Folder** (Bilder-Suchordner) — wird beim Import durchsucht, wenn
   neben dem Preset kein Bild für Picture/Texer liegt, und ist der Startordner der
   Bildauswahl in der Effektkette · **User Data: Open Folder** (Benutzerdaten-Ordner) — dort liegen
@@ -2807,6 +2810,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.124.0 | 2026-10-12 | §Settings, Panels (Session 114): neben der Exe liegt jetzt der Ordner `asset/` mit dem, was das Programm selbst liest (Voreinstellungen, Vorlagen, Blenden, Kit, Instrumente, Beispiel-Loops, Datei-Icons) |
 | 1.123.0 | 2026-10-11 | Session 113. §16 Loop — **Der Drum-Editor** und **Der Instrument-Editor** NEU je der Abschnitt „Mehrere Schritte / Noten zugleich": markieren mit Shift+Ziehen und Ctrl+Klick, Ctrl+C / X / V an der **Einfügemarke** (Klick in die Zeile der Takte), Ctrl+Shift+V legt im Drum-Editor nur dazu, Ctrl+D, Entf, Pfeiltasten, **Alt+Pfeil** dreht im Kreis, im Instrument-Editor mehrere Noten als Gruppe ziehen; das Menü des Rechtsklicks; NEU der Haken **Right-click deletes** in beiden Editoren. GEÄNDERT: im Instrument-Editor löscht der Rechtsklick auf eine Note nur noch mit diesem Haken — sonst markiert er sie und öffnet das Menü |
 | 1.122.0 | 2026-10-11 | Session 113. §16 Loop NEU **Effekte am Clip**: das Fenster **Clip effects** (Rechtsklick auf einen Clip → **Effects...**) mit Distortion, Echo und Reverb je Clip, „mixed" bei mehreren, Copy, Paste, Reset, die Marke **fx** am Clip; **Clips und Kanäle** GEÄNDERT: mehrere Clips markieren (Ctrl+Klick, Rahmen, Ctrl+A, **Select all clips**), als Gruppe ziehen, kopieren und löschen; Beispiel `asset\loop\effects_demo.lvloop`; der Satz „Hall und Echo gibt es noch nicht" im Abschnitt Instrument-Creator ersetzt |
 | 1.121.0 | 2026-10-11 | Session 111. §16 Loop — **Beispiele** um neunzehn Loops nach Genre unter `asset\loop\genres` erweitert (Trance, Funk, Disco, Reggae, Ska, Reggaeton, Hip-Hop, Trap, Drum and Bass, Techno, Bossa Nova, Blues, Jazz Waltz, Lo-Fi, Synth-Pop, Afrobeat, Metal); neunzehn Instrumente dazu (neunundvierzig insgesamt) |

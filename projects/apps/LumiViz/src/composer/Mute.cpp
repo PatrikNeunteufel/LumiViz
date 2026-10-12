@@ -6,6 +6,7 @@
 #include "composer/Mute.hpp"
 
 #include "audio/IAudioPlayer.hpp"
+#include "core/Mitgeliefert.hpp"
 #include "visualizers/multieffect/NodePresetStore.hpp"
 
 #include <QCoreApplication>
@@ -248,17 +249,10 @@ void sammle(const QString& ordner, bool mitgeliefert, std::vector<Eintrag>& aus)
         aus.push_back({QFileInfo(datei).completeBaseName(), dir.filePath(datei), mitgeliefert});
 }
 
-/// Aufwaertssuche ab dem Programmordner; Anker ist die README des Ordners.
+/// Neben der Exe oder im Projektordner (core/Mitgeliefert.hpp, S114).
 QString sucheAsset()
 {
-    QDir dir(QCoreApplication::applicationDirPath());
-    for (int i = 0; i < 12; ++i)
-    {
-        const QString kandidat = dir.filePath(QStringLiteral("asset/") + kUnterordner);
-        if (QFileInfo::exists(kandidat + QStringLiteral("/README.md"))) return kandidat;
-        if (!dir.cdUp()) break;
-    }
-    return {};
+    return lumi::core::mitgeliefert::ordner(kUnterordner);
 }
 
 }  // namespace
