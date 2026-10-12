@@ -224,6 +224,9 @@ bool einstellungGehtMit(const QString& schluessel)
     static const QSet<QString> kEinzeln = {
         QStringLiteral("effectPalette/favorites"),
         QStringLiteral("effectPalette/recent"),
+        // das Fenster „Instruments" (S114, Stufe 14c): Namen, wie ein Muster sie nennt
+        QStringLiteral("instrumentPalette/favorites"),
+        QStringLiteral("instrumentPalette/recent"),
         // E1 a: Favoriten der Presets, volle Dateipfade — sie gehen mit, wie sie sind
         QStringLiteral("presets/chain/favorites"),
         QStringLiteral("presets/karaoke/favorites"),

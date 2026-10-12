@@ -2442,8 +2442,18 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     eigene Kopie unter einem Namen in den Benutzerordner (GEÄNDERT: war
     grau), Save as... bleibt für einen freien Ort. Im Programm nicht
     gesehen; nicht geprüft: der Dialog „Save instrument" und die Vorschläge
-    der Genres im gezeigten Fenster. **Offen:** 14c das Fenster und
-    Browse...
+    der Genres im gezeigten Fenster. **Gebaut 14c** — das Fenster
+    **Instruments** (`loop/InstrumentPalette`): Suche, Filter nach Genre,
+    Favorites, Recently used, die acht Arten, My files, Anspielen per Klick
+    mit Preview note, Use; im Instrument-Editor **Browse...** statt der
+    Dropdown-Liste (GEÄNDERT). **Stufe 14 ist gebaut. Im Programm nicht
+    gesehen und nicht gehört** — ⬜ Liste 10, Abschnitt P (P0 bis P14) und
+    Urteile U37 bis U41. Nicht geprüft: das Menü des Rechtsklicks, die
+    Tasten, das Fenster neben dem Editor. Von Claude gesetzt und nicht
+    entschieden: die Zuordnung der 49 nach Art und ihre Beschreibungen, die
+    Genres aus den Loops gezählt (Guitar und Violin ohne), ein eigenes
+    Instrument steht nur unter My files, Preview note je Art. 🔧 Vorgemerkt:
+    der Schalter „Replace the built-in one for all loops" (P2 c)
   - 🟡 **Datenablage** (S114; Steuerdokument
     [Datenablage_Konzept.md](core-services/Datenablage_Konzept.md), Entscheide
     D1 b bis D10): **gebaut A1** — eine Stelle für den Ordner eines
@@ -2466,7 +2476,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Liste `Sichttest_Datenablage.md` (D0 bis D14). 🔧 Offene Listen lesen
     nach einem Import nicht von selbst neu (nicht geprüft, welche es doch
     tun); ganze Spalten in der Liste über drei Knöpfe statt Haken im Kopf.
-    **Offen:** A3 eigene Instrumente im Benutzerordner (mit Stufe 14).
+    **A3** — eigene Instrumente im Benutzerordner — ist mit Stufe 14 des
+    Loops gebaut; damit ist die Datenablage gebaut.
     🔧 Vorgemerkt (Frage Patrik S114): ein Instrument trägt höchstens vier
     Schichten (`kSchichtenMax`, von Claude in S111 gesetzt, nicht gemessen)
     — vor einem Anheben die Rechenzeit je Ton mit vier, sechs, acht messen. 🟠 **Befund:** in

@@ -9,6 +9,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
+#include "loop/InstrumentPalette.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -998,9 +999,20 @@ void InstrumentEditor::setupUI()
     aussen->addLayout(kopf);
 
     auto* zeile = new QHBoxLayout;
-    m_instrument = new QComboBox(this);
+    // der Name des Instruments als Text; gewaehlt wird im Fenster „Instruments"
+    // (Stufe 14c, Entscheid P1 a — bis S113 stand hier eine Dropdown-Liste)
+    m_instrument = new QLabel(this);
     m_instrument->setObjectName(QStringLiteral("instrumentSound"));
     m_instrument->setMinimumWidth(130);
+    {
+        QFont fett = m_instrument->font();
+        fett.setBold(true);
+        m_instrument->setFont(fett);
+    }
+    m_instrumentSuchen = new QPushButton(tr("Browse..."), this);
+    m_instrumentSuchen->setObjectName(QStringLiteral("instrumentBrowse"));
+    m_instrumentSuchen->setToolTip(
+        tr("Open the Instruments window: search, filter by genre, listen, and use an instrument in this pattern"));
     m_laut = new QSlider(Qt::Horizontal, this);
     m_laut->setObjectName(QStringLiteral("instrumentVolume"));
     m_laut->setRange(0, 100);
@@ -1025,6 +1037,7 @@ void InstrumentEditor::setupUI()
     m_instrumentLaden->setToolTip(tr("Use an instrument file (.lvinst) for this pattern"));
     zeile->addWidget(new QLabel(tr("Instrument"), this));
     zeile->addWidget(m_instrument);
+    zeile->addWidget(m_instrumentSuchen);
     zeile->addWidget(m_instrumentBearbeiten);
     zeile->addWidget(m_instrumentLaden);
     zeile->addWidget(new QLabel(tr("Volume"), this));
@@ -1071,8 +1084,7 @@ void InstrumentEditor::setupUI()
 
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
-    connect(m_instrument, &QComboBox::activated, this,
-            [this](int index) { setzeInstrument(m_instrument->itemData(index).toString()); });
+    connect(m_instrumentSuchen, &QPushButton::clicked, this, [this] { oeffnePalette(); });
     connect(m_stumm, &QToolButton::toggled, this, [this](bool stumm) { setzeStumm(stumm); });
     connect(m_instrumentBearbeiten, &QPushButton::clicked, this, [this] { (void)oeffneCreator(); });
     connect(m_instrumentLaden, &QPushButton::clicked, this, [this] {
@@ -1194,6 +1206,7 @@ void InstrumentEditor::setLoop(const Loop& loop)
     {
         // die Basis gibt es nicht mehr (ihr letzter Clip ist geloescht, ein anderer Loop geladen)
         m_muster.clear();
+        if (m_palette != nullptr) m_palette->setzeZiel(QString());
         close();
         return;
     }
@@ -1210,27 +1223,19 @@ void InstrumentEditor::zeigeAlles()
     m_nutzer->setText(tr("· used by %1 clips").arg(basisNutzer(m_loop, m_muster)));
     {
         const QSignalBlocker a(m_takte);
-        const QSignalBlocker b(m_instrument);
         const QSignalBlocker c(m_laut);
         const QSignalBlocker d(m_pan);
         const QSignalBlocker e(m_stumm);
         m_takte->setValue(ziel->takte);
-        m_instrument->clear();
-        for (const Instrument& instrument : instrumente()) m_instrument->addItem(instrument.titel, instrument.name);
-        // eine eigene Datei steht mit ihrem Titel da; was sich nicht finden
-        // laesst, bleibt stehen — es schweigt
-        if (m_instrument->findData(ziel->instrument) < 0)
-        {
-            Instrument eigenes;
-            const bool datei = istInstrumentDatei(ziel->instrument);
-            const QString kurz = datei ? QFileInfo(ziel->instrument).fileName() : ziel->instrument;
-            m_instrument->addItem(holeInstrument(ziel->instrument, eigenes) ? tr("%1 (%2)").arg(eigenes.titel, kurz)
-                                                                             : tr("%1 (not found)").arg(kurz),
-                                  ziel->instrument);
-        }
-        m_instrument->setToolTip(istInstrumentDatei(ziel->instrument) ? QDir::toNativeSeparators(ziel->instrument)
-                                                                      : QString());
-        m_instrument->setCurrentIndex(m_instrument->findData(ziel->instrument));
+        // ein eigenes und eine Datei stehen mit ihrem Titel da; was sich nicht
+        // finden laesst, bleibt stehen — es schweigt
+        m_instrument->setText(instrumentAnzeige(ziel->instrument));
+        m_instrument->setToolTip(istInstrumentDatei(ziel->instrument)
+                                     ? QDir::toNativeSeparators(ziel->instrument)
+                                     : istEigenesInstrument(ziel->instrument)
+                                           ? QDir::toNativeSeparators(eigeneDatei(
+                                                 ziel->instrument.mid(static_cast<int>(qstrlen(kEigenVorsatz)))))
+                                           : QString());
         if (!m_laut->isSliderDown()) m_laut->setValue(static_cast<int>(std::lround(ziel->laut * 100.0)));
         if (!m_pan->isSliderDown()) m_pan->setValue(static_cast<int>(std::lround(ziel->pan * 100.0)));
         m_stumm->setChecked(ziel->stumm);
@@ -1238,6 +1243,41 @@ void InstrumentEditor::zeigeAlles()
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     passeRollbalkenAn();
     zeigeAuswahl();
+    // das Fenster „Instruments" waehlt fuer diese Basis
+    if (m_palette != nullptr) m_palette->setzeZiel(m_muster);
+}
+
+QString InstrumentEditor::instrumentAnzeige(const QString& nennung)
+{
+    Instrument instrument;
+    const bool datei = istInstrumentDatei(nennung);
+    const QString kurz = datei ? QFileInfo(nennung).fileName() : nennung;
+    if (!holeInstrument(nennung, instrument)) return tr("%1 (not found)").arg(kurz);
+    if (istEigenesInstrument(nennung)) return tr("%1 (My files)").arg(instrument.titel);
+    return datei ? tr("%1 (%2)").arg(instrument.titel, kurz) : instrument.titel;
+}
+
+InstrumentPalette* InstrumentEditor::palette() const
+{
+    return m_palette;
+}
+
+void InstrumentEditor::oeffnePalette(bool zeigen)
+{
+    if (m_palette == nullptr)
+    {
+        m_palette = new InstrumentPalette(this);
+        connect(m_palette, &InstrumentPalette::verwenden, this, &InstrumentEditor::setzeInstrument);
+        // ein Klick im Fenster spielt das Instrument an — auf demselben Weg wie der Creator
+        connect(m_palette, &InstrumentPalette::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
+    }
+    m_palette->setzeZiel(m_muster);
+    if (zeigen)
+        m_palette->zeigeVorn();
+    else
+        m_palette->liesNeu();
+    // das Instrument der Basis ist gewaehlt — ohne es anzuspielen
+    if (const Muster* ziel = basis()) (void)m_palette->waehle(ziel->instrument);
 }
 
 void InstrumentEditor::zeigeAuswahl()
@@ -1288,6 +1328,13 @@ bool InstrumentEditor::oeffneCreator(bool zeigen)
         connect(m_creator, &InstrumentCreator::gespeichert, this, [this](const QString& pfad) {
             setzeInstrument(pfad);
             Q_EMIT instrumentGespeichert();
+            // ein neues oder geaendertes eigenes: das Fenster „Instruments" zeigt es gleich
+            if (m_palette != nullptr)
+            {
+                m_palette->liesNeu();
+                (void)m_palette->waehle(pfad);
+            }
+            zeigeAlles();  // der Titel in der Zeile kann sich geaendert haben, auch wenn die Nennung blieb
         });
         connect(m_creator, &InstrumentCreator::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
     }

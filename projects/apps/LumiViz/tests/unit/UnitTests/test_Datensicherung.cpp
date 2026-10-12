@@ -448,6 +448,7 @@ TEST_CASE("Datensicherung: die Einstellungen — nur was mitgehen darf, hin und 
 {
     // die Liste (Datenablage_Konzept.md §4a)
     for (const char* mit : {"shortcuts/view.screenshot", "effectPalette/favorites", "effectPalette/recent",
+                            "instrumentPalette/favorites", "instrumentPalette/recent",
                             "presets/chain/favorites", "presets/karaoke/favorites", "player/shuffle",
                             "composer/atEnd", "composer/muteProfile", "milkdrop/pufferWechsel", "editor/indentWidth",
                             "lyrics/onlineSearch", "karaoke/enabled", "loop/drumRightClickDeletes",
@@ -462,7 +463,8 @@ TEST_CASE("Datensicherung: die Einstellungen — nur was mitgehen darf, hin und 
                              "screenshot/baseDir", "player/resumeFile", "player/resumePositionMs",
                              "composer/session/file", "playlist/sessionIndex", "presets/chain/current",
                              "presets/chain/recent", "karaoke/currentPreset", "ui/lastVisualizer",
-                             "data/bundledFromProjectFirst", "panels/import_browser/lastPreset", "etwas/neues"})
+                             "data/bundledFromProjectFirst", "panels/import_browser/lastPreset",
+                             "instrumentPalette/geometry", "etwas/neues"})
     {
         CAPTURE(ohne);
         CHECK_FALSE(ds::einstellungGehtMit(QString::fromLatin1(ohne)));

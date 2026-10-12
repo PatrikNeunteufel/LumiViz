@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.126.0
+> **Version:** 1.127.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2640,8 +2640,27 @@ das Instrument, mit dem er gespeichert wurde.
 
 | Im Instrument-Editor | Wirkung |
 |---|---|
+| **Browse...** | Öffnet das Fenster **Instruments** (siehe unten). Der Name des Instruments steht fett davor — bei einem eigenen „Titel (My files)", bei einer Datei „Titel (Dateiname)" |
 | **Edit instrument...** | Öffnet den Creator mit dem Instrument des Musters. Ein mitgeliefertes wird dabei zur Vorlage: es selbst bleibt, wie es ist |
-| **Load instrument...** | Nimmt eine Datei `.lvinst` für dieses Muster. In der Auswahl steht sie als „Titel (Dateiname)" |
+| **Load instrument...** | Nimmt eine Datei `.lvinst` von einem beliebigen Ort für dieses Muster |
+
+**Das Fenster Instruments** bleibt offen, während du arbeitest, und wählt immer für
+das Muster, das der Instrument-Editor gerade zeigt („For pattern: …").
+
+| Im Fenster Instruments | Wirkung |
+|---|---|
+| **Search** | Sucht in Name, Art, Genres und Beschreibung; mehrere Worte müssen alle vorkommen. Pfeil hinunter führt in die Liste, Enter verwendet das gewählte |
+| **Genre** | Zeigt nur Instrumente, die dieses Genre tragen. Die Genres der mitgelieferten sind aus den Beispiel-Loops gezählt |
+| Die Liste | **Favorites**, **Recently used** (die letzten acht), dann die Arten Keys, Bass, Lead, Pads and strings, Plucked, Wind, Percussion, Unusual mit der Zahl dahinter, zuletzt **My files** — deine eigenen Instrumente. Was Suche oder Genre ausschließen, verschwindet samt Überschrift |
+| Klick | Spielt einen Ton des Instruments und zeigt unten Art, Genres, einen Satz und die Zahl der Schichten |
+| **Preview note** | Die Tonhöhe des Anspielens. Sie stellt sich bei jedem Instrument auf seine Art (ein Bass spielt tief, C2; alles andere C4) und lässt sich von C1 bis C6 ändern |
+| **Play** | Spielt den Ton noch einmal |
+| **Favorite** | Legt das gewählte unter Favorites, oder nimmt es wieder heraus |
+| Doppelklick, Enter, **Use** | Setzt das Instrument ins Muster (Ctrl+Z nimmt es zurück). Ohne offenes Instrument-Muster ist Use grau |
+| Rechtsklick | Use, Play, Favorit; bei einem eigenen Instrument dazu **Show in folder** und **Delete** — ein gelöschtes fehlt jedem Muster, das es nennt |
+
+Die Tasten schweigen, solange der Composer den Ton hat oder der Loop spielt — wie
+die Klaviatur des Editors.
 
 | Im Creator | Wirkung |
 |---|---|
@@ -2830,6 +2849,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.127.0 | 2026-10-12 | Session 114. §16 Loop NEU **das Fenster Instruments**: **Browse...** im Instrument-Editor, Suche, Filter nach Genre, die Arten als Liste, Favorites, Recently used, My files, Anspielen per Klick mit Preview note, Use (GEÄNDERT: die Dropdown-Liste der Instrumente gibt es nicht mehr) |
 | 1.126.0 | 2026-10-12 | Session 114. §16 Loop, Instrument-Creator: die zweite Zeile **Type**, **Genres**, **Description**; **Save** legt eine eigene Kopie unter einem Namen zu den eigenen Dateien (GEÄNDERT: bei einem mitgelieferten Instrument war Save grau), **Save as...** bleibt für einen freien Ort; ein eigenes Instrument verdrängt kein mitgeliefertes |
 | 1.125.0 | 2026-10-12 | Settings, Panels (Session 114): **Export...** und **Import...** der eigenen Daten als eine Datei `.lvdata` — Bereiche wählen, vier Regeln bei gleichem Namen, die Liste „Let me decide for each file" |
 | 1.124.0 | 2026-10-12 | §Settings, Panels (Session 114): neben der Exe liegt jetzt der Ordner `asset/` mit dem, was das Programm selbst liest (Voreinstellungen, Vorlagen, Blenden, Kit, Instrumente, Beispiel-Loops, Datei-Icons) |

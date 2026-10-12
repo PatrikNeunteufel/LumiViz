@@ -40,6 +40,7 @@ namespace lumi::loop
 {
 
 class InstrumentCreator;
+class InstrumentPalette;
 
 /// Das Raster der Noten. Es rollt selbst — waagrecht (lange Muster) und
 /// senkrecht (sechs Oktaven): Klaviatur, Kopf und die Zeile der Lautstaerken
@@ -274,6 +275,18 @@ public:
     /// Das Fenster des Creators; nullptr, solange er noch nie geoeffnet wurde.
     [[nodiscard]] InstrumentCreator* creator() const;
 
+    // --- das Fenster „Instruments" (Stufe 14c) --------------------------------
+    /// „Browse...": das Fenster oeffnen (es entsteht beim ersten Mal) und das
+    /// Instrument dieser Basis darin waehlen. **Use** dort setzt das
+    /// Instrument ins Muster. `zeigen` false fuellt es nur (fuer Tests).
+    void oeffnePalette(bool zeigen = true);
+    /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] InstrumentPalette* palette() const;
+    /// Wie das Instrument einer Basis in der Zeile steht: der Titel; bei einem
+    /// eigenen „Titel (My files)", bei einer Datei „Titel (datei.lvinst)",
+    /// sonst „name (not found)".
+    [[nodiscard]] static QString instrumentAnzeige(const QString& nennung);
+
 Q_SIGNALS:
     /// Der Creator will einen Ton hoeren: das Instrument beim Pfad seiner
     /// Vorhoer-Datei.
@@ -308,10 +321,12 @@ private:
     QSpinBox* m_takte = nullptr;
     QPushButton* m_play = nullptr;
     QLabel* m_spitze = nullptr;
-    QComboBox* m_instrument = nullptr;
+    QLabel* m_instrument = nullptr;  ///< der Name des Instruments (bis S113 eine Dropdown-Liste)
+    QPushButton* m_instrumentSuchen = nullptr;  ///< „Browse..."
     QPushButton* m_instrumentBearbeiten = nullptr;
     QPushButton* m_instrumentLaden = nullptr;
     QPointer<InstrumentCreator> m_creator;
+    QPointer<InstrumentPalette> m_palette;
     QSlider* m_laut = nullptr;
     QSlider* m_pan = nullptr;
     QToolButton* m_stumm = nullptr;

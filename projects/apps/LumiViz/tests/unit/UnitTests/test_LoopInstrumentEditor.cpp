@@ -735,10 +735,11 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(gemeldet == QStringList{QStringLiteral("Change instrument")});
         CHECK(loop.muster[0].instrument == pfad);
         CHECK(gespeichert == 1);
-        auto* auswahl = editor.findChild<QComboBox*>(QStringLiteral("instrumentSound"));
+        // die Zeile nennt das Instrument als Text (seit 14c keine Dropdown-Liste mehr)
+        auto* auswahl = editor.findChild<QLabel*>(QStringLiteral("instrumentSound"));
         REQUIRE(auswahl != nullptr);
-        CHECK(auswahl->currentText() == QStringLiteral("My piano (my_piano.lvinst)"));
-        CHECK(auswahl->count() == static_cast<int>(instrumente().size()) + 1);
+        CHECK(auswahl->text() == QStringLiteral("My piano (my_piano.lvinst)"));
+        CHECK(QDir::fromNativeSeparators(auswahl->toolTip()) == pfad);
 
         // noch einmal Save in dieselbe Datei: am Loop aendert sich nichts, gemeldet wird es trotzdem
         creator->aendereSchicht([](Schicht& s) { s.halten = 0.3; });
@@ -1031,19 +1032,22 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
         CHECK(editor.windowTitle() == QStringLiteral("Instrument pattern: Mel"));
         CHECK(editor.findChild<QLabel*>(QStringLiteral("instrumentUsers"))->text() == QStringLiteral("· used by 2 clips"));
-        auto* auswahl = editor.findChild<QComboBox*>(QStringLiteral("instrumentSound"));
+        // das Instrument steht als Text in der Zeile, daneben Browse... (seit 14c)
+        auto* auswahl = editor.findChild<QLabel*>(QStringLiteral("instrumentSound"));
         REQUIRE(auswahl != nullptr);
-        const int mitgeliefert = static_cast<int>(instrumente().size());
-        REQUIRE(mitgeliefert >= 7);
-        REQUIRE(auswahl->count() == mitgeliefert);
-        CHECK(auswahl->itemText(0) == instrumente().front().titel);  // nach Titel sortiert
-        CHECK(auswahl->currentData().toString() == QStringLiteral("piano"));
+        CHECK(auswahl->text() == QStringLiteral("Piano"));
+        CHECK(editor.findChild<QComboBox*>(QStringLiteral("instrumentSound")) == nullptr);
+        REQUIRE(editor.findChild<QPushButton*>(QStringLiteral("instrumentBrowse")) != nullptr);
 
         // --- Instrument, Lautstaerke, Panorama, Stumm, Takte
         editor.setzeInstrument(QStringLiteral("strings"));
         CHECK(gemeldet.last() == QStringLiteral("Change instrument"));
         CHECK(loop.muster[0].instrument == QStringLiteral("strings"));
-        CHECK(auswahl->currentText() == QStringLiteral("Strings"));
+        CHECK(auswahl->text() == QStringLiteral("Strings"));
+        // was sich nicht finden laesst, bleibt stehen und sagt es
+        CHECK(InstrumentEditor::instrumentAnzeige(QStringLiteral("tuba")) == QStringLiteral("tuba (not found)"));
+        CHECK(InstrumentEditor::instrumentAnzeige(QStringLiteral("user:gibt_es_nicht")) ==
+              QStringLiteral("user:gibt_es_nicht (not found)"));
         editor.setzeInstrument(QStringLiteral("strings"));  // dasselbe noch einmal: nichts
         CHECK(gemeldet.size() == 1);
         editor.setzeLaut(0.5);
@@ -1109,14 +1113,14 @@ TEST_SUITE("LoopInstrumentEditor")
         editor.setSpitze(-1.0);
         CHECK(spitze->text() == QStringLiteral("–"));
 
-        // --- ein Instrument, das dieses Programm nicht kennt, bleibt in der Auswahl stehen
+        // --- ein Instrument, das dieses Programm nicht kennt, bleibt in der Zeile stehen
         Loop fremd = loop;
         musterIn(fremd, QStringLiteral("Mel"))->instrument = QStringLiteral("tuba");
         editor.setLoop(fremd);
-        CHECK(auswahl->count() == mitgeliefert + 1);
-        CHECK(auswahl->currentText() == QStringLiteral("tuba (not found)"));
+        CHECK(auswahl->text() == QStringLiteral("tuba (not found)"));
         editor.setLoop(loop);
-        CHECK(auswahl->count() == mitgeliefert);
+        CHECK(auswahl->text() == InstrumentEditor::instrumentAnzeige(loop.muster[0].instrument));
+        CHECK_FALSE(auswahl->text().contains(QStringLiteral("not found")));
 
         // --- die Basis wird umbenannt: der Editor folgt; es gibt sie nicht mehr: er ist leer
         Loop umbenannt = loop;
