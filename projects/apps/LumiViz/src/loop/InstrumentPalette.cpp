@@ -54,7 +54,9 @@ constexpr int kHoeheSonst = 60;   // C4
 
 int InstrumentPalette::hoeheFuerArt(const QString& art)
 {
-    return gueltigeArt(art) == QLatin1String("bass") ? kHoeheBass : kHoeheSonst;
+    // ein Bass und ein Schlag fuer eine Drum-Spur (K3 a) spielen tief
+    const QString schluessel = gueltigeArt(art);
+    return schluessel == QLatin1String("bass") || schluessel == QLatin1String("drums") ? kHoeheBass : kHoeheSonst;
 }
 
 InstrumentPalette::InstrumentPalette(QWidget* parent) : QWidget(parent, Qt::Window)

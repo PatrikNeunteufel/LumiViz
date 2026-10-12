@@ -27,7 +27,7 @@ from pathlib import Path
 
 HIER = Path(__file__).resolve().parent
 
-ARTEN = ("keys", "bass", "lead", "pads", "plucked", "wind", "percussion", "unusual")
+ARTEN = ("keys", "bass", "lead", "pads", "plucked", "wind", "percussion", "drums", "unusual")
 
 # Name der Datei -> (Art, Beschreibung)
 KATALOG = {

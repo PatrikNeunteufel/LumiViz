@@ -5,6 +5,8 @@
 
 #include "loop/Loop.hpp"
 
+#include "loop/Sample.hpp"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -28,7 +30,10 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // (Kit am Loop, Abfolge als Liste) gab es nur einen Tag und wird nicht gelesen.
 // 3 (S113, Entscheid F2 a): die Effekte am Clip. Fassung 2 wird weiter
 // gelesen, geschrieben wird immer 3.
-constexpr int kVersion = 3;
+// 4 (S115, Stufe 11c, Entscheide K1 a und K2 a): eine Spur nennt auch ein
+// eigenes Sample (`user:<name>`) oder ein Instrument mit Note und Laenge.
+// Fassung 2 und 3 werden weiter gelesen, geschrieben wird immer 4.
+constexpr int kVersion = 4;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
@@ -222,6 +227,16 @@ bool istKitKlang(const QString& klang)
     return klang.startsWith(kKitVorsatz);
 }
 
+bool istEigenerKlang(const QString& klang)
+{
+    return istEigenesSample(klang);
+}
+
+QString Spur::spielt() const
+{
+    return instrument.isEmpty() ? klang : tonKlang(instrument, hoehe, dauerMs);
+}
+
 bool istTon(const QString& klang)
 {
     return klang.startsWith(kTonVorsatz);
@@ -302,7 +317,7 @@ QStringList Loop::klangNamen() const
         if (m.art == MusterArt::Instrument)
             for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
         else
-            for (const Spur& spur : m.spuren) nimm(spur.klang);
+            for (const Spur& spur : m.spuren) nimm(spur.spielt());
     }
     return namen;
 }
@@ -462,11 +477,20 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         {
             QJsonObject s;
             s[QStringLiteral("name")] = spur.name;
-            s[QStringLiteral("sound")] =
-                istKitKlang(spur.klang) ? spur.klang : fuerDatei(spur.klang, basisOrdner);
+            s[QStringLiteral("sound")] = istKitKlang(spur.klang) || istEigenerKlang(spur.klang)
+                                             ? spur.klang
+                                             : fuerDatei(spur.klang, basisOrdner);
             s[QStringLiteral("volume")] = spur.laut;
             s[QStringLiteral("pan")] = spur.pan;
             s[QStringLiteral("mute")] = spur.stumm;
+            if (!spur.instrument.isEmpty())
+            {
+                // seit Fassung 4; `sound` bleibt daneben stehen — ein aelteres Programm spielt dann den
+                s[QStringLiteral("instrument")] =
+                    istInstrumentDatei(spur.instrument) ? fuerDatei(spur.instrument, basisOrdner) : spur.instrument;
+                s[QStringLiteral("note")] = spur.hoehe;
+                s[QStringLiteral("length")] = spur.dauerMs;
+            }
             spuren.append(s);
         }
         o[QStringLiteral("tracks")] = spuren;
@@ -581,16 +605,31 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             Spur spur;
             spur.name = s.value(QStringLiteral("name")).toString();
             const QString klang = s.value(QStringLiteral("sound")).toString();
-            spur.klang = istKitKlang(klang) ? klang : ausDatei(klang, basisOrdner);
+            spur.klang = istKitKlang(klang) || istEigenerKlang(klang) ? klang : ausDatei(klang, basisOrdner);
             spur.laut = s.value(QStringLiteral("volume")).toDouble(1.0);
             spur.pan = s.value(QStringLiteral("pan")).toDouble(0.0);
             spur.stumm = s.value(QStringLiteral("mute")).toBool(false);
-            if (bericht != nullptr && !spur.klang.isEmpty() && !istKitKlang(spur.klang) &&
-                !QFileInfo::exists(spur.klang))
+            // seit Fassung 4: ein Instrument mit Note und Laenge
+            spur.instrument = s.value(QStringLiteral("instrument")).toString();
+            if (istInstrumentDatei(spur.instrument)) spur.instrument = ausDatei(spur.instrument, basisOrdner);
+            spur.hoehe = std::clamp(s.value(QStringLiteral("note")).toInt(spur.hoehe), 0, 127);
+            spur.dauerMs = std::clamp(s.value(QStringLiteral("length")).toInt(spur.dauerMs), kSpurDauerMinMs, kSpurDauerMaxMs);
+            if (bericht != nullptr)
             {
-                const QString zeile =
-                    QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.klang));
-                if (!bericht->contains(zeile)) bericht->append(zeile);
+                // was fehlt, steht im Bericht — fuer den Klang nur, wenn die Spur ihn auch spielt
+                QString zeile;
+                if (!spur.instrument.isEmpty())
+                {
+                    if (istInstrumentDatei(spur.instrument) && !QFileInfo::exists(spur.instrument))
+                        zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.instrument));
+                }
+                else if (istEigenerKlang(spur.klang))
+                {
+                    if (sampleDatei(spur.klang).isEmpty()) zeile = QStringLiteral("Sample not found: %1").arg(spur.klang);
+                }
+                else if (!spur.klang.isEmpty() && !istKitKlang(spur.klang) && !QFileInfo::exists(spur.klang))
+                    zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.klang));
+                if (!zeile.isEmpty() && !bericht->contains(zeile)) bericht->append(zeile);
             }
             m.spuren.push_back(std::move(spur));
         }

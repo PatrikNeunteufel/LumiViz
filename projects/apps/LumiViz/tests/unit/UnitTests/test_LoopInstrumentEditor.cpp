@@ -606,7 +606,7 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(save != nullptr);
 
         // --- die zweite Zeile zeigt, was das Instrument traegt
-        CHECK(art->count() == 8);
+        CHECK(art->count() == 9);
         CHECK(art->itemText(3) == QStringLiteral("Pads and strings"));
         CHECK(art->currentData().toString() == QStringLiteral("keys"));
         CHECK(genres->text() == QStringLiteral("House"));

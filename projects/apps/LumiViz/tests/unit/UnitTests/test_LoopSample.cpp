@@ -241,8 +241,8 @@ TEST_SUITE("Loop Sample")
         const int p = periode(a4, 4000, 4000, 80, 125);
         CHECK(p >= 99);
         CHECK(p <= 102);
-        CHECK(spitze(a4, 2000, 20000) == doctest::Approx(0.5f).epsilon(0.02));         // Luft nach oben, wie gerechnete Schichten
-        CHECK(spitze(a4, 2000, 20000, 1) == doctest::Approx(0.25f).epsilon(0.02));     // rechts halb so laut
+        CHECK(spitze(a4, 2000, 20000) == doctest::Approx(1.0f).epsilon(0.02));         // so laut wie die Aufnahme (seit Stufe 11c; davor halb)
+        CHECK(spitze(a4, 2000, 20000, 1) == doctest::Approx(0.5f).epsilon(0.02));      // rechts halb so laut
         CHECK(std::abs(a4.daten[a4.daten.size() - 2]) < 0.002f);                       // endet bei null
 
         // --- eine Oktave hoeher: halbe Periode, und die Aufnahme ist nach einer halben Sekunde zu Ende
@@ -291,7 +291,7 @@ TEST_SUITE("Loop Sample")
         gehalten.schichten[0].schleifeBisMs = 700.0;
         const Klang schleife = rendereTon(gehalten, 69, 2000.0, kRate);
         CHECK(spitze(schleife, 44200, 88000) > 0.4f);  // wo es ohne Schleife still war
-        CHECK(spitze(schleife, 44200, 88000) < 0.52f);  // an der Naht wird nichts lauter
+        CHECK(spitze(schleife, 44200, 88000) < 1.02f);  // an der Naht wird nichts lauter
         const int pSchleife = periode(schleife, 60000, 4000, 80, 125);
         CHECK(pSchleife >= 99);
         CHECK(pSchleife <= 102);
@@ -315,7 +315,7 @@ TEST_SUITE("Loop Sample")
         hart.schichten[0].verzerrung = 1.0;
         const Klang verzerrt = rendereTon(hart, 69, 500.0, kRate);
         CHECK(verzerrt.daten != a4.daten);
-        CHECK(spitze(verzerrt, 2000, 20000) <= 0.501f);
+        CHECK(spitze(verzerrt, 2000, 20000) <= 1.001f);
 
         // --- nichts gemerkt oder nichts genannt: die Schicht schweigt, der Ton ist so lang wie sonst
         const Klang stumm = rendereTon(sampleInstrument(QStringLiteral("frei:fehlt")), 69, 500.0, kRate);

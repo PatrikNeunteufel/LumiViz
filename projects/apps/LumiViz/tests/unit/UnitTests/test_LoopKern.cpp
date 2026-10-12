@@ -360,7 +360,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("ein Clip ohne Effekte traegt das Feld nicht; geschrieben wird Fassung 3")
     {
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 3);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 4);  // seit S115: Drum-Spuren mit eigenem Sample oder Instrument
         const QJsonObject clip =
             json.value(QStringLiteral("channels")).toArray()[0].toObject().value(QStringLiteral("clips")).toArray()[0].toObject();
         CHECK(!clip.contains(QStringLiteral("effects")));
@@ -403,7 +403,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("eine neuere Fassung wird gelesen und gemeldet")
     {
         QJsonObject morgen = alsJson(loop);
-        morgen[QStringLiteral("version")] = 4;
+        morgen[QStringLiteral("version")] = 5;
         Loop gelesen;
         QStringList bericht;
         REQUIRE(ausJson(morgen, gelesen, {}, &bericht));

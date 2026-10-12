@@ -251,6 +251,9 @@ constexpr double kNahtMs = 10.0;
 /// Sustain loop — an seiner Naht kurz ueberblendet; danach laeuft die
 /// Aufnahme weiter bis an ihr Ende. Ist zu `schicht.sample` nichts gemerkt,
 /// bleibt die Schicht still. Die beiden Seiten der Aufnahme bleiben getrennt.
+/// Die Aufnahme spielt so laut, wie sie ist — ohne die Luft nach oben, die eine
+/// gerechnete Schwingung bekommt (`kPegel`): bei der Note ihres Grundtons
+/// klingt sie wie die Datei (seit Stufe 11c; davor halb so laut).
 void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const std::shared_ptr<const SampleDaten> quelle = sampleDaten(schicht.sample);
@@ -283,7 +286,7 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
     const bool filter = schicht.filterTeilton > 0.0;
     std::array<double, 2> f1 = {0.0, 0.0};
     std::array<double, 2> f2 = {0.0, 0.0};
-    const double pegel = kPegel * schicht.laut;
+    const double pegel = schicht.laut;
 
     for (std::int64_t t = 0; t < frames; ++t)
     {
@@ -576,6 +579,7 @@ const std::vector<InstrumentArt>& instrumentArten()
         {"plucked", "Plucked"},
         {"wind", "Wind"},
         {"percussion", "Percussion"},
+        {"drums", "Drums"},  // seit S115 (Entscheid K3 a): Schlaege fuer eine Drum-Spur
         {"unusual", "Unusual"},
     };
     return kArten;

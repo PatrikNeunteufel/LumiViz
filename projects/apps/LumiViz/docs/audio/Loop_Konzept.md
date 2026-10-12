@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.49.0
+> **Version:** 0.50.0
 > **Datum:** 2026-10-12 (Session 114)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1458,6 +1458,54 @@ entschieden wird nach den Hörproben:**
   die Hi-Hats) — verwandt mit den Harmonics des Sinus, aber mit festen,
   nicht ganzzahligen Verhältnissen, deshalb ohne klare Tonhöhe, metallisch.
 
+**Wunsch Patrik (S115) — die Kaskade als Kette, „in einer Art Node-Editor",
+auch für die Effekte:** nicht zwei feste Plätze für Filter, sondern eine
+Folge von Bausteinen, die sich hinzufügen, entfernen und umordnen lassen —
+je Schicht im Creator, und ebenso für die Effekte am Clip (heute drei feste
+in fester Reihenfolge). Vorgemerkt als eigene Stufe, Vorlage mit Skizze
+nach 11c. Dazu festgehalten: innerhalb einer Schicht läuft der Ton heute
+durch feste Stationen — Schwingung, Filter, Drive, Hüllkurve, Level
+(`rechneSchwingung`); die Schichten selbst haben keine klangliche
+Reihenfolge, sie werden addiert. Mit einer Kette je Schicht wären zwei der
+drei fehlenden Bausteine von selbst da: ein zweiter Filter ist ein weiterer
+Baustein, „Drive hinter der Hüllkurve" heißt, Drive ans Ende zu ziehen.
+Nicht geprüft: was vom Unterbau der Effect Chain der Visuals sich für Ton
+wiederverwenden lässt.
+
+**Gebaut — 11c, Schritt 1 (S115), der Kern ohne Fenster:** die `Spur`
+trägt neben `klang` jetzt `instrument`, `hoehe` (Note) und `dauerMs`
+(Length, 1 bis 30000, vorbelegt 250); `Spur::spielt()` nennt, was der
+Rechenkern für sie spielt — den Klang oder den Ton ihres Instruments
+(`inst:<Instrument>:<Note>:<Länge>`, derselbe Weg wie eine Note eines
+Instrument-Musters). `klang` kann ein eigenes Sample nennen (`user:<name>`,
+`istEigenerKlang`); `klangDatei` findet seine Datei. **`.lvloop` in
+Fassung 4:** `sound` wie bisher (ein eigenes Sample steht da, wie es heißt,
+nicht als Pfad), bei einer Instrument-Spur dazu `instrument` (eine Datei
+relativ zum Loop, wenn sie darunter liegt), `note`, `length` — `sound`
+bleibt daneben stehen, sodass ein älteres Programm den Klang spielt.
+Fassung 2 und 3 lesen weiter. Im Bericht: „Sample not found: user:…",
+„File not found: …" für die Datei eines Instruments. Eine Sample-Schicht
+kann einen Klang des Kits nennen (`kit:kick`, `sampleDatei`). Die Art
+**Drums** steht als neunte zwischen Percussion und Unusual, ihre Preview
+note ist C2.
+**GEÄNDERT gegenüber 11a:** eine Sample-Schicht spielt die Aufnahme so
+laut, wie sie ist — nicht mehr halb so laut wie gerechnete Schichten. Bei
+der Note ihres Grundtons, voll gehalten und so lang wie die Aufnahme,
+ergibt sie dieselben Werte wie die Datei (im Test Abtastwert für
+Abtastwert). Das ist die Voraussetzung dafür, dass eine Spur nach „Edit
+sound..." klingt wie vorher. Folge: ein Instrument mit einer Sample-Schicht
+ist doppelt so laut wie nach 11a; mit weiteren Schichten kann die Summe
+über 1 gehen — dafür gibt es Level.
+Von Claude gesetzt, nicht entschieden: die Änderung der Lautstärke oben;
+`sound` bleibt an einer Instrument-Spur stehen; jede `.lvloop` wird als
+Fassung 4 geschrieben; die Grenzen von Length. Nicht gebaut: alles im
+Drum-Editor (er zeigt und stellt weiter nur `klang`), Edit sound...,
+das Fenster Instruments aus einer Drum-Spur. Nicht geprüft: eine echte
+Datei des Kits durch eine Sample-Schicht bei einer anderen Abtastrate als
+48000 Hz (dort wird geradlinig umgerechnet, die Werte sind dann nicht
+dieselben wie beim direkten Dekodieren). Im Programm ist nur die Art Drums
+zu sehen: in der Liste Type des Creators.
+
 **Stufen (Go für 11a, Patrik S115):** 11a Sample als Schicht — in drei
 Schritten: der Kern ohne Fenster, der Creator nach der Skizze mit File...
 und der Frage aus S2 a, Detect und Reference tone; 11b das Fenster Record
@@ -2193,6 +2241,12 @@ ist die Latenz ein Vielfaches); Release-clang.
 ---
 
 ## 8. Changelog
+
+- **0.50.0** (S115, 2026-10-12): 11c Schritt 1 gebaut — die Spur mit drei
+  Arten von Klang (Kit, eigenes Sample, Instrument mit Note und Length),
+  `.lvloop` Fassung 4, `kit:` in der Sample-Schicht, die Art Drums; GEÄNDERT:
+  eine Sample-Schicht spielt die Aufnahme in ihrer Lautstärke; vorgemerkt:
+  Filter und Effekte als Kette (§4h).
 
 - **0.49.0** (S115, 2026-10-12): Entscheid K3 a (Art „Drums"), die Skizze
   der Klangliste gebilligt; vorgemerkt: zweiter Filter je Schicht, Drive

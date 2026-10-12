@@ -60,6 +60,7 @@ QStringList kitKlaenge()
 QString klangDatei(const QString& klang)
 {
     if (istTon(klang)) return {};  // ein gerechneter Ton hat keine Datei
+    if (istEigenerKlang(klang)) return eigeneSampleDatei(klang.mid(static_cast<int>(qstrlen(kSampleVorsatz))));
     if (!istKitKlang(klang)) return klang;
     const QString name = klang.mid(kKitVorsatzLaenge);
     const bool erlaubt = !name.isEmpty() && std::all_of(name.begin(), name.end(), [](QChar z) {

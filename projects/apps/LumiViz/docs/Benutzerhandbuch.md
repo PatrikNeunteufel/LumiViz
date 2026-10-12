@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.132.0
+> **Version:** 1.133.0
 > **Datum:** 2026-10-12
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2654,7 +2654,7 @@ das Muster, das der Instrument-Editor gerade zeigt („For pattern: …").
 |---|---|
 | **Search** | Sucht in Name, Art, Genres und Beschreibung; mehrere Worte müssen alle vorkommen. Pfeil hinunter führt in die Liste, Enter verwendet das gewählte |
 | **Genre** | Zeigt nur Instrumente, die dieses Genre tragen. Die Genres der mitgelieferten sind aus den Beispiel-Loops gezählt |
-| Die Liste | **Favorites**, **Recently used** (die letzten acht), dann die Arten Keys, Bass, Lead, Pads and strings, Plucked, Wind, Percussion, Unusual mit der Zahl dahinter, zuletzt **My files** — deine eigenen Instrumente. Was Suche oder Genre ausschließen, verschwindet samt Überschrift |
+| Die Liste | **Favorites**, **Recently used** (die letzten acht), dann die Arten Keys, Bass, Lead, Pads and strings, Plucked, Wind, Percussion, Drums, Unusual mit der Zahl dahinter, zuletzt **My files** — deine eigenen Instrumente. Was Suche oder Genre ausschließen, verschwindet samt Überschrift |
 | Klick | Spielt einen Ton des Instruments und zeigt unten Art, Genres, einen Satz und die Zahl der Schichten |
 | **Preview note** | Die Tonhöhe des Anspielens. Sie stellt sich bei jedem Instrument auf seine Art (ein Bass spielt tief, C2; alles andere C4) und lässt sich von C1 bis C6 ändern |
 | **Play** | Spielt den Ton noch einmal |
@@ -2700,7 +2700,7 @@ Schließt du den Creator mit Ungespeichertem, fragt er nach.
 
 **Eine Schicht aus einer Aufnahme (Waveform: Sample).** Statt einer gerechneten
 Schwingung spielt die Schicht eine Tondatei — je Note schneller oder langsamer, also höher
-oder tiefer. Sie mischt sich mit gerechneten Schichten wie jede andere; Envelope, Filter
+oder tiefer. Bei der Note des Root note klingt sie so laut wie die Datei selbst. Sie mischt sich mit gerechneten Schichten wie jede andere; Envelope, Filter
 und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 
 | Bei Waveform: Sample | Wirkung |
@@ -2894,6 +2894,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.133.0 | 2026-10-12 | Session 115. §16 Loop: die Art **Drums** im Fenster Instruments und in Type des Creators; GEÄNDERT: eine Sample-Schicht spielt die Aufnahme so laut wie die Datei (zuvor halb so laut) |
 | 1.132.0 | 2026-10-12 | Session 115. §16 Loop NEU **Record sample**: im Instrument-Creator bei einer Sample-Schicht **Record...** — das Fenster nimmt auf, lässt zuschneiden (zwei Griffe, Trim silence), in Dauerschleife anhören (Play, Repeat) und speichert mit Save and use zu den eigenen Samples |
 | 1.131.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator, Sample-Schicht NEU **Detect** mit **Apply** (misst den Ton der Aufnahme und schlägt Root note und Fine tune vor) und **Reference tone** (ein reiner Ton derselben Note neben der Aufnahme) |
 | 1.130.0 | 2026-10-12 | Session 115. §16 Loop, Instrument-Creator NEU **Waveform: Sample** — eine Schicht aus einer Aufnahme: File..., die Frage „kopieren oder am Ort lassen", Root note, Fine tune, Sample start, Sustain loop mit Loop from und Loop to, das Bild der Aufnahme mit ziehbaren Marken; Settings → Panels NEU **Chosen Sample Files** |

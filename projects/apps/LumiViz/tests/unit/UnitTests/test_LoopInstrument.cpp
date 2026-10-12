@@ -605,7 +605,7 @@ TEST_SUITE("LoopInstrument")
     {
         // --- die acht Arten, in der Reihenfolge des Fensters; was es nicht gibt, ist „Unusual"
         const auto& arten = instrumentArten();
-        REQUIRE(arten.size() == 8);
+        REQUIRE(arten.size() == 9);  // seit S115 mit „Drums“ (K3 a; test_LoopDrumQuellen.cpp)
         CHECK(QLatin1String(arten.front().schluessel) == QLatin1String("keys"));
         CHECK(QLatin1String(arten.back().schluessel) == QLatin1String("unusual"));
         CHECK(gueltigeArt(QStringLiteral("bass")) == QStringLiteral("bass"));

@@ -40,15 +40,47 @@ inline constexpr int kTakteMax = 64;   ///< hoechstens so viele Takte je Muster
 
 /// Der Vorsatz eines Klangs aus dem mitgelieferten Kit: `kit:kick`.
 [[nodiscard]] bool istKitKlang(const QString& klang);
+/// Der Vorsatz eines eigenen Samples aus dem Benutzerordner: `user:table_knock`
+/// (Sample.hpp, Entscheid S1 a).
+[[nodiscard]] bool istEigenerKlang(const QString& klang);
+
+/// So lang wird der Ton einer Spur gehalten, die ein Instrument spielt: die
+/// Vorgabe und die Grenzen, in Millisekunden (Entscheid K2 a, Patrik S115).
+inline constexpr int kSpurDauerMs = 250;
+inline constexpr int kSpurDauerMinMs = 1;
+inline constexpr int kSpurDauerMaxMs = 30000;
 
 /// Eine Spur eines Drumkits: ein Klang mit Lautstaerke und Panorama.
+/// Seit Fassung 4 (Stufe 11c, Entscheid K1 a) hat sie drei Arten von Klang: einen
+/// aus dem Kit, ein eigenes Sample — oder ein Instrument, das bei jedem
+/// Schlag einen Ton spielt, immer dieselbe Note, immer gleich lang.
 struct Spur
 {
     QString name;
-    QString klang;       ///< `kit:<Name>` oder der Pfad einer Sample-Datei (absolut); leer = kein Klang
+    /// `kit:<Name>`, `user:<name>` (ein eigenes Sample) oder der Pfad einer
+    /// Sample-Datei (absolut); leer = kein Klang. Zaehlt nicht, solange
+    /// `instrument` gesetzt ist — bleibt aber stehen.
+    QString klang;
     double laut = 1.0;   ///< 0…1
     double pan = 0.0;    ///< -1 (links) … 1 (rechts)
     bool stumm = false;
+    /// Das Instrument, das die Spur spielt — genannt wie in einem Muster: ein
+    /// mitgeliefertes beim Namen, ein eigenes als `user:<name>`, eine Datei
+    /// beim Pfad. Leer = die Spur spielt `klang`.
+    QString instrument;
+    int hoehe = 60;                ///< Note: die Tonhoehe jedes Schlags (MIDI-Nummer, 0…127)
+    int dauerMs = kSpurDauerMs;    ///< Length: so lang wird der Ton gehalten, danach klingt er aus
+
+    Spur() = default;
+    /// Eine Spur mit einem Klang — wie sie bis Fassung 3 ganz beschrieben war.
+    Spur(QString nameDerSpur, QString klangDerSpur, double lautstaerke = 1.0, double panorama = 0.0, bool istStumm = false)
+        : name(std::move(nameDerSpur)), klang(std::move(klangDerSpur)), laut(lautstaerke), pan(panorama), stumm(istStumm)
+    {
+    }
+
+    /// Was der Rechenkern fuer diese Spur spielt: der Klang — oder der Name
+    /// des Tons ihres Instruments (`tonKlang`). Leer = nichts.
+    [[nodiscard]] QString spielt() const;
 
     [[nodiscard]] bool operator==(const Spur&) const = default;
 };

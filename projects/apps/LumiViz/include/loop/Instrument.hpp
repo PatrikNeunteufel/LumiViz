@@ -107,7 +107,8 @@ struct InstrumentArt
     const char* titel;       ///< wie es im Programm steht
 };
 
-/// Die acht Arten in der Reihenfolge des Fensters; die letzte ist „Unusual".
+/// Die neun Arten in der Reihenfolge des Fensters (seit S115 mit „Drums",
+/// Entscheid K3 a); die letzte ist „Unusual".
 [[nodiscard]] const std::vector<InstrumentArt>& instrumentArten();
 /// Der Schluessel einer Art — oder `unusual`, wenn es `art` nicht gibt (auch leer).
 [[nodiscard]] QString gueltigeArt(const QString& art);

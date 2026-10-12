@@ -104,7 +104,7 @@ Ablauf plane(const Loop& loop, int rate)
                         if (neu)
                         {
                             Stimme stimme;
-                            stimme.klang = static_cast<int>(ablauf.klangNamen.indexOf(spur.klang));
+                            stimme.klang = static_cast<int>(ablauf.klangNamen.indexOf(spur.spielt()));
                             ablauf.stimmen.push_back(std::move(stimme));
                         }
                         const bool versetzt = (i % loop.schritteJeSchlag) % 2 == 1;
