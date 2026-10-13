@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.208.0
+> **Version:** 1.209.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5075,8 +5075,28 @@ Vorlagen sind geschlossen). **Offen daraus:**
 - 🔧 Die Zeile Contour trägt einen „~"-Knopf (das Feld ist eine Zahl in der
   Feldtabelle); eine Modulation dort springt zwischen Kennungen. Lassen oder
   ausnehmen.
-- **Als Nächstes Stufe 19c:** die Schwingung Shape im Klangerzeuger; dort die
-  Kante des Sprungs hören und messen.
+
+**Stand S121 — Stufe 19c gebaut, die Schwingung Shape im Klangerzeuger**
+(`Shape_Konzept.md` 0.14.0, §5 und §9; `.lvinst` Fassung 9). Entschieden
+(Patrik): T1 a der Pegel (kein Ausgleich, die Form am fernsten Punkt
+gemessen), T2 a Angle dreht die Form auch mit Stereo XY. **Offen daraus:**
+- ⬜ **Patriks Ohr — `.claude/handover/hoerproben_19c`** (36 Dateien, lokal):
+  die Formen mit 4, 16 und 64 Teiltönen, Angle, Stereo XY, Harmonics
+  envelope, ein Pfad aus zwei Konturen. Nichts davon ist gehört.
+- 🟡 **Ecken dämpfen** (§5): fest, als Regler, oder gar nicht — die Proben
+  `corners_*_plain` gegen `corners_*_damped`. Der Klangerzeuger dämpft nicht.
+- 🟠 **Die Kante des Sprungs** (§9): bei A4 liegen −33 bis −34 dB des Tons
+  als zurückgefallener Anteil neben den Teiltönen, gleich bei 16, 48 und 160
+  Harmonics. Die Proben `onepath_*`. Stört es: ein längerer Sprung (Regler)
+  oder eine Reihe über den ganzen Umlauf.
+- 🔧 Wird eine Form geschrieben, entstehen schon gerechnete Töne nicht neu
+  (`zaehleInstrumentFassung` fehlt dort) — mit dem Fenster Edit shape.
+- 🔧 Die Arten der Sprünge „kürzeste Wege" und „von Hand" spielen wie die
+  Reihenfolge der Liste (Stufe 20d).
+- Im Creator ist Shape nicht wählbar (Stufe 19e); im Programm ist von 19c
+  nichts zu sehen oder zu hören.
+- **Als Nächstes Stufe 19d:** der Knoten XY Scope (V4 a: mit den fünf
+  Skriptfeldern; die Presets sind vorzulegen).
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5475,6 +5495,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.209.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19c gebaut — die Schwingung Shape im Klangerzeuger**, `.lvinst` Fassung 9 (Entscheide Patrik T1 a, T2 a; `audio/Shape_Konzept.md` 0.14.0). Offen: Patriks Ohr an den Hörproben; Ecken dämpfen; die Kante des Sprungs (gemessen −33 dB bei A4); gerechnete Töne entstehen nach dem Schreiben einer Form nicht neu. **Als Nächstes Stufe 19d.** |
 | 1.208.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19b gebaut — der Knoten Shape** der Effect Chain (Entscheide Patrik V1 a bis V4 a; `audio/Shape_Konzept.md` 0.13.0, Benutzerhandbuch 1.155.0). Offen: im Programm ungesehen; eine geänderte Form-Datei wird erst bei neuer Nennung gelesen; keine Feld-Sonden für `shape`; der „~"-Knopf an Contour. **Als Nächstes Stufe 19c.** Voller Lauf 1169 / 1169, 0 Skips (Testing-MSVC, Bildschirm 2). |
 | 1.207.0 | 2026-10-13 | Session 120, Abschluss. `sessions/Changelog_Session120.md`. **Stand:** Klang aus einer Form — das Konzept ist vollständig (`audio/Shape_Konzept.md` 0.12.0: sieben Vorlagen geschlossen, zwei Skizzen gebilligt, Baustufen freigegeben); gebaut **Stufe 18** (Pan je Schicht, acht Schichten, `.lvinst` Fassung 8) und **Stufe 19a** (`shape/Kontur`, die Datei `.lvcontour`, sechs mitgelieferte Formen, der Bereich Shapes im Export); daneben acht Datei-Icons, im Explorer-Skript und an vier Stellen der App. **Offen:** im Programm ungesehen und ungehört — Liste 10 Abschnitt V (V0 bis V11, U77 bis U79), dazu weiter Abschnitt D, X7 und die Reste aus S118; `register_file_icons.ps1 -Apply -Foreign` (Patrik); **als Nächstes Stufe 19b**, der Knoten Shape für die Effect Chain; in 19c die Kante des Sprungs hören; klein: Pan bei Stereo XY, die Bereiche von Harmonics, `.lvp` ohne Icon, `milk2` in `presetTypeIconForSuffix`, README der Icons gegen Handbuch zum Öffnen einer Datei über die Exe; Ideen Publish und Flanger. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |
 | 1.206.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Stufe 19a gebaut** (`Shape_Konzept.md` 0.12.0) — `shape/Kontur`: die Zeichnung aus Konturen mit festen Kennungen, die Datei `.lvcontour` Fassung 1, mitgelieferte unter `asset/contours` (sechs Formen), eigene als `user:<name>`, die Reihe mit weichem Gewicht; der Bereich **Shapes** in Export und Import (Benutzerhandbuch 1.154.0). Neu `test_ShapeKontur.cpp` (sechs Fälle, **1163 Cases**). Im Programm ist davon nur der neue Bereich im Export zu sehen. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2). **Als Nächstes: Stufe 19b** — der Knoten Shape für die Effect Chain. |

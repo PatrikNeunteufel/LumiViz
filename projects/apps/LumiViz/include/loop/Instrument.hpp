@@ -38,6 +38,8 @@ namespace lumi::loop
 /// (Karplus-Strong), die von selbst ausklingt. Das Sample ist eine Aufnahme,
 /// je Note schneller oder langsamer abgespielt (Stufe 11a). Das Rauschen hat
 /// keine Tonhoehe: eine feste Folge, bei jeder Note dieselbe (Stufe 11d).
+/// Die Form ist die Bewegung eines Stifts um eine gezeichnete Kontur
+/// (`shape/Tonform.hpp`; Stufe 19c, docs/audio/Shape_Konzept.md §5).
 enum class Schwingung : int
 {
     Sinus = 0,
@@ -47,7 +49,13 @@ enum class Schwingung : int
     Saite,
     Sample,
     Rauschen,
+    Form,
 };
+
+/// Die Grenzen der Shape-Schicht (Stufe 19c): Harmonics und der Betrag, um den
+/// die Huellkurve sie hebt oder senkt.
+inline constexpr double kFormHarmonischeMax = 512.0;
+inline constexpr double kFormHuelleMax = 128.0;
 
 /// Pitch sweep (Stufe 11d, Entscheid N1): so weit neben ihrer Tonhoehe darf
 /// eine Note beginnen, in Halbtoenen — darueber (sie faellt) oder darunter
@@ -163,6 +171,30 @@ struct Schicht
     /// des Wegs, wie Decay); 0 = kein Weg, die Note beginnt auf ihrem Ton.
     double tonhoeheZeitMs = 100.0;
 
+    // --- nur Form (Stufe 19c; Entscheide Z2 a, Z4 a, G1 a, T1 a, T2 a) ---
+    // Stimmen, Verstimmung, Vibrato und Pitch sweep gelten wie bei Sinus und Saege.
+    /// Die Form: eine mitgelieferte beim Namen (`heart`), eine eigene
+    /// (`user:<name>`) oder der Pfad einer `.lvcontour`; leer oder nicht zu
+    /// finden = die Schicht schweigt.
+    QString form;
+    /// Contour: die Kennung einer Kontur der Datei — oder 0 = alle mit Haken,
+    /// nacheinander in einem Umlauf (All, one path).
+    int formKontur = 0;
+    /// Harmonics, 1 … `kFormHarmonischeMax`, stufenlos: so viele Teiltoene
+    /// zeichnen die Form. Eine hohe Note bekommt von selbst weniger.
+    double harmonische = 24.0;
+    /// Harmonics envelope, −`kFormHuelleMax` … `kFormHuelleMax`: um so viele
+    /// Teiltoene hebt (oder senkt) die Huellkurve der Schicht Harmonics.
+    double harmonischeHuelle = 0.0;
+    /// Angle, 0 … 360 Grad: dreht die Form, bevor der Ton abgenommen wird
+    /// (0 = die x-Bewegung des Stifts, 90 = die y-Bewegung).
+    double winkelGrad = 0.0;
+    double formStartProzent = 0.0;  ///< Start, 0 … 100: hier im Umlauf beginnt jede Note
+    /// Stereo XY: links die x-Bewegung der (gedrehten) Form, rechts ihre
+    /// y-Bewegung; sonst auf beiden Seiten die x-Bewegung.
+    bool stereoXY = false;
+    bool rueckwaerts = false;  ///< Reverse: der Stift laeuft andersherum
+
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
     // --- der erste Filter und der erste Drive ---------------------------
@@ -254,10 +286,16 @@ struct Instrument
 // Schicht `pan` (-1 … 1) und bis zu acht Schichten statt vier — eine eigene
 // Fassung, weil ein aelteres Programm eine Schicht sonst still in der Mitte
 // spielte und die fuenfte bis achte wegliesse. In einer aelteren Datei
-// fehlt `pan`: die Schicht steht in der Mitte. Geschrieben wird Fassung 8.
+// fehlt `pan`: die Schicht steht in der Mitte. Fassung 9 (S121, Stufe 19c)
+// kennt die Schwingung `shape` mit `shape` (die Form), `shapeContour`,
+// `shapeHarmonics`, `shapeHarmonicsEnvelope`, `shapeAngle`, `shapeStart`,
+// `shapeStereoXY`, `shapeReverse` — eine eigene Fassung, weil ein aelteres
+// Programm eine solche Schicht sonst still als Sinus spielte. (`harmonics`
+// allein ist seit Fassung 1 die Liste der Obertoene des Sinus.) Geschrieben
+// wird Fassung 9.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 8;
+inline constexpr int kInstrumentFassung = 9;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
@@ -359,6 +397,8 @@ inline constexpr double kTonMaxSekunden = 30.0;
 /// Eine Sample-Schicht spielt, was zu ihrer Aufnahme gemerkt ist
 /// (`sampleDaten`, Sample.hpp) — ist nichts gemerkt, schweigt sie. Sind
 /// Sample-Schichten dabei, koennen die beiden Seiten verschieden sein.
+/// Eine Shape-Schicht spielt die Form, die sie nennt (`shape::tonformFuer`) —
+/// gibt es sie nicht, schweigt sie; mit Stereo XY sind die Seiten verschieden.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate);
 
 }  // namespace lumi::loop

@@ -5,6 +5,8 @@
 
 #include "shape/Kontur.hpp"
 
+#include "shape/Tonform.hpp"  // vergissTonformen
+
 #include "core/Mitgeliefert.hpp"
 
 #include <QDir>
@@ -343,7 +345,9 @@ bool speichereZeichnung(const Zeichnung& zeichnung, const QString& pfad)
 {
     QSaveFile datei(pfad);
     if (!datei.open(QIODevice::WriteOnly)) return false;
-    return datei.write(QJsonDocument(alsJson(zeichnung)).toJson(QJsonDocument::Indented)) >= 0 && datei.commit();
+    if (datei.write(QJsonDocument(alsJson(zeichnung)).toJson(QJsonDocument::Indented)) < 0 || !datei.commit()) return false;
+    vergissTonformen();  // wer diese Form fuer den Ton aufbereitet hat, bereitet neu auf
+    return true;
 }
 
 bool ladeZeichnung(const QString& pfad, Zeichnung& zeichnung, bool* zuNeu)
@@ -410,6 +414,7 @@ QString eigenerKonturOrdner()
 void setzeEigenenKonturOrdnerFuerTests(const QString& ordner)
 {
     konturOrdnerImTest() = ordner;
+    vergissTonformen();  // `user:<name>` meint jetzt eine andere Datei
 }
 
 QString eigenerKonturName(const QString& titel)
@@ -466,7 +471,9 @@ bool speichereEigeneZeichnung(Zeichnung& zeichnung, const QString& name)
 bool loescheEigeneZeichnung(const QString& name)
 {
     const QString pfad = eigeneKonturDatei(name);
-    return !pfad.isEmpty() && QFile::remove(pfad);
+    if (pfad.isEmpty() || !QFile::remove(pfad)) return false;
+    vergissTonformen();
+    return true;
 }
 
 bool holeZeichnung(const QString& nennung, Zeichnung& zeichnung, bool* zuNeu)

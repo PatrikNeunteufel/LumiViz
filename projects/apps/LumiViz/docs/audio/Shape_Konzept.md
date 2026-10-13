@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.13.0
+> **Version:** 0.14.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -102,6 +102,9 @@ Von Patrik, S119:
 | **Skizzen** (S120) | Das Fenster Edit shape und die Shape-Schicht, gebilligt; die Preview berichtigt (ein Wellenzug hat je Zeitpunkt einen Wert). |
 | **G1 a** (S120) | Die Schicht entscheidet über ihre Zeile Contour, was sie spielt; Use as im Fenster sagt, was beim Speichern aus dem Creator geschieht. |
 | **G2 a** (S120) | Sprünge von Hand: zwei an einer Kontur erlaubt, ein Ring wird abgelehnt, unerreichte Konturen werden in der Reihenfolge der Liste angehängt. |
+| **V1 a bis V4 a** (S121) | Der Knoten Shape: fünf Skriptfelder mit Per point, die Regler, neun Presets; XY Scope bekommt dieselben fünf Felder (§10). |
+| **T1 a** (S121) | Der Pegel einer Shape-Schicht: so laut, wie er herauskommt, kein Ausgleich je Einstellung — aber die Form wird für den Ton am **fernsten Punkt** gemessen (Abstand 1 zur Mitte), nicht am größten Ausschlag in x oder y. |
+| **T2 a** (S121) | **Angle dreht die Form auch mit Stereo XY**: links die x-Bewegung der gedrehten Form, rechts ihre y-Bewegung. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -150,8 +153,9 @@ z(φ) = Σ g_k · C_k · e^(i·k·φ)        über k = −K … K, k ≠ 0
     mit umgekehrtem Vorzeichen. Dazwischen ändert sich die Klangfarbe
     stufenlos.
   - Mit **Stereo XY** ist links `Re(z')`, rechts `Im(z')` — Angle dreht dann
-    das Bild im Scope (Vorschlag; in S119 nicht besprochen, was Angle bei
-    gesetztem Haken tut).
+    das Bild im Scope, und im Ton wandert Klangfarbe zwischen den Seiten
+    (**T2 a**, Patrik S121). Verworfen: Angle ist mit dem Haken ohne Wirkung
+    und ausgegraut (b).
 - **Start**: ein anderer Startpunkt auf der Kontur, `C_k · e^(i·k·t0)`.
 - **Reverse**: die andere Umlaufrichtung, `C_k` und `C_−k` tauschen.
 
@@ -161,6 +165,56 @@ Gewicht `g_k`, und anders als bei einer einzelnen Kontur behält sie dabei
 ihre Lage in der Zeichnung (`C_0` bleibt). Die Phase eines Umlaufs ist auf
 die Konturen verteilt, nach ihrer Länge; dazwischen liegt je ein kurzer
 gerader Sprung (§9).
+
+### Wie die Schwingung gebaut ist (Stufe 19c, S121)
+
+- **`shape/Tonform`** (`lumi::shape`, ohne Engine und ohne Qt-Anwendung):
+  `tonform(zeichnung, kontur)` bereitet auf — eine Kontur um ihren
+  Schwerpunkt, der fernste Punkt im Abstand 1 (T1 a); bei `kontur = 0` alle
+  Konturen mit Haken als ein Pfad (§9). `tonwert(form, umlauf, harmonische,
+  hoechste)` ist der Ort des Stifts. `tonformFuer(nennung, kontur)` merkt
+  sich das Ergebnis je Nennung und Kontur, auch ein vergebliches;
+  `vergissTonformen` läuft, wenn eine Zeichnung geschrieben oder gelöscht
+  wird. **Nicht gebaut:** dass dabei auch schon gerechnete Töne neu
+  entstehen (`zaehleInstrumentFassung`) — mit dem Fenster Edit shape
+  nachzuziehen.
+- **`Schwingung::Form`** und an der Schicht `form`, `formKontur`,
+  `harmonische` (Vorgabe 24), `harmonischeHuelle` (−128 … 128), `winkelGrad`,
+  `formStartProzent`, `stereoXY`, `rueckwaerts`. Stimmen, Verstimmung, Vibrato
+  und Pitch sweep gelten wie bei Sinus und Säge (so steht es in der
+  gebilligten Skizze, §6).
+- **`rechneForm`** im Klangerzeuger rechnet je Abtastwert die Reihe selbst,
+  keine Tafel: Harmonics darf sich mit der Hüllkurve von Wert zu Wert ändern
+  (`H = Harmonics + Envelope · Hüllkurve`, in 1 … 512), und es gibt nur einen
+  Rechenweg. Die Bandgrenze je Note ist `0,45 · Rate / Tonhöhe`, mit demselben
+  Abstand für Vibrato, Verstimmung und Pitch sweep wie bei den anderen
+  Schwingungen. Start und Reverse wirken auf die Phase, Angle dreht `z`;
+  Pan gilt wie bei jeder Schicht (jede Seite mit ihrem Faktor — bei Stereo XY
+  also als Balance). Eine Schicht ohne Form schweigt in voller Länge.
+- **`.lvinst` Fassung 9:** `waveform: shape` und `shape`, `shapeContour`,
+  `shapeHarmonics`, `shapeHarmonicsEnvelope`, `shapeAngle`, `shapeStart`,
+  `shapeStereoXY`, `shapeReverse` — nur eine Shape-Schicht trägt sie.
+  (`harmonics` allein ist seit Fassung 1 die Liste der Obertöne des Sinus.)
+  Die mitgelieferten Instrumente bleiben in ihrer Fassung und rechnen Bit für
+  Bit wie vorher (`test_LoopWerte`).
+- **Im Creator ist Shape noch nicht wählbar** (Stufe 19e); eine Shape-Schicht
+  entsteht bis dahin nur in einer Datei von Hand oder im Test.
+
+**Gemessen (S121, `test_ShapeTon` „Messung", Release-clang, je Sekunde Ton):**
+
+| Schicht | Rechenzeit |
+|---|---|
+| zum Vergleich: eine teure Schicht mit Säge, Filter und Drive | 2,2 ms |
+| Herz, A2, 24 Harmonics | 4,1 ms |
+| Herz, A2, 64 Harmonics | 8,6 ms |
+| Herz, A2, 64 Harmonics, drei Stimmen, Stereo XY | 26 ms |
+| Herz, A1, 512 eingestellt (die Bandgrenze lässt 340) | 40 ms |
+| Herz und Stern als ein Pfad, A2, 64 Harmonics | 9,4 ms |
+
+Eine Form für den Ton aufbereiten (zwei Konturen): 5 ms, einmal. Unter
+Testing-MSVC dauert alles rund vierzigmal so lang (193 ms je Sekunde bei 24
+Harmonics) — die Tests zum Ton laufen dort entsprechend. Töne werden vorab
+gerechnet; im laufenden Programm ist nicht gemessen.
 
 ### Was Start und Reverse hörbar tun — eine Einschränkung
 
@@ -183,10 +237,21 @@ gehört in die Tooltips und ins Handbuch, sonst wirken zwei Regler tot.
   Zischeln. Das Grobkonzept dämpft mit Lanczos-Faktoren (§2.4). Ob das fest
   eingebaut ist, ein Regler wird oder entfällt, ist nicht entschieden; es
   macht den Klang dunkler und die Ecken im Scope runder.
-- **Pegel:** die Spitze des Tons hängt von Form, Harmonics und Angle ab. Ob
-  der Ton je Einstellung auf gleiche Spitze gebracht wird oder so laut ist,
-  wie er herauskommt, ist offen. Unter einer Harmonics envelope darf sich
-  der Pegel nicht sprunghaft ändern.
+- ~~**Pegel**~~ — entschieden in S121, **T1 a** (Patrik), nach einer Messung
+  an fünf mitgelieferten Formen. So wie die Form bis dahin für den Ton
+  aufbereitet war (größter Ausschlag in x oder y gleich 1), lag die Spitze
+  zwischen 0,62 (Herz, ein Teilton) und 1,41 (Quadrat, auf der Diagonale) —
+  rund 7 dB, und das Quadrat 41 % über jeder anderen Schwingung. Seit T1 a
+  wird die Form am **fernsten Punkt** gemessen (Abstand 1 zur Mitte): die
+  Spitze bleibt bei jedem Winkel und jeder Zahl von Teiltönen bei höchstens
+  rund 1, nichts läuft im Ton mit, unter einer Harmonics envelope springt
+  nichts. Verworfen: jede Einstellung auf die Spitze 1 gebracht (b — der
+  Ausgleich wäre während einer Envelope eine zweite Hüllkurve); ohne
+  Ausgleich wie bisher aufbereitet (c). Nicht gehört. Kippt, wenn die
+  Unterschiede zwischen den Formen beim Hören stören (das Herz liegt bei 0°
+  rund 3 dB unter dem Kreis) — dann b nachziehen, die Datei ändert sich
+  dadurch nicht. `normiert` (Kontur.hpp) bleibt, wie es ist; den Ton
+  bereitet `shape/Tonform` auf.
 - **Rechenzeit:** je Wert `2·K` Sinus und Cosinus; ein Ton von 30 Sekunden
   mit 100 Harmonischen sind knapp 300 Millionen. Vorab gerechnet ist das
   möglich, aber nicht geschenkt — vor dem Bau messen. Ein Ausweg: Tabellen
@@ -623,6 +688,26 @@ noch Energie bei −31, −38 und −51 dB (bei 16, 48, 160) — grob gemessen,
 stört die Kante, ist ein Regler für die Dauer des Sprungs der erste Ausweg,
 der Weg a der zweite.
 
+**Gebaut und gemessen in Stufe 19c (S121), nicht gehört:** ein Sprung nimmt
+`kSprungAnteil` = 0,3 % des Umlaufs (von Claude gesetzt; die Probe hatte
+0,6 % für beide zusammen). Bei A2 sind das gut ein Abtastwert, bei A4 ein
+Drittel — der Sprung ist im Ton also eine **harte Stufe**, und eine Stufe
+hat Teiltöne über der halben Abtastrate, die als falsche Töne zurückfallen.
+Gemessen an Herz und Stern (`test_ShapeTon` „Messung"): bei A2 liegen −33 dB
+(16 Harmonics) und −43 dB (48) des Tons über dem, was Harmonics zulässt; bei
+**A4 sind es −33 bis −34 dB, gleich bei 16, 48 und 160** — dort ist es fast
+ganz der zurückgefallene Anteil, und mehr Harmonics hilft nicht. Hörproben:
+`onepath_*` unter `.claude/handover/hoerproben_19c` (lokal). Ob das stört,
+entscheidet das Ohr; die Auswege stehen oben.
+
+**Drei und mehr Konturen** (von Claude gesetzt, in 19c gebaut): von der
+ersten zur zweiten wird dort gesprungen, wo sie sich am nächsten kommen;
+jede weitere wird an dem Punkt betreten, der dem letzten am nächsten liegt,
+und an demselben Punkt wieder verlassen (ein geschlossener Zug endet, wo er
+begann); von der letzten geht es zurück zum Tor der ersten. Die Arten
+„kürzeste Wege" und „von Hand" spielen bis Stufe 20d wie die Reihenfolge der
+Liste.
+
 ### Wo der Stift springt (B1, Patrik: wählbar)
 
 Im Form-Fenster wählbar, drei Arten:
@@ -892,7 +977,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 — **gebaut in S120**, im Programm ungesehen und ungehört (`Loop_Konzept.md` §5) | — |
 | 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen — **gebaut in S120** (§7 „Wie es gebaut ist"); im Programm ist davon nur der Bereich Shapes im Export zu sehen | — |
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a; V1 a bis V3 a) — **gebaut in S121** (§10 „Wie der Knoten Shape gebaut ist"), im Programm ungesehen | 19a |
-| 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
+| 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster — **gebaut in S121** (§5 „Wie die Schwingung gebaut ist", `.lvinst` Fassung 9; T1 a, T2 a). Die Kante des Sprungs ist **gemessen** (§9), **nicht gehört**; offen dazu und zu den Ecken: Patriks Ohr | 19a |
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a) | — (gebraucht ab 19c) |
 | 19e | die Shape-Schicht im Creator | Skizze |
 | 20a | das Form-Fenster: zeichnen | Skizze |
@@ -924,6 +1009,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.14.0 | 2026-10-13 (S121) | **Die Schwingung Shape entschieden und gebaut (Stufe 19c).** Entscheide Patrik: **T1 a** der Pegel — kein Ausgleich, die Form am fernsten Punkt gemessen (davor gemessen: 0,62 bis 1,41); **T2 a** Angle dreht die Form auch mit Stereo XY (§4, §5). Gebaut: `shape/Tonform`, `Schwingung::Form`, `rechneForm`, `.lvinst` Fassung 9 (§5 „Wie die Schwingung gebaut ist", §14). Gemessen: 4,1 ms je Sekunde Ton bei 24 Harmonics; die Kante des Sprungs liegt bei A4 um −33 dB und ist dort zurückgefallener Anteil (§9). Hörproben abgelegt, nichts gehört; offen: Ecken dämpfen, der Sprung. |
 | 0.13.0 | 2026-10-13 (S121) | **Der Knoten Shape entschieden und gebaut (Stufe 19b).** Entscheide Patrik: **V1 a** fünf Skriptfelder — Init, Frame, Beat, Song und Per point; **V2 a** die Regler, mit Contour, Points, eigener Farbe und Line blend über M2 b hinaus; **V3 a** neun Presets; **V4 a** XY Scope bekommt dieselben fünf Felder (§10). Gebaut: `shape/Zeichenform`, `ShapeParams`, `runShape`, Panel, Palette, Feldtabelle, neun Presets (§10 „Wie der Knoten Shape gebaut ist", §14). Gemessen: Per point 0,19 ms bei 512 Punkten, der Umriss 0,09 ms in der Vorgabe (Release-clang). Im Programm ungesehen. |
 | 0.12.0 | 2026-10-13 (S120) | **Stufe 19a gebaut:** `shape/Kontur` — die Zeichnung, der Pfad als Text, die Datei `.lvcontour` Fassung 1, die Orte (mitgeliefert, `user:<name>`, Pfad), die Reihe mit weichem Gewicht; sechs mitgelieferte Formen; der Bereich Shapes im Export (§7 „Wie es gebaut ist", §14). Die Namen der Felder von Claude gesetzt. |
 | 0.11.0 | 2026-10-13 (S120) | **Stufe 18 gebaut:** Pan je Schicht mit dem Gesetz von Spur und Muster, acht Schichten, `.lvinst` Fassung 8; alte Instrumente rechnen Bit für Bit wie vorher (§14). Im Programm ungesehen und ungehört. |

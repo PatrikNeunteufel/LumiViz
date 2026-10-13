@@ -43,6 +43,7 @@ set(_local_sources
     # Knoten Shape (S121): die Form und ihr Ort unter den mitgelieferten Daten
     "${_myviz_src}/shape/Kontur.cpp"
     "${_myviz_src}/shape/Zeichenform.cpp"
+    "${_myviz_src}/shape/Tonform.cpp"  # Kontur.cpp verwirft dort Gemerktes
     "${_myviz_src}/core/Mitgeliefert.cpp"
     # Gemeinsam mit MilkdropStandalone (S74): echte Musik als Audioquelle
     "${CMAKE_SOURCE_DIR}/projects/exec/common/AudioDateiQuelle.cpp"

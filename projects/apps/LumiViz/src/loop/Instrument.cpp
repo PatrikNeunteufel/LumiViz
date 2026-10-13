@@ -7,6 +7,7 @@
 
 #include "loop/Kit.hpp"
 #include "loop/Sample.hpp"
+#include "shape/Tonform.hpp"  // die Schwingung Form (Stufe 19c)
 
 #include <QDir>
 #include <QFile>
@@ -19,6 +20,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <memory>
 
@@ -51,7 +53,8 @@ double teilton(const Schicht& schicht, int k)
     case Schwingung::Saite:
     case Schwingung::Sample:
     case Schwingung::Rauschen:
-        break;  // kein Wellenzug: die Saite, die Aufnahme und das Rauschen rechnen eigens
+    case Schwingung::Form:
+        break;  // kein Wellenzug: die Saite, die Aufnahme, das Rauschen und die Form rechnen eigens
     }
     return 0.0;
 }
@@ -536,6 +539,68 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
     }
 }
 
+/// Die Form (Stufe 19c, Shape_Konzept §5): der Stift faehrt mit der Tonhoehe
+/// der Note um die Kontur, der Ton ist seine Bewegung. Gerechnet wird je
+/// Abtastwert die Reihe selbst — Harmonics darf sich mit der Huellkurve von
+/// Wert zu Wert aendern, ohne dass etwas springt (Z4 a). Stimmen, Verstimmung,
+/// Vibrato und Pitch sweep wie bei `rechneSchwingung`.
+void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+{
+    const std::shared_ptr<const shape::Tonform> form = shape::tonformFuer(schicht.form, schicht.formKontur);
+    if (form == nullptr || form->leer()) return;  // keine Form: die Schicht schweigt
+    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    const Tonweg weg(schicht, rate);
+    // Die Bandgrenze je Note: kein Teilton ueber 0,45 der Abtastrate. Vibrato und Verstimmung
+    // heben den Ton leicht, eine fallende Note beginnt hoeher (wie bei den anderen Schwingungen).
+    const double hoechste = std::max(1.0, 0.45 * rate / (hz * 1.06 * weg.hoechstes()));
+    const int stimmen = std::clamp(schicht.stimmen, 1, 3);
+    std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
+    std::array<double, 3> phase = {0.0, 0.33, 0.67};  // fest: derselbe Ton ergibt dieselben Werte
+    if (stimmen == 2) verhaeltnis = {std::exp2(-schicht.verstimmungCent / 1200.0), std::exp2(schicht.verstimmungCent / 1200.0), 1.0};
+    if (stimmen == 3) verhaeltnis = {1.0, std::exp2(-schicht.verstimmungCent / 1200.0), std::exp2(schicht.verstimmungCent / 1200.0)};
+    const double jeStimme = 1.0 / std::sqrt(static_cast<double>(stimmen));
+
+    const double einsatz = std::max(1.0, schicht.vibratoEinsatzMs * rate / 1000.0);
+    const bool vibrato = schicht.vibratoHz > 0.0 && schicht.vibratoCent > 0.0;
+    const auto inBereich = [](double wert, double von, double bis, double ersatz) {
+        return std::isfinite(wert) ? std::clamp(wert, von, bis) : ersatz;
+    };
+    const double harmonische = inBereich(schicht.harmonische, 1.0, kFormHarmonischeMax, 1.0);
+    const double mitHuelle = inBereich(schicht.harmonischeHuelle, -kFormHuelleMax, kFormHuelleMax, 0.0);
+    // Angle: z' = e^(−i·θ)·z; Start: ein anderer Anfang im Umlauf; Reverse: andersherum
+    const shape::Punkt dreh = std::polar(1.0, -inBereich(schicht.winkelGrad, 0.0, 360.0, 0.0) * kPi / 180.0);
+    const double start = inBereich(schicht.formStartProzent, 0.0, 100.0, 0.0) / 100.0;
+    const double richtung = schicht.rueckwaerts ? -1.0 : 1.0;
+    std::array<Reihe, 2> reihen = {Reihe(schicht, rate), Reihe(schicht, rate)};  // je Seite einer: jeder Filter hat sein Gedaechtnis
+    const double pegel = kPegel * schicht.laut;
+
+    for (std::int64_t t = 0; t < frames; ++t)
+    {
+        const double h = huelle.bei(t);
+        double schritt = hz / rate * weg.bei(t);
+        if (vibrato)
+        {
+            const double tiefe = schicht.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
+            schritt *= std::exp2(tiefe * std::sin(2.0 * kPi * schicht.vibratoHz * static_cast<double>(t) / rate) / 1200.0);
+        }
+        const double teiltoene = std::clamp(harmonische + mitHuelle * h, 1.0, kFormHarmonischeMax);
+        shape::Punkt z{0.0, 0.0};
+        for (int s = 0; s < stimmen; ++s)
+        {
+            double& p = phase[static_cast<std::size_t>(s)];
+            z += shape::tonwert(*form, start + richtung * p, teiltoene, hoechste / verhaeltnis[static_cast<std::size_t>(s)]);
+            p += schritt * verhaeltnis[static_cast<std::size_t>(s)];
+            p -= std::floor(p);
+        }
+        z *= jeStimme;
+        z *= dreh;
+        const auto links = static_cast<float>(reihen[0].bei(z.real(), h, hz) * pegel);
+        daten[static_cast<std::size_t>(2 * t)] = links;
+        daten[static_cast<std::size_t>(2 * t + 1)] =
+            schicht.stereoXY ? static_cast<float>(reihen[1].bei(z.imag(), h, hz) * pegel) : links;
+    }
+}
+
 }  // namespace
 
 // =============================================================================
@@ -552,13 +617,14 @@ struct Wellenname
     Schwingung schwingung;
     const char* name;
 };
-constexpr std::array<Wellenname, 7> kWellen = {{{Schwingung::Sinus, "sine"},
+constexpr std::array<Wellenname, 8> kWellen = {{{Schwingung::Sinus, "sine"},
                                                 {Schwingung::Dreieck, "triangle"},
                                                 {Schwingung::Saege, "saw"},
                                                 {Schwingung::Rechteck, "square"},
                                                 {Schwingung::Saite, "string"},
                                                 {Schwingung::Sample, "sample"},
-                                                {Schwingung::Rauschen, "noise"}}};
+                                                {Schwingung::Rauschen, "noise"},
+                                                {Schwingung::Form, "shape"}}};
 
 double inGrenzen(double wert, double von, double bis, double ersatz)
 {
@@ -664,6 +730,18 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("loopFrom")] = schicht.schleifeVonMs;
         o[QStringLiteral("loopTo")] = schicht.schleifeBisMs;
     }
+    if (schicht.schwingung == Schwingung::Form)
+    {
+        // seit Fassung 9; nur eine Shape-Schicht traegt sie
+        o[QStringLiteral("shape")] = schicht.form;
+        o[QStringLiteral("shapeContour")] = schicht.formKontur;
+        o[QStringLiteral("shapeHarmonics")] = schicht.harmonische;
+        o[QStringLiteral("shapeHarmonicsEnvelope")] = schicht.harmonischeHuelle;
+        o[QStringLiteral("shapeAngle")] = schicht.winkelGrad;
+        o[QStringLiteral("shapeStart")] = schicht.formStartProzent;
+        o[QStringLiteral("shapeStereoXY")] = schicht.stereoXY;
+        o[QStringLiteral("shapeReverse")] = schicht.rueckwaerts;
+    }
     return o;
 }
 
@@ -712,6 +790,15 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     // seit Fassung 5; in einer aelteren Datei fehlen sie — dann kein Pitch sweep
     neu.tonhoeheStartHt = zahl("pitchStart", vorgabe.tonhoeheStartHt, kTonhoeheStartMin, kTonhoeheStartMax);
     neu.tonhoeheZeitMs = zahl("pitchTime", vorgabe.tonhoeheZeitMs, 0.0, kTonhoeheZeitMaxMs);
+    // seit Fassung 9; in einer aelteren Datei und an anderen Schichten fehlen sie
+    neu.form = wurzel.value(QStringLiteral("shape")).toString();
+    neu.formKontur = std::max(0, wurzel.value(QStringLiteral("shapeContour")).toInt(vorgabe.formKontur));
+    neu.harmonische = zahl("shapeHarmonics", vorgabe.harmonische, 1.0, kFormHarmonischeMax);
+    neu.harmonischeHuelle = zahl("shapeHarmonicsEnvelope", vorgabe.harmonischeHuelle, -kFormHuelleMax, kFormHuelleMax);
+    neu.winkelGrad = zahl("shapeAngle", vorgabe.winkelGrad, 0.0, 360.0);
+    neu.formStartProzent = zahl("shapeStart", vorgabe.formStartProzent, 0.0, 100.0);
+    neu.stereoXY = wurzel.value(QStringLiteral("shapeStereoXY")).toBool(false);
+    neu.rueckwaerts = wurzel.value(QStringLiteral("shapeReverse")).toBool(false);
     neu.reihe.clear();
     if (const QJsonValue reihe = wurzel.value(QStringLiteral("path")); reihe.isArray())
     {
@@ -1182,6 +1269,8 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
             rechneSample(schicht, ton, hz, huelle, rate, eine);
         else if (schicht.schwingung == Schwingung::Rauschen)
             rechneRauschen(schicht, hz, huelle, rate, eine);
+        else if (schicht.schwingung == Schwingung::Form)
+            rechneForm(schicht, hz, huelle, rate, eine);
         else
             rechneSchwingung(schicht, hz, huelle, rate, eine);
         // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
