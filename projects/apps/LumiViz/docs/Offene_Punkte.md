@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.199.0
+> **Version:** 1.200.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5434,6 +5434,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.200.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **As one path entschieden (Patrik): B2 d, B1 wählbar** (`Shape_Konzept.md` 0.6.0, §9) — jede Kontur behält ihre eigene Reihe und bleibt geschlossen, eine Schicht spielt sie nacheinander in einem Umlauf, dazwischen ein kurzer gerader Sprung; wo der Stift springt, ist im Form-Fenster wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet. Die vierte der sieben Vorlagen ist geschlossen; als Nächstes die zwei Module für die Effect Chain. **Offen, in Stufe 19b zu hören:** die Kante des Sprungs im Ton (in der Probe −31 bis −51 dB über der eingestellten Zahl von Harmonischen, grob, nicht gehört). |
 | 1.199.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **SVG entschieden (Patrik): S1 a, mit Beleg** (`Shape_Konzept.md` 0.5.0, §8) — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät, Kurven, Lage und Füllfarbe kommen an; dazu belegt: `QPainterPath` trägt Strecken und Kurven ohne Qt-Anwendung (D4 b). Neu `test_ShapeBelege.cpp` (zwei Fälle, **1155 Cases**), Qt Svg in der `Solution.json`. Die dritte der sieben Vorlagen ist geschlossen; als Nächstes die Brücke bei As one path. Nicht belegt: Text, `use`, CSS-Stile, Verläufe, Dateien aus Inkscape oder Illustrator. Voller Lauf steht aus. |
 | 1.198.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Konturerkennung entschieden (Patrik): K1 a, K2 a** (`Shape_Konzept.md` 0.4.0, §8) — über Flächen, Split by Brightness, Colour oder Transparency, Regler Levels, Smooth, Min size, Detail; davor eine Probe an drei Bildern; die zweite der sieben Vorlagen ist geschlossen, als Nächstes SVG. §7 **Publish, Nachtrag (Patrik):** bei gleichen Namen eine Option Vergleichen mit den Wegen überschreiben, umbenennen, nicht übernehmen; beim Umbenennen werden die Nennungen im Paket mitgeändert — das Muster gibt es beim Host Switcher (S82) und bei Rename base im Loop, der Import der `.lvdata` tut es heute nicht. |
 | 1.197.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Datei `.lvcontour` entschieden (Patrik): D1 a, D2 a, D3 a, D4 b** (`Shape_Konzept.md` 0.3.0, §7; bei D4 zuerst a, dann b: Konturen als Pfade aus Strecken und Kurven) — damit ist die erste der sieben Vorlagen geschlossen; als Nächstes die Konturerkennung aus einem Bild. §7 **NEU Idee Patrik: Publish** — ein Ding mit allen zugehörigen Dateien, der Ordnerstruktur des Benutzerordners und einem Manifest als Paket `<name>.<type>.lvdata`; nachgesehen: eine `.lvdata` ist heute schon ein Zip mit Manifest und `data/<Pfad im Benutzerordner>`; offen die Arten, was dazugehört, gleiche Namen beim Import (die Nennungen im Paket), das Manifest. Nichts entworfen, nichts gebaut. |

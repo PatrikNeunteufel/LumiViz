@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.5.0
+> **Version:** 0.6.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -67,7 +67,7 @@ Nachgesehen in S119 und S120, je mit der Stelle.
 | **Hüllkurve der Schicht** | Attack, Decay, Sustain, Release an der Schicht; die Filter envelope folgt ihr | Harmonics envelope folgt ihr genauso |
 | **Vier Schichten** | `kSchichtenMax = 4` | As layers endet bei vier Konturen (Z5 a) |
 | **Die Visuals bekommen beide Seiten** | `MainWindow.cpp`, Zufuhr an die Visualizer: spielt das Loop-Panel, kommt die Wellenform vom Mixer des Loops (`loop::tonMixer`), unter dem Composer von dessen Mixer; der Mixer hat zwei Kanäle (`BassEngine::createMixer`), `updateAudioStereo` reicht links und rechts getrennt weiter — **512 Werte je Seite und Bild** | ein XY-Scope hat seine Daten; die Frage „nicht geprüft" aus S119 ist damit beantwortet. Grenze: siehe §10 |
-| **Wellenform je Seite in der Effect Chain** | `getWaveformChannel(0/1)`, im Skript `getosc` mit Kanal | ein XY-Scope lässt sich heute schon als Superscope-Skript schreiben (Vorgabe Lissajous gibt es) |
+| **Wellenform je Seite in der Effect Chain** | `getWaveformChannel(0/1)`, im Skript `getosc` mit Kanal | die Daten für ein XY-Scope sind da. **Berichtigt (S120):** die Vorgabe Lissajous des Superscope ist eine gerechnete Figur (`sin` gegen `cos` mit zwei Frequenzen), kein Scope von links gegen rechts — in S119 war sie so verstanden worden. Ob sich ein XY-Scope heute schon als Skript schreiben lässt, ist nicht nachgesehen (Vorlage 5) |
 | **Qt Svg** | liegt in der Installation (`C:/Qt/6.10.1/msvc2022_64`: `Qt6Svg.dll`, `lib/cmake/Qt6Svg`); seit S120 in der `Solution.json` | gibt die Pfade nicht heraus, zeichnet sie aber auf ein mitschreibendes Gerät — §8 |
 | **OpenCV** | liegt nicht im Repo | die Konturerkennung ist selbst zu schreiben |
 | **Die Endung `.lvshape`** | **vergeben:** seit S96 die Stück-Presets des Curve Editors im Composer (`composer/FormPresets.hpp`, `asset/composer/shapes/`, `<AppData>/composer/shapes/`; im Benutzerhandbuch genannt) | die Kontur-Datei braucht eine andere Endung, oder die Presets des Composers ziehen um — §7 |
@@ -94,6 +94,8 @@ Von Patrik, S119:
 | **K1 a** (S120) | Konturen aus einem Bild über Flächen; **Split by** Brightness, Colour oder Transparency. |
 | **K2 a** (S120) | Regler Split by, Levels, Smooth, Min size, Detail; Löcher sind eigene Konturen, Flächen am Bildrand anfangs nicht gewählt, die größten 64 werden angeboten. |
 | **S1 a** (S120) | SVG: Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; Kurven, Lage und Füllfarbe kommen an (belegt). |
+| **B2 d** (S120) | As one path: jede Kontur behält ihre eigene Reihe und bleibt geschlossen; nacheinander in einem Umlauf, dazwischen ein kurzer gerader Sprung; Harmonics je Kontur. |
+| **B1** (S120) | Wo der Stift springt, ist wählbar: in Reihenfolge der Liste (Vorgabe), auf den kürzesten Wegen, oder von Hand eingezeichnet mit Start- und Endpunkt. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -146,6 +148,13 @@ z(φ) = Σ g_k · C_k · e^(i·k·φ)        über k = −K … K, k ≠ 0
     gesetztem Haken tut).
 - **Start**: ein anderer Startpunkt auf der Kontur, `C_k · e^(i·k·t0)`.
 - **Reverse**: die andere Umlaufrichtung, `C_k` und `C_−k` tauschen.
+
+**Mehrere Konturen in einer Schicht (As one path, B2 d):** die Summe oben
+gilt **je Kontur** — jede hat ihre eigenen Koeffizienten und ihr eigenes
+Gewicht `g_k`, und anders als bei einer einzelnen Kontur behält sie dabei
+ihre Lage in der Zeichnung (`C_0` bleibt). Die Phase eines Umlaufs ist auf
+die Konturen verteilt, nach ihrer Länge; dazwischen liegt je ein kurzer
+gerader Sprung (§9).
 
 ### Was Start und Reverse hörbar tun — eine Einschränkung
 
@@ -284,7 +293,8 @@ JSON mit einer Fassung.
   **gezeichnete** aus dem, was das Zeichnen ergibt (Skizze, §13 Punkt 6).
   Zu Punkten wird der Pfad erst beim Laden, für die Rechnung (§5).
 - Für die **Zeichnung**: die Reihenfolge der Konturen, As layers oder As one
-  path, und die Herkunft — gezeichnet, SVG oder Bild, der Name der
+  path, bei As one path die Art der Sprünge und die von Hand gesetzten
+  Brücken mit Start- und Endpunkt (B1, §9), und die Herkunft — gezeichnet, SVG oder Bild, der Name der
   Quelldatei und die Einstellungen der Erkennung.
 - **Nicht in der Datei:** das Quellbild — liegt es nicht mehr am Ort,
   bleiben die gefundenen Konturen, neu erkennen geht erst wieder, wenn das
@@ -414,13 +424,65 @@ das Instrument voll ist (vier). Alle Schichten nennen dieselbe Datei, jede
 ihre Kontur über deren feste Kennung (D1 a, D3 a).
 
 **As one path** (Z5 a): die gewählten Konturen nacheinander in einem Umlauf.
-Nur so erscheint im Scope eine Zeichnung aus mehreren Teilen. Offen ist die
-**Brücke**: der Stift muss von einer Kontur zur nächsten, und dieser Weg ist
-im Scope als Strich zu sehen und im Ton zu hören. Zu klären: wo er ansetzt
-(nächste Punkte), in welcher Reihenfolge die Konturen kommen, ob der Stift
-auf der Brücke schneller fährt (dann ist der Strich blasser und der Ton
-schärfer), und wie viel vom Umlauf jede Kontur bekommt (nach Länge oder
-gleich). Vorlage (§13, Punkt 4).
+Nur so erscheint im Scope eine Zeichnung aus mehreren Teilen. Entschieden in
+S120 (B2 d, B1), nach einer Probe.
+
+### Jede Kontur bleibt für sich (B2 d)
+
+Ein Ton ist die Bewegung eines einzigen Stifts; von einer Kontur zur
+nächsten muss er einen Weg nehmen. Der Weg ist aber **nicht Teil der Form**:
+
+- jede Kontur hat ihre **eigene Reihe** und bleibt ein eigener geschlossener
+  Zug;
+- eine Schicht spielt sie **nacheinander in einem Umlauf**; jede bekommt so
+  viel vom Umlauf, wie sie lang ist;
+- zwischen zwei Konturen **springt** der Stift in einem kurzen geraden Zug;
+- **Harmonics gilt je Kontur**: mit wenigen wird jede für sich rund.
+
+Die Probe (Herz und Stern, in Python, nur zur Anschauung; im Scope-Bild mit
+16, 48 und 160 Harmonischen):
+
+| Weg | Anteil des Wegs am Umlauf | Ergebnis |
+|---|---|---|
+| eine Reihe samt Brücke, Stift gleich schnell | 7,1 % | sauber, die Brücke so hell wie die Konturen; bei 16 verschmelzen die Formen; auf 1 % genau ab 36 Harmonischen |
+| eine Reihe samt Brücke, Stift springt | 0,6 % | bei 160 ein blasser Strich, bei 48 zittern beide Konturen, bei 16 kreuzt der Strich die Formen; auf 1 % genau erst ab 192 |
+| eine Reihe, Brücke zwischen den Startpunkten | 27,6 % | ein langer Strich quer durch das Herz |
+| **jede Kontur ihre eigene Reihe, kurzer Sprung** | 0,6 % | bei 16, 48 und 160 getrennt und geschlossen, der Sprung ein blasser Strich, kein Zittern |
+
+Der Anstoß kam von Patrik: „das sind doch eigentlich zwei separate Konturen,
+und beide sind geschlossen" — Claude hatte in den ersten drei Zeilen aus
+beiden eine gemacht. Verworfen: eine Reihe über den ganzen Umlauf mit Regler
+Bridge speed (a), immer gleich schnell (b), immer im Sprung (c).
+
+**Der Preis liegt im Ton:** der Sprung ist eine Kante im Wellenzug, die
+Harmonics nicht im Griff hat. In der Probe liegt über der eingestellten Zahl
+noch Energie bei −31, −38 und −51 dB (bei 16, 48, 160) — grob gemessen,
+**nicht gehört**. In Stufe 19b zu hören und zu messen, auch an hohen Noten;
+stört die Kante, ist ein Regler für die Dauer des Sprungs der erste Ausweg,
+der Weg a der zweite.
+
+### Wo der Stift springt (B1, Patrik: wählbar)
+
+Im Form-Fenster wählbar, drei Arten:
+
+- **In Reihenfolge der Liste** (b, die Vorgabe): die Konturen kommen, wie sie
+  in der Liste stehen; der Stift springt von jeder zur nächsten an der
+  Stelle, an der sie der nächsten am nächsten kommt, und von der letzten
+  zurück zur ersten. Die Reihenfolge bestimmt, was zuerst im Umlauf klingt.
+- **Auf den kürzesten Wegen** (a): das Programm verbindet selbst, so dass
+  alle Sprünge zusammen am kürzesten sind.
+- **Von Hand** (d, Patrik): die Brücke wird im Form-Fenster eingezeichnet,
+  mit Start- und Endpunkt.
+
+Verworfen (c): der Sprung an den gespeicherten Startpunkten. Die Art und die
+von Hand gesetzten Brücken stehen in der Datei.
+
+**Für die Skizze offen** (§13, Punkt 6), von Claude noch nichts gesetzt: wie
+die drei Arten im Fenster heißen; und bei „von Hand": was gilt, wenn die
+gezeichneten Brücken nicht alle gewählten Konturen erreichen, wenn zwei
+Brücken an einer Kontur ansetzen (der Stift verlässt sie dann mitten im Zug
+und kommt zurück) oder wenn sie einen Ring bilden. Drei und mehr Konturen
+sind nicht geprobt.
 
 ---
 
@@ -491,7 +553,7 @@ und Hörproben in einen Ordner.
 1. ~~Die Datei~~ — entschieden in S120: F1 a, D1 a, D2 a, D3 a, D4 b (§7).
 2. ~~Konturerkennung~~ — entschieden in S120: K1 a, K2 a (§8).
 3. ~~SVG~~ — entschieden in S120: S1 a, mit Beleg (§8).
-4. **Die Brücke** bei As one path (§9).
+4. ~~Die Brücke~~ — entschieden in S120: B2 d, B1 wählbar (§9).
 5. **Die zwei Module** für die Effect Chain und welches zuerst (§10).
 6. **Die Skizze** des Form-Fensters und der Shape-Schicht — mit dem
    Zeichenwerkzeug, vor jedem Bau; die gebilligte Skizze kommt als
@@ -543,6 +605,7 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.6.0 | 2026-10-13 (S120) | **As one path entschieden (Patrik): B2 d** — jede Kontur behält ihre eigene Reihe, nacheinander in einem Umlauf, dazwischen ein kurzer Sprung, Harmonics je Kontur; **B1** — wo der Stift springt, ist wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet (§4, §7, §9, §13). Davor eine Probe in vier Zeilen, die Zahlen stehen in §9; die ersten drei Zeilen rechneten beide Konturen samt Brücke in eine Reihe — Patriks Einwand führte zur vierten. Offen: wie die Kante des Sprungs klingt (Stufe 19b). |
 | 0.5.0 | 2026-10-13 (S120) | **SVG entschieden (Patrik): S1 a, mit Beleg** — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; der Beleg zeigt vier Aufrufe, die Kurve bleibt Kurve, Lage und Farbe stimmen (§8). Dazu belegt, was bei D4 b aus dem Gedächtnis stand: `QPainterPath` ohne Qt-Anwendung (§7). Neu `tests/unit/UnitTests/test_ShapeBelege.cpp`; Qt Svg in der `Solution.json`. |
 | 0.4.0 | 2026-10-13 (S120) | **Konturerkennung entschieden (Patrik): K1 a** über Flächen, Split by Brightness, Colour oder Transparency; **K2 a** die Regler Levels, Smooth, Min size, Detail und die Regeln für Löcher, Bildrand und Anzahl (§4, §8, §13). Davor eine Probe der drei Verfahren an drei Bildern, die Zahlen stehen in §8. |
 | 0.3.0 | 2026-10-13 (S120) | **Die Datei entschieden (Patrik): D1 a** eine Zeichnung mit allen Konturen, **D2 a** Ort und Nennung wie bei Instrumenten und Samples, **D3 a** das Instrument nennt die Form über eine feste Kennung der Kontur, **D4 b** Pfade aus Strecken und Kurven, kein Quellbild, keine Koeffizienten — zuerst a (nur Punktfolgen), dann auf Patriks Einwand b (§4, §7, §9, §13). Für das Teilen Patriks Idee **Publish** — ein Paket `<name>.<type>.lvdata` — als eigener Punkt in `Offene_Punkte.md` §7. |
