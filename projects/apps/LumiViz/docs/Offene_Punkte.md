@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.191.0
+> **Version:** 1.192.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5359,6 +5359,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.192.0 | 2026-10-13 | Session 119, Abschluss. `sessions/Changelog_Session119.md`. **Stand:** Stufe 17 (ein Sample bearbeiten) und X5 (Abweichung im Kasten) sind gebaut, voller Lauf 1153 / 1153 unter Testing-MSVC; die Idee „Klang aus einer Form" ist in Z1 a bis Z5 a gefasst. **Offen:** im Programm ungesehen Liste 10 Abschnitt D, X7, U72 bis U76 und der Rest aus S118; Patriks Ohr an `hoerproben_16e`; `asset/loop/effects_demo2.lvloop` liegt seit S119 im Repo — bleibt sie als mitgelieferter Loop (dann die Werte festhalten) oder soll sie heraus; **als Nächstes die Form:** Konzept auf LumiViz umschreiben, dann Dateiformat, Konturerkennung, SVG, Module, Skizze |
 | 1.191.0 | 2026-10-13 | Session 119. §7 NEU Idee Patrik: **Klang aus einer Form** — Waveform „Shape" im Instrument-Creator (Fourier-Reihe einer Kontur; Grobkonzept `fourier-shape-loops-konzept.md`); Z1 a: in LumiViz, in C++; Eingabe durch Zeichnen, SVG oder Konturen aus einem Bild; Z2 a im Grundsatz (Angle, Stereo XY), dazu die Richtungen ±x und ±y für überlagerte Schichten und ein Modul für die Effect Chain ; Z3 a (Pan je Schicht, Stereo XY an der Shape-Schicht, bewegtes Stereo bei den Effekten), Z4 a (Harmonics läuft weich, dazu Harmonics envelope), Z5 a (mehrere Konturen als Schichten oder als ein Pfad), die Form als Datei `.lvshape`, auch für die Visuals; Start und Reverse als Regler — nichts entworfen, nichts gebaut; offen Dateiformat, Konturerkennung, SVG, die Module, die Skizze. §7 NEU Idee Patrik: **Flanger** als Effekt am Clip — nur notiert |
 | 1.190.0 | 2026-10-13 | Session 119. **X5 gebaut** (Clip effects, mehrere Clips mit derselben Folge): weicht irgendein Wert eines Bausteins ab, steht im Kasten „≠" vor dem Kurzwert, der Kasten ist bernsteinfarben getönt (die Fläche statt des Rands, Vorschlag Patrik — auch am gewählten Kasten zu sehen), der Tooltip nennt die Regler — im Programm ungesehen (Liste 10, X7, U76) |
 | 1.189.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **Stufe 17 fertig** (17c: Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D mit D0 bis D10 und U72 bis U75, voller Lauf 1153 / 1153 unter Testing-MSVC) — im Programm ungesehen. **X5 entschieden (Patrik, a):** weicht irgendein Wert eines Bausteins zwischen den Clips ab, steht die zweite Zeile des Kastens in Bernstein mit „≠" davor, der Tooltip nennt die Regler; dazu Patriks Frage nach einem farbigen Rahmen — **offen, nicht gebaut** |
