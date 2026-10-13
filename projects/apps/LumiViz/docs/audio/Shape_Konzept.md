@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.9.0
+> **Version:** 0.10.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -65,7 +65,7 @@ Nachgesehen in S119 und S120, je mit der Stelle.
 | **Panorama** | eine Schicht hat keines (`Schicht` trägt nur `laut`) | Pan je Schicht ist neu (Z3 a) — neue Fassung der `.lvinst`, heute 7 |
 | **Signal path** | hinter Source stehen Filter, Drive, Envelope in freier Folge (`Schicht::reihe`) | die Shape-Schicht geht durch dieselbe Reihe; zu klären, ob Filter und Drive beide Seiten gleich behandeln |
 | **Hüllkurve der Schicht** | Attack, Decay, Sustain, Release an der Schicht; die Filter envelope folgt ihr | Harmonics envelope folgt ihr genauso |
-| **Vier Schichten** | `kSchichtenMax = 4`; in S120 gemessen und mit 8 probiert — es trägt (`Offene_Punkte.md`, bei der Datenablage unter `kSchichtenMax`), nicht angehoben | As layers endet bei vier Konturen (Z5 a), mit einer angehobenen Grenze bei acht |
+| **Vier Schichten** | `kSchichtenMax = 4`; in S120 gemessen und mit 8 probiert — es trägt; **geht mit Stufe 18 auf acht** (Patrik) | As layers reicht dann für acht Konturen (Z5 a nannte vier) |
 | **Die Visuals bekommen beide Seiten** | `MainWindow.cpp`, Zufuhr an die Visualizer: spielt das Loop-Panel, kommt die Wellenform vom Mixer des Loops (`loop::tonMixer`), unter dem Composer von dessen Mixer; der Mixer hat zwei Kanäle (`BassEngine::createMixer`), `updateAudioStereo` reicht links und rechts getrennt weiter — **512 Werte je Seite und Bild** | ein XY-Scope hat seine Daten; die Frage „nicht geprüft" aus S119 ist damit beantwortet. Grenze: siehe §10 |
 | **Wellenform je Seite in der Effect Chain** | `getWaveformChannel(0/1)`, im Skript `getosc` mit Kanal | die Daten für ein XY-Scope sind da. **Berichtigt (S120):** die Vorgabe Lissajous des Superscope ist eine gerechnete Figur (`sin` gegen `cos` mit zwei Frequenzen), kein Scope von links gegen rechts — in S119 war sie so verstanden worden. Ob sich ein XY-Scope heute schon als Skript schreiben lässt, ist nicht nachgesehen (Vorlage 5) |
 | **Qt Svg** | liegt in der Installation (`C:/Qt/6.10.1/msvc2022_64`: `Qt6Svg.dll`, `lib/cmake/Qt6Svg`); seit S120 in der `Solution.json` | gibt die Pfade nicht heraus, zeichnet sie aber auf ein mitschreibendes Gerät — §8 |
@@ -261,9 +261,23 @@ Pan gilt für jede Waveform und braucht die Form nicht (Z3 a; schließt U19).
 Es ist die kleinste Stufe und kommt zuerst: ein Regler im Kasten Level, ein
 Feld an `Schicht`, **Fassung 8 der `.lvinst`** — eine eigene Fassung aus dem
 bekannten Grund: ein älteres Programm spielte die Schicht sonst still in der
-Mitte. Offen: das Gesetz (gleiche Leistung oder linear), und was Pan an einer
-Sample-Schicht mit zwei verschiedenen Seiten tut. Die mitgelieferten
-Instrumente dürfen sich dabei nicht ändern (`test_LoopWerte` hält sie fest).
+Mitte. Die mitgelieferten Instrumente dürfen sich dabei nicht ändern
+(`test_LoopWerte` hält sie fest).
+
+**Das Gesetz — nachgesehen, nicht neu entschieden:** Spur und Muster haben
+schon ein Pan (`Rechenkern.cpp`): links `min(1, 1 − pan)`, rechts
+`min(1, 1 + pan)` — in der Mitte beide Seiten voll, zur Seite hin wird die
+andere leiser, bis sie schweigt. Die Schicht bekommt **dasselbe Gesetz**; in
+der Mitte ändert sich damit kein Wert. Jede Seite wird mit ihrem Faktor
+genommen, nichts wird gemischt — bei einer Sample-Schicht mit zwei
+verschiedenen Seiten bleibt ganz links nur, was links aufgenommen ist.
+
+**Acht Schichten (Patrik S120):** die Grenze `kSchichtenMax` geht mit dieser
+Stufe von vier auf acht, in derselben Fassung 8 — ein älteres Programm läse
+ein Instrument mit mehr als vier Schichten sonst still gekürzt. Gemessen:
+die Rechenzeit wächst gerade mit der Zahl (Release-clang rund 2 ms je
+Sekunde Ton und teurer Schicht). Zu beachten: die Spitze wächst mit (2,52
+bei acht Schichten auf Level 1); der Creator zeigt sie als Peak.
 
 ---
 
@@ -696,7 +710,9 @@ und Hörproben in einen Ordner.
 5. ~~Die zwei Module~~ — entschieden in S120: M1 a, M2 b, M3 a (§10).
 6. ~~Die Skizze~~ — gebilligt in S120, mit G1 a und G2 a; als Beschreibung
    in §6 (die Shape-Schicht) und §8a (das Fenster Edit shape).
-7. **Baustufen** (§14).
+7. ~~Baustufen~~ — freigegeben in S120 (§14).
+
+Damit sind alle sieben Vorlagen geschlossen.
 
 Daneben, klein, wo sie hingehören: Ecken dämpfen, Pegel, Angle bei gesetztem
 Stereo XY, Pan bei gesetztem Stereo XY, ob Stimmen und Pitch sweep für Shape
@@ -704,13 +720,13 @@ gelten (§5, §6).
 
 ---
 
-## 14. Stufen (Vorschlag, nicht freigegeben)
+## 14. Stufen (freigegeben, Patrik S120)
 
 Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 
 | Stufe | Inhalt | hängt an |
 |---|---|---|
-| 18 | **Pan je Schicht**, `.lvinst` Fassung 8 — offen, ob dabei die Grenze der Schichten von vier auf acht geht (gemessen in S120, nicht entschieden) | nichts — sofort möglich |
+| 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 | nichts — sofort möglich |
 | 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen | — |
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a) | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
@@ -745,6 +761,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.10.0 | 2026-10-13 (S120) | **Baustufen freigegeben (Patrik)** — 18, 19a bis 19e, 20a bis 20d (§14); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18 und in derselben Fassung 8 wie Pan (§6a). Nachgesehen: Spur und Muster haben schon ein Pan mit dem Gesetz `min(1, 1 ∓ pan)`; die Schicht bekommt dasselbe. Alle sieben Vorlagen sind geschlossen. |
 | 0.9.0 | 2026-10-13 (S120) | **Die Skizzen gebilligt (Patrik)** — das Fenster Edit shape (neu §8a) und die Shape-Schicht im Creator (§6), beide als Beschreibung eingetragen; **G1 a** die Zeile Contour an der Schicht entscheidet, **G2 a** die Regeln für Sprünge von Hand. **Berichtigt nach Patriks Einwand:** der Wellenzug der Preview war von Hand gezeichnet und hatte für einen Zeitpunkt bis zu drei Werte; die Preview zeigt jetzt links und rechts je für sich über der Zeit. Die sechste der sieben Vorlagen ist geschlossen. |
 | 0.8.0 | 2026-10-13 (S120) | **Die Module entschieden (Patrik): M1 a** ein Knoten XY Scope in voller Genauigkeit, **M2 b** ein Knoten Shape mit Harmonics und Show circles, **M3 a** Shape gleich nach den Daten, XY Scope nach dem ersten Ton; dazu von Patrik: die üblichen Skriptfelder und einige Presets (§4, §10, §13). §14: die Stufen neu geordnet (19a bis 19e, 20a bis 20d). Die fünfte der sieben Vorlagen ist geschlossen. |
 | 0.7.0 | 2026-10-13 (S120) | **Berichtigt:** die Engine läuft mit 44,1 kHz, nicht 48 (§5, §10). §10 genauer, was die Visuals vom Ton bekommen: 512 Werte je Seite alle 33 ms, für Skripte auf 8 Bit gerundet, kein Nachleuchten von sich aus. §3: acht Schichten gemessen und probiert, die Grenze steht weiter auf vier. |
