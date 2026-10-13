@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.67.0
+> **Version:** 0.68.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2829,7 +2829,7 @@ Folge fehlen Showing und der Hinweis.
 
 ---
 
-## 4k. Ein Sample bearbeiten: Edit... im Creator (Stufe 17 — Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a, Patrik S119; 17a und 17b gebaut)
+## 4k. Ein Sample bearbeiten: Edit... im Creator (Stufe 17 — Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a, Patrik S119; gebaut)
 
 Wunsch Patrik (S118): an einer Sample-Schicht ein bestehendes Sample öffnen
 wie nach einer Aufnahme, zuschneiden, speichern; Mitgeliefertes ist
@@ -2974,7 +2974,12 @@ nichts nachzuziehen.
     Knopf, Save mit Sample start und Schleife, Save as... als Kopie, ein
     Klang des Kits, Record... nach Edit..., über 30 Sekunden, ohne Sample.
     **Im Programm ungesehen.**
-- **17c — Abschluss:** Benutzerhandbuch §16, Liste 10, voller Lauf.
+- **17c — Abschluss (gemacht, S119):** Benutzerhandbuch 1.148.0 (§16: Edit...
+  in der Tabelle der Sample-Schicht, „Ein Sample bearbeiten" mit der Tabelle
+  je Herkunft, Record sample ohne Namensfeld, der Drum-Editor); die Liste
+  `Sichttest_Composer_10_Loop.md` (lokal): Abschnitt **D** (D0 bis D10), U72
+  bis U75, R1, R6, R7 neu gefasst; voller Lauf 1153 / 1153, 0 Skips
+  (Testing-MSVC). **Stufe 17 ist gebaut — im Programm ungesehen.**
 
 ---
 
@@ -3004,7 +3009,7 @@ nichts nachzuziehen.
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
-| 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) — **im Programm ungesehen**; offen 17c (Handbuch, Liste 10, voller Lauf) |
+| 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
 
 ---
 
@@ -3100,6 +3105,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.68.0** (S119, 2026-10-13): §4k — **Stufe 17c gemacht, Stufe 17
+  fertig:** Handbuch, Liste 10, voller Lauf; §5 Stufe 17
 - **0.67.0** (S119, 2026-10-13): §4k — **Stufe 17b gebaut:** Edit... im
   Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden;
   §5 Stufe 17

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.147.0
+> **Version:** 1.148.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2585,7 +2585,7 @@ Die Auswahl **Sound** bietet:
 | unter **File** | Die Tondatei an freiem Ort, die die Spur gerade nennt |
 | **Instrument...** | Öffnet das Fenster **Instruments** für diese Spur. **Use** dort setzt das Instrument in die Spur |
 | **Sample file...** | Fragt nach einer Tondatei — und danach, ob sie zu **My samples** kopiert wird oder bleibt, wo sie ist (dieselbe Frage wie im Instrument-Creator, mit **Don't ask again**) |
-| **Record sample...** | Öffnet das Fenster **Record sample**; **Save and use** setzt die Aufnahme als Klang der Spur |
+| **Record sample...** | Öffnet das Fenster **Record sample**; **Save as...** speichert die Aufnahme unter einem neuen Namen und setzt sie als Klang der Spur |
 
 Spielt die Spur ein Instrument, steht sein Name in der Auswahl, und daneben
 erscheint der Knopf **…**. Er öffnet ein kleines Feld:
@@ -2792,6 +2792,7 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 | **File** und **File...** | Die Aufnahme: eines deiner eigenen Samples (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
 | Die Frage nach „From file..." | **Copy the file to My samples (recommended)** legt eine Kopie in deinen Benutzerordner (`samples`) — sie geht mit einem Export mit und bleibt, wenn das Original verschoben wird. **Use it where it is** lässt die Datei, wo sie ist; das Instrument nennt dann ihren Pfad. „Don't ask again" merkt die Wahl; ändern lässt sie sich unter Settings → Panels, **Chosen Sample Files** |
 | **Record...** | Öffnet das Fenster **Record sample** (siehe unten): selbst aufnehmen statt eine Datei wählen. Was du dort speicherst, ist danach die Aufnahme dieser Schicht |
+| **Edit...** | Öffnet die Aufnahme, die die Schicht gerade spielt, im selben Fenster — zum Zuschneiden (siehe unten, „Ein Sample bearbeiten“). Grau, solange die Schicht keine Aufnahme hat. Aufnahmen über 30 Sekunden öffnet es nicht |
 | **Root note** | Welcher Ton die Aufnahme ist. Bei dieser Note klingt sie, wie sie aufgenommen wurde |
 | **Detect** und **Apply** | Detect misst den Ton der Aufnahme, ab Sample start, und schreibt ihn darunter: „Detected: A3 +12 ct“. Erst **Apply** stellt Root note und Fine tune danach. Bei einem Schlag, Rauschen oder einem Akkord steht dort „No clear pitch found“ — dann stellst du nach Gehör |
 | **Fine tune** | Wie weit die Aufnahme über (+) oder unter dem Root note liegt, in Cent |
@@ -2816,8 +2817,35 @@ eigenen Samples (`samples` im Benutzerordner).
 | **▶ Play**, **Repeat** | Spielt, was gespeichert würde. Mit Repeat läuft der Ausschnitt in Dauerschleife, und die Griffe lassen sich dabei ziehen |
 | **Trim silence at both ends** | Stellt die Griffe an den Anfang und das Ende des Tons. Anfangs an: nach jeder Aufnahme stehen sie schon dort. Aus: die ganze Aufnahme |
 | **Normalize level** | Hebt das gespeicherte Sample auf die Lautstärke der mitgelieferten Klänge |
-| **Name**, die Zeile File | Wie das Sample heißt und welche Datei daraus wird. Gibt es den Namen schon, steht dort „replaces the one there“ |
-| **Save and use** | Speichert den Ausschnitt und setzt ihn in die Schicht. Vor dem Ersetzen fragt es nach — Instrumente, die das Sample benutzen, spielen dann die neue Aufnahme |
+| **Save as...** | Fragt nach einem Namen, speichert den Ausschnitt als neues eigenes Sample und setzt es in die Schicht. Vorgeschlagen ist der erste freie Name („Recording“, „Recording 2“). Einen Namen, den es unter deinen Samples schon gibt, nimmt es nicht |
+| **Save** | Ersetzt ein eigenes Sample, das mit **Edit...** geöffnet wurde (siehe unten). Nach einer frischen Aufnahme ist es grau — sie hat noch keinen Namen |
+
+**Ein Sample bearbeiten.** **Edit...** im Instrument-Creator öffnet im selben Fenster,
+was die Schicht spielt; es heißt dann **Edit sample – <Name>**. Das ganze Sample steht im
+Bild, die Griffe an beiden Enden, Trim silence und Normalize sind aus — öffnen und speichern
+ändert nichts. Neben Record stehen die Länge und woher das Sample kommt.
+
+| Was offen ist | Save | Save as... |
+|---|---|---|
+| Ein eigenes Sample („My samples“) | Ersetzt es. Vorher fragt es nach und nennt deine Instrumente, die das Sample spielen — sie spielen danach die neue Fassung. Was weggeschnitten ist, ist weg | Legt eine Kopie unter neuem Namen daneben („table_knock 2“); das Original bleibt |
+| Ein Klang des Kits („Built-in, read-only“) | Grau — Mitgeliefertes bleibt, wie es ist | Legt den Ausschnitt als eigenes Sample ab („kick 2“) |
+| Eine Tondatei an freiem Ort („File, read-only“) | Grau — die Datei bleibt, wie sie ist | Legt den Ausschnitt als eigenes Sample ab |
+
+Nach dem Speichern spielt die Schicht das Ergebnis. Hast du vorn etwas weggeschnitten,
+rücken **Sample start**, **Loop from** und **Loop to** der Schicht um dieses Stück zurück —
+die Note setzt an derselben Stelle der Aufnahme ein wie vorher. Andere Instrumente, die
+dasselbe Sample spielen, ziehen nicht mit: prüfe dort den Einsatz, oder nimm Save as....
+
+Geblendet wird nur, wo du geschnitten hast: ein Ende, dessen Griff am Rand steht, bleibt
+wie es ist — ein Schlag behält seinen Anschlag. Gespeichert wird als WAV; ein eigenes Sample,
+das vorher eine mp3- oder flac-Datei war, ist danach eine WAV-Datei gleichen Namens.
+
+**Record** bleibt auch hier: über einem eigenen Sample neu aufgenommen, schreibt Save die
+neue Aufnahme unter demselben Namen. Über einem Klang des Kits oder einer Datei aufgenommen,
+ist das Fenster wieder Record sample.
+
+Im Drum-Editor gibt es **Record sample...**, aber kein Edit...: ein vorhandenes eigenes
+Sample ersetzt du über Edit... im Instrument-Creator.
 
 Lässt sich ein Eingang nicht öffnen, steht es in der Zeile neben Record. Bei einem Mikrofon
 liegt das meist an Windows: Einstellungen → Datenschutz und Sicherheit → Mikrofon → „Desktop-Apps
@@ -2978,6 +3006,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.148.0 | 2026-10-13 | Session 119. §16 Loop NEU **Ein Sample bearbeiten**: im Instrument-Creator bei einer Sample-Schicht **Edit...** — öffnet, was die Schicht spielt, im Fenster der Aufnahme (**Edit sample – <Name>**); ein eigenes Sample lässt sich mit **Save** ersetzen, ein Klang des Kits und eine Tondatei sind schreibgeschützt und kommen mit **Save as...** unter neuem Namen zu den eigenen; Sample start und die Schleife der Schicht rücken um das vorn Weggeschnittene mit. GEÄNDERT **Record sample**: das Feld Name und **Save and use** gibt es nicht mehr — unten stehen **Cancel**, **Save as...**, **Save**; Save as... fragt nach dem Namen und nimmt keinen vergebenen |
 | 1.147.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die gerechneten Drums **Kick** und **Clap** sind neu gebaut — der Kick mit Drive hinter der Envelope (er klingt länger nach, näher am Kit), der Clap mit High-pass und Band-pass hintereinander (weniger Tiefen). Wer sie schon in einem Loop benutzt, hört den Unterschied; eigene Kopien bleiben, wie sie sind |
 | 1.146.0 | 2026-10-13 | Session 118. §16 Loop, Effekte am Clip NEU die Zeile **Signal path** im Fenster Clip effects: Clip, die Bausteine, **+ Add**, Out — jeder Effekt beliebig oft und in freier Reihenfolge, höchstens acht; NEU der Baustein **Filter** (Type, Cutoff in Hertz, Resonance); NEU **Showing** und **Use this path for all** für markierte Clips mit verschiedenen Reihen. GEÄNDERT: statt dreier fester Gruppen steht unter der Zeile der gewählte Baustein mit seinem Haken; **Reset** entfernt die Effekte, statt sie auszuschalten |
 | 1.145.0 | 2026-10-13 | Session 118. §16 Loop, Instrument-Creator NEU die Zeile **Signal path** je Schicht: Source, die Bausteine Filter, Drive und Envelope, **+ Add**, Level — ein Klick auf einen Kasten zeigt seine Regler, Ziehen oder **← Move** / **Move →** ordnet um, **Remove** entfernt; Filter und Drive mehrfach, höchstens acht Bausteine. GEÄNDERT: die Gruppen Envelope und Filter gibt es nicht mehr, ihre Regler stehen unter ihrem Kasten; Level, Transpose und Start offset stehen unter Level und Source; der Regler **Envelope** des Filters heißt **Filter envelope** |

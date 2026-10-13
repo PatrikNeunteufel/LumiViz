@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.188.0
+> **Version:** 1.189.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4916,8 +4916,9 @@ gebilligt, die Baustufen freigegeben (B2 a). **17a gebaut** (das Fenster:
 Save und Save as... statt Namensfeld, ein bestehendes Sample öffnen) — im
 Programm zeigt Record... die neuen Knöpfe. **17b gebaut** (der Knopf Edit...
 im Creator; Sample start und Schleife rücken mit; über 30 Sekunden öffnet er
-nicht) — im Programm ungesehen. **Offen:** 17c (Handbuch, Liste 10, voller
-Lauf). Folge: aus
+nicht). **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D,
+voller Lauf 1153 / 1153). **Stufe 17 ist fertig — im Programm ungesehen:**
+Liste 10, D0 bis D10, Urteile U72 bis U75. Folge: aus
 dem Drum-Editor lässt sich ein vorhandenes eigenes Sample nicht mehr ersetzen,
 nur über Edit... im Creator. Was darunter steht, ist die Notiz aus S118.
 
@@ -5270,6 +5271,7 @@ die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.189.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **Stufe 17 fertig** (17c: Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D mit D0 bis D10 und U72 bis U75, voller Lauf 1153 / 1153 unter Testing-MSVC) — im Programm ungesehen. **X5 entschieden (Patrik, a):** weicht irgendein Wert eines Bausteins zwischen den Clips ab, steht die zweite Zeile des Kastens in Bernstein mit „≠" davor, der Tooltip nennt die Regler; dazu Patriks Frage nach einem farbigen Rahmen — **offen, nicht gebaut** |
 | 1.188.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **17b gebaut** (Edit... im Creator) — im Programm ungesehen; offen 17c. **Befund Patrik zu X5, mit drei Bildern (Clip effects, zwei Clips mit derselben Reihe):** weicht ein Wert ab, der im Kasten steht (Time, Mix), zeigt der Kasten „mixed"; weicht nur einer ab, der dort nicht steht (Damping, Feedback), sieht man es erst, wenn der Baustein gewählt ist. Vorschlag Patrik: eine andere Schriftfarbe im Kasten, damit es gleich zu erkennen ist — **offen, noch nicht entworfen** |
 | 1.187.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": Baustufen freigegeben (B2 a), **17a gebaut** (das Fenster Record sample öffnet auch ein bestehendes Sample; Save und Save as... statt Namensfeld) — im Programm ungesehen. **Offen:** 17b, 17c; aus dem Sichttest vom 13.10.: X5 nicht bestanden (Befund Patrik, noch nicht besprochen) |
 | 1.186.0 | 2026-10-13 | Session 119. §7 Wunsch „ein Sample im Creator bearbeiten": entworfen und entschieden (`Loop_Konzept.md` 0.65.0, §4k — M1 a, M2 b, M2b a, M3 a, M4 a, Skizze gebilligt). **Offen:** Patriks Freigabe der Baustufen 17a bis 17c; nichts gebaut |
