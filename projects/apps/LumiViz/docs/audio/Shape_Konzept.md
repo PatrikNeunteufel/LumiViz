@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -91,6 +91,8 @@ Von Patrik, S119:
 | **D2 a** (S120) | Ort und Nennung wie bei Instrumenten und Samples: `asset/contours`, eigene unter `contours` im Benutzerordner als `user:<name>`, freie Dateien beim Pfad; ein Bereich **Shapes** in Export und Import. |
 | **D3 a** (S120) | Das Instrument nennt die Form (Datei und Kontur über eine feste Kennung); alles spielt die neue Fassung. Für das Teilen: **Publish** als eigener Punkt (Patrik). |
 | **D4 b** (S120) | Konturen als Pfade aus Strecken und Kurven, in den Koordinaten der Zeichnung; Herkunft mit Namen der Quelle, ohne das Bild; keine Koeffizienten in der Datei. |
+| **K1 a** (S120) | Konturen aus einem Bild über Flächen; **Split by** Brightness, Colour oder Transparency. |
+| **K2 a** (S120) | Regler Split by, Levels, Smooth, Min size, Detail; Löcher sind eigene Konturen, Flächen am Bildrand anfangs nicht gewählt, die größten 64 werden angeboten. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -323,12 +325,55 @@ Svg), oder das SVG als Bild zeichnen und denselben Weg gehen wie ein Foto.
 Der zweite ist weniger Code und verliert die Genauigkeit des SVG. Vorlage
 (§13, Punkt 3), davor nachsehen.
 
-**Bild.** Konturen in einem jpg oder png finden, anzeigen, auswählen lassen.
-Ohne OpenCV selbst zu schreiben; die Bausteine sind bekannt (nach Helligkeit
-oder Farbe trennen, die Ränder der Flächen ablaufen, die Punktfolge
-ausdünnen). Offen: welche Filter der Benutzer einstellt, wie viele Konturen
-angeboten werden, was mit Löchern und sehr kleinen Flächen geschieht.
-Vorlage (§13, Punkt 2).
+**Bild.** Konturen in einem jpg oder png finden, anzeigen, auswählen lassen —
+ohne OpenCV, selbst geschrieben. Entschieden in S120 (K1 a, K2 a), nach
+einer Probe an drei Bildern aus `asset/img` (in Python, nur zur Anschauung):
+
+| Bild | nach Helligkeit, 3 Stufen | nach Farbe, 6 Farben | nach Kanten |
+|---|---|---|---|
+| `logo/original/avs.png` | 11 Konturen, 32 zu klein | 22, 429 zu klein | 17 Linienstücke, nicht geschlossen |
+| `logo/original/milkdrop.png` | 5, 22 zu klein | 21, 330 zu klein | 33 Stücke |
+| `screenshots/avs/flowers.png` | 2, 5 zu klein | 41, 473 zu klein | 7 Stücke |
+
+Helligkeit gibt wenige, saubere Konturen und findet dunkle farbige Motive
+nicht; Farbe findet sie, liefert viel mehr und zieht in weichen Verläufen
+Ränder, die keiner sieht; Kanten treffen am ehesten den gesehenen Umriss,
+sind aber Bänder und offene Stücke. Beide Flächenverfahren ziehen eine
+Kontur um das ganze Bild.
+
+**Das Verfahren (K1 a):** das Bild wird in **Flächen** geteilt, der Rand
+jeder Fläche ist eine Kontur — er ist von selbst geschlossen. Die Auswahl
+**Split by** stellt ein, wonach geteilt wird:
+
+- **Brightness** — nach Helligkeit, in einstellbar vielen Stufen;
+- **Colour** — nach Farbe, in einstellbar vielen Farben;
+- **Transparency** — nach der Deckkraft, für ein freigestelltes PNG.
+
+Alle drei benutzen dasselbe Ablaufen und Glätten der Ränder. Verworfen: nur
+Helligkeit (b) — versagt an `flowers.png`; Kanten (c) — offene Stücke zu
+schließen wäre ein eigenes Verfahren; belegt ist nur, dass sie offen sind,
+wie gut ein Schließen gelänge, ist nicht versucht. Als Zugabe zu a denkbar.
+
+**Regler (K2 a):** **Split by**, **Levels** (2 bis 8), **Smooth** (das Bild
+vor dem Teilen weichzeichnen), **Min size** (Flächen unter diesem Anteil des
+Bildes fallen weg), **Detail** (wie genau der Rand nachgefahren wird). Smooth
+und Detail ändern den Klang direkt: ein zackiger Rand hat viele hohe
+Harmonische, ein glatter wenige.
+
+**Regeln (K2 a):**
+
+- zum Erkennen wird das Bild auf höchstens 1024 Punkte Kante verkleinert;
+- ein Loch in einer Fläche ist eine eigene Kontur;
+- eine Fläche, die an den Bildrand stößt, wird gezeigt, ist aber anfangs
+  nicht gewählt (verworfen c: sie fällt weg — bei einem angeschnittenen Motiv
+  fehlte die Hauptform);
+- angeboten werden die größten 64, die Liste sagt, wie viele weggefallen
+  sind;
+- anfangs gewählt ist die größte Kontur, die nicht an den Rand stößt.
+
+Die Zahlen (1024, 64, 2 bis 8) sind von Claude gesetzt und nicht gemessen;
+sie gehören in die Skizze und in den Sichttest. Mit D4 b ist eine Kontur aus
+einem Bild ein Pfad nur aus Strecken.
 
 ---
 
@@ -414,7 +459,7 @@ und Hörproben in einen Ordner.
 ## 13. Offen — einzeln vorzulegen, in dieser Reihenfolge
 
 1. ~~Die Datei~~ — entschieden in S120: F1 a, D1 a, D2 a, D3 a, D4 b (§7).
-2. **Konturerkennung** aus einem Bild, ohne OpenCV (§8).
+2. ~~Konturerkennung~~ — entschieden in S120: K1 a, K2 a (§8).
 3. **SVG:** Pfade selbst lesen oder über das Bild (§8) — davor nachsehen,
    was Qt Svg hergibt.
 4. **Die Brücke** bei As one path (§9).
@@ -469,6 +514,7 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.4.0 | 2026-10-13 (S120) | **Konturerkennung entschieden (Patrik): K1 a** über Flächen, Split by Brightness, Colour oder Transparency; **K2 a** die Regler Levels, Smooth, Min size, Detail und die Regeln für Löcher, Bildrand und Anzahl (§4, §8, §13). Davor eine Probe der drei Verfahren an drei Bildern, die Zahlen stehen in §8. |
 | 0.3.0 | 2026-10-13 (S120) | **Die Datei entschieden (Patrik): D1 a** eine Zeichnung mit allen Konturen, **D2 a** Ort und Nennung wie bei Instrumenten und Samples, **D3 a** das Instrument nennt die Form über eine feste Kennung der Kontur, **D4 b** Pfade aus Strecken und Kurven, kein Quellbild, keine Koeffizienten — zuerst a (nur Punktfolgen), dann auf Patriks Einwand b (§4, §7, §9, §13). Für das Teilen Patriks Idee **Publish** — ein Paket `<name>.<type>.lvdata` — als eigener Punkt in `Offene_Punkte.md` §7. |
 | 0.2.0 | 2026-10-13 (S120) | **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour`, `.lvshape` bleibt beim Composer (§4, §7, §13). Das Datei-Icon dazu ist gebaut (`asset/img/logo/icons/lumiviz_lvcontour.ico`, Marke mit Kontur und Stift). |
 | 0.1.0 | 2026-10-13 (S120) | Erste Fassung: das Grobkonzept auf LumiViz umgeschrieben, Entscheide Z1 a bis Z5 a eingetragen. Nachgesehen: die Visuals bekommen vom Loop beide Seiten getrennt (512 Werte je Seite und Bild); Qt Svg liegt in der Installation; die Endung `.lvshape` ist seit S96 vergeben. Festgehalten: Start und Reverse ändern nur Phasen. Stufen als Vorschlag. |

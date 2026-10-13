@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.197.0
+> **Version:** 1.198.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5058,6 +5058,21 @@ Import schreibt nur in die Ordner bekannter Bereiche. Ein Paket wäre
 dieselbe Datei mit einer engeren Auswahl — statt ganzer Bereiche die Dateien,
 an denen ein Ding hängt.
 
+**Gleiche Namen beim Import (Patrik S120, zweite Runde):** es gibt eine
+Option **Vergleichen**, an der man entscheidet: **überschreiben**,
+**umbenennen** oder **nicht übernehmen**. Beim **Umbenennen** werden die
+**Nennungen im Paket automatisch mitgeändert** — das Instrument aus dem Paket
+spielt danach die umbenannte, mitgebrachte Datei. Seine Frage, ob es das
+schon gibt: ja, als Muster an zwei Stellen — der **Host Switcher** (S82):
+wird eine Host-Gruppe umbenannt, führt jeder Switcher, der sie listet, den
+neuen Namen (`hostGruppeUmbenennenInSwitchern`, `EffectChain.hpp`, mit Test
+„Umbenennen zieht jede Switcher-Liste mit"); und im **Loop**: Rename base gilt
+für alle Clips, die die Basis spielen (`loop/Bearbeiten.hpp`). Der Import der
+`.lvdata` tut es heute **nicht**: er gibt der Datei nur eine Zahl an den Namen
+(`Datensicherung.cpp`, `nameMitZahl`). Die drei Wege selbst gibt es dort schon
+als Keep mine, Replace mine, Keep both und je Datei; ein Vergleichen des
+Inhalts nicht — die Liste zeigt Datum und Größe.
+
 **Offen, nichts entworfen:**
 - **Welche Arten** sich veröffentlichen lassen (Instrument, Loop,
   Komposition, Preset …) und wo der Befehl steht.
@@ -5419,6 +5434,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.198.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Konturerkennung entschieden (Patrik): K1 a, K2 a** (`Shape_Konzept.md` 0.4.0, §8) — über Flächen, Split by Brightness, Colour oder Transparency, Regler Levels, Smooth, Min size, Detail; davor eine Probe an drei Bildern; die zweite der sieben Vorlagen ist geschlossen, als Nächstes SVG. §7 **Publish, Nachtrag (Patrik):** bei gleichen Namen eine Option Vergleichen mit den Wegen überschreiben, umbenennen, nicht übernehmen; beim Umbenennen werden die Nennungen im Paket mitgeändert — das Muster gibt es beim Host Switcher (S82) und bei Rename base im Loop, der Import der `.lvdata` tut es heute nicht. |
 | 1.197.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Datei `.lvcontour` entschieden (Patrik): D1 a, D2 a, D3 a, D4 b** (`Shape_Konzept.md` 0.3.0, §7; bei D4 zuerst a, dann b: Konturen als Pfade aus Strecken und Kurven) — damit ist die erste der sieben Vorlagen geschlossen; als Nächstes die Konturerkennung aus einem Bild. §7 **NEU Idee Patrik: Publish** — ein Ding mit allen zugehörigen Dateien, der Ordnerstruktur des Benutzerordners und einem Manifest als Paket `<name>.<type>.lvdata`; nachgesehen: eine `.lvdata` ist heute schon ein Zip mit Manifest und `data/<Pfad im Benutzerordner>`; offen die Arten, was dazugehört, gleiche Namen beim Import (die Nennungen im Paket), das Manifest. Nichts entworfen, nichts gebaut. |
 | 1.196.0 | 2026-10-13 | Session 120. **Datei-Icons in der App, A2 a (Patrik) gebaut:** die Datei-Zeile des Loop-Panels, die Kopfzeile des Instrument-Editors, der Kopf des Dialogs Import data und die Liste „je Datei entscheiden" tragen das Icon ihrer Dateiart (Benutzerhandbuch 1.152.0) — im Programm ungesehen, vier Bilder aus den Tests angesehen. Bewusst ohne Icon: Fenster Instruments, Creator, die Menüs Fade in, Fade out, Shape, Mute-Profile, Verlaufs-Combos. **Nebenbefund, nicht behoben:** `presetTypeIconForSuffix` kennt `milk2` nicht — eine `.milk2` bekäme dort das AVS-Icon; nicht nachgesehen, ob der Effect Browser `.milk2` überhaupt zeigt. |
 | 1.195.0 | 2026-10-13 | Session 120. **Datei-Icons in der App (A1 b, Patrik):** im Audio Browser trägt eine `.lvloop` jetzt `lumiviz_lvloop.ico` statt des Kreispfeils (`dateiArtIcon` in `PresetTypeIcons.hpp`; Benutzerhandbuch 1.151.0) — im Programm ungesehen. Durchgesehen, wo die App Dateien der acht Arten sonst zeigt; **offen A2:** welche Stellen ein Icon bekommen — vorgeschlagen die Datei-Zeile des Loop-Panels, die Kopfzeile des Instrument-Editors, Kopf und Baum „je Datei entscheiden" des Dialogs Import data; nicht vorgeschlagen das Fenster Instruments, der Creator, die Menüs Fade in, Fade out, Shape, die Mute-Profile und die Verlaufs-Combos. |
