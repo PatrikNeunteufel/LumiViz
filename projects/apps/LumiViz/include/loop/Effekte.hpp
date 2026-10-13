@@ -5,8 +5,8 @@
  *
  * Nach G1 b rechnen die Effekte eines Clips im Ton-Thread Block fuer Block
  * mit. Hier stehen nur die Bausteine: sie kennen weder den Loop noch die
- * Engine. Eine `EffektKette` ist das, was EIN Clip braucht — Verzerrer, dann
- * Echo, dann Hall, in dieser festen Reihenfolge.
+ * Engine. Eine `EffektKette` ist das, was EIN Clip braucht — die Bausteine
+ * seiner Reihe (Filter, Verzerrer, Echo, Hall), in ihrer Folge (Stufe 16b).
  *
  * Das Gedaechtnis des Loops sitzt hier (der Rechenkern bleibt ohne): Echo und
  * Hall klingen nach. Dieselbe Eingabe ergibt dieselbe Ausgabe, gleich in
@@ -21,6 +21,7 @@
 
 #include <array>
 #include <cstdint>
+#include <variant>
 #include <vector>
 
 namespace lumi::loop
@@ -112,7 +113,40 @@ private:
     std::array<std::array<Allpass, kAllpaesse>, 2> m_allpaesse;
 };
 
-/// Was ein Clip braucht: Verzerrer, Echo, Hall — in dieser Reihenfolge.
+/// Filter (Stufe 16b; Entscheid Patrik S117, K3 a): Tiefpass, Hochpass oder
+/// Bandpass zweiter Ordnung mit der Grenze in Hertz — er folgt keiner
+/// Tonhoehe und keiner Huellkurve. Die Resonanz wirkt wie am Filter einer
+/// Schicht: die Guete waechst von 0,707 bis rund 11, bei Tiefpass und
+/// Hochpass wird der Ton dabei leiser gestellt. Links und rechts getrennt.
+class FilterEffekt
+{
+public:
+    void richteEin(const ClipFilter& werte, int rate);
+    void leere();
+    void rechne(float* stereo, int frames);
+    void uebernimm(FilterEffekt& alt) { m_zustand = alt.m_zustand; }
+
+private:
+    struct Zustand
+    {
+        double x1 = 0.0;
+        double x2 = 0.0;
+        double y1 = 0.0;
+        double y2 = 0.0;
+    };
+    bool m_an = false;
+    double m_b0 = 1.0;
+    double m_b1 = 0.0;
+    double m_b2 = 0.0;
+    double m_a1 = 0.0;
+    double m_a2 = 0.0;
+    double m_laut = 1.0;
+    std::array<Zustand, 2> m_zustand{};
+};
+
+/// Was ein Clip braucht: die Bausteine seiner Reihe, von vorn nach hinten
+/// (seit Stufe 16b; davor fest Verzerrer, Echo, Hall). Ein ausgeschalteter
+/// Baustein steht in der Kette und wird uebersprungen.
 class EffektKette
 {
 public:
@@ -129,14 +163,16 @@ public:
     /// an Gedaechtnis passt: aendert jemand nur Mix, Feedback, Decay oder
     /// Damping — oder das Muster —, reisst der Nachklang nicht ab. Aendert
     /// sich die Echo-Zeit, das Tempo oder die Groesse des Raums, beginnt
-    /// dieser Effekt leer. Im Ton-Thread erlaubt.
+    /// dieser Effekt leer. Zusammen gehoeren der erste Baustein einer Art
+    /// hier und der erste dort, der zweite und der zweite — wer einen
+    /// Baustein verschiebt oder einen anderer Art dazusetzt, reisst nichts
+    /// ab. Im Ton-Thread erlaubt: holt keinen Speicher.
     void uebernimm(EffektKette& alt);
 
 private:
+    using Glied = std::variant<FilterEffekt, Verzerrer, EchoEffekt, HallEffekt>;
     bool m_an = false;
-    Verzerrer m_verzerrer;
-    EchoEffekt m_echo;
-    HallEffekt m_hall;
+    std::vector<Glied> m_glieder;  ///< je Baustein der Reihe eines, in ihrer Folge
 };
 
 }  // namespace lumi::loop

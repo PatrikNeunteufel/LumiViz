@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.60.0
+> **Version:** 0.61.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2609,7 +2609,8 @@ Clap —, c — nur 16a und 16b):**
   („Unknown effect '…'").
 - **Die mitgelieferten Dateien bleiben, wie sie sind** (Fassung 3 bis 6, 2
   bis 4); das Programm schreibt die neuen Fassungen erst beim Speichern.
-- **Übergang bis 16b, 16c, 16d:** Klangerzeuger, Creator und das Fenster Clip
+- **Übergang bis 16b, 16c, 16d** (der Klangerzeuger seit 16b nicht mehr,
+  siehe unten): Klangerzeuger, Creator und das Fenster Clip
   effects arbeiten noch mit dem **ersten** Baustein je Art in der alten Folge
   (`Schicht::filter`, `drive`, `holeFilter`, `holeDrive`;
   `ClipEffekte::wert`, `hole`). Für jede Datei bis Fassung 6 und 4 ist das die
@@ -2628,6 +2629,57 @@ Clap —, c — nur 16a und 16b):**
   `effects` nicht daneben — ein älteres LumiViz spielt ihre Clips ohne
   Effekte und meldet die neuere Fassung; im alten Creator bleibt ein Filter,
   dessen Cutoff auf „open" zurückgestellt wird, als Baustein in der Reihe.
+
+**16b gebaut (S118) — der Klangerzeuger rechnet die Reihe.**
+
+- **Schicht** (`Instrument.cpp`, `Reihe`): je Abtastwert läuft der Ton durch
+  die Bausteine von vorn nach hinten — jeder Filter mit eigenem Gedächtnis
+  (bei einer Aufnahme je Seite), Drive, und die Stelle, an der die Hüllkurve
+  ihn formt. Filter envelope folgt weiter der Hüllkurve der Schicht, gleich
+  wo der Filter steht. Ein offener Filter und ein Drive mit 0 kommen nicht
+  vor. Damit gehen zwei Filter (Clap) und Drive hinter Envelope (Kick).
+- **Clip** (`Effekte.cpp`, `EffektKette`): je Baustein der Reihe ein Glied,
+  in ihrer Folge; ein ausgeschalteter wird übersprungen. Neu `FilterEffekt`:
+  Low-pass, High-pass, Band-pass zweiter Ordnung mit der Grenze in Hertz,
+  Resonance wie am Filter der Schicht. Beim Wechsel des Programms gehört der
+  erste Baustein einer Art zum ersten derselben Art davor, der zweite zum
+  zweiten: wer einen Baustein verschiebt oder einen anderer Art dazusetzt,
+  reißt keinen Nachklang ab.
+- **Beleg, alte Dateien** (`test_LoopWerte.cpp`): vor dem Umbau je
+  mitgeliefertem Instrument drei Töne und je `.lvloop` ein Durchlauf durch
+  den Klangerzeuger festgehalten — 199 Einträge, je Compiler eine Prüfsumme
+  über jeden Abtastwert. Nach dem Umbau **199 von 199 Bit für Bit gleich**,
+  unter Testing-MSVC und unter Release-clang. Die Zahlen (Abtastwerte,
+  Spitze, Summe der Beträge) liegen als `werte/loop_werte.txt` neben den
+  Tests und werden bei jedem Lauf auf ein Tausendstel verglichen; nach einer
+  gewollten Änderung am Klang schreibt `LUMIVIZ_LOOP_WERTE_SCHREIBEN=1` sie
+  neu (fällig mit 16e).
+- **Messung der Last** (ein Rechner, je drei Läufe, der beste; die Taktprobe
+  blieb gleich):
+
+  | | Release-clang | Testing-MSVC |
+  |---|---|---|
+  | Schicht mit Filter, Drive, Envelope, je Sekunde Ton | 1,9 ms | 4,4 ms |
+  | Schicht mit acht Bausteinen (vier Filter, drei Drive) | 3,7 ms | 9,5 ms |
+  | Clip mit Distortion, Echo, Reverb, je Sekunde Ton | 1,7 ms (0,17 % eines Kerns) | 7,2 ms (0,72 %) |
+  | Clip mit acht Reverb | 7,5 ms (0,75 %) | 45 ms (4,5 %) |
+  | Clip mit acht Filtern | 1,6 ms (0,16 %) | 3,8 ms (0,38 %) |
+
+  Ein Ton der Schicht wird vorab gerechnet, nicht im Ton-Thread; acht
+  Bausteine kosten dort rund das Doppelte. Die Annahme aus K4 a (acht Reverb
+  unter 1 % eines Kerns) hält im Release-Bau; im Testing-Bau sind es 4,5 %.
+- **Von Claude gesetzt, nicht entschieden:** die Saite überspringt die Filter
+  der Reihe weiter (sie hatte nie einen — sonst klängen alte Instrumente mit
+  Saite und Cutoff anders), Drive und die Stelle der Envelope gelten für sie;
+  steht ein Filter hinter der Envelope, werden die letzten 5 ms des Tons auf
+  null geführt (er schwingt nach, wenn die Hüllkurve schon zu ist); der
+  Low-pass am Clip rechnet auch ohne Resonance als Filter zweiter Ordnung
+  (an der Schicht ist er dann der alte, flachere); der Clip klingt mit einem
+  Filter um dessen Ausschwingen länger nach (bei 40 Hz und voller Resonance
+  0,6 s).
+- **Im Programm** ist davon nichts zu erreichen, bis Creator (16c) und Clip
+  effects (16d) die Reihe zeigen; eine Datei mit einer anderen Reihe klingt
+  aber schon so.
 
 **Offen, vor dem jeweiligen Schritt zu entscheiden:**
 - **K5 (vor 16d):** mehrere markierte Clips mit **verschiedenen Reihen** —
@@ -2665,7 +2717,7 @@ Clap —, c — nur 16a und 16b):**
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
-| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5); offen 16b bis 16e, K5 |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich); offen 16c bis 16e, K5 |
 
 ---
 
@@ -2761,6 +2813,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.61.0** (S118, 2026-10-13): §4j — **Stufe 16b gebaut:** der
+  Klangerzeuger rechnet die Reihe an Schicht und Clip, der Filter am Clip in
+  Hertz; Beleg an 199 festgehaltenen Einträgen, Bit für Bit gleich unter
+  beiden Compilern; die Messung der Last; §5 Stufe 16
 - **0.60.0** (S118, 2026-10-13): §4j — Baustufen freigegeben (Entscheid
   Patrik B1 a); **Stufe 16a gebaut:** die Reihe von Bausteinen im Modell von
   Schicht und Clip, `.lvinst` Fassung 7, `.lvloop` Fassung 5, der Übergang

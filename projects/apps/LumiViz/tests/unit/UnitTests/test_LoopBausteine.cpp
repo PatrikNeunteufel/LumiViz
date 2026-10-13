@@ -33,6 +33,10 @@
 #include <QTemporaryDir>
 
 #include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -522,4 +526,314 @@ TEST_CASE("Loop Signal path: eine .lvloop bis Fassung 4 liest ihre Effekte als D
     MESSAGE(dateien << " Loops, " << clipsGeprueft << " Clips bis Fassung 4 geprueft, davon " << mitEffekten << " mit Effekten");
     CHECK(dateien >= 20);
     CHECK(mitEffekten >= 5);  // die fuenf aus effects_demo.lvloop
+}
+
+// =============================================================================
+// Stufe 16b: der Klangerzeuger rechnet die Reihe
+// =============================================================================
+// Dass die Reihe Filter, Drive, Envelope (und Distortion, Echo, Reverb am
+// Clip) Wert fuer Wert ergibt, was vorher fest gerechnet wurde, belegt
+// test_LoopWerte.cpp an jeder mitgelieferten Datei. Hier steht das Neue.
+
+namespace
+{
+
+constexpr int kRate = 44100;
+
+/// Der groesste Betrag der linken Seite in einem Stueck des Tons.
+double spitzeIn(const Klang& klang, double vonMs, double bisMs)
+{
+    const auto von = static_cast<std::size_t>(vonMs * kRate / 1000.0);
+    const auto bis = std::min(static_cast<std::size_t>(bisMs * kRate / 1000.0), klang.daten.size() / 2);
+    double groesster = 0.0;
+    for (std::size_t f = von; f < bis; ++f) groesster = std::max(groesster, static_cast<double>(std::abs(klang.daten[2 * f])));
+    return groesster;
+}
+
+double summeBetraege(const std::vector<float>& daten)
+{
+    double summe = 0.0;
+    for (const float wert : daten) summe += std::abs(wert);
+    return summe;
+}
+
+/// Ein Instrument mit einer Schicht und dieser Reihe.
+Instrument mitReihe(Schwingung schwingung, std::vector<SchichtBaustein> reihe)
+{
+    Instrument instrument;
+    Schicht& schicht = instrument.schichten[0];
+    schicht.schwingung = schwingung;
+    schicht.anstiegMs = 5.0;
+    schicht.abfallMs = 60.0;
+    schicht.halten = 0.2;
+    schicht.ausklangMs = 100.0;
+    schicht.reihe = std::move(reihe);
+    return instrument;
+}
+
+/// Ein Sinus von `hz` auf beiden Seiten.
+std::vector<float> sinusTon(double hz, int frames, float spitze = 0.5f)
+{
+    std::vector<float> werte(2 * static_cast<std::size_t>(frames));
+    for (int f = 0; f < frames; ++f)
+    {
+        const auto wert = static_cast<float>(spitze * std::sin(2.0 * 3.14159265358979323846 * hz * f / kRate));
+        werte[static_cast<std::size_t>(2 * f)] = wert;
+        werte[static_cast<std::size_t>(2 * f + 1)] = wert;
+    }
+    return werte;
+}
+
+/// Eine Kette ueber einen Ton rechnen, in Bloecken von `block` Abtastwerten.
+std::vector<float> durchKette(const ClipEffekte& effekte, std::vector<float> werte, int block = 441)
+{
+    EffektKette kette;
+    kette.richteEin(effekte, kRate, 120.0);
+    const int frames = static_cast<int>(werte.size() / 2);
+    for (int stelle = 0; stelle < frames; stelle += block)
+        kette.rechne(werte.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(block, frames - stelle));
+    return werte;
+}
+
+/// Eine feste Rechenarbeit, gegen die sich eine Messung vergleichen laesst:
+/// drosselt der Rechner, dauert auch sie laenger (S106).
+double taktprobeMs()
+{
+    const auto start = std::chrono::steady_clock::now();
+    volatile double summe = 0.0;
+    for (int i = 1; i <= 4'000'000; ++i) summe = summe + std::sqrt(static_cast<double>(i));
+    return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+}
+
+}  // namespace
+
+TEST_CASE("Loop Signal path: die Schicht rechnet ihre Reihe — die Reihenfolge ist zu hoeren, zwei Filter filtern zweimal")
+{
+    // --- Drive vor oder hinter der Envelope (K2 a): hinter ihr verzerrt er den schon leisen
+    //     Ton weniger hart, hebt ihn aber an — im gehaltenen Teil ist der Ton viel lauter
+    const Instrument davor = mitReihe(Schwingung::Sinus, {SchichtDrive{0.8}, SchichtHuelle{}});
+    const Instrument dahinter = mitReihe(Schwingung::Sinus, {SchichtHuelle{}, SchichtDrive{0.8}});
+    const Klang tonDavor = rendereTon(davor, 57, 600.0, kRate);
+    const Klang tonDahinter = rendereTon(dahinter, 57, 600.0, kRate);
+    REQUIRE(tonDavor.frames() == tonDahinter.frames());
+    // gehalten wird bei 0,2: davor 0,5 * 0,2 = 0,1; dahinter 0,5 * tanh(6,4 * 0,2) / tanh(6,4) = 0,43
+    CHECK(spitzeIn(tonDavor, 400.0, 600.0) == doctest::Approx(0.1).epsilon(0.02));
+    CHECK(spitzeIn(tonDahinter, 400.0, 600.0) == doctest::Approx(0.428).epsilon(0.02));
+    // der Ton endet, wo die Envelope auch steht: ihr letzter Wert ist winzig, Drive hebt ihn kaum
+    CHECK(std::abs(tonDahinter.daten.back()) < 1.0e-5f);
+
+    // --- ein offener Filter und ein Drive mit 0 tun nichts: dieselben Werte wie ohne sie
+    const Instrument schlicht = mitReihe(Schwingung::Saege, {SchichtFilter{FilterArt::Tiefpass, 3.0, 0.0, 0.0}, SchichtHuelle{}});
+    const Instrument mitNichts =
+        mitReihe(Schwingung::Saege, {SchichtDrive{0.0}, SchichtFilter{FilterArt::Tiefpass, 3.0, 0.0, 0.0},
+                                     SchichtFilter{FilterArt::Hochpass, 0.0, 5.0, 0.7}, SchichtHuelle{}, SchichtDrive{0.0}});
+    CHECK(rendereTon(mitNichts, 60, 300.0, kRate).daten == rendereTon(schlicht, 60, 300.0, kRate).daten);
+
+    // --- zwei Filter (der Clap aus §4h): Rauschen durch Hochpass und Tiefpass ist ein Band —
+    //     weniger als durch einen der beiden allein, und zweimal derselbe filtert steiler
+    const SchichtFilter hoch{FilterArt::Hochpass, 4.0, 0.0, 0.0};
+    const SchichtFilter tief{FilterArt::Tiefpass, 8.0, 0.0, 0.0};
+    const auto rausch = [&](std::vector<SchichtBaustein> reihe) {
+        return summeBetraege(rendereTon(mitReihe(Schwingung::Rauschen, std::move(reihe)), 69, 300.0, kRate).daten);
+    };
+    const double nurHoch = rausch({hoch, SchichtHuelle{}});
+    const double nurTief = rausch({tief, SchichtHuelle{}});
+    const double band = rausch({hoch, tief, SchichtHuelle{}});
+    const double zweimalTief = rausch({tief, tief, SchichtHuelle{}});
+    CHECK(band < nurHoch * 0.9);
+    CHECK(band < nurTief * 0.9);
+    CHECK(zweimalTief < nurTief * 0.95);
+    CHECK(band > 0.0);
+
+    // --- ein Filter hinter der Envelope schwingt nach: der Ton endet trotzdem bei null
+    const Instrument filterHinten =
+        mitReihe(Schwingung::Saege, {SchichtHuelle{}, SchichtFilter{FilterArt::Bandpass, 2.0, 0.0, 0.9}});
+    const Klang hinten = rendereTon(filterHinten, 45, 200.0, kRate);
+    CHECK(hinten.daten.back() == 0.0f);
+    CHECK(hinten.daten[hinten.daten.size() - 2] == 0.0f);
+    CHECK(spitzeIn(hinten, 0.0, 200.0) > 0.01);
+    const Instrument filterVorn =
+        mitReihe(Schwingung::Saege, {SchichtFilter{FilterArt::Bandpass, 2.0, 0.0, 0.9}, SchichtHuelle{}});
+    CHECK(rendereTon(filterVorn, 45, 200.0, kRate).daten != hinten.daten);
+
+    // --- die Saite hatte nie einen Filter: sie ueberspringt die der Reihe weiter; Drive wirkt
+    const Instrument saite = mitReihe(Schwingung::Saite, {SchichtHuelle{}});
+    const Instrument saiteFilter = mitReihe(Schwingung::Saite, {SchichtFilter{FilterArt::Tiefpass, 1.0, 0.0, 0.5}, SchichtHuelle{}});
+    const Instrument saiteDrive = mitReihe(Schwingung::Saite, {SchichtDrive{0.6}, SchichtHuelle{}});
+    CHECK(rendereTon(saiteFilter, 52, 300.0, kRate).daten == rendereTon(saite, 52, 300.0, kRate).daten);
+    CHECK(rendereTon(saiteDrive, 52, 300.0, kRate).daten != rendereTon(saite, 52, 300.0, kRate).daten);
+
+    // --- eine Aufnahme hat zwei Seiten: jeder Filter der Reihe fuehrt je Seite sein Gedaechtnis —
+    //     das belegt test_LoopSample.cpp am Filter; hier nur: derselbe Aufruf, dieselben Werte
+    const Instrument voll = mitReihe(Schwingung::Rechteck, {hoch, SchichtDrive{0.5}, tief, SchichtHuelle{}, SchichtDrive{0.2},
+                                                           SchichtFilter{FilterArt::Bandpass, 3.0, 2.0, 0.4}, tief, hoch});
+    CHECK(voll.schichten[0].reihe.size() == static_cast<std::size_t>(kBausteineMax));
+    CHECK(rendereTon(voll, 60, 250.0, kRate).daten == rendereTon(voll, 60, 250.0, kRate).daten);
+    CHECK(rendereTon(voll, 60, 250.0, kRate).daten.back() == 0.0f);
+}
+
+TEST_CASE("Loop Signal path: die Kette am Clip rechnet in freier Reihenfolge — und den Filter in Hertz")
+{
+    const int frames = 2 * kRate;  // zwei Sekunden: bei 120 BPM vier Viertel
+    std::vector<float> schlag(2 * static_cast<std::size_t>(frames), 0.0f);
+    for (int f = 0; f < 2000; ++f)  // ein kurzer Ton am Anfang, danach Stille
+    {
+        const auto wert = static_cast<float>(0.4 * std::sin(2.0 * 3.14159265358979323846 * 330.0 * f / kRate));
+        schlag[static_cast<std::size_t>(2 * f)] = wert;
+        schlag[static_cast<std::size_t>(2 * f + 1)] = wert;
+    }
+    const ClipVerzerrung verzerrung{true, 0.8, 1.0, 1.0};
+    const ClipEcho viertel{true, EchoZeit::Viertel, 0.5, 0.0, 0.5};
+    const ClipEcho sechzehntel{true, EchoZeit::Sechzehntel, 0.4, 0.0, 0.5};
+
+    // --- die Reihenfolge: Distortion vor dem Echo verzerrt nur den Schlag, dahinter auch jede
+    //     Wiederholung — die leisen Wiederholungen werden dann angehoben
+    const std::vector<float> erstVerzerrt = durchKette({{verzerrung, viertel}}, schlag);
+    const std::vector<float> erstEcho = durchKette({{viertel, verzerrung}}, schlag);
+    CHECK(erstVerzerrt != erstEcho);
+    const auto spaet = [&](const std::vector<float>& werte) {
+        // ab der zweiten Wiederholung (sie liegt bei 1 s, die dritte bei 1,5 s)
+        return summeBetraege(std::vector<float>(werte.begin() + 2 * static_cast<std::ptrdiff_t>(0.9 * kRate), werte.end()));
+    };
+    CHECK(spaet(erstEcho) > spaet(erstVerzerrt) * 1.5);
+
+    // --- jeder Baustein beliebig oft: zwei Echos rechnen beide
+    const std::vector<float> einEcho = durchKette({{viertel}}, schlag);
+    const std::vector<float> zweiEchos = durchKette({{viertel, sechzehntel}}, schlag);
+    CHECK(zweiEchos != einEcho);
+    // zwischen Schlag und erster Viertel-Wiederholung (0,5 s) ist mit einem Echo Stille, mit zweien nicht
+    const auto luecke = [&](const std::vector<float>& werte) {
+        return summeBetraege(std::vector<float>(werte.begin() + 2 * static_cast<std::ptrdiff_t>(0.1 * kRate),
+                                                werte.begin() + 2 * static_cast<std::ptrdiff_t>(0.45 * kRate)));
+    };
+    CHECK(luecke(einEcho) == 0.0);
+    CHECK(luecke(zweiEchos) > 1.0);
+
+    // --- ein ausgeschalteter Baustein steht in der Reihe und wird uebersprungen
+    ClipVerzerrung aus = verzerrung;
+    aus.an = false;
+    ClipFilter filterAus{false, FilterArt::Hochpass, 5000.0, 0.5};
+    CHECK(durchKette({{aus, viertel, filterAus}}, schlag) == einEcho);
+
+    // --- der Filter: die Grenze in Hertz, gleich welche Note gespielt wird
+    const std::vector<float> tiefTon = sinusTon(200.0, frames);
+    const auto pegel = [&](const ClipFilter& filter, const std::vector<float>& ton) {
+        const std::vector<float> aus = durchKette({{filter}}, ton);
+        // die zweite Haelfte: der Filter ist eingeschwungen
+        return summeBetraege(std::vector<float>(aus.begin() + frames, aus.end())) /
+               summeBetraege(std::vector<float>(ton.begin() + frames, ton.end()));
+    };
+    CHECK(pegel({true, FilterArt::Hochpass, 2000.0, 0.0}, tiefTon) < 0.02);  // 200 Hz unter 2 kHz: 40 dB weg
+    CHECK(pegel({true, FilterArt::Tiefpass, 2000.0, 0.0}, tiefTon) == doctest::Approx(1.0).epsilon(0.02));
+    CHECK(pegel({true, FilterArt::Bandpass, 200.0, 0.5}, tiefTon) == doctest::Approx(1.0).epsilon(0.02));
+    CHECK(pegel({true, FilterArt::Bandpass, 4000.0, 0.5}, tiefTon) < 0.05);
+    CHECK(pegel({true, FilterArt::Tiefpass, 100.0, 0.0}, sinusTon(1000.0, frames)) < 0.02);
+    // Resonance betont die Grenze: ein Ton genau dort kommt mit ihr lauter heraus als ohne
+    const std::vector<float> anDerGrenze = sinusTon(1000.0, frames, 0.2f);
+    CHECK(pegel({true, FilterArt::Tiefpass, 1000.0, 0.8}, anDerGrenze) > pegel({true, FilterArt::Tiefpass, 1000.0, 0.0}, anDerGrenze) * 1.5);
+    // gleich in welchen Bloecken gerechnet wird
+    const ClipEffekte alle{{ClipFilter{true, FilterArt::Bandpass, 800.0, 0.6}, sechzehntel, verzerrung,
+                            ClipFilter{true, FilterArt::Tiefpass, 3000.0, 0.2}, ClipHall{true, 0.5, 1.0, 0.4, 0.3}}};
+    CHECK(durchKette(alle, schlag, 441) == durchKette(alle, schlag, 64));
+    CHECK(durchKette(alle, schlag, 441) == durchKette(alle, schlag, frames));
+
+    // --- der Nachklang ueberlebt, wenn ein Baustein anderer Art dazukommt: der erste Echo hier
+    //     gehoert zum ersten Echo dort
+    EffektKette alt;
+    alt.richteEin({{viertel}}, kRate, 120.0);
+    std::vector<float> anfang(schlag.begin(), schlag.begin() + 2 * 4410);
+    alt.rechne(anfang.data(), 4410);
+    EffektKette neu;
+    neu.richteEin({{filterAus, viertel}}, kRate, 120.0);
+    neu.uebernimm(alt);
+    std::vector<float> stille(2 * static_cast<std::size_t>(frames), 0.0f);
+    neu.rechne(stille.data(), frames);
+    CHECK(summeBetraege(stille) > 1.0);  // das Echo des Schlags kommt noch
+    EffektKette leer;
+    leer.richteEin({{filterAus, viertel}}, kRate, 120.0);
+    std::vector<float> nichts(2 * static_cast<std::size_t>(frames), 0.0f);
+    leer.rechne(nichts.data(), frames);
+    CHECK(summeBetraege(nichts) < 1.0e-6);  // ohne uebernommenes Gedaechtnis: Stille (bis auf den Schutz vor Denormalen)
+
+    // --- der Clip klingt mit einem Filter mit Resonanz etwas laenger nach
+    CHECK(nachklangSekunden({{ClipFilter{true, FilterArt::Tiefpass, 40.0, 1.0}}}, 120.0) > 0.3);
+    CHECK(nachklangSekunden({{ClipFilter{true, FilterArt::Tiefpass, 5000.0, 0.0}}}, 120.0) < 0.01);
+    CHECK(nachklangSekunden({{filterAus}}, 120.0) == 0.0);
+}
+
+TEST_CASE("Loop Signal path Messung: acht Bausteine an der Schicht und am Clip — die Rechenzeit")
+{
+    // Drei Laeufe je Stellung, davor und danach die Taktprobe: dauert sie laenger als sonst,
+    // hat der Rechner gedrosselt und die Zahl gilt nicht. Geprueft wird nur, dass es traegt.
+    const SchichtFilter filter{FilterArt::Bandpass, 3.0, 2.0, 0.4};
+    Instrument eins = mitReihe(Schwingung::Saege, {filter, SchichtDrive{0.3}, SchichtHuelle{}});
+    Instrument acht = mitReihe(Schwingung::Saege, {filter, SchichtDrive{0.3}, filter, SchichtDrive{0.3}, filter, SchichtHuelle{},
+                                                   filter, SchichtDrive{0.3}});
+    for (Instrument* instrument : {&eins, &acht})
+    {
+        instrument->schichten[0].stimmen = 3;
+        instrument->schichten[0].ausklangMs = 1000.0;
+    }
+    const auto messeTon = [&](const std::string& name, const Instrument& instrument) {
+        double bester = 1.0e30;
+        for (int lauf = 1; lauf <= 3; ++lauf)
+        {
+            const double davor = taktprobeMs();
+            const auto start = std::chrono::steady_clock::now();
+            const Klang klang = rendereTon(instrument, 60, 1000.0, kRate);  // zwei Sekunden Ton
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+            const double danach = taktprobeMs();
+            const double sekunden = static_cast<double>(klang.frames()) / kRate;
+            bester = std::min(bester, ms / sekunden);
+            MESSAGE(name << ", Lauf " << lauf << ": " << ms << " ms fuer " << sekunden << " s Ton = " << ms / sekunden
+                         << " ms je Sekunde; Taktprobe davor " << davor << " ms, danach " << danach << " ms");
+        }
+        return bester;
+    };
+    const double schichtEins = messeTon("Schicht mit Filter, Drive, Envelope", eins);
+    const double schichtAcht = messeTon("Schicht mit acht Bausteinen (vier Filter, drei Drive)", acht);
+    // ein Ton wird vorab gerechnet, nicht im Ton-Thread: er darf dauern, aber nicht ewig
+    CHECK(schichtAcht < 1000.0);
+    MESSAGE("Schicht: acht Bausteine kosten das " << schichtAcht / schichtEins << "-fache der alten Reihe");
+
+    const int sekunden = 5;
+    const int frames = sekunden * kRate;
+    std::vector<float> ton(2 * static_cast<std::size_t>(frames));
+    std::uint32_t folge = 12345u;
+    for (float& wert : ton)
+    {
+        folge = folge * 1664525u + 1013904223u;
+        wert = (static_cast<float>(folge >> 8) / 8388608.0f - 1.0f) * 0.5f;
+    }
+    const ClipHall hall{true, 0.5, 1.8, 0.4, 0.25};
+    const ClipEffekte alteReihe{{ClipVerzerrung{true, 0.3, 0.5, 1.0}, ClipEcho{true, EchoZeit::AchtelPunktiert, 0.4, 0.3, 0.35}, hall}};
+    const ClipEffekte achtHall{{hall, hall, hall, hall, hall, hall, hall, hall}};
+    const ClipFilter clipFilter{true, FilterArt::Tiefpass, 2000.0, 0.3};
+    const ClipEffekte achtFilter{{clipFilter, clipFilter, clipFilter, clipFilter, clipFilter, clipFilter, clipFilter, clipFilter}};
+    const auto messeKette = [&](const std::string& name, const ClipEffekte& effekte) {
+        double bester = 1.0e30;
+        for (int lauf = 1; lauf <= 3; ++lauf)
+        {
+            EffektKette kette;
+            kette.richteEin(effekte, kRate, 120.0);
+            std::vector<float> werte = ton;
+            const double davor = taktprobeMs();
+            const auto start = std::chrono::steady_clock::now();
+            for (int stelle = 0; stelle < frames; stelle += 441)
+                kette.rechne(werte.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(441, frames - stelle));
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+            const double danach = taktprobeMs();
+            bester = std::min(bester, ms / sekunden);
+            MESSAGE(name << ", Lauf " << lauf << ": " << ms / sekunden << " ms je Sekunde Ton (" << ms / sekunden / 10.0
+                         << " % eines Kerns); Taktprobe davor " << davor << " ms, danach " << danach << " ms");
+        }
+        return bester;
+    };
+    const double alt = messeKette("Clip mit Distortion, Echo, Reverb", alteReihe);
+    const double halle = messeKette("Clip mit acht Reverb", achtHall);
+    const double filterKette = messeKette("Clip mit acht Filtern", achtFilter);
+    // die Kette rechnet im Ton-Thread: sie muss schneller sein, als der Ton laeuft
+    CHECK(alt < 1000.0);
+    CHECK(halle < 1000.0);
+    CHECK(filterKette < 1000.0);
 }

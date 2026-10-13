@@ -18,6 +18,7 @@
 
 #include <doctest.h>
 
+#include "LoopOhneEngine.hpp"
 #include "PappTon.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
@@ -59,13 +60,9 @@ struct InstrumentApp
     QCoreApplication app{argc, argv};
 };
 
-/// .../projects/apps/LumiViz/tests/unit/UnitTests -> Wurzel des Repos
-QDir repoWurzel()
-{
-    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
-    for (int i = 0; i < 6; ++i) wurzel.cdUp();
-    return wurzel;
-}
+using looptest::klaengeOhneEngine;
+using looptest::liesWav;
+using looptest::repoWurzel;
 
 /// Ein Loop mit einem Instrument-Muster von vier Takten (64 Schritte) in einem Kanal.
 Loop notenLoop(std::vector<Note> noten, const QString& instrument = QStringLiteral("organ"))
@@ -111,48 +108,6 @@ int periode(const Klang& klang, int ab, int laenge, int von, int bis)
     return beste;
 }
 
-/// Eine WAV-Datei mit 16 Bit lesen (die Klaenge des Kits: 44100 Hz, Mono) — als
-/// Klang in Stereo. Leer = nicht lesbar.
-Klang liesWav(const QString& pfad)
-{
-    Klang klang;
-    QFile datei(pfad);
-    if (!datei.open(QIODevice::ReadOnly)) return klang;
-    const QByteArray roh = datei.readAll();
-    if (roh.size() < 44 || !roh.startsWith("RIFF")) return klang;
-    int kanaele = 1;
-    qsizetype stelle = 12;
-    while (stelle + 8 <= roh.size())
-    {
-        const QByteArray kennung = roh.mid(stelle, 4);
-        std::uint32_t groesse = 0;
-        std::memcpy(&groesse, roh.constData() + stelle + 4, 4);
-        const char* inhalt = roh.constData() + stelle + 8;
-        if (kennung == "fmt ")
-        {
-            std::uint16_t k = 1;
-            std::memcpy(&k, inhalt + 2, 2);
-            kanaele = k;
-        }
-        else if (kennung == "data")
-        {
-            const auto werte = static_cast<qsizetype>(groesse) / 2;
-            for (qsizetype i = 0; i + kanaele <= werte; i += kanaele)
-            {
-                std::int16_t links = 0;
-                std::int16_t rechts = 0;
-                std::memcpy(&links, inhalt + 2 * i, 2);
-                std::memcpy(&rechts, inhalt + 2 * (i + kanaele - 1), 2);
-                klang.daten.push_back(static_cast<float>(links) / 32768.0f);
-                klang.daten.push_back(static_cast<float>(rechts) / 32768.0f);
-            }
-            break;
-        }
-        stelle += 8 + static_cast<qsizetype>(groesse) + (groesse % 2);
-    }
-    return klang;
-}
-
 /// Stereo-Werte als WAV mit 16 Bit schreiben (fuer die Hoerproben).
 bool schreibeWav(const QString& pfad, const std::vector<float>& daten, int rate)
 {
@@ -179,29 +134,6 @@ bool schreibeWav(const QString& pfad, const std::vector<float>& daten, int rate)
         datei.write(reinterpret_cast<const char*>(&ganz), 2);
     }
     return true;
-}
-
-/// Die Klaenge eines Ablaufs ohne Audio-Engine: Toene gerechnet, das Kit aus seinen WAV-Dateien.
-std::vector<Klang> klaengeOhneEngine(const Ablauf& ablauf)
-{
-    const QString kit = repoWurzel().filePath(QStringLiteral("asset/loop/kit"));
-    std::vector<Klang> klaenge;
-    for (const QString& name : ablauf.klangNamen)
-    {
-        QString instrument;
-        int hoehe = 0;
-        int ms = 0;
-        if (zerlegeTon(name, instrument, hoehe, ms))
-        {
-            const Instrument* gefunden = findeInstrument(instrument);
-            klaenge.push_back(gefunden != nullptr ? rendereTon(*gefunden, hoehe, ms, ablauf.rate) : Klang{});
-        }
-        else if (istKitKlang(name))
-            klaenge.push_back(liesWav(QDir(kit).filePath(name.mid(4) + QStringLiteral(".wav"))));
-        else
-            klaenge.push_back({});
-    }
-    return klaenge;
 }
 
 }  // namespace

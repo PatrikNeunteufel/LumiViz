@@ -60,8 +60,82 @@ double nachklangSekunden(const ClipEffekte& effekte, double bpm)
         }
         else if (const auto* hall = std::get_if<ClipHall>(&baustein); hall != nullptr && hall->an)
             sekunden += hall->sekunden;
+        else if (const auto* filter = std::get_if<ClipFilter>(&baustein); filter != nullptr && filter->an)
+        {
+            // ein Filter mit Resonanz schwingt nach: um 60 dB gefallen nach ln(1000) * Guete / (pi * Grenze)
+            const double guete = 0.70710678118654752 * std::exp2(4.0 * std::clamp(filter->resonanz, 0.0, 1.0));
+            sekunden += std::log(1.0 / kVerklungen) * guete / (kPi * std::clamp(filter->hz, kClipFilterHzMin, kClipFilterHzMax));
+        }
     }
     return sekunden;
+}
+
+// --- Filter ---
+
+void FilterEffekt::richteEin(const ClipFilter& werte, int rate)
+{
+    m_an = werte.an && rate > 0;
+    leere();
+    if (!m_an) return;
+    // die Formeln des Filters einer Schicht (Instrument.cpp), mit fester Grenze
+    constexpr double kGueteOhne = 0.70710678118654752;
+    const double resonanz = std::isfinite(werte.resonanz) ? std::clamp(werte.resonanz, 0.0, 1.0) : 0.0;
+    const double guete = kGueteOhne * std::exp2(4.0 * resonanz);
+    const double hz = std::clamp(std::isfinite(werte.hz) ? werte.hz : kClipFilterHzMax, kClipFilterHzMin,
+                                 std::min(kClipFilterHzMax, rate * 0.45));
+    const double w = 2.0 * kPi * hz / rate;
+    const double alpha = std::sin(w) / (2.0 * guete);
+    const double c = std::cos(w);
+    const double a0 = 1.0 + alpha;
+    m_laut = 1.0;
+    switch (werte.art)
+    {
+    case FilterArt::Hochpass:
+        m_b0 = (1.0 + c) / 2.0 / a0;
+        m_b1 = -(1.0 + c) / a0;
+        m_b2 = m_b0;
+        m_laut = 1.0 / std::sqrt(guete / kGueteOhne);
+        break;
+    case FilterArt::Bandpass:
+        m_b0 = alpha / a0;
+        m_b1 = 0.0;
+        m_b2 = -alpha / a0;
+        break;
+    case FilterArt::Tiefpass:
+    default:
+        m_b0 = (1.0 - c) / 2.0 / a0;
+        m_b1 = (1.0 - c) / a0;
+        m_b2 = m_b0;
+        m_laut = 1.0 / std::sqrt(guete / kGueteOhne);
+        break;
+    }
+    m_a1 = -2.0 * c / a0;
+    m_a2 = (1.0 - alpha) / a0;
+}
+
+void FilterEffekt::leere()
+{
+    m_zustand = {};
+}
+
+void FilterEffekt::rechne(float* stereo, int frames)
+{
+    if (!m_an) return;
+    for (int f = 0; f < frames; ++f)
+    {
+        for (int seite = 0; seite < 2; ++seite)
+        {
+            Zustand& z = m_zustand[static_cast<std::size_t>(seite)];
+            float& wert = stereo[2 * f + seite];
+            const double ein = wert;
+            const double aus = m_b0 * ein + m_b1 * z.x1 + m_b2 * z.x2 - m_a1 * z.y1 - m_a2 * z.y2 + kWinzig;
+            z.x2 = z.x1;
+            z.x1 = ein;
+            z.y2 = z.y1;
+            z.y1 = aus;
+            wert = static_cast<float>(aus * m_laut);
+        }
+    }
 }
 
 // --- Verzerrer ---
@@ -231,15 +305,20 @@ void HallEffekt::rechne(float* stereo, int frames)
 
 void EffektKette::richteEin(const ClipEffekte& effekte, int rate, double bpm)
 {
-    // Bis Stufe 16b rechnet die Kette je Art den ersten Baustein, in der festen
-    // Folge — fuer jede Reihe aus einer Datei bis Fassung 4 ist das die ganze.
-    const ClipVerzerrung verzerrung = effekte.wert<ClipVerzerrung>();
-    const ClipEcho echo = effekte.wert<ClipEcho>();
-    const ClipHall hall = effekte.wert<ClipHall>();
-    m_verzerrer.richteEin(verzerrung, rate);
-    m_echo.richteEin(echo, rate, bpm);
-    m_hall.richteEin(hall, rate);
-    m_an = verzerrung.an || echo.an || hall.an;
+    m_glieder.clear();
+    m_glieder.reserve(effekte.reihe.size());
+    for (const ClipBaustein& baustein : effekte.reihe)
+    {
+        if (const auto* filter = std::get_if<ClipFilter>(&baustein))
+            std::get<FilterEffekt>(m_glieder.emplace_back(FilterEffekt{})).richteEin(*filter, rate);
+        else if (const auto* verzerrung = std::get_if<ClipVerzerrung>(&baustein))
+            std::get<Verzerrer>(m_glieder.emplace_back(Verzerrer{})).richteEin(*verzerrung, rate);
+        else if (const auto* echo = std::get_if<ClipEcho>(&baustein))
+            std::get<EchoEffekt>(m_glieder.emplace_back(EchoEffekt{})).richteEin(*echo, rate, bpm);
+        else if (const auto* hall = std::get_if<ClipHall>(&baustein))
+            std::get<HallEffekt>(m_glieder.emplace_back(HallEffekt{})).richteEin(*hall, rate);
+    }
+    m_an = effekte.einerAn();
 }
 
 void EchoEffekt::uebernimm(EchoEffekt& alt)
@@ -280,24 +359,34 @@ void HallEffekt::uebernimm(HallEffekt& alt)
 
 void EffektKette::uebernimm(EffektKette& alt)
 {
-    m_verzerrer.uebernimm(alt.m_verzerrer);
-    m_echo.uebernimm(alt.m_echo);
-    m_hall.uebernimm(alt.m_hall);
+    // der n-te Baustein einer Art hier gehoert zum n-ten derselben Art dort
+    std::array<std::size_t, std::variant_size_v<Glied>> gesehen{};
+    for (Glied& glied : m_glieder)
+    {
+        const std::size_t art = glied.index();
+        std::size_t nummer = gesehen[art]++;
+        for (Glied& vorher : alt.m_glieder)
+        {
+            if (vorher.index() != art) continue;
+            if (nummer-- > 0) continue;
+            std::visit(
+                [&vorher](auto& neu) { neu.uebernimm(std::get<std::remove_reference_t<decltype(neu)>>(vorher)); }, glied);
+            break;
+        }
+    }
 }
 
 void EffektKette::leere()
 {
-    m_verzerrer.leere();
-    m_echo.leere();
-    m_hall.leere();
+    for (Glied& glied : m_glieder)
+        std::visit([](auto& effekt) { effekt.leere(); }, glied);
 }
 
 void EffektKette::rechne(float* stereo, int frames)
 {
     if (!m_an || frames <= 0) return;
-    m_verzerrer.rechne(stereo, frames);
-    m_echo.rechne(stereo, frames);
-    m_hall.rechne(stereo, frames);
+    for (Glied& glied : m_glieder)
+        std::visit([stereo, frames](auto& effekt) { effekt.rechne(stereo, frames); }, glied);
 }
 
 }  // namespace lumi::loop

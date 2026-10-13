@@ -245,6 +245,109 @@ private:
     static double inBereich(double wert, double von, double bis) { return std::isfinite(wert) ? std::clamp(wert, von, bis) : 0.0; }
 };
 
+/// Der Weg des Tons einer Schicht fuer eine Seite (Stufe 16b; Entscheide Patrik
+/// S117, K1 a und K2 a): die Bausteine der Reihe, von vorn nach hinten — jeder
+/// Filter mit eigenem Gedaechtnis, Drive, und die Stelle, an der die Huellkurve
+/// den Ton formt. Ein offener Filter (Cutoff 0) und ein Drive mit 0 tun nichts
+/// und kommen nicht vor. Fuer die Reihe Filter, Drive, Envelope ergibt das Wert
+/// fuer Wert, was bis Stufe 16a fest gerechnet wurde.
+class Reihe
+{
+public:
+    /// `mitFilter` = false: die Saite klingt von selbst aus und hatte nie einen
+    /// Filter — sie ueberspringt die Filter der Reihe weiter.
+    Reihe(const Schicht& schicht, int rate, bool mitFilter = true) : m_grenzeMax(rate * 0.45)
+    {
+        bool huelle = false;
+        for (const SchichtBaustein& baustein : schicht.reihe)
+        {
+            if (const auto* filter = std::get_if<SchichtFilter>(&baustein))
+            {
+                if (mitFilter && filter->teilton > 0.0) m_stufen.push_back(Stufe{Art::Filter, Filter(*filter, rate), Verzerrer(0.0), filter->teilton, filter->huelle});
+            }
+            else if (const auto* drive = std::get_if<SchichtDrive>(&baustein))
+            {
+                if (drive->wert > 0.0) m_stufen.push_back(Stufe{Art::Drive, Filter(SchichtFilter{}, rate), Verzerrer(drive->wert), 0.0, 0.0});
+            }
+            else if (!huelle)
+            {
+                huelle = true;
+                m_stufen.push_back(Stufe{Art::Huelle, Filter(SchichtFilter{}, rate), Verzerrer(0.0), 0.0, 0.0});
+            }
+        }
+        // eine Reihe ohne Envelope gibt es nach `richteReihe` nicht — sonst formt sie am Ende
+        if (!huelle) m_stufen.push_back(Stufe{Art::Huelle, Filter(SchichtFilter{}, rate), Verzerrer(0.0), 0.0, 0.0});
+    }
+    /// Ein Abtastwert durch die Reihe. `h` ist die Huellkurve an dieser Stelle (sie oeffnet
+    /// auch jeden Filter, gleich wo er steht), `hz` die Tonhoehe, der die Filter folgen.
+    [[nodiscard]] double bei(double wert, double h, double hz)
+    {
+        for (Stufe& stufe : m_stufen)
+        {
+            switch (stufe.art)
+            {
+            case Art::Filter:
+                wert = stufe.filter.bei(wert, std::clamp(hz * (stufe.teilton + stufe.huelle * h), 40.0, m_grenzeMax));
+                break;
+            case Art::Drive:
+                wert = stufe.verzerrer.bei(wert);
+                break;
+            case Art::Huelle:
+                wert *= h;
+                break;
+            }
+        }
+        return wert;
+    }
+
+private:
+    enum class Art
+    {
+        Filter,
+        Drive,
+        Huelle,
+    };
+    struct Stufe
+    {
+        Art art;
+        Filter filter;
+        Verzerrer verzerrer;
+        double teilton;  ///< nur Filter: Cutoff
+        double huelle;   ///< nur Filter: Filter envelope
+    };
+    double m_grenzeMax;
+    std::vector<Stufe> m_stufen;
+};
+
+/// Steht in der Reihe ein Filter, der rechnet, hinter der Envelope? Dann schwingt er nach,
+/// wenn die Huellkurve schon bei null ist — der Ton endete nicht mehr bei null.
+bool filterHinterHuelle(const Schicht& schicht)
+{
+    bool huelle = false;
+    for (const SchichtBaustein& baustein : schicht.reihe)
+    {
+        if (std::holds_alternative<SchichtHuelle>(baustein))
+            huelle = true;
+        else if (const auto* filter = std::get_if<SchichtFilter>(&baustein); huelle && filter != nullptr && filter->teilton > 0.0)
+            return true;
+    }
+    return false;
+}
+
+/// Die letzten Millisekunden eines Tons geradlinig auf null fuehren.
+void blendeAus(std::vector<float>& daten, int rate)
+{
+    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    const std::int64_t strecke = std::min<std::int64_t>(frames, std::max(1, rate / 200));  // 5 ms
+    for (std::int64_t i = 0; i < strecke; ++i)
+    {
+        const auto anteil = static_cast<float>(i) / static_cast<float>(strecke);
+        const auto t = static_cast<std::size_t>(frames - 1 - i);
+        daten[2 * t] *= anteil;
+        daten[2 * t + 1] *= anteil;
+    }
+}
+
 void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
@@ -253,8 +356,6 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
     // Eine fallende Note beginnt hoeher: die Tafel traegt nur, was auch dort darunter bleibt.
     const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06 * weg.hoechstes())), 1, kTeiltoeneMax);
     const std::vector<float> tafel = wellenzug(schicht, hoechster);
-    const Verzerrer verzerrer(schicht.drive().wert);
-
     const int stimmen = std::clamp(schicht.stimmen, 1, 3);
     std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
     std::array<double, 3> phase = {0.0, 0.33, 0.67};  // fest: derselbe Ton ergibt dieselben Werte
@@ -264,8 +365,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
 
     const double einsatz = std::max(1.0, schicht.vibratoEinsatzMs * rate / 1000.0);
     const bool vibrato = schicht.vibratoHz > 0.0 && schicht.vibratoCent > 0.0;
-    const SchichtFilter filterWerte = schicht.filter();
-    Filter filter(filterWerte, rate);
+    Reihe reihe(schicht, rate);
     const double pegel = kPegel * schicht.laut;
 
     for (std::int64_t t = 0; t < frames; ++t)
@@ -289,10 +389,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
             p -= std::floor(p);
         }
         wert *= jeStimme;
-        if (filter.an())
-            wert = filter.bei(wert, std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45));
-        wert = verzerrer.bei(wert);
-        const auto aus = static_cast<float>(wert * h * pegel);
+        const auto aus = static_cast<float>(reihe.bei(wert, h, hz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -305,7 +402,7 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
                  std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    const Verzerrer verzerrer(schicht.drive().wert);
+    Reihe reihe(schicht, rate, false);  // ohne die Filter: die Saite hatte nie einen
     // das Mitteln zweier Werte verzoegert um einen halben Abtastwert
     const double verzug = std::max(2.0, rate / hz - 0.5);
     const auto groesse = static_cast<std::size_t>(verzug) + 4;
@@ -347,7 +444,7 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
             const double nach = static_cast<double>(t - huelle.ende);
             h *= std::exp(-nach / huelle.ausklang) * std::max(0.0, 1.0 - nach / static_cast<double>(huelle.aus));
         }
-        const auto aus = static_cast<float>(verzerrer.bei(y) * h * pegel);
+        const auto aus = static_cast<float>(reihe.bei(y, h, hz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -361,19 +458,15 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
 void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    const Verzerrer verzerrer(schicht.drive().wert);
-    const SchichtFilter filterWerte = schicht.filter();
-    Filter filter(filterWerte, rate);
+    Reihe reihe(schicht, rate);
     const double pegel = kPegel * schicht.laut;
     std::uint32_t folge = 22222u;
     for (std::int64_t t = 0; t < frames; ++t)
     {
         const double h = huelle.bei(t);
         folge = folge * 1664525u + 1013904223u;
-        double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
-        if (filter.an())
-            wert = filter.bei(wert, std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45));
-        const auto aus = static_cast<float>(verzerrer.bei(wert) * h * pegel);
+        const double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
+        const auto aus = static_cast<float>(reihe.bei(wert, h, hz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -419,9 +512,7 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         return a + (b - a) * rest;
     };
 
-    const Verzerrer verzerrer(schicht.drive().wert);
-    const SchichtFilter filterWerte = schicht.filter();
-    std::array<Filter, 2> filter = {Filter(filterWerte, rate), Filter(filterWerte, rate)};  // je Seite einer
+    std::array<Reihe, 2> reihen = {Reihe(schicht, rate), Reihe(schicht, rate)};  // je Seite einer: jeder Filter hat sein Gedaechtnis  // je Seite einer
     const double pegel = schicht.laut;
     // Pitch sweep (N2 a): die Aufnahme laeuft am Anfang schneller (oder langsamer) und kommt
     // auf ihr Tempo — der Sustain loop rechnet mit jedem Schritt
@@ -434,14 +525,11 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         const bool gehalten = schleife && t < huelle.ende;
         // an der Naht: was gleich wieder beginnt, kommt schon dazu
         const double blende = gehalten && naht > 0.0 && ort > bis - naht ? (ort - (bis - naht)) / naht : 0.0;
-        const double grenze =
-            filter[0].an() ? std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45) : 0.0;
         for (std::size_t seite = 0; seite < 2; ++seite)
         {
             double wert = lies(ort, seite);
             if (blende > 0.0) wert = wert * (1.0 - blende) + lies(ort - (bis - von), seite) * blende;
-            if (filter[seite].an()) wert = filter[seite].bei(wert, grenze);
-            daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(verzerrer.bei(wert) * h * pegel);
+            daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(reihen[seite].bei(wert, h, hz) * pegel);
         }
         ort += schritt * weg.bei(t);
         if (gehalten && ort >= bis) ort -= bis - von;
@@ -1080,6 +1168,8 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
             rechneRauschen(schicht, hz, huelle, rate, eine);
         else
             rechneSchwingung(schicht, hz, huelle, rate, eine);
+        // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
+        if (schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht)) blendeAus(eine, rate);
         if (erste && einsatz == 0)
         {
             klang.daten.swap(eine);  // eine Schicht allein: ihre Werte, unveraendert
