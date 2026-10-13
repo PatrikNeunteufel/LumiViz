@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.190.0
+> **Version:** 1.191.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4939,6 +4939,94 @@ keine mitgelieferten Samples außer den Klängen des Kits (`kit:<name>`) — ob
 die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 `loop/Sample` (`nimmZuEigenen`), die Regeln aus S117 (E1 a, E1b c).
 
+### ⚪ Idee: Klang aus einer Form — Waveform „Shape" im Instrument-Creator (Patrik S119)
+
+Aus einer geschlossenen Kontur wird über eine abgeschnittene Fourier-Reihe ein
+nahtlos loopender Wellenzug; die Zahl der Harmonischen ist der Klangregler.
+Grobkonzept ohne Bezug zu LumiViz: `docs/fourier-shape-loops-konzept.md`
+(Anstoß: Beiträge mit Epizykel-Animationen — zwei Fourier-Reihen führen den
+Stift in x und y).
+
+**Entschieden (Z1 a):** in LumiViz, als Waveform einer Schicht im
+Instrument-Creator, mit einem eigenen Fenster für die Form; alles in C++, kein
+Python-Werkzeug daneben. Der Export für andere Synths ist eine spätere Zugabe.
+
+**Patriks Eingabewege:** mit einfachem Zeichnen; als SVG importiert; aus einem
+Bild (jpg, png …), dessen Konturen mit geeigneten Filtern erkannt und dann
+ausgewählt werden — verschiedene Konturen, verschiedene Farben.
+
+**Z2 a, im Grundsatz (Patrik):** eine Schicht mit dem Regler **Angle** (dreht
+die Form, bevor der Ton abgenommen wird) und dem Haken **Stereo XY** (x links,
+y rechts). Dazu zwei Gedanken von Patrik, die er als zwei Ideen trennt:
+- **XY auf die Stereokanäle** — das Bild der Form im Ton. Dazu gehört ein
+  **Modul für die Effect Chain**, das die Form zeigt.
+- **Die Richtungen +x, −x, +y, −y** für sich überlagernde Schichten. Mit Angle
+  von 0° bis 360° sind das die Stellungen 0°, 180°, 90°, 270°: −x ist +x mit
+  umgekehrtem Vorzeichen — allein gleich im Klang, über einer anderen Schicht
+  derselben Form löscht oder verstärkt es.
+
+**Nachgesehen (S119):** eine Schicht hat kein Panorama; ein Ton wird in Stereo
+gerechnet, bei Sample-Schichten dürfen die Seiten verschieden sein, alle
+gerechneten Schwingungen sind auf beiden Seiten gleich. Die Effekte am Clip
+rechnen links und rechts getrennt. Die Effect Chain kennt die Wellenform je
+Seite (`getosc` mit Kanal, `getWaveformChannel`), der Superscope hat eine
+Vorgabe Lissajous. **Nicht geprüft:** ob die Visuals vom Loop im Lauf beide
+Seiten getrennt bekommen.
+
+**Z3 a (Patrik):** Stereo an seinem Ort — im Creator bekommt jede Schicht im
+Kasten Level einen Regler **Pan** (für jede Waveform; schließt U19), die
+Shape-Schicht dazu den Haken Stereo XY; bewegtes Stereo (Flanger, Chorus)
+entsteht bei den Effekten am Clip. Folge: eine neue Fassung der `.lvinst`.
+
+**Regler der Shape-Schicht, soweit besprochen:** **Harmonics** (die Zahl der
+Harmonischen — Frage Patrik; der zentrale Klangregler), **Harmonics
+envelope**, **Angle** (0° bis 360°), **Stereo XY**; von Claude vorgeschlagen,
+nicht entschieden: **Start** (der Startpunkt auf der Kontur) und **Reverse**
+(die Umlaufrichtung).
+
+**Z4 a (Patrik):** Harmonics läuft weich — zwischen zwei ganzen Werten wird
+die nächste Harmonische eingeblendet, keine Stufen; **Harmonics envelope**
+wie Filter envelope: die Hüllkurve der Schicht öffnet zusätzliche Harmonische
+(negativ: die Note beginnt als Ellipse und wächst zur Form). Hohe Noten
+bekommen von selbst weniger Harmonische, damit nichts über der halben
+Abtastrate klingt.
+
+**Z5 a (Patrik):** mehrere gewählte Konturen gehen beide Wege, im Form-Fenster
+wählbar, jede Kontur in einer Farbe. **As layers:** je Kontur eine Schicht in
+ihrer Farbe, bis das Instrument voll ist (vier). **As one path:** die
+gewählten Konturen nacheinander in einem Umlauf, für eine Schicht — nur so
+erscheint im Scope eine Zeichnung aus mehreren Teilen (zwei Schichten mit
+Stereo XY ergeben eine Kurve, die Punkt für Punkt ihre Summe ist, nicht zwei
+Formen).
+
+**Die Form ist eine Datei `.lvshape` (Patrik)** — und soll auch von den
+Visuals benutzt werden können: das Modul der Effect Chain, das die Form aus
+ihren Koeffizienten zeichnet, liest dieselbe Datei. **Start** und **Reverse**
+sind Regler der Schicht (Patrik: ja).
+
+**Offen, wird noch geklärt:** was in der `.lvshape` steht (Punkte, Pfade,
+Farben, Herkunft) und wo sie liegt (bei den eigenen Daten wie Samples,
+mitgelieferte Formen, Export und Import der eigenen Daten); die
+Konturerkennung aus einem Bild (OpenCV liegt nicht im Repo — selbst zu
+schreiben); SVG (das Qt-Modul Svg steht nicht in der `Solution.json`; ob es
+in der Installation liegt, ist nicht geprüft); die Brücke zwischen Konturen
+bei As one path; das Modul für die Effect Chain (zwei Arten: ein XY-Scope, das
+links gegen rechts zeichnet, und eines, das die Form aus ihren Koeffizienten
+zeichnet); die Skizze
+des Form-Fensters; was Qt für SVG hergibt und wie Konturen ohne OpenCV erkannt
+werden; mehrere gewählte Konturen; die Entscheide aus §10 des Grobkonzepts.
+Nichts entworfen, nichts gebaut; das Grobkonzept ist noch nicht auf LumiViz
+umgeschrieben.
+
+### ⚪ Idee: Flanger als Effekt am Clip (Patrik S119)
+
+Ein weiterer Baustein für die Zeile Signal path im Fenster Clip effects, wie
+Patrik ihn vom Gitarren-Effektgerät (Korg) kennt: der Ton wird mit einer sehr
+kurz und schwankend verzögerten Kopie seiner selbst gemischt. Verwandt:
+Chorus, Phaser. Er macht aus einem Ton in der Mitte etwas Breites, wenn die
+Schwankung links und rechts versetzt läuft — im Zusammenhang der Frage
+genannt, wo Stereo entstehen soll. Nur notiert.
+
 ## 8. Werkzeug- und Doku-Schulden
 
 - 🟠 **Settings: der Reiter „Panels" ist ein Sammelbecken — bereinigen (Befund
@@ -5271,6 +5359,7 @@ die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.191.0 | 2026-10-13 | Session 119. §7 NEU Idee Patrik: **Klang aus einer Form** — Waveform „Shape" im Instrument-Creator (Fourier-Reihe einer Kontur; Grobkonzept `fourier-shape-loops-konzept.md`); Z1 a: in LumiViz, in C++; Eingabe durch Zeichnen, SVG oder Konturen aus einem Bild; Z2 a im Grundsatz (Angle, Stereo XY), dazu die Richtungen ±x und ±y für überlagerte Schichten und ein Modul für die Effect Chain ; Z3 a (Pan je Schicht, Stereo XY an der Shape-Schicht, bewegtes Stereo bei den Effekten), Z4 a (Harmonics läuft weich, dazu Harmonics envelope), Z5 a (mehrere Konturen als Schichten oder als ein Pfad), die Form als Datei `.lvshape`, auch für die Visuals; Start und Reverse als Regler — nichts entworfen, nichts gebaut; offen Dateiformat, Konturerkennung, SVG, die Module, die Skizze. §7 NEU Idee Patrik: **Flanger** als Effekt am Clip — nur notiert |
 | 1.190.0 | 2026-10-13 | Session 119. **X5 gebaut** (Clip effects, mehrere Clips mit derselben Folge): weicht irgendein Wert eines Bausteins ab, steht im Kasten „≠" vor dem Kurzwert, der Kasten ist bernsteinfarben getönt (die Fläche statt des Rands, Vorschlag Patrik — auch am gewählten Kasten zu sehen), der Tooltip nennt die Regler — im Programm ungesehen (Liste 10, X7, U76) |
 | 1.189.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **Stufe 17 fertig** (17c: Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D mit D0 bis D10 und U72 bis U75, voller Lauf 1153 / 1153 unter Testing-MSVC) — im Programm ungesehen. **X5 entschieden (Patrik, a):** weicht irgendein Wert eines Bausteins zwischen den Clips ab, steht die zweite Zeile des Kastens in Bernstein mit „≠" davor, der Tooltip nennt die Regler; dazu Patriks Frage nach einem farbigen Rahmen — **offen, nicht gebaut** |
 | 1.188.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **17b gebaut** (Edit... im Creator) — im Programm ungesehen; offen 17c. **Befund Patrik zu X5, mit drei Bildern (Clip effects, zwei Clips mit derselben Reihe):** weicht ein Wert ab, der im Kasten steht (Time, Mix), zeigt der Kasten „mixed"; weicht nur einer ab, der dort nicht steht (Damping, Feedback), sieht man es erst, wenn der Baustein gewählt ist. Vorschlag Patrik: eine andere Schriftfarbe im Kasten, damit es gleich zu erkennen ist — **offen, noch nicht entworfen** |
