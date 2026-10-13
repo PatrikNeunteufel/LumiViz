@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.7.0
+> **Version:** 0.8.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -96,6 +96,9 @@ Von Patrik, S119:
 | **S1 a** (S120) | SVG: Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; Kurven, Lage und Füllfarbe kommen an (belegt). |
 | **B2 d** (S120) | As one path: jede Kontur behält ihre eigene Reihe und bleibt geschlossen; nacheinander in einem Umlauf, dazwischen ein kurzer gerader Sprung; Harmonics je Kontur. |
 | **B1** (S120) | Wo der Stift springt, ist wählbar: in Reihenfolge der Liste (Vorgabe), auf den kürzesten Wegen, oder von Hand eingezeichnet mit Start- und Endpunkt. |
+| **M1 a** (S120) | Ein neuer Knoten **XY Scope**: links gegen rechts in voller Genauigkeit; Gain, Line width, Farbe, Rotate 45°. |
+| **M2 b** (S120) | Ein neuer Knoten **Shape**: zeichnet die gewählten Konturen einer `.lvcontour`, mit Harmonics und **Show circles**. Beide Knoten mit den üblichen Skriptfeldern und einigen Presets. |
+| **M3 a** (S120) | Shape gleich nach Datei und Koeffizienten, XY Scope nach dem ersten Ton. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -488,16 +491,44 @@ sind nicht geprobt.
 
 ## 10. Die Visuals
 
-Zwei Module für die Effect Chain, beide gewünscht, die Reihenfolge offen
-(§13, Punkt 5):
+Zwei neue Knoten für die Effect Chain, entschieden in S120 (M1 a, M2 b,
+M3 a).
 
-1. **XY-Scope** — zeichnet links gegen rechts. Braucht die Form nicht, zeigt
-   jeden Stereo-Ton, also auch eine Shape-Schicht mit Stereo XY. Die Daten
-   sind da (§3).
-2. **Form aus den Koeffizienten** — liest die Datei und zeichnet die Form
-   selbst, mit so vielen Harmonischen wie gewünscht; unabhängig vom Ton,
-   also auch zu einem Song. Die Epizykel-Zeichnung, die den Anstoß gab,
-   wäre hier zu Hause.
+1. **XY Scope (M1 a)** — zeichnet die 512 Werte je Seite als Linie, x links
+   und y rechts, in voller Genauigkeit (nicht über die auf 8 Bit gerundeten
+   Werte der Skripte). Braucht die Form nicht, zeigt jeden Stereo-Ton.
+   Regler: **Gain**, **Line width**, Farbe aus der Farbtafel oder einem
+   Verlauf, **Rotate 45°** (Mono steht dann senkrecht, wie bei einem
+   Goniometer). Nachleuchten kommt aus einem Knoten Fadeout dahinter. Die
+   Zufuhr bleibt, wie sie ist. Verworfen: kein Knoten, nur ein Preset mit
+   einem Superscope-Skript (b) — 256 Stufen; eine längere, lückenlose
+   Zufuhr für alle Visuals (c) — eigener Schritt, gegen die Kalibrierung der
+   AVS-Presets zu prüfen.
+2. **Shape (M2 b)** — nennt eine `.lvcontour` wie eine Schicht (beim Namen,
+   `user:<name>` oder Pfad, D2 a) und zeichnet die gewählten Konturen in
+   ihren Farben, unabhängig vom Ton, also auch zu einem Song. Regler:
+   **Harmonics**, **Line width**, Lage, Größe, Drehung; dazu der Haken
+   **Show circles** — die Kreise und Arme, die die Form zeichnen, laufen
+   mit, mit einem Regler **Speed** (die Epizykel-Zeichnung, die den Anstoß
+   gab). Fehlt die Datei, zeichnet er nichts, und das Panel sagt es.
+   Verworfen: ohne die Kreise (a); die Kontur ins Preset eingebettet wie ein
+   Bild bei Picture (c) — eine zweite Fassung neben der Datei, das
+   Weitergeben löst Publish.
+
+**Dazu (Patrik, mit dem Entscheid):** die Knoten bekommen **die üblichen
+Skriptfelder** — Init, Per beat, Per frame … — und es kommen **einige
+Presets** mit. Meine Lesart, nicht nachgefragt: das gilt für beide Knoten;
+die Regler (Harmonics, Gain, Drehung …) sind damit aus dem Skript und im
+Takt steuerbar, wie bei den anderen Knoten der Chain. Welche Felder genau
+(auch ein Feld je Punkt?) und welche Presets, legt die Stufe fest.
+
+**Reihenfolge (M3 a):** jedes Modul kommt dort, wo es als Prüfwerkzeug
+gebraucht wird — der Knoten Shape gleich nach Datei und Koeffizienten, vor
+dem Klang; das XY Scope, wenn der erste Ton zu hören ist (§14).
+
+**Aufwand, nachgesehen:** ein neuer Knotentyp kostete am jüngsten Beispiel
+(Lyrics Trail, S92) rund 630 Zeilen in 15 Dateien — Parameter, Datei,
+Rendern, Panel, Palette, Feldtabellen, Tooltips, Tests, Handbuch.
 
 **Grenzen des XY-Scope, vor dem Bau zu wissen:**
 
@@ -566,7 +597,7 @@ und Hörproben in einen Ordner.
 2. ~~Konturerkennung~~ — entschieden in S120: K1 a, K2 a (§8).
 3. ~~SVG~~ — entschieden in S120: S1 a, mit Beleg (§8).
 4. ~~Die Brücke~~ — entschieden in S120: B2 d, B1 wählbar (§9).
-5. **Die zwei Module** für die Effect Chain und welches zuerst (§10).
+5. ~~Die zwei Module~~ — entschieden in S120: M1 a, M2 b, M3 a (§10).
 6. **Die Skizze** des Form-Fensters und der Shape-Schicht — mit dem
    Zeichenwerkzeug, vor jedem Bau; die gebilligte Skizze kommt als
    Beschreibung in dieses Dokument.
@@ -584,17 +615,19 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 
 | Stufe | Inhalt | hängt an |
 |---|---|---|
-| 18 | **Pan je Schicht**, `.lvinst` Fassung 8 | nichts — sofort möglich |
-| 19a | Form als Daten: Kontur, Koeffizienten, die Datei | Vorlage 1 |
-| 19b | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope; mit einer Form aus einer Datei, ohne Fenster | 19a |
-| 19c | die Shape-Schicht im Creator | Skizze |
+| 18 | **Pan je Schicht**, `.lvinst` Fassung 8 — offen, ob dabei die Grenze der Schichten von vier auf acht geht (gemessen in S120, nicht entschieden) | nichts — sofort möglich |
+| 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen | — |
+| 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a) | 19a |
+| 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
+| 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a) | — (gebraucht ab 19c) |
+| 19e | die Shape-Schicht im Creator | Skizze |
 | 20a | das Form-Fenster: zeichnen | Skizze |
-| 20b | SVG | Vorlage 3 |
-| 20c | Konturen aus einem Bild | Vorlage 2 |
-| 20d | mehrere Konturen: As layers, As one path | Vorlage 4 |
-| 21 | die Module für die Effect Chain | Vorlage 5 |
+| 20b | SVG über das mitschreibende Zeichengerät (S1 a) | 20a |
+| 20c | Konturen aus einem Bild (K1 a, K2 a) | 20a |
+| 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1) | 20a |
 
-Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
+Nach 19b ist die Form zu sehen, nach 19c zu hören und nach 19d im Scope zu
+prüfen — alles, bevor ein Fenster steht.
 
 ---
 
@@ -617,6 +650,7 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.8.0 | 2026-10-13 (S120) | **Die Module entschieden (Patrik): M1 a** ein Knoten XY Scope in voller Genauigkeit, **M2 b** ein Knoten Shape mit Harmonics und Show circles, **M3 a** Shape gleich nach den Daten, XY Scope nach dem ersten Ton; dazu von Patrik: die üblichen Skriptfelder und einige Presets (§4, §10, §13). §14: die Stufen neu geordnet (19a bis 19e, 20a bis 20d). Die fünfte der sieben Vorlagen ist geschlossen. |
 | 0.7.0 | 2026-10-13 (S120) | **Berichtigt:** die Engine läuft mit 44,1 kHz, nicht 48 (§5, §10). §10 genauer, was die Visuals vom Ton bekommen: 512 Werte je Seite alle 33 ms, für Skripte auf 8 Bit gerundet, kein Nachleuchten von sich aus. §3: acht Schichten gemessen und probiert, die Grenze steht weiter auf vier. |
 | 0.6.0 | 2026-10-13 (S120) | **As one path entschieden (Patrik): B2 d** — jede Kontur behält ihre eigene Reihe, nacheinander in einem Umlauf, dazwischen ein kurzer Sprung, Harmonics je Kontur; **B1** — wo der Stift springt, ist wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet (§4, §7, §9, §13). Davor eine Probe in vier Zeilen, die Zahlen stehen in §9; die ersten drei Zeilen rechneten beide Konturen samt Brücke in eine Reihe — Patriks Einwand führte zur vierten. Offen: wie die Kante des Sprungs klingt (Stufe 19b). |
 | 0.5.0 | 2026-10-13 (S120) | **SVG entschieden (Patrik): S1 a, mit Beleg** — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; der Beleg zeigt vier Aufrufe, die Kurve bleibt Kurve, Lage und Farbe stimmen (§8). Dazu belegt, was bei D4 b aus dem Gedächtnis stand: `QPainterPath` ohne Qt-Anwendung (§7). Neu `tests/unit/UnitTests/test_ShapeBelege.cpp`; Qt Svg in der `Solution.json`. |

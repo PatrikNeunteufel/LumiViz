@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.201.0
+> **Version:** 1.202.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5454,6 +5454,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.202.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Module entschieden (Patrik): M1 a, M2 b, M3 a** (`Shape_Konzept.md` 0.8.0, §10, §14) — zwei neue Knoten für die Effect Chain: **XY Scope** (links gegen rechts, volle Genauigkeit) und **Shape** (zeichnet die Konturen einer `.lvcontour`, mit Harmonics und Show circles), beide mit den üblichen Skriptfeldern und einigen Presets; Shape kommt gleich nach Datei und Koeffizienten, XY Scope nach dem ersten Ton. Die fünfte der sieben Vorlagen ist geschlossen; **offen: die Skizze** des Form-Fensters und der Shape-Schicht, danach die Baustufen; **nicht entschieden:** ob die Grenze der Schichten von vier auf acht geht. |
 | 1.201.0 | 2026-10-13 | Session 120. **Acht Schichten je Instrument gemessen und probiert (Frage Patrik)** — eingetragen bei der Datenablage unter `kSchichtenMax`: die Rechenzeit wächst gerade mit der Zahl (Release-clang rund 2 ms je Sekunde Ton und Schicht, acht also 16 ms), mit der Grenze probeweise auf 8 fallen nur die zwei Fälle durch, die die Grenze prüfen; zu beachten die Spitze (2,52 bei acht Schichten auf Level 1) und eine neue Fassung der `.lvinst`. Neu ein Messfall in `test_LoopBausteine.cpp` (**1156 Cases**). Die Grenze steht weiter auf vier, nicht entschieden. Dazu `Shape_Konzept.md` 0.7.0: die Abtastrate der Engine ist 44,1 kHz, nicht 48 (berichtigt), und was die Visuals vom Ton bekommen, genauer nachgesehen. |
 | 1.200.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **As one path entschieden (Patrik): B2 d, B1 wählbar** (`Shape_Konzept.md` 0.6.0, §9) — jede Kontur behält ihre eigene Reihe und bleibt geschlossen, eine Schicht spielt sie nacheinander in einem Umlauf, dazwischen ein kurzer gerader Sprung; wo der Stift springt, ist im Form-Fenster wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet. Die vierte der sieben Vorlagen ist geschlossen; als Nächstes die zwei Module für die Effect Chain. **Offen, in Stufe 19b zu hören:** die Kante des Sprungs im Ton (in der Probe −31 bis −51 dB über der eingestellten Zahl von Harmonischen, grob, nicht gehört). |
 | 1.199.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **SVG entschieden (Patrik): S1 a, mit Beleg** (`Shape_Konzept.md` 0.5.0, §8) — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät, Kurven, Lage und Füllfarbe kommen an; dazu belegt: `QPainterPath` trägt Strecken und Kurven ohne Qt-Anwendung (D4 b). Neu `test_ShapeBelege.cpp` (zwei Fälle, **1155 Cases**), Qt Svg in der `Solution.json`. Die dritte der sieben Vorlagen ist geschlossen; als Nächstes die Brücke bei As one path. Nicht belegt: Text, `use`, CSS-Stile, Verläufe, Dateien aus Inkscape oder Illustrator. Voller Lauf steht aus. |
