@@ -252,9 +252,10 @@ struct ClipEffekte
     }
 
     // --- der erste Baustein einer Art -----------------------------------
-    // Bis das Fenster Clip effects die Reihe zeigt (Stufe 16d) und der
-    // Klangerzeuger sie rechnet (16b), arbeiten beide mit hoechstens einem
-    // Baustein je Art in der alten Folge Distortion, Echo, Reverb.
+    // Kurzwege fuer den, der eine Reihe von Hand baut oder nachsieht (Tests):
+    // der erste Baustein einer Art, in der alten Folge Distortion, Echo,
+    // Reverb. Fenster und Klangerzeuger arbeiten seit Stufe 16 mit der
+    // ganzen Reihe.
 
     /// Der erste Baustein dieser Art; nullptr = keiner.
     template <class Art>

@@ -160,9 +160,10 @@ struct Schicht
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
     // --- der erste Filter und der erste Drive ---------------------------
-    // Bis der Creator die Reihe zeigt (Stufe 16c) und der Klangerzeuger sie
-    // rechnet (16b), arbeiten beide mit hoechstens einem Filter und einem
-    // Drive in der alten Folge Filter, Drive, Envelope.
+    // Kurzwege fuer den, der eine Reihe von Hand baut oder nachsieht (Tests):
+    // der erste Filter und der erste Drive, in der alten Folge Filter, Drive,
+    // Envelope. Creator und Klangerzeuger arbeiten seit Stufe 16 mit der
+    // ganzen Reihe.
 
     /// Der erste Filter der Reihe — oder die Vorgabe (offen), wenn es keinen gibt.
     [[nodiscard]] SchichtFilter filter() const;

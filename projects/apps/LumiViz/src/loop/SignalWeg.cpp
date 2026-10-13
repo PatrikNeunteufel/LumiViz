@@ -48,6 +48,15 @@ void SignalWeg::setKaesten(std::vector<WegKasten> kaesten, int gewaehlt, bool ad
     update();
 }
 
+void SignalWeg::setKastenWert(int platz, const QString& wert)
+{
+    if (platz < 0 || platz >= static_cast<int>(m_kaesten.size())) return;
+    if (m_kaesten[static_cast<std::size_t>(platz)].wert == wert) return;
+    m_kaesten[static_cast<std::size_t>(platz)].wert = wert;
+    lege();
+    update();
+}
+
 void SignalWeg::lege()
 {
     m_rects.assign(m_kaesten.size(), QRect());

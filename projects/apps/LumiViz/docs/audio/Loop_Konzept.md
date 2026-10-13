@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.62.0
+> **Version:** 0.63.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2720,10 +2720,59 @@ Verworfen b (Level, Transpose und Start offset fest über der Reihe), c
   Remove an der Envelope ist grau statt weg; Titel der Zeile mit dem Namen
   der Schicht in Anführungszeichen.
 
+**Entscheid K5 a (Patrik S118, mit Skizze) — mehrere markierte Clips mit
+verschiedenen Reihen:** haben alle markierten Clips dieselbe Folge von
+Bausteinen (gleich viele, je Platz dieselbe Art), zeigt das Fenster sie
+gemeinsam wie bisher („mixed", wo Werte abweichen). Sonst zeigt die Zeile die
+Reihe **eines** Clips, wählbar unter **Showing**; Regler, Add, Move und
+Remove gelten für alle markierten Clips mit derselben Folge. Ein Hinweis
+nennt, wie viele das sind und welche bleiben, wie sie sind. **Use this path
+for all** setzt die gezeigte Reihe mit ihren Werten auf alle markierten
+Clips. Copy, Paste und Reset gelten weiter für alle. Verworfen b (bei
+verschiedenen Reihen nur angleichen), c (jede Änderung gleicht an — ein Dreh
+am Regler ersetzte die Effekte anderer Clips ohne Warnung), d (nach Art
+zuordnen: ein Regler am ersten Echo stellt in jedem Clip dessen erstes Echo —
+dem alten Gebrauch am nächsten, aber die Zeile zeigte für einen Teil der
+Clips eine Folge, die sie nicht haben; kippt dorthin, wenn Patrik oft viele
+Clips mit verschiedenen Effekten zugleich nachzieht). Das trifft auch alte
+Loops: ein Clip nur mit Echo und einer nur mit Reverb haben verschiedene
+Reihen.
+
+**Die Skizze als Beschreibung — Clip effects bei verschiedenen Reihen:** im
+Kopf rechts **Showing** mit einer Auswahl der markierten Clips („Beat (bar
+21)"); darunter ein Kasten mit dem Hinweis und rechts darin der Knopf **Use
+this path for all 3**; darunter die Zeile des gezeigten Clips. Bei gleicher
+Folge fehlen Showing und der Hinweis.
+
+**16d gebaut (S118) — das Fenster Clip effects zeigt die Reihe.**
+
+- **Die Zeile** (`SignalWeg`, wie im Creator): fest **Clip** („dry"), die
+  Bausteine mit Kurzwert („1/8 dotted · 35 %", „1.8 s · 25 %", „Low-pass
+  800 Hz", „Drive 30 %"), **+ Add**, fest **Out** („Peak 0.62"). Sie ersetzt
+  die drei festen Gruppen und die Zeile „Order: …".
+- **Unter der Zeile** der gewählte Baustein: sein Haken mit seinem Namen
+  (aus: er steht grau in der Zeile und wird übersprungen), **← Move**,
+  **Move →**, **Remove**, darunter seine Regler — je Art eine Seite, das
+  Fenster ist so hoch wie die höchste und springt beim Wechsel nicht.
+- **Filter** als vierter Baustein: Type, Cutoff (40 Hz bis 18 kHz, der
+  Schieber geht gleichmäßig in Oktaven), Resonance.
+- **Add** holt einen Baustein eingeschaltet, mit seinen Vorgaben, hinter den
+  gewählten.
+- **K5 a:** Showing, der Hinweis und Use this path for all, wie entschieden.
+  Der Kurzwert eines Kastens sagt, welcher Teil abweicht („mixed · 35 %").
+- **Reset** entfernt jetzt die Bausteine (vorher: alle drei aus, Werte auf
+  Vorgabe) — ein Clip ohne Effekte hat eine leere Reihe.
+- **Bild aus dem Test** (`LUMIVIZ_CLIP_EFFEKTE_BILD`) angesehen und
+  nachgebessert: der umbrochene Hinweis war abgeschnitten (jetzt zwei feste
+  Zeilen: „2 of 3 clips have this path." / „Not changed from here: …"), der
+  Kopf war gekürzt (jetzt kürzt die Liste der Namen), ein Kasten zeigte nur
+  „mixed".
+- **Von Claude gesetzt, nicht entschieden:** der Wortlaut des Hinweises;
+  der Kurzwert je Baustein; die Mindestbreite des Fensters (520); andere
+  Clips markieren wählt den ersten Baustein des ersten Clips; die Spitze
+  steht im Kopf und im Kasten Out; Copy merkt den gezeigten Clip.
+
 **Offen, vor dem jeweiligen Schritt zu entscheiden:**
-- **K5 (vor 16d):** mehrere markierte Clips mit **verschiedenen Reihen** —
-  heute steht je Regler „mixed"; bei verschiedener Zahl oder Reihenfolge der
-  Bausteine gibt es keinen gemeinsamen Regler mehr. Vorlage mit Skizze.
 - **Die Hi-Hat-Schwingung** und ob die gerechneten Drums so laut sein sollen
   wie das Kit — nach Patriks Ohr (Liste 10, U64, U65).
 - **Reihenfolge der Stufen:** 16e setzt 16b voraus, nicht 16c und 16d — die
@@ -2756,7 +2805,7 @@ Verworfen b (Level, Transpose und Start offset fest über der Reihe), c
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
-| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a); offen 16d (davor K5), 16e |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a); offen 16e |
 
 ---
 
@@ -2852,6 +2901,11 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.63.0** (S118, 2026-10-13): §4j — Entscheid Patrik K5 a (mehrere Clips
+  mit verschiedenen Reihen: einen zeigen, die mit derselben Folge
+  mitstellen), die Skizze als Beschreibung; **Stufe 16d gebaut:** das Fenster
+  Clip effects mit der Zeile Signal path, Filter als vierter Baustein,
+  Showing und Use this path for all; §5 Stufe 16
 - **0.62.0** (S118, 2026-10-13): §4j — Skizze des Creators gebilligt
   (Entscheid Patrik S1 a); **Stufe 16c gebaut:** die Zeile Signal path im
   Creator (`SignalWeg`), die Regler folgen dem gewählten Kasten, Add, Move,

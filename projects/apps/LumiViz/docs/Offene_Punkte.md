@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.181.0
+> **Version:** 1.183.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4904,6 +4904,25 @@ teilen eine Umgebung" gilt wieder **ausnahmslos** — geprüft über alle Render
 statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 **Gitter** je Frame (beweglich, interpoliert, mit Buffer-Zugriff und Alpha).
 
+### ⚪ Wunsch: ein Sample im Creator bearbeiten — Knopf „Edit" neben File... und Record... (Patrik S118)
+
+Im Instrument-Creator, an einer Sample-Schicht, neben **File...** und
+**Record...** ein dritter Knopf (Patrik: „Bearbeiten"): er öffnet ein
+**bestehendes** Sample im Fenster wie nach einer Aufnahme (Record sample —
+zuschneiden, anhören) und speichert es danach. **Mitgelieferte Samples sind
+schreibgeschützt wie die mitgelieferten Instrumente:** sie lassen sich nur
+unter einem neuen Namen bei den eigenen (My files) speichern. Für später,
+nur notiert — nicht entworfen, nicht eingeplant.
+
+Offen, wenn es drankommt: der englische Name des Knopfs; ob ein eigenes
+Sample beim Speichern überschrieben wird oder immer eine Kopie entsteht (bei
+Instrumenten: Save überschreibt das eigene, Save as... kopiert); was mit
+Schichten und Drum-Spuren geschieht, die das bearbeitete Sample schon
+spielen; ob auch eine Tondatei an freiem Ort so zu öffnen ist. Heute gibt es
+keine mitgelieferten Samples außer den Klängen des Kits (`kit:<name>`) — ob
+die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
+`loop/Sample` (`nimmZuEigenen`), die Regeln aus S117 (E1 a, E1b c).
+
 ## 8. Werkzeug- und Doku-Schulden
 
 - 🟠 **Settings: der Reiter „Panels" ist ein Sammelbecken — bereinigen (Befund
@@ -5236,6 +5255,8 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.183.0 | 2026-10-13 | Session 118. Loop, Signal path: Entscheid Patrik K5 a (mehrere markierte Clips mit verschiedenen Reihen — die Zeile zeigt einen, gestellt werden die mit derselben Folge; Use this path for all gleicht an). **Stufe 16d gebaut:** das Fenster Clip effects zeigt die Zeile **Signal path** — Clip, die Bausteine, + Add, Out; jeder Effekt beliebig oft und in freier Folge, **Filter** als vierter Baustein mit Cutoff in Hertz; Showing und der Hinweis bei verschiedenen Reihen (`Loop_Konzept.md` §4j). Das Bild aus dem Test angesehen, im Programm ungesehen und ungehört. **Offen:** Patriks Blick (Liste 10, X1 bis X6, Urteile U69, U70); 16e (Drums nachziehen, `werte/loop_werte.txt` neu schreiben, voller Lauf) |
+| 1.182.0 | 2026-10-13 | Session 118. §7 NEU Wunsch Patrik: im Creator ein Knopf zum **Bearbeiten eines bestehenden Samples** neben File... und Record... (wie nach einer Aufnahme, dann speichern; mitgelieferte Samples schreibgeschützt, nur unter neuem Namen bei den eigenen) — nur notiert, für später |
 | 1.181.0 | 2026-10-13 | Session 118. Loop, Signal path: Skizze des Creators gebilligt (Entscheid Patrik S1 a). **Stufe 16c gebaut:** der Creator zeigt je Schicht die Zeile **Signal path** — Source, die Bausteine Filter, Drive, Envelope, + Add, Level; ein Klick auf einen Kasten zeigt seine Regler, Ziehen und ← Move / Move → ordnen um, Remove entfernt (`Loop_Konzept.md` §4j). Die Gruppen Envelope und Filter entfallen. Das Bild aus dem Test angesehen, im Programm ungesehen. **Offen:** Patriks Blick (Liste 10, W1 bis W7, Urteile U66 bis U68); 16d (davor K5), 16e; der volle Lauf am Ende der Stufe 16 |
 | 1.180.0 | 2026-10-13 | Session 118. Loop, Signal path **Stufe 16b gebaut:** der Klangerzeuger rechnet die Reihe an Schicht und Clip in freier Folge, der Filter am Clip in Hertz (`Loop_Konzept.md` §4j). Beleg: 199 vor dem Umbau festgehaltene Einträge (165 Töne aus 55 Instrumenten, 34 Loops) rechnen Bit für Bit gleich, unter Testing-MSVC und Release-clang; Last gemessen (acht Reverb an einem Clip 0,75 % eines Kerns im Release-Bau, 4,5 % im Testing-Bau). Im Programm ist davon nichts zu erreichen, bis 16c und 16d die Reihe zeigen. **Offen:** 16c (Skizze vorher noch einmal zeigen), 16d (davor K5), 16e — dort `werte/loop_werte.txt` neu schreiben; der volle Lauf am Ende der Stufe 16 |
 | 1.179.0 | 2026-10-13 | Session 118. Loop, Signal path: Baustufen freigegeben (Entscheid Patrik B1 a — in der vorgelegten Reihenfolge). **Stufe 16a gebaut:** Schicht und Clip tragen eine Reihe von Bausteinen statt der festen Felder, `.lvinst` Fassung 7, `.lvloop` Fassung 5 (`Loop_Konzept.md` §4j); jede mitgelieferte Datei liest zu der Reihe, die sie fest hatte. Klangerzeuger, Creator und Clip effects arbeiten bis 16b, 16c, 16d mit dem ersten Baustein je Art — am Programm ist nichts neu zu sehen. **Offen:** 16b (vorher die gerechneten Werte aller Instrumente und Beispiel-Loops festhalten), 16c (Skizze vorher noch einmal zeigen), 16d (davor K5), 16e; der volle Lauf steht bis zum Ende der Stufe 16 aus; im Programm ungesehen (Liste 10, G1, G2) |

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.145.0
+> **Version:** 1.146.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2494,8 +2494,9 @@ der markierten lässt nur ihn markiert.
 
 ### Effekte am Clip
 
-Jeder Clip kann eigene Effekte tragen — **Distortion**, **Echo** und
-**Reverb** —, gleich ob er ein Drumkit oder ein Instrument spielt. Sie
+Jeder Clip kann eigene Effekte tragen — **Filter**, **Distortion**, **Echo**
+und **Reverb**, jeden beliebig oft und in freier Reihenfolge, höchstens acht
+—, gleich ob er ein Drumkit oder ein Instrument spielt. Sie
 gehören zum Clip, nicht zur Basis: zwei Clips derselben Basis können
 verschieden klingen, etwa nur der letzte vor einem Wechsel mit Hall. Ein Clip
 mit einem eingeschalteten Effekt trägt rechts die Marke **fx**.
@@ -2507,16 +2508,24 @@ gerade markiert sind.
 | Element | Wirkung |
 |---|---|
 | Kopf | Wie viele Clips, welche (Basis und Takt), rechts **Peak** — die Spitze der Summe beim Spielen, mit Effekten; über 1 steht sie rot |
-| Haken an **Distortion**, **Echo**, **Reverb** | Schaltet den Effekt für die markierten Clips ein oder aus. Zeigt er „teils an", schaltet ein Klick alle an |
+| **Signal path** | Die Zeile zeigt den Weg des Tons durch den Clip, von links nach rechts: **Clip** (wie sein Muster ihn spielt), dann die Bausteine, der Knopf **+ Add**, zuletzt **Out** (mit der Spitze). Jeder Baustein trägt seinen wichtigsten Wert („1/8 dotted · 35 %“). **Ein Klick auf einen Baustein** zeigt darunter seinen Haken und seine Regler. Die Reihenfolge ist zu hören: eine Distortion hinter dem Echo verzerrt auch jede Wiederholung und hebt die leisen an, davor nur den Schlag |
+| **+ Add** | Holt **Filter**, **Distortion**, **Echo** oder **Reverb** hinter den gewählten Baustein, eingeschaltet. Bei acht steht „8 of 8“ |
+| **← Move**, **Move →**, **Remove** | Den gewählten Baustein einen Platz schieben oder entfernen. Dasselbe mit der Maus: einen Baustein in der Zeile **ziehen** |
+| Der Haken am Namen des Bausteins | An: der Baustein wirkt. Aus: er bleibt mit seinen Werten in der Zeile stehen (grau geschrieben) und wird übersprungen. Zeigt er „teils an", schaltet ein Klick alle an |
+| **Filter** — **Type**, **Cutoff**, **Resonance** | **Low-pass** lässt durch, was unter Cutoff liegt, **High-pass**, was darüber liegt, **Band-pass**, was darum herum liegt. **Cutoff** steht in Hertz (40 Hz bis 18 kHz) und gilt für den ganzen Clip, gleich welche Noten er spielt — anders als der Filter im Instrument, der mit jeder Note mitgeht. **Resonance** betont die Stelle an der Grenze |
 | **Distortion** — **Drive**, **Tone**, **Mix** | Verzerrt den Clip als Ganzes: Stärke, Klangfarbe (dunkel bis hell), Anteil. Ein Akkord wird dabei rauer als mit **Drive** im Instrument, das je Ton verzerrt |
 | **Echo** — **Time**, **Feedback**, **Damping**, **Mix** | Wiederholungen im Takt: **Time** ist ein Notenwert (1/16 bis 1/2) und folgt dem BPM des Loops, daneben stehen die Millisekunden. **Feedback** bestimmt, wie viele Wiederholungen nachkommen (bis 90 %), **Damping** macht jede dunkler |
 | **Reverb** — **Size**, **Decay**, **Damping**, **Mix** | Ein Raum: seine Größe, wie lange er nachklingt (0,2 bis 8 Sekunden), wie schnell die Höhen im Nachklang verschwinden |
 | **Mix** | Der Anteil des bearbeiteten Tons. Bei 0 % klingt der Clip unverändert, bei 100 % ist bei Echo und Reverb nur noch der Effekt zu hören |
-| **mixed** an einem Regler | Die markierten Clips haben dort verschiedene Werte. Wer den Regler bewegt, setzt den Wert für alle |
-| **Copy** / **Paste** | Merkt die Effekte des ersten gezeigten Clips und setzt sie auf alle markierten — so überträgst du eine Einstellung auf andere Clips |
-| **Reset** | Schaltet alle Effekte der markierten Clips aus und stellt die Regler auf ihre Vorgabe |
+| **mixed** an einem Regler oder in einem Kasten | Die markierten Clips haben dort verschiedene Werte. Wer den Regler bewegt, setzt den Wert für alle |
+| **Showing** und der Hinweis darunter | Erscheinen, wenn die markierten Clips **verschiedene Reihen** haben (andere Bausteine oder eine andere Reihenfolge). Die Zeile zeigt dann die Reihe eines Clips — unter **Showing** wählst du, welchen. Regler, + Add, Move und Remove gelten für alle markierten Clips mit **derselben** Reihe; der Hinweis nennt, wie viele das sind („2 of 3 clips have this path“) und welche von hier aus nicht geändert werden |
+| **Use this path for all** | Setzt die gezeigte Reihe mit ihren Werten auf alle markierten Clips — deren eigene Effekte werden ersetzt. Danach lassen sie sich wieder gemeinsam stellen |
+| **Copy** / **Paste** | Merkt die Reihe des gezeigten Clips und setzt sie auf alle markierten — so überträgst du eine Einstellung auf andere Clips |
+| **Reset** | Entfernt alle Effekte der markierten Clips |
 
-Die Reihenfolge ist fest: erst Distortion, dann Echo, dann Reverb. Echo und
+Ein Clip aus einem älteren Loop zeigt, was er hatte, in der Reihenfolge von
+früher: Distortion, Echo, Reverb. Zwei alte Clips mit verschiedenen Effekten
+(einer nur mit Echo, einer nur mit Reverb) haben verschiedene Reihen. Echo und
 Reverb klingen über das Ende des Clips hinaus aus. Ein Schieber wirkt beim
 Loslassen; die Änderung ist beim Spielen sofort zu hören und lässt sich mit
 **Ctrl+Z** zurücknehmen. **Duplicate** nimmt die Effekte mit; danach sind die
@@ -2536,7 +2545,7 @@ Gut zu wissen:
   LumiViz es kennt. Ein LumiViz vor Session 118 liest ihn, spielt seine Clips
   aber ohne Effekte und meldet „File was written by a newer version".
 
-Das Beispiel `asset\loop\effects_demo.lvloop` zeigt alle drei Effekte.
+Das Beispiel `asset\loop\effects_demo.lvloop` zeigt Distortion, Echo und Reverb.
 
 ### Der Drum-Editor
 
@@ -2967,6 +2976,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.146.0 | 2026-10-13 | Session 118. §16 Loop, Effekte am Clip NEU die Zeile **Signal path** im Fenster Clip effects: Clip, die Bausteine, **+ Add**, Out — jeder Effekt beliebig oft und in freier Reihenfolge, höchstens acht; NEU der Baustein **Filter** (Type, Cutoff in Hertz, Resonance); NEU **Showing** und **Use this path for all** für markierte Clips mit verschiedenen Reihen. GEÄNDERT: statt dreier fester Gruppen steht unter der Zeile der gewählte Baustein mit seinem Haken; **Reset** entfernt die Effekte, statt sie auszuschalten |
 | 1.145.0 | 2026-10-13 | Session 118. §16 Loop, Instrument-Creator NEU die Zeile **Signal path** je Schicht: Source, die Bausteine Filter, Drive und Envelope, **+ Add**, Level — ein Klick auf einen Kasten zeigt seine Regler, Ziehen oder **← Move** / **Move →** ordnet um, **Remove** entfernt; Filter und Drive mehrfach, höchstens acht Bausteine. GEÄNDERT: die Gruppen Envelope und Filter gibt es nicht mehr, ihre Regler stehen unter ihrem Kasten; Level, Transpose und Start offset stehen unter Level und Source; der Regler **Envelope** des Filters heißt **Filter envelope** |
 | 1.144.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die Dateiformate — eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr; eine `.lvloop` liest es, spielt ihre Clips aber ohne Effekte. Ältere Dateien liest dieses LumiViz wie bisher, sie klingen gleich. Am Programm ist nichts zu sehen |
 | 1.143.0 | 2026-10-12 | Session 117. §16 Loop NEU: sechs gerechnete Drum-Instrumente unter **Drums** im Fenster Instruments (Kick, Tom, Snare, Clap, Hi-Hat Closed, Hi-Hat Open) — für die Note C2 gebaut, leiser als das Kit |

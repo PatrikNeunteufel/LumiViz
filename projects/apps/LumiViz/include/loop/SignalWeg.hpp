@@ -52,6 +52,9 @@ public:
     /// dem Knopf vor dem letzten Kasten; `addMoeglich` = false zeigt ihn grau.
     void setKaesten(std::vector<WegKasten> kaesten, int gewaehlt, bool addMoeglich, const QString& addText);
     [[nodiscard]] const std::vector<WegKasten>& kaesten() const { return m_kaesten; }
+    /// Nur den Kurzwert eines Kastens neu setzen — fuer einen Wert, der sich laufend aendert
+    /// (die Spitze im Kasten Out), ohne Auswahl und Zug anzufassen.
+    void setKastenWert(int platz, const QString& wert);
     [[nodiscard]] int gewaehlt() const { return m_gewaehlt; }
     [[nodiscard]] bool addMoeglich() const { return m_addMoeglich; }
     [[nodiscard]] const QString& addText() const { return m_addText; }
