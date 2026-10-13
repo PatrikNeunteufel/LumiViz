@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -68,7 +68,7 @@ Nachgesehen in S119 und S120, je mit der Stelle.
 | **Vier Schichten** | `kSchichtenMax = 4` | As layers endet bei vier Konturen (Z5 a) |
 | **Die Visuals bekommen beide Seiten** | `MainWindow.cpp`, Zufuhr an die Visualizer: spielt das Loop-Panel, kommt die Wellenform vom Mixer des Loops (`loop::tonMixer`), unter dem Composer von dessen Mixer; der Mixer hat zwei Kanäle (`BassEngine::createMixer`), `updateAudioStereo` reicht links und rechts getrennt weiter — **512 Werte je Seite und Bild** | ein XY-Scope hat seine Daten; die Frage „nicht geprüft" aus S119 ist damit beantwortet. Grenze: siehe §10 |
 | **Wellenform je Seite in der Effect Chain** | `getWaveformChannel(0/1)`, im Skript `getosc` mit Kanal | ein XY-Scope lässt sich heute schon als Superscope-Skript schreiben (Vorgabe Lissajous gibt es) |
-| **Qt Svg** | liegt in der Installation (`C:/Qt/6.10.1/msvc2022_64`: `Qt6Svg.dll`, `lib/cmake/Qt6Svg`), steht nicht in der `Solution.json` | lässt sich dazunehmen; was es für Pfade hergibt, siehe §8 |
+| **Qt Svg** | liegt in der Installation (`C:/Qt/6.10.1/msvc2022_64`: `Qt6Svg.dll`, `lib/cmake/Qt6Svg`); seit S120 in der `Solution.json` | gibt die Pfade nicht heraus, zeichnet sie aber auf ein mitschreibendes Gerät — §8 |
 | **OpenCV** | liegt nicht im Repo | die Konturerkennung ist selbst zu schreiben |
 | **Die Endung `.lvshape`** | **vergeben:** seit S96 die Stück-Presets des Curve Editors im Composer (`composer/FormPresets.hpp`, `asset/composer/shapes/`, `<AppData>/composer/shapes/`; im Benutzerhandbuch genannt) | die Kontur-Datei braucht eine andere Endung, oder die Presets des Composers ziehen um — §7 |
 | **Eigene Daten** | Samples und Instrumente liegen im Benutzerordner (`user:<name>`), mit Export und Import (S114) | das Vorbild für die Ablage eigener Formen |
@@ -93,6 +93,7 @@ Von Patrik, S119:
 | **D4 b** (S120) | Konturen als Pfade aus Strecken und Kurven, in den Koordinaten der Zeichnung; Herkunft mit Namen der Quelle, ohne das Bild; keine Koeffizienten in der Datei. |
 | **K1 a** (S120) | Konturen aus einem Bild über Flächen; **Split by** Brightness, Colour oder Transparency. |
 | **K2 a** (S120) | Regler Split by, Levels, Smooth, Min size, Detail; Löcher sind eigene Konturen, Flächen am Bildrand anfangs nicht gewählt, die größten 64 werden angeboten. |
+| **S1 a** (S120) | SVG: Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; Kurven, Lage und Füllfarbe kommen an (belegt). |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -299,9 +300,11 @@ die bessere Wahl: ein Pfad aus Strecken und Kurven schließt die Punktfolge
 ein (eine Punktfolge ist ein Pfad nur aus Strecken), das SVG bleibt genau und
 in jeder Größe glatt, und ein späteres Bearbeiten an Griffen braucht keine
 neue Fassung der Datei. Qt trägt die Arbeit: `QPainterPath` kennt genau diese
-Stücke und rechnet sie zu Punkten um — **aus dem Gedächtnis, in Stufe 19a
-mit einem Test zu belegen**, auch dass es ohne Qt-Anwendung geht (die Tests
-des Loop-Kerns laufen ohne). Verworfen: das Quellbild in der Datei (c) — aus
+Stücke und rechnet sie zu Punkten um — **belegt** (`test_ShapeBelege.cpp`,
+Fall „Shape Beleg Pfad"): ohne laufende Qt-Anwendung stehen Strecken und
+Kurven im Pfad, wie sie hineinkamen, `toSubpathPolygons` gibt einen
+geschlossenen Zug, `length` und `pointAtPercent` geben Punkte in gleichem
+Abstand entlang des Pfads. Verworfen: das Quellbild in der Datei (c) — aus
 einigen Kilobyte würden Megabyte, in jedem Export.
 
 Die Namen der Felder legt Stufe 19a fest (von Claude zu setzen, im Changelog
@@ -317,13 +320,40 @@ geschlossener Konturen, jede in einer Farbe, einige davon gewählt.
 **Zeichnen.** Mit der Maus eine geschlossene Linie ziehen. Offen: frei Hand
 oder Punkt für Punkt, glätten, nachträglich Punkte schieben.
 
-**SVG.** Qt Svg liegt in der Installation. Nach meinem Wissen zeichnet es
-ein SVG, gibt aber die Pfade nicht als Geometrie heraus — **nicht
-nachgeprüft**. Trifft das zu, bleiben zwei Wege: die Pfade der Datei selbst
-lesen (die Pfadsprache von SVG in einen `QPainterPath` übersetzen, ohne Qt
-Svg), oder das SVG als Bild zeichnen und denselben Weg gehen wie ein Foto.
-Der zweite ist weniger Code und verliert die Genauigkeit des SVG. Vorlage
-(§13, Punkt 3), davor nachsehen.
+**SVG (S1 a, Patrik S120 — mit Beleg).** Nachgesehen: die öffentliche Klasse
+`QSvgRenderer` kann laden, zeichnen und die Lage eines Elements nennen; die
+Pfade gibt sie nicht heraus. Die private Schnittstelle von Qt Svg kennt sie,
+ist aber nicht zugesagt — nicht benutzt.
+
+Der Weg: **Qt Svg zeichnet das SVG auf ein eigenes Zeichengerät, das nichts
+malt und jeden Aufruf mitschreibt.** So kommt an, was Qt Svg zeichnen kann —
+Pfade, Rechtecke, Kreise, Gruppen, Verschiebungen und Drehungen —, als Pfad
+mit Kurven, an seiner Stelle, mit seiner Füllfarbe als Farbe der Kontur. Ein
+offener Pfad wird gezeigt und beim Wählen mit einer geraden Strecke
+geschlossen.
+
+**Der Beleg** (`test_ShapeBelege.cpp`, Fall „Shape Beleg SVG", unter beiden
+Compilern grün): ein SVG mit einem Pfad mit Kurve, einem verschobenen
+Rechteck, einem Kreis in einer verschobenen und vergrößerten Gruppe und
+einer offenen Linie. Angekommen sind **vier Aufrufe** — zweimal `drawPath`,
+einmal `drawRects`, einmal `drawEllipse`:
+
+- der Pfad mit **sechs Elementen**, die Kurve ist eine Kurve geblieben (nicht
+  in Strecken zerlegt), Anfang und Ende an (10, 10), gefüllt in seinem Rot;
+- das Rechteck an seiner verschobenen Stelle (100, 20, 20 × 10);
+- der Kreis mit Verschiebung und Vergrößerung der Gruppe (130, 30, 40 × 40);
+- die offene Linie ohne Füllung, mit ihrem Strich in Gelb, nicht geschlossen.
+
+Zu beachten beim Bau: Rechteck und Kreis kommen nicht als Pfad an, sondern
+über eigene Aufrufe — das Gerät macht daraus Pfade. Die Lage (Verschiebung,
+Drehung, Größe) kommt getrennt als Zustand und wird auf den Pfad angewandt.
+**Nicht belegt:** Text, Verweise mit `use`, Stile aus CSS, Verläufe als
+Füllung, Dateien aus Inkscape oder Illustrator. Verworfen: die Datei selbst
+lesen (b) — bleibt der Rückfall, wenn ein Teil davon nicht ankommt; das SVG
+als Bild durch die Konturerkennung (c) — verliert die Kurven.
+
+Qt Svg steht seit S120 in der `Solution.json` (`Svg`); die DLL lag schon
+neben der Exe.
 
 **Bild.** Konturen in einem jpg oder png finden, anzeigen, auswählen lassen —
 ohne OpenCV, selbst geschrieben. Entschieden in S120 (K1 a, K2 a), nach
@@ -460,8 +490,7 @@ und Hörproben in einen Ordner.
 
 1. ~~Die Datei~~ — entschieden in S120: F1 a, D1 a, D2 a, D3 a, D4 b (§7).
 2. ~~Konturerkennung~~ — entschieden in S120: K1 a, K2 a (§8).
-3. **SVG:** Pfade selbst lesen oder über das Bild (§8) — davor nachsehen,
-   was Qt Svg hergibt.
+3. ~~SVG~~ — entschieden in S120: S1 a, mit Beleg (§8).
 4. **Die Brücke** bei As one path (§9).
 5. **Die zwei Module** für die Effect Chain und welches zuerst (§10).
 6. **Die Skizze** des Form-Fensters und der Shape-Schicht — mit dem
@@ -514,6 +543,7 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.5.0 | 2026-10-13 (S120) | **SVG entschieden (Patrik): S1 a, mit Beleg** — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; der Beleg zeigt vier Aufrufe, die Kurve bleibt Kurve, Lage und Farbe stimmen (§8). Dazu belegt, was bei D4 b aus dem Gedächtnis stand: `QPainterPath` ohne Qt-Anwendung (§7). Neu `tests/unit/UnitTests/test_ShapeBelege.cpp`; Qt Svg in der `Solution.json`. |
 | 0.4.0 | 2026-10-13 (S120) | **Konturerkennung entschieden (Patrik): K1 a** über Flächen, Split by Brightness, Colour oder Transparency; **K2 a** die Regler Levels, Smooth, Min size, Detail und die Regeln für Löcher, Bildrand und Anzahl (§4, §8, §13). Davor eine Probe der drei Verfahren an drei Bildern, die Zahlen stehen in §8. |
 | 0.3.0 | 2026-10-13 (S120) | **Die Datei entschieden (Patrik): D1 a** eine Zeichnung mit allen Konturen, **D2 a** Ort und Nennung wie bei Instrumenten und Samples, **D3 a** das Instrument nennt die Form über eine feste Kennung der Kontur, **D4 b** Pfade aus Strecken und Kurven, kein Quellbild, keine Koeffizienten — zuerst a (nur Punktfolgen), dann auf Patriks Einwand b (§4, §7, §9, §13). Für das Teilen Patriks Idee **Publish** — ein Paket `<name>.<type>.lvdata` — als eigener Punkt in `Offene_Punkte.md` §7. |
 | 0.2.0 | 2026-10-13 (S120) | **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour`, `.lvshape` bleibt beim Composer (§4, §7, §13). Das Datei-Icon dazu ist gebaut (`asset/img/logo/icons/lumiviz_lvcontour.ico`, Marke mit Kontur und Stift). |
