@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.146.0
+> **Version:** 1.147.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2605,7 +2605,9 @@ wählt, nimmt der Spur ihr Instrument; Ctrl+Z holt es zurück.
 **Kick**, **Tom**, **Snare**, **Clap**, **Hi-Hat Closed**, **Hi-Hat Open**. Sie
 sind den Klängen des Kits nachgebaut, aber keine Aufnahmen: jeder besteht aus
 Schichten, die sich im Instrument-Creator ansehen und ändern lassen (Save legt
-dann deine Kopie unter My files ab). Drei Dinge dazu:
+dann deine Kopie unter My files ab). **Kick** und **Clap** zeigen dabei, was die
+Zeile Signal path kann: beim Kick steht Drive hinter der Envelope, der Clap hat
+in jeder Schicht zwei Filter hintereinander. Drei Dinge dazu:
 
 - Sie sind **für die Note C2 gebaut** — das ist die Note, die eine Drum-Spur
   vorbelegt. Eine andere **Note** verschiebt den ganzen Schlag: höher wird er
@@ -2976,6 +2978,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.147.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die gerechneten Drums **Kick** und **Clap** sind neu gebaut — der Kick mit Drive hinter der Envelope (er klingt länger nach, näher am Kit), der Clap mit High-pass und Band-pass hintereinander (weniger Tiefen). Wer sie schon in einem Loop benutzt, hört den Unterschied; eigene Kopien bleiben, wie sie sind |
 | 1.146.0 | 2026-10-13 | Session 118. §16 Loop, Effekte am Clip NEU die Zeile **Signal path** im Fenster Clip effects: Clip, die Bausteine, **+ Add**, Out — jeder Effekt beliebig oft und in freier Reihenfolge, höchstens acht; NEU der Baustein **Filter** (Type, Cutoff in Hertz, Resonance); NEU **Showing** und **Use this path for all** für markierte Clips mit verschiedenen Reihen. GEÄNDERT: statt dreier fester Gruppen steht unter der Zeile der gewählte Baustein mit seinem Haken; **Reset** entfernt die Effekte, statt sie auszuschalten |
 | 1.145.0 | 2026-10-13 | Session 118. §16 Loop, Instrument-Creator NEU die Zeile **Signal path** je Schicht: Source, die Bausteine Filter, Drive und Envelope, **+ Add**, Level — ein Klick auf einen Kasten zeigt seine Regler, Ziehen oder **← Move** / **Move →** ordnet um, **Remove** entfernt; Filter und Drive mehrfach, höchstens acht Bausteine. GEÄNDERT: die Gruppen Envelope und Filter gibt es nicht mehr, ihre Regler stehen unter ihrem Kasten; Level, Transpose und Start offset stehen unter Level und Source; der Regler **Envelope** des Filters heißt **Filter envelope** |
 | 1.144.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die Dateiformate — eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr; eine `.lvloop` liest es, spielt ihre Clips aber ohne Effekte. Ältere Dateien liest dieses LumiViz wie bisher, sie klingen gleich. Am Programm ist nichts zu sehen |

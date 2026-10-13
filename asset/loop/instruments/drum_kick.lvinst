@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 6,
+    "version": 7,
     "title": "Kick",
     "category": "drums",
     "genres": [],
@@ -13,7 +13,6 @@
             "level": 1.0,
             "transpose": -6,
             "startOffset": 0,
-            "drive": 0.19,
             "waveform": "sine",
             "harmonics": [],
             "voices": 1,
@@ -22,16 +21,21 @@
             "decay": 480,
             "sustain": 0,
             "release": 1000,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 22,
-            "pitchTime": 80,
-            "filterType": "lowpass",
-            "filterResonance": 0
+            "pitchTime": 105,
+            "path": [
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.19
+                }
+            ]
         },
         {
             "name": "Click",
@@ -39,7 +43,6 @@
             "level": 0.25,
             "transpose": 0,
             "startOffset": 0,
-            "drive": 0,
             "waveform": "noise",
             "harmonics": [],
             "voices": 1,
@@ -48,16 +51,17 @@
             "decay": 10,
             "sustain": 0,
             "release": 30,
-            "filterCutoff": 0,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 0,
             "pitchTime": 100,
-            "filterType": "lowpass",
-            "filterResonance": 0
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ]
         }
     ]
 }

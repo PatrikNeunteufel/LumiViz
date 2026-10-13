@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 6,
+    "version": 7,
     "title": "Clap",
     "category": "drums",
     "genres": [],
@@ -13,7 +13,6 @@
             "level": 1.0,
             "transpose": 24,
             "startOffset": 0,
-            "drive": 0.4,
             "waveform": "noise",
             "harmonics": [],
             "voices": 1,
@@ -22,16 +21,35 @@
             "decay": 10,
             "sustain": 0,
             "release": 200,
-            "filterCutoff": 6.5,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 0,
             "pitchTime": 100,
-            "filterType": "bandpass",
-            "filterResonance": 0.35
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "highpass",
+                    "cutoff": 2.0,
+                    "envelope": 0,
+                    "resonance": 0.0
+                },
+                {
+                    "type": "filter",
+                    "filterType": "bandpass",
+                    "cutoff": 4.6,
+                    "envelope": 0,
+                    "resonance": 0.19
+                },
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.4
+                }
+            ]
         },
         {
             "name": "Hit 2",
@@ -39,7 +57,6 @@
             "level": 1.0,
             "transpose": 24,
             "startOffset": 10,
-            "drive": 0.4,
             "waveform": "noise",
             "harmonics": [],
             "voices": 1,
@@ -48,16 +65,35 @@
             "decay": 10,
             "sustain": 0,
             "release": 200,
-            "filterCutoff": 6.5,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 0,
             "pitchTime": 100,
-            "filterType": "bandpass",
-            "filterResonance": 0.35
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "highpass",
+                    "cutoff": 2.0,
+                    "envelope": 0,
+                    "resonance": 0.0
+                },
+                {
+                    "type": "filter",
+                    "filterType": "bandpass",
+                    "cutoff": 4.6,
+                    "envelope": 0,
+                    "resonance": 0.19
+                },
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.4
+                }
+            ]
         },
         {
             "name": "Hit 3",
@@ -65,7 +101,6 @@
             "level": 1.0,
             "transpose": 24,
             "startOffset": 20,
-            "drive": 0.4,
             "waveform": "noise",
             "harmonics": [],
             "voices": 1,
@@ -74,16 +109,35 @@
             "decay": 10,
             "sustain": 0,
             "release": 200,
-            "filterCutoff": 6.5,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 0,
             "pitchTime": 100,
-            "filterType": "bandpass",
-            "filterResonance": 0.35
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "highpass",
+                    "cutoff": 2.0,
+                    "envelope": 0,
+                    "resonance": 0.0
+                },
+                {
+                    "type": "filter",
+                    "filterType": "bandpass",
+                    "cutoff": 4.6,
+                    "envelope": 0,
+                    "resonance": 0.19
+                },
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.4
+                }
+            ]
         },
         {
             "name": "Tail",
@@ -91,25 +145,43 @@
             "level": 1.0,
             "transpose": 24,
             "startOffset": 30,
-            "drive": 0.4,
             "waveform": "noise",
             "harmonics": [],
             "voices": 1,
             "detune": 0,
             "attack": 0,
-            "decay": 210,
+            "decay": 190,
             "sustain": 0,
             "release": 200,
-            "filterCutoff": 6.5,
-            "filterEnvelope": 0,
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
             "pitchStart": 0,
             "pitchTime": 100,
-            "filterType": "bandpass",
-            "filterResonance": 0.35
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "highpass",
+                    "cutoff": 2.0,
+                    "envelope": 0,
+                    "resonance": 0.0
+                },
+                {
+                    "type": "filter",
+                    "filterType": "bandpass",
+                    "cutoff": 4.6,
+                    "envelope": 0,
+                    "resonance": 0.19
+                },
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.4
+                }
+            ]
         }
     ]
 }

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.63.0
+> **Version:** 0.64.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -1425,6 +1425,10 @@ Pegel in Drittel-Oktaven, mittel / größter):
 | Hi-Hat Closed | 1,00 | 3,6 / 6,1 dB | 50 / 56 ms |
 | Hi-Hat Open | 1,00 | 3,3 / 6,0 dB | 398 / 387 ms |
 
+**Stand S118 (Stufe 16e): Kick und Clap sind mit der Reihe einer Schicht neu
+gebaut** — Aufbau und die neuen Zahlen neben diesen stehen in §4j. Was hier
+zu Kick und Clap steht, ist der Stand von S117.
+
 Die Werte sind aus Reihen gewählt (Kick 18, Tom 18, Snare 6, Clap 54, Hi-Hats
 21 Varianten), nach diesen Zahlen. **Leiser als das Kit:** die Spitze eines
 Schlags liegt bei 0,42 bis 0,58, die eines Kit-Klangs bei 0,9 — eine Schicht
@@ -2772,11 +2776,56 @@ Folge fehlen Showing und der Hinweis.
   Clips markieren wählt den ersten Baustein des ersten Clips; die Spitze
   steht im Kopf und im Kasten Out; Copy merkt den gezeigten Clip.
 
+**16e gebaut (S118) — die Drums nachgezogen.**
+
+- **Kick** (`drum_kick`, `.lvinst` Fassung 7): die Schicht Body mit der Reihe
+  **Envelope → Drive 19 %** statt Drive → Envelope. Der Verzerrer wirkt damit
+  auf den Ton, wie die Hüllkurve ihn formt: hart am Anschlag, und er lässt mit
+  dem Ton nach — wie das `tanh(1,5 · Ton)` des Kits (8 · 0,19 ≈ 1,5). Sweep
+  time 105 ms statt 80 (das Dreifache der 35 ms des Kits).
+- **Clap** (`drum_clap`, Fassung 7): jede der vier Schichten mit der Reihe
+  **High-pass ×2,0 → Band-pass ×4,6 (Resonance 19 %) → Envelope → Drive 40 %**
+  statt eines Bandpasses um 1,7 kHz. Von C4 aus sind das 520 Hz und 1,2 kHz
+  mit Güte 1,2 — die beiden Filter des Kits. Drive hebt weiter den Pegel,
+  jetzt hinter der Envelope; der Ausklang hat Decay 190 ms statt 210, weil
+  Drive ihn länger hält.
+- Tom, Snare und die Hi-Hats sind unverändert (Fassung 6). Die **Schwingung
+  aus sechs Rechtecken** für die Hi-Hats ist kein Baustein der Reihe und
+  bleibt offen, nach Patriks Ohr.
+- **Gegen das Kit gemessen, nicht gehört** — dieselbe Messung wie in 11f
+  (§4h), die alten Zahlen daneben:
+
+  | | Hüllkurve | Bänder, mittel / größter | klingt (Kit / Instrument) | Spitze |
+  |---|---|---|---|---|
+  | Kick, 11f | 0,91 | 4,9 / 15,2 dB | 439 / 360 ms | 0,57 |
+  | **Kick, 16e** | 0,83 (in Stücken von 25 ms: 1,00) | **0,9 / 1,6 dB** | 439 / 457 ms | 0,58 |
+  | Clap, 11f | 0,97 | 4,7 / 12,5 dB | 200 / 186 ms | 0,42 |
+  | **Clap, 16e** | 0,97 | **1,1 / 3,5 dB** | 200 / 198 ms | 0,43 |
+
+  Die Hüllkurve des Kick ist in Stücken von 2 ms schlechter geworden: ein
+  Stück ist kürzer als eine Schwingung von 45 Hz, der Wert folgt dann der
+  Phase (§4h, Rechenversuch) — mit der längeren Sweep time liegt sie anders.
+  In Stücken von 25 ms sind es 0,997.
+- **Aus Reihen gewählt:** Kick 42 Varianten (Release, Drive, Sweep time, Drive
+  vor und hinter der Envelope), Clap 173 (Hochpass, Bandpass, Resonance,
+  Drive ohne, davor, dahinter, die Länge des Ausklangs). Der Clap ohne Drive
+  liegt in den Bändern gleich gut (1,0 / 2,9 dB), ist aber halb so laut
+  (Spitze 0,21) — genommen ist der mit Drive.
+- **Die festgehaltenen Werte** (`werte/loop_werte.txt`) sind für Kick und Clap
+  neu geschrieben: sechs von 199 Einträgen, die übrigen 193 sind Bit für Bit
+  geblieben. Die mitgelieferten Loops spielen weiter das Kit.
+- **Hörproben:** `.claude/handover/hoerproben_16e/` — je Klang
+  `vergleich_<klang>.wav` (zweimal das Kit, zweimal das Instrument) und für
+  Kick und Clap `alt_neu_<klang>.wav` (zweimal 11f, zweimal 16e).
+- **Von Claude gesetzt, nicht entschieden:** welche Variante genommen ist
+  (nach den Zahlen); der Clap mit Drive um des Pegels willen; der Klick des
+  Kick bleibt ohne Drive.
+
 **Offen, vor dem jeweiligen Schritt zu entscheiden:**
 - **Die Hi-Hat-Schwingung** und ob die gerechneten Drums so laut sein sollen
   wie das Kit — nach Patriks Ohr (Liste 10, U64, U65).
-- **Reihenfolge der Stufen:** 16e setzt 16b voraus, nicht 16c und 16d — die
-  Drums ließen sich vorziehen, wenn Patrik sie zuerst hören will.
+- **K5 d** (Clips mit verschiedenen Effekten doch zusammen stellen) — nach
+  Patriks Gebrauch (Liste 10, U69).
 
 ---
 
@@ -2805,7 +2854,7 @@ Folge fehlen Showing und der Hinweis.
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
-| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a); offen 16e |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 
 ---
 
@@ -2901,6 +2950,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.64.0** (S118, 2026-10-13): §4j — **Stufe 16e gebaut, Stufe 16 fertig:**
+  Kick mit Drive hinter der Envelope, Clap mit Hochpass und Bandpass, die
+  Tabelle aus 11f mit den neuen Zahlen daneben; §4h Verweis; §5 Stufe 16
 - **0.63.0** (S118, 2026-10-13): §4j — Entscheid Patrik K5 a (mehrere Clips
   mit verschiedenen Reihen: einen zeigen, die mit derselben Folge
   mitstellen), die Skizze als Beschreibung; **Stufe 16d gebaut:** das Fenster

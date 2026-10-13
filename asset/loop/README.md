@@ -40,7 +40,10 @@ Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
 
 **Sechs davon sind Drums** (`drum_kick`, `drum_tom`, `drum_snare`, `drum_clap`,
 `drum_hat_closed`, `drum_hat_open`; S117, Stufe 11f): gerechnete Schläge neben
-dem Kit, erzeugt mit `make_drums.py`, Fassung 6. Sie sind **für die Note C2
+dem Kit, erzeugt mit `make_drums.py`, Fassung 6 — **Kick und Clap seit S118
+(Stufe 16e) in Fassung 7**: sie nutzen die Reihe einer Schicht (Signal path),
+der Kick mit Drive hinter der Envelope, der Clap mit Hochpass und Bandpass
+hintereinander. Ein LumiViz vor S118 liest diese beiden nicht. Sie sind **für die Note C2
 gebaut** — eine andere Note verschiebt den ganzen Schlag — und leiser als ein
 Klang des Kits. Gegen das Kit gemessen, nicht gehört (Konzept §4h).
 

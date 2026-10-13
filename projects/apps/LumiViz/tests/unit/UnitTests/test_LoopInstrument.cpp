@@ -1657,6 +1657,22 @@ TEST_SUITE("LoopInstrument")
             return static_cast<double>(letzter) * 1000.0 / kRate;
         };
         const int note = 36;  // C2: was eine Drum-Spur einem Instrument der Art Drums vorbelegt
+        // `LUMIVIZ_DRUM_KANDIDATEN=<Ordner>`: jede `.lvinst` dort wie eine Drum-Spur rechnen und als
+        // `<name>.wav` daneben ablegen — so lassen sich Reihen von Varianten gegen das Kit messen,
+        // bevor eine davon nach `asset/loop/instruments` kommt (Stufe 16e)
+        if (const QString ordner = qEnvironmentVariable("LUMIVIZ_DRUM_KANDIDATEN"); !ordner.isEmpty())
+        {
+            int gerechnet = 0;
+            for (const QString& datei : QDir(ordner).entryList({QStringLiteral("*.lvinst")}, QDir::Files))
+            {
+                Instrument kandidat;
+                REQUIRE(ladeInstrument(QDir(ordner).filePath(datei), kandidat));
+                CHECK(schreibeWav(QDir(ordner).filePath(QFileInfo(datei).completeBaseName() + QStringLiteral(".wav")),
+                                  rendereTon(kandidat, note, kSpurDauerMs, kRate).daten, kRate));
+                ++gerechnet;
+            }
+            MESSAGE(gerechnet << " Kandidaten gerechnet in " << ordner.toStdString());
+        }
         std::map<QString, Klang> klang;
         for (const char* name : {"drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open"})
         {
