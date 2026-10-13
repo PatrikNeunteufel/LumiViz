@@ -22,6 +22,11 @@
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
 #include "loop/SignalWeg.hpp"
+
+#include <QPalette>
+
+#include <algorithm>
+#include <cmath>
 #include "loop/Taktachse.hpp"
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -326,9 +331,62 @@ TEST_CASE("Loop Clip effects: das Fenster zeigt die Reihe der markierten Clips �
         CHECK(zeit->currentIndex() == -1);
         CHECK(zeitMs->text().isEmpty());
         // der Kurzwert sagt, welcher Teil abweicht: die Zeit, nicht der Mix
-        CHECK(weg->kaesten()[1].wert == QString::fromUtf8("mixed · 35 %"));
-        CHECK(weg->kaesten()[2].wert == QStringLiteral("mixed"));  // Decay und Mix weichen beide ab
+        // — und „≠“ davor, sobald irgendein Wert abweicht (Befund Patrik S119, X5 a)
+        CHECK(weg->kaesten()[1].wert == QString::fromUtf8("≠ mixed · 35 %"));
+        CHECK(weg->kaesten()[2].wert == QString::fromUtf8("≠ mixed"));  // Decay und Mix weichen beide ab
         CHECK(weg->kaesten()[1].matt);  // beim gezeigten Clip ausgeschaltet
+        CHECK(weg->kaesten()[1].weichtAb);
+        CHECK(weg->kaesten()[2].weichtAb);
+        CHECK_FALSE(weg->kaesten()[0].weichtAb);  // Clip und Out nie
+        CHECK_FALSE(weg->kaesten()[3].weichtAb);
+        // der Tooltip nennt die Regler, wie sie im Fenster heissen
+        CHECK(weg->kaesten()[1].hilfe ==
+              QStringLiteral("Switched off: it stays in the path and is skipped\nDiffers between the clips: Time"));
+        CHECK(weg->kaesten()[2].hilfe == QStringLiteral("Differs between the clips: On/off, Decay, Mix"));
+        {
+            // weicht nur ab, was der Kurzwert nicht zeigt (Damping, Feedback): der Kasten sagt es trotzdem
+            Loop nur = loop;
+            effekteIn(nur, 0, 1).reihe = {ClipEcho{true, EchoZeit::AchtelPunktiert, 0.16, 0.7, 0.3}};
+            effekteIn(nur, 1, 0).reihe = {ClipEcho{true, EchoZeit::AchtelPunktiert, 0.45, 0.3, 0.3}};
+            fenster.zeige(nur, {{0, 4}, {1, 0}});
+            CHECK(weg->kaesten()[1].wert == QString::fromUtf8("≠ 1/8 dotted · 30 %"));
+            CHECK(weg->kaesten()[1].weichtAb);
+            CHECK(weg->kaesten()[1].hilfe == QStringLiteral("Differs between the clips: Feedback, Damping"));
+            // gleichgestellt: das Zeichen ist weg
+            effekteIn(nur, 0, 1).reihe = effekteIn(nur, 1, 0).reihe;
+            fenster.zeige(nur, {{0, 4}, {1, 0}});
+            CHECK(weg->kaesten()[1].wert == QString::fromUtf8("1/8 dotted · 30 %"));
+            CHECK_FALSE(weg->kaesten()[1].weichtAb);
+            CHECK(weg->kaesten()[1].hilfe.isEmpty());
+            // ein Clip allein weicht von nichts ab
+            fenster.zeige(nur, {{0, 4}});
+            CHECK_FALSE(weg->kaesten()[1].weichtAb);
+            fenster.zeige(loop, {{0, 4}, {1, 0}});
+        }
+        // die Flaeche ist getoent, und der Kurzwert bleibt darauf sauber zu lesen (Patrik S119):
+        // der Abstand der Helligkeiten nach WCAG, im dunklen wie im hellen Design mindestens 7 zu 1
+        const auto hell = [](const QColor& farbe) {
+            const auto kanal = [](double wert) { return wert <= 0.03928 ? wert / 12.92 : std::pow((wert + 0.055) / 1.055, 2.4); };
+            return 0.2126 * kanal(farbe.redF()) + 0.7152 * kanal(farbe.greenF()) + 0.0722 * kanal(farbe.blueF());
+        };
+        const auto abstand = [&hell](const QColor& a, const QColor& b) {
+            const double x = hell(a);
+            const double y = hell(b);
+            return (std::max(x, y) + 0.05) / (std::min(x, y) + 0.05);
+        };
+        QPalette dunkel;
+        dunkel.setColor(QPalette::Window, QColor(0x20, 0x20, 0x20));
+        dunkel.setColor(QPalette::Base, QColor(0x2A, 0x2A, 0x2A));
+        QPalette licht;
+        licht.setColor(QPalette::Window, QColor(0xF0, 0xF0, 0xF0));
+        licht.setColor(QPalette::Base, QColor(0xFF, 0xFF, 0xFF));
+        for (const QPalette& farben : {dunkel, licht, weg->palette()})
+        {
+            CHECK(SignalWeg::abweichFlaeche(farben) != farben.color(QPalette::Base));
+            const double lesbar = abstand(SignalWeg::abweichSchrift(farben), SignalWeg::abweichFlaeche(farben));
+            MESSAGE("Kurzwert auf getoenter Flaeche: " << lesbar << " zu 1");
+            CHECK(lesbar >= 7.0);
+        }
 
         fenster.waehleStelle(1);
         CHECK(an->checkState() == Qt::PartiallyChecked);  // einer an, einer aus

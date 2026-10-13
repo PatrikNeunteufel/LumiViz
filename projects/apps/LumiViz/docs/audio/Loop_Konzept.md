@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.68.0
+> **Version:** 0.69.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2764,6 +2764,26 @@ Folge fehlen Showing und der Hinweis.
   gewählten.
 - **K5 a:** Showing, der Hinweis und Use this path for all, wie entschieden.
   Der Kurzwert eines Kastens sagt, welcher Teil abweicht („mixed · 35 %").
+- **Abweichung im Kasten (S119; Befund Patrik zu X5 mit drei Bildern,
+  Entscheid X5 a):** der Kurzwert zeigt nur zwei Werte (beim Echo Time und
+  Mix) — wich Feedback oder Damping ab, sah man es erst am Regler des
+  gewählten Bausteins. Jetzt: weicht **irgendein** Wert des Bausteins unter
+  den Clips mit derselben Folge ab (auch an/aus), steht vor dem Kurzwert
+  „≠" (`WegKasten::weichtAb`), und der Tooltip nennt die Regler, wie sie im
+  Fenster heißen: „Differs between the clips: Feedback, Damping". Verworfen
+  b (nur die Farbe), c („· mixed" anhängen).
+  **Die Fläche trägt die Farbe (Vorschlag Patrik, X5b):** der Kasten ist
+  bernsteinfarben getönt (`SignalWeg::abweichFlaeche`: sein Grund, zu 22 %
+  im Ton `abweichFarbe`), der Rand bleibt frei für die Wahl — die Tönung ist
+  auch am gewählten Kasten zu sehen. Zuerst gebaut und im Bild verglichen:
+  ein bernsteinfarbener Rand am nicht gewählten Kasten; er sagte am gewählten
+  nichts. **Der Kurzwert muss auf der Fläche sauber zu lesen sein (Patrik):**
+  er steht in `abweichSchrift`, einem hellen Bernstein im dunklen Design und
+  einem dunklen im hellen; der Test misst den Abstand der Helligkeiten nach
+  WCAG und verlangt 7 zu 1 (gemessen 7,3 dunkel, 8,1 hell, 7,1 mit den Farben
+  des Testlaufs). Von Claude gesetzt: die Töne, die 22 %, die Schwelle 7 zu 1,
+  „On/off" als Name für den Haken. Das Bild aus dem Test angesehen; das helle
+  Design nur gerechnet, nicht im Bild.
 - **Reset** entfernt jetzt die Bausteine (vorher: alle drei aus, Werte auf
   Vorgabe) — ein Clip ohne Effekte hat eine leere Reihe.
 - **Bild aus dem Test** (`LUMIVIZ_CLIP_EFFEKTE_BILD`) angesehen und
@@ -3105,6 +3125,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.69.0** (S119, 2026-10-13): §4j — Abweichung im Kasten der Zeile Signal
+  path (Clip effects, mehrere Clips): „≠", die bernsteinfarben getönte
+  Fläche, der Tooltip mit den Reglern (Befund Patrik zu X5, Entscheid X5 a;
+  die Fläche statt des Rands nach seinem Vorschlag)
 - **0.68.0** (S119, 2026-10-13): §4k — **Stufe 17c gemacht, Stufe 17
   fertig:** Handbuch, Liste 10, voller Lauf; §5 Stufe 17
 - **0.67.0** (S119, 2026-10-13): §4k — **Stufe 17b gebaut:** Edit... im

@@ -264,6 +264,30 @@ bool SignalWeg::event(QEvent* event)
     return QWidget::event(event);
 }
 
+QColor SignalWeg::abweichFarbe(const QPalette& farben)
+{
+    // auf dunklem Grund ein helles Bernstein, auf hellem ein dunkles — beide heben sich vom Blau der Wahl ab
+    return farben.color(QPalette::Window).lightness() < 128 ? QColor(0xF0, 0xA0, 0x30) : QColor(0xA8, 0x62, 0x00);
+}
+
+QColor SignalWeg::abweichFlaeche(const QPalette& farben)
+{
+    // der Grund eines Kastens, zu einem guten Fuenftel in Bernstein getoent
+    constexpr double kAnteil = 0.22;
+    const QColor grund = farben.color(QPalette::Base);
+    const QColor ton = abweichFarbe(farben);
+    return QColor::fromRgbF(grund.redF() + (ton.redF() - grund.redF()) * kAnteil,
+                            grund.greenF() + (ton.greenF() - grund.greenF()) * kAnteil,
+                            grund.blueF() + (ton.blueF() - grund.blueF()) * kAnteil);
+}
+
+QColor SignalWeg::abweichSchrift(const QPalette& farben)
+{
+    // auf der getoenten Flaeche muss der Kurzwert sauber zu lesen sein (Patrik S119): im dunklen
+    // Design heller, im hellen dunkler als der Ton der Flaeche — der Test misst den Abstand
+    return farben.color(QPalette::Window).lightness() < 128 ? QColor(0xFF, 0xE0, 0xA8) : QColor(0x5C, 0x33, 0x00);
+}
+
 void SignalWeg::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
@@ -308,7 +332,10 @@ void SignalWeg::paintEvent(QPaintEvent*)
         QPen stift(gewaehlt ? wahl : rand, gewaehlt ? 2.0 : kasten.gestrichelt ? 1.4 : 1.0);
         if (kasten.gestrichelt) stift.setStyle(Qt::DashLine);
         p.setPen(stift);
-        p.setBrush(fest ? QBrush(Qt::NoBrush) : QBrush(farben.color(QPalette::Base)));  // fest: ohne Flaeche, grau geschrieben
+        // weicht ab: die Flaeche bernsteinfarben getoent — der Rand bleibt frei fuer die Wahl,
+        // die Toenung ist auch am gewaehlten Kasten zu sehen (Vorschlag Patrik S119)
+        const QColor flaeche = kasten.weichtAb ? abweichFlaeche(farben) : farben.color(QPalette::Base);
+        p.setBrush(fest ? QBrush(Qt::NoBrush) : QBrush(flaeche));  // fest: ohne Flaeche, grau geschrieben
         p.setOpacity(m_zieht && static_cast<int>(i) == m_gedrueckt ? 0.5 : 1.0);
         p.drawRoundedRect(r, 5, 5);
         const QRect innen = r.adjusted(kKastenInnen, 3, -kKastenInnen, -3);
@@ -316,7 +343,7 @@ void SignalWeg::paintEvent(QPaintEvent*)
         p.setFont(fett);
         p.drawText(QRect(innen.left(), innen.top(), innen.width(), innen.height() / 2), Qt::AlignLeft | Qt::AlignVCenter,
                    p.fontMetrics().elidedText(kasten.titel, Qt::ElideRight, innen.width()));
-        p.setPen(fest || kasten.matt ? matt : schrift);
+        p.setPen(kasten.weichtAb ? abweichSchrift(farben) : fest || kasten.matt ? matt : schrift);
         p.setFont(klein);
         p.drawText(QRect(innen.left(), innen.center().y(), innen.width(), innen.height() / 2), Qt::AlignLeft | Qt::AlignVCenter,
                    p.fontMetrics().elidedText(kasten.wert, Qt::ElideRight, innen.width()));

@@ -84,12 +84,15 @@ QString artName(FilterArt art)
                                         : ClipEffektFenster::tr("Low-pass");
 }
 
-/// Wie ein Baustein in der Zeile heisst, und sein Kurzwert.
+/// Wie ein Baustein in der Zeile heisst, sein Kurzwert, und worin die Clips abweichen.
 struct Kurz
 {
     QString titel;
     QString wert;
     bool an;
+    /// Die Regler, in denen die Clips mit derselben Folge abweichen, wie sie im Fenster heissen
+    /// (auch die, die im Kurzwert nicht stehen); leer = ueberall gleich.
+    QStringList anders = {};
 };
 
 /// Steht dieses Feld des Bausteins am Platz `platz` in allen Reihen gleich? Die Reihen haben
@@ -120,26 +123,53 @@ QString fuege(const QString& trenner, std::initializer_list<std::pair<QString, b
 Kurz kurz(const ClipBaustein& baustein, const std::vector<ClipEffekte>& alle, std::size_t platz)
 {
     const QString punkt = QString::fromUtf8(" · ");
+    // jedes Feld, in dem ein Clip abweicht, beim Namen seines Reglers — auch die, die der Kurzwert nicht zeigt (X5 a)
+    QStringList anders;
+    const auto pruefe = [&](const auto& werte, std::initializer_list<std::pair<bool, const char*>> felder) {
+        if (!ueberall(alle, platz, &std::remove_cvref_t<decltype(werte)>::an, werte)) anders << ClipEffektFenster::tr("On/off");
+        for (const auto& [gleich, name] : felder)
+            if (!gleich) anders << ClipEffektFenster::tr(name);
+    };
     if (const auto* filter = std::get_if<ClipFilter>(&baustein))
-        return {ClipEffektFenster::tr("Filter"),
-                fuege(QStringLiteral(" "), {{artName(filter->art), ueberall(alle, platz, &ClipFilter::art, *filter)},
-                                            {hertz(filter->hz), ueberall(alle, platz, &ClipFilter::hz, *filter)}}),
-                filter->an};
+    {
+        const bool art = ueberall(alle, platz, &ClipFilter::art, *filter);
+        const bool hz = ueberall(alle, platz, &ClipFilter::hz, *filter);
+        pruefe(*filter, {{art, QT_TR_NOOP("Type")},
+                         {hz, QT_TR_NOOP("Cutoff")},
+                         {ueberall(alle, platz, &ClipFilter::resonanz, *filter), QT_TR_NOOP("Resonance")}});
+        return {ClipEffektFenster::tr("Filter"), fuege(QStringLiteral(" "), {{artName(filter->art), art}, {hertz(filter->hz), hz}}),
+                filter->an, anders};
+    }
     if (const auto* verzerrung = std::get_if<ClipVerzerrung>(&baustein))
+    {
+        const bool drive = ueberall(alle, platz, &ClipVerzerrung::drive, *verzerrung);
+        pruefe(*verzerrung, {{drive, QT_TR_NOOP("Drive")},
+                             {ueberall(alle, platz, &ClipVerzerrung::ton, *verzerrung), QT_TR_NOOP("Tone")},
+                             {ueberall(alle, platz, &ClipVerzerrung::mix, *verzerrung), QT_TR_NOOP("Mix")}});
         return {ClipEffektFenster::tr("Distortion"),
-                fuege(punkt, {{ClipEffektFenster::tr("Drive %1").arg(prozent(verzerrung->drive)),
-                               ueberall(alle, platz, &ClipVerzerrung::drive, *verzerrung)}}),
-                verzerrung->an};
+                fuege(punkt, {{ClipEffektFenster::tr("Drive %1").arg(prozent(verzerrung->drive)), drive}}), verzerrung->an, anders};
+    }
     if (const auto* echo = std::get_if<ClipEcho>(&baustein))
-        return {ClipEffektFenster::tr("Echo"),
-                fuege(punkt, {{zeitName(echo->zeit), ueberall(alle, platz, &ClipEcho::zeit, *echo)},
-                              {prozent(echo->mix), ueberall(alle, platz, &ClipEcho::mix, *echo)}}),
-                echo->an};
+    {
+        const bool zeit = ueberall(alle, platz, &ClipEcho::zeit, *echo);
+        const bool mix = ueberall(alle, platz, &ClipEcho::mix, *echo);
+        pruefe(*echo, {{zeit, QT_TR_NOOP("Time")},
+                       {ueberall(alle, platz, &ClipEcho::feedback, *echo), QT_TR_NOOP("Feedback")},
+                       {ueberall(alle, platz, &ClipEcho::daempfung, *echo), QT_TR_NOOP("Damping")},
+                       {mix, QT_TR_NOOP("Mix")}});
+        return {ClipEffektFenster::tr("Echo"), fuege(punkt, {{zeitName(echo->zeit), zeit}, {prozent(echo->mix), mix}}), echo->an,
+                anders};
+    }
     const auto& hall = std::get<ClipHall>(baustein);
+    const bool sekunden = ueberall(alle, platz, &ClipHall::sekunden, hall);
+    const bool mix = ueberall(alle, platz, &ClipHall::mix, hall);
+    pruefe(hall, {{ueberall(alle, platz, &ClipHall::groesse, hall), QT_TR_NOOP("Size")},
+                  {sekunden, QT_TR_NOOP("Decay")},
+                  {ueberall(alle, platz, &ClipHall::daempfung, hall), QT_TR_NOOP("Damping")},
+                  {mix, QT_TR_NOOP("Mix")}});
     return {ClipEffektFenster::tr("Reverb"),
-            fuege(punkt, {{QStringLiteral("%1 s").arg(hall.sekunden, 0, 'f', 1), ueberall(alle, platz, &ClipHall::sekunden, hall)},
-                          {prozent(hall.mix), ueberall(alle, platz, &ClipHall::mix, hall)}}),
-            hall.an};
+            fuege(punkt, {{QStringLiteral("%1 s").arg(hall.sekunden, 0, 'f', 1), sekunden}, {prozent(hall.mix), mix}}), hall.an,
+            anders};
 }
 
 /// Ein Baustein fuer sich: sein Name, und ob er eingeschaltet ist.
@@ -618,8 +648,14 @@ void ClipEffektFenster::fuelle()
             const ClipBaustein& baustein = gezeigt.reihe[static_cast<std::size_t>(i)];
             // der Kurzwert des gezeigten Clips; wo einer mit derselben Folge abweicht, steht „mixed“
             const Kurz k = kurz(baustein, alle, static_cast<std::size_t>(i));
-            kaesten.push_back(WegKasten{k.titel, k.wert, false, !k.an,
-                                        k.an ? QString() : tr("Switched off: it stays in the path and is skipped")});
+            // weicht irgendein Wert ab — auch einer, den der Kurzwert nicht zeigt —, sagt es der Kasten:
+            // „≠“ davor, Bernstein, und der Tooltip nennt die Regler (Befund Patrik S119, X5 a)
+            const bool weichtAb = !k.anders.isEmpty();
+            QStringList hilfe;
+            if (!k.an) hilfe << tr("Switched off: it stays in the path and is skipped");
+            if (weichtAb) hilfe << tr("Differs between the clips: %1").arg(k.anders.join(QStringLiteral(", ")));
+            kaesten.push_back(WegKasten{k.titel, weichtAb ? QString::fromUtf8("≠ ") + k.wert : k.wert, false, !k.an,
+                                        hilfe.join(QLatin1Char('\n')), weichtAb});
         }
         kaesten.push_back(
             WegKasten{tr("Out"), m_spitzenWert < 0.0 ? QString::fromUtf8("–") : tr("Peak %1").arg(m_spitzenWert, 0, 'f', 2), false,

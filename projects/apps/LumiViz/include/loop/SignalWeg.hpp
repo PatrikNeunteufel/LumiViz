@@ -16,7 +16,9 @@
  */
 #pragma once
 
+#include <QColor>
 #include <QFont>
+#include <QPalette>
 #include <QPoint>
 #include <QRect>
 #include <QString>
@@ -35,6 +37,13 @@ struct WegKasten
     bool gestrichelt = false;  ///< gestrichelt umrandet: es gibt ihn genau einmal (Envelope)
     bool matt = false;         ///< grau geschrieben: er tut gerade nichts (ausgeschaltet, uebersprungen)
     QString hilfe;             ///< Tooltip; leer = der allgemeine
+    /// Der Kasten steht fuer mehrere, die nicht in allem gleich sind (Clip
+    /// effects mit mehreren Clips; Befund Patrik S119, Entscheide X5 a und
+    /// X5b a): seine Flaeche ist bernsteinfarben getoent
+    /// (`SignalWeg::abweichFlaeche`), sein Kurzwert steht in
+    /// `abweichSchrift`; der Rand bleibt frei fuer die Wahl. Das Zeichen im
+    /// Kurzwert setzt, wer ihn nennt.
+    bool weichtAb = false;
 
     [[nodiscard]] bool operator==(const WegKasten&) const = default;
 };
@@ -68,6 +77,13 @@ public:
     [[nodiscard]] bool ziehbar(int platz) const;
     /// So viele Zeilen braucht die Reihe in der heutigen Breite.
     [[nodiscard]] int zeilen() const { return m_zeilen; }
+
+    /// Der Ton fuer „weicht ab": Bernstein, im dunklen Design heller.
+    [[nodiscard]] static QColor abweichFarbe(const QPalette& farben);
+    /// Die Flaeche eines Kastens, der abweicht: sein Grund, in diesem Ton getoent.
+    [[nodiscard]] static QColor abweichFlaeche(const QPalette& farben);
+    /// Die Schrift seines Kurzwerts — auf der getoenten Flaeche gut zu lesen.
+    [[nodiscard]] static QColor abweichSchrift(const QPalette& farben);
 
     [[nodiscard]] QSize sizeHint() const override;
     [[nodiscard]] QSize minimumSizeHint() const override;

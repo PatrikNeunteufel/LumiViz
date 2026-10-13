@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.148.0
+> **Version:** 1.149.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2518,6 +2518,7 @@ gerade markiert sind.
 | **Reverb** — **Size**, **Decay**, **Damping**, **Mix** | Ein Raum: seine Größe, wie lange er nachklingt (0,2 bis 8 Sekunden), wie schnell die Höhen im Nachklang verschwinden |
 | **Mix** | Der Anteil des bearbeiteten Tons. Bei 0 % klingt der Clip unverändert, bei 100 % ist bei Echo und Reverb nur noch der Effekt zu hören |
 | **mixed** an einem Regler oder in einem Kasten | Die markierten Clips haben dort verschiedene Werte. Wer den Regler bewegt, setzt den Wert für alle |
+| **≠** in einem bernsteinfarben getönten Kasten | Die markierten Clips sind in diesem Baustein nicht gleich — in irgendeinem Wert, auch einem, den der Kasten nicht zeigt (beim Echo etwa Feedback oder Damping). Der Kasten ist dann bernsteinfarben getönt, und vor seinem Wert steht „≠“ — auch am gewählten Kasten, dessen Rand blau bleibt. Der Tooltip nennt die Regler: „Differs between the clips: Damping“ |
 | **Showing** und der Hinweis darunter | Erscheinen, wenn die markierten Clips **verschiedene Reihen** haben (andere Bausteine oder eine andere Reihenfolge). Die Zeile zeigt dann die Reihe eines Clips — unter **Showing** wählst du, welchen. Regler, + Add, Move und Remove gelten für alle markierten Clips mit **derselben** Reihe; der Hinweis nennt, wie viele das sind („2 of 3 clips have this path“) und welche von hier aus nicht geändert werden |
 | **Use this path for all** | Setzt die gezeigte Reihe mit ihren Werten auf alle markierten Clips — deren eigene Effekte werden ersetzt. Danach lassen sie sich wieder gemeinsam stellen |
 | **Copy** / **Paste** | Merkt die Reihe des gezeigten Clips und setzt sie auf alle markierten — so überträgst du eine Einstellung auf andere Clips |
@@ -3006,6 +3007,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.149.0 | 2026-10-13 | Session 119. §16 Loop, Effekte am Clip NEU: **≠** in einem bernsteinfarben getönten Kasten der Zeile Signal path — die markierten Clips weichen in diesem Baustein ab, auch in einem Wert, den der Kasten nicht zeigt; der Tooltip nennt die Regler |
 | 1.148.0 | 2026-10-13 | Session 119. §16 Loop NEU **Ein Sample bearbeiten**: im Instrument-Creator bei einer Sample-Schicht **Edit...** — öffnet, was die Schicht spielt, im Fenster der Aufnahme (**Edit sample – <Name>**); ein eigenes Sample lässt sich mit **Save** ersetzen, ein Klang des Kits und eine Tondatei sind schreibgeschützt und kommen mit **Save as...** unter neuem Namen zu den eigenen; Sample start und die Schleife der Schicht rücken um das vorn Weggeschnittene mit. GEÄNDERT **Record sample**: das Feld Name und **Save and use** gibt es nicht mehr — unten stehen **Cancel**, **Save as...**, **Save**; Save as... fragt nach dem Namen und nimmt keinen vergebenen |
 | 1.147.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die gerechneten Drums **Kick** und **Clap** sind neu gebaut — der Kick mit Drive hinter der Envelope (er klingt länger nach, näher am Kit), der Clap mit High-pass und Band-pass hintereinander (weniger Tiefen). Wer sie schon in einem Loop benutzt, hört den Unterschied; eigene Kopien bleiben, wie sie sind |
 | 1.146.0 | 2026-10-13 | Session 118. §16 Loop, Effekte am Clip NEU die Zeile **Signal path** im Fenster Clip effects: Clip, die Bausteine, **+ Add**, Out — jeder Effekt beliebig oft und in freier Reihenfolge, höchstens acht; NEU der Baustein **Filter** (Type, Cutoff in Hertz, Resonance); NEU **Showing** und **Use this path for all** für markierte Clips mit verschiedenen Reihen. GEÄNDERT: statt dreier fester Gruppen steht unter der Zeile der gewählte Baustein mit seinem Haken; **Reset** entfernt die Effekte, statt sie auszuschalten |
