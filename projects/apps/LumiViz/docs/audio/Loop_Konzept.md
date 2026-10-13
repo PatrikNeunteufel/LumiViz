@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.64.0
-> **Datum:** 2026-10-13 (Session 118)
+> **Version:** 0.65.0
+> **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -2829,6 +2829,109 @@ Folge fehlen Showing und der Hinweis.
 
 ---
 
+## 4k. Ein Sample bearbeiten: Edit... im Creator (Stufe 17 — Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a, Patrik S119; nicht gebaut)
+
+Wunsch Patrik (S118): an einer Sample-Schicht ein bestehendes Sample öffnen
+wie nach einer Aufnahme, zuschneiden, speichern; Mitgeliefertes ist
+schreibgeschützt.
+
+**Entscheide (Patrik S119):**
+- **M1 a — was der Knopf öffnet:** was die Schicht gerade spielt, gleich
+  welcher Art. Ein eigenes Sample (`user:<name>`) lässt sich bearbeiten und
+  speichern. Ein Klang des Kits (`kit:<name>`) und eine Tondatei an freiem Ort
+  sind schreibgeschützt: das Ergebnis kommt unter einem neuen Namen zu den
+  eigenen Samples, das Original bleibt. Verworfen b (freie Datei grau), c (nur
+  eigene) — über **Edit sound...** im Drum-Editor nennt eine Sample-Schicht
+  meist einen Klang des Kits, dort wäre der Knopf grau.
+- **M2 b — überschreiben oder kopieren:** zwei Knöpfe wie beim Instrument.
+  **Save** überschreibt das eigene Sample, **Save as...** fragt nach einem
+  Namen und kopiert. Verworfen a (der Name im Feld entscheidet), c (immer eine
+  Kopie).
+- **M2b a — nach einer frischen Aufnahme:** das Fenster sieht in beiden
+  Zuständen gleich aus. Das Feld für den Namen und **Save and use** entfallen;
+  unten stehen **Cancel**, **Save as...**, **Save**. Nach einer Aufnahme ist
+  Save grau. Dass der Name im Feld still entschied, ob etwas ersetzt wird, hat
+  Patrik gestört. Verworfen b (die Aufnahme bleibt, wie sie ist).
+- **M3 a — was das Sample schon spielt:** alles, was es nennt, spielt die neue
+  Fassung (wie bisher beim Ersetzen, `speichereAufnahme`). Die Rückfrage von
+  Save nennt die eigenen Instrumente, die es spielen. In der Schicht, aus der
+  das Fenster geöffnet wurde, wird **Sample start** um das vorn
+  Weggeschnittene zurückgenommen (nicht unter null); andere Instrumente
+  bleiben. Verworfen b (allgemeine Rückfrage, Sample start bleibt), c (Sample
+  start in allen eigenen Instrumenten nachziehen — Save schriebe Dateien, die
+  nicht offen sind).
+- **M4 a — die Namen:** der Knopf heißt **Edit...**, das Fenster **Edit sample
+  – <Name>**, über Record... geöffnet weiter **Record sample**. Input, Pegel,
+  Record und Stop bleiben im Bearbeiten-Zustand. Verworfen b (Trim..., ohne
+  Record), c (Edit sample...).
+
+**Die Skizze als Beschreibung (gebilligt, S2 a):**
+
+*Im Creator,* Zeile Sample einer Sample-Schicht: der Name der Datei (grau),
+dann **File...**, **Record...**, **Edit...**. Edit... ist grau, solange die
+Schicht kein Sample nennt oder seine Daten nicht geladen sind. Tooltip: „Trim
+the sample this layer plays and save it".
+
+*Das Fenster,* von oben nach unten:
+1. Titel **Edit sample – <Name>** (der Titel des Samples, bei einer Datei ihr
+   Name).
+2. **Input** mit der Auswahl der Eingänge und dem Pegel, wie bisher.
+3. **Record**, **Stop**, daneben statt „… recorded · up to 30 s" die Länge und
+   die Herkunft: „0.84 s · My samples", „0.44 s · Built-in, read-only",
+   „1.20 s · File, read-only".
+4. Das Bild des Samples mit den zwei Griffen; beim Öffnen stehen sie an beiden
+   Enden. Das Graue fällt beim Speichern weg.
+5. **Play**, **Repeat**, daneben der Ausschnitt in Sekunden.
+6. **Trim silence at both ends** und **Normalize level** — beim Öffnen eines
+   bestehenden Samples beide aus, damit Öffnen und Speichern nichts ändert.
+   Nach einer Aufnahme ist Trim silence an, wie bisher.
+7. Rechts unten **Cancel**, **Save as...**, **Save**.
+
+*Save* ist an, wenn ein eigenes Sample offen ist. Es fragt: „Replace %1? What
+you cut away is gone." und, wenn eigene Instrumente das Sample spielen, „Used
+by: Table Kit, Knock Bass and 2 more — they will play the new version." Die
+Datei wird `<name>.wav` (48 kHz, 16 Bit), auch wenn sie vorher eine andere
+Endung trug.
+
+*Save as...* öffnet einen kleinen Dialog mit dem Namen — vorgeschlagen der
+erste freie („kick 2", nach einer Aufnahme „Recording 2") — und nimmt keinen
+Namen an, den es unter den eigenen Samples schon gibt. Danach spielt die
+Schicht das neue Sample.
+
+*Record im Bearbeiten-Zustand* ersetzt das Bild durch die neue Aufnahme; der
+Name im Titel bleibt, Save schreibt sie unter diesem Namen.
+
+*Schließen mit ungespeicherter Änderung* fragt wie heute nach einer Aufnahme
+(„The recording is not saved. Discard it?"), im Bearbeiten-Zustand mit „Your
+changes are not saved. Discard them?".
+
+**Von Claude gesetzt, in der Skizze genannt und nicht beanstandet:** die Folge
+Cancel, Save as..., Save; die Griffe beim Öffnen an den Enden; Edit... nimmt
+nur Samples bis 30 Sekunden (`AufnahmeFenster::kHoechstensSekunden`) und
+meldet sonst „This file is longer than 30 s. Edit... works on samples up to
+30 s.". **Gesetzt, nicht gezeigt:** der Wortlaut der Rückfrage beim Schließen;
+die Herkunft in der Zeile neben Record.
+
+**Grenzen:** die Liste „Used by" kennt die eigenen Instrumente (ihr Ordner
+ist bekannt), nicht Loops an freiem Ort, deren Drum-Spur das Sample nennt.
+Eine Drum-Spur trägt keinen eigenen Einsatz (`Spur` in `Loop.hpp`) — dort ist
+nichts nachzuziehen.
+
+**Baustufen (vorgelegt S119, nicht freigegeben):**
+- **17a — das Fenster:** `AufnahmeFenster` bekommt den Bearbeiten-Zustand
+  (ein Sample mit seiner Nennung hineingeben), **Save** und **Save as...**
+  statt Namensfeld und Save and use, die Zeile mit Länge und Herkunft, die
+  Rückfragen; dazu im Kern die Suche nach den eigenen Instrumenten, die ein
+  Sample spielen. Tests: `test_LoopAufnahmeFenster` umgestellt und erweitert,
+  `test_LoopAufnahme`, ein Bild.
+- **17b — der Creator:** der Knopf **Edit...**, die Grenze von 30 Sekunden,
+  Sample start der offenen Schicht mitziehen, nach Save as... das neue Sample
+  in der Schicht; Record... läuft über dasselbe Fenster mit den neuen Knöpfen.
+  Tests: `test_LoopInstrumentEditor`, ein Bild.
+- **17c — Abschluss:** Benutzerhandbuch §16, Liste 10, voller Lauf.
+
+---
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -2855,6 +2958,7 @@ Folge fehlen Showing und der Hinweis.
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
+| 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen 17a bis 17c vorgelegt, **nicht freigegeben, nichts gebaut** |
 
 ---
 
@@ -2950,6 +3054,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.65.0** (S119, 2026-10-13): **§4k neu** — ein Sample bearbeiten (Edit...
+  im Creator): Entscheide Patrik M1 a, M2 b, M2b a, M3 a, M4 a, die gebilligte
+  Skizze als Beschreibung, Baustufen 17a bis 17c vorgelegt; §5 Stufe 17;
+  nichts gebaut
 - **0.64.0** (S118, 2026-10-13): §4j — **Stufe 16e gebaut, Stufe 16 fertig:**
   Kick mit Drive hinter der Envelope, Clap mit Hochpass und Bandpass, die
   Tabelle aus 11f mit den neuen Zahlen daneben; §4h Verweis; §5 Stufe 16
