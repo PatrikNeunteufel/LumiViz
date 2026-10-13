@@ -360,27 +360,32 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("ein Clip ohne Effekte traegt das Feld nicht; geschrieben wird Fassung 3")
     {
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 4);  // seit S115: Drum-Spuren mit eigenem Sample oder Instrument
+        CHECK(json.value(QStringLiteral("version")).toInt() == 5);  // seit S118: die Reihe `path` am Clip (test_LoopBausteine.cpp); S115: Drum-Spuren mit eigenem Sample oder Instrument (4)
         const QJsonObject clip =
             json.value(QStringLiteral("channels")).toArray()[0].toObject().value(QStringLiteral("clips")).toArray()[0].toObject();
         CHECK(!clip.contains(QStringLiteral("effects")));
+        CHECK(!clip.contains(QStringLiteral("path")));
     }
     SUBCASE("die Effekte eines Clips kommen zurueck, der Nachbar derselben Basis bleibt ohne")
     {
         ClipEffekte& e = loop.kanaele[0].clips[1].effekte;
-        e.verzerrung = {true, 0.7, 0.2, 0.5};
-        e.echo = {true, EchoZeit::Viertel, 0.6, 0.1, 0.8};
-        e.hall.sekunden = 3.5;  // aus, aber eingestellt: der Wert bleibt
+        e.hole<ClipVerzerrung>() = {true, 0.7, 0.2, 0.5};
+        e.hole<ClipEcho>() = {true, EchoZeit::Viertel, 0.6, 0.1, 0.8};
+        e.hole<ClipHall>().sekunden = 3.5;  // aus, aber eingestellt: der Wert bleibt
         CHECK(loop.kanaele[0].clips[1].effekte.einerAn());
 
         const QJsonObject json = alsJson(loop);
         const QJsonArray clips =
             json.value(QStringLiteral("channels")).toArray()[0].toObject().value(QStringLiteral("clips")).toArray();
-        CHECK(!clips[0].toObject().contains(QStringLiteral("effects")));
-        const QJsonObject effekte = clips[1].toObject().value(QStringLiteral("effects")).toObject();
-        CHECK(effekte.value(QStringLiteral("echo")).toObject().value(QStringLiteral("time")).toString() ==
-              QStringLiteral("1/4"));
-        CHECK(effekte.value(QStringLiteral("reverb")).toObject().value(QStringLiteral("on")).toBool(true) == false);
+        CHECK(!clips[0].toObject().contains(QStringLiteral("path")));
+        // seit Fassung 5 die Reihe `path`: Distortion, Echo, Reverb — in der Folge, in der sie dazukamen
+        const QJsonArray reihe = clips[1].toObject().value(QStringLiteral("path")).toArray();
+        REQUIRE(reihe.size() == 3);
+        CHECK(reihe[0].toObject().value(QStringLiteral("type")).toString() == QStringLiteral("distortion"));
+        CHECK(reihe[1].toObject().value(QStringLiteral("type")).toString() == QStringLiteral("echo"));
+        CHECK(reihe[1].toObject().value(QStringLiteral("time")).toString() == QStringLiteral("1/4"));
+        CHECK(reihe[2].toObject().value(QStringLiteral("type")).toString() == QStringLiteral("reverb"));
+        CHECK(reihe[2].toObject().value(QStringLiteral("on")).toBool(true) == false);
 
         Loop nochmal;
         QStringList bericht;
@@ -388,7 +393,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
         CHECK(nurFehlendeDateien(bericht));
         CHECK(nochmal == loop);
         CHECK(nochmal.kanaele[0].clips[0].effekte == ClipEffekte{});
-        CHECK(nochmal.kanaele[0].clips[1].effekte.hall.sekunden == 3.5);
+        CHECK(nochmal.kanaele[0].clips[1].effekte.wert<ClipHall>().sekunden == 3.5);
     }
     SUBCASE("eine Datei der Fassung 2 wird gelesen, ohne Bericht und ohne Effekte")
     {
@@ -403,7 +408,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("eine neuere Fassung wird gelesen und gemeldet")
     {
         QJsonObject morgen = alsJson(loop);
-        morgen[QStringLiteral("version")] = 5;
+        morgen[QStringLiteral("version")] = 6;
         Loop gelesen;
         QStringList bericht;
         REQUIRE(ausJson(morgen, gelesen, {}, &bericht));
@@ -412,25 +417,27 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("Werte ausserhalb kommen in ihre Grenzen, eine unbekannte Echo-Zeit steht im Bericht")
     {
         ClipEffekte& e = loop.kanaele[0].clips[0].effekte;
-        e.echo.an = true;
-        e.echo.feedback = 5.0;
-        e.hall.sekunden = 100.0;
-        e.verzerrung.mix = -1.0;
+        e.hole<ClipEcho>().an = true;
+        e.hole<ClipEcho>().feedback = 5.0;
+        e.hole<ClipHall>().sekunden = 100.0;
+        e.hole<ClipVerzerrung>().mix = -1.0;
         loop.richte();
-        CHECK(loop.kanaele[0].clips[0].effekte.echo.feedback == kEchoFeedbackMax);
-        CHECK(loop.kanaele[0].clips[0].effekte.hall.sekunden == kHallSekMax);
-        CHECK(loop.kanaele[0].clips[0].effekte.verzerrung.mix == 0.0);
+        CHECK(loop.kanaele[0].clips[0].effekte.wert<ClipEcho>().feedback == kEchoFeedbackMax);
+        CHECK(loop.kanaele[0].clips[0].effekte.wert<ClipHall>().sekunden == kHallSekMax);
+        CHECK(loop.kanaele[0].clips[0].effekte.wert<ClipVerzerrung>().mix == 0.0);
 
         QJsonObject json = alsJson(loop);
         QJsonArray kanaele = json.value(QStringLiteral("channels")).toArray();
         QJsonObject kanal = kanaele[0].toObject();
         QJsonArray clips = kanal.value(QStringLiteral("clips")).toArray();
         QJsonObject clip = clips[0].toObject();
-        QJsonObject effekte = clip.value(QStringLiteral("effects")).toObject();
-        QJsonObject echo = effekte.value(QStringLiteral("echo")).toObject();
+        QJsonArray reihe = clip.value(QStringLiteral("path")).toArray();
+        REQUIRE(reihe.size() == 3);  // Distortion, Echo, Reverb
+        QJsonObject echo = reihe[1].toObject();
+        REQUIRE(echo.value(QStringLiteral("type")).toString() == QStringLiteral("echo"));
         echo[QStringLiteral("time")] = QStringLiteral("1/3");
-        effekte[QStringLiteral("echo")] = echo;
-        clip[QStringLiteral("effects")] = effekte;
+        reihe[1] = echo;
+        clip[QStringLiteral("path")] = reihe;
         clips[0] = clip;
         kanal[QStringLiteral("clips")] = clips;
         kanaele[0] = kanal;
@@ -439,7 +446,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
         QStringList bericht;
         REQUIRE(ausJson(json, gelesen, {}, &bericht));
         CHECK(bericht.contains(QStringLiteral("Unknown echo time '1/3'")));
-        CHECK(gelesen.kanaele[0].clips[0].effekte.echo.zeit == EchoZeit::AchtelPunktiert);
+        CHECK(gelesen.kanaele[0].clips[0].effekte.wert<ClipEcho>().zeit == EchoZeit::AchtelPunktiert);
     }
     SUBCASE("die Echo-Zeit in Schlaegen")
     {

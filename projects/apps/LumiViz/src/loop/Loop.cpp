@@ -32,8 +32,11 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // gelesen, geschrieben wird immer 3.
 // 4 (S115, Stufe 11c, Entscheide K1 a und K2 a): eine Spur nennt auch ein
 // eigenes Sample (`user:<name>`) oder ein Instrument mit Note und Laenge.
-// Fassung 2 und 3 werden weiter gelesen, geschrieben wird immer 4.
-constexpr int kVersion = 4;
+// 5 (S118, Stufe 16a, Entscheide K1 a, K3 a, K4 a): die Effekte am Clip sind
+// eine Reihe von Bausteinen — `path` statt `effects`, mit dem Filter als
+// viertem Baustein. Fassung 2 bis 4 werden weiter gelesen: ihre `effects`
+// werden zur Reihe Distortion, Echo, Reverb. Geschrieben wird immer 5.
+constexpr int kVersion = 5;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
@@ -109,101 +112,204 @@ QString echoZeitName(EchoZeit zeit)
     return QLatin1String(kEchoZeiten[2].name);
 }
 
+const QString kBausteinFilter = QStringLiteral("filter");
+const QString kBausteinVerzerrung = QStringLiteral("distortion");
+const QString kBausteinEcho = QStringLiteral("echo");
+const QString kBausteinHall = QStringLiteral("reverb");
+
+void richteBaustein(ClipFilter& f)
+{
+    const ClipFilter vorgabe;
+    if (f.art < FilterArt::Tiefpass || f.art > FilterArt::Bandpass) f.art = vorgabe.art;
+    f.hz = inGrenzen(f.hz, kClipFilterHzMin, kClipFilterHzMax, vorgabe.hz);
+    f.resonanz = inGrenzen(f.resonanz, 0.0, 1.0, vorgabe.resonanz);
+}
+
+void richteBaustein(ClipVerzerrung& v)
+{
+    const ClipVerzerrung vorgabe;
+    v.drive = inGrenzen(v.drive, 0.0, 1.0, vorgabe.drive);
+    v.ton = inGrenzen(v.ton, 0.0, 1.0, vorgabe.ton);
+    v.mix = inGrenzen(v.mix, 0.0, 1.0, vorgabe.mix);
+}
+
+void richteBaustein(ClipEcho& e)
+{
+    const ClipEcho vorgabe;
+    if (e.zeit < EchoZeit::Sechzehntel || e.zeit > EchoZeit::Halbe) e.zeit = vorgabe.zeit;
+    e.feedback = inGrenzen(e.feedback, 0.0, kEchoFeedbackMax, vorgabe.feedback);
+    e.daempfung = inGrenzen(e.daempfung, 0.0, 1.0, vorgabe.daempfung);
+    e.mix = inGrenzen(e.mix, 0.0, 1.0, vorgabe.mix);
+}
+
+void richteBaustein(ClipHall& h)
+{
+    const ClipHall vorgabe;
+    h.groesse = inGrenzen(h.groesse, 0.0, 1.0, vorgabe.groesse);
+    h.sekunden = inGrenzen(h.sekunden, kHallSekMin, kHallSekMax, vorgabe.sekunden);
+    h.daempfung = inGrenzen(h.daempfung, 0.0, 1.0, vorgabe.daempfung);
+    h.mix = inGrenzen(h.mix, 0.0, 1.0, vorgabe.mix);
+}
+
+/// Die Reihe eines Clips: hoechstens `kBausteineMax` (K4 a — was dahinter
+/// steht, faellt weg), jeder Wert in seinen Grenzen.
 void richteEffekte(ClipEffekte& e)
 {
-    const ClipEffekte vorgabe;
-    e.verzerrung.drive = inGrenzen(e.verzerrung.drive, 0.0, 1.0, vorgabe.verzerrung.drive);
-    e.verzerrung.ton = inGrenzen(e.verzerrung.ton, 0.0, 1.0, vorgabe.verzerrung.ton);
-    e.verzerrung.mix = inGrenzen(e.verzerrung.mix, 0.0, 1.0, vorgabe.verzerrung.mix);
-    if (e.echo.zeit < EchoZeit::Sechzehntel || e.echo.zeit > EchoZeit::Halbe) e.echo.zeit = vorgabe.echo.zeit;
-    e.echo.feedback = inGrenzen(e.echo.feedback, 0.0, kEchoFeedbackMax, vorgabe.echo.feedback);
-    e.echo.daempfung = inGrenzen(e.echo.daempfung, 0.0, 1.0, vorgabe.echo.daempfung);
-    e.echo.mix = inGrenzen(e.echo.mix, 0.0, 1.0, vorgabe.echo.mix);
-    e.hall.groesse = inGrenzen(e.hall.groesse, 0.0, 1.0, vorgabe.hall.groesse);
-    e.hall.sekunden = inGrenzen(e.hall.sekunden, kHallSekMin, kHallSekMax, vorgabe.hall.sekunden);
-    e.hall.daempfung = inGrenzen(e.hall.daempfung, 0.0, 1.0, vorgabe.hall.daempfung);
-    e.hall.mix = inGrenzen(e.hall.mix, 0.0, 1.0, vorgabe.hall.mix);
+    if (e.reihe.size() > static_cast<std::size_t>(kBausteineMax))
+        e.reihe.erase(e.reihe.begin() + kBausteineMax, e.reihe.end());
+    for (ClipBaustein& baustein : e.reihe)
+        std::visit([](auto& werte) { richteBaustein(werte); }, baustein);
 }
 
-/// Nur, was von der Vorgabe abweicht: ein Clip ohne Effekte traegt das Feld
-/// nicht, ein ausgeschalteter Effekt mit eigenen Werten behaelt sie.
-QJsonObject effekteAlsJson(const ClipEffekte& e)
+QJsonObject bausteinAlsJson(const ClipFilter& f)
 {
-    const ClipEffekte vorgabe;
-    QJsonObject o;
-    if (e.verzerrung != vorgabe.verzerrung)
-    {
-        QJsonObject v;
-        v[QStringLiteral("on")] = e.verzerrung.an;
-        v[QStringLiteral("drive")] = e.verzerrung.drive;
-        v[QStringLiteral("tone")] = e.verzerrung.ton;
-        v[QStringLiteral("mix")] = e.verzerrung.mix;
-        o[QStringLiteral("distortion")] = v;
-    }
-    if (e.echo != vorgabe.echo)
-    {
-        QJsonObject v;
-        v[QStringLiteral("on")] = e.echo.an;
-        v[QStringLiteral("time")] = echoZeitName(e.echo.zeit);
-        v[QStringLiteral("feedback")] = e.echo.feedback;
-        v[QStringLiteral("damping")] = e.echo.daempfung;
-        v[QStringLiteral("mix")] = e.echo.mix;
-        o[QStringLiteral("echo")] = v;
-    }
-    if (e.hall != vorgabe.hall)
-    {
-        QJsonObject v;
-        v[QStringLiteral("on")] = e.hall.an;
-        v[QStringLiteral("size")] = e.hall.groesse;
-        v[QStringLiteral("decay")] = e.hall.sekunden;
-        v[QStringLiteral("damping")] = e.hall.daempfung;
-        v[QStringLiteral("mix")] = e.hall.mix;
-        o[QStringLiteral("reverb")] = v;
-    }
-    return o;
+    QJsonObject v;
+    v[QStringLiteral("type")] = kBausteinFilter;
+    v[QStringLiteral("on")] = f.an;
+    v[QStringLiteral("filterType")] = filterArtName(f.art);
+    v[QStringLiteral("cutoff")] = f.hz;
+    v[QStringLiteral("resonance")] = f.resonanz;
+    return v;
 }
 
+QJsonObject bausteinAlsJson(const ClipVerzerrung& w)
+{
+    QJsonObject v;
+    v[QStringLiteral("type")] = kBausteinVerzerrung;
+    v[QStringLiteral("on")] = w.an;
+    v[QStringLiteral("drive")] = w.drive;
+    v[QStringLiteral("tone")] = w.ton;
+    v[QStringLiteral("mix")] = w.mix;
+    return v;
+}
+
+QJsonObject bausteinAlsJson(const ClipEcho& e)
+{
+    QJsonObject v;
+    v[QStringLiteral("type")] = kBausteinEcho;
+    v[QStringLiteral("on")] = e.an;
+    v[QStringLiteral("time")] = echoZeitName(e.zeit);
+    v[QStringLiteral("feedback")] = e.feedback;
+    v[QStringLiteral("damping")] = e.daempfung;
+    v[QStringLiteral("mix")] = e.mix;
+    return v;
+}
+
+QJsonObject bausteinAlsJson(const ClipHall& h)
+{
+    QJsonObject v;
+    v[QStringLiteral("type")] = kBausteinHall;
+    v[QStringLiteral("on")] = h.an;
+    v[QStringLiteral("size")] = h.groesse;
+    v[QStringLiteral("decay")] = h.sekunden;
+    v[QStringLiteral("damping")] = h.daempfung;
+    v[QStringLiteral("mix")] = h.mix;
+    return v;
+}
+
+/// Die Reihe als Liste `path`, von vorn nach hinten. Ein Clip ohne Bausteine
+/// traegt das Feld nicht; ein ausgeschalteter Baustein steht mit seinen Werten da.
+QJsonArray reiheAlsJson(const ClipEffekte& e)
+{
+    QJsonArray reihe;
+    for (const ClipBaustein& baustein : e.reihe)
+        reihe.append(std::visit([](const auto& werte) { return bausteinAlsJson(werte); }, baustein));
+    return reihe;
+}
+
+ClipFilter filterAusJson(const QJsonObject& v)
+{
+    ClipFilter f;
+    f.an = v.value(QStringLiteral("on")).toBool(false);
+    f.art = filterArtAus(v.value(QStringLiteral("filterType")).toString());
+    f.hz = v.value(QStringLiteral("cutoff")).toDouble(f.hz);
+    f.resonanz = v.value(QStringLiteral("resonance")).toDouble(f.resonanz);
+    return f;
+}
+
+ClipVerzerrung verzerrungAusJson(const QJsonObject& v)
+{
+    ClipVerzerrung w;
+    w.an = v.value(QStringLiteral("on")).toBool(false);
+    w.drive = v.value(QStringLiteral("drive")).toDouble(w.drive);
+    w.ton = v.value(QStringLiteral("tone")).toDouble(w.ton);
+    w.mix = v.value(QStringLiteral("mix")).toDouble(w.mix);
+    return w;
+}
+
+ClipEcho echoAusJson(const QJsonObject& v, QStringList* bericht)
+{
+    ClipEcho e;
+    e.an = v.value(QStringLiteral("on")).toBool(false);
+    if (const QJsonValue zeit = v.value(QStringLiteral("time")); !zeit.isUndefined())
+    {
+        const QString name = zeit.toString();
+        const auto* treffer = std::find_if(std::begin(kEchoZeiten), std::end(kEchoZeiten),
+                                           [&name](const ZeitName& z) { return name == QLatin1String(z.name); });
+        if (treffer != std::end(kEchoZeiten))
+            e.zeit = treffer->zeit;
+        else if (bericht != nullptr)
+        {
+            const QString zeile = QStringLiteral("Unknown echo time '%1'").arg(name);
+            if (!bericht->contains(zeile)) bericht->append(zeile);
+        }
+    }
+    e.feedback = v.value(QStringLiteral("feedback")).toDouble(e.feedback);
+    e.daempfung = v.value(QStringLiteral("damping")).toDouble(e.daempfung);
+    e.mix = v.value(QStringLiteral("mix")).toDouble(e.mix);
+    return e;
+}
+
+ClipHall hallAusJson(const QJsonObject& v)
+{
+    ClipHall h;
+    h.an = v.value(QStringLiteral("on")).toBool(false);
+    h.groesse = v.value(QStringLiteral("size")).toDouble(h.groesse);
+    h.sekunden = v.value(QStringLiteral("decay")).toDouble(h.sekunden);
+    h.daempfung = v.value(QStringLiteral("damping")).toDouble(h.daempfung);
+    h.mix = v.value(QStringLiteral("mix")).toDouble(h.mix);
+    return h;
+}
+
+/// Die Liste `path` (seit Fassung 5). Einen Baustein, den dieses Programm
+/// nicht kennt, laesst es weg — das steht im Bericht.
+ClipEffekte reiheAusJson(const QJsonArray& reihe, QStringList* bericht)
+{
+    ClipEffekte e;
+    for (const QJsonValue& eintrag : reihe)
+    {
+        const QJsonObject v = eintrag.toObject();
+        const QString art = v.value(QStringLiteral("type")).toString();
+        if (art == kBausteinFilter)
+            e.reihe.emplace_back(filterAusJson(v));
+        else if (art == kBausteinVerzerrung)
+            e.reihe.emplace_back(verzerrungAusJson(v));
+        else if (art == kBausteinEcho)
+            e.reihe.emplace_back(echoAusJson(v, bericht));
+        else if (art == kBausteinHall)
+            e.reihe.emplace_back(hallAusJson(v));
+        else if (bericht != nullptr)
+        {
+            const QString zeile = QStringLiteral("Unknown effect '%1'").arg(art);
+            if (!bericht->contains(zeile)) bericht->append(zeile);
+        }
+    }
+    return e;
+}
+
+/// Das Feld `effects` bis Fassung 4: drei feste Effekte, von denen nur in der
+/// Datei stand, was von der Vorgabe abwich. Daraus wird die Reihe in der
+/// Folge, in der sie gerechnet wurden — Distortion, Echo, Reverb; was nicht
+/// in der Datei stand, wird kein Baustein.
 ClipEffekte effekteAusJson(const QJsonObject& o, QStringList* bericht)
 {
     ClipEffekte e;
-    if (const QJsonValue wert = o.value(QStringLiteral("distortion")); wert.isObject())
-    {
-        const QJsonObject v = wert.toObject();
-        e.verzerrung.an = v.value(QStringLiteral("on")).toBool(false);
-        e.verzerrung.drive = v.value(QStringLiteral("drive")).toDouble(e.verzerrung.drive);
-        e.verzerrung.ton = v.value(QStringLiteral("tone")).toDouble(e.verzerrung.ton);
-        e.verzerrung.mix = v.value(QStringLiteral("mix")).toDouble(e.verzerrung.mix);
-    }
-    if (const QJsonValue wert = o.value(QStringLiteral("echo")); wert.isObject())
-    {
-        const QJsonObject v = wert.toObject();
-        e.echo.an = v.value(QStringLiteral("on")).toBool(false);
-        if (const QJsonValue zeit = v.value(QStringLiteral("time")); !zeit.isUndefined())
-        {
-            const QString name = zeit.toString();
-            const auto* treffer = std::find_if(std::begin(kEchoZeiten), std::end(kEchoZeiten),
-                                               [&name](const ZeitName& z) { return name == QLatin1String(z.name); });
-            if (treffer != std::end(kEchoZeiten))
-                e.echo.zeit = treffer->zeit;
-            else if (bericht != nullptr)
-            {
-                const QString zeile = QStringLiteral("Unknown echo time '%1'").arg(name);
-                if (!bericht->contains(zeile)) bericht->append(zeile);
-            }
-        }
-        e.echo.feedback = v.value(QStringLiteral("feedback")).toDouble(e.echo.feedback);
-        e.echo.daempfung = v.value(QStringLiteral("damping")).toDouble(e.echo.daempfung);
-        e.echo.mix = v.value(QStringLiteral("mix")).toDouble(e.echo.mix);
-    }
-    if (const QJsonValue wert = o.value(QStringLiteral("reverb")); wert.isObject())
-    {
-        const QJsonObject v = wert.toObject();
-        e.hall.an = v.value(QStringLiteral("on")).toBool(false);
-        e.hall.groesse = v.value(QStringLiteral("size")).toDouble(e.hall.groesse);
-        e.hall.sekunden = v.value(QStringLiteral("decay")).toDouble(e.hall.sekunden);
-        e.hall.daempfung = v.value(QStringLiteral("damping")).toDouble(e.hall.daempfung);
-        e.hall.mix = v.value(QStringLiteral("mix")).toDouble(e.hall.mix);
-    }
+    if (const QJsonValue wert = o.value(kBausteinVerzerrung); wert.isObject())
+        e.reihe.emplace_back(verzerrungAusJson(wert.toObject()));
+    if (const QJsonValue wert = o.value(kBausteinEcho); wert.isObject())
+        e.reihe.emplace_back(echoAusJson(wert.toObject(), bericht));
+    if (const QJsonValue wert = o.value(kBausteinHall); wert.isObject())
+        e.reihe.emplace_back(hallAusJson(wert.toObject()));
     return e;
 }
 
@@ -519,8 +625,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             c[QStringLiteral("pattern")] = clip.muster;
             c[QStringLiteral("start")] = clip.startTakt;
             c[QStringLiteral("repeat")] = clip.wiederholungen;
-            if (const QJsonObject effekte = effekteAlsJson(clip.effekte); !effekte.isEmpty())
-                c[QStringLiteral("effects")] = effekte;
+            if (!clip.effekte.reihe.empty()) c[QStringLiteral("path")] = reiheAlsJson(clip.effekte);
             clips.append(c);
         }
         k[QStringLiteral("clips")] = clips;
@@ -655,7 +760,11 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             clip.muster = c.value(QStringLiteral("pattern")).toString();
             clip.startTakt = c.value(QStringLiteral("start")).toInt(0);
             clip.wiederholungen = c.value(QStringLiteral("repeat")).toInt(1);
-            clip.effekte = effekteAusJson(c.value(QStringLiteral("effects")).toObject(), bericht);
+            // seit Fassung 5 die Reihe `path`; davor die drei festen `effects`
+            if (const QJsonValue reihe = c.value(QStringLiteral("path")); reihe.isArray())
+                clip.effekte = reiheAusJson(reihe.toArray(), bericht);
+            else
+                clip.effekte = effekteAusJson(c.value(QStringLiteral("effects")).toObject(), bericht);
             kanal.clips.push_back(std::move(clip));
         }
         neu.kanaele.push_back(std::move(kanal));

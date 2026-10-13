@@ -150,27 +150,27 @@ void ClipEffektFenster::setupUI()
     // --- Distortion
     QVBoxLayout* verzerrer = neueGruppe();
     neuerSchalter(
-        verzerrer, tr("Distortion"), QStringLiteral("fxDistOn"), [](const ClipEffekte& e) { return e.verzerrung.an; },
-        [](ClipEffekte& e, bool an) { e.verzerrung.an = an; });
+        verzerrer, tr("Distortion"), QStringLiteral("fxDistOn"), [](const ClipEffekte& e) { return e.wert<ClipVerzerrung>().an; },
+        [](ClipEffekte& e, bool an) { e.hole<ClipVerzerrung>().an = an; });
     neuerRegler(
         verzerrer, tr("Drive"), QStringLiteral("fxDistDrive"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.verzerrung.drive; }, [](ClipEffekte& e, double w) { e.verzerrung.drive = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipVerzerrung>().drive; }, [](ClipEffekte& e, double w) { e.hole<ClipVerzerrung>().drive = w; },
         prozent);
     neuerRegler(
         verzerrer, tr("Tone"), QStringLiteral("fxDistTone"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.verzerrung.ton; }, [](ClipEffekte& e, double w) { e.verzerrung.ton = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipVerzerrung>().ton; }, [](ClipEffekte& e, double w) { e.hole<ClipVerzerrung>().ton = w; },
         prozent);
     neuerRegler(
         verzerrer, tr("Mix"), QStringLiteral("fxDistMix"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.verzerrung.mix; }, [](ClipEffekte& e, double w) { e.verzerrung.mix = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipVerzerrung>().mix; }, [](ClipEffekte& e, double w) { e.hole<ClipVerzerrung>().mix = w; },
         prozent);
     verzerrer->addStretch(1);
 
     // --- Echo
     QVBoxLayout* echo = neueGruppe();
     neuerSchalter(
-        echo, tr("Echo"), QStringLiteral("fxEchoOn"), [](const ClipEffekte& e) { return e.echo.an; },
-        [](ClipEffekte& e, bool an) { e.echo.an = an; });
+        echo, tr("Echo"), QStringLiteral("fxEchoOn"), [](const ClipEffekte& e) { return e.wert<ClipEcho>().an; },
+        [](ClipEffekte& e, bool an) { e.hole<ClipEcho>().an = an; });
     {
         auto* zeile = new QHBoxLayout;
         auto* schild = new QLabel(tr("Time"), this);
@@ -191,42 +191,42 @@ void ClipEffektFenster::setupUI()
         connect(m_zeit, &QComboBox::activated, this, [this](int platz) {
             if (platz < 0) return;
             const auto zeit = static_cast<EchoZeit>(m_zeit->itemData(platz).toInt());
-            (void)aendere([zeit](ClipEffekte& e) { e.echo.zeit = zeit; });
+            (void)aendere([zeit](ClipEffekte& e) { e.hole<ClipEcho>().zeit = zeit; });
         });
     }
     neuerRegler(
         echo, tr("Feedback"), QStringLiteral("fxEchoFeedback"), 0, static_cast<int>(std::lround(kEchoFeedbackMax * 100)),
-        100.0, [](const ClipEffekte& e) { return e.echo.feedback; }, [](ClipEffekte& e, double w) { e.echo.feedback = w; },
+        100.0, [](const ClipEffekte& e) { return e.wert<ClipEcho>().feedback; }, [](ClipEffekte& e, double w) { e.hole<ClipEcho>().feedback = w; },
         prozent);
     neuerRegler(
         echo, tr("Damping"), QStringLiteral("fxEchoDamping"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.echo.daempfung; }, [](ClipEffekte& e, double w) { e.echo.daempfung = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipEcho>().daempfung; }, [](ClipEffekte& e, double w) { e.hole<ClipEcho>().daempfung = w; },
         prozent);
     neuerRegler(
-        echo, tr("Mix"), QStringLiteral("fxEchoMix"), 0, 100, 100.0, [](const ClipEffekte& e) { return e.echo.mix; },
-        [](ClipEffekte& e, double w) { e.echo.mix = w; }, prozent);
+        echo, tr("Mix"), QStringLiteral("fxEchoMix"), 0, 100, 100.0, [](const ClipEffekte& e) { return e.wert<ClipEcho>().mix; },
+        [](ClipEffekte& e, double w) { e.hole<ClipEcho>().mix = w; }, prozent);
 
     // --- Reverb
     QVBoxLayout* hall = neueGruppe();
     neuerSchalter(
-        hall, tr("Reverb"), QStringLiteral("fxReverbOn"), [](const ClipEffekte& e) { return e.hall.an; },
-        [](ClipEffekte& e, bool an) { e.hall.an = an; });
+        hall, tr("Reverb"), QStringLiteral("fxReverbOn"), [](const ClipEffekte& e) { return e.wert<ClipHall>().an; },
+        [](ClipEffekte& e, bool an) { e.hole<ClipHall>().an = an; });
     neuerRegler(
         hall, tr("Size"), QStringLiteral("fxReverbSize"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.hall.groesse; }, [](ClipEffekte& e, double w) { e.hall.groesse = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipHall>().groesse; }, [](ClipEffekte& e, double w) { e.hole<ClipHall>().groesse = w; },
         prozent);
     neuerRegler(
         hall, tr("Decay"), QStringLiteral("fxReverbDecay"), static_cast<int>(std::lround(kHallSekMin * 10)),
-        static_cast<int>(std::lround(kHallSekMax * 10)), 10.0, [](const ClipEffekte& e) { return e.hall.sekunden; },
-        [](ClipEffekte& e, double w) { e.hall.sekunden = w; },
+        static_cast<int>(std::lround(kHallSekMax * 10)), 10.0, [](const ClipEffekte& e) { return e.wert<ClipHall>().sekunden; },
+        [](ClipEffekte& e, double w) { e.hole<ClipHall>().sekunden = w; },
         [](double wert) { return QStringLiteral("%1 s").arg(wert, 0, 'f', 1); });
     neuerRegler(
         hall, tr("Damping"), QStringLiteral("fxReverbDamping"), 0, 100, 100.0,
-        [](const ClipEffekte& e) { return e.hall.daempfung; }, [](ClipEffekte& e, double w) { e.hall.daempfung = w; },
+        [](const ClipEffekte& e) { return e.wert<ClipHall>().daempfung; }, [](ClipEffekte& e, double w) { e.hole<ClipHall>().daempfung = w; },
         prozent);
     neuerRegler(
-        hall, tr("Mix"), QStringLiteral("fxReverbMix"), 0, 100, 100.0, [](const ClipEffekte& e) { return e.hall.mix; },
-        [](ClipEffekte& e, double w) { e.hall.mix = w; }, prozent);
+        hall, tr("Mix"), QStringLiteral("fxReverbMix"), 0, 100, 100.0, [](const ClipEffekte& e) { return e.wert<ClipHall>().mix; },
+        [](ClipEffekte& e, double w) { e.hole<ClipHall>().mix = w; }, prozent);
     aussen->addWidget(m_gruppen);
 
     auto* fuss = new QHBoxLayout;
@@ -329,9 +329,9 @@ void ClipEffektFenster::fuelle()
         regler.anzeige->setText(leer ? QString() : gleich ? regler.text(erster) : tr("mixed"));
     }
     {
-        const EchoZeit erste = leer ? ClipEffekte{}.echo.zeit : alle.front().echo.zeit;
+        const EchoZeit erste = leer ? ClipEcho{}.zeit : alle.front().wert<ClipEcho>().zeit;
         const bool gleich =
-            std::all_of(alle.begin(), alle.end(), [erste](const ClipEffekte& e) { return e.echo.zeit == erste; });
+            std::all_of(alle.begin(), alle.end(), [erste](const ClipEffekte& e) { return e.wert<ClipEcho>().zeit == erste; });
         const QSignalBlocker ruhe(m_zeit);
         m_zeit->setCurrentIndex(gleich ? m_zeit->findData(static_cast<int>(erste)) : -1);
         // die Zeit in Millisekunden, im Tempo des Loops

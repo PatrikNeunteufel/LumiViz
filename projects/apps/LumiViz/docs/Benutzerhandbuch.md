@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.143.0
-> **Datum:** 2026-10-12
+> **Version:** 1.144.0
+> **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2532,9 +2532,9 @@ Gut zu wissen:
   Nachklang dort neu: was vor der Stelle gespielt hätte, klingt nicht nach.
 - Änderst du **Time**, **Size** oder das BPM, während ein Clip nachklingt,
   bricht der Nachklang dieses Effekts ab.
-- Ein Loop mit Effekten wird in einem neueren Dateiformat gespeichert. Ein
-  älteres LumiViz spielt ihn ohne Effekte und meldet „File was written by a
-  newer version".
+- Ein Loop wird in einem neueren Dateiformat gespeichert, als ein älteres
+  LumiViz es kennt. Ein LumiViz vor Session 118 liest ihn, spielt seine Clips
+  aber ohne Effekte und meldet „File was written by a newer version".
 
 Das Beispiel `asset\loop\effects_demo.lvloop` zeigt alle drei Effekte.
 
@@ -2963,6 +2963,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.144.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die Dateiformate — eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr; eine `.lvloop` liest es, spielt ihre Clips aber ohne Effekte. Ältere Dateien liest dieses LumiViz wie bisher, sie klingen gleich. Am Programm ist nichts zu sehen |
 | 1.143.0 | 2026-10-12 | Session 117. §16 Loop NEU: sechs gerechnete Drum-Instrumente unter **Drums** im Fenster Instruments (Kick, Tom, Snare, Clap, Hi-Hat Closed, Hi-Hat Open) — für die Note C2 gebaut, leiser als das Kit |
 | 1.142.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Editor GEÄNDERT: **Load instrument...** fragt nach der Wahl, ob die Datei zu den eigenen Instrumenten kopiert wird (vorbelegt) oder am Ort bleibt; vorher stand immer der Pfad im Muster |
 | 1.141.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Creator GEÄNDERT: **Save as...** fragt nur noch nach einem Namen und legt die Kopie zu den eigenen Dateien (vorher ein Dateidialog an beliebigem Ort); der Dialog **Save instrument** sagt bei einem mitgelieferten Instrument, dass Originale nicht überschrieben werden |

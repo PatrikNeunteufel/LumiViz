@@ -404,11 +404,11 @@ TEST_SUITE("LoopInstrumentEditor")
             CHECK(resonanz->isEnabled());
             art->setCurrentIndex(art->findText(QStringLiteral("Band-pass")));
             Q_EMIT art->activated(art->currentIndex());
-            CHECK(creator.schicht().filterArt == FilterArt::Bandpass);
+            CHECK(creator.schicht().filter().art == FilterArt::Bandpass);
             resonanz->setValue(15);
-            CHECK(creator.schicht().filterResonanz == doctest::Approx(0.15));
+            CHECK(creator.schicht().filter().resonanz == doctest::Approx(0.15));
             CHECK(steht(QStringLiteral("15 %")));
-            creator.aendereSchicht([](Schicht& s) { s.filterArt = FilterArt::Hochpass; });
+            creator.aendereSchicht([](Schicht& s) { s.holeFilter().art = FilterArt::Hochpass; });
             CHECK(art->currentText() == QStringLiteral("High-pass"));  // die Auswahl folgt
             // die Saite hat keinen Filter
             creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Saite; });
@@ -734,7 +734,7 @@ TEST_SUITE("LoopInstrumentEditor")
         creator.aendereSchicht([](Schicht& s) { s.name = QStringLiteral("Shimmer"); });
         CHECK(creator.schicht().versatzHalbtoene == 12);
         CHECK(creator.schicht().einsatzMs == doctest::Approx(40.0));
-        CHECK(creator.schicht().verzerrung == doctest::Approx(0.3));
+        CHECK(creator.schicht().drive().wert == doctest::Approx(0.3));
         CHECK(creator.schicht().laut == doctest::Approx(0.35));
         CHECK(liste->item(1)->text() == QStringLiteral("2 Shimmer · Sine\nLevel 35 % · +12 st"));
         CHECK(InstrumentCreator::schichtTitel(creator.schicht(), 1) == QStringLiteral("2 Shimmer"));

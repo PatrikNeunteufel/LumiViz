@@ -550,7 +550,10 @@ TEST_SUITE("LoopInstrument")
         wildeSchicht[QStringLiteral("waveform")] = QStringLiteral("gibt es nicht");
         wildeSchicht[QStringLiteral("transpose")] = 99;
         wildeSchicht[QStringLiteral("startOffset")] = -5.0;
-        wildeSchicht[QStringLiteral("drive")] = 7.0;
+        // seit Fassung 7 steht Drive in der Reihe `path`
+        wildeSchicht[QStringLiteral("path")] =
+            QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("drive")}, {QStringLiteral("amount"), 7.0}},
+                       QJsonObject{{QStringLiteral("type"), QStringLiteral("envelope")}}};
         wild[QStringLiteral("layers")] = QJsonArray{wildeSchicht};
         wild[QStringLiteral("level")] = 3.0;
         Instrument gezaehmt;
@@ -562,7 +565,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(gezaehmt.schichten[0].schwingung == Schwingung::Sinus);  // die Vorgabe
         CHECK(gezaehmt.schichten[0].versatzHalbtoene == 24);
         CHECK(gezaehmt.schichten[0].einsatzMs == doctest::Approx(0.0));
-        CHECK(gezaehmt.schichten[0].verzerrung == doctest::Approx(1.0));
+        CHECK(gezaehmt.schichten[0].drive().wert == doctest::Approx(1.0));
         QJsonObject fremd = alsJson(eigenes);
         fremd[QStringLiteral("format")] = QStringLiteral("lumiviz-loop");
         CHECK_FALSE(ausJson(fremd, gezaehmt));
@@ -800,11 +803,11 @@ TEST_SUITE("LoopInstrument")
         oben.laut = 0.35;
         oben.versatzHalbtoene = 12;
         oben.einsatzMs = 40.0;
-        oben.verzerrung = 0.5;
+        oben.holeDrive().wert = 0.5;
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 6);  // seit S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 7);  // seit S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
@@ -812,7 +815,13 @@ TEST_SUITE("LoopInstrument")
         CHECK(zweite.value(QStringLiteral("name")).toString() == QStringLiteral("Shimmer"));
         CHECK(zweite.value(QStringLiteral("transpose")).toInt() == 12);
         CHECK(zweite.value(QStringLiteral("startOffset")).toDouble() == doctest::Approx(40.0));
-        CHECK(zweite.value(QStringLiteral("drive")).toDouble() == doctest::Approx(0.5));
+        CHECK_FALSE(zweite.contains(QStringLiteral("drive")));  // seit Fassung 7 in der Reihe `path`
+        const QJsonArray weg = zweite.value(QStringLiteral("path")).toArray();
+        const auto istDrive = [](const QJsonValue& baustein) {
+            return baustein.toObject().value(QStringLiteral("type")).toString() == QStringLiteral("drive") &&
+                   baustein.toObject().value(QStringLiteral("amount")).toDouble() == doctest::Approx(0.5);
+        };
+        CHECK(std::count_if(weg.begin(), weg.end(), istDrive) == 1);
         CHECK(zweite.value(QStringLiteral("on")).toBool());
         Instrument gelesen;
         gelesen.name = zwei.name;
@@ -841,7 +850,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(alt.schichten[0].schwingung == Schwingung::Saege);
         CHECK(alt.schichten[0].stimmen == 2);
         CHECK(alt.schichten[0].versatzHalbtoene == 0);
-        CHECK(alt.schichten[0].verzerrung == 0.0);
+        CHECK(alt.schichten[0].drive().wert == 0.0);
         flach.remove(QStringLiteral("version"));  // ohne Nummer: Fassung 1
         REQUIRE(ausJson(flach, alt));
         CHECK(alt.schichten[0].schwingung == Schwingung::Saege);
@@ -936,7 +945,7 @@ TEST_SUITE("LoopInstrument")
         sinus.schichten[0].halten = 1.0;
         const Klang rein = rendereTon(sinus, 57, 500.0, kRate);
         Instrument verzerrt = sinus;
-        verzerrt.schichten[0].verzerrung = 1.0;
+        verzerrt.schichten[0].holeDrive().wert = 1.0;
         const Klang hart = rendereTon(verzerrt, 57, 500.0, kRate);
         REQUIRE(hart.daten.size() == rein.daten.size());
         CHECK(hart.daten != rein.daten);
@@ -1052,7 +1061,7 @@ TEST_SUITE("LoopInstrument")
         REQUIRE(loop.kanaele[0].clips.size() == 2u);
         CHECK(loop.kanaele[0].clips[0].muster == loop.kanaele[0].clips[1].muster);
         CHECK(!loop.kanaele[0].clips[0].effekte.einerAn());
-        CHECK(loop.kanaele[0].clips[1].effekte.hall.an);
+        CHECK(loop.kanaele[0].clips[1].effekte.wert<ClipHall>().an);
 
         const Ablauf ablauf = plane(loop, kRate);
         CHECK(ablauf.busse.size() == 5u);
@@ -1280,9 +1289,9 @@ TEST_SUITE("LoopInstrument")
             s.anstiegMs = 0.0;
             s.halten = 1.0;
             s.ausklangMs = 20.0;
-            s.filterTeilton = cutoff;
-            s.filterArt = art;
-            s.filterResonanz = resonanz;
+            s.holeFilter().teilton = cutoff;
+            s.holeFilter().art = art;
+            s.holeFilter().resonanz = resonanz;
             return instrument;
         };
         // der groesste Betrag, nachdem der Filter eingeschwungen ist (ab 200 ms); A3, 220 Hz
@@ -1356,48 +1365,66 @@ TEST_SUITE("LoopInstrument")
                 return zahl;
             };
             const int weiss = wechsel(rendereTon(rausch, 81, 200.0, kRate));
-            rausch.schichten[0].filterTeilton = 8.0;  // A5 mal acht: 7040 Hz
-            rausch.schichten[0].filterArt = FilterArt::Hochpass;
+            rausch.schichten[0].holeFilter().teilton = 8.0;  // A5 mal acht: 7040 Hz
+            rausch.schichten[0].holeFilter().art = FilterArt::Hochpass;
             const Klang hell = rendereTon(rausch, 81, 200.0, kRate);
             CHECK(wechsel(hell) > weiss + 300);  // gemessen: 2449 gegen 1953
-            rausch.schichten[0].filterArt = FilterArt::Tiefpass;
+            rausch.schichten[0].holeFilter().art = FilterArt::Tiefpass;
             CHECK(wechsel(rendereTon(rausch, 81, 200.0, kRate)) < weiss - 300);
         }
 
-        // --- die Datei: Fassung 6 mit `filterType` und `filterResonance`
+        // --- die Datei: Art und Resonanz stehen seit Fassung 7 am Filter in der Reihe `path`
+        //     (`filterType`, `resonance`), in Fassung 6 flach an der Schicht (`filterType`, `filterResonance`)
         Instrument instrument = sinus(4.6, FilterArt::Bandpass, 0.15);
         instrument.schichten.push_back(Schicht{});
-        instrument.schichten[1].filterArt = FilterArt::Hochpass;
+        instrument.schichten[1].holeFilter().art = FilterArt::Hochpass;
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 6);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
         const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
         REQUIRE(schichten.size() == 2);
-        CHECK(schichten.at(0).toObject().value(QStringLiteral("filterType")).toString() == QStringLiteral("bandpass"));
-        CHECK(schichten.at(0).toObject().value(QStringLiteral("filterResonance")).toDouble() == doctest::Approx(0.15));
-        CHECK(schichten.at(1).toObject().value(QStringLiteral("filterType")).toString() == QStringLiteral("highpass"));
+        const auto ersterFilter = [](const QJsonValue& schicht) {
+            for (const QJsonValue& baustein : schicht.toObject().value(QStringLiteral("path")).toArray())
+                if (baustein.toObject().value(QStringLiteral("type")).toString() == QStringLiteral("filter"))
+                    return baustein.toObject();
+            return QJsonObject{};
+        };
+        CHECK(ersterFilter(schichten.at(0)).value(QStringLiteral("filterType")).toString() == QStringLiteral("bandpass"));
+        CHECK(ersterFilter(schichten.at(0)).value(QStringLiteral("resonance")).toDouble() == doctest::Approx(0.15));
+        CHECK(ersterFilter(schichten.at(1)).value(QStringLiteral("filterType")).toString() == QStringLiteral("highpass"));
         Instrument gelesen;
         REQUIRE(ausJson(json, gelesen));
         CHECK(gelesen == instrument);
+        // dieselbe Schicht, wie Fassung 6 sie schrieb: flach
+        QJsonObject sechs = schichten.at(0).toObject();
+        sechs.remove(QStringLiteral("path"));
+        sechs[QStringLiteral("filterCutoff")] = 4.6;
+        sechs[QStringLiteral("filterType")] = QStringLiteral("bandpass");
+        sechs[QStringLiteral("filterResonance")] = 0.15;
+        QJsonObject alsSechs = json;
+        alsSechs[QStringLiteral("version")] = 6;
+        alsSechs[QStringLiteral("layers")] = QJsonArray{sechs};
+        REQUIRE(ausJson(alsSechs, gelesen));
+        CHECK(gelesen.schichten[0] == instrument.schichten[0]);
         // Werte in ihren Grenzen; eine unbekannte Art ist der Tiefpass
-        QJsonObject wild = json;
-        QJsonObject schicht = schichten.at(0).toObject();
+        QJsonObject wild = alsSechs;
+        QJsonObject schicht = sechs;
         schicht[QStringLiteral("filterType")] = QStringLiteral("notch");
         schicht[QStringLiteral("filterResonance")] = 7.0;
         wild[QStringLiteral("layers")] = QJsonArray{schicht};
         REQUIRE(ausJson(wild, gelesen));
-        CHECK(gelesen.schichten[0].filterArt == FilterArt::Tiefpass);
-        CHECK(gelesen.schichten[0].filterResonanz == 1.0);
+        CHECK(gelesen.schichten[0].filter().art == FilterArt::Tiefpass);
+        CHECK(gelesen.schichten[0].filter().resonanz == 1.0);
         // eine Datei der Fassung 5 kennt die Felder nicht: der Tiefpass von frueher
         QJsonObject alt = json;
         alt[QStringLiteral("version")] = 5;
-        QJsonObject ohne = schichten.at(0).toObject();
+        QJsonObject ohne = sechs;
         ohne.remove(QStringLiteral("filterType"));
         ohne.remove(QStringLiteral("filterResonance"));
         alt[QStringLiteral("layers")] = QJsonArray{ohne};
         REQUIRE(ausJson(alt, gelesen));
-        CHECK(gelesen.schichten[0].filterArt == FilterArt::Tiefpass);
-        CHECK(gelesen.schichten[0].filterResonanz == 0.0);
-        CHECK(gelesen.schichten[0].filterTeilton == doctest::Approx(4.6));
+        CHECK(gelesen.schichten[0].filter().art == FilterArt::Tiefpass);
+        CHECK(gelesen.schichten[0].filter().resonanz == 0.0);
+        CHECK(gelesen.schichten[0].filter().teilton == doctest::Approx(4.6));
 
         // --- `LUMIVIZ_11E_WAV=<Ordner>` legt Hoerproben ab: Snare, Clap und Hi-Hat aus Rauschen mit Filter,
         //     ein Bass mit Resonanz und Filter-Huellkurve
@@ -1415,9 +1442,9 @@ TEST_SUITE("LoopInstrument")
                 return s;
             };
             const auto mitFilter = [](Schicht s, FilterArt art, double cutoff, double resonanz) {
-                s.filterArt = art;
-                s.filterTeilton = cutoff;
-                s.filterResonanz = resonanz;
+                s.holeFilter().art = art;
+                s.holeFilter().teilton = cutoff;
+                s.holeFilter().resonanz = resonanz;
                 return s;
             };
             const auto viermal = [](const Instrument& i, int hoehe, double dauerMs) {
@@ -1452,9 +1479,9 @@ TEST_SUITE("LoopInstrument")
             // ein Bass: Saege, Tiefpass mit Resonanz, die Huellkurve oeffnet ihn
             Instrument bass;
             bass.schichten = {mitFilter(schlag(Schwingung::Saege, 0.8, 300.0), FilterArt::Tiefpass, 2.0, 0.7)};
-            bass.schichten[0].filterHuelle = 14.0;
+            bass.schichten[0].holeFilter().huelle = 14.0;
             Instrument bassOhne = bass;
-            bassOhne.schichten[0].filterResonanz = 0.0;
+            bassOhne.schichten[0].holeFilter().resonanz = 0.0;
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("snare_zwei_sinus_und_rauschen_hochpass.wav")), viermal(snare, 54, 280.0), kRate));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("clap_rauschen_bandpass_vier_schichten.wav")), viermal(clap, 60, 330.0), kRate));
             CHECK(schreibeWav(QDir(ordner).filePath(QStringLiteral("hat_zu_rauschen_hochpass.wav")), viermal(hat, 72, 90.0), kRate));
@@ -1520,7 +1547,7 @@ TEST_SUITE("LoopInstrument")
         rausch.schichten[0].versatzHalbtoene = 12;
         CHECK(rendereTon(rausch, 48, 200.0, kRate).daten == tief.daten);
         rausch.schichten[0].versatzHalbtoene = 0;
-        rausch.schichten[0].filterTeilton = 4.0;
+        rausch.schichten[0].holeFilter().teilton = 4.0;
         const Klang dumpf = rendereTon(rausch, 48, 200.0, kRate);
         const Klang hell = rendereTon(rausch, 72, 200.0, kRate);
         CHECK(dumpf.daten != hell.daten);
@@ -1528,7 +1555,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(staerke(hell) < staerke(tief));
         CHECK(wechsel(dumpf, 1000, 5000) < wechsel(hell, 1000, 5000));
         // Pitch sweep kennt das Rauschen nicht
-        rausch.schichten[0].filterTeilton = 0.0;
+        rausch.schichten[0].holeFilter().teilton = 0.0;
         rausch.schichten[0].tonhoeheStartHt = 24.0;
         CHECK(rendereTon(rausch, 48, 200.0, kRate).daten == tief.daten);
 
@@ -1654,7 +1681,7 @@ TEST_SUITE("LoopInstrument")
             kick.schichten[0].tonhoeheStartHt = 22.0;
             kick.schichten[0].tonhoeheZeitMs = 105.0;
             Instrument kickDrive = kick;
-            kickDrive.schichten[0].verzerrung = 0.19;
+            kickDrive.schichten[0].holeDrive().wert = 0.19;
             Instrument tomtom;
             tomtom.schichten = {schlag(Schwingung::Sinus, 1.0, 420.0), schlag(Schwingung::Rauschen, 0.15, 10.0)};
             tomtom.schichten[0].tonhoeheStartHt = 10.0;

@@ -277,7 +277,7 @@ TEST_SUITE("LoopArrangement")
     {
         // Stufe 12c (S113). probe(): Drums A 0 bis 8, B 8 bis 16; Perc A 4 bis 8
         Loop loop = probe();
-        loop.kanaele[1].clips[0].effekte.echo.an = true;
+        loop.kanaele[1].clips[0].effekte.hole<ClipEcho>().an = true;
         const Loop vorher = loop;
         CHECK(findeClip(loop, {0, 8}) == 1);
         CHECK(findeClip(loop, {0, 9}) == -1);
@@ -290,7 +290,7 @@ TEST_SUITE("LoopArrangement")
             CHECK(orte == std::vector<ClipOrt>{{0, 16}, {1, 20}});
             CHECK(clipIn(loop, 0, 1) == LoopClip{QStringLiteral("A"), 16, 2});
             CHECK(clipIn(loop, 1, 0).startTakt == 20);
-            CHECK(clipIn(loop, 1, 0).effekte.echo.an);  // die Effekte reisen mit
+            CHECK(clipIn(loop, 1, 0).effekte.wert<ClipEcho>().an);  // die Effekte reisen mit
             CHECK(inOrdnung(loop));
         }
         SUBCASE("liegt an einem der Ziele ein anderer Clip, geschieht nichts")
@@ -330,7 +330,7 @@ TEST_SUITE("LoopArrangement")
             CHECK(loop.kanaele[0].clips.size() == 3u);
             CHECK(loop.kanaele[1].clips.size() == 2u);
             CHECK(clipIn(loop, 0, 0) == clipIn(vorher, 0, 0));  // die Vorlagen bleiben
-            CHECK(clipIn(loop, 1, 1).effekte.echo.an);          // die Kopie nimmt die Effekte mit
+            CHECK(clipIn(loop, 1, 1).effekte.wert<ClipEcho>().an);          // die Kopie nimmt die Effekte mit
             CHECK(clipIn(loop, 1, 1).muster == QStringLiteral("A"));  // und bleibt verbunden
             CHECK(inOrdnung(loop));
         }
@@ -357,7 +357,7 @@ TEST_SUITE("LoopArrangement")
         Taktachse achse;
         achse.resize(900, 260);
         Loop loop = probe();
-        loop.kanaele[1].clips[0].effekte.hall.an = true;  // traegt die Marke fx
+        loop.kanaele[1].clips[0].effekte.hole<ClipHall>().an = true;  // traegt die Marke fx
         achse.setLoop(loop, true);
 
         int aenderungen = 0;
@@ -434,7 +434,7 @@ TEST_SUITE("LoopArrangement")
             CHECK(zuletzt == QStringLiteral("Move clips"));
             CHECK(clipIn(achse.loop(), 0, 1).startTakt == 12);
             CHECK(clipIn(achse.loop(), 1, 0).startTakt == 8);
-            CHECK(clipIn(achse.loop(), 1, 0).effekte.hall.an);
+            CHECK(clipIn(achse.loop(), 1, 0).effekte.wert<ClipHall>().an);
             CHECK(achse.markierte() == std::vector<ClipOrt>{{0, 12}, {1, 8}});
             CHECK(inOrdnung(achse.loop()));
             // zurueck nach links ueber Drums A hinweg geht nicht: die Gruppe bleibt an der

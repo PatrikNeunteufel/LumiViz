@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.178.0
-> **Datum:** 2026-10-13 (Session 117)
+> **Version:** 1.179.0
+> **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -5236,6 +5236,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.179.0 | 2026-10-13 | Session 118. Loop, Signal path: Baustufen freigegeben (Entscheid Patrik B1 a — in der vorgelegten Reihenfolge). **Stufe 16a gebaut:** Schicht und Clip tragen eine Reihe von Bausteinen statt der festen Felder, `.lvinst` Fassung 7, `.lvloop` Fassung 5 (`Loop_Konzept.md` §4j); jede mitgelieferte Datei liest zu der Reihe, die sie fest hatte. Klangerzeuger, Creator und Clip effects arbeiten bis 16b, 16c, 16d mit dem ersten Baustein je Art — am Programm ist nichts neu zu sehen. **Offen:** 16b (vorher die gerechneten Werte aller Instrumente und Beispiel-Loops festhalten), 16c (Skizze vorher noch einmal zeigen), 16d (davor K5), 16e; der volle Lauf steht bis zum Ende der Stufe 16 aus; im Programm ungesehen (Liste 10, G1, G2) |
 | 1.178.0 | 2026-10-13 | Session 117. Loop: die Vorlage zur Kette für Filter und Effekte ist entschieden — **Signal path**, `Loop_Konzept.md` §4j, K1 a (eine Reihe von Bausteinen), K2 a (Schicht: Filter, Drive, Envelope), K3 a (Clip: Filter in Hertz, Distortion, Echo, Reverb), K4 a (höchstens acht). **Offen:** Patriks Freigabe der Baustufen 16a bis 16e; K5 (mehrere markierte Clips mit verschiedenen Reihen); die Skizze vor 16c noch einmal zeigen. Nichts gebaut |
 | 1.177.0 | 2026-10-12 | Session 117. Loop **Stufe 11f gebaut:** sechs gerechnete Drum-Instrumente unter Drums (`asset/loop/make_drums.py`), für die Note C2, gegen das Kit gemessen (`Loop_Konzept.md` §4h, Tabelle), leiser als das Kit (Spitze 0,42 bis 0,58 gegen 0,9) — im Programm nicht gesehen und nicht gehört. **Offen:** Patriks Ohr an `.claude/handover/hoerproben_11f/vergleich_*.wav` (dazu die aus 11d, 11e und `hoerproben_drumkit`) — daran hängt, ob Drive hinter der Hüllkurve (Kick), zwei Filter (Clap) und die Hi-Hat-Schwingung gebaut werden; ob die gerechneten so laut sein sollen wie das Kit (ginge nur mit einer Änderung am Klangerzeuger); die Vorlage zur Kette für Filter und Effekte |
 | 1.176.0 | 2026-10-12 | Session 117. Loop, Instrument-Editor: **Load instrument...** fragt, ob die Datei zu den eigenen kopiert wird oder am Ort bleibt (E3 a) — im Programm nicht gesehen; E2 a erledigt (die drei losen `.lvinst` liegen unter `instruments`) |

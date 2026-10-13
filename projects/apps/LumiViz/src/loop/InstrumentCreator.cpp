@@ -838,32 +838,32 @@ void InstrumentCreator::setupUI()
         gitter->addWidget(m_filterArt, zeile, 1, 1, 2);
         connect(m_filterArt, &QComboBox::activated, this, [this](int index) {
             const auto art = static_cast<FilterArt>(m_filterArt->itemData(index).toInt());
-            aendereSchicht([art](Schicht& s) { s.filterArt = art; });
+            aendereSchicht([art](Schicht& s) { s.holeFilter().art = art; });
         });
     }
-    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filterTeilton * 10.0); },
-           [](Schicht& i, int w) { i.filterTeilton = w / 10.0; },
+    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filter().teilton * 10.0); },
+           [](Schicht& i, int w) { i.holeFilter().teilton = w / 10.0; },
            [](const Schicht& i) {
-               return i.filterTeilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filterTeilton, 0, 'f', 1);
+               return i.filter().teilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filter().teilton, 0, 'f', 1);
            });
     m_nichtSaite.push_back(m_regler.size() - 1);
     // Resonance (Entscheid H1 b): an allen drei Arten
-    regler(gitter, tr("Resonance"), "creatorResonance", 0, 100, [](const Schicht& i) { return gerundet(i.filterResonanz * 100.0); },
-           [](Schicht& i, int w) { i.filterResonanz = w / 100.0; },
-           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.filterResonanz * 100.0)); })
+    regler(gitter, tr("Resonance"), "creatorResonance", 0, 100, [](const Schicht& i) { return gerundet(i.filter().resonanz * 100.0); },
+           [](Schicht& i, int w) { i.holeFilter().resonanz = w / 100.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.filter().resonanz * 100.0)); })
         .schieber->setToolTip(tr("Emphasis at Cutoff: further right the filter rings at its edge. With Band-pass it sets "
                                  "the width — further right the band gets narrower"));
     m_reglerResonanz = m_regler.size() - 1;
     m_nichtSaite.push_back(m_reglerResonanz);
     regler(gitter, tr("Envelope"), "creatorFilterEnvelope", 0, 320,
-           [](const Schicht& i) { return gerundet(i.filterHuelle * 10.0); },
-           [](Schicht& i, int w) { i.filterHuelle = w / 10.0; },
-           [](const Schicht& i) { return QStringLiteral("+ %1").arg(i.filterHuelle, 0, 'f', 1); });
+           [](const Schicht& i) { return gerundet(i.filter().huelle * 10.0); },
+           [](Schicht& i, int w) { i.holeFilter().huelle = w / 10.0; },
+           [](const Schicht& i) { return QStringLiteral("+ %1").arg(i.filter().huelle, 0, 'f', 1); });
     m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [](const Schicht& i) { return gerundet(i.verzerrung * 100.0); },
-           [](Schicht& i, int w) { i.verzerrung = w / 100.0; },
+    regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [](const Schicht& i) { return gerundet(i.drive().wert * 100.0); },
+           [](Schicht& i, int w) { i.holeDrive().wert = w / 100.0; },
            [](const Schicht& i) {
-               return i.verzerrung <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(i.verzerrung * 100.0));
+               return i.drive().wert <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(i.drive().wert * 100.0));
            })
         .schieber->setToolTip(tr("Distortion of this layer"));
 
@@ -1593,12 +1593,12 @@ void InstrumentCreator::zeigeAlles()
     // der Filter (Stufe 11e): die Saite hat keinen; steht Cutoff auf „open", ist nichts zu stellen
     {
         const QSignalBlocker ruhe(m_filterArt);
-        m_filterArt->setCurrentIndex(m_filterArt->findData(static_cast<int>(gewaehlte.filterArt)));
+        m_filterArt->setCurrentIndex(m_filterArt->findData(static_cast<int>(gewaehlte.filter().art)));
     }
     m_filterArtName->setVisible(!saite);
     m_filterArt->setVisible(!saite);
-    m_filterArt->setEnabled(gewaehlte.filterTeilton > 0.0);
-    m_regler[m_reglerResonanz].schieber->setEnabled(gewaehlte.filterTeilton > 0.0);
+    m_filterArt->setEnabled(gewaehlte.filter().teilton > 0.0);
+    m_regler[m_reglerResonanz].schieber->setEnabled(gewaehlte.filter().teilton > 0.0);
     for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
     {
         // Detect: das Ergebnis gilt fuer die Schicht und die Aufnahme, an der gemessen wurde

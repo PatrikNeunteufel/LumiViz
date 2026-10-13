@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.59.0
-> **Datum:** 2026-10-13 (Session 117)
+> **Version:** 0.60.0
+> **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -2482,7 +2482,7 @@ die des Rechners nicht verstellen).
 
 ---
 
-## 4j. Signal path: Filter und Effekte als Kette (Stufe 16 — Skizzen gezeigt, Entscheide K1 a bis K4 a, Patrik S117; nicht gebaut)
+## 4j. Signal path: Filter und Effekte als Kette (Stufe 16 — Skizzen gezeigt, Entscheide K1 a bis K4 a, Patrik S117; Baustufen freigegeben S118, B1 a; 16a gebaut)
 
 Anlass: Wunsch Patrik S115 (§4h, „die Kaskade als Kette, in einer Art
 Node-Editor, auch für die Effekte"). Vorgelegt in S117 mit zwei Skizzen aus
@@ -2571,7 +2571,10 @@ Enden; die Regler unter der Reihe; der Bereich von Cutoff am Clip; dass ein
 Filter vor oder hinter Envelope kaum anders klingt, steht als Satz im
 Handbuch.
 
-**Baustufen — vorgelegt S117, von Patrik noch nicht freigegeben:**
+**Baustufen — vorgelegt S117, freigegeben S118 (Entscheid Patrik B1 a: in
+dieser Reihenfolge, die Drums erst, wenn Creator und Clip effects die Reihe
+zeigen; verworfen b — Drums vorgezogen, mit gesperrtem Creator für Kick und
+Clap —, c — nur 16a und 16b):**
 
 | Stufe | Inhalt | Beleg |
 |---|---|---|
@@ -2580,6 +2583,51 @@ Handbuch.
 | 16c | **Creator:** die Zeile Signal path je Schicht, die Regler darunter, Add, Move, Remove, Ziehen; die Gruppen Envelope und Filter entfallen | die Skizze vorher noch einmal zeigen; das Bild aus dem Test ansehen; Ziehen mit Zeigerwechsel und Hinweis (Bedienung auffindbar) |
 | 16d | **Fenster Clip effects:** die Zeile statt der drei Gruppen, Filter als vierter Baustein | davor **K5** entscheiden (unten); Bild aus dem Test |
 | 16e | **Die Drums nachziehen und Abschluss:** Kick mit Drive hinter Envelope, Clap mit zwei Filtern — neu gegen das Kit gemessen, neue Hörproben; Benutzerhandbuch, Sichttest-Liste, voller Lauf | die Tabelle aus 11f mit den neuen Zahlen daneben |
+
+**16a gebaut (S118) — Modell und Dateien.**
+
+- **Schicht** (`loop/Instrument.hpp`): `reihe`, eine Liste aus
+  `SchichtFilter` (Art, Cutoff als Vielfaches des Grundtons, Filter envelope,
+  Resonance), `SchichtDrive` und `SchichtHuelle`. Die festen Felder für
+  Filter und Drive gibt es nicht mehr; Attack, Decay, Sustain und Release
+  bleiben an der Schicht, `SchichtHuelle` ist nur die Stelle. `richteReihe`:
+  genau eine Envelope, höchstens `kBausteineMax` (`loop/Bausteine.hpp`).
+- **Clip** (`loop/Loop.hpp`): `ClipEffekte::reihe`, eine Liste aus
+  `ClipFilter` (neu: Art, Cutoff in Hertz, Resonance, Haken), `ClipVerzerrung`,
+  `ClipEcho`, `ClipHall`. Ein Clip ohne Effekte hat eine leere Reihe.
+- **`.lvinst` Fassung 7:** je Schicht die Liste `path` mit Einträgen
+  `{"type": "filter", "filterType", "cutoff", "envelope", "resonance"}`,
+  `{"type": "drive", "amount"}`, `{"type": "envelope"}`; die flachen Felder
+  `drive`, `filterCutoff`, `filterEnvelope`, `filterType`, `filterResonance`
+  entfallen. Eine Datei bis Fassung 6 liest sich als Filter, Drive, Envelope —
+  ein Filter mit Cutoff 0 und ein Drive mit 0 werden kein Baustein.
+- **`.lvloop` Fassung 5:** je Clip die Liste `path` mit Einträgen
+  `{"type": "filter" | "distortion" | "echo" | "reverb", "on", …}` statt des
+  Felds `effects`. Eine Datei bis Fassung 4 liest ihre `effects` als
+  Distortion, Echo, Reverb; was dort nicht stand, wird kein Baustein. Einen
+  unbekannten Baustein lässt das Programm weg und nennt ihn im Bericht
+  („Unknown effect '…'").
+- **Die mitgelieferten Dateien bleiben, wie sie sind** (Fassung 3 bis 6, 2
+  bis 4); das Programm schreibt die neuen Fassungen erst beim Speichern.
+- **Übergang bis 16b, 16c, 16d:** Klangerzeuger, Creator und das Fenster Clip
+  effects arbeiten noch mit dem **ersten** Baustein je Art in der alten Folge
+  (`Schicht::filter`, `drive`, `holeFilter`, `holeDrive`;
+  `ClipEffekte::wert`, `hole`). Für jede Datei bis Fassung 6 und 4 ist das die
+  ganze Reihe — sie klingt und zeigt sich wie bisher. Eine Reihe mit zwei
+  Filtern oder einer anderen Folge wird gelesen, gespeichert und behalten,
+  aber noch nicht so gerechnet und nicht gezeigt. Der Filter am Clip steht
+  im Modell und in der Datei, gerechnet wird er ab 16b.
+- **Beleg** (`test_LoopBausteine.cpp`, fünf Fälle): jede der 55
+  mitgelieferten `.lvinst` (113 Schichten, davon 48 mit Filter, 22 mit Drive)
+  und jede der 34 `.lvloop` (210 Clips, davon 12 mit Effekten) liest zu der
+  Reihe, die sie fest hatte; Schreiben und Lesen ergeben dasselbe.
+- **Von Claude gesetzt, nicht entschieden:** die Namen in den Dateien (`path`,
+  `type`, `amount`, `cutoff`, `envelope`, `resonance`); ein Baustein der
+  Schicht hat keinen Haken zum Ausschalten; die Vorgabe des Filters am Clip
+  (aus, Low-pass, 1000 Hz); eine `.lvloop` der Fassung 5 trägt das alte Feld
+  `effects` nicht daneben — ein älteres LumiViz spielt ihre Clips ohne
+  Effekte und meldet die neuere Fassung; im alten Creator bleibt ein Filter,
+  dessen Cutoff auf „open" zurückgestellt wird, als Baustein in der Reihe.
 
 **Offen, vor dem jeweiligen Schritt zu entscheiden:**
 - **K5 (vor 16d):** mehrere markierte Clips mit **verschiedenen Reihen** —
@@ -2617,7 +2665,7 @@ Handbuch.
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
-| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; Baustufen 16a bis 16e vorgelegt, **nicht freigegeben, nichts gebaut**; offen K5 |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5); offen 16b bis 16e, K5 |
 
 ---
 
@@ -2713,6 +2761,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.60.0** (S118, 2026-10-13): §4j — Baustufen freigegeben (Entscheid
+  Patrik B1 a); **Stufe 16a gebaut:** die Reihe von Bausteinen im Modell von
+  Schicht und Clip, `.lvinst` Fassung 7, `.lvloop` Fassung 5, der Übergang
+  bis 16b bis 16d; §5 Stufe 16
 - **0.59.0** (S117, 2026-10-13): neu §4j **Signal path** — Filter und Effekte
   als Reihe von Bausteinen: Befund zum Unterbau der Effect Chain, die zwei
   Skizzen als Beschreibung, Entscheide K1 a bis K4 a, die Baustufen 16a bis

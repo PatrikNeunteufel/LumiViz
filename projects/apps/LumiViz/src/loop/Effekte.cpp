@@ -45,17 +45,22 @@ constexpr float kHallAusgang = 3.0f;
 
 double nachklangSekunden(const ClipEffekte& effekte, double bpm)
 {
+    // jeder Baustein, der nachklingt, haengt seinen Nachklang an den davor
     double sekunden = 0.0;
-    if (effekte.echo.an && bpm > 0.0)
+    for (const ClipBaustein& baustein : effekte.reihe)
     {
-        const double zeit = echoSchlaege(effekte.echo.zeit) * 60.0 / bpm;
-        // so viele Wiederholungen, bis feedback^n unter 60 dB liegt
-        const double feedback = std::clamp(effekte.echo.feedback, 0.0, kEchoFeedbackMax);
-        const double wiederholungen =
-            feedback > 0.0 ? std::ceil(std::log(kVerklungen) / std::log(feedback)) : 0.0;
-        sekunden += zeit * (1.0 + wiederholungen);
+        if (const auto* echo = std::get_if<ClipEcho>(&baustein); echo != nullptr && echo->an && bpm > 0.0)
+        {
+            const double zeit = echoSchlaege(echo->zeit) * 60.0 / bpm;
+            // so viele Wiederholungen, bis feedback^n unter 60 dB liegt
+            const double feedback = std::clamp(echo->feedback, 0.0, kEchoFeedbackMax);
+            const double wiederholungen =
+                feedback > 0.0 ? std::ceil(std::log(kVerklungen) / std::log(feedback)) : 0.0;
+            sekunden += zeit * (1.0 + wiederholungen);
+        }
+        else if (const auto* hall = std::get_if<ClipHall>(&baustein); hall != nullptr && hall->an)
+            sekunden += hall->sekunden;
     }
-    if (effekte.hall.an) sekunden += effekte.hall.sekunden;
     return sekunden;
 }
 
@@ -226,10 +231,15 @@ void HallEffekt::rechne(float* stereo, int frames)
 
 void EffektKette::richteEin(const ClipEffekte& effekte, int rate, double bpm)
 {
-    m_verzerrer.richteEin(effekte.verzerrung, rate);
-    m_echo.richteEin(effekte.echo, rate, bpm);
-    m_hall.richteEin(effekte.hall, rate);
-    m_an = effekte.einerAn();
+    // Bis Stufe 16b rechnet die Kette je Art den ersten Baustein, in der festen
+    // Folge — fuer jede Reihe aus einer Datei bis Fassung 4 ist das die ganze.
+    const ClipVerzerrung verzerrung = effekte.wert<ClipVerzerrung>();
+    const ClipEcho echo = effekte.wert<ClipEcho>();
+    const ClipHall hall = effekte.wert<ClipHall>();
+    m_verzerrer.richteEin(verzerrung, rate);
+    m_echo.richteEin(echo, rate, bpm);
+    m_hall.richteEin(hall, rate);
+    m_an = verzerrung.an || echo.an || hall.an;
 }
 
 void EchoEffekt::uebernimm(EchoEffekt& alt)

@@ -40,6 +40,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Aufnahme.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AufnahmeFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Auswahl.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bausteine.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Bearbeiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/ClipEffektFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Offen.hpp"

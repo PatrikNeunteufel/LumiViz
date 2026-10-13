@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include "loop/Bausteine.hpp"
 #include "loop/Rechenkern.hpp"
 
 #include <QJsonObject>
@@ -26,6 +27,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <variant>
 #include <vector>
 
 namespace lumi::loop
@@ -54,15 +56,49 @@ inline constexpr double kTonhoeheStartMin = -24.0;
 inline constexpr double kTonhoeheStartMax = 48.0;
 inline constexpr double kTonhoeheZeitMaxMs = 2000.0;
 
-/// Die Art des Filters einer Schicht (Stufe 11e; Skizze gebilligt, Patrik
-/// S116). Der Tiefpass laesst durch, was unter der Grenze liegt, der Hochpass,
-/// was darueber liegt, der Bandpass, was um sie herum liegt.
-enum class FilterArt : int
+// --- der Weg des Tons einer Schicht (Stufe 16a; Entscheide Patrik S117:
+// K1 a eine Reihe, K2 a die Bausteine, K4 a hoechstens acht) ---------------
+// Zwischen dem, was den Ton erzeugt (Source: Schwingung, Stimmen, Sample,
+// Pitch sweep, Vibrato), und der Lautstaerke der Schicht (Level) steht eine
+// Reihe von Bausteinen: Filter und Drive beliebig oft, Envelope genau einmal.
+
+/// Filter: folgt der Tonhoehe. Art und Resonanz seit Stufe 11e (Entscheid
+/// H1 b, Patrik S116).
+struct SchichtFilter
 {
-    Tiefpass = 0,
-    Hochpass,
-    Bandpass,
+    FilterArt art = FilterArt::Tiefpass;
+    double teilton = 0.0;  ///< Cutoff: die Grenze als Vielfaches des Grundtons, 0…64; 0 = offen
+    double huelle = 0.0;   ///< Filter envelope: so viele Vielfache oeffnet die Huellkurve der Schicht dazu
+    /// Resonance, 0…1: die Betonung an der Grenze; beim Bandpass die Breite
+    /// (mehr = schmaler). Ein Tiefpass mit 0 ist der Filter bis Stufe 11d,
+    /// unveraendert — darueber rechnet er wie Hochpass und Bandpass.
+    double resonanz = 0.0;
+
+    [[nodiscard]] bool operator==(const SchichtFilter&) const = default;
 };
+
+/// Drive: der Verzerrer je Ton (Entscheid E1 a).
+struct SchichtDrive
+{
+    double wert = 0.0;  ///< 0…1, 0 = aus
+
+    [[nodiscard]] bool operator==(const SchichtDrive&) const = default;
+};
+
+/// Envelope: die Stelle, an der die Huellkurve den Ton formt. Ihre Werte
+/// (Attack, Decay, Sustain, Release) stehen an der Schicht — es gibt sie genau
+/// einmal, und die Filter envelope jedes Filters folgt ihr.
+struct SchichtHuelle
+{
+    [[nodiscard]] bool operator==(const SchichtHuelle&) const = default;
+};
+
+using SchichtBaustein = std::variant<SchichtFilter, SchichtDrive, SchichtHuelle>;
+
+/// Eine Reihe richten: genau eine Envelope (fehlt sie, kommt sie ans Ende;
+/// von mehreren bleibt die erste), hoechstens `kBausteineMax` — was dahinter
+/// steht, faellt weg, die Envelope nie —, jeder Wert in seinen Grenzen.
+void richteReihe(std::vector<SchichtBaustein>& reihe);
 
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
 /// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze
@@ -74,7 +110,11 @@ struct Schicht
     bool an = true;              ///< aus = stumm, bleibt aber im Instrument
     int versatzHalbtoene = 0;    ///< -24…24: so weit liegt die Schicht neben der Note
     double einsatzMs = 0.0;      ///< 0…1000: so lange nach dem Anschlag setzt sie ein (kein Echo)
-    double verzerrung = 0.0;     ///< 0…1: der Verzerrer (Drive), 0 = aus (Entscheid E1 a)
+
+    /// Der Weg des Tons zwischen Source und Level, von vorn nach hinten. Eine
+    /// neue Schicht hat nur die Envelope; eine Datei bis Fassung 6 liest sich
+    /// als Filter, Drive, Envelope — so wurde bis dahin fest gerechnet.
+    std::vector<SchichtBaustein> reihe = {SchichtHuelle{}};
 
     Schwingung schwingung = Schwingung::Sinus;
     /// Nur Sinus: die Anteile des 2., 3., … Teiltons (der Grundton zaehlt 1).
@@ -87,10 +127,6 @@ struct Schicht
     double abfallMs = 200.0;   ///< danach bis auf `halten`
     double halten = 0.7;       ///< 0…1, solange die Note dauert
     double ausklangMs = 150.0; ///< nach dem Ende der Note
-
-    // --- Filter (Tiefpass, folgt der Tonhoehe) ---
-    double filterTeilton = 0.0; ///< Grenze als Vielfaches des Grundtons; 0 = offen
-    double filterHuelle = 0.0;  ///< so viele Vielfache oeffnet die Huellkurve dazu
 
     // --- Vibrato ---
     double vibratoHz = 0.0;
@@ -121,14 +157,21 @@ struct Schicht
     /// des Wegs, wie Decay); 0 = kein Weg, die Note beginnt auf ihrem Ton.
     double tonhoeheZeitMs = 100.0;
 
-    // --- Art und Resonanz des Filters (Stufe 11e; Entscheid H1 b, Patrik S116) ---
-    FilterArt filterArt = FilterArt::Tiefpass;
-    /// Resonance, 0…1: die Betonung an der Grenze; beim Bandpass die Breite
-    /// (mehr = schmaler). Ein Tiefpass mit 0 ist der Filter bis Stufe 11d,
-    /// unveraendert — darueber rechnet er wie Hochpass und Bandpass.
-    double filterResonanz = 0.0;
-
     [[nodiscard]] bool operator==(const Schicht&) const = default;
+
+    // --- der erste Filter und der erste Drive ---------------------------
+    // Bis der Creator die Reihe zeigt (Stufe 16c) und der Klangerzeuger sie
+    // rechnet (16b), arbeiten beide mit hoechstens einem Filter und einem
+    // Drive in der alten Folge Filter, Drive, Envelope.
+
+    /// Der erste Filter der Reihe — oder die Vorgabe (offen), wenn es keinen gibt.
+    [[nodiscard]] SchichtFilter filter() const;
+    /// Der erste Drive der Reihe — oder die Vorgabe (aus).
+    [[nodiscard]] SchichtDrive drive() const;
+    /// Der erste Filter zum Aendern; fehlt er, kommt er vorn dazu.
+    SchichtFilter& holeFilter();
+    /// Der erste Drive zum Aendern; fehlt er, kommt er vor die Envelope.
+    SchichtDrive& holeDrive();
 };
 
 /// So viele Schichten traegt ein Instrument hoechstens: jede wird je Ton
@@ -190,10 +233,17 @@ struct Instrument
 // Programm spielte Rauschen als Sinus und einen fallenden Ton gerade.
 // Fassung 6 (S116, Stufe 11e) kennt an jeder Schicht `filterType` (`lowpass`,
 // `highpass`, `bandpass`) und `filterResonance` — ein aelteres Programm
-// spielte einen Hochpass als Tiefpass. Geschrieben wird Fassung 6.
+// spielte einen Hochpass als Tiefpass. Fassung 7 (S118, Stufe 16a) traegt an
+// jeder Schicht die Reihe `path` — Eintraege mit `type`: `filter` (mit
+// `filterType`, `cutoff`, `envelope`, `resonance`), `drive` (mit `amount`),
+// `envelope` — statt der flachen Felder `drive`, `filterCutoff`,
+// `filterEnvelope`, `filterType`, `filterResonance`; Attack, Decay, Sustain
+// und Release bleiben an der Schicht. Eine Datei bis Fassung 6 liest sich als
+// Filter, Drive, Envelope; ein Filter mit Cutoff 0 und ein Drive mit 0 werden
+// dabei kein Baustein (K2 a). Geschrieben wird Fassung 7.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 6;
+inline constexpr int kInstrumentFassung = 7;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

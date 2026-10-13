@@ -20,11 +20,15 @@
  */
 #pragma once
 
+#include "loop/Bausteine.hpp"
+
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
 
+#include <algorithm>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace lumi::loop
@@ -156,12 +160,17 @@ struct Muster
 
 // --- Effekte am Clip (Stufe 12, Entscheide Patrik S113: E2 b, F2 a) ---
 // Jeder Clip traegt seine eigenen Effekte mit allen Einstellungen, gleich ob
-// Drumkit oder Instrument; die Reihenfolge ist fest: Verzerrer, Echo, Hall.
-// Hier steht nur das Modell — gerechnet wird noch nichts davon.
+// Drumkit oder Instrument. Seit Stufe 16a (Entscheide Patrik S117: K1 a,
+// K3 a, K4 a) sind sie eine **Reihe von Bausteinen**: Filter, Distortion,
+// Echo, Reverb, jeder beliebig oft, in freier Reihenfolge, hoechstens
+// `kBausteineMax`. Hier steht nur das Modell.
 
 inline constexpr double kEchoFeedbackMax = 0.9;  ///< darueber klaenge ein Echo nie aus
 inline constexpr double kHallSekMin = 0.2;
 inline constexpr double kHallSekMax = 8.0;
+/// Die Grenze des Filters am Clip, in Hertz — er folgt keiner Tonhoehe.
+inline constexpr double kClipFilterHzMin = 40.0;
+inline constexpr double kClipFilterHzMax = 18000.0;
 
 /// Die Zeit eines Echos als Notenwert — sie folgt dem Tempo des Loops.
 enum class EchoZeit : int
@@ -210,15 +219,71 @@ struct ClipHall
     [[nodiscard]] bool operator==(const ClipHall&) const = default;
 };
 
+/// Filter: Art und Resonanz wie an der Schicht eines Instruments, die Grenze
+/// aber in Hertz und ohne Filter envelope (K3 a).
+struct ClipFilter
+{
+    bool an = false;
+    FilterArt art = FilterArt::Tiefpass;
+    double hz = 1000.0;     ///< `kClipFilterHzMin` … `kClipFilterHzMax`
+    double resonanz = 0.0;  ///< 0…1
+
+    [[nodiscard]] bool operator==(const ClipFilter&) const = default;
+};
+
+/// Ein Baustein in der Reihe eines Clips. Ausgeschaltet (`an`) steht er in
+/// der Reihe und wird uebersprungen. Die Folge der Arten ist die, in der bis
+/// Fassung 4 der `.lvloop` fest gerechnet wurde — mit dem Filter davor.
+using ClipBaustein = std::variant<ClipFilter, ClipVerzerrung, ClipEcho, ClipHall>;
+
 struct ClipEffekte
 {
-    ClipVerzerrung verzerrung;
-    ClipEcho echo;
-    ClipHall hall;
+    /// Der Weg des Tons, von vorn nach hinten; leer = der Clip klingt, wie er
+    /// ist. Nach `Loop::richte` hoechstens `kBausteineMax`.
+    std::vector<ClipBaustein> reihe;
 
     [[nodiscard]] bool operator==(const ClipEffekte&) const = default;
     /// Ist einer eingeschaltet? Dann zeigt der Clip die Marke „fx".
-    [[nodiscard]] bool einerAn() const { return verzerrung.an || echo.an || hall.an; }
+    [[nodiscard]] bool einerAn() const
+    {
+        return std::any_of(reihe.begin(), reihe.end(), [](const ClipBaustein& baustein) {
+            return std::visit([](const auto& werte) { return werte.an; }, baustein);
+        });
+    }
+
+    // --- der erste Baustein einer Art -----------------------------------
+    // Bis das Fenster Clip effects die Reihe zeigt (Stufe 16d) und der
+    // Klangerzeuger sie rechnet (16b), arbeiten beide mit hoechstens einem
+    // Baustein je Art in der alten Folge Distortion, Echo, Reverb.
+
+    /// Der erste Baustein dieser Art; nullptr = keiner.
+    template <class Art>
+    [[nodiscard]] const Art* erster() const
+    {
+        for (const ClipBaustein& baustein : reihe)
+            if (const Art* werte = std::get_if<Art>(&baustein)) return werte;
+        return nullptr;
+    }
+    /// Seine Werte — oder die Vorgabe (ausgeschaltet), wenn es keinen gibt.
+    template <class Art>
+    [[nodiscard]] Art wert() const
+    {
+        const Art* werte = erster<Art>();
+        return werte != nullptr ? *werte : Art{};
+    }
+    /// Der erste Baustein dieser Art zum Aendern; fehlt er, kommt er mit der
+    /// Vorgabe dazu — vor den ersten Baustein einer Art, die in der alten
+    /// Folge nach ihm kommt.
+    template <class Art>
+    Art& hole()
+    {
+        for (ClipBaustein& baustein : reihe)
+            if (Art* werte = std::get_if<Art>(&baustein)) return *werte;
+        const std::size_t rang = ClipBaustein(Art{}).index();
+        const auto platz = std::find_if(reihe.begin(), reihe.end(),
+                                        [rang](const ClipBaustein& baustein) { return baustein.index() > rang; });
+        return std::get<Art>(*reihe.insert(platz, ClipBaustein(Art{})));
+    }
 };
 
 /// Ein Clip im Kanal: ein Muster ab einem Takt, einmal oder mehrfach
@@ -236,7 +301,7 @@ struct LoopClip
     // steht an vielen Stellen und soll ohne die Effekte gueltig bleiben.
     LoopClip() = default;
     LoopClip(QString musterName, int start, int wieOft, ClipEffekte clipEffekte = {})
-        : muster(std::move(musterName)), startTakt(start), wiederholungen(wieOft), effekte(clipEffekte)
+        : muster(std::move(musterName)), startTakt(start), wiederholungen(wieOft), effekte(std::move(clipEffekte))
     {
     }
 

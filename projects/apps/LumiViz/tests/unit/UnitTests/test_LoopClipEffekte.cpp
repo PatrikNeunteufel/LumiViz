@@ -138,19 +138,19 @@ TEST_CASE("Loop Clip effects: das Fenster zeigt die markierten Clips und setzt j
         echoAn->click();
         CHECK(aenderungen == 1);
         CHECK(zuletzt == QStringLiteral("Clip effects"));
-        CHECK(effekteIn(loop, 0, 1).echo.an);
-        CHECK_FALSE(effekteIn(loop, 0, 0).echo.an);  // der andere Clip derselben Basis bleibt
+        CHECK(effekteIn(loop, 0, 1).wert<ClipEcho>().an);
+        CHECK_FALSE(effekteIn(loop, 0, 0).wert<ClipEcho>().an);  // der andere Clip derselben Basis bleibt
         CHECK(echoAn->checkState() == Qt::Checked);
 
         feedback->setValue(70);
-        CHECK(effekteIn(loop, 0, 1).echo.feedback == doctest::Approx(0.7));
+        CHECK(effekteIn(loop, 0, 1).wert<ClipEcho>().feedback == doctest::Approx(0.7));
         CHECK(feedback->maximum() == 90);  // darueber klaenge ein Echo nie aus
         decay->setValue(35);
-        CHECK(effekteIn(loop, 0, 1).hall.sekunden == doctest::Approx(3.5));
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().sekunden == doctest::Approx(3.5));
         CHECK(decayWert->text() == QStringLiteral("3.5 s"));
         zeit->setCurrentIndex(zeit->findText(QStringLiteral("1/4")));
         Q_EMIT zeit->activated(zeit->currentIndex());
-        CHECK(effekteIn(loop, 0, 1).echo.zeit == EchoZeit::Viertel);
+        CHECK(effekteIn(loop, 0, 1).wert<ClipEcho>().zeit == EchoZeit::Viertel);
         CHECK(zeitMs->text() == QStringLiteral("600 ms"));
         CHECK(aenderungen == 4);
 
@@ -162,15 +162,15 @@ TEST_CASE("Loop Clip effects: das Fenster zeigt die markierten Clips und setzt j
         mix->setValue(60);
         CHECK(mixWert->text() == QStringLiteral("60 %"));
         CHECK(aenderungen == 4);
-        CHECK(effekteIn(loop, 0, 1).hall.mix == doctest::Approx(0.25));
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().mix == doctest::Approx(0.25));
         mix->setSliderDown(false);  // loest sliderReleased aus
         CHECK(aenderungen == 5);
-        CHECK(effekteIn(loop, 0, 1).hall.mix == doctest::Approx(0.6));
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().mix == doctest::Approx(0.6));
     }
     SUBCASE("mehrere Clips: verschiedene Werte stehen als mixed, ein Regler setzt alle")
     {
-        loop.kanaele[0].clips[1].effekte.hall = {true, 0.5, 4.0, 0.4, 0.5};
-        loop.kanaele[0].clips[1].effekte.echo.zeit = EchoZeit::Halbe;
+        loop.kanaele[0].clips[1].effekte.hole<ClipHall>() = {true, 0.5, 4.0, 0.4, 0.5};
+        loop.kanaele[0].clips[1].effekte.hole<ClipEcho>().zeit = EchoZeit::Halbe;
         fenster.zeige(loop, {{0, 4}, {1, 0}});
         CHECK(kopf->text() == QStringLiteral("2 clips"));
         CHECK(clips->text() == QStringLiteral("Beat (bar 5) · Lead (bar 1)"));
@@ -183,21 +183,21 @@ TEST_CASE("Loop Clip effects: das Fenster zeigt die markierten Clips und setzt j
 
         // ein Klick auf „teils an" schaltet alle an
         hallAn->click();
-        CHECK(effekteIn(loop, 0, 1).hall.an);
-        CHECK(effekteIn(loop, 1, 0).hall.an);
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().an);
+        CHECK(effekteIn(loop, 1, 0).wert<ClipHall>().an);
         CHECK(hallAn->checkState() == Qt::Checked);
         // der Regler setzt den Wert fuer beide; was er nicht beruehrt, bleibt verschieden
         decay->setValue(25);
-        CHECK(effekteIn(loop, 0, 1).hall.sekunden == doctest::Approx(2.5));
-        CHECK(effekteIn(loop, 1, 0).hall.sekunden == doctest::Approx(2.5));
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().sekunden == doctest::Approx(2.5));
+        CHECK(effekteIn(loop, 1, 0).wert<ClipHall>().sekunden == doctest::Approx(2.5));
         CHECK(decayWert->text() == QStringLiteral("2.5 s"));
         CHECK(mixWert->text() == QStringLiteral("mixed"));
-        CHECK(effekteIn(loop, 0, 1).hall.mix == doctest::Approx(0.5));
-        CHECK_FALSE(effekteIn(loop, 0, 0).hall.an);  // nicht markiert: unberuehrt
+        CHECK(effekteIn(loop, 0, 1).wert<ClipHall>().mix == doctest::Approx(0.5));
+        CHECK_FALSE(effekteIn(loop, 0, 0).wert<ClipHall>().an);  // nicht markiert: unberuehrt
     }
     SUBCASE("Copy, Paste und Reset")
     {
-        loop.kanaele[0].clips[0].effekte.verzerrung = {true, 0.8, 0.2, 0.6};
+        loop.kanaele[0].clips[0].effekte.hole<ClipVerzerrung>() = {true, 0.8, 0.2, 0.6};
         fenster.zeige(loop, {{0, 0}});
         CHECK_FALSE(einfuegen->isEnabled());  // noch nichts gemerkt
         CHECK(drive->value() == 80);
@@ -216,15 +216,15 @@ TEST_CASE("Loop Clip effects: das Fenster zeigt die markierten Clips und setzt j
         CHECK(aenderungen == 2);
         CHECK(effekteIn(loop, 0, 1) == ClipEffekte{});
         CHECK(effekteIn(loop, 1, 0) == ClipEffekte{});
-        CHECK(effekteIn(loop, 0, 0).verzerrung.an);  // nicht markiert
+        CHECK(effekteIn(loop, 0, 0).wert<ClipVerzerrung>().an);  // nicht markiert
         zurueck->click();  // schon zurueckgesetzt: nichts zu melden
         CHECK(aenderungen == 2);
     }
     SUBCASE("das Bild des Fensters")
     {
-        loop.kanaele[0].clips[1].effekte.echo = {true, EchoZeit::AchtelPunktiert, 0.45, 0.3, 0.35};
-        loop.kanaele[0].clips[1].effekte.hall = {true, 0.55, 1.8, 0.4, 0.25};
-        loop.kanaele[1].clips[0].effekte.hall = {true, 0.55, 3.0, 0.4, 0.25};
+        loop.kanaele[0].clips[1].effekte.hole<ClipEcho>() = {true, EchoZeit::AchtelPunktiert, 0.45, 0.3, 0.35};
+        loop.kanaele[0].clips[1].effekte.hole<ClipHall>() = {true, 0.55, 1.8, 0.4, 0.25};
+        loop.kanaele[1].clips[0].effekte.hole<ClipHall>() = {true, 0.55, 3.0, 0.4, 0.25};
         fenster.zeige(loop, {{0, 4}, {1, 0}});
         fenster.setSpitze(0.88);
         fenster.resize(fenster.sizeHint());
@@ -285,8 +285,8 @@ TEST_CASE("Loop Clip effects im Panel: Effects oeffnet das Fenster, es folgt den
 
         // eine Aenderung im Fenster laeuft ueber den CommandBus des Panels
         hallAn->click();
-        CHECK(panel.loop().kanaele[0].clips[1].effekte.hall.an);
-        CHECK_FALSE(panel.loop().kanaele[0].clips[0].effekte.hall.an);
+        CHECK(panel.loop().kanaele[0].clips[1].effekte.wert<ClipHall>().an);
+        CHECK_FALSE(panel.loop().kanaele[0].clips[0].effekte.wert<ClipHall>().an);
         CHECK(bus->undoDescription() == "Clip effects");
         CHECK(panel.spieler().loop() == panel.loop());  // was gespielt wuerde, hat den Effekt
         CHECK(panel.ungespeichert());
@@ -304,7 +304,7 @@ TEST_CASE("Loop Clip effects im Panel: Effects oeffnet das Fenster, es folgt den
         // Undo: der Effekt ist wieder aus, das Fenster zeigt es
         achse->markiere({{0, 4}});
         REQUIRE(bus->undo());
-        CHECK_FALSE(panel.loop().kanaele[0].clips[1].effekte.hall.an);
+        CHECK_FALSE(panel.loop().kanaele[0].clips[1].effekte.wert<ClipHall>().an);
         CHECK(hallAn->checkState() == Qt::Unchecked);
         REQUIRE(bus->redo());
         CHECK(hallAn->checkState() == Qt::Checked);
@@ -315,7 +315,7 @@ TEST_CASE("Loop Clip effects im Panel: Effects oeffnet das Fenster, es folgt den
         REQUIRE(versetzeClips(verschoben, orte, 0, 8));
         panel.bearbeite(verschoben, QStringLiteral("Move clip"));
         CHECK(panel.loop().kanaele[0].clips[1].startTakt == 12);
-        CHECK(panel.loop().kanaele[0].clips[1].effekte.hall.an);
+        CHECK(panel.loop().kanaele[0].clips[1].effekte.wert<ClipHall>().an);
 
         // New: das Fenster hat keinen Clip mehr
         panel.neu();

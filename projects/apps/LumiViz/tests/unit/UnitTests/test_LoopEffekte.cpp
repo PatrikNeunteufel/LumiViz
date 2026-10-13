@@ -90,7 +90,7 @@ TEST_CASE("Loop Effekte: ohne eingeschalteten Effekt bleibt der Ton, wie er ist"
     std::vector<float> werte = vorher;
     EffektKette kette;
     ClipEffekte effekte;
-    effekte.hall.sekunden = 5.0;  // eingestellt, aber aus
+    effekte.hole<ClipHall>().sekunden = 5.0;  // eingestellt, aber aus
     kette.richteEin(effekte, kEffektRate, 120.0);
     CHECK(!kette.an());
     kette.rechne(werte.data(), 4000);
@@ -98,10 +98,10 @@ TEST_CASE("Loop Effekte: ohne eingeschalteten Effekt bleibt der Ton, wie er ist"
 
     SUBCASE("ein Effekt mit Mix 0 aendert auch nichts")
     {
-        effekte.verzerrung = {true, 0.9, 0.5, 0.0};
-        effekte.echo = {true, EchoZeit::Achtel, 0.5, 0.0, 0.0};
-        effekte.hall.an = true;
-        effekte.hall.mix = 0.0;
+        effekte.hole<ClipVerzerrung>() = {true, 0.9, 0.5, 0.0};
+        effekte.hole<ClipEcho>() = {true, EchoZeit::Achtel, 0.5, 0.0, 0.0};
+        effekte.hole<ClipHall>().an = true;
+        effekte.hole<ClipHall>().mix = 0.0;
         kette.richteEin(effekte, kEffektRate, 120.0);
         kette.rechne(werte.data(), 4000);
         CHECK(werte == vorher);
@@ -197,9 +197,9 @@ TEST_CASE("Loop Effekte: der Hall faellt in der eingestellten Zeit um 60 dB")
 TEST_CASE("Loop Effekte: gleich in welchen Bloecken gerechnet wird, das Ergebnis ist dasselbe")
 {
     ClipEffekte effekte;
-    effekte.verzerrung = {true, 0.6, 0.4, 0.7};
-    effekte.echo = {true, EchoZeit::Sechzehntel, 0.6, 0.4, 0.4};
-    effekte.hall = {true, 0.7, 1.2, 0.5, 0.3};
+    effekte.hole<ClipVerzerrung>() = {true, 0.6, 0.4, 0.7};
+    effekte.hole<ClipEcho>() = {true, EchoZeit::Sechzehntel, 0.6, 0.4, 0.4};
+    effekte.hole<ClipHall>() = {true, 0.7, 1.2, 0.5, 0.3};
     const int frames = 30000;
     const std::vector<float> ton = rauschen(frames);
 
@@ -242,13 +242,13 @@ TEST_CASE("Loop Effekte: wie lange ein Clip nachklingt")
 {
     ClipEffekte effekte;
     CHECK(nachklangSekunden(effekte, 120.0) == 0.0);
-    effekte.verzerrung.an = true;  // ein Verzerrer klingt nicht nach
+    effekte.hole<ClipVerzerrung>().an = true;  // ein Verzerrer klingt nicht nach
     CHECK(nachklangSekunden(effekte, 120.0) == 0.0);
-    effekte.hall.an = true;
-    effekte.hall.sekunden = 1.8;
+    effekte.hole<ClipHall>().an = true;
+    effekte.hole<ClipHall>().sekunden = 1.8;
     CHECK(nachklangSekunden(effekte, 120.0) == doctest::Approx(1.8));
     // Viertel bei 120 BPM = 0,5 s; Feedback 0,5 braucht zehn Wiederholungen bis -60 dB
-    effekte.echo = {true, EchoZeit::Viertel, 0.5, 0.0, 0.5};
+    effekte.hole<ClipEcho>() = {true, EchoZeit::Viertel, 0.5, 0.0, 0.5};
     CHECK(nachklangSekunden(effekte, 120.0) == doctest::Approx(0.5 * 11 + 1.8));
 }
 
@@ -307,7 +307,7 @@ float groessterBetrag(const std::vector<float>& werte)
 ClipEffekte nurEcho(double feedback = 0.8, double mix = 0.5, EchoZeit zeit = EchoZeit::Viertel)
 {
     ClipEffekte effekte;
-    effekte.echo = {true, zeit, feedback, 0.0, mix};
+    effekte.hole<ClipEcho>() = {true, zeit, feedback, 0.0, mix};
     return effekte;
 }
 
@@ -316,8 +316,8 @@ ClipEffekte nurEcho(double feedback = 0.8, double mix = 0.5, EchoZeit zeit = Ech
 TEST_CASE("Loop Effekte im Klangerzeuger: ein Clip mit Effekten klingt wie sein Ton durch die Kette")
 {
     ClipEffekte effekte = nurEcho(0.5);
-    effekte.verzerrung = {true, 0.5, 0.8, 1.0};
-    effekte.hall = {true, 0.5, 0.6, 0.3, 0.3};
+    effekte.hole<ClipVerzerrung>() = {true, 0.5, 0.8, 1.0};
+    effekte.hole<ClipHall>() = {true, 0.5, 0.6, 0.3, 0.3};
     const Loop loop = effektLoop(effekte);
     const auto klaenge = effektKlang();
     const int frames = 176400;
@@ -355,7 +355,7 @@ TEST_CASE("Loop Effekte im Klangerzeuger: die Effekte treffen nur ihren Clip und
     {
         // der Verzerrer klingt nicht nach: beim zweiten Clip ist der erste vorbei
         ClipEffekte verzerrt;
-        verzerrt.verzerrung = {true, 0.8, 0.5, 1.0};
+        verzerrt.hole<ClipVerzerrung>() = {true, 0.8, 0.5, 1.0};
         Loop loop = effektLoop(verzerrt);
         loop.kanaele[0].clips[1].muster = QStringLiteral("M");
         loop.richte();
@@ -473,10 +473,10 @@ TEST_CASE("Loop Effekte Messung: die Rechenzeit einer Kette gegen die Dauer des 
     constexpr int kBlock = 441;  // 10 ms, wie der spielende Mixer sie holt (Beleg §6)
 
     ClipEffekte nurHall;
-    nurHall.hall = {true, 0.5, 1.8, 0.4, 0.25};
+    nurHall.hole<ClipHall>() = {true, 0.5, 1.8, 0.4, 0.25};
     ClipEffekte alle = nurHall;
-    alle.verzerrung = {true, 0.3, 0.5, 1.0};
-    alle.echo = {true, EchoZeit::AchtelPunktiert, 0.4, 0.3, 0.35};
+    alle.hole<ClipVerzerrung>() = {true, 0.3, 0.5, 1.0};
+    alle.hole<ClipEcho>() = {true, EchoZeit::AchtelPunktiert, 0.4, 0.3, 0.35};
 
     const auto messe = [&](const std::string& name, const ClipEffekte& effekte) {
         double schlechtester = 0.0;

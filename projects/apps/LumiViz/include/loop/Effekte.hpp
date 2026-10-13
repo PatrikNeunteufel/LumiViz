@@ -28,7 +28,7 @@ namespace lumi::loop
 
 /// Wie lange ein Clip mit diesen Effekten nach seinem letzten Ton noch
 /// klingt, in Sekunden — bis Echo und Hall um 60 dB gefallen sind. 0, wenn
-/// weder Echo noch Hall an ist.
+/// weder Echo noch Hall an ist. Stehen mehrere in der Reihe, zaehlt jeder.
 [[nodiscard]] double nachklangSekunden(const ClipEffekte& effekte, double bpm);
 
 /// Verzerrer: formt den Augenblickswert um, danach ein Tiefpass fuer die

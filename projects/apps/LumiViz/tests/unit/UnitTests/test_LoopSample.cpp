@@ -309,10 +309,10 @@ TEST_SUITE("Loop Sample")
 
         // --- Filter und Drive gelten: ein enger Filter macht leiser, Drive formt um
         Instrument dumpf = instrument;
-        dumpf.schichten[0].filterTeilton = 0.25;  // Grenze bei einem Viertel des Tons
+        dumpf.schichten[0].holeFilter().teilton = 0.25;  // Grenze bei einem Viertel des Tons
         CHECK(spitze(rendereTon(dumpf, 69, 500.0, kRate), 4000, 20000) < 0.2f);
         Instrument hart = instrument;
-        hart.schichten[0].verzerrung = 1.0;
+        hart.schichten[0].holeDrive().wert = 1.0;
         const Klang verzerrt = rendereTon(hart, 69, 500.0, kRate);
         CHECK(verzerrt.daten != a4.daten);
         CHECK(spitze(verzerrt, 2000, 20000) <= 1.001f);
@@ -491,14 +491,14 @@ TEST_SUITE("Loop Sample")
         CHECK(rendereTon(instrument, 69, 1500.0, kRate).daten == gerade.daten);
 
         // --- Stufe 11e: auch die Aufnahme geht durch Hochpass und Bandpass, je Seite ein Filter
-        instrument.schichten[0].filterTeilton = 8.0;  // 3520 Hz, die Aufnahme liegt bei 440 Hz
-        instrument.schichten[0].filterArt = FilterArt::Hochpass;
+        instrument.schichten[0].holeFilter().teilton = 8.0;  // 3520 Hz, die Aufnahme liegt bei 440 Hz
+        instrument.schichten[0].holeFilter().art = FilterArt::Hochpass;
         const Klang duenn = rendereTon(instrument, 69, 1500.0, kRate);
         CHECK(spitze(duenn, 8820, 30000) < 0.03f);
         CHECK(spitze(duenn, 8820, 30000, 1) < 0.015f);  // rechts halb so laut, wie die Aufnahme
         CHECK(spitze(duenn, 8820, 30000, 1) > 0.0f);
-        instrument.schichten[0].filterArt = FilterArt::Bandpass;
-        instrument.schichten[0].filterTeilton = 1.0;
+        instrument.schichten[0].holeFilter().art = FilterArt::Bandpass;
+        instrument.schichten[0].holeFilter().teilton = 1.0;
         CHECK(spitze(rendereTon(instrument, 69, 1500.0, kRate), 8820, 30000) == doctest::Approx(1.0f).epsilon(0.03));
     }
 }

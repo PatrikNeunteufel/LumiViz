@@ -135,15 +135,14 @@ struct Verzerrer
 /// zwei Stufen erster Ordnung hintereinander — jedes Instrument von frueher
 /// ergibt dieselben Werte. Alles andere rechnet ein Biquad (die Formeln des
 /// Kits, `make_kit.py`): Hochpass, Bandpass mit gleichbleibender Spitze, und
-/// der Tiefpass mit Resonanz. Die Guete waechst mit `filterResonanz` von 0,707
+/// der Tiefpass mit Resonanz. Die Guete waechst mit `resonanz` von 0,707
 /// (keine Betonung) bis rund 11; bei Tiefpass und Hochpass wird der Ton dabei
 /// leiser gestellt, damit die Spitze an der Grenze nicht davonlaeuft.
 struct Filter
 {
-    Filter(const Schicht& schicht, int rate)
-        : m_art(schicht.filterArt), m_rate(rate), m_an(schicht.filterTeilton > 0.0)
+    Filter(const SchichtFilter& werte, int rate) : m_art(werte.art), m_rate(rate), m_an(werte.teilton > 0.0)
     {
-        const double resonanz = std::isfinite(schicht.filterResonanz) ? std::clamp(schicht.filterResonanz, 0.0, 1.0) : 0.0;
+        const double resonanz = std::isfinite(werte.resonanz) ? std::clamp(werte.resonanz, 0.0, 1.0) : 0.0;
         m_alt = m_art == FilterArt::Tiefpass && resonanz <= 0.0;
         m_guete = kGueteOhne * std::exp2(4.0 * resonanz);
         if (m_art != FilterArt::Bandpass) m_laut = 1.0 / std::sqrt(m_guete / kGueteOhne);
@@ -254,7 +253,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
     // Eine fallende Note beginnt hoeher: die Tafel traegt nur, was auch dort darunter bleibt.
     const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06 * weg.hoechstes())), 1, kTeiltoeneMax);
     const std::vector<float> tafel = wellenzug(schicht, hoechster);
-    const Verzerrer verzerrer(schicht.verzerrung);
+    const Verzerrer verzerrer(schicht.drive().wert);
 
     const int stimmen = std::clamp(schicht.stimmen, 1, 3);
     std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
@@ -265,7 +264,8 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
 
     const double einsatz = std::max(1.0, schicht.vibratoEinsatzMs * rate / 1000.0);
     const bool vibrato = schicht.vibratoHz > 0.0 && schicht.vibratoCent > 0.0;
-    Filter filter(schicht, rate);
+    const SchichtFilter filterWerte = schicht.filter();
+    Filter filter(filterWerte, rate);
     const double pegel = kPegel * schicht.laut;
 
     for (std::int64_t t = 0; t < frames; ++t)
@@ -290,7 +290,7 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
         }
         wert *= jeStimme;
         if (filter.an())
-            wert = filter.bei(wert, std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45));
+            wert = filter.bei(wert, std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45));
         wert = verzerrer.bei(wert);
         const auto aus = static_cast<float>(wert * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
@@ -305,7 +305,7 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
                  std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    const Verzerrer verzerrer(schicht.verzerrung);
+    const Verzerrer verzerrer(schicht.drive().wert);
     // das Mitteln zweier Werte verzoegert um einen halben Abtastwert
     const double verzug = std::max(2.0, rate / hz - 0.5);
     const auto groesse = static_cast<std::size_t>(verzug) + 4;
@@ -361,8 +361,9 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
 void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    const Verzerrer verzerrer(schicht.verzerrung);
-    Filter filter(schicht, rate);
+    const Verzerrer verzerrer(schicht.drive().wert);
+    const SchichtFilter filterWerte = schicht.filter();
+    Filter filter(filterWerte, rate);
     const double pegel = kPegel * schicht.laut;
     std::uint32_t folge = 22222u;
     for (std::int64_t t = 0; t < frames; ++t)
@@ -371,7 +372,7 @@ void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int
         folge = folge * 1664525u + 1013904223u;
         double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
         if (filter.an())
-            wert = filter.bei(wert, std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45));
+            wert = filter.bei(wert, std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45));
         const auto aus = static_cast<float>(verzerrer.bei(wert) * h * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
@@ -418,8 +419,9 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         return a + (b - a) * rest;
     };
 
-    const Verzerrer verzerrer(schicht.verzerrung);
-    std::array<Filter, 2> filter = {Filter(schicht, rate), Filter(schicht, rate)};  // je Seite einer
+    const Verzerrer verzerrer(schicht.drive().wert);
+    const SchichtFilter filterWerte = schicht.filter();
+    std::array<Filter, 2> filter = {Filter(filterWerte, rate), Filter(filterWerte, rate)};  // je Seite einer
     const double pegel = schicht.laut;
     // Pitch sweep (N2 a): die Aufnahme laeuft am Anfang schneller (oder langsamer) und kommt
     // auf ihr Tempo — der Sustain loop rechnet mit jedem Schritt
@@ -433,7 +435,7 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         // an der Naht: was gleich wieder beginnt, kommt schon dazu
         const double blende = gehalten && naht > 0.0 && ort > bis - naht ? (ort - (bis - naht)) / naht : 0.0;
         const double grenze =
-            filter[0].an() ? std::clamp(hz * (schicht.filterTeilton + schicht.filterHuelle * h), 40.0, rate * 0.45) : 0.0;
+            filter[0].an() ? std::clamp(hz * (filterWerte.teilton + filterWerte.huelle * h), 40.0, rate * 0.45) : 0.0;
         for (std::size_t seite = 0; seite < 2; ++seite)
         {
             double wert = lies(ort, seite);
@@ -486,6 +488,52 @@ std::uint64_t& fassung()
 namespace
 {
 
+const QString kBausteinFilter = QStringLiteral("filter");
+const QString kBausteinDrive = QStringLiteral("drive");
+const QString kBausteinHuelle = QStringLiteral("envelope");
+
+/// Ein Baustein der Reihe als Eintrag von `path`.
+struct BausteinAlsJson
+{
+    QJsonObject operator()(const SchichtFilter& filter) const
+    {
+        QJsonObject b;
+        b[QStringLiteral("type")] = kBausteinFilter;
+        b[QStringLiteral("filterType")] = filterArtName(filter.art);
+        b[QStringLiteral("cutoff")] = filter.teilton;
+        b[QStringLiteral("envelope")] = filter.huelle;
+        b[QStringLiteral("resonance")] = filter.resonanz;
+        return b;
+    }
+    QJsonObject operator()(const SchichtDrive& drive) const
+    {
+        QJsonObject b;
+        b[QStringLiteral("type")] = kBausteinDrive;
+        b[QStringLiteral("amount")] = drive.wert;
+        return b;
+    }
+    QJsonObject operator()(const SchichtHuelle&) const
+    {
+        QJsonObject b;
+        b[QStringLiteral("type")] = kBausteinHuelle;
+        return b;
+    }
+};
+
+/// Die Werte eines Bausteins in ihre Grenzen.
+struct RichteBaustein
+{
+    void operator()(SchichtFilter& filter) const
+    {
+        if (filter.art < FilterArt::Tiefpass || filter.art > FilterArt::Bandpass) filter.art = FilterArt::Tiefpass;
+        filter.teilton = inGrenzen(filter.teilton, 0.0, 64.0, 0.0);
+        filter.huelle = inGrenzen(filter.huelle, 0.0, 64.0, 0.0);
+        filter.resonanz = inGrenzen(filter.resonanz, 0.0, 1.0, 0.0);
+    }
+    void operator()(SchichtDrive& drive) const { drive.wert = inGrenzen(drive.wert, 0.0, 1.0, 0.0); }
+    void operator()(SchichtHuelle&) const {}
+};
+
 QJsonObject schichtAlsJson(const Schicht& schicht)
 {
     QJsonObject o;
@@ -493,7 +541,6 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("on")] = schicht.an;
     o[QStringLiteral("transpose")] = schicht.versatzHalbtoene;
     o[QStringLiteral("startOffset")] = schicht.einsatzMs;
-    o[QStringLiteral("drive")] = schicht.verzerrung;
     for (const Wellenname& welle : kWellen)
         if (welle.schwingung == schicht.schwingung) o[QStringLiteral("waveform")] = QLatin1String(welle.name);
     QJsonArray obertoene;
@@ -505,8 +552,6 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("decay")] = schicht.abfallMs;
     o[QStringLiteral("sustain")] = schicht.halten;
     o[QStringLiteral("release")] = schicht.ausklangMs;
-    o[QStringLiteral("filterCutoff")] = schicht.filterTeilton;
-    o[QStringLiteral("filterEnvelope")] = schicht.filterHuelle;
     o[QStringLiteral("vibratoRate")] = schicht.vibratoHz;
     o[QStringLiteral("vibratoDepth")] = schicht.vibratoCent;
     o[QStringLiteral("vibratoDelay")] = schicht.vibratoEinsatzMs;
@@ -515,11 +560,10 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     // seit Fassung 5 (Pitch sweep): Halbtoene neben der Note, und die Zeit des Wegs
     o[QStringLiteral("pitchStart")] = schicht.tonhoeheStartHt;
     o[QStringLiteral("pitchTime")] = schicht.tonhoeheZeitMs;
-    // seit Fassung 6: Art und Resonanz des Filters
-    o[QStringLiteral("filterType")] = QLatin1String(schicht.filterArt == FilterArt::Hochpass   ? "highpass"
-                                                    : schicht.filterArt == FilterArt::Bandpass ? "bandpass"
-                                                                                               : "lowpass");
-    o[QStringLiteral("filterResonance")] = schicht.filterResonanz;
+    // seit Fassung 7: der Weg des Tons als Reihe, von vorn nach hinten
+    QJsonArray reihe;
+    for (const SchichtBaustein& baustein : schicht.reihe) reihe.append(std::visit(BausteinAlsJson{}, baustein));
+    o[QStringLiteral("path")] = reihe;
     if (schicht.schwingung == Schwingung::Sample)
     {
         // seit Fassung 4; nur eine Sample-Schicht traegt sie
@@ -560,15 +604,12 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.abfallMs = zahl("decay", vorgabe.abfallMs, 0.0, 10000.0);
     neu.halten = zahl("sustain", vorgabe.halten, 0.0, 1.0);
     neu.ausklangMs = zahl("release", vorgabe.ausklangMs, 0.0, 5000.0);
-    neu.filterTeilton = zahl("filterCutoff", vorgabe.filterTeilton, 0.0, 64.0);
-    neu.filterHuelle = zahl("filterEnvelope", vorgabe.filterHuelle, 0.0, 64.0);
     neu.vibratoHz = zahl("vibratoRate", vorgabe.vibratoHz, 0.0, 20.0);
     neu.vibratoCent = zahl("vibratoDepth", vorgabe.vibratoCent, 0.0, 100.0);
     neu.vibratoEinsatzMs = zahl("vibratoDelay", vorgabe.vibratoEinsatzMs, 0.0, 5000.0);
     neu.saiteDaempfung = zahl("damping", vorgabe.saiteDaempfung, 0.9, 0.9999);
     neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
     neu.einsatzMs = zahl("startOffset", vorgabe.einsatzMs, 0.0, 1000.0);
-    neu.verzerrung = zahl("drive", vorgabe.verzerrung, 0.0, 1.0);
     // seit Fassung 4; in einer aelteren Datei und an anderen Schichten fehlen sie
     const double laengsteMs = kKlangMaxSekunden * 1000.0;
     neu.sample = wurzel.value(QStringLiteral("sample")).toString();
@@ -581,16 +622,99 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     // seit Fassung 5; in einer aelteren Datei fehlen sie — dann kein Pitch sweep
     neu.tonhoeheStartHt = zahl("pitchStart", vorgabe.tonhoeheStartHt, kTonhoeheStartMin, kTonhoeheStartMax);
     neu.tonhoeheZeitMs = zahl("pitchTime", vorgabe.tonhoeheZeitMs, 0.0, kTonhoeheZeitMaxMs);
-    // seit Fassung 6; fehlt die Art oder ist sie unbekannt, gilt der Tiefpass
-    const QString filterArt = wurzel.value(QStringLiteral("filterType")).toString();
-    neu.filterArt = filterArt == QLatin1String("highpass")   ? FilterArt::Hochpass
-                    : filterArt == QLatin1String("bandpass") ? FilterArt::Bandpass
-                                                             : FilterArt::Tiefpass;
-    neu.filterResonanz = zahl("filterResonance", vorgabe.filterResonanz, 0.0, 1.0);
+    neu.reihe.clear();
+    if (const QJsonValue reihe = wurzel.value(QStringLiteral("path")); reihe.isArray())
+    {
+        // seit Fassung 7: die Reihe steht in der Datei. Einen Baustein, den dieses Programm
+        // nicht kennt, laesst es weg.
+        for (const QJsonValue& eintrag : reihe.toArray())
+        {
+            const QJsonObject b = eintrag.toObject();
+            const QString art = b.value(QStringLiteral("type")).toString();
+            if (art == kBausteinFilter)
+            {
+                SchichtFilter filter;
+                filter.art = filterArtAus(b.value(QStringLiteral("filterType")).toString());
+                filter.teilton = b.value(QStringLiteral("cutoff")).toDouble(filter.teilton);
+                filter.huelle = b.value(QStringLiteral("envelope")).toDouble(filter.huelle);
+                filter.resonanz = b.value(QStringLiteral("resonance")).toDouble(filter.resonanz);
+                neu.reihe.emplace_back(filter);
+            }
+            else if (art == kBausteinDrive)
+                neu.reihe.emplace_back(SchichtDrive{b.value(QStringLiteral("amount")).toDouble(0.0)});
+            else if (art == kBausteinHuelle)
+                neu.reihe.emplace_back(SchichtHuelle{});
+        }
+    }
+    else
+    {
+        // bis Fassung 6: flache Felder, gerechnet wurde fest Filter, Drive, Envelope. Ein Filter
+        // mit Cutoff 0 und ein Drive mit 0 taten nichts — sie werden kein Baustein (K2 a).
+        // `filterType` und `filterResonance` gibt es seit Fassung 6; fehlt die Art oder ist sie
+        // unbekannt, gilt der Tiefpass.
+        SchichtFilter filter;
+        filter.teilton = wurzel.value(QStringLiteral("filterCutoff")).toDouble(0.0);
+        filter.huelle = wurzel.value(QStringLiteral("filterEnvelope")).toDouble(0.0);
+        filter.art = filterArtAus(wurzel.value(QStringLiteral("filterType")).toString());
+        filter.resonanz = wurzel.value(QStringLiteral("filterResonance")).toDouble(0.0);
+        if (std::isfinite(filter.teilton) && filter.teilton > 0.0) neu.reihe.emplace_back(filter);
+        const double drive = wurzel.value(QStringLiteral("drive")).toDouble(0.0);
+        if (std::isfinite(drive) && drive > 0.0) neu.reihe.emplace_back(SchichtDrive{drive});
+        neu.reihe.emplace_back(SchichtHuelle{});
+    }
+    richteReihe(neu.reihe);
     return neu;
 }
 
 }  // namespace
+
+void richteReihe(std::vector<SchichtBaustein>& reihe)
+{
+    const auto istHuelle = [](const SchichtBaustein& baustein) { return std::holds_alternative<SchichtHuelle>(baustein); };
+    // genau eine Envelope: von mehreren bleibt die erste
+    auto erste = std::find_if(reihe.begin(), reihe.end(), istHuelle);
+    if (erste != reihe.end()) reihe.erase(std::remove_if(erste + 1, reihe.end(), istHuelle), reihe.end());
+    const auto grenze = static_cast<std::size_t>(kBausteineMax);
+    if (reihe.size() > grenze) reihe.erase(reihe.begin() + kBausteineMax, reihe.end());
+    if (std::none_of(reihe.begin(), reihe.end(), istHuelle))
+    {
+        // sie fehlte — oder stand hinter dem achten: sie kommt ans Ende, der letzte weicht ihr
+        if (reihe.size() == grenze) reihe.pop_back();
+        reihe.emplace_back(SchichtHuelle{});
+    }
+    for (SchichtBaustein& baustein : reihe) std::visit(RichteBaustein{}, baustein);
+}
+
+SchichtFilter Schicht::filter() const
+{
+    for (const SchichtBaustein& baustein : reihe)
+        if (const auto* werte = std::get_if<SchichtFilter>(&baustein)) return *werte;
+    return {};
+}
+
+SchichtDrive Schicht::drive() const
+{
+    for (const SchichtBaustein& baustein : reihe)
+        if (const auto* werte = std::get_if<SchichtDrive>(&baustein)) return *werte;
+    return {};
+}
+
+SchichtFilter& Schicht::holeFilter()
+{
+    for (SchichtBaustein& baustein : reihe)
+        if (auto* werte = std::get_if<SchichtFilter>(&baustein)) return *werte;
+    return std::get<SchichtFilter>(*reihe.insert(reihe.begin(), SchichtFilter{}));
+}
+
+SchichtDrive& Schicht::holeDrive()
+{
+    for (SchichtBaustein& baustein : reihe)
+        if (auto* werte = std::get_if<SchichtDrive>(&baustein)) return *werte;
+    const auto huelle = std::find_if(reihe.begin(), reihe.end(), [](const SchichtBaustein& baustein) {
+        return std::holds_alternative<SchichtHuelle>(baustein);
+    });
+    return std::get<SchichtDrive>(*reihe.insert(huelle, SchichtDrive{}));
+}
 
 QJsonObject alsJson(const Instrument& instrument)
 {
