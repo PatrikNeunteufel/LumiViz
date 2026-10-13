@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.156.0
+> **Version:** 1.157.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2879,7 +2879,7 @@ die Klaviatur des Editors.
 | **Pan** (Layer) | NEU in 1.153.0. Wo die Schicht zwischen links und rechts sitzt — der zweite Regler unter dem Kasten **Level**, für jede Waveform. „C" ist die Mitte, „L 100" ganz links, „R 100" ganz rechts. Zur Seite hin wird die **andere** Seite leiser, bis sie schweigt; die eigene bleibt, wie sie ist (dasselbe Pan wie an einer Spur im Drum-Editor und am Muster im Instrument-Editor). Der Kasten nennt Pan, sobald es neben der Mitte steht („80 % · Pan L 20"). Mit zwei Schichten auf zwei Seiten wird ein Instrument breit. In einem Instrument von früher stehen alle Schichten in der Mitte |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
 | **Start offset** | Die Schicht setzt so viele Millisekunden nach dem Anschlag ein. Kein Echo — sie beginnt nur später |
-| **Waveform** | Sine, Triangle, Saw, Square, **Noise** (Rauschen, siehe unten), Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
+| **Waveform** | Sine, Triangle, Saw, Square, **Noise** (Rauschen, siehe unten), Plucked string (eine gezupfte Saite), **Sample** (eine Aufnahme, siehe unten) oder **Shape** (eine gezeichnete Form, siehe unten) |
 | **Voices**, **Detune** | Eine bis drei gleiche Schwingungen übereinander, leicht gegeneinander verstimmt — das macht den Klang breit |
 | **Pitch sweep** | Jede Note beginnt so viele Halbtöne neben ihrer Tonhöhe und kommt auf sie. Nach rechts beginnt sie darüber und **fällt** (der Wert zeigt „↓ 22 st") — so entsteht eine Kick oder ein Tom. Nach links beginnt sie darunter und **steigt** („↑ 12 st"). In der Mitte steht „off". Bei Sine, Triangle, Saw, Square und Sample; bei einer Aufnahme läuft sie am Anfang entsprechend schneller oder langsamer |
 | **Sweep time** | Nach dieser Zeit ist die Note auf ihrer Tonhöhe angekommen. Grau, solange Pitch sweep auf „off" steht |
@@ -2922,6 +2922,33 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 Fehlt die Datei einer Aufnahme, steht in der Zeile File „(not found)", und die Schicht
 schweigt. Eine andere Aufnahme beginnt von vorn: Sample start steht wieder auf 0, der
 Sustain loop ist aus.
+
+**Eine Schicht aus einer Form (Waveform: Shape).** NEU in 1.157.0. Ein Stift
+fährt mit der Tonhöhe der Note um eine gezeichnete Kontur, und der Ton ist
+seine Bewegung: bei jeder Note einmal herum je Schwingung. Ein Kreis klingt
+wie ein Sinus, ein Quadrat hohl, eine zackige Form scharf. Die Formen sind
+dieselben Dateien (`.lvcontour`), die der Knoten **Shape** der Effect Chain
+zeichnet; sechs kommen mit. Voices, Detune, Pitch sweep, Vibrato, Envelope,
+Filter und Drive gelten wie bei Sine und Saw.
+
+| Bei Waveform: Shape | Wirkung |
+|---|---|
+| **Shape** und **Browse...** | Die Form: eine mitgelieferte, eine eigene (unter „My shapes") oder über „From file..." eine `.lvcontour` von irgendwo — die Schicht nennt dann ihren Pfad. Beim ersten Wählen von Shape steht *Heart* da. Fehlt die Datei, steht „(not found)", und die Schicht schweigt |
+| **Contour** | Was die Schicht spielt: eine Kontur der Form beim Namen, oder **All, one path** — alle Konturen mit Haken nacheinander in einem Umlauf, mit einem kurzen Sprung dazwischen |
+| **Harmonics** | Wie viele Teiltöne die Form zeichnen (1 bis 512): bei 1 ist jede Form eine Ellipse und klingt wie ein Sinus, mit mehr folgt sie der Zeichnung genauer und klingt heller. Der Regler stellt unten fein. Hohe Noten bekommen von selbst weniger |
+| **Harmonics envelope** | Die Hüllkurve der Schicht hebt Harmonics um diesen Betrag (nach rechts: die Note beginnt hell und wird runder) oder senkt sie (nach links: sie beginnt rund). Wie Filter envelope, nur am Klang der Form selbst |
+| **Angle** | Dreht die Form, bevor der Ton abgenommen wird: bei 0° ist der Ton die Bewegung des Stifts nach links und rechts, bei 90° die nach oben und unten. Dazwischen ändert sich die Klangfarbe stufenlos; 180° ist 0° mit umgekehrtem Vorzeichen |
+| **Start** | Wo im Umlauf jede Note beginnt, in Prozent |
+| **Stereo XY** | Links spielt die Bewegung nach links und rechts, rechts die nach oben und unten. Ein **XY Scope** in der Effect Chain zeichnet dann die Form; Angle dreht das Bild |
+| **Reverse** | Der Stift läuft andersherum |
+| **Shape, as it plays** | Das Bild unter One cycle: gestrichelt die Zeichnung, durchgezogen die Form mit der eingestellten Zahl von Teiltönen, der Pfeil zeigt Angle |
+
+Start und Reverse ändern nur, wie der Wellenzug aussieht, nicht wie stark seine
+Teiltöne sind: an einer Schicht allein hörst du sie kaum. Hörbar werden sie
+hinter einem **Drive**, neben einer zweiten Schicht mit derselben Form, und
+sichtbar im Scope. Der Pegel einer Shape-Schicht hängt von Form, Harmonics und
+Angle ab — eine runde Form ist leiser als eine eckige; der Creator zeigt den
+Peak. Ein Fenster zum Zeichnen eigener Formen gibt es noch nicht.
 
 **Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
 Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
@@ -3135,6 +3162,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.157.0 | 2026-10-13 | Session 121. §16 Instrument-Creator NEU **Waveform: Shape** — eine Schicht spielt eine gezeichnete Form: **Shape** mit **Browse...**, **Contour**, **Harmonics**, **Harmonics envelope**, **Angle**, **Start**, **Stereo XY**, **Reverse** und das Bild **Shape, as it plays**. |
 | 1.156.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **XY Scope**: zeichnet links gegen rechts, ein Punkt je Abtastwert, in voller Genauigkeit — **Gain**, **Draw** (Lines, Dots), **Line width**, **Rotate 45°**, Lage, Größe, **Color from** (Table, Gradient), **Line blend**; Skriptfelder Init, Frame, Beat, Song und **Point**; sechs Voreinstellungen. |
 | 1.155.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **Shape**: zeichnet die Konturen einer Form-Datei (`.lvcontour`) aus beliebig vielen Teiltönen (**Harmonics**), mit **Contour**, **Points**, Lage, Größe, Drehung, eigener Farbe, **Line blend**, **Show circles** und **Speed**; Skriptfelder Init, Frame, Beat, Song und **Point** (je Punkt der Linie); neun Voreinstellungen. §17: `.lvcontour` gibt es jetzt. |
 | 1.154.0 | 2026-10-13 | Session 120. Export und Import der eigenen Daten: NEU der Bereich **Shapes** (eigene Formen, `.lvcontour`). Mehr ist von der Form im Programm noch nicht zu sehen. |

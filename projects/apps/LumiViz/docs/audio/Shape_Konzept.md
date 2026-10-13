@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.15.0
+> **Version:** 0.16.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -319,6 +319,34 @@ Bild „Shape, as it plays", Start in Prozent. Noch offen, klein: was **Pan**
 tut, wenn Stereo XY gesetzt ist (die Seiten tragen dann verschiedenes — Pan
 als Balance, oder ausgegraut); die Bereiche von Harmonics und Harmonics
 envelope.
+
+### Wie die Shape-Schicht im Creator gebaut ist (Stufe 19e, S121)
+
+Nach der Skizze oben, mit diesen Abweichungen und Zusätzen:
+
+- **Edit...** fehlt noch: das Fenster Edit shape gibt es erst mit Stufe 20a;
+  ein Knopf ohne Fenster wäre tot. Neben Shape steht nur **Browse...** — ein
+  Menü mit den mitgelieferten Formen, den eigenen („My shapes") und „From
+  file...". Eine Datei von irgendwo wird nicht kopiert; die Schicht nennt
+  ihren Pfad.
+- **Harmonics** läuft am Regler in gleichen Verhältnissen (40 Schritte je
+  Verdopplung, 1 bis 512) — unten, wo sich der Klang am stärksten ändert,
+  stellt er fein. Der Wert steht mit einer Nachkommastelle unter 10.
+- **Harmonics envelope** −128 bis +128, „off" in der Mitte; **Angle** in
+  ganzen Grad; **Start** in ganzen Prozent.
+- Beim ersten Wählen von Shape bekommt die Schicht die Form `heart`, damit
+  gleich etwas klingt.
+- **Contour** nennt die Konturen mit Platz und Namen („1 Heart"); eine
+  Kennung, die es in der Form nicht (mehr) gibt, steht als „Contour 7
+  (missing)" da, und die Schicht schweigt.
+- **Shape, as it plays** (`FormBild`): gestrichelt ein Umlauf mit allen 512
+  Teiltönen (bei mehreren Konturen samt Sprüngen), durchgezogen derselbe mit
+  der eingestellten Zahl, der Pfeil in Richtung Angle (0° nach rechts, 90°
+  nach oben). Die Harmonics envelope zeigt das Bild nicht.
+- **One cycle** zeigt wie bei jeder Schwingung den gerechneten Ton — bei
+  Stereo XY die linke Seite.
+- Alles in dieser Liste ist von Claude gesetzt. Kein mitgeliefertes
+  Instrument trägt eine Shape-Schicht.
 
 ### 6a. Pan je Schicht — eine eigene Stufe davor
 
@@ -1020,7 +1048,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a; V1 a bis V3 a) — **gebaut in S121** (§10 „Wie der Knoten Shape gebaut ist"), im Programm ungesehen | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster — **gebaut in S121** (§5 „Wie die Schwingung gebaut ist", `.lvinst` Fassung 9; T1 a, T2 a). Die Kante des Sprungs ist **gemessen** (§9), **nicht gehört**; offen dazu und zu den Ecken: Patriks Ohr | 19a |
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a; V4 a, X1 a, X2 a) — **gebaut in S121** (§10 „Wie der Knoten XY Scope gebaut ist"), im Programm ungesehen | — (gebraucht ab 19c) |
-| 19e | die Shape-Schicht im Creator | Skizze |
+| 19e | die Shape-Schicht im Creator — **gebaut in S121** (§6 „Wie die Shape-Schicht im Creator gebaut ist"), ohne den Knopf Edit... (kommt mit 20a); im Programm ungesehen und ungehört | Skizze |
 | 20a | das Form-Fenster: zeichnen | Skizze |
 | 20b | SVG über das mitschreibende Zeichengerät (S1 a) | 20a |
 | 20c | Konturen aus einem Bild (K1 a, K2 a) | 20a |
@@ -1050,6 +1078,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.16.0 | 2026-10-13 (S121) | **Die Shape-Schicht im Creator gebaut (Stufe 19e)**, nach der gebilligten Skizze: Waveform Shape, die Zeilen Shape mit Browse... und Contour, die Regler Harmonics, Harmonics envelope, Angle, Start, die Haken Stereo XY und Reverse, das Bild „Shape, as it plays" (§6, §14). Ohne den Knopf Edit... (Stufe 20a). Damit ist ein Instrument mit einer Form im Programm spielbar; gesehen und gehört ist es nicht. |
 | 0.15.0 | 2026-10-13 (S121) | **Der Knoten XY Scope entschieden und gebaut (Stufe 19d).** Entscheide Patrik: **X1 a** die Regler (mit Draw Lines oder Dots, Lage, Größe, Color from, Line blend über M1 a hinaus), **X2 a** sechs Presets; die Reihenfolge der Stufen bleibt (19d vor 19e). Gebaut: `XyScopeParams`, `runXyScope`, Panel, Palette, Feldtabelle, sechs Presets (§10, §14). Im Feld Point zeigt `y` nach oben (der rechte Wert). Im Programm ungesehen. |
 | 0.14.0 | 2026-10-13 (S121) | **Die Schwingung Shape entschieden und gebaut (Stufe 19c).** Entscheide Patrik: **T1 a** der Pegel — kein Ausgleich, die Form am fernsten Punkt gemessen (davor gemessen: 0,62 bis 1,41); **T2 a** Angle dreht die Form auch mit Stereo XY (§4, §5). Gebaut: `shape/Tonform`, `Schwingung::Form`, `rechneForm`, `.lvinst` Fassung 9 (§5 „Wie die Schwingung gebaut ist", §14). Gemessen: 4,1 ms je Sekunde Ton bei 24 Harmonics; die Kante des Sprungs liegt bei A4 um −33 dB und ist dort zurückgefallener Anteil (§9). Hörproben abgelegt, nichts gehört; offen: Ecken dämpfen, der Sprung. |
 | 0.13.0 | 2026-10-13 (S121) | **Der Knoten Shape entschieden und gebaut (Stufe 19b).** Entscheide Patrik: **V1 a** fünf Skriptfelder — Init, Frame, Beat, Song und Per point; **V2 a** die Regler, mit Contour, Points, eigener Farbe und Line blend über M2 b hinaus; **V3 a** neun Presets; **V4 a** XY Scope bekommt dieselben fünf Felder (§10). Gebaut: `shape/Zeichenform`, `ShapeParams`, `runShape`, Panel, Palette, Feldtabelle, neun Presets (§10 „Wie der Knoten Shape gebaut ist", §14). Gemessen: Per point 0,19 ms bei 512 Punkten, der Umriss 0,09 ms in der Vorgabe (Release-clang). Im Programm ungesehen. |

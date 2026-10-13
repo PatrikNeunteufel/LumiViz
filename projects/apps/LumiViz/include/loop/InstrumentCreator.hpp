@@ -30,6 +30,12 @@
  * Marke fuer Sample start und einem blauen Bereich fuer den Sustain loop —
  * beide lassen sich im Bild ziehen.
  *
+ * **Eine Schicht der Art Shape (Stufe 19e; Skizze gebilligt, Patrik S120):**
+ * unter Waveform stehen Shape mit **Browse...**, Contour (eine Kontur der
+ * Datei oder „All, one path"), Harmonics, Harmonics envelope, Angle, Start und
+ * die Haken Stereo XY und Reverse; darunter wie sonst Voices, Detune, Pitch
+ * sweep. Rechts steht unter One cycle das Bild „Shape, as it plays".
+ *
  * Der Creator arbeitet an einer Kopie. Erst **Save** schreibt die Datei
  * `.lvinst` — ein mitgeliefertes Instrument laesst sich nur unter neuem Namen
  * speichern (Save as...). Zum Anspielen schreibt er die Kopie in eine
@@ -40,6 +46,8 @@
 #include "loop/Grundton.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Sample.hpp"
+#include "shape/Kontur.hpp"
+#include "shape/Tonform.hpp"
 
 #include <QPoint>
 #include <QPolygonF>
@@ -145,6 +153,34 @@ private:
     double m_zeiger = -1.0;
     double m_griffe[3] = {-1.0, -1.0, -1.0};
     Griff m_gezogen = KeinGriff;
+};
+
+/// „Shape, as it plays" (Stufe 19e; Skizze gebilligt, Patrik S120): die
+/// Zeichnung gestrichelt, darueber die Form mit der eingestellten Zahl von
+/// Harmonischen, und ein Pfeil fuer Angle — die Richtung, aus der der Ton von
+/// der Form abgenommen wird.
+class FormBild : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit FormBild(QWidget* parent = nullptr);
+    /// `form` = nullptr: nichts zu zeigen (keine Form genannt oder nicht gefunden).
+    void setForm(const std::shared_ptr<const shape::Tonform>& form, double harmonische, double winkelGrad);
+    /// Die Zeichnung und die Form, wie sie spielt — als geschlossene Zuege in
+    /// den Koordinaten der Form (−1 … 1, y nach oben); leer = nichts zu zeigen.
+    [[nodiscard]] const QPolygonF& zeichnung() const { return m_zeichnung; }
+    [[nodiscard]] const QPolygonF& umriss() const { return m_umriss; }
+    [[nodiscard]] double winkelGrad() const { return m_winkelGrad; }
+    [[nodiscard]] QSize sizeHint() const override { return {260, 150}; }
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    QPolygonF m_zeichnung;
+    QPolygonF m_umriss;
+    double m_winkelGrad = 0.0;
 };
 
 /// Zwei Oktaven Tasten, C3 bis C5: ein Klick verlangt den Ton.
@@ -280,6 +316,14 @@ public:
     /// Der Sustain loop der gewaehlten Schicht an oder aus; beim ersten
     /// Einschalten liegt er auf dem mittleren Teil der Aufnahme.
     void setzeSchleife(bool an);
+
+    // --- die Form einer Shape-Schicht (Stufe 19e) --------------------------------
+    /// Die Form der gewaehlten Schicht setzen: eine mitgelieferte beim Namen,
+    /// eine eigene (`user:<name>`) oder der Pfad einer `.lvcontour`. Eine
+    /// andere Form hat andere Konturen: Contour steht danach auf „All, one path".
+    void setzeForm(const QString& nennung);
+    /// Das Bild „Shape, as it plays" (fuer Tests).
+    [[nodiscard]] FormBild* formBild() const { return m_formBild; }
 
     // --- Detect und Reference tone (Stufe 11a, Schritt 3) ----------------------
     /// **Detect:** den Grundton der Aufnahme der gewaehlten Schicht messen, ab
@@ -490,6 +534,26 @@ private:
     QPushButton* m_sampleWahl = nullptr;
     QComboBox* m_grundton = nullptr;
     QCheckBox* m_schleife = nullptr;
+    // --- nur Shape (Stufe 19e)
+    std::vector<std::size_t> m_nurForm;      ///< Plaetze: Harmonics, Harmonics envelope, Angle, Start
+    std::vector<QWidget*> m_formZeilen;      ///< was sonst nur bei Shape zu sehen ist
+    QLabel* m_formName = nullptr;
+    QPushButton* m_formWahl = nullptr;
+    QComboBox* m_formKontur = nullptr;
+    QCheckBox* m_formStereo = nullptr;
+    QCheckBox* m_formRueckwaerts = nullptr;
+    /// Die Zeichnung der gewaehlten Schicht, einmal je Nennung gelesen (fuer
+    /// die Zeile Contour); `m_formGefunden` = sie liess sich lesen.
+    QString m_formGelesen;
+    bool m_formGelesenDa = false;
+    bool m_formGefunden = false;
+    shape::Zeichnung m_formZeichnung;
+    void liesForm(const QString& nennung);
+    /// Das Menue hinter „Browse...": die mitgelieferten und die eigenen Formen, „From file...".
+    void zeigeFormWahl();
+    FormBild* m_formBild = nullptr;
+    QLabel* m_formBildTitel = nullptr;
+    QLabel* m_formLegende = nullptr;
     QWidget* m_vibratoTitel = nullptr;       ///< die Ueberschrift Vibrato: weg, wenn kein Regler darunter steht
     /// Eine Gruppe von Zeilen unter einer Ueberschrift, die sich einklappen laesst.
     struct Gruppe

@@ -39,6 +39,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLineF>
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QPushButton>
@@ -376,7 +377,7 @@ TEST_SUITE("LoopInstrumentEditor")
         auto* wellenWahl = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
         REQUIRE(wellenWahl != nullptr);
         CHECK(wellenWahl->currentText() == QStringLiteral("Plucked string"));
-        CHECK(wellenWahl->count() == 7);  // seit S115 dazu Sample, seit S116 Noise
+        CHECK(wellenWahl->count() == 8);  // seit S115 dazu Sample, seit S116 Noise, seit S121 Shape
 
         // --- Stufe 11d: Pitch sweep und Sweep time; die Schwingung Noise
         {
@@ -1966,6 +1967,181 @@ TEST_SUITE("LoopInstrumentEditor")
             QCoreApplication::processEvents();
             const QFileInfo ort(bild);
             CHECK(gezeigt.grab().save(ort.dir().filePath(ort.completeBaseName() + QStringLiteral("_level.") + ort.suffix())));
+        }
+    }
+
+    TEST_CASE("Instrument-Creator: eine Shape-Schicht — Form und Contour, die Regler, das Bild Shape as it plays")
+    {
+        // Stufe 19e (S121), Skizze Shape_Konzept §6. `LUMIVIZ_INSTRUMENT_SHAPE_BILD=<datei.png>` legt ein Bild ab.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir ordner;
+        REQUIRE(ordner.isValid());
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        Instrument neu;
+        neu.titel = QStringLiteral("Shape test");
+        creator.oeffne(neu);
+        const auto teil = [&creator](const char* kennung) {
+            auto* w = creator.findChild<QWidget*>(QLatin1String(kennung));
+            REQUIRE(w != nullptr);
+            return w;
+        };
+        const auto schieber = [&creator](const char* kennung) {
+            auto* s = creator.findChild<QSlider*>(QLatin1String(kennung));
+            REQUIRE(s != nullptr);
+            return s;
+        };
+        auto* welle = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
+        REQUIRE(welle != nullptr);
+        const int alsForm = welle->findData(static_cast<int>(Schwingung::Form));
+        REQUIRE(alsForm >= 0);
+        CHECK(welle->itemText(alsForm) == QStringLiteral("Shape"));
+
+        // --- ein Sinus: von der Form ist nichts zu sehen
+        for (const char* kennung : {"creatorShapeName", "creatorShapeBrowse", "creatorShapeContour", "creatorShapeHarmonics",
+                                    "creatorShapeHarmonicsEnvelope", "creatorShapeAngle", "creatorShapeStart",
+                                    "creatorShapeStereoXY", "creatorShapeReverse", "creatorShapePicture", "creatorShapeLegend"})
+        {
+            CAPTURE(kennung);
+            CHECK(teil(kennung)->isHidden());
+        }
+
+        // --- Waveform Shape: zum ersten Mal eine Form — eine mitgelieferte, damit gleich etwas klingt
+        welle->setCurrentIndex(alsForm);
+        emit welle->activated(alsForm);
+        CHECK(creator.schicht().schwingung == Schwingung::Form);
+        CHECK(creator.schicht().form == QStringLiteral("heart"));
+        for (const char* kennung : {"creatorShapeName", "creatorShapeBrowse", "creatorShapeContour", "creatorShapeHarmonics",
+                                    "creatorShapeHarmonicsEnvelope", "creatorShapeAngle", "creatorShapeStart",
+                                    "creatorShapeStereoXY", "creatorShapeReverse", "creatorShapePicture", "creatorShapeLegend"})
+        {
+            CAPTURE(kennung);
+            CHECK_FALSE(teil(kennung)->isHidden());
+        }
+        // Voices, Detune, Pitch sweep und Vibrato gelten wie bei Sinus und Saege; die Obertoene und die Aufnahme nicht
+        CHECK_FALSE(schieber("creatorVoices")->isHidden());
+        CHECK_FALSE(schieber("creatorPitchSweep")->isHidden());
+        CHECK_FALSE(schieber("creatorVibratoRate")->isHidden());
+        CHECK(schieber("creatorHarmonic2")->isHidden());
+        CHECK(teil("creatorSampleFile")->isHidden());
+        auto* name = creator.findChild<QLabel*>(QStringLiteral("creatorShapeName"));
+        CHECK(name->text() == QStringLiteral("Heart"));
+        // der Kasten Source nennt die Form
+        CHECK(creator.signalWeg()->kaesten()[0].wert == QString::fromUtf8("Shape · Heart"));
+        auto* kontur = creator.findChild<QComboBox*>(QStringLiteral("creatorShapeContour"));
+        REQUIRE(kontur->count() == 2);
+        CHECK(kontur->itemText(0) == QStringLiteral("All, one path"));
+        CHECK(kontur->itemText(1).startsWith(QStringLiteral("1 ")));
+        CHECK(kontur->currentData().toInt() == 0);
+
+        // --- die Regler schreiben in die Schicht
+        schieber("creatorShapeHarmonics")->setValue(160);  // 40 Schritte je Verdopplung: 2 hoch 4
+        CHECK(creator.schicht().harmonische == doctest::Approx(16.0));
+        schieber("creatorShapeHarmonics")->setValue(0);
+        CHECK(creator.schicht().harmonische == doctest::Approx(1.0));
+        schieber("creatorShapeHarmonics")->setValue(360);
+        CHECK(creator.schicht().harmonische == doctest::Approx(512.0));
+        schieber("creatorShapeHarmonics")->setValue(184);
+        CHECK(creator.schicht().harmonische == doctest::Approx(24.25).epsilon(0.01));
+        schieber("creatorShapeHarmonicsEnvelope")->setValue(-20);
+        CHECK(creator.schicht().harmonischeHuelle == doctest::Approx(-20.0));
+        schieber("creatorShapeAngle")->setValue(90);
+        CHECK(creator.schicht().winkelGrad == doctest::Approx(90.0));
+        schieber("creatorShapeStart")->setValue(25);
+        CHECK(creator.schicht().formStartProzent == doctest::Approx(25.0));
+        auto* stereo = creator.findChild<QCheckBox*>(QStringLiteral("creatorShapeStereoXY"));
+        auto* zurueck = creator.findChild<QCheckBox*>(QStringLiteral("creatorShapeReverse"));
+        stereo->setChecked(true);
+        zurueck->setChecked(true);
+        CHECK(creator.schicht().stereoXY);
+        CHECK(creator.schicht().rueckwaerts);
+
+        // --- das Bild: die Zeichnung gestrichelt, die Form mit den eingestellten Harmonischen, der Pfeil
+        FormBild* bild = creator.formBild();
+        REQUIRE(bild != nullptr);
+        REQUIRE(bild->zeichnung().size() > 100);
+        REQUIRE(bild->umriss().size() == bild->zeichnung().size());
+        CHECK(bild->winkelGrad() == doctest::Approx(90.0));
+        const auto abweichung = [bild] {
+            double groesste = 0.0;
+            for (qsizetype n = 0; n < bild->umriss().size(); ++n)
+                groesste = std::max(groesste, QLineF(bild->umriss()[n], bild->zeichnung()[n]).length());
+            return groesste;
+        };
+        const double mit24 = abweichung();
+        schieber("creatorShapeHarmonics")->setValue(0);
+        const double mit1 = abweichung();
+        schieber("creatorShapeHarmonics")->setValue(360);
+        const double mit512 = abweichung();
+        CHECK(mit1 > 0.2);     // eine Ellipse liegt weit neben dem Herz
+        CHECK(mit24 < mit1);
+        CHECK(mit512 < 1.0e-9);  // mit allen Teiltoenen ist es die Zeichnung
+        auto* legende = creator.findChild<QLabel*>(QStringLiteral("creatorShapeLegend"));
+        CHECK(legende->text().contains(QStringLiteral("512 harmonics")));
+        schieber("creatorShapeHarmonics")->setValue(184);
+
+        // --- eine andere Form: ihre Konturen stehen in der Zeile Contour, die Wahl faellt auf den ganzen Pfad
+        creator.setzeForm(QStringLiteral("heart_and_star"));
+        CHECK(creator.schicht().form == QStringLiteral("heart_and_star"));
+        CHECK(name->text() == QStringLiteral("Heart and star"));
+        REQUIRE(kontur->count() == 3);
+        CHECK(kontur->itemText(1) == QStringLiteral("1 Heart"));
+        CHECK(kontur->itemText(2) == QStringLiteral("2 Star"));
+        kontur->setCurrentIndex(2);
+        emit kontur->activated(2);
+        CHECK(creator.schicht().formKontur == 2);
+        creator.setzeForm(QStringLiteral("star"));
+        CHECK(creator.schicht().formKontur == 0);
+        // eine Form, die es nicht gibt: es steht da, das Bild ist leer, nichts stuerzt
+        creator.setzeForm(QStringLiteral("gibt_es_nicht"));
+        CHECK(name->text() == QStringLiteral("gibt_es_nicht (not found)"));
+        CHECK(bild->umriss().isEmpty());
+        creator.setzeForm(QStringLiteral("heart"));
+        CHECK(bild->umriss().size() > 100);
+
+        // --- anspielen, speichern, wieder oeffnen
+        QStringList toene;
+        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator,
+                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+        REQUIRE(creator.spieleAn(60));
+        CHECK(toene.size() == 1);
+        Instrument vorhoer;
+        REQUIRE(ladeInstrument(InstrumentCreator::vorhoerDatei(), vorhoer));
+        CHECK(vorhoer.schichten[0].schwingung == Schwingung::Form);
+        const Klang ton = rendereTon(vorhoer, 60, 200.0, 44100);
+        CHECK(std::any_of(ton.daten.begin(), ton.daten.end(), [](float w) { return std::abs(w) > 0.05f; }));
+        QFile::remove(InstrumentCreator::vorhoerDatei());
+        const QString pfad = ordner.filePath(QStringLiteral("shape_test.lvinst"));
+        REQUIRE(creator.speichereUnter(pfad));
+        Instrument gelesen;
+        REQUIRE(ladeInstrument(pfad, gelesen));
+        CHECK(gelesen.schichten[0].form == QStringLiteral("heart"));
+        CHECK(gelesen.schichten[0].winkelGrad == doctest::Approx(90.0));
+        CHECK(gelesen.schichten[0].stereoXY);
+        InstrumentCreator zweiter;
+        zweiter.oeffne(gelesen);
+        CHECK(zweiter.findChild<QComboBox*>(QStringLiteral("creatorWaveform"))->currentData().toInt() ==
+              static_cast<int>(Schwingung::Form));
+        CHECK(zweiter.findChild<QLabel*>(QStringLiteral("creatorShapeName"))->text() == QStringLiteral("Heart"));
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_INSTRUMENT_SHAPE_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            Instrument zeig;
+            zeig.titel = QStringLiteral("Heart lead");
+            zeig.schichten[0].schwingung = Schwingung::Form;
+            zeig.schichten[0].form = QStringLiteral("heart");
+            zeig.schichten[0].harmonische = 12.0;
+            zeig.schichten[0].harmonischeHuelle = 20.0;
+            zeig.schichten[0].winkelGrad = 35.0;
+            gezeigt.oeffne(zeig);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(ziel));
         }
     }
 

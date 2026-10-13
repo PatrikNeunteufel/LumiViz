@@ -52,6 +52,7 @@ namespace
 
 const char* const kLetzterOrdner = "loop/lastInstrumentDir";
 const char* const kLetzterSampleOrdner = "loop/lastSampleDir";
+const char* const kLetzterFormOrdner = "loop/lastShapeDir";
 const char* const kGruppeZu = "loop/creatorFolded/";  ///< dahinter der Schluessel der Gruppe
 
 /// Wird die Stellung der Gruppen gelesen und gemerkt? (Tests schalten es ab.)
@@ -714,6 +715,7 @@ void InstrumentCreator::setupUI()
     m_welle->addItem(tr("Noise"), static_cast<int>(Schwingung::Rauschen));  // Stufe 11d
     m_welle->addItem(tr("Plucked string"), static_cast<int>(Schwingung::Saite));
     m_welle->addItem(tr("Sample"), static_cast<int>(Schwingung::Sample));
+    m_welle->addItem(tr("Shape"), static_cast<int>(Schwingung::Form));  // Stufe 19e
     {
         const int zeile = gitter->rowCount();
         gitter->addWidget(new QLabel(tr("Waveform"), this), zeile, 0);
@@ -724,9 +726,94 @@ void InstrumentCreator::setupUI()
         aendereSchicht([welle](Schicht& s) {
             // zum ersten Mal eine Aufnahme: sie klingt, wie sie ist — voll gehalten
             if (welle == Schwingung::Sample && s.schwingung != Schwingung::Sample && s.sample.isEmpty()) s.halten = 1.0;
+            // zum ersten Mal eine Form: eine mitgelieferte, damit gleich etwas klingt
+            if (welle == Schwingung::Form && s.form.isEmpty()) s.form = QStringLiteral("heart");
             s.schwingung = welle;
         });
     });
+
+    // --- nur Shape (Stufe 19e; Skizze gebilligt, Patrik S120)
+    {
+        auto* name = new QLabel(tr("Shape"), this);
+        m_formName = new QLabel(this);
+        m_formName->setObjectName(QStringLiteral("creatorShapeName"));
+        m_formName->setEnabled(false);  // grau: eine Auskunft
+        m_formWahl = new QPushButton(tr("Browse..."), this);
+        m_formWahl->setObjectName(QStringLiteral("creatorShapeBrowse"));
+        m_formWahl->setToolTip(tr("Choose the shape: a built-in one, one of your own, or a shape file"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_formName, zeile, 1);
+        gitter->addWidget(m_formWahl, zeile, 2);
+        auto* kontur = new QLabel(tr("Contour"), this);
+        m_formKontur = new QComboBox(this);
+        m_formKontur->setObjectName(QStringLiteral("creatorShapeContour"));
+        m_formKontur->setToolTip(tr("What this layer plays: one contour of the shape, or all ticked contours one after "
+                                    "the other in one round of the pen"));
+        const int zweite = gitter->rowCount();
+        gitter->addWidget(kontur, zweite, 0);
+        gitter->addWidget(m_formKontur, zweite, 1, 1, 2);
+        m_formZeilen = {name, m_formName, m_formWahl, kontur, m_formKontur};
+        connect(m_formWahl, &QPushButton::clicked, this, &InstrumentCreator::zeigeFormWahl);
+        connect(m_formKontur, &QComboBox::activated, this, [this](int index) {
+            const int kennung = m_formKontur->itemData(index).toInt();
+            aendereSchicht([kennung](Schicht& s) { s.formKontur = kennung; });
+        });
+    }
+    // Harmonics: der Regler laeuft in gleichen Verhaeltnissen (40 Schritte je Verdopplung) — unten,
+    // wo sich der Klang am staerksten aendert, stellt er fein
+    regler(gitter, tr("Harmonics"), "creatorShapeHarmonics", 0, 360,
+           [](const Schicht& i) { return gerundet(40.0 * std::log2(std::clamp(i.harmonische, 1.0, kFormHarmonischeMax))); },
+           [](Schicht& i, int w) { i.harmonische = std::clamp(std::exp2(w / 40.0), 1.0, kFormHarmonischeMax); },
+           [](const Schicht& i) { return i.harmonische < 10.0 ? QString::number(i.harmonische, 'f', 1) : QString::number(gerundet(i.harmonische)); })
+        .schieber->setToolTip(tr("How many partials draw the shape: 1 is an ellipse and sounds like a sine, more follow "
+                                 "the drawing more closely and sound brighter. High notes get fewer by themselves"));
+    m_nurForm.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Harmonics envelope"), "creatorShapeHarmonicsEnvelope", -static_cast<int>(kFormHuelleMax),
+           static_cast<int>(kFormHuelleMax), [](const Schicht& i) { return gerundet(i.harmonischeHuelle); },
+           [](Schicht& i, int w) { i.harmonischeHuelle = w; },
+           [](const Schicht& i) {
+               const int w = gerundet(i.harmonischeHuelle);
+               return w == 0 ? tr("off") : QStringLiteral("%1%2").arg(w > 0 ? QStringLiteral("+ ") : QString::fromUtf8("− ")).arg(std::abs(w));
+           })
+        .schieber->setToolTip(tr("The envelope of the layer adds this many partials on top of Harmonics (or takes them "
+                                 "away): to the right a note starts bright and gets rounder, to the left it starts round"));
+    m_nurForm.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Angle"), "creatorShapeAngle", 0, 360, [](const Schicht& i) { return gerundet(i.winkelGrad); },
+           [](Schicht& i, int w) { i.winkelGrad = w; },
+           [](const Schicht& i) { return QString::fromUtf8("%1°").arg(gerundet(i.winkelGrad)); })
+        .schieber->setToolTip(tr("Turns the shape before the tone is taken from it: 0° is the sideways movement of the "
+                                 "pen, 90° its up-and-down movement. Changes the sound; with Stereo XY it turns the picture"));
+    m_nurForm.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Start"), "creatorShapeStart", 0, 100, [](const Schicht& i) { return gerundet(i.formStartProzent); },
+           [](Schicht& i, int w) { i.formStartProzent = w; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.formStartProzent)); })
+        .schieber->setToolTip(tr("Where on the round of the pen every note begins. On its own you hardly hear it — it "
+                                 "matters behind a Drive, next to a second layer with the same shape, and in a scope"));
+    m_nurForm.push_back(m_regler.size() - 1);
+    {
+        m_formStereo = new QCheckBox(tr("Stereo XY"), this);
+        m_formStereo->setObjectName(QStringLiteral("creatorShapeStereoXY"));
+        m_formStereo->setToolTip(tr("Left plays the sideways movement of the pen, right its up-and-down movement — an "
+                                    "XY scope then draws the shape"));
+        m_formRueckwaerts = new QCheckBox(tr("Reverse"), this);
+        m_formRueckwaerts->setObjectName(QStringLiteral("creatorShapeReverse"));
+        m_formRueckwaerts->setToolTip(tr("The pen runs the other way round. On its own you hardly hear it — it matters "
+                                         "behind a Drive, next to a second layer with the same shape, and in a scope"));
+        auto* haken = new QWidget(this);
+        auto* reihe = new QHBoxLayout(haken);
+        reihe->setContentsMargins(0, 0, 0, 0);
+        reihe->addWidget(m_formStereo);
+        reihe->addWidget(m_formRueckwaerts);
+        reihe->addStretch(1);
+        gitter->addWidget(haken, gitter->rowCount(), 1, 1, 2);
+        m_formZeilen.push_back(haken);
+        m_formZeilen.push_back(m_formStereo);
+        m_formZeilen.push_back(m_formRueckwaerts);
+        connect(m_formStereo, &QCheckBox::toggled, this, [this](bool an) { aendereSchicht([an](Schicht& s) { s.stereoXY = an; }); });
+        connect(m_formRueckwaerts, &QCheckBox::toggled, this,
+                [this](bool an) { aendereSchicht([an](Schicht& s) { s.rueckwaerts = an; }); });
+    }
 
     // --- nur Sample (Stufe 11a; Skizze gebilligt, Patrik S115)
     {
@@ -1032,6 +1119,17 @@ void InstrumentCreator::setupUI()
     m_bildHinweis->setObjectName(QStringLiteral("creatorSampleHint"));
     m_bildHinweis->setEnabled(false);
     rechts->addWidget(m_bildHinweis);
+    // nur bei einer Shape-Schicht (Stufe 19e): die Zeichnung, die Form, wie sie spielt, und Angle
+    m_formBildTitel = new QLabel(tr("Shape, as it plays"), this);
+    m_formBildTitel->setObjectName(QStringLiteral("creatorShapeTitle"));
+    rechts->addWidget(m_formBildTitel);
+    m_formBild = new FormBild(this);
+    m_formBild->setObjectName(QStringLiteral("creatorShapePicture"));
+    rechts->addWidget(m_formBild, 2);
+    m_formLegende = new QLabel(this);
+    m_formLegende->setObjectName(QStringLiteral("creatorShapeLegend"));
+    m_formLegende->setEnabled(false);
+    rechts->addWidget(m_formLegende);
     connect(m_wellenBild, &KurvenBild::griffGezogen, this, [this](int welcher, double stelle) {
         const double laenge = sampleLaengeMs();
         if (laenge <= 0.0 || schicht().schwingung != Schwingung::Sample) return;
@@ -1704,6 +1802,38 @@ void InstrumentCreator::zeigeAlles()
     for (const std::size_t platz : m_nurSinus) zeige(platz, sinus);
     for (const std::size_t platz : m_nurSample) zeige(platz, sample);
     for (const std::size_t platz : m_nurTonweg) zeige(platz, !saite && !rauschen);
+    // --- nur Shape (Stufe 19e): die Form, ihre Konturen, die vier Regler und die zwei Haken
+    const bool form = gewaehlte.schwingung == Schwingung::Form;
+    for (const std::size_t platz : m_nurForm) zeige(platz, form);
+    for (QWidget* teil : m_formZeilen) teil->setVisible(form);
+    if (form)
+    {
+        liesForm(gewaehlte.form);
+        m_formName->setText(gewaehlte.form.isEmpty() ? tr("(none)")
+                            : !m_formGefunden        ? tr("%1 (not found)").arg(gewaehlte.form)
+                                                     : m_formZeichnung.titel);
+        m_formName->setToolTip(shape::istKonturDatei(gewaehlte.form) ? QDir::toNativeSeparators(gewaehlte.form) : gewaehlte.form);
+        const QSignalBlocker ruhe(m_formKontur);
+        m_formKontur->clear();
+        m_formKontur->addItem(tr("All, one path"), 0);
+        for (std::size_t n = 0; n < m_formZeichnung.konturen.size(); ++n)
+        {
+            const shape::Kontur& k = m_formZeichnung.konturen[n];
+            m_formKontur->addItem(QStringLiteral("%1 %2").arg(n + 1).arg(k.name.isEmpty() ? tr("Contour") : k.name), k.kennung);
+        }
+        int platz = m_formKontur->findData(gewaehlte.formKontur);
+        if (platz < 0)
+        {
+            // die Kontur gibt es in dieser Form nicht (mehr): die Schicht schweigt, das steht da
+            m_formKontur->addItem(tr("Contour %1 (missing)").arg(gewaehlte.formKontur), gewaehlte.formKontur);
+            platz = m_formKontur->count() - 1;
+        }
+        m_formKontur->setCurrentIndex(platz);
+        const QSignalBlocker ruheStereo(m_formStereo);
+        const QSignalBlocker ruheZurueck(m_formRueckwaerts);
+        m_formStereo->setChecked(gewaehlte.stereoXY);
+        m_formRueckwaerts->setChecked(gewaehlte.rueckwaerts);
+    }
     // ohne Weg gibt es keine Zeit zu stellen
     m_regler[m_reglerWegZeit].schieber->setEnabled(gerundet(gewaehlte.tonhoeheStartHt) != 0);
     // der gewaehlte Filter (Stufe 11e, 16c): die Saite hat keinen; steht Cutoff auf „open", ist nichts zu stellen
@@ -1991,6 +2121,9 @@ void InstrumentCreator::zeigeWeg()
     if (const int st = gerundet(s.tonhoeheStartHt);
         st != 0 && s.tonhoeheZeitMs > 0.0 && !saite && s.schwingung != Schwingung::Rauschen)
         quelle += st > 0 ? QString::fromUtf8(" ↓ %1 st").arg(st) : QString::fromUtf8(" ↑ %1 st").arg(-st);
+    // eine Shape-Schicht nennt ihre Form: „Shape · Heart"
+    if (s.schwingung == Schwingung::Form && !s.form.isEmpty())
+        quelle += QString::fromUtf8(" · %1").arg(m_formGelesen == s.form && m_formGefunden ? m_formZeichnung.titel : s.form);
     kaesten.push_back(WegKasten{tr("Source"), quelle, false, false, tr("What makes the tone: waveform, transpose, pitch sweep, vibrato")});
     for (const SchichtBaustein& baustein : s.reihe)
     {
@@ -2255,6 +2388,123 @@ void InstrumentCreator::setzeSchleife(bool an)
     });
 }
 
+// =============================================================================
+// Die Form einer Shape-Schicht (Stufe 19e)
+// =============================================================================
+
+void InstrumentCreator::liesForm(const QString& nennung)
+{
+    if (m_formGelesenDa && m_formGelesen == nennung) return;
+    m_formGelesen = nennung;
+    m_formGelesenDa = true;
+    m_formZeichnung = shape::Zeichnung{};
+    m_formGefunden = !nennung.isEmpty() && shape::holeZeichnung(nennung, m_formZeichnung);
+    if (!m_formGefunden) m_formZeichnung = shape::Zeichnung{};
+}
+
+void InstrumentCreator::setzeForm(const QString& nennung)
+{
+    m_formGelesenDa = false;  // auch dieselbe Nennung noch einmal lesen: die Datei kann eine andere sein
+    aendereSchicht([&nennung](Schicht& s) {
+        s.form = nennung;
+        s.formKontur = 0;  // eine andere Form hat andere Konturen
+    });
+}
+
+void InstrumentCreator::zeigeFormWahl()
+{
+    QMenu menue(this);
+    menue.addSection(tr("Built-in shapes"));
+    for (const shape::Zeichnung& z : shape::zeichnungen())
+        connect(menue.addAction(z.titel), &QAction::triggered, this, [this, nennung = z.name] { setzeForm(nennung); });
+    const std::vector<shape::Zeichnung> eigene = shape::eigeneZeichnungen();
+    if (!eigene.empty())
+    {
+        menue.addSection(tr("My shapes"));
+        for (const shape::Zeichnung& z : eigene)
+            connect(menue.addAction(z.titel), &QAction::triggered, this, [this, nennung = z.name] { setzeForm(nennung); });
+    }
+    menue.addSeparator();
+    connect(menue.addAction(tr("From file...")), &QAction::triggered, this, [this] {
+        QSettings einstellungen;
+        const QString pfad = QFileDialog::getOpenFileName(this, tr("Choose a shape"),
+                                                          einstellungen.value(QLatin1String(kLetzterFormOrdner)).toString(),
+                                                          tr("LumiViz shapes (*%1)").arg(QLatin1String(shape::kKonturEndung)));
+        if (pfad.isEmpty()) return;
+        einstellungen.setValue(QLatin1String(kLetzterFormOrdner), QFileInfo(pfad).absolutePath());
+        setzeForm(pfad);  // die Schicht nennt den Pfad, die Datei bleibt, wo sie ist
+    });
+    menue.exec(m_formWahl->mapToGlobal(QPoint(0, m_formWahl->height())));
+}
+
+// =============================================================================
+// FormBild — „Shape, as it plays"
+// =============================================================================
+
+FormBild::FormBild(QWidget* parent) : QWidget(parent)
+{
+    setMinimumHeight(120);
+}
+
+void FormBild::setForm(const std::shared_ptr<const shape::Tonform>& form, double harmonische, double winkelGrad)
+{
+    m_zeichnung.clear();
+    m_umriss.clear();
+    m_winkelGrad = winkelGrad;
+    if (form != nullptr && !form->leer())
+    {
+        // ein Umlauf des Stifts — bei mehreren Konturen mit den Spruengen dazwischen
+        constexpr int kPunkte = 720;
+        for (int n = 0; n <= kPunkte; ++n)
+        {
+            const double umlauf = static_cast<double>(n % kPunkte) / kPunkte;
+            const shape::Punkt gezeichnet = shape::tonwert(*form, umlauf, shape::kHarmonischeMax);
+            const shape::Punkt gespielt = shape::tonwert(*form, umlauf, harmonische);
+            m_zeichnung << QPointF(gezeichnet.real(), gezeichnet.imag());
+            m_umriss << QPointF(gespielt.real(), gespielt.imag());
+        }
+    }
+    update();
+}
+
+void FormBild::paintEvent(QPaintEvent*)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+    const QPalette pal = palette();
+    p.fillRect(rect(), pal.color(QPalette::Base));
+    QColor leise = pal.color(QPalette::Text);
+    leise.setAlpha(90);
+    p.setPen(leise);
+    p.drawRect(rect().adjusted(0, 0, -1, -1));
+    if (m_umriss.size() < 2) return;
+    // die Form fuellt mit etwas Rand ein Quadrat in der Mitte; y zeigt in der Form nach oben
+    const double rand = 12.0;
+    const double halb = std::max(1.0, std::min(width(), height()) / 2.0 - rand);
+    const QPointF mitte(width() / 2.0, height() / 2.0);
+    const auto imBild = [&](const QPolygonF& zug) {
+        QPolygonF bild;
+        bild.reserve(zug.size());
+        for (const QPointF& punkt : zug) bild << QPointF(mitte.x() + punkt.x() * halb, mitte.y() - punkt.y() * halb);
+        return bild;
+    };
+    QColor gestrichelt = pal.color(QPalette::Text);
+    gestrichelt.setAlpha(150);
+    p.setPen(QPen(gestrichelt, 1.0, Qt::DashLine));
+    p.drawPolyline(imBild(m_zeichnung));
+    p.setPen(QPen(pal.color(QPalette::Highlight), 1.8));
+    p.drawPolyline(imBild(m_umriss));
+    // der Pfeil fuer Angle: aus dieser Richtung wird der Ton abgenommen (0° nach rechts, 90° nach oben)
+    const double winkel = m_winkelGrad * 3.14159265358979323846 / 180.0;
+    const QPointF richtung(std::cos(winkel), -std::sin(winkel));
+    const QPointF spitze = mitte + richtung * (halb + rand - 3.0);
+    p.setPen(QPen(kGriffRot, 1.6));
+    p.drawLine(mitte, spitze);
+    const QPointF quer(-richtung.y(), richtung.x());
+    p.setBrush(kGriffRot);
+    p.drawPolygon(QPolygonF{spitze, spitze - richtung * 9.0 + quer * 4.0, spitze - richtung * 9.0 - quer * 4.0});
+}
+
 void InstrumentCreator::zeigeSampleWahl()
 {
     const QStringList eigene = eigeneSamples();
@@ -2310,6 +2560,18 @@ void InstrumentCreator::zeigeBilder()
     const Schicht& gewaehlte = schicht();
     const bool sample = gewaehlte.schwingung == Schwingung::Sample;
     m_bildHinweis->setVisible(sample);
+    // --- eine Shape-Schicht ist gewaehlt: unter One cycle die Zeichnung, die Form und Angle
+    const bool form = gewaehlte.schwingung == Schwingung::Form;
+    m_formBildTitel->setVisible(form);
+    m_formBild->setVisible(form);
+    m_formLegende->setVisible(form);
+    if (form)
+    {
+        const double teiltoene = std::clamp(gewaehlte.harmonische, 1.0, kFormHarmonischeMax);
+        m_formBild->setForm(shape::tonformFuer(gewaehlte.form, gewaehlte.formKontur), teiltoene, gewaehlte.winkelGrad);
+        m_formLegende->setText(tr("Dashed: the drawing · solid: with %1 harmonics · arrow: Angle")
+                                   .arg(teiltoene < 10.0 ? QString::number(teiltoene, 'f', 1) : QString::number(gerundet(teiltoene))));
+    }
     if (sample)
     {
         const std::shared_ptr<const SampleDaten> daten = holeSample(gewaehlte.sample);
