@@ -11,9 +11,14 @@
  * Schichten — Haken (an oder stumm), Name, Schwingung, Lautstaerke und
  * Versatz; darunter Add layer, Add layer from instrument..., Duplicate,
  * Remove, hinauf und hinunter.
- * **Mitte:** die gewaehlte Schicht — Name, Level, Transpose, Start offset;
- * Oscillator (Waveform, Voices, Detune — bei Sine die Obertoene, bei Plucked
- * string Damping), Envelope, Filter, Drive, Vibrato.
+ * **Mitte (seit Stufe 16c; Skizze gebilligt, Patrik S118, Entscheid S1 a):**
+ * die gewaehlte Schicht — ihr Name, darunter die Zeile **Signal path**
+ * (`SignalWeg`): fest Source, dann die Bausteine der Reihe (Filter, Drive,
+ * Envelope), der Knopf + Add, fest Level. Unter der Zeile stehen die Regler
+ * des gewaehlten Kastens und, bei einem Baustein, ← Move, Move →, Remove.
+ * Source zeigt Transpose, Start offset, Oscillator (Waveform, Voices, Detune,
+ * Pitch sweep — bei Sine die Obertoene, bei Plucked string Damping) und
+ * Vibrato; Level den Regler Level. Ziehen ordnet die Bausteine um.
  * **Rechts:** das Bild einer Schwingung und die Huellkurve einer Note — die
  * Summe aller Schichten als Linie, die gewaehlte gestrichelt — und eine
  * kleine Klaviatur zum Anspielen; „Selected layer only" laesst die gewaehlte
@@ -63,6 +68,7 @@ namespace lumi::loop
 {
 
 class AufnahmeFenster;
+class SignalWeg;
 
 /// Eine Kurve als Bild: Werte von -1 bis 1 (oder 0 bis 1), ueber die Breite
 /// verteilt; auf Wunsch ein senkrechter Strich an einer Stelle.
@@ -313,11 +319,37 @@ public:
     /// Der Abstand in Millisekunden: die Schlaege im Tempo des Loops, mindestens 250 ms.
     [[nodiscard]] int wiederholMs() const;
 
+    // --- Signal path (Stufe 16c) -------------------------------------------------
+    /// Was in der Zeile gewaehlt ist — seine Regler stehen darunter: Source,
+    /// Level oder der Platz eines Bausteins in `schicht().reihe` (ab 0).
+    static constexpr int kStelleSource = -1;
+    static constexpr int kStelleLevel = -2;
+    [[nodiscard]] int stelle() const { return m_stelle; }
+    /// Einen Kasten waehlen; was es nicht gibt, waehlt Source.
+    void waehleStelle(int stelle);
+    /// **+ Add:** ein neuer Filter (Low-pass, Cutoff × 4) oder Drive (30 %)
+    /// hinter dem gewaehlten Baustein — bei Source vorn, bei Level hinten; er
+    /// ist danach gewaehlt. false = die Reihe traegt schon `kBausteineMax`.
+    bool fuegeFilterEin();
+    bool fuegeDriveEin();
+    /// **← Move / Move →:** den gewaehlten Baustein einen Platz nach vorn (-1)
+    /// oder hinten (+1). false = kein Baustein gewaehlt, oder er steht am Rand.
+    bool schiebeBaustein(int richtung);
+    /// Ziehen: den Baustein vom Platz `von` an den Platz `nach` der Reihe; er
+    /// ist danach gewaehlt. false = einen der Plaetze gibt es nicht.
+    bool verschiebeBaustein(int von, int nach);
+    /// **Remove:** den gewaehlten Baustein entfernen. false = keiner gewaehlt —
+    /// oder es ist die Envelope: sie bleibt, jede Schicht hat genau eine.
+    bool entferneBaustein();
+    /// Die Zeile selbst (fuer Tests).
+    [[nodiscard]] SignalWeg* signalWeg() const { return m_pfad; }
+
     // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) -----------------------
-    /// Die Gruppen Oscillator, Envelope, Filter und Vibrato lassen sich an
+    /// Die Gruppen Oscillator und Vibrato (unter Source) lassen sich an
     /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
     /// (`loop/creatorFolded/<schluessel>`), sie gilt fuer jede Schicht und jedes
-    /// Instrument. `schluessel`: `oscillator`, `envelope`, `filter`, `vibrato`.
+    /// Instrument. `schluessel`: `oscillator`, `vibrato` — Envelope und Filter
+    /// sind seit Stufe 16c Bausteine der Zeile Signal path, keine Gruppen mehr.
     void setzeGruppeZu(const QString& schluessel, bool zu);
     [[nodiscard]] bool gruppeZu(const QString& schluessel) const;
     /// Nur fuer Tests: aus = die Stellung wird weder gelesen noch gemerkt.
@@ -450,10 +482,11 @@ private:
     /// Eine Gruppe von Zeilen unter einer Ueberschrift, die sich einklappen laesst.
     struct Gruppe
     {
-        QString schluessel;         ///< `oscillator`, `envelope`, `filter`, `vibrato`
+        QString schluessel;         ///< `oscillator`, `vibrato`
         QToolButton* kopf = nullptr;
         int zeile = 0;              ///< die Zeile der Ueberschrift im Gitter
         bool zu = false;
+        int ende = -1;              ///< die erste Zeile, die nicht mehr dazugehoert; -1 = bis zur naechsten Ueberschrift
     };
     std::vector<Gruppe> m_gruppen;
     QGridLayout* m_gitter = nullptr;
@@ -466,6 +499,41 @@ private:
     double m_schlagMs = 500.0;           ///< ein Schlag bei 120 BPM
     /// Was eingeklappt ist, ausblenden; die Pfeile der Ueberschriften stellen.
     void klappeGruppen();
+    // --- Signal path (Stufe 16c)
+    int m_stelle = kStelleSource;
+    int m_stelleFuer = 0;  ///< fuer diese Schicht gilt `m_stelle`; eine andere beginnt bei Source
+    SignalWeg* m_pfad = nullptr;
+    QLabel* m_wegTitel = nullptr;      ///< „Signal path — Layer 1 "Body"“
+    QLabel* m_stellenTitel = nullptr;  ///< der Name des gewaehlten Kastens ueber seinen Reglern
+    QPushButton* m_bausteinVor = nullptr;
+    QPushButton* m_bausteinZurueck = nullptr;
+    QPushButton* m_bausteinWeg = nullptr;
+    /// Zeilen des Gitters, die zu einem Kasten gehoeren: von (einschliesslich) bis (ausschliesslich).
+    struct Abschnitt
+    {
+        int von = 0;
+        int bis = 0;
+    };
+    Abschnitt m_zeilenLevel;
+    Abschnitt m_zeilenSource;
+    Abschnitt m_zeilenHuelle;
+    Abschnitt m_zeilenFilter;
+    Abschnitt m_zeilenDrive;
+    /// Der gewaehlte Baustein dieser Schicht, wenn er ein Filter (ein Drive) ist; sonst nullptr.
+    [[nodiscard]] const SchichtFilter* gewaehlterFilter(const Schicht& schicht) const;
+    [[nodiscard]] SchichtFilter* gewaehlterFilter(Schicht& schicht) const;
+    [[nodiscard]] const SchichtDrive* gewaehlterDrive(const Schicht& schicht) const;
+    [[nodiscard]] SchichtDrive* gewaehlterDrive(Schicht& schicht) const;
+    /// Die Zeilen des Gitters, deren Regler zum gewaehlten Kasten gehoeren.
+    [[nodiscard]] const Abschnitt& gewaehlterAbschnitt() const;
+    /// Einen Baustein hinter dem gewaehlten einsetzen (`fuegeFilterEin`, `fuegeDriveEin`).
+    bool fuegeEin(const SchichtBaustein& baustein);
+    /// Die Kaesten der Zeile, ihr Titel, die Knoepfe Move und Remove.
+    void zeigeWeg();
+    /// Im Gitter nur zeigen, was zum gewaehlten Kasten gehoert.
+    void zeigeStelle();
+    /// Das Menue hinter + Add.
+    void zeigeAddMenue(QPoint unten);
     QLabel* m_wellenTitel = nullptr;
     QLabel* m_bildHinweis = nullptr;
     QString m_sampleVersucht;                ///< diese Aufnahme liess sich nicht laden: nicht bei jedem Zug neu fragen

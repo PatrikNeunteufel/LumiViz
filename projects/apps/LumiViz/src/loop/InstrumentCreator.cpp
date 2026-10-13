@@ -8,6 +8,7 @@
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/SampleFrage.hpp"
+#include "loop/SignalWeg.hpp"
 
 #include <QAction>
 #include <QCheckBox>
@@ -606,22 +607,80 @@ void InstrumentCreator::setupUI()
     const auto ms = [](double wert) { return QStringLiteral("%1 ms").arg(gerundet(wert)); };
 
     // --- die gewaehlte Schicht: was nur sie betrifft
+    // Seit Stufe 16c (Skizze gebilligt, Patrik S118, S1 a) steht ueber den Reglern die Zeile
+    // Signal path; das Gitter darunter zeigt nur, was zum gewaehlten Kasten gehoert.
+    auto* mitte = new QVBoxLayout;
     m_schichtKopf = new QLabel(this);
     m_schichtKopf->setObjectName(QStringLiteral("creatorLayerTitle"));
     {
         QFont fett = m_schichtKopf->font();
         fett.setBold(true);
         m_schichtKopf->setFont(fett);
-        gitter->addWidget(m_schichtKopf, gitter->rowCount(), 0, 1, 3);
         m_schichtName = new QLineEdit(this);
         m_schichtName->setObjectName(QStringLiteral("creatorLayerName"));
-        const int zeile = gitter->rowCount();
-        gitter->addWidget(new QLabel(tr("Name"), this), zeile, 0);
-        gitter->addWidget(m_schichtName, zeile, 1, 1, 2);
+        auto* zeile = new QHBoxLayout;
+        zeile->addWidget(m_schichtKopf);
+        zeile->addSpacing(8);
+        zeile->addWidget(new QLabel(tr("Name"), this));
+        zeile->addWidget(m_schichtName, 1);
+        mitte->addLayout(zeile);
     }
+    m_wegTitel = new QLabel(this);
+    m_wegTitel->setObjectName(QStringLiteral("creatorPathTitle"));
+    {
+        QFont fett = m_wegTitel->font();
+        fett.setBold(true);
+        m_wegTitel->setFont(fett);
+    }
+    {
+        // sonst findet niemand, dass sich die Kaesten anklicken und ziehen lassen — neben dem
+        // Titel, nicht darunter: jede Zeile hier macht das Fenster hoeher
+        auto* hinweis = new QLabel(tr("click a block · drag to move it"), this);
+        hinweis->setObjectName(QStringLiteral("creatorPathHint"));
+        hinweis->setEnabled(false);
+        auto* zeile = new QHBoxLayout;
+        zeile->addWidget(m_wegTitel);
+        zeile->addStretch(1);
+        zeile->addWidget(hinweis);
+        mitte->addLayout(zeile);
+    }
+    m_pfad = new SignalWeg(this);
+    m_pfad->setObjectName(QStringLiteral("creatorPath"));
+    mitte->addWidget(m_pfad);
+    {
+        auto* zeile = new QHBoxLayout;
+        m_stellenTitel = new QLabel(this);
+        m_stellenTitel->setObjectName(QStringLiteral("creatorBlockTitle"));
+        QFont fett = m_stellenTitel->font();
+        fett.setBold(true);
+        m_stellenTitel->setFont(fett);
+        m_bausteinVor = knopf(QString::fromUtf8("← Move"), "creatorBlockLeft", tr("Move the selected block one place towards Source"));
+        m_bausteinZurueck = knopf(QString::fromUtf8("Move →"), "creatorBlockRight", tr("Move the selected block one place towards Level"));
+        m_bausteinWeg = knopf(tr("Remove"), "creatorBlockRemove", QString());
+        zeile->addWidget(m_stellenTitel, 1);
+        zeile->addWidget(m_bausteinVor);
+        zeile->addWidget(m_bausteinZurueck);
+        zeile->addWidget(m_bausteinWeg);
+        mitte->addLayout(zeile);
+    }
+    connect(m_pfad, &SignalWeg::gewaehltGeaendert, this, [this](int platz) {
+        const int letzter = static_cast<int>(m_pfad->kaesten().size()) - 1;
+        waehleStelle(platz <= 0 ? kStelleSource : platz >= letzter ? kStelleLevel : platz - 1);
+    });
+    // die Plaetze der Zeile zaehlen Source mit: der erste Baustein steht dort auf Platz 1
+    connect(m_pfad, &SignalWeg::verschoben, this, [this](int von, int nach) { (void)verschiebeBaustein(von - 1, nach - 1); });
+    connect(m_pfad, &SignalWeg::addVerlangt, this, &InstrumentCreator::zeigeAddMenue);
+    connect(m_bausteinVor, &QPushButton::clicked, this, [this] { (void)schiebeBaustein(-1); });
+    connect(m_bausteinZurueck, &QPushButton::clicked, this, [this] { (void)schiebeBaustein(1); });
+    connect(m_bausteinWeg, &QPushButton::clicked, this, [this] { (void)entferneBaustein(); });
+
+    // --- Level: der feste Kasten am Ende der Zeile
+    m_zeilenLevel.von = gitter->rowCount();
     regler(gitter, tr("Level"), "creatorLevel", 0, 100, [](const Schicht& i) { return gerundet(i.laut * 100.0); },
            [](Schicht& i, int w) { i.laut = w / 100.0; },
            [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.laut * 100.0)); });
+    // --- Source: der feste Kasten am Anfang — Transpose, Start offset, Oscillator, Vibrato
+    m_zeilenLevel.bis = m_zeilenSource.von = gitter->rowCount();
     regler(gitter, tr("Transpose"), "creatorTranspose", -24, 24, [](const Schicht& i) { return i.versatzHalbtoene; },
            [](Schicht& i, int w) { i.versatzHalbtoene = w; },
            [](const Schicht& i) {
@@ -807,67 +866,7 @@ void InstrumentCreator::setupUI()
            [](const Schicht& i) { return QString::number(i.saiteDaempfung, 'f', 4); });
     m_daempfung = m_regler.size() - 1;
 
-    // --- Envelope
-    titel(tr("Envelope"), "envelope");
-    regler(gitter, tr("Attack"), "creatorAttack", 0, 1000, [](const Schicht& i) { return gerundet(i.anstiegMs); },
-           [](Schicht& i, int w) { i.anstiegMs = w; }, [ms](const Schicht& i) { return ms(i.anstiegMs); });
-    regler(gitter, tr("Decay"), "creatorDecay", 0, 500, [](const Schicht& i) { return gerundet(i.abfallMs / 10.0); },
-           [](Schicht& i, int w) { i.abfallMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.abfallMs); });
-    m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Sustain"), "creatorSustain", 0, 100, [](const Schicht& i) { return gerundet(i.halten * 100.0); },
-           [](Schicht& i, int w) { i.halten = w / 100.0; },
-           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.halten * 100.0)); });
-    m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Release"), "creatorRelease", 0, 300, [](const Schicht& i) { return gerundet(i.ausklangMs / 10.0); },
-           [](Schicht& i, int w) { i.ausklangMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.ausklangMs); });
-
-    // --- Filter
-    titel(tr("Filter"), "filter");
-    // --- Type (Stufe 11e; Skizze gebilligt, Patrik S116): Low-pass ist der Filter von frueher
-    {
-        m_filterArtName = new QLabel(tr("Type"), this);
-        m_filterArt = new QComboBox(this);
-        m_filterArt->setObjectName(QStringLiteral("creatorFilterType"));
-        m_filterArt->addItem(tr("Low-pass"), static_cast<int>(FilterArt::Tiefpass));
-        m_filterArt->addItem(tr("High-pass"), static_cast<int>(FilterArt::Hochpass));
-        m_filterArt->addItem(tr("Band-pass"), static_cast<int>(FilterArt::Bandpass));
-        m_filterArt->setToolTip(tr("Low-pass keeps what lies below Cutoff, High-pass what lies above it, Band-pass what "
-                                   "lies around it. With Cutoff at \"open\" there is no filter"));
-        const int zeile = gitter->rowCount();
-        gitter->addWidget(m_filterArtName, zeile, 0);
-        gitter->addWidget(m_filterArt, zeile, 1, 1, 2);
-        connect(m_filterArt, &QComboBox::activated, this, [this](int index) {
-            const auto art = static_cast<FilterArt>(m_filterArt->itemData(index).toInt());
-            aendereSchicht([art](Schicht& s) { s.holeFilter().art = art; });
-        });
-    }
-    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [](const Schicht& i) { return gerundet(i.filter().teilton * 10.0); },
-           [](Schicht& i, int w) { i.holeFilter().teilton = w / 10.0; },
-           [](const Schicht& i) {
-               return i.filter().teilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(i.filter().teilton, 0, 'f', 1);
-           });
-    m_nichtSaite.push_back(m_regler.size() - 1);
-    // Resonance (Entscheid H1 b): an allen drei Arten
-    regler(gitter, tr("Resonance"), "creatorResonance", 0, 100, [](const Schicht& i) { return gerundet(i.filter().resonanz * 100.0); },
-           [](Schicht& i, int w) { i.holeFilter().resonanz = w / 100.0; },
-           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.filter().resonanz * 100.0)); })
-        .schieber->setToolTip(tr("Emphasis at Cutoff: further right the filter rings at its edge. With Band-pass it sets "
-                                 "the width — further right the band gets narrower"));
-    m_reglerResonanz = m_regler.size() - 1;
-    m_nichtSaite.push_back(m_reglerResonanz);
-    regler(gitter, tr("Envelope"), "creatorFilterEnvelope", 0, 320,
-           [](const Schicht& i) { return gerundet(i.filter().huelle * 10.0); },
-           [](Schicht& i, int w) { i.holeFilter().huelle = w / 10.0; },
-           [](const Schicht& i) { return QStringLiteral("+ %1").arg(i.filter().huelle, 0, 'f', 1); });
-    m_nichtSaite.push_back(m_regler.size() - 1);
-    regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [](const Schicht& i) { return gerundet(i.drive().wert * 100.0); },
-           [](Schicht& i, int w) { i.holeDrive().wert = w / 100.0; },
-           [](const Schicht& i) {
-               return i.drive().wert <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(i.drive().wert * 100.0));
-           })
-        .schieber->setToolTip(tr("Distortion of this layer"));
-
-    // --- Vibrato
+    // --- Vibrato: gehoert zu Source und steht deshalb vor den Bausteinen
     m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
            [](Schicht& i, int w) { i.vibratoHz = w / 10.0; },
@@ -885,6 +884,91 @@ void InstrumentCreator::setupUI()
            [ms](const Schicht& i) { return ms(i.vibratoEinsatzMs); });
     m_nichtSaite.push_back(m_regler.size() - 1);
     m_nichtSample.push_back(m_regler.size() - 1);
+    m_gruppen.back().ende = gitter->rowCount();
+    m_zeilenSource.bis = gitter->rowCount();
+
+    // --- Envelope: seit Stufe 16c ein Baustein der Zeile, ohne eigene Ueberschrift
+    m_zeilenHuelle.von = gitter->rowCount();
+    regler(gitter, tr("Attack"), "creatorAttack", 0, 1000, [](const Schicht& i) { return gerundet(i.anstiegMs); },
+           [](Schicht& i, int w) { i.anstiegMs = w; }, [ms](const Schicht& i) { return ms(i.anstiegMs); });
+    regler(gitter, tr("Decay"), "creatorDecay", 0, 500, [](const Schicht& i) { return gerundet(i.abfallMs / 10.0); },
+           [](Schicht& i, int w) { i.abfallMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.abfallMs); });
+    m_nichtSaite.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Sustain"), "creatorSustain", 0, 100, [](const Schicht& i) { return gerundet(i.halten * 100.0); },
+           [](Schicht& i, int w) { i.halten = w / 100.0; },
+           [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.halten * 100.0)); });
+    m_nichtSaite.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Release"), "creatorRelease", 0, 300, [](const Schicht& i) { return gerundet(i.ausklangMs / 10.0); },
+           [](Schicht& i, int w) { i.ausklangMs = w * 10.0; }, [ms](const Schicht& i) { return ms(i.ausklangMs); });
+
+    // --- Filter: der Baustein Filter — die Regler stellen den, der in der Zeile gewaehlt ist
+    m_zeilenHuelle.bis = m_zeilenFilter.von = gitter->rowCount();
+    const auto filterWert = [this](const Schicht& s) {
+        const SchichtFilter* filter = gewaehlterFilter(s);
+        return filter != nullptr ? *filter : SchichtFilter{};
+    };
+    const auto driveWert = [this](const Schicht& s) {
+        const SchichtDrive* drive = gewaehlterDrive(s);
+        return drive != nullptr ? drive->wert : 0.0;
+    };
+    // --- Type (Stufe 11e; Skizze gebilligt, Patrik S116): Low-pass ist der Filter von frueher
+    {
+        m_filterArtName = new QLabel(tr("Type"), this);
+        m_filterArt = new QComboBox(this);
+        m_filterArt->setObjectName(QStringLiteral("creatorFilterType"));
+        m_filterArt->addItem(tr("Low-pass"), static_cast<int>(FilterArt::Tiefpass));
+        m_filterArt->addItem(tr("High-pass"), static_cast<int>(FilterArt::Hochpass));
+        m_filterArt->addItem(tr("Band-pass"), static_cast<int>(FilterArt::Bandpass));
+        m_filterArt->setToolTip(tr("Low-pass keeps what lies below Cutoff, High-pass what lies above it, Band-pass what "
+                                   "lies around it. With Cutoff at \"open\" there is no filter"));
+        const int zeile = gitter->rowCount();
+        gitter->addWidget(m_filterArtName, zeile, 0);
+        gitter->addWidget(m_filterArt, zeile, 1, 1, 2);
+        connect(m_filterArt, &QComboBox::activated, this, [this](int index) {
+            const auto art = static_cast<FilterArt>(m_filterArt->itemData(index).toInt());
+            aendereSchicht([this, art](Schicht& s) {
+                if (SchichtFilter* filter = gewaehlterFilter(s)) filter->art = art;
+            });
+        });
+    }
+    regler(gitter, tr("Cutoff"), "creatorCutoff", 0, 320, [filterWert](const Schicht& i) { return gerundet(filterWert(i).teilton * 10.0); },
+           [this](Schicht& i, int w) {
+               if (SchichtFilter* filter = gewaehlterFilter(i)) filter->teilton = w / 10.0;
+           },
+           [filterWert](const Schicht& i) {
+               return filterWert(i).teilton <= 0.0 ? tr("open") : QStringLiteral("× %1").arg(filterWert(i).teilton, 0, 'f', 1);
+           });
+    m_nichtSaite.push_back(m_regler.size() - 1);
+    // Resonance (Entscheid H1 b): an allen drei Arten
+    regler(gitter, tr("Resonance"), "creatorResonance", 0, 100, [filterWert](const Schicht& i) { return gerundet(filterWert(i).resonanz * 100.0); },
+           [this](Schicht& i, int w) {
+               if (SchichtFilter* filter = gewaehlterFilter(i)) filter->resonanz = w / 100.0;
+           },
+           [filterWert](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(filterWert(i).resonanz * 100.0)); })
+        .schieber->setToolTip(tr("Emphasis at Cutoff: further right the filter rings at its edge. With Band-pass it sets "
+                                 "the width — further right the band gets narrower"));
+    m_reglerResonanz = m_regler.size() - 1;
+    m_nichtSaite.push_back(m_reglerResonanz);
+    regler(gitter, tr("Filter envelope"), "creatorFilterEnvelope", 0, 320,
+           [filterWert](const Schicht& i) { return gerundet(filterWert(i).huelle * 10.0); },
+           [this](Schicht& i, int w) {
+               if (SchichtFilter* filter = gewaehlterFilter(i)) filter->huelle = w / 10.0;
+           },
+           [filterWert](const Schicht& i) { return QStringLiteral("+ %1").arg(filterWert(i).huelle, 0, 'f', 1); })
+        .schieber->setToolTip(tr("The envelope of the layer opens the filter by this much on top of Cutoff"));
+    m_nichtSaite.push_back(m_regler.size() - 1);
+
+    // --- Drive: der Baustein Drive
+    m_zeilenFilter.bis = m_zeilenDrive.von = gitter->rowCount();
+    regler(gitter, tr("Drive"), "creatorDrive", 0, 100, [driveWert](const Schicht& i) { return gerundet(driveWert(i) * 100.0); },
+           [this](Schicht& i, int w) {
+               if (SchichtDrive* drive = gewaehlterDrive(i)) drive->wert = w / 100.0;
+           },
+           [driveWert](const Schicht& i) {
+               return driveWert(i) <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(driveWert(i) * 100.0));
+           })
+        .schieber->setToolTip(tr("Distortion at this place of the path"));
+    m_zeilenDrive.bis = gitter->rowCount();
     gitter->setRowStretch(gitter->rowCount(), 1);
     // Die Regler der Schicht stehen in einem Feld, das rollt (Befund Patrik S116: mit jeder
     // aufgeklappten Gruppe wuchs das Fenster, bis ueber die Hoehe des Bildschirms). So bestimmt
@@ -905,7 +989,8 @@ void InstrumentCreator::setupUI()
         // wie das Fenster, nicht wie ein Eingabefeld
         m_rollen->viewport()->setAutoFillBackground(false);
         inhalt->setAutoFillBackground(false);
-        koerper->addWidget(m_rollen, 5);
+        mitte->addWidget(m_rollen, 1);
+        koerper->addLayout(mitte, 5);
         // das Mausrad rollt das Feld — es verstellt keinen Regler und keine Auswahl, ueber die
         // der Zeiger gerade faehrt (`eventFilter`)
         for (QSlider* schieber : inhalt->findChildren<QSlider*>()) schieber->installEventFilter(this);
@@ -1168,6 +1253,8 @@ void InstrumentCreator::oeffne(const Instrument& instrument)
     if (m_instrument.schichten.empty()) m_instrument.schichten.push_back(Schicht{});
     m_vorlage = m_instrument;
     m_gewaehlt = 0;
+    m_stelle = kStelleSource;
+    m_stelleFuer = 0;
     m_eigenerName.clear();
     // die Vorschlaege fuer Genres: auch was seit dem letzten Oeffnen dazukam
     static_cast<GenreVorschlag*>(m_genres->completer())->liesNeu();
@@ -1500,6 +1587,11 @@ void InstrumentCreator::zeigeAlles()
     if (!m_beschreibung->hasFocus()) m_beschreibung->setText(m_instrument.beschreibung);
     m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
     const Schicht& gewaehlte = schicht();
+    // eine andere Schicht beginnt bei Source; einen Baustein, den es nicht mehr gibt, auch
+    if (m_gewaehlt != m_stelleFuer || m_stelle >= static_cast<int>(gewaehlte.reihe.size()) ||
+        (m_stelle < 0 && m_stelle != kStelleLevel))
+        m_stelle = kStelleSource;
+    m_stelleFuer = m_gewaehlt;
     {
         const QSignalBlocker ruhe(m_gesamt);
         m_gesamt->setValue(gerundet(m_instrument.laut * 100.0));
@@ -1590,15 +1682,16 @@ void InstrumentCreator::zeigeAlles()
     for (const std::size_t platz : m_nurTonweg) zeige(platz, !saite && !rauschen);
     // ohne Weg gibt es keine Zeit zu stellen
     m_regler[m_reglerWegZeit].schieber->setEnabled(gerundet(gewaehlte.tonhoeheStartHt) != 0);
-    // der Filter (Stufe 11e): die Saite hat keinen; steht Cutoff auf „open", ist nichts zu stellen
+    // der gewaehlte Filter (Stufe 11e, 16c): die Saite hat keinen; steht Cutoff auf „open", ist nichts zu stellen
+    const SchichtFilter* const filter = gewaehlterFilter(gewaehlte);
     {
         const QSignalBlocker ruhe(m_filterArt);
-        m_filterArt->setCurrentIndex(m_filterArt->findData(static_cast<int>(gewaehlte.filter().art)));
+        m_filterArt->setCurrentIndex(m_filterArt->findData(static_cast<int>(filter != nullptr ? filter->art : FilterArt::Tiefpass)));
     }
     m_filterArtName->setVisible(!saite);
     m_filterArt->setVisible(!saite);
-    m_filterArt->setEnabled(gewaehlte.filter().teilton > 0.0);
-    m_regler[m_reglerResonanz].schieber->setEnabled(gewaehlte.filter().teilton > 0.0);
+    m_filterArt->setEnabled(filter != nullptr && filter->teilton > 0.0);
+    m_regler[m_reglerResonanz].schieber->setEnabled(filter != nullptr && filter->teilton > 0.0);
     for (QWidget* teil : m_sampleZeilen) teil->setVisible(sample);
     {
         // Detect: das Ergebnis gilt fuer die Schicht und die Aufnahme, an der gemessen wurde
@@ -1613,6 +1706,7 @@ void InstrumentCreator::zeigeAlles()
     }
     m_vibratoTitel->setVisible(!saite && !sample && !rauschen);  // eine Ueberschrift ohne Regler darunter bleibt weg
     zeige(m_daempfung, saite);
+    zeigeWeg();
     klappeGruppen();
     zeigeBilder();
 }
@@ -1695,7 +1789,7 @@ void InstrumentCreator::klappeGruppen()
         gruppe.kopf->setArrowType(gruppe.zu ? Qt::RightArrow : Qt::DownArrow);
         if (!gruppe.zu) continue;
         // ihre Zeilen: bis zur naechsten Ueberschrift, die letzte bis ans Ende des Gitters
-        const int bis = g + 1 < m_gruppen.size() ? m_gruppen[g + 1].zeile : m_gitter->rowCount();
+        const int bis = gruppe.ende >= 0 ? gruppe.ende : g + 1 < m_gruppen.size() ? m_gruppen[g + 1].zeile : m_gitter->rowCount();
         for (int i = 0; i < m_gitter->count(); ++i)
         {
             int zeile = 0;
@@ -1707,6 +1801,7 @@ void InstrumentCreator::klappeGruppen()
                 teil->setVisible(false);
         }
     }
+    zeigeStelle();
     // Das rollende Feld behaelt die Hoehe, die seine Zeilen brauchen: sonst drueckte das Fenster
     // sie zusammen, bevor der Rollbalken kaeme (im Bild aus dem Test gesehen).
     if (m_rollen != nullptr)
@@ -1738,6 +1833,208 @@ void InstrumentCreator::setzeGruppeZu(const QString& schluessel, bool zu)
 void InstrumentCreator::setzeGruppenMerken(bool an)
 {
     gruppenMerken() = an;
+}
+
+// =============================================================================
+// Signal path (Stufe 16c; Skizze gebilligt, Patrik S118, Entscheid S1 a)
+// =============================================================================
+
+const SchichtFilter* InstrumentCreator::gewaehlterFilter(const Schicht& schicht) const
+{
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(schicht.reihe.size())) return nullptr;
+    return std::get_if<SchichtFilter>(&schicht.reihe[static_cast<std::size_t>(m_stelle)]);
+}
+
+SchichtFilter* InstrumentCreator::gewaehlterFilter(Schicht& schicht) const
+{
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(schicht.reihe.size())) return nullptr;
+    return std::get_if<SchichtFilter>(&schicht.reihe[static_cast<std::size_t>(m_stelle)]);
+}
+
+const SchichtDrive* InstrumentCreator::gewaehlterDrive(const Schicht& schicht) const
+{
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(schicht.reihe.size())) return nullptr;
+    return std::get_if<SchichtDrive>(&schicht.reihe[static_cast<std::size_t>(m_stelle)]);
+}
+
+SchichtDrive* InstrumentCreator::gewaehlterDrive(Schicht& schicht) const
+{
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(schicht.reihe.size())) return nullptr;
+    return std::get_if<SchichtDrive>(&schicht.reihe[static_cast<std::size_t>(m_stelle)]);
+}
+
+const InstrumentCreator::Abschnitt& InstrumentCreator::gewaehlterAbschnitt() const
+{
+    if (m_stelle == kStelleLevel) return m_zeilenLevel;
+    const std::vector<SchichtBaustein>& reihe = schicht().reihe;
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(reihe.size())) return m_zeilenSource;
+    const SchichtBaustein& baustein = reihe[static_cast<std::size_t>(m_stelle)];
+    if (std::holds_alternative<SchichtFilter>(baustein)) return m_zeilenFilter;
+    if (std::holds_alternative<SchichtDrive>(baustein)) return m_zeilenDrive;
+    return m_zeilenHuelle;
+}
+
+void InstrumentCreator::waehleStelle(int stelle)
+{
+    const int zahl = static_cast<int>(schicht().reihe.size());
+    const int neu = stelle == kStelleLevel || (stelle >= 0 && stelle < zahl) ? stelle : kStelleSource;
+    if (neu == m_stelle) return;
+    m_stelle = neu;
+    zeigeAlles();
+}
+
+bool InstrumentCreator::fuegeEin(const SchichtBaustein& baustein)
+{
+    const int zahl = static_cast<int>(schicht().reihe.size());
+    if (zahl >= kBausteineMax) return false;
+    // hinter dem gewaehlten: bei Source vorn, bei Level hinten
+    const int platz = m_stelle == kStelleLevel ? zahl : m_stelle < 0 ? 0 : std::min(m_stelle + 1, zahl);
+    m_stelle = platz;  // vor dem Aendern: die Anzeige soll schon den neuen zeigen
+    aendereSchicht([&baustein, platz](Schicht& s) { s.reihe.insert(s.reihe.begin() + platz, baustein); });
+    return true;
+}
+
+bool InstrumentCreator::fuegeFilterEin()
+{
+    // ein neuer Filter soll zu hoeren sein: nicht offen
+    return fuegeEin(SchichtFilter{FilterArt::Tiefpass, 4.0, 0.0, 0.0});
+}
+
+bool InstrumentCreator::fuegeDriveEin()
+{
+    return fuegeEin(SchichtDrive{0.3});
+}
+
+bool InstrumentCreator::verschiebeBaustein(int von, int nach)
+{
+    const int zahl = static_cast<int>(schicht().reihe.size());
+    if (von < 0 || von >= zahl || nach < 0 || nach >= zahl) return false;
+    m_stelle = nach;
+    if (von == nach)
+    {
+        zeigeAlles();
+        return true;
+    }
+    const Instrument vorher = m_instrument;
+    aendereSchicht([von, nach](Schicht& s) {
+        const SchichtBaustein baustein = s.reihe[static_cast<std::size_t>(von)];
+        s.reihe.erase(s.reihe.begin() + von);
+        s.reihe.insert(s.reihe.begin() + nach, baustein);
+    });
+    if (m_instrument == vorher) zeigeAlles();  // zwei gleiche Bausteine getauscht: nur die Wahl wandert
+    return true;
+}
+
+bool InstrumentCreator::schiebeBaustein(int richtung)
+{
+    if (m_stelle < 0) return false;
+    const int ziel = m_stelle + (richtung < 0 ? -1 : 1);
+    if (ziel < 0 || ziel >= static_cast<int>(schicht().reihe.size())) return false;
+    return verschiebeBaustein(m_stelle, ziel);
+}
+
+bool InstrumentCreator::entferneBaustein()
+{
+    const std::vector<SchichtBaustein>& reihe = schicht().reihe;
+    if (m_stelle < 0 || m_stelle >= static_cast<int>(reihe.size())) return false;
+    if (std::holds_alternative<SchichtHuelle>(reihe[static_cast<std::size_t>(m_stelle)])) return false;
+    const int platz = m_stelle;
+    // danach ist gewaehlt, was an seinen Platz rueckt — oder der davor
+    m_stelle = std::min(platz, static_cast<int>(reihe.size()) - 2);
+    aendereSchicht([platz](Schicht& s) { s.reihe.erase(s.reihe.begin() + platz); });
+    return true;
+}
+
+void InstrumentCreator::zeigeAddMenue(QPoint unten)
+{
+    QMenu menue(this);
+    menue.setObjectName(QStringLiteral("creatorAddBlockMenu"));
+    connect(menue.addAction(tr("Filter")), &QAction::triggered, this, [this] { (void)fuegeFilterEin(); });
+    connect(menue.addAction(tr("Drive")), &QAction::triggered, this, [this] { (void)fuegeDriveEin(); });
+    // jede Schicht hat genau eine Envelope: sie steht da, laesst sich aber nicht noch einmal holen
+    menue.addAction(tr("Envelope — already in the path"))->setEnabled(false);
+    menue.exec(m_pfad->mapToGlobal(unten));
+}
+
+void InstrumentCreator::zeigeWeg()
+{
+    const Schicht& s = schicht();
+    const bool saite = s.schwingung == Schwingung::Saite;
+    const int zahl = static_cast<int>(s.reihe.size());
+    std::vector<WegKasten> kaesten;
+    // --- Source: die Schwingung, und ob die Note faellt oder steigt
+    QString quelle = m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung)));
+    if (const int st = gerundet(s.tonhoeheStartHt);
+        st != 0 && s.tonhoeheZeitMs > 0.0 && !saite && s.schwingung != Schwingung::Rauschen)
+        quelle += st > 0 ? QString::fromUtf8(" ↓ %1 st").arg(st) : QString::fromUtf8(" ↑ %1 st").arg(-st);
+    kaesten.push_back(WegKasten{tr("Source"), quelle, false, false, tr("What makes the tone: waveform, transpose, pitch sweep, vibrato")});
+    for (const SchichtBaustein& baustein : s.reihe)
+    {
+        if (const auto* filter = std::get_if<SchichtFilter>(&baustein))
+        {
+            const QString art = m_filterArt->itemText(m_filterArt->findData(static_cast<int>(filter->art)));
+            const bool offen = filter->teilton <= 0.0;
+            kaesten.push_back(WegKasten{tr("Filter"),
+                                        saite   ? tr("skipped")
+                                        : offen ? tr("open")
+                                                : QString::fromUtf8("%1 ×%2").arg(art).arg(filter->teilton, 0, 'f', 1),
+                                        false, saite || offen,
+                                        saite ? tr("A plucked string has no filter — this block is skipped") : QString()});
+        }
+        else if (const auto* drive = std::get_if<SchichtDrive>(&baustein))
+            kaesten.push_back(WegKasten{tr("Drive"),
+                                        drive->wert <= 0.0 ? tr("off") : QStringLiteral("%1 %").arg(gerundet(drive->wert * 100.0)),
+                                        false, drive->wert <= 0.0, QString()});
+        else
+            kaesten.push_back(WegKasten{tr("Envelope"), tr("Decay %1 ms").arg(gerundet(s.abfallMs)), true, false,
+                                        tr("Where the envelope shapes the tone — every layer has exactly one. Drag it to move it")});
+    }
+    kaesten.push_back(WegKasten{tr("Level"), QStringLiteral("%1 %").arg(gerundet(s.laut * 100.0)), false, false,
+                                tr("The level of this layer")});
+    const bool voll = zahl >= kBausteineMax;
+    const int gewaehlt = m_stelle == kStelleLevel ? zahl + 1 : m_stelle < 0 ? 0 : m_stelle + 1;
+    m_pfad->setKaesten(std::move(kaesten), gewaehlt, !voll,
+                      voll ? tr("%1 of %1").arg(kBausteineMax) : tr("+ Add"));
+
+    QString titel = tr("Signal path — Layer %1").arg(m_gewaehlt + 1);
+    if (!s.name.isEmpty()) titel += QStringLiteral(" \"%1\"").arg(s.name);
+    m_wegTitel->setText(titel);
+
+    // --- ueber den Reglern: wie der gewaehlte Kasten heisst, und was sich mit ihm tun laesst
+    const bool baustein = m_stelle >= 0;
+    const bool huelle = baustein && std::holds_alternative<SchichtHuelle>(s.reihe[static_cast<std::size_t>(m_stelle)]);
+    m_stellenTitel->setText(m_pfad->kaesten()[static_cast<std::size_t>(gewaehlt)].titel);
+    m_bausteinVor->setVisible(baustein);
+    m_bausteinZurueck->setVisible(baustein);
+    m_bausteinWeg->setVisible(baustein);
+    m_bausteinVor->setEnabled(baustein && m_stelle > 0);
+    m_bausteinZurueck->setEnabled(baustein && m_stelle + 1 < zahl);
+    m_bausteinWeg->setEnabled(baustein && !huelle);
+    m_bausteinWeg->setToolTip(huelle ? tr("The envelope stays in the path — every layer has exactly one")
+                                     : tr("Remove the selected block from the path"));
+}
+
+void InstrumentCreator::zeigeStelle()
+{
+    // im Gitter nur, was zum gewaehlten Kasten gehoert; was davor schon ausgeblendet wurde
+    // (die Schwingung kennt es nicht, die Gruppe ist eingeklappt), bleibt weg
+    const Abschnitt& gewaehlt = gewaehlterAbschnitt();
+    const int ersteGruppe = m_gruppen.empty() ? 0 : m_gruppen.front().zeile;
+    for (int i = 0; i < m_gitter->count(); ++i)
+    {
+        int zeile = 0;
+        int spalte = 0;
+        int hoch = 0;
+        int breit = 0;
+        m_gitter->getItemPosition(i, &zeile, &spalte, &hoch, &breit);
+        QWidget* teil = m_gitter->itemAt(i)->widget();
+        if (teil == nullptr) continue;
+        const bool dabei = zeile >= gewaehlt.von && zeile < gewaehlt.bis;
+        if (!dabei)
+            teil->setVisible(false);
+        else if (zeile < ersteGruppe)
+            teil->setVisible(true);  // vor der ersten Gruppe blendet sonst niemand ein
+    }
 }
 
 // =============================================================================

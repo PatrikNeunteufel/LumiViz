@@ -25,6 +25,7 @@
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
+#include "loop/SignalWeg.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -50,8 +51,11 @@
 #include <QStringList>
 #include <QTemporaryDir>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <type_traits>
+#include <variant>
 #include <vector>
 
 using namespace lumi::loop;
@@ -104,6 +108,30 @@ Loop probe()
 /// Die Groesse, bei der 64 Schritte und 20 Tonhoehen zu sehen sind.
 constexpr int kBreite = NotenRaster::kTastenBreite + 64 * NotenRaster::kSchrittBreite;
 constexpr int kHoehe = NotenRaster::kKopfHoehe + 20 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe;
+
+template <class Art>
+bool ist(const SchichtBaustein& baustein)
+{
+    return std::holds_alternative<Art>(baustein);
+}
+
+/// Den ersten Baustein dieser Art in der Zeile Signal path waehlen — seine Regler stehen dann
+/// unter der Zeile (Stufe 16c). Fehlt ein Filter oder ein Drive, kommt er dazu.
+template <class Art>
+void waehleBaustein(InstrumentCreator& creator)
+{
+    const std::vector<SchichtBaustein>& reihe = creator.schicht().reihe;
+    for (std::size_t i = 0; i < reihe.size(); ++i)
+        if (std::holds_alternative<Art>(reihe[i]))
+        {
+            creator.waehleStelle(static_cast<int>(i));
+            return;
+        }
+    if constexpr (std::is_same_v<Art, SchichtFilter>)
+        REQUIRE(creator.fuegeFilterEin());
+    else if constexpr (std::is_same_v<Art, SchichtDrive>)
+        REQUIRE(creator.fuegeDriveEin());
+}
 
 }  // namespace
 
@@ -283,7 +311,12 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(schieber("creatorVoices")->value() == 3);
         CHECK(schieber("creatorDetune")->value() == 9);
         CHECK(schieber("creatorAttack")->value() == 160);
+        // seit Stufe 16c zeigen Cutoff und Drive den Baustein, der in der Zeile Signal path gewaehlt ist
+        CHECK(schieber("creatorCutoff")->value() == 0);
+        waehleBaustein<SchichtFilter>(creator);
         CHECK(schieber("creatorCutoff")->value() == 60);  // das Sechsfache des Grundtons
+        creator.waehleStelle(InstrumentCreator::kStelleSource);
+        CHECK_FALSE(creator.geaendert());  // einen Kasten waehlen aendert nichts
         // die Bilder: eine Schwingung und die Huellkurve einer Note
         auto* welle = creator.findChild<KurvenBild*>(QStringLiteral("creatorCycle"));
         auto* huelle = creator.findChild<KurvenBild*>(QStringLiteral("creatorEnvelope"));
@@ -333,7 +366,13 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(schieber("creatorCutoff")->isHidden());
         CHECK(schieber("creatorHarmonic2")->isHidden());
         CHECK_FALSE(schieber("creatorDamping")->isHidden());
+        // seit Stufe 16c ist die Envelope ein Baustein der Zeile: ihre Regler stehen da, wenn sie gewaehlt ist
+        CHECK(schieber("creatorAttack")->isHidden());
+        waehleBaustein<SchichtHuelle>(creator);
         CHECK_FALSE(schieber("creatorAttack")->isHidden());
+        CHECK(schieber("creatorDecay")->isHidden());  // die Saite klingt von selbst aus
+        CHECK(schieber("creatorDamping")->isHidden());  // gehoert zu Source
+        creator.waehleStelle(InstrumentCreator::kStelleSource);
         auto* wellenWahl = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
         REQUIRE(wellenWahl != nullptr);
         CHECK(wellenWahl->currentText() == QStringLiteral("Plucked string"));
@@ -381,14 +420,24 @@ TEST_SUITE("LoopInstrumentEditor")
                 CAPTURE(weg2);
                 CHECK(schieber(weg2)->isHidden());
             }
-            for (const char* da : {"creatorAttack", "creatorDecay", "creatorSustain", "creatorRelease", "creatorCutoff", "creatorDrive"})
+            // Envelope, Filter und Drive sind Bausteine der Zeile: jeder zeigt seine Regler, wenn er gewaehlt ist
+            waehleBaustein<SchichtHuelle>(creator);
+            for (const char* da : {"creatorAttack", "creatorDecay", "creatorSustain", "creatorRelease"})
             {
                 CAPTURE(da);
                 CHECK_FALSE(schieber(da)->isHidden());
             }
+            CHECK(schieber("creatorCutoff")->isHidden());
+            CHECK(schieber("creatorDrive")->isHidden());
+            waehleBaustein<SchichtDrive>(creator);
+            CHECK_FALSE(schieber("creatorDrive")->isHidden());
+            CHECK(schieber("creatorAttack")->isHidden());
+            waehleBaustein<SchichtFilter>(creator);
+            CHECK_FALSE(schieber("creatorCutoff")->isHidden());
+            CHECK(schieber("creatorDrive")->isHidden());
             CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorCycleTitle"))->text() == QStringLiteral("Noise"));
 
-            // --- Stufe 11e: Type und Resonance in der Gruppe Filter
+            // --- Stufe 11e: Type und Resonance am Filter (er ist gewaehlt)
             auto* art = creator.findChild<QComboBox*>(QStringLiteral("creatorFilterType"));
             REQUIRE(art != nullptr);
             QSlider* resonanz = schieber("creatorResonance");
@@ -415,40 +464,43 @@ TEST_SUITE("LoopInstrumentEditor")
             CHECK(art->isHidden());
             CHECK(resonanz->isHidden());
 
-            // --- Gruppen ein- und ausklappen (Wunsch Patrik S116): ein Klick auf die Ueberschrift
-            auto* kopfHuelle = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_envelope"));
+            // --- Gruppen ein- und ausklappen (Wunsch Patrik S116): ein Klick auf die Ueberschrift.
+            //     Seit Stufe 16c gibt es nur noch Oscillator und Vibrato, unter Source — Envelope und
+            //     Filter sind Bausteine der Zeile Signal path
+            CHECK(creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_envelope")) == nullptr);
+            CHECK(creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_filter")) == nullptr);
             auto* schwinger = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_oscillator"));
             auto* vibrato = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_vibrato"));
-            REQUIRE(kopfHuelle != nullptr);
             REQUIRE(schwinger != nullptr);
             REQUIRE(vibrato != nullptr);
-            REQUIRE(creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_filter")) != nullptr);
-            CHECK(kopfHuelle->text() == QStringLiteral("Envelope"));
-            CHECK_FALSE(creator.gruppeZu(QStringLiteral("envelope")));
-            CHECK(kopfHuelle->arrowType() == Qt::DownArrow);
-            kopfHuelle->click();
-            CHECK(creator.gruppeZu(QStringLiteral("envelope")));
-            CHECK(kopfHuelle->arrowType() == Qt::RightArrow);
-            CHECK_FALSE(kopfHuelle->isHidden());  // die Ueberschrift bleibt
-            CHECK(schieber("creatorAttack")->isHidden());
-            CHECK(schieber("creatorRelease")->isHidden());
-            CHECK_FALSE(schieber("creatorDamping")->isHidden());  // die anderen Gruppen bleiben offen
-            CHECK_FALSE(schieber("creatorDrive")->isHidden());
-            // eine Aenderung an der Schicht klappt nichts auf
-            creator.aendereSchicht([](Schicht& s) { s.laut = 0.6; });
-            CHECK(schieber("creatorAttack")->isHidden());
-            // die Gruppe Oscillator: zu ist alles weg; wieder auf fehlt weiter, was die Saite nicht kennt
+            creator.waehleStelle(InstrumentCreator::kStelleSource);
+            CHECK(schwinger->text() == QStringLiteral("Oscillator"));
+            CHECK_FALSE(creator.gruppeZu(QStringLiteral("oscillator")));
+            CHECK(schwinger->arrowType() == Qt::DownArrow);
+            CHECK_FALSE(wellenWahl->isHidden());
             schwinger->click();
+            CHECK(creator.gruppeZu(QStringLiteral("oscillator")));
+            CHECK(schwinger->arrowType() == Qt::RightArrow);
+            CHECK_FALSE(schwinger->isHidden());  // die Ueberschrift bleibt
             CHECK(wellenWahl->isHidden());
             CHECK(schieber("creatorDamping")->isHidden());
+            CHECK_FALSE(schieber("creatorTranspose")->isHidden());  // steht ueber der Gruppe
+            // eine Aenderung an der Schicht klappt nichts auf
+            creator.aendereSchicht([](Schicht& s) { s.laut = 0.6; });
+            CHECK(wellenWahl->isHidden());
+            // ein anderer Kasten und zurueck: die Gruppe bleibt zu
+            waehleBaustein<SchichtHuelle>(creator);
+            CHECK_FALSE(schieber("creatorAttack")->isHidden());
+            CHECK(schwinger->isHidden());  // die Ueberschrift gehoert zu Source
+            creator.waehleStelle(InstrumentCreator::kStelleSource);
+            CHECK_FALSE(schwinger->isHidden());
+            CHECK(wellenWahl->isHidden());
+            // wieder auf: es fehlt weiter, was die Saite nicht kennt
             schwinger->click();
             CHECK_FALSE(wellenWahl->isHidden());
             CHECK_FALSE(schieber("creatorDamping")->isHidden());
             CHECK(schieber("creatorVoices")->isHidden());
             CHECK(vibrato->isHidden());  // die Saite hat kein Vibrato: auch keine Ueberschrift
-            kopfHuelle->click();
-            CHECK_FALSE(creator.gruppeZu(QStringLiteral("envelope")));
-            CHECK_FALSE(schieber("creatorAttack")->isHidden());
             // die Stellung wird gemerkt und gilt fuer das naechste Fenster (in eigenen Einstellungen)
             {
                 const QString org = QCoreApplication::organizationName();
@@ -459,15 +511,15 @@ TEST_SUITE("LoopInstrumentEditor")
                 InstrumentCreator::setzeGruppenMerken(true);
                 {
                     InstrumentCreator erster;
-                    erster.setzeGruppeZu(QStringLiteral("filter"), true);
+                    erster.setzeGruppeZu(QStringLiteral("vibrato"), true);
                 }
                 {
                     InstrumentCreator zweiter;
-                    CHECK(zweiter.gruppeZu(QStringLiteral("filter")));
-                    CHECK_FALSE(zweiter.gruppeZu(QStringLiteral("envelope")));
+                    CHECK(zweiter.gruppeZu(QStringLiteral("vibrato")));
+                    CHECK_FALSE(zweiter.gruppeZu(QStringLiteral("oscillator")));
                     zweiter.oeffne(*strings);
-                    CHECK(zweiter.findChild<QSlider*>(QStringLiteral("creatorCutoff"))->isHidden());
-                    CHECK_FALSE(zweiter.findChild<QSlider*>(QStringLiteral("creatorAttack"))->isHidden());
+                    CHECK(zweiter.findChild<QSlider*>(QStringLiteral("creatorVibratoRate"))->isHidden());
+                    CHECK_FALSE(zweiter.findChild<QSlider*>(QStringLiteral("creatorVoices"))->isHidden());
                 }
                 InstrumentCreator::setzeGruppenMerken(false);
                 QSettings().clear();
@@ -493,11 +545,11 @@ TEST_SUITE("LoopInstrumentEditor")
                 CHECK(weit > 300);
                 CHECK(wellenWahl->height() >= wellenWahl->sizeHint().height());
                 CHECK(schieber("creatorAttack")->height() >= schieber("creatorAttack")->sizeHint().height());
-                for (const char* gruppe : {"oscillator", "envelope", "filter", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), true);
+                for (const char* gruppe : {"oscillator", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), true);
                 QCoreApplication::processEvents();
                 CHECK(creator.size() == QSize(1000, 500));
                 CHECK(rollen->verticalScrollBar()->maximum() == 0);  // alles eingeklappt: nichts zu rollen
-                for (const char* gruppe : {"oscillator", "envelope", "filter", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), false);
+                for (const char* gruppe : {"oscillator", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), false);
                 QCoreApplication::processEvents();
                 CHECK(creator.size() == QSize(1000, 500));  // wieder aufgeklappt: das Fenster ist nicht gewachsen
                 CHECK(rollen->verticalScrollBar()->maximum() == weit);
@@ -729,6 +781,7 @@ TEST_SUITE("LoopInstrumentEditor")
         // --- die Regler der Schicht: Transpose, Start offset, Drive, Level, Name
         schieber("creatorTranspose")->setValue(12);
         schieber("creatorStartOffset")->setValue(8);  // 40 ms
+        REQUIRE(creator.fuegeDriveEin());  // seit Stufe 16c ein Baustein der Zeile: er kommt mit 30 % dazu
         schieber("creatorDrive")->setValue(30);
         schieber("creatorLevel")->setValue(35);
         creator.aendereSchicht([](Schicht& s) { s.name = QStringLiteral("Shimmer"); });
@@ -1110,12 +1163,23 @@ TEST_SUITE("LoopInstrumentEditor")
             CAPTURE(weg);
             CHECK(schieber(weg)->isHidden());
         }
-        for (const char* bleibt : {"creatorLevel", "creatorTranspose", "creatorStartOffset", "creatorAttack", "creatorDecay",
-                                   "creatorSustain", "creatorRelease", "creatorCutoff", "creatorDrive"})
+        for (const char* bleibt : {"creatorTranspose", "creatorStartOffset"})
         {
             CAPTURE(bleibt);
             CHECK_FALSE(schieber(bleibt)->isHidden());
         }
+        // Level und Envelope haben seit Stufe 16c ihren Kasten in der Zeile Signal path
+        CHECK(schieber("creatorLevel")->isHidden());
+        creator.waehleStelle(InstrumentCreator::kStelleLevel);
+        CHECK_FALSE(schieber("creatorLevel")->isHidden());
+        CHECK(schieber("creatorTranspose")->isHidden());
+        waehleBaustein<SchichtHuelle>(creator);
+        for (const char* bleibt : {"creatorAttack", "creatorDecay", "creatorSustain", "creatorRelease"})
+        {
+            CAPTURE(bleibt);
+            CHECK_FALSE(schieber(bleibt)->isHidden());
+        }
+        creator.waehleStelle(InstrumentCreator::kStelleSource);
         CHECK(dateiZeile->text() == QStringLiteral("(none)"));
         CHECK(bildTitel->text() == QStringLiteral("The sample — choose a file"));
         CHECK_FALSE(hinweis->isHidden());
@@ -1443,6 +1507,267 @@ TEST_SUITE("LoopInstrumentEditor")
             gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
             QCoreApplication::processEvents();
             CHECK(gezeigt.grab().save(ziel));
+        }
+    }
+
+    TEST_CASE("Instrument-Creator: die Zeile Signal path — Kaesten waehlen, Add, Move, Remove und ziehen")
+    {
+        // Stufe 16c (S118); Skizze gebilligt, Entscheid Patrik S1 a. Ohne gezeigtes Fenster.
+        // `LUMIVIZ_CREATOR_PATH_BILD=<datei.png>` legt zwei Bilder ab: die Schicht aus der Skizze mit
+        // gewaehltem Filter, und (mit `_8` im Namen) dieselbe mit acht Bausteinen.
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        InstrumentCreator creator;  // nicht gezeigt: kein Fenster
+        const auto schieber = [&](const char* kennung) {
+            auto* s = creator.findChild<QSlider*>(QString::fromLatin1(kennung));
+            REQUIRE(s != nullptr);
+            return s;
+        };
+        const auto knopf = [&](const char* kennung) {
+            auto* k = creator.findChild<QPushButton*>(QString::fromLatin1(kennung));
+            REQUIRE(k != nullptr);
+            return k;
+        };
+        SignalWeg* weg = creator.signalWeg();
+        REQUIRE(weg != nullptr);
+        weg->resize(1400, 40);  // breit genug fuer eine Zeile: die Kaesten stehen nebeneinander
+        auto* titel = creator.findChild<QLabel*>(QStringLiteral("creatorPathTitle"));
+        auto* kasten = creator.findChild<QLabel*>(QStringLiteral("creatorBlockTitle"));
+        auto* welle = creator.findChild<QComboBox*>(QStringLiteral("creatorWaveform"));
+        auto* art = creator.findChild<QComboBox*>(QStringLiteral("creatorFilterType"));
+        REQUIRE(titel != nullptr);
+        REQUIRE(kasten != nullptr);
+        REQUIRE(welle != nullptr);
+        REQUIRE(art != nullptr);
+        CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorPathHint")) != nullptr);  // sagt, dass man klicken und ziehen kann
+        const auto namen = [&] {
+            QStringList alle;
+            for (const WegKasten& einer : weg->kaesten()) alle << einer.titel;
+            return alle;
+        };
+        const auto reihe = [&]() -> const std::vector<SchichtBaustein>& { return creator.schicht().reihe; };
+
+        // --- ein neues Instrument: Source, Envelope, Level — Source ist gewaehlt und zeigt den Oscillator
+        Instrument frisch;
+        frisch.titel = QStringLiteral("Fresh");
+        creator.oeffne(frisch);
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Envelope"), QStringLiteral("Level")});
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        CHECK(weg->gewaehlt() == 0);
+        CHECK(titel->text() == QString::fromUtf8("Signal path — Layer 1"));
+        CHECK(kasten->text() == QStringLiteral("Source"));
+        CHECK(weg->kaesten()[0].wert == QStringLiteral("Sine"));
+        CHECK(weg->kaesten()[1].gestrichelt);  // die Envelope gibt es genau einmal
+        CHECK(weg->kaesten()[1].wert == QStringLiteral("Decay 200 ms"));
+        CHECK(weg->kaesten()[2].wert == QStringLiteral("100 %"));
+        CHECK(weg->addMoeglich());
+        CHECK(weg->addText() == QStringLiteral("+ Add"));
+        CHECK_FALSE(welle->isHidden());
+        CHECK_FALSE(schieber("creatorTranspose")->isHidden());
+        CHECK(schieber("creatorAttack")->isHidden());
+        CHECK(schieber("creatorLevel")->isHidden());
+        CHECK(knopf("creatorBlockLeft")->isHidden());  // Source laesst sich weder schieben noch entfernen
+        CHECK(knopf("creatorBlockRemove")->isHidden());
+        CHECK_FALSE(weg->ziehbar(0));
+        CHECK(weg->ziehbar(1));
+        CHECK_FALSE(weg->ziehbar(2));
+
+        // --- ein Klick auf Level: nur sein Regler
+        klick(*weg, weg->kastenRect(2).center());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleLevel);
+        CHECK(kasten->text() == QStringLiteral("Level"));
+        CHECK_FALSE(schieber("creatorLevel")->isHidden());
+        CHECK(welle->isHidden());
+        CHECK(knopf("creatorBlockRemove")->isHidden());
+        schieber("creatorLevel")->setValue(80);
+        CHECK(weg->kaesten()[2].wert == QStringLiteral("80 %"));
+
+        // --- ein Klick auf Envelope: Attack bis Release; sie laesst sich nicht entfernen
+        klick(*weg, weg->kastenRect(1).center());
+        CHECK(creator.stelle() == 0);
+        CHECK(kasten->text() == QStringLiteral("Envelope"));
+        CHECK_FALSE(schieber("creatorAttack")->isHidden());
+        CHECK_FALSE(schieber("creatorRelease")->isHidden());
+        CHECK(schieber("creatorLevel")->isHidden());
+        CHECK_FALSE(knopf("creatorBlockRemove")->isHidden());
+        CHECK_FALSE(knopf("creatorBlockRemove")->isEnabled());
+        CHECK_FALSE(knopf("creatorBlockLeft")->isEnabled());  // der einzige Baustein
+        CHECK_FALSE(knopf("creatorBlockRight")->isEnabled());
+        CHECK_FALSE(creator.entferneBaustein());
+        schieber("creatorDecay")->setValue(21);
+        CHECK(weg->kaesten()[1].wert == QStringLiteral("Decay 210 ms"));
+
+        // --- Add: ein Filter kommt hinter den gewaehlten und ist gewaehlt
+        REQUIRE(creator.fuegeFilterEin());
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Envelope"), QStringLiteral("Filter"), QStringLiteral("Level")});
+        CHECK(creator.stelle() == 1);
+        CHECK(weg->gewaehlt() == 2);
+        CHECK(kasten->text() == QStringLiteral("Filter"));
+        CHECK(ist<SchichtHuelle>(reihe()[0]));
+        CHECK(std::get<SchichtFilter>(reihe()[1]) == SchichtFilter{FilterArt::Tiefpass, 4.0, 0.0, 0.0});  // zu hoeren, nicht offen
+        CHECK(weg->kaesten()[2].wert == QString::fromUtf8("Low-pass ×4.0"));
+        CHECK_FALSE(schieber("creatorCutoff")->isHidden());
+        CHECK(schieber("creatorCutoff")->value() == 40);
+        CHECK(schieber("creatorAttack")->isHidden());
+        schieber("creatorCutoff")->setValue(23);
+        art->setCurrentIndex(art->findText(QStringLiteral("High-pass")));
+        Q_EMIT art->activated(art->currentIndex());
+        CHECK(std::get<SchichtFilter>(reihe()[1]) == SchichtFilter{FilterArt::Hochpass, 2.3, 0.0, 0.0});
+        CHECK(weg->kaesten()[2].wert == QString::fromUtf8("High-pass ×2.3"));
+
+        // --- ← Move: der Filter rueckt vor die Envelope
+        CHECK(knopf("creatorBlockLeft")->isEnabled());
+        CHECK_FALSE(knopf("creatorBlockRight")->isEnabled());
+        knopf("creatorBlockLeft")->click();
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Filter"), QStringLiteral("Envelope"), QStringLiteral("Level")});
+        CHECK(creator.stelle() == 0);  // er bleibt gewaehlt
+        CHECK_FALSE(knopf("creatorBlockLeft")->isEnabled());
+        CHECK(knopf("creatorBlockRight")->isEnabled());
+
+        // --- Add bei gewaehltem Source: vorn
+        klick(*weg, weg->kastenRect(0).center());
+        REQUIRE(creator.fuegeDriveEin());
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Drive"), QStringLiteral("Filter"), QStringLiteral("Envelope"),
+                                     QStringLiteral("Level")});
+        CHECK(creator.stelle() == 0);
+        CHECK(schieber("creatorDrive")->value() == 30);
+        CHECK_FALSE(schieber("creatorDrive")->isHidden());
+        schieber("creatorDrive")->setValue(40);
+        CHECK(weg->kaesten()[1].wert == QStringLiteral("40 %"));
+        CHECK(std::get<SchichtDrive>(reihe()[0]).wert == doctest::Approx(0.4));
+
+        // --- ziehen: Drive hinter die Envelope (der Kick aus §4h) — er ist danach gewaehlt
+        ziehe(*weg, weg->kastenRect(1).center(), weg->kastenRect(3).center());
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Filter"), QStringLiteral("Envelope"), QStringLiteral("Drive"),
+                                     QStringLiteral("Level")});
+        CHECK(creator.stelle() == 2);
+        CHECK(ist<SchichtDrive>(reihe()[2]));
+        // die Envelope laesst sich auch ziehen; ein fester Kasten nicht
+        ziehe(*weg, weg->kastenRect(2).center(), weg->kastenRect(1).center());
+        CHECK(ist<SchichtHuelle>(reihe()[0]));
+        CHECK(creator.stelle() == 0);
+        const std::vector<SchichtBaustein> vorher = reihe();
+        ziehe(*weg, weg->kastenRect(0).center(), weg->kastenRect(2).center());
+        CHECK(reihe() == vorher);
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);  // der Klick hat ihn nur gewaehlt
+        // ein Klick ohne Zug verschiebt nichts
+        klick(*weg, weg->kastenRect(3).center());
+        CHECK(reihe() == vorher);
+        CHECK(creator.stelle() == 2);
+
+        // --- Remove: der gewaehlte Baustein geht, gewaehlt ist danach sein Nachbar
+        CHECK(knopf("creatorBlockRemove")->isEnabled());
+        knopf("creatorBlockRemove")->click();
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Envelope"), QStringLiteral("Filter"), QStringLiteral("Level")});
+        CHECK(creator.stelle() == 1);
+
+        // --- zwei Filter: jeder hat seine Werte, die Regler stellen den gewaehlten
+        REQUIRE(creator.fuegeFilterEin());
+        CHECK(creator.stelle() == 2);
+        schieber("creatorCutoff")->setValue(80);
+        CHECK(std::get<SchichtFilter>(reihe()[2]).teilton == doctest::Approx(8.0));
+        CHECK(std::get<SchichtFilter>(reihe()[1]).teilton == doctest::Approx(2.3));
+        CHECK(std::get<SchichtFilter>(reihe()[1]).art == FilterArt::Hochpass);
+        klick(*weg, weg->kastenRect(2).center());  // der erste Filter
+        CHECK(schieber("creatorCutoff")->value() == 23);
+        CHECK(art->currentText() == QStringLiteral("High-pass"));
+        klick(*weg, weg->kastenRect(3).center());  // der zweite
+        CHECK(schieber("creatorCutoff")->value() == 80);
+        CHECK(art->currentText() == QStringLiteral("Low-pass"));
+        // „open": der Kasten steht matt da — der Filter bleibt in der Reihe
+        schieber("creatorCutoff")->setValue(0);
+        CHECK(weg->kaesten()[3].wert == QStringLiteral("open"));
+        CHECK(weg->kaesten()[3].matt);
+        CHECK(reihe().size() == 3);
+        schieber("creatorCutoff")->setValue(80);
+
+        // --- der Titel traegt den Namen der Schicht; Source nennt die Schwingung und den Weg der Tonhoehe
+        creator.aendereSchicht([](Schicht& s) {
+            s.name = QStringLiteral("Body");
+            s.tonhoeheStartHt = 22.0;
+        });
+        CHECK(titel->text() == QString::fromUtf8("Signal path — Layer 1 \"Body\""));
+        CHECK(weg->kaesten()[0].wert == QString::fromUtf8("Sine ↓ 22 st"));
+        // die Saite hat keinen Filter: der Kasten sagt es
+        creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Saite; });
+        CHECK(weg->kaesten()[2].wert == QStringLiteral("skipped"));
+        CHECK(weg->kaesten()[2].matt);
+        CHECK(weg->kaesten()[0].wert == QStringLiteral("Plucked string"));
+        creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });
+
+        // --- hoechstens acht (K4 a): danach ist Add grau, und nichts kommt mehr dazu
+        while (reihe().size() < static_cast<std::size_t>(kBausteineMax)) REQUIRE(creator.fuegeDriveEin());
+        CHECK_FALSE(creator.fuegeDriveEin());
+        CHECK_FALSE(creator.fuegeFilterEin());
+        CHECK(reihe().size() == 8);
+        CHECK(weg->kaesten().size() == 10);
+        CHECK_FALSE(weg->addMoeglich());
+        CHECK(weg->addText() == QStringLiteral("8 of 8"));
+        CHECK(std::count_if(reihe().begin(), reihe().end(), ist<SchichtHuelle>) == 1);
+        // in schmaler Breite bricht die Reihe um
+        // ein nicht gezeigtes Widget erfaehrt von seiner Groesse erst beim Zeigen: hier von Hand
+        const auto breite = [&](int b) {
+            weg->resize(b, 40);
+            QResizeEvent ereignis(weg->size(), QSize());
+            QCoreApplication::sendEvent(weg, &ereignis);
+        };
+        CHECK(weg->zeilen() == 1);
+        breite(420);
+        CHECK(weg->zeilen() >= 2);
+        CHECK(weg->kastenRect(9).top() > weg->kastenRect(0).top());
+        breite(1400);
+        // was die Zeile zeigt, ist was gespeichert wird
+        Instrument gelesen;
+        REQUIRE(ausJson(alsJson(creator.instrument()), gelesen));
+        CHECK(gelesen.schichten[0].reihe == reihe());
+
+        // --- eine andere Schicht beginnt bei Source
+        klick(*weg, weg->kastenRect(4).center());
+        CHECK(creator.stelle() == 3);
+        REQUIRE(creator.neueSchicht());
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        CHECK(namen() == QStringList{QStringLiteral("Source"), QStringLiteral("Envelope"), QStringLiteral("Level")});
+        CHECK(titel->text() == QString::fromUtf8("Signal path — Layer 2"));
+        creator.waehle(0);
+        CHECK(creator.stelle() == InstrumentCreator::kStelleSource);
+        CHECK(weg->kaesten().size() == 10);
+
+        // --- ein altes Instrument oeffnet als Filter, Drive, Envelope — nur was es hat
+        const Instrument* bass = findeInstrument(QStringLiteral("acid_bass"));
+        REQUIRE(bass != nullptr);
+        creator.oeffne(*bass);
+        CHECK(namen().first() == QStringLiteral("Source"));
+        CHECK(namen().contains(QStringLiteral("Filter")));
+        CHECK(namen().last() == QStringLiteral("Level"));
+        CHECK_FALSE(creator.geaendert());  // ansehen und Kaesten waehlen aendert nichts
+        klick(*weg, weg->kastenRect(1).center());
+        CHECK_FALSE(creator.geaendert());
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_PATH_BILD"); !ziel.isEmpty())
+        {
+            // wie in der Skizze: Sine, die faellt, durch High-pass, Drive und Envelope
+            Instrument skizze;
+            skizze.titel = QStringLiteral("Sketch");
+            Schicht& s = skizze.schichten[0];
+            s.name = QStringLiteral("Body");
+            s.tonhoeheStartHt = 22.0;
+            s.abfallMs = 210.0;
+            s.reihe = {SchichtFilter{FilterArt::Hochpass, 2.3, 0.0, 0.15}, SchichtDrive{0.4}, SchichtHuelle{}};
+            InstrumentCreator gezeigt;
+            gezeigt.oeffne(skizze);
+            gezeigt.waehleStelle(0);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(ziel));
+            gezeigt.waehleStelle(InstrumentCreator::kStelleSource);
+            while (gezeigt.fuegeDriveEin()) {}
+            QCoreApplication::processEvents();
+            QFileInfo info(ziel);
+            CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_8.") + info.suffix())));
         }
     }
 

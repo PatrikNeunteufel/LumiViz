@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.180.0
+> **Version:** 1.181.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5236,6 +5236,7 @@ statisch) und bringt die 23 eingebauten Effekte mit; `r_dmove` rechnet ein
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.181.0 | 2026-10-13 | Session 118. Loop, Signal path: Skizze des Creators gebilligt (Entscheid Patrik S1 a). **Stufe 16c gebaut:** der Creator zeigt je Schicht die Zeile **Signal path** — Source, die Bausteine Filter, Drive, Envelope, + Add, Level; ein Klick auf einen Kasten zeigt seine Regler, Ziehen und ← Move / Move → ordnen um, Remove entfernt (`Loop_Konzept.md` §4j). Die Gruppen Envelope und Filter entfallen. Das Bild aus dem Test angesehen, im Programm ungesehen. **Offen:** Patriks Blick (Liste 10, W1 bis W7, Urteile U66 bis U68); 16d (davor K5), 16e; der volle Lauf am Ende der Stufe 16 |
 | 1.180.0 | 2026-10-13 | Session 118. Loop, Signal path **Stufe 16b gebaut:** der Klangerzeuger rechnet die Reihe an Schicht und Clip in freier Folge, der Filter am Clip in Hertz (`Loop_Konzept.md` §4j). Beleg: 199 vor dem Umbau festgehaltene Einträge (165 Töne aus 55 Instrumenten, 34 Loops) rechnen Bit für Bit gleich, unter Testing-MSVC und Release-clang; Last gemessen (acht Reverb an einem Clip 0,75 % eines Kerns im Release-Bau, 4,5 % im Testing-Bau). Im Programm ist davon nichts zu erreichen, bis 16c und 16d die Reihe zeigen. **Offen:** 16c (Skizze vorher noch einmal zeigen), 16d (davor K5), 16e — dort `werte/loop_werte.txt` neu schreiben; der volle Lauf am Ende der Stufe 16 |
 | 1.179.0 | 2026-10-13 | Session 118. Loop, Signal path: Baustufen freigegeben (Entscheid Patrik B1 a — in der vorgelegten Reihenfolge). **Stufe 16a gebaut:** Schicht und Clip tragen eine Reihe von Bausteinen statt der festen Felder, `.lvinst` Fassung 7, `.lvloop` Fassung 5 (`Loop_Konzept.md` §4j); jede mitgelieferte Datei liest zu der Reihe, die sie fest hatte. Klangerzeuger, Creator und Clip effects arbeiten bis 16b, 16c, 16d mit dem ersten Baustein je Art — am Programm ist nichts neu zu sehen. **Offen:** 16b (vorher die gerechneten Werte aller Instrumente und Beispiel-Loops festhalten), 16c (Skizze vorher noch einmal zeigen), 16d (davor K5), 16e; der volle Lauf steht bis zum Ende der Stufe 16 aus; im Programm ungesehen (Liste 10, G1, G2) |
 | 1.178.0 | 2026-10-13 | Session 117. Loop: die Vorlage zur Kette für Filter und Effekte ist entschieden — **Signal path**, `Loop_Konzept.md` §4j, K1 a (eine Reihe von Bausteinen), K2 a (Schicht: Filter, Drive, Envelope), K3 a (Clip: Filter in Hertz, Distortion, Echo, Reverb), K4 a (höchstens acht). **Offen:** Patriks Freigabe der Baustufen 16a bis 16e; K5 (mehrere markierte Clips mit verschiedenen Reihen); die Skizze vor 16c noch einmal zeigen. Nichts gebaut |

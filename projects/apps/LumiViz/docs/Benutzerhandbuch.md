@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.144.0
+> **Version:** 1.145.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2741,9 +2741,13 @@ die Klaviatur des Editors.
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
 | **Add layer from instrument...** | Nimmt die Schichten eines anderen Instruments dazu — aus der Liste der mitgelieferten oder über **From file...** aus einer `.lvinst`. Es ist eine Kopie: das andere Instrument bleibt, wie es ist |
 | **Duplicate**, **Remove**, **▲**, **▼** | Die gewählte Schicht noch einmal, entfernen, hinauf, hinunter |
-| Die Überschriften **Oscillator**, **Envelope**, **Filter**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten). Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts. Das Fenster behält dabei seine Größe: passen die Regler nicht alle hinein, erscheint rechts von ihnen ein Rollbalken. Das Mausrad über einem Regler rollt die Liste und verstellt ihn nicht |
+| **Signal path** | Die Zeile über den Reglern zeigt den Weg des Tons durch die gewählte Schicht, von links nach rechts: **Source** (was den Ton erzeugt), dann die Bausteine — **Filter**, **Drive**, **Envelope** —, der Knopf **+ Add**, zuletzt **Level**. Jeder Kasten trägt seinen wichtigsten Wert („High-pass ×2.3“, „40 %“, „Decay 210 ms“). **Ein Klick auf einen Kasten** zeigt darunter seine Regler — immer nur die des gewählten. Die Reihenfolge ist zu hören: ein Drive hinter der Envelope verzerrt den schon leisen Ton weniger hart und hebt ihn an (so klingt eine Kick nach), zwei Filter hintereinander lassen nur ein Band durch (ein Clap). Passt die Zeile nicht in die Breite, bricht sie um; das Fenster breiter ziehen bringt sie wieder in eine Zeile. Beim Öffnen einer Schicht ist Source gewählt |
+| **+ Add** | Ein neuer **Filter** (Low-pass, Cutoff × 4) oder **Drive** (30 %) kommt hinter den gewählten Kasten und ist danach gewählt. Filter und Drive darf es mehrfach geben, **Envelope** genau einmal — im Menü steht sie grau als „already in the path“. Höchstens acht Bausteine; dann steht auf dem Knopf „8 of 8“ |
+| **← Move**, **Move →**, **Remove** | Über den Reglern eines Bausteins: ihn einen Platz nach vorn oder hinten schieben, oder entfernen. Dasselbe geht mit der Maus: einen Baustein in der Zeile **ziehen** (der Zeiger wird zur Hand, ein Strich zeigt, wo er hinkäme). Die Envelope lässt sich schieben, aber nicht entfernen. Source und Level stehen fest |
+| **Source** | Unter diesem Kasten stehen Transpose, Start offset und die Gruppen **Oscillator** und **Vibrato** |
+| Die Überschriften **Oscillator**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten). Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts. Das Fenster behält dabei seine Größe: passen die Regler nicht alle hinein, erscheint rechts von ihnen ein Rollbalken. Das Mausrad über einem Regler rollt die Liste und verstellt ihn nicht |
 | **Name** (Layer) | Wie die Schicht in der Liste heißt |
-| **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten |
+| **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten — der Regler unter dem Kasten **Level** am Ende der Zeile; der Kasten zeigt den Wert immer |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
 | **Start offset** | Die Schicht setzt so viele Millisekunden nach dem Anschlag ein. Kein Echo — sie beginnt nur später |
 | **Waveform** | Sine, Triangle, Saw, Square, **Noise** (Rauschen, siehe unten), Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
@@ -2752,11 +2756,11 @@ die Klaviatur des Editors.
 | **Sweep time** | Nach dieser Zeit ist die Note auf ihrer Tonhöhe angekommen. Grau, solange Pitch sweep auf „off" steht |
 | **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
 | **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
-| **Attack**, **Decay**, **Sustain**, **Release** | Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
-| **Type** (Filter) | Die Art des Filters. **Low-pass** lässt durch, was unter Cutoff liegt (dumpfer) — der Filter jedes Instruments von früher. **High-pass** lässt durch, was darüber liegt (dünner, heller): der Teppich einer Snare, eine Hi-Hat aus Rauschen. **Band-pass** lässt durch, was um Cutoff herum liegt: ein Clap |
-| **Cutoff**, **Envelope** (Filter) | Die Grenze des Filters; sie geht mit der Tonhöhe mit. Cutoff ganz links ist „open" (kein Filter, Type und Resonance sind dann grau), sonst die Grenze als Vielfaches des Grundtons. Envelope verschiebt sie mit dem Anschlag nach oben |
+| **Attack**, **Decay**, **Sustain**, **Release** | Unter dem Kasten **Envelope**. Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
+| **Type** (Filter) | Unter einem Kasten **Filter**. Die Art des Filters. **Low-pass** lässt durch, was unter Cutoff liegt (dumpfer) — der Filter jedes Instruments von früher. **High-pass** lässt durch, was darüber liegt (dünner, heller): der Teppich einer Snare, eine Hi-Hat aus Rauschen. **Band-pass** lässt durch, was um Cutoff herum liegt: ein Clap |
+| **Cutoff**, **Filter envelope** | Die Grenze des Filters; sie geht mit der Tonhöhe mit. Cutoff ganz links ist „open" (der Filter tut nichts, sein Kasten ist grau geschrieben, Type und Resonance sind grau), sonst die Grenze als Vielfaches des Grundtons. Filter envelope verschiebt sie mit dem Anschlag nach oben — sie folgt der Hüllkurve der Schicht, gleich wo der Filter in der Zeile steht. Bei einer gezupften Saite wird ein Filter übersprungen; sein Kasten sagt „skipped“ |
 | **Resonance** | Betont die Stelle an der Grenze: weiter rechts klingt der Filter dort mit, bis er fast pfeift — mit Envelope zusammen der typische Klang eines Synthesizer-Basses. Beim Band-pass stellt sie die Breite: weiter rechts wird das Band schmaler. Mit mehr Resonance wird der übrige Ton leiser. Ein Low-pass mit 0 % ist genau der Filter von früher; schon bei 1 % ist er etwas heller |
-| **Drive** | Ein Verzerrer für diese Schicht: ganz links aus, weiter rechts rauer und lauter im Eindruck |
+| **Drive** | Unter einem Kasten **Drive**. Ein Verzerrer an dieser Stelle des Wegs: ganz links aus, weiter rechts rauer und lauter im Eindruck |
 | **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst |
 | **Noise** (Waveform) | Rauschen hat keine Tonhöhe: jede Taste spielt dasselbe, und Voices, Detune, Pitch sweep, die Obertöne und Vibrato fehlen. Geformt wird es mit Hüllkurve, Filter und Drive — kurz und ungefiltert ist es der Klick eines Schlags, länger der Teppich einer Snare. Der Filter geht weiter mit der Note mit: mit Cutoff klingt eine tiefere Taste dumpfer. Das Bild oben heißt dann **Noise** und zeigt ein kurzes Stück |
 | **One cycle**, **Envelope of a note** | Das Bild einer Schwingung und der Hüllkurve — je Schicht eine einzelne Stimme ohne Vibrato und ohne Pitch sweep. Die Linie ist die Summe aller eingeschalteten Schichten; bei mehreren zeigt die gestrichelte die gewählte allein |
@@ -2963,6 +2967,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.145.0 | 2026-10-13 | Session 118. §16 Loop, Instrument-Creator NEU die Zeile **Signal path** je Schicht: Source, die Bausteine Filter, Drive und Envelope, **+ Add**, Level — ein Klick auf einen Kasten zeigt seine Regler, Ziehen oder **← Move** / **Move →** ordnet um, **Remove** entfernt; Filter und Drive mehrfach, höchstens acht Bausteine. GEÄNDERT: die Gruppen Envelope und Filter gibt es nicht mehr, ihre Regler stehen unter ihrem Kasten; Level, Transpose und Start offset stehen unter Level und Source; der Regler **Envelope** des Filters heißt **Filter envelope** |
 | 1.144.0 | 2026-10-13 | Session 118. §16 Loop GEÄNDERT: die Dateiformate — eine Datei `.lvinst` aus dieser Fassung liest ein älteres LumiViz nicht mehr; eine `.lvloop` liest es, spielt ihre Clips aber ohne Effekte. Ältere Dateien liest dieses LumiViz wie bisher, sie klingen gleich. Am Programm ist nichts zu sehen |
 | 1.143.0 | 2026-10-12 | Session 117. §16 Loop NEU: sechs gerechnete Drum-Instrumente unter **Drums** im Fenster Instruments (Kick, Tom, Snare, Clap, Hi-Hat Closed, Hi-Hat Open) — für die Note C2 gebaut, leiser als das Kit |
 | 1.142.0 | 2026-10-12 | Session 117. §16 Loop, Instrument-Editor GEÄNDERT: **Load instrument...** fragt nach der Wahl, ob die Datei zu den eigenen Instrumenten kopiert wird (vorbelegt) oder am Ort bleibt; vorher stand immer der Pfad im Muster |

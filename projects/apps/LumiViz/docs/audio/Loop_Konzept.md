@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.61.0
+> **Version:** 0.62.0
 > **Datum:** 2026-10-13 (Session 118)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -2681,6 +2681,45 @@ Clap —, c — nur 16a und 16b):**
   effects (16d) die Reihe zeigen; eine Datei mit einer anderen Reihe klingt
   aber schon so.
 
+**16c gebaut (S118) — der Creator zeigt die Reihe. Skizze gebilligt (Patrik
+S118, Entscheid S1 a), mit drei Ergänzungen:** Source und Level sind
+anklickbar und zeigen ihre Regler unter der Reihe; ein neuer Baustein kommt
+hinter den gewählten; beim Öffnen einer Schicht ist Source gewählt.
+Verworfen b (Level, Transpose und Start offset fest über der Reihe), c
+(Änderungen).
+
+- **Die Zeile** ist ein eigenes Widget (`loop/SignalWeg`): Kästen mit Name
+  und Kurzwert, Pfeile, der Knopf + Add vor dem letzten Kasten. Es kennt
+  weder Schicht noch Clip — das Fenster Clip effects benutzt es in 16d
+  wieder. Jeder Kasten ist so breit wie sein Text; passt die Reihe nicht in
+  die Breite, bricht sie um (im Fenster in seiner Mindestbreite stehen vier
+  Kästen in einer Zeile, acht Bausteine brauchen drei).
+- **Unter der Zeile** der Name des gewählten Kastens, bei einem Baustein
+  **← Move**, **Move →**, **Remove** (bei Envelope grau), darunter nur seine
+  Regler: Source — Transpose, Start offset, Oscillator, Vibrato; Filter —
+  Type, Cutoff, Resonance, Filter envelope; Drive; Envelope — Attack bis
+  Release; Level. Die Regler von Filter und Drive stellen den Baustein, der
+  gewählt ist: zwei Filter haben je ihre Werte.
+- **Ziehen** ordnet um, auch die Envelope: der Zeiger wird über einem
+  Baustein zur offenen Hand, beim Ziehen zur geschlossenen, ein Strich zeigt
+  den Platz; neben dem Titel steht „click a block · drag to move it“, jeder
+  Kasten hat einen Tooltip.
+- **Add:** ein Filter kommt als Low-pass mit Cutoff × 4, ein Drive mit 30 % —
+  beide sind gleich zu hören. Bei acht steht „8 of 8“.
+- **Die Gruppen Envelope und Filter** gibt es nicht mehr; einklappen lassen
+  sich Oscillator und Vibrato (unter Source). Der Regler „Envelope“ des
+  Filters heißt jetzt **Filter envelope**.
+- **Bild aus dem Test** (`LUMIVIZ_CREATOR_PATH_BILD`) angesehen, zweimal
+  nachgebessert: die Kurzwerte waren abgeschnitten („High-pass …“) — die
+  Kästen richten sich jetzt nach ihrem Text; der gestrichelte Rand der
+  Envelope war im dunklen Design nicht zu sehen.
+- **Von Claude gesetzt, nicht entschieden:** die Vorgaben eines neuen
+  Filters und Drive; der Hinweis steht neben dem Titel statt in einer eigenen
+  Zeile (jede Zeile macht das Fenster höher); ein Filter mit Cutoff „open“
+  und einer an einer Saite stehen matt in der Zeile („open“, „skipped“);
+  Remove an der Envelope ist grau statt weg; Titel der Zeile mit dem Namen
+  der Schicht in Anführungszeichen.
+
 **Offen, vor dem jeweiligen Schritt zu entscheiden:**
 - **K5 (vor 16d):** mehrere markierte Clips mit **verschiedenen Reihen** —
   heute steht je Regler „mixed"; bei verschiedener Zahl oder Reihenfolge der
@@ -2717,7 +2756,7 @@ Clap —, c — nur 16a und 16b):**
 | 13 | **Mehrfachauswahl in Drum- und Instrument-Editor:** mehrere Schritte oder Noten markieren, kopieren, einfügen, verschieben (§4i) | S113: Skizze gebilligt (§4i), Entscheide V1 a, V2 a, V3 a, dazu das Drehen im Kreis mit Alt+Pfeil. **13a gebaut:** die Regeln als reine Funktionen (`loop/Auswahl`), `test_LoopAuswahl.cpp`, fünf Fälle; **13b gebaut:** im Drum-Editor markieren (Shift+Ziehen, Ctrl+Klick, Ctrl+A), Ctrl+C / X / V / D, Entf, Pfeiltasten, Alt+Pfeil, die Einfügemarke, das Menü, die Hinweiszeile (§4i); ein Fall mit sieben Teilen in `test_LoopDrumEditor.cpp`; **im Programm nicht gesehen**. **13c gebaut:** dasselbe im Instrument-Editor, dazu das Ziehen mehrerer Noten als Gruppe (§4i); ein Fall mit sechs Teilen in `test_LoopInstrumentEditor.cpp`; **im Programm nicht gesehen**. **13d gemacht:** der Haken „Right-click deletes" in beiden Editoren (Wunsch Patrik, §4i); Benutzerhandbuch 1.123.0 (§16: mehrere Schritte und Noten zugleich); die Liste `Sichttest_Composer_10_Loop.md` (lokal) um Abschnitt M (M0 bis M16) und U32 bis U36; voller Lauf 1068 / 1068, 0 Skips (Testing-MSVC) im zweiten Anlauf — der erste brach im 267. Fall ab, ohne fehlgeschlagene Prüfung (nach der Reihenfolge der Liste ein Composer-Fall „S102 Zeitachse", die ein echtes Fenster öffnen; einzeln fünfmal grün; Ursache nicht untersucht). **Stufe 13 ist gebaut — im Programm nicht gesehen.** |
 | 14 | **Palette der Instrumente** (P1 a): Fenster Instruments nach Art, mit Suche, Genre, Anspielen (§4h) | Skizze gebilligt (S114), F3 b, P2 a; **14a gebaut** (Modell, Fassung 3, die 49 Dateien, eigene Instrumente), **14b gebaut** (Creator: Type, Genres, Description, Save als eigene Kopie), **14c gebaut** (das Fenster, Browse...); **im Programm noch nicht gesehen und nicht gehört** — Liste 10, Abschnitt P |
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
-| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich); offen 16c bis 16e, K5 |
+| 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a); offen 16d (davor K5), 16e |
 
 ---
 
@@ -2813,6 +2852,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.62.0** (S118, 2026-10-13): §4j — Skizze des Creators gebilligt
+  (Entscheid Patrik S1 a); **Stufe 16c gebaut:** die Zeile Signal path im
+  Creator (`SignalWeg`), die Regler folgen dem gewählten Kasten, Add, Move,
+  Remove, Ziehen; die Gruppen Envelope und Filter entfallen; §5 Stufe 16
 - **0.61.0** (S118, 2026-10-13): §4j — **Stufe 16b gebaut:** der
   Klangerzeuger rechnet die Reihe an Schicht und Clip, der Filter am Clip in
   Hertz; Beleg an 199 festgehaltenen Einträgen, Bit für Bit gleich unter
