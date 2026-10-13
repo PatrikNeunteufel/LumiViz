@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.200.0
+> **Version:** 1.201.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2495,7 +2495,27 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Loops gebaut; damit ist die Datenablage gebaut.
     🔧 Vorgemerkt (Frage Patrik S114): ein Instrument trägt höchstens vier
     Schichten (`kSchichtenMax`, von Claude in S111 gesetzt, nicht gemessen)
-    — vor einem Anheben die Rechenzeit je Ton mit vier, sechs, acht messen. 🟠 **Befund:** in
+    — vor einem Anheben die Rechenzeit je Ton mit vier, sechs, acht messen.
+    **Gemessen und probiert (S120, Frage Patrik: trägt ein Instrument auch
+    acht?):** ja. *Rechenzeit* (`test_LoopBausteine.cpp`, Fall „Loop
+    Instrument Messung", je Schicht Säge mit drei Stimmen, Filter, Drive,
+    langem Ausklang): sie wächst gerade mit der Zahl — unter Testing-MSVC
+    4,5 / 19,5 / 28,9 / 38,8 ms je Sekunde Ton bei 1 / 4 / 6 / 8 Schichten,
+    unter Release-clang 2,0 / 8,3 / 12,1 / 16,3 ms; ein Ton wird vorab
+    gerechnet, acht Schichten kosten also rund 16 ms je Sekunde Ton im
+    ausgelieferten Bau. *Mit der Grenze probeweise auf 8* (nicht
+    committet): von 150 Fällen zu Loop, Instrumenten, Drum und
+    Sichttest-Aktionen fallen nur die zwei durch, die die Grenze selbst
+    prüfen (sie zählen bis vier); die festgehaltenen Werte der mitgelieferten
+    Instrumente bleiben gleich; der Creator zeigt acht Schichten in der
+    Liste, im Bild aus dem Test ohne Rollbalken. **Zu beachten vor einem
+    Anheben:** (1) die *Spitze* wächst mit — 0,41 / 1,31 / 1,98 / 2,52 bei
+    allen Level auf 1; schon vier Schichten übersteuern, der Creator zeigt
+    die Zahl (Peak), nimmt aber nichts zurück; (2) eine *Datei* mit mehr als
+    vier Schichten läse ein älteres Programm still gekürzt — das verlangt
+    eine neue Fassung der `.lvinst`, sie fiele mit der für Pan zusammen
+    (Fassung 8, `Shape_Konzept.md` §6a); (3) bei der Form: As layers reichte
+    dann für acht Konturen. Nicht entschieden. 🟠 **Befund:** in
     der Konfiguration Testing unter MSVC fehlt `/MD` bei LumiViz, Core und
     miniz — die Objektdateien verlangen `LIBCMT`, Qt ist `/MD`; seit miniz
     meldet der Linker es an `LumiViz.exe` (LNK4098, LNK4217). Bestand
@@ -5434,6 +5454,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.201.0 | 2026-10-13 | Session 120. **Acht Schichten je Instrument gemessen und probiert (Frage Patrik)** — eingetragen bei der Datenablage unter `kSchichtenMax`: die Rechenzeit wächst gerade mit der Zahl (Release-clang rund 2 ms je Sekunde Ton und Schicht, acht also 16 ms), mit der Grenze probeweise auf 8 fallen nur die zwei Fälle durch, die die Grenze prüfen; zu beachten die Spitze (2,52 bei acht Schichten auf Level 1) und eine neue Fassung der `.lvinst`. Neu ein Messfall in `test_LoopBausteine.cpp` (**1156 Cases**). Die Grenze steht weiter auf vier, nicht entschieden. Dazu `Shape_Konzept.md` 0.7.0: die Abtastrate der Engine ist 44,1 kHz, nicht 48 (berichtigt), und was die Visuals vom Ton bekommen, genauer nachgesehen. |
 | 1.200.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **As one path entschieden (Patrik): B2 d, B1 wählbar** (`Shape_Konzept.md` 0.6.0, §9) — jede Kontur behält ihre eigene Reihe und bleibt geschlossen, eine Schicht spielt sie nacheinander in einem Umlauf, dazwischen ein kurzer gerader Sprung; wo der Stift springt, ist im Form-Fenster wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet. Die vierte der sieben Vorlagen ist geschlossen; als Nächstes die zwei Module für die Effect Chain. **Offen, in Stufe 19b zu hören:** die Kante des Sprungs im Ton (in der Probe −31 bis −51 dB über der eingestellten Zahl von Harmonischen, grob, nicht gehört). |
 | 1.199.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **SVG entschieden (Patrik): S1 a, mit Beleg** (`Shape_Konzept.md` 0.5.0, §8) — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät, Kurven, Lage und Füllfarbe kommen an; dazu belegt: `QPainterPath` trägt Strecken und Kurven ohne Qt-Anwendung (D4 b). Neu `test_ShapeBelege.cpp` (zwei Fälle, **1155 Cases**), Qt Svg in der `Solution.json`. Die dritte der sieben Vorlagen ist geschlossen; als Nächstes die Brücke bei As one path. Nicht belegt: Text, `use`, CSS-Stile, Verläufe, Dateien aus Inkscape oder Illustrator. Voller Lauf steht aus. |
 | 1.198.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Konturerkennung entschieden (Patrik): K1 a, K2 a** (`Shape_Konzept.md` 0.4.0, §8) — über Flächen, Split by Brightness, Colour oder Transparency, Regler Levels, Smooth, Min size, Detail; davor eine Probe an drei Bildern; die zweite der sieben Vorlagen ist geschlossen, als Nächstes SVG. §7 **Publish, Nachtrag (Patrik):** bei gleichen Namen eine Option Vergleichen mit den Wegen überschreiben, umbenennen, nicht übernehmen; beim Umbenennen werden die Nennungen im Paket mitgeändert — das Muster gibt es beim Host Switcher (S82) und bei Rename base im Loop, der Import der `.lvdata` tut es heute nicht. |

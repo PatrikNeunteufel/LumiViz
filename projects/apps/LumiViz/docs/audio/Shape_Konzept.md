@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.6.0
+> **Version:** 0.7.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -65,7 +65,7 @@ Nachgesehen in S119 und S120, je mit der Stelle.
 | **Panorama** | eine Schicht hat keines (`Schicht` trägt nur `laut`) | Pan je Schicht ist neu (Z3 a) — neue Fassung der `.lvinst`, heute 7 |
 | **Signal path** | hinter Source stehen Filter, Drive, Envelope in freier Folge (`Schicht::reihe`) | die Shape-Schicht geht durch dieselbe Reihe; zu klären, ob Filter und Drive beide Seiten gleich behandeln |
 | **Hüllkurve der Schicht** | Attack, Decay, Sustain, Release an der Schicht; die Filter envelope folgt ihr | Harmonics envelope folgt ihr genauso |
-| **Vier Schichten** | `kSchichtenMax = 4` | As layers endet bei vier Konturen (Z5 a) |
+| **Vier Schichten** | `kSchichtenMax = 4`; in S120 gemessen und mit 8 probiert — es trägt (`Offene_Punkte.md`, bei der Datenablage unter `kSchichtenMax`), nicht angehoben | As layers endet bei vier Konturen (Z5 a), mit einer angehobenen Grenze bei acht |
 | **Die Visuals bekommen beide Seiten** | `MainWindow.cpp`, Zufuhr an die Visualizer: spielt das Loop-Panel, kommt die Wellenform vom Mixer des Loops (`loop::tonMixer`), unter dem Composer von dessen Mixer; der Mixer hat zwei Kanäle (`BassEngine::createMixer`), `updateAudioStereo` reicht links und rechts getrennt weiter — **512 Werte je Seite und Bild** | ein XY-Scope hat seine Daten; die Frage „nicht geprüft" aus S119 ist damit beantwortet. Grenze: siehe §10 |
 | **Wellenform je Seite in der Effect Chain** | `getWaveformChannel(0/1)`, im Skript `getosc` mit Kanal | die Daten für ein XY-Scope sind da. **Berichtigt (S120):** die Vorgabe Lissajous des Superscope ist eine gerechnete Figur (`sin` gegen `cos` mit zwei Frequenzen), kein Scope von links gegen rechts — in S119 war sie so verstanden worden. Ob sich ein XY-Scope heute schon als Skript schreiben lässt, ist nicht nachgesehen (Vorlage 5) |
 | **Qt Svg** | liegt in der Installation (`C:/Qt/6.10.1/msvc2022_64`: `Qt6Svg.dll`, `lib/cmake/Qt6Svg`); seit S120 in der `Solution.json` | gibt die Pfade nicht heraus, zeichnet sie aber auf ein mitschreibendes Gerät — §8 |
@@ -135,8 +135,8 @@ z(φ) = Σ g_k · C_k · e^(i·k·φ)        über k = −K … K, k ≠ 0
   eingestellten Betrag, wie die Filter envelope den Cutoff öffnet; negativ
   beginnt die Note als Ellipse und wächst zur Form.
 - **Bandgrenze je Note**: `H` wird bei `0,45 · Rate / Tonhöhe in Hz`
-  gekappt. Bei 48 kHz sind das rund 390 Harmonische bei A1, 98 bei A3, 24 bei
-  A5. Die Folge ist gewollt (Z4 a) und heißt: dieselbe Form klingt hoch
+  gekappt. Bei 44,1 kHz (der Rate der Engine) sind das rund 360 Harmonische
+  bei A1, 90 bei A3, 22 bei A5. Die Folge ist gewollt (Z4 a) und heißt: dieselbe Form klingt hoch
   gespielt runder — und sieht im Scope runder aus.
 - **Angle** `θ`: `z` wird um `θ` gedreht, `z' = e^(−i·θ) · z`.
   - Ohne Stereo XY ist der Ton `Re(z')` auf beiden Seiten: bei 0° die
@@ -501,10 +501,22 @@ Zwei Module für die Effect Chain, beide gewünscht, die Reihenfolge offen
 
 **Grenzen des XY-Scope, vor dem Bau zu wissen:**
 
-- Ein Bild bekommt **512 Werte je Seite**. Bei 48 kHz sind das knapp 11 ms:
-  ein Ton unter rund 94 Hz zeigt in einem Bild keinen ganzen Umlauf, die Form
-  bleibt offen. (Die Rate der Engine habe ich nicht nachgesehen.) Ein Scope
-  mit Nachleuchten schließt die Lücke, oder die Zufuhr wird länger.
+- Ein Bild bekommt **512 Werte je Seite**. Die Engine läuft mit 44,1 kHz
+  (`BassEngine.hpp`, nachgesehen in S120 — vorher stand hier 48 kHz, ohne
+  nachzusehen): das sind 11,6 ms, ein Ton unter rund 86 Hz zeigt in einem
+  Bild keinen ganzen Umlauf, die Form bleibt offen. Ein Scope mit
+  Nachleuchten schließt die Lücke, oder die Zufuhr wird länger.
+- Die Zufuhr läuft mit einem Takt von 33 ms (`MainWindow.cpp`), gezeichnet
+  wird mit 60 Bildern je Sekunde: von je 33 ms Ton kommen 11,6 ms bei den
+  Visuals an, und zwei Bilder können denselben Block zeigen.
+- **Skripte bekommen weniger:** für `getosc` werden die 512 Werte auf 576
+  gestreckt und auf 8 Bit gerundet (`buildVisData`). Ein Superscope-Skript
+  kann nach dem Code heute schon links gegen rechts zeichnen
+  (`x=getosc(i,0,1); y=getosc(i,0,2)` — 1 ist links, 2 rechts), aber in 256
+  Stufen; ausgeführt ist das nicht. Die Fließkomma-Werte je Seite bekommt
+  nur ein Knoten in C++ (`waveOfChannel`).
+- **Nachleuchten** hat kein Scope-Knoten der Chain von sich aus; es entsteht
+  aus der Liste ohne „clear every frame" und einem Knoten Fadeout.
 - Der Scope zeichnet **die Summe** dessen, was spielt: zwei Schichten mit
   Stereo XY ergeben eine Kurve, nicht zwei Formen; andere Spuren, Echo und
   Hall am Clip verwischen das Bild. Sauber steht die Form nur, wenn die
@@ -605,6 +617,7 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.7.0 | 2026-10-13 (S120) | **Berichtigt:** die Engine läuft mit 44,1 kHz, nicht 48 (§5, §10). §10 genauer, was die Visuals vom Ton bekommen: 512 Werte je Seite alle 33 ms, für Skripte auf 8 Bit gerundet, kein Nachleuchten von sich aus. §3: acht Schichten gemessen und probiert, die Grenze steht weiter auf vier. |
 | 0.6.0 | 2026-10-13 (S120) | **As one path entschieden (Patrik): B2 d** — jede Kontur behält ihre eigene Reihe, nacheinander in einem Umlauf, dazwischen ein kurzer Sprung, Harmonics je Kontur; **B1** — wo der Stift springt, ist wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet (§4, §7, §9, §13). Davor eine Probe in vier Zeilen, die Zahlen stehen in §9; die ersten drei Zeilen rechneten beide Konturen samt Brücke in eine Reihe — Patriks Einwand führte zur vierten. Offen: wie die Kante des Sprungs klingt (Stufe 19b). |
 | 0.5.0 | 2026-10-13 (S120) | **SVG entschieden (Patrik): S1 a, mit Beleg** — Qt Svg zeichnet auf ein mitschreibendes Zeichengerät; der Beleg zeigt vier Aufrufe, die Kurve bleibt Kurve, Lage und Farbe stimmen (§8). Dazu belegt, was bei D4 b aus dem Gedächtnis stand: `QPainterPath` ohne Qt-Anwendung (§7). Neu `tests/unit/UnitTests/test_ShapeBelege.cpp`; Qt Svg in der `Solution.json`. |
 | 0.4.0 | 2026-10-13 (S120) | **Konturerkennung entschieden (Patrik): K1 a** über Flächen, Split by Brightness, Colour oder Transparency; **K2 a** die Regler Levels, Smooth, Min size, Detail und die Regeln für Löcher, Bildrand und Anzahl (§4, §8, §13). Davor eine Probe der drei Verfahren an drei Bildern, die Zahlen stehen in §8. |

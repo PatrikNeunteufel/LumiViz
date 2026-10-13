@@ -837,3 +837,45 @@ TEST_CASE("Loop Signal path Messung: acht Bausteine an der Schicht und am Clip �
     CHECK(halle < 1000.0);
     CHECK(filterKette < 1000.0);
 }
+
+TEST_CASE("Loop Instrument Messung: ein Ton mit einer, vier, sechs und acht Schichten — Rechenzeit und Spitze")
+{
+    // Frage Patrik (S114, S120): kann ein Instrument mehr als vier Schichten tragen? `rendereTon`
+    // rechnet, was im Instrument steht — die Grenze `kSchichtenMax` setzen die Datei und der
+    // Creator. Jede Schicht hier ist eine teure: Saege, drei Stimmen, Filter, Drive, ein langer
+    // Ausklang. Drei Laeufe je Zahl mit der Taktprobe; geprueft wird nur, dass es traegt.
+    const SchichtFilter filter{FilterArt::Tiefpass, 6.0, 2.0, 0.2};
+    Instrument vorlage = mitReihe(Schwingung::Saege, {filter, SchichtDrive{0.3}, SchichtHuelle{}});
+    vorlage.schichten[0].stimmen = 3;
+    vorlage.schichten[0].verstimmungCent = 8.0;
+    vorlage.schichten[0].ausklangMs = 1000.0;
+    const int versatz[8] = {0, 12, 7, -12, 19, 4, 24, -5};
+    double eine = 0.0;
+    for (const int zahl : {1, 4, 6, 8})
+    {
+        Instrument instrument = vorlage;
+        instrument.schichten.resize(static_cast<std::size_t>(zahl), vorlage.schichten[0]);
+        for (int i = 0; i < zahl; ++i) instrument.schichten[static_cast<std::size_t>(i)].versatzHalbtoene = versatz[i];
+        double bester = 1.0e30;
+        float spitze = 0.0f;
+        for (int lauf = 1; lauf <= 3; ++lauf)
+        {
+            const double davor = taktprobeMs();
+            const auto start = std::chrono::steady_clock::now();
+            const Klang klang = rendereTon(instrument, 60, 1000.0, kRate);  // zwei Sekunden Ton
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+            const double danach = taktprobeMs();
+            const double sekunden = static_cast<double>(klang.frames()) / kRate;
+            bester = std::min(bester, ms / sekunden);
+            for (const float wert : klang.daten) spitze = std::max(spitze, std::abs(wert));
+            MESSAGE(zahl << " Schichten, Lauf " << lauf << ": " << ms << " ms fuer " << sekunden << " s Ton = " << ms / sekunden
+                         << " ms je Sekunde; Taktprobe davor " << davor << " ms, danach " << danach << " ms");
+        }
+        if (zahl == 1) eine = bester;
+        // ein Ton wird vorab gerechnet, nicht im Ton-Thread: er darf dauern, aber nicht ewig
+        CHECK(bester < 1000.0);
+        // die Schichten werden addiert: mit jeder waechst die Spitze, wenn keiner die Level zuruecknimmt
+        MESSAGE(zahl << " Schichten: " << bester << " ms je Sekunde Ton, das " << bester / eine
+                     << "-fache einer Schicht; Spitze des Tons " << spitze << " (alle Level auf 1)");
+    }
+}
