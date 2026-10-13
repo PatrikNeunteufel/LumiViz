@@ -110,6 +110,7 @@
 #include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QStandardItemModel>
+#include <QStyle>
 #include <QWheelEvent>
 #include <QTabWidget>
 #include <QTableWidget>
@@ -3881,6 +3882,22 @@ TEST_CASE("PaletteUi S109: Audio Browser zeigt die Loops des Ordners, der Doppel
     CHECK(eintrag->data(Qt::UserRole + 1).toInt() == AudioBrowserPanel::Type_Loop);
     CHECK(QFileInfo(eintrag->data(Qt::UserRole).toString()) == QFileInfo(loop));
     CHECK_FALSE(eintrag->icon().isNull());
+    // S120: das Datei-Icon der Loops (die Marke mit Schritt-Raster), nicht
+    // mehr der Kreispfeil des Systems
+    const QIcon marke = lumi::ui::dateiArtIcon(QStringLiteral("lvloop"));
+    REQUIRE_FALSE(marke.isNull());
+    CHECK(eintrag->icon().pixmap(32, 32).toImage() == marke.pixmap(32, 32).toImage());
+    CHECK(eintrag->icon().pixmap(32, 32).toImage()
+          != browser.style()->standardIcon(QStyle::SP_BrowserReload).pixmap(32, 32).toImage());
+    // die acht Datei-Icons aus S120 liegen bei den uebrigen; was es nicht gibt, ist ein Null-Icon
+    for (const char* endung : {"lvloop", "lvinst", "lvcontour", "lvfade", "lvshape", "lvmute", "lvdata", "grad"})
+    {
+        CAPTURE(endung);
+        CHECK_FALSE(lumi::ui::dateiArtIcon(QString::fromLatin1(endung)).isNull());
+    }
+    CHECK_FALSE(lumi::ui::dateiArtIcon(QStringLiteral("LVLOOP")).isNull());
+    CHECK(lumi::ui::dateiArtIcon(QStringLiteral("gibtesnicht")).isNull());
+    CHECK(lumi::ui::dateiArtIcon(QString()).isNull());
     CHECK(eintrag->toolTip().contains(QStringLiteral("Loop panel")));
     bool statusNenntLoop = false;
     for (const QLabel* label : browser.findChildren<QLabel*>())

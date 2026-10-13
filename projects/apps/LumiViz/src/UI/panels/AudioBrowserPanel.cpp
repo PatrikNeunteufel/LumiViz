@@ -8,6 +8,7 @@
 #include "UI/panels/AudioBrowserPanel.hpp"
 #include "UI/widgets/AudioDateien.hpp"
 #include "UI/widgets/DateiListe.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 #include "audio/AlbumCover.hpp"
 #include "audio/AudioEvents.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -156,7 +157,10 @@ void AudioBrowserPanel::refresh()
 
     // S109 (Wunsch Patrik): die Loops des Ordners, hinter den Songs — der
     // Doppelklick laedt sie ins Loop-Panel.
-    const QIcon loopIcon = style()->standardIcon(QStyle::SP_BrowserReload);
+    // S120 (Entscheid Patrik A1): das Datei-Icon der Loops, die Marke mit
+    // Schritt-Raster; fehlt die Datei, bleibt der Kreispfeil des Systems.
+    const QIcon loopMarke = lumi::ui::dateiArtIcon(QLatin1String(kLoopEndung));
+    const QIcon loopIcon = loopMarke.isNull() ? style()->standardIcon(QStyle::SP_BrowserReload) : loopMarke;
     const QFileInfoList loops = m_dir.entryInfoList({QStringLiteral("*.") + QLatin1String(kLoopEndung)}, QDir::Files,
                                                     QDir::Name | QDir::IgnoreCase);
     for (const QFileInfo& fi : loops)

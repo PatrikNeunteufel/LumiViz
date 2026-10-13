@@ -114,4 +114,17 @@ inline const QIcon& presetTypeIconForSuffix(const QString& suffix)
     return presetTypeIcon(PresetIconKind::Avs);
 }
 
+/// Das Datei-Icon einer Dateiart, die kein Preset-Format ist (S120, Entscheid
+/// Patrik I1 a): die Marke mit einem Zeichen im Kreis, `lumiviz_<endung>.ico`
+/// — fuer `lvloop`, `lvinst`, `lvcontour`, `lvfade`, `lvshape`, `lvmute`,
+/// `lvdata`, `grad`. `endung` ohne Punkt, Gross und Klein gleich. Null-Icon,
+/// wenn es die Datei nicht gibt (aelterer Asset-Stand, unbekannte Endung) —
+/// der Aufrufer nimmt dann, was er bisher zeigte.
+inline QIcon dateiArtIcon(const QString& endung)
+{
+    if (presetIconDir().isEmpty() || endung.isEmpty()) return {};
+    const QString pfad = presetIconDir() + QStringLiteral("/lumiviz_") + endung.toLower() + QStringLiteral(".ico");
+    return QFileInfo::exists(pfad) ? QIcon(pfad) : QIcon();
+}
+
 }  // namespace lumi::ui

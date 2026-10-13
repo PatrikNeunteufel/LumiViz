@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.150.0
+> **Version:** 1.151.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2926,7 +2926,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvkar](bilder/handbuch/icons/lumiviz_karaoke.png) | `.lvkar` | Karaoke-Preset: der Stand der Karaoke-Ebene | Effect Browser |
 | ![lvtrail](bilder/handbuch/icons/lumiviz_trail.png) | `.lvtrail` | Trail-Preset der Karaoke-Ebene | Effect Chain, an jeder Effect List mit einem Lyrics Trail |
 | ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
-| ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | noch nirgends als Icon — im Audio Browser steht ein Kreispfeil |
+| ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | noch nirgends als Icon |
 | ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Kontur für die Waveform Shape — vorgesehen, die Datei gibt es noch nicht | noch nirgends als Icon |
 | ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | noch nirgends als Icon |
@@ -2947,8 +2947,9 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 
 Ohne eigenes Icon sind Playlists (`.m3u8`), Knoten-Voreinstellungen (`.json`)
 und die Presets der einzelnen Visualizer (`.lvp`). Die acht Icons von
-`.lvloop` bis `.grad` gibt es seit Fassung 1.150.0 als Dateien; die App zeigt
-sie noch nicht, im Explorer erscheinen sie nach dem Eintragen.
+`.lvloop` bis `.grad` gibt es seit Fassung 1.150.0 als Dateien; in der App
+trägt bisher nur der Loop im Audio Browser das seine, im Explorer erscheinen
+alle nach dem Eintragen.
 
 **Im Windows-Explorer:** LumiViz trägt von sich aus nichts in Windows ein. Im
 Projektordner von LumiViz liegt dafür das Skript
@@ -3015,6 +3016,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.151.0 | 2026-10-13 | Session 120. §17: im **Audio Browser** trägt ein Loop jetzt sein eigenes Icon (die Marke mit Schritt-Raster) statt des Kreispfeils. |
 | 1.150.0 | 2026-10-13 | Session 120. §17 Dateitypen und ihre Icons: **acht neue Icons** — `.lvloop`, `.lvinst`, `.lvcontour`, `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, `.grad`, alle aus der Marke mit einem Zeichen im Kreis; die App zeigt sie noch nicht, das Skript für den Explorer trägt sie ein (`.grad` nur mit `-Foreign`). |
 | 1.149.0 | 2026-10-13 | Session 119. §16 Loop, Effekte am Clip NEU: **≠** in einem bernsteinfarben getönten Kasten der Zeile Signal path — die markierten Clips weichen in diesem Baustein ab, auch in einem Wert, den der Kasten nicht zeigt; der Tooltip nennt die Regler |
 | 1.148.0 | 2026-10-13 | Session 119. §16 Loop NEU **Ein Sample bearbeiten**: im Instrument-Creator bei einer Sample-Schicht **Edit...** — öffnet, was die Schicht spielt, im Fenster der Aufnahme (**Edit sample – <Name>**); ein eigenes Sample lässt sich mit **Save** ersetzen, ein Klang des Kits und eine Tondatei sind schreibgeschützt und kommen mit **Save as...** unter neuem Namen zu den eigenen; Sample start und die Schleife der Schicht rücken um das vorn Weggeschnittene mit. GEÄNDERT **Record sample**: das Feld Name und **Save and use** gibt es nicht mehr — unten stehen **Cancel**, **Save as...**, **Save**; Save as... fragt nach dem Namen und nimmt keinen vergebenen |

@@ -22,7 +22,7 @@ Windows).
 | übrige Audioformate | `audio.svg` / `.ico` | erzeugt | Audio Browser |
 | `.lrc` (Songtext) | `lyrics_lrc.svg` / `.ico` | erzeugt | noch nicht |
 | `.lvcomp` (Komposition des Composers, S100) | `lumiviz_lvcomp.ico` — der Fächer mit Zeitstrahl und Abspielmarke (Entscheide Patrik S100) | erzeugt aus `lumiviz.ico` | Effect Browser (Doppelklick öffnet die Komposition), Panel Composer vor dem Dateinamen |
-| `.lvloop` (Loop, S120) | `lumiviz_lvloop.ico` — Marke mit Schritt-Raster und Bogen zurück zum Anfang | erzeugt aus `lumiviz.ico` | noch nicht |
+| `.lvloop` (Loop, S120) | `lumiviz_lvloop.ico` — Marke mit Schritt-Raster und Bogen zurück zum Anfang | erzeugt aus `lumiviz.ico` | Audio Browser (S120; über `dateiArtIcon` in `PresetTypeIcons.hpp`) |
 | `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.lvcontour` (Kontur für die Waveform Shape, S120 — die Datei gibt es noch nicht) | `lumiviz_lvcontour.ico` — Marke mit Kontur und Stift | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.lvfade` (Blende des Curve Editors, S120) | `lumiviz_lvfade.ico` — Marke mit Keil | erzeugt aus `lumiviz.ico` | noch nicht |
@@ -77,8 +77,9 @@ Zeichen im Kreis; die Zeichen an vier Vorschaublättern gewählt — für `.lvlo
 das Schritt-Raster mit Bogen statt zweier Pfeile, die wie „aktualisieren"
 aussahen; für `.lvdata` die gefüllte Ablage). Gefüllte Flächen statt dünner
 Striche, damit bei 32 px etwas stehen bleibt; bei 16 px ist kein Zeichen der
-Familie zu lesen, auch das Mikrofon nicht. **In der App benutzt sie noch
-nichts.** `.grad` gilt im Skript für den Explorer als fremde Endung (von
+Familie zu lesen, auch das Mikrofon nicht. **In der App** trägt bisher nur der
+Loop im Audio Browser das seine; die übrigen lädt `dateiArtIcon(<endung>)`,
+sobald ein Fenster sie zeigen soll. `.grad` gilt im Skript für den Explorer als fremde Endung (von
 Claude gesetzt: sie trägt kein `lv` und kann anderen Programmen gehören).
 
 Was davon `register_file_icons.ps1` im **Explorer** einträgt (s. u. „Im Explorer
