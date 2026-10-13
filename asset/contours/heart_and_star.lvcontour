@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Heart and star",
+    "useAs": "onePath",
+    "jumps": "listOrder",
+    "nextId": 3,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Heart",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 100 76.667 C 100 35.185 42.963 30 42.963 74.074 C 42.963 115.556 100 133.704 100 170 C 100 133.704 157.037 115.556 157.037 74.074 C 157.037 30 100 35.185 100 76.667 Z"
+        },
+        {
+            "id": 2,
+            "name": "Star",
+            "color": "#ff4fa3",
+            "selected": true,
+            "path": "M 290 22 L 309.397 75.302 L 366.085 77.279 L 321.385 112.198 L 337.023 166.721 L 290 135 L 242.977 166.721 L 258.615 112.198 L 213.915 77.279 L 270.603 75.302 L 290 22 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

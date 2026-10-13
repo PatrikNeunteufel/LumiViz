@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Square",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Square",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 30 30 L 170 30 L 170 170 L 30 170 L 30 30 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

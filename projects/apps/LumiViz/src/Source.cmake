@@ -73,6 +73,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/composer/Source.cmake")  # Composer (rueckbau
 include("${CMAKE_CURRENT_LIST_DIR}/core/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/loop/Source.cmake")  # Loop (docs/audio/Loop_Konzept.md)
 include("${CMAKE_CURRENT_LIST_DIR}/scripting/Source.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/shape/Source.cmake")  # Klang aus einer Form (docs/audio/Shape_Konzept.md)
 include("${CMAKE_CURRENT_LIST_DIR}/services/Source.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/sichttest/Source.cmake")  # Sichttest-Steuerung (rueckbaubar, Konzept §12)
 include("${CMAKE_CURRENT_LIST_DIR}/UI/Source.cmake")

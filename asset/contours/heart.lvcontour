@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Heart",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Heart",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 100 73.333 C 100 25.926 34.815 20 34.815 70.37 C 34.815 117.778 100 138.519 100 180 C 100 138.519 165.185 117.778 165.185 70.37 C 165.185 20 100 25.926 100 73.333 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

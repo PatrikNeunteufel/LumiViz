@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.153.0
+> **Version:** 1.154.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -274,7 +274,9 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   in **eine Datei** (`.lvdata`) schreiben und wieder einlesen — zum Sichern oder für einen
   anderen Rechner. *Export your data* zeigt die Bereiche mit der Zahl deiner Dateien
   (Visualizer presets, Gradients, Module presets, Shader templates, Karaoke presets and
-  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Samples); abgesetzt
+  trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Samples, Shapes —
+  der letzte NEU in 1.154.0: eigene Formen für die Waveform Shape, noch ohne Fenster,
+  das sie anlegt); abgesetzt
   darunter und anfangs aus stehen *Settings* (Tastenkürzel, Favoriten, Optionen — nie die
   Fensterlage, gemerkte Ordner oder der Shadertoy-Schlüssel) und *Downloaded lyrics* (die
   geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
@@ -3019,6 +3021,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.154.0 | 2026-10-13 | Session 120. Export und Import der eigenen Daten: NEU der Bereich **Shapes** (eigene Formen, `.lvcontour`). Mehr ist von der Form im Programm noch nicht zu sehen. |
 | 1.153.0 | 2026-10-13 | Session 120. §16 Instrument-Creator: NEU **Pan** je Schicht (im Kasten Level, für jede Waveform); GEÄNDERT **Layers**: ein Instrument trägt bis zu acht Schichten statt vier. |
 | 1.152.0 | 2026-10-13 | Session 120. §17: die neuen Datei-Icons an vier Stellen der App — im Panel **Loop** vor dem Dateinamen, im **Instrument-Editor** vor dem Namen des Instruments, im Dialog **Import data** vor dem Namen der Datei und in der Liste „Let me decide for each file" an jeder Datei, deren Art ein Icon hat. |
 | 1.151.0 | 2026-10-13 | Session 120. §17: im **Audio Browser** trägt ein Loop jetzt sein eigenes Icon (die Marke mit Schritt-Raster) statt des Kreispfeils. |

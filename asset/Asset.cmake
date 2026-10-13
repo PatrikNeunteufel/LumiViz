@@ -55,6 +55,11 @@ lumi_asset(loop
         "genres/*.lvloop"
         "*_demo.lvloop")
 
+# Formen (shape/Kontur): die mitgelieferten Zeichnungen. Nicht: make_contours.py
+# und README.md.
+lumi_asset(contours
+    NUR "*.lvcontour")
+
 # Format-Icons (PresetTypeIcons) und das Skript, das sie in Windows eintraegt.
 # Nicht: die Python-Skripte, die sie erzeugen.
 lumi_asset(img/logo/icons

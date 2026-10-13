@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.11.0
+> **Version:** 0.12.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -376,8 +376,54 @@ geschlossenen Zug, `length` und `pointAtPercent` geben Punkte in gleichem
 Abstand entlang des Pfads. Verworfen: das Quellbild in der Datei (c) — aus
 einigen Kilobyte würden Megabyte, in jedem Export.
 
-Die Namen der Felder legt Stufe 19a fest (von Claude zu setzen, im Changelog
-zu nennen).
+### Wie es gebaut ist (Stufe 19a, S120)
+
+`shape/Kontur.hpp` — nicht unter `loop`, weil auch die Visuals die Form
+lesen. Die Namen in der Datei hat Claude gesetzt:
+
+```json
+{
+    "format": "lumiviz-contour", "version": 1, "title": "Heart and star",
+    "useAs": "onePath",        // oder "layers"
+    "jumps": "listOrder",      // oder "shortest", "byHand"
+    "nextId": 3,
+    "contours": [
+        { "id": 1, "name": "Heart", "color": "#00e5ff", "selected": true,
+          "path": "M 100 76.667 C 100 35.185 42.963 30 42.963 74.074 … Z" }
+    ],
+    "bridges": [ { "from": 1, "fromPoint": [60, 20], "to": 2, "toPoint": [100, 10] } ],
+    "source": { "kind": "drawn", "file": "", "settings": {} }   // oder "svg", "image"
+}
+```
+
+- **Der Pfad** steht als Text wie die Pfadsprache von SVG, mit vier
+  Befehlen: `M x y`, `L x y`, `C x1 y1 x2 y2 x y`, `Z`. Zahlen so kurz, dass
+  sie genau zurückkommen. Koordinaten der Zeichnung, y nach unten.
+- **`nextId`** ist die Kennung, die die nächste neue Kontur bekommt — größer
+  als jede, die es in der Zeichnung je gab; eine Kennung wird nie neu
+  vergeben.
+- **Beim Lesen** in seine Grenzen: höchstens 64 Konturen, jede Kennung
+  einmal, eine Kontur ohne Pfad fällt weg, ein offener Pfad wird geschlossen,
+  eine Brücke nur zwischen zwei verschiedenen Konturen, die es gibt. Eine
+  Fassung von morgen liest das Programm nicht und sagt es.
+- **Die Rechnung:** `abtasten` (4096 Punkte in gleichem Abstand, y
+  umgedreht), `normiert` (um den Schwerpunkt, größter Ausschlag 1), `reihe`
+  (Koeffizienten bis zur 512. Harmonischen, direkt gerechnet), `wert` und
+  `umriss` (ein Punkt, der ganze Zug, mit weichem Gewicht nach Z4 a). Kurven
+  werden vor dem Zerlegen groß gerechnet — Qt zerlegt mit einer festen
+  Toleranz in den Einheiten des Pfads, eine kleine Zeichnung würde sonst
+  eckig.
+- **Mitgeliefert** (`asset/contours`, aus `make_contours.py`): Circle,
+  Square, Triangle, Star, Heart, und Heart and star mit zwei Konturen als ein
+  Pfad.
+- **Tests:** `test_ShapeKontur.cpp`, sechs Fälle; `LUMIVIZ_SHAPE_BILD=<datei.png>`
+  legt ein Bild ab — je mitgelieferter Kontur die Form mit 1, 4, 16 und 64
+  Teiltönen über der Zeichnung. Gemessen am Quadrat: die größte Abweichung
+  ist 0,27 mit einem Teilton, 0,071 mit 8, 0,0089 mit 64, 0,0021 mit 256
+  (bei einer halben Kantenlänge von 1).
+
+Noch nicht gebaut: eine Datei von irgendwo zu den eigenen kopieren (wie
+`nimmZuEigenen` der Samples) — kommt mit dem Fenster.
 
 ---
 
@@ -727,7 +773,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | Stufe | Inhalt | hängt an |
 |---|---|---|
 | 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 — **gebaut in S120**, im Programm ungesehen und ungehört (`Loop_Konzept.md` §5) | — |
-| 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen | — |
+| 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen — **gebaut in S120** (§7 „Wie es gebaut ist"); im Programm ist davon nur der Bereich Shapes im Export zu sehen | — |
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a) | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a) | — (gebraucht ab 19c) |
@@ -761,6 +807,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.12.0 | 2026-10-13 (S120) | **Stufe 19a gebaut:** `shape/Kontur` — die Zeichnung, der Pfad als Text, die Datei `.lvcontour` Fassung 1, die Orte (mitgeliefert, `user:<name>`, Pfad), die Reihe mit weichem Gewicht; sechs mitgelieferte Formen; der Bereich Shapes im Export (§7 „Wie es gebaut ist", §14). Die Namen der Felder von Claude gesetzt. |
 | 0.11.0 | 2026-10-13 (S120) | **Stufe 18 gebaut:** Pan je Schicht mit dem Gesetz von Spur und Muster, acht Schichten, `.lvinst` Fassung 8; alte Instrumente rechnen Bit für Bit wie vorher (§14). Im Programm ungesehen und ungehört. |
 | 0.10.0 | 2026-10-13 (S120) | **Baustufen freigegeben (Patrik)** — 18, 19a bis 19e, 20a bis 20d (§14); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18 und in derselben Fassung 8 wie Pan (§6a). Nachgesehen: Spur und Muster haben schon ein Pan mit dem Gesetz `min(1, 1 ∓ pan)`; die Schicht bekommt dasselbe. Alle sieben Vorlagen sind geschlossen. |
 | 0.9.0 | 2026-10-13 (S120) | **Die Skizzen gebilligt (Patrik)** — das Fenster Edit shape (neu §8a) und die Shape-Schicht im Creator (§6), beide als Beschreibung eingetragen; **G1 a** die Zeile Contour an der Schicht entscheidet, **G2 a** die Regeln für Sprünge von Hand. **Berichtigt nach Patriks Einwand:** der Wellenzug der Preview war von Hand gezeichnet und hatte für einen Zeitpunkt bis zu drei Werte; die Preview zeigt jetzt links und rechts je für sich über der Zeit. Die sechste der sieben Vorlagen ist geschlossen. |

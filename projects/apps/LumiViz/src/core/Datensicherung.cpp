@@ -170,6 +170,8 @@ const std::vector<Bereich>& bereiche()
         {QStringLiteral("instruments"), QStringLiteral("Instruments"), {QStringLiteral("instruments")}, {}, true},
         // eigene Samples (Loop, Stufe 11a; Entscheid S1 a): Instrumente nennen sie als `user:<name>`
         {QStringLiteral("samples"), QStringLiteral("Samples"), {QStringLiteral("samples")}, {}, true},
+        // eigene Formen (Klang aus einer Form, Stufe 19a; Entscheid D2 a): Schichten nennen sie als `user:<name>`
+        {QStringLiteral("shapes"), QStringLiteral("Shapes"), {QStringLiteral("contours")}, {}, true},
         // geladene Songtexte mit den Versaetzen (`offsets.json`); `notfound.json`
         // merkt nur Fehlsuchen
         {QStringLiteral("lyrics"), QStringLiteral("Downloaded lyrics"), {QStringLiteral("lyrics")},

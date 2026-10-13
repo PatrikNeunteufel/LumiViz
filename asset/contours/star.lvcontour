@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Star",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Star",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 100 18 L 121.16 74.875 L 181.791 77.425 L 134.238 115.125 L 150.55 173.575 L 100 140 L 49.45 173.575 L 65.762 115.125 L 18.209 77.425 L 78.84 74.875 L 100 18 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

@@ -100,7 +100,7 @@ const ds::ImportBereich* finde(const ds::Inhalt& inhalt, const QString& id)
 TEST_CASE("Datensicherung: die Bereiche — feste Namen, jeder mit Ordner, nur die Songtexte anfangs aus")
 {
     const auto& bereiche = ds::bereiche();
-    REQUIRE(bereiche.size() == 10);  // seit S115 dazu „Samples" (Loop, Stufe 11a)
+    REQUIRE(bereiche.size() == 11);  // seit S120 dazu „Shapes" (Klang aus einer Form, Stufe 19a); S115: „Samples" (Loop, Stufe 11a)
     QStringList ids;
     for (const ds::Bereich& bereich : bereiche)
     {

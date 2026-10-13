@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Circle",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Circle",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 180 100 C 180 144.183 144.183 180 100 180 C 55.817 180 20 144.183 20 100 C 20 55.817 55.817 20 100 20 C 144.183 20 180 55.817 180 100 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

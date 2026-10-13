@@ -86,6 +86,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopGrundton.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopBelegeAufnahme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShapeBelege.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ShapeKontur.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAufnahme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAufnahmeFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopDrumQuellen.cpp"

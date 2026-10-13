@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.205.0
+> **Version:** 1.206.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5456,6 +5456,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.206.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Stufe 19a gebaut** (`Shape_Konzept.md` 0.12.0) — `shape/Kontur`: die Zeichnung aus Konturen mit festen Kennungen, die Datei `.lvcontour` Fassung 1, mitgelieferte unter `asset/contours` (sechs Formen), eigene als `user:<name>`, die Reihe mit weichem Gewicht; der Bereich **Shapes** in Export und Import (Benutzerhandbuch 1.154.0). Neu `test_ShapeKontur.cpp` (sechs Fälle, **1163 Cases**). Im Programm ist davon nur der neue Bereich im Export zu sehen. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2). **Als Nächstes: Stufe 19b** — der Knoten Shape für die Effect Chain. |
 | 1.205.0 | 2026-10-13 | Session 120. **Stufe 18 gebaut: Pan je Schicht und acht Schichten je Instrument** (`Loop_Konzept.md` 0.70.0 §5, `Shape_Konzept.md` 0.11.0) — `.lvinst` Fassung 8; Pan mit dem Gesetz von Spur und Muster, im Creator der Regler im Kasten Level; alte Instrumente rechnen Bit für Bit wie vorher; Benutzerhandbuch 1.153.0; lokal Liste 10 um Abschnitt V (V0 bis V11, U77 bis U79; darin auch die Punkte zu den Datei-Icons dieser Sitzung), B1 und U19 angepasst. **Im Programm ungesehen und ungehört.** Voller Lauf 1157 / 1157, 0 Skips (Testing-MSVC, Bildschirm 2, 263 s). **Als Nächstes: Stufe 19a** — die Form als Daten und die Datei `.lvcontour`. |
 | 1.204.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Baustufen freigegeben (Patrik)** — 18 (Pan je Schicht), 19a bis 19e (Daten und Datei, Knoten Shape, Schwingung im Klangerzeuger, Knoten XY Scope, Shape-Schicht im Creator), 20a bis 20d (das Fenster Edit shape); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18. `Shape_Konzept.md` 0.10.0; alle sieben Vorlagen sind geschlossen, das Konzept ist vollständig. **Als Nächstes: Stufe 18 bauen.** Nichts gebaut. |
 | 1.203.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Skizzen gebilligt (Patrik)** — das Fenster Edit shape und die Shape-Schicht im Creator, als Beschreibung in `Shape_Konzept.md` 0.9.0 (§6, §8a); **G1 a** (die Zeile Contour an der Schicht entscheidet, was sie spielt), **G2 a** (Regeln für Sprünge von Hand); berichtigt nach Patriks Einwand: der Wellenzug der Preview hat je Zeitpunkt einen Wert. Die sechste der sieben Vorlagen ist geschlossen; **offen: die Freigabe der Baustufen** und ob die Grenze der Schichten auf acht geht. |
