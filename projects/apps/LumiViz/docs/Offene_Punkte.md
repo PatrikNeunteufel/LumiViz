@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.192.0
-> **Datum:** 2026-10-13 (Session 119)
+> **Version:** 1.193.0
+> **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -4947,6 +4947,20 @@ Grobkonzept ohne Bezug zu LumiViz: `docs/fourier-shape-loops-konzept.md`
 (Anstoß: Beiträge mit Epizykel-Animationen — zwei Fourier-Reihen führen den
 Stift in x und y).
 
+**Seit S120 auf LumiViz umgeschrieben:** `docs/audio/Shape_Konzept.md` 0.1.0 —
+dort die Rechnung, die Regler, die Stufen als Vorschlag und die Liste der
+sieben Vorlagen (§13). Drei Befunde aus dem Nachsehen: **(1) die Endung
+`.lvshape` ist vergeben** — seit S96 heißen so die Stück-Presets des Curve
+Editors im Composer (`composer/FormPresets.hpp`); die Kontur-Datei braucht
+eine andere, oder die Presets ziehen um (erste Vorlage). **(2) Die Visuals
+bekommen vom Loop beide Seiten getrennt** (`MainWindow.cpp`, Zufuhr über den
+Mixer des Loops, 512 Werte je Seite und Bild) — ein Ton unter rund 94 Hz
+zeigt bei 48 kHz in einem Bild keinen ganzen Umlauf. **(3) Qt Svg liegt in
+der Installation** (6.10.1); ob es Pfade als Geometrie herausgibt, ist nicht
+nachgeprüft. Dazu festgehalten: Start und Reverse ändern nur die Phasen der
+Teiltöne — an einer Schicht allein hört man sie nicht, wohl hinter Drive,
+über einer zweiten Schicht derselben Form und im Scope.
+
 **Entschieden (Z1 a):** in LumiViz, als Waveform einer Schicht im
 Instrument-Creator, mit einem eigenen Fenster für die Form; alles in C++, kein
 Python-Werkzeug daneben. Der Export für andere Synths ist eine spätere Zugabe.
@@ -5015,8 +5029,8 @@ links gegen rechts zeichnet, und eines, das die Form aus ihren Koeffizienten
 zeichnet); die Skizze
 des Form-Fensters; was Qt für SVG hergibt und wie Konturen ohne OpenCV erkannt
 werden; mehrere gewählte Konturen; die Entscheide aus §10 des Grobkonzepts.
-Nichts entworfen, nichts gebaut; das Grobkonzept ist noch nicht auf LumiViz
-umgeschrieben.
+Nichts entworfen, nichts gebaut; das Grobkonzept ist seit S120 auf LumiViz
+umgeschrieben (`docs/audio/Shape_Konzept.md`), die Vorlagen stehen aus.
 
 ### ⚪ Idee: Flanger als Effekt am Clip (Patrik S119)
 
@@ -5359,6 +5373,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.193.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": das Grobkonzept ist auf LumiViz umgeschrieben — **NEU `docs/audio/Shape_Konzept.md` 0.1.0** (Rechnung, Regler, Tests, Stufen 18 bis 21 als Vorschlag, sieben Vorlagen in fester Reihenfolge). Nachgesehen: **die Endung `.lvshape` ist seit S96 vergeben** (Stück-Presets des Curve Editors) — in S119 nicht aufgefallen, gehört in die erste Vorlage; die Visuals bekommen vom Loop beide Seiten getrennt (512 Werte je Seite und Bild; die Frage aus S119 ist beantwortet); Qt Svg liegt in der Installation, steht nicht in der `Solution.json`. Festgehalten: Start und Reverse ändern nur Phasen. Nicht nachgeprüft: ob Qt Svg Pfade als Geometrie herausgibt; die Rate der Engine. Nichts entworfen, nichts gebaut. |
 | 1.192.0 | 2026-10-13 | Session 119, Abschluss. `sessions/Changelog_Session119.md`. **Stand:** Stufe 17 (ein Sample bearbeiten) und X5 (Abweichung im Kasten) sind gebaut, voller Lauf 1153 / 1153 unter Testing-MSVC; die Idee „Klang aus einer Form" ist in Z1 a bis Z5 a gefasst. **Offen:** im Programm ungesehen Liste 10 Abschnitt D, X7, U72 bis U76 und der Rest aus S118; Patriks Ohr an `hoerproben_16e`; `asset/loop/effects_demo2.lvloop` liegt seit S119 im Repo — bleibt sie als mitgelieferter Loop (dann die Werte festhalten) oder soll sie heraus; **als Nächstes die Form:** Konzept auf LumiViz umschreiben, dann Dateiformat, Konturerkennung, SVG, Module, Skizze |
 | 1.191.0 | 2026-10-13 | Session 119. §7 NEU Idee Patrik: **Klang aus einer Form** — Waveform „Shape" im Instrument-Creator (Fourier-Reihe einer Kontur; Grobkonzept `fourier-shape-loops-konzept.md`); Z1 a: in LumiViz, in C++; Eingabe durch Zeichnen, SVG oder Konturen aus einem Bild; Z2 a im Grundsatz (Angle, Stereo XY), dazu die Richtungen ±x und ±y für überlagerte Schichten und ein Modul für die Effect Chain ; Z3 a (Pan je Schicht, Stereo XY an der Shape-Schicht, bewegtes Stereo bei den Effekten), Z4 a (Harmonics läuft weich, dazu Harmonics envelope), Z5 a (mehrere Konturen als Schichten oder als ein Pfad), die Form als Datei `.lvshape`, auch für die Visuals; Start und Reverse als Regler — nichts entworfen, nichts gebaut; offen Dateiformat, Konturerkennung, SVG, die Module, die Skizze. §7 NEU Idee Patrik: **Flanger** als Effekt am Clip — nur notiert |
 | 1.190.0 | 2026-10-13 | Session 119. **X5 gebaut** (Clip effects, mehrere Clips mit derselben Folge): weicht irgendein Wert eines Bausteins ab, steht im Kasten „≠" vor dem Kurzwert, der Kasten ist bernsteinfarben getönt (die Fläche statt des Rands, Vorschlag Patrik — auch am gewählten Kasten zu sehen), der Tooltip nennt die Regler — im Programm ungesehen (Liste 10, X7, U76) |
