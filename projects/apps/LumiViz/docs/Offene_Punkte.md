@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.196.0
+> **Version:** 1.197.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5019,9 +5019,13 @@ Visuals benutzt werden können: das Modul der Effect Chain, das die Form aus
 ihren Koeffizienten zeichnet, liest dieselbe Datei. **Start** und **Reverse**
 sind Regler der Schicht (Patrik: ja).
 
-**Offen, wird noch geklärt:** was in der `.lvshape` steht (Punkte, Pfade,
-Farben, Herkunft) und wo sie liegt (bei den eigenen Daten wie Samples,
-mitgelieferte Formen, Export und Import der eigenen Daten); die
+**Die Datei ist entschieden (S120, `Shape_Konzept.md` §7):** D1 a eine
+Zeichnung mit allen Konturen, D2 a Ort und Nennung wie bei Instrumenten und
+Samples (`asset/contours`, `user:<name>`, Bereich Shapes im Export), D3 a das
+Instrument nennt die Form über eine feste Kennung der Kontur, D4 b Pfade
+aus Strecken und Kurven, ohne Quellbild und ohne Koeffizienten.
+
+**Offen, wird noch geklärt:** die
 Konturerkennung aus einem Bild (OpenCV liegt nicht im Repo — selbst zu
 schreiben); SVG (das Qt-Modul Svg steht nicht in der `Solution.json`; ob es
 in der Installation liegt, ist nicht geprüft); die Brücke zwischen Konturen
@@ -5032,6 +5036,47 @@ des Form-Fensters; was Qt für SVG hergibt und wie Konturen ohne OpenCV erkannt
 werden; mehrere gewählte Konturen; die Entscheide aus §10 des Grobkonzepts.
 Nichts entworfen, nichts gebaut; das Grobkonzept ist seit S120 auf LumiViz
 umgeschrieben (`docs/audio/Shape_Konzept.md`), die Vorlagen stehen aus.
+
+### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
+
+Anlass: der Entscheid D3 a zur Form (`Shape_Konzept.md` §7) — ein Instrument
+**nennt** seine Form, wie es heute schon seine Samples nennt. Eine `.lvinst`
+allein ist deshalb nicht vollständig; wer sie weitergibt, gibt den Klang
+nicht mit.
+
+**Patriks Lösung, für diesen Fall und andere:** **Publish** archiviert ein
+Ding mit **allen zugehörigen Dateien** und der **Ordnerstruktur des
+Benutzerordners** in ein Paket, mit einem **Manifest**. Das Paket heißt
+`<name>.<type>.lvdata`, wobei `<type>` die Art nennt — etwa
+`mein_bass.lvinst.lvdata`. Der richtige Import ergibt sich aus Ordnerstruktur
+und Manifest.
+
+**Nachgesehen (S120):** das passt auf das, was es gibt. Eine `.lvdata` ist
+heute ein Zip mit `manifest.json` (Format, Fassung, LumiViz-Version, Datum,
+Zahlen) und `data/<Pfad im Benutzerordner>` (`core/Datensicherung.hpp`); der
+Import schreibt nur in die Ordner bekannter Bereiche. Ein Paket wäre
+dieselbe Datei mit einer engeren Auswahl — statt ganzer Bereiche die Dateien,
+an denen ein Ding hängt.
+
+**Offen, nichts entworfen:**
+- **Welche Arten** sich veröffentlichen lassen (Instrument, Loop,
+  Komposition, Preset …) und wo der Befehl steht.
+- **Was dazugehört:** ein Instrument nennt Samples und Formen; ein Loop
+  nennt Instrumente und Samples; Mitgeliefertes geht nicht mit. Was mit einer
+  Datei an freiem Ort geschieht (sie liegt nicht im Benutzerordner).
+- **Gleiche Namen beim Import:** „Keep both" gibt der importierten Datei eine
+  Zahl an den Namen (`nameMitZahl`: `Neon (2).json`) — das Ding im Paket
+  nennt seine Zugehörigen aber beim alten Namen. Ohne ein Umschreiben der
+  Nennungen spielte es dann die eigene Datei, nicht die mitgebrachte. Dazu,
+  **aus den Köpfen gelesen und nicht geprüft:** ein eigenes Instrument oder
+  Sample darf nur `a`–`z`, Ziffern und `_` im Namen tragen (`istEigenerName`);
+  eine Datei `bass (2).lvinst` könnte ein Muster dann gar nicht nennen. Ob
+  das heute beim Import ganzer Bereiche schon so ist, wäre mit einem Test zu
+  klären.
+- **Manifest:** ob ein Paket dieselbe Fassung der `.lvdata` bleibt (dann
+  liest es auch der heutige Import) oder eine neue mit den Feldern Art und
+  Hauptdatei.
+- Ob der Dialog Import data ein Paket anders zeigt als einen Export.
 
 ### ⚪ Idee: Flanger als Effekt am Clip (Patrik S119)
 
@@ -5374,6 +5419,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.197.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Datei `.lvcontour` entschieden (Patrik): D1 a, D2 a, D3 a, D4 b** (`Shape_Konzept.md` 0.3.0, §7; bei D4 zuerst a, dann b: Konturen als Pfade aus Strecken und Kurven) — damit ist die erste der sieben Vorlagen geschlossen; als Nächstes die Konturerkennung aus einem Bild. §7 **NEU Idee Patrik: Publish** — ein Ding mit allen zugehörigen Dateien, der Ordnerstruktur des Benutzerordners und einem Manifest als Paket `<name>.<type>.lvdata`; nachgesehen: eine `.lvdata` ist heute schon ein Zip mit Manifest und `data/<Pfad im Benutzerordner>`; offen die Arten, was dazugehört, gleiche Namen beim Import (die Nennungen im Paket), das Manifest. Nichts entworfen, nichts gebaut. |
 | 1.196.0 | 2026-10-13 | Session 120. **Datei-Icons in der App, A2 a (Patrik) gebaut:** die Datei-Zeile des Loop-Panels, die Kopfzeile des Instrument-Editors, der Kopf des Dialogs Import data und die Liste „je Datei entscheiden" tragen das Icon ihrer Dateiart (Benutzerhandbuch 1.152.0) — im Programm ungesehen, vier Bilder aus den Tests angesehen. Bewusst ohne Icon: Fenster Instruments, Creator, die Menüs Fade in, Fade out, Shape, Mute-Profile, Verlaufs-Combos. **Nebenbefund, nicht behoben:** `presetTypeIconForSuffix` kennt `milk2` nicht — eine `.milk2` bekäme dort das AVS-Icon; nicht nachgesehen, ob der Effect Browser `.milk2` überhaupt zeigt. |
 | 1.195.0 | 2026-10-13 | Session 120. **Datei-Icons in der App (A1 b, Patrik):** im Audio Browser trägt eine `.lvloop` jetzt `lumiviz_lvloop.ico` statt des Kreispfeils (`dateiArtIcon` in `PresetTypeIcons.hpp`; Benutzerhandbuch 1.151.0) — im Programm ungesehen. Durchgesehen, wo die App Dateien der acht Arten sonst zeigt; **offen A2:** welche Stellen ein Icon bekommen — vorgeschlagen die Datei-Zeile des Loop-Panels, die Kopfzeile des Instrument-Editors, Kopf und Baum „je Datei entscheiden" des Dialogs Import data; nicht vorgeschlagen das Fenster Instruments, der Creator, die Menüs Fade in, Fade out, Shape, die Mute-Profile und die Verlaufs-Combos. |
 | 1.194.0 | 2026-10-13 | Session 120. **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour` (`Shape_Konzept.md` 0.2.0). **Acht Datei-Icons gebaut (I1 a, Patrik):** `.lvloop`, `.lvinst`, `.lvcontour`, `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, `.grad` — alle als Marke mit einem Zeichen im Kreis, die Zeichen von Patrik an vier Vorschaublättern gewählt; im Skript für den Explorer eingetragen, Benutzerhandbuch 1.150.0 (§17). **Offen:** `-Apply` für die neuen Endungen (Patrik); die App zeigt die acht Icons noch nirgends (im Audio Browser steht bei Loops weiter der Kreispfeil des Systems); `.lvp` ohne Icon — nicht nachgesehen, ob das Format noch geschrieben wird; die README der Icons sagt, `LumiViz.exe <datei>` lade keine Datei, das Handbuch sagt, eine Datei lasse sich auf die Exe ziehen — nicht abgeglichen. |

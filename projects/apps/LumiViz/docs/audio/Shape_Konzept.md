@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -87,6 +87,10 @@ Von Patrik, S119:
 | **Z4 a** | **Harmonics** läuft weich (die nächste Harmonische wird eingeblendet, keine Stufen); dazu **Harmonics envelope** wie Filter envelope. Hohe Noten bekommen von selbst weniger Harmonische. |
 | **Z5 a** | Mehrere gewählte Konturen gehen beide Wege, im Form-Fenster wählbar, jede in einer Farbe: **As layers** (je Kontur eine Schicht, bis vier) oder **As one path** (nacheinander in einem Umlauf, für eine Schicht). |
 | **F1 a** (S120) | Die Form ist eine Datei **`.lvcontour`**. Die Endung `.lvshape` bleibt bei den Stück-Presets des Composers. Im Programm heißt die Waveform weiter **Shape**. |
+| **D1 a** (S120) | Eine `.lvcontour` ist eine Zeichnung: alle Konturen mit Farbe und Auswahl, die Reihenfolge, As layers oder As one path. |
+| **D2 a** (S120) | Ort und Nennung wie bei Instrumenten und Samples: `asset/contours`, eigene unter `contours` im Benutzerordner als `user:<name>`, freie Dateien beim Pfad; ein Bereich **Shapes** in Export und Import. |
+| **D3 a** (S120) | Das Instrument nennt die Form (Datei und Kontur über eine feste Kennung); alles spielt die neue Fassung. Für das Teilen: **Publish** als eigener Punkt (Patrik). |
+| **D4 b** (S120) | Konturen als Pfade aus Strecken und Kurven, in den Koordinaten der Zeichnung; Herkunft mit Namen der Quelle, ohne das Bild; keine Koeffizienten in der Datei. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -217,21 +221,89 @@ der eigenen Daten könnten sie nicht unterscheiden. **Entschieden (F1 a,
 Patrik S120): die Kontur-Datei heißt `.lvcontour`**; verworfen: die Presets
 des Composers umbenennen (b), beide Arten unter einer Endung (c).
 
-Noch zu entscheiden (§13, Punkt 1):
+### Eine Datei ist eine Zeichnung (D1 a)
 
-- der **Inhalt**: die Konturen als Punkte oder Kurven, ihre Farben, welche
-  gewählt sind, As layers oder As one path, die Herkunft (gezeichnet, aus
-  welchem SVG, aus welchem Bild und mit welchen Einstellungen der
-  Erkennung); ob die Koeffizienten mit in der Datei stehen oder beim Laden
-  gerechnet werden;
-- der **Ort**: mitgelieferte Formen unter `asset/`, eigene im Benutzerordner
-  wie Samples (`user:<name>`), eine Datei an freiem Ort beim Pfad; ob eigene
-  Formen in Export und Import der eigenen Daten kommen;
-- wie ein **Instrument** die Form nennt, und was geschieht, wenn sie fehlt
-  (eine Sample-Schicht ohne Aufnahme schweigt);
-- ob ein Instrument die Form **einbettet** statt sie zu nennen — dann klingt
-  es weiter, auch wenn die Datei geändert oder gelöscht wird; bei Samples
-  ist anders entschieden (Stufe 17, M3 a: alles spielt die neue Fassung).
+Eine `.lvcontour` hält die ganze Arbeit aus dem Form-Fenster fest: **alle
+Konturen**, je mit Farbe und dem Haken, ob sie gewählt ist, dazu ihre
+Reihenfolge und die Wahl **As layers** oder **As one path**. Sie lässt sich
+wieder öffnen, eine andere Kontur wählen, der Weg wechseln. Eine Datei mit
+einer einzigen Kontur ist der einfache Fall. Das Modul der Effect Chain
+zeichnet die gewählten Konturen in ihren Farben. Verworfen (b): eine Datei
+je Kontur — die nicht gewählten Konturen und die Erkennung wären nach dem
+Speichern verloren.
+
+### Ort und Nennung (D2 a)
+
+Wie bei Instrumenten und Samples (P2 a, S1 a):
+
+| | liegt | eine Schicht nennt sie |
+|---|---|---|
+| mitgeliefert | `asset/contours/<name>.lvcontour` | beim Namen: `heart` |
+| eigene | `<Benutzerordner>/contours/<name>.lvcontour` | `user:<name>` |
+| an freiem Ort | wo sie liegt | beim Pfad |
+
+Eigene sind ein eigener Raum: ein eigenes `heart` verdrängt das mitgelieferte
+nicht. Wird eine Datei an freiem Ort gewählt, fragt das Programm wie bei
+Samples, ob es sie zu den eigenen kopiert. Eigene Formen bekommen einen
+Bereich **Shapes** in Export und Import der eigenen Daten
+(`core/Datensicherung`), mitgelieferte einen Eintrag in `asset/Asset.cmake`.
+Der Ordner liegt nicht unter `loop`, weil auch die Visuals ihn lesen.
+Verworfen (b): ein Namensraum, in dem die eigene Datei die mitgelieferte
+verdrängt, wie bei den Kurven-Presets des Composers — eine eigene `heart`
+änderte dann jedes mitgelieferte Instrument, das `heart` spielt.
+
+### Das Instrument nennt die Form (D3 a)
+
+Die Schicht nennt die **Datei** und darin die **Kontur über eine feste
+Kennung**, die beim Anlegen der Kontur vergeben wird und sich nicht mehr
+ändert — wird eine Kontur gelöscht, verrutschen die anderen nicht. Wird die
+Form geändert, spielen alle Instrumente die neue Fassung; das Form-Fenster
+nennt vor dem Speichern die eigenen Instrumente, die sie spielen (wie bei
+Samples, M3 a). Fehlt die Datei oder die Kontur, schweigt die Schicht, und
+der Creator sagt es. Verworfen: eine Kopie im Instrument (b), beides mit der
+Kopie als Rückfall (c).
+
+**Das Teilen** ist damit nicht gelöst — eine `.lvinst` allein ist nicht
+vollständig, wie heute schon bei Samples. Patriks Lösung dafür, für diesen
+Fall und andere: **Publish** — ein Paket `<name>.<type>.lvdata` mit allen
+zugehörigen Dateien, der Ordnerstruktur des Benutzerordners und einem
+Manifest. Eigener Punkt, `Offene_Punkte.md` §7; hier nichts dazu gebaut.
+
+### Der Inhalt (D4 b)
+
+JSON mit einer Fassung.
+
+- Je **Kontur**: die feste Kennung, ein Name, die Farbe, der Haken gewählt,
+  und die Kontur als **geschlossener Pfad aus Stücken** — gerade Strecken und
+  Kurven (kubische Bézier-Stücke), in den Koordinaten der Zeichnung, damit
+  die Konturen zueinander liegen wie im Bild. Eine Kontur aus einem **SVG**
+  behält ihre Kurven; eine aus einem **Bild** besteht nur aus Strecken; eine
+  **gezeichnete** aus dem, was das Zeichnen ergibt (Skizze, §13 Punkt 6).
+  Zu Punkten wird der Pfad erst beim Laden, für die Rechnung (§5).
+- Für die **Zeichnung**: die Reihenfolge der Konturen, As layers oder As one
+  path, und die Herkunft — gezeichnet, SVG oder Bild, der Name der
+  Quelldatei und die Einstellungen der Erkennung.
+- **Nicht in der Datei:** das Quellbild — liegt es nicht mehr am Ort,
+  bleiben die gefundenen Konturen, neu erkennen geht erst wieder, wenn das
+  Bild neu gewählt ist. Und die Koeffizienten: sie werden beim Laden
+  gerechnet (eine Fourier-Transformation je Kontur; die Dauer ist geschätzt,
+  nicht gemessen).
+
+**Zum Entscheid:** Claude hatte a empfohlen (nur Punktfolgen) und b mit „mehr
+Code" abgetan, ohne Beleg. Patrik: „vielleicht besser b … damit es angezeigt
+werden kann" — die Form soll im Form-Fenster und im Modul der Effect Chain
+als Kurve gezeichnet werden, glatt in jeder Größe. Nachgedacht, b ist
+die bessere Wahl: ein Pfad aus Strecken und Kurven schließt die Punktfolge
+ein (eine Punktfolge ist ein Pfad nur aus Strecken), das SVG bleibt genau und
+in jeder Größe glatt, und ein späteres Bearbeiten an Griffen braucht keine
+neue Fassung der Datei. Qt trägt die Arbeit: `QPainterPath` kennt genau diese
+Stücke und rechnet sie zu Punkten um — **aus dem Gedächtnis, in Stufe 19a
+mit einem Test zu belegen**, auch dass es ohne Qt-Anwendung geht (die Tests
+des Loop-Kerns laufen ohne). Verworfen: das Quellbild in der Datei (c) — aus
+einigen Kilobyte würden Megabyte, in jedem Export.
+
+Die Namen der Felder legt Stufe 19a fest (von Claude zu setzen, im Changelog
+zu nennen).
 
 ---
 
@@ -263,8 +335,8 @@ Vorlage (§13, Punkt 2).
 ## 9. Mehrere Konturen
 
 **As layers** (Z5 a): je gewählter Kontur eine Schicht in ihrer Farbe, bis
-das Instrument voll ist (vier). Offen: ob jede Schicht ihre eigene Datei
-bekommt oder alle dieselbe nennen, mit der Nummer der Kontur.
+das Instrument voll ist (vier). Alle Schichten nennen dieselbe Datei, jede
+ihre Kontur über deren feste Kennung (D1 a, D3 a).
 
 **As one path** (Z5 a): die gewählten Konturen nacheinander in einem Umlauf.
 Nur so erscheint im Scope eine Zeichnung aus mehreren Teilen. Offen ist die
@@ -341,8 +413,7 @@ und Hörproben in einen Ordner.
 
 ## 13. Offen — einzeln vorzulegen, in dieser Reihenfolge
 
-1. **Die Datei** `.lvcontour` (Endung entschieden, F1 a): Inhalt, Ort, wie
-   ein Instrument sie nennt (§7).
+1. ~~Die Datei~~ — entschieden in S120: F1 a, D1 a, D2 a, D3 a, D4 b (§7).
 2. **Konturerkennung** aus einem Bild, ohne OpenCV (§8).
 3. **SVG:** Pfade selbst lesen oder über das Bild (§8) — davor nachsehen,
    was Qt Svg hergibt.
@@ -398,5 +469,6 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.3.0 | 2026-10-13 (S120) | **Die Datei entschieden (Patrik): D1 a** eine Zeichnung mit allen Konturen, **D2 a** Ort und Nennung wie bei Instrumenten und Samples, **D3 a** das Instrument nennt die Form über eine feste Kennung der Kontur, **D4 b** Pfade aus Strecken und Kurven, kein Quellbild, keine Koeffizienten — zuerst a (nur Punktfolgen), dann auf Patriks Einwand b (§4, §7, §9, §13). Für das Teilen Patriks Idee **Publish** — ein Paket `<name>.<type>.lvdata` — als eigener Punkt in `Offene_Punkte.md` §7. |
 | 0.2.0 | 2026-10-13 (S120) | **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour`, `.lvshape` bleibt beim Composer (§4, §7, §13). Das Datei-Icon dazu ist gebaut (`asset/img/logo/icons/lumiviz_lvcontour.ico`, Marke mit Kontur und Stift). |
 | 0.1.0 | 2026-10-13 (S120) | Erste Fassung: das Grobkonzept auf LumiViz umgeschrieben, Entscheide Z1 a bis Z5 a eingetragen. Nachgesehen: die Visuals bekommen vom Loop beide Seiten getrennt (512 Werte je Seite und Bild); Qt Svg liegt in der Installation; die Endung `.lvshape` ist seit S96 vergeben. Festgehalten: Start und Reverse ändern nur Phasen. Stufen als Vorschlag. |
