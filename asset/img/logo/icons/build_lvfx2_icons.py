@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt fuenf .ico (16–256 px) neben diesem Skript:
+Erzeugt fuenfzehn .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -19,6 +19,12 @@ Erzeugt fuenf .ico (16–256 px) neben diesem Skript:
                         Patrik: der Komet bleibt auch in 32 px als Bewegung
                         lesbar). In der App traegt es jede Effect List, die
                         einen Lyrics Trail enthaelt.
+- acht weitere aus der Familie „Marke" (Session 120), je `lumiviz_<endung>.ico`:
+                        `lvloop` (Schritt-Raster mit Bogen zurueck), `lvinst`
+                        (Klaviertasten), `lvcontour` (Kontur mit Stift),
+                        `lvdata` (Ablage mit Pfeil), `lvfade` (Keil), `lvshape`
+                        (Huegel), `lvmute` (Lautsprecher mit Kreuz), `grad`
+                        (Verlauf).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -31,6 +37,7 @@ Erzeugt fuenf .ico (16–256 px) neben diesem Skript:
 Die Reserve-Icons sind noch ohne Verwendung (Ideen in `README.md`).
 `lumiviz.ico` selbst ist Handarbeit und wird nur gelesen.
 """
+import math
 import pathlib
 import sys
 
@@ -129,6 +136,124 @@ def zeichen_schweif(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
     d.ellipse((kx - kopf, cy - kopf, kx + kopf, cy + kopf), fill=(*CYAN, 255))
 
 
+# --- acht weitere Zeichen (Session 120, Entscheid Patrik I1 a: jede Dateiart
+# ohne Icon bekommt die Marke mit ihrem Zeichen; die Zeichen an vier
+# Vorschaublaettern gewaehlt). Gefuellte Flaechen statt duenner Striche, damit
+# bei 32 px etwas stehen bleibt. ---------------------------------------------
+
+LEER = (70, 76, 88, 255)  # ein nicht gesetzter Schritt im Raster
+
+
+def zeichen_loop(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Schritt-Raster wie im Drum-Editor (zwei Spuren, vier Schritte), darueber
+    ein Bogen vom letzten Schritt zurueck zum ersten."""
+    z, luecke = int(r * 0.24), int(r * 0.07)
+    breite = 4 * z + 3 * luecke
+    x0, y0 = cx - breite // 2, cy + int(r * 0.04)
+    for zeile, (farbe, schritte) in enumerate(((CYAN, (1, 0, 1, 1)), (MAGENTA, (0, 1, 0, 1)))):
+        for spalte, an in enumerate(schritte):
+            x, y = x0 + spalte * (z + luecke), y0 + zeile * (z + luecke)
+            d.rounded_rectangle((x, y, x + z, y + z), radius=int(z * 0.22),
+                                fill=(*farbe, 255) if an else LEER)
+    rx, ry = (breite - z) // 2, int(r * 0.42)
+    yc = y0 - int(r * 0.24)               # Mitte des Bogens; die Spitze endet ueber dem Raster
+    d.arc((cx - rx, yc - ry, cx + rx, yc + ry), start=190, end=360, fill=(*BERNSTEIN, 255),
+          width=int(r * 0.15))
+    s = int(r * 0.18)
+    d.polygon([(cx - rx - s, yc - int(r * 0.08)), (cx - rx + s, yc - int(r * 0.08)),
+               (cx - rx, yc + int(r * 0.13))], fill=(*BERNSTEIN, 255))
+
+
+def zeichen_tasten(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Drei Klaviertasten in den Logofarben, zwei schwarze dazwischen."""
+    b, h, luecke = int(r * 0.30), int(r * 0.62), int(r * 0.06)
+    x0 = cx - (3 * b + 2 * luecke) // 2
+    for i, farbe in enumerate((CYAN, MAGENTA, BERNSTEIN)):
+        x = x0 + i * (b + luecke)
+        d.rounded_rectangle((x, cy - h, x + b, cy + h), radius=int(b * 0.25), fill=(*farbe, 255))
+    sb = int(r * 0.20)
+    for i in (1, 2):
+        x = x0 + i * (b + luecke) - luecke // 2
+        d.rectangle((x - sb // 2, cy - h - 2, x + sb // 2, cy + int(h * 0.15)), fill=MARKE_GRUND)
+
+
+def zeichen_kontur(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Eine geschlossene Form mit kraeftigem Rand, darauf der Stift als Punkt."""
+    radius = r * 0.50
+    punkte = []
+    for i in range(121):
+        t = 2 * math.pi * i / 120
+        rad = radius * (1 + 0.28 * math.cos(3 * t + 0.6))
+        punkte.append((cx + rad * math.cos(t), cy + rad * math.sin(t)))
+    d.polygon(punkte, fill=(150, 46, 96, 255))  # Magenta, abgedunkelt
+    d.line(punkte, fill=(*CYAN, 255), width=34, joint="curve")
+    px, py = punkte[58]
+    k = int(r * 0.20)
+    d.ellipse((px - k - 8, py - k - 8, px + k + 8, py + k + 8), fill=MARKE_GRUND)
+    d.ellipse((px - k, py - k, px + k, py + k), fill=(*BERNSTEIN, 255))
+
+
+def zeichen_ablage(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Eine gefuellte Ablage, ein Pfeil faellt hinein (Export der eigenen Daten)."""
+    b = int(r * 0.58)
+    d.rounded_rectangle((cx - b, cy + int(r * 0.10), cx + b, cy + int(r * 0.58)),
+                        radius=int(r * 0.10), fill=(*BERNSTEIN, 255))
+    spitze, s, schaft = cy + int(r * 0.40), int(r * 0.34), int(r * 0.12)
+    oben = cy - int(r * 0.68)
+    # erst dunkel und etwas groesser (der Rand ueber der Ablage), dann der Pfeil
+    for rand, farbe in ((int(r * 0.07), MARKE_GRUND), (0, (*CYAN, 255))):
+        d.rectangle((cx - schaft - rand, oben - rand, cx + schaft + rand, spitze - s + 2),
+                    fill=farbe)
+        d.polygon([(cx - s - rand * 2, spitze - s - rand), (cx + s + rand * 2, spitze - s - rand),
+                   (cx, spitze + rand * 2)], fill=farbe)
+
+
+def zeichen_blende(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Die Flaeche unter einer ansteigenden Kurve: ein Keil auf einer Grundlinie."""
+    b, h = int(r * 0.60), int(r * 0.44)
+    punkte = []
+    for i in range(41):
+        u = i / 40
+        punkte.append((cx - b + 2 * b * u, cy + h - 2 * h * u * u * (3 - 2 * u)))
+    d.polygon(punkte + [(cx + b, cy + h), (cx - b, cy + h)], fill=(*CYAN, 255))
+    d.line([(cx - b, cy + h), (cx + b, cy + h)], fill=(*BERNSTEIN, 255), width=24)
+
+
+def zeichen_stueck(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Huegel mitten auf der Grundlinie: ein Stueck der Pegelkurve."""
+    b, h = int(r * 0.62), int(r * 0.44)
+    punkte = []
+    for i in range(61):
+        u = i / 60
+        v = 0.0 if u < 0.2 or u > 0.8 else 0.5 * (1 - math.cos(2 * math.pi * (u - 0.2) / 0.6))
+        punkte.append((cx - b + 2 * b * u, cy + h - 2 * h * v))
+    d.polygon(punkte, fill=(*MAGENTA, 255))
+    d.line([(cx - b, cy + h), (cx + b, cy + h)], fill=(*BERNSTEIN, 255), width=24)
+
+
+def zeichen_stumm(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Lautsprecher, daneben ein Kreuz."""
+    x = cx - int(r * 0.58)
+    k, g = int(r * 0.18), int(r * 0.46)
+    d.polygon([(x, cy - k), (x + int(r * 0.24), cy - k), (x + int(r * 0.56), cy - g),
+               (x + int(r * 0.56), cy + g), (x + int(r * 0.24), cy + k), (x, cy + k)],
+              fill=(*CYAN, 255))
+    a, m = int(r * 0.22), cx + int(r * 0.36)
+    d.line([(m - a, cy - a), (m + a, cy + a)], fill=(*MAGENTA, 255), width=22)
+    d.line([(m - a, cy + a), (m + a, cy - a)], fill=(*MAGENTA, 255), width=22)
+
+
+def zeichen_verlauf(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Balken, der von Cyan ueber Magenta nach Bernstein laeuft."""
+    b, h = int(r * 0.62), int(r * 0.30)
+    for x in range(-b, b + 1):
+        u = (x + b) / (2 * b)
+        von, nach, v = (CYAN, MAGENTA, u * 2) if u < 0.5 else (MAGENTA, BERNSTEIN, u * 2 - 1)
+        farbe = tuple(round(von[i] + (nach[i] - von[i]) * v) for i in range(3))
+        d.line([(cx + x, cy - h), (cx + x, cy + h)], fill=(*farbe, 255), width=1)
+    d.rectangle((cx - b, cy - h, cx + b, cy + h), outline=(235, 235, 235, 255), width=10)
+
+
 def marke(icon: Image.Image, zeichen=zeichen_ebenen) -> Image.Image:
     """Das Icon ganz, unten rechts ein Kreis mit einem Zeichen — eine Familie:
     je Verwendung ein eigenes Zeichen im Kreis (Idee Patrik S89)."""
@@ -195,6 +320,15 @@ def main() -> int:
     als_ico(marke(icon), "lumiviz_marke.ico")
     als_ico(marke(icon, zeichen_mikrofon), "lumiviz_karaoke.ico")
     als_ico(marke(icon, zeichen_schweif), "lumiviz_trail.ico")
+    # Session 120: die Marke fuer die Dateiarten, die noch kein Icon hatten
+    als_ico(marke(icon, zeichen_loop), "lumiviz_lvloop.ico")
+    als_ico(marke(icon, zeichen_tasten), "lumiviz_lvinst.ico")
+    als_ico(marke(icon, zeichen_kontur), "lumiviz_lvcontour.ico")
+    als_ico(marke(icon, zeichen_ablage), "lumiviz_lvdata.ico")
+    als_ico(marke(icon, zeichen_blende), "lumiviz_lvfade.ico")
+    als_ico(marke(icon, zeichen_stueck), "lumiviz_lvshape.ico")
+    als_ico(marke(icon, zeichen_stumm), "lumiviz_lvmute.ico")
+    als_ico(marke(icon, zeichen_verlauf), "lumiviz_grad.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein

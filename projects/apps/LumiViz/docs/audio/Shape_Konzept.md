@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.1.0
+> **Version:** 0.2.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -86,6 +86,7 @@ Von Patrik, S119:
 | **Z3 a** | Stereo an seinem Ort: **Pan** je Schicht im Kasten Level, für jede Waveform; Stereo XY an der Shape-Schicht; bewegtes Stereo (Flanger, Chorus) bei den Effekten am Clip. |
 | **Z4 a** | **Harmonics** läuft weich (die nächste Harmonische wird eingeblendet, keine Stufen); dazu **Harmonics envelope** wie Filter envelope. Hohe Noten bekommen von selbst weniger Harmonische. |
 | **Z5 a** | Mehrere gewählte Konturen gehen beide Wege, im Form-Fenster wählbar, jede in einer Farbe: **As layers** (je Kontur eine Schicht, bis vier) oder **As one path** (nacheinander in einem Umlauf, für eine Schicht). |
+| **F1 a** (S120) | Die Form ist eine Datei **`.lvcontour`**. Die Endung `.lvshape` bleibt bei den Stück-Presets des Composers. Im Programm heißt die Waveform weiter **Shape**. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -212,12 +213,12 @@ Patrik: die Form ist eine Datei, und die Visuals lesen dieselbe.
 **Die Endung `.lvshape` ist vergeben** (§3): seit S96 heißen so die
 Stück-Presets des Curve Editors. In S119 ist das nicht aufgefallen. Zwei
 Dateiarten unter einer Endung gehen nicht — ein Öffnen-Dialog und der Export
-der eigenen Daten könnten sie nicht unterscheiden. Das ist der erste Punkt
-der ersten Vorlage.
+der eigenen Daten könnten sie nicht unterscheiden. **Entschieden (F1 a,
+Patrik S120): die Kontur-Datei heißt `.lvcontour`**; verworfen: die Presets
+des Composers umbenennen (b), beide Arten unter einer Endung (c).
 
-Zu entscheiden, in einer Vorlage (§13, Punkt 1):
+Noch zu entscheiden (§13, Punkt 1):
 
-- die **Endung**;
 - der **Inhalt**: die Konturen als Punkte oder Kurven, ihre Farben, welche
   gewählt sind, As layers oder As one path, die Herkunft (gezeichnet, aus
   welchem SVG, aus welchem Bild und mit welchen Einstellungen der
@@ -340,8 +341,8 @@ und Hörproben in einen Ordner.
 
 ## 13. Offen — einzeln vorzulegen, in dieser Reihenfolge
 
-1. **Die Datei:** Endung (`.lvshape` ist vergeben), Inhalt, Ort, wie ein
-   Instrument sie nennt (§7).
+1. **Die Datei** `.lvcontour` (Endung entschieden, F1 a): Inhalt, Ort, wie
+   ein Instrument sie nennt (§7).
 2. **Konturerkennung** aus einem Bild, ohne OpenCV (§8).
 3. **SVG:** Pfade selbst lesen oder über das Bild (§8) — davor nachsehen,
    was Qt Svg hergibt.
@@ -397,4 +398,5 @@ Nach 19b ist der Klang zu hören und zu messen, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.2.0 | 2026-10-13 (S120) | **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour`, `.lvshape` bleibt beim Composer (§4, §7, §13). Das Datei-Icon dazu ist gebaut (`asset/img/logo/icons/lumiviz_lvcontour.ico`, Marke mit Kontur und Stift). |
 | 0.1.0 | 2026-10-13 (S120) | Erste Fassung: das Grobkonzept auf LumiViz umgeschrieben, Entscheide Z1 a bis Z5 a eingetragen. Nachgesehen: die Visuals bekommen vom Loop beide Seiten getrennt (512 Werte je Seite und Bild); Qt Svg liegt in der Installation; die Endung `.lvshape` ist seit S96 vergeben. Festgehalten: Start und Reverse ändern nur Phasen. Stufen als Vorschlag. |

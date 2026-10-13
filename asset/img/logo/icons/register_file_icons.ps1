@@ -53,7 +53,15 @@ $types = @(
     @{ Ext = '.lvkar';   ProgId = 'LumiViz.Karaoke';     Text = 'LumiViz Karaoke Preset';    Icon = 'lumiviz_karaoke.ico'; Own = $true  }
     @{ Ext = '.lvtrail'; ProgId = 'LumiViz.Trail';       Text = 'LumiViz Trail Preset';      Icon = 'lumiviz_trail.ico';   Own = $true  }
     @{ Ext = '.lvcomp';  ProgId = 'LumiViz.Composition'; Text = 'LumiViz Composition';       Icon = 'lumiviz_lvcomp.ico';  Own = $true  }
-    @{ Ext = '.avs';     ProgId = 'LumiViz.Avs';         Text = 'AVS Preset';                Icon = 'avs.ico';             Own = $false }
+    @{ Ext = '.lvloop';  ProgId = 'LumiViz.Loop';        Text = 'LumiViz Loop';              Icon = 'lumiviz_lvloop.ico';  Own = $true  }
+    @{ Ext = '.lvinst';  ProgId = 'LumiViz.Instrument';  Text = 'LumiViz Instrument';        Icon = 'lumiviz_lvinst.ico';  Own = $true  }
+    @{ Ext = '.lvcontour'; ProgId = 'LumiViz.Contour';   Text = 'LumiViz Contour';           Icon = 'lumiviz_lvcontour.ico'; Own = $true }
+    @{ Ext = '.lvfade';  ProgId = 'LumiViz.Fade';        Text = 'LumiViz Fade Preset';       Icon = 'lumiviz_lvfade.ico';  Own = $true  }
+    @{ Ext = '.lvshape'; ProgId = 'LumiViz.CurvePiece';  Text = 'LumiViz Curve Piece Preset'; Icon = 'lumiviz_lvshape.ico'; Own = $true  }
+    @{ Ext = '.lvmute';  ProgId = 'LumiViz.Mute';        Text = 'LumiViz Mute Profile';      Icon = 'lumiviz_lvmute.ico';  Own = $true  }
+    @{ Ext = '.lvdata';  ProgId = 'LumiViz.Data';        Text = 'LumiViz Data Export';       Icon = 'lumiviz_lvdata.ico';  Own = $true  }
+    @{ Ext = '.grad';    ProgId = 'LumiViz.Gradient';    Text = 'LumiViz Gradient';          Icon = 'lumiviz_grad.ico';    Own = $false }
+    @{ Ext = '.avs';     ProgId = 'LumiViz.Avs';       Text = 'AVS Preset';                Icon = 'avs.ico';             Own = $false }
     @{ Ext = '.milk';    ProgId = 'LumiViz.MilkDrop';    Text = 'MilkDrop Preset';           Icon = 'milkdrop.ico';        Own = $false }
     @{ Ext = '.milk2';   ProgId = 'LumiViz.MilkDrop';    Text = 'MilkDrop Preset';           Icon = 'milkdrop.ico';        Own = $false }
     @{ Ext = '.lrc';     ProgId = 'LumiViz.Lyrics';      Text = 'Lyrics (LRC)';              Icon = 'lyrics_lrc.ico';      Own = $false }
@@ -96,11 +104,11 @@ foreach ($t in $types) {
 
     if ($Remove) {
         if ($ours) {
-            Write-Host ("{0,-9} entfernt (zeigte auf {1})" -f $t.Ext, $current)
+            Write-Host ("{0,-10} entfernt (zeigte auf {1})" -f $t.Ext, $current)
             Remove-Item -LiteralPath $extKey -Recurse -Force
             $changed = $true
         } else {
-            Write-Host ("{0,-9} nichts zu tun" -f $t.Ext)
+            Write-Host ("{0,-10} nichts zu tun" -f $t.Ext)
         }
         if (Test-Path -LiteralPath $progKey) {
             Remove-Item -LiteralPath $progKey -Recurse -Force
@@ -110,20 +118,20 @@ foreach ($t in $types) {
     }
 
     if (-not $t.Own -and -not $Foreign) {
-        Write-Host ("{0,-9} uebersprungen: fremde Endung (mit -Foreign eintragen)" -f $t.Ext)
+        Write-Host ("{0,-10} uebersprungen: fremde Endung (mit -Foreign eintragen)" -f $t.Ext)
         continue
     }
     if (-not (Test-Path -LiteralPath $iconPath)) {
-        Write-Host ("{0,-9} uebersprungen: {1} gibt es nicht" -f $t.Ext, $t.Icon)
+        Write-Host ("{0,-10} uebersprungen: {1} gibt es nicht" -f $t.Ext, $t.Icon)
         continue
     }
     if ($current -and -not $ours) {
-        Write-Host ("{0,-9} uebersprungen: gehoert schon '{1}'" -f $t.Ext, $current)
+        Write-Host ("{0,-10} uebersprungen: gehoert schon '{1}'" -f $t.Ext, $current)
         continue
     }
     $hint = if ($hasChoice) { '  (Achtung: im Explorer ist "Oeffnen mit" fest gewaehlt - dessen Icon gilt)' } else { '' }
     $state = if ($ours) { 'ist eingetragen' } else { 'noch nicht eingetragen' }
-    Write-Host ("{0,-9} -> {1,-20} {2}  [{3}]{4}" -f $t.Ext, $t.ProgId, $t.Icon, $state, $hint)
+    Write-Host ("{0,-10} -> {1,-20} {2}  [{3}]{4}" -f $t.Ext, $t.ProgId, $t.Icon, $state, $hint)
     if ($Apply) {
         Set-DefaultValue $extKey $t.ProgId
         Set-DefaultValue $progKey $t.Text

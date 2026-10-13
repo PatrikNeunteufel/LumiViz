@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.193.0
+> **Version:** 1.194.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5013,7 +5013,8 @@ erscheint im Scope eine Zeichnung aus mehreren Teilen (zwei Schichten mit
 Stereo XY ergeben eine Kurve, die Punkt für Punkt ihre Summe ist, nicht zwei
 Formen).
 
-**Die Form ist eine Datei `.lvshape` (Patrik)** — und soll auch von den
+**Die Form ist eine Datei (Patrik) — seit S120 `.lvcontour` (F1 a; in S119
+hieß sie `.lvshape`, die Endung gehört aber seit S96 dem Composer)** — und soll auch von den
 Visuals benutzt werden können: das Modul der Effect Chain, das die Form aus
 ihren Koeffizienten zeichnet, liest dieselbe Datei. **Start** und **Reverse**
 sind Regler der Schicht (Patrik: ja).
@@ -5373,6 +5374,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.194.0 | 2026-10-13 | Session 120. **F1 a (Patrik):** die Kontur-Datei heißt `.lvcontour` (`Shape_Konzept.md` 0.2.0). **Acht Datei-Icons gebaut (I1 a, Patrik):** `.lvloop`, `.lvinst`, `.lvcontour`, `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, `.grad` — alle als Marke mit einem Zeichen im Kreis, die Zeichen von Patrik an vier Vorschaublättern gewählt; im Skript für den Explorer eingetragen, Benutzerhandbuch 1.150.0 (§17). **Offen:** `-Apply` für die neuen Endungen (Patrik); die App zeigt die acht Icons noch nirgends (im Audio Browser steht bei Loops weiter der Kreispfeil des Systems); `.lvp` ohne Icon — nicht nachgesehen, ob das Format noch geschrieben wird; die README der Icons sagt, `LumiViz.exe <datei>` lade keine Datei, das Handbuch sagt, eine Datei lasse sich auf die Exe ziehen — nicht abgeglichen. |
 | 1.193.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": das Grobkonzept ist auf LumiViz umgeschrieben — **NEU `docs/audio/Shape_Konzept.md` 0.1.0** (Rechnung, Regler, Tests, Stufen 18 bis 21 als Vorschlag, sieben Vorlagen in fester Reihenfolge). Nachgesehen: **die Endung `.lvshape` ist seit S96 vergeben** (Stück-Presets des Curve Editors) — in S119 nicht aufgefallen, gehört in die erste Vorlage; die Visuals bekommen vom Loop beide Seiten getrennt (512 Werte je Seite und Bild; die Frage aus S119 ist beantwortet); Qt Svg liegt in der Installation, steht nicht in der `Solution.json`. Festgehalten: Start und Reverse ändern nur Phasen. Nicht nachgeprüft: ob Qt Svg Pfade als Geometrie herausgibt; die Rate der Engine. Nichts entworfen, nichts gebaut. |
 | 1.192.0 | 2026-10-13 | Session 119, Abschluss. `sessions/Changelog_Session119.md`. **Stand:** Stufe 17 (ein Sample bearbeiten) und X5 (Abweichung im Kasten) sind gebaut, voller Lauf 1153 / 1153 unter Testing-MSVC; die Idee „Klang aus einer Form" ist in Z1 a bis Z5 a gefasst. **Offen:** im Programm ungesehen Liste 10 Abschnitt D, X7, U72 bis U76 und der Rest aus S118; Patriks Ohr an `hoerproben_16e`; `asset/loop/effects_demo2.lvloop` liegt seit S119 im Repo — bleibt sie als mitgelieferter Loop (dann die Werte festhalten) oder soll sie heraus; **als Nächstes die Form:** Konzept auf LumiViz umschreiben, dann Dateiformat, Konturerkennung, SVG, Module, Skizze |
 | 1.191.0 | 2026-10-13 | Session 119. §7 NEU Idee Patrik: **Klang aus einer Form** — Waveform „Shape" im Instrument-Creator (Fourier-Reihe einer Kontur; Grobkonzept `fourier-shape-loops-konzept.md`); Z1 a: in LumiViz, in C++; Eingabe durch Zeichnen, SVG oder Konturen aus einem Bild; Z2 a im Grundsatz (Angle, Stereo XY), dazu die Richtungen ±x und ±y für überlagerte Schichten und ein Modul für die Effect Chain ; Z3 a (Pan je Schicht, Stereo XY an der Shape-Schicht, bewegtes Stereo bei den Effekten), Z4 a (Harmonics läuft weich, dazu Harmonics envelope), Z5 a (mehrere Konturen als Schichten oder als ein Pfad), die Form als Datei `.lvshape`, auch für die Visuals; Start und Reverse als Regler — nichts entworfen, nichts gebaut; offen Dateiformat, Konturerkennung, SVG, die Module, die Skizze. §7 NEU Idee Patrik: **Flanger** als Effekt am Clip — nur notiert |
