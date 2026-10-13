@@ -1,0 +1,19 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "shape",
+        "shape": "star",
+        "contour": 0,
+        "harmonics": 16,
+        "points": 512,
+        "size": 80,
+        "rotation": 0,
+        "showCircles": true,
+        "speed": 0.25,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "pointCode": ""
+    }
+}

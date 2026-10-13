@@ -3030,6 +3030,62 @@ struct LyricsTrailParams
     std::string lineCode;
 };
 
+/**
+ * LumiViz "Shape" (S121, Shape_Konzept §10, M2 b): draws the contours of a
+ * `.lvcontour` drawing as lines — rebuilt from their Fourier series with
+ * `harmonics` partials, independent of the sound. With `showCircles` the
+ * circles and arms that draw the shape run along (epicycles).
+ */
+struct ShapeParams
+{
+    /// The drawing: the name of a bundled shape (`heart`), an own one
+    /// (`user:<name>`) or the path of a `.lvcontour` file. Missing or
+    /// unreadable = nothing is drawn.
+    std::string shape = "heart";
+    /// Which contour is drawn: 0 = every contour that is ticked in the drawing,
+    /// otherwise the id of one contour (as the Contour row of a shape layer).
+    /// An id the drawing does not have draws nothing.
+    int contour = 0;
+    /// Number of partials the shape is rebuilt from (1..512). Runs smoothly:
+    /// 3.5 is half way between 3 and 4. 1 = an ellipse, more = closer to the
+    /// drawing.
+    float harmonics = 64.0f;
+    /// Points of the line per contour (16..4096). The point code runs this
+    /// many times per contour.
+    int points = 512;
+    float lineWidth = 2.0f;  ///< stroke width in pixels (1..20)
+    float xShift = 0.0f;     ///< offset from the centre, percent of width (-100..100)
+    float yShift = 0.0f;     ///< offset from the centre, percent of height (negative = up)
+    /// Size in percent (1..400): 100 = the drawing fills the shorter side of
+    /// the picture.
+    float size = 80.0f;
+    /// Rotation in degrees, counter-clockwise (0..360; a script may run past
+    /// either end, the angle wraps).
+    float rotation = 0.0f;
+    bool useOwnColor = false;        ///< draw in `color` instead of the colors of the contours
+    std::uint32_t color = 0xFFFFFF;  ///< own color 0x00RRGGBB (with `useOwnColor`)
+    /// How the line mixes with the picture: AVS BLEND_LINE mode 0..9 as on
+    /// SuperScope (0 replace, 1 additive, 2 maximum, 3 50/50, …). A preceding
+    /// Set Render Mode wins.
+    int lineBlend = 1;
+    /// Draw the circles and arms that add up to the shape; the pen runs round
+    /// with `speed`.
+    bool showCircles = false;
+    float speed = 0.25f;  ///< rounds per second of the pen (0..4; with `showCircles`)
+
+    /// Script quartet (S121): init/frame/beat (and Song) read and set every
+    /// field of this node + `b`/`w`/`h` + audio set. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    /// Runs once per point of the line: `i` (place on the round, 0..1), `x`/`y`
+    /// (the point of the shape, before shift, size and rotation; y down as on
+    /// SuperScope), `contour` (id of the contour being drawn) and `v`
+    /// (waveform at `i`) come in; `x`/`y`, `red`/`green`/`blue` and `skip` are
+    /// read back. The circles of `showCircles` keep drawing the computed shape.
+    std::string pointCode;
+};
+
 using EffectParams =
     std::variant<ListParams, ClearParams, FadeoutParams, InvertParams,
                  BrightnessParams, FastBrightnessParams, BlurParams, MirrorParams,
@@ -3061,7 +3117,8 @@ using EffectParams =
                  VideoSourceParams, PixelFilterParams, IsfFilterParams,
                  HostSwitcherParams, PassthroughParams,
                  LyricsParams,
-                 LyricsTrailParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
+                 LyricsTrailParams,
+                 ShapeParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
 
 /**
  * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
@@ -3283,6 +3340,7 @@ struct CompileResult
         const char* operator()(const HostSwitcherParams&) const { return "Host Switcher"; }
         const char* operator()(const LyricsParams&) const { return "Lyrics"; }
         const char* operator()(const LyricsTrailParams&) const { return "Lyrics Trail"; }
+        const char* operator()(const ShapeParams&) const { return "Shape"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }

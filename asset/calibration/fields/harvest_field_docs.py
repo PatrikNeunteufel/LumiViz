@@ -384,6 +384,8 @@ ALIASSE = {
 # Panel-Art) — trotzdem skriptbar: (Art, lo, hi).
 ZUSATZ_FELDER = {
     "mirror.mode": ("Ganzzahl", 0, 15),  # Richtungs-Bits (4 Haekchen im Editor)
+    # S121: die Kennung einer Kontur (Liste aus der Datei, kein addEnum); 0 = alle
+    "shape.contour": ("Ganzzahl", 0, 4096),
 }
 
 # Panel-Art -> Art der Tabelle (nur skalare Felder).

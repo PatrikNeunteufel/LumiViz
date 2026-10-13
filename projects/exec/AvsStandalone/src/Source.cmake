@@ -40,6 +40,10 @@ set(_local_sources
     "${_myviz_src}/scripting/LuaScriptEngine.cpp"
     "${_myviz_src}/services/VideoFrameCache.cpp"
     "${_myviz_src}/services/LiveVideoFeed.cpp"
+    # Knoten Shape (S121): die Form und ihr Ort unter den mitgelieferten Daten
+    "${_myviz_src}/shape/Kontur.cpp"
+    "${_myviz_src}/shape/Zeichenform.cpp"
+    "${_myviz_src}/core/Mitgeliefert.cpp"
     # Gemeinsam mit MilkdropStandalone (S74): echte Musik als Audioquelle
     "${CMAKE_SOURCE_DIR}/projects/exec/common/AudioDateiQuelle.cpp"
 )

@@ -40,6 +40,7 @@
 #include "visualizers/multieffect/TextTags.hpp"            // Tag-Platzhalter (S86)
 #include "visualizers/multieffect/FieldBindings.hpp"        // modulierbar (F4, S85)
 #include "scripting/ScriptFormatter.hpp"                // Beautify-Kerne (S69)
+#include "shape/Kontur.hpp"                             // Knoten Shape: Formen und Konturen (S121)
 #include <EelTranspiler.hpp>                            // Apply-Syntaxprobe EEL (S69)
 #include <HlslTranspiler.hpp>                           // Apply-Syntaxprobe HLSL (S69)
 #include "services/IEventBus.hpp"
@@ -8787,6 +8788,121 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).beatCode = std::move(v); });
         // S91 (Entscheid T2 a): einmal je gegangener Zeile — `line` ist die Zeile, die der Trail zeichnet
         addScript("lineCode", tr("Line"), p->lineCode, [](ChainNode& n, std::string v) { std::get<LyricsTrailParams>(n.params).lineCode = std::move(v); });
+    }
+    else if (auto* p = std::get_if<ShapeParams>(&params))
+    {
+        // Shape (S121, Shape_Konzept §10): zeichnet die Konturen einer
+        // `.lvcontour` aus ihrer Fourier-Reihe. Die Zeichnung wird hier nur
+        // gelesen, um die Liste der Konturen zu zeigen.
+        lumi::shape::Zeichnung zeichnung;
+        const QString nennung = QString::fromStdString(p->shape);
+        const bool gefunden = lumi::shape::holeZeichnung(nennung, zeichnung);
+        {
+            auto* zeile = new QWidget(m_propContainer);
+            auto* hl = new QHBoxLayout(zeile);
+            hl->setContentsMargins(0, 0, 0, 0);
+            hl->setSpacing(4);
+            auto* combo = new QComboBox(zeile);
+            combo->setObjectName(QStringLiteral("shapeChoice"));
+            for (const lumi::shape::Zeichnung& z : lumi::shape::zeichnungen())
+                combo->addItem(z.titel, z.name);
+            for (const lumi::shape::Zeichnung& z : lumi::shape::eigeneZeichnungen())
+                combo->addItem(tr("%1 (own)").arg(z.titel), z.name);
+            int platz = combo->findData(nennung);
+            if (platz < 0)
+            {
+                // eine Datei an freiem Ort — oder eine, die es nicht mehr gibt
+                combo->addItem(gefunden ? QFileInfo(nennung).fileName()
+                                        : tr("%1 (not found)").arg(nennung),
+                               nennung);
+                platz = combo->count() - 1;
+            }
+            combo->setCurrentIndex(platz);
+            const auto setze = [this, path](const QString& neu) {
+                const std::string v = neu.toStdString();
+                // eine andere Zeichnung hat andere Konturen: die Wahl faellt auf „alle"
+                mutate(path, [&](ChainNode& n) {
+                    std::get<ShapeParams>(n.params).shape = v;
+                    std::get<ShapeParams>(n.params).contour = 0;
+                });
+                QMetaObject::invokeMethod(
+                    this, [this, path] { buildPropertyEditor(path); }, Qt::QueuedConnection);
+            };
+            connect(combo, QOverload<int>::of(&QComboBox::activated), this,
+                    [combo, setze](int index) { setze(combo->itemData(index).toString()); });
+            hl->addWidget(combo, 1);
+            auto* browse = new QPushButton(tr("Browse..."), zeile);
+            browse->setObjectName(QStringLiteral("shapeBrowse"));
+            browse->setToolTip(tr("Open a shape file (.lvcontour) from anywhere. The node keeps "
+                                  "the path, the file stays where it is."));
+            connect(browse, &QPushButton::clicked, this, [this, setze]() {
+                QSettings settings;
+                const QString schluessel = QStringLiteral("effectPalette/shapeDir");
+                const QString datei = QFileDialog::getOpenFileName(
+                    this, tr("Open shape"), settings.value(schluessel).toString(),
+                    tr("LumiViz shapes (*.lvcontour)"));
+                if (datei.isEmpty()) return;
+                settings.setValue(schluessel, QFileInfo(datei).absolutePath());
+                setze(datei);
+            });
+            hl->addWidget(browse);
+            addRow("shape", tr("Shape"), zeile);
+        }
+        if (!gefunden)
+        {
+            auto* hinweis = new QLabel(tr("The shape was not found. Nothing is drawn."), m_propContainer);
+            hinweis->setObjectName(QStringLiteral("shapeMissing"));
+            hinweis->setWordWrap(true);
+            form->addRow(hinweis);
+        }
+        {
+            auto* combo = new QComboBox(m_propContainer);
+            combo->addItem(tr("All ticked"), 0);
+            for (const lumi::shape::Kontur& k : zeichnung.konturen)
+                combo->addItem(k.name.isEmpty() ? tr("Contour %1").arg(k.kennung) : k.name, k.kennung);
+            int platz = combo->findData(p->contour);
+            if (platz < 0)
+            {
+                combo->addItem(tr("Contour %1 (missing)").arg(p->contour), p->contour);
+                platz = combo->count() - 1;
+            }
+            combo->setCurrentIndex(platz);
+            connect(combo, QOverload<int>::of(&QComboBox::activated), this, [this, path, combo](int index) {
+                const int kennung = combo->itemData(index).toInt();
+                mutate(path, [&](ChainNode& n) { std::get<ShapeParams>(n.params).contour = kennung; });
+            });
+            addRow("contour", tr("Contour"), combo);
+        }
+        addDouble("harmonics", tr("Harmonics"), p->harmonics, 1.0, 512.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).harmonics = static_cast<float>(v); });
+        addInt("points", tr("Points"), p->points, 16, 4096,
+               [](ChainNode& n, int v) { std::get<ShapeParams>(n.params).points = v; });
+        addDouble("lineWidth", tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).lineWidth = static_cast<float>(v); });
+        addDouble("xShift", tr("X shift (%)"), p->xShift, -100.0, 100.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).xShift = static_cast<float>(v); });
+        addDouble("yShift", tr("Y shift (%)"), p->yShift, -100.0, 100.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).yShift = static_cast<float>(v); });
+        addDouble("size", tr("Size (%)"), p->size, 1.0, 400.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).size = static_cast<float>(v); });
+        addDouble("rotation", tr("Rotation (°)"), p->rotation, 0.0, 360.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).rotation = static_cast<float>(v); });
+        addBool("useOwnColor", tr("Use own color"), p->useOwnColor,
+                [](ChainNode& n, bool v) { std::get<ShapeParams>(n.params).useOwnColor = v; });
+        addColor("color", tr("Color"), p->color,
+                 [](ChainNode& n, uint32_t v) { std::get<ShapeParams>(n.params).color = v; });
+        addEnum("lineBlend", tr("Line blend"), std::clamp(p->lineBlend, 0, 9),
+                {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
+                 "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
+                [](ChainNode& n, int v) { std::get<ShapeParams>(n.params).lineBlend = v; });
+        addBool("showCircles", tr("Show circles"), p->showCircles,
+                [](ChainNode& n, bool v) { std::get<ShapeParams>(n.params).showCircles = v; });
+        addDouble("speed", tr("Speed (rounds/s)"), p->speed, 0.0, 4.0, 0.05,
+                  [](ChainNode& n, double v) { std::get<ShapeParams>(n.params).speed = static_cast<float>(v); });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).pointCode = std::move(v); });
     }
     else if (auto* p = std::get_if<AviParams>(&params))
     {

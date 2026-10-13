@@ -1,0 +1,19 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "shape",
+        "shape": "circle",
+        "contour": 0,
+        "harmonics": 64,
+        "points": 512,
+        "size": 70,
+        "rotation": 0,
+        "showCircles": false,
+        "speed": 0.25,
+        "initCode": "",
+        "frameCode": "size = size + (70 - size) * 0.12;",
+        "beatCode": "size = 110;",
+        "pointCode": ""
+    }
+}

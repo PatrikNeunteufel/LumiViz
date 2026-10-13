@@ -593,6 +593,21 @@ std::vector<std::pair<std::size_t, Typ>> baue()
     out.push_back({ix<ShadertoyParams>(), Typ{"shadertoy", Traeger::ParamSkript, {
         LV_FELD(ShadertoyParams, blend, "blend", "blend", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
     }}});
+    out.push_back({ix<ShapeParams>(), Typ{"shape", Traeger::EigenerHost, {
+        LV_FELD(ShapeParams, color, "color", "color", "", 1.0, Farbe, Live, kNaN, kNaN),
+        LV_FELD(ShapeParams, contour, "contour", "contour", "", 1.0, Ganzzahl, Live, 0.0, 4096.0),
+        LV_FELD(ShapeParams, harmonics, "harmonics", "harmonics", "", 1.0, Kommazahl, Live, 1.0, 512.0),
+        LV_FELD(ShapeParams, lineBlend, "lineBlend", "lineblend", "", 1.0, Aufzaehlung, Live, 0.0, 9.0),
+        LV_FELD(ShapeParams, lineWidth, "lineWidth", "linewidth", "", 1.0, Kommazahl, Live, 1.0, 20.0),
+        LV_FELD(ShapeParams, points, "points", "points", "", 1.0, Ganzzahl, Live, 16.0, 4096.0),
+        LV_FELD(ShapeParams, rotation, "rotation", "rotation", "", 1.0, Kommazahl, Live, 0.0, 360.0),
+        LV_FELD(ShapeParams, showCircles, "showCircles", "showcircles", "", 1.0, Schalter, Live, 0.0, 1.0),
+        LV_FELD(ShapeParams, size, "size", "size", "", 1.0, Kommazahl, Live, 1.0, 400.0),
+        LV_FELD(ShapeParams, speed, "speed", "speed", "", 1.0, Kommazahl, Live, 0.0, 4.0),
+        LV_FELD(ShapeParams, useOwnColor, "useOwnColor", "useowncolor", "", 1.0, Schalter, Live, 0.0, 1.0),
+        LV_FELD(ShapeParams, xShift, "xShift", "xshift", "", 1.0, Kommazahl, Live, -100.0, 100.0),
+        LV_FELD(ShapeParams, yShift, "yShift", "yshift", "", 1.0, Kommazahl, Live, -100.0, 100.0),
+    }}});
     out.push_back({ix<SimpleScopeParams>(), Typ{"simpleScope", Traeger::ParamSkript, {
         LV_FELD(SimpleScopeParams, channel, "channel", "channel", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
         LV_FELD(SimpleScopeParams, mode, "mode", "mode", "", 1.0, Aufzaehlung, Live, 0.0, 5.0),

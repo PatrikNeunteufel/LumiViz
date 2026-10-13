@@ -5230,6 +5230,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
         {
             self.runLyricsTrail(node, params);
         }
+        void operator()(const ShapeParams& params) const { self.runShape(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const ImportNotesParams&) const { /* Import-Protokoll, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
@@ -13557,6 +13558,212 @@ void MultiEffectVisualizer::runCamera3D(const ChainNode& node,
     m_camera3d.fogStart = static_cast<float>(fogStart);
     m_camera3d.fogEnd = static_cast<float>(fogEnd);
     m_camera3d.fogColor = nebel.vec();  // Skript-Kopie
+}
+
+void MultiEffectVisualizer::runShape(const ChainNode& node, const ShapeParams& params)
+{
+    if (!m_scopeRenderer.ready()) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // EEL-Quartett (Entscheid V1 a, S121): ohne Code kein Host. Mit Code laeuft
+    // der Knoten auf der Frame-Kopie — feldHostVor speist die Regler ein,
+    // feldHostNach schreibt die Skriptwerte zurueck, sie stehen danach in `params`.
+    const bool hatCode = !params.initCode.empty() || !params.frameCode.empty() ||
+                         !params.beatCode.empty() || !params.pointCode.empty() || hatSongCode();
+    lumi::scripting::LuaScriptEngine* engine = nullptr;
+    bool mitPunkt = false;
+    if (hatCode)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + '\n' + params.pointCode + songSchluessel();
+        const bool fresh = rt.shapeHost == nullptr || rt.shapeCompiled != snap;
+        if (fresh)
+        {
+            rt.shapeHost = std::make_unique<ScriptSlotHost>("shape", activeContext(),
+                                                            ScriptSlotHost::Dialect::Avs);
+            rt.shapeHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.shapeHost);
+            rt.shapeHost->setSource(Slot::Frame, params.frameCode);
+            rt.shapeHost->setSource(Slot::Beat, params.beatCode);
+            rt.shapeHost->setSource(Slot::Point, params.pointCode);
+            if (!rt.shapeHost->compileAll())
+                BasicLogger::logWarning("MultiEffect: Shape: " + rt.shapeHost->lastError());
+            rt.shapeCompiled = snap;
+        }
+        engine = &rt.shapeHost->engine();
+        feldHostVor(rt, *engine, fresh);
+        engine->setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        engine->setNumber("w", m_surfaceWidth);
+        engine->setNumber("h", m_surfaceHeight);
+        feedAudio(*engine);
+        if (fresh && rt.shapeHost->has(Slot::Init)) rt.shapeHost->run(Slot::Init);
+        laufeSong(*rt.shapeHost);
+        if (rt.shapeHost->has(Slot::Frame)) rt.shapeHost->run(Slot::Frame);
+        if (m_frameBeat && rt.shapeHost->has(Slot::Beat)) rt.shapeHost->run(Slot::Beat);
+        feldHostNach(rt, *engine, fresh);
+        mitPunkt = rt.shapeHost->has(Slot::Point);
+    }
+    else if (rt.shapeHost != nullptr)
+    {
+        rt.shapeHost.reset();
+        rt.shapeCompiled.clear();
+    }
+
+    // Die Zeichnung: einmal je Nennung gelesen und aufbereitet (auch ein
+    // vergeblicher Versuch wird gemerkt — sonst laese jedes Bild die Platte).
+    if (!rt.shapeGelesen || rt.shapeNennung != params.shape)
+    {
+        rt.shapeNennung = params.shape;
+        rt.shapeGelesen = true;
+        lumi::shape::Zeichnung zeichnung;
+        rt.shapeForm = lumi::shape::holeZeichnung(QString::fromStdString(params.shape), zeichnung)
+                           ? lumi::shape::zeichenform(zeichnung)
+                           : lumi::shape::Zeichenform{};
+    }
+    if (rt.shapeForm.leer() || m_surfaceWidth <= 0 || m_surfaceHeight <= 0) return;
+
+    // Die Regler — nach den Slots, also mit den Skriptwerten. Ein Skript kann
+    // etwas hinterlassen, das keine Zahl ist: dann gilt der Wert daneben.
+    const auto zahl = [](float wert, double ersatz) {
+        return std::isfinite(wert) ? static_cast<double>(wert) : ersatz;
+    };
+    const double harmonische =
+        std::clamp(zahl(params.harmonics, 1.0), 1.0, static_cast<double>(lumi::shape::kHarmonischeMax));
+    const int punkte = std::clamp(params.points, 16, 4096);
+    // 100 % = die Zeichnung fuellt die kuerzere Seite; je Achse, damit ein Kreis rund bleibt
+    const double kurz = static_cast<double>(std::min(m_surfaceWidth, m_surfaceHeight));
+    const double mass = std::clamp(zahl(params.size, 0.0), 0.0, 400.0) / 100.0;
+    const double massX = mass * kurz / m_surfaceWidth;
+    const double massY = mass * kurz / m_surfaceHeight;
+    const double winkel = zahl(params.rotation, 0.0) * 3.14159265358979323846 / 180.0;
+    const double cosW = std::cos(winkel);
+    const double sinW = std::sin(winkel);
+    const double versatzX = zahl(params.xShift, 0.0) / 100.0 * 2.0;
+    const double versatzY = -zahl(params.yShift, 0.0) / 100.0 * 2.0;  // negativ = nach oben
+    const QVector3D eigen = FarbKopie(params.color).vec();
+
+    using lumi::modules::SuperscopePoint;
+    // Ein Punkt der Form (y nach oben) an seinen Platz im Bild: drehen, Groesse, Lage.
+    const auto imBild = [&](double fx, double fy, float r, float g, float b) {
+        SuperscopePoint p;
+        p.x = (fx * cosW - fy * sinW) * massX + versatzX;
+        p.y = (fx * sinW + fy * cosW) * massY + versatzY;
+        p.r = r;
+        p.g = g;
+        p.b = b;
+        return p;
+    };
+    const auto trenner = [] {
+        SuperscopePoint p;
+        p.breakStrip = true;
+        return p;
+    };
+    // `v` je Punkt: die Wellenform an der Stelle `i`, in voller Genauigkeit
+    const std::vector<float> wave = mitPunkt ? getWaveform() : std::vector<float>();
+    const auto welle = [&wave](double i01) {
+        if (wave.empty()) return 0.0;
+        const double lage = std::clamp(i01, 0.0, 1.0) * static_cast<double>(wave.size() - 1);
+        const auto i0 = static_cast<std::size_t>(lage);
+        const std::size_t i1 = std::min(i0 + 1, wave.size() - 1);
+        const double teil = lage - static_cast<double>(i0);
+        return wave[i0] * (1.0 - teil) + wave[i1] * teil;
+    };
+
+    const std::vector<std::size_t> plaetze = lumi::shape::gemeinteKonturen(rt.shapeForm, params.contour);
+    // Im Feld Point heisst `contour` die Kontur, die gerade gezeichnet wird;
+    // danach bekommt die Variable wieder, was Frame und Beat hinterlassen haben.
+    const double auswahl = mitPunkt ? engine->number("contour") : 0.0;
+    std::vector<SuperscopePoint> linie;
+    for (const std::size_t platz : plaetze)
+    {
+        lumi::shape::ZeichenKontur& kontur = rt.shapeForm.konturen[platz];
+        const std::vector<lumi::shape::Punkt>& umriss = lumi::shape::umrissVon(kontur, harmonische, punkte);
+        const float r0 = params.useOwnColor ? eigen.x() : kontur.rot;
+        const float g0 = params.useOwnColor ? eigen.y() : kontur.gruen;
+        const float b0 = params.useOwnColor ? eigen.z() : kontur.blau;
+        if (!linie.empty()) linie.push_back(trenner());
+        const std::size_t anfang = linie.size();
+        for (int n = 0; n < punkte; ++n)
+        {
+            const lumi::shape::Punkt& f = umriss[static_cast<std::size_t>(n)];
+            if (!mitPunkt)
+            {
+                linie.push_back(imBild(f.real(), f.imag(), r0, g0, b0));
+                continue;
+            }
+            // Im Skript zeigt y nach unten, wie bei SuperScope
+            const double i01 = static_cast<double>(n) / punkte;
+            engine->setNumber("i", i01);
+            engine->setNumber("x", f.real());
+            engine->setNumber("y", -f.imag());
+            engine->setNumber("contour", kontur.kennung);
+            engine->setNumber("v", welle(i01));
+            engine->setNumber("red", r0);
+            engine->setNumber("green", g0);
+            engine->setNumber("blue", b0);
+            engine->setNumber("skip", 0.0);
+            rt.shapeHost->run(Slot::Point);
+            SuperscopePoint p = imBild(engine->number("x"), -engine->number("y"),
+                                       static_cast<float>(engine->number("red")),
+                                       static_cast<float>(engine->number("green")),
+                                       static_cast<float>(engine->number("blue")));
+            p.skip = engine->number("skip") > 0.5;
+            linie.push_back(p);
+        }
+        linie.push_back(linie[anfang]);  // der Zug ist geschlossen
+    }
+    if (mitPunkt) engine->setNumber("contour", auswahl);
+
+    // Show circles: die Kreise und Arme, die die Form zeichnen — die gerechnete
+    // Form, nicht die vom Feld Point verformte. Kreise gedaempft, Arme heller.
+    std::vector<SuperscopePoint> kreise;
+    if (params.showCircles)
+    {
+        rt.shapeUmlauf += zahl(params.speed, 0.0) * static_cast<double>(m_deltaTime);
+        rt.shapeUmlauf -= std::floor(rt.shapeUmlauf);
+        for (const std::size_t platz : plaetze)
+        {
+            lumi::shape::ZeichenKontur& kontur = rt.shapeForm.konturen[platz];
+            const float r0 = params.useOwnColor ? eigen.x() : kontur.rot;
+            const float g0 = params.useOwnColor ? eigen.y() : kontur.gruen;
+            const float b0 = params.useOwnColor ? eigen.z() : kontur.blau;
+            const lumi::shape::Zeigerbild bild = lumi::shape::zeigerbild(kontur, rt.shapeUmlauf, harmonische);
+            for (const lumi::shape::Kreis& kreis : bild.kreise)
+            {
+                // ein Kreis unter einem halben Pixel ist nicht zu sehen
+                if (kreis.radius * mass * kurz < 1.0) continue;
+                const int stuecke = std::clamp(static_cast<int>(12.0 + 60.0 * kreis.radius), 12, 72);
+                if (!kreise.empty()) kreise.push_back(trenner());
+                for (int s = 0; s <= stuecke; ++s)
+                {
+                    const double a = 2.0 * 3.14159265358979323846 * s / stuecke;
+                    kreise.push_back(imBild(kreis.mitte.real() + kreis.radius * std::cos(a),
+                                            kreis.mitte.imag() + kreis.radius * std::sin(a),
+                                            r0 * 0.35f, g0 * 0.35f, b0 * 0.35f));
+                }
+            }
+            if (!kreise.empty()) kreise.push_back(trenner());
+            for (const lumi::shape::Punkt& ort : bild.arme)
+                kreise.push_back(imBild(ort.real(), ort.imag(), r0 * 0.7f, g0 * 0.7f, b0 * 0.7f));
+        }
+    }
+
+    // Zeichnen wie SuperScope: ein Set Render Mode davor gewinnt bei Mischart und Breite.
+    const int mischart = m_renderMode.set ? m_renderMode.lineBlend : std::clamp(params.lineBlend, 0, 9);
+    applyLineBlend(mischart, m_renderMode.alpha);
+    lumi::render::ScopeRenderer::Params rp;
+    rp.mode = lumi::modules::SuperscopeRenderMode::Lines;
+    rp.glowEnabled = false;
+    if (!kreise.empty())
+    {
+        rp.lineWidth = 1.0f;
+        m_scopeRenderer.draw(kreise, rp);
+    }
+    rp.lineWidth = (m_renderMode.set && m_renderMode.lineWidth > 0)
+                       ? static_cast<float>(m_renderMode.lineWidth)
+                       : std::clamp(params.lineWidth, 1.0f, 20.0f);
+    m_scopeRenderer.draw(linie, rp);
+    resetLineBlend();
 }
 
 void MultiEffectVisualizer::runSuperScope3D(const ChainNode& node,

@@ -403,6 +403,7 @@ private:
         {QStringLiteral("dynamicMovement"), QStringLiteral("once per <b>grid node</b>, every frame")},
         {QStringLiteral("terrain3d"), QStringLiteral("once per <b>grid point</b>")},
         {QStringLiteral("glowOrbs"), QStringLiteral("once per <b>orb</b> (<code>i</code> = orb index)")},
+        {QStringLiteral("shape"), QStringLiteral("once per <b>point</b> of the line (<code>points</code> per contour; <code>i</code> runs 0..1)")},
     };
 
     QString wann;

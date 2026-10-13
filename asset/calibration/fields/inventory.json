@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 859,
-        "typen": 94
+        "felder": 877,
+        "typen": 95
     },
     "typen": [
         {
@@ -4069,6 +4069,102 @@
             ],
             "name": "Shadertoy",
             "typkey": "shadertoy"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 16777215,
+                    "name": "color"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "contour"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 64,
+                    "name": "harmonics"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineBlend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "lineWidth"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 512,
+                    "name": "points"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "rotation"
+                },
+                {
+                    "art": "text",
+                    "default": "heart",
+                    "name": "shape"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "showCircles"
+                },
+                {
+                    "art": "zahl",
+                    "default": 80,
+                    "name": "size"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0.25,
+                    "name": "speed"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "useOwnColor"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "xShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "yShift"
+                }
+            ],
+            "name": "Shape",
+            "typkey": "shape"
         },
         {
             "felder": [

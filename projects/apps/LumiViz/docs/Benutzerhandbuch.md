@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.154.0
+> **Version:** 1.155.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1099,6 +1099,75 @@ Bei der Effect List wirkt das Song-Feld nur mit eingeschaltetem Listen-Code
 > über die Zeit ändert (ein Beat-Zähler etwa), kann das Bild dort nicht bewegen.
 > Für Zeitabhängiges ist **Dynamic Movement** der richtige Knoten; der Editor
 > weist darauf hin.
+
+### Shape: eine Form aus Kreisen zeichnen
+
+Der Knoten **Shape** (Effekt-Palette → Images) zeichnet die Konturen einer
+Form-Datei (`.lvcontour`) als Linien. Er zeichnet sie nicht einfach nach: jede
+Kontur wird aus einer Reihe von Kreisbewegungen zusammengesetzt, und der
+Regler **Harmonics** sagt, wie viele davon mitspielen. Mit einem Teilton ist
+jede Form eine Ellipse, mit wenigen eine runde Ahnung der Zeichnung, mit vielen
+die Zeichnung selbst. Der Knoten hört nicht auf den Ton — er zeichnet auch zu
+einem Song —, aber seine Skriptfelder können ihn auf den Ton antworten lassen.
+
+Sechs Formen kommen mit: Circle, Square, Triangle, Star, Heart und Heart and
+star (zwei Konturen). Eigene Formen liegen im Benutzerordner unter `contours`
+und stehen in der Liste mit „(own)"; ein Fenster zum Zeichnen gibt es noch
+nicht.
+
+| Feld | Bedeutung |
+|---|---|
+| **Shape** | die Form: eine mitgelieferte, eine eigene, oder mit **Browse...** eine `.lvcontour` von irgendwo (der Knoten merkt sich den Pfad, die Datei bleibt, wo sie ist). Fehlt die Datei, wird nichts gezeichnet, und das Panel sagt es |
+| **Contour** | **All ticked** — jede Kontur, die in der Form einen Haken trägt — oder eine einzelne beim Namen |
+| **Harmonics** | 1 bis 512, auch Zwischenwerte: bei 3,5 spielt der vierte Teilton halb mit, die Form wächst also weich |
+| **Points** | Punkte der Linie je Kontur (16 bis 4096). Mehr Punkte zeichnen feiner; so oft läuft auch das Feld Point |
+| **Line width** | Strichbreite in Pixeln |
+| **X shift / Y shift (%)** | Lage gegen die Bildmitte, in Prozent der Breite und Höhe (negativ = nach oben) |
+| **Size (%)** | 100 = die ganze Form füllt die kürzere Seite des Bilds. Bei mehreren Konturen steht jede an ihrer Stelle in der Form — eine einzelne ist dann kleiner |
+| **Rotation (°)** | Drehung gegen den Uhrzeigersinn |
+| **Use own color** / **Color** | eine Farbe für alles statt der Farben der Konturen |
+| **Line blend** | wie sich die Linie mit dem Bild mischt — dieselben zehn Arten wie bei SuperScope. Ein **Set Render Mode** davor gewinnt, bei Mischart und Breite |
+| **Show circles** | zeigt die Kreise und Arme, aus denen die Form entsteht: jeder Kreis sitzt auf dem Rand des vorigen, die Spitze des letzten Arms fährt die Form ab. So viele Kreispaare wie Harmonics |
+| **Speed (rounds/s)** | wie schnell die Spitze umläuft (nur mit Show circles) |
+| Skriptfelder **Init**, **Frame**, **Beat**, **Point** | siehe unten; dazu **Song** wie an jedem Knoten |
+
+**Die Skriptfelder.** In **Init**, **Frame**, **Beat** und **Song** ist jeder
+Regler eine Variable: `harmonics`, `points`, `linewidth`, `xshift`, `yshift`,
+`size`, `rotation`, `contour`, `lineblend`, `showcircles`, `speed`,
+`useowncolor` und `color_r`, `color_g`, `color_b`. `contour` nimmt die Nummer
+einer Kontur (0 = alle mit Haken); `rotation` darf über 360 hinauslaufen.
+Beispiel: Beat `harmonics = 3;` und Frame
+`harmonics = harmonics + (64 - harmonics) * 0.06;` lassen die Form bei jedem
+Beat zu einem runden Klecks zusammenfallen und wieder scharf werden.
+
+**Point** läuft einmal je Punkt der Linie und darf den Punkt versetzen und
+färben:
+
+| Variable | |
+|---|---|
+| `i` | die Stelle im Umlauf der Kontur, 0 bis 1 |
+| `x`, `y` | der Punkt der Form, vor Lage, Größe und Drehung; `y` zeigt nach unten wie bei SuperScope. Lesen und setzen |
+| `v` | die Wellenform des Tons an dieser Stelle, −1 bis 1 |
+| `contour` | die Nummer der Kontur, die gerade gezeichnet wird |
+| `red`, `green`, `blue` | die Farbe des Punkts, mit der Farbe der Linie vorbelegt |
+| `skip` | über 0,5: die Linie in diesen Punkt entfällt |
+
+Beispiel: `r = 1 + v * 0.35; x = x * r; y = y * r;` schiebt jeden Punkt mit
+der Wellenform nach außen — die Form zittert im Ton. `skip = above(i, 0.5);`
+zeichnet nur die erste Hälfte des Umlaufs. Die Kreise von Show circles
+zeichnen weiter die unverformte Form.
+
+Neun **Voreinstellungen** zeigen, was geht: *Heart* (die Form allein),
+*Epicycles* (Show circles), *Harmonics Sweep* (Harmonics läuft auf und ab),
+*Beat Harmonics*, *Beat Pulse* (Size springt im Beat), *Bass Spin* (Rotation
+folgt dem Bass), *Wave Outline* und *Rainbow Outline* (Point), *Contour
+Switch* (im Beat die nächste Kontur). Jede bringt Form, Größe, Harmonics und
+alle vier Skriptfelder mit; Strichbreite, Farbe und Mischart bleiben, wie du
+sie hast.
+
+Ein Nachleuchten hat der Knoten nicht von sich aus. Es entsteht wie bei
+SuperScope: in einer Effect List ohne *Clear every frame*, mit einem
+**Fadeout** davor.
 
 ### Werte ohne Formel bewegen (Modulation)
 
@@ -2931,7 +3000,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
 | ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser; Panel Loop vor dem Dateinamen |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
-| ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Kontur für die Waveform Shape — vorgesehen, die Datei gibt es noch nicht | noch nirgends als Icon |
+| ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11); als Klang einer Schicht noch nicht | noch nirgends als Icon |
 | ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | Import data, Liste „Let me decide for each file" |
 | ![lvshape](bilder/handbuch/icons/lumiviz_lvshape.png) | `.lvshape` | Stück des Curve Editors (§15) | Import data, dieselbe Liste |
 | ![lvmute](bilder/handbuch/icons/lumiviz_lvmute.png) | `.lvmute` | Mute-Profil des Composers (§15) | Import data, dieselbe Liste |
@@ -3021,6 +3090,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.155.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **Shape**: zeichnet die Konturen einer Form-Datei (`.lvcontour`) aus beliebig vielen Teiltönen (**Harmonics**), mit **Contour**, **Points**, Lage, Größe, Drehung, eigener Farbe, **Line blend**, **Show circles** und **Speed**; Skriptfelder Init, Frame, Beat, Song und **Point** (je Punkt der Linie); neun Voreinstellungen. §17: `.lvcontour` gibt es jetzt. |
 | 1.154.0 | 2026-10-13 | Session 120. Export und Import der eigenen Daten: NEU der Bereich **Shapes** (eigene Formen, `.lvcontour`). Mehr ist von der Form im Programm noch nicht zu sehen. |
 | 1.153.0 | 2026-10-13 | Session 120. §16 Instrument-Creator: NEU **Pan** je Schicht (im Kasten Level, für jede Waveform); GEÄNDERT **Layers**: ein Instrument trägt bis zu acht Schichten statt vier. |
 | 1.152.0 | 2026-10-13 | Session 120. §17: die neuen Datei-Icons an vier Stellen der App — im Panel **Loop** vor dem Dateinamen, im **Instrument-Editor** vor dem Namen des Instruments, im Dialog **Import data** vor dem Namen der Datei und in der Liste „Let me decide for each file" an jeder Datei, deren Art ein Icon hat. |

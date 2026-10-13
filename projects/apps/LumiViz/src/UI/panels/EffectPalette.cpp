@@ -259,6 +259,9 @@ const std::vector<EffectType>& effectPalette()
          "Shows the lyrics of the playing track, in time with the music."},
         {"Lyrics Trail", &makeDefault<LyricsTrailParams>, R, Lumi,
          "Draws the lyrics line that just ended once more, for the effects after it to fade."},
+        // S121: Klang aus einer Form — die Kontur aus ihrer Fourier-Reihe
+        {"Shape", &makeDefault<ShapeParams>, R, Lumi,
+         "Draws the contours of a shape file, rebuilt from any number of harmonics."},
         {"Texer", &makeDefault<TexerParams>, R, Ape,
          "Sprites of an image along the waveform.", "Texer"},
         {"Texer II", &makeDefault<TexerIIParams>, R, Ape,

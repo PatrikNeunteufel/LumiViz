@@ -1,7 +1,7 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.12.0
-> **Datum:** 2026-10-13 (Session 120)
+> **Version:** 0.13.0
+> **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
 > LumiViz umgeschrieben. Entschieden sind Z1 a bis Z5 a (Patrik S119); alles
@@ -673,10 +673,127 @@ M3 a).
 
 **Dazu (Patrik, mit dem Entscheid):** die Knoten bekommen **die üblichen
 Skriptfelder** — Init, Per beat, Per frame … — und es kommen **einige
-Presets** mit. Meine Lesart, nicht nachgefragt: das gilt für beide Knoten;
-die Regler (Harmonics, Gain, Drehung …) sind damit aus dem Skript und im
-Takt steuerbar, wie bei den anderen Knoten der Chain. Welche Felder genau
-(auch ein Feld je Punkt?) und welche Presets, legt die Stufe fest.
+Presets** mit. Was das heißt, ist in S121 einzeln entschieden (V1 bis V4).
+
+**V1 a (Patrik S121) — die Skriptfelder von Shape:** Init, Per frame, Per
+beat, Song und **Per point**. Die ersten vier steuern alle Regler. Per point
+läuft je Punkt der gezeichneten Linie: es liest `i` (Stelle im Umlauf, 0 bis
+1), `x` und `y` (der Punkt der Form nach Harmonics, vor Lage, Größe und
+Drehung), `contour` (Nummer der Kontur) und `v` (der Wert der Wellenform an
+dieser Stelle) und setzt `x`, `y`, `red`, `green`, `blue`, `skip`. Die Kreise
+von Show circles zeichnen weiter die gerechnete Form. Die Namen sind die von
+SuperScope, `contour` von Claude gesetzt. Verworfen: nur die vier Felder ohne
+Per point (b). Die Rechenzeit von Per point ist vor dem Bau des Felds
+gemessen (unten, „Gemessen").
+
+**V2 a (Patrik S121) — die Regler von Shape:**
+
+| Im Panel | Skriptname | Bereich, Vorgabe | Anmerkung |
+|---|---|---|---|
+| Shape, mit Browse... | – | Nennung der `.lvcontour` | nicht aus dem Skript |
+| Contour | `contour` | 0 = alle mit Haken, sonst die Kennung; Vorgabe 0 | wie die Zeile an der Schicht |
+| Harmonics | `harmonics` | 1 bis 512, Kommazahl; Vorgabe 64 | läuft weich (Z4 a) |
+| Points | `points` | 16 bis 4096; Vorgabe 512 | je Kontur; so oft läuft Per point |
+| Line width | `linewidth` | 1 bis 20 px; Vorgabe 2 | wie SuperScope |
+| X shift, Y shift | `xshift`, `yshift` | −100 bis 100 % der Breite, Höhe; Vorgabe 0 | wie Text und Lyrics |
+| Size | `size` | 1 bis 400 %; Vorgabe 80 | 100 = die Form füllt die kürzere Seite |
+| Rotation | `rotation` | 0 bis 360°; Vorgabe 0 | aus dem Skript auch darüber hinaus, läuft um |
+| Use own color, Color | `useowncolor`, `color_r/_g/_b` | Vorgabe aus | sonst die Farben der Konturen |
+| Line blend | `lineblend` | 0 bis 9; Vorgabe 1 (additiv) | wie SuperScope |
+| Show circles | `showcircles` | Haken; Vorgabe aus | |
+| Speed | `speed` | 0 bis 4 Umläufe je Sekunde; Vorgabe 0,25 | nur mit Show circles |
+
+Contour, Points, die eigene Farbe und Line blend standen nicht in M2 b; sie
+kamen mit V2 a dazu. Von Claude gesetzt, mit a gebilligt: alle Vorgaben, die
+Bereiche von Size und Speed, die Einheit von Speed, der Name Points.
+Verworfen: nur die Liste aus M2 b mit fest 512 Punkten (b).
+
+**V3 a (Patrik S121) — neun Presets** unter `asset/nodepresets/shape/`, je
+eines für jede Fähigkeit des Knotens:
+
+| Name | Form | Was es zeigt |
+|---|---|---|
+| Heart | heart | die Form ohne Skript, 64 Harmonics |
+| Epicycles | star | Show circles an, 16 Harmonics, Speed 0,25 |
+| Harmonics Sweep | square | Per frame: Harmonics läuft von 1 bis 64 und zurück |
+| Beat Harmonics | heart | Per beat: Harmonics fällt auf 3, Per frame: wächst zurück |
+| Beat Pulse | circle | Per beat: Size springt, Per frame: klingt ab |
+| Bass Spin | triangle | Per frame: Rotation folgt dem Bass |
+| Wave Outline | circle | Per point: die Wellenform schiebt jeden Punkt nach außen |
+| Rainbow Outline | star | Per point: die Farbe läuft mit `i` um die Linie |
+| Contour Switch | heart_and_star | Per beat: die nächste Kontur |
+
+Namen, Formen und Zahlen von Claude gesetzt. Verworfen: drei Presets (b).
+
+**V4 a (Patrik S121) — XY Scope bekommt dieselben fünf Felder** (Stufe 19d):
+Init, Per frame, Per beat, Song und Per point, dazu einige Presets. Per point
+liest dort `i`, `x` (links) und `y` (rechts) in voller Genauigkeit und setzt
+`x`, `y`, `red`, `green`, `blue`, `skip`. Welche Presets, wird bei 19d
+vorgelegt. Verworfen: ohne Per point (b), ohne Skriptfelder (c). Fällt die
+Messung zu Per point bei Shape schlecht aus, wird V4 neu vorgelegt.
+
+### Wie der Knoten Shape gebaut ist (Stufe 19b, S121)
+
+- **`shape/Zeichenform`** (`lumi::shape`, ohne OpenGL und ohne Qt-Anwendung):
+  bereitet eine Zeichnung zum Zeichnen auf. Die Reihe für den Klang liegt um
+  den Nullpunkt und ist auf vollen Pegel gebracht; ein Bild braucht jede
+  Kontur **an ihrer Stelle**, alle im selben Maßstab. `zeichenform` legt die
+  ganze Zeichnung — auch die Konturen ohne Haken — in das Quadrat −1 … 1;
+  welche Kontur gezeichnet wird, ändert deshalb nicht, wo die anderen stehen.
+  `gemeinteKonturen` (0 = jede mit Haken, sonst die eine Kennung, auch ohne
+  Haken), `umrissVon` (gemerkt, bis sich Harmonics oder die Punktzahl ändern),
+  `zeigerbild` (die Kreise in der Folge +1, −1, +2, −2, …; die Spitze des
+  letzten Arms ist der Punkt des Umrisses).
+- **`ShapeParams`** in `EffectChain.hpp`, am Ende der Variante; Typschlüssel
+  `shape`. Lage, Größe, Drehung und Harmonics sind Kommazahlen, damit ein
+  Skript sie stufenlos bewegt.
+- **`runShape`** im `MultiEffectVisualizer`: eigener Skript-Host (wie
+  SuperScope 3D) nur, wenn der Knoten Code trägt; die Regler kommen über die
+  Feldtabelle hinein und zurück. Die Zeichnung wird je Nennung einmal gelesen
+  — **eine geänderte Datei sieht der Knoten erst, wenn die Nennung wechselt**
+  (für das Fenster Edit shape, Stufe 20a, nachzuziehen). Gezeichnet wird mit
+  dem Linienzeichner von SuperScope; ein Set Render Mode davor gewinnt bei
+  Mischart und Breite.
+- **Im Feld Point** heißt `contour` die Kennung der Kontur, die gerade
+  gezeichnet wird; nach den Punkten bekommt die Variable wieder, was Frame und
+  Beat hinterlassen haben. So trägt ein Name beide Bedeutungen, ohne dass das
+  Feld Point die Auswahl verstellt. `y` zeigt im Skript nach unten wie bei
+  SuperScope. Der Zug wird mit dem ersten Punkt geschlossen, das Skript läuft
+  dafür nicht ein zweites Mal.
+- **Show circles:** die Kreise in 35 %, die Arme in 70 % der Linienfarbe, ein
+  Pixel breit; Kreise unter einem Pixel Radius entfallen. Die Linie wird ganz
+  gezeichnet, nicht nur bis zur Spitze. Alles von Claude gesetzt.
+- **Panel:** die Zeile Shape ist eine Liste (mitgelieferte, eigene mit
+  „(own)", eine Datei an freiem Ort) mit **Browse...**; eine andere Form
+  setzt Contour auf „All ticked". Die Zeile Contour nennt die Konturen der
+  Datei. Der Ernter (`harvest_field_docs.py`) führt `contour` als
+  Zusatzfeld, weil die Liste kein `addEnum` ist.
+- **Von Claude gesetzt, nicht vorgelegt:** die Drehrichtung (gegen den
+  Uhrzeigersinn); `xShift`/`yShift` als Kommazahl statt Ganzzahl wie bei Text;
+  die Vorgabe `heart` für einen neuen Knoten; die Texte im Panel; in den
+  Presets Size 100 bei Contour Switch (eine von zwei Konturen ist sonst
+  klein) und 70 bei den Kreisen.
+
+**Gemessen (S121, `test_ShapeKnoten` „Messung", je Bild und Kontur, die
+kürzeste von drei Messungen):**
+
+| | Release-clang | Testing-MSVC |
+|---|---|---|
+| Per point, 512 Punkte | 0,19 ms | 0,21 ms |
+| Per point, 4096 Punkte | 1,5 ms | 1,6 ms |
+| Per point, 16384 Punkte (vier Konturen mit 4096) | 6,0 ms | 6,7 ms |
+| Umriss, 512 Punkte, 64 Harmonics (die Vorgabe) | 0,09 ms | 2,8 ms |
+| Umriss, 512 Punkte, 512 Harmonics | 0,63 ms | 22 ms |
+| Umriss, 4096 Punkte, 512 Harmonics | 5,3 ms | 180 ms |
+
+Das Skript war das von Wave Outline und Rainbow Outline zusammen. Ein Bild hat
+bei 60 Bildern je Sekunde 16,7 ms. Per point trägt also (V1 a, V4 a bleiben);
+teurer als das Skript ist im äußersten Fall der Umriss — und der wird nur neu
+gerechnet, wenn sich Harmonics oder Points ändern. Die Testing-Fassung
+rechnet den Umriss rund dreißigmal langsamer als die Fassung, die im Programm
+läuft; wer dort misst, misst nicht das Programm. Nicht gemessen: im laufenden
+Programm, mit anderen Knoten daneben; die Reihe einer Kontur beim ersten
+Zeichnen (einmal je Kontur).
 
 **Reihenfolge (M3 a):** jedes Modul kommt dort, wo es als Prüfwerkzeug
 gebraucht wird — der Knoten Shape gleich nach Datei und Koeffizienten, vor
@@ -774,7 +891,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 |---|---|---|
 | 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 — **gebaut in S120**, im Programm ungesehen und ungehört (`Loop_Konzept.md` §5) | — |
 | 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen — **gebaut in S120** (§7 „Wie es gebaut ist"); im Programm ist davon nur der Bereich Shapes im Export zu sehen | — |
-| 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a) | 19a |
+| 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a; V1 a bis V3 a) — **gebaut in S121** (§10 „Wie der Knoten Shape gebaut ist"), im Programm ungesehen | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a) | — (gebraucht ab 19c) |
 | 19e | die Shape-Schicht im Creator | Skizze |
@@ -807,6 +924,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.13.0 | 2026-10-13 (S121) | **Der Knoten Shape entschieden und gebaut (Stufe 19b).** Entscheide Patrik: **V1 a** fünf Skriptfelder — Init, Frame, Beat, Song und Per point; **V2 a** die Regler, mit Contour, Points, eigener Farbe und Line blend über M2 b hinaus; **V3 a** neun Presets; **V4 a** XY Scope bekommt dieselben fünf Felder (§10). Gebaut: `shape/Zeichenform`, `ShapeParams`, `runShape`, Panel, Palette, Feldtabelle, neun Presets (§10 „Wie der Knoten Shape gebaut ist", §14). Gemessen: Per point 0,19 ms bei 512 Punkten, der Umriss 0,09 ms in der Vorgabe (Release-clang). Im Programm ungesehen. |
 | 0.12.0 | 2026-10-13 (S120) | **Stufe 19a gebaut:** `shape/Kontur` — die Zeichnung, der Pfad als Text, die Datei `.lvcontour` Fassung 1, die Orte (mitgeliefert, `user:<name>`, Pfad), die Reihe mit weichem Gewicht; sechs mitgelieferte Formen; der Bereich Shapes im Export (§7 „Wie es gebaut ist", §14). Die Namen der Felder von Claude gesetzt. |
 | 0.11.0 | 2026-10-13 (S120) | **Stufe 18 gebaut:** Pan je Schicht mit dem Gesetz von Spur und Muster, acht Schichten, `.lvinst` Fassung 8; alte Instrumente rechnen Bit für Bit wie vorher (§14). Im Programm ungesehen und ungehört. |
 | 0.10.0 | 2026-10-13 (S120) | **Baustufen freigegeben (Patrik)** — 18, 19a bis 19e, 20a bis 20d (§14); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18 und in derselben Fassung 8 wie Pan (§6a). Nachgesehen: Spur und Muster haben schon ein Pan mit dem Gesetz `min(1, 1 ∓ pan)`; die Schicht bekommt dasselbe. Alle sieben Vorlagen sind geschlossen. |

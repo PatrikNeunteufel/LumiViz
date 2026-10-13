@@ -1,0 +1,19 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "shape",
+        "shape": "square",
+        "contour": 0,
+        "harmonics": 1,
+        "points": 512,
+        "size": 80,
+        "rotation": 0,
+        "showCircles": false,
+        "speed": 0.25,
+        "initCode": "t = 0;",
+        "frameCode": "t = t + 0.01;\r\nharmonics = 1 + 31.5 * (1 - cos(t));",
+        "beatCode": "",
+        "pointCode": ""
+    }
+}

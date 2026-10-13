@@ -78,6 +78,11 @@ const Eintrag kBeispiele[] = {
     // §11 Lyrics Trail — Feld Line
     {"xshift = rand(21) - 10; yshift = -6 - rand(8);", Art::Belegt, "test_FeldSteuerungGl.cpp"},
     {"blendstrength = if(line % 2, 100, 50);", Art::Belegt, "test_FeldSteuerungGl.cpp"},
+    // §11 Shape — die Regler aus Beat und Frame, das Feld Point
+    {"harmonics = 3;", Art::Belegt, "test_ShapeKnoten.cpp"},
+    {"harmonics = harmonics + (64 - harmonics) * 0.06;", Art::Belegt, "test_ShapeKnoten.cpp"},
+    {"r = 1 + v * 0.35; x = x * r; y = y * r;", Art::Belegt, "test_ShapeKnoten.cpp"},
+    {"skip = above(i, 0.5);", Art::Belegt, "test_ShapeKnoten.cpp"},
     // Song-Feld: ein Muster mit frei erfundenen Variablen, keine Wirkung zu pruefen
     {"farbe = rand(6); zaehler = 0;", Art::NurUebersetzt,
      "Muster fuer das Song-Feld mit eigenen Variablen — zeigt nur die Schreibweise"},

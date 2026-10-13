@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.207.0
-> **Datum:** 2026-10-13 (Session 120)
+> **Version:** 1.208.0
+> **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -5059,6 +5059,25 @@ werden; mehrere gewählte Konturen; die Entscheide aus §10 des Grobkonzepts.
 Nichts entworfen, nichts gebaut; das Grobkonzept ist seit S120 auf LumiViz
 umgeschrieben (`docs/audio/Shape_Konzept.md`), die Vorlagen stehen aus.
 
+**Stand S121 — Stufe 19b gebaut, der Knoten Shape** (`Shape_Konzept.md`
+0.13.0, §10). Entschieden (Patrik): V1 a fünf Skriptfelder (Init, Frame, Beat,
+Song, Per point), V2 a die Regler mit Contour, Points, eigener Farbe und Line
+blend, V3 a neun Presets, V4 a XY Scope bekommt dieselben fünf Felder. Der
+Absatz „Offen, wird noch geklärt" darüber ist seit S120 überholt (alle sieben
+Vorlagen sind geschlossen). **Offen daraus:**
+- ⬜ **Im Programm ungesehen:** der Knoten, sein Panel, die neun Presets, Show
+  circles. Gesehen sind nur Bilder aus den Tests. Eine Sichttest-Liste dafür
+  gibt es noch nicht.
+- 🔧 Eine geänderte `.lvcontour` sieht der Knoten erst, wenn die Nennung
+  wechselt — mit dem Fenster Edit shape (Stufe 20a) nachzuziehen.
+- 🔧 Für `shape` gibt es keine Feld-Sonden unter
+  `asset/calibration/fields/probes` (`make_field_probes.py` nicht gefahren).
+- 🔧 Die Zeile Contour trägt einen „~"-Knopf (das Feld ist eine Zahl in der
+  Feldtabelle); eine Modulation dort springt zwischen Kennungen. Lassen oder
+  ausnehmen.
+- **Als Nächstes Stufe 19c:** die Schwingung Shape im Klangerzeuger; dort die
+  Kante des Sprungs hören und messen.
+
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
 Anlass: der Entscheid D3 a zur Form (`Shape_Konzept.md` §7) — ein Instrument
@@ -5456,6 +5475,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.208.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19b gebaut — der Knoten Shape** der Effect Chain (Entscheide Patrik V1 a bis V4 a; `audio/Shape_Konzept.md` 0.13.0, Benutzerhandbuch 1.155.0). Offen: im Programm ungesehen; eine geänderte Form-Datei wird erst bei neuer Nennung gelesen; keine Feld-Sonden für `shape`; der „~"-Knopf an Contour. **Als Nächstes Stufe 19c.** Voller Lauf 1169 / 1169, 0 Skips (Testing-MSVC, Bildschirm 2). |
 | 1.207.0 | 2026-10-13 | Session 120, Abschluss. `sessions/Changelog_Session120.md`. **Stand:** Klang aus einer Form — das Konzept ist vollständig (`audio/Shape_Konzept.md` 0.12.0: sieben Vorlagen geschlossen, zwei Skizzen gebilligt, Baustufen freigegeben); gebaut **Stufe 18** (Pan je Schicht, acht Schichten, `.lvinst` Fassung 8) und **Stufe 19a** (`shape/Kontur`, die Datei `.lvcontour`, sechs mitgelieferte Formen, der Bereich Shapes im Export); daneben acht Datei-Icons, im Explorer-Skript und an vier Stellen der App. **Offen:** im Programm ungesehen und ungehört — Liste 10 Abschnitt V (V0 bis V11, U77 bis U79), dazu weiter Abschnitt D, X7 und die Reste aus S118; `register_file_icons.ps1 -Apply -Foreign` (Patrik); **als Nächstes Stufe 19b**, der Knoten Shape für die Effect Chain; in 19c die Kante des Sprungs hören; klein: Pan bei Stereo XY, die Bereiche von Harmonics, `.lvp` ohne Icon, `milk2` in `presetTypeIconForSuffix`, README der Icons gegen Handbuch zum Öffnen einer Datei über die Exe; Ideen Publish und Flanger. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |
 | 1.206.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Stufe 19a gebaut** (`Shape_Konzept.md` 0.12.0) — `shape/Kontur`: die Zeichnung aus Konturen mit festen Kennungen, die Datei `.lvcontour` Fassung 1, mitgelieferte unter `asset/contours` (sechs Formen), eigene als `user:<name>`, die Reihe mit weichem Gewicht; der Bereich **Shapes** in Export und Import (Benutzerhandbuch 1.154.0). Neu `test_ShapeKontur.cpp` (sechs Fälle, **1163 Cases**). Im Programm ist davon nur der neue Bereich im Export zu sehen. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2). **Als Nächstes: Stufe 19b** — der Knoten Shape für die Effect Chain. |
 | 1.205.0 | 2026-10-13 | Session 120. **Stufe 18 gebaut: Pan je Schicht und acht Schichten je Instrument** (`Loop_Konzept.md` 0.70.0 §5, `Shape_Konzept.md` 0.11.0) — `.lvinst` Fassung 8; Pan mit dem Gesetz von Spur und Muster, im Creator der Regler im Kasten Level; alte Instrumente rechnen Bit für Bit wie vorher; Benutzerhandbuch 1.153.0; lokal Liste 10 um Abschnitt V (V0 bis V11, U77 bis U79; darin auch die Punkte zu den Datei-Icons dieser Sitzung), B1 und U19 angepasst. **Im Programm ungesehen und ungehört.** Voller Lauf 1157 / 1157, 0 Skips (Testing-MSVC, Bildschirm 2, 263 s). **Als Nächstes: Stufe 19a** — die Form als Daten und die Datei `.lvcontour`. |

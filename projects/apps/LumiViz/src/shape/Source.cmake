@@ -14,9 +14,11 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Kontur.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Zeichenform.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Kontur.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Zeichenform.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

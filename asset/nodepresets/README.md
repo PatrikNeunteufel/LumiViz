@@ -257,6 +257,20 @@ feste lässt kein Skript der vorigen stehen.
 | | Every 16 Beats | fester Takt: alle `beats_per_group` Beats weiter, Gruppen der Reihe nach |
 | | Bass Drop | wechselt bei einem Bass-Schlag deutlich über dem laufenden Mittel (`kick`), frühestens nach `min_seconds`, spätestens nach `max_seconds` |
 | | One per Song | ohne Skript: jeder Song bekommt eine andere Gruppe |
+| `shape` (S121) | Heart | die Form allein, 64 Harmonics, ohne Skript |
+| | Epicycles | Stern mit Show circles, 16 Harmonics — die Kreise und Arme zeichnen mit |
+| | Harmonics Sweep | Frame-Skript: Harmonics läuft am Quadrat von 1 bis 64 und zurück |
+| | Beat Harmonics | Beat-Skript: Harmonics fällt auf 3, das Frame-Skript lässt es zurückwachsen |
+| | Beat Pulse | Beat-Skript: Size springt, das Frame-Skript lässt es abklingen |
+| | Bass Spin | Frame-Skript: Rotation folgt dem Bass |
+| | Wave Outline | Point-Skript: die Wellenform schiebt jeden Punkt des Kreises nach außen |
+| | Rainbow Outline | Point-Skript: die Farbe läuft mit `i` um die Linie |
+| | Contour Switch | Beat-Skript: `contour` wechselt zwischen den zwei Konturen von Heart and star |
+
+Die Shape-Vorlagen tragen Form, Contour, Harmonics, Points, Größe, Drehung,
+Show circles, Speed und alle vier Skriptfelder (auch leere) — ein Wechsel lässt
+kein Skript der vorigen stehen. Strichbreite, Farbe, Lage und Line blend
+bleiben beim Nutzer.
 
 Die Text- und AVI-Vorlagen lassen den Text bzw. die Videodatei unberührt —
 außer „Now Playing", das die Tag-Vorlage als Text mitbringt.

@@ -106,6 +106,7 @@
 #include <QMimeData>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
@@ -1490,6 +1491,102 @@ TEST_CASE("PaletteUi Panel A14: Drop auf die Leerflaeche haengt ans Ende der Ket
     CHECK(p.ziehe("Clear", weitUnten));
     REQUIRE(p.root().children.size() == 4);
     CHECK(ist<lumi::multieffect::ClearParams>(p.root().children.back()));
+}
+
+// S121 (Stufe 19b): der Knoten Shape im Panel — die Zeile Shape mit den
+// mitgelieferten Formen, die Zeile Contour mit den Konturen der Datei, die
+// Regler und die vier Skriptfelder. `LUMIVIZ_SHAPE_PANEL_BILD=<datei.png>` legt
+// ein Bild des Panels ab.
+TEST_CASE("PaletteUi Panel S121: der Knoten Shape — Formen, Konturen, Regler, Skriptfelder")
+{
+    using lumi::multieffect::ShapeParams;
+    UiUmgebung env;
+    PanelUmgebung p;
+    REQUIRE(p.tree != nullptr);
+    const QPoint weitUnten(60, p.tree->viewport()->height() - 10);
+    REQUIRE(p.ziehe("Shape", weitUnten));
+    REQUIRE(p.root().children.size() == 4);
+    REQUIRE(ist<ShapeParams>(p.root().children.back()));
+    const auto shape = [&]() -> const ShapeParams& {
+        return std::get<ShapeParams>(p.root().children.back().params);
+    };
+    CHECK(shape().shape == "heart");  // ein neuer Knoten zeigt gleich etwas
+
+    p.tree->setCurrentItem(p.oben(3));
+    QCoreApplication::processEvents();
+    auto* formen = p.panel->findChild<QComboBox*>(QStringLiteral("shapeChoice"));
+    REQUIRE(formen != nullptr);
+    // die sechs mitgelieferten Formen, die gewaehlte ist die des Knotens
+    for (const char* name : {"circle", "square", "triangle", "star", "heart", "heart_and_star"})
+        CHECK(formen->findData(QString::fromLatin1(name)) >= 0);
+    CHECK(formen->currentData().toString() == QStringLiteral("heart"));
+    CHECK(p.panel->findChild<QPushButton*>(QStringLiteral("shapeBrowse")) != nullptr);
+    CHECK(p.panel->findChild<QLabel*>(QStringLiteral("shapeMissing")) == nullptr);
+    auto* konturen = p.panel->findChild<QComboBox*>(QStringLiteral("contour"));
+    REQUIRE(konturen != nullptr);
+    CHECK(konturen->count() == 2);  // All ticked und die eine Kontur des Herzens
+    CHECK(konturen->currentData().toInt() == 0);
+    for (const char* feld : {"harmonics", "lineWidth", "xShift", "yShift", "size", "rotation", "speed"})
+    {
+        CAPTURE(feld);
+        CHECK(p.panel->findChild<QDoubleSpinBox*>(QString::fromLatin1(feld)) != nullptr);
+    }
+    CHECK(p.panel->findChild<QSpinBox*>(QStringLiteral("points")) != nullptr);
+    CHECK(p.panel->findChild<QCheckBox*>(QStringLiteral("showCircles")) != nullptr);
+    CHECK(p.panel->findChild<QCheckBox*>(QStringLiteral("useOwnColor")) != nullptr);
+    CHECK(p.panel->findChild<QComboBox*>(QStringLiteral("lineBlend")) != nullptr);
+    // jedes Feld traegt seinen Hinweis aus EffectChain.hpp
+    CHECK_FALSE(p.panel->findChild<QDoubleSpinBox*>(QStringLiteral("harmonics"))->toolTip().isEmpty());
+    CHECK_FALSE(konturen->toolTip().isEmpty());
+    {
+        const QString ziel = qEnvironmentVariable("LUMIVIZ_SHAPE_PANEL_BILD");
+        if (!ziel.isEmpty())
+        {
+            // die Seite der Felder ganz, nicht nur den Ausschnitt, den das Panel zeigt
+            QWidget* seite = formen;
+            QScrollArea* rollen = nullptr;
+            for (QWidget* w = formen; w != nullptr && rollen == nullptr; w = w->parentWidget())
+                rollen = qobject_cast<QScrollArea*>(w);
+            if (rollen != nullptr && rollen->widget() != nullptr) seite = rollen->widget();
+            CHECK(seite->grab().save(ziel));
+        }
+    }
+
+    // --- eine Kontur waehlen: der Knoten nennt ihre Kennung
+    const int zwei = formen->findData(QStringLiteral("heart_and_star"));
+    REQUIRE(zwei >= 0);
+    formen->setCurrentIndex(zwei);
+    emit formen->activated(zwei);
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    CHECK(shape().shape == "heart_and_star");
+    konturen = p.panel->findChild<QComboBox*>(QStringLiteral("contour"));
+    REQUIRE(konturen != nullptr);
+    REQUIRE(konturen->count() == 3);  // All ticked, Heart, Star
+    CHECK(konturen->itemText(1) == QStringLiteral("Heart"));
+    CHECK(konturen->itemText(2) == QStringLiteral("Star"));
+    konturen->setCurrentIndex(2);
+    emit konturen->activated(2);
+    QCoreApplication::processEvents();
+    CHECK(shape().contour == 2);
+
+    // --- eine andere Form: die Wahl der Kontur faellt auf „alle"
+    formen = p.panel->findChild<QComboBox*>(QStringLiteral("shapeChoice"));
+    REQUIRE(formen != nullptr);
+    const int stern = formen->findData(QStringLiteral("star"));
+    formen->setCurrentIndex(stern);
+    emit formen->activated(stern);
+    QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
+    CHECK(shape().shape == "star");
+    CHECK(shape().contour == 0);
+
+    // --- ein Regler schreibt in den Knoten
+    auto* harmonics = p.panel->findChild<QDoubleSpinBox*>(QStringLiteral("harmonics"));
+    REQUIRE(harmonics != nullptr);
+    harmonics->setValue(12.5);
+    QCoreApplication::processEvents();
+    CHECK(shape().harmonics == doctest::Approx(12.5f));
 }
 
 TEST_CASE("PaletteUi Panel A14b: Custom Shape auf die Leerflaeche landet im Milkdrop-Knoten")

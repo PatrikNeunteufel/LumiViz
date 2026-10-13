@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 94,
-    "felder": 859,
+    "typen": 95,
+    "felder": 877,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -7897,6 +7897,208 @@
             "blend",
             "wobble"
           ]
+        }
+      ]
+    },
+    {
+      "typkey": "shape",
+      "name": "Shape",
+      "struct": "ShapeParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "contour",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 16777215,
+          "name": "color",
+          "panel": "farbe",
+          "helfer": "addColor",
+          "doc": "own color 0x00RRGGBB (with `useOwnColor`)"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "contour",
+          "panel": "sonderzeile",
+          "doc": "Which contour is drawn: 0 = every contour that is ticked in the drawing, otherwise the id of one contour (as the Contour row of a shape layer). An id the drawing does not have draws nothing."
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "contour",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 64,
+          "name": "harmonics",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 1.0,
+          "hi": 512.0,
+          "doc": "Number of partials the shape is rebuilt from (1..512). Runs smoothly: 3.5 is half way between 3 and 4. 1 = an ellipse, more = closer to the drawing."
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "contour",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "lineBlend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 10,
+          "doc": "How the line mixes with the picture: AVS BLEND_LINE mode 0..9 as on SuperScope (0 replace, 1 additive, 2 maximum, 3 50/50, …). A preceding Set Render Mode wins."
+        },
+        {
+          "art": "zahl",
+          "default": 2,
+          "name": "lineWidth",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 1.0,
+          "hi": 20.0,
+          "doc": "stroke width in pixels (1..20)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "pointCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script. Runs once per point of the line: `i` (place on the round, 0..1), `x`/`y` (the point of the shape, before shift, size and rotation; y down as on SuperScope), `contour` (id of the contour being drawn) and `v` (waveform at `i`) come in; `x`/`y`, `red`/`green`/`blue` and `skip` are read back. The circles of `showCircles` keep drawing the computed shape.",
+          "skriptvars": [
+            "blue",
+            "contour",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 512,
+          "name": "points",
+          "panel": "int",
+          "helfer": "addInt",
+          "lo": 16.0,
+          "hi": 4096.0,
+          "doc": "Points of the line per contour (16..4096). The point code runs this many times per contour."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "rotation",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 360.0,
+          "doc": "Rotation in degrees, counter-clockwise (0..360; a script may run past either end, the angle wraps)."
+        },
+        {
+          "art": "text",
+          "default": "heart",
+          "name": "shape",
+          "panel": "sonderzeile",
+          "doc": "The drawing: the name of a bundled shape (`heart`), an own one (`user:<name>`) or the path of a `.lvcontour` file. Missing or unreadable = nothing is drawn."
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "showCircles",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Draw the circles and arms that add up to the shape; the pen runs round with `speed`."
+        },
+        {
+          "art": "zahl",
+          "default": 80,
+          "name": "size",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 1.0,
+          "hi": 400.0,
+          "doc": "Size in percent (1..400): 100 = the drawing fills the shorter side of the picture."
+        },
+        {
+          "art": "zahl",
+          "default": 0.25,
+          "name": "speed",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.0,
+          "hi": 4.0,
+          "doc": "rounds per second of the pen (0..4; with `showCircles`)"
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "useOwnColor",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "draw in `color` instead of the colors of the contours"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "xShift",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the centre, percent of width (-100..100)"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "yShift",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the centre, percent of height (negative = up)"
         }
       ]
     },

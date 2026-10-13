@@ -1072,6 +1072,27 @@ struct WriteVisitor
         o["beatCode"] = QString::fromStdString(p.beatCode);
         o["lineCode"] = QString::fromStdString(p.lineCode);  // S91: je gegangener Zeile
     }
+    void operator()(const ShapeParams& p) const  // S121
+    {
+        o["shape"] = QString::fromStdString(p.shape);
+        o["contour"] = p.contour;
+        o["harmonics"] = static_cast<double>(p.harmonics);
+        o["points"] = p.points;
+        o["lineWidth"] = static_cast<double>(p.lineWidth);
+        o["xShift"] = static_cast<double>(p.xShift);
+        o["yShift"] = static_cast<double>(p.yShift);
+        o["size"] = static_cast<double>(p.size);
+        o["rotation"] = static_cast<double>(p.rotation);
+        o["useOwnColor"] = p.useOwnColor;
+        o["color"] = static_cast<double>(p.color);
+        o["lineBlend"] = p.lineBlend;
+        o["showCircles"] = p.showCircles;
+        o["speed"] = static_cast<double>(p.speed);
+        o["initCode"] = QString::fromStdString(p.initCode);
+        o["frameCode"] = QString::fromStdString(p.frameCode);
+        o["beatCode"] = QString::fromStdString(p.beatCode);
+        o["pointCode"] = QString::fromStdString(p.pointCode);
+    }
     void operator()(const LyricsParams& p) const  // S86
     {
         o["fontFace"] = QString::fromStdString(p.fontFace);
@@ -2566,6 +2587,29 @@ EffectParams readParams(const QString& type, const QJsonObject& o)
         p.lineCode = getStr(o, "lineCode", p.lineCode);
         return p;
     }
+    if (type == "shape")  // S121
+    {
+        ShapeParams p;
+        p.shape = getStr(o, "shape", p.shape);
+        p.contour = std::max(0, getInt(o, "contour", p.contour));
+        p.harmonics = static_cast<float>(std::clamp(getDouble(o, "harmonics", p.harmonics), 1.0, 512.0));
+        p.points = std::clamp(getInt(o, "points", p.points), 16, 4096);
+        p.lineWidth = static_cast<float>(std::clamp(getDouble(o, "lineWidth", p.lineWidth), 1.0, 20.0));
+        p.xShift = static_cast<float>(std::clamp(getDouble(o, "xShift", p.xShift), -100.0, 100.0));
+        p.yShift = static_cast<float>(std::clamp(getDouble(o, "yShift", p.yShift), -100.0, 100.0));
+        p.size = static_cast<float>(std::clamp(getDouble(o, "size", p.size), 1.0, 400.0));
+        p.rotation = static_cast<float>(std::clamp(getDouble(o, "rotation", p.rotation), 0.0, 360.0));
+        p.useOwnColor = getBool(o, "useOwnColor", p.useOwnColor);
+        p.color = getColor(o, "color", p.color);
+        p.lineBlend = std::clamp(getInt(o, "lineBlend", p.lineBlend), 0, 9);
+        p.showCircles = getBool(o, "showCircles", p.showCircles);
+        p.speed = static_cast<float>(std::clamp(getDouble(o, "speed", p.speed), 0.0, 4.0));
+        p.initCode = getStr(o, "initCode", p.initCode);
+        p.frameCode = getStr(o, "frameCode", p.frameCode);
+        p.beatCode = getStr(o, "beatCode", p.beatCode);
+        p.pointCode = getStr(o, "pointCode", p.pointCode);
+        return p;
+    }
     if (type == "lyrics")  // S86
     {
         LyricsParams p;
@@ -3174,6 +3218,7 @@ QString effectTypeKey(const EffectParams& params)
         QString operator()(const HostSwitcherParams&) const { return "hostSwitcher"; }
         QString operator()(const LyricsParams&) const { return "lyrics"; }
         QString operator()(const LyricsTrailParams&) const { return "lyricsTrail"; }
+        QString operator()(const ShapeParams&) const { return "shape"; }
         QString operator()(const PassthroughParams&) const { return "passthrough"; }
     };
     return std::visit(Visitor{}, params);

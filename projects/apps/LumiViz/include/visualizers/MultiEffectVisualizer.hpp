@@ -45,6 +45,7 @@
 #include "scripting/ScriptContext.hpp"
 #include "scripting/ScriptSlotHost.hpp"
 #include "services/VideoFrameCache.hpp"
+#include "shape/Zeichenform.hpp"  // Knoten Shape (S121)
 
 #include <QImage>
 #include <QMatrix4x4>
@@ -951,6 +952,15 @@ private:
         std::unique_ptr<lumi::scripting::ScriptSlotHost> orbsHost;
         std::string orbsCompiled;
 
+        // Shape (S121): EEL-Quartett (Point je Punkt der Linie), die
+        // aufbereitete Zeichnung und der Stand des Stifts fuer Show circles
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> shapeHost;
+        std::string shapeCompiled;
+        std::string shapeNennung;        ///< wofuer `shapeForm` steht
+        bool shapeGelesen = false;       ///< `shapeNennung` ist versucht (auch vergeblich)
+        lumi::shape::Zeichenform shapeForm;
+        double shapeUmlauf = 0.0;        ///< 0 … 1
+
         // Water Bump: RGBA16F height ping-pong (.r current, .g previous height)
         std::unique_ptr<QOpenGLFramebufferObject> wbHeight[2];
         int wbCur = 0;   ///< index of the current height buffer
@@ -1300,6 +1310,11 @@ private:
     /// noch einmal zeichnen; Schrift und Lage vom Lyrics-Knoten `source`.
     void runLyricsTrail(const lumi::multieffect::ChainNode& node,
                         const lumi::multieffect::LyricsTrailParams& params);
+    /// Shape (S121): die Konturen einer `.lvcontour` als Linien, aus ihrer
+    /// Fourier-Reihe mit `harmonics` Teiltoenen; EEL-Quartett mit Point je
+    /// Punkt der Linie; mit `showCircles` die Kreise und Arme dazu.
+    void runShape(const lumi::multieffect::ChainNode& node,
+                  const lumi::multieffect::ShapeParams& params);
     [[nodiscard]] const lumi::multieffect::ChainNode* findeLyricsKnoten(
         const std::string& name) const;
     /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
