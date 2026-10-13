@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.211.0
+> **Version:** 1.212.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5512,6 +5512,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.212.0 | 2026-10-13 | Session 121, Abschluss. `sessions/Changelog_Session121.md`. **Stand:** Klang aus einer Form — gebaut die Stufen **19b** (Knoten Shape), **19c** (die Schwingung Shape im Klangerzeuger, `.lvinst` Fassung 9), **19d** (Knoten XY Scope), **19e** (die Shape-Schicht im Instrument-Creator); `audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0. **Offen:** im Programm ungesehen und ungehört bis auf Patriks Blick auf den Knoten Shape (ohne Befund); Patriks Ohr an `hoerproben_19c`, danach die Vorlagen zu den Ecken und zur Kante des Sprungs; mitgelieferte Instrumente mit Shape-Schicht; **als Nächstes Stufe 20a**, das Fenster Edit shape — mit dem Knopf Edit... im Creator und dem Neuladen einer geänderten Form. Voller Lauf 1181 / 1181, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |
 | 1.211.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19e gebaut — die Shape-Schicht im Instrument-Creator** (`audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0). Offen: im Programm ungesehen und ungehört; der Knopf Edit... kommt mit 20a; kein mitgeliefertes Instrument mit Shape-Schicht. **Als Nächstes Stufe 20a**, das Fenster Edit shape. |
 | 1.210.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19d gebaut — der Knoten XY Scope** der Effect Chain (Entscheide Patrik X1 a, X2 a; `audio/Shape_Konzept.md` 0.15.0, Benutzerhandbuch 1.156.0). Offen: im Programm ungesehen, keine Sichttest-Liste, keine Feld-Sonden. **Als Nächstes Stufe 19e**, die Shape-Schicht im Creator. |
 | 1.209.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19c gebaut — die Schwingung Shape im Klangerzeuger**, `.lvinst` Fassung 9 (Entscheide Patrik T1 a, T2 a; `audio/Shape_Konzept.md` 0.14.0). Offen: Patriks Ohr an den Hörproben; Ecken dämpfen; die Kante des Sprungs (gemessen −33 dB bei A4); gerechnete Töne entstehen nach dem Schreiben einer Form nicht neu. **Als Nächstes Stufe 19d.** |
