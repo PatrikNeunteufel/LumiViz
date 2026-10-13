@@ -18,11 +18,14 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSettings>
 #include <QTemporaryDir>
+#include <QTreeWidget>
+#include <QTreeWidgetItemIterator>
 
 namespace
 {
@@ -206,6 +209,10 @@ TEST_CASE("Datensicherung Dialog Import: nur was in der Datei steckt, Zahlen und
     auto* kopf = dialog.findChild<QLabel*>(QStringLiteral("dataImportHead"));
     REQUIRE(kopf != nullptr);
     CHECK(kopf->text().startsWith(QStringLiteral("sicherung.lvdata · exported with LumiViz ")));
+    // davor das Datei-Icon des Exports (S120)
+    auto* kopfIcon = dialog.findChild<QLabel*>(QStringLiteral("dataImportHeadIcon"));
+    REQUIRE(kopfIcon != nullptr);
+    CHECK_FALSE(kopfIcon->pixmap().isNull());
 
     // nur die Bereiche aus der Datei: kein Composer, keine Songtexte, keine leeren
     for (const char* da : {"visuals", "gradients", "nodepresets", "karaoke", "settings"})
@@ -340,6 +347,29 @@ TEST_CASE("Datensicherung Dialog Je Datei: eine Zeile je gleichem Namen, die Hak
     CHECK(wahl.at(warm) == ds::Wahl::Beide);
     CHECK(wahl.at(spiral) == ds::Wahl::Meine);
     CHECK(wahl.at(sunset) == ds::Wahl::Meine);
+    // S120: eine Zeile traegt das Icon ihrer Dateiart, wo es eines gibt — der
+    // Verlauf das seines Bereichs, ein Visualizer-Preset (`.json`) keins
+    {
+        auto* baum = liste.findChild<QTreeWidget*>(QStringLiteral("dataDecideList"));
+        REQUIRE(baum != nullptr);
+        int mitIcon = 0;
+        int ohneIcon = 0;
+        for (QTreeWidgetItemIterator it(baum); *it != nullptr; ++it)
+        {
+            if ((*it)->childCount() > 0) continue;  // eine Kopfzeile
+            // ohne Icon steht ein leeres da, damit die Namen untereinander stehen
+            REQUIRE_FALSE((*it)->icon(0).isNull());
+            const QImage icon = (*it)->icon(0).pixmap(16, 16).toImage().convertToFormat(QImage::Format_ARGB32);
+            bool hat = false;
+            for (int y = 0; y < icon.height() && !hat; ++y)
+                for (int x = 0; x < icon.width() && !hat; ++x) hat = qAlpha(icon.pixel(x, y)) != 0;
+            CAPTURE((*it)->text(0).toStdString());
+            CHECK(hat == ((*it)->text(0) == QStringLiteral("Sunset")));
+            (hat ? mitIcon : ohneIcon) += 1;
+        }
+        CHECK(mitIcon == 1);
+        CHECK(ohneIcon == 3);
+    }
     bild(liste, "LUMIVIZ_IMPORT_WAHL_BILD");
 
     // die Wahl durch den Import-Dialog: genau das geschieht

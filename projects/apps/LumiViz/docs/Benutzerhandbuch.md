@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.151.0
+> **Version:** 1.152.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2926,14 +2926,14 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvkar](bilder/handbuch/icons/lumiviz_karaoke.png) | `.lvkar` | Karaoke-Preset: der Stand der Karaoke-Ebene | Effect Browser |
 | ![lvtrail](bilder/handbuch/icons/lumiviz_trail.png) | `.lvtrail` | Trail-Preset der Karaoke-Ebene | Effect Chain, an jeder Effect List mit einem Lyrics Trail |
 | ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
-| ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser |
-| ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | noch nirgends als Icon |
+| ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser; Panel Loop vor dem Dateinamen |
+| ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
 | ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Kontur für die Waveform Shape — vorgesehen, die Datei gibt es noch nicht | noch nirgends als Icon |
-| ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | noch nirgends als Icon |
-| ![lvshape](bilder/handbuch/icons/lumiviz_lvshape.png) | `.lvshape` | Stück des Curve Editors (§15) | noch nirgends als Icon |
-| ![lvmute](bilder/handbuch/icons/lumiviz_lvmute.png) | `.lvmute` | Mute-Profil des Composers (§15) | noch nirgends als Icon |
-| ![lvdata](bilder/handbuch/icons/lumiviz_lvdata.png) | `.lvdata` | Export der eigenen Daten | noch nirgends als Icon |
-| ![grad](bilder/handbuch/icons/lumiviz_grad.png) | `.grad` | Farbverlauf | noch nirgends als Icon |
+| ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | Import data, Liste „Let me decide for each file" |
+| ![lvshape](bilder/handbuch/icons/lumiviz_lvshape.png) | `.lvshape` | Stück des Curve Editors (§15) | Import data, dieselbe Liste |
+| ![lvmute](bilder/handbuch/icons/lumiviz_lvmute.png) | `.lvmute` | Mute-Profil des Composers (§15) | Import data, dieselbe Liste |
+| ![lvdata](bilder/handbuch/icons/lumiviz_lvdata.png) | `.lvdata` | Export der eigenen Daten | Import data, vor dem Namen der Datei |
+| ![grad](bilder/handbuch/icons/lumiviz_grad.png) | `.grad` | Farbverlauf | Import data, dieselbe Liste — dort an jedem eigenen Verlauf |
 | ![app](bilder/handbuch/icons/lumiviz_app.png) | `LumiViz.exe` | die App selbst | Explorer, Taskleiste, Fenster |
 | ![avs](bilder/handbuch/icons/avs.png) | `.avs` | AVS-Preset (Winamp) | Effect Browser |
 | ![milk](bilder/handbuch/icons/milkdrop.png) | `.milk`, `.milk2` | MilkDrop-Preset | Effect Browser |
@@ -2947,9 +2947,11 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 
 Ohne eigenes Icon sind Playlists (`.m3u8`), Knoten-Voreinstellungen (`.json`)
 und die Presets der einzelnen Visualizer (`.lvp`). Die acht Icons von
-`.lvloop` bis `.grad` gibt es seit Fassung 1.150.0 als Dateien; in der App
-trägt bisher nur der Loop im Audio Browser das seine, im Explorer erscheinen
-alle nach dem Eintragen.
+`.lvloop` bis `.grad` gibt es seit Fassung 1.150.0; in der App stehen sie, wo
+ein Dateiname steht oder Dateien verschiedener Art untereinander (Spalte
+rechts), im Explorer erscheinen alle nach dem Eintragen. In Listen, in denen
+jede Zeile von derselben Art ist — das Fenster Instruments, die Menüs der
+Blenden und Mute-Profile —, steht bewusst keines.
 
 **Im Windows-Explorer:** LumiViz trägt von sich aus nichts in Windows ein. Im
 Projektordner von LumiViz liegt dafür das Skript
@@ -3016,6 +3018,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.152.0 | 2026-10-13 | Session 120. §17: die neuen Datei-Icons an vier Stellen der App — im Panel **Loop** vor dem Dateinamen, im **Instrument-Editor** vor dem Namen des Instruments, im Dialog **Import data** vor dem Namen der Datei und in der Liste „Let me decide for each file" an jeder Datei, deren Art ein Icon hat. |
 | 1.151.0 | 2026-10-13 | Session 120. §17: im **Audio Browser** trägt ein Loop jetzt sein eigenes Icon (die Marke mit Schritt-Raster) statt des Kreispfeils. |
 | 1.150.0 | 2026-10-13 | Session 120. §17 Dateitypen und ihre Icons: **acht neue Icons** — `.lvloop`, `.lvinst`, `.lvcontour`, `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, `.grad`, alle aus der Marke mit einem Zeichen im Kreis; die App zeigt sie noch nicht, das Skript für den Explorer trägt sie ein (`.grad` nur mit `-Foreign`). |
 | 1.149.0 | 2026-10-13 | Session 119. §16 Loop, Effekte am Clip NEU: **≠** in einem bernsteinfarben getönten Kasten der Zeile Signal path — die markierten Clips weichen in diesem Baustein ab, auch in einem Wert, den der Kasten nicht zeigt; der Tooltip nennt die Regler |

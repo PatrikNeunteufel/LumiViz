@@ -726,10 +726,16 @@ TEST_SUITE("LoopArrangement")
         CHECK_FALSE(speichern->isEnabled());
         CHECK_FALSE(speichernUnter->isEnabled());
         CHECK_FALSE(bpm->isEnabled());
+        // das Datei-Icon der Loops vor dem Namen (S120): erst mit einem Loop
+        auto* dateiIcon = panel.findChild<QLabel*>(QStringLiteral("loopFileIcon"));
+        REQUIRE(dateiIcon != nullptr);
+        CHECK_FALSE(dateiIcon->pixmap().isNull());
+        CHECK(dateiIcon->isHidden());
 
         // New: ein leerer Loop mit einem Kanal, noch ohne Datei
         panel.neu();
         CHECK(panel.geladen());
+        CHECK_FALSE(dateiIcon->isHidden());
         CHECK(datei->text() == QStringLiteral("untitled"));
         CHECK_FALSE(panel.ungespeichert());
         CHECK(speichern->isEnabled());  // noch nie gespeichert

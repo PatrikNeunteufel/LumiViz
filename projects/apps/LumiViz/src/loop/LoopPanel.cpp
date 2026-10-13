@@ -6,6 +6,7 @@
 #include "loop/LoopPanel.hpp"
 
 #include "UI/widgets/Achse.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
 #include "composer/AppAnbindung.hpp"
@@ -195,6 +196,13 @@ void LoopPanel::setupUI()
     auto* aussen = new QVBoxLayout(this);
 
     auto* dateiReihe = new QHBoxLayout;
+    // das Datei-Icon der Loops vor dem Namen, wie im Panel Composer (S120,
+    // Entscheid Patrik A2 a); zu sehen, solange ein Loop geladen ist
+    m_dateiIcon = new QLabel(this);
+    m_dateiIcon->setObjectName(QStringLiteral("loopFileIcon"));
+    if (const QIcon marke = lumi::ui::dateiArtIcon(QStringLiteral("lvloop")); !marke.isNull())
+        m_dateiIcon->setPixmap(marke.pixmap(18, 18));
+    m_dateiIcon->setVisible(false);
     m_dateiZeile = new QLabel(this);
     m_dateiZeile->setObjectName(QStringLiteral("loopFile"));
     m_dateiZeile->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -212,6 +220,7 @@ void LoopPanel::setupUI()
     m_tags->setObjectName(QStringLiteral("loopTags"));
     m_tags->setToolTip(tr("Title, artist and the other tags of the loop — what the player shows "
                           "while the loop runs as a clip in the Composer"));
+    dateiReihe->addWidget(m_dateiIcon);
     dateiReihe->addWidget(m_dateiZeile, 1);
     dateiReihe->addWidget(m_tags);
     dateiReihe->addWidget(m_neu);
@@ -776,6 +785,7 @@ void LoopPanel::zeigeDatei()
     m_tags->setEnabled(m_geladen);
     m_bpm->setEnabled(m_geladen);
     meldeStand();  // jede Aenderung an Loop oder Datei kommt hier vorbei
+    m_dateiIcon->setVisible(m_geladen && !m_dateiIcon->pixmap().isNull());
     if (!m_geladen)
     {
         m_dateiZeile->setText(tr("No loop loaded"));

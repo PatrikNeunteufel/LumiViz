@@ -2276,6 +2276,10 @@ TEST_SUITE("LoopInstrumentEditor")
         auto* auswahl = editor.findChild<QLabel*>(QStringLiteral("instrumentSound"));
         REQUIRE(auswahl != nullptr);
         CHECK(auswahl->text() == QStringLiteral("Piano"));
+        // davor das Datei-Icon der Instrumente (S120)
+        auto* soundIcon = editor.findChild<QLabel*>(QStringLiteral("instrumentSoundIcon"));
+        REQUIRE(soundIcon != nullptr);
+        CHECK_FALSE(soundIcon->pixmap().isNull());
         CHECK(editor.findChild<QComboBox*>(QStringLiteral("instrumentSound")) == nullptr);
         REQUIRE(editor.findChild<QPushButton*>(QStringLiteral("instrumentBrowse")) != nullptr);
 

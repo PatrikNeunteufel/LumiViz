@@ -22,14 +22,14 @@ Windows).
 | übrige Audioformate | `audio.svg` / `.ico` | erzeugt | Audio Browser |
 | `.lrc` (Songtext) | `lyrics_lrc.svg` / `.ico` | erzeugt | noch nicht |
 | `.lvcomp` (Komposition des Composers, S100) | `lumiviz_lvcomp.ico` — der Fächer mit Zeitstrahl und Abspielmarke (Entscheide Patrik S100) | erzeugt aus `lumiviz.ico` | Effect Browser (Doppelklick öffnet die Komposition), Panel Composer vor dem Dateinamen |
-| `.lvloop` (Loop, S120) | `lumiviz_lvloop.ico` — Marke mit Schritt-Raster und Bogen zurück zum Anfang | erzeugt aus `lumiviz.ico` | Audio Browser (S120; über `dateiArtIcon` in `PresetTypeIcons.hpp`) |
-| `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | noch nicht |
+| `.lvloop` (Loop, S120) | `lumiviz_lvloop.ico` — Marke mit Schritt-Raster und Bogen zurück zum Anfang | erzeugt aus `lumiviz.ico` | Audio Browser, Loop-Panel (Datei-Zeile) |
+| `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | Instrument-Editor (Kopfzeile), Import data (Liste) |
 | `.lvcontour` (Kontur für die Waveform Shape, S120 — die Datei gibt es noch nicht) | `lumiviz_lvcontour.ico` — Marke mit Kontur und Stift | erzeugt aus `lumiviz.ico` | noch nicht |
-| `.lvfade` (Blende des Curve Editors, S120) | `lumiviz_lvfade.ico` — Marke mit Keil | erzeugt aus `lumiviz.ico` | noch nicht |
-| `.lvshape` (Stück des Curve Editors, S120) | `lumiviz_lvshape.ico` — Marke mit Hügel | erzeugt aus `lumiviz.ico` | noch nicht |
-| `.lvmute` (Mute-Profil des Composers, S120) | `lumiviz_lvmute.ico` — Marke mit Lautsprecher und Kreuz | erzeugt aus `lumiviz.ico` | noch nicht |
-| `.lvdata` (Export der eigenen Daten, S120) | `lumiviz_lvdata.ico` — Marke mit Ablage und Pfeil | erzeugt aus `lumiviz.ico` | noch nicht |
-| `.grad` (Farbverlauf, S120) | `lumiviz_grad.ico` — Marke mit Verlauf | erzeugt aus `lumiviz.ico` | noch nicht |
+| `.lvfade` (Blende des Curve Editors, S120) | `lumiviz_lvfade.ico` — Marke mit Keil | erzeugt aus `lumiviz.ico` | Import data (Liste) |
+| `.lvshape` (Stück des Curve Editors, S120) | `lumiviz_lvshape.ico` — Marke mit Hügel | erzeugt aus `lumiviz.ico` | Import data (Liste) |
+| `.lvmute` (Mute-Profil des Composers, S120) | `lumiviz_lvmute.ico` — Marke mit Lautsprecher und Kreuz | erzeugt aus `lumiviz.ico` | Import data (Liste) |
+| `.lvdata` (Export der eigenen Daten, S120) | `lumiviz_lvdata.ico` — Marke mit Ablage und Pfeil | erzeugt aus `lumiviz.ico` | Import data (Kopf) |
+| `.grad` (Farbverlauf, S120) | `lumiviz_grad.ico` — Marke mit Verlauf | erzeugt aus `lumiviz.ico` | Import data (Liste, an jedem eigenen Verlauf) |
 | **die App selbst** (`LumiViz.exe`, S100) | `lumiviz_app.ico` — `lumiviz.ico` auf ein Quadrat gesetzt, in den üblichen Stufen | erzeugt aus `lumiviz.ico` | Icon-Ressource der Exe (`projects/apps/LumiViz/main/LumiViz.rc`): Explorer, Verknüpfungen, Taskleiste, Fenster |
 
 ### Die Icons im Bild
@@ -77,9 +77,16 @@ Zeichen im Kreis; die Zeichen an vier Vorschaublättern gewählt — für `.lvlo
 das Schritt-Raster mit Bogen statt zweier Pfeile, die wie „aktualisieren"
 aussahen; für `.lvdata` die gefüllte Ablage). Gefüllte Flächen statt dünner
 Striche, damit bei 32 px etwas stehen bleibt; bei 16 px ist kein Zeichen der
-Familie zu lesen, auch das Mikrofon nicht. **In der App** trägt bisher nur der
-Loop im Audio Browser das seine; die übrigen lädt `dateiArtIcon(<endung>)`,
-sobald ein Fenster sie zeigen soll. `.grad` gilt im Skript für den Explorer als fremde Endung (von
+Familie zu lesen, auch das Mikrofon nicht. **In der App** (Entscheid Patrik A2 a)
+stehen sie, wo ein Dateiname steht oder Dateien verschiedener Art
+untereinander: Audio Browser und Datei-Zeile des Loop-Panels (`lvloop`),
+Kopfzeile des Instrument-Editors (`lvinst`), Dialog Import data — vor dem
+Namen der Datei (`lvdata`) und in der Liste „je Datei entscheiden" je nach
+Endung (`dateiIconFuerEndung`; ein Verlauf ist dort eine `.json` und trägt
+das Icon seines Bereichs). Bewusst ohne: das Fenster Instruments, der
+Creator, die Menüs der Blenden, Stücke und Mute-Profile, die Verlaufs-Combos
+— dort ist jede Zeile von derselben Art. Geladen wird über
+`dateiArtIcon(<endung>)` in `UI/widgets/PresetTypeIcons.hpp`. `.grad` gilt im Skript für den Explorer als fremde Endung (von
 Claude gesetzt: sie trägt kein `lv` und kann anderen Programmen gehören).
 
 Was davon `register_file_icons.ps1` im **Explorer** einträgt (s. u. „Im Explorer

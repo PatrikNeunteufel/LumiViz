@@ -9,6 +9,7 @@
 #include "UI/dialogs/DatensicherungDialoge.hpp"
 
 #include "AppInfo.hpp"
+#include "UI/widgets/PresetTypeIcons.hpp"
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -360,6 +361,19 @@ DatenJeDateiDialog::DatenJeDateiDialog(const std::vector<ds::ImportBereich>& ber
             const bool eigeneJuenger = datei.eigeneGeaendert > datei.geaendert;
             auto* zeile = new QTreeWidgetItem(kopf);
             zeile->setText(kSpalteName, QFileInfo(datei.rel).completeBaseName());
+            // das Icon der Dateiart, wo es eines gibt (S120, Entscheid Patrik
+            // A2 a): hier stehen Dateien verschiedener Art untereinander. Ein
+            // Verlauf ist eine `.json` — er traegt das Icon seines Bereichs.
+            QIcon art = dateiIconFuerEndung(QFileInfo(datei.rel).suffix());
+            if (art.isNull() && bereich->id == QLatin1String("gradients")) art = dateiArtIcon(QStringLiteral("grad"));
+            // ohne Icon ein leeres von gleicher Groesse: die Namen stehen untereinander
+            if (art.isNull())
+            {
+                QPixmap leer(m_liste->iconSize().isValid() ? m_liste->iconSize() : QSize(16, 16));
+                leer.fill(Qt::transparent);
+                art = QIcon(leer);
+            }
+            zeile->setIcon(kSpalteName, art);
             zeile->setToolTip(kSpalteName, QDir::toNativeSeparators(datei.rel));
             zeile->setData(kSpalteName, kRolleRel, datei.rel);
             zeile->setText(kSpalteMeine, datumUndGroesse(datei.eigeneGeaendert, datei.eigeneGroesse) +
@@ -478,7 +492,17 @@ DatenImportDialog::DatenImportDialog(const QString& datei, const QString& benutz
     kopf->setObjectName(QStringLiteral("dataImportHead"));
     kopf->setEnabled(false);
     kopf->setWordWrap(true);
-    aussen->addWidget(kopf);
+    // das Datei-Icon des Exports vor dem Namen (S120, Entscheid Patrik A2 a)
+    auto* kopfReihe = new QHBoxLayout;
+    if (const QIcon marke = dateiArtIcon(QStringLiteral("lvdata")); !marke.isNull())
+    {
+        auto* icon = new QLabel(this);
+        icon->setObjectName(QStringLiteral("dataImportHeadIcon"));
+        icon->setPixmap(marke.pixmap(18, 18));
+        kopfReihe->addWidget(icon);  // mittig wie der Text daneben
+    }
+    kopfReihe->addWidget(kopf, 1);
+    aussen->addLayout(kopfReihe);
 
     auto* abbrechen = new QPushButton(tr("Cancel"), this);
     m_import = new QPushButton(tr("Import"), this);

@@ -6,6 +6,7 @@
 
 #include "loop/InstrumentEditor.hpp"
 
+#include "UI/widgets/PresetTypeIcons.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
@@ -1038,6 +1039,14 @@ void InstrumentEditor::setupUI()
     m_instrumentLaden->setObjectName(QStringLiteral("instrumentLoad"));
     m_instrumentLaden->setToolTip(tr("Use an instrument file (.lvinst) for this pattern"));
     zeile->addWidget(new QLabel(tr("Instrument"), this));
+    // das Datei-Icon der Instrumente vor dem Namen (S120, Entscheid Patrik A2 a)
+    if (const QIcon marke = lumi::ui::dateiArtIcon(QStringLiteral("lvinst")); !marke.isNull())
+    {
+        auto* icon = new QLabel(this);
+        icon->setObjectName(QStringLiteral("instrumentSoundIcon"));
+        icon->setPixmap(marke.pixmap(18, 18));
+        zeile->addWidget(icon);
+    }
     zeile->addWidget(m_instrument);
     zeile->addWidget(m_instrumentSuchen);
     zeile->addWidget(m_instrumentBearbeiten);

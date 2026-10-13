@@ -127,4 +127,17 @@ inline QIcon dateiArtIcon(const QString& endung)
     return QFileInfo::exists(pfad) ? QIcon(pfad) : QIcon();
 }
 
+/// Das Icon zu einer Dateiendung, wenn LumiViz eines hat: die Preset-Formate
+/// und die Dateiarten aus `dateiArtIcon`. Null-Icon fuer alles andere — fuer
+/// Listen, in denen Dateien verschiedener Art stehen (S120, Entscheid A2 a).
+inline QIcon dateiIconFuerEndung(const QString& endung)
+{
+    const QString e = endung.toLower();
+    if (presetIconDir().isEmpty() || e.isEmpty()) return {};
+    if (e == QLatin1String("milk2")) return presetTypeIcon(PresetIconKind::MilkDrop);
+    for (const char* preset : {"avs", "milk", "lvfx", "lvfx2", "lvkar", "lvtrail", "lvcomp"})
+        if (e == QLatin1String(preset)) return presetTypeIconForSuffix(e);
+    return dateiArtIcon(e);
+}
+
 }  // namespace lumi::ui

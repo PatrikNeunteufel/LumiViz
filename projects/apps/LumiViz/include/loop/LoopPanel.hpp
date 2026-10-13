@@ -194,6 +194,7 @@ private:
     int m_ladung = 0;
     QStringList m_ladeBericht;  ///< was beim Lesen der Datei auffiel
 
+    QLabel* m_dateiIcon = nullptr;  ///< das Datei-Icon der Loops vor dem Namen (S120, A2 a)
     QLabel* m_dateiZeile = nullptr;
     QPushButton* m_neu = nullptr;
     QPushButton* m_laden = nullptr;
