@@ -5231,6 +5231,7 @@ void MultiEffectVisualizer::renderNode(const ChainNode& node)
             self.runLyricsTrail(node, params);
         }
         void operator()(const ShapeParams& params) const { self.runShape(node, params); }
+        void operator()(const XyScopeParams& params) const { self.runXyScope(node, params); }
         void operator()(const CommentParams&) const { /* annotation, no-op */ }
         void operator()(const ImportNotesParams&) const { /* Import-Protokoll, no-op */ }
         void operator()(const RenderScaleParams&) const { /* pre-frame state, no-op */ }
@@ -13763,6 +13764,153 @@ void MultiEffectVisualizer::runShape(const ChainNode& node, const ShapeParams& p
                        ? static_cast<float>(m_renderMode.lineWidth)
                        : std::clamp(params.lineWidth, 1.0f, 20.0f);
     m_scopeRenderer.draw(linie, rp);
+    resetLineBlend();
+}
+
+void MultiEffectVisualizer::runXyScope(const ChainNode& node, const XyScopeParams& params)
+{
+    if (!m_scopeRenderer.ready() || m_surfaceWidth <= 0 || m_surfaceHeight <= 0) return;
+    LeafRuntime& rt = m_leafRuntimes[node.nodeId];
+
+    // EEL-Quartett (Entscheid V4 a, S121) — gebaut wie am Knoten Shape: ohne Code kein Host.
+    const bool hatCode = !params.initCode.empty() || !params.frameCode.empty() ||
+                         !params.beatCode.empty() || !params.pointCode.empty() || hatSongCode();
+    lumi::scripting::LuaScriptEngine* engine = nullptr;
+    bool mitPunkt = false;
+    if (hatCode)
+    {
+        const std::string snap = params.initCode + '\n' + params.frameCode + '\n' +
+                                 params.beatCode + '\n' + params.pointCode + songSchluessel();
+        const bool fresh = rt.xyHost == nullptr || rt.xyCompiled != snap;
+        if (fresh)
+        {
+            rt.xyHost = std::make_unique<ScriptSlotHost>("xyscope", activeContext(),
+                                                         ScriptSlotHost::Dialect::Avs);
+            rt.xyHost->setSource(Slot::Init, params.initCode);
+            setzeSong(*rt.xyHost);
+            rt.xyHost->setSource(Slot::Frame, params.frameCode);
+            rt.xyHost->setSource(Slot::Beat, params.beatCode);
+            rt.xyHost->setSource(Slot::Point, params.pointCode);
+            if (!rt.xyHost->compileAll())
+                BasicLogger::logWarning("MultiEffect: XY Scope: " + rt.xyHost->lastError());
+            rt.xyCompiled = snap;
+        }
+        engine = &rt.xyHost->engine();
+        feldHostVor(rt, *engine, fresh);
+        engine->setNumber("b", m_frameBeat ? 1.0 : 0.0);
+        engine->setNumber("w", m_surfaceWidth);
+        engine->setNumber("h", m_surfaceHeight);
+        feedAudio(*engine);
+        if (fresh && rt.xyHost->has(Slot::Init)) rt.xyHost->run(Slot::Init);
+        laufeSong(*rt.xyHost);
+        if (rt.xyHost->has(Slot::Frame)) rt.xyHost->run(Slot::Frame);
+        if (m_frameBeat && rt.xyHost->has(Slot::Beat)) rt.xyHost->run(Slot::Beat);
+        feldHostNach(rt, *engine, fresh);
+        mitPunkt = rt.xyHost->has(Slot::Point);
+    }
+    else if (rt.xyHost != nullptr)
+    {
+        rt.xyHost.reset();
+        rt.xyCompiled.clear();
+    }
+
+    // Die Farbe: eine aus der Tafel fuer die ganze Linie (wandert von Bild zu Bild durch die
+    // Tafel, wie bei Simple Scope) — oder der Verlauf entlang der Linie.
+    const QVector3D tafelFarbe = colorToVec(cycleScopeColor(params.colors, rt.scopeColorPos));
+    const bool verlauf = params.colorSource == 1;
+    if (verlauf && (rt.xyVerlauf.empty() || rt.xyVerlaufName != params.gradientPreset))
+    {
+        lumi::modules::ColorGradientModule quelle;
+        quelle.loadPreset(params.gradientPreset);
+        rt.xyVerlauf.resize(256);
+        for (std::size_t n = 0; n < rt.xyVerlauf.size(); ++n)
+        {
+            const auto farbe = quelle.sample(static_cast<float>(n) / 255.0f);
+            rt.xyVerlauf[n] = QVector3D(farbe[0], farbe[1], farbe[2]);
+        }
+        rt.xyVerlaufName = params.gradientPreset;
+    }
+
+    // Links gegen rechts, in voller Genauigkeit (nicht die auf 8 Bit gerundeten Werte der Skripte)
+    // Ohne Ton: Stille — der Knoten laeuft trotzdem (ein Punkt in der Mitte, das Skript rechnet).
+    static const std::vector<float> kStille(512, 0.0f);
+    std::vector<float> links = getWaveformChannel(0);
+    std::vector<float> rechts = getWaveformChannel(1);
+    if (std::min(links.size(), rechts.size()) < 2)
+    {
+        links = kStille;
+        rechts = kStille;
+    }
+    const std::size_t werte = std::min(links.size(), rechts.size());
+
+    const auto zahl = [](float wert, double ersatz) {
+        return std::isfinite(wert) ? static_cast<double>(wert) : ersatz;
+    };
+    const double gain = std::clamp(zahl(params.gain, 1.0), 0.0, 16.0);
+    // 100 % = Vollausschlag fuellt die kuerzere Seite; je Achse, damit ein Kreis rund bleibt
+    const double kurz = static_cast<double>(std::min(m_surfaceWidth, m_surfaceHeight));
+    const double mass = std::clamp(zahl(params.size, 0.0), 0.0, 400.0) / 100.0;
+    const double massX = mass * kurz / m_surfaceWidth;
+    const double massY = mass * kurz / m_surfaceHeight;
+    const double versatzX = zahl(params.xShift, 0.0) / 100.0 * 2.0;
+    const double versatzY = -zahl(params.yShift, 0.0) / 100.0 * 2.0;  // negativ = nach oben
+    // Rotate 45°: ein Mono-Ton (links = rechts) steht senkrecht, wie bei einem Goniometer
+    const double kWurzelHalb = 0.70710678118654752;
+
+    std::vector<lumi::modules::SuperscopePoint> punkte;
+    punkte.reserve(werte);
+    for (std::size_t n = 0; n < werte; ++n)
+    {
+        const double i01 = static_cast<double>(n) / static_cast<double>(werte - 1);
+        double x = static_cast<double>(links[n]) * gain;
+        double y = static_cast<double>(rechts[n]) * gain;  // rechts zeigt nach oben
+        QVector3D farbe = tafelFarbe;
+        if (verlauf) farbe = rt.xyVerlauf[std::min<std::size_t>(255, static_cast<std::size_t>(i01 * 255.0 + 0.5))];
+        bool skip = false;
+        if (mitPunkt)
+        {
+            engine->setNumber("i", i01);
+            engine->setNumber("x", x);
+            engine->setNumber("y", y);
+            engine->setNumber("red", farbe.x());
+            engine->setNumber("green", farbe.y());
+            engine->setNumber("blue", farbe.z());
+            engine->setNumber("skip", 0.0);
+            rt.xyHost->run(Slot::Point);
+            x = engine->number("x");
+            y = engine->number("y");
+            farbe = QVector3D(static_cast<float>(engine->number("red")), static_cast<float>(engine->number("green")),
+                              static_cast<float>(engine->number("blue")));
+            skip = engine->number("skip") > 0.5;
+        }
+        if (params.rotate45)
+        {
+            const double gedrehtX = (x - y) * kWurzelHalb;
+            y = (x + y) * kWurzelHalb;
+            x = gedrehtX;
+        }
+        lumi::modules::SuperscopePoint p;
+        p.x = x * massX + versatzX;
+        p.y = y * massY + versatzY;
+        p.r = farbe.x();
+        p.g = farbe.y();
+        p.b = farbe.z();
+        p.skip = skip;
+        punkte.push_back(p);
+    }
+
+    // Zeichnen wie SuperScope: ein Set Render Mode davor gewinnt bei Mischart und Breite.
+    const int mischart = m_renderMode.set ? m_renderMode.lineBlend : std::clamp(params.lineBlend, 0, 9);
+    applyLineBlend(mischart, m_renderMode.alpha);
+    lumi::render::ScopeRenderer::Params rp;
+    const float breite = (m_renderMode.set && m_renderMode.lineWidth > 0) ? static_cast<float>(m_renderMode.lineWidth)
+                                                                          : std::clamp(params.lineWidth, 1.0f, 20.0f);
+    rp.mode = params.drawMode == 1 ? lumi::modules::SuperscopeRenderMode::Dots
+                                   : lumi::modules::SuperscopeRenderMode::Lines;
+    rp.lineWidth = breite;
+    rp.dotSize = breite;
+    rp.glowEnabled = false;
+    m_scopeRenderer.draw(punkte, rp);
     resetLineBlend();
 }
 

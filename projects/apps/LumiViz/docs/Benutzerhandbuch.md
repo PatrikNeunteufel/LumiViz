@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.155.0
+> **Version:** 1.156.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1168,6 +1168,51 @@ sie hast.
 Ein Nachleuchten hat der Knoten nicht von sich aus. Es entsteht wie bei
 SuperScope: in einer Effect List ohne *Clear every frame*, mit einem
 **Fadeout** davor.
+
+### XY Scope: links gegen rechts
+
+Der Knoten **XY Scope** (Effekt-Palette → Scopes & Sources) zeichnet den Ton als Bild:
+jeder Abtastwert ist ein Punkt, die linke Seite gibt seine Lage waagrecht, die
+rechte senkrecht (ein positiver Wert rechts liegt oben). Ein Mono-Ton — beide
+Seiten gleich — ist eine schräge Linie, ein breites Stereobild eine Wolke, und
+ein Ton, dessen Seiten zwei verschiedene Schwingungen tragen, zeichnet eine
+Figur. Der Knoten liest die Werte genauer als die Skriptfunktion `getosc`,
+die auf 256 Stufen rundet.
+
+| Feld | Bedeutung |
+|---|---|
+| **Gain** | Verstärkung beider Seiten (0,1 bis 16). Bei 1 füllt ein Ton mit vollem Pegel die eingestellte Größe |
+| **Draw** | **Lines** — ein Zug durch alle Werte — oder **Dots** — ein Punkt je Wert. Bei lautem, dichtem Material zeigen Punkte die Form oft besser |
+| **Line width** | Strichbreite in Pixeln; bei Dots der Durchmesser |
+| **Rotate 45°** | dreht das Bild um 45 Grad: ein Mono-Ton steht dann senkrecht, wie bei einem Goniometer |
+| **X shift / Y shift (%)** | Lage gegen die Bildmitte (negativ = nach oben) |
+| **Size (%)** | 100 = voller Pegel füllt die kürzere Seite des Bilds |
+| **Color from** | **Table** — die ganze Linie in einer Farbe, die von Bild zu Bild durch **Colors** wandert — oder **Gradient** — der gewählte Verlauf läuft entlang der Linie, vom ersten Wert zum letzten |
+| **Line blend** | wie bei Shape und SuperScope; ein **Set Render Mode** davor gewinnt |
+| Skriptfelder **Init**, **Frame**, **Beat**, **Point** | wie bei Shape; dazu **Song** |
+
+In Init, Frame, Beat und Song sind die Regler Variablen: `gain`, `drawmode`
+(0 Lines, 1 Dots), `linewidth`, `rotate45`, `xshift`, `yshift`, `size`,
+`colorsource`, `lineblend`. Beispiel: Beat `gain = 2.5;` und Frame
+`gain = gain + (1 - gain) * 0.12;` blasen das Bild bei jedem Beat auf.
+
+**Point** läuft einmal je Abtastwert: `i` ist die Stelle im Block (0 bis 1),
+`x` der linke und `y` der rechte Wert (nach Gain, vor Rotate, Size und Shift;
+anders als bei SuperScope und Shape zeigt `y` hier nach oben, weil es die
+rechte Seite ist), dazu `red`, `green`, `blue` und `skip`. Beispiel:
+`y = x; x = i * 2 - 1;` macht aus dem Scope ein Oszilloskop der linken Seite.
+
+Ein Bild bekommt 512 Werte je Seite, das sind knapp 12 Millisekunden Ton. Ein
+Ton unter rund 86 Hz zeigt darin keinen ganzen Umlauf — die Figur bleibt offen.
+Ein Nachleuchten schließt die Lücke: der Knoten in einer Effect List ohne
+*Clear every frame*, mit einem **Fadeout** davor. Das Scope zeichnet die Summe
+dessen, was spielt; eine einzelne Figur steht nur, wenn eine Schicht allein
+und ohne Echo und Hall klingt.
+
+Sechs **Voreinstellungen**: *Goniometer* (Rotate 45°, Dots), *Lissajous*
+(Lines mit Verlauf), *Beat Zoom*, *Slow Spin* (Point dreht das Bild langsam),
+*Rainbow Trace* (Point färbt entlang der Linie), *Corner Meter* (klein in der
+Ecke oben rechts, als Messgerät über einem anderen Bild).
 
 ### Werte ohne Formel bewegen (Modulation)
 
@@ -3090,6 +3135,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.156.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **XY Scope**: zeichnet links gegen rechts, ein Punkt je Abtastwert, in voller Genauigkeit — **Gain**, **Draw** (Lines, Dots), **Line width**, **Rotate 45°**, Lage, Größe, **Color from** (Table, Gradient), **Line blend**; Skriptfelder Init, Frame, Beat, Song und **Point**; sechs Voreinstellungen. |
 | 1.155.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **Shape**: zeichnet die Konturen einer Form-Datei (`.lvcontour`) aus beliebig vielen Teiltönen (**Harmonics**), mit **Contour**, **Points**, Lage, Größe, Drehung, eigener Farbe, **Line blend**, **Show circles** und **Speed**; Skriptfelder Init, Frame, Beat, Song und **Point** (je Punkt der Linie); neun Voreinstellungen. §17: `.lvcontour` gibt es jetzt. |
 | 1.154.0 | 2026-10-13 | Session 120. Export und Import der eigenen Daten: NEU der Bereich **Shapes** (eigene Formen, `.lvcontour`). Mehr ist von der Form im Programm noch nicht zu sehen. |
 | 1.153.0 | 2026-10-13 | Session 120. §16 Instrument-Creator: NEU **Pan** je Schicht (im Kasten Level, für jede Waveform); GEÄNDERT **Layers**: ein Instrument trägt bis zu acht Schichten statt vier. |

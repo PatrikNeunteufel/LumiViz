@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.14.0
+> **Version:** 0.15.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -817,6 +817,47 @@ liest dort `i`, `x` (links) und `y` (rechts) in voller Genauigkeit und setzt
 vorgelegt. Verworfen: ohne Per point (b), ohne Skriptfelder (c). Fällt die
 Messung zu Per point bei Shape schlecht aus, wird V4 neu vorgelegt.
 
+**X1 a (Patrik S121) — die Regler von XY Scope:**
+
+| Im Panel | Skriptname | Bereich, Vorgabe | Anmerkung |
+|---|---|---|---|
+| Gain | `gain` | 0,1 bis 16; Vorgabe 1 | Vollausschlag füllt bei 1 die Größe |
+| Draw | `drawmode` | Lines, Dots; Vorgabe Lines | |
+| Line width | `linewidth` | 1 bis 20 px; Vorgabe 2 | bei Dots der Durchmesser |
+| Rotate 45° | `rotate45` | Haken; Vorgabe aus | Mono steht senkrecht |
+| X shift, Y shift | `xshift`, `yshift` | −100 bis 100 %; Vorgabe 0 | wie Shape |
+| Size | `size` | 1 bis 400 %; Vorgabe 80 | 100 = Vollausschlag füllt die kürzere Seite |
+| Color from | `colorsource` | Table, Gradient; Vorgabe Table | |
+| Colors | – | Farbtafel, Vorgabe Weiß | wandert von Bild zu Bild durch die Tafel |
+| Gradient | – | ein mitgelieferter Verlauf; Vorgabe Neon | entlang der Linie |
+| Line blend | `lineblend` | 0 bis 9; Vorgabe 1 | wie Shape |
+
+Lage, Größe, Line blend und Dots standen nicht in M1 a. Verworfen: nur die
+Liste aus M1 a (b).
+
+**X2 a (Patrik S121) — sechs Presets** unter `asset/nodepresets/xyScope/`:
+Goniometer (Rotate 45°, Dots), Lissajous (Lines mit Verlauf), Beat Zoom,
+Slow Spin (Per point dreht das Bild), Rainbow Trace (Per point färbt), Corner
+Meter (klein in der Ecke). Verworfen: zwei (b).
+
+### Wie der Knoten XY Scope gebaut ist (Stufe 19d, S121)
+
+- **`XyScopeParams`** am Ende der Variante, Typschlüssel `xyScope`;
+  **`runXyScope`** gebaut wie `runShape` (eigener Skript-Host nur mit Code,
+  die Regler über die Feldtabelle, der Linienzeichner von SuperScope).
+- Die Werte kommen aus `getWaveformChannel(0)` und `(1)` als Kommazahlen —
+  so viele, wie die Zufuhr liefert (512 je Seite). **Ohne Ton** rechnet der
+  Knoten mit Stille: ein Punkt in der Mitte, das Skript läuft.
+- **Im Feld Point zeigt `y` nach oben** — es ist der rechte Wert, wie V4 a
+  ihn nennt; bei SuperScope und am Knoten Shape zeigt `y` nach unten. Von
+  Claude gesetzt, steht im Handbuch.
+- Der Verlauf wird einmal je Wahl in eine Tafel mit 256 Farben gerechnet.
+- In der Palette steht der Knoten unter „Scopes & Sources".
+- **Nicht gesehen:** das Scope zu Musik und zu einer Shape-Schicht mit
+  Stereo XY. Im Test zeichnet es gerechnete Blöcke (Kreis, Mono, eine Figur
+  aus zwei Frequenzen); das Blatt mit sechs Stellungen und den sechs Presets
+  ist angesehen.
+
 ### Wie der Knoten Shape gebaut ist (Stufe 19b, S121)
 
 - **`shape/Zeichenform`** (`lumi::shape`, ohne OpenGL und ohne Qt-Anwendung):
@@ -978,7 +1019,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen — **gebaut in S120** (§7 „Wie es gebaut ist"); im Programm ist davon nur der Bereich Shapes im Export zu sehen | — |
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a; V1 a bis V3 a) — **gebaut in S121** (§10 „Wie der Knoten Shape gebaut ist"), im Programm ungesehen | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster — **gebaut in S121** (§5 „Wie die Schwingung gebaut ist", `.lvinst` Fassung 9; T1 a, T2 a). Die Kante des Sprungs ist **gemessen** (§9), **nicht gehört**; offen dazu und zu den Ecken: Patriks Ohr | 19a |
-| 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a) | — (gebraucht ab 19c) |
+| 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a; V4 a, X1 a, X2 a) — **gebaut in S121** (§10 „Wie der Knoten XY Scope gebaut ist"), im Programm ungesehen | — (gebraucht ab 19c) |
 | 19e | die Shape-Schicht im Creator | Skizze |
 | 20a | das Form-Fenster: zeichnen | Skizze |
 | 20b | SVG über das mitschreibende Zeichengerät (S1 a) | 20a |
@@ -1009,6 +1050,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.15.0 | 2026-10-13 (S121) | **Der Knoten XY Scope entschieden und gebaut (Stufe 19d).** Entscheide Patrik: **X1 a** die Regler (mit Draw Lines oder Dots, Lage, Größe, Color from, Line blend über M1 a hinaus), **X2 a** sechs Presets; die Reihenfolge der Stufen bleibt (19d vor 19e). Gebaut: `XyScopeParams`, `runXyScope`, Panel, Palette, Feldtabelle, sechs Presets (§10, §14). Im Feld Point zeigt `y` nach oben (der rechte Wert). Im Programm ungesehen. |
 | 0.14.0 | 2026-10-13 (S121) | **Die Schwingung Shape entschieden und gebaut (Stufe 19c).** Entscheide Patrik: **T1 a** der Pegel — kein Ausgleich, die Form am fernsten Punkt gemessen (davor gemessen: 0,62 bis 1,41); **T2 a** Angle dreht die Form auch mit Stereo XY (§4, §5). Gebaut: `shape/Tonform`, `Schwingung::Form`, `rechneForm`, `.lvinst` Fassung 9 (§5 „Wie die Schwingung gebaut ist", §14). Gemessen: 4,1 ms je Sekunde Ton bei 24 Harmonics; die Kante des Sprungs liegt bei A4 um −33 dB und ist dort zurückgefallener Anteil (§9). Hörproben abgelegt, nichts gehört; offen: Ecken dämpfen, der Sprung. |
 | 0.13.0 | 2026-10-13 (S121) | **Der Knoten Shape entschieden und gebaut (Stufe 19b).** Entscheide Patrik: **V1 a** fünf Skriptfelder — Init, Frame, Beat, Song und Per point; **V2 a** die Regler, mit Contour, Points, eigener Farbe und Line blend über M2 b hinaus; **V3 a** neun Presets; **V4 a** XY Scope bekommt dieselben fünf Felder (§10). Gebaut: `shape/Zeichenform`, `ShapeParams`, `runShape`, Panel, Palette, Feldtabelle, neun Presets (§10 „Wie der Knoten Shape gebaut ist", §14). Gemessen: Per point 0,19 ms bei 512 Punkten, der Umriss 0,09 ms in der Vorgabe (Release-clang). Im Programm ungesehen. |
 | 0.12.0 | 2026-10-13 (S120) | **Stufe 19a gebaut:** `shape/Kontur` — die Zeichnung, der Pfad als Text, die Datei `.lvcontour` Fassung 1, die Orte (mitgeliefert, `user:<name>`, Pfad), die Reihe mit weichem Gewicht; sechs mitgelieferte Formen; der Bereich Shapes im Export (§7 „Wie es gebaut ist", §14). Die Namen der Felder von Claude gesetzt. |

@@ -1,8 +1,8 @@
 {
     "schema": 1,
     "summe": {
-        "felder": 877,
-        "typen": 95
+        "felder": 892,
+        "typen": 96
     },
     "typen": [
         {
@@ -5170,6 +5170,90 @@
             ],
             "name": "Water Bump",
             "typkey": "waterBump"
+        },
+        {
+            "felder": [
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "beatCode"
+                },
+                {
+                    "art": "liste",
+                    "default": [
+                        16777215
+                    ],
+                    "laenge": 1,
+                    "name": "colors"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "colorSource"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "drawMode"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "frameCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "gain"
+                },
+                {
+                    "art": "text",
+                    "default": "Neon",
+                    "name": "gradientPreset"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "initCode"
+                },
+                {
+                    "art": "zahl",
+                    "default": 1,
+                    "name": "lineBlend"
+                },
+                {
+                    "art": "zahl",
+                    "default": 2,
+                    "name": "lineWidth"
+                },
+                {
+                    "art": "text",
+                    "default": "",
+                    "name": "pointCode"
+                },
+                {
+                    "art": "bool",
+                    "default": false,
+                    "name": "rotate45"
+                },
+                {
+                    "art": "zahl",
+                    "default": 80,
+                    "name": "size"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "xShift"
+                },
+                {
+                    "art": "zahl",
+                    "default": 0,
+                    "name": "yShift"
+                }
+            ],
+            "name": "XY Scope",
+            "typkey": "xyScope"
         }
     ]
 }

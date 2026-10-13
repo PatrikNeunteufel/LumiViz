@@ -199,6 +199,9 @@ const std::vector<EffectType>& effectPalette()
          "Scripted scope: draws dots or lines from per-point code.", "Render / SuperScope"},
         {"Simple (Scope)", &makeDefault<SimpleScopeParams>, R, Avs,
          "The classic oscilloscope / spectrum analyser.", "Render / Simple"},
+        // S121: links gegen rechts, in voller Genauigkeit
+        {"XY Scope", &makeDefault<XyScopeParams>, R, Lumi,
+         "Left channel against right: the stereo picture of the sound, as lines or dots."},
         {"Oscilliscope Star", &makeDefault<OscStarParams>, R, Avs,
          "Waveform drawn along rotating radial spokes.", "Render / Oscilliscope Star"},
         {"Ring", &makeDefault<OscRingParams>, R, Avs,

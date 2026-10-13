@@ -6,8 +6,8 @@
     "beschreibung": "EffectChain.hpp (Doxygen)"
   },
   "summe": {
-    "typen": 95,
-    "felder": 877,
+    "typen": 96,
+    "felder": 892,
     "ohne_panel": 0,
     "ohne_doc": 0
   },
@@ -10222,6 +10222,181 @@
           "panel": "bool",
           "helfer": "addBool",
           "doc": "random drop spot vs. fixed dropX/dropY"
+        }
+      ]
+    },
+    {
+      "typkey": "xyScope",
+      "name": "XY Scope",
+      "struct": "XyScopeParams",
+      "felder": [
+        {
+          "art": "text",
+          "default": "",
+          "name": "beatCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "liste",
+          "default": [
+            16777215
+          ],
+          "laenge": 1,
+          "name": "colors",
+          "panel": "farbtafel",
+          "helfer": "addColorTable",
+          "doc": "Color table (0x00RRGGBB), cycled through over the frames (with `colorSource` 0)."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "colorSource",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 2,
+          "doc": "Where the colour comes from: 0 the colour table (one colour for the whole line, moving through the table from frame to frame), 1 the gradient (running along the line from the first sample to the last)."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "drawMode",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 2,
+          "doc": "0 lines (one stroke through all samples), 1 dots (one per sample)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "frameCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "gain",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 0.1,
+          "hi": 16.0,
+          "doc": "factor on both channels (0.1..16); at 1 full scale fills `size`"
+        },
+        {
+          "art": "text",
+          "default": "Neon",
+          "name": "gradientPreset",
+          "panel": "gradient",
+          "helfer": "addGradient",
+          "doc": "gradient preset name (with `colorSource` 1)"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "initCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script.",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "zahl",
+          "default": 1,
+          "name": "lineBlend",
+          "panel": "enum",
+          "helfer": "addEnum",
+          "enumWerte": 10,
+          "doc": "How the line mixes with the picture: AVS BLEND_LINE mode 0..9 as on SuperScope (0 replace, 1 additive, 2 maximum, 3 50/50, …). A preceding Set Render Mode wins."
+        },
+        {
+          "art": "zahl",
+          "default": 2,
+          "name": "lineWidth",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 1.0,
+          "hi": 20.0,
+          "doc": "stroke width in pixels (1..20); with dots their diameter"
+        },
+        {
+          "art": "text",
+          "default": "",
+          "name": "pointCode",
+          "panel": "skript",
+          "helfer": "addScript",
+          "doc": "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script. Runs once per sample: `i` (place in the block, 0..1), `x` (left) and `y` (right; up on the screen), both after `gain` and before rotate, size and shift, come in; `x`/`y`, `red`/`green`/`blue` and `skip` are read back.",
+          "skriptvars": [
+            "blue",
+            "green",
+            "red",
+            "skip",
+            "x",
+            "y"
+          ]
+        },
+        {
+          "art": "bool",
+          "default": false,
+          "name": "rotate45",
+          "panel": "bool",
+          "helfer": "addBool",
+          "doc": "Turn the picture by 45 degrees: a mono sound (left = right) stands upright, as on a goniometer."
+        },
+        {
+          "art": "zahl",
+          "default": 80,
+          "name": "size",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": 1.0,
+          "hi": 400.0,
+          "doc": "Size in percent (1..400): 100 = full scale fills the shorter side of the picture."
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "xShift",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the centre, percent of width (-100..100)"
+        },
+        {
+          "art": "zahl",
+          "default": 0,
+          "name": "yShift",
+          "panel": "double",
+          "helfer": "addDouble",
+          "lo": -100.0,
+          "hi": 100.0,
+          "doc": "offset from the centre, percent of height (negative = up)"
         }
       ]
     }

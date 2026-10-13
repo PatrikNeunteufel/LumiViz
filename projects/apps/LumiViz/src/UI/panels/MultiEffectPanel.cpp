@@ -8904,6 +8904,39 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
         addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).beatCode = std::move(v); });
         addScript("pointCode", tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<ShapeParams>(n.params).pointCode = std::move(v); });
     }
+    else if (auto* p = std::get_if<XyScopeParams>(&params))
+    {
+        // XY Scope (S121, Shape_Konzept §10): links gegen rechts, ein Punkt je Abtastwert
+        addDouble("gain", tr("Gain"), p->gain, 0.1, 16.0, 0.1,
+                  [](ChainNode& n, double v) { std::get<XyScopeParams>(n.params).gain = static_cast<float>(v); });
+        addEnum("drawMode", tr("Draw"), std::clamp(p->drawMode, 0, 1), {"Lines", "Dots"},
+                [](ChainNode& n, int v) { std::get<XyScopeParams>(n.params).drawMode = v; });
+        addDouble("lineWidth", tr("Line width"), p->lineWidth, 1.0, 20.0, 0.5,
+                  [](ChainNode& n, double v) { std::get<XyScopeParams>(n.params).lineWidth = static_cast<float>(v); });
+        addBool("rotate45", tr("Rotate 45°"), p->rotate45,
+                [](ChainNode& n, bool v) { std::get<XyScopeParams>(n.params).rotate45 = v; });
+        addDouble("xShift", tr("X shift (%)"), p->xShift, -100.0, 100.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<XyScopeParams>(n.params).xShift = static_cast<float>(v); });
+        addDouble("yShift", tr("Y shift (%)"), p->yShift, -100.0, 100.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<XyScopeParams>(n.params).yShift = static_cast<float>(v); });
+        addDouble("size", tr("Size (%)"), p->size, 1.0, 400.0, 1.0,
+                  [](ChainNode& n, double v) { std::get<XyScopeParams>(n.params).size = static_cast<float>(v); });
+        addEnum("colorSource", tr("Color from"), std::clamp(p->colorSource, 0, 1), {"Table", "Gradient"},
+                [](ChainNode& n, int v) { std::get<XyScopeParams>(n.params).colorSource = v; });
+        addColorTable("colors", tr("Colors"), p->colors,
+                      [](ChainNode& n) -> std::vector<uint32_t>& { return std::get<XyScopeParams>(n.params).colors; },
+                      tr("Color table — the scope moves through these from frame to frame (Color from: Table)."));
+        addGradient("gradientPreset", tr("Gradient"), p->gradientPreset,
+                    [](ChainNode& n, std::string v) { std::get<XyScopeParams>(n.params).gradientPreset = std::move(v); });
+        addEnum("lineBlend", tr("Line blend"), std::clamp(p->lineBlend, 0, 9),
+                {"Replace", "Additive", "Maximum", "50/50", "Sub (fb-c)",
+                 "Sub (c-fb)", "Multiply", "Adjustable", "XOR (~Add)", "Minimum"},
+                [](ChainNode& n, int v) { std::get<XyScopeParams>(n.params).lineBlend = v; });
+        addScript("initCode", tr("Init"), p->initCode, [](ChainNode& n, std::string v) { std::get<XyScopeParams>(n.params).initCode = std::move(v); });
+        addScript("frameCode", tr("Frame"), p->frameCode, [](ChainNode& n, std::string v) { std::get<XyScopeParams>(n.params).frameCode = std::move(v); });
+        addScript("beatCode", tr("Beat"), p->beatCode, [](ChainNode& n, std::string v) { std::get<XyScopeParams>(n.params).beatCode = std::move(v); });
+        addScript("pointCode", tr("Point"), p->pointCode, [](ChainNode& n, std::string v) { std::get<XyScopeParams>(n.params).pointCode = std::move(v); });
+    }
     else if (auto* p = std::get_if<AviParams>(&params))
     {
         addText("filename", tr("File"), p->filename,

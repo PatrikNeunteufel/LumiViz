@@ -266,6 +266,16 @@ feste lässt kein Skript der vorigen stehen.
 | | Wave Outline | Point-Skript: die Wellenform schiebt jeden Punkt des Kreises nach außen |
 | | Rainbow Outline | Point-Skript: die Farbe läuft mit `i` um die Linie |
 | | Contour Switch | Beat-Skript: `contour` wechselt zwischen den zwei Konturen von Heart and star |
+| `xyScope` (S121) | Goniometer | Rotate 45°, Dots: das Stereo-Messgerät, ein Mono-Ton steht senkrecht |
+| | Lissajous | Lines mit dem Verlauf Neon entlang der Linie |
+| | Beat Zoom | Beat-Skript: Gain springt, das Frame-Skript lässt es abklingen |
+| | Slow Spin | Frame-Skript zählt einen Winkel, das Point-Skript dreht jeden Punkt darum |
+| | Rainbow Trace | Point-Skript: die Farbe läuft mit `i` durch den Farbkreis |
+| | Corner Meter | klein in der Ecke oben rechts, Rotate 45°, Dots |
+
+Die XY-Scope-Vorlagen tragen Gain, Draw, Rotate 45°, Lage, Größe, Color from
+und alle vier Skriptfelder (auch leere); Farbtafel, Strichbreite und Line
+blend bleiben beim Nutzer.
 
 Die Shape-Vorlagen tragen Form, Contour, Harmonics, Points, Größe, Drehung,
 Show circles, Speed und alle vier Skriptfelder (auch leere) — ein Wechsel lässt

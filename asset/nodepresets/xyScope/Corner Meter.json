@@ -1,0 +1,18 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "xyScope",
+        "gain": 1,
+        "drawMode": 1,
+        "rotate45": true,
+        "xShift": 33,
+        "yShift": -33,
+        "size": 30,
+        "colorSource": 0,
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "pointCode": ""
+    }
+}

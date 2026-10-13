@@ -1,0 +1,19 @@
+{
+    "format": "lumiviz-nodepreset",
+    "formatVersion": 1,
+    "node": {
+        "type": "xyScope",
+        "gain": 1,
+        "drawMode": 0,
+        "rotate45": false,
+        "xShift": 0,
+        "yShift": 0,
+        "size": 80,
+        "colorSource": 1,
+        "gradientPreset": "Neon",
+        "initCode": "",
+        "frameCode": "",
+        "beatCode": "",
+        "pointCode": ""
+    }
+}

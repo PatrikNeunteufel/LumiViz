@@ -18,7 +18,7 @@ namespace
 {
 // Nach Schluessel sortiert — die Suche unten setzt das voraus.
 constexpr std::array<std::pair<std::string_view, std::string_view>,
-                     877>
+                     892>
     kDocs{{
     {"addBorders.beatCode",
      "Parameter script (Strang D): `size` + `b`/`w`/`h` + audio set. Empty = no script. Colors via script (Block B, S79): `color_r`, `color_g`, `color_b` (0..1)."},
@@ -1774,6 +1774,36 @@ constexpr std::array<std::pair<std::string_view, std::string_view>,
      "Parameter script (Strang D): `density`, `depth`, `dropradius`, `displacescale` + `b`/`w`/`h` + audio set. Empty = no script. More fields via script (Block D, S79): `dropx`, `dropy`."},
     {"waterBump.randomDrop",
      "random drop spot vs. fixed dropX/dropY"},
+    {"xyScope.beatCode",
+     "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script."},
+    {"xyScope.colorSource",
+     "Where the colour comes from: 0 the colour table (one colour for the whole line, moving through the table from frame to frame), 1 the gradient (running along the line from the first sample to the last)."},
+    {"xyScope.colors",
+     "Color table (0x00RRGGBB), cycled through over the frames (with `colorSource` 0)."},
+    {"xyScope.drawMode",
+     "0 lines (one stroke through all samples), 1 dots (one per sample)"},
+    {"xyScope.frameCode",
+     "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script."},
+    {"xyScope.gain",
+     "factor on both channels (0.1..16); at 1 full scale fills `size`"},
+    {"xyScope.gradientPreset",
+     "gradient preset name (with `colorSource` 1)"},
+    {"xyScope.initCode",
+     "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script."},
+    {"xyScope.lineBlend",
+     "How the line mixes with the picture: AVS BLEND_LINE mode 0..9 as on SuperScope (0 replace, 1 additive, 2 maximum, 3 50/50, \342\200\246). A preceding Set Render Mode wins."},
+    {"xyScope.lineWidth",
+     "stroke width in pixels (1..20); with dots their diameter"},
+    {"xyScope.pointCode",
+     "Script quartet (S121): init/frame/beat (and Song) read and set every field of this node + `b`/`w`/`h` + audio set. Empty = no script. Runs once per sample: `i` (place in the block, 0..1), `x` (left) and `y` (right; up on the screen), both after `gain` and before rotate, size and shift, come in; `x`/`y`, `red`/`green`/`blue` and `skip` are read back."},
+    {"xyScope.rotate45",
+     "Turn the picture by 45 degrees: a mono sound (left = right) stands upright, as on a goniometer."},
+    {"xyScope.size",
+     "Size in percent (1..400): 100 = full scale fills the shorter side of the picture."},
+    {"xyScope.xShift",
+     "offset from the centre, percent of width (-100..100)"},
+    {"xyScope.yShift",
+     "offset from the centre, percent of height (negative = up)"},
 }};
 }  // namespace
 

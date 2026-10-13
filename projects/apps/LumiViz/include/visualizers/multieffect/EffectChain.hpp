@@ -3086,6 +3086,50 @@ struct ShapeParams
     std::string pointCode;
 };
 
+/**
+ * LumiViz "XY Scope" (S121, Shape_Konzept §10, M1 a): draws the left channel
+ * against the right — one point per sample, x = left, y = right — in full
+ * precision (the script functions `getosc` round to 8 bit). Shows the picture
+ * of any stereo sound; a shape layer with Stereo XY draws its shape here.
+ * An afterglow comes from a Fadeout in a list that keeps its picture.
+ */
+struct XyScopeParams
+{
+    float gain = 1.0f;  ///< factor on both channels (0.1..16); at 1 full scale fills `size`
+    int drawMode = 0;   ///< 0 lines (one stroke through all samples), 1 dots (one per sample)
+    float lineWidth = 2.0f;  ///< stroke width in pixels (1..20); with dots their diameter
+    /// Turn the picture by 45 degrees: a mono sound (left = right) stands
+    /// upright, as on a goniometer.
+    bool rotate45 = false;
+    float xShift = 0.0f;  ///< offset from the centre, percent of width (-100..100)
+    float yShift = 0.0f;  ///< offset from the centre, percent of height (negative = up)
+    /// Size in percent (1..400): 100 = full scale fills the shorter side of
+    /// the picture.
+    float size = 80.0f;
+    /// Where the colour comes from: 0 the colour table (one colour for the
+    /// whole line, moving through the table from frame to frame), 1 the
+    /// gradient (running along the line from the first sample to the last).
+    int colorSource = 0;
+    /// Color table (0x00RRGGBB), cycled through over the frames (with `colorSource` 0).
+    std::vector<uint32_t> colors{0xFFFFFF};
+    std::string gradientPreset = "Neon";  ///< gradient preset name (with `colorSource` 1)
+    /// How the line mixes with the picture: AVS BLEND_LINE mode 0..9 as on
+    /// SuperScope (0 replace, 1 additive, 2 maximum, 3 50/50, …). A preceding
+    /// Set Render Mode wins.
+    int lineBlend = 1;
+
+    /// Script quartet (S121): init/frame/beat (and Song) read and set every
+    /// field of this node + `b`/`w`/`h` + audio set. Empty = no script.
+    std::string initCode;
+    std::string frameCode;
+    std::string beatCode;
+    /// Runs once per sample: `i` (place in the block, 0..1), `x` (left) and
+    /// `y` (right; up on the screen), both after `gain` and before rotate,
+    /// size and shift, come in; `x`/`y`, `red`/`green`/`blue` and `skip` are
+    /// read back.
+    std::string pointCode;
+};
+
 using EffectParams =
     std::variant<ListParams, ClearParams, FadeoutParams, InvertParams,
                  BrightnessParams, FastBrightnessParams, BlurParams, MirrorParams,
@@ -3118,7 +3162,8 @@ using EffectParams =
                  HostSwitcherParams, PassthroughParams,
                  LyricsParams,
                  LyricsTrailParams,
-                 ShapeParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
+                 ShapeParams,
+                 XyScopeParams>;  // neue Typen ans ENDE (Indizes bleiben stehen)
 
 /**
  * Die Herkunft eines Knotens — oder `nullptr`, wenn sein Typ keine trägt.
@@ -3341,6 +3386,7 @@ struct CompileResult
         const char* operator()(const LyricsParams&) const { return "Lyrics"; }
         const char* operator()(const LyricsTrailParams&) const { return "Lyrics Trail"; }
         const char* operator()(const ShapeParams&) const { return "Shape"; }
+        const char* operator()(const XyScopeParams&) const { return "XY Scope"; }
         const char* operator()(const ClearParams&) const { return "Clear"; }
         const char* operator()(const FadeoutParams&) const { return "Fadeout"; }
         const char* operator()(const InvertParams&) const { return "Invert"; }

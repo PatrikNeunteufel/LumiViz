@@ -241,8 +241,8 @@ TEST_CASE("Feldsteuerung F2b: auch Module mit eigenem Skript-Host setzen jedes L
     const auto [typen, felder] = pruefeLiveFelder(
         [](const ft::Typ& t) { return t.traeger == ft::Traeger::EigenerHost; });
     // alle Module mit eigenem Skript-Host (S86: + SuperScope, Effect List,
-    // Dynamic Movement, Host Switcher; S121: + Shape)
-    CHECK(typen == 24);
+    // Dynamic Movement, Host Switcher; S121: + Shape, XY Scope)
+    CHECK(typen == 25);
     CHECK(felder > 120);
 }
 

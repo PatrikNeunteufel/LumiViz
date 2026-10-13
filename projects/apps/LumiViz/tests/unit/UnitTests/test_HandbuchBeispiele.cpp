@@ -83,6 +83,10 @@ const Eintrag kBeispiele[] = {
     {"harmonics = harmonics + (64 - harmonics) * 0.06;", Art::Belegt, "test_ShapeKnoten.cpp"},
     {"r = 1 + v * 0.35; x = x * r; y = y * r;", Art::Belegt, "test_ShapeKnoten.cpp"},
     {"skip = above(i, 0.5);", Art::Belegt, "test_ShapeKnoten.cpp"},
+    // §11 XY Scope — Gain im Takt, das Feld Point
+    {"gain = 2.5;", Art::Belegt, "test_XyScopeKnoten.cpp"},
+    {"gain = gain + (1 - gain) * 0.12;", Art::Belegt, "test_XyScopeKnoten.cpp"},
+    {"y = x; x = i * 2 - 1;", Art::Belegt, "test_XyScopeKnoten.cpp"},
     // Song-Feld: ein Muster mit frei erfundenen Variablen, keine Wirkung zu pruefen
     {"farbe = rand(6); zaehler = 0;", Art::NurUebersetzt,
      "Muster fuer das Song-Feld mit eigenen Variablen — zeigt nur die Schreibweise"},

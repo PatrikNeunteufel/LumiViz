@@ -751,6 +751,17 @@ std::vector<std::pair<std::size_t, Typ>> baue()
         LV_FELD(WaterBumpParams, dropY, "dropY", "dropy", "", 1.0, Aufzaehlung, Live, 0.0, 2.0),
         LV_FELD(WaterBumpParams, randomDrop, "randomDrop", "randomdrop", "", 1.0, Schalter, Live, 0.0, 1.0),
     }}});
+    out.push_back({ix<XyScopeParams>(), Typ{"xyScope", Traeger::EigenerHost, {
+        LV_FELD(XyScopeParams, colorSource, "colorSource", "colorsource", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
+        LV_FELD(XyScopeParams, drawMode, "drawMode", "drawmode", "", 1.0, Aufzaehlung, Live, 0.0, 1.0),
+        LV_FELD(XyScopeParams, gain, "gain", "gain", "", 1.0, Kommazahl, Live, 0.1, 16.0),
+        LV_FELD(XyScopeParams, lineBlend, "lineBlend", "lineblend", "", 1.0, Aufzaehlung, Live, 0.0, 9.0),
+        LV_FELD(XyScopeParams, lineWidth, "lineWidth", "linewidth", "", 1.0, Kommazahl, Live, 1.0, 20.0),
+        LV_FELD(XyScopeParams, rotate45, "rotate45", "rotate45", "", 1.0, Schalter, Live, 0.0, 1.0),
+        LV_FELD(XyScopeParams, size, "size", "size", "", 1.0, Kommazahl, Live, 1.0, 400.0),
+        LV_FELD(XyScopeParams, xShift, "xShift", "xshift", "", 1.0, Kommazahl, Live, -100.0, 100.0),
+        LV_FELD(XyScopeParams, yShift, "yShift", "yshift", "", 1.0, Kommazahl, Live, -100.0, 100.0),
+    }}});
     return out;
 }
 #undef LV_FELD

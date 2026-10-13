@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.209.0
+> **Version:** 1.210.0
 > **Datum:** 2026-10-13 (Session 121)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5095,8 +5095,16 @@ gemessen), T2 a Angle dreht die Form auch mit Stereo XY. **Offen daraus:**
   Reihenfolge der Liste (Stufe 20d).
 - Im Creator ist Shape nicht wählbar (Stufe 19e); im Programm ist von 19c
   nichts zu sehen oder zu hören.
-- **Als Nächstes Stufe 19d:** der Knoten XY Scope (V4 a: mit den fünf
-  Skriptfeldern; die Presets sind vorzulegen).
+
+**Stand S121 — Stufe 19d gebaut, der Knoten XY Scope** (`Shape_Konzept.md`
+0.15.0, §10; Benutzerhandbuch 1.156.0). Entschieden (Patrik): X1 a die
+Regler, X2 a sechs Presets; die Reihenfolge der Stufen bleibt. **Offen
+daraus:**
+- ⬜ **Im Programm ungesehen:** das Scope zu Musik, seine Presets, sein
+  Panel. Keine Sichttest-Liste, keine Feld-Sonden für `xyScope`.
+- **Als Nächstes Stufe 19e:** die Shape-Schicht im Instrument-Creator — erst
+  damit ist ein Instrument mit einer Form spielbar und das Scope an einer
+  Shape-Schicht zu sehen.
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5495,6 +5503,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.210.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19d gebaut — der Knoten XY Scope** der Effect Chain (Entscheide Patrik X1 a, X2 a; `audio/Shape_Konzept.md` 0.15.0, Benutzerhandbuch 1.156.0). Offen: im Programm ungesehen, keine Sichttest-Liste, keine Feld-Sonden. **Als Nächstes Stufe 19e**, die Shape-Schicht im Creator. |
 | 1.209.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19c gebaut — die Schwingung Shape im Klangerzeuger**, `.lvinst` Fassung 9 (Entscheide Patrik T1 a, T2 a; `audio/Shape_Konzept.md` 0.14.0). Offen: Patriks Ohr an den Hörproben; Ecken dämpfen; die Kante des Sprungs (gemessen −33 dB bei A4); gerechnete Töne entstehen nach dem Schreiben einer Form nicht neu. **Als Nächstes Stufe 19d.** |
 | 1.208.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19b gebaut — der Knoten Shape** der Effect Chain (Entscheide Patrik V1 a bis V4 a; `audio/Shape_Konzept.md` 0.13.0, Benutzerhandbuch 1.155.0). Offen: im Programm ungesehen; eine geänderte Form-Datei wird erst bei neuer Nennung gelesen; keine Feld-Sonden für `shape`; der „~"-Knopf an Contour. **Als Nächstes Stufe 19c.** Voller Lauf 1169 / 1169, 0 Skips (Testing-MSVC, Bildschirm 2). |
 | 1.207.0 | 2026-10-13 | Session 120, Abschluss. `sessions/Changelog_Session120.md`. **Stand:** Klang aus einer Form — das Konzept ist vollständig (`audio/Shape_Konzept.md` 0.12.0: sieben Vorlagen geschlossen, zwei Skizzen gebilligt, Baustufen freigegeben); gebaut **Stufe 18** (Pan je Schicht, acht Schichten, `.lvinst` Fassung 8) und **Stufe 19a** (`shape/Kontur`, die Datei `.lvcontour`, sechs mitgelieferte Formen, der Bereich Shapes im Export); daneben acht Datei-Icons, im Explorer-Skript und an vier Stellen der App. **Offen:** im Programm ungesehen und ungehört — Liste 10 Abschnitt V (V0 bis V11, U77 bis U79), dazu weiter Abschnitt D, X7 und die Reste aus S118; `register_file_icons.ps1 -Apply -Foreign` (Patrik); **als Nächstes Stufe 19b**, der Knoten Shape für die Effect Chain; in 19c die Kante des Sprungs hören; klein: Pan bei Stereo XY, die Bereiche von Harmonics, `.lvp` ohne Icon, `milk2` in `presetTypeIconForSuffix`, README der Icons gegen Handbuch zum Öffnen einer Datei über die Exe; Ideen Publish und Flanger. Voller Lauf 1163 / 1163, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |

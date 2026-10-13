@@ -961,6 +961,13 @@ private:
         lumi::shape::Zeichenform shapeForm;
         double shapeUmlauf = 0.0;        ///< 0 … 1
 
+        // XY Scope (S121): EEL-Quartett (Point je Abtastwert) und der Verlauf
+        // als Tafel — neu gerechnet nur, wenn ein anderer gewaehlt ist
+        std::unique_ptr<lumi::scripting::ScriptSlotHost> xyHost;
+        std::string xyCompiled;
+        std::string xyVerlaufName;
+        std::vector<QVector3D> xyVerlauf;
+
         // Water Bump: RGBA16F height ping-pong (.r current, .g previous height)
         std::unique_ptr<QOpenGLFramebufferObject> wbHeight[2];
         int wbCur = 0;   ///< index of the current height buffer
@@ -1315,6 +1322,10 @@ private:
     /// Punkt der Linie; mit `showCircles` die Kreise und Arme dazu.
     void runShape(const lumi::multieffect::ChainNode& node,
                   const lumi::multieffect::ShapeParams& params);
+    /// XY Scope (S121): links gegen rechts, ein Punkt je Abtastwert, in voller
+    /// Genauigkeit; EEL-Quartett mit Point je Abtastwert.
+    void runXyScope(const lumi::multieffect::ChainNode& node,
+                    const lumi::multieffect::XyScopeParams& params);
     [[nodiscard]] const lumi::multieffect::ChainNode* findeLyricsKnoten(
         const std::string& name) const;
     /// Glyphen-Textur `texture` ueber das laufende Bild legen (S86; derselbe
