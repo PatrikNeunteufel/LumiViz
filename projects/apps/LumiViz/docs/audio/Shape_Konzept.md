@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.8.0
+> **Version:** 0.9.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -99,6 +99,9 @@ Von Patrik, S119:
 | **M1 a** (S120) | Ein neuer Knoten **XY Scope**: links gegen rechts in voller Genauigkeit; Gain, Line width, Farbe, Rotate 45°. |
 | **M2 b** (S120) | Ein neuer Knoten **Shape**: zeichnet die gewählten Konturen einer `.lvcontour`, mit Harmonics und **Show circles**. Beide Knoten mit den üblichen Skriptfeldern und einigen Presets. |
 | **M3 a** (S120) | Shape gleich nach Datei und Koeffizienten, XY Scope nach dem ersten Ton. |
+| **Skizzen** (S120) | Das Fenster Edit shape und die Shape-Schicht, gebilligt; die Preview berichtigt (ein Wellenzug hat je Zeitpunkt einen Wert). |
+| **G1 a** (S120) | Die Schicht entscheidet über ihre Zeile Contour, was sie spielt; Use as im Fenster sagt, was beim Speichern aus dem Creator geschieht. |
+| **G2 a** (S120) | Sprünge von Hand: zwei an einer Kontur erlaubt, ein Ring wird abgelehnt, unerreichte Konturen werden in der Reihenfolge der Liste angehängt. |
 | ohne Buchstaben | Die Form ist eine **Datei**, die auch die Visuals lesen. **Start** und **Reverse** sind Regler der Schicht. Eingabewege: zeichnen, SVG, Konturen aus einem Bild wählen. Gewünscht: ein Modul für die Effect Chain, das die Form zeigt. |
 
 Offen: §13.
@@ -210,8 +213,47 @@ zeigt, gehört in die Skizze (§13, Punkt 6) — hier steht kein Entwurf.
 | **Reverse** | Haken | Patrik: ja |
 | **Pan** | im Kasten Level, bei jeder Waveform | Z3 a; §6a |
 
-Zu klären mit der Skizze: was aus **Pan** wird, wenn Stereo XY gesetzt ist
-(die Seiten tragen dann verschiedenes — Pan als Balance, oder ausgegraut).
+### Die Skizze der Shape-Schicht (gebilligt, Patrik S120)
+
+Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung, damit sie nicht neu
+gezeichnet werden muss.
+
+- **Zeile Signal path:** der Kasten **Source** zeigt „Shape · <Name der
+  Form>"; der Kasten **Level** zeigt Level und Pan („80 % · Pan L 20").
+- **Gruppe Oscillator**, von oben nach unten:
+  - **Waveform** — die Auswahl, mit dem neuen Eintrag Shape;
+  - **Shape** — der Name der Form als Text, daneben **Browse...** (eine
+    Form wählen) und **Edit...** (das Fenster Edit shape);
+  - **Contour** — eine Kontur der Datei beim Namen („1 Heart", „2 Star")
+    oder **All, one path** (G1 a);
+  - **Harmonics** — Regler mit Zahl;
+  - **Harmonics envelope** — Regler von negativ bis positiv, mit Zahl;
+  - **Angle** — 0° bis 360°;
+  - **Start** — in Prozent des Umlaufs;
+  - die Haken **Stereo XY** und **Reverse** nebeneinander;
+  - darunter wie bei den anderen Schwingungen **Voices**, Detune, **Pitch
+    sweep**.
+- **Gruppe Level:** **Level** und neu **Pan** (L 100 bis R 100), bei jeder
+  Waveform.
+- **Rechts:** **One cycle** wie bisher (der Wellenzug über der Zeit);
+  darunter neu **Shape, as it plays** — die Zeichnung gestrichelt, darüber
+  die Form mit der eingestellten Zahl von Harmonischen, und ein Pfeil für
+  Angle. Darunter die Legende „Dashed: the drawing · solid: with 24
+  harmonics · arrow: Angle".
+
+**Contour entscheidet, was die Schicht spielt (G1 a, Patrik):** eine Kontur
+oder alle als ein Pfad. **Use as** im Fenster Edit shape sagt nur, was beim
+Speichern aus dem Creator heraus geschieht — bei Layers legt der Creator je
+gewählter Kontur eine Schicht an, bei One path stellt er die offene Schicht
+auf „All, one path". Danach lässt sich Contour an jeder Schicht ändern.
+Verworfen: nur das Fenster entscheidet (b); Use as entfällt, ein Knopf im
+Creator (c).
+
+Von Claude in der Skizze gesetzt, mit ihr gebilligt: die Zeile Contour, das
+Bild „Shape, as it plays", Start in Prozent. Noch offen, klein: was **Pan**
+tut, wenn Stereo XY gesetzt ist (die Seiten tragen dann verschiedenes — Pan
+als Balance, oder ausgegraut); die Bereiche von Harmonics und Harmonics
+envelope.
 
 ### 6a. Pan je Schicht — eine eigene Stufe davor
 
@@ -420,6 +462,63 @@ einem Bild ein Pfad nur aus Strecken.
 
 ---
 
+## 8a. Das Fenster Edit shape (Skizze gebilligt, Patrik S120)
+
+Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung.
+
+- **Kopf:** „Edit shape – <Name>", daneben der Ort („My shapes"); rechts die
+  drei Eingabewege **Draw**, **Open SVG...**, **Open image...**
+- **Zeichenfläche** (links, der größere Teil): das Bild blass im
+  Hintergrund, die Konturen in ihren Farben darüber — gewählte kräftig,
+  nicht gewählte dünn und gestrichelt; ein Sprung als grauer gestrichelter
+  Strich mit zwei Punkten; der Startpunkt einer Kontur als gefüllter Punkt.
+  Darunter die Werkzeuge **Pen** (zeichnen), **Move point** (Punkte
+  schieben), **Bridge** (einen Sprung von Hand setzen) und rechts der Haken
+  **Show image**.
+- **Liste Contours** (rechts): Kopf „Contours — 3 of 41 shown"; je Zeile
+  Haken (gewählt), Farbpunkt, Nummer und Name, rechts der Anteil am Umlauf
+  in Prozent — bei einer Kontur am Bildrand statt dessen „edge". Darunter
+  **Rename**, **Remove** und zwei Pfeile für die Reihenfolge; darunter der
+  Satz, wie viele kleinere weggefallen sind („38 smaller ones left out").
+- **Drei Gruppen nebeneinander, unter beidem:**
+  - **From image** — **Split by** (Colour, Brightness, Transparency),
+    **Levels**, **Smooth**, **Min size**, **Detail** (K2 a);
+  - **Use as** — die Wahl **Layers, one per contour** oder **One path**;
+    bei One path die Auswahl **Jumps** mit „In list order", „Shortest",
+    „Drawn by hand" (B1); darunter eine Zeile mit den Zahlen („2 contours ·
+    2 jumps");
+  - **Preview** — der Wellenzug eines Umlaufs **über der Zeit**, links und
+    rechts je eine Kurve, mit einem Strich, wo die nächste Kontur beginnt;
+    darunter ein Regler **Harmonics** zum Ausprobieren und **Play**.
+- **Fuß:** links „Used by: <eigene Instrumente, die die Form spielen>",
+  rechts **Cancel**, **Save as...**, **Save** — wie im Fenster Edit sample.
+
+**Berichtigt nach Patriks Einwand:** in der ersten Skizze war der Wellenzug
+der Preview von Hand gezeichnet und lief stellenweise zurück — für einen
+Zeitpunkt standen bis zu drei Werte da. Das kann kein Wellenzug: er ist eine
+Funktion der Zeit und hat je Zeitpunkt genau einen Wert. Die Preview zeigt
+deshalb die x-Bewegung des Stifts und die y-Bewegung **je für sich über der
+Zeit** (in der berichtigten Skizze aus der Probe gerechnet: Herz und Stern,
+je 48 Harmonische). Die Form selbst — in der ein x mehrere y haben darf —
+steht auf der Zeichenfläche, nicht in der Preview.
+
+**Sprünge von Hand (G2 a, Patrik):** mit Bridge klickt man einen Punkt auf
+einer Kontur und einen auf einer anderen. Zwei Sprünge an einer Kontur sind
+erlaubt — der Stift verlässt sie dann unterwegs und kommt zurück. Ein
+Sprung, der einen Ring schließen würde, wird nicht angenommen, und das
+Fenster sagt warum. Erreichen die Sprünge nicht alle gewählten Konturen,
+hängt das Programm die übrigen in der Reihenfolge der Liste an und sagt, wie
+viele. Verworfen: unerreichte Konturen spielen nicht mit (b); Speichern erst,
+wenn alle erreicht sind (c).
+
+Von Claude in der Skizze gesetzt, mit ihr gebilligt: die Namen (Edit shape,
+Pen, Move point, Bridge, Contours, From image, Use as, Jumps und seine drei
+Einträge), der Anteil am Umlauf und das Wort „edge" in der Liste, die Gruppe
+Preview. Noch offen, klein: was Draw genau tut (frei Hand oder Punkt für
+Punkt, glätten); die Sätze der Meldungen.
+
+---
+
 ## 9. Mehrere Konturen
 
 **As layers** (Z5 a): je gewählter Kontur eine Schicht in ihrer Farbe, bis
@@ -480,12 +579,9 @@ Im Form-Fenster wählbar, drei Arten:
 Verworfen (c): der Sprung an den gespeicherten Startpunkten. Die Art und die
 von Hand gesetzten Brücken stehen in der Datei.
 
-**Für die Skizze offen** (§13, Punkt 6), von Claude noch nichts gesetzt: wie
-die drei Arten im Fenster heißen; und bei „von Hand": was gilt, wenn die
-gezeichneten Brücken nicht alle gewählten Konturen erreichen, wenn zwei
-Brücken an einer Kontur ansetzen (der Stift verlässt sie dann mitten im Zug
-und kommt zurück) oder wenn sie einen Ring bilden. Drei und mehr Konturen
-sind nicht geprobt.
+Wie die drei Arten im Fenster heißen und die Regeln für Sprünge von Hand
+stehen seit der Skizze fest (§8a, G2 a). Drei und mehr Konturen sind nicht
+geprobt.
 
 ---
 
@@ -598,9 +694,8 @@ und Hörproben in einen Ordner.
 3. ~~SVG~~ — entschieden in S120: S1 a, mit Beleg (§8).
 4. ~~Die Brücke~~ — entschieden in S120: B2 d, B1 wählbar (§9).
 5. ~~Die zwei Module~~ — entschieden in S120: M1 a, M2 b, M3 a (§10).
-6. **Die Skizze** des Form-Fensters und der Shape-Schicht — mit dem
-   Zeichenwerkzeug, vor jedem Bau; die gebilligte Skizze kommt als
-   Beschreibung in dieses Dokument.
+6. ~~Die Skizze~~ — gebilligt in S120, mit G1 a und G2 a; als Beschreibung
+   in §6 (die Shape-Schicht) und §8a (das Fenster Edit shape).
 7. **Baustufen** (§14).
 
 Daneben, klein, wo sie hingehören: Ecken dämpfen, Pegel, Angle bei gesetztem
@@ -650,6 +745,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.9.0 | 2026-10-13 (S120) | **Die Skizzen gebilligt (Patrik)** — das Fenster Edit shape (neu §8a) und die Shape-Schicht im Creator (§6), beide als Beschreibung eingetragen; **G1 a** die Zeile Contour an der Schicht entscheidet, **G2 a** die Regeln für Sprünge von Hand. **Berichtigt nach Patriks Einwand:** der Wellenzug der Preview war von Hand gezeichnet und hatte für einen Zeitpunkt bis zu drei Werte; die Preview zeigt jetzt links und rechts je für sich über der Zeit. Die sechste der sieben Vorlagen ist geschlossen. |
 | 0.8.0 | 2026-10-13 (S120) | **Die Module entschieden (Patrik): M1 a** ein Knoten XY Scope in voller Genauigkeit, **M2 b** ein Knoten Shape mit Harmonics und Show circles, **M3 a** Shape gleich nach den Daten, XY Scope nach dem ersten Ton; dazu von Patrik: die üblichen Skriptfelder und einige Presets (§4, §10, §13). §14: die Stufen neu geordnet (19a bis 19e, 20a bis 20d). Die fünfte der sieben Vorlagen ist geschlossen. |
 | 0.7.0 | 2026-10-13 (S120) | **Berichtigt:** die Engine läuft mit 44,1 kHz, nicht 48 (§5, §10). §10 genauer, was die Visuals vom Ton bekommen: 512 Werte je Seite alle 33 ms, für Skripte auf 8 Bit gerundet, kein Nachleuchten von sich aus. §3: acht Schichten gemessen und probiert, die Grenze steht weiter auf vier. |
 | 0.6.0 | 2026-10-13 (S120) | **As one path entschieden (Patrik): B2 d** — jede Kontur behält ihre eigene Reihe, nacheinander in einem Umlauf, dazwischen ein kurzer Sprung, Harmonics je Kontur; **B1** — wo der Stift springt, ist wählbar: Reihenfolge der Liste (Vorgabe), kürzeste Wege, von Hand eingezeichnet (§4, §7, §9, §13). Davor eine Probe in vier Zeilen, die Zahlen stehen in §9; die ersten drei Zeilen rechneten beide Konturen samt Brücke in eine Reihe — Patriks Einwand führte zur vierten. Offen: wie die Kante des Sprungs klingt (Stufe 19b). |
