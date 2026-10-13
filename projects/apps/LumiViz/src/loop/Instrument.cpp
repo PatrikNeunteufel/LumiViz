@@ -645,6 +645,7 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("vibratoDelay")] = schicht.vibratoEinsatzMs;
     o[QStringLiteral("damping")] = schicht.saiteDaempfung;
     o[QStringLiteral("level")] = schicht.laut;
+    o[QStringLiteral("pan")] = schicht.pan;  // seit Fassung 8
     // seit Fassung 5 (Pitch sweep): Halbtoene neben der Note, und die Zeit des Wegs
     o[QStringLiteral("pitchStart")] = schicht.tonhoeheStartHt;
     o[QStringLiteral("pitchTime")] = schicht.tonhoeheZeitMs;
@@ -697,6 +698,7 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.vibratoEinsatzMs = zahl("vibratoDelay", vorgabe.vibratoEinsatzMs, 0.0, 5000.0);
     neu.saiteDaempfung = zahl("damping", vorgabe.saiteDaempfung, 0.9, 0.9999);
     neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
+    neu.pan = zahl("pan", vorgabe.pan, -1.0, 1.0);  // seit Fassung 8; fehlt es, steht die Schicht in der Mitte
     neu.einsatzMs = zahl("startOffset", vorgabe.einsatzMs, 0.0, 1000.0);
     // seit Fassung 4; in einer aelteren Datei und an anderen Schichten fehlen sie
     const double laengsteMs = kKlangMaxSekunden * 1000.0;
@@ -1184,6 +1186,18 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
             rechneSchwingung(schicht, hz, huelle, rate, eine);
         // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
         if (schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht)) blendeAus(eine, rate);
+        // Pan (Stufe 18): das Gesetz von Spur und Muster. In der Mitte bleibt jeder Wert,
+        // wie er ist — alte Instrumente rechnen Bit fuer Bit wie vorher.
+        if (const double pan = std::clamp(schicht.pan, -1.0, 1.0); pan != 0.0)
+        {
+            const auto links = static_cast<float>(std::min(1.0, 1.0 - pan));
+            const auto rechts = static_cast<float>(std::min(1.0, 1.0 + pan));
+            for (std::size_t i = 0; i + 1 < eine.size(); i += 2)
+            {
+                eine[i] *= links;
+                eine[i + 1] *= rechts;
+            }
+        }
         if (erste && einsatz == 0)
         {
             klang.daten.swap(eine);  // eine Schicht allein: ihre Werte, unveraendert

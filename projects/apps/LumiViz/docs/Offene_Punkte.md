@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.204.0
+> **Version:** 1.205.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2516,8 +2516,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     eine neue Fassung der `.lvinst`, sie fiele mit der für Pan zusammen
     (Fassung 8, `Shape_Konzept.md` §6a); (3) bei der Form: As layers reichte
     dann für acht Konturen. **Entschieden (Patrik S120): die Grenze geht auf
-    acht** — mit Stufe 18 (Pan je Schicht), in `.lvinst` Fassung 8; nicht
-    gebaut. 🟠 **Befund:** in
+    acht** — mit Stufe 18 (Pan je Schicht), in `.lvinst` Fassung 8;
+    **gebaut in S120**, im Programm ungesehen. 🟠 **Befund:** in
     der Konfiguration Testing unter MSVC fehlt `/MD` bei LumiViz, Core und
     miniz — die Objektdateien verlangen `LIBCMT`, Qt ist `/MD`; seit miniz
     meldet der Linker es an `LumiViz.exe` (LNK4098, LNK4217). Bestand
@@ -5456,6 +5456,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.205.0 | 2026-10-13 | Session 120. **Stufe 18 gebaut: Pan je Schicht und acht Schichten je Instrument** (`Loop_Konzept.md` 0.70.0 §5, `Shape_Konzept.md` 0.11.0) — `.lvinst` Fassung 8; Pan mit dem Gesetz von Spur und Muster, im Creator der Regler im Kasten Level; alte Instrumente rechnen Bit für Bit wie vorher; Benutzerhandbuch 1.153.0; lokal Liste 10 um Abschnitt V (V0 bis V11, U77 bis U79; darin auch die Punkte zu den Datei-Icons dieser Sitzung), B1 und U19 angepasst. **Im Programm ungesehen und ungehört.** Voller Lauf 1157 / 1157, 0 Skips (Testing-MSVC, Bildschirm 2, 263 s). **Als Nächstes: Stufe 19a** — die Form als Daten und die Datei `.lvcontour`. |
 | 1.204.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **Baustufen freigegeben (Patrik)** — 18 (Pan je Schicht), 19a bis 19e (Daten und Datei, Knoten Shape, Schwingung im Klangerzeuger, Knoten XY Scope, Shape-Schicht im Creator), 20a bis 20d (das Fenster Edit shape); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18. `Shape_Konzept.md` 0.10.0; alle sieben Vorlagen sind geschlossen, das Konzept ist vollständig. **Als Nächstes: Stufe 18 bauen.** Nichts gebaut. |
 | 1.203.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Skizzen gebilligt (Patrik)** — das Fenster Edit shape und die Shape-Schicht im Creator, als Beschreibung in `Shape_Konzept.md` 0.9.0 (§6, §8a); **G1 a** (die Zeile Contour an der Schicht entscheidet, was sie spielt), **G2 a** (Regeln für Sprünge von Hand); berichtigt nach Patriks Einwand: der Wellenzug der Preview hat je Zeitpunkt einen Wert. Die sechste der sieben Vorlagen ist geschlossen; **offen: die Freigabe der Baustufen** und ob die Grenze der Schichten auf acht geht. |
 | 1.202.0 | 2026-10-13 | Session 120. §7 „Klang aus einer Form": **die Module entschieden (Patrik): M1 a, M2 b, M3 a** (`Shape_Konzept.md` 0.8.0, §10, §14) — zwei neue Knoten für die Effect Chain: **XY Scope** (links gegen rechts, volle Genauigkeit) und **Shape** (zeichnet die Konturen einer `.lvcontour`, mit Harmonics und Show circles), beide mit den üblichen Skriptfeldern und einigen Presets; Shape kommt gleich nach Datei und Koeffizienten, XY Scope nach dem ersten Ton. Die fünfte der sieben Vorlagen ist geschlossen; **offen: die Skizze** des Form-Fensters und der Shape-Schicht, danach die Baustufen; **nicht entschieden:** ob die Grenze der Schichten von vier auf acht geht. |

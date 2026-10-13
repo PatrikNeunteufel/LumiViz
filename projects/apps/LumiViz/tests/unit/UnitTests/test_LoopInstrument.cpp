@@ -717,6 +717,70 @@ TEST_SUITE("LoopInstrument")
         CHECK(eigeneInstrumente().size() == 1);
     }
 
+    TEST_CASE("Loop Instrument: Pan je Schicht — in der Mitte bleibt jeder Wert und zur Seite wird die andere leiser")
+    {
+        // Stufe 18 (Entscheid Z3 a, Patrik S119; das Gesetz von Spur und Muster, Rechenkern.cpp):
+        // links min(1, 1 - pan), rechts min(1, 1 + pan). Ohne Qt-Anwendung, an einem gerechneten Ton.
+        Instrument mitte;
+        mitte.schichten[0].schwingung = Schwingung::Saege;
+        mitte.schichten[0].stimmen = 2;
+        mitte.schichten[0].verstimmungCent = 7.0;
+        const Klang ton = rendereTon(mitte, 57, 200.0, kRate);
+        REQUIRE(ton.frames() > 1000);
+        bool gleich = true;
+        float spitze = 0.0f;
+        for (std::size_t i = 0; i + 1 < ton.daten.size(); i += 2)
+        {
+            gleich = gleich && ton.daten[i] == ton.daten[i + 1];
+            spitze = std::max(spitze, std::abs(ton.daten[i]));
+        }
+        CHECK(gleich);  // in der Mitte sind beide Seiten gleich
+        REQUIRE(spitze > 0.05f);
+
+        const auto mitPan = [&](double pan) {
+            Instrument seitlich = mitte;
+            seitlich.schichten[0].pan = pan;
+            return rendereTon(seitlich, 57, 200.0, kRate);
+        };
+        // jede Seite ist der Ton der Mitte mal ihrem Faktor — nichts anderes
+        const auto pruefe = [&](double pan, float links, float rechts) {
+            CAPTURE(pan);
+            const Klang seitlich = mitPan(pan);
+            REQUIRE(seitlich.daten.size() == ton.daten.size());
+            bool passt = true;
+            for (std::size_t i = 0; i + 1 < ton.daten.size() && passt; i += 2)
+                passt = seitlich.daten[i] == ton.daten[i] * links && seitlich.daten[i + 1] == ton.daten[i + 1] * rechts;
+            CHECK(passt);
+        };
+        pruefe(0.0, 1.0f, 1.0f);    // Bit fuer Bit der Ton ohne Pan
+        pruefe(-0.5, 1.0f, 0.5f);   // halb links: links voll, rechts halb
+        pruefe(0.5, 0.5f, 1.0f);
+        pruefe(-1.0, 1.0f, 0.0f);   // ganz links: rechts schweigt
+        pruefe(1.0, 0.0f, 1.0f);
+        pruefe(-3.0, 1.0f, 0.0f);   // ausserhalb: wie ganz links
+
+        // zwei Schichten, eine links und eine rechts: die Seiten tragen Verschiedenes
+        Instrument breit = mitte;
+        breit.schichten.push_back(mitte.schichten[0]);
+        breit.schichten[0].pan = -1.0;
+        breit.schichten[1].pan = 1.0;
+        breit.schichten[1].versatzHalbtoene = 7;
+        const Klang beide = rendereTon(breit, 57, 200.0, kRate);
+        Instrument nurOben = mitte;
+        nurOben.schichten[0].versatzHalbtoene = 7;
+        const Klang oben = rendereTon(nurOben, 57, 200.0, kRate);
+        REQUIRE(beide.daten.size() >= ton.daten.size());
+        bool linksIstUnten = true;
+        bool rechtsIstOben = true;
+        for (std::size_t i = 0; i + 1 < ton.daten.size() && i + 1 < oben.daten.size(); i += 2)
+        {
+            linksIstUnten = linksIstUnten && beide.daten[i] == ton.daten[i];
+            rechtsIstOben = rechtsIstOben && beide.daten[i + 1] == oben.daten[i + 1];
+        }
+        CHECK(linksIstUnten);
+        CHECK(rechtsIstOben);
+    }
+
     TEST_CASE("Loop Instrument: Schichten — die Datei der Fassung 2 und der Ton als Summe")
     {
         const InstrumentApp app;
@@ -739,7 +803,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 7);  // seit S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 8);  // seit S120: Pan je Schicht und acht Schichten (8, Stufe 18); S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
@@ -787,11 +851,47 @@ TEST_SUITE("LoopInstrument")
         REQUIRE(ausJson(flach, alt));
         CHECK(alt.schichten[0].schwingung == Schwingung::Saege);
 
-        // --- mehr als vier Schichten: die uebrigen bleiben weg; ohne Liste eine mit Grundeinstellung
+        // --- Pan je Schicht (Stufe 18, Fassung 8): steht in der Datei; in einer aelteren fehlt
+        // es, dann steht die Schicht in der Mitte; ein Wert ausserhalb kommt in seine Grenzen
+        CHECK(zweite.value(QStringLiteral("pan")).toDouble() == 0.0);
+        {
+            Instrument seitlich = zwei;
+            seitlich.schichten[1].pan = -0.4;
+            const QJsonObject mitPan = alsJson(seitlich);
+            CHECK(mitPan.value(QStringLiteral("layers")).toArray().at(1).toObject().value(QStringLiteral("pan")).toDouble() ==
+                  doctest::Approx(-0.4));
+            Instrument zurueck;
+            zurueck.name = seitlich.name;
+            REQUIRE(ausJson(mitPan, zurueck));
+            CHECK(zurueck == seitlich);
+            QJsonObject alteDatei = mitPan;
+            alteDatei[QStringLiteral("version")] = 7;
+            QJsonArray ohnePan;
+            for (const QJsonValue& schicht : mitPan.value(QStringLiteral("layers")).toArray())
+            {
+                QJsonObject eintrag = schicht.toObject();
+                eintrag.remove(QStringLiteral("pan"));
+                ohnePan.append(eintrag);
+            }
+            alteDatei[QStringLiteral("layers")] = ohnePan;
+            REQUIRE(ausJson(alteDatei, zurueck));
+            CHECK(zurueck.schichten[1].pan == 0.0);
+            QJsonObject wild = mitPan;
+            QJsonArray zuWeit = mitPan.value(QStringLiteral("layers")).toArray();
+            QJsonObject eintrag = zuWeit.at(1).toObject();
+            eintrag[QStringLiteral("pan")] = 7.0;
+            zuWeit[1] = eintrag;
+            wild[QStringLiteral("layers")] = zuWeit;
+            REQUIRE(ausJson(wild, zurueck));
+            CHECK(zurueck.schichten[1].pan == 1.0);  // ausserhalb: in die Grenzen geholt
+        }
+
+        // --- mehr als acht Schichten (bis Stufe 17: vier): die uebrigen bleiben weg; ohne Liste eine mit Grundeinstellung
+        CHECK(kSchichtenMax == 8);
         QJsonObject viele = json;
-        QJsonArray sechs;
-        for (int i = 0; i < 6; ++i) sechs.append(zweite);
-        viele[QStringLiteral("layers")] = sechs;
+        QJsonArray zehn;
+        for (int i = 0; i < 10; ++i) zehn.append(zweite);
+        viele[QStringLiteral("layers")] = zehn;
         Instrument gekuerzt;
         REQUIRE(ausJson(viele, gekuerzt));
         CHECK(gekuerzt.schichten.size() == static_cast<std::size_t>(kSchichtenMax));

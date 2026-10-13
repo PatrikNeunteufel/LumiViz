@@ -102,6 +102,14 @@ int gerundet(double wert)
     return static_cast<int>(std::lround(wert));
 }
 
+/// Pan als Text: „C" in der Mitte, sonst „L 20" oder „R 100" (in Hundertsteln).
+QString panText(double pan)
+{
+    const int wert = gerundet(pan * 100.0);
+    if (wert == 0) return QStringLiteral("C");
+    return QStringLiteral("%1 %2").arg(wert < 0 ? QStringLiteral("L") : QStringLiteral("R")).arg(std::abs(wert));
+}
+
 bool schwarz(int hoehe)
 {
     const int stufe = ((hoehe % 12) + 12) % 12;
@@ -679,6 +687,10 @@ void InstrumentCreator::setupUI()
     regler(gitter, tr("Level"), "creatorLevel", 0, 100, [](const Schicht& i) { return gerundet(i.laut * 100.0); },
            [](Schicht& i, int w) { i.laut = w / 100.0; },
            [](const Schicht& i) { return QStringLiteral("%1 %").arg(gerundet(i.laut * 100.0)); });
+    // Pan je Schicht (Stufe 18, Entscheid Z3 a; Skizze gebilligt S120): fuer jede Waveform
+    regler(gitter, tr("Pan"), "creatorPan", -100, 100, [](const Schicht& i) { return gerundet(i.pan * 100.0); },
+           [](Schicht& i, int w) { i.pan = w / 100.0; }, [](const Schicht& i) { return panText(i.pan); })
+        .schieber->setToolTip(tr("Where this layer sits between left and right. Towards one side, the other side gets quieter"));
     // --- Source: der feste Kasten am Anfang — Transpose, Start offset, Oscillator, Vibrato
     m_zeilenLevel.bis = m_zeilenSource.von = gitter->rowCount();
     regler(gitter, tr("Transpose"), "creatorTranspose", -24, 24, [](const Schicht& i) { return i.versatzHalbtoene; },
@@ -2001,8 +2013,10 @@ void InstrumentCreator::zeigeWeg()
             kaesten.push_back(WegKasten{tr("Envelope"), tr("Decay %1 ms").arg(gerundet(s.abfallMs)), true, false,
                                         tr("Where the envelope shapes the tone — every layer has exactly one. Drag it to move it")});
     }
-    kaesten.push_back(WegKasten{tr("Level"), QStringLiteral("%1 %").arg(gerundet(s.laut * 100.0)), false, false,
-                                tr("The level of this layer")});
+    // der Kasten nennt Pan nur neben der Mitte: „80 % · Pan L 20"
+    QString pegel = QStringLiteral("%1 %").arg(gerundet(s.laut * 100.0));
+    if (gerundet(s.pan * 100.0) != 0) pegel += tr(" · Pan %1").arg(panText(s.pan));
+    kaesten.push_back(WegKasten{tr("Level"), pegel, false, false, tr("The level and the pan of this layer")});
     const bool voll = zahl >= kBausteineMax;
     const int gewaehlt = m_stelle == kStelleLevel ? zahl + 1 : m_stelle < 0 ? 0 : m_stelle + 1;
     m_pfad->setKaesten(std::move(kaesten), gewaehlt, !voll,

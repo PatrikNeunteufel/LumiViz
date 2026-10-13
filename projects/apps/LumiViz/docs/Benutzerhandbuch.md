@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.152.0
+> **Version:** 1.153.0
 > **Datum:** 2026-10-13
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2749,7 +2749,7 @@ die Klaviatur des Editors.
 | **Save as...** | Derselbe Dialog, bei jedem Instrument: eine Kopie unter einem neuen Namen zu deinen eigenen Dateien; das bisherige bleibt, wie es ist, und das Muster spielt danach die Kopie. Einen Ort wählst du nicht (GEÄNDERT in 1.141.0: vorher ein Dateidialog an beliebigem Ort). Eine `.lvinst` für jemand anderen holst du aus dem Ordner oder über den Export deiner Daten |
 | **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
 | **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen — mit allen eingeschalteten Schichten |
-| **Layers** | Die Schichten des Instruments, eine bis vier. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen |
+| **Layers** | Die Schichten des Instruments, eine bis acht (GEÄNDERT in 1.153.0: vorher vier). Jede Schicht wird je Ton eigens gerechnet und zu den anderen addiert — mit jeder steigt **Peak**; liegt er über 1, die Level der Schichten zurücknehmen. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen |
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
 | **Add layer from instrument...** | Nimmt die Schichten eines anderen Instruments dazu — aus der Liste der mitgelieferten oder über **From file...** aus einer `.lvinst`. Es ist eine Kopie: das andere Instrument bleibt, wie es ist |
 | **Duplicate**, **Remove**, **▲**, **▼** | Die gewählte Schicht noch einmal, entfernen, hinauf, hinunter |
@@ -2760,6 +2760,7 @@ die Klaviatur des Editors.
 | Die Überschriften **Oscillator**, **Vibrato** | Ein Klick klappt die Zeilen der Gruppe ein (der Pfeil zeigt nach rechts) und wieder aus (nach unten). Die Stellung bleibt über einen Neustart und gilt für alle Schichten und Instrumente. Eingeklappt ändert sich am Klang nichts. Das Fenster behält dabei seine Größe: passen die Regler nicht alle hinein, erscheint rechts von ihnen ein Rollbalken. Das Mausrad über einem Regler rollt die Liste und verstellt ihn nicht |
 | **Name** (Layer) | Wie die Schicht in der Liste heißt |
 | **Level** (Layer) | Lautstärke der Schicht gegen die anderen Schichten — der Regler unter dem Kasten **Level** am Ende der Zeile; der Kasten zeigt den Wert immer |
+| **Pan** (Layer) | NEU in 1.153.0. Wo die Schicht zwischen links und rechts sitzt — der zweite Regler unter dem Kasten **Level**, für jede Waveform. „C" ist die Mitte, „L 100" ganz links, „R 100" ganz rechts. Zur Seite hin wird die **andere** Seite leiser, bis sie schweigt; die eigene bleibt, wie sie ist (dasselbe Pan wie an einer Spur im Drum-Editor und am Muster im Instrument-Editor). Der Kasten nennt Pan, sobald es neben der Mitte steht („80 % · Pan L 20"). Mit zwei Schichten auf zwei Seiten wird ein Instrument breit. In einem Instrument von früher stehen alle Schichten in der Mitte |
 | **Transpose** | Die Schicht klingt so viele Halbtöne über oder unter der Note: +12 ist eine Oktave höher, +7 eine Quinte |
 | **Start offset** | Die Schicht setzt so viele Millisekunden nach dem Anschlag ein. Kein Echo — sie beginnt nur später |
 | **Waveform** | Sine, Triangle, Saw, Square, **Noise** (Rauschen, siehe unten), Plucked string (eine gezupfte Saite) oder **Sample** (eine Aufnahme, siehe unten) |
@@ -3018,6 +3019,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.153.0 | 2026-10-13 | Session 120. §16 Instrument-Creator: NEU **Pan** je Schicht (im Kasten Level, für jede Waveform); GEÄNDERT **Layers**: ein Instrument trägt bis zu acht Schichten statt vier. |
 | 1.152.0 | 2026-10-13 | Session 120. §17: die neuen Datei-Icons an vier Stellen der App — im Panel **Loop** vor dem Dateinamen, im **Instrument-Editor** vor dem Namen des Instruments, im Dialog **Import data** vor dem Namen der Datei und in der Liste „Let me decide for each file" an jeder Datei, deren Art ein Icon hat. |
 | 1.151.0 | 2026-10-13 | Session 120. §17: im **Audio Browser** trägt ein Loop jetzt sein eigenes Icon (die Marke mit Schritt-Raster) statt des Kreispfeils. |
 | 1.150.0 | 2026-10-13 | Session 120. §17 Dateitypen und ihre Icons: **acht neue Icons** — `.lvloop`, `.lvinst`, `.lvcontour`, `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, `.grad`, alle aus der Marke mit einem Zeichen im Kreis; die App zeigt sie noch nicht, das Skript für den Explorer trägt sie ein (`.grad` nur mit `-Foreign`). |

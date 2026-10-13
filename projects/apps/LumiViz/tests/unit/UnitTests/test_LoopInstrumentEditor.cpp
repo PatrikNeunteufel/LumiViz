@@ -784,6 +784,18 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(creator.fuegeDriveEin());  // seit Stufe 16c ein Baustein der Zeile: er kommt mit 30 % dazu
         schieber("creatorDrive")->setValue(30);
         schieber("creatorLevel")->setValue(35);
+        // Pan je Schicht (Stufe 18): der Regler im Kasten Level; der Kasten nennt Pan nur neben der Mitte
+        REQUIRE(creator.signalWeg() != nullptr);
+        CHECK(creator.signalWeg()->kaesten().back().wert == QStringLiteral("35 %"));
+        schieber("creatorPan")->setValue(-20);
+        CHECK(creator.schicht().pan == doctest::Approx(-0.2));
+        CHECK(creator.signalWeg()->kaesten().back().wert == QStringLiteral("35 % · Pan L 20"));
+        schieber("creatorPan")->setValue(100);
+        CHECK(creator.schicht().pan == doctest::Approx(1.0));
+        CHECK(creator.signalWeg()->kaesten().back().wert == QStringLiteral("35 % · Pan R 100"));
+        schieber("creatorPan")->setValue(0);
+        CHECK(creator.schicht().pan == 0.0);
+        CHECK(creator.signalWeg()->kaesten().back().wert == QStringLiteral("35 %"));
         creator.aendereSchicht([](Schicht& s) { s.name = QStringLiteral("Shimmer"); });
         CHECK(creator.schicht().versatzHalbtoene == 12);
         CHECK(creator.schicht().einsatzMs == doctest::Approx(40.0));
@@ -833,13 +845,25 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.gewaehlt() == 2);
         CHECK(creator.instrument().schichten[2] == creator.instrument().schichten[1]);
         CHECK(creator.instrument().schichten[3].name == QStringLiteral("Strings"));
-        // vier sind das Ende
+        // acht sind das Ende (bis Stufe 17 vier; Entscheid Patrik S120)
+        CHECK(knopf("creatorAddLayer")->isEnabled());
+        while (creator.instrument().schichten.size() < 8) REQUIRE(creator.neueSchicht());
+        CHECK(liste->count() == 8);
+        CHECK(creator.gewaehlt() == 7);  // die neue ist gewaehlt
         CHECK_FALSE(knopf("creatorAddLayer")->isEnabled());
         CHECK_FALSE(knopf("creatorAddLayerFrom")->isEnabled());
         CHECK_FALSE(knopf("creatorDuplicateLayer")->isEnabled());
         CHECK_FALSE(creator.neueSchicht());
         CHECK_FALSE(creator.verdopple());
         CHECK(creator.schichtenAus(*strings) == 0);
+        CHECK(knopf("creatorAddLayer")->toolTip().contains(QStringLiteral("up to 8 layers")));
+        // die vier neuen wieder weg: sie stehen am Ende
+        while (creator.instrument().schichten.size() > 4)
+        {
+            creator.waehle(static_cast<int>(creator.instrument().schichten.size()) - 1);
+            REQUIRE(creator.entferne());
+        }
+        CHECK(creator.instrument().schichten[3].name == QStringLiteral("Strings"));
         creator.waehle(3);
         knopf("creatorLayerUp")->click();
         CHECK(creator.gewaehlt() == 2);
@@ -1170,8 +1194,10 @@ TEST_SUITE("LoopInstrumentEditor")
         }
         // Level und Envelope haben seit Stufe 16c ihren Kasten in der Zeile Signal path
         CHECK(schieber("creatorLevel")->isHidden());
+        CHECK(schieber("creatorPan")->isHidden());  // Pan steht im Kasten Level (Stufe 18)
         creator.waehleStelle(InstrumentCreator::kStelleLevel);
         CHECK_FALSE(schieber("creatorLevel")->isHidden());
+        CHECK_FALSE(schieber("creatorPan")->isHidden());
         CHECK(schieber("creatorTranspose")->isHidden());
         waehleBaustein<SchichtHuelle>(creator);
         for (const char* bleibt : {"creatorAttack", "creatorDecay", "creatorSustain", "creatorRelease"})
@@ -1934,6 +1960,12 @@ TEST_SUITE("LoopInstrumentEditor")
             gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
             QCoreApplication::processEvents();
             CHECK(gezeigt.grab().save(bild));
+            // ein zweites Bild (mit `_level` im Namen): der Kasten Level mit dem Regler Pan (Stufe 18)
+            gezeigt.aendereSchicht([](Schicht& s) { s.pan = -0.2; });
+            gezeigt.waehleStelle(InstrumentCreator::kStelleLevel);
+            QCoreApplication::processEvents();
+            const QFileInfo ort(bild);
+            CHECK(gezeigt.grab().save(ort.dir().filePath(ort.completeBaseName() + QStringLiteral("_level.") + ort.suffix())));
         }
     }
 

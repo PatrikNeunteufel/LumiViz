@@ -135,6 +135,12 @@ struct Schicht
 
     double saiteDaempfung = 0.996;  ///< nur Saite: 0.9…0.9999, groesser klingt laenger
     double laut = 1.0;              ///< die Lautstaerke der Schicht
+    /// Pan, -1 (links) … 1 (rechts); 0 = Mitte (Stufe 18, Entscheid Z3 a).
+    /// Dasselbe Gesetz wie an Spur und Muster (Rechenkern): links
+    /// `min(1, 1 - pan)`, rechts `min(1, 1 + pan)` — in der Mitte beide
+    /// Seiten voll, zur Seite hin wird die andere leiser. Gemischt wird
+    /// nichts: jede Seite wird mit ihrem Faktor genommen.
+    double pan = 0.0;
 
     // --- nur Sample (Stufe 11a; Skizze gebilligt, Patrik S115) ---
     /// Die Aufnahme: ein eigenes Sample (`user:<name>`, Sample.hpp) oder der
@@ -176,8 +182,11 @@ struct Schicht
 };
 
 /// So viele Schichten traegt ein Instrument hoechstens: jede wird je Ton
-/// einzeln gerechnet.
-inline constexpr int kSchichtenMax = 4;
+/// einzeln gerechnet. Bis Stufe 17 vier; seit Stufe 18 acht (Entscheid
+/// Patrik S120, davor gemessen: die Rechenzeit waechst gerade mit der Zahl,
+/// test_LoopBausteine.cpp „Loop Instrument Messung") — mit Fassung 8 der
+/// Datei, weil ein aelteres Programm eine laengere Liste still kuerzte.
+inline constexpr int kSchichtenMax = 8;
 
 /// Eine Art von Instrument: so ist das Fenster „Instruments" gegliedert
 /// (Stufe 14, Entscheid P1 a; Skizze gebilligt, Patrik S114).
@@ -241,10 +250,14 @@ struct Instrument
 // `filterEnvelope`, `filterType`, `filterResonance`; Attack, Decay, Sustain
 // und Release bleiben an der Schicht. Eine Datei bis Fassung 6 liest sich als
 // Filter, Drive, Envelope; ein Filter mit Cutoff 0 und ein Drive mit 0 werden
-// dabei kein Baustein (K2 a). Geschrieben wird Fassung 7.
+// dabei kein Baustein (K2 a). Fassung 8 (S120, Stufe 18) kennt an jeder
+// Schicht `pan` (-1 … 1) und bis zu acht Schichten statt vier — eine eigene
+// Fassung, weil ein aelteres Programm eine Schicht sonst still in der Mitte
+// spielte und die fuenfte bis achte wegliesse. In einer aelteren Datei
+// fehlt `pan`: die Schicht steht in der Mitte. Geschrieben wird Fassung 8.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 7;
+inline constexpr int kInstrumentFassung = 8;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
@@ -338,7 +351,8 @@ inline constexpr int kObertoeneMax = 16;
 inline constexpr double kTonMaxSekunden = 30.0;
 
 /// Einen Ton rechnen: `dauerMs` lang gehalten, danach der Ausklang des
-/// Instruments; der Klang endet bei null. Stereo, beide Seiten gleich.
+/// Instruments; der Klang endet bei null. Stereo; die Seiten sind gleich,
+/// solange keine Schicht ein Pan neben der Mitte traegt (Stufe 18).
 /// Die eingeschalteten Schichten werden addiert — jede an ihrer Tonhoehe und
 /// ab ihrem Einsatz; der Klang ist so lang wie die laengste. Ist keine an,
 /// ist er still. Leer = `rate` oder `dauerMs` nicht groesser als 0.

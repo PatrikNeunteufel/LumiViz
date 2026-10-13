@@ -223,8 +223,8 @@ TEST_CASE("Loop Signal path: .lvinst Fassung 7 — die Reihe steht in der Datei,
     instrument.schichten.push_back(Schicht{});  // eine neue Schicht: nur Envelope
 
     const QJsonObject json = alsJson(instrument);
-    CHECK(kInstrumentFassung == 7);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 7);
+    CHECK(kInstrumentFassung >= 7);  // die Reihe gibt es seit Fassung 7; geschrieben wird die juengste (seit Stufe 18: 8)
+    CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
     const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
     REQUIRE(schichten.size() == 2);
     const QJsonObject erste = schichten.at(0).toObject();
@@ -278,7 +278,7 @@ TEST_CASE("Loop Signal path: .lvinst Fassung 7 — die Reihe steht in der Datei,
     CHECK(mitReihe(QJsonArray{}) == std::vector<SchichtBaustein>{SchichtHuelle{}});
     // --- eine Fassung von morgen liest das Programm nicht
     QJsonObject morgen = json;
-    morgen[QStringLiteral("version")] = 8;
+    morgen[QStringLiteral("version")] = kInstrumentFassung + 1;
     bool zuNeu = false;
     CHECK_FALSE(ausJson(morgen, gelesen, &zuNeu));
     CHECK(zuNeu);

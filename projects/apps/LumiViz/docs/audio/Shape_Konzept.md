@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.10.0
+> **Version:** 0.11.0
 > **Datum:** 2026-10-13 (Session 120)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -726,7 +726,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 
 | Stufe | Inhalt | hängt an |
 |---|---|---|
-| 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 | nichts — sofort möglich |
+| 18 | **Pan je Schicht** und **acht Schichten je Instrument** (Patrik S120: „Grenze auf acht"), beides in `.lvinst` Fassung 8 — **gebaut in S120**, im Programm ungesehen und ungehört (`Loop_Konzept.md` §5) | — |
 | 19a | Form als Daten: Kontur als Pfad, Koeffizienten, die Datei `.lvcontour`, ein paar mitgelieferte Formen | — |
 | 19b | der Knoten **Shape** für die Effect Chain, mit Show circles, Skriptfeldern und Presets (M2 b, M3 a) | 19a |
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster. **Hier hören und messen: die Kante des Sprungs** (B2 d) | 19a |
@@ -761,6 +761,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.11.0 | 2026-10-13 (S120) | **Stufe 18 gebaut:** Pan je Schicht mit dem Gesetz von Spur und Muster, acht Schichten, `.lvinst` Fassung 8; alte Instrumente rechnen Bit für Bit wie vorher (§14). Im Programm ungesehen und ungehört. |
 | 0.10.0 | 2026-10-13 (S120) | **Baustufen freigegeben (Patrik)** — 18, 19a bis 19e, 20a bis 20d (§14); **die Grenze der Schichten geht auf acht (Patrik)**, mit Stufe 18 und in derselben Fassung 8 wie Pan (§6a). Nachgesehen: Spur und Muster haben schon ein Pan mit dem Gesetz `min(1, 1 ∓ pan)`; die Schicht bekommt dasselbe. Alle sieben Vorlagen sind geschlossen. |
 | 0.9.0 | 2026-10-13 (S120) | **Die Skizzen gebilligt (Patrik)** — das Fenster Edit shape (neu §8a) und die Shape-Schicht im Creator (§6), beide als Beschreibung eingetragen; **G1 a** die Zeile Contour an der Schicht entscheidet, **G2 a** die Regeln für Sprünge von Hand. **Berichtigt nach Patriks Einwand:** der Wellenzug der Preview war von Hand gezeichnet und hatte für einen Zeitpunkt bis zu drei Werte; die Preview zeigt jetzt links und rechts je für sich über der Zeit. Die sechste der sieben Vorlagen ist geschlossen. |
 | 0.8.0 | 2026-10-13 (S120) | **Die Module entschieden (Patrik): M1 a** ein Knoten XY Scope in voller Genauigkeit, **M2 b** ein Knoten Shape mit Harmonics und Show circles, **M3 a** Shape gleich nach den Daten, XY Scope nach dem ersten Ton; dazu von Patrik: die üblichen Skriptfelder und einige Presets (§4, §10, §13). §14: die Stufen neu geordnet (19a bis 19e, 20a bis 20d). Die fünfte der sieben Vorlagen ist geschlossen. |
