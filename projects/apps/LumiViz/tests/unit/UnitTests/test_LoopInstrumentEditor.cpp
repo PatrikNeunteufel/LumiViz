@@ -1404,17 +1404,16 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(creator.oeffneAufnahme(false));
         CHECK(creator.aufnahmeFenster() == aufnahme);  // dasselbe Fenster, kein zweites
         CHECK(aufnahme->findChild<QPushButton*>(QStringLiteral("recordStart"))->isEnabled());
-        CHECK(aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->text() == QStringLiteral("Recording"));
+        CHECK(aufnahme->vorschlagTitel() == QStringLiteral("Recording"));
         {
             std::vector<float> ton(2 * 48000);  // eine Sekunde
             for (std::size_t t = 0; t < 48000; ++t)
                 ton[2 * t] = ton[2 * t + 1] = static_cast<float>(0.5 * std::sin(2.0 * 3.14159265358979 * 220.0 * static_cast<double>(t) / 48000.0));
             aufnahme->setzeAufnahme(std::move(ton), 48000);
         }
-        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("Mein Ton"));
         verlangt.clear();
         creator.aendereSchicht([](Schicht& s) { s.sampleStartMs = 100.0; });
-        CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton"));
+        CHECK(aufnahme->speichereAls(QStringLiteral("Mein Ton")) == QStringLiteral("user:mein_ton"));
         CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));
         CHECK(creator.schicht().sampleStartMs == 0.0);  // eine andere Aufnahme beginnt von vorn
         CHECK(QFileInfo(QDir(eigenerSampleOrdner()).filePath(QStringLiteral("mein_ton.wav"))).size() == 44 + 4 * 48000);
@@ -1425,10 +1424,11 @@ TEST_SUITE("LoopInstrumentEditor")
         // Record... noch einmal: von vorn, mit dem naechsten freien Namen
         REQUIRE(creator.oeffneAufnahme(false));
         CHECK(aufnahme->frames() == 0);
-        CHECK(aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->text() == QStringLiteral("Recording"));
-        // unter demselben Namen neu aufgenommen: die Schicht nennt dasselbe, die Daten werden neu verlangt
+        CHECK(aufnahme->vorschlagTitel() == QStringLiteral("Recording"));
+        // dasselbe Sample neu aufgenommen (seit Stufe 17 ueber Save an einem geoeffneten):
+        // die Schicht nennt dasselbe, die Daten werden neu verlangt
+        aufnahme->bearbeite(QStringLiteral("user:mein_ton"), std::vector<float>(2 * 48000, 0.1f), 48000);
         aufnahme->setzeAufnahme(std::vector<float>(2 * 24000, 0.25f), 48000);
-        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("mein ton"));
         verlangt.clear();
         CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton"));
         CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));

@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.186.0
+> **Version:** 1.187.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4912,8 +4912,12 @@ schreibgeschützt), M2 b (Save überschreibt das eigene, Save as... kopiert),
 M2b a (das Namensfeld entfällt, auch nach einer Aufnahme), M3 a (die Rückfrage
 nennt die eigenen Instrumente, Sample start der offenen Schicht zieht mit),
 M4 a (Edit..., Fenster „Edit sample – <Name>", Record bleibt); die Skizze ist
-gebilligt. **Offen:** Patriks Freigabe der Baustufen 17a bis 17c; gebaut ist
-nichts. Was darunter steht, ist die Notiz aus S118.
+gebilligt, die Baustufen freigegeben (B2 a). **17a gebaut** (das Fenster:
+Save und Save as... statt Namensfeld, ein bestehendes Sample öffnen) — im
+Programm zeigt Record... die neuen Knöpfe, ungesehen. **Offen:** 17b (der
+Knopf Edit... im Creator), 17c (Handbuch, Liste 10, voller Lauf). Folge: aus
+dem Drum-Editor lässt sich ein vorhandenes eigenes Sample nicht mehr ersetzen,
+nur über Edit... im Creator. Was darunter steht, ist die Notiz aus S118.
 
 Im Instrument-Creator, an einer Sample-Schicht, neben **File...** und
 **Record...** ein dritter Knopf (Patrik: „Bearbeiten"): er öffnet ein
@@ -5264,6 +5268,7 @@ die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.187.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": Baustufen freigegeben (B2 a), **17a gebaut** (das Fenster Record sample öffnet auch ein bestehendes Sample; Save und Save as... statt Namensfeld) — im Programm ungesehen. **Offen:** 17b, 17c; aus dem Sichttest vom 13.10.: X5 nicht bestanden (Befund Patrik, noch nicht besprochen) |
 | 1.186.0 | 2026-10-13 | Session 119. §7 Wunsch „ein Sample im Creator bearbeiten": entworfen und entschieden (`Loop_Konzept.md` 0.65.0, §4k — M1 a, M2 b, M2b a, M3 a, M4 a, Skizze gebilligt). **Offen:** Patriks Freigabe der Baustufen 17a bis 17c; nichts gebaut |
 | 1.185.0 | 2026-10-13 | Session 118, Abschluss. `sessions/Changelog_Session118.md`. **Stand:** Stufe 16 (Signal path) ist ganz gebaut — Modell und Dateien, Klangerzeuger, Creator, Clip effects, Drums; voller Lauf 1152 / 1152 unter Testing-MSVC. **Offen:** alles aus S118 im Programm ungesehen und ungehört (Liste 10: G1, G2, W1 bis W7, X1 bis X6, F3, F4, U66 bis U71); Patriks Ohr an `hoerproben_16e`; die Hi-Hat-Schwingung; der Wunsch zum Bearbeiten eines Samples (§7) |
 | 1.184.0 | 2026-10-13 | Session 118. Loop, Signal path **Stufe 16e gebaut, Stufe 16 fertig:** die gerechneten Drums Kick und Clap nutzen die Reihe — Kick mit Drive hinter der Envelope, Clap mit High-pass und Band-pass hintereinander (`.lvinst` Fassung 7); gegen das Kit gemessen: Kick 0,9 / 1,6 dB in den Bändern (vorher 4,9 / 15,2), Clap 1,1 / 3,5 dB (vorher 4,7 / 12,5) — `Loop_Konzept.md` §4j, Tabelle. Die festgehaltenen Werte für beide neu geschrieben (6 von 199). **Offen:** Patriks Ohr an `.claude/handover/hoerproben_16e/` (`vergleich_<klang>.wav`, `alt_neu_kick.wav`, `alt_neu_clap.wav`) — U64, U65, U71; die Hi-Hat-Schwingung; alles aus Stufe 16 im Programm ungesehen und ungehört (Liste 10: G1, G2, W1 bis W7, X1 bis X6, U66 bis U71) |

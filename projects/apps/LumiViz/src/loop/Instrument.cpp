@@ -1035,6 +1035,20 @@ std::vector<Instrument> eigeneInstrumente()
     return alle;
 }
 
+QStringList eigeneInstrumenteMitSample(const QString& nennung)
+{
+    QStringList titel;
+    if (nennung.isEmpty()) return titel;
+    for (const Instrument& instrument : eigeneInstrumente())
+    {
+        const bool spieltEs = std::any_of(instrument.schichten.begin(), instrument.schichten.end(), [&nennung](const Schicht& s) {
+            return s.schwingung == Schwingung::Sample && s.sample == nennung;
+        });
+        if (spieltEs) titel << instrument.titel;
+    }
+    return titel;
+}
+
 bool speichereEigenes(Instrument& instrument, const QString& name)
 {
     const QString pfad = eigeneDatei(name);

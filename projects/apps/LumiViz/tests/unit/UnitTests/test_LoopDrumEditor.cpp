@@ -1091,18 +1091,19 @@ TEST_SUITE("LoopDrumEditor")
         REQUIRE(aufnahme != nullptr);
         CHECK(aufnahme->findChild<QPushButton*>(QStringLiteral("recordStart"))->isEnabled());
         aufnahme->setzeAufnahme(std::vector<float>(2 * 24000, 0.25f), 48000);
-        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("Tisch"));
         const int geladenVorher = neuGeladen;
-        CHECK(aufnahme->speichere() == QStringLiteral("user:tisch"));
+        CHECK(aufnahme->speichereAls(QStringLiteral("Tisch")) == QStringLiteral("user:tisch"));
         CHECK(spur(0).klang == QStringLiteral("user:tisch"));
         CHECK(spur(0).instrument.isEmpty());  // die Spur spielte „strings": jetzt die Aufnahme
         CHECK(mehr0->isHidden());
         CHECK(klang0->currentText() == QStringLiteral("tisch"));
         CHECK(neuGeladen == geladenVorher + 1);
-        // unter demselben Namen neu aufgenommen: am Loop aendert sich nichts, aber wer spielt, laedt neu
+        // dasselbe Sample ersetzt (seit Stufe 17 nur ueber Save an einem geoeffneten):
+        // am Loop aendert sich nichts, aber wer spielt, laedt neu
         REQUIRE(editor.oeffneAufnahme(0, false));
         aufnahme->setzeAufnahme(std::vector<float>(2 * 12000, 0.5f), 48000);
-        aufnahme->findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("tisch"));
+        CHECK(aufnahme->speichereAls(QStringLiteral("tisch")).isEmpty());  // vergeben: Save as... nimmt den Namen nicht
+        aufnahme->bearbeite(QStringLiteral("user:tisch"), std::vector<float>(2 * 12000, 0.5f), 48000);
         const int schritte = aenderungen;
         CHECK(aufnahme->speichere() == QStringLiteral("user:tisch"));
         CHECK(aenderungen == schritte);

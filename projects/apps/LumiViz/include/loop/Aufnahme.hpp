@@ -52,12 +52,21 @@ inline constexpr double kNormalSpitze = 0.9;
 /// Der groesste Betrag im Ausschnitt.
 [[nodiscard]] float spitzeIn(const std::vector<float>& stereo, Ausschnitt ausschnitt);
 
-/// Den Ausschnitt herausnehmen: an beiden Enden kurz geblendet, mit
-/// `normalisieren` so laut, dass der groesste Betrag `kNormalSpitze` ist
+/// An welchen Enden ein Ausschnitt kurz auf null geblendet wird. Ein Ende, an
+/// dem nicht geschnitten wurde, bleibt ungeblendet (Stufe 17: ein geoeffnetes
+/// Sample behaelt seinen Anschlag).
+struct Blenden
+{
+    bool vorn = true;
+    bool hinten = true;
+};
+
+/// Den Ausschnitt herausnehmen: an beiden Enden kurz geblendet (`blenden`),
+/// mit `normalisieren` so laut, dass der groesste Betrag `kNormalSpitze` ist
 /// (Stille bleibt Stille). Der Ausschnitt wird auf die Aufnahme begrenzt;
 /// leer = nichts darin.
 [[nodiscard]] std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Ausschnitt ausschnitt,
-                                             bool normalisieren);
+                                             bool normalisieren, Blenden blenden = {});
 
 /// Als WAV schreiben: Stereo, 16 Bit — das liest jedes Programm. Werte ueber 1
 /// werden begrenzt. false = leer, `rate` nicht groesser als 0, oder nicht zu schreiben.
@@ -66,6 +75,10 @@ bool schreibeWav(const QString& pfad, const std::vector<float>& stereo, int rate
 /// Der Titel, den „Record sample" vorschlaegt: „Recording", sonst „Recording
 /// 2", … — der erste, den es unter den eigenen Samples noch nicht gibt.
 [[nodiscard]] QString vorschlagAufnahmeTitel();
+/// Der Titel, den „Save as..." fuer die Kopie eines Samples vorschlaegt
+/// (Stufe 17): „kick 2", sonst „kick 3", … — der erste, den es unter den
+/// eigenen Samples noch nicht gibt. Ohne Titel wie `vorschlagAufnahmeTitel`.
+[[nodiscard]] QString vorschlagKopieTitel(const QString& titel);
 
 /// Eine Aufnahme unter diesem Titel zu den eigenen Samples legen: als
 /// `<name>.wav` mit `name = eigenerName(titel)`; ein vorhandenes Sample mit

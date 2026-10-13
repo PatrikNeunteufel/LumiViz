@@ -8,11 +8,13 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"  // KurvenBild
 #include "loop/Kit.hpp"
+#include "loop/Loop.hpp"  // istKitKlang
 #include "loop/Sample.hpp"
 
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QDialog>
 #include <QDir>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -83,6 +85,8 @@ void AusschnittQuelle::render(float* out, int frames)
     const bool wiederholen = m_wiederholen.load();
     const double faktor = m_faktor.load();
     const double blende = std::min(kSchnittBlendeMs * m_rate / 1000.0, (bis - von) / 2.0);
+    const bool blendeVorn = m_blendeVorn.load();
+    const bool blendeHinten = m_blendeHinten.load();
 
     for (int i = 0; i < frames; ++i)
     {
@@ -99,7 +103,7 @@ void AusschnittQuelle::render(float* out, int frames)
         const auto f = static_cast<std::size_t>(m_ort);
         const double rest = m_ort - static_cast<double>(f);
         // an beiden Enden kurz auf null, wie beim Speichern
-        const double rand = std::min(m_ort - von, bis - 1.0 - m_ort);
+        const double rand = std::min(blendeVorn ? m_ort - von : blende, blendeHinten ? bis - 1.0 - m_ort : blende);
         const double g = faktor * (blende > 0.0 ? std::min(1.0, rand / blende) : 1.0);
         for (std::size_t seite = 0; seite < 2; ++seite)
         {
@@ -211,24 +215,18 @@ void AufnahmeFenster::setupUI()
     haken->addStretch(1);
     aussen->addLayout(haken);
 
-    // --- Name, Datei, Cancel, Save and use
-    m_name = new QLineEdit(this);
-    m_name->setObjectName(QStringLiteral("recordName"));
-    auto* name = new QHBoxLayout;
-    name->addWidget(new QLabel(tr("Name"), this));
-    name->addWidget(m_name, 1);
-    aussen->addLayout(name);
-    m_datei = new QLabel(this);
-    m_datei->setObjectName(QStringLiteral("recordFile"));
-    m_datei->setEnabled(false);
-    aussen->addWidget(m_datei);
+    // --- Cancel, Save as..., Save (Stufe 17, M2 b und M2b a: kein Namensfeld mehr)
     auto* abbrechen = new QPushButton(tr("Cancel"), this);
     abbrechen->setObjectName(QStringLiteral("recordCancel"));
-    m_sichern = new QPushButton(tr("Save and use"), this);
+    m_sichernAls = new QPushButton(tr("Save as..."), this);
+    m_sichernAls->setObjectName(QStringLiteral("recordSaveAs"));
+    m_sichernAls->setToolTip(tr("Save as a new sample in My samples and use it"));
+    m_sichern = new QPushButton(tr("Save"), this);
     m_sichern->setObjectName(QStringLiteral("recordSave"));
     auto* fuss = new QHBoxLayout;
     fuss->addStretch(1);
     fuss->addWidget(abbrechen);
+    fuss->addWidget(m_sichernAls);
     fuss->addWidget(m_sichern);
     aussen->addLayout(fuss);
 
@@ -248,12 +246,12 @@ void AufnahmeFenster::setupUI()
     connect(m_wiederholen, &QCheckBox::toggled, this, &AufnahmeFenster::setzeWiederholen);
     connect(m_ohneStille, &QCheckBox::toggled, this, &AufnahmeFenster::setzeOhneStille);
     connect(m_normal, &QCheckBox::toggled, this, &AufnahmeFenster::setzeNormalisieren);
-    connect(m_name, &QLineEdit::textChanged, this, [this] { zeigeAlles(); });
     connect(m_eingang, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
         QSettings().setValue(QLatin1String(kEingangGemerkt), m_eingang->itemData(index, Qt::UserRole + 1).toString());
     });
     connect(abbrechen, &QPushButton::clicked, this, &QWidget::close);
     connect(m_sichern, &QPushButton::clicked, this, &AufnahmeFenster::frageUndSpeichere);
+    connect(m_sichernAls, &QPushButton::clicked, this, &AufnahmeFenster::frageUndSpeichereAls);
     connect(m_bild, &KurvenBild::griffGezogen, this, [this](int welcher, double stelle) {
         const auto ort = static_cast<std::int64_t>(std::llround(stelle * static_cast<double>(frames())));
         Ausschnitt neu = m_ausschnitt;
@@ -261,7 +259,7 @@ void AufnahmeFenster::setupUI()
         if (welcher == KurvenBild::GriffBis) neu.bis = std::max(ort, neu.von + minFrames());
         setzeAusschnitt(neu);
     });
-    resize(600, 430);
+    resize(600, 390);
 }
 
 void AufnahmeFenster::setEngine(IAudioEngine* engine)
@@ -304,10 +302,55 @@ void AufnahmeFenster::beginne()
     m_rate = 0;
     m_ausschnitt = {};
     m_gesichert = true;
+    m_nennung.clear();
+    m_frisch = false;
     m_meldung.clear();
+    {
+        // nach einer Aufnahme stehen die Griffe am Ton — auch wenn vorher ein Sample offen war
+        const QSignalBlocker ruhe(m_ohneStille);
+        m_ohneStille->setChecked(true);
+    }
     liesEingaenge();
-    m_name->setText(vorschlagAufnahmeTitel());
+    zeigeBild();
     zeigeAlles();
+}
+
+void AufnahmeFenster::bearbeite(const QString& nennung, std::vector<float> stereo, int rate)
+{
+    halte();
+    if (m_engine != nullptr && m_nimmtAuf) (void)m_engine->recordStop();
+    m_nimmtAuf = false;
+    m_meldung.clear();
+    m_nennung = nennung;
+    m_frisch = false;
+    {
+        // oeffnen und speichern aendert nichts: kein Schnitt, kein Anheben
+        const QSignalBlocker ruheStille(m_ohneStille);
+        const QSignalBlocker ruheNormal(m_normal);
+        m_ohneStille->setChecked(false);
+        m_normal->setChecked(false);
+    }
+    m_daten = std::make_shared<const std::vector<float>>(std::move(stereo));
+    m_rate = rate;
+    m_ausschnitt = Ausschnitt{0, frames()};
+    m_gesichert = false;  // ob es etwas zu verlieren gibt, sagt `geaendert`
+    m_quelle.setzeVerstaerkung(1.0f);
+    liesEingaenge();
+    zeigeBild();
+    zeigeAlles();
+}
+
+AufnahmeFenster::Herkunft AufnahmeFenster::herkunft() const
+{
+    if (m_nennung.isEmpty()) return Herkunft::Aufnahme;
+    if (istEigenesSample(m_nennung)) return Herkunft::Eigenes;
+    return istKitKlang(m_nennung) ? Herkunft::Mitgeliefert : Herkunft::Datei;
+}
+
+bool AufnahmeFenster::geaendert() const
+{
+    if (frames() <= 0) return false;
+    return m_frisch || m_ausschnitt != Ausschnitt{0, frames()} || m_normal->isChecked();
 }
 
 std::int64_t AufnahmeFenster::frames() const
@@ -362,6 +405,16 @@ void AufnahmeFenster::setzeAufnahme(std::vector<float> stereo, int rate)
     m_daten = std::make_shared<const std::vector<float>>(std::move(stereo));
     m_rate = rate;
     m_gesichert = false;
+    if (!m_nennung.isEmpty() && !m_frisch)
+    {
+        // die erste Aufnahme ueber einem geoeffneten Sample: Trim silence wie nach jeder Aufnahme
+        const QSignalBlocker ruhe(m_ohneStille);
+        m_ohneStille->setChecked(true);
+    }
+    // ueber einem Klang des Kits oder einer Datei aufgenommen: mit ihnen hat das Bild nichts mehr zu tun.
+    // Ein eigenes Sample bleibt offen — Save schreibt die Aufnahme unter seinem Namen (M4 a).
+    if (herkunft() != Herkunft::Eigenes) m_nennung.clear();
+    m_frisch = true;
     m_ausschnitt = m_ohneStille->isChecked() ? ohneStille(*m_daten, m_rate) : Ausschnitt{0, frames()};
     zeigeBild();
     zeigeAlles();
@@ -377,6 +430,7 @@ void AufnahmeFenster::setzeAusschnitt(Ausschnitt ausschnitt)
     m_ausschnitt = ausschnitt;
     // was gerade spielt, folgt sofort
     m_quelle.setzeAusschnitt(m_ausschnitt);
+    m_quelle.setzeBlenden(blenden());
     setzeNormalisieren(m_normal->isChecked());
     zeigeAlles();
 }
@@ -421,6 +475,7 @@ bool AufnahmeFenster::spiele()
     halte();
     m_quelle.setzeDaten(m_daten, m_rate, m_engine->getSampleRate());
     m_quelle.setzeAusschnitt(m_ausschnitt);
+    m_quelle.setzeBlenden(blenden());
     m_quelle.setzeWiederholen(m_wiederholen->isChecked());
     setzeNormalisieren(m_normal->isChecked());
     const AudioStreamHandle mixer = m_engine->createMixer();
@@ -459,33 +514,134 @@ void AufnahmeFenster::halte()
 std::vector<float> AufnahmeFenster::ergebnis() const
 {
     if (m_daten == nullptr) return {};
-    return schneideAus(*m_daten, m_rate, m_ausschnitt, m_normal->isChecked());
+    return schneideAus(*m_daten, m_rate, m_ausschnitt, m_normal->isChecked(), blenden());
 }
 
-QString AufnahmeFenster::speichere()
+Blenden AufnahmeFenster::blenden() const
+{
+    if (m_frisch || m_nennung.isEmpty()) return {};
+    return {m_ausschnitt.von > 0, m_ausschnitt.bis < frames()};
+}
+
+QString AufnahmeFenster::schreibe(const QString& name)
 {
     const std::vector<float> daten = ergebnis();
-    if (daten.empty()) return {};
+    if (daten.empty() || name.isEmpty()) return {};
     halte();
-    const QString nennung = speichereAufnahme(daten, m_rate, m_name->text());
+    // eine frische Aufnahme ist ein anderer Klang: dort gibt es keinen Einsatz mitzuziehen
+    const double vornWegMs = m_frisch ? -1.0 : 1000.0 * static_cast<double>(m_ausschnitt.von) / m_rate;
+    const QString nennung = speichereAufnahme(daten, m_rate, name);
     if (nennung.isEmpty()) return {};
     m_gesichert = true;
-    Q_EMIT gespeichert(nennung);
+    Q_EMIT gespeichert(nennung, vornWegMs);
     close();
     return nennung;
 }
 
+QString AufnahmeFenster::speichere()
+{
+    if (herkunft() != Herkunft::Eigenes) return {};
+    return schreibe(m_nennung.mid(static_cast<int>(qstrlen(kSampleVorsatz))));
+}
+
+QString AufnahmeFenster::speichereAls(const QString& titel)
+{
+    const QString name = eigenerName(titel);
+    // einen vergebenen Namen nimmt Save as... nicht — ersetzen kann nur Save (M2 b)
+    if (name.isEmpty() || !eigeneSampleDatei(name).isEmpty()) return {};
+    return schreibe(name);
+}
+
+QString AufnahmeFenster::vorschlagTitel() const
+{
+    return m_nennung.isEmpty() ? vorschlagAufnahmeTitel() : vorschlagKopieTitel(sampleTitel(m_nennung));
+}
+
+QString AufnahmeFenster::ersetzenFrage() const
+{
+    const QString datei = QFileInfo(sampleDatei(m_nennung)).fileName();
+    QString frage = m_frisch ? tr("Replace %1 with the new recording?").arg(datei)
+                             : tr("Replace %1?\nWhat you cut away is gone.").arg(datei);
+    const QStringList nutzer = eigeneInstrumenteMitSample(m_nennung);
+    if (!nutzer.isEmpty())
+    {
+        constexpr int kBeimNamen = 3;
+        QString liste = nutzer.mid(0, kBeimNamen).join(QStringLiteral(", "));
+        if (nutzer.size() > kBeimNamen) liste = tr("%1 and %2 more").arg(liste).arg(nutzer.size() - kBeimNamen);
+        frage += QLatin1Char('\n') + tr("Used by: %1 — they will play the new version.").arg(liste);
+    }
+    return frage;
+}
+
+QString AufnahmeFenster::dateiZeile(const QString& titel, bool* geht)
+{
+    const QString kurz = eigenerName(titel);
+    const bool vergeben = !kurz.isEmpty() && !eigeneSampleDatei(kurz).isEmpty();
+    if (geht != nullptr) *geht = !kurz.isEmpty() && !vergeben;
+    if (kurz.isEmpty()) return tr("Type a name with letters or digits");
+    if (vergeben) return tr("My samples already holds %1 — choose another name").arg(QFileInfo(eigeneSampleDatei(kurz)).fileName());
+    return tr("File: My files · samples · %1.wav").arg(kurz);
+}
+
 void AufnahmeFenster::frageUndSpeichere()
 {
-    const QString name = eigenerName(m_name->text());
-    if (!eigeneSampleDatei(name).isEmpty() &&
-        QMessageBox::question(this, tr("Record sample"),
-                              tr("My samples already holds %1.\nReplace it? Instruments that use it will play the new recording.")
-                                  .arg(QFileInfo(eigeneSampleDatei(name)).fileName())) != QMessageBox::Yes)
-        return;
+    if (herkunft() != Herkunft::Eigenes) return;
+    const QString datei = sampleDatei(m_nennung);
+    if (QMessageBox::question(this, windowTitle(), ersetzenFrage()) != QMessageBox::Yes) return;
     if (speichere().isEmpty())
-        QMessageBox::warning(this, tr("Record sample"),
-                             tr("Could not write %1").arg(QDir::toNativeSeparators(QDir(eigenerSampleOrdner()).filePath(name + QStringLiteral(".wav")))));
+        QMessageBox::warning(this, windowTitle(), tr("Could not write %1").arg(QDir::toNativeSeparators(datei)));
+}
+
+void AufnahmeFenster::frageUndSpeichereAls()
+{
+    if (frames() <= 0) return;
+    QDialog dialog(this);
+    dialog.setObjectName(QStringLiteral("recordSaveAsDialog"));
+    dialog.setWindowTitle(tr("Save sample as"));
+    auto* aussen = new QVBoxLayout(&dialog);
+    QString satzText = tr("This saves a new sample to My samples and uses it.");
+    if (herkunft() == Herkunft::Mitgeliefert) satzText = tr("Built-in sounds stay as they are. This saves a copy to My samples and uses it.");
+    if (herkunft() == Herkunft::Datei) satzText = tr("The file stays as it is. This saves a copy to My samples and uses it.");
+    if (herkunft() == Herkunft::Eigenes) satzText = tr("%1 stays as it is. This saves a copy to My samples and uses it.").arg(sampleTitel(m_nennung));
+    auto* satz = new QLabel(satzText, &dialog);
+    satz->setWordWrap(true);
+    satz->setEnabled(false);
+    aussen->addWidget(satz);
+    auto* name = new QLineEdit(vorschlagTitel(), &dialog);
+    name->setObjectName(QStringLiteral("recordSaveAsName"));
+    auto* zeile = new QHBoxLayout;
+    zeile->addWidget(new QLabel(tr("Name"), &dialog));
+    zeile->addWidget(name, 1);
+    aussen->addLayout(zeile);
+    auto* datei = new QLabel(&dialog);
+    datei->setObjectName(QStringLiteral("recordSaveAsFile"));
+    datei->setEnabled(false);
+    aussen->addWidget(datei);
+    auto* abbrechen = new QPushButton(tr("Cancel"), &dialog);
+    auto* sichern = new QPushButton(tr("Save"), &dialog);
+    sichern->setDefault(true);
+    auto* fuss = new QHBoxLayout;
+    fuss->addStretch(1);
+    fuss->addWidget(abbrechen);
+    fuss->addWidget(sichern);
+    aussen->addLayout(fuss);
+    const auto zeige = [name, datei, sichern] {
+        bool geht = false;
+        datei->setText(dateiZeile(name->text(), &geht));
+        sichern->setEnabled(geht);
+    };
+    connect(name, &QLineEdit::textChanged, &dialog, zeige);
+    connect(abbrechen, &QPushButton::clicked, &dialog, &QDialog::reject);
+    connect(sichern, &QPushButton::clicked, &dialog, &QDialog::accept);
+    zeige();
+    dialog.resize(420, dialog.sizeHint().height());
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    const QString titel = name->text().trimmed();
+    if (speichereAls(titel).isEmpty())
+        QMessageBox::warning(this, windowTitle(),
+                             tr("Could not write %1")
+                                 .arg(QDir::toNativeSeparators(QDir(eigenerSampleOrdner()).filePath(eigenerName(titel) + QStringLiteral(".wav")))));
 }
 
 void AufnahmeFenster::takt()
@@ -557,8 +713,16 @@ void AufnahmeFenster::zeigeAlles()
         stand = m_meldung;
     else if (m_nimmtAuf)
         stand = tr("%1 s recorded · %2").arg(sekunden(static_cast<double>(m_engine->recordedFrames()) / kSampleRate, 1), hoechstens);
-    else if (aufnahmeDa)
+    else if (aufnahmeDa && m_frisch)
         stand = tr("%1 s recorded").arg(sekunden(static_cast<double>(alle) / m_rate, 1));
+    else if (aufnahmeDa)
+    {
+        // ein geoeffnetes Sample: wie lang es ist und woher es kommt
+        QString woher = tr("My samples");
+        if (herkunft() == Herkunft::Mitgeliefert) woher = tr("Built-in, read-only");
+        if (herkunft() == Herkunft::Datei) woher = tr("File, read-only");
+        stand = tr("%1 s · %2").arg(sekunden(static_cast<double>(alle) / m_rate, 2), woher);
+    }
     else if (!engineDa)
         stand = tr("No audio engine — recording is not available");
     else if (!eingangDa)
@@ -593,20 +757,25 @@ void AufnahmeFenster::zeigeAlles()
     m_ohneStille->setEnabled(aufnahmeDa && !m_nimmtAuf);
     m_normal->setEnabled(aufnahmeDa && !m_nimmtAuf);
 
-    // der Name und die Datei, die daraus wird
-    const QString kurz = eigenerName(m_name->text());
-    if (kurz.isEmpty())
-        m_datei->setText(tr("Type a name with letters or digits"));
+    // der Titel sagt, was offen ist; Save gibt es nur fuer ein eigenes Sample
+    setWindowTitle(m_nennung.isEmpty() ? tr("Record sample") : tr("Edit sample – %1").arg(sampleTitel(m_nennung)));
+    const bool eigenes = herkunft() == Herkunft::Eigenes;
+    m_sichernAls->setEnabled(aufnahmeDa && !m_nimmtAuf);
+    m_sichern->setEnabled(aufnahmeDa && !m_nimmtAuf && eigenes);
+    if (eigenes)
+        m_sichern->setToolTip(tr("Replace %1 in My samples").arg(sampleTitel(m_nennung)));
+    else if (herkunft() == Herkunft::Aufnahme)
+        m_sichern->setToolTip(tr("A new recording has no name yet — use Save as..."));
     else
-        m_datei->setText(tr("File: My files · samples · %1.wav%2")
-                             .arg(kurz, eigeneSampleDatei(kurz).isEmpty() ? QString() : tr(" — replaces the one there")));
-    m_sichern->setEnabled(aufnahmeDa && !m_nimmtAuf && !kurz.isEmpty());
+        m_sichern->setToolTip(tr("Built-in sounds and files stay as they are — use Save as..."));
 }
 
 void AufnahmeFenster::closeEvent(QCloseEvent* event)
 {
-    if (!m_gesichert && frames() > 0 &&
-        QMessageBox::question(this, tr("Record sample"), tr("The recording is not saved.\nDiscard it?")) != QMessageBox::Yes)
+    if (!m_gesichert && geaendert() &&
+        QMessageBox::question(this, windowTitle(),
+                              m_frisch ? tr("The recording is not saved.\nDiscard it?") : tr("Your changes are not saved.\nDiscard them?")) !=
+            QMessageBox::Yes)
     {
         event->ignore();
         return;

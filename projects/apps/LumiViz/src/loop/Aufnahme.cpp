@@ -75,7 +75,7 @@ Ausschnitt ohneStille(const std::vector<float>& stereo, int rate)
     return begrenzt({erster - vor, letzter + 1 + nach}, frames);
 }
 
-std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Ausschnitt ausschnitt, bool normalisieren)
+std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Ausschnitt ausschnitt, bool normalisieren, Blenden blenden)
 {
     const Ausschnitt a = begrenzt(ausschnitt, framesVon(stereo));
     const std::int64_t frames = a.frames();
@@ -98,6 +98,8 @@ std::vector<float> schneideAus(const std::vector<float>& stereo, int rate, Aussc
         const float anteil = static_cast<float>(f) / static_cast<float>(blende);
         for (const std::int64_t stelle : {f, frames - 1 - f})
         {
+            // ein Ende, an dem nicht geschnitten wurde, bleibt wie es ist — der Anschlag eines Schlags etwa
+            if (stelle == f ? !blenden.vorn : !blenden.hinten) continue;
             aus[static_cast<std::size_t>(2 * stelle)] *= anteil;
             aus[static_cast<std::size_t>(2 * stelle + 1)] *= anteil;
         }
@@ -146,6 +148,18 @@ QString vorschlagAufnahmeTitel()
     {
         const QString titel = zahl == 1 ? grund : QStringLiteral("%1 %2").arg(grund).arg(zahl);
         if (eigeneSampleDatei(eigenerName(titel)).isEmpty()) return titel;
+    }
+}
+
+QString vorschlagKopieTitel(const QString& titel)
+{
+    // der Name ohne Endung: aus „cello.mp3" wird „cello 2", nicht „cello.mp3 2"
+    const QString grund = QFileInfo(titel).completeBaseName();
+    if (eigenerName(grund).isEmpty()) return vorschlagAufnahmeTitel();
+    for (int zahl = 2;; ++zahl)
+    {
+        const QString kopie = QStringLiteral("%1 %2").arg(grund).arg(zahl);
+        if (eigeneSampleDatei(eigenerName(kopie)).isEmpty()) return kopie;
     }
 }
 

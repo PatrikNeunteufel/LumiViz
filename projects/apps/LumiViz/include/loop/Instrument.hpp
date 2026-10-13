@@ -298,6 +298,11 @@ void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
 /// Die eigenen Instrumente, nach Titel sortiert; `name` ist `user:<name>`.
 /// Jedes Mal neu gelesen — der Ordner aendert sich, waehrend das Programm laeuft.
 [[nodiscard]] std::vector<Instrument> eigeneInstrumente();
+/// Die Titel der eigenen Instrumente, in denen eine Sample-Schicht dieses
+/// Sample nennt (`user:<name>`, `kit:<name>` oder ein Pfad) — nach Titel
+/// sortiert, jedes einmal. Fuer die Rueckfrage, bevor ein Sample ersetzt wird
+/// (Stufe 17, Entscheid M3 a). Loops an freiem Ort kennt sie nicht.
+[[nodiscard]] QStringList eigeneInstrumenteMitSample(const QString& nennung);
 /// Ein eigenes Instrument in den Benutzerordner schreiben (legt ihn an).
 /// `instrument.name` wird `user:<name>`. false = kein gueltiger Name oder
 /// nicht zu schreiben.

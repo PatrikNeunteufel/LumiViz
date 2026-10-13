@@ -2,12 +2,16 @@
  * @file test_LoopAufnahmeFenster.cpp
  * @brief Loop, Stufe 11b, Schritt 2: das Fenster „Record sample" — aufnehmen,
  *        zuschneiden, in Dauerschleife anhoeren, speichern
- *        (docs/audio/Loop_Konzept.md §4h; Skizze gebilligt, Patrik S115)
+ *        (docs/audio/Loop_Konzept.md §4h; Skizze gebilligt, Patrik S115);
+ *        seit Stufe 17a auch „Edit sample": ein bestehendes Sample oeffnen,
+ *        Save und Save as... (§4k; Entscheide M1 a bis M4 a, Patrik S119)
  *
  * Ohne Ton, ohne Eingang, ohne gezeigtes Fenster: die Engine ist aus Pappe —
  * sie „nimmt auf", was der Test ihr gibt, und reicht die Quelle heraus, die
  * den Ausschnitt spielt. Eigene Samples liegen in einem Wegwerf-Ordner.
- * `LUMIVIZ_RECORD_SAMPLE_BILD=<datei.png>` legt ein Bild des Fensters ab.
+ * `LUMIVIZ_RECORD_SAMPLE_BILD=<datei.png>` legt ein Bild des Fensters ab,
+ * `LUMIVIZ_EDIT_SAMPLE_BILD=<datei.png>` zwei vom Bearbeiten (das zweite mit
+ * `_kit`: ein Klang des Kits). Die Dialoge selbst werden nicht gezeigt.
  */
 
 #include <doctest.h>
@@ -15,6 +19,7 @@
 #include "PappAufnahme.hpp"
 #include "loop/Aufnahme.hpp"
 #include "loop/AufnahmeFenster.hpp"
+#include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"  // KurvenBild
 #include "loop/Sample.hpp"
 
@@ -202,19 +207,23 @@ TEST_SUITE("Loop Aufnahme Fenster")
         auto* schnitt = fenster.findChild<QLabel*>(QStringLiteral("recordTrimmed"));
         auto* ohneStilleHaken = fenster.findChild<QCheckBox*>(QStringLiteral("recordTrimSilence"));
         auto* normal = fenster.findChild<QCheckBox*>(QStringLiteral("recordNormalize"));
-        auto* name = fenster.findChild<QLineEdit*>(QStringLiteral("recordName"));
-        auto* datei = fenster.findChild<QLabel*>(QStringLiteral("recordFile"));
+        auto* sichernAls = fenster.findChild<QPushButton*>(QStringLiteral("recordSaveAs"));
         auto* sichern = fenster.findChild<QPushButton*>(QStringLiteral("recordSave"));
         auto* hinweis = fenster.findChild<QLabel*>(QStringLiteral("recordHint"));
         for (QObject* teil : std::initializer_list<QObject*>{wahl, record, stop, stand, pegel, bild, play, wiederholen, schnitt,
-                                                              ohneStilleHaken, normal, name, datei, sichern, hinweis})
+                                                              ohneStilleHaken, normal, sichernAls, sichern, hinweis})
             REQUIRE(teil != nullptr);
         CHECK(fenster.windowTitle() == QStringLiteral("Record sample"));
+        // seit Stufe 17 (M2b a): kein Namensfeld mehr, unten Cancel, Save as..., Save
+        CHECK(fenster.findChild<QLineEdit*>(QStringLiteral("recordName")) == nullptr);
+        CHECK(sichernAls->text() == QStringLiteral("Save as..."));
+        CHECK(sichern->text() == QStringLiteral("Save"));
 
         // --- ohne Engine: nichts geht, und die Zeile sagt es
         CHECK_FALSE(record->isEnabled());
         CHECK_FALSE(play->isEnabled());
         CHECK_FALSE(sichern->isEnabled());
+        CHECK_FALSE(sichernAls->isEnabled());
         CHECK(stand->text() == QStringLiteral("No audio engine — recording is not available"));
         CHECK_FALSE(fenster.starteAufnahme());
 
@@ -227,9 +236,11 @@ TEST_SUITE("Loop Aufnahme Fenster")
         CHECK(record->isEnabled());
         CHECK_FALSE(stop->isEnabled());
         CHECK(stand->text() == QStringLiteral("Press Record — up to 30 s"));
-        CHECK(name->text() == QStringLiteral("Recording"));
-        CHECK(datei->text() == QStringLiteral("File: My files · samples · recording.wav"));
-        CHECK_FALSE(sichern->isEnabled());  // noch nichts aufgenommen
+        CHECK(fenster.vorschlagTitel() == QStringLiteral("Recording"));
+        CHECK(fenster.herkunft() == AufnahmeFenster::Herkunft::Aufnahme);
+        CHECK_FALSE(sichernAls->isEnabled());  // noch nichts aufgenommen
+        CHECK_FALSE(sichern->isEnabled());
+        CHECK_FALSE(fenster.geaendert());
         CHECK(hinweis->isHidden());
         CHECK(bild->aussenGrau());
         CHECK(bild->gespiegelt());
@@ -273,7 +284,13 @@ TEST_SUITE("Loop Aufnahme Fenster")
         CHECK(schnitt->text().contains(QStringLiteral(" s to 1.83 s · 1.5")));
         CHECK_FALSE(hinweis->isHidden());
         CHECK(play->isEnabled());
-        CHECK(sichern->isEnabled());
+        // eine frische Aufnahme hat noch keinen Namen: nur Save as...
+        CHECK(sichernAls->isEnabled());
+        CHECK_FALSE(sichern->isEnabled());
+        CHECK(sichern->toolTip() == QStringLiteral("A new recording has no name yet — use Save as..."));
+        CHECK(fenster.frisch());
+        CHECK(fenster.geaendert());
+        CHECK(fenster.speichere().isEmpty());
         CHECK(record->isEnabled());
 
         // --- die Griffe ziehen: der Anfang nach rechts, das Ende nach links; sie kreuzen sich nicht
@@ -342,7 +359,7 @@ TEST_SUITE("Loop Aufnahme Fenster")
         CHECK_FALSE(drittes.starteAufnahme());
     }
 
-    TEST_CASE("Loop Record sample: Play und Repeat — der Ausschnitt folgt den Griffen; Save and use legt das Sample ab")
+    TEST_CASE("Loop Record sample: Play und Repeat — der Ausschnitt folgt den Griffen; Save as legt das Sample ab")
     {
         Umgebung u;
         AufnahmeEngine engine;
@@ -353,16 +370,18 @@ TEST_SUITE("Loop Aufnahme Fenster")
         fenster.setEngine(&engine);
         fenster.beginne();
         QStringList gespeichert;
-        QObject::connect(&fenster, &AufnahmeFenster::gespeichert, &fenster, [&](const QString& nennung) { gespeichert << nennung; });
+        std::vector<double> vornWeg;
+        QObject::connect(&fenster, &AufnahmeFenster::gespeichert, &fenster, [&](const QString& nennung, double ms) {
+            gespeichert << nennung;
+            vornWeg.push_back(ms);
+        });
         auto* play = fenster.findChild<QPushButton*>(QStringLiteral("recordPlay"));
         auto* wiederholen = fenster.findChild<QCheckBox*>(QStringLiteral("recordRepeat"));
         auto* bild = fenster.findChild<KurvenBild*>(QStringLiteral("recordPicture"));
-        auto* name = fenster.findChild<QLineEdit*>(QStringLiteral("recordName"));
-        auto* datei = fenster.findChild<QLabel*>(QStringLiteral("recordFile"));
-        auto* sichern = fenster.findChild<QPushButton*>(QStringLiteral("recordSave"));
 
         CHECK_FALSE(fenster.spiele());  // nichts aufgenommen
         CHECK(fenster.speichere().isEmpty());
+        CHECK(fenster.speichereAls(QStringLiteral("Leer")).isEmpty());
         fenster.setzeAufnahme(aufnahme, 48000);
         fenster.setzeAusschnitt({24000, 28800});
 
@@ -411,33 +430,38 @@ TEST_SUITE("Loop Aufnahme Fenster")
         engine.angekommen = 96000;
         REQUIRE(fenster.stoppeAufnahme());
 
-        // --- der Name und die Datei, die daraus wird
-        name->setText(QStringLiteral("Table Knock"));
-        CHECK(datei->text() == QStringLiteral("File: My files · samples · table_knock.wav"));
-        name->setText(QStringLiteral("???"));
-        CHECK(datei->text() == QStringLiteral("Type a name with letters or digits"));
-        CHECK_FALSE(sichern->isEnabled());
-        CHECK(fenster.speichere().isEmpty());
-        name->setText(QStringLiteral("Table Knock"));
-        CHECK(sichern->isEnabled());
+        // --- der Dialog von Save as...: der Name und die Datei, die daraus wird
+        bool geht = false;
+        CHECK(AufnahmeFenster::dateiZeile(QStringLiteral("Table Knock"), &geht) == QStringLiteral("File: My files · samples · table_knock.wav"));
+        CHECK(geht);
+        CHECK(AufnahmeFenster::dateiZeile(QStringLiteral("???"), &geht) == QStringLiteral("Type a name with letters or digits"));
+        CHECK_FALSE(geht);
+        CHECK(fenster.speichereAls(QStringLiteral("???")).isEmpty());
 
-        // --- Save and use: der Ausschnitt liegt als WAV bei den eigenen Samples, das Fenster meldet es
+        // --- Save as...: der Ausschnitt liegt als WAV bei den eigenen Samples, das Fenster meldet es
         fenster.setzeAusschnitt({24000, 28800});
         REQUIRE(fenster.spiele());
-        CHECK(fenster.speichere() == QStringLiteral("user:table_knock"));
+        CHECK(fenster.speichereAls(QStringLiteral("Table Knock")) == QStringLiteral("user:table_knock"));
         CHECK_FALSE(fenster.spielt());  // das Anhoeren haelt
         CHECK(gespeichert == QStringList{QStringLiteral("user:table_knock")});
+        CHECK(vornWeg == std::vector<double>{-1.0});  // eine Aufnahme: kein Einsatz mitzuziehen
         const QString pfad = QDir(u.ordner).filePath(QStringLiteral("table_knock.wav"));
         REQUIRE(QFileInfo::exists(pfad));
         CHECK(QFileInfo(pfad).size() == 44 + 4 * 4800);  // 0,1 s Stereo in 16 Bit
         CHECK(eigeneSamples() == QStringList{QStringLiteral("user:table_knock")});
 
-        // --- beim naechsten Mal: ein neuer Name; der alte waere ein Ersetzen, und die Zeile sagt es
+        // --- beim naechsten Mal: ein neuer Vorschlag; den vergebenen Namen nimmt Save as... nicht (M2 b)
         fenster.beginne();
         CHECK(fenster.frames() == 0);
-        CHECK(name->text() == QStringLiteral("Recording"));
-        name->setText(QStringLiteral("table knock"));
-        CHECK(datei->text() == QStringLiteral("File: My files · samples · table_knock.wav — replaces the one there"));
+        CHECK(fenster.vorschlagTitel() == QStringLiteral("Recording"));
+        CHECK(AufnahmeFenster::dateiZeile(QStringLiteral("table knock"), &geht) ==
+              QStringLiteral("My samples already holds table_knock.wav — choose another name"));
+        CHECK_FALSE(geht);
+        fenster.setzeAufnahme(aufnahme, 48000);
+        CHECK(fenster.speichereAls(QStringLiteral("table knock")).isEmpty());
+        CHECK(QFileInfo(pfad).size() == 44 + 4 * 4800);  // unberuehrt
+        CHECK(gespeichert.size() == 1);
+        fenster.beginne();
 
         if (const QString ziel = qEnvironmentVariable("LUMIVIZ_RECORD_SAMPLE_BILD"); !ziel.isEmpty())
         {
@@ -455,7 +479,6 @@ TEST_SUITE("Loop Aufnahme Fenster")
                                                                      std::exp(-seit / 22000.0) * std::min(1.0, seit / 300.0));
             }
             gezeigt.setzeAufnahme(std::move(klang), 48000);
-            gezeigt.findChild<QLineEdit*>(QStringLiteral("recordName"))->setText(QStringLiteral("Door slam"));
             gezeigt.setzeWiederholen(true);
             REQUIRE(gezeigt.spiele());
             std::vector<float> stumm(2 * 30000);
@@ -466,7 +489,205 @@ TEST_SUITE("Loop Aufnahme Fenster")
             QCoreApplication::processEvents();
             CHECK(gezeigt.grab().save(ziel));
             gezeigt.halte();
-            (void)gezeigt.speichere();  // sonst fragt das Schliessen nach
+            (void)gezeigt.speichereAls(QStringLiteral("Door slam"));  // sonst fragt das Schliessen nach
         }
+    }
+
+    TEST_CASE("Loop Edit sample: ein bestehendes Sample oeffnen — Save ersetzt das eigene, Kit und Datei sind schreibgeschuetzt")
+    {
+        Umgebung u;
+        QTemporaryDir instrumente;
+        REQUIRE(instrumente.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(instrumente.path());
+        AufnahmeEngine engine;
+        engine.eingaenge = {eingang(0, QStringLiteral("Default"), true)};
+        const std::vector<float> klang = probe();
+
+        AufnahmeFenster fenster;
+        fenster.setEngine(&engine);
+        QStringList gespeichert;
+        std::vector<double> vornWeg;
+        QObject::connect(&fenster, &AufnahmeFenster::gespeichert, &fenster, [&](const QString& nennung, double ms) {
+            gespeichert << nennung;
+            vornWeg.push_back(ms);
+        });
+        auto* stand = fenster.findChild<QLabel*>(QStringLiteral("recordState"));
+        auto* bild = fenster.findChild<KurvenBild*>(QStringLiteral("recordPicture"));
+        auto* ohneStilleHaken = fenster.findChild<QCheckBox*>(QStringLiteral("recordTrimSilence"));
+        auto* normal = fenster.findChild<QCheckBox*>(QStringLiteral("recordNormalize"));
+        auto* record = fenster.findChild<QPushButton*>(QStringLiteral("recordStart"));
+        auto* sichernAls = fenster.findChild<QPushButton*>(QStringLiteral("recordSaveAs"));
+        auto* sichern = fenster.findChild<QPushButton*>(QStringLiteral("recordSave"));
+
+        // ein eigenes Sample, wie Save as... es ablegt
+        REQUIRE(speichereAufnahme(klang, 48000, QStringLiteral("Table Knock")) == QStringLiteral("user:table_knock"));
+        const QString pfad = QDir(u.ordner).filePath(QStringLiteral("table_knock.wav"));
+        REQUIRE(QFileInfo(pfad).size() == 44 + 4 * 96000);
+
+        SUBCASE("ein eigenes Sample: das Ganze im Bild, Save ersetzt es, der Schnitt vorn geht mit hinaus")
+        {
+            normal->setChecked(true);  // von einer Aufnahme davor stehen geblieben
+            fenster.bearbeite(QStringLiteral("user:table_knock"), klang, 48000);
+            CHECK(fenster.windowTitle() == QStringLiteral("Edit sample – table_knock"));
+            CHECK(fenster.nennung() == QStringLiteral("user:table_knock"));
+            CHECK(fenster.herkunft() == AufnahmeFenster::Herkunft::Eigenes);
+            CHECK_FALSE(fenster.frisch());
+            CHECK(stand->text() == QStringLiteral("2.00 s · My samples"));
+            // oeffnen aendert nichts: kein Schnitt, kein Anheben, nichts zu verlieren
+            CHECK_FALSE(ohneStilleHaken->isChecked());
+            CHECK_FALSE(normal->isChecked());
+            CHECK(fenster.ausschnitt() == Ausschnitt{0, 96000});
+            CHECK(bild->griff(KurvenBild::GriffVon) == doctest::Approx(0.0));
+            CHECK(bild->griff(KurvenBild::GriffBis) == doctest::Approx(1.0));
+            CHECK(bild->werte().size() == 600);
+            CHECK_FALSE(fenster.geaendert());
+            CHECK(fenster.ergebnis() == klang);  // an keinem Ende geblendet
+            CHECK(record->isEnabled());           // Record bleibt (M4 a)
+            CHECK(sichernAls->isEnabled());
+            CHECK(sichern->isEnabled());
+            CHECK(sichern->toolTip() == QStringLiteral("Replace table_knock in My samples"));
+            CHECK(fenster.vorschlagTitel() == QStringLiteral("table_knock 2"));
+            CHECK(fenster.ersetzenFrage() == QStringLiteral("Replace table_knock.wav?\nWhat you cut away is gone."));
+
+            // vorn und hinten schneiden: geblendet wird nur dort, wo geschnitten ist
+            fenster.setzeAusschnitt({24000, 96000});
+            CHECK(fenster.geaendert());
+            CHECK(fenster.blenden().vorn);
+            CHECK_FALSE(fenster.blenden().hinten);
+            CHECK(fenster.ergebnis() == schneideAus(klang, 48000, {24000, 96000}, false, {true, false}));
+            fenster.setzeAusschnitt({24000, 72000});
+            CHECK(fenster.ergebnis() == schneideAus(klang, 48000, {24000, 72000}, false));
+
+            // Save: dieselbe Nennung, die Datei ist kuerzer, 500 ms sind vorn weg
+            CHECK(fenster.speichere() == QStringLiteral("user:table_knock"));
+            CHECK(gespeichert == QStringList{QStringLiteral("user:table_knock")});
+            REQUIRE(vornWeg.size() == 1);
+            CHECK(vornWeg[0] == doctest::Approx(500.0));
+            CHECK(QFileInfo(pfad).size() == 44 + 4 * 48000);
+            CHECK(eigeneSamples() == QStringList{QStringLiteral("user:table_knock")});
+        }
+
+        SUBCASE("Save as... legt eine Kopie daneben, das Original bleibt")
+        {
+            fenster.bearbeite(QStringLiteral("user:table_knock"), klang, 48000);
+            fenster.setzeAusschnitt({12000, 60000});
+            CHECK(fenster.speichereAls(QStringLiteral("table knock")).isEmpty());  // vergeben
+            CHECK(fenster.speichereAls(fenster.vorschlagTitel()) == QStringLiteral("user:table_knock_2"));
+            CHECK(gespeichert == QStringList{QStringLiteral("user:table_knock_2")});
+            CHECK(vornWeg[0] == doctest::Approx(250.0));
+            CHECK(QFileInfo(pfad).size() == 44 + 4 * 96000);
+            CHECK(QFileInfo(QDir(u.ordner).filePath(QStringLiteral("table_knock_2.wav"))).size() == 44 + 4 * 48000);
+            // der naechste Vorschlag zaehlt weiter
+            fenster.bearbeite(QStringLiteral("user:table_knock"), klang, 48000);
+            CHECK(fenster.vorschlagTitel() == QStringLiteral("table_knock 3"));
+        }
+
+        SUBCASE("ein Klang des Kits und eine Datei an freiem Ort: Save ist grau")
+        {
+            fenster.bearbeite(QStringLiteral("kit:kick"), klang, 48000);
+            CHECK(fenster.windowTitle() == QStringLiteral("Edit sample – kick"));
+            CHECK(fenster.herkunft() == AufnahmeFenster::Herkunft::Mitgeliefert);
+            CHECK(stand->text() == QStringLiteral("2.00 s · Built-in, read-only"));
+            CHECK_FALSE(sichern->isEnabled());
+            CHECK(sichern->toolTip() == QStringLiteral("Built-in sounds and files stay as they are — use Save as..."));
+            CHECK(sichernAls->isEnabled());
+            CHECK(fenster.speichere().isEmpty());
+            CHECK(fenster.vorschlagTitel() == QStringLiteral("kick 2"));
+            fenster.setzeAusschnitt({0, 48000});
+            CHECK(fenster.speichereAls(QStringLiteral("kick 2")) == QStringLiteral("user:kick_2"));
+            CHECK(vornWeg == std::vector<double>{0.0});
+
+            const QString frei = QDir(u.tmp.path()).filePath(QStringLiteral("cello.mp3"));
+            fenster.bearbeite(frei, klang, 48000);
+            CHECK(fenster.windowTitle() == QStringLiteral("Edit sample – cello.mp3"));
+            CHECK(fenster.herkunft() == AufnahmeFenster::Herkunft::Datei);
+            CHECK(stand->text() == QStringLiteral("2.00 s · File, read-only"));
+            CHECK_FALSE(sichern->isEnabled());
+            CHECK(fenster.vorschlagTitel() == QStringLiteral("cello 2"));
+
+            // ueber einer Datei aufgenommen: mit ihr hat das Bild nichts mehr zu tun
+            fenster.setzeAufnahme(probe(0.2f), 48000);
+            CHECK(fenster.nennung().isEmpty());
+            CHECK(fenster.windowTitle() == QStringLiteral("Record sample"));
+            CHECK(ohneStilleHaken->isChecked());
+            CHECK(fenster.ausschnitt() == ohneStille(probe(0.2f), 48000));
+            CHECK(fenster.vorschlagTitel() == QStringLiteral("Recording"));
+            CHECK_FALSE(sichern->isEnabled());
+        }
+
+        SUBCASE("ueber einem eigenen Sample neu aufgenommen: Save schreibt unter demselben Namen")
+        {
+            fenster.bearbeite(QStringLiteral("user:table_knock"), klang, 48000);
+            engine.aufnahme = probe(0.2f);
+            REQUIRE(fenster.starteAufnahme());
+            engine.angekommen = 96000;
+            REQUIRE(fenster.stoppeAufnahme());
+            CHECK(fenster.nennung() == QStringLiteral("user:table_knock"));
+            CHECK(fenster.windowTitle() == QStringLiteral("Edit sample – table_knock"));
+            CHECK(fenster.frisch());
+            CHECK(stand->text() == QStringLiteral("2.0 s recorded"));
+            CHECK(ohneStilleHaken->isChecked());
+            CHECK(sichern->isEnabled());
+            CHECK(fenster.ersetzenFrage() == QStringLiteral("Replace table_knock.wav with the new recording?"));
+            CHECK(fenster.speichere() == QStringLiteral("user:table_knock"));
+            CHECK(vornWeg == std::vector<double>{-1.0});  // ein anderer Klang
+            // danach von vorn: Record sample, ohne Sample
+            fenster.beginne();
+            CHECK(fenster.nennung().isEmpty());
+            CHECK(fenster.windowTitle() == QStringLiteral("Record sample"));
+            CHECK(bild->werte().empty());
+        }
+
+        SUBCASE("die Rueckfrage nennt die eigenen Instrumente, die das Sample spielen")
+        {
+            const auto lege = [](const QString& titel, const QString& sample) {
+                Instrument instrument;
+                instrument.titel = titel;
+                instrument.schichten[0].schwingung = Schwingung::Sample;
+                instrument.schichten[0].sample = sample;
+                REQUIRE(speichereEigenes(instrument, eigenerName(titel)));
+            };
+            lege(QStringLiteral("Table Kit"), QStringLiteral("user:table_knock"));
+            lege(QStringLiteral("Other"), QStringLiteral("user:something_else"));
+            CHECK(eigeneInstrumenteMitSample(QStringLiteral("user:table_knock")) == QStringList{QStringLiteral("Table Kit")});
+            CHECK(eigeneInstrumenteMitSample(QString()).isEmpty());
+            fenster.bearbeite(QStringLiteral("user:table_knock"), klang, 48000);
+            CHECK(fenster.ersetzenFrage() ==
+                  QStringLiteral("Replace table_knock.wav?\nWhat you cut away is gone.\nUsed by: Table Kit — they will play the new version."));
+            lege(QStringLiteral("Knock Bass"), QStringLiteral("user:table_knock"));
+            lege(QStringLiteral("Alpha"), QStringLiteral("user:table_knock"));
+            lege(QStringLiteral("Zed"), QStringLiteral("user:table_knock"));
+            lege(QStringLiteral("Yak"), QStringLiteral("user:table_knock"));
+            CHECK(fenster.ersetzenFrage().endsWith(
+                QStringLiteral("Used by: Alpha, Knock Bass, Table Kit and 2 more — they will play the new version.")));
+        }
+
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_EDIT_SAMPLE_BILD"); !ziel.isEmpty())
+        {
+            // zwei Bilder: ein eigenes Sample, zugeschnitten — und (mit _kit) ein Klang des Kits
+            for (const bool kit : {false, true})
+            {
+                AufnahmeFenster gezeigt;
+                gezeigt.setEngine(&engine);
+                std::vector<float> schlag(2 * 40320, 0.0f);  // 0,84 Sekunden
+                for (std::size_t t = 3800; t < 40320; ++t)
+                {
+                    const double seit = static_cast<double>(t - 3800);
+                    schlag[2 * t] = schlag[2 * t + 1] =
+                        static_cast<float>(0.7 * std::sin(2.0 * kPi * 140.0 * seit / 48000.0) * std::exp(-seit / 6000.0));
+                }
+                gezeigt.bearbeite(kit ? QStringLiteral("kit:kick") : QStringLiteral("user:table_knock"), std::move(schlag), 48000);
+                gezeigt.setzeAusschnitt({kit ? 0 : 3800, 31700});
+                gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+                gezeigt.show();
+                QCoreApplication::processEvents();
+                QString datei = ziel;
+                if (kit) datei.replace(QStringLiteral(".png"), QStringLiteral("_kit.png"));
+                CHECK(gezeigt.grab().save(datei));
+                gezeigt.setzeAusschnitt({0, 40320});  // sonst fragt das Schliessen nach
+            }
+        }
+        fenster.setEngine(nullptr);
+        setzeEigenenInstrumentOrdnerFuerTests(QString());
     }
 }

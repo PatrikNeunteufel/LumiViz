@@ -12,8 +12,15 @@
  * das Graue faellt beim Speichern weg; eine blaue Linie zeigt, wo gerade
  * gespielt wird. **Play** mit dem Haken **Repeat** spielt den Ausschnitt, auf
  * Wunsch in Dauerschleife — die Griffe lassen sich dabei ziehen.
- * **Unten:** **Trim silence at both ends**, **Normalize level**, der Name,
- * die Datei, **Cancel** und **Save and use**.
+ * **Unten:** **Trim silence at both ends**, **Normalize level**, **Cancel**,
+ * **Save as...** und **Save**.
+ *
+ * Seit Stufe 17 (§4k; Entscheide M1 a bis M4 a, Patrik S119) oeffnet das
+ * Fenster auch ein **bestehendes** Sample (`bearbeite`) und heisst dann „Edit
+ * sample – <Name>". **Save** ersetzt ein eigenes Sample nach einer Rueckfrage
+ * und ist sonst grau — nach einer frischen Aufnahme, bei einem Klang des Kits,
+ * bei einer Datei an freiem Ort. **Save as...** fragt nach einem Namen und
+ * legt ein neues eigenes Sample an; einen vergebenen Namen nimmt es nicht.
  *
  * Aufgenommen und gespielt wird ueber die `IAudioEngine`, die das Fenster
  * genannt bekommt (`setEngine`). Gespeichert wird mit `speichereAufnahme`
@@ -59,6 +66,12 @@ public:
     void setzeWiederholen(bool an) { m_wiederholen.store(an); }
     /// Mit diesem Faktor wird gespielt (Normalize).
     void setzeVerstaerkung(float faktor) { m_faktor.store(faktor); }
+    /// An welchen Enden geblendet wird — wie beim Speichern.
+    void setzeBlenden(Blenden blenden)
+    {
+        m_blendeVorn.store(blenden.vorn);
+        m_blendeHinten.store(blenden.hinten);
+    }
     /// Von vorn: der naechste Block beginnt am Anfang des Ausschnitts.
     void starte();
     /// Die Stelle in der Aufnahme, an der zuletzt gespielt wurde.
@@ -76,6 +89,8 @@ private:
     std::atomic<std::int64_t> m_bis{0};
     std::atomic<bool> m_wiederholen{false};
     std::atomic<float> m_faktor{1.0f};
+    std::atomic<bool> m_blendeVorn{true};
+    std::atomic<bool> m_blendeHinten{true};
     std::atomic<bool> m_neu{false};
     std::atomic<bool> m_fertig{true};
     std::atomic<std::int64_t> m_stelle{0};
@@ -94,8 +109,29 @@ public:
     /// (Record und Play sind dann aus). Sie muss das Fenster ueberleben, oder
     /// vorher mit nullptr abgemeldet werden.
     void setEngine(IAudioEngine* engine);
-    /// Von vorn: keine Aufnahme, die Eingaenge neu gelesen, ein neuer Name.
+    /// Von vorn: keine Aufnahme, kein Sample, die Eingaenge neu gelesen.
     void beginne();
+
+    /// Woher stammt, was im Bild steht?
+    enum class Herkunft
+    {
+        Aufnahme,      ///< in diesem Fenster aufgenommen, oder noch nichts da
+        Eigenes,       ///< ein eigenes Sample (`user:<name>`): Save ersetzt es
+        Mitgeliefert,  ///< ein Klang des Kits (`kit:<name>`): schreibgeschuetzt
+        Datei,         ///< eine Tondatei an freiem Ort: schreibgeschuetzt
+    };
+    /// **Edit...:** ein bestehendes Sample oeffnen, wie eine Schicht es nennt,
+    /// mit seinen dekodierten Daten. Das ganze Sample steht im Bild, die
+    /// Griffe an beiden Enden, Trim silence und Normalize sind aus — oeffnen
+    /// und speichern aendert nichts.
+    void bearbeite(const QString& nennung, std::vector<float> stereo, int rate);
+    /// Das Sample, das offen ist; leer = keins (eine frische Aufnahme).
+    [[nodiscard]] QString nennung() const { return m_nennung; }
+    [[nodiscard]] Herkunft herkunft() const;
+    /// Ist im Bild eine Aufnahme aus diesem Fenster (und nicht mehr, was geoeffnet wurde)?
+    [[nodiscard]] bool frisch() const { return m_frisch; }
+    /// Gibt es etwas zu verlieren: eine frische Aufnahme, ein versetzter Griff, Normalize?
+    [[nodiscard]] bool geaendert() const;
 
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
     /// **Record.** false = keine Engine, kein Eingang, oder er laesst sich nicht oeffnen.
@@ -121,11 +157,28 @@ public:
     [[nodiscard]] bool spielt() const { return m_mixer != INVALID_STREAM; }
     /// Was gespeichert wuerde: der Ausschnitt, geblendet, auf Wunsch normalisiert.
     [[nodiscard]] std::vector<float> ergebnis() const;
-    /// **Save and use** ohne Rueckfrage: unter dem Namen im Feld speichern.
-    /// Leer = nichts aufgenommen, aus dem Namen wird keiner, oder nicht zu
-    /// schreiben; sonst die Nennung `user:<name>` — sie geht auch als
+    /// Wo geblendet wird: nach einer Aufnahme an beiden Enden; an einem
+    /// geoeffneten Sample nur dort, wo ein Griff nicht mehr am Rand steht.
+    [[nodiscard]] Blenden blenden() const;
+    /// **Save** ohne Rueckfrage: das eigene Sample ersetzen, das offen ist.
+    /// Leer = kein eigenes Sample offen (`herkunft`), nichts im Bild, oder
+    /// nicht zu schreiben; sonst die Nennung `user:<name>` — sie geht auch als
     /// `gespeichert` hinaus, und das Fenster schliesst.
     QString speichere();
+    /// **Save as...** ohne Dialog: als neues eigenes Sample unter diesem Titel.
+    /// Leer = nichts im Bild, aus dem Titel wird kein Name, den Namen gibt es
+    /// schon, oder nicht zu schreiben; sonst wie `speichere`.
+    QString speichereAls(const QString& titel);
+    /// Was Save as... als Namen vorschlaegt: nach einer Aufnahme „Recording",
+    /// „Recording 2", …; fuer ein geoeffnetes Sample „kick 2", „kick 3", …
+    [[nodiscard]] QString vorschlagTitel() const;
+    /// Der Satz, mit dem Save nachfragt: was ersetzt wird, was verloren geht,
+    /// und welche eigenen Instrumente das Sample spielen (hoechstens drei beim
+    /// Namen, dann „and n more").
+    [[nodiscard]] QString ersetzenFrage() const;
+    /// Die Zeile unter dem Namen im Dialog von Save as...: die Datei, die
+    /// daraus wird — oder warum es so nicht geht. `geht` sagt, ob Save an ist.
+    [[nodiscard]] static QString dateiZeile(const QString& titel, bool* geht = nullptr);
     /// Die Quelle, die den Ausschnitt spielt (fuer Tests).
     [[nodiscard]] AusschnittQuelle& quelle() { return m_quelle; }
     /// Ein Takt des Fensters — sein Zeitgeber ruft ihn, solange aufgenommen
@@ -140,8 +193,11 @@ public:
     static constexpr double kAusschnittMinMs = 10.0;
 
 Q_SIGNALS:
-    /// Die Aufnahme liegt bei den eigenen Samples und heisst so (`user:<name>`).
-    void gespeichert(const QString& nennung);
+    /// Das Sample liegt bei den eigenen Samples und heisst so (`user:<name>`).
+    /// `vornWegMs`: so viel ist gegenueber dem geoeffneten Sample vorn
+    /// weggeschnitten, in Millisekunden — wer dort einen Einsatz stehen hat,
+    /// zieht ihn mit (M3 a). Negativ = es ist eine andere Aufnahme.
+    void gespeichert(const QString& nennung, double vornWegMs);
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -152,14 +208,19 @@ private:
     void zeigeAlles();
     void zeigeBild();
     void frageUndSpeichere();
+    void frageUndSpeichereAls();
+    /// Das Ergebnis unter diesem Namen ablegen, melden, schliessen.
+    QString schreibe(const QString& name);
     [[nodiscard]] std::int64_t minFrames() const;
 
     IAudioEngine* m_engine = nullptr;
-    std::shared_ptr<const std::vector<float>> m_daten;  ///< die Aufnahme, Stereo
+    std::shared_ptr<const std::vector<float>> m_daten;  ///< was im Bild steht, Stereo
     int m_rate = 0;
     Ausschnitt m_ausschnitt;
     bool m_nimmtAuf = false;
-    bool m_gesichert = true;  ///< false = es gibt eine Aufnahme, die noch nicht gespeichert ist
+    bool m_gesichert = true;  ///< false = im Bild steht etwas, das so noch nicht gespeichert ist
+    QString m_nennung;        ///< das geoeffnete Sample; leer = keins
+    bool m_frisch = false;    ///< im Bild steht eine Aufnahme aus diesem Fenster
     QString m_meldung;        ///< statt der Zeile „… recorded": warum es nicht ging
 
     AusschnittQuelle m_quelle;
@@ -178,8 +239,7 @@ private:
     QLabel* m_schnitt = nullptr;
     QCheckBox* m_ohneStille = nullptr;
     QCheckBox* m_normal = nullptr;
-    QLineEdit* m_name = nullptr;
-    QLabel* m_datei = nullptr;
+    QPushButton* m_sichernAls = nullptr;
     QPushButton* m_sichern = nullptr;
     QTimer* m_takt = nullptr;
 };
