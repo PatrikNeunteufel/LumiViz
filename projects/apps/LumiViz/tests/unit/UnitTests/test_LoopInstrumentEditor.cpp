@@ -1434,6 +1434,84 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));
         CHECK(verlangt == QStringList{QStringLiteral("user:mein_ton")});
 
+        // --- Edit... (Stufe 17b; M1 a, M3 a, M4 a): was die Schicht spielt, im selben Fenster zuschneiden
+        auto* editKnopf = creator.findChild<QPushButton*>(QStringLiteral("creatorSampleEdit"));
+        REQUIRE(editKnopf != nullptr);
+        CHECK(editKnopf->text() == QStringLiteral("Edit..."));
+        CHECK_FALSE(editKnopf->isHidden());
+        CHECK(editKnopf->isEnabled());
+        CHECK(creator.bearbeitenHindernis().isEmpty());
+        REQUIRE(creator.oeffneBearbeiten(false));
+        CHECK(creator.aufnahmeFenster() == aufnahme);  // dasselbe Fenster wie bei Record...
+        CHECK(aufnahme->nennung() == QStringLiteral("user:mein_ton"));
+        CHECK(aufnahme->windowTitle() == QStringLiteral("Edit sample – mein_ton"));
+        CHECK(aufnahme->frames() == 96000);  // die zwei Sekunden, die der Test herausgibt
+        CHECK(aufnahme->ausschnitt() == Ausschnitt{0, 96000});
+        CHECK(aufnahme->findChild<QPushButton*>(QStringLiteral("recordSave"))->isEnabled());
+        // Save, vorn 250 ms weg: Sample start und die Schleife ruecken mit, die Daten werden neu verlangt
+        creator.aendereSchicht([](Schicht& s) {
+            s.sampleStartMs = 400.0;
+            s.schleife = true;
+            s.schleifeVonMs = 600.0;
+            s.schleifeBisMs = 1200.0;
+        });
+        aufnahme->setzeAusschnitt({12000, 72000});
+        verlangt.clear();
+        CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton"));
+        CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton"));
+        CHECK(creator.schicht().sampleStartMs == doctest::Approx(150.0));
+        CHECK(creator.schicht().schleife);
+        CHECK(creator.schicht().schleifeVonMs == doctest::Approx(350.0));
+        CHECK(creator.schicht().schleifeBisMs == doctest::Approx(950.0));
+        CHECK(verlangt == QStringList{QStringLiteral("user:mein_ton")});
+        CHECK(QFileInfo(QDir(eigenerSampleOrdner()).filePath(QStringLiteral("mein_ton.wav"))).size() == 44 + 4 * 60000);
+        // Save as..., weiter vorn geschnitten als der Einsatz: er bleibt bei null; die Schicht spielt die Kopie
+        REQUIRE(creator.oeffneBearbeiten(false));
+        aufnahme->setzeAusschnitt({24000, 96000});
+        CHECK(aufnahme->vorschlagTitel() == QStringLiteral("mein_ton 2"));
+        CHECK(aufnahme->speichereAls(aufnahme->vorschlagTitel()) == QStringLiteral("user:mein_ton_2"));
+        CHECK(creator.schicht().sample == QStringLiteral("user:mein_ton_2"));
+        CHECK(creator.schicht().sampleStartMs == 0.0);
+        CHECK(creator.schicht().schleifeVonMs == 0.0);
+        CHECK(creator.schicht().schleifeBisMs == doctest::Approx(450.0));
+        CHECK(creator.schicht().schleife);
+        CHECK(QFileInfo(QDir(eigenerSampleOrdner()).filePath(QStringLiteral("mein_ton.wav"))).size() == 44 + 4 * 60000);  // unberuehrt
+        CHECK(dateiZeile->text().startsWith(QStringLiteral("mein_ton_2.wav · ")));
+        // die Schleife ganz weggeschnitten: sie ist aus
+        REQUIRE(creator.oeffneBearbeiten(false));
+        aufnahme->setzeAusschnitt({48000, 96000});
+        CHECK(aufnahme->speichere() == QStringLiteral("user:mein_ton_2"));
+        CHECK_FALSE(creator.schicht().schleife);
+        // ein Klang des Kits: schreibgeschuetzt — Save ist grau, Save as... legt ihn zu den eigenen
+        creator.setzeSample(QStringLiteral("kit:kick"));
+        REQUIRE(QFileInfo::exists(sampleDatei(QStringLiteral("kit:kick"))));
+        CHECK(editKnopf->isEnabled());
+        REQUIRE(creator.oeffneBearbeiten(false));
+        CHECK(aufnahme->windowTitle() == QStringLiteral("Edit sample – kick"));
+        CHECK(aufnahme->herkunft() == AufnahmeFenster::Herkunft::Mitgeliefert);
+        CHECK_FALSE(aufnahme->findChild<QPushButton*>(QStringLiteral("recordSave"))->isEnabled());
+        CHECK(aufnahme->speichere().isEmpty());
+        aufnahme->setzeAusschnitt({0, 24000});
+        CHECK(aufnahme->speichereAls(QStringLiteral("Mein Kick")) == QStringLiteral("user:mein_kick"));
+        CHECK(creator.schicht().sample == QStringLiteral("user:mein_kick"));
+        // Record... nach Edit...: wieder von vorn, ohne Sample
+        REQUIRE(creator.oeffneAufnahme(false));
+        CHECK(aufnahme->nennung().isEmpty());
+        CHECK(aufnahme->windowTitle() == QStringLiteral("Record sample"));
+        // laenger als 30 Sekunden: Edit... oeffnet es nicht und sagt, warum
+        const QString lang = datei(QStringLiteral("quelle/lang.wav"), "DD");
+        merkeSampleDaten(lang, 48000, std::vector<float>(2 * 48000 * 31, 0.1f));
+        REQUIRE(creator.nimmSampleDatei(lang, false));
+        CHECK(editKnopf->isEnabled());
+        CHECK_FALSE(creator.oeffneBearbeiten(false));
+        CHECK(creator.bearbeitenHindernis() == QStringLiteral("This sample is longer than 30 s. Edit... works on samples up to 30 s."));
+        // ohne Sample: grau, nichts zu oeffnen
+        creator.setzeSample(QString());
+        CHECK_FALSE(editKnopf->isEnabled());
+        CHECK_FALSE(creator.oeffneBearbeiten(false));
+        CHECK(creator.bearbeitenHindernis().isEmpty());
+        creator.setzeSample(QStringLiteral("user:mein_ton"));
+
         // --- ein Sample, das es nicht gibt: die Zeile sagt es, gefragt wird einmal
         verlangt.clear();
         creator.setzeSample(QStringLiteral("user:gibt_es_nicht"));

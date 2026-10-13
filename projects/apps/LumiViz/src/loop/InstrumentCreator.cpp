@@ -737,12 +737,22 @@ void InstrumentCreator::setupUI()
         reihe->setContentsMargins(0, 0, 0, 0);
         reihe->addWidget(m_sampleWahl);
         reihe->addWidget(m_sampleAufnahme);
+        // Edit... (Stufe 17b; Entscheide M1 a und M4 a, Patrik S119): was die Schicht spielt, zuschneiden
+        m_sampleBearbeiten = new QPushButton(tr("Edit..."), this);
+        m_sampleBearbeiten->setObjectName(QStringLiteral("creatorSampleEdit"));
+        m_sampleBearbeiten->setToolTip(tr("Trim the sample this layer plays and save it"));
+        reihe->addWidget(m_sampleBearbeiten);
         reihe->addStretch(1);
         gitter->addWidget(knoepfe, gitter->rowCount(), 1, 1, 2);
         // auch die Knoepfe selbst: wer nach ihnen fragt, soll sehen, dass sie weg sind
-        m_sampleZeilen = {name, m_sampleName, knoepfe, m_sampleWahl, m_sampleAufnahme};
+        m_sampleZeilen = {name, m_sampleName, knoepfe, m_sampleWahl, m_sampleAufnahme, m_sampleBearbeiten};
         connect(m_sampleWahl, &QPushButton::clicked, this, &InstrumentCreator::zeigeSampleWahl);
         connect(m_sampleAufnahme, &QPushButton::clicked, this, [this] { (void)oeffneAufnahme(true); });
+        connect(m_sampleBearbeiten, &QPushButton::clicked, this, [this] {
+            if (oeffneBearbeiten(true)) return;
+            // der Knopf ist nur an, wenn es ein Sample gibt: dann ist es zu lang
+            if (const QString grund = bearbeitenHindernis(); !grund.isEmpty()) QMessageBox::information(this, tr("Edit sample"), grund);
+        });
 
         auto* grundton = new QLabel(tr("Root note"), this);
         m_grundton = new QComboBox(this);
@@ -1627,6 +1637,8 @@ void InstrumentCreator::zeigeAlles()
         }
         m_sampleName->setText(text);
         m_sampleName->setToolTip(datei.isEmpty() ? QString() : QDir::toNativeSeparators(datei));
+        // Edit... (Stufe 17b): nur, wenn es etwas zu oeffnen gibt
+        m_sampleBearbeiten->setEnabled(laengeMs > 0.0);
         {
             const QSignalBlocker ruhe(m_grundton);
             m_grundton->setCurrentIndex(m_grundton->findData(std::clamp(gewaehlte.grundton, 0, 127)));
@@ -2068,27 +2080,88 @@ void InstrumentCreator::setEngineGeber(std::function<IAudioEngine*()> geber)
     m_engineGeber = std::move(geber);
 }
 
-bool InstrumentCreator::oeffneAufnahme(bool zeigen)
+void InstrumentCreator::richteAufnahmeEin()
 {
-    if (schicht().schwingung != Schwingung::Sample) return false;
     if (m_aufnahme == nullptr)
     {
         m_aufnahme = new AufnahmeFenster(this);
-        // Save and use: die Aufnahme ist die der Schicht, die jetzt gewaehlt ist
-        connect(m_aufnahme, &AufnahmeFenster::gespeichert, this, [this](const QString& nennung) {
-            if (schicht().schwingung == Schwingung::Sample) setzeSample(nennung);
+        // Save und Save as...: das Sample ist das der Schicht, die jetzt gewaehlt ist
+        connect(m_aufnahme, &AufnahmeFenster::gespeichert, this, [this](const QString& nennung, double vornWegMs) {
+            if (schicht().schwingung == Schwingung::Sample) uebernimmSample(nennung, vornWegMs);
         });
     }
     // die Engine, wie sie jetzt ist — sie kann seit dem letzten Mal eine andere sein
     m_aufnahme->setEngine(m_engineGeber ? m_engineGeber() : nullptr);
+}
+
+void InstrumentCreator::zeigeAufnahme()
+{
+    m_aufnahme->show();
+    m_aufnahme->raise();
+    m_aufnahme->activateWindow();
+}
+
+bool InstrumentCreator::oeffneAufnahme(bool zeigen)
+{
+    if (schicht().schwingung != Schwingung::Sample) return false;
+    richteAufnahmeEin();
+    m_bearbeitet.clear();
     m_aufnahme->beginne();
-    if (zeigen)
-    {
-        m_aufnahme->show();
-        m_aufnahme->raise();
-        m_aufnahme->activateWindow();
-    }
+    if (zeigen) zeigeAufnahme();
     return true;
+}
+
+QString InstrumentCreator::bearbeitenHindernis()
+{
+    if (schicht().schwingung != Schwingung::Sample || schicht().sample.isEmpty()) return {};
+    if (sampleLaengeMs() <= 1000.0 * AufnahmeFenster::kHoechstensSekunden) return {};
+    return tr("This sample is longer than %1 s. Edit... works on samples up to %1 s.").arg(AufnahmeFenster::kHoechstensSekunden, 0, 'f', 0);
+}
+
+bool InstrumentCreator::oeffneBearbeiten(bool zeigen)
+{
+    if (schicht().schwingung != Schwingung::Sample) return false;
+    const QString nennung = schicht().sample;
+    const std::shared_ptr<const SampleDaten> daten = holeSample(nennung);
+    if (daten == nullptr || daten->rate <= 0 || daten->klang.frames() <= 0) return false;
+    if (!bearbeitenHindernis().isEmpty()) return false;
+    richteAufnahmeEin();
+    m_bearbeitet = nennung;
+    m_aufnahme->bearbeite(nennung, daten->klang.daten, daten->rate);
+    if (zeigen) zeigeAufnahme();
+    return true;
+}
+
+void InstrumentCreator::uebernimmSample(const QString& nennung, double vornWegMs)
+{
+    // zugeschnitten ist, was diese Schicht spielte, als Edit... gedrueckt wurde — sonst ist es ein anderer Klang
+    const bool zugeschnitten = vornWegMs >= 0.0 && !m_bearbeitet.isEmpty() && schicht().sample == m_bearbeitet;
+    m_bearbeitet.clear();
+    if (!zugeschnitten)
+    {
+        const bool derselbeName = schicht().sample == nennung;
+        setzeSample(nennung);
+        // unter demselben Namen neu aufgenommen: auch das beginnt von vorn
+        if (derselbeName)
+            aendereSchicht([](Schicht& s) {
+                s.sampleStartMs = 0.0;
+                s.schleife = false;
+                s.schleifeVonMs = 0.0;
+                s.schleifeBisMs = 0.0;
+            });
+        return;
+    }
+    m_sampleVersucht.clear();
+    m_gemessenFuer.clear();
+    aendereSchicht([&nennung, vornWegMs](Schicht& s) {
+        s.sample = nennung;
+        // was vorn weg ist, fehlt jeder Stelle im Sample: der Einsatz und die Schleife ruecken mit (M3 a)
+        s.sampleStartMs = std::max(0.0, s.sampleStartMs - vornWegMs);
+        s.schleifeVonMs = std::max(0.0, s.schleifeVonMs - vornWegMs);
+        s.schleifeBisMs = std::max(0.0, s.schleifeBisMs - vornWegMs);
+        if (s.schleifeBisMs <= s.schleifeVonMs) s.schleife = false;
+    });
+    zeigeAlles();
 }
 
 void InstrumentCreator::setzeSample(const QString& nennung)

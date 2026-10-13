@@ -361,10 +361,22 @@ public:
     /// nennt er keine) sagt das Fenster, dass es nicht aufnehmen kann.
     void setEngineGeber(std::function<IAudioEngine*()> geber);
     /// **Record...:** das Fenster „Record sample" oeffnen (von vorn: keine
-    /// Aufnahme, ein neuer Name). Was dort mit Save and use gespeichert wird,
-    /// ist danach die Aufnahme der gewaehlten Schicht. false = die gewaehlte
-    /// Schicht ist keine Sample-Schicht.
+    /// Aufnahme). Was dort mit Save as... gespeichert wird, ist danach die
+    /// Aufnahme der gewaehlten Schicht. false = die gewaehlte Schicht ist
+    /// keine Sample-Schicht.
     bool oeffneAufnahme(bool zeigen = true);
+    /// **Edit...** (Stufe 17b; Entscheide M1 a, M3 a, M4 a, Patrik S119): was
+    /// die gewaehlte Schicht spielt, im selben Fenster oeffnen — ein eigenes
+    /// Sample, einen Klang des Kits, eine Datei an freiem Ort. Nach Save oder
+    /// Save as... spielt die Schicht das Ergebnis; ihr Sample start und ihre
+    /// Schleife ruecken um das vorn Weggeschnittene mit. false = keine
+    /// Sample-Schicht, kein Sample, seine Daten sind nicht zu laden, oder es
+    /// ist zu lang (`bearbeitenHindernis`).
+    bool oeffneBearbeiten(bool zeigen = true);
+    /// Warum Edit... das Sample der gewaehlten Schicht nicht oeffnet, obwohl
+    /// es da ist: es ist laenger als `AufnahmeFenster::kHoechstensSekunden`.
+    /// Leer = kein Hindernis (oder nichts zu oeffnen).
+    [[nodiscard]] QString bearbeitenHindernis();
     /// Das Fenster „Record sample"; nullptr, solange Record... noch nie gedrueckt wurde.
     [[nodiscard]] AufnahmeFenster* aufnahmeFenster() const { return m_aufnahme; }
 
@@ -550,6 +562,13 @@ private:
     // --- Record... (Stufe 11b)
     QPushButton* m_sampleAufnahme = nullptr;
     AufnahmeFenster* m_aufnahme = nullptr;
+    // --- Edit... (Stufe 17b)
+    QPushButton* m_sampleBearbeiten = nullptr;
+    QString m_bearbeitet;  ///< das Sample, fuer das Edit... das Fenster geoeffnet hat; leer = Record...
+    void richteAufnahmeEin();
+    void zeigeAufnahme();
+    /// Was das Fenster gespeichert hat, in die gewaehlte Schicht setzen.
+    void uebernimmSample(const QString& nennung, double vornWegMs);
     std::function<IAudioEngine*()> m_engineGeber;
     KurvenBild* m_wellenBild = nullptr;
     KurvenBild* m_huellBild = nullptr;

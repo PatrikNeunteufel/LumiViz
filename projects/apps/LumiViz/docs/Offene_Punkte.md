@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.187.0
+> **Version:** 1.188.0
 > **Datum:** 2026-10-13 (Session 119)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -4914,8 +4914,10 @@ nennt die eigenen Instrumente, Sample start der offenen Schicht zieht mit),
 M4 a (Edit..., Fenster „Edit sample – <Name>", Record bleibt); die Skizze ist
 gebilligt, die Baustufen freigegeben (B2 a). **17a gebaut** (das Fenster:
 Save und Save as... statt Namensfeld, ein bestehendes Sample öffnen) — im
-Programm zeigt Record... die neuen Knöpfe, ungesehen. **Offen:** 17b (der
-Knopf Edit... im Creator), 17c (Handbuch, Liste 10, voller Lauf). Folge: aus
+Programm zeigt Record... die neuen Knöpfe. **17b gebaut** (der Knopf Edit...
+im Creator; Sample start und Schleife rücken mit; über 30 Sekunden öffnet er
+nicht) — im Programm ungesehen. **Offen:** 17c (Handbuch, Liste 10, voller
+Lauf). Folge: aus
 dem Drum-Editor lässt sich ein vorhandenes eigenes Sample nicht mehr ersetzen,
 nur über Edit... im Creator. Was darunter steht, ist die Notiz aus S118.
 
@@ -5268,6 +5270,7 @@ die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.188.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": **17b gebaut** (Edit... im Creator) — im Programm ungesehen; offen 17c. **Befund Patrik zu X5, mit drei Bildern (Clip effects, zwei Clips mit derselben Reihe):** weicht ein Wert ab, der im Kasten steht (Time, Mix), zeigt der Kasten „mixed"; weicht nur einer ab, der dort nicht steht (Damping, Feedback), sieht man es erst, wenn der Baustein gewählt ist. Vorschlag Patrik: eine andere Schriftfarbe im Kasten, damit es gleich zu erkennen ist — **offen, noch nicht entworfen** |
 | 1.187.0 | 2026-10-13 | Session 119. §7 „ein Sample im Creator bearbeiten": Baustufen freigegeben (B2 a), **17a gebaut** (das Fenster Record sample öffnet auch ein bestehendes Sample; Save und Save as... statt Namensfeld) — im Programm ungesehen. **Offen:** 17b, 17c; aus dem Sichttest vom 13.10.: X5 nicht bestanden (Befund Patrik, noch nicht besprochen) |
 | 1.186.0 | 2026-10-13 | Session 119. §7 Wunsch „ein Sample im Creator bearbeiten": entworfen und entschieden (`Loop_Konzept.md` 0.65.0, §4k — M1 a, M2 b, M2b a, M3 a, M4 a, Skizze gebilligt). **Offen:** Patriks Freigabe der Baustufen 17a bis 17c; nichts gebaut |
 | 1.185.0 | 2026-10-13 | Session 118, Abschluss. `sessions/Changelog_Session118.md`. **Stand:** Stufe 16 (Signal path) ist ganz gebaut — Modell und Dateien, Klangerzeuger, Creator, Clip effects, Drums; voller Lauf 1152 / 1152 unter Testing-MSVC. **Offen:** alles aus S118 im Programm ungesehen und ungehört (Liste 10: G1, G2, W1 bis W7, X1 bis X6, F3, F4, U66 bis U71); Patriks Ohr an `hoerproben_16e`; die Hi-Hat-Schwingung; der Wunsch zum Bearbeiten eines Samples (§7) |
