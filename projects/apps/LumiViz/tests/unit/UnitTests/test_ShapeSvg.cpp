@@ -185,7 +185,7 @@ TEST_CASE("Shape SVG im Fenster: Open SVG... ersetzt oder fuegt hinzu — eingep
     FormFenster fenster;
     fenster.flaeche()->resize(400, 400);
     CHECK(fenster.findChild<QPushButton*>(QStringLiteral("shapeOpenSvg"))->isEnabled());
-    CHECK(fenster.findChild<QPushButton*>(QStringLiteral("shapeOpenImage"))->isEnabled() == false);
+    CHECK(fenster.findChild<QPushButton*>(QStringLiteral("shapeOpenImage"))->isEnabled());  // seit 20c
 
     // --- in eine leere Zeichnung: in den eigenen Massen, die Herkunft wird SVG — auch wenn Add verlangt ist
     REQUIRE(fenster.nimmSvg(potrace, FormFenster::Einfuegen::Hinzufuegen) == 2);

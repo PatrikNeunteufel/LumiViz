@@ -18,6 +18,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Tonform.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Zeichnen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SvgKonturen.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/BildKonturen.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Kontur.hpp"
@@ -25,6 +26,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Zeichenform.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Zeichnen.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/SvgKonturen.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/BildKonturen.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.159.0
+> **Version:** 1.160.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2983,10 +2983,29 @@ wenn es höchstens acht sind, sonst nur die längste. Was im SVG unsichtbar ist,
 kommt nicht an — auch nicht, was seine Farbe über eine CSS-Variable
 (`var(--…)`) nennt.
 
+**Open image...** (NEU in 1.160.0) findet Konturen in einem Bild (PNG, JPEG,
+BMP, GIF, WebP): das Bild wird in Flächen geteilt, der Rand jeder Fläche ist
+eine Kontur, ein Loch darin ebenso. Wie geteilt wird, stellst du in der Gruppe
+**From image** ein:
+
+| From image | Wirkung |
+|---|---|
+| **Split by** | **Colour** (in so viele Farben, wie Levels sagt), **Brightness** (in so viele Helligkeitsstufen) oder **Transparency** (nach der Deckkraft — für ein freigestelltes PNG) |
+| **Levels** | 2 bis 8 Farben oder Stufen |
+| **Smooth** | das Bild vorher weichzeichnen: glattere Ränder, weniger hohe Teiltöne |
+| **Min size** | Flächen kleiner als dieser Anteil des Bilds gehen in ihrer größten Nachbarfläche auf |
+| **Detail** | wie genau der Rand nachgefahren wird: mehr Detail, mehr hohe Teiltöne |
+| **Apply live** | an: jede Änderung erkennt neu und ersetzt die Konturen aus dem Bild — gezeichnete und SVG-Konturen bleiben, Ctrl+Z holt die vorigen zurück. Aus: die Konturen stehen nur in Grau als Vorschlag da, **Take contours** übernimmt sie. Das Programm merkt sich den Haken |
+
+Eine Kontur am Bildrand steht in der Liste mit „edge" und hat anfangs keinen
+Haken; anfangs angehakt ist die größte, die nicht an den Rand stößt. Höchstens
+64 bleiben (die größten). **Show image** zeigt das Bild blass hinter den
+Konturen. Das Bild selbst wird nicht in der Form gespeichert: nach dem Speichern
+oder Wiederöffnen sind die Regler grau, bis du es neu öffnest.
+
 Nach dem Speichern rechnen Loops und Instrumente, die die Form spielen, mit der
-neuen Fassung. **Open image...**, **Bridge**, **Show image**, **From image** und
-**Use as** stehen schon da, sind aber noch grau — sie kommen mit den nächsten
-Stufen.
+neuen Fassung. **Bridge** und **Use as** stehen schon da, sind aber noch grau —
+sie kommen mit der nächsten Stufe.
 
 **Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
 Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
@@ -3200,6 +3219,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.160.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open image...** mit der Gruppe **From image** (**Split by**, **Levels**, **Smooth**, **Min size**, **Detail**, **Apply live**, **Take contours**), **Show image**, „edge" in der Liste. |
 | 1.159.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open SVG...** — Konturen aus einer SVG-Datei, **Replace** oder **Add**, höchstens 64 (die längsten), anfangs Haken für alle bis acht, sonst die längste; eine Farbe, die alle Konturen teilen, wird durch die Farben der Reihe ersetzt. |
 | 1.158.0 | 2026-10-14 | Session 122. §16 NEU das Fenster **Edit shape**: Konturen mit **Pen** zeichnen (frei Hand und Eckpunkte gemischt), mit **Move point** schieben, die Liste **Contours** (Haken, Anteil am Umlauf, Rename, Remove, Reihenfolge), **Preview** mit **Harmonics** und **Play**, Undo, **Save** und **Save as...**, „Used by"; im Instrument-Creator **Edit...** neben Shape und **New shape...** im Menü hinter Browse... §11: der Knoten Shape zeichnet eine gespeicherte Form gleich neu. §17: `.lvcontour` nachgezogen. |
 | 1.157.0 | 2026-10-13 | Session 121. §16 Instrument-Creator NEU **Waveform: Shape** — eine Schicht spielt eine gezeichnete Form: **Shape** mit **Browse...**, **Contour**, **Harmonics**, **Harmonics envelope**, **Angle**, **Start**, **Stereo XY**, **Reverse** und das Bild **Shape, as it plays**. |

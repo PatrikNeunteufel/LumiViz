@@ -29,25 +29,31 @@
 
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"  // AusschnittQuelle
+#include "shape/BildKonturen.hpp"
 #include "shape/Kontur.hpp"
 #include "shape/Tonform.hpp"
 
+#include <QImage>
 #include <QPainterPath>
 #include <QPointF>
 #include <QRectF>
+#include <QTransform>
 #include <QString>
 #include <QWidget>
 
 #include <memory>
 #include <vector>
 
+class QCheckBox;
 class QComboBox;
+class QGroupBox;
 class QLabel;
 class QPushButton;
 class QRadioButton;
 class QSlider;
 class QToolButton;
 class QTreeWidget;
+class QTimer;
 class QTreeWidgetItem;
 
 namespace lumi::loop
@@ -76,6 +82,11 @@ public:
     [[nodiscard]] Werkzeug werkzeug() const { return m_werkzeug; }
     /// Diese Kontur hervorheben (die in der Liste gewaehlte); 0 = keine.
     void setHervorgehoben(int kennung);
+    /// Das Bild blass im Hintergrund (Show image): `bild` in seinen Punkten, `lage`
+    /// legt es in die Zeichnung; nullptr = keins.
+    void setBild(const QImage* bild, const QTransform& lage, bool zeigen);
+    /// Konturen, die nur vorgeschlagen sind (From image ohne Apply live): duenn und grau.
+    void setVorschau(std::vector<QPainterPath> vorschau);
 
     /// Ein Punkt der Zeichnung im Bild und zurueck.
     [[nodiscard]] QPointF imBild(QPointF punkt) const;
@@ -129,6 +140,10 @@ private:
     [[nodiscard]] double mass() const;
 
     const shape::Zeichnung* m_zeichnung = nullptr;
+    const QImage* m_bild = nullptr;
+    QTransform m_bildLage;
+    bool m_zeigeBild = true;
+    std::vector<QPainterPath> m_vorschau;
     QRectF m_ansicht{0.0, 0.0, 200.0, 200.0};
     Werkzeug m_werkzeug = Werkzeug::Stift;
     int m_hervorgehoben = 0;
@@ -239,6 +254,32 @@ public:
     /// Zeile unter der Liste); 0 = keine.
     [[nodiscard]] int weggefallen() const { return m_weggefallen; }
 
+    // --- Open image... und From image (Stufe 20c; Entscheide K1 a, K2 a, R1 a, R2 a) ---
+    /// Ein Bild nehmen, ohne Dialog. Mit **Apply live** (R1 a) kommen seine
+    /// Konturen gleich in die Zeichnung (bei einer leeren immer Ersetzen; bei
+    /// Add eingepasst in den Ausschnitt); ohne (R2 a) nur als Vorschau, bis
+    /// `uebernimmVorschau`. Zurueck: so viele Konturen kamen dazu (ohne Apply
+    /// live: so viele schlaegt die Vorschau vor); -1 = kein Bild.
+    int nimmBild(const QString& datei, Einfuegen art);
+    int nimmBild(const QImage& bild, const QString& name, Einfuegen art);
+    /// Ist ein Bild da (die Regler von From image wirken)? Nach dem Oeffnen einer
+    /// Form oder New shape nicht mehr — das Bild steht nicht in der Datei.
+    [[nodiscard]] bool hatBild() const { return !m_bildDaten.isNull(); }
+    /// Die Regler setzen und gleich neu erkennen (ohne die Pause der Regler).
+    void setzeBildEinstellung(const shape::BildEinstellung& einstellung);
+    [[nodiscard]] const shape::BildEinstellung& bildEinstellung() const { return m_bildEinstellung; }
+    /// **Apply live** (R2 a): an = die Regler ersetzen die Konturen aus dem Bild; aus = Vorschau und Take contours.
+    void setzeLive(bool an);
+    [[nodiscard]] bool live() const { return m_live; }
+    /// **Take contours:** die Vorschau uebernehmen (O1 a). Zurueck: so viele kamen dazu.
+    int uebernimmVorschau(Einfuegen art);
+    /// Was ohne Apply live vorgeschlagen ist.
+    [[nodiscard]] const shape::BildKonturen& vorschau() const { return m_vorschauKonturen; }
+    /// Stammt die Kontur aus dem Bild, solange es da ist (die Regler ersetzen sie)?
+    [[nodiscard]] bool ausBild(int kennung) const;
+    /// Stoesst die Kontur an den Rand ihres Bilds (die Liste zeigt „edge")?
+    [[nodiscard]] bool amRand(int kennung) const;
+
     /// **Harmonics** der Preview: 1 … `shape::kHarmonischeMax`.
     void setzeHarmonische(double harmonische);
     [[nodiscard]] double harmonische() const { return m_harmonische; }
@@ -308,6 +349,36 @@ private:
     void frageUndSpeichereAls();
     /// Open SVG...: die Datei waehlen, bei vorhandenen Konturen Replace, Add oder Cancel (O1 a).
     void frageNachSvg();
+    /// Open image...: die Datei waehlen; mit Apply live und vorhandenen Konturen Replace, Add oder Cancel.
+    void frageNachBild();
+    /// Die Konturen des Bilds in die Zeichnung (ans Ende); merkt sie als die aus dem Bild. Zurueck: so viele.
+    int setzeBildKonturen();
+    /// Die Regler haben sich bewegt: live neu erkennen, sonst die Vorschau.
+    void erkenneNeu();
+    void rechneVorschau();
+    void zeigeBildRegler();
+    QImage m_bildDaten;  ///< das Bild zum Erkennen (verkleinert); leer = keins
+    QString m_bildName;
+    QTransform m_bildLage;  ///< Punkte des Bilds -> Zeichnung
+    shape::BildEinstellung m_bildEinstellung;
+    bool m_live = true;
+    shape::BildKonturen m_vorschauKonturen;
+    std::vector<int> m_bildKennungen;  ///< die Konturen aus dem Bild (R1 a)
+    std::vector<int> m_randKennungen;  ///< Konturen, die an den Bildrand stossen
+    QGroupBox* m_ausBild = nullptr;
+    QComboBox* m_teilung = nullptr;
+    QSlider* m_stufen = nullptr;
+    QSlider* m_glaetten = nullptr;
+    QSlider* m_mindest = nullptr;
+    QSlider* m_detail = nullptr;
+    QLabel* m_stufenWert = nullptr;
+    QLabel* m_glaettenWert = nullptr;
+    QLabel* m_mindestWert = nullptr;
+    QLabel* m_detailWert = nullptr;
+    QCheckBox* m_liveHaken = nullptr;
+    QPushButton* m_nehmen = nullptr;
+    QCheckBox* m_zeigeBild = nullptr;
+    QTimer* m_bildTakt = nullptr;  ///< die Regler: erst nach einer kurzen Pause neu erkennen
     int m_weggefallen = 0;
     QLabel* m_weggefallenZeile = nullptr;
     /// Die Zeichnung unter diesem Namen ablegen, melden, schliessen.
@@ -321,8 +392,16 @@ private:
     shape::Zeichnung m_vorlage;  ///< wie geoeffnet
     QString m_nennung;
     bool m_gesichert = true;
-    std::vector<shape::Zeichnung> m_zurueck;
-    std::vector<shape::Zeichnung> m_vor;
+    /// Ein Schritt fuer Undo: die Zeichnung und welche ihrer Konturen aus dem Bild stammen.
+    struct Stand
+    {
+        shape::Zeichnung zeichnung;
+        std::vector<int> bildKennungen;
+        std::vector<int> randKennungen;
+    };
+    std::vector<Stand> m_zurueck;
+    std::vector<Stand> m_vor;
+    void nimmStand(Stand stand);
     bool m_schiebtGerade = false;  ///< Move point: der Stand ist zu Beginn des Ziehens gemerkt
     double m_harmonische = 24.0;
     std::shared_ptr<const shape::Tonform> m_form;

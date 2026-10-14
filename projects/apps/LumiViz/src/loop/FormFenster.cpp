@@ -6,6 +6,7 @@
 #include "loop/FormFenster.hpp"
 
 #include "loop/Instrument.hpp"  // eigeneInstrumenteMitForm, zaehleInstrumentFassung
+#include "shape/BildKonturen.hpp"
 #include "shape/SvgKonturen.hpp"
 #include "shape/Zeichnen.hpp"
 
@@ -16,9 +17,11 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QImageReader>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QLabel>
@@ -35,6 +38,7 @@
 #include <QShortcut>
 #include <QSignalBlocker>
 #include <QSlider>
+#include <QTimer>
 #include <QSpinBox>
 #include <QToolButton>
 #include <QTransform>
@@ -58,6 +62,14 @@ const QRectF kLeereAnsicht(0.0, 0.0, 200.0, 200.0);
 constexpr float kPlayPegel = 0.4f;
 /// Hier merkt sich Open SVG... den Ordner der letzten Datei.
 const char* const kLetzterSvgOrdner = "shape/lastSvgFolder";
+/// Und Open image... den seinen.
+const char* const kLetzterBildOrdner = "shape/lastImageFolder";
+/// Hier merkt sich das Programm den Haken Apply live (R2 a).
+const char* const kBildLive = "shape/imageApplyLive";
+/// So lange nach der letzten Bewegung eines Reglers wird erkannt.
+constexpr int kBildPauseMs = 150;
+/// So deckend steht das Bild hinter den Konturen.
+constexpr double kBildDeckung = 0.35;
 
 QString konturTitel(const shape::Kontur& kontur, int platz)
 {
@@ -118,6 +130,20 @@ void FormFlaeche::setWerkzeug(Werkzeug werkzeug)
 void FormFlaeche::setHervorgehoben(int kennung)
 {
     m_hervorgehoben = kennung;
+    update();
+}
+
+void FormFlaeche::setBild(const QImage* bild, const QTransform& lage, bool zeigen)
+{
+    m_bild = bild;
+    m_bildLage = lage;
+    m_zeigeBild = zeigen;
+    update();
+}
+
+void FormFlaeche::setVorschau(std::vector<QPainterPath> vorschau)
+{
+    m_vorschau = std::move(vorschau);
     update();
 }
 
@@ -329,7 +355,27 @@ void FormFlaeche::paintEvent(QPaintEvent*)
     bild.scale(mass(), mass());
     bild.translate(-m_ansicht.center().x(), -m_ansicht.center().y());
 
-    const bool leer = (m_zeichnung == nullptr || m_zeichnung->konturen.empty()) && m_angefangen.isEmpty() && m_zug.empty();
+    // das Bild blass dahinter (Show image)
+    if (m_bild != nullptr && !m_bild->isNull() && m_zeigeBild)
+    {
+        p.save();
+        p.setOpacity(kBildDeckung);
+        p.setTransform(m_bildLage * bild, true);
+        p.drawImage(QPointF(0.0, 0.0), *m_bild);
+        p.restore();
+    }
+    // was From image ohne Apply live vorschlaegt: duenn und grau
+    if (!m_vorschau.empty())
+    {
+        QColor grau = pal.color(QPalette::Text);
+        grau.setAlpha(150);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(grau, 1.2));
+        for (const QPainterPath& v : m_vorschau) p.drawPath(bild.map(v));
+    }
+
+    const bool leer = (m_zeichnung == nullptr || m_zeichnung->konturen.empty()) && m_angefangen.isEmpty() && m_zug.empty() &&
+                      (m_bild == nullptr || m_bild->isNull());
     if (leer)
     {
         QColor hinweis = pal.color(QPalette::Text);
@@ -515,8 +561,7 @@ void FormFenster::setupUI()
     m_svg->setToolTip(tr("Take the contours of an SVG file — every closed or open path becomes a contour"));
     m_bild = new QPushButton(tr("Open image..."), this);
     m_bild->setObjectName(QStringLiteral("shapeOpenImage"));
-    m_bild->setEnabled(false);
-    m_bild->setToolTip(tr("Not available yet"));
+    m_bild->setToolTip(tr("Find contours in a picture (PNG, JPEG, ...) — the picture is split into areas, the edge of each area is a contour"));
     auto* kopf = new QHBoxLayout;
     kopf->addWidget(m_ort, 1);
     kopf->addWidget(m_svg);
@@ -544,16 +589,16 @@ void FormFenster::setupUI()
     m_schieben = werkzeug(tr("Move point"), "shapeMovePoint", tr("Drag a point of a contour to move it"));
     m_bruecke = werkzeug(tr("Bridge"), "shapeBridge", tr("Not available yet"));
     m_bruecke->setEnabled(false);
-    auto* zeigeBild = new QCheckBox(tr("Show image"), this);
-    zeigeBild->setObjectName(QStringLiteral("shapeShowImage"));
-    zeigeBild->setEnabled(false);
-    zeigeBild->setToolTip(tr("Not available yet"));
+    m_zeigeBild = new QCheckBox(tr("Show image"), this);
+    m_zeigeBild->setObjectName(QStringLiteral("shapeShowImage"));
+    m_zeigeBild->setChecked(true);
+    m_zeigeBild->setToolTip(tr("Show the picture faintly behind the contours"));
     auto* werkzeuge = new QHBoxLayout;
     werkzeuge->addWidget(m_stift);
     werkzeuge->addWidget(m_schieben);
     werkzeuge->addWidget(m_bruecke);
     werkzeuge->addStretch(1);
-    werkzeuge->addWidget(zeigeBild);
+    werkzeuge->addWidget(m_zeigeBild);
     links->addLayout(werkzeuge);
     m_hinweis = new QLabel(this);
     m_hinweis->setObjectName(QStringLiteral("shapeHint"));
@@ -605,25 +650,45 @@ void FormFenster::setupUI()
     // --- drei Gruppen: From image und Use as kommen mit 20c und 20d, Preview gilt
     auto* gruppen = new QHBoxLayout;
     {
-        auto* ausBild = new QGroupBox(tr("From image"), this);
-        ausBild->setObjectName(QStringLiteral("shapeFromImage"));
-        ausBild->setEnabled(false);
-        ausBild->setToolTip(tr("Not available yet"));
-        auto* g = new QVBoxLayout(ausBild);
-        auto* teilen = new QComboBox(ausBild);
-        teilen->addItems({tr("Colour"), tr("Brightness"), tr("Transparency")});
-        auto* zeile = new QHBoxLayout;
-        zeile->addWidget(new QLabel(tr("Split by"), ausBild));
-        zeile->addWidget(teilen, 1);
-        g->addLayout(zeile);
-        for (const QString& name : {tr("Levels"), tr("Smooth"), tr("Min size"), tr("Detail")})
-        {
-            auto* regler = new QHBoxLayout;
-            regler->addWidget(new QLabel(name, ausBild));
-            regler->addWidget(new QSlider(Qt::Horizontal, ausBild), 1);
-            g->addLayout(regler);
-        }
-        gruppen->addWidget(ausBild, 1);
+        m_ausBild = new QGroupBox(tr("From image"), this);
+        m_ausBild->setObjectName(QStringLiteral("shapeFromImage"));
+        auto* g = new QGridLayout(m_ausBild);
+        // die Reihenfolge wie shape::Teilung
+        m_teilung = new QComboBox(m_ausBild);
+        m_teilung->setObjectName(QStringLiteral("shapeSplitBy"));
+        m_teilung->addItems({tr("Colour"), tr("Brightness"), tr("Transparency")});
+        m_teilung->setToolTip(tr("Split the picture into areas by colour, by brightness, or by how opaque it is (for a cut-out PNG)"));
+        g->addWidget(new QLabel(tr("Split by"), m_ausBild), 0, 0);
+        g->addWidget(m_teilung, 0, 1, 1, 2);
+        const auto regler = [this, g](int zeile, const QString& name, const char* kennung, int von, int bis, const QString& tipp,
+                                      QSlider*& schieber, QLabel*& wert) {
+            schieber = new QSlider(Qt::Horizontal, m_ausBild);
+            schieber->setObjectName(QLatin1String(kennung));
+            schieber->setRange(von, bis);
+            schieber->setToolTip(tipp);
+            wert = new QLabel(m_ausBild);
+            wert->setMinimumWidth(36);
+            g->addWidget(new QLabel(name, m_ausBild), zeile, 0);
+            g->addWidget(schieber, zeile, 1);
+            g->addWidget(wert, zeile, 2);
+        };
+        regler(1, tr("Levels"), "shapeLevels", 2, 8, tr("How many brightness steps, colours or steps of transparency"), m_stufen, m_stufenWert);
+        regler(2, tr("Smooth"), "shapeSmooth", 0, 10, tr("Blur the picture before splitting it: smoother edges, fewer high partials"),
+               m_glaetten, m_glaettenWert);
+        regler(3, tr("Min size"), "shapeMinSize", 0, 50, tr("Areas smaller than this share of the picture merge into their largest neighbour"),
+               m_mindest, m_mindestWert);
+        regler(4, tr("Detail"), "shapeDetail", 0, 100, tr("How closely the edge is followed: more detail, more high partials"), m_detail,
+               m_detailWert);
+        m_liveHaken = new QCheckBox(tr("Apply live"), m_ausBild);
+        m_liveHaken->setObjectName(QStringLiteral("shapeApplyLive"));
+        m_liveHaken->setToolTip(tr("On: every change finds the contours again and replaces those from the picture. "
+                                   "Off: the contours are only proposed in grey, Take contours takes them"));
+        m_nehmen = new QPushButton(tr("Take contours"), m_ausBild);
+        m_nehmen->setObjectName(QStringLiteral("shapeTakeContours"));
+        m_nehmen->setToolTip(tr("Take the proposed contours into the shape"));
+        g->addWidget(m_liveHaken, 5, 0, 1, 2);
+        g->addWidget(m_nehmen, 5, 2);
+        gruppen->addWidget(m_ausBild, 1);
     }
     {
         auto* nutzung = new QGroupBox(tr("Use as"), this);
@@ -746,6 +811,48 @@ void FormFenster::setupUI()
     });
     connect(abbrechen, &QPushButton::clicked, this, &QWidget::close);
     connect(m_svg, &QPushButton::clicked, this, &FormFenster::frageNachSvg);
+    connect(m_bild, &QPushButton::clicked, this, &FormFenster::frageNachBild);
+    connect(m_zeigeBild, &QCheckBox::toggled, this, [this](bool an) { m_flaeche->setBild(&m_bildDaten, m_bildLage, an); });
+    m_bildTakt = new QTimer(this);
+    m_bildTakt->setSingleShot(true);
+    m_bildTakt->setInterval(kBildPauseMs);
+    connect(m_bildTakt, &QTimer::timeout, this, &FormFenster::erkenneNeu);
+    const auto reglerBewegt = [this] {
+        m_bildEinstellung.teilung = static_cast<shape::Teilung>(m_teilung->currentIndex());
+        m_bildEinstellung.stufen = m_stufen->value();
+        m_bildEinstellung.glaetten = m_glaetten->value();
+        m_bildEinstellung.mindestProzent = m_mindest->value() / 10.0;
+        m_bildEinstellung.detail = m_detail->value();
+        zeigeBildRegler();
+        m_bildTakt->start();
+    };
+    connect(m_teilung, QOverload<int>::of(&QComboBox::currentIndexChanged), this, reglerBewegt);
+    for (QSlider* s : {m_stufen, m_glaetten, m_mindest, m_detail}) connect(s, &QSlider::valueChanged, this, reglerBewegt);
+    connect(m_liveHaken, &QCheckBox::clicked, this, [this](bool an) {
+        QSettings().setValue(QLatin1String(kBildLive), an);
+        setzeLive(an);
+    });
+    connect(m_nehmen, &QPushButton::clicked, this, [this] {
+        Einfuegen art = Einfuegen::Ersetzen;
+        if (!m_zeichnung.konturen.empty())
+        {
+            QMessageBox frage(QMessageBox::Question, windowTitle(),
+                              tr("The shape already holds %n contour(s). Replace them with the contours from the picture, or add those?",
+                                 nullptr, static_cast<int>(m_zeichnung.konturen.size())),
+                              QMessageBox::NoButton, this);
+            QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
+            QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
+            frage.addButton(QMessageBox::Cancel);
+            frage.setDefaultButton(hinzu);
+            frage.exec();
+            if (frage.clickedButton() == hinzu)
+                art = Einfuegen::Hinzufuegen;
+            else if (frage.clickedButton() != ersetzen)
+                return;
+        }
+        (void)uebernimmVorschau(art);
+    });
+    m_live = QSettings().value(QLatin1String(kBildLive), true).toBool();
     connect(m_sichern, &QPushButton::clicked, this, &FormFenster::frageUndSpeichere);
     connect(m_sichernAls, &QPushButton::clicked, this, &FormFenster::frageUndSpeichereAls);
     auto* zurueck = new QShortcut(QKeySequence::Undo, this);
@@ -780,6 +887,10 @@ void FormFenster::beginneNeu()
     m_zurueck.clear();
     m_vor.clear();
     m_weggefallen = 0;
+    m_bildDaten = QImage();
+    m_bildKennungen.clear();
+    m_randKennungen.clear();
+    m_vorschauKonturen = {};
     m_gesichert = true;
     passeAnsichtAn();
     setzeWerkzeug(FormFlaeche::Werkzeug::Stift);
@@ -798,6 +909,10 @@ bool FormFenster::bearbeite(const QString& nennung)
     m_zurueck.clear();
     m_vor.clear();
     m_weggefallen = 0;
+    m_bildDaten = QImage();
+    m_bildKennungen.clear();
+    m_randKennungen.clear();
+    m_vorschauKonturen = {};
     m_gesichert = true;
     passeAnsichtAn();
     setzeWerkzeug(FormFlaeche::Werkzeug::Stift);
@@ -818,6 +933,11 @@ void FormFenster::passeAnsichtAn()
 {
     QRectF alles;
     for (const shape::Kontur& k : m_zeichnung.konturen) alles = alles.isNull() ? k.pfad.boundingRect() : alles.united(k.pfad.boundingRect());
+    if (hatBild())
+    {
+        const QRectF bild = m_bildLage.mapRect(QRectF(QPointF(0.0, 0.0), QSizeF(m_bildDaten.size())));
+        alles = alles.isNull() ? bild : alles.united(bild);
+    }
     if (alles.width() <= 0.0 && alles.height() <= 0.0)
     {
         m_flaeche->setAnsicht(kLeereAnsicht);
@@ -840,16 +960,23 @@ void FormFenster::setzeWerkzeug(FormFlaeche::Werkzeug werkzeug)
 
 void FormFenster::merke()
 {
-    m_zurueck.push_back(m_zeichnung);
+    m_zurueck.push_back({m_zeichnung, m_bildKennungen, m_randKennungen});
     if (m_zurueck.size() > kSchritteMax) m_zurueck.erase(m_zurueck.begin());
     m_vor.clear();
+}
+
+void FormFenster::nimmStand(Stand stand)
+{
+    m_zeichnung = std::move(stand.zeichnung);
+    m_bildKennungen = std::move(stand.bildKennungen);
+    m_randKennungen = std::move(stand.randKennungen);
 }
 
 bool FormFenster::rueckgaengig()
 {
     if (m_zurueck.empty()) return false;
-    m_vor.push_back(m_zeichnung);
-    m_zeichnung = std::move(m_zurueck.back());
+    m_vor.push_back({m_zeichnung, m_bildKennungen, m_randKennungen});
+    nimmStand(std::move(m_zurueck.back()));
     m_zurueck.pop_back();
     geaendertJetzt();
     return true;
@@ -858,8 +985,8 @@ bool FormFenster::rueckgaengig()
 bool FormFenster::wiederherstellen()
 {
     if (m_vor.empty()) return false;
-    m_zurueck.push_back(m_zeichnung);
-    m_zeichnung = std::move(m_vor.back());
+    m_zurueck.push_back({m_zeichnung, m_bildKennungen, m_randKennungen});
+    nimmStand(std::move(m_vor.back()));
     m_vor.pop_back();
     geaendertJetzt();
     return true;
@@ -1088,6 +1215,9 @@ void FormFenster::zeigeAlles()
     if (herkunft() == Herkunft::Datei) ort = tr("File, read-only: %1").arg(QDir::toNativeSeparators(m_nennung));
     m_ort->setText(ort);
     m_nutzer->setText(nutzerZeile());
+    m_flaeche->setBild(&m_bildDaten, m_bildLage, m_zeigeBild->isChecked());
+    if (!hatBild()) m_flaeche->setVorschau({});
+    zeigeBildRegler();
     (m_zeichnung.nutzung == shape::Nutzung::EinPfad ? m_nutzungPfad : m_nutzungSchichten)->setChecked(true);
     m_spruenge->setCurrentIndex(static_cast<int>(m_zeichnung.spruenge));
     zeigeKnoepfe();
@@ -1116,7 +1246,7 @@ void FormFenster::zeigeListe()
         zeile->setFlags(zeile->flags() | Qt::ItemIsUserCheckable);
         zeile->setCheckState(0, k.gewaehlt ? Qt::Checked : Qt::Unchecked);
         const double a = anteil(k.kennung);
-        zeile->setText(1, a < 0.0 ? QString::fromUtf8("–") : QStringLiteral("%1 %").arg(std::lround(100.0 * a)));
+        zeile->setText(1, amRand(k.kennung) ? tr("edge") : a < 0.0 ? QString::fromUtf8("–") : QStringLiteral("%1 %").arg(std::lround(100.0 * a)));
         zeile->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
         if (k.gewaehlt) ++gewaehlt;
     }
@@ -1152,6 +1282,17 @@ void FormFenster::zeigeKnoepfe()
         m_play->setText(spielt() ? tr("■ Stop playing") : tr("▶ Play"));
     }
     if (m_engine == nullptr) m_play->setToolTip(tr("No audio engine — Play is not available"));
+
+    // From image (R1 a, R2 a): nur mit einem Bild; Take contours nur ohne Apply live
+    m_ausBild->setEnabled(hatBild());
+    m_ausBild->setToolTip(hatBild() ? QString() : tr("Open a picture with Open image... — the picture is not kept in the shape file"));
+    m_zeigeBild->setEnabled(hatBild());
+    {
+        const QSignalBlocker ruhe(m_liveHaken);
+        m_liveHaken->setChecked(m_live);
+    }
+    m_nehmen->setVisible(!m_live);
+    m_nehmen->setEnabled(hatBild() && !m_vorschauKonturen.konturen.empty());
 
     const bool etwas = !alle.empty();
     const bool eigene = herkunft() == Herkunft::Eigene;
@@ -1247,6 +1388,215 @@ void FormFenster::frageNachSvg()
         QMessageBox::warning(this, windowTitle(), tr("Could not read %1 as an SVG file").arg(QDir::toNativeSeparators(datei)));
     else if (dazu == 0)
         QMessageBox::information(this, windowTitle(), tr("%1 holds no visible path").arg(QFileInfo(datei).fileName()));
+}
+
+// =============================================================================
+// Open image... und From image (Stufe 20c)
+// =============================================================================
+
+bool FormFenster::ausBild(int kennung) const
+{
+    return std::find(m_bildKennungen.begin(), m_bildKennungen.end(), kennung) != m_bildKennungen.end();
+}
+
+bool FormFenster::amRand(int kennung) const
+{
+    return std::find(m_randKennungen.begin(), m_randKennungen.end(), kennung) != m_randKennungen.end();
+}
+
+int FormFenster::nimmBild(const QString& datei, Einfuegen art)
+{
+    QImageReader leser(datei);
+    leser.setAutoTransform(true);  // ein Foto steht, wie es aufgenommen ist
+    const QImage bild = leser.read();
+    if (bild.isNull()) return -1;
+    return nimmBild(bild, QFileInfo(datei).fileName(), art);
+}
+
+int FormFenster::nimmBild(const QImage& bild, const QString& name, Einfuegen art)
+{
+    const QImage vorbereitet = shape::bildZumErkennen(bild);
+    if (vorbereitet.isNull()) return -1;
+    const bool ersetzen = art == Einfuegen::Ersetzen || m_zeichnung.konturen.empty();
+    m_bildDaten = vorbereitet;
+    m_bildName = name;
+    m_bildLage = QTransform();
+    if (!ersetzen)
+    {
+        // Add: das Bild fuellt den Ausschnitt ohne seinen Rand, wie ein SVG (O1 a)
+        const QRectF ansicht = m_flaeche->ansicht();
+        const QSizeF innen = ansicht.size() / 1.5;
+        const double mass = std::min(innen.width() / m_bildDaten.width(), innen.height() / m_bildDaten.height());
+        m_bildLage.translate(ansicht.center().x(), ansicht.center().y());
+        m_bildLage.scale(mass, mass);
+        m_bildLage.translate(-m_bildDaten.width() / 2.0, -m_bildDaten.height() / 2.0);
+    }
+    m_flaeche->setBild(&m_bildDaten, m_bildLage, m_zeigeBild->isChecked());
+    if (!m_live)
+    {
+        // R2 a: nur vorschlagen — uebernommen wird mit Take contours
+        m_bildKennungen.clear();
+        rechneVorschau();
+        if (ersetzen) passeAnsichtAn();
+        zeigeAlles();
+        return static_cast<int>(m_vorschauKonturen.konturen.size());
+    }
+    merke();
+    if (ersetzen)
+    {
+        m_zeichnung.konturen.clear();
+        m_zeichnung.bruecken.clear();
+        m_randKennungen.clear();
+        m_zeichnung.herkunft = shape::Herkunft{shape::HerkunftArt::Bild, name, m_bildEinstellung.alsJson()};
+    }
+    m_bildKennungen.clear();  // was aus einem frueheren Bild kam, bleibt, wie es ist
+    const int dazu = setzeBildKonturen();
+    passeAnsichtAn();
+    geaendertJetzt();
+    if (!m_bildKennungen.empty()) waehle(m_bildKennungen.front());
+    return dazu;
+}
+
+int FormFenster::setzeBildKonturen()
+{
+    const shape::BildKonturen gefunden = shape::bildKonturen(m_bildDaten, m_bildEinstellung);
+    int weg = gefunden.weggefallen;
+    int dazu = 0;
+    for (const shape::BildKontur& k : gefunden.konturen)
+    {
+        const int kennung = m_zeichnung.neueKontur(m_bildLage.map(k.pfad));
+        if (kennung == 0)
+        {
+            ++weg;  // die Zeichnung ist voll
+            continue;
+        }
+        m_zeichnung.konturen.back().gewaehlt = k.gewaehlt;
+        m_bildKennungen.push_back(kennung);
+        if (k.rand) m_randKennungen.push_back(kennung);
+        ++dazu;
+    }
+    m_weggefallen = weg;
+    // die Herkunft traegt die Regler, solange sie dieses Bild nennt
+    if (m_zeichnung.herkunft.art == shape::HerkunftArt::Bild && m_zeichnung.herkunft.quelle == m_bildName)
+        m_zeichnung.herkunft.einstellungen = m_bildEinstellung.alsJson();
+    return dazu;
+}
+
+void FormFenster::erkenneNeu()
+{
+    m_bildTakt->stop();
+    if (!hatBild()) return;
+    if (!m_live)
+    {
+        rechneVorschau();
+        return;
+    }
+    // R1 a: genau die Konturen aus dem Bild ersetzen; gezeichnete und SVG-Konturen bleiben
+    merke();
+    for (const int kennung : m_bildKennungen)
+    {
+        (void)m_zeichnung.entferne(kennung);
+        std::erase(m_randKennungen, kennung);
+    }
+    m_bildKennungen.clear();
+    (void)setzeBildKonturen();
+    geaendertJetzt();
+}
+
+void FormFenster::rechneVorschau()
+{
+    m_vorschauKonturen = m_live || !hatBild() ? shape::BildKonturen{} : shape::bildKonturen(m_bildDaten, m_bildEinstellung);
+    std::vector<QPainterPath> zuege;
+    for (const shape::BildKontur& k : m_vorschauKonturen.konturen) zuege.push_back(m_bildLage.map(k.pfad));
+    m_flaeche->setVorschau(std::move(zuege));
+    zeigeKnoepfe();
+}
+
+int FormFenster::uebernimmVorschau(Einfuegen art)
+{
+    if (!hatBild() || m_live) return 0;
+    merke();
+    if (art == Einfuegen::Ersetzen || m_zeichnung.konturen.empty())
+    {
+        m_zeichnung.konturen.clear();
+        m_zeichnung.bruecken.clear();
+        m_randKennungen.clear();
+        m_zeichnung.herkunft = shape::Herkunft{shape::HerkunftArt::Bild, m_bildName, m_bildEinstellung.alsJson()};
+    }
+    m_bildKennungen.clear();
+    const int dazu = setzeBildKonturen();
+    passeAnsichtAn();
+    geaendertJetzt();
+    if (!m_bildKennungen.empty()) waehle(m_bildKennungen.front());
+    return dazu;
+}
+
+void FormFenster::setzeBildEinstellung(const shape::BildEinstellung& einstellung)
+{
+    m_bildEinstellung = einstellung;
+    m_bildEinstellung.ausJson(einstellung.alsJson());  // in die Grenzen
+    zeigeBildRegler();
+    erkenneNeu();
+}
+
+void FormFenster::setzeLive(bool an)
+{
+    m_live = an;
+    {
+        const QSignalBlocker ruhe(m_liveHaken);
+        m_liveHaken->setChecked(an);
+    }
+    rechneVorschau();  // aus: vorschlagen; an: die Vorschau verschwindet
+}
+
+void FormFenster::zeigeBildRegler()
+{
+    const shape::BildEinstellung& e = m_bildEinstellung;
+    for (QWidget* w : std::initializer_list<QWidget*>{m_teilung, m_stufen, m_glaetten, m_mindest, m_detail}) w->blockSignals(true);
+    m_teilung->setCurrentIndex(static_cast<int>(e.teilung));
+    m_stufen->setValue(e.stufen);
+    m_glaetten->setValue(e.glaetten);
+    m_mindest->setValue(static_cast<int>(std::lround(e.mindestProzent * 10.0)));
+    m_detail->setValue(e.detail);
+    for (QWidget* w : std::initializer_list<QWidget*>{m_teilung, m_stufen, m_glaetten, m_mindest, m_detail}) w->blockSignals(false);
+    m_stufenWert->setText(QString::number(e.stufen));
+    m_glaettenWert->setText(e.glaetten == 0 ? tr("off") : QString::number(e.glaetten));
+    m_mindestWert->setText(QStringLiteral("%1 %").arg(e.mindestProzent, 0, 'f', 1));
+    m_detailWert->setText(QStringLiteral("%1 %").arg(e.detail));
+}
+
+void FormFenster::frageNachBild()
+{
+    QSettings einstellungen;
+    const QString datei = QFileDialog::getOpenFileName(this, tr("Open image"), einstellungen.value(QLatin1String(kLetzterBildOrdner)).toString(),
+                                                       tr("Pictures (*.png *.jpg *.jpeg *.bmp *.gif *.webp)"));
+    if (datei.isEmpty()) return;
+    einstellungen.setValue(QLatin1String(kLetzterBildOrdner), QFileInfo(datei).absolutePath());
+    Einfuegen art = Einfuegen::Ersetzen;
+    if (m_live && !m_zeichnung.konturen.empty())
+    {
+        // O1 a: stehen schon Konturen da, entscheidet der Nutzer (ohne Apply live erst bei Take contours)
+        QMessageBox frage(QMessageBox::Question, windowTitle(),
+                          tr("The shape already holds %n contour(s). Replace them with the contours of %1, or add those?", nullptr,
+                             static_cast<int>(m_zeichnung.konturen.size()))
+                              .arg(QFileInfo(datei).fileName()),
+                          QMessageBox::NoButton, this);
+        QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
+        QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
+        frage.addButton(QMessageBox::Cancel);
+        frage.setDefaultButton(hinzu);
+        frage.exec();
+        if (frage.clickedButton() == hinzu)
+            art = Einfuegen::Hinzufuegen;
+        else if (frage.clickedButton() != ersetzen)
+            return;
+    }
+    else if (!m_zeichnung.konturen.empty())
+    {
+        art = Einfuegen::Hinzufuegen;  // ohne Apply live: das Bild liegt eingepasst neben den Konturen, Take contours fragt
+    }
+    if (nimmBild(datei, art) < 0)
+        QMessageBox::warning(this, windowTitle(), tr("Could not read %1 as a picture").arg(QDir::toNativeSeparators(datei)));
 }
 
 QString FormFenster::nutzerZeile() const

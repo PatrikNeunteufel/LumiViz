@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.18.0
+> **Version:** 0.19.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -662,6 +662,47 @@ Die Zahlen (1024, 64, 2 bis 8) sind von Claude gesetzt und nicht gemessen;
 sie gehören in die Skizze und in den Sichttest. Mit D4 b ist eine Kontur aus
 einem Bild ein Pfad nur aus Strecken.
 
+**Was die Regler ändern (R1 a, Patrik S122):** das Fenster merkt sich, welche
+Konturen aus dem zuletzt geöffneten Bild stammen. Ein Regler erkennt neu und
+ersetzt genau diese (neue Kennungen, Haken nach K2 a); gezeichnete und
+SVG-Konturen bleiben. Was man an den Konturen aus dem Bild geändert hat, geht
+dabei verloren — jedes Neu-Erkennen ist ein Schritt für Undo. Nach dem
+Speichern oder Wiederöffnen ist das Bild nicht mehr da; die Regler sind grau,
+bis es neu gewählt ist. **Mit b als Möglichkeit (Patrik S122), der Schalter im
+Fenster (R2 a):** in der Gruppe From image der Haken **Apply live** — an gilt
+R1 a; aus zeigen die Regler die erkannten Konturen nur als Vorschau in Grau auf
+der Zeichenfläche, und der Knopf **Take contours** übernimmt sie (mit O1 a:
+Replace, Add, Cancel). Das Programm merkt sich die Stellung. Verworfen: der
+Schalter in den Settings (R2 b) — aus dem Fenster heraus nicht zu finden; nur
+bis zur ersten Änderung live (R1 c).
+
+**Wie es gebaut ist (Stufe 20c, S122):** `shape/BildKonturen` (ohne Widget).
+Das Bild wird auf höchstens 1024 Punkte Kante verkleinert und zweimal mit
+einem gleitenden Mittel über 2·Smooth+1 Punkte weichgezeichnet. Durchsichtiges
+zählt für Brightness und Colour als Weiß. **Brightness** und
+**Transparency** teilen in gleich breite Stufen; **Colour** mit k-means auf
+einer Stichprobe von höchstens 40 000 Punkten, die Startmitten ohne Zufall:
+die dunkelste Farbe, dann jeweils die, die von allen bisherigen am weitesten
+weg liegt (nach Quantilen der Helligkeit fielen zwei Mitten in eine große
+Fläche, eine kleine helle bekam keine). Flächen sind zusammenhängende Punkte
+einer Klasse (je vier Nachbarn); eine unter Min size geht in ihrem größten
+Nachbarn auf (bis zu vier Runden). Die Ränder werden auf den Kanten der Punkte
+abgelaufen, die Fläche links; wo sich zwei Punkte nur schräg berühren, bleibt
+der Rand getrennt. Ein Rand, den zwei Flächen teilen, kommt einmal. Douglas-
+Peucker mit 0,75 Punkten (Detail 100 %) bis 5 Punkten (Detail 0 %). Die
+Vorgaben: Brightness, Levels 3, Smooth 1, Min size 0,2 %, Detail 50 %.
+Im Fenster: **Open image...** (PNG, JPEG, BMP, GIF, WebP; ein Foto steht, wie
+es aufgenommen ist), mit Apply live nach O1 a; ohne Apply live liegt das Bild
+neben vorhandenen Konturen eingepasst, Take contours fragt. **Show image**:
+das Bild mit 35 % Deckung hinter den Konturen. Die Liste zeigt „edge" für
+Konturen am Bildrand. Die Regler erkennen 150 ms nach der letzten Bewegung.
+Undo merkt sich mit der Zeichnung, welche Konturen aus dem Bild stammen. Nach
+dem Speichern, Wiederöffnen oder New shape ist das Bild weg. An
+`asset/img/logo/original/milkdrop.png` mit den Vorgaben: 6 Konturen, das
+abgerundete Rechteck mit Haken, der Bildrand „edge" (die Probe in S120: 5).
+Die Farben der Konturen sind die der Reihe (wie O3 a). Alles in diesem Absatz
+ohne Verweis auf einen Entscheid ist von Claude gesetzt.
+
 ---
 
 ## 8a. Das Fenster Edit shape (Skizze gebilligt, Patrik S120)
@@ -1174,7 +1215,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 19e | die Shape-Schicht im Creator — **gebaut in S121** (§6 „Wie die Shape-Schicht im Creator gebaut ist"), ohne den Knopf Edit... (kommt mit 20a); im Programm ungesehen und ungehört | Skizze |
 | 20a | das Form-Fenster: zeichnen (Z1 a, Z2 a) — **gebaut in S122** (§8a „Wie das Fenster gebaut ist"), im Programm ungesehen | Skizze |
 | 20b | SVG über das mitschreibende Zeichengerät (S1 a, O1 a, O2 a) — **gebaut in S122** (§8 „Wie es gebaut ist"), im Programm ungesehen | 20a |
-| 20c | Konturen aus einem Bild (K1 a, K2 a) | 20a |
+| 20c | Konturen aus einem Bild (K1 a, K2 a, R1 a, R2 a) — **gebaut in S122** (§8 „Wie es gebaut ist (Stufe 20c)"), im Programm ungesehen | 20a |
 | 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1) | 20a |
 
 Nach 19b ist die Form zu sehen, nach 19c zu hören und nach 19d im Scope zu
@@ -1201,6 +1242,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.19.0 | 2026-10-14 (S122) | **Konturen aus einem Bild entschieden und gebaut (Stufe 20c).** Entscheide Patrik: **R1 a** die Regler ersetzen nur die Konturen aus dem Bild, Undo deckt es; mit b als Möglichkeit, **R2 a** der Haken **Apply live** im Fenster (aus: Vorschau in Grau und **Take contours**) (§8). Gebaut: `shape/BildKonturen`, Open image..., From image, Show image, „edge" in der Liste. Im Programm ungesehen. |
 | 0.18.0 | 2026-10-14 (S122) | **SVG entschieden und gebaut (Stufe 20b).** Entscheide Patrik: **O1 a** Open SVG... fragt bei vorhandenen Konturen Replace, Add oder Cancel (gilt auch für Open image..., 20c); **O2 a** die 64 längsten, Haken für alle bis acht, sonst nur die längste; **O3 a** teilen alle Konturen eine Farbe, bekommen sie die Farben der Reihe (§8, §8a). Gebaut: `shape/SvgKonturen`, Open SVG... im Fenster, die Zeile „n smaller ones left out". Befund: Farben über CSS-Variablen kommen nicht an (sechs `-raw`-Dateien in `asset/shapes/2`). Im Programm ungesehen. |
 | 0.17.0 | 2026-10-14 (S122) | **Das Fenster Edit shape entschieden und gebaut (Stufe 20a).** Entscheide Patrik: **Z1 a** Pen zeichnet frei Hand und Punkt für Punkt gemischt, Move point schiebt Ankerpunkte (§8); **Z2 a** der Knopf Draw entfällt (§8a). Gebaut: `shape/Zeichnen`, `loop/FormFenster`, Edit... und New shape... im Creator, das Neulesen einer geschriebenen Form im Knoten und im Creator (`zeichnungFassung`), Töne neu rechnen (`zaehleInstrumentFassung`) (§8a, §14). Im Programm ungesehen. |
 | 0.16.0 | 2026-10-13 (S121) | **Die Shape-Schicht im Creator gebaut (Stufe 19e)**, nach der gebilligten Skizze: Waveform Shape, die Zeilen Shape mit Browse... und Contour, die Regler Harmonics, Harmonics envelope, Angle, Start, die Haken Stereo XY und Reverse, das Bild „Shape, as it plays" (§6, §14). Ohne den Knopf Edit... (Stufe 20a). Damit ist ein Instrument mit einer Form im Programm spielbar; gesehen und gehört ist es nicht. |

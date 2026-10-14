@@ -113,7 +113,8 @@ TEST_CASE("Shape Fenster: zeichnen mit Pen — Klicks, frei Hand, Doppelklick, E
     CHECK(fenster.findChild<QLabel*>(QStringLiteral("shapeLocation"))->text() == QStringLiteral("Not saved yet"));
     CHECK(flaeche->werkzeug() == FormFlaeche::Werkzeug::Stift);
     CHECK(fenster.findChild<QToolButton*>(QStringLiteral("shapePen"))->isChecked());
-    for (const char* grau : {"shapeOpenImage", "shapeBridge", "shapeShowImage", "shapeFromImage", "shapeUseAs"})  // Open SVG... seit 20b
+    // Open SVG... seit 20b, Open image... seit 20c; Show image und From image erst mit einem Bild
+    for (const char* grau : {"shapeBridge", "shapeShowImage", "shapeFromImage", "shapeUseAs"})
     {
         INFO(grau);
         auto* teil = fenster.findChild<QWidget*>(QLatin1String(grau));
