@@ -32,7 +32,14 @@
   Desert Caravan, Zen Garden, Flute Tropics, Sax After Dark, Shape Synthwave,
   Geometry.
 
-- **Kits (Stufe 21a, nur das Modell — im Programm noch nicht zu sehen):** die
+- **Kits im Drum-Editor (Stufe 21b):** der Knopf **Kit** im Kopf — ein Kit
+  wählen gibt jeder Spur den Klang ihrer Rolle, die Schritte bleiben; nach einer
+  Änderung von Hand „(changed)"; eine Zeile sagt, was der Wechsel getan hat.
+  Die Spalte **Role** je Spur (Klick: Rolle wählen; geraten in Klammern; fehlt
+  sie im Kit, durchgestrichen). **Add track** bietet die Rollen des Kits an,
+  die noch keine Spur hat. **Save as kit...** speichert die Spuren als eigenes
+  Kit.
+- **Kits (Stufe 21a, das Modell):** die
   Datei `.lvkit`, Rollen je Drum-Spur (kick, snare, clap, rim, hat, open hat,
   ride, crash, tom, perc, fx, nummeriert), der Kitwechsel, der die Schritte
   behält, und zehn mitgelieferte Kits mit angeglichener Lautstärke: Classic,

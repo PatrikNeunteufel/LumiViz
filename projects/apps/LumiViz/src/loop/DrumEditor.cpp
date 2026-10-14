@@ -7,6 +7,7 @@
 
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
@@ -50,6 +51,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
+#include <optional>
 
 namespace lumi::loop
 {
@@ -68,7 +71,8 @@ const char* const kRechtsLoescht = "loop/drumRightClickDeletes";
 const char* const kSpurNr = "spur";
 constexpr int kKlangBreite = 124;    ///< die Auswahl „Sound" — breit genug fuer den Titel eines Instruments
 constexpr int kMehrBreite = 22;      ///< der Knopf „…" einer Instrument-Spur
-constexpr int kSpaltenBreite = 368;  ///< die Kopfzeilen der Spuren, links vom Raster
+constexpr int kRolleBreite = 64;     ///< das Etikett Role (Stufe 21b)
+constexpr int kSpaltenBreite = 438;  ///< die Kopfzeilen der Spuren, links vom Raster
 constexpr int kRand = 4;             ///< vor dem ersten und hinter dem letzten Schritt
 
 }  // namespace
@@ -739,16 +743,33 @@ void DrumEditor::setupUI()
     m_spitze->setObjectName(QStringLiteral("drumPeak"));
     m_spitze->setMinimumWidth(36);
     m_spitze->setToolTip(tr("Peak of the mixed loop while it plays; above 1 it clips"));
+    // der Knopf Kit (Stufe 21b, Skizze S123): sein Menue entsteht beim Aufklappen
+    // ein Knopf mit Menue: er laesst seinem Pfeil eigenen Platz (ein QToolButton legt ihn ueber den Text)
+    m_kitKnopf = new QPushButton(this);
+    m_kitKnopf->setObjectName(QStringLiteral("drumKit"));
+    auto* kitMenue = new QMenu(m_kitKnopf);
+    kitMenue->setToolTipsVisible(true);
+    m_kitKnopf->setMenu(kitMenue);
+    connect(kitMenue, &QMenu::aboutToShow, this, [this, kitMenue] { fuelleKitMenue(kitMenue); });
     kopf->addWidget(new QLabel(tr("Base"), this));
     kopf->addWidget(m_basisName);
     kopf->addWidget(m_nutzer);
     kopf->addStretch(1);
+    kopf->addWidget(m_kitKnopf);
+    kopf->addSpacing(12);
     kopf->addWidget(new QLabel(tr("Bars"), this));
     kopf->addWidget(m_takte);
     kopf->addWidget(m_play);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
     aussen->addLayout(kopf);
+    // was der letzte Kitwechsel getan hat (K2 a): getroffen, ohne Gegenstueck, was Add track anbietet
+    m_kitZeile = new QLabel(this);
+    m_kitZeile->setObjectName(QStringLiteral("drumKitMessage"));
+    m_kitZeile->setEnabled(false);
+    m_kitZeile->setWordWrap(true);
+    m_kitZeile->hide();
+    aussen->addWidget(m_kitZeile);
 
     auto* raster = new QHBoxLayout;
     m_schlaege = new QSpinBox(this);
@@ -796,6 +817,7 @@ void DrumEditor::setupUI()
         titelReihe->addWidget(feld);
     };
     titelFeld(tr("Track"), 70);
+    titelFeld(tr("Role"), kRolleBreite);
     titelFeld(tr("Sound"), kKlangBreite);
     titelFeld(QString(), kMehrBreite);  // ueber dem Knopf „…"
     titelFeld(tr("Vol"), 48);
@@ -860,7 +882,7 @@ void DrumEditor::setupUI()
     connect(m_jeSchlag, &QSpinBox::valueChanged, this, [this](int jeSchlag) { setzeRaster(m_schlaege->value(), jeSchlag); });
     connect(m_swing, &QDoubleSpinBox::valueChanged, this, [this](double prozent) { setzeSwing(prozent / 100.0); });
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
-    connect(m_spurNeu, &QPushButton::clicked, this, [this] { spurHinzu(); });
+    connect(m_spurNeu, &QPushButton::clicked, this, &DrumEditor::spurNeuGeklickt);
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
     connect(m_raster, &SchrittRaster::auswahlGeaendert, this, &DrumEditor::zeigeAuswahl);
     m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
@@ -875,7 +897,7 @@ void DrumEditor::setupUI()
         ziel->zeilen = neu.zeilen;
         Q_EMIT bearbeitet(fassung, was);
     });
-    resize(874, 320);
+    resize(944, 330);
 }
 
 void DrumEditor::setKitKlaenge(const QStringList& klaenge)
@@ -889,7 +911,11 @@ bool DrumEditor::zeige(const Loop& loop, const QString& muster)
     const Muster* ziel = loop.findeMuster(muster);
     if (ziel == nullptr || ziel->art != MusterArt::Drumkit) return false;
     // eine andere Basis: die Fenster daneben galten einer Spur der alten
-    if (muster != m_muster) m_paletteSpur = m_creatorSpur = m_aufnahmeSpur = m_detailSpur = -1;
+    if (muster != m_muster)
+    {
+        m_paletteSpur = m_creatorSpur = m_aufnahmeSpur = m_detailSpur = -1;
+        m_kitMeldung.clear();  // sie galt dem anderen Muster
+    }
     m_loop = loop;
     m_muster = muster;
     zeigeAlles();
@@ -942,6 +968,7 @@ void DrumEditor::zeigeAlles()
     // das Raster in voller Hoehe, darunter Platz fuer den Rollbalken
     m_rollen->setFixedHeight(m_raster->sizeHint().height() + style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 2);
     baueSpuren(*ziel);
+    zeigeKit();
     m_leerHinweis->setVisible(ziel->spuren.empty());
     waehleSpur(m_raster->spur());
     zeigeAuswahl();
@@ -1094,6 +1121,11 @@ void DrumEditor::baueSpuren(const Muster& muster)
             zeile.name->setFixedWidth(70);
             zeile.name->setProperty(kSpurNr, s);
             zeile.name->installEventFilter(this);
+            // das Etikett Role (Stufe 21b, K1 a): ein Klick oeffnet die Rollen
+            zeile.rolle = new QToolButton(zeile.reihe);
+            zeile.rolle->setObjectName(QStringLiteral("drumTrackRole%1").arg(s));
+            zeile.rolle->setFixedSize(kRolleBreite, 20);
+            zeile.rolle->setAutoRaise(true);
             zeile.klang = new QComboBox(zeile.reihe);
             zeile.klang->setObjectName(QStringLiteral("drumTrackSound%1").arg(s));
             zeile.klang->setFixedWidth(kKlangBreite);
@@ -1120,6 +1152,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
             zeile.pan->setToolTip(tr("Pan: left to right"));
             reihe->addWidget(zeile.stumm);
             reihe->addWidget(zeile.name);
+            reihe->addWidget(zeile.rolle);
             reihe->addWidget(zeile.klang);
             reihe->addWidget(zeile.mehr);
             reihe->addWidget(zeile.laut);
@@ -1134,6 +1167,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
                 klangGewaehlt(s, auswahl->itemData(index).toString());
             });
             connect(zeile.mehr, &QToolButton::clicked, this, [this, s] { (void)oeffneDetail(s); });
+            connect(zeile.rolle, &QToolButton::clicked, this, [this, s] { rollenMenue(s); });
             // ein Schieber meldet beim Loslassen — nicht jeden Pixel als Schritt fuer Undo
             const auto schieber = [this, s](QSlider* regler, bool pan) {
                 const auto melde = [this, s, regler, pan] {
@@ -1154,10 +1188,32 @@ void DrumEditor::baueSpuren(const Muster& muster)
     }
     const QStringList eigene = eigeneSamples();  // einmal gelesen, fuer alle Spuren
     const QStringList bibliothek = bibliotheksKlaenge();
+    DrumKit kit;
+    const bool hatKit = aktuellesKit(kit);
     for (std::size_t s = 0; s < m_spuren.size(); ++s)
     {
         const Spur& spur = muster.spuren[s];
         SpurZeile& zeile = m_spuren[s];
+        {
+            // das Etikett Role: gesetzt, geraten (in Klammern, grau) oder keine; fehlt sie im Kit, durchgestrichen
+            const std::optional<Rolle> rolle = leseRolle(spur.rolle);
+            const QString geraten = rolle ? QString() : rateRollenArt(spur);
+            const bool fehlt = rolle && hatKit && kit.fuer(*rolle) == nullptr;
+            zeile.rolle->setText(rolle ? rollenText(*rolle) : geraten.isEmpty() ? QStringLiteral("—")
+                                                                               : QStringLiteral("(%1)").arg(geraten));
+            QFont schrift = zeile.rolle->font();
+            schrift.setStrikeOut(fehlt);
+            schrift.setItalic(!rolle);
+            zeile.rolle->setFont(schrift);
+            zeile.rolle->setProperty("fehltImKit", fehlt);
+            if (fehlt)
+                zeile.rolle->setToolTip(tr("%1 — not in the kit %2: the track keeps its sound").arg(rollenText(*rolle), kit.titel));
+            else if (rolle)
+                zeile.rolle->setToolTip(tr("Role in the kit: a new kit gives this track the sound of %1").arg(rollenText(*rolle)));
+            else
+                zeile.rolle->setToolTip(geraten.isEmpty() ? tr("No role — click to choose one. Without a role, a new kit leaves this track as it is")
+                                                          : tr("Guessed: %1 — a new kit takes it. Click to choose another").arg(geraten));
+        }
         const QSignalBlocker a(zeile.stumm);
         const QSignalBlocker b(zeile.laut);
         const QSignalBlocker c(zeile.pan);
@@ -1734,6 +1790,259 @@ void DrumEditor::setzeStumm(int spur, bool stumm)
     ziel->spuren[static_cast<std::size_t>(spur)].stumm = stumm;
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Mute track"));
+}
+
+// --- Kits (Stufe 21b; Entscheide K1 a bis K5 a, S123) -------------------------
+
+namespace
+{
+/// „open hat" → „Open hat": der Name einer neuen Spur aus ihrer Rolle
+QString spurNameAus(const QString& rolle)
+{
+    return rolle.isEmpty() ? rolle : rolle.left(1).toUpper() + rolle.mid(1);
+}
+}  // namespace
+
+bool DrumEditor::aktuellesKit(DrumKit& kit) const
+{
+    const Muster* ziel = basis();
+    return ziel != nullptr && !ziel->kit.isEmpty() && holeKit(ziel->kit, kit);
+}
+
+QString DrumEditor::kitText() const
+{
+    const Muster* ziel = basis();
+    if (ziel == nullptr || ziel->kit.isEmpty()) return tr("Kit");
+    DrumKit kit;
+    if (!holeKit(ziel->kit, kit)) return tr("Kit: %1 (not found)").arg(ziel->kit);
+    return weichtAb(*ziel, kit) ? tr("Kit: %1 (changed)").arg(kit.titel) : tr("Kit: %1").arg(kit.titel);
+}
+
+void DrumEditor::zeigeKit()
+{
+    m_kitKnopf->setText(kitText());  // den Pfeil des Menues zeichnet der Knopf selbst
+    m_kitKnopf->setToolTip(tr("Choose a kit: every track takes the sound of its role, the steps stay. "
+                              "\"(changed)\" means a track differs from the kit"));
+    m_kitZeile->setText(m_kitMeldung);
+    m_kitZeile->setVisible(!m_kitMeldung.isEmpty());
+}
+
+QStringList DrumEditor::kitZeilen() const
+{
+    const Muster* ziel = basis();
+    const QString gewaehlt = ziel != nullptr ? ziel->kit : QString();
+    QStringList zeilen{QStringLiteral("[Built-in kits]")};
+    for (const DrumKit& kit : mitgelieferteKits()) zeilen << (kit.name == gewaehlt ? QStringLiteral("*") : QString()) + kit.name;
+    const std::vector<DrumKit> eigene = eigeneKits();
+    if (!eigene.empty())
+    {
+        zeilen << QStringLiteral("[My kits]");
+        for (const DrumKit& kit : eigene) zeilen << (kit.name == gewaehlt ? QStringLiteral("*") : QString()) + kit.name;
+    }
+    zeilen << tr("Save as kit...") << tr("Edit kits...");
+    return zeilen;
+}
+
+void DrumEditor::fuelleKitMenue(QMenu* menue)
+{
+    menue->clear();
+    const Muster* ziel = basis();
+    const QString gewaehlt = ziel != nullptr ? ziel->kit : QString();
+    const auto liste = [this, menue, &gewaehlt](const QString& titel, const std::vector<DrumKit>& kits) {
+        if (kits.empty()) return;
+        menue->addSection(titel);
+        for (const DrumKit& kit : kits)
+        {
+            QAction* eintrag = menue->addAction(kit.titel, this, [this, nennung = kit.name] { (void)wendeKitAn(nennung); });
+            eintrag->setCheckable(true);
+            eintrag->setChecked(kit.name == gewaehlt);
+            eintrag->setToolTip(kit.beschreibung);
+        }
+    };
+    liste(tr("Built-in kits"), mitgelieferteKits());
+    liste(tr("My kits"), eigeneKits());
+    menue->addSeparator();
+    QAction* sichern = menue->addAction(tr("Save as kit..."), this, [this] {
+        bool ok = false;
+        const QString titel = QInputDialog::getText(this, tr("Save as kit"), tr("Name of the kit:"), QLineEdit::Normal,
+                                                    QString(), &ok);
+        if (!ok || titel.trimmed().isEmpty()) return;
+        if (!speichereAlsKit(titel).isEmpty()) return;
+        // vergeben? Dann fragen, ob ersetzt wird
+        if (!eigeneKitDatei(eigenerName(titel)).isEmpty() && QFileInfo::exists(eigeneKitDatei(eigenerName(titel))) &&
+            QMessageBox::question(this, tr("Save as kit"), tr("You already have a kit named %1. Replace it?").arg(titel)) ==
+                QMessageBox::Yes)
+            (void)speichereAlsKit(titel, true);
+    });
+    sichern->setToolTip(tr("Saves the sounds of these tracks, by role, with volume and pan as your own kit"));
+    QAction* bearbeiten = menue->addAction(tr("Edit kits..."));
+    bearbeiten->setEnabled(false);  // das Fenster Kits kommt mit Stufe 21c
+    bearbeiten->setToolTip(tr("The Kits window — not built yet"));
+}
+
+bool DrumEditor::wendeKitAn(const QString& nennung)
+{
+    DrumKit kit;
+    if (!holeKit(nennung, kit)) return false;
+    Loop neu = m_loop;
+    Muster* ziel = musterIn(neu, m_muster);
+    if (ziel == nullptr) return false;
+    const KitWechsel wechsel = lumi::loop::wendeKitAn(*ziel, kit);
+    // was geschehen ist, in einer Zeile (K2 a: wer keine Entsprechung hat, behaelt seinen Klang)
+    QStringList teile{tr("%1: %2 of %3 tracks took a sound from the kit")
+                          .arg(kit.titel)
+                          .arg(wechsel.getroffen)
+                          .arg(ziel->spuren.size())};
+    if (!wechsel.ohneGegenstueck.isEmpty())
+        teile << tr("not in the kit, kept: %1").arg(wechsel.ohneGegenstueck.join(QStringLiteral(", ")));
+    if (!wechsel.fehlend.isEmpty())
+        teile << tr("Add track offers: %1").arg(wechsel.fehlend.join(QStringLiteral(", ")));
+    m_kitMeldung = teile.join(QStringLiteral(" · "));
+    if (neu == m_loop)
+    {
+        zeigeKit();  // nichts geaendert (dasselbe Kit noch einmal): nur die Zeile
+        return true;
+    }
+    Q_EMIT bearbeitet(neu, tr("Kit: %1").arg(kit.titel));
+    return true;
+}
+
+void DrumEditor::setzeRolle(int spur, const QString& rolle)
+{
+    QString text;
+    if (!rolle.trimmed().isEmpty())
+    {
+        const std::optional<Rolle> gelesen = leseRolle(rolle);
+        if (!gelesen) return;
+        text = rollenText(*gelesen);
+    }
+    (void)aendereSpur(spur, tr("Change role"), [&text](Spur& s) { s.rolle = text; });
+}
+
+void DrumEditor::rollenMenue(int spur)
+{
+    const Muster* ziel = basis();
+    if (ziel == nullptr || spur < 0 || spur >= static_cast<int>(ziel->spuren.size())) return;
+    waehleSpur(spur);
+    // je Art die hoechste Nummer, die eine Spur schon traegt — angeboten wird eine mehr
+    std::map<QString, int> hoechste;
+    for (const Spur& s : ziel->spuren)
+        if (const std::optional<Rolle> r = leseRolle(s.rolle)) hoechste[r->art] = std::max(hoechste[r->art], r->nummer);
+    const QString jetzt = ziel->spuren[static_cast<std::size_t>(spur)].rolle;
+    QMenu menue(this);
+    for (const QString& art : rollenArten())
+    {
+        const int bis = std::max(1, hoechste[art] + (art == QLatin1String("tom") || art == QLatin1String("perc") || hoechste[art] > 0 ? 1 : 0));
+        for (int n = 1; n <= bis; ++n)
+        {
+            const QString text = rollenText({art, n});
+            QAction* eintrag = menue.addAction(text, this, [this, spur, text] { setzeRolle(spur, text); });
+            eintrag->setCheckable(true);
+            eintrag->setChecked(text == jetzt);
+        }
+    }
+    menue.addSeparator();
+    menue.addAction(tr("No role"), this, [this, spur] { setzeRolle(spur, QString()); });
+    menue.exec(m_spuren[static_cast<std::size_t>(spur)].rolle->mapToGlobal(QPoint(0, m_spuren[static_cast<std::size_t>(spur)].rolle->height())));
+}
+
+QStringList DrumEditor::fehlendeRollen() const
+{
+    const Muster* ziel = basis();
+    DrumKit kit;
+    if (ziel == nullptr || !aktuellesKit(kit)) return {};
+    Muster probe = *ziel;  // geraten wird nur auf der Probe
+    return lumi::loop::wendeKitAn(probe, kit).fehlend;
+}
+
+int DrumEditor::spurAusKit(const QString& rolle)
+{
+    DrumKit kit;
+    const std::optional<Rolle> gelesen = leseRolle(rolle);
+    if (!gelesen || !aktuellesKit(kit)) return -1;
+    const QString text = rollenText(*gelesen);
+    const auto treffer = std::find_if(kit.klaenge.begin(), kit.klaenge.end(), [&text](const KitKlang& k) { return k.rolle == text; });
+    if (treffer == kit.klaenge.end()) return -1;
+    Loop neu = m_loop;
+    const int spur = lumi::loop::spurHinzu(neu, m_muster, {});
+    Muster* ziel = musterIn(neu, m_muster);
+    if (spur < 0 || ziel == nullptr) return -1;
+    Spur& s = ziel->spuren[static_cast<std::size_t>(spur)];
+    QString name = spurNameAus(text);
+    for (int n = 2; std::any_of(ziel->spuren.begin(), ziel->spuren.end(), [&name, &s](const Spur& t) { return &t != &s && t.name == name; }); ++n)
+        name = spurNameAus(text) + QStringLiteral(" (%1)").arg(n);
+    s.name = name;
+    s.rolle = text;
+    s.klang = treffer->klang;
+    s.instrument = treffer->instrument;
+    if (!s.instrument.isEmpty())
+    {
+        s.hoehe = treffer->hoehe;
+        s.dauerMs = treffer->dauerMs;
+    }
+    s.laut = treffer->laut;
+    s.pan = treffer->pan;
+    Q_EMIT bearbeitet(neu, tr("Add track"));
+    waehleSpur(spur);
+    return spur;
+}
+
+void DrumEditor::spurNeuGeklickt()
+{
+    const QStringList fehlend = fehlendeRollen();
+    if (fehlend.isEmpty())
+    {
+        spurHinzu();
+        return;
+    }
+    // die Rollen des Kits, die keine Spur hat — darunter die leere Spur wie bisher (K2 a)
+    DrumKit kit;
+    (void)aktuellesKit(kit);
+    QMenu menue(this);
+    for (const QString& rolle : fehlend)
+        menue.addAction(tr("%1 — from %2").arg(spurNameAus(rolle), kit.titel), this, [this, rolle] { (void)spurAusKit(rolle); });
+    menue.addSeparator();
+    menue.addAction(tr("Empty track"), this, [this] { spurHinzu(); });
+    menue.exec(m_spurNeu->mapToGlobal(QPoint(0, m_spurNeu->height())));
+}
+
+QString DrumEditor::speichereAlsKit(const QString& titel, bool ueberschreiben)
+{
+    const Muster* ziel = basis();
+    const QString name = eigenerName(titel);
+    const QString datei = eigeneKitDatei(name);
+    if (ziel == nullptr || datei.isEmpty()) return {};
+    if (QFileInfo::exists(datei) && !ueberschreiben) return {};
+    DrumKit kit = kitAusMuster(*ziel, titel.trimmed());
+    if (!speichereKit(datei, kit)) return {};
+    // das Muster nennt jetzt das eigene Kit, und seine Spuren tragen die Rollen, unter denen sie gespeichert sind
+    const QString nennung = QLatin1String(kEigenVorsatz) + name;
+    Loop neu = m_loop;
+    Muster* m = musterIn(neu, m_muster);
+    rateRollen(*m);
+    m->kit = nennung;
+    m_kitMeldung = tr("Saved as your kit %1 (%2 roles)").arg(titel.trimmed()).arg(kit.klaenge.size());
+    if (neu == m_loop)
+        zeigeKit();
+    else
+        Q_EMIT bearbeitet(neu, tr("Save as kit"));
+    return nennung;
+}
+
+QString DrumEditor::rollenEtikett(int spur) const
+{
+    return spur >= 0 && spur < static_cast<int>(m_spuren.size()) ? m_spuren[static_cast<std::size_t>(spur)].rolle->text() : QString();
+}
+
+bool DrumEditor::rolleFehltImKit(int spur) const
+{
+    return spur >= 0 && spur < static_cast<int>(m_spuren.size()) &&
+           m_spuren[static_cast<std::size_t>(spur)].rolle->property("fehltImKit").toBool();
+}
+
+QString DrumEditor::kitMeldung() const
+{
+    return m_kitMeldung;
 }
 
 }  // namespace lumi::loop

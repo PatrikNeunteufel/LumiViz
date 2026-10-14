@@ -42,6 +42,7 @@ class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
+class QMenu;
 class QPushButton;
 class QScrollArea;
 class QSlider;
@@ -53,6 +54,7 @@ namespace lumi::loop
 {
 
 class AufnahmeFenster;
+struct DrumKit;
 class InstrumentCreator;
 class InstrumentPalette;
 struct Instrument;
@@ -306,6 +308,41 @@ public:
     /// `instrument:<Nennung>`. Trennlinien fehlen.
     [[nodiscard]] QStringList klangZeilen(int spur) const;
 
+    // --- Kits (Stufe 21b; Entscheide K1 a bis K5 a, Skizze gezeigt S123) -----
+    // Im Kopf der Knopf **Kit: <Titel> ▾** (nach einer Aenderung von Hand mit
+    // „(changed)", K4 a); sein Menue: Built-in kits, My kits, Save as kit...,
+    // Edit kits... (grau bis Stufe 21c). Je Spur das Etikett **Role**: ein
+    // Klick waehlt die Rolle; eine geratene steht in Klammern, eine, die das
+    // Kit nicht hat, durchgestrichen (K2 a). **Add track** bietet die Rollen
+    // des Kits an, die keine Spur hat.
+
+    /// Das Kit anwenden (`wendeKitAn`, DrumKit.hpp): jede Spur bekommt den Klang
+    /// ihrer Rolle, die Schritte bleiben. false = kein Kit dieses Namens.
+    bool wendeKitAn(const QString& nennung);
+    /// Die Rolle einer Spur setzen; leer = keine. Eine ungueltige wird nicht gesetzt.
+    void setzeRolle(int spur, const QString& rolle);
+    /// Eine Spur fuer eine Rolle des Kits anlegen, mit dessen Klang und leeren
+    /// Schritten (Add track, K2 a). -1 = das Muster nennt kein Kit, oder es hat die Rolle nicht.
+    int spurAusKit(const QString& rolle);
+    /// **Save as kit...**: die Spuren als eigenes Kit mit diesem Titel speichern
+    /// (`kitAusMuster`); danach nennt das Muster es. Leer = nicht gespeichert
+    /// (kein gueltiger Name, oder vergeben und `ueberschreiben` aus); sonst die Nennung.
+    QString speichereAlsKit(const QString& titel, bool ueberschreiben = false);
+    /// Was der Knopf Kit zeigt.
+    [[nodiscard]] QString kitText() const;
+    /// Die Rollen des Kits, die keine Spur hat (die Eintraege oben in Add track).
+    [[nodiscard]] QStringList fehlendeRollen() const;
+    /// Das Etikett Role einer Spur, wie es dasteht.
+    [[nodiscard]] QString rollenEtikett(int spur) const;
+    /// Steht das Etikett durchgestrichen (die Rolle fehlt im Kit)?
+    [[nodiscard]] bool rolleFehltImKit(int spur) const;
+    /// Das Menue des Knopfs Kit von oben nach unten: Ueberschriften als
+    /// `[Built-in kits]`, `[My kits]`, je Kit seine Nennung (das gewaehlte mit
+    /// `*` davor), dann die Eintraege bei ihrem Text.
+    [[nodiscard]] QStringList kitZeilen() const;
+    /// Was der letzte Kitwechsel getan hat (die Zeile unter dem Kopf); leer = keiner.
+    [[nodiscard]] QString kitMeldung() const;
+
 Q_SIGNALS:
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
@@ -336,6 +373,7 @@ private:
         QWidget* reihe = nullptr;
         QToolButton* stumm = nullptr;
         QLabel* name = nullptr;
+        QToolButton* rolle = nullptr;  ///< das Etikett Role (Stufe 21b)
         QComboBox* klang = nullptr;
         QToolButton* mehr = nullptr;  ///< „…": nur an einer Instrument-Spur zu sehen
         QSlider* laut = nullptr;
@@ -385,6 +423,17 @@ private:
     QComboBox* m_detailNote = nullptr;
     QSpinBox* m_detailDauer = nullptr;
     QLabel* m_detailTitel = nullptr;
+
+    // --- Kits (Stufe 21b)
+    QPushButton* m_kitKnopf = nullptr;
+    QLabel* m_kitZeile = nullptr;
+    QString m_kitMeldung;
+    /// Das Kit, das das gezeigte Muster nennt. false = keines, oder es fehlt.
+    bool aktuellesKit(DrumKit& kit) const;
+    void zeigeKit();
+    void fuelleKitMenue(QMenu* menue);
+    void rollenMenue(int spur);
+    void spurNeuGeklickt();
 
     QLabel* m_basisName = nullptr;
     QLabel* m_nutzer = nullptr;

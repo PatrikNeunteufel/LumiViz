@@ -4988,10 +4988,11 @@ geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
 
 **Offen:**
 - 🟡 **Kits (3 a) — Stufe 21**, Entscheide K1 a bis K9 a, Skizzen gebilligt
-  (`audio/Loop_Konzept.md` §4l, mit dem Inhalt aller vierzehn Kits). **21a
+  (`audio/Loop_Konzept.md` §4l, mit dem Inhalt aller vierzehn Kits). **21a und 21b
   gebaut** (Modell, `.lvkit`, Rollen, Kitwechsel, zehn Kits mit gemessenem
-  Volume, Bereich Kits in Export und Import). Offen: **21b** Knopf Kit im
-  Drum-Editor, **21c** Fenster Kits, **21d** Rock'n'Roll, Hardrock, Heavy Metal
+  Volume, Bereich Kits in Export und Import; im Drum-Editor der Knopf Kit, das
+  Etikett Role, Add track aus dem Kit, Save as kit... — im Programm ungesehen).
+  Offen: **21c** Fenster Kits, **21d** Rock'n'Roll, Hardrock, Heavy Metal
   und Jazz Brushes aus DrumGizmo (DRSKit, CrocellKit, CC BY 4.0 — Downloads zur
   Freigabe) mit gerechneten Besen und dem Loop Brush Swing, **21e** Icon
   (I1 a: Trommel mit Sticks), Handbuch, Sichttest. Patrik überlegt, das

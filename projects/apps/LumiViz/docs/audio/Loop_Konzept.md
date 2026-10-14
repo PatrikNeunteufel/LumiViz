@@ -3106,6 +3106,29 @@ Kick und Rim zusammen auf der Drei (One Drop).
   Snare in Strange (4,9 dB darunter — er ist zu leise für das Ziel). Die
   Reihenfolge im Menü ist die nach Titel.
 
+### Wie 21b gebaut ist (S123)
+
+- **Kopf des Drum-Editors:** rechts der Knopf **Kit** (`drumKit`, ein Knopf
+  mit Menü — ein Werkzeugknopf legte seinen Pfeil über den Text); er zeigt
+  „Kit", „Kit: <Titel>", „Kit: <Titel> (changed)" oder „Kit: <Nennung> (not
+  found)". Das Menü entsteht beim Aufklappen: *Built-in kits* und *My kits*
+  (das gewählte mit Haken, die Beschreibung als Tooltip), **Save as kit...**
+  (fragt nach dem Namen; ist er vergeben, ob ersetzt wird), **Edit kits...**
+  grau bis 21c.
+- **Die Zeile darunter** (`drumKitMessage`) sagt nach einem Wechsel, wie viele
+  Spuren einen Klang bekamen, welche Rollen das Kit nicht hat und was Add track
+  anbietet; nach Save as kit, wie viele Rollen gespeichert sind.
+- **Spalte Role** zwischen Track und Sound: gesetzt als Text, geraten kursiv in
+  Klammern („(kick)"), keine als „—"; fehlt die Rolle im Kit, durchgestrichen
+  mit Tooltip (K2 a). Ein Klick öffnet die Rollen — je Art eine Nummer mehr als
+  vergeben (tom und perc immer), darunter **No role**.
+- **Add track:** hat das Kit Rollen ohne Spur, ein Menü „Clap — from 808" …,
+  darunter **Empty track**; sonst wie bisher.
+- Jede Änderung läuft als ein Schritt über Undo („Kit: 808", „Change role",
+  „Add track", „Save as kit"). Von Claude gesetzt: die Wortlaute, die Breite
+  der Spalte (64), dass ein erneuter Klick auf dasselbe Kit nur die Zeile neu
+  setzt, wenn sich nichts ändert.
+
 ### Das Fenster Kits (Skizze gebilligt, Patrik S123, K8 a)
 
 Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
@@ -3157,7 +3180,7 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 | 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
-| 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; offen 21b (Drum-Editor), 21c (Fenster Kits), 21d (akustische Kits), 21e (Icon, Handbuch, Sichttest) |
+| 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; Edit kits... grau bis 21c; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; offen 21c (Fenster Kits), 21d (akustische Kits), 21e (Icon, Handbuch, Sichttest) |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
 
 ---

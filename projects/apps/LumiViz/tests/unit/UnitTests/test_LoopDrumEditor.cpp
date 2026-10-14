@@ -16,6 +16,7 @@
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/DrumEditor.hpp"
+#include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
@@ -39,6 +40,7 @@
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QSettings>
@@ -1230,5 +1232,128 @@ TEST_SUITE("LoopDrumEditor")
 
         // ohne Audio-Engine wird nichts angespielt
         CHECK_FALSE(panel.spieleSpur(QStringLiteral("Grund"), 1));
+    }
+
+    // Stufe 21b (S123; Entscheide K1 a bis K5 a): der Knopf Kit, das Etikett Role, Add track mit den Rollen des
+    // Kits, Save as kit.... Eigene Kits in einem Wegwerf-Ordner; die mitgelieferten aus dem Repo.
+    TEST_CASE("Drum-Editor 21b: Kit wechseln, Rollen, Add track aus dem Kit, Save as kit")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenKitOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("kits")));
+
+        DrumEditor editor;
+        int aenderungen = 0;
+        QString zuletzt;
+        QObject::connect(&editor, &DrumEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+            ++aenderungen;
+            zuletzt = was;
+            editor.setLoop(neu);
+        });
+        REQUIRE(editor.zeige(probe(), QStringLiteral("Grund")));
+        const auto grund = [&editor] { return *editor.loop().findeMuster(QStringLiteral("Grund")); };
+        auto* knopf = editor.findChild<QPushButton*>(QStringLiteral("drumKit"));
+        auto* zeile = editor.findChild<QLabel*>(QStringLiteral("drumKitMessage"));
+        REQUIRE(knopf != nullptr);
+        REQUIRE(zeile != nullptr);
+
+        // --- vor dem ersten Kit: kein Name, die Rollen geraten in Klammern
+        CHECK(editor.kitText() == QStringLiteral("Kit"));
+        CHECK(knopf->text() == QStringLiteral("Kit"));  // den Pfeil des Menues zeichnet der Knopf selbst
+        CHECK(editor.rollenEtikett(0) == QStringLiteral("(kick)"));
+        CHECK(editor.rollenEtikett(1) == QStringLiteral("(snare)"));
+        CHECK(editor.fehlendeRollen().isEmpty());
+        const QStringList menue = editor.kitZeilen();
+        CHECK(menue.first() == QStringLiteral("[Built-in kits]"));
+        CHECK(menue.contains(QStringLiteral("808")));
+        CHECK_FALSE(menue.contains(QStringLiteral("[My kits]")));  // noch keine eigenen
+        CHECK(menue.mid(menue.size() - 2) == QStringList{QStringLiteral("Save as kit..."), QStringLiteral("Edit kits...")});
+        Q_EMIT knopf->menu()->aboutToShow();
+        const QList<QAction*> eintraege = knopf->menu()->actions();
+        const auto bearbeiten = std::find_if(eintraege.begin(), eintraege.end(),
+                                             [](QAction* a) { return a->text() == QStringLiteral("Edit kits..."); });
+        REQUIRE(bearbeiten != eintraege.end());
+        CHECK_FALSE((*bearbeiten)->isEnabled());  // das Fenster Kits kommt mit 21c
+
+        // --- 808 anwenden: Klang je Rolle, die Schritte bleiben, Undo-Schritt „Kit: 808"
+        const Muster vorher = grund();
+        CHECK_FALSE(editor.wendeKitAn(QStringLiteral("gibt_es_nicht")));
+        REQUIRE(editor.wendeKitAn(QStringLiteral("808")));
+        CHECK(aenderungen == 1);
+        CHECK(zuletzt == QStringLiteral("Kit: 808"));
+        CHECK(grund().zeilen == vorher.zeilen);
+        CHECK(grund().kit == QStringLiteral("808"));
+        CHECK(grund().spuren[0].instrument == QStringLiteral("drum_kick_808"));
+        CHECK(grund().spuren[1].klang == QStringLiteral("lib:snare_808"));
+        CHECK(grund().spuren[0].rolle == QStringLiteral("kick"));
+        CHECK(editor.rollenEtikett(0) == QStringLiteral("kick"));
+        CHECK(editor.kitText() == QStringLiteral("Kit: 808"));
+        CHECK(knopf->text() == QStringLiteral("Kit: 808"));
+        CHECK(editor.kitZeilen().contains(QStringLiteral("*808")));
+        CHECK(editor.kitMeldung().startsWith(QStringLiteral("808: 2 of 2 tracks took a sound from the kit")));
+        CHECK(zeile->text() == editor.kitMeldung());
+        CHECK(editor.fehlendeRollen() == QStringList{QStringLiteral("clap"), QStringLiteral("hat"), QStringLiteral("open hat"),
+                                                     QStringLiteral("tom 1"), QStringLiteral("tom 2"), QStringLiteral("crash")});
+
+        // --- von Hand geaendert: „(changed)"; eine Rolle, die das Kit nicht hat: durchgestrichen
+        editor.setzeLaut(0, 0.3);
+        CHECK(editor.kitText() == QStringLiteral("Kit: 808 (changed)"));
+        editor.setzeRolle(1, QStringLiteral("Rim"));
+        CHECK(grund().spuren[1].rolle == QStringLiteral("rim"));
+        CHECK(zuletzt == QStringLiteral("Change role"));
+        CHECK(editor.rolleFehltImKit(1));
+        CHECK_FALSE(editor.rolleFehltImKit(0));
+        const int vorUngueltig = aenderungen;
+        editor.setzeRolle(1, QStringLiteral("cowbell"));  // keine Rolle: nichts
+        CHECK(aenderungen == vorUngueltig);
+        editor.setzeRolle(1, QStringLiteral("snare"));
+        CHECK_FALSE(editor.rolleFehltImKit(1));
+
+        // --- Add track: eine Rolle des Kits als neue Spur mit leeren Schritten
+        CHECK(editor.spurAusKit(QStringLiteral("cowbell")) == -1);
+        const int clap = editor.spurAusKit(QStringLiteral("clap"));
+        REQUIRE(clap == 2);
+        CHECK(grund().spuren[2].name == QStringLiteral("Clap"));
+        CHECK(grund().spuren[2].rolle == QStringLiteral("clap"));
+        CHECK(grund().spuren[2].instrument == QStringLiteral("drum_clap"));
+        const std::vector<double> leer = grund().zeilen[2];
+        CHECK(std::all_of(leer.begin(), leer.end(), [](double w) { return w == 0.0; }));
+        CHECK_FALSE(editor.fehlendeRollen().contains(QStringLiteral("clap")));
+
+        // --- ein anderes Kit: was eine Rolle hat, wechselt; die Spur ohne Gegenstueck bleibt
+        REQUIRE(editor.wendeKitAn(QStringLiteral("hand_drums")));
+        CHECK(grund().spuren[0].klang == QStringLiteral("lib:djembe_low"));
+        CHECK(grund().spuren[0].instrument.isEmpty());
+        CHECK(grund().spuren[2].instrument == QStringLiteral("drum_clap"));  // Hand drums hat keinen Clap
+        CHECK(editor.rolleFehltImKit(2));
+        CHECK(editor.kitMeldung().contains(QStringLiteral("not in the kit, kept: clap")));
+        CHECK(editor.kitText() == QStringLiteral("Kit: Hand drums"));
+
+        // --- Save as kit...: ein eigenes Kit, danach nennt das Muster es
+        CHECK(editor.speichereAlsKit(QStringLiteral("  ")).isEmpty());
+        CHECK(editor.speichereAlsKit(QStringLiteral("Mein Beat")) == QStringLiteral("user:mein_beat"));
+        CHECK(zuletzt == QStringLiteral("Save as kit"));
+        CHECK(grund().kit == QStringLiteral("user:mein_beat"));
+        CHECK(editor.kitText() == QStringLiteral("Kit: Mein Beat"));
+        REQUIRE(eigeneKits().size() == 1);
+        CHECK(eigeneKits()[0].klaenge.size() == 3);
+        CHECK(editor.kitZeilen().contains(QStringLiteral("[My kits]")));
+        CHECK(editor.kitZeilen().contains(QStringLiteral("*user:mein_beat")));
+        CHECK(editor.speichereAlsKit(QStringLiteral("Mein Beat")).isEmpty());  // vergeben
+        CHECK(editor.speichereAlsKit(QStringLiteral("Mein Beat"), true) == QStringLiteral("user:mein_beat"));
+
+        // `LUMIVIZ_DRUM_KIT_BILD=<datei.png>` legt ein Bild des Editors mit Kit und Rollen ab
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_DRUM_KIT_BILD"); !bild.isEmpty())
+        {
+            REQUIRE(editor.wendeKitAn(QStringLiteral("808")));
+            editor.resize(editor.sizeHint().expandedTo(QSize(944, 330)));
+            CHECK(editor.grab().save(bild));
+        }
+        setzeEigenenKitOrdnerFuerTests(QString());
     }
 }
