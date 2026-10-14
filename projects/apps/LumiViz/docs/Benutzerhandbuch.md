@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.164.0
+> **Version:** 1.165.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2554,11 +2554,12 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | Dateiname | Der geladene Loop; ein Stern heißt: es gibt Ungespeichertes. „untitled" = noch nie gespeichert |
 | **Tags...** | Titel, Künstler, Album, Jahr, Genre, Nummer und Songtext des Loops — was das Panel Player zeigt, wenn der Loop als Clip im Composer läuft. Ohne Titel gilt der Dateiname |
 | **New** / **Load...** / **Save** / **Save As...** | Ein leerer Loop mit einem Kanal; eine Datei laden; speichern. New, Load und das Beenden von LumiViz fragen nach, wenn Ungespeichertes verloren ginge (Save / Discard / Cancel). Der zuletzt geladene Loop steht nach dem Neustart wieder da |
-| **Play** / **Stop** | Spielt den Loop von vorn, im Kreis |
+| **Play** / **Stop** | Spielt den Loop im Kreis — von vorn oder ab der grünen Marke im Lineal |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
 | Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
 | **Fit** | Zeigt den ganzen Loop, die Zeilen in normaler Höhe (auch Ctrl+0) |
 | Achse | Lineal mit Taktnummern, je Kanal eine Zeile, die Clips als Blöcke; unten die Zeile *New channel* |
+| Klick oder Ziehen im **Lineal** | Spielt der Loop, springt er an die Stelle (auf den Schritt genau). Sonst setzt es die **grüne Marke**: dort beginnt **Play**. Ein Klick ganz links nimmt sie wieder an den Anfang; ein anderer Loop beginnt wieder vorn |
 | Clip-Zeile | Zum angeklickten Clip: Basis, Takte, Wiederholungen und wie viele Clips die Basis spielen |
 
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
@@ -2676,7 +2677,8 @@ siehe unten.)
 |---|---|
 | **Base** | Die Basis und wie viele Clips sie spielen |
 | **Kit** | Das Kit des Musters — siehe „Kits" unten |
-| **Bars** | Länge des Musters, 4 bis 64 Takte. Länger hängt Stille an, kürzer schneidet hinten ab. Die Clips der Basis werden mit ihr länger; ein Clip dahinter rückt nach hinten |
+| **Bars** | Länge des Musters, 1 bis 64 Takte (ein neues Muster hat 4). Kürzer schneidet hinten ab. Die Clips der Basis werden mit ihr länger; ein Clip dahinter rückt nach hinten |
+| **Repeat when lengthening** | Ein Haken, den LumiViz sich merkt (zuerst an; derselbe im Instrument-Editor). An: wird **Bars** größer, wiederholen die neuen Takte die bisherigen — aus einem Takt werden vier gleiche, aus drei auf vier die Takte 1, 2, 3, 1. Aus: die neuen Takte sind leer. So lässt sich ein Takt komponieren und danach auffüllen |
 | **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster |
 | **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
 | **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
@@ -2767,7 +2769,8 @@ viel markiert ist und was die Tasten tun.
 | **Shift+Ziehen** | Markiert einen Bereich, auch über mehrere Spuren. Der ganze Bereich zählt, auch seine leeren Schritte. Markierte Schritte tragen einen hellen Rand |
 | **Ctrl+Klick** auf einen Schritt | Nimmt ihn dazu oder heraus. So lassen sich auch einzelne, verstreute Schritte markieren |
 | **Ctrl+A**, **Esc** | Alle Schritte markieren; die Marken aufheben |
-| Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** (gestrichelte Linie mit einem kleinen Dreieck). Dort fügt Ctrl+V ein |
+| Klick in die Zeile mit den Taktnummern | Setzt die **Abspielstelle** (grüne Flagge und Linie): dort beginnt **Play pattern**. Spielt das Muster gerade allein, springt es dorthin |
+| **Shift**+Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** (gestrichelte Linie mit einem kleinen Dreieck). Dort fügt Ctrl+V ein |
 | **Ctrl+C**, **Ctrl+X** | Kopieren; ausschneiden |
 | **Ctrl+V** | Fügt an der Einfügemarke ein, in der Spur, in der die kopierte Auswahl begann — und **ersetzt** dort: wo die Kopie einen Schritt hat, steht danach einer, wo sie leer ist, ist es danach leer. Die Marke rückt um die eingefügte Länge weiter, mehrmaliges Ctrl+V füllt so mehrere Takte |
 | **Ctrl+Shift+V** | Legt nur dazu: was am Ziel schon gesetzt ist, bleibt |
@@ -2875,8 +2878,9 @@ Kopierte gemerkt, wenn der Editor ein anderes Muster zeigt.
 | **Ctrl+Klick** auf eine Note | Nimmt sie dazu oder heraus |
 | **Ctrl+A**, **Esc** | Alle Noten markieren; die Marken aufheben |
 | Eine von mehreren markierten ziehen | Alle markierten gehen in Zeit und Tonhöhe mit. Ist für eine kein Platz mehr, bleibt die Gruppe an der letzten Stelle stehen, an der Platz war. Ein Klick ohne Ziehen lässt nur die angeklickte markiert |
-| Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** |
-| **Ctrl+C**, **Ctrl+X**, **Ctrl+V** | Kopieren, ausschneiden, an der Einfügemarke einfügen — in den Tonhöhen der Kopie. Die Noten kommen dazu; nur eine Note auf demselben Schritt und derselben Tonhöhe wird ersetzt. Die Marke rückt um die eingefügte Länge weiter. Die eingefügten Noten sind danach markiert und lassen sich als Gruppe an ihren Platz ziehen |
+| Klick in die Zeile mit den Taktnummern | Setzt die **Abspielstelle** (grüne Flagge): dort beginnt **Play pattern**; spielt das Muster allein, springt es dorthin |
+| **Shift**+Klick in die Zeile mit den Taktnummern | Setzt die **Einfügemarke** |
+| **Ctrl+C**, **Ctrl+X**, **Ctrl+V** | Kopieren, ausschneiden, an der Einfügemarke einfügen — in den Tonhöhen der Kopie. Mit einem **Rahmen** (Shift+Ziehen) markiert, nimmt die Kopie den ganzen Zeitraum des Rahmens mit, auch die leeren Stellen an seinen Rändern; mit **Ctrl+A** das ganze Muster. Einzeln mit Ctrl+Klick markierte Noten reichen von der ersten bis zur letzten. Die Noten kommen dazu; nur eine Note auf demselben Schritt und derselben Tonhöhe wird ersetzt. Die Marke rückt um die eingefügte Länge weiter. Die eingefügten Noten sind danach markiert und lassen sich als Gruppe an ihren Platz ziehen |
 | **Ctrl+D** | Fügt die Auswahl direkt hinter sich selbst noch einmal ein |
 | Pfeiltasten | Links und rechts um einen Schritt, hinauf und hinunter um einen Halbton, mit **Shift** um eine Oktave. Stößt eine Note an den Rand (Anfang, Ende, C1, C7), bewegt sich nichts |
 | **Alt+Pfeil links / rechts** | Dreht die markierten Noten in der Zeit **im Kreis**. Eine Note, die danach über das Ende des Musters reichte, wird dort gekürzt; zurückgedreht bekommt sie ihre Länge wieder |
@@ -3302,6 +3306,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.165.0 | 2026-10-14 | Session 124. §16 GEÄNDERT: ein Muster kann **1 bis 64 Takte** lang sein (bisher 4 bis 64), neu der Haken **Repeat when lengthening**; ein Klick in die Taktzeile der Editoren setzt jetzt die **Abspielstelle**, die Einfügemarke setzt **Shift**+Klick; im Instrument-Editor nimmt eine Kopie den Zeitraum des Rahmens mit; ein Klick ins **Lineal** des Panels Loop springt oder setzt die Startmarke. Eine `.lvloop` wird als Fassung 6 geschrieben. |
 | 1.164.0 | 2026-10-14 | Session 124. §16 auf den Stand gebracht: der Instrument-Creator nennt dreiundneunzig mitgelieferte Instrumente nach Art (stand noch auf neunundvierzig, seit S123 veraltet), die Drums sind zwanzig (mit 808 Kick, Toms, Shaker, Ride, Crash, drei Besen und fünf aus Samples). |
 | 1.163.0 | 2026-10-14 | Session 124. §16 NEU **Kits**: Rollen, der Knopf Kit mit den Haken **Add all roles of the kit** und **Remove empty tracks the kit doesn't have**, das \* für Spuren, die nicht zum Kit gehören, das Fenster **Kits**; vierzehn mitgelieferte Kits, darunter Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes; die Samples aus DrumGizmo (CC BY 4.0). §17 NEU `.lvkit`. |
 | 1.162.0 | 2026-10-14 | Session 123. §16 Drum-Editor und Instrument-Creator NEU die Gruppe **Samples** — achtunddreißig mitgelieferte Samples (CC BY 3.0, Nennung in `samples\CREDITS.md`); neunzig mitgelieferte Instrumente, zwanzig Formen, neun Loops mehr. |
