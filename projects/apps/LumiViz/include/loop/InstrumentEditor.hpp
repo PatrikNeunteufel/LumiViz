@@ -26,6 +26,8 @@
 #include <QWidget>
 
 #include <functional>
+#include <optional>
+#include <utility>
 #include <vector>
 
 class IAudioEngine;
@@ -82,6 +84,13 @@ public:
     void markiereAlle();
     void setzeEinfuegemarke(int schritt);
     [[nodiscard]] int einfuegemarke() const { return m_einfuegen; }
+    /// Wo **Play pattern** beginnt (Entscheid Patrik B4 b, S124): ein Klick in
+    /// die Zeile der Takte setzt sie, Shift+Klick die Einfuegemarke.
+    void setzeAbspielstelle(int schritt);
+    [[nodiscard]] int abspielstelle() const { return m_abspiel; }
+    /// Der Zeitraum, den Ctrl+C mitnimmt (B3 a): die Kanten des Rahmens, mit
+    /// Ctrl+A das ganze Muster; leer = die Noten selbst (Ctrl+Klick).
+    [[nodiscard]] std::optional<std::pair<int, int>> zeitraum() const;
     [[nodiscard]] bool hatKopie() const { return !m_kopie.leer(); }
     bool kopiere();
     bool schneideAus();
@@ -154,6 +163,8 @@ Q_SIGNALS:
     void gerollt();
     /// Marken, Einfuegemarke oder Meldung haben sich geaendert.
     void auswahlGeaendert();
+    /// Ein Klick in die Zeile der Takte hat die Abspielstelle gesetzt (B4 b).
+    void abspielstelleGewaehlt(int schritt);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -206,6 +217,10 @@ private:
 
     std::vector<NotenOrt> m_marken;
     std::vector<NotenOrt> m_vorMarken;  ///< die Marken beim Druck
+    std::optional<std::pair<int, int>> m_vorZeitraum;  ///< der Zeitraum beim Druck (Ctrl+Rahmen erweitert ihn)
+    /// B3 a: der Zeitraum des Rahmens — er gilt, solange genau diese Noten markiert sind.
+    std::optional<std::pair<int, int>> m_zeitraum;
+    std::vector<NotenOrt> m_zeitraumMarken;
     QPoint m_rahmenStart;
     QRect m_rahmen;          ///< der Rahmen, solange er gezogen wird
     bool m_klickSammelt = false;  ///< der Druck traf eine von mehreren markierten: ohne Zug bleibt nur sie
@@ -214,6 +229,7 @@ private:
     int m_gutSchritt = 0;    ///< der letzte Versatz der Gruppe, der Platz hatte
     int m_gutHoehe = 0;
     int m_einfuegen = 0;
+    int m_abspiel = 0;  ///< B4 b
     NotenKopie m_kopie;
     QString m_meldung;
     // mehrere Pfeiltasten hintereinander: gerechnet wird vom Stand beim ersten Druck
@@ -315,6 +331,8 @@ Q_SIGNALS:
     void bearbeitet(const lumi::loop::Loop& neu, const QString& was);
     /// „Play pattern" / „Stop": dieses Muster allein spielen, oder anhalten.
     void spielenVerlangt(bool spielen);
+    /// Ein Klick in die Zeile der Takte (B4 b): spielt das Muster allein, springt es dorthin.
+    void abspielstelleGewaehlt(int schritt);
     /// Eine Taste der Klaviatur: diesen Ton des Instruments anspielen.
     void tonVerlangt(int hoehe);
 
@@ -352,6 +370,7 @@ private:
     QLabel* m_hinweis = nullptr;
     QLabel* m_auswahlZeile = nullptr;  ///< wie man markiert — oder was markiert ist und was die Tasten tun
     QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
+    QCheckBox* m_wiederholen = nullptr;    ///< „Repeat when lengthening" (B2 a)
     void zeigeAuswahl();
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;

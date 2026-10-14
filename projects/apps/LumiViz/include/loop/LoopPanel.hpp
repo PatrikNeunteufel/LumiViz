@@ -140,6 +140,9 @@ public:
     /// Lautstaerke und Panorama der Spuren (▶ und Play all im Fenster Kits,
     /// Stufe 21c). false = keine Spur spielt etwas, oder der Loop spielt.
     bool spieleSchlaege(const std::vector<Spur>& spuren);
+    /// B4 (S124): die Stelle, an der Play beginnt, in Schritten; spielt der Loop, springt er dorthin.
+    void setzeStartstelle(int schritt);
+    [[nodiscard]] int startstelle() const { return m_startSchritt; }
     /// Wird gerade ein Ton angespielt?
     [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }
     /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,
@@ -215,6 +218,7 @@ private:
     QLabel* m_hinweis = nullptr;
     QLabel* m_bericht = nullptr;
     QTimer* m_takt = nullptr;
+    int m_startSchritt = 0;  ///< B4: wo Play beginnt
 };
 
 }  // namespace lumi::loop

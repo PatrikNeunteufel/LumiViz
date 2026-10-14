@@ -107,6 +107,17 @@ void klick(QWidget& ziel, QPoint ort)
     maus(ziel, QEvent::MouseButtonRelease, ort, Qt::LeftButton, Qt::NoButton);
 }
 
+/// Ein Klick mit gedrueckter Shift-Taste (in der Zeile der Takte: die Einfuegemarke, B4 b).
+void shiftKlick(QWidget& ziel, QPoint ort)
+{
+    for (const auto& [art, tasten] : {std::pair{QEvent::MouseButtonPress, Qt::MouseButtons(Qt::LeftButton)},
+                                      std::pair{QEvent::MouseButtonRelease, Qt::MouseButtons(Qt::NoButton)}})
+    {
+        QMouseEvent ereignis(art, QPointF(ort), QPointF(ziel.mapToGlobal(ort)), Qt::LeftButton, tasten, Qt::ShiftModifier);
+        QCoreApplication::sendEvent(&ziel, &ereignis);
+    }
+}
+
 struct EigeneEinstellungen
 {
     QString org = QCoreApplication::organizationName();
@@ -177,7 +188,7 @@ TEST_SUITE("LoopDrumEditor")
         CHECK(loop.findeMuster(QStringLiteral("Grund"))->zeilen[0].size() == 64);
         CHECK(loop.kanaele[0].clips[1].startTakt == 8);
         // in ihren Grenzen
-        REQUIRE(setzeMusterTakte(loop, QStringLiteral("Grund"), 1));
+        REQUIRE(setzeMusterTakte(loop, QStringLiteral("Grund"), 0));
         CHECK(loop.findeMuster(QStringLiteral("Grund"))->takte == kTakteMin);
         REQUIRE(setzeMusterTakte(loop, QStringLiteral("Grund"), 999));
         CHECK(loop.findeMuster(QStringLiteral("Grund"))->takte == kTakteMax);
@@ -427,8 +438,8 @@ TEST_SUITE("LoopDrumEditor")
             rahmen(0, 0, 1, 15);
             taste(Qt::Key_C, Qt::ControlModifier);
             CHECK(raster.hatKopie());
-            // ein Klick in die Zeile der Takte setzt die Marke
-            klick(raster, QPoint(raster.xVonSchritt(32) + 3, 5));
+            // Shift+Klick in die Zeile der Takte setzt die Marke (B4 b; ein Klick setzt die Abspielstelle)
+            shiftKlick(raster, QPoint(raster.xVonSchritt(32) + 3, 5));
             CHECK(raster.einfuegemarke() == 32);
             const int vorher = aenderungen;
             taste(Qt::Key_V, Qt::ControlModifier);
@@ -442,7 +453,7 @@ TEST_SUITE("LoopDrumEditor")
             CHECK(raster.istMarkiert(0, 32));
             CHECK(inOrdnung(editor.loop()));
             // hinter dem Ende passt nichts mehr: der Editor sagt es
-            klick(raster, QPoint(raster.xVonSchritt(63) + SchrittRaster::kSchrittBreite + 2, 5));
+            shiftKlick(raster, QPoint(raster.xVonSchritt(63) + SchrittRaster::kSchrittBreite + 2, 5));
             CHECK(raster.einfuegemarke() == 64);
             taste(Qt::Key_V, Qt::ControlModifier);
             CHECK(aenderungen == vorher + 1);

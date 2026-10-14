@@ -82,6 +82,17 @@ void klick(QWidget& ziel, QPoint ort)
     maus(ziel, QEvent::MouseButtonRelease, ort, Qt::LeftButton, Qt::NoButton);
 }
 
+/// Ein Klick mit gedrueckter Shift-Taste (in der Zeile der Takte: die Einfuegemarke, B4 b).
+void shiftKlick(QWidget& ziel, QPoint ort)
+{
+    for (const auto& [art, tasten] : {std::pair{QEvent::MouseButtonPress, Qt::MouseButtons(Qt::LeftButton)},
+                                      std::pair{QEvent::MouseButtonRelease, Qt::MouseButtons(Qt::NoButton)}})
+    {
+        QMouseEvent ereignis(art, QPointF(ort), QPointF(ziel.mapToGlobal(ort)), Qt::LeftButton, tasten, Qt::ShiftModifier);
+        QCoreApplication::sendEvent(&ziel, &ereignis);
+    }
+}
+
 void ziehe(QWidget& ziel, QPoint von, QPoint nach)
 {
     maus(ziel, QEvent::MouseButtonPress, von, Qt::LeftButton, Qt::LeftButton);
@@ -2239,7 +2250,7 @@ TEST_SUITE("LoopInstrumentEditor")
             raster.markiere({{0, 60}, {2, 64}});
             taste(Qt::Key_C, Qt::ControlModifier);
             CHECK(raster.hatKopie());
-            klick(raster, QPoint(raster.xVonSchritt(16) + 1, 5));  // ein Klick in die Zeile der Takte
+            shiftKlick(raster, QPoint(raster.xVonSchritt(16) + 1, 5));  // Shift+Klick in die Zeile der Takte (B4 b)
             CHECK(raster.einfuegemarke() == 16);
             taste(Qt::Key_V, Qt::ControlModifier);
             CHECK(gemeldet.last() == QStringLiteral("Paste notes"));

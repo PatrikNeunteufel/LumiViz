@@ -102,6 +102,7 @@ void SchrittRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schr
                                   }),
                    m_marken.end());
     m_einfuegen = std::clamp(m_einfuegen, 0, zahl);
+    m_abspiel = std::clamp(m_abspiel, 0, std::max(0, zahl - 1));
     // kommt nicht die Fassung zurueck, die das Verschieben erzeugt hat, beginnt es neu
     if (m_schiebeGilt && m_muster.zeilen != m_schiebeErgebnis.zeilen) m_schiebeGilt = false;
     if (m_spur >= static_cast<int>(m_muster.spuren.size())) m_spur = static_cast<int>(m_muster.spuren.size()) - 1;
@@ -227,6 +228,19 @@ void SchrittRaster::paintEvent(QPaintEvent*)
         p.setPen(Qt::NoPen);
     }
 
+    // --- die Abspielstelle (B4 b): dort beginnt Play pattern — gruen, im Kopf und als Linie
+    if (spuren > 0)
+    {
+        const int x = xVonSchritt(m_abspiel) - 2;
+        const QColor gruen(80, 200, 120);
+        p.setPen(QPen(gruen, 1.2));
+        p.drawLine(x, 8, x, yVonSpur(spuren));
+        p.setPen(Qt::NoPen);
+        p.setBrush(gruen);
+        const QPoint flagge[3] = {QPoint(x, 1), QPoint(x + 8, 5), QPoint(x, 9)};
+        p.drawPolygon(flagge, 3);
+    }
+
     // --- die Einfuegemarke: dort landet Ctrl+V
     if (spuren > 0)
     {
@@ -350,6 +364,15 @@ void SchrittRaster::markiereAlle()
     for (int spur = 0; spur < static_cast<int>(m_muster.spuren.size()); ++spur)
         for (int schritt = 0; schritt < schritte(); ++schritt) alle.push_back({spur, schritt});
     markiere(alle);
+}
+
+void SchrittRaster::setzeAbspielstelle(int schritt)
+{
+    const int neu = std::clamp(schritt, 0, std::max(0, schritte() - 1));
+    if (neu == m_abspiel) return;
+    m_abspiel = neu;
+    update();
+    Q_EMIT abspielstelleGewaehlt(m_abspiel);
 }
 
 void SchrittRaster::setzeEinfuegemarke(int schritt)
@@ -545,9 +568,18 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
     }
     if (ort.y() < kKopfHoehe)
     {
-        // die Zeile der Takte: hier steht die Einfuegemarke
+        // die Zeile der Takte (B4 b): ein Klick setzt die Abspielstelle, Shift+Klick die Einfuegemarke
         const int zahl = schritte();
-        setzeEinfuegemarke(zahl > 0 && ort.x() >= xVonSchritt(zahl - 1) + kSchrittBreite ? zahl : schrittNahe(ort.x()));
+        if (shift)
+            setzeEinfuegemarke(zahl > 0 && ort.x() >= xVonSchritt(zahl - 1) + kSchrittBreite ? zahl : schrittNahe(ort.x()));
+        else
+        {
+            const int schritt = schrittNahe(ort.x());
+            if (schritt == m_abspiel)
+                Q_EMIT abspielstelleGewaehlt(m_abspiel);  // derselbe Schritt noch einmal: wieder dorthin springen
+            else
+                setzeAbspielstelle(schritt);
+        }
         return;
     }
     const int spur = (ort.y() - kKopfHoehe) / kZeilenHoehe;
@@ -736,6 +768,13 @@ void DrumEditor::setupUI()
     m_takte->setRange(kTakteMin, kTakteMax);
     m_takte->setKeyboardTracking(false);
     m_takte->setToolTip(tr("Length of the pattern in bars; its clips grow and shrink with it"));
+    // B2 a (S124): laenger gestellt, wiederholen die neuen Takte die bisherigen
+    m_wiederholen = new QCheckBox(tr("Repeat when lengthening"), this);
+    m_wiederholen->setObjectName(QStringLiteral("drumRepeatBars"));
+    m_wiederholen->setToolTip(tr("On: more bars repeat the bars you have — one bar becomes four of the same. Off: "
+                                 "the new bars are empty"));
+    m_wiederholen->setChecked(wiederholenBeimVerlaengern());
+    connect(m_wiederholen, &QCheckBox::toggled, this, [](bool an) { setzeWiederholenBeimVerlaengern(an); });
     m_play = new QPushButton(tr("Play pattern"), this);
     m_play->setObjectName(QStringLiteral("drumPlay"));
     m_play->setToolTip(tr("Play only this pattern, in a loop"));
@@ -759,6 +798,7 @@ void DrumEditor::setupUI()
     kopf->addSpacing(12);
     kopf->addWidget(new QLabel(tr("Bars"), this));
     kopf->addWidget(m_takte);
+    kopf->addWidget(m_wiederholen);
     kopf->addWidget(m_play);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
@@ -896,6 +936,7 @@ void DrumEditor::setupUI()
     connect(m_spurNeu, &QPushButton::clicked, this, &DrumEditor::spurNeuGeklickt);
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
     connect(m_raster, &SchrittRaster::auswahlGeaendert, this, &DrumEditor::zeigeAuswahl);
+    connect(m_raster, &SchrittRaster::abspielstelleGewaehlt, this, &DrumEditor::abspielstelleGewaehlt);
     m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
     connect(m_rechtsLoescht, &QCheckBox::toggled, this, [this](bool an) {
         m_raster->setRechtsklickLoescht(an);
@@ -972,6 +1013,8 @@ void DrumEditor::zeigeAlles()
         const QSignalBlocker c(m_jeSchlag);
         const QSignalBlocker d(m_swing);
         m_takte->setValue(ziel->takte);
+        const QSignalBlocker e(m_wiederholen);
+        m_wiederholen->setChecked(wiederholenBeimVerlaengern());  // der andere Editor kann ihn umgestellt haben
         m_schlaege->setValue(m_loop.schlaegeJeTakt);
         m_jeSchlag->setValue(m_loop.schritteJeSchlag);
         m_swing->setValue(m_loop.swing * 100.0);
@@ -1018,8 +1061,8 @@ void DrumEditor::zeigeAuswahl()
     QString text;
     if (marken.empty())
         // sonst findet es niemand: sagen, wie man markiert
-        text = tr("Shift+drag selects steps · Ctrl+click adds or removes one · a click in the bar row sets the paste "
-                  "marker");
+        text = tr("Shift+drag selects steps · Ctrl+click adds or removes one · a click in the bar row sets where Play "
+                  "starts, Shift+click the paste marker");
     else
     {
         std::vector<int> spuren;
@@ -1258,7 +1301,7 @@ void DrumEditor::setSpitze(double spitze)
 void DrumEditor::setzeTakte(int takte)
 {
     Loop neu = m_loop;
-    if (!setzeMusterTakte(neu, m_muster, takte) || neu == m_loop) return;
+    if (!setzeMusterTakte(neu, m_muster, takte, wiederholenBeimVerlaengern()) || neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change pattern length"));
 }
 

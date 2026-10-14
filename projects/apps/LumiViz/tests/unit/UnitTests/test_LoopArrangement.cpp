@@ -136,7 +136,7 @@ TEST_SUITE("LoopArrangement")
         CHECK(clipIn(loop, 1, 2).muster == QStringLiteral("Pattern 1"));
         const Muster* neu = loop.findeMuster(QStringLiteral("Pattern 1"));
         REQUIRE(neu != nullptr);
-        CHECK(neu->takte == kTakteMin);
+        CHECK(neu->takte == kTakteNeu);
         CHECK(neu->art == MusterArt::Drumkit);
         CHECK(neu->spuren.empty());
         CHECK(loop.clipTakte(clipIn(loop, 1, 0)) == 4);

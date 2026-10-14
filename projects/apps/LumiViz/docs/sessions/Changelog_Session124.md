@@ -10,6 +10,15 @@
 
 ## Neu
 
+- **Ein Takt reicht:** Ein Muster kann jetzt 1 bis 64 Takte lang sein (neue
+  beginnen weiter mit 4). Neben **Bars** der Haken **Repeat when
+  lengthening**: wer einen Takt komponiert und dann auf 4 stellt, bekommt ihn
+  viermal.
+- **Springen:** Ein Klick ins **Lineal** des Panels Loop springt an die
+  Stelle, wenn der Loop spielt; sonst setzt er eine grüne Marke, an der Play
+  beginnt. In beiden Editoren setzt ein Klick in die Taktzeile die
+  **Abspielstelle** (grüne Flagge) — dort beginnt Play pattern, und spielt das
+  Muster, springt es dorthin.
 - **Vier Kits mehr** (Stufe 21d): **Rock'n'Roll** und **Hardrock** aus einem
   echten, aufgenommenen Schlagzeug (DRSKit), **Heavy Metal** aus dem Kit einer
   Metal-Band (CrocellKit, mit Doppelpedal, vier Toms, drei Crashes, China und
@@ -48,6 +57,15 @@
   Kit neu — „(changed)" misst gegen das Kit, wie es jetzt gespeichert ist.
 
 ## Geändert
+
+- **Die Einfügemarke** in den Editoren setzt jetzt **Shift**+Klick in die
+  Taktzeile (der Klick allein setzt die Abspielstelle).
+- **Kopieren im Instrument-Editor:** Mit einem Rahmen markiert, nimmt die
+  Kopie den ganzen Zeitraum des Rahmens mit — auch leere Stellen am Rand. So
+  landet sie beim Einfügen dort, wo sie hingehört (vorher fehlte der Abstand
+  bis zur ersten Note).
+- Eine `.lvloop` wird als **Fassung 6** geschrieben; ein älteres LumiViz liest
+  sie, meldet aber, dass sie neuer ist.
 
 - **Die Auswahl Sound** im Drum-Editor: ein zu langer Name endet jetzt mit
   „…" und steht ganz im Tooltip; die aufgeklappte Liste ist so breit wie ihr

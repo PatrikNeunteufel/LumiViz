@@ -37,9 +37,12 @@ namespace lumi::loop
 inline constexpr double kBpmMin = 20.0;
 inline constexpr double kBpmMax = 400.0;
 inline constexpr int kRasterMax = 16;  ///< hoechstens so viele Schlaege je Takt und Schritte je Schlag
-/// Ein Muster ist mindestens so lang — die Laenge eines neuen Clips
-/// (Vorgabe Patrik S108).
-inline constexpr int kTakteMin = 4;
+/// Ein Muster ist mindestens so lang (Entscheid Patrik B1 a, S124: zum
+/// Probieren ein Takt; bis S124 war es 4).
+inline constexpr int kTakteMin = 1;
+/// So lang beginnt ein neues Muster — und ein neuer Clip (Vorgabe Patrik S108,
+/// bestaetigt mit B1 a).
+inline constexpr int kTakteNeu = 4;
 inline constexpr int kTakteMax = 64;   ///< hoechstens so viele Takte je Muster
 
 /// Der Vorsatz eines Klangs aus dem mitgelieferten Kit: `kit:kick`.
@@ -152,7 +155,7 @@ struct Muster
 {
     QString name;
     MusterArt art = MusterArt::Drumkit;
-    int takte = kTakteMin;
+    int takte = kTakteNeu;
 
     // --- Drumkit ---
     std::vector<Spur> spuren;

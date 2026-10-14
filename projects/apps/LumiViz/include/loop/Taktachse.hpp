@@ -56,6 +56,12 @@ public:
     void setSpielt(bool spielt);
     /// Die Stelle im Durchlauf, in Schritten (wie `Spieler::stelleSchritte`).
     void setStelleSchritte(double schritte);
+    /// Wo Play beginnt (Entscheid Patrik B4, S124), in Schritten; gezeichnet im
+    /// Lineal, solange der Loop nicht spielt und sie nicht am Anfang steht.
+    void setStartmarke(double schritte);
+    [[nodiscard]] double startmarke() const { return m_startSchritte; }
+    /// Die Stelle unter `x`, in ganzen Schritten des Durchlaufs (fuer das Lineal).
+    [[nodiscard]] int schrittBeiX(int x) const;
 
     [[nodiscard]] int gewaehlterKanal() const { return m_kanal; }
     [[nodiscard]] int gewaehlterClip() const { return m_clip; }
@@ -130,6 +136,8 @@ Q_SIGNALS:
     void editorVerlangt(const QString& muster);
     /// Das Fenster „Clip effects" soll sich fuer die markierten Clips oeffnen.
     void effekteVerlangt();
+    /// Ein Klick oder Zug im Lineal (B4): dorthin springen, oder dort beginnen.
+    void stelleGewaehlt(int schritt);
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
@@ -186,6 +194,8 @@ private:
     int m_gutKanal = 0;  ///< der letzte Versatz der Gruppe, an dem Platz war
     int m_gutTakt = 0;
     QRect m_rahmen;      ///< der Rahmen, solange er gezogen wird
+    double m_startSchritte = 0.0;  ///< B4: wo Play beginnt
+    bool m_imLineal = false;       ///< die Maus zieht im Lineal
 };
 
 }  // namespace lumi::loop

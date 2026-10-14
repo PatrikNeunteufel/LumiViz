@@ -305,6 +305,8 @@ void LoopPanel::setupUI()
     connect(m_achse, &Taktachse::auswahlGeaendert, this, &LoopPanel::zeigeClip);
     connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
     connect(m_achse, &Taktachse::effekteVerlangt, this, [this] { (void)oeffneEffekte(); });
+    // B4 (S124): ein Klick ins Lineal — dorthin springen, oder dort beginnen
+    connect(m_achse, &Taktachse::stelleGewaehlt, this, &LoopPanel::setzeStartstelle);
     connect(m_achse, &Taktachse::zeilenProzentGeaendert, this,
             [](int prozent) { QSettings().setValue(QLatin1String(kZeilenProzent), prozent); });
 }
@@ -408,6 +410,7 @@ bool LoopPanel::lade(const QString& pfad)
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     merkeGeoeffnetenLoop(pfad);  // fuer „Used by" im Fenster Kits
+    setzeStartstelle(0);         // ein anderer Loop beginnt wieder vorn
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -496,8 +499,17 @@ bool LoopPanel::spiele()
     m_spieler.setzeLoop(m_loop);
     m_spitze = 0.0f;
     const bool spielt = m_spieler.starte(*engine, *player);
+    if (spielt && m_startSchritt > 0) (void)m_spieler.springe(m_startSchritt);  // B4: dort beginnen
     zeigeStand();
     return spielt;
+}
+
+void LoopPanel::setzeStartstelle(int schritt)
+{
+    m_startSchritt = std::max(0, schritt);
+    m_achse->setStartmarke(m_startSchritt);
+    // spielt der ganze Loop, springt er; ein Muster allein gehoert seinem Editor
+    if (m_spieler.spielt() && m_solo.isEmpty() && m_vorhoeren == 0) (void)m_spieler.springe(m_startSchritt);
 }
 
 bool LoopPanel::spieleMuster(const QString& muster)
@@ -691,9 +703,17 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             connect(m_instrumentEditor, &InstrumentEditor::bearbeitet, this, &LoopPanel::bearbeite);
             connect(m_instrumentEditor, &InstrumentEditor::spielenVerlangt, this, [this](bool spielen) {
                 if (spielen && m_instrumentEditor != nullptr)
-                    (void)spieleMuster(m_instrumentEditor->muster());
+                {
+                    // B4 b: Play pattern beginnt an der Abspielstelle des Editors
+                    if (spieleMuster(m_instrumentEditor->muster()))
+                        (void)m_spieler.springe(m_instrumentEditor->raster()->abspielstelle());
+                }
                 else
                     halte();
+            });
+            connect(m_instrumentEditor, &InstrumentEditor::abspielstelleGewaehlt, this, [this](int schritt) {
+                if (m_instrumentEditor != nullptr && m_spieler.spielt() && m_solo == m_instrumentEditor->muster())
+                    (void)m_spieler.springe(schritt);
             });
             connect(m_instrumentEditor, &InstrumentEditor::tonVerlangt, this, [this](int hoehe) {
                 if (m_instrumentEditor != nullptr) (void)spieleTon(m_instrumentEditor->muster(), hoehe);
@@ -741,9 +761,16 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
         connect(m_editor, &DrumEditor::bearbeitet, this, &LoopPanel::bearbeite);
         connect(m_editor, &DrumEditor::spielenVerlangt, this, [this](bool spielen) {
             if (spielen && m_editor != nullptr)
-                (void)spieleMuster(m_editor->muster());
+            {
+                // B4 b: Play pattern beginnt an der Abspielstelle des Editors
+                if (spieleMuster(m_editor->muster())) (void)m_spieler.springe(m_editor->raster()->abspielstelle());
+            }
             else
                 halte();
+        });
+        // B4 b: ein Klick in die Taktzeile — spielt das Muster allein, springt es
+        connect(m_editor, &DrumEditor::abspielstelleGewaehlt, this, [this](int schritt) {
+            if (m_editor != nullptr && m_spieler.spielt() && m_solo == m_editor->muster()) (void)m_spieler.springe(schritt);
         });
         // der Klang einer Spur (Stufe 11c, Schritt 2): Play im Feld hinter „…", das Fenster
         // Instruments, der Creator und „Record sample" — dieselben Wege wie beim Instrument-Editor

@@ -178,7 +178,8 @@ int findeNote(const Muster& muster, NotenOrt ort)
     return -1;
 }
 
-NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte)
+NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte,
+                        std::optional<std::pair<int, int>> zeitraum)
 {
     NotenKopie kopie;
     for (const NotenOrt& ort : einmal(orte))
@@ -187,11 +188,13 @@ NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte)
     if (kopie.noten.empty()) return kopie;
     int erster = kopie.noten.front().schritt;
     for (const Note& note : kopie.noten) erster = std::min(erster, note.schritt);
+    if (zeitraum) erster = std::min(erster, zeitraum->first);  // B3 a: der Rahmen beginnt, wo er beginnt
     for (Note& note : kopie.noten)
     {
         note.schritt -= erster;
         kopie.schritte = std::max(kopie.schritte, note.schritt + note.laenge);
     }
+    if (zeitraum) kopie.schritte = std::max(kopie.schritte, zeitraum->second - erster);
     std::stable_sort(kopie.noten.begin(), kopie.noten.end(), [](const Note& a, const Note& b) {
         return a.schritt != b.schritt ? a.schritt < b.schritt : a.hoehe < b.hoehe;
     });

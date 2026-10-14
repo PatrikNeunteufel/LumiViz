@@ -238,7 +238,7 @@ TEST_SUITE("LoopInstrument")
         REQUIRE(loop.muster.size() == 1);
         CHECK(loop.muster[0].art == MusterArt::Instrument);
         CHECK(loop.muster[0].instrument == QStringLiteral("piano"));
-        CHECK(loop.muster[0].takte == kTakteMin);
+        CHECK(loop.muster[0].takte == kTakteNeu);
         CHECK(loop.muster[0].noten.empty());
         REQUIRE(neuerClip(loop, 0, 4) == 1);  // die Vorgabe bleibt das Drumkit
         CHECK(loop.muster[1].art == MusterArt::Drumkit);

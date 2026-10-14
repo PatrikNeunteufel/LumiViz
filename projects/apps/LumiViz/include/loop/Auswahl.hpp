@@ -22,6 +22,8 @@
 
 #include "loop/Loop.hpp"
 
+#include <optional>
+#include <utility>
 #include <vector>
 
 namespace lumi::loop
@@ -116,7 +118,13 @@ struct NotenRest
 
 /// Der Platz der Note im Muster; -1 = es gibt sie nicht.
 [[nodiscard]] int findeNote(const Muster& muster, NotenOrt ort);
-[[nodiscard]] NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte);
+/// Ohne `zeitraum` reicht die Kopie von der ersten Note bis zum Ende der
+/// letzten. Mit `zeitraum` (von, bis in Schritten — der Rahmen, Entscheid
+/// Patrik B3 a, S124) beginnt sie bei `von` und reicht bis `bis`, auch wenn dort
+/// keine Note liegt; eine Note, die vor `von` beginnt oder ueber `bis` reicht,
+/// weitet die Kopie.
+[[nodiscard]] NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte,
+                                      std::optional<std::pair<int, int>> zeitraum = std::nullopt);
 /// Die Kopie ab `schritt` einfuegen, in ihren Tonhoehen. Eine Note des
 /// Musters auf demselben Schritt und derselben Tonhoehe wird ersetzt, alle
 /// anderen bleiben. `schritteImMuster` ist die Laenge des Musters.

@@ -5,6 +5,8 @@
 
 #include "loop/Bearbeiten.hpp"
 
+#include <QSettings>
+
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
@@ -99,13 +101,13 @@ QString folgeBasis(const Loop& alt, const QString& name, const Loop& neu)
 
 int neuerClip(Loop& loop, int kanal, int startTakt, MusterArt art)
 {
-    if (!istFrei(loop, kanal, startTakt, kTakteMin)) return -1;
+    if (!istFrei(loop, kanal, startTakt, kTakteNeu)) return -1;
     Muster basis;
     basis.name = freierName(QStringLiteral("Pattern"),
                             [&loop](const QString& name) { return loop.findeMuster(name) != nullptr; });
     basis.art = art;
     if (art == MusterArt::Instrument) basis.instrument = instrumentVorgabe();
-    basis.takte = kTakteMin;
+    basis.takte = kTakteNeu;
     loop.muster.push_back(basis);
     LoopClip clip;
     clip.muster = basis.name;
@@ -379,14 +381,54 @@ QString neueBasisAus(Loop& loop, int kanal, int clip)
     return neu;
 }
 
-bool setzeMusterTakte(Loop& loop, const QString& muster, int takte)
+bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederholen)
 {
     Muster* ziel = musterIn(loop, muster);
     if (ziel == nullptr) return false;
+    const int alt = ziel->takte;
     ziel->takte = std::clamp(takte, kTakteMin, kTakteMax);
+    const int neu = ziel->takte;
     // Zeilen auf die neue Laenge, und Clips, die jetzt ineinander reichten, ruecken nach hinten
     loop.richte();
+    if (!wiederholen || neu <= alt || alt <= 0) return true;
+    // B2 a: die neuen Takte wiederholen die bisherigen der Reihe nach
+    ziel = musterIn(loop, muster);
+    const int jeTakt = loop.schritteJeTakt();
+    const int altSchritte = alt * jeTakt;
+    const int neuSchritte = neu * jeTakt;
+    for (std::vector<double>& zeile : ziel->zeilen)
+        for (int s = altSchritte; s < neuSchritte && s < static_cast<int>(zeile.size()); ++s)
+            zeile[static_cast<std::size_t>(s)] = zeile[static_cast<std::size_t>(s % altSchritte)];
+    std::vector<Note> dazu;
+    for (const Note& note : ziel->noten)
+    {
+        if (note.schritt >= altSchritte) continue;
+        for (int beginn = note.schritt + altSchritte; beginn < neuSchritte; beginn += altSchritte)
+        {
+            Note kopie = note;
+            kopie.schritt = beginn;
+            kopie.laenge = std::min(kopie.laenge, neuSchritte - beginn);  // endet spaetestens mit dem Muster
+            dazu.push_back(kopie);
+        }
+    }
+    ziel->noten.insert(ziel->noten.end(), dazu.begin(), dazu.end());
+    loop.richte();
     return true;
+}
+
+namespace
+{
+const char* const kWiederholen = "loop/repeatWhenLengthening";  ///< B2 a
+}  // namespace
+
+bool wiederholenBeimVerlaengern()
+{
+    return QSettings().value(QLatin1String(kWiederholen), true).toBool();
+}
+
+void setzeWiederholenBeimVerlaengern(bool an)
+{
+    QSettings().setValue(QLatin1String(kWiederholen), an);
 }
 
 bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)

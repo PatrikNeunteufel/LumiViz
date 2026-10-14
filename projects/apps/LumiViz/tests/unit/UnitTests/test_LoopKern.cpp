@@ -239,7 +239,7 @@ TEST_CASE("Loop Modell: richte bringt Unsinn in Ordnung")
     loop.swing = 2.0;
     loop.laut = -1.0;
     Muster ohneName;
-    ohneName.takte = 1;  // kuerzer als die kuerzeste Laenge
+    ohneName.takte = 0;  // kuerzer als die kuerzeste Laenge (seit S124, B1 a: 1 Takt)
     ohneName.spuren = {{QStringLiteral("A"), QStringLiteral("kit:a"), 7.0, -3.0, false},
                        {QStringLiteral("B"), QStringLiteral("kit:b"), 1.0, 0.0, false}};
     ohneName.zeilen = {{3.0, -1.0, 0.5}};  // eine Zeile zu wenig, zu kurz, Werte ausserhalb
@@ -274,10 +274,11 @@ TEST_CASE("Loop Modell: richte bringt Unsinn in Ordnung")
     CHECK(loop.muster[0].zeilen[1].size() == loop.muster[0].zeilen[0].size());
 
     // der Clip ohne Muster ist weg; die beiden anderen: sortiert, ab Takt 0,
-    // der spaetere beginnt, wo der fruehere endet (2 x 4 Takte)
+    // der fruehere endet nach 2 x 1 Takt, der spaetere bleibt bei Takt 6 (bis S124, mit 4 Takten, rueckte er
+    // auf 8 — dass ein ueberlappender Clip nach hinten rueckt, prueft test_LoopDrumEditor.cpp, „setzeMusterTakte")
     REQUIRE(loop.kanaele[0].clips.size() == 2u);
     CHECK(loop.kanaele[0].clips[0] == LoopClip{QStringLiteral("Pattern 1"), 0, 2});
-    CHECK(loop.kanaele[0].clips[1] == LoopClip{QStringLiteral("Pattern 1"), 8, 1});
+    CHECK(loop.kanaele[0].clips[1] == LoopClip{QStringLiteral("Pattern 1"), 6, 1});
     REQUIRE(bericht.size() == 2);
     CHECK(bericht[0] == QStringLiteral("Pattern name used twice: Pattern 1"));
     CHECK(bericht[1] == QStringLiteral("Pattern not found: Gibtsnicht"));
@@ -360,7 +361,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("ein Clip ohne Effekte traegt das Feld nicht; geschrieben wird Fassung 3")
     {
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 5);  // seit S118: die Reihe `path` am Clip (test_LoopBausteine.cpp); S115: Drum-Spuren mit eigenem Sample oder Instrument (4)
+        CHECK(json.value(QStringLiteral("version")).toInt() == 6);  // seit S124: Muster ab 1 Takt (B1 a); S118: die Reihe `path` am Clip (test_LoopBausteine.cpp); S115: Drum-Spuren mit eigenem Sample oder Instrument (4)
         const QJsonObject clip =
             json.value(QStringLiteral("channels")).toArray()[0].toObject().value(QStringLiteral("clips")).toArray()[0].toObject();
         CHECK(!clip.contains(QStringLiteral("effects")));
@@ -408,7 +409,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("eine neuere Fassung wird gelesen und gemeldet")
     {
         QJsonObject morgen = alsJson(loop);
-        morgen[QStringLiteral("version")] = 6;
+        morgen[QStringLiteral("version")] = 7;
         Loop gelesen;
         QStringList bericht;
         REQUIRE(ausJson(morgen, gelesen, {}, &bericht));

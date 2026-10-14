@@ -93,8 +93,13 @@ public:
     void markiereUm(int spur, int schritt);
     void markiereAlle();
     /// Der Schritt, an dem Ctrl+V einfuegt (0 bis zur Laenge des Musters).
+    /// Gesetzt mit Shift+Klick in die Zeile der Takte (Entscheid Patrik B4 b, S124).
     void setzeEinfuegemarke(int schritt);
     [[nodiscard]] int einfuegemarke() const { return m_einfuegen; }
+    /// Wo **Play pattern** beginnt und wohin ein Klick in die Zeile der Takte
+    /// springt, solange das Muster spielt (B4 b); 0 = der Anfang.
+    void setzeAbspielstelle(int schritt);
+    [[nodiscard]] int abspielstelle() const { return m_abspiel; }
     [[nodiscard]] bool hatKopie() const { return !m_kopie.leer(); }
     /// Die markierten Schritte merken. false = nichts markiert.
     bool kopiere();
@@ -149,6 +154,8 @@ Q_SIGNALS:
     void geaendert(const lumi::loop::Muster& neu, const QString& was);
     /// Marken, Einfuegemarke oder Meldung haben sich geaendert.
     void auswahlGeaendert();
+    /// Ein Klick in die Zeile der Takte hat die Abspielstelle gesetzt (B4 b).
+    void abspielstelleGewaehlt(int schritt);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -195,6 +202,7 @@ private:
     std::vector<SchrittOrt> m_vorRahmen;  ///< die Marken beim Druck (mit Ctrl bleiben sie)
     SchrittOrt m_rahmenStart;
     int m_einfuegen = 0;
+    int m_abspiel = 0;  ///< B4 b
     SchrittKopie m_kopie;
     int m_kopieSpur = 0;  ///< die Spur, in der die kopierte Auswahl begann
     QString m_meldung;
@@ -369,6 +377,8 @@ Q_SIGNALS:
     void spielenVerlangt(bool spielen);
     /// Einen Schlag dieser Spur des Musters anspielen (Play im Feld hinter „…").
     void spurTonVerlangt(const QString& muster, int spur);
+    /// Ein Klick in die Zeile der Takte (B4 b): spielt das Muster allein, springt es dorthin.
+    void abspielstelleGewaehlt(int schritt);
     /// Creator und Fenster Instruments wollen einen Ton eines Instruments hoeren.
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
     /// Dasselbe von „Repeat note" im Creator: der Ton darf `klingtMs` lang klingen.
@@ -472,6 +482,7 @@ private:
     QLabel* m_fremdZeile = nullptr;   ///< „* not in the kit …" (K11 a)
     QLabel* m_auswahlZeile = nullptr; ///< wie man markiert — oder was markiert ist und was die Tasten tun
     QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
+    QCheckBox* m_wiederholen = nullptr;    ///< „Repeat when lengthening" (B2 a)
     void zeigeAuswahl();
     QScrollArea* m_rollen = nullptr;
     SchrittRaster* m_raster = nullptr;

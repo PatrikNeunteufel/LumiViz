@@ -104,6 +104,7 @@ void NotenRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schrit
     if (auswahl() < 0) m_wahlSchritt = m_wahlHoehe = -1;
     richteMarken();  // was es nicht mehr gibt, faellt aus den Marken
     m_einfuegen = std::clamp(m_einfuegen, 0, schritte());
+    m_abspiel = std::clamp(m_abspiel, 0, std::max(0, schritte() - 1));
     // kommt nicht die Fassung zurueck, die das Verschieben erzeugt hat, beginnt es neu
     if (m_schiebeGilt && m_muster.noten != m_schiebeErgebnis.noten) m_schiebeGilt = false;
     setRollen(m_rollX, m_rollY);  // das Muster kann kuerzer geworden sein
@@ -192,6 +193,23 @@ void NotenRaster::markiereAlle()
     std::vector<NotenOrt> alle;
     for (const Note& note : m_muster.noten) alle.push_back({note.schritt, note.hoehe});
     markiere(alle);
+    // B3 a: Ctrl+A nimmt das ganze Muster als Zeitraum
+    m_zeitraum = std::pair<int, int>{0, schritte()};
+    m_zeitraumMarken = m_marken;
+}
+
+std::optional<std::pair<int, int>> NotenRaster::zeitraum() const
+{
+    return m_zeitraum && m_marken == m_zeitraumMarken ? m_zeitraum : std::nullopt;
+}
+
+void NotenRaster::setzeAbspielstelle(int schritt)
+{
+    const int neu = std::clamp(schritt, 0, std::max(0, schritte() - 1));
+    if (neu == m_abspiel) return;
+    m_abspiel = neu;
+    update();
+    Q_EMIT abspielstelleGewaehlt(m_abspiel);
 }
 
 void NotenRaster::setzeEinfuegemarke(int schritt)
@@ -226,7 +244,7 @@ void NotenRaster::setzeMeldung(const NotenRest& rest)
 
 bool NotenRaster::kopiere()
 {
-    const NotenKopie kopie = kopiereNoten(m_muster, m_marken);
+    const NotenKopie kopie = kopiereNoten(m_muster, m_marken, zeitraum());
     if (kopie.leer()) return false;
     m_kopie = kopie;
     m_meldung.clear();
@@ -267,10 +285,11 @@ bool NotenRaster::fuegeEin()
 bool NotenRaster::dupliziere()
 {
     if (m_zug != Zug::Keiner) return false;
-    const NotenKopie kopie = kopiereNoten(m_muster, m_marken);
+    const NotenKopie kopie = kopiereNoten(m_muster, m_marken, zeitraum());
     if (kopie.leer()) return false;
     int erster = m_marken.front().schritt;
     for (const NotenOrt& ort : m_marken) erster = std::min(erster, ort.schritt);
+    if (const auto raum = zeitraum()) erster = std::min(erster, raum->first);  // B3 a: hinter den Rahmen
     Muster neu = m_muster;
     std::vector<NotenOrt> eingefuegt;
     setzeMeldung(fuegeNotenEin(neu, kopie, erster + kopie.schritte, schritte(), &eingefuegt));
@@ -508,6 +527,15 @@ void NotenRaster::paintEvent(QPaintEvent*)
         p.drawRect(m_rahmen);
         p.setBrush(Qt::NoBrush);
     }
+    // --- die Abspielstelle (B4 b): dort beginnt Play pattern — gruen
+    {
+        const int x = xVonSchritt(m_abspiel);
+        if (x >= kTastenBreite && x <= width())
+        {
+            p.setPen(QPen(QColor(80, 200, 120), 1.2));
+            p.drawLine(x, oben, x, unten);
+        }
+    }
     // --- die Einfuegemarke: dort landet Ctrl+V
     {
         const int x = xVonSchritt(m_einfuegen);
@@ -543,6 +571,15 @@ void NotenRaster::paintEvent(QPaintEvent*)
     for (int takt = 0; takt < m_muster.takte; ++takt)
         p.drawText(QRect(xVonSchritt(takt * jeTakt) + 3, 0, 80, kKopfHoehe), Qt::AlignLeft | Qt::AlignVCenter,
                    tr("Bar %1").arg(takt + 1));
+    {
+        // die Abspielstelle im Kopf: eine gruene Flagge (B4 b)
+        const int x = xVonSchritt(m_abspiel);
+        p.setPen(Qt::NoPen);
+        p.setBrush(QColor(80, 200, 120));
+        const QPoint flagge[3] = {QPoint(x, 1), QPoint(x + 8, 5), QPoint(x, 9)};
+        p.drawPolygon(flagge, 3);
+        p.setBrush(Qt::NoBrush);
+    }
     {
         // die Einfuegemarke im Kopf: ein kleines Dreieck
         const int x = xVonSchritt(m_einfuegen);
@@ -620,6 +657,20 @@ void NotenRaster::zieheBei(QPoint ort)
             if (r.intersects(m_rahmen)) orte.push_back({note.schritt, note.hoehe});
         }
         markiere(orte);
+        // B3 a: der Zeitraum des Rahmens, auf Schritte gerundet — mit Ctrl um den bisherigen erweitert
+        {
+            const int zahl = schritte();
+            int von = std::clamp(schrittUnter(m_rahmen.left() + kSchrittBreite / 2), 0, zahl);
+            int bis = std::clamp(schrittUnter(m_rahmen.right() + kSchrittBreite / 2), 0, zahl);
+            if (bis <= von) bis = std::min(zahl, von + 1);
+            if (m_vorZeitraum)
+            {
+                von = std::min(von, m_vorZeitraum->first);
+                bis = std::max(bis, m_vorZeitraum->second);
+            }
+            m_zeitraum = std::pair<int, int>{von, bis};
+            m_zeitraumMarken = m_marken;
+        }
         update();
         return;
     }
@@ -709,8 +760,18 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
     m_klickSammelt = false;
     if (ort.y() < kKopfHoehe)
     {
-        // die Zeile der Takte: hier steht die Einfuegemarke
-        if (ort.x() >= kTastenBreite) setzeEinfuegemarke(std::clamp(schrittUnter(ort.x() + kSchrittBreite / 2), 0, schritte()));
+        // die Zeile der Takte (B4 b): ein Klick setzt die Abspielstelle, Shift+Klick die Einfuegemarke
+        if (ort.x() < kTastenBreite) return;
+        if (shift)
+            setzeEinfuegemarke(std::clamp(schrittUnter(ort.x() + kSchrittBreite / 2), 0, schritte()));
+        else
+        {
+            const int schritt = std::clamp(schrittUnter(ort.x()), 0, std::max(0, schritte() - 1));
+            if (schritt == m_abspiel)
+                Q_EMIT abspielstelleGewaehlt(m_abspiel);  // derselbe Schritt noch einmal: wieder dorthin springen
+            else
+                setzeAbspielstelle(schritt);
+        }
         return;
     }
     if (shift && ort.x() >= kTastenBreite && ort.y() < lautOben())
@@ -722,6 +783,7 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         m_rahmen = {};
         m_vorZug = m_muster;
         m_vorMarken = ctrl ? m_marken : std::vector<NotenOrt>{};
+        m_vorZeitraum = ctrl ? zeitraum() : std::nullopt;
         markiere(m_vorMarken);
         return;
     }
@@ -983,6 +1045,13 @@ void InstrumentEditor::setupUI()
     m_takte->setRange(kTakteMin, kTakteMax);
     m_takte->setKeyboardTracking(false);
     m_takte->setToolTip(tr("Length of the pattern in bars; its clips grow and shrink with it"));
+    // B2 a (S124): laenger gestellt, wiederholen die neuen Takte die bisherigen
+    m_wiederholen = new QCheckBox(tr("Repeat when lengthening"), this);
+    m_wiederholen->setObjectName(QStringLiteral("instrumentRepeatBars"));
+    m_wiederholen->setToolTip(tr("On: more bars repeat the bars you have — one bar becomes four of the same. Off: "
+                                 "the new bars are empty"));
+    m_wiederholen->setChecked(wiederholenBeimVerlaengern());
+    connect(m_wiederholen, &QCheckBox::toggled, this, [](bool an) { setzeWiederholenBeimVerlaengern(an); });
     m_play = new QPushButton(tr("Play pattern"), this);
     m_play->setObjectName(QStringLiteral("instrumentPlay"));
     m_play->setToolTip(tr("Play only this pattern, in a loop"));
@@ -996,6 +1065,7 @@ void InstrumentEditor::setupUI()
     kopf->addStretch(1);
     kopf->addWidget(new QLabel(tr("Bars"), this));
     kopf->addWidget(m_takte);
+    kopf->addWidget(m_wiederholen);
     kopf->addWidget(m_play);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
@@ -1165,6 +1235,7 @@ void InstrumentEditor::setupUI()
     });
     connect(m_raster, &NotenRaster::tonVerlangt, this, &InstrumentEditor::tonVerlangt);
     connect(m_raster, &NotenRaster::auswahlGeaendert, this, &InstrumentEditor::zeigeAuswahl);
+    connect(m_raster, &NotenRaster::abspielstelleGewaehlt, this, &InstrumentEditor::abspielstelleGewaehlt);
     m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
     connect(m_rechtsLoescht, &QCheckBox::toggled, this, [this](bool an) {
         m_raster->setRechtsklickLoescht(an);
@@ -1265,6 +1336,8 @@ void InstrumentEditor::zeigeAlles()
         const QSignalBlocker d(m_pan);
         const QSignalBlocker e(m_stumm);
         m_takte->setValue(ziel->takte);
+        const QSignalBlocker wiederholen(m_wiederholen);
+        m_wiederholen->setChecked(wiederholenBeimVerlaengern());  // der andere Editor kann ihn umgestellt haben
         // ein eigenes und eine Datei stehen mit ihrem Titel da; was sich nicht
         // finden laesst, bleibt stehen — es schweigt
         m_instrument->setText(instrumentAnzeige(ziel->instrument));
@@ -1332,8 +1405,8 @@ void InstrumentEditor::zeigeAuswahl()
     QString text;
     if (zahl == 0)
         // sonst findet es niemand: sagen, wie man markiert
-        text = tr("Shift+drag selects notes · Ctrl+click adds or removes one · a click in the bar row sets the paste "
-                  "marker");
+        text = tr("Shift+drag selects notes · Ctrl+click adds or removes one · a click in the bar row sets where Play "
+                  "starts, Shift+click the paste marker");
     else if (zahl == 1)
         text = tr("1 note selected · Ctrl+C copy · Ctrl+V paste at the marker · Ctrl+D duplicate · arrow keys move · "
                   "Shift+drag selects several");
@@ -1418,7 +1491,7 @@ void InstrumentEditor::setSpitze(double spitze)
 void InstrumentEditor::setzeTakte(int takte)
 {
     Loop neu = m_loop;
-    if (!setzeMusterTakte(neu, m_muster, takte) || neu == m_loop) return;
+    if (!setzeMusterTakte(neu, m_muster, takte, wiederholenBeimVerlaengern()) || neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change pattern length"));
 }
 

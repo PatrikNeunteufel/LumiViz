@@ -104,10 +104,17 @@ bool loescheClips(Loop& loop, const std::vector<ClipOrt>& orte);
 /// Namen zurueck; leer = den Clip gibt es nicht.
 QString neueBasisAus(Loop& loop, int kanal, int clip);
 /// Die Laenge des Musters setzen (`kTakteMin` bis `kTakteMax`): kuerzer
-/// schneidet die hinteren Schritte ab, laenger haengt leere an. Seine Clips
-/// werden mit ihm laenger oder kuerzer; ein Clip dahinter, in den einer
-/// hineinwuechse, rueckt nach hinten.
-bool setzeMusterTakte(Loop& loop, const QString& muster, int takte);
+/// schneidet die hinteren Schritte ab, laenger haengt leere an — oder, mit
+/// `wiederholen` (Entscheid B2 a), wiederholt in den neuen Takten die
+/// bisherigen der Reihe nach (aus 1 Takt vier gleiche, aus 3 auf 4 die Takte
+/// 1, 2, 3, 1): Schritte mit ihrer Lautstaerke, Noten; eine Note, die ueber
+/// das Ende reichte, wird gekuerzt. Seine Clips werden mit ihm laenger oder
+/// kuerzer; ein Clip dahinter, in den einer hineinwuechse, rueckt nach hinten.
+bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederholen = false);
+/// Der Haken „Repeat when lengthening" beider Editoren (B2 a): das Programm
+/// merkt ihn, zuerst ist er an.
+[[nodiscard]] bool wiederholenBeimVerlaengern();
+void setzeWiederholenBeimVerlaengern(bool an);
 /// Das Raster des ganzen Loops setzen (je 1 bis `kRasterMax`). Jeder Schritt
 /// bleibt an seiner Stelle im Takt, wo das neue Raster sie kennt: ein Schlag,
 /// den es nicht mehr gibt, und ein Schritt, der zwischen zwei neue faellt,

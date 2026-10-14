@@ -35,8 +35,11 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 5 (S118, Stufe 16a, Entscheide K1 a, K3 a, K4 a): die Effekte am Clip sind
 // eine Reihe von Bausteinen — `path` statt `effects`, mit dem Filter als
 // viertem Baustein. Fassung 2 bis 4 werden weiter gelesen: ihre `effects`
-// werden zur Reihe Distortion, Echo, Reverb. Geschrieben wird immer 5.
-constexpr int kVersion = 5;
+// werden zur Reihe Distortion, Echo, Reverb.
+// 6 (S124, Entscheid B1 a): ein Muster kann 1 bis 3 Takte lang sein — ein
+// aelteres Programm streckte es auf 4 und haengte Stille an; es liest die Datei
+// weiter, meldet aber, dass sie neuer ist. Geschrieben wird immer 6.
+constexpr int kVersion = 6;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -699,7 +702,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 bericht->append(QStringLiteral("Unknown pattern kind '%1': %2").arg(art, m.name));
             continue;
         }
-        m.takte = o.value(QStringLiteral("bars")).toInt(kTakteMin);
+        m.takte = o.value(QStringLiteral("bars")).toInt(kTakteNeu);
         if (art == kArtInstrument)
         {
             m.art = MusterArt::Instrument;

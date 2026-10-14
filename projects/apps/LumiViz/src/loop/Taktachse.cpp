@@ -212,6 +212,20 @@ void Taktachse::setStelleSchritte(double schritte)
     setStelle(static_cast<std::int64_t>(schritte / jeTakt * static_cast<double>(kTicksJeTakt)));
 }
 
+void Taktachse::setStartmarke(double schritte)
+{
+    if (schritte == m_startSchritte) return;
+    m_startSchritte = schritte;
+    update();
+}
+
+int Taktachse::schrittBeiX(int x) const
+{
+    const int jeTakt = std::max(1, m_loop.schritteJeTakt());
+    const double schritte = static_cast<double>(stelleVon(x)) * jeTakt / static_cast<double>(kTicksJeTakt);
+    return std::clamp(static_cast<int>(std::lround(schritte)), 0, std::max(0, m_loop.durchlaufSchritte()));
+}
+
 const LoopClip* Taktachse::auswahl() const
 {
     if (m_kanal < 0 || m_kanal >= static_cast<int>(m_loop.kanaele.size())) return nullptr;
@@ -316,7 +330,22 @@ void Taktachse::paintEvent(QPaintEvent*)
         }
     };
     const auto auflage = [&] {
-        if (!m_spielt) return;
+        if (!m_spielt)
+        {
+            // B4: wo Play beginnt — eine gruene Marke, wenn es nicht der Anfang ist
+            if (m_startSchritte <= 0.0) return;
+            const int jeTakt = std::max(1, m_loop.schritteJeTakt());
+            const int x = xVon(static_cast<std::int64_t>(m_startSchritte / jeTakt * static_cast<double>(kTicksJeTakt)));
+            const QColor gruen(80, 200, 120);
+            p.setPen(QPen(gruen, 1.5));
+            p.drawLine(x, 0, x, unten);
+            p.setPen(Qt::NoPen);
+            p.setBrush(gruen);
+            const QPoint spitze[3] = {QPoint(x - 5, 0), QPoint(x + 5, 0), QPoint(x, 8)};
+            p.drawPolygon(spitze, 3);
+            p.setBrush(Qt::NoBrush);
+            return;
+        }
         const int x = xVon(stelle());
         p.setPen(QPen(QColor(255, 90, 70), 2.0));
         p.drawLine(x, 0, x, unten);
@@ -470,7 +499,13 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
     }
     if (!m_geladen || event->button() != Qt::LeftButton) return;
     const QPoint ort = event->position().toPoint();
-    if (ort.y() < kLinealHoehe) return;  // Play beginnt immer von vorn: im Lineal gibt es nichts zu setzen
+    if (ort.y() < kLinealHoehe)
+    {
+        // B4 (S124): ein Klick ins Lineal waehlt die Stelle — dorthin springen oder dort beginnen
+        m_imLineal = true;
+        Q_EMIT stelleGewaehlt(schrittBeiX(ort.x()));
+        return;
+    }
     int kanal = -1;
     int clip = -1;
     const Griff griff = griffBei(ort, &kanal, &clip);
@@ -633,6 +668,11 @@ void Taktachse::brichZugAb()
 void Taktachse::mouseMoveEvent(QMouseEvent* event)
 {
     const QPoint ort = event->position().toPoint();
+    if (m_imLineal && (event->buttons() & Qt::LeftButton))
+    {
+        Q_EMIT stelleGewaehlt(schrittBeiX(ort.x()));  // Ziehen im Lineal: die Stelle folgt
+        return;
+    }
     if (schwenkt())
     {
         schwenkeZu(ort);
@@ -658,6 +698,11 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
 void Taktachse::mouseReleaseEvent(QMouseEvent* event)
 {
     merkeTaste(event->buttons() != Qt::NoButton);
+    if (m_imLineal && event->button() == Qt::LeftButton)
+    {
+        m_imLineal = false;
+        return;
+    }
     if (schwenkt())
     {
         if (event->button() != Qt::MiddleButton) return;  // eine andere Taste: das Schwenken laeuft weiter
@@ -954,7 +999,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         {
             const int takt = taktBei(ort.x());
             QAction* neu = menu.addAction(tr("New drumkit clip"), this, [this, kanal, takt] { (void)neuerClip(kanal, takt); });
-            neu->setEnabled(istFrei(m_loop, kanal, takt, kTakteMin));
+            neu->setEnabled(istFrei(m_loop, kanal, takt, kTakteNeu));
             QAction* instrument = menu.addAction(tr("New instrument clip"), this, [this, kanal, takt] {
                 (void)neuerClip(kanal, takt, MusterArt::Instrument);
             });

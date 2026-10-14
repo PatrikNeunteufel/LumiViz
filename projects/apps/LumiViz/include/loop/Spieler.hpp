@@ -71,6 +71,10 @@ public:
     /// Der Mixer des Loops — Spektrum und Wellenform fuer die Visuals.
     /// INVALID_STREAM = er spielt nicht.
     [[nodiscard]] AudioStreamHandle mixer() const { return m_mixer; }
+    /// An diese Stelle des Durchlaufs springen, in Schritten (Entscheid Patrik
+    /// B4, S124). Echo und Hall vergessen dabei, was sie gehoert haben
+    /// (`kSprungMs`). false = er spielt nicht.
+    bool springe(double schritt);
     /// Die Stelle im laufenden Durchlauf, in Schritten (mit Bruchteil); 0,
     /// wenn er nicht spielt.
     [[nodiscard]] double stelleSchritte() const;

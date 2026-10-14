@@ -9,6 +9,9 @@
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 namespace lumi::loop
 {
 
@@ -133,6 +136,17 @@ void Spieler::takt()
         m_engine->setVolume(m_mixer, laut);
         m_laut = laut;
     }
+}
+
+bool Spieler::springe(double schritt)
+{
+    if (!spielt()) return false;
+    const std::shared_ptr<const Programm> programm = m_erzeuger.programm();
+    if (programm == nullptr || programm->ablauf.schrittFrames <= 0.0) return false;
+    std::int64_t frame = std::llround(std::max(0.0, schritt) * programm->ablauf.schrittFrames);
+    if (programm->ablauf.durchlaufFrames > 0) frame %= programm->ablauf.durchlaufFrames;
+    m_erzeuger.setzeStelle(frame);
+    return true;
 }
 
 double Spieler::stelleSchritte() const
