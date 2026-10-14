@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.163.0
+> **Version:** 1.164.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2722,13 +2722,20 @@ erscheint der Knopf **…**. Er öffnet ein kleines Feld:
 Ein Klick neben das Feld schließt es. Wer in **Sound** wieder einen Klang
 wählt, nimmt der Spur ihr Instrument; Ctrl+Z holt es zurück.
 
-**Sechs gerechnete Drums** stehen im Fenster Instruments unter **Drums**:
-**Kick**, **Tom**, **Snare**, **Clap**, **Hi-Hat Closed**, **Hi-Hat Open**. Sie
-sind den Klängen des Kits nachgebaut, aber keine Aufnahmen: jeder besteht aus
-Schichten, die sich im Instrument-Creator ansehen und ändern lassen (Save legt
-dann deine Kopie unter My files ab). **Kick** und **Clap** zeigen dabei, was die
-Zeile Signal path kann: beim Kick steht Drive hinter der Envelope, der Clap hat
-in jeder Schicht zwei Filter hintereinander. Drei Dinge dazu:
+**Zwanzig Drums** stehen im Fenster Instruments unter **Drums**. Sechs sind
+den Klängen des Kits nachgebaut: **Kick**, **Tom**, **Snare**, **Clap**,
+**Hi-Hat Closed**, **Hi-Hat Open**. Dazu gerechnet **808 Kick**, **Low Tom**,
+**High Tom**, **Shaker**, **Ride**, **Crash** und drei Besen für Jazz: **Brush
+Tap**, **Brush Slap** (der Akzent) und **Brush Sweep** (der kreisende Besen,
+ohne Anschlag). Aus mitgelieferten Samples geschichtet sind **Punch Kick**,
+**Fat Snare**, **Clap Stack**, **Hat Shake** und **Beatbox Kick**. Keine davon
+ist eine einzelne Aufnahme: jede besteht aus Schichten, die sich im
+Instrument-Creator ansehen und ändern lassen (Save legt dann deine Kopie unter
+My files ab). **Kick** und **Clap** zeigen dabei, was die Zeile Signal path
+kann: beim Kick steht Drive hinter der Envelope, der Clap hat in jeder Schicht
+zwei Filter hintereinander. Echte, aufgenommene Schlagzeuge spielen die Kits
+Rock'n'Roll, Hardrock und Heavy Metal (siehe „Kits" unten). Drei Dinge zu den
+sechs nachgebauten:
 
 - Sie sind **für die Note C2 gebaut** — das ist die Note, die eine Drum-Spur
   vorbelegt. Eine andere **Note** verschiebt den ganzen Schlag: höher wird er
@@ -2842,7 +2849,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Element | Wirkung |
 |---|---|
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
-| **Instrument** | Neunundvierzig mitgelieferte, nach Namen sortiert — darunter seit den Genre-Beispielen Trance Lead, Trance Pluck, Rolling Bass, Hoover, Clavinet, Slap Bass, Clean Guitar, Muted Guitar, Round Bass, 808 Bass, Reese Bass, Upright Bass, Nylon Guitar, Sax, Vibraphone, Steel Drum und als Schlagwerk Cowbell, Conga, Clave (bei ihnen ist die Tonhöhe der Note die Tonhöhe des Schlags). Dazu: Piano, Strings, Violin, Guitar, Bass, Organ, Lead — für House: House Piano, House Organ, Chord Stab, Warm Pad, Sub Bass, Acid Bass, Pluck — aus mehreren Schichten: Bell, Tine Piano, Brass, Flute, Super Saw, Fifth Pad, Overdrive Guitar, Kalimba, Marimba — und sieben ungewöhnliche: Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Growl Bass, Reverse Swell (schwillt an und bricht ab). Die Klänge sind gerechnet, nicht aufgenommen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
+| **Instrument** | Dreiundneunzig mitgelieferte, nach Namen sortiert; das Fenster **Instruments** (**Browse...**) ordnet sie nach Art: **Keys** (8), **Bass** (12), **Lead** (7), **Pads** (9), **Plucked** (12), **Wind** (7), **Percussion** (10), **Drums** (20), **Unusual** (8). Gerechnet aus Schichten sind etwa Piano, Strings, Violin, Organ, die House-Klänge, Bell, Brass, Super Saw, Kalimba, Marimba und ungewöhnliche wie Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Reverse Swell (schwillt an und bricht ab). **Aus Formen** (Waveform Shape) klingen elf: Heart Pad, Rings Choir, Infinity Drone, Gear Bass, Moon Bass, Star Lead, Bolt Pluck, Flower Flute, Smiley Keys, Atom Bell, Cat. **Aus mitgelieferten Samples** dreizehn: Female Choir, Hum Pad, Vocal Lead, Vocal Chop, Harp, Koto, Dulcimer, Thumb Piano, Shakuhachi, Alto Sax, Alto Flute, Angel Harp, Wind Voices. Bei Schlagwerk wie Cowbell, Conga, Clave ist die Tonhöhe der Note die Tonhöhe des Schlags. Die gerechneten Klänge sind keine Aufnahmen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
 | Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
@@ -3295,6 +3302,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.164.0 | 2026-10-14 | Session 124. §16 auf den Stand gebracht: der Instrument-Creator nennt dreiundneunzig mitgelieferte Instrumente nach Art (stand noch auf neunundvierzig, seit S123 veraltet), die Drums sind zwanzig (mit 808 Kick, Toms, Shaker, Ride, Crash, drei Besen und fünf aus Samples). |
 | 1.163.0 | 2026-10-14 | Session 124. §16 NEU **Kits**: Rollen, der Knopf Kit mit den Haken **Add all roles of the kit** und **Remove empty tracks the kit doesn't have**, das \* für Spuren, die nicht zum Kit gehören, das Fenster **Kits**; vierzehn mitgelieferte Kits, darunter Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes; die Samples aus DrumGizmo (CC BY 4.0). §17 NEU `.lvkit`. |
 | 1.162.0 | 2026-10-14 | Session 123. §16 Drum-Editor und Instrument-Creator NEU die Gruppe **Samples** — achtunddreißig mitgelieferte Samples (CC BY 3.0, Nennung in `samples\CREDITS.md`); neunzig mitgelieferte Instrumente, zwanzig Formen, neun Loops mehr. |
 | 1.161.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Use as** (Layers, One path, **Jumps**: In list order, Shortest, Drawn by hand) und **Bridge**; Instrument-Creator NEU der **Farbpunkt** je Schicht mit **Colour...** und **Automatic**; Save mit Layers legt je angehakter Kontur eine Schicht an. |
