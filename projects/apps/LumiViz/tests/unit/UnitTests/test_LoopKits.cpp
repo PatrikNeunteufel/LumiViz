@@ -333,6 +333,97 @@ TEST_SUITE("Loop Kits")
         }
     }
 
+    // Entscheid K10 a (S124): die beiden Haken — fehlende Rollen anlegen, leere fremde Spuren entfernen
+    TEST_CASE("Loop Kits: Kitwechsel mit Haken — Rollen anlegen, leere fremde Spuren entfernen (K10 a)")
+    {
+        DrumKit kit;
+        kit.name = QStringLiteral("probe");
+        kit.titel = QStringLiteral("Probe");
+        for (const char* rolle : {"kick", "snare", "hat", "tom 1"})
+        {
+            KitKlang klang;
+            klang.rolle = QString::fromLatin1(rolle);
+            klang.klang = QStringLiteral("kit:") + QString::fromLatin1(rolle).remove(QLatin1Char(' '));
+            klang.laut = 0.7;
+            klang.pan = rolle[0] == 'h' ? 0.2 : 0.0;
+            kit.klaenge.push_back(klang);
+        }
+        kit.klaenge[3].instrument = QStringLiteral("drum_tom_low");  // eine Rolle mit Instrument
+        kit.klaenge[3].hoehe = 38;
+        kit.klaenge[3].dauerMs = 300;
+        const KitOptionen beide{true, true};
+
+        // --- ein leeres Muster: alle Rollen als Spuren, in der Reihenfolge des Kits, mit leeren Schritten
+        Loop loop;
+        Muster leer;
+        leer.name = QStringLiteral("P");
+        leer.takte = 2;
+        loop.muster = {leer};
+        KitWechsel wechsel = wendeKitAn(loop, QStringLiteral("P"), kit, beide);
+        const Muster* p = loop.findeMuster(QStringLiteral("P"));
+        REQUIRE(p != nullptr);
+        CHECK(wechsel.angelegt == QStringList{QStringLiteral("kick"), QStringLiteral("snare"), QStringLiteral("hat"),
+                                             QStringLiteral("tom 1")});
+        CHECK(wechsel.fehlend.isEmpty());
+        CHECK(wechsel.getroffen == 0);
+        REQUIRE(p->spuren.size() == 4);
+        REQUIRE(p->zeilen.size() == 4);
+        CHECK(p->spuren[0].name == QStringLiteral("Kick"));
+        CHECK(p->spuren[2].name == QStringLiteral("Hat"));
+        CHECK(p->spuren[3].name == QStringLiteral("Tom 1"));
+        CHECK(p->spuren[3].instrument == QStringLiteral("drum_tom_low"));
+        CHECK(p->spuren[3].hoehe == 38);
+        CHECK(p->spuren[3].dauerMs == 300);
+        CHECK(p->spuren[2].pan == doctest::Approx(0.2));
+        CHECK(p->spuren[1].rolle == QStringLiteral("snare"));
+        for (const auto& zeile : p->zeilen) CHECK(zeile == std::vector<double>(static_cast<std::size_t>(2 * loop.schritteJeTakt()), 0.0));
+        CHECK(p->kit == QStringLiteral("probe"));
+        CHECK_FALSE(weichtAb(*p, kit));
+
+        // --- ein Muster mit Spuren: Kick (Schritte), Rim (leer), Perc (Schritte), eine Spur ohne Rolle (leer)
+        Muster voll;
+        voll.name = QStringLiteral("Q");
+        voll.takte = 1;
+        voll.spuren = {{QStringLiteral("Kick"), QStringLiteral("kit:kick"), 1.0, 0.0, false},
+                       {QStringLiteral("Rim"), QStringLiteral("lib:rim"), 1.0, 0.0, false},
+                       {QStringLiteral("Perc"), QStringLiteral("lib:tambourine"), 1.0, 0.0, false},
+                       {QStringLiteral("Thing"), QStringLiteral("C:/irgendwo/ding.wav"), 1.0, 0.0, false}};
+        voll.zeilen = {std::vector<double>(16, 0.0), std::vector<double>(16, 0.0), std::vector<double>(16, 0.0),
+                       std::vector<double>(16, 0.0)};
+        voll.zeilen[0][0] = 1.0;
+        voll.zeilen[2][4] = 0.5;
+        loop.muster = {voll};
+        Loop ohne = loop;  // dieselbe Probe ohne Haken: wie bisher (K2 a)
+        wechsel = wendeKitAn(loop, QStringLiteral("Q"), kit, beide);
+        const Muster* q = loop.findeMuster(QStringLiteral("Q"));
+        REQUIRE(q != nullptr);
+        CHECK(wechsel.entfernt == QStringList{QStringLiteral("Rim")});                // leer, nicht im Kit
+        CHECK(wechsel.ohneGegenstueck == QStringList{QStringLiteral("perc 1")});      // traegt Schritte: bleibt
+        CHECK(wechsel.angelegt == QStringList{QStringLiteral("snare"), QStringLiteral("hat"), QStringLiteral("tom 1")});
+        QStringList namen;
+        for (const Spur& s : q->spuren) namen << s.name;
+        // die neuen an ihrem Platz im Kit: vor der ersten Spur, die das Kit nicht kennt
+        CHECK(namen == QStringList{QStringLiteral("Kick"), QStringLiteral("Snare"), QStringLiteral("Hat"), QStringLiteral("Tom 1"),
+                                   QStringLiteral("Perc"), QStringLiteral("Thing")});
+        REQUIRE(q->zeilen.size() == 6);
+        CHECK(q->zeilen[0][0] == 1.0);   // Kick behaelt seine Schritte
+        CHECK(q->zeilen[4][4] == 0.5);   // Perc auch — die Zeilen sind mit den Spuren gewandert
+        CHECK(q->zeilen[1] == std::vector<double>(16, 0.0));
+        CHECK(q->spuren[5].rolle.isEmpty());  // ohne Rolle: bleibt, auch leer
+
+        // --- ohne Haken: nichts angelegt, nichts entfernt
+        wechsel = wendeKitAn(ohne, QStringLiteral("Q"), kit, KitOptionen{});
+        CHECK(ohne.findeMuster(QStringLiteral("Q"))->spuren.size() == 4);
+        CHECK(wechsel.angelegt.isEmpty());
+        CHECK(wechsel.entfernt.isEmpty());
+        CHECK(wechsel.fehlend == QStringList{QStringLiteral("snare"), QStringLiteral("hat"), QStringLiteral("tom 1")});
+        // ein Name ist vergeben: die neue Spur heisst weiter
+        Muster zwei;
+        zwei.spuren = {{QStringLiteral("Snare"), QString(), 1.0, 0.0, false}};
+        CHECK(freierSpurName(zwei, QStringLiteral("snare")) == QStringLiteral("Snare (2)"));
+        CHECK(wendeKitAn(ohne, QStringLiteral("gibt es nicht"), kit, beide).angelegt.isEmpty());
+    }
+
     TEST_CASE("Loop Kits: Pegel — je Rolle ueber die Kits angeglichen; LUMIVIZ_KIT_PEGEL=1 gibt die Messung aus")
     {
         const KitApp app;

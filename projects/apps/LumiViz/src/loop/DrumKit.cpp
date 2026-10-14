@@ -6,6 +6,7 @@
 #include "loop/DrumKit.hpp"
 
 #include "core/Mitgeliefert.hpp"
+#include "loop/Bearbeiten.hpp"  // musterIn
 #include "loop/Instrument.hpp"  // istEigenerName, kEigenVorsatz
 
 #include <QDir>
@@ -399,6 +400,81 @@ KitWechsel wendeKitAn(Muster& muster, const DrumKit& kit)
     for (const KitKlang& klang : kit.klaenge)
         if (!belegt.contains(klang.rolle)) wechsel.fehlend << klang.rolle;
     muster.kit = kit.name;
+    return wechsel;
+}
+
+Spur spurAusKitKlang(const KitKlang& klang)
+{
+    Spur spur;
+    spur.name = klang.rolle.isEmpty() ? klang.rolle : klang.rolle.left(1).toUpper() + klang.rolle.mid(1);
+    spur.rolle = klang.rolle;
+    spur.klang = klang.klang;
+    spur.instrument = klang.instrument;
+    if (!klang.instrument.isEmpty())
+    {
+        spur.hoehe = klang.hoehe;
+        spur.dauerMs = klang.dauerMs;
+    }
+    spur.laut = klang.laut;
+    spur.pan = klang.pan;
+    return spur;
+}
+
+QString freierSpurName(const Muster& muster, const QString& rolle)
+{
+    const QString basis = rolle.isEmpty() ? rolle : rolle.left(1).toUpper() + rolle.mid(1);
+    const auto vergeben = [&muster](const QString& name) {
+        return std::any_of(muster.spuren.begin(), muster.spuren.end(), [&name](const Spur& s) { return s.name == name; });
+    };
+    QString name = basis;
+    for (int n = 2; vergeben(name); ++n) name = basis + QStringLiteral(" (%1)").arg(n);
+    return name;
+}
+
+KitWechsel wendeKitAn(Loop& loop, const QString& muster, const DrumKit& kit, const KitOptionen& optionen)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr) return {};
+    KitWechsel wechsel = wendeKitAn(*ziel, kit);
+    ziel->zeilen.resize(ziel->spuren.size());  // je Spur eine Zeile, auch in einer unordentlichen Datei
+    // der Platz einer Rolle im Kit; was das Kit nicht kennt, steht hinten
+    const auto platzImKit = [&kit](const QString& rolle) {
+        for (std::size_t i = 0; i < kit.klaenge.size(); ++i)
+            if (kit.klaenge[i].rolle == rolle) return static_cast<int>(i);
+        return static_cast<int>(kit.klaenge.size());
+    };
+    if (optionen.leereEntfernen)
+        for (int s = static_cast<int>(ziel->spuren.size()) - 1; s >= 0; --s)
+        {
+            const Spur& spur = ziel->spuren[static_cast<std::size_t>(s)];
+            const std::optional<Rolle> rolle = leseRolle(spur.rolle);
+            if (!rolle || kit.fuer(*rolle) != nullptr) continue;  // ohne Rolle oder im Kit: bleibt
+            const std::vector<double>& zeile = ziel->zeilen[static_cast<std::size_t>(s)];
+            if (std::any_of(zeile.begin(), zeile.end(), [](double w) { return w > 0.0; })) continue;  // traegt Schritte
+            wechsel.ohneGegenstueck.removeOne(spur.rolle);
+            wechsel.entfernt.prepend(spur.name);
+            ziel->spuren.erase(ziel->spuren.begin() + s);
+            ziel->zeilen.erase(ziel->zeilen.begin() + s);
+        }
+    if (optionen.alleRollen)
+    {
+        const int schritte = ziel->takte * loop.schritteJeTakt();
+        for (const QString& rolle : std::as_const(wechsel.fehlend))
+        {
+            const auto klang = std::find_if(kit.klaenge.begin(), kit.klaenge.end(), [&rolle](const KitKlang& k) { return k.rolle == rolle; });
+            if (klang == kit.klaenge.end()) continue;
+            Spur neu = spurAusKitKlang(*klang);
+            neu.name = freierSpurName(*ziel, rolle);
+            const int eigener = platzImKit(rolle);
+            const auto vor = std::find_if(ziel->spuren.begin(), ziel->spuren.end(),
+                                          [&](const Spur& s) { return platzImKit(s.rolle) > eigener; });
+            const auto platz = vor - ziel->spuren.begin();
+            ziel->spuren.insert(vor, neu);
+            ziel->zeilen.insert(ziel->zeilen.begin() + platz, std::vector<double>(static_cast<std::size_t>(schritte), 0.0));
+            wechsel.angelegt << rolle;
+        }
+        wechsel.fehlend.clear();
+    }
     return wechsel;
 }
 

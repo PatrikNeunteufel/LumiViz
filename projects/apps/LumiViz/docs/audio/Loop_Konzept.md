@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.73.0
+> **Version:** 0.74.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3052,6 +3052,8 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
 | **K6 a, K6b a, K6c a** | Vierzehn mitgelieferte Kits. Sofort aus vorhandenen Klängen: Classic, 808, 909 House, Electro, Hand drums, Beatbox, Lo-fi, Reggae, Reggaeton, Strange (Inhalt je Rolle: Tabelle unten). Im zweiten Schritt aus akustischen Aufnahmen (CC BY 4.0, DrumGizmo; Downloads vorher zur Freigabe): Rock'n'Roll und Hardrock aus dem **DRSKit**, Heavy Metal aus dem **CrocellKit**. **Jazz Brushes**: Kick, Ride, Hi-Hat leise aus dem DRSKit, die Besen gerechnet (`drum_brush_sweep`, `drum_brush_tap`, `drum_brush_slap`); ein Paket mit Besen-Aufnahmen kann sie später ersetzen, wenn seine Lizenz CC0 oder CC BY ist. Dazu ein Loop „Brush Swing". Inhalt: Tabelle unten. |
 | **K7 a** | **Edit kits...** öffnet das Fenster **Kits**. |
 | **K8 a** | Die Skizze des Fensters Kits ist gebilligt (unten). |
+| **K10 a** | (S124, Anlass: ein Kit auf einem leeren Muster tat sichtbar nichts) Im Menü des Knopfs Kit zwei Haken, die das Programm merkt, beide zuerst an: **Add all roles of the kit** (Rollen des Kits ohne Spur werden Spuren mit leeren Schritten, an ihrem Platz in der Reihenfolge des Kits) und **Remove empty tracks the kit doesn't have** (eine Spur, deren Rolle das Kit nicht hat und die keinen gesetzten Schritt trägt, fällt weg; Spuren ohne Rolle bleiben immer). Ein Schritt für Undo. Ändert K2 a: mit den Haken aus gilt K2 a weiter. Verworfen: ein Dialog bei jedem Wechsel (b), fest ohne Wahl (c). |
+| **K11 a** | Eine Spur, deren Rolle das Kit nicht hat, trägt im Etikett Role ein * in der Hinweisfarbe (die des ≠ in Signal path) statt der Durchstreichung; eine Zeile unter dem Raster sagt „* not in the kit <Kit> — the track keeps its own sound". Verworfen: * und Durchstreichung (b), wie bisher (c). |
 
 ### Der Inhalt der mitgelieferten Kits (K6 a, K6b a, K6c a)
 
@@ -3195,6 +3197,20 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
 - Gesehen am Bild aus dem Test: in der gewählten Zeile scheinen an den
   Rändern der Zellen schmale Striche der Auswahlfarbe durch — kosmetisch,
   offen.
+
+### Wie K10 a und K11 a gebaut sind (S124)
+
+- **Modell** (`loop/DrumKit`): `KitOptionen`, `wendeKitAn(Loop&, muster, kit,
+  optionen)` — erst der Wechsel wie bisher, dann leere fremde Spuren weg, dann
+  je fehlende Rolle eine Spur vor der ersten, deren Rolle im Kit später kommt
+  (Spuren, die das Kit nicht kennt, bleiben dahinter); `spurAusKitKlang`,
+  `freierSpurName` (auch Add track nimmt sie jetzt). `KitWechsel` nennt
+  `angelegt` und `entfernt`.
+- **Drum-Editor:** die Haken unter den Kits im Menü (`kitOptionen`,
+  `setzeKitOptionen`, Einstellungen `loop/kitAddAllRoles`,
+  `loop/kitRemoveEmpty`); die Zeile unter dem Kopf nennt „n tracks created"
+  und „empty, not in the kit, removed: …"; das * im Etikett und die Zeile
+  `drumNotInKit` (K11 a).
 
 ### Die Entscheide zu 21d (Patrik S124)
 
@@ -3361,6 +3377,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.74.0** (S124, 2026-10-14): §4l — K10 a (zwei Haken beim Kitwechsel)
+  und K11 a (* statt Durchstreichung) entschieden und gebaut.
 - **0.73.0** (S124, 2026-10-14): §4l — Stufe 21d gebaut, Entscheide D1 a
   bis D6 a („Die Entscheide zu 21d", „Wie 21d gebaut ist"); D3 a und D5 a
   sind durch D6 a ersetzt.

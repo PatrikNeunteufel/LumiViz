@@ -24,6 +24,7 @@
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
 #include "loop/Sample.hpp"
+#include "loop/SignalWeg.hpp"
 #include "loop/Taktachse.hpp"
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -1246,6 +1247,7 @@ TEST_SUITE("LoopDrumEditor")
         QTemporaryDir tmp;
         REQUIRE(tmp.isValid());
         setzeEigenenKitOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("kits")));
+        DrumEditor::setzeKitOptionen(KitOptionen{});  // dieser Fall prueft K2 a: beide Haken aus (K10 a)
 
         DrumEditor editor;
         int aenderungen = 0;
@@ -1273,6 +1275,7 @@ TEST_SUITE("LoopDrumEditor")
         CHECK(menue.contains(QStringLiteral("808")));
         CHECK_FALSE(menue.contains(QStringLiteral("[My kits]")));  // noch keine eigenen
         CHECK(menue.mid(menue.size() - 2) == QStringList{QStringLiteral("Save as kit..."), QStringLiteral("Edit kits...")});
+        CHECK(menue.contains(QStringLiteral("[ ] Add all roles of the kit")));
         Q_EMIT knopf->menu()->aboutToShow();
         const QList<QAction*> eintraege = knopf->menu()->actions();
         const auto bearbeiten = std::find_if(eintraege.begin(), eintraege.end(),
@@ -1355,5 +1358,100 @@ TEST_SUITE("LoopDrumEditor")
             CHECK(editor.grab().save(bild));
         }
         setzeEigenenKitOrdnerFuerTests(QString());
+    }
+
+    // Entscheide K10 a und K11 a (S124): die beiden Haken im Menue, das * im Etikett Role, die Zeile darunter
+    TEST_CASE("Drum-Editor K10/K11: Kit legt Spuren an, leere fremde fallen weg, * fuer fremde mit Schritten")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;  // leer: beide Haken an (die Vorgabe)
+
+        DrumEditor editor;
+        int aenderungen = 0;
+        QObject::connect(&editor, &DrumEditor::bearbeitet, &editor, [&](const Loop& neu, const QString&) {
+            ++aenderungen;
+            editor.setLoop(neu);
+        });
+        CHECK(DrumEditor::kitOptionen().alleRollen);
+        CHECK(DrumEditor::kitOptionen().leereEntfernen);
+        CHECK(editor.kitZeilen().contains(QStringLiteral("[x] Add all roles of the kit")));
+        CHECK(editor.kitZeilen().contains(QStringLiteral("[x] Remove empty tracks the kit doesn't have")));
+
+        // --- ein leeres Muster („Fill"): 808 legt alle acht Rollen an, ein Schritt fuer Undo
+        REQUIRE(editor.zeige(probe(), QStringLiteral("Fill")));
+        REQUIRE(editor.wendeKitAn(QStringLiteral("808")));
+        CHECK(aenderungen == 1);
+        const auto fill = [&editor] { return *editor.loop().findeMuster(QStringLiteral("Fill")); };
+        CHECK(fill().spuren.size() == 8);
+        CHECK(editor.kitMeldung().contains(QStringLiteral("8 tracks created")));
+        CHECK(editor.kitMeldung().startsWith(QStringLiteral("808: 0 of 0 tracks took a sound from the kit")));
+        CHECK(editor.kitText() == QStringLiteral("Kit: 808"));
+        CHECK(editor.fehlendeRollen().isEmpty());
+        CHECK(editor.fremdZeile().isEmpty());
+        CHECK(editor.findChild<QLabel*>(QStringLiteral("drumNotInKit"))->isHidden());
+
+        // --- „Grund" mit einer Rim-Spur mit Schritt und einer leeren Clap-Spur: Lo-fi hat rim und clap,
+        // Hand drums hat beide nicht — die leere faellt weg, die mit Schritten bleibt mit *
+        REQUIRE(editor.zeige(editor.loop(), QStringLiteral("Grund")));
+        editor.spurHinzu();
+        editor.setzeRolle(2, QStringLiteral("rim"));
+        editor.setzeKlang(2, QStringLiteral("lib:rim"));
+        editor.spurHinzu();
+        editor.setzeRolle(3, QStringLiteral("clap"));
+        REQUIRE(editor.raster() != nullptr);
+        {
+            Loop neu = editor.loop();
+            Muster* g = nullptr;
+            for (Muster& m : neu.muster)
+                if (m.name == QStringLiteral("Grund")) g = &m;
+            REQUIRE(g != nullptr);
+            g->zeilen[2][6] = 1.0;  // die Rim-Spur traegt einen Schritt
+            editor.setLoop(neu);
+        }
+        aenderungen = 0;
+        REQUIRE(editor.wendeKitAn(QStringLiteral("hand_drums")));
+        CHECK(aenderungen == 1);
+        const auto grund = [&editor] { return *editor.loop().findeMuster(QStringLiteral("Grund")); };
+        QStringList rollen;
+        for (const Spur& s : grund().spuren) rollen << s.rolle;
+        CHECK_FALSE(rollen.contains(QStringLiteral("clap")));  // leer, nicht in Electro: weg
+        CHECK(rollen.contains(QStringLiteral("rim")));          // traegt einen Schritt: bleibt
+        CHECK(editor.kitMeldung().contains(QStringLiteral("empty, not in the kit, removed: ")));
+        const int rim = static_cast<int>(rollen.indexOf(QStringLiteral("rim")));
+        REQUIRE(rim >= 0);
+        CHECK(editor.rollenEtikett(rim) == QStringLiteral("rim *"));
+        CHECK(editor.rolleFehltImKit(rim));
+        auto* etikett = editor.findChild<QToolButton*>(QStringLiteral("drumTrackRole%1").arg(rim));
+        REQUIRE(etikett != nullptr);
+        CHECK_FALSE(etikett->font().strikeOut());  // K11 a: keine Durchstreichung mehr
+        CHECK(etikett->palette().color(QPalette::ButtonText) == SignalWeg::abweichFarbe(etikett->palette()));
+        CHECK(editor.fremdZeile() == QStringLiteral("* not in the kit Hand drums — the track keeps its own sound"));
+        CHECK_FALSE(editor.findChild<QLabel*>(QStringLiteral("drumNotInKit"))->isHidden());
+        CHECK(rollen.contains(QStringLiteral("perc 3")));  // Hand drums hat drei Percussions: angelegt
+        CHECK(editor.fehlendeRollen().isEmpty());
+
+        // --- ein Kit mit rim: das * verschwindet, die Zeile auch
+        REQUIRE(editor.wendeKitAn(QStringLiteral("lo_fi")));
+        for (int s = 0; s < static_cast<int>(grund().spuren.size()); ++s) CHECK_FALSE(editor.rolleFehltImKit(s));
+        CHECK(editor.fremdZeile().isEmpty());
+
+        // --- die Haken aus: wieder K2 a
+        DrumEditor::setzeKitOptionen(KitOptionen{});
+        CHECK(editor.kitZeilen().contains(QStringLiteral("[ ] Add all roles of the kit")));
+        const std::size_t vorher = grund().spuren.size();
+        REQUIRE(editor.wendeKitAn(QStringLiteral("electro")));
+        CHECK(grund().spuren.size() == vorher);
+
+        // `LUMIVIZ_DRUM_K11_BILD=<datei.png>` legt ein Bild mit dem * und der Zeile ab
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_DRUM_K11_BILD"); !bild.isEmpty())
+        {
+            DrumEditor::setzeKitOptionen(KitOptionen{true, true});
+            REQUIRE(editor.wendeKitAn(QStringLiteral("hand_drums")));
+            editor.resize(editor.sizeHint().expandedTo(QSize(944, 420)));
+            CHECK(editor.grab().save(bild));
+        }
     }
 }

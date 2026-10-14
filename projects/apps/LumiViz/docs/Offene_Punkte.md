@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.221.0
+> **Version:** 1.222.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5002,7 +5002,10 @@ geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
   Hardrock, Heavy Metal, Jazz Brushes, der Loop Brush Swing; offen Patriks
   Ohr an `hoerproben_21d` (Mischung, Besen — Befund „Hats abgeschnitten":
   die Reihen-Proben waren nach 3 s gekappt; seit D6 a bleiben die Samples
-  ganz, nachzuhören). Ursprünglicher Plan:
+  ganz, nachzuhören). **K10 a, K11 a gebaut** (S124, Befund Patrik am
+  Programm: ein Kit auf einem leeren Muster tat nichts): zwei gemerkte Haken
+  im Kit-Menü — alle Rollen anlegen, leere fremde Spuren entfernen; das * in
+  der Hinweisfarbe für fremde Spuren mit Schritten. Ursprünglicher Plan:
   ~~**21d** Rock'n'Roll, Hardrock, Heavy Metal
   und Jazz Brushes aus DrumGizmo (DRSKit, CrocellKit, CC BY 4.0 — Downloads zur
   Freigabe) mit gerechneten Besen und dem Loop Brush Swing~~. Offen: **21e** Icon
@@ -5259,6 +5262,21 @@ die **Länge eines neuen Clips** (`Bearbeiten.cpp`, `Taktachse.cpp`,
 ein Clip eines kurzen Musters auf der Achse zeigt; ob „auffüllen" nur das
 Verlängern meint oder auch ein Kopieren von Bar 1 in die neuen Takte. Nicht
 gebaut — nach Stufe 21.
+
+**Dazu (Befund Patrik S124, mit diesem Punkt zu bauen — Wunsch Patrik):**
+Kopieren und Einfügen hat einen falschen Versatz, wenn der erste oder letzte
+markierte Schritt leer ist: eingefügt wird ab dem ersten **belegten** Schritt,
+und die Einfügemarke rückt nur bis zum letzten belegten weiter — statt den
+markierten Bereich (die markierten Takte) einzufügen. **Im Code nachgesehen
+(nichts geändert):** im Instrument-Editor markiert man nur Noten
+(`NotenRaster`), `kopiereNoten` misst von der ersten Note bis zum Ende der
+letzten — leere Zeit davor und danach fällt weg, immer. Im Drum-Editor nehmen
+Rahmen und Ctrl+A die leeren Schritte mit (`rahmeBis`, `markiereAlle`), dort
+stimmt der Versatz; mit Ctrl+Klick zählen nur die angeklickten (Entscheid
+V2 a, S113) — dann derselbe Fehler. Kern: eine Kopie kennt keinen markierten
+Zeitraum. Vorzulegen mit dem Punkt oben: ob die Kopie den Zeitraum des
+Rahmens trägt oder auf ganze Takte gerundet wird, und ob V2 a dafür neu
+gefasst wird.
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5664,6 +5682,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.222.0 | 2026-10-14 | Session 124. K10 a und K11 a gebaut (Kitwechsel mit zwei Haken, * für fremde Spuren); §7 „Bars kleiner als 4" um den Befund Kopieren/Einfügen ergänzt (Versatz bei leeren Rändern der Auswahl — mit jenem Punkt zu bauen, Wunsch Patrik). 1215 Cases. |
 | 1.221.0 | 2026-10-14 | Session 124. Kits **21d gebaut** (D1 a bis D6 a): 37 Stereo-Samples aus DrumGizmo (CC BY 4.0), drei Besen, vier Kits (vierzehn), Brush Swing; 75 Samples, 93 Instrumente. Offen: 21e, Patriks Ohr an `hoerproben_21d`. |
 | 1.220.0 | 2026-10-14 | Session 124. Kits **21c gebaut**: das Fenster Kits, die Auswahl Sound als gemeinsames Bauteil, Used by mit den zuletzt geöffneten Loops. 1213 Cases; 240 Bereichsfälle unter Testing-MSVC grün. Offen: 21d, 21e. |
 | 1.219.0 | 2026-10-14 | Session 123, Abschluss. `sessions/Changelog_Session123.md`. **Stand:** Vorlagen (20 Formen, 38 Samples `lib:`, 90 Instrumente, 9 Loops), Kits Stufe 21a und 21b gebaut (Modell, zehn Kits, Drum-Editor), VST3-Konzept 0.1.0, Versuch Titanium (lokal). **Offen:** 21c (Fenster Kits) als Nächstes, 21d, 21e; §7 NEU Wunsch Patrik „Bars kleiner als 4" (Befund: `kTakteMin` ist Untergrenze und Länge neuer Clips zugleich); Patriks Ohr an `hoerproben_s123`. 1210 Cases, voller Lauf 1202 / 1202 nach den Vorlagen, danach 236 Bereichsfälle unter beiden Compilern grün. |

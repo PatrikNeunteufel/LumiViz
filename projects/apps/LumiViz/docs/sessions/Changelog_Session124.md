@@ -19,6 +19,12 @@
   Nennung steht in `asset\loop\samples\CREDITS.md`. Wer sie in einem Stück
   verwendet, nennt sie dort, wo auch andere Mitwirkende genannt werden.
 - **Drei Besen** als Instrumente: Brush Tap, Brush Slap, Brush Sweep.
+- **Kitwechsel mit Wahl:** im Menü des Knopfs Kit zwei Haken, die das
+  Programm merkt (beide zuerst an): **Add all roles of the kit** legt für jede
+  Rolle des Kits ohne Spur eine an — auf einem leeren Muster also das ganze
+  Kit —, **Remove empty tracks the kit doesn't have** nimmt leere Spuren weg,
+  die zum neuen Kit nicht passen. Eine solche Spur mit Schritten bleibt und
+  trägt ein **\*** in Bernstein; eine Zeile unter dem Raster sagt, was es heißt.
 - **Fenster Kits** (Stufe 21c, Skizze gebilligt S123, K7 a, K8 a):
   - links die Liste: *Built-in kits* mit Schloss, *My kits*; darunter
     **Duplicate** (eine eigene Kopie, „808 copy"), **Rename** (nur der Titel —
@@ -55,6 +61,10 @@
 
 ## Tests
 
+- K10/K11: ein Fall in `test_LoopKits.cpp` (das Modell), einer in
+  `test_LoopDrumEditor.cpp` (`LUMIVIZ_DRUM_K11_BILD=<datei.png>` legt ein Bild
+  ab — angesehen); der Fall zu 21b prüft K2 a mit beiden Haken aus. Danach
+  1215 Cases, 242 Bereichsfälle unter beiden Compilern grün.
 - Stufe 21d: in fünf Tests die Zahlen nachgestellt (75 Samples, 93
   Instrumente, 20 Drums, 14 Kits); zehn Prüfwerte dazu (die Besen, Brush
   Swing), keiner geändert.

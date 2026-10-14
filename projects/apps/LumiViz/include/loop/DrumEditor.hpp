@@ -26,6 +26,7 @@
 #pragma once
 
 #include "loop/Auswahl.hpp"
+#include "loop/DrumKit.hpp"  // KitOptionen
 #include "loop/Loop.hpp"
 
 #include <QPoint>
@@ -313,13 +314,19 @@ public:
     // --- Kits (Stufe 21b; Entscheide K1 a bis K5 a, Skizze gezeigt S123) -----
     // Im Kopf der Knopf **Kit: <Titel> ▾** (nach einer Aenderung von Hand mit
     // „(changed)", K4 a); sein Menue: Built-in kits, My kits, Save as kit...,
-    // Edit kits... (das Fenster Kits, Stufe 21c). Je Spur das Etikett **Role**: ein
+    // Edit kits... (das Fenster Kits, Stufe 21c). Darunter zwei Haken (K10 a, S124),
+    // die das Programm merkt: Add all roles of the kit, Remove empty tracks the
+    // kit doesn't have. Eine Spur, deren Rolle das Kit nicht hat, traegt im
+    // Etikett ein * in der Hinweisfarbe; eine Zeile unter dem Raster sagt, was es
+    // heisst (K11 a). Je Spur das Etikett **Role**: ein
     // Klick waehlt die Rolle; eine geratene steht in Klammern, eine, die das
     // Kit nicht hat, durchgestrichen (K2 a). **Add track** bietet die Rollen
     // des Kits an, die keine Spur hat.
 
     /// Das Kit anwenden (`wendeKitAn`, DrumKit.hpp): jede Spur bekommt den Klang
-    /// ihrer Rolle, die Schritte bleiben. false = kein Kit dieses Namens.
+    /// ihrer Rolle, die Schritte bleiben; mit den Haken (`kitOptionen`) kommen
+    /// fehlende Rollen dazu und leere fremde Spuren fallen weg — ein Schritt
+    /// fuer Undo. false = kein Kit dieses Namens.
     bool wendeKitAn(const QString& nennung);
     /// Die Rolle einer Spur setzen; leer = keine. Eine ungueltige wird nicht gesetzt.
     void setzeRolle(int spur, const QString& rolle);
@@ -344,6 +351,11 @@ public:
     [[nodiscard]] QStringList kitZeilen() const;
     /// Was der letzte Kitwechsel getan hat (die Zeile unter dem Kopf); leer = keiner.
     [[nodiscard]] QString kitMeldung() const;
+    /// Die beiden Haken im Menue (K10 a); das Programm merkt sie, beide sind zuerst an.
+    [[nodiscard]] static KitOptionen kitOptionen();
+    static void setzeKitOptionen(const KitOptionen& optionen);
+    /// Die Zeile unter dem Raster, die das * erklaert; leer = keine Spur ohne Gegenstueck im Kit.
+    [[nodiscard]] QString fremdZeile() const;
     /// **Edit kits...** (Stufe 21c, K7 a): das Fenster Kits oeffnen, auf dem Kit
     /// des Musters (sonst dem ersten). `zeigen` false fuellt es nur (fuer Tests).
     void oeffneKits(bool zeigen = true);
@@ -457,6 +469,7 @@ private:
     QPushButton* m_spurNeu = nullptr;
     QLabel* m_lautName = nullptr;
     QLabel* m_leerHinweis = nullptr;  ///< steht da, solange das Muster keine Spur hat
+    QLabel* m_fremdZeile = nullptr;   ///< „* not in the kit …" (K11 a)
     QLabel* m_auswahlZeile = nullptr; ///< wie man markiert — oder was markiert ist und was die Tasten tun
     QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
     void zeigeAuswahl();

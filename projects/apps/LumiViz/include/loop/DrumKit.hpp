@@ -124,12 +124,38 @@ struct KitWechsel
     int getroffen = 0;            ///< so viele Spuren haben einen Klang aus dem Kit bekommen
     QStringList ohneGegenstueck;  ///< Rollen der Spuren, die das Kit nicht hat (sie behalten ihren Klang)
     QStringList fehlend;          ///< Rollen des Kits ohne Spur (fuer Add track, K2 a)
+    QStringList angelegt;         ///< Rollen, fuer die eine Spur angelegt wurde (K10 a)
+    QStringList entfernt;         ///< Namen der leeren Spuren, die wegfielen (K10 a)
+};
+
+/// Die beiden Haken im Menue des Knopfs Kit (Entscheid K10 a, S124).
+struct KitOptionen
+{
+    /// „Add all roles of the kit": Rollen des Kits ohne Spur werden Spuren.
+    bool alleRollen = false;
+    /// „Remove empty tracks the kit doesn't have": eine Spur, deren Rolle das
+    /// Kit nicht hat und die keinen gesetzten Schritt traegt, faellt weg.
+    bool leereEntfernen = false;
 };
 
 /// Das Kit auf ein Drum-Muster anwenden: erst die fehlenden Rollen raten, dann
 /// je Spur Klang, Instrument, Note, Length, Volume und Pan aus dem Kit; die
 /// Schritte bleiben. Setzt `muster.kit`.
 KitWechsel wendeKitAn(Muster& muster, const DrumKit& kit);
+/// Das Kit auf ein Drum-Muster des Loops anwenden, mit den Haken aus K10 a:
+/// erst wie `wendeKitAn(Muster&, …)`, dann (wenn verlangt) leere Spuren mit
+/// einer Rolle, die das Kit nicht hat, weg — Spuren ohne Rolle bleiben immer —
+/// und fuer jede fehlende Rolle eine Spur mit leeren Schritten, an ihrem Platz
+/// in der Reihenfolge des Kits (vor der ersten Spur, deren Rolle im Kit spaeter
+/// kommt; Spuren, die das Kit nicht kennt, bleiben dahinter). Die Felder der
+/// neuen Spur kommen aus dem Kit (`spurAusKitKlang`). Ohne das Muster: leer.
+KitWechsel wendeKitAn(Loop& loop, const QString& muster, const DrumKit& kit, const KitOptionen& optionen);
+/// Eine neue Spur fuer einen Klang des Kits: Name aus der Rolle („Open hat"),
+/// Rolle, Klang, Instrument mit Note und Length, Volume und Pan.
+[[nodiscard]] Spur spurAusKitKlang(const KitKlang& klang);
+/// „open hat" → „Open hat"; vergeben im Muster, dann „Open hat (2)", …
+[[nodiscard]] QString freierSpurName(const Muster& muster, const QString& rolle);
+
 /// Weicht das Muster vom Kit ab, das es nennt — „(changed)" (K4 a)? Eine Spur
 /// ohne Rolle oder mit einer Rolle, die das Kit nicht hat, zaehlt nicht.
 [[nodiscard]] bool weichtAb(const Muster& muster, const DrumKit& kit);
