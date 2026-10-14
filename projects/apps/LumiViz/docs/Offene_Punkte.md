@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.212.0
-> **Datum:** 2026-10-13 (Session 121)
+> **Version:** 1.213.0
+> **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -5068,8 +5068,8 @@ Vorlagen sind geschlossen). **Offen daraus:**
 - ⬜ **Im Programm ungesehen:** der Knoten, sein Panel, die neun Presets, Show
   circles. Gesehen sind nur Bilder aus den Tests. Eine Sichttest-Liste dafür
   gibt es noch nicht.
-- 🔧 Eine geänderte `.lvcontour` sieht der Knoten erst, wenn die Nennung
-  wechselt — mit dem Fenster Edit shape (Stufe 20a) nachzuziehen.
+- ✅ ~~Eine geänderte `.lvcontour` sieht der Knoten erst, wenn die Nennung
+  wechselt~~ — S122 mit Stufe 20a: `zeichnungFassung`, der Knoten liest neu.
 - 🔧 Für `shape` gibt es keine Feld-Sonden unter
   `asset/calibration/fields/probes` (`make_field_probes.py` nicht gefahren).
 - 🔧 Die Zeile Contour trägt einen „~"-Knopf (das Feld ist eine Zahl in der
@@ -5089,8 +5089,9 @@ gemessen), T2 a Angle dreht die Form auch mit Stereo XY. **Offen daraus:**
   als zurückgefallener Anteil neben den Teiltönen, gleich bei 16, 48 und 160
   Harmonics. Die Proben `onepath_*`. Stört es: ein längerer Sprung (Regler)
   oder eine Reihe über den ganzen Umlauf.
-- 🔧 Wird eine Form geschrieben, entstehen schon gerechnete Töne nicht neu
-  (`zaehleInstrumentFassung` fehlt dort) — mit dem Fenster Edit shape.
+- ✅ ~~Wird eine Form geschrieben, entstehen schon gerechnete Töne nicht
+  neu~~ — S122: das Fenster Edit shape zählt `zaehleInstrumentFassung`. Eine
+  Form, die anders als über das Fenster geschrieben wird, zählt weiter nicht.
 - 🔧 Die Arten der Sprünge „kürzeste Wege" und „von Hand" spielen wie die
   Reihenfolge der Liste (Stufe 20d).
 - Im Creator ist Shape nicht wählbar (Stufe 19e); im Programm ist von 19c
@@ -5109,11 +5110,30 @@ Instrument mit einer Form im Programm spielbar. **Offen daraus:**
 - ⬜ **Im Programm ungesehen und ungehört:** Waveform Shape im Creator, die
   Regler, das Bild „Shape, as it plays", der Ton, das XY Scope an einer
   Schicht mit Stereo XY. Gesehen ist ein Bild des Creators aus dem Test.
-- 🔧 Der Knopf **Edit...** neben Shape fehlt, bis es das Fenster gibt (20a).
+- ✅ ~~Der Knopf **Edit...** neben Shape fehlt~~ — S122 mit Stufe 20a.
 - 🟡 Kein mitgeliefertes Instrument trägt eine Shape-Schicht — eines oder
   zwei dazulegen? (Katalog, Zahlen in den Tests und `loop_werte.txt` sind
   dann nachzustellen.)
-- **Als Nächstes Stufe 20a:** das Fenster Edit shape, zeichnen.
+
+**Stand S122 — Stufe 20a gebaut, das Fenster Edit shape** (`Shape_Konzept.md`
+0.17.0, §8 und §8a; Benutzerhandbuch 1.158.0). Entschieden (Patrik): **Z1 a**
+Pen zeichnet frei Hand und Punkt für Punkt gemischt, Move point schiebt
+Ankerpunkte; **Z2 a** der Knopf Draw entfällt. Dazu im Creator **Edit...**
+neben Shape und **New shape...** im Menü Browse... (Patriks Frage S122).
+**Offen daraus:**
+- ⬜ **Im Programm ungesehen:** das Fenster, Zeichnen mit der Maus, Move
+  point, Play, Edit... und New shape... im Creator, ein Knoten Shape, der
+  nach Save neu zeichnet. Gesehen ist ein Bild des Fensters aus dem Test.
+  Keine Sichttest-Liste.
+- 🟡 Von Claude gesetzt, im Sichttest zu prüfen: wie stark geglättet wird (2
+  Bildpunkte), ab wann ein Ziehen ein Zug ist (4), der Fangkreis (8), die
+  feste Ansicht beim Öffnen (wandert nicht mit), Undo mit hundert Schritten,
+  Play bei A3 mit Pegel 0,4.
+- 🔧 Nicht gebaut: den Ausschnitt verschieben oder vergrößern, Punkte
+  einfügen oder löschen, Griffe einzeln ziehen.
+- **Als Nächstes Stufe 20b:** SVG über das mitschreibende Zeichengerät
+  (S1 a). Vorher zu klären: ersetzt **Open SVG...** die Konturen oder fügt
+  es hinzu.
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5512,6 +5532,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.213.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20a gebaut — das Fenster Edit shape** (Entscheide Patrik Z1 a, Z2 a; `audio/Shape_Konzept.md` 0.17.0, Benutzerhandbuch 1.158.0), mit Edit... und New shape... im Creator; erledigt: der Knoten liest eine geschriebene Form neu, gerechnete Töne entstehen neu, der Knopf Edit.... Offen: im Programm ungesehen; die von Claude gesetzten Zahlen; als Nächstes Stufe 20b. |
 | 1.212.0 | 2026-10-13 | Session 121, Abschluss. `sessions/Changelog_Session121.md`. **Stand:** Klang aus einer Form — gebaut die Stufen **19b** (Knoten Shape), **19c** (die Schwingung Shape im Klangerzeuger, `.lvinst` Fassung 9), **19d** (Knoten XY Scope), **19e** (die Shape-Schicht im Instrument-Creator); `audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0. **Offen:** im Programm ungesehen und ungehört bis auf Patriks Blick auf den Knoten Shape (ohne Befund); Patriks Ohr an `hoerproben_19c`, danach die Vorlagen zu den Ecken und zur Kante des Sprungs; mitgelieferte Instrumente mit Shape-Schicht; **als Nächstes Stufe 20a**, das Fenster Edit shape — mit dem Knopf Edit... im Creator und dem Neuladen einer geänderten Form. Voller Lauf 1181 / 1181, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |
 | 1.211.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19e gebaut — die Shape-Schicht im Instrument-Creator** (`audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0). Offen: im Programm ungesehen und ungehört; der Knopf Edit... kommt mit 20a; kein mitgeliefertes Instrument mit Shape-Schicht. **Als Nächstes Stufe 20a**, das Fenster Edit shape. |
 | 1.210.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19d gebaut — der Knoten XY Scope** der Effect Chain (Entscheide Patrik X1 a, X2 a; `audio/Shape_Konzept.md` 0.15.0, Benutzerhandbuch 1.156.0). Offen: im Programm ungesehen, keine Sichttest-Liste, keine Feld-Sonden. **Als Nächstes Stufe 19e**, die Shape-Schicht im Creator. |

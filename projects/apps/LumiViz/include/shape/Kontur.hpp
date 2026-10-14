@@ -40,6 +40,7 @@
 #include <QString>
 
 #include <complex>
+#include <cstdint>
 #include <vector>
 
 namespace lumi::shape
@@ -209,6 +210,10 @@ bool loescheEigeneZeichnung(const QString& name);
 /// eigene als `user:<name>` oder eine Datei beim Pfad. false = nicht gefunden
 /// oder nicht lesbar.
 bool holeZeichnung(const QString& nennung, Zeichnung& zeichnung, bool* zuNeu = nullptr);
+/// Zaehlt jedes Schreiben und Loeschen einer Zeichnung und jeden Wechsel des
+/// Ordners der eigenen (Stufe 20a): wer eine Zeichnung gelesen hat und sich die
+/// Zahl merkt, sieht, ob er neu lesen muss — auch bei gleicher Nennung.
+[[nodiscard]] std::uint64_t zeichnungFassung();
 
 // --- die Rechnung (§5) -----------------------------------------------------------
 

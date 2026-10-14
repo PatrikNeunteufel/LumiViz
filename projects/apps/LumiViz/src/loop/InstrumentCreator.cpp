@@ -7,6 +7,7 @@
 
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
+#include "loop/FormFenster.hpp"
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"
 
@@ -741,10 +742,18 @@ void InstrumentCreator::setupUI()
         m_formWahl = new QPushButton(tr("Browse..."), this);
         m_formWahl->setObjectName(QStringLiteral("creatorShapeBrowse"));
         m_formWahl->setToolTip(tr("Choose the shape: a built-in one, one of your own, or a shape file"));
+        // Edit... (Stufe 20a): die Form im Fenster Edit shape
+        m_formBearbeiten = new QPushButton(tr("Edit..."), this);
+        m_formBearbeiten->setObjectName(QStringLiteral("creatorShapeEdit"));
+        auto* formKnoepfe = new QWidget(this);
+        auto* formReihe = new QHBoxLayout(formKnoepfe);
+        formReihe->setContentsMargins(0, 0, 0, 0);
+        formReihe->addWidget(m_formWahl);
+        formReihe->addWidget(m_formBearbeiten);
         const int zeile = gitter->rowCount();
         gitter->addWidget(name, zeile, 0);
         gitter->addWidget(m_formName, zeile, 1);
-        gitter->addWidget(m_formWahl, zeile, 2);
+        gitter->addWidget(formKnoepfe, zeile, 2);
         auto* kontur = new QLabel(tr("Contour"), this);
         m_formKontur = new QComboBox(this);
         m_formKontur->setObjectName(QStringLiteral("creatorShapeContour"));
@@ -753,8 +762,9 @@ void InstrumentCreator::setupUI()
         const int zweite = gitter->rowCount();
         gitter->addWidget(kontur, zweite, 0);
         gitter->addWidget(m_formKontur, zweite, 1, 1, 2);
-        m_formZeilen = {name, m_formName, m_formWahl, kontur, m_formKontur};
+        m_formZeilen = {name, m_formName, formKnoepfe, m_formWahl, m_formBearbeiten, kontur, m_formKontur};
         connect(m_formWahl, &QPushButton::clicked, this, &InstrumentCreator::zeigeFormWahl);
+        connect(m_formBearbeiten, &QPushButton::clicked, this, [this] { (void)oeffneFormBearbeiten(true); });
         connect(m_formKontur, &QComboBox::activated, this, [this](int index) {
             const int kennung = m_formKontur->itemData(index).toInt();
             aendereSchicht([kennung](Schicht& s) { s.formKontur = kennung; });
@@ -1813,6 +1823,9 @@ void InstrumentCreator::zeigeAlles()
                             : !m_formGefunden        ? tr("%1 (not found)").arg(gewaehlte.form)
                                                      : m_formZeichnung.titel);
         m_formName->setToolTip(shape::istKonturDatei(gewaehlte.form) ? QDir::toNativeSeparators(gewaehlte.form) : gewaehlte.form);
+        m_formBearbeiten->setEnabled(m_formGefunden);
+        m_formBearbeiten->setToolTip(m_formGefunden ? tr("Draw, move and order the contours of this shape and save it")
+                                                    : tr("The shape of this layer is not found — choose one with Browse..."));
         const QSignalBlocker ruhe(m_formKontur);
         m_formKontur->clear();
         m_formKontur->addItem(tr("All, one path"), 0);
@@ -2394,9 +2407,11 @@ void InstrumentCreator::setzeSchleife(bool an)
 
 void InstrumentCreator::liesForm(const QString& nennung)
 {
-    if (m_formGelesenDa && m_formGelesen == nennung) return;
+    // eine geschriebene Form (Edit shape) ist neu zu lesen, auch bei gleicher Nennung
+    if (m_formGelesenDa && m_formGelesen == nennung && m_formFassung == shape::zeichnungFassung()) return;
     m_formGelesen = nennung;
     m_formGelesenDa = true;
+    m_formFassung = shape::zeichnungFassung();
     m_formZeichnung = shape::Zeichnung{};
     m_formGefunden = !nennung.isEmpty() && shape::holeZeichnung(nennung, m_formZeichnung);
     if (!m_formGefunden) m_formZeichnung = shape::Zeichnung{};
@@ -2434,7 +2449,68 @@ void InstrumentCreator::zeigeFormWahl()
         einstellungen.setValue(QLatin1String(kLetzterFormOrdner), QFileInfo(pfad).absolutePath());
         setzeForm(pfad);  // die Schicht nennt den Pfad, die Datei bleibt, wo sie ist
     });
+    menue.addSeparator();
+    connect(menue.addAction(tr("New shape...")), &QAction::triggered, this, [this] { (void)oeffneNeueForm(true); });
     menue.exec(m_formWahl->mapToGlobal(QPoint(0, m_formWahl->height())));
+}
+
+void InstrumentCreator::richteFormFensterEin()
+{
+    if (m_formFenster == nullptr)
+    {
+        m_formFenster = new FormFenster(this);
+        // Save und Save as...: die Form ist die der Schicht, die jetzt gewaehlt ist
+        connect(m_formFenster, &FormFenster::gespeichert, this, &InstrumentCreator::uebernimmForm);
+    }
+    // die Engine, wie sie jetzt ist — sie kann seit dem letzten Mal eine andere sein
+    m_formFenster->setEngine(m_engineGeber ? m_engineGeber() : nullptr);
+}
+
+bool InstrumentCreator::oeffneFormBearbeiten(bool zeigen)
+{
+    if (schicht().schwingung != Schwingung::Form) return false;
+    richteFormFensterEin();
+    if (!m_formFenster->bearbeite(schicht().form)) return false;
+    if (zeigen)
+    {
+        m_formFenster->show();
+        m_formFenster->raise();
+        m_formFenster->activateWindow();
+    }
+    return true;
+}
+
+bool InstrumentCreator::oeffneNeueForm(bool zeigen)
+{
+    if (schicht().schwingung != Schwingung::Form) return false;
+    richteFormFensterEin();
+    m_formFenster->beginneNeu();
+    if (zeigen)
+    {
+        m_formFenster->show();
+        m_formFenster->raise();
+        m_formFenster->activateWindow();
+    }
+    return true;
+}
+
+void InstrumentCreator::uebernimmForm(const QString& nennung)
+{
+    if (schicht().schwingung != Schwingung::Form) return;
+    if (schicht().form != nennung)
+    {
+        setzeForm(nennung);
+        return;
+    }
+    // dieselbe Form, neu geschrieben: die gewaehlte Kontur bleibt, solange es sie gibt
+    shape::Zeichnung zeichnung;
+    const bool da = shape::holeZeichnung(nennung, zeichnung);
+    const int kontur = schicht().formKontur;
+    m_formGelesenDa = false;
+    if (da && kontur != 0 && zeichnung.finde(kontur) == nullptr)
+        aendereSchicht([](Schicht& s) { s.formKontur = 0; });
+    else
+        zeigeAlles();  // die Schicht bleibt, wie sie ist — die Zeile Contour und das Bild aber nicht
 }
 
 // =============================================================================

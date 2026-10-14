@@ -958,6 +958,7 @@ private:
         std::string shapeCompiled;
         std::string shapeNennung;        ///< wofuer `shapeForm` steht
         bool shapeGelesen = false;       ///< `shapeNennung` ist versucht (auch vergeblich)
+        std::uint64_t shapeFassung = 0;  ///< `zeichnungFassung` beim Lesen (Stufe 20a)
         lumi::shape::Zeichenform shapeForm;
         double shapeUmlauf = 0.0;        ///< 0 … 1
 

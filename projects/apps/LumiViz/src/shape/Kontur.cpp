@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 
@@ -53,6 +54,20 @@ QString& konturOrdnerImTest()
 {
     static QString ordner;
     return ordner;
+}
+
+std::atomic<std::uint64_t>& fassung()
+{
+    static std::atomic<std::uint64_t> zahl{0};
+    return zahl;
+}
+
+/// Eine Zeichnung ist geschrieben oder geloescht, oder `user:<name>` meint eine
+/// andere Datei: wer aufbereitet oder gelesen hat, tut es neu.
+void zeichnungGeaendert()
+{
+    ++fassung();
+    vergissTonformen();
 }
 
 struct Wort
@@ -346,7 +361,7 @@ bool speichereZeichnung(const Zeichnung& zeichnung, const QString& pfad)
     QSaveFile datei(pfad);
     if (!datei.open(QIODevice::WriteOnly)) return false;
     if (datei.write(QJsonDocument(alsJson(zeichnung)).toJson(QJsonDocument::Indented)) < 0 || !datei.commit()) return false;
-    vergissTonformen();  // wer diese Form fuer den Ton aufbereitet hat, bereitet neu auf
+    zeichnungGeaendert();  // wer diese Form fuer den Ton aufbereitet hat, bereitet neu auf
     return true;
 }
 
@@ -414,7 +429,7 @@ QString eigenerKonturOrdner()
 void setzeEigenenKonturOrdnerFuerTests(const QString& ordner)
 {
     konturOrdnerImTest() = ordner;
-    vergissTonformen();  // `user:<name>` meint jetzt eine andere Datei
+    zeichnungGeaendert();  // `user:<name>` meint jetzt eine andere Datei
 }
 
 QString eigenerKonturName(const QString& titel)
@@ -472,8 +487,13 @@ bool loescheEigeneZeichnung(const QString& name)
 {
     const QString pfad = eigeneKonturDatei(name);
     if (pfad.isEmpty() || !QFile::remove(pfad)) return false;
-    vergissTonformen();
+    zeichnungGeaendert();
     return true;
+}
+
+std::uint64_t zeichnungFassung()
+{
+    return fassung();
 }
 
 bool holeZeichnung(const QString& nennung, Zeichnung& zeichnung, bool* zuNeu)

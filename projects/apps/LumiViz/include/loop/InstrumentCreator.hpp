@@ -54,6 +54,7 @@
 #include <QString>
 #include <QWidget>
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -76,6 +77,7 @@ namespace lumi::loop
 {
 
 class AufnahmeFenster;
+class FormFenster;
 class SignalWeg;
 
 /// Eine Kurve als Bild: Werte von -1 bis 1 (oder 0 bis 1), ueber die Breite
@@ -324,6 +326,16 @@ public:
     void setzeForm(const QString& nennung);
     /// Das Bild „Shape, as it plays" (fuer Tests).
     [[nodiscard]] FormBild* formBild() const { return m_formBild; }
+    /// **Edit...** neben Shape (Stufe 20a): die Form der gewaehlten Schicht im
+    /// Fenster Edit shape oeffnen. Nach Save oder Save as... spielt die Schicht
+    /// das Ergebnis. false = keine Shape-Schicht, oder ihre Form ist nicht zu lesen.
+    bool oeffneFormBearbeiten(bool zeigen = true);
+    /// **New shape...** im Menue hinter Browse...: das Fenster leer oeffnen;
+    /// was dort mit Save as... gespeichert wird, spielt danach die gewaehlte
+    /// Schicht. false = keine Shape-Schicht.
+    bool oeffneNeueForm(bool zeigen = true);
+    /// Das Fenster Edit shape; nullptr, solange es nie geoeffnet wurde.
+    [[nodiscard]] FormFenster* formFenster() const { return m_formFenster; }
 
     // --- Detect und Reference tone (Stufe 11a, Schritt 3) ----------------------
     /// **Detect:** den Grundton der Aufnahme der gewaehlten Schicht messen, ab
@@ -539,6 +551,11 @@ private:
     std::vector<QWidget*> m_formZeilen;      ///< was sonst nur bei Shape zu sehen ist
     QLabel* m_formName = nullptr;
     QPushButton* m_formWahl = nullptr;
+    QPushButton* m_formBearbeiten = nullptr;  ///< Edit... (Stufe 20a)
+    FormFenster* m_formFenster = nullptr;
+    void richteFormFensterEin();
+    /// Was das Fenster gespeichert hat, in die gewaehlte Schicht setzen.
+    void uebernimmForm(const QString& nennung);
     QComboBox* m_formKontur = nullptr;
     QCheckBox* m_formStereo = nullptr;
     QCheckBox* m_formRueckwaerts = nullptr;
@@ -546,6 +563,7 @@ private:
     /// die Zeile Contour); `m_formGefunden` = sie liess sich lesen.
     QString m_formGelesen;
     bool m_formGelesenDa = false;
+    std::uint64_t m_formFassung = 0;  ///< `shape::zeichnungFassung` beim Lesen
     bool m_formGefunden = false;
     shape::Zeichnung m_formZeichnung;
     void liesForm(const QString& nennung);

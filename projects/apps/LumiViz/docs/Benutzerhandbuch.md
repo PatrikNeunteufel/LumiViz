@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.157.0
-> **Datum:** 2026-10-13
+> **Version:** 1.158.0
+> **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -275,8 +275,8 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   anderen Rechner. *Export your data* zeigt die Bereiche mit der Zahl deiner Dateien
   (Visualizer presets, Gradients, Module presets, Shader templates, Karaoke presets and
   trails, Composer fades, shapes, mutes, Shadertoy imports, Instruments, Samples, Shapes —
-  der letzte NEU in 1.154.0: eigene Formen für die Waveform Shape, noch ohne Fenster,
-  das sie anlegt); abgesetzt
+  der letzte NEU in 1.154.0: eigene Formen, wie sie das Fenster **Edit shape** anlegt
+  (§16)); abgesetzt
   darunter und anfangs aus stehen *Settings* (Tastenkürzel, Favoriten, Optionen — nie die
   Fensterlage, gemerkte Ordner oder der Shadertoy-Schlüssel) und *Downloaded lyrics* (die
   geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
@@ -1112,8 +1112,9 @@ einem Song —, aber seine Skriptfelder können ihn auf den Ton antworten lassen
 
 Sechs Formen kommen mit: Circle, Square, Triangle, Star, Heart und Heart and
 star (zwei Konturen). Eigene Formen liegen im Benutzerordner unter `contours`
-und stehen in der Liste mit „(own)"; ein Fenster zum Zeichnen gibt es noch
-nicht.
+und stehen in der Liste mit „(own)"; gezeichnet werden sie im Fenster **Edit
+shape** (§16, Instrument-Creator). Wird dort eine Form gespeichert, die ein
+Knoten zeigt, zeichnet er gleich die neue Fassung.
 
 | Feld | Bedeutung |
 |---|---|
@@ -2933,7 +2934,8 @@ Filter und Drive gelten wie bei Sine und Saw.
 
 | Bei Waveform: Shape | Wirkung |
 |---|---|
-| **Shape** und **Browse...** | Die Form: eine mitgelieferte, eine eigene (unter „My shapes") oder über „From file..." eine `.lvcontour` von irgendwo — die Schicht nennt dann ihren Pfad. Beim ersten Wählen von Shape steht *Heart* da. Fehlt die Datei, steht „(not found)", und die Schicht schweigt |
+| **Shape** und **Browse...** | Die Form: eine mitgelieferte, eine eigene (unter „My shapes") oder über „From file..." eine `.lvcontour` von irgendwo — die Schicht nennt dann ihren Pfad. Beim ersten Wählen von Shape steht *Heart* da. Fehlt die Datei, steht „(not found)", und die Schicht schweigt. NEU in 1.158.0: **New shape...** am Ende des Menüs öffnet das Fenster **Edit shape** leer |
+| **Edit...** | NEU in 1.158.0. Öffnet die Form der Schicht im Fenster **Edit shape** (siehe unten). Nach **Save** oder **Save as...** spielt die Schicht das Ergebnis; grau, wenn die Form nicht gefunden wird |
 | **Contour** | Was die Schicht spielt: eine Kontur der Form beim Namen, oder **All, one path** — alle Konturen mit Haken nacheinander in einem Umlauf, mit einem kurzen Sprung dazwischen |
 | **Harmonics** | Wie viele Teiltöne die Form zeichnen (1 bis 512): bei 1 ist jede Form eine Ellipse und klingt wie ein Sinus, mit mehr folgt sie der Zeichnung genauer und klingt heller. Der Regler stellt unten fein. Hohe Noten bekommen von selbst weniger |
 | **Harmonics envelope** | Die Hüllkurve der Schicht hebt Harmonics um diesen Betrag (nach rechts: die Note beginnt hell und wird runder) oder senkt sie (nach links: sie beginnt rund). Wie Filter envelope, nur am Klang der Form selbst |
@@ -2948,7 +2950,28 @@ Teiltöne sind: an einer Schicht allein hörst du sie kaum. Hörbar werden sie
 hinter einem **Drive**, neben einer zweiten Schicht mit derselben Form, und
 sichtbar im Scope. Der Pegel einer Shape-Schicht hängt von Form, Harmonics und
 Angle ab — eine runde Form ist leiser als eine eckige; der Creator zeigt den
-Peak. Ein Fenster zum Zeichnen eigener Formen gibt es noch nicht.
+Peak.
+
+**Edit shape — eine Form zeichnen.** NEU in 1.158.0. Das Fenster öffnet sich
+mit **Edit...** neben Shape (die Form der Schicht) oder mit **New shape...** im
+Menü hinter **Browse...** (leer). Links die Zeichenfläche mit den Konturen in
+ihren Farben — mit Haken kräftig, ohne dünn und gestrichelt, der Startpunkt als
+Punkt —, rechts die Liste **Contours**, darunter **Preview**.
+
+| Im Fenster | Wirkung |
+|---|---|
+| **Pen** | Zeichnet eine neue Kontur. **Ziehen** mit gedrückter Maustaste zeichnet frei Hand; beim Loslassen wird der Zug geglättet und in wenige Kurven umgerechnet. Ein **Klick** setzt einen Eckpunkt, verbunden durch eine gerade Linie. Beides lässt sich in einer Kontur mischen. **Geschlossen** wird mit einem Klick auf den ersten Punkt (der Ring um ihn), mit einem Doppelklick oder mit Enter; ein Zug frei Hand, der am ersten Punkt endet, schließt von selbst. **Esc** verwirft, was gerade entsteht |
+| **Move point** | Zeigt die Punkte jeder Kontur als kleine Quadrate; einen davon ziehen schiebt ihn, die Kurven daneben gehen mit |
+| **Contours** | Je Kontur der Haken (nur Konturen mit Haken spielen bei *All, one path* mit), die Farbe, Platz und Name und rechts ihr Anteil am Umlauf des Stifts. **Rename** (auch Doppelklick), **Remove**, **↑** und **↓** für die Reihenfolge, in der der Stift sie spielt |
+| **Preview** | Ein Umlauf des Stifts über der Zeit: **L** die Bewegung zur Seite, **R** die nach oben; ein gestrichelter Strich, wo die nächste Kontur beginnt. **Harmonics** stellt nur hier zum Ausprobieren; **Play** spielt die Form bei A3 immer wieder, links und rechts wie Stereo XY |
+| **Ctrl+Z**, **Ctrl+Y** | Nimmt jeden Schritt zurück und bringt ihn wieder |
+| **Save** | Ersetzt eine eigene Form — nach einer Rückfrage, die nennt, welche deiner Instrumente sie spielen (unten links steht es schon: „Used by: …"). Eine mitgelieferte Form, eine Datei von irgendwo oder eine neue lässt Save in Ruhe |
+| **Save as...** | Legt eine neue eigene Form unter „My shapes" an (die Datei `contours/<name>.lvcontour` im Benutzerordner); einen vergebenen Namen nimmt es nicht. So wird auch eine mitgelieferte Form oder eine Datei von irgendwo zu deiner eigenen |
+
+Nach dem Speichern rechnen Loops und Instrumente, die die Form spielen, mit der
+neuen Fassung. **Open SVG...**, **Open image...**, **Bridge**, **Show image**,
+**From image** und **Use as** stehen schon da, sind aber noch grau — sie kommen
+mit den nächsten Stufen.
 
 **Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
 Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
@@ -3072,7 +3095,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
 | ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser; Panel Loop vor dem Dateinamen |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
-| ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11); als Klang einer Schicht noch nicht | noch nirgends als Icon |
+| ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11), eine Shape-Schicht im Instrument-Creator spielt sie, das Fenster **Edit shape** legt sie an (§16) | noch nirgends als Icon |
 | ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | Import data, Liste „Let me decide for each file" |
 | ![lvshape](bilder/handbuch/icons/lumiviz_lvshape.png) | `.lvshape` | Stück des Curve Editors (§15) | Import data, dieselbe Liste |
 | ![lvmute](bilder/handbuch/icons/lumiviz_lvmute.png) | `.lvmute` | Mute-Profil des Composers (§15) | Import data, dieselbe Liste |
@@ -3162,6 +3185,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.158.0 | 2026-10-14 | Session 122. §16 NEU das Fenster **Edit shape**: Konturen mit **Pen** zeichnen (frei Hand und Eckpunkte gemischt), mit **Move point** schieben, die Liste **Contours** (Haken, Anteil am Umlauf, Rename, Remove, Reihenfolge), **Preview** mit **Harmonics** und **Play**, Undo, **Save** und **Save as...**, „Used by"; im Instrument-Creator **Edit...** neben Shape und **New shape...** im Menü hinter Browse... §11: der Knoten Shape zeichnet eine gespeicherte Form gleich neu. §17: `.lvcontour` nachgezogen. |
 | 1.157.0 | 2026-10-13 | Session 121. §16 Instrument-Creator NEU **Waveform: Shape** — eine Schicht spielt eine gezeichnete Form: **Shape** mit **Browse...**, **Contour**, **Harmonics**, **Harmonics envelope**, **Angle**, **Start**, **Stereo XY**, **Reverse** und das Bild **Shape, as it plays**. |
 | 1.156.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **XY Scope**: zeichnet links gegen rechts, ein Punkt je Abtastwert, in voller Genauigkeit — **Gain**, **Draw** (Lines, Dots), **Line width**, **Rotate 45°**, Lage, Größe, **Color from** (Table, Gradient), **Line blend**; Skriptfelder Init, Frame, Beat, Song und **Point**; sechs Voreinstellungen. |
 | 1.155.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **Shape**: zeichnet die Konturen einer Form-Datei (`.lvcontour`) aus beliebig vielen Teiltönen (**Harmonics**), mit **Contour**, **Points**, Lage, Größe, Drehung, eigener Farbe, **Line blend**, **Show circles** und **Speed**; Skriptfelder Init, Frame, Beat, Song und **Point** (je Punkt der Linie); neun Voreinstellungen. §17: `.lvcontour` gibt es jetzt. |

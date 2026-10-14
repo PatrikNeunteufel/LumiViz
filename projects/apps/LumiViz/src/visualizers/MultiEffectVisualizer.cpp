@@ -13612,10 +13612,12 @@ void MultiEffectVisualizer::runShape(const ChainNode& node, const ShapeParams& p
 
     // Die Zeichnung: einmal je Nennung gelesen und aufbereitet (auch ein
     // vergeblicher Versuch wird gemerkt — sonst laese jedes Bild die Platte).
-    if (!rt.shapeGelesen || rt.shapeNennung != params.shape)
+    // Ist seither eine Form geschrieben worden (Edit shape), wird neu gelesen.
+    if (!rt.shapeGelesen || rt.shapeNennung != params.shape || rt.shapeFassung != lumi::shape::zeichnungFassung())
     {
         rt.shapeNennung = params.shape;
         rt.shapeGelesen = true;
+        rt.shapeFassung = lumi::shape::zeichnungFassung();
         lumi::shape::Zeichnung zeichnung;
         rt.shapeForm = lumi::shape::holeZeichnung(QString::fromStdString(params.shape), zeichnung)
                            ? lumi::shape::zeichenform(zeichnung)

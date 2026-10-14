@@ -354,6 +354,9 @@ void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
 /// sortiert, jedes einmal. Fuer die Rueckfrage, bevor ein Sample ersetzt wird
 /// (Stufe 17, Entscheid M3 a). Loops an freiem Ort kennt sie nicht.
 [[nodiscard]] QStringList eigeneInstrumenteMitSample(const QString& nennung);
+/// Dasselbe fuer eine Form: die Titel der eigenen Instrumente, in denen eine
+/// Shape-Schicht diese Form nennt (Stufe 20a, „Used by" im Fenster Edit shape).
+[[nodiscard]] QStringList eigeneInstrumenteMitForm(const QString& nennung);
 /// Ein eigenes Instrument in den Benutzerordner schreiben (legt ihn an).
 /// `instrument.name` wird `user:<name>`. false = kein gueltiger Name oder
 /// nicht zu schreiben.

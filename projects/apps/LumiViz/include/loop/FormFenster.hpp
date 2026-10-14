@@ -1,0 +1,341 @@
+/**
+ * @file FormFenster.hpp
+ * @brief Klang aus einer Form: das Fenster „Edit shape" — Konturen zeichnen,
+ *        schieben, ordnen, anhoeren und als Form speichern
+ *        (docs/audio/Shape_Konzept.md §8a; Stufe 20a; Skizze gebilligt,
+ *        Patrik S120; Entscheide Z1 a und Z2 a, Patrik S122)
+ *
+ * **Kopf:** „Edit shape – <Name>", daneben der Ort; rechts **Open SVG...**
+ * und **Open image...** — in Stufe 20a noch grau (20b, 20c). Draw gibt es
+ * nicht (Z2 a): gezeichnet wird mit Pen.
+ * **Zeichenflaeche** (`FormFlaeche`): die Konturen in ihren Farben — gewaehlte
+ * kraeftig, nicht gewaehlte duenn und gestrichelt, der Startpunkt gefuellt.
+ * Darunter die Werkzeuge **Pen** und **Move point**; **Bridge** und **Show
+ * image** sind grau (20d, 20c).
+ * **Liste Contours:** Haken, Farbe, Platz und Name, der Anteil am Umlauf;
+ * **Rename**, **Remove**, ↑ und ↓.
+ * **Unten:** **From image** und **Use as** grau, **Preview** mit dem
+ * Wellenzug eines Umlaufs (`FormVerlauf`), **Harmonics** und **Play**.
+ * **Fuss:** „Used by: …", **Cancel**, **Save as...**, **Save** — wie im
+ * Fenster Edit sample: Save ersetzt eine eigene Form nach einer Rueckfrage und
+ * ist sonst grau; Save as... legt eine neue eigene an.
+ *
+ * Gespeichert wird mit `speichereEigeneZeichnung` (Kontur.hpp); danach zaehlt
+ * das Fenster die Fassung der Instrumente weiter (`zaehleInstrumentFassung`),
+ * damit gerechnete Toene mit der neuen Form neu entstehen. `gespeichert` nennt
+ * die Form, wie eine Schicht sie nennt.
+ */
+#pragma once
+
+#include "audio/IAudioEngine.hpp"
+#include "loop/AufnahmeFenster.hpp"  // AusschnittQuelle
+#include "shape/Kontur.hpp"
+#include "shape/Tonform.hpp"
+
+#include <QPainterPath>
+#include <QPointF>
+#include <QRectF>
+#include <QString>
+#include <QWidget>
+
+#include <memory>
+#include <vector>
+
+class QComboBox;
+class QLabel;
+class QPushButton;
+class QRadioButton;
+class QSlider;
+class QToolButton;
+class QTreeWidget;
+class QTreeWidgetItem;
+
+namespace lumi::loop
+{
+
+/// Die Zeichenflaeche: zeigt eine Zeichnung und nimmt Pen und Move point an.
+/// Sie aendert die Zeichnung nicht selbst — sie meldet, was geschehen soll.
+class FormFlaeche : public QWidget
+{
+    Q_OBJECT
+
+public:
+    enum class Werkzeug
+    {
+        Stift,     ///< Pen: ziehen = frei Hand, Klick = Eckpunkt
+        Schieben,  ///< Move point
+    };
+
+    explicit FormFlaeche(QWidget* parent = nullptr);
+    /// Die Zeichnung, die zu sehen ist (gehoert dem Fenster); nullptr = keine.
+    void setZeichnung(const shape::Zeichnung* zeichnung);
+    /// Der Ausschnitt der Zeichnung, der die Flaeche fuellt (mit gleichem Mass in x und y).
+    void setAnsicht(const QRectF& ansicht);
+    [[nodiscard]] const QRectF& ansicht() const { return m_ansicht; }
+    void setWerkzeug(Werkzeug werkzeug);
+    [[nodiscard]] Werkzeug werkzeug() const { return m_werkzeug; }
+    /// Diese Kontur hervorheben (die in der Liste gewaehlte); 0 = keine.
+    void setHervorgehoben(int kennung);
+
+    /// Ein Punkt der Zeichnung im Bild und zurueck.
+    [[nodiscard]] QPointF imBild(QPointF punkt) const;
+    [[nodiscard]] QPointF inZeichnung(QPointF ort) const;
+    /// So viele Einheiten der Zeichnung macht ein Bildpunkt.
+    [[nodiscard]] double einheitJePunkt() const;
+
+    // --- Pen (auch fuer Tests; Punkte in den Koordinaten der Zeichnung) ---------
+    /// Die Kontur, die gerade entsteht; leer = keine.
+    [[nodiscard]] const QPainterPath& angefangen() const { return m_angefangen; }
+    /// Ein Klick: ein Eckpunkt — oder, auf dem ersten Punkt, schliessen.
+    void klicke(QPointF punkt);
+    /// Ein Zug frei Hand; endet er am ersten Punkt, schliesst er die Kontur.
+    void ziehe(const std::vector<QPointF>& zug);
+    /// Schliessen (Doppelklick, Enter). false = daraus wird keine Kontur.
+    bool schliesse();
+    /// Die angefangene Kontur verwerfen (Esc).
+    void verwirf();
+
+    /// So nah (in Bildpunkten) muss die Maus an einem Punkt sein, der getroffen werden soll.
+    static constexpr double kFangRadius = 8.0;
+    /// So weit (in Bildpunkten) darf ein Zug frei Hand nach dem Glaetten abweichen.
+    static constexpr double kGlaetten = 2.0;
+    /// Weiter als das (in Bildpunkten) bewegt: kein Klick, ein Zug.
+    static constexpr double kZugAb = 4.0;
+
+Q_SIGNALS:
+    /// Pen hat eine Kontur geschlossen.
+    void konturFertig(const QPainterPath& pfad);
+    /// Move point: der Ankerpunkt `anker` der Kontur `kennung` soll nach `ziel`.
+    void ankerGezogen(int kennung, int anker, QPointF ziel);
+    /// Move point: losgelassen — erst jetzt lohnt es, neu zu rechnen.
+    void ankerLosgelassen();
+    /// Pen hat etwas angefangen oder verworfen (der Hinweis unter der Flaeche).
+    void angefangenGeaendert();
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void leaveEvent(QEvent* event) override;
+
+private:
+    /// Der Ankerpunkt unter dem Ort (Bildpunkte): Kennung und Platz; {0, -1} = keiner.
+    [[nodiscard]] std::pair<int, int> ankerBei(QPointF ort) const;
+    void stelleZeiger(QPointF ort);
+    /// Das Mass: Bildpunkte je Einheit der Zeichnung, und wo ihr Ursprung liegt.
+    [[nodiscard]] double mass() const;
+
+    const shape::Zeichnung* m_zeichnung = nullptr;
+    QRectF m_ansicht{0.0, 0.0, 200.0, 200.0};
+    Werkzeug m_werkzeug = Werkzeug::Stift;
+    int m_hervorgehoben = 0;
+    QPainterPath m_angefangen;
+    // die Maus
+    bool m_gedrueckt = false;
+    QPointF m_druckOrt;              ///< Bildpunkte
+    std::vector<QPointF> m_zug;      ///< Zeichnung: der Zug, solange gedrueckt
+    bool m_istZug = false;
+    QPointF m_maus{-1.0, -1.0};      ///< Bildpunkte; < 0 = nicht ueber der Flaeche
+    int m_ziehKennung = 0;           ///< Move point: welche Kontur, welcher Punkt
+    int m_ziehAnker = -1;
+};
+
+/// „Preview": ein Umlauf des Stifts ueber der Zeit — links die Bewegung zur
+/// Seite, rechts die nach oben, mit einem Strich, wo die naechste Kontur beginnt.
+class FormVerlauf : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit FormVerlauf(QWidget* parent = nullptr);
+    void setForm(const std::shared_ptr<const shape::Tonform>& form, double harmonische);
+    /// Die beiden Kurven, je ein Wert zwischen −1 und 1 je Stelle (fuer Tests).
+    [[nodiscard]] const std::vector<double>& links() const { return m_links; }
+    [[nodiscard]] const std::vector<double>& rechts() const { return m_rechts; }
+    /// Wo eine neue Kontur beginnt, als Anteil des Umlaufs.
+    [[nodiscard]] const std::vector<double>& grenzen() const { return m_grenzen; }
+    [[nodiscard]] QSize sizeHint() const override { return {240, 90}; }
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    std::vector<double> m_links;
+    std::vector<double> m_rechts;
+    std::vector<double> m_grenzen;
+};
+
+class FormFenster : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit FormFenster(QWidget* parent = nullptr);
+    ~FormFenster() override;
+
+    /// Die Engine, ueber die Play spielt; nullptr = keine (Play ist dann aus).
+    /// Sie muss das Fenster ueberleben, oder vorher mit nullptr abgemeldet werden.
+    void setEngine(IAudioEngine* engine);
+
+    /// **New shape...:** eine leere Zeichnung, Pen gewaehlt.
+    void beginneNeu();
+    /// **Edit...:** eine Form oeffnen, wie eine Schicht sie nennt. false = nicht
+    /// gefunden oder nicht lesbar; das Fenster bleibt, wie es war.
+    bool bearbeite(const QString& nennung);
+
+    /// Woher stammt, was offen ist?
+    enum class Herkunft
+    {
+        Neu,           ///< New shape: noch ohne Namen
+        Eigene,        ///< eine eigene Form (`user:<name>`): Save ersetzt sie
+        Mitgeliefert,  ///< eine mitgelieferte Form: schreibgeschuetzt
+        Datei,         ///< eine `.lvcontour` an freiem Ort: schreibgeschuetzt
+    };
+    [[nodiscard]] Herkunft herkunft() const;
+    /// Die Form, die offen ist; leer = eine neue.
+    [[nodiscard]] const QString& nennung() const { return m_nennung; }
+    /// Die Zeichnung, wie sie gerade steht.
+    [[nodiscard]] const shape::Zeichnung& zeichnung() const { return m_zeichnung; }
+    /// Weicht sie von dem ab, was geoeffnet wurde?
+    [[nodiscard]] bool geaendert() const { return !(m_zeichnung == m_vorlage); }
+
+    // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
+    void setzeWerkzeug(FormFlaeche::Werkzeug werkzeug);
+    /// Eine Kontur dazu (Pen hat sie geschlossen); sie ist danach in der Liste
+    /// gewaehlt. Zurueck: ihre Kennung; 0 = die Zeichnung ist voll.
+    int fuegeKonturHinzu(const QPainterPath& pfad);
+    /// Der Haken in der Liste.
+    void setzeGewaehlt(int kennung, bool an);
+    /// **Rename.** Leer = der Name faellt weg („Contour").
+    void benenne(int kennung, const QString& name);
+    /// **Remove.** false = es gab sie nicht.
+    bool entferne(int kennung);
+    /// **↑ / ↓:** einen Platz hinauf (-1) oder hinunter (+1). false = am Rand.
+    bool schiebe(int kennung, int richtung);
+    /// **Move point.** false = es gibt den Punkt nicht.
+    bool schiebeAnker(int kennung, int anker, QPointF ziel);
+    /// Die in der Liste gewaehlte Kontur; 0 = keine.
+    [[nodiscard]] int aktuelle() const;
+    void waehle(int kennung);
+    /// **Undo** (Ctrl+Z) und **Redo** (Ctrl+Y): jeder Schritt oben ist einer.
+    bool rueckgaengig();
+    bool wiederherstellen();
+
+    /// **Harmonics** der Preview: 1 … `shape::kHarmonischeMax`.
+    void setzeHarmonische(double harmonische);
+    [[nodiscard]] double harmonische() const { return m_harmonische; }
+    /// Was die Preview zeigt und Play spielt: alle Konturen mit Haken als ein
+    /// Pfad; nullptr = keine Kontur mit Haken.
+    [[nodiscard]] std::shared_ptr<const shape::Tonform> form() const { return m_form; }
+    /// Der Anteil der Kontur am Umlauf (0 … 1); -1 = sie spielt nicht mit.
+    [[nodiscard]] double anteil(int kennung) const;
+    /// **Play:** einen Umlauf immer wieder, links die Bewegung zur Seite, rechts
+    /// die nach oben (wie Stereo XY), bei `kPlayHz`. false = keine Engine oder
+    /// keine Kontur mit Haken.
+    bool spiele();
+    void halte();
+    [[nodiscard]] bool spielt() const { return m_mixer != INVALID_STREAM; }
+    /// Was Play spielt: eine Sekunde, Stereo, bei `kPlayRate` (fuer Tests).
+    [[nodiscard]] std::vector<float> klang() const;
+    static constexpr int kPlayRate = 48000;
+    static constexpr int kPlayHz = 220;  ///< A3 — ganzzahlig, damit die Sekunde nahtlos wiederholt
+
+    /// **Save** ohne Rueckfrage: die eigene Form ersetzen, die offen ist. Leer
+    /// = keine eigene offen, keine Kontur, oder nicht zu schreiben; sonst die
+    /// Nennung `user:<name>` — sie geht auch als `gespeichert` hinaus, und das
+    /// Fenster schliesst.
+    QString speichere();
+    /// **Save as...** ohne Dialog: als neue eigene Form unter diesem Titel.
+    /// Leer = keine Kontur, aus dem Titel wird kein Name, den Namen gibt es
+    /// schon, oder nicht zu schreiben; sonst wie `speichere`.
+    QString speichereAls(const QString& titel);
+    /// Was Save as... als Namen vorschlaegt: „My shape", „My shape 2", …; fuer
+    /// eine geoeffnete Form „Heart 2", „Heart 3", …
+    [[nodiscard]] QString vorschlagTitel() const;
+    /// Die Zeile unter dem Namen im Dialog von Save as...: die Datei, die
+    /// daraus wird — oder warum es so nicht geht. `geht` sagt, ob Save an ist.
+    [[nodiscard]] static QString dateiZeile(const QString& titel, bool* geht = nullptr);
+    /// Der Satz, mit dem Save nachfragt — mit den eigenen Instrumenten, die die
+    /// Form spielen.
+    [[nodiscard]] QString ersetzenFrage() const;
+    /// Die Zeile links im Fuss: „Used by: …" oder leer.
+    [[nodiscard]] QString nutzerZeile() const;
+
+    /// Die Teile (fuer Tests).
+    [[nodiscard]] FormFlaeche* flaeche() const { return m_flaeche; }
+    [[nodiscard]] FormVerlauf* verlauf() const { return m_verlauf; }
+    [[nodiscard]] QTreeWidget* liste() const { return m_liste; }
+
+Q_SIGNALS:
+    /// Die Form liegt bei den eigenen und heisst so (`user:<name>`).
+    void gespeichert(const QString& nennung);
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
+private:
+    void setupUI();
+    /// Vor einer Aenderung: den Stand fuer Undo merken.
+    void merke();
+    /// Nach einer Aenderung: nicht mehr gesichert, alles neu gezeigt, Play spielt das Neue.
+    void geaendertJetzt();
+    /// Titel, Ort, Liste, Preview, Knoepfe aus `m_zeichnung`.
+    void zeigeAlles();
+    /// Der Regler Harmonics und seine Zahl.
+    void zeigeHarmonische();
+    void zeigeListe();
+    void zeigeKnoepfe();
+    void rechneForm();
+    void frageUndSpeichere();
+    void frageUndSpeichereAls();
+    /// Die Zeichnung unter diesem Namen ablegen, melden, schliessen.
+    QString schreibe(const QString& name);
+    /// Den Ausschnitt so legen, dass alle Konturen mit Rand hineinpassen.
+    void passeAnsichtAn();
+    [[nodiscard]] QTreeWidgetItem* zeileVon(int kennung) const;
+
+    IAudioEngine* m_engine = nullptr;
+    shape::Zeichnung m_zeichnung;
+    shape::Zeichnung m_vorlage;  ///< wie geoeffnet
+    QString m_nennung;
+    bool m_gesichert = true;
+    std::vector<shape::Zeichnung> m_zurueck;
+    std::vector<shape::Zeichnung> m_vor;
+    bool m_schiebtGerade = false;  ///< Move point: der Stand ist zu Beginn des Ziehens gemerkt
+    double m_harmonische = 24.0;
+    std::shared_ptr<const shape::Tonform> m_form;
+
+    AusschnittQuelle m_quelle;
+    AudioStreamHandle m_mixer = INVALID_STREAM;
+    AudioStreamHandle m_quellHandle = INVALID_STREAM;
+
+    QLabel* m_ort = nullptr;
+    QPushButton* m_svg = nullptr;
+    QPushButton* m_bild = nullptr;
+    FormFlaeche* m_flaeche = nullptr;
+    QToolButton* m_stift = nullptr;
+    QToolButton* m_schieben = nullptr;
+    QToolButton* m_bruecke = nullptr;
+    QLabel* m_hinweis = nullptr;
+    QTreeWidget* m_liste = nullptr;
+    QLabel* m_listenKopf = nullptr;
+    QPushButton* m_umbenennen = nullptr;
+    QPushButton* m_weg = nullptr;
+    QPushButton* m_hinauf = nullptr;
+    QPushButton* m_hinunter = nullptr;
+    QRadioButton* m_nutzungSchichten = nullptr;  ///< Use as: grau bis Stufe 20d
+    QRadioButton* m_nutzungPfad = nullptr;
+    QComboBox* m_spruenge = nullptr;
+    FormVerlauf* m_verlauf = nullptr;
+    QSlider* m_harmonischeRegler = nullptr;
+    QLabel* m_harmonischeWert = nullptr;
+    QPushButton* m_play = nullptr;
+    QLabel* m_nutzer = nullptr;
+    QPushButton* m_sichernAls = nullptr;
+    QPushButton* m_sichern = nullptr;
+};
+
+}  // namespace lumi::loop

@@ -16,11 +16,13 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Kontur.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Zeichenform.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Tonform.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Zeichnen.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Kontur.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Tonform.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Zeichenform.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/shape/Zeichnen.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

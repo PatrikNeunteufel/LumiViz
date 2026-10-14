@@ -1,7 +1,7 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.16.0
-> **Datum:** 2026-10-13 (Session 121)
+> **Version:** 0.17.0
+> **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
 > LumiViz umgeschrieben. Entschieden sind Z1 a bis Z5 a (Patrik S119); alles
@@ -525,8 +525,17 @@ Noch nicht gebaut: eine Datei von irgendwo zu den eigenen kopieren (wie
 Alle drei enden im selben Fenster und in derselben Datei: einer Liste
 geschlossener Konturen, jede in einer Farbe, einige davon gewählt.
 
-**Zeichnen.** Mit der Maus eine geschlossene Linie ziehen. Offen: frei Hand
-oder Punkt für Punkt, glätten, nachträglich Punkte schieben.
+**Zeichnen (Z1 a, Patrik S122).** Ein Werkzeug **Pen** für beides: Ziehen
+mit gedrückter Taste zeichnet frei Hand — beim Loslassen wird der Zug
+geglättet und in wenige Kurven umgerechnet; einzelne Klicks setzen Eckpunkte,
+verbunden durch gerade Strecken; beides lässt sich in einer Kontur mischen.
+Geschlossen wird mit einem Klick auf den ersten Punkt, einem Doppelklick oder
+Enter (mit einer geraden Strecke zum Anfang); Esc verwirft die angefangene
+Kontur. **Move point** zeigt danach die Ankerpunkte; ziehen schiebt einen
+Punkt, die Kurven daneben gehen mit. Wie stark geglättet wird, ist eine feste
+Zahl (von Claude gesetzt), kein Regler in 20a. Verworfen: nur frei Hand (b) —
+klare Ecken gingen nur mit ruhiger Hand; nur Punkt für Punkt mit Griffen wie
+in Inkscape (c) — keine freie Hand, Griffe als eigener Bedienschritt.
 
 **SVG (S1 a, Patrik S120 — mit Beleg).** Nachgesehen: die öffentliche Klasse
 `QSvgRenderer` kann laden, zeichnen und die Lage eines Elements nennen; die
@@ -619,8 +628,12 @@ einem Bild ein Pfad nur aus Strecken.
 
 Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung.
 
-- **Kopf:** „Edit shape – <Name>", daneben der Ort („My shapes"); rechts die
-  drei Eingabewege **Draw**, **Open SVG...**, **Open image...**
+- **Kopf:** „Edit shape – <Name>", daneben der Ort („My shapes"); rechts
+  **Open SVG...** und **Open image...** — die Wege, die Konturen von außen
+  holen. **Draw entfällt (Z2 a, Patrik S122):** gezeichnet wird jederzeit mit
+  **Pen**, auch über geholte Konturen; ein leeres Fenster beginnt mit Pen
+  gewählt. Verworfen: Draw als Kürzel für Pen (b); Draw beginnt eine neue
+  Zeichnung (c).
 - **Zeichenfläche** (links, der größere Teil): das Bild blass im
   Hintergrund, die Konturen in ihren Farben darüber — gewählte kräftig,
   nicht gewählte dünn und gestrichelt; ein Sprung als grauer gestrichelter
@@ -667,8 +680,70 @@ wenn alle erreicht sind (c).
 Von Claude in der Skizze gesetzt, mit ihr gebilligt: die Namen (Edit shape,
 Pen, Move point, Bridge, Contours, From image, Use as, Jumps und seine drei
 Einträge), der Anteil am Umlauf und das Wort „edge" in der Liste, die Gruppe
-Preview. Noch offen, klein: was Draw genau tut (frei Hand oder Punkt für
-Punkt, glätten); die Sätze der Meldungen.
+Preview. Was Pen tut, steht seit S122 in §8 (Z1 a); Draw ist entfallen
+(Z2 a). Noch offen, klein: die Sätze der Meldungen.
+
+### Wie das Fenster gebaut ist (Stufe 20a, S122)
+
+Nach der Skizze oben, mit Z1 a und Z2 a. `loop/FormFenster` (das Fenster,
+`FormFlaeche`, `FormVerlauf`), die Rechnung am Pfad in `shape/Zeichnen`
+(ohne Widget, ohne Qt-Anwendung).
+
+- **Pen:** ein Zug frei Hand wird mit einem gleitenden Mittel über fünf
+  Punkte geglättet, mit Douglas-Peucker auf die Punkte vereinfacht, ohne die
+  er weiter als **2 Bildpunkte** abwiche, und durch diese Punkte mit Kurven
+  (Catmull-Rom als kubische Bezier-Stücke) gelegt. Ein Klick hängt eine
+  gerade Strecke an; nach einem Eckpunkt führt eine Strecke zum Anfang des
+  nächsten Zugs. Mehr als **4 Bildpunkte** zwischen Drücken und Loslassen
+  ist ein Zug, sonst ein Klick. Der Fangkreis um den ersten Punkt hat **8
+  Bildpunkte**; ein Zug frei Hand, der darin endet, schließt die Kontur von
+  selbst. Schließen geht erst ab drei Punkten (oder zwei mit einer Kurve
+  dazwischen). Wer Pen mit etwas Angefangenem verlässt, behält es als
+  Kontur, wenn es sich schließen lässt, sonst ist es weg.
+- **Move point:** die Ankerpunkte als kleine Quadrate; geschoben gehen die
+  beiden Griffe der Kurven daneben um dasselbe Stück mit, bei einem
+  geschlossenen Zug der Anfang mit dem Ende. Während des Ziehens wird nur
+  gezeichnet, gerechnet (Preview, Anteile) beim Loslassen; ein Zug ist ein
+  Schritt für Undo.
+- **Die Ansicht** wird beim Öffnen gesetzt: alle Konturen mit einem Rand von
+  einem Viertel der längeren Seite; eine leere Zeichnung zeigt 0 bis 200 in
+  beiden Richtungen, wie die mitgelieferten Formen. Sie wandert beim
+  Zeichnen nicht mit.
+- **Contours:** „Contours — 2 of 3 ticked" statt „3 of 41 shown" (das „shown"
+  gehört zu Konturen aus einem Bild, 20c); der Anteil am Umlauf ist der der
+  Rechnung (§9), eine Kontur ohne Haken zeigt „–". Rename auch mit
+  Doppelklick.
+- **Preview:** L und R in zwei Farben in einem Kasten; die Grenzen der
+  Konturen gestrichelt. Harmonics wie im Creator (40 Schritte je
+  Verdopplung), Vorgabe 24. **Play** spielt eine Sekunde aus 220 ganzen
+  Umläufen (A3) in Dauerschleife, links x, rechts y, mit dem Pegel 0,4 —
+  über `AusschnittQuelle` des Fensters Record sample, ohne Blenden. Eine
+  Änderung spielt sofort mit.
+- **Undo und Redo** (Ctrl+Z, Ctrl+Y), hundert Schritte — nicht in der
+  Skizze.
+- **Save** und **Save as...** wie im Fenster Edit sample (Rückfrage mit den
+  eigenen Instrumenten, die die Form spielen — neu
+  `eigeneInstrumenteMitForm`; ein vergebener Name geht bei Save as... nicht).
+  Eine mitgelieferte Form oder eine Datei von irgendwo wird mit Save as... zu
+  einer eigenen — das ist das Kopieren, das S121 hierher verschoben hatte.
+  Nach dem Schreiben zählt das Fenster `zaehleInstrumentFassung` weiter
+  (gerechnete Töne entstehen neu) und `Kontur.cpp` die neue
+  `zeichnungFassung` — der Knoten Shape (`rt.shapeFassung`) und der Creator
+  lesen danach neu, auch bei gleicher Nennung.
+- **Im Creator:** **Edit...** neben Browse... (grau, wenn die Form nicht
+  gefunden wird) und **New shape...** am Ende des Menüs Browse... (Antwort auf
+  Patriks Frage S122, ob man eine neue beginnen kann). Nach Save oder Save
+  as... spielt die gewählte Schicht das Ergebnis; ist es dieselbe Form, bleibt
+  die gewählte Kontur, solange es sie gibt, sonst steht Contour auf „All, one
+  path".
+- **Grau bis zu ihrer Stufe:** Open SVG..., Open image..., Bridge, Show image,
+  From image, Use as — Use as zeigt dabei, was in der Datei steht.
+- **Preview:** R in der Textfarbe, damit die Kurve keiner Kontur zu gehören
+  scheint (im ersten Bild war sie pink wie die zweite Kontur).
+
+Alle Zahlen und die Punkte ohne Verweis auf einen Entscheid sind von Claude
+gesetzt. Nicht gebaut: ein Ausschnitt, der sich verschieben oder vergrößern
+lässt; Punkte einfügen oder löschen; Griffe einzeln ziehen.
 
 ---
 
@@ -1049,7 +1124,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 19c | die Schwingung Shape im Klangerzeuger: Harmonics, Angle, Stereo XY, Start, Reverse, Harmonics envelope, mehrere Konturen mit Sprung; mit einer Form aus einer Datei, ohne Fenster — **gebaut in S121** (§5 „Wie die Schwingung gebaut ist", `.lvinst` Fassung 9; T1 a, T2 a). Die Kante des Sprungs ist **gemessen** (§9), **nicht gehört**; offen dazu und zu den Ecken: Patriks Ohr | 19a |
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a; V4 a, X1 a, X2 a) — **gebaut in S121** (§10 „Wie der Knoten XY Scope gebaut ist"), im Programm ungesehen | — (gebraucht ab 19c) |
 | 19e | die Shape-Schicht im Creator — **gebaut in S121** (§6 „Wie die Shape-Schicht im Creator gebaut ist"), ohne den Knopf Edit... (kommt mit 20a); im Programm ungesehen und ungehört | Skizze |
-| 20a | das Form-Fenster: zeichnen | Skizze |
+| 20a | das Form-Fenster: zeichnen (Z1 a, Z2 a) — **gebaut in S122** (§8a „Wie das Fenster gebaut ist"), im Programm ungesehen | Skizze |
 | 20b | SVG über das mitschreibende Zeichengerät (S1 a) | 20a |
 | 20c | Konturen aus einem Bild (K1 a, K2 a) | 20a |
 | 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1) | 20a |
@@ -1078,6 +1153,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.17.0 | 2026-10-14 (S122) | **Das Fenster Edit shape entschieden und gebaut (Stufe 20a).** Entscheide Patrik: **Z1 a** Pen zeichnet frei Hand und Punkt für Punkt gemischt, Move point schiebt Ankerpunkte (§8); **Z2 a** der Knopf Draw entfällt (§8a). Gebaut: `shape/Zeichnen`, `loop/FormFenster`, Edit... und New shape... im Creator, das Neulesen einer geschriebenen Form im Knoten und im Creator (`zeichnungFassung`), Töne neu rechnen (`zaehleInstrumentFassung`) (§8a, §14). Im Programm ungesehen. |
 | 0.16.0 | 2026-10-13 (S121) | **Die Shape-Schicht im Creator gebaut (Stufe 19e)**, nach der gebilligten Skizze: Waveform Shape, die Zeilen Shape mit Browse... und Contour, die Regler Harmonics, Harmonics envelope, Angle, Start, die Haken Stereo XY und Reverse, das Bild „Shape, as it plays" (§6, §14). Ohne den Knopf Edit... (Stufe 20a). Damit ist ein Instrument mit einer Form im Programm spielbar; gesehen und gehört ist es nicht. |
 | 0.15.0 | 2026-10-13 (S121) | **Der Knoten XY Scope entschieden und gebaut (Stufe 19d).** Entscheide Patrik: **X1 a** die Regler (mit Draw Lines oder Dots, Lage, Größe, Color from, Line blend über M1 a hinaus), **X2 a** sechs Presets; die Reihenfolge der Stufen bleibt (19d vor 19e). Gebaut: `XyScopeParams`, `runXyScope`, Panel, Palette, Feldtabelle, sechs Presets (§10, §14). Im Feld Point zeigt `y` nach oben (der rechte Wert). Im Programm ungesehen. |
 | 0.14.0 | 2026-10-13 (S121) | **Die Schwingung Shape entschieden und gebaut (Stufe 19c).** Entscheide Patrik: **T1 a** der Pegel — kein Ausgleich, die Form am fernsten Punkt gemessen (davor gemessen: 0,62 bis 1,41); **T2 a** Angle dreht die Form auch mit Stereo XY (§4, §5). Gebaut: `shape/Tonform`, `Schwingung::Form`, `rechneForm`, `.lvinst` Fassung 9 (§5 „Wie die Schwingung gebaut ist", §14). Gemessen: 4,1 ms je Sekunde Ton bei 24 Harmonics; die Kante des Sprungs liegt bei A4 um −33 dB und ist dort zurückgefallener Anteil (§9). Hörproben abgelegt, nichts gehört; offen: Ecken dämpfen, der Sprung. |
