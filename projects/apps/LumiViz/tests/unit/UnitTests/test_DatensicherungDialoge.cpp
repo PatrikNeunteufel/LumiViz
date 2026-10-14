@@ -384,7 +384,7 @@ TEST_CASE("Datensicherung Dialog Je Datei: eine Zeile je gleichem Namen, die Hak
     CHECK(ergebnis.gleich == 1);
     CHECK(lies(a.ziel, neon) == "neon");
     CHECK(lies(a.ziel, warm) == "meine fassung");
-    CHECK(lies(a.ziel, QStringLiteral("presets/visuals/equalizer/Warm glow (2).json")) == "warm");
+    CHECK(lies(a.ziel, QStringLiteral("presets/visuals/equalizer/Warm glow_2.json")) == "warm");
     CHECK(lies(a.ziel, spiral) == "meine fassung");
 
     // die drei Knoepfe ueber der Liste setzen ganze Spalten

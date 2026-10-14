@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.166.0
-> **Datum:** 2026-10-14
+> **Version:** 1.167.0
+> **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -282,7 +282,7 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   geladenen Songtexte mit deinen Versätzen). *Import data* zeigt nur, was in der Datei
   steckt, und wie viele Namen es bei dir schon gibt; darunter wählst du, was dann geschieht:
   **Keep mine** (Vorgabe), **Replace mine**, **Keep both** (die importierte Datei bekommt
-  eine Zahl an den Namen) oder **Let me decide for each file** — eine Liste mit beiden
+  eine Zahl an den Namen: aus `bass` wird `bass_2`) oder **Let me decide for each file** — eine Liste mit beiden
   Dateien je Name, Datum und Größe, in der du anhakst, was bleibt. Eine importierte Datei,
   die deiner Byte für Byte gleicht, zählt nicht. Importierte *Settings* ersetzen deine und
   gelten nach einem Neustart. Nicht im Export: Loops, Kompositionen und Ketten, die du
@@ -3312,6 +3312,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.167.0 | 2026-10-15 | Session 125. §8 Import data: Keep both heißt jetzt `bass_2` statt `bass (2)` — einen Namen mit Klammern übergingen Instrumente, Samples, Kits und Formen. |
 | 1.166.0 | 2026-10-14 | Session 124. §16 NEU der Schalter für alle Effekte eines Clips: **Effects on** im Fenster Clip effects, **FX** im Drum- und Instrument-Editor, die matte Marke **fx**; **Play pattern** spielt jetzt mit den Effekten des Bezugsclips (vorher trocken). Eine `.lvloop` wird als Fassung 7 geschrieben. |
 | 1.165.0 | 2026-10-14 | Session 124. §16 GEÄNDERT: ein Muster kann **1 bis 64 Takte** lang sein (bisher 4 bis 64), neu der Haken **Repeat when lengthening**; ein Klick in die Taktzeile der Editoren setzt jetzt die **Abspielstelle**, die Einfügemarke setzt **Shift**+Klick; im Instrument-Editor nimmt eine Kopie den Zeitraum des Rahmens mit; ein Klick ins **Lineal** des Panels Loop springt oder setzt die Startmarke. Eine `.lvloop` wird als Fassung 6 geschrieben. |
 | 1.164.0 | 2026-10-14 | Session 124. §16 auf den Stand gebracht: der Instrument-Creator nennt dreiundneunzig mitgelieferte Instrumente nach Art (stand noch auf neunundvierzig, seit S123 veraltet), die Drums sind zwanzig (mit 808 Kick, Toms, Shaker, Ride, Crash, drei Besen und fünf aus Samples). |

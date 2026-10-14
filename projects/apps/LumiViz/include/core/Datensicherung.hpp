@@ -190,7 +190,9 @@ struct ImportErgebnis
 [[nodiscard]] ImportErgebnis importiere(const QString& datei, const QString& benutzerOrdner, const ImportWahl& wahl);
 
 /// Der Name, unter dem eine Datei neben einer gleichnamigen liegt:
-/// `Neon.json` -> `Neon (2).json`, die erste Zahl, die `istVergeben` nicht kennt.
+/// `Neon.json` -> `Neon_2.json`, die erste Zahl, die `istVergeben` nicht kennt; der
+/// Stamm wird auf 60 Zeichen gekuerzt. Bis S125 hiess es `Neon (2).json` — ein Name,
+/// den das Programm bei Instrumenten, Samples, Kits und Formen uebergeht (P6 a).
 [[nodiscard]] QString nameMitZahl(const QString& rel, const std::function<bool(const QString&)>& istVergeben);
 
 }  // namespace lumi::core::datensicherung

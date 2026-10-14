@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.225.0
-> **Datum:** 2026-10-14 (Session 124)
+> **Version:** 1.227.0
+> **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -5292,7 +5292,20 @@ Zeitraum. Vorzulegen mit dem Punkt oben: ob die Kopie den Zeitraum des
 Rahmens trägt oder auf ganze Takte gerundet wird, und ob V2 a dafür neu
 gefasst wird.
 
-### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
+### 🟡 Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
+
+**S125: entschieden, nichts gebaut.** Steuerdokument
+[core-services/Publish_Konzept.md](core-services/Publish_Konzept.md) 0.1.0 —
+Entscheide Patrik P1 a bis P8 a (alle Arten, zuerst die Loop-Familie;
+Publish... hinter Save as an sieben Orten, Publish a file... und Import
+package... im Menü File; Eigenes und freie Orte gehen mit und werden
+`user:`; Medien per Haken, anfangs aus; `.lvdata` Fassung 2; gleiche Namen
+mit Vergleich, Vorgabe Keep both als `<name>_2`; Dialoge Publish und Import
+package), drei Skizzen als Beschreibung. Nächster Schritt: Stufe P-A (die
+Loop-Familie). Nebenbefund Keep both: `bass (2).lvinst` übergeht das
+Programm — mit einem Test belegt und behoben (S125, `<name>_2`).
+
+*Darunter die Vorgeschichte (S120, S123):*
 
 **Patrik S123:** angehen, **nachdem die laufenden Arbeiten abgeschlossen
 sind** (Kits, Vorlagen S123) — nicht vorher. Anlass: der Versuch „Titanium"
@@ -5335,7 +5348,7 @@ für alle Clips, die die Basis spielen (`loop/Bearbeiten.hpp`). Der Import der
 als Keep mine, Replace mine, Keep both und je Datei; ein Vergleichen des
 Inhalts nicht — die Liste zeigt Datum und Größe.
 
-**Offen, nichts entworfen:**
+**Offen, nichts entworfen** (S120; seit S125 entschieden, siehe oben):
 - **Welche Arten** sich veröffentlichen lassen (Instrument, Loop,
   Komposition, Preset …) und wo der Befehl steht.
 - **Was dazugehört:** ein Instrument nennt Samples und Formen; ein Loop
@@ -5696,6 +5709,8 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.227.0 | 2026-10-15 | Session 125. Keep both belegt und behoben (`nameMitZahl` → `<name>_2`). |
+| 1.226.0 | 2026-10-15 | Session 125. §7 Publish entschieden (P1 a bis P8 a), Steuerdokument `core-services/Publish_Konzept.md` 0.1.0; Nebenbefund Keep both (`nameMitZahl`). |
 | 1.225.0 | 2026-10-14 | Session 124. E1 a gebaut: Schalter der Effekte je Clip, Play pattern mit Effekten (Loop_Konzept §4m); 1221 Cases. |
 | 1.224.0 | 2026-10-14 | Session 124. §7 „Bars kleiner als 4" **gebaut** mit dem Fehler beim Einfügen und dem Springen im Zeitstrahl (B1 a, B2 a, B3 a, B4 b; Loop_Konzept §4m). 1219 Cases. |
 | 1.223.0 | 2026-10-14 | Session 124. Kits **21e gemacht**, **Stufe 21 fertig**: Icon `.lvkit` (I2 a), Benutzerhandbuch 1.163.0, Liste `Sichttest_Kits.md`; voller Lauf 1215 / 1215. Als Nächstes: „Bars kleiner als 4" mit dem Fehler beim Einfügen (§7). |

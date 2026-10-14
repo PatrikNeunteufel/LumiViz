@@ -10,6 +10,7 @@
 
 #include "core/Datensicherung.hpp"
 #include "core/ZipArchiv.hpp"
+#include "loop/Instrument.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -300,15 +301,69 @@ TEST_CASE("Datensicherung: die drei Regeln fuer den ganzen Import")
         CHECK(e.umbenannt == 1);
         CHECK(e.gleich == 1);
         CHECK(lies(ordner.ziel, neon) == "meine fassung");
-        CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/equalizer/Neon bars (2).json")) == "neon");
+        CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/equalizer/Neon bars_2.json")) == "neon");
 
-        // ist die (2) schon da, wird es die (3)
+        // ist die _2 schon da, wird es die _3
         lege(ordner.ziel, neon, "wieder anders");
         const auto nochmal = ds::importiere(ordner.datei, ordner.ziel, {alleBereiche(), ds::Regel::BeideBehalten, {}});
         REQUIRE(nochmal.ok);
         CHECK(nochmal.umbenannt == 1);
-        CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/equalizer/Neon bars (3).json")) == "neon");
+        CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/equalizer/Neon bars_3.json")) == "neon");
     }
+}
+
+TEST_CASE("Datensicherung: Keep both — der neue Name ist ein eigener Name, das Programm findet die Datei (S125, P6 a)")
+{
+    // Instrumente, Samples, Kits und Formen nennt ein Muster als `user:<name>`; der
+    // Name darf nur a-z, Ziffern und `_` tragen (`istEigenerName`) — sonst uebergeht
+    // das Programm die Datei (Publish_Konzept.md §2b)
+    namespace lp = lumi::loop;
+    const Ordner ordner;
+    lp::Instrument ihres;
+    ihres.titel = QStringLiteral("Bass aus der Sicherung");
+    lp::Instrument meines;
+    meines.titel = QStringLiteral("Mein Bass");
+    REQUIRE(QDir().mkpath(QDir(ordner.quelle).filePath(QStringLiteral("instruments"))));
+    REQUIRE(QDir().mkpath(QDir(ordner.ziel).filePath(QStringLiteral("instruments"))));
+    REQUIRE(lp::speichereInstrument(ihres, QDir(ordner.quelle).filePath(QStringLiteral("instruments/bass.lvinst"))));
+    REQUIRE(lp::speichereInstrument(meines, QDir(ordner.ziel).filePath(QStringLiteral("instruments/bass.lvinst"))));
+    const QStringList andere = {QStringLiteral("samples/kick.wav"), QStringLiteral("kits/rock.lvkit"),
+                                QStringLiteral("contours/herz.lvcontour")};
+    for (const QString& rel : andere)
+    {
+        lege(ordner.quelle, rel, "aus der sicherung");
+        lege(ordner.ziel, rel, "meine");
+    }
+
+    const QStringList ids = {QStringLiteral("instruments"), QStringLiteral("samples"), QStringLiteral("kits"),
+                             QStringLiteral("shapes")};
+    REQUIRE(ds::exportiere(ordner.quelle, {ids, false}, {}, ordner.datei, QStringLiteral("0.12.0")).ok);
+    const auto e = ds::importiere(ordner.datei, ordner.ziel, {ids, ds::Regel::BeideBehalten, {}});
+    REQUIRE(e.ok);
+    CHECK(e.umbenannt == 4);
+
+    for (const QString& unter : {QStringLiteral("instruments"), QStringLiteral("samples"), QStringLiteral("kits"),
+                                 QStringLiteral("contours")})
+    {
+        const QStringList dateien = QDir(QDir(ordner.ziel).filePath(unter)).entryList(QDir::Files, QDir::Name);
+        CHECK(dateien.size() == 2);
+        for (const QString& datei : dateien)
+        {
+            CAPTURE(datei.toStdString());
+            CHECK(lp::istEigenerName(QFileInfo(datei).completeBaseName()));
+        }
+    }
+
+    // die Liste der eigenen Instrumente zeigt beide
+    lp::setzeEigenenInstrumentOrdnerFuerTests(QDir(ordner.ziel).filePath(QStringLiteral("instruments")));
+    struct Zurueck
+    {
+        ~Zurueck() { lumi::loop::setzeEigenenInstrumentOrdnerFuerTests(QString()); }
+    } zurueck;
+    QStringList titel;
+    for (const lp::Instrument& instrument : lp::eigeneInstrumente()) titel << instrument.titel;
+    titel.sort();
+    CHECK(titel == QStringList{QStringLiteral("Bass aus der Sicherung"), QStringLiteral("Mein Bass")});
 }
 
 TEST_CASE("Datensicherung: je Datei entscheiden — was fehlt, behaelt die eigene")
@@ -335,23 +390,28 @@ TEST_CASE("Datensicherung: je Datei entscheiden — was fehlt, behaelt die eigen
     CHECK(e.uebersprungen == 2);
     CHECK(lies(ordner.ziel, neon) == "neon");
     CHECK(lies(ordner.ziel, spiral) == "meine");
-    CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/superscope/Spiral 3 (2).json")) == "spiral");
+    CHECK(lies(ordner.ziel, QStringLiteral("presets/visuals/superscope/Spiral 3_2.json")) == "spiral");
     CHECK(lies(ordner.ziel, ring) == "meine");
     CHECK(lies(ordner.ziel, sunset) == "meine");
 }
 
-TEST_CASE("Datensicherung: nameMitZahl — vor der Endung, die erste freie Zahl")
+TEST_CASE("Datensicherung: nameMitZahl — `_<zahl>` vor der Endung, die erste freie Zahl (seit S125, P6 a)")
 {
     const auto nie = [](const QString&) { return false; };
-    CHECK(ds::nameMitZahl(QStringLiteral("a/b/Neon.json"), nie) == QStringLiteral("a/b/Neon (2).json"));
-    CHECK(ds::nameMitZahl(QStringLiteral("Neon.v2.json"), nie) == QStringLiteral("Neon.v2 (2).json"));
-    CHECK(ds::nameMitZahl(QStringLiteral("a/ohne_endung"), nie) == QStringLiteral("a/ohne_endung (2)"));
-    CHECK(ds::nameMitZahl(QStringLiteral("a/.versteckt"), nie) == QStringLiteral("a/.versteckt (2)"));
+    CHECK(ds::nameMitZahl(QStringLiteral("a/b/Neon.json"), nie) == QStringLiteral("a/b/Neon_2.json"));
+    CHECK(ds::nameMitZahl(QStringLiteral("Neon.v2.json"), nie) == QStringLiteral("Neon.v2_2.json"));
+    CHECK(ds::nameMitZahl(QStringLiteral("a/ohne_endung"), nie) == QStringLiteral("a/ohne_endung_2"));
+    CHECK(ds::nameMitZahl(QStringLiteral("a/.versteckt"), nie) == QStringLiteral("a/.versteckt_2"));
     const auto bisVier = [](const QString& name) {
-        return name.contains(QStringLiteral("(2)")) || name.contains(QStringLiteral("(3)")) ||
-               name.contains(QStringLiteral("(4)"));
+        return name.contains(QStringLiteral("_2.")) || name.contains(QStringLiteral("_3.")) ||
+               name.contains(QStringLiteral("_4."));
     };
-    CHECK(ds::nameMitZahl(QStringLiteral("a/Neon.json"), bisVier) == QStringLiteral("a/Neon (5).json"));
+    CHECK(ds::nameMitZahl(QStringLiteral("a/Neon.json"), bisVier) == QStringLiteral("a/Neon_5.json"));
+    // ein langer eigener Name bleibt ein eigener Name: der Stamm wird auf 60 gekuerzt
+    const QString lang(64, QLatin1Char('b'));
+    const QString neu = ds::nameMitZahl(QStringLiteral("instruments/") + lang + QStringLiteral(".lvinst"), nie);
+    CHECK(neu == QStringLiteral("instruments/") + QString(60, QLatin1Char('b')) + QStringLiteral("_2.lvinst"));
+    CHECK(lumi::loop::istEigenerName(QFileInfo(neu).completeBaseName()));
 }
 
 TEST_CASE("Datensicherung: ein Archiv schreibt nur in die Ordner der Bereiche")

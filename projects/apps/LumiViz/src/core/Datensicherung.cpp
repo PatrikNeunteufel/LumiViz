@@ -416,9 +416,11 @@ QString nameMitZahl(const QString& rel, const std::function<bool(const QString&)
     const int punkt = datei.lastIndexOf(QLatin1Char('.'));
     const QString stamm = punkt > 0 ? datei.left(punkt) : datei;
     const QString endung = punkt > 0 ? datei.mid(punkt) : QString();
+    // `<stamm>_<zahl>` (S125, P6 a): ein eigener Name traegt nur a-z, Ziffern und `_`
+    // und hoechstens 64 Zeichen (`istEigenerName`) — so wie `nimmZuEigenenInstrumenten`
     for (int zahl = 2;; ++zahl)
     {
-        const QString versuch = ordner + QStringLiteral("%1 (%2)%3").arg(stamm).arg(zahl).arg(endung);
+        const QString versuch = ordner + QStringLiteral("%1_%2%3").arg(stamm.left(60)).arg(zahl).arg(endung);
         if (!istVergeben(versuch)) return versuch;
     }
 }
