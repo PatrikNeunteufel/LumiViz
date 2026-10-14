@@ -136,6 +136,10 @@ public:
     /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.
     /// false = die Spur gibt es nicht, sie spielt nichts, oder der Loop spielt.
     bool spieleSpur(const QString& muster, int spur);
+    /// Je Spur einen Schlag, einen Schlag (des Loops) nach dem anderen — mit
+    /// Lautstaerke und Panorama der Spuren (▶ und Play all im Fenster Kits,
+    /// Stufe 21c). false = keine Spur spielt etwas, oder der Loop spielt.
+    bool spieleSchlaege(const std::vector<Spur>& spuren);
     /// Wird gerade ein Ton angespielt?
     [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }
     /// „Play pattern": nur dieses Muster spielen, im Kreis — damit man hoert,

@@ -106,6 +106,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopInstrumentEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopInstrumentPalette.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKits.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopKitFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"

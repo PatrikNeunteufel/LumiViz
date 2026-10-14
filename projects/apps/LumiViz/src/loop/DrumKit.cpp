@@ -14,7 +14,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <QDirIterator>
 #include <QSaveFile>
+#include <QSettings>
 #include <QStandardPaths>
 
 #include <algorithm>
@@ -444,6 +446,66 @@ DrumKit kitAusMuster(const Muster& muster, const QString& titel)
         kit.klaenge.push_back(std::move(klang));
     }
     return kit;
+}
+
+// --- Wer ein Kit nennt -------------------------------------------------------
+
+namespace
+{
+const char* const kZuletztLoops = "loop/recentFiles";
+}  // namespace
+
+void merkeGeoeffnetenLoop(const QString& pfad)
+{
+    if (pfad.isEmpty()) return;
+    const QString sauber = QFileInfo(pfad).absoluteFilePath();
+    QSettings einstellungen;
+    QStringList liste = einstellungen.value(QLatin1String(kZuletztLoops)).toStringList();
+    liste.removeAll(sauber);
+    liste.prepend(sauber);
+    while (liste.size() > kZuletztLoopsMax) liste.removeLast();
+    einstellungen.setValue(QLatin1String(kZuletztLoops), liste);
+}
+
+QStringList zuletztGeoeffneteLoops()
+{
+    QStringList liste;
+    for (const QString& pfad : QSettings().value(QLatin1String(kZuletztLoops)).toStringList())
+        if (QFileInfo::exists(pfad)) liste << pfad;
+    return liste;
+}
+
+QStringList mitgelieferteLoopDateien()
+{
+    const QString ordner = lumi::core::mitgeliefert::ordner(QStringLiteral("loop"));
+    if (ordner.isEmpty()) return {};
+    QStringList dateien;
+    QDirIterator suche(ordner, {QStringLiteral("*.lvloop")}, QDir::Files, QDirIterator::Subdirectories);
+    while (suche.hasNext()) dateien << suche.next();
+    dateien.sort(Qt::CaseInsensitive);
+    return dateien;
+}
+
+bool nenntKit(const Loop& loop, const QString& nennung)
+{
+    return !nennung.isEmpty() && std::any_of(loop.muster.begin(), loop.muster.end(), [&nennung](const Muster& m) {
+               return m.art == MusterArt::Drumkit && m.kit == nennung;
+           });
+}
+
+QStringList loopsMitKit(const QString& nennung, const QStringList& dateien)
+{
+    QStringList namen;
+    QStringList gesehen;
+    for (const QString& datei : dateien)
+    {
+        const QString sauber = QFileInfo(datei).absoluteFilePath();
+        if (gesehen.contains(sauber, Qt::CaseInsensitive)) continue;
+        gesehen << sauber;
+        Loop loop;
+        if (ladeLoop(datei, loop) && nenntKit(loop, nennung)) namen << QFileInfo(datei).completeBaseName();
+    }
+    return namen;
 }
 
 }  // namespace lumi::loop

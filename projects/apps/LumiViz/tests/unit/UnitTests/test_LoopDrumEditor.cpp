@@ -1278,7 +1278,7 @@ TEST_SUITE("LoopDrumEditor")
         const auto bearbeiten = std::find_if(eintraege.begin(), eintraege.end(),
                                              [](QAction* a) { return a->text() == QStringLiteral("Edit kits..."); });
         REQUIRE(bearbeiten != eintraege.end());
-        CHECK_FALSE((*bearbeiten)->isEnabled());  // das Fenster Kits kommt mit 21c
+        CHECK((*bearbeiten)->isEnabled());  // das Fenster Kits (21c, test_LoopKitFenster.cpp)
 
         // --- 808 anwenden: Klang je Rolle, die Schritte bleiben, Undo-Schritt „Kit: 808"
         const Muster vorher = grund();

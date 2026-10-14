@@ -12,6 +12,8 @@
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/InstrumentPalette.hpp"
+#include "loop/KitFenster.hpp"
+#include "loop/KlangAuswahl.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
@@ -60,12 +62,6 @@ namespace lumi::loop
 namespace
 {
 
-// Die Eintraege der Klang-Auswahl, die kein Klang sind (Stufe 11c, Schritt 2):
-const QString kDateiWahl = QStringLiteral("?file");              ///< „Sample file...": fragt nach einer Tondatei
-const QString kInstrumentWahl = QStringLiteral("?instrument");   ///< „Instrument...": das Fenster Instruments
-const QString kAufnahmeWahl = QStringLiteral("?record");         ///< „Record sample...": das Fenster Record sample
-const QString kInstrumentJetzt = QStringLiteral("?current");     ///< das Instrument, das die Spur spielt
-const QString kKopf = QStringLiteral("?head");                   ///< eine Ueberschrift, nicht zu waehlen
 const char* const kSampleOrdner = "loop/lastSampleDir";
 const char* const kRechtsLoescht = "loop/drumRightClickDeletes";
 const char* const kSpurNr = "spur";
@@ -903,6 +899,7 @@ void DrumEditor::setupUI()
 void DrumEditor::setKitKlaenge(const QStringList& klaenge)
 {
     m_kitKlaenge = klaenge;
+    if (m_kits != nullptr) m_kits->setKitKlaenge(klaenge);
     if (basis() != nullptr) zeigeAlles();
 }
 
@@ -1014,85 +1011,11 @@ void DrumEditor::zeigeAuswahl()
     m_auswahlZeile->setText(text);
 }
 
-void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene,
-                             const QStringList& bibliothek) const
-{
-    const QSignalBlocker ruhe(auswahl);
-    auswahl->clear();
-    const auto kopf = [auswahl](const QString& text) {
-        auswahl->addItem(text, kKopf);
-        // eine Ueberschrift: grau, nicht zu waehlen
-        if (auto* modell = qobject_cast<QStandardItemModel*>(auswahl->model()))
-            if (QStandardItem* eintrag = modell->item(auswahl->count() - 1)) eintrag->setFlags(Qt::NoItemFlags);
-    };
-    const QString& klang = spur.klang;
-    const bool instrument = !spur.instrument.isEmpty();
-    // ganz oben, was die Spur spielt, wenn es kein Klang der Listen darunter ist
-    if (instrument)
-        auswahl->addItem(InstrumentEditor::instrumentAnzeige(spur.instrument), kInstrumentJetzt);
-    else if (klang.isEmpty())
-        auswahl->addItem(tr("(none)"), QString());
-    kopf(tr("Kit"));
-    for (const QString& kit : m_kitKlaenge) auswahl->addItem(kit.mid(4), kit);  // ohne den Vorsatz „kit:"
-    if (istKitKlang(klang) && !m_kitKlaenge.contains(klang)) auswahl->addItem(klang.mid(4), klang);
-    // die mitgelieferten Samples (`lib:`, Entscheid 1 a, S123)
-    const bool mitgeliefertFehlt = istBibliotheksKlang(klang) && !bibliothek.contains(klang);
-    if (!bibliothek.isEmpty() || mitgeliefertFehlt)
-    {
-        kopf(tr("Samples"));
-        for (const QString& nennung : bibliothek) auswahl->addItem(sampleTitel(nennung), nennung);
-        if (mitgeliefertFehlt) auswahl->addItem(tr("%1 (not found)").arg(sampleTitel(klang)), klang);
-    }
-    const bool eigenerFehlt = istEigenerKlang(klang) && !eigene.contains(klang);
-    if (!eigene.isEmpty() || eigenerFehlt)
-    {
-        kopf(tr("My samples"));
-        for (const QString& nennung : eigene) auswahl->addItem(sampleTitel(nennung), nennung);
-        if (eigenerFehlt) auswahl->addItem(tr("%1 (not found)").arg(sampleTitel(klang)), klang);
-    }
-    if (!klang.isEmpty() && !istMitgelieferterKlang(klang) && !istEigenerKlang(klang))
-    {
-        // eine Tondatei an freiem Ort
-        kopf(tr("File"));
-        auswahl->addItem(QFileInfo(klang).fileName(), klang);
-    }
-    auswahl->insertSeparator(auswahl->count());
-    auswahl->addItem(tr("Instrument..."), kInstrumentWahl);
-    auswahl->addItem(tr("Sample file..."), kDateiWahl);
-    auswahl->addItem(tr("Record sample..."), kAufnahmeWahl);
-    auswahl->setCurrentIndex(instrument ? 0 : auswahl->findData(klang));
-    if (instrument)
-        auswahl->setToolTip(tr("Plays the instrument %1 — note %2, held %3 ms. The button … next to it changes that")
-                                .arg(InstrumentEditor::instrumentAnzeige(spur.instrument), tonName(spur.hoehe))
-                                .arg(spur.dauerMs));
-    else if (klang.isEmpty())
-        auswahl->setToolTip(QString());
-    else
-        // sonst findet es niemand: sagen, wo Edit sound... steht
-        auswahl->setToolTip(tr("%1\nRight-click the track: Edit sound... makes an instrument of it")
-                                .arg(istMitgelieferterKlang(klang) || istEigenerKlang(klang) ? klang : QDir::toNativeSeparators(klang)));
-}
-
 QStringList DrumEditor::klangZeilen(int spur) const
 {
-    QStringList zeilen;
     const Spur* ziel = spurBei(spur);
-    if (ziel == nullptr || spur >= static_cast<int>(m_spuren.size())) return zeilen;
-    const QComboBox* auswahl = m_spuren[static_cast<std::size_t>(spur)].klang;
-    for (int i = 0; i < auswahl->count(); ++i)
-    {
-        if (auswahl->itemData(i, Qt::AccessibleDescriptionRole).toString() == QLatin1String("separator")) continue;
-        const QString wert = auswahl->itemData(i).toString();
-        if (wert == kKopf)
-            zeilen << QStringLiteral("[%1]").arg(auswahl->itemText(i));
-        else if (wert == kInstrumentJetzt)
-            zeilen << QStringLiteral("instrument:") + ziel->instrument;
-        else if (wert == kInstrumentWahl || wert == kDateiWahl || wert == kAufnahmeWahl || wert.isEmpty())
-            zeilen << auswahl->itemText(i);
-        else
-            zeilen << wert;
-    }
-    return zeilen;
+    if (ziel == nullptr || spur >= static_cast<int>(m_spuren.size())) return {};
+    return m_spuren[static_cast<std::size_t>(spur)].klang->zeilen();
 }
 
 void DrumEditor::baueSpuren(const Muster& muster)
@@ -1126,10 +1049,9 @@ void DrumEditor::baueSpuren(const Muster& muster)
             zeile.rolle->setObjectName(QStringLiteral("drumTrackRole%1").arg(s));
             zeile.rolle->setFixedSize(kRolleBreite, 20);
             zeile.rolle->setAutoRaise(true);
-            zeile.klang = new QComboBox(zeile.reihe);
+            zeile.klang = new KlangAuswahl(zeile.reihe);
             zeile.klang->setObjectName(QStringLiteral("drumTrackSound%1").arg(s));
             zeile.klang->setFixedWidth(kKlangBreite);
-            zeile.klang->view()->setMinimumWidth(190);  // die Liste darf breiter sein als das Feld
             // „…" (Stufe 11c): nur an einer Spur, die ein Instrument spielt — sein Platz bleibt
             // auch sonst frei, damit die Regler dahinter in einer Flucht stehen
             zeile.mehr = new QToolButton(zeile.reihe);
@@ -1220,7 +1142,12 @@ void DrumEditor::baueSpuren(const Muster& muster)
         zeile.stumm->setChecked(spur.stumm);
         zeile.name->setText(zeile.name->fontMetrics().elidedText(spur.name, Qt::ElideRight, 70));
         zeile.name->setToolTip(spur.name);
-        fuelleKlang(zeile.klang, spur, eigene, bibliothek);
+        zeile.klang->fuelle(spur, m_kitKlaenge, eigene, bibliothek, true);
+        // sonst findet es niemand: sagen, wo das Feld hinter „…" und Edit sound... stehen
+        if (!spur.instrument.isEmpty())
+            zeile.klang->setToolTip(zeile.klang->toolTip() + tr(". The button … next to it changes that"));
+        else if (!spur.klang.isEmpty())
+            zeile.klang->setToolTip(zeile.klang->toolTip() + tr("\nRight-click the track: Edit sound... makes an instrument of it"));
         zeile.mehr->setVisible(!spur.instrument.isEmpty());
         if (!zeile.laut->isSliderDown()) zeile.laut->setValue(static_cast<int>(std::lround(spur.laut * 100.0)));
         if (!zeile.pan->isSliderDown()) zeile.pan->setValue(static_cast<int>(std::lround(spur.pan * 100.0)));
@@ -1375,17 +1302,17 @@ void DrumEditor::setzeKlang(int spur, const QString& klang)
 
 void DrumEditor::klangGewaehlt(int spur, const QString& wahl)
 {
-    if (wahl == kInstrumentJetzt) return;  // das spielt die Spur schon
-    if (wahl == kDateiWahl)
+    if (wahl == kKlangWahlJetzt) return;  // das spielt die Spur schon
+    if (wahl == kKlangWahlDatei)
     {
         frageNachSampleDatei(spur);
         return;
     }
-    if (wahl == kInstrumentWahl || wahl == kAufnahmeWahl)
+    if (wahl == kKlangWahlInstrument || wahl == kKlangWahlAufnahme)
     {
         // die Auswahl zeigt wieder, was die Spur spielt — geaendert wird erst im Fenster
         zeigeAlles();
-        if (wahl == kInstrumentWahl)
+        if (wahl == kKlangWahlInstrument)
             (void)oeffnePalette(spur);
         else
             (void)oeffneAufnahme(spur);
@@ -1875,9 +1802,41 @@ void DrumEditor::fuelleKitMenue(QMenu* menue)
             (void)speichereAlsKit(titel, true);
     });
     sichern->setToolTip(tr("Saves the sounds of these tracks, by role, with volume and pan as your own kit"));
-    QAction* bearbeiten = menue->addAction(tr("Edit kits..."));
-    bearbeiten->setEnabled(false);  // das Fenster Kits kommt mit Stufe 21c
-    bearbeiten->setToolTip(tr("The Kits window — not built yet"));
+    QAction* bearbeiten = menue->addAction(tr("Edit kits..."), this, [this] { oeffneKits(); });
+    bearbeiten->setToolTip(tr("Look at the kits, make your own copy, change sounds, volume and pan"));
+}
+
+KitFenster* DrumEditor::kitFenster() const
+{
+    return m_kits;
+}
+
+void DrumEditor::oeffneKits(bool zeigen)
+{
+    if (m_kits == nullptr)
+    {
+        m_kits = new KitFenster(this);
+        connect(m_kits, &KitFenster::anspielenVerlangt, this, &DrumEditor::kitAnspielenVerlangt);
+        connect(m_kits, &KitFenster::instrumentTonVerlangt, this, &DrumEditor::instrumentTonVerlangt);
+        // ein eigenes Kit ist neu geschrieben oder weggefallen: Knopf Kit und Etiketten Role neu
+        // („(changed)" und „not in kit" haengen am Kit, wie es jetzt in der Datei steht)
+        connect(m_kits, &KitFenster::gespeichert, this, [this] {
+            if (basis() != nullptr) zeigeAlles();
+        });
+        connect(m_kits, &KitFenster::kitsGeaendert, this, [this] {
+            if (basis() != nullptr) zeigeAlles();
+        });
+    }
+    m_kits->setKitKlaenge(m_kitKlaenge);
+    m_kits->setOffenerLoop(m_loop);
+    const Muster* ziel = basis();
+    m_kits->oeffne(ziel != nullptr ? ziel->kit : QString());
+    if (zeigen)
+    {
+        m_kits->show();
+        m_kits->raise();
+        m_kits->activateWindow();
+    }
 }
 
 bool DrumEditor::wendeKitAn(const QString& nennung)

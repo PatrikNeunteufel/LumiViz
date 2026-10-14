@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.219.0
-> **Datum:** 2026-10-14 (Session 123)
+> **Version:** 1.220.0
+> **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -4992,7 +4992,12 @@ geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
   gebaut** (Modell, `.lvkit`, Rollen, Kitwechsel, zehn Kits mit gemessenem
   Volume, Bereich Kits in Export und Import; im Drum-Editor der Knopf Kit, das
   Etikett Role, Add track aus dem Kit, Save as kit... — im Programm ungesehen).
-  Offen: **21c** Fenster Kits, **21d** Rock'n'Roll, Hardrock, Heavy Metal
+  **21c gebaut** (S124): das Fenster Kits (Edit kits...) mit Duplicate, Rename,
+  Delete, Sound, Volume, Pan, Add role, Remove role, ▶, Play all, Undo, Save,
+  Used by — im Programm ungesehen; von Claude gesetzte Regeln in
+  `audio/Loop_Konzept.md` §4l „Wie 21c gebaut ist"; kosmetisch offen: Striche
+  der Auswahlfarbe am Rand der Zellen der gewählten Zeile.
+  Offen: **21d** Rock'n'Roll, Hardrock, Heavy Metal
   und Jazz Brushes aus DrumGizmo (DRSKit, CrocellKit, CC BY 4.0 — Downloads zur
   Freigabe) mit gerechneten Besen und dem Loop Brush Swing, **21e** Icon
   (I1 a: Trommel mit Sticks), Handbuch, Sichttest. Patrik überlegt, das
@@ -5653,6 +5658,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.220.0 | 2026-10-14 | Session 124. Kits **21c gebaut**: das Fenster Kits, die Auswahl Sound als gemeinsames Bauteil, Used by mit den zuletzt geöffneten Loops. 1213 Cases; 240 Bereichsfälle unter Testing-MSVC grün. Offen: 21d, 21e. |
 | 1.219.0 | 2026-10-14 | Session 123, Abschluss. `sessions/Changelog_Session123.md`. **Stand:** Vorlagen (20 Formen, 38 Samples `lib:`, 90 Instrumente, 9 Loops), Kits Stufe 21a und 21b gebaut (Modell, zehn Kits, Drum-Editor), VST3-Konzept 0.1.0, Versuch Titanium (lokal). **Offen:** 21c (Fenster Kits) als Nächstes, 21d, 21e; §7 NEU Wunsch Patrik „Bars kleiner als 4" (Befund: `kTakteMin` ist Untergrenze und Länge neuer Clips zugleich); Patriks Ohr an `hoerproben_s123`. 1210 Cases, voller Lauf 1202 / 1202 nach den Vorlagen, danach 236 Bereichsfälle unter beiden Compilern grün. |
 | 1.218.0 | 2026-10-14 | Session 123. §7 NEU „Vorlagen S123": Formen (20), mitgelieferte Samples `lib:` (38, CC BY 3.0, Entscheide 1 a, 2 a), 35 Instrumente mehr (90), neun Loops; offen die Kits (3 a, Skizze gezeigt, Entscheide ausstehend), Patriks Ohr an `hoerproben_s123`; Versuch „Titanium" (lokal); VST3-Konzept `audio/VST3_Konzept.md` 0.1.0. |
 | 1.217.0 | 2026-10-14 | Session 122, Abschluss. `sessions/Changelog_Session122.md`. **Stand:** Klang aus einer Form — **Stufe 20 vollständig**: 20a (Edit shape), 20b (SVG), 20c (Bild), 20d (mehrere Konturen, Brücken, Farben der Schichten); `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0; dazu die Sichttest-Liste `Sichttest_Shape_Klang-aus-einer-Form.md` (lokal) mit den Vorlagen `asset/sichttest/presets/Shape.lvfx` und `XyScope.lvfx`. **Offen:** im Programm ungesehen und ungehört (19b bis 20d) — Patriks Sichttest mit der Liste; Patriks Ohr an `hoerproben_19c`; die von Claude gesetzten Zahlen und Regeln; CSS-Variablen in SVG; mitgelieferte Instrumente mit Shape-Schicht. 1200 Cases, voller Lauf 1199 / 1199 nach 20d (Testing-MSVC, Bildschirm 2), der Fall danach unter beiden Compilern grün. |

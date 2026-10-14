@@ -13,6 +13,7 @@
 #include "loop/Bearbeiten.hpp"
 #include "loop/ClipEffektFenster.hpp"
 #include "loop/DrumEditor.hpp"
+#include "loop/DrumKit.hpp"  // merkeGeoeffnetenLoop
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Offen.hpp"
@@ -406,6 +407,7 @@ bool LoopPanel::lade(const QString& pfad)
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // gibt es seine Basis hier nicht, schliesst er sich
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
+    merkeGeoeffnetenLoop(pfad);  // fuer „Used by" im Fenster Kits
     zeigeDatei();
     zeigeClip();
     zeigeStand();
@@ -441,6 +443,7 @@ bool LoopPanel::speichere(const QString& pfad)
     m_datei = pfad;
     m_gespeichert = m_loop;
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
+    merkeGeoeffnetenLoop(pfad);
     zeigeDatei();
     return true;
 }
@@ -600,21 +603,36 @@ bool LoopPanel::spieleSpur(const QString& muster, int spur)
     const Muster* basis = m_geladen ? m_loop.findeMuster(muster) : nullptr;
     if (basis == nullptr || basis->art != MusterArt::Drumkit || spur < 0 || spur >= static_cast<int>(basis->spuren.size()))
         return false;
-    Spur eine = basis->spuren[static_cast<std::size_t>(spur)];
-    if (eine.spielt().isEmpty()) return false;
-    eine.stumm = false;
+    return spieleSchlaege({basis->spuren[static_cast<std::size_t>(spur)]});
+}
+
+bool LoopPanel::spieleSchlaege(const std::vector<Spur>& spuren)
+{
+    if (!m_geladen) return false;
+    std::vector<Spur> spielen;
+    for (const Spur& spur : spuren)
+        if (!spur.spielt().isEmpty()) spielen.push_back(spur);
+    if (spielen.empty()) return false;
+    for (Spur& spur : spielen) spur.stumm = false;
     // ein Instrument klingt Length lang und klingt dann aus; ein Klang ist so lang wie seine Datei —
-    // angespielt werden davon hoechstens zwei Sekunden
-    const int dauerMs = (eine.instrument.isEmpty() ? 2000 : eine.dauerMs) + 600;
-    // ein Muster mit dieser Spur und einem Schlag am Anfang — so lang, dass es nicht von vorn
-    // beginnt, bevor der Schlag verklungen ist
-    const double taktMs = 60000.0 / m_loop.bpm * m_loop.schlaegeJeTakt;
+    // angespielt werden davon hoechstens zwei Sekunden; der letzte Schlag kommt nach den anderen
+    const double schlagMs = 60000.0 / m_loop.bpm;
+    const Spur& letzte = spielen.back();
+    const int dauerMs = static_cast<int>(std::ceil(schlagMs * static_cast<double>(spielen.size() - 1))) +
+                        (letzte.instrument.isEmpty() ? 2000 : letzte.dauerMs) + 600;
+    // ein Muster mit diesen Spuren, je Spur ein Schlag, einen Schlag nach dem anderen — so lang,
+    // dass es nicht von vorn beginnt, bevor der letzte verklungen ist
+    const double taktMs = schlagMs * m_loop.schlaegeJeTakt;
     Muster schlag;
     schlag.art = MusterArt::Drumkit;
     schlag.takte = std::clamp(static_cast<int>(std::ceil(dauerMs / taktMs)) + 1, kTakteMin, kTakteMax);
-    schlag.spuren = {eine};
-    schlag.zeilen = {std::vector<double>(static_cast<std::size_t>(schlag.takte * m_loop.schritteJeTakt()), 0.0)};
-    schlag.zeilen[0][0] = 1.0;
+    const int schritte = schlag.takte * m_loop.schritteJeTakt();
+    // mehr Schlaege, als das laengste Muster fasst, faellt weg
+    while (static_cast<int>(spielen.size() - 1) * m_loop.schritteJeSchlag >= schritte) spielen.pop_back();
+    schlag.spuren = spielen;
+    schlag.zeilen.assign(spielen.size(), std::vector<double>(static_cast<std::size_t>(schritte), 0.0));
+    for (std::size_t s = 0; s < spielen.size(); ++s)
+        schlag.zeilen[s][s * static_cast<std::size_t>(m_loop.schritteJeSchlag)] = 1.0;
     return spieleAllein(schlag, dauerMs);
 }
 
@@ -731,6 +749,9 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
         // Instruments, der Creator und „Record sample" — dieselben Wege wie beim Instrument-Editor
         connect(m_editor, &DrumEditor::spurTonVerlangt, this,
                 [this](const QString& basisName, int spur) { (void)spieleSpur(basisName, spur); });
+        // ▶ und Play all im Fenster Kits (Stufe 21c)
+        connect(m_editor, &DrumEditor::kitAnspielenVerlangt, this,
+                [this](const std::vector<Spur>& spuren) { (void)spieleSchlaege(spuren); });
         connect(m_editor, &DrumEditor::instrumentTonVerlangt, this,
                 [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
         connect(m_editor, &DrumEditor::instrumentTonLangVerlangt, this,

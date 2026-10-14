@@ -57,6 +57,8 @@ class AufnahmeFenster;
 struct DrumKit;
 class InstrumentCreator;
 class InstrumentPalette;
+class KitFenster;
+class KlangAuswahl;
 struct Instrument;
 struct Schicht;
 
@@ -311,7 +313,7 @@ public:
     // --- Kits (Stufe 21b; Entscheide K1 a bis K5 a, Skizze gezeigt S123) -----
     // Im Kopf der Knopf **Kit: <Titel> ▾** (nach einer Aenderung von Hand mit
     // „(changed)", K4 a); sein Menue: Built-in kits, My kits, Save as kit...,
-    // Edit kits... (grau bis Stufe 21c). Je Spur das Etikett **Role**: ein
+    // Edit kits... (das Fenster Kits, Stufe 21c). Je Spur das Etikett **Role**: ein
     // Klick waehlt die Rolle; eine geratene steht in Klammern, eine, die das
     // Kit nicht hat, durchgestrichen (K2 a). **Add track** bietet die Rollen
     // des Kits an, die keine Spur hat.
@@ -342,6 +344,11 @@ public:
     [[nodiscard]] QStringList kitZeilen() const;
     /// Was der letzte Kitwechsel getan hat (die Zeile unter dem Kopf); leer = keiner.
     [[nodiscard]] QString kitMeldung() const;
+    /// **Edit kits...** (Stufe 21c, K7 a): das Fenster Kits oeffnen, auf dem Kit
+    /// des Musters (sonst dem ersten). `zeigen` false fuellt es nur (fuer Tests).
+    void oeffneKits(bool zeigen = true);
+    /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] KitFenster* kitFenster() const;
 
 Q_SIGNALS:
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.
@@ -361,6 +368,8 @@ Q_SIGNALS:
     void sampleVerlangt(const QString& nennung);
     /// Das Fenster Instruments bittet um Undo (false) oder Redo (true).
     void rueckgaengigVerlangt(bool wiederholen);
+    /// Das Fenster Kits will Schlaege hoeren: je Spur einen, einen Schlag nach dem anderen.
+    void kitAnspielenVerlangt(const std::vector<lumi::loop::Spur>& spuren);
 
 protected:
     /// Ein Klick in die Kopfzeile einer Spur waehlt sie.
@@ -374,7 +383,7 @@ private:
         QToolButton* stumm = nullptr;
         QLabel* name = nullptr;
         QToolButton* rolle = nullptr;  ///< das Etikett Role (Stufe 21b)
-        QComboBox* klang = nullptr;
+        KlangAuswahl* klang = nullptr;
         QToolButton* mehr = nullptr;  ///< „…": nur an einer Instrument-Spur zu sehen
         QSlider* laut = nullptr;
         QSlider* pan = nullptr;
@@ -383,7 +392,6 @@ private:
     /// Kopf, Raster und Spuren aus `m_loop` neu fuellen.
     void zeigeAlles();
     void baueSpuren(const Muster& muster);
-    void fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene, const QStringList& bibliothek) const;
     /// Was in der Auswahl gewaehlt wurde: ein Klang — oder einer der drei Wege darunter.
     void klangGewaehlt(int spur, const QString& wahl);
     void frageNachSampleDatei(int spur);
@@ -406,6 +414,7 @@ private:
     QPointer<InstrumentPalette> m_palette;
     QPointer<InstrumentCreator> m_creator;
     QPointer<AufnahmeFenster> m_aufnahme;
+    QPointer<KitFenster> m_kits;
     int m_paletteSpur = -1;   ///< fuer diese Spur waehlt das Fenster Instruments; -1 = keine
     int m_creatorSpur = -1;   ///< das Instrument dieser Spur ist im Creator offen
     /// „Edit sound..." hat fuer diese Spur ein neues Instrument geoeffnet: beim

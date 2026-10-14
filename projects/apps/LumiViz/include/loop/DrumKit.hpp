@@ -137,4 +137,20 @@ KitWechsel wendeKitAn(Muster& muster, const DrumKit& kit);
 /// Klang; Spuren ohne Rolle bekommen vorher eine geratene.
 [[nodiscard]] DrumKit kitAusMuster(const Muster& muster, const QString& titel);
 
+// --- Wer ein Kit nennt (Stufe 21c, „Used by" im Fenster Kits) ----------------
+
+/// So viele zuletzt geoeffnete Loops merkt sich das Programm.
+inline constexpr int kZuletztLoopsMax = 10;
+/// Ein Loop ist geladen oder gespeichert worden: vorn in die Liste.
+void merkeGeoeffnetenLoop(const QString& pfad);
+/// Die zuletzt geoeffneten Loops, juengster zuerst, nur die, die es noch gibt.
+[[nodiscard]] QStringList zuletztGeoeffneteLoops();
+/// Die mitgelieferten Loops: jede `.lvloop` unter `asset/loop`, auch in Unterordnern.
+[[nodiscard]] QStringList mitgelieferteLoopDateien();
+/// Nennt ein Muster des Loops dieses Kit (Feld `kit`, K4 a)?
+[[nodiscard]] bool nenntKit(const Loop& loop, const QString& nennung);
+/// Die Dateien unter `dateien`, deren Loop das Kit nennt — beim Dateinamen ohne
+/// Endung, jede einmal, in der Reihenfolge von `dateien`.
+[[nodiscard]] QStringList loopsMitKit(const QString& nennung, const QStringList& dateien);
+
 }  // namespace lumi::loop
