@@ -70,4 +70,6 @@
 - Die Kits im Programm (Stufen 21b bis 21e): der Knopf Kit im Drum-Editor, das
   Fenster Kits, die akustischen Kits, das Icon.
 - Hören: `.claude\handover\hoerproben_s123` (lokal).
+- Wunsch: das Feld Bars im Drum- und Instrument-Editor unter 4 — zum
+  Austesten erst einen Takt komponieren (`Offene_Punkte.md` §7).
 - Kein Männerchor — die Männerstimmen der Sammlung halten keinen Ton.

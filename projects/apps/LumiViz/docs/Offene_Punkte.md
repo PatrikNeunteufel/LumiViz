@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.218.0
+> **Version:** 1.219.0
 > **Datum:** 2026-10-14 (Session 123)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5235,6 +5235,20 @@ Wunsch); **V1 a** dafür keine neue Fassung der `.lvinst`. **Offen daraus:**
   die Übergangsanimation des Stils beim sofortigen Abfotografieren; im
   Programm nachsehen.
 
+### 🟡 Wunsch: Bars kleiner als 4 im Drum- und Instrument-Editor (Patrik S123)
+
+„Zumindest für das Austesten würde ein kleinerer Loop helfen, dass man Bar 1
+komponiert und erst nachher die anderen Bars auffüllt." Heute geht das Feld
+Bars nicht unter 4. **Befund (nachgesehen, nichts geändert):** `kTakteMin` = 4
+(`loop/Loop.hpp`, „Vorgabe Patrik S108") ist zugleich die **Untergrenze** (die
+Felder Bars beider Editoren, `setzeMusterTakte`, das Richten beim Laden) und
+die **Länge eines neuen Clips** (`Bearbeiten.cpp`, `Taktachse.cpp`,
+`LoopPanel.cpp`). Für den Wunsch wären die beiden zu trennen (etwa Untergrenze
+1, neue Clips weiter 4). Offen, vorzulegen: ob die Untergrenze 1 oder 2 ist; was
+ein Clip eines kurzen Musters auf der Achse zeigt; ob „auffüllen" nur das
+Verlängern meint oder auch ein Kopieren von Bar 1 in die neuen Takte. Nicht
+gebaut — nach Stufe 21.
+
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
 **Patrik S123:** angehen, **nachdem die laufenden Arbeiten abgeschlossen
@@ -5639,6 +5653,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.219.0 | 2026-10-14 | Session 123, Abschluss. `sessions/Changelog_Session123.md`. **Stand:** Vorlagen (20 Formen, 38 Samples `lib:`, 90 Instrumente, 9 Loops), Kits Stufe 21a und 21b gebaut (Modell, zehn Kits, Drum-Editor), VST3-Konzept 0.1.0, Versuch Titanium (lokal). **Offen:** 21c (Fenster Kits) als Nächstes, 21d, 21e; §7 NEU Wunsch Patrik „Bars kleiner als 4" (Befund: `kTakteMin` ist Untergrenze und Länge neuer Clips zugleich); Patriks Ohr an `hoerproben_s123`. 1210 Cases, voller Lauf 1202 / 1202 nach den Vorlagen, danach 236 Bereichsfälle unter beiden Compilern grün. |
 | 1.218.0 | 2026-10-14 | Session 123. §7 NEU „Vorlagen S123": Formen (20), mitgelieferte Samples `lib:` (38, CC BY 3.0, Entscheide 1 a, 2 a), 35 Instrumente mehr (90), neun Loops; offen die Kits (3 a, Skizze gezeigt, Entscheide ausstehend), Patriks Ohr an `hoerproben_s123`; Versuch „Titanium" (lokal); VST3-Konzept `audio/VST3_Konzept.md` 0.1.0. |
 | 1.217.0 | 2026-10-14 | Session 122, Abschluss. `sessions/Changelog_Session122.md`. **Stand:** Klang aus einer Form — **Stufe 20 vollständig**: 20a (Edit shape), 20b (SVG), 20c (Bild), 20d (mehrere Konturen, Brücken, Farben der Schichten); `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0; dazu die Sichttest-Liste `Sichttest_Shape_Klang-aus-einer-Form.md` (lokal) mit den Vorlagen `asset/sichttest/presets/Shape.lvfx` und `XyScope.lvfx`. **Offen:** im Programm ungesehen und ungehört (19b bis 20d) — Patriks Sichttest mit der Liste; Patriks Ohr an `hoerproben_19c`; die von Claude gesetzten Zahlen und Regeln; CSS-Variablen in SVG; mitgelieferte Instrumente mit Shape-Schicht. 1200 Cases, voller Lauf 1199 / 1199 nach 20d (Testing-MSVC, Bildschirm 2), der Fall danach unter beiden Compilern grün. |
 | 1.216.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20d gebaut — mehrere Konturen** (Entscheide Patrik L1 a, F1 a, V1 a; `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0); Stufe 20 damit vollständig. Offen: im Programm ungesehen und ungehört; die gesetzten Abstufungen und Regeln. |
