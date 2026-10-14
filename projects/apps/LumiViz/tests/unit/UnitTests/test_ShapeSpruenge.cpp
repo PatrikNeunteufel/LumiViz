@@ -19,6 +19,7 @@
 #include "loop/InstrumentCreator.hpp"
 #include "shape/Kontur.hpp"
 #include "shape/Tonform.hpp"
+#include "visualizers/multieffect/ChainSerializer.hpp"
 
 #include <QApplication>
 #include <QDir>
@@ -365,4 +366,24 @@ TEST_CASE("Shape Spruenge im Creator: Save mit Layers legt Kopien an, bis acht â
         CHECK(gezeigt.grab().save(QString(ziel).replace(QStringLiteral(".png"), QStringLiteral("_creator.png"))));
         gezeigt.hide();
     }
+}
+
+TEST_CASE("Shape Sichttest-Vorlagen: Shape.lvfx und XyScope.lvfx laden mit ihrem Knoten")
+{
+    // die Vorlagen der Liste Sichttest_Shape (S122) â€” vom Arbeitsordner aus (die Test-Exe aus dem Projekt-Root starten)
+    namespace me = lumi::multieffect;
+    me::ChainNode kette;
+    QStringList bericht;
+    REQUIRE(me::loadChainFromFile(QDir::current().filePath(QStringLiteral("asset/sichttest/presets/Shape.lvfx")), kette, &bericht));
+    REQUIRE(kette.children.size() == 1);
+    const auto* form = std::get_if<me::ShapeParams>(&kette.children[0].params);
+    REQUIRE(form != nullptr);
+    CHECK(form->shape == "heart");
+    CHECK(form->showCircles);
+    me::ChainNode scope;
+    REQUIRE(me::loadChainFromFile(QDir::current().filePath(QStringLiteral("asset/sichttest/presets/XyScope.lvfx")), scope, &bericht));
+    REQUIRE(scope.children.size() == 1);
+    const auto* xy = std::get_if<me::XyScopeParams>(&scope.children[0].params);
+    REQUIRE(xy != nullptr);
+    CHECK_FALSE(xy->rotate45);  // eine Schicht mit Stereo XY zeichnet ihre Form aufrecht
 }
