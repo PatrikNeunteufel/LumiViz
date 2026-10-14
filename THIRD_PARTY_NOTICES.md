@@ -232,7 +232,7 @@ Wird beim Konfigurieren in der in `cmakecraft.pin` festgelegten Version geholt.
 
 ---
 
-## Mitgelieferte Klänge — `asset/loop/samples/` (CC BY 3.0)
+## Mitgelieferte Klänge — `asset/loop/samples/` (CC BY 3.0, CC BY 4.0)
 
 Achtunddreißig Aufnahmen aus den **OLPC Sound Samples** (One Laptop per Child
 music library, zusammengestellt von Richard Boulanger und vielen Beitragenden
@@ -241,6 +241,17 @@ Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>);
 die Lizenz steht je Eintrag in dessen Metadaten (geprüft S123). LumiViz hat
 sie bearbeitet: Stille an den Rändern weg, am Ende ausgeblendet, Pegel
 angehoben, Mono, 16 Bit, 44100 Hz.
+
+Siebenunddreißig Anschläge (`drs_*`, `crocell_*`) aus zwei Schlagzeug-Kits für
+**DrumGizmo** (<https://drumgizmo.org>): **DRSKit 2.1** (DrumGizmo-Team und
+Jes Eiler, DRSDrums) und **CrocellKit 1.1** (DrumGizmo-Team, aufgenommen bei
+JBOSound), beide unter **Creative Commons Attribution 4.0 International**
+(<https://creativecommons.org/licenses/by/4.0/>; Wortlaut der Kit-Seiten,
+geprüft S124). Wer die Klänge in einer Komposition verwendet, nennt sie überall
+dort, wo auch andere Mitwirkende genannt werden. LumiViz hat sie bearbeitet:
+die Mikrofone je Anschlag zu Stereo gemischt, Stille vorn weg, die letzten
+10 ms ausgeblendet, Pegel angehoben, 16 Bit, 44100 Hz
+(`asset/loop/samples/make_drumgizmo.py`).
 
 Urheber, Eintrag und Datei stehen je Sample in
 **`asset/loop/samples/CREDITS.md`** — diese Datei geht mit neben die Exe und

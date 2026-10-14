@@ -1,0 +1,53 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Jazz Brushes",
+    "description": "Computed brushes on the snare (tap, slap, sweep) with a soft acoustic kick, hi-hat foot and ride (DRSKit).",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "lib:drs_kick_soft",
+            "volume": 0.75,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "",
+            "instrument": "drum_brush_tap",
+            "note": 36,
+            "length": 250,
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "snare 2",
+            "sound": "",
+            "instrument": "drum_brush_slap",
+            "note": 36,
+            "length": 250,
+            "volume": 0.767,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:drs_hat_foot",
+            "volume": 0.457,
+            "pan": 0.0
+        },
+        {
+            "role": "ride",
+            "sound": "lib:drs_ride_soft",
+            "volume": 0.347,
+            "pan": 0.0
+        },
+        {
+            "role": "perc 1",
+            "sound": "",
+            "instrument": "drum_brush_sweep",
+            "note": 36,
+            "length": 500,
+            "volume": 0.891,
+            "pan": 0.3
+        }
+    ]
+}

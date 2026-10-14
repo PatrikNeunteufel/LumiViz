@@ -3,7 +3,7 @@ mitgelieferten Samples (`lib:`), die neuen Drums (Wunsch Patrik S123).
 
     python asset/loop/make_showcase.py
 
-Schreibt nach `asset/loop/genres/*.lvloop` (neun Loops) — dort prueft der Test jede Datei
+Schreibt nach `asset/loop/genres/*.lvloop` (zehn Loops; Brush Swing seit S124, Stufe 21d) — dort prueft der Test jede Datei
 von selbst mit. Danach `python asset/loop/instrument_katalog.py`: die Genres der Instrumente
 werden aus den Loops gezaehlt. Kein Zufall: zwei Laeufe ergeben dieselben Dateien.
 
@@ -207,6 +207,32 @@ def sax_after_dark():
     return effekte(b.fertig(), {"Sax": [hall(0.3, 0.6, 2.0)], "Harp": [hall(0.25)]})
 
 
+def brush_swing():
+    """S124, Stufe 21d (K6c a): das Kit Jazz Brushes. Swing in Triolen: zwoelf Schritte je Takt.
+    Ride „ding, ding-a", Fuss-Hi-Hat auf 2 und 4, der Besen kreist auf 1 und 3, Taps und im
+    vierten Takt ein Slap als Akzent, die Kick gefedert."""
+    b = Bau("Brush Swing", "Jazz", 132, 0.4, schlaege=4, je_schlag=3)
+    akk = [(50, 53, 57, 60), (55, 59, 62, 65), (48, 52, 55, 59), (57, 61, 64, 67)]  # Dm7 G7 Cmaj7 A7
+    t = "...o.-...o.-"
+    beat = drums(b, "Brushes", [
+        ("Kick", "lib:drs_kick_soft", 0.5, 0.0, "-..-..-..-.."),
+        ("Brush", "kit:snare", 0.7, 0.0, [t, t, "...o.-..-o.-", t], "drum_brush_tap"),
+        ("Accent", "kit:snare", 0.8, 0.0, ["............", "............", "............", ".........x.."], "drum_brush_slap"),
+        ("Sweep", "kit:hat_open", 0.6, 0.0, "x.....o.....", "drum_brush_sweep"),
+        ("Hat", "lib:drs_hat_foot", 0.7, 0.0, "...x.....x.."),
+        ("Ride", "lib:drs_ride_soft", 0.6, 0.0, "x..o.-x..o.-")])
+    muster = b.patterns[-1]
+    muster["kit"] = "jazz_brushes"  # Entscheid K4 a: das Kit, nach dem die Spuren gesetzt sind
+    for spur, rolle in zip(muster["tracks"], ("kick", "snare", "snare 2", "perc 1", "hat", "ride")):
+        spur["role"] = rolle
+    muster["tracks"][3]["length"] = 500  # der Besen kreist einen halben Takt, wie im Kit
+    bass = b.noten("Bass", "upright_bass", b.takte(akk, lambda t, a: lauf((0, 3, 6, 9), 3, (a[0] - 12, a[1] - 12, a[2] - 12,
+                                                                                          a[3] - 24), 0.8)), 0.85)
+    b.kanal("Drums", (beat, 0, 4))
+    b.kanal("Bass", (bass, 4, 3))
+    return b.fertig()
+
+
 # --- Formen ----------------------------------------------------------------
 
 def shape_synthwave():
@@ -267,6 +293,7 @@ LOOPS = {
     "sax_after_dark": sax_after_dark,
     "shape_synthwave": shape_synthwave,
     "geometry": geometry,
+    "brush_swing": brush_swing,
 }
 
 

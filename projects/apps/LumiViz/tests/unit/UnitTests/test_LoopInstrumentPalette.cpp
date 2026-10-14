@@ -127,7 +127,7 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(fenster.unter(QStringLiteral("Plucked")).size() == 12);
     CHECK(fenster.unter(QStringLiteral("Wind")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Percussion")).size() == 10);
-    CHECK(fenster.unter(QStringLiteral("Drums")).size() == 17);  // Stufe 11f, S123
+    CHECK(fenster.unter(QStringLiteral("Drums")).size() == 20);  // Stufe 11f, S123, drei Besen S124
     CHECK(fenster.unter(QStringLiteral("Unusual")).size() == 8);
     CHECK(fenster.unter(QStringLiteral("My files")).isEmpty());
     CHECK(kopfText(fenster, QStringLiteral("Bass")) == QStringLiteral("Bass  (12)"));

@@ -342,7 +342,8 @@ TEST_SUITE("LoopInstrument")
         // Schichten, sieben davon ungewoehnlich, und neunzehn fuer die Genre-Beispiele
         // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117); S123: elf aus Formen,
         // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
-        REQUIRE(alle.size() == 90);
+        // und drei Besen (S124, Stufe 21d)
+        REQUIRE(alle.size() == 93);
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -363,7 +364,8 @@ TEST_SUITE("LoopInstrument")
                                  "dulcimer", "thumb_piano", "shakuhachi", "alto_sax", "alto_flute", "angel_harp",
                                  "wind_voices", "drum_kick_808", "drum_tom_low", "drum_tom_high", "drum_shaker",
                                  "drum_ride", "drum_crash", "drum_kick_punch", "drum_snare_fat", "drum_clap_stack",
-                                 "drum_hat_shake", "drum_beatbox_kick"})
+                                 "drum_hat_shake", "drum_beatbox_kick", "drum_brush_tap", "drum_brush_slap",
+                                 "drum_brush_sweep"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -634,11 +636,11 @@ TEST_SUITE("LoopInstrument")
         CHECK(jeArt[QStringLiteral("plucked")] == 12);
         CHECK(jeArt[QStringLiteral("wind")] == 7);
         CHECK(jeArt[QStringLiteral("percussion")] == 10);
-        CHECK(jeArt[QStringLiteral("drums")] == 17);  // Stufe 11f, S123
+        CHECK(jeArt[QStringLiteral("drums")] == 20);  // Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem,
         // die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 19);
+        CHECK(ohneGenre == 22);  // seit S124 mit den drei Besen
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
     }
@@ -701,7 +703,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 90);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 93);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {

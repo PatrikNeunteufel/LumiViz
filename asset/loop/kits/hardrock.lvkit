@@ -1,0 +1,68 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Hardrock",
+    "description": "The same acoustic kit (DRSKit, DrumGizmo), hit hard, with two crashes.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "lib:drs_kick_hard",
+            "volume": 0.891,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "lib:drs_snare_hard",
+            "volume": 0.891,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:drs_hat_hard",
+            "volume": 0.394,
+            "pan": 0.0
+        },
+        {
+            "role": "open hat",
+            "sound": "lib:drs_hat_open_hard",
+            "volume": 0.49,
+            "pan": 0.0
+        },
+        {
+            "role": "ride",
+            "sound": "lib:drs_ride",
+            "volume": 0.335,
+            "pan": 0.0
+        },
+        {
+            "role": "crash",
+            "sound": "lib:drs_crash_left_hard",
+            "volume": 0.902,
+            "pan": 0.0
+        },
+        {
+            "role": "crash 2",
+            "sound": "lib:drs_crash_right_shank_hard",
+            "volume": 0.495,
+            "pan": 0.0
+        },
+        {
+            "role": "tom 1",
+            "sound": "lib:drs_tom1_hard",
+            "volume": 0.871,
+            "pan": -0.25
+        },
+        {
+            "role": "tom 2",
+            "sound": "lib:drs_tom2_hard",
+            "volume": 0.767,
+            "pan": 0.25
+        },
+        {
+            "role": "tom 3",
+            "sound": "lib:drs_tom3_hard",
+            "volume": 0.955,
+            "pan": 0.0
+        }
+    ]
+}

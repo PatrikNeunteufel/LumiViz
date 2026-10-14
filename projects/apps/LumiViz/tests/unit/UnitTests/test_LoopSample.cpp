@@ -521,12 +521,13 @@ TEST_SUITE("Loop Sample")
         REQUIRE_FALSE(bibliothekOrdner().isEmpty());
         const QStringList alle = bibliotheksKlaenge();
         // wer ein Sample dazulegt, traegt es in asset/loop/samples/make_samples.py ein und stellt die Zahl nach
-        CHECK(alle.size() == 38);
+        CHECK(alle.size() == 75);  // 38 aus OLPC (S123), 37 aus DrumGizmo (S124, make_drumgizmo.py)
         CHECK(std::is_sorted(alle.begin(), alle.end()));
         QFile credits(QDir(bibliothekOrdner()).filePath(QStringLiteral("CREDITS.md")));
         REQUIRE(credits.open(QIODevice::ReadOnly));
         const QString nennungen = QString::fromUtf8(credits.readAll());
         CHECK(nennungen.contains(QStringLiteral("Creative Commons Attribution 3.0")));
+        CHECK(nennungen.contains(QStringLiteral("Creative Commons Attribution 4.0 International")));  // DrumGizmo
         for (const QString& klang : alle)
         {
             CAPTURE(klang.toStdString());

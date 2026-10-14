@@ -347,3 +347,37 @@ Drum-Spuren nennen ein Sample (`lib:`), einen Klang des Kits oder ein
 Instrument der Art Drums (Note C2). Nach Rechnung gesetzt, nicht gehört.
 Hörproben: `LUMIVIZ_LOOP_WAV=<datei.lvloop oder Ordner>` mit
 `LUMIVIZ_LOOP_WAV_ZIEL=<Ordner>` (`test_LoopWerte.cpp`).
+
+## S124, Stufe 21d: akustische Drums, Besen, vier Kits, Brush Swing
+
+### samples/ — siebenunddreißig Anschläge aus DrumGizmo (CC BY 4.0)
+
+`samples/make_drumgizmo.py <ordner>` in drei Schritten: `verzeichnis` liest das
+Inhaltsverzeichnis der beiden ZIPs (DRSKit 2.1, 2,80 GB; CrocellKit 1.1,
+5,65 GB) über Teil-Abrufe, dazu die XMLs der Instrumente; `holen` lädt nur die
+gewählten Anschläge (`WAHL`, 310,5 MB, Entscheide D1 a, D1b, D4 a); `schreiben`
+mischt sie zu Stereo (D2 a) und lässt sie ganz — nur die Stille vorn fällt weg (D6 a). Die Originale liegen
+nicht im Repo (S124: `…\Visuals_Project\cmake\DrumGizmo`). Nennung in
+`samples/CREDITS.md`, Abschnitt *Acoustic drums — DrumGizmo*.
+
+| Präfix | Kit | Was |
+|---|---|---|
+| `drs_*` (22) | DRSKit | Kick leise/mittel/voll, Snare mittel/voll, Rim, Hat mittel/voll/Fuß, offene Hat mittel/voll, Toms 1–3 mittel/voll, Ride leise/mittel, Crash links mittel/voll, Crash rechts mit dem Schaft voll |
+| `crocell_*` (15) | CrocellKit | Kick links/rechts (Doppelpedal), Snare, Hat, offene Hat, Toms 1–4, Ride, Crash 1–3, China, Splash — alle voll |
+
+### Instrumente
+
+Drei gerechnete Besen (`make_drums.py`): `drum_brush_tap`, `drum_brush_slap`,
+`drum_brush_sweep` — Rauschen durch Filter, nach Rechnung, nicht gehört.
+
+### kits/ — vier Kits mehr (vierzehn)
+
+Rock'n'Roll und Hardrock aus dem DRSKit (mittel bzw. voll), Heavy Metal aus dem
+CrocellKit, Jazz Brushes mit den Besen und leisem DRSKit. Volume gemessen wie
+in S123 (`make_kits.py`, `PEGEL_DB`); Hats und Becken der Stereo-Samples auf
+Pan 0 — sie tragen ihr Bild aus den Overheads.
+
+### genres/brush_swing.lvloop
+
+Jazz, 132 BPM, Swing in Triolen (zwölf Schritte je Takt), Kit `jazz_brushes`
+mit Rollen an den Spuren; Upright Bass als Walking Bass über Dm7 G7 Cmaj7 A7.

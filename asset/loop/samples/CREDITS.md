@@ -1,5 +1,7 @@
 # Samples — sources and credits
 
+## OLPC Sound Samples
+
 These sounds come from the **OLPC Sound Samples** collection (One Laptop per Child music library,
 compiled by Richard Boulanger and many contributors at Berklee), published on archive.org under
 **Creative Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>).
@@ -47,3 +49,69 @@ peak of 0.89, written as mono, 16 bit, 44100 Hz. In LumiViz a sample `name.wav` 
 | `thumb_piano.wav` | thumb piano, one note | Berklee (Forsyth) | [Berklee44Forsyth](https://archive.org/details/Berklee44Forsyth), `Berklee44Forsyth.zip` → `Berklee44Forsyth/thumbpiano_do.wav` |
 | `sax_alto.wav` | alto saxophone, one note with vibrato | OpenPathMusic | [OpenPathMusic44V2](https://archive.org/details/OpenPathMusic44V2), `OpenPathMusic44V2.zip` → `OpenPathMusic44V2/saxophone-alto-C-octave1-vib.wav` |
 | `flute_alto.wav` | alto flute, one note with vibrato | OpenPathMusic | [OpenPathMusic44V2](https://archive.org/details/OpenPathMusic44V2), `OpenPathMusic44V2.zip` → `OpenPathMusic44V2/flute-alto-C-vib.wav` |
+
+<!-- DrumGizmo: ab hier schreibt make_drumgizmo.py -->
+
+## Acoustic drums — DrumGizmo
+
+These sounds come from two drum kits made for **DrumGizmo** (<https://drumgizmo.org>), released under
+**Creative Commons Attribution 4.0 International** (<https://creativecommons.org/licenses/by/4.0/>).
+When the samples are used in a composition, any context in which other credits (e.g. to performers) are
+presented must include an attribution — for example: *Drums: DRSKit / CrocellKit by the DrumGizmo team, CC BY 4.0.*
+
+LumiViz changed them: of each hit, the close microphones of the drum that was hit (centre), the
+overheads at -6 dB (left and right) and the room microphones at -12 dB (left and right) are mixed to
+stereo; the close microphones of the other drums are left out. Silence before the hit is removed, the
+last 10 ms are faded out, the level is raised to a peak of 0.89, written as stereo, 16 bit, 44100 Hz.
+In LumiViz a sample `name.wav` is called `lib:name`.
+
+### DRSKit 2.1
+
+By the DrumGizmo team and Jes Eiler of DRSDrums. A collaboration between the DrumGizmo team and Jes Eiler of DRSDrums, who lent the kit. Source: <https://drumgizmo.org/wiki/doku.php?id=kits:drskit>, `https://drumgizmo.org/kits/DRSKit/DRSKit2_1.zip`.
+
+| File | What | File in the kit |
+|---|---|---|
+| `drs_kick.wav` | Kdrum without contact, medium hit | `DRSKit/Kdrum_without_contact/samples/24-Kdrum_without_contact.wav` |
+| `drs_kick_hard.wav` | Kdrum without contact, hard hit | `DRSKit/Kdrum_without_contact/samples/28-Kdrum_without_contact.wav` |
+| `drs_kick_soft.wav` | Kdrum without contact, soft hit | `DRSKit/Kdrum_without_contact/samples/16-Kdrum_without_contact.wav` |
+| `drs_snare.wav` | Snare, medium hit | `DRSKit/Snare/samples/23-Snare.wav` |
+| `drs_snare_hard.wav` | Snare, hard hit | `DRSKit/Snare/samples/28-Snare.wav` |
+| `drs_rim.wav` | Snare rim, medium hit | `DRSKit/Snare_rim/samples/13-Snare_rim.wav` |
+| `drs_hat.wav` | Hihat closed, medium hit | `DRSKit/Hihat_closed/samples/20-Hihat_closed.wav` |
+| `drs_hat_hard.wav` | Hihat closed, hard hit | `DRSKit/Hihat_closed/samples/23-Hihat_closed.wav` |
+| `drs_hat_foot.wav` | Hihat foot, medium hit | `DRSKit/Hihat_foot/samples/5-Hihat_foot.wav` |
+| `drs_hat_open.wav` | Hihat open, medium hit | `DRSKit/Hihat_open/samples/14-Hihat_open.wav` |
+| `drs_hat_open_hard.wav` | Hihat open, hard hit | `DRSKit/Hihat_open/samples/17-Hihat_open.wav` |
+| `drs_tom1.wav` | Tom1, medium hit | `DRSKit/Tom1/samples/23-Tom1.wav` |
+| `drs_tom2.wav` | Tom2, medium hit | `DRSKit/Tom2/samples/25-Tom2.wav` |
+| `drs_tom3.wav` | Tom3, medium hit | `DRSKit/Tom3/samples/24-Tom3.wav` |
+| `drs_tom1_hard.wav` | Tom1, hard hit | `DRSKit/Tom1/samples/26-Tom1.wav` |
+| `drs_tom2_hard.wav` | Tom2, hard hit | `DRSKit/Tom2/samples/29-Tom2.wav` |
+| `drs_tom3_hard.wav` | Tom3, hard hit | `DRSKit/Tom3/samples/28-Tom3.wav` |
+| `drs_ride.wav` | Ride tip, medium hit | `DRSKit/Ride_tip/samples/12-Ride_tip.wav` |
+| `drs_ride_soft.wav` | Ride tip, soft hit | `DRSKit/Ride_tip/samples/9-Ride_tip.wav` |
+| `drs_crash_left.wav` | Crash left tip, medium hit | `DRSKit/Crash_left_tip/samples/8-Crash_left_tip.wav` |
+| `drs_crash_left_hard.wav` | Crash left tip, hard hit | `DRSKit/Crash_left_tip/samples/10-Crash_left_tip.wav` |
+| `drs_crash_right_shank_hard.wav` | Crash right shank, hard hit | `DRSKit/Crash_right_shank/samples/12-Crash_right_shank.wav` |
+
+### CrocellKit 1.1
+
+By the DrumGizmo team. The kit of the Danish metal band Crocell, sampled by the DrumGizmo team at JBOSound (Jacob Olsen) while the band recorded its album Relics. Source: <https://drumgizmo.org/wiki/doku.php?id=kits:crocellkit>, `https://drumgizmo.org/kits/CrocellKit/CrocellKit1_1.zip`.
+
+| File | What | File in the kit |
+|---|---|---|
+| `crocell_kick_left.wav` | KDrumL, hard hit | `CrocellKit/KDrumL/samples/49-KDrumL.wav` |
+| `crocell_kick_right.wav` | KDrumR, hard hit | `CrocellKit/KDrumR/samples/46-KDrumR.wav` |
+| `crocell_snare.wav` | Snare, hard hit | `CrocellKit/Snare/samples/94-Snare.wav` |
+| `crocell_hat.wav` | HihatClosed, hard hit | `CrocellKit/HihatClosed/samples/40-HihatClosed.wav` |
+| `crocell_hat_open.wav` | HihatOpen, hard hit | `CrocellKit/HihatOpen/samples/44-HihatOpen.wav` |
+| `crocell_tom1.wav` | Tom1, hard hit | `CrocellKit/Tom1/samples/43-Tom1.wav` |
+| `crocell_tom2.wav` | Tom2, hard hit | `CrocellKit/Tom2/samples/37-Tom2.wav` |
+| `crocell_tom3.wav` | FTom1, hard hit | `CrocellKit/FTom1/samples/28-FTom1.wav` |
+| `crocell_tom4.wav` | FTom2, hard hit | `CrocellKit/FTom2/samples/33-FTom2.wav` |
+| `crocell_ride.wav` | RideR, hard hit | `CrocellKit/RideR/samples/36-RideR.wav` |
+| `crocell_crash1.wav` | CrashL, hard hit | `CrocellKit/CrashL/samples/25-CrashL.wav` |
+| `crocell_crash2.wav` | CrashR, hard hit | `CrocellKit/CrashR/samples/21-CrashR.wav` |
+| `crocell_crash3.wav` | CrashRXtra, hard hit | `CrocellKit/CrashRXtra/samples/8-CrashRXtra.wav` |
+| `crocell_china.wav` | ChinaL, hard hit | `CrocellKit/ChinaL/samples/16-ChinaL.wav` |
+| `crocell_splash.wav` | SplashL, hard hit | `CrocellKit/SplashL/samples/11-SplashL.wav` |

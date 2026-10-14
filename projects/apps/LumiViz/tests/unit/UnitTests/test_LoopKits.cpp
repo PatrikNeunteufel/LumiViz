@@ -293,20 +293,21 @@ TEST_SUITE("Loop Kits")
         CHECK(gelesen.muster[0].kit == QDir::cleanPath(loop.muster[0].kit));
     }
 
-    TEST_CASE("Loop Kits: die mitgelieferten — zehn, jeder Klang da, jede Rolle gueltig (K6 a, K6b a)")
+    TEST_CASE("Loop Kits: die mitgelieferten — vierzehn, jeder Klang da, jede Rolle gueltig (K6 a, K6b a, K6c a)")
     {
         const KitApp app;
         REQUIRE_FALSE(mitgelieferterKitOrdner().isEmpty());
         const std::vector<DrumKit>& alle = mitgelieferteKits();
         // wer ein Kit dazulegt, traegt es in asset/loop/kits/make_kits.py ein und stellt die Zahl nach
-        REQUIRE(alle.size() == 10);
+        REQUIRE(alle.size() == 14);
         QStringList namen;
         for (const DrumKit& kit : alle) namen << kit.name;
         namen.sort();
         CHECK(namen == QStringList{QStringLiteral("808"), QStringLiteral("909_house"), QStringLiteral("beatbox"),
                                    QStringLiteral("classic"), QStringLiteral("electro"), QStringLiteral("hand_drums"),
+                                   QStringLiteral("hardrock"), QStringLiteral("heavy_metal"), QStringLiteral("jazz_brushes"),
                                    QStringLiteral("lo_fi"), QStringLiteral("reggae"), QStringLiteral("reggaeton"),
-                                   QStringLiteral("strange")});
+                                   QStringLiteral("rock_n_roll"), QStringLiteral("strange")});
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         for (const DrumKit& kit : alle)

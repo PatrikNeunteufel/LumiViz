@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.72.0
+> **Version:** 0.73.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3196,6 +3196,45 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
   Rändern der Zellen schmale Striche der Auswahlfarbe durch — kosmetisch,
   offen.
 
+### Die Entscheide zu 21d (Patrik S124)
+
+| Entscheid | Inhalt |
+|---|---|
+| **D1 a** | Aus den ZIPs von DrumGizmo (DRSKit 2,80 GB, CrocellKit 5,65 GB) nur holen, was gebraucht wird: erst das Inhaltsverzeichnis über Teil-Abrufe, dann die Auswahl mit Größe zur Freigabe. Verworfen: beide ganz laden (b, 8,45 GB bei 56 GB frei), DRSKit ganz und vom CrocellKit der Stereo MIX (c — dort fehlen Urheber und Lizenz). |
+| **D1b** | Die Auswahl: 37 Anschläge, 296,5 MB, je Instrument der Anschlag, dessen `power` 25 % (leise), 60 % (mittel) oder 90 % (voll) der Spanne am nächsten liegt (die Anteile von Claude gesetzt). |
+| **D2 a** | Stereo, 16 Bit, 44100 Hz. Verworfen: Mono wie die übrigen Samples (b). |
+| **D3 a** | ~~Schluss bei −50 dB unter der Spitze, die letzten 10 % ausgeblendet~~ — ersetzt durch D5 a. |
+| **D4 a** | crash 2 in Hardrock: der Schlag mit dem Schaft (`Crash_right_shank`, 13,98 MB mehr), weil der Tip-Anschlag auch bei Volume 1 6,6 dB unter crash 1 blieb. Verworfen: Ausnahme im Test (b), nur ein Crash (c). |
+| **D5 a** | ~~(ersetzt durch D6 a)~~ Befund Patrik: die Hats klangen einzeln abgeschnitten. Gemessen: gegen die Spitze eines scharfen Anschlags liegt −50 dB noch im Körper, 10 % Ausblendung sind bei 0,35 s nur 35 ms. Jetzt: Schluss, wo der Effektivwert (10 ms) 60 dB unter sein Maximum fällt, spätestens am Ende der Datei; ausgeblendet über 30 % der Länge, 50 ms bis 1 s. 27,4 MB statt 21,7. Verworfen: nur für Hats (b), D3 a lassen (c). |
+| **D6 a** | Nach D5 a „kaum geändert" (Patrik). Befund dazu: Claudes Hörproben der Reihen hatten jeden Anschlag nach 3 s gekappt — ein Fehler der Probe, nicht der Samples. Jetzt: die Samples behalten ihre ganze Länge; nur die Stille bis 2 ms vor dem Anschlag fällt weg, am Dateiende 10 ms ausgeblendet. Die Aufnahmen klingen selbst in Stille aus, die längste hat 23,8 s (Grenze 30 s); das Kürzen sparte nur noch 3 MB. Verworfen: D5 a lassen (b). |
+
+### Wie 21d gebaut ist (S124)
+
+- **`asset/loop/samples/make_drumgizmo.py`:** `verzeichnis` (zentrales
+  Verzeichnis der ZIP, auch ZIP64, über HTTP Range; dazu die XMLs),
+  `holen` (je Datei der lokale Kopf, dann die Bytes, gegen die Prüfsumme der
+  ZIP geprüft), `schreiben` (mischen, auf 44100 Hz, Stille vorn weg, Spitze 0,89,
+  `CREDITS.md` ab einer Marke — `make_samples.py` lässt diesen Teil stehen).
+- **Die Mischung** (von Claude gesetzt, an den Hörproben zu beurteilen): die
+  Nahmikrofone der angeschlagenen Trommel 0 dB in der Mitte, Overheads −6 dB
+  links und rechts (CrocellKit: ein mittlerer in der Mitte), Raum −12 dB; die
+  Nahmikrofone fremder Trommeln fallen weg. Ein zweites Nahmikrofon wird
+  gedreht, wenn es in den ersten 30 ms gegen das erste läuft — so bei beiden
+  unteren Snare-Mikrofonen.
+- **Die Besen** (`make_drums.py`, Fassung 6): Tap (Rauschen über 1,6 kHz,
+  Bandpass um 2,9 kHz, ein Hauch Fell; nach der ersten Messung 7,5 dB zu
+  leise, verbreitert), Slap (heller, mehr Fell, ein Klick), Sweep (Rauschen mit
+  Anstieg 180 ms, im Kit 500 ms gehalten).
+- **Die Kits** (`make_kits.py`): Rock'n'Roll, Hardrock, Heavy Metal, Jazz
+  Brushes nach der Tabelle oben; Jazz Brushes trägt den Akzent als `snare 2`.
+  Volume nach Messung; je Rolle liegen alle vierzehn Kits innerhalb von 5 dB
+  (crash: Rock'n'Roll 4,3 dB unter Hardrock). Stereo-Samples: Hats und Becken
+  auf Pan 0.
+- **Brush Swing** (`make_showcase.py`): Jazz, 132 BPM, zwölf Schritte je Takt,
+  das Muster nennt `jazz_brushes` und trägt die Rollen.
+- Nicht gehört von Claude; Hörproben in `.claude/handover/hoerproben_21d/`
+  (lokal).
+
 ---
 
 ## 5. Stufen
@@ -3225,7 +3264,7 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 | 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
-| 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; offen 21d (akustische Kits), 21e (Icon, Handbuch, Sichttest) |
+| 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; offen 21e (Icon, Handbuch, Sichttest, voller Lauf) |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
 
 ---
@@ -3322,6 +3361,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.73.0** (S124, 2026-10-14): §4l — Stufe 21d gebaut, Entscheide D1 a
+  bis D6 a („Die Entscheide zu 21d", „Wie 21d gebaut ist"); D3 a und D5 a
+  sind durch D6 a ersetzt.
 - **0.72.0** (S124, 2026-10-14): §4l — Stufe 21c gebaut: das Fenster Kits
   („Wie 21c gebaut ist"), die Auswahl Sound als gemeinsames Bauteil.
 - **0.71.0** (S123, 2026-10-14): §4l NEU — mitgelieferte Samples `lib:`

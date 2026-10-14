@@ -1,0 +1,140 @@
+{
+    "format": "lumiviz-loop",
+    "version": 2,
+    "bpm": 132,
+    "beatsPerBar": 4,
+    "stepsPerBeat": 3,
+    "swing": 0.0,
+    "volume": 0.4,
+    "tags": {
+        "title": "Brush Swing",
+        "artist": "LumiViz",
+        "genre": "Jazz"
+    },
+    "patterns": [
+        {
+            "name": "Brushes",
+            "kind": "drumkit",
+            "bars": 4,
+            "tracks": [
+                {
+                    "name": "Kick",
+                    "sound": "lib:drs_kick_soft",
+                    "volume": 0.5,
+                    "pan": 0.0,
+                    "mute": false,
+                    "role": "kick"
+                },
+                {
+                    "name": "Brush",
+                    "sound": "kit:snare",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "drum_brush_tap",
+                    "note": 36,
+                    "length": 250,
+                    "role": "snare"
+                },
+                {
+                    "name": "Accent",
+                    "sound": "kit:snare",
+                    "volume": 0.8,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "drum_brush_slap",
+                    "note": 36,
+                    "length": 250,
+                    "role": "snare 2"
+                },
+                {
+                    "name": "Sweep",
+                    "sound": "kit:hat_open",
+                    "volume": 0.6,
+                    "pan": 0.0,
+                    "mute": false,
+                    "instrument": "drum_brush_sweep",
+                    "note": 36,
+                    "length": 500,
+                    "role": "perc 1"
+                },
+                {
+                    "name": "Hat",
+                    "sound": "lib:drs_hat_foot",
+                    "volume": 0.7,
+                    "pan": 0.0,
+                    "mute": false,
+                    "role": "hat"
+                },
+                {
+                    "name": "Ride",
+                    "sound": "lib:drs_ride_soft",
+                    "volume": 0.6,
+                    "pan": 0.0,
+                    "mute": false,
+                    "role": "ride"
+                }
+            ],
+            "rows": [
+                [0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0, 0.4, 0, 0],
+                [0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0.4, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4, 0, 0, 0, 0.7, 0, 0.4],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0],
+                [1.0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 1.0, 0, 0],
+                [1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4, 1.0, 0, 0, 0.7, 0, 0.4]
+            ],
+            "kit": "jazz_brushes"
+        },
+        {
+            "name": "Bass",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "upright_bass",
+            "volume": 0.85,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 3, 38, 0.8],
+                [3, 3, 41, 0.8],
+                [6, 3, 45, 0.8],
+                [9, 3, 36, 0.8],
+                [12, 3, 43, 0.8],
+                [15, 3, 47, 0.8],
+                [18, 3, 50, 0.8],
+                [21, 3, 41, 0.8],
+                [24, 3, 36, 0.8],
+                [27, 3, 40, 0.8],
+                [30, 3, 43, 0.8],
+                [33, 3, 35, 0.8],
+                [36, 3, 45, 0.8],
+                [39, 3, 49, 0.8],
+                [42, 3, 52, 0.8],
+                [45, 3, 43, 0.8]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Drums",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Brushes",
+                    "start": 0,
+                    "repeat": 4
+                }
+            ]
+        },
+        {
+            "name": "Bass",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Bass",
+                    "start": 4,
+                    "repeat": 3
+                }
+            ]
+        }
+    ]
+}

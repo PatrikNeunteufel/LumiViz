@@ -97,6 +97,13 @@ def clap_schichten():
             for name, start, decay in (("Hit 1", 0, 10), ("Hit 2", 10, 10), ("Hit 3", 20, 10), ("Tail", 30, 190))]
 
 
+def schicht_ohne_anschlag(name, waveform, attack, decay, release, **werte):
+    """Wie `schlag`, aber mit Anstieg: ein Klang, der anschwillt (der Besen, der kreist)."""
+    s = schlag(name, waveform, decay, release, **werte)
+    s["attack"] = attack
+    return s
+
+
 # Release ist bei den langen Schlaegen gross: eine Drum-Spur spielt die Note 250 ms (Length),
 # danach soll der Schlag ausklingen wie sein Decay, nicht abbrechen.
 INSTRUMENTE = {
@@ -154,6 +161,31 @@ INSTRUMENTE = {
         "Crash", 0.8,
         schlag("Wash", "noise", 1800, 1800, transpose=24, filterType="highpass", filterCutoff=8),
         schlag("Sizzle", "noise", 900, 900, transpose=24, level=0.5, filterType="highpass", filterCutoff=20)),
+    # --- S124, Stufe 21d: drei Besen fuer das Kit Jazz Brushes (Entscheid K6c a); nach Rechnung, nicht gehoert.
+    # Ein Besen ist Rauschen ohne harten Anschlag: viele Draehte, die das Fell streifen. Der Filter folgt der
+    # Tonhoehe — bei Transpose 24 (C4, 262 Hz) liegt Cutoff 11 bei 2,9 kHz, 6 bei 1,6 kHz.
+    # Tap: ein kurzer Schlag auf die Snare — Rauschen ueber 1,6 kHz, Bandpass um 2,9 kHz darauf, ein Hauch
+    # Fell darunter. Nur der Bandpass war 7,5 dB leiser als die anderen Snares (gemessen S124).
+    "drum_brush_tap": instrument(
+        "Brush Tap", 1.0,
+        schlag("Wires", "noise", 110, 140, transpose=24, filterType="highpass", filterCutoff=6),
+        schlag("Bristle", "noise", 80, 100, transpose=24, level=0.7, filterType="bandpass", filterCutoff=11,
+               filterResonance=0.1),
+        schlag("Head", "sine", 70, 80, transpose=18, level=0.2)),
+    # Slap: der Akzent — lauter, heller, mit mehr Fell und einem kurzen Klick
+    "drum_brush_slap": instrument(
+        "Brush Slap", 1.0,
+        schlag("Wires", "noise", 220, 250, transpose=24, filterType="highpass", filterCutoff=8),
+        schlag("Head", "sine", 120, 140, transpose=18, level=0.35),
+        schlag("Click", "noise", 15, 20, transpose=24, level=0.3, filterType="highpass", filterCutoff=20)),
+    # Sweep: der Besen kreist auf dem Fell — Rauschen schwillt an und ab, ohne Anschlag; in einer
+    # Drum-Spur mit langer Length (das Kit setzt 500 ms) klingt es einen halben Takt
+    "drum_brush_sweep": instrument(
+        "Brush Sweep", 1.0,
+        schicht_ohne_anschlag("Swish", "noise", 180, 420, 500, transpose=24, filterType="bandpass", filterCutoff=6,
+                              filterResonance=0.05),
+        schicht_ohne_anschlag("Air", "noise", 260, 380, 450, transpose=24, level=0.4, filterType="highpass",
+                              filterCutoff=14)),
 }
 
 

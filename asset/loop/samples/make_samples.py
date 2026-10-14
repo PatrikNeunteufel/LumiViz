@@ -138,14 +138,19 @@ def main():
         print(f"{name:20s} {info}")
         zeilen.append(f"| `{name}.wav` | {was} | {urheber} | [{eintrag}](https://archive.org/details/{eintrag}), "
                       f"`{zip_}` → `{pfad}` |")
+    # was ab der Marke steht, schreibt make_drumgizmo.py — es bleibt stehen
+    marke = "<!-- DrumGizmo: ab hier schreibt make_drumgizmo.py -->"
+    alt = (HIER / "CREDITS.md").read_text(encoding="utf-8") if (HIER / "CREDITS.md").exists() else ""
+    hinten = ("\n" + marke + alt.split(marke, 1)[1]) if marke in alt else ""
     (HIER / "CREDITS.md").write_text(
         "# Samples — sources and credits\n\n"
+        "## OLPC Sound Samples\n\n"
         "These sounds come from the **OLPC Sound Samples** collection (One Laptop per Child music library,\n"
         "compiled by Richard Boulanger and many contributors at Berklee), published on archive.org under\n"
         "**Creative Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>).\n\n"
         "LumiViz changed them: silence at the ends removed, a 10 ms fade at the end, the level raised to a\n"
         "peak of 0.89, written as mono, 16 bit, 44100 Hz. In LumiViz a sample `name.wav` is called `lib:name`.\n\n"
-        "| File | What | By | Source |\n|---|---|---|---|\n" + "\n".join(zeilen) + "\n",
+        "| File | What | By | Source |\n|---|---|---|---|\n" + "\n".join(zeilen) + "\n" + hinten,
         encoding="utf-8", newline="\n")
     print(len(QUELLEN), "Samples, CREDITS.md")
 

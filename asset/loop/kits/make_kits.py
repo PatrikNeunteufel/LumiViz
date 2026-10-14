@@ -15,7 +15,10 @@ fuer den Klang bei Volume 1 gemessen hat (Effektivwert der ersten 300 ms, dB). V
 10^((ZIEL - PEGEL) / 20), hoechstens 1. Wer einen Klang tauscht, misst neu
 (`LUMIVIZ_KIT_PEGEL=1`) und traegt den Wert hier ein.
 
-Die drei Rock-Kits und Jazz Brushes kommen in Stufe 21d (Aufnahmen aus DrumGizmo).
+Seit Stufe 21d (S124) dazu Rock'n'Roll, Hardrock, Heavy Metal und Jazz Brushes: akustische
+Aufnahmen aus DrumGizmo (`lib:drs_*`, `lib:crocell_*`, `../samples/make_drumgizmo.py`, Stereo) und
+drei gerechnete Besen (`drum_brush_*`, `../make_drums.py`). Ein Stereo-Sample traegt seine Lage im
+Raum schon (die Overheads): Hats und Becken stehen dort auf Pan 0, nur die Toms werden verteilt.
 """
 import json
 import math
@@ -45,6 +48,18 @@ PEGEL_DB = {
     "lib:kick_deep": -11.3, "lib:rim": -17.5, "lib:snap": -26.9, "lib:snare_808": -16.9, "lib:snare_909": -12.9,
     "lib:tambourine": -21.2, "lib:voice_female_gliss": -7.6, "lib:voice_male_hey": -13.5,
     "shape_atom_bell": -15.6, "shape_cat": -16.0,
+    # S124, Stufe 21d: DrumGizmo (Stereo) und die Besen
+    "drum_brush_slap": -19.7, "drum_brush_sweep": -22.0, "drum_brush_tap": -22.2,
+    "lib:crocell_china": -17.1, "lib:crocell_crash1": -15.7, "lib:crocell_crash2": -14.1, "lib:crocell_crash3": -14.0,
+    "lib:crocell_hat": -19.9, "lib:crocell_hat_open": -15.1, "lib:crocell_kick_left": -15.9, "lib:crocell_kick_right": -16.5,
+    "lib:crocell_ride": -25.9, "lib:crocell_snare": -19.3, "lib:crocell_splash": -15.6, "lib:crocell_tom1": -13.1,
+    "lib:crocell_tom2": -14.7, "lib:crocell_tom3": -17.5, "lib:crocell_tom4": -15.8,
+    "lib:drs_crash_left": -24.3, "lib:drs_crash_left_hard": -19.1, "lib:drs_crash_right_shank_hard": -13.9, "lib:drs_hat": -19.2,
+    "lib:drs_hat_foot": -20.2, "lib:drs_hat_hard": -18.9, "lib:drs_hat_open": -14.4, "lib:drs_hat_open_hard": -15.8,
+    "lib:drs_kick": -19.2, "lib:drs_kick_hard": -19.0, "lib:drs_kick_soft": -17.5, "lib:drs_ride": -15.5,
+    "lib:drs_ride_soft": -15.8, "lib:drs_rim": -23.8, "lib:drs_snare": -19.6, "lib:drs_snare_hard": -21.0,
+    "lib:drs_tom1": -15.7, "lib:drs_tom1_hard": -16.8, "lib:drs_tom2": -17.0, "lib:drs_tom2_hard": -15.7,
+    "lib:drs_tom3": -17.7, "lib:drs_tom3_hard": -17.6,
 }
 
 PAN = {"hat": 0.2, "open hat": 0.2, "ride": 0.25, "crash": -0.15}
@@ -54,6 +69,11 @@ PAN_NUMMERIERT = {"tom": (-0.25, 0.25, 0.0, 0.1), "perc": (0.3, -0.3, 0.15, -0.1
 def art_von(rolle):
     teile = rolle.split(" ")
     return " ".join(teile[:-1]) if teile[-1].isdigit() else rolle
+
+
+def ist_stereo(klang):
+    """Die akustischen Aufnahmen aus DrumGizmo: Stereo mit dem Bild der Overheads."""
+    return klang.startswith(("lib:drs_", "lib:crocell_"))
 
 
 def eintrag(rolle, klang):
@@ -73,7 +93,7 @@ def eintrag(rolle, klang):
         nummer = int(rolle.split(" ")[-1])
         r["pan"] = PAN_NUMMERIERT[art][(nummer - 1) % 4]
     else:
-        r["pan"] = PAN.get(art, 0.0)
+        r["pan"] = 0.0 if ist_stereo(klang) else PAN.get(art, 0.0)
     return r
 
 
@@ -114,10 +134,31 @@ KITS = {
         ("kick", "drum_beatbox_kick"), ("snare", "lib:snap"), ("hat", "lib:beatbox_hat_closed"), ("open hat", "drum_crash"),
         ("perc 1", "shape_cat"), ("perc 2", "lib:voice_female_gliss"), ("fx", "lib:voice_male_hey"),
         ("tom 1", "shape_atom_bell")]),
+    # --- S124, Stufe 21d (K6b a, K6c a)
+    "rock_n_roll": kit("Rock'n'Roll", "An acoustic kit (DRSKit, DrumGizmo), played medium: cross-stick, three toms, ride and crash.", [
+        ("kick", "lib:drs_kick"), ("snare", "lib:drs_snare"), ("rim", "lib:drs_rim"), ("hat", "lib:drs_hat"),
+        ("open hat", "lib:drs_hat_open"), ("ride", "lib:drs_ride"), ("crash", "lib:drs_crash_left"),
+        ("tom 1", "lib:drs_tom1"), ("tom 2", "lib:drs_tom2"), ("tom 3", "lib:drs_tom3")]),
+    "hardrock": kit("Hardrock", "The same acoustic kit (DRSKit, DrumGizmo), hit hard, with two crashes.", [
+        ("kick", "lib:drs_kick_hard"), ("snare", "lib:drs_snare_hard"), ("hat", "lib:drs_hat_hard"),
+        ("open hat", "lib:drs_hat_open_hard"), ("ride", "lib:drs_ride"), ("crash", "lib:drs_crash_left_hard"),
+        ("crash 2", "lib:drs_crash_right_shank_hard"), ("tom 1", "lib:drs_tom1_hard"), ("tom 2", "lib:drs_tom2_hard"),
+        ("tom 3", "lib:drs_tom3_hard")]),
+    "heavy_metal": kit("Heavy Metal", "A metal band's kit (CrocellKit, DrumGizmo): double pedal, four toms, three crashes, china and splash.", [
+        ("kick", "lib:crocell_kick_left"), ("kick 2", "lib:crocell_kick_right"), ("snare", "lib:crocell_snare"),
+        ("hat", "lib:crocell_hat"), ("open hat", "lib:crocell_hat_open"), ("ride", "lib:crocell_ride"),
+        ("crash", "lib:crocell_crash1"), ("crash 2", "lib:crocell_crash2"), ("crash 3", "lib:crocell_crash3"),
+        ("tom 1", "lib:crocell_tom1"), ("tom 2", "lib:crocell_tom2"), ("tom 3", "lib:crocell_tom3"),
+        ("tom 4", "lib:crocell_tom4"), ("perc 1", "lib:crocell_splash"), ("fx", "lib:crocell_china")]),
+    "jazz_brushes": kit("Jazz Brushes", "Computed brushes on the snare (tap, slap, sweep) with a soft acoustic kick, hi-hat foot and ride (DRSKit).", [
+        ("kick", "lib:drs_kick_soft"), ("snare", "drum_brush_tap"), ("snare 2", "drum_brush_slap"),
+        ("hat", "lib:drs_hat_foot"), ("ride", "lib:drs_ride_soft"), ("perc 1", "drum_brush_sweep")]),
 }
 
 # Wo ein Instrument nicht auf C2 gebaut ist, steht die Note hier (MIDI)
 NOTEN = {("strange", "perc 1"): 64, ("strange", "tom 1"): 48}
+# Wo ein Instrument laenger gehalten wird als 250 ms (Length, ms): der Besen kreist einen halben Takt
+LAENGEN = {("jazz_brushes", "perc 1"): 500}
 
 
 def main():
@@ -126,6 +167,8 @@ def main():
             if (name, r["role"]) in NOTEN:
                 r["note"] = NOTEN[(name, r["role"])]
                 r["length"] = 400
+            if (name, r["role"]) in LAENGEN:
+                r["length"] = LAENGEN[(name, r["role"])]
         (ORDNER / f"{name}.lvkit").write_text(json.dumps(daten, indent=4) + "\n", encoding="utf-8", newline="\n")
     fehlt = sorted({k for d in KITS.values() for k in (r.get("instrument") or r["sound"] for r in d["roles"])} - set(PEGEL_DB))
     print(len(KITS), "Kits;", "ohne Messung:", ", ".join(fehlt) if fehlt else "keiner")
