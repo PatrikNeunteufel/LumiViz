@@ -1,0 +1,73 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Moon Bass",
+    "category": "bass",
+    "genres": ["Hip-Hop", "House"],
+    "description": "The crescent moon with few harmonics, warm, over a sine an octave below.",
+    "level": 0.65,
+    "layers": [
+        {
+            "name": "Moon",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 4,
+            "decay": 500,
+            "sustain": 0.75,
+            "release": 200,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "moon",
+            "shapeContour": 0,
+            "shapeHarmonics": 4,
+            "shapeHarmonicsEnvelope": 12,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Sub",
+            "on": true,
+            "level": 0.35,
+            "transpose": -12,
+            "startOffset": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 4,
+            "decay": 500,
+            "sustain": 0.9,
+            "release": 200,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ]
+        }
+    ]
+}

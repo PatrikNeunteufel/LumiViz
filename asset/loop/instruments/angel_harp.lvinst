@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Angel Harp",
+    "category": "plucked",
+    "genres": ["Chillout"],
+    "description": "The recorded harp with a female oo choir that swells in an octave above.",
+    "level": 0.75,
+    "layers": [
+        {
+            "name": "Harp",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 2000,
+            "sustain": 0,
+            "release": 900,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:harp",
+            "rootNote": 69,
+            "fineTune": -5,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        },
+        {
+            "name": "Choir",
+            "on": true,
+            "level": 0.4,
+            "transpose": 12,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 700,
+            "decay": 600,
+            "sustain": 0.8,
+            "release": 1200,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_oo",
+            "rootNote": 60,
+            "fineTune": 5,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 900.31,
+            "loopTo": 3600.01
+        }
+    ]
+}

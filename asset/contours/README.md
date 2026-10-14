@@ -14,13 +14,32 @@ Knoten Shape der Effect Chain zeichnet sie.
 | `heart.lvcontour` | Heart | 1 — vier Kurven |
 | `heart_and_star.lvcontour` | Heart and star | 2 — als ein Pfad (As one path) |
 
+Seit S123 dazu vierzehn weitere — zehn mit einer Kontur, vier mit mehreren:
+
+| Datei | Titel | Konturen |
+|---|---|---|
+| `moon.lvcontour` | Moon | 1 — eine Sichel aus zwei Bögen, spitze Enden |
+| `drop.lvcontour` | Drop | 1 — glatt, oben eine Spitze |
+| `bolt.lvcontour` | Bolt | 1 — sieben Strecken |
+| `note.lvcontour` | Note | 1 — eine Achtelnote: Kopf, Hals und Fähnchen in einem Umriss |
+| `flower.lvcontour` | Flower | 1 — fünf Blätter, glatt |
+| `gear.lvcontour` | Gear | 1 — zehn Zähne, viele Ecken; klingt erst mit vielen Harmonics nach Zahnrad |
+| `cross.lvcontour` | Cross | 1 — zwölf Strecken |
+| `house.lvcontour` | House | 1 — mit Kamin |
+| `infinity.lvcontour` | Infinity | 1 — die Lemniskate; der Pfad kreuzt sich in der Mitte |
+| `cat.lvcontour` | Cat | 1 — runder Kopf, zwei spitze Ohren |
+| `smiley.lvcontour` | Smiley | 4 — Gesicht, zwei Augen, Mund; als Schichten (Layers) |
+| `yin_yang.lvcontour` | Yin and yang | 4 — Kreis, Welle, zwei Punkte; als ein Pfad, kürzeste Sprünge |
+| `rings.lvcontour` | Rings | 5 — fünf Ringe; als ein Pfad, kürzeste Sprünge |
+| `atom.lvcontour` | Atom | 4 — Kern und drei Bahnen; als Schichten |
+
 ## Pflege
 
 ```
 python asset/contours/make_contours.py
 ```
 
-Das Skript schreibt alle sechs neu. Wer eine Form dazulegt, trägt sie im
+Das Skript schreibt alle zwanzig neu. Wer eine Form dazulegt, trägt sie im
 Skript ein und stellt die Zahl in `test_ShapeKontur.cpp` nach.
 
 - **Format:** JSON, Fassung 1 — beschrieben in

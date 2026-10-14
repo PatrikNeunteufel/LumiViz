@@ -39,6 +39,7 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 constexpr int kVersion = 5;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
+const QString kBibliothekVorsatz = QStringLiteral("lib:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
 const QString kTonVorsatz = QStringLiteral("inst:");
@@ -333,6 +334,16 @@ bool istKitKlang(const QString& klang)
     return klang.startsWith(kKitVorsatz);
 }
 
+bool istBibliotheksKlang(const QString& klang)
+{
+    return klang.startsWith(kBibliothekVorsatz);
+}
+
+bool istMitgelieferterKlang(const QString& klang)
+{
+    return istKitKlang(klang) || istBibliotheksKlang(klang);
+}
+
 bool istEigenerKlang(const QString& klang)
 {
     return istEigenesSample(klang);
@@ -583,7 +594,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         {
             QJsonObject s;
             s[QStringLiteral("name")] = spur.name;
-            s[QStringLiteral("sound")] = istKitKlang(spur.klang) || istEigenerKlang(spur.klang)
+            s[QStringLiteral("sound")] = istMitgelieferterKlang(spur.klang) || istEigenerKlang(spur.klang)
                                              ? spur.klang
                                              : fuerDatei(spur.klang, basisOrdner);
             s[QStringLiteral("volume")] = spur.laut;
@@ -710,7 +721,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             Spur spur;
             spur.name = s.value(QStringLiteral("name")).toString();
             const QString klang = s.value(QStringLiteral("sound")).toString();
-            spur.klang = istKitKlang(klang) || istEigenerKlang(klang) ? klang : ausDatei(klang, basisOrdner);
+            spur.klang = istMitgelieferterKlang(klang) || istEigenerKlang(klang) ? klang : ausDatei(klang, basisOrdner);
             spur.laut = s.value(QStringLiteral("volume")).toDouble(1.0);
             spur.pan = s.value(QStringLiteral("pan")).toDouble(0.0);
             spur.stumm = s.value(QStringLiteral("mute")).toBool(false);
@@ -728,9 +739,11 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                     if (istInstrumentDatei(spur.instrument) && !QFileInfo::exists(spur.instrument))
                         zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.instrument));
                 }
-                else if (istEigenerKlang(spur.klang))
+                else if (istEigenerKlang(spur.klang) || istBibliotheksKlang(spur.klang))
                 {
-                    if (sampleDatei(spur.klang).isEmpty()) zeile = QStringLiteral("Sample not found: %1").arg(spur.klang);
+                    const QString datei = sampleDatei(spur.klang);
+                    if (datei.isEmpty() || !QFileInfo::exists(datei))
+                        zeile = QStringLiteral("Sample not found: %1").arg(spur.klang);
                 }
                 else if (!spur.klang.isEmpty() && !istKitKlang(spur.klang) && !QFileInfo::exists(spur.klang))
                     zeile = QStringLiteral("File not found: %1").arg(QDir::toNativeSeparators(spur.klang));

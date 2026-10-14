@@ -1,0 +1,77 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Gear Bass",
+    "category": "bass",
+    "genres": ["Electronica", "Synthwave"],
+    "description": "The gear shape, driven; the attack opens its teeth, then it settles to a round tone over a sine.",
+    "level": 0.6,
+    "layers": [
+        {
+            "name": "Gear",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 3,
+            "decay": 260,
+            "sustain": 0.5,
+            "release": 160,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.25
+                }
+            ],
+            "shape": "gear",
+            "shapeContour": 0,
+            "shapeHarmonics": 6,
+            "shapeHarmonicsEnvelope": 46,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Sub",
+            "on": true,
+            "level": 0.45,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 3,
+            "decay": 400,
+            "sustain": 0.9,
+            "release": 160,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ]
+        }
+    ]
+}

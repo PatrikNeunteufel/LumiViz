@@ -19,6 +19,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
+#include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/Loop.hpp"
 #include "loop/LoopPanel.hpp"
 #include "loop/Sample.hpp"
@@ -900,12 +901,15 @@ TEST_SUITE("LoopDrumEditor")
         REQUIRE(mehr0 != nullptr);
         REQUIRE(mehr1 != nullptr);
 
-        // --- die Auswahl: Kit, My samples, darunter die drei Wege
+        // --- die Auswahl: Kit, die mitgelieferten Samples (S123), My samples, darunter die drei Wege
         const QStringList wege{QStringLiteral("Instrument..."), QStringLiteral("Sample file..."),
                                QStringLiteral("Record sample...")};
+        const QStringList bibliothek = lumi::loop::bibliotheksKlaenge();
+        REQUIRE_FALSE(bibliothek.isEmpty());
         CHECK(editor.klangZeilen(0) == QStringList{QStringLiteral("[Kit]"), QStringLiteral("kit:clap"), QStringLiteral("kit:kick"),
-                                                    QStringLiteral("kit:snare"), QStringLiteral("[My samples]"),
-                                                    QStringLiteral("user:knock")} + wege);
+                                                    QStringLiteral("kit:snare"), QStringLiteral("[Samples]")} +
+                                           bibliothek + QStringList{QStringLiteral("[My samples]"), QStringLiteral("user:knock")} +
+                                           wege);
         CHECK(klang0->currentText() == QStringLiteral("kick"));
         CHECK(mehr0->isHidden());  // „…" gibt es nur an einer Instrument-Spur
         CHECK(mehr1->isHidden());

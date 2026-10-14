@@ -364,12 +364,17 @@ TEST_CASE("Shape Kontur: jede mitgelieferte Form laedt, ist geschlossen und ergi
     CHECK(QDir(konturOrdner()).dirName() == QStringLiteral("contours"));
     const std::vector<Zeichnung>& alle = zeichnungen();
     // wer eine Form dazulegt, traegt sie in asset/contours/make_contours.py ein und stellt die Zahl nach
-    REQUIRE(alle.size() == 6);
+    REQUIRE(alle.size() == 20);
     QStringList namen;
     for (const Zeichnung& zeichnung : alle) namen << zeichnung.name;
     namen.sort();
-    CHECK(namen == QStringList{QStringLiteral("circle"), QStringLiteral("heart"), QStringLiteral("heart_and_star"),
-                               QStringLiteral("square"), QStringLiteral("star"), QStringLiteral("triangle")});
+    CHECK(namen == QStringList{QStringLiteral("atom"),     QStringLiteral("bolt"),           QStringLiteral("cat"),
+                               QStringLiteral("circle"),   QStringLiteral("cross"),          QStringLiteral("drop"),
+                               QStringLiteral("flower"),   QStringLiteral("gear"),           QStringLiteral("heart"),
+                               QStringLiteral("heart_and_star"), QStringLiteral("house"),    QStringLiteral("infinity"),
+                               QStringLiteral("moon"),     QStringLiteral("note"),           QStringLiteral("rings"),
+                               QStringLiteral("smiley"),   QStringLiteral("square"),         QStringLiteral("star"),
+                               QStringLiteral("triangle"), QStringLiteral("yin_yang")});
     for (const Zeichnung& zeichnung : alle)
     {
         CAPTURE(zeichnung.name.toStdString());

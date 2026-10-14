@@ -1,0 +1,76 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Punch Kick",
+    "category": "drums",
+    "genres": [],
+    "description": "The 909-style kick sample over a falling sine sub. Built for the note C2.",
+    "level": 0.6,
+    "layers": [
+        {
+            "name": "Click",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 0,
+            "decay": 400,
+            "sustain": 0,
+            "release": 300,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:kick_909",
+            "rootNote": 36,
+            "fineTune": 0,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        },
+        {
+            "name": "Sub",
+            "on": true,
+            "level": 0.6,
+            "transpose": -7,
+            "startOffset": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 0,
+            "decay": 450,
+            "sustain": 0,
+            "release": 400,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 12,
+            "pitchTime": 60,
+            "path": [
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.15
+                }
+            ]
+        }
+    ]
+}

@@ -27,14 +27,23 @@ namespace lumi::loop
 /// Asset-Ordnern). Leer = nicht gefunden.
 [[nodiscard]] QString kitOrdner();
 
-/// Die Datei zu einem Klang: fuer `kit:<Name>` die WAV-Datei im Kit, sonst der
-/// Klang selbst als Pfad. Leer = kein Klang, ein Name mit unerlaubten Zeichen
-/// (erlaubt: a–z, 0–9, `_`), oder das Kit ist nicht da.
+/// Der Ordner der mitgelieferten Samples: `asset/loop/samples` (Entscheid 1 a,
+/// Patrik S123), neben dem Kit. Leer = der Loop-Ordner ist nicht gefunden.
+[[nodiscard]] QString bibliothekOrdner();
+
+/// Die Datei zu einem Klang: fuer `kit:<Name>` die WAV-Datei im Kit, fuer
+/// `lib:<Name>` die unter den mitgelieferten Samples, fuer `user:<Name>` das
+/// eigene Sample, sonst der Klang selbst als Pfad. Leer = kein Klang, ein Name
+/// mit unerlaubten Zeichen (erlaubt: a–z, 0–9, `_`), oder der Ordner ist nicht da.
 [[nodiscard]] QString klangDatei(const QString& klang);
 
 /// Die Klaenge des mitgelieferten Kits als `kit:<Name>`, nach Namen sortiert —
 /// was im Ordner des Kits als WAV liegt. Leer = das Kit ist nicht da.
 [[nodiscard]] QStringList kitKlaenge();
+
+/// Die mitgelieferten Samples als `lib:<Name>`, nach Namen sortiert — was im
+/// Ordner `samples` als WAV liegt. Leer = keine da.
+[[nodiscard]] QStringList bibliotheksKlaenge();
 
 /// So lang darf ein Sample hoechstens sein; was laenger ist, wird abgeschnitten.
 inline constexpr double kKlangMaxSekunden = 30.0;

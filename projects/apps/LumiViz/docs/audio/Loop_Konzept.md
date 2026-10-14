@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.70.0
-> **Datum:** 2026-10-13 (Session 120)
+> **Version:** 0.71.0
+> **Datum:** 2026-10-14 (Session 123)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3001,6 +3001,51 @@ nichts nachzuziehen.
   bis U75, R1, R6, R7 neu gefasst; voller Lauf 1153 / 1153, 0 Skips
   (Testing-MSVC). **Stufe 17 ist gebaut — im Programm ungesehen.**
 
+## 4l. Mitgelieferte Samples und Kits (S123 — Entscheide 1 a, 2 a, 3 a, Patrik S123)
+
+Anlass: Patriks Wunsch nach mehr Vorlagen — Samples aus freien Quellen (auch
+Stimmen), Instrumente daraus, ein Drumkit aus zusätzlichen Drums, Loops.
+
+| Entscheid | Inhalt |
+|---|---|
+| **1 a** | Mitgelieferte Samples liegen unter `asset/loop/samples/` und heißen im Loop **`lib:<name>`** — dritte Art neben `kit:` und `user:`. In der Klangliste des Drum-Editors und im Sample-Menü des Creators eine eigene Gruppe **Samples** zwischen Kit und My samples. Schreibgeschützt wie das Kit. Verworfen: b — die Samples unter `kit:` (Stimmen stünden zwischen Kick und Snare); c — keine mitgelieferten Samples. |
+| **2 a** | Nur CC0, CC BY und gemeinfreie Aufnahmen mit direktem Download; je Datei Quelle, Urheber und Lizenz in `samples/CREDITS.md`, die mit neben die Exe geht. Vocals aus Freesound lädt Patrik selbst (Konto nötig). Verworfen: b — nur CC0. |
+| **3 a** | Ein **Kit wird eine eigene Einheit** (mehrere Kits, je eine Datei mit Namen und Klängen; im Drum-Editor füllt die Wahl die Spuren); neue Drum-Klänge entstehen dafür. Skizze vorher. Verworfen: b — nur mehr einzelne Klänge. |
+
+**Gebaut (S123):** `istBibliotheksKlang`, `istMitgelieferterKlang` (`loop/Loop.hpp`);
+`bibliothekOrdner`, `bibliotheksKlaenge`, `klangDatei` kennt `lib:` (`loop/Kit.hpp`);
+`sampleDatei` und `sampleTitel` kennen `lib:` (`loop/Sample.hpp`); die Datei
+nennt ein mitgeliefertes Sample beim Namen, nie als Pfad; ein fehlendes steht
+im Bericht als „Sample not found: lib:<name>". Die Gruppe **Samples** im
+Drum-Editor (`DrumEditor::fuelleKlang`) und im Menü **File...** des Creators;
+dort steht hinter dem Namen „· built-in". Das Fenster Edit sample behandelt
+`lib:` wie das Kit (Herkunft Mitgeliefert: eine Kopie geht zu My samples).
+Achtunddreißig Samples aus der OLPC-Sammlung (CC BY 3.0); Instrumente daraus
+und die Loops: `asset/loop/README.md`, Abschnitt S123. Keine neue Fassung der
+`.lvloop` oder `.lvinst`: `lib:` ist ein Wert in Feldern, die es gibt — ein
+älteres LumiViz meldet das Sample als nicht gefunden.
+
+### Die Skizze der Kits (gezeigt S123, noch nicht gebilligt)
+
+Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
+
+- **Drum-Editor, Kopfzeile:** rechts neben dem Namen des Musters ein Knopf
+  **Kit: <Name> ▾**, daneben Add track.
+- **Das Menü des Knopfs:** Abschnitt *Built-in kits* (Classic, 808, 909 House,
+  Electro, Hand drums, Beatbox, Lo-fi; das gewählte mit Haken), Abschnitt *My
+  kits*, Trennlinie, **Save as kit...**, **Edit kits...**.
+- **Spuren:** links vor der Auswahl Sound ein Etikett **Role** (kick, snare,
+  clap, hat, open hat …).
+- **Zeile unter dem Raster:** „Switching the kit keeps the steps: each track
+  takes the sound of its role from the new kit. Tracks without a match keep
+  their sound."
+
+Offen, einzeln vorzulegen: woher die Rolle einer bestehenden Spur kommt
+(geraten aus Name und Klang, oder gesetzt), was mit Spuren ohne Gegenstück und
+mit Rollen des Kits ohne Spur geschieht, die Endung der Datei (`.lvkit`), ob
+ein Kit nur Klänge oder auch Lautstärke und Pan je Rolle trägt, ob die
+`.lvloop` sich merkt, welches Kit ein Muster trägt.
+
 ---
 
 ## 5. Stufen
@@ -3126,6 +3171,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.71.0** (S123, 2026-10-14): §4l NEU — mitgelieferte Samples `lib:`
+  (Entscheide 1 a, 2 a) gebaut; Kits (3 a) mit der gezeigten Skizze als
+  Beschreibung, offen.
 - **0.70.0** (S120, 2026-10-13): §5 — Stufe 18 gebaut: Pan je Schicht und
   acht Schichten je Instrument, `.lvinst` Fassung 8. Die Stufe kommt aus
   `Shape_Konzept.md` (Klang aus einer Form), dort stehen auch die Stufen 19

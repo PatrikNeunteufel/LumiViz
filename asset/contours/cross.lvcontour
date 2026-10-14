@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Cross",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Cross",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 77 20 L 123 20 L 123 77 L 180 77 L 180 123 L 123 123 L 123 180 L 77 180 L 77 123 L 20 123 L 20 77 L 77 77 L 77 20 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

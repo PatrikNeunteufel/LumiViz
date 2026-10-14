@@ -340,12 +340,13 @@ TEST_SUITE("LoopInstrument")
         const std::vector<Instrument>& alle = instrumente();
         // sieben allgemeine und sieben fuer House (Wunsch Patrik S110), dazu sechzehn aus
         // Schichten, sieben davon ungewoehnlich, und neunzehn fuer die Genre-Beispiele
-        // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117)
-        REQUIRE(alle.size() == 55);
+        // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117); S123: elf aus Formen,
+        // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
+        REQUIRE(alle.size() == 90);
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
-        CHECK(alle.back().titel == QStringLiteral("Warm Pad"));
+        CHECK(alle.back().titel == QStringLiteral("Wind Voices"));
         for (const char* name : {"bass", "guitar", "lead", "organ", "piano", "strings", "violin", "acid_bass",
                                  "chord_stab", "house_organ", "house_piano", "pluck", "sub_bass", "warm_pad",
                                  "bell", "tine_piano", "brass", "flute", "super_saw", "fifth_pad", "overdrive_guitar",
@@ -354,7 +355,15 @@ TEST_SUITE("LoopInstrument")
                                  "trance_lead", "trance_pluck", "rolling_bass", "hoover", "clavinet", "slap_bass",
                                  "clean_guitar", "muted_guitar", "round_bass", "bass_808", "reese_bass", "upright_bass",
                                  "nylon_guitar", "sax", "vibraphone", "steel_drum", "cowbell", "conga", "clave",
-                                 "drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open"})
+                                 "drum_kick", "drum_tom", "drum_snare", "drum_clap", "drum_hat_closed", "drum_hat_open",
+                                 "shape_heart_pad", "shape_rings_choir", "shape_infinity_drone", "shape_gear_bass",
+                                 "shape_moon_bass", "shape_star_lead", "shape_bolt_pluck", "shape_flower_flute",
+                                 "shape_smiley_keys", "shape_atom_bell", "shape_cat",
+                                 "female_choir", "hum_pad", "vocal_lead", "vocal_chop", "harp", "koto",
+                                 "dulcimer", "thumb_piano", "shakuhachi", "alto_sax", "alto_flute", "angel_harp",
+                                 "wind_voices", "drum_kick_808", "drum_tom_low", "drum_tom_high", "drum_shaker",
+                                 "drum_ride", "drum_crash", "drum_kick_punch", "drum_snare_fat", "drum_clap_stack",
+                                 "drum_hat_shake", "drum_beatbox_kick"})
         {
             CAPTURE(name);
             const Instrument* gefunden = findeInstrument(QString::fromLatin1(name));
@@ -388,7 +397,9 @@ TEST_SUITE("LoopInstrument")
                 laengsterAusklang = std::max(laengsterAusklang, schicht.ausklangMs);
                 vibrato = std::max(vibrato, schicht.vibratoCent);
             }
-            // A4, eine halbe Sekunde gehalten: so lang wie die Note und der laengste Ausklang
+            // A4, eine halbe Sekunde gehalten: so lang wie die Note und der laengste Ausklang;
+            // Sample-Schichten (S123) bekommen ihre Aufnahme vorher aus der WAV-Datei
+            looptest::merkeSamplesOhneEngine(instrument);
             const Klang ton = rendereTon(instrument, 69, 500.0, kRate);
             const std::int64_t ausklang = std::llround(std::max(5.0, laengsterAusklang) * kRate / 1000.0);
             CHECK(ton.frames() == 22050 + ausklang);
@@ -405,7 +416,11 @@ TEST_SUITE("LoopInstrument")
                 if (ton.daten[i] != ton.daten[i + 1]) beideGleich = false;
             }
             CHECK(endlich);
-            CHECK(beideGleich);
+            // beide Seiten gleich — ausser eine Schicht steht mit Pan zur Seite oder spielt Stereo XY
+            // (S123: Instrumente aus Formen, etwa Rings Choir und Atom Bell)
+            const bool stereo = std::any_of(instrument.schichten.begin(), instrument.schichten.end(),
+                                            [](const Schicht& s) { return s.pan != 0.0 || s.stereoXY; });
+            CHECK(beideGleich == !stereo);
             // der Klang endet bei null: kein Knacken am Ende
             CHECK(std::abs(ton.daten[ton.daten.size() - 2]) < 0.002f);
             // die Tonhoehe: 440 Hz sind 100,2 Abtastwerte je Schwingung — mit Vibrato schwankt
@@ -611,18 +626,19 @@ TEST_SUITE("LoopInstrument")
             ++jeArt[instrument.art];
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
-        CHECK(jeArt[QStringLiteral("keys")] == 7);
-        CHECK(jeArt[QStringLiteral("bass")] == 10);
-        CHECK(jeArt[QStringLiteral("lead")] == 4);
-        CHECK(jeArt[QStringLiteral("pads")] == 4);
-        CHECK(jeArt[QStringLiteral("plucked")] == 7);
-        CHECK(jeArt[QStringLiteral("wind")] == 3);
-        CHECK(jeArt[QStringLiteral("percussion")] == 8);
-        CHECK(jeArt[QStringLiteral("drums")] == 6);  // Stufe 11f
-        CHECK(jeArt[QStringLiteral("unusual")] == 6);
+        // (S123: aus Formen, aus Samples und elf Drums dazu)
+        CHECK(jeArt[QStringLiteral("keys")] == 8);
+        CHECK(jeArt[QStringLiteral("bass")] == 12);
+        CHECK(jeArt[QStringLiteral("lead")] == 7);
+        CHECK(jeArt[QStringLiteral("pads")] == 9);
+        CHECK(jeArt[QStringLiteral("plucked")] == 12);
+        CHECK(jeArt[QStringLiteral("wind")] == 7);
+        CHECK(jeArt[QStringLiteral("percussion")] == 10);
+        CHECK(jeArt[QStringLiteral("drums")] == 17);  // Stufe 11f, S123
+        CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem,
-        // die sechs Drums auch nicht
-        CHECK(ohneGenre == 8);
+        // die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine Drum-Spuren), Flower Flute (S123) auch nicht
+        CHECK(ohneGenre == 19);
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
     }
@@ -685,7 +701,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 55);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 90);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {

@@ -145,14 +145,15 @@ QString sampleDatei(const QString& nennung)
 {
     if (nennung.isEmpty()) return {};
     // ein Klang des mitgelieferten Kits (Stufe 11c): aus einer Spur wird so ein Instrument, das ueberall klingt
-    if (istKitKlang(nennung)) return klangDatei(nennung);
+    // ein mitgeliefertes Sample (`lib:`, S123) ebenso
+    if (istMitgelieferterKlang(nennung)) return klangDatei(nennung);
     return istEigenesSample(nennung) ? eigeneSampleDatei(nameAus(nennung)) : nennung;
 }
 
 QString sampleTitel(const QString& nennung)
 {
     if (nennung.isEmpty()) return {};
-    if (istKitKlang(nennung)) return nennung.mid(4);  // ohne den Vorsatz „kit:"
+    if (istMitgelieferterKlang(nennung)) return nennung.mid(4);  // ohne den Vorsatz „kit:" oder „lib:"
     return istEigenesSample(nennung) ? nameAus(nennung) : QFileInfo(nennung).fileName();
 }
 

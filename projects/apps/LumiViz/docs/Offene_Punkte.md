@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.217.0
-> **Datum:** 2026-10-14 (Session 122)
+> **Version:** 1.218.0
+> **Datum:** 2026-10-14 (Session 123)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -4961,6 +4961,50 @@ keine mitgelieferten Samples außer den Klängen des Kits (`kit:<name>`) — ob
 die gemeint sind, ist zu fragen. Vorbild und Unterbau: `loop/AufnahmeFenster`,
 `loop/Sample` (`nimmZuEigenen`), die Regeln aus S117 (E1 a, E1b c).
 
+### 🟡 Vorlagen S123: Formen, Samples, Kits, Loops — dazu ein Versuch „Titanium" und das VST3-Konzept (Wunsch Patrik S123)
+
+Auftrag: mehr Vorlagen für das, was zuletzt entstand — Formen (einzeln und
+mehrere), Instrumente daraus, Samples aus freien Quellen (gern mit Stimmen),
+Instrumente daraus (auch mehrere Schichten), ein Drumkit aus zusätzlichen
+Drums, Loops mit allem; danach ein Konzept für VST3. Entscheide Patrik S123:
+**1 a** (mitgelieferte Samples unter `asset/loop/samples`, im Loop
+`lib:<name>`, eigene Gruppe *Samples* in den Klanglisten), **2 a** (nur CC0,
+CC BY, gemeinfrei, mit Nennung in `samples/CREDITS.md`, die mit neben die Exe
+geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
+
+**Gebaut (S123), im Programm ungesehen und ungehört:**
+- 14 Formen mehr (`asset/contours`, jetzt 20; vier mit mehreren Konturen).
+- `lib:` im Code: `istBibliotheksKlang`, `istMitgelieferterKlang`,
+  `bibliothekOrdner`, `bibliotheksKlaenge`; die Gruppe *Samples* im Drum-Editor
+  und im Sample-Menü des Creators; `Asset.cmake` nimmt `samples/*.wav` und
+  `CREDITS.md` mit (die eine Ausnahme von „nur eigene Werke",
+  `THIRD_PARTY_NOTICES.md`).
+- 38 Samples aus der OLPC-Sammlung (CC BY 3.0), aufbereitet von
+  `samples/make_samples.py`.
+- 35 Instrumente mehr (90): elf aus Formen, dreizehn aus Samples, elf Drums
+  (sechs gerechnet, fünf aus Samples geschichtet).
+- 9 Loops mehr unter `genres/` (`make_showcase.py`), vier neue Genres.
+- Tests: Hörproben eines Loops als WAV (`LUMIVIZ_LOOP_WAV`); ein Fall zu `lib:`.
+
+**Offen:**
+- 🟡 **Kits (3 a)** — Skizze in S123 gezeigt (Knopf *Kit* im Drum-Editor,
+  Menü Built-in kits / My kits / Save as kit... / Edit kits..., Rollen je Spur,
+  Kitwechsel behält die Schritte); die Entscheide dazu stehen aus, gebaut ist
+  nichts. Vorgesehene Kits: Classic, 808, 909 House, Electro, Hand drums,
+  Beatbox, Lo-fi.
+- ⬜ Patriks Ohr an `.claude/handover/hoerproben_s123/` (Instrumente und die
+  neun Loops) — besonders die Schleifen der gehaltenen Stimmen (Knacken?),
+  Cat und die Lautstärke der Loops.
+- ⚪ Kein Männerchor: die drei Männerstimmen halten keinen Ton (gemessen).
+- ⚪ **Versuch „Titanium"** (lokal, `.claude/handover/titanium/`, nicht im
+  Repo): der Song ohne Gesang als Loop über 121 Takte, mit drei eigenen
+  Instrumenten. Gemessen gegen die MP3: Akkorde je Takt Kosinus 0,77 im Mittel
+  (Drops 0,9), Verlauf der Energie tief 0,55 / hoch 0,59; über 500 Hz 6 bis
+  10 dB zu wenig — dort sitzt die Stimme.
+- 🟡 **VST3** — Konzept `audio/VST3_Konzept.md` 0.1.0, Entscheide V1 bis V5
+  offen; Lizenz belegt (MIT seit VST 3.8, Pressemitteilung Steinberg
+  29.10.2025), die Usage Guidelines zur Marke nicht gelesen.
+
 ### ⚪ Idee: Klang aus einer Form — Waveform „Shape" im Instrument-Creator (Patrik S119)
 
 Aus einer geschlossenen Kontur wird über eine abgeschnittene Fourier-Reihe ein
@@ -5582,6 +5626,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.218.0 | 2026-10-14 | Session 123. §7 NEU „Vorlagen S123": Formen (20), mitgelieferte Samples `lib:` (38, CC BY 3.0, Entscheide 1 a, 2 a), 35 Instrumente mehr (90), neun Loops; offen die Kits (3 a, Skizze gezeigt, Entscheide ausstehend), Patriks Ohr an `hoerproben_s123`; Versuch „Titanium" (lokal); VST3-Konzept `audio/VST3_Konzept.md` 0.1.0. |
 | 1.217.0 | 2026-10-14 | Session 122, Abschluss. `sessions/Changelog_Session122.md`. **Stand:** Klang aus einer Form — **Stufe 20 vollständig**: 20a (Edit shape), 20b (SVG), 20c (Bild), 20d (mehrere Konturen, Brücken, Farben der Schichten); `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0; dazu die Sichttest-Liste `Sichttest_Shape_Klang-aus-einer-Form.md` (lokal) mit den Vorlagen `asset/sichttest/presets/Shape.lvfx` und `XyScope.lvfx`. **Offen:** im Programm ungesehen und ungehört (19b bis 20d) — Patriks Sichttest mit der Liste; Patriks Ohr an `hoerproben_19c`; die von Claude gesetzten Zahlen und Regeln; CSS-Variablen in SVG; mitgelieferte Instrumente mit Shape-Schicht. 1200 Cases, voller Lauf 1199 / 1199 nach 20d (Testing-MSVC, Bildschirm 2), der Fall danach unter beiden Compilern grün. |
 | 1.216.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20d gebaut — mehrere Konturen** (Entscheide Patrik L1 a, F1 a, V1 a; `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0); Stufe 20 damit vollständig. Offen: im Programm ungesehen und ungehört; die gesetzten Abstufungen und Regeln. |
 | 1.215.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20c gebaut — Konturen aus einem Bild** (Entscheide Patrik R1 a, R2 a; `audio/Shape_Konzept.md` 0.19.0, Benutzerhandbuch 1.160.0); Patriks Idee zu den Farben der Schichten (Paletten je Waveform) beim Punkt zu 20d. Offen: im Programm ungesehen; die gesetzten Vorgaben. **Als Nächstes Stufe 20d.** |

@@ -1,0 +1,46 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Cat",
+    "category": "unusual",
+    "genres": ["Electronica"],
+    "description": "The cat shape sliding up into the note, bright at first, with late vibrato: a meow.",
+    "level": 0.75,
+    "layers": [
+        {
+            "name": "Meow",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 40,
+            "decay": 500,
+            "sustain": 0.6,
+            "release": 260,
+            "vibratoRate": 6.5,
+            "vibratoDepth": 25,
+            "vibratoDelay": 220,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": -5,
+            "pitchTime": 110,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "cat",
+            "shapeContour": 0,
+            "shapeHarmonics": 12,
+            "shapeHarmonicsEnvelope": 20,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        }
+    ]
+}

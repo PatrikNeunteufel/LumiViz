@@ -124,6 +124,36 @@ INSTRUMENTE = {
     "drum_hat_open": instrument(
         "Hi-Hat Open", 1.0,
         schlag("Noise", "noise", 450, 1000, transpose=24, filterType="highpass", filterCutoff=22)),
+    # --- S123: sechs weitere, fuer die Kits (Entscheid 3 a); nach Rechnung, nicht gegen eine Vorlage gemessen
+    # Die 808-Kick: tiefer und laenger als Kick, die Tonhoehe faellt schneller, mehr Drive
+    "drum_kick_808": instrument(
+        "808 Kick", 1.0,
+        schlag_mit_reihe("Body", "sine", 900, 1300, [HUELLE, drive(0.3)], transpose=-5, pitchStart=12, pitchTime=60),
+        schlag_mit_reihe("Click", "noise", 10, 30, [HUELLE], level=0.15),
+        fassung=7),
+    "drum_tom_low": instrument(
+        "Low Tom", 1.0,
+        schlag("Body", "sine", 520, 800, transpose=3, pitchStart=8, pitchTime=150),
+        schlag("Click", "noise", 10, 30, level=0.12)),
+    "drum_tom_high": instrument(
+        "High Tom", 1.0,
+        schlag("Body", "sine", 340, 600, transpose=14, pitchStart=8, pitchTime=100),
+        schlag("Click", "noise", 10, 30, level=0.12)),
+    # zwei kurze Stoesse Rauschen, der zweite 25 ms spaeter: das Korn rutscht nach
+    "drum_shaker": instrument(
+        "Shaker", 1.0,
+        schlag("Shake", "noise", 90, 80, transpose=24, filterType="highpass", filterCutoff=12),
+        schlag("Grain", "noise", 60, 60, transpose=24, startOffset=25, level=0.6, filterType="highpass", filterCutoff=12)),
+    # Ride: langes, hohes Rauschen und zwei Rechtecke im Abstand einer Quarte darueber als Glocke
+    "drum_ride": instrument(
+        "Ride", 0.8,
+        schlag("Wash", "noise", 1400, 1500, transpose=24, level=0.5, filterType="highpass", filterCutoff=16),
+        schlag("Bell", "square", 1200, 1200, transpose=24, level=0.25, filterType="highpass", filterCutoff=8),
+        schlag("Bell 2", "square", 900, 900, transpose=19, level=0.15, filterType="highpass", filterCutoff=10)),
+    "drum_crash": instrument(
+        "Crash", 0.8,
+        schlag("Wash", "noise", 1800, 1800, transpose=24, filterType="highpass", filterCutoff=8),
+        schlag("Sizzle", "noise", 900, 900, transpose=24, level=0.5, filterType="highpass", filterCutoff=20)),
 }
 
 

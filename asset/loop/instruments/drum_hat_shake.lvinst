@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Hat Shake",
+    "category": "drums",
+    "genres": [],
+    "description": "The 808-style closed hat with a quiet tambourine on the right. Built for the note C2.",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Hat",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 0,
+            "decay": 100,
+            "sustain": 0,
+            "release": 80,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:hat_808_closed",
+            "rootNote": 36,
+            "fineTune": 0,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        },
+        {
+            "name": "Tambourine",
+            "on": true,
+            "level": 0.35,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 0,
+            "decay": 260,
+            "sustain": 0,
+            "release": 150,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.3,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:tambourine",
+            "rootNote": 36,
+            "fineTune": 0,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        }
+    ]
+}

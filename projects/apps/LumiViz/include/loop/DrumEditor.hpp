@@ -345,7 +345,7 @@ private:
     /// Kopf, Raster und Spuren aus `m_loop` neu fuellen.
     void zeigeAlles();
     void baueSpuren(const Muster& muster);
-    void fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene) const;
+    void fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene, const QStringList& bibliothek) const;
     /// Was in der Auswahl gewaehlt wurde: ein Klang — oder einer der drei Wege darunter.
     void klangGewaehlt(int spur, const QString& wahl);
     void frageNachSampleDatei(int spur);

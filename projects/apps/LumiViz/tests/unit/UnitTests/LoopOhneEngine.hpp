@@ -17,6 +17,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
+#include "loop/Sample.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -80,12 +81,39 @@ inline lumi::loop::Klang liesWav(const QString& pfad)
     return klang;
 }
 
-/// Die Klaenge eines Ablaufs ohne Audio-Engine: Toene gerechnet, das Kit aus
-/// seinen WAV-Dateien. Was sich nicht findet, bleibt leer.
+/// Die WAV-Datei eines mitgelieferten Klangs im Repo: `kit:` unter
+/// `asset/loop/kit`, `lib:` unter `asset/loop/samples` (S123). Leer = keiner.
+inline QString mitgelieferteWav(const QString& klang)
+{
+    using namespace lumi::loop;
+    if (istKitKlang(klang)) return repoWurzel().filePath(QStringLiteral("asset/loop/kit/") + klang.mid(4) + QStringLiteral(".wav"));
+    if (istBibliotheksKlang(klang))
+        return repoWurzel().filePath(QStringLiteral("asset/loop/samples/") + klang.mid(4) + QStringLiteral(".wav"));
+    return {};
+}
+
+/// Die Aufnahmen der Sample-Schichten eines Instruments merken, aus den WAV-Dateien
+/// im Repo — ohne Engine (S123: Instrumente aus mitgelieferten Samples). Die Dateien
+/// haben 44100 Hz; so werden sie gemerkt, das Programm rechnet von dort um.
+inline void merkeSamplesOhneEngine(const lumi::loop::Instrument& instrument)
+{
+    using namespace lumi::loop;
+    for (const Schicht& schicht : instrument.schichten)
+    {
+        if (schicht.schwingung != Schwingung::Sample || schicht.sample.isEmpty()) continue;
+        if (sampleDaten(schicht.sample) != nullptr) continue;
+        const QString wav = mitgelieferteWav(schicht.sample);
+        Klang klang = liesWav(wav.isEmpty() ? sampleDatei(schicht.sample) : wav);
+        if (!klang.daten.empty()) merkeSampleDaten(schicht.sample, 44100, std::move(klang.daten));
+    }
+}
+
+/// Die Klaenge eines Ablaufs ohne Audio-Engine: Toene gerechnet, das Kit und
+/// die mitgelieferten Samples aus ihren WAV-Dateien. Was sich nicht findet,
+/// bleibt leer.
 inline std::vector<lumi::loop::Klang> klaengeOhneEngine(const lumi::loop::Ablauf& ablauf)
 {
     using namespace lumi::loop;
-    const QString kit = repoWurzel().filePath(QStringLiteral("asset/loop/kit"));
     std::vector<Klang> klaenge;
     for (const QString& name : ablauf.klangNamen)
     {
@@ -94,11 +122,14 @@ inline std::vector<lumi::loop::Klang> klaengeOhneEngine(const lumi::loop::Ablauf
         int ms = 0;
         if (zerlegeTon(name, instrument, hoehe, ms))
         {
-            const Instrument* gefunden = findeInstrument(instrument);
-            klaenge.push_back(gefunden != nullptr ? rendereTon(*gefunden, hoehe, ms, ablauf.rate) : Klang{});
+            // mitgeliefert, eigen (`user:`) oder eine Datei neben dem Loop
+            Instrument gefunden;
+            const bool da = holeInstrument(instrument, gefunden);
+            if (da) merkeSamplesOhneEngine(gefunden);
+            klaenge.push_back(da ? rendereTon(gefunden, hoehe, ms, ablauf.rate) : Klang{});
         }
-        else if (istKitKlang(name))
-            klaenge.push_back(liesWav(QDir(kit).filePath(name.mid(4) + QStringLiteral(".wav"))));
+        else if (istMitgelieferterKlang(name))
+            klaenge.push_back(liesWav(mitgelieferteWav(name)));
         else
             klaenge.push_back({});
     }

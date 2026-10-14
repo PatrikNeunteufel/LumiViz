@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "Bolt",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "Bolt",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 122 14 L 52 112 L 96 112 L 72 188 L 152 82 L 106 82 L 138 14 L 122 14 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

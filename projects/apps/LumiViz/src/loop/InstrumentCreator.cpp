@@ -8,6 +8,7 @@
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
+#include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"
 
@@ -1775,6 +1776,7 @@ void InstrumentCreator::zeigeAlles()
                 text = QFileInfo(datei).fileName();
                 if (laengeMs > 0.0) text += QStringLiteral(" · %1 s").arg(laengeMs / 1000.0, 0, 'f', 1);
                 if (istEigenesSample(gewaehlte.sample)) text += tr(" · My samples");
+                if (istMitgelieferterKlang(gewaehlte.sample)) text += tr(" · built-in");
             }
         }
         m_sampleName->setText(text);
@@ -2716,15 +2718,21 @@ void FormBild::paintEvent(QPaintEvent*)
 void InstrumentCreator::zeigeSampleWahl()
 {
     const QStringList eigene = eigeneSamples();
-    if (eigene.isEmpty())
+    const QStringList bibliothek = bibliotheksKlaenge();  // die mitgelieferten (`lib:`, S123)
+    if (eigene.isEmpty() && bibliothek.isEmpty())
     {
         frageNachSampleDatei();
         return;
     }
     QMenu menue(this);
-    menue.addSection(tr("My samples"));
-    for (const QString& nennung : eigene)
-        connect(menue.addAction(sampleTitel(nennung)), &QAction::triggered, this, [this, nennung] { setzeSample(nennung); });
+    const auto gruppe = [this, &menue](const QString& titel, const QStringList& nennungen) {
+        if (nennungen.isEmpty()) return;
+        menue.addSection(titel);
+        for (const QString& nennung : nennungen)
+            connect(menue.addAction(sampleTitel(nennung)), &QAction::triggered, this, [this, nennung] { setzeSample(nennung); });
+    };
+    gruppe(tr("Samples"), bibliothek);
+    gruppe(tr("My samples"), eigene);
     menue.addSeparator();
     connect(menue.addAction(tr("From file...")), &QAction::triggered, this, &InstrumentCreator::frageNachSampleDatei);
     menue.exec(m_sampleWahl->mapToGlobal(QPoint(0, m_sampleWahl->height())));

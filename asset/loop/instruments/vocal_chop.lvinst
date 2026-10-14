@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Vocal Chop",
+    "category": "lead",
+    "genres": ["Hip-Hop", "House"],
+    "description": "A short recorded female ah with an aah an octave above, for chopped vocal stabs.",
+    "level": 0.9,
+    "layers": [
+        {
+            "name": "Ah",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 260,
+            "sustain": 0,
+            "release": 120,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_ah",
+            "rootNote": 66,
+            "fineTune": -30,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        },
+        {
+            "name": "Aah",
+            "on": true,
+            "level": 0.3,
+            "transpose": 12,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 180,
+            "sustain": 0,
+            "release": 100,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_aah",
+            "rootNote": 60,
+            "fineTune": -14,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        }
+    ]
+}

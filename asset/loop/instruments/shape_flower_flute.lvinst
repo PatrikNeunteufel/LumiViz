@@ -1,0 +1,80 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Flower Flute",
+    "category": "wind",
+    "genres": [],
+    "description": "The flower with few harmonics and vibrato, with a breath of band-passed noise.",
+    "level": 0.7,
+    "layers": [
+        {
+            "name": "Flower",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 80,
+            "decay": 250,
+            "sustain": 0.85,
+            "release": 180,
+            "vibratoRate": 5.2,
+            "vibratoDepth": 11,
+            "vibratoDelay": 380,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "flower",
+            "shapeContour": 0,
+            "shapeHarmonics": 8,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Breath",
+            "on": true,
+            "level": 0.12,
+            "transpose": 24,
+            "startOffset": 0,
+            "waveform": "noise",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 30,
+            "decay": 120,
+            "sustain": 0.15,
+            "release": 120,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "bandpass",
+                    "cutoff": 1.5,
+                    "envelope": 0.0,
+                    "resonance": 0.3
+                },
+                {
+                    "type": "envelope"
+                }
+            ]
+        }
+    ]
+}

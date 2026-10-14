@@ -33,7 +33,8 @@ aufgenommen.
 
 ## instruments/
 
-Die fünfundfünfzig mitgelieferten Instrumente, je eine Datei `.lvinst` (JSON). Der
+Die neunzig mitgelieferten Instrumente (bis S122 fünfundfünfzig; die fünfunddreißig
+aus S123 stehen im Abschnitt S123 unten), je eine Datei `.lvinst` (JSON). Der
 Dateiname ist der Name im Loop: `piano.lvinst` ist das Instrument `piano`.
 Im Programm steht kein Instrument — maßgebend sind diese Dateien (Entscheide
 Patrik S110, I2 b und I3 a). Die Felder beschreibt das Konzept §4f.
@@ -269,3 +270,68 @@ Noten. `test_LoopInstrument.cpp` lädt die Datei, rechnet einen Durchlauf und
 prüft, dass die Summe unter 1 bleibt; mit `LUMIVIZ_INSTRUMENT_WAV=<Ordner>`
 legt der Fall Hörproben ab — das Beispiel und je Instrument eine Tonleiter
 mit Akkord.
+
+## S123: mitgelieferte Samples, Instrumente aus Formen und Samples, neue Drums, neun Loops
+
+Wunsch Patrik S123: mehr Vorlagen für Shape, Samples, Kits und Loops.
+Entscheide 1 a (mitgelieferte Samples unter `samples/`, im Loop `lib:<name>`),
+2 a (nur CC0, CC BY oder gemeinfrei, mit Nennung) und 3 a (Kits als eigene
+Einheit — die Kits selbst kommen nach der Skizze).
+
+### samples/
+
+**Achtunddreißig Aufnahmen** aus der OLPC-Sammlung (One Laptop per Child,
+archive.org, **CC BY 3.0**): Stimmen (Frauen: ha, hum, uh, aah, oo, ah,
+gliss; Männer: aah, oo, la, hey), Beatbox (kick, snare, zwei Hi-Hats),
+Drum-Maschinen und Schlagwerk (909, 808, 707, Tambourine, Djembe, Conga,
+Darbuka, Kick, Snap, Rim) und Instrumente mit Ton (Harfe, Koto, Shakuhachi,
+Hackbrett, Daumenklavier, Altsaxophon, Altflöte). Der Dateiname ist der Name
+im Loop: `harp.wav` ist `lib:harp`. Mono, 16 Bit, 44100 Hz, Stille an den
+Rändern weg, Spitze 0,89.
+
+- **`samples/CREDITS.md`** nennt je Datei Urheber, Eintrag und Datei im ZIP —
+  sie geht mit neben die Exe (`asset/Asset.cmake`), die Lizenz verlangt es.
+  `THIRD_PARTY_NOTICES.md` führt die Samples.
+- **`samples/make_samples.py <Ordner der Originale>`** schreibt alle neu und
+  gibt die gemessene Tonhöhe aus. Die Originale liegen **nicht** im Repo; ihre
+  Adressen stehen im Skript.
+- **Gemessen, nicht gehört:** `voice_male_aah` und `voice_male_oo` gleiten in
+  1,5 s um rund fünfzehn Halbtöne nach unten, `voice_male_la` schwankt um
+  ±0,7 — für gehaltene Töne taugen sie nicht, es gibt deshalb keinen
+  Männerchor. Harfe und Hackbrett lassen Saiten mitklingen; ihre Tonhöhe steht
+  im Dateinamen und ist am Spektrum bestätigt.
+
+### Instrumente
+
+| Skript | Was | Fassung |
+|---|---|---|
+| `make_shapes.py` | elf aus Formen (`shape_*`): Heart Pad, Rings Choir, Infinity Drone, Gear Bass, Moon Bass, Star Lead, Bolt Pluck, Flower Flute, Smiley Keys, Atom Bell, Cat | 9 |
+| `make_sample_instruments.py` | dreizehn aus Samples: Female Choir, Hum Pad, Vocal Lead, Vocal Chop, Harp, Koto, Dulcimer, Thumb Piano, Shakuhachi, Alto Sax, Alto Flute, Angel Harp, Wind Voices — und fünf geschichtete Drums (Punch Kick, Fat Snare, Clap Stack, Hat Shake, Beatbox Kick) | 8 |
+| `make_drums.py` | sechs weitere gerechnete Drums: 808 Kick, Low Tom, High Tom, Shaker, Ride, Crash | 6 und 7 |
+
+Neunzig mitgelieferte Instrumente. Grundton und Fine tune der Samples sind
+gemessen; die Schleifen gehaltener Klänge liegen auf aufsteigenden
+Nulldurchgängen. Wo eine Stimme in den Ton schleift (Hum 300 ms, Ha 250 ms
+Atem, Shakuhachi überbläst die ersten 150 ms), beginnt sie später (Sample
+start). Smiley Keys und Atom Bell spielen je Kontur eine Schicht, mit Pan;
+Rings Choir und Infinity Drone spielen Stereo XY — sie sind die ersten
+mitgelieferten Instrumente, die nicht auf beiden Seiten gleich klingen.
+
+### genres/ — neun Loops (`make_showcase.py`)
+
+| Datei | Genre | BPM | Was zeigt er |
+|---|---|---|---|
+| `vocal_house.lvloop` | House | 124 | Vocal Chop, Female Choir, Vocal Lead über 909, 808 und 707 aus `samples/` |
+| `angel_steps.lvloop` | Chillout | 90 | Angel Harp, Hum Pad, Kick, Rim, Snap, Shaker |
+| `beatbox_groove.lvloop` | Hip-Hop | 92 | Beatbox-Samples, Beatbox Kick, „hey", Moon Bass, Smiley Keys |
+| `desert_caravan.lvloop` | World | 100 | Darbuka, Djembe, Tambourine; Hackbrett, Koto, Shakuhachi in D-Hijaz |
+| `zen_garden.lvloop` | Ambient | 70 | Koto, Wind Voices, Thumb Piano, Shakuhachi |
+| `flute_tropics.lvloop` | Afrobeat | 108 | Djembe, Conga, Shaker; Thumb Piano, Alto Flute, Steel Drum |
+| `sax_after_dark.lvloop` | Jazz | 84 | Alto Sax, Harp, Upright Bass, Ride, Rim |
+| `shape_synthwave.lvloop` | Synthwave | 110 | Gear Bass, Heart Pad, Bolt Pluck, Star Lead; 808 Kick, Fat Snare, Crash |
+| `geometry.lvloop` | Electronica | 122 | Atom Bell, Smiley Keys, Rings Choir, Infinity Drone, Cat; Punch Kick, Clap Stack, Ride, Toms |
+
+Drum-Spuren nennen ein Sample (`lib:`), einen Klang des Kits oder ein
+Instrument der Art Drums (Note C2). Nach Rechnung gesetzt, nicht gehört.
+Hörproben: `LUMIVIZ_LOOP_WAV=<datei.lvloop oder Ordner>` mit
+`LUMIVIZ_LOOP_WAV_ZIEL=<Ordner>` (`test_LoopWerte.cpp`).

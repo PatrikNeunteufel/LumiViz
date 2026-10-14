@@ -48,8 +48,9 @@ void setzeEigenenSampleOrdnerFuerTests(const QString& ordner);
 /// gelesen. Dateien mit einem Namen, den keine Schicht nennen kann, fehlen.
 [[nodiscard]] QStringList eigeneSamples();
 /// Die Datei zu dem, was eine Schicht nennt: ein eigenes beim Namen, ein
-/// Klang des mitgelieferten Kits (`kit:kick`, seit Stufe 11c), sonst die
-/// Nennung selbst als Pfad. Leer = nichts genannt oder nicht gefunden.
+/// Klang des mitgelieferten Kits (`kit:kick`, seit Stufe 11c), ein
+/// mitgeliefertes Sample (`lib:<name>`, S123), sonst die Nennung selbst als
+/// Pfad. Leer = nichts genannt oder nicht gefunden.
 [[nodiscard]] QString sampleDatei(const QString& nennung);
 /// Wie ein Sample im Programm heisst: „table_knock" bzw. der Dateiname.
 [[nodiscard]] QString sampleTitel(const QString& nennung);

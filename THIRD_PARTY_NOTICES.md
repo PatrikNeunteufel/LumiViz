@@ -232,6 +232,21 @@ Wird beim Konfigurieren in der in `cmakecraft.pin` festgelegten Version geholt.
 
 ---
 
+## Mitgelieferte Klänge — `asset/loop/samples/` (CC BY 3.0)
+
+Achtunddreißig Aufnahmen aus den **OLPC Sound Samples** (One Laptop per Child
+music library, zusammengestellt von Richard Boulanger und vielen Beitragenden
+am Berklee College of Music), veröffentlicht auf archive.org unter **Creative
+Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>);
+die Lizenz steht je Eintrag in dessen Metadaten (geprüft S123). LumiViz hat
+sie bearbeitet: Stille an den Rändern weg, am Ende ausgeblendet, Pegel
+angehoben, Mono, 16 Bit, 44100 Hz.
+
+Urheber, Eintrag und Datei stehen je Sample in
+**`asset/loop/samples/CREDITS.md`** — diese Datei geht mit neben die Exe und
+muss bei jeder Weitergabe dabei sein. Sie sind die einzigen fremden Inhalte
+unter `asset/` (Entscheid Patrik S123, 2 a).
+
 ## Nicht enthaltene Inhalte
 
 Bewusst **nicht** in diesem Repository, weil die Rechte bei Dritten liegen oder
@@ -246,4 +261,5 @@ ungeklärt sind:
 
 LumiViz kann diese Dateien **laden**; mitgeliefert werden sie nicht. Die in
 `asset/` enthaltenen Presets, Ketten und Shader sind Eigenwerk bzw. von den
-Skripten unter `asset/calibration/` erzeugt.
+Skripten unter `asset/calibration/` erzeugt — ausgenommen die Samples unter
+`asset/loop/samples/` (oben).

@@ -1,0 +1,45 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Alto Flute",
+    "category": "wind",
+    "genres": ["Afrobeat"],
+    "description": "A recorded alto flute note with its own vibrato, held in a loop.",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Flute",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 60,
+            "decay": 300,
+            "sustain": 0.9,
+            "release": 220,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:flute_alto",
+            "rootNote": 60,
+            "fineTune": 10,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 899.53,
+            "loopTo": 2600.14
+        }
+    ]
+}

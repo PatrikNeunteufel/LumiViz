@@ -1,0 +1,72 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Harp",
+    "category": "plucked",
+    "genres": ["Jazz"],
+    "description": "A recorded harp note with a short sine body.",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Harp",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 2000,
+            "sustain": 0,
+            "release": 900,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:harp",
+            "rootNote": 69,
+            "fineTune": -5,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        },
+        {
+            "name": "Body",
+            "on": true,
+            "level": 0.15,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sine",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 600,
+            "sustain": 0,
+            "release": 400,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ]
+        }
+    ]
+}

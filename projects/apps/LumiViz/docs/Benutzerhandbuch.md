@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.161.0
+> **Version:** 1.162.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2699,6 +2699,7 @@ Die Auswahl **Sound** bietet:
 | Eintrag | Wirkung |
 |---|---|
 | unter **Kit** | Die Klänge des mitgelieferten Kits |
+| unter **Samples** | Die mitgelieferten Samples: Stimmen, Beatbox, Drum-Maschinen, Schlagwerk und Instrumente mit Ton — Aufnahmen aus der OLPC-Sammlung unter CC BY 3.0, ihre Urheber stehen in `asset\loop\samples\CREDITS.md` neben der Exe. Wie das Kit lassen sie sich nicht überschreiben — bearbeitet (Fenster **Edit sample**) wird eine Kopie unter **My samples** |
 | unter **My samples** | Deine eigenen Samples (kopierte Dateien und Aufnahmen). Die Überschrift fehlt, solange es keine gibt |
 | unter **File** | Die Tondatei an freiem Ort, die die Spur gerade nennt |
 | **Instrument...** | Öffnet das Fenster **Instruments** für diese Spur. **Use** dort setzt das Instrument in die Spur |
@@ -2908,7 +2909,7 @@ und Drive gelten weiter, Voices, Detune und Vibrato gibt es bei ihr nicht.
 
 | Bei Waveform: Sample | Wirkung |
 |---|---|
-| **File** und **File...** | Die Aufnahme: eines deiner eigenen Samples (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
+| **File** und **File...** | Die Aufnahme: ein mitgeliefertes Sample (unter „Samples", daneben „built-in"), eines deiner eigenen (unter „My samples") oder über „From file..." eine Tondatei (wav, flac, mp3, ogg, aiff). Daneben stehen ihr Name und ihre Länge |
 | Die Frage nach „From file..." | **Copy the file to My samples (recommended)** legt eine Kopie in deinen Benutzerordner (`samples`) — sie geht mit einem Export mit und bleibt, wenn das Original verschoben wird. **Use it where it is** lässt die Datei, wo sie ist; das Instrument nennt dann ihren Pfad. „Don't ask again" merkt die Wahl; ändern lässt sie sich unter Settings → Panels, **Chosen Sample Files** |
 | **Record...** | Öffnet das Fenster **Record sample** (siehe unten): selbst aufnehmen statt eine Datei wählen. Was du dort speicherst, ist danach die Aufnahme dieser Schicht |
 | **Edit...** | Öffnet die Aufnahme, die die Schicht gerade spielt, im selben Fenster — zum Zuschneiden (siehe unten, „Ein Sample bearbeiten“). Grau, solange die Schicht keine Aufnahme hat. Aufnahmen über 30 Sekunden öffnet es nicht |
@@ -3236,6 +3237,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.162.0 | 2026-10-14 | Session 123. §16 Drum-Editor und Instrument-Creator NEU die Gruppe **Samples** — achtunddreißig mitgelieferte Samples (CC BY 3.0, Nennung in `samples\CREDITS.md`); neunzig mitgelieferte Instrumente, zwanzig Formen, neun Loops mehr. |
 | 1.161.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Use as** (Layers, One path, **Jumps**: In list order, Shortest, Drawn by hand) und **Bridge**; Instrument-Creator NEU der **Farbpunkt** je Schicht mit **Colour...** und **Automatic**; Save mit Layers legt je angehakter Kontur eine Schicht an. |
 | 1.160.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open image...** mit der Gruppe **From image** (**Split by**, **Levels**, **Smooth**, **Min size**, **Detail**, **Apply live**, **Take contours**), **Show image**, „edge" in der Liste. |
 | 1.159.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open SVG...** — Konturen aus einer SVG-Datei, **Replace** oder **Add**, höchstens 64 (die längsten), anfangs Haken für alle bis acht, sonst die längste; eine Farbe, die alle Konturen teilen, wird durch die Farben der Reihe ersetzt. |

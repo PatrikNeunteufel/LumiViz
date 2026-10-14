@@ -1,0 +1,85 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Star Lead",
+    "category": "lead",
+    "genres": ["Synthwave"],
+    "description": "The star with forty harmonics, driven, with vibrato and a soft octave above.",
+    "level": 0.5,
+    "layers": [
+        {
+            "name": "Star",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 2,
+            "detune": 10,
+            "attack": 12,
+            "decay": 300,
+            "sustain": 0.85,
+            "release": 220,
+            "vibratoRate": 5.5,
+            "vibratoDepth": 12,
+            "vibratoDelay": 250,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                },
+                {
+                    "type": "drive",
+                    "amount": 0.2
+                }
+            ],
+            "shape": "star",
+            "shapeContour": 0,
+            "shapeHarmonics": 40,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Octave",
+            "on": true,
+            "level": 0.3,
+            "transpose": 12,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 12,
+            "decay": 300,
+            "sustain": 0.7,
+            "release": 220,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "star",
+            "shapeContour": 0,
+            "shapeHarmonics": 16,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        }
+    ]
+}

@@ -24,14 +24,28 @@ namespace lumi::loop
 namespace
 {
 
-constexpr int kKitVorsatzLaenge = 4;  // "kit:"
+constexpr int kVorsatzLaenge = 4;  // "kit:" und "lib:"
 
-/// `asset/loop/kit` — neben der Exe oder im Projektordner
+/// `asset/loop/<unter>` — neben der Exe oder im Projektordner
 /// (core/Mitgeliefert.hpp, S114).
-QString sucheKit()
+QString sucheUnterLoop(const QString& unter)
 {
     const QString loop = lumi::core::mitgeliefert::ordner(QStringLiteral("loop"));
-    return loop.isEmpty() ? QString() : loop + QStringLiteral("/kit");
+    return loop.isEmpty() ? QString() : loop + QLatin1Char('/') + unter;
+}
+
+/// Die WAV-Dateien eines mitgelieferten Ordners als `<vorsatz><Name>`, nach Namen sortiert.
+QStringList klaengeIn(const QString& ordner, const QString& vorsatz)
+{
+    if (ordner.isEmpty()) return {};
+    QStringList klaenge;
+    const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.wav")}, QDir::Files, QDir::Name);
+    for (const QString& datei : dateien)
+    {
+        const QString klang = vorsatz + QFileInfo(datei).completeBaseName();
+        if (!klangDatei(klang).isEmpty()) klaenge << klang;  // nur Namen, die `klangDatei` auch annimmt
+    }
+    return klaenge;
 }
 
 }  // namespace
@@ -39,35 +53,37 @@ QString sucheKit()
 QString kitOrdner()
 {
     // einmal aufgeloest und gemerkt
-    static const QString kOrdner = sucheKit();
+    static const QString kOrdner = sucheUnterLoop(QStringLiteral("kit"));
+    return kOrdner;
+}
+
+QString bibliothekOrdner()
+{
+    static const QString kOrdner = sucheUnterLoop(QStringLiteral("samples"));
     return kOrdner;
 }
 
 QStringList kitKlaenge()
 {
-    const QString ordner = kitOrdner();
-    if (ordner.isEmpty()) return {};
-    QStringList klaenge;
-    const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.wav")}, QDir::Files, QDir::Name);
-    for (const QString& datei : dateien)
-    {
-        const QString klang = QStringLiteral("kit:") + QFileInfo(datei).completeBaseName();
-        if (!klangDatei(klang).isEmpty()) klaenge << klang;  // nur Namen, die `klangDatei` auch annimmt
-    }
-    return klaenge;
+    return klaengeIn(kitOrdner(), QStringLiteral("kit:"));
+}
+
+QStringList bibliotheksKlaenge()
+{
+    return klaengeIn(bibliothekOrdner(), QStringLiteral("lib:"));
 }
 
 QString klangDatei(const QString& klang)
 {
     if (istTon(klang)) return {};  // ein gerechneter Ton hat keine Datei
     if (istEigenerKlang(klang)) return eigeneSampleDatei(klang.mid(static_cast<int>(qstrlen(kSampleVorsatz))));
-    if (!istKitKlang(klang)) return klang;
-    const QString name = klang.mid(kKitVorsatzLaenge);
+    if (!istMitgelieferterKlang(klang)) return klang;
+    const QString name = klang.mid(kVorsatzLaenge);
     const bool erlaubt = !name.isEmpty() && std::all_of(name.begin(), name.end(), [](QChar z) {
         return (z >= QLatin1Char('a') && z <= QLatin1Char('z')) || (z >= QLatin1Char('0') && z <= QLatin1Char('9')) ||
                z == QLatin1Char('_');
     });
-    const QString ordner = kitOrdner();
+    const QString ordner = istKitKlang(klang) ? kitOrdner() : bibliothekOrdner();
     if (!erlaubt || ordner.isEmpty()) return {};
     return QDir(ordner).filePath(name + QStringLiteral(".wav"));
 }

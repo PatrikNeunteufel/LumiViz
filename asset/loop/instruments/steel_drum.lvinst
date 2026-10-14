@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Steel Drum",
     "category": "percussion",
-    "genres": ["Reggaeton"],
+    "genres": ["Afrobeat", "Reggaeton"],
     "description": "A sine with strong overtones, a detuned ring an octave above and a short hit.",
     "level": 0.7,
     "layers": [

@@ -501,4 +501,68 @@ TEST_SUITE("Loop Sample")
         instrument.schichten[0].holeFilter().teilton = 1.0;
         CHECK(spitze(rendereTon(instrument, 69, 1500.0, kRate), 8820, 30000) == doctest::Approx(1.0f).epsilon(0.03));
     }
+
+    // S123, Entscheide Patrik 1 a und 2 a: mitgelieferte Samples unter asset/loop/samples, im Loop `lib:<name>`.
+    // Liest das Repo vom Arbeitsordner aus (die Test-Exe aus dem Projekt-Root starten).
+    TEST_CASE("Loop Sample S123: die mitgelieferten Samples — lib:, die Liste, die Nennung in CREDITS.md, im Loop beim Namen")
+    {
+        // --- die Nennung
+        CHECK(istBibliotheksKlang(QStringLiteral("lib:harp")));
+        CHECK_FALSE(istBibliotheksKlang(QStringLiteral("kit:kick")));
+        CHECK(istMitgelieferterKlang(QStringLiteral("lib:harp")));
+        CHECK(istMitgelieferterKlang(QStringLiteral("kit:kick")));
+        CHECK_FALSE(istMitgelieferterKlang(QStringLiteral("user:harp")));
+        CHECK(sampleTitel(QStringLiteral("lib:thumb_piano")) == QStringLiteral("thumb_piano"));
+        CHECK(klangDatei(QStringLiteral("lib:Harp")).isEmpty());   // nur a–z, 0–9, _
+        CHECK(klangDatei(QStringLiteral("lib:../kit/kick")).isEmpty());
+        CHECK(klangDatei(QStringLiteral("lib:")).isEmpty());
+
+        // --- die Liste: was im Ordner liegt, jede Datei da und in CREDITS.md genannt
+        REQUIRE_FALSE(bibliothekOrdner().isEmpty());
+        const QStringList alle = bibliotheksKlaenge();
+        // wer ein Sample dazulegt, traegt es in asset/loop/samples/make_samples.py ein und stellt die Zahl nach
+        CHECK(alle.size() == 38);
+        CHECK(std::is_sorted(alle.begin(), alle.end()));
+        QFile credits(QDir(bibliothekOrdner()).filePath(QStringLiteral("CREDITS.md")));
+        REQUIRE(credits.open(QIODevice::ReadOnly));
+        const QString nennungen = QString::fromUtf8(credits.readAll());
+        CHECK(nennungen.contains(QStringLiteral("Creative Commons Attribution 3.0")));
+        for (const QString& klang : alle)
+        {
+            CAPTURE(klang.toStdString());
+            CHECK(klang.startsWith(QStringLiteral("lib:")));
+            CHECK(QFileInfo::exists(klangDatei(klang)));
+            CHECK(sampleDatei(klang) == klangDatei(klang));
+            CHECK(nennungen.contains(QStringLiteral("`") + klang.mid(4) + QStringLiteral(".wav`")));
+        }
+        CHECK(alle.contains(QStringLiteral("lib:voice_female_aah")));
+        CHECK(alle.contains(QStringLiteral("lib:clap_707")));
+
+        // --- im Loop: eine Drum-Spur nennt das Sample beim Namen, nie als Pfad
+        QJsonArray zeile;
+        for (int i = 0; i < 64; ++i) zeile.append(i % 4 == 0 ? 1.0 : 0.0);
+        QJsonObject spur{{QStringLiteral("name"), QStringLiteral("Snap")}, {QStringLiteral("sound"), QStringLiteral("lib:snap")},
+                         {QStringLiteral("volume"), 1.0}, {QStringLiteral("pan"), 0.0}, {QStringLiteral("mute"), false}};
+        QJsonObject muster{{QStringLiteral("name"), QStringLiteral("Beat")}, {QStringLiteral("kind"), QStringLiteral("drumkit")},
+                           {QStringLiteral("bars"), 4}, {QStringLiteral("tracks"), QJsonArray{spur}},
+                           {QStringLiteral("rows"), QJsonArray{zeile}}};
+        QJsonObject datei{{QStringLiteral("format"), QStringLiteral("lumiviz-loop")}, {QStringLiteral("version"), 5},
+                          {QStringLiteral("bpm"), 120.0}, {QStringLiteral("beatsPerBar"), 4}, {QStringLiteral("stepsPerBeat"), 4},
+                          {QStringLiteral("patterns"), QJsonArray{muster}}, {QStringLiteral("channels"), QJsonArray{}}};
+        const QString basis = QDir(bibliothekOrdner()).filePath(QStringLiteral(".."));  // auch unter dem Ordner des Loops kein Pfad
+        Loop loop;
+        QStringList bericht;
+        REQUIRE(ausJson(datei, loop, basis, &bericht));
+        CHECK(bericht.isEmpty());
+        REQUIRE(loop.muster.size() == 1);
+        CHECK(loop.muster[0].spuren[0].klang == QStringLiteral("lib:snap"));
+        CHECK(alsJson(loop, basis).value(QStringLiteral("patterns")).toArray().at(0).toObject().value(QStringLiteral("tracks"))
+                  .toArray().at(0).toObject().value(QStringLiteral("sound")).toString() == QStringLiteral("lib:snap"));
+        // ein mitgeliefertes Sample, das es nicht gibt, steht im Bericht
+        spur[QStringLiteral("sound")] = QStringLiteral("lib:gibt_es_nicht");
+        muster[QStringLiteral("tracks")] = QJsonArray{spur};
+        datei[QStringLiteral("patterns")] = QJsonArray{muster};
+        REQUIRE(ausJson(datei, loop, basis, &bericht));
+        CHECK(bericht == QStringList{QStringLiteral("Sample not found: lib:gibt_es_nicht")});
+    }
 }

@@ -11,6 +11,7 @@
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/InstrumentPalette.hpp"
+#include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
 
@@ -986,7 +987,8 @@ void DrumEditor::zeigeAuswahl()
     m_auswahlZeile->setText(text);
 }
 
-void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene) const
+void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QStringList& eigene,
+                             const QStringList& bibliothek) const
 {
     const QSignalBlocker ruhe(auswahl);
     auswahl->clear();
@@ -1006,6 +1008,14 @@ void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QString
     kopf(tr("Kit"));
     for (const QString& kit : m_kitKlaenge) auswahl->addItem(kit.mid(4), kit);  // ohne den Vorsatz „kit:"
     if (istKitKlang(klang) && !m_kitKlaenge.contains(klang)) auswahl->addItem(klang.mid(4), klang);
+    // die mitgelieferten Samples (`lib:`, Entscheid 1 a, S123)
+    const bool mitgeliefertFehlt = istBibliotheksKlang(klang) && !bibliothek.contains(klang);
+    if (!bibliothek.isEmpty() || mitgeliefertFehlt)
+    {
+        kopf(tr("Samples"));
+        for (const QString& nennung : bibliothek) auswahl->addItem(sampleTitel(nennung), nennung);
+        if (mitgeliefertFehlt) auswahl->addItem(tr("%1 (not found)").arg(sampleTitel(klang)), klang);
+    }
     const bool eigenerFehlt = istEigenerKlang(klang) && !eigene.contains(klang);
     if (!eigene.isEmpty() || eigenerFehlt)
     {
@@ -1013,7 +1023,7 @@ void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QString
         for (const QString& nennung : eigene) auswahl->addItem(sampleTitel(nennung), nennung);
         if (eigenerFehlt) auswahl->addItem(tr("%1 (not found)").arg(sampleTitel(klang)), klang);
     }
-    if (!klang.isEmpty() && !istKitKlang(klang) && !istEigenerKlang(klang))
+    if (!klang.isEmpty() && !istMitgelieferterKlang(klang) && !istEigenerKlang(klang))
     {
         // eine Tondatei an freiem Ort
         kopf(tr("File"));
@@ -1033,7 +1043,7 @@ void DrumEditor::fuelleKlang(QComboBox* auswahl, const Spur& spur, const QString
     else
         // sonst findet es niemand: sagen, wo Edit sound... steht
         auswahl->setToolTip(tr("%1\nRight-click the track: Edit sound... makes an instrument of it")
-                                .arg(istKitKlang(klang) || istEigenerKlang(klang) ? klang : QDir::toNativeSeparators(klang)));
+                                .arg(istMitgelieferterKlang(klang) || istEigenerKlang(klang) ? klang : QDir::toNativeSeparators(klang)));
 }
 
 QStringList DrumEditor::klangZeilen(int spur) const
@@ -1143,6 +1153,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
         }
     }
     const QStringList eigene = eigeneSamples();  // einmal gelesen, fuer alle Spuren
+    const QStringList bibliothek = bibliotheksKlaenge();
     for (std::size_t s = 0; s < m_spuren.size(); ++s)
     {
         const Spur& spur = muster.spuren[s];
@@ -1153,7 +1164,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
         zeile.stumm->setChecked(spur.stumm);
         zeile.name->setText(zeile.name->fontMetrics().elidedText(spur.name, Qt::ElideRight, 70));
         zeile.name->setToolTip(spur.name);
-        fuelleKlang(zeile.klang, spur, eigene);
+        fuelleKlang(zeile.klang, spur, eigene, bibliothek);
         zeile.mehr->setVisible(!spur.instrument.isEmpty());
         if (!zeile.laut->isSliderDown()) zeile.laut->setValue(static_cast<int>(std::lround(spur.laut * 100.0)));
         if (!zeile.pan->isSliderDown()) zeile.pan->setValue(static_cast<int>(std::lround(spur.pan * 100.0)));

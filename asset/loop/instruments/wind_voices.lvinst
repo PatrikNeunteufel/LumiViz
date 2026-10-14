@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Wind Voices",
+    "category": "pads",
+    "genres": ["Ambient"],
+    "description": "The recorded alto flute and a female hum, held in loops, slow, left and right.",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Flute",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 400,
+            "decay": 500,
+            "sustain": 0.9,
+            "release": 900,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": -0.25,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:flute_alto",
+            "rootNote": 60,
+            "fineTune": 10,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 899.53,
+            "loopTo": 2600.14
+        },
+        {
+            "name": "Hum",
+            "on": true,
+            "level": 0.6,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 600,
+            "decay": 500,
+            "sustain": 0.9,
+            "release": 1100,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.25,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_hum",
+            "rootNote": 72,
+            "fineTune": -38,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 1500.07,
+            "loopTo": 5000.45
+        }
+    ]
+}

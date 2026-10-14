@@ -1,0 +1,45 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Koto",
+    "category": "plucked",
+    "genres": ["Ambient", "World"],
+    "description": "A recorded koto note that rings for three seconds.",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Koto",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 3000,
+            "sustain": 0,
+            "release": 800,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:koto",
+            "rootNote": 62,
+            "fineTune": 14,
+            "sampleStart": 0,
+            "sustainLoop": false,
+            "loopFrom": 0,
+            "loopTo": 0
+        }
+    ]
+}

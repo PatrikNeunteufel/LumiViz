@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Vocal Lead",
+    "category": "lead",
+    "genres": ["House"],
+    "description": "A recorded female voice singing ha, held in a loop, with a quiet filtered saw.",
+    "level": 0.85,
+    "layers": [
+        {
+            "name": "Ha",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 40,
+            "decay": 300,
+            "sustain": 0.9,
+            "release": 350,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_ha",
+            "rootNote": 72,
+            "fineTune": -33,
+            "sampleStart": 260,
+            "sustainLoop": true,
+            "loopFrom": 1499.79,
+            "loopTo": 6000.06
+        },
+        {
+            "name": "Edge",
+            "on": true,
+            "level": 0.12,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "saw",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 40,
+            "decay": 300,
+            "sustain": 0.8,
+            "release": 300,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "filter",
+                    "filterType": "lowpass",
+                    "cutoff": 3.0,
+                    "envelope": 0.0,
+                    "resonance": 0.0
+                },
+                {
+                    "type": "envelope"
+                }
+            ]
+        }
+    ]
+}

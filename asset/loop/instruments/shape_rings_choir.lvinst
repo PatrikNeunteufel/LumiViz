@@ -1,0 +1,81 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Rings Choir",
+    "category": "pads",
+    "genres": ["Electronica"],
+    "description": "The five rings as one path, stereo XY, with deep vibrato and a soft octave above.",
+    "level": 0.5,
+    "layers": [
+        {
+            "name": "Rings",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 2,
+            "detune": 9,
+            "attack": 600,
+            "decay": 900,
+            "sustain": 0.8,
+            "release": 1300,
+            "vibratoRate": 5.5,
+            "vibratoDepth": 14,
+            "vibratoDelay": 300,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "rings",
+            "shapeContour": 0,
+            "shapeHarmonics": 20,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": true,
+            "shapeReverse": false
+        },
+        {
+            "name": "Air",
+            "on": true,
+            "level": 0.25,
+            "transpose": 12,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 2,
+            "detune": 16,
+            "attack": 900,
+            "decay": 900,
+            "sustain": 0.7,
+            "release": 1300,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "rings",
+            "shapeContour": 0,
+            "shapeHarmonics": 6,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        }
+    ]
+}

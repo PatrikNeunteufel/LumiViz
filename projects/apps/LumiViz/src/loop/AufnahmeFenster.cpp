@@ -344,7 +344,7 @@ AufnahmeFenster::Herkunft AufnahmeFenster::herkunft() const
 {
     if (m_nennung.isEmpty()) return Herkunft::Aufnahme;
     if (istEigenesSample(m_nennung)) return Herkunft::Eigenes;
-    return istKitKlang(m_nennung) ? Herkunft::Mitgeliefert : Herkunft::Datei;
+    return istMitgelieferterKlang(m_nennung) ? Herkunft::Mitgeliefert : Herkunft::Datei;
 }
 
 bool AufnahmeFenster::geaendert() const

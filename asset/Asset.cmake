@@ -22,7 +22,8 @@
 #
 # ⚠ NUR EIGENE WERKE. Was hier steht, wird mit der Exe weitergegeben. Fremde
 # Presets, Shader und Texturen gehoeren nicht hinein — siehe
-# THIRD_PARTY_NOTICES.md, „Nicht enthaltene Inhalte“. Draussen bleiben auch
+# THIRD_PARTY_NOTICES.md, „Nicht enthaltene Inhalte“. Einzige Ausnahme: die
+# Samples unter loop/samples (CC BY 3.0, mit Nennung; unten bei loop). Draussen bleiben auch
 # Pflegenotizen (README.md), Erzeuger-Skripte und Arbeitsdateien.
 #
 # Eine Datei unter asset/ geaendert? LumiViz bauen — das Programm liest die
@@ -46,11 +47,16 @@ lumi_asset(karaoke          OHNE "README.md")
 # Composer: Blenden, Formen, Mutes (FormPresets, Mute)
 lumi_asset(composer         OHNE "README.md")
 
-# Loop: das Kit, die Instrumente, die Beispiel-Loops. Nicht: make_*.py,
-# README.md und Arbeitsdateien im Ordner (test.lvloop, DDdemo.lvloop, ...) —
-# ein Beispiel heisst <name>_demo.lvloop oder liegt unter genres/.
+# Loop: das Kit, die mitgelieferten Samples, die Instrumente, die Beispiel-Loops.
+# Nicht: make_*.py, README.md und Arbeitsdateien im Ordner (test.lvloop,
+# DDdemo.lvloop, ...) — ein Beispiel heisst <name>_demo.lvloop oder liegt unter
+# genres/. Die Samples unter samples/ sind die eine Ausnahme von „nur eigene
+# Werke": fremde Aufnahmen unter CC BY 3.0 (Entscheid 2 a, Patrik S123) — ihre
+# Nennung samples/CREDITS.md geht mit, und THIRD_PARTY_NOTICES.md fuehrt sie.
 lumi_asset(loop
     NUR "kit/*.wav"
+        "samples/*.wav"
+        "samples/CREDITS.md"
         "instruments/*.lvinst"
         "genres/*.lvloop"
         "*_demo.lvloop")

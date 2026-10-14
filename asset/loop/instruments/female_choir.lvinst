@@ -1,0 +1,79 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 8,
+    "title": "Female Choir",
+    "category": "pads",
+    "genres": ["House"],
+    "description": "Two recorded female voices, aah and oo, held in a loop, left and right.",
+    "level": 0.8,
+    "layers": [
+        {
+            "name": "Aah",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 220,
+            "decay": 400,
+            "sustain": 0.9,
+            "release": 650,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": -0.2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_aah",
+            "rootNote": 60,
+            "fineTune": -14,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 700.03,
+            "loopTo": 2399.7
+        },
+        {
+            "name": "Oo",
+            "on": true,
+            "level": 0.75,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "sample",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 380,
+            "decay": 400,
+            "sustain": 0.9,
+            "release": 750,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.2,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "sample": "lib:voice_female_oo",
+            "rootNote": 60,
+            "fineTune": 5,
+            "sampleStart": 0,
+            "sustainLoop": true,
+            "loopFrom": 900.31,
+            "loopTo": 3600.01
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+{
+    "format": "lumiviz-contour",
+    "version": 1,
+    "title": "House",
+    "useAs": "layers",
+    "jumps": "listOrder",
+    "nextId": 2,
+    "contours": [
+        {
+            "id": 1,
+            "name": "House",
+            "color": "#00e5ff",
+            "selected": true,
+            "path": "M 100 22 L 128 46 L 128 30 L 146 30 L 146 62 L 178 92 L 156 92 L 156 178 L 44 178 L 44 92 L 22 92 L 100 22 Z"
+        }
+    ],
+    "bridges": [],
+    "source": {
+        "kind": "drawn",
+        "file": "",
+        "settings": {}
+    }
+}

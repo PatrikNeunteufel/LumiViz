@@ -32,6 +32,7 @@
 #include <doctest.h>
 
 #include "LoopOhneEngine.hpp"
+#include "loop/Aufnahme.hpp"  // schreibeWav
 #include "loop/Instrument.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
@@ -41,6 +42,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 
 #include <algorithm>
@@ -103,13 +105,32 @@ struct Probe
 };
 constexpr Probe kProben[] = {{36, 250}, {60, 500}, {81, 120}};
 
+/// Ein Durchlauf eines Loops durch den Klangerzeuger (mit den Effekten der Clips); leer = nicht zu laden.
+std::vector<float> rechneLoop(const QString& pfad)
+{
+    Loop loop;
+    if (!ladeLoop(pfad, loop)) return {};
+    const Ablauf ablauf = plane(loop, kRate);
+    const auto klaenge = std::make_shared<const std::vector<Klang>>(looptest::klaengeOhneEngine(ablauf));
+    Klangerzeuger erzeuger;
+    erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge));
+    const int frames = static_cast<int>(ablauf.durchlaufFrames);
+    std::vector<float> durchlauf(static_cast<std::size_t>(frames) * 2);
+    for (int stelle = 0; stelle < frames; stelle += 441)
+        erzeuger.render(durchlauf.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(441, frames - stelle));
+    return durchlauf;
+}
+
 std::map<QString, Wert> rechneAlles()
 {
     std::map<QString, Wert> alles;
     for (const Instrument& instrument : instrumente())
+    {
+        looptest::merkeSamplesOhneEngine(instrument);  // Sample-Schichten (S123)
         for (const Probe& probe : kProben)
             alles[QStringLiteral("inst:%1:%2:%3").arg(instrument.name).arg(probe.hoehe).arg(probe.dauerMs)] =
                 messe(rendereTon(instrument, probe.hoehe, probe.dauerMs, kRate).daten);
+    }
 
     const QDir wurzel(looptest::repoWurzel().filePath(QStringLiteral("asset/loop")));
     QDirIterator lauf(wurzel.path(), {QStringLiteral("*.lvloop")}, QDir::Files, QDirIterator::Subdirectories);
@@ -118,16 +139,8 @@ std::map<QString, Wert> rechneAlles()
         const QString pfad = lauf.next();
         Loop loop;
         if (!ladeLoop(pfad, loop)) continue;
-        const Ablauf ablauf = plane(loop, kRate);
-        const auto klaenge = std::make_shared<const std::vector<Klang>>(looptest::klaengeOhneEngine(ablauf));
         // durch den Klangerzeuger: dort sitzen die Effekte der Clips
-        Klangerzeuger erzeuger;
-        erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge));
-        const int frames = static_cast<int>(ablauf.durchlaufFrames);
-        std::vector<float> durchlauf(static_cast<std::size_t>(frames) * 2);
-        for (int stelle = 0; stelle < frames; stelle += 441)
-            erzeuger.render(durchlauf.data() + 2 * static_cast<std::ptrdiff_t>(stelle), std::min(441, frames - stelle));
-        alles[QStringLiteral("loop:") + wurzel.relativeFilePath(pfad)] = messe(durchlauf);
+        alles[QStringLiteral("loop:") + wurzel.relativeFilePath(pfad)] = messe(rechneLoop(pfad));
     }
     return alles;
 }
@@ -138,6 +151,40 @@ QString werteDatei()
 }
 
 }  // namespace
+
+// Hoerproben (S123): `LUMIVIZ_LOOP_WAV=<datei.lvloop oder Ordner>` rechnet den Loop — oder jeden `.lvloop`
+// im Ordner — einmal durch und legt ihn als WAV nach `LUMIVIZ_LOOP_WAV_ZIEL=<Ordner>`. Instrumente als
+// Datei neben dem Loop und eigene (`user:`) gehen mit; ohne die Variable prueft der Fall nichts.
+TEST_CASE("Loop Werte: ein Loop als WAV (LUMIVIZ_LOOP_WAV)")
+{
+    const QString quelle = qEnvironmentVariable("LUMIVIZ_LOOP_WAV");
+    if (quelle.isEmpty())
+    {
+        MESSAGE("LUMIVIZ_LOOP_WAV nicht gesetzt — keine Hoerproben");
+        return;
+    }
+    const WerteApp app;
+    const QString ziel = qEnvironmentVariable("LUMIVIZ_LOOP_WAV_ZIEL");
+    REQUIRE_FALSE(ziel.isEmpty());
+    REQUIRE(QDir().mkpath(ziel));
+    QStringList dateien;
+    if (QFileInfo(quelle).isDir())
+        for (const QString& name : QDir(quelle).entryList({QStringLiteral("*.lvloop")}, QDir::Files, QDir::Name))
+            dateien << QDir(quelle).filePath(name);
+    else
+        dateien << quelle;
+    REQUIRE_FALSE(dateien.isEmpty());
+    for (const QString& pfad : dateien)
+    {
+        CAPTURE(pfad.toStdString());
+        const std::vector<float> durchlauf = rechneLoop(pfad);
+        REQUIRE_FALSE(durchlauf.empty());
+        const QString wav = QDir(ziel).filePath(QFileInfo(pfad).completeBaseName() + QStringLiteral(".wav"));
+        CHECK(schreibeWav(wav, durchlauf, kRate));
+        MESSAGE(QFileInfo(wav).fileName().toStdString() << ": " << durchlauf.size() / 2 / kRate << " s, groesster Betrag "
+                                                       << messe(durchlauf).spitze);
+    }
+}
 
 TEST_CASE("Loop Werte: jedes mitgelieferte Instrument und jedes Beispiel rechnet, was festgehalten ist")
 {

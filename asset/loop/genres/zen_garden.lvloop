@@ -1,0 +1,220 @@
+{
+    "format": "lumiviz-loop",
+    "version": 5,
+    "bpm": 70,
+    "beatsPerBar": 4,
+    "stepsPerBeat": 4,
+    "swing": 0.0,
+    "volume": 0.62,
+    "tags": {
+        "title": "Zen Garden",
+        "artist": "LumiViz",
+        "genre": "Ambient"
+    },
+    "patterns": [
+        {
+            "name": "Beat",
+            "kind": "drumkit",
+            "bars": 4,
+            "tracks": [
+                {
+                    "name": "Rim",
+                    "sound": "lib:rim",
+                    "volume": 0.35,
+                    "pan": 0.3,
+                    "mute": false
+                },
+                {
+                    "name": "Tom",
+                    "sound": "kit:tom",
+                    "volume": 0.4,
+                    "pan": -0.3,
+                    "mute": false,
+                    "instrument": "drum_tom_low",
+                    "note": 36,
+                    "length": 250
+                }
+            ],
+            "rows": [
+                [1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0, 1.0, 0, 0, 0]
+            ]
+        },
+        {
+            "name": "Koto",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "koto",
+            "volume": 0.55,
+            "pan": -0.15,
+            "mute": false,
+            "notes": [
+                [0, 4, 62, 0.8],
+                [6, 2, 69, 0.6],
+                [8, 6, 67, 0.7],
+                [16, 4, 64, 0.7],
+                [22, 2, 71, 0.6],
+                [24, 8, 69, 0.7],
+                [32, 4, 74, 0.8],
+                [38, 2, 71, 0.6],
+                [40, 6, 69, 0.7],
+                [48, 4, 67, 0.7],
+                [52, 4, 64, 0.6],
+                [56, 8, 62, 0.7]
+            ]
+        },
+        {
+            "name": "Wind",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "wind_voices",
+            "volume": 0.45,
+            "pan": 0.0,
+            "mute": false,
+            "notes": [
+                [0, 32, 50, 0.6],
+                [0, 32, 57, 0.5],
+                [32, 32, 55, 0.6],
+                [32, 32, 62, 0.5]
+            ]
+        },
+        {
+            "name": "Drops",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "thumb_piano",
+            "volume": 0.45,
+            "pan": 0.3,
+            "mute": false,
+            "notes": [
+                [3, 2, 76, 0.6],
+                [11, 2, 88, 0.6],
+                [19, 2, 83, 0.6],
+                [27, 2, 79, 0.6],
+                [35, 2, 74, 0.6],
+                [43, 2, 86, 0.6],
+                [51, 2, 81, 0.6],
+                [59, 2, 76, 0.6]
+            ]
+        },
+        {
+            "name": "Shakuhachi",
+            "kind": "instrument",
+            "bars": 4,
+            "instrument": "shakuhachi",
+            "volume": 0.5,
+            "pan": 0.1,
+            "mute": false,
+            "notes": [
+                [8, 12, 74, 0.7],
+                [24, 6, 71, 0.6],
+                [40, 16, 69, 0.7]
+            ]
+        }
+    ],
+    "channels": [
+        {
+            "name": "Wind",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Wind",
+                    "start": 0,
+                    "repeat": 6,
+                    "path": [
+                        {
+                            "type": "reverb",
+                            "on": true,
+                            "size": 0.8,
+                            "decay": 3.0,
+                            "damping": 0.4,
+                            "mix": 0.3
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Koto",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Koto",
+                    "start": 4,
+                    "repeat": 4,
+                    "path": [
+                        {
+                            "type": "reverb",
+                            "on": true,
+                            "size": 0.8,
+                            "decay": 3.0,
+                            "damping": 0.4,
+                            "mix": 0.35
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Drops",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Drops",
+                    "start": 0,
+                    "repeat": 6,
+                    "path": [
+                        {
+                            "type": "echo",
+                            "on": true,
+                            "time": "1/4",
+                            "feedback": 0.5,
+                            "damping": 0.4,
+                            "mix": 0.35
+                        },
+                        {
+                            "type": "reverb",
+                            "on": true,
+                            "size": 0.6,
+                            "decay": 2.2,
+                            "damping": 0.4,
+                            "mix": 0.3
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Shakuhachi",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Shakuhachi",
+                    "start": 12,
+                    "repeat": 3,
+                    "path": [
+                        {
+                            "type": "reverb",
+                            "on": true,
+                            "size": 0.8,
+                            "decay": 3.5,
+                            "damping": 0.4,
+                            "mix": 0.4
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Drums",
+            "enabled": true,
+            "clips": [
+                {
+                    "pattern": "Beat",
+                    "start": 8,
+                    "repeat": 3
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,151 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 9,
+    "title": "Smiley Keys",
+    "category": "keys",
+    "genres": ["Electronica", "Hip-Hop"],
+    "description": "One layer per contour of the smiley: face on the note, eyes and mouth above it.",
+    "level": 0.5,
+    "layers": [
+        {
+            "name": "Face",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 1100,
+            "sustain": 0.2,
+            "release": 400,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "smiley",
+            "shapeContour": 1,
+            "shapeHarmonics": 12,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Left eye",
+            "on": true,
+            "level": 0.35,
+            "transpose": 12,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 600,
+            "sustain": 0,
+            "release": 300,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": -0.4,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "smiley",
+            "shapeContour": 2,
+            "shapeHarmonics": 8,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Right eye",
+            "on": true,
+            "level": 0.25,
+            "transpose": 19,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 500,
+            "sustain": 0,
+            "release": 300,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.4,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "smiley",
+            "shapeContour": 3,
+            "shapeHarmonics": 8,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        },
+        {
+            "name": "Mouth",
+            "on": true,
+            "level": 0.3,
+            "transpose": 7,
+            "startOffset": 0,
+            "waveform": "shape",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 800,
+            "sustain": 0.1,
+            "release": 350,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "pan": 0.0,
+            "pitchStart": 0,
+            "pitchTime": 100,
+            "path": [
+                {
+                    "type": "envelope"
+                }
+            ],
+            "shape": "smiley",
+            "shapeContour": 4,
+            "shapeHarmonics": 16,
+            "shapeHarmonicsEnvelope": 0.0,
+            "shapeAngle": 0.0,
+            "shapeStart": 0.0,
+            "shapeStereoXY": false,
+            "shapeReverse": false
+        }
+    ]
+}

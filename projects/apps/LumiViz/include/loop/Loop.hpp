@@ -44,6 +44,12 @@ inline constexpr int kTakteMax = 64;   ///< hoechstens so viele Takte je Muster
 
 /// Der Vorsatz eines Klangs aus dem mitgelieferten Kit: `kit:kick`.
 [[nodiscard]] bool istKitKlang(const QString& klang);
+/// Der Vorsatz eines mitgelieferten Samples: `lib:voice_female_ah` — die Datei
+/// `asset/loop/samples/voice_female_ah.wav` (Entscheid 1 a, Patrik S123).
+[[nodiscard]] bool istBibliotheksKlang(const QString& klang);
+/// Mitgeliefert und schreibgeschuetzt: ein Klang des Kits oder ein
+/// mitgeliefertes Sample. Eine Datei nennt ihn beim Namen, nie als Pfad.
+[[nodiscard]] bool istMitgelieferterKlang(const QString& klang);
 /// Der Vorsatz eines eigenen Samples aus dem Benutzerordner: `user:table_knock`
 /// (Sample.hpp, Entscheid S1 a).
 [[nodiscard]] bool istEigenerKlang(const QString& klang);
