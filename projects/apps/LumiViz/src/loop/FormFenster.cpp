@@ -6,6 +6,7 @@
 #include "loop/FormFenster.hpp"
 
 #include "loop/Instrument.hpp"  // eigeneInstrumenteMitForm, zaehleInstrumentFassung
+#include "shape/SvgKonturen.hpp"
 #include "shape/Zeichnen.hpp"
 
 #include <QCheckBox>
@@ -13,6 +14,7 @@
 #include <QComboBox>
 #include <QDialog>
 #include <QDir>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -29,6 +31,7 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QSettings>
 #include <QShortcut>
 #include <QSignalBlocker>
 #include <QSlider>
@@ -53,6 +56,8 @@ constexpr std::size_t kSchritteMax = 100;
 const QRectF kLeereAnsicht(0.0, 0.0, 200.0, 200.0);
 /// Mit diesem Pegel spielt Play (der fernste Punkt der Form hat den Abstand 1).
 constexpr float kPlayPegel = 0.4f;
+/// Hier merkt sich Open SVG... den Ordner der letzten Datei.
+const char* const kLetzterSvgOrdner = "shape/lastSvgFolder";
 
 QString konturTitel(const shape::Kontur& kontur, int platz)
 {
@@ -507,8 +512,7 @@ void FormFenster::setupUI()
     m_ort->setEnabled(false);
     m_svg = new QPushButton(tr("Open SVG..."), this);
     m_svg->setObjectName(QStringLiteral("shapeOpenSvg"));
-    m_svg->setEnabled(false);
-    m_svg->setToolTip(tr("Not available yet"));
+    m_svg->setToolTip(tr("Take the contours of an SVG file — every closed or open path becomes a contour"));
     m_bild = new QPushButton(tr("Open image..."), this);
     m_bild->setObjectName(QStringLiteral("shapeOpenImage"));
     m_bild->setEnabled(false);
@@ -590,6 +594,11 @@ void FormFenster::setupUI()
     listenKnoepfe->addWidget(m_hinauf);
     listenKnoepfe->addWidget(m_hinunter);
     rechts->addLayout(listenKnoepfe);
+    m_weggefallenZeile = new QLabel(this);
+    m_weggefallenZeile->setObjectName(QStringLiteral("shapeLeftOut"));
+    m_weggefallenZeile->setEnabled(false);
+    m_weggefallenZeile->setToolTip(tr("A shape holds at most %1 contours: the longest ones are kept").arg(shape::kKonturenMax));
+    rechts->addWidget(m_weggefallenZeile);
     mitte->addLayout(rechts, 2);
     aussen->addLayout(mitte, 1);
 
@@ -736,6 +745,7 @@ void FormFenster::setupUI()
         zeigeKnoepfe();
     });
     connect(abbrechen, &QPushButton::clicked, this, &QWidget::close);
+    connect(m_svg, &QPushButton::clicked, this, &FormFenster::frageNachSvg);
     connect(m_sichern, &QPushButton::clicked, this, &FormFenster::frageUndSpeichere);
     connect(m_sichernAls, &QPushButton::clicked, this, &FormFenster::frageUndSpeichereAls);
     auto* zurueck = new QShortcut(QKeySequence::Undo, this);
@@ -769,6 +779,7 @@ void FormFenster::beginneNeu()
     m_nennung.clear();
     m_zurueck.clear();
     m_vor.clear();
+    m_weggefallen = 0;
     m_gesichert = true;
     passeAnsichtAn();
     setzeWerkzeug(FormFlaeche::Werkzeug::Stift);
@@ -786,6 +797,7 @@ bool FormFenster::bearbeite(const QString& nennung)
     m_nennung = nennung;
     m_zurueck.clear();
     m_vor.clear();
+    m_weggefallen = 0;
     m_gesichert = true;
     passeAnsichtAn();
     setzeWerkzeug(FormFlaeche::Werkzeug::Stift);
@@ -1109,6 +1121,8 @@ void FormFenster::zeigeListe()
         if (k.gewaehlt) ++gewaehlt;
     }
     m_listenKopf->setText(tr("Contours — %1 of %2 ticked").arg(gewaehlt).arg(m_zeichnung.konturen.size()));
+    m_weggefallenZeile->setText(m_weggefallen > 0 ? tr("%1 smaller ones left out").arg(m_weggefallen) : QString());
+    m_weggefallenZeile->setVisible(m_weggefallen > 0);
     if (QTreeWidgetItem* zeile = zeileVon(vorher)) m_liste->setCurrentItem(zeile);
 }
 
@@ -1149,6 +1163,90 @@ void FormFenster::zeigeKnoepfe()
         m_sichern->setToolTip(tr("A new shape has no name yet — use Save as..."));
     else
         m_sichern->setToolTip(tr("Built-in shapes and files stay as they are — use Save as..."));
+}
+
+int FormFenster::nimmSvg(const QString& datei, Einfuegen art)
+{
+    const shape::SvgKonturen svg = shape::liesSvgKonturen(datei);
+    if (!svg.gelesen) return -1;
+    if (svg.teile.empty()) return 0;
+    merke();
+    const bool ersetzen = art == Einfuegen::Ersetzen || m_zeichnung.konturen.empty();
+    QTransform lage;
+    int weg = svg.weggefallen;
+    if (ersetzen)
+    {
+        // wie eine leere Zeichnung: die Kennungen laufen weiter, damit keine Schicht eine neue Kontur fuer eine alte haelt
+        m_zeichnung.konturen.clear();
+        m_zeichnung.bruecken.clear();
+        m_zeichnung.herkunft = shape::Herkunft{shape::HerkunftArt::Svg, QFileInfo(datei).fileName(), {}};
+    }
+    else
+    {
+        // Add: das SVG fuellt den Ausschnitt ohne seinen Rand (O1 a), mit gleichem Mass in x und y
+        QRectF quelle;
+        for (const shape::SvgTeil& t : svg.teile) quelle = quelle.isNull() ? t.pfad.boundingRect() : quelle.united(t.pfad.boundingRect());
+        const QRectF ansicht = m_flaeche->ansicht();
+        const QSizeF innen = ansicht.size() / 1.5;  // passeAnsichtAn legt ein Viertel der laengeren Seite je Seite als Rand dazu
+        const double mass = std::min(innen.width() / std::max(quelle.width(), 1e-9), innen.height() / std::max(quelle.height(), 1e-9));
+        lage.translate(ansicht.center().x(), ansicht.center().y());
+        lage.scale(mass, mass);
+        lage.translate(-quelle.center().x(), -quelle.center().y());
+    }
+    int dazu = 0;
+    int erste = 0;
+    for (const shape::SvgTeil& t : svg.teile)
+    {
+        const int kennung = m_zeichnung.neueKontur(lage.map(t.pfad), QString(), t.farbe);
+        if (kennung == 0)
+        {
+            ++weg;  // die Zeichnung ist voll
+            continue;
+        }
+        m_zeichnung.konturen.back().gewaehlt = t.gewaehlt;
+        if (erste == 0) erste = kennung;
+        ++dazu;
+    }
+    m_weggefallen = ersetzen ? weg : m_weggefallen + weg;
+    passeAnsichtAn();
+    geaendertJetzt();
+    if (erste != 0) waehle(erste);
+    return dazu;
+}
+
+void FormFenster::frageNachSvg()
+{
+    QSettings einstellungen;
+    const QString datei = QFileDialog::getOpenFileName(this, tr("Open SVG"), einstellungen.value(QLatin1String(kLetzterSvgOrdner)).toString(),
+                                                       tr("SVG files (*.svg)"));
+    if (datei.isEmpty()) return;
+    einstellungen.setValue(QLatin1String(kLetzterSvgOrdner), QFileInfo(datei).absolutePath());
+    Einfuegen art = Einfuegen::Ersetzen;
+    if (!m_zeichnung.konturen.empty())
+    {
+        // O1 a: stehen schon Konturen da, entscheidet der Nutzer
+        QMessageBox frage(QMessageBox::Question, windowTitle(),
+                          tr("The shape already holds %n contour(s). Replace them with the contours of %1, or add those?", nullptr,
+                             static_cast<int>(m_zeichnung.konturen.size()))
+                              .arg(QFileInfo(datei).fileName()),
+                          QMessageBox::NoButton, this);
+        QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
+        QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
+        frage.addButton(QMessageBox::Cancel);
+        frage.setDefaultButton(hinzu);
+        frage.exec();
+        if (frage.clickedButton() == ersetzen)
+            art = Einfuegen::Ersetzen;
+        else if (frage.clickedButton() == hinzu)
+            art = Einfuegen::Hinzufuegen;
+        else
+            return;
+    }
+    const int dazu = nimmSvg(datei, art);
+    if (dazu < 0)
+        QMessageBox::warning(this, windowTitle(), tr("Could not read %1 as an SVG file").arg(QDir::toNativeSeparators(datei)));
+    else if (dazu == 0)
+        QMessageBox::information(this, windowTitle(), tr("%1 holds no visible path").arg(QFileInfo(datei).fileName()));
 }
 
 QString FormFenster::nutzerZeile() const

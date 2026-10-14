@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.17.0
+> **Version:** 0.18.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -572,6 +572,46 @@ als Bild durch die Konturerkennung (c) — verliert die Kurven.
 Qt Svg steht seit S120 in der `Solution.json` (`Svg`); die DLL lag schon
 neben der Exe.
 
+**Welche Konturen, welche mit Haken (O2 a, Patrik S122):** jeder Teilpfad
+wird eine Kontur, ein Loch ebenso. Sind es mehr als 64, bleiben die 64
+längsten (nach Länge des Umrisses — offene Linien haben keine Fläche), und die
+Liste sagt „n smaller ones left out". Anfangs haben alle den Haken, wenn es
+höchstens acht sind (so viele Schichten trägt ein Instrument); sind es mehr,
+nur die längste, wie bei Bildern. Belegt an Patriks 93 Proben in
+`asset/shapes`: 72 haben höchstens acht Teilpfade, 4 neun bis 64, 17 mehr
+als 64 (die Muster aus `2/` und drei Dateien aus potrace, bis 2363).
+Verworfen: immer alle angehakt (b) — bei einem Muster bis zu 63 Haken von
+Hand weg; immer nur die längste (c) — bei einfachen Formen jedes Mal die
+anderen Teile von Hand dazu.
+
+**Wie es gebaut ist (Stufe 20b, S122):** `shape/SvgKonturen` — das
+Zeichengerät aus dem Beleg, `QSvgRenderer` zeichnet in die viewBox selbst
+(die Konturen behalten die Maße des SVG). Jeder Teilpfad eines Aufrufs wird
+eine Kontur; ein offener wird mit einer Strecke geschlossen. Die Farbe ist
+die Füllung, wenn sie zu sehen ist, sonst der Strich; was unsichtbar ist,
+fällt weg — QPainter reicht einen Pfad ohne Füllung und Strich gar nicht
+erst an das Gerät. **Die Farbe (O3 a, Patrik S122):** haben alle Konturen
+eines SVG dieselbe Farbe, bekommen sie die Farben der Reihe wie gezeichnete;
+haben sie verschiedene, behält jede ihre. Anlass: aus potrace kommt alles
+schwarz — auf der Zeichenfläche kaum, im Knoten Shape auf schwarzem Grund gar
+nicht zu sehen (Bild aus dem Test, `1299642.svg`), und gleich gefärbte
+Konturen sind nicht zu unterscheiden. Verworfen: nur zu dunkle Farben ersetzen
+(b) — gleich gefärbte bleiben ununterscheidbar, die Schwelle wäre gesetzt;
+immer die Farbe aus dem SVG (c) — S1 a wörtlich, potrace unsichtbar. Im Fenster **Open SVG...** mit Replace, Add und Cancel
+(O1 a); Add passt das SVG mit gleichem Maß in x und y in den Ausschnitt ohne
+seinen Rand (die Ansicht durch 1,5); Replace lässt die Kennungen
+weiterlaufen; die Zeile „n smaller ones left out" unter der Liste zählt bis
+zur nächsten neuen oder geöffneten Zeichnung, auch was eine volle Zeichnung
+beim Hinzufügen nicht mehr nimmt. Der Ordner der letzten Datei wird gemerkt.
+Gemessen an Patriks 93 Proben (Testing-MSVC): jede gelesen, 78 mit höchstens
+acht Konturen, 11 mit mehr als 64, 358 offene Konturen geschlossen, die
+langsamste in 17 ms. **Sechs Dateien ohne Kontur:** die `-raw`-Fassungen der
+Muster in `2/` nennen ihre Farben über CSS-Variablen
+(`stroke="var(--stroke-color, currentColor)"`); Qt Svg kennt sie nicht, die
+Pfade sind unsichtbar, das Fenster meldet „holds no visible path". Die
+aufgelösten Fassungen daneben kommen an. Alles in diesem Absatz ohne Verweis
+auf einen Entscheid ist von Claude gesetzt.
+
 **Bild.** Konturen in einem jpg oder png finden, anzeigen, auswählen lassen —
 ohne OpenCV, selbst geschrieben. Entschieden in S120 (K1 a, K2 a), nach
 einer Probe an drei Bildern aus `asset/img` (in Python, nur zur Anschauung):
@@ -634,6 +674,14 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung.
   **Pen**, auch über geholte Konturen; ein leeres Fenster beginnt mit Pen
   gewählt. Verworfen: Draw als Kürzel für Pen (b); Draw beginnt eine neue
   Zeichnung (c).
+  **Ersetzen oder hinzufügen (O1 a, Patrik S122):** ist die Zeichnung leer,
+  kommen die Konturen des SVG (in 20c: des Bilds) in ihren eigenen Maßen
+  hinein, die Herkunft wird „SVG" mit dem Dateinamen. Stehen schon Konturen
+  da, fragt das Fenster: **Replace** (die bisherigen fallen weg, wie bei einer
+  leeren Zeichnung), **Add** (die neuen kommen ans Ende der Liste, so
+  eingepasst, dass sie den Ausschnitt der Zeichnung füllen; die Herkunft
+  bleibt) oder **Cancel**. Beides ist ein Schritt für Undo. Verworfen: immer
+  ersetzen (b) — kein Mischen; immer hinzufügen (c) — Ausprobieren mühsam.
 - **Zeichenfläche** (links, der größere Teil): das Bild blass im
   Hintergrund, die Konturen in ihren Farben darüber — gewählte kräftig,
   nicht gewählte dünn und gestrichelt; ein Sprung als grauer gestrichelter
@@ -1125,7 +1173,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 19d | der Knoten **XY Scope**, mit Skriptfeldern und Presets (M1 a, M3 a; V4 a, X1 a, X2 a) — **gebaut in S121** (§10 „Wie der Knoten XY Scope gebaut ist"), im Programm ungesehen | — (gebraucht ab 19c) |
 | 19e | die Shape-Schicht im Creator — **gebaut in S121** (§6 „Wie die Shape-Schicht im Creator gebaut ist"), ohne den Knopf Edit... (kommt mit 20a); im Programm ungesehen und ungehört | Skizze |
 | 20a | das Form-Fenster: zeichnen (Z1 a, Z2 a) — **gebaut in S122** (§8a „Wie das Fenster gebaut ist"), im Programm ungesehen | Skizze |
-| 20b | SVG über das mitschreibende Zeichengerät (S1 a) | 20a |
+| 20b | SVG über das mitschreibende Zeichengerät (S1 a, O1 a, O2 a) — **gebaut in S122** (§8 „Wie es gebaut ist"), im Programm ungesehen | 20a |
 | 20c | Konturen aus einem Bild (K1 a, K2 a) | 20a |
 | 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1) | 20a |
 
@@ -1153,6 +1201,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.18.0 | 2026-10-14 (S122) | **SVG entschieden und gebaut (Stufe 20b).** Entscheide Patrik: **O1 a** Open SVG... fragt bei vorhandenen Konturen Replace, Add oder Cancel (gilt auch für Open image..., 20c); **O2 a** die 64 längsten, Haken für alle bis acht, sonst nur die längste; **O3 a** teilen alle Konturen eine Farbe, bekommen sie die Farben der Reihe (§8, §8a). Gebaut: `shape/SvgKonturen`, Open SVG... im Fenster, die Zeile „n smaller ones left out". Befund: Farben über CSS-Variablen kommen nicht an (sechs `-raw`-Dateien in `asset/shapes/2`). Im Programm ungesehen. |
 | 0.17.0 | 2026-10-14 (S122) | **Das Fenster Edit shape entschieden und gebaut (Stufe 20a).** Entscheide Patrik: **Z1 a** Pen zeichnet frei Hand und Punkt für Punkt gemischt, Move point schiebt Ankerpunkte (§8); **Z2 a** der Knopf Draw entfällt (§8a). Gebaut: `shape/Zeichnen`, `loop/FormFenster`, Edit... und New shape... im Creator, das Neulesen einer geschriebenen Form im Knoten und im Creator (`zeichnungFassung`), Töne neu rechnen (`zaehleInstrumentFassung`) (§8a, §14). Im Programm ungesehen. |
 | 0.16.0 | 2026-10-13 (S121) | **Die Shape-Schicht im Creator gebaut (Stufe 19e)**, nach der gebilligten Skizze: Waveform Shape, die Zeilen Shape mit Browse... und Contour, die Regler Harmonics, Harmonics envelope, Angle, Start, die Haken Stereo XY und Reverse, das Bild „Shape, as it plays" (§6, §14). Ohne den Knopf Edit... (Stufe 20a). Damit ist ein Instrument mit einer Form im Programm spielbar; gesehen und gehört ist es nicht. |
 | 0.15.0 | 2026-10-13 (S121) | **Der Knoten XY Scope entschieden und gebaut (Stufe 19d).** Entscheide Patrik: **X1 a** die Regler (mit Draw Lines oder Dots, Lage, Größe, Color from, Line blend über M1 a hinaus), **X2 a** sechs Presets; die Reihenfolge der Stufen bleibt (19d vor 19e). Gebaut: `XyScopeParams`, `runXyScope`, Panel, Palette, Feldtabelle, sechs Presets (§10, §14). Im Feld Point zeigt `y` nach oben (der rechte Wert). Im Programm ungesehen. |

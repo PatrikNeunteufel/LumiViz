@@ -224,6 +224,21 @@ public:
     bool rueckgaengig();
     bool wiederherstellen();
 
+    // --- Open SVG... (Stufe 20b; Entscheide S1 a, O1 a, O2 a) ------------------
+    enum class Einfuegen
+    {
+        Ersetzen,     ///< Replace: die bisherigen Konturen fallen weg; die Herkunft wird „SVG"
+        Hinzufuegen,  ///< Add: ans Ende der Liste, eingepasst in den Ausschnitt; die Herkunft bleibt
+    };
+    /// Die Konturen eines SVG nehmen, ohne Dialog. Bei einer leeren Zeichnung
+    /// gilt immer Ersetzen. Zurueck: so viele kamen dazu; 0 = das SVG hat keine
+    /// sichtbare Kontur; -1 = keine SVG-Datei oder nicht lesbar. Ein Schritt
+    /// fuer Undo.
+    int nimmSvg(const QString& datei, Einfuegen art);
+    /// So viele kuerzere Konturen sind beim letzten Holen weggefallen (die
+    /// Zeile unter der Liste); 0 = keine.
+    [[nodiscard]] int weggefallen() const { return m_weggefallen; }
+
     /// **Harmonics** der Preview: 1 … `shape::kHarmonischeMax`.
     void setzeHarmonische(double harmonische);
     [[nodiscard]] double harmonische() const { return m_harmonische; }
@@ -291,6 +306,10 @@ private:
     void rechneForm();
     void frageUndSpeichere();
     void frageUndSpeichereAls();
+    /// Open SVG...: die Datei waehlen, bei vorhandenen Konturen Replace, Add oder Cancel (O1 a).
+    void frageNachSvg();
+    int m_weggefallen = 0;
+    QLabel* m_weggefallenZeile = nullptr;
     /// Die Zeichnung unter diesem Namen ablegen, melden, schliessen.
     QString schreibe(const QString& name);
     /// Den Ausschnitt so legen, dass alle Konturen mit Rand hineinpassen.

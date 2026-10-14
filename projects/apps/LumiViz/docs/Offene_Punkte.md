@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.213.0
+> **Version:** 1.214.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5131,9 +5131,24 @@ neben Shape und **New shape...** im Menü Browse... (Patriks Frage S122).
   Play bei A3 mit Pegel 0,4.
 - 🔧 Nicht gebaut: den Ausschnitt verschieben oder vergrößern, Punkte
   einfügen oder löschen, Griffe einzeln ziehen.
-- **Als Nächstes Stufe 20b:** SVG über das mitschreibende Zeichengerät
-  (S1 a). Vorher zu klären: ersetzt **Open SVG...** die Konturen oder fügt
-  es hinzu.
+
+**Stand S122 — Stufe 20b gebaut, SVG** (`Shape_Konzept.md` 0.18.0, §8;
+Benutzerhandbuch 1.159.0). Entschieden (Patrik): **O1 a** Replace, Add oder
+Cancel, wenn schon Konturen da sind (gilt auch für 20c); **O2 a** die 64
+längsten, Haken für alle bis acht, sonst nur die längste; **O3 a** eine
+Farbe, die alle teilen, wird durch die Farben der Reihe ersetzt. **Offen daraus:**
+- ⬜ **Im Programm ungesehen:** Open SVG... mit Patriks Proben.
+- 🟡 **Farben über CSS-Variablen** (`var(--…)`) kommen nicht an: die sechs
+  `-raw`-Dateien in `asset/shapes/2` liefern keine Kontur (die aufgelösten
+  daneben schon). Auflösen hieße die Variablen im Text selbst einsetzen —
+  vorzulegen, wenn es gebraucht wird.
+- ✅ ~~Die Farben aus potrace sind schwarz~~ — O3 a (Patrik S122): eine Farbe,
+  die alle Konturen teilen, wird durch die Farben der Reihe ersetzt.
+- 🟡 **Farben für Schichten** (Frage Patrik S122): Schichten haben heute keine
+  Farbe; §9 sieht für As layers „je Kontur eine Schicht in ihrer Farbe" vor.
+  Ob Schichten generell Farben bekommen und wie sie mit den Konturen
+  übereinstimmen — mit Stufe 20d vorzulegen.
+- **Als Nächstes Stufe 20c:** Konturen aus einem Bild (K1 a, K2 a).
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5532,6 +5547,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.214.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20b gebaut — SVG** (Entscheide Patrik O1 a, O2 a, O3 a; `audio/Shape_Konzept.md` 0.18.0, Benutzerhandbuch 1.159.0). Offen: im Programm ungesehen; CSS-Variablen; Farben für Schichten (mit 20d); als Nächstes Stufe 20c. |
 | 1.213.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20a gebaut — das Fenster Edit shape** (Entscheide Patrik Z1 a, Z2 a; `audio/Shape_Konzept.md` 0.17.0, Benutzerhandbuch 1.158.0), mit Edit... und New shape... im Creator; erledigt: der Knoten liest eine geschriebene Form neu, gerechnete Töne entstehen neu, der Knopf Edit.... Offen: im Programm ungesehen; die von Claude gesetzten Zahlen; als Nächstes Stufe 20b. |
 | 1.212.0 | 2026-10-13 | Session 121, Abschluss. `sessions/Changelog_Session121.md`. **Stand:** Klang aus einer Form — gebaut die Stufen **19b** (Knoten Shape), **19c** (die Schwingung Shape im Klangerzeuger, `.lvinst` Fassung 9), **19d** (Knoten XY Scope), **19e** (die Shape-Schicht im Instrument-Creator); `audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0. **Offen:** im Programm ungesehen und ungehört bis auf Patriks Blick auf den Knoten Shape (ohne Befund); Patriks Ohr an `hoerproben_19c`, danach die Vorlagen zu den Ecken und zur Kante des Sprungs; mitgelieferte Instrumente mit Shape-Schicht; **als Nächstes Stufe 20a**, das Fenster Edit shape — mit dem Knopf Edit... im Creator und dem Neuladen einer geänderten Form. Voller Lauf 1181 / 1181, 0 Skips (Testing-MSVC, Bildschirm 2), seither nur Doku geändert. |
 | 1.211.0 | 2026-10-13 | Session 121. §7 „Klang aus einer Form": **Stufe 19e gebaut — die Shape-Schicht im Instrument-Creator** (`audio/Shape_Konzept.md` 0.16.0, Benutzerhandbuch 1.157.0). Offen: im Programm ungesehen und ungehört; der Knopf Edit... kommt mit 20a; kein mitgeliefertes Instrument mit Shape-Schicht. **Als Nächstes Stufe 20a**, das Fenster Edit shape. |

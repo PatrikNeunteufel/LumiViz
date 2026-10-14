@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.158.0
+> **Version:** 1.159.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2968,10 +2968,25 @@ Punkt —, rechts die Liste **Contours**, darunter **Preview**.
 | **Save** | Ersetzt eine eigene Form — nach einer Rückfrage, die nennt, welche deiner Instrumente sie spielen (unten links steht es schon: „Used by: …"). Eine mitgelieferte Form, eine Datei von irgendwo oder eine neue lässt Save in Ruhe |
 | **Save as...** | Legt eine neue eigene Form unter „My shapes" an (die Datei `contours/<name>.lvcontour` im Benutzerordner); einen vergebenen Namen nimmt es nicht. So wird auch eine mitgelieferte Form oder eine Datei von irgendwo zu deiner eigenen |
 
+**Open SVG...** (NEU in 1.159.0) holt die Konturen einer SVG-Datei: jeder Pfad
+wird eine Kontur, ein Loch darin ebenso, eine offene Linie wird mit einer
+geraden Linie geschlossen; die Farbe ist die Füllung (ohne Füllung die Linie) —
+haben alle Konturen der Datei dieselbe Farbe (etwa alles schwarz), bekommen sie
+die Farben der Reihe wie gezeichnete, damit du sie auseinanderhalten kannst.
+Ist die Zeichnung leer, kommen die Konturen in den Maßen der Datei hinein.
+Stehen schon Konturen da, fragt das Fenster: **Replace** (die bisherigen fallen
+weg), **Add** (die neuen kommen ans Ende der Liste, eingepasst in den
+sichtbaren Ausschnitt) oder **Cancel**. Eine Zeichnung trägt höchstens 64
+Konturen: hat das SVG mehr, bleiben die längsten, und unter der Liste steht,
+wie viele kleinere weggefallen sind. Anfangs haben alle Konturen den Haken,
+wenn es höchstens acht sind, sonst nur die längste. Was im SVG unsichtbar ist,
+kommt nicht an — auch nicht, was seine Farbe über eine CSS-Variable
+(`var(--…)`) nennt.
+
 Nach dem Speichern rechnen Loops und Instrumente, die die Form spielen, mit der
-neuen Fassung. **Open SVG...**, **Open image...**, **Bridge**, **Show image**,
-**From image** und **Use as** stehen schon da, sind aber noch grau — sie kommen
-mit den nächsten Stufen.
+neuen Fassung. **Open image...**, **Bridge**, **Show image**, **From image** und
+**Use as** stehen schon da, sind aber noch grau — sie kommen mit den nächsten
+Stufen.
 
 **Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
 Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
@@ -3185,6 +3200,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.159.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open SVG...** — Konturen aus einer SVG-Datei, **Replace** oder **Add**, höchstens 64 (die längsten), anfangs Haken für alle bis acht, sonst die längste; eine Farbe, die alle Konturen teilen, wird durch die Farben der Reihe ersetzt. |
 | 1.158.0 | 2026-10-14 | Session 122. §16 NEU das Fenster **Edit shape**: Konturen mit **Pen** zeichnen (frei Hand und Eckpunkte gemischt), mit **Move point** schieben, die Liste **Contours** (Haken, Anteil am Umlauf, Rename, Remove, Reihenfolge), **Preview** mit **Harmonics** und **Play**, Undo, **Save** und **Save as...**, „Used by"; im Instrument-Creator **Edit...** neben Shape und **New shape...** im Menü hinter Browse... §11: der Knoten Shape zeichnet eine gespeicherte Form gleich neu. §17: `.lvcontour` nachgezogen. |
 | 1.157.0 | 2026-10-13 | Session 121. §16 Instrument-Creator NEU **Waveform: Shape** — eine Schicht spielt eine gezeichnete Form: **Shape** mit **Browse...**, **Contour**, **Harmonics**, **Harmonics envelope**, **Angle**, **Start**, **Stereo XY**, **Reverse** und das Bild **Shape, as it plays**. |
 | 1.156.0 | 2026-10-13 | Session 121. §11 NEU der Knoten **XY Scope**: zeichnet links gegen rechts, ein Punkt je Abtastwert, in voller Genauigkeit — **Gain**, **Draw** (Lines, Dots), **Line width**, **Rotate 45°**, Lage, Größe, **Color from** (Table, Gradient), **Line blend**; Skriptfelder Init, Frame, Beat, Song und **Point**; sechs Voreinstellungen. |
