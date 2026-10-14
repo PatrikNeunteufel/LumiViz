@@ -1,0 +1,80 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Electro",
+    "description": "Layered drums: punch kick, fat snare, clap stack and hat shake.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "",
+            "instrument": "drum_kick_punch",
+            "note": 36,
+            "length": 250,
+            "volume": 0.813,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "",
+            "instrument": "drum_snare_fat",
+            "note": 36,
+            "length": 250,
+            "volume": 0.804,
+            "pan": 0.0
+        },
+        {
+            "role": "clap",
+            "sound": "",
+            "instrument": "drum_clap_stack",
+            "note": 36,
+            "length": 250,
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "",
+            "instrument": "drum_hat_shake",
+            "note": 36,
+            "length": 250,
+            "volume": 1.0,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "",
+            "instrument": "drum_hat_open",
+            "note": 36,
+            "length": 250,
+            "volume": 0.653,
+            "pan": 0.2
+        },
+        {
+            "role": "tom 1",
+            "sound": "",
+            "instrument": "drum_tom_low",
+            "note": 36,
+            "length": 250,
+            "volume": 0.676,
+            "pan": -0.25
+        },
+        {
+            "role": "tom 2",
+            "sound": "",
+            "instrument": "drum_tom_high",
+            "note": 36,
+            "length": 250,
+            "volume": 0.822,
+            "pan": 0.25
+        },
+        {
+            "role": "crash",
+            "sound": "",
+            "instrument": "drum_crash",
+            "note": 36,
+            "length": 250,
+            "volume": 0.432,
+            "pan": -0.15
+        }
+    ]
+}

@@ -271,6 +271,18 @@ prüft, dass die Summe unter 1 bleibt; mit `LUMIVIZ_INSTRUMENT_WAV=<Ordner>`
 legt der Fall Hörproben ab — das Beispiel und je Instrument eine Tonleiter
 mit Akkord.
 
+## kits/ — die mitgelieferten Kits (S123, Stufe 21a)
+
+Zehn Dateien `.lvkit` (Konzept §4l, Entscheide K1 a bis K9 a): Classic, 808,
+909 House, Electro, Hand drums, Beatbox, Lo-fi, Reggae, Reggaeton, Strange.
+Der Dateiname ist der Name im Loop: `909_house.lvkit` ist das Kit
+`909_house`. Je Rolle ein Klang (`kit:`, `lib:` oder ein Instrument `drum_*`
+auf C2) mit Volume und Pan; was in welchem Kit steckt, steht im Konzept §4l.
+Erzeugt mit `kits/make_kits.py`; **Volume ist gemessen** — der Pegel jedes
+Klangs steht im Skript (`PEGEL_DB`), gemessen mit `LUMIVIZ_KIT_PEGEL=1` in
+`test_LoopKits.cpp`. Wer einen Klang tauscht, misst neu. Die Rock-Kits und
+Jazz Brushes kommen in Stufe 21d.
+
 ## S123: mitgelieferte Samples, Instrumente aus Formen und Samples, neue Drums, neun Loops
 
 Wunsch Patrik S123: mehr Vorlagen für Shape, Samples, Kits und Loops.

@@ -1,0 +1,41 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Beatbox",
+    "description": "A recorded human beatbox with a sine sub under the kick, and a shouted hey.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "",
+            "instrument": "drum_beatbox_kick",
+            "note": 36,
+            "length": 250,
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "lib:beatbox_snare",
+            "volume": 0.569,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:beatbox_hat_closed",
+            "volume": 0.316,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "lib:beatbox_hat_open",
+            "volume": 0.243,
+            "pan": 0.2
+        },
+        {
+            "role": "fx",
+            "sound": "lib:voice_male_hey",
+            "volume": 0.473,
+            "pan": 0.0
+        }
+    ]
+}

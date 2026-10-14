@@ -1,0 +1,53 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Lo-fi",
+    "description": "A deep kick, 808 snare, rim shot and finger snap, with tambourine.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "lib:kick_deep",
+            "volume": 0.367,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "lib:snare_808",
+            "volume": 0.556,
+            "pan": 0.0
+        },
+        {
+            "role": "rim",
+            "sound": "lib:rim",
+            "volume": 0.596,
+            "pan": 0.0
+        },
+        {
+            "role": "clap",
+            "sound": "lib:snap",
+            "volume": 1.0,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:hat_808_closed",
+            "volume": 0.432,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "",
+            "instrument": "drum_hat_open",
+            "note": 36,
+            "length": 250,
+            "volume": 0.653,
+            "pan": 0.2
+        },
+        {
+            "role": "perc 1",
+            "sound": "lib:tambourine",
+            "volume": 0.813,
+            "pan": 0.3
+        }
+    ]
+}

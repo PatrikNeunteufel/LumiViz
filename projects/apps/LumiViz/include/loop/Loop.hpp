@@ -50,6 +50,12 @@ inline constexpr int kTakteMax = 64;   ///< hoechstens so viele Takte je Muster
 /// Mitgeliefert und schreibgeschuetzt: ein Klang des Kits oder ein
 /// mitgeliefertes Sample. Eine Datei nennt ihn beim Namen, nie als Pfad.
 [[nodiscard]] bool istMitgelieferterKlang(const QString& klang);
+
+/// Ein Pfad, wie ihn eine Datei des Loops traegt: relativ zu `basisOrdner`,
+/// wenn die Datei darunter liegt, sonst absolut (wie in der `.lvcomp`).
+[[nodiscard]] QString pfadFuerDatei(const QString& datei, const QString& basisOrdner);
+/// Der Rueckweg: ein relativer Eintrag gilt ab `basisOrdner`.
+[[nodiscard]] QString pfadAusDatei(const QString& eintrag, const QString& basisOrdner);
 /// Der Vorsatz eines eigenen Samples aus dem Benutzerordner: `user:table_knock`
 /// (Sample.hpp, Entscheid S1 a).
 [[nodiscard]] bool istEigenerKlang(const QString& klang);
@@ -80,6 +86,10 @@ struct Spur
     QString instrument;
     int hoehe = 60;                ///< Note: die Tonhoehe jedes Schlags (MIDI-Nummer, 0…127)
     int dauerMs = kSpurDauerMs;    ///< Length: so lang wird der Ton gehalten, danach klingt er aus
+    /// Die Rolle im Kit (`loop/DrumKit.hpp`, Entscheide K1 a, K5 a, Patrik S123):
+    /// „kick", „tom 2", „perc 1" … Leer = noch keine; ein Kitwechsel raet sie dann.
+    /// In der Datei das freiwillige Feld `role` (keine neue Fassung).
+    QString rolle;
 
     Spur() = default;
     /// Eine Spur mit einem Klang — wie sie bis Fassung 3 ganz beschrieben war.
@@ -146,6 +156,10 @@ struct Muster
 
     // --- Drumkit ---
     std::vector<Spur> spuren;
+    /// Das Kit, das zuletzt auf das Muster angewendet wurde — seine Nennung
+    /// (`808`, `user:mein_trap`, ein Pfad); leer = keines (Entscheid K4 a, S123).
+    /// In der Datei das freiwillige Feld `kit` (keine neue Fassung).
+    QString kit;
     /// `zeilen[spur][schritt]`, 0…1; nach `Loop::richte` je Spur eine Zeile
     /// mit `takte * schritteJeTakt()` Schritten.
     std::vector<std::vector<double>> zeilen;

@@ -4987,11 +4987,16 @@ geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
 - Tests: Hörproben eines Loops als WAV (`LUMIVIZ_LOOP_WAV`); ein Fall zu `lib:`.
 
 **Offen:**
-- 🟡 **Kits (3 a)** — Skizze in S123 gezeigt (Knopf *Kit* im Drum-Editor,
-  Menü Built-in kits / My kits / Save as kit... / Edit kits..., Rollen je Spur,
-  Kitwechsel behält die Schritte); die Entscheide dazu stehen aus, gebaut ist
-  nichts. Vorgesehene Kits: Classic, 808, 909 House, Electro, Hand drums,
-  Beatbox, Lo-fi.
+- 🟡 **Kits (3 a) — Stufe 21**, Entscheide K1 a bis K9 a, Skizzen gebilligt
+  (`audio/Loop_Konzept.md` §4l, mit dem Inhalt aller vierzehn Kits). **21a
+  gebaut** (Modell, `.lvkit`, Rollen, Kitwechsel, zehn Kits mit gemessenem
+  Volume, Bereich Kits in Export und Import). Offen: **21b** Knopf Kit im
+  Drum-Editor, **21c** Fenster Kits, **21d** Rock'n'Roll, Hardrock, Heavy Metal
+  und Jazz Brushes aus DrumGizmo (DRSKit, CrocellKit, CC BY 4.0 — Downloads zur
+  Freigabe) mit gerechneten Besen und dem Loop Brush Swing, **21e** Icon
+  (I1 a: Trommel mit Sticks), Handbuch, Sichttest. Patrik überlegt, das
+  Besen-Paket von Ben Burnes zu kaufen — vor dem Einbau die Lizenz im Download
+  prüfen (2019 hieß es CC0).
 - ⬜ Patriks Ohr an `.claude/handover/hoerproben_s123/` (Instrumente und die
   neun Loops) — besonders die Schleifen der gehaltenen Stimmen (Knacken?),
   Cat und die Lautstärke der Loops.
@@ -5230,6 +5235,13 @@ Wunsch); **V1 a** dafür keine neue Fassung der `.lvinst`. **Offen daraus:**
   Programm nachsehen.
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
+
+**Patrik S123:** angehen, **nachdem die laufenden Arbeiten abgeschlossen
+sind** (Kits, Vorlagen S123) — nicht vorher. Anlass: der Versuch „Titanium"
+(`.claude/handover/titanium/`) — der Loop nennt drei Instrumente als Datei
+neben sich; wer ihn allein weitergibt oder verschiebt, verliert sie. Ein Paket
+„als Package speichern / aus Package laden" löst genau das. Export und Import
+aller eigenen Daten (`.lvdata`, S114) gibt es schon und ist der Unterbau.
 
 Anlass: der Entscheid D3 a zur Form (`Shape_Konzept.md` §7) — ein Instrument
 **nennt** seine Form, wie es heute schon seine Samples nennt. Eine `.lvinst`

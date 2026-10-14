@@ -1,0 +1,53 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Hand drums",
+    "description": "Djembe, conga, darbuka, tambourine and shaker; kick and snare are the low and the bright stroke.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "lib:djembe_low",
+            "volume": 0.412,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "lib:djembe_slap",
+            "volume": 0.427,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "",
+            "instrument": "drum_shaker",
+            "note": 36,
+            "length": 250,
+            "volume": 0.676,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "lib:tambourine",
+            "volume": 0.912,
+            "pan": 0.2
+        },
+        {
+            "role": "perc 1",
+            "sound": "lib:conga_high",
+            "volume": 0.861,
+            "pan": 0.3
+        },
+        {
+            "role": "perc 2",
+            "sound": "lib:darbuka_doom",
+            "volume": 0.309,
+            "pan": -0.3
+        },
+        {
+            "role": "perc 3",
+            "sound": "lib:darbuka_tak",
+            "volume": 0.537,
+            "pan": 0.15
+        }
+    ]
+}

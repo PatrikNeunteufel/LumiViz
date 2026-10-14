@@ -45,6 +45,7 @@ const QString kArtInstrument = QStringLiteral("instrument");
 const QString kTonVorsatz = QStringLiteral("inst:");
 const QString kInstrumentVorgabe = QStringLiteral("piano");
 const QString kInstrumentEndung = QStringLiteral(".lvinst");
+const QString kKitEndung = QStringLiteral(".lvkit");
 
 // Pfade wie in der `.lvcomp` (composer/Komposition.cpp): relativ zum Ordner
 // der Datei, wenn das Sample darunter liegt, sonst absolut.
@@ -344,6 +345,16 @@ bool istMitgelieferterKlang(const QString& klang)
     return istKitKlang(klang) || istBibliotheksKlang(klang);
 }
 
+QString pfadFuerDatei(const QString& datei, const QString& basisOrdner)
+{
+    return fuerDatei(datei, basisOrdner);
+}
+
+QString pfadAusDatei(const QString& eintrag, const QString& basisOrdner)
+{
+    return ausDatei(eintrag, basisOrdner);
+}
+
 bool istEigenerKlang(const QString& klang)
 {
     return istEigenesSample(klang);
@@ -608,9 +619,14 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
                 s[QStringLiteral("note")] = spur.hoehe;
                 s[QStringLiteral("length")] = spur.dauerMs;
             }
+            // seit S123 (Entscheid K1 a): freiwillig, ein aelteres Programm liest es nicht
+            if (!spur.rolle.isEmpty()) s[QStringLiteral("role")] = spur.rolle;
             spuren.append(s);
         }
         o[QStringLiteral("tracks")] = spuren;
+        // seit S123 (Entscheid K4 a): das zuletzt angewendete Kit, freiwillig
+        if (!m.kit.isEmpty())
+            o[QStringLiteral("kit")] = m.kit.endsWith(kKitEndung, Qt::CaseInsensitive) ? fuerDatei(m.kit, basisOrdner) : m.kit;
         QJsonArray zeilen;
         for (const std::vector<double>& zeile : m.zeilen)
         {
@@ -730,6 +746,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             if (istInstrumentDatei(spur.instrument)) spur.instrument = ausDatei(spur.instrument, basisOrdner);
             spur.hoehe = std::clamp(s.value(QStringLiteral("note")).toInt(spur.hoehe), 0, 127);
             spur.dauerMs = std::clamp(s.value(QStringLiteral("length")).toInt(spur.dauerMs), kSpurDauerMinMs, kSpurDauerMaxMs);
+            // seit S123: die Rolle im Kit, so wie sie dasteht (geprueft wird sie beim Kitwechsel, DrumKit.hpp)
+            spur.rolle = s.value(QStringLiteral("role")).toString().trimmed().toLower();
             if (bericht != nullptr)
             {
                 // was fehlt, steht im Bericht — fuer den Klang nur, wenn die Spur ihn auch spielt
@@ -757,6 +775,9 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             for (const QJsonValue& wert : zv.toArray()) zeile.push_back(wert.toDouble());
             m.zeilen.push_back(std::move(zeile));
         }
+        // seit S123: das zuletzt angewendete Kit
+        m.kit = o.value(QStringLiteral("kit")).toString();
+        if (m.kit.endsWith(kKitEndung, Qt::CaseInsensitive)) m.kit = ausDatei(m.kit, basisOrdner);
         neu.muster.push_back(std::move(m));
     }
 

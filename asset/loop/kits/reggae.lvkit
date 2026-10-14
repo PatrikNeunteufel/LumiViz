@@ -1,0 +1,59 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Reggae",
+    "description": "For the one drop: kick and rim shot together on the three.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "",
+            "instrument": "drum_kick",
+            "note": 36,
+            "length": 250,
+            "volume": 0.412,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "kit:snare",
+            "volume": 0.596,
+            "pan": 0.0
+        },
+        {
+            "role": "rim",
+            "sound": "lib:rim",
+            "volume": 0.596,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:hat_808_closed",
+            "volume": 0.432,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "",
+            "instrument": "drum_hat_open",
+            "note": 36,
+            "length": 250,
+            "volume": 0.653,
+            "pan": 0.2
+        },
+        {
+            "role": "perc 1",
+            "sound": "lib:tambourine",
+            "volume": 0.813,
+            "pan": 0.3
+        },
+        {
+            "role": "tom 1",
+            "sound": "",
+            "instrument": "drum_tom_high",
+            "note": 36,
+            "length": 250,
+            "volume": 0.822,
+            "pan": -0.25
+        }
+    ]
+}

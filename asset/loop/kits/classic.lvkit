@@ -1,0 +1,44 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "Classic",
+    "description": "The six computed sounds of the original kit.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "kit:kick",
+            "volume": 0.232,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "kit:snare",
+            "volume": 0.596,
+            "pan": 0.0
+        },
+        {
+            "role": "clap",
+            "sound": "kit:clap",
+            "volume": 0.513,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "kit:hat_closed",
+            "volume": 0.38,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "kit:hat_open",
+            "volume": 0.495,
+            "pan": 0.2
+        },
+        {
+            "role": "tom 1",
+            "sound": "kit:tom",
+            "volume": 0.432,
+            "pan": -0.25
+        }
+    ]
+}

@@ -32,6 +32,13 @@
   Desert Caravan, Zen Garden, Flute Tropics, Sax After Dark, Shape Synthwave,
   Geometry.
 
+- **Kits (Stufe 21a, nur das Modell — im Programm noch nicht zu sehen):** die
+  Datei `.lvkit`, Rollen je Drum-Spur (kick, snare, clap, rim, hat, open hat,
+  ride, crash, tom, perc, fx, nummeriert), der Kitwechsel, der die Schritte
+  behält, und zehn mitgelieferte Kits mit angeglichener Lautstärke: Classic,
+  808, 909 House, Electro, Hand drums, Beatbox, Lo-fi, Reggae, Reggaeton,
+  Strange. Eigene Kits gehen mit Export und Import mit (Bereich **Kits**).
+
 ## Geändert
 
 - `asset/Asset.cmake`: `loop/samples/*.wav` und `CREDITS.md` gehen mit neben
@@ -53,6 +60,7 @@
 
 ## Offen
 
-- Die Kits selbst (Entscheid 3 a): Skizze gezeigt, Entscheide ausstehend.
+- Die Kits im Programm (Stufen 21b bis 21e): der Knopf Kit im Drum-Editor, das
+  Fenster Kits, die akustischen Kits, das Icon.
 - Hören: `.claude\handover\hoerproben_s123` (lokal).
 - Kein Männerchor — die Männerstimmen der Sammlung halten keinen Ton.

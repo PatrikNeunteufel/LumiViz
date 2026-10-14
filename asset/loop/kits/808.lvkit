@@ -1,0 +1,74 @@
+{
+    "format": "lumiviz-kit",
+    "version": 1,
+    "title": "808",
+    "description": "A long 808-style kick, 808 snare and hat, computed toms and crash.",
+    "roles": [
+        {
+            "role": "kick",
+            "sound": "",
+            "instrument": "drum_kick_808",
+            "note": 36,
+            "length": 250,
+            "volume": 0.279,
+            "pan": 0.0
+        },
+        {
+            "role": "snare",
+            "sound": "lib:snare_808",
+            "volume": 0.556,
+            "pan": 0.0
+        },
+        {
+            "role": "clap",
+            "sound": "",
+            "instrument": "drum_clap",
+            "note": 36,
+            "length": 250,
+            "volume": 0.785,
+            "pan": 0.0
+        },
+        {
+            "role": "hat",
+            "sound": "lib:hat_808_closed",
+            "volume": 0.432,
+            "pan": 0.2
+        },
+        {
+            "role": "open hat",
+            "sound": "",
+            "instrument": "drum_hat_open",
+            "note": 36,
+            "length": 250,
+            "volume": 0.653,
+            "pan": 0.2
+        },
+        {
+            "role": "tom 1",
+            "sound": "",
+            "instrument": "drum_tom_low",
+            "note": 36,
+            "length": 250,
+            "volume": 0.676,
+            "pan": -0.25
+        },
+        {
+            "role": "tom 2",
+            "sound": "",
+            "instrument": "drum_tom_high",
+            "note": 36,
+            "length": 250,
+            "volume": 0.822,
+            "pan": 0.25
+        },
+        {
+            "role": "crash",
+            "sound": "",
+            "instrument": "drum_crash",
+            "note": 36,
+            "length": 250,
+            "volume": 0.432,
+            "pan": -0.15
+        }
+    ]
+}

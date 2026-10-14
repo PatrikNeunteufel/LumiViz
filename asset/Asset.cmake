@@ -57,6 +57,7 @@ lumi_asset(loop
     NUR "kit/*.wav"
         "samples/*.wav"
         "samples/CREDITS.md"
+        "kits/*.lvkit"
         "instruments/*.lvinst"
         "genres/*.lvloop"
         "*_demo.lvloop")

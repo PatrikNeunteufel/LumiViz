@@ -3040,11 +3040,93 @@ Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
   takes the sound of its role from the new kit. Tracks without a match keep
   their sound."
 
-Offen, einzeln vorzulegen: woher die Rolle einer bestehenden Spur kommt
-(geraten aus Name und Klang, oder gesetzt), was mit Spuren ohne Gegenstück und
-mit Rollen des Kits ohne Spur geschieht, die Endung der Datei (`.lvkit`), ob
-ein Kit nur Klänge oder auch Lautstärke und Pan je Rolle trägt, ob die
-`.lvloop` sich merkt, welches Kit ein Muster trägt.
+### Die Entscheide zu den Kits (Patrik S123)
+
+| Entscheid | Inhalt |
+|---|---|
+| **K1 a** | Jede Drum-Spur trägt eine **Rolle**. Bei alten Loops geraten aus dem Klang (`kit:kick`, `lib:snare_909`, `drum_ride`) und dem Namen der Spur; per Klick auf das Etikett änderbar. Ein Kit nennt je Rolle einen Klang. Verworfen: der Reihe nach (b), alle Spuren ersetzen (c). |
+| **K2 a** | Eine Spur, deren Rolle das Kit nicht hat, behält ihren Klang (Etikett „not in kit"). Rollen des Kits ohne Spur werden nicht angelegt, stehen aber oben in **Add track** („Clap — from 808"). Verworfen: fehlende Rollen gleich anhängen (b), Spuren stummschalten (c). |
+| **K3 a** | Datei **`.lvkit`** (JSON: Titel, Beschreibung, Rollen); je Rolle ein Klang jeder Art, die eine Spur kennt, dazu Volume und Pan; ein Wechsel übernimmt alle drei. Mitgeliefert unter `asset/loop/kits`, eigene im Benutzerordner unter `kits` (mit Export und Import). Verworfen: nur Klänge (b), Kit als Muster in einer `.lvloop` (c). |
+| **K4 a** | Ein Drum-Muster trägt das freiwillige Feld `kit` (ohne neue Fassung der `.lvloop`); der Knopf zeigt „Kit: 808", nach einer Änderung von Hand „Kit: 808 (changed)", ohne Feld „Kit ▾". Verworfen: kein Gedächtnis (b). |
+| **K5 a** | Feste Rollen, nummeriert mehrfach: kick, snare, clap, rim, hat, open hat, ride, crash, tom (tom 1, tom 2 …), perc (perc 1, perc 2 …), fx. Fehlt die Nummer im neuen Kit, nimmt die Spur die höchste vorhandene derselben Rolle, sonst K2 a. Verworfen: jede Rolle einmal (b), freie Namen (c). |
+| **K6 a, K6b a, K6c a** | Vierzehn mitgelieferte Kits. Sofort aus vorhandenen Klängen: Classic, 808, 909 House, Electro, Hand drums, Beatbox, Lo-fi, Reggae, Reggaeton, Strange (Inhalt je Rolle: Tabelle unten). Im zweiten Schritt aus akustischen Aufnahmen (CC BY 4.0, DrumGizmo; Downloads vorher zur Freigabe): Rock'n'Roll und Hardrock aus dem **DRSKit**, Heavy Metal aus dem **CrocellKit**. **Jazz Brushes**: Kick, Ride, Hi-Hat leise aus dem DRSKit, die Besen gerechnet (`drum_brush_sweep`, `drum_brush_tap`, `drum_brush_slap`); ein Paket mit Besen-Aufnahmen kann sie später ersetzen, wenn seine Lizenz CC0 oder CC BY ist. Dazu ein Loop „Brush Swing". Inhalt: Tabelle unten. |
+| **K7 a** | **Edit kits...** öffnet das Fenster **Kits**. |
+| **K8 a** | Die Skizze des Fensters Kits ist gebilligt (unten). |
+
+### Der Inhalt der mitgelieferten Kits (K6 a, K6b a, K6c a)
+
+Volume nach Messung angeglichen (gleiche Lautheit je Rolle über die Kits);
+Pan: Hats leicht rechts, Toms und Percussion verteilt, sonst Mitte. Nach
+Rechnung gesetzt, nicht gehört.
+
+| Kit | kick | snare | clap / rim | hat | open hat | weitere |
+|---|---|---|---|---|---|---|
+| Classic | `kit:kick` | `kit:snare` | clap `kit:clap` | `kit:hat_closed` | `kit:hat_open` | tom 1 `kit:tom` |
+| 808 | `drum_kick_808` | `lib:snare_808` | clap `drum_clap` | `lib:hat_808_closed` | `drum_hat_open` | tom 1 `drum_tom_low`, tom 2 `drum_tom_high`, crash `drum_crash` |
+| 909 House | `lib:kick_909` | `lib:snare_909` | clap `lib:clap_707` | `drum_hat_closed` | `lib:hat_707_open` | ride `drum_ride`, crash `drum_crash`, perc 1 `lib:tambourine` |
+| Electro | `drum_kick_punch` | `drum_snare_fat` | clap `drum_clap_stack` | `drum_hat_shake` | `drum_hat_open` | tom 1 `drum_tom_low`, tom 2 `drum_tom_high`, crash `drum_crash` |
+| Hand drums | `lib:djembe_low` | `lib:djembe_slap` | — | `drum_shaker` | `lib:tambourine` | perc 1 `lib:conga_high`, perc 2 `lib:darbuka_doom`, perc 3 `lib:darbuka_tak` |
+| Beatbox | `drum_beatbox_kick` | `lib:beatbox_snare` | — | `lib:beatbox_hat_closed` | `lib:beatbox_hat_open` | fx `lib:voice_male_hey` |
+| Lo-fi | `lib:kick_deep` | `lib:snare_808` | rim `lib:rim`, clap `lib:snap` | `lib:hat_808_closed` | `drum_hat_open` | perc 1 `lib:tambourine` |
+| Reggae | `drum_kick` | `kit:snare` | rim `lib:rim` | `lib:hat_808_closed` | `drum_hat_open` | perc 1 `lib:tambourine`, tom 1 `drum_tom_high` |
+| Reggaeton | `drum_kick_808` | `lib:snare_808` | clap `lib:clap_707` | `drum_hat_closed` | `lib:hat_707_open` | perc 1 `lib:conga_high`, perc 2 `lib:rim` |
+| Strange | `drum_beatbox_kick` | `lib:snap` | — | `lib:beatbox_hat_closed` | `drum_crash` (kurz) | perc 1 `shape_cat`, perc 2 `lib:voice_female_gliss`, fx `lib:voice_male_hey`, tom 1 `shape_atom_bell` (tief) |
+| Rock'n'Roll | DRSKit | DRSKit | rim DRSKit (Cross-Stick) | DRSKit | DRSKit | tom 1–3, ride, crash DRSKit |
+| Hardrock | DRSKit, volle Stärke | DRSKit, volle Stärke | — | DRSKit | DRSKit | tom 1–3, ride, crash 1–2 DRSKit |
+| Heavy Metal | CrocellKit (Doppelpedal: kick 1, kick 2) | CrocellKit | — | CrocellKit | CrocellKit | tom 1–4, ride, crash 1–3, fx China, perc Splash |
+| Jazz Brushes | DRSKit leise | `drum_brush_tap`, Akzent `drum_brush_slap` | — | DRSKit (Fuß) | — | perc 1 `drum_brush_sweep`, ride DRSKit leise |
+
+Im Hand-drums-Kit tragen kick und snare den tiefsten und den hellsten
+Schlag, damit ein Beat beim Wechsel seinen Puls behält; im Reggae-Kit stehen
+Kick und Rim zusammen auf der Drei (One Drop).
+
+### Wie 21a gebaut ist (S123)
+
+- **`loop/DrumKit.hpp`:** `rollenArten`, `leseRolle` und `rollenText` (tom und
+  perc immer mit Nummer, die anderen ab der zweiten); `rateRollenArt` sucht in
+  den Wörtern von Instrument, Klang, dann Name (von Claude gesetzt: Wortlisten
+  wie „hat, hh, hihat", „shaker, conga, djembe, …"; open + hat ist open hat;
+  snap ist clap); `rateRollen` nummeriert je Art weiter, Toms von tief nach
+  hoch (low, floor vor high). `DrumKit::fuer` folgt K5 a. `wendeKitAn` rät
+  erst, setzt dann Klang, Instrument mit Note und Length, Volume und Pan; ein
+  Kit ohne Klang neben einem Instrument lässt den alten Klang der Spur stehen
+  (für ein älteres Programm). `weichtAb` vergleicht genau diese Felder.
+- **Die Datei `.lvkit`:** `format` `lumiviz-kit`, `version` 1, `title`,
+  `description`, `roles` (je `role`, `sound`, bei einem Instrument
+  `instrument`, `note`, `length`, dazu `volume`, `pan`); Pfade wie in der
+  `.lvloop` relativ zum Ordner der Datei; unbekannte und doppelte Rollen fallen
+  beim Lesen weg.
+- **Die `.lvloop`:** `role` an der Spur und `kit` am Muster, beide nur, wenn
+  gesetzt — keine neue Fassung. Geraten wird nicht beim Laden, sondern erst
+  beim Kitwechsel: eine alte Datei liest sich gleich wie vorher.
+- **Volume der zehn Kits:** gemessen (Effektivwert der ersten 300 ms bei
+  Volume 1, `test_LoopKits.cpp` mit `LUMIVIZ_KIT_PEGEL=1`), auf ein Ziel je
+  Rolle gebracht (`ZIEL_DB` in `make_kits.py`, von Claude gesetzt); danach
+  liegen die Kits je Rolle auf 0,5 dB beieinander, ausgenommen der Snap als
+  Snare in Strange (4,9 dB darunter — er ist zu leise für das Ziel). Die
+  Reihenfolge im Menü ist die nach Titel.
+
+### Das Fenster Kits (Skizze gebilligt, Patrik S123, K8 a)
+
+Mit dem Zeichenwerkzeug gezeigt; hier als Beschreibung:
+
+- **Kopf:** „Kits", rechts Undo und Redo.
+- **Links die Liste:** Abschnitt *Built-in kits* (die vierzehn), Abschnitt *My
+  kits*; darunter **Duplicate**, **Rename**, **Delete**. Ein mitgeliefertes
+  Kit trägt ein Schloss.
+- **Rechts das gewählte Kit:** Titel; bei einem mitgelieferten der Satz
+  „Built-in, read-only — Duplicate makes your own copy". Eine Tabelle, je
+  Zeile **Role**, **Sound** (dieselbe Auswahl wie im Drum-Editor, mit Samples,
+  Instrument..., Sample file...), **Volume**, **Pan**, ▶ zum Anhören.
+  Darunter **Add role ▾** (die Rollen aus K5 a, nummeriert selbst weiter),
+  **Remove role**, rechts **Play all** (die Rollen nacheinander).
+- **Fuß:** „Used by: …" — die Loops, deren Muster dieses Kit tragen (Feld
+  `kit`, K4 a), soweit LumiViz sie kennt (die mitgelieferten und die zuletzt
+  geöffneten; die Zeile sagt das); **Close**, **Save**.
+- **Anmerkung Patrik zur Skizze:** die Texte in der Auswahl Sound waren nicht
+  ganz zu sehen. Gebaut wird: die Spalte Sound nimmt den freien Platz, die
+  aufgeklappte Liste ist so breit wie ihr längster Eintrag, ein gekürzter
+  Name im geschlossenen Feld endet mit „…" und steht ganz im Tooltip.
 
 ---
 
@@ -3075,6 +3157,7 @@ ein Kit nur Klänge oder auch Lautstärke und Pan je Rolle trägt, ob die
 | 15 | **Wave-Clips** (Tonspuren wie Gesang) und **Autotune** am Clip (§3.2) | später |
 | 16 | **Signal path:** Filter und Effekte als Reihe von Bausteinen, je Schicht im Creator und je Clip (§4j) | S117: Skizzen gezeigt, Entscheide K1 a bis K4 a; S118: Baustufen freigegeben (B1 a), **16a gebaut** (Modell und Dateien, `.lvinst` 7, `.lvloop` 5), **16b gebaut** (der Klangerzeuger rechnet die Reihe; alte Dateien Bit für Bit gleich), **16c gebaut** (der Creator zeigt die Zeile Signal path; Skizze gebilligt, S1 a), **16d gebaut** (Clip effects zeigt die Reihe, Filter als vierter Baustein; K5 a), **16e gebaut** (Kick mit Drive hinter der Envelope, Clap mit zwei Filtern, neu gegen das Kit gemessen); **Stufe 16 fertig** — im Programm ungesehen und ungehört; offen die Hi-Hat-Schwingung, nach Patriks Ohr |
 | 17 | **Ein Sample bearbeiten:** Edit... an einer Sample-Schicht öffnet das Sample im Fenster der Aufnahme; Save und Save as... statt Namensfeld; Kit und freie Dateien schreibgeschützt (§4k) | S119: Skizze gebilligt, Entscheide M1 a, M2 b, M2b a, M3 a, M4 a; Baustufen freigegeben (B2 a); **17a gebaut** (das Fenster: `bearbeite`, Save und Save as..., die Rückfragen; ein Fall mit fünf Teilen in `test_LoopAufnahmeFenster.cpp`) ; **17b gebaut** (der Knopf Edit... im Creator, Sample start und Schleife rücken mit, die Grenze von 30 Sekunden; im Fall zur Sample-Schicht in `test_LoopInstrumentEditor.cpp`) ; **17c gemacht** (Benutzerhandbuch 1.148.0, Liste 10 Abschnitt D, voller Lauf 1153 / 1153); **Stufe 17 fertig — im Programm ungesehen** |
+| 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; offen 21b (Drum-Editor), 21c (Fenster Kits), 21d (akustische Kits), 21e (Icon, Handbuch, Sichttest) |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
 
 ---
