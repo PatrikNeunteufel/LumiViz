@@ -42,6 +42,8 @@
 #include <QWidget>
 
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
 
 class QCheckBox;
@@ -70,6 +72,7 @@ public:
     {
         Stift,     ///< Pen: ziehen = frei Hand, Klick = Eckpunkt
         Schieben,  ///< Move point
+        Bruecke,   ///< Bridge: ein Punkt auf einer Kontur, dann einer auf einer anderen (G2 a)
     };
 
     explicit FormFlaeche(QWidget* parent = nullptr);
@@ -87,6 +90,10 @@ public:
     void setBild(const QImage* bild, const QTransform& lage, bool zeigen);
     /// Konturen, die nur vorgeschlagen sind (From image ohne Apply live): duenn und grau.
     void setVorschau(std::vector<QPainterPath> vorschau);
+    /// Die Spruenge des Stifts (One path): grau gestrichelt mit zwei Punkten.
+    void setSpruenge(std::vector<std::pair<QPointF, QPointF>> spruenge);
+    /// Bridge: der erste Punkt einer Bruecke, die gerade entsteht; nullopt = keiner.
+    void setBrueckeAnfang(std::optional<QPointF> punkt);
 
     /// Ein Punkt der Zeichnung im Bild und zurueck.
     [[nodiscard]] QPointF imBild(QPointF punkt) const;
@@ -122,6 +129,10 @@ Q_SIGNALS:
     void ankerLosgelassen();
     /// Pen hat etwas angefangen oder verworfen (der Hinweis unter der Flaeche).
     void angefangenGeaendert();
+    /// Bridge: hier wurde geklickt (Koordinaten der Zeichnung).
+    void brueckeGeklickt(QPointF punkt);
+    /// Bridge: Esc — die angefangene Bruecke verwerfen.
+    void brueckeVerworfen();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -144,6 +155,8 @@ private:
     QTransform m_bildLage;
     bool m_zeigeBild = true;
     std::vector<QPainterPath> m_vorschau;
+    std::vector<std::pair<QPointF, QPointF>> m_spruenge;
+    std::optional<QPointF> m_brueckeAnfang;
     QRectF m_ansicht{0.0, 0.0, 200.0, 200.0};
     Werkzeug m_werkzeug = Werkzeug::Stift;
     int m_hervorgehoben = 0;
@@ -279,6 +292,26 @@ public:
     [[nodiscard]] bool ausBild(int kennung) const;
     /// Stoesst die Kontur an den Rand ihres Bilds (die Liste zeigt „edge")?
     [[nodiscard]] bool amRand(int kennung) const;
+
+    // --- Use as und Bridge (Stufe 20d; Entscheide Z5 a, B1, G1 a, G2 a) ----------
+    /// **Use as:** Layers, one per contour — oder One path. Ein Schritt fuer Undo.
+    void setzeNutzung(shape::Nutzung nutzung);
+    /// **Jumps** (nur bei One path): In list order, Shortest, Drawn by hand.
+    void setzeSpruenge(shape::Spruenge spruenge);
+    /// Eine Bruecke von Hand setzen, ohne Maus. false = dieselbe Kontur, eine
+    /// gibt es nicht, oder sie schloesse einen Ring (G2 a). Sonst stellt sie
+    /// Use as auf One path und Jumps auf Drawn by hand.
+    bool setzeBruecke(int von, QPointF vonPunkt, int nach, QPointF nachPunkt);
+    /// Die Bruecke an diesem Platz in `zeichnung().bruecken` entfernen.
+    bool entferneBruecke(int platz);
+    /// **Bridge** mit der Maus: der erste Klick setzt den Anfang auf eine
+    /// Kontur, der zweite das Ende auf eine andere; ein Klick auf eine
+    /// bestehende Bruecke entfernt sie (ohne angefangene).
+    void brueckeKlick(QPointF punkt);
+    /// Was Bridge zuletzt sagt (ein Ring wird nicht angenommen, ...).
+    [[nodiscard]] const QString& brueckenMeldung() const { return m_brueckenMeldung; }
+    /// Die Zeile unter Use as: „2 contours · 2 jumps".
+    [[nodiscard]] QString zahlenZeile() const;
 
     /// **Harmonics** der Preview: 1 … `shape::kHarmonischeMax`.
     void setzeHarmonische(double harmonische);
@@ -424,7 +457,12 @@ private:
     QPushButton* m_weg = nullptr;
     QPushButton* m_hinauf = nullptr;
     QPushButton* m_hinunter = nullptr;
-    QRadioButton* m_nutzungSchichten = nullptr;  ///< Use as: grau bis Stufe 20d
+    std::optional<std::pair<int, QPointF>> m_brueckeAnfang;  ///< Bridge: Kontur und Punkt des ersten Klicks
+    QString m_brueckenMeldung;
+    QLabel* m_zahlen = nullptr;
+    /// Die Kontur, die dem Punkt am naechsten liegt, und der Punkt auf ihr; {0, …} = keine im Fangkreis.
+    [[nodiscard]] std::pair<int, QPointF> konturBei(QPointF punkt) const;
+    QRadioButton* m_nutzungSchichten = nullptr;
     QRadioButton* m_nutzungPfad = nullptr;
     QComboBox* m_spruenge = nullptr;
     FormVerlauf* m_verlauf = nullptr;

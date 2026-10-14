@@ -22,6 +22,7 @@
 #include "loop/Bausteine.hpp"
 #include "loop/Rechenkern.hpp"
 
+#include <QColor>
 #include <QJsonObject>
 #include <QString>
 #include <QStringList>
@@ -195,6 +196,10 @@ struct Schicht
     bool stereoXY = false;
     bool rueckwaerts = false;  ///< Reverse: der Stift laeuft andersherum
 
+    /// Die eigene Farbe der Schicht (`#rrggbb`, F1 a, Stufe 20d); leer = die
+    /// abgeleitete (`schichtFarbe`).
+    QString farbe;
+
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
     // --- der erste Filter und der erste Drive ---------------------------
@@ -292,7 +297,9 @@ struct Instrument
 // `shapeStereoXY`, `shapeReverse` — eine eigene Fassung, weil ein aelteres
 // Programm eine solche Schicht sonst still als Sinus spielte. (`harmonics`
 // allein ist seit Fassung 1 die Liste der Obertoene des Sinus.) Geschrieben
-// wird Fassung 9.
+// wird Fassung 9. Seit Stufe 20d (S122, Entscheid V1 a) kann eine Schicht `color`
+// tragen, ihre eigene Farbe — ohne neue Fassung: ein aelteres Programm ueberliest
+// das Feld und zeigt die abgeleitete Farbe; der Klang aendert sich nicht.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
 inline constexpr int kInstrumentFassung = 9;
@@ -357,6 +364,15 @@ void setzeEigenenInstrumentOrdnerFuerTests(const QString& ordner);
 /// Dasselbe fuer eine Form: die Titel der eigenen Instrumente, in denen eine
 /// Shape-Schicht diese Form nennt (Stufe 20a, „Used by" im Fenster Edit shape).
 [[nodiscard]] QStringList eigeneInstrumenteMitForm(const QString& nennung);
+
+/// Die Farbe der Schicht auf `platz` (F1 a, Patrik S122): ihre eigene, sonst
+/// abgeleitet — eine Familie je Waveform in vier Abstufungen (die n-te
+/// Schicht derselben Art bekommt die n-te), eine Shape-Schicht die Farbe ihrer
+/// Kontur aus der Form (bei All, one path die der ersten angehakten; die Form
+/// wird je Fassung der Zeichnungen einmal gelesen). Ungueltig = es gibt den Platz nicht.
+[[nodiscard]] QColor schichtFarbe(const Instrument& instrument, int platz);
+/// Die abgeleitete Farbe allein, ohne die eigene (fuer „Automatic").
+[[nodiscard]] QColor abgeleiteteSchichtFarbe(const Instrument& instrument, int platz);
 /// Ein eigenes Instrument in den Benutzerordner schreiben (legt ihn an).
 /// `instrument.name` wird `user:<name>`. false = kein gueltiger Name oder
 /// nicht zu schreiben.

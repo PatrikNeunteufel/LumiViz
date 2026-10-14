@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.160.0
+> **Version:** 1.161.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2866,7 +2866,7 @@ die Klaviatur des Editors.
 | **Save as...** | Derselbe Dialog, bei jedem Instrument: eine Kopie unter einem neuen Namen zu deinen eigenen Dateien; das bisherige bleibt, wie es ist, und das Muster spielt danach die Kopie. Einen Ort wählst du nicht (GEÄNDERT in 1.141.0: vorher ein Dateidialog an beliebigem Ort). Eine `.lvinst` für jemand anderen holst du aus dem Ordner oder über den Export deiner Daten |
 | **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
 | **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen — mit allen eingeschalteten Schichten |
-| **Layers** | Die Schichten des Instruments, eine bis acht (GEÄNDERT in 1.153.0: vorher vier). Jede Schicht wird je Ton eigens gerechnet und zu den anderen addiert — mit jeder steigt **Peak**; liegt er über 1, die Level der Schichten zurücknehmen. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen |
+| **Layers** | Die Schichten des Instruments, eine bis acht (GEÄNDERT in 1.153.0: vorher vier). Jede Schicht wird je Ton eigens gerechnet und zu den anderen addiert — mit jeder steigt **Peak**; liegt er über 1, die Level der Schichten zurücknehmen. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen. NEU in 1.161.0: der **Farbpunkt** — jede Waveform hat ihre Farbfamilie (Sine Blau, Triangle Grün, Saw Rot, Square Orange, Plucked string Ocker, Noise Grau, Sample Violett), die zweite, dritte, vierte Schicht derselben Art eine andere Abstufung; eine Shape-Schicht trägt die Farbe ihrer Kontur. Ein Klick auf den Punkt (oder ein Rechtsklick auf die Schicht): **Colour...** wählt eine eigene, **Automatic** stellt zurück |
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
 | **Add layer from instrument...** | Nimmt die Schichten eines anderen Instruments dazu — aus der Liste der mitgelieferten oder über **From file...** aus einer `.lvinst`. Es ist eine Kopie: das andere Instrument bleibt, wie es ist |
 | **Duplicate**, **Remove**, **▲**, **▼** | Die gewählte Schicht noch einmal, entfernen, hinauf, hinunter |
@@ -3003,9 +3003,26 @@ Haken; anfangs angehakt ist die größte, die nicht an den Rand stößt. Höchst
 Konturen. Das Bild selbst wird nicht in der Form gespeichert: nach dem Speichern
 oder Wiederöffnen sind die Regler grau, bis du es neu öffnest.
 
+**Mehrere Konturen** (NEU in 1.161.0). Die Gruppe **Use as** sagt, was beim
+Speichern aus dem Instrument-Creator heraus geschieht:
+
+| Use as | Wirkung |
+|---|---|
+| **Layers, one per contour** | Die Schicht, aus der heraus du Edit... gedrückt hast, spielt eine angehakte Kontur; jede weitere angehakte bekommt gleich dahinter eine **Kopie** dieser Schicht (alle Einstellungen gleich, nur Contour anders, der Name „<Schicht> · <Kontur>"). Eine Kontur, die schon eine Schicht spielt, bekommt keine zweite. Passen nicht alle hinein (acht Schichten), sagt der Creator, wie viele fehlen |
+| **One path** | Die Schicht spielt alle angehakten Konturen nacheinander in einem Umlauf (Contour: *All, one path*). Dazwischen springt der Stift; die Sprünge stehen grau gestrichelt auf der Fläche |
+| **Jumps** | Nur bei One path — wo der Stift springt: **In list order** (in der Reihenfolge der Liste, an den nächsten Punkten), **Shortest** (das Programm sucht Reihenfolge und Punkte, so dass alle Sprünge zusammen kurz sind), **Drawn by hand** (an den Brücken, die du mit **Bridge** setzt) |
+
+**Bridge**: klick einen Punkt auf einer Kontur, dann einen auf einer anderen.
+Ein Sprung, der einen Ring schlösse, wird nicht angenommen — der Hinweis unter
+der Fläche sagt es. Eine Kontur darf zwei Brücken haben: der Stift verlässt
+sie dann unterwegs und kommt an derselben Stelle zurück. Konturen, die keine
+Brücke erreicht, kommen in der Reihenfolge der Liste dazu; die Zeile unter Use
+as nennt, wie viele. Ein Klick auf die Mitte einer Brücke entfernt sie, Esc
+verwirft einen angefangenen Anfang. Wer eine Brücke setzt, stellt Use as auf
+One path und Jumps auf Drawn by hand.
+
 Nach dem Speichern rechnen Loops und Instrumente, die die Form spielen, mit der
-neuen Fassung. **Bridge** und **Use as** stehen schon da, sind aber noch grau —
-sie kommen mit der nächsten Stufe.
+neuen Fassung.
 
 **Record sample — ein Sample selbst aufnehmen.** Das Fenster nimmt auf, lässt dich das
 Aufgenommene zuschneiden und in Dauerschleife anhören, bis es passt, und legt es zu deinen
@@ -3219,6 +3236,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.161.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Use as** (Layers, One path, **Jumps**: In list order, Shortest, Drawn by hand) und **Bridge**; Instrument-Creator NEU der **Farbpunkt** je Schicht mit **Colour...** und **Automatic**; Save mit Layers legt je angehakter Kontur eine Schicht an. |
 | 1.160.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open image...** mit der Gruppe **From image** (**Split by**, **Levels**, **Smooth**, **Min size**, **Detail**, **Apply live**, **Take contours**), **Show image**, „edge" in der Liste. |
 | 1.159.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open SVG...** — Konturen aus einer SVG-Datei, **Replace** oder **Add**, höchstens 64 (die längsten), anfangs Haken für alle bis acht, sonst die längste; eine Farbe, die alle Konturen teilen, wird durch die Farben der Reihe ersetzt. |
 | 1.158.0 | 2026-10-14 | Session 122. §16 NEU das Fenster **Edit shape**: Konturen mit **Pen** zeichnen (frei Hand und Eckpunkte gemischt), mit **Move point** schieben, die Liste **Contours** (Haken, Anteil am Umlauf, Rename, Remove, Reihenfolge), **Preview** mit **Harmonics** und **Play**, Undo, **Save** und **Save as...**, „Used by"; im Instrument-Creator **Edit...** neben Shape und **New shape...** im Menü hinter Browse... §11: der Knoten Shape zeichnet eine gespeicherte Form gleich neu. §17: `.lvcontour` nachgezogen. |

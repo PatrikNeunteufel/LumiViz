@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.215.0
+> **Version:** 1.216.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5144,8 +5144,8 @@ Farbe, die alle teilen, wird durch die Farben der Reihe ersetzt. **Offen daraus:
   vorzulegen, wenn es gebraucht wird.
 - ✅ ~~Die Farben aus potrace sind schwarz~~ — O3 a (Patrik S122): eine Farbe,
   die alle Konturen teilen, wird durch die Farben der Reihe ersetzt.
-- 🟡 **Farben für Schichten** (Frage Patrik S122): Schichten haben heute keine
-  Farbe; §9 sieht für As layers „je Kontur eine Schicht in ihrer Farbe" vor.
+- ✅ **Farben für Schichten** — entschieden und gebaut mit 20d (F1 a, V1 a).
+  Vorher: Schichten hatten keine Farbe; §9 sieht für As layers „je Kontur eine Schicht in ihrer Farbe" vor.
   Ob Schichten generell Farben bekommen und wie sie mit den Konturen
   übereinstimmen — mit Stufe 20d vorzulegen (Patrik S122: ja, mit 20d).
   **Patriks Idee (S122):** je Waveform eine eigene Palette in Abstufungen —
@@ -5166,9 +5166,24 @@ Haken **Apply live** im Fenster (**R2 a**). **Offen daraus:**
   Levels 3, Smooth 1, Min size 0,2 %, Detail 50 %), Detail von 0,75 bis 5
   Punkte, die Pause der Regler (150 ms), das Bild mit 35 % Deckung,
   Durchsichtiges zählt als Weiß, die Startmitten der Farbteilung.
-- **Als Nächstes Stufe 20d:** mehrere Konturen — As layers, As one path, die
-  drei Arten der Sprünge (B1), Bridge; dazu die Vorlage zu den Farben der
-  Schichten.
+
+**Stand S122 — Stufe 20d gebaut, mehrere Konturen; damit ist Stufe 20
+vollständig** (`Shape_Konzept.md` 0.20.0, §6, §8a, §9; Benutzerhandbuch
+1.161.0). Entschieden (Patrik): **L1 a** Save mit Layers legt Kopien der
+offenen Schicht an; **F1 a** Farben der Schichten nach Patriks Idee
+(Familien je Waveform, Shape in der Farbe ihrer Kontur, eigene Farbe auf
+Wunsch); **V1 a** dafür keine neue Fassung der `.lvinst`. **Offen daraus:**
+- ⬜ **Im Programm ungesehen und ungehört:** Use as, Jumps, Bridge, Shortest
+  und Drawn by hand im Ton (eine Kontur in zwei Stücken), Save mit Layers, die
+  Farbpunkte. Keine Sichttest-Liste.
+- 🟡 Von Claude gesetzt, im Sichttest zu prüfen: die Abstufungen der
+  Familien; Shortest als Näherung (sechs Runden, 2-opt); der Anfang bei
+  Drawn by hand an der ersten Brücke; wer eine Brücke setzt, stellt One path
+  und Drawn by hand; ein Klick auf die Mitte einer Brücke entfernt sie; im
+  Creator behält die offene Schicht ihre Kontur, solange sie einen Haken hat.
+- 🟡 Im Bild aus dem Test erschien „One path" ungefüllt, obwohl gesetzt — wohl
+  die Übergangsanimation des Stils beim sofortigen Abfotografieren; im
+  Programm nachsehen.
 
 ### ⚪ Idee: Publish — etwas mit allem, was dazugehört, als Paket weitergeben (Patrik S120)
 
@@ -5567,6 +5582,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.216.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20d gebaut — mehrere Konturen** (Entscheide Patrik L1 a, F1 a, V1 a; `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0); Stufe 20 damit vollständig. Offen: im Programm ungesehen und ungehört; die gesetzten Abstufungen und Regeln. |
 | 1.215.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20c gebaut — Konturen aus einem Bild** (Entscheide Patrik R1 a, R2 a; `audio/Shape_Konzept.md` 0.19.0, Benutzerhandbuch 1.160.0); Patriks Idee zu den Farben der Schichten (Paletten je Waveform) beim Punkt zu 20d. Offen: im Programm ungesehen; die gesetzten Vorgaben. **Als Nächstes Stufe 20d.** |
 | 1.214.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20b gebaut — SVG** (Entscheide Patrik O1 a, O2 a, O3 a; `audio/Shape_Konzept.md` 0.18.0, Benutzerhandbuch 1.159.0). Offen: im Programm ungesehen; CSS-Variablen; Farben für Schichten (mit 20d); als Nächstes Stufe 20c. |
 | 1.213.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20a gebaut — das Fenster Edit shape** (Entscheide Patrik Z1 a, Z2 a; `audio/Shape_Konzept.md` 0.17.0, Benutzerhandbuch 1.158.0), mit Edit... und New shape... im Creator; erledigt: der Knoten liest eine geschriebene Form neu, gerechnete Töne entstehen neu, der Knopf Edit.... Offen: im Programm ungesehen; die von Claude gesetzten Zahlen; als Nächstes Stufe 20b. |

@@ -18,8 +18,13 @@
  * an dem Punkt betreten, der dem letzten am naechsten liegt; eine Kontur wird
  * an dem Punkt verlassen, an dem sie betreten wurde. Der Mittelwert des ganzen
  * Wegs liegt im Nullpunkt, der fernste Punkt hat den Abstand 1.
- * Die Arten „kuerzeste Wege" und „von Hand" kommen mit dem Fenster (Stufe 20d);
- * bis dahin spielt jede Zeichnung in Reihenfolge der Liste.
+ * **Shortest** (B1 a, Stufe 20d): Reihenfolge und Tore so, dass alle Spruenge
+ * zusammen kurz sind — eine Naeherung (abwechselnd Tore und 2-opt), die erste
+ * Kontur der Liste bleibt vorn. **Von Hand** (B1 d, G2 a): der Stift faehrt
+ * die Bruecken als Baum ab — an einer Bruecke verlaesst er die Kontur, faehrt
+ * die andere mit allem, was an ihr haengt, und kommt an derselben Stelle
+ * zurueck; eine Kontur mit zwei Bruecken wird so unterwegs verlassen. Was
+ * keine Bruecke erreicht, kommt in Reihenfolge der Liste dazu.
  *
  * Aufbereiten kostet (abtasten, Reihe bis zur 512. Harmonischen) — `tonformFuer`
  * merkt sich das Ergebnis je Nennung und Kontur.
@@ -30,9 +35,11 @@
 
 #include "shape/Kontur.hpp"
 
+#include <QPointF>
 #include <QString>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace lumi::shape
@@ -41,12 +48,14 @@ namespace lumi::shape
 /// So viel vom Umlauf nimmt ein Sprung zwischen zwei Konturen (As one path).
 inline constexpr double kSprungAnteil = 0.003;
 
-/// Eine Kontur der Form, wie der Ton sie braucht.
+/// Ein Stueck der Form, wie der Ton es braucht: eine Kontur, einmal ganz
+/// herum — oder bei Spruengen von Hand ein Teil davon (Stufe 20d).
 struct TonKontur
 {
     Reihe reihe;          ///< mit `mitte`: ihre Lage im gemeinsamen Bild
     double anteil = 1.0;  ///< so viel vom Umlauf gehoert ihr
-    double start = 0.0;   ///< hier (0 … 1 auf ihrem Zug) wird sie betreten und verlassen
+    double start = 0.0;   ///< hier (0 … 1 auf ihrem Zug) wird sie betreten
+    double umfang = 1.0;  ///< so viel der Kontur ab `start`; 1 = ganz herum, verlassen wird sie, wo sie betreten wurde
 };
 
 struct Tonform
@@ -68,6 +77,17 @@ struct Tonform
 /// entsprechend schneller durchlaufen und traegt anteilig weniger (mindestens
 /// einen Teilton).
 [[nodiscard]] Punkt tonwert(const Tonform& form, double umlauf, double harmonische, double hoechste = kHarmonischeMax);
+
+/// Die Spruenge des Stifts bei All, one path, wie die Art der Zeichnung sie
+/// legt (`Zeichnung::spruenge`): je Sprung von wo nach wo, in den Koordinaten
+/// der Zeichnung (y nach unten) — fuer das Bild im Fenster Edit shape. Leer
+/// bei weniger als zwei Konturen mit Haken.
+[[nodiscard]] std::vector<std::pair<QPointF, QPointF>> sprungLinien(const Zeichnung& zeichnung);
+
+/// Darf eine Bruecke von Hand die beiden Konturen verbinden (G2 a)? false =
+/// dieselbe Kontur, eine gibt es nicht, oder die vorhandenen Bruecken
+/// verbinden sie schon (auch ueber andere) — sie schloesse einen Ring.
+[[nodiscard]] bool brueckeErlaubt(const Zeichnung& zeichnung, int von, int nach);
 
 /// Die Form, die eine Schicht nennt (`holeZeichnung`), aufbereitet und gemerkt.
 /// nullptr = nicht gefunden, nicht lesbar oder ohne die genannte Kontur — auch

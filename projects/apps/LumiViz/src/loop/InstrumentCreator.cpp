@@ -15,6 +15,7 @@
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QColorDialog>
 #include <QCompleter>
 #include <QDialog>
 #include <QDir>
@@ -35,6 +36,8 @@
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSlider>
+#include <QStyle>
+#include <QStyleOptionViewItem>
 #include <QStringListModel>
 #include <QTimer>
 #include <QToolButton>
@@ -559,7 +562,13 @@ void InstrumentCreator::setupUI()
     }
     m_liste = new QListWidget(this);
     m_liste->setObjectName(QStringLiteral("creatorLayers"));
-    m_liste->setToolTip(tr("Click a layer to edit it; the check mark mutes it"));
+    m_liste->setToolTip(tr("Click a layer to edit it; the check mark mutes it; click the colour dot to choose its colour"));
+    // der Farbpunkt (Stufe 20d): ein Klick darauf oder ein Rechtsklick auf die Schicht oeffnet die Farbwahl
+    m_liste->viewport()->installEventFilter(this);
+    m_liste->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_liste, &QListWidget::customContextMenuRequested, this, [this](QPoint wo) {
+        if (QListWidgetItem* eintrag = m_liste->itemAt(wo)) zeigeFarbMenue(m_liste->row(eintrag), m_liste->viewport()->mapToGlobal(wo));
+    });
     links->addWidget(m_liste, 1);
     const auto knopf = [this](const QString& text, const char* kennung, const QString& hilfe) {
         auto* k = new QPushButton(text, this);
@@ -1668,6 +1677,19 @@ void InstrumentCreator::zeigeListe()
                              .arg(s.versatzHalbtoene > 0 ? QStringLiteral("+") : QString())
                              .arg(s.versatzHalbtoene));
         eintrag->setCheckState(s.an ? Qt::Checked : Qt::Unchecked);
+        // die Farbe der Schicht (F1 a): ihre eigene oder die abgeleitete
+        const QColor farbe = schichtFarbe(m_instrument, platz);
+        QPixmap punkt(12, 12);
+        punkt.fill(Qt::transparent);
+        {
+            QPainter p(&punkt);
+            p.setRenderHint(QPainter::Antialiasing);
+            p.setPen(Qt::NoPen);
+            p.setBrush(farbe);
+            p.drawEllipse(QRectF(1.0, 1.0, 10.0, 10.0));
+        }
+        eintrag->setIcon(QIcon(punkt));
+        eintrag->setData(Qt::UserRole, farbe.name(QColor::HexRgb));
     }
     m_liste->setCurrentRow(m_gewaehlt);
     const bool platzFrei = zahl < kSchichtenMax;
@@ -1935,6 +1957,17 @@ void InstrumentCreator::hideEvent(QHideEvent* event)
 
 bool InstrumentCreator::eventFilter(QObject* objekt, QEvent* ereignis)
 {
+    // ein Klick auf den Farbpunkt einer Schicht: die Farbwahl
+    if (m_liste != nullptr && objekt == m_liste->viewport() && ereignis->type() == QEvent::MouseButtonPress)
+    {
+        const auto* maus = static_cast<QMouseEvent*>(ereignis);
+        if (QListWidgetItem* eintrag = m_liste->itemAt(maus->position().toPoint());
+            eintrag != nullptr && maus->button() == Qt::LeftButton && farbPunktRect(m_liste->row(eintrag)).contains(maus->position().toPoint()))
+        {
+            zeigeFarbMenue(m_liste->row(eintrag), m_liste->viewport()->mapToGlobal(maus->position().toPoint()));
+            return true;
+        }
+    }
     // im rollenden Feld gehoert das Mausrad dem Rollen: der Regler nimmt es nicht, das Ereignis
     // geht an das Feld weiter
     if (ereignis->type() == QEvent::Wheel && m_rollen != nullptr)
@@ -2497,20 +2530,119 @@ bool InstrumentCreator::oeffneNeueForm(bool zeigen)
 void InstrumentCreator::uebernimmForm(const QString& nennung)
 {
     if (schicht().schwingung != Schwingung::Form) return;
-    if (schicht().form != nennung)
+    m_formGelesenDa = false;  // auch dieselbe Nennung neu lesen
+    m_formMeldung.clear();
+    shape::Zeichnung zeichnung;
+    std::vector<int> mitHaken;
+    if (shape::holeZeichnung(nennung, zeichnung))
+        for (const shape::Kontur& k : zeichnung.konturen)
+            if (k.gewaehlt) mitHaken.push_back(k.kennung);
+
+    // One path (G1 a) — oder keine Kontur mit Haken: die offene Schicht spielt alle als einen Pfad
+    if (mitHaken.empty() || zeichnung.nutzung == shape::Nutzung::EinPfad)
     {
-        setzeForm(nennung);
+        aendereSchicht([&nennung](Schicht& s) {
+            s.form = nennung;
+            s.formKontur = 0;
+        });
+        zeigeAlles();
         return;
     }
-    // dieselbe Form, neu geschrieben: die gewaehlte Kontur bleibt, solange es sie gibt
-    shape::Zeichnung zeichnung;
-    const bool da = shape::holeZeichnung(nennung, zeichnung);
-    const int kontur = schicht().formKontur;
-    m_formGelesenDa = false;
-    if (da && kontur != 0 && zeichnung.finde(kontur) == nullptr)
-        aendereSchicht([](Schicht& s) { s.formKontur = 0; });
-    else
-        zeigeAlles();  // die Schicht bleibt, wie sie ist — die Zeile Contour und das Bild aber nicht
+
+    // Layers (L1 a): die offene Schicht spielt eine angehakte Kontur — ihre bisherige, wenn sie noch einen
+    // Haken hat, sonst die erste, die keine Schicht spielt —, jede weitere angehakte bekommt dahinter
+    // eine Kopie der offenen Schicht; eine Kontur, die schon eine Schicht mit dieser Form spielt, keine zweite
+    const int platz = m_gewaehlt;
+    const Schicht vorlage = schicht();
+    int fehlen = 0;
+    aendere([&](Instrument& instrument) {
+        const auto spielt = [&instrument, &nennung](int kontur, int ausser) {
+            for (std::size_t i = 0; i < instrument.schichten.size(); ++i)
+            {
+                const Schicht& s = instrument.schichten[i];
+                if (static_cast<int>(i) != ausser && s.schwingung == Schwingung::Form && s.form == nennung && s.formKontur == kontur)
+                    return true;
+            }
+            return false;
+        };
+        Schicht& offen = instrument.schichten[static_cast<std::size_t>(platz)];
+        const bool behaelt = offen.form == nennung && std::find(mitHaken.begin(), mitHaken.end(), offen.formKontur) != mitHaken.end();
+        if (!behaelt)
+        {
+            int eigene = mitHaken.front();
+            for (const int k : mitHaken)
+                if (!spielt(k, platz))
+                {
+                    eigene = k;
+                    break;
+                }
+            offen.form = nennung;
+            offen.formKontur = eigene;
+        }
+        Schicht kopie = offen;
+        kopie.farbe.clear();  // jede Kopie traegt die Farbe ihrer Kontur
+        const QString wer = vorlage.name.isEmpty() ? tr("Layer %1").arg(platz + 1) : vorlage.name;
+        int hinter = platz;
+        for (const int k : mitHaken)
+        {
+            if (spielt(k, -1)) continue;
+            if (instrument.schichten.size() >= static_cast<std::size_t>(kSchichtenMax))
+            {
+                ++fehlen;
+                continue;
+            }
+            const shape::Kontur* kontur = zeichnung.finde(k);
+            kopie.formKontur = k;
+            kopie.name = QStringLiteral("%1 · %2").arg(wer, kontur != nullptr && !kontur->name.isEmpty() ? kontur->name : tr("Contour"));
+            instrument.schichten.insert(instrument.schichten.begin() + (++hinter), kopie);
+        }
+    });
+    if (fehlen > 0)
+    {
+        m_formMeldung = (fehlen == 1 ? tr("1 ticked contour did not fit — an instrument holds %1 layers").arg(kSchichtenMax)
+                                     : tr("%1 ticked contours did not fit — an instrument holds %2 layers").arg(fehlen).arg(kSchichtenMax));
+        if (isVisible()) QMessageBox::information(this, tr("Edit shape"), m_formMeldung);
+    }
+    zeigeAlles();
+}
+
+void InstrumentCreator::setzeSchichtFarbe(int platz, const QString& farbe)
+{
+    if (platz < 0 || platz >= static_cast<int>(m_instrument.schichten.size())) return;
+    const QColor gelesen(farbe);
+    const QString neu = farbe.isEmpty() || !gelesen.isValid() ? QString() : gelesen.name(QColor::HexRgb);
+    aendere([platz, &neu](Instrument& i) { i.schichten[static_cast<std::size_t>(platz)].farbe = neu; });
+}
+
+void InstrumentCreator::zeigeFarbMenue(int platz, QPoint wo)
+{
+    if (platz < 0 || platz >= static_cast<int>(m_instrument.schichten.size())) return;
+    QMenu menue(this);
+    connect(menue.addAction(tr("Colour...")), &QAction::triggered, this, [this, platz] {
+        const QColor gewaehlt = QColorDialog::getColor(schichtFarbe(m_instrument, platz), this, tr("Layer colour"));
+        if (gewaehlt.isValid()) setzeSchichtFarbe(platz, gewaehlt.name(QColor::HexRgb));
+    });
+    QAction* automatisch = menue.addAction(tr("Automatic"));
+    automatisch->setCheckable(true);
+    automatisch->setChecked(m_instrument.schichten[static_cast<std::size_t>(platz)].farbe.isEmpty());
+    automatisch->setToolTip(tr("The colour of its waveform family — a Shape layer takes the colour of its contour"));
+    connect(automatisch, &QAction::triggered, this, [this, platz] { setzeSchichtFarbe(platz, QString()); });
+    menue.exec(wo);
+}
+
+QRect InstrumentCreator::farbPunktRect(int platz) const
+{
+    QListWidgetItem* eintrag = m_liste->item(platz);
+    if (eintrag == nullptr) return {};
+    QStyleOptionViewItem option;
+    option.initFrom(m_liste);
+    option.rect = m_liste->visualItemRect(eintrag);
+    option.features = QStyleOptionViewItem::HasCheckIndicator | QStyleOptionViewItem::HasDecoration | QStyleOptionViewItem::HasDisplay;
+    option.decorationSize = m_liste->iconSize().isValid() ? m_liste->iconSize() : QSize(16, 16);
+    option.icon = eintrag->icon();
+    option.text = eintrag->text();
+    option.checkState = eintrag->checkState();
+    return m_liste->style()->subElementRect(QStyle::SE_ItemViewItemDecoration, &option, m_liste).adjusted(-2, -2, 2, 2);
 }
 
 // =============================================================================

@@ -336,6 +336,14 @@ public:
     bool oeffneNeueForm(bool zeigen = true);
     /// Das Fenster Edit shape; nullptr, solange es nie geoeffnet wurde.
     [[nodiscard]] FormFenster* formFenster() const { return m_formFenster; }
+    /// Was der Creator nach dem letzten Speichern aus Edit shape sagt („2
+    /// contours did not fit ..."); leer = nichts.
+    [[nodiscard]] const QString& formMeldung() const { return m_formMeldung; }
+
+    // --- die Farbe einer Schicht (Stufe 20d, F1 a) --------------------------------
+    /// Die eigene Farbe der Schicht auf `platz` setzen (`#rrggbb`); leer =
+    /// Automatic, die abgeleitete.
+    void setzeSchichtFarbe(int platz, const QString& farbe);
 
     // --- Detect und Reference tone (Stufe 11a, Schritt 3) ----------------------
     /// **Detect:** den Grundton der Aufnahme der gewaehlten Schicht messen, ab
@@ -554,8 +562,14 @@ private:
     QPushButton* m_formBearbeiten = nullptr;  ///< Edit... (Stufe 20a)
     FormFenster* m_formFenster = nullptr;
     void richteFormFensterEin();
-    /// Was das Fenster gespeichert hat, in die gewaehlte Schicht setzen.
+    /// Was das Fenster gespeichert hat, in die gewaehlte Schicht setzen — mit
+    /// Use as: Layers je weiterer angehakter Kontur eine Kopie (L1 a).
     void uebernimmForm(const QString& nennung);
+    QString m_formMeldung;
+    /// Das Menue der Farbe einer Schicht: Colour... und Automatic.
+    void zeigeFarbMenue(int platz, QPoint wo);
+    /// Wo in der Liste der Farbpunkt einer Schicht steht (in Punkten des Viewports).
+    [[nodiscard]] QRect farbPunktRect(int platz) const;
     QComboBox* m_formKontur = nullptr;
     QCheckBox* m_formStereo = nullptr;
     QCheckBox* m_formRueckwaerts = nullptr;

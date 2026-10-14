@@ -1,6 +1,6 @@
 # LumiViz — Klang aus einer Form (Konzept)
 
-> **Version:** 0.19.0
+> **Version:** 0.20.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Konzept — das Grobkonzept
 > [fourier-shape-loops-konzept.md](../fourier-shape-loops-konzept.md) auf
@@ -313,6 +313,16 @@ gewählter Kontur eine Schicht an, bei One path stellt er die offene Schicht
 auf „All, one path". Danach lässt sich Contour an jeder Schicht ändern.
 Verworfen: nur das Fenster entscheidet (b); Use as entfällt, ein Knopf im
 Creator (c).
+
+**Was Save mit Layers anlegt (L1 a, Patrik S122):** die offene Schicht spielt
+danach die erste angehakte Kontur. Für jede weitere angehakte Kontur entsteht
+gleich dahinter eine **Kopie der offenen Schicht** — alle Einstellungen
+gleich, nur Contour anders, der Name „<Name der Schicht> · <Name der
+Kontur>". Eine Kontur, die schon eine Schicht mit dieser Form spielt, bekommt
+keine zweite. Passen nicht alle hinein (acht Schichten), entstehen so viele,
+wie Platz ist, und der Creator sagt, wie viele fehlen. Verworfen: neue
+Schichten mit Grundeinstellung (b) — der gebaute Klang wäre von Hand zu
+übertragen; jedes Mal fragen (c) — Use as ist schon die Antwort.
 
 Von Claude in der Skizze gesetzt, mit ihr gebilligt: die Zeile Contour, das
 Bild „Shape, as it plays", Start in Prozent. Noch offen, klein: was **Pan**
@@ -766,6 +776,38 @@ hängt das Programm die übrigen in der Reihenfolge der Liste an und sagt, wie
 viele. Verworfen: unerreichte Konturen spielen nicht mit (b); Speichern erst,
 wenn alle erreicht sind (c).
 
+### Wie Use as und Bridge gebaut sind (Stufe 20d, S122)
+
+- **Use as** ist bedienbar: **Layers, one per contour** oder **One path**;
+  **Jumps** nur bei One path. Darunter die Zeile „3 ticked contours · one
+  layer each" oder „4 contours · 5 jumps", bei Drawn by hand dazu, wie viele
+  keine Brücke erreicht („1 not reached by a bridge — added in list order")
+  oder „No bridges yet".
+- **Bridge:** ein Klick nahe einer Kontur (im Fangkreis von 8 Bildpunkten)
+  setzt den Anfang, ein Klick auf eine andere das Ende; dieselbe Kontur oder
+  ein Ring wird nicht angenommen, und der Hinweis unter der Fläche sagt warum.
+  Ein Klick auf die Mitte einer Brücke (nicht ihre Enden) entfernt sie; Esc
+  verwirft einen angefangenen Anfang. **Wer eine Brücke setzt, stellt Use as
+  auf One path und Jumps auf Drawn by hand** — sonst wirkte sie nicht. Remove
+  einer Kontur nimmt ihre Brücken mit. Jeder Schritt ist einer für Undo.
+- **Die Sprünge auf der Fläche** (bei One path, in jeder Art): grau
+  gestrichelt mit einem Punkt an jedem Ende.
+- **Das Fenster** ist größer geworden (900 × 720): mit den mehrzeiligen
+  Zahlen unter Use as überdeckte die Werkzeugzeile sonst die Fläche.
+- **Im Creator (L1 a):** behält die offene Schicht eine angehakte Kontur,
+  bleibt sie dabei; sonst nimmt sie die erste angehakte, die noch keine
+  Schicht spielt — so entsteht beim zweiten Speichern nichts doppelt. Kopien
+  tragen keine eigene Farbe (sie zeigen die ihrer Kontur).
+- **Die Farbe (F1 a, V1 a):** ein Punkt vor jeder Schicht in der Liste;
+  ein Klick auf den Punkt oder ein Rechtsklick auf die Schicht öffnet das
+  Menü **Colour...** und **Automatic**. Die vier Abstufungen je Familie sind
+  von Claude gesetzt (Sine `#3b7be0`, `#7aa9f0`, `#2556a8`, `#a9c8f7`; Saw,
+  Triangle, Square, Plucked string, Noise, Sample entsprechend). Die Form
+  einer Shape-Schicht wird für die Farbe je Fassung der Zeichnungen einmal
+  gelesen.
+
+Alles in dieser Liste ohne Verweis auf einen Entscheid ist von Claude gesetzt.
+
 Von Claude in der Skizze gesetzt, mit ihr gebilligt: die Namen (Edit shape,
 Pen, Move point, Bridge, Contours, From image, Use as, Jumps und seine drei
 Einträge), der Anteil am Umlauf und das Wort „edge" in der Liste, die Gruppe
@@ -839,8 +881,27 @@ lässt; Punkte einfügen oder löschen; Griffe einzeln ziehen.
 ## 9. Mehrere Konturen
 
 **As layers** (Z5 a): je gewählter Kontur eine Schicht in ihrer Farbe, bis
-das Instrument voll ist (vier). Alle Schichten nennen dieselbe Datei, jede
-ihre Kontur über deren feste Kennung (D1 a, D3 a).
+das Instrument voll ist (seit Stufe 18 acht). Alle Schichten nennen dieselbe
+Datei, jede ihre Kontur über deren feste Kennung (D1 a, D3 a). Was Save mit
+Layers im Creator anlegt: §6 (L1 a).
+
+**Die Farbe einer Schicht (F1 a, Patrik S122, nach seiner Idee):** jede
+Schicht hat eine Farbe, als Punkt vor ihrem Namen in der Liste der Schichten.
+**Abgeleitet:** eine Familie je Waveform — Sine Blautöne, Triangle Grün, Saw
+Rot, Square Orange, Plucked string Ocker, Noise Grau, Sample Violett —, je
+Familie vier Abstufungen; die n-te Schicht derselben Art im Instrument bekommt
+die n-te (danach wieder von vorn). Eine **Shape**-Schicht trägt die Farbe
+ihrer Kontur aus der Form (bei „All, one path" die der ersten angehakten) —
+sie stimmt immer mit Edit shape überein. **Eigene Farbe:** ein Klick auf den
+Punkt öffnet die Farbwahl; die gewählte steht in der `.lvinst` und gilt statt
+der abgeleiteten, **Automatic** stellt zurück. **Keine neue Fassung (V1 a,
+Patrik S122):** `color` steht nur an einer Schicht mit eigener Farbe, als
+freiwilliges Feld in Fassung 9 — ein älteres LumiViz liest die Datei weiter
+und zeigt die abgeleitete Farbe (die Fassung sperrt nur, was sonst falsch
+klänge). Verworfen: Fassung 10 (b) — ein älteres Programm öffnete kein neu
+gespeichertes Instrument mehr. Verworfen zu F1: nur abgeleitet (b)
+— ein Zusammenfall (die Reihe der Konturen hat ein Blau) liesse sich nicht
+auflösen; eine Reihe für alle nach Platz (c) — die Art wäre nicht zu sehen.
 
 **As one path** (Z5 a): die gewählten Konturen nacheinander in einem Umlauf.
 Nur so erscheint im Scope eine Zeichnung aus mehreren Teilen. Entschieden in
@@ -896,9 +957,30 @@ entscheidet das Ohr; die Auswege stehen oben.
 ersten zur zweiten wird dort gesprungen, wo sie sich am nächsten kommen;
 jede weitere wird an dem Punkt betreten, der dem letzten am nächsten liegt,
 und an demselben Punkt wieder verlassen (ein geschlossener Zug endet, wo er
-begann); von der letzten geht es zurück zum Tor der ersten. Die Arten
-„kürzeste Wege" und „von Hand" spielen bis Stufe 20d wie die Reihenfolge der
-Liste.
+begann); von der letzten geht es zurück zum Tor der ersten.
+
+**Wie die drei Arten gebaut sind (Stufe 20d, S122):** der Weg des Stifts ist
+eine Folge von **Stücken** — eine Kontur einmal ganz, oder ein Teil von ihr —,
+zwischen zwei Stücken (und vom letzten zum ersten) ein Sprung von
+`kSprungAnteil`; jedes Stück bekommt so viel vom Umlauf, wie es lang ist, und
+Harmonics gilt je Stück anteilig (ein Teil einer Kontur läuft schneller über
+ihre Reihe). **In list order** wie seit 19c. **Shortest**: jede Kontur einmal
+ganz, betreten und verlassen am selben Punkt; Reihenfolge und Tore aus einer
+Näherung — abwechselnd die Tore zur Reihenfolge (der Punkt, der beiden
+Nachbarn zusammen am nächsten liegt) und die Reihenfolge zu den Toren (2-opt),
+sechs Runden, die erste Kontur der Liste bleibt vorn; vier Quadrate an den
+Ecken in Zickzack-Reihenfolge: 386 → 320 (der Rundweg). **Drawn by hand**: die
+Brücken zwischen Konturen mit Haken bilden Bäume (eine, die einen Ring
+schlösse, bleibt weg); der Stift fährt jeden Baum ab — an einer Brücke
+verlässt er die Kontur, fährt die andere mit allem, was an ihr hängt, und
+kommt an derselben Stelle zurück; eine Kontur mit zwei Brücken wird so
+unterwegs verlassen (G2 a) und spielt in zwei Stücken. Jede Brücke ist zwei
+Sprünge, hin und zurück. Der Anfang liegt an der ersten Brücke der ersten
+Kontur; was keine Brücke erreicht, kommt in Reihenfolge der Liste dazu,
+betreten am Punkt, der dem letzten am nächsten liegt. Ein Instrument, das
+keine Shape-Schicht trägt, rechnet Bit für Bit wie vorher
+(`test_LoopWerte`). Alles in diesem Absatz ohne Verweis auf einen Entscheid
+ist von Claude gesetzt.
 
 ### Wo der Stift springt (B1, Patrik: wählbar)
 
@@ -1216,7 +1298,7 @@ Die Nummern schließen an `Loop_Konzept.md` §5 an (zuletzt Stufe 17).
 | 20a | das Form-Fenster: zeichnen (Z1 a, Z2 a) — **gebaut in S122** (§8a „Wie das Fenster gebaut ist"), im Programm ungesehen | Skizze |
 | 20b | SVG über das mitschreibende Zeichengerät (S1 a, O1 a, O2 a) — **gebaut in S122** (§8 „Wie es gebaut ist"), im Programm ungesehen | 20a |
 | 20c | Konturen aus einem Bild (K1 a, K2 a, R1 a, R2 a) — **gebaut in S122** (§8 „Wie es gebaut ist (Stufe 20c)"), im Programm ungesehen | 20a |
-| 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1) | 20a |
+| 20d | mehrere Konturen: As layers, As one path, die drei Arten der Sprünge (B1), Bridge; L1 a, F1 a, V1 a — **gebaut in S122** (§6, §8a „Wie Use as und Bridge gebaut sind", §9), im Programm ungesehen | 20a |
 
 Nach 19b ist die Form zu sehen, nach 19c zu hören und nach 19d im Scope zu
 prüfen — alles, bevor ein Fenster steht.
@@ -1242,6 +1324,7 @@ prüfen — alles, bevor ein Fenster steht.
 
 | Version | Datum | Inhalt |
 |---|---|---|
+| 0.20.0 | 2026-10-14 (S122) | **Mehrere Konturen entschieden und gebaut (Stufe 20d).** Entscheide Patrik: **L1 a** Save mit Layers legt Kopien der offenen Schicht an, ohne Doppelte, bis acht (§6); **F1 a** Farben der Schichten — Familien je Waveform in Abstufungen, Shape in der Farbe ihrer Kontur, eine eigene Farbe auf Wunsch (Patriks Idee); **V1 a** dafür keine neue Fassung der `.lvinst` (§9). Gebaut: die Stücke des Wegs mit Shortest und Drawn by hand im Ton (`sprungLinien`, `brueckeErlaubt`), Use as, Bridge, die Sprünge auf der Fläche, L1 a im Creator, `schichtFarbe` und der Farbpunkt (§8a, §9). Damit ist Stufe 20 vollständig. Im Programm ungesehen. |
 | 0.19.0 | 2026-10-14 (S122) | **Konturen aus einem Bild entschieden und gebaut (Stufe 20c).** Entscheide Patrik: **R1 a** die Regler ersetzen nur die Konturen aus dem Bild, Undo deckt es; mit b als Möglichkeit, **R2 a** der Haken **Apply live** im Fenster (aus: Vorschau in Grau und **Take contours**) (§8). Gebaut: `shape/BildKonturen`, Open image..., From image, Show image, „edge" in der Liste. Im Programm ungesehen. |
 | 0.18.0 | 2026-10-14 (S122) | **SVG entschieden und gebaut (Stufe 20b).** Entscheide Patrik: **O1 a** Open SVG... fragt bei vorhandenen Konturen Replace, Add oder Cancel (gilt auch für Open image..., 20c); **O2 a** die 64 längsten, Haken für alle bis acht, sonst nur die längste; **O3 a** teilen alle Konturen eine Farbe, bekommen sie die Farben der Reihe (§8, §8a). Gebaut: `shape/SvgKonturen`, Open SVG... im Fenster, die Zeile „n smaller ones left out". Befund: Farben über CSS-Variablen kommen nicht an (sechs `-raw`-Dateien in `asset/shapes/2`). Im Programm ungesehen. |
 | 0.17.0 | 2026-10-14 (S122) | **Das Fenster Edit shape entschieden und gebaut (Stufe 20a).** Entscheide Patrik: **Z1 a** Pen zeichnet frei Hand und Punkt für Punkt gemischt, Move point schiebt Ankerpunkte (§8); **Z2 a** der Knopf Draw entfällt (§8a). Gebaut: `shape/Zeichnen`, `loop/FormFenster`, Edit... und New shape... im Creator, das Neulesen einer geschriebenen Form im Knoten und im Creator (`zeichnungFassung`), Töne neu rechnen (`zaehleInstrumentFassung`) (§8a, §14). Im Programm ungesehen. |

@@ -7,6 +7,7 @@
 
 #include "loop/Instrument.hpp"  // eigeneInstrumenteMitForm, zaehleInstrumentFassung
 #include "shape/BildKonturen.hpp"
+#include "shape/Tonform.hpp"  // sprungLinien, brueckeErlaubt
 #include "shape/SvgKonturen.hpp"
 #include "shape/Zeichnen.hpp"
 
@@ -71,6 +72,12 @@ constexpr int kBildPauseMs = 150;
 /// So deckend steht das Bild hinter den Konturen.
 constexpr double kBildDeckung = 0.35;
 
+/// „1 contour", „3 contours" — ohne Uebersetzungsdatei setzt tr() mit %n keine Mehrzahl ein.
+QString zahlMit(int zahl, const char* eins, const char* mehr)
+{
+    return QStringLiteral("%1 %2").arg(zahl).arg(zahl == 1 ? FormFenster::tr(eins) : FormFenster::tr(mehr));
+}
+
 QString konturTitel(const shape::Kontur& kontur, int platz)
 {
     return QStringLiteral("%1 %2").arg(platz + 1).arg(kontur.name.isEmpty() ? FormFenster::tr("Contour") : kontur.name);
@@ -123,7 +130,7 @@ void FormFlaeche::setWerkzeug(Werkzeug werkzeug)
     m_werkzeug = werkzeug;
     m_gedrueckt = false;
     m_ziehAnker = -1;
-    setCursor(werkzeug == Werkzeug::Stift ? Qt::CrossCursor : Qt::ArrowCursor);
+    setCursor(werkzeug == Werkzeug::Stift ? Qt::CrossCursor : werkzeug == Werkzeug::Bruecke ? Qt::PointingHandCursor : Qt::ArrowCursor);
     update();
 }
 
@@ -144,6 +151,18 @@ void FormFlaeche::setBild(const QImage* bild, const QTransform& lage, bool zeige
 void FormFlaeche::setVorschau(std::vector<QPainterPath> vorschau)
 {
     m_vorschau = std::move(vorschau);
+    update();
+}
+
+void FormFlaeche::setSpruenge(std::vector<std::pair<QPointF, QPointF>> spruenge)
+{
+    m_spruenge = std::move(spruenge);
+    update();
+}
+
+void FormFlaeche::setBrueckeAnfang(std::optional<QPointF> punkt)
+{
+    m_brueckeAnfang = punkt;
     update();
 }
 
@@ -227,6 +246,8 @@ void FormFlaeche::stelleZeiger(QPointF ort)
 {
     if (m_werkzeug == Werkzeug::Stift)
         setCursor(Qt::CrossCursor);
+    else if (m_werkzeug == Werkzeug::Bruecke)
+        setCursor(Qt::PointingHandCursor);
     else if (m_ziehAnker >= 0)
         setCursor(Qt::ClosedHandCursor);
     else
@@ -241,6 +262,11 @@ void FormFlaeche::mousePressEvent(QMouseEvent* event)
         return;
     }
     setFocus();
+    if (m_werkzeug == Werkzeug::Bruecke)
+    {
+        Q_EMIT brueckeGeklickt(inZeichnung(event->position()));
+        return;
+    }
     m_gedrueckt = true;
     m_druckOrt = event->position();
     m_istZug = false;
@@ -316,6 +342,11 @@ void FormFlaeche::mouseDoubleClickEvent(QMouseEvent* event)
 
 void FormFlaeche::keyPressEvent(QKeyEvent* event)
 {
+    if (m_werkzeug == Werkzeug::Bruecke && event->key() == Qt::Key_Escape && m_brueckeAnfang.has_value())
+    {
+        Q_EMIT brueckeVerworfen();
+        return;
+    }
     if (m_werkzeug == Werkzeug::Stift && !m_angefangen.isEmpty())
     {
         if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)
@@ -408,6 +439,36 @@ void FormFlaeche::paintEvent(QPaintEvent*)
             p.setPen(Qt::NoPen);
             p.setBrush(farbe);
             p.drawEllipse(imBild(anker.front()), 4.0, 4.0);
+        }
+    }
+
+    // die Spruenge des Stifts (One path): grau gestrichelt, an beiden Enden ein Punkt
+    if (!m_spruenge.empty())
+    {
+        QColor grau = pal.color(QPalette::Text);
+        grau.setAlpha(140);
+        for (const auto& [von, nach] : m_spruenge)
+        {
+            p.setBrush(Qt::NoBrush);
+            p.setPen(QPen(grau, 1.3, Qt::DashLine));
+            p.drawLine(imBild(von), imBild(nach));
+            p.setPen(Qt::NoPen);
+            p.setBrush(grau);
+            p.drawEllipse(imBild(von), 2.8, 2.8);
+            p.drawEllipse(imBild(nach), 2.8, 2.8);
+        }
+    }
+    // Bridge: der erste Punkt einer Bruecke, die gerade entsteht, und die Linie zur Maus
+    if (m_brueckeAnfang.has_value())
+    {
+        const QColor wahl = pal.color(QPalette::Highlight);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(wahl, 1.6));
+        p.drawEllipse(imBild(*m_brueckeAnfang), kFangRadius, kFangRadius);
+        if (m_maus.x() >= 0.0)
+        {
+            p.setPen(QPen(wahl, 1.2, Qt::DashLine));
+            p.drawLine(imBild(*m_brueckeAnfang), m_maus);
         }
     }
 
@@ -587,8 +648,8 @@ void FormFenster::setupUI()
     };
     m_stift = werkzeug(tr("Pen"), "shapePen", tr("Draw a contour: drag to draw freehand, click to set corners"));
     m_schieben = werkzeug(tr("Move point"), "shapeMovePoint", tr("Drag a point of a contour to move it"));
-    m_bruecke = werkzeug(tr("Bridge"), "shapeBridge", tr("Not available yet"));
-    m_bruecke->setEnabled(false);
+    m_bruecke = werkzeug(tr("Bridge"), "shapeBridge",
+                         tr("Set a jump by hand: click a point on one contour, then one on another — click a bridge to remove it"));
     m_zeigeBild = new QCheckBox(tr("Show image"), this);
     m_zeigeBild->setObjectName(QStringLiteral("shapeShowImage"));
     m_zeigeBild->setChecked(true);
@@ -693,23 +754,31 @@ void FormFenster::setupUI()
     {
         auto* nutzung = new QGroupBox(tr("Use as"), this);
         nutzung->setObjectName(QStringLiteral("shapeUseAs"));
-        nutzung->setEnabled(false);
-        nutzung->setToolTip(tr("Not available yet"));
         auto* g = new QVBoxLayout(nutzung);
         // grau, aber mit dem, was in der Datei steht (die Reihenfolge wie `shape::Nutzung`, `shape::Spruenge`)
         m_nutzungSchichten = new QRadioButton(tr("Layers, one per contour"), nutzung);
+        m_nutzungSchichten->setToolTip(tr("Saved from the Instrument Creator, every ticked contour gets a layer of its own"));
         m_nutzungSchichten->setObjectName(QStringLiteral("shapeUseAsLayers"));
         m_nutzungPfad = new QRadioButton(tr("One path"), nutzung);
         m_nutzungPfad->setObjectName(QStringLiteral("shapeUseAsOnePath"));
+        m_nutzungPfad->setToolTip(tr("Saved from the Instrument Creator, the layer plays all ticked contours one after the other "
+                                     "in one round of the pen"));
         g->addWidget(m_nutzungSchichten);
         g->addWidget(m_nutzungPfad);
         m_spruenge = new QComboBox(nutzung);
         m_spruenge->setObjectName(QStringLiteral("shapeJumps"));
         m_spruenge->addItems({tr("In list order"), tr("Shortest"), tr("Drawn by hand")});
+        m_spruenge->setToolTip(tr("Where the pen jumps from one contour to the next: in the order of the list, on the "
+                                  "shortest ways, or along bridges drawn with Bridge"));
         auto* zeile = new QHBoxLayout;
         zeile->addWidget(new QLabel(tr("Jumps"), nutzung));
         zeile->addWidget(m_spruenge, 1);
         g->addLayout(zeile);
+        m_zahlen = new QLabel(nutzung);
+        m_zahlen->setObjectName(QStringLiteral("shapeUseAsCount"));
+        m_zahlen->setEnabled(false);
+        m_zahlen->setWordWrap(true);
+        g->addWidget(m_zahlen);
         g->addStretch(1);
         gruppen->addWidget(nutzung, 1);
     }
@@ -812,6 +881,18 @@ void FormFenster::setupUI()
     connect(abbrechen, &QPushButton::clicked, this, &QWidget::close);
     connect(m_svg, &QPushButton::clicked, this, &FormFenster::frageNachSvg);
     connect(m_bild, &QPushButton::clicked, this, &FormFenster::frageNachBild);
+    connect(m_bruecke, &QToolButton::clicked, this, [this] { setzeWerkzeug(FormFlaeche::Werkzeug::Bruecke); });
+    connect(m_flaeche, &FormFlaeche::brueckeGeklickt, this, &FormFenster::brueckeKlick);
+    connect(m_flaeche, &FormFlaeche::brueckeVerworfen, this, [this] {
+        m_brueckeAnfang.reset();
+        m_brueckenMeldung.clear();
+        m_flaeche->setBrueckeAnfang(std::nullopt);
+        zeigeKnoepfe();
+    });
+    connect(m_nutzungSchichten, &QRadioButton::clicked, this, [this] { setzeNutzung(shape::Nutzung::Schichten); });
+    connect(m_nutzungPfad, &QRadioButton::clicked, this, [this] { setzeNutzung(shape::Nutzung::EinPfad); });
+    connect(m_spruenge, QOverload<int>::of(&QComboBox::activated), this,
+            [this](int index) { setzeSpruenge(static_cast<shape::Spruenge>(index)); });
     connect(m_zeigeBild, &QCheckBox::toggled, this, [this](bool an) { m_flaeche->setBild(&m_bildDaten, m_bildLage, an); });
     m_bildTakt = new QTimer(this);
     m_bildTakt->setSingleShot(true);
@@ -837,8 +918,8 @@ void FormFenster::setupUI()
         if (!m_zeichnung.konturen.empty())
         {
             QMessageBox frage(QMessageBox::Question, windowTitle(),
-                              tr("The shape already holds %n contour(s). Replace them with the contours from the picture, or add those?",
-                                 nullptr, static_cast<int>(m_zeichnung.konturen.size())),
+                              tr("The shape already holds %1. Replace them with the contours from the picture, or add those?")
+                                  .arg(zahlMit(static_cast<int>(m_zeichnung.konturen.size()), "contour", "contours")),
                               QMessageBox::NoButton, this);
             QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
             QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
@@ -866,7 +947,8 @@ void FormFenster::setupUI()
         const QSignalBlocker ruhe(m_harmonischeRegler);
         m_harmonischeRegler->setValue(static_cast<int>(std::lround(40.0 * std::log2(m_harmonische))));
     }
-    resize(820, 600);
+    // seit 20d tragen Hinweis und Use as mehrere Zeilen: bei 820 × 600 ueberdeckte die Werkzeugzeile die Flaeche
+    resize(900, 720);
 }
 
 void FormFenster::setEngine(IAudioEngine* engine)
@@ -954,7 +1036,13 @@ void FormFenster::passeAnsichtAn()
 void FormFenster::setzeWerkzeug(FormFlaeche::Werkzeug werkzeug)
 {
     m_flaeche->setWerkzeug(werkzeug);
-    (werkzeug == FormFlaeche::Werkzeug::Stift ? m_stift : m_schieben)->setChecked(true);
+    (werkzeug == FormFlaeche::Werkzeug::Stift ? m_stift : werkzeug == FormFlaeche::Werkzeug::Bruecke ? m_bruecke : m_schieben)->setChecked(true);
+    if (werkzeug != FormFlaeche::Werkzeug::Bruecke)
+    {
+        m_brueckeAnfang.reset();
+        m_flaeche->setBrueckeAnfang(std::nullopt);
+    }
+    m_brueckenMeldung.clear();
     zeigeKnoepfe();
 }
 
@@ -1220,6 +1308,10 @@ void FormFenster::zeigeAlles()
     zeigeBildRegler();
     (m_zeichnung.nutzung == shape::Nutzung::EinPfad ? m_nutzungPfad : m_nutzungSchichten)->setChecked(true);
     m_spruenge->setCurrentIndex(static_cast<int>(m_zeichnung.spruenge));
+    m_spruenge->setEnabled(m_zeichnung.nutzung == shape::Nutzung::EinPfad);
+    m_zahlen->setText(zahlenZeile());
+    m_flaeche->setSpruenge(m_zeichnung.nutzung == shape::Nutzung::EinPfad ? shape::sprungLinien(m_zeichnung)
+                                                                           : std::vector<std::pair<QPointF, QPointF>>{});
     zeigeKnoepfe();
 }
 
@@ -1259,7 +1351,10 @@ void FormFenster::zeigeListe()
 void FormFenster::zeigeKnoepfe()
 {
     const bool stift = m_flaeche->werkzeug() == FormFlaeche::Werkzeug::Stift;
-    if (!stift)
+    if (m_flaeche->werkzeug() == FormFlaeche::Werkzeug::Bruecke)
+        m_hinweis->setText(!m_brueckenMeldung.isEmpty() ? m_brueckenMeldung
+                                                        : tr("Click a point on one contour, then one on another · click a bridge to remove it"));
+    else if (!stift)
         m_hinweis->setText(tr("Drag a point to move it · Ctrl+Z undoes"));
     else if (!m_flaeche->angefangen().isEmpty())
         m_hinweis->setText(tr("Go on drawing · click the first point, double-click or press Enter to close · Esc discards"));
@@ -1367,9 +1462,8 @@ void FormFenster::frageNachSvg()
     {
         // O1 a: stehen schon Konturen da, entscheidet der Nutzer
         QMessageBox frage(QMessageBox::Question, windowTitle(),
-                          tr("The shape already holds %n contour(s). Replace them with the contours of %1, or add those?", nullptr,
-                             static_cast<int>(m_zeichnung.konturen.size()))
-                              .arg(QFileInfo(datei).fileName()),
+                          tr("The shape already holds %1. Replace them with the contours of %2, or add those?")
+                              .arg(zahlMit(static_cast<int>(m_zeichnung.konturen.size()), "contour", "contours"), QFileInfo(datei).fileName()),
                           QMessageBox::NoButton, this);
         QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
         QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
@@ -1577,9 +1671,8 @@ void FormFenster::frageNachBild()
     {
         // O1 a: stehen schon Konturen da, entscheidet der Nutzer (ohne Apply live erst bei Take contours)
         QMessageBox frage(QMessageBox::Question, windowTitle(),
-                          tr("The shape already holds %n contour(s). Replace them with the contours of %1, or add those?", nullptr,
-                             static_cast<int>(m_zeichnung.konturen.size()))
-                              .arg(QFileInfo(datei).fileName()),
+                          tr("The shape already holds %1. Replace them with the contours of %2, or add those?")
+                              .arg(zahlMit(static_cast<int>(m_zeichnung.konturen.size()), "contour", "contours"), QFileInfo(datei).fileName()),
                           QMessageBox::NoButton, this);
         QPushButton* ersetzen = frage.addButton(tr("Replace"), QMessageBox::DestructiveRole);
         QPushButton* hinzu = frage.addButton(tr("Add"), QMessageBox::AcceptRole);
@@ -1597,6 +1690,146 @@ void FormFenster::frageNachBild()
     }
     if (nimmBild(datei, art) < 0)
         QMessageBox::warning(this, windowTitle(), tr("Could not read %1 as a picture").arg(QDir::toNativeSeparators(datei)));
+}
+
+// =============================================================================
+// Use as und Bridge (Stufe 20d)
+// =============================================================================
+
+void FormFenster::setzeNutzung(shape::Nutzung nutzung)
+{
+    if (m_zeichnung.nutzung == nutzung) return;
+    merke();
+    m_zeichnung.nutzung = nutzung;
+    geaendertJetzt();
+}
+
+void FormFenster::setzeSpruenge(shape::Spruenge spruenge)
+{
+    if (m_zeichnung.spruenge == spruenge) return;
+    merke();
+    m_zeichnung.spruenge = spruenge;
+    geaendertJetzt();
+}
+
+bool FormFenster::setzeBruecke(int von, QPointF vonPunkt, int nach, QPointF nachPunkt)
+{
+    if (!shape::brueckeErlaubt(m_zeichnung, von, nach)) return false;
+    merke();
+    m_zeichnung.bruecken.push_back(shape::Bruecke{von, vonPunkt, nach, nachPunkt});
+    // eine Bruecke wirkt nur bei One path mit Drawn by hand — wer eine setzt, meint das
+    m_zeichnung.nutzung = shape::Nutzung::EinPfad;
+    m_zeichnung.spruenge = shape::Spruenge::VonHand;
+    geaendertJetzt();
+    return true;
+}
+
+bool FormFenster::entferneBruecke(int platz)
+{
+    if (platz < 0 || platz >= static_cast<int>(m_zeichnung.bruecken.size())) return false;
+    merke();
+    m_zeichnung.bruecken.erase(m_zeichnung.bruecken.begin() + platz);
+    geaendertJetzt();
+    return true;
+}
+
+std::pair<int, QPointF> FormFenster::konturBei(QPointF punkt) const
+{
+    const double radius = FormFlaeche::kFangRadius * m_flaeche->einheitJePunkt();
+    int beste = 0;
+    QPointF ort;
+    double naechst = radius;
+    for (const shape::Kontur& k : m_zeichnung.konturen)
+        for (const shape::Punkt& p : shape::abtasten(k.pfad, 512))
+        {
+            const QPointF hier(p.real(), -p.imag());  // abtasten dreht y nach oben
+            if (const double d = QLineF(hier, punkt).length(); d <= naechst)
+            {
+                naechst = d;
+                beste = k.kennung;
+                ort = hier;
+            }
+        }
+    return {beste, ort};
+}
+
+void FormFenster::brueckeKlick(QPointF punkt)
+{
+    const double radius = FormFlaeche::kFangRadius * m_flaeche->einheitJePunkt();
+    // ein Klick auf eine bestehende Bruecke entfernt sie
+    if (!m_brueckeAnfang.has_value())
+        for (std::size_t i = 0; i < m_zeichnung.bruecken.size(); ++i)
+        {
+            const shape::Bruecke& b = m_zeichnung.bruecken[i];
+            const QLineF linie(b.vonPunkt, b.nachPunkt);
+            const double laenge2 = linie.dx() * linie.dx() + linie.dy() * linie.dy();
+            const double t = laenge2 > 0.0 ? std::clamp(((punkt.x() - b.vonPunkt.x()) * linie.dx() + (punkt.y() - b.vonPunkt.y()) * linie.dy()) / laenge2, 0.0, 1.0) : 0.0;
+            const QPointF fuss = b.vonPunkt + t * (b.nachPunkt - b.vonPunkt);
+            // nicht an ihren Enden: dort beginnt eher eine neue
+            if (QLineF(fuss, punkt).length() <= radius && t > 0.1 && t < 0.9)
+            {
+                (void)entferneBruecke(static_cast<int>(i));
+                m_brueckenMeldung = tr("Bridge removed");
+                zeigeKnoepfe();
+                return;
+            }
+        }
+    const auto [kennung, ort] = konturBei(punkt);
+    if (kennung == 0)
+    {
+        m_brueckenMeldung = tr("Click on a contour");
+    }
+    else if (!m_brueckeAnfang.has_value())
+    {
+        m_brueckeAnfang = std::make_pair(kennung, ort);
+        m_brueckenMeldung = tr("Now click a point on another contour · Esc cancels");
+    }
+    else if (m_brueckeAnfang->first == kennung)
+    {
+        m_brueckenMeldung = tr("A bridge joins two different contours — click on another one");
+    }
+    else
+    {
+        const auto anfang = *m_brueckeAnfang;
+        m_brueckeAnfang.reset();
+        m_brueckenMeldung = setzeBruecke(anfang.first, anfang.second, kennung, ort)
+                                ? tr("Bridge set")
+                                : tr("This bridge would close a ring — the two contours are already joined, so it is not taken");
+    }
+    m_flaeche->setBrueckeAnfang(m_brueckeAnfang.has_value() ? std::optional<QPointF>(m_brueckeAnfang->second) : std::nullopt);
+    zeigeKnoepfe();
+}
+
+QString FormFenster::zahlenZeile() const
+{
+    int mitHaken = 0;
+    for (const shape::Kontur& k : m_zeichnung.konturen) mitHaken += k.gewaehlt ? 1 : 0;
+    if (m_zeichnung.nutzung == shape::Nutzung::Schichten)
+        return tr("%1 · one layer each").arg(zahlMit(mitHaken, "ticked contour", "ticked contours"));
+    const auto spruenge = shape::sprungLinien(m_zeichnung);
+    QString zeile = zahlMit(mitHaken, "contour", "contours") + QStringLiteral(" · ") +
+                    zahlMit(static_cast<int>(spruenge.size()), "jump", "jumps");
+    if (m_zeichnung.spruenge == shape::Spruenge::VonHand && mitHaken > 1)
+    {
+        // wie viele keine Bruecke erreicht (G2 a): die kommen in Reihenfolge der Liste dazu
+        std::vector<int> erreicht;
+        for (const shape::Bruecke& b : m_zeichnung.bruecken)
+        {
+            const shape::Kontur* von = m_zeichnung.finde(b.von);
+            const shape::Kontur* nach = m_zeichnung.finde(b.nach);
+            if (von == nullptr || nach == nullptr || !von->gewaehlt || !nach->gewaehlt) continue;
+            erreicht.push_back(b.von);
+            erreicht.push_back(b.nach);
+        }
+        std::sort(erreicht.begin(), erreicht.end());
+        erreicht.erase(std::unique(erreicht.begin(), erreicht.end()), erreicht.end());
+        const int ohne = mitHaken - static_cast<int>(erreicht.size());
+        if (erreicht.empty())
+            zeile += QStringLiteral("\n") + tr("No bridges yet — set them with Bridge; until then in list order");
+        else if (ohne > 0)
+            zeile += QStringLiteral("\n") + tr("%1 not reached by a bridge — added in list order").arg(ohne);
+    }
+    return zeile;
 }
 
 QString FormFenster::nutzerZeile() const

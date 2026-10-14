@@ -113,8 +113,8 @@ TEST_CASE("Shape Fenster: zeichnen mit Pen — Klicks, frei Hand, Doppelklick, E
     CHECK(fenster.findChild<QLabel*>(QStringLiteral("shapeLocation"))->text() == QStringLiteral("Not saved yet"));
     CHECK(flaeche->werkzeug() == FormFlaeche::Werkzeug::Stift);
     CHECK(fenster.findChild<QToolButton*>(QStringLiteral("shapePen"))->isChecked());
-    // Open SVG... seit 20b, Open image... seit 20c; Show image und From image erst mit einem Bild
-    for (const char* grau : {"shapeBridge", "shapeShowImage", "shapeFromImage", "shapeUseAs"})
+    // Open SVG... seit 20b, Open image... seit 20c, Bridge und Use as seit 20d; Show image und From image erst mit einem Bild
+    for (const char* grau : {"shapeShowImage", "shapeFromImage"})
     {
         INFO(grau);
         auto* teil = fenster.findChild<QWidget*>(QLatin1String(grau));
@@ -461,7 +461,7 @@ TEST_CASE("Shape Fenster im Creator: Edit... und New shape... — die Schicht sp
     fenster->benenne(1, QStringLiteral("Mein Herz"));
     REQUIRE(fenster->speichereAls(QStringLiteral("Herz 2")) == QStringLiteral("user:herz_2"));
     CHECK(creator.schicht().form == QStringLiteral("user:herz_2"));
-    CHECK(creator.schicht().formKontur == 0);
+    CHECK(creator.schicht().formKontur == 1);  // Use as: Layers (die Vorgabe) — die erste angehakte Kontur (L1 a, seit 20d)
     CHECK(formName->text() == QStringLiteral("Herz 2"));
 
     // --- New shape...: leer; was gespeichert wird, spielt die Schicht
@@ -473,23 +473,38 @@ TEST_CASE("Shape Fenster im Creator: Edit... und New shape... — die Schicht sp
     CHECK(creator.schicht().form == QStringLiteral("user:dreieck"));
     CHECK(formName->text() == QStringLiteral("Dreieck"));
 
-    // --- dieselbe Form neu geschrieben: die gewaehlte Kontur bleibt — bis es sie nicht mehr gibt
-    creator.aendereSchicht([a](Schicht& s) { s.formKontur = a; });
+    CHECK(creator.schicht().formKontur == a);
+
+    // --- dieselbe Form neu geschrieben, mit einer zweiten Kontur: die offene Schicht behaelt ihre, die neue bekommt
+    // eine Kopie der offenen Schicht gleich dahinter (L1 a, seit 20d)
+    creator.aendereSchicht([](Schicht& s) {
+        s.name = QStringLiteral("Lead");
+        s.harmonische = 7.0;
+    });
     REQUIRE(creator.oeffneFormBearbeiten(false));
     const int b = fenster->fuegeKonturHinzu(dreieck(60.0));
     REQUIRE(fenster->speichere() == QStringLiteral("user:dreieck"));
     CHECK(creator.schicht().formKontur == a);
+    REQUIRE(creator.instrument().schichten.size() == 2);
+    CHECK(creator.instrument().schichten[1].formKontur == b);
+    CHECK(creator.instrument().schichten[1].form == QStringLiteral("user:dreieck"));
+    CHECK(creator.instrument().schichten[1].harmonische == doctest::Approx(7.0));
+    CHECK(creator.instrument().schichten[1].name == QStringLiteral("Lead · Contour"));
+    // noch einmal gespeichert: keine Doppelten
+    REQUIRE(creator.oeffneFormBearbeiten(false));
+    fenster->benenne(b, QStringLiteral("Rechts"));
+    REQUIRE(fenster->speichere() == QStringLiteral("user:dreieck"));
+    CHECK(creator.instrument().schichten.size() == 2);
     auto* kontur = creator.findChild<QComboBox*>(QStringLiteral("creatorShapeContour"));
     REQUIRE(kontur != nullptr);
     CHECK(kontur->count() == 3);  // All, one path und zwei Konturen: neu gelesen
     REQUIRE(creator.oeffneFormBearbeiten(false));
     REQUIRE(fenster->entferne(a));
     REQUIRE(fenster->speichere() == QStringLiteral("user:dreieck"));
-    CHECK(creator.schicht().formKontur == 0);
+    CHECK(creator.schicht().formKontur == b);  // ihre Kontur gibt es nicht mehr: die erste angehakte
     // das Bild „Shape, as it plays" zeigt die neue Form: das zweite Dreieck allein
     REQUIRE(creator.formBild() != nullptr);
     CHECK_FALSE(creator.formBild()->zeichnung().isEmpty());
-    (void)b;
 
     // --- eine Form, die es nicht gibt: Edit... ist grau
     creator.setzeForm(QStringLiteral("gibt_es_nicht"));

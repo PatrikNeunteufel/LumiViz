@@ -93,6 +93,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ShapeFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShapeSvg.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShapeBild.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ShapeSpruenge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_XyScopeKnoten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAufnahme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAufnahmeFenster.cpp"

@@ -7,6 +7,7 @@
 
 #include "loop/Kit.hpp"
 #include "loop/Sample.hpp"
+#include "shape/Kontur.hpp"   // die Farbe einer Shape-Schicht (Stufe 20d)
 #include "shape/Tonform.hpp"  // die Schwingung Form (Stufe 19c)
 
 #include <QDir>
@@ -22,7 +23,9 @@
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <map>
 #include <memory>
+#include <mutex>
 
 namespace lumi::loop
 {
@@ -742,6 +745,8 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("shapeStereoXY")] = schicht.stereoXY;
         o[QStringLiteral("shapeReverse")] = schicht.rueckwaerts;
     }
+    // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
+    if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
     return o;
 }
 
@@ -799,6 +804,9 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.formStartProzent = zahl("shapeStart", vorgabe.formStartProzent, 0.0, 100.0);
     neu.stereoXY = wurzel.value(QStringLiteral("shapeStereoXY")).toBool(false);
     neu.rueckwaerts = wurzel.value(QStringLiteral("shapeReverse")).toBool(false);
+    // die eigene Farbe (Stufe 20d); fehlt sie oder ist sie keine, gilt die abgeleitete
+    if (const QColor farbe(wurzel.value(QStringLiteral("color")).toString()); farbe.isValid())
+        neu.farbe = farbe.name(QColor::HexRgb);
     neu.reihe.clear();
     if (const QJsonValue reihe = wurzel.value(QStringLiteral("path")); reihe.isArray())
     {
@@ -1150,6 +1158,78 @@ QStringList eigeneInstrumenteMitForm(const QString& nennung)
         if (spieltEs) titel << instrument.titel;
     }
     return titel;
+}
+
+namespace
+{
+
+/// Vier Abstufungen je Familie (F1 a): die n-te Schicht derselben Art bekommt die n-te.
+struct Familie
+{
+    Schwingung schwingung;
+    std::array<const char*, 4> farben;
+};
+constexpr std::array<Familie, 7> kFamilien = {{
+    {Schwingung::Sinus, {"#3b7be0", "#7aa9f0", "#2556a8", "#a9c8f7"}},
+    {Schwingung::Dreieck, {"#2fa356", "#6ccb88", "#1d7039", "#a3e0b4"}},
+    {Schwingung::Saege, {"#d93f3f", "#ef7a7a", "#9c2626", "#f6aeae"}},
+    {Schwingung::Rechteck, {"#e5801f", "#f3a85f", "#a85a10", "#f8cb98"}},
+    {Schwingung::Saite, {"#c9a227", "#e2c55e", "#8d7116", "#efdc9c"}},
+    {Schwingung::Rauschen, {"#8c8c8c", "#b3b3b3", "#5f5f5f", "#d2d2d2"}},
+    {Schwingung::Sample, {"#9160d9", "#b590f0", "#653ba3", "#d2bdf6"}},
+}};
+
+/// Die Farbe einer Kontur in einer Form — gelesen einmal je Nennung und Fassung der Zeichnungen.
+QColor konturFarbeIn(const QString& nennung, int kontur)
+{
+    struct Gelesen
+    {
+        std::uint64_t fassung = 0;
+        bool gefunden = false;
+        shape::Zeichnung zeichnung;
+    };
+    static std::mutex sperre;
+    static std::map<QString, Gelesen> gemerkt;
+    const std::uint64_t fassung = shape::zeichnungFassung();
+    shape::Zeichnung zeichnung;
+    {
+        const std::lock_guard<std::mutex> halt(sperre);
+        auto it = gemerkt.find(nennung);
+        if (it == gemerkt.end() || it->second.fassung != fassung)
+        {
+            Gelesen neu;
+            neu.fassung = fassung;
+            neu.gefunden = shape::holeZeichnung(nennung, neu.zeichnung);
+            it = gemerkt.insert_or_assign(nennung, std::move(neu)).first;
+        }
+        if (!it->second.gefunden) return QColor(0x8c, 0x8c, 0x8c);  // nicht gefunden: grau wie eine stumme Schicht
+        zeichnung = it->second.zeichnung;
+    }
+    for (const shape::Kontur& k : zeichnung.konturen)
+        if (kontur == 0 ? k.gewaehlt : k.kennung == kontur) return QColor(k.farbe);
+    return QColor(0x8c, 0x8c, 0x8c);
+}
+
+}  // namespace
+
+QColor abgeleiteteSchichtFarbe(const Instrument& instrument, int platz)
+{
+    if (platz < 0 || platz >= static_cast<int>(instrument.schichten.size())) return {};
+    const Schicht& schicht = instrument.schichten[static_cast<std::size_t>(platz)];
+    if (schicht.schwingung == Schwingung::Form) return konturFarbeIn(schicht.form, schicht.formKontur);
+    int davor = 0;
+    for (int i = 0; i < platz; ++i) davor += instrument.schichten[static_cast<std::size_t>(i)].schwingung == schicht.schwingung ? 1 : 0;
+    for (const Familie& f : kFamilien)
+        if (f.schwingung == schicht.schwingung) return QColor(QLatin1String(f.farben[static_cast<std::size_t>(davor) % f.farben.size()]));
+    return QColor(0x8c, 0x8c, 0x8c);
+}
+
+QColor schichtFarbe(const Instrument& instrument, int platz)
+{
+    if (platz < 0 || platz >= static_cast<int>(instrument.schichten.size())) return {};
+    const QString& eigene = instrument.schichten[static_cast<std::size_t>(platz)].farbe;
+    if (const QColor farbe(eigene); !eigene.isEmpty() && farbe.isValid()) return farbe;
+    return abgeleiteteSchichtFarbe(instrument, platz);
 }
 
 bool speichereEigenes(Instrument& instrument, const QString& name)
