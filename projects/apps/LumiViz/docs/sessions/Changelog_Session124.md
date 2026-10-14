@@ -25,6 +25,11 @@
   Kit —, **Remove empty tracks the kit doesn't have** nimmt leere Spuren weg,
   die zum neuen Kit nicht passen. Eine solche Spur mit Schritten bleibt und
   trägt ein **\*** in Bernstein; eine Zeile unter dem Raster sagt, was es heißt.
+- **Ein Icon für Kits** (`.lvkit`): die Marke mit einer Snare und zwei
+  gekreuzten Sticks — am Knopf Kit, in Import data, im Explorer nach
+  `register_file_icons.ps1 -Apply`.
+- **Benutzerhandbuch** §16 „Kits" (Rollen, Knopf Kit, die Haken, das \*, das
+  Fenster Kits) und §17 `.lvkit`.
 - **Fenster Kits** (Stufe 21c, Skizze gebilligt S123, K7 a, K8 a):
   - links die Liste: *Built-in kits* mit Schloss, *My kits*; darunter
     **Duplicate** (eine eigene Kopie, „808 copy"), **Rename** (nur der Titel —
@@ -51,7 +56,7 @@
 
 ## Offen
 
-- Stufe 21e (Icon, Handbuch, Sichttest-Liste, voller Lauf).
+- Patriks Sichttest mit `.claude\handover\Sichttest_Kits.md`.
 - Gehört ist von den neuen Kits noch nichts im Programm; Hörproben liegen
   bereit.
 - Kosmetisch: in der gewählten Zeile der Tabelle scheinen schmale Striche der
@@ -64,7 +69,8 @@
 - K10/K11: ein Fall in `test_LoopKits.cpp` (das Modell), einer in
   `test_LoopDrumEditor.cpp` (`LUMIVIZ_DRUM_K11_BILD=<datei.png>` legt ein Bild
   ab — angesehen); der Fall zu 21b prüft K2 a mit beiden Haken aus. Danach
-  1215 Cases, 242 Bereichsfälle unter beiden Compilern grün.
+  1215 Cases, 242 Bereichsfälle unter beiden Compilern grün. Zum Abschluss von
+  Stufe 21 der volle Lauf: 1215 / 1215, 0 Skips (Testing-MSVC, Bildschirm 2).
 - Stufe 21d: in fünf Tests die Zahlen nachgestellt (75 Samples, 93
   Instrumente, 20 Drums, 14 Kits); zehn Prüfwerte dazu (die Besen, Brush
   Swing), keiner geändert.

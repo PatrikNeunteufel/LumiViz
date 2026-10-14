@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.222.0
+> **Version:** 1.223.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5008,8 +5008,11 @@ geht), **3 a** (Kits als eigene Einheit, mit Skizze vorher).
   der Hinweisfarbe für fremde Spuren mit Schritten. Ursprünglicher Plan:
   ~~**21d** Rock'n'Roll, Hardrock, Heavy Metal
   und Jazz Brushes aus DrumGizmo (DRSKit, CrocellKit, CC BY 4.0 — Downloads zur
-  Freigabe) mit gerechneten Besen und dem Loop Brush Swing~~. Offen: **21e** Icon
-  (I1 a: Trommel mit Sticks), Handbuch, Sichttest. Patrik überlegt, das
+  Freigabe) mit gerechneten Besen und dem Loop Brush Swing~~. **21e gemacht** (S124): Icon `.lvkit` (I2 a), Handbuch §16 „Kits", Liste
+  `Sichttest_Kits.md`, voller Lauf 1215 / 1215 — **Stufe 21 fertig**; offen: Patriks
+  Sichttest mit der Liste (K, N, R, F, A, I, U) und sein Ohr an `hoerproben_21d`;
+  `register_file_icons.ps1 -Apply` (Patrik). Ursprünglich offen: ~~**21e** Icon
+  (I1 a: Trommel mit Sticks), Handbuch, Sichttest~~. Patrik überlegt, das
   Besen-Paket von Ben Burnes zu kaufen — vor dem Einbau die Lizenz im Download
   prüfen (2019 hieß es CC0).
 - ⬜ Patriks Ohr an `.claude/handover/hoerproben_s123/` (Instrumente und die
@@ -5682,6 +5685,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.223.0 | 2026-10-14 | Session 124. Kits **21e gemacht**, **Stufe 21 fertig**: Icon `.lvkit` (I2 a), Benutzerhandbuch 1.163.0, Liste `Sichttest_Kits.md`; voller Lauf 1215 / 1215. Als Nächstes: „Bars kleiner als 4" mit dem Fehler beim Einfügen (§7). |
 | 1.222.0 | 2026-10-14 | Session 124. K10 a und K11 a gebaut (Kitwechsel mit zwei Haken, * für fremde Spuren); §7 „Bars kleiner als 4" um den Befund Kopieren/Einfügen ergänzt (Versatz bei leeren Rändern der Auswahl — mit jenem Punkt zu bauen, Wunsch Patrik). 1215 Cases. |
 | 1.221.0 | 2026-10-14 | Session 124. Kits **21d gebaut** (D1 a bis D6 a): 37 Stereo-Samples aus DrumGizmo (CC BY 4.0), drei Besen, vier Kits (vierzehn), Brush Swing; 75 Samples, 93 Instrumente. Offen: 21e, Patriks Ohr an `hoerproben_21d`. |
 | 1.220.0 | 2026-10-14 | Session 124. Kits **21c gebaut**: das Fenster Kits, die Auswahl Sound als gemeinsames Bauteil, Used by mit den zuletzt geöffneten Loops. 1213 Cases; 240 Bereichsfälle unter Testing-MSVC grün. Offen: 21d, 21e. |

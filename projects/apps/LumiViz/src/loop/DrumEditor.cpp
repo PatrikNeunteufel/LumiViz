@@ -18,6 +18,7 @@
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"  // abweichFarbe: die Hinweisfarbe
+#include "UI/widgets/PresetTypeIcons.hpp"  // dateiArtIcon
 
 #include <QAbstractItemView>
 #include <QCheckBox>
@@ -1776,6 +1777,8 @@ QString DrumEditor::kitText() const
 void DrumEditor::zeigeKit()
 {
     m_kitKnopf->setText(kitText());  // den Pfeil des Menues zeichnet der Knopf selbst
+    // das Datei-Icon der Kits (S124, I2 a; A2 a: wo ein Kit beim Namen steht)
+    if (m_kitKnopf->icon().isNull()) m_kitKnopf->setIcon(lumi::ui::dateiArtIcon(QStringLiteral("lvkit")));
     m_kitKnopf->setToolTip(tr("Choose a kit: every track takes the sound of its role, the steps stay. "
                               "\"(changed)\" means a track differs from the kit"));
     m_kitZeile->setText(m_kitMeldung);

@@ -55,6 +55,7 @@ $types = @(
     @{ Ext = '.lvcomp';  ProgId = 'LumiViz.Composition'; Text = 'LumiViz Composition';       Icon = 'lumiviz_lvcomp.ico';  Own = $true  }
     @{ Ext = '.lvloop';  ProgId = 'LumiViz.Loop';        Text = 'LumiViz Loop';              Icon = 'lumiviz_lvloop.ico';  Own = $true  }
     @{ Ext = '.lvinst';  ProgId = 'LumiViz.Instrument';  Text = 'LumiViz Instrument';        Icon = 'lumiviz_lvinst.ico';  Own = $true  }
+    @{ Ext = '.lvkit';   ProgId = 'LumiViz.Kit';         Text = 'LumiViz Drum Kit';          Icon = 'lumiviz_lvkit.ico';   Own = $true  }
     @{ Ext = '.lvcontour'; ProgId = 'LumiViz.Contour';   Text = 'LumiViz Contour';           Icon = 'lumiviz_lvcontour.ico'; Own = $true }
     @{ Ext = '.lvfade';  ProgId = 'LumiViz.Fade';        Text = 'LumiViz Fade Preset';       Icon = 'lumiviz_lvfade.ico';  Own = $true  }
     @{ Ext = '.lvshape'; ProgId = 'LumiViz.CurvePiece';  Text = 'LumiViz Curve Piece Preset'; Icon = 'lumiviz_lvshape.ico'; Own = $true  }

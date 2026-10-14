@@ -24,6 +24,7 @@ Windows).
 | `.lvcomp` (Komposition des Composers, S100) | `lumiviz_lvcomp.ico` — der Fächer mit Zeitstrahl und Abspielmarke (Entscheide Patrik S100) | erzeugt aus `lumiviz.ico` | Effect Browser (Doppelklick öffnet die Komposition), Panel Composer vor dem Dateinamen |
 | `.lvloop` (Loop, S120) | `lumiviz_lvloop.ico` — Marke mit Schritt-Raster und Bogen zurück zum Anfang | erzeugt aus `lumiviz.ico` | Audio Browser, Loop-Panel (Datei-Zeile) |
 | `.lvinst` (Instrument, S120) | `lumiviz_lvinst.ico` — Marke mit Klaviertasten | erzeugt aus `lumiviz.ico` | Instrument-Editor (Kopfzeile), Import data (Liste) |
+| `.lvkit` (Drum-Kit, S124) | `lumiviz_lvkit.ico` — Marke mit Snare und gekreuzten Sticks (Entscheide Patrik I1 a, I2 a) | erzeugt aus `lumiviz.ico` | Drum-Editor (Knopf Kit), Import data (Liste) |
 | `.lvcontour` (Kontur für die Waveform Shape, S120 — die Datei gibt es noch nicht) | `lumiviz_lvcontour.ico` — Marke mit Kontur und Stift | erzeugt aus `lumiviz.ico` | noch nicht |
 | `.lvfade` (Blende des Curve Editors, S120) | `lumiviz_lvfade.ico` — Marke mit Keil | erzeugt aus `lumiviz.ico` | Import data (Liste) |
 | `.lvshape` (Stück des Curve Editors, S120) | `lumiviz_lvshape.ico` — Marke mit Hügel | erzeugt aus `lumiviz.ico` | Import data (Liste) |
@@ -48,6 +49,7 @@ zeigt dieselben Dateien. Neu bauen nach jedem neuen oder geänderten Icon:
 | ![lumiviz_lvcomp](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvcomp.png) | `lumiviz_lvcomp.ico` — Fächer mit Zeitstrahl | `.lvcomp` |
 | ![lumiviz_lvloop](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvloop.png) | `lumiviz_lvloop.ico` | `.lvloop` |
 | ![lumiviz_lvinst](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvinst.png) | `lumiviz_lvinst.ico` | `.lvinst` |
+| ![lumiviz_lvkit](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvkit.png) | `lumiviz_lvkit.ico` | `.lvkit` |
 | ![lumiviz_lvcontour](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvcontour.png) | `lumiviz_lvcontour.ico` | `.lvcontour` |
 | ![lumiviz_lvfade](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvfade.png) | `lumiviz_lvfade.ico` | `.lvfade` |
 | ![lumiviz_lvshape](../../../../projects/apps/LumiViz/docs/bilder/handbuch/icons/lumiviz_lvshape.png) | `lumiviz_lvshape.ico` | `.lvshape` |
@@ -80,7 +82,7 @@ Striche, damit bei 32 px etwas stehen bleibt; bei 16 px ist kein Zeichen der
 Familie zu lesen, auch das Mikrofon nicht. **In der App** (Entscheid Patrik A2 a)
 stehen sie, wo ein Dateiname steht oder Dateien verschiedener Art
 untereinander: Audio Browser und Datei-Zeile des Loop-Panels (`lvloop`),
-Kopfzeile des Instrument-Editors (`lvinst`), Dialog Import data — vor dem
+Kopfzeile des Instrument-Editors (`lvinst`), Knopf Kit im Drum-Editor (`lvkit`, S124), Dialog Import data — vor dem
 Namen der Datei (`lvdata`) und in der Liste „je Datei entscheiden" je nach
 Endung (`dateiIconFuerEndung`; ein Verlauf ist dort eine `.json` und trägt
 das Icon seines Bereichs). Bewusst ohne: das Fenster Instruments, der
@@ -101,6 +103,7 @@ eintragen"; die Liste im Skript und diese Tabelle zusammen pflegen):
 | `.lvcomp` | `LumiViz.Composition` | `lumiviz_lvcomp.ico` | `-Apply` |
 | `.lvloop` | `LumiViz.Loop` | `lumiviz_lvloop.ico` | `-Apply` |
 | `.lvinst` | `LumiViz.Instrument` | `lumiviz_lvinst.ico` | `-Apply` |
+| `.lvkit` | `LumiViz.Kit` | `lumiviz_lvkit.ico` | `-Apply` (S124) |
 | `.lvcontour` | `LumiViz.Contour` | `lumiviz_lvcontour.ico` | `-Apply` |
 | `.lvfade` | `LumiViz.Fade` | `lumiviz_lvfade.ico` | `-Apply` |
 | `.lvshape` | `LumiViz.CurvePiece` | `lumiviz_lvshape.ico` | `-Apply` |
@@ -173,7 +176,7 @@ powershell -ExecutionPolicy Bypass -File asset\img\logo\icons\register_file_icon
 - **Ohne Schalter** ändert es nichts und zeigt nur, was es täte.
 - **`-Apply`** trägt die eigenen Endungen ein (`.lvfx`, `.lvfx2`, `.lvkar`,
   `.lvtrail`, `.lvcomp`, seit S120 `.lvloop`, `.lvinst`, `.lvcontour`,
-  `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`), **`-Foreign`** dazu `.avs`,
+  `.lvfade`, `.lvshape`, `.lvmute`, `.lvdata`, seit S124 `.lvkit`), **`-Foreign`** dazu `.avs`,
   `.milk`, `.milk2`, `.lrc`, `.grad`. Audioformate nie.
 - **`-Remove`** entfernt genau die eigenen Einträge (Schlüssel `LumiViz.*` und
   Endungen, die auf einen davon zeigen).

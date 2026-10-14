@@ -4,7 +4,7 @@ Aufruf (normales Python mit Pillow):
 
     python asset/img/logo/icons/build_lvfx2_icons.py
 
-Erzeugt fuenfzehn .ico (16–256 px) neben diesem Skript:
+Erzeugt sechzehn .ico (16–256 px) neben diesem Skript:
 
 - `lumiviz_lvfx2.ico`   „Stapel"  — das Icon vorn, zwei abgedunkelte Kopien
                         versetzt dahinter. Das Datei-Icon fuer `.lvfx2`
@@ -25,6 +25,10 @@ Erzeugt fuenfzehn .ico (16–256 px) neben diesem Skript:
                         `lvdata` (Ablage mit Pfeil), `lvfade` (Keil), `lvshape`
                         (Huegel), `lvmute` (Lautsprecher mit Kreuz), `grad`
                         (Verlauf).
+- `lumiviz_lvkit.ico`   „Marke" mit einer Snare und zwei gekreuzten Sticks —
+                        das Datei-Icon fuer Kits `.lvkit` (Session 124;
+                        Entscheide Patrik I1 a, I2 a: am Vorschaublatt aus
+                        drei Fassungen gewaehlt).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -254,6 +258,23 @@ def zeichen_verlauf(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
     d.rectangle((cx - b, cy - h, cx + b, cy + h), outline=(235, 235, 235, 255), width=10)
 
 
+def zeichen_trommel(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Eine Snare von der Seite — Kessel in Magenta, das Fell als Ellipse in Cyan —,
+    darueber zwei gekreuzte Sticks in Bernstein (Session 124, I2 a: Fassung A)."""
+    b = int(r * 0.58)
+    oben, unten = cy - int(r * 0.02), cy + int(r * 0.50)
+    e = int(r * 0.16)
+    d.rectangle((cx - b, oben, cx + b, unten), fill=(*MAGENTA, 255))
+    d.ellipse((cx - b, unten - e, cx + b, unten + e), fill=(*MAGENTA, 255))
+    d.ellipse((cx - b, oben - e, cx + b, oben + e), fill=(*CYAN, 255))
+    w = int(r * 0.12)
+    for vz in (-1, 1):
+        x0, y0 = cx - vz * int(r * 0.20), oben - int(r * 0.08)
+        d.line([(x0, y0), (cx + vz * int(r * 0.62), cy - int(r * 0.66))], fill=(*BERNSTEIN, 255), width=w)
+        k = int(w * 0.85)  # die Spitze des Sticks
+        d.ellipse((x0 - k, y0 - k, x0 + k, y0 + k), fill=(*BERNSTEIN, 255))
+
+
 def marke(icon: Image.Image, zeichen=zeichen_ebenen) -> Image.Image:
     """Das Icon ganz, unten rechts ein Kreis mit einem Zeichen — eine Familie:
     je Verwendung ein eigenes Zeichen im Kreis (Idee Patrik S89)."""
@@ -329,6 +350,8 @@ def main() -> int:
     als_ico(marke(icon, zeichen_stueck), "lumiviz_lvshape.ico")
     als_ico(marke(icon, zeichen_stumm), "lumiviz_lvmute.ico")
     als_ico(marke(icon, zeichen_verlauf), "lumiviz_grad.ico")
+    # Session 124: Kits (.lvkit)
+    als_ico(marke(icon, zeichen_trommel), "lumiviz_lvkit.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.162.0
+> **Version:** 1.163.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2675,11 +2675,13 @@ siehe unten.)
 | Element | Wirkung |
 |---|---|
 | **Base** | Die Basis und wie viele Clips sie spielen |
+| **Kit** | Das Kit des Musters — siehe „Kits" unten |
 | **Bars** | Länge des Musters, 4 bis 64 Takte. Länger hängt Stille an, kürzer schneidet hinten ab. Die Clips der Basis werden mit ihr länger; ein Clip dahinter rückt nach hinten |
 | **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster |
 | **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
 | **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
 | **M** | Die Spur ist stumm |
+| **Role** | Die Rolle der Spur im Kit (kick, snare, hat …) — siehe „Kits" unten |
 | **Sound** | Was die Spur spielt — siehe „Der Klang einer Spur" unten |
 | **…** | Nur an einer Spur, die ein Instrument spielt: Note, Length, Play, Browse..., Edit instrument... |
 | Zwei Schieber | Lautstärke und Panorama der Spur |
@@ -2699,7 +2701,7 @@ Die Auswahl **Sound** bietet:
 | Eintrag | Wirkung |
 |---|---|
 | unter **Kit** | Die Klänge des mitgelieferten Kits |
-| unter **Samples** | Die mitgelieferten Samples: Stimmen, Beatbox, Drum-Maschinen, Schlagwerk und Instrumente mit Ton — Aufnahmen aus der OLPC-Sammlung unter CC BY 3.0, ihre Urheber stehen in `asset\loop\samples\CREDITS.md` neben der Exe. Wie das Kit lassen sie sich nicht überschreiben — bearbeitet (Fenster **Edit sample**) wird eine Kopie unter **My samples** |
+| unter **Samples** | Die mitgelieferten Samples: Stimmen, Beatbox, Drum-Maschinen, Schlagwerk und Instrumente mit Ton — Aufnahmen aus der OLPC-Sammlung unter CC BY 3.0 —, dazu akustische Schlagzeug-Anschläge `drs_…` und `crocell_…` in Stereo aus zwei Kits für DrumGizmo unter CC BY 4.0. Ihre Urheber stehen in `asset\loop\samples\CREDITS.md` neben der Exe; wer die Schlagzeug-Klänge in einem Stück verwendet, nennt sie dort, wo auch andere Mitwirkende genannt werden. Wie das Kit lassen sie sich nicht überschreiben — bearbeitet (Fenster **Edit sample**) wird eine Kopie unter **My samples** |
 | unter **My samples** | Deine eigenen Samples (kopierte Dateien und Aufnahmen). Die Überschrift fehlt, solange es keine gibt |
 | unter **File** | Die Tondatei an freiem Ort, die die Spur gerade nennt |
 | **Instrument...** | Öffnet das Fenster **Instruments** für diese Spur. **Use** dort setzt das Instrument in die Spur |
@@ -2774,6 +2776,61 @@ liegt, bleibt beim Einfügen unberührt. Passt beim Einfügen etwas nicht mehr
 ins Muster, wird es abgeschnitten — unter dem Raster steht dann, wie viele
 Schritte keinen Platz hatten. Ein Klick ohne Taste setzt weiter einen
 Schritt; die Marken bleiben dabei stehen.
+
+### Kits
+
+Ein **Kit** nennt je **Rolle** einen Klang mit Lautstärke und Panorama: die
+Kick, die Snare, die Hi-Hat … Ein Kit zu wählen gibt jeder Spur den Klang ihrer
+Rolle aus dem Kit — die Schritte bleiben, wie sie sind. So klingt derselbe Beat
+mit einem Klick wie eine 808, wie ein Rock-Schlagzeug oder wie Besen.
+
+**Die Rollen:** kick, snare, clap, rim, hat, open hat, ride, crash, tom, perc
+und fx. Mehrere derselben Art werden nummeriert (tom 1, tom 2, crash 2 …). Das
+Etikett **Role** jeder Spur zeigt ihre Rolle; ein Klick darauf wählt eine
+andere oder **No role**. Hat eine Spur noch keine Rolle, rät LumiViz sie aus
+ihrem Instrument, ihrem Klang oder ihrem Namen und zeigt sie kursiv in
+Klammern — „(kick)". Eine Spur ohne Rolle lässt ein Kitwechsel, wie sie ist.
+
+Der Knopf **Kit** im Kopf des Drum-Editors zeigt das Kit des Musters —
+„Kit: 808", nach einer Änderung von Hand „Kit: 808 (changed)". Sein Menü:
+
+| Eintrag | Wirkung |
+|---|---|
+| **Built-in kits** | Die vierzehn mitgelieferten: Classic, 808, 909 House, Electro, Hand drums, Beatbox, Lo-fi, Reggae, Reggaeton, Strange — dazu aus echten Schlagzeug-Aufnahmen **Rock'n'Roll**, **Hardrock**, **Heavy Metal** (Doppelpedal, vier Toms, drei Crashes, China, Splash) und **Jazz Brushes** (gerechnete Besen). Das gewählte trägt einen Haken; die Beschreibung steht im Tooltip |
+| **My kits** | Deine eigenen |
+| **Add all roles of the kit** | Ein Haken, den LumiViz sich merkt (zuerst an): Rollen des Kits, für die es keine Spur gibt, werden neue Spuren mit leeren Schritten. Auf einem leeren Muster legt ein Kit so alle seine Spuren an |
+| **Remove empty tracks the kit doesn't have** | Ein Haken (zuerst an): eine Spur, deren Rolle das neue Kit nicht hat und in der **kein Schritt gesetzt** ist, fällt weg. Trägt sie Schritte, bleibt sie mit ihrem Klang |
+| **Save as kit...** | Speichert die Klänge der Spuren je Rolle, mit Lautstärke und Panorama, als eigenes Kit |
+| **Edit kits...** | Öffnet das Fenster **Kits** (unten) |
+
+Unter dem Kopf sagt eine Zeile, was der Wechsel getan hat — wie viele Spuren
+einen Klang bekamen, welche angelegt oder entfernt wurden. Eine Spur, deren
+Rolle das Kit nicht hat, trägt im Etikett ein **\*** in Bernstein („rim \*"),
+und unter dem Raster steht: „\* not in the kit … — the track keeps its own
+sound". Ein Kitwechsel ist **ein** Schritt für Ctrl+Z.
+
+**Add track** bietet, solange das Kit Rollen ohne Spur hat, diese zuerst an
+(„Clap — from 808"), darunter **Empty track**.
+
+**Das Fenster Kits** (Edit kits...):
+
+| Element | Wirkung |
+|---|---|
+| Liste links | **Built-in kits** (mit Schloss: nur zum Ansehen) und **My kits** |
+| **Duplicate** | Macht vom gewählten Kit, wie es dasteht, eine eigene Kopie („808 copy") |
+| **Rename** | Ändert den Namen eines eigenen Kits; Loops, die es nennen, finden es weiter |
+| **Delete** | Löscht ein eigenes Kit (nach Rückfrage). Ein Loop, der es nannte, behält seine Klänge; sein Knopf Kit zeigt dann „(not found)" |
+| Tabelle | Je Rolle **Sound** (dieselbe Auswahl wie im Drum-Editor), **Volume**, **Pan** und ▶ zum Anhören |
+| **Add role ▾** | Eine Rolle dazu — je Art die nächste Nummer |
+| **Remove role** | Die gewählte Rolle weg |
+| **Play all** | Spielt jede Rolle einmal, einen Schlag nach dem anderen |
+| **Undo**, **Redo** | Ctrl+Z, Ctrl+Y — für die Änderungen am offenen Kit |
+| **Used by** | Welche Loops das Kit nennen: die mitgelieferten, die zehn zuletzt geöffneten und der offene |
+| **Save** | Schreibt das eigene Kit. Wer ein anderes Kit wählt oder schließt, wird nach ungesicherten Änderungen gefragt |
+
+Ein mitgeliefertes Kit lässt sich nicht ändern — **Duplicate** macht eine
+eigene Kopie, die sich ändern lässt. Kits sind Dateien `.lvkit`; die eigenen
+liegen im Benutzerordner unter `kits` und kommen mit **Export data** mit.
 
 ### Der Instrument-Editor
 
@@ -3146,6 +3203,7 @@ tragen die Dateien sie erst, wenn sie dort eingetragen sind (siehe unten).
 | ![lvtrail](bilder/handbuch/icons/lumiviz_trail.png) | `.lvtrail` | Trail-Preset der Karaoke-Ebene | Effect Chain, an jeder Effect List mit einem Lyrics Trail |
 | ![lvcomp](bilder/handbuch/icons/lumiviz_lvcomp.png) | `.lvcomp` | Komposition des Composers (§15) | Effect Browser (ein Doppelklick öffnet sie), Panel Composer vor dem Dateinamen |
 | ![lvloop](bilder/handbuch/icons/lumiviz_lvloop.png) | `.lvloop` | Loop (§16) | Audio Browser; Panel Loop vor dem Dateinamen |
+| ![lvkit](bilder/handbuch/icons/lumiviz_lvkit.png) | `.lvkit` | Drum-Kit für den Loop (§16, Kits) | Drum-Editor, Knopf Kit; Import data, Liste „Let me decide for each file" |
 | ![lvinst](bilder/handbuch/icons/lumiviz_lvinst.png) | `.lvinst` | Instrument für den Loop (§16) | Instrument-Editor vor dem Namen des Instruments; Import data, Liste „Let me decide for each file" |
 | ![lvcontour](bilder/handbuch/icons/lumiviz_lvcontour.png) | `.lvcontour` | Form aus einer oder mehreren Konturen — der Knoten **Shape** der Effect Chain zeichnet sie (§11), eine Shape-Schicht im Instrument-Creator spielt sie, das Fenster **Edit shape** legt sie an (§16) | noch nirgends als Icon |
 | ![lvfade](bilder/handbuch/icons/lumiviz_lvfade.png) | `.lvfade` | Blende des Curve Editors (§15) | Import data, Liste „Let me decide for each file" |
@@ -3237,6 +3295,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.163.0 | 2026-10-14 | Session 124. §16 NEU **Kits**: Rollen, der Knopf Kit mit den Haken **Add all roles of the kit** und **Remove empty tracks the kit doesn't have**, das \* für Spuren, die nicht zum Kit gehören, das Fenster **Kits**; vierzehn mitgelieferte Kits, darunter Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes; die Samples aus DrumGizmo (CC BY 4.0). §17 NEU `.lvkit`. |
 | 1.162.0 | 2026-10-14 | Session 123. §16 Drum-Editor und Instrument-Creator NEU die Gruppe **Samples** — achtunddreißig mitgelieferte Samples (CC BY 3.0, Nennung in `samples\CREDITS.md`); neunzig mitgelieferte Instrumente, zwanzig Formen, neun Loops mehr. |
 | 1.161.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Use as** (Layers, One path, **Jumps**: In list order, Shortest, Drawn by hand) und **Bridge**; Instrument-Creator NEU der **Farbpunkt** je Schicht mit **Colour...** und **Automatic**; Save mit Layers legt je angehakter Kontur eine Schicht an. |
 | 1.160.0 | 2026-10-14 | Session 122. §16 Edit shape NEU **Open image...** mit der Gruppe **From image** (**Split by**, **Levels**, **Smooth**, **Min size**, **Detail**, **Apply live**, **Take contours**), **Show image**, „edge" in der Liste. |
