@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.216.0
+> **Version:** 1.217.0
 > **Datum:** 2026-10-14 (Session 122)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5582,6 +5582,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.217.0 | 2026-10-14 | Session 122, Abschluss. `sessions/Changelog_Session122.md`. **Stand:** Klang aus einer Form — **Stufe 20 vollständig**: 20a (Edit shape), 20b (SVG), 20c (Bild), 20d (mehrere Konturen, Brücken, Farben der Schichten); `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0; dazu die Sichttest-Liste `Sichttest_Shape_Klang-aus-einer-Form.md` (lokal) mit den Vorlagen `asset/sichttest/presets/Shape.lvfx` und `XyScope.lvfx`. **Offen:** im Programm ungesehen und ungehört (19b bis 20d) — Patriks Sichttest mit der Liste; Patriks Ohr an `hoerproben_19c`; die von Claude gesetzten Zahlen und Regeln; CSS-Variablen in SVG; mitgelieferte Instrumente mit Shape-Schicht. 1200 Cases, voller Lauf 1199 / 1199 nach 20d (Testing-MSVC, Bildschirm 2), der Fall danach unter beiden Compilern grün. |
 | 1.216.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20d gebaut — mehrere Konturen** (Entscheide Patrik L1 a, F1 a, V1 a; `audio/Shape_Konzept.md` 0.20.0, Benutzerhandbuch 1.161.0); Stufe 20 damit vollständig. Offen: im Programm ungesehen und ungehört; die gesetzten Abstufungen und Regeln. |
 | 1.215.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20c gebaut — Konturen aus einem Bild** (Entscheide Patrik R1 a, R2 a; `audio/Shape_Konzept.md` 0.19.0, Benutzerhandbuch 1.160.0); Patriks Idee zu den Farben der Schichten (Paletten je Waveform) beim Punkt zu 20d. Offen: im Programm ungesehen; die gesetzten Vorgaben. **Als Nächstes Stufe 20d.** |
 | 1.214.0 | 2026-10-14 | Session 122. §7 „Klang aus einer Form": **Stufe 20b gebaut — SVG** (Entscheide Patrik O1 a, O2 a, O3 a; `audio/Shape_Konzept.md` 0.18.0, Benutzerhandbuch 1.159.0). Offen: im Programm ungesehen; CSS-Variablen; Farben für Schichten (mit 20d); als Nächstes Stufe 20c. |
