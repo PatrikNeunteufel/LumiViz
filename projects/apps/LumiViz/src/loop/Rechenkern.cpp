@@ -44,9 +44,10 @@ Ablauf plane(const Loop& loop, int rate)
         {
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
-            // ein Clip mit Effekten: seine Schlaege gehen in einen eigenen Bus
+            // ein Clip mit Effekten: seine Schlaege gehen in einen eigenen Bus —
+            // nicht, wenn sein Schalter aus ist (E1 a): dann klingt er trocken
             int bus = -1;
-            if (clip.effekte.einerAn())
+            if (clip.effekteWirken())
             {
                 bus = static_cast<int>(ablauf.busse.size());
                 ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte});

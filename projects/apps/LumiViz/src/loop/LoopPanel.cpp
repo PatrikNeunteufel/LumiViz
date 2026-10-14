@@ -482,10 +482,8 @@ Loop LoopPanel::spielFassung()
         m_solo.clear();  // das Muster gibt es nicht mehr: wieder der ganze Loop
         return m_loop;
     }
-    Loop allein = m_loop;
-    allein.muster = {*solo};
-    allein.kanaele = {Kanal{QStringLiteral("Solo"), true, {LoopClip{m_solo, 0, 1}}}};
-    return allein;
+    // E1 a (S124): mit den Effekten des Bezugsclips — der markierte, sonst der erste der Basis
+    return soloFassung(m_loop, m_solo, markierterClip());
 }
 
 bool LoopPanel::spiele()
@@ -744,6 +742,7 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                     (void)(wiederholen ? bus->redo() : bus->undo());
             });
         }
+        m_instrumentEditor->setMarkierterClip(markierterClip());
         if (!m_instrumentEditor->zeige(m_loop, muster)) return false;
         if (zeigen)
         {
@@ -798,6 +797,7 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             if (auto* bus = services().tryResolve<ICommandBus>()) (void)(wiederholen ? bus->redo() : bus->undo());
         });
     }
+    m_editor->setMarkierterClip(markierterClip());
     if (!m_editor->zeige(m_loop, muster)) return false;
     if (zeigen)
     {
@@ -856,8 +856,21 @@ void LoopPanel::zeigeDatei()
                         .arg(m_loop.durchlaufMs() / 1000.0, 0, 'f', 1));
 }
 
+std::optional<ClipOrt> LoopPanel::markierterClip() const
+{
+    const int kanal = m_achse->gewaehlterKanal();
+    const LoopClip* clip = m_achse->auswahl();
+    if (kanal < 0 || clip == nullptr) return std::nullopt;
+    return ClipOrt{kanal, clip->startTakt};
+}
+
 void LoopPanel::zeigeClip()
 {
+    // E1 a: der markierte Clip ist der Bezugsclip der Editoren — sie zeigen seinen Schalter,
+    // und ein Muster, das allein spielt, spielt mit seinen Effekten
+    if (m_editor != nullptr) m_editor->setMarkierterClip(markierterClip());
+    if (m_instrumentEditor != nullptr) m_instrumentEditor->setMarkierterClip(markierterClip());
+    if (!m_solo.isEmpty() && m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
     // das Fenster der Effekte folgt den Marken — und jeder neuen Fassung
     if (m_effekte != nullptr) m_effekte->zeige(m_achse->loop(), m_achse->markierte());
     const LoopClip* clip = m_achse->auswahl();

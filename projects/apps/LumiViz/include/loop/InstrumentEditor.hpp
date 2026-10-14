@@ -17,6 +17,7 @@
 #pragma once
 
 #include "loop/Auswahl.hpp"
+#include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
 
 #include <QPoint>
@@ -336,6 +337,20 @@ Q_SIGNALS:
     /// Eine Taste der Klaviatur: diesen Ton des Instruments anspielen.
     void tonVerlangt(int hoehe);
 
+public:
+    // --- Effekte beim Abspielen (Entscheid Patrik E1 a, S124) ------------------
+    // Play pattern spielt mit den Effekten des Bezugsclips: der im Loop
+    // markierte, wenn er dieses Muster spielt, sonst der erste der Basis. Der
+    // Knopf **FX** im Kopf schaltet dessen Reihe an oder aus — derselbe Schalter
+    // wie im Loop (die Marke „fx" steht dann matt).
+    /// Welcher Clip im Loop markiert ist (das Panel sagt es); leer = keiner.
+    void setMarkierterClip(std::optional<ClipOrt> ort);
+    /// Der Clip, dessen Effekte gelten; leer = die Basis hat keinen Clip.
+    [[nodiscard]] std::optional<ClipOrt> bezugsclip() const;
+    /// Der Knopf FX: den Schalter des Bezugsclips setzen (ein Schritt fuer Undo).
+    /// false = kein Bezugsclip, oder er stand schon so.
+    bool setzeEffekteAn(bool an);
+
 protected:
     /// Beim ersten Zeigen: der Ausschnitt liegt auf den Noten (ohne Noten um C4).
     void showEvent(QShowEvent* event) override;
@@ -371,6 +386,9 @@ private:
     QLabel* m_auswahlZeile = nullptr;  ///< wie man markiert — oder was markiert ist und was die Tasten tun
     QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
     QCheckBox* m_wiederholen = nullptr;    ///< „Repeat when lengthening" (B2 a)
+    std::optional<ClipOrt> m_markiert;  ///< E1 a: der im Loop markierte Clip
+    QPushButton* m_fx = nullptr;         ///< E1 a: der Knopf FX
+    void zeigeFx();
     void zeigeAuswahl();
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;

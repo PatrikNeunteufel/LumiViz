@@ -26,6 +26,7 @@
 #pragma once
 
 #include "loop/Auswahl.hpp"
+#include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/DrumKit.hpp"  // KitOptionen
 #include "loop/Loop.hpp"
 
@@ -36,6 +37,7 @@
 #include <QWidget>
 
 #include <functional>
+#include <optional>
 #include <vector>
 
 class IAudioEngine;
@@ -364,6 +366,18 @@ public:
     static void setzeKitOptionen(const KitOptionen& optionen);
     /// Die Zeile unter dem Raster, die das * erklaert; leer = keine Spur ohne Gegenstueck im Kit.
     [[nodiscard]] QString fremdZeile() const;
+    // --- Effekte beim Abspielen (Entscheid Patrik E1 a, S124) ------------------
+    // Play pattern spielt mit den Effekten des Bezugsclips: der im Loop
+    // markierte, wenn er dieses Muster spielt, sonst der erste der Basis. Der
+    // Knopf **FX** im Kopf schaltet dessen Reihe an oder aus — derselbe Schalter
+    // wie im Loop (die Marke „fx" steht dann matt).
+    /// Welcher Clip im Loop markiert ist (das Panel sagt es); leer = keiner.
+    void setMarkierterClip(std::optional<ClipOrt> ort);
+    /// Der Clip, dessen Effekte gelten; leer = die Basis hat keinen Clip.
+    [[nodiscard]] std::optional<ClipOrt> bezugsclip() const;
+    /// Der Knopf FX: den Schalter des Bezugsclips setzen (ein Schritt fuer Undo).
+    /// false = kein Bezugsclip, oder er stand schon so.
+    bool setzeEffekteAn(bool an);
     /// **Edit kits...** (Stufe 21c, K7 a): das Fenster Kits oeffnen, auf dem Kit
     /// des Musters (sonst dem ersten). `zeigen` false fuellt es nur (fuer Tests).
     void oeffneKits(bool zeigen = true);
@@ -483,6 +497,9 @@ private:
     QLabel* m_auswahlZeile = nullptr; ///< wie man markiert — oder was markiert ist und was die Tasten tun
     QCheckBox* m_rechtsLoescht = nullptr;  ///< „Right-click deletes"
     QCheckBox* m_wiederholen = nullptr;    ///< „Repeat when lengthening" (B2 a)
+    std::optional<ClipOrt> m_markiert;  ///< E1 a: der im Loop markierte Clip
+    QPushButton* m_fx = nullptr;         ///< E1 a: der Knopf FX
+    void zeigeFx();
     void zeigeAuswahl();
     QScrollArea* m_rollen = nullptr;
     SchrittRaster* m_raster = nullptr;

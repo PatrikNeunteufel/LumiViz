@@ -421,6 +421,54 @@ namespace
 const char* const kWiederholen = "loop/repeatWhenLengthening";  ///< B2 a
 }  // namespace
 
+std::optional<ClipOrt> bezugsclip(const Loop& loop, const QString& muster, std::optional<ClipOrt> markiert)
+{
+    if (markiert)
+    {
+        const int clip = findeClip(loop, *markiert);
+        if (clip >= 0 && loop.kanaele[static_cast<std::size_t>(markiert->kanal)].clips[static_cast<std::size_t>(clip)].muster == muster)
+            return markiert;
+    }
+    for (std::size_t k = 0; k < loop.kanaele.size(); ++k)
+        for (const LoopClip& clip : loop.kanaele[k].clips)
+            if (clip.muster == muster) return ClipOrt{static_cast<int>(k), clip.startTakt};
+    return std::nullopt;
+}
+
+QString clipText(const Loop& loop, ClipOrt ort)
+{
+    if (ort.kanal < 0 || ort.kanal >= static_cast<int>(loop.kanaele.size())) return {};
+    return QStringLiteral("%1, bar %2").arg(loop.kanaele[static_cast<std::size_t>(ort.kanal)].name).arg(ort.startTakt + 1);
+}
+
+Loop soloFassung(const Loop& loop, const QString& muster, std::optional<ClipOrt> markiert)
+{
+    const Muster* solo = loop.findeMuster(muster);
+    if (solo == nullptr) return loop;
+    Loop allein = loop;
+    allein.muster = {*solo};
+    LoopClip clip{muster, 0, 1};
+    if (const std::optional<ClipOrt> bezug = bezugsclip(loop, muster, markiert))
+    {
+        const LoopClip& vorbild =
+            loop.kanaele[static_cast<std::size_t>(bezug->kanal)].clips[static_cast<std::size_t>(findeClip(loop, *bezug))];
+        clip.effekte = vorbild.effekte;
+        clip.effekteAn = vorbild.effekteAn;
+    }
+    allein.kanaele = {Kanal{QStringLiteral("Solo"), true, {clip}}};
+    return allein;
+}
+
+bool setzeEffekteAn(Loop& loop, ClipOrt ort, bool an)
+{
+    const int clip = findeClip(loop, ort);
+    if (clip < 0) return false;
+    LoopClip& ziel = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(clip)];
+    if (ziel.effekteAn == an) return false;
+    ziel.effekteAn = an;
+    return true;
+}
+
 bool wiederholenBeimVerlaengern()
 {
     return QSettings().value(QLatin1String(kWiederholen), true).toBool();

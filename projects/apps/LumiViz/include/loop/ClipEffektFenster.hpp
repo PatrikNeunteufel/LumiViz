@@ -64,6 +64,11 @@ public:
     /// und sagt, was zu tun ist. Andere Clips als bisher: die Zeile zeigt den
     /// ersten, gewaehlt ist sein erster Baustein.
     void zeige(const Loop& loop, const std::vector<ClipOrt>& orte);
+    /// Der Haken **Effects on** (E1 a, S124): der Schalter aller markierten
+    /// Clips; verschieden = halb. false = nichts geaendert.
+    bool setzeEffekteAn(bool an);
+    /// Der Haken: Qt::Checked, Qt::Unchecked oder Qt::PartiallyChecked.
+    [[nodiscard]] Qt::CheckState effekteAnStand() const;
     [[nodiscard]] const std::vector<ClipOrt>& orte() const { return m_orte; }
     /// Die Spitze der Summe, solange der Loop spielt; kleiner als 0 = kein Wert.
     void setSpitze(double spitze);
@@ -176,6 +181,7 @@ private:
     QPushButton* m_angleichen = nullptr;
     SignalWeg* m_pfad = nullptr;
     QCheckBox* m_an = nullptr;       ///< der Haken des gewaehlten Bausteins, mit seinem Namen
+    QCheckBox* m_alleAn = nullptr;   ///< „Effects on": der Schalter der Clips (E1 a)
     QPushButton* m_bausteinVor = nullptr;
     QPushButton* m_bausteinZurueck = nullptr;
     QPushButton* m_bausteinWeg = nullptr;

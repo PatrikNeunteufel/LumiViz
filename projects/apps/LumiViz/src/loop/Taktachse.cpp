@@ -414,19 +414,23 @@ void Taktachse::paintEvent(QPaintEvent*)
             // Anfang des Clips hinausgerollt ist
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
             namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
-            // die Marke „fx": an diesem Clip ist ein Effekt eingeschaltet (Stufe 12)
+            // die Marke „fx": an diesem Clip ist ein Effekt eingeschaltet (Stufe 12);
+            // ist sein Schalter aus (E1 a), steht sie matt da — die Reihe bleibt
             if (clip.effekte.einerAn() && r.width() >= 48 && namePasst(r.height()))
             {
                 const QString marke = QStringLiteral("fx");
                 const int breit = fontMetrics().horizontalAdvance(marke) + 8;
                 const int markeHoch = std::min(r.height() - 4, fontMetrics().height() + 2);
                 const QRect feld(r.right() - breit - 3, r.center().y() - markeHoch / 2, breit, markeHoch);
-                p.setPen(QPen(Qt::white, 1.0));
-                p.setBrush(QColor(0, 0, 0, 70));
+                QColor schrift = Qt::white;
+                if (!clip.effekteAn) schrift.setAlpha(90);
+                p.setPen(QPen(schrift, 1.0, clip.effekteAn ? Qt::SolidLine : Qt::DotLine));
+                p.setBrush(QColor(0, 0, 0, clip.effekteAn ? 70 : 30));
                 p.drawRoundedRect(feld, 3, 3);
                 p.setBrush(Qt::NoBrush);
                 p.drawText(feld, Qt::AlignCenter, marke);
                 namensFeld.setRight(feld.left() - 4);
+                p.setPen(Qt::white);  // der Name bleibt hell, auch neben einer matten Marke
             }
             const QString beschriftung = clip.wiederholungen > 1
                                              ? tr("%1 × %2").arg(clip.muster).arg(clip.wiederholungen)

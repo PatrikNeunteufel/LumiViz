@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.76.0
+> **Version:** 0.77.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3265,6 +3265,22 @@ in den Zeitstrahl springt — im Composer ging das schon).
 | **B3 a** | Eine Kopie trägt den **markierten Zeitraum**: im Instrument-Editor merkt sich der Rahmen seine Kanten (auf Schritte gerundet), Ctrl+A das ganze Muster; die Marke rückt um die Breite des Rahmens weiter. Ohne Rahmen (Ctrl+Klick) wie bisher. Der Drum-Editor bleibt (ein Rahmen nimmt dort die leeren Schritte schon mit — mit einem Test belegt). Verworfen: auf ganze Takte runden (b), Einrasten der Marke (c). |
 | **B4 b** | **Panel:** Klick oder Ziehen im Lineal springt, wenn der Loop spielt; sonst setzt es die grüne Startmarke, an der Play beginnt (wie der Composer). **Editoren:** zwei Marken — ein Klick in die Taktzeile setzt die **Abspielstelle** (grüne Flagge, dort beginnt Play pattern; spielt das Muster allein, springt es), **Shift**+Klick die **Einfügemarke**. Spielt der ganze Loop, springt ein Klick im Editor nicht. Verworfen: eine Marke für beides (a), nur das Panel (c). |
 
+**E1 a (S124, Wunsch Patrik: Effekte beim Abspielen im Editor an und aus):**
+Jeder Clip hat einen Schalter für seine ganze Reihe (`LoopClip::effekteAn`, in
+der Datei `fxOn`, nur wenn aus; **`.lvloop` Fassung 7** — ein älteres Programm
+spielte einen abgeschalteten Clip mit Effekten). Aus = trocken, die Reihe
+bleibt, die Marke **fx** steht matt mit gepunktetem Rand. **Play pattern**
+spielt mit den Effekten des **Bezugsclips** (`bezugsclip`, `soloFassung` in
+`loop/Bearbeiten`): der im Loop markierte, wenn er die Basis spielt, sonst der
+erste — bis S124 spielte es trocken. Der Knopf **FX** in beiden Editoren
+schaltet den Bezugsclip (grau ohne Effekte; der Tooltip nennt den Clip), der
+Haken **Effects on** im Fenster Clip effects die markierten Clips (halb bei
+verschiedenen). Verworfen: der Schalter für alle Clips der Basis (b), ein
+Bypass für den ganzen Loop (c). Von Claude gesetzt: der Schalter als eigenes
+Feld am Clip (nicht in der Reihe — sonst zählten zwei Clips mit gleicher
+Reihe als verschieden), die Form der matten Marke, die Wortlaute. Tests:
+`test_LoopEffekteSchalter.cpp`, zwei Fälle (`LUMIVIZ_FX_SCHALTER_BILD`).
+
 **Wie es gebaut ist (S124):**
 - `kTakteMin` = 1, `kTakteNeu` = 4 (`loop/Loop.hpp`); neue Muster und Clips,
   das Lesen ohne `bars` und die Lücke für New clip nehmen `kTakteNeu`.
@@ -3415,6 +3431,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.77.0** (S124, 2026-10-14): §4m — E1 a: der Schalter der Effekte je
+  Clip, Play pattern mit den Effekten des Bezugsclips, FX und Effects on;
+  `.lvloop` Fassung 7.
 - **0.76.0** (S124, 2026-10-14): §4m NEU — Muster ab 1 Takt (B1 a),
   Repeat when lengthening (B2 a), die Kopie trägt den Zeitraum des Rahmens
   (B3 a), Springen im Lineal und in den Editoren mit zwei Marken (B4 b);

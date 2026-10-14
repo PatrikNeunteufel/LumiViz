@@ -320,6 +320,12 @@ struct LoopClip
     /// Gehoeren zum Clip, nicht zum Muster: zwei Clips derselben Basis
     /// koennen verschieden klingen.
     ClipEffekte effekte;
+    /// Der Schalter fuer die ganze Reihe (Entscheid Patrik E1 a, S124): aus =
+    /// der Clip klingt trocken, die Reihe bleibt, wie sie ist (die Marke „fx"
+    /// steht matt). In der Datei `fxOn`, nur wenn aus.
+    bool effekteAn = true;
+    /// Wirken seine Effekte gerade — Schalter an und ein Baustein an?
+    [[nodiscard]] bool effekteWirken() const { return effekteAn && effekte.einerAn(); }
 
     // Mit Konstruktor statt als Aggregat: `{muster, start, wiederholungen}`
     // steht an vielen Stellen und soll ohne die Effekte gueltig bleiben.

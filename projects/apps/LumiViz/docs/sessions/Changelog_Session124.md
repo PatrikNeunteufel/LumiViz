@@ -14,6 +14,10 @@
   beginnen weiter mit 4). Neben **Bars** der Haken **Repeat when
   lengthening**: wer einen Takt komponiert und dann auf 4 stellt, bekommt ihn
   viermal.
+- **Effekte an und aus:** Jeder Clip hat einen Schalter für alle seine
+  Effekte — **FX** im Drum- und Instrument-Editor (beim Abspielen umschaltbar),
+  **Effects on** im Fenster Clip effects. Aus, klingt der Clip trocken, auch im
+  ganzen Loop; die Marke **fx** bleibt, aber matt.
 - **Springen:** Ein Klick ins **Lineal** des Panels Loop springt an die
   Stelle, wenn der Loop spielt; sonst setzt er eine grüne Marke, an der Play
   beginnt. In beiden Editoren setzt ein Klick in die Taktzeile die
@@ -64,7 +68,9 @@
   Kopie den ganzen Zeitraum des Rahmens mit — auch leere Stellen am Rand. So
   landet sie beim Einfügen dort, wo sie hingehört (vorher fehlte der Abstand
   bis zur ersten Note).
-- Eine `.lvloop` wird als **Fassung 6** geschrieben; ein älteres LumiViz liest
+- **Play pattern spielt mit Effekten** — denen des im Loop markierten Clips
+  dieser Basis, sonst ihres ersten (vorher klang es im Editor immer trocken).
+- Eine `.lvloop` wird als **Fassung 7** geschrieben; ein älteres LumiViz liest
   sie, meldet aber, dass sie neuer ist.
 
 - **Die Auswahl Sound** im Drum-Editor: ein zu langer Name endet jetzt mit

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "UI/panels/PanelBase.hpp"
+#include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
 #include "services/IEventBus.hpp"
@@ -29,6 +30,7 @@
 #include <QStringList>
 
 #include <functional>
+#include <optional>
 
 class QDoubleSpinBox;
 class QLabel;
@@ -142,6 +144,8 @@ public:
     bool spieleSchlaege(const std::vector<Spur>& spuren);
     /// B4 (S124): die Stelle, an der Play beginnt, in Schritten; spielt der Loop, springt er dorthin.
     void setzeStartstelle(int schritt);
+    /// Der im Loop markierte Clip; leer = keiner (E1 a: der Bezugsclip der Editoren).
+    [[nodiscard]] std::optional<ClipOrt> markierterClip() const;
     [[nodiscard]] int startstelle() const { return m_startSchritt; }
     /// Wird gerade ein Ton angespielt?
     [[nodiscard]] bool hoertVor() const { return m_vorhoeren != 0; }

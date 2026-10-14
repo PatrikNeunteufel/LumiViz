@@ -19,6 +19,7 @@
 
 #include "loop/Loop.hpp"
 
+#include <optional>
 #include <QString>
 #include <QStringList>
 
@@ -82,6 +83,19 @@ struct ClipOrt
 
 /// Der Platz des Clips in seinem Kanal; -1 = es gibt ihn nicht.
 [[nodiscard]] int findeClip(const Loop& loop, ClipOrt ort);
+/// Der Clip, dessen Effekte ein Editor beim Abspielen seines Musters nimmt
+/// (Entscheid E1 a, S124): `markiert`, wenn er dieses Muster spielt — sonst
+/// der erste Clip des Musters (Kanaele und Clips der Reihe nach). Leer = das
+/// Muster hat keinen Clip.
+[[nodiscard]] std::optional<ClipOrt> bezugsclip(const Loop& loop, const QString& muster, std::optional<ClipOrt> markiert);
+/// „Drums, bar 5": wie ein Clip in Texten heisst.
+[[nodiscard]] QString clipText(const Loop& loop, ClipOrt ort);
+/// Was „Play pattern" spielt: ein Loop aus einem Kanal „Solo" mit einem Clip
+/// dieses Musters ab Takt 1 — mit den Effekten und dem Schalter des
+/// Bezugsclips (`bezugsclip`, E1 a). Ohne das Muster: der Loop, wie er ist.
+[[nodiscard]] Loop soloFassung(const Loop& loop, const QString& muster, std::optional<ClipOrt> markiert);
+/// Den Schalter der Effekte eines Clips setzen. false = es gibt ihn nicht, oder er stand schon so.
+bool setzeEffekteAn(Loop& loop, ClipOrt ort, bool an);
 /// Alle genannten Clips um dieselben Takte und Kanaele versetzen — ihre Lage
 /// zueinander bleibt. Der Versatz wird so weit gekuerzt, dass kein Clip vor
 /// Takt 0 oder ausserhalb der Kanaele landet. Anders als ein einzelner Clip

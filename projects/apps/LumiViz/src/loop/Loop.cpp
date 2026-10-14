@@ -38,8 +38,11 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // werden zur Reihe Distortion, Echo, Reverb.
 // 6 (S124, Entscheid B1 a): ein Muster kann 1 bis 3 Takte lang sein — ein
 // aelteres Programm streckte es auf 4 und haengte Stille an; es liest die Datei
-// weiter, meldet aber, dass sie neuer ist. Geschrieben wird immer 6.
-constexpr int kVersion = 6;
+// weiter, meldet aber, dass sie neuer ist.
+// 7 (S124, Entscheid E1 a): der Schalter `fxOn` am Clip — ein aelteres
+// Programm spielte einen abgeschalteten Clip mit Effekten. Geschrieben wird
+// immer 7.
+constexpr int kVersion = 7;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -656,6 +659,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             c[QStringLiteral("start")] = clip.startTakt;
             c[QStringLiteral("repeat")] = clip.wiederholungen;
             if (!clip.effekte.reihe.empty()) c[QStringLiteral("path")] = reiheAlsJson(clip.effekte);
+            if (!clip.effekteAn) c[QStringLiteral("fxOn")] = false;  // seit Fassung 7
             clips.append(c);
         }
         k[QStringLiteral("clips")] = clips;
@@ -797,6 +801,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             clip.muster = c.value(QStringLiteral("pattern")).toString();
             clip.startTakt = c.value(QStringLiteral("start")).toInt(0);
             clip.wiederholungen = c.value(QStringLiteral("repeat")).toInt(1);
+            clip.effekteAn = c.value(QStringLiteral("fxOn")).toBool(true);
             // seit Fassung 5 die Reihe `path`; davor die drei festen `effects`
             if (const QJsonValue reihe = c.value(QStringLiteral("path")); reihe.isArray())
                 clip.effekte = reiheAusJson(reihe.toArray(), bericht);

@@ -300,8 +300,15 @@ void ClipEffektFenster::setupUI()
     m_zeigtWahl = new QComboBox(this);
     m_zeigtWahl->setObjectName(QStringLiteral("fxShowing"));
     m_zeigtWahl->setToolTip(tr("The selected clips have different paths — this one is shown"));
+    // E1 a (S124): der Schalter der ganzen Reihe — aus klingen die Clips trocken, die Reihe bleibt
+    m_alleAn = new QCheckBox(tr("Effects on"), this);
+    m_alleAn->setObjectName(QStringLiteral("fxClipOn"));
+    m_alleAn->setToolTip(tr("Off: the selected clips play dry; their effects stay as they are and \"fx\" turns pale. "
+                            "The drum and instrument editors switch the same"));
+    connect(m_alleAn, &QCheckBox::clicked, this, [this](bool an) { (void)setzeEffekteAn(an); });
     kopf->addWidget(m_kopf);
     kopf->addWidget(m_clips, 1);
+    kopf->addWidget(m_alleAn);
     kopf->addWidget(m_zeigtName);
     kopf->addWidget(m_zeigtWahl);
     kopf->addWidget(new QLabel(tr("Peak"), this));
@@ -593,6 +600,12 @@ void ClipEffektFenster::fuelle()
     const bool verschieden = mit.size() < m_orte.size();
 
     m_pfad->setEnabled(!leer);
+    {
+        const QSignalBlocker ruhe(m_alleAn);
+        m_alleAn->setEnabled(!leer);
+        m_alleAn->setTristate(effekteAnStand() == Qt::PartiallyChecked);
+        m_alleAn->setCheckState(effekteAnStand());
+    }
     m_kopieren->setEnabled(!leer);
     m_einfuegen->setEnabled(!leer && m_gemerkt.has_value());
     m_zurueck->setEnabled(!leer);
@@ -744,6 +757,36 @@ bool ClipEffektFenster::melde(const Loop& neu)
     m_loop = neu;
     fuelle();
     Q_EMIT bearbeitet(neu, tr("Clip effects"));
+    return true;
+}
+
+Qt::CheckState ClipEffektFenster::effekteAnStand() const
+{
+    int an = 0;
+    int aus = 0;
+    for (const ClipOrt& ort : m_orte)
+    {
+        const int clip = findeClip(m_loop, ort);
+        if (clip < 0) continue;
+        (m_loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(clip)].effekteAn ? an : aus) += 1;
+    }
+    return aus == 0 ? Qt::Checked : an == 0 ? Qt::Unchecked : Qt::PartiallyChecked;
+}
+
+bool ClipEffektFenster::setzeEffekteAn(bool an)
+{
+    if (m_orte.empty()) return false;
+    Loop neu = m_loop;
+    bool geaendert = false;
+    for (const ClipOrt& ort : m_orte) geaendert = lumi::loop::setzeEffekteAn(neu, ort, an) || geaendert;
+    if (!geaendert)
+    {
+        fuelle();
+        return false;
+    }
+    m_loop = neu;
+    fuelle();
+    Q_EMIT bearbeitet(neu, an ? tr("Effects on") : tr("Effects off"));
     return true;
 }
 

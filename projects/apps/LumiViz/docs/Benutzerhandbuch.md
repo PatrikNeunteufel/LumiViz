@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.165.0
+> **Version:** 1.166.0
 > **Datum:** 2026-10-14
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2617,7 +2617,11 @@ und **Reverb**, jeden beliebig oft und in freier Reihenfolge, höchstens acht
 —, gleich ob er ein Drumkit oder ein Instrument spielt. Sie
 gehören zum Clip, nicht zur Basis: zwei Clips derselben Basis können
 verschieden klingen, etwa nur der letzte vor einem Wechsel mit Hall. Ein Clip
-mit einem eingeschalteten Effekt trägt rechts die Marke **fx**.
+mit einem eingeschalteten Effekt trägt rechts die Marke **fx**. Jeder Clip hat
+dazu einen **Schalter für alle seine Effekte** (Haken **Effects on** im Fenster
+Clip effects, Knopf **FX** in den Editoren): aus, klingt der Clip trocken, die
+Effekte bleiben mit ihren Werten stehen, und die Marke **fx** ist matt mit
+gepunktetem Rand.
 
 Einen oder mehrere Clips markieren, Rechtsklick → **Effects...**: das Fenster
 **Clip effects** öffnet sich. Es bleibt offen und zeigt immer die Clips, die
@@ -2626,6 +2630,7 @@ gerade markiert sind.
 | Element | Wirkung |
 |---|---|
 | Kopf | Wie viele Clips, welche (Basis und Takt), rechts **Peak** — die Spitze der Summe beim Spielen, mit Effekten; über 1 steht sie rot |
+| **Effects on** | Der Schalter aller Effekte der markierten Clips. Aus: sie klingen trocken, die Reihe bleibt. Halb, wenn die Clips verschieden stehen — ein Klick schaltet alle an |
 | **Signal path** | Die Zeile zeigt den Weg des Tons durch den Clip, von links nach rechts: **Clip** (wie sein Muster ihn spielt), dann die Bausteine, der Knopf **+ Add**, zuletzt **Out** (mit der Spitze). Jeder Baustein trägt seinen wichtigsten Wert („1/8 dotted · 35 %“). **Ein Klick auf einen Baustein** zeigt darunter seinen Haken und seine Regler. Die Reihenfolge ist zu hören: eine Distortion hinter dem Echo verzerrt auch jede Wiederholung und hebt die leisen an, davor nur den Schlag |
 | **+ Add** | Holt **Filter**, **Distortion**, **Echo** oder **Reverb** hinter den gewählten Baustein, eingeschaltet. Bei acht steht „8 of 8“ |
 | **← Move**, **Move →**, **Remove** | Den gewählten Baustein einen Platz schieben oder entfernen. Dasselbe mit der Maus: einen Baustein in der Zeile **ziehen** |
@@ -2679,7 +2684,8 @@ siehe unten.)
 | **Kit** | Das Kit des Musters — siehe „Kits" unten |
 | **Bars** | Länge des Musters, 1 bis 64 Takte (ein neues Muster hat 4). Kürzer schneidet hinten ab. Die Clips der Basis werden mit ihr länger; ein Clip dahinter rückt nach hinten |
 | **Repeat when lengthening** | Ein Haken, den LumiViz sich merkt (zuerst an; derselbe im Instrument-Editor). An: wird **Bars** größer, wiederholen die neuen Takte die bisherigen — aus einem Takt werden vier gleiche, aus drei auf vier die Takte 1, 2, 3, 1. Aus: die neuen Takte sind leer. So lässt sich ein Takt komponieren und danach auffüllen |
-| **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster |
+| **Play pattern** / **Stop** | Spielt nur dieses Muster im Kreis; eine Marke läuft durch das Raster. Mit den Effekten eines Clips dieser Basis — siehe **FX** |
+| **FX** | Die Effekte beim Abspielen an oder aus. Sie gehören dem **Bezugsclip**: dem im Panel Loop markierten Clip, wenn er diese Basis spielt, sonst ihrem ersten Clip (der Tooltip nennt ihn, etwa „Drums, bar 5"). Es ist derselbe Schalter wie im Loop: aus, klingt dieser Clip auch im ganzen Loop trocken. Grau, wenn der Clip keine Effekte hat. Ein Schritt für Ctrl+Z |
 | **Peak** | Der größte Ausschlag der Summe, solange etwas spielt. Über 1 steht er **rot**: dann übersteuert der Loop — eine Spur oder den Loop leiser stellen |
 | **Beats per bar**, **Steps per beat**, **Swing** | Das Raster des **ganzen Loops**, nicht nur dieses Musters. Swing verzögert jeden zweiten Schritt eines Schlags |
 | **M** | Die Spur ist stumm |
@@ -3306,6 +3312,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.166.0 | 2026-10-14 | Session 124. §16 NEU der Schalter für alle Effekte eines Clips: **Effects on** im Fenster Clip effects, **FX** im Drum- und Instrument-Editor, die matte Marke **fx**; **Play pattern** spielt jetzt mit den Effekten des Bezugsclips (vorher trocken). Eine `.lvloop` wird als Fassung 7 geschrieben. |
 | 1.165.0 | 2026-10-14 | Session 124. §16 GEÄNDERT: ein Muster kann **1 bis 64 Takte** lang sein (bisher 4 bis 64), neu der Haken **Repeat when lengthening**; ein Klick in die Taktzeile der Editoren setzt jetzt die **Abspielstelle**, die Einfügemarke setzt **Shift**+Klick; im Instrument-Editor nimmt eine Kopie den Zeitraum des Rahmens mit; ein Klick ins **Lineal** des Panels Loop springt oder setzt die Startmarke. Eine `.lvloop` wird als Fassung 6 geschrieben. |
 | 1.164.0 | 2026-10-14 | Session 124. §16 auf den Stand gebracht: der Instrument-Creator nennt dreiundneunzig mitgelieferte Instrumente nach Art (stand noch auf neunundvierzig, seit S123 veraltet), die Drums sind zwanzig (mit 808 Kick, Toms, Shaker, Ride, Crash, drei Besen und fünf aus Samples). |
 | 1.163.0 | 2026-10-14 | Session 124. §16 NEU **Kits**: Rollen, der Knopf Kit mit den Haken **Add all roles of the kit** und **Remove empty tracks the kit doesn't have**, das \* für Spuren, die nicht zum Kit gehören, das Fenster **Kits**; vierzehn mitgelieferte Kits, darunter Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes; die Samples aus DrumGizmo (CC BY 4.0). §17 NEU `.lvkit`. |

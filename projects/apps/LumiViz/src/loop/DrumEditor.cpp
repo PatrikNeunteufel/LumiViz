@@ -800,6 +800,13 @@ void DrumEditor::setupUI()
     kopf->addWidget(m_takte);
     kopf->addWidget(m_wiederholen);
     kopf->addWidget(m_play);
+    // E1 a (S124): die Effekte des Bezugsclips an oder aus — derselbe Schalter wie im Loop
+    m_fx = new QPushButton(QStringLiteral("FX"), this);
+    m_fx->setObjectName(QStringLiteral("drumFx"));
+    m_fx->setCheckable(true);
+    m_fx->setMaximumWidth(fontMetrics().horizontalAdvance(QStringLiteral("FX")) + 28);
+    connect(m_fx, &QPushButton::clicked, this, [this](bool an) { (void)setzeEffekteAn(an); });
+    kopf->addWidget(m_fx);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
     aussen->addLayout(kopf);
@@ -1015,6 +1022,7 @@ void DrumEditor::zeigeAlles()
         m_takte->setValue(ziel->takte);
         const QSignalBlocker e(m_wiederholen);
         m_wiederholen->setChecked(wiederholenBeimVerlaengern());  // der andere Editor kann ihn umgestellt haben
+        zeigeFx();
         m_schlaege->setValue(m_loop.schlaegeJeTakt);
         m_jeSchlag->setValue(m_loop.schritteJeSchlag);
         m_swing->setValue(m_loop.swing * 100.0);
@@ -2114,6 +2122,49 @@ void DrumEditor::setzeKitOptionen(const KitOptionen& optionen)
 QString DrumEditor::fremdZeile() const
 {
     return m_fremdZeile->text();
+}
+
+void DrumEditor::setMarkierterClip(std::optional<ClipOrt> ort)
+{
+    m_markiert = ort;
+    if (m_fx != nullptr) zeigeFx();
+}
+
+std::optional<ClipOrt> DrumEditor::bezugsclip() const
+{
+    return lumi::loop::bezugsclip(m_loop, m_muster, m_markiert);
+}
+
+bool DrumEditor::setzeEffekteAn(bool an)
+{
+    const std::optional<ClipOrt> ort = bezugsclip();
+    Loop neu = m_loop;
+    if (!ort || !lumi::loop::setzeEffekteAn(neu, *ort, an))
+    {
+        zeigeFx();  // der Knopf steht wieder, wie der Clip ist
+        return false;
+    }
+    Q_EMIT bearbeitet(neu, an ? tr("Effects on") : tr("Effects off"));
+    return true;
+}
+
+void DrumEditor::zeigeFx()
+{
+    const std::optional<ClipOrt> ort = bezugsclip();
+    const int clip = ort ? findeClip(m_loop, *ort) : -1;
+    const LoopClip* bezug = clip >= 0 ? &m_loop.kanaele[static_cast<std::size_t>(ort->kanal)].clips[static_cast<std::size_t>(clip)] : nullptr;
+    const QSignalBlocker ruhe(m_fx);
+    const bool hatEffekte = bezug != nullptr && bezug->effekte.einerAn();
+    m_fx->setEnabled(hatEffekte);
+    m_fx->setChecked(hatEffekte && bezug->effekteAn);
+    if (bezug == nullptr)
+        m_fx->setToolTip(tr("Effects: this pattern has no clip in the loop yet"));
+    else if (!hatEffekte)
+        m_fx->setToolTip(tr("Effects of the clip %1: none — set them with Clip effects in the Loop panel").arg(clipText(m_loop, *ort)));
+    else
+        m_fx->setToolTip(tr("Effects of the clip %1: %2 — Play pattern plays them; the same switch as in the loop. "
+                            "Select another clip of this pattern in the loop to use its effects")
+                             .arg(clipText(m_loop, *ort), bezug->effekteAn ? tr("on") : tr("off")));
 }
 
 }  // namespace lumi::loop

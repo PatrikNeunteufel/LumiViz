@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.224.0
+> **Version:** 1.225.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5259,6 +5259,9 @@ Muster ab 1 Takt, neue weiter 4; der Haken Repeat when lengthening; die Kopie
 trägt den Zeitraum des Rahmens; dazu (Wunsch Patrik S124) ein Klick in den
 Zeitstrahl springt — im Lineal des Panels und mit einer eigenen Abspielstelle
 in den Editoren (die Einfügemarke mit Shift+Klick). `.lvloop` Fassung 6.
+Dazu E1 a (Wunsch Patrik S124): der Schalter der Effekte je Clip — FX in den
+Editoren, Effects on im Fenster Clip effects, die matte Marke fx; Play pattern
+spielt jetzt mit den Effekten des Bezugsclips. `.lvloop` Fassung 7.
 Im Programm ungesehen. Der Befund unten bleibt als Vorgeschichte stehen.
 
 
@@ -5693,6 +5696,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.225.0 | 2026-10-14 | Session 124. E1 a gebaut: Schalter der Effekte je Clip, Play pattern mit Effekten (Loop_Konzept §4m); 1221 Cases. |
 | 1.224.0 | 2026-10-14 | Session 124. §7 „Bars kleiner als 4" **gebaut** mit dem Fehler beim Einfügen und dem Springen im Zeitstrahl (B1 a, B2 a, B3 a, B4 b; Loop_Konzept §4m). 1219 Cases. |
 | 1.223.0 | 2026-10-14 | Session 124. Kits **21e gemacht**, **Stufe 21 fertig**: Icon `.lvkit` (I2 a), Benutzerhandbuch 1.163.0, Liste `Sichttest_Kits.md`; voller Lauf 1215 / 1215. Als Nächstes: „Bars kleiner als 4" mit dem Fehler beim Einfügen (§7). |
 | 1.222.0 | 2026-10-14 | Session 124. K10 a und K11 a gebaut (Kitwechsel mit zwei Haken, * für fremde Spuren); §7 „Bars kleiner als 4" um den Befund Kopieren/Einfügen ergänzt (Versatz bei leeren Rändern der Auswahl — mit jenem Punkt zu bauen, Wunsch Patrik). 1215 Cases. |
