@@ -1530,6 +1530,154 @@ TEST_SUITE("ComposerPanel")
         CHECK_FALSE(achse->bearbeiten());
     }
 
+    TEST_CASE("S126 G2 Panel: Gain am Ton-Clip — Feld statt Blend, Marke im Clip, Reset gain, Undo")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString eins = dir.filePath(QStringLiteral("Titanium.mp3"));
+        const QString zwei = dir.filePath(QStringLiteral("Zwei.mp3"));
+        for (const QString& pfad : {eins, zwei})
+        {
+            QFile f(pfad);
+            REQUIRE(f.open(QIODevice::WriteOnly));
+        }
+        Komposition k;
+        Kanal bildKanal;
+        bildKanal.name = QStringLiteral("CH1");
+        bildKanal.clips = {clip(rot, 0, 60000)};
+        Kanal ton;
+        ton.name = QStringLiteral("A1");
+        ton.art = KanalArt::Audio;
+        ton.clips = {clip(eins, 0, 30000), clip(zwei, 32000, 60000)};
+        ton.clips[0].quellMs = 30000;
+        ton.clips[1].quellMs = 28000;
+        ton.clips[0].gainDb = 6.0;
+        k.kanaele = {bildKanal, ton};
+        const QString datei = dir.filePath(QStringLiteral("gain.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>(
+            [](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new papp::PappEngine); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        auto* engine = dynamic_cast<papp::PappEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(bus != nullptr);
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{eins, 30000}, {zwei, 28000}};
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 420);  // hoch genug, dass die Clips unter den Master-Zeilen im Bild sind
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        auto* mischart = panel.findChild<QComboBox*>(QStringLiteral("composerMischart"));
+        auto* gain = panel.findChild<QDoubleSpinBox*>(QStringLiteral("composerGain"));
+        REQUIRE(edit != nullptr);
+        REQUIRE(mischart != nullptr);
+        REQUIRE(gain != nullptr);
+        CHECK(panel.gainFeld() == gain);
+        CHECK(gain->minimum() == kGainMinDb);
+        CHECK(gain->maximum() == kGainMaxDb);
+        CHECK(ComposerPanel::gainText(12.0) == QStringLiteral("+12.0 dB"));
+        CHECK(ComposerPanel::gainText(-6.5) == QStringLiteral("-6.5 dB"));
+        CHECK(ComposerPanel::gainText(0.0) == QStringLiteral("0.0 dB"));
+
+        REQUIRE(sitzung->lade(datei));
+        const auto klick = [&](std::int64_t ms, int zeile) {
+            const QPoint a(achse->xVon(ms), achse->yVonZeile(zeile));
+            QMouseEvent druck(QEvent::MouseButtonPress, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                              Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &druck);
+            QMouseEvent los(QEvent::MouseButtonRelease, QPointF(a), QPointF(achse->mapToGlobal(a)),
+                            Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(achse, &los);
+        };
+        const auto gainVon = [&](int c) { return sitzung->komposition().kanaele[1].clips[static_cast<std::size_t>(c)].gainDb; };
+
+        // --- ohne Edit: der Ton-Clip zeigt sein Gain, gesperrt; Blend ist fort
+        klick(10000, 1);
+        REQUIRE(achse->gewaehlterKanal() == 1);
+        REQUIRE(achse->gewaehlterClip() == 0);
+        CHECK(gain->isVisible());
+        CHECK_FALSE(mischart->isVisible());
+        CHECK_FALSE(gain->isEnabled());
+        CHECK(gain->value() == doctest::Approx(6.0));
+        gain->setValue(9.0);  // gesperrt: aendert nichts an der Komposition
+        CHECK(gainVon(0) == doctest::Approx(6.0));
+
+        // --- ein Bild-Clip: Blend wie bisher, kein Gain
+        klick(10000, 0);
+        CHECK(mischart->isVisible());
+        CHECK_FALSE(gain->isVisible());
+
+        // --- mit Edit: das Feld stellt das Gain, ein Undo-Schritt
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        klick(40000, 1);
+        REQUIRE(achse->gewaehlterClip() == 1);
+        CHECK(gain->isEnabled());
+        CHECK(gain->value() == doctest::Approx(0.0));
+        gain->setValue(12.5);
+        CHECK(gainVon(1) == doctest::Approx(12.5));
+        CHECK(bus->undoDescription() == "Change gain");
+        bus->undo();
+        CHECK(gainVon(1) == doctest::Approx(0.0));
+        CHECK(gain->value() == doctest::Approx(0.0));
+        bus->redo();
+        CHECK(gainVon(1) == doctest::Approx(12.5));
+        CHECK(gain->value() == doctest::Approx(12.5));
+        gain->setValue(40.0);  // das Feld haelt die Grenzen
+        CHECK(gainVon(1) == doctest::Approx(kGainMaxDb));
+        gain->setValue(-6.5);
+        CHECK(gainVon(1) == doctest::Approx(-6.5));
+
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_GAIN_BILD"); !bild.isEmpty())
+        {
+            QCoreApplication::processEvents();
+            CHECK(panel.grab().save(bild));
+        }
+
+        // --- Reset gain (Rechtsklick): auf 0 dB, ein Undo-Schritt; ohne Gain tut es nichts
+        achse->gainZuruecksetzen(1, 0);
+        CHECK(gainVon(0) == 0.0);
+        CHECK(bus->undoDescription() == "Reset gain");
+        const int schritte = static_cast<int>(bus->undoCount());
+        achse->gainZuruecksetzen(1, 0);
+        CHECK(static_cast<int>(bus->undoCount()) == schritte);
+        achse->gainZuruecksetzen(0, 0);  // ein Bild-Clip hat kein Gain
+        CHECK(static_cast<int>(bus->undoCount()) == schritte);
+        bus->undo();
+        CHECK(gainVon(0) == doctest::Approx(6.0));
+        // ohne Edit tut Reset nichts
+        edit->click();
+        REQUIRE_FALSE(achse->bearbeiten());
+        achse->gainZuruecksetzen(1, 0);
+        CHECK(gainVon(0) == doctest::Approx(6.0));
+    }
+
     TEST_CASE("C5 Panel: ein Audio-Kanal — anlegen, Songs hineinziehen, Wellenform, Kanten und Blenden")
     {
         int argc = 1;

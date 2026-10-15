@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.84.0
+> **Version:** 0.85.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -26,7 +26,7 @@
 > in §4 bis §9e; seit S105 auf `master` (§12) — **S109 / S110: die gemeinsame
 > Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)** —
 > **S126: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a),
-> G1 und G3 gebaut, im Programm nichts gesehen (§9g)**
+> G1 bis G3 gebaut, im Programm nichts gesehen (§9g)**
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
 > erst nach `master` geholt wird, wenn der Composer sauber läuft
@@ -1259,7 +1259,7 @@ danach aus den Einstellungen bekam; Panel Karaoke und Menü lesen die
 Einstellung selbst und stimmten. Seit S110 setzt das Hauptfenster den
 Schalter **vor** dem Aufbau der Panels (`MainWindow::setupUi`).
 
-### 9g. Lautstärke-Abgleich der Ton-Clips — entschieden S126, G1 und G3 gebaut
+### 9g. Lautstärke-Abgleich der Ton-Clips — entschieden S126, G1 bis G3 gebaut
 
 **Anlass (Patrik S126):** in `asset/compare.lvcomp` liegen der Song
 *Titanium* (A1) und der nachgebaute Loop `titanium_versuch.lvloop` (A2)
@@ -1349,8 +1349,20 @@ Loop-Kleinkram“):**
   schreibt es, die Tonführung multipliziert es (`Tonfuehrung.cpp`, neben
   `pegelBei`); Tests gegen die Engine aus Pappe (Volume über 1 kommt an,
   alte Dateien unverändert).
-- **G2 Gain am Clip bedienen:** Marke im Clip, Eingabe, Undo; vorher die
-  Bedienung vorlegen.
+- ✅ **G2 Gain am Clip bedienen** (S126, Entscheid Patrik **G2 a**, mit
+  Skizze): in der Fußzeile des angeklickten Clips steht bei einem Ton-Clip
+  **Gain:** (`composerGain`, −24 … +24 dB, eine Stelle, Pfeile und Rad 0,5 dB)
+  an der Stelle von *Blend*; bei einem Bild-Clip und ohne Auswahl bleibt
+  *Blend*. Nur mit *Edit*, jede Änderung ein Undo-Schritt „Change gain“. Ein
+  Ton-Clip mit Gain trägt rechts eine Marke („+6.0 dB“, `gainText`); sie
+  weicht, wenn der Clip zu schmal ist. Rechtsklick **Reset gain (+6.0 dB)**
+  nur an einem Ton-Clip mit Gain (`Zeitachse::gainZuruecksetzen`, Undo
+  „Reset gain“). Test „S126 G2 Panel“ in `test_ComposerPanel.cpp`,
+  `LUMIVIZ_COMPOSER_GAIN_BILD=<datei.png>` legt ein Bild ab. Von mir gesetzt:
+  das Feld zeigt kein „+“ (Qt-Feld), die Marke schon; Schritt 0,5 dB auch
+  für die Pfeile (vorgelegt war 0,1 für Pfeile und 0,5 für das Rad — ein
+  Qt-Feld kennt nur einen Schritt); bei mehreren markierten Clips stellt das
+  Feld nur den angeklickten.
 - ✅ **G3 Messbaustein** (S126): `composer/Lautheit` — `LautheitsMessung`
   (stückweise fütterbar) und `messeLautheit`, K-Filter für jede Abtastrate
   (Kennwerte wie in libebur128), Blöcke 400 ms / 75 %, Gates −70 LUFS und
@@ -1741,6 +1753,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.85.0 | 2026-10-15 | Session 126 — §9g: **G2** gebaut (Entscheid G2 a: Feld Gain statt Blend am Ton-Clip, Marke im Clip, Reset gain im Rechtsklick); Kopf |
 | 0.84.0 | 2026-10-15 | Session 126 — §9g: **G1** (Gain je Ton-Clip in Modell, Datei und Tonführung) und **G3** (Messbaustein `composer/Lautheit` nach EBU R128, belegt an Tech 3341 Fälle 1–5; Beleg L3b: ein Loop-Durchlauf gleicht dem nächsten) gebaut; Baustufen freigegeben; Kopf. Im Programm nichts gesehen |
 | 0.83.0 | 2026-10-15 | Session 126 — **§9g neu: Lautstärke-Abgleich der Ton-Clips** (Anlass Patrik: `compare.lvcomp`, der Loop viel leiser als das Original). Entscheide L1 a (Gain je Ton-Clip in dB), L2 a (EBU R128, LUFS), L3 a (Target: Clip oder Fixed level), L3b a (gespielter Ausschnitt ohne Pegelkurve), L4 a (Limiter am Mixer); die Skizze des Dialogs Match loudness als Beschreibung; Baustufen G1 bis G6 vorgelegt, nicht freigegeben; §11 fünf Zeilen; Kopf. Nichts gebaut |
 | 0.82.0 | 2026-10-11 | Session 110 — **§9f neu** (Nachtrag zu S109 und S110): die gemeinsame Basis `lumi::ui::Achse` für Zeitachse und Loop-Panel, der Loop als Clip im Audio-Kanal (Klangerzeuger in der Tonführung, kein Ende, laufender Song aus den Tags, Verbindung zum Loop-Panel), der Haken Karaoke stimmt nach dem Start; §3 und Kopf nachgezogen |

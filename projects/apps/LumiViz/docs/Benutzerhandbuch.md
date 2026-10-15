@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.168.0
+> **Version:** 1.169.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2024,6 +2024,7 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | **Ctrl+C** / **Ctrl+X** | Kopiert bzw. schneidet den angeklickten Clip aus — mit Länge, Pegelkurve, Mischart und (beim Song) Einsatz. Auch im Rechtsklick-Menü: *Copy clip*, *Cut clip* |
 | **Ctrl+V** | Fügt den Clip mit seinem **Anfang an der Einfügemarke** ein. Auch: Rechtsklick auf eine freie Stelle → *Paste clip here* |
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
+| **Gain** (unten rechts, am Ton-Clip statt *Blend*) | Wie viel lauter oder leiser der angeklickte Song oder Loop spielt als seine Datei, −24 bis +24 dB. Die Pfeile und das Mausrad gehen in Schritten von 0,5 dB, eintippen lässt sich auf 0,1 genau. Ein Clip mit Gain trägt rechts eine Marke („+6.0 dB“); Rechtsklick → *Reset gain* setzt ihn auf 0 dB zurück |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
 
@@ -2234,6 +2235,12 @@ Playlist ruht.
   dieselben Presets. Der Pegel ist hier die **Lautstärke**: voller Pegel ist
   so laut, wie der Regler im Panel Player steht; die Wellenform im Clip wird
   mit dem Pegel schmaler.
+- **Gain — einen Clip lauter oder leiser als seine Datei:** ein selbst gebauter
+  Loop ist oft viel leiser als ein fertiger Song. Das Feld **Gain** unten rechts
+  (nur mit *Edit*) hebt oder senkt einen Ton-Clip um bis zu 24 dB. Es ist
+  getrennt von der Pegelkurve: die Blenden laufen weiter von 0 bis 1, das Gain
+  kommt obendrauf. Welcher Song als **laufender Song** gilt, entscheidet
+  weiter die Pegelkurve, nicht das Gain.
 - **Mehrere Audio-Kanäle — Songs überlagern und überblenden:** alle
   eingeschalteten Audio-Kanäle spielen **zugleich**, jeder Song mit seiner
   eigenen Pegelkurve. Liegt das Ende eines Songs in A1 über dem Anfang eines
@@ -2506,6 +2513,7 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `curve` | Form des Abschnitts **bis zum nächsten Punkt**: 0 linear · 1 S-Kurve · 2 Ease in · 3 Ease out · 4 exponentiell · 5 halten (Sprung am nächsten Punkt) · 6 Bézier |
 | `base` | Grundpegel des Clips, 0 … 1 (ohne Angabe 1): der Pegel zwischen den Teilen. Die Blenden laufen von null bis dorthin |
 | `kind` (am Kanal) | `visual` — Presets als Clips — oder `audio` — Songs als Clips. Ein Clip im Audio-Kanal hat dieselben Felder für Zeit und Pegelkurve; statt `blend` trägt er `offset` |
+| `gain` | Nur im Audio-Kanal, freiwillig: das Gain des Clips in dB, −24 … +24 (ohne Angabe 0) — zu hören ist die Datei mal Gain mal Pegelkurve |
 | `offset`, `sourceLength` | Nur im Audio-Kanal: `offset` ist die Stelle im Song (Millisekunden), an der der Clip einsetzt; `sourceLength` die Länge des Songs (schreibt LumiViz selbst). Fehlt `end`, reicht der Clip bis zum Schluss des Songs |
 | `shapes` | Stücke mitten im Clip, freiwillig: je `pos` (Mitte des Stücks als Anteil der Clip-Länge), `width` (Millisekunden), `flipped` und `shape` (`kind` `shape`). Die Form sagt, wie viel vom Grundpegel bleibt — 1 alles, 0 nichts (eine Delle); mit `flipped` tauschen oben und unten, das Stück hebt den Pegel vom Grundpegel bis auf voll (ein Buckel) |
 | `levels` | **Alt (bis Version 1):** die Pegelkurve als Punkte mit `t` (Millisekunden ab Clip-Start) und `level`. Wird beim Laden übersetzt — eine einfache Ein- / Ausblendung in `fadeIn` / `fadeOut`, jede andere Kurve in ein Stück über den ganzen Clip; der Verlauf bleibt derselbe. Geschrieben wird das Feld nicht mehr |
@@ -3350,6 +3358,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.169.0 | 2026-10-15 | Session 126. §15 Composer NEU **Gain** am Ton-Clip: Feld unten rechts statt *Blend*, Marke im Clip, Rechtsklick *Reset gain*; in der Datei das Feld `gain`. |
 | 1.168.0 | 2026-10-15 | Session 125. §16 NEU „Weitergeben: Publish“: Publish... in Panel Loop, Instrument-Creator, Kits, Edit shape, Record sample, File → Publish a file... und Import package..., die Dialoge Publish und Import package (Same names mit Keep both, Replace mine, Use mine); §8 ein Paket öffnet aus Import... den Dialog Import package. |
 | 1.167.0 | 2026-10-15 | Session 125. §8 Import data: Keep both heißt jetzt `bass_2` statt `bass (2)` — einen Namen mit Klammern übergingen Instrumente, Samples, Kits und Formen. |
 | 1.166.0 | 2026-10-14 | Session 124. §16 NEU der Schalter für alle Effekte eines Clips: **Effects on** im Fenster Clip effects, **FX** im Drum- und Instrument-Editor, die matte Marke **fx**; **Play pattern** spielt jetzt mit den Effekten des Bezugsclips (vorher trocken). Eine `.lvloop` wird als Fassung 7 geschrieben. |

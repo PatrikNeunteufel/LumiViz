@@ -206,6 +206,8 @@ public:
     /// seine Kurve oeffnen (nur im Bearbeiten).
     void stueckHinzu(int kanal, int clip, std::int64_t zeitImClipMs);
     void stueckLoeschen(int kanal, int clip, int stueck);
+    /// Das Gain eines Ton-Clips auf 0 dB (Rechtsklick „Reset gain", S126, G2).
+    void gainZuruecksetzen(int kanal, int clip);
     /// Das Teil, an dem der Curve Editor haengt — am angeklickten Clip markiert.
     void setTeil(Teil teil);
     /// Mitte eines Griffs des Stuecks oben im Clip: `welcher` 0 = die Raute in
@@ -473,6 +475,10 @@ public:
 
     /// Eine Stelle als Text: Minuten, Sekunden, Zehntel („1:23.4").
     [[nodiscard]] static QString zeitText(std::int64_t ms);
+    /// Das Gain eines Ton-Clips als Text, mit Vorzeichen („+12.0 dB", S126).
+    [[nodiscard]] static QString gainText(double db);
+    /// Das Feld Gain der Fusszeile (S126, G2) — fuer Tests.
+    [[nodiscard]] QDoubleSpinBox* gainFeld() const { return m_gain; }
     /// Enthaelt die Kettendatei einen Host Switcher? Dann wechseln im Composer
     /// zwei Wechsler — davor warnt das Panel beim Hinzufuegen (Entscheid S88).
     [[nodiscard]] static bool hatHostSwitcher(const QString& pfad);
@@ -533,7 +539,10 @@ private:
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
+    QLabel* m_mischTitel = nullptr;
     QComboBox* m_mischart = nullptr;
+    QLabel* m_gainTitel = nullptr;
+    QDoubleSpinBox* m_gain = nullptr;  ///< Gain des angeklickten Ton-Clips, statt Blend (S126, G2)
     QCheckBox* m_endeFest = nullptr;
     QDoubleSpinBox* m_endeZeit = nullptr;
     QDoubleSpinBox* m_ueberlappung = nullptr;  ///< Loop overlap (S99)

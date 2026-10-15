@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.233.0
+> **Version:** 1.234.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2726,16 +2726,16 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
-- 🔧 **Lautstärke-Abgleich der Ton-Clips (S126, entschieden; G1 und G3 gebaut):**
+- 🔧 **Lautstärke-Abgleich der Ton-Clips (S126, entschieden; G1 bis G3 gebaut):**
   Anlass `asset/compare.lvcomp` — der Loop `titanium_versuch` ist viel leiser
   als der Song, und ein Clip kann heute nicht lauter werden als seine Datei.
   Entschieden L1 a (Gain je Ton-Clip in dB, getrennt von der Pegelkurve),
   L2 a (EBU R128, LUFS, Peak daneben), L3 a (Target: jeder Clip oder Fixed
   level, Vorgabe der lauteste), L3b a (gespielter Ausschnitt ohne Kurve),
   L4 a (Limiter am Mixer ab 0 dB). Dialog **Match loudness** als Skizze.
-  Gebaut G1 (Gain je Ton-Clip, bis G2 nur in der Datei zu setzen) und G3
-  (Messung nach R128, an EBU Tech 3341 belegt; ein Loop-Durchlauf gleicht
-  dem nächsten). Offen: G2 (Gain am Clip bedienen, vorher vorlegen), G4
+  Gebaut G1 (Gain je Ton-Clip), G2 (Feld Gain in der Fußzeile, Marke im
+  Clip, Reset gain) und G3 (Messung nach R128, an EBU Tech 3341 belegt; ein
+  Loop-Durchlauf gleicht dem nächsten). Offen: G4
   (Limiter; vorher belegen, was die Visuals hinter einem Baustein am Mixer
   sehen), G5 (Dialog; vorher Listen A/B und Undo vorlegen), G6. Steuerdokument
   [Composer_Konzept.md](ui/Composer_Konzept.md) §9g.
@@ -5737,6 +5737,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.234.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G2 gebaut. |
 | 1.233.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G1 und G3 gebaut. |
 | 1.232.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a, Composer_Konzept §9g), nicht gebaut. |
 | 1.231.0 | 2026-10-15 | Session 125. §6 Loop: Menüs des Rechtsklicks, Rename, Tags und Schieber getestet. |

@@ -565,6 +565,25 @@ void Zeitachse::paintEvent(QPaintEvent*)
             // Anfang des Clips hinausgerollt ist (von mir gesetzt, S102)
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
             namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
+            // das Gain eines Ton-Clips als Marke rechts im Clip (S126, G2 a) —
+            // am rechten Rand des Fensters stehend, wenn das Ende hinausgerollt ist
+            if (ton && clip.gainDb != 0.0 && namePasst(r.height()))
+            {
+                const QString gainMarke = ComposerPanel::gainText(clip.gainDb);
+                const int breite = fontMetrics().horizontalAdvance(gainMarke) + 10;
+                const int rechts = std::min(r.right(), width()) - 4;
+                const QRect marke(rechts - breite, r.center().y() - fontMetrics().height() / 2 - 1, breite,
+                                  fontMetrics().height() + 2);
+                if (marke.left() > namensFeld.left() + 24)
+                {
+                    p.setBrush(QColor(0, 0, 0, 70));
+                    p.setPen(QPen(QColor(255, 255, 255, 170), 1.0));
+                    p.drawRoundedRect(marke, 3, 3);
+                    p.setPen(Qt::white);
+                    p.drawText(marke, Qt::AlignCenter, gainMarke);
+                    namensFeld.setRight(marke.left() - 6);
+                }
+            }
             if (namePasst(r.height()))
                 p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
                            fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
@@ -1053,6 +1072,20 @@ void Zeitachse::stueckLoeschen(int kanal, int clip, int stueck)
     schreibeClip(neu, kanal, clip, c);
     uebernimm(neu, kanal, clip);
     Q_EMIT bearbeitet(neu, tr("Delete shape"));
+}
+
+void Zeitachse::gainZuruecksetzen(int kanal, int clip)
+{
+    if (!m_bearbeiten || !m_geladen || istMaster(kanal)) return;
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
+    Komposition neu = m_komposition;
+    Kanal& k = neu.kanaele[static_cast<std::size_t>(kanal)];
+    if (k.art != KanalArt::Audio || clip < 0 || clip >= static_cast<int>(k.clips.size())) return;
+    Clip& c = k.clips[static_cast<std::size_t>(clip)];
+    if (c.gainDb == 0.0) return;
+    c.gainDb = 0.0;
+    uebernimm(neu, kanal, clip);
+    Q_EMIT bearbeitet(neu, tr("Reset gain"));
 }
 
 void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
@@ -1893,6 +1926,16 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         }
         if (!istMaster(kanal))  // eine Kurve der Komposition ist kein Clip
         {
+            // S126, G2 a: nur an einem Ton-Clip mit Gain
+            const VisualClip& c = *clipIn(m_komposition, kanal, clip, ablage);
+            if (m_komposition.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio && c.gainDb != 0.0)
+            {
+                QAction* zurueck = menu.addAction(tr("Reset gain (%1)").arg(ComposerPanel::gainText(c.gainDb)),
+                                                  this, [this, kanal, clip] { gainZuruecksetzen(kanal, clip); });
+                zurueck->setObjectName(QStringLiteral("composerResetGain"));
+                zurueck->setEnabled(m_bearbeiten);
+                menu.addSeparator();
+            }
             menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
             menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
             menu.addAction(tr("Delete clip"), this, [this] { loescheAuswahl(); });
@@ -2047,6 +2090,11 @@ QString ComposerPanel::zeitText(std::int64_t ms)
         .arg(zehntel / 600)
         .arg((zehntel / 10) % 60, 2, 10, QLatin1Char('0'))
         .arg(zehntel % 10);
+}
+
+QString ComposerPanel::gainText(double db)
+{
+    return QStringLiteral("%1%2 dB").arg(db > 0.0 ? QStringLiteral("+") : QString()).arg(db, 0, 'f', 1);
 }
 
 void ComposerPanel::setupUI()
@@ -2243,8 +2291,8 @@ void ComposerPanel::setupUI()
         neu.laengeMs = static_cast<std::int64_t>(sekunden * 1000.0 + 0.5);
         bearbeite(neu, tr("Change the end"));
     });
-    auto* mischTitel = new QLabel(tr("Blend:"), this);
-    fuss->addWidget(mischTitel);
+    m_mischTitel = new QLabel(tr("Blend:"), this);
+    fuss->addWidget(m_mischTitel);
     m_mischart = new QComboBox(this);
     m_mischart->setObjectName(QStringLiteral("composerMischart"));
     for (int i = 0; i < kMischarten; ++i)
@@ -2252,6 +2300,22 @@ void ComposerPanel::setupUI()
     m_mischart->setToolTip(tr("How the selected clip is mixed with what lies below it. "
                               "Can be changed while Edit is on."));
     fuss->addWidget(m_mischart);
+    // am Ton-Clip steht an derselben Stelle das Gain (S126, Entscheid Patrik G2 a)
+    m_gainTitel = new QLabel(tr("Gain:"), this);
+    fuss->addWidget(m_gainTitel);
+    m_gain = new QDoubleSpinBox(this);
+    m_gain->setObjectName(QStringLiteral("composerGain"));
+    m_gain->setDecimals(1);
+    m_gain->setSingleStep(0.5);
+    m_gain->setRange(kGainMinDb, kGainMaxDb);
+    m_gain->setSuffix(tr(" dB"));
+    m_gain->setKeyboardTracking(false);
+    m_gain->setToolTip(tr("How much louder or quieter the selected sound clip plays than its file, "
+                          "-24 to +24 dB. The level curve (fades, shapes) stays 0 to 1 on top of it. "
+                          "Can be changed while Edit is on; right-click the clip to reset it."));
+    fuss->addWidget(m_gain);
+    m_gainTitel->hide();
+    m_gain->hide();
     root->addLayout(fuss);
 
     // --- die Schleife der Komposition (S99, Entscheide Patrik): die Werte
@@ -2395,6 +2459,16 @@ void ComposerPanel::setupUI()
             .clips[static_cast<std::size_t>(m_zeitachse->gewaehlterClip())]
             .mischart = static_cast<Mischart>(index);
         bearbeite(neu, tr("Change blend mode"));
+    });
+    connect(m_gain, &QDoubleSpinBox::valueChanged, this, [this](double db) {
+        const VisualClip* clip = m_zeitachse->auswahl();
+        if (clip == nullptr || m_sitzung == nullptr || !m_zeitachse->bearbeiten()) return;
+        if (m_zeitachse->gesamtGewaehlt() || std::abs(clip->gainDb - db) < 1e-9) return;
+        Komposition neu = m_sitzung->komposition();
+        Kanal& kanal = neu.kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())];
+        if (kanal.art != KanalArt::Audio) return;
+        kanal.clips[static_cast<std::size_t>(m_zeitachse->gewaehlterClip())].gainDb = db;
+        bearbeite(neu, tr("Change gain"));
     });
     connect(m_speichern, &QPushButton::clicked, this, [this] {
         if (m_fenster != nullptr) (void)speichereMitDialog(*m_fenster, this, false);
@@ -2735,6 +2809,18 @@ void ComposerPanel::zeigeClip()
                       m_zeitachse->komposition().kanaele[static_cast<std::size_t>(m_zeitachse->gewaehlterKanal())].art ==
                           KanalArt::Visual;
     m_mischart->setEnabled(bild && m_zeitachse->bearbeiten());
+    // am Ton-Clip statt der Mischart das Gain (S126, G2 a)
+    const bool ton = clip != nullptr && !gesamt && !bild;
+    m_mischTitel->setVisible(!ton);
+    m_mischart->setVisible(!ton);
+    m_gainTitel->setVisible(ton);
+    m_gain->setVisible(ton);
+    m_gain->setEnabled(ton && m_zeitachse->bearbeiten());
+    if (ton)
+    {
+        const QSignalBlocker still(m_gain);
+        m_gain->setValue(clip->gainDb);
+    }
     // Sync on Effect Chain (C3c) folgt dem angeklickten Clip
     if (m_sitzung != nullptr)
         m_sitzung->waehleClip(clip != nullptr && !gesamt ? m_zeitachse->gewaehlterKanal() : -1,
