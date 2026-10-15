@@ -532,7 +532,10 @@ bool BassEngine::setVolume(AudioStreamHandle stream, float volume)
 {
     if (stream == INVALID_STREAM) return false;
     
-    volume = std::clamp(volume, 0.0f, 1.0f);
+    // ueber 1 verstaerkt BASS (S126: das Gain eines Ton-Clips im Composer, bis
+    // +24 dB = Faktor 16); vorher war hier bei 1 Schluss, und ein Gain ueber
+    // 0 dB kam nie an (belegt im Fall „Beleg G4" in test_ComposerNahtMixer)
+    volume = std::clamp(volume, 0.0f, kHoechsteLautstaerke);
     return BASS_ChannelSetAttribute(static_cast<HSTREAM>(stream), BASS_ATTRIB_VOL, volume) != 0;
 }
 

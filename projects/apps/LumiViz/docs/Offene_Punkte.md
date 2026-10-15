@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.235.0
+> **Version:** 1.236.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2740,9 +2740,10 @@ Idee Preset-Warmup/Pre-Roll.
   L4 a (Limiter am Mixer ab 0 dB). Dialog **Match loudness** als Skizze.
   Gebaut G1 (Gain je Ton-Clip), G2 (Feld Gain in der Fußzeile, Marke im
   Clip, Reset gain) und G3 (Messung nach R128, an EBU Tech 3341 belegt; ein
-  Loop-Durchlauf gleicht dem nächsten). Offen: G4
-  (Limiter; vorher belegen, was die Visuals hinter einem Baustein am Mixer
-  sehen), G5 (Dialog; vorher Listen A/B und Undo vorlegen), G6. Steuerdokument
+  Loop-Durchlauf gleicht dem nächsten). Dabei behoben: die BassEngine klemmte
+  die Lautstärke auf 1, ein Gain über 0 dB kam bis zum Beleg G4 nicht an.
+  Belegt: die Visuals sehen das Signal hinter einem DSP am Mixer. Offen: G4
+  (Limiter), G5 (Dialog; vorher Listen A/B und Undo vorlegen), G6. Steuerdokument
   [Composer_Konzept.md](ui/Composer_Konzept.md) §9g.
 - **Sichttests, S103 — neu gefasst, mit festen Vorlagen (Anlass Patrik: „ich
   habe die Sichttests aufgegeben, sie sind zum Teil etwas unklar
@@ -5742,6 +5743,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.236.0 | 2026-10-15 | Session 126. §7 Composer: Beleg G4, Gain über 0 dB in der BassEngine behoben. |
 | 1.235.0 | 2026-10-15 | Session 126. §7 Composer: einzelne Clips ausschalten (D1 c) gebaut. |
 | 1.234.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G2 gebaut. |
 | 1.233.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G1 und G3 gebaut. |

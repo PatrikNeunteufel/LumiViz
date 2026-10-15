@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.86.0
+> **Version:** 0.87.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1381,6 +1381,19 @@ Loop-Kleinkram“):**
     unter Testing-MSVC (ohne Dekodieren).
 - **G4 Limiter** am Mixer, Haken; Beleg, was die Visuals sehen; Test: unter
   0 dB Bit für Bit gleich.
+  **Beleg vor dem Bau (S126, „Beleg G4“ in `test_ComposerNahtMixer.cpp`,
+  echte BassEngine, rund eine Sekunde sehr leiser Ton):** Wellenform und
+  Spektrum des Mixers — was die Visuals lesen (`MainWindow::onAudioUpdate`)
+  — zeigen das Signal **hinter** einem DSP am Mixer (×0,5 am Mixer: Spitze
+  0,125 statt 0,25). Ein Limiter am Mixer ändert also auch, was die Visuals
+  sehen — nur an Spitzen über 0 dB. Das Gain einer Quelle kommt **vor** dem
+  DSP an (×4 an der Quelle, ×0,5 am Mixer: 0,5).
+  **Befund dabei — G1 wirkte nicht über 0 dB:** `BassEngine::setVolume`
+  klemmte auf 0…1; ein Gain über 0 dB kam in der echten Engine nie an (der
+  Test zu G1 lief gegen die Engine aus Pappe, die nicht klemmt). Behoben:
+  Grenze `kHoechsteLautstaerke` = 16 (+24 dB) in `IAudioEngine.hpp`; alle
+  anderen Aufrufer geben höchstens 1 (Lautstärke des Players ist auf 0…1
+  geklemmt).
 - **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
   vorher Listen A/B und Undo vorlegen.
 - **G6** Handbuch, Sichttest-Liste, voller Lauf.
@@ -1782,6 +1795,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.87.0 | 2026-10-15 | Session 126 — §9g G4: Beleg, was die Visuals hinter einem DSP am Mixer sehen; **Befund: G1 wirkte in der echten Engine nicht über 0 dB** (`BassEngine::setVolume` klemmte auf 1), behoben mit `kHoechsteLautstaerke` = 16 |
 | 0.86.0 | 2026-10-15 | Session 126 — **§9h neu: einzelne Clips ausschalten** (Entscheid D1 c): *Clip enabled* im Rechtsklick, Ctrl+E, `enabled` in der `.lvcomp`; §11 eine Zeile; Kopf |
 | 0.85.0 | 2026-10-15 | Session 126 — §9g: **G2** gebaut (Entscheid G2 a: Feld Gain statt Blend am Ton-Clip, Marke im Clip, Reset gain im Rechtsklick); Kopf |
 | 0.84.0 | 2026-10-15 | Session 126 — §9g: **G1** (Gain je Ton-Clip in Modell, Datei und Tonführung) und **G3** (Messbaustein `composer/Lautheit` nach EBU R128, belegt an Tech 3341 Fälle 1–5; Beleg L3b: ein Loop-Durchlauf gleicht dem nächsten) gebaut; Baustufen freigegeben; Kopf. Im Programm nichts gesehen |

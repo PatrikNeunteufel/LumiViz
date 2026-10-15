@@ -26,6 +26,8 @@
 #include "PappTon.hpp"
 #include "audio/BassEngine.hpp"
 
+#include <bass.h>  // Beleg G4: ein DSP am Mixer
+
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QElapsedTimer>
@@ -407,5 +409,85 @@ TEST_CASE("Naht N12: Tags und Songtext liest die Engine auch an einer Quelle des
     CHECK(engine.getDurationMs(quelle) == doctest::Approx(dauer).epsilon(0.02));
 
     engine.mixerRemoveSource(quelle);
+    engine.freeStream(mixer);
+}
+
+namespace
+{
+
+/// Ein DSP, der alles mit einem Faktor malnimmt (Fliesskomma, wie der Mixer).
+void CALLBACK halbiere(HDSP, DWORD, void* puffer, DWORD laenge, void* faktor)
+{
+    auto* werte = static_cast<float*>(puffer);
+    const float f = *static_cast<const float*>(faktor);
+    for (DWORD i = 0; i < laenge / sizeof(float); ++i) werte[i] *= f;
+}
+
+}  // namespace
+
+// Beleg vor G4 (Composer_Konzept §9g, L4 a): sehen die Visuals das Signal
+// VOR oder NACH einem Baustein (DSP) am Mixer? Sie lesen Wellenform und
+// Spektrum am Mixer (`MainWindow::onAudioUpdate`). Ausserdem: kommt das Gain
+// einer Quelle (BASS_ATTRIB_VOL, auch ueber 1) VOR dem DSP an?
+TEST_CASE("Beleg G4: Wellenform und Spektrum des Mixers zeigen das Signal hinter einem DSP am Mixer")
+{
+    App app;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    const QString datei = ordner.filePath(QStringLiteral("a_1000.wav"));
+    REQUIRE(schreibeSinus(datei, kFreqA, 0.25f, 3));
+
+    BassEngine bass;
+    if (!bass.initialize())
+    {
+        MESSAGE("kein Ausgabegeraet: nichts geprueft (" << bass.getLastError().toStdString() << ")");
+        return;
+    }
+    IAudioEngine& engine = bass;
+    const AudioStreamHandle mixer = engine.createMixer();
+    REQUIRE(mixer != INVALID_STREAM);
+    engine.setVolume(mixer, kLeise);
+    const AudioStreamHandle a = engine.mixerAddSource(mixer, datei);
+    REQUIRE(a != INVALID_STREAM);
+    REQUIRE(engine.play(mixer));
+    REQUIRE(engine.setSourcePaused(a, false));
+    QThread::msleep(300);
+
+    const auto welleSpitze = [&] {
+        std::vector<float> welle(2048, 0.0f);
+        REQUIRE(engine.getWaveformData(mixer, welle.data(), 2048));
+        float groesste = 0.0f;
+        for (const float w : welle) groesste = std::max(groesste, std::abs(w));
+        return groesste;
+    };
+    const float vorher = welleSpitze();
+    const float spektrumVorher = spitzeBei(engine, mixer, kFreqA);
+    MESSAGE("ohne DSP: Spitze der Wellenform " << vorher << ", Spektrum " << spektrumVorher);
+    CHECK(vorher == doctest::Approx(0.25f).epsilon(0.1));
+
+    // ein DSP am Mixer, der halbiert
+    static float faktor = 0.5f;
+    const HDSP dsp = BASS_ChannelSetDSP(static_cast<HSTREAM>(mixer), &halbiere, &faktor, 0);
+    REQUIRE(dsp != 0);
+    QThread::msleep(400);
+    const float mitDsp = welleSpitze();
+    const float spektrumMitDsp = spitzeBei(engine, mixer, kFreqA);
+    MESSAGE("mit DSP x0,5: Spitze der Wellenform " << mitDsp << ", Spektrum " << spektrumMitDsp);
+    CHECK(mitDsp == doctest::Approx(vorher * 0.5f).epsilon(0.1));
+    CHECK(spektrumMitDsp == doctest::Approx(spektrumVorher * 0.5f).epsilon(0.15));
+
+    // das Gain der Quelle ueber 1 kommt vor dem DSP an: ×4 an der Quelle, ×0,5 am Mixer = ×2
+    REQUIRE(engine.setVolume(a, 4.0f));
+    CHECK(engine.getVolume(a) == doctest::Approx(4.0f));  // bis S126 bei 1 geklemmt
+    REQUIRE(engine.setVolume(a, 100.0f));
+    CHECK(engine.getVolume(a) == doctest::Approx(kHoechsteLautstaerke));
+    REQUIRE(engine.setVolume(a, 4.0f));
+    QThread::msleep(400);
+    const float gainUndDsp = welleSpitze();
+    MESSAGE("Quelle x4, DSP x0,5: Spitze " << gainUndDsp << " (die Summe kann ueber 1 gehen)");
+    CHECK(gainUndDsp == doctest::Approx(vorher * 2.0f).epsilon(0.1));
+
+    REQUIRE(BASS_ChannelRemoveDSP(static_cast<HSTREAM>(mixer), dsp) != 0);
+    engine.mixerRemoveSource(a);
     engine.freeStream(mixer);
 }

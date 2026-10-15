@@ -83,6 +83,10 @@ using AudioStreamHandle = std::uint32_t;
 /// Invalid stream handle constant
 constexpr AudioStreamHandle INVALID_STREAM = 0;
 
+/// Groesste Lautstaerke, die `IAudioEngine::setVolume` annimmt: 16 = +24 dB,
+/// das hoechste Gain eines Ton-Clips im Composer (S126, `kGainMaxDb`).
+constexpr float kHoechsteLautstaerke = 16.0f;
+
 // =============================================================================
 // Audio Generator
 // =============================================================================
@@ -275,7 +279,8 @@ public:
     }
 
     /**
-     * @brief Get/Set volume (0.0 - 1.0)
+     * @brief Get/Set volume: 0 = still, 1 = wie die Datei, darueber verstaerkt
+     *        (bis `kHoechsteLautstaerke`, S126 — das Gain eines Ton-Clips).
      */
     [[nodiscard]] virtual float getVolume(AudioStreamHandle stream) const = 0;
     virtual bool setVolume(AudioStreamHandle stream, float volume) = 0;
