@@ -374,6 +374,25 @@ const Zugehoerige* Fund::finde(Art gesucht, const QString& name) const
     return nullptr;
 }
 
+QString dateiDerNennung(Art art, const QString& nennung, const QString& basis)
+{
+    Aufloesung a;
+    switch (art)
+    {
+        case Art::Instrument: a = loeseInstrument(nennung, basis); break;
+        case Art::Kit: a = loeseKit(nennung, basis); break;
+        case Art::Kontur: a = loeseKontur(nennung, basis); break;
+        case Art::Sample: a = loeseSample(nennung, basis); break;
+        case Art::Loop: break;
+    }
+    return a.was == Aufloesung::Datei ? a.pfad : QString();
+}
+
+QString dateiSchluessel(const QString& datei)
+{
+    return schluessel(datei);
+}
+
 Fund sammle(const QString& datei)
 {
     Sammler sammler;

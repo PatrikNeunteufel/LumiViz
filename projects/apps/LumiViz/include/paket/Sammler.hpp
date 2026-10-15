@@ -102,4 +102,10 @@ struct Fund
 /// auch wenn sie mehrfach genannt wird.
 [[nodiscard]] Fund sammle(const QString& datei);
 
+/// Die Datei, auf die eine Nennung einer Art zeigt — aufgeloest wie im Sammler,
+/// ein relativer Pfad ab `basis`. Leer = Mitgeliefertes, nichts oder fehlt.
+[[nodiscard]] QString dateiDerNennung(Art art, const QString& nennung, const QString& basis);
+/// Ein Schluessel, der eine Datei einmal zaehlt, auch unter zwei Schreibweisen.
+[[nodiscard]] QString dateiSchluessel(const QString& datei);
+
 }  // namespace lumi::paket

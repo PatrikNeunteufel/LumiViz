@@ -1,10 +1,10 @@
 # LumiViz — Publish (Konzept)
 
-> **Version:** 0.3.0
+> **Version:** 0.4.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Konzept — die Entscheide P1 a bis P8 a sind gefallen (Patrik S125,
 > §3), die drei Skizzen sind gebilligt (§4); gebaut: der Namensbau von Keep
-> both (P6 a, §2b) und die Sammler der Loop-Familie (§5a)
+> both (P6 a, §2b), die Sammler der Loop-Familie (§5a) und das Packen (§5b)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Datenablage_Konzept.md](Datenablage_Konzept.md) §4a (Export und
@@ -217,9 +217,33 @@ die auf sie zeigten, und den Titeln dessen, was sie nennt. Tests:
 - Die Art im Manifest und im Paketnamen: `lvinst`, `lvkit`, `lvloop`,
   `lvcontour`, für ein Sample `sample`.
 
+### 5b. Wie das Packen gebaut ist (S125)
+
+`paket/Packen` (`packe(fund, ziel, appVersion)`) schreibt eine `.lvdata` in
+Fassung 2 (`kPaketFassung`). Jede Zugehörige liegt unter
+`data/<Ordner der Art>/<name>.<endung>`; das Hauptding ebenso, wenn seine Art
+einen Ordner hat, sonst (ein Loop) unter `package/<Dateiname>`. Instrument,
+Kit und Loop werden gelesen, ihre Nennungen auf `user:<name>` umgeschrieben
+und neu geschrieben; Formen und Samples gehen Byte für Byte mit. Das
+Umschreiben löst jede Nennung so auf wie der Sammler (`dateiDerNennung`)
+und vergleicht die Datei, nicht den Text — zwei gleiche relative Pfade in
+verschiedenen Ordnern bleiben verschieden. Tests: `test_PublishPacken`
+(zwei Fälle); der Bestand der Tests steht in `PaketBestand.hpp`.
+
+**Das Manifest (von Claude gesetzt):** wie Fassung 1 (`format`, `version`
+= 2, `app`, `appVersion`, `exported`, `groups` je Bereich mit Zahl,
+`settings` = false), dazu `package` mit `type` (`lvloop` …), `title`,
+`name` (der künftige Name des Hauptdings; leer bei einem Loop), `main`
+(sein Pfad im Paket), `files` (je Zugehörige `path`, `type`, `name`,
+`origin` = `own`/`elsewhere`, `namedBy`), `bundled` (die Namen des
+Mitgelieferten), `missing` (je `type`, `reference`, `namedBy`) und `media`
+(leer bis Stufe P-B). Ein Programm, das nur Fassung 1 kennt, weist das Paket
+ab — mit der LumiViz-Version des Absenders in der Meldung (Test).
+
 ## 6. Offen, von Claude zu setzen und vorzulegen, wo es sichtbar wird
 
-- Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.
+- ~~Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.~~
+  Gesetzt (§5b).
 - Was „used by" in §4c zählt (eigene Instrumente, zuletzt geöffnete Loops —
   wie `loopsMitKit`).
 - ~~Ob eine Nennung als Pfad auf eine Datei im **Benutzerordner** (statt
@@ -229,6 +253,7 @@ die auf sie zeigten, und den Titeln dessen, was sie nennt. Tests:
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-10-15 | Session 125. §5b NEU: das Packen gebaut (`paket/Packen`, `.lvdata` Fassung 2), das Manifest. |
 | 0.3.0 | 2026-10-15 | Session 125. §5a NEU: die Sammler der Loop-Familie gebaut (`paket/Sammler`), mit den von Claude gesetzten Regeln. |
 | 0.2.0 | 2026-10-15 | Session 125. §2b: Fehler bei Keep both mit einem Test belegt und behoben (`nameMitZahl` → `<name>_2`). |
 | 0.1.0 | 2026-10-15 | Session 125. Erstfassung: Befund der Nennungen, Entscheide P1 a bis P8 a, drei Skizzen als Beschreibung, Stufen P-A und P-B als Vorschlag. |

@@ -15,9 +15,11 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Sammler.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Packen.cpp"
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/paket/Sammler.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/paket/Packen.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

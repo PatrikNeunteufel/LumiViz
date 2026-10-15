@@ -26,5 +26,9 @@
 - Publish, Stufe P-A: die Sammler der Loop-Familie (`paket/Sammler`) —
   was ein Loop, Kit, Instrument, eine Form oder ein Sample über alle Stufen
   nennt; neu `test_PublishSammler` (vier Fälle). Noch ohne Oberfläche.
+- Publish, Stufe P-A: das Packen (`paket/Packen`) — ein Paket
+  `<name>.<art>.lvdata` in Fassung 2 mit Manifest, die Nennungen schon auf
+  `user:<name>` umgeschrieben; neu `test_PublishPacken` (zwei Fälle), der
+  gemeinsame Bestand der Tests in `PaketBestand.hpp`.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.
