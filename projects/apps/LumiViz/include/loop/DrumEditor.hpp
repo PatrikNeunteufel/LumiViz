@@ -366,6 +366,14 @@ public:
     static void setzeKitOptionen(const KitOptionen& optionen);
     /// Die Zeile unter dem Raster, die das * erklaert; leer = keine Spur ohne Gegenstueck im Kit.
     [[nodiscard]] QString fremdZeile() const;
+    // --- Groesse und Lage (S125, Offene_Punkte §6 Loop) ---------------------
+    /// Das Fenster merkt Groesse und Lage beim Verstecken und stellt sie beim
+    /// Bauen wieder her. Die Test-Exe schaltet das ab (sonst hinge der Ausgang
+    /// der Tests an dem, was im Programm zuletzt stand).
+    static void setzeLageMerken(bool an);
+    /// Groesse und Lage jetzt merken (das Verstecken ruft es; fuer Tests).
+    void merkeLage() const;
+
     // --- Effekte beim Abspielen (Entscheid Patrik E1 a, S124) ------------------
     // Play pattern spielt mit den Effekten des Bezugsclips: der im Loop
     // markierte, wenn er dieses Muster spielt, sonst der erste der Basis. Der
@@ -410,6 +418,7 @@ Q_SIGNALS:
 protected:
     /// Ein Klick in die Kopfzeile einer Spur waehlt sie.
     bool eventFilter(QObject* objekt, QEvent* ereignis) override;
+    void hideEvent(QHideEvent* event) override;
 
 private:
     /// Die Bedienelemente einer Spur, links neben ihrer Zeile im Raster.

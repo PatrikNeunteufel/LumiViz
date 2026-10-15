@@ -16,6 +16,12 @@
   **Replace mine** oder **Use mine**, mit ▶ zum Vergleichen. Handbuch §16
   „Weitergeben: Publish“.
 
+## Geändert
+
+- **Drum- und Instrument-Editor merken Größe und Lage:** Wer ein Editor-Fenster
+  größer zieht oder verschiebt, findet es beim nächsten Öffnen so wieder.
+- Benutzerhandbuch §8: Keep both nennt das Beispiel `bass_2`; ein Paket öffnet aus Import... den Dialog Import package.
+
 ## Behoben
 
 - **Import data → Keep both:** Gab es den Namen schon, hieß die importierte
@@ -24,10 +30,6 @@
   nirgends und ließ sich nicht nennen. Jetzt heißt sie `bass_2`, wie beim
   Übernehmen eines Instruments zu den eigenen. Das gilt für alle Bereiche, auch
   für Presets (`Neon bars_2.json`).
-
-## Geändert
-
-- Benutzerhandbuch §8: Keep both nennt das Beispiel `bass_2`; ein Paket öffnet aus Import... den Dialog Import package.
 
 ## Intern
 
@@ -51,5 +53,7 @@
 - Publish, Stufe P-A: die Knöpfe und das Menü File; `PreviewSoundFileEvent`
   (das Panel Loop spielt ▶ aus Import package). Ein Fall mehr in
   `test_PublishDialoge`, eine Prüfung mehr in `test_LoopArrangement`.
+- Loop: neu `test_LoopEditorLage` (ein Fall); das Merken der Lage ist in der
+  Test-Exe abgeschaltet.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.228.0
+> **Version:** 1.229.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2330,10 +2330,15 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Ordner im Audio Browser wählen (B0)
   - 🔧 Menüs, Dialoge (Tags, Umbenennen) und das Ziehen an den Schiebern des
     Editors sind ohne Test, ebenso das Hineinziehen eines Loops über das
-    echte Composer-Panel und die Anzeige der Tags in Player-Panel und Karaoke
+    echte Composer-Panel und die Anzeige der Tags in Player-Panel und Karaoke.
+    ✅ Ein eingefügter Loop-Clip ist einen Durchlauf lang und lässt sich
+    beliebig länger ziehen (`fuegeSongEin`, Test in `test_LoopSpieler`) — von
+    Patrik im Programm gesehen (S125)
   - 🔧 ein Loop, der allein im Loop-Panel spielt, meldet sich nicht als Song;
-    der Editor merkt Größe und Lage nicht; kein eigenes Icon für `.lvloop`;
-    Kanäle und Spuren lassen sich nicht umsortieren
+    Kanäle und Spuren lassen sich nicht umsortieren. ✅ Seit S120 das Icon für
+    `.lvloop`; ✅ seit S125 merken Drum- und Instrument-Editor Größe und Lage
+    (`loop/drumEditorGeometry`, `loop/instrumentEditorGeometry`; in der
+    Test-Exe abgeschaltet, `test_LoopEditorLage`)
   - ✅ `Composer_Konzept.md` nachgezogen (S110, §9f): die Basis `Achse`, der
     Loop-Clip in der Tonführung. 🔧 Offen bleibt: der Composer hängt am
     Namensraum `loop` und umgekehrt — nicht entschieden, ob das so bleibt
@@ -2524,8 +2529,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     vorher, Ursache nicht untersucht (die Schalter der Konfiguration
     Testing sind leer, auch ohne Optimierung) — an CMakeCraft melden. 🔧 Im Nachgang,
     ohne Priorität: Beispiele aus `examples`, `composits`, `shadertoys`,
-    `effectchain` neben die Exe (je Ordner erst die Herkunft prüfen); Icons
-    für `.lvloop`, `.lvinst`, `.lvdata`; Wunsch an CMakeCraft: Daten-Ordner
+    `effectchain` neben die Exe (je Ordner erst die Herkunft prüfen);
+    ~~Icons für `.lvloop`, `.lvinst`, `.lvdata`~~ (seit S120); Wunsch an CMakeCraft: Daten-Ordner
     einer App als Angabe in `Solution.json`. Folge von D9 a: **eine unter
     `asset/` geänderte Datei sieht `LumiViz.exe` erst nach einem Bau**
   - ⚪ **15 Wave-Clips (Tonspuren wie Gesang) und Autotune am Clip** —
@@ -5712,6 +5717,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.229.0 | 2026-10-15 | Session 125. §6 Loop: Editoren merken Größe und Lage; Clip-Länge eines Loops und Icons als erledigt vermerkt. |
 | 1.228.0 | 2026-10-15 | Session 125. §7 Publish: Stufe P-A gebaut (Knöpfe, Menü File), offen Sichttest und P-B. |
 | 1.227.0 | 2026-10-15 | Session 125. Keep both belegt und behoben (`nameMitZahl` → `<name>_2`). |
 | 1.226.0 | 2026-10-15 | Session 125. §7 Publish entschieden (P1 a bis P8 a), Steuerdokument `core-services/Publish_Konzept.md` 0.1.0; Nebenbefund Keep both (`nameMitZahl`). |

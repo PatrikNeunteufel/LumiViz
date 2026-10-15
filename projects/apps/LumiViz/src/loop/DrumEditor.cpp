@@ -68,6 +68,14 @@ const char* const kSampleOrdner = "loop/lastSampleDir";
 const char* const kRechtsLoescht = "loop/drumRightClickDeletes";
 const char* const kKitAlleRollen = "loop/kitAddAllRoles";        ///< K10 a
 const char* const kKitLeereEntfernen = "loop/kitRemoveEmpty";    ///< K10 a
+const char* const kLage = "loop/drumEditorGeometry";  ///< ein Pfad der Fensterlage: geht nie in einen Export
+
+bool& lageMerken()
+{
+    static bool an = true;
+    return an;
+}
+
 const char* const kSpurNr = "spur";
 constexpr int kKlangBreite = 124;    ///< die Auswahl „Sound" — breit genug fuer den Titel eines Instruments
 constexpr int kMehrBreite = 22;      ///< der Knopf „…" einer Instrument-Spur
@@ -957,6 +965,23 @@ void DrumEditor::setupUI()
         Q_EMIT bearbeitet(fassung, was);
     });
     resize(944, 330);
+    if (lageMerken()) (void)restoreGeometry(QSettings().value(QLatin1String(kLage)).toByteArray());
+}
+
+void DrumEditor::setzeLageMerken(bool an)
+{
+    lageMerken() = an;
+}
+
+void DrumEditor::merkeLage() const
+{
+    if (lageMerken()) QSettings().setValue(QLatin1String(kLage), saveGeometry());
+}
+
+void DrumEditor::hideEvent(QHideEvent* event)
+{
+    merkeLage();
+    QWidget::hideEvent(event);
 }
 
 void DrumEditor::setKitKlaenge(const QStringList& klaenge)

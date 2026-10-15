@@ -51,6 +51,13 @@ namespace
 
 const char* const kInstrumentOrdner = "loop/lastInstrumentDir";
 const char* const kRechtsLoescht = "loop/notesRightClickDeletes";
+const char* const kLage = "loop/instrumentEditorGeometry";  ///< ein Pfad der Fensterlage: geht nie in einen Export
+
+bool& lageMerken()
+{
+    static bool an = true;
+    return an;
+}
 constexpr int kHoehen = kHoeheMax - kHoeheMin + 1;
 constexpr double kLautMin = 0.05;  ///< leiser wird eine Note nicht — ohne Lautstaerke gaebe es sie nicht
 
@@ -1252,6 +1259,23 @@ void InstrumentEditor::setupUI()
     connect(m_rollX, &QScrollBar::valueChanged, this, [this](int x) { m_raster->setRollen(x, m_raster->rollY()); });
     connect(m_rollY, &QScrollBar::valueChanged, this, [this](int y) { m_raster->setRollen(m_raster->rollX(), y); });
     resize(1100, 560);
+    if (lageMerken()) (void)restoreGeometry(QSettings().value(QLatin1String(kLage)).toByteArray());
+}
+
+void InstrumentEditor::setzeLageMerken(bool an)
+{
+    lageMerken() = an;
+}
+
+void InstrumentEditor::merkeLage() const
+{
+    if (lageMerken()) QSettings().setValue(QLatin1String(kLage), saveGeometry());
+}
+
+void InstrumentEditor::hideEvent(QHideEvent* event)
+{
+    merkeLage();
+    QWidget::hideEvent(event);
 }
 
 void InstrumentEditor::passeRollbalkenAn()

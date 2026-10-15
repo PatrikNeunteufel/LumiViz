@@ -351,9 +351,18 @@ public:
     /// false = kein Bezugsclip, oder er stand schon so.
     bool setzeEffekteAn(bool an);
 
+    // --- Groesse und Lage (S125, Offene_Punkte §6 Loop) ---------------------
+    /// Das Fenster merkt Groesse und Lage beim Verstecken und stellt sie beim
+    /// Bauen wieder her. Die Test-Exe schaltet das ab (sonst hinge der Ausgang
+    /// der Tests an dem, was im Programm zuletzt stand).
+    static void setzeLageMerken(bool an);
+    /// Groesse und Lage jetzt merken (das Verstecken ruft es; fuer Tests).
+    void merkeLage() const;
+
 protected:
     /// Beim ersten Zeigen: der Ausschnitt liegt auf den Noten (ohne Noten um C4).
     void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
 
 private:
     void setupUI();
