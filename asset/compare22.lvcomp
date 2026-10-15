@@ -1,0 +1,471 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 245147,
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "start": 0
+                }
+            ],
+            "color": "#5785a5",
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 32000,
+                    "fadeIn": {
+                        "ms": 8000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 9000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/Martin - Pixies Party (Hakan mash-up) 8.4.milk",
+                    "start": 12000
+                },
+                {
+                    "blend": 0,
+                    "end": 57000,
+                    "fadeIn": {
+                        "ms": 10000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/Flexi - intention focus.milk",
+                    "start": 38000
+                },
+                {
+                    "blend": 0,
+                    "end": 85000,
+                    "fadeIn": {
+                        "ms": 5000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 8000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/Flexi + Geiss + BDRV - illumination.milk",
+                    "start": 66000
+                },
+                {
+                    "blend": 0,
+                    "end": 108000,
+                    "fadeIn": {
+                        "ms": 4000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 7000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - stratospheric turbulences.milk",
+                    "start": 91000
+                },
+                {
+                    "blend": 0,
+                    "end": 138000,
+                    "fadeIn": {
+                        "ms": 6000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 13000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - shader pimped caleidoscope.milk",
+                    "start": 115000
+                },
+                {
+                    "blend": 0,
+                    "end": 167000,
+                    "fadeIn": {
+                        "ms": 7000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 7664,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - purple pulsator.milk",
+                    "start": 150000
+                },
+                {
+                    "blend": 0,
+                    "end": 206000,
+                    "fadeIn": {
+                        "ms": 11000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 8000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - crystal palace.milk",
+                    "start": 183000
+                },
+                {
+                    "blend": 0,
+                    "end": 245000,
+                    "fadeIn": {
+                        "ms": 14000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "fadeOut": {
+                        "ms": 7000,
+                        "shape": {
+                            "kind": "fade",
+                            "points": [
+                                {
+                                    "curve": 0,
+                                    "x": 0,
+                                    "y": 0
+                                },
+                                {
+                                    "curve": 0,
+                                    "x": 1,
+                                    "y": 1
+                                }
+                            ]
+                        }
+                    },
+                    "file": "Milkdrop3/presets/martin - glassworks 3.milk",
+                    "start": 219000
+                }
+            ],
+            "color": "#8157a5",
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH2"
+        },
+        {
+            "clips": [
+                {
+                    "end": 245147,
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/David Guetta - Greatest Hits (2012)/14. Titanium (feat. Sia).mp3",
+                    "offset": 0,
+                    "shapes": [
+                        {
+                            "flipped": false,
+                            "pos": 0,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.030534351145038167,
+                                        "y": 0.1517509727626459
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5877862595419847,
+                                        "y": 0.14396887159533073
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.9904580152671756,
+                                        "y": 0.15953307392996108
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 240000
+                        }
+                    ],
+                    "sourceLength": 245147,
+                    "start": 0
+                }
+            ],
+            "color": "#967855",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        },
+        {
+            "clips": [
+                {
+                    "base": 0,
+                    "end": 237000,
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/.claude/handover/titanium/titanium_versuch.lvloop",
+                    "gain": 15,
+                    "offset": 0,
+                    "shapes": [
+                        {
+                            "flipped": true,
+                            "pos": 0,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.050997782705099776,
+                                        "y": 0.4123222748815166
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5210643015521065,
+                                        "y": 0.49763033175355453
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.9223946784922394,
+                                        "y": 0.48815165876777256
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 236190
+                        }
+                    ],
+                    "start": 810
+                }
+            ],
+            "color": "#965555",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 2
+}

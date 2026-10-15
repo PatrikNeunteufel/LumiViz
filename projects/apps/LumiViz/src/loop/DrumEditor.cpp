@@ -1151,6 +1151,9 @@ void DrumEditor::baueSpuren(const Muster& muster)
             zeile.name->setFixedWidth(70);
             zeile.name->setProperty(kSpurNr, s);
             zeile.name->installEventFilter(this);
+            // am Namen laesst sich die Spur verschieben (7b a) — der Zeiger sagt es
+            zeile.name->setCursor(Qt::OpenHandCursor);
+            zeile.name->setToolTip(tr("Drag to move the track"));
             // das Etikett Role (Stufe 21b, K1 a): ein Klick oeffnet die Rollen
             zeile.rolle = new QToolButton(zeile.reihe);
             zeile.rolle->setObjectName(QStringLiteral("drumTrackRole%1").arg(s));
@@ -1256,7 +1259,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
         const QSignalBlocker c(zeile.pan);
         zeile.stumm->setChecked(spur.stumm);
         zeile.name->setText(zeile.name->fontMetrics().elidedText(spur.name, Qt::ElideRight, 70));
-        zeile.name->setToolTip(spur.name);
+        zeile.name->setToolTip(spur.name + QLatin1Char('\n') + tr("Drag to move the track"));
         zeile.klang->fuelle(spur, m_kitKlaenge, eigene, bibliothek, true);
         // sonst findet es niemand: sagen, wo das Feld hinter „…" und Edit sound... stehen
         if (!spur.instrument.isEmpty())
@@ -1288,8 +1291,124 @@ void DrumEditor::waehleSpur(int spur)
 bool DrumEditor::eventFilter(QObject* objekt, QEvent* ereignis)
 {
     if (ereignis->type() == QEvent::MouseButtonPress && objekt->property(kSpurNr).isValid())
-        waehleSpur(objekt->property(kSpurNr).toInt());
+    {
+        const int spur = objekt->property(kSpurNr).toInt();
+        waehleSpur(spur);
+        // am Namen (7b a): die Spur laesst sich an einen anderen Platz ziehen —
+        // vorbereitet hier, gezogen erst, wenn die Maus sich bewegt
+        const auto* maus = static_cast<QMouseEvent*>(ereignis);
+        if (maus->button() == Qt::LeftButton && qobject_cast<QLabel*>(objekt) != nullptr)
+        {
+            m_spurZug = spur;
+            m_spurZiel = -1;
+            m_spurZugStart = maus->globalPosition().toPoint();
+        }
+    }
+    else if (ereignis->type() == QEvent::MouseMove && m_spurZug >= 0 && qobject_cast<QLabel*>(objekt) != nullptr)
+    {
+        const auto* maus = static_cast<QMouseEvent*>(ereignis);
+        if ((maus->buttons() & Qt::LeftButton) != 0) zieheSpurZu(maus->globalPosition().toPoint());
+    }
+    else if (ereignis->type() == QEvent::MouseButtonRelease && m_spurZug >= 0 && qobject_cast<QLabel*>(objekt) != nullptr)
+        beendeSpurZug(true);
     return QWidget::eventFilter(objekt, ereignis);
+}
+
+void DrumEditor::zieheSpurZu(QPoint global)
+{
+    if (m_spurZug < 0 || m_spuren.empty()) return;
+    if (m_spurZiel < 0 && (global - m_spurZugStart).manhattanLength() < 4) return;
+    // die Zeile unter der Maus; ueber der ersten die erste, unter der letzten die letzte
+    int ziel = static_cast<int>(m_spuren.size()) - 1;
+    for (int s = 0; s < static_cast<int>(m_spuren.size()); ++s)
+    {
+        const QWidget* reihe = m_spuren[static_cast<std::size_t>(s)].reihe;
+        const int unten = reihe->mapToGlobal(QPoint(0, reihe->height())).y();
+        if (global.y() < unten)
+        {
+            ziel = s;
+            break;
+        }
+    }
+    m_spurZiel = ziel;
+    for (const SpurZeile& zeile : m_spuren) zeile.name->setCursor(Qt::ClosedHandCursor);
+    // die gezogene Zeile hervorgehoben, wie in der Achse des Panels Loop
+    if (QWidget* gezogen = m_spuren[static_cast<std::size_t>(m_spurZug)].reihe; !gezogen->autoFillBackground())
+    {
+        QPalette farben = gezogen->palette();
+        QColor hell = farben.color(QPalette::Highlight);
+        hell.setAlpha(45);
+        farben.setColor(QPalette::Window, hell);
+        gezogen->setPalette(farben);
+        gezogen->setAutoFillBackground(true);
+    }
+    // der Strich: nach unten gezogen landet sie UNTER der Zielzeile, nach oben ueber ihr
+    QWidget* traeger = m_spuren.front().reihe->parentWidget();
+    if (m_spurStrich == nullptr)
+    {
+        m_spurStrich = new QWidget(traeger);
+        m_spurStrich->setObjectName(QStringLiteral("drumTrackDropLine"));
+        m_spurStrich->setAttribute(Qt::WA_TransparentForMouseEvents);
+        m_spurStrich->setAutoFillBackground(true);
+        QPalette farben = m_spurStrich->palette();
+        farben.setColor(QPalette::Window, farben.color(QPalette::Highlight));
+        m_spurStrich->setPalette(farben);
+    }
+    const QWidget* zielReihe = m_spuren[static_cast<std::size_t>(ziel)].reihe;
+    const int y = ziel > m_spurZug ? zielReihe->geometry().bottom() : zielReihe->geometry().top();
+    m_spurStrich->setGeometry(0, y - 1, traeger->width(), 3);
+    m_spurStrich->setVisible(ziel != m_spurZug);
+    m_spurStrich->raise();
+}
+
+void DrumEditor::beendeSpurZug(bool verschieben)
+{
+    const int von = m_spurZug;
+    const int nach = m_spurZiel;
+    if (von >= 0 && von < static_cast<int>(m_spuren.size()))
+    {
+        QWidget* gezogen = m_spuren[static_cast<std::size_t>(von)].reihe;
+        gezogen->setAutoFillBackground(false);
+        gezogen->setPalette(QPalette());  // wieder die des Fensters
+    }
+    m_spurZug = -1;
+    m_spurZiel = -1;
+    if (m_spurStrich != nullptr) m_spurStrich->hide();
+    for (const SpurZeile& zeile : m_spuren) zeile.name->setCursor(Qt::OpenHandCursor);
+    if (verschieben && nach >= 0 && nach != von) spurVerschieben(von, nach);
+}
+
+void DrumEditor::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Escape && m_spurZug >= 0)
+    {
+        beendeSpurZug(false);  // Esc laesst die Spur, wo sie war
+        return;
+    }
+    QWidget::keyPressEvent(event);
+}
+
+QWidget* DrumEditor::spurZeile(int spur) const
+{
+    return spur >= 0 && spur < static_cast<int>(m_spuren.size()) ? m_spuren[static_cast<std::size_t>(spur)].reihe
+                                                                    : nullptr;
+}
+
+void DrumEditor::spurVerschieben(int von, int nach)
+{
+    Loop neu = m_loop;
+    if (!lumi::loop::spurVerschieben(neu, m_muster, von, nach)) return;
+    // was sich eine Spur merkt, folgt ihr — die Auswahl und die offenen Fenster
+    const int gewaehlt = m_raster->spur();
+    const auto folgt = [von, nach](int& platz) {
+        if (platz >= 0) platz = platzNachVerschieben(platz, von, nach);
+    };
+    folgt(m_paletteSpur);
+    folgt(m_creatorSpur);
+    folgt(m_wandelSpur);
+    folgt(m_detailSpur);
+    Q_EMIT bearbeitet(neu, tr("Move track"));
+    if (gewaehlt >= 0) waehleSpur(platzNachVerschieben(gewaehlt, von, nach));
 }
 
 void DrumEditor::spurMenue(int spur, QPoint ort)
@@ -1316,6 +1435,13 @@ void DrumEditor::spurMenue(int spur, QPoint ort)
         const QString neu = lumi::ui::frageText(this, tr("Rename track"), tr("Name:"), name, &ok);
         if (ok) spurUmbenennen(spur, neu);
     });
+    // 7b a: wie die Kanaele im Composer — auch durch Ziehen am Namen
+    QAction* hoch = menu.addAction(tr("Move track up"), this, [this, spur] { spurVerschieben(spur, spur - 1); });
+    hoch->setObjectName(QStringLiteral("drumMoveTrackUp"));
+    hoch->setEnabled(spur > 0);
+    QAction* runter = menu.addAction(tr("Move track down"), this, [this, spur] { spurVerschieben(spur, spur + 1); });
+    runter->setObjectName(QStringLiteral("drumMoveTrackDown"));
+    runter->setEnabled(spur + 1 < static_cast<int>(ziel->spuren.size()));
     menu.addAction(tr("Remove track"), this, [this, spur] { spurLoeschen(spur); });
     lumi::ui::zeigeMenue(menu, ort);
 }

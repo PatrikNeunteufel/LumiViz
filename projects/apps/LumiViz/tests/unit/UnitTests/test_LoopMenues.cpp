@@ -25,7 +25,11 @@
 #include <QContextMenuEvent>
 #include <QDialog>
 #include <QInputDialog>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
 #include <QLineEdit>
+#include <QMouseEvent>
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -192,8 +196,10 @@ TEST_SUITE("Loop Menues")
         fang.waehle = QStringLiteral("Rename channel...");
         fang.dialog = [](QDialog&) { return static_cast<int>(QDialog::Rejected); };
         rechts(achse, QPoint(10, percY));
-        CHECK(fang.texte == QStringList{QStringLiteral("Rename channel..."), QStringLiteral("Turn channel off"),
+        CHECK(fang.texte == QStringList{QStringLiteral("Rename channel..."), QStringLiteral("Move channel up"),
+                                        QStringLiteral("Move channel down"), QStringLiteral("Turn channel off"),
                                         QStringLiteral("Delete channel")});
+        CHECK(fang.grau == QStringList{QStringLiteral("Move channel down")});  // Perc ist der letzte
         CHECK(fang.dialogTitel == QStringLiteral("Rename channel"));
         CHECK(fang.dialogText == QStringLiteral("Perc"));
         CHECK(aenderungen == 1);
@@ -378,5 +384,192 @@ TEST_SUITE("Loop Menues")
         };
         knopf->click();
         CHECK(panel.loop().tags.titel == QStringLiteral("Mein Beat"));
+    }
+
+    TEST_CASE("S127 7b Loop: verschieben im Modell — Kanal, Spur mit Zeile, der Platz danach")
+    {
+        Loop loop = arrangement();
+        CHECK_FALSE(kanalVerschieben(loop, 0, 0));
+        CHECK_FALSE(kanalVerschieben(loop, 0, 2));
+        REQUIRE(kanalVerschieben(loop, 0, 1));
+        CHECK(loop.kanaele[0].name == QStringLiteral("Perc"));
+        CHECK(loop.kanaele[1].name == QStringLiteral("Drums"));
+        CHECK(loop.kanaele[1].clips.size() == 2);  // die Clips gehen mit
+
+        Loop schlag = schlagzeug();
+        schlag.muster[0].spuren.push_back({QStringLiteral("Hat"), QStringLiteral("kit:hat"), 0.5, 0.0, false});
+        schlag.richte();
+        schlag.muster[0].zeilen[2][3] = 0.7;
+        REQUIRE(spurVerschieben(schlag, QStringLiteral("Grund"), 2, 0));
+        const Muster& m = schlag.muster[0];
+        CHECK(m.spuren[0].name == QStringLiteral("Hat"));
+        CHECK(m.spuren[1].name == QStringLiteral("Kick"));
+        CHECK(m.zeilen[0][3] == doctest::Approx(0.7));  // die Schritte gehen mit
+        CHECK(m.zeilen[1][0] == doctest::Approx(1.0));
+        CHECK_FALSE(spurVerschieben(schlag, QStringLiteral("Grund"), 0, 3));
+        CHECK_FALSE(spurVerschieben(schlag, QStringLiteral("Gibts nicht"), 0, 1));
+
+        // der Platz anderer nach einem Verschieben von 1 nach 3 (und zurueck)
+        CHECK(platzNachVerschieben(1, 1, 3) == 3);
+        CHECK(platzNachVerschieben(2, 1, 3) == 1);
+        CHECK(platzNachVerschieben(3, 1, 3) == 2);
+        CHECK(platzNachVerschieben(0, 1, 3) == 0);
+        CHECK(platzNachVerschieben(4, 1, 3) == 4);
+        CHECK(platzNachVerschieben(1, 3, 1) == 2);
+        CHECK(platzNachVerschieben(3, 3, 1) == 1);
+    }
+
+    TEST_CASE("S127 7b Taktachse: Kanaele am Namen ziehen, Esc, Rechtsklick Move channel up/down")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        Fang fang;
+
+        Taktachse achse;  // nicht gezeigt
+        achse.resize(900, 260);
+        Loop drei = arrangement();
+        drei.kanaele.push_back({QStringLiteral("Bass"), true, {}});
+        achse.setLoop(drei, true);
+        Loop letzter = drei;
+        QString was;
+        QObject::connect(&achse, &Taktachse::bearbeitet, &achse, [&](const Loop& neu, const QString& w) {
+            letzter = neu;
+            was = w;
+            achse.zeigeBearbeitet(neu);
+        });
+        // die Mitte einer Zeile — einmal am Anfang gemessen (nach dem Umsortieren hat Kanal 0 keinen Clip mehr)
+        const int y0 = achse.clipRechteck(0, 0).center().y();
+        const int zeile = achse.clipRechteck(1, 0).center().y() - y0;
+        const auto mitte = [&](int kanal) { return y0 + kanal * zeile; };
+        const auto maus = [&](QEvent::Type art, QPoint ort, Qt::MouseButtons tasten) {
+            QMouseEvent e(art, QPointF(ort), QPointF(achse.mapToGlobal(ort)), Qt::LeftButton, tasten, Qt::NoModifier);
+            QCoreApplication::sendEvent(&achse, &e);
+        };
+
+        // ein Clip in Drums markiert: er folgt seinem Kanal
+        achse.waehle(0, 1);
+        // --- Drums am Namen ganz nach unten ziehen: ein Strich, beim Loslassen ein Schritt
+        maus(QEvent::MouseButtonPress, QPoint(10, mitte(0)), Qt::LeftButton);
+        CHECK(achse.kanalImZug() == 0);
+        maus(QEvent::MouseMove, QPoint(10, mitte(2)), Qt::LeftButton);
+        CHECK(achse.kanalZiel() == 2);
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_UMSORTIEREN_BILD"); !bild.isEmpty())
+            CHECK(achse.grab().save(bild + QStringLiteral(".kanal.png")));
+        maus(QEvent::MouseButtonRelease, QPoint(10, mitte(2)), Qt::NoButton);
+        CHECK(achse.kanalImZug() == -1);
+        CHECK(was == QStringLiteral("Move channel"));
+        CHECK(letzter.kanaele[0].name == QStringLiteral("Perc"));
+        CHECK(letzter.kanaele[1].name == QStringLiteral("Bass"));
+        CHECK(letzter.kanaele[2].name == QStringLiteral("Drums"));
+        CHECK(achse.gewaehlterKanal() == 2);  // die Auswahl ist mitgegangen
+        CHECK(achse.auswahl() != nullptr);
+        CHECK(achse.auswahl()->muster == QStringLiteral("B"));
+
+        // --- ein Klick ohne Bewegung verschiebt nichts; Esc bricht ab
+        was.clear();
+        maus(QEvent::MouseButtonPress, QPoint(10, mitte(0)), Qt::LeftButton);
+        maus(QEvent::MouseButtonRelease, QPoint(10, mitte(0)), Qt::NoButton);
+        CHECK(was.isEmpty());
+        maus(QEvent::MouseButtonPress, QPoint(10, mitte(0)), Qt::LeftButton);
+        maus(QEvent::MouseMove, QPoint(10, mitte(2)), Qt::LeftButton);
+        QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+        QCoreApplication::sendEvent(&achse, &esc);
+        CHECK(achse.kanalImZug() == -1);
+        maus(QEvent::MouseButtonRelease, QPoint(10, mitte(2)), Qt::NoButton);
+        CHECK(was.isEmpty());
+
+        // --- Rechtsklick: oben ist Move channel up grau; Move channel down legt ihn eins tiefer
+        rechts(achse, QPoint(10, mitte(0)));
+        CHECK(fang.grau == QStringList{QStringLiteral("Move channel up")});
+        fang.waehle = QStringLiteral("Move channel down");
+        rechts(achse, QPoint(10, mitte(0)));
+        CHECK(letzter.kanaele[0].name == QStringLiteral("Bass"));
+        CHECK(letzter.kanaele[1].name == QStringLiteral("Perc"));
+        fang.waehle = QStringLiteral("Move channel up");
+        rechts(achse, QPoint(10, mitte(2)));
+        CHECK(letzter.kanaele[1].name == QStringLiteral("Drums"));
+        CHECK(letzter.kanaele[2].name == QStringLiteral("Perc"));
+    }
+
+    TEST_CASE("S127 7b Drum-Editor: Spuren am Namen ziehen, Esc, Rechtsklick Move track up/down")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        Fang fang;
+
+        Loop schlag = schlagzeug();
+        schlag.muster[0].spuren.push_back({QStringLiteral("Hat"), QStringLiteral("kit:hat"), 0.5, 0.0, false});
+        schlag.richte();
+        DrumEditor editor;  // gelegt, aber nicht auf dem Bildschirm: die Zeilen brauchen ihre Lage
+        Loop letzter = schlag;
+        QString was;
+        QObject::connect(&editor, &DrumEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& w) {
+            letzter = neu;
+            was = w;
+            editor.setLoop(neu);
+        });
+        REQUIRE(editor.zeige(schlag, QStringLiteral("Grund")));
+        editor.resize(900, 500);
+        editor.setAttribute(Qt::WA_DontShowOnScreen);
+        editor.show();
+        QCoreApplication::processEvents();
+        const auto name = [&](int s) { return editor.spurZeile(s)->findChild<QLabel*>(); };
+        const auto namen = [&] {
+            QStringList n;
+            for (const Spur& s : letzter.muster[0].spuren) n << s.name;
+            return n;
+        };
+        const auto maus = [&](int spur, QEvent::Type art, int zielSpur, Qt::MouseButtons tasten) {
+            QLabel* l = name(spur);
+            QWidget* ziel = editor.spurZeile(zielSpur);
+            const QPoint global = ziel->mapToGlobal(QPoint(5, ziel->height() / 2));
+            QMouseEvent e(art, QPointF(l->mapFromGlobal(global)), QPointF(global), Qt::LeftButton, tasten, Qt::NoModifier);
+            QCoreApplication::sendEvent(l, &e);
+        };
+        REQUIRE(name(0) != nullptr);
+        CHECK(name(0)->cursor().shape() == Qt::OpenHandCursor);
+
+        // --- Kick (0) ans Ende ziehen; die gewaehlte Spur geht mit
+        maus(0, QEvent::MouseButtonPress, 0, Qt::LeftButton);
+        CHECK(editor.spurImZug() == 0);
+        maus(0, QEvent::MouseMove, 2, Qt::LeftButton);
+        CHECK(editor.spurZiel() == 2);
+        auto* strich = editor.findChild<QWidget*>(QStringLiteral("drumTrackDropLine"));
+        REQUIRE(strich != nullptr);
+        CHECK_FALSE(strich->isHidden());
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_UMSORTIEREN_BILD"); !bild.isEmpty())
+            CHECK(editor.grab().save(bild + QStringLiteral(".spur.png")));
+        maus(0, QEvent::MouseButtonRelease, 2, Qt::NoButton);
+        CHECK(was == QStringLiteral("Move track"));
+        CHECK(namen() == QStringList{QStringLiteral("Snare"), QStringLiteral("Hat"), QStringLiteral("Kick")});
+        CHECK(letzter.muster[0].zeilen[2][0] == doctest::Approx(1.0));  // die Schritte der Kick gingen mit
+        CHECK(editor.raster()->spur() == 2);
+        CHECK(strich->isHidden());
+
+        // --- Esc bricht ab
+        was.clear();
+        maus(0, QEvent::MouseButtonPress, 0, Qt::LeftButton);
+        maus(0, QEvent::MouseMove, 2, Qt::LeftButton);
+        QKeyEvent esc(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+        QCoreApplication::sendEvent(&editor, &esc);
+        CHECK(editor.spurImZug() == -1);
+        maus(0, QEvent::MouseButtonRelease, 2, Qt::NoButton);
+        CHECK(was.isEmpty());
+
+        // --- Rechtsklick: unten ist Move track down grau; Move track up
+        editor.spurMenue(2, QPoint());
+        CHECK(fang.grau == QStringList{QStringLiteral("Move track down")});
+        CHECK(fang.texte.contains(QStringLiteral("Move track up")));
+        fang.waehle = QStringLiteral("Move track up");
+        editor.spurMenue(2, QPoint());
+        CHECK(namen() == QStringList{QStringLiteral("Snare"), QStringLiteral("Kick"), QStringLiteral("Hat")});
+        fang.waehle = QStringLiteral("Move track down");
+        editor.spurMenue(0, QPoint());
+        CHECK(namen() == QStringList{QStringLiteral("Kick"), QStringLiteral("Snare"), QStringLiteral("Hat")});
     }
 }

@@ -112,6 +112,13 @@ public:
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
+    /// Den Kanal an einen anderen Platz legen (S127, Entscheid Patrik 7b a) —
+    /// auch durch Ziehen am Namen oder Rechtsklick „Move channel up/down".
+    /// Clips, Marken und Auswahl gehen mit; ein Undo-Schritt.
+    void kanalVerschieben(int von, int nach);
+    /// Der Kanal, der gerade am Namen gezogen wird, und wo er landete (-1 = keiner).
+    [[nodiscard]] int kanalImZug() const { return m_kanalZug; }
+    [[nodiscard]] int kanalZiel() const { return m_kanalZiel; }
 
     // --- Geometrie (auch fuer Tests) ----------------------------------------
     [[nodiscard]] int xVonTakt(int takt) const { return xVon(takt * kTicksJeTakt); }
@@ -198,6 +205,9 @@ private:
     QRect m_rahmen;      ///< der Rahmen, solange er gezogen wird
     double m_startSchritte = 0.0;  ///< B4: wo Play beginnt
     bool m_imLineal = false;       ///< die Maus zieht im Lineal
+    int m_kanalZug = -1;           ///< der Kanal, der am Namen gezogen wird (7b)
+    int m_kanalZiel = -1;          ///< der Platz, auf den er fiele
+    QPoint m_kanalZugStart;
 };
 
 }  // namespace lumi::loop

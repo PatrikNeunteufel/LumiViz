@@ -594,4 +594,42 @@ bool kanalSchalten(Loop& loop, int kanal, bool an)
     return true;
 }
 
+namespace
+{
+/// Ein Element von `von` nach `nach` legen; die dazwischen ruecken nach.
+template <typename T>
+void lege(std::vector<T>& liste, int von, int nach)
+{
+    T eins = std::move(liste[static_cast<std::size_t>(von)]);
+    liste.erase(liste.begin() + von);
+    liste.insert(liste.begin() + nach, std::move(eins));
+}
+}  // namespace
+
+int platzNachVerschieben(int platz, int von, int nach)
+{
+    if (platz == von) return nach;
+    if (von < nach && platz > von && platz <= nach) return platz - 1;
+    if (nach < von && platz >= nach && platz < von) return platz + 1;
+    return platz;
+}
+
+bool kanalVerschieben(Loop& loop, int von, int nach)
+{
+    if (!gibtKanal(loop, von) || !gibtKanal(loop, nach) || von == nach) return false;
+    lege(loop.kanaele, von, nach);
+    return true;
+}
+
+bool spurVerschieben(Loop& loop, const QString& muster, int von, int nach)
+{
+    Muster* ziel = musterIn(loop, muster);
+    if (ziel == nullptr || von == nach) return false;
+    const int zahl = static_cast<int>(ziel->spuren.size());
+    if (von < 0 || von >= zahl || nach < 0 || nach >= zahl) return false;
+    lege(ziel->spuren, von, nach);
+    if (static_cast<int>(ziel->zeilen.size()) == zahl) lege(ziel->zeilen, von, nach);
+    return true;
+}
+
 }  // namespace lumi::loop

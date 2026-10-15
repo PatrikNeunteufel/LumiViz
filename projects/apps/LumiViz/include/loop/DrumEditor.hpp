@@ -261,6 +261,15 @@ public:
     void spurHinzu();
     void spurLoeschen(int spur);
     void spurUmbenennen(int spur, const QString& name);
+    /// Die Spur an einen anderen Platz legen (S127, Entscheid Patrik 7b a) — auch
+    /// durch Ziehen am Namen oder Rechtsklick „Move track up/down". Schritte,
+    /// Klang und Auswahl gehen mit; ein Undo-Schritt.
+    void spurVerschieben(int von, int nach);
+    /// Die Zeile einer Spur (Name, Klang, Regler); nullptr = gibt es nicht. Fuer Tests.
+    [[nodiscard]] QWidget* spurZeile(int spur) const;
+    /// Die Spur, die gerade am Namen gezogen wird, und wo sie landete (-1 = keine).
+    [[nodiscard]] int spurImZug() const { return m_spurZug; }
+    [[nodiscard]] int spurZiel() const { return m_spurZiel; }
     /// Die Spur spielt diesen Klang: `kit:<Name>`, `user:<name>` oder der Pfad
     /// einer Tondatei. Spielte sie ein Instrument, spielt sie es danach nicht
     /// mehr — Note und Length stehen wieder auf ihrer Vorgabe.
@@ -434,6 +443,8 @@ protected:
     /// Ein Klick in die Kopfzeile einer Spur waehlt sie.
     bool eventFilter(QObject* objekt, QEvent* ereignis) override;
     void hideEvent(QHideEvent* event) override;
+    /// Esc bricht das Ziehen einer Spur ab.
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     /// Die Bedienelemente einer Spur, links neben ihrer Zeile im Raster.
@@ -465,10 +476,19 @@ private:
     /// nicht, oder es hat sich nichts geaendert.
     bool aendereSpur(int spur, const QString& was, const std::function<void(Spur&)>& tu);
 
+    /// Das Ziehen einer Spur am Namen (7b a): das Ziel unter der Maus bestimmen
+    /// und den Strich setzen; `ende` = losgelassen (verschieben) oder abgebrochen.
+    void zieheSpurZu(QPoint global);
+    void beendeSpurZug(bool verschieben);
+
     Loop m_loop;
     QString m_muster;
     QStringList m_kitKlaenge;
     bool m_spielt = false;
+    int m_spurZug = -1;            ///< die Spur, die am Namen gezogen wird (7b)
+    int m_spurZiel = -1;           ///< der Platz, auf den sie fiele
+    QPoint m_spurZugStart;         ///< wo gedrueckt wurde (global)
+    QWidget* m_spurStrich = nullptr;  ///< der Strich, der zeigt, wo sie landet
     std::function<IAudioEngine*()> m_engineGeber;
     QPointer<InstrumentPalette> m_palette;
     QPointer<InstrumentCreator> m_creator;

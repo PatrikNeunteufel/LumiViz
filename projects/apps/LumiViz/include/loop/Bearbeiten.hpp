@@ -140,6 +140,12 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag);
 /// ihren Platz zurueck, -1 = das Muster gibt es nicht.
 int spurHinzu(Loop& loop, const QString& muster, const QStringList& kitKlaenge);
 bool spurLoeschen(Loop& loop, const QString& muster, int spur);
+/// Die Spur `von` an den Platz `nach` legen, mit ihrer Zeile (S127, Entscheid
+/// Patrik 7b a); die anderen ruecken nach. false = gibt es nicht, oder nichts zu tun.
+bool spurVerschieben(Loop& loop, const QString& muster, int von, int nach);
+/// Wo ein Platz `platz` liegt, nachdem einer von `von` nach `nach` gelegt
+/// wurde (fuer Auswahl und Marken, die ihrem Kanal oder ihrer Spur folgen).
+[[nodiscard]] int platzNachVerschieben(int platz, int von, int nach);
 /// Das Muster zum Aendern; nullptr = es gibt keins dieses Namens.
 [[nodiscard]] Muster* musterIn(Loop& loop, const QString& name);
 
@@ -149,5 +155,8 @@ int kanalHinzu(Loop& loop);
 bool kanalLoeschen(Loop& loop, int kanal);
 bool kanalUmbenennen(Loop& loop, int kanal, const QString& name);
 bool kanalSchalten(Loop& loop, int kanal, bool an);
+/// Den Kanal `von` an den Platz `nach` legen, mit seinen Clips (S127, 7b a). Der
+/// Klang aendert sich nicht. false = gibt es nicht, oder nichts zu tun.
+bool kanalVerschieben(Loop& loop, int von, int nach);
 
 }  // namespace lumi::loop

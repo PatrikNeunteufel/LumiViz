@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.175.0
+> **Version:** 1.176.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2608,6 +2608,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | Achse | Lineal mit Taktnummern, je Kanal eine Zeile, die Clips als Blöcke; unten die Zeile *New channel* |
 | Klick oder Ziehen im **Lineal** | Spielt der Loop, springt er an die Stelle (auf den Schritt genau). Sonst setzt es die **grüne Marke**: dort beginnt **Play**. Ein Klick ganz links nimmt sie wieder an den Anfang; ein anderer Loop beginnt wieder vorn |
 | Clip-Zeile | Zum angeklickten Clip: Basis, Takte, Wiederholungen und wie viele Clips die Basis spielen |
+| Kanal am **Namen** ziehen | Legt den Kanal an einen anderen Platz — ein Strich zeigt, wo er landet; Esc bricht ab. Oder Rechtsklick auf den Namen → **Move channel up** / **Move channel down**. Clips und Auswahl gehen mit, der Klang bleibt; ein Schritt für Undo |
 
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
 oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
@@ -2755,7 +2756,8 @@ siehe unten.)
 | Schritte | Ein Klick schaltet einen Schritt an oder aus. Mit gedrückter Taste weitergezogen bekommen die überfahrenen Schritte denselben Zustand. Jeder zweite Schlag ist heller unterlegt |
 | **Step volume** | Die Lautstärke je Schritt der angeklickten Spur: an einem Balken ziehen. Ganz unten ist der Schritt aus |
 | **Add track** | Eine neue Spur „Track N" |
-| Rechtsklick auf eine Spur | **Edit sound...** (siehe unten), **Rename track...**, **Remove track** |
+| Rechtsklick auf eine Spur | **Edit sound...** (siehe unten), **Rename track...**, **Move track up** / **Move track down**, **Remove track** |
+| Spur am **Namen** ziehen | Legt die Spur an einen anderen Platz — ein Strich zeigt, wo sie landet; Esc bricht ab. Schritte, Klang und Regler gehen mit; ein Schritt für Undo |
 
 Wird das Raster gröber gestellt (weniger Schritte je Schlag) oder ein Takt
 kürzer (weniger Schläge), gehen die Schritte verloren, für die es keine
@@ -3408,6 +3410,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.176.0 | 2026-10-15 | Session 127. §16 Loop: Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren — am Namen ziehen oder Rechtsklick *Move … up/down*. |
 | 1.175.0 | 2026-10-15 | Session 127. §16 Loop: spielt das Panel Loop den ganzen Loop, ist er der laufende Song („Loop - <Titel>“ im Panel Player, Tags für Text und Karaoke). |
 | 1.174.0 | 2026-10-15 | Session 127. §16 Loop: die Marke läuft mit — in den Editoren beim Play des ganzen Loops und wenn der Composer den offenen Loop spielt; NEU Haken **Scroll with playhead** im Panel Loop. |
 | 1.173.0 | 2026-10-15 | Session 127. §15 Composer: der Knopf **Match loudness...** steht immer unten rechts, nicht nur bei einem angeklickten Ton-Clip. |

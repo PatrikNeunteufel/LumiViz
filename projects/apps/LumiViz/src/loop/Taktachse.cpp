@@ -445,6 +445,21 @@ void Taktachse::paintEvent(QPaintEvent*)
     p.setClipRect(ausschnitte.zeilen);
     p.setPen(linie);
     p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
+    // --- ein Kanal wird am Namen gezogen (7b a, wie im Composer): seine Zeile
+    //     hervorgehoben, ein Strich an der Kante der Zeile, an der er landet
+    if (m_kanalZug >= 0 && m_kanalZiel >= 0 && m_kanalZug < kanaele)
+    {
+        QColor hell = pal.color(QPalette::Highlight);
+        hell.setAlpha(45);
+        p.fillRect(QRect(0, zeileOben(m_kanalZug), width(), zeileHoch(m_kanalZug)), hell);
+        if (m_kanalZiel != m_kanalZug)
+        {
+            // nach unten gezogen landet er UNTER der Zielzeile, nach oben ueber ihr
+            const int y = zeileOben(m_kanalZiel + (m_kanalZiel > m_kanalZug ? 1 : 0));
+            p.setPen(QPen(pal.color(QPalette::Highlight), 3.0));
+            p.drawLine(0, y, width(), y);
+        }
+    }
     p.setClipRect(ausschnitte.zeilenZeit);
     if (m_griff == Griff::Rahmen && m_zugLaeuft)
     {
@@ -510,6 +525,15 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
         // B4 (S124): ein Klick ins Lineal waehlt die Stelle — dorthin springen oder dort beginnen
         m_imLineal = true;
         Q_EMIT stelleGewaehlt(schrittBeiX(ort.x()));
+        return;
+    }
+    // am Kanalnamen (7b a): der Kanal laesst sich an einen anderen Platz ziehen —
+    // vorbereitet wird es hier, gezogen erst, wenn die Maus sich bewegt
+    if (ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+    {
+        m_kanalZug = kanalBei(ort.y());
+        m_kanalZiel = -1;
+        m_kanalZugStart = ort;
         return;
     }
     int kanal = -1;
@@ -684,6 +708,16 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
         schwenkeZu(ort);
         return;
     }
+    if (m_kanalZug >= 0 && (event->buttons() & Qt::LeftButton))
+    {
+        // ein Kanal wird am Namen gezogen: er fiele auf die Zeile unter der Maus
+        if (m_kanalZiel < 0 && (ort - m_kanalZugStart).manhattanLength() < 4) return;
+        const int zeilen = static_cast<int>(m_loop.kanaele.size());
+        m_kanalZiel = std::clamp(zeileBei(ort.y()), 0, std::max(0, zeilen - 1));
+        setCursor(Qt::ClosedHandCursor);
+        update();
+        return;
+    }
     if (m_griff != Griff::Keiner && (event->buttons() & Qt::LeftButton))
     {
         if (!m_zugLaeuft && (ort - m_zugStart).manhattanLength() < 4) return;
@@ -695,7 +729,9 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
     int kanal = -1;
     int clip = -1;
     const Griff griff = griffBei(ort, &kanal, &clip);
-    if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
+    if (ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+        setCursor(Qt::OpenHandCursor);  // am Kanalnamen: der Kanal laesst sich verschieben
+    else if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
         setCursor(Qt::SizeHorCursor);
     else
         unsetCursor();
@@ -713,6 +749,18 @@ void Taktachse::mouseReleaseEvent(QMouseEvent* event)
     {
         if (event->button() != Qt::MiddleButton) return;  // eine andere Taste: das Schwenken laeuft weiter
         beendeSchwenken();
+        return;
+    }
+    if (m_kanalZug >= 0 && event->button() == Qt::LeftButton)
+    {
+        // der Kanal faellt auf seinen neuen Platz — ohne Bewegung war es nur ein Klick
+        const int von = m_kanalZug;
+        const int nach = m_kanalZiel;
+        m_kanalZug = -1;
+        m_kanalZiel = -1;
+        unsetCursor();
+        update();
+        if (nach >= 0 && nach != von) kanalVerschieben(von, nach);
         return;
     }
     if (m_griff == Griff::Keiner) return;
@@ -753,6 +801,15 @@ void Taktachse::mouseReleaseEvent(QMouseEvent* event)
 
 void Taktachse::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_Escape && m_kanalZug >= 0)
+    {
+        // einen Kanal gezogen: Esc laesst ihn, wo er war
+        m_kanalZug = -1;
+        m_kanalZiel = -1;
+        unsetCursor();
+        update();
+        return;
+    }
     if (event->key() == Qt::Key_Escape && m_griff != Griff::Keiner)
     {
         brichZugAb();
@@ -924,6 +981,16 @@ void Taktachse::kanalUmbenennen(int kanal, const QString& name)
     uebernimm(neu, m_kanal, m_clip, tr("Rename channel"));
 }
 
+void Taktachse::kanalVerschieben(int von, int nach)
+{
+    if (!m_geladen || m_griff != Griff::Keiner) return;
+    Loop neu = m_loop;
+    if (!lumi::loop::kanalVerschieben(neu, von, nach)) return;
+    // Marken und Auswahl bleiben bei ihrem Kanal
+    for (ClipOrt& ort : m_gruppe) ort.kanal = platzNachVerschieben(ort.kanal, von, nach);
+    uebernimm(neu, m_kanal >= 0 ? platzNachVerschieben(m_kanal, von, nach) : m_kanal, m_clip, tr("Move channel"));
+}
+
 void Taktachse::kanalSchalten(int kanal, bool an)
 {
     if (!m_geladen || m_griff != Griff::Keiner) return;
@@ -953,6 +1020,14 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             const QString neu = lumi::ui::frageText(this, tr("Rename channel"), tr("Name:"), name, &ok);
             if (ok) kanalUmbenennen(kanal, neu);
         });
+        // 7b a: wie im Composer — auch durch Ziehen am Namen
+        QAction* hoch = menu.addAction(tr("Move channel up"), this, [this, kanal] { kanalVerschieben(kanal, kanal - 1); });
+        hoch->setObjectName(QStringLiteral("loopMoveChannelUp"));
+        hoch->setEnabled(kanal > 0);
+        QAction* runter =
+            menu.addAction(tr("Move channel down"), this, [this, kanal] { kanalVerschieben(kanal, kanal + 1); });
+        runter->setObjectName(QStringLiteral("loopMoveChannelDown"));
+        runter->setEnabled(kanal + 1 < static_cast<int>(m_loop.kanaele.size()));
         menu.addAction(k.an ? tr("Turn channel off") : tr("Turn channel on"), this,
                        [this, kanal, an = k.an] { kanalSchalten(kanal, !an); });
         menu.addAction(tr("Delete channel"), this, [this, kanal] { kanalLoeschen(kanal); });

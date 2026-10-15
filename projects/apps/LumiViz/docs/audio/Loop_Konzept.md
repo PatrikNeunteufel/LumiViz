@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.80.0
+> **Version:** 0.81.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3390,7 +3390,38 @@ seitenweise, die Editoren gar nicht.
   erst danach sichtbar wird. **Von mir gesetzt:** ein noch nie gespeicherter
   Loop meldet sich nicht (ein Song ohne Datei heißt für Player-Panel und Tag
   View „kein Titel“). Test: in `test_LoopSpieler` „S127 7a“.
-- Offen: 7 drei Vorlagen einzeln (Loop allein als Song, Kanäle
+- **7b — entschieden (Patrik S127, a), mit Skizze:** Kanäle im Panel Loop und
+  Spuren im Drum-Editor umsortieren wie die Kanäle im Composer (S100). **Die
+  Skizze als Beschreibung:** links die Namensspalte der Achse; ein Kanal wird
+  an seinem Namen gegriffen und nach oben oder unten gezogen, der gegriffene
+  Name steht gestrichelt mit einem Griff-Symbol, seine Clips blass, und ein
+  blauer Strich über die ganze Breite zeigt, wo er landet; Esc bricht ab. Im
+  Rechtsklick auf die Zeile **Move channel up** / **Move channel down**
+  (zwischen *Rename channel...* und *Turn channel off*). Im Drum-Editor
+  dasselbe an der Spalte der Spurnamen: Ziehen mit Strich zwischen den
+  Spuren, im Rechtsklick **Move track up** / **Move track down** (zwischen
+  *Rename track...* und *Remove track*). Clips, Schritte, Lautstärken, Klang
+  und Auswahl gehen mit; jede Verschiebung ein Undo-Schritt; der Klang ändert
+  sich nicht (die Reihenfolge steht in der `.lvloop`, keine neue Fassung). Der
+  Instrument-Editor hat keine Spuren. Verworfen: nur Rechtsklick, nur Kanäle.
+  ✅ **Gebaut (S127):** `kanalVerschieben`, `spurVerschieben` (mit der Zeile
+  der Schritte), `platzNachVerschieben` in `loop/Bearbeiten`;
+  `Taktachse::kanalVerschieben` — Ziehen am Namen mit offener und geschlossener
+  Hand, die Zeile hervorgehoben, ein Strich in der Farbe der Auswahl, Esc
+  bricht ab; Marken und Auswahl folgen ihrem Kanal; Undo „Move channel“.
+  `DrumEditor::spurVerschieben` — Ziehen am Spurnamen (Zeiger Hand, Tooltip
+  „Drag to move the track“), die Zeile hervorgehoben, ein Strich zwischen den
+  Spuren, Esc bricht ab; die gewählte Spur und die Spur, für die das Fenster
+  Instruments, der Creator, „Edit sound…“ oder das Feld „…“ offen ist, folgen
+  ihr; Undo „Move track“. **Abweichung von der Skizze, von mir gesetzt:** statt
+  des gestrichelten Namens und blasser Clips ist die gezogene Zeile
+  hervorgehoben — so wie im Composer. Tests in `test_LoopMenues` „S127 7b“
+  (Modell, Taktachse, Drum-Editor; `LUMIVIZ_LOOP_UMSORTIEREN_BILD` legt je ein
+  Bild während des Ziehens ab). (In der Vorlage hatte ich gesagt, die Geste zum
+  Ziehen gebe es in der Basis `Achse` schon — falsch, sie steckt in der
+  Zeitachse des Composers; für die Taktachse wird sie nach diesem Vorbild
+  gebaut.)
+- Offen: 7 zwei Vorlagen einzeln (Loop allein als Song, Kanäle
   und Spuren umsortieren, Cowbell/Clave als Samples, Namensraum
   Composer↔loop).
 
@@ -3521,6 +3552,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.81.0** (S127, 2026-10-15): 7b entschieden (mit Skizze) und gebaut —
+  Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren.
 - **0.80.0** (S127, 2026-10-15): Kleinkram 5 erledigt (Debug-MSVC, voller
   Lauf unter clang); 7a entschieden und gebaut — das Panel Loop meldet beim
   Play des ganzen Loops ihn als laufenden Song.
