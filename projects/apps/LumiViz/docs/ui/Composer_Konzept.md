@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.87.0
+> **Version:** 0.88.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1394,6 +1394,24 @@ Loop-Kleinkram“):**
   Grenze `kHoechsteLautstaerke` = 16 (+24 dB) in `IAudioEngine.hpp`; alle
   anderen Aufrufer geben höchstens 1 (Lautstärke des Players ist auf 0…1
   geklemmt).
+  **Teil 1 gebaut (S126, `49fa0f56`):** `audio/Begrenzer` — Stereo, beide
+  Kanäle mit demselben Faktor, Decke −0,1 dBFS, sofortiges Absenken am
+  lauten Sample, Loslassen mit 80 ms Zeitkonstante, **ohne Vorschau** (von
+  mir gesetzt, abweichend von „kurze Vorschau“ in L4 a: eine Vorschau
+  verzögert das ganze Signal — dann ginge nichts mehr Bit für Bit durch, und
+  der Ton läge gegen die Uhr versetzt; Preis: kurze Spitzen klingen etwas
+  härter). `IAudioEngine::setMixerLimiter` / `mixerLimiterFrames`, die
+  BassEngine hängt ihn als DSP an den Mixer. Tests `test_ComposerBegrenzer`
+  und im Beleg G4 (Quelle ×8: Spitze 0,9886 statt 2,0). **Der Composer
+  schaltet ihn noch nicht ein.**
+  **Entscheid Patrik G4b a (S126, mit Skizze):** der Haken **Limiter** steht
+  in der Zeile der Komposition hinter *Visuals overlap themselves*, Vorgabe
+  an, nur mit *Edit*, Undo-Schritt; in der `.lvcomp` `"limiter": false` nur,
+  wenn aus. Verworfen: Settings → Composer für alle Kompositionen.
+  **Teil 2, nächster Schritt:** `Komposition::limiter`, Datei, die
+  Tonführung schaltet ihn je Takt am Mixer (wie `m_laut`, zurückgesetzt in
+  `uebernimm`), der Haken `composerLimiter` neben `m_bilderDoppelt`, Tests
+  gegen die Engine aus Pappe (zählt die Aufrufe) und ein Bild.
 - **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
   vorher Listen A/B und Undo vorlegen.
 - **G6** Handbuch, Sichttest-Liste, voller Lauf.
@@ -1621,6 +1639,7 @@ dabei, damit die Gründe nachlesbar bleiben.
 | L2 | Maß des Abgleichs (S126) | **Lautheit nach EBU R128 in LUFS**, Peak daneben | RMS; Peak |
 | L3 | Ziel des Abgleichs (S126) | **Liste: jeder Ton-Clip und Fixed level**, Vorgabe der lauteste Clip | nur Bezugsclip; nur fester Wert |
 | L3b | Gemessener Teil (S126) | **der gespielte Ausschnitt ohne Pegelkurve**, beim Loop ein Durchlauf nach einem vorgerechneten | ganze Datei; nur der Teil auf vollem Pegel |
+| G4b | Ort des Hakens Limiter (S126) | **in der Zeile der Komposition**, in der `.lvcomp`, Vorgabe an | Settings → Composer, für alle |
 | D1 | Einzelne Clips ausschalten (S126) | **Haken Clip enabled im Rechtsklick und Ctrl+E**, nur mit Edit; wirkt wie ein ausgeschalteter Kanal (§9h) | Grundpegel auf 0 (*Mute clip*); ohne Kürzel |
 | L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
 
@@ -1795,6 +1814,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.88.0 | 2026-10-15 | Session 126, Abschluss — §9g G4: Teil 1 gebaut (Begrenzer ohne Vorschau, Engine-Schnittstelle), Entscheid **G4b a** (Haken in der Zeile der Komposition); §11 eine Zeile |
 | 0.87.0 | 2026-10-15 | Session 126 — §9g G4: Beleg, was die Visuals hinter einem DSP am Mixer sehen; **Befund: G1 wirkte in der echten Engine nicht über 0 dB** (`BassEngine::setVolume` klemmte auf 1), behoben mit `kHoechsteLautstaerke` = 16 |
 | 0.86.0 | 2026-10-15 | Session 126 — **§9h neu: einzelne Clips ausschalten** (Entscheid D1 c): *Clip enabled* im Rechtsklick, Ctrl+E, `enabled` in der `.lvcomp`; §11 eine Zeile; Kopf |
 | 0.85.0 | 2026-10-15 | Session 126 — §9g: **G2** gebaut (Entscheid G2 a: Feld Gain statt Blend am Ton-Clip, Marke im Clip, Reset gain im Rechtsklick); Kopf |
