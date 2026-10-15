@@ -1422,6 +1422,55 @@ Loop-Kleinkram“):**
   Handbuch 1.171.0.
 - **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
   vorher Listen A/B und Undo vorlegen.
+  **Entscheid Patrik G5-1 a (S127) — Vorhören:** der Dialog sperrt den
+  Composer nicht (Play, Stop, Klicks in die Zeitachse gehen weiter); was im
+  Dialog steht, hört man sofort, wenn der Composer spielt — noch kein
+  Undo-Schritt, *Cancel* stellt zurück. **Listen A/B** schaltet zwischen den
+  Gains von vor dem Dialog (A) und denen im Dialog (B), der Knopf zeigt
+  „Hearing: A (before)“ / „Hearing: B (dialog)“. Je Zeile ein Knopf **▶**:
+  setzt die Abspielstelle in die Mitte des gespielten Ausschnitts dieses
+  Clips und startet den Composer; Clips, die dort auch liegen, klingen mit.
+  Verworfen: nur A/B ohne ▶, nur ▶ ohne A/B, kein Vorhören (modal, hören nach
+  OK).
+  **Entscheid Patrik G5-2 a (S127) — Undo:** *OK* schreibt **einen**
+  Undo-Schritt „Match loudness“ mit allen geänderten Gains. *Use
+  suggestions*, Schieber und *Listen A/B* ändern nur den Dialog und das
+  Gehörte, nicht Undo; *Cancel* verwirft ohne Spur. Solange der Dialog offen
+  ist, ist *Edit* grau (Abspielen, Stelle setzen, ▶ gehen). Ändert sich die
+  Komposition doch (etwa Ctrl+Z), liest der Dialog die Liste neu: die Gains
+  bleiben bei Clips mit derselben Datei und demselben Ausschnitt, neue oder
+  geänderte Clips werden neu gemessen. Grund: Clips haben keine eigene
+  Kennung, der Dialog kennt sie nur an Kanal und Platz. Verworfen:
+  Bearbeiten bei offenem Dialog (bräuchte eine Kennung je Clip), zwei
+  Schritte (Use suggestions eigener Schritt), jeder Zug ein Schritt.
+  **Entscheid Patrik G5-3 a (S127) — Messen:** beim Öffnen misst der Dialog
+  von selbst, im Hintergrund, Clip für Clip; eine Zeile zeigt „Measuring…
+  35 %“, bis Loudness und Peak dastehen; der Dialog bleibt bedienbar (auch ▶
+  und Listen A/B). *Suggested* und *Use suggestions* gelten je Zeile, sobald
+  sie und das Ziel gemessen sind. **Songs** merkt sich LumiViz in einer
+  Datei im Cache-Ordner des Benutzers (Schlüssel: Datei, Größe,
+  Änderungszeit, Ausschnitt) — auch über einen Neustart; **Loops** werden
+  bei jedem Öffnen neu gemessen (ihr Klang hängt an Instrumenten, Kits und
+  Samples). **Measure again** misst alle neu und überschreibt Gemerktes.
+  Schließen oder *Cancel* bricht eine laufende Messung ab. Der Cache gehört
+  nicht zu den eigenen Daten (kein Export, kein Publish). Ein Song wird
+  **stückweise** ab dem Anfang des Ausschnitts dekodiert — `decodeStereo`
+  lädt die ganze Datei und ist für kurze Klänge gedacht. **Im Bau zu
+  melden:** wie lange das Dekodieren eines Songs dauert; bleibt es unter
+  einer halben Sekunde, ist die Cache-Datei überflüssig (dann vorlegen,
+  bevor sie gebaut wird). Verworfen: nur bis zum Beenden merken, Messen erst
+  auf Klick mit wartendem Fortschrittsfenster.
+  **Entscheid Patrik G5-4 a, Ort angepasst (S127) — Eingang:** ein Knopf
+  **Match loudness...** in der Fußzeile **neben dem Feld Gain** (Patrik:
+  „eher im Bereich, wo man auch Gain angeben kann“) — sichtbar wie das Feld,
+  also wenn ein Ton-Clip gewählt ist, aktiv nur mit *Edit*. Dazu im
+  Rechtsklick eines Ton-Clips **Match loudness to this clip...**, nur mit
+  *Edit*, mit diesem Clip als *Target*. **Von mir gesetzt:** der Knopf öffnet
+  mit der Vorgabe aus L3 a (der lauteste Clip oder die gemerkte Wahl) und
+  markiert die Zeile des gewählten Clips — er macht ihn **nicht** zum Ziel:
+  neben seinem Gain-Feld erwartet man, dass dieser Clip angeglichen wird,
+  nicht dass er bei 0 dB bleibt und die anderen sich bewegen. Verworfen: der
+  Knopf in der Datei-Zeile (vorgeschlagen als a), nur Knopf, nur Rechtsklick.
 - **G6** Handbuch, Sichttest-Liste, voller Lauf.
 
 ### 9h. Einzelne Clips ausschalten — entschieden und gebaut S126
@@ -1648,6 +1697,10 @@ dabei, damit die Gründe nachlesbar bleiben.
 | L3 | Ziel des Abgleichs (S126) | **Liste: jeder Ton-Clip und Fixed level**, Vorgabe der lauteste Clip | nur Bezugsclip; nur fester Wert |
 | L3b | Gemessener Teil (S126) | **der gespielte Ausschnitt ohne Pegelkurve**, beim Loop ein Durchlauf nach einem vorgerechneten | ganze Datei; nur der Teil auf vollem Pegel |
 | G4b | Ort des Hakens Limiter (S126) | **in der Zeile der Komposition**, in der `.lvcomp`, Vorgabe an | Settings → Composer, für alle |
+| G5-1 | Vorhören im Dialog Match loudness (S127) | **Dialog sperrt nicht, wirkt live; Listen A/B als Umschalter vorher/Dialog; ▶ je Zeile** | nur A/B; nur ▶; modal, hören nach OK |
+| G5-2 | Undo im Dialog Match loudness (S127) | **ein Schritt beim OK; Edit grau, solange der Dialog offen ist; bei Änderung Liste neu lesen** | Bearbeiten bei offenem Dialog; zwei Schritte; jeder Zug ein Schritt |
+| G5-3 | Messen im Dialog Match loudness (S127) | **beim Öffnen im Hintergrund; Songs im Cache gemerkt (auch über Neustart), Loops immer neu** | nur bis Beenden merken; erst auf Klick, wartend |
+| G5-4 | Eingang zum Dialog Match loudness (S127) | **Knopf neben dem Feld Gain (Fußzeile) und Rechtsklick „Match loudness to this clip...“, beide nur mit Edit** | Knopf in der Datei-Zeile; nur Knopf; nur Rechtsklick |
 | D1 | Einzelne Clips ausschalten (S126) | **Haken Clip enabled im Rechtsklick und Ctrl+E**, nur mit Edit; wirkt wie ein ausgeschalteter Kanal (§9h) | Grundpegel auf 0 (*Mute clip*); ohne Kürzel |
 | L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
 
@@ -1822,7 +1875,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
-| 0.89.0 | 2026-10-15 | Session 127 — §9g G4 Teil 2 gebaut: `Komposition::limiter`, Datei, die Tonführung schaltet ihn am Mixer, Haken **Limiter** mit Undo — G4 fertig |
+| 0.89.0 | 2026-10-15 | Session 127 — §9g G4 Teil 2 gebaut: `Komposition::limiter`, Datei, die Tonführung schaltet ihn am Mixer, Haken **Limiter** mit Undo — G4 fertig; Entscheide **G5-1 a** (Vorhören: Dialog sperrt nicht, Listen A/B, ▶ je Zeile), **G5-2 a** (ein Undo-Schritt beim OK, Edit grau), **G5-3 a** (Messen im Hintergrund, Songs im Cache) und **G5-4 a** (Knopf neben Gain, Rechtsklick am Ton-Clip); §11 vier Zeilen |
 | 0.88.0 | 2026-10-15 | Session 126, Abschluss — §9g G4: Teil 1 gebaut (Begrenzer ohne Vorschau, Engine-Schnittstelle), Entscheid **G4b a** (Haken in der Zeile der Komposition); §11 eine Zeile |
 | 0.87.0 | 2026-10-15 | Session 126 — §9g G4: Beleg, was die Visuals hinter einem DSP am Mixer sehen; **Befund: G1 wirkte in der echten Engine nicht über 0 dB** (`BassEngine::setVolume` klemmte auf 1), behoben mit `kHoechsteLautstaerke` = 16 |
 | 0.86.0 | 2026-10-15 | Session 126 — **§9h neu: einzelne Clips ausschalten** (Entscheid D1 c): *Clip enabled* im Rechtsklick, Ctrl+E, `enabled` in der `.lvcomp`; §11 eine Zeile; Kopf |

@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.237.0
+> **Version:** 1.238.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2744,10 +2744,18 @@ Idee Preset-Warmup/Pre-Roll.
   die Lautstärke auf 1, ein Gain über 0 dB kam bis zum Beleg G4 nicht an.
   Belegt: die Visuals sehen das Signal hinter einem DSP am Mixer. G4 Teil 1
   gebaut (Limiter `audio/Begrenzer` an der Engine), G4b a entschieden (Haken
-  in der Zeile der Komposition). Offen: **G4 Teil 2** (Haken, Datei,
-  Tonführung schaltet ihn ein), G5 (Dialog; vorher Listen A/B und Undo
-  vorlegen), G6 (Handbuch, Sichttest-Liste, voller Lauf). Steuerdokument
+  in der Zeile der Komposition). S127: G4 Teil 2 gebaut (Haken **Limiter**,
+  Datei, die Tonführung schaltet ihn am Mixer) — G4 fertig. G5 entschieden
+  (G5-1 a bis G5-4 a: Vorhören live mit Listen A/B und ▶, ein Undo-Schritt
+  beim OK, Messen im Hintergrund mit Cache für Songs, Knopf neben Gain und
+  Rechtsklick). Offen: G5 bauen, G6 (Handbuch, Sichttest-Liste, voller Lauf). Steuerdokument
   [Composer_Konzept.md](ui/Composer_Konzept.md) §9g.
+- ⬜ **Loop-Editor läuft mit dem Composer mit (Wunsch Patrik S127, nach G5/G6):**
+  spielt im Composer ein Loop-Clip, dessen Loop gerade in einem Loop-Editor
+  offen ist, soll die Abspielstelle des Editors simultan mitlaufen — an der
+  Stelle im Loop, die der Composer gerade spielt. Noch nicht vorgelegt;
+  vorher zu klären: welche Editoren (Panel Loop, Drum, Instrument), was bei
+  mehreren Clips desselben Loops gilt, ob der Editor dabei bedienbar bleibt.
 - **Sichttests, S103 — neu gefasst, mit festen Vorlagen (Anlass Patrik: „ich
   habe die Sichttests aufgegeben, sie sind zum Teil etwas unklar
   beschrieben"):**
@@ -5746,6 +5754,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.238.0 | 2026-10-15 | Session 127. §7 Composer: G4 fertig (Teil 2), G5 entschieden (G5-1 bis G5-4); Wunsch: Loop-Editor läuft mit dem Composer mit. |
 | 1.237.0 | 2026-10-15 | Session 126, Abschluss. §7 Composer: G4 Teil 1 gebaut, G4b a entschieden. |
 | 1.236.0 | 2026-10-15 | Session 126. §7 Composer: Beleg G4, Gain über 0 dB in der BassEngine behoben. |
 | 1.235.0 | 2026-10-15 | Session 126. §7 Composer: einzelne Clips ausschalten (D1 c) gebaut. |
