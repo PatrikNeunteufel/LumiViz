@@ -189,6 +189,7 @@ private:
     };
     std::vector<Abgeloest> m_abgeloest;
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt
+    int m_limiter = -1;               ///< Limiter zuletzt am Mixer: 1 an, 0 aus, −1 noch nicht gesetzt
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts
     int m_laufendDauerMs = 0;         ///< seine Laenge

@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.88.0
+> **Version:** 0.89.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1408,10 +1408,18 @@ Loop-Kleinkram“):**
   in der Zeile der Komposition hinter *Visuals overlap themselves*, Vorgabe
   an, nur mit *Edit*, Undo-Schritt; in der `.lvcomp` `"limiter": false` nur,
   wenn aus. Verworfen: Settings → Composer für alle Kompositionen.
-  **Teil 2, nächster Schritt:** `Komposition::limiter`, Datei, die
-  Tonführung schaltet ihn je Takt am Mixer (wie `m_laut`, zurückgesetzt in
-  `uebernimm`), der Haken `composerLimiter` neben `m_bilderDoppelt`, Tests
-  gegen die Engine aus Pappe (zählt die Aufrufe) und ein Bild.
+  **Teil 2 gebaut (S127):** `Komposition::limiter` (Vorgabe an), in der
+  `.lvcomp` `"limiter": false` nur, wenn aus; die Tonführung gibt ihn im
+  ersten Takt nach `uebernimm` und danach nur bei einem Wechsel an den Mixer
+  (`m_limiter`, wie `m_laut`) — mit dem Mixer geht auch sein Limiter. Eine
+  Engine ohne Limiter antwortet false; die Führung versucht es dann nicht
+  bei jedem Takt neu. Der Haken `composerLimiter` steht hinter *Visuals
+  overlap themselves*, nur mit *Edit*, Undo „Turn on/off limiter“. Tests:
+  in `test_ComposerTonfuehrung` „S127 G4 Limiter“ (die Engine aus Pappe
+  schreibt die Aufrufe in `limiterAufrufe`, nicht ins `protokoll`, das
+  manche Fälle als Ganzes vergleichen), in `test_ComposerPanel` im Fall
+  „C3a Panel“ der Haken mit Undo, Bild `<LUMIVIZ_COMPOSER_PANEL_BILD>.limiter.png`.
+  Handbuch 1.171.0.
 - **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
   vorher Listen A/B und Undo vorlegen.
 - **G6** Handbuch, Sichttest-Liste, voller Lauf.
@@ -1814,6 +1822,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.89.0 | 2026-10-15 | Session 127 — §9g G4 Teil 2 gebaut: `Komposition::limiter`, Datei, die Tonführung schaltet ihn am Mixer, Haken **Limiter** mit Undo — G4 fertig |
 | 0.88.0 | 2026-10-15 | Session 126, Abschluss — §9g G4: Teil 1 gebaut (Begrenzer ohne Vorschau, Engine-Schnittstelle), Entscheid **G4b a** (Haken in der Zeile der Komposition); §11 eine Zeile |
 | 0.87.0 | 2026-10-15 | Session 126 — §9g G4: Beleg, was die Visuals hinter einem DSP am Mixer sehen; **Befund: G1 wirkte in der echten Engine nicht über 0 dB** (`BassEngine::setVolume` klemmte auf 1), behoben mit `kHoechsteLautstaerke` = 16 |
 | 0.86.0 | 2026-10-15 | Session 126 — **§9h neu: einzelne Clips ausschalten** (Entscheid D1 c): *Clip enabled* im Rechtsklick, Ctrl+E, `enabled` in der `.lvcomp`; §11 eine Zeile; Kopf |

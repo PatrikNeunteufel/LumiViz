@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.170.0
+> **Version:** 1.171.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2246,6 +2246,14 @@ Playlist ruht.
   getrennt von der Pegelkurve: die Blenden laufen weiter von 0 bis 1, das Gain
   kommt obendrauf. Welcher Song als **laufender Song** gilt, entscheidet
   weiter die Pegelkurve, nicht das Gain.
+- **Limiter — Spitzen über 0 dB abfangen:** hebt das Gain einen Clip an, oder
+  spielen mehrere Songs zugleich, kann die Summe über 0 dB steigen und am
+  Ausgang hart abschneiden. Der Haken **Limiter** (in der Zeile von *Loop
+  overlap*, hinter *Visuals overlap themselves*, nur mit *Edit*; Standard: an)
+  senkt solche Spitzen weich unter −0,1 dB; was darunter bleibt, geht
+  unverändert durch. Die Visuals sehen den Ton hinter dem Limiter. Der Haken
+  gehört zur Komposition und steht in ihrer Datei; er wirkt, solange der
+  Composer den Ton führt.
 - **Mehrere Audio-Kanäle — Songs überlagern und überblenden:** alle
   eingeschalteten Audio-Kanäle spielen **zugleich**, jeder Song mit seiner
   eigenen Pegelkurve. Liegt das Ende eines Songs in A1 über dem Anfang eines
@@ -2528,6 +2536,7 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `gridSeconds` | Das Raster beim Ziehen in Sekunden (ohne Angabe 1) |
 | `color` (am Kanal) | Die Farbe der Clips des Kanals als `"#rrggbb"`, freiwillig. Ohne Angabe vergibt LumiViz beim Laden eine Farbe seiner Reihe (kühl für Bild, warm für Ton) |
 | `loop` | Die Schleife, freiwillig: `overlap` (Millisekunden, um die der Anfang vor dem Ende beginnt — *Loop overlap*), `songsTwice` (*Songs overlap themselves*, ohne Angabe an) und `visualsTwice` (*Visuals overlap themselves*, ohne Angabe aus) |
+| `limiter` | Der Haken *Limiter*, freiwillig: steht nur als `false` in der Datei, wenn er aus ist; ohne Angabe an |
 | `fade` | Die Blenden der Zeile MASTER, freiwillig: `in` und `out` in Millisekunden (*Fade in*, *Fade out*), dazu wahlweise `inShape` und `outShape` mit einer Form wie bei `fadeIn` |
 | `level` | Grundpegel und Stücke der Zeile MASTER, freiwillig: `base` (0 … 1, ohne Angabe 1) und `shapes` wie am Clip — nur dass ein Stück hier `at` trägt statt `pos`: seine Mitte als **feste Zeit** in Millisekunden. Wird die Komposition länger oder kürzer, bleibt es an dieser Zeit; ein Stück im Clip wandert dagegen anteilig mit |
 | `visualMaster`, `audioMaster`, `karaokeMaster` | Die Kurven der Zeilen VISUAL, AUDIO und KARAOKE, jede freiwillig und mit denselben Feldern: `in`, `out`, `inShape`, `outShape`, `base`, `shapes` (mit `at`) |
@@ -3364,6 +3373,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.171.0 | 2026-10-15 | Session 127. §15 Composer NEU Haken **Limiter** (Standard an, nur mit *Edit*): fängt Spitzen über 0 dB am Mixer ab; in der Datei `limiter`. |
 | 1.170.0 | 2026-10-15 | Session 126. §15 Composer NEU **Clip enabled** im Rechtsklick und **Ctrl+E**: einzelne Clips ausschalten; in der Datei `enabled` am Clip. |
 | 1.169.0 | 2026-10-15 | Session 126. §15 Composer NEU **Gain** am Ton-Clip: Feld unten rechts statt *Blend*, Marke im Clip, Rechtsklick *Reset gain*; in der Datei das Feld `gain`. |
 | 1.168.0 | 2026-10-15 | Session 125. §16 NEU „Weitergeben: Publish“: Publish... in Panel Loop, Instrument-Creator, Kits, Edit shape, Record sample, File → Publish a file... und Import package..., die Dialoge Publish und Import package (Same names mit Keep both, Replace mine, Use mine); §8 ein Paket öffnet aus Import... den Dialog Import package. |

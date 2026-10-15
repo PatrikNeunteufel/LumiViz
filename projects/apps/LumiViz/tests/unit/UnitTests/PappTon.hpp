@@ -333,8 +333,23 @@ public:
     }
     void freeStream(AudioStreamHandle h) override
     {
-        if (h == mixer) protokoll << QStringLiteral("free mixer");
+        if (h == mixer)
+        {
+            protokoll << QStringLiteral("free mixer");
+            limiterAn = false;  // mit dem Mixer geht sein Limiter
+        }
         PappEngine::freeStream(h);
+    }
+    /// Der Limiter am Mixer (S127): jeder Aufruf in `limiterAufrufe` (nicht im
+    /// `protokoll` — Tests vergleichen es teils als Ganzes), der Stand in `limiterAn`.
+    std::vector<bool> limiterAufrufe;
+    bool limiterAn = false;
+    bool setMixerLimiter(AudioStreamHandle m, bool an) override
+    {
+        if (m == INVALID_STREAM || m != mixer) return false;
+        limiterAufrufe.push_back(an);
+        limiterAn = an;
+        return true;
     }
 
 private:

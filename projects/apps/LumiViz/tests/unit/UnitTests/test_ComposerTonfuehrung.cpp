@@ -822,6 +822,71 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(f.quellen() == 0);
     }
 
+    TEST_CASE("S127 G4 Limiter: Datei, Vorgabe an, die Fuehrung schaltet ihn bei jedem Wechsel am Mixer")
+    {
+        // Datei: nur geschrieben, wenn aus; fehlt es (bis S126), ist er an
+        Komposition k = probe();
+        CHECK(k.limiter);
+        CHECK_FALSE(alsJson(k).contains(QStringLiteral("limiter")));
+        k.limiter = false;
+        const QJsonObject json = alsJson(k);
+        CHECK(json.value(QStringLiteral("limiter")).toBool(true) == false);
+        Komposition gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK_FALSE(gelesen.limiter);
+        CHECK(gleich(k, gelesen));
+        CHECK_FALSE(gleich(k, probe()));  // der Haken zaehlt fuer Undo und „ungespeichert"
+        Komposition alt;
+        REQUIRE(ausJson(alsJson(probe()), alt));
+        CHECK(alt.limiter);
+
+        // die Fuehrung: im ersten Takt an den Mixer, danach nur bei einem Wechsel
+        PappPlayer p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+        CHECK(e.limiterAufrufe.empty());  // erst der Takt kennt die Komposition
+        k.limiter = true;
+        (void)f.takt(k, 30000, true);
+        CHECK(e.limiterAufrufe == std::vector<bool>{true});
+        CHECK(e.limiterAn);
+        (void)f.takt(k, 30033, true);
+        (void)f.takt(k, 30066, false);  // auch angehalten: der Mixer bleibt, der Limiter auch
+        CHECK(e.limiterAufrufe.size() == 1);
+        k.limiter = false;
+        (void)f.takt(k, 30100, true);
+        CHECK(e.limiterAufrufe == std::vector<bool>{true, false});
+        CHECK_FALSE(e.limiterAn);
+        (void)f.takt(k, 30133, true);
+        CHECK(e.limiterAufrufe.size() == 2);
+
+        // freigegeben und neu uebernommen: ein neuer Mixer, der Limiter kommt wieder dran
+        k.limiter = true;
+        (void)f.takt(k, 30166, true);
+        CHECK(e.limiterAn);
+        f.gibFrei(false);
+        CHECK_FALSE(e.limiterAn);
+        REQUIRE(f.uebernimm(e, p));
+        (void)f.takt(k, 30200, true);
+        CHECK(e.limiterAufrufe == std::vector<bool>{true, false, true, true});
+        CHECK(e.limiterAn);
+        f.gibFrei(false);
+
+        // eine Engine ohne Limiter (die Vorgabe der Schnittstelle antwortet false): kein Fehler,
+        // der Ton geht weiter
+        struct OhneLimiter : PappMischEngine
+        {
+            bool setMixerLimiter(AudioStreamHandle m, bool an) override { return IAudioEngine::setMixerLimiter(m, an); }
+        } ohne;
+        ohne.laengen = e.laengen;
+        Tonfuehrung g;
+        REQUIRE(g.uebernimm(ohne, p));
+        const Tonfuehrung::Ergebnis r = g.takt(k, 30000, true);
+        CHECK(r.hatSong);
+        CHECK(ohne.quelle(kEins) != INVALID_STREAM);
+    }
+
     TEST_CASE("Next und Previous: die Anfaenge der Songs")
     {
         const Komposition k = probe();  // eins 10–70 s, zwei 80–100 s

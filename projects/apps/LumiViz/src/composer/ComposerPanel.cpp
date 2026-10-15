@@ -2407,6 +2407,25 @@ void ComposerPanel::setupUI()
         neu.bilderDoppelt = an;
         bearbeite(neu, an ? tr("Let visuals overlap themselves") : tr("Run visuals once in the loop"));
     });
+    // der Limiter am Mixer (Entscheid Patrik G4b a, S127): gehoert zur
+    // Komposition, Vorgabe an
+    m_limiter = new QCheckBox(tr("Limiter"), this);
+    m_limiter->setObjectName(QStringLiteral("composerLimiter"));
+    m_limiter->setToolTip(
+        tr("Keeps the sum of all sound clips below 0 dB while the Composer plays the sound.\n\n"
+           "On: peaks above 0 dB — for example from a clip with Gain above 0 dB — are turned down "
+           "smoothly instead of clipping. Everything below passes unchanged. The visuals see the "
+           "sound behind the limiter.\n\n"
+           "Off: the sum goes out as it is; peaks above 0 dB clip at the output.\n\n"
+           "Saved with the composition. Can be changed while Edit is on."));
+    schleifenZeile->addSpacing(8);
+    schleifenZeile->addWidget(m_limiter);
+    connect(m_limiter, &QCheckBox::clicked, this, [this](bool an) {
+        if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
+        Komposition neu = m_sitzung->komposition();
+        neu.limiter = an;
+        bearbeite(neu, an ? tr("Turn on limiter") : tr("Turn off limiter"));
+    });
     // Ein- und Ausblenden der ganzen Komposition (Entscheid Patrik S99: getrennt
     // von der Ueberlappung, gilt immer)
     // — in einer eigenen Zeile: zusammen mit den Haken waere das Panel zu breit
@@ -2724,6 +2743,8 @@ void ComposerPanel::zeigeEnde()
     m_songsDoppelt->setChecked(!geladen || m_sitzung->komposition().songsDoppelt);
     m_bilderDoppelt->setEnabled(bearbeiten);
     m_bilderDoppelt->setChecked(geladen && m_sitzung->komposition().bilderDoppelt);
+    m_limiter->setEnabled(bearbeiten);
+    m_limiter->setChecked(!geladen || m_sitzung->komposition().limiter);
     m_einblende->setEnabled(bearbeiten);
     m_ausblende->setEnabled(bearbeiten);
     const QSignalBlocker ruheEin(m_einblende);

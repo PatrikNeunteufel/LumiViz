@@ -142,6 +142,7 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     player.setPlaylist(nullptr);
     m_quellen.clear();
     m_laut = -1.0f;
+    m_limiter = -1;
     m_laufend = {};
     m_laufendDauerMs = 0;
     m_liefZuletzt = false;
@@ -201,6 +202,14 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
     {
         engine.setVolume(m_mixer, laut);
         m_laut = laut;
+    }
+    // der Limiter der Komposition (G4b a, S127): nur bei einem Wechsel an den
+    // Mixer — eine Engine ohne Limiter antwortet false, dann bleibt es beim Versuch
+    const int limiter = komposition.limiter ? 1 : 0;
+    if (limiter != m_limiter)
+    {
+        engine.setMixerLimiter(m_mixer, komposition.limiter);
+        m_limiter = limiter;
     }
 
     const bool liefZuletzt = m_liefZuletzt;

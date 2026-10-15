@@ -575,6 +575,24 @@ TEST_SUITE("ComposerPanel")
             REQUIRE(bus->undo());
             CHECK_FALSE(sitzung->komposition().bilderDoppelt);
             CHECK_FALSE(bilderDoppelt->isChecked());
+            // der Haken Limiter (G4b a, S127): in derselben Zeile, Vorgabe an, ein Undo-Schritt
+            auto* limiter = panel.findChild<QCheckBox*>(QStringLiteral("composerLimiter"));
+            REQUIRE(limiter != nullptr);
+            CHECK(limiter->isEnabled());
+            CHECK(limiter->isChecked());
+            CHECK(limiter->isVisible());
+            CHECK(limiter->parentWidget() == bilderDoppelt->parentWidget());
+            limiter->click();
+            CHECK_FALSE(sitzung->komposition().limiter);
+            CHECK(bus->undoDescription() == "Turn off limiter");
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD"); !bild.isEmpty())
+            {
+                QCoreApplication::processEvents();
+                CHECK(panel.grab().save(bild + QStringLiteral(".limiter.png")));
+            }
+            REQUIRE(bus->undo());
+            CHECK(sitzung->komposition().limiter);
+            CHECK(limiter->isChecked());
             // die Zeitachse hat die geaenderte Komposition, und sie kennt den Schalter Loop
             const bool schleifeVorher = sitzung->schleife();
             sitzung->setSchleife(true);

@@ -226,6 +226,10 @@ struct Komposition
     /// Dasselbe fuer einen Bild-Clip: ein zweites, frisch gestartetes Exemplar.
     /// Aus = er laeuft einmal durch, im Fenster gilt der hoehere der zwei Pegel.
     bool bilderDoppelt = false;
+    /// Der Limiter am Mixer, solange der Composer den Ton fuehrt (Entscheid
+    /// Patrik G4b a, S127): faengt Spitzen ueber 0 dB ab, die das Gain der
+    /// Ton-Clips erzeugen kann. Vorgabe an.
+    bool limiter = true;
     /// Ein- und Ausblenden der GANZEN Komposition, Bild und Ton; 0 = keins.
     /// Gilt immer — auch beim ersten Start und am Ende ohne Schleife.
     std::int64_t einblendeMs = 0;

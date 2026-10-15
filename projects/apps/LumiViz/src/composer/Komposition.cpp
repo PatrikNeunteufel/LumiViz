@@ -597,6 +597,8 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
         schleife.insert(QStringLiteral("visualsTwice"), komposition.bilderDoppelt);
         wurzel.insert(QStringLiteral("loop"), schleife);
     }
+    // der Limiter (S127): nur, wenn er aus ist — die Vorgabe ist an
+    if (!komposition.limiter) wurzel.insert(QStringLiteral("limiter"), false);
     if (komposition.einblendeMs > 0 || komposition.ausblendeMs > 0)
     {
         QJsonObject blende;
@@ -677,6 +679,7 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
     neu.ueberlappungMs = static_cast<std::int64_t>(schleife.value(QStringLiteral("overlap")).toDouble());
     neu.songsDoppelt = schleife.value(QStringLiteral("songsTwice")).toBool(true);
     neu.bilderDoppelt = schleife.value(QStringLiteral("visualsTwice")).toBool(false);
+    neu.limiter = wurzel.value(QStringLiteral("limiter")).toBool(true);
     const QJsonObject blende = wurzel.value(QStringLiteral("fade")).toObject();
     neu.einblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("in")).toDouble());
     neu.ausblendeMs = static_cast<std::int64_t>(blende.value(QStringLiteral("out")).toDouble());
