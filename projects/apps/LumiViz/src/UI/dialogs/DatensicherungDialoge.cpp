@@ -9,7 +9,9 @@
 #include "UI/dialogs/DatensicherungDialoge.hpp"
 
 #include "AppInfo.hpp"
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "paket/Import.hpp"
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -725,6 +727,12 @@ void zeigeDatenImport(QWidget* parent)
                                      QObject::tr("LumiViz data (*%1);;All files (*)").arg(QLatin1String(ds::kEndung)));
     if (datei.isEmpty()) return;
     einstellungen.setValue(QLatin1String(kLetzterOrdner), QFileInfo(datei).absolutePath());
+    if (lumi::paket::istPaket(datei))
+    {
+        // ein Paket aus Publish: der Dialog Import package (Publish_Konzept.md P2 a, P8 a)
+        zeigeImportPaket(parent, datei);
+        return;
+    }
     DatenImportDialog dialog(datei, ordner, parent);
     if (!dialog.inhalt().ok)
     {

@@ -25,44 +25,6 @@ namespace
 
 namespace ds = lumi::core::datensicherung;
 
-/// Die eigenen Ordner des Empfaengers; solange er lebt, gelten sie.
-struct Empfaenger
-{
-    QString instrumente, samples, kits, konturen, loops;
-
-    explicit Empfaenger(const QString& wurzel)
-    {
-        const QDir w(wurzel);
-        instrumente = w.filePath(QStringLiteral("empfaenger/instruments"));
-        samples = w.filePath(QStringLiteral("empfaenger/samples"));
-        kits = w.filePath(QStringLiteral("empfaenger/kits"));
-        konturen = w.filePath(QStringLiteral("empfaenger/contours"));
-        loops = w.filePath(QStringLiteral("empfaenger/loops"));
-        for (const QString& o : {instrumente, samples, kits, konturen, loops}) REQUIRE(QDir().mkpath(o));
-        lp::setzeEigenenInstrumentOrdnerFuerTests(instrumente);
-        lp::setzeEigenenSampleOrdnerFuerTests(samples);
-        lp::setzeEigenenKitOrdnerFuerTests(kits);
-        lumi::shape::setzeEigenenKonturOrdnerFuerTests(konturen);
-    }
-    ~Empfaenger()
-    {
-        lp::setzeEigenenInstrumentOrdnerFuerTests(QString());
-        lp::setzeEigenenSampleOrdnerFuerTests(QString());
-        lp::setzeEigenenKitOrdnerFuerTests(QString());
-        lumi::shape::setzeEigenenKonturOrdnerFuerTests(QString());
-    }
-};
-
-/// Packt den Loop des Bestands; zurueck: der Pfad des Pakets.
-QString packeTitan(const Bestand& b)
-{
-    const pb::Fund fund = pb::sammle(b.loopDatei);
-    REQUIRE(fund.ok);
-    const QString ziel = QDir(b.tmp.path()).filePath(pb::paketName(fund));
-    REQUIRE(pb::packe(fund, ziel, QStringLiteral("1.2.3")).ok);
-    return ziel;
-}
-
 QByteArray liesBytes(const QString& pfad)
 {
     QFile datei(pfad);

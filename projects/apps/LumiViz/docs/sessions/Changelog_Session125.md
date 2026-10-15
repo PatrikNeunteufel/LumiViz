@@ -34,5 +34,10 @@
   den Benutzerordner, der Loop an seinen Ort, gleiche Namen nach P6 a (Keep
   both mit Umschreiben, Use mine, Replace mine); neu `test_PublishImport`
   (drei Fälle). Der Sammler prüft jetzt, ob ein `kit:`/`lib:`-Klang da ist.
+- Publish, Stufe P-A: die Dialoge **Publish <art>** und **Import package**
+  (`UI/dialogs/PaketDialoge`); Settings → User data → Import... öffnet ein
+  Paket im Dialog Import package. Neu `test_PublishDialoge` (drei Fälle,
+  `LUMIVIZ_PUBLISH_DIALOG_BILD`, `LUMIVIZ_IMPORT_PAKET_BILD`). Die Knöpfe
+  fehlen noch — im Programm erreicht man Publish noch nicht.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

@@ -16,6 +16,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/GradientEditorDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/LyricsAlternativesDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/DatensicherungDialoge.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/PaketDialoge.cpp"
 )
 set(_local_headers
     # (headers - *.h; *.hpp)

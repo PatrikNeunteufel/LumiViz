@@ -1,11 +1,11 @@
 # LumiViz — Publish (Konzept)
 
-> **Version:** 0.5.0
+> **Version:** 0.6.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Konzept — die Entscheide P1 a bis P8 a sind gefallen (Patrik S125,
 > §3), die drei Skizzen sind gebilligt (§4); gebaut: der Namensbau von Keep
-> both (P6 a, §2b), die Sammler der Loop-Familie (§5a), das Packen (§5b) und der Import (§5c);
-> offen in P-A: die Dialoge und die Knöpfe
+> both (P6 a, §2b), die Sammler der Loop-Familie (§5a), das Packen (§5b), der Import (§5c) und
+> die Dialoge (§5d); offen in P-A: die Knöpfe und das Menü File
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Datenablage_Konzept.md](Datenablage_Konzept.md) §4a (Export und
@@ -265,12 +265,40 @@ is a backup of user data, not a package“. Tests: `test_PublishImport`
 (drei Fälle). Nebenbei: der Sammler prüft jetzt auch, ob ein `kit:`- oder
 `lib:`-Klang da ist (vorher galt er ungeprüft als mitgeliefert).
 
+### 5d. Wie die Dialoge gebaut sind (S125)
+
+`UI/dialogs/PaketDialoge`: `PublishDialog` und `ImportPaketDialog` nach den
+Skizzen §4b–§4d, ohne gezeigtes Fenster bedienbar (`fuehreAus`);
+`zeigePublish(parent, datei)` und `zeigeImportPaket(parent, datei, oeffne)`.
+Settings → User data → Import... öffnet ein Paket jetzt im Dialog Import
+package (P2 a). Tests: `test_PublishDialoge` (drei Fälle), Bilder mit
+`LUMIVIZ_PUBLISH_DIALOG_BILD` und `LUMIVIZ_IMPORT_PAKET_BILD` — angesehen.
+
+**Von Claude gesetzt:**
+- Die Hinweisfarbe ist das Bernstein des Drum-Editors
+  (`SignalWeg::abweichFarbe`, wie K11 a); Grau für Herkunft und
+  Mitgeliefertes.
+- Ein langer Pfad im Baum wird in der Mitte gekürzt, ganz steht er im
+  Tooltip.
+- **used by** zählt bei den eigenen Dateien: bei Samples und Formen die
+  eigenen Instrumente, die sie nennen; bei Kits und Instrumenten die zuletzt
+  geöffneten Loops (wie das Fenster Kits); auf der Seite des Pakets die Titel
+  aus `namedBy` (damit ist der zweite Punkt aus §6 entschieden).
+- ▶ gibt es bei Samples und Instrumenten; der Dialog spielt nicht selbst,
+  er sendet `anspielenVerlangt` mit der eigenen Datei oder einer Kopie aus
+  dem Paket in einem Wegwerf-Ordner — das Anspielen verdrahtet der nächste
+  Schritt. Ein Instrument aus dem Paket löst seine `user:`-Nennungen dabei
+  gegen die eigenen Dateien des Empfängers auf (vor dem Import gibt es die
+  des Pakets noch nicht). Formen zeigen ein kleines Bild.
+- Der gemerkte Ordner: `data/lastPublishDir` und `data/lastPackageDir`
+  (Pfade gehen nie in einen Export).
+
 ## 6. Offen, von Claude zu setzen und vorzulegen, wo es sichtbar wird
 
 - ~~Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.~~
   Gesetzt (§5b).
-- Was „used by" in §4c zählt (eigene Instrumente, zuletzt geöffnete Loops —
-  wie `loopsMitKit`).
+- ~~Was „used by" in §4c zählt (eigene Instrumente, zuletzt geöffnete Loops —
+  wie `loopsMitKit`).~~ Gesetzt (§5d).
 - ~~Ob eine Nennung als Pfad auf eine Datei im **Benutzerordner** (statt
   `user:`) als eigen oder als freier Ort zählt.~~ Eigen (§5a).
 
@@ -278,6 +306,7 @@ is a backup of user data, not a package“. Tests: `test_PublishImport`
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.6.0 | 2026-10-15 | Session 125. §5d NEU: die Dialoge Publish und Import package gebaut (`UI/dialogs/PaketDialoge`); Settings-Import nimmt Pakete. |
 | 0.5.0 | 2026-10-15 | Session 125. §5c NEU: der Import gebaut (`paket/Import`); `bundled` trägt die Art. |
 | 0.4.0 | 2026-10-15 | Session 125. §5b NEU: das Packen gebaut (`paket/Packen`, `.lvdata` Fassung 2), das Manifest. |
 | 0.3.0 | 2026-10-15 | Session 125. §5a NEU: die Sammler der Loop-Familie gebaut (`paket/Sammler`), mit den von Claude gesetzten Regeln. |

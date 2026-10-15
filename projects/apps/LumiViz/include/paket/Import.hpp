@@ -110,4 +110,10 @@ struct PaketErgebnis
 /// Liest das Paket ein.
 [[nodiscard]] PaketErgebnis importierePaket(const QString& datei, const PaketWahl& wahl);
 
+/// Der Name, den **Keep both** einer Datei gibt: `<name>_2`, `_3` … — der
+/// erste, den es weder beim Empfaenger noch im Paket gibt. Fuer den Dialog.
+[[nodiscard]] QString keepBothName(const PaketInhalt& inhalt, const PaketDatei& datei);
+/// Die Bytes einer Datei im Paket (`pfad` wie in `PaketDatei`); leer = keine.
+[[nodiscard]] QByteArray paketDaten(const QString& paket, const QString& pfad);
+
 }  // namespace lumi::paket

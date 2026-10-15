@@ -353,6 +353,27 @@ PaketInhalt oeffnePaket(const QString& datei)
     return lies(datei).inhalt;
 }
 
+QString keepBothName(const PaketInhalt& inhalt, const PaketDatei& datei)
+{
+    QSet<QString> imPaket;
+    for (const PaketDatei& d : inhalt.dateien)
+        if (d.art == datei.art) imPaket.insert(d.name);
+    for (int zahl = 2;; ++zahl)
+    {
+        const QString name = datei.name.left(60) + QLatin1Char('_') + QString::number(zahl);
+        if (!imPaket.contains(name) && eigeneVorhanden(datei.art, name, endungVon(datei.pfad)).isEmpty()) return name;
+    }
+}
+
+QByteArray paketDaten(const QString& paket, const QString& pfad)
+{
+    std::vector<lumi::core::ZipEintrag> eintraege;
+    if (!lumi::core::leseZip(paket, eintraege)) return {};
+    for (const auto& e : eintraege)
+        if (e.name == pfad) return e.daten;
+    return {};
+}
+
 PaketErgebnis importierePaket(const QString& datei, const PaketWahl& wahl)
 {
     PaketErgebnis ergebnis;
@@ -369,9 +390,8 @@ PaketErgebnis importierePaket(const QString& datei, const PaketWahl& wahl)
         return ergebnis;
     }
 
-    // 1. die Namen beim Empfaenger: erst alle des Pakets vormerken, dann je Datei
-    std::map<Art, QSet<QString>> vorgemerkt;
-    for (const PaketDatei& d : p.dateien) vorgemerkt[d.art].insert(d.name);
+    // 1. die Namen beim Empfaenger, je Datei (Keep both: keepBothName — die Namen
+    // einer Art im Paket sind verschieden, also auch ihre neuen)
     struct Auftrag
     {
         const PaketDatei* datei;
@@ -408,15 +428,7 @@ PaketErgebnis importierePaket(const QString& datei, const PaketWahl& wahl)
                 }
                 else
                 {
-                    QString name;
-                    for (int zahl = 2;; ++zahl)
-                    {
-                        name = d.name.left(60) + QLatin1Char('_') + QString::number(zahl);
-                        if (!vorgemerkt[d.art].contains(name) &&
-                            eigeneVorhanden(d.art, name, endungVon(d.pfad)).isEmpty())
-                            break;
-                    }
-                    vorgemerkt[d.art].insert(name);
+                    const QString name = keepBothName(p, d);
                     um[d.art][d.name] = name;
                     auftraege.push_back({&d, name, true, false});
                     ++ergebnis.umbenannt;
