@@ -23,5 +23,8 @@
 
 - Konzept `docs/core-services/Publish_Konzept.md` 0.1.0 (Entscheide P1 a bis
   P8 a, drei Skizzen als Beschreibung); Offene_Punkte 1.226.0.
+- Publish, Stufe P-A: die Sammler der Loop-Familie (`paket/Sammler`) —
+  was ein Loop, Kit, Instrument, eine Form oder ein Sample über alle Stufen
+  nennt; neu `test_PublishSammler` (vier Fälle). Noch ohne Oberfläche.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

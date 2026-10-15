@@ -1,10 +1,10 @@
 # LumiViz — Publish (Konzept)
 
-> **Version:** 0.2.0
+> **Version:** 0.3.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Konzept — die Entscheide P1 a bis P8 a sind gefallen (Patrik S125,
 > §3), die drei Skizzen sind gebilligt (§4); gebaut: der Namensbau von Keep
-> both (P6 a, §2b)
+> both (P6 a, §2b) und die Sammler der Loop-Familie (§5a)
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Datenablage_Konzept.md](Datenablage_Konzept.md) §4a (Export und
@@ -193,17 +193,42 @@ Von oben:
   Haken, die Knöpfe im Panel Composer und Publish Effect Chain....
 - Danach: Handbuch, Sichttest-Liste, voller Lauf.
 
+### 5a. Wie die Sammler gebaut sind (S125)
+
+`paket/Sammler` (`sammle(datei)`; der Ordner heißt nicht `publish/`, den
+schließt die `.gitignore` aus) geht von einer Datei aus alle Nennungen
+ab, über alle Stufen, und teilt sie in Zugehörige, Mitgeliefertes und
+Fehlendes. Gezählt wird, **was spielt**: an einer Drum-Spur oder einem Klang
+des Kits das Instrument, wenn eines gesetzt ist, sonst der Klang; an einer
+Schicht das Sample nur bei der Waveform Sample, die Form nur bei Shape. Jede
+Datei kommt einmal vor (nach ihrem kanonischen Pfad), mit allen Nennungen,
+die auf sie zeigten, und den Titeln dessen, was sie nennt. Tests:
+`test_PublishSammler` (vier Fälle).
+
+**Von Claude gesetzt:**
+- Eine Datei im Ordner der eigenen ihrer Art mit einem gültigen eigenen
+  Namen zählt als eigen, auch wenn sie als Pfad genannt ist (damit ist der
+  dritte Punkt aus §6 entschieden).
+- Eigene behalten ihren Namen; eine Datei an freiem Ort bekommt ihn aus dem
+  Dateinamen (`eigenerName`, „Snare Hit.wav“ → `snare_hit`), bei gleichem
+  Namen in derselben Art `<name>_2` — Eigene zuerst, damit sie ihren behalten.
+- Eine Zugehörige, die sich nicht lesen lässt, geht trotzdem mit, nur ohne
+  ihre Nennungen; fehlt die Hauptdatei, gibt es keinen Fund.
+- Die Art im Manifest und im Paketnamen: `lvinst`, `lvkit`, `lvloop`,
+  `lvcontour`, für ein Sample `sample`.
+
 ## 6. Offen, von Claude zu setzen und vorzulegen, wo es sichtbar wird
 
 - Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.
 - Was „used by" in §4c zählt (eigene Instrumente, zuletzt geöffnete Loops —
   wie `loopsMitKit`).
-- Ob eine Nennung als Pfad auf eine Datei im **Benutzerordner** (statt
-  `user:`) als eigen oder als freier Ort zählt.
+- ~~Ob eine Nennung als Pfad auf eine Datei im **Benutzerordner** (statt
+  `user:`) als eigen oder als freier Ort zählt.~~ Eigen (§5a).
 
 ## Changelog
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.3.0 | 2026-10-15 | Session 125. §5a NEU: die Sammler der Loop-Familie gebaut (`paket/Sammler`), mit den von Claude gesetzten Regeln. |
 | 0.2.0 | 2026-10-15 | Session 125. §2b: Fehler bei Keep both mit einem Test belegt und behoben (`nameMitZahl` → `<name>_2`). |
 | 0.1.0 | 2026-10-15 | Session 125. Erstfassung: Befund der Nennungen, Entscheide P1 a bis P8 a, drei Skizzen als Beschreibung, Stufen P-A und P-B als Vorschlag. |
