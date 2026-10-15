@@ -73,8 +73,10 @@ TEST_SUITE("Publish")
         CHECK(herz->genanntVon == QStringList{QStringLiteral("Mein Bass")});
 
         // Mitgeliefertes nur beim Namen; kit:snare spielt nicht (das Instrument spielt) und fehlt hier
-        CHECK(fund.mitgeliefert == QStringList{QStringLiteral("heart"), QStringLiteral("kit:hat"),
-                                               QStringLiteral("lib:clap_1"), QStringLiteral("piano")});
+        CHECK(fund.mitgeliefert == std::vector<pb::Nennung>{{pb::Art::Kontur, QStringLiteral("heart")},
+                                                            {pb::Art::Sample, QStringLiteral("kit:hat_closed")},
+                                                            {pb::Art::Sample, QStringLiteral("lib:clap_707")},
+                                                            {pb::Art::Instrument, QStringLiteral("piano")}});
 
         REQUIRE(fund.fehlt.size() == 1);
         CHECK(fund.fehlt.front() == pb::Fehlend{pb::Art::Sample, QStringLiteral("user:gibt_es_nicht"),
@@ -93,7 +95,7 @@ TEST_SUITE("Publish")
         CHECK(pump.hauptName == QStringLiteral("pump_bass"));
         REQUIRE(pump.zugehoerige.size() == 1);
         CHECK(pump.zugehoerige.front().name == QStringLiteral("snare_hit"));
-        CHECK(pump.mitgeliefert == QStringList{QStringLiteral("heart")});
+        CHECK(pump.mitgeliefert == std::vector<pb::Nennung>{{pb::Art::Kontur, QStringLiteral("heart")}});
 
         // das eigene Instrument, als Datei gewaehlt: es heisst weiter bass
         const pb::Fund bass = pb::sammle(QDir(b.instrumente).filePath(QStringLiteral("bass.lvinst")));

@@ -144,8 +144,8 @@ struct Bestand : Ablage
         drums.kit = QStringLiteral("user:mein");
         drums.spuren = {spur(QStringLiteral("Kick"), QStringLiteral("user:kick")),
                         spur(QStringLiteral("Snare"), QString(), pumpDatei),
-                        spur(QStringLiteral("Clap"), QStringLiteral("lib:clap_1")),
-                        spur(QStringLiteral("Hat"), QStringLiteral("kit:hat")),
+                        spur(QStringLiteral("Clap"), QStringLiteral("lib:clap_707")),
+                        spur(QStringLiteral("Hat"), QStringLiteral("kit:hat_closed")),
                         spur(QStringLiteral("Tief"), freiKick),
                         spur(QStringLiteral("Weg"), QStringLiteral("user:gibt_es_nicht"))};
         lp::Muster klavier;

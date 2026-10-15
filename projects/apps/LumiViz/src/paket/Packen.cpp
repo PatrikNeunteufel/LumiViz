@@ -225,6 +225,9 @@ PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVers
                                  {QStringLiteral("reference"), f.nennung},
                                  {QStringLiteral("namedBy"), f.genanntVon}});
 
+    QJsonArray mitgeliefert;
+    for (const Nennung& n : fund.mitgeliefert)
+        mitgeliefert.append(QJsonObject{{QStringLiteral("type"), artText(n.art)}, {QStringLiteral("reference"), n.text}});
     QJsonObject gruppenJson;
     for (const auto& [id, zahl] : gruppen) gruppenJson.insert(id, zahl);
     const QJsonObject paket{
@@ -233,7 +236,7 @@ PackErgebnis packe(const Fund& fund, const QString& ziel, const QString& appVers
         {QStringLiteral("name"), fund.hauptName},
         {QStringLiteral("main"), hauptPfad(fund)},
         {QStringLiteral("files"), dateien},
-        {QStringLiteral("bundled"), QJsonArray::fromStringList(fund.mitgeliefert)},
+        {QStringLiteral("bundled"), mitgeliefert},
         {QStringLiteral("missing"), fehlt},
         {QStringLiteral("media"), QJsonArray()},  // Stufe P-B (P4 a)
     };

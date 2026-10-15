@@ -106,7 +106,7 @@ TEST_SUITE("Publish")
         QStringList spielt;
         for (const lp::Spur& s : drums.spuren) spielt << (s.instrument.isEmpty() ? s.klang : s.instrument);
         CHECK(spielt == QStringList{QStringLiteral("user:kick"), QStringLiteral("user:pump_bass"),
-                                    QStringLiteral("lib:clap_1"), QStringLiteral("kit:hat"),
+                                    QStringLiteral("lib:clap_707"), QStringLiteral("kit:hat_closed"),
                                     QStringLiteral("user:kick_2"), QStringLiteral("user:gibt_es_nicht")});
         CHECK(loop.muster.at(1).instrument == QStringLiteral("piano"));
         CHECK(loop.muster.at(2).instrument == QStringLiteral("user:bass"));

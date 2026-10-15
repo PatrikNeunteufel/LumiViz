@@ -30,5 +30,9 @@
   `<name>.<art>.lvdata` in Fassung 2 mit Manifest, die Nennungen schon auf
   `user:<name>` umgeschrieben; neu `test_PublishPacken` (zwei Fälle), der
   gemeinsame Bestand der Tests in `PaketBestand.hpp`.
+- Publish, Stufe P-A: der Import eines Pakets (`paket/Import`) — Eigenes in
+  den Benutzerordner, der Loop an seinen Ort, gleiche Namen nach P6 a (Keep
+  both mit Umschreiben, Use mine, Replace mine); neu `test_PublishImport`
+  (drei Fälle). Der Sammler prüft jetzt, ob ein `kit:`/`lib:`-Klang da ist.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

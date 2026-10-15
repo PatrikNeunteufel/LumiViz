@@ -135,6 +135,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_DatensicherungDialoge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishSammler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishPacken.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_PublishImport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShadertoyWrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVertrag.cpp"

@@ -1,10 +1,11 @@
 # LumiViz — Publish (Konzept)
 
-> **Version:** 0.4.0
+> **Version:** 0.5.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Konzept — die Entscheide P1 a bis P8 a sind gefallen (Patrik S125,
 > §3), die drei Skizzen sind gebilligt (§4); gebaut: der Namensbau von Keep
-> both (P6 a, §2b), die Sammler der Loop-Familie (§5a) und das Packen (§5b)
+> both (P6 a, §2b), die Sammler der Loop-Familie (§5a), das Packen (§5b) und der Import (§5c);
+> offen in P-A: die Dialoge und die Knöpfe
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Datenablage_Konzept.md](Datenablage_Konzept.md) §4a (Export und
@@ -240,6 +241,30 @@ Mitgelieferten), `missing` (je `type`, `reference`, `namedBy`) und `media`
 (leer bis Stufe P-B). Ein Programm, das nur Fassung 1 kennt, weist das Paket
 ab — mit der LumiViz-Version des Absenders in der Meldung (Test).
 
+### 5c. Wie der Import gebaut ist (S125)
+
+`paket/Import`: `istPaket` (liest nur das Manifest), `oeffnePaket` (hält jede
+Datei gegen den Benutzerordner: Neu, Gleich, Name vergeben — ein Sample
+unter jeder Endung) und `importierePaket(datei, wahl)`. Zuerst werden alle
+Namen des Pakets vorgemerkt, dann je Datei entschieden: **Keep both**
+(Vorgabe, was in `jeDatei` fehlt) sucht `<name>_2`, `_3` …, frei im
+Benutzerordner und im Paket; **Use mine** schreibt nicht, das Paket nennt
+die eigene; **Replace mine** ersetzt — ein Sample unter anderer Endung
+(`snare_hit.flac` gegen `.wav`) wird dabei gelöscht. Dann wird geschrieben,
+Instrument, Kit, Form und Loop über ihre Modelle (`speichere…`, damit
+zählen die Fassungen der Zwischenspeicher), jede Nennung `user:<alt>` auf
+`user:<neu>`. Ein Loop braucht `wahl.ziel`. Mitgeliefertes, das es beim
+Empfänger nicht gibt, steht in `mitgeliefertFehltHier` — dafür trägt das
+Manifest die Art (`bundled`: je `type`, `reference`).
+
+**Von Claude gesetzt:** gelesen wird nur, was das Manifest nennt, und nur
+unter `data/<Ordner der Art>/<eigener Name>.<passende Endung>` bzw.
+`package/<Dateiname>.lvloop`; ein anderer Pfad macht das Paket „damaged“
+und nichts wird geschrieben. Eine Datensicherung (Fassung 1) meldet: „This
+is a backup of user data, not a package“. Tests: `test_PublishImport`
+(drei Fälle). Nebenbei: der Sammler prüft jetzt auch, ob ein `kit:`- oder
+`lib:`-Klang da ist (vorher galt er ungeprüft als mitgeliefert).
+
 ## 6. Offen, von Claude zu setzen und vorzulegen, wo es sichtbar wird
 
 - ~~Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.~~
@@ -253,6 +278,7 @@ ab — mit der LumiViz-Version des Absenders in der Meldung (Test).
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-10-15 | Session 125. §5c NEU: der Import gebaut (`paket/Import`); `bundled` trägt die Art. |
 | 0.4.0 | 2026-10-15 | Session 125. §5b NEU: das Packen gebaut (`paket/Packen`, `.lvdata` Fassung 2), das Manifest. |
 | 0.3.0 | 2026-10-15 | Session 125. §5a NEU: die Sammler der Loop-Familie gebaut (`paket/Sammler`), mit den von Claude gesetzten Regeln. |
 | 0.2.0 | 2026-10-15 | Session 125. §2b: Fehler bei Keep both mit einem Test belegt und behoben (`nameMitZahl` → `<name>_2`). |

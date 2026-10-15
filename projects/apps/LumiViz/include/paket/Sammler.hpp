@@ -77,6 +77,16 @@ struct Fehlend
     [[nodiscard]] bool operator==(const Fehlend&) const = default;
 };
 
+/// Eine Nennung mit ihrer Art — fuer Mitgeliefertes, dessen Name allein die
+/// Art nicht sagt (`piano` ist ein Instrument, `heart` eine Form).
+struct Nennung
+{
+    Art art = Art::Sample;
+    QString text;
+
+    [[nodiscard]] bool operator==(const Nennung&) const = default;
+};
+
 struct Fund
 {
     bool ok = false;
@@ -90,8 +100,8 @@ struct Fund
     QString hauptName;
     /// Nach Art (in der Reihenfolge von `Art`), darin nach Name.
     std::vector<Zugehoerige> zugehoerige;
-    /// Die Nennungen des Mitgelieferten, sortiert, je einmal.
-    QStringList mitgeliefert;
+    /// Die Nennungen des Mitgelieferten, nach Text sortiert, je einmal.
+    std::vector<Nennung> mitgeliefert;
     std::vector<Fehlend> fehlt;
 
     /// Die Zugehoerige einer Art mit diesem Namen; nullptr = keine.
@@ -102,8 +112,18 @@ struct Fund
 /// auch wenn sie mehrfach genannt wird.
 [[nodiscard]] Fund sammle(const QString& datei);
 
-/// Die Datei, auf die eine Nennung einer Art zeigt — aufgeloest wie im Sammler,
-/// ein relativer Pfad ab `basis`. Leer = Mitgeliefertes, nichts oder fehlt.
+/// Was eine Nennung beim Leser ist.
+enum class Befund : int
+{
+    Nichts,        ///< leer oder ein gerechneter Ton
+    Mitgeliefert,  ///< und da
+    Datei,         ///< eigen oder an freiem Ort, und da
+    Fehlt,
+};
+/// Loest eine Nennung einer Art auf, wie der Sammler (ein relativer Pfad ab
+/// `basis`); bei `Befund::Datei` steht in `datei` der Pfad.
+[[nodiscard]] Befund befundDerNennung(Art art, const QString& nennung, const QString& basis, QString* datei = nullptr);
+/// Die Datei, auf die eine Nennung zeigt. Leer = Mitgeliefertes, nichts oder fehlt.
 [[nodiscard]] QString dateiDerNennung(Art art, const QString& nennung, const QString& basis);
 /// Ein Schluessel, der eine Datei einmal zaehlt, auch unter zwei Schreibweisen.
 [[nodiscard]] QString dateiSchluessel(const QString& datei);

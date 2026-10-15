@@ -6,6 +6,7 @@
 
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Sample.hpp"
 #include "shape/Kontur.hpp"
@@ -57,7 +58,8 @@ Aufloesung alsDatei(const QString& pfad)
 Aufloesung loeseSample(const QString& nennung, const QString& basis)
 {
     if (nennung.isEmpty() || lp::istTon(nennung)) return {};
-    if (lp::istMitgelieferterKlang(nennung)) return {Aufloesung::Mitgeliefert, {}};
+    if (lp::istMitgelieferterKlang(nennung))
+        return {QFileInfo(lp::klangDatei(nennung)).isFile() ? Aufloesung::Mitgeliefert : Aufloesung::Fehlt, {}};
     if (nennung.startsWith(kEigen)) return alsDatei(lp::eigeneSampleDatei(nennung.mid(kEigen.size())));
     return alsDatei(absolut(nennung, basis));
 }
@@ -175,7 +177,7 @@ private:
     std::map<QString, std::size_t> m_platz;
     QSet<QString> m_gesehen;
     std::map<Art, QSet<QString>> m_vergeben;
-    QSet<QString> m_mitgeliefert;
+    std::vector<Nennung> m_mitgeliefert;
     QString m_von;  ///< der Titel dessen, was gerade abgesucht wird
 
     static QString nameAusDatei(Art art, const QString& datei)
@@ -284,7 +286,10 @@ private:
         switch (a.was)
         {
             case Aufloesung::Nichts: return;
-            case Aufloesung::Mitgeliefert: m_mitgeliefert.insert(nennung); return;
+            case Aufloesung::Mitgeliefert:
+                if (std::find(m_mitgeliefert.begin(), m_mitgeliefert.end(), Nennung{art, nennung}) == m_mitgeliefert.end())
+                    m_mitgeliefert.push_back({art, nennung});
+                return;
             case Aufloesung::Fehlt:
             {
                 const Fehlend fehlend{art, nennung, m_von};
@@ -336,8 +341,9 @@ private:
             if (a.art != b.art) return static_cast<int>(a.art) < static_cast<int>(b.art);
             return a.name < b.name;
         });
-        fund.mitgeliefert = QStringList(m_mitgeliefert.begin(), m_mitgeliefert.end());
-        fund.mitgeliefert.sort();
+        fund.mitgeliefert = m_mitgeliefert;
+        std::sort(fund.mitgeliefert.begin(), fund.mitgeliefert.end(),
+                  [](const Nennung& a, const Nennung& b) { return a.text < b.text; });
     }
 };
 
@@ -374,7 +380,7 @@ const Zugehoerige* Fund::finde(Art gesucht, const QString& name) const
     return nullptr;
 }
 
-QString dateiDerNennung(Art art, const QString& nennung, const QString& basis)
+Befund befundDerNennung(Art art, const QString& nennung, const QString& basis, QString* datei)
 {
     Aufloesung a;
     switch (art)
@@ -385,7 +391,21 @@ QString dateiDerNennung(Art art, const QString& nennung, const QString& basis)
         case Art::Sample: a = loeseSample(nennung, basis); break;
         case Art::Loop: break;
     }
-    return a.was == Aufloesung::Datei ? a.pfad : QString();
+    if (datei != nullptr) *datei = a.was == Aufloesung::Datei ? a.pfad : QString();
+    switch (a.was)
+    {
+        case Aufloesung::Nichts: return Befund::Nichts;
+        case Aufloesung::Mitgeliefert: return Befund::Mitgeliefert;
+        case Aufloesung::Datei: return Befund::Datei;
+        case Aufloesung::Fehlt: break;
+    }
+    return Befund::Fehlt;
+}
+
+QString dateiDerNennung(Art art, const QString& nennung, const QString& basis)
+{
+    QString datei;
+    return befundDerNennung(art, nennung, basis, &datei) == Befund::Datei ? datei : QString();
 }
 
 QString dateiSchluessel(const QString& datei)
