@@ -6,6 +6,7 @@
 
 #include "loop/InstrumentEditor.hpp"
 
+#include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
@@ -1004,7 +1005,7 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         ->setEnabled(etwas);
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
-    menu.exec(event->globalPos());
+    lumi::ui::zeigeMenue(menu, event->globalPos());
 }
 
 void NotenRaster::wheelEvent(QWheelEvent* event)

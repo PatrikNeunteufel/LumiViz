@@ -14,6 +14,7 @@ set(_local_sources
 set(_local_headers
     # (headers - *.h; *.hpp)
     "${CMAKE_CURRENT_LIST_DIR}/Achse.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Bedienhilfe.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/AudioDateien.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/DateiDrag.hpp"

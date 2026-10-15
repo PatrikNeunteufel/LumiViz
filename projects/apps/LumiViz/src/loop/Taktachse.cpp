@@ -11,6 +11,8 @@
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QInputDialog>
+
+#include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMenu>
@@ -938,7 +940,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
     if (ort.y() < kLinealHoehe)
     {
         fuelleZoomMenue(menu);
-        menu.exec(event->globalPos());
+        lumi::ui::zeigeMenue(menu, event->globalPos());
         return;
     }
     const int kanal = kanalBei(ort.y());
@@ -948,13 +950,13 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         const Kanal& k = m_loop.kanaele[static_cast<std::size_t>(kanal)];
         menu.addAction(tr("Rename channel..."), this, [this, kanal, name = k.name] {
             bool ok = false;
-            const QString neu = QInputDialog::getText(this, tr("Rename channel"), tr("Name:"), QLineEdit::Normal, name, &ok);
+            const QString neu = lumi::ui::frageText(this, tr("Rename channel"), tr("Name:"), name, &ok);
             if (ok) kanalUmbenennen(kanal, neu);
         });
         menu.addAction(k.an ? tr("Turn channel off") : tr("Turn channel on"), this,
                        [this, kanal, an = k.an] { kanalSchalten(kanal, !an); });
         menu.addAction(tr("Delete channel"), this, [this, kanal] { kanalLoeschen(kanal); });
-        menu.exec(event->globalPos());
+        lumi::ui::zeigeMenue(menu, event->globalPos());
         return;
     }
 
@@ -989,8 +991,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
             const LoopClip* gewaehlt = auswahl();
             if (gewaehlt == nullptr) return;
             bool ok = false;
-            const QString neu = QInputDialog::getText(this, tr("Rename base"), tr("Name:"), QLineEdit::Normal,
-                                                      gewaehlt->muster, &ok);
+            const QString neu = lumi::ui::frageText(this, tr("Rename base"), tr("Name:"), gewaehlt->muster, &ok);
             if (ok) (void)benenneBasisUm(neu);
         });
         umbenennen->setEnabled(!gruppe);
@@ -1014,7 +1015,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         menu.addAction(tr("Select all clips"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
     }
     fuelleZoomMenue(menu);
-    menu.exec(event->globalPos());
+    lumi::ui::zeigeMenue(menu, event->globalPos());
 }
 
 }  // namespace lumi::loop

@@ -61,5 +61,9 @@
 - Loop: neu `test_LoopEditorLage` (ein Fall); das Merken der Lage ist in der
   Test-Exe abgeschaltet.
 - `UserDataImportedEvent`; neu `test_LoopNachImport` (zwei Fälle).
+- `UI/widgets/Bedienhilfe` (`zeigeMenue`, `fuehreDialogAus`, `frageText`): Menüs
+  und kleine Dialoge der Loop-Fenster gehen darüber, ein Test kann sie abfragen;
+  neu `test_LoopMenues` (vier Fälle: Taktachse, Drum-Editor mit Schiebern,
+  Instrument-Editor, Tags...). Die Schieber im Drum-Editor tragen Namen.
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

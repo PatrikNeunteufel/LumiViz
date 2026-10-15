@@ -391,6 +391,9 @@ public:
     void oeffneKits(bool zeigen = true);
     /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
     [[nodiscard]] KitFenster* kitFenster() const;
+    /// Das Menue des Rechtsklicks auf eine Spur (Edit sound, Rename track..., Remove
+    /// track); oeffentlich fuer Tests (S125), gezeigt ueber `lumi::ui::zeigeMenue`.
+    void spurMenue(int spur, QPoint ort);
     /// Nach einem Import (S125): die Spuren mit ihrer Auswahl Sound, das Fenster
     /// Instruments und die Liste im Fenster Kits neu lesen.
     void liesEigeneNeu();
@@ -443,7 +446,6 @@ private:
     /// Was in der Auswahl gewaehlt wurde: ein Klang — oder einer der drei Wege darunter.
     void klangGewaehlt(int spur, const QString& wahl);
     void frageNachSampleDatei(int spur);
-    void spurMenue(int spur, QPoint ort);
     void waehleSpur(int spur);
     /// Das Feld hinter „…" aus der Spur fuellen; spielt sie kein Instrument mehr, schliesst es.
     void zeigeDetail();

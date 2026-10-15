@@ -7,6 +7,7 @@
 
 #include "UI/dialogs/PaketDialoge.hpp"
 #include "UI/widgets/Achse.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
@@ -184,6 +185,7 @@ void LoopPanel::frageNachTags()
     if (!m_geladen) return;
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Loop tags"));
+    dialog.setObjectName(QStringLiteral("loopTagsDialog"));
     auto* formular = new QFormLayout(&dialog);
     const auto feld = [&](const QString& name, const QString& wert) {
         auto* eingabe = new QLineEdit(wert, &dialog);
@@ -204,7 +206,7 @@ void LoopPanel::frageNachTags()
     formular->addRow(knoepfe);
     connect(knoepfe, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(knoepfe, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (lumi::ui::fuehreDialogAus(dialog) != QDialog::Accepted) return;
     LoopTags tags;
     tags.titel = titel->text().trimmed();
     tags.kuenstler = kuenstler->text().trimmed();

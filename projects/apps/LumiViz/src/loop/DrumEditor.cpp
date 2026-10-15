@@ -18,6 +18,7 @@
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"  // abweichFarbe: die Hinweisfarbe
+#include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"  // dateiArtIcon
 
 #include <QAbstractItemView>
@@ -748,7 +749,7 @@ void SchrittRaster::contextMenuEvent(QContextMenuEvent* event)
         menu.addAction(tr("Clear this step"), this, [this, hier] { (void)leereSchritt(hier); })->setEnabled(gesetzt);
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
-    menu.exec(event->globalPos());
+    lumi::ui::zeigeMenue(menu, event->globalPos());
 }
 
 // =============================================================================
@@ -1171,10 +1172,12 @@ void DrumEditor::baueSpuren(const Muster& muster)
                 zeile.mehr->setSizePolicy(platz);
             }
             zeile.laut = new QSlider(Qt::Horizontal, zeile.reihe);
+            zeile.laut->setObjectName(QStringLiteral("drumTrackVolume%1").arg(s));
             zeile.laut->setRange(0, 100);
             zeile.laut->setFixedWidth(48);
             zeile.laut->setToolTip(tr("Volume of the track"));
             zeile.pan = new QSlider(Qt::Horizontal, zeile.reihe);
+            zeile.pan->setObjectName(QStringLiteral("drumTrackPan%1").arg(s));
             zeile.pan->setRange(-100, 100);
             zeile.pan->setFixedWidth(48);
             zeile.pan->setToolTip(tr("Pan: left to right"));
@@ -1310,11 +1313,11 @@ void DrumEditor::spurMenue(int spur, QPoint ort)
     }
     menu.addAction(tr("Rename track..."), this, [this, spur, name = ziel->spuren[static_cast<std::size_t>(spur)].name] {
         bool ok = false;
-        const QString neu = QInputDialog::getText(this, tr("Rename track"), tr("Name:"), QLineEdit::Normal, name, &ok);
+        const QString neu = lumi::ui::frageText(this, tr("Rename track"), tr("Name:"), name, &ok);
         if (ok) spurUmbenennen(spur, neu);
     });
     menu.addAction(tr("Remove track"), this, [this, spur] { spurLoeschen(spur); });
-    menu.exec(ort);
+    lumi::ui::zeigeMenue(menu, ort);
 }
 
 void DrumEditor::setSpielt(bool spielt, double schritt)
@@ -1928,8 +1931,7 @@ void DrumEditor::fuelleKitMenue(QMenu* menue)
     menue->addSeparator();
     QAction* sichern = menue->addAction(tr("Save as kit..."), this, [this] {
         bool ok = false;
-        const QString titel = QInputDialog::getText(this, tr("Save as kit"), tr("Name of the kit:"), QLineEdit::Normal,
-                                                    QString(), &ok);
+        const QString titel = lumi::ui::frageText(this, tr("Save as kit"), tr("Name of the kit:"), QString(), &ok);
         if (!ok || titel.trimmed().isEmpty()) return;
         if (!speichereAlsKit(titel).isEmpty()) return;
         // vergeben? Dann fragen, ob ersetzt wird
@@ -2044,7 +2046,8 @@ void DrumEditor::rollenMenue(int spur)
     }
     menue.addSeparator();
     menue.addAction(tr("No role"), this, [this, spur] { setzeRolle(spur, QString()); });
-    menue.exec(m_spuren[static_cast<std::size_t>(spur)].rolle->mapToGlobal(QPoint(0, m_spuren[static_cast<std::size_t>(spur)].rolle->height())));
+    const QWidget* etikett = m_spuren[static_cast<std::size_t>(spur)].rolle;
+    lumi::ui::zeigeMenue(menue, etikett->mapToGlobal(QPoint(0, etikett->height())));
 }
 
 QStringList DrumEditor::fehlendeRollen() const
@@ -2093,7 +2096,7 @@ void DrumEditor::spurNeuGeklickt()
         menue.addAction(tr("%1 — from %2").arg(spurNameAus(rolle), kit.titel), this, [this, rolle] { (void)spurAusKit(rolle); });
     menue.addSeparator();
     menue.addAction(tr("Empty track"), this, [this] { spurHinzu(); });
-    menue.exec(m_spurNeu->mapToGlobal(QPoint(0, m_spurNeu->height())));
+    lumi::ui::zeigeMenue(menue, m_spurNeu->mapToGlobal(QPoint(0, m_spurNeu->height())));
 }
 
 QString DrumEditor::speichereAlsKit(const QString& titel, bool ueberschreiben)

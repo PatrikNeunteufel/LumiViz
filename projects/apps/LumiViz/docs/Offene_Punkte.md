@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.230.0
+> **Version:** 1.231.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2328,9 +2328,12 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ([Sichttest_Steuerung.md](Sichttest_Steuerung.md) §3); Liste 10 nutzt sie
     in L0 und E0. Mit dem Tester noch nicht ausgelöst. Handarbeit bleibt: den
     Ordner im Audio Browser wählen (B0)
-  - 🔧 Menüs, Dialoge (Tags, Umbenennen) und das Ziehen an den Schiebern des
-    Editors sind ohne Test, ebenso das Hineinziehen eines Loops über das
-    echte Composer-Panel und die Anzeige der Tags in Player-Panel und Karaoke.
+  - ✅ Menüs, Dialoge (Tags, Umbenennen) und das Ziehen an den Schiebern des
+    Editors sind getestet (S125, `test_LoopMenues`: Taktachse, Schritt- und
+    Notenraster, Spur, Rolle, Add track, Tags..., die Schieber; Menüs und
+    Dialoge laufen dafür über `UI/widgets/Bedienhilfe`). 🔧 Ohne Test bleiben
+    das Hineinziehen eines Loops über das echte Composer-Panel und die
+    Anzeige der Tags in Player-Panel und Karaoke.
     ✅ Ein eingefügter Loop-Clip ist einen Durchlauf lang und lässt sich
     beliebig länger ziehen (`fuegeSongEin`, Test in `test_LoopSpieler`) — von
     Patrik im Programm gesehen (S125)
@@ -2409,7 +2412,7 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Last im Ton-Thread selbst und mit vielen Clips (gemessen ist eine Kette
     außerhalb: rund 0,2 % eines Kerns unter Release-clang); nicht geprüft:
     ein Loop-Clip mit Effekten im Composer (kein eigener Testfall, in der
-    Liste F17), die Menüs des Rechtsklicks. Von Claude gesetzt und nicht
+    Liste F17); ✅ die Menüs des Rechtsklicks (S125, `test_LoopMenues`). Von Claude gesetzt und nicht
     entschieden: alle Grenzen und Vorgaben, die Bauart des Halls (Freeverb),
     Mix blendet über statt dazuzumischen, ein verschobener Clip verliert
     seinen Nachklang — steht in `Loop_Konzept.md` §4 und §4g
@@ -2423,9 +2426,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     (anfangs aus — **im Instrument-Editor löscht der Rechtsklick seither
     nicht mehr von selbst**). **Im Programm:** Patrik hat M0 bis M4, M12 und
     M13 der Liste 10 geprüft — „sind ok" (S114, im Gespräch, ohne Testlog).
-    ⬜ Liste 10, M5 bis M11, M14 bis M16 und Urteile U32 bis U36. 🔧 Nicht
-    geprüft: die Menüs
-    des Rechtsklicks, ob die Tasten im gezeigten Fenster beim Raster ankommen
+    ⬜ Liste 10, M5 bis M11, M14 bis M16 und Urteile U32 bis U36. ✅ Die Menüs
+    des Rechtsklicks sind getestet (S125). 🔧 Nicht geprüft: ob die Tasten im
+    gezeigten Fenster beim Raster ankommen
   - 🟡 **11 Instrumente aus Samples** — als Art von Schicht, mit Root note,
     Fine tune und Detect (Idee S113, von Patrik nicht verworfen;
     `Loop_Konzept.md` §4h). **Multisamples** vorgemerkt: vorziehen, wenn Tests
@@ -5721,6 +5724,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.231.0 | 2026-10-15 | Session 125. §6 Loop: Menüs des Rechtsklicks, Rename, Tags und Schieber getestet. |
 | 1.230.0 | 2026-10-15 | Session 125. §6 Loop: offene Listen des Loops lesen nach einem Import neu. |
 | 1.229.0 | 2026-10-15 | Session 125. §6 Loop: Editoren merken Größe und Lage; Clip-Länge eines Loops und Icons als erledigt vermerkt. |
 | 1.228.0 | 2026-10-15 | Session 125. §7 Publish: Stufe P-A gebaut (Knöpfe, Menü File), offen Sichttest und P-B. |
