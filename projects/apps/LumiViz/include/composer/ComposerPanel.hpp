@@ -327,6 +327,8 @@ Q_SIGNALS:
     void hineingezogen(const QStringList& dateien);
     /// Die Kurve dieses Teils des angeklickten Clips soll in den Curve Editor.
     void kurveOeffnen(lumi::composer::Teil teil);
+    /// Rechtsklick „Match loudness to this clip..." (S127, G5-4 a).
+    void lautheitAbgleichen(int kanal, int clip);
 
 protected:
     [[nodiscard]] bool istGeladen() const override { return m_geladen; }
@@ -449,6 +451,7 @@ public:
 };
 
 class KurvenFenster;
+class LautheitsDialog;
 
 class ComposerPanel : public PanelBase
 {
@@ -482,6 +485,13 @@ public:
     [[nodiscard]] static QString gainText(double db);
     /// Das Feld Gain der Fusszeile (S126, G2) — fuer Tests.
     [[nodiscard]] QDoubleSpinBox* gainFeld() const { return m_gain; }
+    /// Den Dialog Match loudness oeffnen (S127, G5) — oder den offenen nach
+    /// vorn holen. `alsZiel`: der Clip ist das Ziel (Rechtsklick), sonst wird
+    /// seine Zeile nur markiert (Knopf neben Gain). Nur mit Edit; solange er
+    /// offen ist, ist Edit grau (G5-2 a). nullptr = nicht moeglich.
+    LautheitsDialog* oeffneAbgleich(int kanal, int clip, bool alsZiel);
+    /// Der offene Dialog Match loudness, nullptr = keiner.
+    [[nodiscard]] LautheitsDialog* abgleichDialog() const;
     /// Enthaelt die Kettendatei einen Host Switcher? Dann wechseln im Composer
     /// zwei Wechsler — davor warnt das Panel beim Hinzufuegen (Entscheid S88).
     [[nodiscard]] static bool hatHostSwitcher(const QString& pfad);
@@ -546,6 +556,8 @@ private:
     QComboBox* m_mischart = nullptr;
     QLabel* m_gainTitel = nullptr;
     QDoubleSpinBox* m_gain = nullptr;  ///< Gain des angeklickten Ton-Clips, statt Blend (S126, G2)
+    QPushButton* m_abgleichKnopf = nullptr;   ///< Match loudness... neben Gain (S127, G5-4 a)
+    QPointer<LautheitsDialog> m_abgleich;     ///< der offene Dialog Match loudness
     QCheckBox* m_endeFest = nullptr;
     QDoubleSpinBox* m_endeZeit = nullptr;
     QDoubleSpinBox* m_ueberlappung = nullptr;  ///< Loop overlap (S99)

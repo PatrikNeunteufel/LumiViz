@@ -13,6 +13,7 @@ dbg(DBG_OFTEN
 
 # Set local lists for this directory
 set(_local_sources
+    "${CMAKE_CURRENT_LIST_DIR}/Abgleich.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/AppAnbindung.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bearbeiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bildquelle.cpp"
@@ -22,6 +23,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Komposition.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/KurvenEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Lautheit.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LautheitsDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Mischer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Mute.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/MuteKnopf.cpp"
@@ -32,6 +34,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Wiedergabe.cpp"
 )
 set(_local_headers
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Abgleich.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/AppAnbindung.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bearbeiten.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Bildquelle.hpp"
@@ -41,6 +44,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Komposition.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/KurvenEditor.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Lautheit.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/LautheitsDialog.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Mischer.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/Mute.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/composer/MuteKnopf.hpp"

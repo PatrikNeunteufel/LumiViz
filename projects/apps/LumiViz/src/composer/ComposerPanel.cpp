@@ -17,6 +17,7 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/FormPresets.hpp"
 #include "composer/KurvenEditor.hpp"
+#include "composer/LautheitsDialog.hpp"
 #include "composer/Mischer.hpp"
 #include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
@@ -1962,13 +1963,21 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
             clipAn->setEnabled(m_bearbeiten);
             connect(clipAn, &QAction::triggered, this,
                     [this, kanal, clip](bool ein) { clipSchalten(kanal, clip, ein); });
-            // S126, G2 a: nur an einem Ton-Clip mit Gain
-            if (m_komposition.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio && c.gainDb != 0.0)
+            if (m_komposition.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio)
             {
-                QAction* zurueck = menu.addAction(tr("Reset gain (%1)").arg(ComposerPanel::gainText(c.gainDb)),
-                                                  this, [this, kanal, clip] { gainZuruecksetzen(kanal, clip); });
-                zurueck->setObjectName(QStringLiteral("composerResetGain"));
-                zurueck->setEnabled(m_bearbeiten);
+                // S126, G2 a: nur an einem Ton-Clip mit Gain
+                if (c.gainDb != 0.0)
+                {
+                    QAction* zurueck = menu.addAction(tr("Reset gain (%1)").arg(ComposerPanel::gainText(c.gainDb)),
+                                                      this, [this, kanal, clip] { gainZuruecksetzen(kanal, clip); });
+                    zurueck->setObjectName(QStringLiteral("composerResetGain"));
+                    zurueck->setEnabled(m_bearbeiten);
+                }
+                // S127, G5-4 a: der Dialog Match loudness mit diesem Clip als Ziel
+                QAction* abgleich = menu.addAction(tr("Match loudness to this clip..."), this,
+                                                   [this, kanal, clip] { Q_EMIT lautheitAbgleichen(kanal, clip); });
+                abgleich->setObjectName(QStringLiteral("composerMatchToClip"));
+                abgleich->setEnabled(m_bearbeiten);
                 menu.addSeparator();
             }
             menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
@@ -2349,8 +2358,20 @@ void ComposerPanel::setupUI()
                           "-24 to +24 dB. The level curve (fades, shapes) stays 0 to 1 on top of it. "
                           "Can be changed while Edit is on; right-click the clip to reset it."));
     fuss->addWidget(m_gain);
+    // daneben der Dialog Match loudness (S127, Entscheid Patrik G5-4 a)
+    m_abgleichKnopf = new QPushButton(tr("Match loudness..."), this);
+    m_abgleichKnopf->setObjectName(QStringLiteral("composerMatchLoudness"));
+    m_abgleichKnopf->setToolTip(
+        tr("Measure the loudness of every sound clip and suggest a gain for each, so that they play "
+           "equally loud. You hear the dialog while the Composer plays; OK keeps it as one step. "
+           "Can be opened while Edit is on."));
+    fuss->addWidget(m_abgleichKnopf);
+    connect(m_abgleichKnopf, &QPushButton::clicked, this, [this] {
+        (void)oeffneAbgleich(m_zeitachse->gewaehlterKanal(), m_zeitachse->gewaehlterClip(), false);
+    });
     m_gainTitel->hide();
     m_gain->hide();
+    m_abgleichKnopf->hide();
     root->addLayout(fuss);
 
     // --- die Schleife der Komposition (S99, Entscheide Patrik): die Werte
@@ -2581,6 +2602,8 @@ void ComposerPanel::setupUI()
     });
     connect(m_zeitachse, &Zeitachse::auswahlGeaendert, this, [this] { zeigeClip(); });
     connect(m_zeitachse, &Zeitachse::kurveOeffnen, this, [this](Teil teil) { oeffneKurve(teil); });
+    connect(m_zeitachse, &Zeitachse::lautheitAbgleichen, this,
+            [this](int kanal, int clip) { (void)oeffneAbgleich(kanal, clip, true); });
 
     // Audiokanal (C5): was die Zeitachse ueber Songs wissen muss, kommt von der Audio-Engine
     // — dazu die Loops (S109, Loop_Konzept §4e): eine `.lvloop` faellt in einen
@@ -2766,7 +2789,7 @@ void ComposerPanel::zeigeDatei()
     m_dateiIcon->setVisible(geladen && !m_dateiIcon->pixmap().isNull());
     m_speichern->setEnabled(offen || ohneDatei);
     m_speichernUnter->setEnabled(geladen);
-    m_edit->setEnabled(geladen);
+    m_edit->setEnabled(geladen && m_abgleich == nullptr);  // grau, solange Match loudness offen ist (G5-2 a)
     if (!geladen && m_edit->isChecked()) m_edit->setChecked(false);
     m_sync->setEnabled(m_sitzung != nullptr);
     m_sync->setChecked(m_sitzung != nullptr && m_sitzung->sync());
@@ -2786,6 +2809,49 @@ bool ComposerPanel::hatHostSwitcher(const QString& pfad)
         return false;
     };
     return sucht(sucht, wurzel);
+}
+
+LautheitsDialog* ComposerPanel::oeffneAbgleich(int kanal, int clip, bool alsZiel)
+{
+    if (m_abgleich != nullptr)
+    {
+        if (alsZiel)
+            m_abgleich->setzeZielClip(kanal, clip);
+        else
+            m_abgleich->markiere(kanal, clip);
+        m_abgleich->raise();
+        m_abgleich->activateWindow();
+        return m_abgleich;
+    }
+    if (m_sitzung == nullptr || !m_sitzung->geladen() || !m_zeitachse->bearbeiten()) return nullptr;
+    auto* dialog = new LautheitsDialog(
+        *m_sitzung, services().tryResolve<IAudioEngine>(),
+        [this](const Komposition& neu, const QString& was) { bearbeite(neu, was); }, this);
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    m_abgleich = dialog;
+    // solange er offen ist, ruht das Bearbeiten: Edit grau, der Haken bleibt (G5-2 a)
+    m_zeitachse->setBearbeiten(false);
+    zeigeDatei();
+    zeigeClip();
+    zeigeEnde();
+    connect(dialog, &QDialog::finished, this, [this] {
+        m_abgleich = nullptr;
+        m_zeitachse->setBearbeiten(m_edit->isChecked() && m_sitzung != nullptr && m_sitzung->geladen());
+        zeigeDatei();
+        zeigeClip();
+        zeigeEnde();
+    });
+    if (alsZiel)
+        dialog->setzeZielClip(kanal, clip);
+    else
+        dialog->markiere(kanal, clip);
+    dialog->show();
+    return dialog;
+}
+
+LautheitsDialog* ComposerPanel::abgleichDialog() const
+{
+    return m_abgleich;
 }
 
 void ComposerPanel::bearbeite(const Komposition& neu, const QString& was)
@@ -2872,6 +2938,8 @@ void ComposerPanel::zeigeClip()
     m_gainTitel->setVisible(ton);
     m_gain->setVisible(ton);
     m_gain->setEnabled(ton && m_zeitachse->bearbeiten());
+    m_abgleichKnopf->setVisible(ton);
+    m_abgleichKnopf->setEnabled(ton && m_zeitachse->bearbeiten());
     if (ton)
     {
         const QSignalBlocker still(m_gain);

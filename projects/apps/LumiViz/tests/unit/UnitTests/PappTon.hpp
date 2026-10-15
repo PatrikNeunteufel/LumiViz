@@ -27,6 +27,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
+#include <cstdint>
 #include <vector>
 
 namespace papp
@@ -237,6 +239,37 @@ public:
     [[nodiscard]] QString getVersion() const override { return QStringLiteral("Pappe"); }
     [[nodiscard]] QString getLastError() const override { return QStringLiteral("not found"); }
     [[nodiscard]] int getLastErrorCode() const override { return 0; }
+
+    /// Wie laut eine „Datei" dekodiert klingt (S127, G5): ein Sinus von 1 kHz
+    /// mit dieser Spitze in dBFS, beide Kanaele gleich (−23 dBFS misst −23
+    /// LUFS). Was hier fehlt, laesst sich nicht dekodieren. Nur vor dem Messen
+    /// setzen — gelesen wird auch aus dem Thread des Dialogs.
+    QMap<QString, double> pegelDbfs;
+    std::atomic<int> dekodiert{0};  ///< so oft wurde dekodiert
+    bool decodeStereoChunks(const QString& filePath, int sampleRate, std::int64_t startMs, std::int64_t lengthMs,
+                            const DecodeChunk& take) override
+    {
+        if (!pegelDbfs.contains(filePath) || sampleRate <= 0) return false;
+        ++dekodiert;
+        const double amp = std::pow(10.0, pegelDbfs.value(filePath) / 20.0);
+        const std::int64_t gesamtMs = lengthMs > 0 ? lengthMs : std::max<std::int64_t>(0, laengen.value(filePath, 3000) - startMs);
+        const std::int64_t frames = gesamtMs * sampleRate / 1000;
+        std::vector<float> block(2 * 4096);
+        for (std::int64_t n = 0; n < frames;)
+        {
+            const auto stueck = static_cast<std::size_t>(std::min<std::int64_t>(4096, frames - n));
+            for (std::size_t i = 0; i < stueck; ++i)
+            {
+                const auto x = static_cast<float>(amp * std::sin(2.0 * 3.14159265358979323846 * 1000.0 *
+                                                                 static_cast<double>(n + static_cast<std::int64_t>(i)) / sampleRate));
+                block[2 * i] = x;
+                block[2 * i + 1] = x;
+            }
+            if (!take(block.data(), stueck)) return false;
+            n += static_cast<std::int64_t>(stueck);
+        }
+        return true;
+    }
 
 protected:
     std::vector<Stream> m_streams;

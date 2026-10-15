@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.238.0
+> **Version:** 1.239.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2748,7 +2748,8 @@ Idee Preset-Warmup/Pre-Roll.
   Datei, die Tonführung schaltet ihn am Mixer) — G4 fertig. G5 entschieden
   (G5-1 a bis G5-4 a: Vorhören live mit Listen A/B und ▶, ein Undo-Schritt
   beim OK, Messen im Hintergrund mit Cache für Songs, Knopf neben Gain und
-  Rechtsklick). Offen: G5 bauen, G6 (Handbuch, Sichttest-Liste, voller Lauf). Steuerdokument
+  Rechtsklick). S127: G5 gebaut (Messung je Clip mit Cache für Songs, der
+  Dialog Match loudness), im Programm nicht gesehen. Offen: G6 (Handbuch, Sichttest-Liste, voller Lauf). Steuerdokument
   [Composer_Konzept.md](ui/Composer_Konzept.md) §9g.
 - ⬜ **Loop-Editor läuft mit dem Composer mit (Wunsch Patrik S127, nach G5/G6):**
   spielt im Composer ein Loop-Clip, dessen Loop gerade in einem Loop-Editor
@@ -5754,6 +5755,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.239.0 | 2026-10-15 | Session 127. §7 Composer: G5 gebaut (Dialog Match loudness), offen G6. |
 | 1.238.0 | 2026-10-15 | Session 127. §7 Composer: G4 fertig (Teil 2), G5 entschieden (G5-1 bis G5-4); Wunsch: Loop-Editor läuft mit dem Composer mit. |
 | 1.237.0 | 2026-10-15 | Session 126, Abschluss. §7 Composer: G4 Teil 1 gebaut, G4b a entschieden. |
 | 1.236.0 | 2026-10-15 | Session 126. §7 Composer: Beleg G4, Gain über 0 dB in der BassEngine behoben. |

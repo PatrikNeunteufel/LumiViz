@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.171.0
+> **Version:** 1.172.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2025,6 +2025,7 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | **Ctrl+V** | Fügt den Clip mit seinem **Anfang an der Einfügemarke** ein. Auch: Rechtsklick auf eine freie Stelle → *Paste clip here* |
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
 | **Gain** (unten rechts, am Ton-Clip statt *Blend*) | Wie viel lauter oder leiser der angeklickte Song oder Loop spielt als seine Datei, −24 bis +24 dB. Die Pfeile und das Mausrad gehen in Schritten von 0,5 dB, eintippen lässt sich auf 0,1 genau. Ein Clip mit Gain trägt rechts eine Marke („+6.0 dB“); Rechtsklick → *Reset gain* setzt ihn auf 0 dB zurück |
+| **Match loudness...** (neben *Gain*) | Öffnet den Dialog, der alle Ton-Clips misst und gleich laut stellt (siehe unten); nur mit *Edit* |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
 
@@ -2254,6 +2255,27 @@ Playlist ruht.
   unverändert durch. Die Visuals sehen den Ton hinter dem Limiter. Der Haken
   gehört zur Komposition und steht in ihrer Datei; er wirkt, solange der
   Composer den Ton führt.
+- **Match loudness — alle Clips gleich laut:** der Knopf **Match loudness...**
+  neben dem Feld *Gain* (bei einem angeklickten Ton-Clip, nur mit *Edit*) oder
+  Rechtsklick auf einen Ton-Clip → **Match loudness to this clip...** öffnet
+  einen Dialog. Er misst jeden Ton-Clip nach EBU R128 (LUFS) — genau den Teil,
+  den der Clip spielt, ohne seine Pegelkurve; einen Loop einen Durchlauf lang,
+  mit dem Nachklang des vorigen. Das läuft im Hintergrund, Zeile um Zeile;
+  einen schon gemessenen Song kennt LumiViz auch nach einem Neustart
+  (*Measure again* misst neu). Oben wählt **Target**, woran angeglichen wird:
+  ein Clip — er behält 0 dB, jeder andere bekommt den Abstand seiner Lautheit —
+  oder **Fixed level** mit einem Wert in LUFS. Zuerst ist der lauteste Clip
+  gewählt; Fixed level merkt sich der Dialog. Je Zeile stehen **Loudness**,
+  **Peak**, das **Gain** als Schieber und **Suggested**; käme die Spitze mit
+  dem Vorschlag über 0 dB, steht er gelb mit Warnzeichen, und darunter, was der
+  Limiter daraus macht. **Use suggestions** übernimmt alle Vorschläge.
+  Der Dialog sperrt den Composer nicht: was in ihm steht, **hört man sofort**,
+  während der Composer spielt. **Listen A/B** wechselt zwischen den Gains von
+  vorher (A) und denen im Dialog (B); **▶** in einer Zeile springt in die Mitte
+  dieses Clips und spielt. Solange der Dialog offen ist, ist *Edit* grau.
+  **OK** übernimmt alles als **einen** Schritt („Match loudness“, mit Ctrl+Z
+  zurück), **Cancel** oder Schließen stellt die Gains von vorher wieder her.
+  Clips ausgeschalteter Kanäle stehen grau in der Liste und werden mitgemessen.
 - **Mehrere Audio-Kanäle — Songs überlagern und überblenden:** alle
   eingeschalteten Audio-Kanäle spielen **zugleich**, jeder Song mit seiner
   eigenen Pegelkurve. Liegt das Ende eines Songs in A1 über dem Anfang eines
@@ -3373,6 +3395,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.172.0 | 2026-10-15 | Session 127. §15 Composer NEU Dialog **Match loudness** (Knopf neben *Gain*, Rechtsklick „Match loudness to this clip...“): misst jeden Ton-Clip nach EBU R128, schlägt je Clip ein Gain vor, Vorhören mit Listen A/B und ▶, OK als ein Schritt. |
 | 1.171.0 | 2026-10-15 | Session 127. §15 Composer NEU Haken **Limiter** (Standard an, nur mit *Edit*): fängt Spitzen über 0 dB am Mixer ab; in der Datei `limiter`. |
 | 1.170.0 | 2026-10-15 | Session 126. §15 Composer NEU **Clip enabled** im Rechtsklick und **Ctrl+E**: einzelne Clips ausschalten; in der Datei `enabled` am Clip. |
 | 1.169.0 | 2026-10-15 | Session 126. §15 Composer NEU **Gain** am Ton-Clip: Feld unten rechts statt *Blend*, Marke im Clip, Rechtsklick *Reset gain*; in der Datei das Feld `gain`. |
