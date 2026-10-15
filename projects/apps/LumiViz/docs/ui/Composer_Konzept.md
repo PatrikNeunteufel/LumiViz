@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.83.0
+> **Version:** 0.84.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -26,7 +26,7 @@
 > in §4 bis §9e; seit S105 auf `master` (§12) — **S109 / S110: die gemeinsame
 > Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)** —
 > **S126: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a),
-> nicht gebaut (§9g)**
+> G1 und G3 gebaut, im Programm nichts gesehen (§9g)**
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
 > erst nach `master` geholt wird, wenn der Composer sauber läuft
@@ -1259,7 +1259,7 @@ danach aus den Einstellungen bekam; Panel Karaoke und Menü lesen die
 Einstellung selbst und stimmten. Seit S110 setzt das Hauptfenster den
 Schalter **vor** dem Aufbau der Panels (`MainWindow::setupUi`).
 
-### 9g. Lautstärke-Abgleich der Ton-Clips — entschieden S126, nicht gebaut
+### 9g. Lautstärke-Abgleich der Ton-Clips — entschieden S126, G1 und G3 gebaut
 
 **Anlass (Patrik S126):** in `asset/compare.lvcomp` liegen der Song
 *Titanium* (A1) und der nachgebaute Loop `titanium_versuch.lvloop` (A2)
@@ -1336,17 +1336,36 @@ tut, wie Gain am Clip selbst bedient wird (Feld, Rad mit Taste — Ctrl+Rad
 und Alt+Rad gehören schon der Achse), ob Use suggestions und OK ein
 Undo-Schritt sind. Wird mit der Stufe vorgelegt, die es baut.
 
-**Baustufen (vorgelegt S126, nicht freigegeben):**
+**Baustufen (freigegeben S126, Patrik: „G1 und G3 sofort, vor dem
+Loop-Kleinkram“):**
 
-- **G1 Modell, Datei, Ton:** `gain` am Ton-Clip, `.lvcomp` liest und
+- ✅ **G1 Modell, Datei, Ton** (S126): `Clip::gainDb`, `gainFaktor()`,
+  `kGainMinDb`/`kGainMaxDb`; `richte` klemmt, ein Bild-Clip hat 0; die
+  Fassung der `.lvcomp` bleibt 2 (freiwilliges Feld). Den laufenden Song
+  bestimmt weiter die Pegelkurve allein (Entscheid S97), das Gain wirkt nur
+  auf die Lautstärke. Test „S126 Gain je Ton-Clip“ in
+  `test_ComposerTonfuehrung.cpp`. Bis G2 nur von Hand in der Datei zu setzen.
+  Geplant war: `gain` am Ton-Clip, `.lvcomp` liest und
   schreibt es, die Tonführung multipliziert es (`Tonfuehrung.cpp`, neben
   `pegelBei`); Tests gegen die Engine aus Pappe (Volume über 1 kommt an,
   alte Dateien unverändert).
 - **G2 Gain am Clip bedienen:** Marke im Clip, Eingabe, Undo; vorher die
   Bedienung vorlegen.
-- **G3 Messbaustein** (`composer/Lautheit`): R128 und Peak, Prüftöne der
-  Norm, Beleg „ein Durchlauf gleicht dem nächsten" für die mitgelieferten
-  Loops; Rechenzeit unter Release-clang an einem langen Song.
+- ✅ **G3 Messbaustein** (S126): `composer/Lautheit` — `LautheitsMessung`
+  (stückweise fütterbar) und `messeLautheit`, K-Filter für jede Abtastrate
+  (Kennwerte wie in libebur128), Blöcke 400 ms / 75 %, Gates −70 LUFS und
+  −10 LU, Sample-Spitze (kein True Peak). `test_ComposerLautheit.cpp`:
+  - die Fälle 1 bis 5 aus **EBU Tech 3341** (2023, Tabelle 1, gedruckte
+    S. 8) bei 48 und 44,1 kHz innerhalb ±0,1 LU;
+  - ein Sinus bei 50 Hz misst 4,6 dB leiser als einer bei 1 kHz gleicher
+    Spitze (der Grund für R128 statt RMS);
+  - **Beleg L3b:** von 46 Loops unter `asset/loop` sind bei 37 der zweite
+    und dritte Durchlauf Bit für Bit gleich, bei 9 weichen sie um höchstens
+    5·10⁻⁵ ab (Effekte), in der Lautheit auf vier Stellen gar nicht; der
+    erste (ohne Nachklang) weicht um höchstens 0,015 LU ab. Ein Durchlauf
+    nach einem vorgerechneten genügt also;
+  - zehn Minuten Stereo bei 44,1 kHz: 126 ms unter Release-clang, 622 ms
+    unter Testing-MSVC (ohne Dekodieren).
 - **G4 Limiter** am Mixer, Haken; Beleg, was die Visuals sehen; Test: unter
   0 dB Bit für Bit gleich.
 - **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
@@ -1722,6 +1741,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.84.0 | 2026-10-15 | Session 126 — §9g: **G1** (Gain je Ton-Clip in Modell, Datei und Tonführung) und **G3** (Messbaustein `composer/Lautheit` nach EBU R128, belegt an Tech 3341 Fälle 1–5; Beleg L3b: ein Loop-Durchlauf gleicht dem nächsten) gebaut; Baustufen freigegeben; Kopf. Im Programm nichts gesehen |
 | 0.83.0 | 2026-10-15 | Session 126 — **§9g neu: Lautstärke-Abgleich der Ton-Clips** (Anlass Patrik: `compare.lvcomp`, der Loop viel leiser als das Original). Entscheide L1 a (Gain je Ton-Clip in dB), L2 a (EBU R128, LUFS), L3 a (Target: Clip oder Fixed level), L3b a (gespielter Ausschnitt ohne Pegelkurve), L4 a (Limiter am Mixer); die Skizze des Dialogs Match loudness als Beschreibung; Baustufen G1 bis G6 vorgelegt, nicht freigegeben; §11 fünf Zeilen; Kopf. Nichts gebaut |
 | 0.82.0 | 2026-10-11 | Session 110 — **§9f neu** (Nachtrag zu S109 und S110): die gemeinsame Basis `lumi::ui::Achse` für Zeitachse und Loop-Panel, der Loop als Clip im Audio-Kanal (Klangerzeuger in der Tonführung, kein Ende, laufender Song aus den Tags, Verbindung zum Loop-Panel), der Haken Karaoke stimmt nach dem Start; §3 und Kopf nachgezogen |
 | 0.81.0 | 2026-10-09 | Session 105 — §12: **Rückbau-Regeln abgeschlossen** (Entscheid Patrik M1: a): `composer` ist nach `master` überführt, Marke `vor-composer` auf dem Stand davor; die Nahtlisten bleiben als Beschreibung, werden aber nicht weitergeführt |

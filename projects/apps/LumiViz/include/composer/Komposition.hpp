@@ -55,6 +55,10 @@ struct AltPunkt
     BezierGriffe bezier = kBezierVorgabe;
 };
 
+/// Grenzen des Gains eines Ton-Clips in dB (Composer_Konzept §9g, L1 a).
+inline constexpr double kGainMinDb = -24.0;
+inline constexpr double kGainMaxDb = 24.0;
+
 /// Ein Clip auf der Zeitachse — EIN Typ fuer Bild und Ton (Entscheid Patrik
 /// S96, C5): beide haben Start und Ende, beide dieselbe Pegelkurve mit
 /// denselben Presets. Was er ist, sagt der Kanal, in dem er liegt
@@ -75,6 +79,12 @@ struct Clip
     /// Laenge des Songs; 0 = unbekannt. Ueber sie hinaus laesst sich der Clip
     /// nicht ziehen.
     std::int64_t quellMs = 0;
+    /// Verstaerkung des Tons in dB, `kGainMinDb`…`kGainMaxDb` (Entscheid
+    /// Patrik S126, L1 a): getrennt von der Pegelkurve, die 0…1 bleibt. Zu
+    /// hoeren ist Datei × Gain × Pegelkurve; 0 = so laut wie die Datei.
+    double gainDb = 0.0;
+    /// `gainDb` als Faktor auf die Amplitude (0 dB = 1).
+    [[nodiscard]] double gainFaktor() const;
 
     // --- Pegelkurve (Entscheide Patrik S96): alle Teile sind freiwillig ------
     /// Der Pegel zwischen den Teilen, 0…1. Die Blenden laufen von null bis

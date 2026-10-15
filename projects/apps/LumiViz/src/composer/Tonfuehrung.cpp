@@ -403,7 +403,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         const double pegelWert = clip->pegelBei(imClip) * komposition.tonPegelBei(stimmStelle);
         if (!zuEnde)
         {
-            const auto pegel = static_cast<float>(pegelWert);
+            // zu hoeren ist der Pegel mal das Gain des Clips (S126, L1 a); den
+            // laufenden Song bestimmt weiter die Pegelkurve allein (unten)
+            const auto pegel = static_cast<float>(pegelWert * clip->gainFaktor());
             if (pegel != q.pegel)
             {
                 engine.setVolume(q.handle, pegel);

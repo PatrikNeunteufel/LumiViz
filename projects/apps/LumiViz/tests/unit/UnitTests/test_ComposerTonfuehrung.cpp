@@ -26,10 +26,13 @@
 #include "composer/Komposition.hpp"
 #include "composer/Tonfuehrung.hpp"
 
+#include <QJsonArray>
 #include <QMap>
 #include <QStringList>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 using namespace lumi::composer;
 using papp::PappEngine;
@@ -694,6 +697,85 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(Tonfuehrung::songAnfang(k, 1000, true) == 193000);
         CHECK(Tonfuehrung::songAnfang(k, 250000, false) == 193000);
         CHECK(Tonfuehrung::songAnfang(k, 194000, false) == 0);
+    }
+
+    TEST_CASE("S126 Gain je Ton-Clip: Datei, Grenzen, Lautstaerke der Quelle — der laufende Song bleibt Sache der Kurve")
+    {
+        // der Faktor: 20·log10 der Amplitude
+        Clip c;
+        CHECK(c.gainFaktor() == doctest::Approx(1.0));
+        c.gainDb = 20.0 * std::log10(2.0);
+        CHECK(c.gainFaktor() == doctest::Approx(2.0));
+        c.gainDb = -20.0;
+        CHECK(c.gainFaktor() == doctest::Approx(0.1));
+
+        // Datei: nur geschrieben, wenn nicht 0; fehlt es (bis S126), gilt 0 dB
+        Komposition k = probe();
+        k.kanaele[1].clips[0].gainDb = 13.3;
+        const QJsonObject json = alsJson(k);
+        const QJsonObject clipEins =
+            json.value(QStringLiteral("channels")).toArray().at(1).toObject().value(QStringLiteral("clips")).toArray().at(0).toObject();
+        const QJsonObject clipZwei =
+            json.value(QStringLiteral("channels")).toArray().at(1).toObject().value(QStringLiteral("clips")).toArray().at(1).toObject();
+        CHECK(clipEins.value(QStringLiteral("gain")).toDouble() == doctest::Approx(13.3));
+        CHECK_FALSE(clipZwei.contains(QStringLiteral("gain")));
+        Komposition gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK(gelesen.kanaele[1].clips[0].gainDb == doctest::Approx(13.3));
+        CHECK(gelesen.kanaele[1].clips[1].gainDb == 0.0);
+        CHECK(gleich(k, gelesen));
+
+        // Grenzen: geklemmt auf ±24 dB, Unsinn wird 0; ein Bild-Clip hat kein Gain
+        {
+            Komposition r = probe();
+            REQUIRE(fuegeClipEin(r, 0, QStringLiteral("C:/presets/eins.milk"), 0, 5000) == 0);
+            r.kanaele[0].clips[0].gainDb = 6.0;
+            r.kanaele[1].clips[0].gainDb = 40.0;
+            r.kanaele[1].clips[1].gainDb = std::numeric_limits<double>::quiet_NaN();
+            r.richte();
+            CHECK(r.kanaele[0].clips[0].gainDb == 0.0);
+            CHECK(r.kanaele[1].clips[0].gainDb == kGainMaxDb);
+            CHECK(r.kanaele[1].clips[1].gainDb == 0.0);
+            r.kanaele[1].clips[0].gainDb = -40.0;
+            r.richte();
+            CHECK(r.kanaele[1].clips[0].gainDb == kGainMinDb);
+        }
+
+        // die Quelle bekommt Pegelkurve × Gain, auch ueber 1 (BASS verstaerkt dann)
+        PappPlayer p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        k.kanaele[1].clips[0].setzeBlenden(2000, 0);
+        k.kanaele[1].clips[0].gainDb = 20.0 * std::log10(2.0);
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+        (void)f.takt(k, 11000, true);  // halb eingeblendet
+        const AudioStreamHandle a = e.quelle(kEins);
+        REQUIRE(a != INVALID_STREAM);
+        CHECK(e.stream(a).lautstaerke == doctest::Approx(1.0f));
+        (void)f.takt(k, 30000, true);
+        CHECK(e.stream(a).lautstaerke == doctest::Approx(2.0f));
+        k.tonKurve.grundpegel = 0.5;  // der Audio-Master kommt dazu
+        (void)f.takt(k, 30033, true);
+        CHECK(e.stream(a).lautstaerke == doctest::Approx(1.0f));
+
+        // zwei Clips uebereinander: der laufende Song ist der mit der hoeheren
+        // Kurve, auch wenn der andere mit seinem Gain lauter klingt
+        Komposition u = neueKomposition();
+        REQUIRE(fuegeKanalEin(u, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeKanalEin(u, {}, KanalArt::Audio) == 2);
+        REQUIRE(fuegeSongEin(u, 1, kEins, 0, 100000) == 0);
+        REQUIRE(fuegeSongEin(u, 2, kZwei, 0, 100000) == 0);
+        u.kanaele[1].clips[0].grundpegel = 0.9;
+        u.kanaele[2].clips[0].grundpegel = 0.5;
+        u.kanaele[2].clips[0].gainDb = 12.0;
+        PappMischEngine e2;
+        e2.laengen = e.laengen;
+        Tonfuehrung g;
+        REQUIRE(g.uebernimm(e2, p));
+        const Tonfuehrung::Ergebnis r = g.takt(u, 5000, true);
+        CHECK(e2.stream(e2.quelle(kZwei)).lautstaerke > e2.stream(e2.quelle(kEins)).lautstaerke);
+        CHECK(r.song.filePath == kEins);
     }
 
     TEST_CASE("Next und Previous: die Anfaenge der Songs")

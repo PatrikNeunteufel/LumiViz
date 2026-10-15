@@ -114,6 +114,11 @@ void VisualClip::setzeBlenden(std::int64_t einMs, std::int64_t ausMs, Kurvenform
     aus = {std::max<std::int64_t>(0, ausMs), einfacheBlende(form)};
 }
 
+double VisualClip::gainFaktor() const
+{
+    return std::pow(10.0, gainDb / 20.0);
+}
+
 bool VisualClip::vollerPegel() const
 {
     return grundpegel >= 1.0 && ein.dauerMs <= 0 && aus.dauerMs <= 0 && stuecke.empty();
@@ -385,6 +390,8 @@ void Komposition::richte(QStringList* bericht)
             // Einsatz und Song-Laenge gibt es nur am Ton
             c.einsatzMs = ton ? std::max<std::int64_t>(0, c.einsatzMs) : 0;
             c.quellMs = ton ? std::max<std::int64_t>(0, c.quellMs) : 0;
+            // Gain gibt es nur am Ton (S126, L1 a)
+            c.gainDb = ton && std::isfinite(c.gainDb) ? std::clamp(c.gainDb, kGainMinDb, kGainMaxDb) : 0.0;
             if (c.endeMs <= c.startMs)
             {
                 melde(QStringLiteral("%1: clip \"%2\" had no length — set to one second")
@@ -540,6 +547,7 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                 {
                     o.insert(QStringLiteral("offset"), static_cast<double>(c.einsatzMs));
                     if (c.quellMs > 0) o.insert(QStringLiteral("sourceLength"), static_cast<double>(c.quellMs));
+                    if (c.gainDb != 0.0) o.insert(QStringLiteral("gain"), c.gainDb);
                 }
                 else
                     o.insert(QStringLiteral("blend"), static_cast<int>(c.mischart));
@@ -749,6 +757,7 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                 {
                     c.einsatzMs = static_cast<std::int64_t>(o.value(QStringLiteral("offset")).toDouble());
                     c.quellMs = static_cast<std::int64_t>(o.value(QStringLiteral("sourceLength")).toDouble());
+                    c.gainDb = o.value(QStringLiteral("gain")).toDouble(0.0);  // fehlt bis S126: 0 dB
                     if (istLoop(datei))
                         c.quellMs = 0;  // ein Loop hat kein Ende (siehe `istLoop`)
                     else if (c.quellMs <= 0 && laengeVon)
