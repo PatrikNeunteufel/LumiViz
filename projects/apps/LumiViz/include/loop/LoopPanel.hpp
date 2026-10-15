@@ -33,6 +33,7 @@
 #include <optional>
 
 class QDoubleSpinBox;
+class QCheckBox;
 class QLabel;
 class QPushButton;
 class QTimer;
@@ -154,6 +155,9 @@ public:
     bool spieleMuster(const QString& muster);
     /// Das Muster, das gerade allein spielt; leer = keins.
     [[nodiscard]] const QString& soloMuster() const { return m_solo; }
+    /// Marke, Stelle und Knoepfe jetzt zeigen — sonst im Takt, solange das
+    /// Panel oder ein Editor sichtbar ist (fuer Tests ohne Fenster).
+    void zeigeStandJetzt() { zeigeStand(); }
 
     // --- die Effekte am Clip (Stufe 12d) --------------------------------------
     /// Das Fenster „Clip effects" fuer die markierten Clips zeigen (es
@@ -220,6 +224,7 @@ private:
     QLabel* m_info = nullptr;
     QLabel* m_stelle = nullptr;
     QPushButton* m_fit = nullptr;
+    QCheckBox* m_mitlaufen = nullptr;  ///< Scroll with playhead (S127, W3 a)
     Taktachse* m_achse = nullptr;
     QLabel* m_clipZeile = nullptr;
     QLabel* m_hinweis = nullptr;

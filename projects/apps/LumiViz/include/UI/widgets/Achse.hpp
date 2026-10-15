@@ -122,6 +122,11 @@ public:
     [[nodiscard]] Mitlaufen mitlaufen() const { return m_mitlaufen; }
     /// Ein Rollbalken wird gezogen (oder losgelassen): so lange laeuft nichts mit.
     void halteMitlaufen(bool halten) { m_balkenGehalten = halten; }
+    /// Die Regel des Mitlaufens fuer jede rollende Ansicht (S127, auch die
+    /// Editoren des Loops): die Marke liegt bei `imInhalt` Pixeln vom Anfang des
+    /// Inhalts, sichtbar sind `breite` Pixel ab `rollJetzt`. Liefert, wohin
+    /// gerollt werden soll (ungeklemmt; `rollJetzt` = bleiben).
+    [[nodiscard]] static int rollFuerMarke(Mitlaufen art, int imInhalt, int breite, int rollJetzt);
 
     /// Die Zeile unter `y`: negativ = eine Kopfzeile, ab 0 eine Zeile — auch
     /// eine Zahl hinter der letzten (die freie Flaeche darunter).

@@ -29,6 +29,7 @@
 
 #include <DockWidget.h>
 
+#include <QCheckBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -65,6 +66,8 @@ const char* const kLetzteDatei = "loop/lastFile";
 /// Einstellung: die Hoehe der Zeilen in der Achse, in Prozent.
 const char* const kZeilenProzent = "loop/rowHeightPercent";
 constexpr int kTaktMs = 33;
+/// Einstellung: Scroll with playhead (S127, W3 a), Vorgabe an.
+const char* const kMitlaufen = "loop/scrollWithPlayhead";
 
 void setzeText(QLabel* label, const QString& text)
 {
@@ -284,6 +287,17 @@ void LoopPanel::setupUI()
     spielReihe->addWidget(m_bpm);
     spielReihe->addWidget(m_info, 1);
     spielReihe->addWidget(m_stelle);
+    // Mitlaufen (S127, Entscheid Patrik W3 a): wie im Composer, Vorgabe an
+    m_mitlaufen = new QCheckBox(tr("Scroll with playhead"), this);
+    m_mitlaufen->setObjectName(QStringLiteral("loopScrollWithPlayhead"));
+    m_mitlaufen->setChecked(QSettings().value(QLatin1String(kMitlaufen), true).toBool());
+    m_mitlaufen->setToolTip(
+        tr("While something plays — Play here, Play pattern or the Composer — the arrangement and the "
+           "pattern editors follow the playhead when they are zoomed in or longer than the window. "
+           "Continuous or page by page as set for the Composer (Settings). While you drag a scroll "
+           "bar, nothing moves."));
+    connect(m_mitlaufen, &QCheckBox::toggled, this, [](bool an) { QSettings().setValue(QLatin1String(kMitlaufen), an); });
+    spielReihe->addWidget(m_mitlaufen);
     spielReihe->addWidget(m_fit);
     aussen->addLayout(spielReihe);
 
@@ -952,9 +966,16 @@ void LoopPanel::zeigeStand()
     // ein angespielter Ton zaehlt nicht als Spielen: Play bleibt Play, keine Marke laeuft
     const bool spielt = m_spieler.spielt() && m_vorhoeren == 0;
     const bool darf = m_spieler.darfSpielen();
+    // die Stelle im Arrangement (Schritte), -1 = keine: das eigene Play — oder der
+    // Composer, der diesen Loop gerade spielt (S127, Entscheide Patrik W1 a, W2 a)
+    double arrangement = -1.0;
+    if (spielt && m_solo.isEmpty())
+        arrangement = m_spieler.stelleSchritte();
+    else if (!spielt && m_geladen && !m_datei.isEmpty())
+        if (const double ms = lumi::composer::loopStelleMs(m_datei); ms >= 0.0) arrangement = m_loop.schritteVonMs(ms);
     setzeText(m_stelle, [&]() -> QString {
-        if (!spielt) return {};
-        const int schritt = static_cast<int>(m_spieler.stelleSchritte());
+        if (arrangement < 0.0) return {};
+        const int schritt = static_cast<int>(arrangement);
         return tr("Bar %1 · Step %2").arg(schritt / m_loop.schritteJeTakt() + 1).arg(schritt % m_loop.schritteJeTakt() + 1);
     }());
     const QString knopf = spielt ? tr("Stop") : tr("Play");
@@ -965,21 +986,35 @@ void LoopPanel::zeigeStand()
     m_hinweis->setVisible(!darf);
     m_fit->setEnabled(m_achse->zoomVerstellt());
 
-    // die Abspielmarke; hineingezoomt blaettert der Ausschnitt mit ihr weiter
-    m_achse->setMitlaufen(spielt ? lumi::ui::Achse::Mitlaufen::Seitenweise : lumi::ui::Achse::Mitlaufen::Aus);
+    // die Abspielmarke; mit Scroll with playhead folgt ihr der Ausschnitt (W3 a), in
+    // der Art, die fuer den Composer eingestellt ist
+    using Mitlaufen = lumi::ui::Achse::Mitlaufen;
+    const Mitlaufen art = !m_mitlaufen->isChecked()                  ? Mitlaufen::Aus
+                          : lumi::composer::mitlaufenSeitenweise() ? Mitlaufen::Seitenweise
+                                                                   : Mitlaufen::Stetig;
     // spielt ein Muster allein, laeuft die Marke im Editor — im Arrangement gibt es dafuer keine Stelle
-    m_achse->setSpielt(spielt && m_solo.isEmpty());
-    if (spielt && m_solo.isEmpty()) m_achse->setStelleSchritte(m_spieler.stelleSchritte());
+    m_achse->setMitlaufen(arrangement >= 0.0 ? art : Mitlaufen::Aus);
+    m_achse->setSpielt(arrangement >= 0.0);
+    if (arrangement >= 0.0) m_achse->setStelleSchritte(arrangement);
+    // die Kaskade in die Editoren: allein gespielt die Stelle im Muster, sonst die
+    // Stelle des Arrangements in einem Clip dieses Musters (W1 a, Zusatz Patrik)
+    const auto imMuster = [&](const QString& muster, bool allein) {
+        if (allein) return m_spieler.stelleSchritte();
+        return arrangement >= 0.0 ? m_loop.stelleImMuster(arrangement, muster) : -1.0;
+    };
     if (m_effekte != nullptr) m_effekte->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     if (m_editor != nullptr)
     {
-        m_editor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_editor->muster(), m_spieler.stelleSchritte());
+        const bool allein = spielt && !m_solo.isEmpty() && m_solo == m_editor->muster();
+        m_editor->setSpielt(allein, m_spieler.stelleSchritte());
+        m_editor->zeigeMarke(imMuster(m_editor->muster(), allein), art);
         m_editor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     }
     if (m_instrumentEditor != nullptr)
     {
-        m_instrumentEditor->setSpielt(spielt && !m_solo.isEmpty() && m_solo == m_instrumentEditor->muster(),
-                                      m_spieler.stelleSchritte());
+        const bool allein = spielt && !m_solo.isEmpty() && m_solo == m_instrumentEditor->muster();
+        m_instrumentEditor->setSpielt(allein, m_spieler.stelleSchritte());
+        m_instrumentEditor->zeigeMarke(imMuster(m_instrumentEditor->muster(), allein), art);
         m_instrumentEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
         // warum ein Klick auf eine Taste gerade nichts hoeren laesst
         m_instrumentEditor->setHinweis(!darf     ? tr("The Composer plays the audio — keys and Play pattern are silent")

@@ -141,6 +141,7 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     m_playlist = player.playlist();
     player.setPlaylist(nullptr);
     m_quellen.clear();
+    m_loopStellen.clear();
     m_laut = -1.0f;
     m_limiter = -1;
     m_laufend = {};
@@ -158,6 +159,7 @@ void Tonfuehrung::gibFrei(bool playerWeiter)
     // die Klangerzeuger der Loops leben, bis der Mixer fort ist
     const std::vector<Quelle> bisher = std::move(m_quellen);
     m_quellen.clear();
+    m_loopStellen.clear();
     m_engine->freeStream(m_mixer);
     m_abgeloest.clear();
     m_player->setPlaylist(m_playlist);
@@ -173,6 +175,15 @@ int Tonfuehrung::quellen() const
 {
     return static_cast<int>(std::count_if(m_quellen.begin(), m_quellen.end(),
                                           [](const Quelle& q) { return q.handle != INVALID_STREAM; }));
+}
+
+double Tonfuehrung::loopStelleMs(const QString& datei) const
+{
+    if (datei.isEmpty()) return -1.0;
+    const QFileInfo gesucht(datei);
+    for (const LoopStelle& l : m_loopStellen)
+        if (l.datei == datei || QFileInfo(l.datei) == gesucht) return l.ms;
+    return -1.0;
 }
 
 int Tonfuehrung::loops() const
@@ -342,6 +353,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
     m_quellen = std::move(quellen);
 
     // --- je Stimme: Pegel, Stelle, laufen — und wer der laufende Song ist
+    m_loopStellen.clear();
     const Clip* bester = nullptr;
     const Quelle* besteQuelle = nullptr;
     double bestPegel = -1.0;
@@ -459,6 +471,16 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
                 engine.setSourcePaused(q.handle, false);
                 q.imClip = true;
             }
+        }
+        // die Stelle je Loop fuer Panel und Editoren (S127, W2 a): die des lautesten Clips
+        if (q.loop != nullptr)
+        {
+            const auto da = std::find_if(m_loopStellen.begin(), m_loopStellen.end(),
+                                         [&](const LoopStelle& l) { return l.datei == clip->datei; });
+            if (da == m_loopStellen.end())
+                m_loopStellen.push_back({clip->datei, q.loop->imDurchlauf(soll), pegelWert});
+            else if (pegelWert > da->pegel + kGleich)
+                *da = {clip->datei, q.loop->imDurchlauf(soll), pegelWert};
         }
         // der laufende Song: der hoechste Wert der Pegelkurve; bei Gleichstand
         // der bisherige, sonst der oberste Kanal (der erste in der Liste)

@@ -1330,6 +1330,23 @@ void DrumEditor::setSpielt(bool spielt, double schritt)
     m_raster->setMarke(spielt ? schritt : -1.0);
 }
 
+void DrumEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art)
+{
+    m_raster->setMarke(schritt);
+    QScrollBar* balken = m_rollen->horizontalScrollBar();
+    if (schritt < 0.0 || balken->isSliderDown() || balken->maximum() <= 0) return;
+    const int ganz = static_cast<int>(schritt);
+    const int imInhalt =
+        m_raster->xVonSchritt(ganz) + static_cast<int>((schritt - ganz) * SchrittRaster::kSchrittBreite);
+    const int ziel = lumi::ui::Achse::rollFuerMarke(art, imInhalt, m_rollen->viewport()->width(), balken->value());
+    if (ziel != balken->value()) balken->setValue(ziel);  // der Balken klemmt
+}
+
+int DrumEditor::rollX() const
+{
+    return m_rollen->horizontalScrollBar()->value();
+}
+
 void DrumEditor::setSpitze(double spitze)
 {
     const QString text = spitze < 0.0 ? QStringLiteral("–") : QString::number(spitze, 'f', 2);

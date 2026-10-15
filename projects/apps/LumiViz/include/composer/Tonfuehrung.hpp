@@ -131,6 +131,12 @@ public:
     [[nodiscard]] int quellen() const;
     /// Wie viele davon Loops sind.
     [[nodiscard]] int loops() const;
+    /// Die Stelle in einem Durchlauf des Loops `datei` (ms), wie sie im
+    /// letzten Takt zu hoeren war — fuer die Marke im Panel Loop und in den
+    /// Editoren (S127, Entscheide Patrik W1 a, W2 a). Spielen mehrere Clips
+    /// dieses Loops zugleich, die des lautesten (Pegelkurve, ohne Gain); -1 =
+    /// kein Clip dieses Loops liegt an der Stelle.
+    [[nodiscard]] double loopStelleMs(const QString& datei) const;
 
     /// Der Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition,
     /// von `stelleMs` aus — fuer Next / Previous. Zurueck: mitten in einem
@@ -190,6 +196,14 @@ private:
     std::vector<Abgeloest> m_abgeloest;
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt
     int m_limiter = -1;               ///< Limiter zuletzt am Mixer: 1 an, 0 aus, −1 noch nicht gesetzt
+    /// Je Loop-Datei des letzten Takts: Stelle im Durchlauf und Pegel ihres lautesten Clips.
+    struct LoopStelle
+    {
+        QString datei;
+        double ms = 0.0;
+        double pegel = -1.0;
+    };
+    std::vector<LoopStelle> m_loopStellen;
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts
     int m_laufendDauerMs = 0;         ///< seine Laenge

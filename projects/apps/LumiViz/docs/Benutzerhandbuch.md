@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.173.0
+> **Version:** 1.174.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2603,6 +2603,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | **Play** / **Stop** | Spielt den Loop im Kreis — von vorn oder ab der grünen Marke im Lineal |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
 | Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
+| **Scroll with playhead** | Standard an. Läuft eine Marke — **Play**, **Play pattern** oder der Composer —, folgen ihr die Achse und die Editoren, wenn sie hineingezoomt oder länger als das Fenster sind; stetig oder seitenweise wie für den Composer eingestellt (Settings). Während du an einem Rollbalken ziehst, rollt nichts |
 | **Fit** | Zeigt den ganzen Loop, die Zeilen in normaler Höhe (auch Ctrl+0) |
 | Achse | Lineal mit Taktnummern, je Kanal eine Zeile, die Clips als Blöcke; unten die Zeile *New channel* |
 | Klick oder Ziehen im **Lineal** | Spielt der Loop, springt er an die Stelle (auf den Schritt genau). Sonst setzt es die **grüne Marke**: dort beginnt **Play**. Ein Klick ganz links nimmt sie wieder an den Anfang; ein anderer Loop beginnt wieder vorn |
@@ -2613,6 +2614,14 @@ oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
 an; bei **Stop** spielt er weiter, wenn er vorher spielte. Lautstärke und Mute
 des Players gelten auch für den Loop, und die Visuals reagieren auf ihn.
 Hat der **Composer** den Ton, ist Play im Panel Loop grau.
+
+**Die Marke läuft mit.** Spielt das Panel den ganzen Loop, zeigen Drum- und
+Instrument-Editor die Marke in ihrem Muster, solange die Stelle in einem Clip
+dieses Musters liegt (sonst keine). Dasselbe gilt, wenn der **Composer** den
+Loop spielt, den das Panel offen hat: die rote Marke läuft dann durch die
+Achse des Panels, rechts steht *Bar · Step*, und die Editoren zeigen die
+Stelle in ihrem Muster. Spielt der Composer denselben Loop in mehreren Clips
+zugleich, folgt die Marke dem gerade lautesten (nach seiner Pegelkurve).
 
 ### Clips und Kanäle
 
@@ -3395,6 +3404,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.174.0 | 2026-10-15 | Session 127. §16 Loop: die Marke läuft mit — in den Editoren beim Play des ganzen Loops und wenn der Composer den offenen Loop spielt; NEU Haken **Scroll with playhead** im Panel Loop. |
 | 1.173.0 | 2026-10-15 | Session 127. §15 Composer: der Knopf **Match loudness...** steht immer unten rechts, nicht nur bei einem angeklickten Ton-Clip. |
 | 1.172.0 | 2026-10-15 | Session 127. §15 Composer NEU Dialog **Match loudness** (Knopf neben *Gain*, Rechtsklick „Match loudness to this clip...“): misst jeden Ton-Clip nach EBU R128, schlägt je Clip ein Gain vor, Vorhören mit Listen A/B und ▶, OK als ein Schritt. |
 | 1.171.0 | 2026-10-15 | Session 127. §15 Composer NEU Haken **Limiter** (Standard an, nur mit *Edit*): fängt Spitzen über 0 dB am Mixer ab; in der Datei `limiter`. |

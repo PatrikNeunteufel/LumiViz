@@ -122,6 +122,13 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 
 /// Fuehrt der Composer gerade den Ton?
 [[nodiscard]] bool fuehrtTon();
+/// Die Stelle im Durchlauf des Loops `datei`, wie der Composer ihn gerade
+/// spielt (ms) — fuer die Marke im Panel Loop und in den Editoren (S127,
+/// Entscheide Patrik W1 a, W2 a). -1 = er spielt ihn nicht.
+[[nodiscard]] double loopStelleMs(const QString& datei);
+/// Rollt eine Achse mit der Marke seitenweise statt stetig? Die Einstellung
+/// des Composers (S102), auch fuer das Panel Loop (S127, W3 a).
+[[nodiscard]] bool mitlaufenSeitenweise();
 /// Der laufende Song und sein Stand, fuer ein Panel, das erst jetzt sichtbar
 /// wird. `fuehrt` false = der Composer fuehrt keinen Ton; dann gilt der Player.
 struct TonStand

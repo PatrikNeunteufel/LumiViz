@@ -246,6 +246,17 @@ bool fuehrtTon()
     return Sitzung::fuehrende() != nullptr;
 }
 
+double loopStelleMs(const QString& datei)
+{
+    const Sitzung* sitzung = Sitzung::fuehrende();
+    return sitzung != nullptr ? sitzung->loopStelleMs(datei) : -1.0;
+}
+
+bool mitlaufenSeitenweise()
+{
+    return Sitzung::mitlaufenSeitenweise();
+}
+
 bool meldetBindung()
 {
     return Sitzung::meldetBindung();

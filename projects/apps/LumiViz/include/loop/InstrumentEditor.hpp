@@ -19,6 +19,7 @@
 #include "loop/Auswahl.hpp"
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
+#include "UI/widgets/Achse.hpp"  // Mitlaufen
 
 #include <QPoint>
 #include <QPointer>
@@ -121,6 +122,8 @@ public:
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
     [[nodiscard]] int rollX() const { return m_rollX; }
+    /// Die Abspielmarke in Schritten des Musters; -1 = keine.
+    [[nodiscard]] double marke() const { return m_marke; }
     [[nodiscard]] int rollY() const { return m_rollY; }
     /// So weit laesst sich rollen (0 = alles ist zu sehen).
     [[nodiscard]] int rollXMax() const;
@@ -272,6 +275,10 @@ public:
 
     /// Spielt gerade dieses Muster allein — und wo steht es (Schritt im Muster)?
     void setSpielt(bool spielt, double schritt);
+    /// Die Marke allein, ohne den Knopf Play pattern (S127, W1 a): das Arrangement
+    /// oder der Composer spielt dieses Muster gerade; -1 = keine. Mit `art` folgt
+    /// der Ausschnitt ihr (W3 a) — nicht, solange am Rollbalken gezogen wird.
+    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art);
     /// Die Spitze der Summe, solange etwas spielt; unter null = keine Anzeige.
     void setSpitze(double spitze);
     /// Ein Satz unter der Instrument-Zeile: warum die Tasten gerade stumm

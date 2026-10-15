@@ -29,6 +29,7 @@
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/DrumKit.hpp"  // KitOptionen
 #include "loop/Loop.hpp"
+#include "UI/widgets/Achse.hpp"  // Mitlaufen
 
 #include <QPoint>
 #include <QPointer>
@@ -142,6 +143,8 @@ public:
     static constexpr int kSchrittLuft = 2;
     static constexpr int kSchlagLuft = 5;    ///< zusaetzlich zwischen zwei Schlaegen
     [[nodiscard]] int xVonSchritt(int schritt) const;
+    /// Die Abspielmarke in Schritten des Musters; -1 = keine.
+    [[nodiscard]] double marke() const { return m_marke; }
     /// Der Schritt unter `x`; -1 = keiner (eine Luecke, ausserhalb).
     [[nodiscard]] int schrittBei(int x) const;
     [[nodiscard]] int yVonSpur(int spur) const { return kKopfHoehe + spur * kZeilenHoehe; }
@@ -242,6 +245,12 @@ public:
     void setKitKlaenge(const QStringList& klaenge);
     /// Spielt gerade dieses Muster allein — und wo steht es (Schritt im Muster)?
     void setSpielt(bool spielt, double schritt);
+    /// Die Marke allein, ohne den Knopf Play pattern (S127, W1 a): das Arrangement
+    /// oder der Composer spielt dieses Muster gerade; -1 = keine. Mit `art` folgt
+    /// der Ausschnitt ihr (W3 a) — nicht, solange am Rollbalken gezogen wird.
+    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art);
+    /// Wo das Raster gerade steht (der Rollbalken), in Pixeln — fuer Tests.
+    [[nodiscard]] int rollX() const;
     /// Die Spitze der Summe, solange etwas spielt; unter null = keine Anzeige.
     void setSpitze(double spitze);
 

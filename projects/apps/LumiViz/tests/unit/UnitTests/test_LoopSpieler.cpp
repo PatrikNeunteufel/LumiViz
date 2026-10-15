@@ -31,6 +31,7 @@
 #include "services/ServiceContainer.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
@@ -981,6 +982,130 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
 
     fuehrung.gibFrei();
     CHECK(engine.generator == nullptr);
+}
+
+TEST_CASE("S127 W2 Loop im Composer: die Stelle je Loop fuer Panel und Editoren — der lauteste Clip, -1 ohne")
+{
+    using namespace lumi::composer;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    const QString pfad = ordner.filePath(QStringLiteral("beat.lvloop"));
+    REQUIRE(speichereLoop(spielLoop({1, 0, 0, 0}), pfad));  // ein Durchlauf 2000 ms
+
+    // A1: der Loop 1000–6000 auf vollem Pegel; A2: derselbe Loop 3000–8000, ab 300 ms, halb so laut
+    Komposition k = mitClip(pfad, 1000, 6000);
+    lumi::composer::Kanal zweiter = k.kanaele[0];
+    zweiter.name = QStringLiteral("A2");
+    zweiter.clips[0].startMs = 3000;
+    zweiter.clips[0].endeMs = 8000;
+    zweiter.clips[0].einsatzMs = 300;
+    zweiter.clips[0].grundpegel = 0.5;
+    k.kanaele.push_back(zweiter);
+
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Tonfuehrung fuehrung;
+    CHECK(fuehrung.loopStelleMs(pfad) == -1.0);  // fuehrt noch nicht
+    REQUIRE(fuehrung.uebernimm(engine, player));
+    (void)fuehrung.takt(k, 0, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == -1.0);  // im Vorlauf: noch kein Clip an der Stelle
+    (void)fuehrung.takt(k, 2500, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(1500.0));
+    // die Schreibweise des Pfads zaehlt nicht
+    CHECK(fuehrung.loopStelleMs(QDir::toNativeSeparators(pfad)) == doctest::Approx(1500.0));
+    CHECK(fuehrung.loopStelleMs(ordner.filePath(QStringLiteral("anderer.lvloop"))) == -1.0);
+    CHECK(fuehrung.loopStelleMs({}) == -1.0);
+
+    // beide spielen: A1 bei 2500 im Clip = 500 im Durchlauf, A2 bei 500 + 300 = 800 — A1 ist lauter
+    (void)fuehrung.takt(k, 3500, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(500.0));
+    // jetzt ist A2 lauter
+    k.kanaele[0].clips[0].grundpegel = 0.4;
+    k.kanaele[1].clips[0].grundpegel = 1.0;
+    (void)fuehrung.takt(k, 3533, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(833.0));
+    // das Gain zaehlt nicht (W2 a: die Pegelkurve)
+    k.kanaele[0].clips[0].gainDb = 24.0;
+    (void)fuehrung.takt(k, 3566, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(866.0));
+    // nur noch A2: hinter dem Ende von A1
+    (void)fuehrung.takt(k, 7000, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(300.0));  // 4000 + 300 = 4300 → 300
+    // dahinter keiner, und frei gegeben auch nicht
+    (void)fuehrung.takt(k, 9000, true);
+    CHECK(fuehrung.loopStelleMs(pfad) == -1.0);
+    (void)fuehrung.takt(k, 2500, true);
+    fuehrung.gibFrei();
+    CHECK(fuehrung.loopStelleMs(pfad) == -1.0);
+}
+
+TEST_CASE("S127 W1 W3 Loop Panel: die Marke in den Editoren beim Play des Arrangements, Scroll with playhead")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString beispiel = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+    REQUIRE(QFileInfo::exists(beispiel));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    REQUIRE(panel.lade(beispiel));
+    const Loop& loop = panel.loop();
+    const int spt = loop.schritteJeTakt();
+    // drums_demo: in Drums Grund (Takt 1–4), Fill (5–8), Grund (9–12), Break (13–16)
+    const LoopClip& zweiterGrund = loop.kanaele[0].clips[2];
+    REQUIRE(zweiterGrund.muster == loop.kanaele[0].clips[0].muster);
+    const QString grund = zweiterGrund.muster;
+    const QString fill = loop.kanaele[0].clips[1].muster;
+    REQUIRE(panel.oeffneEditor(grund, false));
+    DrumEditor* editor = panel.editor();
+    REQUIRE(editor != nullptr);
+    auto* play = editor->findChild<QPushButton*>(QStringLiteral("drumPlay"));
+
+    // der Haken: da, Vorgabe an, gemerkt
+    auto* mitlaufen = panel.findChild<QCheckBox*>(QStringLiteral("loopScrollWithPlayhead"));
+    REQUIRE(mitlaufen != nullptr);
+    CHECK(mitlaufen->isChecked());
+    mitlaufen->setChecked(false);
+    CHECK_FALSE(QSettings().value(QStringLiteral("loop/scrollWithPlayhead")).toBool());
+    mitlaufen->setChecked(true);
+
+    // nichts spielt: keine Marke
+    panel.zeigeStandJetzt();
+    CHECK(editor->raster()->marke() < 0.0);
+
+    // Play des ganzen Loops, die Stelle in Takt 10, Schritt 4: im zweiten Clip Grund
+    REQUIRE(panel.spiele());
+    const int stelle = (zweiterGrund.startTakt + 1) * spt + 3;
+    panel.setzeStartstelle(stelle);
+    panel.zeigeStandJetzt();
+    CHECK(panel.spieler().stelleSchritte() == doctest::Approx(stelle));
+    CHECK(panel.taktachse()->spielt());
+    // die Kaskade (W1 a, Zusatz Patrik): der Editor zeigt die Stelle im Muster, ohne Play pattern
+    CHECK(editor->raster()->marke() == doctest::Approx(spt + 3));
+    if (play != nullptr) CHECK(play->text() == QStringLiteral("Play pattern"));
+    CHECK(panel.taktachse()->mitlaufen() != lumi::ui::Achse::Mitlaufen::Aus);
+    // ein anderes Muster im Editor: an dieser Stelle spielt es nicht
+    REQUIRE(panel.oeffneEditor(fill, false));
+    panel.zeigeStandJetzt();
+    CHECK(editor->raster()->marke() < 0.0);
+    // ohne Haken rollt die Achse nicht mit
+    mitlaufen->setChecked(false);
+    panel.zeigeStandJetzt();
+    CHECK(panel.taktachse()->mitlaufen() == lumi::ui::Achse::Mitlaufen::Aus);
+    panel.halte();
+    panel.zeigeStandJetzt();
+    CHECK(editor->raster()->marke() < 0.0);
 }
 
 TEST_CASE("Loop im Composer: ein Loop-Clip hat kein Ende — die Komposition laesst ihm seine Laenge")

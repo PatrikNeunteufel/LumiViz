@@ -437,6 +437,35 @@ double Loop::durchlaufMs() const
     return durchlaufSchritte() * 60000.0 / bpm / schritteJeSchlag;
 }
 
+double Loop::schritteVonMs(double ms) const
+{
+    const double dauer = durchlaufMs();
+    return dauer > 0.0 ? ms / dauer * durchlaufSchritte() : 0.0;
+}
+
+double Loop::stelleImMuster(double schritt, const QString& name) const
+{
+    const Muster* m = findeMuster(name);
+    if (m == nullptr || schritt < 0.0) return -1.0;
+    const int spt = schritteJeTakt();
+    const double musterSchritte = static_cast<double>(m->takte) * spt;
+    if (musterSchritte <= 0.0) return -1.0;
+    // eingeschaltete Kanaele zuerst: was man hoert, geht vor
+    for (const bool nurAn : {true, false})
+        for (const Kanal& kanal : kanaele)
+        {
+            if (nurAn != kanal.an) continue;
+            for (const LoopClip& clip : kanal.clips)
+            {
+                if (clip.muster != name) continue;
+                const double anfang = static_cast<double>(clip.startTakt) * spt;
+                const double ende = anfang + static_cast<double>(clipTakte(clip)) * spt;
+                if (schritt >= anfang && schritt < ende) return std::fmod(schritt - anfang, musterSchritte);
+            }
+        }
+    return -1.0;
+}
+
 QStringList Loop::klangNamen() const
 {
     QStringList namen;

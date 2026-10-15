@@ -1467,6 +1467,15 @@ void InstrumentEditor::setSpielt(bool spielt, double schritt)
     m_raster->setMarke(spielt ? schritt : -1.0);
 }
 
+void InstrumentEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art)
+{
+    m_raster->setMarke(schritt);
+    if (schritt < 0.0 || m_rollX->isSliderDown() || m_rollX->maximum() <= 0) return;
+    const int imInhalt = static_cast<int>(schritt * NotenRaster::kSchrittBreite);
+    const int ziel = lumi::ui::Achse::rollFuerMarke(art, imInhalt, m_raster->sichtBreite(), m_rollX->value());
+    if (ziel != m_rollX->value()) m_rollX->setValue(ziel);  // der Balken klemmt und rollt das Raster
+}
+
 InstrumentCreator* InstrumentEditor::creator() const
 {
     return m_creator;

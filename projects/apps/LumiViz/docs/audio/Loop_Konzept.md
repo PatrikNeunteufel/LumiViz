@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.77.0
+> **Version:** 0.78.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3304,6 +3304,41 @@ Reihe als verschieden), die Form der matten Marke, die Wortlaute. Tests:
 - Tests: `test_LoopTakteSprung.cpp` (vier Fälle); in den Tests der Editoren
   setzt jetzt Shift+Klick die Einfügemarke; die Fassung 6 in fünf Tests.
 
+### Die Marke läuft mit — Arrangement, Editoren, Composer (S127)
+
+**Wunsch Patrik S127:** spielt im Composer der Loop, der im Loop-Editor offen
+ist, läuft die Zeit dort simultan mit. **Entscheide:** W1 a — Panel Loop
+(Marke im Arrangement), Drum- und Instrument-Editor (Marke im Muster, solange
+die Stelle in einem Clip dieses Musters liegt); Zusatz Patrik: dieselbe
+Kaskade auch vom Panel Loop zu den Editoren, beim Play des ganzen Loops. W2 a
+— spielt der Composer denselben Loop mehrfach zugleich, zählt der gerade
+lauteste Clip (Pegelkurve, ohne Gain — die Regel des laufenden Songs). W3 a —
+Haken **Scroll with playhead** im Panel Loop (`loop/scrollWithPlayhead`,
+Vorgabe an), gilt für Panel und Editoren bei jeder Wiedergabe; die Art aus der
+Einstellung des Composers. Vorher rollte die Achse beim eigenen Play fest
+seitenweise, die Editoren gar nicht.
+
+**Gebaut (S127):**
+- `Loop::stelleImMuster(schritt, muster)` (Clips eingeschalteter Kanäle
+  zuerst, Wiederholungen eingerechnet), `Loop::schritteVonMs`.
+- `Tonfuehrung::loopStelleMs(datei)` — je Takt die Stelle im Durchlauf des
+  lautesten Clips je Loop-Datei (nach der Uhr, nicht nach dem Klangerzeuger);
+  `Sitzung::loopStelleMs`, nach außen `composer::loopStelleMs` und
+  `composer::mitlaufenSeitenweise` (`AppAnbindung`).
+- `LoopPanel::zeigeStand`: die Stelle im Arrangement aus dem eigenen Play oder
+  — spielt das Panel nicht — aus dem Composer; daraus Achse, *Bar · Step* und
+  je Editor `zeigeMarke` (die Marke ohne den Knopf Play pattern).
+- `lumi::ui::Achse::rollFuerMarke` (die Regel des Mitlaufens als Funktion),
+  genutzt von der Achse und von `DrumEditor`/`InstrumentEditor::zeigeMarke`;
+  nicht, solange am Rollbalken gezogen wird.
+- Tests: `test_LoopMitlaufen` (Umrechnung, Regel des Mitrollens), in
+  `test_LoopSpieler` „S127 W2“ (Stelle je Loop, lautester Clip, Gain zählt
+  nicht) und „S127 W1 W3“ (Kaskade beim Play, Haken). **Nicht im Test:** der
+  Weg Composer → Panel als Ganzes (braucht eine Sitzung mit Fenster) — die
+  Teile davor und danach sind je für sich geprüft.
+- Von Claude gesetzt: die Marke des Composers ist dieselbe rote; die Stelle
+  folgt der Uhr des Composers, auch angehalten.
+
 ---
 
 ## 5. Stufen
@@ -3431,6 +3466,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.78.0** (S127, 2026-10-15): NEU „Die Marke läuft mit“ — Entscheide W1 a
+  (mit der Kaskade vom Panel), W2 a, W3 a, gebaut; Haken Scroll with playhead.
 - **0.77.0** (S124, 2026-10-14): §4m — E1 a: der Schalter der Effekte je
   Clip, Play pattern mit den Effekten des Bezugsclips, FX und Effects on;
   `.lvloop` Fassung 7.

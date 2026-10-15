@@ -408,6 +408,16 @@ struct Loop
     /// ihres Tons steht.
     [[nodiscard]] int notenMs(const Note& note) const;
 
+    /// Eine Stelle im Durchlauf in Millisekunden als Stelle in Schritten (linear,
+    /// ohne Swing — wie die Marke sie zeigt).
+    [[nodiscard]] double schritteVonMs(double ms) const;
+    /// Wo das Muster `muster` an der Stelle `schritt` des Arrangements steht,
+    /// in Schritten des Musters (S127, Entscheid Patrik W1 a): liegt die Stelle
+    /// in einem Clip dieses Musters, die Stelle darin (Wiederholungen
+    /// eingerechnet). Clips eingeschalteter Kanaele zuerst, dann der oberste
+    /// Kanal. -1 = kein Clip dieses Musters liegt dort.
+    [[nodiscard]] double stelleImMuster(double schritt, const QString& muster) const;
+
     /// Unsinn richten: Werte in ihre Grenzen, je Muster eine Zeile je Spur in
     /// voller Laenge, Muster ohne Namen benennen; Clips nach Start sortieren,
     /// Ueberlappung im selben Kanal aufloesen (der spaetere Clip beginnt, wo

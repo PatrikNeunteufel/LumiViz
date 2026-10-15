@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.240.0
+> **Version:** 1.241.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2754,12 +2754,44 @@ Idee Preset-Warmup/Pre-Roll.
   voller Lauf 1263 / 1264 — der eine die Vorlage mitten im Lauf). **Offen:
   Patriks Sichttest 11 mit den Urteilen U1 bis U4.** Steuerdokument
   [Composer_Konzept.md](ui/Composer_Konzept.md) §9g.
-- ⬜ **Loop-Editor läuft mit dem Composer mit (Wunsch Patrik S127, nach G5/G6):**
+- ✅ **Loop-Editor läuft mit dem Composer mit (Wunsch Patrik S127, nach G5/G6):**
   spielt im Composer ein Loop-Clip, dessen Loop gerade in einem Loop-Editor
   offen ist, soll die Abspielstelle des Editors simultan mitlaufen — an der
-  Stelle im Loop, die der Composer gerade spielt. Noch nicht vorgelegt;
-  vorher zu klären: welche Editoren (Panel Loop, Drum, Instrument), was bei
-  mehreren Clips desselben Loops gilt, ob der Editor dabei bedienbar bleibt.
+  Stelle im Loop, die der Composer gerade spielt. **Entscheid W1 a (S127):**
+  Panel Loop (Marke im Arrangement), Drum- und Instrument-Editor (Marke im
+  Muster, solange die Stelle in einem Clip mit diesem Muster liegt).
+  **Entscheid W2 a (S127):** spielt der Composer denselben Loop mehrfach
+  zugleich, folgt die Marke dem gerade lautesten Clip dieses Loops (seine
+  Pegelkurve, ohne Gain — die Regel des laufenden Songs, S97). **Zusatz
+  Patrik:** dieselbe Kaskade gilt auch vom Panel Loop zu den Editoren — heute
+  zeigen die Editoren nur bei *Play pattern* eine Marke, beim Play des ganzen
+  Arrangements nicht (`LoopPanel::zeigeStand`); beides geht über dieselbe
+  Umrechnung Arrangement → Muster. **Entscheid W3 a (S127):** im Panel Loop
+  ein Haken **Scroll with playhead** wie im Composer, Vorgabe an, gemerkt;
+  an, folgt der Ausschnitt der Marke — Panel, Drum- und Instrument-Editor,
+  bei jeder Wiedergabe (Play, Play pattern, Composer); die Art (stetig,
+  seitenweise) aus der Einstellung des Composers; beim Ziehen am Rollbalken
+  rollt nichts. Heute rollt die Achse des Panels nur beim eigenen Play mit,
+  fest seitenweise (`LoopPanel::zeigeStand`; in der Vorlage W3 als „rollt nie
+  mit“ falsch angegeben, berichtigt S127), die Editoren gar nicht. ✅ Gebaut
+  S127 (Loop_Konzept „Die Marke läuft mit“, Sichttest 11 Abschnitt W), im
+  Programm nicht gesehen.
+- ⚪ **Idee Patrik S127 — Spielweisen der Saiteninstrumente (später, nur
+  aufgenommen):** Anschlag **down** und **up** klingen verschieden und spielen
+  die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
+  down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
+  trägt dafür mehrere Anschlag-Charakteristiken nebeneinander (Artikulationen).
+  Die Töne wahlweise über **Akkord-Tabulaturen** setzen — **optional neben
+  der Piano-Roll, nicht statt ihr** (Präzisierung Patrik): ein Akkord lässt
+  sich auch in der Piano-Roll darstellen, nur mit dem Versatz der Saiten;
+  Tabs eigen oder aus Vorlagen, auf dem Griffbrett verschiebbar; welche Saite
+  welchen Ton spielt, folgt aus dem Griff und der **Stimmung** (Standard
+  E A D G H E, aber variabel — je Instrument zu definieren). Gilt für alle Saiteninstrumente mit ihrer
+  Saitenzahl (Gitarre, Bass, Violine, vielleicht Harfe). Bei der Vorlage zu
+  klären: Violine wird eher gestrichen als angeschlagen, die Harfe hat kein
+  Griffbrett (eine Saite je Ton), Stimmung (Standard, Drop D, Capo).
+  Gemeinsam mit dem Mitlaufen: die Umrechnung Arrangement → Muster und die
+  Marke im Muster braucht ein Tab-Editor genauso.
 - **Sichttests, S103 — neu gefasst, mit festen Vorlagen (Anlass Patrik: „ich
   habe die Sichttests aufgegeben, sie sind zum Teil etwas unklar
   beschrieben"):**
@@ -5758,6 +5790,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.241.0 | 2026-10-15 | Session 127. §7: Mitlaufen der Loop-Fenster entschieden (W1 a mit Kaskade, W2 a, W3 a) und gebaut; Idee Spielweisen der Saiteninstrumente aufgenommen. |
 | 1.240.0 | 2026-10-15 | Session 127. §7 Composer: G6 fertig, Sichttest 11 offen. |
 | 1.239.0 | 2026-10-15 | Session 127. §7 Composer: G5 gebaut (Dialog Match loudness), offen G6. |
 | 1.238.0 | 2026-10-15 | Session 127. §7 Composer: G4 fertig (Teil 2), G5 entschieden (G5-1 bis G5-4); Wunsch: Loop-Editor läuft mit dem Composer mit. |

@@ -54,6 +54,8 @@ public:
 
     /// Die Abspielmarke: gezeichnet wird sie nur, solange der Loop spielt.
     void setSpielt(bool spielt);
+    /// Steht die Abspielmarke (das Panel spielt, oder der Composer spielt diesen Loop)?
+    [[nodiscard]] bool spielt() const { return m_spielt; }
     /// Die Stelle im Durchlauf, in Schritten (wie `Spieler::stelleSchritte`).
     void setStelleSchritte(double schritte);
     /// Wo Play beginnt (Entscheid Patrik B4, S124), in Schritten; gezeichnet im

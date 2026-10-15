@@ -46,17 +46,19 @@ void Achse::setStelle(std::int64_t stelle)
 void Achse::folgeDerMarke()
 {
     if (m_mitlaufen == Mitlaufen::Aus || zeitGanz() || m_tasteUnten || m_balkenGehalten) return;
-    const int breite = zeitBreite();
     const int imInhalt = static_cast<int>(std::floor(static_cast<double>(m_stelle) / einheitJePixel() + 0.5));
-    if (m_mitlaufen == Mitlaufen::Stetig)
-    {
-        // die Marke in der Mitte — am Anfang und am Ende laeuft sie selbst
-        setRollX(imInhalt - breite / 2);
-        return;
-    }
+    const int ziel = rollFuerMarke(m_mitlaufen, imInhalt, zeitBreite(), m_rollX);
+    if (ziel != m_rollX) setRollX(ziel);
+}
+
+int Achse::rollFuerMarke(Mitlaufen art, int imInhalt, int breite, int rollJetzt)
+{
+    // die Marke in der Mitte — am Anfang und am Ende laeuft sie selbst (der Aufrufer klemmt)
+    if (art == Mitlaufen::Stetig) return imInhalt - breite / 2;
     // seitenweise: erst wenn die Marke den Ausschnitt verlaesst, dann steht sie links
-    const int imFenster = imInhalt - m_rollX;
-    if (imFenster < 0 || imFenster >= breite) setRollX(imInhalt);
+    const int imFenster = imInhalt - rollJetzt;
+    if (art == Mitlaufen::Seitenweise && (imFenster < 0 || imFenster >= breite)) return imInhalt;
+    return rollJetzt;
 }
 
 void Achse::beginneNeu()
