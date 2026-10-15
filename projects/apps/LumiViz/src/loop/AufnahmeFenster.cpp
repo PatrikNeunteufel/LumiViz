@@ -5,6 +5,7 @@
 
 #include "loop/AufnahmeFenster.hpp"
 
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"  // KurvenBild
 #include "loop/Kit.hpp"
@@ -223,11 +224,15 @@ void AufnahmeFenster::setupUI()
     m_sichernAls->setToolTip(tr("Save as a new sample in My samples and use it"));
     m_sichern = new QPushButton(tr("Save"), this);
     m_sichern->setObjectName(QStringLiteral("recordSave"));
+    m_publish = new QPushButton(tr("Publish..."), this);
+    m_publish->setObjectName(QStringLiteral("recordPublish"));
+    m_publish->setToolTip(tr("Pass the sample on as one file"));
     auto* fuss = new QHBoxLayout;
     fuss->addStretch(1);
     fuss->addWidget(abbrechen);
     fuss->addWidget(m_sichernAls);
     fuss->addWidget(m_sichern);
+    fuss->addWidget(m_publish);
     aussen->addLayout(fuss);
 
     m_takt = new QTimer(this);
@@ -252,6 +257,12 @@ void AufnahmeFenster::setupUI()
     connect(abbrechen, &QPushButton::clicked, this, &QWidget::close);
     connect(m_sichern, &QPushButton::clicked, this, &AufnahmeFenster::frageUndSpeichere);
     connect(m_sichernAls, &QPushButton::clicked, this, &AufnahmeFenster::frageUndSpeichereAls);
+    // Publish (Publish_Konzept.md P2 a): das gespeicherte Sample — Save schliesst das Fenster
+    connect(m_publish, &QPushButton::clicked, this, [this] {
+        lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Sample,
+                                            lumi::paket::dateiDerNennung(lumi::paket::Art::Sample, m_nennung, {}),
+                                            geaendert());
+    });
     connect(m_bild, &KurvenBild::griffGezogen, this, [this](int welcher, double stelle) {
         const auto ort = static_cast<std::int64_t>(std::llround(stelle * static_cast<double>(frames())));
         Ausschnitt neu = m_ausschnitt;

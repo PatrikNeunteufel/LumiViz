@@ -975,6 +975,12 @@ TEST_SUITE("LoopArrangement")
 
         bus->publish(LoadLoopEvent{pfad.toStdString()});
         CHECK(panel.geladen());
+        // Publish (S125): der Knopf in der Datei-Zeile; ▶ aus Import package erreicht das Panel (ohne Engine: still)
+        auto* publish = panel.findChild<QPushButton*>(QStringLiteral("loopPublish"));
+        REQUIRE(publish != nullptr);
+        CHECK(publish->text() == QStringLiteral("Publish..."));
+        bus->publish(PreviewSoundFileEvent(false, pfad.toStdString()));
+        bus->publish(PreviewSoundFileEvent(true, pfad.toStdString()));
         CHECK(panel.datei() == pfad);
         REQUIRE(panel.loop().kanaele.size() == 2);
         CHECK(panel.loop().kanaele[0].name == QStringLiteral("Drums"));

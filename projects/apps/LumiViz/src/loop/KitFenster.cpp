@@ -5,6 +5,7 @@
 
 #include "loop/KitFenster.hpp"
 
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "loop/Instrument.hpp"  // holeInstrument, eigenerName, kEigenVorsatz
 #include "loop/InstrumentPalette.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
@@ -220,9 +221,13 @@ void KitFenster::setupUI()
     m_sichern = new QPushButton(tr("Save"), this);
     m_sichern->setObjectName(QStringLiteral("kitsSave"));
     m_sichern->setDefault(true);
+    m_publish = new QPushButton(tr("Publish..."), this);
+    m_publish->setObjectName(QStringLiteral("kitsPublish"));
+    m_publish->setToolTip(tr("Pass the kit on as one file, with the instruments and samples of your own it uses"));
     fuss->addWidget(m_nutzer, 1);
     fuss->addWidget(m_schliessen);
     fuss->addWidget(m_sichern);
+    fuss->addWidget(m_publish);
     haupt->addLayout(fuss);
 
     connect(m_undo, &QToolButton::clicked, this, [this] { (void)rueckgaengig(); });
@@ -249,6 +254,18 @@ void KitFenster::setupUI()
     connect(m_sichern, &QPushButton::clicked, this, [this] {
         if (speichere().isEmpty())
             QMessageBox::warning(this, tr("Kits"), tr("Could not save the kit %1").arg(m_kit.titel));
+    });
+    // Publish (Publish_Konzept.md P2 a): das gewaehlte Kit, wie es gespeichert ist
+    connect(m_publish, &QPushButton::clicked, this, [this] {
+        const QString datei = lumi::paket::dateiDerNennung(lumi::paket::Art::Kit, m_kit.name, {});
+        if (datei.isEmpty())  // ein mitgeliefertes: die Meldung, kein Speichern
+        {
+            lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Kit, datei, false);
+            return;
+        }
+        lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Kit, datei, geaendert(), [this, datei] {
+            return speichere().isEmpty() ? QString() : datei;
+        });
     });
     resize(880, 520);
 }

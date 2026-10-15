@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.227.0
+> **Version:** 1.228.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -5301,8 +5301,11 @@ Publish... hinter Save as an sieben Orten, Publish a file... und Import
 package... im Menü File; Eigenes und freie Orte gehen mit und werden
 `user:`; Medien per Haken, anfangs aus; `.lvdata` Fassung 2; gleiche Namen
 mit Vergleich, Vorgabe Keep both als `<name>_2`; Dialoge Publish und Import
-package), drei Skizzen als Beschreibung. Nächster Schritt: Stufe P-A (die
-Loop-Familie). Nebenbefund Keep both: `bass (2).lvinst` übergeht das
+package), drei Skizzen als Beschreibung. **Stufe P-A gebaut (S125):** Sammler,
+Packen, Import, die Dialoge, Publish... an fünf Orten, File → Publish a file...
+und Import package... (Konzept §5a–§5e, Handbuch §16 „Weitergeben: Publish“);
+im Programm ungesehen — offen: Patriks Sichttest, dann Stufe P-B (Komposition,
+Effect chain, Medien). Nebenbefund Keep both: `bass (2).lvinst` übergeht das
 Programm — mit einem Test belegt und behoben (S125, `<name>_2`).
 
 *Darunter die Vorgeschichte (S120, S123):*
@@ -5709,6 +5712,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.228.0 | 2026-10-15 | Session 125. §7 Publish: Stufe P-A gebaut (Knöpfe, Menü File), offen Sichttest und P-B. |
 | 1.227.0 | 2026-10-15 | Session 125. Keep both belegt und behoben (`nameMitZahl` → `<name>_2`). |
 | 1.226.0 | 2026-10-15 | Session 125. §7 Publish entschieden (P1 a bis P8 a), Steuerdokument `core-services/Publish_Konzept.md` 0.1.0; Nebenbefund Keep both (`nameMitZahl`). |
 | 1.225.0 | 2026-10-14 | Session 124. E1 a gebaut: Schalter der Effekte je Clip, Play pattern mit Effekten (Loop_Konzept §4m); 1221 Cases. |

@@ -713,7 +713,7 @@ void zeigeDatenExport(QWidget* parent)
     dialog.exec();
 }
 
-void zeigeDatenImport(QWidget* parent)
+void zeigeDatenImport(QWidget* parent, IEventBus* bus)
 {
     const QString ordner = ds::benutzerOrdner();
     if (ordner.isEmpty())
@@ -730,7 +730,7 @@ void zeigeDatenImport(QWidget* parent)
     if (lumi::paket::istPaket(datei))
     {
         // ein Paket aus Publish: der Dialog Import package (Publish_Konzept.md P2 a, P8 a)
-        zeigeImportPaket(parent, datei);
+        zeigeImportPaket(parent, datei, bus);
         return;
     }
     DatenImportDialog dialog(datei, ordner, parent);

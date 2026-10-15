@@ -16,6 +16,9 @@
  * ```
  * File (100)
  * ├── Open Audio... (100)    [Ctrl+O]
+ * ├── … Effect Chain, Composition …
+ * ├── Publish a file... (510)
+ * ├── Import package... (520)
  * ├── ─────────────── (800)  [Separator]
  * └── Exit (900)             [Alt+F4]
  *
@@ -60,11 +63,23 @@
 #include "services/ICommandBus.hpp"
 #include "services/events/UIEvents.hpp"
 #include "composer/AppAnbindung.hpp"  // Composer-Naht N8
+#include "UI/dialogs/PaketDialoge.hpp"  // Publish (S125)
 
 #include <QApplication>
 #include <QMainWindow>
 #include <QSettings>
 #include <BasicLogger.h>
+
+namespace
+{
+/// Das Hauptfenster als Eltern der Dialoge aus dem Menue.
+QWidget* hauptfenster()
+{
+    for (QWidget* w : QApplication::topLevelWidgets())
+        if (qobject_cast<QMainWindow*>(w) != nullptr) return w;
+    return QApplication::activeWindow();
+}
+}  // namespace
 
 // =============================================================================
 // initMenuDefaults - Called by MenuRegistry::instance() on first access
@@ -199,6 +214,32 @@ void initMenuDefaults(MenuRegistry& registry)
             [](ServiceContainer& svc) {
                 if (auto* eventBus = svc.tryResolve<IEventBus>())
                     eventBus->publish(lumi::composer::CloseCompositionEvent{});
+            },
+            {}, {}, ""
+        },
+        false);
+
+    // Publish (docs/core-services/Publish_Konzept.md, Entscheid Patrik P2 a, S125):
+    // eine Datei mit allem, was sie nennt, als Paket — und ein Paket importieren
+    registry.registerGroup(
+        MenuGroupDesc{{"menu.file.group.publish", "menu.file", 500}},
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.publishfile", "menu.file", 510},
+            "Publish a file...",
+            [](ServiceContainer& /*svc*/) { lumi::ui::zeigePublishDatei(hauptfenster()); },
+            {}, {}, ""
+        },
+        false);
+
+    registry.registerItem(
+        MenuItemDesc{
+            {"menu.file.importpackage", "menu.file", 520},
+            "Import package...",
+            [](ServiceContainer& svc) {
+                lumi::ui::zeigeImportPaket(hauptfenster(), QString(), svc.tryResolve<IEventBus>());
             },
             {}, {}, ""
         },

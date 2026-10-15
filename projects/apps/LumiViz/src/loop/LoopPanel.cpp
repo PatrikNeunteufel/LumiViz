@@ -5,6 +5,7 @@
 
 #include "loop/LoopPanel.hpp"
 
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "UI/widgets/Achse.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "audio/IAudioEngine.hpp"
@@ -122,6 +123,15 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     if (auto* bus = eventBus())
         m_ladeSubscription = bus->subscribeScoped<LoadLoopEvent>(
             [this](const LoadLoopEvent& e) { (void)oeffne(QString::fromStdString(e.path)); });
+    // ▶ im Dialog Import package (Publish, S125): ein Sample einen Schlag lang, ein Instrument C4
+    if (auto* bus = eventBus())
+        m_vorhoerSubscription = bus->subscribeScoped<PreviewSoundFileEvent>([this](const PreviewSoundFileEvent& e) {
+            const QString pfad = QString::fromStdString(e.path);
+            if (e.instrument)
+                (void)spieleInstrumentTon(pfad, 60);
+            else
+                (void)spieleSchlaege({Spur(QString(), pfad)});
+        });
     // vor dem Beenden der App fragt das Hauptfenster hier nach (MainWindow::closeEvent)
     meldeBeendenFrage(this, [this](const QString& titel) { return darfErsetzen(titel); });
 
@@ -217,6 +227,10 @@ void LoopPanel::setupUI()
     m_speichern->setObjectName(QStringLiteral("loopSave"));
     m_speichernUnter = new QPushButton(tr("Save As..."), this);
     m_speichernUnter->setObjectName(QStringLiteral("loopSaveAs"));
+    m_publish = new QPushButton(tr("Publish..."), this);
+    m_publish->setObjectName(QStringLiteral("loopPublish"));
+    m_publish->setToolTip(tr("Pass the loop on as one file, with the instruments, kits, shapes and samples "
+                             "of your own it uses"));
     m_tags = new QPushButton(tr("Tags..."), this);
     m_tags->setObjectName(QStringLiteral("loopTags"));
     m_tags->setToolTip(tr("Title, artist and the other tags of the loop — what the player shows "
@@ -228,6 +242,7 @@ void LoopPanel::setupUI()
     dateiReihe->addWidget(m_laden);
     dateiReihe->addWidget(m_speichern);
     dateiReihe->addWidget(m_speichernUnter);
+    dateiReihe->addWidget(m_publish);
     aussen->addLayout(dateiReihe);
 
     auto* spielReihe = new QHBoxLayout;
@@ -284,6 +299,11 @@ void LoopPanel::setupUI()
     connect(m_tags, &QPushButton::clicked, this, &LoopPanel::frageNachTags);
     connect(m_speichern, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(false); });
     connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)speichereMitDialog(true); });
+    // Publish (Publish_Konzept.md P2 a): die gespeicherte Datei; ungespeichert bietet es Speichern an
+    connect(m_publish, &QPushButton::clicked, this, [this] {
+        lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Loop, m_datei, m_datei.isEmpty() || ungespeichert(),
+                                            [this] { return speichereMitDialog(m_datei.isEmpty()) ? m_datei : QString(); });
+    });
     connect(m_play, &QPushButton::clicked, this, [this] {
         if (m_spieler.spielt() && !hoertVor())
             halte();

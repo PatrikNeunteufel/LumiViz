@@ -12,6 +12,11 @@
 #include "PaketBestand.hpp"
 
 #include "UI/dialogs/PaketDialoge.hpp"
+#include "loop/AufnahmeFenster.hpp"
+#include "loop/FormFenster.hpp"
+#include "loop/InstrumentCreator.hpp"
+#include "loop/InstrumentPalette.hpp"  // KitFenster haelt sie in einem QPointer
+#include "loop/KitFenster.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -193,6 +198,25 @@ TEST_SUITE("Publish")
         REQUIRE(lp::ladeLoop(ziel, loop));
         CHECK(loop.muster.at(2).instrument == QStringLiteral("user:bass"));
         CHECK(QDir::fromNativeSeparators(einstellungen.value(QStringLiteral("data/lastPackageDir")).toString()) == e.loops);
+    }
+
+    TEST_CASE("Publish Knoepfe: Publish... im Instrument-Creator, in Kits, Edit shape und Record sample (P2 a)")
+    {
+        const DialogApp app;
+        lp::InstrumentCreator creator;
+        lp::KitFenster kits;
+        lp::FormFenster form;
+        lp::AufnahmeFenster aufnahme;
+        const std::vector<std::pair<QWidget*, const char*>> orte = {
+            {&creator, "creatorPublish"}, {&kits, "kitsPublish"}, {&form, "shapePublish"}, {&aufnahme, "recordPublish"}};
+        for (const auto& [fenster, name] : orte)
+        {
+            CAPTURE(name);
+            auto* knopf = fenster->findChild<QPushButton*>(QString::fromLatin1(name));
+            REQUIRE(knopf != nullptr);
+            CHECK(knopf->text() == QStringLiteral("Publish..."));
+            CHECK_FALSE(knopf->toolTip().isEmpty());
+        }
     }
 
     TEST_CASE("Import package Dialog: ohne gleiche Namen keine Liste; eine Datensicherung laesst sich nicht importieren")

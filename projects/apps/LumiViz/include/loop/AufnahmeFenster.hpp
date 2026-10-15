@@ -241,6 +241,7 @@ private:
     QCheckBox* m_normal = nullptr;
     QPushButton* m_sichernAls = nullptr;
     QPushButton* m_sichern = nullptr;
+    QPushButton* m_publish = nullptr;
     QTimer* m_takt = nullptr;
 };
 

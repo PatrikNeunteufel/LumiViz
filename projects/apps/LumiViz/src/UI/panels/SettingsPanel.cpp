@@ -1421,7 +1421,8 @@ void SettingsPanel::setupConnections()
         m_pSearchDirDownButton->setEnabled(zeile >= 0 && zeile < m_pSearchDirList->count() - 1);
     });
     connect(m_pExportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenExport(this); });
-    connect(m_pImportDataButton, &QPushButton::clicked, this, [this] { lumi::ui::zeigeDatenImport(this); });
+    connect(m_pImportDataButton, &QPushButton::clicked, this,
+            [this] { lumi::ui::zeigeDatenImport(this, services().tryResolve<IEventBus>()); });
     if (m_pBundledFromProjectCheckBox != nullptr)
         connect(m_pBundledFromProjectCheckBox, &QCheckBox::toggled, this,
                 [](bool checked) { lumi::core::mitgeliefert::setzeProjektZuerst(checked); });

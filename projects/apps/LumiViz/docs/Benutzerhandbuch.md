@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.167.0
+> **Version:** 1.168.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -287,7 +287,8 @@ Alle Panels und Visualizer-Fenster sind frei andockbar:
   die deiner Byte für Byte gleicht, zählt nicht. Importierte *Settings* ersetzen deine und
   gelten nach einem Neustart. Nicht im Export: Loops, Kompositionen und Ketten, die du
   selbst irgendwo gespeichert hast, und die Testaufnahmen der Kamera. Die Datei ist ein
-  Zip — umbenannt in `.zip` lässt sie sich mit jedem Werkzeug ansehen · **Chosen Sample
+  Zip — umbenannt in `.zip` lässt sie sich mit jedem Werkzeug ansehen. Ein **Paket** aus
+  Publish (§16, „Weitergeben: Publish“) öffnet hier den Dialog *Import package* · **Chosen Sample
   Files** — was mit einer Tondatei geschieht, die du im Instrument-Creator über File...
   wählst: *Ask each time* (Vorgabe), *Copy to My samples* oder *Use it where it is*
   (§16, Instrument-Creator) · **MilkDrop Preset Switch** + **MilkDrop Fade
@@ -3195,6 +3196,43 @@ gerechnet, nicht nach Gehör eingestellt:
 | `afrobeat.lvloop` | Lagos night | Afrobeat | 108 | Cowbell und Congas als Instrumente, Round Bass, Clean Guitar, Orgel, Bläser |
 | `metal.lvloop` | Iron road | Metal | 160 | Doppel-Kick in Sechzehnteln, Overdrive Guitar, Growl Bass, Strings, Solo in harmonisch Moll |
 
+### Weitergeben: Publish
+
+Ein Loop nennt seine Instrumente, Klänge und sein Kit, ein Instrument seine
+Samples und Formen — gibst du nur die `.lvloop` weiter, fehlt dem anderen,
+was du selbst gebaut hast. **Publish...** packt ein Ding mit allem, was es
+nennt, in **eine Datei**: `<name>.<art>.lvdata`, etwa `titan.lvloop.lvdata`.
+
+- **Wo:** als letzter Knopf neben Save im Panel **Loop**, im
+  **Instrument-Creator**, im Fenster **Kits**, in **Edit shape** und in **Record
+  sample**; dazu **File → Publish a file...** für eine Datei, die gerade nicht
+  offen ist. Publish nimmt die **gespeicherte** Fassung — mit ungespeicherten
+  Änderungen fragt es nach (das Panel Loop bietet gleich das Speichern an).
+  Mitgeliefertes hat keine eigene Datei: davon erst mit Save as... eine Kopie
+  machen.
+- **Der Dialog Publish** zeigt, was mitgeht: das Ding selbst, darunter je Art
+  die Instrumente, Kits, Formen und Samples, die es über alle Stufen nennt —
+  mit ihrer Herkunft (*yours*, *next to the loop* oder der Pfad auf der Platte)
+  und dem Namen, den sie beim Empfänger tragen (`user:<name>`). Grau und
+  eingeklappt steht **Bundled, not included**: Mitgeliefertes wie `piano` oder
+  `kit:hat_closed` hat jedes LumiViz, es geht nur beim Namen mit. In Bernstein
+  steht **Not found**: was genannt ist, aber nicht mehr da — es kann nicht
+  mit, das Paket nennt es. Darunter **Save to** und die Summe.
+- **Einlesen:** **File → Import package...** (oder Settings → User data →
+  Import...). Der Dialog **Import package** zeigt, wohin jede Datei kommt:
+  Instrumente, Kits, Formen und Samples in deine eigenen (*My …*), ein Loop
+  dorthin, wo du ihn unter **Save to** ablegst. Gibt es einen Namen bei dir
+  schon mit anderem Inhalt, steht er unter **Same names** — mit ▶ für deine und
+  die aus dem Paket (bei Formen ein kleines Bild) und der Wahl je Zeile:
+  **Keep both** (Vorgabe: die aus dem Paket heißt dann `bass_2`, und alles im
+  Paket nennt sie so), **Replace mine** oder **Use mine** (das Paket nimmt
+  deine). **All:** stellt alle Zeilen auf einmal. Was Byte für Byte gleich ist,
+  wird nicht noch einmal geschrieben. **Notes** nennt, was dem Absender fehlte,
+  und Mitgeliefertes, das dein LumiViz nicht hat (ein älteres). Mit **Open the
+  loop after import** steht der Loop danach im Panel.
+- Songs, Videos, Kompositionen und Effektketten kommen in einer späteren
+  Stufe dazu.
+
 ### Eine Loop-Datei von Hand
 
 `.lvloop` ist eine Textdatei (JSON). Die Felder stehen in der Entwickler-Doku
@@ -3312,6 +3350,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.168.0 | 2026-10-15 | Session 125. §16 NEU „Weitergeben: Publish“: Publish... in Panel Loop, Instrument-Creator, Kits, Edit shape, Record sample, File → Publish a file... und Import package..., die Dialoge Publish und Import package (Same names mit Keep both, Replace mine, Use mine); §8 ein Paket öffnet aus Import... den Dialog Import package. |
 | 1.167.0 | 2026-10-15 | Session 125. §8 Import data: Keep both heißt jetzt `bass_2` statt `bass (2)` — einen Namen mit Klammern übergingen Instrumente, Samples, Kits und Formen. |
 | 1.166.0 | 2026-10-14 | Session 124. §16 NEU der Schalter für alle Effekte eines Clips: **Effects on** im Fenster Clip effects, **FX** im Drum- und Instrument-Editor, die matte Marke **fx**; **Play pattern** spielt jetzt mit den Effekten des Bezugsclips (vorher trocken). Eine `.lvloop` wird als Fassung 7 geschrieben. |
 | 1.165.0 | 2026-10-14 | Session 124. §16 GEÄNDERT: ein Muster kann **1 bis 64 Takte** lang sein (bisher 4 bis 64), neu der Haken **Repeat when lengthening**; ein Klick in die Taktzeile der Editoren setzt jetzt die **Abspielstelle**, die Einfügemarke setzt **Shift**+Klick; im Instrument-Editor nimmt eine Kopie den Zeitraum des Rahmens mit; ein Klick ins **Lineal** des Panels Loop springt oder setzt die Startmarke. Eine `.lvloop` wird als Fassung 6 geschrieben. |

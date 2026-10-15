@@ -42,6 +42,7 @@ class QSettings;
 class QTreeWidget;
 class QTreeWidgetItem;
 class QVBoxLayout;
+class IEventBus;
 
 namespace lumi::ui
 {
@@ -146,13 +147,21 @@ private:
     std::unique_ptr<QTemporaryDir> m_vorhoeren;  ///< Kopien aus dem Paket zum Anspielen
 };
 
-/// File → **Publish a file...** und die Knoepfe **Publish...**: den Dialog fuer `datei`
-/// zeigen (nach einem Fehler eine Meldung).
+/// Die Knoepfe **Publish...**: den Dialog fuer `datei` zeigen (nach einem
+/// Fehler eine Meldung).
 void zeigePublish(QWidget* parent, const QString& datei);
+/// File → **Publish a file...**: nach einer Datei der Loop-Familie fragen, dann `zeigePublish`.
+void zeigePublishDatei(QWidget* parent);
+/// **Publish...** in einem Fenster (Publish_Konzept.md §5e, von Claude gesetzt):
+/// ohne eigene Datei (mitgeliefert, neu) eine Meldung; mit ungespeicherten
+/// Aenderungen die Frage, ob die gespeicherte Fassung gehen soll — gibt es
+/// `speichere`, bietet sie Speichern an. Dann `zeigePublish`.
+void veroeffentlicheAusFenster(QWidget* parent, lumi::paket::Art art, const QString& datei, bool ungespeichert,
+                               const std::function<QString()>& speichere = {});
 /// Eine `.lvdata` importieren: ein Paket im Dialog Import package, eine
 /// Datensicherung im Dialog Import data (P2 a, P8 a). `datei` leer = erst fragen.
-/// `oeffne` bekommt nach dem Import das Hauptding, wenn der Haken sitzt.
-void zeigeImportPaket(QWidget* parent, const QString& datei = {},
-                      const std::function<void(lumi::paket::Art, const QString&)>& oeffne = {});
+/// Mit `bus` spielen ▶ und das Oeffnen nach dem Import ueber das Panel Loop
+/// (`PreviewSoundFileEvent`, `LoadLoopEvent`).
+void zeigeImportPaket(QWidget* parent, const QString& datei = {}, IEventBus* bus = nullptr);
 
 }  // namespace lumi::ui

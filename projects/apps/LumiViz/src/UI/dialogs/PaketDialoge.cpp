@@ -15,6 +15,9 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/SignalWeg.hpp"
+#include "loop/Sample.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
 #include "shape/Kontur.hpp"
 
 #include <QCheckBox>
@@ -50,6 +53,7 @@ namespace
 
 const char* const kLetzterPublishOrdner = "data/lastPublishDir";  // ein Pfad: geht nie in einen Export
 const char* const kLetzterImportOrdner = "data/lastPackageDir";
+const char* const kLetzterQuellOrdner = "data/lastPublishSourceDir";
 
 QString startOrdner(QSettings& einstellungen, const char* schluessel)
 {
@@ -486,10 +490,14 @@ ImportPaketDialog::ImportPaketDialog(const QString& datei, QWidget* parent, QSet
             aussen->addLayout(zielZeile);
         }
 
-        m_oeffnen = new QCheckBox(tr("Open the %1 after import").arg(paketArtWort(m_inhalt.art)), this);
-        m_oeffnen->setObjectName(QStringLiteral("importPackageOpen"));
-        m_oeffnen->setChecked(true);
-        fuss->addWidget(m_oeffnen);
+        // nur ein Loop wird geoeffnet; Instrumente, Kits, Formen und Samples stehen danach in ihren Listen
+        if (m_inhalt.brauchtZiel())
+        {
+            m_oeffnen = new QCheckBox(tr("Open the %1 after import").arg(paketArtWort(m_inhalt.art)), this);
+            m_oeffnen->setObjectName(QStringLiteral("importPackageOpen"));
+            m_oeffnen->setChecked(true);
+            fuss->addWidget(m_oeffnen);
+        }
     }
     fuss->addStretch(1);
     m_import = new QPushButton(tr("Import"), this);
@@ -763,7 +771,64 @@ void zeigePublish(QWidget* parent, const QString& datei)
     dialog.exec();
 }
 
-void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, const std::function<void(pk::Art, const QString&)>& oeffne)
+void zeigePublishDatei(QWidget* parent)
+{
+    QSettings einstellungen;
+    QStringList samples;
+    for (const QString& endung : lp::sampleEndungen()) samples << QStringLiteral("*.") + endung;
+    const QString datei = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Publish a file"), startOrdner(einstellungen, kLetzterQuellOrdner),
+        QObject::tr("Loops, instruments, kits, shapes (*.lvloop *.lvinst *.lvkit *.lvcontour);;Samples (%1);;All files (*)")
+            .arg(samples.join(QLatin1Char(' '))));
+    if (datei.isEmpty()) return;
+    einstellungen.setValue(QLatin1String(kLetzterQuellOrdner), QFileInfo(datei).absolutePath());
+    zeigePublish(parent, datei);
+}
+
+void veroeffentlicheAusFenster(QWidget* parent, pk::Art art, const QString& datei, bool ungespeichert,
+                               const std::function<QString()>& speichere)
+{
+    const QString titel = QObject::tr("Publish %1").arg(paketArtWort(art));
+    QString pfad = datei;
+    if (ungespeichert || pfad.isEmpty())
+    {
+        if (speichere)
+        {
+            const auto antwort = QMessageBox::question(
+                parent, titel,
+                pfad.isEmpty() ? QObject::tr("Publish takes the saved %1. Save it now?").arg(paketArtWort(art))
+                               : QObject::tr("Publish takes the saved %1 — your latest changes aren't in it. Save them now?")
+                                     .arg(paketArtWort(art)),
+                pfad.isEmpty() ? QMessageBox::Save | QMessageBox::Cancel
+                               : QMessageBox::Save | QMessageBox::Ignore | QMessageBox::Cancel);
+            if (antwort == QMessageBox::Cancel) return;
+            if (antwort == QMessageBox::Save)
+            {
+                pfad = speichere();
+                if (pfad.isEmpty()) return;
+            }
+        }
+        else if (pfad.isEmpty())
+        {
+            QMessageBox::information(parent, titel,
+                                     QObject::tr("This %1 has no file of its own: it is built in, or not saved yet. "
+                                                 "Built-in ones come with every LumiViz. To pass on a changed one, "
+                                                 "save a copy first (Save as...).")
+                                         .arg(paketArtWort(art)));
+            return;
+        }
+        else if (QMessageBox::question(parent, titel,
+                                       QObject::tr("Publish takes the saved %1 — your latest changes aren't in it. "
+                                                   "Publish the saved one?")
+                                           .arg(paketArtWort(art))) != QMessageBox::Yes)
+        {
+            return;
+        }
+    }
+    zeigePublish(parent, pfad);
+}
+
+void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus)
 {
     QString datei = gewaehlt;
     if (datei.isEmpty())
@@ -791,9 +856,15 @@ void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, const std::funct
         return;
     }
     ImportPaketDialog dialog(datei, parent);
-    if (oeffne)
-        QObject::connect(&dialog, &ImportPaketDialog::oeffnenVerlangt, &dialog,
-                         [&oeffne](int art, const QString& pfad) { oeffne(static_cast<pk::Art>(art), pfad); });
+    if (bus != nullptr)
+    {
+        QObject::connect(&dialog, &ImportPaketDialog::anspielenVerlangt, &dialog, [bus](int art, const QString& pfad) {
+            bus->publish(PreviewSoundFileEvent(static_cast<pk::Art>(art) == pk::Art::Instrument, pfad.toStdString()));
+        });
+        QObject::connect(&dialog, &ImportPaketDialog::oeffnenVerlangt, &dialog, [bus](int art, const QString& pfad) {
+            if (static_cast<pk::Art>(art) == pk::Art::Loop) bus->publish(LoadLoopEvent(pfad.toStdString()));
+        });
+    }
     dialog.exec();
 }
 

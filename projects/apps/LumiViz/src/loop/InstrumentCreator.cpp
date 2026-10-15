@@ -5,6 +5,7 @@
 
 #include "loop/InstrumentCreator.hpp"
 
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
@@ -499,6 +500,9 @@ void InstrumentCreator::setupUI()
     m_speichernUnter = new QPushButton(tr("Save as..."), this);
     m_speichernUnter->setObjectName(QStringLiteral("creatorSaveAs"));
     m_speichernUnter->setToolTip(tr("Save a copy to My files under a new name"));
+    m_publish = new QPushButton(tr("Publish..."), this);
+    m_publish->setObjectName(QStringLiteral("creatorPublish"));
+    m_publish->setToolTip(tr("Pass the instrument on as one file, with the samples and shapes of your own it uses"));
     m_spitze = new QLabel(this);
     m_spitze->setObjectName(QStringLiteral("creatorPeak"));
     m_spitze->setToolTip(tr("Peak of one note (C4) with these settings"));
@@ -509,6 +513,7 @@ void InstrumentCreator::setupUI()
     kopf->addWidget(m_zurueck);
     kopf->addWidget(m_speichern);
     kopf->addWidget(m_speichernUnter);
+    kopf->addWidget(m_publish);
     m_gesamt = new QSlider(Qt::Horizontal, this);
     m_gesamt->setObjectName(QStringLiteral("creatorMasterLevel"));
     m_gesamt->setRange(0, 100);
@@ -1239,6 +1244,10 @@ void InstrumentCreator::setupUI()
     });
     // Save as...: immer eine Kopie unter neuem Namen in den Benutzerordner — kein Dateidialog (Entscheid E1 a, S117)
     connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)frageNachNamen(); });
+    // Publish (Publish_Konzept.md P2 a): die gespeicherte Datei; ein mitgeliefertes hat keine
+    connect(m_publish, &QPushButton::clicked, this, [this] {
+        lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Instrument, m_datei, geaendert());
+    });
     connect(m_tasten, &Tastenleiste::taste, this, [this](int hoehe) {
         m_wiederholHoehe = hoehe;  // auch ohne Repeat: mit ihm beginnt es spaeter
         (void)spieleAn(hoehe);

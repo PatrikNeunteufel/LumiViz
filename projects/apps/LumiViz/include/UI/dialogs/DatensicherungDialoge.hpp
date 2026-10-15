@@ -33,6 +33,7 @@
 #include <map>
 #include <vector>
 
+class IEventBus;
 class QCheckBox;
 class QLabel;
 class QLineEdit;
@@ -155,8 +156,9 @@ private:
     int m_einstellungenGesetzt = 0;
 };
 
-/// Settings → User data → **Import...**: nach der Datei fragen, den Dialog zeigen.
-void zeigeDatenImport(QWidget* parent);
+/// Settings → User data → **Import...**: nach der Datei fragen, den Dialog zeigen
+/// — ein Paket aus Publish im Dialog Import package (mit `bus`: ▶ und Oeffnen).
+void zeigeDatenImport(QWidget* parent, IEventBus* bus = nullptr);
 /// Settings → User data → **Export...**.
 void zeigeDatenExport(QWidget* parent);
 

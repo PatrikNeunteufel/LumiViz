@@ -189,6 +189,7 @@ private:
 
     /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
     IEventBus::SubscriberHandle m_ladeSubscription;
+    IEventBus::SubscriberHandle m_vorhoerSubscription;  ///< ▶ im Dialog Import package (Publish, S125)
     QPointer<DrumEditor> m_editor;
     QPointer<InstrumentEditor> m_instrumentEditor;
     QPointer<ClipEffektFenster> m_effekte;
@@ -211,6 +212,7 @@ private:
     QPushButton* m_laden = nullptr;
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
+    QPushButton* m_publish = nullptr;
     QPushButton* m_tags = nullptr;
     QPushButton* m_play = nullptr;
     QDoubleSpinBox* m_bpm = nullptr;

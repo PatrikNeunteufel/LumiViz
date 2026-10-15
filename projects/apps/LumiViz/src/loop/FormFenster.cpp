@@ -5,6 +5,7 @@
 
 #include "loop/FormFenster.hpp"
 
+#include "UI/dialogs/PaketDialoge.hpp"
 #include "loop/Instrument.hpp"  // eigeneInstrumenteMitForm, zaehleInstrumentFassung
 #include "shape/BildKonturen.hpp"
 #include "shape/Tonform.hpp"  // sprungLinien, brueckeErlaubt
@@ -822,11 +823,15 @@ void FormFenster::setupUI()
     m_sichernAls->setToolTip(tr("Save as a new shape in My shapes and use it"));
     m_sichern = new QPushButton(tr("Save"), this);
     m_sichern->setObjectName(QStringLiteral("shapeSave"));
+    m_publish = new QPushButton(tr("Publish..."), this);
+    m_publish->setObjectName(QStringLiteral("shapePublish"));
+    m_publish->setToolTip(tr("Pass the shape on as one file"));
     auto* fuss = new QHBoxLayout;
     fuss->addWidget(m_nutzer, 1);
     fuss->addWidget(abbrechen);
     fuss->addWidget(m_sichernAls);
     fuss->addWidget(m_sichern);
+    fuss->addWidget(m_publish);
     aussen->addLayout(fuss);
 
     connect(m_stift, &QToolButton::clicked, this, [this] { setzeWerkzeug(FormFlaeche::Werkzeug::Stift); });
@@ -936,6 +941,13 @@ void FormFenster::setupUI()
     m_live = QSettings().value(QLatin1String(kBildLive), true).toBool();
     connect(m_sichern, &QPushButton::clicked, this, &FormFenster::frageUndSpeichere);
     connect(m_sichernAls, &QPushButton::clicked, this, &FormFenster::frageUndSpeichereAls);
+    // Publish (Publish_Konzept.md P2 a): die gespeicherte Form — Save schliesst das Fenster, darum
+    // fragt Publish nur, ob die gespeicherte Fassung gehen soll
+    connect(m_publish, &QPushButton::clicked, this, [this] {
+        lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Kontur,
+                                            lumi::paket::dateiDerNennung(lumi::paket::Art::Kontur, m_nennung, {}),
+                                            geaendert());
+    });
     auto* zurueck = new QShortcut(QKeySequence::Undo, this);
     zurueck->setContext(Qt::WidgetWithChildrenShortcut);
     connect(zurueck, &QShortcut::activated, this, [this] { (void)rueckgaengig(); });

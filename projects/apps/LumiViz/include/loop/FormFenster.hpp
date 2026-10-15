@@ -472,6 +472,7 @@ private:
     QLabel* m_nutzer = nullptr;
     QPushButton* m_sichernAls = nullptr;
     QPushButton* m_sichern = nullptr;
+    QPushButton* m_publish = nullptr;
 };
 
 }  // namespace lumi::loop

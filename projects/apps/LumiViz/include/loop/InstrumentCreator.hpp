@@ -527,6 +527,7 @@ private:
     QPushButton* m_zurueck = nullptr;
     QPushButton* m_speichern = nullptr;
     QPushButton* m_speichernUnter = nullptr;
+    QPushButton* m_publish = nullptr;
     QLabel* m_spitze = nullptr;
     // die zweite Zeile im Kopf (Stufe 14b): fuer das Fenster „Instruments"
     QComboBox* m_art = nullptr;

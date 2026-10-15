@@ -411,6 +411,24 @@ struct LoadLoopEvent : public Event
 };
 
 /**
+ * @brief Request to play a sound file once — a sample or an instrument file
+ *        (.lvinst, one note C4). The Loop panel plays it (Publish, ▶ in the
+ *        dialog Import package, S125).
+ */
+struct PreviewSoundFileEvent : public Event
+{
+    EVENT_TYPE_NAME("PreviewSoundFileEvent")
+
+    bool instrument = false;  ///< false = a sample file
+    std::string path;
+
+    PreviewSoundFileEvent() = default;
+    PreviewSoundFileEvent(bool istInstrument, std::string p)
+        : instrument(istInstrument), path(std::move(p))
+    {}
+};
+
+/**
  * @brief Request to switch the karaoke layer on/off (menu View → Karaoke,
  *        shortcut `view.karaoke`). The main window toggles and announces the
  *        new state with KaraokeEnabledChangedEvent.

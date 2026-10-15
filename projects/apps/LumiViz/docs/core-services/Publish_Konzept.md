@@ -1,11 +1,11 @@
 # LumiViz — Publish (Konzept)
 
-> **Version:** 0.6.0
+> **Version:** 0.7.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Konzept — die Entscheide P1 a bis P8 a sind gefallen (Patrik S125,
 > §3), die drei Skizzen sind gebilligt (§4); gebaut: der Namensbau von Keep
-> both (P6 a, §2b), die Sammler der Loop-Familie (§5a), das Packen (§5b), der Import (§5c) und
-> die Dialoge (§5d); offen in P-A: die Knöpfe und das Menü File
+> both (P6 a, §2b), die Sammler der Loop-Familie (§5a), das Packen (§5b), der Import (§5c),
+> die Dialoge (§5d) und die Knöpfe (§5e) — **Stufe P-A gebaut**; im Programm ungesehen
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Datenablage_Konzept.md](Datenablage_Konzept.md) §4a (Export und
@@ -293,6 +293,29 @@ package (P2 a). Tests: `test_PublishDialoge` (drei Fälle), Bilder mit
 - Der gemerkte Ordner: `data/lastPublishDir` und `data/lastPackageDir`
   (Pfade gehen nie in einen Export).
 
+### 5e. Die Knöpfe und das Menü (S125)
+
+**Publish...** steht als letzter Knopf neben Save im Panel Loop (`loopPublish`),
+im Instrument-Creator (`creatorPublish`), im Fenster Kits (`kitsPublish`), in
+Edit shape (`shapePublish`) und Record sample (`recordPublish`); im Menü File
+eine Gruppe mit **Publish a file...** und **Import package...**. Das Panel Loop
+spielt, worum ▶ im Dialog Import package bittet (`PreviewSoundFileEvent`: ein
+Sample einen Schlag lang, ein Instrument C4), und lädt den Loop nach dem
+Import (`LoadLoopEvent`). Composer und Effect chain folgen mit Stufe P-B.
+Handbuch §16 „Weitergeben: Publish“ (1.168.0).
+
+**Von Claude gesetzt:**
+- Publish nimmt die **gespeicherte** Datei. Mit ungespeicherten Änderungen
+  fragt es, ob die gespeicherte Fassung gehen soll; nur das Panel Loop und
+  das Fenster Kits bieten Speichern an (in Edit shape und Record sample
+  schließt Save das Fenster, der Creator speichert über einen Namen). Ohne
+  eigene Datei (mitgeliefert, neu) eine Meldung mit dem Hinweis auf Save as....
+- Der Knopf steht als letzter, auch rechts neben Save, wo Save der letzte war.
+- Der Haken Open … after import nur bei einem Loop; die anderen Arten stehen
+  nach dem Import in ihren Listen.
+- File → Publish a file... fragt nach Loops, Instrumenten, Kits, Formen und
+  Samples und merkt den Ordner (`data/lastPublishSourceDir`).
+
 ## 6. Offen, von Claude zu setzen und vorzulegen, wo es sichtbar wird
 
 - ~~Die Namen im Manifest-Block `package` und der Aufbau unter `package/`.~~
@@ -306,6 +329,7 @@ package (P2 a). Tests: `test_PublishDialoge` (drei Fälle), Bilder mit
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-10-15 | Session 125. §5e NEU: die Knöpfe und das Menü File — Stufe P-A gebaut. |
 | 0.6.0 | 2026-10-15 | Session 125. §5d NEU: die Dialoge Publish und Import package gebaut (`UI/dialogs/PaketDialoge`); Settings-Import nimmt Pakete. |
 | 0.5.0 | 2026-10-15 | Session 125. §5c NEU: der Import gebaut (`paket/Import`); `bundled` trägt die Art. |
 | 0.4.0 | 2026-10-15 | Session 125. §5b NEU: das Packen gebaut (`paket/Packen`, `.lvdata` Fassung 2), das Manifest. |
