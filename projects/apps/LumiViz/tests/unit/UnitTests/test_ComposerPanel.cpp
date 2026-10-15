@@ -30,6 +30,7 @@
 #include "composer/Komposition.hpp"
 #include "composer/KurvenEditor.hpp"
 #include "composer/Sitzung.hpp"
+#include "loop/Loop.hpp"
 #include "services/CommandBus.hpp"
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -3119,5 +3120,101 @@ TEST_SUITE("ComposerPanel")
             wahl->setCurrentIndex(0);
             CHECK_FALSE(Sitzung::mitlaufenSeitenweise());
         }
+    }
+
+    TEST_CASE("S127 Loop 3b Panel: eine .lvloop ins echte Composer-Panel ziehen — ein Loop-Clip mit seinem Durchlauf")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+        for (int i = 0; i < 6; ++i) wurzel.cdUp();
+        const QString drums = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+        const QString effekte = wurzel.filePath(QStringLiteral("asset/loop/effects_demo.lvloop"));
+        REQUIRE(QFileInfo::exists(drums));
+        REQUIRE(QFileInfo::exists(effekte));
+        lumi::loop::Loop drumsLoop;
+        lumi::loop::Loop effektLoop;
+        REQUIRE(lumi::loop::ladeLoop(drums, drumsLoop));
+        REQUIRE(lumi::loop::ladeLoop(effekte, effektLoop));
+
+        Komposition k;
+        Kanal bildKanal;
+        bildKanal.name = QStringLiteral("CH1");
+        bildKanal.clips = {clip(rot, 0, 60000)};
+        Kanal ton;
+        ton.name = QStringLiteral("A1");
+        ton.art = KanalArt::Audio;
+        k.kanaele = {bildKanal, ton};
+        const QString datei = dir.filePath(QStringLiteral("loops.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new papp::PappEngine); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        REQUIRE(bus != nullptr);
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 420);
+        testfenster::platziere(panel);
+        panel.show();
+        REQUIRE(warte([&] { return panel.zeitachse()->width() > 400; }));
+        Sitzung* sitzung = panel.sitzung();
+        Zeitachse* achse = panel.zeitachse();
+        REQUIRE(sitzung->lade(datei));
+        auto* edit = panel.findChild<QCheckBox*>(QStringLiteral("composerEdit"));
+        REQUIRE(edit != nullptr);
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        const auto tonClips = [&] { return sitzung->komposition().kanaele[1].clips; };
+
+        // --- ein Loop in den Ton-Kanal: so lang wie ein Durchlauf, ohne Quelllaenge (er endet nie)
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(5200), achse->yVonZeile(1)), {drums}));
+        REQUIRE(tonClips().size() == 1);
+        const Clip c = tonClips()[0];
+        CHECK(c.datei == drums);
+        CHECK(istLoop(c.datei));
+        CHECK(c.startMs == 5000);  // auf dem Raster
+        CHECK(c.dauerMs() == static_cast<std::int64_t>(std::llround(drumsLoop.durchlaufMs())));
+        CHECK(c.quellMs == 0);
+        CHECK(bus->undoDescription() == "Add song");  // ein Ton-Clip, wie ein Song
+
+        // --- ein zweiter, mit Effekten, dahinter
+        const std::int64_t hinter = c.endeMs + 1000;
+        REQUIRE(achse->lasseFallen(QPoint(achse->xVon(hinter), achse->yVonZeile(1)), {effekte}));
+        REQUIRE(tonClips().size() == 2);
+        CHECK(tonClips()[1].datei == effekte);
+        CHECK(tonClips()[1].dauerMs() == static_cast<std::int64_t>(std::llround(effektLoop.durchlaufMs())));
+        // das Ende der Komposition folgt ihm
+        CHECK(sitzung->laengeMs() == tonClips()[1].endeMs);
+
+        // --- ein Loop in einen Bild-Kanal wird kein Bild-Clip
+        const std::size_t bilder = sitzung->komposition().kanaele[0].clips.size();
+        (void)achse->lasseFallen(QPoint(achse->xVon(30000), achse->yVonZeile(0)), {drums});
+        for (const Clip& b : sitzung->komposition().kanaele[0].clips) CHECK_FALSE(istLoop(b.datei));
+        CHECK(sitzung->komposition().kanaele[0].clips.size() == bilder);
+
+        // --- Undo nimmt die Clips einzeln zurueck
+        while (tonClips().size() > 0 && bus->canUndo()) REQUIRE(bus->undo());
+        CHECK(tonClips().empty());
     }
 }

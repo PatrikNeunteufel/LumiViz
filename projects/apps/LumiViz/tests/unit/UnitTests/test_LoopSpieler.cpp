@@ -984,6 +984,58 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
     CHECK(engine.generator == nullptr);
 }
 
+TEST_CASE("S127 Loop 3b im Composer: ein Loop mit Effekten — der Klangerzeuger des Clips traegt sie")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QCoreApplication app{argc, argv};  // die mitgelieferten Instrumente
+    using namespace lumi::composer;
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString pfad = wurzel.filePath(QStringLiteral("asset/loop/effects_demo.lvloop"));
+    Loop mitFx;
+    REQUIRE(ladeLoop(pfad, mitFx));
+    // die Stelle, an der ein Clip mit Effekten spielt
+    int startTakt = -1;
+    for (const auto& kanal : mitFx.kanaele)
+        for (const LoopClip& c : kanal.clips)
+            if (c.effekteWirken() && startTakt < 0) startTakt = c.startTakt;
+    REQUIRE(startTakt >= 0);
+    const double msJeTakt = mitFx.durchlaufMs() / mitFx.durchlaufTakte();
+
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Tonfuehrung fuehrung;
+    REQUIRE(fuehrung.uebernimm(engine, player));
+    const auto bei = static_cast<std::int64_t>(std::llround(startTakt * msJeTakt));
+    const Komposition k = mitClip(pfad, 0, 120000);
+    (void)fuehrung.takt(k, bei, true);
+    REQUIRE(fuehrung.loops() == 1);
+    const auto* erzeuger = dynamic_cast<const Klangerzeuger*>(engine.generator);
+    REQUIRE(erzeuger != nullptr);
+    const auto programm = erzeuger->programm();
+    REQUIRE(programm != nullptr);
+    CHECK(programm->effekte != nullptr);  // die Effekte der Clips sind im Programm des Composers
+    CHECK_FALSE(programm->ablauf.busse.empty());
+    // er rechnet: an der Stelle eines Clips mit Effekten kommt Ton heraus, und nichts ist kaputt
+    std::vector<float> block(2 * 4096, 0.0f);
+    float spitze = 0.0f;
+    int kaputt = 0;
+    for (int i = 0; i < 20; ++i)
+    {
+        engine.generator->render(block.data(), 4096);
+        for (float x : block)
+        {
+            if (!std::isfinite(x)) ++kaputt;
+            spitze = std::max(spitze, std::abs(x));
+        }
+    }
+    CHECK(kaputt == 0);
+    CHECK(spitze > 0.0f);
+    fuehrung.gibFrei();
+}
+
 TEST_CASE("S127 W2 Loop im Composer: die Stelle je Loop fuer Panel und Editoren — der lauteste Clip, -1 ohne")
 {
     using namespace lumi::composer;

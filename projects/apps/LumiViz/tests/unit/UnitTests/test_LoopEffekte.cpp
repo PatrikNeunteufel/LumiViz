@@ -506,3 +506,68 @@ TEST_CASE("Loop Effekte Messung: die Rechenzeit einer Kette gegen die Dauer des 
     CHECK(hall < 1000.0);
     CHECK(kette < 1000.0);
 }
+
+TEST_CASE("Loop Effekte Messung: viele Clips mit Effekten im Klangerzeuger (S127, Loop-Kleinkram 4)")
+{
+    // Je Kanal ein Clip ueber den ganzen Durchlauf mit Verzerrer, Echo und Hall,
+    // auf jedem Schlag ein Schlag: alle Ketten rechnen die ganze Zeit. Gemessen
+    // wird der Klangerzeuger in Bloecken wie der Mixer; meldet nur Zahlen —
+    // aussagekraeftig unter Release-clang (Testing-MSVC rechnet die Reihe
+    // dreissig- bis vierzigmal langsamer).
+    bool ok = false;
+    int sekunden = qEnvironmentVariableIntValue("LUMIVIZ_EFFEKT_MESSUNG_S", &ok);
+    if (!ok || sekunden <= 0) sekunden = 5;
+    const int frames = sekunden * kEffektRate;
+    constexpr int kBlock = 441;
+
+    ClipEffekte alle;
+    alle.hole<ClipHall>() = {true, 0.5, 1.8, 0.4, 0.25};
+    alle.hole<ClipVerzerrung>() = {true, 0.3, 0.5, 1.0};
+    alle.hole<ClipEcho>() = {true, EchoZeit::AchtelPunktiert, 0.4, 0.3, 0.35};
+    const auto klaenge = effektKlang();
+
+    const auto loopMit = [&](int kanaele) {
+        Loop loop;
+        loop.laut = 1.0 / kanaele;
+        loop.schlaegeJeTakt = 1;
+        Muster m;
+        m.name = QStringLiteral("M");
+        m.spuren = {{QStringLiteral("A"), QStringLiteral("a.wav"), 1.0, 0.0, false}};
+        m.zeilen = {std::vector<double>(16, 0.0)};
+        for (std::size_t s = 0; s < 16; s += 4) m.zeilen[0][s] = 1.0;  // jeder Schlag
+        loop.muster = {m};
+        for (int k = 0; k < kanaele; ++k)
+            loop.kanaele.push_back({QStringLiteral("K%1").arg(k), true, {LoopClip{QStringLiteral("M"), 0, 2, alle}}});
+        loop.richte();
+        return loop;
+    };
+
+    std::vector<std::pair<int, double>> ergebnisse;
+    for (const int kanaele : {1, 8, 16, 32})
+    {
+        const auto programm = baueProgramm(loopMit(kanaele), kEffektRate, klaenge);
+        REQUIRE(programm->ablauf.busse.size() == static_cast<std::size_t>(kanaele));
+        double schlechtester = 0.0;
+        for (int lauf = 1; lauf <= 3; ++lauf)
+        {
+            Klangerzeuger erzeuger;
+            erzeuger.setzeProgramm(programm);
+            std::vector<float> block(2 * kBlock);
+            const double davor = taktprobeMs();
+            const auto start = std::chrono::steady_clock::now();
+            for (int stelle = 0; stelle < frames; stelle += kBlock) erzeuger.render(block.data(), std::min(kBlock, frames - stelle));
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+            const double danach = taktprobeMs();
+            const double jeSekunde = ms / sekunden;
+            schlechtester = std::max(schlechtester, jeSekunde);
+            MESSAGE(kanaele << " Clips mit Effekten, Lauf " << lauf << ": " << jeSekunde << " ms je Sekunde Ton ("
+                            << jeSekunde / 10.0 << " % eines Kerns); Taktprobe davor " << davor << " ms, danach "
+                            << danach << " ms");
+        }
+        ergebnisse.emplace_back(kanaele, schlechtester);
+    }
+    for (const auto& [kanaele, ms] : ergebnisse)
+        MESSAGE("schlechtester Lauf, " << kanaele << " Clips: " << ms << " ms je Sekunde");
+    // gemeldet, nicht gefordert: ab welcher Zahl der Ton-Thread nicht mehr mitkommt
+    CHECK(ergebnisse.front().second < 1000.0);
+}

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.78.0
+> **Version:** 0.79.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -384,7 +384,20 @@ Spur, ein eigenes Raster je Muster.
 48000 Hz mit 24000.
 
 **Nicht geprüft:** dass `mixerRemoveSource` wartet, bis ein laufender Rückruf
-fertig ist — der Test sieht nur, dass danach niemand mehr ruft. Das Kit im
+fertig ist — der Test sieht nur, dass danach niemand mehr ruft. **In der Doku
+nachgesehen (S127, Hilfe BASS 2.4 / BASSmix 2.4 aus `externals/bass`, Seiten
+`BASS_StreamFree`, `BASS_Mixer_ChannelRemove`, `STREAMPROC`, alle 302 Seiten
+nach „wait“, „until … callback“, „in progress“ durchsucht):** keine Seite sagt
+zu, dass `BASS_StreamFree` oder `BASS_Mixer_ChannelRemove` auf einen laufenden
+`STREAMPROC` warten. `STREAMPROC` verbietet nur, aus dem Rückruf heraus den
+eigenen Stream freizugeben. Bei einer anderen Art Rückruf sagt die Doku das
+Gegenteil ausdrücklich: `FILECLOSEPROC` kann laufen, während `FILEREADPROC`
+noch arbeitet, wenn der Stream vorher freigegeben wird. **Folge:** LumiViz
+verlässt sich nicht darauf, und so ist es gebaut — die Tonführung hält den
+Klangerzeuger einer entfernten Quelle noch vier Takte (`kAbgeloestTakte`,
+rund 130 ms) und beim Freigeben, bis der Mixer fort ist; `Spieler` und die
+Fenster tragen ihren Klangerzeuger als Mitglied, er lebt länger als seine
+Quelle. Kein Umbau nötig. Das Kit im
 Release-Paket: `asset/` liegt dort nicht neben der Exe.
 
 ---
@@ -3339,6 +3352,31 @@ seitenweise, die Editoren gar nicht.
 - Von Claude gesetzt: die Marke des Composers ist dieselbe rote; die Stelle
   folgt der Uhr des Composers, auch angehalten.
 
+### Loop-Kleinkram (Plan S125, fortgesetzt S127)
+
+- ✅ **3b** (S127): eine `.lvloop` ins echte Composer-Panel gezogen — in
+  `test_ComposerPanel` „S127 Loop 3b Panel“: ein Ton-Clip so lang wie ein
+  Durchlauf, ohne Quelllänge, auf dem Raster, Undo „Add song“ (wie ein Song);
+  ein zweiter Loop dahinter, das Ende folgt ihm; in einem Bild-Kanal entsteht
+  kein Bild-Clip. Ein Loop mit Effekten im Composer — in `test_LoopSpieler`
+  „S127 Loop 3b im Composer“: das Programm des Klangerzeugers trägt die
+  Effekte (`effekte`, `busse`), an der Stelle eines Clips mit Effekten kommt
+  Ton, nichts ist NaN.
+- ✅ **4** (S127): Effektlast mit vielen Clips — `test_LoopEffekte` „viele
+  Clips mit Effekten“: je Kanal ein Clip mit Verzerrer, Echo und Hall, auf
+  jedem Schlag ein Schlag. **Gemessen unter Release-clang** (schlechtester von
+  drei Läufen, Taktprobe ruhig): 1 Clip 1,4 ms, 8 Clips 11,3 ms, 16 Clips
+  23,4 ms, 32 Clips 52,7 ms je Sekunde Ton — linear, rund 1,5 ms je Clip;
+  32 Clips sind gut 5 % eines Kerns. Der Ton-Thread trägt das weit. Unter
+  Testing-MSVC 9 s Laufzeit, Zahlen dort ohne Aussage.
+- ✅ **6** (S127): `mixerRemoveSource` in der Doku von BASS — sie sagt kein
+  Warten auf einen laufenden `STREAMPROC` zu; LumiViz verlässt sich nicht
+  darauf (Klangerzeuger leben länger als ihre Quelle). Beleg in §4 unter
+  „Nicht geprüft“.
+- Offen: 5 Debug-MSVC und voller Lauf unter clang, 7 vier Vorlagen einzeln (Loop allein als Song, Kanäle
+  und Spuren umsortieren, Cowbell/Clave als Samples, Namensraum
+  Composer↔loop).
+
 ---
 
 ## 5. Stufen
@@ -3466,6 +3504,10 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.79.0** (S127, 2026-10-15): Loop-Kleinkram 3b, 4 und 6 erledigt —
+  Ziehen ins Composer-Panel und Effekte im Composer getestet, Effektlast
+  gemessen (32 Clips gut 5 % eines Kerns), `mixerRemoveSource` in der Doku
+  von BASS nachgesehen (kein Warten zugesagt, LumiViz braucht es nicht).
 - **0.78.0** (S127, 2026-10-15): NEU „Die Marke läuft mit“ — Entscheide W1 a
   (mit der Kaskade vom Panel), W2 a, W3 a, gebaut; Haken Scroll with playhead.
 - **0.77.0** (S124, 2026-10-14): §4m — E1 a: der Schalter der Effekte je
