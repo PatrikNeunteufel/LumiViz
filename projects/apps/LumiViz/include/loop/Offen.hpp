@@ -13,6 +13,7 @@
  */
 #pragma once
 
+#include "audio/AudioEvents.hpp"  // TrackInfo
 #include "loop/Loop.hpp"
 
 #include <QString>
@@ -31,6 +32,19 @@ void meldeOffen(const QString& datei, const Loop& loop);
 /// Die offene Fassung dieser Datei. false = das Panel hat sie nicht offen;
 /// `loop` bleibt dann, wie er war.
 bool offenerLoop(const QString& datei, Loop& loop);
+
+// --- der Loop als laufender Song (S127, Entscheid Patrik 7a) -------------------
+
+/// Der Loop als Song, wie Player-Panel, Text-Vorlagen und Karaoke ihn lesen
+/// (Entscheid Patrik S109): die Tags, ohne Titel der Dateiname; die Laenge ein
+/// Durchlauf. Fuer den Loop-Clip im Composer und das Panel Loop.
+[[nodiscard]] TrackInfo loopAlsSong(const Loop& loop, const QString& datei, int rate);
+/// Das Panel Loop spielt den ganzen Loop allein und meldet ihn als laufenden
+/// Song (`song`), oder nicht mehr (nullptr). Das Player-Panel zeigt dann
+/// „Loop - <Titel>“.
+void meldeLaufendenLoop(const TrackInfo* song);
+/// Der Loop, den das Panel Loop gerade als laufenden Song meldet; nullptr = keiner.
+[[nodiscard]] const TrackInfo* laufenderLoop();
 
 // --- vor dem Beenden der App --------------------------------------------------
 

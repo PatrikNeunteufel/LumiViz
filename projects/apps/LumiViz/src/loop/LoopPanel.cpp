@@ -26,6 +26,7 @@
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
+#include "visualizers/MultiEffectVisualizer.hpp"  // notifyPlayPosition, notifyPlayState (7a)
 
 #include <DockWidget.h>
 
@@ -163,6 +164,7 @@ LoopPanel::~LoopPanel()
 {
     // die Audio-Engine lebt laenger als die Panels: hier noch freigeben
     m_spieler.halte(false);
+    if (m_meldetSong) meldeLaufendenLoop(nullptr);
     vergissBeendenFrage(this);
     meldeOffen({}, {});  // niemand hat mehr einen Loop offen
 }
@@ -859,9 +861,99 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
     return true;
 }
 
+void LoopPanel::meldeSong()
+{
+    IEventBus* bus = eventBus();
+    // ein Loop ohne Datei (noch nie gespeichert) meldet sich nicht: ein Song ohne
+    // Datei heisst fuer Player-Panel und Tag View „kein Titel“
+    const bool meldet =
+        m_geladen && !m_datei.isEmpty() && m_spieler.spielt() && m_solo.isEmpty() && m_vorhoeren == 0;
+    if (meldet)
+    {
+        const IAudioEngine* engine = services().tryResolve<IAudioEngine>();
+        const TrackInfo song = loopAlsSong(m_loop, m_datei, engine != nullptr ? engine->getSampleRate() : 0);
+        // ein neuer Song: zum ersten Mal, oder Tags, Datei oder Laenge haben sich geaendert
+        const bool neu = !m_meldetSong || song.filePath != m_gemeldet.filePath || song.title != m_gemeldet.title ||
+                         song.artist != m_gemeldet.artist || song.album != m_gemeldet.album ||
+                         song.lyricsPlain != m_gemeldet.lyricsPlain || song.durationMs != m_gemeldet.durationMs;
+        if (neu)
+        {
+            const bool warSchon = m_meldetSong;
+            m_meldetSong = true;
+            m_gemeldet = song;
+            meldeLaufendenLoop(&m_gemeldet);
+            if (bus != nullptr)
+            {
+                TrackChangedEvent ereignis;
+                ereignis.track = song;
+                bus->publish(ereignis);
+                if (!warSchon)
+                {
+                    PlaybackStateEvent zustand;
+                    zustand.state = PlaybackState::Playing;
+                    zustand.previousState = PlaybackState::Paused;
+                    bus->publish(zustand);
+                }
+            }
+            MultiEffectVisualizer::notifyPlayState(true);
+            m_gemeldeteStelle = -1;
+        }
+        // die Stelle im Durchlauf: an den Renderer in jedem Takt, an den Bus etwa
+        // zehnmal je Sekunde und nach einem Sprung — wie der Composer
+        const double msJeSchritt =
+            m_loop.durchlaufSchritte() > 0 ? m_loop.durchlaufMs() / m_loop.durchlaufSchritte() : 0.0;
+        const int stelle = static_cast<int>(std::lround(m_spieler.stelleSchritte() * msJeSchritt));
+        MultiEffectVisualizer::notifyPlayPosition(stelle);
+        ++m_stelleTakte;
+        if (bus != nullptr && (m_gemeldeteStelle < 0 || m_stelleTakte >= 3 || std::abs(stelle - m_gemeldeteStelle) > 500))
+        {
+            m_stelleTakte = 0;
+            m_gemeldeteStelle = stelle;
+            PlaybackPositionEvent ort;
+            ort.positionMs = stelle;
+            ort.durationMs = song.durationMs;
+            ort.progress = song.durationMs > 0 ? static_cast<float>(stelle) / static_cast<float>(song.durationMs) : 0.0f;
+            bus->publish(ort);
+        }
+        return;
+    }
+    if (!m_meldetSong) return;
+    m_meldetSong = false;
+    meldeLaufendenLoop(nullptr);
+    // hat der Composer den Ton uebernommen, meldet er seinen Song selbst
+    if (lumi::composer::fuehrtTon()) return;
+    // sonst gilt wieder der Song des Players — wie nach dem Composer (Sitzung::gibTonFrei)
+    IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
+    const bool spielt = player != nullptr && player->isPlaying();
+    if (bus != nullptr)
+    {
+        if (player != nullptr && player->hasTrack())
+        {
+            TrackChangedEvent ereignis;
+            ereignis.track = player->currentTrack();
+            ereignis.playlistIndex = player->playlistIndex();
+            bus->publish(ereignis);
+            PlaybackPositionEvent ort;
+            ort.positionMs = player->positionMs();
+            ort.durationMs = player->durationMs();
+            ort.progress = player->positionFraction();
+            bus->publish(ort);
+        }
+        else
+            bus->publish(TrackChangedEvent{});  // kein Titel: das Player-Panel ruht
+        PlaybackStateEvent zustand;
+        zustand.state = spielt ? PlaybackState::Playing : PlaybackState::Paused;
+        zustand.previousState = PlaybackState::Playing;
+        bus->publish(zustand);
+    }
+    if (player != nullptr && player->hasTrack()) MultiEffectVisualizer::notifyPlayPosition(player->positionMs());
+    MultiEffectVisualizer::notifyPlayState(spielt);
+}
+
 void LoopPanel::beimTakt()
 {
     m_spieler.takt();
+    meldeSong();
     // der Composer kann den Ton uebernommen haben: dann spielt auch kein Muster mehr allein
     if (!m_spieler.spielt() && (!m_solo.isEmpty() || m_vorhoeren != 0))
     {

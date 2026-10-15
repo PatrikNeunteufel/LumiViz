@@ -104,18 +104,9 @@ struct Tonfuehrung::LoopQuelle
     /// Laenge ist ein Durchlauf.
     [[nodiscard]] TrackInfo alsSong() const
     {
-        TrackInfo song;
-        song.filePath = datei;
-        song.title = loop.tags.titel.isEmpty() ? QFileInfo(datei).completeBaseName() : loop.tags.titel;
-        song.artist = loop.tags.kuenstler;
-        song.album = loop.tags.album;
-        song.year = loop.tags.jahr;
-        song.genre = loop.tags.genre;
-        song.trackNumber = loop.tags.nummer;
-        song.lyricsPlain = loop.tags.text;
+        // dasselbe wie im Panel Loop (S127, 7a); die Laenge ist die des Klangerzeugers
+        TrackInfo song = lumi::loop::loopAlsSong(loop, datei, rate);
         song.durationMs = static_cast<int>(std::lround(durchlaufMs));
-        song.sampleRate = rate;
-        song.channels = 2;
         return song;
     }
 };

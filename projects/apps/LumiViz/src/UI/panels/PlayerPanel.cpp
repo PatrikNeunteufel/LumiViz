@@ -17,6 +17,7 @@
 #include "audio/Wiederaufnahme.hpp"  // Resume playback (S88)
 #include "UI/widgets/AudioDateien.hpp"
 #include "composer/AppAnbindung.hpp"  // Composer-Naht N5: Transport bei fuehrendem Audiokanal
+#include "loop/Offen.hpp"             // laufenderLoop (S127, 7a)
 
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
@@ -129,6 +130,12 @@ void PlayerPanel::onActivate()
             onPlaybackPositionChanged(stand.stelleMs, stand.song.durationMs);
         }
     }
+    // dasselbe fuer einen Loop, den das Panel Loop als laufenden Song meldet (S127, 7a)
+    else if (const TrackInfo* loop = lumi::loop::laufenderLoop())
+    {
+        updatePlayButton(true);
+        onTrackChanged(loop->title, loop->artist, loop->durationMs);
+    }
 
     // Composer-Naht N5, Anzeige (docs/ui/Composer_Konzept.md §12.2; Sichttest
     // S99, A2): solange das Panel nicht zu sehen ist, hat es kein Abo und
@@ -136,7 +143,8 @@ void PlayerPanel::onActivate()
     // jetzt weder der Player einen Titel noch der Composer einen laufenden
     // Song, gilt der Ruhezustand — nicht, was vor dem Verdecken hier stand.
     const auto* player = services().tryResolve<IAudioPlayer>();
-    if ((player == nullptr || !player->hasTrack()) && !(stand.fuehrt && stand.hatSong))
+    if ((player == nullptr || !player->hasTrack()) && !(stand.fuehrt && stand.hatSong) &&
+        lumi::loop::laufenderLoop() == nullptr)
     {
         zeigeRuhezustand();
     }
@@ -358,7 +366,11 @@ void PlayerPanel::onTrackChanged(const QString& title, const QString& artist, in
     QString displayTitle = title.isEmpty() ? tr("Unknown Title") : title;
     // Composer-Naht N5, Anzeige (Entscheid Patrik S98): fuehrt der Composer den
     // Ton, ist es der laufende Song der Komposition — „Composer - <Song>".
-    if (lumi::composer::fuehrtTon()) displayTitle = tr("Composer - %1").arg(displayTitle);
+    if (lumi::composer::fuehrtTon())
+        displayTitle = tr("Composer - %1").arg(displayTitle);
+    // S127, Entscheid Patrik 7a: spielt das Panel Loop den ganzen Loop, ist er der laufende Song
+    else if (lumi::loop::laufenderLoop() != nullptr)
+        displayTitle = tr("Loop - %1").arg(displayTitle);
     m_pTrackLabel->setText(displayTitle);
     
     QString displayArtist = artist.isEmpty() ? tr("Unknown Artist") : artist;

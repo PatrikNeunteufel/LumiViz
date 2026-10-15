@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.79.0
+> **Version:** 0.80.0
 > **Datum:** 2026-10-14 (Session 124)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3373,7 +3373,24 @@ seitenweise, die Editoren gar nicht.
   Warten auf einen laufenden `STREAMPROC` zu; LumiViz verlässt sich nicht
   darauf (Klangerzeuger leben länger als ihre Quelle). Beleg in §4 unter
   „Nicht geprüft“.
-- Offen: 5 Debug-MSVC und voller Lauf unter clang, 7 vier Vorlagen einzeln (Loop allein als Song, Kanäle
+- ✅ **5** (S127): Debug-MSVC baut alle Ziele ohne Fehler (LumiViz, Tests,
+  Standalones); der volle Lauf unter Release-clang 1271 / 1271, 0 Skips.
+- **7a — entschieden (Patrik S127, a):** beim **Play** des ganzen Loops meldet
+  das Panel Loop ihn als laufenden Song, wie der Composer einen Loop-Clip
+  (Tags, ohne Titel der Dateiname; Länge ein Durchlauf, Stelle im Durchlauf);
+  das Panel Player zeigt „Loop - <Titel>“; bei **Stop** meldet wieder der
+  Player seinen Song. **Play pattern** meldet nichts (Vorhören). Verworfen:
+  auch Play pattern melden, alles lassen. ✅ **Gebaut (S127):**
+  `loop::loopAlsSong` (in `loop/Offen`, auch von der Tonführung benutzt),
+  `meldeLaufendenLoop`/`laufenderLoop`; `LoopPanel::meldeSong` im Takt —
+  Songwechsel bei neuen Tags, Datei oder Länge, „läuft“, die Stelle zehnmal je
+  Sekunde und nach einem Sprung, an den Renderer in jedem Takt; endet es, der
+  Song des Players (oder nichts, wenn der Composer den Ton übernommen hat — er
+  meldet seinen selbst). Das Player-Panel zeigt „Loop - <Titel>“, auch wenn es
+  erst danach sichtbar wird. **Von mir gesetzt:** ein noch nie gespeicherter
+  Loop meldet sich nicht (ein Song ohne Datei heißt für Player-Panel und Tag
+  View „kein Titel“). Test: in `test_LoopSpieler` „S127 7a“.
+- Offen: 7 drei Vorlagen einzeln (Loop allein als Song, Kanäle
   und Spuren umsortieren, Cowbell/Clave als Samples, Namensraum
   Composer↔loop).
 
@@ -3504,6 +3521,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.80.0** (S127, 2026-10-15): Kleinkram 5 erledigt (Debug-MSVC, voller
+  Lauf unter clang); 7a entschieden und gebaut — das Panel Loop meldet beim
+  Play des ganzen Loops ihn als laufenden Song.
 - **0.79.0** (S127, 2026-10-15): Loop-Kleinkram 3b, 4 und 6 erledigt —
   Ziehen ins Composer-Panel und Effekte im Composer getestet, Effektlast
   gemessen (32 Clips gut 5 % eines Kerns), `mixerRemoveSource` in der Doku

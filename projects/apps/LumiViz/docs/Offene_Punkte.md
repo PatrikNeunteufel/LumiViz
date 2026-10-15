@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.241.0
+> **Version:** 1.242.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2337,8 +2337,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     ✅ Ein eingefügter Loop-Clip ist einen Durchlauf lang und lässt sich
     beliebig länger ziehen (`fuegeSongEin`, Test in `test_LoopSpieler`) — von
     Patrik im Programm gesehen (S125)
-  - 🔧 ein Loop, der allein im Loop-Panel spielt, meldet sich nicht als Song;
-    Kanäle und Spuren lassen sich nicht umsortieren. ✅ Seit S120 das Icon für
+  - ✅ ein Loop, der allein im Loop-Panel spielt, meldet sich als Song (S127,
+    Entscheid 7a: beim Play des ganzen Loops, nicht bei Play pattern);
+    🔧 Kanäle und Spuren lassen sich nicht umsortieren. ✅ Seit S120 das Icon für
     `.lvloop`; ✅ seit S125 merken Drum- und Instrument-Editor Größe und Lage
     (`loop/drumEditorGeometry`, `loop/instrumentEditorGeometry`; in der
     Test-Exe abgeschaltet, `test_LoopEditorLage`)
@@ -5790,6 +5791,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.242.0 | 2026-10-15 | Session 127. §7 Loop: Kleinkram 3b bis 6 erledigt, 7a (Loop allein als Song) entschieden und gebaut. |
 | 1.241.0 | 2026-10-15 | Session 127. §7: Mitlaufen der Loop-Fenster entschieden (W1 a mit Kaskade, W2 a, W3 a) und gebaut; Idee Spielweisen der Saiteninstrumente aufgenommen. |
 | 1.240.0 | 2026-10-15 | Session 127. §7 Composer: G6 fertig, Sichttest 11 offen. |
 | 1.239.0 | 2026-10-15 | Session 127. §7 Composer: G5 gebaut (Dialog Match loudness), offen G6. |

@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.174.0
+> **Version:** 1.175.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2611,7 +2611,11 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
 oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
-an; bei **Stop** spielt er weiter, wenn er vorher spielte. Lautstärke und Mute
+an; bei **Stop** spielt er weiter, wenn er vorher spielte. Solange **Play**
+den ganzen Loop spielt, ist er der **laufende Song**: das Panel Player zeigt
+„Loop - <Titel>“, Text-Vorlagen, Karaoke und Tag View lesen seine **Tags**
+(ohne Titel den Dateinamen). **Play pattern** zählt nicht, und ein noch nie
+gespeicherter Loop auch nicht. Nach **Stop** gilt wieder der Titel des Players. Lautstärke und Mute
 des Players gelten auch für den Loop, und die Visuals reagieren auf ihn.
 Hat der **Composer** den Ton, ist Play im Panel Loop grau.
 
@@ -3404,6 +3408,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.175.0 | 2026-10-15 | Session 127. §16 Loop: spielt das Panel Loop den ganzen Loop, ist er der laufende Song („Loop - <Titel>“ im Panel Player, Tags für Text und Karaoke). |
 | 1.174.0 | 2026-10-15 | Session 127. §16 Loop: die Marke läuft mit — in den Editoren beim Play des ganzen Loops und wenn der Composer den offenen Loop spielt; NEU Haken **Scroll with playhead** im Panel Loop. |
 | 1.173.0 | 2026-10-15 | Session 127. §15 Composer: der Knopf **Match loudness...** steht immer unten rechts, nicht nur bei einem angeklickten Ton-Clip. |
 | 1.172.0 | 2026-10-15 | Session 127. §15 Composer NEU Dialog **Match loudness** (Knopf neben *Gain*, Rechtsklick „Match loudness to this clip...“): misst jeden Ton-Clip nach EBU R128, schlägt je Clip ein Gain vor, Vorhören mit Listen A/B und ▶, OK als ein Schritt. |

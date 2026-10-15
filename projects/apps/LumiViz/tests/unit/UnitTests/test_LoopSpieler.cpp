@@ -17,6 +17,9 @@
 #include <doctest.h>
 
 #include "PappTon.hpp"
+#include "TestFenster.hpp"
+#include "UI/panels/PlayerPanel.hpp"
+#include "audio/AudioEvents.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Tonfuehrung.hpp"
@@ -28,6 +31,7 @@
 #include "loop/Offen.hpp"
 #include "loop/SichttestAktionen.hpp"
 #include "loop/Spieler.hpp"
+#include "services/EventBus.hpp"
 #include "services/ServiceContainer.hpp"
 
 #include <QApplication>
@@ -982,6 +986,124 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
 
     fuehrung.gibFrei();
     CHECK(engine.generator == nullptr);
+}
+
+TEST_CASE("S127 7a Loop Panel: Play des ganzen Loops meldet ihn als laufenden Song, Play pattern nicht, Stop gibt zurueck")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+
+    // ein Loop mit Tags und zwei Mustern
+    Loop loop = spielLoop({1, 0, 0, 0});
+    loop.tags.titel = QStringLiteral("Mein Beat");
+    loop.tags.kuenstler = QStringLiteral("Ich");
+    loop.tags.text = QStringLiteral("la la");
+    Muster zwei = loop.muster[0];
+    zwei.name = QStringLiteral("N");
+    loop.muster.push_back(zwei);
+    const QString pfad = ordner.filePath(QStringLiteral("beat.lvloop"));
+    REQUIRE(speichereLoop(loop, pfad));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+    IEventBus* bus = dienste.tryResolve<IEventBus>();
+    REQUIRE(bus != nullptr);
+    std::vector<TrackInfo> songs;
+    std::vector<int> stellen;
+    std::vector<PlaybackState> zustaende;
+    const auto aboSong = bus->subscribeScoped<TrackChangedEvent>([&](const TrackChangedEvent& e) { songs.push_back(e.track); });
+    const auto aboStelle =
+        bus->subscribeScoped<PlaybackPositionEvent>([&](const PlaybackPositionEvent& e) { stellen.push_back(e.positionMs); });
+    const auto aboZustand =
+        bus->subscribeScoped<PlaybackStateEvent>([&](const PlaybackStateEvent& e) { zustaende.push_back(e.state); });
+    const auto takte = [] {
+        QElapsedTimer uhr;
+        uhr.start();
+        while (uhr.elapsed() < 150) QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+    };
+
+    LoopPanel panel(dienste);  // nicht gezeigt: der Takt laeuft trotzdem
+    REQUIRE(panel.lade(pfad));
+    takte();
+    CHECK(songs.empty());  // nichts spielt: nichts gemeldet
+    CHECK(laufenderLoop() == nullptr);
+
+    // --- Play: der Loop ist der laufende Song, mit seinen Tags; „laeuft", die Stelle
+    REQUIRE(panel.spiele());
+    takte();
+    REQUIRE(songs.size() == 1);
+    CHECK(songs[0].filePath == pfad);
+    CHECK(songs[0].title == QStringLiteral("Mein Beat"));
+    CHECK(songs[0].artist == QStringLiteral("Ich"));
+    CHECK(songs[0].lyricsPlain == QStringLiteral("la la"));
+    CHECK(songs[0].durationMs == static_cast<int>(std::lround(panel.loop().durchlaufMs())));
+    REQUIRE(laufenderLoop() != nullptr);
+    CHECK(laufenderLoop()->title == QStringLiteral("Mein Beat"));
+    // das Player-Panel, erst jetzt sichtbar, zeigt ihn als „Loop - <Titel>"
+    PlayerPanel spielerPanel(dienste);
+    testfenster::platziere(spielerPanel);
+    spielerPanel.show();
+    QCoreApplication::processEvents();
+    const auto loopTitel = [&]() -> QString {
+        for (const QLabel* l : spielerPanel.findChildren<QLabel*>())
+            if (l->text().startsWith(QStringLiteral("Loop - "))) return l->text();
+        return {};
+    };
+    CHECK(loopTitel() == QStringLiteral("Loop - Mein Beat"));
+    REQUIRE_FALSE(zustaende.empty());
+    CHECK(zustaende.back() == PlaybackState::Playing);
+    CHECK_FALSE(stellen.empty());
+    // ein Sprung: die Stelle kommt mit
+    panel.setzeStartstelle(8);  // 8 von 16 Schritten = die Mitte des Durchlaufs
+    takte();
+    CHECK(stellen.back() == static_cast<int>(std::lround(panel.loop().durchlaufMs() / 2.0)));
+    CHECK(songs.size() == 1);  // derselbe Song: nicht noch einmal
+
+    // --- andere Tags: neu gemeldet
+    LoopTags neueTags = panel.loop().tags;
+    neueTags.titel = QStringLiteral("Anders");
+    panel.setzeTags(neueTags);
+    takte();
+    REQUIRE(songs.size() == 2);
+    CHECK(songs[1].title == QStringLiteral("Anders"));
+    CHECK(loopTitel() == QStringLiteral("Loop - Anders"));  // das Panel hoert am Bus mit
+
+    // --- Play pattern: Vorhoeren — der Song des Players gilt wieder
+    REQUIRE(panel.spieleMuster(QStringLiteral("N")));
+    takte();
+    REQUIRE(songs.size() == 3);
+    CHECK(songs[2].filePath == QStringLiteral("song"));  // der Titel des Players
+    CHECK(laufenderLoop() == nullptr);
+    CHECK(zustaende.back() == PlaybackState::Paused);
+
+    // --- wieder Play, dann Stop: zurueck zum Player
+    REQUIRE(panel.spiele());
+    takte();
+    REQUIRE(songs.size() == 4);
+    CHECK(songs[3].title == QStringLiteral("Anders"));
+    panel.halte();
+    takte();
+    REQUIRE(songs.size() == 5);
+    CHECK(songs[4].filePath == QStringLiteral("song"));
+    CHECK(laufenderLoop() == nullptr);
+    CHECK(loopTitel().isEmpty());  // wieder der Titel des Players
+
+    // --- ein Loop ohne Datei meldet sich nicht
+    panel.neu();
+    const std::size_t vorher = songs.size();
+    if (panel.spiele()) takte();
+    CHECK(songs.size() == vorher);
+    CHECK(laufenderLoop() == nullptr);
+    panel.halte();
 }
 
 TEST_CASE("S127 Loop 3b im Composer: ein Loop mit Effekten — der Klangerzeuger des Clips traegt sie")

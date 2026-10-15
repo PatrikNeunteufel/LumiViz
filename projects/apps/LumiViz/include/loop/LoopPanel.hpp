@@ -20,6 +20,7 @@
 #pragma once
 
 #include "UI/panels/PanelBase.hpp"
+#include "audio/AudioEvents.hpp"  // TrackInfo
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
 #include "loop/Spieler.hpp"
@@ -179,6 +180,10 @@ private:
     void zeigeClip();
     void zeigeStand();
     void beimTakt();
+    /// Der ganze Loop spielt allein: als laufenden Song melden — Songwechsel,
+    /// „laeuft", Stelle (S127, Entscheid Patrik 7a). Endet das, gilt wieder der
+    /// Song des Players (oder der des Composers, der den Ton uebernahm).
+    void meldeSong();
     /// Das Anspielen beenden (falls eines laeuft): der Spieler haelt und bekommt den Loop zurueck.
     void beendeVorhoeren();
     /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
@@ -199,6 +204,10 @@ private:
     QPointer<InstrumentEditor> m_instrumentEditor;
     QPointer<ClipEffektFenster> m_effekte;
     int m_vorhoeren = 0;    ///< die Nummer des Tons, der gerade angespielt wird; 0 = keiner
+    bool m_meldetSong = false;  ///< der Loop ist als laufender Song gemeldet (7a)
+    TrackInfo m_gemeldet;       ///< so, wie er gemeldet ist
+    int m_gemeldeteStelle = -1; ///< die zuletzt an den Bus gemeldete Stelle (ms)
+    int m_stelleTakte = 0;
     int m_vorhoerNr = 0;
     QString m_solo;        ///< das Muster, das allein spielt; leer = der ganze Loop
     float m_spitze = 0.0f;  ///< der groesste Betrag der Summe seit Play oder der letzten Aenderung
