@@ -272,6 +272,11 @@ void KitFenster::setupUI()
 
 // --- die Liste ---------------------------------------------------------------
 
+void KitFenster::liesListeNeu()
+{
+    baueListe();
+}
+
 void KitFenster::baueListe()
 {
     const QSignalBlocker ruhe(m_liste);

@@ -852,7 +852,7 @@ void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus)
                                      .arg(QDir::toNativeSeparators(datei), dialog.inhalt().fehler));
             return;
         }
-        dialog.exec();
+        if (dialog.exec() == QDialog::Accepted && bus != nullptr) bus->publish(UserDataImportedEvent{});
         return;
     }
     ImportPaketDialog dialog(datei, parent);
@@ -865,7 +865,9 @@ void zeigeImportPaket(QWidget* parent, const QString& gewaehlt, IEventBus* bus)
             if (static_cast<pk::Art>(art) == pk::Art::Loop) bus->publish(LoadLoopEvent(pfad.toStdString()));
         });
     }
-    dialog.exec();
+    // danach lesen offene Listen neu, Zwischenspeicher fallen weg (S125); ein Loop, den
+    // oeffnenVerlangt schon geladen hat, las die neuen Dateien ohnehin
+    if (dialog.exec() == QDialog::Accepted && bus != nullptr) bus->publish(UserDataImportedEvent{});
 }
 
 }  // namespace lumi::ui

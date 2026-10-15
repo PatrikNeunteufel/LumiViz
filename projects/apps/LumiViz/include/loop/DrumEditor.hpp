@@ -391,6 +391,9 @@ public:
     void oeffneKits(bool zeigen = true);
     /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
     [[nodiscard]] KitFenster* kitFenster() const;
+    /// Nach einem Import (S125): die Spuren mit ihrer Auswahl Sound, das Fenster
+    /// Instruments und die Liste im Fenster Kits neu lesen.
+    void liesEigeneNeu();
 
 Q_SIGNALS:
     /// Eine Aenderung ist fertig: die neue Fassung des Loops und ein Wort fuer Undo.

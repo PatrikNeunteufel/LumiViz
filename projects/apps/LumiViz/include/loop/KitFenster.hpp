@@ -61,6 +61,9 @@ public:
     /// Die Liste neu lesen (eigene Kits koennen sich geaendert haben) und
     /// dieses Kit oeffnen; gibt es es nicht, das erste der Liste.
     void oeffne(const QString& nennung);
+    /// Nur die Liste neu lesen (nach einem Import, S125); das offene Kit und
+    /// seine ungesicherten Aenderungen bleiben.
+    void liesListeNeu();
     /// Die Klaenge des Kits fuer die Auswahl Sound (`kit:<Name>`).
     void setKitKlaenge(const QStringList& klaenge);
     /// Der Loop, der gerade offen ist — er zaehlt bei „Used by" mit.

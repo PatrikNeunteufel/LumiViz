@@ -968,6 +968,13 @@ void DrumEditor::setupUI()
     if (lageMerken()) (void)restoreGeometry(QSettings().value(QLatin1String(kLage)).toByteArray());
 }
 
+void DrumEditor::liesEigeneNeu()
+{
+    zeigeAlles();  // baut die Spuren und ihre Auswahl Sound neu
+    if (m_palette) m_palette->liesNeu();
+    if (m_kits) m_kits->liesListeNeu();
+}
+
 void DrumEditor::setzeLageMerken(bool an)
 {
     lageMerken() = an;

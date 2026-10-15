@@ -138,6 +138,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishImport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PublishDialoge.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorLage.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopNachImport.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_EffectChain.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShadertoyWrapper.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ShaderVertrag.cpp"

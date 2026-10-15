@@ -12,6 +12,8 @@
 #include "UI/dialogs/PaketDialoge.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "paket/Import.hpp"
+#include "services/IEventBus.hpp"
+#include "services/events/UIEvents.hpp"
 
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -741,7 +743,8 @@ void zeigeDatenImport(QWidget* parent, IEventBus* bus)
                                  .arg(QDir::toNativeSeparators(datei), dialog.inhalt().fehler));
         return;
     }
-    dialog.exec();
+    // offene Listen lesen neu, Zwischenspeicher fallen weg (S125)
+    if (dialog.exec() == QDialog::Accepted && bus != nullptr) bus->publish(UserDataImportedEvent{});
 }
 
 }  // namespace lumi::ui

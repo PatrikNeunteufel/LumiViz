@@ -309,6 +309,8 @@ public:
     void oeffnePalette(bool zeigen = true);
     /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
     [[nodiscard]] InstrumentPalette* palette() const;
+    /// Nach einem Import (S125): das Fenster Instruments neu lesen.
+    void liesEigeneNeu();
     /// Wie das Instrument einer Basis in der Zeile steht: der Titel; bei einem
     /// eigenen „Titel (My files)", bei einer Datei „Titel (datei.lvinst)",
     /// sonst „name (not found)".

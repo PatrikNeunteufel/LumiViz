@@ -411,6 +411,16 @@ struct LoadLoopEvent : public Event
 };
 
 /**
+ * @brief Files in the user folder may have changed: a backup or a package was
+ *        imported (Import data, Import package). Open lists read again, caches
+ *        of computed tones, samples and shapes are dropped (S125).
+ */
+struct UserDataImportedEvent : public Event
+{
+    EVENT_TYPE_NAME("UserDataImportedEvent")
+};
+
+/**
  * @brief Request to play a sound file once — a sample or an instrument file
  *        (.lvinst, one note C4). The Loop panel plays it (Publish, ▶ in the
  *        dialog Import package, S125).

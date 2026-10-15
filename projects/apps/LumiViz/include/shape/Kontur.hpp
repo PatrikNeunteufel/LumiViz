@@ -214,6 +214,9 @@ bool holeZeichnung(const QString& nennung, Zeichnung& zeichnung, bool* zuNeu = n
 /// Ordners der eigenen (Stufe 20a): wer eine Zeichnung gelesen hat und sich die
 /// Zahl merkt, sieht, ob er neu lesen muss — auch bei gleicher Nennung.
 [[nodiscard]] std::uint64_t zeichnungFassung();
+/// Eigene Dateien koennen sich geaendert haben (ein Import, S125): die Fassung
+/// weiterzaehlen und gerechnete Tonformen vergessen.
+void zaehleZeichnungFassung();
 
 // --- die Rechnung (§5) -----------------------------------------------------------
 

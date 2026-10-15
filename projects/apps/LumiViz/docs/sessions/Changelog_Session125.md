@@ -20,6 +20,11 @@
 
 - **Drum- und Instrument-Editor merken Größe und Lage:** Wer ein Editor-Fenster
   größer zieht oder verschiebt, findet es beim nächsten Öffnen so wieder.
+- **Nach einem Import lesen die Listen des Loops neu:** Was Import data oder
+  Import package an Instrumenten, Kits, Samples und Formen bringt, steht gleich
+  im offenen Drum-Editor (Auswahl Sound), im Fenster Instruments und im Fenster
+  Kits — vorher erst nach dem Schließen und Wiederöffnen. Ein ersetztes
+  Instrument oder Sample klingt sofort neu.
 - Benutzerhandbuch §8: Keep both nennt das Beispiel `bass_2`; ein Paket öffnet aus Import... den Dialog Import package.
 
 ## Behoben
@@ -55,5 +60,6 @@
   `test_PublishDialoge`, eine Prüfung mehr in `test_LoopArrangement`.
 - Loop: neu `test_LoopEditorLage` (ein Fall); das Merken der Lage ist in der
   Test-Exe abgeschaltet.
+- `UserDataImportedEvent`; neu `test_LoopNachImport` (zwei Fälle).
 - Tests: in `test_Datensicherung` ein Fall zu Keep both mit Instrumenten,
   Samples, Kits und Formen; die Fälle zu `nameMitZahl` auf `_2` umgestellt.

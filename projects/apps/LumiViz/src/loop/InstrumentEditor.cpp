@@ -1262,6 +1262,11 @@ void InstrumentEditor::setupUI()
     if (lageMerken()) (void)restoreGeometry(QSettings().value(QLatin1String(kLage)).toByteArray());
 }
 
+void InstrumentEditor::liesEigeneNeu()
+{
+    if (m_palette) m_palette->liesNeu();
+}
+
 void InstrumentEditor::setzeLageMerken(bool an)
 {
     lageMerken() = an;

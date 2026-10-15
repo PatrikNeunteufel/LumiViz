@@ -15,11 +15,13 @@
 #include "loop/ClipEffektFenster.hpp"
 #include "loop/DrumEditor.hpp"
 #include "loop/DrumKit.hpp"  // merkeGeoeffnetenLoop
+#include "loop/Instrument.hpp"  // zaehleInstrumentFassung
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Offen.hpp"
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
+#include "shape/Kontur.hpp"  // zaehleZeichnungFassung
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
@@ -123,6 +125,18 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     if (auto* bus = eventBus())
         m_ladeSubscription = bus->subscribeScoped<LoadLoopEvent>(
             [this](const LoadLoopEvent& e) { (void)oeffne(QString::fromStdString(e.path)); });
+    // nach Import data oder Import package (S125): eigene Dateien koennen ersetzt sein —
+    // gerechnete Toene, Samples und Formen vergessen, offene Listen neu lesen
+    if (auto* bus = eventBus())
+        m_importSubscription = bus->subscribeScoped<UserDataImportedEvent>([this](const UserDataImportedEvent&) {
+            zaehleInstrumentFassung();
+            vergissSampleDaten();
+            lumi::shape::zaehleZeichnungFassung();
+            if (m_editor) m_editor->liesEigeneNeu();
+            if (m_instrumentEditor) m_instrumentEditor->liesEigeneNeu();
+            if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
+            meldeStand();
+        });
     // ▶ im Dialog Import package (Publish, S125): ein Sample einen Schlag lang, ein Instrument C4
     if (auto* bus = eventBus())
         m_vorhoerSubscription = bus->subscribeScoped<PreviewSoundFileEvent>([this](const PreviewSoundFileEvent& e) {

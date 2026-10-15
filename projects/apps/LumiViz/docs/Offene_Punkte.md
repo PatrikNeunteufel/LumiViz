@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.229.0
+> **Version:** 1.230.0
 > **Datum:** 2026-10-15 (Session 125)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2493,9 +2493,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     „Let me decide for each file". Im Programm von Patrik geprüft (S115, im
     Gespräch, ohne Testlog): **D1 und D3 ok** (der Ordner `asset` neben der
     Exe; Icons, Voreinstellungen und Instrumente sind da). Alles andere
-    ungesehen — ⬜ lokale Liste `Sichttest_Datenablage.md` (D2, D4 bis D14). 🔧 Offene Listen lesen
-    nach einem Import nicht von selbst neu (nicht geprüft, welche es doch
-    tun); ganze Spalten in der Liste über drei Knöpfe statt Haken im Kopf.
+    ungesehen — ⬜ lokale Liste `Sichttest_Datenablage.md` (D2, D4 bis D14). ✅ Offene Listen
+    des Loops lesen nach einem Import neu (S125: `UserDataImportedEvent` nach Import data und
+    Import package; das Panel Loop vergisst gerechnete Töne, Samples und Formen und lässt
+    Spuren, Fenster Instruments und Fenster Kits neu lesen; `test_LoopNachImport`).
+    🔧 Weiter offen: die Listen der Visuals (Presets, Gradients, Module presets, die
+    Formen am Knoten Shape) hören nicht darauf; ganze Spalten in der Liste über drei
+    Knöpfe statt Haken im Kopf.
     **A3** — eigene Instrumente im Benutzerordner — ist mit Stufe 14 des
     Loops gebaut; damit ist die Datenablage gebaut.
     🔧 Vorgemerkt (Frage Patrik S114): ein Instrument trägt höchstens vier
@@ -5717,6 +5721,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.230.0 | 2026-10-15 | Session 125. §6 Loop: offene Listen des Loops lesen nach einem Import neu. |
 | 1.229.0 | 2026-10-15 | Session 125. §6 Loop: Editoren merken Größe und Lage; Clip-Länge eines Loops und Icons als erledigt vermerkt. |
 | 1.228.0 | 2026-10-15 | Session 125. §7 Publish: Stufe P-A gebaut (Knöpfe, Menü File), offen Sichttest und P-B. |
 | 1.227.0 | 2026-10-15 | Session 125. Keep both belegt und behoben (`nameMitZahl` → `<name>_2`). |

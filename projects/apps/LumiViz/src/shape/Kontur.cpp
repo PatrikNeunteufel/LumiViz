@@ -491,6 +491,11 @@ bool loescheEigeneZeichnung(const QString& name)
     return true;
 }
 
+void zaehleZeichnungFassung()
+{
+    zeichnungGeaendert();
+}
+
 std::uint64_t zeichnungFassung()
 {
     return fassung();

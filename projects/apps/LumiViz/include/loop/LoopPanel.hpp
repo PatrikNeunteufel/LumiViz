@@ -190,6 +190,7 @@ private:
     /// Permanent: ein Loop aus dem Audio Browser kommt auch an, wenn das Panel nie sichtbar war.
     IEventBus::SubscriberHandle m_ladeSubscription;
     IEventBus::SubscriberHandle m_vorhoerSubscription;  ///< ▶ im Dialog Import package (Publish, S125)
+    IEventBus::SubscriberHandle m_importSubscription;   ///< nach einem Import neu lesen (S125)
     QPointer<DrumEditor> m_editor;
     QPointer<InstrumentEditor> m_instrumentEditor;
     QPointer<ClipEffektFenster> m_effekte;
