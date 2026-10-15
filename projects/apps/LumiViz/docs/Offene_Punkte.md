@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.234.0
+> **Version:** 1.235.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2726,6 +2726,11 @@ Idee Preset-Warmup/Pre-Roll.
   und C1b im Zweig `composer`, noch nicht nach `master` geholt. Die folgenden
   Notizen sind dort eingearbeitet und bleiben als Quelle stehen; die Fragen
   aus S93 (Kürzel sperren, Start) sind dort entschieden.
+- ✅ **Einzelne Clips ausschalten (Wunsch Patrik S126, D1 c, gebaut):**
+  *Clip enabled* im Rechtsklick und Ctrl+E, nur mit *Edit*; ein
+  ausgeschalteter Clip spielt nicht (Ton, Bild, laufender Song, Next /
+  Previous), bleibt aber bearbeitbar. Composer_Konzept §9h. Im Programm
+  nicht gesehen.
 - 🔧 **Lautstärke-Abgleich der Ton-Clips (S126, entschieden; G1 bis G3 gebaut):**
   Anlass `asset/compare.lvcomp` — der Loop `titanium_versuch` ist viel leiser
   als der Song, und ein Clip kann heute nicht lauter werden als seine Datei.
@@ -5737,6 +5742,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.235.0 | 2026-10-15 | Session 126. §7 Composer: einzelne Clips ausschalten (D1 c) gebaut. |
 | 1.234.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G2 gebaut. |
 | 1.233.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich G1 und G3 gebaut. |
 | 1.232.0 | 2026-10-15 | Session 126. §7 Composer: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a, Composer_Konzept §9g), nicht gebaut. |

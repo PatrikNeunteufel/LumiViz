@@ -266,6 +266,7 @@ bool Wiedergabe::rendere(std::int64_t stelleMs, float deltaSekunden, QSize groes
             for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
             {
                 const VisualClip& clip = kanal.clips[static_cast<size_t>(c)];
+                if (!clip.an) continue;  // ausgeschaltet (S126, D1 c): wie in einem ausgeschalteten Kanal
                 const bool vorn = stelleMs >= clip.startMs && stelleMs < clip.endeMs;
                 const bool hinten = zweiteMs >= clip.startMs && zweiteMs < clip.endeMs;
                 if (nurHinten != (hinten && !vorn)) continue;

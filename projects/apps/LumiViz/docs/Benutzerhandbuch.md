@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.169.0
+> **Version:** 1.170.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2174,7 +2174,12 @@ unter `composer/fades` und `composer/shapes`.
   während des Ziehens „New channel". Oder Rechtsklick → *Add channel*.
 - **Rechtsklick** auf eine Zeile: *Rename channel...*, *Channel enabled*
   (ein ausgeschalteter Kanal trägt nichts zum Bild bei), *Delete channel*
-  (samt seinen Clips), *Add channel*; auf einem Clip zusätzlich *Delete clip*.
+  (samt seinen Clips), *Add channel*; auf einem Clip zusätzlich *Delete clip*
+  und **Clip enabled** — ein ausgeschalteter Clip bleibt stehen und lässt sich
+  bearbeiten, spielt aber nicht: kein Ton, kein Bild, er zählt nicht als
+  laufender Song, *Next* / *Previous* springen an ihm vorbei. Er trägt „(off)“
+  hinter dem Namen. Kürzel für den angeklickten Clip: **Ctrl+E** (nur mit
+  *Edit*).
 - **Kanäle verschieben:** Zieh einen Kanal an seinem **Namen** (linke Spalte)
   nach oben oder unten — ein Strich zeigt, wo er landet; Esc bricht ab. Oder
   Rechtsklick auf die Zeile → **Move channel up** / **Move channel down**.
@@ -2507,6 +2512,7 @@ Eine `.lvcomp` ist eine Textdatei (JSON). Die kleinste sinnvolle Fassung:
 | `channels` | Die Kanäle, **der unterste zuerst** — spätere liegen darüber |
 | `file` | Die Preset-Datei, absolut oder **relativ zur `.lvcomp`** |
 | `start`, `end` | In Millisekunden auf der Zeitachse. Clips eines Kanals überlappen nicht |
+| `enabled` (am Clip) | Freiwillig: `false` = der Clip ist ausgeschaltet (*Clip enabled*). Ohne Angabe ist er an |
 | `blend` | Mischart mit dem, was darunter liegt: 0 Normal · 1 Additive · 2 Subtract · 3 Maximum · 4 Minimum · 5 Multiply · 6 Xor |
 | `fadeIn`, `fadeOut` | Ein- und Ausblendung, beide freiwillig: `ms` ist die eingestellte Dauer, `shape` die Form. Ohne beide läuft der Clip von Anfang bis Ende auf seinem Grundpegel |
 | `shape` | Eine Form ohne Zeit: `points` mit `x` (Anteil der Dauer, 0 … 1) und `y` (Pegel, 0 … 1). Eine Blende (`kind` `fade`) läuft von (0, 0) nach (1, 1); als `fadeOut` wird dieselbe Form rückwärts gelesen |
@@ -3358,6 +3364,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.170.0 | 2026-10-15 | Session 126. §15 Composer NEU **Clip enabled** im Rechtsklick und **Ctrl+E**: einzelne Clips ausschalten; in der Datei `enabled` am Clip. |
 | 1.169.0 | 2026-10-15 | Session 126. §15 Composer NEU **Gain** am Ton-Clip: Feld unten rechts statt *Blend*, Marke im Clip, Rechtsklick *Reset gain*; in der Datei das Feld `gain`. |
 | 1.168.0 | 2026-10-15 | Session 125. §16 NEU „Weitergeben: Publish“: Publish... in Panel Loop, Instrument-Creator, Kits, Edit shape, Record sample, File → Publish a file... und Import package..., die Dialoge Publish und Import package (Same names mit Keep both, Replace mine, Use mine); §8 ein Paket öffnet aus Import... den Dialog Import package. |
 | 1.167.0 | 2026-10-15 | Session 125. §8 Import data: Keep both heißt jetzt `bass_2` statt `bass (2)` — einen Namen mit Klammern übergingen Instrumente, Samples, Kits und Formen. |

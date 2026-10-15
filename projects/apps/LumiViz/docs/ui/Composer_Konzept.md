@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.85.0
+> **Version:** 0.86.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -26,7 +26,8 @@
 > in §4 bis §9e; seit S105 auf `master` (§12) — **S109 / S110: die gemeinsame
 > Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)** —
 > **S126: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a),
-> G1 bis G3 gebaut, im Programm nichts gesehen (§9g)**
+> G1 bis G3 gebaut, im Programm nichts gesehen (§9g); einzelne Clips
+> ausschalten, D1 c, gebaut (§9h)**
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
 > erst nach `master` geholt wird, wenn der Composer sauber läuft
@@ -1384,6 +1385,33 @@ Loop-Kleinkram“):**
   vorher Listen A/B und Undo vorlegen.
 - **G6** Handbuch, Sichttest-Liste, voller Lauf.
 
+### 9h. Einzelne Clips ausschalten — entschieden und gebaut S126
+
+**Wunsch Patrik S126:** „einzelne Clips (audio und visuals) sollte man per
+Kontextmenü deaktivieren können". **Entscheid D1 c:** wie das Ausschalten
+eines Kanals, dazu ein Tastenkürzel.
+
+- **Bedienung:** Rechtsklick auf einen Clip → Haken **Clip enabled**
+  (Kürzel **Ctrl+E** für den angeklickten Clip, in der Zeitachse); nur mit
+  *Edit*, wie *Channel enabled* (das war in der Vorlage als „auch ohne Edit"
+  angenommen und vor dem Bau im Code nachgesehen: `kanalSchalten` verlangt
+  *Edit*). Undo „Disable clip" / „Enable clip".
+- **Wirkung:** ein ausgeschalteter Clip spielt nicht — kein Ton
+  (`Komposition::toeneBei`), kein Bild und kein Vorwärmen (`Wiedergabe`),
+  kein laufender Song (`Tonfuehrung::stelleImLaufenden`), kein Ziel für Next /
+  Previous (`songAnfang`). Er bleibt in der Zeitachse und lässt sich
+  bearbeiten; das Ende der Komposition folgt auch ihm. Der festgehaltene Clip
+  von *Sync on Effect Chain* wird weiter gezeigt (wie in einem ausgeschalteten
+  Kanal).
+- **Darstellung:** blasse Schrift und „(off)" hinter dem Namen; die Farbe wie
+  bei einem ausgeschalteten Kanal (bei *Composer off* sind alle Clips
+  gedämpft, dann unterscheidet nur die Schrift).
+- **Datei:** `Clip::an`, in der `.lvcomp` `"enabled": false` nur, wenn aus;
+  Fassung bleibt 2.
+- **Tests:** „S126 D1 Clip aus" (`test_ComposerTonfuehrung`), „S126 D1 GL"
+  (`test_ComposerWiedergabe`), Ctrl+E, Undo, Speichern im Fall „S126 G2
+  Panel" (`test_ComposerPanel`, Bild mit `.off.png`).
+
 ### 9a. Stand C0 — ✅ erledigt (S93): Host-Gruppen, verworfen
 
 `tests/unit/UnitTests/test_ComposerBelege.cpp`, Suite `ComposerBelege`,
@@ -1580,6 +1608,7 @@ dabei, damit die Gründe nachlesbar bleiben.
 | L2 | Maß des Abgleichs (S126) | **Lautheit nach EBU R128 in LUFS**, Peak daneben | RMS; Peak |
 | L3 | Ziel des Abgleichs (S126) | **Liste: jeder Ton-Clip und Fixed level**, Vorgabe der lauteste Clip | nur Bezugsclip; nur fester Wert |
 | L3b | Gemessener Teil (S126) | **der gespielte Ausschnitt ohne Pegelkurve**, beim Loop ein Durchlauf nach einem vorgerechneten | ganze Datei; nur der Teil auf vollem Pegel |
+| D1 | Einzelne Clips ausschalten (S126) | **Haken Clip enabled im Rechtsklick und Ctrl+E**, nur mit Edit; wirkt wie ein ausgeschalteter Kanal (§9h) | Grundpegel auf 0 (*Mute clip*); ohne Kürzel |
 | L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
 
 **Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
@@ -1753,6 +1782,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.86.0 | 2026-10-15 | Session 126 — **§9h neu: einzelne Clips ausschalten** (Entscheid D1 c): *Clip enabled* im Rechtsklick, Ctrl+E, `enabled` in der `.lvcomp`; §11 eine Zeile; Kopf |
 | 0.85.0 | 2026-10-15 | Session 126 — §9g: **G2** gebaut (Entscheid G2 a: Feld Gain statt Blend am Ton-Clip, Marke im Clip, Reset gain im Rechtsklick); Kopf |
 | 0.84.0 | 2026-10-15 | Session 126 — §9g: **G1** (Gain je Ton-Clip in Modell, Datei und Tonführung) und **G3** (Messbaustein `composer/Lautheit` nach EBU R128, belegt an Tech 3341 Fälle 1–5; Beleg L3b: ein Loop-Durchlauf gleicht dem nächsten) gebaut; Baustufen freigegeben; Kopf. Im Programm nichts gesehen |
 | 0.83.0 | 2026-10-15 | Session 126 — **§9g neu: Lautstärke-Abgleich der Ton-Clips** (Anlass Patrik: `compare.lvcomp`, der Loop viel leiser als das Original). Entscheide L1 a (Gain je Ton-Clip in dB), L2 a (EBU R128, LUFS), L3 a (Target: Clip oder Fixed level), L3b a (gespielter Ausschnitt ohne Pegelkurve), L4 a (Limiter am Mixer); die Skizze des Dialogs Match loudness als Beschreibung; Baustufen G1 bis G6 vorgelegt, nicht freigegeben; §11 fünf Zeilen; Kopf. Nichts gebaut |

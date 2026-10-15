@@ -71,6 +71,10 @@ struct Clip
     std::int64_t startMs = 0;
     std::int64_t endeMs = 0;  ///< ausschliesslich: der Clip laeuft in [start, ende)
     Mischart mischart = Mischart::Normal;  ///< nur Bild
+    /// Aus (Entscheid Patrik S126, D1 c): der Clip bleibt in der Zeitachse und
+    /// laesst sich bearbeiten, spielt aber nicht — kein Ton, kein Bild, kein
+    /// laufender Song, kein Ziel fuer Next / Previous; wie ein ausgeschalteter Kanal.
+    bool an = true;
 
     // --- nur Ton ---------------------------------------------------------------
     /// Ab dieser Stelle im Song beginnt der Clip. Wird die linke Kante

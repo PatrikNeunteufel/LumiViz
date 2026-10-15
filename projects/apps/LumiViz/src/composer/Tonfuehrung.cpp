@@ -19,6 +19,7 @@
 #include <BasicLogger.h>
 
 #include <algorithm>
+#include <iterator>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -500,7 +501,7 @@ std::int64_t Tonfuehrung::stelleImLaufenden(const Komposition& komposition, doub
         if (kanal.art != KanalArt::Audio || !kanal.an) continue;
         for (const Clip& c : kanal.clips)
         {
-            if (!(Schluessel{c.datei, c.startMs, c.einsatzMs} == m_laufend)) continue;
+            if (!c.an || !(Schluessel{c.datei, c.startMs, c.einsatzMs} == m_laufend)) continue;
             const auto imSong = static_cast<std::int64_t>(std::clamp(anteil, 0.0, 1.0) * m_laufendDauerMs);
             // was vor dem Einsatz oder hinter dem Ende des Clips laege, gibt es in der Komposition nicht
             return std::clamp<std::int64_t>(c.startMs + (imSong - c.einsatzMs), c.startMs, c.endeMs - 1);
@@ -511,11 +512,12 @@ std::int64_t Tonfuehrung::stelleImLaufenden(const Komposition& komposition, doub
 
 std::int64_t Tonfuehrung::songAnfang(const Komposition& komposition, std::int64_t stelleMs, bool vor)
 {
-    // die Songs aller eingeschalteten Audio-Kanaele, nach ihrem Anfang
+    // die eingeschalteten Songs aller eingeschalteten Audio-Kanaele, nach ihrem Anfang
     std::vector<Clip> clips;
     for (const Kanal& kanal : komposition.kanaele)
         if (kanal.art == KanalArt::Audio && kanal.an)
-            clips.insert(clips.end(), kanal.clips.begin(), kanal.clips.end());
+            std::copy_if(kanal.clips.begin(), kanal.clips.end(), std::back_inserter(clips),
+                         [](const Clip& c) { return c.an; });
     std::stable_sort(clips.begin(), clips.end(),
                      [](const Clip& a, const Clip& b) { return a.startMs < b.startMs; });
     if (vor)

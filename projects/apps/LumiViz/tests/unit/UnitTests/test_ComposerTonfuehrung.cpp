@@ -778,6 +778,50 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(r.song.filePath == kEins);
     }
 
+    TEST_CASE("S126 D1 Clip aus: Datei, kein Ton, nicht laufender Song, nicht Next / Previous")
+    {
+        // Datei: nur geschrieben, wenn aus; fehlt es, ist der Clip an
+        Komposition k = probe();  // eins 10–70 s, zwei 80–100 s
+        k.kanaele[1].clips[0].an = false;
+        const QJsonObject json = alsJson(k);
+        const QJsonArray clips =
+            json.value(QStringLiteral("channels")).toArray().at(1).toObject().value(QStringLiteral("clips")).toArray();
+        CHECK(clips.at(0).toObject().value(QStringLiteral("enabled")).toBool(true) == false);
+        CHECK_FALSE(clips.at(1).toObject().contains(QStringLiteral("enabled")));
+        Komposition gelesen;
+        REQUIRE(ausJson(json, gelesen));
+        CHECK_FALSE(gelesen.kanaele[1].clips[0].an);
+        CHECK(gelesen.kanaele[1].clips[1].an);
+        CHECK(gleich(k, gelesen));
+
+        // das Modell: ein ausgeschalteter Clip ist kein Ton
+        CHECK(k.toeneBei(30000).empty());
+        CHECK(k.toeneBei(90000).size() == 1);
+        // Next / Previous gehen an ihm vorbei
+        CHECK(Tonfuehrung::songAnfang(k, 0, true) == 80000);
+        CHECK(Tonfuehrung::songAnfang(k, 95000, false) == 80000);
+
+        // die Fuehrung: keine Quelle, kein laufender Song; wieder an, spielt er
+        PappPlayer p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+        const Tonfuehrung::Ergebnis r = f.takt(k, 30000, true);
+        CHECK(e.quelle(kEins) == INVALID_STREAM);
+        CHECK(f.quellen() == 0);
+        CHECK_FALSE(r.hatSong);
+        k.kanaele[1].clips[0].an = true;
+        const Tonfuehrung::Ergebnis wieder = f.takt(k, 30033, true);
+        CHECK(e.quelle(kEins) != INVALID_STREAM);
+        CHECK(wieder.hatSong);
+        CHECK(wieder.song.filePath == kEins);
+        // waehrend er spielt ausgeschaltet: seine Quelle geht
+        k.kanaele[1].clips[0].an = false;
+        (void)f.takt(k, 30066, true);
+        CHECK(f.quellen() == 0);
+    }
+
     TEST_CASE("Next und Previous: die Anfaenge der Songs")
     {
         const Komposition k = probe();  // eins 10–70 s, zwei 80–100 s

@@ -1676,6 +1676,44 @@ TEST_SUITE("ComposerPanel")
         REQUIRE_FALSE(achse->bearbeiten());
         achse->gainZuruecksetzen(1, 0);
         CHECK(gainVon(0) == doctest::Approx(6.0));
+
+        // --- S126 D1 c: Ctrl+E schaltet den angeklickten Clip aus und an — nur mit Edit
+        const auto ctrlE = [&] {
+            QKeyEvent druck(QEvent::KeyPress, Qt::Key_E, Qt::ControlModifier);
+            QCoreApplication::sendEvent(achse, &druck);
+        };
+        const auto clipAn = [&](int kanal, int c) {
+            return sitzung->komposition().kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(c)].an;
+        };
+        klick(10000, 1);
+        ctrlE();  // ohne Edit: nichts
+        CHECK(clipAn(1, 0));
+        edit->click();
+        REQUIRE(achse->bearbeiten());
+        klick(10000, 1);
+        ctrlE();
+        CHECK_FALSE(clipAn(1, 0));
+        CHECK(bus->undoDescription() == "Disable clip");
+        klick(10000, 0);  // ein Bild-Clip ebenso, ueber den Weg des Menues
+        achse->clipSchalten(0, 0, false);
+        CHECK_FALSE(clipAn(0, 0));
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_GAIN_BILD"); !bild.isEmpty())
+        {
+            QCoreApplication::processEvents();
+            CHECK(panel.grab().save(bild + QStringLiteral(".off.png")));
+        }
+        bus->undo();
+        CHECK(clipAn(0, 0));
+        klick(10000, 1);
+        ctrlE();
+        CHECK(clipAn(1, 0));
+        CHECK(bus->undoDescription() == "Enable clip");
+        // gespeichert und wieder geladen bleibt er aus
+        achse->clipSchalten(1, 1, false);
+        REQUIRE(sitzung->speichere());
+        REQUIRE(sitzung->lade(datei));
+        CHECK_FALSE(clipAn(1, 1));
+        CHECK(clipAn(1, 0));
     }
 
     TEST_CASE("C5 Panel: ein Audio-Kanal — anlegen, Songs hineinziehen, Wellenform, Kanten und Blenden")

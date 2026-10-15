@@ -465,7 +465,7 @@ void Zeitachse::paintEvent(QPaintEvent*)
                                        : k == kMasterKaraoke ? QColor(88, 112, 96)
                                                              : QColor(96, 100, 112);
             const QColor farbe = istMaster(k) ? (m_an ? masterFarbe : masterFarbe.darker(130))
-                                              : kanalFarbe(m_komposition, k, m_an && kanal.an);
+                                              : kanalFarbe(m_komposition, k, m_an && kanal.an && clip.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
             p.setBrush(farbe);
             // hineingezoomt kann ein Clip viele tausend Pixel breit sein: gezeichnet
@@ -585,9 +585,14 @@ void Zeitachse::paintEvent(QPaintEvent*)
                 }
             }
             if (namePasst(r.height()))
+            {
+                // ausgeschaltet (S126, D1 c): blasse Schrift und „(off)", wie am Kanal
+                const QString clipName = QFileInfo(clip.datei).completeBaseName();
+                if (!clip.an) p.setPen(QColor(255, 255, 255, 140));
                 p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
-                           fontMetrics().elidedText(QFileInfo(clip.datei).completeBaseName(),
+                           fontMetrics().elidedText(clip.an ? clipName : tr("%1 (off)").arg(clipName),
                                                     Qt::ElideRight, std::max(0, namensFeld.width())));
+            }
 
             // Griffe der Blenden (C4), nur im Bearbeiten: oben im Clip je ein
             // Quadrat fuer die Laenge; am angeklickten Clip die Bézier-Anfasser
@@ -1088,6 +1093,20 @@ void Zeitachse::gainZuruecksetzen(int kanal, int clip)
     Q_EMIT bearbeitet(neu, tr("Reset gain"));
 }
 
+void Zeitachse::clipSchalten(int kanal, int clip, bool an)
+{
+    if (!m_bearbeiten || !m_geladen || istMaster(kanal)) return;
+    if (kanal < 0 || kanal >= static_cast<int>(m_komposition.kanaele.size())) return;
+    Komposition neu = m_komposition;
+    Kanal& k = neu.kanaele[static_cast<std::size_t>(kanal)];
+    if (clip < 0 || clip >= static_cast<int>(k.clips.size())) return;
+    Clip& c = k.clips[static_cast<std::size_t>(clip)];
+    if (c.an == an) return;
+    c.an = an;
+    uebernimm(neu, m_kanal, m_clip);
+    Q_EMIT bearbeitet(neu, an ? tr("Enable clip") : tr("Disable clip"));
+}
+
 void Zeitachse::mouseDoubleClickEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
@@ -1440,6 +1459,13 @@ void Zeitachse::keyPressEvent(QKeyEvent* event)
         (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace))
     {
         loescheAuswahl();
+        return;
+    }
+    // Ctrl+E: den angeklickten Clip ein- und ausschalten (S126, D1 c)
+    if (m_bearbeiten && m_griff == Griff::Keiner && auswahl() != nullptr && !gesamtGewaehlt() &&
+        event->key() == Qt::Key_E && event->modifiers() == Qt::ControlModifier)
+    {
+        clipSchalten(m_kanal, m_clip, !auswahl()->an);
         return;
     }
     if (m_geladen && m_griff == Griff::Keiner)
@@ -1926,8 +1952,17 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         }
         if (!istMaster(kanal))  // eine Kurve der Komposition ist kein Clip
         {
-            // S126, G2 a: nur an einem Ton-Clip mit Gain
             const VisualClip& c = *clipIn(m_komposition, kanal, clip, ablage);
+            // S126, D1 c: den Clip ein- und ausschalten, wie den Kanal
+            QAction* clipAn = menu.addAction(tr("Clip enabled"));
+            clipAn->setObjectName(QStringLiteral("composerClipEnabled"));
+            clipAn->setCheckable(true);
+            clipAn->setChecked(c.an);
+            clipAn->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_E));
+            clipAn->setEnabled(m_bearbeiten);
+            connect(clipAn, &QAction::triggered, this,
+                    [this, kanal, clip](bool ein) { clipSchalten(kanal, clip, ein); });
+            // S126, G2 a: nur an einem Ton-Clip mit Gain
             if (m_komposition.kanaele[static_cast<std::size_t>(kanal)].art == KanalArt::Audio && c.gainDb != 0.0)
             {
                 QAction* zurueck = menu.addAction(tr("Reset gain (%1)").arg(ComposerPanel::gainText(c.gainDb)),

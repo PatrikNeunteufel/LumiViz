@@ -488,7 +488,7 @@ std::vector<const Clip*> Komposition::toeneBei(std::int64_t stelleMs, std::int64
     {
         if (kanal.art != KanalArt::Audio || !kanal.an) continue;
         for (const Clip& c : kanal.clips)
-            if (stelleMs >= c.startMs - vorlaufMs && stelleMs < c.endeMs) toene.push_back(&c);
+            if (c.an && stelleMs >= c.startMs - vorlaufMs && stelleMs < c.endeMs) toene.push_back(&c);
     }
     return toene;
 }
@@ -543,6 +543,7 @@ QJsonObject alsJson(const Komposition& komposition, const QString& basisOrdner)
                 o.insert(QStringLiteral("file"), fuerDatei(c.datei, basisOrdner));
                 o.insert(QStringLiteral("start"), static_cast<double>(c.startMs));
                 o.insert(QStringLiteral("end"), static_cast<double>(c.endeMs));
+                if (!c.an) o.insert(QStringLiteral("enabled"), false);  // nur, wenn aus (S126, D1 c)
                 if (ton)
                 {
                     o.insert(QStringLiteral("offset"), static_cast<double>(c.einsatzMs));
@@ -751,6 +752,7 @@ bool ausJson(const QJsonObject& wurzel, Komposition& komposition, const QString&
                 c.datei = datei;
                 c.startMs = static_cast<std::int64_t>(o.value(QStringLiteral("start")).toDouble());
                 c.endeMs = static_cast<std::int64_t>(o.value(QStringLiteral("end")).toDouble());
+                c.an = o.value(QStringLiteral("enabled")).toBool(true);
                 c.mischart = static_cast<Mischart>(
                     std::clamp(o.value(QStringLiteral("blend")).toInt(), 0, kMischarten - 1));
                 if (kanal.art == KanalArt::Audio)

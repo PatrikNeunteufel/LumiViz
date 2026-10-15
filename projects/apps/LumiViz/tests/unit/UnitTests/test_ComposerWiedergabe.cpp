@@ -1184,6 +1184,48 @@ TEST_SUITE("ComposerWiedergabe")
         CHECK(w.rendererAnzahl() == 0);
     }
 
+    TEST_CASE("S126 D1 GL: ein ausgeschalteter Clip zeigt nichts und bekommt keinen Renderer — darunter liegt, was darunter ist")
+    {
+        Gl gl;
+        if (!gl.gut)
+        {
+            MESSAGE("Kein GL-Kontext moeglich (Headless?) — uebersprungen");
+            return;
+        }
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        const QString rot = farbPreset(dir, QStringLiteral("Rot.lvfx"), 0xFF0000);
+        const QString blau = farbPreset(dir, QStringLiteral("Blau.lvfx"), 0x0000FF);
+        const QSize groesse(64, 64);
+        Komposition k;
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH1"), {clip(rot, 0, 10000)}));
+        k.kanaele.push_back(visualKanal(QStringLiteral("CH2"), {clip(blau, 0, 10000)}));
+        Wiedergabe w;
+        w.setKomposition(k);
+        REQUIRE(w.rendere(5000, 1.0f / 60.0f, groesse));
+        CHECK(w.mischer().bild().pixelColor(32, 32).blue() > 250);  // CH2 liegt oben
+
+        // CH2 aus: das Rote darunter, und der blaue Clip hat keinen Renderer mehr
+        k.kanaele[1].clips[0].an = false;
+        w.setKomposition(k);
+        REQUIRE(w.rendere(5033, 1.0f / 60.0f, groesse));
+        CHECK(w.mischer().bild().pixelColor(32, 32).red() > 250);
+        CHECK(w.mischer().bild().pixelColor(32, 32).blue() < 5);
+        CHECK(w.gemischteClips() == 1);
+        CHECK_FALSE(w.hatRenderer(1, 0));
+        // auch nicht im Vorlauf
+        REQUIRE(w.rendere(0, 1.0f / 60.0f, groesse));
+        CHECK_FALSE(w.hatRenderer(1, 0));
+
+        // beide aus: schwarz, wie eine Luecke
+        k.kanaele[0].clips[0].an = false;
+        w.setKomposition(k);
+        REQUIRE(w.rendere(5066, 1.0f / 60.0f, groesse));
+        CHECK(w.gemischteClips() == 0);
+        CHECK(w.mischer().bild().pixelColor(32, 32) == QColor(0, 0, 0));
+        w.entladeAlles();
+    }
+
     TEST_CASE("Schleife S99 GL: im Fenster laufen die Clips beider Stellen, ein Clip in beiden einmal — Vorwaermen ueber den Umschlag")
     {
         Gl gl;

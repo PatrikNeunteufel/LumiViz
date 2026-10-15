@@ -208,6 +208,9 @@ public:
     void stueckLoeschen(int kanal, int clip, int stueck);
     /// Das Gain eines Ton-Clips auf 0 dB (Rechtsklick „Reset gain", S126, G2).
     void gainZuruecksetzen(int kanal, int clip);
+    /// Einen Clip ein- oder ausschalten (Rechtsklick „Clip enabled", Ctrl+E;
+    /// S126, D1 c). Nur im Bearbeiten, wie „Channel enabled".
+    void clipSchalten(int kanal, int clip, bool an);
     /// Das Teil, an dem der Curve Editor haengt — am angeklickten Clip markiert.
     void setTeil(Teil teil);
     /// Mitte eines Griffs des Stuecks oben im Clip: `welcher` 0 = die Raute in
