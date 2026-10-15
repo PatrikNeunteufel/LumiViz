@@ -11,6 +11,7 @@
 
 #include "pch.h"
 #include "audio/BassEngine.hpp"
+#include "audio/Begrenzer.hpp"
 
 #include <BasicLogger.h>
 
@@ -28,6 +29,8 @@
 #include <cmath>
 #include <algorithm>
 #include <atomic>
+#include <map>
+#include <memory>
 #include <mutex>
 
 // =============================================================================
@@ -56,6 +59,16 @@ struct BassEngine::Impl
     std::atomic<float> recPeak{0.0f};    ///< der groesste Betrag seit `recordLevel`
     HRECORD recChannel = 0;
     bool recOpen = false;                ///< `BASS_RecordInit` gelang und ist noch nicht freigegeben
+
+    // --- Limiter am Mixer (S126, L4 a): je Mixer der DSP und sein Begrenzer.
+    //     Der Begrenzer rechnet im Ton-Thread von BASS; angelegt und entfernt
+    //     wird hier, gelesen wird nur sein Zaehler (atomar).
+    struct Limiter
+    {
+        HDSP dsp = 0;
+        std::unique_ptr<Begrenzer> begrenzer;
+    };
+    std::map<DWORD, Limiter> limiter;
 };
 
 // =============================================================================
@@ -237,7 +250,8 @@ void BassEngine::shutdown()
     
     // Free BASS
     BASS_Free();
-    
+    m_impl->limiter.clear();  // mit BASS sind die Mixer und ihre DSPs fort
+
     m_impl->initialized = false;
     m_impl->deviceId = -1;
     
@@ -384,6 +398,8 @@ void BassEngine::freeStream(AudioStreamHandle stream)
     if (stream != INVALID_STREAM)
     {
         BASS_StreamFree(static_cast<HSTREAM>(stream));
+        // mit dem Mixer geht sein DSP; der Begrenzer dazu erst danach
+        m_impl->limiter.erase(static_cast<DWORD>(stream));
     }
 }
 
@@ -557,6 +573,52 @@ bool BassEngine::setTempo(AudioStreamHandle stream, float faktor)
 // =============================================================================
 // Mixer (Composer-Naht N12, docs/ui/Composer_Konzept.md §4 und §12.2)
 // =============================================================================
+
+namespace
+{
+
+/// Der DSP des Limiters: der Mixer rechnet in Fliesskomma, Stereo (`createMixer`).
+void CALLBACK begrenzeDsp(HDSP, DWORD, void* puffer, DWORD laenge, void* begrenzer)
+{
+    static_cast<Begrenzer*>(begrenzer)->verarbeite(static_cast<float*>(puffer), laenge / (2 * sizeof(float)));
+}
+
+}  // namespace
+
+bool BassEngine::setMixerLimiter(AudioStreamHandle mixer, bool an)
+{
+    if (mixer == INVALID_STREAM || !m_impl->initialized) return false;
+    const auto handle = static_cast<DWORD>(mixer);
+    const auto da = m_impl->limiter.find(handle);
+    if (!an)
+    {
+        if (da != m_impl->limiter.end())
+        {
+            BASS_ChannelRemoveDSP(handle, da->second.dsp);  // danach ruft BASS ihn nicht mehr
+            m_impl->limiter.erase(da);
+        }
+        return true;
+    }
+    if (da != m_impl->limiter.end()) return true;
+    Impl::Limiter neu;
+    neu.begrenzer = std::make_unique<Begrenzer>(m_impl->sampleRate);
+    neu.dsp = BASS_ChannelSetDSP(handle, &begrenzeDsp, neu.begrenzer.get(), 0);
+    if (neu.dsp == 0)
+    {
+        m_impl->lastError = BASS_ErrorGetCode();
+        m_impl->lastErrorMsg = bassErrorToString(m_impl->lastError);
+        return false;
+    }
+    m_impl->limiter.emplace(handle, std::move(neu));
+    return true;
+}
+
+long long BassEngine::mixerLimiterFrames(AudioStreamHandle mixer) const
+{
+    const auto da = m_impl->limiter.find(static_cast<DWORD>(mixer));
+    if (da == m_impl->limiter.end()) return -1;
+    return static_cast<long long>(da->second.begrenzer->begrenzteFrames());
+}
 
 AudioStreamHandle BassEngine::createMixer()
 {

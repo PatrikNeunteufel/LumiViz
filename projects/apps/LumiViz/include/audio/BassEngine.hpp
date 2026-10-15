@@ -107,6 +107,8 @@ public:
     bool setSourcePaused(AudioStreamHandle source, bool paused) override;
     [[nodiscard]] bool isSourcePlaying(AudioStreamHandle source) const override;
     // Loop (docs/audio/Loop_Konzept.md §6)
+    bool setMixerLimiter(AudioStreamHandle mixer, bool an) override;
+    [[nodiscard]] long long mixerLimiterFrames(AudioStreamHandle mixer) const override;
     [[nodiscard]] AudioStreamHandle mixerAddGenerator(AudioStreamHandle mixer,
                                                       IAudioGenerator* generator) override;
     [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int sampleRate,

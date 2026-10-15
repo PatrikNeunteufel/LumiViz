@@ -435,7 +435,7 @@ TEST_CASE("Beleg G4: Wellenform und Spektrum des Mixers zeigen das Signal hinter
     QTemporaryDir ordner;
     REQUIRE(ordner.isValid());
     const QString datei = ordner.filePath(QStringLiteral("a_1000.wav"));
-    REQUIRE(schreibeSinus(datei, kFreqA, 0.25f, 3));
+    REQUIRE(schreibeSinus(datei, kFreqA, 0.25f, 8));  // laenger als der ganze Fall
 
     BassEngine bass;
     if (!bass.initialize())
@@ -488,6 +488,42 @@ TEST_CASE("Beleg G4: Wellenform und Spektrum des Mixers zeigen das Signal hinter
     CHECK(gainUndDsp == doctest::Approx(vorher * 2.0f).epsilon(0.1));
 
     REQUIRE(BASS_ChannelRemoveDSP(static_cast<HSTREAM>(mixer), dsp) != 0);
+
+    // --- G4: der Limiter der Engine am Mixer. Quelle ×8: die Summe stuende bei 2,0
+    REQUIRE(engine.setVolume(a, 8.0f));
+    QThread::msleep(400);
+    const float ohneLimiter = welleSpitze();
+    MESSAGE("Quelle x8, ohne Limiter: Spitze " << ohneLimiter);
+    CHECK(ohneLimiter == doctest::Approx(2.0f).epsilon(0.1));
+    CHECK(engine.mixerLimiterFrames(mixer) == -1);
+    REQUIRE(engine.setMixerLimiter(mixer, true));
+    REQUIRE(engine.setMixerLimiter(mixer, true));  // zweimal an: einer
+    QThread::msleep(400);
+    const float mitLimiter = welleSpitze();
+    MESSAGE("Quelle x8, mit Limiter: Spitze " << mitLimiter << ", begrenzte Frames "
+                                               << engine.mixerLimiterFrames(mixer));
+    CHECK(mitLimiter <= 0.99f);
+    CHECK(mitLimiter > 0.9f);
+    CHECK(engine.mixerLimiterFrames(mixer) > 0);
+    // unter der Decke greift er nicht: Quelle ×1 (0,25) — nach dem Rueckweg wie ohne
+    REQUIRE(engine.setVolume(a, 1.0f));
+    QThread::msleep(1600);
+    CHECK(welleSpitze() == doctest::Approx(vorher).epsilon(0.02));
+    REQUIRE(engine.setMixerLimiter(mixer, false));
+    CHECK(engine.mixerLimiterFrames(mixer) == -1);
+    REQUIRE(engine.setVolume(a, 8.0f));
+    QThread::msleep(400);
+    CHECK(welleSpitze() == doctest::Approx(2.0f).epsilon(0.1));
+
     engine.mixerRemoveSource(a);
-    engine.freeStream(mixer);
+    REQUIRE(engine.setMixerLimiter(mixer, true));
+    engine.freeStream(mixer);  // nimmt den Limiter mit
+    CHECK(engine.mixerLimiterFrames(mixer) == -1);
+}
+
+TEST_CASE("G4: eine Engine ohne Limiter meldet das")
+{
+    papp::PappEngine engine;
+    CHECK_FALSE(engine.setMixerLimiter(1, true));
+    CHECK(engine.mixerLimiterFrames(1) == -1);
 }

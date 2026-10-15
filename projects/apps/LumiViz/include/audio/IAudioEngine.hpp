@@ -358,6 +358,17 @@ public:
     }
 
     /**
+     * @brief Den Limiter am Mixer an- oder ausschalten (S126, Composer_Konzept
+     *        §9g, L4 a). Er haelt die Summe aller Quellen unter −0,1 dBFS statt
+     *        sie hart abzuschneiden; was darunter bleibt, geht Bit fuer Bit
+     *        durch. Die Visuals sehen das Signal hinter ihm (Beleg G4).
+     * @return false = kein Mixer, oder die Engine kennt keinen Limiter
+     */
+    virtual bool setMixerLimiter(AudioStreamHandle /*mixer*/, bool /*an*/) { return false; }
+    /// Wie viele Frames der Limiter am Mixer bisher begrenzt hat; −1 = keiner dran.
+    [[nodiscard]] virtual long long mixerLimiterFrames(AudioStreamHandle /*mixer*/) const { return -1; }
+
+    /**
      * @brief Eine Datei ganz dekodieren: Stereo, float, links und rechts im
      *        Wechsel, umgerechnet auf `sampleRate`; hoechstens `maxSeconds`.
      *        Fuer kurze Klaenge (Samples des Loops), nicht fuer Songs.
