@@ -511,6 +511,8 @@ private:
     void zeigeClip();
     /// Der Schalter „Fixed end" und seine Zeit.
     void zeigeEnde();
+    /// Der Knopf Match loudness...: da mit einer Komposition, waehlbar mit Edit und einem Ton-Clip.
+    void zeigeAbgleichKnopf();
     /// Eine Aenderung ausfuehren — ueber den CommandBus der App (Undo / Redo),
     /// ohne ihn direkt.
     void bearbeite(const Komposition& neu, const QString& was);

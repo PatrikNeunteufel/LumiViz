@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.92.0
+> **Version:** 0.93.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1507,6 +1507,12 @@ Loop-Kleinkram“):**
   neben seinem Gain-Feld erwartet man, dass dieser Clip angeglichen wird,
   nicht dass er bei 0 dB bleibt und die anderen sich bewegen. Verworfen: der
   Knopf in der Datei-Zeile (vorgeschlagen als a), nur Knopf, nur Rechtsklick.
+  **Nachtrag Patrik (S127, nach dem Bau):** „Match loudness kann doch immer
+  angezeigt werden, nicht nur wenn ein Audioclip markiert ist“ — der Knopf
+  steht jetzt immer ganz rechts in der Fußzeile, sobald eine Komposition
+  geladen ist; wählbar mit *Edit* und mindestens einem Ton-Clip. Ein
+  angeklickter Ton-Clip wird im Dialog markiert, sonst keiner
+  (`ComposerPanel::zeigeAbgleichKnopf`, auch nach jeder Bearbeitung).
 - ✅ **G6** Handbuch, Sichttest-Liste, voller Lauf (S127). Handbuch mit G4
   (1.171.0) und G5 (1.172.0); Liste `.claude/handover/Sichttest_Composer_11_Lautstaerke.md`
   (Abschnitte G Gain, C Clip aus, L Limiter, M Match loudness, Urteile U1 bis
@@ -1745,7 +1751,7 @@ dabei, damit die Gründe nachlesbar bleiben.
 | G5-2 | Undo im Dialog Match loudness (S127) | **ein Schritt beim OK; Edit grau, solange der Dialog offen ist; bei Änderung Liste neu lesen** | Bearbeiten bei offenem Dialog; zwei Schritte; jeder Zug ein Schritt |
 | G5-3 | Messen im Dialog Match loudness (S127) | **beim Öffnen im Hintergrund; Songs im Cache gemerkt (auch über Neustart), Loops immer neu** | nur bis Beenden merken; erst auf Klick, wartend |
 | G5-3b | Cache-Datei für Songs nach der Messung, 235 ms je Song (S127) | **bleibt** | nur im Speicher; gar nichts merken |
-| G5-4 | Eingang zum Dialog Match loudness (S127) | **Knopf neben dem Feld Gain (Fußzeile) und Rechtsklick „Match loudness to this clip...“, beide nur mit Edit** | Knopf in der Datei-Zeile; nur Knopf; nur Rechtsklick |
+| G5-4 | Eingang zum Dialog Match loudness (S127) | **Knopf in der Fußzeile, immer da (Nachtrag Patrik), und Rechtsklick „Match loudness to this clip...“, beide nur mit Edit** | Knopf in der Datei-Zeile; nur Knopf; nur Rechtsklick |
 | D1 | Einzelne Clips ausschalten (S126) | **Haken Clip enabled im Rechtsklick und Ctrl+E**, nur mit Edit; wirkt wie ein ausgeschalteter Kanal (§9h) | Grundpegel auf 0 (*Mute clip*); ohne Kürzel |
 | L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
 
@@ -1920,6 +1926,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.93.0 | 2026-10-15 | Session 127 — §9g G5-4: Nachtrag Patrik, der Knopf Match loudness ist immer da |
 | 0.92.0 | 2026-10-15 | Session 127 — §9g G6: Sichttest-Liste 11 mit Vorlage L, voller Lauf; G1 bis G6 fertig |
 | 0.91.0 | 2026-10-15 | Session 127 — §9g G5 gebaut: der Dialog Match loudness (`composer/Abgleich`, `composer/LautheitsDialog`), Knopf neben Gain, Rechtsklick, Edit grau; Stolperstein der eigenen Meldung beim Setzen — G5 fertig |
 | 0.90.0 | 2026-10-15 | Session 127 — §9g G5: die Messung je Ton-Clip gebaut (`decodeStereoChunks`, `composer/ClipLautheit`, Cache für Songs), Dekodieren gemessen (235 ms je Song), Entscheid **G5-3b a** (Cache bleibt); §11 eine Zeile |

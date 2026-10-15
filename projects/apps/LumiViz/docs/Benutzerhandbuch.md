@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.172.0
+> **Version:** 1.173.0
 > **Datum:** 2026-10-15
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2025,7 +2025,7 @@ Nach jedem Start ist er aus — ein versehentliches Ziehen ändert dann nichts.
 | **Ctrl+V** | Fügt den Clip mit seinem **Anfang an der Einfügemarke** ein. Auch: Rechtsklick auf eine freie Stelle → *Paste clip here* |
 | **Blend** (unten rechts) | Mischart des angeklickten Clips |
 | **Gain** (unten rechts, am Ton-Clip statt *Blend*) | Wie viel lauter oder leiser der angeklickte Song oder Loop spielt als seine Datei, −24 bis +24 dB. Die Pfeile und das Mausrad gehen in Schritten von 0,5 dB, eintippen lässt sich auf 0,1 genau. Ein Clip mit Gain trägt rechts eine Marke („+6.0 dB“); Rechtsklick → *Reset gain* setzt ihn auf 0 dB zurück |
-| **Match loudness...** (neben *Gain*) | Öffnet den Dialog, der alle Ton-Clips misst und gleich laut stellt (siehe unten); nur mit *Edit* |
+| **Match loudness...** (unten rechts, immer da) | Öffnet den Dialog, der alle Ton-Clips misst und gleich laut stellt (siehe unten); nur mit *Edit* und wenn die Komposition einen Ton-Clip hat. Ein angeklickter Ton-Clip ist im Dialog fett |
 | **Esc** während eines Zugs | Bricht ihn ab |
 | *Edit → Undo* / *Redo* (Ctrl+Z / Ctrl+Y) | Nimmt den letzten Schritt zurück / holt ihn wieder |
 
@@ -2256,7 +2256,7 @@ Playlist ruht.
   gehört zur Komposition und steht in ihrer Datei; er wirkt, solange der
   Composer den Ton führt.
 - **Match loudness — alle Clips gleich laut:** der Knopf **Match loudness...**
-  neben dem Feld *Gain* (bei einem angeklickten Ton-Clip, nur mit *Edit*) oder
+  unten rechts (immer da, wählbar mit *Edit*) oder
   Rechtsklick auf einen Ton-Clip → **Match loudness to this clip...** öffnet
   einen Dialog. Er misst jeden Ton-Clip nach EBU R128 (LUFS) — genau den Teil,
   den der Clip spielt, ohne seine Pegelkurve; einen Loop einen Durchlauf lang,
@@ -3395,6 +3395,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.173.0 | 2026-10-15 | Session 127. §15 Composer: der Knopf **Match loudness...** steht immer unten rechts, nicht nur bei einem angeklickten Ton-Clip. |
 | 1.172.0 | 2026-10-15 | Session 127. §15 Composer NEU Dialog **Match loudness** (Knopf neben *Gain*, Rechtsklick „Match loudness to this clip...“): misst jeden Ton-Clip nach EBU R128, schlägt je Clip ein Gain vor, Vorhören mit Listen A/B und ▶, OK als ein Schritt. |
 | 1.171.0 | 2026-10-15 | Session 127. §15 Composer NEU Haken **Limiter** (Standard an, nur mit *Edit*): fängt Spitzen über 0 dB am Mixer ab; in der Datei `limiter`. |
 | 1.170.0 | 2026-10-15 | Session 126. §15 Composer NEU **Clip enabled** im Rechtsklick und **Ctrl+E**: einzelne Clips ausschalten; in der Datei `enabled` am Clip. |

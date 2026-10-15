@@ -344,9 +344,12 @@ TEST_SUITE("ComposerAbgleich")
             QCoreApplication::sendEvent(achse, &los);
         };
 
-        // --- der Knopf neben Gain: nur am Ton-Clip, nur mit Edit
+        // --- der Knopf: immer da, sobald eine Komposition geladen ist (Wunsch Patrik
+        //     nach G5-4 a), waehlbar nur mit Edit
+        CHECK(knopf->isVisible());  // nichts angeklickt
+        CHECK_FALSE(knopf->isEnabled());
         waehle(10000, 0);
-        CHECK_FALSE(knopf->isVisible());  // ein Bild-Clip
+        CHECK(knopf->isVisible());  // ein Bild-Clip
         waehle(40000, 1);
         REQUIRE(achse->gewaehlterClip() == 1);
         CHECK(knopf->isVisible());
@@ -354,6 +357,15 @@ TEST_SUITE("ComposerAbgleich")
         CHECK(panel.oeffneAbgleich(1, 1, false) == nullptr);  // ohne Edit nicht
         edit->click();
         REQUIRE(achse->bearbeiten());
+        // mit einem Bild-Clip angeklickt: waehlbar, keine Zeile markiert
+        waehle(10000, 0);
+        CHECK(knopf->isEnabled());
+        knopf->click();
+        REQUIRE(panel.abgleichDialog() != nullptr);
+        CHECK(panel.abgleichDialog()->markiert() == -1);
+        REQUIRE(warte([&] { return !panel.abgleichDialog()->misst(); }));  // die Songs sind danach gemerkt
+        panel.abgleichDialog()->reject();
+        REQUIRE(warte([&] { return panel.abgleichDialog() == nullptr; }));
         // vorher ein eigener Schritt: eins auf +6 dB (fuer Ctrl+Z bei offenem Dialog)
         waehle(10000, 1);
         panel.gainFeld()->setValue(6.0);
@@ -386,7 +398,7 @@ TEST_SUITE("ComposerAbgleich")
         MESSAGE("effects_demo im Dialog: " << a.zeilen()[2].messung->lufs << " LUFS");
         CHECK(a.ziel() == a.lauteste());  // L3 a: zuerst der lauteste
         const int dekodiertBeimErstenMal = engine->dekodiert.load();
-        CHECK(dekodiertBeimErstenMal == 2);  // zwei Songs; der Loop rechnet selbst
+        CHECK(dekodiertBeimErstenMal == 2);  // zwei Songs, beim ersten Oeffnen; jetzt aus dem Speicher
 
         // --- Ziel eins (ueber die Liste): zwei bekommt +9 dB vorgeschlagen
         auto* ziel = dialog->findChild<QComboBox*>(QStringLiteral("matchTarget"));
@@ -514,5 +526,8 @@ TEST_SUITE("ComposerAbgleich")
         REQUIRE(dialog != nullptr);
         sitzung->neu();
         REQUIRE(warte([&] { return panel.abgleichDialog() == nullptr; }));
+        // eine Komposition ohne Ton-Clip: der Knopf ist da, aber grau
+        CHECK(knopf->isVisible());
+        CHECK_FALSE(knopf->isEnabled());
     }
 }

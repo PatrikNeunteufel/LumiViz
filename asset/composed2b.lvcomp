@@ -623,6 +623,7 @@
                         }
                     },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/Cheryl Cole - 3 Words/02. Parachute.mp3",
+                    "gain": 2.2,
                     "offset": 0,
                     "sourceLength": 220330,
                     "start": 0
@@ -674,6 +675,7 @@
                         }
                     },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/David Guetta - One Love/110-david_guetta-one_love_(feat._estelle).mp3",
+                    "gain": 0.8,
                     "offset": 0,
                     "sourceLength": 241000,
                     "start": 181000
@@ -737,6 +739,7 @@
                         }
                     },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/[2009] Planet Funk [Self Titled]/08 - Chase The Sun.mp3",
+                    "gain": 3.2,
                     "offset": 0,
                     "shapes": [
                         {
@@ -815,6 +818,7 @@
                         }
                     },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/The xx - I See You (2017) (Dlx)/08. On Hold.mp3",
+                    "gain": 1.1,
                     "offset": 0,
                     "sourceLength": 224133,
                     "start": 386867
@@ -858,6 +862,7 @@
                         }
                     },
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/Groove Armada - Love Box/10-easy.mp3",
+                    "gain": 2.4,
                     "offset": 0,
                     "sourceLength": 352000,
                     "start": 769000
@@ -907,6 +912,7 @@
                     "base": 0,
                     "end": 864000,
                     "file": "C:/Users/patri/source/repos/Visuals_Project/music/Groove Armada - Love Box/12-but i feel good.mp3",
+                    "gain": 2.9,
                     "offset": 0,
                     "shapes": [
                         {

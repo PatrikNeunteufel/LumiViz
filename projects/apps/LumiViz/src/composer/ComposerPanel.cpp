@@ -2364,7 +2364,8 @@ void ComposerPanel::setupUI()
     m_abgleichKnopf->setToolTip(
         tr("Measure the loudness of every sound clip and suggest a gain for each, so that they play "
            "equally loud. You hear the dialog while the Composer plays; OK keeps it as one step. "
-           "Can be opened while Edit is on."));
+           "A selected sound clip is marked in the list. Can be opened while Edit is on and the "
+           "composition has a sound clip."));
     fuss->addWidget(m_abgleichKnopf);
     connect(m_abgleichKnopf, &QPushButton::clicked, this, [this] {
         (void)oeffneAbgleich(m_zeitachse->gewaehlterKanal(), m_zeitachse->gewaehlterClip(), false);
@@ -2701,6 +2702,7 @@ void ComposerPanel::setFenster(VisualizerWidget* fenster)
             m_zeitachse->zeigeBearbeitet(m_sitzung->komposition());
             // (der Curve Editor folgt ueber `auswahlGeaendert` → `zeigeClip`, auch nach Undo)
             zeigeEnde();
+            zeigeAbgleichKnopf();  // der letzte Ton-Clip kann gegangen sein
         });
         connect(m_sitzung, &Sitzung::geaendert, this, [this] {
             zeigeStand();
@@ -2854,6 +2856,19 @@ LautheitsDialog* ComposerPanel::abgleichDialog() const
     return m_abgleich;
 }
 
+void ComposerPanel::zeigeAbgleichKnopf()
+{
+    // S127, Wunsch Patrik nach G5-4 a: immer da, sobald eine Komposition
+    // geladen ist — der Dialog gilt allen Ton-Clips, nicht dem angeklickten
+    const bool geladen = m_sitzung != nullptr && m_sitzung->geladen();
+    const bool hatTon = geladen && std::any_of(m_sitzung->komposition().kanaele.begin(),
+                                               m_sitzung->komposition().kanaele.end(), [](const Kanal& k) {
+                                                   return k.art == KanalArt::Audio && !k.clips.empty();
+                                               });
+    m_abgleichKnopf->setVisible(geladen);
+    m_abgleichKnopf->setEnabled(hatTon && m_zeitachse->bearbeiten());
+}
+
 void ComposerPanel::bearbeite(const Komposition& neu, const QString& was)
 {
     if (m_sitzung == nullptr || !m_sitzung->geladen()) return;
@@ -2938,8 +2953,7 @@ void ComposerPanel::zeigeClip()
     m_gainTitel->setVisible(ton);
     m_gain->setVisible(ton);
     m_gain->setEnabled(ton && m_zeitachse->bearbeiten());
-    m_abgleichKnopf->setVisible(ton);
-    m_abgleichKnopf->setEnabled(ton && m_zeitachse->bearbeiten());
+    zeigeAbgleichKnopf();
     if (ton)
     {
         const QSignalBlocker still(m_gain);
