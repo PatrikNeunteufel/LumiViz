@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.91.0
+> **Version:** 0.92.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1507,7 +1507,15 @@ Loop-Kleinkram“):**
   neben seinem Gain-Feld erwartet man, dass dieser Clip angeglichen wird,
   nicht dass er bei 0 dB bleibt und die anderen sich bewegen. Verworfen: der
   Knopf in der Datei-Zeile (vorgeschlagen als a), nur Knopf, nur Rechtsklick.
-- **G6** Handbuch, Sichttest-Liste, voller Lauf.
+- ✅ **G6** Handbuch, Sichttest-Liste, voller Lauf (S127). Handbuch mit G4
+  (1.171.0) und G5 (1.172.0); Liste `.claude/handover/Sichttest_Composer_11_Lautstaerke.md`
+  (Abschnitte G Gain, C Clip aus, L Limiter, M Match loudness, Urteile U1 bis
+  U4) mit der neuen Vorlage `asset/sichttest/composer_L_lautstaerke.lvcomp`
+  (Testmusik, *beat_A*, Sinus nacheinander; Zusage in `test_ComposerVorlagen`).
+  Voller Lauf unter Testing-MSVC: 1263 / 1264, 0 Skips — der eine war die
+  Vorlage, die während des Laufs ohne Zusage dazukam; danach die Fälle zu
+  Vorlagen und Abgleich unter beiden Compilern grün. **Stufen G1 bis G6
+  fertig; offen sind Patriks Sichttest und Urteile.**
 
 ### 9h. Einzelne Clips ausschalten — entschieden und gebaut S126
 
@@ -1912,6 +1920,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.92.0 | 2026-10-15 | Session 127 — §9g G6: Sichttest-Liste 11 mit Vorlage L, voller Lauf; G1 bis G6 fertig |
 | 0.91.0 | 2026-10-15 | Session 127 — §9g G5 gebaut: der Dialog Match loudness (`composer/Abgleich`, `composer/LautheitsDialog`), Knopf neben Gain, Rechtsklick, Edit grau; Stolperstein der eigenen Meldung beim Setzen — G5 fertig |
 | 0.90.0 | 2026-10-15 | Session 127 — §9g G5: die Messung je Ton-Clip gebaut (`decodeStereoChunks`, `composer/ClipLautheit`, Cache für Songs), Dekodieren gemessen (235 ms je Song), Entscheid **G5-3b a** (Cache bleibt); §11 eine Zeile |
 | 0.89.0 | 2026-10-15 | Session 127 — §9g G4 Teil 2 gebaut: `Komposition::limiter`, Datei, die Tonführung schaltet ihn am Mixer, Haken **Limiter** mit Undo — G4 fertig; Entscheide **G5-1 a** (Vorhören: Dialog sperrt nicht, Listen A/B, ▶ je Zeile), **G5-2 a** (ein Undo-Schritt beim OK, Edit grau), **G5-3 a** (Messen im Hintergrund, Songs im Cache) und **G5-4 a** (Knopf neben Gain, Rechtsklick am Ton-Clip); §11 vier Zeilen |

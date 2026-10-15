@@ -121,6 +121,11 @@ std::vector<VorlagenZusage> zusagen()
          {{"CH1", B, {{"Ring", 0, 60000}}},
           {"A1", T, {{"beat_A", 0, 50000}}},
           {"A2", T, {{"15_pseudo_musik_120bpm_60s", 36000, 60000}}}}},
+        // S127, Liste `Sichttest_Composer_11_Lautstaerke.md`: drei Quellen nacheinander
+        {"composer_L_lautstaerke.lvcomp", 60000,
+         {{"CH1", B, {{"Ring", 0, 60000}}},
+          {"A1", T, {{"15_pseudo_musik_120bpm_60s", 0, 20000}, {"02_sinus440_mono_30s", 40000, 60000}}},
+          {"A2", T, {{"beat_A", 20000, 40000}}}}},
     };
 }
 
@@ -212,6 +217,20 @@ TEST_SUITE("ComposerVorlagen")
             CHECK(loop.durchlaufMs() == doctest::Approx(32000.0));
             // der Clip (50 s) laeuft ueber das Ende des Durchlaufs hinaus: er wiederholt sich
             CHECK(loopClip.dauerMs() > static_cast<std::int64_t>(loop.durchlaufMs()));
+        }
+
+        SUBCASE("L Lautstaerke: kein Gain, keine Blende, der Limiter an, alles an — der Sichttest beginnt bei 0 dB")
+        {
+            const Komposition k = lade(QStringLiteral("composer_L_lautstaerke.lvcomp"));
+            CHECK(k.limiter);
+            for (const Kanal& kanal : k.kanaele)
+                for (const Clip& clip : kanal.clips)
+                {
+                    CHECK(clip.gainDb == 0.0);
+                    CHECK(clip.an);
+                    CHECK(clip.vollerPegel());
+                }
+            CHECK(istLoop(k.kanaele[2].clips[0].datei));
         }
 
         SUBCASE("A kurz: nur CH1 reicht bis ans Ende, CH2 blendet je 5 s, keine Master-Kurve")
