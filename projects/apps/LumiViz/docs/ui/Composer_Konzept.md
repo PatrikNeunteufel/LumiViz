@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.89.0
+> **Version:** 0.90.0
 > **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1460,6 +1460,24 @@ Loop-Kleinkram“):**
   einer halben Sekunde, ist die Cache-Datei überflüssig (dann vorlegen,
   bevor sie gebaut wird). Verworfen: nur bis zum Beenden merken, Messen erst
   auf Klick mit wartendem Fortschrittsfenster.
+  **Gemessen (S127, `test_ComposerClipLautheit`, `LUMIVIZ_BELEG_SONG`):**
+  *Titanium* (rund vier Minuten MP3) ganz dekodiert und gemessen in 235 ms
+  unter Release-clang, 490–530 ms unter Testing-MSVC — unter der Schwelle.
+  Die Merk-Klasse war da schon gebaut (gegen die eigene Ankündigung, nicht
+  angeschlossen) und wurde vorgelegt. **Entscheid Patrik G5-3b a:** die
+  Cache-Datei bleibt (für viele Songs, lange Mixes und einen gedrosselten
+  Prozessor); verworfen: nur im Speicher, gar nichts merken.
+  **Gebaut (S127): die Messung je Ton-Clip.**
+  `IAudioEngine::decodeStereoChunks` (die BassEngine dekodiert ab dem Anfang
+  des Ausschnitts in Stücken, PRESCAN für genaue Sprünge in MP3, darf in
+  einem eigenen Thread laufen); `composer/ClipLautheit`: `messeSong`,
+  `bereiteLoopVor` (Thread der Oberfläche: was das Loop-Panel offen hat, die
+  Klänge über die Engine, ein eigenes Programm je Messung) und `messeLoop`
+  (zwei Durchläufe, gemessen der zweite; ohne Engine), `SongLautheiten`
+  (`composer_loudness.json` im Cache-Ordner, Schlüssel Datei, Größe,
+  Änderungszeit, Ausschnitt, Rate). Ein Sinus von −23 dBFS misst −23 LUFS;
+  hinter 5 s Stille −23,12 LUFS — die Blöcke über der Grenze zählen nach R128
+  mit.
   **Entscheid Patrik G5-4 a, Ort angepasst (S127) — Eingang:** ein Knopf
   **Match loudness...** in der Fußzeile **neben dem Feld Gain** (Patrik:
   „eher im Bereich, wo man auch Gain angeben kann“) — sichtbar wie das Feld,
@@ -1700,6 +1718,7 @@ dabei, damit die Gründe nachlesbar bleiben.
 | G5-1 | Vorhören im Dialog Match loudness (S127) | **Dialog sperrt nicht, wirkt live; Listen A/B als Umschalter vorher/Dialog; ▶ je Zeile** | nur A/B; nur ▶; modal, hören nach OK |
 | G5-2 | Undo im Dialog Match loudness (S127) | **ein Schritt beim OK; Edit grau, solange der Dialog offen ist; bei Änderung Liste neu lesen** | Bearbeiten bei offenem Dialog; zwei Schritte; jeder Zug ein Schritt |
 | G5-3 | Messen im Dialog Match loudness (S127) | **beim Öffnen im Hintergrund; Songs im Cache gemerkt (auch über Neustart), Loops immer neu** | nur bis Beenden merken; erst auf Klick, wartend |
+| G5-3b | Cache-Datei für Songs nach der Messung, 235 ms je Song (S127) | **bleibt** | nur im Speicher; gar nichts merken |
 | G5-4 | Eingang zum Dialog Match loudness (S127) | **Knopf neben dem Feld Gain (Fußzeile) und Rechtsklick „Match loudness to this clip...“, beide nur mit Edit** | Knopf in der Datei-Zeile; nur Knopf; nur Rechtsklick |
 | D1 | Einzelne Clips ausschalten (S126) | **Haken Clip enabled im Rechtsklick und Ctrl+E**, nur mit Edit; wirkt wie ein ausgeschalteter Kanal (§9h) | Grundpegel auf 0 (*Mute clip*); ohne Kürzel |
 | L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
@@ -1875,6 +1894,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.90.0 | 2026-10-15 | Session 127 — §9g G5: die Messung je Ton-Clip gebaut (`decodeStereoChunks`, `composer/ClipLautheit`, Cache für Songs), Dekodieren gemessen (235 ms je Song), Entscheid **G5-3b a** (Cache bleibt); §11 eine Zeile |
 | 0.89.0 | 2026-10-15 | Session 127 — §9g G4 Teil 2 gebaut: `Komposition::limiter`, Datei, die Tonführung schaltet ihn am Mixer, Haken **Limiter** mit Undo — G4 fertig; Entscheide **G5-1 a** (Vorhören: Dialog sperrt nicht, Listen A/B, ▶ je Zeile), **G5-2 a** (ein Undo-Schritt beim OK, Edit grau), **G5-3 a** (Messen im Hintergrund, Songs im Cache) und **G5-4 a** (Knopf neben Gain, Rechtsklick am Ton-Clip); §11 vier Zeilen |
 | 0.88.0 | 2026-10-15 | Session 126, Abschluss — §9g G4: Teil 1 gebaut (Begrenzer ohne Vorschau, Engine-Schnittstelle), Entscheid **G4b a** (Haken in der Zeile der Komposition); §11 eine Zeile |
 | 0.87.0 | 2026-10-15 | Session 126 — §9g G4: Beleg, was die Visuals hinter einem DSP am Mixer sehen; **Befund: G1 wirkte in der echten Engine nicht über 0 dB** (`BassEngine::setVolume` klemmte auf 1), behoben mit `kHoechsteLautstaerke` = 16 |

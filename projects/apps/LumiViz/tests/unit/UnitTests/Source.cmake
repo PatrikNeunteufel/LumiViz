@@ -77,6 +77,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerVorlagen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerSichttestStart.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerTonfuehrung.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_ComposerClipLautheit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerLautheit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerBegrenzer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_ComposerNahtTon.cpp"

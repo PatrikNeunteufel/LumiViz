@@ -113,6 +113,8 @@ public:
                                                       IAudioGenerator* generator) override;
     [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int sampleRate,
                                                   double maxSeconds) override;
+    bool decodeStereoChunks(const QString& filePath, int sampleRate, std::int64_t startMs, std::int64_t lengthMs,
+                            const DecodeChunk& take) override;
     // Aufnahme (Loop, Stufe 11b) — laeuft neben der Ausgabe, mit oder ohne `initialize`
     [[nodiscard]] std::vector<AudioDeviceInfo> getRecordDevices() const override;
     bool recordStart(int deviceId, int sampleRate, double maxSeconds) override;

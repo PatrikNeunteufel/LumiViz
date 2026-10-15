@@ -380,6 +380,23 @@ public:
         return {};
     }
 
+    /// Nimmt ein Stueck dekodierten Ton: Stereo, float, links und rechts im
+    /// Wechsel; false = abbrechen.
+    using DecodeChunk = std::function<bool(const float* stereo, std::size_t frames)>;
+    /**
+     * @brief Einen Ausschnitt einer Datei stueckweise dekodieren (S127,
+     *        Composer_Konzept §9g, G5-3 a): ab `startMs`, hoechstens
+     *        `lengthMs` (0 = bis zum Ende), Stereo, umgerechnet auf
+     *        `sampleRate`. Fuer Songs — nichts davon liegt ganz im Speicher.
+     *        Darf aus einem anderen Thread als dem der Oberflaeche laufen.
+     * @return false = nicht lesbar, abgebrochen, oder die Engine kann es nicht
+     */
+    virtual bool decodeStereoChunks(const QString& /*filePath*/, int /*sampleRate*/, std::int64_t /*startMs*/,
+                                    std::int64_t /*lengthMs*/, const DecodeChunk& /*take*/)
+    {
+        return false;
+    }
+
     // =========================================================================
     // Aufnahme (Loop, Stufe 11b: „Record sample"; docs/audio/Loop_Konzept.md §4h)
     // =========================================================================

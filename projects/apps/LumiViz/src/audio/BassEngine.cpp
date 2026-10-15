@@ -29,6 +29,7 @@
 #include <cmath>
 #include <algorithm>
 #include <atomic>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -781,6 +782,56 @@ std::vector<float> BassEngine::decodeStereo(const QString& filePath, int sampleR
     BASS_StreamFree(mixer);
     BASS_StreamFree(source);
     return daten;
+}
+
+bool BassEngine::decodeStereoChunks(const QString& filePath, int sampleRate, std::int64_t startMs,
+                                    std::int64_t lengthMs, const DecodeChunk& take)
+{
+    if (!m_impl->initialized || sampleRate <= 0 || !take) return false;
+
+    // PRESCAN: damit der Sprung an den Anfang des Ausschnitts auch in einer
+    // MP3 mit wechselnder Bitrate genau sitzt
+    const std::string path = filePath.toLocal8Bit().constData();
+    const HSTREAM source = BASS_StreamCreateFile(
+        FALSE, path.c_str(), 0, 0, BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_STREAM_PRESCAN);
+    if (source == 0) return false;
+    if (startMs > 0)
+    {
+        const QWORD stelle = BASS_ChannelSeconds2Bytes(source, static_cast<double>(startMs) / 1000.0);
+        if (BASS_ChannelSetPosition(source, stelle, BASS_POS_BYTE) == 0)
+        {
+            BASS_StreamFree(source);
+            return false;
+        }
+    }
+    // wie decodeStereo: ein dekodierender Mixer rechnet auf Stereo und die Rate um
+    const HSTREAM mixer = BASS_Mixer_StreamCreate(static_cast<DWORD>(sampleRate), 2,
+                                                  BASS_STREAM_DECODE | BASS_SAMPLE_FLOAT | BASS_MIXER_END);
+    if (mixer == 0 || BASS_Mixer_StreamAddChannel(mixer, source, BASS_MIXER_CHAN_NORAMPIN) == 0)
+    {
+        if (mixer != 0) BASS_StreamFree(mixer);
+        BASS_StreamFree(source);
+        return false;
+    }
+
+    const std::uint64_t hoechstens =
+        lengthMs > 0 ? static_cast<std::uint64_t>(lengthMs) * static_cast<std::uint64_t>(sampleRate) / 1000u
+                     : std::numeric_limits<std::uint64_t>::max();
+    std::uint64_t abgegeben = 0;
+    bool weiter = true;
+    std::vector<float> block(16384);
+    while (weiter && abgegeben < hoechstens)
+    {
+        const DWORD gelesen = BASS_ChannelGetData(
+            mixer, block.data(), static_cast<DWORD>(block.size() * sizeof(float)) | BASS_DATA_FLOAT);
+        if (gelesen == static_cast<DWORD>(-1) || gelesen == 0) break;
+        const auto frames = std::min<std::uint64_t>(gelesen / (2 * sizeof(float)), hoechstens - abgegeben);
+        weiter = take(block.data(), static_cast<std::size_t>(frames));
+        abgegeben += frames;
+    }
+    BASS_StreamFree(mixer);
+    BASS_StreamFree(source);
+    return weiter;
 }
 
 // =============================================================================
