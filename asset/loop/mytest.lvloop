@@ -60,6 +60,7 @@
         {
             "clips": [
                 {
+                    "fxOn": false,
                     "path": [
                         {
                             "drive": 0.3,

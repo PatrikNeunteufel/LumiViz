@@ -1,0 +1,126 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 245147,
+                    "file": "Milkdrop3/presets/martin - frosty caves 2.milk",
+                    "start": 0
+                }
+            ],
+            "color": "#5785a5",
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 245147,
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/music/David Guetta - Greatest Hits (2012)/14. Titanium (feat. Sia).mp3",
+                    "offset": 0,
+                    "shapes": [
+                        {
+                            "flipped": false,
+                            "pos": 0,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.030534351145038167,
+                                        "y": 0.1517509727626459
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5877862595419847,
+                                        "y": 0.14396887159533073
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.9904580152671756,
+                                        "y": 0.15953307392996108
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 240000
+                        }
+                    ],
+                    "sourceLength": 245147,
+                    "start": 0
+                }
+            ],
+            "color": "#967855",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        },
+        {
+            "clips": [
+                {
+                    "base": 0,
+                    "end": 237000,
+                    "file": "C:/Users/patri/source/repos/Visuals_Project/cmake/LumiViz/.claude/handover/titanium/titanium_versuch.lvloop",
+                    "offset": 0,
+                    "shapes": [
+                        {
+                            "flipped": true,
+                            "pos": 0,
+                            "shape": {
+                                "kind": "shape",
+                                "points": [
+                                    {
+                                        "curve": 1,
+                                        "x": 0,
+                                        "y": 1
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.03244274809160305,
+                                        "y": 0.042654028436018954
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.5248091603053435,
+                                        "y": 0.014218009478673022
+                                    },
+                                    {
+                                        "curve": 1,
+                                        "x": 0.9446564885496184,
+                                        "y": 0.004739336492891044
+                                    },
+                                    {
+                                        "curve": 0,
+                                        "x": 1,
+                                        "y": 1
+                                    }
+                                ]
+                            },
+                            "width": 236190
+                        }
+                    ],
+                    "start": 810
+                }
+            ],
+            "color": "#965555",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "version": 2
+}

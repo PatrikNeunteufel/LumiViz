@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.82.0
-> **Datum:** 2026-10-11 (Session 110)
+> **Version:** 0.83.0
+> **Datum:** 2026-10-15 (Session 126)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -24,7 +24,9 @@
 > die Lücke „Composer off ohne Titel im Player" geschlossen; im Programm
 > nichts davon gesehen oder gehört (Sichttest S99)** — dazu Entscheide aus S95 und S96
 > in §4 bis §9e; seit S105 auf `master` (§12) — **S109 / S110: die gemeinsame
-> Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)**
+> Achse mit dem Loop-Panel und der Loop als Clip im Audio-Kanal (§9f)** —
+> **S126: Lautstärke-Abgleich der Ton-Clips entschieden (L1 a bis L4 a),
+> nicht gebaut (§9g)**
 > **Status:** Entwurf
 > **Vorgabe:** rückbaubar (§12); entsteht ab C1 im Zweig `composer`, der
 > erst nach `master` geholt wird, wenn der Composer sauber läuft
@@ -1257,6 +1259,100 @@ danach aus den Einstellungen bekam; Panel Karaoke und Menü lesen die
 Einstellung selbst und stimmten. Seit S110 setzt das Hauptfenster den
 Schalter **vor** dem Aufbau der Panels (`MainWindow::setupUi`).
 
+### 9g. Lautstärke-Abgleich der Ton-Clips — entschieden S126, nicht gebaut
+
+**Anlass (Patrik S126):** in `asset/compare.lvcomp` liegen der Song
+*Titanium* (A1) und der nachgebaute Loop `titanium_versuch.lvloop` (A2)
+übereinander. Der Loop ist „viel viel leiser als das Original", obwohl seine
+Pegelkurve bei fast 1 und die des Songs bei etwa 0,85 steht. Ursache im
+Modell: ein Clip kann nur leiser werden als seine Datei — die Pegelkurve
+läuft von 0 bis 1, und 1 heißt „so laut wie die Datei" (§6). Wunsch Patrik:
+jeden Clip einzeln lauter oder leiser stellen, und ein Dialog, der die
+Lautheit der Clips misst und in einem Mixer je Clip eine Grundlautstärke
+vorschlägt, **sodass Ein- und Ausblenden 0…1 für jeden Clip gleich klingt**.
+
+**Belegt vor den Entscheiden:** BASS verstärkt über 1,0 (Doku
+`BASS_ATTRIB_VOL`: „above 1.0 = amplification", abgerufen S126); der Mixer
+des Composers rechnet in Fließkomma ohne Begrenzer
+(`BassEngine.cpp`, `BASS_SAMPLE_FLOAT | BASS_MIXER_NONSTOP`); messbar sind
+ein Song über `decodeStereo`, ein Loop über den Klangerzeuger ohne Engine.
+
+**Entscheide (Patrik S126):**
+
+- **L1 a — Gain je Ton-Clip, getrennt von der Pegelkurve.** Neues Feld
+  **Gain** in dB, −24 bis +24, Vorgabe 0. Zu hören ist *Datei × Gain ×
+  Pegelkurve × Kurve der Komposition*. Die Pegelkurve bleibt 0…1 und ist nur
+  noch Blende und Stück. In der `.lvcomp` `"gain": 13.3`; fehlt das Feld,
+  gilt 0 dB — alte Kompositionen klingen gleich. Der Clip zeigt den Wert als
+  Marke, sobald er nicht 0 ist. Bild-Clips haben kein Gain. Verworfen: die
+  Pegelkurve über 1 (vermischt Angleichen und Blenden), Gain je Kanal (ein
+  Kanal trägt verschiedene Songs).
+- **L2 a — Lautheit nach EBU R128 / ITU-R BS.1770, in LUFS.** K-Filter,
+  Blöcke von 400 ms, Gate gegen Stille; daneben die Spitze (Peak) in dB.
+  Ein Messbaustein ohne Engine und ohne Qt-Anwendung, gegen die Prüftöne der
+  Norm getestet. Verworfen: RMS ohne Gewichtung (zählt den Bass voll — ein
+  Loop mit kräftiger Kick bekäme zu wenig Gain), Peak (löst das Problem
+  nicht).
+- **L3 a — Target:** eine Liste mit **jedem Ton-Clip der Komposition** und
+  **Fixed level** mit einem Feld in LUFS (Vorgabe −14); zuerst gewählt ist
+  der **lauteste Clip**. Der Bezugsclip bekommt 0 dB, jeder andere den
+  Abstand seiner Lautheit. Gespeichert wird nur das Gain je Clip; die letzte
+  Wahl merkt sich der Dialog in den Einstellungen. Verworfen: nur Bezugsclip,
+  nur fester Wert.
+- **L3b a — gemessen wird der gespielte Ausschnitt, ohne Pegelkurve.** Genau
+  der Teil der Datei, den der Clip spielt; beim Loop-Clip ein Durchlauf,
+  nachdem einer vorgerechnet und verworfen ist (damit Echo und Hall des
+  vorigen mitklingen). Die Auswahl „Measure" der Skizze entfällt.
+  **Vor dem Bau zu prüfen:** ob ein Durchlauf jedem anderen gleicht; weichen
+  sie ab, wird die ganze Länge des Clips gemessen. Verworfen: die ganze
+  Datei, nur der Teil auf vollem Pegel.
+- **L4 a — Limiter am Mixer des Composers.** Decke −0,1 dB, kurze Vorschau,
+  weiches Loslassen; er greift **nur**, wo heute hart abgeschnitten würde —
+  darunter bleibt das Signal Bit für Bit gleich. Der Dialog schlägt das volle
+  Gain vor; geht die Spitze eines Clips dadurch über 0 dB, sagt die Zeile es
+  in Gelb („Peak would reach +3.5 dB – the limiter keeps it below 0 dB.").
+  Haken **Limiter**, Vorgabe an; sein Ort wird mit dem Bau festgelegt und im
+  Bild gezeigt. **Vor dem Bau zu prüfen:** ob die Visuals das Signal vor oder
+  nach einem Baustein am Mixer (`BASS_ChannelSetDSP`) sehen. Verworfen:
+  Vorschlag auf −1 dB Peak kappen (der Loop bliebe leiser als das Original),
+  nur warnen (hartes Abschneiden).
+
+**Welche Clips (Antwort an Patrik S126, als Annahme):** der Dialog führt
+jeden Ton-Clip aller Audio-Kanäle, Loop-Clips eingeschlossen, jeden als
+eigene Zeile; zwei Clips derselben Datei werden je für sich gemessen (sie
+können verschiedene Ausschnitte spielen); Clips ausgeschalteter Kanäle
+stehen grau in der Liste und werden mitgemessen.
+
+**Die Skizze (S126, als Beschreibung; nach L3b a ohne „Measure"):** Dialog
+**Match loudness – <Komposition>**. Oben **Target** (Liste: Clips mit Namen,
+Fixed level) und **Measure again**. Darunter je Ton-Clip eine Zeile: Farbe
+und Name des Kanals, Name des Clips · **Loudness** (LUFS) · **Peak** (dB) ·
+**Gain** als Schieber mit Wert in dB · **Suggested** (dB, gelb mit Warnzeichen,
+wenn die Spitze über 0 dB käme, darunter der Satz zum Limiter). Unten **Use
+suggestions** und **Listen A/B** links, **Cancel** und **OK** rechts. Im
+Composer trägt ein Clip mit Gain die Marke „+13.3 dB" rechts im Clip.
+**Nicht entschieden, in der Skizze nur angedeutet:** was Listen A/B genau
+tut, wie Gain am Clip selbst bedient wird (Feld, Rad mit Taste — Ctrl+Rad
+und Alt+Rad gehören schon der Achse), ob Use suggestions und OK ein
+Undo-Schritt sind. Wird mit der Stufe vorgelegt, die es baut.
+
+**Baustufen (vorgelegt S126, nicht freigegeben):**
+
+- **G1 Modell, Datei, Ton:** `gain` am Ton-Clip, `.lvcomp` liest und
+  schreibt es, die Tonführung multipliziert es (`Tonfuehrung.cpp`, neben
+  `pegelBei`); Tests gegen die Engine aus Pappe (Volume über 1 kommt an,
+  alte Dateien unverändert).
+- **G2 Gain am Clip bedienen:** Marke im Clip, Eingabe, Undo; vorher die
+  Bedienung vorlegen.
+- **G3 Messbaustein** (`composer/Lautheit`): R128 und Peak, Prüftöne der
+  Norm, Beleg „ein Durchlauf gleicht dem nächsten" für die mitgelieferten
+  Loops; Rechenzeit unter Release-clang an einem langen Song.
+- **G4 Limiter** am Mixer, Haken; Beleg, was die Visuals sehen; Test: unter
+  0 dB Bit für Bit gleich.
+- **G5 Dialog Match loudness** nach der Skizze, mit Bild aus dem Test;
+  vorher Listen A/B und Undo vorlegen.
+- **G6** Handbuch, Sichttest-Liste, voller Lauf.
+
 ### 9a. Stand C0 — ✅ erledigt (S93): Host-Gruppen, verworfen
 
 `tests/unit/UnitTests/test_ComposerBelege.cpp`, Suite `ComposerBelege`,
@@ -1449,6 +1545,11 @@ dabei, damit die Gründe nachlesbar bleiben.
 | — | Wessen Spektrum die Visuals sehen (S97) | **die Summe mit den Pegeln** — das, was zu hören ist | — (Zielbild Patrik) |
 | — | Der laufende Song bei mehreren zugleich (S97) | **die Pegelkurve entscheidet, und alles folgt** (Karaoke, Tags, Songwechsel-Zähler, Tag View, Audio Browser) | der gemessene Pegel entscheidet; nur die Karaoke folgt, der Rest wechselt am Clip-Anfang |
 | — | Das Player-Panel bei führendem Composer (S97, **geändert S98**) | **zeigt den laufenden Song als „Composer - <Song>"** (Künstler, Stelle im Song, Länge; Klick in den Balken springt im Song und damit in der Komposition; in einer Lücke bleibt der letzte Song stehen; Loop-Knopf ausgegraut) | zeigt die Komposition (Dateiname, Zeitachse; Loop-Knopf = Schleife der Komposition) — in S97 entschieden, in S98 von Patrik zurückgenommen, nichts davon gebaut; ruht |
+| L1 | Lautstärke eines Clips über die Datei hinaus (S126) | **Gain je Ton-Clip in dB**, −24 bis +24, getrennt von der Pegelkurve 0…1 (§9g) | Pegelkurve über 1; Gain je Kanal |
+| L2 | Maß des Abgleichs (S126) | **Lautheit nach EBU R128 in LUFS**, Peak daneben | RMS; Peak |
+| L3 | Ziel des Abgleichs (S126) | **Liste: jeder Ton-Clip und Fixed level**, Vorgabe der lauteste Clip | nur Bezugsclip; nur fester Wert |
+| L3b | Gemessener Teil (S126) | **der gespielte Ausschnitt ohne Pegelkurve**, beim Loop ein Durchlauf nach einem vorgerechneten | ganze Datei; nur der Teil auf vollem Pegel |
+| L4 | Spitzen über 0 dB (S126) | **Limiter am Mixer**, Decke −0,1 dB, greift nur über 0 dB; Warnung im Dialog; Haken Limiter, Vorgabe an | Vorschlag kappen; nur warnen |
 
 **Früher entschieden und übernommen:** Pfad-Referenzen statt eingebetteter
 Presets (S60) · bei einer Datei mit Host Switcher warnt der Composer beim
@@ -1621,6 +1722,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.83.0 | 2026-10-15 | Session 126 — **§9g neu: Lautstärke-Abgleich der Ton-Clips** (Anlass Patrik: `compare.lvcomp`, der Loop viel leiser als das Original). Entscheide L1 a (Gain je Ton-Clip in dB), L2 a (EBU R128, LUFS), L3 a (Target: Clip oder Fixed level), L3b a (gespielter Ausschnitt ohne Pegelkurve), L4 a (Limiter am Mixer); die Skizze des Dialogs Match loudness als Beschreibung; Baustufen G1 bis G6 vorgelegt, nicht freigegeben; §11 fünf Zeilen; Kopf. Nichts gebaut |
 | 0.82.0 | 2026-10-11 | Session 110 — **§9f neu** (Nachtrag zu S109 und S110): die gemeinsame Basis `lumi::ui::Achse` für Zeitachse und Loop-Panel, der Loop als Clip im Audio-Kanal (Klangerzeuger in der Tonführung, kein Ende, laufender Song aus den Tags, Verbindung zum Loop-Panel), der Haken Karaoke stimmt nach dem Start; §3 und Kopf nachgezogen |
 | 0.81.0 | 2026-10-09 | Session 105 — §12: **Rückbau-Regeln abgeschlossen** (Entscheid Patrik M1: a): `composer` ist nach `master` überführt, Marke `vor-composer` auf dem Stand davor; die Nahtlisten bleiben als Beschreibung, werden aber nicht weitergeführt |
 | 0.80.0 | 2026-10-09 | Session 105 — §12.2 neue Naht **N26** (`qt-ads` in den `externals` des Test-Targets, für den Testfall mit echtem Dock; eingetragen vor dem Bau), §12.4 Rückbau-Liste |
