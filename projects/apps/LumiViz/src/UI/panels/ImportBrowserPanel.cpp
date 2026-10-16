@@ -593,14 +593,25 @@ int ImportBrowserPanel::nextPresetRow(const QList<int>& types, int from, int del
     // Tastendruck etwas laedt statt ins Leere zu laufen.
     int row = from;
     if (row < 0 || row >= types.size()) row = step > 0 ? -1 : types.size();
-    for (row += step; row >= 0 && row < types.size(); row += step)
-    {
-        const int type = types.at(row);
+    const auto istPreset = [&](int zeile) {
+        const int type = types.at(zeile);
         // Ordner und ".." werden uebersprungen — Stufe 1 blaettert nur ueber die
         // Presets des AKTIVEN Verzeichnisses, ohne Rekursion (Entscheid 2).
-        if (type == Type_Avs || type == Type_Milk || type == Type_Lvfx) return row;
+        return type == Type_Avs || type == Type_Milk || type == Type_Lvfx;
+    };
+    for (row += step; row >= 0 && row < types.size(); row += step)
+    {
+        if (istPreset(row)) return row;
     }
-    return -1;  // am Ende anhalten, nicht umlaufen (Entscheid 3)
+    // Am Ende umlaufen (Entscheid Patrik S60, §9.3): vom anderen Ende her das
+    // erste Preset — aber nicht das, von dem aus geblaettert wurde.
+    for (row = step > 0 ? 0 : static_cast<int>(types.size()) - 1;
+         row >= 0 && row < types.size(); row += step)
+    {
+        if (row == from) return -1;
+        if (istPreset(row)) return row;
+    }
+    return -1;
 }
 
 void ImportBrowserPanel::onPresetStep(int delta)
@@ -614,23 +625,27 @@ void ImportBrowserPanel::onPresetStep(int delta)
         types.append(m_pListWidget->item(i)->data(Qt::UserRole + 1).toInt());
     }
 
-    const int row = nextPresetRow(types, m_pListWidget->currentRow(), delta);
+    const int from = m_pListWidget->currentRow();
+    const int row = nextPresetRow(types, from, delta);
     BasicLogger::logDebug("ImportBrowserPanel: step " + std::to_string(delta) +
-                          " from " + std::to_string(m_pListWidget->currentRow()) +
+                          " from " + std::to_string(from) +
                           " -> " + std::to_string(row) + " (" +
                           std::to_string(types.size()) + " entries)");
     if (row < 0)
     {
-        if (m_filter == Filter::Favoriten)
-            setStatus(delta > 0 ? tr("End of favorites") : tr("Start of favorites"));
-        else
-            setStatus(delta > 0 ? tr("End of folder") : tr("Start of folder"));
+        setStatus(m_filter == Filter::Favoriten ? tr("No other favorite to step to")
+                                                : tr("No other preset in this folder"));
         return;
     }
     m_pListWidget->setCurrentRow(row);
     m_pListWidget->scrollToItem(m_pListWidget->item(row));
     // Derselbe Weg wie ein Doppelklick — eine Wahrheit fuer "Eintrag laden".
     onItemDoubleClicked(m_pListWidget->item(row));
+    // Umgelaufen (§9.3): sagen, dass es von vorn bzw. hinten weitergeht — nach
+    // dem Laden, damit die Meldung des Ladens sie nicht ueberschreibt.
+    const bool umgelaufen = from >= 0 && from < types.size() && (delta > 0 ? row < from : row > from);
+    if (umgelaufen)
+        setStatus(delta > 0 ? tr("Back to the first preset") : tr("Back to the last preset"));
 }
 
 void ImportBrowserPanel::onUpClicked()

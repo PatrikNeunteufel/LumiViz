@@ -121,6 +121,8 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onActionTriggered();
     void onPanelVisibilityChanged(const QString& panelId, bool visible);
+    /// Menuetexte, die die Taste dieser Hotkey-Aktion zeigen, neu setzen (§9.5)
+    void hotkeyTexteAktualisieren(const QString& hotkeyId);
 
 private:
     void buildMenuRecursive(QMenu* parentMenu, const QString& parentId);

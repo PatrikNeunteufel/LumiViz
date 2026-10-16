@@ -158,6 +158,7 @@ QString ShortcutManager::setSequence(const QString& actionId,
     {
         settings.setValue(settingsKey(actionId), canonical(sequence));
     }
+    emit sequenceChanged(actionId);
     return {};
 }
 
@@ -167,6 +168,7 @@ void ShortcutManager::resetToDefault(const QString& actionId)
     m_sequences.insert(actionId, defaultSequenceFor(actionId));
     QSettings settings;
     settings.remove(settingsKey(actionId));
+    emit sequenceChanged(actionId);
 }
 
 void ShortcutManager::resetAllToDefaults()
@@ -177,6 +179,8 @@ void ShortcutManager::resetAllToDefaults()
         it.value() = defaultSequenceFor(it.key());
         settings.remove(settingsKey(it.key()));
     }
+    for (auto it = m_sequences.constBegin(); it != m_sequences.constEnd(); ++it)
+        emit sequenceChanged(it.key());
 }
 
 // =============================================================================
@@ -305,6 +309,13 @@ void ShortcutManager::dispatch(const QString& actionId)
     {
         BasicLogger::logDebug("ShortcutManager: view.karaoke");
         bus->publish(KaraokeToggleEvent{});
+    }
+    else if (actionId == QStringLiteral("view.fullscreen"))
+    {
+        // Ohne Quelle — wie aus dem Menue: das Hauptfenster waehlt den
+        // Visualizer bzw. verlaesst das laufende Vollbild (S129, §9.5)
+        BasicLogger::logDebug("ShortcutManager: view.fullscreen");
+        bus->publish(ToggleFullscreenEvent{});
     }
     else if (const auto it = kTransport.constFind(actionId); it != kTransport.constEnd())
     {

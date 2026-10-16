@@ -124,8 +124,14 @@ struct MenuItemDesc : MenuBaseDesc
     using IsEnabled = std::function<bool(ServiceContainer&)>;
     IsEnabled isEnabled;
 
-    /// Keyboard shortcut (e.g., "Ctrl+O")
+    /// Keyboard shortcut (e.g., "Ctrl+O") — eine Taste, die NUR das Menue kennt
     std::string shortcut;
+
+    /// Hotkey-Aktion der `ShortcutRegistry` (z. B. "view.karaoke"), deren
+    /// aktuelle Taste das Menue nur ANZEIGT; ausgeloest wird sie vom Filter des
+    /// `ShortcutManager` (Hotkey_Konzept §9.5, Entscheid Patrik S60, gebaut
+    /// S129). Dann bleibt `shortcut` leer — eine Taste, eine Wahrheit.
+    std::string hotkeyAction{};
 };
 
 // =============================================================================

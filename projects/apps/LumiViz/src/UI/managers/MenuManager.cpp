@@ -11,6 +11,7 @@
 
 #include "UI/managers/MenuManager.hpp"
 #include "UI/managers/PanelManager.hpp"
+#include "UI/managers/ShortcutManager.hpp"
 #include "services/MenuRegistry.hpp"
 #include "services/PanelRegistry.hpp"
 #include "services/ServiceContainer.hpp"
@@ -21,6 +22,25 @@
 #include <QActionGroup>
 #include <QKeySequence>
 
+namespace
+{
+
+/// Menuetext eines Eintrags. Traegt er eine Hotkey-Aktion (§9.5, S129), steht
+/// deren aktuelle Taste hinter einem Tabulator — Qt zeigt sie dort wie ein
+/// Kuerzel an, ohne sie zu belegen; ausgeloest wird sie vom ShortcutManager.
+QString menuText(const MenuItemDesc& desc, const ShortcutManager* hotkeys)
+{
+    QString text = QString::fromStdString(desc.title);
+    if (desc.hotkeyAction.empty()) return text;
+    const QString id = QString::fromStdString(desc.hotkeyAction);
+    const QKeySequence taste =
+        hotkeys != nullptr ? hotkeys->sequenceFor(id) : ShortcutManager::defaultSequenceFor(id);
+    if (!taste.isEmpty()) text += QLatin1Char('\t') + taste.toString(QKeySequence::NativeText);
+    return text;
+}
+
+}  // namespace
+
 // =============================================================================
 // Construction
 // =============================================================================
@@ -29,6 +49,10 @@ MenuManager::MenuManager(ServiceContainer& services, QObject* parent)
     : QObject(parent)
     , m_services(services)
 {
+    // Eine umbelegte Taste erscheint sofort im Menue (§9.5)
+    if (auto* hotkeys = m_services.tryResolve<ShortcutManager>())
+        connect(hotkeys, &ShortcutManager::sequenceChanged, this,
+                &MenuManager::hotkeyTexteAktualisieren);
 }
 
 MenuManager::~MenuManager()
@@ -323,11 +347,11 @@ QAction* MenuManager::createAction(const QString& actionId, QWidget* parent)
         return nullptr;
     }
 
-    QString title = QString::fromStdString(desc->title);
-    auto* action = new QAction(title, parent);
+    auto* action = new QAction(menuText(*desc, m_services.tryResolve<ShortcutManager>()), parent);
     action->setObjectName(actionId);
 
-    // Shortcut
+    // Shortcut — nur eine Taste, die allein das Menue kennt; eine Hotkey-
+    // Aktion steht schon im Text (menuText) und loest ueber den Filter aus
     if (!desc->shortcut.empty())
     {
         action->setShortcut(QKeySequence(QString::fromStdString(desc->shortcut)));
@@ -350,4 +374,16 @@ QAction* MenuManager::createAction(const QString& actionId, QWidget* parent)
 
     m_actions.insert(actionId, action);
     return action;
+}
+
+void MenuManager::hotkeyTexteAktualisieren(const QString& hotkeyId)
+{
+    auto& registry = MenuRegistry::instance();
+    const auto* hotkeys = m_services.tryResolve<ShortcutManager>();
+    for (auto it = m_actions.constBegin(); it != m_actions.constEnd(); ++it)
+    {
+        const auto* desc = registry.item(it.key().toStdString());
+        if (desc == nullptr || desc->hotkeyAction != hotkeyId.toStdString()) continue;
+        it.value()->setText(menuText(*desc, hotkeys));
+    }
 }

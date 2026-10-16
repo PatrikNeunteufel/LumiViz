@@ -88,7 +88,10 @@ struct ShortcutAction
         {"preset.previous", "Previous Preset", ShortcutCategory::Preset, "PgUp"},
 
         // --- Ansicht ----------------------------------------------------------
-        {"view.fullscreen", "Fullscreen", ShortcutCategory::View, "F11", false, false},
+        // Seit S129 verdrahtet (§9.5): F11 loest hier aus, das Menue View →
+        // Fullscreen zeigt die Taste nur an — und sie wirkt jetzt auch im
+        // Vollbild-Fenster, das das Menue nicht erreicht
+        {"view.fullscreen", "Fullscreen", ShortcutCategory::View, "F11"},
         // Druck: nimmt das Visual auf statt des Bildschirms. Windows oeffnet auf
         // dieselbe Taste eventuell das Snipping Tool — das ist eine
         // Windows-Einstellung und liegt ausserhalb der App.

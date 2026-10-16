@@ -105,11 +105,13 @@ public:
      * @param types  EntryType je Zeile in Anzeigereihenfolge
      * @param from   aktuelle Zeile, oder -1 fuer "keine Auswahl"
      * @param delta  Vorzeichen entscheidet die Richtung
-     * @return Zeilenindex, oder -1 wenn in dieser Richtung keines mehr kommt
+     * @return Zeilenindex, oder -1 wenn es kein anderes Preset gibt
      *
-     * Ordner und ".." werden uebersprungen (keine Rekursion), am Ende wird
-     * angehalten statt umzulaufen. Frei von Qt-Widgets, damit die Regel
-     * pruefbar ist.
+     * Ordner und ".." werden uebersprungen (keine Rekursion, §9.2). Am Ende
+     * des Verzeichnisses laeuft es um — nach dem letzten Preset kommt das
+     * erste, vor dem ersten das letzte (Entscheid Patrik S60, §9.3; gebaut
+     * S129). Ist das aktuelle das einzige Preset, kommt -1 statt desselben.
+     * Frei von Qt-Widgets, damit die Regel pruefbar ist.
      */
     [[nodiscard]] static int nextPresetRow(const QList<int>& types, int from,
                                           int delta);

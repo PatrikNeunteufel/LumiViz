@@ -48,6 +48,7 @@
 #include <thread>
 #include "UI/panels/KaraokePanel.hpp"
 #include "UI/panels/LyricsSyncPanel.hpp"
+#include "UI/managers/MenuManager.hpp"
 #include "UI/managers/ShortcutManager.hpp"
 #include "services/ShortcutRegistry.hpp"
 #include "visualizers/multieffect/TrailPresetStore.hpp"
@@ -79,6 +80,7 @@
 #include <QAction>
 #include <QEventLoop>
 #include <QMenu>
+#include <QMenuBar>
 #include <QMouseEvent>
 #include <QCheckBox>
 #include <QComboBox>
@@ -5978,4 +5980,63 @@ TEST_CASE("PaletteUi S85: jeder Skript-Slot nennt auf der Info-Seite seinen Takt
     CHECK(slotScopeHtml(QStringLiteral("clear"), QStringLiteral("gibtEsNicht"),
                         QStringLiteral("X"))
               .isEmpty());
+}
+
+// S129 (Hotkey_Konzept §9.5, Entscheid Patrik S60): das Menue zeigt die Taste
+// einer Hotkey-Aktion aus der Registry nur an — Karaoke und Fullscreen —, eine
+// Umbelegung erscheint sofort im Menue, und F11 loest ueber den Filter des
+// ShortcutManager aus statt ueber die Menueaktion (eine Taste, eine Wahrheit).
+TEST_CASE("Hotkeys S129: Menue zeigt die Taste aus der Registry, F11 laeuft ueber den Filter")
+{
+    UiUmgebung env;
+    ServiceContainer services;
+    services.registerInstance<IEventBus>(std::make_unique<EventBus>());
+    services.registerSingleton<ShortcutManager>(
+        [](ServiceContainer& c) { return std::make_unique<ShortcutManager>(c); });
+    auto* hotkeys = services.tryResolve<ShortcutManager>();
+    REQUIRE(hotkeys != nullptr);
+    IEventBus* bus = services.tryResolve<IEventBus>();
+    int vollbild = 0;
+    const auto abo =
+        bus->subscribeScoped<ToggleFullscreenEvent>([&](const ToggleFullscreenEvent&) { ++vollbild; });
+
+    QMenuBar leiste;
+    MenuManager menues(services);
+    menues.buildMenuBar(&leiste);
+    QAction* karaoke = menues.action(QStringLiteral("menu.view.karaoke"));
+    QAction* voll = menues.action(QStringLiteral("menu.view.fullscreen"));
+    REQUIRE(karaoke != nullptr);
+    REQUIRE(voll != nullptr);
+    const auto anzeige = [](const char* taste) {
+        return QKeySequence(QString::fromLatin1(taste)).toString(QKeySequence::NativeText);
+    };
+
+    // --- die Taste steht hinter dem Tabulator, belegt ist sie im Menue nicht
+    CHECK(karaoke->text() == QStringLiteral("Karaoke\t") + anzeige("Ctrl+K"));
+    CHECK(voll->text() == QStringLiteral("Fullscreen\t") + anzeige("F11"));
+    CHECK(karaoke->shortcut().isEmpty());
+    CHECK(voll->shortcut().isEmpty());
+
+    // --- umbelegt: das Menue zieht nach; ohne Taste kein Tabulator; zurueck
+    REQUIRE(hotkeys->setSequence(QStringLiteral("view.fullscreen"),
+                                 QKeySequence(QStringLiteral("F10")))
+                .isEmpty());
+    CHECK(voll->text() == QStringLiteral("Fullscreen\t") + anzeige("F10"));
+    CHECK(karaoke->text() == QStringLiteral("Karaoke\t") + anzeige("Ctrl+K"));
+    REQUIRE(hotkeys->setSequence(QStringLiteral("view.fullscreen"), QKeySequence()).isEmpty());
+    CHECK(voll->text() == QStringLiteral("Fullscreen"));
+    hotkeys->resetToDefault(QStringLiteral("view.fullscreen"));
+    CHECK(voll->text() == QStringLiteral("Fullscreen\t") + anzeige("F11"));
+    REQUIRE(hotkeys->setSequence(QStringLiteral("view.karaoke"),
+                                 QKeySequence(QStringLiteral("Ctrl+J")))
+                .isEmpty());
+    hotkeys->resetAllToDefaults();
+    CHECK(karaoke->text() == QStringLiteral("Karaoke\t") + anzeige("Ctrl+K"));
+
+    // --- F11 loest ueber den Filter aus, genau einmal
+    QWidget irgendwo;
+    QKeyEvent f11(QEvent::KeyPress, Qt::Key_F11, Qt::NoModifier);
+    QCoreApplication::sendEvent(&irgendwo, &f11);
+    QCoreApplication::processEvents();
+    CHECK(vollbild == 1);
 }

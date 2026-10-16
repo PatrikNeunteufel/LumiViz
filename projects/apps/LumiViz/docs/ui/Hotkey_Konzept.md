@@ -1,9 +1,9 @@
 # LumiViz — Hotkeys (Konzept)
 
-> **Version:** 1.2.0
-> **Datum:** 2026-07-27
-> **Typ:** Konzept (**Stufen 1 + 2 umgesetzt**, Session 51/52)
-> **Status:** Entwurf — Entscheide §9.2–§9.5 offen
+> **Version:** 1.3.0
+> **Datum:** 2026-10-16
+> **Typ:** Konzept (**Stufen 1 + 2 umgesetzt**, Session 51/52; §9 umgesetzt S129)
+> **Status:** Alle Entscheide §9 gefallen (§9.1 S52, §9.2–§9.5 Patrik S60) und gebaut
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Visual_Playlist_Konzept.md](Visual_Playlist_Konzept.md) (§4 verweist hierher) ·
 > [Menu_System.md](Menu_System.md) (`MenuRegistry` trägt schon Shortcut-Slots) ·
@@ -101,7 +101,7 @@ Dauerkonflikt. Statt `Space`/`Backspace` (MilkDrop-Konvention), weil `Space` nac
 **Ansicht**
 | Taste | Aktion-ID |
 |---|---|
-| `F11` | `view.fullscreen` (heute nur Menü/Doppelklick) |
+| `F11` | `view.fullscreen` (seit S129 über den Filter; das Menü zeigt die Taste nur an) |
 | `Esc` | `view.exitFullscreen` (bereits vorhanden, hier nur dokumentiert) |
 | `Druck` | `view.screenshot` — Bild des Visuals in den Ordner des Laufs ([Screenshot_Ablage.md](Screenshot_Ablage.md)) |
 
@@ -201,26 +201,46 @@ die Ereignisse bleiben — das ist der Grund für den Zuschnitt in §3.
 
 ---
 
-## 9. Offene Entscheide
+## 9. Entscheide
 
 1. ~~**Vorbelegung Preset-Navigation**~~ — **entschieden (Session 52):** `Bild ab`
    = vorwärts, `Bild auf` = zurück, wie in jeder Liste.
-2. **Blättert Stufe 1 nur über Presets oder auch in Unterordner hinein?**
-   Vorschlag: nur die Presets des aktiven Verzeichnisses (Ordner werden
-   übersprungen, keine Rekursion) — das ist vorhersagbar und deckt Deinen
-   Kalibrier-Anwendungsfall. Rekursion wäre Sache der Visual-Playlist.
-3. **Am Ende des Verzeichnisses:** anhalten (Vorschlag) oder umlaufen.
-4. **Verhalten bei Mehrfachauswahl** im Browser: ignorieren und der Reihe nach
-   blättern (Vorschlag) — Auswahl-Rolle kommt erst mit der Playlist.
-5. **Sollen Menü-Einträge die Tasten anzeigen?** Der `MenuRegistry` hat die
-   Shortcut-Slots schon; sie zu füllen bedeutet aber zwei Wahrheiten. Vorschlag:
-   Menü zeigt die Taste **aus der Shortcut-Registry** (nur Anzeige), Auslösung
-   bleibt beim Filter.
+2. ~~**Blättert Stufe 1 nur über Presets oder auch in Unterordner hinein?**~~ —
+   **entschieden (Patrik S60):** nur die Presets des aktiven Verzeichnisses
+   (Ordner und `..` werden übersprungen, keine Rekursion). Gebaut seit S51.
+3. ~~**Am Ende des Verzeichnisses:** anhalten oder umlaufen~~ — **entschieden
+   (Patrik S60): umlaufen.** Gebaut S129 (bis dahin hielt der Code nach dem
+   Vorschlag von S51 an): nach dem letzten Preset kommt das erste, vor dem
+   ersten das letzte; die Statuszeile sagt „Back to the first preset“ bzw.
+   „… last preset“. Ist das gewählte das einzige Preset, geschieht nichts
+   („No other preset in this folder“) — es wird nicht neu geladen.
+   `ImportBrowserPanel::nextPresetRow`, Test `test_Shortcuts`.
+4. ~~**Verhalten bei Mehrfachauswahl**~~ — **entschieden (Patrik S60):**
+   Blättern wirkt auf den **zuletzt gewählten** Eintrag. Erfüllt: die Liste
+   des Browsers erlaubt nur eine Auswahl (`SingleSelection`), geblättert wird
+   ab `currentRow()` (S129 geprüft).
+5. ~~**Sollen Menü-Einträge die Tasten anzeigen?**~~ — **entschieden (Patrik
+   S60): ja, aus der Shortcut-Registry, nur als Anzeige; ausgelöst wird beim
+   Filter.** Gebaut S129: `MenuItemDesc::hotkeyAction` nennt die Aktion, der
+   `MenuManager` setzt ihre aktuelle Taste hinter einen Tabulator in den Text
+   (Qt zeigt sie dort wie ein Kürzel, ohne sie zu belegen) und zieht nach, wenn
+   der `ShortcutManager` `sequenceChanged` meldet. Betrifft **View → Karaoke**
+   (`view.karaoke`) und **View → Fullscreen** (`view.fullscreen`). Fullscreen
+   trug bis dahin `F11` als eigene Menütaste (zwei Wahrheiten, die
+   Registry-Zeile stand auf „noch ohne Wirkung“): jetzt ist `view.fullscreen`
+   verdrahtet (`ToggleFullscreenEvent` ohne Quelle), umbelegbar, und wirkt auch
+   im Vollbild-Fenster, das das Menü nicht erreicht. Die übrigen Menütasten
+   (Ctrl+O, Ctrl+S, …) kennt nur das Menü; sie bleiben dort. Test:
+   `test_PaletteUi` „Hotkeys S129“.
 
 ---
 
 ## 10. Changelog
 
+- **1.3.0** (2026-10-16, Session 129): §9 nachgezogen — die Entscheide §9.2–§9.5
+  (Patrik S60) waren nur in `Offene_Punkte.md` vermerkt. Gebaut: §9.3 umlaufen,
+  §9.5 Menü zeigt die Taste aus der Registry (Karaoke, Fullscreen),
+  `view.fullscreen` verdrahtet; §9.4 als erfüllt geprüft.
 - **1.2.0** (2026-07-27, Session 52): Aktion `view.screenshot` auf `Druck` —
   Ablage und Vollbild-Fehlerregel in [Screenshot_Ablage.md](Screenshot_Ablage.md).
 - **1.1.0** (2026-07-27, Session 52): Vorbelegung der Preset-Navigation korrigiert

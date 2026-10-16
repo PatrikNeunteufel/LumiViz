@@ -96,6 +96,11 @@ public:
     [[nodiscard]] static bool gehoertDemTextfeld(const QKeySequence& sequence,
                                                  bool notWhileTyping, bool aufnahmeFeld);
 
+Q_SIGNALS:
+    /// Die Taste einer Aktion hat sich geaendert (gesetzt oder zurueckgesetzt) —
+    /// fuer Anzeigen wie das Menue, das sie nur zeigt (§9.5, S129).
+    void sequenceChanged(const QString& actionId);
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 

@@ -348,7 +348,8 @@ void initMenuDefaults(MenuRegistry& registry)
         },
         false);
     
-    // Fullscreen (F11)
+    // Fullscreen — die Taste (Vorgabe F11, umbelegbar) gehoert der
+    // Tastenkuerzel-Tabelle `view.fullscreen`; das Menue zeigt sie nur (§9.5)
     registry.registerItem(
         MenuItemDesc{
             {"menu.view.fullscreen", "menu.view", 150},
@@ -362,14 +363,16 @@ void initMenuDefaults(MenuRegistry& registry)
             },
             {},  // isChecked
             {},  // isEnabled
-            "F11"
+            {},  // shortcut
+            "view.fullscreen"
         },
         false);
     
     // Karaoke an/aus (S89, KE4): Songtext ueber jedem Preset. Die Taste steht
     // in der Tastenkuerzel-Tabelle (`view.karaoke`, umbelegbar), nicht hier —
-    // sonst loeste ein Druck zweimal aus. Der Haken kommt aus der gemerkten
-    // Einstellung: der Renderer wird erst nach dem Menue geschaltet.
+    // sonst loeste ein Druck zweimal aus; das Menue zeigt sie nur (§9.5, S129).
+    // Der Haken kommt aus der gemerkten Einstellung: der Renderer wird erst
+    // nach dem Menue geschaltet.
     registry.registerItem(
         MenuItemDesc{
             {"menu.view.karaoke", "menu.view", 160},
@@ -382,7 +385,8 @@ void initMenuDefaults(MenuRegistry& registry)
                 return QSettings().value(QStringLiteral("karaoke/enabled"), false).toBool();
             },
             {},  // isEnabled
-            {}   // shortcut
+            {},  // shortcut
+            "view.karaoke"
         },
         false);
 

@@ -134,10 +134,10 @@ TEST_SUITE("Shortcuts")
         CHECK(P::nextPresetRow(types, 5, -1) == 4);
         // Aus einem Ordner heraus vorwaerts: erstes Preset danach.
         CHECK(P::nextPresetRow(types, 1, 1) == 3);
-        // Rueckwaerts vor dem ersten Preset: nichts mehr (kein Umlauf).
-        CHECK(P::nextPresetRow(types, 3, -1) == -1);
-        // Am Ende anhalten (Entscheid 3), nicht bei 3 wieder anfangen.
-        CHECK(P::nextPresetRow(types, 5, 1) == -1);
+        // Am Ende umlaufen (Entscheid Patrik S60, §9.3): vor dem ersten Preset
+        // kommt das letzte, nach dem letzten das erste — Ordner bleiben aussen vor.
+        CHECK(P::nextPresetRow(types, 3, -1) == 5);
+        CHECK(P::nextPresetRow(types, 5, 1) == 3);
         // delta 0 bewegt nichts; leere Liste ergibt nichts.
         CHECK(P::nextPresetRow(types, 3, 0) == -1);
         CHECK(P::nextPresetRow({}, -1, 1) == -1);
@@ -159,5 +159,10 @@ TEST_SUITE("Shortcuts")
         const QList<int> mitPreset{P::Type_Up, P::Type_Avs};
         CHECK(P::nextPresetRow(mitPreset, 99, -1) == 1);
         CHECK(P::nextPresetRow(mitPreset, 99, 1) == 1);
+
+        // Das einzige Preset ist schon gewaehlt: kein Umlauf auf sich selbst —
+        // es wird nicht noch einmal geladen.
+        CHECK(P::nextPresetRow(mitPreset, 1, 1) == -1);
+        CHECK(P::nextPresetRow(mitPreset, 1, -1) == -1);
     }
 }
