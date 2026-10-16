@@ -445,13 +445,27 @@ double Loop::schritteVonMs(double ms) const
 
 double Loop::stelleImMuster(double schritt, const QString& name) const
 {
+    const std::vector<double> stellen = stellenImMuster(schritt, name);
+    return stellen.empty() ? -1.0 : stellen.front();
+}
+
+std::vector<double> Loop::stellenImMuster(double schritt, const QString& name) const
+{
     const Muster* m = findeMuster(name);
-    if (m == nullptr || schritt < 0.0) return -1.0;
+    if (m == nullptr || schritt < 0.0) return {};
     const int spt = schritteJeTakt();
     const double musterSchritte = static_cast<double>(m->takte) * spt;
-    if (musterSchritte <= 0.0) return -1.0;
-    // eingeschaltete Kanaele zuerst: was man hoert, geht vor
+    if (musterSchritte <= 0.0) return {};
+    struct Treffer
+    {
+        int startTakt;
+        double stelle;
+    };
+    // eingeschaltete Kanaele zuerst: was man hoert, geht vor — ein ausgeschalteter nur,
+    // wenn sonst keiner dort liegt
     for (const bool nurAn : {true, false})
+    {
+        std::vector<Treffer> treffer;
         for (const Kanal& kanal : kanaele)
         {
             if (nurAn != kanal.an) continue;
@@ -460,10 +474,21 @@ double Loop::stelleImMuster(double schritt, const QString& name) const
                 if (clip.muster != name) continue;
                 const double anfang = static_cast<double>(clip.startTakt) * spt;
                 const double ende = anfang + static_cast<double>(clipTakte(clip)) * spt;
-                if (schritt >= anfang && schritt < ende) return std::fmod(schritt - anfang, musterSchritte);
+                if (schritt >= anfang && schritt < ende)
+                    treffer.push_back({clip.startTakt, std::fmod(schritt - anfang, musterSchritte)});
             }
         }
-    return -1.0;
+        if (treffer.empty()) continue;
+        if (!nurAn) return {treffer.front().stelle};
+        // W8-2 a: der zuletzt begonnene zuerst — bei gleichem Anfang bleibt der obere Kanal vorn
+        std::stable_sort(treffer.begin(), treffer.end(),
+                         [](const Treffer& a, const Treffer& b) { return a.startTakt > b.startTakt; });
+        std::vector<double> stellen;
+        stellen.reserve(treffer.size());
+        for (const Treffer& t : treffer) stellen.push_back(t.stelle);
+        return stellen;
+    }
+    return {};
 }
 
 QStringList Loop::klangNamen() const

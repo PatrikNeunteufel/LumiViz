@@ -72,6 +72,30 @@ TEST_SUITE("LoopMitlaufen")
         beide.richte();
         CHECK(beide.stelleImMuster(16.0 + 4.0, QStringLiteral("A")) == doctest::Approx(4.0));  // K1, nicht K3 (dort 20)
 
+        // S130, W8-2 a: dasselbe Muster zugleich in zwei eingeschalteten Kanaelen — beide Stellen,
+        // der zuletzt begonnene zuerst (wie im Sichttest: Drums Grund ab Takt 0, Percussion Grund ab Takt 1)
+        Loop doppelt = loop;
+        doppelt.kanaele.push_back({QStringLiteral("K4"), true, {{QStringLiteral("A"), 1, 1}}});  // A in K4 ab Takt 1
+        doppelt.richte();
+        const std::vector<double> zwei = doppelt.stellenImMuster(16.0 + 5.0, QStringLiteral("A"));
+        REQUIRE(zwei.size() == 2);
+        CHECK(zwei[0] == doctest::Approx(5.0));         // K4, eben begonnen: Takt 0 im Muster
+        CHECK(zwei[1] == doctest::Approx(16.0 + 5.0));  // K1, seit Takt 0: Takt 1 im Muster
+        CHECK(doppelt.stelleImMuster(16.0 + 5.0, QStringLiteral("A")) == doctest::Approx(5.0));
+        // vor dem Einsatz in K4 nur K1
+        CHECK(doppelt.stellenImMuster(5.0, QStringLiteral("A")) == std::vector<double>{5.0});
+        // gleicher Anfang: der obere Kanal vorn — K1 spielt A zweimal, K4 einmal: in Takt 2
+        // steht K1 wieder am Anfang des Musters, K4 ist vorbei
+        Loop gleich = loop;
+        gleich.kanaele.push_back({QStringLiteral("K4"), true, {{QStringLiteral("A"), 0, 1}}});
+        gleich.richte();
+        CHECK(gleich.stellenImMuster(3.0, QStringLiteral("A")) == std::vector<double>{3.0, 3.0});
+        CHECK(gleich.stellenImMuster(32.0 + 1.0, QStringLiteral("A")) == std::vector<double>{1.0});
+        // ein ausgeschalteter Kanal kommt nur, wenn kein eingeschalteter dort liegt — und dann nur einer
+        CHECK(beide.stellenImMuster(16.0 + 4.0, QStringLiteral("A")) == std::vector<double>{4.0});
+        CHECK(loop.stellenImMuster(64.0 + 3.0, QStringLiteral("A")) == std::vector<double>{3.0});
+        CHECK(loop.stellenImMuster(40.0, QStringLiteral("B")).empty());
+
         // Millisekunden als Schritte: ein Durchlauf ist 7 Takte, bei 120 BPM 14 s
         CHECK(loop.durchlaufSchritte() == 112);
         CHECK(loop.durchlaufMs() == doctest::Approx(14000.0));

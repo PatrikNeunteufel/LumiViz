@@ -1375,6 +1375,64 @@ TEST_CASE("S130 W8 a Loop Panel: spielt der Composer denselben Loop mehrfach, di
     CHECK(editor->raster()->nebenMarken().empty());
 }
 
+TEST_CASE("S130 W8-2 a Loop Panel: liegt ein Muster zugleich in zwei Kanaelen, zeigt der Editor beide Stellen — der zuletzt begonnene Clip voll")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+    lumi::loop::setzeComposerAbfragen({});  // der Composer spielt nicht
+
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString beispiel = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+    REQUIRE(QFileInfo::exists(beispiel));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+
+    // wie im Sichttest 11 (beat_A): Grund in Drums ab Takt 1, dazu in Percussion ab Takt 2
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    Loop vorlage;
+    REQUIRE(lumi::loop::ladeLoop(beispiel, vorlage));
+    const QString grund = vorlage.kanaele[0].clips[0].muster;
+    REQUIRE(vorlage.kanaele.size() >= 2);
+    vorlage.kanaele[1].clips.push_back({grund, 1, 1});
+    vorlage.richte();
+    const QString datei = ordner.filePath(QStringLiteral("doppelt.lvloop"));
+    REQUIRE(lumi::loop::speichereLoop(vorlage, datei));
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    REQUIRE(panel.lade(datei));
+    const int spt = panel.loop().schritteJeTakt();
+    REQUIRE(panel.oeffneEditor(grund, false));
+    DrumEditor* editor = panel.editor();
+    REQUIRE(editor != nullptr);
+
+    // Play des ganzen Loops, Takt 3, Schritt 13: in Drums Takt 3 des Musters, in Percussion Takt 2
+    REQUIRE(panel.spiele());
+    panel.setzeStartstelle(2 * spt + 12);
+    panel.zeigeStandJetzt();
+    // (der Spieler laeuft zwischen Setzen und Fragen ein paar Mikrosekunden weiter)
+    CHECK(editor->raster()->marke() == doctest::Approx(spt + 12).epsilon(0.01));  // Percussion, zuletzt begonnen
+    REQUIRE(editor->raster()->nebenMarken().size() == 1);
+    CHECK(editor->raster()->nebenMarken()[0] == doctest::Approx(2 * spt + 12).epsilon(0.01));  // Drums, blasser
+    // in Takt 1 liegt nur der Clip in Drums: eine Marke
+    panel.setzeStartstelle(5);
+    panel.zeigeStandJetzt();
+    CHECK(editor->raster()->marke() == doctest::Approx(5).epsilon(0.01));
+    CHECK(editor->raster()->nebenMarken().empty());
+    panel.halte();
+    panel.zeigeStandJetzt();
+    CHECK(editor->raster()->marke() < 0.0);
+    CHECK(editor->raster()->nebenMarken().empty());
+}
+
 TEST_CASE("Loop im Composer: ein Loop-Clip hat kein Ende — die Komposition laesst ihm seine Laenge")
 {
     using namespace lumi::composer;

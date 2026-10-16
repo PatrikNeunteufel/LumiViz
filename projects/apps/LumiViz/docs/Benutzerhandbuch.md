@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.183.0
+> **Version:** 1.184.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2613,7 +2613,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | **Play** / **Stop** | Spielt den Loop im Kreis — von vorn oder ab der grünen Marke im Lineal |
 | **BPM** | Das Tempo des ganzen Loops, 20 bis 400 |
 | Zeile daneben | Tempo, Zahl der Kanäle, Takte und Dauer eines Durchlaufs; beim Spielen rechts die Stelle als *Bar · Step* |
-| **Scroll with playhead** | Standard an. Läuft eine Marke — **Play**, **Play pattern** oder der Composer —, folgen ihr die Achse und die Editoren, wenn sie hineingezoomt oder länger als das Fenster sind; stetig oder seitenweise wie für den Composer eingestellt (Settings). Während du an einem Rollbalken ziehst, rollt nichts. Spielt der Composer denselben Loop mehrfach zugleich, steht die Marke beim lautesten Clip, die übrigen sind blasser zu sehen |
+| **Scroll with playhead** | Standard an. Läuft eine Marke — **Play**, **Play pattern** oder der Composer —, folgen ihr die Achse und die Editoren, wenn sie hineingezoomt oder länger als das Fenster sind; stetig oder seitenweise wie für den Composer eingestellt (Settings). Während du an einem Rollbalken ziehst, rollt nichts. Spielt der Composer denselben Loop mehrfach zugleich, steht die Marke beim lautesten Clip, die übrigen sind blasser zu sehen. Liegt ein Muster im Loop zugleich in mehreren Kanälen, zeigt sein Editor jede Stelle — voll die des zuletzt begonnenen Clips |
 | **Fit** | Zeigt den ganzen Loop, die Zeilen in normaler Höhe (auch Ctrl+0) |
 | Achse | Lineal mit Taktnummern, je Kanal eine Zeile, die Clips als Blöcke; unten die Zeile *New channel* |
 | Klick oder Ziehen im **Lineal** | Spielt der Loop, springt er an die Stelle (auf den Schritt genau). Sonst setzt es die **grüne Marke**: dort beginnt **Play**. Ein Klick ganz links nimmt sie wieder an den Anfang; ein anderer Loop beginnt wieder vorn |
@@ -3420,6 +3420,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.184.0 | 2026-10-16 | Session 130. §16 Loop: liegt ein Muster zugleich in mehreren Kanälen, zeigt sein Editor jede Stelle, voll die des zuletzt begonnenen Clips. |
 | 1.183.0 | 2026-10-16 | Session 130. §16 Loop: spielt der Composer denselben Loop mehrfach zugleich, zeigen Achse und Editoren jede Stelle, die leiseren Clips blasser. |
 | 1.182.0 | 2026-10-16 | Session 130. §15 Composer: Rechtsklick auf einen Loop-Clip → **Open in Loop panel**, auch ohne *Edit*. |
 | 1.181.0 | 2026-10-16 | Session 130. §15 Composer, **Clip enabled**: das Panel Player nennt einen ausgeschalteten Clip an der Stelle mit „(off)“. |

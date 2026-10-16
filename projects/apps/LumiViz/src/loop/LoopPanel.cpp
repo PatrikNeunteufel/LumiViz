@@ -1097,17 +1097,27 @@ void LoopPanel::zeigeStand()
     if (arrangement >= 0.0) m_achse->setStelleSchritte(arrangement);
     m_achse->setNebenStellenSchritte(neben);
     // die Kaskade in die Editoren: allein gespielt die Stelle im Muster, sonst die
-    // Stelle des Arrangements in einem Clip dieses Musters (W1 a, Zusatz Patrik)
+    // Stelle des Arrangements in einem Clip dieses Musters (W1 a, Zusatz Patrik) —
+    // liegt das Muster dort mehrfach, die des zuletzt begonnenen Clips (W8-2 a)
     const auto imMuster = [&](const QString& muster, bool allein) {
         if (allein) return m_spieler.stelleSchritte();
         return arrangement >= 0.0 ? m_loop.stelleImMuster(arrangement, muster) : -1.0;
     };
-    // ... und die Stellen der leiseren Clips, soweit sie in einem Clip dieses Musters liegen (W8 a)
+    // ... und blasser die uebrigen: die frueher begonnenen Clips dieses Musters an derselben
+    // Stelle (W8-2 a) und alle Clips dieses Musters an den Stellen der leiseren Composer-Clips (W8 a)
     const auto nebenImMuster = [&](const QString& muster, bool allein) {
         std::vector<double> imClip;
         if (allein) return imClip;
+        if (arrangement >= 0.0)
+        {
+            const std::vector<double> hier = m_loop.stellenImMuster(arrangement, muster);
+            if (hier.size() > 1) imClip.insert(imClip.end(), hier.begin() + 1, hier.end());
+        }
         for (const double n : neben)
-            if (const double s = m_loop.stelleImMuster(n, muster); s >= 0.0) imClip.push_back(s);
+        {
+            const std::vector<double> dort = m_loop.stellenImMuster(n, muster);
+            imClip.insert(imClip.end(), dort.begin(), dort.end());
+        }
         return imClip;
     };
     if (m_effekte != nullptr) m_effekte->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);

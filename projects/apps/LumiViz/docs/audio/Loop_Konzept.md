@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.86.0
+> **Version:** 0.87.0
 > **Datum:** 2026-10-16 (Session 130)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3373,6 +3373,23 @@ c (bei W2 a bleiben).
   Stellen, Achse und Editor); `LUMIVIZ_LOOP_W8_BILD=<datei.png>` legt Bilder
   von Achse und Editor ab.
 
+**Der zweite Fall von W8 (S130, Befund Patrik am Bild):** gemeint war auch —
+und im Bild des Sichttests zu sehen — dasselbe Muster **im Loop selbst**
+zweimal zur selben Zeit (Grund in *Drums* ab Takt 1 und in *Percussion* ab
+Takt 2). `Loop::stelleImMuster` gab nur die Stelle des ersten Clips (oberster
+eingeschalteter Kanal, von Claude in S127 gesetzt). **Entscheid Patrik
+W8-2 a:** jeder Clip des offenen Musters, der an der Stelle in einem
+eingeschalteten Kanal liegt, bekommt im Editor eine Marke; voll die des
+**zuletzt begonnenen**, die früher begonnenen blasser (bei gleichem Anfang
+der obere Kanal zuerst). Ein ausgeschalteter Kanal nur, wenn kein
+eingeschalteter dort liegt, und dann eine Marke. Verworfen: b (voll der
+oberste Kanal). Beide Fälle wirken zusammen: voll ist nur die eine Marke des
+lautesten Composer-Clips in seinem zuletzt begonnenen Clip, alles andere ist
+blasser. Gilt auch beim eigenen Play des ganzen Loops.
+- `Loop::stellenImMuster(schritt, muster)`; `stelleImMuster` ist deren erste.
+- Tests: in „S127 W1 Loop“ (`test_LoopMitlaufen`) die Reihenfolge, neu
+  „S130 W8-2 a“ (`test_LoopSpieler`, Play des ganzen Loops).
+
 ### Loop-Kleinkram (Plan S125, fortgesetzt S127)
 
 - ✅ **3b** (S127): eine `.lvloop` ins echte Composer-Panel gezogen — in
@@ -3636,6 +3653,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.87.0** (S130, 2026-10-16): Entscheid **W8-2 a** — liegt ein Muster im Loop
+  zugleich in mehreren Kanälen, zeigt der Editor jede Stelle, voll die des
+  zuletzt begonnenen Clips (`Loop::stellenImMuster`).
 - **0.86.0** (S130, 2026-10-16): Sichttest 11 W8, Entscheid **W8 a** — spielt
   der Composer denselben Loop mehrfach, bekommt jede Stelle eine Marke, die
   leiseren Clips blasser („Die Marke läuft mit“).

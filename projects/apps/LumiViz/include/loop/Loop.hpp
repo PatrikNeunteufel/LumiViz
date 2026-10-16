@@ -414,9 +414,16 @@ struct Loop
     /// Wo das Muster `muster` an der Stelle `schritt` des Arrangements steht,
     /// in Schritten des Musters (S127, Entscheid Patrik W1 a): liegt die Stelle
     /// in einem Clip dieses Musters, die Stelle darin (Wiederholungen
-    /// eingerechnet). Clips eingeschalteter Kanaele zuerst, dann der oberste
-    /// Kanal. -1 = kein Clip dieses Musters liegt dort.
+    /// eingerechnet). Liegen mehrere Clips dieses Musters dort, die erste von
+    /// `stellenImMuster`. -1 = kein Clip dieses Musters liegt dort.
     [[nodiscard]] double stelleImMuster(double schritt, const QString& muster) const;
+    /// Alle Stellen im Muster `muster` an der Stelle `schritt` — je Clip dieses
+    /// Musters, der dort in einem eingeschalteten Kanal liegt, eine (S130,
+    /// Entscheid Patrik W8-2 a): zuerst der zuletzt begonnene, dann die frueher
+    /// begonnenen (bei gleichem Anfang der obere Kanal zuerst). Liegt keiner in
+    /// einem eingeschalteten Kanal, der erste in einem ausgeschalteten (eine
+    /// Stelle). Leer = kein Clip dieses Musters liegt dort.
+    [[nodiscard]] std::vector<double> stellenImMuster(double schritt, const QString& muster) const;
 
     /// Unsinn richten: Werte in ihre Grenzen, je Muster eine Zeile je Spur in
     /// voller Laenge, Muster ohne Namen benennen; Clips nach Start sortieren,
