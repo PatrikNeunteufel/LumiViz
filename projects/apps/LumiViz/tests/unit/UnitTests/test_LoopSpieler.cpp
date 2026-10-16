@@ -23,6 +23,7 @@
 #include "composer/Bearbeiten.hpp"
 #include "composer/Komposition.hpp"
 #include "composer/Tonfuehrung.hpp"
+#include "loop/ComposerAbfragen.hpp"
 #include "loop/DrumEditor.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Klangerzeuger.hpp"
@@ -1193,11 +1194,17 @@ TEST_CASE("S127 W2 Loop im Composer: die Stelle je Loop fuer Panel und Editoren 
     // beide spielen: A1 bei 2500 im Clip = 500 im Durchlauf, A2 bei 500 + 300 = 800 — A1 ist lauter
     (void)fuehrung.takt(k, 3500, true);
     CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(500.0));
+    // S130 W8 a: beide Stellen, der lauteste zuerst
+    REQUIRE(fuehrung.loopStellenMs(pfad).size() == 2);
+    CHECK(fuehrung.loopStellenMs(pfad)[0] == doctest::Approx(500.0));
+    CHECK(fuehrung.loopStellenMs(pfad)[1] == doctest::Approx(800.0));
     // jetzt ist A2 lauter
     k.kanaele[0].clips[0].grundpegel = 0.4;
     k.kanaele[1].clips[0].grundpegel = 1.0;
     (void)fuehrung.takt(k, 3533, true);
     CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(833.0));
+    REQUIRE(fuehrung.loopStellenMs(pfad).size() == 2);
+    CHECK(fuehrung.loopStellenMs(pfad)[1] == doctest::Approx(533.0));
     // das Gain zaehlt nicht (W2 a: die Pegelkurve)
     k.kanaele[0].clips[0].gainDb = 24.0;
     (void)fuehrung.takt(k, 3566, true);
@@ -1205,6 +1212,7 @@ TEST_CASE("S127 W2 Loop im Composer: die Stelle je Loop fuer Panel und Editoren 
     // nur noch A2: hinter dem Ende von A1
     (void)fuehrung.takt(k, 7000, true);
     CHECK(fuehrung.loopStelleMs(pfad) == doctest::Approx(300.0));  // 4000 + 300 = 4300 → 300
+    CHECK(fuehrung.loopStellenMs(pfad).size() == 1);
     // dahinter keiner, und frei gegeben auch nicht
     (void)fuehrung.takt(k, 9000, true);
     CHECK(fuehrung.loopStelleMs(pfad) == -1.0);
@@ -1280,6 +1288,91 @@ TEST_CASE("S127 W1 W3 Loop Panel: die Marke in den Editoren beim Play des Arrang
     panel.halte();
     panel.zeigeStandJetzt();
     CHECK(editor->raster()->marke() < 0.0);
+}
+
+TEST_CASE("S130 W8 a Loop Panel: spielt der Composer denselben Loop mehrfach, die leiseren Clips blasser — in Achse und Editor")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString beispiel = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+    REQUIRE(QFileInfo::exists(beispiel));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+
+    LoopPanel panel(dienste);  // nicht gezeigt: kein Fenster
+    REQUIRE(panel.lade(beispiel));
+    const Loop& loop = panel.loop();
+    const int spt = loop.schritteJeTakt();
+    // drums_demo: in Drums Grund (Takt 1–4), Fill (5–8), Grund (9–12), Break (13–16)
+    const QString grund = loop.kanaele[0].clips[0].muster;
+    REQUIRE(loop.kanaele[0].clips[2].muster == grund);
+    REQUIRE(panel.oeffneEditor(grund, false));
+    DrumEditor* editor = panel.editor();
+    REQUIRE(editor != nullptr);
+
+    // der Composer spielt diesen Loop dreimal zugleich: der lauteste in Takt 10, Schritt 4
+    // (zweiter Grund), leiser in Takt 2, Schritt 2 (erster Grund) und in Takt 6 (Fill)
+    const double msJeSchritt = 1000.0 / loop.schritteVonMs(1000.0);
+    const double lautester = 9 * spt + 3;
+    const double leiserGrund = 1 * spt + 1;
+    const double leiserFill = 5 * spt;
+    const QString datei = panel.datei();
+    lumi::loop::setzeComposerAbfragen(
+        {[] { return true; },
+         [&](const QString& gefragt) {
+             return gefragt == datei ? std::vector<double>{lautester * msJeSchritt, leiserGrund * msJeSchritt,
+                                                           leiserFill * msJeSchritt}
+                                     : std::vector<double>{};
+         },
+         [] { return false; }});
+    panel.zeigeStandJetzt();
+
+    // die Achse: die Marke beim lautesten, die beiden anderen blasser
+    CHECK(panel.taktachse()->spielt());
+    const std::vector<double>& neben = panel.taktachse()->nebenStellenSchritte();
+    REQUIRE(neben.size() == 2);
+    CHECK(neben[0] == doctest::Approx(leiserGrund));
+    CHECK(neben[1] == doctest::Approx(leiserFill));
+    // der Editor (Grund): die Marke im zweiten Clip Grund, blass die Stelle im ersten — Fill liegt nicht in Grund
+    CHECK(editor->raster()->marke() == doctest::Approx(spt + 3));
+    REQUIRE(editor->raster()->nebenMarken().size() == 1);
+    CHECK(editor->raster()->nebenMarken()[0] == doctest::Approx(spt + 1));
+
+    const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_W8_BILD");
+    if (!bild.isEmpty())
+    {
+        panel.taktachse()->resize(900, 220);
+        CHECK(panel.taktachse()->grab().save(bild));
+        editor->resize(900, 360);
+        CHECK(editor->grab().save(QFileInfo(bild).path() + QLatin1Char('/') + QFileInfo(bild).completeBaseName() +
+                                  QStringLiteral("_editor.png")));
+    }
+
+    // spielt er ihn nur noch einmal: keine blassen Marken mehr
+    lumi::loop::setzeComposerAbfragen(
+        {[] { return true; },
+         [&](const QString&) { return std::vector<double>{lautester * msJeSchritt}; },
+         [] { return false; }});
+    panel.zeigeStandJetzt();
+    CHECK(panel.taktachse()->nebenStellenSchritte().empty());
+    CHECK(editor->raster()->nebenMarken().empty());
+    CHECK(editor->raster()->marke() == doctest::Approx(spt + 3));
+    // und gar nicht: keine Marke
+    lumi::loop::setzeComposerAbfragen({});
+    panel.zeigeStandJetzt();
+    CHECK_FALSE(panel.taktachse()->spielt());
+    CHECK(editor->raster()->marke() < 0.0);
+    CHECK(editor->raster()->nebenMarken().empty());
 }
 
 TEST_CASE("Loop im Composer: ein Loop-Clip hat kein Ende — die Komposition laesst ihm seine Laenge")

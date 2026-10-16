@@ -148,6 +148,10 @@ public:
     /// dieses Loops zugleich, die des lautesten (Pegelkurve, ohne Gain); -1 =
     /// kein Clip dieses Loops liegt an der Stelle.
     [[nodiscard]] double loopStelleMs(const QString& datei) const;
+    /// Alle Stellen, an denen der letzte Takt den Loop `datei` spielte (S130,
+    /// Entscheid Patrik W8 a): zuerst die des lautesten Clips (wie
+    /// `loopStelleMs`), dann die leiseren nach ihrem Pegel. Leer = keiner.
+    [[nodiscard]] std::vector<double> loopStellenMs(const QString& datei) const;
 
     /// Der Anfang des naechsten (`vor`) bzw. vorigen Songs der Komposition,
     /// von `stelleMs` aus — fuer Next / Previous. Zurueck: mitten in einem

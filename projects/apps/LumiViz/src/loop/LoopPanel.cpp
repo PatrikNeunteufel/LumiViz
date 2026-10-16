@@ -1061,10 +1061,17 @@ void LoopPanel::zeigeStand()
     // die Stelle im Arrangement (Schritte), -1 = keine: das eigene Play — oder der
     // Composer, der diesen Loop gerade spielt (S127, Entscheide Patrik W1 a, W2 a)
     double arrangement = -1.0;
+    // spielt der Composer diesen Loop mehrfach zugleich, die Stellen der leiseren Clips
+    // (S130, Entscheid Patrik W8 a) — blassere Marken; der lauteste fuehrt
+    std::vector<double> neben;
     if (spielt && m_solo.isEmpty())
         arrangement = m_spieler.stelleSchritte();
     else if (!spielt && m_geladen && !m_datei.isEmpty())
-        if (const double ms = composerLoopStelleMs(m_datei); ms >= 0.0) arrangement = m_loop.schritteVonMs(ms);
+    {
+        const std::vector<double> stellen = composerLoopStellenMs(m_datei);
+        if (!stellen.empty()) arrangement = m_loop.schritteVonMs(stellen.front());
+        for (std::size_t i = 1; i < stellen.size(); ++i) neben.push_back(m_loop.schritteVonMs(stellen[i]));
+    }
     setzeText(m_stelle, [&]() -> QString {
         if (arrangement < 0.0) return {};
         const int schritt = static_cast<int>(arrangement);
@@ -1088,25 +1095,35 @@ void LoopPanel::zeigeStand()
     m_achse->setMitlaufen(arrangement >= 0.0 ? art : Mitlaufen::Aus);
     m_achse->setSpielt(arrangement >= 0.0);
     if (arrangement >= 0.0) m_achse->setStelleSchritte(arrangement);
+    m_achse->setNebenStellenSchritte(neben);
     // die Kaskade in die Editoren: allein gespielt die Stelle im Muster, sonst die
     // Stelle des Arrangements in einem Clip dieses Musters (W1 a, Zusatz Patrik)
     const auto imMuster = [&](const QString& muster, bool allein) {
         if (allein) return m_spieler.stelleSchritte();
         return arrangement >= 0.0 ? m_loop.stelleImMuster(arrangement, muster) : -1.0;
     };
+    // ... und die Stellen der leiseren Clips, soweit sie in einem Clip dieses Musters liegen (W8 a)
+    const auto nebenImMuster = [&](const QString& muster, bool allein) {
+        std::vector<double> imClip;
+        if (allein) return imClip;
+        for (const double n : neben)
+            if (const double s = m_loop.stelleImMuster(n, muster); s >= 0.0) imClip.push_back(s);
+        return imClip;
+    };
     if (m_effekte != nullptr) m_effekte->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     if (m_editor != nullptr)
     {
         const bool allein = spielt && !m_solo.isEmpty() && m_solo == m_editor->muster();
         m_editor->setSpielt(allein, m_spieler.stelleSchritte());
-        m_editor->zeigeMarke(imMuster(m_editor->muster(), allein), art);
+        m_editor->zeigeMarke(imMuster(m_editor->muster(), allein), art, nebenImMuster(m_editor->muster(), allein));
         m_editor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
     }
     if (m_instrumentEditor != nullptr)
     {
         const bool allein = spielt && !m_solo.isEmpty() && m_solo == m_instrumentEditor->muster();
         m_instrumentEditor->setSpielt(allein, m_spieler.stelleSchritte());
-        m_instrumentEditor->zeigeMarke(imMuster(m_instrumentEditor->muster(), allein), art);
+        m_instrumentEditor->zeigeMarke(imMuster(m_instrumentEditor->muster(), allein), art,
+                                       nebenImMuster(m_instrumentEditor->muster(), allein));
         m_instrumentEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
         // warum ein Klick auf eine Taste gerade nichts hoeren laesst
         m_instrumentEditor->setHinweis(!darf     ? tr("The Composer plays the audio — keys and Play pattern are silent")

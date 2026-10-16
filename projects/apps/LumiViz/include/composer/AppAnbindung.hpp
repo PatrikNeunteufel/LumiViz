@@ -122,10 +122,11 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 
 /// Fuehrt der Composer gerade den Ton?
 [[nodiscard]] bool fuehrtTon();
-/// Die Stelle im Durchlauf des Loops `datei`, wie der Composer ihn gerade
-/// spielt (ms) — fuer die Marke im Panel Loop und in den Editoren (S127,
-/// Entscheide Patrik W1 a, W2 a). -1 = er spielt ihn nicht.
-[[nodiscard]] double loopStelleMs(const QString& datei);
+/// Die Stellen im Durchlauf des Loops `datei`, wie der Composer ihn gerade
+/// spielt (ms) — fuer die Marken im Panel Loop und in den Editoren (S127,
+/// Entscheide Patrik W1 a, W2 a): der lauteste Clip zuerst, dann die leiseren
+/// (S130, W8 a). Leer = er spielt ihn nicht.
+[[nodiscard]] std::vector<double> loopStellenMs(const QString& datei);
 /// Rollt eine Achse mit der Marke seitenweise statt stetig? Die Einstellung
 /// des Composers (S102), auch fuer das Panel Loop (S127, W3 a).
 [[nodiscard]] bool mitlaufenSeitenweise();

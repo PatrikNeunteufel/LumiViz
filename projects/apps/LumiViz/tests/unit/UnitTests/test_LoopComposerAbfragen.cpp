@@ -35,6 +35,7 @@ TEST_CASE("Loop S128 N1 b: ComposerAbfragen — ohne Anmeldung die Vorgaben, ang
     loop::setzeComposerAbfragen({});
     CHECK_FALSE(loop::composerFuehrtTon());
     CHECK(loop::composerLoopStelleMs(QStringLiteral("a.lvloop")) == -1.0);
+    CHECK(loop::composerLoopStellenMs(QStringLiteral("a.lvloop")).empty());
     CHECK_FALSE(loop::mitlaufenSeitenweise());
 
     bool fuehrt = true;
@@ -42,13 +43,14 @@ TEST_CASE("Loop S128 N1 b: ComposerAbfragen — ohne Anmeldung die Vorgaben, ang
     loop::setzeComposerAbfragen({[&fuehrt] { return fuehrt; },
                                  [&gefragt](const QString& datei) {
                                      gefragt = datei;
-                                     return 1250.0;
+                                     return std::vector<double>{1250.0, 300.0};  // der lauteste zuerst (S130, W8 a)
                                  },
                                  [] { return true; }});
     CHECK(loop::composerFuehrtTon());
     fuehrt = false;
     CHECK_FALSE(loop::composerFuehrtTon());  // gefragt wird jedes Mal, nicht einmal gemerkt
     CHECK(loop::composerLoopStelleMs(QStringLiteral("beat.lvloop")) == 1250.0);
+    CHECK(loop::composerLoopStellenMs(QStringLiteral("beat.lvloop")) == std::vector<double>{1250.0, 300.0});
     CHECK(gefragt == QStringLiteral("beat.lvloop"));
     CHECK(loop::mitlaufenSeitenweise());
 
@@ -68,7 +70,7 @@ TEST_CASE("Loop S128 N1 b: der Composer meldet an — der Loop bekommt dieselben
     // ohne geladene Komposition fuehrt keine Sitzung den Ton
     CHECK(loop::composerFuehrtTon() == composer::fuehrtTon());
     CHECK_FALSE(loop::composerFuehrtTon());
-    CHECK(loop::composerLoopStelleMs(QStringLiteral("beat.lvloop")) == composer::loopStelleMs(QStringLiteral("beat.lvloop")));
+    CHECK(loop::composerLoopStellenMs(QStringLiteral("beat.lvloop")) == composer::loopStellenMs(QStringLiteral("beat.lvloop")));
     CHECK(loop::composerLoopStelleMs(QStringLiteral("beat.lvloop")) == -1.0);
     loop::setzeComposerAbfragen({});  // die anderen Faelle laufen ohne Anmeldung
 }

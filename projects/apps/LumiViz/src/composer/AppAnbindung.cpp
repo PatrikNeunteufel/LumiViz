@@ -247,10 +247,10 @@ bool fuehrtTon()
     return Sitzung::fuehrende() != nullptr;
 }
 
-double loopStelleMs(const QString& datei)
+std::vector<double> loopStellenMs(const QString& datei)
 {
     const Sitzung* sitzung = Sitzung::fuehrende();
-    return sitzung != nullptr ? sitzung->loopStelleMs(datei) : -1.0;
+    return sitzung != nullptr ? sitzung->loopStellenMs(datei) : std::vector<double>{};
 }
 
 bool mitlaufenSeitenweise()
@@ -261,7 +261,7 @@ bool mitlaufenSeitenweise()
 void meldeLoopAbfragenAn()
 {
     loop::setzeComposerAbfragen({[] { return fuehrtTon(); },
-                                 [](const QString& datei) { return loopStelleMs(datei); },
+                                 [](const QString& datei) { return loopStellenMs(datei); },
                                  [] { return mitlaufenSeitenweise(); }});
 }
 

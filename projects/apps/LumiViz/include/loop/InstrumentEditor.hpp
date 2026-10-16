@@ -69,6 +69,10 @@ public:
     [[nodiscard]] const Muster& muster() const { return m_muster; }
     /// Die Abspielmarke: der Schritt im Muster (mit Bruchteil); unter null = keine.
     void setMarke(double schritt);
+    /// Weitere Stellen im Muster, an denen der Composer diesen Loop zugleich
+    /// spielt — die leiseren Clips, blasser (S130, Entscheid Patrik W8 a).
+    void setNebenMarken(std::vector<double> schritte);
+    [[nodiscard]] const std::vector<double>& nebenMarken() const { return m_neben; }
     /// Die gewaehlte Note (Platz in `muster().noten`); -1 = keine.
     [[nodiscard]] int auswahl() const;
     /// Die gewaehlte Note loeschen — sind mehrere markiert, alle.
@@ -189,6 +193,7 @@ private:
     int m_schlaege = 4;
     int m_jeSchlag = 4;
     double m_marke = -1.0;
+    std::vector<double> m_neben;  ///< W8 a: die blasseren Marken
     int m_rollX = 0;
     int m_rollY = 0;
     /// Die gewaehlte Note, an ihrem Einsatz erkannt (die Plaetze aendern sich
@@ -278,7 +283,9 @@ public:
     /// Die Marke allein, ohne den Knopf Play pattern (S127, W1 a): das Arrangement
     /// oder der Composer spielt dieses Muster gerade; -1 = keine. Mit `art` folgt
     /// der Ausschnitt ihr (W3 a) — nicht, solange am Rollbalken gezogen wird.
-    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art);
+    /// `neben`: die Stellen der leiseren Clips desselben Loops im Composer,
+    /// blasser gezeichnet (S130, W8 a); der Ausschnitt folgt nur `schritt`.
+    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art, std::vector<double> neben = {});
     /// Die Spitze der Summe, solange etwas spielt; unter null = keine Anzeige.
     void setSpitze(double spitze);
     /// Ein Satz unter der Instrument-Zeile: warum die Tasten gerade stumm

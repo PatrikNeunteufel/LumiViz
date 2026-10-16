@@ -199,11 +199,32 @@ int Tonfuehrung::quellen() const
 
 double Tonfuehrung::loopStelleMs(const QString& datei) const
 {
-    if (datei.isEmpty()) return -1.0;
+    const std::vector<double> stellen = loopStellenMs(datei);
+    return stellen.empty() ? -1.0 : stellen.front();
+}
+
+std::vector<double> Tonfuehrung::loopStellenMs(const QString& datei) const
+{
+    if (datei.isEmpty()) return {};
     const QFileInfo gesucht(datei);
+    std::vector<LoopStelle> treffer;
     for (const LoopStelle& l : m_loopStellen)
-        if (l.datei == datei || QFileInfo(l.datei) == gesucht) return l.ms;
-    return -1.0;
+        if (l.datei == datei || QFileInfo(l.datei) == gesucht) treffer.push_back(l);
+    if (treffer.empty()) return {};
+    // der lauteste nach der Regel des laufenden Songs (W2 a): bei Gleichstand der erste
+    constexpr double kGleich = 1e-6;
+    std::size_t lautester = 0;
+    for (std::size_t i = 1; i < treffer.size(); ++i)
+        if (treffer[i].pegel > treffer[lautester].pegel + kGleich) lautester = i;
+    std::rotate(treffer.begin(), treffer.begin() + static_cast<std::ptrdiff_t>(lautester),
+                treffer.begin() + static_cast<std::ptrdiff_t>(lautester) + 1);
+    // die leiseren danach, die lauteren zuerst
+    std::stable_sort(treffer.begin() + 1, treffer.end(),
+                     [](const LoopStelle& a, const LoopStelle& b) { return a.pegel > b.pegel; });
+    std::vector<double> stellen;
+    stellen.reserve(treffer.size());
+    for (const LoopStelle& l : treffer) stellen.push_back(l.ms);
+    return stellen;
 }
 
 int Tonfuehrung::loops() const
@@ -492,16 +513,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
                 q.imClip = true;
             }
         }
-        // die Stelle je Loop fuer Panel und Editoren (S127, W2 a): die des lautesten Clips
-        if (q.loop != nullptr)
-        {
-            const auto da = std::find_if(m_loopStellen.begin(), m_loopStellen.end(),
-                                         [&](const LoopStelle& l) { return l.datei == clip->datei; });
-            if (da == m_loopStellen.end())
-                m_loopStellen.push_back({clip->datei, q.loop->imDurchlauf(soll), pegelWert});
-            else if (pegelWert > da->pegel + kGleich)
-                *da = {clip->datei, q.loop->imDurchlauf(soll), pegelWert};
-        }
+        // die Stellen je Loop fuer Panel und Editoren (S127, W2 a; S130, W8 a): jeder Clip,
+        // mit seinem Pegel — wer der lauteste ist, rechnet `loopStellenMs`
+        if (q.loop != nullptr) m_loopStellen.push_back({clip->datei, q.loop->imDurchlauf(soll), pegelWert});
         // der laufende Song: der hoechste Wert der Pegelkurve; bei Gleichstand
         // der bisherige, sonst der oberste Kanal (der erste in der Liste)
         const bool gleich = bester != nullptr && std::abs(pegelWert - bestPegel) <= kGleich;

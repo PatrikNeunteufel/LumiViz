@@ -58,6 +58,10 @@ public:
     [[nodiscard]] bool spielt() const { return m_spielt; }
     /// Die Stelle im Durchlauf, in Schritten (wie `Spieler::stelleSchritte`).
     void setStelleSchritte(double schritte);
+    /// Weitere Stellen, an denen der Composer diesen Loop zugleich spielt — die
+    /// leiseren Clips, blasser gezeichnet (S130, Entscheid Patrik W8 a). Leer = keine.
+    void setNebenStellenSchritte(std::vector<double> schritte);
+    [[nodiscard]] const std::vector<double>& nebenStellenSchritte() const { return m_nebenSchritte; }
     /// Wo Play beginnt (Entscheid Patrik B4, S124), in Schritten; gezeichnet im
     /// Lineal, solange der Loop nicht spielt und sie nicht am Anfang steht.
     void setStartmarke(double schritte);
@@ -204,6 +208,7 @@ private:
     int m_gutTakt = 0;
     QRect m_rahmen;      ///< der Rahmen, solange er gezogen wird
     double m_startSchritte = 0.0;  ///< B4: wo Play beginnt
+    std::vector<double> m_nebenSchritte;  ///< W8 a: die blasseren Marken der leiseren Clips
     bool m_imLineal = false;       ///< die Maus zieht im Lineal
     int m_kanalZug = -1;           ///< der Kanal, der am Namen gezogen wird (7b)
     int m_kanalZiel = -1;          ///< der Platz, auf den er fiele

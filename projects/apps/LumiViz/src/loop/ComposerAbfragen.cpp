@@ -32,10 +32,16 @@ bool composerFuehrtTon()
     return f ? f() : false;
 }
 
+std::vector<double> composerLoopStellenMs(const QString& datei)
+{
+    const auto& f = angemeldet().loopStellenMs;
+    return f ? f(datei) : std::vector<double>{};
+}
+
 double composerLoopStelleMs(const QString& datei)
 {
-    const auto& f = angemeldet().loopStelleMs;
-    return f ? f(datei) : -1.0;
+    const std::vector<double> stellen = composerLoopStellenMs(datei);
+    return stellen.empty() ? -1.0 : stellen.front();
 }
 
 bool mitlaufenSeitenweise()

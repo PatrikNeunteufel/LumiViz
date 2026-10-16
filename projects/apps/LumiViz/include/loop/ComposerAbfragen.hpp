@@ -22,6 +22,7 @@
 #include <QString>
 
 #include <functional>
+#include <vector>
 
 namespace lumi::loop
 {
@@ -30,8 +31,9 @@ struct ComposerAbfragen
 {
     /// Führt der Composer gerade den Ton?
     std::function<bool()> fuehrtTon;
-    /// Die Stelle im Durchlauf des Loops `datei`, wie der Composer ihn spielt (ms); -1 = er spielt ihn nicht.
-    std::function<double(const QString& datei)> loopStelleMs;
+    /// Die Stellen im Durchlauf des Loops `datei`, wie der Composer ihn spielt (ms): der
+    /// lauteste Clip zuerst, dann die leiseren (S130, W8 a); leer = er spielt ihn nicht.
+    std::function<std::vector<double>(const QString& datei)> loopStellenMs;
     /// Rollt eine Achse mit der Marke seitenweise statt stetig (die Einstellung des Composers)?
     std::function<bool()> mitlaufenSeitenweise;
 };
@@ -40,6 +42,8 @@ struct ComposerAbfragen
 void setzeComposerAbfragen(ComposerAbfragen abfragen);
 
 [[nodiscard]] bool composerFuehrtTon();
+[[nodiscard]] std::vector<double> composerLoopStellenMs(const QString& datei);
+/// Die erste davon (der lauteste Clip); -1 = keine.
 [[nodiscard]] double composerLoopStelleMs(const QString& datei);
 [[nodiscard]] bool mitlaufenSeitenweise();
 

@@ -248,11 +248,12 @@ public:
     /// Der Mixer, in dem die Songs der Komposition laufen — Spektrum und
     /// Wellenform der Summe. 0 = die Sitzung fuehrt keinen Ton.
     [[nodiscard]] std::uint32_t tonMixer() const { return m_ton.mixer(); }
-    /// Die Stelle im Durchlauf des Loops `datei`, wie der Composer ihn gerade
-    /// spielt (ms; S127, W1 a); -1 = er spielt ihn nicht, oder er fuehrt keinen Ton.
-    [[nodiscard]] double loopStelleMs(const QString& datei) const
+    /// Die Stellen im Durchlauf des Loops `datei`, wie der Composer ihn gerade
+    /// spielt (ms; S127, W1 a) — der lauteste Clip zuerst, dann die leiseren
+    /// (S130, W8 a); leer = er spielt ihn nicht, oder er fuehrt keinen Ton.
+    [[nodiscard]] std::vector<double> loopStellenMs(const QString& datei) const
     {
-        return m_ton.fuehrt() ? m_ton.loopStelleMs(datei) : -1.0;
+        return m_ton.fuehrt() ? m_ton.loopStellenMs(datei) : std::vector<double>{};
     }
     /// Die Sitzung, die den Ton fuehrt — es gibt nur einen Player, also
     /// hoechstens eine. nullptr = keine.

@@ -214,6 +214,13 @@ void Taktachse::setStelleSchritte(double schritte)
     setStelle(static_cast<std::int64_t>(schritte / jeTakt * static_cast<double>(kTicksJeTakt)));
 }
 
+void Taktachse::setNebenStellenSchritte(std::vector<double> schritte)
+{
+    if (schritte == m_nebenSchritte) return;
+    m_nebenSchritte = std::move(schritte);
+    update();
+}
+
 void Taktachse::setStartmarke(double schritte)
 {
     if (schritte == m_startSchritte) return;
@@ -347,6 +354,15 @@ void Taktachse::paintEvent(QPaintEvent*)
             p.drawPolygon(spitze, 3);
             p.setBrush(Qt::NoBrush);
             return;
+        }
+        // W8 a (S130): spielt der Composer diesen Loop mehrfach, die leiseren Clips blasser
+        // — wie die zweite Marke im Fenster der Ueberlappung des Composers
+        const int jeTakt = std::max(1, m_loop.schritteJeTakt());
+        p.setPen(QPen(QColor(255, 90, 70, 120), 2.0));
+        for (const double neben : m_nebenSchritte)
+        {
+            const int xNeben = xVon(static_cast<std::int64_t>(neben / jeTakt * static_cast<double>(kTicksJeTakt)));
+            p.drawLine(xNeben, 0, xNeben, unten);
         }
         const int x = xVon(stelle());
         p.setPen(QPen(QColor(255, 90, 70), 2.0));

@@ -84,6 +84,10 @@ public:
     [[nodiscard]] int spur() const { return m_spur; }
     /// Die Abspielmarke: der Schritt im Muster (mit Bruchteil); unter null = keine.
     void setMarke(double schritt);
+    /// Weitere Stellen im Muster, an denen der Composer diesen Loop zugleich
+    /// spielt — die leiseren Clips, blasser (S130, Entscheid Patrik W8 a).
+    void setNebenMarken(std::vector<double> schritte);
+    [[nodiscard]] const std::vector<double>& nebenMarken() const { return m_neben; }
 
     // --- Mehrere Schritte zugleich (Stufe 13b, Skizze §4i) -------------------
     // Markiert wird mit Shift+Ziehen (ein Bereich, auch ueber mehrere Spuren)
@@ -187,6 +191,7 @@ private:
     int m_jeSchlag = 4;
     int m_spur = -1;
     double m_marke = -1.0;
+    std::vector<double> m_neben;  ///< W8 a: die blasseren Marken
 
     /// Was die gedrueckte Maus gerade tut.
     enum class Zug
@@ -248,7 +253,9 @@ public:
     /// Die Marke allein, ohne den Knopf Play pattern (S127, W1 a): das Arrangement
     /// oder der Composer spielt dieses Muster gerade; -1 = keine. Mit `art` folgt
     /// der Ausschnitt ihr (W3 a) — nicht, solange am Rollbalken gezogen wird.
-    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art);
+    /// `neben`: die Stellen der leiseren Clips desselben Loops im Composer,
+    /// blasser gezeichnet (S130, W8 a); der Ausschnitt folgt nur `schritt`.
+    void zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art, std::vector<double> neben = {});
     /// Wo das Raster gerade steht (der Rollbalken), in Pixeln — fuer Tests.
     [[nodiscard]] int rollX() const;
     /// Die Spitze der Summe, solange etwas spielt; unter null = keine Anzeige.

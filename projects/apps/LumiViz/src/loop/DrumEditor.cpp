@@ -135,6 +135,13 @@ void SchrittRaster::setMarke(double schritt)
     update();
 }
 
+void SchrittRaster::setNebenMarken(std::vector<double> schritte)
+{
+    if (schritte == m_neben) return;
+    m_neben = std::move(schritte);
+    update();
+}
+
 int SchrittRaster::schritte() const
 {
     return m_muster.takte * m_schlaege * m_jeSchlag;
@@ -281,6 +288,15 @@ void SchrittRaster::paintEvent(QPaintEvent*)
         }
     }
 
+    // --- W8 a (S130): die Stellen der leiseren Clips desselben Loops im Composer, blasser
+    p.setPen(QPen(QColor(255, 90, 70, 120), 2.0));
+    for (const double neben : m_neben)
+    {
+        if (neben < 0.0 || neben >= zahl) continue;
+        const int ganz = static_cast<int>(neben);
+        const int x = xVonSchritt(ganz) + static_cast<int>((neben - ganz) * (kSchrittBreite + kSchrittLuft));
+        p.drawLine(x, 0, x, height());
+    }
     // --- die Abspielmarke
     if (m_marke >= 0.0 && m_marke < zahl)
     {
@@ -1454,11 +1470,13 @@ void DrumEditor::setSpielt(bool spielt, double schritt)
         m_play->setText(spielt ? tr("Stop") : tr("Play pattern"));
     }
     m_raster->setMarke(spielt ? schritt : -1.0);
+    if (spielt) m_raster->setNebenMarken({});  // eigenes Play: nur die eine Marke
 }
 
-void DrumEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art)
+void DrumEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art, std::vector<double> neben)
 {
     m_raster->setMarke(schritt);
+    m_raster->setNebenMarken(std::move(neben));
     QScrollBar* balken = m_rollen->horizontalScrollBar();
     if (schritt < 0.0 || balken->isSliderDown() || balken->maximum() <= 0) return;
     const int ganz = static_cast<int>(schritt);

@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.85.0
-> **Datum:** 2026-10-16 (Session 129)
+> **Version:** 0.86.0
+> **Datum:** 2026-10-16 (Session 130)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3354,6 +3354,25 @@ seitenweise, die Editoren gar nicht.
 - Von Claude gesetzt: die Marke des Composers ist dieselbe rote; die Stelle
   folgt der Uhr des Composers, auch angehalten.
 
+**Sichttest 11, W8 (S130):** spielten zwei Clips desselben Loops zugleich,
+zeigte das Panel nur die Stelle des lauteren. **Entscheid Patrik W8 a:**
+jede Stelle, an der der Composer den Loop gerade spielt, bekommt eine Marke —
+im Arrangement und in den Editoren (dort, soweit sie in einem Clip des
+offenen Musters liegt). Der lauteste Clip (Regel W2 a) hat die volle Marke,
+die anderen sind blasser, wie die zweite Marke des Composers im Fenster der
+Überlappung (dieselbe Farbe, Deckkraft 120). *Bar · Step* und *Scroll with
+playhead* folgen weiter dem lautesten. Verworfen: b (höchstens zwei Marken),
+c (bei W2 a bleiben).
+- `Tonfuehrung::loopStellenMs(datei)` — alle Stellen, der lauteste zuerst,
+  dann nach Pegel; `loopStelleMs` ist deren erste. Die Abfrage
+  `loop/ComposerAbfragen::loopStellenMs` liefert die Liste
+  (`composerLoopStellenMs`, `composerLoopStelleMs` = die erste).
+- `Taktachse::setNebenStellenSchritte`, `DrumEditor`/`InstrumentEditor::
+  zeigeMarke(schritt, art, neben)`; beim eigenen Play keine blassen Marken.
+- Tests: in „S127 W2“ die Liste, neu „S130 W8 a“ (`test_LoopSpieler`, drei
+  Stellen, Achse und Editor); `LUMIVIZ_LOOP_W8_BILD=<datei.png>` legt Bilder
+  von Achse und Editor ab.
+
 ### Loop-Kleinkram (Plan S125, fortgesetzt S127)
 
 - ✅ **3b** (S127): eine `.lvloop` ins echte Composer-Panel gezogen — in
@@ -3617,6 +3636,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.86.0** (S130, 2026-10-16): Sichttest 11 W8, Entscheid **W8 a** — spielt
+  der Composer denselben Loop mehrfach, bekommt jede Stelle eine Marke, die
+  leiseren Clips blasser („Die Marke läuft mit“).
 - **0.85.0** (S129, 2026-10-16): 7e W1 a, W2 a entschieden und gebaut —
   die Tests über alle mitgelieferten Loops lesen die Liste aus
   `asset/Asset.cmake`, Arbeitsdateien unter `asset/loop` prüfen sie nicht mehr.
