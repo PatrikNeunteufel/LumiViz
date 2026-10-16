@@ -285,11 +285,19 @@ TEST_SUITE("ComposerPanel")
         CHECK(sitzung->schleife());
         CHECK(schleife->isChecked());
         CHECK_FALSE(Sitzung::resumeAn());
+        CHECK(resume->styleSheet().isEmpty());
         resume->click();
         CHECK(Sitzung::resumeAn());
         CHECK(resume->isChecked());
+        CHECK_FALSE(resume->styleSheet().isEmpty());  // blau: an
+        CHECK(resume->toolTip().contains(QStringLiteral("(ON)")));
         resume->click();
         CHECK_FALSE(Sitzung::resumeAn());
+        // Sichttest 11 (S130): der Klick schaltet den Knopf schon vor dem Panel um —
+        // er blieb blau und sagte „ON“, obwohl Resume aus war
+        CHECK_FALSE(resume->isChecked());
+        CHECK(resume->styleSheet().isEmpty());
+        CHECK_FALSE(resume->toolTip().contains(QStringLiteral("(ON)")));
 
         const QString bild = qEnvironmentVariable("LUMIVIZ_COMPOSER_PANEL_BILD");
         if (!bild.isEmpty())

@@ -569,6 +569,9 @@ private:
     QDoubleSpinBox* m_einblende = nullptr;    ///< Fade in der ganzen Komposition (S99)
     QDoubleSpinBox* m_ausblende = nullptr;     ///< Fade out der ganzen Komposition (S99)
     int m_gezeigt = -1;  ///< was Schalter und Knoepfe zuletzt zeigten
+    /// was der Knopf Resume zuletzt zeigte (−1: noch nichts) — nicht `isChecked`,
+    /// das schaltet der Klick schon vorher um (Sichttest 11, S130)
+    int m_resumeGezeigt = -1;
 };
 
 }  // namespace lumi::composer

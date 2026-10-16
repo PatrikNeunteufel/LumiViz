@@ -2908,8 +2908,9 @@ void ComposerPanel::zeigeStand()
         m_zeitachse->setAn(an);
     }
     const bool resume = Sitzung::resumeAn();
-    if (resume != m_resume->isChecked() || m_resume->toolTip().isEmpty())
+    if ((resume ? 1 : 0) != m_resumeGezeigt)
     {
+        m_resumeGezeigt = resume ? 1 : 0;
         m_resume->setChecked(resume);
         m_resume->setStyleSheet(resume ? kKnopfAn : QString());
         m_resume->setToolTip(
