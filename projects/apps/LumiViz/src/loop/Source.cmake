@@ -32,6 +32,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Klangerzeuger.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Loop.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/LoopPanel.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/ComposerAbfragen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Offen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Rechenkern.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Sample.cpp"

@@ -5,7 +5,7 @@
 
 #include "loop/SichttestAktionen.hpp"
 
-#include "composer/AppAnbindung.hpp"
+#include "loop/ComposerAbfragen.hpp"
 #include "loop/LoopPanel.hpp"
 
 #include <QApplication>
@@ -43,7 +43,7 @@ Ergebnis wiedergabe(LoopPanel& panel, const QJsonObject& argumente)
     if (was == QLatin1String("start"))
     {
         if (!panel.geladen()) return fehler(QStringLiteral("No loop is loaded."));
-        if (lumi::composer::fuehrtTon())
+        if (composerFuehrtTon())
             return fehler(QStringLiteral("The Composer has the sound; the Loop panel cannot play."));
         if (!panel.spiele()) return fehler(QStringLiteral("The loop could not start (no audio engine or no mixer)."));
         return ok();

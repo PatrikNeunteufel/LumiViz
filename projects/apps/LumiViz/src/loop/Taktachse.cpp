@@ -5,7 +5,7 @@
 
 #include "loop/Taktachse.hpp"
 
-#include "composer/Komposition.hpp"  // reihenFarbe: dieselben Farbreihen wie die Kanaele des Composers
+#include "UI/widgets/Farbreihen.hpp"  // dieselben Farbreihen wie die Kanaele des Composers (S128, N1 b)
 #include "loop/Bearbeiten.hpp"
 
 #include <QAction>
@@ -279,11 +279,11 @@ QColor Taktachse::basisFarbe(const QString& muster, bool an) const
     int nr = 0;
     for (std::size_t i = 0; i < m_loop.muster.size(); ++i)
         if (m_loop.muster[i].name == muster) nr = static_cast<int>(i);
-    // zwoelf Toene: erst die kuehle, dann die warme Reihe des Composers
-    const int reihen = 2 * lumi::composer::kReihenFarben;
-    const bool warm = nr % reihen >= lumi::composer::kReihenFarben;
-    const std::int32_t rgb = lumi::composer::reihenFarbe(
-        warm ? lumi::composer::KanalArt::Audio : lumi::composer::KanalArt::Visual, nr % lumi::composer::kReihenFarben);
+    // zwoelf Toene: erst die kuehle, dann die warme Reihe
+    const int reihen = 2 * lumi::ui::kReihenFarben;
+    const bool warm = nr % reihen >= lumi::ui::kReihenFarben;
+    const std::int32_t rgb = lumi::ui::reihenFarbe(warm ? lumi::ui::Farbreihe::Warm : lumi::ui::Farbreihe::Kuehl,
+                                                   nr % lumi::ui::kReihenFarben);
     QColor farbe = QColor::fromRgb(static_cast<QRgb>(rgb) | 0xFF000000u);
     if (!an) farbe = QColor::fromHsv(std::max(0, farbe.hue()), std::min(farbe.saturation(), 40), 110);
     return farbe;

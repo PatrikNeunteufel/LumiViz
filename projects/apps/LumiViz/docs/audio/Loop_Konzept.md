@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.83.0
+> **Version:** 0.84.0
 > **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -613,6 +613,8 @@ Clip ist, sagt die Endung seiner Datei (`composer::istLoop`).
   nicht belegt ist, dass `mixerRemoveSource` auf einen laufenden Rückruf wartet.
 - Der Composer hängt jetzt am Namensraum `loop` und umgekehrt (das Loop-Panel
   fragt, ob der Composer den Ton hat; die Taktachse nimmt seine Farbreihen).
+  **Seit S128 entschieden (Patrik, N1 b):** nur noch der Composer hängt am
+  Loop — siehe „Loop-Kleinkram“, 7d.
 
 **Nicht drin:** ein Tempo der Komposition, an dem Loops einrasten (L2 a,
 zurückgestellt); ein Loop, der allein im Loop-Panel spielt, meldet sich nicht
@@ -3457,7 +3459,22 @@ seitenweise, die Editoren gar nicht.
   der gespielten Note“ ausgenommen wie die Drums — Folge von C2-G a.
   Hörproben unter `.claude/handover/hoerproben_s128/` (vorher, nachher,
   die Cowbell bei zwei Grundtönen). **Nicht gehört.**
-- Offen: der Namensraum Composer↔loop (Vorlage).
+- **7d Namensraum Composer ↔ loop — entschieden (Patrik S128, N1 b):** die
+  Abhängigkeit läuft in einer Richtung, der Composer kennt den Loop, der
+  Loop den Composer nicht. Die drei Fragen des Panels Loop (führt der
+  Composer den Ton, an welcher Stelle spielt er diesen Loop, rollt die Marke
+  seitenweise) gehen über die Schnittstelle `loop/ComposerAbfragen`; der
+  Composer meldet seine Antworten mit `composer::meldeLoopAbfragenAn` an, das
+  Hauptfenster ruft es vor `setupUi()`. Ohne Anmeldung (ein Test ohne
+  Composer): führt nicht, −1, stetig. Die Farbreihen liegen in
+  `UI/widgets/Farbreihen` (`Farbreihe::Kuehl`/`Warm`), neben der
+  gemeinsamen `Achse`; `composer::reihenFarbe` ruft sie. Verworfen: a (nur
+  die Farben verlegen, die Fragen über `composer/AppAnbindung` lassen) — die
+  hatte ich zuerst empfohlen; Patrik: b ist sauberer, und b schloss a ein.
+  ✅ **Gebaut (S128):** Tests in `test_LoopComposerAbfragen` — Vorgaben und
+  Weitergabe, die Anmeldung des Composers, die Farbreihen, und ein Fall,
+  der die Richtung festhält: keine Datei unter `include/loop`, `src/loop`
+  bindet etwas aus `composer/` ein.
 
 ---
 
@@ -3586,6 +3603,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.84.0** (S128, 2026-10-16): 7d N1 b entschieden und gebaut — der
+  Loop hängt nicht mehr am Composer (`loop/ComposerAbfragen`,
+  `UI/widgets/Farbreihen`). Der Loop-Kleinkram ist damit abgeschlossen.
 - **0.83.0** (S128, 2026-10-16): 7c C2 und C2-G entschieden und gebaut —
   die Instrumente Cowbell und Clave aus den Aufnahmen, zwei Kits mehr.
 - **0.82.0** (S128, 2026-10-16): 7c C1 entschieden und gebaut — Cowbell

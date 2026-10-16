@@ -11,9 +11,9 @@
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
-#include "composer/AppAnbindung.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/ClipEffektFenster.hpp"
+#include "loop/ComposerAbfragen.hpp"  // der Composer steht ueber dem Loop (S128, N1 b)
 #include "loop/DrumEditor.hpp"
 #include "loop/DrumKit.hpp"  // merkeGeoeffnetenLoop
 #include "loop/Instrument.hpp"  // zaehleInstrumentFassung
@@ -117,7 +117,7 @@ private:
 LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
     : PanelBase(services, "loop", tr("Loop"), parent),
       // Rangfolge (Entscheid Patrik S108, L4): der Composer steht ueber dem Loop
-      m_spieler([] { return lumi::composer::fuehrtTon(); })
+      m_spieler([] { return composerFuehrtTon(); })
 {
     setupUI();
     // der zuletzt geladene Loop steht wieder im Panel (gespielt wird nicht von selbst)
@@ -921,7 +921,7 @@ void LoopPanel::meldeSong()
     m_meldetSong = false;
     meldeLaufendenLoop(nullptr);
     // hat der Composer den Ton uebernommen, meldet er seinen Song selbst
-    if (lumi::composer::fuehrtTon()) return;
+    if (composerFuehrtTon()) return;
     // sonst gilt wieder der Song des Players — wie nach dem Composer (Sitzung::gibTonFrei)
     IAudioPlayer* player = services().tryResolve<IAudioPlayer>();
     const bool spielt = player != nullptr && player->isPlaying();
@@ -1064,7 +1064,7 @@ void LoopPanel::zeigeStand()
     if (spielt && m_solo.isEmpty())
         arrangement = m_spieler.stelleSchritte();
     else if (!spielt && m_geladen && !m_datei.isEmpty())
-        if (const double ms = lumi::composer::loopStelleMs(m_datei); ms >= 0.0) arrangement = m_loop.schritteVonMs(ms);
+        if (const double ms = composerLoopStelleMs(m_datei); ms >= 0.0) arrangement = m_loop.schritteVonMs(ms);
     setzeText(m_stelle, [&]() -> QString {
         if (arrangement < 0.0) return {};
         const int schritt = static_cast<int>(arrangement);
@@ -1082,7 +1082,7 @@ void LoopPanel::zeigeStand()
     // der Art, die fuer den Composer eingestellt ist
     using Mitlaufen = lumi::ui::Achse::Mitlaufen;
     const Mitlaufen art = !m_mitlaufen->isChecked()                  ? Mitlaufen::Aus
-                          : lumi::composer::mitlaufenSeitenweise() ? Mitlaufen::Seitenweise
+                          : mitlaufenSeitenweise()                 ? Mitlaufen::Seitenweise
                                                                    : Mitlaufen::Stetig;
     // spielt ein Muster allein, laeuft die Marke im Editor — im Arrangement gibt es dafuer keine Stelle
     m_achse->setMitlaufen(arrangement >= 0.0 ? art : Mitlaufen::Aus);

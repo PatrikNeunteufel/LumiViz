@@ -129,6 +129,10 @@ bool stelleKompositionWiederHer(VisualizerWidget& widget);
 /// Rollt eine Achse mit der Marke seitenweise statt stetig? Die Einstellung
 /// des Composers (S102), auch fuer das Panel Loop (S127, W3 a).
 [[nodiscard]] bool mitlaufenSeitenweise();
+/// Beim Loop anmelden, was er vom Composer wissen muss — die drei Fragen
+/// oben (`loop/ComposerAbfragen`; S128, Entscheid Patrik N1 b: der Loop
+/// haengt nicht am Composer). Einmal beim Aufbau der App, vor den Panels.
+void meldeLoopAbfragenAn();
 /// Der laufende Song und sein Stand, fuer ein Panel, das erst jetzt sichtbar
 /// wird. `fuehrt` false = der Composer fuehrt keinen Ton; dann gilt der Player.
 struct TonStand

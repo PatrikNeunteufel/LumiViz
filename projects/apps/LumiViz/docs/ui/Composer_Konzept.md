@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.93.0
-> **Datum:** 2026-10-15 (Session 126)
+> **Version:** 0.94.0
+> **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -1244,10 +1244,16 @@ T1 a und T2).
   (`loop/Offen.hpp`), spielt der Clip dessen Fassung — auch die
   ungespeicherte — und folgt jeder Änderung. Play im Loop-Panel ist gesperrt,
   solange der Composer den Ton hat (Rangfolge Composer, Loop-Panel, Player).
-- **Abhängigkeit in beide Richtungen:** `composer/Tonfuehrung` nimmt
-  `loop/Klangerzeuger`, `loop/Kit` und `loop/Offen`; das Loop-Panel fragt
-  `composer::fuehrtTon`, seine Achse nimmt `composer::reihenFarbe`. Nicht
-  entschieden, ob das so bleiben soll.
+- **Abhängigkeit in einer Richtung — entschieden (Patrik S128, N1 b):**
+  `composer/Tonfuehrung` nimmt `loop/Klangerzeuger`, `loop/Kit` und
+  `loop/Offen`; der Loop kennt den Composer nicht. Er fragt über
+  `loop/ComposerAbfragen` (führt der Composer den Ton, wo spielt er den
+  Loop, rollt die Marke seitenweise); der Composer meldet die Antworten mit
+  `composer::meldeLoopAbfragenAn` an, das Hauptfenster ruft es vor dem
+  Aufbau der Panels. Die Farbreihen der Kanäle liegen in
+  `UI/widgets/Farbreihen` (kühl/warm), `composer::reihenFarbe` ruft sie;
+  die Taktachse nimmt sie von dort. Bis S127 hing der Loop über
+  `composer::fuehrtTon` und `composer::reihenFarbe` am Composer.
 - **Nicht drin:** ein Tempo der Komposition, an dem Loop-Clips einrasten
   (Loop-Konzept L2 a, zurückgestellt) — ein Loop-Clip rastet wie ein Song, an
   Kanten und am Raster in Sekunden.
@@ -1926,6 +1932,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.94.0 | 2026-10-16 | Session 128 — §9f: der Loop hängt nicht mehr am Composer (N1 b: `loop/ComposerAbfragen`, `UI/widgets/Farbreihen`) |
 | 0.93.0 | 2026-10-15 | Session 127 — §9g G5-4: Nachtrag Patrik, der Knopf Match loudness ist immer da |
 | 0.92.0 | 2026-10-15 | Session 127 — §9g G6: Sichttest-Liste 11 mit Vorlage L, voller Lauf; G1 bis G6 fertig |
 | 0.91.0 | 2026-10-15 | Session 127 — §9g G5 gebaut: der Dialog Match loudness (`composer/Abgleich`, `composer/LautheitsDialog`), Knopf neben Gain, Rechtsklick, Edit grau; Stolperstein der eigenen Meldung beim Setzen — G5 fertig |

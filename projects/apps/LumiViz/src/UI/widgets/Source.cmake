@@ -13,6 +13,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Achse.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Bedienhilfe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/CollapsibleGroupBox.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Farbreihen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/GradientPresetDelegate.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/PresetZeile.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/TapPreviewWidget.cpp"

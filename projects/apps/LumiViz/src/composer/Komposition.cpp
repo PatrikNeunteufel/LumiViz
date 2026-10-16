@@ -324,15 +324,8 @@ void Komposition::setzeKurveAusClip(const Clip& clip, MasterArt art)
 
 std::int32_t reihenFarbe(KanalArt art, int nr)
 {
-    // Bild: kuehl — Blau (die Farbe, die CH1 schon immer hatte), Violett,
-    // Gruen, Tuerkis, Magenta, Indigo. Ton: warm — Orange (der Ton aller
-    // Audio-Clips bis S99), Rot, Gelb, Rosa, Rotorange, Ocker.
-    static constexpr std::array<std::int32_t, kReihenFarben> bild = {0x5785A5, 0x8157A5, 0x57A57E,
-                                                                    0x57A5A5, 0xA557A5, 0x5757A5};
-    static constexpr std::array<std::int32_t, kReihenFarben> ton = {0x967855, 0x965555, 0x968D55,
-                                                                   0x96556B, 0x966755, 0x968555};
-    const auto platz = static_cast<std::size_t>(((nr % kReihenFarben) + kReihenFarben) % kReihenFarben);
-    return art == KanalArt::Audio ? ton[platz] : bild[platz];
+    // Bild: kuehl, Ton: warm (die Farben in UI/widgets/Farbreihen, S128 N1 b)
+    return ui::reihenFarbe(art == KanalArt::Audio ? ui::Farbreihe::Warm : ui::Farbreihe::Kuehl, nr);
 }
 
 std::int32_t Komposition::freieFarbe(KanalArt art) const

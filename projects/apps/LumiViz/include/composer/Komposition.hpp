@@ -15,6 +15,7 @@
 
 #include "composer/Mischer.hpp"
 #include "composer/Pegelform.hpp"
+#include "UI/widgets/Farbreihen.hpp"
 
 #include <QJsonObject>
 #include <QString>
@@ -142,9 +143,10 @@ enum class KanalArt : int
 /// Die Farbreihen der Kanaele (Entscheid Patrik S100, K1 b): Bild-Kanaele
 /// bekommen kuehle Toene, Audio-Kanaele warme — die Art bleibt an der Farbe
 /// erkennbar. `nr` zaehlt in der Reihe und laeuft um. Der Wert ist 0xRRGGBB.
+/// Die Farben selbst stehen seit S128 in `UI/widgets/Farbreihen` (N1 b).
 [[nodiscard]] std::int32_t reihenFarbe(KanalArt art, int nr);
 /// So viele Farben hat eine Reihe.
-inline constexpr int kReihenFarben = 6;
+inline constexpr int kReihenFarben = ui::kReihenFarben;
 
 struct Kanal
 {

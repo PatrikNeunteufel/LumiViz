@@ -185,6 +185,10 @@ MainWindow::MainWindow(QWidget* parent)
     m_pScreenshotManager =
         std::make_unique<ScreenshotManager>(QDateTime::currentDateTime());
 
+    // Der Loop fragt den Composer ueber loop/ComposerAbfragen (S128, N1 b) —
+    // vor setupUi(): das Panel Loop entsteht dort und fragt im Takt.
+    lumi::composer::meldeLoopAbfragenAn();
+
     setupUi();
 
     // Erst jetzt gibt es Visualizer-Widgets, an die sich der Manager haengen kann.

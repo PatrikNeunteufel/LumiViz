@@ -10,6 +10,7 @@
 #include "composer/Mute.hpp"
 #include "composer/MuteKnopf.hpp"
 #include "composer/Sitzung.hpp"
+#include "loop/ComposerAbfragen.hpp"
 
 #include "UI/PresetSpeichern.hpp"
 #include "composer/ComposerPanel.hpp"
@@ -255,6 +256,13 @@ double loopStelleMs(const QString& datei)
 bool mitlaufenSeitenweise()
 {
     return Sitzung::mitlaufenSeitenweise();
+}
+
+void meldeLoopAbfragenAn()
+{
+    loop::setzeComposerAbfragen({[] { return fuehrtTon(); },
+                                 [](const QString& datei) { return loopStelleMs(datei); },
+                                 [] { return mitlaufenSeitenweise(); }});
 }
 
 bool meldetBindung()

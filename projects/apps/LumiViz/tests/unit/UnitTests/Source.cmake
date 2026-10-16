@@ -116,6 +116,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKern.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWiedergabe.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpieler.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopComposerAbfragen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopArrangement.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopDrumEditor.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_PaletteUi.cpp"

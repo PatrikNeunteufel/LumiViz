@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.245.0
+> **Version:** 1.246.0
 > **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2345,8 +2345,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     (`loop/drumEditorGeometry`, `loop/instrumentEditorGeometry`; in der
     Test-Exe abgeschaltet, `test_LoopEditorLage`)
   - ✅ `Composer_Konzept.md` nachgezogen (S110, §9f): die Basis `Achse`, der
-    Loop-Clip in der Tonführung. 🔧 Offen bleibt: der Composer hängt am
-    Namensraum `loop` und umgekehrt — nicht entschieden, ob das so bleibt
+    Loop-Clip in der Tonführung. ✅ S128 (N1 b): nur noch der Composer hängt
+    am Loop — der Loop fragt über `loop/ComposerAbfragen`, die Farbreihen
+    liegen in `UI/widgets/Farbreihen`; ein Test hält die Richtung fest
   - ✅ **Haken Karaoke im Composer nach dem Start leer, obwohl die Ebene an
     war** (Befund Patrik S110): das Hauptfenster setzt den Schalter jetzt vor
     dem Aufbau der Panels. Aus der Reihenfolge im Code gelesen und behoben,
@@ -5796,6 +5797,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.246.0 | 2026-10-16 | Session 128. §7 Loop: der Loop hängt nicht mehr am Composer (N1 b); Loop-Kleinkram abgeschlossen. |
 | 1.245.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als Instrumente aus den Aufnahmen, in zwei Kits (C2 a). |
 | 1.244.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als mitgelieferte Samples (C1 a). |
 | 1.243.0 | 2026-10-15 | Session 127. §7 Loop: 7b (Kanäle und Spuren umsortieren) entschieden und gebaut. |
