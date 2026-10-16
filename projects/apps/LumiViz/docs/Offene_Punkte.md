@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.246.0
-> **Datum:** 2026-10-16 (Session 128)
+> **Version:** 1.247.0
+> **Datum:** 2026-10-16 (Session 129)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -5797,6 +5797,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.247.0 | 2026-10-16 | Session 129. §7 Loop: die Tests über alle mitgelieferten Loops lesen die Liste aus `asset/Asset.cmake`, Arbeitsdateien prüfen sie nicht mehr (W1 a, W2 a; Loop_Konzept 7e). |
 | 1.246.0 | 2026-10-16 | Session 128. §7 Loop: der Loop hängt nicht mehr am Composer (N1 b); Loop-Kleinkram abgeschlossen. |
 | 1.245.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als Instrumente aus den Aufnahmen, in zwei Kits (C2 a). |
 | 1.244.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als mitgelieferte Samples (C1 a). |

@@ -10,8 +10,9 @@
  *
  * @details
  * Ohne Ton, ohne Fenster, ohne Audio-Engine. Je mitgeliefertem Instrument drei
- * Toene, je `.lvloop` unter `asset/loop` ein Durchlauf durch den Klangerzeuger
- * (mit den Effekten der Clips). Festgehalten sind je Eintrag die Zahl der
+ * Toene, je mitgeliefertem Loop (was `asset/Asset.cmake` nennt, nicht die
+ * Arbeitsdateien im Ordner) ein Durchlauf durch den Klangerzeuger (mit den
+ * Effekten der Clips). Festgehalten sind je Eintrag die Zahl der
  * Abtastwerte, der groesste Betrag und die Summe der Betraege — in
  * `werte/loop_werte.txt` neben dieser Datei.
  *
@@ -40,7 +41,6 @@
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
@@ -132,11 +132,12 @@ std::map<QString, Wert> rechneAlles()
                 messe(rendereTon(instrument, probe.hoehe, probe.dauerMs, kRate).daten);
     }
 
+    // nur die mitgelieferten (asset/Asset.cmake), keine Arbeitsdateien (S129, W1 a, W2 a)
     const QDir wurzel(looptest::repoWurzel().filePath(QStringLiteral("asset/loop")));
-    QDirIterator lauf(wurzel.path(), {QStringLiteral("*.lvloop")}, QDir::Files, QDirIterator::Subdirectories);
-    while (lauf.hasNext())
+    const QStringList loops = looptest::mitgelieferteLoops();
+    REQUIRE(loops.size() >= 20);
+    for (const QString& pfad : loops)
     {
-        const QString pfad = lauf.next();
         Loop loop;
         if (!ladeLoop(pfad, loop)) continue;
         // durch den Klangerzeuger: dort sitzen die Effekte der Clips

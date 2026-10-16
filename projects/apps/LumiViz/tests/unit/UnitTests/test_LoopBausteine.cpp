@@ -23,8 +23,9 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 
+#include "LoopOhneEngine.hpp"  // repoWurzel, mitgelieferteLoops
+
 #include <QDir>
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -45,13 +46,8 @@ using namespace lumi::loop;
 namespace
 {
 
-/// .../projects/apps/LumiViz/tests/unit/UnitTests -> Wurzel des Repos
-QDir repoWurzel()
-{
-    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
-    for (int i = 0; i < 6; ++i) wurzel.cdUp();
-    return wurzel;
-}
+using looptest::mitgelieferteLoops;
+using looptest::repoWurzel;
 
 QJsonObject liesJson(const QString& pfad)
 {
@@ -483,11 +479,9 @@ TEST_CASE("Loop Signal path: eine .lvloop bis Fassung 4 liest ihre Effekte als D
     int dateien = 0;
     int clipsGeprueft = 0;
     int mitEffekten = 0;
-    QDirIterator lauf(repoWurzel().filePath(QStringLiteral("asset/loop")), {QStringLiteral("*.lvloop")}, QDir::Files,
-                      QDirIterator::Subdirectories);
-    while (lauf.hasNext())
+    // nur die mitgelieferten (asset/Asset.cmake), keine Arbeitsdateien (S129, W2 a)
+    for (const QString& pfad : mitgelieferteLoops())
     {
-        const QString pfad = lauf.next();
         CAPTURE(pfad.toStdString());
         const QJsonObject wurzel = liesJson(pfad);
         REQUIRE(!wurzel.isEmpty());

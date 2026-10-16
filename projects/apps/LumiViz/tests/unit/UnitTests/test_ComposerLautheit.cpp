@@ -33,7 +33,6 @@
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QDirIterator>
 
 #include <algorithm>
 #include <chrono>
@@ -156,12 +155,11 @@ TEST_SUITE("ComposerLautheit")
         const LoopApp app;
         constexpr int rate = 44100;
         const QDir wurzel(looptest::repoWurzel().filePath(QStringLiteral("asset/loop")));
-        QDirIterator lauf(wurzel.path(), {QStringLiteral("*.lvloop")}, QDir::Files, QDirIterator::Subdirectories);
         int geprueft = 0;
         int bitgleich = 0;
-        while (lauf.hasNext())
+        // nur die mitgelieferten (asset/Asset.cmake), keine Arbeitsdateien (S129, W2 a)
+        for (const QString& pfad : looptest::mitgelieferteLoops())
         {
-            const QString pfad = lauf.next();
             CAPTURE(wurzel.relativeFilePath(pfad).toStdString());
             lumi::loop::Loop loop;
             if (!lumi::loop::ladeLoop(pfad, loop)) continue;

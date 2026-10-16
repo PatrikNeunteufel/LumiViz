@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.84.0
-> **Datum:** 2026-10-16 (Session 128)
+> **Version:** 0.85.0
+> **Datum:** 2026-10-16 (Session 129)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3475,6 +3475,20 @@ seitenweise, die Editoren gar nicht.
   Weitergabe, die Anmeldung des Composers, die Farbreihen, und ein Fall,
   der die Richtung festhält: keine Datei unter `include/loop`, `src/loop`
   bindet etwas aus `composer/` ein.
+- **7e Tests ohne Arbeitsdateien — entschieden (Patrik S129, W1 a, W2 a):**
+  die Tests, die „jeden mitgelieferten Loop“ prüfen, nehmen nur, was
+  `asset/Asset.cmake` im Block `lumi_asset(loop …)` nennt (`genres/*.lvloop`,
+  `*_demo.lvloop`) — dieselbe Liste, nach der der Bau neben die Exe kopiert.
+  Anlass: `LUMIVIZ_LOOP_WERTE_SCHREIBEN=1` nahm Patriks Arbeitsdatei
+  `mytest.lvloop` auf, und sieben weitere standen schon in `loop_werte.txt`;
+  eine geänderte oder halb fertige Arbeitsdatei ließ Tests fehlschlagen.
+  W1 a: die Muster werden aus `Asset.cmake` gelesen
+  (`looptest::mitgelieferteLoops()` in `LoopOhneEngine.hpp`), nicht im Test
+  nachgeschrieben (verworfen b) und nicht durch Verlegen der Arbeitsdateien
+  ersetzt (verworfen c). W2 a: alle drei Schleifen — `test_LoopWerte`,
+  `test_LoopBausteine`, `test_ComposerLautheit` (Beleg L3b). ✅ **Gebaut
+  (S129):** 38 Loops je Fall; aus `loop_werte.txt` fielen die sieben Zeilen
+  der Arbeitsdateien weg, sonst unverändert.
 
 ---
 
@@ -3603,6 +3617,9 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.85.0** (S129, 2026-10-16): 7e W1 a, W2 a entschieden und gebaut —
+  die Tests über alle mitgelieferten Loops lesen die Liste aus
+  `asset/Asset.cmake`, Arbeitsdateien unter `asset/loop` prüfen sie nicht mehr.
 - **0.84.0** (S128, 2026-10-16): 7d N1 b entschieden und gebaut — der
   Loop hängt nicht mehr am Composer (`loop/ComposerAbfragen`,
   `UI/widgets/Farbreihen`). Der Loop-Kleinkram ist damit abgeschlossen.
