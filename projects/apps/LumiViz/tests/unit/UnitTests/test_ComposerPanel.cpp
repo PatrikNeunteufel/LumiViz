@@ -23,6 +23,7 @@
 #include "PappTon.hpp"
 #include "TestFenster.hpp"
 #include "UI/panels/SettingsPanel.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 #include "UI/widgets/VisualizerWidget.hpp"
 #include "composer/Bearbeiten.hpp"
 #include "composer/ComposerPanel.hpp"
@@ -32,13 +33,19 @@
 #include "composer/Sitzung.hpp"
 #include "loop/Loop.hpp"
 #include "services/CommandBus.hpp"
+#include "services/EventBus.hpp"
 #include "services/ICommandBus.hpp"
+#include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
+#include "services/events/UIEvents.hpp"
 #include "visualizers/MultiEffectVisualizer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 
+#include <QAction>
 #include <QApplication>
 #include <QCheckBox>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDoubleSpinBox>
@@ -138,6 +145,80 @@ void klick(QWidget& ziel, QPoint ort)
 
 TEST_SUITE("ComposerPanel")
 {
+    TEST_CASE("S130 Open in Loop panel: der Rechtsklick auf einen Loop-Clip, auch ohne Edit")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+
+        // A1: ein Song 0–10 s, ein Loop 10–30 s
+        Komposition k = neueKomposition();
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeSongEin(k, 1, QStringLiteral("C:/musik/eins.mp3"), 0, 10000) == 0);
+        const QString loopDatei = QStringLiteral("C:/loops/beat.lvloop");
+        REQUIRE(fuegeSongEin(k, 1, loopDatei, 10000, 20000) == 1);
+        REQUIRE(istLoop(loopDatei));
+
+        Zeitachse achse;
+        achse.resize(900, 320);
+        achse.setKomposition(k, true);
+        (void)achse.grab();  // ohne Fenster kommt das erste resizeEvent erst hier
+        QStringList verlangt;
+        QObject::connect(&achse, &Zeitachse::loopImPanelOeffnen,
+                         [&verlangt](const QString& datei) { verlangt << datei; });
+
+        // das Menue fangen: die Namen der Eintraege, und den Loop-Eintrag waehlen, wenn er da ist
+        QStringList namen;
+        bool waehlen = true;
+        lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+            namen.clear();
+            QAction* loopEintrag = nullptr;
+            for (QAction* a : menue.actions())
+            {
+                namen << a->objectName();
+                if (a->objectName() == QStringLiteral("composerOpenInLoopPanel")) loopEintrag = a;
+            }
+            return waehlen ? loopEintrag : nullptr;
+        });
+        const auto rechts = [&](std::int64_t ms) {
+            // die Mitte der Zeile A1 (yVonZeile gibt die Mitte), unterhalb der Griffe oben im Clip
+            const QPoint ort(achse.xVon(ms), achse.yVonZeile(1) + 4);
+            QContextMenuEvent ereignis(QContextMenuEvent::Mouse, ort, achse.mapToGlobal(ort));
+            QCoreApplication::sendEvent(&achse, &ereignis);
+        };
+
+        // ohne Edit: der Eintrag steht da, die Wahl meldet die Datei
+        REQUIRE_FALSE(achse.bearbeiten());
+        rechts(20000);
+        CHECK(namen.contains(QStringLiteral("composerOpenInLoopPanel")));
+        CHECK(verlangt == QStringList{loopDatei});
+        // auf dem Song: kein solcher Eintrag
+        rechts(5000);
+        CHECK_FALSE(namen.contains(QStringLiteral("composerOpenInLoopPanel")));
+        CHECK(verlangt.size() == 1);
+        // mit Edit: ebenso, neben den Eintraegen zum Bearbeiten
+        achse.setBearbeiten(true);
+        rechts(20000);
+        CHECK(namen.contains(QStringLiteral("composerOpenInLoopPanel")));
+        CHECK(namen.contains(QStringLiteral("composerClipEnabled")));
+        CHECK(verlangt.size() == 2);
+        waehlen = false;
+        rechts(5000);
+        CHECK_FALSE(namen.contains(QStringLiteral("composerOpenInLoopPanel")));
+        lumi::ui::setzeMenueBeobachterFuerTests({});
+
+        // das Panel gibt den Wunsch als LoadLoopEvent an den Bus — wie der Doppelklick im Audio Browser
+        ServiceContainer dienste;
+        dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
+        QStringList amBus;
+        const auto abo = dienste.tryResolve<IEventBus>()->subscribeScoped<LoadLoopEvent>(
+            [&amBus](const LoadLoopEvent& e) { amBus << QString::fromStdString(e.path); });
+        ComposerPanel panel(dienste);
+        Q_EMIT panel.zeitachse()->loopImPanelOeffnen(loopDatei);
+        CHECK(amBus == QStringList{loopDatei});
+    }
+
     TEST_CASE("C2b Panel: die Zeit als Text")
     {
         CHECK(ComposerPanel::zeitText(0) == QStringLiteral("0:00.0"));

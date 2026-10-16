@@ -329,6 +329,9 @@ Q_SIGNALS:
     void kurveOeffnen(lumi::composer::Teil teil);
     /// Rechtsklick „Match loudness to this clip..." (S127, G5-4 a).
     void lautheitAbgleichen(int kanal, int clip);
+    /// Rechtsklick „Open in Loop panel" auf einem Loop-Clip (S130, Wunsch
+    /// Patrik) — auch ohne Edit; das Panel Loop fragt nach Ungespeichertem.
+    void loopImPanelOeffnen(const QString& datei);
 
 protected:
     [[nodiscard]] bool istGeladen() const override { return m_geladen; }

@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.96.0
+> **Version:** 0.97.0
 > **Datum:** 2026-10-16 (Session 130)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1244,6 +1244,14 @@ T1 a und T2).
   (`loop/Offen.hpp`), spielt der Clip dessen Fassung — auch die
   ungespeicherte — und folgt jeder Änderung. Play im Loop-Panel ist gesperrt,
   solange der Composer den Ton hat (Rangfolge Composer, Loop-Panel, Player).
+- **Im Loop-Panel öffnen (S130, Wunsch Patrik):** Rechtsklick auf einen
+  Loop-Clip → *Open in Loop panel*, **auch ohne Edit** (dann neben dem Zoom).
+  Die Zeitachse meldet `loopImPanelOeffnen`, das Panel schickt
+  `LoadLoopEvent` — derselbe Weg wie der Doppelklick im Audio Browser: das
+  Loop-Panel fragt bei Ungespeichertem mit Save, Discard und Cancel und kommt
+  nach vorn. Keine neue Abhängigkeit zwischen Composer und Loop. Das Menü
+  der Zeitachse läuft seither über `lumi::ui::zeigeMenue` (testbar). Test:
+  „S130 Open in Loop panel" (`test_ComposerPanel`).
 - **Abhängigkeit in einer Richtung — entschieden (Patrik S128, N1 b):**
   `composer/Tonfuehrung` nimmt `loop/Klangerzeuger`, `loop/Kit` und
   `loop/Offen`; der Loop kennt den Composer nicht. Er fragt über
@@ -1966,6 +1974,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.97.0 | 2026-10-16 | Session 130 — §9f: Rechtsklick *Open in Loop panel* auf einem Loop-Clip, auch ohne Edit (Wunsch Patrik) |
 | 0.96.0 | 2026-10-16 | Session 130 — §9h: Sichttest 11 C1, Entscheid **C1 c**: das Panel Player zeigt einen ausgeschalteten Clip an der Stelle mit „(off)", ohne Songwechsel |
 | 0.95.0 | 2026-10-16 | Session 130 — §9g: Sichttest 11 L2 gemessen (der Limiter ohne Vorschau knackte), Entscheid **L2-1 b**: 5 ms Vorschau, Verzögerung nur bei gesetztem Haken |
 | 0.94.0 | 2026-10-16 | Session 128 — §9f: der Loop hängt nicht mehr am Composer (N1 b: `loop/ComposerAbfragen`, `UI/widgets/Farbreihen`) |

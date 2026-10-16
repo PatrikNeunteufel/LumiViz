@@ -7,6 +7,7 @@
 
 #include "UI/panels/KaraokePanel.hpp"  // der eine Weg, die Karaoke-Ebene zu schalten (S101)
 #include "UI/widgets/AudioDateien.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"  // das Menue des Rechtsklicks, testbar (S130)
 #include "UI/widgets/DateiDrag.hpp"
 #include "UI/widgets/PresetTypeIcons.hpp"  // das Datei-Icon der Komposition (S100)
 #include "UI/widgets/VisualizerWidget.hpp"
@@ -24,6 +25,7 @@
 #include "loop/Loop.hpp"   // ein Loop als Clip im Audio-Kanal (S109)
 #include "loop/Offen.hpp"
 #include "services/ICommandBus.hpp"
+#include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "visualizers/multieffect/ChainSerializer.hpp"
 #include "visualizers/multieffect/EffectChain.hpp"
@@ -1844,18 +1846,30 @@ void Zeitachse::dropEvent(QDropEvent* event)
 void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
 {
     if (!m_geladen) return;
-    if (!m_bearbeiten)
-    {
-        // ohne Edit gibt es nichts zu aendern — der Zoom gehoert nicht dazu (S102)
-        QMenu nurZoom(this);
-        fuelleZoomMenue(nurZoom);
-        nurZoom.exec(event->globalPos());
-        return;
-    }
     const QPoint ort = event->pos();
     int kanal = -1;
     int clip = -1;
     (void)griffBei(ort, &kanal, &clip);
+    // S130 (Wunsch Patrik): ein Loop-Clip laesst sich im Panel Loop oeffnen — auch ohne Edit
+    const auto loopEintrag = [&](QMenu& m) {
+        if (clip < 0 || istMaster(kanal)) return;
+        const Kanal& k = m_komposition.kanaele[static_cast<std::size_t>(kanal)];
+        if (k.art != KanalArt::Audio) return;
+        const QString datei = k.clips[static_cast<std::size_t>(clip)].datei;
+        if (!istLoop(datei)) return;
+        QAction* a = m.addAction(tr("Open in Loop panel"), this, [this, datei] { Q_EMIT loopImPanelOeffnen(datei); });
+        a->setObjectName(QStringLiteral("composerOpenInLoopPanel"));
+        m.addSeparator();
+    };
+    if (!m_bearbeiten)
+    {
+        // ohne Edit gibt es nichts zu aendern — der Zoom gehoert nicht dazu (S102)
+        QMenu nurZoom(this);
+        loopEintrag(nurZoom);
+        fuelleZoomMenue(nurZoom);
+        (void)lumi::ui::zeigeMenue(nurZoom, event->globalPos());
+        return;
+    }
     const int zeile = kanalBei(ort.y());
 
     QMenu menu(this);
@@ -1979,6 +1993,7 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
                 abgleich->setObjectName(QStringLiteral("composerMatchToClip"));
                 abgleich->setEnabled(m_bearbeiten);
                 menu.addSeparator();
+                loopEintrag(menu);
             }
             menu.addAction(tr("Copy clip"), this, [this] { (void)kopiere(); })->setShortcut(QKeySequence::Copy);
             menu.addAction(tr("Cut clip"), this, [this] { (void)schneideAus(); })->setShortcut(QKeySequence::Cut);
@@ -2039,7 +2054,7 @@ void Zeitachse::contextMenuEvent(QContextMenuEvent* event)
         ->setEnabled(!nachArtSortiert(m_komposition, false));
     menu.addSeparator();
     fuelleZoomMenue(menu);
-    menu.exec(event->globalPos());
+    (void)lumi::ui::zeigeMenue(menu, event->globalPos());
 }
 
 // =============================================================================
@@ -2605,6 +2620,11 @@ void ComposerPanel::setupUI()
     connect(m_zeitachse, &Zeitachse::kurveOeffnen, this, [this](Teil teil) { oeffneKurve(teil); });
     connect(m_zeitachse, &Zeitachse::lautheitAbgleichen, this,
             [this](int kanal, int clip) { (void)oeffneAbgleich(kanal, clip, true); });
+    // S130: ueber den Bus, wie der Doppelklick im Audio Browser — das Panel Loop
+    // fragt nach Ungespeichertem und kommt nach vorn
+    connect(m_zeitachse, &Zeitachse::loopImPanelOeffnen, this, [this](const QString& datei) {
+        if (auto* bus = services().tryResolve<IEventBus>()) bus->publish(LoadLoopEvent{datei.toStdString()});
+    });
 
     // Audiokanal (C5): was die Zeitachse ueber Songs wissen muss, kommt von der Audio-Engine
     // — dazu die Loops (S109, Loop_Konzept §4e): eine `.lvloop` faellt in einen
