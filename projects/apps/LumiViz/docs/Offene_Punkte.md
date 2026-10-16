@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.247.0
+> **Version:** 1.248.0
 > **Datum:** 2026-10-16 (Session 129)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -425,7 +425,12 @@ dichtes Messmittel abgenommen ist.
 > Differenzbild), beim 96er nicht — und hätte um ein Haar dreizehn
 > Blend-Befunde gemeldet, die keine sind.
 
-### 🔴 `Water` (Id 20) verschmiert viel zu stark (S74)
+### ✅ `Water` (Id 20) verschmiert viel zu stark (S74) — überholt
+
+*(Bereinigt S129: kein Fehler des Ports — der Effekt war im Preset mit
+`enabled = 0` abgeschaltet, und wir führten ihn trotzdem aus; behoben S74,
+Water gegen Raster 0,332 → 0,001, s. „Der `enabled`-Schalter im Effekt-Blob
+wurde ignoriert“ oben. Der Text unten ist der Befund vor der Klärung.)*
 
 Gemessen mit dem Kalibrier-Raster (s. §1.0): Raster + **nur** dem
 Water-Knoten aus `02_color extasy`, 120 Frames, 320×240.
@@ -447,6 +452,20 @@ auffällig gewesen wäre.
 
 Daneben, kleiner, aus demselben Lauf: **`Blur` (Id 6)** MAE 0,009 / dMean
 0,025 — ebenfalls erst mit Raster sichtbar.
+
+🟠 **Blur gegen das Kalibrier-Raster — nachgemessen S129 (Entscheid Patrik
+B1 a): der Befund steht.** `bisect_avs.py --solo --raster` an
+`02_color extasy`, Blur = `solo_l04` (Id 6), gegen AvsRef
+(`out/blur_s129/`). Messmittel abgenommen: Raster allein dMean 0,001 /
+MAE 0,001; Gegenprobe Water (`solo_l03`) 0,001 / 0,001.
+**Blur:** 320×240 dMean **0,025** / dMaxLuma 0,001 / MAE **0,009** (PRUEFEN,
+dieselben Zahlen wie S74) · 740×460 dMean 0,015 / MAE 0,006 (OK).
+**Im Bild** (Montage): Struktur und Farben deckungsgleich; der Unterschied
+ist eine gleichmäßige schwache Tönung über die ganze Fläche — ein kleiner
+systematischer Versatz, kein Strukturfehler — plus die oberste und die
+unterste Bildzeile. Verdacht: Rundung des Blur-Mittels oder die Randzeilen
+(verwandt: die Blur-Rundungsmodi in §1c, `06_blur/02_trail_rounddown`,
+`03_trail_roundup`). Nicht untersucht.
 
 ### ✅ Skript-Funktionen: AVS 40/40, MilkDrop 32/32 (S74)
 
@@ -880,7 +899,7 @@ dünnen Inhalten).
 | **Blitter-Zoom-in: Trail weicher als Referenz** | Beispiele 0,062–0,163 | 🟠 **NEU (S61, Beispiel-Sweep):** drei der 90 .avs-Beispiele fallen auf — `blitterFeedback - Inward Pull` (0,163/MAE 0,143), `Beat-Sprung` (0,062) und `dynamicMovement - Molecule Grid` (0,060). Die Montagen zeigen ÜBERALL dieselbe Struktur und Farbe, unser Bild ist über die Rückkopplung nur **weicher** (Ringe verschmieren, die Referenz bleibt scharf) — der Zoom-IN-Pfad (subpixel/BLEND4) verliert je Durchgang etwas mehr Hochfrequenz, die Trail-Szene stapelt das über 120 Frames. Kein Strukturfehler; die Matrix-Zeile 04 (Grundkonfig) blieb grün, sichtbar wird es erst bei DAUER-Zoom-in. Kandidat: Bilinear-Gewichte/Rundung des blitter_normal-Pfads gegen r_blit BLEND4 vermessen (Bauart wie der S60-Zoom-out-Befund). Metrik-Bremse: fixen oder §9 mit Abnahme | 🟠 |
 | ~~**Sonde `convolution_kante`**~~ | 4547/3981 → **4547/4540 px** | ✅ **gelöst (S57).** Die APE berechnet die **letzte Zeile und die letzte Spalte nicht** — ein Off-by-one ihrer Schleife. Der Zielpuffer behält dort seinen alten Inhalt, und weil er im Wechsel wiederverwendet wird, läuft der Wert über die Frames auf: in der Referenz stand dort **255** (gesättigt nach mehrfacher 8×-Verstärkung), bei uns jedes Mal frisch **128** = 8 × 16. Der Weg dorthin: die 560 Pixel im Bild verorten (Zeile 239 + Spalte 319, je vollständig), dann mit der **Identitäts-Sonde** belegen, dass das Eingangsbild identisch ist, und über den Kern (`[0]*24 + [8] + [0]*24` — nur die Mitte) die Randbehandlung ausschliessen. Modul-Sonden **78/80 → 79/80**. Nebenwirkung: `convolution.edgeMode` fällt von 0,0014 auf 0,0007 (SCHWACH), weil der Rand-Unterschied jetzt nur noch links und oben entstehen kann — erklärbar, kein Befund | ✅ |
 | ~~**Sonde `6_alloy/paar_original`**~~ | 39546/37671 → **grün** | ✅ **gelöst (S59) — durch den bit-exakten Texer-II-Resampler**, nicht durch die S57-These (rand-Startphase): die Sprite-Rasterung selbst wich ab (Subpixel-Phase, Malbreite). Ursprünglich: 🟠 **S57: Ursache bewiesen — die ZUFALLS-STARTPHASE.** Die Kette ist Dynamic Movement + Texer II, und ihr Init lautet `t=rand(100)/50`. Zwei neue Sonden mit **festem** `t` (`paar_t_fest_082`, `paar_t_fest_2`) sind **grün** (Menge 0,02 · Lage 0,5 bzw. 1,5) — bei gleichem Startwert rechnen beide Seiten also gleich, und Physik wie Darstellung scheiden aus. Unser `rand()` ist der exakte MSVC-LCG mit Seed 1 (erster Zug 41 → `t = 0,82`); es steht beim Init dieses Effekts nur an einer anderen Stelle des Stroms als bei AvsRef. **Nächster Schritt:** bestimmen, wie viele Züge die Referenz vor dem ersten Effekt-Init macht (Konstruktoren ziehen — Grain zieht 491+1, S49) und unseren Strom entsprechend ausrichten | 🟠 |
-| **Modul-Matrix-Reste** | **40/43** (S60) | **S60: vier der fünf Flächen-Befunde PIXELGENAU gelöst** (je Menge 0,00/Deckung 1,00 in beiden Größen): **`13_rotating_stars`** — exakter r_rotstar-Port: Sterngröße aus dem größten LOKALEN Peak der rohen visdata-Bytes (Bedingung: beide Nachbarn um >4 unterboten, in SIGNED char — Bytes >127 zählen nie), Größe `(s+9)/352` je Achse, `rotSpeed` 0,1, und die Cast-Eigenheit: der ERSTE Eckpunkt entsteht mit getrennten `(int)`-Casts, die Schleifen-Ecken mit EINEM Cast über die Summe (floor statt trunc bei negativem Anteil) · **`02_osc_star`** — exakter r_oscstar-Port: 64 Schritte je Arm, fortlaufender Byte-Index über die 5 Arme, dfactor-Hüllkurve 1/1024→~1/128, `is=min(w·s,h·s)` ganzzahlig · **`14_osc_ring`** — exakter r_oscring-Port: 80 Segmente, Spiegel-Index `q>40?80−q:q`, negativer Winkellauf, EIN impliziter Cast über die Summe · **`17_dot_grid`** — das Gitter stand VERTIKAL GESPIEGELT (Push ohne y-Negation vor `avsZeile`); bei spacing 8 traf nie eine Zeile, dMean sah es nicht. Alle Sternchen-Segmente laufen jetzt durch den linedraw-Bresenham-Port (ThickLines, Breite aus SRM) statt GL-Linien. **`04_blitter_feedback` GRÜN (S60, zwei Befunde):** (1) **blitter_out (Zoom-out) sampelt IMMER nearest** (`src[s_x>>16]`, r_blit.cpp:143) — der `subpixel`-Schalter wirkt nur im Zoom-in (`blitter_normal`/BLEND4); unser Shader bilinear-filterte auch im Zoom-out (konstante Kanten-Differenz ab Frame 2, KEINE Akkumulation — die anderen MAT_TRAIL-Zeilen waren grün). (2) **y-Anker der Abbildung war h−1,5 statt h−0,5** — jede Quellzeile lag eine AVS-Zeile zu tief, der Fehler stapelte sich über die Feedback-Kaskade (Deckung 0,72 → 0,93). Jetzt 0,002/0,007 (320) · 0,001/0,004 (740), Menge 0,01. Restdiff = verstreute Einzelpixel entlang der Waveform (Messerkanten über die Rückkopplung). **Offen (2):** `water` (Chaos-Rauschen, Deckung 0,96) · `grain` (Zufallsstrom-Versatz, Deckung 0,56) — §9-Kandidaten, Abnahme Patrik angefragt (S60, Montagen übergeben). Historie S59: das Flächen-Urteil deckte die fünf Befunde auf (Stand davor 40/43 nach Mittelwert allein) — dünne Zeichner, die die Mittelwert-Metrik nie sehen konnte: `13_rotating_stars` (Ref: winzige Punkt-Sterne, wir GROSSE — Deckung 0!) · `02_osc_star` (Deckung 0,02) · `14_osc_ring` (0) · `17_dot_grid` (gleiche Menge, NULL Überlapp — Verdacht Bewegungs-Akkumulation) · `04_blitter_feedback` (grenzwertig 0,30/0,72). Dazu die drei Altbestände `water` (Chaos-Rauschen) · `grain` (Zufallsstrom-Versatz) · `water_bump` (Trail-Zeile, s. eigener S59-Punkt). Stand vor dem Flächen-Urteil: 40/43. Historie S57: **`dot_grid` ist grün** (dMean 0,047 → **0,000**): wir zeichneten 2 Pixel grosse Punkte statt einzelner, setzten sie auf Zwischenpositionen statt auf ganze Pixel (`xp`/`yp` sind 8.8-Festkomma) und interpolierten die Farbe zu 1 statt zu 63/64. **`interferences` ist GRÜN** (0,053 → **0,027**, dMean 0,025 → **0,001**): die Referenz laesst eine Kopie ausserhalb des Bildes **nichts** beitragen, unser Shader klemmte auf den Randpixel und schmierte ihn nach innen. **`water` erheblich verbessert** (dMean 0,029 → **0,002**, MAE 0,069 → 0,055): Nachbarn ausserhalb werden weggelassen statt geklemmt, und die Halbierung ist ganzzahlig — bei einem rueckgekoppelten Effekt bleibt ein Randfehler nicht am Rand. Der Rest ist **kein Strukturfehler**: die Montage zeigt beide Seiten deckungsgleich, der Diff ist feines Rauschen ueber den Wellenzonen — Chaos-Verstaerkung wie bei `24_grain`. Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | 🟠 |
+| ~~**Modul-Matrix-Reste**~~ | **40/43** (S60) → **43/43** | ✅ **erledigt (S60; bereinigt S129):** `20_water` und `24_grain` sind von Patrik als bewusste Grenze abgenommen (§0 Haken 2, §9) — die beiden „Offen (2)“ unten sind damit geschlossen. **S60: vier der fünf Flächen-Befunde PIXELGENAU gelöst** (je Menge 0,00/Deckung 1,00 in beiden Größen): **`13_rotating_stars`** — exakter r_rotstar-Port: Sterngröße aus dem größten LOKALEN Peak der rohen visdata-Bytes (Bedingung: beide Nachbarn um >4 unterboten, in SIGNED char — Bytes >127 zählen nie), Größe `(s+9)/352` je Achse, `rotSpeed` 0,1, und die Cast-Eigenheit: der ERSTE Eckpunkt entsteht mit getrennten `(int)`-Casts, die Schleifen-Ecken mit EINEM Cast über die Summe (floor statt trunc bei negativem Anteil) · **`02_osc_star`** — exakter r_oscstar-Port: 64 Schritte je Arm, fortlaufender Byte-Index über die 5 Arme, dfactor-Hüllkurve 1/1024→~1/128, `is=min(w·s,h·s)` ganzzahlig · **`14_osc_ring`** — exakter r_oscring-Port: 80 Segmente, Spiegel-Index `q>40?80−q:q`, negativer Winkellauf, EIN impliziter Cast über die Summe · **`17_dot_grid`** — das Gitter stand VERTIKAL GESPIEGELT (Push ohne y-Negation vor `avsZeile`); bei spacing 8 traf nie eine Zeile, dMean sah es nicht. Alle Sternchen-Segmente laufen jetzt durch den linedraw-Bresenham-Port (ThickLines, Breite aus SRM) statt GL-Linien. **`04_blitter_feedback` GRÜN (S60, zwei Befunde):** (1) **blitter_out (Zoom-out) sampelt IMMER nearest** (`src[s_x>>16]`, r_blit.cpp:143) — der `subpixel`-Schalter wirkt nur im Zoom-in (`blitter_normal`/BLEND4); unser Shader bilinear-filterte auch im Zoom-out (konstante Kanten-Differenz ab Frame 2, KEINE Akkumulation — die anderen MAT_TRAIL-Zeilen waren grün). (2) **y-Anker der Abbildung war h−1,5 statt h−0,5** — jede Quellzeile lag eine AVS-Zeile zu tief, der Fehler stapelte sich über die Feedback-Kaskade (Deckung 0,72 → 0,93). Jetzt 0,002/0,007 (320) · 0,001/0,004 (740), Menge 0,01. Restdiff = verstreute Einzelpixel entlang der Waveform (Messerkanten über die Rückkopplung). **Offen (2):** `water` (Chaos-Rauschen, Deckung 0,96) · `grain` (Zufallsstrom-Versatz, Deckung 0,56) — §9-Kandidaten, Abnahme Patrik angefragt (S60, Montagen übergeben). Historie S59: das Flächen-Urteil deckte die fünf Befunde auf (Stand davor 40/43 nach Mittelwert allein) — dünne Zeichner, die die Mittelwert-Metrik nie sehen konnte: `13_rotating_stars` (Ref: winzige Punkt-Sterne, wir GROSSE — Deckung 0!) · `02_osc_star` (Deckung 0,02) · `14_osc_ring` (0) · `17_dot_grid` (gleiche Menge, NULL Überlapp — Verdacht Bewegungs-Akkumulation) · `04_blitter_feedback` (grenzwertig 0,30/0,72). Dazu die drei Altbestände `water` (Chaos-Rauschen) · `grain` (Zufallsstrom-Versatz) · `water_bump` (Trail-Zeile, s. eigener S59-Punkt). Stand vor dem Flächen-Urteil: 40/43. Historie S57: **`dot_grid` ist grün** (dMean 0,047 → **0,000**): wir zeichneten 2 Pixel grosse Punkte statt einzelner, setzten sie auf Zwischenpositionen statt auf ganze Pixel (`xp`/`yp` sind 8.8-Festkomma) und interpolierten die Farbe zu 1 statt zu 63/64. **`interferences` ist GRÜN** (0,053 → **0,027**, dMean 0,025 → **0,001**): die Referenz laesst eine Kopie ausserhalb des Bildes **nichts** beitragen, unser Shader klemmte auf den Randpixel und schmierte ihn nach innen. **`water` erheblich verbessert** (dMean 0,029 → **0,002**, MAE 0,069 → 0,055): Nachbarn ausserhalb werden weggelassen statt geklemmt, und die Halbierung ist ganzzahlig — bei einem rueckgekoppelten Effekt bleibt ein Randfehler nicht am Rand. Der Rest ist **kein Strukturfehler**: die Montage zeigt beide Seiten deckungsgleich, der Diff ist feines Rauschen ueber den Wellenzonen — Chaos-Verstaerkung wie bei `24_grain`. Zwei neue Zeilen kamen hinzu und sind beide grün: `06_blur/02_trail_rounddown` und `03_trail_roundup` (§1c). **Korrektur S53:** der S52-Stand „37/41, vier Reste" war ungenau — `24_grain/01_static100` ist gelb (dMean **0,000**, MAE **0,046**, dreimal identisch gemessen, also kein Rauschen). Die Montage zeigt beide Seiten deckungsgleich, der 4×-Diff ist ein **gleichmäßiges Flächenrauschen**: die Kornmenge stimmt, der Zufallsstrom ist gegen die Referenz versetzt. Kein Strukturfehler — und es betrifft **statisches** Grain, der 🔧-Punkt unten meint das nicht-statische | ✅ |
 | ~~**`Dot Fountain` ist nicht portiert**~~ | **0,000 / 0,000 — Diff komplett schwarz** | ✅ **portiert (S57), pixelgenau.** Das 30×256-Gitter, die Alterungs-Schleife (jede Stufe rutscht eine weiter und bekommt dabei ihre Physik), die Erzeugung aus der Wellenform (`t*5/4 - 64`, bei Beat +128) und die 3D-Matrix stehen jetzt zeilengenau nach `r_dotfnt.cpp`. Der letzte Fehler war die Kanalzuordnung: die Farbtabelle liegt in 0x00RRGGBB vor, nicht in AVS-Reihenfolge — rot und blau waren vertauscht, die Montage zeigte es sofort. Matrix-Helfer und `initcolortab` teilen sich Dot Plane und Dot Fountain jetzt (`avsMat*`, `avsInitColorTab`); vorher lagen sie doppelt. **Die Warnung zur Zeile bleibt gültig:** sie mass auch im völlig falschen Zustand 0,002, weil beide Bilder überwiegend schwarz sind — ein flächenbasiertes Urteil fehlt weiterhin. Ursprünglicher Befund: 🔴 **S53:** Die Referenz `r_dotfnt.cpp` ist ein **30×256-Gitter** (7680 Punkte, rotierende Höhenwand, 3D-Matrix `translate(0,-20,400)` wie `Dot Plane`, Höhe aus dem Spektrum). Unser Renderer sind **400 freie Partikel** mit eigener Physik — der Header sagt es selbst („Simplified particle model here"). Die Montage zeigt links einen hohen geordneten Brunnen über die volle Bildhöhe, mittig einen flachen Fleck von ~⅕ der Fläche; der 4×-Diff **ist** das Referenzbild. Die Matrix-Zeile `19_dot_fountain` misst trotzdem 0,002 und zählt zu den 37 — **die Metrik lügt bei dünnen Inhalten**, beide Bilder sind überwiegend schwarz. Faktisch also **36/41**. Fix = echte Portierung nach dem `Dot Plane`-Muster (Matrix + Farbtabellen-Arithmetik liegen dort zeilengenau vor); zusätzlich braucht die Zeile ein **flächenbasiertes** Urteil, sonst bewacht sie weiter nichts | 🔴 |
 | ~~Color-Map-Kennlinie~~ | ±1 → **0** | ✅ **gelöst (S57).** Die APE rechnet in DREI ganzzahligen Schritten, und der Verlust steckt in der Schrittweite selbst: `step = 65536/span`, dann `t = (d·step) >> 8`, dann `(a·(256−t) + b·t) >> 8`. Das erklärt, warum Zweierpotenzen exakt waren (65536/16 geht auf) und 200 nicht (327,68 → 327). Unsere alte Formel `a + (b−a)·d/span` traf auf dem Graukeil **1 von 255** Punkten. Jetzt **922/922** über sechs Spannweiten, beide Kennlinien-Blöcke 0 Abweichungen. Die `04_span*`-Sonden existierten seit S49, wurden aber nie ausgewertet — der Bericht prüfte 15 Stichproben, und daran sind fünf Formeln nicht unterscheidbar; die Auswertung ist jetzt in `analyse_colormap.py` | ✅ |
 | ~~Colorfade-Zufalls-Beatmodus~~ | — | ✅ **gelöst (S57)**, zusammen mit dem `enabled`-Bitfeld — es war dieselbe Sache. Colorfade folgt jetzt `r_colorfade` zeilengenau: Bitfeld beim Import (1 an · 2 on-beat-random · 4 slow fade), persistenter Fader-Zustand, Nachziehen um EINEN Schritt je Frame samt der Grün/Blau-**Vertauschung** (`faderpos[1]` folgt `faders[2]`, beim direkten Setzen gilt sie nicht), drei exklusive Beat-Zweige. Folge: **ohne `slowFade` wirken die Beat-Fader nicht** — im Original ist ihr Zweig gar nicht erreichbar. Alle 12 Felder wirken | ✅ |
@@ -1061,10 +1080,10 @@ Nebenbei: die Rede von „13 verbliebenen" war eine Fehlzählung — `avi` stand
 | ~~`avi.filename` · `avi.resolvedPath`~~ | 0,234 | ✅ **gefixt S55** — `aviTried` merkte sich nur, DASS geöffnet wurde; ein Pfadwechsel griff nie. Jetzt Pfad-Schnappschuss + Neuöffnen (Textur wird verworfen). Nachgemessen: keine WIRKUNGSLOS mehr, Feld-Sonden 6/6 ohne Regression |
 | ~~`texer.imageData`~~ | 0,070 | ✅ **gefixt S56** — `ensureEmbeddedTexture` stieg bei `picTexture != 0` aus, die Textur hing am Aufbau fest. Jetzt Schnappschuss der Bilddaten (`picSnapshot`, Bauart wie `cmSnapshot`), bei Wechsel wird neu hochgeladen. Nachgemessen: texer 6/6 GLEICH; Picture/Picture II/Texer II 19/19 GLEICH ohne Regression |
 | ~~`milkdrop.meshX` · `meshY` · `debugGrid`~~ | 0,036 · 0,053 · 0,006 | ✅ **gefixt S56** — die drei standen IM Revisions-Block von `runMilkdropNode`, und `revision` zählt nur Preset-/Skript-/Shader-Edits. Es sind reine `setParam`-Zuweisungen ohne Neuaufbau, stehen jetzt je Frame außerhalb. Nachgemessen: debugGrid GLEICH, meshX/meshY TEILWEISE (Feedback-Puffer), keine WIRKUNGSLOS |
-| `bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT`, s. u. |
-| `bassSpin.smoothing` | 0,184 | ⬜ **kein Befund (S56)** — `VERDECKT` |
-| `customBpm.skip` | 0,109 | ⬜ **kein Befund (S56)** — `VERDECKT` |
-| `mirror.slower` | 0,014 | ⬜ **kein Befund (S56)** — `VERDECKT` |
+| ~~`bufferSave.slot` · `dir` · `initCode` · `frameCode` · `beatCode`~~ | 0,109 | ✅ **kein Befund (S56)** — `VERDECKT`, s. u. |
+| ~~`bassSpin.smoothing`~~ | 0,184 | ✅ **kein Befund (S56)** — `VERDECKT` |
+| ~~`customBpm.skip`~~ | 0,109 | ✅ **kein Befund (S56)** — `VERDECKT` |
+| ~~`mirror.slower`~~ | 0,014 | ✅ **kein Befund (S56)** — `VERDECKT` |
 
 ### Der Quercheck aus S55 war falsch (Korrektur S56)
 
@@ -1865,9 +1884,11 @@ Montagen (Referenz | neu | alt): Scratchpad S80 `strato/out/`.
    **Umgesetzt (S80, Entscheid Patrik a):** `milkdrop/MilkdropFft.hpp` — Port
    von `fft.cpp` (Dämpfung, Sinus-Hüllkurve, Entzerrung, 1024-FFT, float wie
    im Original) auf der 8-bit-Wellenform (`lround(x·127)`); Custom-Waves mit
-   den Original-Faktoren 0,15/0,004. Schalter **„Wave-Audio“** je
-   Milkdrop-Knoten (`PresetState.audioOriginal`, Standard bisher bis zum
-   Entscheid nach der Messreihe; Diagnose `LUMIVIZ_MILKDROP_AUDIO`).
+   den Original-Faktoren 0,15/0,004. Schalter je Milkdrop-Knoten
+   (`PresetState.audioOriginal`; Diagnose `LUMIVIZ_MILKDROP_AUDIO`) — hieß
+   zuerst „Wave-Audio“ mit Standard bisher; seit dem zweiten Schritt unten
+   EIN Feld **„Audio“** für Waves und Lautheit, **Standard Original**
+   (Entscheid Patrik a, S80; `MilkdropPresetState.hpp`, bereinigt S129).
    **Beleg:** `test_MilkdropFft` — dieselbe Wellenform ergibt das Spektrum
    des Original-Kerns bis auf 5·10⁻⁷ (alle 512 Bänder; Sollwerte aus
    `MILKDROPREF_AUDIO_DUMP`).
@@ -2142,13 +2163,14 @@ Die verbleibenden 0,230 bei `Dancing Hearts` sind der **Farbbefund**
 (Aufgabe 3: bei uns weiß/rosa, im Original gelb/orange) — ein eigener,
 unabhängiger Punkt.
 
-**Rest offen:** ob der **Warp-Shader** dieselbe Spiegelung braucht — dafür eine
+**Rest offen** (als 🔧 in der Tabelle „MilkDrop: Kalibrier-Runde und offene
+Punkte“ unten geführt): ob der **Warp-Shader** dieselbe Spiegelung braucht — dafür eine
 eigene Sonde mit `warp_1` (analog zur Y-Sonde). Bisher spricht nichts dafür:
 die y-symmetrischen Presets (`Magma`, `Rock The House`, `Starfield`) blieben
 über den Fix hinweg unverändert bei ≤0,047, und ein falsch orientierter Warp
 hätte sie bewegt.
 
-**Zusatzwunsch Patrik (S75):** im MilkDrop-Host-Modul zwei Optionsfelder
+**Zusatzwunsch Patrik (S75)** (nicht gebaut; als 🟡 in der Tabelle unten geführt): im MilkDrop-Host-Modul zwei Optionsfelder
 **Flip X / Flip Y** anbieten — unabhängig vom Fix, als Gestaltungsmittel und
 als Diagnosehilfe.
 
@@ -2213,6 +2235,13 @@ Reihenfolge, Gegenproben und Fertig-Kriterium.
 gelb/orange). Das ist ein ZWEITER Befund, der nichts mit der Spiegelung zu tun
 hat und noch niemand angesehen hat.
 
+</details>
+
+### MilkDrop: Kalibrier-Runde und offene Punkte
+
+*(Bereinigt S129: dieser Teil stand bis 1.247.0 versehentlich im eingeklappten
+Block „S73-Fassung … überholt“ unter dem erledigten Y-Achsen-Kopf.)*
+
 **Kalibrier-Runde läuft seit S63.** Werkzeuge: Triage-Kette
 `asset/calibration/milkdrop/` (`triage_presets.py` → `make_triage_report.py`
 → `compare_ref.py --dir <lauf>`) + **MilkdropRef** (`tools/MilkdropRef/`,
@@ -2241,13 +2270,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | ~~**MilkdropRef-MessageBoxen**~~ | ✅ **erledigt (S67):** `patched/ref_msgbox.h` per `/FI` in alle Übersetzungseinheiten — alle MessageBoxen werden stderr-Zeilen + IDOK (nachdem die Falle erneut einen Sonden-Lauf blockierte). Merke: `data/include.fx` wird relativ `<presetordner>/../data` gesucht — Sonden nach `asset/Milkdrop3/sonden/` | ✅ |
 | **MD3/2077-Feature-Frage (Patrik)** | erst nach dem MD2-Grundpfad: welche 2077-Presets nutzen MD3-exklusive Features, die uns fehlen? | 🟡 |
 | **`rot_*`-Matrizen optisch** | seit S52 im Code (24 Matrizen + Matrix-Indizierung), 9 Presets im Pack betroffen. Werte sind zufällig und unser PRNG ist ein anderer als der von MilkDrop — prüfbar ist nur: laden sie durch, bewegt sich Plausibles | ⬜ |
-| ~~**Texturen `worms`, `rose`, `grad3`**~~ | ✅ **beschafft (S60):** im Original-Winamp-Pack fehlen sie tatsächlich (21 Texturen, geprüft gegen `ref/winamp_orig`), aber der **MegaPack-`textures`-Ordner** (`…\VisualsPresets\MilkDrop 135k+ Presets MegaPack 2026\textures`, 8415 Dateien) hat alle drei — nach `asset/Milkdrop3/textures/` kopiert. Damit sind 27 von 35 Fehler-Log-Zeilen weg. ⚠ Herkunft Community-Pack: Lizenzfrage vor dem Commit kurz bedenken. Bei künftigen fehlenden Texturen zuerst dort suchen (verwandt: „Assets-Ordner-Fallback" §7) | ✅ |
+| ~~**Texturen `worms`, `rose`, `grad3`**~~ | ✅ **beschafft (S60):** im Original-Winamp-Pack fehlen sie tatsächlich (21 Texturen, geprüft gegen `ref/winamp_orig`), aber der **MegaPack-`textures`-Ordner** (`…\VisualsPresets\MilkDrop 135k+ Presets MegaPack 2026\textures`, 8415 Dateien) hat alle drei — nach `asset/Milkdrop3/textures/` kopiert. Damit sind 27 von 35 Fehler-Log-Zeilen weg. Herkunft Community-Pack: die drei bleiben lokal — `asset/Milkdrop3/` ist per `.gitignore` ausgeschlossen, im Repo liegt nichts davon (geprüft S129). Bei künftigen fehlenden Texturen zuerst dort suchen (verwandt: „Assets-Ordner-Fallback" §7) | ✅ |
 | **In-App-Sichttest-Runde** | c1- + m5-Presets über den Node-Pfad, Panel-Baum + Editor-Sektionen, Session-A-Features (Wave/Shape/Sprite anlegen/entfernen/klonen, Sprite-Editor, fShader-Wash). Offen seit S42 — [Status Punkt 0](visuals/MilkDrop_Import_Status.md) | ⬜ |
 | **Decay-Dither** + **`.milk`-Export** | Punkt 8, ganz ans Ende | 🟡 |
-| **Playlist-Anbindung** | hängt an E6 (§6) | 🟡 |
+| ~~**Playlist-Anbindung**~~ | ✅ **entfällt (bereinigt S129):** hing an E6, der Visual-Playlist — die ist geschlossen (Entscheid Patrik S93, C4 a, aufgegangen in Composer und Host Switcher; §6 „P2 Visual-Playlist") | ✅ |
 | Host-Gruppen-Feinschliff | exakter paarweiser 2er-Mix statt sequentiellem Adjustable | 🔧 |
-
-</details>
+| **Warp-Shader: dieselbe Spiegelung wie die Y-Achse?** | Rest aus dem Y-Achsen-Fix (S75, oben): eigene Sonde mit `warp_1` analog zur Y-Sonde; bisher spricht nichts dafür (y-symmetrische Presets blieben ≤0,047). Bis 1.247.0 nur im erledigten Block vermerkt | 🔧 |
+| **Flip X / Flip Y am MilkDrop-Host-Modul** | Wunsch Patrik S75 (oben unter dem Y-Achsen-Fix): zwei Optionsfelder als Gestaltungsmittel und Diagnosehilfe. Nicht gebaut — `flipx`/`flipy` gibt es nur an Sprites (`MilkdropVisualizer.cpp`). Bis 1.247.0 nur im erledigten Block vermerkt; offen, wann er eingeplant wird | 🟡 |
 
 ## 4. Sichttests, die nie stattgefunden haben
 
@@ -2270,7 +2299,7 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 
 | Quelle | Entscheid | |
 |---|---|---|
-| ~~[Hotkey_Konzept §9](ui/Hotkey_Konzept.md)~~ | ✅ **entschieden (Patrik, S60):** §9.2 Stufe 1 blättert NICHT in Unterordner (nur aktuelle Ebene) · §9.3 am Verzeichnisende **umlaufen** · §9.4 Blättern wirkt auf den **zuletzt gewählten** Eintrag · §9.5 Menü-Einträge zeigen die Tasten. *(§9.1 in S52 entschieden: `Bild ab` = vorwärts.)* Umsetzung/Konzept-Nachzug bei der nächsten Hotkey-Arbeit (nach §0) | ✅ |
+| ~~[Hotkey_Konzept §9](ui/Hotkey_Konzept.md)~~ | ✅ **entschieden (Patrik, S60):** §9.2 Stufe 1 blättert NICHT in Unterordner (nur aktuelle Ebene) · §9.3 am Verzeichnisende **umlaufen** · §9.4 Blättern wirkt auf den **zuletzt gewählten** Eintrag · §9.5 Menü-Einträge zeigen die Tasten. *(§9.1 in S52 entschieden: `Bild ab` = vorwärts.)* Umsetzung/Konzept-Nachzug bei der nächsten Hotkey-Arbeit (nach §0) — **nicht geschehen** (S129 geprüft): `ImportBrowserPanel::nextPresetRow` hält am Ende an („nicht umlaufen“, Stand S51, vor dem Entscheid), `Hotkey_Konzept.md` steht auf „§9.2–§9.5 offen“; als 🔧 in §6 geführt | ✅ |
 | ~~[Visual_Playlist §6](ui/Visual_Playlist_Konzept.md)~~ | ✅ **entschieden (Patrik, S60):** **Pfad-Referenzen** statt eingebetteter `.lvfx` (kaputte Pfade beim Laden melden) · **Auslöser-Default: KEIN automatischer Wechsel** (manuell; Songwechsel/Timer sind opt-in) · Timer-Wechsel, wenn aktiviert, **beat-quantisiert** (nächster Beat) · Import-Browser-Erweiterung **erst mit der Playlist**. P2 damit entsperrt, Umsetzung nach §0 | ✅ |
 | ~~[Lights_Module_Entwurf](visuals/Lights_Module_Entwurf.md)~~ | ✅ **entschieden (Patrik, S60): nach §7 (Backlog) verschoben** — BASS-Lookahead-Service (`AudioLookahead`) erst mit den Lights-Modulen; bis dahin reichen Beat-Prädiktion + `gettime()` | ✅ |
 | [Parameter_Reference §10](visuals/Parameter_Reference.md) | Deklarierte Preset-Defaults vs. Dropdown-Indizes bereinigen · `solidColor`/`peak.color.fixed` ohne deklarierten Default | 🔧 |
@@ -2644,8 +2673,8 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   eigene Pipeline bleibt offen). Ausloeser nur Songwechsel (`TrackChangedEvent`).
   Test: `test_ScriptVariablesGl` „Song-Slot" prueft jeden Typ. **Offen:**
   MilkDrop-Node, Playlist-Start/Stop als Ausloeser.
-  Urspruenglicher Eintrag:
-- 🟡 **`onChange`-Slot: Skript beim Song-Wechsel** (Idee Patrik, S75) — neben
+  Urspruenglicher Eintrag (bereinigt S129: als Song-Slot umgesetzt, s. o.):
+- ~~**`onChange`-Slot: Skript beim Song-Wechsel**~~ (Idee Patrik, S75) — neben
   `init` ein Slot, der **beim Wechsel des Songs** ausgelöst wird; für
   MilkDrop-, AVS- und eigene Module gleichermaßen. Damit kann ein Preset auf
   einen neuen Titel reagieren (Farbwechsel, Reset von Zählern, neuer Seed —
@@ -2675,6 +2704,30 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   formal geschlossen. Prüfen und schließen.
 - ⚪ **Hotkeys Stufe 2/3** — Stufe 2 (Transport) ist in S52 verdrahtet; Stufe 3
   (Composer-Spuren) ist Fernziel.
+- 🔧 **Hotkeys Stufe 1: Entscheide §9.2–§9.5 (Patrik S60) umsetzen und das
+  Konzept nachziehen** (eingetragen S129 — stand bis dahin nur als Halbsatz an
+  der erledigten Zeile in §5). Abweichend vom Entscheid hält
+  `ImportBrowserPanel::nextPresetRow` am Verzeichnisende an statt umzulaufen
+  (§9.3); §9.4 (Blättern ab dem zuletzt gewählten Eintrag) und §9.5 (Menüs
+  zeigen die Tasten) nicht geprüft; `ui/Hotkey_Konzept.md` steht auf
+  „Entscheide §9.2–§9.5 offen“.
+- 🟡 **Audio-Effekt: Vocals unterdrücken oder allein behalten** (Idee Patrik
+  S129; noch keine Vorlage, kein Konzept). Zwei Wege, die sich nicht
+  ausschließen:
+  1. **Ohne KI, als Effekt in Echtzeit:** „Mitte auslöschen“ (L−R, der
+     Karaoke-Trick) — Vocals sind meist mittig gemischt. Nimmt auch Bass,
+     Kick, Snare mit, Ergebnis mono; besser nur im Stimmbereich (etwa
+     150 Hz–6 kHz) oder im Frequenzbereich (STFT-Maske: je Bin dämpfen, was
+     links und rechts gleich ist), dann mit Artefakten und abhängig vom Mix.
+     Umgekehrt (nur Mitte behalten) bleibt die Stimme mit allem Mittigen —
+     zum Isolieren kaum brauchbar.
+  2. **Mit KI, Quellentrennung in Stems** (Vocals, Drums, Bass, Rest; etwa
+     Demucs, Spleeter, Open-Unmix): deutlich besser, in beide Richtungen.
+     Kosten: ONNX Runtime oder LibTorch als Abhängigkeit, Modelle einige
+     hundert MB; nicht in Echtzeit, sondern einmal je Song im Hintergrund,
+     Stems im Cache (Bauart wie `SongLautheiten`), im Composer als eigene
+     Ton-Clips spielbar — passt zu Karaoke. **Vorher belegen:** Lizenzen von
+     Code und Modellgewichten.
 
 ## 7. Backlog (bewusst nichts tun)
 
@@ -3059,6 +3112,24 @@ Idee Preset-Warmup/Pre-Roll.
   Quelltext, kein Standalone lief dafür; ein Bildvergleich seit S100
   liegt nicht vor. **Bleibt:** der Vergleichslauf vor dem Holen nach
   `master` (Konzept §12.4) — er deckt dann alles seit S93.
+  ✅ **Nachgeholt S129 (Entscheid Patrik B2 a)** — vorher nie gefahren
+  (weder Report S105 noch Changelogs S105–S128 nennen ihn), seit
+  `vor-composer` (`93d0be4`) +1257/−99 Zeilen in den Visualizern. Stand
+  `vor-composer` per `git archive` neben das Repo gelegt, beide Stände unter
+  Release-clang, dieselben Preset-Dateien aus dem Repo, Bildschirm 2,
+  verglichen die LumiViz-Bilder alt gegen neu:
+  **AVS** (`compare_avsref.py`, 26 Kalibrier-Presets + 10 mitgelieferte,
+  320×240, Aspekt-Reihe, 2560×734): **252 / 252 bitgleich.**
+  **MilkDrop** (`compare_milkref.py --zufall-lumiviz`, 22 mitgelieferte,
+  640×480, Aspekt-Reihe, 2560×734, je drei Marken und zwei Saaten):
+  **747 / 748 bitgleich**; das eine (Helix, 640×480, Saat 0x5EED63, f30)
+  stammt aus einem Lauf, der danach mit Kartenfehler abbrach — Helix je
+  Stand zweimal einzeln nachgefahren: alle vier Läufe bitgleich, gleich dem
+  alten Stand. **Reichweite:** die Harnesse rendern über die Standalones
+  (AVS-Import, MilkDrop-Knoten); Composer, Karaoke-Ebene und `.lvfx`-Ketten
+  mit den neuen Knoten (Shape, XY Scope) erreichen sie nicht. Für den
+  alten Stand nötig (unversioniert): BASS- und Lua-Binaries,
+  `asset/Milkdrop3`, `tools/*Ref/build`, `tools/MilkdropRef/third_party`.
   Die Einzelheiten stehen in den Blöcken unter „Stand S100".
 - **Composer, Stand S100 am Ende (Konzept 0.52.1), kurz:** gebaut sind die
   Zeile MASTER (Pegelkurve der ganzen Komposition, samt Ziehen des festen
@@ -3556,8 +3627,10 @@ Idee Preset-Warmup/Pre-Roll.
   - **Composer Variables** (Konzept §9e, entschieden: feste Variablen
     `comp_…` und freie `cv1` …; preset-weit, Namen geschützt, nur lesbar) —
     nicht begonnen.
-  - Die Rückbau-Liste (§12.4) ist vor dem Holen nach `master` zu prüfen; der
-    Commit `356a868` enthält Naht N11 und eigenen Code zusammen.
+  - ~~Die Rückbau-Liste (§12.4) ist vor dem Holen nach `master` zu prüfen; der
+    Commit `356a868` enthält Naht N11 und eigenen Code zusammen.~~ ✅ hinfällig:
+    `composer` ist überführt, §12 abgeschlossen (S105, M1: a); der
+    Vergleichslauf wird nachgeholt (B2 a, S129, s. Block „Stand S101“).
   **Offen aus C2a:**
   - Nachlauf des Sichttests: `.claude/handover/Sichttests_S94b.md` — C1–C5
     und D1 offen.
@@ -3663,9 +3736,10 @@ Idee Preset-Warmup/Pre-Roll.
     (Zeile in Fensterauflösung). **✅ Dieselben Mischarten am Lyrics-Knoten
     und am Lyrics Trail (S88):** Feld Blend mit neun Arten; Replace, Additive,
     50/50 bitgleich wie bisher, ab Subtract bleibt die Kontur normal.
-    **Offen:** KE2–KE4 (Panel, Ablage mit Karaoke-Presets, Trail-Reiter,
-    Menü/Kürzel), K4 b, Stärke-Regler am Knoten (hat nur die Ebene);
-    **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
+    ✅ KE2–KE4 (Panel, Ablage mit Karaoke-Presets, Trail-Reiter,
+    Menü/Kürzel), K4 b und das Feld **Blend strength** an Lyrics / Lyrics
+    Trail sind in S89 gebaut (Changelog 1.82.0; `FieldBindings.cpp`
+    `blendStrength`; bereinigt S129). **Offen:** **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
     Post-Bloom, mit Render Scale).
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
@@ -4223,7 +4297,11 @@ Mindestbreiten. Übertragen nur auf Wunsch. Offen außerdem: die Log-Zeilen
 `Effect Chain: Feldzeile '…' braucht N px` einmal durch alle Module sichten
 (bekannt breit: 7×7-Kernel, bewusst).
 
-### ➜ Shadertoy-Modul (Entscheid Patrik S64 — geplant, Strang S)
+### ✅ Shadertoy-Modul (Entscheid Patrik S64, Strang S — gebaut S65)
+
+*(Bereinigt S129: Strang S S1–S4 ist in S65 komplett gebaut, s. „Erledigt in
+S65“ oben. Offen bleiben die Sichttests und die Netz-Abnahme mit API-Key. Der
+Text unten ist der Plan vor dem Bau.)*
 
 Eigener Node-Typ mit **modernem Regelwerk**, inkl. **URL-/ID-Import**
 (Shadertoy-API auf Knopfdruck, API-Key in den Settings; Fallback
@@ -4387,8 +4465,10 @@ ISF-spezifisch schneiden. Prüfen, wie sich das zur bestehenden
 Panel-Erzeugung (`addInt`/`addDouble`/`addCombo`/`addCodeEditor`) verhält:
 Ablösung oder zweiter Weg?
 
-**Lizenz-Pflicht gilt auch hier** (s. 🔴 im §7-Block oben): Herkunft, Autor
-und Lizenz (`CREDIT` im ISF-JSON) gehören ins Preset, nicht nur in die Doku.
+**Lizenz-Pflicht gilt auch hier** (s. „LIZENZ-PFLICHT bei JEDEM Fremd-Import“
+im §7-Block unten): Herkunft, Autor und Lizenz (`CREDIT` im ISF-JSON) gehören
+ins Preset, nicht nur in die Doku. ✅ Umgesetzt (Changelog 1.67.0;
+`EffectChain.hpp` `Herkunft`, `IsfImport.hpp` CREDIT → Autor; bereinigt S129).
 
 ### ⚪ Szenen-Wechsler-Modul (Idee Patrik, 2026-08-06 — Konzept in eigener Session)
 
@@ -4833,8 +4913,11 @@ Ursprüngliche Sondierung (S55, weiter gültig für die Rest-Punkte):
     Shadertoy-Knoten (s. iChannel-Erweiterungen unten). Der Filter-Stack
     ist die Kette selbst (mehrere Knoten, umsortierbar; Entscheid Patrik
     S70 — keine interne Unterliste, Klone sind unabhängige Kopien).
-  - **🔴 LIZENZ-PFLICHT bei JEDEM Fremd-Import (Vorgabe Patrik S71 — muss im
-    Loader stecken, nicht nur in der Doku, sonst geht es unter):** Shadertoy
+  - **✅ LIZENZ-PFLICHT bei JEDEM Fremd-Import (Vorgabe Patrik S71 — muss im
+    Loader stecken, nicht nur in der Doku, sonst geht es unter)** — umgesetzt
+    (Changelog 1.67.0: `Herkunft` in `EffectChain.hpp` mit Name, Autor, URL,
+    Lizenz, gesetzt von ISF-Import und Shadertoy-Browser, gespeichert im
+    Preset, angezeigt im Panel; bereinigt S129): Shadertoy
     verpflichtet API-Nutzer ausdrücklich, die Lizenz **jedes einzelnen
     Shaders** zu respektieren (Default dort ist meist CC BY-NC-SA); ISF trägt
     ein `CREDIT`-Feld im JSON-Kopf. **Regel: ein Import schreibt Herkunft
@@ -4916,7 +4999,10 @@ den rohen 1/r²-Gradienten). Feinschliff ist Kür. 🔧
 Ausgearbeitet als **Etappen 7–9** im
 [Knoten_Parameter_Konzept.md](visuals/Knoten_Parameter_Konzept.md) (§9–§11):
 
-1. 🔴 **Test-Presets für JEDES Modul und JEDES Feld** (Strang E, Konzept §9). Ein
+1. ✅ **Test-Presets für JEDES Modul und JEDES Feld** (Strang E, Konzept §9) —
+   umgesetzt als Feld-Sonden (S54, §8 „Strang E — Feld-Sonden“), Vollauf grün
+   (§0 Haken 3, S60); offen nur der erste Lauf der 60 Sonden aus S73 (§4;
+   bereinigt S129). Ein
    Preset je Feld, nur dieses eine vom Default abweichend; für Transformationen
    mit klar definiertem statischem Untergrundbild wie auf der MilkDrop-Seite.
    Urteil = zwei Läufe (Default vs. gesetzt); kein Unterschied heißt: das Feld
@@ -4978,7 +5064,7 @@ Ausgearbeitet als **Etappen 7–9** im
    (`runParamScript` und alle Skript-Träger fahren Frame VOR Beat, wie AVS)
    und der AVS-Dialog-Konvention — kein Umbau.
 
-### 🔴 Movement: Beat-Umkehr kann strukturell nicht wirken (Befund Patrik S53)
+### ✅ Movement: Beat-Umkehr kann strukturell nicht wirken (Befund Patrik S53 — entschieden S53, s. u.)
 
 `asset/effectchain/movement3b.lvfx` setzt `bt=1` (Init), `bt=(-1)*bt` (Beat) und
 liest `bt` im Point-Code (`r=r+bt*0.02`). Die Rotation kehrt nie um — aus **zwei**
@@ -5523,7 +5609,9 @@ genannt, wo Stereo entstehen soll. Nur notiert.
   Kamera-Leuchte geht aus); ein per Undo zurückgeholter Knoten beginnt mit
   frischem Zustand.
 
-- 🟡 **Oberflächentexte englisch — erledigt bis auf die Feld-Tooltips** (S83,
+- ✅ **Oberflächentexte englisch — erledigt** (die Feld-Tooltips und der
+  Dateiname der Kamera-Clips folgten in S84, s. §7 „Umstellung auf Englisch
+  fortsetzen“; offen dort nur die Handbuch-Screenshots; bereinigt S129) (S83,
   Entscheid Patrik a). **Umgesetzt:** ~220 `tr()`-Texte + ~150 sichtbare
   Nicht-`tr()`-Texte (ⓘ-Referenzseiten, Import-Meldungen ISF/Shadertoy,
   Groß-Editor-Dialog, Tastenkürzel-Namen, Palette) englisch; „Testaufnahme"
@@ -5645,14 +5733,17 @@ genannt, wo Stereo entstehen soll. Nur notiert.
   auf einem anderen Rechner neu erzeugen (`make_field_probes.py`). Begründung
   steht im Generator.
 
-- 🔧 **Die eingefrorenen `.lvfx`-Zwillinge stehen auf 27/67** (vorgefunden S58, nicht
+- ✅ **Die eingefrorenen `.lvfx`-Zwillinge stehen auf 27/67** — erledigt S59
+  („Zwillinge durchgesehen + refreezed 67/67“, Changelog 1.14.0; S62 wieder
+  67/67; bereinigt S129) (vorgefunden S58, nicht
   von dort verursacht). `freeze_lvfx_twins.py --verify` meldet durchweg dieselbe
   Abweichung: die Strang-D-Felder `initCode`/`frameCode`/`beatCode` sind seit dem
   Parameter-Skript-Ausbau in jedem Knoten dazugekommen, die Zwillinge aber nie
   nachgezogen worden. Der Prüfstand ist damit blind. Zu tun: einmal durchsehen,
   ob wirklich nur diese Felder dazukamen, dann `--refreeze`. **Kein Zwilling
   enthält Picture II** — der Parser-Fix aus S58 ist nicht beteiligt.
-- 🔧 **Der SuperScope-Randspalten-Fix hat keinen Wächter** (S58). Eine einzelne
+- ✅ **Der SuperScope-Randspalten-Fix hat keinen Wächter** — erledigt S59
+  („Randspalten-Wächter-Sonde (89.)“, Changelog 1.14.0; bereinigt S129) (S58). Eine einzelne
   Bildspalte liegt unter jeder Schwelle der Modul-Sonden-Metrik (Menge 0 · Lage
   1 px · MAE 0,003). Ein Versuch, sie über ein Movement als Verstärker sichtbar zu
   machen, ist gescheitert: die Sammelstelle des Movements liegt selbst auf einer
@@ -5797,6 +5888,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.248.0 | 2026-10-16 | Session 129. **Widersprüche bereinigt** (Liste aus der Übersicht S125, 16 von 18; je Stelle gegen Dokument, Changelog und Code geprüft): §1 Water-Kopf überholt (enabled-Schalter, S74), Modul-Matrix-Reste 43/43, vier VERDECKT-Zeilen ✅ · §3 Feld „Audio“ mit Standard Original, Texturen bleiben lokal (gitignored), Playlist-Anbindung entfällt (S93 C4 a), **die Tabelle der laufenden Kalibrier-Runde stand im eingeklappten „überholt“-Block** — `</details>` an die richtige Stelle, eigener Kopf; Warp-Sonde (🔧) und Flip X/Y (🟡, Wunsch Patrik S75) als eigene Zeilen · §5 Hotkeys: Entscheid S60 nicht umgesetzt — neu 🔧 in §6 · §6 onChange als Song-Slot umgesetzt · §7 Stärke-Regler gebaut (S89), Shadertoy-Modul gebaut (S65), Lizenz-Pflicht umgesetzt, Test-Presets als Feld-Sonden umgesetzt, Movement-Beat-Umkehr entschieden · §8 Oberflächentexte erledigt, `.lvfx`-Zwillinge 67/67 und Randspalten-Wächter seit S59. Entschieden: B1 a (Blur mit Raster nachgemessen, §1: der Befund steht — 320×240 dMean 0,025 / MAE 0,009, gleichmäßiger kleiner Versatz plus Randzeilen, 740×460 OK), B2 a (Vergleichslauf seit `vor-composer` auf `master` nachgeholt: AVS 252 / 252 und MilkDrop 747 / 748 bitgleich, der eine ein Ausreißer eines abgebrochenen Laufs, §7). §6 neu: Idee Patrik — Vocals unterdrücken oder allein behalten (ohne KI: Mitte auslöschen; mit KI: Stems). Dazu F1 a (Patrik): Fenster der Standalones und der Unit-Tests erscheinen auf Bildschirm 2 ohne Fokus (voller Lauf 1279 / 1279 unter Release-clang und Testing-MSVC). |
 | 1.247.0 | 2026-10-16 | Session 129. §7 Loop: die Tests über alle mitgelieferten Loops lesen die Liste aus `asset/Asset.cmake`, Arbeitsdateien prüfen sie nicht mehr (W1 a, W2 a; Loop_Konzept 7e). |
 | 1.246.0 | 2026-10-16 | Session 128. §7 Loop: der Loop hängt nicht mehr am Composer (N1 b); Loop-Kleinkram abgeschlossen. |
 | 1.245.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als Instrumente aus den Aufnahmen, in zwei Kits (C2 a). |
