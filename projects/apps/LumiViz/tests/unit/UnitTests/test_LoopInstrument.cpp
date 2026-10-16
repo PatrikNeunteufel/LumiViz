@@ -388,7 +388,10 @@ TEST_SUITE("LoopInstrument")
             CHECK(instrument.schichten.size() <= static_cast<std::size_t>(kSchichtenMax));
             // (die sechs Drums aus Stufe 11f nicht: sie sind fuer die Note C2 gebaut und tragen, wohin
             // der Schlag gehoert, als Transpose — ihre Tonhoehe prueft der Fall „Loop Instrument 11f")
-            const bool schlag = instrument.art == QStringLiteral("drums");
+            // (S128, Entscheide Patrik C2 a und C2-G a: Cowbell und Clave sind Aufnahmen, ihr Grundton liegt auf der
+            // Note der Loops — 81 und 84 —, nicht auf der Tonhoehe des Schlags; die Werte haelt test_LoopWerte fest)
+            const bool schlag = instrument.art == QStringLiteral("drums") || instrument.name == QStringLiteral("cowbell") ||
+                                instrument.name == QStringLiteral("clave");
             if (!schlag) CHECK(instrument.schichten[0].versatzHalbtoene == 0);
             CHECK(instrument.schichten[0].einsatzMs == 0.0);
             double laengsterAusklang = 0.0;

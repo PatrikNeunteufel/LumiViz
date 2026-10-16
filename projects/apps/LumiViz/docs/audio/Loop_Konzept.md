@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.82.0
+> **Version:** 0.83.0
 > **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3435,8 +3435,28 @@ seitenweise, die Editoren gar nicht.
   Cowbells 274 und 246 ms, die Clave 244 ms, bei −40 dB nach 89 ms; der
   Rauschboden der Aufnahme liegt um −101 dBFS. `CREDITS.md` mit eigenem
   Abschnitt, `THIRD_PARTY_NOTICES.md`, Handbuch 1.177.0, Test
-  `test_LoopSample` (78 Samples). **Nicht gehört.** Offen: C2 — wo die
-  Klänge eingesetzt werden (Instrumente `cowbell`/`clave`, Kits).
+  `test_LoopSample` (78 Samples). **Nicht gehört.**
+- **7c C2 — entschieden (Patrik S128, a), Grundton C2-G a:** die
+  Instrumente `cowbell` und `clave` spielen die Aufnahmen (je eine
+  Sample-Schicht, `make_sample_instruments.py`; die gerechneten aus
+  `make_genres.py` entfallen), Name, Art und Genres bleiben. Der Grundton
+  liegt auf der Note der Loops, nicht auf der gemessenen Tonhöhe (die
+  Cowbell misst YIN B3, die stärksten Linien 458 und 501 Hz): Cowbell 81
+  (Afrobeat 81/84, Reggaeton 79/84 — Verschiebung −2 bis +3 Halbtöne),
+  Clave 84 (Bossa). Verworfen: b (die gerechneten bleiben als `*_synth`),
+  c (nur die Kits); beim Grundton b (84). Kits: Reggaeton perc 3
+  `lib:cowbell`, Hand drums perc 4 `lib:clave`. ✅ **Gebaut (S128):**
+  Hülle Sustain 1, Release 400 ms (die Hülle kürzt den Schlag nicht);
+  Level gegen die gerechneten gemessen — nur ihr Kanal aus den drei Loops
+  gerechnet, die Summe der Beträge vorher/nachher auf 0,1 dB gleich
+  (Cowbell 0,64, Clave 0,49). Kit-Volume aus dem gemessenen Pegel
+  (`lib:cowbell` −19,2 dB, `lib:clave` −19,5 dB bei Volume 1, Release-clang).
+  `loop_werte.txt` neu (die zwei Instrumente; Afrobeat, Reggaeton, Bossa
+  in der Summe unter 0,03 % anders). **Von mir gesetzt:** in
+  `test_LoopInstrument` sind Cowbell und Clave von der Prüfung „klingt auf
+  der gespielten Note“ ausgenommen wie die Drums — Folge von C2-G a.
+  Hörproben unter `.claude/handover/hoerproben_s128/` (vorher, nachher,
+  die Cowbell bei zwei Grundtönen). **Nicht gehört.**
 - Offen: der Namensraum Composer↔loop (Vorlage).
 
 ---
@@ -3566,6 +3586,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.83.0** (S128, 2026-10-16): 7c C2 und C2-G entschieden und gebaut —
+  die Instrumente Cowbell und Clave aus den Aufnahmen, zwei Kits mehr.
 - **0.82.0** (S128, 2026-10-16): 7c C1 entschieden und gebaut — Cowbell
   (OLPC) und Clave (ESMUC, CC0) als mitgelieferte Samples.
 - **0.81.0** (S127, 2026-10-15): 7b entschieden (mit Skizze) und gebaut —

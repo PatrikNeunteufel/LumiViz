@@ -139,6 +139,18 @@ INSTRUMENTE = {
         probe("Flute", "flute_alto", 60, 10, (900, 2600), attack=400, decay=500, sustain=0.9, release=900, pan=-0.25),
         probe("Hum", "voice_female_hum", 72, -38, (1500, 5000), attack=600, decay=500, sustain=0.9, release=1100,
               level=0.6, pan=0.25)),
+    # --- Schlagwerk aus Aufnahmen (S128, Entscheide Patrik C2 a und C2-G a): ersetzen die
+    # gerechneten aus make_genres.py. Der Grundton liegt auf der Note der Loops, nicht auf der
+    # gemessenen Tonhoehe — auf ihm klingt die Aufnahme, wie sie ist: Cowbell 81 (Afrobeat
+    # spielt 81 und 84, Reggaeton 79 und 84), Clave 84 (Bossa). Sustain 1, damit die Huelle den
+    # Schlag nicht kuerzt; nach der Note blendet er in 400 ms aus. Level nach der Messung gegen
+    # die gerechneten (gleiche Summe im Kanal), nicht nach Gehoer.
+    "cowbell": instrument(
+        "Cowbell", 0.64,
+        probe("Bell", "cowbell", 81, attack=0, decay=1, sustain=1.0, release=400)),
+    "clave": instrument(
+        "Clave", 0.49,
+        probe("Wood", "clave", 84, attack=0, decay=1, sustain=1.0, release=400)),
     # --- Drums aus Samples, geschichtet (fuer C2 gebaut)
     "drum_kick_punch": instrument(
         "Punch Kick", 0.6,

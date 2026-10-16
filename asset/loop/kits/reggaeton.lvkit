@@ -2,7 +2,7 @@
     "format": "lumiviz-kit",
     "version": 1,
     "title": "Reggaeton",
-    "description": "For the dembow: 808 kick and snare, a 707 clap, conga and rim.",
+    "description": "For the dembow: 808 kick and snare, a 707 clap, conga, rim and cowbell.",
     "roles": [
         {
             "role": "kick",
@@ -51,6 +51,12 @@
             "sound": "lib:rim",
             "volume": 0.531,
             "pan": -0.3
+        },
+        {
+            "role": "perc 3",
+            "sound": "lib:cowbell",
+            "volume": 0.646,
+            "pan": 0.15
         }
     ]
 }

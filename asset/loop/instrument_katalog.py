@@ -78,9 +78,9 @@ KATALOG = {
     "marimba": ("percussion", "A short sine bar with a mallet click two octaves above."),
     "steel_drum": ("percussion", "A sine with strong overtones, a detuned ring an octave above and a short hit."),
     "vibraphone": ("percussion", "A long sine bar with slow vibrato and a short strike."),
-    "clave": ("percussion", "A very short sine with a tick an octave above; the note sets the pitch of the hit."),
+    "clave": ("percussion", "A recorded stroke of claves (ESMUC, CC0); on C6 it sounds as recorded, other notes shift its pitch."),
     "conga": ("percussion", "A short sine skin with a damped string slap; the note sets the pitch of the hit."),
-    "cowbell": ("percussion", "Two short squares a fifth apart; the note sets the pitch of the hit."),
+    "cowbell": ("percussion", "A recorded cowbell (TamTam Drum Kits, OLPC); on A5 it sounds as recorded, other notes shift its pitch."),
     # --- Drums (S117, Stufe 11f: `make_drums.py`; alle fuer die Note C2 gebaut)
     "drum_kick": ("drums", "A driven sine that drops almost two octaves, with a short noise click. Built for the note C2."),
     "drum_tom": ("drums", "A sine that drops ten semitones, with a short noise click. Built for the note C2."),

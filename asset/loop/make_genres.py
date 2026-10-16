@@ -4,7 +4,8 @@ viele mehr; fehlende Instrumente dazu).
 
     python asset/loop/make_genres.py
 
-Schreibt nach `asset/loop/instruments/*.lvinst` (neunzehn Instrumente) und
+Schreibt nach `asset/loop/instruments/*.lvinst` (siebzehn Instrumente; Cowbell
+und Clave kommen seit S128 aus Samples, `make_sample_instruments.py`) und
 `asset/loop/genres/*.lvloop` (neunzehn Loops). Kein Zufall: zwei Laeufe ergeben
 dieselben Dateien. Massgebend sind die Dateien im Repo, nicht ein neuer Lauf.
 
@@ -101,18 +102,11 @@ INSTRUMENTE = {
         schicht("Ring", "sine", transpose=12, voices=2, detune=18, attack=1, decay=260, sustain=0, release=200, level=0.4),
         schicht("Hit", "triangle", transpose=24, attack=1, decay=30, sustain=0, release=20, level=0.2)),
     # Schlagwerk als Instrument: die Tonhoehe der Note ist die Tonhoehe des Schlags
-    "cowbell": instrument(
-        "Cowbell", 0.6,
-        schicht("Low", "square", attack=1, decay=130, sustain=0, release=60, filterCutoff=4),
-        schicht("High", "square", transpose=7, attack=1, decay=110, sustain=0, release=60, filterCutoff=4, level=0.5)),
+    # (Cowbell und Clave waren bis S128 hier gerechnet — Entscheid Patrik C2 a)
     "conga": instrument(
         "Conga", 0.85,
         schicht("Skin", "sine", harmonics=[0.15], attack=1, decay=150, sustain=0, release=60),
         schicht("Slap", "string", transpose=12, damping=0.94, attack=1, release=30, level=0.35)),
-    "clave": instrument(
-        "Clave", 0.8,
-        schicht("Wood", "sine", harmonics=[0.2], attack=1, decay=45, sustain=0, release=30),
-        schicht("Tick", "triangle", transpose=12, attack=1, decay=18, sustain=0, release=15, level=0.4)),
 }
 
 # --- Bausteine ---------------------------------------------------------------

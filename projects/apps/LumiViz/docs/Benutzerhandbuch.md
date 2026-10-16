@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.177.0
+> **Version:** 1.178.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2919,7 +2919,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Element | Wirkung |
 |---|---|
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
-| **Instrument** | Dreiundneunzig mitgelieferte, nach Namen sortiert; das Fenster **Instruments** (**Browse...**) ordnet sie nach Art: **Keys** (8), **Bass** (12), **Lead** (7), **Pads** (9), **Plucked** (12), **Wind** (7), **Percussion** (10), **Drums** (20), **Unusual** (8). Gerechnet aus Schichten sind etwa Piano, Strings, Violin, Organ, die House-Klänge, Bell, Brass, Super Saw, Kalimba, Marimba und ungewöhnliche wie Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Reverse Swell (schwillt an und bricht ab). **Aus Formen** (Waveform Shape) klingen elf: Heart Pad, Rings Choir, Infinity Drone, Gear Bass, Moon Bass, Star Lead, Bolt Pluck, Flower Flute, Smiley Keys, Atom Bell, Cat. **Aus mitgelieferten Samples** dreizehn: Female Choir, Hum Pad, Vocal Lead, Vocal Chop, Harp, Koto, Dulcimer, Thumb Piano, Shakuhachi, Alto Sax, Alto Flute, Angel Harp, Wind Voices. Bei Schlagwerk wie Cowbell, Conga, Clave ist die Tonhöhe der Note die Tonhöhe des Schlags. Die gerechneten Klänge sind keine Aufnahmen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
+| **Instrument** | Dreiundneunzig mitgelieferte, nach Namen sortiert; das Fenster **Instruments** (**Browse...**) ordnet sie nach Art: **Keys** (8), **Bass** (12), **Lead** (7), **Pads** (9), **Plucked** (12), **Wind** (7), **Percussion** (10), **Drums** (20), **Unusual** (8). Gerechnet aus Schichten sind etwa Piano, Strings, Violin, Organ, die House-Klänge, Bell, Brass, Super Saw, Kalimba, Marimba und ungewöhnliche wie Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Reverse Swell (schwillt an und bricht ab). **Aus Formen** (Waveform Shape) klingen elf: Heart Pad, Rings Choir, Infinity Drone, Gear Bass, Moon Bass, Star Lead, Bolt Pluck, Flower Flute, Smiley Keys, Atom Bell, Cat. **Aus mitgelieferten Samples** fünfzehn: Female Choir, Hum Pad, Vocal Lead, Vocal Chop, Harp, Koto, Dulcimer, Thumb Piano, Shakuhachi, Alto Sax, Alto Flute, Angel Harp, Wind Voices, Cowbell, Clave. Bei gerechnetem Schlagwerk wie der Conga ist die Tonhöhe der Note die Tonhöhe des Schlags; Cowbell und Clave sind Aufnahmen und klingen auf A5 bzw. C6 so, wie sie aufgenommen sind — andere Noten machen den Schlag höher und kürzer oder tiefer und länger. Die gerechneten Klänge sind keine Aufnahmen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
 | Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
@@ -3410,6 +3410,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.178.0 | 2026-10-16 | Session 128. §16 Instrumente: Cowbell und Clave spielen die Aufnahmen (auf A5 bzw. C6 unverändert); die Kits Reggaeton (perc 3 Cowbell) und Hand drums (perc 4 Clave). |
 | 1.177.0 | 2026-10-16 | Session 128. §16 Samples: `cowbell` und `cowbell_tip` (OLPC, CC BY 3.0) und `clave` (ESMUC, CC0) — achtundsiebzig mitgelieferte Samples. |
 | 1.176.0 | 2026-10-15 | Session 127. §16 Loop: Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren — am Namen ziehen oder Rechtsklick *Move … up/down*. |
 | 1.175.0 | 2026-10-15 | Session 127. §16 Loop: spielt das Panel Loop den ganzen Loop, ist er der laufende Song („Loop - <Titel>“ im Panel Player, Tags für Text und Karaoke). |

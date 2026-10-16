@@ -43,7 +43,8 @@ PEGEL_DB = {
     "kit:clap": -18.2, "kit:hat_closed": -18.6, "kit:hat_open": -15.9, "kit:kick": -7.3, "kit:snare": -17.5,
     "kit:tom": -10.7,
     "lib:beatbox_hat_closed": -17.0, "lib:beatbox_hat_open": -9.7, "lib:beatbox_snare": -17.1, "lib:clap_707": -17.2,
-    "lib:conga_high": -21.7, "lib:darbuka_doom": -12.8, "lib:darbuka_tak": -17.6, "lib:djembe_low": -12.3,
+    "lib:clave": -19.5, "lib:cowbell": -19.2,  # S128, Release-clang
+    "lib:conga_high": -21.7,"lib:darbuka_doom": -12.8, "lib:darbuka_tak": -17.6, "lib:djembe_low": -12.3,
     "lib:djembe_slap": -14.6, "lib:hat_707_open": -15.9, "lib:hat_808_closed": -19.7, "lib:kick_909": -13.1,
     "lib:kick_deep": -11.3, "lib:rim": -17.5, "lib:snap": -26.9, "lib:snare_808": -16.9, "lib:snare_909": -12.9,
     "lib:tambourine": -21.2, "lib:voice_female_gliss": -7.6, "lib:voice_male_hey": -13.5,
@@ -115,9 +116,10 @@ KITS = {
     "electro": kit("Electro", "Layered drums: punch kick, fat snare, clap stack and hat shake.", [
         ("kick", "drum_kick_punch"), ("snare", "drum_snare_fat"), ("clap", "drum_clap_stack"), ("hat", "drum_hat_shake"),
         ("open hat", "drum_hat_open"), ("tom 1", "drum_tom_low"), ("tom 2", "drum_tom_high"), ("crash", "drum_crash")]),
-    "hand_drums": kit("Hand drums", "Djembe, conga, darbuka, tambourine and shaker; kick and snare are the low and the bright stroke.", [
+    # S128 (Entscheid Patrik C2 a): Hand drums mit Clave als perc 4, Reggaeton mit Cowbell als perc 3
+    "hand_drums": kit("Hand drums", "Djembe, conga, darbuka, claves, tambourine and shaker; kick and snare are the low and the bright stroke.", [
         ("kick", "lib:djembe_low"), ("snare", "lib:djembe_slap"), ("hat", "drum_shaker"), ("open hat", "lib:tambourine"),
-        ("perc 1", "lib:conga_high"), ("perc 2", "lib:darbuka_doom"), ("perc 3", "lib:darbuka_tak")]),
+        ("perc 1", "lib:conga_high"), ("perc 2", "lib:darbuka_doom"), ("perc 3", "lib:darbuka_tak"), ("perc 4", "lib:clave")]),
     "beatbox": kit("Beatbox", "A recorded human beatbox with a sine sub under the kick, and a shouted hey.", [
         ("kick", "drum_beatbox_kick"), ("snare", "lib:beatbox_snare"), ("hat", "lib:beatbox_hat_closed"),
         ("open hat", "lib:beatbox_hat_open"), ("fx", "lib:voice_male_hey")]),
@@ -127,9 +129,9 @@ KITS = {
     "reggae": kit("Reggae", "For the one drop: kick and rim shot together on the three.", [
         ("kick", "drum_kick"), ("snare", "kit:snare"), ("rim", "lib:rim"), ("hat", "lib:hat_808_closed"),
         ("open hat", "drum_hat_open"), ("perc 1", "lib:tambourine"), ("tom 1", "drum_tom_high")]),
-    "reggaeton": kit("Reggaeton", "For the dembow: 808 kick and snare, a 707 clap, conga and rim.", [
+    "reggaeton": kit("Reggaeton", "For the dembow: 808 kick and snare, a 707 clap, conga, rim and cowbell.", [
         ("kick", "drum_kick_808"), ("snare", "lib:snare_808"), ("clap", "lib:clap_707"), ("hat", "drum_hat_closed"),
-        ("open hat", "lib:hat_707_open"), ("perc 1", "lib:conga_high"), ("perc 2", "lib:rim")]),
+        ("open hat", "lib:hat_707_open"), ("perc 1", "lib:conga_high"), ("perc 2", "lib:rim"), ("perc 3", "lib:cowbell")]),
     "strange": kit("Strange", "Beatbox, snaps, a gliding voice, a cat and a bell made of shapes.", [
         ("kick", "drum_beatbox_kick"), ("snare", "lib:snap"), ("hat", "lib:beatbox_hat_closed"), ("open hat", "drum_crash"),
         ("perc 1", "shape_cat"), ("perc 2", "lib:voice_female_gliss"), ("fx", "lib:voice_male_hey"),
