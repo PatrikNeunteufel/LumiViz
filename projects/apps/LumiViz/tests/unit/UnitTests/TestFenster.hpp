@@ -36,22 +36,28 @@ inline QScreen* bildschirm()
     return nullptr;
 }
 
-/// Vor `show()` rufen: Fenster oben links auf den Bildschirm der Referenzlaeufe.
+/// Vor `show()` rufen: Fenster oben links auf den Bildschirm der Referenzlaeufe,
+/// und ohne den Fokus zu nehmen (Entscheid Patrik S129, F1 a — ein Lauf soll die
+/// Arbeit am anderen Bildschirm nicht stoeren). Ein Fenster der Tests nimmt
+/// keine Tasten von Hand an; Tests schicken ihre Ereignisse direkt.
 inline void platziere(QWindow& fenster)
 {
     if (QScreen* s = bildschirm())
     {
         fenster.setScreen(s);
         fenster.setPosition(s->geometry().topLeft());
+        fenster.setFlag(Qt::WindowDoesNotAcceptFocus);
     }
 }
 
+/// Wie oben; ein Widget erscheint nur ohne Aktivierung, ein Klick aktiviert es.
 inline void platziere(QWidget& widget)
 {
     if (QScreen* s = bildschirm())
     {
         widget.setScreen(s);
         widget.move(s->geometry().topLeft());
+        widget.setAttribute(Qt::WA_ShowWithoutActivating);
     }
 }
 

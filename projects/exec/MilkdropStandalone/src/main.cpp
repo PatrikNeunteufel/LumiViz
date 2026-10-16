@@ -101,6 +101,10 @@ void refBildschirmAnwenden(QWindow& window)
     {
         if (screen->geometry().topLeft() != ecke) continue;
         window.setScreen(screen);
+        // ohne Fokus (Entscheid Patrik S129, F1 a): der Lauf soll die Arbeit am
+        // anderen Bildschirm nicht stoeren; das Werkzeug nimmt keine Tasten an.
+        // Vor create(): das Flag gehoert zum nativen Fenster.
+        window.setFlag(Qt::WindowDoesNotAcceptFocus);
         // create() zuerst: erst das native Fenster kennt seine Rahmenmasse —
         // sonst ragt die Titelleiste 31 px ueber den Monitor hinaus (S81)
         window.create();
