@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.243.0
-> **Datum:** 2026-10-15 (Session 126)
+> **Version:** 1.244.0
+> **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2398,7 +2398,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
     Metal) und neunzehn Instrumente dafür (neunundvierzig insgesamt) —
     ⬜ Liste 10, S19 bis S21 und U24; das Kit hat nur sechs Klänge, Cowbell,
     Conga und Clave sind deshalb Instrumente (🔧 ein größeres Kit wäre der
-    sauberere Weg)
+    sauberere Weg). ✅ S128 (C1 a): `lib:cowbell`, `lib:cowbell_tip`
+    (OLPC) und `lib:clave` (ESMUC, CC0) sind mitgeliefert; 🔧 offen C2 —
+    ob die Instrumente `cowbell`/`clave` und Kits sie nutzen
   - ✅ **12 Effekte am Clip** (S113; aus „Hall und Echo am Muster", E1 a) —
     **gebaut:** Entscheide **E2 b** (jeder Clip im Loop-Panel trägt eigene
     Effekte, für Drumkit- und Instrument-Clips gleich), **F2 a** (Feld
@@ -5792,6 +5794,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.244.0 | 2026-10-16 | Session 128. §7 Loop: Cowbell und Clave als mitgelieferte Samples (C1 a). |
 | 1.243.0 | 2026-10-15 | Session 127. §7 Loop: 7b (Kanäle und Spuren umsortieren) entschieden und gebaut. |
 | 1.242.0 | 2026-10-15 | Session 127. §7 Loop: Kleinkram 3b bis 6 erledigt, 7a (Loop allein als Song) entschieden und gebaut. |
 | 1.241.0 | 2026-10-15 | Session 127. §7: Mitlaufen der Loop-Fenster entschieden (W1 a mit Kaskade, W2 a, W3 a) und gebaut; Idee Spielweisen der Saiteninstrumente aufgenommen. |

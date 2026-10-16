@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.176.0
-> **Datum:** 2026-10-15
+> **Version:** 1.177.0
+> **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2770,7 +2770,7 @@ Die Auswahl **Sound** bietet:
 | Eintrag | Wirkung |
 |---|---|
 | unter **Kit** | Die Klänge des mitgelieferten Kits |
-| unter **Samples** | Die mitgelieferten Samples: Stimmen, Beatbox, Drum-Maschinen, Schlagwerk und Instrumente mit Ton — Aufnahmen aus der OLPC-Sammlung unter CC BY 3.0 —, dazu akustische Schlagzeug-Anschläge `drs_…` und `crocell_…` in Stereo aus zwei Kits für DrumGizmo unter CC BY 4.0. Ihre Urheber stehen in `asset\loop\samples\CREDITS.md` neben der Exe; wer die Schlagzeug-Klänge in einem Stück verwendet, nennt sie dort, wo auch andere Mitwirkende genannt werden. Wie das Kit lassen sie sich nicht überschreiben — bearbeitet (Fenster **Edit sample**) wird eine Kopie unter **My samples** |
+| unter **Samples** | Die mitgelieferten Samples: Stimmen, Beatbox, Drum-Maschinen, Schlagwerk (darunter `cowbell`, `cowbell_tip` und `clave`) und Instrumente mit Ton — Aufnahmen aus der OLPC-Sammlung unter CC BY 3.0, die Clave aus einer Aufnahme der Musikhochschule ESMUC unter CC0 —, dazu akustische Schlagzeug-Anschläge `drs_…` und `crocell_…` in Stereo aus zwei Kits für DrumGizmo unter CC BY 4.0. Ihre Urheber stehen in `asset\loop\samples\CREDITS.md` neben der Exe; wer die Schlagzeug-Klänge in einem Stück verwendet, nennt sie dort, wo auch andere Mitwirkende genannt werden. Wie das Kit lassen sie sich nicht überschreiben — bearbeitet (Fenster **Edit sample**) wird eine Kopie unter **My samples** |
 | unter **My samples** | Deine eigenen Samples (kopierte Dateien und Aufnahmen). Die Überschrift fehlt, solange es keine gibt |
 | unter **File** | Die Tondatei an freiem Ort, die die Spur gerade nennt |
 | **Instrument...** | Öffnet das Fenster **Instruments** für diese Spur. **Use** dort setzt das Instrument in die Spur |
@@ -3410,6 +3410,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.177.0 | 2026-10-16 | Session 128. §16 Samples: `cowbell` und `cowbell_tip` (OLPC, CC BY 3.0) und `clave` (ESMUC, CC0) — achtundsiebzig mitgelieferte Samples. |
 | 1.176.0 | 2026-10-15 | Session 127. §16 Loop: Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren — am Namen ziehen oder Rechtsklick *Move … up/down*. |
 | 1.175.0 | 2026-10-15 | Session 127. §16 Loop: spielt das Panel Loop den ganzen Loop, ist er der laufende Song („Loop - <Titel>“ im Panel Player, Tags für Text und Karaoke). |
 | 1.174.0 | 2026-10-15 | Session 127. §16 Loop: die Marke läuft mit — in den Editoren beim Play des ganzen Loops und wenn der Composer den offenen Loop spielt; NEU Haken **Scroll with playhead** im Panel Loop. |

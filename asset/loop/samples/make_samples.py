@@ -1,11 +1,16 @@
 """Die mitgelieferten Samples aus den Originalen schreiben (S123; Entscheide Patrik 1 a und 2 a).
 
-    python asset/loop/samples/make_samples.py <ordner-mit-den-originalen>
+    python asset/loop/samples/make_samples.py <ordner-mit-den-originalen> <Clave_son_2-3.wav>
 
 Die Originale stammen aus der OLPC-Sammlung auf archive.org (CC BY 3.0, die Lizenz steht je
 Eintrag in den Metadaten) und liegen NICHT im Repo; geladen werden sie einzeln aus den ZIPs der
 Eintraege, Adresse je Datei unten in `QUELLEN` (`<eintrag>/<zip>/<pfad>`). Im Ordner heisst ein
-Original `<eintrag>__<datei>.wav` — so, wie es die Sitzung S123 abgelegt hat.
+Original `<eintrag>__<datei>.wav` — so, wie es die Sitzung S123 abgelegt hat (seit S128 liegen
+sie unter `…/Visuals_Project/cmake/OLPC`).
+
+Die Clave (S128, Entscheid Patrik C1 a) ist ein einzelner Schlag aus `Clave son 2-3.wav` von
+Wikimedia Commons (ESMUC, CC0; Original unter `…/Visuals_Project/cmake/CommonsClave`), siehe
+`CLAVE`.
 
 Je Sample: Stille an den Raendern weg (Schwelle -50 dB, davor 2 ms stehen gelassen), am Ende
 10 ms ausgeblendet, die Spitze auf 0,89 (wie die Klaenge des Kits), Mono, 16 Bit, 44100 Hz.
@@ -56,6 +61,8 @@ QUELLEN = {
     "djembe_low": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/djembe_low.wav", "TamTam Drum Kits", "djembe, low stroke", False),
     "djembe_slap": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/djembe_slap.wav", "TamTam Drum Kits", "djembe, slap", False),
     "conga_high": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/Conga aigu ouvert.wav", "TamTam Drum Kits", "high conga, open", False),
+    "cowbell": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/cowbell.wav", "TamTam Drum Kits", "cowbell", False),
+    "cowbell_tip": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/cowbell_tip.wav", "TamTam Drum Kits", "cowbell, \"tip\" stroke", False),
     "darbuka_doom": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/darbuka_doom.wav", "TamTam Drum Kits", "darbuka, doum", False),
     "darbuka_tak": ("TamTamDrumKits", "TamTamDrumKits44.zip", "tamtamDrumKits44/darbuka_tak.wav", "TamTam Drum Kits", "darbuka, tak", False),
     "kick_deep": ("MattLange", "MattLange44.zip", "MattLange44/kick1.wav", "Matt Lange", "deep electronic kick", False),
@@ -71,7 +78,20 @@ QUELLEN = {
     "flute_alto": ("OpenPathMusic44V2", "OpenPathMusic44V2.zip", "OpenPathMusic44V2/flute-alto-C-vib.wav", "OpenPathMusic", "alto flute, one note with vibrato", True),
 }
 
-NOTEN = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+# Die Clave: ein Schlag aus einem gespielten Son-Muster (2-3). Gemessen S128: Rauschboden um
+# -101 dBFS, ein normaler Schlag um -25 dBFS klingt in 90 bis 150 ms ab, bis zum naechsten sind es
+# 500 bis 1000 ms. Genommen wird der Anschlag im Fenster unten (der vierte der Aufnahme, 751 ms
+# frei), davon 400 ms; danach wie die anderen geschnitten.
+CLAVE = {
+    "name": "clave",
+    "fenster_s": (1.95, 2.20),
+    "laenge_s": 0.40,
+    "was": "claves, one stroke (cut from a played son clave pattern)",
+    "urheber": "Escola Superior de Música de Catalunya (ESMUC)",
+    "quelle": "https://commons.wikimedia.org/wiki/File:Clave_son_2-3.wav",
+}
+
+NOTEN =["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 def lies(datei):
@@ -93,6 +113,16 @@ def schneide(x):
     aus = min(len(y), int(0.010 * RATE))
     y[-aus:] *= np.linspace(1.0, 0.0, aus)
     return y * (SPITZE / np.abs(y).max())
+
+
+def clave_schlag(datei):
+    """Den Schlag im Fenster aus der Aufnahme nehmen: ab 2 ms vor dem Anschlag `laenge_s` lang."""
+    x = lies(datei)  # 24 Bit: der Massstab ist gleich, `schneide` hebt auf die Spitze
+    a, b = (int(t * RATE) for t in CLAVE["fenster_s"])
+    fenster = np.abs(x[a:b])
+    anschlag = a + int(np.nonzero(fenster > 0.1 * fenster.max())[0][0])
+    anfang = max(0, anschlag - int(0.002 * RATE))
+    return schneide(x[anfang:anfang + int(CLAVE["laenge_s"] * RATE)])
 
 
 def grundton(x):
@@ -119,7 +149,7 @@ def grundton(x):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         raise SystemExit(__doc__)
     roh = Path(sys.argv[1])
     zeilen = []
@@ -138,6 +168,9 @@ def main():
         print(f"{name:20s} {info}")
         zeilen.append(f"| `{name}.wav` | {was} | {urheber} | [{eintrag}](https://archive.org/details/{eintrag}), "
                       f"`{zip_}` → `{pfad}` |")
+    y = clave_schlag(Path(sys.argv[2]))
+    wavfile.write(HIER / f"{CLAVE['name']}.wav", RATE, np.round(y * 32767).astype(np.int16))
+    print(f"{CLAVE['name']:20s} {len(y) / RATE:5.2f} s")
     # was ab der Marke steht, schreibt make_drumgizmo.py — es bleibt stehen
     marke = "<!-- DrumGizmo: ab hier schreibt make_drumgizmo.py -->"
     alt = (HIER / "CREDITS.md").read_text(encoding="utf-8") if (HIER / "CREDITS.md").exists() else ""
@@ -150,9 +183,15 @@ def main():
         "**Creative Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>).\n\n"
         "LumiViz changed them: silence at the ends removed, a 10 ms fade at the end, the level raised to a\n"
         "peak of 0.89, written as mono, 16 bit, 44100 Hz. In LumiViz a sample `name.wav` is called `lib:name`.\n\n"
-        "| File | What | By | Source |\n|---|---|---|---|\n" + "\n".join(zeilen) + "\n" + hinten,
+        "| File | What | By | Source |\n|---|---|---|---|\n" + "\n".join(zeilen) + "\n\n"
+        "## Claves — Wikimedia Commons\n\n"
+        "This sound comes from a recording on Wikimedia Commons, released under **CC0 1.0** (public domain\n"
+        "dedication, <https://creativecommons.org/publicdomain/zero/1.0/>). LumiViz took one stroke from it\n"
+        "and changed it like the sounds above.\n\n"
+        "| File | What | By | Source |\n|---|---|---|---|\n"
+        f"| `{CLAVE['name']}.wav` | {CLAVE['was']} | {CLAVE['urheber']} | <{CLAVE['quelle']}> |\n" + hinten,
         encoding="utf-8", newline="\n")
-    print(len(QUELLEN), "Samples, CREDITS.md")
+    print(len(QUELLEN) + 1, "Samples, CREDITS.md")
 
 
 if __name__ == "__main__":

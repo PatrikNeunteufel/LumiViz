@@ -304,9 +304,14 @@ Rändern weg, Spitze 0,89.
 - **`samples/CREDITS.md`** nennt je Datei Urheber, Eintrag und Datei im ZIP —
   sie geht mit neben die Exe (`asset/Asset.cmake`), die Lizenz verlangt es.
   `THIRD_PARTY_NOTICES.md` führt die Samples.
-- **`samples/make_samples.py <Ordner der Originale>`** schreibt alle neu und
-  gibt die gemessene Tonhöhe aus. Die Originale liegen **nicht** im Repo; ihre
-  Adressen stehen im Skript.
+- **`samples/make_samples.py <Ordner der Originale> <Clave_son_2-3.wav>`**
+  schreibt alle neu und gibt die gemessene Tonhöhe aus. Die Originale liegen
+  **nicht** im Repo (seit S128 unter `…\Visuals_Project\cmake\OLPC` und
+  `…\cmake\CommonsClave`); ihre Adressen stehen im Skript.
+- **S128 (Entscheid Patrik C1 a):** dazu `cowbell` und `cowbell_tip` aus
+  TamTam Drum Kits (OLPC, CC BY 3.0) und `clave` — ein Schlag aus *Clave son
+  2-3* der ESMUC auf Wikimedia Commons (**CC0**; in OLPC gibt es keine Clave,
+  gesucht in allen 78 Einträgen). Achtundsiebzig Samples insgesamt.
 - **Gemessen, nicht gehört:** `voice_male_aah` und `voice_male_oo` gleiten in
   1,5 s um rund fünfzehn Halbtöne nach unten, `voice_male_la` schwankt um
   ±0,7 — für gehaltene Töne taugen sie nicht, es gibt deshalb keinen

@@ -521,13 +521,16 @@ TEST_SUITE("Loop Sample")
         REQUIRE_FALSE(bibliothekOrdner().isEmpty());
         const QStringList alle = bibliotheksKlaenge();
         // wer ein Sample dazulegt, traegt es in asset/loop/samples/make_samples.py ein und stellt die Zahl nach
-        CHECK(alle.size() == 75);  // 38 aus OLPC (S123), 37 aus DrumGizmo (S124, make_drumgizmo.py)
+        // 38 aus OLPC (S123), 37 aus DrumGizmo (S124, make_drumgizmo.py), S128 (C1 a) zwei Cowbells aus OLPC
+        // und die Clave aus Wikimedia Commons (CC0)
+        CHECK(alle.size() == 78);
         CHECK(std::is_sorted(alle.begin(), alle.end()));
         QFile credits(QDir(bibliothekOrdner()).filePath(QStringLiteral("CREDITS.md")));
         REQUIRE(credits.open(QIODevice::ReadOnly));
         const QString nennungen = QString::fromUtf8(credits.readAll());
         CHECK(nennungen.contains(QStringLiteral("Creative Commons Attribution 3.0")));
         CHECK(nennungen.contains(QStringLiteral("Creative Commons Attribution 4.0 International")));  // DrumGizmo
+        CHECK(nennungen.contains(QStringLiteral("CC0 1.0")));  // die Clave
         for (const QString& klang : alle)
         {
             CAPTURE(klang.toStdString());
@@ -538,6 +541,9 @@ TEST_SUITE("Loop Sample")
         }
         CHECK(alle.contains(QStringLiteral("lib:voice_female_aah")));
         CHECK(alle.contains(QStringLiteral("lib:clap_707")));
+        CHECK(alle.contains(QStringLiteral("lib:cowbell")));
+        CHECK(alle.contains(QStringLiteral("lib:cowbell_tip")));
+        CHECK(alle.contains(QStringLiteral("lib:clave")));
 
         // --- im Loop: eine Drum-Spur nennt das Sample beim Namen, nie als Pfad
         QJsonArray zeile;

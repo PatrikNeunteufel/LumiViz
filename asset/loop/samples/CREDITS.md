@@ -37,6 +37,8 @@ peak of 0.89, written as mono, 16 bit, 44100 Hz. In LumiViz a sample `name.wav` 
 | `djembe_low.wav` | djembe, low stroke | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/djembe_low.wav` |
 | `djembe_slap.wav` | djembe, slap | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/djembe_slap.wav` |
 | `conga_high.wav` | high conga, open | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/Conga aigu ouvert.wav` |
+| `cowbell.wav` | cowbell | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/cowbell.wav` |
+| `cowbell_tip.wav` | cowbell, "tip" stroke | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/cowbell_tip.wav` |
 | `darbuka_doom.wav` | darbuka, doum | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/darbuka_doom.wav` |
 | `darbuka_tak.wav` | darbuka, tak | TamTam Drum Kits | [TamTamDrumKits](https://archive.org/details/TamTamDrumKits), `TamTamDrumKits44.zip` → `tamtamDrumKits44/darbuka_tak.wav` |
 | `kick_deep.wav` | deep electronic kick | Matt Lange | [MattLange](https://archive.org/details/MattLange), `MattLange44.zip` → `MattLange44/kick1.wav` |
@@ -49,6 +51,16 @@ peak of 0.89, written as mono, 16 bit, 44100 Hz. In LumiViz a sample `name.wav` 
 | `thumb_piano.wav` | thumb piano, one note | Berklee (Forsyth) | [Berklee44Forsyth](https://archive.org/details/Berklee44Forsyth), `Berklee44Forsyth.zip` → `Berklee44Forsyth/thumbpiano_do.wav` |
 | `sax_alto.wav` | alto saxophone, one note with vibrato | OpenPathMusic | [OpenPathMusic44V2](https://archive.org/details/OpenPathMusic44V2), `OpenPathMusic44V2.zip` → `OpenPathMusic44V2/saxophone-alto-C-octave1-vib.wav` |
 | `flute_alto.wav` | alto flute, one note with vibrato | OpenPathMusic | [OpenPathMusic44V2](https://archive.org/details/OpenPathMusic44V2), `OpenPathMusic44V2.zip` → `OpenPathMusic44V2/flute-alto-C-vib.wav` |
+
+## Claves — Wikimedia Commons
+
+This sound comes from a recording on Wikimedia Commons, released under **CC0 1.0** (public domain
+dedication, <https://creativecommons.org/publicdomain/zero/1.0/>). LumiViz took one stroke from it
+and changed it like the sounds above.
+
+| File | What | By | Source |
+|---|---|---|---|
+| `clave.wav` | claves, one stroke (cut from a played son clave pattern) | Escola Superior de Música de Catalunya (ESMUC) | <https://commons.wikimedia.org/wiki/File:Clave_son_2-3.wav> |
 
 <!-- DrumGizmo: ab hier schreibt make_drumgizmo.py -->
 

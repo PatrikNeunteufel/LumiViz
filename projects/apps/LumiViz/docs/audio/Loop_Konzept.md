@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.81.0
-> **Datum:** 2026-10-14 (Session 124)
+> **Version:** 0.82.0
+> **Datum:** 2026-10-16 (Session 128)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3421,9 +3421,23 @@ seitenweise, die Editoren gar nicht.
   Ziehen gebe es in der Basis `Achse` schon — falsch, sie steckt in der
   Zeitachse des Composers; für die Taktachse wird sie nach diesem Vorbild
   gebaut.)
-- Offen: 7 zwei Vorlagen einzeln (Loop allein als Song, Kanäle
-  und Spuren umsortieren, Cowbell/Clave als Samples, Namensraum
-  Composer↔loop).
+- **7c Cowbell/Clave als Samples — C1 entschieden (Patrik S128, a):** die
+  Cowbell aus TamTam Drum Kits (OLPC, CC BY 3.0: `cowbell.wav`,
+  `cowbell_tip.wav`, einzeln aus dem ZIP), die Clave als ein Schlag aus
+  *Clave son 2-3* der ESMUC auf Wikimedia Commons (CC0, 34 MB, Original
+  außerhalb des Repos). In OLPC gibt es keine Clave: gesucht in den
+  ZIP-Verzeichnissen aller 78 Einträge des Hochladers `sj@laptop.org`
+  (nur Clavichord, Woodblock). Verworfen: b (`Claves.ogg`, gemeinfrei, aber
+  Ogg und ohne nachvollziehbaren Urheber), c (Clave bleibt gerechnet).
+  ✅ **Gebaut (S128):** `lib:cowbell`, `lib:cowbell_tip`, `lib:clave` —
+  `make_samples.py` schneidet den Schlag (Fenster 1,95–2,20 s, 400 ms, dann
+  wie die anderen); die 38 alten kommen byte-gleich heraus. Gemessen: die
+  Cowbells 274 und 246 ms, die Clave 244 ms, bei −40 dB nach 89 ms; der
+  Rauschboden der Aufnahme liegt um −101 dBFS. `CREDITS.md` mit eigenem
+  Abschnitt, `THIRD_PARTY_NOTICES.md`, Handbuch 1.177.0, Test
+  `test_LoopSample` (78 Samples). **Nicht gehört.** Offen: C2 — wo die
+  Klänge eingesetzt werden (Instrumente `cowbell`/`clave`, Kits).
+- Offen: der Namensraum Composer↔loop (Vorlage).
 
 ---
 
@@ -3552,6 +3566,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.82.0** (S128, 2026-10-16): 7c C1 entschieden und gebaut — Cowbell
+  (OLPC) und Clave (ESMUC, CC0) als mitgelieferte Samples.
 - **0.81.0** (S127, 2026-10-15): 7b entschieden (mit Skizze) und gebaut —
   Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren.
 - **0.80.0** (S127, 2026-10-15): Kleinkram 5 erledigt (Debug-MSVC, voller

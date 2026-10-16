@@ -232,15 +232,21 @@ Wird beim Konfigurieren in der in `cmakecraft.pin` festgelegten Version geholt.
 
 ---
 
-## Mitgelieferte Klänge — `asset/loop/samples/` (CC BY 3.0, CC BY 4.0)
+## Mitgelieferte Klänge — `asset/loop/samples/` (CC BY 3.0, CC BY 4.0, CC0)
 
-Achtunddreißig Aufnahmen aus den **OLPC Sound Samples** (One Laptop per Child
+Vierzig Aufnahmen aus den **OLPC Sound Samples** (One Laptop per Child
 music library, zusammengestellt von Richard Boulanger und vielen Beitragenden
 am Berklee College of Music), veröffentlicht auf archive.org unter **Creative
 Commons Attribution 3.0** (<https://creativecommons.org/licenses/by/3.0/>);
-die Lizenz steht je Eintrag in dessen Metadaten (geprüft S123). LumiViz hat
-sie bearbeitet: Stille an den Rändern weg, am Ende ausgeblendet, Pegel
-angehoben, Mono, 16 Bit, 44100 Hz.
+die Lizenz steht je Eintrag in dessen Metadaten (geprüft S123, für die zwei
+Cowbells aus TamTam Drum Kits S128). LumiViz hat sie bearbeitet: Stille an den
+Rändern weg, am Ende ausgeblendet, Pegel angehoben, Mono, 16 Bit, 44100 Hz.
+
+Ein Schlag Claves (`clave`), geschnitten aus *Clave son 2-3* der Escola
+Superior de Música de Catalunya (ESMUC) auf Wikimedia Commons
+(<https://commons.wikimedia.org/wiki/File:Clave_son_2-3.wav>), freigegeben
+unter **CC0 1.0** (<https://creativecommons.org/publicdomain/zero/1.0/>; Feld
+der Dateiseite, geprüft S128). Bearbeitet wie die OLPC-Aufnahmen.
 
 Siebenunddreißig Anschläge (`drs_*`, `crocell_*`) aus zwei Schlagzeug-Kits für
 **DrumGizmo** (<https://drumgizmo.org>): **DRSKit 2.1** (DrumGizmo-Team und
