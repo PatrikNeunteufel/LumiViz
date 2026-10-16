@@ -1,6 +1,6 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.95.0
+> **Version:** 0.96.0
 > **Datum:** 2026-10-16 (Session 130)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
@@ -1569,6 +1569,21 @@ eines Kanals, dazu ein Tastenkürzel.
 - **Darstellung:** blasse Schrift und „(off)" hinter dem Namen; die Farbe wie
   bei einem ausgeschalteten Kanal (bei *Composer off* sind alle Clips
   gedämpft, dann unterscheidet nur die Schrift).
+- **Im Panel Player (S130, Sichttest 11 C1, Entscheid Patrik C1 c):** liegt
+  an der Stelle kein gespielter Song, aber ein ausgeschalteter Ton-Clip, zeigt
+  das Panel ihn wie die Zeitachse: „Composer - <Titel> (off)", sein Künstler,
+  der Balken läuft durch ihn, ein Klick in den Balken springt in ihm. Er ist
+  **kein Songwechsel**: ein eigenes Ereignis (`AusgeschalteterClipEvent` in
+  `composer/AppAnbindung.hpp`), Tag View, Karaoke, Songtext, Audio Browser
+  und die Stelle der Visuals bleiben beim letzten gespielten Song. Ist er
+  vorbei, holt das Panel den laufenden Song aus `tonStand()`; in einer Lücke
+  ohne Clip gilt weiter S98 (der letzte Song steht). Mehrere ausgeschaltete
+  Clips an einer Stelle: der des obersten Kanals. Titel und Länge liest die
+  Tonführung einmal beim Eintritt (eine Datei kurz geöffnet, ein Loop
+  gelesen). Verworfen: a (die Regel aus S98 auch hier — dann nannte das Panel
+  einen vorbeigegangenen Song, während die Achse „(off)" zeigt), b (in jeder
+  Lücke kein Song). Tests: „S130 C1 c" in `test_ComposerTonfuehrung` und
+  `test_ComposerNahtTon`.
 - **Datei:** `Clip::an`, in der `.lvcomp` `"enabled": false` nur, wenn aus;
   Fassung bleibt 2.
 - **Tests:** „S126 D1 Clip aus" (`test_ComposerTonfuehrung`), „S126 D1 GL"
@@ -1951,6 +1966,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.96.0 | 2026-10-16 | Session 130 — §9h: Sichttest 11 C1, Entscheid **C1 c**: das Panel Player zeigt einen ausgeschalteten Clip an der Stelle mit „(off)", ohne Songwechsel |
 | 0.95.0 | 2026-10-16 | Session 130 — §9g: Sichttest 11 L2 gemessen (der Limiter ohne Vorschau knackte), Entscheid **L2-1 b**: 5 ms Vorschau, Verzögerung nur bei gesetztem Haken |
 | 0.94.0 | 2026-10-16 | Session 128 — §9f: der Loop hängt nicht mehr am Composer (N1 b: `loop/ComposerAbfragen`, `UI/widgets/Farbreihen`) |
 | 0.93.0 | 2026-10-15 | Session 127 — §9g G5-4: Nachtrag Patrik, der Knopf Match loudness ist immer da |

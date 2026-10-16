@@ -674,4 +674,121 @@ TEST_SUITE("ComposerNahtTon")
         for (const QSlider* s : panel.findChildren<QSlider*>())
             if (s->maximum() == 1000) CHECK(s->value() == 0);
     }
+
+    TEST_CASE("S130 C1 c: das Player-Panel zeigt einen ausgeschalteten Clip mit (off) — Tag View und Stelle bleiben beim Song")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        ChainNode root;
+        root.params = ListParams{};
+        const QString preset = dir.filePath(QStringLiteral("Leer.lvfx"));
+        REQUIRE(saveChainToFile(root, preset));
+        // A1: eins 0–20 s · A2: zwei 20–40 s, ausgeschaltet · danach eine Luecke bis 60 s
+        Komposition k = neueKomposition();
+        REQUIRE(fuegeClipEin(k, 0, preset, 0, 60000) == 0);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 1);
+        REQUIRE(fuegeSongEin(k, 1, kEins, 0, 20000) == 0);
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 2);
+        REQUIRE(fuegeSongEin(k, 2, kZwei, 20000, 20000) == 0);
+        k.kanaele[2].clips[0].an = false;
+        const QString datei = dir.filePath(QStringLiteral("aus.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<IEventBus>([](ServiceContainer&) { return std::make_unique<EventBus>(); });
+        dienste.registerSingleton<IAudioPlayer>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new PappPlayer); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new PappMischEngine); });
+        IEventBus* bus = dienste.tryResolve<IEventBus>();
+        auto* engine = dynamic_cast<PappMischEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(bus != nullptr);
+        REQUIRE(engine != nullptr);
+        engine->laengen = {{kEins, 300000}, {kZwei, 300000}};
+        // was Karaoke, Tag View und die Visuals erfahren
+        QString gemeldet;
+        int stelleGemeldet = -1;
+        const auto abo =
+            bus->subscribeScoped<TrackChangedEvent>([&](const TrackChangedEvent& e) { gemeldet = e.track.filePath; });
+        const auto aboStelle = bus->subscribeScoped<PlaybackPositionEvent>(
+            [&](const PlaybackPositionEvent& e) { stelleGemeldet = e.positionMs; });
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        PlayerPanel panel(dienste);
+        testfenster::platziere(panel);
+        panel.show();
+        const auto titel = [&]() -> QString {
+            for (const QLabel* l : panel.findChildren<QLabel*>())
+                if (l->text().startsWith(QStringLiteral("Composer - "))) return l->text();
+            return {};
+        };
+        QSlider* balken = nullptr;
+        for (QSlider* s : panel.findChildren<QSlider*>())
+            if (s->maximum() == 1000) balken = s;
+        REQUIRE(balken != nullptr);
+
+        Sitzung& sitzung = Sitzung::fuer(widget);
+        REQUIRE(sitzung.lade(datei));
+        sitzung.setAn(true);
+        REQUIRE(warte([&] { return sitzung.fuehrtTon(); }));
+        sitzung.springe(5000);
+        sitzung.spiele();
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - eins"); }));
+        REQUIRE(warte([&] { return stelleGemeldet >= 5000; }));
+
+        // im ausgeschalteten Clip: das Panel nennt ihn mit (off), der Balken laeuft durch ihn
+        sitzung.springe(25000);
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - zwei (off)"); }));
+        REQUIRE(warte([&] { return balken->value() >= 16; }));  // 5 s von 300 s
+        const int balkenVorher = balken->value();
+        QThread::msleep(400);
+        REQUIRE(warte([&] { return balken->value() > balkenVorher; }));
+        // nichts davon ging an Karaoke, Tag View oder die Stelle der Visuals
+        CHECK(gemeldet == kEins);
+        CHECK(stelleGemeldet < 20000);
+        CHECK(engine->quelle(kZwei) == INVALID_STREAM);  // er klingt nicht
+        // ein Panel, das erst jetzt sichtbar wird, zeigt ihn ebenso
+        panel.hide();
+        QCoreApplication::processEvents();
+        panel.show();
+        QCoreApplication::processEvents();
+        CHECK(titel() == QStringLiteral("Composer - zwei (off)"));
+        // ein Klick in den Balken springt in ihm: ein Hundertstel (3 s im Song) = 23 s
+        balken->setValue(10);
+        Q_EMIT balken->sliderReleased();
+        REQUIRE(warte([&] { return std::llabs(sitzung.stelleMs() - 23000) < 300; }));
+
+        // in der Luecke danach: wieder der letzte gespielte Song, wie in jeder Luecke (S98)
+        sitzung.springe(45000);
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - eins"); }));
+        CHECK(gemeldet == kEins);
+        // und zurueck in den gespielten Song
+        sitzung.springe(25000);
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - zwei (off)"); }));
+        sitzung.springe(2000);
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - eins"); }));
+        REQUIRE(warte([&] { return stelleGemeldet >= 2000 && stelleGemeldet < 4000; }));
+
+        // Composer aus waehrend des ausgeschalteten Clips: das Panel faellt nicht auf ihn zurueck
+        sitzung.springe(25000);
+        REQUIRE(warte([&] { return titel() == QStringLiteral("Composer - zwei (off)"); }));
+        sitzung.setAn(false);
+        QCoreApplication::processEvents();
+        CHECK(titel().isEmpty());
+    }
 }

@@ -148,6 +148,8 @@ void PlayerPanel::onActivate()
     {
         zeigeRuhezustand();
     }
+    // liegt an der Stelle nur ein ausgeschalteter Clip, zeigt das Panel ihn (S130, C1 c)
+    if (stand.fuehrt && stand.hatAus) zeigeAusgeschaltet(stand.aus, stand.ausStelleMs);
 }
 
 void PlayerPanel::onDeactivate()
@@ -182,6 +184,10 @@ void PlayerPanel::subscribeToEvents()
             }
             onTrackChanged(e.track.title, e.track.artist, e.track.durationMs);
         }));
+
+    // S130, Entscheid Patrik C1 c: ein ausgeschalteter Clip des Composers an der Stelle
+    m_eventSubscriptions.push_back(eventBus->subscribeScoped<lumi::composer::AusgeschalteterClipEvent>(
+        [this](const lumi::composer::AusgeschalteterClipEvent& e) { zeigeAusgeschaltet(e.clip, e.stelleMs); }));
 
     // Playback state changed
     m_eventSubscriptions.push_back(eventBus->subscribeScoped<PlaybackStateEvent>(
@@ -361,6 +367,7 @@ void PlayerPanel::onProgressMoved(int value)
 void PlayerPanel::onTrackChanged(const QString& title, const QString& artist, int durationMs)
 {
     m_currentDurationMs = durationMs;
+    m_zeigtAus = false;
     
     // Update track info
     QString displayTitle = title.isEmpty() ? tr("Unknown Title") : title;
@@ -383,8 +390,36 @@ void PlayerPanel::onTrackChanged(const QString& title, const QString& artist, in
     BasicLogger::logInfo("PlayerPanel: Track changed - " + displayTitle.toStdString());
 }
 
+void PlayerPanel::zeigeAusgeschaltet(const TrackInfo& clip, int stelleMs)
+{
+    if (clip.filePath.isEmpty())
+    {
+        // vorbei: wieder der laufende Song des Composers, wo er stand — oder nichts
+        if (!m_zeigtAus) return;
+        m_zeigtAus = false;
+        const lumi::composer::TonStand stand = lumi::composer::tonStand();
+        if (stand.fuehrt && stand.hatSong)
+        {
+            onTrackChanged(stand.song.title, stand.song.artist, stand.song.durationMs);
+            onPlaybackPositionChanged(stand.stelleMs, stand.song.durationMs);
+        }
+        else
+        {
+            zeigeRuhezustand();
+        }
+        return;
+    }
+    // wie auf der Zeitachse (S126, D1 c): der Name mit „(off)"
+    const QString titel = clip.title.isEmpty() ? tr("Unknown Title") : clip.title;
+    m_pTrackLabel->setText(tr("Composer - %1 (off)").arg(titel));
+    m_pArtistLabel->setText(clip.artist.isEmpty() ? tr("Unknown Artist") : clip.artist);
+    m_zeigtAus = true;
+    if (!m_isSeeking) zeigeStelle(stelleMs, clip.durationMs);
+}
+
 void PlayerPanel::zeigeRuhezustand()
 {
+    m_zeigtAus = false;
     m_currentDurationMs = 0;
     m_pTrackLabel->setText(tr("No track loaded"));
     m_pArtistLabel->setText(QString());
@@ -405,9 +440,13 @@ void PlayerPanel::onPlaybackPositionChanged(int positionMs, int durationMs)
     {
         return;
     }
-    
+    zeigeStelle(positionMs, durationMs);
+}
+
+void PlayerPanel::zeigeStelle(int positionMs, int durationMs)
+{
     m_currentDurationMs = durationMs;
-    
+
     // Update progress slider (0-1000 range for precision)
     if (durationMs > 0)
     {

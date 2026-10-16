@@ -115,6 +115,32 @@ namespace
 {
 /// So viele Takte lebt der Klangerzeuger einer entfernten Quelle noch.
 constexpr int kAbgeloestTakte = 4;
+
+/// Titel, Kuenstler und Laenge eines ausgeschalteten Ton-Clips (S130, C1 c) —
+/// dasselbe, was das Player-Panel zeigte, wenn er spielte. Er hat keine Quelle
+/// im Mixer: eine Datei wird dafuer kurz geoeffnet, ein Loop gelesen.
+TrackInfo liesAusgeschalteten(IAudioEngine& engine, const QString& datei)
+{
+    if (istLoop(datei))
+    {
+        lumi::loop::Loop loop;
+        if (lumi::loop::offenerLoop(datei, loop) || lumi::loop::ladeLoop(datei, loop))
+        {
+            loop.richte();
+            return lumi::loop::loopAlsSong(loop, datei, engine.getSampleRate());
+        }
+    }
+    else if (const AudioStreamHandle h = engine.createStream(datei); h != INVALID_STREAM)
+    {
+        TrackInfo song = leseTrackInfo(engine, h, datei);
+        engine.freeStream(h);
+        return song;
+    }
+    TrackInfo song;  // nicht zu lesen: der Name der Datei, wie auf der Zeitachse
+    song.filePath = datei;
+    song.title = QFileInfo(datei).completeBaseName();
+    return song;
+}
 }  // namespace
 
 bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
@@ -137,6 +163,9 @@ bool Tonfuehrung::uebernimm(IAudioEngine& engine, IAudioPlayer& player)
     m_limiter = -1;
     m_laufend = {};
     m_laufendDauerMs = 0;
+    m_aus = {};
+    m_ausDauerMs = 0;
+    m_ausLoop = false;
     m_liefZuletzt = false;
     m_nachgesetzt = 0;
     return true;
@@ -512,7 +541,58 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         }
         ergebnis.songDauerMs = m_laufendDauerMs;
     }
+
+    // --- kein Song zu hoeren: liegt an der Stelle ein ausgeschalteter Ton-Clip
+    //     (S130, Entscheid Patrik C1 c)? Der oberste Kanal zuerst, wie beim Song.
+    const Clip* stumm = nullptr;
+    if (bester == nullptr)
+        for (const Kanal& kanal : komposition.kanaele)
+        {
+            if (kanal.art != KanalArt::Audio || !kanal.an) continue;
+            const auto da = std::find_if(kanal.clips.begin(), kanal.clips.end(), [stelleMs](const Clip& c) {
+                return !c.an && c.startMs <= stelleMs && stelleMs < c.endeMs;
+            });
+            if (da != kanal.clips.end())
+            {
+                stumm = &*da;
+                break;
+            }
+        }
+    if (stumm == nullptr)
+    {
+        m_aus = {};
+        return ergebnis;
+    }
+    ergebnis.hatAus = true;
+    if (!(schluesselVon(stumm) == m_aus))
+    {
+        m_aus = schluesselVon(stumm);
+        ergebnis.ausGewechselt = true;
+        ergebnis.aus = liesAusgeschalteten(engine, stumm->datei);
+        m_ausDauerMs = ergebnis.aus.durationMs;
+        m_ausLoop = istLoop(stumm->datei);
+    }
+    const std::int64_t soll = stumm->songStelle(stelleMs - stumm->startMs);
+    ergebnis.ausStelleMs = m_ausLoop && m_ausDauerMs > 0 ? soll % m_ausDauerMs : soll;
+    ergebnis.ausDauerMs = m_ausDauerMs;
     return ergebnis;
+}
+
+std::int64_t Tonfuehrung::stelleImAus(const Komposition& komposition, double anteil) const
+{
+    if (m_aus.startMs < 0 || m_ausDauerMs <= 0) return -1;
+    for (const Kanal& kanal : komposition.kanaele)
+    {
+        if (kanal.art != KanalArt::Audio) continue;
+        for (const Clip& c : kanal.clips)
+        {
+            if (c.an || !(Schluessel{c.datei, c.startMs, c.einsatzMs} == m_aus)) continue;
+            // wie im laufenden Song (bei einem Loop: im ersten Durchlauf des Clips)
+            const auto imSong = static_cast<std::int64_t>(std::clamp(anteil, 0.0, 1.0) * m_ausDauerMs);
+            return std::clamp<std::int64_t>(c.startMs + (imSong - c.einsatzMs), c.startMs, c.endeMs - 1);
+        }
+    }
+    return -1;
 }
 
 std::int64_t Tonfuehrung::stelleImLaufenden(const Komposition& komposition, double anteil) const

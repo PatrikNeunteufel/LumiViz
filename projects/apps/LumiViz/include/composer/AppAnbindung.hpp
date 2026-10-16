@@ -142,6 +142,23 @@ struct TonStand
     bool hatSong = false;  ///< es wurde schon ein laufender Song gemeldet
     TrackInfo song;
     int stelleMs = 0;      ///< die Stelle in ihm
+    bool hatAus = false;   ///< an der Stelle liegt nur ein ausgeschalteter Clip (S130, C1 c)
+    TrackInfo aus;         ///< dieser Clip
+    int ausStelleMs = 0;   ///< die Stelle in ihm
+};
+/// Fuer das Player-Panel (S130, Entscheid Patrik C1 c): an der Stelle ist
+/// kein Song zu hoeren, aber ein ausgeschalteter Ton-Clip liegt dort — das
+/// Panel zeigt ihn wie die Zeitachse mit „(off)", der Balken laeuft durch ihn.
+/// Ein eigenes Ereignis, kein `TrackChangedEvent`: Tag View, Karaoke,
+/// Songtext und die Stelle der Visuals bleiben beim letzten gespielten Song.
+/// Kommt etwa zehnmal je Sekunde mit der Stelle; `clip.filePath` leer = es
+/// liegt keiner mehr dort, das Panel zeigt wieder, was davor stand.
+struct AusgeschalteterClipEvent : public Event
+{
+    EVENT_TYPE_NAME("ComposerAusgeschalteterClipEvent")
+
+    TrackInfo clip;    ///< Titel, Kuenstler, Laenge wie bei einem Song
+    int stelleMs = 0;  ///< die Stelle in ihm
 };
 [[nodiscard]] TonStand tonStand();
 /// Ein Klick in den Balken des Player-Panels: im laufenden Song an den

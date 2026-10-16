@@ -292,6 +292,9 @@ TonStand tonStand()
     stand.hatSong = s.hatSong;
     stand.song = s.song;
     stand.stelleMs = s.stelleMs;
+    stand.hatAus = s.hatAus;
+    stand.aus = s.aus;
+    stand.ausStelleMs = s.ausStelleMs;
     return stand;
 }
 

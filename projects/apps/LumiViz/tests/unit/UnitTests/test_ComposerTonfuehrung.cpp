@@ -822,6 +822,57 @@ TEST_SUITE("ComposerTonfuehrung")
         CHECK(f.quellen() == 0);
     }
 
+    TEST_CASE("S130 C1 c: ein ausgeschalteter Clip an der Stelle wird gemeldet — kein laufender Song, keine Quelle")
+    {
+        Komposition k = probe();  // eins 10–70 s (ab 5 s im Song), zwei 80–100 s
+        k.kanaele[1].clips[0].an = false;
+        PappPlayer p;
+        PappMischEngine e;
+        e.laengen = {{kEins, 300000}, {kZwei, 300000}};
+        Tonfuehrung f;
+        REQUIRE(f.uebernimm(e, p));
+
+        // im ausgeschalteten Clip: gemeldet mit Titel (ohne Tags der Dateiname) und Laenge
+        const Tonfuehrung::Ergebnis r = f.takt(k, 30000, true);
+        CHECK_FALSE(r.hatSong);
+        CHECK(r.hatAus);
+        CHECK(r.ausGewechselt);
+        CHECK(r.aus.filePath == kEins);
+        CHECK(r.aus.title == QStringLiteral("eins"));
+        CHECK(r.ausDauerMs == 300000);
+        CHECK(r.ausStelleMs == 25000);  // 20 s im Clip, Einsatz bei 5 s
+        // er kommt nicht in den Mixer — fuer die Tags wurde er nur kurz geoeffnet
+        CHECK(f.quellen() == 0);
+        CHECK(e.quelle(kEins) == INVALID_STREAM);
+        // der naechste Takt: derselbe, nicht noch einmal gelesen
+        const int geoeffnet = static_cast<int>(e.geoeffnet.size());
+        const Tonfuehrung::Ergebnis weiter = f.takt(k, 30033, true);
+        CHECK(weiter.hatAus);
+        CHECK_FALSE(weiter.ausGewechselt);
+        CHECK(weiter.ausStelleMs == 25033);
+        CHECK(e.geoeffnet.size() == geoeffnet);
+        // ein Klick in den Balken bei einem Zehntel (30 s im Song): im Clip an 10 + (30 − 5) s
+        CHECK(f.stelleImAus(k, 0.1) == 35000);
+        CHECK(f.stelleImLaufenden(k, 0.1) == -1);  // einen laufenden Song gab es nie
+
+        // in der Luecke danach: nichts gemeldet
+        const Tonfuehrung::Ergebnis luecke = f.takt(k, 75000, true);
+        CHECK_FALSE(luecke.hatAus);
+        CHECK_FALSE(luecke.hatSong);
+        CHECK(f.stelleImAus(k, 0.1) == -1);
+        // im gespielten Song danach: der Song, kein ausgeschalteter
+        const Tonfuehrung::Ergebnis song = f.takt(k, 90000, true);
+        CHECK(song.hatSong);
+        CHECK_FALSE(song.hatAus);
+
+        // liegt an derselben Stelle ein gespielter Song, gilt der — der ausgeschaltete schweigt auch hier
+        REQUIRE(fuegeKanalEin(k, {}, KanalArt::Audio) == 2);
+        REQUIRE(fuegeSongEin(k, 2, kZwei, 20000, 20000) == 0);
+        const Tonfuehrung::Ergebnis darueber = f.takt(k, 30000, true);
+        CHECK(darueber.hatSong);
+        CHECK_FALSE(darueber.hatAus);
+    }
+
     TEST_CASE("S127 G4 Limiter: Datei, Vorgabe an, die Fuehrung schaltet ihn bei jedem Wechsel am Mixer")
     {
         // Datei: nur geschrieben, wenn aus; fehlt es (bis S126), ist er an

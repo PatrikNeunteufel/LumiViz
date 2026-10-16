@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.180.0
+> **Version:** 1.181.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2183,8 +2183,10 @@ unter `composer/fades` und `composer/shapes`.
   und **Clip enabled** — ein ausgeschalteter Clip bleibt stehen und lässt sich
   bearbeiten, spielt aber nicht: kein Ton, kein Bild, er zählt nicht als
   laufender Song, *Next* / *Previous* springen an ihm vorbei. Er trägt „(off)“
-  hinter dem Namen. Kürzel für den angeklickten Clip: **Ctrl+E** (nur mit
-  *Edit*).
+  hinter dem Namen. Liegt an der Stelle sonst kein Song, nennt ihn auch das
+  Panel **Player** so („Composer - <Titel> (off)“), der Balken läuft durch
+  ihn; Tag View und Karaoke bleiben beim letzten gespielten Song. Kürzel für
+  den angeklickten Clip: **Ctrl+E** (nur mit *Edit*).
 - **Kanäle verschieben:** Zieh einen Kanal an seinem **Namen** (linke Spalte)
   nach oben oder unten — ein Strich zeigt, wo er landet; Esc bricht ab. Oder
   Rechtsklick auf die Zeile → **Move channel up** / **Move channel down**.
@@ -3416,6 +3418,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.181.0 | 2026-10-16 | Session 130. §15 Composer, **Clip enabled**: das Panel Player nennt einen ausgeschalteten Clip an der Stelle mit „(off)“. |
 | 1.180.0 | 2026-10-16 | Session 130. §15 Composer, Haken **Limiter**: schaut rund 5 ms voraus und knackt nicht mehr; mit Haken kommt der Ton 5 ms später. |
 | 1.179.0 | 2026-10-16 | Session 129. §9 Tastenkürzel: Bild ab / Bild auf laufen am Ende des Ordners um; F11 wirkt auch im Vollbild und ist umbelegbar, das Menü View zeigt die aktuellen Tasten von Fullscreen und Karaoke. |
 | 1.178.0 | 2026-10-16 | Session 128. §16 Instrumente: Cowbell und Clave spielen die Aufnahmen (auf A5 bzw. C6 unverändert); die Kits Reggaeton (perc 3 Cowbell) und Hand drums (perc 4 Clave). |

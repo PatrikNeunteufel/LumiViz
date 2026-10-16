@@ -101,6 +101,14 @@ public:
         std::int64_t songStelleMs = 0; ///< die Stelle im laufenden Song
         int songDauerMs = 0;           ///< seine Laenge
         bool songLaeuft = false;       ///< die Uhr laeuft und der Song ist nicht zu Ende
+        /// An der Stelle ist kein Song zu hoeren, aber ein ausgeschalteter
+        /// Ton-Clip liegt dort (S130, Entscheid Patrik C1 c) — das Player-Panel
+        /// nennt ihn mit „(off)". Er ist kein laufender Song: `hatSong` bleibt false.
+        bool hatAus = false;
+        bool ausGewechselt = false;    ///< ein anderer (oder neu) seit dem letzten Takt — `aus` ist neu
+        TrackInfo aus;                 ///< der ausgeschaltete Clip (nur bei `ausGewechselt` gefuellt)
+        std::int64_t ausStelleMs = 0;  ///< die Stelle in ihm
+        int ausDauerMs = 0;            ///< seine Laenge
         /// Der Player spielte doch (jemand hat ihn gestartet) und wurde in
         /// diesem Takt angehalten — seine Meldungen haben die des laufenden
         /// Songs ueberschrieben, wer taktet, meldet ihn noch einmal.
@@ -123,6 +131,9 @@ public:
     /// Balken des Player-Panels. Bleibt im Clip des Songs (geklemmt). -1 = es
     /// gab noch keinen laufenden Song, oder sein Clip ist nicht mehr da.
     [[nodiscard]] std::int64_t stelleImLaufenden(const Komposition& komposition, double anteil) const;
+    /// Dasselbe im ausgeschalteten Clip, den der letzte Takt gemeldet hat
+    /// (`Ergebnis::hatAus`, S130). -1 = der letzte Takt meldete keinen.
+    [[nodiscard]] std::int64_t stelleImAus(const Komposition& komposition, double anteil) const;
 
     /// Wie oft eine Quelle nachgesetzt wurde, weil sie der Uhr davonlief —
     /// seit dem Uebernehmen.
@@ -207,6 +218,9 @@ private:
 
     Schluessel m_laufend;             ///< der laufende Song des letzten Takts
     int m_laufendDauerMs = 0;         ///< seine Laenge
+    Schluessel m_aus;                 ///< der ausgeschaltete Clip des letzten Takts (S130); leer = keiner
+    int m_ausDauerMs = 0;             ///< seine Laenge
+    bool m_ausLoop = false;           ///< er ist ein Loop: die Stelle laeuft im Durchlauf um
     bool m_liefZuletzt = false;       ///< die Uhr lief im letzten Takt
     int m_nachgesetzt = 0;
 };

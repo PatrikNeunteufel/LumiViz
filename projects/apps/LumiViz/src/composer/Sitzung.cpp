@@ -9,6 +9,7 @@
 #include "audio/AudioEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "audio/IAudioPlayer.hpp"
+#include "composer/AppAnbindung.hpp"  // AusgeschalteterClipEvent (S130)
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
 #include "services/IEventBus.hpp"
@@ -718,6 +719,15 @@ void Sitzung::fuehreTon(Bildquelle& q)
         }
     }
 
+    // Der ausgeschaltete Clip ist vorbei (S130, C1 c): das zuerst melden — ein
+    // Songwechsel im selben Takt kommt danach und gilt.
+    if (!ergebnis.hatAus && m_tonStand.hatAus)
+    {
+        m_tonStand.hatAus = false;
+        m_tonStand.aus = {};
+        if (bus != nullptr) bus->publish(AusgeschalteterClipEvent{});
+    }
+
     // Der laufende Song geht dieselben Wege wie ein Titel des Players — ueber
     // den Bus: der Songwechsel (Tags, Songtext, Tag View, Audio Browser,
     // Player-Panel), die Stelle im Song und „laeuft" (Player-Panel, Renderer).
@@ -772,6 +782,33 @@ void Sitzung::fuehreTon(Bildquelle& q)
         }
         MultiEffectVisualizer::notifyPlayPosition(ergebnis.songStelleMs);
     }
+    // Nur ein ausgeschalteter Clip an der Stelle (S130, C1 c): an das
+    // Player-Panel allein, mit seiner Stelle etwa zehnmal je Sekunde — nicht an
+    // den Renderer und nicht als Songwechsel.
+    if (ergebnis.hatAus)
+    {
+        const bool neu = ergebnis.ausGewechselt || !m_tonStand.hatAus || ergebnis.playerAngehalten;
+        if (ergebnis.ausGewechselt)
+        {
+            m_tonStand.aus = ergebnis.aus;
+        }
+        m_tonStand.hatAus = true;
+        const int stelle = static_cast<int>(ergebnis.ausStelleMs);
+        const bool sprung = std::abs(stelle - m_tonStand.ausStelleMs) > 500;
+        ++m_ausTakte;
+        if (neu || (stelle != m_tonStand.ausStelleMs && (m_ausTakte >= 3 || sprung)))
+        {
+            m_ausTakte = 0;
+            m_tonStand.ausStelleMs = stelle;
+            if (bus != nullptr)
+            {
+                AusgeschalteterClipEvent ereignis;
+                ereignis.clip = m_tonStand.aus;
+                ereignis.stelleMs = stelle;
+                bus->publish(ereignis);
+            }
+        }
+    }
     // Dem Renderer gilt „laeuft" fuer den SONG: in einer Luecke und nach dem
     // Ende eines Songs zaehlen Karaoke und Lyrics nicht weiter.
     if (ergebnis.songLaeuft != m_songLief || ergebnis.songGewechselt)
@@ -783,7 +820,9 @@ void Sitzung::fuehreTon(Bildquelle& q)
 
 bool Sitzung::springeImSong(double anteil)
 {
-    const std::int64_t ziel = m_ton.stelleImLaufenden(m_komposition, anteil);
+    // zeigt das Player-Panel einen ausgeschalteten Clip (S130, C1 c), gilt der Klick ihm
+    const std::int64_t ziel = m_tonStand.hatAus ? m_ton.stelleImAus(m_komposition, anteil)
+                                                : m_ton.stelleImLaufenden(m_komposition, anteil);
     if (ziel < 0) return false;
     springe(ziel);
     return true;
@@ -827,7 +866,7 @@ void Sitzung::gibTonFrei(bool melden)
         // Songwechsel — sonst zeigten Player-Panel, Tag View, Karaoke und Audio
         // Browser weiter den letzten Song der Komposition. Nur, wenn ueberhaupt
         // einer gemeldet war.
-        else if (bus != nullptr && m_tonStand.hatSong)
+        else if (bus != nullptr && (m_tonStand.hatSong || m_tonStand.hatAus))
         {
             bus->publish(TrackChangedEvent{});
         }

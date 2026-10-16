@@ -101,6 +101,12 @@ private:
     /// @brief Kein Titel geladen: „No track loaded", Kuenstler leer, Balken und
     ///        Zeit auf null (Composer-Naht N5, Anzeige).
     void zeigeRuhezustand();
+    /// @brief Ein ausgeschalteter Clip des Composers an der Stelle (S130,
+    ///        Entscheid Patrik C1 c): „Composer - <Titel> (off)", der Balken
+    ///        laeuft durch ihn. Leere Datei = vorbei: wieder der laufende Song.
+    void zeigeAusgeschaltet(const TrackInfo& clip, int stelleMs);
+    /// @brief Balken und Zeit auf `positionMs` von `durationMs`.
+    void zeigeStelle(int positionMs, int durationMs);
 
     /**
      * @brief Fuehrt einen Transport-Befehl aus (Hotkey, Menue oder eigener Knopf).
@@ -145,4 +151,7 @@ private:
     bool m_isSeeking = false;           ///< True while user is dragging progress
     bool m_loopEnabled = false;         ///< True when single-track loop is active
     int m_currentDurationMs = 0;        ///< Current track duration
+    /// zeigt gerade einen ausgeschalteten Clip des Composers (S130, C1 c) —
+    /// ist er vorbei, holt das Panel den laufenden Song aus `tonStand()`
+    bool m_zeigtAus = false;
 };

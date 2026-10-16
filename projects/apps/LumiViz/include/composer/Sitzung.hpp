@@ -265,6 +265,11 @@ public:
         bool hatSong = false;
         TrackInfo song;
         int stelleMs = 0;
+        /// an der Stelle liegt nur ein ausgeschalteter Clip (S130, C1 c) — er
+        /// ersetzt den laufenden Song nicht, das Player-Panel zeigt ihn daneben
+        bool hatAus = false;
+        TrackInfo aus;
+        int ausStelleMs = 0;
     };
     [[nodiscard]] TonStand tonStand() const { return m_tonStand; }
     /// Im laufenden Song an den `anteil` (0…1) seiner Laenge springen — die
@@ -317,6 +322,7 @@ private:
     bool m_songLief = false;    ///< zuletzt an den Renderer gemeldet
     int m_gemeldetLaeuft = -1;  ///< „die Komposition laeuft", zuletzt an den Bus gemeldet; -1 = noch nie
     int m_stelleTakte = 0;      ///< Takte seit der letzten Stelle an den Bus
+    int m_ausTakte = 0;         ///< dasselbe fuer den ausgeschalteten Clip (S130)
     TonStand m_tonStand;
 
     bool m_sync = false;
