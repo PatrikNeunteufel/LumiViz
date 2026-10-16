@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.179.0
+> **Version:** 1.180.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2256,7 +2256,9 @@ Playlist ruht.
   Ausgang hart abschneiden. Der Haken **Limiter** (in der Zeile von *Loop
   overlap*, hinter *Visuals overlap themselves*, nur mit *Edit*; Standard: an)
   senkt solche Spitzen weich unter −0,1 dB; was darunter bleibt, geht
-  unverändert durch. Die Visuals sehen den Ton hinter dem Limiter. Der Haken
+  unverändert durch. Damit er nicht knackt, schaut er rund 5 ms voraus: mit
+  gesetztem Haken kommt der Ton um diese 5 ms später, beim Umschalten springt
+  er um so viel. Die Visuals sehen den Ton hinter dem Limiter. Der Haken
   gehört zur Komposition und steht in ihrer Datei; er wirkt, solange der
   Composer den Ton führt.
 - **Match loudness — alle Clips gleich laut:** der Knopf **Match loudness...**
@@ -3414,6 +3416,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.180.0 | 2026-10-16 | Session 130. §15 Composer, Haken **Limiter**: schaut rund 5 ms voraus und knackt nicht mehr; mit Haken kommt der Ton 5 ms später. |
 | 1.179.0 | 2026-10-16 | Session 129. §9 Tastenkürzel: Bild ab / Bild auf laufen am Ende des Ordners um; F11 wirkt auch im Vollbild und ist umbelegbar, das Menü View zeigt die aktuellen Tasten von Fullscreen und Karaoke. |
 | 1.178.0 | 2026-10-16 | Session 128. §16 Instrumente: Cowbell und Clave spielen die Aufnahmen (auf A5 bzw. C6 unverändert); die Kits Reggaeton (perc 3 Cowbell) und Hand drums (perc 4 Clave). |
 | 1.177.0 | 2026-10-16 | Session 128. §16 Samples: `cowbell` und `cowbell_tip` (OLPC, CC BY 3.0) und `clave` (ESMUC, CC0) — achtundsiebzig mitgelieferte Samples. |

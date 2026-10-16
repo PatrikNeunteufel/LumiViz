@@ -1,0 +1,60 @@
+{
+    "channels": [
+        {
+            "clips": [
+                {
+                    "blend": 0,
+                    "end": 60000,
+                    "file": "presets/Ring.lvfx",
+                    "start": 0
+                }
+            ],
+            "color": "#5785a5",
+            "enabled": true,
+            "kind": "visual",
+            "name": "CH1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 20000,
+                    "file": "audio/15_pseudo_musik_120bpm_60s.mp3",
+                    "gain": 24,
+                    "offset": 0,
+                    "sourceLength": 60000,
+                    "start": 0
+                },
+                {
+                    "end": 60000,
+                    "file": "audio/02_sinus440_mono_30s.mp3",
+                    "offset": 0,
+                    "sourceLength": 30000,
+                    "start": 40000
+                }
+            ],
+            "color": "#967855",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A1"
+        },
+        {
+            "clips": [
+                {
+                    "end": 40000,
+                    "file": "loop/beat_A.lvloop",
+                    "offset": 0,
+                    "start": 20000
+                }
+            ],
+            "color": "#965555",
+            "enabled": true,
+            "kind": "audio",
+            "name": "A2"
+        }
+    ],
+    "format": "lumiviz-composition",
+    "gridSeconds": 1,
+    "length": 0,
+    "limiter": false,
+    "version": 2
+}

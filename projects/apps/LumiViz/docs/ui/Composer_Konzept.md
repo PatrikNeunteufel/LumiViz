@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.94.0
-> **Datum:** 2026-10-16 (Session 128)
+> **Version:** 0.95.0
+> **Datum:** 2026-10-16 (Session 130)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -1410,6 +1410,25 @@ Loop-Kleinkram“):**
   BassEngine hängt ihn als DSP an den Mixer. Tests `test_ComposerBegrenzer`
   und im Beleg G4 (Quelle ×8: Spitze 0,9886 statt 2,0). **Der Composer
   schaltet ihn noch nicht ein.**
+  **Sichttest 11, L2 (S130): „mit Limiter kracht es“.** Gemessen (Begrenzer
+  nach Python übertragen, `15_pseudo_musik_120bpm_60s`, +24 dB): ohne
+  Vorschau sprang die Verstärkung an einer Spitze in einem Frame um bis zu
+  23 % — hörbar als Knacken (157 Fenster je Sekunde mit Energie über 5 kHz,
+  die das Original nicht hat; hart bei 1,0 abgeschnitten 319, mit 5 ms
+  Vorschau 46). Der Preis „etwas härter“ war unterschätzt. Warum es ohne
+  Limiter bei Patrik nicht stärker kracht, ist nicht belegt (vermutet: das
+  System fängt Fließkomma über 1 selbst weicher ab).
+  **Entscheid Patrik L2-1 b (S130):** der Limiter schaut **rund 5 ms
+  voraus** (`Begrenzer::kVorschauMs`): die Ziel-Verstärkung ist das Minimum
+  dessen, was die nächsten n Frames brauchen, mit 80 ms Loslassen; die
+  Verstärkung eines Frames ist das Mittel der letzten n Ziele — sie sinkt
+  gleitend und hält die Decke trotzdem ein. Der Ton kommt dafür
+  `verzoegerungFrames()` später (220 Frames bei 44,1 kHz), **nur bei
+  gesetztem Haken** (der DSP hängt nur dann am Mixer); ein Umschalten
+  springt um diese 5 ms. Unter der Decke Bit für Bit gleich, nur versetzt.
+  Verworfen: a (Verzögerung immer, solange der Composer führt), c (ohne
+  Vorschau, Absenken über 1 ms). Test: größter Sprung je Frame 0,0034 statt
+  rund 0,75 bei einem Schlag von +12 dB.
   **Entscheid Patrik G4b a (S126, mit Skizze):** der Haken **Limiter** steht
   in der Zeile der Komposition hinter *Visuals overlap themselves*, Vorgabe
   an, nur mit *Edit*, Undo-Schritt; in der `.lvcomp` `"limiter": false` nur,
@@ -1932,6 +1951,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.95.0 | 2026-10-16 | Session 130 — §9g: Sichttest 11 L2 gemessen (der Limiter ohne Vorschau knackte), Entscheid **L2-1 b**: 5 ms Vorschau, Verzögerung nur bei gesetztem Haken |
 | 0.94.0 | 2026-10-16 | Session 128 — §9f: der Loop hängt nicht mehr am Composer (N1 b: `loop/ComposerAbfragen`, `UI/widgets/Farbreihen`) |
 | 0.93.0 | 2026-10-15 | Session 127 — §9g G5-4: Nachtrag Patrik, der Knopf Match loudness ist immer da |
 | 0.92.0 | 2026-10-15 | Session 127 — §9g G6: Sichttest-Liste 11 mit Vorlage L, voller Lauf; G1 bis G6 fertig |
