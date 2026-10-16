@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.248.0
+> **Version:** 1.249.0
 > **Datum:** 2026-10-16 (Session 129)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -463,9 +463,22 @@ dieselben Zahlen wie S74) · 740×460 dMean 0,015 / MAE 0,006 (OK).
 **Im Bild** (Montage): Struktur und Farben deckungsgleich; der Unterschied
 ist eine gleichmäßige schwache Tönung über die ganze Fläche — ein kleiner
 systematischer Versatz, kein Strukturfehler — plus die oberste und die
-unterste Bildzeile. Verdacht: Rundung des Blur-Mittels oder die Randzeilen
-(verwandt: die Blur-Rundungsmodi in §1c, `06_blur/02_trail_rounddown`,
-`03_trail_roundup`). Nicht untersucht.
+unterste Bildzeile.
+**Eingegrenzt S129 (Ursache offen):** der Knoten steht auf Stärke 1
+(`enabled=1`, „light“) und Round mode aus. LumiViz minus Referenz, in
+Byte-Stufen (320×240, f120): **Blau +8** auf 98 % der Fläche (sonst +5/+6),
+Rot und Grün im Inneren gleich (Mittel +0,02 / −0,13); oberste Zeile Rot +9,
+unterste drei Zeilen Grün bis −20. **Ausgeschlossen:** (1) die Rundung in
+`anteil()` — mit vorher auf ganze Stufen gerundetem Texturwert identische
+Zahlen, zurückgenommen; (2) der MMX-Zweig der Referenz (`AvsRef` baut ohne
+`NO_MMX`) — er rechnet dieselbe Formel wie der C-Zweig (`paddb` je Byte,
+gleiche Masken und Nachbarn); (3) die Byte-Masken (`MASK_SH*` trennen die
+Kanäle sauber). **Gefunden, nicht nachgebildet:** die linke Randspalte rechnet
+das Original bei Stärke 1 als `4 × DIV_4` der Nachbarn **ohne** die Mitte
+(`r_blur.cpp:631`), bei Stärke 2 die oberste/unterste Zeile mit dem leichten
+Kern (`:158`). **Nächster Schritt:** eine Sonde mit flacher Farbe je Kanal
+(etwa reines Blau 200) und Blur, Frame 1 gegen Frame 120 — entsteht der
+Versatz je Durchlauf oder erst über die Rückkopplung?
 
 ### ✅ Skript-Funktionen: AVS 40/40, MilkDrop 32/32 (S74)
 
@@ -2163,8 +2176,8 @@ Die verbleibenden 0,230 bei `Dancing Hearts` sind der **Farbbefund**
 (Aufgabe 3: bei uns weiß/rosa, im Original gelb/orange) — ein eigener,
 unabhängiger Punkt.
 
-**Rest offen** (als 🔧 in der Tabelle „MilkDrop: Kalibrier-Runde und offene
-Punkte“ unten geführt): ob der **Warp-Shader** dieselbe Spiegelung braucht — dafür eine
+**Rest offen — S129 gemessen: ja, Befund** (als 🔴 in der Tabelle „MilkDrop:
+Kalibrier-Runde und offene Punkte“ unten, Sonde `ysonde/Y_warp.milk`): ob der **Warp-Shader** dieselbe Spiegelung braucht — dafür eine
 eigene Sonde mit `warp_1` (analog zur Y-Sonde). Bisher spricht nichts dafür:
 die y-symmetrischen Presets (`Magma`, `Rock The House`, `Starfield`) blieben
 über den Fix hinweg unverändert bei ≤0,047, und ein falsch orientierter Warp
@@ -2275,7 +2288,7 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
 | **Decay-Dither** + **`.milk`-Export** | Punkt 8, ganz ans Ende | 🟡 |
 | ~~**Playlist-Anbindung**~~ | ✅ **entfällt (bereinigt S129):** hing an E6, der Visual-Playlist — die ist geschlossen (Entscheid Patrik S93, C4 a, aufgegangen in Composer und Host Switcher; §6 „P2 Visual-Playlist") | ✅ |
 | Host-Gruppen-Feinschliff | exakter paarweiser 2er-Mix statt sequentiellem Adjustable | 🔧 |
-| **Warp-Shader: dieselbe Spiegelung wie die Y-Achse?** | Rest aus dem Y-Achsen-Fix (S75, oben): eigene Sonde mit `warp_1` analog zur Y-Sonde; bisher spricht nichts dafür (y-symmetrische Presets blieben ≤0,047). Bis 1.247.0 nur im erledigten Block vermerkt | 🔧 |
+| **🔴 Warp-Shader sieht `uv.y` gespiegelt (Sonde S129)** | Rest aus dem Y-Achsen-Fix (S75, oben), jetzt gemessen: `asset/calibration/milkdrop/ysonde/` (README dort). `Y_comp.milk` (Comp-Shader `ret = float3(uv.y,0,0)`): Rot oben/unten Referenz **0,050 / 0,950**, LumiViz **0,050 / 0,950** — OK. `Y_warp.milk` (dasselbe im **Warp**-Shader, Comp reicht durch): Referenz **0,050 / 0,950**, LumiViz **0,948 / 0,048** — BEFUND, MAE 0,167 ab Frame 10. Der Warp-Pass rechnet im gespiegelten Feedback-Raum: `tex2D(sampler_main, uv)` fällt nicht auf (Lesen und Schreiben im selben Raum), jeder Wert aus `uv.y` (und vermutlich `ang`) kommt umgekehrt. Die Annahme aus S75 („bisher spricht nichts dafür“) stützte sich nur auf y-symmetrische Presets. Möglicher Bezug: das vertauschte Tunnelzentrum in §3 (S80). Behebung = Eingriff in den Renderweg — Vorlage folgt | 🔴 |
 | **Flip X / Flip Y am MilkDrop-Host-Modul** | Wunsch Patrik S75 (oben unter dem Y-Achsen-Fix): zwei Optionsfelder als Gestaltungsmittel und Diagnosehilfe. Nicht gebaut — `flipx`/`flipy` gibt es nur an Sprites (`MilkdropVisualizer.cpp`). Bis 1.247.0 nur im erledigten Block vermerkt; offen, wann er eingeplant wird | 🟡 |
 
 ## 4. Sichttests, die nie stattgefunden haben
@@ -2704,9 +2717,13 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   formal geschlossen. Prüfen und schließen.
 - ⚪ **Hotkeys Stufe 2/3** — Stufe 2 (Transport) ist in S52 verdrahtet; Stufe 3
   (Composer-Spuren) ist Fernziel.
-- 🔧 **Hotkeys Stufe 1: Entscheide §9.2–§9.5 (Patrik S60) umsetzen und das
-  Konzept nachziehen** (eingetragen S129 — stand bis dahin nur als Halbsatz an
-  der erledigten Zeile in §5). Abweichend vom Entscheid hält
+- ✅ **Hotkeys Stufe 1: Entscheide §9.2–§9.5 (Patrik S60) umsetzen und das
+  Konzept nachziehen** — **gebaut S129:** §9.3 umlaufen, §9.5 das Menü zeigt
+  die Taste aus der Registry (View → Karaoke, View → Fullscreen; F11 jetzt über
+  den Filter, umbelegbar, wirkt auch im Vollbild), §9.4 als erfüllt geprüft;
+  `Hotkey_Konzept.md` 1.3.0, Handbuch 1.179.0. ⬜ Im Programm ungesehen.
+  (Eingetragen S129 — stand bis dahin nur als Halbsatz an
+  der erledigten Zeile in §5.) Abweichend vom Entscheid hält
   `ImportBrowserPanel::nextPresetRow` am Verzeichnisende an statt umzulaufen
   (§9.3); §9.4 (Blättern ab dem zuletzt gewählten Eintrag) und §9.5 (Menüs
   zeigen die Tasten) nicht geprüft; `ui/Hotkey_Konzept.md` steht auf
@@ -2728,6 +2745,14 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
      Stems im Cache (Bauart wie `SongLautheiten`), im Composer als eigene
      Ton-Clips spielbar — passt zu Karaoke. **Vorher belegen:** Lizenzen von
      Code und Modellgewichten.
+- 🟡 **Loop: Saiteninstrumente** (Idee Patrik, S128; S129: „nicht mal so viel
+  später“ — bald). Bisher nur im Handover; noch keine Vorlage, kein Konzept.
+- 🟡 **Loop: weitere Effekte** (Frage Patrik S129). Heute am Clip Filter,
+  Distortion, Echo, Reverb (`ClipBaustein`, `loop/Loop.hpp`), an der Schicht
+  Filter, Drive, Pan. Nicht geplant waren bisher Flanger, Chorus, Phaser,
+  Stereo-Breite, Tremolo, Kompressor — sie passen als weitere Bausteine in
+  dieselbe Reihe (Variant, Fenster Clip effects, Signal path). Noch keine
+  Vorlage.
 
 ## 7. Backlog (bewusst nichts tun)
 
@@ -5066,7 +5091,11 @@ Ausgearbeitet als **Etappen 7–9** im
 
 ### ✅ Movement: Beat-Umkehr kann strukturell nicht wirken (Befund Patrik S53 — entschieden S53, s. u.)
 
-`asset/effectchain/movement3b.lvfx` setzt `bt=1` (Init), `bt=(-1)*bt` (Beat) und
+*(S129: die toten Felder `initCode`/`frameCode`/`beatCode` der beiden Movement-Knoten
+sind aus der Datei genommen — der Serialisierer liest sie seit dem Entscheid
+nicht mehr, am Bild ändert sich nichts; der Point-Code mit `bt` blieb. Der Text
+hier beschreibt die Datei, wie sie in S53 war.)*
+`asset/effectchain/movement3b.lvfx` setzte `bt=1` (Init), `bt=(-1)*bt` (Beat) und
 liest `bt` im Point-Code (`r=r+bt*0.02`). Die Rotation kehrt nie um — aus **zwei**
 unabhängigen Gründen:
 
@@ -5888,6 +5917,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.249.0 | 2026-10-16 | Session 129, zweiter Teil. §6 Hotkeys Stufe 1 gebaut (§9.3 umlaufen, §9.5 Menü zeigt die Taste, F11 über den Filter). §3 **🔴 Warp-Shader sieht `uv.y` gespiegelt** — Sonden `ysonde/Y_comp.milk` (OK) und `Y_warp.milk` (Befund). §1 Blur eingegrenzt: Blau +8 bei Stärke 1, drei Ursachen ausgeschlossen, Ursache offen. `movement3b.lvfx` ohne die toten Movement-Felder. §6 neu: Saiteninstrumente (bald), weitere Loop-Effekte. |
 | 1.248.0 | 2026-10-16 | Session 129. **Widersprüche bereinigt** (Liste aus der Übersicht S125, 16 von 18; je Stelle gegen Dokument, Changelog und Code geprüft): §1 Water-Kopf überholt (enabled-Schalter, S74), Modul-Matrix-Reste 43/43, vier VERDECKT-Zeilen ✅ · §3 Feld „Audio“ mit Standard Original, Texturen bleiben lokal (gitignored), Playlist-Anbindung entfällt (S93 C4 a), **die Tabelle der laufenden Kalibrier-Runde stand im eingeklappten „überholt“-Block** — `</details>` an die richtige Stelle, eigener Kopf; Warp-Sonde (🔧) und Flip X/Y (🟡, Wunsch Patrik S75) als eigene Zeilen · §5 Hotkeys: Entscheid S60 nicht umgesetzt — neu 🔧 in §6 · §6 onChange als Song-Slot umgesetzt · §7 Stärke-Regler gebaut (S89), Shadertoy-Modul gebaut (S65), Lizenz-Pflicht umgesetzt, Test-Presets als Feld-Sonden umgesetzt, Movement-Beat-Umkehr entschieden · §8 Oberflächentexte erledigt, `.lvfx`-Zwillinge 67/67 und Randspalten-Wächter seit S59. Entschieden: B1 a (Blur mit Raster nachgemessen, §1: der Befund steht — 320×240 dMean 0,025 / MAE 0,009, gleichmäßiger kleiner Versatz plus Randzeilen, 740×460 OK), B2 a (Vergleichslauf seit `vor-composer` auf `master` nachgeholt: AVS 252 / 252 und MilkDrop 747 / 748 bitgleich, der eine ein Ausreißer eines abgebrochenen Laufs, §7). §6 neu: Idee Patrik — Vocals unterdrücken oder allein behalten (ohne KI: Mitte auslöschen; mit KI: Stems). Dazu F1 a (Patrik): Fenster der Standalones und der Unit-Tests erscheinen auf Bildschirm 2 ohne Fokus (voller Lauf 1279 / 1279 unter Release-clang und Testing-MSVC). |
 | 1.247.0 | 2026-10-16 | Session 129. §7 Loop: die Tests über alle mitgelieferten Loops lesen die Liste aus `asset/Asset.cmake`, Arbeitsdateien prüfen sie nicht mehr (W1 a, W2 a; Loop_Konzept 7e). |
 | 1.246.0 | 2026-10-16 | Session 128. §7 Loop: der Loop hängt nicht mehr am Composer (N1 b); Loop-Kleinkram abgeschlossen. |

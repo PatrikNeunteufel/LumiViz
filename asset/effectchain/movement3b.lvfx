@@ -79,13 +79,10 @@
                         "type": "blur"
                     },
                     {
-                        "beatCode": "",
                         "blend": false,
                         "builtinRemap": 0,
                         "code": "x=x*.99;y=y*.99;",
                         "enabled": true,
-                        "frameCode": "",
-                        "initCode": "",
                         "name": "Movement",
                         "rectCoords": true,
                         "sourceMapped": 0,
@@ -94,13 +91,10 @@
                         "wrap": false
                     },
                     {
-                        "beatCode": "bt=(-1)*bt;",
                         "blend": false,
                         "builtinRemap": 0,
                         "code": "r=r+bt*0.02;\nd=d-0.02;",
                         "enabled": true,
-                        "frameCode": "",
-                        "initCode": "bt=1;",
                         "name": "Movement",
                         "rectCoords": false,
                         "sourceMapped": 0,

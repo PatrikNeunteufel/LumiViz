@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.178.0
+> **Version:** 1.179.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -319,7 +319,7 @@ Bedienung entkoppelt.
 | Kürzel | Aktion |
 |---|---|
 | Ctrl+N | Neues Visualizer-Fenster |
-| F11 | *Fullscreen* ein/aus (Haupt-Visualizer) |
+| F11 | *Fullscreen* ein/aus (Haupt-Visualizer) — wirkt auch im Vollbild selbst; umbelegbar unter *Settings → Hotkeys*, das Menü **View** zeigt die aktuelle Taste |
 | Esc | Vollbild verlassen |
 | Ctrl+Z / Ctrl+Y | Parameter-Änderung rückgängig / wiederherstellen |
 | Ctrl+O | *Open Audio…* (derzeit ohne Funktion, siehe §10) |
@@ -398,7 +398,11 @@ Effect Browser:
 `Bild ab` geht in der Liste nach unten, also **vorwärts**.
 
 Geblättert wird über die Presets des Ordners, der im Effect Browser offen ist —
-Unterordner werden übersprungen, am Ende des Ordners hält es an. Steht der
+Unterordner werden übersprungen. Am Ende des Ordners geht es von vorn weiter
+(nach dem letzten Preset das erste, rückwärts vor dem ersten das letzte); die
+Statuszeile des Browsers sagt dann *Back to the first preset* bzw. *Back to the
+last preset*. Liegt im Ordner nur das eine Preset, das schon läuft, geschieht
+nichts. Steht der
 Effect Browser auf **★ Favorites**, blättern die Tasten stattdessen durch die
 Favoriten (Karaoke-Presets werden übersprungen). Das Panel muss
 dafür **nicht** sichtbar oder fokussiert sein. Während in einem Textfeld oder
@@ -3410,6 +3414,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.179.0 | 2026-10-16 | Session 129. §9 Tastenkürzel: Bild ab / Bild auf laufen am Ende des Ordners um; F11 wirkt auch im Vollbild und ist umbelegbar, das Menü View zeigt die aktuellen Tasten von Fullscreen und Karaoke. |
 | 1.178.0 | 2026-10-16 | Session 128. §16 Instrumente: Cowbell und Clave spielen die Aufnahmen (auf A5 bzw. C6 unverändert); die Kits Reggaeton (perc 3 Cowbell) und Hand drums (perc 4 Clave). |
 | 1.177.0 | 2026-10-16 | Session 128. §16 Samples: `cowbell` und `cowbell_tip` (OLPC, CC BY 3.0) und `clave` (ESMUC, CC0) — achtundsiebzig mitgelieferte Samples. |
 | 1.176.0 | 2026-10-15 | Session 127. §16 Loop: Kanäle im Panel Loop und Spuren im Drum-Editor umsortieren — am Namen ziehen oder Rechtsklick *Move … up/down*. |
