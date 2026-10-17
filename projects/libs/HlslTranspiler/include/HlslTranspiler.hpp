@@ -6,7 +6,7 @@
  *
  * @author LumiPulse Team
  * @date   August 2026
- * @version 1.5.0
+ * @version 1.6.0
  *
  * @details
  * Übersetzt NUR den Preset-Anteil eines warp_/comp_-Shaders (Deklarationen +
@@ -45,6 +45,11 @@
  *
  * 1.5.0 (Strang R, S65): TranspileOptions mit `d3d9Div` (Default true = der
  * S64-Divisionsvertrag). false ⇒ roher `/`-Operator (Modern-Regelwerk, IEEE).
+ *
+ * 1.6.0 (LumiViz S130, Entscheide WP1/WP2): TranspileOptions mit `referenzRaum`
+ * (Default false = unverändert). true ⇒ `tex2D`/`tex2Dlod` werden zu
+ * `lv_tex2D`/`lv_tex2Dlod`; der Host rechnet dort aus dem Raum der Referenz
+ * (y nach unten) in die Lage seiner Texturen um.
  ****************************************************************************************
  */
 
@@ -81,6 +86,11 @@ enum class ShaderKind
 struct TranspileOptions
 {
     bool d3d9Div = true;
+    /// Texturkoordinaten im Raum der Referenz (y nach unten, LumiViz S130): `tex2D`
+    /// und `tex2Dlod` werden zu `lv_tex2D` / `lv_tex2Dlod` — der Host definiert sie
+    /// und rechnet dort in die Lage seiner Texturen um. Aus = `texture` /
+    /// `textureLod` wie bisher.
+    bool referenzRaum = false;
 };
 
 /**
@@ -2317,7 +2327,8 @@ private:
             if (s.type.base != Base::Sampler2D) fail(e.line, "tex2D: Sampler erwartet");
             EmitResult uvArg = emitExpr(e.args[1]);
             uvArg = convertTo(uvArg, {Base::Vec2}, e.line);
-            return {"texture(" + s.code + ", " + uvArg.code + ")", {Base::Vec4}};
+            return {std::string(m_opts.referenzRaum ? "lv_tex2D(" : "texture(") + s.code + ", " + uvArg.code + ")",
+                    {Base::Vec4}};
         }
         if (lower == "tex2dlod")
         {
@@ -2326,7 +2337,8 @@ private:
             if (s.type.base != Base::Sampler2D) fail(e.line, "tex2Dlod: Sampler erwartet");
             EmitResult a = emitExpr(e.args[1]);
             a = convertTo(a, {Base::Vec4}, e.line);
-            return {"textureLod(" + s.code + ", (" + a.code + ").xy, (" + a.code + ").w)",
+            return {std::string(m_opts.referenzRaum ? "lv_tex2Dlod(" : "textureLod(") + s.code + ", (" + a.code +
+                        ").xy, (" + a.code + ").w)",
                     {Base::Vec4}};
         }
         if (lower == "tex3d" || lower == "tex3dbias")

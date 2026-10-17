@@ -286,6 +286,18 @@ struct PresetState
     /// (Entscheid Patrik a, S81 — Spektrum-Wave-Sonde 640x480: Hoehe 0,021
     /// Original gegen 0,100 bisher, 0,023 mit Streckung; quadratisch 0,003).
     bool aspektOriginal = true;
+    /// Y-Richtung im Warp-Shader (S130): true = wie das Original — `uv`,
+    /// `uv_orig`, damit `ang`, und jedes Lesen einer Textur mit y nach unten;
+    /// false = LumiViz bisher (y nach oben: Werte aus uv.y und jeder Versatz
+    /// gespiegelt, der Look bis S129). Standard Original, auch fuer gespeicherte
+    /// Ketten ohne das Feld (Entscheide Patrik WP1 a, WP1-R a, WP2 b — Sonden
+    /// `asset/calibration/milkdrop/ysonde/`).
+    bool warpYOriginal = true;
+    /// Y-Richtung im Comp-Shader (S130): true = wie das Original — jedes Lesen
+    /// einer Textur (Puffer, Blur, Bilder) mit y nach unten; false = LumiViz
+    /// bisher (`uv` richtig seit S75, gelesen wurde aber auf dem Kopf). Standard
+    /// Original, wie `warpYOriginal` (WP2 b: je Pass ein Schalter).
+    bool compYOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------
     bool kaltstartSaat = true;      ///< Rausch-Saat beim Kaltstart (heutiges

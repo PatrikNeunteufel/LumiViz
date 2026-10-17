@@ -75,17 +75,22 @@ TEST_CASE("MilkdropGlSmoke: c1-Shader kompilieren + linken im 3.3-Core-Kontext")
         const auto compile = [&](const std::string& text, bool isWarp) {
             if (text.empty()) return;
             ++shaders;
-            const std::string frag =
-                MilkdropVisualizer::debugAssembleFragment(text, isWarp);
-            REQUIRE_MESSAGE(frag.rfind("// TRANSPILE-FEHLER", 0) != 0, frag);
-            QOpenGLShaderProgram program;
-            const bool okVert = program.addShaderFromSourceCode(
-                QOpenGLShader::Vertex, MilkdropVisualizer::debugCustomVertexShader());
-            const bool okFrag = program.addShaderFromSourceCode(QOpenGLShader::Fragment,
-                                                                frag.c_str());
-            const bool allOk = okVert && okFrag && program.link();
-            CHECK_MESSAGE(allOk, entry.path().filename().string(), " (",
-                          (isWarp ? "warp" : "comp"), "): ", program.log().toStdString());
+            // S130: beide Raeume — Original (Standard, liest ueber lv_tex2D) und bisher
+            for (const bool referenzRaum : {true, false})
+            {
+                const std::string frag =
+                    MilkdropVisualizer::debugAssembleFragment(text, isWarp, referenzRaum);
+                REQUIRE_MESSAGE(frag.rfind("// TRANSPILE-FEHLER", 0) != 0, frag);
+                QOpenGLShaderProgram program;
+                const bool okVert = program.addShaderFromSourceCode(
+                    QOpenGLShader::Vertex, MilkdropVisualizer::debugCustomVertexShader());
+                const bool okFrag = program.addShaderFromSourceCode(QOpenGLShader::Fragment,
+                                                                    frag.c_str());
+                const bool allOk = okVert && okFrag && program.link();
+                CHECK_MESSAGE(allOk, entry.path().filename().string(), " (",
+                              (isWarp ? "warp" : "comp"), referenzRaum ? ", Referenz" : ", bisher",
+                              "): ", program.log().toStdString());
+            }
         };
         compile(parsed.warpShader, true);
         compile(parsed.compShader, false);

@@ -163,6 +163,30 @@ TEST_CASE("HlslTranspiler: d3d9Div=false emittiert rohe Division (Strang R, S65)
     CHECK(lumi::hlsl::TranspileOptions{}.d3d9Div);
 }
 
+TEST_CASE("HlslTranspiler: referenzRaum liest ueber die Hilfsfunktionen des Hosts (LumiViz S130, WP1/WP2)")
+{
+    const std::string code = body("ret = tex2D(sampler_main, uv).xyz;\n"
+                                  "ret += tex2Dlod(sampler_blur1, float4(uv, 0, 0)).xyz;");
+    // aus (Standard): unveraendert texture / textureLod — die Goldens bleiben gueltig
+    CHECK_FALSE(lumi::hlsl::TranspileOptions{}.referenzRaum);
+    const HlslResult bisher = transpile(code, ShaderKind::Warp);
+    INFO(bisher.error);
+    REQUIRE(bisher.ok);
+    CHECK(contains(bisher.glslBody, "texture(sampler_main, uv)"));
+    CHECK(contains(bisher.glslBody, "textureLod(sampler_blur1"));
+    CHECK_FALSE(contains(bisher.glslBody, "lv_tex2D"));
+    // an: lv_tex2D / lv_tex2Dlod, kein direktes texture mehr
+    lumi::hlsl::TranspileOptions opts;
+    opts.referenzRaum = true;
+    const HlslResult neu = transpile(code, ShaderKind::Warp, opts);
+    INFO(neu.error);
+    REQUIRE(neu.ok);
+    CHECK(contains(neu.glslBody, "lv_tex2D(sampler_main, uv)"));
+    CHECK(contains(neu.glslBody, "lv_tex2Dlod(sampler_blur1"));
+    CHECK_FALSE(contains(neu.glslBody, "texture("));
+    CHECK_FALSE(contains(neu.glslBody, "textureLod("));
+}
+
 TEST_CASE("HlslTranspiler C3: while-Schleife mit int-Zaehler und n++ (S43)")
 {
     // Muster aus 'martin + Stahlregen - martin in da mash 12b'

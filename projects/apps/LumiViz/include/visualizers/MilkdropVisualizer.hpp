@@ -22,6 +22,10 @@
  *
  * Y convention (§2.1): ONE internal math space, no per-draw flips — the single
  * vertical flip happens at the composite (presentation) pass.
+ * Shaders (S130, Entscheide WP1/WP2): every texture we hold (feedback, blur,
+ * loaded images) lies GL-up; preset shaders see the reference's space (uv,
+ * uv_orig, ang with y DOWN) and read through `lv_koord` in the preamble — the
+ * one conversion. Fields warpYOriginal/compYOriginal bring back the old look.
  *
  * Scripts: EEL (Dialect::Milkdrop) via ScriptSlotHost — Init = per_frame_init,
  * Frame = per_frame, Point = per_pixel. q1-q64 snapshots per the M2 contract
@@ -151,9 +155,10 @@ public:
     /// @brief Currently loaded preset state (for tests/panel)
     [[nodiscard]] const lumi::milkdrop::PresetState& presetState() const { return m_state; }
 
-    /// @brief Test/Debug (C1): assembled GLSL fragment for a preset shader text
+    /// @brief Test/Debug (C1): assembled GLSL fragment for a preset shader text;
+    ///        `referenzRaum` = die Felder warpYOriginal/compYOriginal (S130, Standard true)
     [[nodiscard]] static std::string debugAssembleFragment(const std::string& hlslText,
-                                                           bool isWarp);
+                                                           bool isWarp, bool referenzRaum = true);
     /// @brief Test/Debug (C1): the custom passes' vertex shader source
     [[nodiscard]] static const char* debugCustomVertexShader();
 

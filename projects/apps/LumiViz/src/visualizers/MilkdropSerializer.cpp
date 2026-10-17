@@ -361,6 +361,8 @@ QJsonObject presetToJson(const PresetState& state)
     p["eelRandOriginal"] = state.eelRandOriginal;  // S80: Skript-Zufall
     p["audioOriginal"] = state.audioOriginal;      // S80: Audio der Custom-Waves
     p["aspektOriginal"] = state.aspektOriginal;    // S81: Seitenverhaeltnis Custom-Waves
+    p["warpYOriginal"] = state.warpYOriginal;      // S130: Y-Richtung im Warp-Shader
+    p["compYOriginal"] = state.compYOriginal;      // S130: Y-Richtung im Comp-Shader
     // Gestaltung (S80): Drift/Weichzeichnen je Frame, kein Original-Verhalten
     p["gestaltLinAn"] = state.gestaltLinAn;
     p["gestaltLinStaerke"] = state.gestaltLinStaerke;
@@ -508,6 +510,8 @@ PresetState presetFromJson(const QJsonObject& doc, QStringList* report)
     s.eelRandOriginal = getBool(p, "eelRandOriginal", s.eelRandOriginal);  // fehlt = Original
     s.audioOriginal = getBool(p, "audioOriginal", s.audioOriginal);        // fehlt = Standard
     s.aspektOriginal = getBool(p, "aspektOriginal", s.aspektOriginal);     // fehlt = Original
+    s.warpYOriginal = getBool(p, "warpYOriginal", s.warpYOriginal);        // fehlt = Original (S130)
+    s.compYOriginal = getBool(p, "compYOriginal", s.compYOriginal);        // fehlt = Original (S130)
     // Gestaltung (S80): fehlende Felder ⇒ aus (original-treu); Werte geklemmt
     s.gestaltLinAn = getBool(p, "gestaltLinAn", s.gestaltLinAn);
     s.gestaltLinStaerke =

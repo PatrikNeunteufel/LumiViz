@@ -89,3 +89,31 @@ TEST_CASE("Milkdrop: Schalter Seitenverhaeltnis (Waves) — Standard Original, S
     CHECK_FALSE(lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr)
                     .aspektOriginal);
 }
+
+TEST_CASE("Milkdrop: Schalter Y-Richtung der Shader (S130) — je Pass, Standard Original, Speichern/Laden")
+{
+    lumi::milkdrop::PresetState a;
+    CHECK(a.warpYOriginal);  // Entscheide Patrik WP1 a, WP2 b
+    CHECK(a.compYOriginal);
+    // Altbestand ohne die Felder: Original
+    QJsonObject alt = lumi::milkdrop::presetToJson({});
+    QJsonObject inner = alt.value("preset").toObject();
+    inner.remove("warpYOriginal");
+    inner.remove("compYOriginal");
+    alt.insert("preset", inner);
+    const lumi::milkdrop::PresetState gelesen = lumi::milkdrop::presetFromJson(alt, nullptr);
+    CHECK(gelesen.warpYOriginal);
+    CHECK(gelesen.compYOriginal);
+    // je Pass getrennt gespeichert
+    a.warpYOriginal = false;
+    const lumi::milkdrop::PresetState nurWarp =
+        lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr);
+    CHECK_FALSE(nurWarp.warpYOriginal);
+    CHECK(nurWarp.compYOriginal);
+    a.warpYOriginal = true;
+    a.compYOriginal = false;
+    const lumi::milkdrop::PresetState nurComp =
+        lumi::milkdrop::presetFromJson(lumi::milkdrop::presetToJson(a), nullptr);
+    CHECK(nurComp.warpYOriginal);
+    CHECK_FALSE(nurComp.compYOriginal);
+}

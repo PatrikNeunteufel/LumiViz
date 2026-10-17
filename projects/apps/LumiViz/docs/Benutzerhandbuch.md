@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.184.0
+> **Version:** 1.185.0
 > **Datum:** 2026-10-16
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -1437,6 +1437,22 @@ x/y-Werte aufs Bild legen.
   1 = rechter/oberer Rand), die Kurve bleibt ungestreckt im Bild. Der Look
   von Session 39 bis 80.
 
+**Warp shader Y** und **Comp shader Y** (Y-Richtung der Shader, Session 130): in
+welche Richtung `y` in den Shadern eines Presets zeigt — je Pass ein Schalter.
+
+- **Original (MilkDrop)** — **Standard**, auch für ältere gespeicherte
+  Ketten. Wie MilkDrop: `uv`, `uv_orig` und `ang` zählen `y` nach unten, und
+  jedes Lesen einer Textur folgt ihnen. Verläufe, Wirbel und Versätze zeigen
+  dorthin, wohin der Autor sie gesetzt hat; geladene Bilder und das Bild im
+  Comp-Shader stehen aufrecht.
+- **LumiViz (previous)** — der Look bis Session 129. Im Warp-Shader zeigte `y`
+  nach oben: Werte aus `uv.y` und jeder senkrechte Versatz kamen gespiegelt.
+  Im Comp-Shader stimmte `uv`, gelesen wurde aber auf dem Kopf (Bild, Blur,
+  geladene Bilder).
+
+Hat ein Preset **beide** Shader, stell beide Zeilen gleich: Vorher hoben sich
+die zwei Spiegelungen gegenseitig auf; nur eine zurückzustellen spiegelt das Bild.
+
 ### Alte Verhaltensweisen zurückholen („bisher"-Schalter)
 
 Wenn LumiViz einem Original-Verhalten näherkommt und sich das Bild dadurch
@@ -1449,6 +1465,8 @@ können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameters**-Sektio
 | **Script random** | Original (ns-eel2) | LumiViz (previous): ganze Zahlen aus `rand()` | Session 80 |
 | **Audio** | Original (MilkDrop) | LumiViz (previous): App-Spektrum mit geschätzten Faktoren | Session 80 |
 | **Aspect ratio (waves)** | Original (MilkDrop) | LumiViz (previous): Custom-Waves ungestreckt, bildfüllend | Session 81 |
+| **Warp shader Y** | Original (MilkDrop) | LumiViz (previous): `y` im Warp-Shader nach oben — Werte aus `uv.y`, `ang` und senkrechte Versätze gespiegelt | Session 130 |
+| **Comp shader Y** | Original (MilkDrop) | LumiViz (previous): der Comp-Shader liest Bild, Blur und geladene Bilder auf dem Kopf | Session 130 |
 | **Styling → Setting „Soft pull ↖"** | aus | den leichten Sog nach oben links samt Weichzeichnen, den jedes MilkDrop-Preset bis Session 80 hatte (damals ein Versatzfehler, heute ein Gestaltungsmittel) | Session 80 |
 
 **Nicht verwechseln:** Das **Regelwerk** (*Rule set*) **„Legacy"** oben ist *kein* „bisher"-
@@ -3420,6 +3438,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.185.0 | 2026-10-16 | Session 130. §MilkDrop NEU **Warp shader Y** und **Comp shader Y**: die Shader sehen `y` wie MilkDrop (Standard), je Pass ein Schalter zurück; Sammelliste der „bisher"-Schalter ergänzt. |
 | 1.184.0 | 2026-10-16 | Session 130. §16 Loop: liegt ein Muster zugleich in mehreren Kanälen, zeigt sein Editor jede Stelle, voll die des zuletzt begonnenen Clips. |
 | 1.183.0 | 2026-10-16 | Session 130. §16 Loop: spielt der Composer denselben Loop mehrfach zugleich, zeigen Achse und Editoren jede Stelle, die leiseren Clips blasser. |
 | 1.182.0 | 2026-10-16 | Session 130. §15 Composer: Rechtsklick auf einen Loop-Clip → **Open in Loop panel**, auch ohne *Edit*. |

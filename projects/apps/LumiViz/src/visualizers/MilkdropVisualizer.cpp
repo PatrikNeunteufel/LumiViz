@@ -233,7 +233,12 @@ void main()
 // include.fx-Gegenstueck (C1): every uniform/macro the transpiled preset code
 // may reference. Inactive sampler uniforms are optimised away by the linker,
 // so declaring the full set costs nothing.
-[[nodiscard]] std::string milkCustomPreamble()
+//
+// `referenzRaum` (S130, Entscheide WP1/WP2): der Shader rechnet im Raum der
+// Referenz (y nach unten); unsere Texturen — Puffer, Blur, geladene Bilder —
+// liegen in GL-Lage (y nach oben). Jedes Lesen geht deshalb ueber `lv_koord`,
+// die EINE Umrechnung. Aus = `lv_koord` reicht durch (der Look bis S129).
+[[nodiscard]] std::string milkCustomPreamble(bool referenzRaum)
 {
     std::string s = R"(#version 330 core
 in vec2 vTex;
@@ -282,11 +287,17 @@ uniform vec3 _hue3 = vec3(1.0);
 const float M_PI = 3.14159265359;
 const float M_PI_2 = 6.28318530718;         // include.fx: 2*pi (NICHT pi/2)
 const float M_INV_PI_2 = 0.159154943091895; // 1/(2*pi)
-vec3 GetMain(vec2 p) { return texture(sampler_main, p).rgb; }
-vec3 GetPixel(vec2 p) { return texture(sampler_main, p).rgb; }
-vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, p).rgb * _blur_scale.x + _blur_scale.y; }
-vec3 GetBlur2(vec2 p) { return texture(sampler_blur2, p).rgb * _blur_scale.z + _blur_scale.w; }
-vec3 GetBlur3(vec2 p) { return texture(sampler_blur3, p).rgb * _blur_sb3.x + _blur_sb3.y; }
+)";
+    s += referenzRaum ? "vec2 lv_koord(vec2 p) { return vec2(p.x, 1.0 - p.y); }  // Referenz (y nach unten) -> GL\n"
+                      : "vec2 lv_koord(vec2 p) { return p; }  // bisher: der Shader rechnet in GL-Lage\n";
+    s += R"(vec4 lv_tex2D(sampler2D s, vec2 p) { return texture(s, lv_koord(p)); }
+vec4 lv_tex2Dlod(sampler2D s, vec2 p, float l) { return textureLod(s, lv_koord(p), l); }
+vec3 GetMain(vec2 p) { return texture(sampler_main, lv_koord(p)).rgb; }
+vec3 GetPixel(vec2 p) { return texture(sampler_main, lv_koord(p)).rgb; }
+vec3 GetBlur1(vec2 p) { return texture(sampler_blur1, lv_koord(p)).rgb * _blur_scale.x + _blur_scale.y; }
+vec3 GetBlur2(vec2 p) { return texture(sampler_blur2, lv_koord(p)).rgb * _blur_scale.z + _blur_scale.w; }
+vec3 GetBlur3(vec2 p) { return texture(sampler_blur3, lv_koord(p)).rgb * _blur_sb3.x + _blur_sb3.y; })";
+    s += R"(
 float lum(vec3 v) { return dot(v, vec3(0.32, 0.49, 0.29)); }
 // D3D9-Divisionsvertrag (Transpiler emittiert _div): Legacy-Float kennt kein
 // NaN aus 0/0 (0*rcp(0)=0) und rcp(0) bleibt endlich — IEEE-NaN wuerde jede
@@ -343,11 +354,15 @@ using lumi::milkdrop::SamplerName;
            base == "noise_hq" || base == "noisevol_lq" || base == "noisevol_hq";
 }
 
-/// Full fragment source from a transpile result (preamble + globals + main)
-[[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r,
-                                                 bool truncateUnorm)
+/// Full fragment source from a transpile result (preamble + globals + main).
+/// `warp`: der Warp-Pass (uv und uv_orig kommen aus dem Mesh in GL-Lage);
+/// `referenzRaum` (S130, WP1/WP2): der Shader sieht uv/uv_orig wie die Referenz
+/// (y nach unten) und liest ueber `lv_koord` — der Comp bekommt uv schon so
+/// vom Praesentations-Quad (S75), der Warp wird hier umgerechnet.
+[[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r, bool warp,
+                                                 bool truncateUnorm, bool referenzRaum)
 {
-    std::string s = milkCustomPreamble();
+    std::string s = milkCustomPreamble(referenzRaum);
     for (const std::string& name : r.customSamplers)
     {
         if (!preambleDeclares(name)) s += "uniform sampler2D " + name + ";\n";
@@ -357,11 +372,12 @@ using lumi::milkdrop::SamplerName;
         if (!preambleDeclares(name)) s += "uniform vec4 " + name + ";\n";
     }
     s += r.glslGlobals;
-    s += R"(void main()
-{
-    vec2 uv = vTex;
-    vec2 uv_orig = vUvOrig;
-    float rad = length((uv_orig - 0.5) * aspect.xy);
+    s += "void main()\n{\n";
+    s += warp && referenzRaum ? "    vec2 uv = vec2(vTex.x, 1.0 - vTex.y);  // GL -> Referenz (y nach unten)\n"
+                                "    vec2 uv_orig = vec2(vUvOrig.x, 1.0 - vUvOrig.y);\n"
+                              : "    vec2 uv = vTex;\n"
+                                "    vec2 uv_orig = vUvOrig;\n";
+    s += R"(    float rad = length((uv_orig - 0.5) * aspect.xy);
     float ang = atan((uv_orig.y - 0.5) * aspect.y, (uv_orig.x - 0.5) * aspect.x);
     // fShader colour-wash: raw corner hues, bilinear like the comp-grid Diffuse
     // (milkdropfs.cpp:4341-4357; the shader text mixes in its own fShader share)
@@ -611,12 +627,14 @@ MilkdropVisualizer::MilkdropVisualizer()
 }
 
 std::string MilkdropVisualizer::debugAssembleFragment(const std::string& hlslText,
-                                                      bool isWarp)
+                                                      bool isWarp, bool referenzRaum)
 {
+    lumi::hlsl::TranspileOptions opts;
+    opts.referenzRaum = referenzRaum;  // S130
     const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(
-        hlslText, isWarp ? lumi::hlsl::ShaderKind::Warp : lumi::hlsl::ShaderKind::Comp);
+        hlslText, isWarp ? lumi::hlsl::ShaderKind::Warp : lumi::hlsl::ShaderKind::Comp, opts);
     if (!r.ok) return "// TRANSPILE-FEHLER: " + r.error;
-    return assembleCustomFragment(r, isWarp);
+    return assembleCustomFragment(r, isWarp, isWarp, opts.referenzRaum);
 }
 
 const char* MilkdropVisualizer::debugCustomVertexShader()
@@ -729,6 +747,13 @@ void MilkdropVisualizer::applyState(lumi::milkdrop::PresetState state, QStringLi
     // Seitenverhaeltnis der Custom-Waves (Feld aspektOriginal)
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_ASPEKT"))
         m_state.aspektOriginal = qgetenv("LUMIVIZ_MILKDROP_ASPEKT") == "original";
+    // Diagnose (S130): LUMIVIZ_MILKDROP_WARP_Y / LUMIVIZ_MILKDROP_COMP_Y =
+    // original|bisher erzwingen die Y-Richtung der Shader (Felder warpYOriginal,
+    // compYOriginal) — fuer Vergleichslaeufe vorher/nachher
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_WARP_Y"))
+        m_state.warpYOriginal = qgetenv("LUMIVIZ_MILKDROP_WARP_Y") == "original";
+    if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_COMP_Y"))
+        m_state.compYOriginal = qgetenv("LUMIVIZ_MILKDROP_COMP_Y") == "original";
     if (qEnvironmentVariableIsSet("LUMIVIZ_MILKDROP_REGELWERK"))
     {
         const QByteArray v = qgetenv("LUMIVIZ_MILKDROP_REGELWERK").toLower();
@@ -1876,11 +1901,13 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
         const auto schalter = lumi::milkdrop::effektiveSchalter(m_state);
         lumi::hlsl::TranspileOptions opts;
         opts.d3d9Div = schalter.divVertragD3d9;
+        // S130 (Entscheide WP1/WP2): je Pass ein Schalter, Original = Raum der Referenz
+        const bool warp = kind == lumi::hlsl::ShaderKind::Warp;
+        opts.referenzRaum = warp ? m_state.warpYOriginal : m_state.compYOriginal;
         const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind, opts);
         if (r.ok)
         {
-            outSrc = assembleCustomFragment(r, kind == lumi::hlsl::ShaderKind::Warp &&
-                                                   schalter.unormTrunkierung);
+            outSrc = assembleCustomFragment(r, warp, warp && schalter.unormTrunkierung, opts.referenzRaum);
             trace::log(QStringLiteral("prepareCustomShaders: %1 → GLSL ok "
                                       "(%2 Zeichen, %3 Custom-Sampler)")
                            .arg(QLatin1String(which))
