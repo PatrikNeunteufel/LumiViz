@@ -26,7 +26,8 @@
  * loaded images) lies GL-up; preset shaders see the reference's space (uv,
  * uv_orig, ang with y DOWN) and read through `lv_koord` in the preamble — the
  * one conversion. Since S131 (S1 a) the same fields also give `rad`/`ang` and
- * the wrap of plain `sampler_main` as the reference does. Fields
+ * the wrap of plain `sampler_main` as the reference does, and (S2 a) square
+ * matrices built in the shader are filled row by row like HLSL. Fields
  * warpYOriginal/compYOriginal = false bring back the old look (up to S130).
  *
  * Scripts: EEL (Dialect::Milkdrop) via ScriptSlotHost — Init = per_frame_init,
@@ -309,7 +310,8 @@ private:
     void ensureCustomTextureUploads();  ///< render thread: QImage -> GL textures
     /// Bind every sampler the program actually uses + feed the per-frame uniforms.
     /// `referenzRaum` = the pass's field warpYOriginal/compYOriginal: plain
-    /// `sampler_main` then wraps like the reference (S131, S1 a), else bTexWrap.
+    /// `sampler_main` then wraps like the reference (S131, S1 a), else bTexWrap;
+    /// the 2D noise samplers get the GL-up copy `m_noiseTexGl` (S3 a).
     void feedCustomUniforms(QOpenGLShaderProgram& program, const FrameVars& fv,
                             unsigned int mainTexture, bool referenzRaum);
 
@@ -406,6 +408,10 @@ private:
     std::unique_ptr<QOpenGLShaderProgram> m_compCustomProgram;
     std::string m_customGlError;    ///< first GL compile/link error (panel/debug)
     std::array<unsigned int, 4> m_noiseTex{};   ///< lq, lq_lite, mq, hq (AddNoiseTex-Port)
+    /// Dieselben Bytes zeilenweise gespiegelt = GL-Lage wie Puffer, Blur und Bilder:
+    /// gebunden, wenn der Pass im Raum der Referenz liest (S131, Entscheid S3 a);
+    /// `m_noiseTex` (D3D-Zeilenfolge) bleibt fuer „bisher“ — bitgleich bis S129.
+    std::array<unsigned int, 4> m_noiseTexGl{};
     std::array<unsigned int, 2> m_noiseVolTex{};///< noisevol lq, hq (AddNoiseVol-Port, C3)
     unsigned int m_placeholderTex = 0;          ///< 1x1 grey (fehlende Texturen)
     std::array<unsigned int, 4> m_samplerObj{}; ///< wrapLin, clampLin, wrapPoint, clampPoint

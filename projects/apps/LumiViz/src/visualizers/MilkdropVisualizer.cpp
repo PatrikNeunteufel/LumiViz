@@ -656,7 +656,8 @@ std::string MilkdropVisualizer::debugAssembleFragment(const std::string& hlslTex
                                                       bool isWarp, bool referenzRaum)
 {
     lumi::hlsl::TranspileOptions opts;
-    opts.referenzRaum = referenzRaum;  // S130
+    opts.referenzRaum = referenzRaum;              // S130
+    opts.quadratMatrixZeilenweise = referenzRaum;  // S131, S2 a: derselbe Schalter
     const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(
         hlslText, isWarp ? lumi::hlsl::ShaderKind::Warp : lumi::hlsl::ShaderKind::Comp, opts);
     if (!r.ok) return "// TRANSPILE-FEHLER: " + r.error;
@@ -1927,9 +1928,11 @@ void MilkdropVisualizer::prepareCustomShaders(QStringList* report)
         const auto schalter = lumi::milkdrop::effektiveSchalter(m_state);
         lumi::hlsl::TranspileOptions opts;
         opts.d3d9Div = schalter.divVertragD3d9;
-        // S130 (Entscheide WP1/WP2): je Pass ein Schalter, Original = Raum der Referenz
+        // S130 (Entscheide WP1/WP2): je Pass ein Schalter, Original = Raum der Referenz;
+        // S131 (S2 a): derselbe Schalter baut quadratische Matrizen zeilenweise wie HLSL
         const bool warp = kind == lumi::hlsl::ShaderKind::Warp;
         opts.referenzRaum = warp ? m_state.warpYOriginal : m_state.compYOriginal;
+        opts.quadratMatrixZeilenweise = opts.referenzRaum;
         const lumi::hlsl::HlslResult r = lumi::hlsl::transpile(text, kind, opts);
         if (r.ok)
         {
@@ -2297,6 +2300,8 @@ void MilkdropVisualizer::releaseCustomGl()
         QOpenGLFunctions* f = ctx->functions();
         if (m_noiseTex[0] != 0)
             f->glDeleteTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
+        if (m_noiseTexGl[0] != 0)
+            f->glDeleteTextures(static_cast<GLsizei>(m_noiseTexGl.size()), m_noiseTexGl.data());
         if (m_noiseVolTex[0] != 0)
             f->glDeleteTextures(static_cast<GLsizei>(m_noiseVolTex.size()),
                                 m_noiseVolTex.data());
@@ -2309,6 +2314,7 @@ void MilkdropVisualizer::releaseCustomGl()
                                  m_samplerObj.data());
     }
     m_noiseTex.fill(0);
+    m_noiseTexGl.fill(0);
     m_placeholderTex = 0;
     m_samplerObj.fill(0);
     m_customTexIds.clear();
@@ -2378,17 +2384,29 @@ bool MilkdropVisualizer::ensureNoiseTextures()
     // aus MilkdropZufall.hpp — GETEILT mit MilkdropRef, damit dessen Host sie
     // mit --zufall-lumiviz in den Original-Kern schreiben kann (S80).
     const auto bilder = lumi::zufall::rauschbilder();
-    f->glGenTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
-    for (std::size_t i = 0; i < m_noiseTex.size(); ++i)
-    {
-        const int n = bilder[i].groesse;
-        f->glBindTexture(GL_TEXTURE_2D, m_noiseTex[i]);
-        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                        bilder[i].rgba.data());
+    const auto lade2D = [f](unsigned int tex, int n, const unsigned char* rgba) {
+        f->glBindTexture(GL_TEXTURE_2D, tex);
+        f->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, n, n, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    };
+    f->glGenTextures(static_cast<GLsizei>(m_noiseTex.size()), m_noiseTex.data());
+    f->glGenTextures(static_cast<GLsizei>(m_noiseTexGl.size()), m_noiseTexGl.data());
+    for (std::size_t i = 0; i < m_noiseTex.size(); ++i)
+    {
+        const int n = bilder[i].groesse;
+        // D3D-Zeilenfolge wie der Kern (Zeile 0 bei v = 0): „bisher“
+        lade2D(m_noiseTex[i], n, bilder[i].rgba.data());
+        // Zeilen gespiegelt = GL-Lage: `lv_koord` liest sie im Raum der Referenz
+        // richtig (S131, Entscheid S3 a — Sonden ysonde/N_comp, N_warp)
+        std::vector<unsigned char> gl(bilder[i].rgba.size());
+        const std::size_t zeile = static_cast<std::size_t>(n) * 4;
+        for (int y = 0; y < n; ++y)
+            std::copy_n(bilder[i].rgba.data() + static_cast<std::size_t>(n - 1 - y) * zeile, zeile,
+                        gl.data() + static_cast<std::size_t>(y) * zeile);
+        lade2D(m_noiseTexGl[i], n, gl.data());
     }
     f->glGenTextures(static_cast<GLsizei>(m_noiseVolTex.size()), m_noiseVolTex.data());
     for (std::size_t i = 0; i < m_noiseVolTex.size(); ++i)
@@ -2470,11 +2488,13 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     for (std::size_t i = 0; i < noiseNames.size(); ++i)
     {
         const std::string base = noiseNames[i];
-        bindSampler(("sampler_" + base).c_str(), m_noiseTex[i], wrapLin);
-        bindSampler(("sampler_fc_" + base).c_str(), m_noiseTex[i], clampLin);
-        bindSampler(("sampler_pc_" + base).c_str(), m_noiseTex[i], clampPoint);
-        bindSampler(("sampler_fw_" + base).c_str(), m_noiseTex[i], wrapLin);
-        bindSampler(("sampler_pw_" + base).c_str(), m_noiseTex[i], wrapPoint);
+        // im Raum der Referenz die GL-Lage (S3 a), sonst die D3D-Zeilenfolge (bisher)
+        const unsigned int rausch = referenzRaum ? m_noiseTexGl[i] : m_noiseTex[i];
+        bindSampler(("sampler_" + base).c_str(), rausch, wrapLin);
+        bindSampler(("sampler_fc_" + base).c_str(), rausch, clampLin);
+        bindSampler(("sampler_pc_" + base).c_str(), rausch, clampPoint);
+        bindSampler(("sampler_fw_" + base).c_str(), rausch, wrapLin);
+        bindSampler(("sampler_pw_" + base).c_str(), rausch, wrapPoint);
     }
     // Volumen-Noise (C3): 3D-Ziel, sonst identische Praefix-Semantik
     const std::array<const char*, 2> noiseVolNames = {"noisevol_lq", "noisevol_hq"};

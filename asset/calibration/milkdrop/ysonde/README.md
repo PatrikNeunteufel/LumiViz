@@ -18,11 +18,21 @@ WP1 a, WP1-R a, WP2 b).
 | `R_warp.milk` | `rad/2` als Rot, `ang/2π + 0,5` als Grün, geschrieben im Warp-Shader (S131) | `rad`/`ang` im Warp wie das Mesh der Referenz (plugin.cpp:2289/2293) |
 | `R_comp.milk` | `rad` als Rot, `ang/2π` als Grün, geschrieben im Comp-Shader (S131) | `rad`/`ang` im Comp wie `UvToMathSpace` (milkdropfs.cpp:3779) |
 | `W_comp.milk` | der Warp schreibt `uv.x` als Rot, der Comp liest bei `bTexWrap=0` an `uv + (0,5, 0)` (S131) | `sampler_main` wiederholt wie in der Referenz: Sägezahn statt rechts voller Hälfte |
+| `M_comp_skalar.milk` | der Comp zeigt `mul(uv − 0,5, float2x2(1, 0,5, 0, 1))` als Rot/Grün (S131) | quadratische Matrix aus Skalaren zeilenweise wie HLSL: Rot hängt nur an x |
+| `M_comp_zeilen.milk` | dasselbe mit `mul(float2x2(float2, float2), uv − 0,5)` (S131) | quadratische Matrix aus Zeilen-Vektoren: Grün hängt nur an y |
+| `N_comp.milk` | der Comp zeigt `sampler_pw_noise_lq` ganzflächig (S131) | Rauschtextur in richtiger Lage — **mit `--zufall-lumiviz` fahren**, sonst würfeln die Seiten verschieden |
+| `N_warp.milk` | dasselbe im Warp, der Comp reicht durch (S131) | Rauschtextur im Warp — ebenso mit `--zufall-lumiviz` |
 
 Die drei Sonden aus S131 (Entscheid Patrik S1 a) zeichnen ganzflächig, dort
 greift die MAE: mit beiden Schaltern auf „bisher“ `R_comp` 0,193, `W_comp`
 0,125, `R_warp` 0,057 — `compare_milkref.py` nennt den letzten noch „OK“,
 das Bild zeigt das halbe `rad` aber ganzflächig; Original alle drei 0,001.
+
+Die vier Sonden aus S131 zu Matrizen und Rauschen (Entscheide S2 a, S3 a):
+vor den Fixes `M_comp_*` 0,076 — von `compare_milkref.py` „OK“ genannt, im
+Bild aber die vertauschte Achse — und `N_comp` unter „Original“ 0,340 (unter
+„bisher“ 0,013: der Comp las Rauschen erst seit S130 gespiegelt). Der ganze
+Ordner mit `--zufall-lumiviz` gefahren schadet den übrigen Sonden nicht.
 
 **Urteil am Bild, nicht an der MAE.** Die Sonden zeichnen wenig; ein
 gespiegeltes Quadrat ergibt eine winzige MAE, und `compare_milkref.py` meldet
@@ -30,7 +40,7 @@ gespiegeltes Quadrat ergibt eine winzige MAE, und `compare_milkref.py` meldet
 Schwerpunkt des Rots für die Quadrate, Referenz gegen LumiViz (Grenze 0,03).
 
 ```
-python asset/calibration/milkdrop/compare_milkref.py --presets asset/calibration/milkdrop/ysonde --size 640x480 --saaten 0 --out out/ysonde
+python asset/calibration/milkdrop/compare_milkref.py --presets asset/calibration/milkdrop/ysonde --size 640x480 --saaten 0 --zufall-lumiviz --out out/ysonde
 python asset/calibration/milkdrop/ysonde/ysonde_auswerten.py out/ysonde --size 640x480
 ```
 

@@ -297,6 +297,8 @@ struct PresetState
     /// abwichen: dazu `rad`/`ang` wie die Vertex-Attribute der Referenz (rad
     /// doppelt so gross, ang mit y nach oben) und `sampler_main` immer mit Wrap
     /// (bisher folgte es bTexWrap). false bleibt bitgleich der Look bis S129.
+    /// Seit S131 (S2 a) heisst die Combo *Warp shader* und baut dazu quadratische
+    /// Matrizen zeilenweise wie HLSL (`TranspileOptions::quadratMatrixZeilenweise`).
     bool warpYOriginal = true;
     /// Y-Richtung im Comp-Shader (S130): true = wie das Original — jedes Lesen
     /// einer Textur (Puffer, Blur, Bilder) mit y nach unten; false = LumiViz
@@ -304,6 +306,7 @@ struct PresetState
     /// Original, wie `warpYOriginal` (WP2 b: je Pass ein Schalter).
     /// Seit S131 (S1 a) *Comp shader input*: dazu `rad`/`ang` wie `UvToMathSpace`
     /// der Referenz (rad an den Ecken 1, ang in 0..2pi) und `sampler_main` mit Wrap.
+    /// Seit S131 (S2 a) *Comp shader*: dazu quadratische Matrizen wie HLSL.
     bool compYOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------

@@ -7507,8 +7507,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         });
                 form->addRow(tr("Aspect ratio (waves)"), aspektCombo);
 
-                // Eingaenge der Shader wie die Referenz (S130 WP1 a, WP2 b: y; S131 S1 a:
-                // dazu rad/ang und Wrap von sampler_main): je Pass ein Schalter
+                // Shader wie die Referenz (S130 WP1 a, WP2 b: y; S131 S1 a: dazu rad/ang
+                // und Wrap von sampler_main; S2 a: quadratische Matrizen): je Pass ein Schalter
                 const auto yCombo = [&](bool original, const QString& tipp, auto setze) {
                     auto* combo = new QComboBox(m_propContainer);
                     combo->addItems({tr("LumiViz (previous)"), tr("Original (MilkDrop)")});
@@ -7520,29 +7520,33 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                     return combo;
                 };
-                form->addRow(tr("Warp shader input"),
+                form->addRow(tr("Warp shader"),
                              yCombo(p->preset.warpYOriginal,
-                                    tr("What the warp shader gets to see. Original (default) = like "
-                                       "MilkDrop: uv and uv_orig count y downwards and every texture read "
-                                       "follows them; rad and ang are those of the reference mesh (rad 0 in "
-                                       "the middle, larger towards the corners, ang counting with y upwards); "
-                                       "sampler_main repeats the image past its edges. Previous = y upwards "
-                                       "(values from uv.y and every vertical offset came out mirrored), half "
-                                       "as large rad, and sampler_main followed the preset's texture wrap; "
-                                       "the look up to session 129. "
+                                    tr("How the warp shader runs. Original (default) = like MilkDrop: uv "
+                                       "and uv_orig count y downwards and every texture read follows them; "
+                                       "rad and ang are those of the reference mesh (rad 0 in the middle, "
+                                       "larger towards the corners, ang counting with y upwards); "
+                                       "sampler_main repeats the image past its edges; matrices built in the "
+                                       "shader (float2x2 ...) are filled row by row, so rotations turn the "
+                                       "way the author wrote them. Previous = y upwards (values from uv.y and "
+                                       "every vertical offset came out mirrored), half as large rad, "
+                                       "sampler_main followed the preset's texture wrap, and built matrices "
+                                       "came out transposed (rotations turned the other way); the look up to "
+                                       "session 129. "
                                        "With a warp AND a comp shader, set both rows the same way: before, "
                                        "the two mirrorings cancelled each other out."),
                                     [](lumi::milkdrop::PresetState& s, bool an) { s.warpYOriginal = an; }));
-                form->addRow(tr("Comp shader input"),
+                form->addRow(tr("Comp shader"),
                              yCombo(p->preset.compYOriginal,
-                                    tr("What the comp shader gets to see. Original (default) = like "
-                                       "MilkDrop: the image, the blur levels and loaded pictures stand "
-                                       "upright; rad is 0 in the middle and 1 in the corners, ang runs from "
-                                       "0 to 6.28; sampler_main repeats the image past its edges. "
-                                       "Previous = uv was right (since session 75), but every texture was "
-                                       "read upside down, rad reached only about 0.6 in the corners, and "
-                                       "sampler_main followed the preset's texture wrap; the look up to "
-                                       "session 129. "
+                                    tr("How the comp shader runs. Original (default) = like MilkDrop: the "
+                                       "image, the blur levels and loaded pictures stand upright; rad is 0 "
+                                       "in the middle and 1 in the corners, ang runs from 0 to 6.28; "
+                                       "sampler_main repeats the image past its edges; matrices built in the "
+                                       "shader (float2x2 ...) are filled row by row, so rotations turn the "
+                                       "way the author wrote them. Previous = uv was right (since session "
+                                       "75), but every texture was read upside down, rad reached only about "
+                                       "0.6 in the corners, sampler_main followed the preset's texture wrap, "
+                                       "and built matrices came out transposed; the look up to session 129. "
                                        "With a warp AND a comp shader, set both rows the same way: before, "
                                        "the two mirrorings cancelled each other out."),
                                     [](lumi::milkdrop::PresetState& s, bool an) { s.compYOriginal = an; }));

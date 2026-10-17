@@ -6,7 +6,7 @@
  *
  * @author LumiPulse Team
  * @date   August 2026
- * @version 1.6.0
+ * @version 1.7.0
  *
  * @details
  * Übersetzt NUR den Preset-Anteil eines warp_/comp_-Shaders (Deklarationen +
@@ -50,6 +50,12 @@
  * (Default false = unverändert). true ⇒ `tex2D`/`tex2Dlod` werden zu
  * `lv_tex2D`/`lv_tex2Dlod`; der Host rechnet dort aus dem Raum der Referenz
  * (y nach unten) in die Lage seiner Texturen um.
+ *
+ * 1.7.0 (LumiViz S131, Entscheid S2 a): TranspileOptions mit
+ * `quadratMatrixZeilenweise` (Default false = unverändert). true ⇒ `float2x2`,
+ * `float3x3`, `float4x4` aus Zeilen-Vektoren oder Skalaren werden wie die
+ * Nicht-Quadrat-Matrizen transponiert emittiert; ohne war jede selbst gebaute
+ * quadratische Matrix in GLSL transponiert (Rotationen drehten andersherum).
  ****************************************************************************************
  */
 
@@ -91,6 +97,12 @@ struct TranspileOptions
     /// und rechnet dort in die Lage seiner Texturen um. Aus = `texture` /
     /// `textureLod` wie bisher.
     bool referenzRaum = false;
+    /// Quadratische Matrix-Konstruktoren (`float2x2`, `float3x3`, `float4x4` aus
+    /// Zeilen-Vektoren oder Skalaren) zeilenweise wie HLSL emittieren — so wie
+    /// schon die Nicht-Quadrat-Matrizen (LumiViz S131, Entscheid S2 a). Aus = der
+    /// Text geht unverändert an GLSL, das spaltenweise füllt: die Matrix ist
+    /// transponiert, eine Rotation dreht andersherum (der Look bis S129).
+    bool quadratMatrixZeilenweise = false;
 };
 
 /**
@@ -2094,8 +2106,15 @@ private:
         }
         // Nicht-Quadrat-Matrizen (C3-Rest): HLSL konstruiert ZEILENweise,
         // GLSL SPALTENweise — transponierte Emission (Zeilen-Vektoren oder
-        // Skalare in Zeilen-Major-Reihenfolge)
-        if (target.base == Base::Mat2x3 || target.base == Base::Mat3x2)
+        // Skalare in Zeilen-Major-Reihenfolge). Quadratische ebenso, wenn die
+        // Option gesetzt ist (S131, S2 a); eine Umwandlung aus EINEM Argument
+        // (Matrix, Splat) bleibt, wie sie ist.
+        const bool quadratisch =
+            m_opts.quadratMatrixZeilenweise &&
+            (target.base == Base::Mat2 || target.base == Base::Mat3 || target.base == Base::Mat4) &&
+            (static_cast<int>(args.size()) == target.matRows() ||
+             static_cast<int>(args.size()) == target.matRows() * target.matCols());
+        if (target.base == Base::Mat2x3 || target.base == Base::Mat3x2 || quadratisch)
         {
             const int rows = target.matRows();
             const int cols = target.matCols();

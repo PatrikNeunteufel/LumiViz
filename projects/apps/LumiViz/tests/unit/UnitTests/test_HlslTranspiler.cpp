@@ -293,6 +293,35 @@ TEST_CASE("HlslTranspiler: mul() wird zu * (auch fuer Matrizen)")
     CHECK(contains(r.glslBody, "((uv - 0.5) * m)"));  // vec2 - float ist in GLSL gueltig
 }
 
+TEST_CASE("HlslTranspiler: quadratische Matrizen zeilenweise wie HLSL (LumiViz S131, S2 a)")
+{
+    // HLSL fuellt float2x2(a,b,c,d) zeilenweise, GLSL mat2(a,b,c,d) spaltenweise:
+    // ohne Umordnung ist die Matrix transponiert (Sonden M_comp_* gegen die Referenz)
+    const std::string code = body("float2x2 m = float2x2(0.1, 0.2, 0.3, 0.4);\n"
+                                  "float2x2 z = float2x2(float2(0.1, 0.2), float2(0.3, 0.4));\n"
+                                  "float3x3 d = float3x3(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);\n"
+                                  "float2x2 k = float2x2(m);\n"
+                                  "ret = float3(mul(uv, m) + mul(z, uv), mul(float3(uv, 1), d).x);");
+    // aus (Standard): unveraendert — der Look bis S129
+    CHECK_FALSE(lumi::hlsl::TranspileOptions{}.quadratMatrixZeilenweise);
+    const HlslResult bisher = transpile(code, ShaderKind::Comp);
+    INFO(bisher.error);
+    REQUIRE(bisher.ok);
+    CHECK(contains(bisher.glslBody, "mat2(0.1, 0.2, 0.3, 0.4)"));
+    // an: Spalte fuer Spalte aus den HLSL-Zeilen
+    lumi::hlsl::TranspileOptions opts;
+    opts.quadratMatrixZeilenweise = true;
+    const HlslResult neu = transpile(code, ShaderKind::Comp, opts);
+    INFO(neu.error);
+    REQUIRE(neu.ok);
+    CHECK(contains(neu.glslBody, "mat2(0.1, 0.3, 0.2, 0.4)"));
+    CHECK(contains(neu.glslBody, "mat3(0.1, 0.4, 0.7, 0.2, 0.5, 0.8, 0.3, 0.6, 0.9)"));
+    // aus Zeilen-Vektoren: die Komponenten spaltenweise
+    CHECK(contains(neu.glslBody, "mat2((vec2(0.1, 0.2)).x, (vec2(0.3, 0.4)).x, (vec2(0.1, 0.2)).y, (vec2(0.3, 0.4)).y)"));
+    // eine Umwandlung aus EINEM Argument bleibt
+    CHECK(contains(neu.glslBody, "mat2(m)"));
+}
+
 TEST_CASE("HlslTranspiler: globale sampler-/texsize-Deklarationen -> Features")
 {
     const HlslResult r = transpile("sampler sampler_fw_clouds;\n"

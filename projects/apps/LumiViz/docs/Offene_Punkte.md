@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.251.0
+> **Version:** 1.252.0
 > **Datum:** 2026-10-17 (Session 131)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -1795,7 +1795,43 @@ Verwandt: E3 im [Sichttest-Protokoll](Sichttest_Protokoll_S79.md)
 (Diagonalenkreuz bei `a`≠`a2` — dort kein Fehler, aber das Weichzeichnen
 verstärkt es).
 
-### 🟠 `martin - stratospheric turbulences` (1 und 2) weicht grob ab (Befund S80)
+### 🟡 `martin - stratospheric turbulences` (1 und 2) weicht grob ab (Befund S80 — S131: dieselbe Szene, Rest kleiner Versatz)
+
+**Stand S131 (Entscheide Patrik S2 a, S3 a):** Mit dem Stand nach S130/S1 a sitzt
+das Tunnelzentrum mittig wie in der Referenz (Anteil 3 unten erledigt). Die Szene
+war aber verdreht, die Röhren hatten vertauschte Farben. Der Zufallsstrom ist es
+nicht — eine Sonde mit den wörtlichen `per_frame_init`-Zügen ist auf beiden
+Seiten gleich (`tr2`, `tubes`, …). Zwei Fehler, beide belegt mit Sonden in
+`asset/calibration/milkdrop/ysonde/`:
+
+1. **Selbst gebaute quadratische Matrizen waren transponiert**
+   (`HlslTranspiler.hpp`, Konstruktor-Emission): nur `float2x3`/`float3x2`
+   wurden zeilenweise umgeordnet, `float2x2(a,b,c,d)` ging als `mat2(a,b,c,d)`
+   durch — HLSL füllt zeilenweise, GLSL spaltenweise; `mul` setzt dagegen
+   GLSL = HLSL voraus. Jede Rotation drehte andersherum, seit C1/C3, in beiden
+   Ständen. Sonden `M_comp_skalar`/`M_comp_zeilen` 0,076 („OK“ genannt, im Bild
+   die vertauschte Achse) → 0,000. Reichweite: im Testsatz 0 von 22, im
+   MegaPack 12 595 Presets (12 108 mit `mul`). **Behoben (S2 a):**
+   `TranspileOptions::quadratMatrixZeilenweise` (HlslTranspiler 1.7.0), gesetzt
+   aus denselben Feldern je Pass; Combos heißen jetzt *Warp shader* / *Comp shader*.
+2. **2D-Rauschtexturen wurden gespiegelt gelesen:** sie lagen in D3D-Zeilenfolge,
+   gelesen wird im Raum der Referenz über `lv_koord` — im Warp schon immer
+   gespiegelt (`N_warp` unter „bisher“ 0,339), im Comp seit S130 (`N_comp`
+   Original 0,340, bisher 0,013). **Behoben (S3 a):** eine zeilenweise
+   gespiegelte Kopie (`m_noiseTexGl`, GL-Lage wie alle anderen Texturen) wird
+   gebunden, wenn der Pass im Raum der Referenz liest; „bisher“ bindet die alte.
+   `tex3D` war nie betroffen. Sonden `N_comp` 0,011, `N_warp` 0,004 (mit
+   `--zufall-lumiviz`).
+
+**Belegt:** `stratospheric` 1 und 2, 640×480, Saat 0, f10/f30/f120/f300:
+0,100/0,061/0,062/0,049 → **0,063/0,041/0,027/0,023**, im Bild dieselbe Szene
+(Röhrenfarben, Fenster, Helligkeit); Ablage `out/strato_s131/`. Sonden 16/16 OK.
+Vergleichslauf 22 × 6 Formate (`out/wp_s131b/`): „bisher“ 748/748 bitgleich zu
+S129, „Original“ 748/748 bitgleich zum Stand nach S1 a (kein Testpreset baut
+Matrizen oder liest 2D-Rauschen — der Testsatz deckt beides nicht ab).
+**Rest:** ein kleiner Versatz in Maßstab/Phase (Wanduhr der Referenz?), nicht zerlegt.
+Nebenbefund: LumiViz nimmt `sampler_pw_noise_lq` ohne Deklaration an, die
+Referenz bricht mit X3004 ab.
 
 Aufgefallen, weil sich der Look mit dem Halbtexel-Fix sichtbar änderte (Frage
 Patrik: „ist er jetzt näher am Original?"). Gemessen gegen MilkdropRef, 640×480,
@@ -5931,6 +5967,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.252.0 | 2026-10-17 | Session 131. §3 `stratospheric turbulences` 🟠 → 🟡: Tunnelzentrum mittig, zwei Fehler behoben — quadratische Matrizen transponiert (S2 a, HlslTranspiler 1.7.0, 12 595 Presets im MegaPack), 2D-Rauschtexturen gespiegelt gelesen (S3 a); vier neue Sonden; bisher 748/748 bitgleich; Rest kleiner Versatz. |
 | 1.251.0 | 2026-10-17 | Session 131. §3 **Shader-Eingänge rad/ang und Wrap von `sampler_main` wie die Referenz** (S1 a, war 🔴 Starfield fast schwarz): zwei Ursachen seit C1, Nebenbefund `ang` im Warp aus S130, drei neue Sonden, Vergleichslauf (bisher 748/748 bitgleich, Original 340 Bilder in 13 Presets, Magma besser). §7 Befund: ein Testfall hängt an der Reihenfolge (`presetIconDir()`). |
 | 1.250.0 | 2026-10-17 | Session 130. §3 **Shader sehen y wie die Referenz** (WP1 a, WP1-R a, WP2 b): Warp und Comp, Felder warpYOriginal/compYOriginal, neun Y-Sonden mit Auswertung am Bild, Vergleichslauf (bisher 748/748 bitgleich, Starfield-2-Familie nicht mehr formatabhängig, Twisted besser); neu 🔴 Starfield (Supernova) in beiden Ständen fast schwarz. Dazu aus dem Sichttest 11: Limiter mit Vorschau (L2-1 b), C1 c, Resume-Knopf, W8 a, W8-2 a. |
 | 1.249.0 | 2026-10-16 | Session 129, zweiter Teil. §6 Hotkeys Stufe 1 gebaut (§9.3 umlaufen, §9.5 Menü zeigt die Taste, F11 über den Filter). §3 **🔴 Warp-Shader sieht `uv.y` gespiegelt** — Sonden `ysonde/Y_comp.milk` (OK) und `Y_warp.milk` (Befund). §1 Blur eingegrenzt: Blau +8 bei Stärke 1, drei Ursachen ausgeschlossen, Ursache offen. `movement3b.lvfx` ohne die toten Movement-Felder. §6 neu: Saiteninstrumente (bald), weitere Loop-Effekte. |
