@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.185.0
-> **Datum:** 2026-10-16
+> **Version:** 1.186.0
+> **Datum:** 2026-10-17
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -1437,18 +1437,28 @@ x/y-Werte aufs Bild legen.
   1 = rechter/oberer Rand), die Kurve bleibt ungestreckt im Bild. Der Look
   von Session 39 bis 80.
 
-**Warp shader Y** und **Comp shader Y** (Y-Richtung der Shader, Session 130): in
-welche Richtung `y` in den Shadern eines Presets zeigt — je Pass ein Schalter.
+**Warp shader input** und **Comp shader input** (Eingänge der Shader,
+Session 130/131; bis 1.185.0 hießen sie *Warp shader Y* und *Comp shader Y*):
+was die Shader eines Presets zu sehen bekommen — je Pass ein Schalter.
 
 - **Original (MilkDrop)** — **Standard**, auch für ältere gespeicherte
-  Ketten. Wie MilkDrop: `uv`, `uv_orig` und `ang` zählen `y` nach unten, und
-  jedes Lesen einer Textur folgt ihnen. Verläufe, Wirbel und Versätze zeigen
-  dorthin, wohin der Autor sie gesetzt hat; geladene Bilder und das Bild im
-  Comp-Shader stehen aufrecht.
+  Ketten. Wie MilkDrop:
+  - `uv` und `uv_orig` zählen `y` nach unten, und jedes Lesen einer Textur
+    folgt ihnen. Verläufe, Wirbel und Versätze zeigen dorthin, wohin der Autor
+    sie gesetzt hat; geladene Bilder und das Bild im Comp-Shader stehen aufrecht.
+  - `rad` und `ang` sind die des Originals: im Warp-Shader die des Gitters
+    (`rad` in der Mitte 0, an den Ecken bei 4:3 rund 1,25; `ang` zählt mit `y`
+    nach oben), im Comp-Shader ist `rad` an den Ecken genau 1 und `ang` läuft
+    von 0 bis 6,28.
+  - `sampler_main` wiederholt das Bild über seine Ränder hinaus — auch wenn
+    das Preset *Texture wrap* ausschaltet; das gilt dort nur für den
+    eingebauten Warp ohne eigenen Shader.
 - **LumiViz (previous)** — der Look bis Session 129. Im Warp-Shader zeigte `y`
   nach oben: Werte aus `uv.y` und jeder senkrechte Versatz kamen gespiegelt.
   Im Comp-Shader stimmte `uv`, gelesen wurde aber auf dem Kopf (Bild, Blur,
-  geladene Bilder).
+  geladene Bilder). `rad` war halb so groß (Comp: an den Ecken rund 0,6),
+  und `sampler_main` folgte *Texture wrap* — ein Preset, das außerhalb des
+  Bildes las, sah bei ausgeschaltetem Wrap nur den Rand.
 
 Hat ein Preset **beide** Shader, stell beide Zeilen gleich: Vorher hoben sich
 die zwei Spiegelungen gegenseitig auf; nur eine zurückzustellen spiegelt das Bild.
@@ -1465,8 +1475,8 @@ können. Alle diese Schalter im Überblick (Milkdrop-Node, **Parameters**-Sektio
 | **Script random** | Original (ns-eel2) | LumiViz (previous): ganze Zahlen aus `rand()` | Session 80 |
 | **Audio** | Original (MilkDrop) | LumiViz (previous): App-Spektrum mit geschätzten Faktoren | Session 80 |
 | **Aspect ratio (waves)** | Original (MilkDrop) | LumiViz (previous): Custom-Waves ungestreckt, bildfüllend | Session 81 |
-| **Warp shader Y** | Original (MilkDrop) | LumiViz (previous): `y` im Warp-Shader nach oben — Werte aus `uv.y`, `ang` und senkrechte Versätze gespiegelt | Session 130 |
-| **Comp shader Y** | Original (MilkDrop) | LumiViz (previous): der Comp-Shader liest Bild, Blur und geladene Bilder auf dem Kopf | Session 130 |
+| **Warp shader input** | Original (MilkDrop) | LumiViz (previous): `y` im Warp-Shader nach oben — Werte aus `uv.y` und senkrechte Versätze gespiegelt; `rad` halb so groß; `sampler_main` folgt *Texture wrap* | Session 130/131 |
+| **Comp shader input** | Original (MilkDrop) | LumiViz (previous): der Comp-Shader liest Bild, Blur und geladene Bilder auf dem Kopf; `rad` an den Ecken rund 0,6 statt 1, `ang` −3,14…3,14; `sampler_main` folgt *Texture wrap* | Session 130/131 |
 | **Styling → Setting „Soft pull ↖"** | aus | den leichten Sog nach oben links samt Weichzeichnen, den jedes MilkDrop-Preset bis Session 80 hatte (damals ein Versatzfehler, heute ein Gestaltungsmittel) | Session 80 |
 
 **Nicht verwechseln:** Das **Regelwerk** (*Rule set*) **„Legacy"** oben ist *kein* „bisher"-
@@ -3438,6 +3448,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.186.0 | 2026-10-17 | Session 131. §MilkDrop: *Warp/Comp shader Y* heißen jetzt **Warp shader input** und **Comp shader input** und schalten dazu `rad`/`ang` wie im Original und das Wiederholen von `sampler_main` (Entscheid S1 a); Sammelliste der „bisher"-Schalter nachgezogen. |
 | 1.185.0 | 2026-10-16 | Session 130. §MilkDrop NEU **Warp shader Y** und **Comp shader Y**: die Shader sehen `y` wie MilkDrop (Standard), je Pass ein Schalter zurück; Sammelliste der „bisher"-Schalter ergänzt. |
 | 1.184.0 | 2026-10-16 | Session 130. §16 Loop: liegt ein Muster zugleich in mehreren Kanälen, zeigt sein Editor jede Stelle, voll die des zuletzt begonnenen Clips. |
 | 1.183.0 | 2026-10-16 | Session 130. §16 Loop: spielt der Composer denselben Loop mehrfach zugleich, zeigen Achse und Editoren jede Stelle, die leiseren Clips blasser. |

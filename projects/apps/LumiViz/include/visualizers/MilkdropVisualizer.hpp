@@ -25,7 +25,9 @@
  * Shaders (S130, Entscheide WP1/WP2): every texture we hold (feedback, blur,
  * loaded images) lies GL-up; preset shaders see the reference's space (uv,
  * uv_orig, ang with y DOWN) and read through `lv_koord` in the preamble — the
- * one conversion. Fields warpYOriginal/compYOriginal bring back the old look.
+ * one conversion. Since S131 (S1 a) the same fields also give `rad`/`ang` and
+ * the wrap of plain `sampler_main` as the reference does. Fields
+ * warpYOriginal/compYOriginal = false bring back the old look (up to S130).
  *
  * Scripts: EEL (Dialect::Milkdrop) via ScriptSlotHost — Init = per_frame_init,
  * Frame = per_frame, Point = per_pixel. q1-q64 snapshots per the M2 contract
@@ -305,9 +307,11 @@ private:
     void loadCustomTextures(const std::vector<std::string>& samplerNames,
                             QStringList* report);
     void ensureCustomTextureUploads();  ///< render thread: QImage -> GL textures
-    /// Bind every sampler the program actually uses + feed the per-frame uniforms
+    /// Bind every sampler the program actually uses + feed the per-frame uniforms.
+    /// `referenzRaum` = the pass's field warpYOriginal/compYOriginal: plain
+    /// `sampler_main` then wraps like the reference (S131, S1 a), else bTexWrap.
     void feedCustomUniforms(QOpenGLShaderProgram& program, const FrameVars& fv,
-                            unsigned int mainTexture);
+                            unsigned int mainTexture, bool referenzRaum);
 
     // --- Preset-Sprites (MilkDrop2077; Port von DrawUserSprites) --------------------------
     void rebuildSprites(QStringList* report);   ///< applyState-Schwanz (GUI, kein GL)

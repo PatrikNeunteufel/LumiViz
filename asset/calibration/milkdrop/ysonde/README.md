@@ -15,6 +15,14 @@ WP1 a, WP1-R a, WP2 b).
 | `Y_dy.milk` | rotes Quadrat, `per_frame dy=0.01` (Mesh, ohne Shader) | Bewegung über das Mesh (CPU) |
 | `Y_shape_md1.milk` | rotes Quadrat bei x 0,3 / y 0,8, der Comp reicht durch (MD1-Weg) | Lage des Puffers über den MD1-Weg |
 | `Y_shape_custom.milk` | dasselbe, der Comp `* 0.999` (Custom-Weg) | Lage des Puffers über einen eigenen Comp-Shader |
+| `R_warp.milk` | `rad/2` als Rot, `ang/2π + 0,5` als Grün, geschrieben im Warp-Shader (S131) | `rad`/`ang` im Warp wie das Mesh der Referenz (plugin.cpp:2289/2293) |
+| `R_comp.milk` | `rad` als Rot, `ang/2π` als Grün, geschrieben im Comp-Shader (S131) | `rad`/`ang` im Comp wie `UvToMathSpace` (milkdropfs.cpp:3779) |
+| `W_comp.milk` | der Warp schreibt `uv.x` als Rot, der Comp liest bei `bTexWrap=0` an `uv + (0,5, 0)` (S131) | `sampler_main` wiederholt wie in der Referenz: Sägezahn statt rechts voller Hälfte |
+
+Die drei Sonden aus S131 (Entscheid Patrik S1 a) zeichnen ganzflächig, dort
+greift die MAE: mit beiden Schaltern auf „bisher“ `R_comp` 0,193, `W_comp`
+0,125, `R_warp` 0,057 — `compare_milkref.py` nennt den letzten noch „OK“,
+das Bild zeigt das halbe `rad` aber ganzflächig; Original alle drei 0,001.
 
 **Urteil am Bild, nicht an der MAE.** Die Sonden zeichnen wenig; ein
 gespiegeltes Quadrat ergibt eine winzige MAE, und `compare_milkref.py` meldet

@@ -1,0 +1,14 @@
+MILKDROP_PRESET_VERSION=201
+PSVERSION=2
+[preset00]
+fWaveAlpha=0.000
+fDecay=1.000
+zoom=1.000
+warp=0.000
+mv_a=0.000
+ob_a=0.000
+ib_a=0.000
+comp_1=`shader_body
+comp_2=`{
+comp_3=`ret = float3(rad, ang * 0.159155, 0);
+comp_4=`}

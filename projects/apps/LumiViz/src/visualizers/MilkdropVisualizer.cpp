@@ -359,6 +359,11 @@ using lumi::milkdrop::SamplerName;
 /// `referenzRaum` (S130, WP1/WP2): der Shader sieht uv/uv_orig wie die Referenz
 /// (y nach unten) und liest ueber `lv_koord` — der Comp bekommt uv schon so
 /// vom Praesentations-Quad (S75), der Warp wird hier umgerechnet.
+/// Seit S131 (Entscheid Patrik S1 a) gehoeren auch `rad`/`ang` dazu: wie die
+/// Vertex-Attribute der Referenz, im Warp aus dem Mesh (plugin.cpp:2289/2293:
+/// x/y in -1..1, y nach oben, rad an den Ecken 1,25 bei 4:3), im Comp aus
+/// `UvToMathSpace` (milkdropfs.cpp:3779: rad an den Ecken 1, ang in 0..2pi).
+/// Aus = die Formel bis S130 (halbes rad, ang mit y in der Lage des Shaders).
 [[nodiscard]] std::string assembleCustomFragment(const lumi::hlsl::HlslResult& r, bool warp,
                                                  bool truncateUnorm, bool referenzRaum)
 {
@@ -377,9 +382,30 @@ using lumi::milkdrop::SamplerName;
                                 "    vec2 uv_orig = vec2(vUvOrig.x, 1.0 - vUvOrig.y);\n"
                               : "    vec2 uv = vTex;\n"
                                 "    vec2 uv_orig = vUvOrig;\n";
-    s += R"(    float rad = length((uv_orig - 0.5) * aspect.xy);
+    if (!referenzRaum)
+    {
+        s += R"(    float rad = length((uv_orig - 0.5) * aspect.xy);
     float ang = atan((uv_orig.y - 0.5) * aspect.y, (uv_orig.x - 0.5) * aspect.x);
-    // fShader colour-wash: raw corner hues, bilinear like the comp-grid Diffuse
+)";
+    }
+    else if (warp)
+    {
+        // Mesh der Referenz in GL-Lage (y nach oben) = vUvOrig; die Mitte hat ang 0
+        s += R"(    vec2 lv_xy = (vUvOrig * 2.0 - 1.0) * aspect.xy;
+    float rad = length(lv_xy);
+    float ang = (lv_xy.x == 0.0 && lv_xy.y == 0.0) ? 0.0 : atan(lv_xy.y, lv_xy.x);
+)";
+    }
+    else
+    {
+        // UvToMathSpace: u/v des Comp-Gitters (y nach unten) = uv_orig
+        s += R"(    vec2 lv_xy = (uv_orig * 2.0 - 1.0) * aspect.xy;
+    float rad = length(lv_xy) / length(aspect.xy);
+    float ang = (lv_xy.x == 0.0 && lv_xy.y == 0.0) ? 0.0 : atan(lv_xy.y, lv_xy.x);
+    if (ang < 0.0) ang += 6.2831853071796;
+)";
+    }
+    s += R"(    // fShader colour-wash: raw corner hues, bilinear like the comp-grid Diffuse
     // (milkdropfs.cpp:4341-4357; the shader text mixes in its own fShader share)
     vec3 hue_shader = _hue0 * (uv_orig.x * uv_orig.y) +
                       _hue1 * ((1.0 - uv_orig.x) * uv_orig.y) +
@@ -2403,7 +2429,8 @@ bool MilkdropVisualizer::ensureNoiseTextures()
 }
 
 void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
-                                            const FrameVars& fv, unsigned int mainTexture)
+                                            const FrameVars& fv, unsigned int mainTexture,
+                                            bool referenzRaum)
 {
     QOpenGLFunctions* f = QOpenGLContext::currentContext()->functions();
     QOpenGLExtraFunctions* ef = QOpenGLContext::currentContext()->extraFunctions();
@@ -2427,7 +2454,10 @@ void MilkdropVisualizer::feedCustomUniforms(QOpenGLShaderProgram& program,
     const unsigned int wrapPoint = m_samplerObj[2];
     const unsigned int clampPoint = m_samplerObj[3];
 
-    bindSampler("sampler_main", mainTexture, fv.wrap ? wrapLin : clampLin);
+    // Die Referenz bindet `sampler_main` ohne Praefix immer mit Wrap (plugin.cpp:2962,
+    // milkdropfs.cpp:3839); bTexWrap wirkt dort nur auf den erzeugten Standard-Warp
+    // (plugin.cpp:8795: sampler_fc_main). Bis S130 folgte es hier bTexWrap (S131, S1 a).
+    bindSampler("sampler_main", mainTexture, (referenzRaum || fv.wrap) ? wrapLin : clampLin);
     bindSampler("sampler_fc_main", mainTexture, clampLin);
     bindSampler("sampler_pc_main", mainTexture, clampPoint);
     bindSampler("sampler_fw_main", mainTexture, wrapLin);
@@ -3320,7 +3350,8 @@ void MilkdropVisualizer::drawWarpPass(const FrameVars& fv)
                            .arg(m_customRev));
         }
         m_warpCustomProgram->bind();
-        feedCustomUniforms(*m_warpCustomProgram, fv, m_feedback.previousTexture());
+        feedCustomUniforms(*m_warpCustomProgram, fv, m_feedback.previousTexture(),
+                           m_state.warpYOriginal);
         m_warpCustomProgram->setUniformValue("uOrigFromPos", true);
         m_meshVao->bind();
         m_meshVbo->bind();
@@ -4361,7 +4392,8 @@ void MilkdropVisualizer::compositeToScreen(const FrameVars& fv)
         }
         f->glDisable(GL_BLEND);
         m_compCustomProgram->bind();
-        feedCustomUniforms(*m_compCustomProgram, fv, m_feedback.currentTexture());
+        feedCustomUniforms(*m_compCustomProgram, fv, m_feedback.currentTexture(),
+                           m_state.compYOriginal);
         // fShader-Farbwash: Roh-Eckfarben wie die comp-Grid-Diffuse der
         // Referenz (der Shader-Text mischt seinen fShader-Anteil selbst)
         {

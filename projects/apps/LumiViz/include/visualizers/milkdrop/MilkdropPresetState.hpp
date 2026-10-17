@@ -292,11 +292,18 @@ struct PresetState
     /// gespiegelt, der Look bis S129). Standard Original, auch fuer gespeicherte
     /// Ketten ohne das Feld (Entscheide Patrik WP1 a, WP1-R a, WP2 b — Sonden
     /// `asset/calibration/milkdrop/ysonde/`).
+    /// Seit S131 (Entscheid Patrik S1 a) heisst das Feld im Panel *Warp shader
+    /// input* und schaltet alle Eingaenge des Warp-Shaders, die von der Referenz
+    /// abwichen: dazu `rad`/`ang` wie die Vertex-Attribute der Referenz (rad
+    /// doppelt so gross, ang mit y nach oben) und `sampler_main` immer mit Wrap
+    /// (bisher folgte es bTexWrap). false bleibt bitgleich der Look bis S129.
     bool warpYOriginal = true;
     /// Y-Richtung im Comp-Shader (S130): true = wie das Original — jedes Lesen
     /// einer Textur (Puffer, Blur, Bilder) mit y nach unten; false = LumiViz
     /// bisher (`uv` richtig seit S75, gelesen wurde aber auf dem Kopf). Standard
     /// Original, wie `warpYOriginal` (WP2 b: je Pass ein Schalter).
+    /// Seit S131 (S1 a) *Comp shader input*: dazu `rad`/`ang` wie `UvToMathSpace`
+    /// der Referenz (rad an den Ecken 1, ang in 0..2pi) und `sampler_main` mit Wrap.
     bool compYOriginal = true;
 
     // --- Kaltstart (S76; Grundstein der S75-Idee "Preset-Seed") ---------------------------

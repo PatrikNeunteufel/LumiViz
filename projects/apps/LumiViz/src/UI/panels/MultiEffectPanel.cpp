@@ -7507,7 +7507,8 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                         });
                 form->addRow(tr("Aspect ratio (waves)"), aspektCombo);
 
-                // Y-Richtung der Shader (S130, Entscheide Patrik WP1 a, WP2 b): je Pass ein Schalter
+                // Eingaenge der Shader wie die Referenz (S130 WP1 a, WP2 b: y; S131 S1 a:
+                // dazu rad/ang und Wrap von sampler_main): je Pass ein Schalter
                 const auto yCombo = [&](bool original, const QString& tipp, auto setze) {
                     auto* combo = new QComboBox(m_propContainer);
                     combo->addItems({tr("LumiViz (previous)"), tr("Original (MilkDrop)")});
@@ -7519,22 +7520,29 @@ void MultiEffectPanel::buildPropertyEditor(const QList<int>& rawPath)
                             });
                     return combo;
                 };
-                form->addRow(tr("Warp shader Y"),
+                form->addRow(tr("Warp shader input"),
                              yCombo(p->preset.warpYOriginal,
-                                    tr("Which way y points in the warp shader. Original (default) = like "
-                                       "MilkDrop: uv, uv_orig and ang count y downwards, and every texture "
-                                       "read follows them — gradients, swirls and offsets point the way the "
-                                       "author saw them. Previous = y upwards, so values from uv.y and every "
-                                       "vertical offset came out mirrored; the look up to session 129. "
+                                    tr("What the warp shader gets to see. Original (default) = like "
+                                       "MilkDrop: uv and uv_orig count y downwards and every texture read "
+                                       "follows them; rad and ang are those of the reference mesh (rad 0 in "
+                                       "the middle, larger towards the corners, ang counting with y upwards); "
+                                       "sampler_main repeats the image past its edges. Previous = y upwards "
+                                       "(values from uv.y and every vertical offset came out mirrored), half "
+                                       "as large rad, and sampler_main followed the preset's texture wrap; "
+                                       "the look up to session 129. "
                                        "With a warp AND a comp shader, set both rows the same way: before, "
                                        "the two mirrorings cancelled each other out."),
                                     [](lumi::milkdrop::PresetState& s, bool an) { s.warpYOriginal = an; }));
-                form->addRow(tr("Comp shader Y"),
+                form->addRow(tr("Comp shader input"),
                              yCombo(p->preset.compYOriginal,
-                                    tr("Which way the comp shader reads its textures. Original (default) = "
-                                       "like MilkDrop: the image, the blur levels and loaded pictures stand "
-                                       "upright. Previous = uv was right (since session 75), but every "
-                                       "texture was read upside down; the look up to session 129. "
+                                    tr("What the comp shader gets to see. Original (default) = like "
+                                       "MilkDrop: the image, the blur levels and loaded pictures stand "
+                                       "upright; rad is 0 in the middle and 1 in the corners, ang runs from "
+                                       "0 to 6.28; sampler_main repeats the image past its edges. "
+                                       "Previous = uv was right (since session 75), but every texture was "
+                                       "read upside down, rad reached only about 0.6 in the corners, and "
+                                       "sampler_main followed the preset's texture wrap; the look up to "
+                                       "session 129. "
                                        "With a warp AND a comp shader, set both rows the same way: before, "
                                        "the two mirrorings cancelled each other out."),
                                     [](lumi::milkdrop::PresetState& s, bool an) { s.compYOriginal = an; }));
