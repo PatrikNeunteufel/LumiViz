@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.257.0
+> **Version:** 1.258.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2797,9 +2797,9 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   **23c ohne Korpus gebaut** (Extended KS, gemessen; S-K4 a, S-K5 a
   entschieden). S-K6 a, S-U3 a entschieden (zweite Recherche; Skizze Pickups,
   Mensur). **23d erster Teil gebaut** (Waveguide, Mensur, Tonabnehmer als
-  Abtaststellen, Piezo). Offen: Festlegen der Werte aus §6/§6b (Korpus,
-  Induktivität des Humbuckers), 23d zweiter Teil (Cable), Hörproben
-  `hoerproben_23c`, `hoerproben_23d`, S-U2 vor 23f.
+  Abtaststellen, Piezo). S-K7 a entschieden; **23d fertig** (Cable aus
+  Messwerten, Mensuren der Vorlagen). Offen: Verfahren des Korpus (vorzulegen),
+  Hörproben `hoerproben_23c`, `hoerproben_23d`, 23e Creator, S-U2 vor 23f.
 - 🟡 **Loop: weitere Effekte** (Frage Patrik S129). Heute am Clip Filter,
   Distortion, Echo, Reverb (`ClipBaustein`, `loop/Loop.hpp`), an der Schicht
   Filter, Drive, Pan. Nicht geplant waren bisher Flanger, Chorus, Phaser,
@@ -5981,6 +5981,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.258.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K7 a; 23d fertig (Cable, Mensuren der Vorlagen). |
 | 1.257.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K6 a, S-U3 a; Stufe 23d erster Teil gebaut (Waveguide, Tonabnehmer). |
 | 1.256.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K4 a, S-K5 a entschieden, Stufe 23c ohne Korpus gebaut (Extended KS). |
 | 1.255.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-A1 a entschieden, Stufe 23b gebaut (Saitenwahl, Abdämpfen beim Planen). |

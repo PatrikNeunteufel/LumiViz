@@ -1,13 +1,13 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.15.0
+> **Version:** 0.16.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
-> (§5b), 23c ohne Korpus (§5c) und der erste Teil von 23d (§5d).
+> (§5b), 23c ohne Korpus (§5c) und 23d (§5d).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -207,6 +207,15 @@ Versatz im Akkord.
   auseinander** ab. Verworfen: b (Prozent, Humbucker auf feste 648 mm
   bezogen — stimmt nur für eine Gitarre), c (Humbucker als eine Abtaststelle
   — *Type* wäre nur ein Name für eine Resonanz).
+- ✅ **S-K7 a** (Patrik S132): **Abgeleitet zählt als belegt**, wenn Rechenweg
+  oder Abbildung mit Fundstelle dabeistehen; was ganz fehlt, bleibt draußen.
+  In die Auswahl kommen *Classical guitar*, *Acoustic guitar* (als Parlor
+  benannt) und alle drei Tonabnehmer; *Violin*, *Upright bass*, *Acoustic
+  bass* bleiben draußen, bis ihre Lücke belegt ist. Mensuren der Vorlagen nach
+  §6b (Händlerangaben als Herstellerdaten; Ukulele Konzert 15″ = 381 mm aus
+  der Größenklasse). Verworfen: b (nur Wörtliches — der Humbucker ohne
+  Resonanz, obwohl seine Güte wörtlich belegt ist), c (markierte Annahmen für
+  Violine und Kontrabass — die Hintertür aus S-K6).
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -397,8 +406,23 @@ am Ende von Stufe 23.
   3 −0,3 dB, Teilton 36 (halbe Wellenlänge 18 mm bei 648 mm) −44 dB; Neck
   gegen Bridge: Teilton 9 gegen 1 −18 gegen −3 dB; Piezo beim Grundton E1
   −8,81 dB (Hochpass berechnet −8,82 dB).
-- **Noch nicht:** die Resonanz des Tonabnehmers mit dem Kabel (*Cable*) —
-  23d, zweiter Teil, nach der Tabelle (§6).
+- **Zweiter Teil (gebaut S132, nach S-K7 a): Cable.** `Schicht::kabelPf`
+  (100 … 2000 pF, Vorgabe 500; in der Datei `cable`); je magnetischem
+  Tonabnehmer ein Tiefpass zweiter Ordnung mit der Resonanz aus
+  `abnehmerResonanz`: die gemessene Resonanz der Bauart bei ihrer
+  Bezugskapazität, umgerechnet mit f ∝ 1/√C, die Güte bleibt — Single coil
+  3,5 kHz bei 600 pF, Q ≈ 1,58 (+4 dB, Zollner Abb. 5.5.9 abgelesen);
+  Humbucker ≈ 3 kHz bei 450 pF (Abb.), Q 1,83 (Zollner/Zwicker 2019,
+  wörtlich). Eine Schaltung aus den Bauteilwerten (Strat 2,2 H, 6 kΩ an
+  111 kΩ, 600 pF) ergäbe 4,5 kHz statt der gemessenen 3,5 kHz — Wicklung und
+  Wirbelströme fehlen ihr —, deshalb die Messwerte. Gemessen: Teilton um
+  5 kHz gegen den Grundton bei 300 pF −37 dB, bei 1500 pF −54 dB.
+- **Mensuren der Vorlagen** (`Stimmungsvorlage::mensurMm`): Gitarre und
+  Drop D 648, Bass 4 und Bass 5 864, Ukulele 381, Violine 327 mm (§6b).
+- **Von Claude gesetzt:** die Bezugslasten der beiden Bauarten sind
+  verschieden (111 kΩ und 333 kΩ) — so stehen sie in den Quellen; die
+  Wicklungskapazität ist nicht eigens gerechnet (sie steckt in den
+  gemessenen Bezugswerten).
 - **Von Claude gesetzt, nicht vorgelegt:** ein magnetischer Tonabnehmer ist so
   bemessen, dass er im ersten Zehntel einer Sekunde so laut ist wie die Saite
   am Steg (Effektivwert), aber höchstens so spitz — der Anfang wird dafür

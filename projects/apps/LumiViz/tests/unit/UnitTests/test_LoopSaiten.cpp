@@ -104,6 +104,10 @@ TEST_CASE("Loop Saiten: der Saitensatz — Grenzen, Vorlagen, die Regel als Name
     CHECK(namen(vorlagen[3].leer) == QStringLiteral("B0 E1 A1 D2 G2"));
     CHECK(namen(vorlagen[4].leer) == QStringLiteral("G4 C4 E4 A4"));  // die G-Saite ist hoch
     CHECK(namen(vorlagen[5].leer) == QStringLiteral("G3 D4 A4 E5"));
+    // die Mensuren (S-U3 a, S-K7 a; Saiten_Konzept §6b)
+    std::vector<double> mensuren;
+    for (const Stimmungsvorlage& v : vorlagen) mensuren.push_back(v.mensurMm);
+    CHECK(mensuren == std::vector<double>{648.0, 648.0, 864.0, 864.0, 381.0, 327.0});
 
     // --- die Vorlage folgt aus den Toenen, das Capo zaehlt nicht
     Saitensatz gitarre{vorlagen[0].leer, 3, Saitenwahl::JeKlang};

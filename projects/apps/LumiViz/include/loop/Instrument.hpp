@@ -109,6 +109,27 @@ inline constexpr double kHumbuckerAbstandMm = 18.0;
     return AbnehmerArt::Keiner;
 }
 
+/// Cable: die Kapazitaet von Kabel und Last, in pF (Stufe 23d; Zollner,
+/// *Physics of the Electric Guitar* 9.4: ueblich 300 bis 600 pF).
+inline constexpr double kKabelMinPf = 100.0;
+inline constexpr double kKabelMaxPf = 2000.0;
+inline constexpr double kKabelVorgabePf = 500.0;
+
+/// Die Resonanz eines magnetischen Tonabnehmers mit Kabel und Last
+/// (S-K5 a, S-K7 a): gemessen je Bauart bei einer Bezugskapazitaet und mit
+/// der Kapazitaet umgerechnet, f ∝ 1/√C (ein Schwingkreis aus Spule und
+/// Kapazitaet); die Guete bleibt. Belege in docs/audio/Saiten_Konzept.md §6b:
+/// - Single coil: 3,5 kHz bei 600 pF und 111 kOhm, Ueberhoehung +4 dB, also
+///   Q ≈ 1,58 nach 20·lg Q (Zollner 5.5.4, Abb. 5.5.9 — abgelesen);
+/// - Humbucker: ≈ 3 kHz bei 450 pF und 333 kOhm (Abb. abgelesen), Q = 1,83
+///   (Zollner/Zwicker, „Factoring in the Q“, GITEC 2019, S. 6 — wörtlich).
+struct Resonanz
+{
+    double hz = 0.0;     ///< 0 = keine (kein magnetischer Tonabnehmer)
+    double guete = 0.0;
+};
+[[nodiscard]] Resonanz abnehmerResonanz(AbnehmerArt art, double kabelPf);
+
 /// Ein Tonabnehmer an seinem Platz (Neck oder Bridge).
 struct Abnehmer
 {
@@ -243,6 +264,9 @@ struct Schicht
     Abnehmer abnehmerHals{AbnehmerArt::Keiner, 160.0};
     Abnehmer abnehmerSteg{AbnehmerArt::Keiner, 40.0};
     AbnehmerWahl abnehmerWahl = AbnehmerWahl::Beide;
+    /// Cable, in pF (`kKabelMinPf` … `kKabelMaxPf`): fuer beide Tonabnehmer;
+    /// er legt die Resonanz der magnetischen fest (`abnehmerResonanz`).
+    double kabelPf = kKabelVorgabePf;
     double laut = 1.0;              ///< die Lautstaerke der Schicht
     /// Pan, -1 (links) … 1 (rechts); 0 = Mitte (Stufe 18, Entscheid Z3 a).
     /// Dasselbe Gesetz wie an Spur und Muster (Rechenkern): links

@@ -120,6 +120,9 @@ struct Stimmungsvorlage
     const char* schluessel;  ///< `guitar`, `dropD` …
     const char* titel;       ///< wie es im Programm steht: „Guitar standard"
     std::vector<int> leer;   ///< die Toene der leeren Saiten, wie `Saitensatz::leer`
+    /// Die uebliche Mensur in mm (S-U3 a, S-K7 a; Belege in
+    /// docs/audio/Saiten_Konzept.md §6b) — wer die Vorlage waehlt, bekommt sie.
+    double mensurMm = 0.0;
 };
 
 /// Die Vorlagen in der Reihenfolge der Auswahl — ohne *None* und *Custom*.

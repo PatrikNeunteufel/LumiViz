@@ -202,6 +202,47 @@ TEST_CASE("Loop Saite WG: der Piezo nimmt die Kraft am Steg, durch seinen Hochpa
     CHECK(db(teilton(piezo, f0, 30) / teilton(akustisch, f0, 30)) > -1.0);
 }
 
+TEST_CASE("Loop Saite WG: Cable — die Resonanz eines magnetischen Tonabnehmers aus Messwerten")
+{
+    // die Bezugswerte (Saiten_Konzept §6b): Single coil 3,5 kHz bei 600 pF, +4 dB; Humbucker 3 kHz bei 450 pF, Q 1,83
+    const Resonanz single = abnehmerResonanz(AbnehmerArt::SingleCoil, 600.0);
+    CHECK(single.hz == doctest::Approx(3500.0));
+    CHECK(db(single.guete) == doctest::Approx(4.0));
+    const Resonanz humbucker = abnehmerResonanz(AbnehmerArt::Humbucker, 450.0);
+    CHECK(humbucker.hz == doctest::Approx(3000.0));
+    CHECK(humbucker.guete == doctest::Approx(1.83));
+    // viermal die Kapazitaet: die halbe Frequenz (f ∝ 1/√C), die Guete bleibt
+    CHECK(abnehmerResonanz(AbnehmerArt::Humbucker, 1800.0).hz == doctest::Approx(1500.0));
+    CHECK(abnehmerResonanz(AbnehmerArt::Humbucker, 1800.0).guete == doctest::Approx(1.83));
+    // Piezo und None haben keine
+    CHECK(abnehmerResonanz(AbnehmerArt::Piezo, 500.0).hz == 0.0);
+    CHECK(abnehmerResonanz(AbnehmerArt::Keiner, 500.0).hz == 0.0);
+    // Grenzen: das Kabel wird auf kKabelMinPf … kKabelMaxPf begrenzt
+    CHECK(abnehmerResonanz(AbnehmerArt::SingleCoil, 1.0).hz == doctest::Approx(3500.0 * std::sqrt(600.0 / kKabelMinPf)));
+    CHECK(abnehmerResonanz(AbnehmerArt::SingleCoil, 1e6).hz == doctest::Approx(3500.0 * std::sqrt(600.0 / kKabelMaxPf)));
+
+    // im Ton: ein kurzes Kabel laesst um 5 kHz deutlich mehr durch als ein langes
+    const double f0 = tonHz(52);
+    const auto hell = [&](double pf) {
+        const Klang ton = rendereTon(wgSaite([&](Schicht& s) {
+                                         s.abnehmerSteg = Abnehmer{AbnehmerArt::SingleCoil, 41.0};
+                                         s.kabelPf = pf;
+                                     }),
+                                     52, 1000.0, kRate);
+        const int k = static_cast<int>(std::lround(5000.0 / f0));
+        return db(teilton(ton, f0, k) / teilton(ton, f0, 1));
+    };
+    const double kurz = hell(300.0);
+    const double lang = hell(1500.0);
+    MESSAGE("Single coil, Teilton um 5 kHz gegen den Grundton: 300 pF " << kurz << " dB, 1500 pF " << lang << " dB");
+    CHECK(kurz > lang + 10.0);
+    // die Datei traegt Cable
+    Instrument mitKabel = wgSaite([](Schicht& s) { s.kabelPf = 820.0; });
+    Instrument gelesen;
+    REQUIRE(ausJson(alsJson(mitKabel), gelesen));
+    CHECK(gelesen.schichten[0].kabelPf == 820.0);
+}
+
 TEST_CASE("Loop Saite WG: jeder Ton im Umfang bleibt endlich und im Rahmen")
 {
     for (const int hoehe : {kHoeheMin, 40, 64, 88, kHoeheMax})

@@ -775,6 +775,18 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         double piezoDavorEin = 0.0;
         double piezoDavorAus = 0.0;
         double faktor = 1.0;  ///< die Bemessung eines magnetischen Tonabnehmers
+        // die Resonanz mit Kabel und Last: ein Tiefpass zweiter Ordnung (RBJ), normiert auf a0
+        double b0 = 1.0, b1 = 0.0, b2 = 0.0, a1 = 0.0, a2 = 0.0;
+        double x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0;
+        [[nodiscard]] double resonanz(double x)
+        {
+            const double y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+            x2 = x1;
+            x1 = x;
+            y2 = y1;
+            y1 = y;
+            return y;
+        }
     };
     const auto platz = [&](const Abnehmer& a) {
         Platz p;
@@ -782,6 +794,17 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         const double x = std::clamp(a.mmVomSteg / mensur, 0.002, 0.998);
         p.stellen[0].x = x;
         p.stellen[1].x = std::clamp(x + kHumbuckerAbstandMm / mensur, 0.002, 0.998);
+        if (const Resonanz r = abnehmerResonanz(a.art, schicht.kabelPf); r.hz > 0.0)
+        {
+            const double w = 2.0 * kPi * std::min(r.hz, 0.45 * rate) / rate;
+            const double alpha = std::sin(w) / (2.0 * r.guete);
+            const double a0 = 1.0 + alpha;
+            p.b0 = 0.5 * (1.0 - std::cos(w)) / a0;
+            p.b1 = (1.0 - std::cos(w)) / a0;
+            p.b2 = p.b0;
+            p.a1 = -2.0 * std::cos(w) / a0;
+            p.a2 = (1.0 - alpha) / a0;
+        }
         return p;
     };
     const bool hals = schicht.abnehmerHals.art != AbnehmerArt::Keiner;
@@ -810,7 +833,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
             summe += jetzt - stelle.davor;
             stelle.davor = jetzt;
         }
-        return p.faktor * summe / spulen;
+        return p.faktor * p.resonanz(summe / spulen);
     };
 
     std::array<Platz, 2> plaetze = {platz(schicht.abnehmerHals), platz(schicht.abnehmerSteg)};
@@ -1154,6 +1177,7 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
             };
             o[QStringLiteral("pickupNeck")] = abnehmer(schicht.abnehmerHals);
             o[QStringLiteral("pickupBridge")] = abnehmer(schicht.abnehmerSteg);
+            o[QStringLiteral("cable")] = schicht.kabelPf;
             o[QStringLiteral("pickupSelect")] = schicht.abnehmerWahl == AbnehmerWahl::Hals   ? QStringLiteral("neck")
                                                 : schicht.abnehmerWahl == AbnehmerWahl::Steg ? QStringLiteral("bridge")
                                                                                              : QStringLiteral("both");
@@ -1240,6 +1264,7 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     };
     neu.abnehmerHals = abnehmer("pickupNeck", vorgabe.abnehmerHals);
     neu.abnehmerSteg = abnehmer("pickupBridge", vorgabe.abnehmerSteg);
+    neu.kabelPf = zahl("cable", vorgabe.kabelPf, kKabelMinPf, kKabelMaxPf);
     const QString wahl = wurzel.value(QStringLiteral("pickupSelect")).toString();
     neu.abnehmerWahl = wahl == QLatin1String("neck")     ? AbnehmerWahl::Hals
                        : wahl == QLatin1String("bridge") ? AbnehmerWahl::Steg
@@ -1899,6 +1924,30 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
 Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate)
 {
     return rendereTonAufSaite(instrument, hoehe, dauerMs, rate, -1);
+}
+
+Resonanz abnehmerResonanz(AbnehmerArt art, double kabelPf)
+{
+    // je Bauart: Bezugsfrequenz, Bezugskapazitaet, Guete (Belege in Instrument.hpp)
+    double bezugHz = 0.0;
+    double bezugPf = 0.0;
+    double guete = 0.0;
+    if (art == AbnehmerArt::SingleCoil)
+    {
+        bezugHz = 3500.0;
+        bezugPf = 600.0;
+        guete = std::pow(10.0, 4.0 / 20.0);  // +4 dB Ueberhoehung, 20 lg Q
+    }
+    else if (art == AbnehmerArt::Humbucker)
+    {
+        bezugHz = 3000.0;
+        bezugPf = 450.0;
+        guete = 1.83;
+    }
+    else
+        return {};
+    const double kabel = std::isfinite(kabelPf) ? std::clamp(kabelPf, kKabelMinPf, kKabelMaxPf) : kKabelVorgabePf;
+    return {bezugHz * std::sqrt(bezugPf / kabel), guete};
 }
 
 Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate)
