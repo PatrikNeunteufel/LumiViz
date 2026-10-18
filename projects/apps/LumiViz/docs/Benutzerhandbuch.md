@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.188.0
+> **Version:** 1.189.0
 > **Datum:** 2026-10-18
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -3064,7 +3064,8 @@ die Klaviatur des Editors.
 | **Pitch sweep** | Jede Note beginnt so viele Halbtöne neben ihrer Tonhöhe und kommt auf sie. Nach rechts beginnt sie darüber und **fällt** (der Wert zeigt „↓ 22 st") — so entsteht eine Kick oder ein Tom. Nach links beginnt sie darunter und **steigt** („↑ 12 st"). In der Mitte steht „off". Bei Sine, Triangle, Saw, Square und Sample; bei einer Aufnahme läuft sie am Anfang entsprechend schneller oder langsamer |
 | **Sweep time** | Nach dieser Zeit ist die Note auf ihrer Tonhöhe angekommen. Grau, solange Pitch sweep auf „off" steht |
 | **Harmonic 2** bis **9** | Nur bei Sine: wie stark die Obertöne mitklingen |
-| **Damping** | Nur bei Plucked string: weiter rechts klingt die Saite länger |
+| **Model** | NEU in 1.189.0. Nur bei Plucked string: wie die Saite gerechnet wird — **Classic** (die Saite von früher, mit Damping), **Extended KS** und **Waveguide** (mit den Gruppen String, Body und Pickups; siehe „Saiteninstrumente“ unten). Der Kasten Source nennt das Verfahren: „Plucked string · Waveguide“ |
+| **Damping** | Nur bei Plucked string mit Model **Classic**: weiter rechts klingt die Saite länger |
 | **Attack**, **Decay**, **Sustain**, **Release** | Unter dem Kasten **Envelope**. Die Hüllkurve: wie schnell der Ton da ist, wie schnell er auf den Haltepegel fällt, wie laut er gehalten wird, wie lange er nach dem Ende der Note ausklingt |
 | **Type** (Filter) | Unter einem Kasten **Filter**. Die Art des Filters. **Low-pass** lässt durch, was unter Cutoff liegt (dumpfer) — der Filter jedes Instruments von früher. **High-pass** lässt durch, was darüber liegt (dünner, heller): der Teppich einer Snare, eine Hi-Hat aus Rauschen. **Band-pass** lässt durch, was um Cutoff herum liegt: ein Clap |
 | **Cutoff**, **Filter envelope** | Die Grenze des Filters; sie geht mit der Tonhöhe mit. Cutoff ganz links ist „open" (der Filter tut nichts, sein Kasten ist grau geschrieben, Type und Resonance sind grau), sonst die Grenze als Vielfaches des Grundtons. Filter envelope verschiebt sie mit dem Anschlag nach oben — sie folgt der Hüllkurve der Schicht, gleich wo der Filter in der Zeile steht. Bei einer gezupften Saite wird ein Filter übersprungen; sein Kasten sagt „skipped“ |
@@ -3079,6 +3080,37 @@ die Klaviatur des Editors.
 
 Ein laufendes Muster klingt erst nach **Save** mit den neuen Einstellungen.
 Schließt du den Creator mit Ungespeichertem, fragt er nach.
+
+**Saiteninstrumente (NEU in 1.189.0).** Ein Instrument kann Saiten haben wie eine
+Gitarre: dann wählt jede Note eine Saite, eine neue Note auf derselben Saite dämpft die
+vorige ab, und die Saite klingt nach der Physik einer echten — mit Anschlagstelle,
+Korpus und Tonabnehmern.
+
+| Im Creator | Wirkung |
+|---|---|
+| **Tuning** | Die Zeile unter Type / Genres / Description. Die Stimmung: **None** (kein Saiteninstrument — dann steht nur diese Auswahl), Guitar standard, Drop D, Bass 4, Bass 5, Ukulele, Violin. **Custom** steht da, wenn die Töne zu keiner Vorlage passen; wählen kann man es nicht |
+| **Strings** | Wie viele Saiten, 1 bis 12. Eine neue Saite kommt oben dazu, eine Quarte über der höchsten |
+| Die Felder der Saiten | Je Saite der Ton der leeren Saite, von der tiefsten an. Getippt wird ein Name (E2, C#4, Bb3) oder eine Zahl, oder mit den Pfeilen. Der Tooltip nennt die Nummer der Saite: gezählt wird wie am Instrument, die **hohe Saite ist 1** (bei der Gitarre die hohe E-Saite) |
+| **Capo** | So viele Bünde höher klingt jede leere Saite |
+| **Scale** | Die Mensur in mm, die schwingende Länge vom Sattel zum Steg; die Vorlage setzt sie. Die Lage der Tonabnehmer gilt in mm vom Steg |
+| **String choice** | Wie eine Note ohne eigene Saite eine findet — die Vorgabe für neue Muster. **Per chord**: Noten, die zugleich klingen, auf verschiedenen Saiten, die Bünde nah beieinander. **Follow hand**: ebenso, aber nah an der Lage des vorigen Anschlags |
+| Gruppe **String** | Bei Extended KS und Waveguide. Zuerst das **Saitenbild**: Sattel links, Steg rechts, die Marke **pluck** und bei Waveguide die Tonabnehmer **neck** und **bridge** (ein Humbucker als zwei Striche). Die Marken lassen sich mit der Maus ziehen (der Zeiger wird zum Doppelpfeil). Darunter **Pluck position** (wo angeschlagen wird, vom Steg aus — bei einem Viertel fehlt der vierte Teilton), **Pluck** (weich wie ein Finger bis hart wie ein Plektrum), **Ring time** (bis der Grundton um 60 dB gefallen ist), **High damping** (wie viel schneller die Höhen vergehen), **Stiffness** (die Obertöne etwas höher, wie beim Klavier), **String variation** (eine tiefere Saite ist dicker: dunkler und steifer) |
+| Gruppe **Body** | **Body**: None, **Acoustic guitar (Parlor)** oder **Classical guitar** — Decke, Boden und Luft schwingen mit der Saite, mit den Werten gemessener Gitarren. **Body amount**: wie viel des Tons durch den Korpus kommt. Er wirkt auf den Ton am Steg — hinter einem Tonabnehmer nicht |
+| Gruppe **Pickups** | Nur bei Waveguide. **Pickup select** Neck / Both / Bridge (grau, solange nur ein Platz einen Tonabnehmer hat); je Platz **Type** (None (acoustic), Single coil, Humbucker, Piezo) und **Position** in mm vom Steg (grau bei None und Piezo); **Cable** in pF, darunter die Resonanz, die daraus folgt — mehr pF klingt dunkler. Ein Tonabnehmer klingt so laut wie die Saite am Steg |
+
+| Im Instrument-Editor, bei einem Saiteninstrument | Wirkung |
+|---|---|
+| **String choice** | Hinter Load instrument...: die Regel dieses Musters (Undo) |
+| Die Zahl in einer Note | Die Saite, auf der sie spielt (1 = die hohe). Eine **Nadel** davor: du hast sie gesetzt |
+| Eine rot schraffierte Note mit **!** | Auf keiner freien Saite greifbar (zu tief, zu hoch oder mehr Noten zugleich als Saiten) — sie klingt trotzdem, auf der nächstbesten Saite; der Tooltip nennt sie |
+| Ein Punkt auf einer Taste | Der Ton einer leeren Saite (mit Capo) |
+| Rechtsklick auf eine Note → **String** | Für die markierten Noten: **Auto** (die Regel wählt) oder eine bestimmte Saite; was nicht greifbar ist, steht grau |
+
+Mitgeliefert spielen seit 1.189.0 **Guitar, Nylon Guitar, Clean Guitar, Muted Guitar,
+Overdrive Guitar, Upright Bass, Slap Bass** (mit Tuning) und **Clavinet** (ohne Tuning,
+eine Saite je Taste) auf den neuen Saiten, gleich laut wie vorher. Die Fassungen davor
+gibt es weiter als „… (old)“. Neu sind **Jazz Guitar, Finger Bass, Ukulele, Drop D
+Guitar, Pizzicato Violin** und **Piezo Guitar**.
 
 **Eine Schicht aus einer Aufnahme (Waveform: Sample).** Statt einer gerechneten
 Schwingung spielt die Schicht eine Tondatei — je Note schneller oder langsamer, also höher
@@ -3273,6 +3305,14 @@ Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
 | `rock_demo.lvloop` | Overdrive Guitar, Growl Bass, Organ, Lead |
 | `strange_demo.lvloop` | Die ungewöhnlichen: Broken Radio, Siren, Alien Choir, Cascade, Growl Bass |
 | `ambient_demo.lvloop` | Ohne Schlagzeug: Reverse Swell, Ghost, Fifth Pad, Flute, Bell, Cascade |
+| `jazz_guitar_demo.lvloop` | NEU in 1.189.0. Jazz Guitar auf Zwei und Vier, Finger Bass in Vierteln (ii-V-I) |
+| `ukulele_demo.lvloop` | NEU. Ukulele in Achteln, Piezo Guitar, Finger Bass |
+| `drop_d_demo.lvloop` | NEU. Drop D Guitar mit Powerchords auf der leeren D-Saite, Finger Bass |
+| `pizzicato_demo.lvloop` | NEU. Zwei Pizzicato Violins und Finger Bass |
+
+Im Unterordner `asset\loop\vergleich` (NEU in 1.189.0) liegen fünf Vergleiche: Bossa,
+Funk, Disco, Rock und Guitar je zweimal hintereinander — zuerst mit den Instrumenten
+„(old)“, dann mit den neuen Saiten. Die übrigen Spuren spielen beide Male gleich.
 
 Im Unterordner `asset\loop\genres` liegen neunzehn Beispiele nach Genre —
 gerechnet, nicht nach Gehör eingestellt:
@@ -3453,6 +3493,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.189.0 | 2026-10-18 | Session 133. §16 Loop NEU **Saiteninstrumente**: im Creator die Zeile **Tuning** (Strings, Capo, Scale, String choice), **Model** (Classic, Extended KS, Waveguide), die Gruppen **String** (mit dem Saitenbild und ziehbaren Marken), **Body** (Parlor, Classical guitar) und **Pickups**; im Instrument-Editor **String choice**, die Nummer der Saite je Note, nicht greifbare Noten, das Menü **String**. Mitgelieferte Gitarren, Bässe und Clavinet spielen auf den neuen Saiten, die alten als „(old)“; sechs neue Instrumente, vier Beispiele und fünf Vergleiche unter `asset\loop\vergleich`. |
 | 1.188.0 | 2026-10-18 | Session 132. §16 Loop: Noten reichen von A0 bis C8, dem Umfang eines Klaviers (vorher C1 bis C7) — Klaviatur der Piano-Roll und **Note** einer Drum-Spur. |
 | 1.187.0 | 2026-10-17 | Session 131. §MilkDrop: die Schalter heißen **Warp shader** und **Comp shader** und füllen dazu selbst gebaute Matrizen zeilenweise wie MilkDrop (Entscheid S2 a); Sammelliste nachgezogen. |
 | 1.186.0 | 2026-10-17 | Session 131. §MilkDrop: *Warp/Comp shader Y* heißen jetzt **Warp shader input** und **Comp shader input** und schalten dazu `rad`/`ang` wie im Original und das Wiederholen von `sampler_main` (Entscheid S1 a); Sammelliste der „bisher"-Schalter nachgezogen. |

@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.26.0
+> **Version:** 0.27.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -757,8 +757,11 @@ am Ende von Stufe 23.
 - **Von Claude gesetzt:** die Werte je Instrument (Tabelle im Skript); der
   Kontrabass ohne Body mit der Mensur der Vorlage Bass 4; das Clavinet ohne
   Tuning (eine Saite je Taste).
-- **Offen in 23g:** Handbuch und Sichttest-Liste; **der volle Lauf erst mit
-  Tabs und Akkorden** (Patrik S133).
+- **Handbuch** 1.189.0 (§16 Loop: „Saiteninstrumente“, Model und Damping, die
+  Beispiele und `vergleich\`); **Sichttest-Liste** `.claude\handover\Sichttest_Saiten.md`
+  (lokal; Abschnitte T, M, S, P, E, I, N, C und die Urteile U1–U6).
+- **Offen:** Patriks Sichttest; **der volle Lauf erst mit Tabs und Akkorden**
+  (Patrik S133).
 
 ---
 
