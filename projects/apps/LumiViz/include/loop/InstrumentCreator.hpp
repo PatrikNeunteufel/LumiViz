@@ -25,7 +25,9 @@
  * steht Damping wie bisher; sonst die Gruppen **String** (zuerst das
  * Saitenbild mit den ziehbaren Marken pluck, neck, bridge; dann Pluck position,
  * Pluck, Ring time, High damping, Stiffness, String variation) und **Body**
- * (Body, Body amount). Der Kasten Source nennt das Verfahren.
+ * (Body, Body amount); bei Waveguide dazu **Pickups** (Pickup select, je
+ * Tonabnehmer Type und Position, Cable mit der Resonanz daneben). Der Kasten
+ * Source nennt das Verfahren.
  * **Rechts:** das Bild einer Schwingung und die Huellkurve einer Note — die
  * Summe aller Schichten als Linie, die gewaehlte gestrichelt — und eine
  * kleine Klaviatur zum Anspielen; „Selected layer only" laesst die gewaehlte
@@ -61,14 +63,17 @@
 #include <QString>
 #include <QWidget>
 
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
 
 class IAudioEngine;
+class QButtonGroup;
 class QCheckBox;
 class QComboBox;
+class QDoubleSpinBox;
 class QGridLayout;
 class QLabel;
 class QLineEdit;
@@ -428,7 +433,7 @@ public:
     /// Die Gruppen Oscillator und Vibrato (unter Source) lassen sich an
     /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
     /// (`loop/creatorFolded/<schluessel>`), sie gilt fuer jede Schicht und jedes
-    /// Instrument. `schluessel`: `oscillator`, `string`, `body` (Stufe 23e), `vibrato` — Envelope und Filter
+    /// Instrument. `schluessel`: `oscillator`, `string`, `body`, `pickups` (Stufe 23e), `vibrato` — Envelope und Filter
     /// sind seit Stufe 16c Bausteine der Zeile Signal path, keine Gruppen mehr.
     void setzeGruppeZu(const QString& schluessel, bool zu);
     [[nodiscard]] bool gruppeZu(const QString& schluessel) const;
@@ -697,6 +702,14 @@ private:
     std::vector<std::size_t> m_nurPhysik;    ///< Plaetze in `m_regler`: die Regler von String und Body
     std::size_t m_reglerKorpusAnteil = 0;    ///< Body amount: grau ohne Korpus
     SaitenBild* m_saitenBild = nullptr;      ///< das Saitenbild, die erste Zeile der Gruppe String
+    // --- die Gruppe Pickups, nur bei Waveguide (Stufe 23e, Nachtrag S-U3 a)
+    QWidget* m_abnehmerTitel = nullptr;
+    std::vector<QWidget*> m_abnehmerZeilen;          ///< Pickup select, Neck, Bridge, die Resonanz
+    QButtonGroup* m_abnehmerWahl = nullptr;          ///< Neck, Both, Bridge
+    std::array<QComboBox*, 2> m_abnehmerArt{};       ///< Type je Platz (Neck, Bridge)
+    std::array<QDoubleSpinBox*, 2> m_abnehmerLage{}; ///< Position je Platz, mm vom Steg
+    std::vector<std::size_t> m_nurWellenleiter;      ///< Plaetze in `m_regler`: Cable
+    QLabel* m_resonanzText = nullptr;                ///< „Resonance: neck ≈ 4.1 kHz · bridge ≈ 2.9 kHz"
 };
 
 }  // namespace lumi::loop

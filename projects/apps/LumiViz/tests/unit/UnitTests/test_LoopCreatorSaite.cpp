@@ -26,7 +26,9 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileInfo>
+#include <QPushButton>
 #include <QLabel>
 #include <QMouseEvent>
 #include <QSlider>
@@ -172,6 +174,13 @@ TEST_CASE("Loop Instrument Creator Saite: Model, die Gruppen String und Body —
         CHECK(gezeigt.grab().save(ziel));
         const QFileInfo info(ziel);
         CHECK(gezeigt.saitenBild()->grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_bild.") + info.suffix())));
+        // die Gruppe Pickups ganz: String und Body eingeklappt
+        gezeigt.setzeGruppeZu(QStringLiteral("string"), true);
+        gezeigt.setzeGruppeZu(QStringLiteral("body"), true);
+        QCoreApplication::processEvents();
+        CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_pickups.") + info.suffix())));
+        gezeigt.setzeGruppeZu(QStringLiteral("string"), false);
+        gezeigt.setzeGruppeZu(QStringLiteral("body"), false);
         gezeigt.aendereSchicht([](Schicht& s) { s.saitenModell = SaitenModell::Klassisch; });
         QCoreApplication::processEvents();
         CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_classic.") + info.suffix())));
@@ -274,4 +283,98 @@ TEST_CASE("Loop Instrument Creator Saite: das Saitenbild — die Marken pluck, n
     // Classic: kein Saitenbild
     creator.aendereSchicht([](Schicht& s) { s.saitenModell = SaitenModell::Klassisch; });
     CHECK(imCreator->isHidden());
+}
+
+TEST_CASE("Loop Instrument Creator Saite: die Gruppe Pickups — Pickup select, Type, Position, Cable")
+{
+    Anwendung anwendung;
+    InstrumentCreator creator;
+    auto* titel = creator.findChild<QToolButton*>(QStringLiteral("creatorGroup_pickups"));
+    auto* halsArt = creator.findChild<QComboBox*>(QStringLiteral("creatorNeckType"));
+    auto* stegArt = creator.findChild<QComboBox*>(QStringLiteral("creatorBridgeType"));
+    auto* halsOrt = creator.findChild<QDoubleSpinBox*>(QStringLiteral("creatorNeckPosition"));
+    auto* stegOrt = creator.findChild<QDoubleSpinBox*>(QStringLiteral("creatorBridgePosition"));
+    auto* nimmHals = creator.findChild<QPushButton*>(QStringLiteral("creatorPickupNeck"));
+    auto* nimmBeide = creator.findChild<QPushButton*>(QStringLiteral("creatorPickupBoth"));
+    auto* nimmSteg = creator.findChild<QPushButton*>(QStringLiteral("creatorPickupBridge"));
+    auto* kabel = creator.findChild<QSlider*>(QStringLiteral("creatorCable"));
+    auto* resonanz = creator.findChild<QLabel*>(QStringLiteral("creatorPickupResonance"));
+    REQUIRE(titel != nullptr);
+    REQUIRE(halsArt != nullptr);
+    REQUIRE(stegArt != nullptr);
+    REQUIRE(halsOrt != nullptr);
+    REQUIRE(stegOrt != nullptr);
+    REQUIRE(nimmHals != nullptr);
+    REQUIRE(nimmBeide != nullptr);
+    REQUIRE(nimmSteg != nullptr);
+    REQUIRE(kabel != nullptr);
+    REQUIRE(resonanz != nullptr);
+    const auto waehle = [](QComboBox* auswahl, AbnehmerArt art) {
+        auswahl->setCurrentIndex(auswahl->findData(static_cast<int>(art)));
+        Q_EMIT auswahl->activated(auswahl->currentIndex());
+    };
+
+    // Extended KS: keine Tonabnehmer
+    creator.oeffne(saite(SaitenModell::ErweiterterKs));
+    CHECK(titel->isHidden());
+    CHECK(halsArt->parentWidget()->isHidden());
+    CHECK(kabel->isHidden());
+
+    // Waveguide: die Gruppe, beide Plaetze auf None — die Position grau, Pickup select grau, Cable wirkungslos
+    Instrument wg = saite(SaitenModell::Wellenleiter);
+    wg.saiten = Saitensatz{{40, 45, 50, 55, 59, 64}, 0, Saitenwahl::JeKlang, 648.0};
+    creator.oeffne(wg);
+    CHECK_FALSE(titel->isHidden());
+    CHECK_FALSE(halsArt->parentWidget()->isHidden());
+    CHECK(halsArt->currentText() == QStringLiteral("None (acoustic)"));
+    CHECK_FALSE(halsOrt->isEnabled());
+    CHECK_FALSE(nimmBeide->isEnabled());
+    CHECK_FALSE(kabel->isEnabled());
+    CHECK(resonanz->text() == QStringLiteral("Cable works only with a single coil or humbucker"));
+    CHECK(halsOrt->value() == 160.0);  // die Vorgaben aus Zollner 2.8.2
+    CHECK(stegOrt->value() == 40.0);
+    CHECK(halsOrt->maximum() == 648.0);  // nicht weiter als die Saite
+
+    // ein Single coil am Hals: die Position stellt sich, Cable wirkt, die Resonanz steht da
+    waehle(halsArt, AbnehmerArt::SingleCoil);
+    CHECK(creator.schicht().abnehmerHals.art == AbnehmerArt::SingleCoil);
+    CHECK(halsOrt->isEnabled());
+    CHECK(kabel->isEnabled());
+    CHECK(resonanz->text().startsWith(QStringLiteral("Resonance: neck ≈ ")));
+    CHECK_FALSE(nimmBeide->isEnabled());  // der andere Platz ist leer: es gibt nichts zu waehlen
+    halsOrt->setValue(152.0);
+    CHECK(creator.schicht().abnehmerHals.mmVomSteg == 152.0);
+
+    // ein Humbucker am Steg: Pickup select wird waehlbar
+    waehle(stegArt, AbnehmerArt::Humbucker);
+    CHECK(nimmBeide->isEnabled());
+    CHECK(nimmBeide->isChecked());  // die Vorgabe: Both
+    nimmSteg->click();
+    CHECK(creator.schicht().abnehmerWahl == AbnehmerWahl::Steg);
+    CHECK(nimmSteg->isChecked());
+    CHECK(resonanz->text().contains(QStringLiteral("bridge ≈ ")));
+    // mehr Kapazitaet: die Resonanz sinkt
+    const double vorher = abnehmerResonanz(AbnehmerArt::SingleCoil, creator.schicht().kabelPf).hz;
+    kabel->setValue(1500);
+    CHECK(creator.schicht().kabelPf == 1500.0);
+    CHECK(abnehmerResonanz(AbnehmerArt::SingleCoil, 1500.0).hz < vorher);
+
+    // ein Piezo am Steg: seine Position ist grau (er sitzt unter dem Steg)
+    waehle(stegArt, AbnehmerArt::Piezo);
+    CHECK_FALSE(stegOrt->isEnabled());
+    CHECK(nimmBeide->isEnabled());
+    CHECK_FALSE(resonanz->text().contains(QStringLiteral("bridge")));
+
+    // die Tonabnehmer-Marken im Saitenbild folgen dem Type
+    SaitenBild* bild = creator.saitenBild();
+    bild->resize(600 + 2 * 14, 92);
+    CHECK(bild->ortVon(SaitenBild::GriffHals).x() == bild->xVon(152.0 / 648.0));
+    CHECK(bild->ortVon(SaitenBild::GriffSteg) == QPoint(-1, -1));  // Piezo: keine ziehbare Marke
+
+    // einklappen
+    creator.setzeGruppeZu(QStringLiteral("pickups"), true);
+    CHECK(halsArt->parentWidget()->isHidden());
+    CHECK(kabel->isHidden());
+    creator.setzeGruppeZu(QStringLiteral("pickups"), false);
+    CHECK_FALSE(kabel->isHidden());
 }

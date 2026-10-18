@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.22.0
+> **Version:** 0.23.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -8,7 +8,9 @@
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
-> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g) Model, String, Body (§5h) und das Saitenbild (§5i).
+> Classical guitar (§5f, S-K10 a, S133); 23e, der Creator: die Zeile Tuning
+> (§5g), Model, String, Body (§5h), das Saitenbild (§5i) und die Gruppe
+> Pickups (§5j).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -620,6 +622,25 @@ am Ende von Stufe 23.
   einen trägt (Type ≠ None) — Type selbst kommt mit der Gruppe Pickups
   (Teilschritt 4); die Lagen werden wie in der Abnahme auf 0,2 … 99,8 % der
   Saite begrenzt.
+
+### 5j. Stufe 23e, Teilschritt 4 — die Gruppe Pickups (gebaut S133; 23e fertig)
+
+- **Im Creator**, nur bei *Waveguide*, unter Body (einklappbar, `pickups`):
+  **Pickup select** als Knopfreihe Neck / Both / Bridge; je Platz **Neck** und
+  **Bridge** die Auswahl *Type* (None (acoustic), Single coil, Humbucker,
+  Piezo) und *Position* in mm vom Steg (bis zur Mensur); **Cable** in pF und
+  darunter die Resonanz, die daraus je Bauart folgt („Resonance: neck ≈
+  3.8 kHz · bridge ≈ 2.8 kHz“ bei 500 pF). Das Saitenbild zeigt die Marken
+  nach dem Type.
+- **Belegt** in `test_LoopCreatorSaite` („die Gruppe Pickups“; ein Bild
+  `_pickups` mit String und Body eingeklappt). **Bereichslauf am Ende von
+  23e:** 322 / 322 unter Testing-MSVC (300 s) und Release-clang (72 s).
+- **Von Claude gesetzt:** *Position* ist grau bei None und Piezo (None hat
+  keine Lage, ein Piezo sitzt unter dem Steg); *Pickup select* ist grau,
+  solange ein Platz auf None steht — dann klingt der andere allein (wie im
+  Modell); *Cable* ist grau ohne magnetischen Tonabnehmer, die Zeile sagt
+  es. Die Gruppe Body bleibt bei Tonabnehmern sichtbar, wirkt dann aber
+  nicht (§5e: ein Tonabnehmer nimmt die Saite selbst ab).
 
 ---
 

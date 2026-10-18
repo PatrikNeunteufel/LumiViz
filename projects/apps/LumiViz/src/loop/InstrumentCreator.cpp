@@ -16,6 +16,7 @@
 #include "loop/SignalWeg.hpp"
 
 #include <QAction>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -23,6 +24,7 @@
 #include <QCompleter>
 #include <QDialog>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
@@ -1102,6 +1104,89 @@ void InstrumentCreator::setupUI()
     m_nurPhysik.push_back(m_regler.size() - 1);
     m_reglerKorpusAnteil = m_regler.size() - 1;
 
+    // --- Pickups, nur bei Waveguide (Stufe 23e; Nachtrag S-U3 a, Skizze gebilligt, Patrik S132)
+    m_abnehmerTitel = titel(tr("Pickups"), "pickups");
+    {
+        const int zeile = gitter->rowCount();
+        auto* name = new QLabel(tr("Pickup select"), this);
+        auto* reihe = new QWidget(this);
+        auto* lage = new QHBoxLayout(reihe);
+        lage->setContentsMargins(0, 0, 0, 0);
+        m_abnehmerWahl = new QButtonGroup(this);
+        m_abnehmerWahl->setExclusive(true);
+        const std::array<std::pair<AbnehmerWahl, const char*>, 3> wahlen = {
+            {{AbnehmerWahl::Hals, "Neck"}, {AbnehmerWahl::Beide, "Both"}, {AbnehmerWahl::Steg, "Bridge"}}};
+        for (const auto& [wahl, text] : wahlen)
+        {
+            auto* k = new QPushButton(tr(text), reihe);
+            k->setObjectName(QStringLiteral("creatorPickup") + QLatin1String(text));
+            k->setCheckable(true);
+            lage->addWidget(k);
+            m_abnehmerWahl->addButton(k, static_cast<int>(wahl));
+        }
+        lage->addStretch(1);
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(reihe, zeile, 1, 1, 2);
+        m_abnehmerZeilen.push_back(name);
+        m_abnehmerZeilen.push_back(reihe);
+        connect(m_abnehmerWahl, &QButtonGroup::idClicked, this, [this](int id) {
+            aendereSchicht([id](Schicht& s) { s.abnehmerWahl = static_cast<AbnehmerWahl>(id); });
+        });
+    }
+    // je Platz: Type und Position (mm vom Steg; bei Piezo und None grau)
+    for (int platz = 0; platz < 2; ++platz)
+    {
+        const int zeile = gitter->rowCount();
+        const QString wort = platz == 0 ? QStringLiteral("Neck") : QStringLiteral("Bridge");
+        auto* name = new QLabel(platz == 0 ? tr("Neck") : tr("Bridge"), this);
+        auto* reihe = new QWidget(this);
+        auto* lage = new QHBoxLayout(reihe);
+        lage->setContentsMargins(0, 0, 0, 0);
+        auto* art = new QComboBox(reihe);
+        art->setObjectName(QStringLiteral("creator%1Type").arg(wort));
+        art->addItem(tr("None (acoustic)"), static_cast<int>(AbnehmerArt::Keiner));
+        art->addItem(tr("Single coil"), static_cast<int>(AbnehmerArt::SingleCoil));
+        art->addItem(tr("Humbucker"), static_cast<int>(AbnehmerArt::Humbucker));
+        art->addItem(tr("Piezo"), static_cast<int>(AbnehmerArt::Piezo));
+        art->setToolTip(tr("Single coil and humbucker sense the string where they sit; a piezo sits under the bridge"));
+        auto* ort = new QDoubleSpinBox(reihe);
+        ort->setObjectName(QStringLiteral("creator%1Position").arg(wort));
+        ort->setDecimals(0);
+        ort->setSuffix(tr(" mm"));
+        ort->setRange(0.0, kMensurMaxMm);
+        ort->setToolTip(tr("Position: how far from the bridge — or drag its mark in the string picture"));
+        lage->addWidget(art);
+        lage->addWidget(new QLabel(tr("Position"), reihe));
+        lage->addWidget(ort);
+        lage->addStretch(1);
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(reihe, zeile, 1, 1, 2);
+        m_abnehmerZeilen.push_back(name);
+        m_abnehmerZeilen.push_back(reihe);
+        m_abnehmerArt[static_cast<std::size_t>(platz)] = art;
+        m_abnehmerLage[static_cast<std::size_t>(platz)] = ort;
+        connect(art, &QComboBox::activated, this, [this, art, platz](int index) {
+            const auto neu = static_cast<AbnehmerArt>(art->itemData(index).toInt());
+            aendereSchicht([platz, neu](Schicht& s) { (platz == 0 ? s.abnehmerHals : s.abnehmerSteg).art = neu; });
+        });
+        connect(ort, &QDoubleSpinBox::valueChanged, this, [this, platz](double mm) {
+            aendereSchicht([platz, mm](Schicht& s) { (platz == 0 ? s.abnehmerHals : s.abnehmerSteg).mmVomSteg = mm; });
+        });
+    }
+    regler(gitter, tr("Cable"), "creatorCable", gerundet(kKabelMinPf), gerundet(kKabelMaxPf),
+           [](const Schicht& i) { return gerundet(i.kabelPf); }, [](Schicht& i, int w) { i.kabelPf = w; },
+           [](const Schicht& i) { return QStringLiteral("%1 pF").arg(gerundet(i.kabelPf)); })
+        .schieber->setToolTip(tr("The capacitance of cable and amp input: more makes the pickup resonance lower and darker"));
+    m_nurWellenleiter.push_back(m_regler.size() - 1);
+    {
+        // daneben die Resonanz, die daraus mit der Bauart folgt
+        m_resonanzText = new QLabel(this);
+        m_resonanzText->setObjectName(QStringLiteral("creatorPickupResonance"));
+        m_resonanzText->setEnabled(false);
+        gitter->addWidget(m_resonanzText, gitter->rowCount(), 1, 1, 2);
+        m_abnehmerZeilen.push_back(m_resonanzText);
+    }
+
     // --- Vibrato: gehoert zu Source und steht deshalb vor den Bausteinen
     m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
@@ -2030,6 +2115,52 @@ void InstrumentCreator::zeigeAlles()
     }
     // ohne Korpus gibt es nichts zu mischen
     m_regler[m_reglerKorpusAnteil].schieber->setEnabled(gewaehlte.korpus != KorpusArt::Keiner);
+    // --- Pickups, nur bei Waveguide (Nachtrag S-U3 a)
+    const bool wellenleiter = saite && gewaehlte.saitenModell == SaitenModell::Wellenleiter;
+    m_abnehmerTitel->setVisible(wellenleiter);
+    for (QWidget* teil : m_abnehmerZeilen) teil->setVisible(wellenleiter);
+    for (const std::size_t platz : m_nurWellenleiter) zeige(platz, wellenleiter);
+    if (wellenleiter)
+    {
+        const std::array<const Abnehmer*, 2> abnehmer = {&gewaehlte.abnehmerHals, &gewaehlte.abnehmerSteg};
+        const auto magnetisch = [](AbnehmerArt art) { return art == AbnehmerArt::SingleCoil || art == AbnehmerArt::Humbucker; };
+        QStringList resonanzen;
+        for (std::size_t platz = 0; platz < 2; ++platz)
+        {
+            const Abnehmer& a = *abnehmer[platz];
+            {
+                const QSignalBlocker ruhe(m_abnehmerArt[platz]);
+                m_abnehmerArt[platz]->setCurrentIndex(m_abnehmerArt[platz]->findData(static_cast<int>(a.art)));
+            }
+            {
+                const QSignalBlocker ruhe(m_abnehmerLage[platz]);
+                m_abnehmerLage[platz]->setMaximum(mensurVon(m_instrument.saiten));
+                m_abnehmerLage[platz]->setValue(a.mmVomSteg);
+            }
+            // ein Piezo sitzt unter dem Steg, None hat keine Lage: die Position ist grau
+            m_abnehmerLage[platz]->setEnabled(magnetisch(a.art));
+            if (magnetisch(a.art))
+                resonanzen << tr("%1 ≈ %2 kHz")
+                                  .arg(platz == 0 ? tr("neck") : tr("bridge"))
+                                  .arg(abnehmerResonanz(a.art, gewaehlte.kabelPf).hz / 1000.0, 0, 'f', 1);
+        }
+        // steht ein Platz auf None, klingt der andere — dann gibt es nichts zu waehlen
+        const bool beide = gewaehlte.abnehmerHals.art != AbnehmerArt::Keiner && gewaehlte.abnehmerSteg.art != AbnehmerArt::Keiner;
+        for (QAbstractButton* knopf : m_abnehmerWahl->buttons())
+        {
+            knopf->setEnabled(beide);
+            knopf->setToolTip(beide ? tr("Which pickup sounds: neck, both (half each) or bridge")
+                                    : tr("Only one place has a pickup — it sounds on its own"));
+        }
+        if (QAbstractButton* knopf = m_abnehmerWahl->button(static_cast<int>(gewaehlte.abnehmerWahl)))
+        {
+            const QSignalBlocker ruhe(m_abnehmerWahl);
+            knopf->setChecked(true);
+        }
+        m_regler[m_nurWellenleiter.front()].schieber->setEnabled(!resonanzen.isEmpty());
+        m_resonanzText->setText(resonanzen.isEmpty() ? tr("Cable works only with a single coil or humbucker")
+                                                     : tr("Resonance: %1").arg(resonanzen.join(QStringLiteral(" · "))));
+    }
     zeigeWeg();
     klappeGruppen();
     zeigeBilder();
