@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.23.0
+> **Version:** 0.24.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -10,7 +10,7 @@
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
 > Classical guitar (§5f, S-K10 a, S133); 23e, der Creator: die Zeile Tuning
 > (§5g), Model, String, Body (§5h), das Saitenbild (§5i) und die Gruppe
-> Pickups (§5j).
+> Pickups (§5j); 23f, der Instrument-Editor (§5k).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -256,8 +256,33 @@ Versatz im Akkord.
   so spitz wie am Steg“ (§5d). Verworfen: b (die Grenze behalten — bei E2
   8–12 dB leiser), c (ohne Grenze — Spitzen bis +7 dBFS, ein Begrenzer auf
   jedem Weg des Loops ist nicht geprüft).
-- **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
-  nicht greifbaren Note — **eigene Skizze vor dem Bau**.
+- ✅ **S-U2 a** (Patrik S133): **Die Skizze des Instrument-Editors, A bis G**
+  — alles nur, wenn das Instrument eine Tuning hat:
+  - **A** *String choice* (Per chord / Follow hand) in der Instrument-Zeile
+    hinter *Load instrument...*; es stellt `Muster::saitenwahl` dieses
+    Musters.
+  - **B** ein Punkt auf den Tasten der leeren Saiten (mit Capo: der klingende
+    Ton).
+  - **C** jede Note trägt die Nummer ihrer Saite im Balken.
+  - **D** eine Note mit gesetzter Saite (`Note::saite`) trägt eine Nadel vor
+    der Nummer; eine automatische nicht.
+  - **E** eine nicht greifbare Note ist rot schraffiert mit „!“ vor der
+    Nummer; der Tooltip nennt die Saite, auf der sie trotzdem klingt.
+  - **F** im Rechtsklick-Menü (Copy, Cut, …) das Untermenü *String*: „Auto
+    (now n)“ und je Saite „n · E4“, die Saiten, auf denen der Ton nicht
+    greifbar ist, grau; es gilt für die markierten Noten (mit Undo). Steht
+    „Right-click deletes“ an, kommt man über das Menü nicht hin.
+  - **G** unten die Hinweiszeile: „number = string · pin = set by you · ! =
+    not playable, sounds on the nearest string · right-click a note: String“.
+  - Verworfen: b (nur A, C, E — die Saite je Note, die das Modell seit 23a
+    trägt, ließe sich nur in der Datei setzen und sähe aus wie eine
+    automatische).
+- ✅ **S-U2b a** (Patrik S133): **Gezählt wird wie am Instrument üblich** —
+  die letzte Saite der Liste (`Saitensatz::leer`) ist 1, die erste trägt die
+  höchste Nummer: Gitarre hohe E-Saite 1, tiefe 6; Bass G-Saite 1; Violine
+  E-Saite 1; Ukulele A-Saite 1. Jedes Feld der Zeile Tuning nennt seine
+  Nummer im Tooltip („String 6“). Verworfen: b (1 = die erste der Liste —
+  gegen die Sprache der Spieler und die späteren Tabs).
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
 
 ---
@@ -641,6 +666,34 @@ am Ende von Stufe 23.
   Modell); *Cable* ist grau ohne magnetischen Tonabnehmer, die Zeile sagt
   es. Die Gruppe Body bleibt bei Tonabnehmern sichtbar, wirkt dann aber
   nicht (§5e: ein Tonabnehmer nimmt die Saite selbst ab).
+
+### 5k. Stufe 23f — der Instrument-Editor zeigt die Saiten (gebaut S133)
+
+- **Nach der Skizze S-U2 a, gezählt nach S-U2b a**, alles nur mit Tuning am
+  Instrument (`InstrumentEditor`, `NotenRaster`):
+  - A *String choice* hinter *Load instrument...* stellt
+    `Muster::saitenwahl` (Undo „Change string choice“);
+  - B ein Punkt auf den Tasten der leeren Saiten (mit Capo);
+  - C die Nummer der Saite im Balken; die Griffe rechnet `greifeNoten` auf
+    einer sortierten Kopie des Musters (während eines Zugs ist es nicht immer
+    gerichtet);
+  - D eine Nadel, wenn die Note ihre gesetzte Saite spielt;
+  - E nicht greifbar: rot, durchscheinend schraffiert, „! 6“ (schmal nur
+    „!“); der Tooltip jeder Note nennt Saite und Bund oder die Saite, auf der
+    sie trotzdem klingt;
+  - F das Untermenü *String* im Menü der Noten: „Auto (now n)“, dann „1 ·
+    E4“ … — gesperrt, wo der Ton nicht für alle markierten greifbar ist, mit
+    „(not playable)“; Undo „String n“ / „String: Auto“;
+  - G die Hinweiszeile über der Zeile der Auswahl.
+  - Die Felder der Zeile Tuning nennen ihre Nummer im Tooltip („String 6 —
+    …“).
+- **Belegt** in `test_LoopEditorSaiten` (zwei Fälle; Bild mit
+  `LUMIVIZ_EDITOR_SAITEN_BILD`). **Bereichslauf am Ende von 23f:** 324 / 324
+  unter Release-clang (71 s) und Testing-MSVC (309 s).
+- **Von Claude gesetzt:** die Nadel nur, wenn die Note ihre gesetzte Saite
+  auch spielt — sonst sagt es der Tooltip („set to string n, which cannot
+  play it here“); im Menü gilt ein Eintrag als greifbar nur, wenn er es für
+  jede markierte Note ist.
 
 ---
 

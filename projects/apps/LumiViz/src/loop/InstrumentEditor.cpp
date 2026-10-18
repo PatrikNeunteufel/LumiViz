@@ -38,11 +38,13 @@
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QToolButton>
+#include <QToolTip>
 #include <QVBoxLayout>
 #include <QWheelEvent>
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 namespace lumi::loop
 {
@@ -117,6 +119,72 @@ void NotenRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schrit
     if (m_schiebeGilt && m_muster.noten != m_schiebeErgebnis.noten) m_schiebeGilt = false;
     setRollen(m_rollX, m_rollY);  // das Muster kann kuerzer geworden sein
     update();
+}
+
+// --- Saiten (Stufe 23f; Skizze gebilligt, Patrik S133: S-U2 a, S-U2b a) -----------
+
+void NotenRaster::setSaiten(const Saitensatz& saiten)
+{
+    if (saiten == m_saiten) return;
+    m_saiten = saiten;
+    update();
+}
+
+std::vector<Griff> NotenRaster::griffe() const
+{
+    std::vector<Griff> ergebnis(m_muster.noten.size());
+    if (!m_saiten.istSaiteninstrument()) return ergebnis;
+    // die Planung will das Muster gerichtet — waehrend eines Zugs ist es das nicht immer:
+    // auf einer sortierten Kopie greifen und die Griffe zurueck an ihre Plaetze legen
+    std::vector<std::size_t> folge(m_muster.noten.size());
+    std::iota(folge.begin(), folge.end(), std::size_t{0});
+    std::stable_sort(folge.begin(), folge.end(), [this](std::size_t a, std::size_t b) {
+        const Note& x = m_muster.noten[a];
+        const Note& y = m_muster.noten[b];
+        return x.schritt != y.schritt ? x.schritt < y.schritt : x.hoehe < y.hoehe;
+    });
+    Muster sortiert = m_muster;
+    sortiert.noten.clear();
+    for (const std::size_t platz : folge) sortiert.noten.push_back(m_muster.noten[platz]);
+    const std::vector<Griff> gegriffen = greifeNoten(sortiert, m_saiten);
+    for (std::size_t k = 0; k < folge.size(); ++k) ergebnis[folge[k]] = gegriffen[k];
+    return ergebnis;
+}
+
+bool NotenRaster::setzeSaite(int stelle)
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty() || stelle < -1 || stelle >= m_saiten.anzahl()) return false;
+    Muster neu = m_muster;
+    for (Note& note : neu.noten)
+        if (istMarkiert(note)) note.saite = stelle;
+    if (neu.noten == m_muster.noten) return false;
+    uebernimm(neu, m_marken, stelle < 0 ? tr("String: Auto") : tr("String %1").arg(saitenNummer(m_saiten, stelle)));
+    return true;
+}
+
+bool NotenRaster::event(QEvent* event)
+{
+    if (event->type() == QEvent::ToolTip && m_saiten.istSaiteninstrument())
+    {
+        const auto* hilfe = static_cast<QHelpEvent*>(event);
+        if (const int platz = noteBei(hilfe->pos()); platz >= 0)
+        {
+            const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+            const Griff griff = griffe()[static_cast<std::size_t>(platz)];
+            const int nummer = saitenNummer(m_saiten, griff.saite);
+            QString text = !griff.greifbar ? tr("Not playable on any free string — sounds on string %1").arg(nummer)
+                                           : tr("String %1, fret %2").arg(nummer).arg(griff.bund);
+            if (griff.greifbar && note.saite >= 0 && note.saite == griff.saite) text += tr(" — set by you");
+            if (note.saite >= 0 && note.saite != griff.saite)
+                text += tr(" (set to string %1, which cannot play it here)").arg(saitenNummer(m_saiten, note.saite));
+            QToolTip::showText(hilfe->globalPos(), text, this);
+            return true;
+        }
+        QToolTip::hideText();
+        event->ignore();
+        return true;
+    }
+    return QWidget::event(event);
 }
 
 int NotenRaster::schrittUnter(int x) const
@@ -519,18 +587,50 @@ void NotenRaster::paintEvent(QPaintEvent*)
     }
     // --- die Noten: so kraeftig, wie sie laut sind; die gewaehlte mit Rand
     const int gewaehlt = auswahl();
+    // Stufe 23f: mit Saiten traegt jede Note die Nummer ihrer Saite (S-U2 a, C–E)
+    const bool mitSaiten = m_saiten.istSaiteninstrument();
+    const std::vector<Griff> alleGriffe = griffe();
+    p.setFont(klein);
     for (int i = 0; i < static_cast<int>(m_muster.noten.size()); ++i)
     {
         const Note& note = m_muster.noten[static_cast<std::size_t>(i)];
         const QRect r(xVonSchritt(note.schritt) + 1, yVonHoehe(note.hoehe) + 1, note.laenge * kSchrittBreite - 1,
                       kZeilenHoehe - 2);
-        QColor farbe = m_muster.stumm ? text : an;
+        const Griff& griff = alleGriffe[static_cast<std::size_t>(i)];
+        const bool nichtGreifbar = mitSaiten && !griff.greifbar;
+        QColor farbe = nichtGreifbar ? QColor(226, 75, 74) : m_muster.stumm ? text : an;
         farbe.setAlphaF((m_muster.stumm ? 0.2 : 0.4) + (m_muster.stumm ? 0.25 : 0.6) * note.laut);
         // markierte Noten tragen einen Rand (die gewaehlte gehoert dazu)
         p.setPen(i == gewaehlt || istMarkiert(note) ? QPen(text, m_marken.size() > 1 ? 1.6 : 1.0) : Qt::NoPen);
         p.setBrush(farbe);
         p.drawRoundedRect(r, 2, 2);
+        if (!mitSaiten) continue;
+        if (nichtGreifbar)
+        {
+            // E: nicht greifbar — rot schraffiert
+            p.setPen(Qt::NoPen);
+            p.setBrush(QBrush(QColor(255, 255, 255, 70), Qt::BDiagPattern));  // durchscheinend: die Schrift bleibt lesbar
+            p.drawRoundedRect(r, 2, 2);
+        }
+        // D: selbst gesetzt (und dort gespielt) — eine Nadel vor der Nummer
+        const bool nadel = griff.greifbar && note.saite >= 0 && note.saite == griff.saite;
+        int links = r.left() + 3;
+        const QColor schrift = nichtGreifbar ? QColor(Qt::white) : pal.color(QPalette::HighlightedText);
+        if (nadel && r.width() >= 14)
+        {
+            p.setPen(Qt::NoPen);
+            p.setBrush(schrift);
+            p.drawEllipse(QPoint(links + 2, r.top() + 4), 2, 2);
+            p.setPen(QPen(schrift, 1.2));
+            p.drawLine(links + 2, r.top() + 5, links + 2, r.bottom() - 1);
+            links += 7;
+        }
+        const QString nummer = QString::number(saitenNummer(m_saiten, griff.saite));
+        const QString zeichen = !nichtGreifbar ? nummer : r.width() >= 20 ? QStringLiteral("! ") + nummer : QStringLiteral("!");
+        p.setPen(schrift);
+        p.drawText(QRect(links, r.top(), std::max(0, r.right() - links), r.height()), Qt::AlignLeft | Qt::AlignVCenter, zeichen);
     }
+    p.setFont(font());
     p.setBrush(Qt::NoBrush);
     // --- der Rahmen, der Noten markiert
     if (m_zug == Zug::Rahmen && !m_rahmen.isEmpty())
@@ -578,6 +678,18 @@ void NotenRaster::paintEvent(QPaintEvent*)
             p.setPen(QColor(40, 40, 44));
             p.drawText(taste.adjusted(4, 0, -2, 0), Qt::AlignLeft | Qt::AlignVCenter, tonName(hoehe));
         }
+    }
+    // B (Stufe 23f): ein Punkt auf den Tasten der leeren Saiten — mit Capo der klingende Ton
+    if (mitSaiten)
+    {
+        p.setPen(Qt::NoPen);
+        p.setBrush(QColor(186, 117, 23));
+        for (const int leer : m_saiten.leer)
+        {
+            const int y = yVonHoehe(leer + m_saiten.capo);
+            p.drawEllipse(QPoint(kTastenBreite - 8, y + kZeilenHoehe / 2), 3, 3);
+        }
+        p.setBrush(Qt::NoBrush);
     }
 
     // --- der Kopf: die Takte
@@ -1018,6 +1130,38 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         ->setEnabled(etwas);
     menu.addAction(tr("Delete"), QKeySequence(Qt::Key_Delete), this, [this] { (void)loescheAuswahl(); })
         ->setEnabled(etwas);
+    // F (Stufe 23f, S-U2 a): die Saite der markierten Noten — Auto oder eine bestimmte
+    if (m_saiten.istSaiteninstrument())
+    {
+        QMenu* saite = menu.addMenu(tr("String"));
+        saite->setObjectName(QStringLiteral("instrumentStringMenu"));
+        saite->setEnabled(etwas);
+        const std::vector<Griff> alle = griffe();
+        std::vector<std::size_t> markierte;
+        for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+            if (istMarkiert(m_muster.noten[i])) markierte.push_back(i);
+        // die gemeinsame Einstellung der markierten; -2 = verschieden
+        int gemeinsam = markierte.empty() ? -2 : m_muster.noten[markierte.front()].saite;
+        for (const std::size_t i : markierte)
+            if (m_muster.noten[i].saite != gemeinsam) gemeinsam = -2;
+        QString autoText = tr("Auto");
+        if (markierte.size() == 1) autoText = tr("Auto (now %1)").arg(saitenNummer(m_saiten, alle[markierte.front()].saite));
+        QAction* automatisch = saite->addAction(autoText, this, [this] { (void)setzeSaite(-1); });
+        automatisch->setCheckable(true);
+        automatisch->setChecked(gemeinsam == -1);
+        for (int nummer = 1; nummer <= m_saiten.anzahl(); ++nummer)
+        {
+            const int stelle = m_saiten.anzahl() - nummer;
+            bool geht = true;
+            for (const std::size_t i : markierte) geht = geht && greifbarAuf(m_saiten, stelle, m_muster.noten[i].hoehe);
+            QString text = QStringLiteral("%1 · %2").arg(nummer).arg(tonName(m_saiten.leer[static_cast<std::size_t>(stelle)] + m_saiten.capo));
+            if (!geht) text += tr(" (not playable)");
+            QAction* eintrag = saite->addAction(text, this, [this, stelle] { (void)setzeSaite(stelle); });
+            eintrag->setCheckable(true);
+            eintrag->setChecked(gemeinsam == stelle);
+            eintrag->setEnabled(geht);
+        }
+    }
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
     lumi::ui::zeigeMenue(menu, event->globalPos());
@@ -1151,6 +1295,20 @@ void InstrumentEditor::setupUI()
     zeile->addWidget(m_instrumentSuchen);
     zeile->addWidget(m_instrumentBearbeiten);
     zeile->addWidget(m_instrumentLaden);
+    // A (Stufe 23f, S-U2 a): String choice — nur, wenn das Instrument Saiten traegt
+    m_saitenWahlName = new QLabel(tr("String choice"), this);
+    m_saitenWahl = new QComboBox(this);
+    m_saitenWahl->setObjectName(QStringLiteral("instrumentStringChoice"));
+    m_saitenWahl->addItem(tr("Per chord"), static_cast<int>(Saitenwahl::JeKlang));
+    m_saitenWahl->addItem(tr("Follow hand"), static_cast<int>(Saitenwahl::Hand));
+    m_saitenWahl->setToolTip(tr("How a note without its own string finds one, in this pattern.\n"
+                                "Per chord: notes sounding together on different strings, frets close together.\n"
+                                "Follow hand: the same, but staying near where the hand was."));
+    zeile->addSpacing(8);
+    zeile->addWidget(m_saitenWahlName);
+    zeile->addWidget(m_saitenWahl);
+    connect(m_saitenWahl, &QComboBox::activated, this,
+            [this](int index) { setzeSaitenwahl(static_cast<Saitenwahl>(m_saitenWahl->itemData(index).toInt())); });
     zeile->addWidget(new QLabel(tr("Volume"), this));
     zeile->addWidget(m_laut);
     zeile->addWidget(new QLabel(tr("Pan"), this));
@@ -1176,6 +1334,14 @@ void InstrumentEditor::setupUI()
     koerper->setRowStretch(0, 1);
     koerper->setColumnStretch(0, 1);
     aussen->addLayout(koerper, 1);
+    // G (Stufe 23f, S-U2 a): was die Zeichen an den Noten heissen — nur mit Saiten
+    m_saitenHinweis = new QLabel(tr("number = string (1 = highest) · pin = set by you · ! = not playable, sounds on the "
+                                    "nearest string · right-click a note: String"),
+                                 this);
+    m_saitenHinweis->setObjectName(QStringLiteral("instrumentStringHint"));
+    m_saitenHinweis->setEnabled(false);
+    m_saitenHinweis->setWordWrap(true);
+    aussen->addWidget(m_saitenHinweis);
     // wie man mehrere Noten markiert — oder was markiert ist und was die Tasten tun
     m_auswahlZeile = new QLabel(this);
     m_auswahlZeile->setObjectName(QStringLiteral("instrumentSelection"));
@@ -1404,6 +1570,18 @@ void InstrumentEditor::zeigeAlles()
         if (!m_pan->isSliderDown()) m_pan->setValue(static_cast<int>(std::lround(ziel->pan * 100.0)));
         m_stumm->setChecked(ziel->stumm);
     }
+    // Stufe 23f: die Saiten des Instruments — ohne sie ist von alledem nichts zu sehen
+    {
+        Instrument instrument;
+        const Saitensatz saiten = holeInstrument(ziel->instrument, instrument) ? instrument.saiten : Saitensatz{};
+        const bool mitSaiten = saiten.istSaiteninstrument();
+        m_raster->setSaiten(saiten);
+        m_saitenWahlName->setVisible(mitSaiten);
+        m_saitenWahl->setVisible(mitSaiten);
+        m_saitenHinweis->setVisible(mitSaiten);
+        const QSignalBlocker ruhe(m_saitenWahl);
+        m_saitenWahl->setCurrentIndex(m_saitenWahl->findData(static_cast<int>(ziel->saitenwahl)));
+    }
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     passeRollbalkenAn();
     zeigeAuswahl();
@@ -1591,6 +1769,16 @@ void InstrumentEditor::setzeLaut(double laut)
     ziel->laut = std::clamp(laut, 0.0, 1.0);
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change pattern volume"));
+}
+
+void InstrumentEditor::setzeSaitenwahl(Saitenwahl wahl)
+{
+    Loop neu = m_loop;
+    Muster* ziel = musterIn(neu, m_muster);
+    if (ziel == nullptr) return;
+    ziel->saitenwahl = wahl;
+    if (neu == m_loop) return;
+    Q_EMIT bearbeitet(neu, tr("Change string choice"));
 }
 
 void InstrumentEditor::setzePan(double pan)

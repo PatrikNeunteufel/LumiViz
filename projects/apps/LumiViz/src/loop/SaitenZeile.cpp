@@ -108,7 +108,6 @@ QWidget* paar(QWidget* eltern, QLabel* name, QWidget* feld)
 TonFeld::TonFeld(QWidget* parent) : QSpinBox(parent)
 {
     setRange(0, 127);
-    setToolTip(tr("Pitch of the open string — type a name (E2, C#4, Bb3) or use the arrows"));
 }
 
 int TonFeld::hoeheAus(const QString& text)
@@ -345,6 +344,9 @@ void SaitenZeile::zeigeFelder()
         const bool da = i < m_saiten.anzahl();
         feld->setVisible(da);
         if (!da) continue;
+        // gezaehlt wie am Instrument (S-U2b a): die letzte der Liste ist 1
+        feld->setToolTip(tr("String %1 — pitch of the open string: type a name (E2, C#4, Bb3) or use the arrows")
+                             .arg(m_saiten.anzahl() - i));
         const QSignalBlocker ruhe(feld);
         feld->setValue(m_saiten.leer[static_cast<std::size_t>(i)]);
     }

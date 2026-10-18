@@ -9,6 +9,9 @@
  * **Instrument-Zeile:** Instrument, Lautstaerke, Panorama, Stumm. **Raster:**
  * links die Klaviatur (A0 bis C8, `kHoeheMin` … `kHoeheMax`), rechts die Schritte; eine Note ist ein
  * Balken in der Zeile ihrer Tonhoehe. Darunter die Lautstaerke je Note.
+ * **Saiten (Stufe 23f; Skizze gebilligt, Patrik S133, S-U2 a):** traegt das
+ * Instrument eine Tuning, steht in der Instrument-Zeile *String choice*, jede
+ * Note zeigt ihre Saite, und unter dem Raster erklaert eine Zeile die Zeichen.
  *
  * Wie der Drum-Editor aendert er den Loop nicht selbst: er meldet die neue
  * Fassung mit `bearbeitet`, das Loop-Panel fuehrt sie ueber Undo aus und gibt
@@ -19,6 +22,7 @@
 #include "loop/Auswahl.hpp"
 #include "loop/Bearbeiten.hpp"  // ClipOrt
 #include "loop/Loop.hpp"
+#include "loop/Saitenplan.hpp"  // Griff (Stufe 23f)
 #include "UI/widgets/Achse.hpp"  // Mitlaufen
 
 #include <QPoint>
@@ -123,6 +127,23 @@ public:
     void setRechtsklickLoescht(bool an) { m_rechtsLoescht = an; }
     [[nodiscard]] bool rechtsklickLoescht() const { return m_rechtsLoescht; }
 
+    // --- Saiten (Stufe 23f; Skizze gebilligt, Patrik S133: S-U2 a, S-U2b a) -----
+    // Traegt das Instrument eine Tuning, zeigt jede Note die Nummer ihrer Saite
+    // (1 = die hohe), eine selbst gesetzte eine Nadel davor, eine nicht
+    // greifbare ist rot schraffiert mit „!"; die Tasten der leeren Saiten
+    // tragen einen Punkt. Das Menue der Noten hat ein Untermenue String.
+    /// Die Saiten des Instruments; leer = keine Saiten, nichts davon zu sehen.
+    void setSaiten(const Saitensatz& saiten);
+    [[nodiscard]] const Saitensatz& saiten() const { return m_saiten; }
+    /// Je Note des Musters (in seiner Reihenfolge) der Griff, wie die Planung
+    /// ihn waehlt (`greifeNoten`); ohne Saiten lauter leere.
+    [[nodiscard]] std::vector<Griff> griffe() const;
+    /// Wie eine Saite heisst (S-U2b a): die letzte der Liste ist 1.
+    [[nodiscard]] static int saitenNummer(const Saitensatz& saiten, int stelle) { return saiten.anzahl() - stelle; }
+    /// Die markierten Noten auf diese Saite setzen (Stelle in `Saitensatz::leer`),
+    /// −1 = Auto. false = nichts markiert, keine Saiten, oder es aendert nichts.
+    bool setzeSaite(int stelle);
+
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
     [[nodiscard]] int rollX() const { return m_rollX; }
@@ -183,6 +204,8 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    /// Der Tooltip einer Note: ihre Saite und ihr Bund — oder warum sie nicht greifbar ist.
+    bool event(QEvent* event) override;
 
 private:
     [[nodiscard]] int schritte() const { return m_muster.takte * m_schlaege * m_jeSchlag; }
@@ -258,6 +281,7 @@ private:
     /// Den Mauszeiger setzen: an der Kante einer Note der Doppelpfeil, auf ihr
     /// das Kreuz, auf der Klaviatur die Hand.
     void zeigeZeiger(QPoint ort);
+    Saitensatz m_saiten;  ///< Stufe 23f: die Saiten des Instruments; leer = keine
 };
 
 class InstrumentEditor : public QWidget
@@ -303,6 +327,9 @@ public:
     void setzeLaut(double laut);
     void setzePan(double pan);
     void setzeStumm(bool stumm);
+    /// *String choice* (Stufe 23f, S-U2 a): die Regel dieses Musters fuer Noten
+    /// ohne eigene Saite. Die Auswahl steht nur da, wenn das Instrument Saiten traegt.
+    void setzeSaitenwahl(Saitenwahl wahl);
 
     // --- der Instrument-Creator (Stufe 10b) -----------------------------------
     /// „Edit instrument...": den Creator mit dem Instrument dieser Basis
@@ -418,6 +445,10 @@ private:
     NotenRaster* m_raster = nullptr;
     QScrollBar* m_rollX = nullptr;
     QScrollBar* m_rollY = nullptr;
+    // --- Stufe 23f (S-U2 a): String choice und die Hinweiszeile zu den Saiten
+    QLabel* m_saitenWahlName = nullptr;
+    QComboBox* m_saitenWahl = nullptr;
+    QLabel* m_saitenHinweis = nullptr;
 };
 
 }  // namespace lumi::loop
