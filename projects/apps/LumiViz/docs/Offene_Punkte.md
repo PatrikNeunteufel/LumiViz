@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.252.0
-> **Datum:** 2026-10-17 (Session 131)
+> **Version:** 1.253.0
+> **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2785,7 +2785,14 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
      Ton-Clips spielbar — passt zu Karaoke. **Vorher belegen:** Lizenzen von
      Code und Modellgewichten.
 - 🟡 **Loop: Saiteninstrumente** (Idee Patrik, S128; S129: „nicht mal so viel
-  später“ — bald). Bisher nur im Handover; noch keine Vorlage, kein Konzept.
+  später“ — bald). **S132: Konzept und Bau begonnen** —
+  [Saiten_Konzept.md](audio/Saiten_Konzept.md): Ziel S-Z1 a (Modell, dann
+  Spielweisen, dann Tabs), Modell S-M1 a bis S-M3 a, Klang S-K1 (Waveguide und
+  Extended KS schaltbar), S-K2 b (Classic bleibt), S-K3 a (Regler nach der
+  Physik), Creator-Skizze S-U1 a gebilligt, Baustufen 23a bis 23g freigegeben
+  (S-B1 a). **23a gebaut** (Modell und Datei, `.lvinst` 10, `.lvloop` 8).
+  Offen: Befund Tonumfang (B0 eines fünfsaitigen Basses liegt unter
+  `kHoeheMin`), dann 23b; S-U2 (Instrument-Editor) mit Skizze vor 23f.
 - 🟡 **Loop: weitere Effekte** (Frage Patrik S129). Heute am Clip Filter,
   Distortion, Echo, Reverb (`ClipBaustein`, `loop/Loop.hpp`), an der Schicht
   Filter, Drive, Pan. Nicht geplant waren bisher Flanger, Chorus, Phaser,
@@ -5967,6 +5974,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.253.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: Konzept `audio/Saiten_Konzept.md` mit zehn Entscheiden (S-Z1 a bis S-B1 a), Creator-Skizze gebilligt, Stufe 23a gebaut (Modell, `.lvinst` 10, `.lvloop` 8); Befund Tonumfang B0. |
 | 1.252.0 | 2026-10-17 | Session 131. §3 `stratospheric turbulences` 🟠 → 🟡: Tunnelzentrum mittig, zwei Fehler behoben — quadratische Matrizen transponiert (S2 a, HlslTranspiler 1.7.0, 12 595 Presets im MegaPack), 2D-Rauschtexturen gespiegelt gelesen (S3 a); vier neue Sonden; bisher 748/748 bitgleich; Rest kleiner Versatz. |
 | 1.251.0 | 2026-10-17 | Session 131. §3 **Shader-Eingänge rad/ang und Wrap von `sampler_main` wie die Referenz** (S1 a, war 🔴 Starfield fast schwarz): zwei Ursachen seit C1, Nebenbefund `ang` im Warp aus S130, drei neue Sonden, Vergleichslauf (bisher 748/748 bitgleich, Original 340 Bilder in 13 Presets, Magma besser). §7 Befund: ein Testfall hängt an der Reihenfolge (`presetIconDir()`). |
 | 1.250.0 | 2026-10-17 | Session 130. §3 **Shader sehen y wie die Referenz** (WP1 a, WP1-R a, WP2 b): Warp und Comp, Felder warpYOriginal/compYOriginal, neun Y-Sonden mit Auswertung am Bild, Vergleichslauf (bisher 748/748 bitgleich, Starfield-2-Familie nicht mehr formatabhängig, Twisted besser); neu 🔴 Starfield (Supernova) in beiden Ständen fast schwarz. Dazu aus dem Sichttest 11: Limiter mit Vorschau (L2-1 b), C1 c, Resume-Knopf, W8 a, W8-2 a. |

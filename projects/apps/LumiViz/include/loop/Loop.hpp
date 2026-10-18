@@ -21,6 +21,7 @@
 #pragma once
 
 #include "loop/Bausteine.hpp"
+#include "loop/Saiten.hpp"
 
 #include <QJsonObject>
 #include <QString>
@@ -129,6 +130,12 @@ struct Note
     int laenge = 1;     ///< in Schritten, mindestens 1
     int hoehe = 60;     ///< MIDI-Nummer, `kHoeheMin` … `kHoeheMax`
     double laut = 1.0;  ///< 0…1 (groesser als 0 — eine Note ohne Lautstaerke gibt es nicht)
+    /// Die Saite, auf der die Note gespielt wird (Stufe 23a, Entscheid S-M2 a):
+    /// die Stelle in `Saitensatz::leer` des Instruments, 0 … `kSaitenMax` − 1;
+    /// −1 = keine — dann waehlt das Programm sie nach der Regel des Musters.
+    /// Die Piano-Roll setzt sie nicht von selbst, die Tabs immer. Ob die Note
+    /// auf dieser Saite greifbar ist, weiss erst, wer das Instrument kennt.
+    int saite = -1;
 
     [[nodiscard]] bool operator==(const Note&) const = default;
 };
@@ -177,6 +184,10 @@ struct Muster
     /// Nach `Loop::richte` nach Schritt, dann Tonhoehe sortiert; je Schritt
     /// und Tonhoehe hoechstens eine, keine reicht ueber das Ende des Musters.
     std::vector<Note> noten;
+    /// String choice (Stufe 23a, Entscheid S-M2c a): die Regel fuer Noten ohne
+    /// eigene Saite. Ein neues Muster bekommt die Vorgabe seines Instruments
+    /// (`Saitensatz::wahl`). Gilt nur, wenn das Instrument Saiten traegt.
+    Saitenwahl saitenwahl = Saitenwahl::JeKlang;
 
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };

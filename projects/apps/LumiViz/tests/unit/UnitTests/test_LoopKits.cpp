@@ -273,7 +273,7 @@ TEST_SUITE("Loop Kits")
         loop.muster.push_back(m);
         loop.richte();
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 7);  // role und kit brauchen keine neue Fassung; 7 seit E1 a
+        CHECK(json.value(QStringLiteral("version")).toInt() == 8);  // role und kit brauchen keine neue Fassung; 7 seit E1 a, 8 seit S132
         const QJsonObject muster = json.value(QStringLiteral("patterns")).toArray().at(0).toObject();
         CHECK(muster.value(QStringLiteral("kit")).toString() == QStringLiteral("808"));
         const QJsonArray spuren = muster.value(QStringLiteral("tracks")).toArray();

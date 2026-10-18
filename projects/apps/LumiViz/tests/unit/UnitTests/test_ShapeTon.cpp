@@ -355,7 +355,7 @@ TEST_CASE("Shape Ton: Stimmen, Pitch sweep und Level gelten — ohne Form schwei
 
 TEST_CASE("Shape Ton: die Datei — Fassung 9, hin und zurueck, eine aeltere, eine von morgen")
 {
-    CHECK(kInstrumentFassung == 9);
+    CHECK(kInstrumentFassung >= 9);  // die Felder gibt es seit Fassung 9; geschrieben wird die juengste (S132: 10)
     Instrument instrument = formInstrument("user:mein_herz", [](Schicht& s) {
         s.formKontur = 3;
         s.harmonische = 37.5;
@@ -367,7 +367,7 @@ TEST_CASE("Shape Ton: die Datei — Fassung 9, hin und zurueck, eine aeltere, ei
     });
     instrument.schichten.push_back(Schicht{});  // ein Sinus daneben
     const QJsonObject json = alsJson(instrument);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 9);
+    CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
     const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
     REQUIRE(schichten.size() == 2);
     const QJsonObject form = schichten[0].toObject();

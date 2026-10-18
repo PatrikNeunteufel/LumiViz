@@ -914,6 +914,17 @@ QJsonObject alsJson(const Instrument& instrument)
     QJsonArray schichten;
     for (const Schicht& schicht : instrument.schichten) schichten.append(schichtAlsJson(schicht));
     o[QStringLiteral("layers")] = schichten;
+    if (instrument.saiten.istSaiteninstrument())
+    {
+        // seit Fassung 10: die Saiten gehoeren dem Instrument (S-M1 a)
+        QJsonObject saiten;
+        QJsonArray leer;
+        for (const int ton : instrument.saiten.leer) leer.append(ton);
+        saiten[QStringLiteral("open")] = leer;
+        saiten[QStringLiteral("capo")] = instrument.saiten.capo;
+        saiten[QStringLiteral("stringChoice")] = saitenwahlName(instrument.saiten.wahl);
+        o[QStringLiteral("strings")] = saiten;
+    }
     return o;
 }
 
@@ -955,6 +966,13 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
         }
     }
     if (neu.schichten.empty()) neu.schichten.push_back(Schicht{});
+    // seit Fassung 10; fehlt der Block, ist es kein Saiteninstrument
+    const QJsonObject saiten = wurzel.value(QStringLiteral("strings")).toObject();
+    for (const QJsonValue& ton : saiten.value(QStringLiteral("open")).toArray())
+        if (ton.isDouble()) neu.saiten.leer.push_back(ton.toInt());
+    neu.saiten.capo = saiten.value(QStringLiteral("capo")).toInt(0);
+    neu.saiten.wahl = saitenwahlAusName(saiten.value(QStringLiteral("stringChoice")).toString());
+    richteSaiten(neu.saiten);
     instrument = std::move(neu);
     return true;
 }

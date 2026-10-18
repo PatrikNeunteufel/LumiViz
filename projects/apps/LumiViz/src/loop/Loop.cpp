@@ -40,9 +40,11 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // aelteres Programm streckte es auf 4 und haengte Stille an; es liest die Datei
 // weiter, meldet aber, dass sie neuer ist.
 // 7 (S124, Entscheid E1 a): der Schalter `fxOn` am Clip — ein aelteres
-// Programm spielte einen abgeschalteten Clip mit Effekten. Geschrieben wird
-// immer 7.
-constexpr int kVersion = 7;
+// Programm spielte einen abgeschalteten Clip mit Effekten.
+// 8 (S132, Stufe 23a, Entscheide S-M2 a, S-M2c a): eine Note kann als fuenften
+// Wert ihre Saite tragen, ein Instrument-Muster das Feld `stringChoice` — ein
+// aelteres Programm verloere beides still. Geschrieben wird immer 8.
+constexpr int kVersion = 8;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -550,7 +552,9 @@ void Loop::richte(QStringList* bericht)
                 note.hoehe = std::clamp(note.hoehe, kHoeheMin, kHoeheMax);
                 note.laenge = std::clamp(note.laenge, 1, std::max(1, schritte - note.schritt));
                 note.laut = inGrenzen(note.laut, 0.0, 1.0, 1.0);
+                if (note.saite < -1 || note.saite >= kSaitenMax) note.saite = -1;
             }
+            if (m.saitenwahl != Saitenwahl::Hand) m.saitenwahl = Saitenwahl::JeKlang;
             m.noten.erase(std::remove_if(m.noten.begin(), m.noten.end(),
                                          [schritte](const Note& n) {
                                              return n.schritt < 0 || n.schritt >= schritte || n.laut <= 0.0;
@@ -568,6 +572,7 @@ void Loop::richte(QStringList* bericht)
         }
         m.instrument.clear();
         m.noten.clear();
+        m.saitenwahl = Saitenwahl::JeKlang;
         m.laut = 1.0;
         m.pan = 0.0;
         m.stumm = false;
@@ -651,11 +656,19 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             o[QStringLiteral("volume")] = m.laut;
             o[QStringLiteral("pan")] = m.pan;
             o[QStringLiteral("mute")] = m.stumm;
-            // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke
+            // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke — seit
+            // Fassung 8 als fuenfter Wert die Saite, nur wenn die Note eine traegt
             QJsonArray noten;
             for (const Note& note : m.noten)
-                noten.append(QJsonArray{note.schritt, note.laenge, note.hoehe, note.laut});
+            {
+                QJsonArray zeile{note.schritt, note.laenge, note.hoehe, note.laut};
+                if (note.saite >= 0) zeile.append(note.saite);
+                noten.append(zeile);
+            }
             o[QStringLiteral("notes")] = noten;
+            // seit Fassung 8; Per chord ist die Vorgabe und steht nicht da
+            if (m.saitenwahl != Saitenwahl::JeKlang)
+                o[QStringLiteral("stringChoice")] = saitenwahlName(m.saitenwahl);
             muster.append(o);
             continue;
         }
@@ -787,8 +800,10 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 note.laenge = werte[1].toInt(1);
                 note.hoehe = werte[2].toInt(60);
                 note.laut = werte.size() > 3 ? werte[3].toDouble(1.0) : 1.0;
+                note.saite = werte.size() > 4 ? werte[4].toInt(-1) : -1;  // seit Fassung 8
                 m.noten.push_back(note);
             }
+            m.saitenwahl = saitenwahlAusName(o.value(QStringLiteral("stringChoice")).toString());
             neu.muster.push_back(std::move(m));
             continue;
         }

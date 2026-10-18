@@ -21,6 +21,7 @@
 
 #include "loop/Bausteine.hpp"
 #include "loop/Rechenkern.hpp"
+#include "loop/Saiten.hpp"
 
 #include <QColor>
 #include <QJsonObject>
@@ -259,6 +260,11 @@ struct Instrument
     /// Wo es hingehoert („Funk", „Disco"); leer = nur unter „All".
     QStringList genres;
     QString beschreibung;  ///< ein Satz
+    /// Die Saiten (seit Fassung 10, Stufe 23a, Entscheid S-M1 a): Stimmung,
+    /// Capo und die Vorgabe der Regel fuer neue Muster. Ohne Saiten
+    /// (`istSaiteninstrument()` = false) ist das Instrument wie bis Stufe 22.
+    /// Die Schichten bleiben der Klang.
+    Saitensatz saiten;
 
     [[nodiscard]] bool operator==(const Instrument&) const = default;
 };
@@ -296,13 +302,18 @@ struct Instrument
 // `shapeHarmonics`, `shapeHarmonicsEnvelope`, `shapeAngle`, `shapeStart`,
 // `shapeStereoXY`, `shapeReverse` — eine eigene Fassung, weil ein aelteres
 // Programm eine solche Schicht sonst still als Sinus spielte. (`harmonics`
-// allein ist seit Fassung 1 die Liste der Obertoene des Sinus.) Geschrieben
-// wird Fassung 9. Seit Stufe 20d (S122, Entscheid V1 a) kann eine Schicht `color`
-// tragen, ihre eigene Farbe — ohne neue Fassung: ein aelteres Programm ueberliest
-// das Feld und zeigt die abgeleitete Farbe; der Klang aendert sich nicht.
+// allein ist seit Fassung 1 die Liste der Obertoene des Sinus.) Seit Stufe 20d
+// (S122, Entscheid V1 a) kann eine Schicht `color` tragen, ihre eigene Farbe —
+// ohne neue Fassung: ein aelteres Programm ueberliest das Feld und zeigt die
+// abgeleitete Farbe; der Klang aendert sich nicht. Fassung 10 (S132, Stufe 23a,
+// Entscheid S-M1 a) kennt am Instrument den Block `strings` mit `open` (die
+// Toene der leeren Saiten als MIDI-Nummern), `capo` und `stringChoice`
+// (`perChord`, `followHand`); ein Instrument ohne Saiten traegt ihn nicht.
+// Eine eigene Fassung, weil ein aelteres Programm die Saiten still ueberginge.
+// Geschrieben wird Fassung 10.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 9;
+inline constexpr int kInstrumentFassung = 10;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);
