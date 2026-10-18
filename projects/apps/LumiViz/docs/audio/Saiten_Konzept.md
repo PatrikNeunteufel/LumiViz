@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.19.0
+> **Version:** 0.20.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -8,7 +8,7 @@
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
-> Classical guitar (§5f, S-K10 a, S133).
+> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -559,6 +559,30 @@ am Ende von Stufe 23.
 - Hörproben `ks_classical`, `wg_classical` unter
   `.claude/handover/hoerproben_korpus/` (lokal). **Patriks Ohr (S133):** „passt
   eigentlich soweit“ — gehört mit Parlor und ohne Korpus.
+
+### 5g. Stufe 23e, Teilschritt 1 — die Zeile Tuning (gebaut S133)
+
+- **`loop/SaitenZeile`** (neu): die Zeile nach §4 — *Tuning* (None, die sechs
+  Vorlagen, Custom), *Strings* 1 … 12, je Saite ein Feld mit dem Ton der
+  leeren Saite, *Capo*, *Scale*, *String choice*. Im Creator unter *Type /
+  Genres / Description*, über Layers und Signal path; sie stellt
+  `Instrument::saiten`. Bei *None* steht nur die Auswahl. Ein eigenes
+  Fließ-Layout bricht die Zeile um, wenn die Breite nicht reicht (bei 1280 px
+  und sechs Saiten passt sie in eine Zeile).
+- **Belegt** in `test_LoopCreatorTuning` (drei Fälle; Bilder mit
+  `LUMIVIZ_CREATOR_TUNING_BILD`): Namen und Zahlen im Tonfeld, jede
+  Bedienung der Zeile, der Weg in den Creator mit Reset, der Umbruch (zwölf
+  Saiten: 30 px hoch bei 2400 px Breite, 173 px bei 420 px). Der Fall
+  „Regler stellen die Kopie“ in `test_LoopInstrumentEditor` gibt dem Fenster
+  540 statt 500 px Höhe (die Zeile braucht 33 px) und prüft die Höhe des
+  Inhalts statt des Rollwegs allein.
+- **Von Claude gesetzt:** *Custom* lässt sich nicht wählen — es steht da,
+  wenn die Töne zu keiner Vorlage passen (die Vorlage folgt aus den Tönen,
+  wie in der Datei); eine Vorlage setzt Töne und Mensur, Capo und String
+  choice bleiben; *Strings* mehr = neue Saite eine Quarte über der höchsten,
+  weniger = die obersten fallen weg; das Tonfeld ist ein Drehfeld mit Pfeilen
+  und nimmt getippte Namen (`E2`, `C#4`, `Bb3`, auch klein) oder Zahlen;
+  *Scale* zeigt ohne gesetzte Mensur die Vorgabe 648 mm.
 
 ---
 

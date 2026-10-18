@@ -547,23 +547,25 @@ TEST_SUITE("LoopInstrumentEditor")
                 creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });  // die meisten Zeilen
                 CHECK(creator.minimumSizeHint().height() < 600);  // die Spalte bestimmt die Hoehe nicht mehr
                 creator.setAttribute(Qt::WA_DontShowOnScreen);
-                creator.resize(1000, 500);
+                // 540 statt 500 (Stufe 23e): die Zeile Tuning braucht eine Zeile Hoehe mehr
+                creator.resize(1000, 540);
                 creator.show();
                 QCoreApplication::processEvents();
-                CHECK(creator.size() == QSize(1000, 500));
+                CHECK(creator.size() == QSize(1000, 540));
                 CHECK(rollen->verticalScrollBar()->maximum() > 0);  // es passt nicht alles: der Rollbalken ist da
                 const int weit = rollen->verticalScrollBar()->maximum();
-                // die Zeilen sind nicht zusammengedrueckt: jede hat die Hoehe, die sie braucht
-                CHECK(weit > 300);
+                // die Zeilen sind nicht zusammengedrueckt: jede hat die Hoehe, die sie braucht — der
+                // Inhalt (was zu rollen ist und was zu sehen ist) bleibt so hoch, gleich wie hoch das Fenster
+                CHECK(weit + rollen->viewport()->height() > 530);
                 CHECK(wellenWahl->height() >= wellenWahl->sizeHint().height());
                 CHECK(schieber("creatorAttack")->height() >= schieber("creatorAttack")->sizeHint().height());
                 for (const char* gruppe : {"oscillator", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), true);
                 QCoreApplication::processEvents();
-                CHECK(creator.size() == QSize(1000, 500));
+                CHECK(creator.size() == QSize(1000, 540));
                 CHECK(rollen->verticalScrollBar()->maximum() == 0);  // alles eingeklappt: nichts zu rollen
                 for (const char* gruppe : {"oscillator", "vibrato"}) creator.setzeGruppeZu(QLatin1String(gruppe), false);
                 QCoreApplication::processEvents();
-                CHECK(creator.size() == QSize(1000, 500));  // wieder aufgeklappt: das Fenster ist nicht gewachsen
+                CHECK(creator.size() == QSize(1000, 540));  // wieder aufgeklappt: das Fenster ist nicht gewachsen
                 CHECK(rollen->verticalScrollBar()->maximum() == weit);
                 // das Mausrad ueber einem Regler rollt das Feld und verstellt ihn nicht
                 QSlider* laut = schieber("creatorLevel");

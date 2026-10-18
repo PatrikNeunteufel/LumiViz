@@ -11,6 +11,7 @@
 #include "loop/FormFenster.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/SampleFrage.hpp"
+#include "loop/SaitenZeile.hpp"
 #include "loop/SignalWeg.hpp"
 
 #include <QAction>
@@ -554,6 +555,13 @@ void InstrumentCreator::setupUI()
     angaben->addWidget(new QLabel(tr("Description"), this));
     angaben->addWidget(m_beschreibung, 1);
     aussen->addLayout(angaben);
+
+    // --- die Zeile Tuning (Stufe 23e; Skizze gebilligt, Patrik S132, S-U1 a): die
+    // Saiten gehoeren dem Instrument (S-M1 a), nicht einer Schicht
+    m_saitenZeile = new SaitenZeile(this);
+    connect(m_saitenZeile, &SaitenZeile::geaendert, this,
+            [this](const Saitensatz& saiten) { aendere([&saiten](Instrument& i) { i.saiten = saiten; }); });
+    aussen->addWidget(m_saitenZeile);
 
     auto* koerper = new QHBoxLayout;
 
@@ -1747,6 +1755,7 @@ void InstrumentCreator::zeigeAlles()
     }
     if (!m_genres->hasFocus()) m_genres->setText(m_instrument.genres.join(QStringLiteral(", ")));
     if (!m_beschreibung->hasFocus()) m_beschreibung->setText(m_instrument.beschreibung);
+    m_saitenZeile->zeige(m_instrument.saiten);
     m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
     const Schicht& gewaehlte = schicht();
     // eine andere Schicht beginnt bei Source; einen Baustein, den es nicht mehr gibt, auch

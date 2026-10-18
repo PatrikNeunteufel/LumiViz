@@ -6,7 +6,8 @@
  *        Patrik S110; Entscheide I2 b und I3 a)
  *
  * **Kopf:** Name, die Vorlage, Reset, Save, Save as..., Level des ganzen
- * Instruments, Peak.
+ * Instruments, Peak; darunter Type, Genres, Description und die Zeile
+ * **Tuning** (`SaitenZeile`, Stufe 23e) — die Saiten des Instruments.
  * **Links (Stufe 10c; Skizze gebilligt, Patrik S111):** die Liste der
  * Schichten — Haken (an oder stumm), Name, Schwingung, Lautstaerke und
  * Versatz; darunter Add layer, Add layer from instrument..., Duplicate,
@@ -78,6 +79,7 @@ namespace lumi::loop
 
 class AufnahmeFenster;
 class FormFenster;
+class SaitenZeile;
 class SignalWeg;
 
 /// Eine Kurve als Bild: Werte von -1 bis 1 (oder 0 bis 1), ueber die Breite
@@ -408,6 +410,11 @@ public:
     /// Die Zeile selbst (fuer Tests).
     [[nodiscard]] SignalWeg* signalWeg() const { return m_pfad; }
 
+    // --- Tuning (Stufe 23e) --------------------------------------------------------
+    /// Die Zeile Tuning unter Type / Genres / Description: die Saiten des
+    /// Instruments (`Instrument::saiten`).
+    [[nodiscard]] SaitenZeile* saitenZeile() const { return m_saitenZeile; }
+
     // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) -----------------------
     /// Die Gruppen Oscillator und Vibrato (unter Source) lassen sich an
     /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
@@ -670,6 +677,7 @@ private:
     KurvenBild* m_wellenBild = nullptr;
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;
+    SaitenZeile* m_saitenZeile = nullptr;  ///< die Zeile Tuning (Stufe 23e)
 };
 
 }  // namespace lumi::loop
