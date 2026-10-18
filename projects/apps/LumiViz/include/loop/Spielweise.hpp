@@ -44,10 +44,12 @@ enum class HandRaster : int
     Schritt = 2,       ///< *Step*
 };
 
-/// Versatz der Saiten: die Vorgabe und die Grenze, in ms (von Claude gesetzt;
-/// die Vorgabe ist ein Platzhalter, hergeleitet wird sie in Stufe 24f).
-inline constexpr double kSpreadVorgabeMs = 20.0;
-inline constexpr double kSpreadMaxMs = 500.0;
+/// Spread: der Abstand zweier benachbarter Saiten beim Anschlag, in ms
+/// (S-W12 a) — die Vorgabe nach Freire 2018 (SMC, Table 6, S. 547:
+/// sechssaitig gestrummt 8–11 ms je Saite, „adagio"), die Grenze von Claude
+/// gesetzt (ein langsam gebrochener Akkord).
+inline constexpr double kSpreadVorgabeMs = 8.0;
+inline constexpr double kSpreadMaxMs = 100.0;
 /// So viele Stellen traegt das Muster der Hand hoechstens: ein Takt im
 /// feinsten Raster (`kRasterMax` Schlaege mit je `kRasterMax` Schritten).
 inline constexpr int kHandStellenMax = 256;
@@ -55,7 +57,7 @@ inline constexpr int kHandStellenMax = 256;
 /// Strum: die Vorgabe eines Musters — und eines Instruments fuer neue Muster.
 struct Strum
 {
-    double spreadMs = kSpreadVorgabeMs;  ///< Spread: von der ersten bis zur letzten Saite, 0 … `kSpreadMaxMs`
+    double spreadMs = kSpreadVorgabeMs;  ///< Spread: von einer Saite zur naechsten, 0 … `kSpreadMaxMs`
     HandRaster raster = HandRaster::HalberSchlag;
     /// Je Stelle eines Takts die Richtung; eine Stelle dahinter wechselt ab
     /// (gerade Stellen Down, ungerade Up). Leer = *Alternate*. Gerichtet steht

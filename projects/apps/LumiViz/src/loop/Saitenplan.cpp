@@ -218,7 +218,6 @@ std::vector<Anschlagplan> schlageAn(const Muster& muster, const Saitensatz& sait
     const std::vector<Note>& noten = muster.noten;
     std::vector<Anschlagplan> plan(noten.size());
     if (!saiten.istSaiteninstrument() || griffe.size() != noten.size()) return plan;
-    const int zwischenraeume = saiten.anzahl() - 1;  // so oft geht die Hand von Saite zu Saite, ueber alle
     for (std::size_t a = 0; a < noten.size();)
     {
         // ein Akkord: die Noten, die am selben Schritt anschlagen (gerichtet: nach Schritt sortiert)
@@ -248,10 +247,11 @@ std::vector<Anschlagplan> schlageAn(const Muster& muster, const Saitensatz& sait
         {
             plan[i].richtung = richtung;
             const int saite = griffe[i].saite;
-            if (art == Anschlagart::Zugleich || zwischenraeume <= 0 || saite < 0) continue;
-            // Down: die erste Saite am Instrument zuerst, Up: die letzte — der Weg der Hand bis hierher
+            if (art == Anschlagart::Zugleich || saite < 0) continue;
+            // Down: die erste Saite am Instrument zuerst, Up: die letzte — je Saite des Wegs bis hierher
+            // um Spread spaeter (S-W12 a)
             const int weg = richtung == Richtung::Ab ? saite - erste : letzte - saite;
-            plan[i].versatzMs = spreadMs * weg / zwischenraeume;
+            plan[i].versatzMs = spreadMs * weg;
         }
         a = b;
     }

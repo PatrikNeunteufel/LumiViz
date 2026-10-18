@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
 > **Version:** 0.28.0
-> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W11 a)
+> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W12 a)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -507,6 +507,16 @@ Lesen die Vorgabe. Korrigiert die Setzung aus 24a („nur, wenn sie abweicht“)
 Verworfen: b (nur bei Abweichung — die Vorgabe wird in 24f noch hergeleitet,
 jede Änderung wirkte still auf alle Loops, die sie benutzen).
 
+✅ **S-W12 a** (Patrik S134): ***Spread* ist der Abstand zweier benachbarter
+Saiten**, Vorgabe **8 ms**, Grenze 100 ms. Der Versatz einer Note ist Spread ×
+die Saiten vom ersten Anschlag des Akkords bis zu ihr; ein Akkord über sechs
+Saiten dauert 40 ms, auf jedem Instrument gleich schnell. Beleg: Freire 2018
+(SMC, Table 6, S. 547): sechssaitig gestrummt „adagio“ 8–11 ms je Saite,
+37–46 ms über den Akkord; „moderate“ 5–12,5 / 26–62 ms. Verworfen: b (Spread
+als Zeit über alle Saiten, Vorgabe 40 ms — eine Ukulele bekäme 13 ms je Saite,
+eine Zwölfsaitige knapp 4: die Hand wäre je nach Saitenzahl verschieden
+schnell). Korrigiert die Setzung aus 24b (§5n).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -986,8 +996,9 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
   Eintrag in *Anschläge*, sonst aus Strum des Musters (Spread, Hand an seiner
   Stelle). *Together*: kein Versatz, klingt wie Down. Der Versatz wächst mit
   dem Weg der Hand: Down beginnt an der ersten Saite des Akkords nach der
-  Reihenfolge am Instrument, Up an der letzten; *Spread* ist die Zeit über
-  alle Saiten des Instruments (bei der Gitarre 20 ms / 5 = 4 ms je Saite).
+  Reihenfolge am Instrument, Up an der letzten; *Spread* ist seit S-W12 a der
+  Abstand zweier benachbarter Saiten (Vorgabe 8 ms; bis dahin die Zeit über
+  alle Saiten, 20 ms).
 - **Flageolett** (S-W7 a): `teiltonHalbtoene`, `flageolettAuf`,
   `kFlageolettTeiltonMax` 6 in `Saiten.hpp`; in `greifeNoten` eine Stelle mehr
   in den Kosten (nach „nicht greifbar“: ein natürliches kostet sein n, ein
@@ -1016,9 +1027,8 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
   `drop_d_demo` (effektiv 16 % der Spitze), `jazz_guitar_demo`,
   `ukulele_demo`, `bossa` (3 bis 6 %); null bei den neun Loops ohne Akkorde.
   Die Richtung ändert den Klang erst mit 24c.
-- **Von Claude gesetzt, nicht vorgelegt:** *Spread* gilt über alle Saiten des
-  Instruments (ein Akkord auf zwei benachbarten Saiten ist schnell, einer über
-  sechs dauert den ganzen Spread); eine nicht greifbare Note bekommt ihren
+- **Von Claude gesetzt, nicht vorgelegt:** *Spread* über alle Saiten des
+  Instruments (abgelöst durch S-W12 a); eine nicht greifbare Note bekommt ihren
   Versatz nach der Saite, auf der sie klingt; Palm mute und Tapping gelten
   auch für eine nicht greifbare Note.
 

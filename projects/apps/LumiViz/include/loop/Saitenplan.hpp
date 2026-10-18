@@ -71,8 +71,8 @@ struct Anschlagplan
     Richtung richtung = Richtung::Ab;
     /// So viel spaeter als ihr Schritt schlaegt sie an, in ms: bei Down die
     /// erste Saite des Akkords nach der Reihenfolge am Instrument zuerst, bei Up
-    /// die letzte; der Versatz waechst mit dem Abstand der Saiten — *Spread*
-    /// ist die Zeit ueber alle Saiten des Instruments (von Claude gesetzt).
+    /// die letzte; je Saite dazwischen um *Spread* spaeter (S-W12 a: der
+    /// Abstand zweier benachbarter Saiten).
     double versatzMs = 0.0;
 
     [[nodiscard]] bool operator==(const Anschlagplan&) const = default;

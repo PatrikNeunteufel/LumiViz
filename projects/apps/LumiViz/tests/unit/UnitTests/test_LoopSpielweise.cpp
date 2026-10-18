@@ -514,7 +514,7 @@ TEST_SUITE("LoopSpielweise")
     TEST_CASE("Loop Spielweise 24b: Richtung und Versatz je Akkord — aus der Hand, aus der Abweichung")
     {
         // probe(): Akkorde an 0 (Saiten 0, 1, 2), 4 (1, 2), 8 (0, 1, 3), eine Note an 12 (5).
-        // Spread 20 ms ueber die fuenf Zwischenraeume der Gitarre: 4 ms je Saite.
+        // Spread 8 ms je Saite (S-W12 a).
         Loop loop = probe();
         Muster& m = riff(loop);
         const std::vector<Griff> griffe = greifeNoten(m, gitarre());
@@ -531,7 +531,7 @@ TEST_SUITE("LoopSpielweise")
 
         // --- die Vorgabe (S-W10 a): an — 0, 4, 8 sind Stellen der Hand nach unten (1/2 beat, gerade Stellen)
         std::vector<Anschlagplan> plan = schlageAn(m, gitarre(), griffe, 4, 4);
-        CHECK(versatz(plan) == std::vector<double>{0, 4, 8, 0, 4, 0, 4, 12, 0});  // an 8 ueberspringt die Hand Saite 2
+        CHECK(versatz(plan) == std::vector<double>{0, 8, 16, 0, 8, 0, 8, 24, 0});  // an 8 ueberspringt die Hand Saite 2
         for (const Anschlagplan& a : plan) CHECK(a.richtung == Richtung::Ab);
 
         // --- die Abweichungen: Up an 4, Together an 8, an 0 die Hand mit eigenem Spread 50 ms
@@ -539,7 +539,7 @@ TEST_SUITE("LoopSpielweise")
         setzeAnschlag(m, Anschlag{8, Anschlagart::Zugleich});
         setzeAnschlag(m, Anschlag{0, Anschlagart::Hand, 50.0});
         plan = schlageAn(m, gitarre(), griffe, 4, 4);
-        CHECK(versatz(plan) == std::vector<double>{0, 10, 20, 4, 0, 0, 0, 0, 0});
+        CHECK(versatz(plan) == std::vector<double>{0, 50, 100, 8, 0, 0, 0, 0, 0});
         CHECK(plan[3].richtung == Richtung::Auf);  // Up: die hohe Saite zuerst
         CHECK(plan[4].richtung == Richtung::Auf);
         CHECK(plan[5].richtung == Richtung::Ab);   // Together klingt wie Down
@@ -623,11 +623,11 @@ TEST_SUITE("LoopSpielweise")
         REQUIRE(toene.size() == 1);
         REQUIRE(toene[0].size() == 1);
         const std::vector<GeplanterTon>& t = toene[0][0];
-        CHECK(t[1].versatzMs == doctest::Approx(4.0));
-        CHECK(t[2].versatzMs == doctest::Approx(8.0));
-        // Let ring: gehalten, bis die E3 des Akkords an 4 dieselbe Saite anschlaegt (504 ms) — 496 ms nach ihrem Anschlag
-        CHECK(t[2].endeMs == 496);
-        CHECK(t[2].dauerMs == 496);
+        CHECK(t[1].versatzMs == doctest::Approx(8.0));
+        CHECK(t[2].versatzMs == doctest::Approx(16.0));
+        // Let ring: gehalten, bis die E3 des Akkords an 4 dieselbe Saite anschlaegt (508 ms) — 492 ms nach ihrem Anschlag
+        CHECK(t[2].endeMs == 492);
+        CHECK(t[2].dauerMs == 492);
         CHECK(t[1].dauerMs == 250);  // ohne Let ring: ihre Laenge
         // Palm mute und Tapping im Namen; Let ring nicht (es steckt in der Dauer)
         CHECK(t[8].artikulationen == (kPalmMute | kTapping));
