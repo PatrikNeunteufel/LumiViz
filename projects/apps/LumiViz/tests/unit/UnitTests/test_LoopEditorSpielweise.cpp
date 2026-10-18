@@ -198,7 +198,7 @@ TEST_CASE("Loop Instrument Editor Spielweise: I und K — Versatz der Akkordnote
     }
 }
 
-TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick schaltet den Akkord weiter")
+TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum oben, ein Klick schaltet den Anschlag weiter (S-W14 a, S-W15 a)")
 {
     Anwendung anwendung;
     Saitensatz saiten = gitarre().saiten;
@@ -215,22 +215,39 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick sc
     raster.resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
                   NotenRaster::kKopfHoehe + 20 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe +
                       NotenRaster::kStrumHoehe);
-    // ohne Saiten gibt es die Spur nicht
+    // ohne Saiten gibt es die Spur nicht: die Noten beginnen unter der Zeile der Takte
     CHECK(raster.strumHoehe() == 0);
-    CHECK(raster.lautOben() == raster.height() - NotenRaster::kLautHoehe);
+    CHECK(raster.rasterOben() == NotenRaster::kKopfHoehe);
+    const int c8OhneSpur = raster.yVonHoehe(kHoeheMax);
     CHECK_FALSE(raster.schalteAnschlag(0));
     raster.setSaiten(saiten);
+    // S-W14 a: die Spur liegt zwischen der Zeile der Takte und den Noten, Note vol. bleibt unten
     CHECK(raster.strumHoehe() == NotenRaster::kStrumHoehe);
-    CHECK(raster.lautOben() == raster.strumOben() - NotenRaster::kLautHoehe);
+    CHECK(raster.strumOben() == NotenRaster::kKopfHoehe);
+    CHECK(raster.rasterOben() == NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe);
+    CHECK(raster.yVonHoehe(kHoeheMax) == c8OhneSpur + NotenRaster::kStrumHoehe);
+    CHECK(raster.lautOben() == raster.height() - NotenRaster::kLautHoehe);
     CHECK(raster.hoeheBei(raster.strumOben() + 3) == -1);
+    CHECK(raster.hoeheBei(raster.rasterOben()) >= kHoeheMin);
 
     QStringList gemeldet;
     QObject::connect(&raster, &NotenRaster::geaendert, &raster,
                      [&](const Muster&, const QString& was) { gemeldet << was; });
-    // eine einzelne Note und ein leerer Schritt: kein Akkord
-    CHECK_FALSE(raster.schalteAnschlag(4));
+    // ein leerer Schritt: nichts
     CHECK_FALSE(raster.schalteAnschlag(1));
     CHECK(gemeldet.isEmpty());
+    // S-W15 a: eine einzelne Note schaltet Follow hand → Down → Up → Follow hand, ohne Together
+    CHECK(raster.anschlaege()[6].richtung == Richtung::Ab);  // Stelle 2 der Hand: Down
+    REQUIRE(raster.schalteAnschlag(4));
+    CHECK(anschlagAn(raster.muster(), 4)->art == Anschlagart::Ab);
+    REQUIRE(raster.schalteAnschlag(4));
+    CHECK(anschlagAn(raster.muster(), 4)->art == Anschlagart::Auf);
+    CHECK(raster.anschlaege()[6].richtung == Richtung::Auf);
+    REQUIRE(raster.schalteAnschlag(4));
+    CHECK(anschlagAn(raster.muster(), 4) == nullptr);
+    CHECK(gemeldet == QStringList{QStringLiteral("Strum: Down"), QStringLiteral("Strum: Up"),
+                                  QStringLiteral("Strum: Follow hand")});
+    gemeldet.clear();
 
     // Follow hand → Down → Up → Together → Follow hand
     const auto art = [&](int schritt) -> std::optional<Anschlagart> {
@@ -263,8 +280,9 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick sc
     CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Ab);
     CHECK(anschlagAn(raster.muster(), 0)->spreadMs == 25.0);
 
-    // mit der Maus: ein Klick in die Spur am Schritt 2
+    // mit der Maus: ein Klick in die Spur am Schritt 2 (oben, unter der Zeile der Takte)
     const int vorher = static_cast<int>(gemeldet.size());
+    const int abspielVorher = raster.abspielstelle();
     const QPoint inSpur(raster.xVonSchritt(2) + NotenRaster::kSchrittBreite / 2, raster.strumOben() + 8);
     QMouseEvent druck(QEvent::MouseButtonPress, inSpur, raster.mapToGlobal(inSpur), Qt::LeftButton, Qt::LeftButton,
                       Qt::NoModifier);
@@ -274,10 +292,15 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick sc
     QCoreApplication::sendEvent(&raster, &los);
     CHECK(static_cast<int>(gemeldet.size()) == vorher + 1);
     CHECK(art(2) == Anschlagart::Ab);
-    CHECK(raster.muster().noten.size() == 7);  // keine Note gesetzt
+    CHECK(raster.muster().noten.size() == 7);         // keine Note gesetzt
+    CHECK(raster.abspielstelle() == abspielVorher);    // und nicht die Abspielstelle versetzt
 
     if (const QString ziel = qEnvironmentVariable("LUMIVIZ_EDITOR_STRUM_BILD"); !ziel.isEmpty())
     {
+        // fuers Bild: die einzelne E2 getippt — dort steht „T"
+        Muster getippt = raster.muster();
+        getippt.noten[6].artikulationen = kTapping;
+        raster.setMuster(getippt, 4, 4);
         raster.zeigeHoehe(46);
         QString datei = ziel;
         datei.replace(QStringLiteral(".png"), QStringLiteral("_spur.png"));

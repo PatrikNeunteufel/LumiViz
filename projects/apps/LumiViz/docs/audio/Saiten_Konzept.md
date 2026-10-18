@@ -345,7 +345,7 @@ Versatz im Akkord.
   - **I** die Noten eines Akkords beginnen in der Piano-Roll um den Versatz
     versetzt (Down: die tiefe Saite zuerst, Up: die hohe); ein feiner Strich am
     Anschlag zeigt die Richtung.
-  - **J** Spur *Strum* unter *Note vol.*: je Akkord ein Pfeil — grau aus der
+  - **J** (Lage geändert mit S-W14 a, unten) Spur *Strum* unter *Note vol.*: je Akkord ein Pfeil — grau aus der
     Hand, blau mit Nadel von dir gesetzt (ein Eintrag in *Anschläge*), „≡“ für
     Together; ein Klick schaltet Follow hand → Down → Up → Together; eine
     einzelne Note zeigt einen Punkt.
@@ -526,6 +526,27 @@ einer Gitarre mit deren Vorgaben. *Anschläge* bleiben stehen. Verworfen: b
 (immer übernehmen — verwirft eine bewusste Einstellung ohne Meldung), c (nie,
 dafür ein Knopf *From instrument* — eine neue Basis bliebe bei den Werten des
 Vorgabe-Instruments, die Lücke aus 23f offen).
+
+✅ **S-W14 a** (Patrik S135, auf seinen Vorschlag am Bild von 24e-4): **Die
+Spur *Strum* steht zwischen der Zeile der Takte und dem Raster der Noten** —
+an jedem Schritt, an dem eine Note beginnt, die Anschlagrichtung (grau aus der
+Hand, blau mit Nadel gesetzt, „≡“ für Together); ein Klick schaltet weiter. Sie
+rollt waagrecht mit, senkrecht steht sie; eine Trennlinie und die Beschriftung
+„Strum“ in der Spalte der Klaviatur setzen sie von der Zeile der Takte ab. Eine
+spätere Tab-Spur kommt direkt darunter (Pfeile über dem Tab-System wie im
+Druck). Ersetzt die Lage aus S-W5 a J (unter *Note vol.*). Verworfen: b (unten
+lassen, bei den Spuren je Anschlag wie in einer DAW — Strum ist eine
+Spielanweisung, keine Größe wie die Lautstärke, und gehört über den Griff).
+
+✅ **S-W15 a** (Patrik S135): **An jedem Schritt, an dem eine Note beginnt,
+steht ein Pfeil — auch bei einer einzelnen Note**, grau aus der Hand, blau mit
+Nadel gesetzt. Ein Klick schaltet bei einem Akkord Follow hand → Down → Up →
+Together, bei einer einzelnen Note Follow hand → Down → Up (Together ist auf
+einer Saite dasselbe wie Down). Ersetzt den Punkt aus S-W5 a J. Verworfen: b
+(Punkt, Richtung nur über das Menü — die Richtung einer Melodienote klingt,
+S-W10 a). **Von Claude gesetzt, nicht vorgelegt:** schlagen an einem Schritt
+nur getippte Noten an, steht dort „T“ statt eines Pfeils (ein getippter Ton hat
+keine Richtung, §5o).
 
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
@@ -1198,7 +1219,17 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   den Dialog); eng (38 Fälle) unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*`
   (266 Fälle) unter Release-clang grün.
   **Von Claude gesetzt, nicht vorgelegt:** die Namen im Menü und der Undo-Texte;
-  *Strum* im Menü gilt auch für einzelne Noten (die Spur J nicht).
+  *Strum* im Menü gilt auch für einzelne Noten (die Spur J bis S-W15 a nicht).
+- **Nachgezogen nach S-W14 a und S-W15 a (gebaut S135):** die Spur *Strum*
+  liegt zwischen der Zeile der Takte und den Noten (`strumOben` = `kKopfHoehe`,
+  `rasterOben` = Kopf + Spur; *Note vol.* wieder ganz unten), mit Trennlinien
+  oben und unten; ein Klick dort setzt nie die Abspielstelle. An jedem Schritt
+  mit einer Note ein Pfeil, auch bei einer einzelnen (Follow hand → Down → Up),
+  „T“, wo nur getippt wird. Die Hinweiszeile sagt „Strum lane (top)“ und
+  „T = tapped“. **Belegt** in `test_LoopEditorSpielweise` (Fall J neu gefasst:
+  Lage, einzelne Note, der Klick versetzt die Abspielstelle nicht); eng
+  (42 Fälle mit `*Loop Menue*`) unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*`
+  (266 Fälle) unter Release-clang grün.
 
 ---
 

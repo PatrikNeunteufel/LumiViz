@@ -202,14 +202,15 @@ bool NotenRaster::schalteAnschlag(int schritt)
     if (!m_saiten.istSaiteninstrument()) return false;
     const auto zahl = std::count_if(m_muster.noten.begin(), m_muster.noten.end(),
                                     [schritt](const Note& n) { return n.schritt == schritt; });
-    if (zahl < 2) return false;
-    // Follow hand → Down → Up → Together → Follow hand; ein eigener Spread bleibt
+    if (zahl < 1) return false;
+    // Follow hand → Down → Up → Together → Follow hand; eine einzelne Note ohne Together
+    // (auf einer Saite dasselbe wie Down, S-W15 a); ein eigener Spread bleibt
     const Anschlag* eintrag = anschlagAn(m_muster, schritt);
     const Anschlagart jetzt = eintrag != nullptr ? eintrag->art : Anschlagart::Hand;
-    const Anschlagart weiter = jetzt == Anschlagart::Hand  ? Anschlagart::Ab
-                               : jetzt == Anschlagart::Ab  ? Anschlagart::Auf
-                               : jetzt == Anschlagart::Auf ? Anschlagart::Zugleich
-                                                           : Anschlagart::Hand;
+    const Anschlagart weiter = jetzt == Anschlagart::Hand ? Anschlagart::Ab
+                               : jetzt == Anschlagart::Ab ? Anschlagart::Auf
+                               : jetzt == Anschlagart::Auf && zahl > 1 ? Anschlagart::Zugleich
+                                                                       : Anschlagart::Hand;
     Muster neu = m_muster;
     setzeAnschlag(neu, Anschlag{schritt, weiter, eintrag != nullptr ? eintrag->spreadMs : -1.0});
     const QString name = weiter == Anschlagart::Hand ? tr("Follow hand")
@@ -367,7 +368,7 @@ int NotenRaster::schrittUnter(int x) const
 
 int NotenRaster::hoeheUnter(int y) const
 {
-    return kHoeheMax - teileAb(y - kKopfHoehe + m_rollY, kZeilenHoehe);
+    return kHoeheMax - teileAb(y - rasterOben() + m_rollY, kZeilenHoehe);
 }
 
 void NotenRaster::richteMarken()
@@ -681,8 +682,8 @@ int NotenRaster::schrittBei(int x) const
 
 int NotenRaster::hoeheBei(int y) const
 {
-    if (y < kKopfHoehe || y >= lautOben()) return -1;
-    const int hoehe = kHoeheMax - (y - kKopfHoehe + m_rollY) / kZeilenHoehe;
+    if (y < rasterOben() || y >= lautOben()) return -1;
+    const int hoehe = kHoeheMax - (y - rasterOben() + m_rollY) / kZeilenHoehe;
     return hoehe >= kHoeheMin && hoehe <= kHoeheMax ? hoehe : -1;
 }
 
@@ -721,7 +722,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
     leise.setAlpha(130);
     const int zahl = schritte();
     const int jeTakt = m_schlaege * m_jeSchlag;
-    const int oben = kKopfHoehe;
+    const int oben = rasterOben();  // seit S-W14 a liegt mit Saiten die Spur Strum darueber
     const int unten = lautOben();
     const QRect feld(kTastenBreite, oben, sichtBreite(), unten - oben);
     const int rechts = std::min(width(), xVonSchritt(zahl));
@@ -957,22 +958,26 @@ void NotenRaster::paintEvent(QPaintEvent*)
     // (die Spalte der Klaviatur ist schmal: „Note volume" passt nicht hinein)
     p.drawText(QRect(2, unten, kTastenBreite - 4, kLautHoehe), Qt::AlignLeft | Qt::AlignVCenter, tr("Note\nvol."));
 
-    // --- J (Stufe 24e): die Spur Strum — je Akkord ein Pfeil, eine einzelne Note ein Punkt
+    // --- J (Stufe 24e, S-W14 a, S-W15 a): die Spur Strum zwischen den Takten und den Noten —
+    // an jedem Schritt, an dem eine Note beginnt, die Richtung
     if (mitSaiten)
     {
         const int strumY = strumOben();
         p.setPen(leise);
-        p.drawLine(kTastenBreite, strumY, width(), strumY);
+        p.drawLine(0, strumY, width(), strumY);  // gegen die Zeile der Takte abgesetzt
+        p.drawLine(0, strumY + kStrumHoehe - 1, width(), strumY + kStrumHoehe - 1);
         p.drawText(QRect(2, strumY, kTastenBreite - 4, kStrumHoehe), Qt::AlignLeft | Qt::AlignVCenter, tr("Strum"));
         p.setClipRect(QRect(kTastenBreite, strumY, sichtBreite(), kStrumHoehe));
-        // je Schritt: wie viele Noten anschlagen, und die Richtung der ersten
+        // je Schritt: wie viele Noten anschlagen, die Richtung der ersten, ob nur getippt wird
         std::vector<int> zahlJe(static_cast<std::size_t>(std::max(0, zahl)), 0);
         std::vector<Richtung> richtungJe(zahlJe.size(), Richtung::Ab);
+        std::vector<char> nurGetippt(zahlJe.size(), 1);
         for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
         {
             const int s = m_muster.noten[i].schritt;
             if (s < 0 || s >= zahl) continue;
             if (zahlJe[static_cast<std::size_t>(s)]++ == 0) richtungJe[static_cast<std::size_t>(s)] = alleAnschlaege[i].richtung;
+            if ((m_muster.noten[i].artikulationen & kTapping) == 0) nurGetippt[static_cast<std::size_t>(s)] = 0;
         }
         QFont pfeil = font();
         pfeil.setBold(true);
@@ -985,17 +990,12 @@ void NotenRaster::paintEvent(QPaintEvent*)
             if (zelle.right() < kTastenBreite || zelle.left() > width()) continue;
             const Anschlag* eintrag = anschlagAn(m_muster, s);
             const QColor farbe = eintrag != nullptr ? an : leise;
-            if (anzahl == 1)
-            {
-                p.setPen(Qt::NoPen);
-                p.setBrush(farbe);
-                p.drawEllipse(zelle.center(), 2, 2);
-                continue;
-            }
-            const QString zeichen = eintrag != nullptr && eintrag->art == Anschlagart::Zugleich
+            // ein getippter Ton hat keine Richtung (§5o): „T"; sonst der Pfeil, auch bei einer einzelnen Note
+            const QString zeichen = nurGetippt[static_cast<std::size_t>(s)] != 0 ? QStringLiteral("T")
+                                    : anzahl > 1 && eintrag != nullptr && eintrag->art == Anschlagart::Zugleich
                                         ? QString::fromUtf8("≡")
-                                        : richtungJe[static_cast<std::size_t>(s)] == Richtung::Auf ? QString::fromUtf8("↑")
-                                                                                                   : QString::fromUtf8("↓");
+                                    : richtungJe[static_cast<std::size_t>(s)] == Richtung::Auf ? QString::fromUtf8("↑")
+                                                                                               : QString::fromUtf8("↓");
             p.setPen(farbe);
             p.drawText(zelle, Qt::AlignCenter, zeichen);
             if (eintrag != nullptr)
@@ -1127,7 +1127,7 @@ void NotenRaster::zieheBei(QPoint ort)
     else if (m_zug == Zug::Verschieben)
     {
         const int schritt = std::clamp(schrittRoh - m_griffSchritt, 0, zahl - note.laenge);
-        const int hoehe = std::clamp(kHoeheMax - teileAb(ort.y() - kKopfHoehe + m_rollY, kZeilenHoehe), kHoeheMin, kHoeheMax);
+        const int hoehe = std::clamp(kHoeheMax - teileAb(ort.y() - rasterOben() + m_rollY, kZeilenHoehe), kHoeheMin, kHoeheMax);
         if (belegt(schritt, hoehe, platz)) return;  // dort beginnt schon eine Note dieser Tonhoehe
         note.schritt = schritt;
         note.hoehe = hoehe;
@@ -1192,6 +1192,12 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         }
         return;
     }
+    // J (Stufe 24e, S-W14 a): ein Klick in die Spur Strum schaltet den Anschlag an diesem Schritt weiter
+    if (ort.y() < rasterOben())
+    {
+        if (const int schritt = schrittBei(ort.x()); schritt >= 0) (void)schalteAnschlag(schritt);
+        return;
+    }
     if (shift && ort.x() >= kTastenBreite && ort.y() < lautOben())
     {
         // ein Rahmen: markiert die Noten, die er beruehrt
@@ -1213,12 +1219,6 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
             const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
             markiereUm({note.schritt, note.hoehe});
         }
-        return;
-    }
-    // J (Stufe 24e): ein Klick in die Spur Strum schaltet den Akkord an diesem Schritt weiter
-    if (strumHoehe() > 0 && ort.y() >= strumOben())
-    {
-        if (const int schritt = schrittBei(ort.x()); schritt >= 0) (void)schalteAnschlag(schritt);
         return;
     }
     if (ort.y() >= lautOben())
@@ -1407,7 +1407,7 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         return;
     }
     const QPoint ort = event->pos();
-    if (ort.x() < kTastenBreite || ort.y() < kKopfHoehe || ort.y() >= lautOben()) return;
+    if (ort.x() < kTastenBreite || ort.y() < rasterOben() || ort.y() >= lautOben()) return;
     const int hier = std::clamp(schrittUnter(ort.x()), 0, std::max(0, schritte() - 1));
     const bool etwas = !m_marken.empty();
     QMenu menu(this);
@@ -1685,8 +1685,8 @@ void InstrumentEditor::setupUI()
     // G (Stufe 23f, S-U2 a): was die Zeichen an den Noten heissen — nur mit Saiten
     // M (Stufe 24e, S-W5 a): dazu die Pfeile der Spur Strum und die Kuerzel der Artikulationen
     m_saitenHinweis = new QLabel(tr("number = string (1 = highest) · pin = set by you · ! = not playable, sounds on the "
-                                    "nearest string · Strum lane: ↓ ↑ grey = from the hand, blue = set by you, ≡ = "
-                                    "together, click a chord to change it · PM palm mute · LR let ring · T tapping · ◇ "
+                                    "nearest string · Strum lane (top): ↓ ↑ grey = from the hand, blue = set by you, ≡ = "
+                                    "together, T = tapped, click to change · PM palm mute · LR let ring · T tapping · ◇ "
                                     "harmonic · right-click a note: String, Strum, playing styles"),
                                  this);
     m_saitenHinweis->setObjectName(QStringLiteral("instrumentStringHint"));

@@ -160,11 +160,12 @@ public:
     [[nodiscard]] int versatzPixel(double versatzMs) const;
     /// Die Kuerzel einer Note: PM (Palm mute), LR (Let ring), T (Tapping), ◇ (Harmonic).
     [[nodiscard]] static QString artikulationsKuerzel(int artikulationen);
-    /// J: die Spur *Strum* unter *Note vol.* (nur mit Saiten) — je Akkord ein
-    /// Pfeil, grau aus der Hand, blau mit Nadel aus *Anschlaege*, „≡" fuer
-    /// Together; eine einzelne Note ein Punkt. Ein Klick auf einen Akkord
-    /// schaltet Follow hand → Down → Up → Together. false = an diesem Schritt
-    /// schlaegt kein Akkord an (keine Saiten, keine oder nur eine Note).
+    /// J: die Spur *Strum* zwischen der Zeile der Takte und den Noten (S-W14 a;
+    /// nur mit Saiten) — an jedem Schritt, an dem eine Note beginnt, ein Pfeil
+    /// (S-W15 a), grau aus der Hand, blau mit Nadel aus *Anschlaege*, „≡" fuer
+    /// Together, „T", wo nur getippt wird. Ein Klick schaltet bei einem Akkord
+    /// Follow hand → Down → Up → Together, bei einer einzelnen Note Follow hand
+    /// → Down → Up. false = keine Saiten oder keine Note an diesem Schritt.
     bool schalteAnschlag(int schritt);
     /// L: im Menue der Noten das Untermenue *Strum* (fuer die Schritte, an denen
     /// markierte Noten anschlagen) und die Haken der Artikulationen (fuer die
@@ -177,8 +178,8 @@ public:
     bool schalteArtikulation(int bit);
     /// Der Name einer Artikulation im Menue: Palm mute, Let ring, Tapping, Harmonic.
     [[nodiscard]] static QString artikulationsName(int bit);
-    /// Oberkante der Spur Strum; ohne Saiten `height()` (es gibt sie nicht).
-    [[nodiscard]] int strumOben() const { return height() - strumHoehe(); }
+    /// Oberkante der Spur Strum: direkt unter der Zeile der Takte (S-W14 a).
+    [[nodiscard]] int strumOben() const { return kKopfHoehe; }
     [[nodiscard]] int strumHoehe() const { return m_saiten.istSaiteninstrument() ? kStrumHoehe : 0; }
 
     // --- Rollen ---------------------------------------------------------------
@@ -202,7 +203,7 @@ public:
     static constexpr int kZeilenHoehe = 14;   ///< je Tonhoehe
     static constexpr int kSchrittBreite = 16;
     static constexpr int kLautHoehe = 56;     ///< die Lautstaerke je Note, unten
-    static constexpr int kStrumHoehe = 20;    ///< Stufe 24e (J): die Spur Strum darunter, nur mit Saiten
+    static constexpr int kStrumHoehe = 20;    ///< Stufe 24e (J, S-W14 a): die Spur Strum unter dem Kopf, nur mit Saiten
     static constexpr int kKante = 5;          ///< so breit ist der Griff am Ende einer Note mindestens
     static constexpr int kKanteMax = 9;       ///< und hoechstens (ein Drittel der Note, dazwischen)
     /// Liegt `x` auf dem Griff am Ende dieser Note? Dort zieht man ihre Laenge;
@@ -211,11 +212,13 @@ public:
     [[nodiscard]] int xVonSchritt(int schritt) const { return kTastenBreite + schritt * kSchrittBreite - m_rollX; }
     /// Der Schritt unter `x`; -1 = keiner (die Klaviatur, hinter dem Ende).
     [[nodiscard]] int schrittBei(int x) const;
-    [[nodiscard]] int yVonHoehe(int hoehe) const { return kKopfHoehe + (kHoeheMax - hoehe) * kZeilenHoehe - m_rollY; }
+    [[nodiscard]] int yVonHoehe(int hoehe) const { return rasterOben() + (kHoeheMax - hoehe) * kZeilenHoehe - m_rollY; }
+    /// Oberkante der Noten: unter der Zeile der Takte und (mit Saiten) der Spur Strum.
+    [[nodiscard]] int rasterOben() const { return kKopfHoehe + strumHoehe(); }
     /// Die Tonhoehe unter `y`; -1 = keine (der Kopf, die Zeile der Lautstaerken).
     [[nodiscard]] int hoeheBei(int y) const;
     /// Oberkante der Zeile mit der Lautstaerke je Note.
-    [[nodiscard]] int lautOben() const { return height() - kLautHoehe - strumHoehe(); }
+    [[nodiscard]] int lautOben() const { return height() - kLautHoehe; }
     /// Die Note unter dem Punkt (Platz in `muster().noten`); -1 = keine.
     [[nodiscard]] int noteBei(QPoint ort) const;
     [[nodiscard]] QSize sizeHint() const override { return {kTastenBreite + 64 * kSchrittBreite, 420}; }
