@@ -1036,8 +1036,8 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
 
 Nach S-W6 a, S-W7 a, S-W8 a; nur an Saiten *Extended KS* und *Waveguide*,
 jede andere Schicht spielt die klingende Tonhöhe wie immer. Grundlage: der
-Recherche-Bericht S134 (Agent, im Scratchpad; die tragenden Stellen von Claude
-an der Quelle nachgelesen, unten mit Fundstelle).
+Recherche-Bericht S134 (Agent; lokal unter `.claude/handover/recherche_24c/bericht.md`;
+die tragenden Stellen von Claude an der Quelle nachgelesen, unten mit Fundstelle).
 
 - **Punktdämpfer im Umlauf** (`PunktDaempfer`, `Spielart`, `laufeUm`): nach
   Pakarinen (EUSIPCO 2005, Gl. 2–3, nachgelesen S. 2): ein Widerstand R an
