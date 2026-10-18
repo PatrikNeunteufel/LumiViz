@@ -173,11 +173,21 @@ struct TonAngabe
     /// letzten Millisekunden blendet er aus (`kAbdaempfenMs`). 0 = kein Ende,
     /// er klingt aus wie bisher.
     int endeMs = 0;
+    // --- seit Stufe 24b (S-W2 a, S-W6 a, S-W7 a): was den Klang des Anschlags aendert ---
+    Richtung richtung = Richtung::Ab;  ///< Up: von der anderen Seite angeschlagen
+    /// Nur die Bits, die den Klang aendern: `kPalmMute`, `kTapping`. *Let ring*
+    /// steckt in Dauer und Ende, *Harmonic* in `teilton`.
+    int artikulationen = 0;
+    /// Ein Flageolett: der Teilton, der klingt (2 … 6); 1 = keines. Die Tonhoehe
+    /// ist die klingende, gegriffen ist sie um diesen Teilton tiefer.
+    int teilton = 1;
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
-/// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, bei einem
-/// Ende `:e<ms>` — ohne beides derselbe Name wie bis Stufe 22.
+/// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, dann (seit
+/// Stufe 24b) `:h<teilton>` bei einem Flageolett, `:u` bei Up, `:m` bei Palm
+/// mute, `:t` bei Tapping, zuletzt `:e<ms>` bei einem Ende — ohne alles
+/// derselbe Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

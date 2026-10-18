@@ -482,8 +482,7 @@ struct Instrument
 // `highDamping`, `stiffness`, `stringVariation`; ohne `stringModel` ist sie
 // *Classic* und traegt nur `damping` wie bisher. Fassung 11 (S134, Stufe 24a,
 // Entscheide S-W2 a, S-W6 a) kennt unter `strings` den Block `strum` (`spread`,
-// `hand`, `pattern` — die Vorgabe fuer neue Muster, nur wenn sie von der des
-// Programms abweicht) und an einer Saite *Extended KS* oder *Waveguide* den
+// `hand`, `pattern` — die Vorgabe fuer neue Muster, immer, S-W11 a) und an einer Saite *Extended KS* oder *Waveguide* den
 // Block `playing` mit `upLevel`, `mute`, `tapLevel`, `touch`. Eine eigene
 // Fassung, weil ein aelteres Programm die Spielweisen still ueberginge.
 // Geschrieben wird Fassung 11.

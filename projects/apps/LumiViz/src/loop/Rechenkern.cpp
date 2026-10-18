@@ -69,10 +69,11 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                     for (std::size_t noteNr = 0; noteNr < muster->noten.size(); ++noteNr)
                     {
                         const Note& note = muster->noten[noteNr];
-                        const QString name =
-                            toeneDesClips.empty()
-                                ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
-                                : tonKlang(toeneDesClips[static_cast<std::size_t>(runde)][noteNr]);
+                        const GeplanterTon* geplant =
+                            toeneDesClips.empty() ? nullptr : &toeneDesClips[static_cast<std::size_t>(runde)][noteNr];
+                        const QString name = geplant == nullptr
+                                                 ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
+                                                 : tonKlang(*geplant);
                         const int klang = klangVon.value(name, -1);
                         const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
                         if (neu)
@@ -82,8 +83,10 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                             ablauf.stimmen.push_back(std::move(stimme));
                         }
                         const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
+                        // Strum (Stufe 24b): eine Saite des Akkords schlaegt so viel spaeter an
+                        const double strumFrames = geplant == nullptr ? 0.0 : geplant->versatzMs * rate / 1000.0;
                         const double stelle = static_cast<double>(schrittDavor + note.schritt) * schrittFrames +
-                                              (versetzt ? swingFrames : 0.0);
+                                              (versetzt ? swingFrames : 0.0) + strumFrames;
                         const double laut = note.laut * lautMuster;
                         Schlag schlag;
                         schlag.frame = std::llround(stelle);

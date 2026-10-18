@@ -517,7 +517,8 @@ TEST_CASE("Loop Saiten 23b: die Toene je Vorkommen — das Ende an der naechsten
     // die erste E4 endet, wo die zweite anschlaegt (250 ms), die zweite an der ersten der
     // naechsten Wiederholung — nach der letzten an der ersten des naechsten Durchlaufs
     CHECK(toene[0][0][0] == TonAngabe{QStringLiteral("gitarre"), 64, 500, 5, 250});
-    CHECK(toene[0][0][1] == TonAngabe{QStringLiteral("gitarre"), 64, 250, 5, 1750});
+    // seit Stufe 24b (S-W10 a, Wechselschlag): Schritt 2 ist „und" — ein Upstroke
+    CHECK(toene[0][0][1] == TonAngabe{QStringLiteral("gitarre"), 64, 250, 5, 1750, Richtung::Auf});
     CHECK(toene[0][1][0] == toene[0][0][0]);
     CHECK(toene[0][1][1] == toene[0][0][1]);
     // die E2 allein auf ihrer Saite: sie endet am naechsten Anschlag, eine Wiederholung spaeter
@@ -525,7 +526,7 @@ TEST_CASE("Loop Saiten 23b: die Toene je Vorkommen — das Ende an der naechsten
 
     // --- klangNamen und plane rechnen dasselbe
     const QStringList namen = loop.klangNamen(nurGitarre());
-    CHECK(namen == QStringList{QStringLiteral("inst:gitarre:64:500:s5:e250"), QStringLiteral("inst:gitarre:64:250:s5:e1750"),
+    CHECK(namen == QStringList{QStringLiteral("inst:gitarre:64:500:s5:e250"), QStringLiteral("inst:gitarre:64:250:s5:u:e1750"),
                                QStringLiteral("inst:gitarre:40:125:s0:e2000")});
     const Ablauf ablauf = plane(loop, 8000, nurGitarre());
     CHECK(ablauf.klangNamen == namen);

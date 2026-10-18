@@ -6,6 +6,7 @@
 #include "loop/Saiten.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace lumi::loop
 {
@@ -20,6 +21,23 @@ void richteSaiten(Saitensatz& saiten)
     if (saiten.wahl != Saitenwahl::Hand) saiten.wahl = Saitenwahl::JeKlang;
     // das Instrument kennt das Raster des Loops nicht: hoechstens ein Takt im feinsten
     richteStrum(saiten.strum);
+}
+
+int teiltonHalbtoene(int teilton)
+{
+    if (teilton <= 1) return 0;
+    return static_cast<int>(std::lround(12.0 * std::log2(static_cast<double>(teilton))));
+}
+
+Flageolett flageolettAuf(const Saitensatz& saiten, int saite, int hoehe)
+{
+    if (saite < 0 || saite >= saiten.anzahl()) return {};
+    const int ueberLeer = bundAuf(saiten, saite, hoehe);  // so weit liegt der Ton ueber der leeren Saite mit Capo
+    for (int n = 2; n <= kFlageolettTeiltonMax; ++n)
+        if (teiltonHalbtoene(n) == ueberLeer) return Flageolett{n, 0, false};
+    const int bund = ueberLeer - teiltonHalbtoene(2);
+    if (bund >= 0 && bund + teiltonHalbtoene(2) <= kBuendeMax) return Flageolett{2, bund, true};
+    return {};
 }
 
 const std::vector<Stimmungsvorlage>& stimmungsvorlagen()

@@ -106,14 +106,24 @@ struct Probe
 constexpr Probe kProben[] = {{36, 250}, {60, 500}, {81, 120}};
 
 /// Ein Durchlauf eines Loops durch den Klangerzeuger (mit den Effekten der Clips); leer = nicht zu laden.
-std::vector<float> rechneLoop(const QString& pfad)
+/// Geplant wie im Programm — mit der Auskunft ueber die Saiten der Instrumente (seit S134; bis dahin
+/// ohne, die Saitenplanung aus Stufe 23b fehlte hier). `ohneStrum`: Spread 0 und keine Abweichungen der
+/// Akkorde — fuer Hoerproben „vor Strum" (`LUMIVIZ_LOOP_WAV_OHNE_STRUM=1`, Stufe 24b).
+std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false)
 {
     Loop loop;
     if (!ladeLoop(pfad, loop)) return {};
-    const Ablauf ablauf = plane(loop, kRate);
+    if (ohneStrum)
+        for (Muster& m : loop.muster)
+        {
+            m.strum.spreadMs = 0.0;
+            m.anschlaege.clear();
+        }
+    const SaitenVon saiten = saitenAusInstrumenten();
+    const Ablauf ablauf = plane(loop, kRate, saiten);
     const auto klaenge = std::make_shared<const std::vector<Klang>>(looptest::klaengeOhneEngine(ablauf));
     Klangerzeuger erzeuger;
-    erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge));
+    erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge, saiten));
     const int frames = static_cast<int>(ablauf.durchlaufFrames);
     std::vector<float> durchlauf(static_cast<std::size_t>(frames) * 2);
     for (int stelle = 0; stelle < frames; stelle += 441)
@@ -156,6 +166,7 @@ QString werteDatei()
 // Hoerproben (S123): `LUMIVIZ_LOOP_WAV=<datei.lvloop oder Ordner>` rechnet den Loop — oder jeden `.lvloop`
 // im Ordner — einmal durch und legt ihn als WAV nach `LUMIVIZ_LOOP_WAV_ZIEL=<Ordner>`. Instrumente als
 // Datei neben dem Loop und eigene (`user:`) gehen mit; ohne die Variable prueft der Fall nichts.
+// `LUMIVIZ_LOOP_WAV_OHNE_STRUM=1` rechnet ohne Strum (Spread 0, keine Abweichungen der Akkorde).
 TEST_CASE("Loop Werte: ein Loop als WAV (LUMIVIZ_LOOP_WAV)")
 {
     const QString quelle = qEnvironmentVariable("LUMIVIZ_LOOP_WAV");
@@ -175,10 +186,11 @@ TEST_CASE("Loop Werte: ein Loop als WAV (LUMIVIZ_LOOP_WAV)")
     else
         dateien << quelle;
     REQUIRE_FALSE(dateien.isEmpty());
+    const bool ohneStrum = qEnvironmentVariableIntValue("LUMIVIZ_LOOP_WAV_OHNE_STRUM") == 1;
     for (const QString& pfad : dateien)
     {
         CAPTURE(pfad.toStdString());
-        const std::vector<float> durchlauf = rechneLoop(pfad);
+        const std::vector<float> durchlauf = rechneLoop(pfad, ohneStrum);
         REQUIRE_FALSE(durchlauf.empty());
         const QString wav = QDir(ziel).filePath(QFileInfo(pfad).completeBaseName() + QStringLiteral(".wav"));
         CHECK(schreibeWav(wav, durchlauf, kRate));

@@ -24,6 +24,8 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentEditor.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Rechenkern.hpp"
+#include "loop/Saitenplan.hpp"
 #include "loop/Spielweise.hpp"
 
 #include <QApplication>
@@ -73,6 +75,19 @@ std::vector<int> schritteVon(const Muster& m)
     std::vector<int> schritte;
     for (const Anschlag& a : m.anschlaege) schritte.push_back(a.schritt);
     return schritte;
+}
+
+/// Eine Gitarre in Standardstimmung, wie die Planung sie vom Instrument erfaehrt.
+Saitensatz gitarre()
+{
+    Saitensatz s;
+    s.leer = {40, 45, 50, 55, 59, 64};
+    return s;
+}
+
+SaitenVon nurGitarre()
+{
+    return [](const QString& instrument) { return instrument == QLatin1String("guitar") ? gitarre() : Saitensatz{}; };
 }
 
 void maus(QWidget& ziel, QEvent::Type art, QPoint ort, Qt::MouseButton taste, Qt::MouseButtons tasten)
@@ -160,11 +175,12 @@ TEST_SUITE("LoopSpielweise")
 
     TEST_CASE("Loop Spielweise: .lvloop Fassung 9 — Strum, Anschlaege, Artikulationen")
     {
-        // --- ohne Spielweisen: kein Block, keine sechsten Werte — die Noten wie in Fassung 8
+        // --- ohne Spielweisen: Strum steht trotzdem da (S-W11 a), Abweichungen und sechste Werte nicht
         Loop schlicht = probe();
         const QJsonObject ohne = musterJson(alsJson(schlicht));
         CHECK(alsJson(schlicht).value(QStringLiteral("version")).toInt() == 9);
-        CHECK_FALSE(ohne.contains(QStringLiteral("strum")));
+        CHECK(ohne.value(QStringLiteral("strum")).toObject() ==
+              QJsonObject{{QStringLiteral("spread"), kSpreadVorgabeMs}, {QStringLiteral("hand"), QStringLiteral("halfBeat")}});
         CHECK_FALSE(ohne.contains(QStringLiteral("strokes")));
         for (const QJsonValue& zeile : ohne.value(QStringLiteral("notes")).toArray()) CHECK(zeile.toArray().size() == 4);
 
@@ -272,10 +288,11 @@ TEST_SUITE("LoopSpielweise")
         gitarre.schichten[0].saitenModell = SaitenModell::Wellenleiter;
         gitarre.saiten.leer = {40, 45, 50, 55, 59, 64};
 
-        // --- die Vorgabe des Programms steht nicht da; Playing an jeder Saite Extended KS / Waveguide
+        // --- Strum steht auch mit der Vorgabe da (S-W11 a); Playing an jeder Saite Extended KS / Waveguide
         QJsonObject json = alsJson(gitarre);
         CHECK(json.value(QStringLiteral("version")).toInt() == 11);
-        CHECK_FALSE(json.value(QStringLiteral("strings")).toObject().contains(QStringLiteral("strum")));
+        CHECK(json.value(QStringLiteral("strings")).toObject().value(QStringLiteral("strum")).toObject() == strumAlsJson(Strum{}));
+        CHECK_FALSE(alsJson(Instrument{}).contains(QStringLiteral("strings")));  // ohne Saiten kein Block
         const QJsonObject spiel = json.value(QStringLiteral("layers")).toArray().at(0).toObject().value(QStringLiteral("playing")).toObject();
         CHECK(spiel.value(QStringLiteral("upLevel")).toDouble() == doctest::Approx(gitarre.schichten[0].aufschlagLaut));
         CHECK(spiel.value(QStringLiteral("mute")).toDouble() == doctest::Approx(gitarre.schichten[0].handDaempfung));
@@ -492,5 +509,159 @@ TEST_SUITE("LoopSpielweise")
             CHECK(anschlagAn(gemeldet, 2)->art == Anschlagart::Auf);
             CHECK(anschlagAn(gemeldet, 8)->art == Anschlagart::Zugleich);
         }
+    }
+
+    TEST_CASE("Loop Spielweise 24b: Richtung und Versatz je Akkord — aus der Hand, aus der Abweichung")
+    {
+        // probe(): Akkorde an 0 (Saiten 0, 1, 2), 4 (1, 2), 8 (0, 1, 3), eine Note an 12 (5).
+        // Spread 20 ms ueber die fuenf Zwischenraeume der Gitarre: 4 ms je Saite.
+        Loop loop = probe();
+        Muster& m = riff(loop);
+        const std::vector<Griff> griffe = greifeNoten(m, gitarre());
+        REQUIRE(griffe.size() == 9);
+        CHECK(griffe[0].saite == 0);
+        CHECK(griffe[1].saite == 1);
+        CHECK(griffe[2].saite == 2);
+        CHECK(griffe[7].saite == 3);
+        const auto versatz = [&](const std::vector<Anschlagplan>& plan) {
+            std::vector<double> ms;
+            for (const Anschlagplan& a : plan) ms.push_back(a.versatzMs);
+            return ms;
+        };
+
+        // --- die Vorgabe (S-W10 a): an — 0, 4, 8 sind Stellen der Hand nach unten (1/2 beat, gerade Stellen)
+        std::vector<Anschlagplan> plan = schlageAn(m, gitarre(), griffe, 4, 4);
+        CHECK(versatz(plan) == std::vector<double>{0, 4, 8, 0, 4, 0, 4, 12, 0});  // an 8 ueberspringt die Hand Saite 2
+        for (const Anschlagplan& a : plan) CHECK(a.richtung == Richtung::Ab);
+
+        // --- die Abweichungen: Up an 4, Together an 8, an 0 die Hand mit eigenem Spread 50 ms
+        setzeAnschlag(m, Anschlag{4, Anschlagart::Auf});
+        setzeAnschlag(m, Anschlag{8, Anschlagart::Zugleich});
+        setzeAnschlag(m, Anschlag{0, Anschlagart::Hand, 50.0});
+        plan = schlageAn(m, gitarre(), griffe, 4, 4);
+        CHECK(versatz(plan) == std::vector<double>{0, 10, 20, 4, 0, 0, 0, 0, 0});
+        CHECK(plan[3].richtung == Richtung::Auf);  // Up: die hohe Saite zuerst
+        CHECK(plan[4].richtung == Richtung::Auf);
+        CHECK(plan[5].richtung == Richtung::Ab);   // Together klingt wie Down
+        CHECK(plan[0].richtung == Richtung::Ab);
+
+        // --- das Muster der Hand: Stelle 6 (Schritt 12) nach oben; Spread 0 = zugleich
+        Loop zwei = probe();
+        Muster& n = riff(zwei);
+        n.strum.hand = handAusText(QStringLiteral("DDDDDDUD"));
+        plan = schlageAn(n, gitarre(), griffe, 4, 4);
+        CHECK(plan[8].richtung == Richtung::Auf);
+        CHECK(plan[0].richtung == Richtung::Ab);
+        n.strum.spreadMs = 0.0;
+        plan = schlageAn(n, gitarre(), griffe, 4, 4);
+        for (const Anschlagplan& a : plan) CHECK(a.versatzMs == doctest::Approx(0.0));
+        // im Raster Beat ist Schritt 12 Stelle 3 — abwechselnd Up
+        n.strum = Strum{};
+        n.strum.raster = HandRaster::Schlag;
+        plan = schlageAn(n, gitarre(), griffe, 4, 4);
+        CHECK(plan[3].richtung == Richtung::Auf);  // Schritt 4 = Schlag 2
+        CHECK(plan[8].richtung == Richtung::Auf);
+
+        // --- ohne Saiten: nichts
+        plan = schlageAn(m, Saitensatz{}, std::vector<Griff>(m.noten.size()), 4, 4);
+        for (const Anschlagplan& a : plan) CHECK(a == Anschlagplan{});
+    }
+
+    TEST_CASE("Loop Spielweise 24b: Harmonic — natuerliche Flageoletts vor kuenstlichen (S-W7 a)")
+    {
+        // --- die Teiltoene ueber dem Grundton
+        CHECK(teiltonHalbtoene(1) == 0);
+        CHECK(teiltonHalbtoene(2) == 12);
+        CHECK(teiltonHalbtoene(3) == 19);
+        CHECK(teiltonHalbtoene(4) == 24);
+        CHECK(teiltonHalbtoene(5) == 28);
+        CHECK(teiltonHalbtoene(6) == 31);
+        CHECK(flageolettAuf(gitarre(), 0, 68) == Flageolett{5, 0, false});  // G#4 auf der tiefen E-Saite
+        CHECK(flageolettAuf(gitarre(), 1, 61) == Flageolett{2, 4, true});   // C#4: gegriffen im 4. Bund der A-Saite
+        CHECK(flageolettAuf(gitarre(), 4, 59) == Flageolett{});              // die leere Saite selbst ist kein Flageolett
+        CHECK(flageolettAuf(gitarre(), 5, 100) == Flageolett{});             // der Knoten laege ueber dem 24. Bund
+
+        // --- die Wahl der Saite: je Note fuer sich (verschiedene Schritte)
+        Muster m;
+        m.art = MusterArt::Instrument;
+        m.instrument = QStringLiteral("guitar");
+        m.noten = {Note{0, 1, 52, 1.0, -1, kHarmonic},   // E3: n = 2 auf der tiefen E-Saite
+                   Note{2, 1, 59, 1.0, -1, kHarmonic},   // B3: n = 3 auf E — vor dem kuenstlichen auf A
+                   Note{4, 1, 68, 1.0, -1, kHarmonic},   // G#4: n = 5 auf E
+                   Note{6, 1, 62, 1.0, -1, kHarmonic},   // D4: n = 2 auf der D-Saite
+                   Note{8, 1, 61, 1.0, -1, kHarmonic},   // C#4: kein natuerliches — kuenstlich, die tiefste Lage
+                   Note{10, 1, 100, 1.0, -1, kHarmonic},  // E7: nirgends
+                   Note{12, 1, 52},                        // E3 ohne Harmonic: gegriffen wie bisher
+                   Note{14, 1, 52, 1.0, 1, kHarmonic}};    // gesetzt auf A, dort kein Flageolett: es gilt die Wahl
+        const std::vector<Griff> griffe = greifeNoten(m, gitarre());
+        REQUIRE(griffe.size() == 8);
+        CHECK(griffe[0] == Griff{0, 0, true, 2});
+        CHECK(griffe[1] == Griff{0, 0, true, 3});
+        CHECK(griffe[2] == Griff{0, 0, true, 5});
+        CHECK(griffe[3] == Griff{2, 0, true, 2});
+        CHECK(griffe[4] == Griff{1, 4, true, 2});
+        CHECK(griffe[5] == Griff{5, 36, false, 1});  // nicht greifbar: als gewoehnlicher Ton auf der naechstbesten Saite
+        CHECK(griffe[6] == Griff{2, 2, true, 1});
+        CHECK(griffe[7] == Griff{0, 0, true, 2});
+        // gesetzt, wo es eines gibt: es gilt
+        m.noten[7].saite = 0;
+        CHECK(greifeNoten(m, gitarre())[7] == Griff{0, 0, true, 2});
+    }
+
+    TEST_CASE("Loop Spielweise 24b: die Toene je Vorkommen — Versatz, Richtung, Artikulationen, Let ring; plane setzt den Versatz")
+    {
+        Loop loop = probe();
+        Muster& m = riff(loop);
+        m.noten.push_back(Note{14, 2, 52, 1.0, -1, kHarmonic});  // Schritt 14: Stelle 7, Up
+        m.noten[2].artikulationen = kLetRing;                     // E3 im ersten Akkord, Saite 2
+        m.noten[8].artikulationen = kPalmMute | kTapping;         // E4 an 12
+        loop.richte();
+        REQUIRE(m.noten.size() == 10);
+        REQUIRE(loop.durchlaufMs() == 2000.0);
+
+        const std::vector<ClipToene> toene = toeneImKanal(loop, 0, nurGitarre());
+        REQUIRE(toene.size() == 1);
+        REQUIRE(toene[0].size() == 1);
+        const std::vector<GeplanterTon>& t = toene[0][0];
+        CHECK(t[1].versatzMs == doctest::Approx(4.0));
+        CHECK(t[2].versatzMs == doctest::Approx(8.0));
+        // Let ring: gehalten, bis die E3 des Akkords an 4 dieselbe Saite anschlaegt (504 ms) — 496 ms nach ihrem Anschlag
+        CHECK(t[2].endeMs == 496);
+        CHECK(t[2].dauerMs == 496);
+        CHECK(t[1].dauerMs == 250);  // ohne Let ring: ihre Laenge
+        // Palm mute und Tapping im Namen; Let ring nicht (es steckt in der Dauer)
+        CHECK(t[8].artikulationen == (kPalmMute | kTapping));
+        CHECK(t[2].artikulationen == 0);
+        CHECK(tonKlang(t[8]).contains(QStringLiteral(":m:t")));
+        // das Flageolett an 14: E3 als Teilton 2 der tiefen E-Saite, nach oben angeschlagen
+        CHECK(t[9].teilton == 2);
+        CHECK(t[9].saite == 0);
+        CHECK(t[9].richtung == Richtung::Auf);
+        CHECK(tonKlang(t[9]) == QStringLiteral("inst:guitar:52:250:s0:h2:u:e250"));
+
+        // --- der Name zerlegt sich wieder in dieselbe Angabe
+        TonAngabe zurueck;
+        REQUIRE(zerlegeTon(tonKlang(t[9]), zurueck));
+        CHECK(zurueck == static_cast<const TonAngabe&>(t[9]));
+        REQUIRE(zerlegeTon(tonKlang(t[8]), zurueck));
+        CHECK(zurueck == static_cast<const TonAngabe&>(t[8]));
+        REQUIRE(zerlegeTon(QStringLiteral("inst:C:/ich/eigen.lvinst:52:250:s0:h3:u:m:t:e40"), zurueck));
+        CHECK(zurueck == TonAngabe{QStringLiteral("C:/ich/eigen.lvinst"), 52, 250, 0, 40, Richtung::Auf, kPalmMute | kTapping, 3});
+
+        // --- plane: jeder Schlag dort, wo sein Schritt ist, und um seinen Versatz spaeter (8000 Hz: 8 Abtastwerte je ms)
+        const Ablauf ablauf = plane(loop, 8000, nurGitarre());
+        for (std::size_t i = 0; i < t.size(); ++i)
+        {
+            const int klang = static_cast<int>(ablauf.klangNamen.indexOf(tonKlang(t[i])));
+            REQUIRE(klang >= 0);
+            const std::int64_t erwartet = std::llround((m.noten[i].schritt * 125.0 + t[i].versatzMs) * 8.0);
+            bool gefunden = false;
+            for (const Stimme& stimme : ablauf.stimmen)
+                if (stimme.klang == klang)
+                    for (const Schlag& schlag : stimme.schlaege) gefunden = gefunden || schlag.frame == erwartet;
+            CAPTURE(i);
+            CHECK(gefunden);
+        }
+        CHECK(ablauf.klangNamen == loop.klangNamen(nurGitarre()));
     }
 }

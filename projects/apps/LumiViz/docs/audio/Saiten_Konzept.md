@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
 > **Version:** 0.28.0
-> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W9 a)
+> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W11 a)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -488,6 +488,25 @@ am Ende von Stufe 23.
 | 23f | **Instrument-Editor** (S-U2, Skizze vor dem Bau): *String choice* am Muster, Anzeige nicht greifbarer Noten | Bilder aus den Tests |
 | 23g | **Mitgelieferte Instrumente:** Vorschlag, welche auf die neuen Verfahren umgestellt werden (vorher/nachher als Hörproben, eigene Vorlage); Handbuch, Sichttest-Liste — **der volle Lauf erst, wenn Tabs mit Akkorden möglich sind** (Patrik S133) | `test_LoopWerte` neu geschrieben nur für die umgestellten |
 
+✅ **S-W10 a** (Patrik S134): **Strum ist von sich aus an.** Die Vorgabe
+(Spread, Hand abwechselnd) gilt für jedes Muster eines Saiteninstruments, das
+nichts setzt: jeder Akkord wird angeschlagen, jede Note bekommt die Richtung
+ihrer Stelle (auch Melodien: Wechselschlag). Zugleich klingt ein Akkord mit
+*Spread* 0 oder *Together*. Die mitgelieferten Loops mit Saiten ändern sich
+mit Absicht: belegt mit Hörproben vorher/nachher, `test_LoopWerte` für sie neu
+geschrieben. Beleg von 24b: Instrumente ohne Saiten Bit für Bit wie vorher.
+Verworfen: b (Vorgabe aus — Akkorde, die auf die Millisekunde zugleich
+klingen, widersprächen dem Zweck der Stufe).
+
+✅ **S-W11 a** (Patrik S134, auf Patriks Frage „ist das nicht im Loop
+gespeichert?“): **Strum steht immer in der Datei** — an jedem Instrument-Muster
+der `.lvloop` und unter `strings` jeder `.lvinst` mit Saiten, auch wenn es der
+Vorgabe gleicht. Eine gespeicherte Datei klingt gleich, wie immer die Vorgabe
+des Programms später lautet; nur Dateien vor Fassung 9 / 11 bekommen beim
+Lesen die Vorgabe. Korrigiert die Setzung aus 24a („nur, wenn sie abweicht“).
+Verworfen: b (nur bei Abweichung — die Vorgabe wird in 24f noch hergeleitet,
+jede Änderung wirkte still auf alle Loops, die sie benutzen).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -933,10 +952,11 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
   `handDaempfung` (*Mute*), `tappingLaut` (*Tap level*), `knotenDruck`
   (*Touch*).
 - **`.lvloop` Fassung 9:** am Instrument-Muster `strum` (`spread`, `hand`,
-  `pattern` als `D`/`U`) und `strokes` (`step`, `stroke`, `spread`), beide nur,
-  wenn gesetzt; die Artikulationen als sechster Wert einer Note (dann die
+  `pattern` als `D`/`U`; seit S-W11 a immer) und `strokes` (`step`, `stroke`,
+  `spread`; nur, wenn es welche gibt); die Artikulationen als sechster Wert einer Note (dann die
   Saite als fünfter, −1 = keine). **`.lvinst` Fassung 11:** unter `strings`
-  der Block `strum` (nur, wenn er abweicht), an einer Saite *Extended KS* oder
+  der Block `strum` (seit S-W11 a immer, wenn das Instrument Saiten hat; am
+  Muster immer), an einer Saite *Extended KS* oder
   *Waveguide* der Block `playing`.
 - **Der Eintrag wandert mit** (S-W4 a): `kopiereNoten` / `fuegeNotenEin`
   (`NotenKopie::anschlaege`), `loescheNoten`, `versetzeNoten`, `dreheNoten`
@@ -959,6 +979,48 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
 - **Gefunden:** dass ein neues Muster *String choice* von seinem Instrument
   bekommt (§5a, „baut 23f“), war nicht gebaut. `uebernimmVorgaben` deckt es
   jetzt im Modell ab; der Aufruf beim Wechsel des Instruments kommt mit 24e.
+
+### 5n. Stufe 24b — Planung der Spielweisen (gebaut S134)
+
+- **Richtung und Versatz** (`schlageAn`, `Anschlagplan`): je Akkord aus seinem
+  Eintrag in *Anschläge*, sonst aus Strum des Musters (Spread, Hand an seiner
+  Stelle). *Together*: kein Versatz, klingt wie Down. Der Versatz wächst mit
+  dem Weg der Hand: Down beginnt an der ersten Saite des Akkords nach der
+  Reihenfolge am Instrument, Up an der letzten; *Spread* ist die Zeit über
+  alle Saiten des Instruments (bei der Gitarre 20 ms / 5 = 4 ms je Saite).
+- **Flageolett** (S-W7 a): `teiltonHalbtoene`, `flageolettAuf`,
+  `kFlageolettTeiltonMax` 6 in `Saiten.hpp`; in `greifeNoten` eine Stelle mehr
+  in den Kosten (nach „nicht greifbar“: ein natürliches kostet sein n, ein
+  künstliches 7), `Griff::teilton`. Ohne Noten mit *Harmonic* ist die Wahl
+  dieselbe wie bis Stufe 23.
+- **Let ring:** die Dauer wird bis zum Ende verlängert, an dem die nächste Note
+  auf derselben Saite anschlägt.
+- **Der Ton:** `TonAngabe` trägt `richtung`, `artikulationen` (nur Palm mute
+  und Tapping) und `teilton`; der Name `:h<n>`, `:u`, `:m`, `:t` vor `:e`.
+  `GeplanterTon` (= `TonAngabe` + `versatzMs`) in `ClipToene`; `plane` setzt
+  jeden Schlag um seinen Versatz später, `toeneImKanal` rechnet das Ende mit
+  dem versetzten Anschlag.
+- **Gefunden und behoben:** `test_LoopWerte` und die Hörproben
+  (`LUMIVIZ_LOOP_WAV`) planten **ohne** die Auskunft über die Saiten — die
+  Saitenplanung aus 23b (Saite, Abdämpfen) stand nie in den Werten. Jetzt wie
+  im Programm (`saitenAusInstrumenten()`); dazu `LUMIVIZ_LOOP_WAV_OHNE_STRUM=1`
+  für Hörproben ohne Strum.
+- **Belegt** in `test_LoopSpielweise` (drei Fälle mehr: Richtung und Versatz,
+  Harmonic, die Töne je Vorkommen mit `plane`); im 23b-Fall von
+  `test_LoopSaiten` ist die zweite E4 jetzt ein Upstroke (`:u`, S-W10 a).
+  `test_LoopWerte` neu geschrieben: genau die 24 Loops mit Saiten geändert,
+  kein Instrument und kein Loop ohne Saiten. Eng unter beiden Compilern grün
+  (54 Fälle; Testing-MSVC 61 s).
+- **Hörproben** `.claude/handover/hoerproben_24b/vorher` (ohne Strum) und
+  `nachher` (je 24): Unterschied nur, wo Akkorde gespielt werden — am größten
+  `drop_d_demo` (effektiv 16 % der Spitze), `jazz_guitar_demo`,
+  `ukulele_demo`, `bossa` (3 bis 6 %); null bei den neun Loops ohne Akkorde.
+  Die Richtung ändert den Klang erst mit 24c.
+- **Von Claude gesetzt, nicht vorgelegt:** *Spread* gilt über alle Saiten des
+  Instruments (ein Akkord auf zwei benachbarten Saiten ist schnell, einer über
+  sechs dauert den ganzen Spread); eine nicht greifbare Note bekommt ihren
+  Versatz nach der Saite, auf der sie klingt; Palm mute und Tapping gelten
+  auch für eine nicht greifbare Note.
 
 ---
 

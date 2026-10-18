@@ -26,8 +26,41 @@ namespace
 /// Grenze greift erst bei sehr vielen Saiten und Noten zugleich.
 constexpr long kVersucheMax = 200000;
 
-/// Was eine Moeglichkeit kostet — kleiner ist besser, Stelle fuer Stelle.
-using Kosten = std::tuple<int, int, int, int>;  // nicht greifbar, Abstand der Buende, Weg der Hand, Summe der Buende
+/// Was eine Moeglichkeit kostet — kleiner ist besser, Stelle fuer Stelle: nicht
+/// greifbar, Flageoletts (Stufe 24b), Abstand der Buende, Weg der Hand, Summe
+/// der Buende. Ohne Noten mit *Harmonic* ist die zweite Stelle immer 0 — die
+/// Wahl ist dieselbe wie bis Stufe 23.
+using Kosten = std::tuple<int, int, int, int, int>;
+
+/// Was ein Flageolett kostet (S-W7 a): ein natuerliches sein n, ein kuenstliches
+/// mehr als jedes natuerliche.
+int flageolettKosten(const Flageolett& f)
+{
+    return f.kuenstlich ? kFlageolettTeiltonMax + 1 : f.teilton;
+}
+
+bool istFlageolett(const Note& note)
+{
+    return (note.artikulationen & kHarmonic) != 0;
+}
+
+/// Ist `note` auf `saite` spielbar — gegriffen, oder bei *Harmonic* als Flageolett?
+bool spielbarAuf(const Saitensatz& saiten, int saite, const Note& note)
+{
+    return istFlageolett(note) ? flageolettAuf(saiten, saite, note.hoehe).teilton > 0
+                               : greifbarAuf(saiten, saite, note.hoehe);
+}
+
+/// Der Griff einer spielbaren Note auf `saite`.
+Griff griffAuf(const Saitensatz& saiten, int saite, const Note& note)
+{
+    if (istFlageolett(note))
+    {
+        const Flageolett f = flageolettAuf(saiten, saite, note.hoehe);
+        return Griff{saite, f.bund, true, f.teilton};
+    }
+    return Griff{saite, bundAuf(saiten, saite, note.hoehe), true};
+}
 
 /// Die naechstbeste Saite einer Note, die nirgends frei greifbar ist: die mit
 /// dem kleinsten Weg bis in den greifbaren Bereich, bei Gleichstand die erste.
@@ -79,10 +112,10 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
         for (std::size_t i = a; i < b; ++i)
         {
             const Note& note = noten[i];
-            if (greifbarAuf(saiten, note.saite, note.hoehe) && !imAnschlag[static_cast<std::size_t>(note.saite)])
+            if (spielbarAuf(saiten, note.saite, note) && !imAnschlag[static_cast<std::size_t>(note.saite)])
             {
                 imAnschlag[static_cast<std::size_t>(note.saite)] = true;
-                griffe[i] = Griff{note.saite, bundAuf(saiten, note.saite, note.hoehe), true};
+                griffe[i] = griffAuf(saiten, note.saite, note);
                 festeBuende.push_back(griffe[i].bund);
             }
             else
@@ -92,10 +125,11 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
         // die uebrigen: alle Moeglichkeiten auf freien Saiten, die beste nach `Kosten`
         std::vector<int> wahl(offen.size(), -1);
         std::vector<int> beste(offen.size(), -1);
-        Kosten besteKosten{std::numeric_limits<int>::max(), 0, 0, 0};
+        Kosten besteKosten{std::numeric_limits<int>::max(), 0, 0, 0, 0};
         long versuche = 0;
         const auto bewerte = [&]() {
             int nicht = 0;
+            int flageoletts = 0;
             int tief = std::numeric_limits<int>::max();
             int hoch = -1;
             int summe = 0;
@@ -115,11 +149,19 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
                     ++nicht;
                     continue;
                 }
-                zaehle(bundAuf(saiten, wahl[k], noten[offen[k]].hoehe));
+                const Note& note = noten[offen[k]];
+                if (istFlageolett(note))
+                {
+                    const Flageolett f = flageolettAuf(saiten, wahl[k], note.hoehe);
+                    flageoletts += flageolettKosten(f);
+                    zaehle(f.bund);  // ein natuerliches greift nicht
+                }
+                else
+                    zaehle(bundAuf(saiten, wahl[k], note.hoehe));
             }
             const int abstand = hoch >= 0 ? hoch - tief : 0;
             const int weg = hand && vorigeLage >= 0 && hoch >= 0 ? std::abs(tief - vorigeLage) : 0;
-            return Kosten{nicht, abstand, weg, summe};
+            return Kosten{nicht, flageoletts, abstand, weg, summe};
         };
         const std::function<void(std::size_t)> suche = [&](std::size_t k) {
             if (versuche >= kVersucheMax) return;
@@ -134,11 +176,11 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
                 }
                 return;
             }
-            const int hoehe = noten[offen[k]].hoehe;
+            const Note& note = noten[offen[k]];
             for (int s = 0; s < anzahl; ++s)
             {
                 const auto platz = static_cast<std::size_t>(s);
-                if (belegt[platz] || imAnschlag[platz] || !greifbarAuf(saiten, s, hoehe)) continue;
+                if (belegt[platz] || imAnschlag[platz] || !spielbarAuf(saiten, s, note)) continue;
                 imAnschlag[platz] = true;
                 wahl[k] = s;
                 suche(k + 1);
@@ -155,7 +197,7 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
             Griff& griff = griffe[offen[k]];
             const int hoehe = noten[offen[k]].hoehe;
             if (beste[k] >= 0)
-                griff = Griff{beste[k], bundAuf(saiten, beste[k], hoehe), true};
+                griff = griffAuf(saiten, beste[k], noten[offen[k]]);
             else
             {
                 const int s = naechstbesteSaite(saiten, hoehe);
@@ -168,6 +210,52 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
         a = b;
     }
     return griffe;
+}
+
+std::vector<Anschlagplan> schlageAn(const Muster& muster, const Saitensatz& saiten, const std::vector<Griff>& griffe,
+                                    int schlaegeJeTakt, int schritteJeSchlag)
+{
+    const std::vector<Note>& noten = muster.noten;
+    std::vector<Anschlagplan> plan(noten.size());
+    if (!saiten.istSaiteninstrument() || griffe.size() != noten.size()) return plan;
+    const int zwischenraeume = saiten.anzahl() - 1;  // so oft geht die Hand von Saite zu Saite, ueber alle
+    for (std::size_t a = 0; a < noten.size();)
+    {
+        // ein Akkord: die Noten, die am selben Schritt anschlagen (gerichtet: nach Schritt sortiert)
+        std::size_t b = a;
+        while (b < noten.size() && noten[b].schritt == noten[a].schritt) ++b;
+        const int schritt = noten[a].schritt;
+        const Anschlag* abweichung = anschlagAn(muster, schritt);
+        const Anschlagart art = abweichung != nullptr ? abweichung->art : Anschlagart::Hand;
+        const double spreadMs =
+            abweichung != nullptr && abweichung->spreadMs >= 0.0 ? abweichung->spreadMs : muster.strum.spreadMs;
+        Richtung richtung = Richtung::Ab;  // auch bei Together
+        if (art == Anschlagart::Auf)
+            richtung = Richtung::Auf;
+        else if (art == Anschlagart::Hand)
+            richtung = richtungAnStelle(muster.strum,
+                                        handStelleVon(muster.strum.raster, schritt, schlaegeJeTakt, schritteJeSchlag));
+
+        int erste = std::numeric_limits<int>::max();
+        int letzte = -1;
+        for (std::size_t i = a; i < b; ++i)
+            if (griffe[i].saite >= 0)
+            {
+                erste = std::min(erste, griffe[i].saite);
+                letzte = std::max(letzte, griffe[i].saite);
+            }
+        for (std::size_t i = a; i < b; ++i)
+        {
+            plan[i].richtung = richtung;
+            const int saite = griffe[i].saite;
+            if (art == Anschlagart::Zugleich || zwischenraeume <= 0 || saite < 0) continue;
+            // Down: die erste Saite am Instrument zuerst, Up: die letzte — der Weg der Hand bis hierher
+            const int weg = richtung == Richtung::Ab ? saite - erste : letzte - saite;
+            plan[i].versatzMs = spreadMs * weg / zwischenraeume;
+        }
+        a = b;
+    }
+    return plan;
 }
 
 std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const SaitenVon& saitenVon)
@@ -188,6 +276,7 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
     {
         Saitensatz saiten;
         std::vector<Griff> griffe;
+        std::vector<Anschlagplan> anschlag;
     };
     std::map<const Muster*, Gegriffen> gegriffen;
     struct Vorkommen
@@ -215,13 +304,14 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
             neu.saiten = saitenVon(muster->instrument);
             richteSaiten(neu.saiten);
             neu.griffe = greifeNoten(*muster, neu.saiten);
+            neu.anschlag = schlageAn(*muster, neu.saiten, neu.griffe, loop.schlaegeJeTakt, loop.schritteJeSchlag);
             ort = gegriffen.emplace(muster, std::move(neu)).first;
         }
         const Gegriffen& g = ort->second;
         if (!g.saiten.istSaiteninstrument()) continue;
 
         const auto runden = static_cast<std::size_t>(std::max(1, clip.wiederholungen));
-        toene[c].assign(runden, std::vector<TonAngabe>(muster->noten.size()));
+        toene[c].assign(runden, std::vector<GeplanterTon>(muster->noten.size()));
         for (std::size_t r = 0; r < runden; ++r)
         {
             const std::int64_t schrittDavor =
@@ -230,11 +320,20 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
             {
                 const Note& note = muster->noten[i];
                 const Griff& griff = g.griffe[i];
-                toene[c][r][i] = TonAngabe{muster->instrument, note.hoehe, loop.notenMs(note), griff.saite, 0};
+                GeplanterTon& ton = toene[c][r][i];
+                ton.instrument = muster->instrument;
+                ton.hoehe = note.hoehe;
+                ton.dauerMs = loop.notenMs(note);
+                ton.saite = griff.saite;
+                // Stufe 24b: Richtung und Versatz des Akkords, die Artikulationen, das Flageolett
+                ton.richtung = g.anschlag[i].richtung;
+                ton.versatzMs = g.anschlag[i].versatzMs;
+                ton.artikulationen = note.artikulationen & (kPalmMute | kTapping);
+                ton.teilton = griff.greifbar ? griff.teilton : 1;
                 if (!griff.greifbar) continue;  // eine nicht greifbare Note daempft nicht und wird nicht gedaempft
                 const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
-                const double startMs =
-                    static_cast<double>(schrittDavor + note.schritt) * schrittMs + (versetzt ? swingMs : 0.0);
+                const double startMs = static_cast<double>(schrittDavor + note.schritt) * schrittMs +
+                                       (versetzt ? swingMs : 0.0) + ton.versatzMs;
                 vorkommen.push_back({c, r, i, startMs, muster, griff.saite});
                 anschlaege[{muster, griff.saite}].push_back(startMs);
             }
@@ -250,7 +349,10 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         const std::vector<double>& stellen = anschlaege[{v.muster, v.saite}];
         const auto danach = std::upper_bound(stellen.begin(), stellen.end(), v.startMs);
         const double naechste = danach != stellen.end() ? *danach : stellen.front() + durchlaufMs;
-        toene[v.clip][v.runde][v.note].endeMs = std::max(1, static_cast<int>(std::lround(naechste - v.startMs)));
+        GeplanterTon& ton = toene[v.clip][v.runde][v.note];
+        ton.endeMs = std::max(1, static_cast<int>(std::lround(naechste - v.startMs)));
+        // Let ring (S-W6 a): gehalten, bis die naechste Note auf derselben Saite sie abdaempft
+        if ((v.muster->noten[v.note].artikulationen & kLetRing) != 0) ton.dauerMs = std::max(ton.dauerMs, ton.endeMs);
     }
     return toene;
 }

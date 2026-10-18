@@ -1640,8 +1640,8 @@ QJsonObject alsJson(const Instrument& instrument)
         saiten[QStringLiteral("capo")] = instrument.saiten.capo;
         saiten[QStringLiteral("stringChoice")] = saitenwahlName(instrument.saiten.wahl);
         if (instrument.saiten.mensurMm > 0.0) saiten[QStringLiteral("scale")] = instrument.saiten.mensurMm;  // Stufe 23d
-        // seit Fassung 11 (Stufe 24a): die Vorgabe fuer neue Muster, nur wenn sie abweicht
-        if (instrument.saiten.strum != Strum{}) saiten[QStringLiteral("strum")] = strumAlsJson(instrument.saiten.strum);
+        // seit Fassung 11 (Stufe 24a): die Vorgabe fuer neue Muster — immer (S-W11 a)
+        saiten[QStringLiteral("strum")] = strumAlsJson(instrument.saiten.strum);
         o[QStringLiteral("strings")] = saiten;
     }
     return o;

@@ -109,6 +109,26 @@ inline constexpr double kMensurVorgabeMm = 648.0;
     return bund >= 0 && bund <= kBuendeMax;
 }
 
+/// Der hoechste Teilton eines Flageoletts (S-W7 a, von Claude gesetzt: n bis 6).
+inline constexpr int kFlageolettTeiltonMax = 6;
+
+/// Wie ein Ton als Flageolett auf einer Saite entsteht (S-W7 a).
+struct Flageolett
+{
+    int teilton = 0;          ///< 2 … `kFlageolettTeiltonMax`; 0 = auf dieser Saite keines
+    int bund = 0;             ///< gegriffen (ab dem Capo): 0 bei einem natuerlichen
+    bool kuenstlich = false;  ///< gegriffen, der Knoten 12 Buende darueber (n = 2)
+
+    [[nodiscard]] bool operator==(const Flageolett&) const = default;
+};
+/// So viele Halbtoene liegt der Teilton `n` ueber dem Grundton, gerundet:
+/// 12, 19, 24, 28, 31 fuer n = 2 … 6 (n = 5 klingt 14 Cent tiefer, n = 6 2 Cent).
+[[nodiscard]] int teiltonHalbtoene(int teilton);
+/// Das Flageolett, mit dem `hoehe` (der klingende Ton) auf `saite` entsteht:
+/// zuerst ein natuerliches (leere Saite, das kleinste n), sonst ein
+/// kuenstliches (gegriffen auf Bund f, bis f + 12 ≤ `kBuendeMax`).
+[[nodiscard]] Flageolett flageolettAuf(const Saitensatz& saiten, int saite, int hoehe);
+
 /// Die Auskunft, die die Planung herein bekommt (Entscheid S-A1 a, S132): die
 /// Saiten des Instruments, das ein Muster nennt. Leer (keine Funktion) = jedes
 /// Instrument gilt als eines ohne Saiten — alles wie bis Stufe 22. Wer

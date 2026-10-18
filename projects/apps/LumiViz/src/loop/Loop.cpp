@@ -45,8 +45,8 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 8 (S132, Stufe 23a, Entscheide S-M2 a, S-M2c a): eine Note kann als fuenften
 // Wert ihre Saite tragen, ein Instrument-Muster das Feld `stringChoice` — ein
 // aelteres Programm verloere beides still.
-// 9 (S134, Stufe 24a, Entscheide S-W2 a bis S-W4 a): ein Instrument-Muster kann
-// `strum` und `strokes` tragen, eine Note als sechsten Wert ihre Artikulationen
+// 9 (S134, Stufe 24a, Entscheide S-W2 a bis S-W4 a, S-W11 a): ein Instrument-Muster
+// traegt immer `strum`, dazu `strokes`, wenn es welche gibt; eine Note als sechsten Wert ihre Artikulationen
 // (dann steht die Saite als fuenfter Wert da, −1 = keine). Geschrieben wird
 // immer 9.
 constexpr int kVersion = 9;
@@ -402,6 +402,10 @@ QString tonKlang(const TonAngabe& ton)
 {
     QString name = tonKlang(ton.instrument, ton.hoehe, ton.dauerMs);
     if (ton.saite >= 0) name += QStringLiteral(":s%1").arg(ton.saite);
+    if (ton.teilton > 1) name += QStringLiteral(":h%1").arg(ton.teilton);  // seit Stufe 24b
+    if (ton.richtung == Richtung::Auf) name += QStringLiteral(":u");
+    if ((ton.artikulationen & kPalmMute) != 0) name += QStringLiteral(":m");
+    if ((ton.artikulationen & kTapping) != 0) name += QStringLiteral(":t");
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
 }
@@ -409,24 +413,33 @@ QString tonKlang(const TonAngabe& ton)
 namespace
 {
 
-/// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: hoechstens
-/// `:e<ms>` und `:s<n>` (seit Stufe 23b), dann Dauer und Tonhoehe als reine
-/// Zahlen — davor das Instrument, das als Pfad selbst einen Doppelpunkt tragen
-/// kann (C:/…).
+/// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
+/// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
+/// 24b), dann Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das
+/// als Pfad selbst einen Doppelpunkt tragen kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
-    int saite = -1;
-    int ende = 0;
-    for (int runde = 0; runde < 2; ++runde)
+    TonAngabe zusatz;
+    for (int runde = 0; runde < 6; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
-        const QChar art = rest.at(vor + 1);
-        if (art != QLatin1Char('s') && art != QLatin1Char('e')) break;
-        bool ok = false;
-        const int wert = rest.mid(vor + 2).toInt(&ok);
-        if (!ok || wert < 0) return false;
-        (art == QLatin1Char('s') ? saite : ende) = wert;
+        const QStringView stueck = QStringView(rest).mid(vor + 1);
+        if (stueck == QLatin1String("u"))
+            zusatz.richtung = Richtung::Auf;
+        else if (stueck == QLatin1String("m"))
+            zusatz.artikulationen |= kPalmMute;
+        else if (stueck == QLatin1String("t"))
+            zusatz.artikulationen |= kTapping;
+        else
+        {
+            const QChar art = stueck.front();
+            if (art != QLatin1Char('s') && art != QLatin1Char('e') && art != QLatin1Char('h')) break;
+            bool ok = false;
+            const int wert = stueck.mid(1).toInt(&ok);
+            if (!ok || wert < 0) return false;
+            (art == QLatin1Char('s') ? zusatz.saite : art == QLatin1Char('e') ? zusatz.endeMs : zusatz.teilton) = wert;
+        }
         rest.truncate(vor);
     }
     const qsizetype vorDauer = rest.lastIndexOf(QLatin1Char(':'));
@@ -437,7 +450,10 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
     const int h = rest.mid(vorHoehe + 1, vorDauer - vorHoehe - 1).toInt(&hoeheOk);
     const int ms = rest.mid(vorDauer + 1).toInt(&dauerOk);
     if (!hoeheOk || !dauerOk || ms <= 0) return false;
-    ton = TonAngabe{rest.left(vorHoehe), h, ms, saite, ende};
+    zusatz.instrument = rest.left(vorHoehe);
+    zusatz.hoehe = h;
+    zusatz.dauerMs = ms;
+    ton = std::move(zusatz);
     return true;
 }
 
@@ -567,7 +583,7 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
             for (std::size_t c = 0; c < kanaele[k].clips.size(); ++c)
             {
                 if (kanaele[k].clips[c].muster != m.name) continue;
-                for (const std::vector<TonAngabe>& runde : jeKanal[k][c])
+                for (const std::vector<GeplanterTon>& runde : jeKanal[k][c])
                     for (const TonAngabe& ton : runde) nimm(tonKlang(ton));
             }
     }
@@ -788,8 +804,8 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             // seit Fassung 8; Per chord ist die Vorgabe und steht nicht da
             if (m.saitenwahl != Saitenwahl::JeKlang)
                 o[QStringLiteral("stringChoice")] = saitenwahlName(m.saitenwahl);
-            // seit Fassung 9; die Vorgabe steht nicht da
-            if (m.strum != Strum{}) o[QStringLiteral("strum")] = strumAlsJson(m.strum);
+            // seit Fassung 9, immer (S-W11 a): die Datei klingt gleich, wie immer die Vorgabe spaeter lautet
+            o[QStringLiteral("strum")] = strumAlsJson(m.strum);
             if (!m.anschlaege.empty())
             {
                 QJsonArray anschlaege;
