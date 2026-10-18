@@ -27,7 +27,10 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDir>
+#include <QMouseEvent>
 #include <QTemporaryDir>
+
+#include <optional>
 
 using namespace lumi::loop;
 
@@ -185,6 +188,93 @@ TEST_CASE("Loop Instrument Editor Spielweise: I und K — Versatz der Akkordnote
         QString datei = ziel;
         datei.replace(QStringLiteral(".png"), QStringLiteral("_raster.png"));
         CHECK(gross.grab().save(datei));
+    }
+}
+
+TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick schaltet den Akkord weiter")
+{
+    Anwendung anwendung;
+    Saitensatz saiten = gitarre().saiten;
+    saiten.strum = Strum{};
+    Muster mel;
+    mel.art = MusterArt::Instrument;
+    uebernimmVorgaben(mel, saiten);
+    // Akkorde auf Schritt 0 (Hand: Down) und 2 (Hand: Up), ein E2 allein auf 4
+    mel.noten = {Note{0, 2, 40, 1.0, -1}, Note{0, 2, 45, 1.0, -1}, Note{0, 2, 50, 1.0, -1},
+                 Note{2, 2, 40, 1.0, -1}, Note{2, 2, 45, 1.0, -1}, Note{2, 2, 50, 1.0, -1}, Note{4, 2, 40, 1.0, -1}};
+
+    NotenRaster raster;
+    raster.setMuster(mel, 4, 4);
+    raster.resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
+                  NotenRaster::kKopfHoehe + 20 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe +
+                      NotenRaster::kStrumHoehe);
+    // ohne Saiten gibt es die Spur nicht
+    CHECK(raster.strumHoehe() == 0);
+    CHECK(raster.lautOben() == raster.height() - NotenRaster::kLautHoehe);
+    CHECK_FALSE(raster.schalteAnschlag(0));
+    raster.setSaiten(saiten);
+    CHECK(raster.strumHoehe() == NotenRaster::kStrumHoehe);
+    CHECK(raster.lautOben() == raster.strumOben() - NotenRaster::kLautHoehe);
+    CHECK(raster.hoeheBei(raster.strumOben() + 3) == -1);
+
+    QStringList gemeldet;
+    QObject::connect(&raster, &NotenRaster::geaendert, &raster,
+                     [&](const Muster&, const QString& was) { gemeldet << was; });
+    // eine einzelne Note und ein leerer Schritt: kein Akkord
+    CHECK_FALSE(raster.schalteAnschlag(4));
+    CHECK_FALSE(raster.schalteAnschlag(1));
+    CHECK(gemeldet.isEmpty());
+
+    // Follow hand → Down → Up → Together → Follow hand
+    const auto art = [&](int schritt) -> std::optional<Anschlagart> {
+        const Anschlag* a = anschlagAn(raster.muster(), schritt);
+        return a != nullptr ? std::optional<Anschlagart>(a->art) : std::nullopt;
+    };
+    CHECK_FALSE(art(2).has_value());
+    CHECK(raster.anschlaege()[3].richtung == Richtung::Auf);
+    REQUIRE(raster.schalteAnschlag(2));
+    CHECK(art(2) == Anschlagart::Ab);
+    REQUIRE(gemeldet.size() == 1);
+    CHECK(gemeldet.back() == QStringLiteral("Strum: Down"));
+    CHECK(raster.anschlaege()[3].richtung == Richtung::Ab);  // die Planung folgt dem Eintrag
+    REQUIRE(raster.schalteAnschlag(2));
+    CHECK(art(2) == Anschlagart::Auf);
+    REQUIRE(raster.schalteAnschlag(2));
+    CHECK(art(2) == Anschlagart::Zugleich);
+    for (const int platz : {3, 4, 5}) CHECK(raster.anschlaege()[static_cast<std::size_t>(platz)].versatzMs == 0.0);
+    REQUIRE(raster.schalteAnschlag(2));
+    CHECK_FALSE(art(2).has_value());
+    CHECK(raster.muster().anschlaege.empty());
+    CHECK(gemeldet.back() == QStringLiteral("Strum: Follow hand"));
+
+    // ein eigener Spread bleibt beim Weiterschalten
+    Muster mitSpread = raster.muster();
+    setzeAnschlag(mitSpread, Anschlag{0, Anschlagart::Hand, 25.0});
+    raster.setMuster(mitSpread, 4, 4);
+    REQUIRE(raster.schalteAnschlag(0));
+    REQUIRE(anschlagAn(raster.muster(), 0) != nullptr);
+    CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Ab);
+    CHECK(anschlagAn(raster.muster(), 0)->spreadMs == 25.0);
+
+    // mit der Maus: ein Klick in die Spur am Schritt 2
+    const int vorher = static_cast<int>(gemeldet.size());
+    const QPoint inSpur(raster.xVonSchritt(2) + NotenRaster::kSchrittBreite / 2, raster.strumOben() + 8);
+    QMouseEvent druck(QEvent::MouseButtonPress, inSpur, raster.mapToGlobal(inSpur), Qt::LeftButton, Qt::LeftButton,
+                      Qt::NoModifier);
+    QCoreApplication::sendEvent(&raster, &druck);
+    QMouseEvent los(QEvent::MouseButtonRelease, inSpur, raster.mapToGlobal(inSpur), Qt::LeftButton, Qt::NoButton,
+                    Qt::NoModifier);
+    QCoreApplication::sendEvent(&raster, &los);
+    CHECK(static_cast<int>(gemeldet.size()) == vorher + 1);
+    CHECK(art(2) == Anschlagart::Ab);
+    CHECK(raster.muster().noten.size() == 7);  // keine Note gesetzt
+
+    if (const QString ziel = qEnvironmentVariable("LUMIVIZ_EDITOR_STRUM_BILD"); !ziel.isEmpty())
+    {
+        raster.zeigeHoehe(46);
+        QString datei = ziel;
+        datei.replace(QStringLiteral(".png"), QStringLiteral("_spur.png"));
+        CHECK(raster.grab().save(datei));
     }
 }
 

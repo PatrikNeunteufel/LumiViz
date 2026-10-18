@@ -1165,6 +1165,23 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   Punkt am Anfang (ein Pfeil nach oben bei einem Down wäre gegen die Sprache
   der Spieler — Down führt in der Piano-Roll von unten nach oben); Klick- und
   Zugflächen der Noten bleiben am Schritt, ohne den Versatz.
+- **Teilschritt 3 (gebaut S135):** **J** die Spur *Strum* unter *Note vol.*
+  (`kStrumHoehe` 20 px, nur mit Saiten — dann rückt *Note vol.* um so viel
+  nach oben): je Schritt mit Akkord ein Pfeil ↓/↑ nach der Planung, grau aus
+  der Hand, blau mit Nadel bei einem Eintrag in *Anschläge*, „≡“ für
+  *Together*; eine einzelne Note ein Punkt. Ein Klick auf einen Akkord
+  (`schalteAnschlag`) schaltet Follow hand → Down → Up → Together → Follow
+  hand, Undo „Strum: Down“ usw.; ein eigener *Spread* des Eintrags bleibt.
+  **Gefunden und behoben:** `NotenRaster::uebernimm` meldete nur, wenn sich die
+  Noten änderten — eine Änderung allein an *Anschläge* wäre still verloren
+  gegangen; jetzt vergleicht es das ganze Muster.
+  **Belegt** in `test_LoopEditorSpielweise` (ein Fall mehr, mit Mausklick; das
+  Bild `<name>_spur.png`); eng (37 Fälle) unter Testing-MSVC, der Bereich
+  `*Loop*,*Instrument*,*Drum*` (265 Fälle) unter Release-clang grün.
+  **Von Claude gesetzt, nicht vorgelegt:** eine einzelne Note lässt sich in der
+  Spur nicht schalten (Punkt, blau, wenn sie einen Eintrag trägt — die Skizze
+  nennt nur den Punkt; die Richtung einer Melodienote wird mit L im Menü
+  gesetzt); die Höhe der Spur.
 
 ---
 

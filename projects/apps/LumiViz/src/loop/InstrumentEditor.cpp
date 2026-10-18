@@ -194,6 +194,29 @@ int NotenRaster::versatzPixel(double versatzMs) const
     return static_cast<int>(std::lround(versatzMs / schrittMs * kSchrittBreite));
 }
 
+bool NotenRaster::schalteAnschlag(int schritt)
+{
+    if (!m_saiten.istSaiteninstrument()) return false;
+    const auto zahl = std::count_if(m_muster.noten.begin(), m_muster.noten.end(),
+                                    [schritt](const Note& n) { return n.schritt == schritt; });
+    if (zahl < 2) return false;
+    // Follow hand → Down → Up → Together → Follow hand; ein eigener Spread bleibt
+    const Anschlag* eintrag = anschlagAn(m_muster, schritt);
+    const Anschlagart jetzt = eintrag != nullptr ? eintrag->art : Anschlagart::Hand;
+    const Anschlagart weiter = jetzt == Anschlagart::Hand  ? Anschlagart::Ab
+                               : jetzt == Anschlagart::Ab  ? Anschlagart::Auf
+                               : jetzt == Anschlagart::Auf ? Anschlagart::Zugleich
+                                                           : Anschlagart::Hand;
+    Muster neu = m_muster;
+    setzeAnschlag(neu, Anschlag{schritt, weiter, eintrag != nullptr ? eintrag->spreadMs : -1.0});
+    const QString name = weiter == Anschlagart::Hand ? tr("Follow hand")
+                         : weiter == Anschlagart::Ab ? tr("Down")
+                         : weiter == Anschlagart::Auf ? tr("Up")
+                                                      : tr("Together");
+    uebernimm(neu, m_marken, tr("Strum: %1").arg(name));
+    return true;
+}
+
 QString NotenRaster::artikulationsKuerzel(int artikulationen)
 {
     QStringList kuerzel;
@@ -352,7 +375,7 @@ void NotenRaster::setzeEinfuegemarke(int schritt)
 
 void NotenRaster::uebernimm(const Muster& neu, const std::vector<NotenOrt>& marken, const QString& was)
 {
-    const bool anders = neu.noten != m_muster.noten;
+    const bool anders = neu != m_muster;  // seit Stufe 24e auch die Anschlaege (J), nicht nur die Noten
     m_muster = neu;
     m_marken = marken;
     m_wahlSchritt = marken.empty() ? -1 : marken.front().schritt;
@@ -828,7 +851,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         QColor farbe = an;
         if (i != gewaehlt) farbe.setAlpha(150);
         p.setBrush(farbe);
-        p.drawRect(QRect(xVonSchritt(note.schritt) + 2, height() - 1 - hoch, kSchrittBreite - 5, hoch));
+        p.drawRect(QRect(xVonSchritt(note.schritt) + 2, unten + kLautHoehe - 1 - hoch, kSchrittBreite - 5, hoch));
     }
     p.setClipping(false);
     p.setFont(font());
@@ -836,6 +859,62 @@ void NotenRaster::paintEvent(QPaintEvent*)
     p.setFont(klein);
     // (die Spalte der Klaviatur ist schmal: „Note volume" passt nicht hinein)
     p.drawText(QRect(2, unten, kTastenBreite - 4, kLautHoehe), Qt::AlignLeft | Qt::AlignVCenter, tr("Note\nvol."));
+
+    // --- J (Stufe 24e): die Spur Strum — je Akkord ein Pfeil, eine einzelne Note ein Punkt
+    if (mitSaiten)
+    {
+        const int strumY = strumOben();
+        p.setPen(leise);
+        p.drawLine(kTastenBreite, strumY, width(), strumY);
+        p.drawText(QRect(2, strumY, kTastenBreite - 4, kStrumHoehe), Qt::AlignLeft | Qt::AlignVCenter, tr("Strum"));
+        p.setClipRect(QRect(kTastenBreite, strumY, sichtBreite(), kStrumHoehe));
+        // je Schritt: wie viele Noten anschlagen, und die Richtung der ersten
+        std::vector<int> zahlJe(static_cast<std::size_t>(std::max(0, zahl)), 0);
+        std::vector<Richtung> richtungJe(zahlJe.size(), Richtung::Ab);
+        for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+        {
+            const int s = m_muster.noten[i].schritt;
+            if (s < 0 || s >= zahl) continue;
+            if (zahlJe[static_cast<std::size_t>(s)]++ == 0) richtungJe[static_cast<std::size_t>(s)] = alleAnschlaege[i].richtung;
+        }
+        QFont pfeil = font();
+        pfeil.setBold(true);
+        p.setFont(pfeil);
+        for (int s = 0; s < zahl; ++s)
+        {
+            const int anzahl = zahlJe[static_cast<std::size_t>(s)];
+            if (anzahl == 0) continue;
+            const QRect zelle(xVonSchritt(s), strumY + 1, kSchrittBreite, kStrumHoehe - 1);
+            if (zelle.right() < kTastenBreite || zelle.left() > width()) continue;
+            const Anschlag* eintrag = anschlagAn(m_muster, s);
+            const QColor farbe = eintrag != nullptr ? an : leise;
+            if (anzahl == 1)
+            {
+                p.setPen(Qt::NoPen);
+                p.setBrush(farbe);
+                p.drawEllipse(zelle.center(), 2, 2);
+                continue;
+            }
+            const QString zeichen = eintrag != nullptr && eintrag->art == Anschlagart::Zugleich
+                                        ? QString::fromUtf8("≡")
+                                        : richtungJe[static_cast<std::size_t>(s)] == Richtung::Auf ? QString::fromUtf8("↑")
+                                                                                                   : QString::fromUtf8("↓");
+            p.setPen(farbe);
+            p.drawText(zelle, Qt::AlignCenter, zeichen);
+            if (eintrag != nullptr)
+            {
+                // die Nadel: von dir gesetzt (wie D an den Noten)
+                p.setPen(Qt::NoPen);
+                p.setBrush(farbe);
+                p.drawEllipse(QPoint(zelle.right() - 2, zelle.top() + 3), 2, 2);
+                p.setPen(QPen(farbe, 1.0));
+                p.drawLine(zelle.right() - 2, zelle.top() + 4, zelle.right() - 2, zelle.top() + 8);
+            }
+        }
+        p.setBrush(Qt::NoBrush);
+        p.setClipping(false);
+        p.setFont(font());
+    }
 
     // --- W8 a (S130): die Stellen der leiseren Clips desselben Loops im Composer, blasser
     p.setPen(QPen(QColor(255, 90, 70, 120), 2.0));
@@ -1037,6 +1116,12 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
             const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
             markiereUm({note.schritt, note.hoehe});
         }
+        return;
+    }
+    // J (Stufe 24e): ein Klick in die Spur Strum schaltet den Akkord an diesem Schritt weiter
+    if (strumHoehe() > 0 && ort.y() >= strumOben())
+    {
+        if (const int schritt = schrittBei(ort.x()); schritt >= 0) (void)schalteAnschlag(schritt);
         return;
     }
     if (ort.y() >= lautOben())

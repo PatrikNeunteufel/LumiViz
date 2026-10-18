@@ -160,6 +160,15 @@ public:
     [[nodiscard]] int versatzPixel(double versatzMs) const;
     /// Die Kuerzel einer Note: PM (Palm mute), LR (Let ring), T (Tapping), ◇ (Harmonic).
     [[nodiscard]] static QString artikulationsKuerzel(int artikulationen);
+    /// J: die Spur *Strum* unter *Note vol.* (nur mit Saiten) — je Akkord ein
+    /// Pfeil, grau aus der Hand, blau mit Nadel aus *Anschlaege*, „≡" fuer
+    /// Together; eine einzelne Note ein Punkt. Ein Klick auf einen Akkord
+    /// schaltet Follow hand → Down → Up → Together. false = an diesem Schritt
+    /// schlaegt kein Akkord an (keine Saiten, keine oder nur eine Note).
+    bool schalteAnschlag(int schritt);
+    /// Oberkante der Spur Strum; ohne Saiten `height()` (es gibt sie nicht).
+    [[nodiscard]] int strumOben() const { return height() - strumHoehe(); }
+    [[nodiscard]] int strumHoehe() const { return m_saiten.istSaiteninstrument() ? kStrumHoehe : 0; }
 
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
@@ -172,7 +181,7 @@ public:
     [[nodiscard]] int rollYMax() const;
     /// Breite und Hoehe des Ausschnitts, in dem die Noten liegen.
     [[nodiscard]] int sichtBreite() const { return width() - kTastenBreite; }
-    [[nodiscard]] int sichtHoehe() const { return height() - kKopfHoehe - kLautHoehe; }
+    [[nodiscard]] int sichtHoehe() const { return height() - kKopfHoehe - kLautHoehe - strumHoehe(); }
     /// So rollen, dass diese Tonhoehe in der Mitte liegt.
     void zeigeHoehe(int hoehe);
 
@@ -182,6 +191,7 @@ public:
     static constexpr int kZeilenHoehe = 14;   ///< je Tonhoehe
     static constexpr int kSchrittBreite = 16;
     static constexpr int kLautHoehe = 56;     ///< die Lautstaerke je Note, unten
+    static constexpr int kStrumHoehe = 20;    ///< Stufe 24e (J): die Spur Strum darunter, nur mit Saiten
     static constexpr int kKante = 5;          ///< so breit ist der Griff am Ende einer Note mindestens
     static constexpr int kKanteMax = 9;       ///< und hoechstens (ein Drittel der Note, dazwischen)
     /// Liegt `x` auf dem Griff am Ende dieser Note? Dort zieht man ihre Laenge;
@@ -194,7 +204,7 @@ public:
     /// Die Tonhoehe unter `y`; -1 = keine (der Kopf, die Zeile der Lautstaerken).
     [[nodiscard]] int hoeheBei(int y) const;
     /// Oberkante der Zeile mit der Lautstaerke je Note.
-    [[nodiscard]] int lautOben() const { return height() - kLautHoehe; }
+    [[nodiscard]] int lautOben() const { return height() - kLautHoehe - strumHoehe(); }
     /// Die Note unter dem Punkt (Platz in `muster().noten`); -1 = keine.
     [[nodiscard]] int noteBei(QPoint ort) const;
     [[nodiscard]] QSize sizeHint() const override { return {kTastenBreite + 64 * kSchrittBreite, 420}; }
