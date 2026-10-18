@@ -412,6 +412,19 @@ bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederh
         }
     }
     ziel->noten.insert(ziel->noten.end(), dazu.begin(), dazu.end());
+    // die Abweichungen der Akkorde wiederholen sich mit (S-W4 a)
+    std::vector<Anschlag> mit;
+    for (const Anschlag& anschlag : ziel->anschlaege)
+    {
+        if (anschlag.schritt >= altSchritte) continue;
+        for (int beginn = anschlag.schritt + altSchritte; beginn < neuSchritte; beginn += altSchritte)
+        {
+            Anschlag kopie = anschlag;
+            kopie.schritt = beginn;
+            mit.push_back(kopie);
+        }
+    }
+    ziel->anschlaege.insert(ziel->anschlaege.end(), mit.begin(), mit.end());
     loop.richte();
     return true;
 }
@@ -505,6 +518,20 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
             noten.push_back(neu);
         }
         m.noten = std::move(noten);
+        // die Abweichungen der Akkorde gehen mit ihren Noten — nach derselben Regel (S-W4 a)
+        std::vector<Anschlag> anschlaege;
+        for (const Anschlag& anschlag : m.anschlaege)
+        {
+            const int takt = anschlag.schritt / (alteSchlaege * alteSchritte);
+            const int imTakt = anschlag.schritt % (alteSchlaege * alteSchritte);
+            const int schlag = imTakt / alteSchritte;
+            const int teil = imTakt % alteSchritte;
+            if (schlag >= schlaege || (teil * schritte) % alteSchritte != 0) continue;
+            Anschlag neu = anschlag;
+            neu.schritt = (takt * schlaege + schlag) * schritte + teil * schritte / alteSchritte;
+            anschlaege.push_back(neu);
+        }
+        m.anschlaege = std::move(anschlaege);
         for (std::vector<double>& zeile : m.zeilen)
         {
             std::vector<double> neu(static_cast<std::size_t>(m.takte * schlaege * schritte), 0.0);

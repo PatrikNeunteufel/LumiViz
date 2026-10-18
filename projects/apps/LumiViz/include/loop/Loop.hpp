@@ -138,6 +138,9 @@ struct Note
     /// Die Piano-Roll setzt sie nicht von selbst, die Tabs immer. Ob die Note
     /// auf dieser Saite greifbar ist, weiss erst, wer das Instrument kennt.
     int saite = -1;
+    /// Die Artikulationen (Stufe 24a, S-W4 a): Bits aus `Artikulation`
+    /// (Spielweise.hpp), 0 = keine. Wirken nur bei einem Instrument mit Saiten.
+    int artikulationen = 0;
 
     [[nodiscard]] bool operator==(const Note&) const = default;
 };
@@ -213,9 +216,34 @@ struct Muster
     /// eigene Saite. Ein neues Muster bekommt die Vorgabe seines Instruments
     /// (`Saitensatz::wahl`). Gilt nur, wenn das Instrument Saiten traegt.
     Saitenwahl saitenwahl = Saitenwahl::JeKlang;
+    /// Strum (Stufe 24a, S-W2 a, S-W3 a): Versatz der Saiten und das Muster der
+    /// Hand fuer alle Akkorde dieses Musters. Ein neues Muster bekommt die
+    /// Vorgabe seines Instruments (`Saitensatz::strum`). Gilt nur, wenn das
+    /// Instrument Saiten traegt.
+    Strum strum;
+    /// Die Akkorde, die davon abweichen (S-W4 a): je Schritt hoechstens ein
+    /// Eintrag, nach Schritt sortiert, nur an Schritten, an denen eine Note
+    /// anschlaegt (`Loop::richte`). Wer Noten verschiebt, kopiert oder dreht,
+    /// nimmt den Eintrag ihres Schritts mit (Auswahl.hpp, Bearbeiten.hpp).
+    std::vector<Anschlag> anschlaege;
 
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };
+
+/// Der Eintrag eines Musters an einem Schritt — oder nullptr: der Akkord dort
+/// folgt dem Muster.
+[[nodiscard]] const Anschlag* anschlagAn(const Muster& muster, int schritt);
+/// Einen Eintrag setzen (ersetzt den am selben Schritt); einer, der nicht
+/// abweicht, entfernt ihn.
+void setzeAnschlag(Muster& muster, const Anschlag& anschlag);
+/// Die Eintraege in ihre Grenzen: nach Schritt sortiert, je Schritt einer (der
+/// erste bleibt), keiner, der nicht abweicht, keiner an einem Schritt ohne
+/// anschlagende Note. Nach jeder Aenderung an den Noten (auch in `richte`).
+void richteAnschlaege(Muster& muster);
+/// Ein Muster bekommt die Vorgaben seines Instruments: *String choice* und
+/// Strum (S-M2c a, S-W2 a) — fuer ein neues Muster und beim Wechsel des
+/// Instruments.
+void uebernimmVorgaben(Muster& muster, const Saitensatz& saiten);
 
 // --- Effekte am Clip (Stufe 12, Entscheide Patrik S113: E2 b, F2 a) ---
 // Jeder Clip traegt seine eigenen Effekte mit allen Einstellungen, gleich ob

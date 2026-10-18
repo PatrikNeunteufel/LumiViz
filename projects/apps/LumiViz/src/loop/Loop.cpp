@@ -44,8 +44,12 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // Programm spielte einen abgeschalteten Clip mit Effekten.
 // 8 (S132, Stufe 23a, Entscheide S-M2 a, S-M2c a): eine Note kann als fuenften
 // Wert ihre Saite tragen, ein Instrument-Muster das Feld `stringChoice` — ein
-// aelteres Programm verloere beides still. Geschrieben wird immer 8.
-constexpr int kVersion = 8;
+// aelteres Programm verloere beides still.
+// 9 (S134, Stufe 24a, Entscheide S-W2 a bis S-W4 a): ein Instrument-Muster kann
+// `strum` und `strokes` tragen, eine Note als sechsten Wert ihre Artikulationen
+// (dann steht die Saite als fuenfter Wert da, −1 = keine). Geschrieben wird
+// immer 9.
+constexpr int kVersion = 9;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -576,6 +580,56 @@ int Loop::notenMs(const Note& note) const
     return std::max(1, static_cast<int>(std::lround(note.laenge * 60000.0 / bpm / schritteJeSchlag)));
 }
 
+const Anschlag* anschlagAn(const Muster& muster, int schritt)
+{
+    for (const Anschlag& anschlag : muster.anschlaege)
+        if (anschlag.schritt == schritt) return &anschlag;
+    return nullptr;
+}
+
+void setzeAnschlag(Muster& muster, const Anschlag& anschlag)
+{
+    std::vector<Anschlag>& liste = muster.anschlaege;
+    liste.erase(std::remove_if(liste.begin(), liste.end(),
+                               [&anschlag](const Anschlag& a) { return a.schritt == anschlag.schritt; }),
+                liste.end());
+    if (anschlag.weichtAb()) liste.push_back(anschlag);
+    richteAnschlaege(muster);
+}
+
+void richteAnschlaege(Muster& muster)
+{
+    std::vector<Anschlag>& liste = muster.anschlaege;
+    for (Anschlag& anschlag : liste)
+    {
+        // −1 heisst „wie das Muster"; was keine Zahl oder negativ ist, auch
+        anschlag.spreadMs = std::isfinite(anschlag.spreadMs) && anschlag.spreadMs >= 0.0
+                                ? std::min(anschlag.spreadMs, kSpreadMaxMs)
+                                : -1.0;
+        const int art = static_cast<int>(anschlag.art);
+        if (art < static_cast<int>(Anschlagart::Hand) || art > static_cast<int>(Anschlagart::Zugleich))
+            anschlag.art = Anschlagart::Hand;
+    }
+    const auto ohneNote = [&muster](const Anschlag& anschlag) {
+        return std::none_of(muster.noten.begin(), muster.noten.end(),
+                            [&anschlag](const Note& note) { return note.schritt == anschlag.schritt; });
+    };
+    liste.erase(std::remove_if(liste.begin(), liste.end(),
+                               [&ohneNote](const Anschlag& a) { return !a.weichtAb() || ohneNote(a); }),
+                liste.end());
+    std::stable_sort(liste.begin(), liste.end(),
+                     [](const Anschlag& a, const Anschlag& b) { return a.schritt < b.schritt; });
+    liste.erase(std::unique(liste.begin(), liste.end(),
+                            [](const Anschlag& a, const Anschlag& b) { return a.schritt == b.schritt; }),
+                liste.end());
+}
+
+void uebernimmVorgaben(Muster& muster, const Saitensatz& saiten)
+{
+    muster.saitenwahl = saiten.wahl;
+    muster.strum = saiten.strum;
+}
+
 void Loop::richte(QStringList* bericht)
 {
     bpm = inGrenzen(bpm, kBpmMin, kBpmMax, 120.0);
@@ -611,8 +665,10 @@ void Loop::richte(QStringList* bericht)
                 note.laenge = std::clamp(note.laenge, 1, std::max(1, schritte - note.schritt));
                 note.laut = inGrenzen(note.laut, 0.0, 1.0, 1.0);
                 if (note.saite < -1 || note.saite >= kSaitenMax) note.saite = -1;
+                note.artikulationen &= kArtikulationenAlle;
             }
             if (m.saitenwahl != Saitenwahl::Hand) m.saitenwahl = Saitenwahl::JeKlang;
+            richteStrum(m.strum, handStellen(m.strum.raster, schlaegeJeTakt, schritteJeSchlag));
             m.noten.erase(std::remove_if(m.noten.begin(), m.noten.end(),
                                          [schritte](const Note& n) {
                                              return n.schritt < 0 || n.schritt >= schritte || n.laut <= 0.0;
@@ -626,11 +682,14 @@ void Loop::richte(QStringList* bericht)
                                           return a.schritt == b.schritt && a.hoehe == b.hoehe;
                                       }),
                           m.noten.end());
+            richteAnschlaege(m);
             continue;
         }
         m.instrument.clear();
         m.noten.clear();
         m.saitenwahl = Saitenwahl::JeKlang;
+        m.strum = Strum{};
+        m.anschlaege.clear();
         m.laut = 1.0;
         m.pan = 0.0;
         m.stumm = false;
@@ -715,18 +774,34 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             o[QStringLiteral("pan")] = m.pan;
             o[QStringLiteral("mute")] = m.stumm;
             // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke — seit
-            // Fassung 8 als fuenfter Wert die Saite, nur wenn die Note eine traegt
+            // Fassung 8 als fuenfter Wert die Saite, nur wenn die Note eine traegt;
+            // seit Fassung 9 als sechster die Artikulationen (die Saite dann als −1)
             QJsonArray noten;
             for (const Note& note : m.noten)
             {
                 QJsonArray zeile{note.schritt, note.laenge, note.hoehe, note.laut};
-                if (note.saite >= 0) zeile.append(note.saite);
+                if (note.saite >= 0 || note.artikulationen != 0) zeile.append(note.saite);
+                if (note.artikulationen != 0) zeile.append(note.artikulationen);
                 noten.append(zeile);
             }
             o[QStringLiteral("notes")] = noten;
             // seit Fassung 8; Per chord ist die Vorgabe und steht nicht da
             if (m.saitenwahl != Saitenwahl::JeKlang)
                 o[QStringLiteral("stringChoice")] = saitenwahlName(m.saitenwahl);
+            // seit Fassung 9; die Vorgabe steht nicht da
+            if (m.strum != Strum{}) o[QStringLiteral("strum")] = strumAlsJson(m.strum);
+            if (!m.anschlaege.empty())
+            {
+                QJsonArray anschlaege;
+                for (const Anschlag& anschlag : m.anschlaege)
+                {
+                    QJsonObject a{{QStringLiteral("step"), anschlag.schritt},
+                                  {QStringLiteral("stroke"), anschlagartName(anschlag.art)}};
+                    if (anschlag.spreadMs >= 0.0) a[QStringLiteral("spread")] = anschlag.spreadMs;
+                    anschlaege.append(a);
+                }
+                o[QStringLiteral("strokes")] = anschlaege;
+            }
             muster.append(o);
             continue;
         }
@@ -859,9 +934,21 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 note.hoehe = werte[2].toInt(60);
                 note.laut = werte.size() > 3 ? werte[3].toDouble(1.0) : 1.0;
                 note.saite = werte.size() > 4 ? werte[4].toInt(-1) : -1;  // seit Fassung 8
+                note.artikulationen = werte.size() > 5 ? werte[5].toInt(0) : 0;  // seit Fassung 9
                 m.noten.push_back(note);
             }
             m.saitenwahl = saitenwahlAusName(o.value(QStringLiteral("stringChoice")).toString());
+            // seit Fassung 9; fehlt es, gilt die Vorgabe
+            m.strum = strumAusJson(o.value(QStringLiteral("strum")).toObject());
+            for (const QJsonValue& av : o.value(QStringLiteral("strokes")).toArray())
+            {
+                const QJsonObject a = av.toObject();
+                Anschlag anschlag;
+                anschlag.schritt = a.value(QStringLiteral("step")).toInt(-1);
+                anschlag.art = anschlagartAusName(a.value(QStringLiteral("stroke")).toString());
+                anschlag.spreadMs = a.value(QStringLiteral("spread")).toDouble(-1.0);
+                m.anschlaege.push_back(anschlag);
+            }
             neu.muster.push_back(std::move(m));
             continue;
         }

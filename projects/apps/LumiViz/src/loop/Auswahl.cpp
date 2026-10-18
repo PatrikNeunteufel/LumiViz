@@ -191,9 +191,20 @@ NotenKopie kopiereNoten(const Muster& muster, const std::vector<NotenOrt>& orte,
     if (zeitraum) erster = std::min(erster, zeitraum->first);  // B3 a: der Rahmen beginnt, wo er beginnt
     for (Note& note : kopie.noten)
     {
+        // die Abweichung des Akkords geht mit (S-W4 a) — einmal je Schritt
+        if (const Anschlag* anschlag = anschlagAn(muster, note.schritt);
+            anschlag != nullptr && std::none_of(kopie.anschlaege.begin(), kopie.anschlaege.end(),
+                                                [&](const Anschlag& a) { return a.schritt == note.schritt - erster; }))
+        {
+            Anschlag mit = *anschlag;
+            mit.schritt -= erster;
+            kopie.anschlaege.push_back(mit);
+        }
         note.schritt -= erster;
         kopie.schritte = std::max(kopie.schritte, note.schritt + note.laenge);
     }
+    std::stable_sort(kopie.anschlaege.begin(), kopie.anschlaege.end(),
+                     [](const Anschlag& a, const Anschlag& b) { return a.schritt < b.schritt; });
     if (zeitraum) kopie.schritte = std::max(kopie.schritte, zeitraum->second - erster);
     std::stable_sort(kopie.noten.begin(), kopie.noten.end(), [](const Note& a, const Note& b) {
         return a.schritt != b.schritt ? a.schritt < b.schritt : a.hoehe < b.hoehe;
@@ -227,7 +238,14 @@ NotenRest fuegeNotenEin(Muster& muster, const NotenKopie& kopie, int schritt, in
             muster.noten.push_back(note);
         if (eingefuegt != nullptr) eingefuegt->push_back(ort);
     }
+    // die Abweichungen der Akkorde der Kopie ersetzen die an ihrem Ziel (S-W4 a)
+    for (Anschlag anschlag : kopie.anschlaege)
+    {
+        anschlag.schritt += schritt;
+        if (anschlag.schritt >= 0 && anschlag.schritt < schritteImMuster) setzeAnschlag(muster, anschlag);
+    }
     ordneNoten(muster);
+    richteAnschlaege(muster);
     return rest;
 }
 
@@ -240,7 +258,37 @@ bool loescheNoten(Muster& muster, const std::vector<NotenOrt>& orte)
                                                  orte.end();
                                       }),
                        muster.noten.end());
+    richteAnschlaege(muster);  // ein Akkord ohne Noten hat keine Abweichung mehr
     return muster.noten.size() != vorher;
+}
+
+void nimmAnschlaegeMit(Muster& muster, const Muster& vorher, const std::vector<std::pair<NotenOrt, int>>& wege)
+{
+    const auto bewegt = [&wege](const Note& note) {
+        return std::any_of(wege.begin(), wege.end(), [&note](const std::pair<NotenOrt, int>& weg) {
+            return weg.first == NotenOrt{note.schritt, note.hoehe};
+        });
+    };
+    std::vector<Anschlag> neu;
+    // was bleibt: ein Eintrag, an dessen Schritt eine nicht bewegte Note anschlaegt
+    for (const Anschlag& anschlag : vorher.anschlaege)
+        if (std::any_of(vorher.noten.begin(), vorher.noten.end(), [&](const Note& note) {
+                return note.schritt == anschlag.schritt && !bewegt(note);
+            }))
+            neu.push_back(anschlag);
+    muster.anschlaege = std::move(neu);
+    // was mitgeht: der Eintrag des alten Schritts an den neuen
+    for (const auto& [ort, nach] : wege)
+        if (const Anschlag* anschlag = anschlagAn(vorher, ort.schritt); anschlag != nullptr)
+        {
+            Anschlag mit = *anschlag;
+            mit.schritt = nach;
+            muster.anschlaege.erase(std::remove_if(muster.anschlaege.begin(), muster.anschlaege.end(),
+                                                   [nach](const Anschlag& a) { return a.schritt == nach; }),
+                                    muster.anschlaege.end());
+            muster.anschlaege.push_back(mit);
+        }
+    richteAnschlaege(muster);
 }
 
 bool versetzeNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersatz, int hoeheVersatz,
@@ -263,6 +311,9 @@ bool versetzeNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersa
             return false;
         bewegt.push_back(note);
     }
+    const Muster vorher = muster;
+    std::vector<std::pair<NotenOrt, int>> wege;
+    for (std::size_t i = 0; i < quellen.size(); ++i) wege.emplace_back(quellen[i], bewegt[i].schritt);
     (void)loescheNoten(muster, quellen);
     std::vector<NotenOrt> ziele;
     for (const Note& note : bewegt)
@@ -275,6 +326,7 @@ bool versetzeNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersa
         ziele.push_back(ort);
     }
     ordneNoten(muster);
+    nimmAnschlaegeMit(muster, vorher, wege);
     orte = std::move(ziele);
     return true;
 }
@@ -301,6 +353,9 @@ bool dreheNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersatz,
         }
         bewegt.push_back(note);
     }
+    const Muster vorher = muster;
+    std::vector<std::pair<NotenOrt, int>> wege;
+    for (std::size_t i = 0; i < quellen.size(); ++i) wege.emplace_back(quellen[i], bewegt[i].schritt);
     (void)loescheNoten(muster, quellen);
     std::vector<NotenOrt> ziele;
     for (const Note& note : bewegt)
@@ -313,6 +368,7 @@ bool dreheNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersatz,
         ziele.push_back(ort);
     }
     ordneNoten(muster);
+    nimmAnschlaegeMit(muster, vorher, wege);
     orte = std::move(ziele);
     return true;
 }

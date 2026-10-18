@@ -18,6 +18,8 @@ void richteSaiten(Saitensatz& saiten)
     // 0 = nicht gesetzt (auch, was keine Zahl ist), sonst in den Grenzen
     saiten.mensurMm = saiten.mensurMm > 0.0 ? std::clamp(saiten.mensurMm, kMensurMinMm, kMensurMaxMm) : 0.0;
     if (saiten.wahl != Saitenwahl::Hand) saiten.wahl = Saitenwahl::JeKlang;
+    // das Instrument kennt das Raster des Loops nicht: hoechstens ein Takt im feinsten
+    richteStrum(saiten.strum);
 }
 
 const std::vector<Stimmungsvorlage>& stimmungsvorlagen()

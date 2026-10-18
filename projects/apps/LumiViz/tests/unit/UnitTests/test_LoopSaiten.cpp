@@ -153,8 +153,8 @@ TEST_CASE("Loop Saiten: .lvinst Fassung 10 — der Block strings, hin und zuruec
     instrument.saiten = Saitensatz{stimmungsvorlagen()[0].leer, 2, Saitenwahl::Hand};
 
     const QJsonObject json = alsJson(instrument);
-    CHECK(kInstrumentFassung == 10);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 10);
+    CHECK(kInstrumentFassung >= 10);  // die Saiten gibt es seit Fassung 10; geschrieben wird die juengste (S134: 11)
+    CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
     const QJsonObject saiten = json.value(QStringLiteral("strings")).toObject();
     CHECK(saiten.value(QStringLiteral("open")).toArray() == QJsonArray{40, 45, 50, 55, 59, 64});
     CHECK(saiten.value(QStringLiteral("capo")).toInt() == 2);
@@ -203,7 +203,7 @@ TEST_CASE("Loop Saiten: .lvloop Fassung 8 — die Saite einer Note und String ch
 {
     const Loop loop = gitarrenLoop();
     const QJsonObject json = alsJson(loop);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 8);
+    CHECK(json.value(QStringLiteral("version")).toInt() == 9);  // seit Fassung 8; geschrieben wird die juengste (S134: 9)
 
     // --- die Saite steht als fuenfter Wert, nur wenn die Note eine traegt
     const QJsonArray noten = notenIn(json);

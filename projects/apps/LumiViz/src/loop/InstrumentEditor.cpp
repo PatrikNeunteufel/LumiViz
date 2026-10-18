@@ -465,6 +465,7 @@ bool NotenRaster::loescheAuswahl()
         return true;
     }
     m_muster.noten.erase(m_muster.noten.begin() + platz);
+    richteAnschlaege(m_muster);  // ein Akkord ohne Noten hat keine Abweichung mehr (S-W4 a)
     m_wahlSchritt = m_wahlHoehe = -1;
     m_marken.clear();
     update();
@@ -859,6 +860,14 @@ void NotenRaster::zieheBei(QPoint ort)
         m_wahlSchritt = schritt;
         m_wahlHoehe = hoehe;
         m_marken = {{schritt, hoehe}};  // die Marke geht mit der Note
+        // die Abweichung ihres Akkords geht mit — gerechnet vom Stand vor dem Zug, damit sie nicht an
+        // Akkorden haengen bleibt, ueber die die Note nur hinweggezogen wird (S-W4 a). Waehrend des
+        // Zugs ordnet niemand die Noten um: der Platz ist derselbe wie vorher.
+        if (static_cast<std::size_t>(platz) < m_vorZug.noten.size())
+        {
+            const Note& vorher = m_vorZug.noten[static_cast<std::size_t>(platz)];
+            nimmAnschlaegeMit(m_muster, m_vorZug, {{NotenOrt{vorher.schritt, vorher.hoehe}, schritt}});
+        }
     }
     update();
 }

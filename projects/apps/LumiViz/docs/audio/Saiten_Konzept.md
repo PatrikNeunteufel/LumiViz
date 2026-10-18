@@ -917,6 +917,49 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
 - **Offen:** Patriks Sichttest; **der volle Lauf erst mit Tabs und Akkorden**
   (Patrik S133).
 
+### 5m. Stufe 24a — Modell und Datei der Spielweisen (gebaut S134)
+
+- **`loop/Spielweise.hpp`** (neu): `Richtung` (Down, Up), `HandRaster`
+  (*Beat*, *1/2 beat*, *Step*), `Strum` (`spreadMs`, `raster`, `hand` — je
+  Stelle eines Takts die Richtung, dahinter abwechselnd), `handStellen`,
+  `handStelleVon`, `richtungAnStelle`, `richteStrum`; `Anschlagart` (Follow
+  hand, Down, Up, Together), `Anschlag` (`schritt`, `art`, `spreadMs` −1 = wie
+  das Muster); die Artikulationen als Bits `kPalmMute`, `kLetRing`,
+  `kTapping`, `kHarmonic`.
+- **Am Modell:** `Saitensatz::strum` (Vorgabe des Instruments), `Note::
+  artikulationen`, `Muster::strum`, `Muster::anschlaege`; `anschlagAn`,
+  `setzeAnschlag`, `richteAnschlaege`, `uebernimmVorgaben` (String choice und
+  Strum vom Instrument ans Muster); an der Schicht `aufschlagLaut` (*Up level*),
+  `handDaempfung` (*Mute*), `tappingLaut` (*Tap level*), `knotenDruck`
+  (*Touch*).
+- **`.lvloop` Fassung 9:** am Instrument-Muster `strum` (`spread`, `hand`,
+  `pattern` als `D`/`U`) und `strokes` (`step`, `stroke`, `spread`), beide nur,
+  wenn gesetzt; die Artikulationen als sechster Wert einer Note (dann die
+  Saite als fünfter, −1 = keine). **`.lvinst` Fassung 11:** unter `strings`
+  der Block `strum` (nur, wenn er abweicht), an einer Saite *Extended KS* oder
+  *Waveguide* der Block `playing`.
+- **Der Eintrag wandert mit** (S-W4 a): `kopiereNoten` / `fuegeNotenEin`
+  (`NotenKopie::anschlaege`), `loescheNoten`, `versetzeNoten`, `dreheNoten`
+  (über `nimmAnschlaegeMit`: ein Eintrag bleibt, solange an seinem Schritt
+  eine nicht bewegte Note anschlägt, und geht mit an den neuen Schritt),
+  `setzeMusterTakte` mit Wiederholen, `setzeRaster`, das Ziehen einer Note im
+  Instrument-Editor (gerechnet vom Stand vor dem Zug) und das Löschen einer
+  einzelnen Note dort.
+- **Belegt** in `test_LoopSpielweise` (vier Fälle, der letzte mit einem
+  Teilfall je Stelle); Fassungsnummern in sieben Testdateien nachgezogen.
+  Eng unter Release-clang (79 Fälle, 9 s) und Testing-MSVC (81 mit Loop Werte,
+  100 s) grün; `test_LoopWerte` unverändert (368 Einträge).
+- **Von Claude gesetzt, nicht vorgelegt:** die Namen der Felder und der
+  Datei-Schlüssel; *Spread*-Vorgabe 20 ms und Grenze 500 ms, die Vorgaben von
+  *Playing* (0,8 / 0,6 / 0,65 / 0,3) — Platzhalter bis 24c/24f; das Muster der
+  Hand hat genau eine Schreibweise (hinten weg, was ohnehin abwechselt);
+  Artikulationen frei kombinierbar; bei zwei Einträgen am selben Schritt in
+  einer Datei bleibt der erste; ein Teil eines Akkords, der verschoben wird,
+  nimmt den Eintrag mit, und der Rest behält ihn.
+- **Gefunden:** dass ein neues Muster *String choice* von seinem Instrument
+  bekommt (§5a, „baut 23f“), war nicht gebaut. `uebernimmVorgaben` deckt es
+  jetzt im Modell ab; der Aufruf beim Wechsel des Instruments kommt mit 24e.
+
 ---
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)

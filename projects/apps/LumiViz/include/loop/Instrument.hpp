@@ -354,6 +354,20 @@ struct Schicht
     /// abgeleitete (`schichtFarbe`).
     QString farbe;
 
+    // --- nur Saite Extended KS und Waveguide: Playing (Stufe 24a, S-W6 a) ---
+    // Je Spielweise eine Abweichung der vorhandenen Groessen, jeder Regler
+    // genau eine. Die Vorgaben sind Platzhalter (von Claude gesetzt); sie werden
+    // in Stufe 24c hergeleitet und belegt.
+    /// Up level, 0 … 1: so laut schlaegt die Hand nach oben an wie nach unten
+    /// (das Vorzeichen des Anschlags dreht sich dabei immer um).
+    double aufschlagLaut = 0.8;
+    /// Mute, 0 … 1: wie stark der Handballen bei *Palm mute* am Steg daempft.
+    double handDaempfung = 0.6;
+    /// Tap level, 0 … 1: so laut ist ein Ton beim *Tapping* (am Bund angeschlagen).
+    double tappingLaut = 0.65;
+    /// Touch, 0 … 1: wie fest der Finger beim *Harmonic* auf dem Knoten liegt.
+    double knotenDruck = 0.3;
+
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
     // --- der erste Filter und der erste Drive ---------------------------
@@ -466,10 +480,16 @@ struct Instrument
 // In derselben Fassung (Stufe 23c, noch nicht ausgeliefert) traegt eine Saite
 // mit `stringModel` `extendedKS` dazu `pluckPosition`, `pluck`, `ringTime`,
 // `highDamping`, `stiffness`, `stringVariation`; ohne `stringModel` ist sie
-// *Classic* und traegt nur `damping` wie bisher. Geschrieben wird Fassung 10.
+// *Classic* und traegt nur `damping` wie bisher. Fassung 11 (S134, Stufe 24a,
+// Entscheide S-W2 a, S-W6 a) kennt unter `strings` den Block `strum` (`spread`,
+// `hand`, `pattern` — die Vorgabe fuer neue Muster, nur wenn sie von der des
+// Programms abweicht) und an einer Saite *Extended KS* oder *Waveguide* den
+// Block `playing` mit `upLevel`, `mute`, `tapLevel`, `touch`. Eine eigene
+// Fassung, weil ein aelteres Programm die Spielweisen still ueberginge.
+// Geschrieben wird Fassung 11.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 10;
+inline constexpr int kInstrumentFassung = 11;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

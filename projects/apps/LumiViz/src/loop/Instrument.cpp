@@ -1413,6 +1413,11 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
                                     : schicht.korpus == KorpusArt::Klassik ? QStringLiteral("classical")
                                                                            : QStringLiteral("none");
         o[QStringLiteral("bodyAmount")] = schicht.korpusAnteil;
+        // seit Fassung 11 (Stufe 24a): die Spielweisen
+        o[QStringLiteral("playing")] = QJsonObject{{QStringLiteral("upLevel"), schicht.aufschlagLaut},
+                                                   {QStringLiteral("mute"), schicht.handDaempfung},
+                                                   {QStringLiteral("tapLevel"), schicht.tappingLaut},
+                                                   {QStringLiteral("touch"), schicht.knotenDruck}};
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
     if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
@@ -1506,6 +1511,15 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.hoehenDaempfung = zahl("highDamping", vorgabe.hoehenDaempfung, 0.0, 1.0);
     neu.steifheit = zahl("stiffness", vorgabe.steifheit, 0.0, 1.0);
     neu.saitenUnterschied = zahl("stringVariation", vorgabe.saitenUnterschied, 0.0, 1.0);
+    // seit Fassung 11 (Stufe 24a); fehlen sie, gelten die Vorgaben
+    const QJsonObject spiel = wurzel.value(QStringLiteral("playing")).toObject();
+    const auto spielZahl = [&spiel](const char* schluessel, double ersatz) {
+        return inGrenzen(spiel.value(QLatin1String(schluessel)).toDouble(ersatz), 0.0, 1.0, ersatz);
+    };
+    neu.aufschlagLaut = spielZahl("upLevel", vorgabe.aufschlagLaut);
+    neu.handDaempfung = spielZahl("mute", vorgabe.handDaempfung);
+    neu.tappingLaut = spielZahl("tapLevel", vorgabe.tappingLaut);
+    neu.knotenDruck = spielZahl("touch", vorgabe.knotenDruck);
     // die eigene Farbe (Stufe 20d); fehlt sie oder ist sie keine, gilt die abgeleitete
     if (const QColor farbe(wurzel.value(QStringLiteral("color")).toString()); farbe.isValid())
         neu.farbe = farbe.name(QColor::HexRgb);
@@ -1626,6 +1640,8 @@ QJsonObject alsJson(const Instrument& instrument)
         saiten[QStringLiteral("capo")] = instrument.saiten.capo;
         saiten[QStringLiteral("stringChoice")] = saitenwahlName(instrument.saiten.wahl);
         if (instrument.saiten.mensurMm > 0.0) saiten[QStringLiteral("scale")] = instrument.saiten.mensurMm;  // Stufe 23d
+        // seit Fassung 11 (Stufe 24a): die Vorgabe fuer neue Muster, nur wenn sie abweicht
+        if (instrument.saiten.strum != Strum{}) saiten[QStringLiteral("strum")] = strumAlsJson(instrument.saiten.strum);
         o[QStringLiteral("strings")] = saiten;
     }
     return o;
@@ -1676,6 +1692,7 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     neu.saiten.capo = saiten.value(QStringLiteral("capo")).toInt(0);
     neu.saiten.wahl = saitenwahlAusName(saiten.value(QStringLiteral("stringChoice")).toString());
     neu.saiten.mensurMm = saiten.value(QStringLiteral("scale")).toDouble(0.0);
+    neu.saiten.strum = strumAusJson(saiten.value(QStringLiteral("strum")).toObject());  // seit Fassung 11
     richteSaiten(neu.saiten);
     instrument = std::move(neu);
     return true;

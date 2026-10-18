@@ -104,6 +104,10 @@ struct NotenKopie
 {
     std::vector<Note> noten;
     int schritte = 0;  ///< vom ersten Einsatz bis zum letzten Ende
+    /// Die Abweichungen der Akkorde, an deren Schritt eine kopierte Note
+    /// anschlaegt (Stufe 24a, S-W4 a) — Schritte wie bei `noten` ab dem Anfang
+    /// der Kopie.
+    std::vector<Anschlag> anschlaege;
 
     [[nodiscard]] bool leer() const { return noten.empty(); }
     [[nodiscard]] bool operator==(const NotenKopie&) const = default;
@@ -143,5 +147,13 @@ bool versetzeNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersa
 /// sie. true = gedreht.
 bool dreheNoten(Muster& muster, std::vector<NotenOrt>& orte, int schrittVersatz, int schritteImMuster,
                 int* gekuerzt = nullptr);
+/// Die Abweichungen der Akkorde (`Muster::anschlaege`, S-W4 a) folgen
+/// bewegten Noten: `wege` nennt je bewegter Note ihren Ort in `vorher` und
+/// ihren neuen Schritt. Ein Eintrag bleibt an seinem Schritt, solange dort
+/// eine nicht bewegte Note anschlaegt; der Eintrag des alten Schritts geht mit
+/// an den neuen und ersetzt einen, der dort stand. Danach `richteAnschlaege`.
+/// Das Versetzen und Drehen tun es selbst; der Editor ruft es beim Ziehen einer
+/// einzelnen Note.
+void nimmAnschlaegeMit(Muster& muster, const Muster& vorher, const std::vector<std::pair<NotenOrt, int>>& wege);
 
 }  // namespace lumi::loop

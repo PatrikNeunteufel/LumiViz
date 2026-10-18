@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include "loop/Spielweise.hpp"
+
 #include <QLatin1String>
 #include <QString>
 
@@ -72,6 +74,9 @@ struct Saitensatz
     /// `kMensurVorgabeMm`. Lagen am Instrument (Tonabnehmer) stehen in mm vom
     /// Steg und werden mit ihr zum Anteil der Saite.
     double mensurMm = 0.0;
+    /// Strum, das ein neues Muster dieses Instruments bekommt (Stufe 24a,
+    /// S-W2 a) — wie `wahl`.
+    Strum strum;
 
     [[nodiscard]] bool istSaiteninstrument() const { return !leer.empty(); }
     [[nodiscard]] int anzahl() const { return static_cast<int>(leer.size()); }

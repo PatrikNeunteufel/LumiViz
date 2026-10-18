@@ -43,6 +43,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/SampleFrage.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SichttestAktionen.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/SignalWeg.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Spielweise.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Spieler.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Taktachse.cpp"
 )
@@ -79,6 +80,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/SampleFrage.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/SichttestAktionen.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/SignalWeg.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Spielweise.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Spieler.hpp"
 )
 set(_local_templates
