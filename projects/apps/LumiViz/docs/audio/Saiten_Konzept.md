@@ -1,12 +1,13 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.12.0
+> **Version:** 0.13.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
-> Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut ist 23a (§5a).
+> Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a) und
+> 23b (§5b).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -245,6 +246,11 @@ am Ende von Stufe 23.
   `G4 C4 E4 A4`); zwei Noten gleicher Tonhöhe auf demselben Schritt bleiben
   wie bisher eine (keine Unisono-Paare auf zwei Saiten); dass ein neues Muster
   die Regel seines Instruments bekommt, baut 23f (im Editor).
+- ✅ **S-A1 a** (Patrik S132): **Die Planung bekommt eine Auskunft herein**
+  (`SaitenVon`: die Saiten eines Instruments beim Namen). `plane` und
+  `Loop::klangNamen` rechnen über einen gemeinsamen Plan je Vorkommen; ohne
+  Auskunft wie bis Stufe 22. Verworfen: b (Kopie der Saiten am Muster —
+  zweite Quelle), c (Nachbearbeitung des Ablaufs bei jedem Aufrufer).
 - ✅ **S-T1 a** (Patrik S132): **Die Noten reichen von A0 (21) bis C8 (108)**,
   dem Umfang eines Klaviers (`kHoeheMin`, `kHoeheMax` in `Loop.hpp`; bis
   dahin C1 bis C7). Anlass: die tiefe B-Saite eines fünfsaitigen Basses (B0 =
@@ -252,3 +258,36 @@ am Ende von Stufe 23.
   Dateien mit Noten im alten Umfang ändern sich nicht; die Piano-Roll hat 88
   statt 73 Zeilen. Verworfen: b (nur unten bis B0 — die Violine stieße oben an
   dieselbe Grenze), c (Umfang bleibt, Bass 5 fällt weg).
+
+### 5b. Stufe 23b — Saitenwahl und Abdämpfen beim Planen (gebaut S132)
+
+- **`loop/Saitenplan.hpp`** (neu): `greifeNoten` (je Note eines Musters der
+  `Griff`: Saite, Bund, greifbar) und `toeneImKanal` (je Vorkommen einer Note
+  in einem Kanal die `TonAngabe` mit Saite und Ende).
+- **Die Regel** (S-M2b): Noten werden nach ihrem Anschlag gruppiert; wer am
+  selben Schritt anschlägt, bekommt verschiedene Saiten, Saiten noch
+  gehaltener Noten sind belegt. Bewertet wird der Reihe nach: möglichst alle
+  greifbar, kleinster Abstand der gegriffenen Bünde (leere Saiten zählen
+  nicht), bei *Follow hand* dann die Nähe zur Lage des vorigen Anschlags (der
+  tiefste gegriffene Bund; leere Saiten bewegen die Hand nicht), zuletzt die
+  tiefste Lage (kleinste Summe der Bünde). Eine gesetzte, greifbare Saite gilt
+  (S-M2 a).
+- **Das Ende** (S-M3 a): je Kanal, Muster und Saite endet ein Ton dort, wo
+  der nächste auf derselben Saite anschlägt — über Wiederholungen, Clips und
+  das Ende des Durchlaufs hinweg (der Loop wiederholt sich; ein Ton allein auf
+  seiner Saite endet einen Durchlauf später). Die letzten `kAbdaempfenMs`
+  (5 ms) blendet er aus; beim Anschlag ist er still.
+- **Der Name des Tons**: `inst:<instrument>:<hoehe>:<dauer>:s<saite>:e<ende>`;
+  ohne Saite und Ende derselbe Name wie bis Stufe 22.
+- **Die Auskunft** `saitenAusInstrumenten()` (Instrument.hpp) — Spieler,
+  Tonführung des Composers und Messung je Clip reichen sie an `klangNamen`
+  und `baueProgramm`.
+- **Beleg:** jeder mitgelieferte Loop plant mit der Auskunft genau wie ohne
+  (Namen, Stimmen, Schläge) — keines der mitgelieferten Instrumente trägt
+  Saiten.
+- **Von Claude gesetzt, nicht vorgelegt:** greifbar bis Bund 24
+  (`kBuendeMax`); 5 ms Abdämpfen, endend beim neuen Anschlag; eine nicht
+  greifbare Note klingt auf der nächstbesten Saite, dämpft keine andere und
+  wird nicht gedämpft; die Reihenfolge der Bewertung oben; ein Ende steht im
+  Namen auch, wenn der Ton vorher von selbst verklingt (mehr Namen, gleicher
+  Klang); die Suche prüft je Anschlag höchstens 200 000 Möglichkeiten.

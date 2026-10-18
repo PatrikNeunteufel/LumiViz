@@ -46,10 +46,10 @@ void uebernimmGedaechtnis(const Programm* alt, const Programm& neu)
 }  // namespace
 
 std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
-                                             std::shared_ptr<const std::vector<Klang>> klaenge)
+                                             std::shared_ptr<const std::vector<Klang>> klaenge, const SaitenVon& saiten)
 {
     auto programm = std::make_shared<Programm>();
-    programm->ablauf = plane(loop, rate);
+    programm->ablauf = plane(loop, rate, saiten);
     programm->klaenge = std::move(klaenge);
     const std::size_t busse = programm->ablauf.busse.size();
     if (busse > 0)

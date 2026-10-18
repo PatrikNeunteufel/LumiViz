@@ -6,6 +6,7 @@
 #include "composer/ClipLautheit.hpp"
 
 #include "audio/IAudioEngine.hpp"
+#include "loop/Instrument.hpp"  // saitenAusInstrumenten (Stufe 23b)
 #include "loop/Kit.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
@@ -56,8 +57,11 @@ std::shared_ptr<const loop::Programm> bereiteLoopVor(const QString& datei, IAudi
     loop::Loop geladen;
     if (!loop::offenerLoop(datei, geladen) && !loop::ladeLoop(datei, geladen)) return nullptr;
     geladen.richte();
-    auto klaenge = std::make_shared<const std::vector<loop::Klang>>(loop::ladeKlaenge(geladen.klangNamen(), engine, rate));
-    auto programm = loop::baueProgramm(geladen, rate, std::move(klaenge));
+    // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
+    const loop::SaitenVon saiten = loop::saitenAusInstrumenten();
+    auto klaenge =
+        std::make_shared<const std::vector<loop::Klang>>(loop::ladeKlaenge(geladen.klangNamen(saiten), engine, rate));
+    auto programm = loop::baueProgramm(geladen, rate, std::move(klaenge), saiten);
     if (programm == nullptr || programm->ablauf.durchlaufFrames <= 0) return nullptr;
     return programm;
 }

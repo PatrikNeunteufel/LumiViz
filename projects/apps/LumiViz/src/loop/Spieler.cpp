@@ -52,7 +52,9 @@ void Spieler::setzeLoop(const Loop& loop)
 void Spieler::ladeProgramm()
 {
     const int rate = m_engine->getSampleRate();
-    const QStringList namen = m_loop.klangNamen();
+    // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
+    const SaitenVon saiten = saitenAusInstrumenten();
+    const QStringList namen = m_loop.klangNamen(saiten);
     // auch wenn eine Instrument-Datei neu gespeichert wurde: ihre Toene sind dann andere
     const std::uint64_t instrumente = instrumentFassung();
     if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate || instrumente != m_instrumentFassung)
@@ -63,7 +65,7 @@ void Spieler::ladeProgramm()
         m_klangRate = rate;
         m_instrumentFassung = instrumente;
     }
-    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge));
+    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saiten));
 }
 
 bool Spieler::starte(IAudioEngine& engine, IAudioPlayer& player)

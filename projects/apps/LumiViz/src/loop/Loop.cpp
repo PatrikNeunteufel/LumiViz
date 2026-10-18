@@ -5,6 +5,7 @@
 
 #include "loop/Loop.hpp"
 
+#include "loop/Saitenplan.hpp"
 #include "loop/Sample.hpp"
 
 #include <QDir>
@@ -393,12 +394,37 @@ bool istInstrumentDatei(const QString& nennung)
     return nennung.endsWith(kInstrumentEndung, Qt::CaseInsensitive);
 }
 
-bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs)
+QString tonKlang(const TonAngabe& ton)
 {
-    if (!istTon(klang)) return false;
-    // von hinten: Dauer, Tonhoehe — davor das Instrument, das als Pfad selbst
-    // einen Doppelpunkt tragen kann (C:/…)
-    const QString rest = klang.mid(kTonVorsatz.size());
+    QString name = tonKlang(ton.instrument, ton.hoehe, ton.dauerMs);
+    if (ton.saite >= 0) name += QStringLiteral(":s%1").arg(ton.saite);
+    if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
+    return name;
+}
+
+namespace
+{
+
+/// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: hoechstens
+/// `:e<ms>` und `:s<n>` (seit Stufe 23b), dann Dauer und Tonhoehe als reine
+/// Zahlen — davor das Instrument, das als Pfad selbst einen Doppelpunkt tragen
+/// kann (C:/…).
+bool zerlegeTonRest(QString rest, TonAngabe& ton)
+{
+    int saite = -1;
+    int ende = 0;
+    for (int runde = 0; runde < 2; ++runde)
+    {
+        const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
+        if (vor < 0 || vor + 2 > rest.size()) break;
+        const QChar art = rest.at(vor + 1);
+        if (art != QLatin1Char('s') && art != QLatin1Char('e')) break;
+        bool ok = false;
+        const int wert = rest.mid(vor + 2).toInt(&ok);
+        if (!ok || wert < 0) return false;
+        (art == QLatin1Char('s') ? saite : ende) = wert;
+        rest.truncate(vor);
+    }
     const qsizetype vorDauer = rest.lastIndexOf(QLatin1Char(':'));
     const qsizetype vorHoehe = vorDauer > 0 ? rest.lastIndexOf(QLatin1Char(':'), vorDauer - 1) : -1;
     if (vorHoehe <= 0) return false;
@@ -407,9 +433,24 @@ bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& daue
     const int h = rest.mid(vorHoehe + 1, vorDauer - vorHoehe - 1).toInt(&hoeheOk);
     const int ms = rest.mid(vorDauer + 1).toInt(&dauerOk);
     if (!hoeheOk || !dauerOk || ms <= 0) return false;
-    instrument = rest.left(vorHoehe);
-    hoehe = h;
-    dauerMs = ms;
+    ton = TonAngabe{rest.left(vorHoehe), h, ms, saite, ende};
+    return true;
+}
+
+}  // namespace
+
+bool zerlegeTon(const QString& klang, TonAngabe& ton)
+{
+    return istTon(klang) && zerlegeTonRest(klang.mid(kTonVorsatz.size()), ton);
+}
+
+bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs)
+{
+    TonAngabe ton;
+    if (!zerlegeTon(klang, ton)) return false;
+    instrument = ton.instrument;
+    hoehe = ton.hoehe;
+    dauerMs = ton.dauerMs;
     return true;
 }
 
@@ -493,7 +534,7 @@ std::vector<double> Loop::stellenImMuster(double schritt, const QString& name) c
     return {};
 }
 
-QStringList Loop::klangNamen() const
+QStringList Loop::klangNamen(const SaitenVon& saiten) const
 {
     QStringList namen;
     QSet<QString> gesehen;
@@ -502,12 +543,29 @@ QStringList Loop::klangNamen() const
         gesehen.insert(klang);
         namen << klang;
     };
+    // die Toene der Saiteninstrumente je Vorkommen (Stufe 23b) — dieselbe Rechnung wie `plane`
+    std::vector<std::vector<ClipToene>> jeKanal;
+    if (saiten)
+        for (std::size_t k = 0; k < kanaele.size(); ++k) jeKanal.push_back(toeneImKanal(*this, k, saiten));
     for (const Muster& m : muster)
     {
-        if (m.art == MusterArt::Instrument)
-            for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
-        else
+        if (m.art != MusterArt::Instrument)
+        {
             for (const Spur& spur : m.spuren) nimm(spur.spielt());
+            continue;
+        }
+        if (!saiten || !saiten(m.instrument).istSaiteninstrument())
+        {
+            for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
+            continue;
+        }
+        for (std::size_t k = 0; k < kanaele.size(); ++k)
+            for (std::size_t c = 0; c < kanaele[k].clips.size(); ++c)
+            {
+                if (kanaele[k].clips[c].muster != m.name) continue;
+                for (const std::vector<TonAngabe>& runde : jeKanal[k][c])
+                    for (const TonAngabe& ton : runde) nimm(tonKlang(ton));
+            }
     }
     return namen;
 }

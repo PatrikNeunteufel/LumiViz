@@ -5,6 +5,8 @@
 
 #include "loop/Rechenkern.hpp"
 
+#include "loop/Saitenplan.hpp"
+
 #include <QHash>
 
 #include <algorithm>
@@ -15,11 +17,11 @@
 namespace lumi::loop
 {
 
-Ablauf plane(const Loop& loop, int rate)
+Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
 {
     Ablauf ablauf;
     ablauf.rate = rate;
-    ablauf.klangNamen = loop.klangNamen();
+    ablauf.klangNamen = loop.klangNamen(saiten);
     ablauf.bpm = loop.bpm;
     if (rate <= 0 || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ablauf;
 
@@ -40,8 +42,12 @@ Ablauf plane(const Loop& loop, int rate)
         // und Dauer — ist eine eigene Stimme: ein Akkord klingt zusammen, und
         // nur derselbe Ton schneidet sich selbst ab.
         std::map<std::pair<const Muster*, int>, std::size_t> tonStimmeVon;
-        for (const LoopClip& clip : kanal.clips)
+        // die Toene der Saiteninstrumente je Vorkommen (Stufe 23b); leer ohne `saiten`
+        const std::vector<ClipToene> saitenToene = toeneImKanal(loop, kanalNr, saiten);
+        for (std::size_t clipNr = 0; clipNr < kanal.clips.size(); ++clipNr)
         {
+            const LoopClip& clip = kanal.clips[clipNr];
+            const ClipToene& toeneDesClips = saitenToene[clipNr];
             const Muster* muster = loop.findeMuster(clip.muster);
             if (muster == nullptr) continue;
             // ein Clip mit Effekten: seine Schlaege gehen in einen eigenen Bus —
@@ -60,10 +66,14 @@ Ablauf plane(const Loop& loop, int rate)
                 {
                     const std::int64_t schrittDavor =
                         static_cast<std::int64_t>(clip.startTakt + runde * muster->takte) * jeTakt;
-                    for (const Note& note : muster->noten)
+                    for (std::size_t noteNr = 0; noteNr < muster->noten.size(); ++noteNr)
                     {
-                        const int klang = klangVon.value(
-                            tonKlang(muster->instrument, note.hoehe, loop.notenMs(note)), -1);
+                        const Note& note = muster->noten[noteNr];
+                        const QString name =
+                            toeneDesClips.empty()
+                                ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
+                                : tonKlang(toeneDesClips[static_cast<std::size_t>(runde)][noteNr]);
+                        const int klang = klangVon.value(name, -1);
                         const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
                         if (neu)
                         {

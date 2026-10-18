@@ -99,11 +99,10 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
         if (istTon(klang))
         {
             // der Ton eines gerechneten Instruments: er entsteht hier, nicht aus einer Datei
-            QString instrument;
-            int hoehe = 0;
-            int dauerMs = 0;
+            TonAngabe ton;  // seit Stufe 23b mit Saite und Ende
+            const QString& instrument = ton.instrument;
             const Instrument* gefunden = nullptr;
-            if (zerlegeTon(klang, instrument, hoehe, dauerMs))
+            if (zerlegeTon(klang, ton))
             {
                 // je Instrument einmal holen — eine eigene Datei wird dabei gelesen
                 auto ort = geholt.find(instrument);
@@ -136,7 +135,7 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
                 if (ort->second.has_value()) gefunden = &*ort->second;
             }
             if (gefunden != nullptr)
-                klaenge[i] = rendereTon(*gefunden, hoehe, dauerMs, rate);
+                klaenge[i] = rendereTon(*gefunden, ton, rate);
             else if (bericht != nullptr)
             {
                 const QString zeile = (zuNeu.contains(instrument) ? QStringLiteral("Instrument needs a newer LumiViz: %1")

@@ -60,7 +60,9 @@ struct Tonfuehrung::LoopQuelle
     void baue(IAudioEngine& engine)
     {
         rate = engine.getSampleRate();
-        const QStringList namen = loop.klangNamen();
+        // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
+        const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
+        const QStringList namen = loop.klangNamen(saiten);
         // auch wenn eine Instrument-Datei neu gespeichert wurde
         const std::uint64_t fassung = lumi::loop::instrumentFassung();
         if (klaenge == nullptr || namen != klangNamen || fassung != instrumente)
@@ -70,7 +72,7 @@ struct Tonfuehrung::LoopQuelle
             klangNamen = namen;
             instrumente = fassung;
         }
-        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge);
+        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, saiten);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);
     }

@@ -153,8 +153,31 @@ struct Note
 [[nodiscard]] bool istTon(const QString& klang);
 /// Der Name des Klangs zu einem Ton eines Instruments.
 [[nodiscard]] QString tonKlang(const QString& instrument, int hoehe, int dauerMs);
-/// Den Namen wieder zerlegen. false = kein Ton.
+/// Den Namen wieder zerlegen. false = kein Ton. Ein Ton mit Saite und Ende
+/// zerlegt sich hier auch — Saite und Ende fallen dabei weg.
 bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs);
+
+/// Ein gerechneter Ton mit allem, was ihn ausmacht (seit Stufe 23b): bei einem
+/// Saiteninstrument auch die Saite und das Ende, an dem die naechste Note auf
+/// derselben Saite ihn abdaempft (Entscheid S-M3 a).
+struct TonAngabe
+{
+    QString instrument;
+    int hoehe = 60;
+    int dauerMs = 1;  ///< so lang wird der Ton gehalten
+    int saite = -1;   ///< −1 = keine (kein Saiteninstrument oder nicht greifbar)
+    /// Spaetestens hier, ab dem Anschlag gezaehlt, ist der Ton still — die
+    /// letzten Millisekunden blendet er aus (`kAbdaempfenMs`). 0 = kein Ende,
+    /// er klingt aus wie bisher.
+    int endeMs = 0;
+
+    [[nodiscard]] bool operator==(const TonAngabe&) const = default;
+};
+/// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, bei einem
+/// Ende `:e<ms>` — ohne beides derselbe Name wie bis Stufe 22.
+[[nodiscard]] QString tonKlang(const TonAngabe& ton);
+/// Den Namen wieder zerlegen. false = kein Ton.
+bool zerlegeTon(const QString& klang, TonAngabe& ton);
 
 /// Ein Muster, die „Basis" eines oder mehrerer Clips. Ein **Drumkit** traegt
 /// das Kit und je Spur eine Zeile, je Schritt eine Lautstaerke (0 = aus). Ein
@@ -416,7 +439,11 @@ struct Loop
     /// Reihenfolge ihres ersten Auftretens; Spuren ohne Klang zaehlen nicht.
     /// Dazu je Instrument-Muster die Toene seiner Noten (`tonKlang`): je
     /// Tonhoehe und Dauer einer — die Dauer haengt am Tempo.
-    [[nodiscard]] QStringList klangNamen() const;
+    /// Mit `saiten` (Stufe 23b, Entscheid S-A1 a): ein Muster, dessen
+    /// Instrument Saiten traegt, nennt seine Toene je Vorkommen in einem Clip,
+    /// mit Saite und Ende (`toeneImKanal`, Saitenplan.hpp) — dieselbe Rechnung
+    /// wie `plane`. Ohne `saiten` wie bis Stufe 22.
+    [[nodiscard]] QStringList klangNamen(const SaitenVon& saiten = {}) const;
     /// Die Dauer einer Note in Millisekunden, gerundet — wie sie im Namen
     /// ihres Tons steht.
     [[nodiscard]] int notenMs(const Note& note) const;

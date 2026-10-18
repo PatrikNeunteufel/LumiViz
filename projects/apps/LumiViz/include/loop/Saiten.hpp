@@ -18,6 +18,7 @@
 #include <QLatin1String>
 #include <QString>
 
+#include <functional>
 #include <vector>
 
 namespace lumi::loop
@@ -27,6 +28,9 @@ namespace lumi::loop
 inline constexpr int kSaitenMax = 12;
 /// So weit kann das Capo hinauf, in Buenden.
 inline constexpr int kCapoMax = 12;
+/// So viele Buende ueber der leeren Saite (mit Capo) ist ein Ton noch greifbar
+/// (Stufe 23b, von Claude gesetzt: eine Gitarre mit 24 Buenden).
+inline constexpr int kBuendeMax = 24;
 
 /// Die Regel fuer eine Note ohne eigene Saite (S-M2b, beide schaltbar).
 enum class Saitenwahl : int
@@ -69,6 +73,25 @@ struct Saitensatz
 
     [[nodiscard]] bool operator==(const Saitensatz&) const = default;
 };
+
+/// Der Bund, in dem `hoehe` auf `saite` liegt — gezaehlt ab dem Capo (0 = die
+/// leere Saite mit Capo). Greifbar ist er in 0 … `kBuendeMax`.
+[[nodiscard]] inline int bundAuf(const Saitensatz& saiten, int saite, int hoehe)
+{
+    return hoehe - saiten.leer[static_cast<std::size_t>(saite)] - saiten.capo;
+}
+[[nodiscard]] inline bool greifbarAuf(const Saitensatz& saiten, int saite, int hoehe)
+{
+    if (saite < 0 || saite >= saiten.anzahl()) return false;
+    const int bund = bundAuf(saiten, saite, hoehe);
+    return bund >= 0 && bund <= kBuendeMax;
+}
+
+/// Die Auskunft, die die Planung herein bekommt (Entscheid S-A1 a, S132): die
+/// Saiten des Instruments, das ein Muster nennt. Leer (keine Funktion) = jedes
+/// Instrument gilt als eines ohne Saiten — alles wie bis Stufe 22. Wer
+/// Instrumente kennt, liefert sie (`saitenAusInstrumenten`, Instrument.hpp).
+using SaitenVon = std::function<Saitensatz(const QString& instrument)>;
 
 /// Werte in ihre Grenzen: hoechstens `kSaitenMax` Saiten (was dahinter steht,
 /// faellt weg), jeder Ton in 0 … 127, das Capo in 0 … `kCapoMax`.

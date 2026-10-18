@@ -430,5 +430,17 @@ inline constexpr double kTonMaxSekunden = 30.0;
 /// Eine Shape-Schicht spielt die Form, die sie nennt (`shape::tonformFuer`) —
 /// gibt es sie nicht, schweigt sie; mit Stereo XY sind die Seiten verschieden.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate);
+/// Einen Ton nach seiner Angabe rechnen (Stufe 23b): wie oben; traegt sie ein
+/// Ende (`TonAngabe::endeMs`), ist der Ton dort still — er blendet ueber die
+/// letzten `kAbdaempfenMs` aus (Saitenplan.hpp, Entscheid S-M3 a). Ein Ton,
+/// der vorher von selbst endet, bleibt Bit fuer Bit derselbe. Die Saite
+/// aendert den Klang noch nicht (Stufe 23c).
+[[nodiscard]] Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate);
+
+/// Die Auskunft fuer die Planung (Entscheid S-A1 a): die Saiten eines
+/// Instruments beim Namen, ueber `holeInstrument` — je Name einmal gelesen und
+/// gemerkt, solange die Auskunft lebt. Ein Instrument, das sich nicht findet,
+/// hat keine Saiten.
+[[nodiscard]] SaitenVon saitenAusInstrumenten();
 
 }  // namespace lumi::loop

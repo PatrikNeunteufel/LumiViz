@@ -6,6 +6,7 @@
 #include "loop/Instrument.hpp"
 
 #include "loop/Kit.hpp"
+#include "loop/Saitenplan.hpp"  // kAbdaempfenMs (Stufe 23b)
 #include "loop/Sample.hpp"
 #include "shape/Kontur.hpp"   // die Farbe einer Shape-Schicht (Stufe 20d)
 #include "shape/Tonform.hpp"  // die Schwingung Form (Stufe 19c)
@@ -1422,6 +1423,41 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
         for (float& wert : klang.daten) wert *= laut;
     }
     return klang;
+}
+
+Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate)
+{
+    Klang klang = rendereTon(instrument, ton.hoehe, ton.dauerMs, rate);
+    if (ton.endeMs <= 0 || rate <= 0) return klang;
+    // abdaempfen (S-M3 a): bis zum Ende still, die letzten Millisekunden ausgeblendet
+    const std::int64_t ende = std::max<std::int64_t>(1, std::llround(ton.endeMs * static_cast<double>(rate) / 1000.0));
+    if (klang.frames() <= ende) return klang;  // er endet von selbst vorher
+    const std::int64_t blende = std::min<std::int64_t>(ende, std::max<std::int64_t>(1, std::llround(kAbdaempfenMs * rate / 1000.0)));
+    const std::int64_t ab = ende - blende;
+    for (std::int64_t f = ab; f < ende; ++f)
+    {
+        const auto faktor = static_cast<float>(static_cast<double>(ende - f) / static_cast<double>(blende + 1));
+        klang.daten[static_cast<std::size_t>(2 * f)] *= faktor;
+        klang.daten[static_cast<std::size_t>(2 * f + 1)] *= faktor;
+    }
+    klang.daten.resize(static_cast<std::size_t>(2 * ende));
+    return klang;
+}
+
+SaitenVon saitenAusInstrumenten()
+{
+    auto gemerkt = std::make_shared<std::map<QString, Saitensatz>>();
+    return [gemerkt](const QString& nennung) {
+        auto ort = gemerkt->find(nennung);
+        if (ort == gemerkt->end())
+        {
+            Instrument instrument;
+            Saitensatz saiten;
+            if (holeInstrument(nennung, instrument)) saiten = instrument.saiten;
+            ort = gemerkt->emplace(nennung, std::move(saiten)).first;
+        }
+        return ort->second;
+    };
 }
 
 }  // namespace lumi::loop

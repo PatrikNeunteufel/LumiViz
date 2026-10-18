@@ -208,16 +208,14 @@ inline std::vector<lumi::loop::Klang> klaengeOhneEngine(const lumi::loop::Ablauf
     std::vector<Klang> klaenge;
     for (const QString& name : ablauf.klangNamen)
     {
-        QString instrument;
-        int hoehe = 0;
-        int ms = 0;
-        if (zerlegeTon(name, instrument, hoehe, ms))
+        TonAngabe ton;  // seit Stufe 23b mit Saite und Ende
+        if (zerlegeTon(name, ton))
         {
             // mitgeliefert, eigen (`user:`) oder eine Datei neben dem Loop
             Instrument gefunden;
-            const bool da = holeInstrument(instrument, gefunden);
+            const bool da = holeInstrument(ton.instrument, gefunden);
             if (da) merkeSamplesOhneEngine(gefunden);
-            klaenge.push_back(da ? rendereTon(gefunden, hoehe, ms, ablauf.rate) : Klang{});
+            klaenge.push_back(da ? rendereTon(gefunden, ton, ablauf.rate) : Klang{});
         }
         else if (istMitgelieferterKlang(name))
             klaenge.push_back(liesWav(mitgelieferteWav(name)));

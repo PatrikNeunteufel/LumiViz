@@ -101,7 +101,11 @@ struct Ablauf
 /// die aus sind, und stumme Spuren haben keine Stimme; die Laenge des
 /// Durchlaufs aendern sie nicht.
 /// Panorama: in der Mitte beide Seiten voll, zur Seite faellt die andere ab.
-[[nodiscard]] Ablauf plane(const Loop& loop, int rate);
+/// Mit `saiten` (Stufe 23b, Entscheid S-A1 a) spielt ein Muster, dessen
+/// Instrument Saiten traegt, je Vorkommen den Ton aus `toeneImKanal`
+/// (Saitenplan.hpp) — mit Saite und Ende; die Namen stimmen mit
+/// `loop.klangNamen(saiten)` ueberein. Ohne `saiten` wie bis Stufe 22.
+[[nodiscard]] Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten = {});
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
 /// Werte; der Block wird ueberschrieben). `klaenge[i]` ist der Klang zu

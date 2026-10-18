@@ -21,7 +21,9 @@
 
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Rechenkern.hpp"
 #include "loop/Saiten.hpp"
+#include "loop/Saitenplan.hpp"
 
 #include "LoopOhneEngine.hpp"  // repoWurzel, mitgelieferteLoops
 
@@ -311,4 +313,276 @@ TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich ohne Saiten und schr
     }
     MESSAGE(dateien.size() << " Instrumente, " << loops.size() << " Loops mit " << noten << " Noten geprueft");
     CHECK(noten > 0);
+}
+
+// =============================================================================
+// Stufe 23b — Saitenwahl und Abdaempfen beim Planen (S-M2b, S-M3 a, S-A1 a)
+// =============================================================================
+
+namespace
+{
+
+const Saitensatz& gitarre()
+{
+    static const Saitensatz satz{stimmungsvorlagen()[0].leer, 0, Saitenwahl::JeKlang};
+    return satz;
+}
+
+/// Ein Muster aus Noten, gerichtet in einem Loop (120 BPM, vier Schritte je Schlag).
+Muster musterAus(std::vector<Note> noten, Saitenwahl wahl = Saitenwahl::JeKlang)
+{
+    Loop loop;
+    Muster m;
+    m.name = QStringLiteral("M");
+    m.art = MusterArt::Instrument;
+    m.instrument = QStringLiteral("gitarre");
+    m.takte = 1;
+    m.noten = std::move(noten);
+    m.saitenwahl = wahl;
+    loop.muster.push_back(m);
+    loop.richte();
+    return loop.muster[0];
+}
+
+std::vector<int> saitenVon(const std::vector<Griff>& griffe)
+{
+    std::vector<int> s;
+    for (const Griff& g : griffe) s.push_back(g.saite);
+    return s;
+}
+
+/// Eine Auskunft, die nur `gitarre` mit Saiten kennt.
+SaitenVon nurGitarre()
+{
+    return [](const QString& name) { return name == QStringLiteral("gitarre") ? gitarre() : Saitensatz{}; };
+}
+
+}  // namespace
+
+TEST_CASE("Loop Saiten 23b: der Name eines Tons traegt Saite und Ende — und zerlegt sich wieder")
+{
+    const TonAngabe ohne{QStringLiteral("piano"), 60, 500};
+    CHECK(tonKlang(ohne) == QStringLiteral("inst:piano:60:500"));  // wie bis Stufe 22
+    CHECK(tonKlang(ohne) == tonKlang(QStringLiteral("piano"), 60, 500));
+    const TonAngabe mit{QStringLiteral("C:/eigene/gitarre.lvinst"), 64, 250, 5, 1750};
+    CHECK(tonKlang(mit) == QStringLiteral("inst:C:/eigene/gitarre.lvinst:64:250:s5:e1750"));
+    TonAngabe gelesen;
+    REQUIRE(zerlegeTon(tonKlang(mit), gelesen));
+    CHECK(gelesen == mit);
+    REQUIRE(zerlegeTon(tonKlang(ohne), gelesen));
+    CHECK(gelesen == ohne);
+    // nur Saite, nur Ende
+    REQUIRE(zerlegeTon(QStringLiteral("inst:user:s3:40:100:s0"), gelesen));
+    CHECK(gelesen == TonAngabe{QStringLiteral("user:s3"), 40, 100, 0, 0});
+    REQUIRE(zerlegeTon(QStringLiteral("inst:piano:60:500:e300"), gelesen));
+    CHECK(gelesen == TonAngabe{QStringLiteral("piano"), 60, 500, -1, 300});
+    // der alte Weg nimmt den neuen Namen auch — Saite und Ende fallen weg
+    QString instrument;
+    int hoehe = 0;
+    int dauer = 0;
+    REQUIRE(zerlegeTon(tonKlang(mit), instrument, hoehe, dauer));
+    CHECK(instrument == mit.instrument);
+    CHECK(hoehe == 64);
+    CHECK(dauer == 250);
+    // kaputt
+    CHECK_FALSE(zerlegeTon(QStringLiteral("inst:piano:60:500:sx"), gelesen));
+    CHECK_FALSE(zerlegeTon(QStringLiteral("kit:kick"), gelesen));
+}
+
+TEST_CASE("Loop Saiten 23b: Per chord — offene Akkorde, belegte Saiten, gesetzte Saiten, die Grenzen")
+{
+    CHECK(bundAuf(gitarre(), 1, 47) == 2);
+    CHECK(greifbarAuf(gitarre(), 5, 64 + kBuendeMax));
+    CHECK_FALSE(greifbarAuf(gitarre(), 5, 64 + kBuendeMax + 1));
+    CHECK_FALSE(greifbarAuf(gitarre(), 0, 39));
+    CHECK_FALSE(greifbarAuf(gitarre(), 6, 64));
+
+    // --- E-Dur offen: E2 B2 E3 G#3 B3 E4 — jede Saite einmal, Buende 0 2 2 1 0 0
+    std::vector<Griff> griffe = greifeNoten(musterAus({{0, 4, 40}, {0, 4, 47}, {0, 4, 52}, {0, 4, 56}, {0, 4, 59}, {0, 4, 64}}), gitarre());
+    CHECK(saitenVon(griffe) == std::vector<int>{0, 1, 2, 3, 4, 5});
+    std::vector<int> buende;
+    for (const Griff& g : griffe)
+    {
+        CHECK(g.greifbar);
+        buende.push_back(g.bund);
+    }
+    CHECK(buende == std::vector<int>{0, 2, 2, 1, 0, 0});
+    // --- C-Dur offen: C3 E3 G3 C4 E4 — auf der A- bis zur hohen E-Saite, Buende 3 2 0 1 0
+    griffe = greifeNoten(musterAus({{0, 4, 48}, {0, 4, 52}, {0, 4, 55}, {0, 4, 60}, {0, 4, 64}}), gitarre());
+    CHECK(saitenVon(griffe) == std::vector<int>{1, 2, 3, 4, 5});
+
+    // --- eine gehaltene Note belegt ihre Saite: E4 offen klingt, F4 muss auf die H-Saite
+    griffe = greifeNoten(musterAus({{0, 4, 64}, {1, 1, 65}}), gitarre());
+    CHECK(saitenVon(griffe) == std::vector<int>{5, 4});
+    CHECK(griffe[1].bund == 6);
+    // ist sie vorbei, ist die Saite wieder frei
+    griffe = greifeNoten(musterAus({{0, 1, 64}, {1, 1, 65}}), gitarre());
+    CHECK(saitenVon(griffe) == std::vector<int>{5, 5});
+
+    // --- eine gesetzte Saite gilt, solange sie greifbar ist (S-M2 a)
+    Note gesetzt{0, 1, 64, 1.0, 3};  // E4 auf der G-Saite, Bund 9
+    griffe = greifeNoten(musterAus({gesetzt}), gitarre());
+    CHECK(griffe[0] == Griff{3, 9, true});
+    gesetzt.hoehe = 30;  // auf keiner Saite greifbar: automatisch, und auch dort nicht
+    griffe = greifeNoten(musterAus({gesetzt}), gitarre());
+    CHECK_FALSE(griffe[0].greifbar);
+    CHECK(griffe[0].saite == 0);  // die naechstbeste: die tiefe E-Saite
+    CHECK(griffe[0].bund == 30 - 40);
+
+    // --- mehr Noten zugleich als Saiten: eine Ukulele mit fuenf Toenen — vier gegriffen, einer nicht
+    const Saitensatz ukulele{stimmungsvorlagen()[4].leer, 0, Saitenwahl::JeKlang};
+    griffe = greifeNoten(musterAus({{0, 2, 60}, {0, 2, 64}, {0, 2, 67}, {0, 2, 69}, {0, 2, 72}}), ukulele);
+    int greifbar = 0;
+    std::vector<bool> benutzt(4, false);
+    for (const Griff& g : griffe)
+        if (g.greifbar)
+        {
+            ++greifbar;
+            CHECK_FALSE(benutzt[static_cast<std::size_t>(g.saite)]);  // verschiedene Saiten
+            benutzt[static_cast<std::size_t>(g.saite)] = true;
+        }
+    CHECK(greifbar == 4);
+
+    // --- das Capo hebt jede leere Saite
+    Saitensatz mitCapo = gitarre();
+    mitCapo.capo = 2;
+    griffe = greifeNoten(musterAus({{0, 1, 42}}), mitCapo);  // F#2: die leere tiefe E-Saite mit Capo 2
+    CHECK(griffe[0] == Griff{0, 0, true});
+    griffe = greifeNoten(musterAus({{0, 1, 41}}), mitCapo);  // F2 liegt darunter
+    CHECK_FALSE(griffe[0].greifbar);
+
+    // --- ohne Saiten: lauter leere Griffe
+    griffe = greifeNoten(musterAus({{0, 1, 60}}), Saitensatz{});
+    CHECK(griffe == std::vector<Griff>{Griff{}});
+}
+
+TEST_CASE("Loop Saiten 23b: Follow hand bleibt in der Lage, Per chord nimmt die tiefste")
+{
+    // C#5 nur hoch greifbar (hohe E-Saite, Bund 9), dann F#4: Per chord nimmt die
+    // tiefste Lage (hohe E-Saite, Bund 2), Follow hand die naechste zur Hand
+    // (H-Saite, Bund 7 — G-Saite Bund 11 ist gleich nah, aber hoeher)
+    const std::vector<Note> melodie = {{0, 1, 73}, {1, 1, 66}};
+    std::vector<Griff> akkord = greifeNoten(musterAus(melodie, Saitenwahl::JeKlang), gitarre());
+    CHECK(akkord[0] == Griff{5, 9, true});
+    CHECK(akkord[1] == Griff{5, 2, true});
+    std::vector<Griff> hand = greifeNoten(musterAus(melodie, Saitenwahl::Hand), gitarre());
+    CHECK(hand[0] == Griff{5, 9, true});
+    CHECK(hand[1] == Griff{4, 7, true});
+    // eine leere Saite dazwischen bewegt die Hand nicht
+    hand = greifeNoten(musterAus({{0, 1, 73}, {1, 1, 64}, {2, 1, 66}}, Saitenwahl::Hand), gitarre());
+    CHECK(hand[1] == Griff{5, 0, true});
+    CHECK(hand[2] == Griff{4, 7, true});
+}
+
+TEST_CASE("Loop Saiten 23b: die Toene je Vorkommen — das Ende an der naechsten Note derselben Saite")
+{
+    // zwei E4 auf der hohen E-Saite (gesetzt), 120 BPM, ein Schritt 125 ms, ein Takt 2000 ms
+    Loop loop;
+    Muster m;
+    m.name = QStringLiteral("Riff");
+    m.art = MusterArt::Instrument;
+    m.instrument = QStringLiteral("gitarre");
+    m.takte = 1;
+    m.noten = {Note{0, 4, 64, 1.0, 5}, Note{2, 2, 64, 1.0, 5}, Note{8, 1, 40, 1.0}};
+    loop.muster.push_back(m);
+    Kanal kanal;
+    kanal.clips.push_back(LoopClip{});
+    kanal.clips[0].muster = m.name;
+    kanal.clips[0].wiederholungen = 2;
+    loop.kanaele.push_back(kanal);
+    loop.richte();
+    REQUIRE(loop.durchlaufMs() == 4000.0);
+
+    const std::vector<ClipToene> toene = toeneImKanal(loop, 0, nurGitarre());
+    REQUIRE(toene.size() == 1);
+    REQUIRE(toene[0].size() == 2);  // zwei Wiederholungen
+    // die erste E4 endet, wo die zweite anschlaegt (250 ms), die zweite an der ersten der
+    // naechsten Wiederholung — nach der letzten an der ersten des naechsten Durchlaufs
+    CHECK(toene[0][0][0] == TonAngabe{QStringLiteral("gitarre"), 64, 500, 5, 250});
+    CHECK(toene[0][0][1] == TonAngabe{QStringLiteral("gitarre"), 64, 250, 5, 1750});
+    CHECK(toene[0][1][0] == toene[0][0][0]);
+    CHECK(toene[0][1][1] == toene[0][0][1]);
+    // die E2 allein auf ihrer Saite: sie endet am naechsten Anschlag, eine Wiederholung spaeter
+    CHECK(toene[0][0][2] == TonAngabe{QStringLiteral("gitarre"), 40, 125, 0, 2000});
+
+    // --- klangNamen und plane rechnen dasselbe
+    const QStringList namen = loop.klangNamen(nurGitarre());
+    CHECK(namen == QStringList{QStringLiteral("inst:gitarre:64:500:s5:e250"), QStringLiteral("inst:gitarre:64:250:s5:e1750"),
+                               QStringLiteral("inst:gitarre:40:125:s0:e2000")});
+    const Ablauf ablauf = plane(loop, 8000, nurGitarre());
+    CHECK(ablauf.klangNamen == namen);
+    REQUIRE(ablauf.stimmen.size() == 3);
+    for (const Stimme& stimme : ablauf.stimmen)
+    {
+        CHECK(stimme.klang >= 0);
+        CHECK(stimme.schlaege.size() == 2);  // je Wiederholung einer
+    }
+
+    // --- ohne Auskunft, oder ein Instrument ohne Saiten: wie bis Stufe 22
+    const QStringList alt{QStringLiteral("inst:gitarre:64:500"), QStringLiteral("inst:gitarre:64:250"),
+                          QStringLiteral("inst:gitarre:40:125")};
+    CHECK(loop.klangNamen() == alt);
+    CHECK(loop.klangNamen([](const QString&) { return Saitensatz{}; }) == alt);
+    CHECK(plane(loop, 8000).klangNamen == alt);
+    CHECK(toeneImKanal(loop, 0, {})[0].empty());
+}
+
+TEST_CASE("Loop Saiten 23b: ein Ton mit Ende ist dort still — vorher Bit fuer Bit derselbe")
+{
+    Instrument instrument;
+    instrument.schichten[0].schwingung = Schwingung::Saite;
+    instrument.schichten[0].ausklangMs = 400.0;
+    instrument.saiten = gitarre();
+    const int rate = 8000;
+    const Klang frei = rendereTon(instrument, TonAngabe{QString(), 64, 500, 5, 0}, rate);
+    CHECK(frei.daten == rendereTon(instrument, 64, 500, rate).daten);  // ohne Ende wie bisher
+    REQUIRE(frei.frames() > rate * 800 / 1000);
+
+    const Klang gedaempft = rendereTon(instrument, TonAngabe{QString(), 64, 500, 5, 300}, rate);
+    CHECK(gedaempft.frames() == rate * 300 / 1000);
+    // bis zur Blende dieselben Werte, in der Blende leiser, am Ende fast still
+    const std::int64_t blende = rate * kAbdaempfenMs / 1000;
+    const std::int64_t ab = gedaempft.frames() - blende;
+    bool gleich = true;
+    for (std::int64_t f = 0; f < 2 * ab; ++f)
+        if (gedaempft.daten[static_cast<std::size_t>(f)] != frei.daten[static_cast<std::size_t>(f)]) gleich = false;
+    CHECK(gleich);
+    for (std::int64_t f = ab; f < gedaempft.frames(); ++f)
+        CHECK(std::abs(gedaempft.daten[static_cast<std::size_t>(2 * f)]) <=
+              std::abs(frei.daten[static_cast<std::size_t>(2 * f)]) + 1e-9f);
+    CHECK(std::abs(gedaempft.daten[gedaempft.daten.size() - 2]) <= std::abs(frei.daten[gedaempft.daten.size() - 2]) / 4.0f + 1e-9f);
+    // ein Ende hinter dem Ausklang aendert nichts
+    CHECK(rendereTon(instrument, TonAngabe{QString(), 64, 500, 5, 60000}, rate).daten == frei.daten);
+}
+
+TEST_CASE("Loop Saiten 23b: jeder mitgelieferte Loop plant mit der Auskunft genau wie ohne")
+{
+    // keines der mitgelieferten Instrumente traegt Saiten (bis 23g): die Auskunft aendert nichts —
+    // dieselben Namen, dieselben Stimmen, dieselben Schlaege
+    const SaitenVon saiten = saitenAusInstrumenten();
+    const QStringList loops = mitgelieferteLoops();
+    REQUIRE(loops.size() >= 38);
+    for (const QString& pfad : loops)
+    {
+        CAPTURE(pfad.toStdString());
+        Loop loop;
+        REQUIRE(ladeLoop(pfad, loop));
+        CHECK(loop.klangNamen(saiten) == loop.klangNamen());
+        const Ablauf mit = plane(loop, 44100, saiten);
+        const Ablauf ohne = plane(loop, 44100);
+        CHECK(mit.klangNamen == ohne.klangNamen);
+        REQUIRE(mit.stimmen.size() == ohne.stimmen.size());
+        bool gleich = true;
+        for (std::size_t i = 0; i < mit.stimmen.size(); ++i)
+        {
+            const Stimme& a = mit.stimmen[i];
+            const Stimme& b = ohne.stimmen[i];
+            if (a.klang != b.klang || a.schlaege.size() != b.schlaege.size()) gleich = false;
+            for (std::size_t k = 0; gleich && k < a.schlaege.size(); ++k)
+                if (a.schlaege[k].frame != b.schlaege[k].frame || a.schlaege[k].links != b.schlaege[k].links ||
+                    a.schlaege[k].rechts != b.schlaege[k].rechts || a.schlaege[k].bus != b.schlaege[k].bus)
+                    gleich = false;
+        }
+        CHECK(gleich);
+    }
 }
