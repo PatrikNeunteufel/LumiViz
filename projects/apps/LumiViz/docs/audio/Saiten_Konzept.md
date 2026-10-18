@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.27.0
-> **Datum:** 2026-10-18 (Session 133)
+> **Version:** 0.28.0
+> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W9 a)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -45,6 +45,46 @@ Töne auf einer Saite verbindet (Hammer-on / Pull-off, Slide, Bend — die Planu
 rechnet dafür zwei Noten zu einem Ton). Verworfen: b (nur Strum, Palm mute,
 Tapping). Als Nächstes einzeln: wo Strum eingestellt wird, wie eine Artikulation
 in der Piano-Roll gesetzt wird (Skizze), dann die Tabs.
+
+✅ **S-W2 a** (Patrik S134): **Strum steht am Muster als Vorgabe, jeder Akkord
+kann abweichen.** Das Muster trägt *Strum*: das Richtungsmuster (etwa
+Down-Up-Down-Up) und *Spread*, den Versatz der Saiten in ms; ein neues Muster
+bekommt beides vom Instrument (wie *String choice*, S-M2c a). Ein Akkord — die
+Noten, die am selben Schritt anschlagen, wie im `Saitenplan` — kann in
+Richtung (Down, Up, Together) und Versatz abweichen; ohne Abweichung folgt er
+dem Muster. Die Tabs setzen die Richtung je Akkord. Folge: `.lvloop` Fassung 9.
+Der Klang von Down und Up gehört dem Instrument (eigene Frage). Verworfen: b
+(nur am Muster — die Tabs hätten keinen Platz für ihre Angabe, das Format wäre
+zweimal zu ändern), c (nur am Akkord — ein gleichmäßiges Schlagmuster Akkord
+für Akkord zu setzen), d (am Instrument — bindet die Musik an den Klang, wie
+S-M2c b). Als Nächstes einzeln: wonach das Richtungsmuster geht (Lage im Takt
+oder Reihe der Akkorde), dann wo die Abweichung je Akkord gespeichert wird.
+
+✅ **S-W3 a** (Patrik S134): **Das Richtungsmuster ist ein Muster der Hand über
+die Stellen eines Takts.** Das Muster trägt ein *Hand*-Raster (Schlag, halber
+Schlag, Schritt) und je Stelle eines Takts *Down* oder *Up*; Vorgabe
+abwechselnd D U D U, jede Stelle umstellbar (etwa D D U U D U). Ein Akkord
+nimmt die Richtung der Stelle, auf der er anschlägt; das Muster wiederholt sich
+je Takt. Einfügen oder Löschen eines Akkords ändert die Richtung der anderen
+nicht. Verworfen: b (Folge über die Reihe der Akkorde — jede Einfügung kippt
+alle folgenden), c (nur abwechselnd — nimmt das Einstellen aus der Idee S127).
+**Von Claude gesetzt, nicht vorgelegt:** ein Akkord zwischen zwei Stellen nimmt
+die vorige; Vorgabe des Rasters der halbe Schlag (Achtel bei 4/4).
+
+✅ **S-W4 a** (Patrik S134): **Die Abweichung eines Akkords steht in einer
+Liste am Muster, nach Schritt.** Das Muster trägt *Anschläge*: je Eintrag
+Schritt, Richtung (Down, Up, Together) und Versatz in ms (−1 = wie das
+Muster), nur für abweichende Akkorde. Wer die Noten eines Schritts verschiebt,
+kopiert oder dreht, nimmt den Eintrag mit — `kopiereNoten`, `fuegeNotenEin`,
+`loescheNoten`, `versetzeNoten`, `dreheNoten` (`Auswahl.cpp`), `setzeRaster`
+und die Kopie beim Verlängern (`Bearbeiten.cpp`), das Ziehen einer Note im
+Instrument-Editor; ein Eintrag ohne Note an seinem Schritt fällt in
+`Loop::richte` weg. In der `.lvloop` (Fassung 9) ein eigener Block am Muster.
+Trennung: was die Hand betrifft (Strum), steht am Zeitpunkt; was eine Saite
+betrifft (Palm mute, Let ring, Tapping, Harmonics), an der Note. Verworfen: b
+(an jeder Note — derselbe Wert mehrfach, Widersprüche über eine verdeckte
+Regel), c (an der tiefsten Note — hängt an einer Note, die man leicht
+entfernt).
 
 Das Konzept beschreibt alle drei; gebaut wird in dieser Reihenfolge.
 Begründung: Spielweisen und Tabs fragen beide „welche Saite spielt diesen
@@ -294,6 +334,66 @@ Versatz im Akkord.
   E-Saite 1; Ukulele A-Saite 1. Jedes Feld der Zeile Tuning nennt seine
   Nummer im Tooltip („String 6“). Verworfen: b (1 = die erste der Liste —
   gegen die Sprache der Spieler und die späteren Tabs).
+- ✅ **S-W5 a** (Patrik S134): **Die Skizze der Spielweisen im
+  Instrument-Editor, H bis M** — an A bis G anschließend, alles nur mit Tuning
+  am Instrument (nach S-W2 a, S-W3 a, S-W4 a):
+  - **H** Zeile *Strum* unter der Instrument-Zeile: *Spread* (ms), *Hand*
+    (Schlag, 1/2 beat, Schritt) und je Stelle eines Takts ein Feld ↓ oder ↑;
+    ein Klick dreht es um, ein umgestelltes ist hinterlegt; *Alternate* setzt
+    alle auf ↓ ↑ ↓ ↑ zurück. Nicht „Pattern“ — so heißt im Editor das Muster
+    (*Play pattern*).
+  - **I** die Noten eines Akkords beginnen in der Piano-Roll um den Versatz
+    versetzt (Down: die tiefe Saite zuerst, Up: die hohe); ein feiner Strich am
+    Anschlag zeigt die Richtung.
+  - **J** Spur *Strum* unter *Note vol.*: je Akkord ein Pfeil — grau aus der
+    Hand, blau mit Nadel von dir gesetzt (ein Eintrag in *Anschläge*), „≡“ für
+    Together; ein Klick schaltet Follow hand → Down → Up → Together; eine
+    einzelne Note zeigt einen Punkt.
+  - **K** Artikulationen als Kürzel im Balken hinter der Nummer der Saite:
+    PM (Palm mute), LR (Let ring), T (Tapping), ◇ (Harmonic).
+  - **L** im Rechtsklick-Menü der Noten neben *String*: Untermenü *Strum*
+    (Follow hand, Down, Up, Together, Spread...) für die Akkorde der markierten
+    Noten; Haken *Palm mute*, *Let ring*, *Tapping*, *Harmonic* für die
+    markierten Noten, mit Undo.
+  - **M** die Hinweiszeile nennt Pfeile und Kürzel.
+  - Verworfen: b (Artikulationen in einer eigenen Spur nach Schritt — sagt im
+    Akkord nicht, welche Note gemeint ist; gegen S-W4 a). Passagen setzt man
+    mit Mehrfachauswahl und Haken.
+  - Offen, eigene Fragen: der Klang von Down/Up und der Artikulationen am
+    Instrument (→ S-W6 a); Stufe 2 (Hammer-on / Pull-off, Slide, Bend).
+- ✅ **S-W6 a** (Patrik S134): **Je Spielweise eine Abweichung der vorhandenen
+  Größen, einstellbar am Instrument.** Die Saiten-Schicht (*Extended KS*,
+  *Waveguide*) bekommt im Creator eine Gruppe *Playing*: je Spielweise wenige
+  Regler, jeder verstellt genau eine Größe wie in S-K3 a (etwa *Up level* — das
+  Vorzeichen des Anschlags dreht sich immer um —, *Mute* für Palm mute als
+  Dämpfung des Handballens am Steg, *Tap level* mit dem Bund als Ort und weichem
+  Anschlag, *Harmonic level*); Vorgaben aus Messwerten oder Literatur, je
+  Herleitung belegt. Andere Schichten des Instruments (etwa der Thud der Muted
+  Guitar) klingen bei jeder Spielweise unverändert. Die Spielweise kommt in den
+  Namen des Tons; `.lvinst` Fassung 11. Verworfen: b (feste Beträge im Programm
+  — ein Bass klingt gedämpft länger als eine Gitarre; b ist a's Vorgabe), c
+  (eigene Schichten je Spielweise — Kopien der Saite, Ring time oder Korpus
+  wären in jedem Satz nachzuziehen).
+  **Von Claude gesetzt, nicht vorgelegt:** *Let ring* ist Planung, nicht Klang
+  — die Note klingt bis zur nächsten auf derselben Saite statt bis zu ihrem
+  Ende; *Classic* bekommt keine Gruppe *Playing* (dort wirken nur Strum und Let
+  ring); Regler und Vorgaben im Einzelnen mit der Skizze des Creators.
+- ✅ **S-W7 a** (Patrik S134): **Harmonic: natürliche und künstliche
+  Flageoletts, die natürlichen zuerst.** Die Piano-Roll zeigt den klingenden
+  Ton. Für eine Harmonic-Note sucht die Saitenwahl zuerst ein natürliches
+  Flageolett (leere Saite, Teilton n = 2 … 6, das kleinste n zuerst), sonst ein
+  künstliches (gegriffen auf Bund f, Knoten 12 Bünde darüber: Tonhöhe = leere
+  Saite + Capo + f + 12, greifbar bis f + 12 ≤ `kBuendeMax`); danach bewertet
+  wie bisher (Abstand der Bünde, bei *Follow hand* die Nähe zur Hand). Was sich
+  so nicht bilden lässt, ist nicht greifbar (rot, „!“) und klingt als normaler
+  Ton auf der nächstbesten Saite. Gerechnet wird der echte Teilton (n = 5:
+  −14 Cent). Die Tabs zeigen später den Griff („<12>“), die Piano-Roll den
+  Klang — beide lesen dieselbe Saite und denselben Knoten. Verworfen: b (nur
+  natürliche — zwei Drittel der Töne ab E3 nicht greifbar), c (die Note ist der
+  Griff — eine Note sähe aus wie E3 und klänge wie E4).
+  **Von Claude gesetzt, nicht vorgelegt:** n bis 6; künstlich nur n = 2, keine
+  Pinch harmonics; eine gesetzte Saite gilt, wenn die Note auf ihr als
+  Flageolett entsteht.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
 
 ---
@@ -342,6 +442,34 @@ Neu gegenüber heute; alles Übrige bleibt, wie es ist.
     der Induktivität der Bauart folgt (≈ kHz);
   - Steht ein Tonabnehmer auf *None*, gilt *Pickup select* für den anderen.
 
+### 4b. Spielweisen im Creator (Skizze gebilligt, S-W8 a, Patrik S134)
+
+Nach S-W2 a und S-W6 a; die Zahlen der Skizze waren Platzhalter, die Vorgaben
+werden beim Bau hergeleitet und belegt (wie S-K4 a).
+
+- **N** Zeile **Strum** unter der Zeile Tuning — dasselbe Element wie H im
+  Instrument-Editor (*Spread*, *Hand*, ↓/↑ je Stelle, *Alternate*), mit dem
+  Hinweis „default for new patterns“. Die Vorgabe gehört dem Instrument, nicht
+  der Schicht, wie *String choice*.
+- **O** Gruppe **Playing** unter *Pickups*, einklappbar, nur bei *Extended KS*
+  und *Waveguide*; je Spielweise ein Regler, daneben in Klartext, was er
+  bewirkt:
+  - *Up stroke*: **Up level** („starts from the other side“);
+  - *Palm mute*: **Mute** — Dämpfung des Handballens am Steg; daneben die
+    Klingdauer, die daraus folgt;
+  - *Tapping*: **Tap level** — angeschlagen am Bund;
+  - *Harmonic*: **Touch** — wie fest der Finger auf dem Knoten liegt (statt
+    „Harmonic level“ aus S-W6 a: die Lautstärke des Flageoletts folgt aus der
+    Physik, der Finger ist die verstellbare Größe);
+  - *Let ring* ohne Regler; *Classic* ohne Gruppe.
+- **P** Auswahl **Play as** unter der Klaviatur: Normal, Up stroke, Palm mute,
+  Tapping, Harmonic, Strum chord (der Akkord der leeren Saiten mit der
+  Strum-Vorgabe); ein Tastenklick spielt den Ton so.
+- Verworfen: b (ohne *Play as* — einen Regler drehen, ohne ihn zu hören).
+- **Von Claude gesetzt, nicht vorgelegt:** die Namen *Up level*, *Mute*,
+  *Tap level*, *Touch*; *Play as* gilt für die ganze Klaviatur und wird nicht
+  gespeichert.
+
 ---
 
 ## 5. Baustufen (freigegeben, S-B1 a, Patrik S132)
@@ -359,6 +487,22 @@ am Ende von Stufe 23.
 | 23e | **Creator** nach der Skizze (§4) | Bilder aus den Tests; die Marken ziehen mit der Maus |
 | 23f | **Instrument-Editor** (S-U2, Skizze vor dem Bau): *String choice* am Muster, Anzeige nicht greifbarer Noten | Bilder aus den Tests |
 | 23g | **Mitgelieferte Instrumente:** Vorschlag, welche auf die neuen Verfahren umgestellt werden (vorher/nachher als Hörproben, eigene Vorlage); Handbuch, Sichttest-Liste — **der volle Lauf erst, wenn Tabs mit Akkorden möglich sind** (Patrik S133) | `test_LoopWerte` neu geschrieben nur für die umgestellten |
+
+**Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
+Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
+b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
+Teilschritt eng nach S-P1 a, am Ende der Stufe der Bereichslauf; der volle Lauf
+weiter erst mit Tabs und Akkorden. Danach Stufe 25 (Hammer-on / Pull-off,
+Slide, Bend) mit eigenen Fragen, dann die Tabs.
+
+| Stufe | Inhalt | Beleg |
+|---|---|---|
+| 24a | **Modell und Datei:** am Muster die Strum-Vorgabe (*Spread*, *Hand* mit Raster und ↓/↑ je Stelle) und *Anschläge* (S-W4 a); an der Note die Artikulationen; am Instrument die Strum-Vorgabe; an der Schicht *Playing*; `.lvloop` **Fassung 9**, `.lvinst` **Fassung 11**; die sieben Stellen, die Noten bewegen, nehmen den Eintrag mit, `Loop::richte` räumt verwaiste ab | Rundweg der Dateien; jede mitgelieferte Datei liest und schreibt sich gleich; je Stelle ein Fall „Eintrag wandert mit“; `test_LoopWerte` unverändert |
+| 24b | **Planung:** Richtung je Akkord (Hand, sonst Eintrag), Versatz je Saite in Anschlagreihenfolge, *Let ring*, die Saitenwahl für *Harmonic* (S-W7 a); Richtung und Spielweise im Namen des Tons | Fälle ohne Qt-Anwendung je Regel; Noten ohne Spielweise und Instrumente ohne Saiten Bit für Bit wie vorher (`LUMIVIZ_LOOP_WERTE_GENAU`) |
+| 24c | **Klang** in *Extended KS* und *Waveguide*: Up stroke, Palm mute, Tapping, Harmonic; Vorgaben hergeleitet, mit Quelle | Messungen am gerechneten Ton (Vorzeichen, Klingdauer bei *Mute*, fehlende Teiltöne bei *Harmonic*, Ort des Anschlags beim Tapping); Hörproben |
+| 24d | **Creator** nach §4b (N bis P) | Bilder aus den Tests |
+| 24e | **Instrument-Editor** nach S-W5 a (H bis M) | Bilder aus den Tests |
+| 24f | **Mitgelieferte Instrumente und Loops:** Vorgaben für Strum und *Playing* je Saiteninstrument, Beispiel-Loops mit Strum und Artikulationen, Handbuch, Sichttest-Liste | Bereichslauf unter beiden Compilern; `test_LoopWerte` nur für die geänderten neu geschrieben |
 
 ### 5a. Stufe 23a — Modell und Datei (gebaut S132)
 
