@@ -745,6 +745,27 @@ void InstrumentCreator::setupUI()
         gitter->addWidget(new QLabel(tr("Waveform"), this), zeile, 0);
         gitter->addWidget(m_welle, zeile, 1, 1, 2);
     }
+    // --- Model, nur Plucked string (Stufe 23e; Skizze gebilligt, Patrik S132, S-U1 a)
+    m_saitenModell = new QComboBox(this);
+    m_saitenModell->setObjectName(QStringLiteral("creatorStringModel"));
+    m_saitenModell->addItem(tr("Classic"), static_cast<int>(SaitenModell::Klassisch));
+    m_saitenModell->addItem(tr("Extended KS"), static_cast<int>(SaitenModell::ErweiterterKs));
+    m_saitenModell->addItem(tr("Waveguide"), static_cast<int>(SaitenModell::Wellenleiter));
+    m_saitenModell->setToolTip(tr("How the string is computed.\n"
+                                  "Classic: the plucked string as before, with Damping.\n"
+                                  "Extended KS: pluck position, ring time, stiffness, body.\n"
+                                  "Waveguide: the same, and pickups along the string."));
+    {
+        const int zeile = gitter->rowCount();
+        auto* name = new QLabel(tr("Model"), this);
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_saitenModell, zeile, 1, 1, 2);
+        m_modellZeile = {name, m_saitenModell};
+    }
+    connect(m_saitenModell, &QComboBox::activated, this, [this](int index) {
+        const auto modell = static_cast<SaitenModell>(m_saitenModell->itemData(index).toInt());
+        aendereSchicht([modell](Schicht& s) { s.saitenModell = modell; });
+    });
     connect(m_welle, &QComboBox::activated, this, [this](int index) {
         const auto welle = static_cast<Schwingung>(m_welle->itemData(index).toInt());
         aendereSchicht([welle](Schicht& s) {
@@ -1007,6 +1028,70 @@ void InstrumentCreator::setupUI()
            [](Schicht& i, int w) { i.saiteDaempfung = kDaempfungVon + (kDaempfungBis - kDaempfungVon) * w / 100.0; },
            [](const Schicht& i) { return QString::number(i.saiteDaempfung, 'f', 4); });
     m_daempfung = m_regler.size() - 1;
+
+    // --- String: die Regler nach der Physik, bei Extended KS und Waveguide (Stufe 23e; S-K3 a,
+    // Skizze gebilligt, Patrik S132)
+    m_saitenTitel = titel(tr("String"), "string");
+    const auto prozent = [](double wert) { return QStringLiteral("%1 %").arg(gerundet(wert * 100.0)); };
+    regler(gitter, tr("Pluck position"), "creatorPluckPosition", gerundet(kAnschlagOrtMin * 100.0), gerundet(kAnschlagOrtMax * 100.0),
+           [](const Schicht& i) { return gerundet(i.anschlagOrt * 100.0); }, [](Schicht& i, int w) { i.anschlagOrt = w / 100.0; },
+           [prozent](const Schicht& i) { return prozent(i.anschlagOrt); })
+        .schieber->setToolTip(tr("Where the string is plucked, from the bridge. At 1/n the n-th harmonic is missing"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Pluck"), "creatorPluck", 0, 100, [](const Schicht& i) { return gerundet(i.anschlagHaerte * 100.0); },
+           [](Schicht& i, int w) { i.anschlagHaerte = w / 100.0; }, [prozent](const Schicht& i) { return prozent(i.anschlagHaerte); })
+        .schieber->setToolTip(tr("How the string is plucked: soft like a finger (0 %) or hard like a pick (100 %)"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    // Ring time logarithmisch: 0,1 s bis 30 s ueber 1000 Schritte
+    const double klingSpanne = std::log(kKlingSekundenMax / kKlingSekundenMin);
+    regler(gitter, tr("Ring time"), "creatorRingTime", 0, 1000,
+           [klingSpanne](const Schicht& i) { return gerundet(1000.0 * std::log(i.klingSekunden / kKlingSekundenMin) / klingSpanne); },
+           [klingSpanne](Schicht& i, int w) { i.klingSekunden = kKlingSekundenMin * std::exp(klingSpanne * w / 1000.0); },
+           [](const Schicht& i) {
+               return QStringLiteral("%1 s").arg(i.klingSekunden, 0, 'f', i.klingSekunden < 1.0 ? 2 : 1);
+           })
+        .schieber->setToolTip(tr("How long until the fundamental has faded by 60 dB — the same for every note"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    regler(gitter, tr("High damping"), "creatorHighDamping", 0, 100, [](const Schicht& i) { return gerundet(i.hoehenDaempfung * 100.0); },
+           [](Schicht& i, int w) { i.hoehenDaempfung = w / 100.0; }, [prozent](const Schicht& i) { return prozent(i.hoehenDaempfung); })
+        .schieber->setToolTip(tr("How much faster the high harmonics fade than the fundamental"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Stiffness"), "creatorStiffness", 0, 100, [](const Schicht& i) { return gerundet(i.steifheit * 100.0); },
+           [](Schicht& i, int w) { i.steifheit = w / 100.0; }, [prozent](const Schicht& i) { return prozent(i.steifheit); })
+        .schieber->setToolTip(tr("How stiff the string is: the harmonics lie a little higher than whole multiples, like a piano"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    regler(gitter, tr("String variation"), "creatorStringVariation", 0, 100,
+           [](const Schicht& i) { return gerundet(i.saitenUnterschied * 100.0); }, [](Schicht& i, int w) { i.saitenUnterschied = w / 100.0; },
+           [prozent](const Schicht& i) { return prozent(i.saitenUnterschied); })
+        .schieber->setToolTip(tr("How much the strings of the instrument differ: a lower string is thicker — darker and stiffer.\n"
+                                 "Works only when the instrument has a Tuning"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+
+    // --- Body: der Korpus hinter dem Steg (S-K8 a, S-K10 a)
+    m_korpusTitel = titel(tr("Body"), "body");
+    m_korpus = new QComboBox(this);
+    m_korpus->setObjectName(QStringLiteral("creatorBody"));
+    m_korpus->addItem(tr("None"), static_cast<int>(KorpusArt::Keiner));
+    m_korpus->addItem(tr("Acoustic guitar (Parlor)"), static_cast<int>(KorpusArt::Parlor));
+    m_korpus->addItem(tr("Classical guitar"), static_cast<int>(KorpusArt::Klassik));
+    m_korpus->setToolTip(tr("The body behind the bridge: top, back and air resonate with the string.\n"
+                            "It works on the sound taken at the bridge — a pickup takes the string itself"));
+    {
+        const int zeile = gitter->rowCount();
+        auto* name = new QLabel(tr("Body"), this);
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_korpus, zeile, 1, 1, 2);
+        m_korpusZeile = {name, m_korpus};
+    }
+    connect(m_korpus, &QComboBox::activated, this, [this](int index) {
+        const auto korpus = static_cast<KorpusArt>(m_korpus->itemData(index).toInt());
+        aendereSchicht([korpus](Schicht& s) { s.korpus = korpus; });
+    });
+    regler(gitter, tr("Body amount"), "creatorBodyAmount", 0, 100, [](const Schicht& i) { return gerundet(i.korpusAnteil * 100.0); },
+           [](Schicht& i, int w) { i.korpusAnteil = w / 100.0; }, [prozent](const Schicht& i) { return prozent(i.korpusAnteil); })
+        .schieber->setToolTip(tr("How much of the sound comes through the body; the rest is the string alone"));
+    m_nurPhysik.push_back(m_regler.size() - 1);
+    m_reglerKorpusAnteil = m_regler.size() - 1;
 
     // --- Vibrato: gehoert zu Source und steht deshalb vor den Bausteinen
     m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
@@ -1914,7 +1999,25 @@ void InstrumentCreator::zeigeAlles()
         m_referenz->setVisible(sample);
     }
     m_vibratoTitel->setVisible(!saite && !sample && !rauschen);  // eine Ueberschrift ohne Regler darunter bleibt weg
-    zeige(m_daempfung, saite);
+    // --- die Saite (Stufe 23e): Model bei jeder Saite; bei Classic nur Damping, sonst die
+    // Gruppen String und Body
+    const bool physik = saite && gewaehlte.saitenModell != SaitenModell::Klassisch;
+    for (QWidget* teil : m_modellZeile) teil->setVisible(saite);
+    {
+        const QSignalBlocker ruhe(m_saitenModell);
+        m_saitenModell->setCurrentIndex(m_saitenModell->findData(static_cast<int>(gewaehlte.saitenModell)));
+    }
+    zeige(m_daempfung, saite && !physik);
+    m_saitenTitel->setVisible(physik);
+    m_korpusTitel->setVisible(physik);
+    for (const std::size_t platz : m_nurPhysik) zeige(platz, physik);
+    for (QWidget* teil : m_korpusZeile) teil->setVisible(physik);
+    {
+        const QSignalBlocker ruhe(m_korpus);
+        m_korpus->setCurrentIndex(m_korpus->findData(static_cast<int>(gewaehlte.korpus)));
+    }
+    // ohne Korpus gibt es nichts zu mischen
+    m_regler[m_reglerKorpusAnteil].schieber->setEnabled(gewaehlte.korpus != KorpusArt::Keiner);
     zeigeWeg();
     klappeGruppen();
     zeigeBilder();
@@ -2187,6 +2290,8 @@ void InstrumentCreator::zeigeWeg()
     if (const int st = gerundet(s.tonhoeheStartHt);
         st != 0 && s.tonhoeheZeitMs > 0.0 && !saite && s.schwingung != Schwingung::Rauschen)
         quelle += st > 0 ? QString::fromUtf8(" ↓ %1 st").arg(st) : QString::fromUtf8(" ↑ %1 st").arg(-st);
+    // eine Saite nennt ihr Verfahren: „Plucked string · Waveguide" (Stufe 23e, §4)
+    if (saite) quelle += QString::fromUtf8(" · %1").arg(m_saitenModell->itemText(m_saitenModell->findData(static_cast<int>(s.saitenModell))));
     // eine Shape-Schicht nennt ihre Form: „Shape · Heart"
     if (s.schwingung == Schwingung::Form && !s.form.isEmpty())
         quelle += QString::fromUtf8(" · %1").arg(m_formGelesen == s.form && m_formGefunden ? m_formZeichnung.titel : s.form);

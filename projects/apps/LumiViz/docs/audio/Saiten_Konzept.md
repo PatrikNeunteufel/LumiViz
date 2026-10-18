@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.20.0
+> **Version:** 0.21.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -8,7 +8,7 @@
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
-> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g).
+> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g) und Model, String, Body (§5h).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -583,6 +583,24 @@ am Ende von Stufe 23.
   weniger = die obersten fallen weg; das Tonfeld ist ein Drehfeld mit Pfeilen
   und nimmt getippte Namen (`E2`, `C#4`, `Bb3`, auch klein) oder Zahlen;
   *Scale* zeigt ohne gesetzte Mensur die Vorgabe 648 mm.
+
+### 5h. Stufe 23e, Teilschritt 2 — Model, String, Body (gebaut S133)
+
+- **Im Creator** (`InstrumentCreator`), nur bei *Plucked string*: unter
+  *Waveform* die Auswahl **Model** (Classic, Extended KS, Waveguide). Bei
+  *Classic* steht *Damping* wie bisher; bei den beiden anderen statt seiner
+  die Gruppen **String** (Pluck position, Pluck, Ring time, High damping,
+  Stiffness, String variation) und **Body** (Body: None, Acoustic guitar
+  (Parlor), Classical guitar; Body amount, grau ohne Korpus), beide
+  einklappbar (`string`, `body`). Der Kasten Source nennt das Verfahren:
+  „Plucked string · Waveguide“.
+- **Belegt** in `test_LoopCreatorSaite` (Bilder mit
+  `LUMIVIZ_CREATOR_SAITE_BILD`); in `test_LoopInstrumentEditor` erwartet der
+  Kasten Source jetzt „Plucked string · Classic“.
+- **Von Claude gesetzt:** Ring time logarithmisch über 1000 Schritte (die
+  Mitte ≈ 1,73 s); Pluck position in Prozent der Saite vom Steg, 2–50 %; die
+  Auswahl Body nennt nur die gebauten Korpusse; die Werte von String und Body
+  bleiben in der Schicht, wenn man auf *Classic* zurückstellt.
 
 ---
 

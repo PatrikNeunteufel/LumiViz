@@ -20,6 +20,11 @@
  * Source zeigt Transpose, Start offset, Oscillator (Waveform, Voices, Detune,
  * Pitch sweep — bei Sine die Obertoene, bei Plucked string Damping) und
  * Vibrato; Level den Regler Level. Ziehen ordnet die Bausteine um.
+ * **Plucked string (Stufe 23e; Skizze gebilligt, Patrik S132):** unter
+ * Waveform die Auswahl Model (Classic, Extended KS, Waveguide). Bei Classic
+ * steht Damping wie bisher; sonst die Gruppen **String** (Pluck position,
+ * Pluck, Ring time, High damping, Stiffness, String variation) und **Body**
+ * (Body, Body amount). Der Kasten Source nennt das Verfahren.
  * **Rechts:** das Bild einer Schwingung und die Huellkurve einer Note — die
  * Summe aller Schichten als Linie, die gewaehlte gestrichelt — und eine
  * kleine Klaviatur zum Anspielen; „Selected layer only" laesst die gewaehlte
@@ -419,7 +424,7 @@ public:
     /// Die Gruppen Oscillator und Vibrato (unter Source) lassen sich an
     /// ihrer Ueberschrift ein- und ausklappen; das Programm merkt die Stellung
     /// (`loop/creatorFolded/<schluessel>`), sie gilt fuer jede Schicht und jedes
-    /// Instrument. `schluessel`: `oscillator`, `vibrato` — Envelope und Filter
+    /// Instrument. `schluessel`: `oscillator`, `string`, `body` (Stufe 23e), `vibrato` — Envelope und Filter
     /// sind seit Stufe 16c Bausteine der Zeile Signal path, keine Gruppen mehr.
     void setzeGruppeZu(const QString& schluessel, bool zu);
     [[nodiscard]] bool gruppeZu(const QString& schluessel) const;
@@ -678,6 +683,15 @@ private:
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;
     SaitenZeile* m_saitenZeile = nullptr;  ///< die Zeile Tuning (Stufe 23e)
+    // --- die Saite nach der Physik (Stufe 23e): Model, die Gruppen String und Body
+    QComboBox* m_saitenModell = nullptr;     ///< Model: Classic, Extended KS, Waveguide
+    std::vector<QWidget*> m_modellZeile;     ///< Name und Auswahl Model: nur bei Plucked string
+    QWidget* m_saitenTitel = nullptr;        ///< die Ueberschrift String
+    QWidget* m_korpusTitel = nullptr;        ///< die Ueberschrift Body
+    QComboBox* m_korpus = nullptr;           ///< Body: None, Acoustic guitar (Parlor), Classical guitar
+    std::vector<QWidget*> m_korpusZeile;     ///< Name und Auswahl Body
+    std::vector<std::size_t> m_nurPhysik;    ///< Plaetze in `m_regler`: die Regler von String und Body
+    std::size_t m_reglerKorpusAnteil = 0;    ///< Body amount: grau ohne Korpus
 };
 
 }  // namespace lumi::loop

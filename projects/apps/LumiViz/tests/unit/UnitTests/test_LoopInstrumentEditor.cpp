@@ -1813,7 +1813,7 @@ TEST_SUITE("LoopInstrumentEditor")
         creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Saite; });
         CHECK(weg->kaesten()[2].wert == QStringLiteral("skipped"));
         CHECK(weg->kaesten()[2].matt);
-        CHECK(weg->kaesten()[0].wert == QStringLiteral("Plucked string"));
+        CHECK(weg->kaesten()[0].wert == QString::fromUtf8("Plucked string · Classic"));  // nennt das Verfahren (Stufe 23e)
         creator.aendereSchicht([](Schicht& s) { s.schwingung = Schwingung::Sinus; });
 
         // --- hoechstens acht (K4 a): danach ist Add grau, und nichts kommt mehr dazu
