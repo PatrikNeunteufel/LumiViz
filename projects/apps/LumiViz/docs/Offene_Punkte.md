@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.259.0
-> **Datum:** 2026-10-18 (Session 132)
+> **Version:** 1.260.0
+> **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2799,10 +2799,19 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Mensur). **23d erster Teil gebaut** (Waveguide, Mensur, Tonabnehmer als
   Abtaststellen, Piezo). S-K7 a entschieden; **23d fertig** (Cable aus
   Messwerten, Mensuren der Vorlagen). S-K8 a: **Korpus Parlor gebaut**
-  (gekoppeltes Modell nach Hess; Spitzen 116/219 Hz wie gemessen). Offen:
-  Classical guitar (Wright nennt V und Schallloch nicht — vorzulegen),
-  Hörproben `hoerproben_23c`, `hoerproben_23d`, `hoerproben_korpus`, 23e
-  Creator, S-U2 vor 23f.
+  (gekoppeltes Modell nach Hess; Spitzen 116/219 Hz wie gemessen).
+  **S133:** S-K9 a/S-K10 a — **Korpus Classical guitar** nach Wrights TOP26
+  gebaut; S-P2 a/S-K11 a — **Bemessung der Tonabnehmer** (Fehler im ersten
+  Abtastwert behoben, gleich laut wie die Saite am Steg, Spitze ≤ 0,9);
+  **23e Creator** (Tuning, Model, String mit Saitenbild, Body, Pickups);
+  S-U2 a/S-U2b a — **23f Instrument-Editor** (String choice, Saite je Note,
+  1 = die hohe, Menü String); S-G1 a bis S-G4 a — **23g**: acht mitgelieferte
+  umgestellt (die alten als `(old)`), sechs neue, Vergleichs- und
+  Beispiel-Loops, Handbuch 1.189.0. Patriks Ohr: 23c „passt“, Korpus „passt
+  eigentlich soweit“, 23d war zu leise (behoben). Offen: Patriks Sichttest
+  (`.claude/handover/Sichttest_Saiten.md`), Finger Bass und Pizzicato nach
+  Gehör (S-G4 a), der volle Lauf erst mit Tabs und Akkorden; als Nächstes die
+  Spielweisen (S-W1 a, siehe die Idee in §7) und die Tabs.
 - 🟡 **Loop: weitere Effekte** (Frage Patrik S129). Heute am Clip Filter,
   Distortion, Echo, Reverb (`ClipBaustein`, `loop/Loop.hpp`), an der Schicht
   Filter, Drive, Pan. Nicht geplant waren bisher Flanger, Chorus, Phaser,
@@ -2928,8 +2937,10 @@ Idee Preset-Warmup/Pre-Roll.
   mit“ falsch angegeben, berichtigt S127), die Editoren gar nicht. ✅ Gebaut
   S127 (Loop_Konzept „Die Marke läuft mit“, Sichttest 11 Abschnitt W), im
   Programm nicht gesehen.
-- ⚪ **Idee Patrik S127 — Spielweisen der Saiteninstrumente (später, nur
-  aufgenommen):** Anschlag **down** und **up** klingen verschieden und spielen
+- ⚪ **Idee Patrik S127 — Spielweisen der Saiteninstrumente** (**S133: Ziel
+  entschieden, S-W1 a** — Strum und Palm mute, Let ring, Tapping, Harmonics,
+  Hammer-on / Pull-off, Slide, Bend, in zwei Stufen; Bearbeitung ab S134,
+  `audio/Saiten_Konzept.md` §1): Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
   trägt dafür mehrere Anschlag-Charakteristiken nebeneinander (Artikulationen).
@@ -5984,6 +5995,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.260.0 | 2026-10-18 | Session 133. §6 Saiteninstrumente: Korpus Classical guitar, Bemessung der Tonabnehmer, 23e, 23f, 23g gebaut (S-K9 a bis S-G4 a); §7 Spielweisen: Ziel S-W1 a. |
 | 1.259.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K8 a; Korpus Parlor gebaut (gekoppeltes Modell nach Hess). |
 | 1.258.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K7 a; 23d fertig (Cable, Mensuren der Vorlagen). |
 | 1.257.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K6 a, S-U3 a; Stufe 23d erster Teil gebaut (Waveguide, Tonabnehmer). |

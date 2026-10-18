@@ -36,6 +36,16 @@ wird in drei Schichten, jede auf der vorigen:
 3. **Die Tabs:** Akkord-Tabulaturen als Ansicht **neben** der Piano-Roll,
    nicht statt ihr; eigene oder aus Vorlagen, auf dem Griffbrett verschiebbar.
 
+✅ **S-W1 a** (Patrik S133; Bearbeitung ab der nächsten Session): **Ziel der
+Spielweisen** sind Strum (Richtung, Versatz der Saiten, Muster) und die
+Artikulationen je Note — Palm mute, Let ring, Tapping, Harmonics, Hammer-on /
+Pull-off, Slide, Bend. Gebaut in zwei Stufen: zuerst Strum und was nur den
+einzelnen Ton ändert (Palm mute, Let ring, Tapping, Harmonics), danach, was zwei
+Töne auf einer Saite verbindet (Hammer-on / Pull-off, Slide, Bend — die Planung
+rechnet dafür zwei Noten zu einem Ton). Verworfen: b (nur Strum, Palm mute,
+Tapping). Als Nächstes einzeln: wo Strum eingestellt wird, wie eine Artikulation
+in der Piano-Roll gesetzt wird (Skizze), dann die Tabs.
+
 Das Konzept beschreibt alle drei; gebaut wird in dieser Reihenfolge.
 Begründung: Spielweisen und Tabs fragen beide „welche Saite spielt diesen
 Ton?" — das weiß nur ein Instrument, das seine Saiten und seine Stimmung kennt.
