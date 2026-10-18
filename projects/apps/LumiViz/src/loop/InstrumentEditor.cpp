@@ -17,7 +17,10 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QContextMenuEvent>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
@@ -215,6 +218,100 @@ bool NotenRaster::schalteAnschlag(int schritt)
                                                       : tr("Together");
     uebernimm(neu, m_marken, tr("Strum: %1").arg(name));
     return true;
+}
+
+std::vector<int> NotenRaster::markierteSchritte() const
+{
+    std::vector<int> schritte;
+    for (const Note& note : m_muster.noten)
+        if (istMarkiert(note)) schritte.push_back(note.schritt);
+    std::sort(schritte.begin(), schritte.end());
+    schritte.erase(std::unique(schritte.begin(), schritte.end()), schritte.end());
+    return schritte;
+}
+
+bool NotenRaster::setzeAnschlagart(Anschlagart art)
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty()) return false;
+    Muster neu = m_muster;
+    for (const int schritt : markierteSchritte())
+    {
+        const Anschlag* e = anschlagAn(m_muster, schritt);
+        setzeAnschlag(neu, Anschlag{schritt, art, e != nullptr ? e->spreadMs : -1.0});
+    }
+    if (neu == m_muster) return false;
+    const QString name = art == Anschlagart::Hand  ? tr("Follow hand")
+                         : art == Anschlagart::Ab  ? tr("Down")
+                         : art == Anschlagart::Auf ? tr("Up")
+                                                   : tr("Together");
+    uebernimm(neu, m_marken, tr("Strum: %1").arg(name));
+    return true;
+}
+
+bool NotenRaster::setzeAnschlagSpread(double ms)
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty()) return false;
+    const double wert = ms < 0.0 ? -1.0 : std::clamp(ms, 0.0, kSpreadMaxMs);
+    Muster neu = m_muster;
+    for (const int schritt : markierteSchritte())
+    {
+        const Anschlag* e = anschlagAn(m_muster, schritt);
+        setzeAnschlag(neu, Anschlag{schritt, e != nullptr ? e->art : Anschlagart::Hand, wert});
+    }
+    if (neu == m_muster) return false;
+    uebernimm(neu, m_marken, wert < 0.0 ? tr("Spread: like the pattern") : tr("Spread: %1 ms").arg(wert));
+    return true;
+}
+
+bool NotenRaster::schalteArtikulation(int bit)
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty() || (bit & kArtikulationenAlle) == 0) return false;
+    // tragen sie alle markierten, geht er weg — sonst bekommen ihn alle
+    bool alle = true;
+    for (const Note& note : m_muster.noten)
+        if (istMarkiert(note)) alle = alle && (note.artikulationen & bit) != 0;
+    Muster neu = m_muster;
+    for (Note& note : neu.noten)
+        if (istMarkiert(note)) note.artikulationen = alle ? note.artikulationen & ~bit : note.artikulationen | bit;
+    if (neu == m_muster) return false;
+    uebernimm(neu, m_marken, (alle ? tr("%1 off") : tr("%1 on")).arg(artikulationsName(bit)));
+    return true;
+}
+
+void NotenRaster::frageSpread(double vorgabe)
+{
+    QDialog frage(this);
+    frage.setObjectName(QStringLiteral("strumSpreadQuestion"));
+    frage.setWindowTitle(tr("Spread"));
+    auto* form = new QVBoxLayout(&frage);
+    form->addWidget(new QLabel(tr("From one string to the next, for the chords of the selected notes:"), &frage));
+    auto* wert = new QDoubleSpinBox(&frage);
+    wert->setObjectName(QStringLiteral("strumSpreadValue"));
+    wert->setRange(-1.0, kSpreadMaxMs);
+    wert->setDecimals(1);
+    wert->setSuffix(tr(" ms"));
+    // ganz unten: wie das Muster (die Zeile Strum)
+    wert->setSpecialValueText(tr("Like the pattern (%1 ms)").arg(m_muster.strum.spreadMs));
+    wert->setValue(vorgabe);
+    form->addWidget(wert);
+    auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &frage);
+    connect(knoepfe, &QDialogButtonBox::accepted, &frage, &QDialog::accept);
+    connect(knoepfe, &QDialogButtonBox::rejected, &frage, &QDialog::reject);
+    form->addWidget(knoepfe);
+    if (lumi::ui::fuehreDialogAus(frage) != QDialog::Accepted) return;
+    (void)setzeAnschlagSpread(wert->value());
+}
+
+QString NotenRaster::artikulationsName(int bit)
+{
+    switch (bit)
+    {
+    case kPalmMute: return tr("Palm mute");
+    case kLetRing: return tr("Let ring");
+    case kTapping: return tr("Tapping");
+    case kHarmonic: return tr("Harmonic");
+    default: return {};
+    }
 }
 
 QString NotenRaster::artikulationsKuerzel(int artikulationen)
@@ -1353,6 +1450,59 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
             eintrag->setChecked(gemeinsam == stelle);
             eintrag->setEnabled(geht);
         }
+
+        // L (Stufe 24e, S-W5 a): Strum fuer die Schritte der markierten Noten
+        QMenu* strum = menu.addMenu(tr("Strum"));
+        strum->setObjectName(QStringLiteral("instrumentStrumMenu"));
+        strum->setEnabled(etwas);
+        const std::vector<int> strumSchritte = markierteSchritte();
+        // die gemeinsame Art und der gemeinsame Spread; leer = verschieden
+        std::optional<Anschlagart> art;
+        std::optional<double> spread;
+        for (std::size_t k = 0; k < strumSchritte.size(); ++k)
+        {
+            const Anschlag* e = anschlagAn(m_muster, strumSchritte[k]);
+            const Anschlagart a = e != nullptr ? e->art : Anschlagart::Hand;
+            const double s = e != nullptr ? e->spreadMs : -1.0;
+            if (k == 0)
+            {
+                art = a;
+                spread = s;
+            }
+            if (art && *art != a) art.reset();
+            if (spread && *spread != s) spread.reset();
+        }
+        const std::pair<Anschlagart, QString> arten[] = {{Anschlagart::Hand, tr("Follow hand")},
+                                                         {Anschlagart::Ab, tr("Down")},
+                                                         {Anschlagart::Auf, tr("Up")},
+                                                         {Anschlagart::Zugleich, tr("Together")}};
+        for (const auto& [wert, name] : arten)
+        {
+            QAction* a = strum->addAction(name, this, [this, wert] { (void)setzeAnschlagart(wert); });
+            a->setCheckable(true);
+            a->setChecked(art && *art == wert);
+        }
+        strum->addSeparator();
+        const QString spreadText = spread && *spread >= 0.0 ? tr("Spread... (%1 ms)").arg(*spread)
+                                   : spread ? tr("Spread... (like the pattern, %1 ms)").arg(m_muster.strum.spreadMs)
+                                            : tr("Spread...");
+        strum->addAction(spreadText, this, [this, spread] { frageSpread(spread.value_or(-1.0)); });
+
+        // L: die Artikulationen der markierten Noten als Haken
+        menu.addSeparator();
+        std::vector<std::size_t> alleMarkierten;
+        for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+            if (istMarkiert(m_muster.noten[i])) alleMarkierten.push_back(i);
+        for (const int bit : {kPalmMute, kLetRing, kTapping, kHarmonic})
+        {
+            bool alleTragen = !alleMarkierten.empty();
+            for (const std::size_t i : alleMarkierten)
+                alleTragen = alleTragen && (m_muster.noten[i].artikulationen & bit) != 0;
+            QAction* haken = menu.addAction(artikulationsName(bit), this, [this, bit] { (void)schalteArtikulation(bit); });
+            haken->setCheckable(true);
+            haken->setChecked(alleTragen);
+            haken->setEnabled(etwas);
+        }
     }
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
@@ -1533,8 +1683,11 @@ void InstrumentEditor::setupUI()
     koerper->setColumnStretch(0, 1);
     aussen->addLayout(koerper, 1);
     // G (Stufe 23f, S-U2 a): was die Zeichen an den Noten heissen — nur mit Saiten
+    // M (Stufe 24e, S-W5 a): dazu die Pfeile der Spur Strum und die Kuerzel der Artikulationen
     m_saitenHinweis = new QLabel(tr("number = string (1 = highest) · pin = set by you · ! = not playable, sounds on the "
-                                    "nearest string · right-click a note: String"),
+                                    "nearest string · Strum lane: ↓ ↑ grey = from the hand, blue = set by you, ≡ = "
+                                    "together, click a chord to change it · PM palm mute · LR let ring · T tapping · ◇ "
+                                    "harmonic · right-click a note: String, Strum, playing styles"),
                                  this);
     m_saitenHinweis->setObjectName(QStringLiteral("instrumentStringHint"));
     m_saitenHinweis->setEnabled(false);

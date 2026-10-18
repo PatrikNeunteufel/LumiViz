@@ -166,6 +166,17 @@ public:
     /// schaltet Follow hand → Down → Up → Together. false = an diesem Schritt
     /// schlaegt kein Akkord an (keine Saiten, keine oder nur eine Note).
     bool schalteAnschlag(int schritt);
+    /// L: im Menue der Noten das Untermenue *Strum* (fuer die Schritte, an denen
+    /// markierte Noten anschlagen) und die Haken der Artikulationen (fuer die
+    /// markierten Noten) — je Wahl ein Schritt fuer Undo. false = nichts
+    /// markiert, keine Saiten, oder es aendert nichts.
+    bool setzeAnschlagart(Anschlagart art);
+    /// *Spread...*: der Abstand zweier Saiten fuer diese Akkorde; −1 = wie das Muster.
+    bool setzeAnschlagSpread(double ms);
+    /// Tragen alle markierten Noten die Artikulation, geht sie weg — sonst bekommen sie alle.
+    bool schalteArtikulation(int bit);
+    /// Der Name einer Artikulation im Menue: Palm mute, Let ring, Tapping, Harmonic.
+    [[nodiscard]] static QString artikulationsName(int bit);
     /// Oberkante der Spur Strum; ohne Saiten `height()` (es gibt sie nicht).
     [[nodiscard]] int strumOben() const { return height() - strumHoehe(); }
     [[nodiscard]] int strumHoehe() const { return m_saiten.istSaiteninstrument() ? kStrumHoehe : 0; }
@@ -313,6 +324,10 @@ private:
     /// Griffe und Anschlaege je Note in der Reihenfolge des Musters — geplant auf
     /// einer sortierten Kopie (waehrend eines Zugs ist das Muster nicht gerichtet).
     void plane(std::vector<Griff>* griffe, std::vector<Anschlagplan>* anschlaege) const;
+    /// Die Schritte, an denen markierte Noten anschlagen, je einmal, aufsteigend.
+    [[nodiscard]] std::vector<int> markierteSchritte() const;
+    /// *Spread...*: der Dialog `strumSpreadQuestion` (ueber `fuehreDialogAus`).
+    void frageSpread(double vorgabe);
 };
 
 class InstrumentEditor : public QWidget

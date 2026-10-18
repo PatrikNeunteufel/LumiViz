@@ -22,11 +22,18 @@
 #include "loop/Saiten.hpp"
 #include "loop/Spielweise.hpp"
 #include "loop/StrumZeile.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 
+#include <QAction>
 #include <QApplication>
 #include <QComboBox>
+#include <QContextMenuEvent>
 #include <QCoreApplication>
+#include <QDialog>
 #include <QDir>
+#include <QDoubleSpinBox>
+#include <QLabel>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QTemporaryDir>
 
@@ -276,6 +283,148 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum, ein Klick sc
         datei.replace(QStringLiteral(".png"), QStringLiteral("_spur.png"));
         CHECK(raster.grab().save(datei));
     }
+}
+
+TEST_CASE("Loop Instrument Editor Spielweise: L und M — das Menue Strum, die Haken der Artikulationen, die Hinweiszeile")
+{
+    Anwendung anwendung;
+    Saitensatz saiten = gitarre().saiten;
+    saiten.strum = Strum{};
+    Muster mel;
+    mel.art = MusterArt::Instrument;
+    uebernimmVorgaben(mel, saiten);
+    mel.noten = {Note{0, 2, 40, 1.0, -1}, Note{0, 2, 45, 1.0, -1}, Note{0, 2, 50, 1.0, -1},
+                 Note{2, 2, 40, 1.0, -1}, Note{2, 2, 45, 1.0, -1}, Note{2, 2, 50, 1.0, -1}, Note{4, 2, 40, 1.0, -1}};
+    NotenRaster raster;
+    raster.setSaiten(saiten);
+    raster.setMuster(mel, 4, 4);
+    raster.resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
+                  NotenRaster::kKopfHoehe + 20 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe +
+                      NotenRaster::kStrumHoehe);
+    raster.zeigeHoehe(45);
+    QStringList gemeldet;
+    QObject::connect(&raster, &NotenRaster::geaendert, &raster,
+                     [&](const Muster&, const QString& was) { gemeldet << was; });
+
+    // nichts markiert: nichts zu tun
+    CHECK_FALSE(raster.setzeAnschlagart(Anschlagart::Auf));
+    CHECK_FALSE(raster.schalteArtikulation(kPalmMute));
+
+    // markiert: eine Note des ersten Akkords und die einzelne E2 — zwei Schritte
+    raster.markiere({NotenOrt{0, 45}, NotenOrt{4, 40}});
+    REQUIRE(raster.setzeAnschlagart(Anschlagart::Auf));
+    CHECK(gemeldet.back() == QStringLiteral("Strum: Up"));
+    REQUIRE(anschlagAn(raster.muster(), 0) != nullptr);
+    CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Auf);
+    REQUIRE(anschlagAn(raster.muster(), 4) != nullptr);  // auch die einzelne Note: so bekommt eine Melodie ihre Richtung
+    CHECK(anschlagAn(raster.muster(), 2) == nullptr);
+    // Spread: die Art bleibt; −1 = wie das Muster
+    REQUIRE(raster.setzeAnschlagSpread(30.0));
+    CHECK(anschlagAn(raster.muster(), 0)->spreadMs == 30.0);
+    CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Auf);
+    CHECK(gemeldet.back() == QStringLiteral("Spread: 30 ms"));
+    CHECK(raster.anschlaege()[2].versatzMs == doctest::Approx(0.0));  // Up: D3 zuerst
+    CHECK(raster.anschlaege()[0].versatzMs == doctest::Approx(60.0));
+
+    // die Haken: alle markierten bekommen Palm mute, beim zweiten Mal geht es weg
+    REQUIRE(raster.schalteArtikulation(kPalmMute));
+    CHECK(gemeldet.back() == QStringLiteral("Palm mute on"));
+    CHECK(raster.muster().noten[1].artikulationen == kPalmMute);
+    CHECK(raster.muster().noten[6].artikulationen == kPalmMute);
+    CHECK(raster.muster().noten[0].artikulationen == 0);  // nicht markiert
+    REQUIRE(raster.schalteArtikulation(kPalmMute));
+    CHECK(gemeldet.back() == QStringLiteral("Palm mute off"));
+    CHECK(raster.muster().noten[1].artikulationen == 0);
+
+    // mit dem Menue: Together aus dem Untermenue Strum, dann der Haken Harmonic
+    QStringList strumEintraege;
+    QStringList haken;
+    const auto rechtsklick = [&] {
+        const QPoint aufNote(raster.xVonSchritt(4) + 6, raster.yVonHoehe(40) + NotenRaster::kZeilenHoehe / 2);
+        QContextMenuEvent rechts(QContextMenuEvent::Mouse, aufNote, raster.mapToGlobal(aufNote));
+        QCoreApplication::sendEvent(&raster, &rechts);
+    };
+    lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+        auto* strum = menue.findChild<QMenu*>(QStringLiteral("instrumentStrumMenu"));
+        REQUIRE(strum != nullptr);
+        QAction* together = nullptr;
+        for (QAction* a : strum->actions())
+        {
+            if (a->isSeparator()) continue;
+            strumEintraege << a->text() + (a->isChecked() ? QStringLiteral(" [x]") : QString());
+            if (a->text() == QStringLiteral("Together")) together = a;
+        }
+        for (QAction* a : menue.actions())
+            if (a->isCheckable()) haken << a->text();
+        return together;
+    });
+    rechtsklick();
+    MESSAGE("Menue Strum: " << strumEintraege.join(QStringLiteral(" | ")).toStdString());
+    CHECK(strumEintraege == QStringList{QStringLiteral("Follow hand"), QStringLiteral("Down"), QStringLiteral("Up [x]"),
+                                        QStringLiteral("Together"), QStringLiteral("Spread... (30 ms)")});
+    CHECK(haken == QStringList{QStringLiteral("Palm mute"), QStringLiteral("Let ring"), QStringLiteral("Tapping"),
+                               QStringLiteral("Harmonic")});
+    CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Zugleich);
+    CHECK(anschlagAn(raster.muster(), 0)->spreadMs == 30.0);
+    lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+        for (QAction* a : menue.actions())
+            if (a->text() == QStringLiteral("Harmonic")) return a;
+        return nullptr;
+    });
+    rechtsklick();
+    CHECK(gemeldet.back() == QStringLiteral("Harmonic on"));
+    CHECK(raster.muster().noten[6].artikulationen == kHarmonic);
+
+    // Spread... ueber den Dialog: zurueck auf „wie das Muster"
+    lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+        for (QAction* a : menue.findChild<QMenu*>(QStringLiteral("instrumentStrumMenu"))->actions())
+            if (a->text().startsWith(QStringLiteral("Spread"))) return a;
+        return nullptr;
+    });
+    lumi::ui::setzeDialogBeobachterFuerTests([&](QDialog& dialog) {
+        CHECK(dialog.objectName() == QStringLiteral("strumSpreadQuestion"));
+        auto* wert = dialog.findChild<QDoubleSpinBox*>(QStringLiteral("strumSpreadValue"));
+        REQUIRE(wert != nullptr);
+        CHECK(wert->value() == 30.0);
+        wert->setValue(wert->minimum());
+        CHECK(wert->text().startsWith(QStringLiteral("Like the pattern")));
+        return static_cast<int>(QDialog::Accepted);
+    });
+    rechtsklick();
+    lumi::ui::setzeDialogBeobachterFuerTests({});
+    lumi::ui::setzeMenueBeobachterFuerTests({});
+    CHECK(gemeldet.back() == QStringLiteral("Spread: like the pattern"));
+    CHECK(anschlagAn(raster.muster(), 0)->spreadMs == -1.0);
+    CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Zugleich);
+
+    // ohne Saiten: kein Strum und keine Haken im Menue
+    raster.setSaiten(Saitensatz{});
+    bool hatStrum = true;
+    int hakenOhne = 0;
+    lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {
+        hatStrum = menue.findChild<QMenu*>(QStringLiteral("instrumentStrumMenu")) != nullptr;
+        for (QAction* a : menue.actions())
+            if (a->isCheckable()) ++hakenOhne;
+        return nullptr;
+    });
+    raster.zeigeHoehe(45);
+    rechtsklick();
+    lumi::ui::setzeMenueBeobachterFuerTests({});
+    CHECK_FALSE(hatStrum);
+    CHECK(hakenOhne == 0);
+    CHECK_FALSE(raster.setzeAnschlagart(Anschlagart::Ab));
+
+    // M: die Hinweiszeile nennt Pfeile und Kuerzel
+    InstrumentEditor editor;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    const QString datei = QDir(ordner.path()).filePath(QStringLiteral("steel.lvinst"));
+    REQUIRE(speichereInstrument(gitarre(), datei));
+    REQUIRE(editor.zeige(probe(datei), QStringLiteral("Mel")));
+    const QString hinweis = editor.findChild<QLabel*>(QStringLiteral("instrumentStringHint"))->text();
+    CHECK(hinweis.contains(QStringLiteral("Strum lane")));
+    CHECK(hinweis.contains(QStringLiteral("PM palm mute")));
+    CHECK(hinweis.contains(QString::fromUtf8("◇ harmonic")));
 }
 
 TEST_CASE("Loop Instrument Editor Spielweise: H — die Zeile Strum des Musters, im Raster des Loops")

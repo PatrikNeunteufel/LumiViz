@@ -1133,7 +1133,7 @@ Nach der Skizze §4b (S-W8 a), alles nur bei einem Instrument mit Tuning.
   einem Instrument ohne Tuning: jede Taste ihr Ton; *Strum chord* hängt nicht
   an der angeklickten Taste.
 
-### 5q. Stufe 24e — die Spielweisen im Instrument-Editor (im Bau, S135)
+### 5q. Stufe 24e — die Spielweisen im Instrument-Editor (gebaut S135)
 
 Nach der Skizze S-W5 a (H bis M), in vier Teilschritten: H mit dem Wechsel des
 Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
@@ -1182,6 +1182,23 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   Spur nicht schalten (Punkt, blau, wenn sie einen Eintrag trägt — die Skizze
   nennt nur den Punkt; die Richtung einer Melodienote wird mit L im Menü
   gesetzt); die Höhe der Spur.
+- **Teilschritt 4 (gebaut S135; 24e fertig):** **L** im Menü der Noten hinter
+  *String* das Untermenü *Strum* (`instrumentStrumMenu`): *Follow hand*,
+  *Down*, *Up*, *Together* (`setzeAnschlagart`) und *Spread...* (Dialog
+  `strumSpreadQuestion`, ganz unten „Like the pattern“ = −1;
+  `setzeAnschlagSpread`) — für jeden Schritt, an dem eine markierte Note
+  anschlägt, auch eine einzelne (so bekommt eine Melodienote ihre Richtung);
+  ein Haken steht, wo alle diese Schritte gleich sind. Danach die Haken *Palm
+  mute*, *Let ring*, *Tapping*, *Harmonic* (`schalteArtikulation`): tragen alle
+  markierten Noten sie, geht sie weg, sonst bekommen sie alle. Je Wahl ein
+  Undo-Schritt („Strum: Up“, „Spread: 30 ms“, „Palm mute on“). Ohne Saiten
+  fehlt beides. **M** die Hinweiszeile nennt die Spur (Pfeile grau/blau, ≡),
+  die Kürzel und „right-click a note: String, Strum, playing styles“.
+  **Belegt** in `test_LoopEditorSpielweise` (ein Fall mehr, über das Menü und
+  den Dialog); eng (38 Fälle) unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*`
+  (266 Fälle) unter Release-clang grün.
+  **Von Claude gesetzt, nicht vorgelegt:** die Namen im Menü und der Undo-Texte;
+  *Strum* im Menü gilt auch für einzelne Noten (die Spur J nicht).
 
 ---
 
