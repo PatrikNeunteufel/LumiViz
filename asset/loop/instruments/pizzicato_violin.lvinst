@@ -1,0 +1,45 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 10,
+    "title": "Pizzicato Violin",
+    "category": "plucked",
+    "genres": ["Classical"],
+    "description": "Four violin strings plucked with the finger (Extended KS, no body yet), short.",
+    "level": 1.0,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 1,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 80,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "stringModel": "extendedKS",
+            "body": "none",
+            "pluck": 0.5,
+            "pluckPosition": 0.3,
+            "ringTime": 0.8,
+            "highDamping": 0.6
+        }
+    ],
+    "strings": {
+        "open": [55, 62, 69, 76],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 327
+    }
+}

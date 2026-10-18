@@ -121,16 +121,16 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     // (S123: aus Formen, aus Samples und Drums dazu — wer Instrumente dazulegt, stellt die Zahlen nach,
     // wie in test_LoopInstrument)
     CHECK(fenster.unter(QStringLiteral("Keys")).size() == 9);  // S133 (Stufe 23g): die alten als <name>_old
-    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 14);
+    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     CHECK(fenster.unter(QStringLiteral("Lead")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Pads and strings")).size() == 9);
-    CHECK(fenster.unter(QStringLiteral("Plucked")).size() == 17);
+    CHECK(fenster.unter(QStringLiteral("Plucked")).size() == 22);
     CHECK(fenster.unter(QStringLiteral("Wind")).size() == 7);
     CHECK(fenster.unter(QStringLiteral("Percussion")).size() == 10);
     CHECK(fenster.unter(QStringLiteral("Drums")).size() == 20);  // Stufe 11f, S123, drei Besen S124
     CHECK(fenster.unter(QStringLiteral("Unusual")).size() == 8);
     CHECK(fenster.unter(QStringLiteral("My files")).isEmpty());
-    CHECK(kopfText(fenster, QStringLiteral("Bass")) == QStringLiteral("Bass  (14)"));
+    CHECK(kopfText(fenster, QStringLiteral("Bass")) == QStringLiteral("Bass  (15)"));
     CHECK(kopfText(fenster, QStringLiteral("My files")) == QStringLiteral("My files"));
     // unter einer Art stehen sie nach Titel
     CHECK(fenster.unter(QStringLiteral("Wind")) ==
@@ -277,7 +277,7 @@ TEST_CASE("Loop Instruments-Fenster: Suche und Genre — was nicht passt, versch
     // „All" und die Genres, die die Instrumente tragen
     CHECK(genre->itemText(0) == QStringLiteral("All"));
     CHECK(genre->count() == bekannteGenres().size() + 1);
-    CHECK(bekannteGenres().size() == 28);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py
+    CHECK(bekannteGenres().size() == 29);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py; S133: Classical (pizzicato_demo)
     CHECK(bekannteGenres().contains(QStringLiteral("Funk")));
 
     // --- Genre: die vier aus dem Funk-Loop, je unter ihrer Art
@@ -321,7 +321,7 @@ TEST_CASE("Loop Instruments-Fenster: Suche und Genre — was nicht passt, versch
     fenster.setzeSuche(QStringLiteral("gibt es nicht"));
     CHECK(fenster.zeilen().isEmpty());
     fenster.setzeSuche(QString());
-    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 14);
+    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     CHECK(fenster.zeilen().last() == QStringLiteral("[My files]"));
 }
 
@@ -337,7 +337,7 @@ TEST_CASE("Loop Instruments-Fenster: My files — die eigenen aus dem Benutzeror
     CHECK(fenster.unter(QStringLiteral("My files")) == QStringList{QStringLiteral("user:mein_bass")});
     CHECK(kopfText(fenster, QStringLiteral("My files")) == QStringLiteral("My files  (1)"));
     // ein eigenes steht nur dort, nicht unter seiner Art — auch wenn es Bass ist
-    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 14);
+    CHECK(fenster.unter(QStringLiteral("Bass")).size() == 15);
     // sein Genre steht im Filter, und der Filter gilt auch fuer es
     auto* genre = fenster.findChild<QComboBox*>(QStringLiteral("instrumentPaletteGenre"));
     CHECK(genre->findData(QStringLiteral("Garage")) > 0);

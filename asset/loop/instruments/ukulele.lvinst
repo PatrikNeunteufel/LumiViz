@@ -1,0 +1,46 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 10,
+    "title": "Ukulele",
+    "category": "plucked",
+    "genres": ["World"],
+    "description": "Four nylon strings in re-entrant tuning, G C E A (Extended KS), short and bright.",
+    "level": 0.878,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 100,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "stringModel": "extendedKS",
+            "body": "none",
+            "pluck": 0.4,
+            "pluckPosition": 0.25,
+            "ringTime": 1.2,
+            "highDamping": 0.4,
+            "stiffness": 0.05
+        }
+    ],
+    "strings": {
+        "open": [67, 60, 64, 69],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 381
+    }
+}

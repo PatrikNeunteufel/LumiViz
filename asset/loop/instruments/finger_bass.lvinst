@@ -1,0 +1,77 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 10,
+    "title": "Finger Bass",
+    "category": "bass",
+    "genres": ["Classical", "Jazz", "Rock", "World"],
+    "description": "Four strings plucked with the fingers (Waveguide) on two single coils, a sine underneath.",
+    "level": 1.0,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 80,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "stringModel": "waveguide",
+            "body": "none",
+            "pluck": 0.4,
+            "pluckPosition": 0.2,
+            "ringTime": 2.0,
+            "highDamping": 0.5,
+            "pickupNeck": {
+                "type": "singleCoil",
+                "position": 150
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 40
+            },
+            "pickupSelect": "both",
+            "cable": 500
+        },
+        {
+            "name": "Wood",
+            "on": true,
+            "level": 0.7,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "sine",
+            "harmonics": [0.2],
+            "voices": 1,
+            "detune": 0,
+            "attack": 5,
+            "decay": 350,
+            "sustain": 0.3,
+            "release": 80,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996
+        }
+    ],
+    "strings": {
+        "open": [28, 33, 38, 43],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 864
+    }
+}

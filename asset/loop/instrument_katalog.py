@@ -53,6 +53,7 @@ KATALOG = {
     "round_bass": ("bass", "A soft sine with two overtones and a short finger noise."),
     "upright_bass": ("bass", "Four strings plucked softly (Extended KS, no body yet) with a woody sine underneath."),
     "upright_bass_old": ("bass", "The upright bass before stage 23: a plucked string with a woody sine body."),
+    "finger_bass": ("bass", "Four strings plucked with the fingers (Waveguide) on two single coils, a sine underneath."),
     # --- Lead
     "lead": ("lead", "A bright square with vibrato."),
     "trance_lead": ("lead", "Detuned saws in two octaves with a driven square for bite."),
@@ -76,6 +77,12 @@ KATALOG = {
     "muted_guitar_old": ("plucked", "The muted guitar before stage 23: a heavily damped plucked string with a short thud."),
     "nylon_guitar_old": ("plucked", "The nylon guitar before stage 23: a plucked string with a warm triangle underneath."),
     "overdrive_guitar_old": ("plucked", "The overdrive guitar before stage 23: three driven plucked strings."),
+    # neu seit S133 (Stufe 23g, Entscheid S-G3 a) — `make_saiten_instrumente.py`
+    "jazz_guitar": ("plucked", "Six strings plucked softly (Waveguide) on a neck humbucker, warm and dark."),
+    "ukulele": ("plucked", "Four nylon strings in re-entrant tuning, G C E A (Extended KS), short and bright."),
+    "drop_d_guitar": ("plucked", "Six driven strings with the low string down to D (Waveguide), on a bridge humbucker."),
+    "pizzicato_violin": ("plucked", "Four violin strings plucked with the finger (Extended KS, no body yet), short."),
+    "piezo_guitar": ("plucked", "Six strings (Waveguide) taken at the bridge by a piezo, like an acoustic on stage."),
     "pluck": ("plucked", "A square through a filter that snaps shut, without sustain."),
     "trance_pluck": ("plucked", "Detuned saws in two octaves through a snapping filter, over a short sine."),
     # --- Wind

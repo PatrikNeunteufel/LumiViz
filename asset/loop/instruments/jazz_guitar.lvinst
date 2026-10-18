@@ -1,0 +1,55 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 10,
+    "title": "Jazz Guitar",
+    "category": "plucked",
+    "genres": ["Jazz"],
+    "description": "Six strings plucked softly (Waveguide) on a neck humbucker, warm and dark.",
+    "level": 0.51,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 150,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "stringModel": "waveguide",
+            "body": "none",
+            "pluck": 0.45,
+            "pluckPosition": 0.2,
+            "ringTime": 2.5,
+            "highDamping": 0.55,
+            "pickupNeck": {
+                "type": "humbucker",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "none",
+                "position": 41
+            },
+            "pickupSelect": "neck",
+            "cable": 700
+        }
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
+}

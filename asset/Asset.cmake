@@ -50,7 +50,7 @@ lumi_asset(composer         OHNE "README.md")
 # Loop: das Kit, die mitgelieferten Samples, die Instrumente, die Beispiel-Loops.
 # Nicht: make_*.py, README.md und Arbeitsdateien im Ordner (test.lvloop,
 # DDdemo.lvloop, ...) — ein Beispiel heisst <name>_demo.lvloop oder liegt unter
-# genres/. Die Samples unter samples/ sind die eine Ausnahme von „nur eigene
+# genres/; unter vergleich/ die Vergleiche alt gegen neu (S133, make_saiten_loops.py). Die Samples unter samples/ sind die eine Ausnahme von „nur eigene
 # Werke": fremde Aufnahmen unter CC BY 3.0, CC BY 4.0 und CC0 (Entscheid 2 a, Patrik S123) — ihre
 # Nennung samples/CREDITS.md geht mit, und THIRD_PARTY_NOTICES.md fuehrt sie.
 lumi_asset(loop
@@ -60,6 +60,7 @@ lumi_asset(loop
         "kits/*.lvkit"
         "instruments/*.lvinst"
         "genres/*.lvloop"
+        "vergleich/*.lvloop"
         "*_demo.lvloop")
 
 # Formen (shape/Kontur): die mitgelieferten Zeichnungen. Nicht: make_contours.py

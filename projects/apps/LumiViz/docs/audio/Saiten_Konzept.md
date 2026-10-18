@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.25.0
+> **Version:** 0.26.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -722,6 +722,31 @@ am Ende von Stufe 23.
   (Triangle) von 0,4 auf 0,6 — gemessen −0,5 dB gegen vorher. Das Skript
   setzt andere Schichten über `ANDERE` (nach ihrem Namen). Verworfen: b (so
   lassen, −3,7 dB — die Mischung der Loops kippte).
+- ✅ **S-G3 a** (Patrik S133): **sechs neue Saiteninstrumente** — Jazz Guitar
+  (Humbucker am Hals), Finger Bass (zwei Single coils, dazu die Sinus-Schicht
+  des Upright), Ukulele (Vorlage, 381 mm), Drop D Guitar (Humbucker am Steg,
+  Drive), Pizzicato Violin (Vorlage Violin, ohne Body), Piezo Guitar (Piezo am
+  Steg); Werte in `NEU` von `make_saiten_instrumente.py`. **Pegel wie die
+  vergleichbaren** (dasselbe Muster, Effektivwert der Spur): Jazz und Piezo wie
+  die Nylon, Drop D wie die Overdrive, Ukulele wie die Guitar — auf 1 dB; an
+  der Grenze `level` 1,0 bleiben **Finger Bass −2,6 dB** (gegen den Upright)
+  und **Pizzicato Violin −4,6 dB** (gegen die Guitar; Ring time 1,2 s und
+  Pluck 70 % machten sie nicht lauter). Verworfen: b (nur vier), c (erst mit
+  den Tabs).
+- ✅ **S-G4 a** (Patrik S133): **so lassen** — beim Pizzicato zählt der
+  Anschlag (Spitze −16,3 gegen −14,5 dBFS der Guitar, 1,8 dB), nicht der
+  Effektivwert über lange Notenwerte; nachgestellt wird nach Patriks Ohr an
+  den Beispiel-Loops. Verworfen: b (Sinus lauter, Ring time um 2 s — ändert
+  den gehörten Klang, und keine bestehende Mischung kippt).
+- **Loops** (Wunsch Patrik S133), `asset/loop/make_saiten_loops.py`:
+  - `vergleich/*.lvloop` — bossa, funk, disco, rock_demo, instrument_demo je
+    zweimal: zuerst mit den `(old)`, dann mit den neuen; die übrigen Spuren
+    gleich. In `Asset.cmake` eingetragen; sie zählen nicht für die Genres.
+  - vier Beispiele: `jazz_guitar_demo` (Jazz, ii-V-I, Finger Bass läuft),
+    `ukulele_demo` (World, mit Piezo Guitar und Finger Bass), `drop_d_demo`
+    (Rock), `pizzicato_demo` (Classical, zwei Violinen und Bass) — daraus die
+    Genres der sechs; ein Genre mehr (Classical, jetzt 29).
+  - Hörproben aller neun unter `.claude/handover/hoerproben_saiten_loops/`.
 - **Loop Werte** neu geschrieben: geändert nur die acht, ihre `_old` (Bit für
   Bit die Werte von vorher, 24 / 24) und die 15 Loops, die sie nutzen.
 - **Tests:** 101 mitgelieferte Instrumente (keys 9, bass 14, plucked 17);

@@ -279,7 +279,11 @@ namespace
 const QStringList kMitSaiten = {QStringLiteral("guitar.lvinst"),       QStringLiteral("nylon_guitar.lvinst"),
                                 QStringLiteral("clean_guitar.lvinst"), QStringLiteral("muted_guitar.lvinst"),
                                 QStringLiteral("overdrive_guitar.lvinst"), QStringLiteral("upright_bass.lvinst"),
-                                QStringLiteral("slap_bass.lvinst")};
+                                QStringLiteral("slap_bass.lvinst"),
+                                // neu (S-G3 a)
+                                QStringLiteral("jazz_guitar.lvinst"),  QStringLiteral("finger_bass.lvinst"),
+                                QStringLiteral("ukulele.lvinst"),      QStringLiteral("drop_d_guitar.lvinst"),
+                                QStringLiteral("pizzicato_violin.lvinst"), QStringLiteral("piezo_guitar.lvinst")};
 }  // namespace
 
 TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich und schreibt sich gleich — Saiten nur die aus 23g")

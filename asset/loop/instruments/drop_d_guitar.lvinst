@@ -1,0 +1,52 @@
+{
+    "format": "lumiviz-instrument",
+    "version": 10,
+    "title": "Drop D Guitar",
+    "category": "plucked",
+    "genres": ["Rock"],
+    "description": "Six driven strings with the low string down to D (Waveguide), on a bridge humbucker.",
+    "level": 0.795,
+    "layers": [
+        {
+            "name": "String",
+            "on": true,
+            "level": 1.0,
+            "transpose": 0,
+            "startOffset": 0,
+            "drive": 0.6,
+            "waveform": "string",
+            "harmonics": [],
+            "voices": 1,
+            "detune": 0,
+            "attack": 2,
+            "decay": 200,
+            "sustain": 0.7,
+            "release": 120,
+            "filterCutoff": 0,
+            "filterEnvelope": 0,
+            "vibratoRate": 0,
+            "vibratoDepth": 0,
+            "vibratoDelay": 0,
+            "damping": 0.996,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 4.0,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "humbucker",
+                "position": 41
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
+        }
+    ],
+    "strings": {
+        "open": [38, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
+}
