@@ -109,6 +109,24 @@ inline constexpr double kHumbuckerAbstandMm = 18.0;
     return AbnehmerArt::Keiner;
 }
 
+/// Body: der Korpus hinter dem Steg (Stufe 23c/23d; Entscheide S-K4 a,
+/// S-K7 a, S-K8 a). Nur Korpusse, deren Werte belegt sind
+/// (docs/audio/Saiten_Konzept.md §6, §6b).
+enum class KorpusArt : int
+{
+    Keiner = 0,  ///< None: die Saite allein
+    /// Acoustic guitar (Parlor): das gekoppelte Modell aus Decke und Luft nach
+    /// Christensen und Vistisen mit den Werten aus D. P. Hess, „Frequency
+    /// Response Evaluation of Acoustic Guitar Modifications“, *Savart
+    /// Journal* 1(3), 2013, Tab. 1 (eine Loar LH-200).
+    Parlor = 1,
+};
+
+/// Die Impulsantwort eines Korpus (fuer Tests und Bilder): was er abstrahlt,
+/// wenn am Steg ein einzelner Kraftstoss angreift — `frames` Abtastwerte,
+/// auf den groessten Betrag 1 bemessen. Leer = kein Korpus.
+[[nodiscard]] std::vector<double> korpusImpulsantwort(KorpusArt art, int rate, int frames);
+
 /// Cable: die Kapazitaet von Kabel und Last, in pF (Stufe 23d; Zollner,
 /// *Physics of the Electric Guitar* 9.4: ueblich 300 bis 600 pF).
 inline constexpr double kKabelMinPf = 100.0;
@@ -267,6 +285,14 @@ struct Schicht
     /// Cable, in pF (`kKabelMinPf` … `kKabelMaxPf`): fuer beide Tonabnehmer;
     /// er legt die Resonanz der magnetischen fest (`abnehmerResonanz`).
     double kabelPf = kKabelVorgabePf;
+    // --- Extended KS und Waveguide: der Korpus (S-K3 a, S-K8 a) ---
+    /// Body: wirkt auf den Ton, der am Steg abgenommen wird — ohne
+    /// Tonabnehmer, und bei Extended KS immer; ein Tonabnehmer nimmt die Saite
+    /// selbst ab, vor dem Korpus.
+    KorpusArt korpus = KorpusArt::Keiner;
+    /// Body amount, 0 … 1: so viel des Tons kommt durch den Korpus, der Rest
+    /// ist die Saite allein.
+    double korpusAnteil = 0.6;
     double laut = 1.0;              ///< die Lautstaerke der Schicht
     /// Pan, -1 (links) … 1 (rechts); 0 = Mitte (Stufe 18, Entscheid Z3 a).
     /// Dasselbe Gesetz wie an Spur und Muster (Rechenkern): links

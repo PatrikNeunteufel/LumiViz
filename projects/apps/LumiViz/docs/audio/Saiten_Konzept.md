@@ -1,13 +1,13 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.16.0
+> **Version:** 0.17.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
-> (§5b), 23c ohne Korpus (§5c) und 23d (§5d).
+> (§5b), 23c (§5c), 23d (§5d) und der Korpus Parlor (§5e).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -216,6 +216,18 @@ Versatz im Akkord.
   der Größenklasse). Verworfen: b (nur Wörtliches — der Humbucker ohne
   Resonanz, obwohl seine Güte wörtlich belegt ist), c (markierte Annahmen für
   Violine und Kontrabass — die Hintertür aus S-K6).
+- ✅ **S-K8 a** (Patrik S132): **Der Korpus ist das gekoppelte Modell der
+  Quellen** — Decke und Luft als gekoppelte Schwinger, getrieben von der Kraft
+  am Steg, mit genau den Parametern der Quelle: Parlor nach
+  Christensen/Vistisen mit Hess Tab. 1 (alle wörtlich), Classical nach Wrights
+  Modell (Kap. 4, Anhang A). Der Test misst die gekoppelten Spitzen gegen die
+  gemessenen. Verworfen: b (Resonanzen aus den Kurven abgelesen — Güte und
+  Höhe mit ±10 %), c (Wrights entkoppelte Moden ohne Luft — die tiefste
+  Spitze am falschen Ort). **Befund beim Lesen:** Wrights Modell braucht für
+  die Luft das Volumen V und die Schalllochfläche A_h (Gl. A.5–A.7); für
+  seine Gitarre BR2 nennt er beides in der Textebene nicht (nur f_h = 122 Hz,
+  Q_h = 45, S. 97, und nach Huber 83–89 mm Schalllochdurchmesser) — die
+  Klassikgitarre ist vorzulegen.
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -430,6 +442,31 @@ am Ende von Stufe 23.
   tiefen Tönen Spitzen bis 3,1); der Anschlag als reines Dreieck ohne
   Rauschen; die Lagen werden auf 0,2 % … 99,8 % der Saite begrenzt; die
   Vorgaben Neck 160 mm, Bridge 40 mm, beide None, Both.
+
+### 5e. Der Korpus Parlor (gebaut S132, S-K8 a)
+
+- **`KorpusArt::Parlor`** (in der Datei `body` `parlor`, dazu `bodyAmount`):
+  Decke und Luft als gekoppelte Schwinger nach Christensen/Vistisen, in der
+  Schreibweise von Wright (1996) Gl. A.1–A.7, mit allen zehn Werten aus Hess
+  (2013) Tab. 1 (c, ρ, V, Schallloch, Deckenfläche, Masse, Steife, Dämpfung
+  der Decke, Masse und Dämpfung der Luft). Getrieben von der Kraft am Steg;
+  abgestrahlt wird die Änderung des Volumenflusses (Wright Gl. 4.17).
+  Trapezregel, vier Zustände.
+- **Wo er wirkt:** auf den Ton am Steg — bei *Extended KS* immer, beim
+  Waveguide ohne Tonabnehmer; ein Tonabnehmer nimmt die Saite selbst ab.
+  Bemessen wie die Tonabnehmer: im ersten Zehntel einer Sekunde so laut wie
+  die Saite allein (Effektivwert); *Body amount* mischt.
+- **Beleg** (`test_LoopKorpus`): eingegeben sind nur entkoppelte Werte (Decke
+  ≈ 211 Hz, Luft 130 Hz — Hess nennt 130 Hz als Helmholtz-Frequenz); das
+  Modell hat seine gekoppelten Spitzen bei **116 und 219 Hz** — Hess hat 116
+  und 219 Hz gemessen —, die zweite **+7,2 dB** über der ersten (Hess Abb. 1a
+  abgelesen: rund +7 dB). Im Ton: A2 Grundton gegen Teilton 5 ohne Korpus
+  +5,6 dB, mit Parlor +12,7 dB.
+- **Von Claude gesetzt:** der Korpus hört die Saite einen Abtastwert später
+  (die Trapezregel kennt die nächste Kraft noch nicht); die Kraft am Steg ist
+  die dort ankommende Welle; Body amount 0,6 als Vorgabe; ein Semi-Hollow
+  mit Tonabnehmer hört seinen Korpus noch nicht (der Korpus wirkt nur auf die
+  Abnahme am Steg).
 
 ---
 

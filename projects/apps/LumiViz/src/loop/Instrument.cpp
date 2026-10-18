@@ -668,6 +668,154 @@ void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, 
     }
 }
 
+/// Der Korpus Parlor (Stufe 23d; S-K8 a): Decke und Luft als gekoppelte
+/// Schwinger nach Christensen und Vistisen (1980), mit den Werten aus Hess
+/// (2013), Tab. 1 — wie Wright (1996) Gl. A.1 bis A.7 sie schreibt:
+///
+///   m_p x_p'' = F − k_p x_p − R_p x_p' + A P,   m_a x_a'' = S P − R_a x_a',
+///   P = −(rho c² / V) (A x_p + S x_a).
+///
+/// Die Kraft F greift am Steg an; abgestrahlt wird, was der Volumenfluss
+/// U = A x_p' + S x_a' sich aendert (eine Punktquelle, Wright Gl. 4.17).
+/// Gerechnet mit der Trapezregel — stabil, und bei 200 Hz an 44,1 kHz kaum
+/// verschoben.
+class Korpus
+{
+public:
+    Korpus(KorpusArt art, int rate)
+    {
+        if (art != KorpusArt::Parlor || rate <= 0) return;
+        m_an = true;
+        // Hess, Tab. 1
+        constexpr double c = 343.0;          // Schallgeschwindigkeit, m/s
+        constexpr double rho = 1.205;        // Dichte der Luft, kg/m^3
+        constexpr double volumen = 0.01183;  // Korpus, m^3
+        constexpr double s = 0.008107;       // Schallloch, m^2
+        constexpr double a = 0.03747;        // wirksame Flaeche der Decke, m^2
+        constexpr double mp = 0.06653;       // Masse der Decke, kg
+        constexpr double kp = 9.995e4;       // Steife der Decke, N/m
+        constexpr double rp = 8.994;         // Daempfung der Decke, Ns/m
+        constexpr double ma = 0.001182;      // Masse der Luft im Schallloch, kg
+        constexpr double ra = 0.03803;       // Daempfung der Luft, Ns/m
+        const double g = rho * c * c / volumen;
+        m_flaecheDecke = a;
+        m_flaecheLoch = s;
+        m_masseDecke = mp;
+        // der Zustand: x_p, v_p, x_a, v_a
+        m_m = {{{0.0, 1.0, 0.0, 0.0},
+                {-(kp + g * a * a) / mp, -rp / mp, -g * a * s / mp, 0.0},
+                {0.0, 0.0, 0.0, 1.0},
+                {-g * a * s / ma, 0.0, -g * s * s / ma, -ra / ma}}};
+        const std::array<double, 4> b = {0.0, 1.0 / mp, 0.0, 0.0};
+        // Trapezregel: x' = M x + b F  ->  (I - hM/2) x_n+1 = (I + hM/2) x_n + h/2 b (F_n + F_n+1)
+        const double h = 1.0 / rate;
+        std::array<std::array<double, 8>, 4> erweitert{};
+        for (std::size_t i = 0; i < 4; ++i)
+            for (std::size_t j = 0; j < 4; ++j)
+            {
+                erweitert[i][j] = (i == j ? 1.0 : 0.0) - 0.5 * h * m_m[i][j];
+                erweitert[i][j + 4] = i == j ? 1.0 : 0.0;
+            }
+        // die Inverse von (I - hM/2), nach Gauss mit Spaltenwahl
+        for (std::size_t spalte = 0; spalte < 4; ++spalte)
+        {
+            std::size_t best = spalte;
+            for (std::size_t z = spalte + 1; z < 4; ++z)
+                if (std::abs(erweitert[z][spalte]) > std::abs(erweitert[best][spalte])) best = z;
+            std::swap(erweitert[spalte], erweitert[best]);
+            const double teiler = erweitert[spalte][spalte];
+            for (double& wert : erweitert[spalte]) wert /= teiler;
+            for (std::size_t z = 0; z < 4; ++z)
+            {
+                if (z == spalte) continue;
+                const double faktor = erweitert[z][spalte];
+                for (std::size_t j = 0; j < 8; ++j) erweitert[z][j] -= faktor * erweitert[spalte][j];
+            }
+        }
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            m_bd[i] = 0.0;
+            for (std::size_t j = 0; j < 4; ++j)
+            {
+                double summe = 0.0;
+                for (std::size_t k = 0; k < 4; ++k)
+                    summe += erweitert[i][k + 4] * ((k == j ? 1.0 : 0.0) + 0.5 * h * m_m[k][j]);
+                m_ad[i][j] = summe;
+                m_bd[i] += erweitert[i][j + 4] * 0.5 * h * b[j];
+            }
+        }
+    }
+    [[nodiscard]] bool an() const { return m_an; }
+    /// Ein Abtastwert: die Kraft am Steg hinein, der abgestrahlte Schall heraus.
+    [[nodiscard]] double schritt(double kraft)
+    {
+        if (!m_an) return 0.0;
+        // der Schall jetzt: die Aenderung des Volumenflusses aus dem Zustand und der Kraft
+        const double vpPunkt = m_m[1][0] * m_x[0] + m_m[1][1] * m_x[1] + m_m[1][2] * m_x[2] + kraft / m_masseDecke;
+        const double vaPunkt = m_m[3][0] * m_x[0] + m_m[3][2] * m_x[2] + m_m[3][3] * m_x[3];
+        const double schall = m_flaecheDecke * vpPunkt + m_flaecheLoch * vaPunkt;
+        // weiter zum naechsten Abtastwert: die Trapezregel nimmt diese Kraft und die davor
+        // (die naechste ist noch unbekannt — der Korpus hoert die Saite einen Abtastwert spaeter)
+        std::array<double, 4> neu{};
+        for (std::size_t i = 0; i < 4; ++i)
+        {
+            double summe = m_bd[i] * (m_davor + kraft);
+            for (std::size_t j = 0; j < 4; ++j) summe += m_ad[i][j] * m_x[j];
+            neu[i] = summe;
+        }
+        m_x = neu;
+        m_davor = kraft;
+        return schall;
+    }
+
+private:
+    bool m_an = false;
+    std::array<std::array<double, 4>, 4> m_m{};
+    std::array<std::array<double, 4>, 4> m_ad{};
+    std::array<double, 4> m_bd{};
+    std::array<double, 4> m_x{};
+    double m_davor = 0.0;
+    double m_flaecheDecke = 0.0;
+    double m_flaecheLoch = 0.0;
+    double m_masseDecke = 1.0;
+};
+
+/// Den Umlauf rechnen, mit Korpus (`amSteg`: der Ton wird am Steg abgenommen —
+/// ohne Tonabnehmer). Der Korpus ist so bemessen, dass er im ersten Zehntel
+/// einer Sekunde so laut ist wie die Saite allein (Effektivwert, der Anfang
+/// einmal vorab gerechnet); Body amount mischt beide. `fabrik()` gibt je Lauf
+/// eine frische Abnahme (mit eigenem Gedaechtnis).
+template <class Fabrik>
+void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u,
+                    std::vector<double> ring, std::vector<float>& daten, Fabrik fabrik, bool amSteg)
+{
+    const double anteil = std::clamp(schicht.korpusAnteil, 0.0, 1.0);
+    if (schicht.korpus == KorpusArt::Keiner || !amSteg || anteil <= 0.0)
+    {
+        laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, fabrik());
+        return;
+    }
+    std::vector<float> anfang(static_cast<std::size_t>(2 * std::max(1, rate / 10)), 0.0f);
+    Korpus probe(schicht.korpus, rate);
+    auto probeAbnahme = fabrik();
+    double quadrateSaite = 0.0;
+    double quadrateKorpus = 0.0;
+    laufeUm(schicht, hz, huelle, rate, u, ring, anfang, [&](double y, const auto& lese) {
+        const double saite = probeAbnahme(y, lese);
+        const double schall = probe.schritt(saite);
+        quadrateSaite += saite * saite;
+        quadrateKorpus += schall * schall;
+        return saite;
+    });
+    const double faktor = quadrateKorpus > 0.0 ? std::sqrt(quadrateSaite / quadrateKorpus) : 0.0;
+    Korpus korpus(schicht.korpus, rate);
+    auto abnahme = fabrik();
+    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [&](double y, const auto& lese) {
+        const double saite = abnahme(y, lese);
+        return (1.0 - anteil) * saite + anteil * faktor * korpus.schritt(saite);
+    });
+}
+
 /// Die Saite *Extended KS* (Stufe 23c; S-K1 b, S-K3 a): das erweiterte
 /// Karplus-Strong nach Jaffe und Smith (1983). Ein Stoss Rauschen — durch die
 /// Haerte des Anschlags gefiltert und an der Anschlagstelle gekaemmt (die
@@ -701,7 +849,9 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
     for (std::size_t i = 0; i < groesse; ++i) ring[i] = stoss[i] - stoss[(i + groesse - kamm % groesse) % groesse];
     normiereStoss(ring);
 
-    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [](double y, const auto&) { return y; });
+    laufeMitKorpus(
+        schicht, hz, huelle, rate, u, std::move(ring), daten,
+        [] { return [](double y, const auto&) { return y; }; }, true);
 }
 
 /// Der Hochpass eines Piezo-Tonabnehmers (S-K5 a): eine kapazitive Quelle an
@@ -866,12 +1016,16 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
                 plaetze[k].faktor = std::min(std::sqrt(quadrateSteg / quadrate[k]), spitzeSteg / spitzen[k]);
     }
 
-    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [&](double y, const auto& lese) {
-        if (!nimmHals && !nimmSteg) return y;  // akustisch: die Welle am Steg
-        const double vomHals = nimmHals ? signal(plaetze[0], y, lese) : 0.0;
-        const double vomSteg = nimmSteg ? signal(plaetze[1], y, lese) : 0.0;
-        return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
-    });
+    // je Lauf eine frische Abnahme mit eigenem Gedaechtnis der Tonabnehmer
+    const auto fabrik = [&] {
+        return [&signal, nimmHals, nimmSteg, eigene = plaetze](double y, const auto& lese) mutable {
+            if (!nimmHals && !nimmSteg) return y;  // akustisch: die Welle am Steg
+            const double vomHals = nimmHals ? signal(eigene[0], y, lese) : 0.0;
+            const double vomSteg = nimmSteg ? signal(eigene[1], y, lese) : 0.0;
+            return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
+        };
+    };
+    laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, fabrik, !nimmHals && !nimmSteg);
 }
 
 /// Das Rauschen (Stufe 11d): gleichverteilt, aus einem festen Zaehlwerk —
@@ -1188,6 +1342,8 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("highDamping")] = schicht.hoehenDaempfung;
         o[QStringLiteral("stiffness")] = schicht.steifheit;
         o[QStringLiteral("stringVariation")] = schicht.saitenUnterschied;
+        o[QStringLiteral("body")] = schicht.korpus == KorpusArt::Parlor ? QStringLiteral("parlor") : QStringLiteral("none");
+        o[QStringLiteral("bodyAmount")] = schicht.korpusAnteil;
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
     if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
@@ -1265,6 +1421,10 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.abnehmerHals = abnehmer("pickupNeck", vorgabe.abnehmerHals);
     neu.abnehmerSteg = abnehmer("pickupBridge", vorgabe.abnehmerSteg);
     neu.kabelPf = zahl("cable", vorgabe.kabelPf, kKabelMinPf, kKabelMaxPf);
+    // ein Korpus, den dieses Programm nicht kennt: keiner
+    neu.korpus = wurzel.value(QStringLiteral("body")).toString() == QLatin1String("parlor") ? KorpusArt::Parlor
+                                                                                           : KorpusArt::Keiner;
+    neu.korpusAnteil = zahl("bodyAmount", vorgabe.korpusAnteil, 0.0, 1.0);
     const QString wahl = wurzel.value(QStringLiteral("pickupSelect")).toString();
     neu.abnehmerWahl = wahl == QLatin1String("neck")     ? AbnehmerWahl::Hals
                        : wahl == QLatin1String("bridge") ? AbnehmerWahl::Steg
@@ -1924,6 +2084,22 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
 Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int rate)
 {
     return rendereTonAufSaite(instrument, hoehe, dauerMs, rate, -1);
+}
+
+std::vector<double> korpusImpulsantwort(KorpusArt art, int rate, int frames)
+{
+    Korpus korpus(art, rate);
+    if (!korpus.an() || frames <= 0) return {};
+    std::vector<double> antwort(static_cast<std::size_t>(frames), 0.0);
+    double groesster = 0.0;
+    for (std::size_t n = 0; n < antwort.size(); ++n)
+    {
+        antwort[n] = korpus.schritt(n == 0 ? 1.0 : 0.0);
+        groesster = std::max(groesster, std::abs(antwort[n]));
+    }
+    if (groesster > 0.0)
+        for (double& wert : antwort) wert /= groesster;
+    return antwort;
 }
 
 Resonanz abnehmerResonanz(AbnehmerArt art, double kabelPf)
