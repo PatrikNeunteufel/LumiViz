@@ -11,6 +11,7 @@
 #include "loop/FormFenster.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
 #include "loop/SampleFrage.hpp"
+#include "loop/SaitenBild.hpp"
 #include "loop/SaitenZeile.hpp"
 #include "loop/SignalWeg.hpp"
 
@@ -1032,6 +1033,14 @@ void InstrumentCreator::setupUI()
     // --- String: die Regler nach der Physik, bei Extended KS und Waveguide (Stufe 23e; S-K3 a,
     // Skizze gebilligt, Patrik S132)
     m_saitenTitel = titel(tr("String"), "string");
+    // zuerst das Saitenbild: Sattel, Steg, die Marken pluck und (bei Waveguide) neck, bridge
+    m_saitenBild = new SaitenBild(this);
+    gitter->addWidget(m_saitenBild, gitter->rowCount(), 0, 1, 3);
+    connect(m_saitenBild, &SaitenBild::anschlagGezogen, this,
+            [this](double anteil) { aendereSchicht([anteil](Schicht& s) { s.anschlagOrt = anteil; }); });
+    connect(m_saitenBild, &SaitenBild::abnehmerGezogen, this, [this](int platz, double mm) {
+        aendereSchicht([platz, mm](Schicht& s) { (platz == 0 ? s.abnehmerHals : s.abnehmerSteg).mmVomSteg = mm; });
+    });
     const auto prozent = [](double wert) { return QStringLiteral("%1 %").arg(gerundet(wert * 100.0)); };
     regler(gitter, tr("Pluck position"), "creatorPluckPosition", gerundet(kAnschlagOrtMin * 100.0), gerundet(kAnschlagOrtMax * 100.0),
            [](const Schicht& i) { return gerundet(i.anschlagOrt * 100.0); }, [](Schicht& i, int w) { i.anschlagOrt = w / 100.0; },
@@ -2010,6 +2019,9 @@ void InstrumentCreator::zeigeAlles()
     zeige(m_daempfung, saite && !physik);
     m_saitenTitel->setVisible(physik);
     m_korpusTitel->setVisible(physik);
+    m_saitenBild->setVisible(physik);
+    m_saitenBild->setze(gewaehlte.anschlagOrt, mensurVon(m_instrument.saiten), {gewaehlte.abnehmerHals, gewaehlte.abnehmerSteg},
+                        gewaehlte.saitenModell == SaitenModell::Wellenleiter);
     for (const std::size_t platz : m_nurPhysik) zeige(platz, physik);
     for (QWidget* teil : m_korpusZeile) teil->setVisible(physik);
     {

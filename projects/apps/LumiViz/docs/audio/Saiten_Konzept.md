@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.21.0
+> **Version:** 0.22.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -8,7 +8,7 @@
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
-> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g) und Model, String, Body (§5h).
+> Classical guitar (§5f, S-K10 a, S133); von 23e die Zeile Tuning (§5g) Model, String, Body (§5h) und das Saitenbild (§5i).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -601,6 +601,25 @@ am Ende von Stufe 23.
   Mitte ≈ 1,73 s); Pluck position in Prozent der Saite vom Steg, 2–50 %; die
   Auswahl Body nennt nur die gebauten Korpusse; die Werte von String und Body
   bleiben in der Schicht, wenn man auf *Classic* zurückstellt.
+
+### 5i. Stufe 23e, Teilschritt 3 — das Saitenbild (gebaut S133)
+
+- **`loop/SaitenBild`** (neu), die erste Zeile der Gruppe String: Sattel
+  links, Steg rechts, die Saite dazwischen, maßstäblich zur Mensur. Die Marke
+  **pluck** (ein Dreieck über der Saite, „pluck 13 %“) und bei *Waveguide* je
+  Tonabnehmer eine Marke **neck** / **bridge** unter der Saite („neck
+  160 mm“; ein Humbucker als zwei Striche 18 mm auseinander, greifbar an
+  beiden; ein Piezo fest am Steg, nicht zu ziehen). Ziehen stellt dieselben
+  Werte wie die Regler (Pluck position; die Lage in mm vom Steg, auf den
+  Millimeter). Über einer Marke wechselt der Zeiger, sie greift ±8 px weit;
+  unten steht „drag the marks · scale 650 mm“.
+- **Belegt** in `test_LoopCreatorSaite` („das Saitenbild“: Griffe, Zeiger,
+  Ziehen mit den Grenzen, Humbucker, Piezo, der Weg in die Schicht; ein Bild
+  `_bild` mit `LUMIVIZ_CREATOR_SAITE_BILD`).
+- **Von Claude gesetzt:** eine Tonabnehmer-Marke steht nur, wenn der Platz
+  einen trägt (Type ≠ None) — Type selbst kommt mit der Gruppe Pickups
+  (Teilschritt 4); die Lagen werden wie in der Abnahme auf 0,2 … 99,8 % der
+  Saite begrenzt.
 
 ---
 

@@ -19,6 +19,7 @@
 
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
+#include "loop/SaitenBild.hpp"
 #include "loop/SignalWeg.hpp"
 
 #include <QApplication>
@@ -27,6 +28,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QSlider>
 #include <QToolButton>
 
@@ -159,15 +161,117 @@ TEST_CASE("Loop Instrument Creator Saite: Model, die Gruppen String und Body —
         wg.titel = QStringLiteral("Nylon");
         wg.saiten = Saitensatz{{40, 45, 50, 55, 59, 64}, 0, Saitenwahl::JeKlang, 650.0};
         wg.schichten[0].korpus = KorpusArt::Klassik;
+        // zwei Tonabnehmer, damit das Saitenbild ihre Marken zeigt (die Gruppe Pickups kommt in Teilschritt 4)
+        wg.schichten[0].abnehmerHals = Abnehmer{AbnehmerArt::SingleCoil, 160.0};
+        wg.schichten[0].abnehmerSteg = Abnehmer{AbnehmerArt::Humbucker, 41.0};
         gezeigt.oeffne(wg);
         gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
         gezeigt.resize(1280, 900);
         gezeigt.show();  // das Layout steht erst nach dem Zeigen; auf den Bildschirm kommt nichts
         QCoreApplication::processEvents();
         CHECK(gezeigt.grab().save(ziel));
+        const QFileInfo info(ziel);
+        CHECK(gezeigt.saitenBild()->grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_bild.") + info.suffix())));
         gezeigt.aendereSchicht([](Schicht& s) { s.saitenModell = SaitenModell::Klassisch; });
         QCoreApplication::processEvents();
-        const QFileInfo info(ziel);
         CHECK(gezeigt.grab().save(info.dir().filePath(info.completeBaseName() + QStringLiteral("_classic.") + info.suffix())));
     }
+}
+
+namespace
+{
+
+void maus(QWidget& ziel, QEvent::Type art, QPoint ort, Qt::MouseButtons knoepfe)
+{
+    QMouseEvent ereignis(art, QPointF(ort), QPointF(ziel.mapToGlobal(ort)),
+                         art == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton, knoepfe, Qt::NoModifier);
+    QCoreApplication::sendEvent(&ziel, &ereignis);
+}
+
+/// Von `von` nach `nach` ziehen, mit der linken Taste.
+void ziehe(QWidget& ziel, QPoint von, QPoint nach)
+{
+    maus(ziel, QEvent::MouseButtonPress, von, Qt::LeftButton);
+    maus(ziel, QEvent::MouseMove, nach, Qt::LeftButton);
+    maus(ziel, QEvent::MouseButtonRelease, nach, Qt::NoButton);
+}
+
+}  // namespace
+
+TEST_CASE("Loop Instrument Creator Saite: das Saitenbild — die Marken pluck, neck, bridge lassen sich ziehen")
+{
+    Anwendung anwendung;
+    SaitenBild bild;
+    // 600 px Saite fuer 600 mm: ein Punkt ist ein Millimeter
+    bild.resize(600 + 2 * 14, 92);
+    REQUIRE(bild.xVon(0.0) - bild.xVon(1.0) == 600);
+    double anschlag = -1.0;
+    int platz = -1;
+    double mm = -1.0;
+    QObject::connect(&bild, &SaitenBild::anschlagGezogen, [&](double a) { anschlag = a; });
+    QObject::connect(&bild, &SaitenBild::abnehmerGezogen, [&](int p, double m) {
+        platz = p;
+        mm = m;
+    });
+    bild.setze(0.25, 600.0, {Abnehmer{AbnehmerArt::SingleCoil, 150.0}, Abnehmer{AbnehmerArt::Humbucker, 40.0}}, true);
+
+    // wo die Marken stehen, und was die Maus dort greift
+    CHECK(bild.ortVon(SaitenBild::GriffAnschlag).x() == bild.xVon(0.25));
+    CHECK(bild.ortVon(SaitenBild::GriffHals).x() == bild.xVon(150.0 / 600.0));
+    CHECK(bild.griffBei(bild.ortVon(SaitenBild::GriffAnschlag)) == SaitenBild::GriffAnschlag);
+    CHECK(bild.griffBei(bild.ortVon(SaitenBild::GriffHals)) == SaitenBild::GriffHals);
+    CHECK(bild.griffBei(bild.ortVon(SaitenBild::GriffSteg)) == SaitenBild::GriffSteg);
+    // ein Humbucker greift man auch an seiner zweiten Spule (18 mm zum Sattel hin)
+    CHECK(bild.griffBei(QPoint(bild.xVon(58.0 / 600.0), bild.ortVon(SaitenBild::GriffSteg).y())) == SaitenBild::GriffSteg);
+    // daneben nichts
+    CHECK(bild.griffBei(QPoint(bild.xVon(0.4), bild.ortVon(SaitenBild::GriffAnschlag).y())) == SaitenBild::KeinGriff);
+
+    // der Zeiger wechselt ueber einer Marke — und zurueck, wenn die Maus weiterzieht
+    maus(bild, QEvent::MouseMove, bild.ortVon(SaitenBild::GriffAnschlag), Qt::NoButton);
+    CHECK(bild.testAttribute(Qt::WA_SetCursor));
+    CHECK(bild.cursor().shape() == Qt::SizeHorCursor);
+    maus(bild, QEvent::MouseMove, QPoint(bild.xVon(0.45), 10), Qt::NoButton);
+    CHECK(bild.cursor().shape() == Qt::ArrowCursor);  // (ein Fenster ohne Eltern behaelt WA_SetCursor)
+
+    // pluck ziehen: der Anteil folgt der Maus, in den Grenzen der Schicht
+    ziehe(bild, bild.ortVon(SaitenBild::GriffAnschlag), QPoint(bild.xVon(0.4), 20));
+    CHECK(anschlag == doctest::Approx(0.4).epsilon(0.005));
+    ziehe(bild, bild.ortVon(SaitenBild::GriffAnschlag), QPoint(bild.xVon(0.0) + 30, 20));
+    CHECK(anschlag == kAnschlagOrtMin);
+    ziehe(bild, bild.ortVon(SaitenBild::GriffAnschlag), QPoint(bild.xVon(1.0), 20));
+    CHECK(anschlag == kAnschlagOrtMax);
+
+    // neck ziehen: die Lage in mm vom Steg, auf den Millimeter
+    ziehe(bild, bild.ortVon(SaitenBild::GriffHals), QPoint(bild.xVon(200.0 / 600.0), 60));
+    CHECK(platz == 0);
+    CHECK(mm == 200.0);
+    ziehe(bild, bild.ortVon(SaitenBild::GriffSteg), QPoint(bild.xVon(25.0 / 600.0), 60));
+    CHECK(platz == 1);
+    CHECK(mm == 25.0);
+
+    // ein Piezo steht fest am Steg; ohne Tonabnehmer (Extended KS) gibt es keine Marken darunter
+    bild.setze(0.25, 600.0, {Abnehmer{}, Abnehmer{AbnehmerArt::Piezo, 0.0}}, true);
+    CHECK(bild.ortVon(SaitenBild::GriffSteg) == QPoint(-1, -1));
+    CHECK(bild.ortVon(SaitenBild::GriffHals) == QPoint(-1, -1));
+    bild.setze(0.25, 600.0, {Abnehmer{AbnehmerArt::SingleCoil, 150.0}, Abnehmer{}}, false);
+    CHECK(bild.griffBei(QPoint(bild.xVon(0.25), 60)) == SaitenBild::KeinGriff);
+
+    // im Creator: das Ziehen stellt die Schicht
+    InstrumentCreator creator;
+    Instrument wg = saite(SaitenModell::Wellenleiter);
+    wg.saiten = Saitensatz{{40, 45, 50, 55, 59, 64}, 0, Saitenwahl::JeKlang, 600.0};
+    wg.schichten[0].abnehmerHals = Abnehmer{AbnehmerArt::SingleCoil, 160.0};
+    creator.oeffne(wg);
+    SaitenBild* imCreator = creator.saitenBild();
+    REQUIRE(imCreator != nullptr);
+    CHECK_FALSE(imCreator->isHidden());
+    imCreator->resize(600 + 2 * 14, 92);
+    ziehe(*imCreator, imCreator->ortVon(SaitenBild::GriffAnschlag), QPoint(imCreator->xVon(0.3), 20));
+    CHECK(creator.schicht().anschlagOrt == doctest::Approx(0.3).epsilon(0.005));
+    CHECK(creator.findChild<QSlider*>(QStringLiteral("creatorPluckPosition"))->value() == 30);  // der Regler zieht nach
+    ziehe(*imCreator, imCreator->ortVon(SaitenBild::GriffHals), QPoint(imCreator->xVon(120.0 / 600.0), 60));
+    CHECK(creator.schicht().abnehmerHals.mmVomSteg == 120.0);
+    // Classic: kein Saitenbild
+    creator.aendereSchicht([](Schicht& s) { s.saitenModell = SaitenModell::Klassisch; });
+    CHECK(imCreator->isHidden());
 }

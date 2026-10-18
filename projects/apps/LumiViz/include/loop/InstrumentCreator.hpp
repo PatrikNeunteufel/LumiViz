@@ -22,7 +22,8 @@
  * Vibrato; Level den Regler Level. Ziehen ordnet die Bausteine um.
  * **Plucked string (Stufe 23e; Skizze gebilligt, Patrik S132):** unter
  * Waveform die Auswahl Model (Classic, Extended KS, Waveguide). Bei Classic
- * steht Damping wie bisher; sonst die Gruppen **String** (Pluck position,
+ * steht Damping wie bisher; sonst die Gruppen **String** (zuerst das
+ * Saitenbild mit den ziehbaren Marken pluck, neck, bridge; dann Pluck position,
  * Pluck, Ring time, High damping, Stiffness, String variation) und **Body**
  * (Body, Body amount). Der Kasten Source nennt das Verfahren.
  * **Rechts:** das Bild einer Schwingung und die Huellkurve einer Note — die
@@ -84,6 +85,7 @@ namespace lumi::loop
 
 class AufnahmeFenster;
 class FormFenster;
+class SaitenBild;
 class SaitenZeile;
 class SignalWeg;
 
@@ -419,6 +421,8 @@ public:
     /// Die Zeile Tuning unter Type / Genres / Description: die Saiten des
     /// Instruments (`Instrument::saiten`).
     [[nodiscard]] SaitenZeile* saitenZeile() const { return m_saitenZeile; }
+    /// Das Saitenbild der Gruppe String (fuer Tests).
+    [[nodiscard]] SaitenBild* saitenBild() const { return m_saitenBild; }
 
     // --- Gruppen ein- und ausklappen (Wunsch Patrik S116) -----------------------
     /// Die Gruppen Oscillator und Vibrato (unter Source) lassen sich an
@@ -692,6 +696,7 @@ private:
     std::vector<QWidget*> m_korpusZeile;     ///< Name und Auswahl Body
     std::vector<std::size_t> m_nurPhysik;    ///< Plaetze in `m_regler`: die Regler von String und Body
     std::size_t m_reglerKorpusAnteil = 0;    ///< Body amount: grau ohne Korpus
+    SaitenBild* m_saitenBild = nullptr;      ///< das Saitenbild, die erste Zeile der Gruppe String
 };
 
 }  // namespace lumi::loop
