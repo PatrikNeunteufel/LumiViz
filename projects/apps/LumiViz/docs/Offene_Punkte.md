@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.261.0
-> **Datum:** 2026-10-18 (Session 134)
+> **Version:** 1.262.0
+> **Datum:** 2026-10-18 (Session 135)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2944,9 +2944,13 @@ Idee Preset-Warmup/Pre-Roll.
   gebaut 24a Modell/Datei (`.lvloop` 9, `.lvinst` 11), 24b Planung (Strum
   von sich aus an, Spread 8 ms je Saite), 24c Klang (Punktdämpfer nach
   Pakarinen für Palm mute und Harmonic, Tapping, Up), 24d Creator (N, O, P).
-  Offen: 24e Instrument-Editor (H–M), 24f mitgelieferte Instrumente und Loops,
-  Handbuch, Sichttest; danach Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann
-  die Tabs.** Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
+  S135: 24e Instrument-Editor gebaut (H–M; S-W13 a Vorgaben beim
+  Instrumentwechsel, S-W14 a Spur Strum oben, S-W15 a Pfeil an jedem
+  Anschlag); im Programm gefunden und behoben: der Editor übernahm die
+  Anschläge nicht. Dazu Zoom in beiden Editoren (E-Z1 a, Loop_Konzept). Offen:
+  24f mitgelieferte Instrumente und Loops, Handbuch, Sichttest, Bereichslauf;
+  danach Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs; Folgefrage:
+  merkt sich ein Editor den Zoom?** Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
   trägt dafür mehrere Anschlag-Charakteristiken nebeneinander (Artikulationen).
@@ -6001,6 +6005,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.262.0 | 2026-10-18 | Session 135. §7 Spielweisen: 24e gebaut (S-W13 a bis S-W15 a), Fehler „Anschläge kamen nicht im Loop an“ behoben; Zoom in den Loop-Editoren (E-Z1 a). |
 | 1.261.0 | 2026-10-18 | Session 134. §7 Spielweisen: S-W2 a bis S-W12 a entschieden; Stufen 24a bis 24d gebaut (Modell, Planung, Klang, Creator). |
 | 1.260.0 | 2026-10-18 | Session 133. §6 Saiteninstrumente: Korpus Classical guitar, Bemessung der Tonabnehmer, 23e, 23f, 23g gebaut (S-K9 a bis S-G4 a); §7 Spielweisen: Ziel S-W1 a. |
 | 1.259.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K8 a; Korpus Parlor gebaut (gekoppeltes Modell nach Hess). |
