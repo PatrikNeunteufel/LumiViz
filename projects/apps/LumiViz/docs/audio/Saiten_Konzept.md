@@ -1,13 +1,13 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.13.0
+> **Version:** 0.14.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
-> Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a) und
-> 23b (§5b).
+> Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
+> (§5b) und 23c ohne Korpus (§5c).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -172,6 +172,26 @@ Versatz im Akkord.
   *Tuning...* — gehört sichtbar zum Instrument wie *Type*; erneut vorlegen,
   wenn eine Saite später mehr trägt, etwa Dicke oder Oktav-Partner), c (ohne
   Saitenbild).
+- ✅ **S-K4 a** (Patrik S132): **Die Werte der Korpusse kommen aus
+  veröffentlichten Messungen** — je Resonanz Frequenz, Güte, Stärke mit
+  Quelle (Seite oder Abbildung, Wortlaut) und Reichweite der Suche; die
+  Tabelle kommt vor dem Bau des Korpus zur Vorlage. Ein Korpus ohne Quelle
+  bleibt aus der Auswahl. Die Saite ohne Korpus darf vorher gebaut werden.
+  Verworfen: b (nach Gehör — ein Name, der nichts belegt), c (Impulsantworten
+  als Hauptweg — Aufnahmen Dritter; zum Ablesen mit geklärter Lizenz erlaubt).
+- ✅ **S-K5 a** (Patrik S132, auf seine Frage nach E-Gitarre, E-Bass,
+  E-Violine): **Body und Tonabnehmer sind unabhängig.** Eine eigene Gruppe
+  **Pickups** (nur Waveguide) mit **bis zu zwei** Tonabnehmern — je *Type*
+  (None/akustisch, Single coil, Humbucker, Piezo), *Position* und die
+  Resonanz der Bauart aus Messwerten (Verfahren wie S-K4 a) — und *Pickup
+  select* (Neck, Both, Bridge). Solid Body = *Body None* + Pickups,
+  Semi-Hollow = *Body* + Pickups, akustisch = *Body* ohne Pickup, E-Violine =
+  *Body None* + Piezo. Verstärker und Box bleiben *Drive* und *Filter* in
+  Signal path und am Clip. **Die Skizze der Gruppe kommt vor 23d**; sie
+  ersetzt in §4 den Regler *Pickup position* und die eine Marke *pickup*.
+  Verworfen: b (ein Tonabnehmer — Datei und Oberfläche zweimal ändern), c
+  (nur Filter im Signal path — der folgt der Tonhöhe, die Resonanz eines
+  Tonabnehmers liegt fest in Hertz).
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -291,3 +311,35 @@ am Ende von Stufe 23.
   wird nicht gedämpft; die Reihenfolge der Bewertung oben; ein Ende steht im
   Namen auch, wenn der Ton vorher von selbst verklingt (mehr Namen, gleicher
   Klang); die Suche prüft je Anschlag höchstens 200 000 Möglichkeiten.
+
+### 5c. Stufe 23c — die Saite *Extended KS*, ohne Korpus (gebaut S132)
+
+- **`SaitenModell`** an der Schicht: *Classic* (unberührt, S-K2 b) und
+  *Extended KS*; der Waveguide folgt mit 23d. Regler nach S-K3 a: Pluck
+  position, Pluck, Ring time, High damping, Stiffness, String variation.
+  In der `.lvinst` (Fassung 10) nur an einer Saite *Extended KS*:
+  `stringModel` `extendedKS`, `pluckPosition`, `pluck`, `ringTime`,
+  `highDamping`, `stiffness`, `stringVariation`.
+- **Die Rechnung** (`rechneSaiteKs`): der Stoß aus derselben festen Folge wie
+  Classic, durch die Härte zweimal tiefpassgefiltert (Grenze vom Doppelten bis
+  zum Achtzigfachen des Grundtons), an der Anschlagstelle gekämmt, ohne
+  Gleichanteil, so laut wie Classic. Im Umlauf ein Tiefpass erster Ordnung
+  mit Verstärkung — der Grundton fällt in *Ring time* um 60 dB, Töne bei
+  2 kHz in *Ring time* · 10^(−2 · High damping) — und acht Allpässe, so
+  eingestellt, dass der achte Teilton bei der Inharmonizität B = 0,001 ·
+  Stiffness² liegt. Die Verzögerung ist um die Laufzeit der Filter beim
+  Grundton kürzer; die Verstärkung bleibt bei jeder Frequenz unter 1.
+  *String variation* gibt einer tieferen Saite bis zu +0,4 High damping und
+  +0,4 Stiffness.
+- **Gemessen** (`test_LoopSaiteKs`, Release-clang): Ring time 1 s bei E2
+  1,000 s, 3 s bei E5 2,68 s; Pluck position ¼: Teilton 4 −25 dB gegen 3;
+  High damping 0,9 gegen 0,1: Teilton 7 −88 gegen −6 dB; Pluck weich gegen
+  hart −29 gegen −5 dB; Stiffness 1: Teilton 8 +52,75 Cent (berechnet +52);
+  String variation: tiefe E-Saite 12 dB dunkler als die D-Saite; die Tonhöhe
+  auf 3 Cent. Hörproben: `LUMIVIZ_23C_WAV=<Ordner>`.
+- **Von Claude gesetzt, nicht vorgelegt:** die Bezugsfrequenz 2 kHz und die
+  Spanne 10^(−2 · High damping); B = 0,001 · Stiffness²; acht Allpässe; die
+  Grenzen der Härte (2 bis 80 · Grundton); +0,4 je Regler durch String
+  variation; die Vorgaben 0,13 / 0,65 / 3,2 s / 0,3 / 0,1 / 0,5 aus der
+  Skizze. Eine erste Fassung (Mitteln wie Classic, vier Allpässe) wirkte kaum
+  und wurde bei hohen Tönen instabil — verworfen, bevor etwas gespeichert war.

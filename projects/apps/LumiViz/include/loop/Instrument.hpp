@@ -54,6 +54,22 @@ enum class Schwingung : int
     Form,
 };
 
+/// Das Verfahren einer Saite (Stufe 23c; Entscheide Patrik S132: S-K1 a + b,
+/// S-K2 b). *Classic* ist die Saite bis Stufe 22, unberuehrt (Damping);
+/// *Extended KS* das erweiterte Karplus-Strong nach Jaffe und Smith mit den
+/// Reglern nach der Physik (S-K3 a). Der Waveguide kommt mit Stufe 23d.
+enum class SaitenModell : int
+{
+    Klassisch = 0,
+    ErweiterterKs = 1,
+};
+
+/// Die Grenzen der Regler der neuen Saite (Stufe 23c).
+inline constexpr double kAnschlagOrtMin = 0.02;  ///< Pluck position: nah am Steg
+inline constexpr double kAnschlagOrtMax = 0.5;   ///< die Mitte der Saite
+inline constexpr double kKlingSekundenMin = 0.1;
+inline constexpr double kKlingSekundenMax = 30.0;
+
 /// Die Grenzen der Shape-Schicht (Stufe 19c): Harmonics und der Betrag, um den
 /// die Huellkurve sie hebt oder senkt.
 inline constexpr double kFormHarmonischeMax = 512.0;
@@ -143,7 +159,28 @@ struct Schicht
     double vibratoCent = 0.0;
     double vibratoEinsatzMs = 0.0;  ///< so lange waechst es an
 
-    double saiteDaempfung = 0.996;  ///< nur Saite: 0.9…0.9999, groesser klingt laenger
+    double saiteDaempfung = 0.996;  ///< nur Saite *Classic*: 0.9…0.9999, groesser klingt laenger
+
+    // --- nur Saite, Verfahren und Regler nach der Physik (Stufe 23c, S-K3 a) ---
+    /// Model: eine Datei bis Fassung 9 (und ohne das Feld) ist *Classic*.
+    SaitenModell saitenModell = SaitenModell::Klassisch;
+    /// Pluck position: wo angeschlagen wird, als Anteil der Saite vom Steg aus
+    /// (`kAnschlagOrtMin` … `kAnschlagOrtMax`). Bei 1/n fehlt der n-te Teilton.
+    double anschlagOrt = 0.13;
+    /// Pluck: die Form des Anschlags, 0 (weich, Finger) … 1 (hart, Plektrum).
+    double anschlagHaerte = 0.65;
+    /// Ring time: so lange, bis der Grundton um 60 dB gefallen ist, in Sekunden
+    /// — fuer jede Tonhoehe gleich (`kKlingSekundenMin` … `kKlingSekundenMax`).
+    double klingSekunden = 3.2;
+    /// High damping, 0 … 1: um wie viel schneller die Hoehen vergehen.
+    double hoehenDaempfung = 0.3;
+    /// Stiffness, 0 … 1: wie steif die Saite ist — die Obertoene liegen hoeher
+    /// als ein Vielfaches des Grundtons.
+    double steifheit = 0.1;
+    /// String variation, 0 … 1: wie stark sich die Saiten des Instruments
+    /// unterscheiden — eine tiefere Saite ist dicker: dunkler und steifer.
+    /// 0 = alle gleich; ohne Saiten am Instrument wirkt es nicht.
+    double saitenUnterschied = 0.5;
     double laut = 1.0;              ///< die Lautstaerke der Schicht
     /// Pan, -1 (links) … 1 (rechts); 0 = Mitte (Stufe 18, Entscheid Z3 a).
     /// Dasselbe Gesetz wie an Spur und Muster (Rechenkern): links
@@ -310,7 +347,10 @@ struct Instrument
 // Toene der leeren Saiten als MIDI-Nummern), `capo` und `stringChoice`
 // (`perChord`, `followHand`); ein Instrument ohne Saiten traegt ihn nicht.
 // Eine eigene Fassung, weil ein aelteres Programm die Saiten still ueberginge.
-// Geschrieben wird Fassung 10.
+// In derselben Fassung (Stufe 23c, noch nicht ausgeliefert) traegt eine Saite
+// mit `stringModel` `extendedKS` dazu `pluckPosition`, `pluck`, `ringTime`,
+// `highDamping`, `stiffness`, `stringVariation`; ohne `stringModel` ist sie
+// *Classic* und traegt nur `damping` wie bisher. Geschrieben wird Fassung 10.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
 inline constexpr int kInstrumentFassung = 10;
@@ -433,8 +473,9 @@ inline constexpr double kTonMaxSekunden = 30.0;
 /// Einen Ton nach seiner Angabe rechnen (Stufe 23b): wie oben; traegt sie ein
 /// Ende (`TonAngabe::endeMs`), ist der Ton dort still — er blendet ueber die
 /// letzten `kAbdaempfenMs` aus (Saitenplan.hpp, Entscheid S-M3 a). Ein Ton,
-/// der vorher von selbst endet, bleibt Bit fuer Bit derselbe. Die Saite
-/// aendert den Klang noch nicht (Stufe 23c).
+/// der vorher von selbst endet, bleibt Bit fuer Bit derselbe. Die Saite gibt
+/// einer Schicht *Extended KS* ihre Dicke (String variation, Stufe 23c); ohne
+/// Saite rechnet sie ohne Dicke.
 [[nodiscard]] Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate);
 
 /// Die Auskunft fuer die Planung (Entscheid S-A1 a): die Saiten eines

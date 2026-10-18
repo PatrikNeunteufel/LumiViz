@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.255.0
+> **Version:** 1.256.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2794,7 +2794,10 @@ NEU `LUMIVIZ_MILKDROP_TRACE_VARS` (Variablen-Trace nach per_frame).
   Tonumfang S-T1 a: Noten A0 bis C8 (vorher C1 bis C7). **23b gebaut**
   (S-A1 a: Auskunft `SaitenVon`; Saitenwahl Per chord / Follow hand,
   Abdämpfen an der nächsten Note derselben Saite, Tonname mit Saite und Ende).
-  Als Nächstes 23c (Extended KS); S-U2 (Instrument-Editor) mit Skizze vor 23f.
+  **23c ohne Korpus gebaut** (Extended KS, gemessen; S-K4 a, S-K5 a
+  entschieden). Offen: Tabelle der Korpus- und Tonabnehmer-Werte (Recherche
+  S132, Lücken), Hörproben `hoerproben_23c`, Skizze Pickups vor 23d, S-U2 vor
+  23f.
 - 🟡 **Loop: weitere Effekte** (Frage Patrik S129). Heute am Clip Filter,
   Distortion, Echo, Reverb (`ClipBaustein`, `loop/Loop.hpp`), an der Schicht
   Filter, Drive, Pan. Nicht geplant waren bisher Flanger, Chorus, Phaser,
@@ -5976,6 +5979,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.256.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-K4 a, S-K5 a entschieden, Stufe 23c ohne Korpus gebaut (Extended KS). |
 | 1.255.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: S-A1 a entschieden, Stufe 23b gebaut (Saitenwahl, Abdämpfen beim Planen). |
 | 1.254.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: Tonumfang S-T1 a — Noten A0 bis C8 (vorher C1 bis C7). |
 | 1.253.0 | 2026-10-18 | Session 132. §6 Saiteninstrumente: Konzept `audio/Saiten_Konzept.md` mit zehn Entscheiden (S-Z1 a bis S-B1 a), Creator-Skizze gebilligt, Stufe 23a gebaut (Modell, `.lvinst` 10, `.lvloop` 8); Befund Tonumfang B0. |
