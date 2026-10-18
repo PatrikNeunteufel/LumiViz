@@ -18,6 +18,7 @@
 #include "loop/Sample.hpp"
 #include "loop/SampleFrage.hpp"
 #include "loop/SignalWeg.hpp"  // abweichFarbe: die Hinweisfarbe
+#include "UI/widgets/Achse.hpp"  // Zoom wie die Zeitachse (E-Z1 a)
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"  // dateiArtIcon
 
@@ -53,6 +54,7 @@
 #include <QStyle>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <cmath>
@@ -149,24 +151,98 @@ int SchrittRaster::schritte() const
 
 int SchrittRaster::xVonSchritt(int schritt) const
 {
-    return kRand + schritt * (kSchrittBreite + kSchrittLuft) + (schritt / m_jeSchlag) * kSchlagLuft;
+    return kRand + schritt * (schrittBreite() + kSchrittLuft) + (schritt / m_jeSchlag) * kSchlagLuft;
 }
 
 int SchrittRaster::schrittBei(int x) const
 {
-    const int schlagBreite = m_jeSchlag * (kSchrittBreite + kSchrittLuft) + kSchlagLuft;
+    const int schlagBreite = m_jeSchlag * (schrittBreite() + kSchrittLuft) + kSchlagLuft;
     if (x < kRand) return -1;
     const int schlag = (x - kRand) / schlagBreite;
     const int rest = (x - kRand) - schlag * schlagBreite;
-    const int teil = rest / (kSchrittBreite + kSchrittLuft);
-    if (teil >= m_jeSchlag || rest % (kSchrittBreite + kSchrittLuft) >= kSchrittBreite) return -1;  // eine Luecke
+    const int teil = rest / (schrittBreite() + kSchrittLuft);
+    if (teil >= m_jeSchlag || rest % (schrittBreite() + kSchrittLuft) >= schrittBreite()) return -1;  // eine Luecke
     const int schritt = schlag * m_jeSchlag + teil;
     return schritt < schritte() ? schritt : -1;
 }
 
+// --- Zoom (Entscheid Patrik E-Z1 a, S135) ---------------------------------------
+
+double SchrittRaster::schrittMass() const
+{
+    return m_schrittBreite + kSchrittLuft + static_cast<double>(kSchlagLuft) / std::max(1, m_jeSchlag);
+}
+
+void SchrittRaster::zoomeZeit(double faktor, int xFest)
+{
+    const double neu = std::clamp(m_schrittBreite * faktor, kSchrittBreiteMin, kSchrittBreiteMax);
+    if (neu == m_schrittBreite) return;
+    // die Stelle unter xFest in Schritten (mit Bruchteil), vorher und nachher im Raster
+    const double stelle = std::max(0.0, (xFest - kRand) / schrittMass());
+    m_schrittBreite = neu;
+    const int nachher = kRand + static_cast<int>(std::lround(stelle * schrittMass()));
+    resize(sizeHint());
+    updateGeometry();
+    update();
+    Q_EMIT gezoomt(xFest, nachher);
+}
+
+void SchrittRaster::setZeilenProzent(int prozent)
+{
+    const int neu = std::clamp(prozent, kZeilenProzentMin, lumi::ui::Achse::kHoeheMax);
+    if (neu == m_zeilenProzent) return;
+    m_zeilenProzent = neu;
+    resize(sizeHint());
+    updateGeometry();
+    update();
+    Q_EMIT hoeheGeaendert();
+}
+
+void SchrittRaster::passeEin(int sichtBreite)
+{
+    // so breit, dass alle Schritte mit Luft und Rand hineinpassen
+    const int zahl = std::max(1, schritte());
+    const int schlaege = (zahl + m_jeSchlag - 1) / std::max(1, m_jeSchlag);
+    const double frei = sichtBreite - 2.0 * kRand - static_cast<double>(schlaege) * kSchlagLuft;
+    m_schrittBreite = std::clamp(std::floor(frei / zahl) - kSchrittLuft, kSchrittBreiteMin, kSchrittBreiteMax);
+    const bool hoeher = m_zeilenProzent != 100;
+    m_zeilenProzent = 100;
+    resize(sizeHint());
+    updateGeometry();
+    update();
+    Q_EMIT gezoomt(0, 0);
+    if (hoeher) Q_EMIT hoeheGeaendert();
+}
+
+void SchrittRaster::wheelEvent(QWheelEvent* event)
+{
+    const Qt::KeyboardModifiers tasten =
+        event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
+    const int rasten = event->angleDelta().y() != 0 ? event->angleDelta().y() : event->angleDelta().x();
+    const bool zeit = tasten == Qt::ControlModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    const bool hoehe = tasten == Qt::AltModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    if (rasten == 0 || (!zeit && !hoehe))
+    {
+        event->ignore();  // das Rad allein und Shift+Rad rollt die Flaeche, in der das Raster liegt
+        return;
+    }
+    if (zeit)
+        zoomeZeit(std::pow(lumi::ui::Achse::kZoomSchritt, rasten / 120.0), static_cast<int>(event->position().x()));
+    if (hoehe)
+    {
+        // die Hoehe geht in ganzen Schritten: ein feines Rad sammelt, bis es eine Raste ist
+        m_radRest += rasten;
+        const int ganze = m_radRest / 120;
+        m_radRest -= ganze * 120;
+        if (ganze != 0) setZeilenProzent(m_zeilenProzent + ganze * lumi::ui::Achse::kHoeheSchritt);
+        lumi::ui::Achse::loeseAltVomMenue(*event);
+    }
+    event->accept();
+}
+
 int SchrittRaster::lautOben() const
 {
-    return kKopfHoehe + static_cast<int>(m_muster.spuren.size()) * kZeilenHoehe + kLuftHoehe;
+    return kKopfHoehe + static_cast<int>(m_muster.spuren.size()) * zeilenHoehe() + kLuftHoehe;
 }
 
 QSize SchrittRaster::sizeHint() const
@@ -203,7 +279,7 @@ void SchrittRaster::paintEvent(QPaintEvent*)
     {
         QColor zeile = an;
         zeile.setAlpha(28);
-        p.fillRect(QRect(0, yVonSpur(m_spur), width(), kZeilenHoehe), zeile);
+        p.fillRect(QRect(0, yVonSpur(m_spur), width(), zeilenHoehe()), zeile);
     }
 
     // --- die Schritte: jeder zweite Schlag heller; ein gesetzter Schritt so
@@ -215,7 +291,7 @@ void SchrittRaster::paintEvent(QPaintEvent*)
         const bool stumm = m_muster.spuren[static_cast<std::size_t>(s)].stumm;
         for (int i = 0; i < zahl && i < static_cast<int>(zeile.size()); ++i)
         {
-            const QRect r(xVonSchritt(i), yVonSpur(s) + 4, kSchrittBreite, kZeilenHoehe - 8);
+            const QRect r(xVonSchritt(i), yVonSpur(s) + 4, schrittBreite(), zeilenHoehe() - 8);
             const double wert = zeile[static_cast<std::size_t>(i)];
             if (wert > 0.0)
             {
@@ -238,7 +314,7 @@ void SchrittRaster::paintEvent(QPaintEvent*)
         p.setBrush(Qt::NoBrush);
         p.setPen(QPen(text, 1.6));
         for (const SchrittOrt& ort : m_marken)
-            p.drawRoundedRect(QRect(xVonSchritt(ort.schritt), yVonSpur(ort.spur) + 4, kSchrittBreite, kZeilenHoehe - 8)
+            p.drawRoundedRect(QRect(xVonSchritt(ort.schritt), yVonSpur(ort.spur) + 4, schrittBreite(), zeilenHoehe() - 8)
                                   .adjusted(-1, -1, 1, 1),
                               2, 2);
         p.setPen(Qt::NoPen);
@@ -284,7 +360,7 @@ void SchrittRaster::paintEvent(QPaintEvent*)
             if (wert <= 0.0) continue;
             const int hoch = std::max(2, static_cast<int>(wert * (kLautHoehe - 6) + 0.5));
             p.setBrush(an);
-            p.drawRect(QRect(xVonSchritt(i), oben + kLautHoehe - 1 - hoch, kSchrittBreite, hoch));
+            p.drawRect(QRect(xVonSchritt(i), oben + kLautHoehe - 1 - hoch, schrittBreite(), hoch));
         }
     }
 
@@ -294,14 +370,14 @@ void SchrittRaster::paintEvent(QPaintEvent*)
     {
         if (neben < 0.0 || neben >= zahl) continue;
         const int ganz = static_cast<int>(neben);
-        const int x = xVonSchritt(ganz) + static_cast<int>((neben - ganz) * (kSchrittBreite + kSchrittLuft));
+        const int x = xVonSchritt(ganz) + static_cast<int>((neben - ganz) * (schrittBreite() + kSchrittLuft));
         p.drawLine(x, 0, x, height());
     }
     // --- die Abspielmarke
     if (m_marke >= 0.0 && m_marke < zahl)
     {
         const int ganz = static_cast<int>(m_marke);
-        const int x = xVonSchritt(ganz) + static_cast<int>((m_marke - ganz) * (kSchrittBreite + kSchrittLuft));
+        const int x = xVonSchritt(ganz) + static_cast<int>((m_marke - ganz) * (schrittBreite() + kSchrittLuft));
         p.setPen(QPen(QColor(255, 90, 70), 2.0));
         p.drawLine(x, 0, x, height());
     }
@@ -341,7 +417,7 @@ int SchrittRaster::schrittNahe(int x) const
     const int zahl = schritte();
     if (zahl <= 0) return 0;
     for (int i = 0; i < zahl; ++i)
-        if (x < xVonSchritt(i) + kSchrittBreite + kSchrittLuft) return i;
+        if (x < xVonSchritt(i) + schrittBreite() + kSchrittLuft) return i;
     return zahl - 1;
 }
 
@@ -349,7 +425,7 @@ int SchrittRaster::spurNahe(int y) const
 {
     const int spuren = static_cast<int>(m_muster.spuren.size());
     if (spuren == 0) return -1;
-    return std::clamp((y - kKopfHoehe) / kZeilenHoehe, 0, spuren - 1);
+    return std::clamp((y - kKopfHoehe) / zeilenHoehe(), 0, spuren - 1);
 }
 
 bool SchrittRaster::istMarkiert(int spur, int schritt) const
@@ -569,7 +645,7 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
         setFocus(Qt::MouseFocusReason);
         const QPoint wo = event->position().toPoint();
         if (!m_rechtsLoescht || wo.y() < kKopfHoehe || wo.y() >= lautOben()) return;
-        const int spur = (wo.y() - kKopfHoehe) / kZeilenHoehe;
+        const int spur = (wo.y() - kKopfHoehe) / zeilenHoehe();
         const int schritt = schrittBei(wo.x());
         if (spur >= static_cast<int>(m_muster.spuren.size()) || schritt < 0) return;
         if (m_marken.size() > 1 && istMarkiert(spur, schritt)) return;
@@ -596,7 +672,7 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
         // die Zeile der Takte (B4 b): ein Klick setzt die Abspielstelle, Shift+Klick die Einfuegemarke
         const int zahl = schritte();
         if (shift)
-            setzeEinfuegemarke(zahl > 0 && ort.x() >= xVonSchritt(zahl - 1) + kSchrittBreite ? zahl : schrittNahe(ort.x()));
+            setzeEinfuegemarke(zahl > 0 && ort.x() >= xVonSchritt(zahl - 1) + schrittBreite() ? zahl : schrittNahe(ort.x()));
         else
         {
             const int schritt = schrittNahe(ort.x());
@@ -607,7 +683,7 @@ void SchrittRaster::mousePressEvent(QMouseEvent* event)
         }
         return;
     }
-    const int spur = (ort.y() - kKopfHoehe) / kZeilenHoehe;
+    const int spur = (ort.y() - kKopfHoehe) / zeilenHoehe();
     if (spur >= spuren)
     {
         markiere({});  // ein Klick ins Leere hebt die Marken auf
@@ -821,6 +897,15 @@ void DrumEditor::setupUI()
     kopf->addStretch(1);
     kopf->addWidget(m_kitKnopf);
     kopf->addSpacing(12);
+    // E-Z1 a (S135): Fit — das ganze Muster in der Breite, die Spuren in Normalhoehe; der
+    // Tooltip nennt die Gesten wie in der Zeitachse (ohne die mittlere Maustaste)
+    auto* fit = new QPushButton(tr("Fit"), this);
+    fit->setObjectName(QStringLiteral("drumFit"));
+    fit->setToolTip(tr("The whole pattern in width, the tracks at normal height") + QStringLiteral("\n") +
+                    lumi::ui::Achse::zoomGesten().mid(0, 5).join(QLatin1Char('\n')));
+    connect(fit, &QPushButton::clicked, this, [this] { m_raster->passeEin(m_rollen->viewport()->width()); });
+    kopf->addWidget(fit);
+    kopf->addSpacing(8);
     kopf->addWidget(new QLabel(tr("Bars"), this));
     kopf->addWidget(m_takte);
     kopf->addWidget(m_wiederholen);
@@ -969,6 +1054,14 @@ void DrumEditor::setupUI()
     connect(m_raster, &SchrittRaster::spurGewaehlt, this, [this](int spur) { waehleSpur(spur); });
     connect(m_raster, &SchrittRaster::auswahlGeaendert, this, &DrumEditor::zeigeAuswahl);
     connect(m_raster, &SchrittRaster::abspielstelleGewaehlt, this, &DrumEditor::abspielstelleGewaehlt);
+    // E-Z1 a: gezoomt — die Stelle unter der Maus bleibt im Fenster stehen
+    connect(m_raster, &SchrittRaster::gezoomt, this, [this](int vorher, int nachher) {
+        QScrollBar* balken = m_rollen->horizontalScrollBar();
+        balken->setRange(0, std::max(0, m_raster->width() - m_rollen->viewport()->width()));
+        balken->setValue(balken->value() + nachher - vorher);
+    });
+    // E-Z1 a: die Spuren hoeher — die Kopfzeilen links wachsen mit
+    connect(m_raster, &SchrittRaster::hoeheGeaendert, this, &DrumEditor::passeSpurHoeheAn);
     m_raster->setRechtsklickLoescht(m_rechtsLoescht->isChecked());
     connect(m_rechtsLoescht, &QCheckBox::toggled, this, [this](bool an) {
         m_raster->setRechtsklickLoescht(an);
@@ -1077,9 +1170,8 @@ void DrumEditor::zeigeAlles()
         m_swing->setValue(m_loop.swing * 100.0);
     }
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
-    // das Raster in voller Hoehe, darunter Platz fuer den Rollbalken
-    m_rollen->setFixedHeight(m_raster->sizeHint().height() + style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 2);
     baueSpuren(*ziel);
+    passeSpurHoeheAn();  // das Raster in voller Hoehe, die Kopfzeilen so hoch wie seine Spuren
     zeigeKit();
     m_leerHinweis->setVisible(ziel->spuren.empty());
     {
@@ -1119,7 +1211,7 @@ void DrumEditor::zeigeAuswahl()
     if (marken.empty())
         // sonst findet es niemand: sagen, wie man markiert
         text = tr("Shift+drag selects steps · Ctrl+click adds or removes one · a click in the bar row sets where Play "
-                  "starts, Shift+click the paste marker");
+                  "starts, Shift+click the paste marker · Ctrl+wheel zooms the time, Alt+wheel the height");
     else
     {
         std::vector<int> spuren;
@@ -1141,6 +1233,14 @@ QStringList DrumEditor::klangZeilen(int spur) const
     return m_spuren[static_cast<std::size_t>(spur)].klang->zeilen();
 }
 
+void DrumEditor::passeSpurHoeheAn()
+{
+    // E-Z1 a: jede Kopfzeile so hoch wie ihre Spur im Raster; das Raster in voller
+    // Hoehe, darunter Platz fuer den Rollbalken
+    for (SpurZeile& zeile : m_spuren) zeile.reihe->setFixedHeight(m_raster->zeilenHoehe());
+    m_rollen->setFixedHeight(m_raster->sizeHint().height() + style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 2);
+}
+
 void DrumEditor::baueSpuren(const Muster& muster)
 {
     if (m_spuren.size() != muster.spuren.size())
@@ -1151,7 +1251,7 @@ void DrumEditor::baueSpuren(const Muster& muster)
         {
             SpurZeile zeile;
             zeile.reihe = new QWidget;
-            zeile.reihe->setFixedHeight(SchrittRaster::kZeilenHoehe);
+            zeile.reihe->setFixedHeight(m_raster->zeilenHoehe());
             zeile.reihe->setProperty(kSpurNr, s);
             zeile.reihe->setContextMenuPolicy(Qt::CustomContextMenu);
             zeile.reihe->installEventFilter(this);
@@ -1481,7 +1581,7 @@ void DrumEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art, std:
     if (schritt < 0.0 || balken->isSliderDown() || balken->maximum() <= 0) return;
     const int ganz = static_cast<int>(schritt);
     const int imInhalt =
-        m_raster->xVonSchritt(ganz) + static_cast<int>((schritt - ganz) * SchrittRaster::kSchrittBreite);
+        m_raster->xVonSchritt(ganz) + static_cast<int>((schritt - ganz) * m_raster->schrittBreite());
     const int ziel = lumi::ui::Achse::rollFuerMarke(art, imInhalt, m_rollen->viewport()->width(), balken->value());
     if (ziel != balken->value()) balken->setValue(ziel);  // der Balken klemmt
 }

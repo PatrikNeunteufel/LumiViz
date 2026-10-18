@@ -101,7 +101,7 @@ NotenRaster::NotenRaster(QWidget* parent) : QWidget(parent)
 
 bool NotenRaster::anKante(const Note& note, int x) const
 {
-    const int griff = std::clamp(note.laenge * kSchrittBreite / 3, kKante, kKanteMax);
+    const int griff = std::clamp(note.laenge * schrittBreite() / 3, kKante, kKanteMax);
     return x >= xVonSchritt(note.schritt + note.laenge) - griff;
 }
 
@@ -194,9 +194,9 @@ std::vector<Anschlagplan> NotenRaster::anschlaege() const
 
 int NotenRaster::versatzPixel(double versatzMs) const
 {
-    // ein Schritt dauert 60000 / bpm / Schritte je Schlag ms und ist kSchrittBreite breit
+    // ein Schritt dauert 60000 / bpm / Schritte je Schlag ms und ist schrittBreite() breit
     const double schrittMs = 60000.0 / m_bpm / std::max(1, m_jeSchlag);
-    return static_cast<int>(std::lround(versatzMs / schrittMs * kSchrittBreite));
+    return static_cast<int>(std::lround(versatzMs / schrittMs * schrittBreite()));
 }
 
 bool NotenRaster::schalteAnschlag(int schritt)
@@ -391,12 +391,12 @@ bool NotenRaster::event(QEvent* event)
 
 int NotenRaster::schrittUnter(int x) const
 {
-    return teileAb(x - kTastenBreite + m_rollX, kSchrittBreite);
+    return teileAb(x - kTastenBreite + m_rollX, schrittBreite());
 }
 
 int NotenRaster::hoeheUnter(int y) const
 {
-    return kHoeheMax - teileAb(y - rasterOben() + m_rollY, kZeilenHoehe);
+    return kHoeheMax - teileAb(y - rasterOben() + m_rollY, zeilenHoehe());
 }
 
 void NotenRaster::richteMarken()
@@ -678,12 +678,12 @@ bool NotenRaster::loescheAuswahl()
 
 int NotenRaster::rollXMax() const
 {
-    return std::max(0, schritte() * kSchrittBreite - sichtBreite());
+    return std::max(0, schritte() * schrittBreite() - sichtBreite());
 }
 
 int NotenRaster::rollYMax() const
 {
-    return std::max(0, kHoehen * kZeilenHoehe - sichtHoehe());
+    return std::max(0, kHoehen * zeilenHoehe() - sichtHoehe());
 }
 
 void NotenRaster::setRollen(int x, int y)
@@ -698,20 +698,20 @@ void NotenRaster::setRollen(int x, int y)
 
 void NotenRaster::zeigeHoehe(int hoehe)
 {
-    setRollen(m_rollX, (kHoeheMax - hoehe) * kZeilenHoehe + kZeilenHoehe / 2 - sichtHoehe() / 2);
+    setRollen(m_rollX, (kHoeheMax - hoehe) * zeilenHoehe() + zeilenHoehe() / 2 - sichtHoehe() / 2);
 }
 
 int NotenRaster::schrittBei(int x) const
 {
     if (x < kTastenBreite) return -1;
-    const int schritt = (x - kTastenBreite + m_rollX) / kSchrittBreite;
+    const int schritt = (x - kTastenBreite + m_rollX) / schrittBreite();
     return schritt < schritte() ? schritt : -1;
 }
 
 int NotenRaster::hoeheBei(int y) const
 {
     if (y < rasterOben() || y >= lautOben()) return -1;
-    const int hoehe = kHoeheMax - (y - rasterOben() + m_rollY) / kZeilenHoehe;
+    const int hoehe = kHoeheMax - (y - rasterOben() + m_rollY) / zeilenHoehe();
     return hoehe >= kHoeheMin && hoehe <= kHoeheMax ? hoehe : -1;
 }
 
@@ -763,19 +763,19 @@ void NotenRaster::paintEvent(QPaintEvent*)
     for (int hoehe = kHoeheMin; hoehe <= kHoeheMax; ++hoehe)
     {
         const int y = yVonHoehe(hoehe);
-        if (y + kZeilenHoehe < oben || y > unten) continue;
+        if (y + zeilenHoehe() < oben || y > unten) continue;
         if (schwarzeTaste(hoehe))
         {
             QColor dunkel = text;
             dunkel.setAlpha(22);
-            p.fillRect(QRect(kTastenBreite, y, rechts - kTastenBreite, kZeilenHoehe), dunkel);
+            p.fillRect(QRect(kTastenBreite, y, rechts - kTastenBreite, zeilenHoehe()), dunkel);
         }
         if (hoehe % 12 == 0)
         {
             QColor linie = text;
             linie.setAlpha(70);
             p.setPen(linie);
-            p.drawLine(kTastenBreite, y + kZeilenHoehe - 1, rechts, y + kZeilenHoehe - 1);
+            p.drawLine(kTastenBreite, y + zeilenHoehe() - 1, rechts, y + zeilenHoehe() - 1);
         }
     }
     // --- die Schritte: jeder Schlag kraeftiger, jeder Takt am kraeftigsten
@@ -802,7 +802,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         // I (Stufe 24e): um den Versatz des Strum verschoben
         const int versatz = versatzPixel(alleAnschlaege[static_cast<std::size_t>(i)].versatzMs);
         const QRect r(xVonSchritt(note.schritt) + 1 + versatz, yVonHoehe(note.hoehe) + 1,
-                      note.laenge * kSchrittBreite - 1, kZeilenHoehe - 2);
+                      note.laenge * schrittBreite() - 1, zeilenHoehe() - 2);
         const Griff& griff = alleGriffe[static_cast<std::size_t>(i)];
         const bool nichtGreifbar = mitSaiten && !griff.greifbar;
         QColor farbe = nichtGreifbar ? QColor(226, 75, 74) : m_muster.stumm ? text : an;
@@ -866,7 +866,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
                 {
                     const Note& note = m_muster.noten[folge[j]];
                     linie << QPoint(xVonSchritt(note.schritt) + 1 + versatzPixel(alleAnschlaege[folge[j]].versatzMs),
-                                    yVonHoehe(note.hoehe) + kZeilenHoehe / 2);
+                                    yVonHoehe(note.hoehe) + zeilenHoehe() / 2);
                 }
                 p.setPen(QPen(strich, 1.0));
                 p.setBrush(Qt::NoBrush);
@@ -915,12 +915,12 @@ void NotenRaster::paintEvent(QPaintEvent*)
     for (int hoehe = kHoeheMin; hoehe <= kHoeheMax; ++hoehe)
     {
         const int y = yVonHoehe(hoehe);
-        if (y + kZeilenHoehe < oben || y > unten) continue;
-        const QRect taste(0, y, kTastenBreite - 1, kZeilenHoehe);
+        if (y + zeilenHoehe() < oben || y > unten) continue;
+        const QRect taste(0, y, kTastenBreite - 1, zeilenHoehe());
         const bool schwarz = schwarzeTaste(hoehe);
         p.fillRect(taste, hoehe == m_taste ? an : schwarz ? QColor(40, 40, 44) : QColor(232, 232, 228));
         p.setPen(QColor(120, 120, 120));
-        p.drawLine(0, y + kZeilenHoehe - 1, kTastenBreite - 1, y + kZeilenHoehe - 1);
+        p.drawLine(0, y + zeilenHoehe() - 1, kTastenBreite - 1, y + zeilenHoehe() - 1);
         if (hoehe % 12 == 0)
         {
             p.setPen(QColor(40, 40, 44));
@@ -935,7 +935,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         for (const int leer : m_saiten.leer)
         {
             const int y = yVonHoehe(leer + m_saiten.capo);
-            p.drawEllipse(QPoint(kTastenBreite - 8, y + kZeilenHoehe / 2), 3, 3);
+            p.drawEllipse(QPoint(kTastenBreite - 8, y + zeilenHoehe() / 2), 3, 3);
         }
         p.setBrush(Qt::NoBrush);
     }
@@ -977,7 +977,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         QColor farbe = an;
         if (i != gewaehlt) farbe.setAlpha(150);
         p.setBrush(farbe);
-        p.drawRect(QRect(xVonSchritt(note.schritt) + 2, unten + kLautHoehe - 1 - hoch, kSchrittBreite - 5, hoch));
+        p.drawRect(QRect(xVonSchritt(note.schritt) + 2, unten + kLautHoehe - 1 - hoch, schrittBreite() - 5, hoch));
     }
     p.setClipping(false);
     p.setFont(font());
@@ -1014,7 +1014,7 @@ void NotenRaster::paintEvent(QPaintEvent*)
         {
             const int anzahl = zahlJe[static_cast<std::size_t>(s)];
             if (anzahl == 0) continue;
-            const QRect zelle(xVonSchritt(s), strumY + 1, kSchrittBreite, kStrumHoehe - 1);
+            const QRect zelle(xVonSchritt(s), strumY + 1, schrittBreite(), kStrumHoehe - 1);
             if (zelle.right() < kTastenBreite || zelle.left() > width()) continue;
             const Anschlag* eintrag = anschlagAn(m_muster, s);
             const QColor farbe = eintrag != nullptr ? an : leise;
@@ -1046,13 +1046,13 @@ void NotenRaster::paintEvent(QPaintEvent*)
     for (const double neben : m_neben)
     {
         if (neben < 0.0 || neben >= zahl) continue;
-        const int x = kTastenBreite + static_cast<int>(neben * kSchrittBreite) - m_rollX;
+        const int x = kTastenBreite + static_cast<int>(neben * schrittBreite()) - m_rollX;
         if (x >= kTastenBreite) p.drawLine(x, 0, x, height());
     }
     // --- die Abspielmarke
     if (m_marke >= 0.0 && m_marke < zahl)
     {
-        const int x = kTastenBreite + static_cast<int>(m_marke * kSchrittBreite) - m_rollX;
+        const int x = kTastenBreite + static_cast<int>(m_marke * schrittBreite()) - m_rollX;
         if (x >= kTastenBreite)
         {
             p.setPen(QPen(QColor(255, 90, 70), 2.0));
@@ -1065,7 +1065,7 @@ void NotenRaster::zieheBei(QPoint ort)
 {
     const int zahl = schritte();
     if (zahl <= 0) return;
-    const int schrittRoh = std::clamp(teileAb(ort.x() - kTastenBreite + m_rollX, kSchrittBreite), 0, zahl - 1);
+    const int schrittRoh = std::clamp(teileAb(ort.x() - kTastenBreite + m_rollX, schrittBreite()), 0, zahl - 1);
     if (m_zug == Zug::Laut)
     {
         const int schritt = schrittBei(ort.x());
@@ -1091,15 +1091,15 @@ void NotenRaster::zieheBei(QPoint ort)
         std::vector<NotenOrt> orte = m_vorMarken;
         for (const Note& note : m_muster.noten)
         {
-            const QRect r(xVonSchritt(note.schritt), yVonHoehe(note.hoehe), note.laenge * kSchrittBreite, kZeilenHoehe);
+            const QRect r(xVonSchritt(note.schritt), yVonHoehe(note.hoehe), note.laenge * schrittBreite(), zeilenHoehe());
             if (r.intersects(m_rahmen)) orte.push_back({note.schritt, note.hoehe});
         }
         markiere(orte);
         // B3 a: der Zeitraum des Rahmens, auf Schritte gerundet — mit Ctrl um den bisherigen erweitert
         {
             const int zahl = schritte();
-            int von = std::clamp(schrittUnter(m_rahmen.left() + kSchrittBreite / 2), 0, zahl);
-            int bis = std::clamp(schrittUnter(m_rahmen.right() + kSchrittBreite / 2), 0, zahl);
+            int von = std::clamp(schrittUnter(m_rahmen.left() + schrittBreite() / 2), 0, zahl);
+            int bis = std::clamp(schrittUnter(m_rahmen.right() + schrittBreite() / 2), 0, zahl);
             if (bis <= von) bis = std::min(zahl, von + 1);
             if (m_vorZeitraum)
             {
@@ -1155,7 +1155,7 @@ void NotenRaster::zieheBei(QPoint ort)
     else if (m_zug == Zug::Verschieben)
     {
         const int schritt = std::clamp(schrittRoh - m_griffSchritt, 0, zahl - note.laenge);
-        const int hoehe = std::clamp(kHoeheMax - teileAb(ort.y() - rasterOben() + m_rollY, kZeilenHoehe), kHoeheMin, kHoeheMax);
+        const int hoehe = std::clamp(kHoeheMax - teileAb(ort.y() - rasterOben() + m_rollY, zeilenHoehe()), kHoeheMin, kHoeheMax);
         if (belegt(schritt, hoehe, platz)) return;  // dort beginnt schon eine Note dieser Tonhoehe
         note.schritt = schritt;
         note.hoehe = hoehe;
@@ -1209,7 +1209,7 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         // die Zeile der Takte (B4 b): ein Klick setzt die Abspielstelle, Shift+Klick die Einfuegemarke
         if (ort.x() < kTastenBreite) return;
         if (shift)
-            setzeEinfuegemarke(std::clamp(schrittUnter(ort.x() + kSchrittBreite / 2), 0, schritte()));
+            setzeEinfuegemarke(std::clamp(schrittUnter(ort.x() + schrittBreite() / 2), 0, schritte()));
         else
         {
             const int schritt = std::clamp(schrittUnter(ort.x()), 0, std::max(0, schritte() - 1));
@@ -1537,15 +1537,94 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
     lumi::ui::zeigeMenue(menu, event->globalPos());
 }
 
+void NotenRaster::zoomeZeit(double faktor, int xFest)
+{
+    const double alt = m_schrittBreite;
+    const double neu = std::clamp(alt * faktor, kSchrittBreiteMin, kSchrittBreiteMax);
+    if (neu == alt) return;
+    // der Schritt unter xFest bleibt an seiner Stelle im Fenster
+    const int vorne = std::max(0, xFest - kTastenBreite);
+    const double schritt = (vorne + m_rollX) / static_cast<double>(schrittBreite());
+    m_schrittBreite = neu;
+    setRollen(static_cast<int>(std::lround(schritt * schrittBreite())) - vorne, m_rollY);
+    update();
+    Q_EMIT gerollt();
+}
+
+void NotenRaster::setZeilenProzent(int prozent, int yFest)
+{
+    const int neu = std::clamp(prozent, lumi::ui::Achse::kHoeheMin, lumi::ui::Achse::kHoeheMax);
+    if (neu == m_zeilenProzent) return;
+    // die Tonhoehe unter yFest bleibt an ihrer Stelle
+    const int oben = yFest < 0 ? 0 : std::max(0, yFest - rasterOben());
+    const double zeile = (oben + m_rollY) / static_cast<double>(zeilenHoehe());
+    m_zeilenProzent = neu;
+    setRollen(m_rollX, static_cast<int>(std::lround(zeile * zeilenHoehe())) - oben);
+    update();
+    Q_EMIT gerollt();
+}
+
+void NotenRaster::passeEin()
+{
+    // die Breite: das ganze Muster
+    const int zahl = std::max(1, schritte());
+    m_schrittBreite = std::clamp(static_cast<double>(sichtBreite()) / zahl, kSchrittBreiteMin, kSchrittBreiteMax);
+    // die Hoehe: die Noten mit einer Zeile Luft darueber und darunter (ohne Noten: Normalhoehe um C4)
+    int tief = 60;
+    int hoch = 60;
+    if (!m_muster.noten.empty())
+    {
+        const auto [min, max] = std::minmax_element(m_muster.noten.begin(), m_muster.noten.end(),
+                                                    [](const Note& a, const Note& b) { return a.hoehe < b.hoehe; });
+        tief = min->hoehe;
+        hoch = max->hoehe;
+        const int zeilen = hoch - tief + 3;
+        const int prozent = sichtHoehe() * 100 / (zeilen * kZeilenHoehe);
+        m_zeilenProzent = std::clamp(prozent - prozent % lumi::ui::Achse::kHoeheSchritt, lumi::ui::Achse::kHoeheMin,
+                                     lumi::ui::Achse::kHoeheMax);
+    }
+    else
+        m_zeilenProzent = 100;
+    setRollen(0, m_rollY);
+    zeigeHoehe((tief + hoch) / 2);
+    update();
+    Q_EMIT gerollt();  // die Rollbalken des Fensters ziehen nach
+}
+
 void NotenRaster::wheelEvent(QWheelEvent* event)
 {
-    // das Rad rollt die Tonhoehen, mit Shift die Zeit
+    const Qt::KeyboardModifiers tasten =
+        event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
+    // mit einer Taste kann das System das Rad als waagrecht melden: es zaehlt die Achse, die sich bewegt
     const int rasten = event->angleDelta().y() != 0 ? event->angleDelta().y() : event->angleDelta().x();
     if (rasten == 0) return;
+    // E-Z1 a: Ctrl+Rad die Zeit, Alt+Rad die Hoehe, Ctrl+Alt+Rad beides — wie die Zeitachse
+    const bool zeit = tasten == Qt::ControlModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    const bool hoehe = tasten == Qt::AltModifier || tasten == (Qt::ControlModifier | Qt::AltModifier);
+    if (zeit || hoehe)
+    {
+        if (zeit)
+            zoomeZeit(std::pow(lumi::ui::Achse::kZoomSchritt, rasten / 120.0),
+                      static_cast<int>(event->position().x()));
+        if (hoehe)
+        {
+            // die Hoehe geht in ganzen Schritten: ein feines Rad sammelt, bis es eine Raste ist
+            m_radRest += rasten;
+            const int ganze = m_radRest / 120;
+            m_radRest -= ganze * 120;
+            if (ganze != 0)
+                setZeilenProzent(m_zeilenProzent + ganze * lumi::ui::Achse::kHoeheSchritt,
+                                 static_cast<int>(event->position().y()));
+            lumi::ui::Achse::loeseAltVomMenue(*event);
+        }
+        event->accept();
+        return;
+    }
+    // das Rad rollt die Tonhoehen, mit Shift die Zeit
     if (event->modifiers() & Qt::ShiftModifier)
-        setRollen(m_rollX - rasten * kSchrittBreite * 4 / 120, m_rollY);
+        setRollen(m_rollX - rasten * schrittBreite() * 4 / 120, m_rollY);
     else
-        setRollen(m_rollX, m_rollY - rasten * kZeilenHoehe * 3 / 120);
+        setRollen(m_rollX, m_rollY - rasten * zeilenHoehe() * 3 / 120);
     Q_EMIT gerollt();
     event->accept();
 }
@@ -1600,6 +1679,15 @@ void InstrumentEditor::setupUI()
     kopf->addWidget(m_basisName);
     kopf->addWidget(m_nutzer);
     kopf->addStretch(1);
+    // E-Z1 a (S135): Fit — das ganze Muster in der Breite, die Noten in der Hoehe; der
+    // Tooltip nennt die Gesten wie in der Zeitachse (ohne die mittlere Maustaste)
+    auto* fit = new QPushButton(tr("Fit"), this);
+    fit->setObjectName(QStringLiteral("instrumentFit"));
+    fit->setToolTip(tr("The whole pattern in width, the notes in height") + QStringLiteral("\n") +
+                    lumi::ui::Achse::zoomGesten().mid(0, 5).join(QLatin1Char('\n')));
+    connect(fit, &QPushButton::clicked, this, [this] { m_raster->passeEin(); });
+    kopf->addWidget(fit);
+    kopf->addSpacing(8);
     kopf->addWidget(new QLabel(tr("Bars"), this));
     kopf->addWidget(m_takte);
     kopf->addWidget(m_wiederholen);
@@ -1853,11 +1941,11 @@ void InstrumentEditor::passeRollbalkenAn()
     const QSignalBlocker b(m_rollY);
     m_rollX->setRange(0, m_raster->rollXMax());
     m_rollX->setPageStep(std::max(1, m_raster->sichtBreite()));
-    m_rollX->setSingleStep(NotenRaster::kSchrittBreite);
+    m_rollX->setSingleStep(m_raster->schrittBreite());
     m_rollX->setValue(m_raster->rollX());
     m_rollY->setRange(0, m_raster->rollYMax());
     m_rollY->setPageStep(std::max(1, m_raster->sichtHoehe()));
-    m_rollY->setSingleStep(NotenRaster::kZeilenHoehe);
+    m_rollY->setSingleStep(m_raster->zeilenHoehe());
     m_rollY->setValue(m_raster->rollY());
     // ein Balken, der nichts zu rollen hat, bleibt weg
     m_rollX->setVisible(m_raster->rollXMax() > 0);
@@ -2023,7 +2111,7 @@ void InstrumentEditor::zeigeAuswahl()
     if (zahl == 0)
         // sonst findet es niemand: sagen, wie man markiert
         text = tr("Shift+drag selects notes · Ctrl+click adds or removes one · a click in the bar row sets where Play "
-                  "starts, Shift+click the paste marker");
+                  "starts, Shift+click the paste marker · Ctrl+wheel zooms the time, Alt+wheel the height");
     else if (zahl == 1)
         text = tr("1 note selected · Ctrl+C copy · Ctrl+V paste at the marker · Ctrl+D duplicate · arrow keys move · "
                   "Shift+drag selects several");
@@ -2052,7 +2140,7 @@ void InstrumentEditor::zeigeMarke(double schritt, lumi::ui::Achse::Mitlaufen art
     m_raster->setMarke(schritt);
     m_raster->setNebenMarken(std::move(neben));
     if (schritt < 0.0 || m_rollX->isSliderDown() || m_rollX->maximum() <= 0) return;
-    const int imInhalt = static_cast<int>(schritt * NotenRaster::kSchrittBreite);
+    const int imInhalt = static_cast<int>(schritt * m_raster->schrittBreite());
     const int ziel = lumi::ui::Achse::rollFuerMarke(art, imInhalt, m_raster->sichtBreite(), m_rollX->value());
     if (ziel != m_rollX->value()) m_rollX->setValue(ziel);  // der Balken klemmt und rollt das Raster
 }

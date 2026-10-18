@@ -31,6 +31,7 @@
 class QMenu;
 class QPainter;
 class QScrollBar;
+class QWheelEvent;
 
 namespace lumi::ui
 {
@@ -103,6 +104,9 @@ public:
     [[nodiscard]] bool zoomVerstellt() const { return !zeitGanz() || m_zeilenProzent != 100; }
     /// Die Gesten der Achse, eine je Zeile — fuer den Tooltip von „Fit".
     [[nodiscard]] static QStringList zoomGesten();
+    /// Nach Alt+Rad: verhindert, dass das Loslassen von Alt unter Windows die
+    /// Menueleiste auf die Tastatur schaltet (auch fuer die Editoren des Loops, E-Z1 a).
+    static void loeseAltVomMenue(const QWheelEvent& event);
 
     // --- Mitlaufen mit der Abspielmarke (S102, Entscheid Patrik ZO6) ----------
     //

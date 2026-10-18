@@ -199,11 +199,32 @@ public:
     /// So rollen, dass diese Tonhoehe in der Mitte liegt.
     void zeigeHoehe(int hoehe);
 
+    // --- Zoom (Entscheid Patrik E-Z1 a, S135) — dieselben Gesten wie die Zeitachse (S102) --
+    // Ctrl+Rad zoomt die Zeit, Alt+Rad die Hoehe der Zeilen, Ctrl+Alt+Rad beides, um die
+    // Stelle unter der Maus; Faktor und Grenzen der Hoehe von `lumi::ui::Achse`.
+    // „Fit" (`passeEin`): das ganze Muster in der Breite, die Noten in der Hoehe.
+    static constexpr double kSchrittBreiteMin = 4.0;   ///< so eng wird ein Schritt hoechstens
+    static constexpr double kSchrittBreiteMax = 96.0;  ///< und so breit
+    /// Die Breite eines Schritts und die Hoehe einer Zeile, wie der Zoom sie gerade setzt.
+    [[nodiscard]] int schrittBreite() const { return static_cast<int>(m_schrittBreite + 0.5); }
+    [[nodiscard]] int zeilenHoehe() const { return kZeilenHoehe * m_zeilenProzent / 100; }
+    [[nodiscard]] int zeilenProzent() const { return m_zeilenProzent; }
+    /// Die Zeit zoomen: `faktor` ueber 1 = hinein; der Schritt unter `xFest` bleibt stehen.
+    void zoomeZeit(double faktor, int xFest);
+    /// Die Hoehe der Zeilen in Prozent (`Achse::kHoeheMin` … `kHoeheMax`); die
+    /// Tonhoehe unter `yFest` bleibt stehen, -1 = die Oberkante der Noten.
+    void setZeilenProzent(int prozent, int yFest = -1);
+    /// **Fit:** das ganze Muster in der Breite, die Noten in der Hoehe (ohne Noten:
+    /// 100 % um C4).
+    void passeEin();
+    /// Weicht der Zoom von der Normalgroesse ab (16 px je Schritt, 100 %)?
+    [[nodiscard]] bool zoomVerstellt() const { return schrittBreite() != kSchrittBreite || m_zeilenProzent != 100; }
+
     // --- Geometrie (auch fuer Tests) ------------------------------------------
     static constexpr int kTastenBreite = 44;  ///< die Klaviatur links
     static constexpr int kKopfHoehe = 18;     ///< die Zeile mit den Takten
-    static constexpr int kZeilenHoehe = 14;   ///< je Tonhoehe
-    static constexpr int kSchrittBreite = 16;
+    static constexpr int kZeilenHoehe = 14;   ///< je Tonhoehe, ohne Zoom
+    static constexpr int kSchrittBreite = 16;  ///< ohne Zoom
     static constexpr int kLautHoehe = 56;     ///< die Lautstaerke je Note, unten
     static constexpr int kStrumHoehe = 20;    ///< Stufe 24e (J, S-W14 a): die Spur Strum unter dem Kopf, nur mit Saiten
     static constexpr int kKante = 5;          ///< so breit ist der Griff am Ende einer Note mindestens
@@ -211,10 +232,10 @@ public:
     /// Liegt `x` auf dem Griff am Ende dieser Note? Dort zieht man ihre Laenge;
     /// der Mauszeiger zeigt es.
     [[nodiscard]] bool anKante(const Note& note, int x) const;
-    [[nodiscard]] int xVonSchritt(int schritt) const { return kTastenBreite + schritt * kSchrittBreite - m_rollX; }
+    [[nodiscard]] int xVonSchritt(int schritt) const { return kTastenBreite + schritt * schrittBreite() - m_rollX; }
     /// Der Schritt unter `x`; -1 = keiner (die Klaviatur, hinter dem Ende).
     [[nodiscard]] int schrittBei(int x) const;
-    [[nodiscard]] int yVonHoehe(int hoehe) const { return rasterOben() + (kHoeheMax - hoehe) * kZeilenHoehe - m_rollY; }
+    [[nodiscard]] int yVonHoehe(int hoehe) const { return rasterOben() + (kHoeheMax - hoehe) * zeilenHoehe() - m_rollY; }
     /// Oberkante der Noten: unter der Zeile der Takte und (mit Saiten) der Spur Strum.
     [[nodiscard]] int rasterOben() const { return kKopfHoehe + strumHoehe(); }
     /// Die Tonhoehe unter `y`; -1 = keine (der Kopf, die Zeile der Lautstaerken).
@@ -326,6 +347,9 @@ private:
     void zeigeZeiger(QPoint ort);
     Saitensatz m_saiten;  ///< Stufe 23f: die Saiten des Instruments; leer = keine
     double m_bpm = 120.0;  ///< Stufe 24e: fuer den Versatz der Akkordnoten
+    double m_schrittBreite = kSchrittBreite;  ///< E-Z1 a: der Zoom der Zeit (mit Bruchteil, damit er nicht wandert)
+    int m_zeilenProzent = 100;                ///< E-Z1 a: der Zoom der Hoehe
+    int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
     /// Griffe und Anschlaege je Note in der Reihenfolge des Musters — geplant auf
     /// einer sortierten Kopie (waehrend eines Zugs ist das Muster nicht gerichtet).
     void plane(std::vector<Griff>* griffe, std::vector<Anschlagplan>* anschlaege) const;

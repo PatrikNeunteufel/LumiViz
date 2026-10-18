@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.87.0
-> **Datum:** 2026-10-16 (Session 130)
+> **Version:** 0.88.0
+> **Datum:** 2026-10-18 (Session 135)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -3526,6 +3526,39 @@ blasser. Gilt auch beim eigenen Play des ganzen Loops.
   (S129):** 38 Loops je Fall; aus `loop_werte.txt` fielen die sieben Zeilen
   der Arbeitsdateien weg, sonst unverändert.
 
+### Zoom in den Editoren (S135 — Entscheid Patrik E-Z1 a; gebaut)
+
+✅ **E-Z1 a** (Patrik S135, auf seinen Wunsch „zoomen des Editors“): **In beiden
+Editoren dieselben Gesten wie in der Zeitachse** (S102): Ctrl+Rad zoomt die
+Zeit, Alt+Rad die Höhe (im Instrument-Editor die Zeilen der Tonhöhen, im
+Drum-Editor die Spuren), Ctrl+Alt+Rad beides, um die Stelle unter der Maus.
+Im Kopf ein Knopf *Fit*: das ganze Muster in der Breite, die Noten in der Höhe.
+Das Rad allein und Shift+Rad rollen wie bisher. Verworfen: b (nur der
+Instrument-Editor — ein Kurzbefehl, der in einem Fenster des Loops geht und im
+anderen nicht), c (Regler im Kopf statt Gesten — die Gesten der Zeitachse
+gelten schon, *Fit* und die Hinweiszeile machen sie sichtbar).
+
+- **Gebaut (S135):** `NotenRaster` und `SchrittRaster` tragen die Breite eines
+  Schritts (4 … 96 px, Faktor `Achse::kZoomSchritt` 1,25 je Raste) und die Höhe
+  der Zeilen in Prozent (Schritt `Achse::kHoeheSchritt`, bis `Achse::kHoeheMax`);
+  die festen `kSchrittBreite`/`kZeilenHoehe` sind die Normalgröße. Der Kniff
+  gegen das Alt-Menü unter Windows steht jetzt einmal in
+  `Achse::loeseAltVomMenue`, Achse und beide Editoren rufen ihn. *Fit*
+  (`instrumentFit`, `drumFit`) mit den Gesten im Tooltip; die Hinweiszeile ohne
+  Auswahl nennt „Ctrl+wheel zooms the time, Alt+wheel the height“. Der Versatz
+  des Strum (24e I) wächst mit der Breite eines Schritts mit.
+- **Von Claude gesetzt, nicht vorgelegt:** im Drum-Editor geht die Höhe nicht
+  unter 100 % (`kZeilenProzentMin`) — links stehen in jeder Spur Bedienelemente
+  (Stumm, Name, Rolle, Klang, Vol, Pan), die so hoch sind; *Fit* setzt dort die
+  Spuren auf 100 % (sie sind ohne senkrechtes Rollen immer alle zu sehen). Im
+  Instrument-Editor rechnet *Fit* die Höhe aus den Noten mit einer Zeile Luft
+  oben und unten, auf ganze 10 % abgerundet; ohne Noten 100 % um C4. Der Zoom
+  wird nicht gemerkt — jedes neue Fenster beginnt in Normalgröße (Folgefrage).
+- **Belegt** in `test_LoopEditorZoom` (drei Fälle: Gesten, Grenzen, Stelle unter
+  der Maus, feines Rad, Fit, Kopfzeilen des Drum-Editors); `*Loop*,*Instrument*,
+  *Drum*,*Achse*,*Composer Panel*` unter Release-clang (281) und Testing-MSVC
+  (279, ohne Loop Werte) grün.
+
 ---
 
 ## 5. Stufen
@@ -3653,6 +3686,8 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.88.0** (S135, 2026-10-18): Entscheid **E-Z1 a** — Zoom in Instrument- und
+  Drum-Editor mit den Gesten der Zeitachse und *Fit* („Zoom in den Editoren“).
 - **0.87.0** (S130, 2026-10-16): Entscheid **W8-2 a** — liegt ein Muster im Loop
   zugleich in mehreren Kanälen, zeigt der Editor jede Stelle, voll die des
   zuletzt begonnenen Clips (`Loop::stellenImMuster`).

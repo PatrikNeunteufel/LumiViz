@@ -53,6 +53,7 @@ class QSlider;
 class QSpinBox;
 class QToolButton;
 class QVBoxLayout;
+class QWheelEvent;
 
 namespace lumi::loop
 {
@@ -138,12 +139,32 @@ public:
     /// Einen Schritt ausschalten (das Menue: „Clear this step"). false = er war aus.
     bool leereSchritt(SchrittOrt ort);
 
+    // --- Zoom (Entscheid Patrik E-Z1 a, S135) — dieselben Gesten wie die Zeitachse (S102) --
+    // Ctrl+Rad zoomt die Zeit, Alt+Rad die Hoehe der Spuren, Ctrl+Alt+Rad beides, um die
+    // Stelle unter der Maus. Die Hoehe geht nicht unter 100 %: links stehen in jeder
+    // Spur Bedienelemente, die so hoch sind (von Claude gesetzt, S135). „Fit": das
+    // ganze Muster in der Breite, die Spuren in Normalhoehe — sie sind immer alle zu sehen.
+    static constexpr double kSchrittBreiteMin = 4.0;
+    static constexpr double kSchrittBreiteMax = 96.0;
+    static constexpr int kZeilenProzentMin = 100;
+    [[nodiscard]] int schrittBreite() const { return static_cast<int>(m_schrittBreite + 0.5); }
+    [[nodiscard]] int zeilenHoehe() const { return kZeilenHoehe * m_zeilenProzent / 100; }
+    [[nodiscard]] int zeilenProzent() const { return m_zeilenProzent; }
+    /// Die Zeit zoomen: `faktor` ueber 1 = hinein. `xFest` im Raster; die Stelle dort
+    /// meldet `gezoomt` vorher und nachher — das Fenster rollt so, dass sie stehen bleibt.
+    void zoomeZeit(double faktor, int xFest);
+    /// Die Hoehe der Spuren in Prozent (100 … `Achse::kHoeheMax`); meldet `hoeheGeaendert`.
+    void setZeilenProzent(int prozent);
+    /// **Fit:** das ganze Muster auf `sichtBreite`, die Spuren in Normalhoehe.
+    void passeEin(int sichtBreite);
+    [[nodiscard]] bool zoomVerstellt() const { return schrittBreite() != kSchrittBreite || m_zeilenProzent != 100; }
+
     // --- Geometrie (auch fuer Tests) ----------------------------------------
     static constexpr int kKopfHoehe = 18;    ///< die Zeile mit den Takten
-    static constexpr int kZeilenHoehe = 26;  ///< je Spur — so hoch wie ihre Kopfzeile links
+    static constexpr int kZeilenHoehe = 26;  ///< je Spur ohne Zoom — so hoch wie ihre Kopfzeile links
     static constexpr int kLuftHoehe = 30;    ///< zwischen den Spuren und der Lautstaerke (links: „Add track")
     static constexpr int kLautHoehe = 52;    ///< die Lautstaerke je Schritt
-    static constexpr int kSchrittBreite = 12;
+    static constexpr int kSchrittBreite = 12;  ///< ohne Zoom
     static constexpr int kSchrittLuft = 2;
     static constexpr int kSchlagLuft = 5;    ///< zusaetzlich zwischen zwei Schlaegen
     [[nodiscard]] int xVonSchritt(int schritt) const;
@@ -151,7 +172,7 @@ public:
     [[nodiscard]] double marke() const { return m_marke; }
     /// Der Schritt unter `x`; -1 = keiner (eine Luecke, ausserhalb).
     [[nodiscard]] int schrittBei(int x) const;
-    [[nodiscard]] int yVonSpur(int spur) const { return kKopfHoehe + spur * kZeilenHoehe; }
+    [[nodiscard]] int yVonSpur(int spur) const { return kKopfHoehe + spur * zeilenHoehe(); }
     /// Oberkante der Zeile mit der Lautstaerke je Schritt.
     [[nodiscard]] int lautOben() const;
     [[nodiscard]] QSize sizeHint() const override;
@@ -165,8 +186,14 @@ Q_SIGNALS:
     void auswahlGeaendert();
     /// Ein Klick in die Zeile der Takte hat die Abspielstelle gesetzt (B4 b).
     void abspielstelleGewaehlt(int schritt);
+    /// E-Z1 a: die Zeit ist gezoomt — die Stelle unter der Maus lag bei `xVorher`
+    /// im Raster und liegt jetzt bei `xNachher`.
+    void gezoomt(int xVorher, int xNachher);
+    /// E-Z1 a: die Spuren sind hoeher oder niedriger geworden.
+    void hoeheGeaendert();
 
 protected:
+    void wheelEvent(QWheelEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -187,6 +214,11 @@ private:
     bool bewege(int spurVersatz, int schrittVersatz, bool imKreis);
 
     Muster m_muster;
+    double m_schrittBreite = kSchrittBreite;  ///< E-Z1 a: der Zoom der Zeit
+    int m_zeilenProzent = 100;                ///< E-Z1 a: der Zoom der Hoehe
+    int m_radRest = 0;  ///< was vom Mausrad noch keine ganze Raste ergab (Hoehen-Zoom)
+    /// Wie weit ein Schritt im Schnitt reicht (Breite, Luft, Anteil der Schlag-Luft).
+    [[nodiscard]] double schrittMass() const;
     int m_schlaege = 4;
     int m_jeSchlag = 4;
     int m_spur = -1;
@@ -471,6 +503,8 @@ private:
     /// Kopf, Raster und Spuren aus `m_loop` neu fuellen.
     void zeigeAlles();
     void baueSpuren(const Muster& muster);
+    /// E-Z1 a: die Kopfzeilen der Spuren so hoch wie die Spuren im Raster, die Flaeche darum mit.
+    void passeSpurHoeheAn();
     /// Was in der Auswahl gewaehlt wurde: ein Klang — oder einer der drei Wege darunter.
     void klangGewaehlt(int spur, const QString& wahl);
     void frageNachSampleDatei(int spur);

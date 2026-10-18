@@ -271,6 +271,18 @@ void Achse::resizeEvent(QResizeEvent* event)
     passeRollenAn();
 }
 
+void Achse::loeseAltVomMenue(const QWheelEvent& event)
+{
+    // Alt allein losgelassen schaltet unter Windows die Menueleiste auf
+    // die Tastatur. Qt laesst das, sobald sich zwischen Druck und
+    // Loslassen die Maus bewegt hat — das Rad zaehlt dabei nicht. Eine
+    // Mausbewegung an ein Objekt ohne Wirkung holt es nach.
+    QObject niemand;
+    QMouseEvent bewegung(QEvent::MouseMove, event.position(), event.globalPosition(), Qt::NoButton, event.buttons(),
+                         event.modifiers());
+    QCoreApplication::sendEvent(&niemand, &bewegung);
+}
+
 void Achse::wheelEvent(QWheelEvent* event)
 {
     // Entscheid Patrik ZO1: a (S102) — ohne Taste senkrecht rollen, Shift+Rad
@@ -301,14 +313,7 @@ void Achse::wheelEvent(QWheelEvent* event)
             if (rasten != 0)
                 setZeilenProzent(m_zeilenProzent + rasten * kHoeheSchritt,
                                  static_cast<int>(event->position().y()));
-            // Alt allein losgelassen schaltet unter Windows die Menueleiste auf
-            // die Tastatur. Qt laesst das, sobald sich zwischen Druck und
-            // Loslassen die Maus bewegt hat — das Rad zaehlt dabei nicht. Eine
-            // Mausbewegung an ein Objekt ohne Wirkung holt es nach.
-            QObject niemand;
-            QMouseEvent bewegung(QEvent::MouseMove, event->position(), event->globalPosition(), Qt::NoButton,
-                                 event->buttons(), event->modifiers());
-            QCoreApplication::sendEvent(&niemand, &bewegung);
+            loeseAltVomMenue(*event);
         }
         event->accept();  // auch am Anschlag: das Rad soll dann nichts anderes rollen
         return;
