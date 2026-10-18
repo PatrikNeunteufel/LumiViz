@@ -12,6 +12,8 @@
  * **Saiten (Stufe 23f; Skizze gebilligt, Patrik S133, S-U2 a):** traegt das
  * Instrument eine Tuning, steht in der Instrument-Zeile *String choice*, jede
  * Note zeigt ihre Saite, und unter dem Raster erklaert eine Zeile die Zeichen.
+ * **Spielweisen (Stufe 24e; Skizze gebilligt, Patrik S134, S-W5 a):** unter der
+ * Instrument-Zeile die Zeile *Strum* des Musters (H).
  *
  * Wie der Drum-Editor aendert er den Loop nicht selbst: er meldet die neue
  * Fassung mit `bearbeitet`, das Loop-Panel fuehrt sie ueber Undo aus und gibt
@@ -51,6 +53,7 @@ namespace lumi::loop
 
 class InstrumentCreator;
 class InstrumentPalette;
+class StrumZeile;
 
 /// Das Raster der Noten. Es rollt selbst — waagrecht (lange Muster) und
 /// senkrecht (sechs Oktaven): Klaviatur, Kopf und die Zeile der Lautstaerken
@@ -330,6 +333,11 @@ public:
     /// *String choice* (Stufe 23f, S-U2 a): die Regel dieses Musters fuer Noten
     /// ohne eigene Saite. Die Auswahl steht nur da, wenn das Instrument Saiten traegt.
     void setzeSaitenwahl(Saitenwahl wahl);
+    /// H (Stufe 24e, S-W5 a): Strum dieses Musters — Spread, Hand und ihr Muster
+    /// je Stelle eines Takts. Die Zeile steht nur da, wenn das Instrument Saiten traegt.
+    void setzeStrum(const Strum& strum);
+    /// Die Zeile Strum (fuer Tests).
+    [[nodiscard]] StrumZeile* strumZeile() const { return m_strumZeile; }
 
     // --- der Instrument-Creator (Stufe 10b) -----------------------------------
     /// „Edit instrument...": den Creator mit dem Instrument dieser Basis
@@ -450,6 +458,7 @@ private:
     QLabel* m_saitenWahlName = nullptr;
     QComboBox* m_saitenWahl = nullptr;
     QLabel* m_saitenHinweis = nullptr;
+    StrumZeile* m_strumZeile = nullptr;  ///< H (Stufe 24e, S-W5 a)
 };
 
 }  // namespace lumi::loop

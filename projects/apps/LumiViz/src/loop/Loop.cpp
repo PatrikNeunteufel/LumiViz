@@ -646,6 +646,17 @@ void uebernimmVorgaben(Muster& muster, const Saitensatz& saiten)
     muster.strum = saiten.strum;
 }
 
+void wechsleVorgaben(Muster& muster, const Saitensatz& alt, const Saitensatz& neu)
+{
+    // ohne Saiten gelten die leeren Vorgaben — so wird eine neue Basis mit der
+    // ersten Gitarre zu einer Gitarre mit deren Vorgaben
+    const Saitensatz ohne;
+    const Saitensatz& vorher = alt.istSaiteninstrument() ? alt : ohne;
+    const Saitensatz& nachher = neu.istSaiteninstrument() ? neu : ohne;
+    if (muster.saitenwahl == vorher.wahl) muster.saitenwahl = nachher.wahl;
+    if (muster.strum == vorher.strum) muster.strum = nachher.strum;
+}
+
 void Loop::richte(QStringList* bericht)
 {
     bpm = inGrenzen(bpm, kBpmMin, kBpmMax, 120.0);

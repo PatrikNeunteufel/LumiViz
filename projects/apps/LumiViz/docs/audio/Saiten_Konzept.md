@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.28.0
-> **Datum:** 2026-10-18 (Session 134; S-W2 a bis S-W12 a)
+> **Version:** 0.29.0
+> **Datum:** 2026-10-18 (Session 135; S-W13 a, Stufe 24e)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -517,6 +517,16 @@ als Zeit über alle Saiten, Vorgabe 40 ms — eine Ukulele bekäme 13 ms je Sait
 eine Zwölfsaitige knapp 4: die Hand wäre je nach Saitenzahl verschieden
 schnell). Korrigiert die Setzung aus 24b (§5n).
 
+✅ **S-W13 a** (Patrik S135): **Beim Wechsel des Instruments übernimmt das
+Muster *Strum* und *String choice* des neuen nur, wo es noch die Vorgabe des
+alten trägt** — je Feld für sich; was am Muster geändert wurde, bleibt. Ein
+Instrument ohne Saiten zählt mit den leeren Vorgaben (`Saitensatz{}`): eine
+neue Basis (Vorgabe-Instrument, ohne Saiten) wird so mit der ersten Gitarre zu
+einer Gitarre mit deren Vorgaben. *Anschläge* bleiben stehen. Verworfen: b
+(immer übernehmen — verwirft eine bewusste Einstellung ohne Meldung), c (nie,
+dafür ein Knopf *From instrument* — eine neue Basis bliebe bei den Werten des
+Vorgabe-Instruments, die Lücke aus 23f offen).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -530,7 +540,7 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
 | 24b | **Planung:** Richtung je Akkord (Hand, sonst Eintrag), Versatz je Saite in Anschlagreihenfolge, *Let ring*, die Saitenwahl für *Harmonic* (S-W7 a); Richtung und Spielweise im Namen des Tons | Fälle ohne Qt-Anwendung je Regel; Noten ohne Spielweise und Instrumente ohne Saiten Bit für Bit wie vorher (`LUMIVIZ_LOOP_WERTE_GENAU`) |
 | 24c | **Klang** in *Extended KS* und *Waveguide*: Up stroke, Palm mute, Tapping, Harmonic; Vorgaben hergeleitet, mit Quelle | Messungen am gerechneten Ton (Vorzeichen, Klingdauer bei *Mute*, fehlende Teiltöne bei *Harmonic*, Ort des Anschlags beim Tapping); Hörproben |
 | 24d | **Creator** nach §4b (N bis P) | Bilder aus den Tests |
-| 24e | **Instrument-Editor** nach S-W5 a (H bis M) | Bilder aus den Tests |
+| 24e | **Instrument-Editor** nach S-W5 a (H bis M); beim Wechsel des Instruments die Vorgaben nach S-W13 a | Bilder aus den Tests |
 | 24f | **Mitgelieferte Instrumente und Loops:** Vorgaben für Strum und *Playing* je Saiteninstrument, Beispiel-Loops mit Strum und Artikulationen, Handbuch, Sichttest-Liste | Bereichslauf unter beiden Compilern; `test_LoopWerte` nur für die geänderten neu geschrieben |
 
 ### 5a. Stufe 23a — Modell und Datei (gebaut S132)
@@ -1122,6 +1132,22 @@ Nach der Skizze §4b (S-W8 a), alles nur bei einem Instrument mit Tuning.
 - **Von Claude gesetzt, nicht vorgelegt:** die Objektnamen; *Play as* bei
   einem Instrument ohne Tuning: jede Taste ihr Ton; *Strum chord* hängt nicht
   an der angeklickten Taste.
+
+### 5q. Stufe 24e — die Spielweisen im Instrument-Editor (im Bau, S135)
+
+Nach der Skizze S-W5 a (H bis M), in vier Teilschritten: H mit dem Wechsel des
+Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
+(Menü, Hinweiszeile).
+
+- **Teilschritt 1 (gebaut S135):** **H** die `StrumZeile` (`editorStrum…`)
+  unter der Instrument-Zeile, im Raster des Loops, Hinweis „for every chord of
+  this pattern“; sie stellt `Muster::strum` (Undo „Change strum“) und steht nur
+  bei einem Instrument mit Tuning da. **S-W13 a:** `wechsleVorgaben` im Modell,
+  aufgerufen in `InstrumentEditor::setzeInstrument` — derselbe Undo-Schritt wie
+  der Wechsel („Change instrument“). Damit ist die Lücke aus 23f geschlossen.
+  **Belegt** in `test_LoopEditorSpielweise` (zwei Fälle,
+  `LUMIVIZ_EDITOR_STRUM_BILD`); eng (35 Fälle zu Editor, Creator, Palette,
+  Spieler, Spielweise) unter Release-clang und Testing-MSVC grün.
 
 ---
 

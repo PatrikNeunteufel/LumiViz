@@ -12,6 +12,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
+#include "loop/StrumZeile.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -63,6 +64,13 @@ bool& lageMerken()
 }
 constexpr int kHoehen = kHoeheMax - kHoeheMin + 1;
 constexpr double kLautMin = 0.05;  ///< leiser wird eine Note nicht — ohne Lautstaerke gaebe es sie nicht
+
+/// Die Saiten eines Instruments; leer, wenn es keine traegt oder sich nicht finden laesst.
+Saitensatz saitenVon(const QString& nennung)
+{
+    Instrument instrument;
+    return holeInstrument(nennung, instrument) ? instrument.saiten : Saitensatz{};
+}
 
 bool schwarzeTaste(int hoehe)
 {
@@ -1330,6 +1338,12 @@ void InstrumentEditor::setupUI()
     zeile->addWidget(m_hinweis);
     zeile->addStretch(1);
     aussen->addLayout(zeile);
+    // H (Stufe 24e, S-W5 a): Strum dieses Musters — dasselbe Element wie N im Creator,
+    // im Raster des Loops; nur, wenn das Instrument Saiten traegt
+    m_strumZeile = new StrumZeile(QStringLiteral("editorStrum"), this);
+    m_strumZeile->setzeHinweis(tr("for every chord of this pattern"));
+    connect(m_strumZeile, &StrumZeile::geaendert, this, [this](const Strum& strum) { setzeStrum(strum); });
+    aussen->addWidget(m_strumZeile);
 
     // --- das Raster mit seinen Rollbalken
     auto* koerper = new QGridLayout;
@@ -1581,8 +1595,7 @@ void InstrumentEditor::zeigeAlles()
     }
     // Stufe 23f: die Saiten des Instruments — ohne sie ist von alledem nichts zu sehen
     {
-        Instrument instrument;
-        const Saitensatz saiten = holeInstrument(ziel->instrument, instrument) ? instrument.saiten : Saitensatz{};
+        const Saitensatz saiten = saitenVon(ziel->instrument);
         const bool mitSaiten = saiten.istSaiteninstrument();
         m_raster->setSaiten(saiten);
         m_saitenWahlName->setVisible(mitSaiten);
@@ -1590,6 +1603,10 @@ void InstrumentEditor::zeigeAlles()
         m_saitenHinweis->setVisible(mitSaiten);
         const QSignalBlocker ruhe(m_saitenWahl);
         m_saitenWahl->setCurrentIndex(m_saitenWahl->findData(static_cast<int>(ziel->saitenwahl)));
+        // H (Stufe 24e): die Zeile Strum im Raster des Loops
+        m_strumZeile->setzeRaster(m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
+        m_strumZeile->zeige(ziel->strum);
+        m_strumZeile->setVisible(mitSaiten);
     }
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     passeRollbalkenAn();
@@ -1749,7 +1766,9 @@ void InstrumentEditor::setzeInstrument(const QString& name)
 {
     Loop neu = m_loop;
     Muster* ziel = musterIn(neu, m_muster);
-    if (ziel == nullptr || name.isEmpty()) return;
+    if (ziel == nullptr || name.isEmpty() || ziel->instrument == name) return;
+    // S-W13 a: String choice und Strum folgen dem neuen, wo das Muster die Vorgabe des alten traegt
+    wechsleVorgaben(*ziel, saitenVon(ziel->instrument), saitenVon(name));
     ziel->instrument = name;
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change instrument"));
@@ -1787,6 +1806,17 @@ void InstrumentEditor::setzeSaitenwahl(Saitenwahl wahl)
     ziel->saitenwahl = wahl;
     if (neu == m_loop) return;
     Q_EMIT bearbeitet(neu, tr("Change string choice"));
+}
+
+void InstrumentEditor::setzeStrum(const Strum& strum)
+{
+    Loop neu = m_loop;
+    Muster* ziel = musterIn(neu, m_muster);
+    if (ziel == nullptr) return;
+    ziel->strum = strum;
+    richteStrum(ziel->strum, handStellen(ziel->strum.raster, neu.schlaegeJeTakt, neu.schritteJeSchlag));
+    if (neu == m_loop) return;
+    Q_EMIT bearbeitet(neu, tr("Change strum"));
 }
 
 void InstrumentEditor::setzePan(double pan)

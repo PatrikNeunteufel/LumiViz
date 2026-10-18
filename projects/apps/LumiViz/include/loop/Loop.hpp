@@ -254,6 +254,11 @@ void richteAnschlaege(Muster& muster);
 /// Strum (S-M2c a, S-W2 a) — fuer ein neues Muster und beim Wechsel des
 /// Instruments.
 void uebernimmVorgaben(Muster& muster, const Saitensatz& saiten);
+/// Beim Wechsel des Instruments (S-W13 a): je Feld (*String choice*, Strum) die
+/// Vorgabe des neuen — nur, wo das Muster noch die des alten traegt. Ein
+/// Instrument ohne Saiten zaehlt mit den leeren Vorgaben (`Saitensatz{}`).
+/// *Anschlaege* bleiben.
+void wechsleVorgaben(Muster& muster, const Saitensatz& alt, const Saitensatz& neu);
 
 // --- Effekte am Clip (Stufe 12, Entscheide Patrik S113: E2 b, F2 a) ---
 // Jeder Clip traegt seine eigenen Effekte mit allen Einstellungen, gleich ob
