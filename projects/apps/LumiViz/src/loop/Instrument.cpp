@@ -38,6 +38,9 @@ constexpr double kPi = 3.14159265358979323846;
 constexpr int kTafel = 2048;        ///< Abtastwerte eines Wellenzugs
 constexpr int kTeiltoeneMax = 512;  ///< mehr traegt die Tafel nicht sauber
 constexpr double kPegel = 0.5;      ///< Luft nach oben: ein Akkord addiert sich (Entscheid L6 a)
+/// Die hoechste Spitze eines Saitentons bei Lautstaerke 1, vor dem Signal path —
+/// die Grenze der Bemessung eines magnetischen Tonabnehmers (Entscheid S-K11 a).
+constexpr double kSpitzeSaiteMax = 0.9;
 
 /// Der Anteil des k-ten Teiltons (k ab 1) an der Schwingung.
 double teilton(const Schicht& schicht, int k)
@@ -931,7 +934,8 @@ inline constexpr double kPiezoHochpassHz = 106.0;
 ///   Stelle (Single coil: eine Stelle; Humbucker: zwei, 18 mm auseinander, zur
 ///   Haelfte je); ein Piezo die Kraft am Steg, durch seinen Hochpass. Ein
 ///   magnetischer Tonabnehmer ist so bemessen, dass er im ersten Zehntel einer
-///   Sekunde so laut ist wie die Saite am Steg (im Effektivwert) — der Anfang
+///   Sekunde so laut ist wie die Saite am Steg (im Effektivwert), mit der Spitze
+///   des fertigen Tons hoechstens bei `kSpitzeSaiteMax` (S-K11 a) — der Anfang
 ///   wird dafuer einmal vorab gerechnet. *Pickup select* nimmt einen oder
 ///   beide (zur Haelfte je).
 void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int rate, double dicke, double mensurMm,
@@ -973,6 +977,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
     {
         double x = 0.0;      ///< Anteil vom Steg
         double davor = 0.0;  ///< die Auslenkung im Abtastwert davor
+        bool erster = true;  ///< noch kein Abtastwert: die Saite ruht beim Loslassen (Geschwindigkeit 0)
     };
     struct Platz
     {
@@ -1036,6 +1041,13 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         {
             Stelle& stelle = p.stellen[static_cast<std::size_t>(s)];
             const double jetzt = lese(stelle.x * 0.5 * laenge) - lese((2.0 - stelle.x) * 0.5 * laenge);
+            if (stelle.erster)
+            {
+                // die Saite ist ausgelenkt, aber in Ruhe — ohne das waere der erste Abtastwert ein
+                // Sprung um die ganze Auslenkung, und die Bemessung richtete sich nach ihm
+                stelle.davor = jetzt;
+                stelle.erster = false;
+            }
             summe += jetzt - stelle.davor;
             stelle.davor = jetzt;
         }
@@ -1052,10 +1064,8 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         std::array<double, 2> quadrate{};
         std::array<double, 2> spitzen{};
         double quadrateSteg = 0.0;
-        double spitzeSteg = 0.0;
         laufeUm(schicht, hz, huelle, rate, u, ring, anfang, [&](double y, const auto& lese) {
             quadrateSteg += y * y;
-            spitzeSteg = std::max(spitzeSteg, std::abs(y));
             for (std::size_t k = 0; k < 2; ++k)
                 if (probe[k].art != AbnehmerArt::Keiner)
                 {
@@ -1065,11 +1075,12 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
                 }
             return y;
         });
-        // so laut wie am Steg — aber zu Beginn hoechstens so spitz (ein tiefer Ton nah am Steg
-        // abgenommen hat Hunderte Teiltoene, und die Geschwindigkeit hebt jeden an)
+        // so laut wie am Steg (S-K11 a) — die Spitze darf ueber der am Steg liegen (die
+        // Geschwindigkeit hebt jeden Teilton an, ein tiefer Ton nah am Steg hat Hunderte), der
+        // fertige Ton aber hoechstens bei kSpitzeSaiteMax
         for (std::size_t k = 0; k < 2; ++k)
             if (plaetze[k].art != AbnehmerArt::Keiner && plaetze[k].art != AbnehmerArt::Piezo && quadrate[k] > 0.0)
-                plaetze[k].faktor = std::min(std::sqrt(quadrateSteg / quadrate[k]), spitzeSteg / spitzen[k]);
+                plaetze[k].faktor = std::min(std::sqrt(quadrateSteg / quadrate[k]), kSpitzeSaiteMax / kPegel / spitzen[k]);
     }
 
     // je Lauf eine frische Abnahme mit eigenem Gedaechtnis der Tonabnehmer

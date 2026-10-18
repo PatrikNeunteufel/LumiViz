@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.18.0
+> **Version:** 0.19.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -246,6 +246,14 @@ Versatz im Akkord.
   übertragen markiert — eine Mischung zweier Sätze, und auch die Luft von BR2
   ist bei Wright nur angenommen), c (beide als Vorlagen — verdoppelt die
   Mischung von b).
+- ✅ **S-K11 a** (Patrik S133, nach S-P2 a: zuerst messen): **Ein magnetischer
+  Tonabnehmer ist so laut wie die Saite am Steg** (Effektivwert im ersten
+  Zehntel); seine Spitze darf über der akustischen liegen, der fertige Ton
+  bei Lautstärke 1 höchstens bei 0,9 — nur wo der Abgleich das überschritte,
+  wird darauf gedeckelt. Ersetzt die von Claude gesetzte Grenze „höchstens
+  so spitz wie am Steg“ (§5d). Verworfen: b (die Grenze behalten — bei E2
+  8–12 dB leiser), c (ohne Grenze — Spitzen bis +7 dBFS, ein Begrenzer auf
+  jedem Weg des Loops ist nicht geprüft).
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -403,7 +411,8 @@ am Ende von Stufe 23.
   High damping 0,9 gegen 0,1: Teilton 7 −88 gegen −6 dB; Pluck weich gegen
   hart −29 gegen −5 dB; Stiffness 1: Teilton 8 +52,75 Cent (berechnet +52);
   String variation: tiefe E-Saite 12 dB dunkler als die D-Saite; die Tonhöhe
-  auf 3 Cent. Hörproben: `LUMIVIZ_23C_WAV=<Ordner>`.
+  auf 3 Cent. Hörproben: `LUMIVIZ_23C_WAV=<Ordner>`. **Patriks Ohr (S133):**
+  „passt“.
 - **Von Claude gesetzt, nicht vorgelegt:** die Bezugsfrequenz 2 kHz und die
   Spanne 10^(−2 · High damping); B = 0,001 · Stiffness²; acht Allpässe; die
   Grenzen der Härte (2 bis 80 · Grundton); +0,4 je Regler durch String
@@ -455,11 +464,41 @@ am Ende von Stufe 23.
   gemessenen Bezugswerten).
 - **Von Claude gesetzt, nicht vorgelegt:** ein magnetischer Tonabnehmer ist so
   bemessen, dass er im ersten Zehntel einer Sekunde so laut ist wie die Saite
-  am Steg (Effektivwert), aber höchstens so spitz — der Anfang wird dafür
+  am Steg (Effektivwert), aber höchstens so spitz (**ersetzt durch S-K11 a**,
+  unten) — der Anfang wird dafür
   einmal vorab gerechnet (eine erste Bemessung nach dem Grundton ergab bei
   tiefen Tönen Spitzen bis 3,1); der Anschlag als reines Dreieck ohne
   Rauschen; die Lagen werden auf 0,2 % … 99,8 % der Saite begrenzt; die
   Vorgaben Neck 160 mm, Bridge 40 mm, beide None, Both.
+- **Patriks Ohr (S133):** „etwas leise“. **Gemessen** an den Hörproben
+  (`LUMIVIZ_23D_WAV`, neu gerechnet in `hoerproben_23d_s133`, gleich wie die
+  aus S132): akustisch RMS −26,4 dBFS, Piezo −28,0, die magnetischen −43,6
+  (Humbucker Bridge) bis −46,3 dBFS (Single Neck) — **17–20 dB leiser**.
+  **Gemessen** (S-P2 a; Messfall „Loop Saite WG: Messung — die Bemessung der
+  Tonabnehmer“, meldet nur Zahlen, Noten 28–76) — zwei Ursachen:
+  1. **Ein Fehler (behoben S133):** die Geschwindigkeit begann mit einem
+     Sprung um die ganze Auslenkung (die Saite startet ausgelenkt, die
+     Stelle „davor“ stand auf 0); nach ihm richtete sich die Bemessung, im
+     fertigen Ton dämpfte ihn der Anstieg weg. Jetzt ruht die Saite beim
+     Loslassen. Die Tonabnehmer wurden dadurch 10–15 dB lauter (Note 40,
+     Single Bridge: Anfang −23,2 → −12,4 dB gegen akustisch).
+  2. **Die Regel „höchstens so spitz“:** danach liegt die Spitze jedes
+     magnetischen Tonabnehmers genau auf der akustischen (−9,2 dBFS), der
+     Effektivwert im ersten Zehntel aber darunter — E2 −8,3 bis −12,4 dB,
+     E3 −5,6 bis −8,6 dB, E4 −5,0 bis −8,0 dB, E1 bis −16,3 dB. Ein reiner
+     Abgleich des Effektivwerts ergäbe Spitzen bis +3,2 dBFS bei E2 und
+     +7,1 dBFS bei E1 (bis 16 dB über der akustischen). Piezo: −0,2 bis
+     −7,2 dB, der Hochpass bei 106 Hz (gewollt). Zur Vorlage: S-K11.
+- **Die Bemessung nach S-K11 a (gebaut S133):** gleich laut wie die Saite am
+  Steg (Effektivwert im ersten Zehntel), die Spitze des fertigen Tons bei
+  Lautstärke 1 höchstens `kSpitzeSaiteMax` = 0,9 (an der Abnahme 1,8, weil
+  danach `kPegel` 0,5 folgt). **Gemessen:** ab E3 je Tonabnehmer auf 0,3 dB
+  gleich laut wie akustisch; wo die Spitze deckelt, leiser — E2 bis −4,1 dB
+  (Single Bridge), E1 bis −8,0 dB; *Both* 1,2–1,5 dB unter einem einzelnen
+  (die Hälften addieren sich nicht voll). Hörproben neu in
+  `hoerproben_23d_s133`: RMS akustisch −26,4, magnetisch −27,2 bis −29,0,
+  Piezo −28,0 dBFS (vorher bis −46,3). Belegt in `test_LoopSaiteWg` („so
+  laut wie akustisch, die Spitze höchstens 0,9“).
 
 ### 5e. Der Korpus Parlor (gebaut S132, S-K8 a)
 
@@ -518,7 +557,8 @@ am Ende von Stufe 23.
   ist nur, dass T(1,1)₂ die stärkste ist). Die Ursache der 2–3 % im Triplett
   ist offen — weder ρ und c noch die Art der Kopplung erklären sie.
 - Hörproben `ks_classical`, `wg_classical` unter
-  `.claude/handover/hoerproben_korpus/` (lokal).
+  `.claude/handover/hoerproben_korpus/` (lokal). **Patriks Ohr (S133):** „passt
+  eigentlich soweit“ — gehört mit Parlor und ohne Korpus.
 
 ---
 

@@ -30,7 +30,9 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include <algorithm>
 #include <cmath>
+#include <sstream>
 #include <vector>
 
 using namespace lumi::loop;
@@ -269,6 +271,127 @@ TEST_CASE("Loop Saite WG: jeder Ton im Umfang bleibt endlich und im Rahmen")
             CHECK(groesster > 0.0005f);
             CHECK(std::abs(ton.daten[ton.daten.size() - 2]) < 0.002f);
         }
+}
+
+TEST_CASE("Loop Saite WG: ein magnetischer Tonabnehmer ist so laut wie akustisch, die Spitze hoechstens 0,9 (S-K11 a)")
+{
+    const auto effektivAnfang = [](const Klang& ton, float& spitze) {
+        const std::size_t frames = ton.daten.size() / 2;
+        const std::size_t anfang = std::min(frames, static_cast<std::size_t>(kRate / 10));
+        double q = 0.0;
+        spitze = 0.0f;
+        for (std::size_t i = 0; i < frames; ++i)
+        {
+            const double x = ton.daten[2 * i];
+            if (i < anfang) q += x * x;
+            spitze = std::max(spitze, std::abs(ton.daten[2 * i]));
+        }
+        return std::sqrt(q / static_cast<double>(anfang));
+    };
+    const std::vector<std::pair<const char*, Abnehmer>> arten = {
+        {"Single Neck", {AbnehmerArt::SingleCoil, 152.0}},
+        {"Single Bridge", {AbnehmerArt::SingleCoil, 41.0}},
+        {"Humbucker Bridge", {AbnehmerArt::Humbucker, 41.0}},
+    };
+    // die Vorgaben der Schicht (Anschlag, Hoehendaempfung, Steife), wie im Programm
+    const auto vorgabe = [](Schicht& s) {
+        const Schicht leer;
+        s.anschlagOrt = leer.anschlagOrt;
+        s.anschlagHaerte = leer.anschlagHaerte;
+        s.klingSekunden = leer.klingSekunden;
+        s.hoehenDaempfung = leer.hoehenDaempfung;
+        s.steifheit = leer.steifheit;
+    };
+    for (const int hoehe : {28, 40, 52, 64, 76})
+    {
+        float spitzeAkustisch = 0.0f;
+        const double akustisch = effektivAnfang(rendereTon(wgSaite(vorgabe), hoehe, 600.0, kRate), spitzeAkustisch);
+        for (const auto& art : arten)
+        {
+            const char* const name = art.first;
+            const Abnehmer abnehmer = art.second;
+            CAPTURE(hoehe);
+            CAPTURE(name);
+            float spitze = 0.0f;
+            const double pegel = effektivAnfang(rendereTon(wgSaite([&](Schicht& s) {
+                                                                vorgabe(s);
+                                                                s.abnehmerSteg = abnehmer;
+                                                                s.abnehmerWahl = AbnehmerWahl::Steg;
+                                                            }),
+                                                            hoehe, 600.0, kRate),
+                                                spitze);
+            CHECK(spitze <= 0.9f + 1e-4f);
+            // nie lauter als akustisch; ab E3 (52) greift die Grenze der Spitze nicht mehr
+            CHECK(db(pegel / akustisch) <= 0.5);
+            if (hoehe >= 52) CHECK(std::abs(db(pegel / akustisch)) <= 1.0);
+        }
+    }
+}
+
+TEST_CASE("Loop Saite WG: Messung — die Bemessung der Tonabnehmer gegen die akustische Abnahme")
+{
+    // meldet nur Zahlen (S133, S-P2 a): je Tonabnehmer und Note der fertige Ton gegen den akustischen,
+    // im ersten Zehntel (dort wird bemessen) und ueber den ganzen Ton; dazu die Spitze, die ein
+    // reiner Abgleich des Effektivwerts im ersten Zehntel ergaebe
+    const auto vorgabe = [](Schicht& s) {
+        const Schicht leer;
+        s.anschlagOrt = leer.anschlagOrt;
+        s.anschlagHaerte = leer.anschlagHaerte;
+        s.klingSekunden = leer.klingSekunden;
+        s.hoehenDaempfung = leer.hoehenDaempfung;
+        s.steifheit = leer.steifheit;
+    };
+    struct Art
+    {
+        const char* name;
+        Instrument instrument;
+    };
+    const std::vector<Art> arten = {
+        {"akustisch", wgSaite(vorgabe)},
+        {"Single Neck", wgSaite([&](Schicht& s) { vorgabe(s); s.abnehmerHals = {AbnehmerArt::SingleCoil, 152.0}; s.abnehmerWahl = AbnehmerWahl::Hals; })},
+        {"Single Bridge", wgSaite([&](Schicht& s) { vorgabe(s); s.abnehmerSteg = {AbnehmerArt::SingleCoil, 41.0}; s.abnehmerWahl = AbnehmerWahl::Steg; })},
+        {"Humbucker Bridge", wgSaite([&](Schicht& s) { vorgabe(s); s.abnehmerSteg = {AbnehmerArt::Humbucker, 41.0}; s.abnehmerWahl = AbnehmerWahl::Steg; })},
+        {"Both", wgSaite([&](Schicht& s) { vorgabe(s); s.abnehmerHals = {AbnehmerArt::SingleCoil, 152.0}; s.abnehmerSteg = {AbnehmerArt::SingleCoil, 41.0}; })},
+        {"Piezo", wgSaite([&](Schicht& s) { vorgabe(s); s.abnehmerSteg = {AbnehmerArt::Piezo, 0.0}; s.abnehmerWahl = AbnehmerWahl::Steg; })},
+    };
+    struct Werte
+    {
+        double rmsAnfang = 0.0, rmsGanz = 0.0, spitze = 0.0;
+    };
+    const auto miss = [](const Klang& ton) {
+        Werte w;
+        const std::size_t frames = ton.daten.size() / 2;
+        const auto anfang = static_cast<std::size_t>(kRate / 10);
+        double qa = 0.0;
+        double qg = 0.0;
+        for (std::size_t i = 0; i < frames; ++i)
+        {
+            const double x = ton.daten[2 * i];
+            qg += x * x;
+            if (i < anfang) qa += x * x;
+            w.spitze = std::max(w.spitze, std::abs(x));
+        }
+        w.rmsAnfang = std::sqrt(qa / static_cast<double>(std::min(anfang, frames)));
+        w.rmsGanz = std::sqrt(qg / static_cast<double>(frames));
+        return w;
+    };
+    for (const int hoehe : {28, 40, 45, 52, 57, 64, 76})
+    {
+        const Werte akustisch = miss(rendereTon(arten[0].instrument, hoehe, 2000.0, kRate));
+        std::ostringstream zeile;
+        zeile << "Note " << hoehe << ": akustisch RMS Anfang " << db(akustisch.rmsAnfang) << " dBFS, ganz " << db(akustisch.rmsGanz)
+              << ", Spitze " << db(akustisch.spitze);
+        for (std::size_t k = 1; k < arten.size(); ++k)
+        {
+            const Werte w = miss(rendereTon(arten[k].instrument, hoehe, 2000.0, kRate));
+            const double abgleich = akustisch.rmsAnfang / w.rmsAnfang;  // was ein reiner RMS-Abgleich noch draufgaebe
+            zeile << "\n    " << arten[k].name << ": Anfang " << db(w.rmsAnfang / akustisch.rmsAnfang) << " dB, ganz "
+                  << db(w.rmsGanz / akustisch.rmsGanz) << " dB, Spitze " << db(w.spitze) << " dBFS"
+                  << " | RMS-Abgleich: +" << db(abgleich) << " dB, Spitze dann " << db(w.spitze * abgleich) << " dBFS ("
+                  << db(w.spitze * abgleich / akustisch.spitze) << " dB ueber akustisch)";
+        }
+        MESSAGE(zeile.str());
+    }
 }
 
 TEST_CASE("Loop Saite WG: Hoerproben (LUMIVIZ_23D_WAV)")
