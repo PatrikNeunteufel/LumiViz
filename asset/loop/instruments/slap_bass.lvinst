@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Slap Bass",
     "category": "bass",
     "genres": ["Funk"],
-    "description": "A plucked string with a thump below and a short pop an octave above.",
-    "level": 0.75,
+    "description": "Four strings plucked hard (Waveguide) on a bridge single coil, a thump below and a short pop an octave above.",
+    "level": 0.938,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,22 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.994
+            "damping": 0.994,
+            "stringModel": "waveguide",
+            "body": "none",
+            "pluck": 1.0,
+            "pluckPosition": 0.35,
+            "ringTime": 1.2,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 40
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
         },
         {
             "name": "Thump",
@@ -73,5 +88,11 @@
             "vibratoDelay": 0,
             "damping": 0.996
         }
-    ]
+    ],
+    "strings": {
+        "open": [28, 33, 38, 43],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 864
+    }
 }

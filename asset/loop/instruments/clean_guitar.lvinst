@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Clean Guitar",
     "category": "plucked",
     "genres": ["Afrobeat", "Blues", "Disco", "Reggae", "Ska"],
-    "description": "A plucked string with a quieter one an octave above.",
-    "level": 0.7,
+    "description": "Six strings (Waveguide) with single coils at neck and bridge, a quieter string an octave above.",
+    "level": 0.398,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,20 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.995
+            "damping": 0.995,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 2.5,
+            "pickupNeck": {
+                "type": "singleCoil",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 41
+            },
+            "pickupSelect": "both",
+            "cable": 500
         },
         {
             "name": "Shimmer",
@@ -49,7 +62,26 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.993
+            "damping": 0.993,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 2.5,
+            "pickupNeck": {
+                "type": "singleCoil",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 41
+            },
+            "pickupSelect": "both",
+            "cable": 500
         }
-    ]
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
 }

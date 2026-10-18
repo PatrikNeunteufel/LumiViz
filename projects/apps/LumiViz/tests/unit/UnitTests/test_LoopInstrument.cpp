@@ -344,7 +344,7 @@ TEST_SUITE("LoopInstrument")
         // (Wunsch Patrik S111), sechs gerechnete Drums (Stufe 11f, S117); S123: elf aus Formen,
         // dreizehn aus mitgelieferten Samples, elf Drums mehr (sechs gerechnet, fuenf aus Samples)
         // und drei Besen (S124, Stufe 21d)
-        REQUIRE(alle.size() == 93);
+        REQUIRE(alle.size() == 101);  // S133 (Stufe 23g): acht alte Saiteninstrumente als <name>_old
         for (std::size_t i = 1; i < alle.size(); ++i)
             CHECK(alle[i - 1].titel.compare(alle[i].titel, Qt::CaseInsensitive) <= 0);
         CHECK(alle.front().titel == QStringLiteral("808 Bass"));  // Ziffern stehen vor Buchstaben
@@ -633,18 +633,18 @@ TEST_SUITE("LoopInstrument")
         }
         // nach dem Titel zugeordnet (asset/loop/instrument_katalog.py) — wer eines dazulegt, stellt die Zahl nach
         // (S123: aus Formen, aus Samples und elf Drums dazu)
-        CHECK(jeArt[QStringLiteral("keys")] == 8);
-        CHECK(jeArt[QStringLiteral("bass")] == 12);
+        CHECK(jeArt[QStringLiteral("keys")] == 9);  // S133: clavinet_old
+        CHECK(jeArt[QStringLiteral("bass")] == 14);  // S133: slap_bass_old, upright_bass_old
         CHECK(jeArt[QStringLiteral("lead")] == 7);
         CHECK(jeArt[QStringLiteral("pads")] == 9);
-        CHECK(jeArt[QStringLiteral("plucked")] == 12);
+        CHECK(jeArt[QStringLiteral("plucked")] == 17);  // S133: fuenf Gitarren *_old
         CHECK(jeArt[QStringLiteral("wind")] == 7);
         CHECK(jeArt[QStringLiteral("percussion")] == 10);
         CHECK(jeArt[QStringLiteral("drums")] == 20);  // Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
         // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem,
         // die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 22);  // seit S124 mit den drei Besen
+        CHECK(ohneGenre == 30);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
         CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
     }
@@ -707,7 +707,7 @@ TEST_SUITE("LoopInstrument")
         CHECK(geholt == *findeInstrument(QStringLiteral("piano")));
         REQUIRE(holeInstrument(QStringLiteral("user:piano"), geholt));
         CHECK(geholt.schichten == findeInstrument(QStringLiteral("organ"))->schichten);
-        CHECK(instrumente().size() == 93);  // die mitgelieferten bleiben, wie sie sind
+        CHECK(instrumente().size() == 101);  // die mitgelieferten bleiben, wie sie sind
 
         // --- die Liste: nach Titel, jedes Mal neu gelesen; was kein Muster nennen kann, fehlt
         {

@@ -11,6 +11,9 @@ im Instrument-Creator nachstellt und speichert, aendert die Datei, nicht dieses
 Skript.
 
 Die Einstellungen sind nach Rechnung gesetzt, nicht nach Gehoer.
+
+**Seit S133 (Stufe 23g):** die Overdrive Guitar schreibt dieses Skript als Classic —
+danach `make_saiten_instrumente.py` laufen lassen, das sie auf die Saiten umstellt.
 """
 
 import json

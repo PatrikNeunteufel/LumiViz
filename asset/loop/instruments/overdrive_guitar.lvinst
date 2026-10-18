@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Overdrive Guitar",
     "category": "plucked",
     "genres": ["Metal", "Rock"],
-    "description": "Three driven plucked strings: the note, a fifth and an octave.",
-    "level": 0.5,
+    "description": "Six driven strings (Waveguide) on a bridge humbucker: the note, a fifth and an octave.",
+    "level": 0.568,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,20 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.997
+            "damping": 0.997,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 4.0,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "humbucker",
+                "position": 41
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
         },
         {
             "name": "Fifth",
@@ -49,7 +62,20 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "damping": 0.996,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 4.0,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "humbucker",
+                "position": 41
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
         },
         {
             "name": "Octave",
@@ -71,7 +97,26 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "damping": 0.996,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 4.0,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "humbucker",
+                "position": 41
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
         }
-    ]
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
 }

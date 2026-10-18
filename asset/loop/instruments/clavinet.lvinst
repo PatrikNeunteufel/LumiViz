@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Clavinet",
     "category": "keys",
     "genres": ["Funk"],
-    "description": "A driven plucked string with a short square bark on top.",
-    "level": 0.6,
+    "description": "A driven string per key (Waveguide) with two single coils and a short square bark on top.",
+    "level": 0.705,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,22 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.99
+            "damping": 0.99,
+            "stringModel": "waveguide",
+            "body": "none",
+            "pluck": 0.9,
+            "pluckPosition": 0.1,
+            "ringTime": 0.8,
+            "pickupNeck": {
+                "type": "singleCoil",
+                "position": 120
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 30
+            },
+            "pickupSelect": "both",
+            "cable": 500
         },
         {
             "name": "Bark",

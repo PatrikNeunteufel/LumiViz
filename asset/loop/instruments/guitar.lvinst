@@ -1,10 +1,10 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Guitar",
     "category": "plucked",
     "genres": [],
-    "description": "A single plucked string.",
+    "description": "Six strings in standard tuning (Extended KS) through the parlor body.",
     "level": 1.0,
     "layers": [
         {
@@ -22,7 +22,16 @@
             "vibratoDepth": 0,
             "vibratoDelay": 0,
             "damping": 0.996,
-            "level": 1
+            "level": 1,
+            "stringModel": "extendedKS",
+            "body": "parlor",
+            "bodyAmount": 0.6
         }
-    ]
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
 }

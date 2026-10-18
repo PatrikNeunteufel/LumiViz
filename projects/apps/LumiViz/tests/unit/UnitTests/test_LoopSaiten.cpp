@@ -273,9 +273,18 @@ TEST_CASE("Loop Saiten: .lvloop Fassung 8 — die Saite einer Note und String ch
     CHECK(ausDatei == loop);
 }
 
-TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich ohne Saiten und schreibt sich gleich")
+namespace
 {
-    // --- Instrumente: keines traegt bis Stufe 23g Saiten
+/// Die mitgelieferten Instrumente mit Tuning seit Stufe 23g (S133, S-G1 a; `asset/loop/make_saiten_instrumente.py` — das Clavinet hat keine: eine Saite je Taste).
+const QStringList kMitSaiten = {QStringLiteral("guitar.lvinst"),       QStringLiteral("nylon_guitar.lvinst"),
+                                QStringLiteral("clean_guitar.lvinst"), QStringLiteral("muted_guitar.lvinst"),
+                                QStringLiteral("overdrive_guitar.lvinst"), QStringLiteral("upright_bass.lvinst"),
+                                QStringLiteral("slap_bass.lvinst")};
+}  // namespace
+
+TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich und schreibt sich gleich — Saiten nur die aus 23g")
+{
+    // --- Instrumente: bis Stufe 23g trug keines Saiten, seit 23g genau die sieben in kMitSaiten
     const QDir instrumente(repoWurzel().filePath(QStringLiteral("asset/loop/instruments")));
     const QStringList dateien = instrumente.entryList({QStringLiteral("*.lvinst")}, QDir::Files, QDir::Name);
     REQUIRE(dateien.size() >= 93);
@@ -284,8 +293,9 @@ TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich ohne Saiten und schr
         CAPTURE(datei.toStdString());
         Instrument instrument;
         REQUIRE(ladeInstrument(instrumente.filePath(datei), instrument));
-        CHECK_FALSE(instrument.saiten.istSaiteninstrument());
-        CHECK_FALSE(alsJson(instrument).contains(QStringLiteral("strings")));
+        const bool soll = kMitSaiten.contains(datei);
+        CHECK(instrument.saiten.istSaiteninstrument() == soll);
+        CHECK(alsJson(instrument).contains(QStringLiteral("strings")) == soll);
         Instrument nochmal;
         nochmal.name = instrument.name;
         REQUIRE(ausJson(alsJson(instrument), nochmal));
@@ -559,18 +569,34 @@ TEST_CASE("Loop Saiten 23b: ein Ton mit Ende ist dort still — vorher Bit fuer 
     CHECK(rendereTon(instrument, TonAngabe{QString(), 64, 500, 5, 60000}, rate).daten == frei.daten);
 }
 
-TEST_CASE("Loop Saiten 23b: jeder mitgelieferte Loop plant mit der Auskunft genau wie ohne")
+TEST_CASE("Loop Saiten 23b: ein mitgelieferter Loop ohne Saiteninstrument plant mit der Auskunft genau wie ohne")
 {
-    // keines der mitgelieferten Instrumente traegt Saiten (bis 23g): die Auskunft aendert nichts —
-    // dieselben Namen, dieselben Stimmen, dieselben Schlaege
+    // ein Loop, dessen Instrumente keine Saiten tragen: die Auskunft aendert nichts — dieselben Namen,
+    // dieselben Stimmen, dieselben Schlaege. Seit 23g spielen einige Gitarren und Baesse (kMitSaiten):
+    // dort tragen die Namen der Toene ihre Saite
     const SaitenVon saiten = saitenAusInstrumenten();
     const QStringList loops = mitgelieferteLoops();
     REQUIRE(loops.size() >= 38);
+    int ohneSaiten = 0;
+    int mitSaiten = 0;
     for (const QString& pfad : loops)
     {
         CAPTURE(pfad.toStdString());
         Loop loop;
         REQUIRE(ladeLoop(pfad, loop));
+        bool spieltSaiten = false;
+        for (const Muster& m : loop.muster)
+            if (m.art == MusterArt::Instrument && saiten(m.instrument).istSaiteninstrument()) spieltSaiten = true;
+        if (spieltSaiten)
+        {
+            ++mitSaiten;
+            bool traegtSaite = false;
+            for (const QString& name : loop.klangNamen(saiten))
+                if (name.contains(QStringLiteral(":s"))) traegtSaite = true;
+            CHECK(traegtSaite);
+            continue;
+        }
+        ++ohneSaiten;
         CHECK(loop.klangNamen(saiten) == loop.klangNamen());
         const Ablauf mit = plane(loop, 44100, saiten);
         const Ablauf ohne = plane(loop, 44100);
@@ -589,4 +615,7 @@ TEST_CASE("Loop Saiten 23b: jeder mitgelieferte Loop plant mit der Auskunft gena
         }
         CHECK(gleich);
     }
+    MESSAGE(ohneSaiten << " Loops ohne Saiteninstrument wie ohne Auskunft, " << mitSaiten << " mit Saiten");
+    CHECK(ohneSaiten > 0);
+    CHECK(mitSaiten > 0);
 }

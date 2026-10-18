@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Upright Bass",
     "category": "bass",
     "genres": ["Blues", "Bossa Nova", "Hip-Hop", "Jazz", "Jazz Waltz", "Ska"],
-    "description": "A plucked string with a woody sine body.",
-    "level": 0.85,
+    "description": "Four strings plucked softly (Extended KS, no body yet) with a woody sine underneath.",
+    "level": 0.954,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,13 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.995
+            "damping": 0.995,
+            "stringModel": "extendedKS",
+            "body": "none",
+            "pluck": 0.3,
+            "pluckPosition": 0.25,
+            "ringTime": 2.0,
+            "highDamping": 0.6
         },
         {
             "name": "Wood",
@@ -51,5 +57,11 @@
             "vibratoDelay": 0,
             "damping": 0.996
         }
-    ]
+    ],
+    "strings": {
+        "open": [28, 33, 38, 43],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 864
+    }
 }

@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Muted Guitar",
     "category": "plucked",
     "genres": ["Funk"],
-    "description": "A heavily damped plucked string with a short thud.",
-    "level": 0.8,
+    "description": "Six strings (Waveguide) that ring briefly, on the bridge single coil, with a short thud.",
+    "level": 1.0,
     "layers": [
         {
             "name": "Mute",
@@ -27,12 +27,26 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.965
+            "damping": 0.965,
+            "stringModel": "waveguide",
+            "body": "none",
+            "ringTime": 0.25,
+            "highDamping": 0.8,
+            "pickupNeck": {
+                "type": "none",
+                "position": 160
+            },
+            "pickupBridge": {
+                "type": "singleCoil",
+                "position": 41
+            },
+            "pickupSelect": "bridge",
+            "cable": 500
         },
         {
             "name": "Thud",
             "on": true,
-            "level": 0.4,
+            "level": 0.6,
             "transpose": 0,
             "startOffset": 0,
             "drive": 0,
@@ -51,5 +65,11 @@
             "vibratoDelay": 0,
             "damping": 0.996
         }
-    ]
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 648
+    }
 }

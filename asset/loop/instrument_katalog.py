@@ -37,7 +37,8 @@ KATALOG = {
     "tine_piano": ("keys", "A soft, lightly driven sine body with a short tine two octaves above."),
     "organ": ("keys", "A sine with five overtones that holds at full level while the key is down."),
     "house_organ": ("keys", "A sine with four overtones and a quick attack, for stabbed chords."),
-    "clavinet": ("keys", "A driven plucked string with a short square bark on top."),
+    "clavinet": ("keys", "A driven string per key (Waveguide) with two single coils and a short square bark on top."),
+    "clavinet_old": ("keys", "The clavinet before stage 23: a driven plucked string with a short square bark on top."),
     "chord_stab": ("keys", "Three detuned saws through a filter that snaps shut."),
     # --- Bass
     "bass": ("bass", "A filtered saw with a short filter sweep."),
@@ -45,11 +46,13 @@ KATALOG = {
     "sub_bass": ("bass", "An almost pure sine that holds."),
     "growl_bass": ("bass", "A heavily driven saw and square with vibrato over a sine sub."),
     "rolling_bass": ("bass", "A short, driven saw with a sine sub, made for fast repeated notes."),
-    "slap_bass": ("bass", "A plucked string with a thump below and a short pop an octave above."),
+    "slap_bass": ("bass", "Four strings plucked hard (Waveguide) on a bridge single coil, a thump below and a short pop an octave above."),
+    "slap_bass_old": ("bass", "The slap bass before stage 23: a plucked string with a thump and a pop."),
     "bass_808": ("bass", "A driven sine with a long decay and a short click."),
     "reese_bass": ("bass", "Three widely detuned saws over a sine sub."),
     "round_bass": ("bass", "A soft sine with two overtones and a short finger noise."),
-    "upright_bass": ("bass", "A plucked string with a woody sine body."),
+    "upright_bass": ("bass", "Four strings plucked softly (Extended KS, no body yet) with a woody sine underneath."),
+    "upright_bass_old": ("bass", "The upright bass before stage 23: a plucked string with a woody sine body."),
     # --- Lead
     "lead": ("lead", "A bright square with vibrato."),
     "trance_lead": ("lead", "Detuned saws in two octaves with a driven square for bite."),
@@ -61,11 +64,18 @@ KATALOG = {
     "warm_pad": ("pads", "Three detuned saws through a low filter, very slow in and out."),
     "fifth_pad": ("pads", "Detuned saws on the note and a fifth above, over a sine an octave below."),
     # --- Plucked
-    "guitar": ("plucked", "A single plucked string."),
-    "clean_guitar": ("plucked", "A plucked string with a quieter one an octave above."),
-    "muted_guitar": ("plucked", "A heavily damped plucked string with a short thud."),
-    "nylon_guitar": ("plucked", "A plucked string with a warm triangle underneath."),
-    "overdrive_guitar": ("plucked", "Three driven plucked strings: the note, a fifth and an octave."),
+    # seit S133 (Stufe 23g, Entscheid S-G1 a) Saiteninstrumente — `make_saiten_instrumente.py`;
+    # die Fassung davor heisst <name>_old
+    "guitar": ("plucked", "Six strings in standard tuning (Extended KS) through the parlor body."),
+    "clean_guitar": ("plucked", "Six strings (Waveguide) with single coils at neck and bridge, a quieter string an octave above."),
+    "muted_guitar": ("plucked", "Six strings (Waveguide) that ring briefly, on the bridge single coil, with a short thud."),
+    "nylon_guitar": ("plucked", "Six strings plucked with the finger (Extended KS) through the classical guitar body, a warm triangle underneath."),
+    "overdrive_guitar": ("plucked", "Six driven strings (Waveguide) on a bridge humbucker: the note, a fifth and an octave."),
+    "guitar_old": ("plucked", "The guitar before stage 23: a single plucked string."),
+    "clean_guitar_old": ("plucked", "The clean guitar before stage 23: a plucked string with a quieter one an octave above."),
+    "muted_guitar_old": ("plucked", "The muted guitar before stage 23: a heavily damped plucked string with a short thud."),
+    "nylon_guitar_old": ("plucked", "The nylon guitar before stage 23: a plucked string with a warm triangle underneath."),
+    "overdrive_guitar_old": ("plucked", "The overdrive guitar before stage 23: three driven plucked strings."),
     "pluck": ("plucked", "A square through a filter that snaps shut, without sustain."),
     "trance_pluck": ("plucked", "Detuned saws in two octaves through a snapping filter, over a short sine."),
     # --- Wind
@@ -171,12 +181,16 @@ def ergaenze(name, daten, genres=None):
     else:
         # Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
         level, schichten = 1.0, [{k: v for k, v in daten.items() if k not in _KOPF or k == "level"}]
-    return {
+    neu = {
         # mindestens 3; eine Datei mit Feldern einer spaeteren Fassung (Drums: 6) behaelt ihre Zahl
         "format": "lumiviz-instrument", "version": max(3, int(daten.get("version", 1))), "title": daten["title"],
         "category": art, "genres": genres.get(name, []), "description": beschreibung,
         "level": level, "layers": schichten,
     }
+    # die Saiten (Fassung 10, Stufe 23a) bleiben, wie sie sind — ohne das verloere ein Lauf sie still
+    if "strings" in daten:
+        neu["strings"] = daten["strings"]
+    return neu
 
 
 def main():

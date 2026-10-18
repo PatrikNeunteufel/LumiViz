@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.24.0
+> **Version:** 0.25.0
 > **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -10,7 +10,8 @@
 > (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
 > Classical guitar (§5f, S-K10 a, S133); 23e, der Creator: die Zeile Tuning
 > (§5g), Model, String, Body (§5h), das Saitenbild (§5i) und die Gruppe
-> Pickups (§5j); 23f, der Instrument-Editor (§5k).
+> Pickups (§5j); 23f, der Instrument-Editor (§5k); von 23g die Umstellung der
+> mitgelieferten Instrumente (§5l).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -347,7 +348,7 @@ am Ende von Stufe 23.
 | 23d | **Waveguide** mit Pickup position | dieselben Messungen; bei gleicher Stellung gegen 23c verglichen; Hörproben |
 | 23e | **Creator** nach der Skizze (§4) | Bilder aus den Tests; die Marken ziehen mit der Maus |
 | 23f | **Instrument-Editor** (S-U2, Skizze vor dem Bau): *String choice* am Muster, Anzeige nicht greifbarer Noten | Bilder aus den Tests |
-| 23g | **Mitgelieferte Instrumente:** Vorschlag, welche auf die neuen Verfahren umgestellt werden (vorher/nachher als Hörproben, eigene Vorlage); Handbuch, Sichttest-Liste, voller Lauf | `test_LoopWerte` neu geschrieben nur für die umgestellten |
+| 23g | **Mitgelieferte Instrumente:** Vorschlag, welche auf die neuen Verfahren umgestellt werden (vorher/nachher als Hörproben, eigene Vorlage); Handbuch, Sichttest-Liste — **der volle Lauf erst, wenn Tabs mit Akkorden möglich sind** (Patrik S133) | `test_LoopWerte` neu geschrieben nur für die umgestellten |
 
 ### 5a. Stufe 23a — Modell und Datei (gebaut S132)
 
@@ -694,6 +695,45 @@ am Ende von Stufe 23.
   auch spielt — sonst sagt es der Tooltip („set to string n, which cannot
   play it here“); im Menü gilt ein Eintrag als greifbar nur, wenn er es für
   jede markierte Note ist.
+
+### 5l. Stufe 23g — die mitgelieferten Saiteninstrumente (gebaut S133)
+
+- ✅ **S-G1 a** (Patrik S133, mit Zusatz): **alle acht umstellen, die alten als
+  „old“ behalten** — guitar, nylon_guitar, clean_guitar, muted_guitar,
+  overdrive_guitar, upright_bass, slap_bass, clavinet. Verworfen: b (ohne
+  Clavinet), c (keines umstellen, die neuen dazu). Die Saite als Klangfarbe
+  (conga, flute, kalimba, broken_radio) bleibt Classic.
+- **`asset/loop/make_saiten_instrumente.py`** (neu): legt beim ersten Lauf
+  `<name>_old.lvinst` an (die Fassung davor, Titel mit „(old)“, ohne Genre)
+  und baut `<name>.lvinst` immer aus ihr — Tuning, Verfahren und Regler aus
+  der Tabelle im Skript, `level` mit einem Faktor angeglichen. Zwei Läufe
+  ergeben dieselben Dateien. `make_genres.py` und `make_examples.py` schreiben
+  die acht als Classic und sagen jetzt, dass danach dieses Skript läuft.
+  `instrument_katalog.py`: neue Beschreibungen, die acht `_old`, und
+  **`ergaenze` trägt `strings` weiter** (vorher hätte ein Lauf die Tuning
+  still verworfen).
+- **Gemessen** an den Hörproben (`hoerproben_23g`, je Instrument seine Spur
+  aus einem mitgelieferten Loop, Effektivwert): guitar, nylon, clean,
+  overdrive, upright, clavinet auf 0,1 dB wie vorher; slap_bass −0,6 dB
+  (Pegel begrenzt: A4 muss unter 0,75 bleiben); muted_guitar wäre bei
+  `level` 1,0, der Grenze, −3,7 dB — Ring time, Pluck, Both und Extended KS
+  änderten daran nichts.
+- ✅ **S-G2 a** (Patrik S133): beim muted_guitar die Schicht **Thud**
+  (Triangle) von 0,4 auf 0,6 — gemessen −0,5 dB gegen vorher. Das Skript
+  setzt andere Schichten über `ANDERE` (nach ihrem Namen). Verworfen: b (so
+  lassen, −3,7 dB — die Mischung der Loops kippte).
+- **Loop Werte** neu geschrieben: geändert nur die acht, ihre `_old` (Bit für
+  Bit die Werte von vorher, 24 / 24) und die 15 Loops, die sie nutzen.
+- **Tests:** 101 mitgelieferte Instrumente (keys 9, bass 14, plucked 17);
+  „jede mitgelieferte Datei …“ prüft jetzt, dass genau die sieben mit Tuning
+  Saiten tragen; „ein mitgelieferter Loop ohne Saiteninstrument plant … wie
+  ohne“ gilt für die Loops ohne sie, die anderen tragen Saiten in den Namen.
+  Klangfilter 223 / 223 unter beiden Compilern.
+- **Von Claude gesetzt:** die Werte je Instrument (Tabelle im Skript); der
+  Kontrabass ohne Body mit der Mensur der Vorlage Bass 4; das Clavinet ohne
+  Tuning (eine Saite je Taste).
+- **Offen in 23g:** Handbuch und Sichttest-Liste; **der volle Lauf erst mit
+  Tabs und Akkorden** (Patrik S133).
 
 ---
 

@@ -1,11 +1,11 @@
 {
     "format": "lumiviz-instrument",
-    "version": 3,
+    "version": 10,
     "title": "Nylon Guitar",
     "category": "plucked",
     "genres": ["Bossa Nova", "Jazz Waltz", "Reggaeton"],
-    "description": "A plucked string with a warm triangle underneath.",
-    "level": 0.75,
+    "description": "Six strings plucked with the finger (Extended KS) through the classical guitar body, a warm triangle underneath.",
+    "level": 0.638,
     "layers": [
         {
             "name": "String",
@@ -27,7 +27,14 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.994
+            "damping": 0.994,
+            "stringModel": "extendedKS",
+            "body": "classical",
+            "bodyAmount": 0.6,
+            "pluck": 0.35,
+            "pluckPosition": 0.18,
+            "highDamping": 0.5,
+            "stiffness": 0.05
         },
         {
             "name": "Warmth",
@@ -51,5 +58,11 @@
             "vibratoDelay": 0,
             "damping": 0.996
         }
-    ]
+    ],
+    "strings": {
+        "open": [40, 45, 50, 55, 59, 64],
+        "capo": 0,
+        "stringChoice": "perChord",
+        "scale": 650
+    }
 }

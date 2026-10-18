@@ -8,6 +8,9 @@ Schreibt nach `asset/loop/instruments/*.lvinst` (siebzehn Instrumente; Cowbell
 und Clave kommen seit S128 aus Samples, `make_sample_instruments.py`) und
 `asset/loop/genres/*.lvloop` (neunzehn Loops). Kein Zufall: zwei Laeufe ergeben
 dieselben Dateien. Massgebend sind die Dateien im Repo, nicht ein neuer Lauf.
+**Seit S133 (Stufe 23g):** Clavinet, Slap Bass, Clean, Muted und Nylon Guitar und
+Upright Bass schreibt dieses Skript als Classic — danach
+`make_saiten_instrumente.py` laufen lassen, das sie auf die Saiten umstellt.
 
 Alles ist nach Rechnung gesetzt, nicht nach Gehoer: Rhythmus, Tonart und
 Besetzung folgen dem, was das Genre ueblicherweise ausmacht — ob es so klingt,
