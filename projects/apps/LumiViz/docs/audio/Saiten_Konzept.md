@@ -1,13 +1,14 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.17.0
-> **Datum:** 2026-10-18 (Session 132)
+> **Version:** 0.18.0
+> **Datum:** 2026-10-18 (Session 133)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
-> (§5b), 23c (§5c), 23d (§5d) und der Korpus Parlor (§5e).
+> (§5b), 23c (§5c), 23d (§5d), der Korpus Parlor (§5e) und der Korpus
+> Classical guitar (§5f, S-K10 a, S133).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -228,6 +229,23 @@ Versatz im Akkord.
   seine Gitarre BR2 nennt er beides in der Textebene nicht (nur f_h = 122 Hz,
   Q_h = 45, S. 97, und nach Huber 83–89 mm Schalllochdurchmesser) — die
   Klassikgitarre ist vorzulegen.
+- ✅ **S-K9 a** (Patrik S132, bearbeitet S133): gezielte Suche nach V und A_h
+  — in Wrights Thesis am Seitenbild (Quelle im Repo:
+  [quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf](quellen/Wright_1996_Acoustics_Psychoacoustics_Guitar.pdf),
+  von hakwright.co.uk). **Befund:** wörtlich nur für den Satz TOP26, S. 138:
+  „A_h = 5.7 × 10⁻³ m² and V = 14 × 10⁻³ m³“ (Schalllochdurchmesser daraus
+  85 mm, in Hubers Bereich). Für BR2 auch im Bild nicht (S. 96: „The area of
+  the soundhole is easily measured“, ohne Zahl). Christensen 1984 und Huber
+  1991 waren danach nicht mehr nötig.
+- ✅ **S-K10 a** (Patrik S133): **Classical guitar nach Wrights Satz TOP26** —
+  elf Moden aus Tab. 7.1 (S. 140; Decke aus der Finite-Elemente-Rechnung einer
+  2,6 mm starken, verstrebten Fichtendecke nach Walker 1991, dazu B(1,1)),
+  Luft f_h = 133 Hz, Q_h = 30, A_h und V von S. 138. Der Test misst die
+  gekoppelten Spitzen gegen Wrights Abb. 7.1 (S. 139: 112 / 195 / 215 / 435 /
+  505 / 674 / 880 Hz). Verworfen: b (BR2 mit A_h und V aus TOP26, als
+  übertragen markiert — eine Mischung zweier Sätze, und auch die Luft von BR2
+  ist bei Wright nur angenommen), c (beide als Vorlagen — verdoppelt die
+  Mischung von b).
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -468,6 +486,40 @@ am Ende von Stufe 23.
   mit Tonabnehmer hört seinen Korpus noch nicht (der Korpus wirkt nur auf die
   Abnahme am Steg).
 
+### 5f. Der Korpus Classical guitar (gebaut S133, S-K10 a)
+
+- **`KorpusArt::Klassik`** (in der Datei `body` `classical`): dasselbe Modell
+  wie der Parlor, jetzt für beliebig viele Kolben (Wright Gl. A.20–A.24) —
+  zehn Moden der Decke und B(1,1) aus Tab. 7.1 (TOP26, S. 140), die Luft im
+  Schallloch mit f_h = 133 Hz, Q_h = 30, A_h = 5,7 × 10⁻³ m², V = 14 × 10⁻³ m³
+  (S. 138). Alle Kolben hängen nur über den einen Druck P im Korpus zusammen;
+  der Schritt der Trapezregel löst sich deshalb je Kolben, P aus einer
+  Gleichung (zwölf Kolben, kein 24×24-System je Abtastwert). Der Parlor läuft
+  über denselben Weg (zwei Kolben) und misst unverändert 116 / 219 Hz,
+  +7,25 dB.
+- **Aus Wrights Werten abgeleitet** (S-K7 a): die Steife je Mode
+  k = m ω² − α A² (seine Frequenzen gelten bei geschlossenem Schallloch,
+  Gl. A.12, A.28), die Dämpfung R = m ω / Q, die Masse der Luft
+  m_h = α A_h² / ω_h² (Gl. A.14; 0,47 g), α = ρ c² / V; der Boden wird nicht
+  von der Kraft am Steg getrieben (Gl. A.20), die Decke an jeder Mode
+  (wirksame Massen am Steg). Moden mit Fläche 0 (T(2,1), T(4,1), T(2,2))
+  strahlen nicht ab und koppeln nicht.
+- **Von Claude gesetzt:** ρ = 1,205 kg/m³ und c = 343 m/s wie beim Parlor
+  (Wright nennt beide nicht; ±10 % in α verschieben das Triplett um weniger
+  als 2 Hz); die Moden der Decke koppeln über P auch untereinander (Wright
+  schreibt nur „a summation is performed“, S. 71 — gerechnet als Summe
+  einzelner Drei-Kolben-Systeme liegen die Spitzen auf 0,5 Hz gleich).
+- **Beleg** (`test_LoopKorpus`): gekoppelte Spitzen bei **115,4 / 191,3 /
+  220,0 / 434,0 / 505,8 / 673,6 / 876,5 Hz** gegen Wrights Abb. 7.1 (S. 139,
+  wörtlich in der Unterschrift) 112 / 195 / 215 / 435 / 505 / 674 / 880 Hz —
+  das Triplett um 2–3 % auseinander, der Rest unter 0,5 %; geprüft auf ±5 %.
+  Pegel gegen T(1,1)₂: −7,5 / 0 / −7,6 / −14,4 / −9,8 / −11,2 / −19,5 dB (in
+  Abb. 7.1 abgelesen rund −7 / 0 / −8 / −14 / −10 / −12 / −20 dB; geprüft
+  ist nur, dass T(1,1)₂ die stärkste ist). Die Ursache der 2–3 % im Triplett
+  ist offen — weder ρ und c noch die Art der Kopplung erklären sie.
+- Hörproben `ks_classical`, `wg_classical` unter
+  `.claude/handover/hoerproben_korpus/` (lokal).
+
 ---
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
@@ -480,7 +532,7 @@ Gough (IOA); Zollner 5.15.
 
 | Korpus | Belegt | Quelle | Lücke |
 |---|---|---|---|
-| Classical guitar | T(1,1) 165 Hz Q 36 · T(2,1) 204 Q 66 · B(1,2) 293 Q 50 · T(1,2) 391 Q 60 · T(3,1) 432 Q 51 · T(2,2) 607 Q 25 (Schallloch zu, je mit wirksamer Masse); Helmholtz 122 Hz Q 40 (im Modell gesetzt) | H. Wright, *The Acoustics and Psychoacoustics of the Guitar*, Diss. Cardiff 1996, S. 97–98, Tab. 5.4 — bestätigt | Stärke nur über die Masse |
+| Classical guitar (gewählt S-K10 a: TOP26, S. 138–140, §5f) | T(1,1) 165 Hz Q 36 · T(2,1) 204 Q 66 · B(1,2) 293 Q 50 · T(1,2) 391 Q 60 · T(3,1) 432 Q 51 · T(2,2) 607 Q 25 (Schallloch zu, je mit wirksamer Masse); Helmholtz 122 Hz Q 40 (im Modell gesetzt) | H. Wright, *The Acoustics and Psychoacoustics of the Guitar*, Diss. Cardiff 1996, S. 97–98, Tab. 5.4 — bestätigt | Stärke nur über die Masse |
 | Acoustic guitar (Steelstring, Parlor) | T(1,1)₁ 116 Hz, T(1,1)₂ 219 Hz, Helmholtz 130 Hz; Modellwerte (Masse, Steife, Dämpfung) | D. P. Hess, *Savart Journal* 1(3), 2013, S. 3, Tab. 1 — bestätigt | Güte nur gerechnet; keine Dreadnought |
 | Upright bass | A0 65–67 Hz, T1/A1 115 Hz, C2 145, C4 130, C3 155, A2 150/158 Hz | A. W. Brown, Diss. mdw Wien 2004, S. 80–83 — bestätigt (A0, T1/A1) | keine Güte, Stärke nur als Kurve |
 | Violin | A0 270 Hz, Hauptholz 420 Hz, „thick plate" 505 Hz, Bridge Hill 2,7 kHz (Mittel vieler Violinen); Bandbreite je 14 Hz | E. Jansson, *Acoustics for Violin and Guitar Makers*, KTH 2002, S. 7.11 — Frequenzen bestätigt, Bandbreiten nur in der Abbildung | keine Stärken |

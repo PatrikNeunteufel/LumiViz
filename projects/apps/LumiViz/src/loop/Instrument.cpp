@@ -668,116 +668,172 @@ void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, 
     }
 }
 
-/// Der Korpus Parlor (Stufe 23d; S-K8 a): Decke und Luft als gekoppelte
-/// Schwinger nach Christensen und Vistisen (1980), mit den Werten aus Hess
-/// (2013), Tab. 1 — wie Wright (1996) Gl. A.1 bis A.7 sie schreibt:
+/// Ein Schwinger des Korpus: eine Mode von Decke oder Boden, oder die Luft im
+/// Schallloch — ein Kolben mit wirksamer Masse und Flaeche (Wright 1996,
+/// Gl. A.20–A.24, fuer beliebig viele Kolben).
+struct KorpusKolben
+{
+    double masse = 1.0;      ///< wirksame Masse, kg
+    double steife = 0.0;     ///< Steife ohne die Luft im Korpus, N/m
+    double daempfung = 0.0;  ///< R, Ns/m
+    double flaeche = 0.0;    ///< wirksame Flaeche, m^2; nach aussen positiv
+    bool getrieben = false;  ///< die Kraft am Steg greift an (Decke) — nicht am Boden, nicht an der Luft
+};
+
+/// Ein Kolben aus den entkoppelten Werten einer Mode, wie Wright sie angibt:
+/// die Frequenz bei geschlossenem Schallloch — die Luft im Korpus federt mit
+/// alpha A^2 (Gl. A.12, A.28) —, die wirksame Masse und Flaeche, die Guete.
+KorpusKolben kolbenAusMode(double hz, double masse, double flaeche, double guete, bool getrieben, double alpha)
+{
+    const double w = 2.0 * kPi * hz;
+    return {masse, masse * w * w - alpha * flaeche * flaeche, masse * w / guete, flaeche, getrieben};
+}
+
+/// Der Korpus (Stufe 23d, S-K8 a; Classical S-K10 a): Decke, Boden und Luft
+/// als gekoppelte Schwinger nach Christensen und Vistisen (1980), wie Wright
+/// (1996) Gl. A.1 bis A.7 und A.20 bis A.24 sie schreibt — je Kolben i
 ///
-///   m_p x_p'' = F − k_p x_p − R_p x_p' + A P,   m_a x_a'' = S P − R_a x_a',
-///   P = −(rho c² / V) (A x_p + S x_a).
+///   m_i x_i'' = F_i − k_i x_i − R_i x_i' + A_i P,   P = −(rho c² / V) Σ A_j x_j,
 ///
-/// Die Kraft F greift am Steg an; abgestrahlt wird, was der Volumenfluss
-/// U = A x_p' + S x_a' sich aendert (eine Punktquelle, Wright Gl. 4.17).
-/// Gerechnet mit der Trapezregel — stabil, und bei 200 Hz an 44,1 kHz kaum
-/// verschoben.
+/// die Luft im Schallloch ein Kolben ohne eigene Steife. Die Kraft F greift
+/// am Steg an, an jeder Mode der Decke (wirksame Massen am Steg); abgestrahlt
+/// wird, was der Volumenfluss U = Σ A_i x_i' sich aendert (eine Punktquelle,
+/// Wright Gl. 4.17). Die Werte:
+/// - *Parlor*: Hess (2013), Tab. 1 — eine Decke und die Luft;
+/// - *Classical guitar*: Wright, Satz TOP26 (S. 138–140): zehn Moden der Decke
+///   und B(1,1) aus Tab. 7.1, Luft f_h = 133 Hz, Q_h = 30, A_h, V.
+/// Gerechnet mit der Trapezregel — stabil, und bei 900 Hz an 44,1 kHz kaum
+/// verschoben. Weil alle Kolben nur ueber den einen Druck P gekoppelt sind,
+/// loest sich der Schritt je Kolben, und P ergibt sich aus einer Gleichung.
 class Korpus
 {
 public:
     Korpus(KorpusArt art, int rate)
     {
-        if (art != KorpusArt::Parlor || rate <= 0) return;
+        if (rate <= 0) return;
+        if (art == KorpusArt::Parlor)
+            setzeParlor();
+        else if (art == KorpusArt::Klassik)
+            setzeKlassik();
+        else
+            return;
         m_an = true;
-        // Hess, Tab. 1
-        constexpr double c = 343.0;          // Schallgeschwindigkeit, m/s
-        constexpr double rho = 1.205;        // Dichte der Luft, kg/m^3
-        constexpr double volumen = 0.01183;  // Korpus, m^3
-        constexpr double s = 0.008107;       // Schallloch, m^2
-        constexpr double a = 0.03747;        // wirksame Flaeche der Decke, m^2
-        constexpr double mp = 0.06653;       // Masse der Decke, kg
-        constexpr double kp = 9.995e4;       // Steife der Decke, N/m
-        constexpr double rp = 8.994;         // Daempfung der Decke, Ns/m
-        constexpr double ma = 0.001182;      // Masse der Luft im Schallloch, kg
-        constexpr double ra = 0.03803;       // Daempfung der Luft, Ns/m
-        const double g = rho * c * c / volumen;
-        m_flaecheDecke = a;
-        m_flaecheLoch = s;
-        m_masseDecke = mp;
-        // der Zustand: x_p, v_p, x_a, v_a
-        m_m = {{{0.0, 1.0, 0.0, 0.0},
-                {-(kp + g * a * a) / mp, -rp / mp, -g * a * s / mp, 0.0},
-                {0.0, 0.0, 0.0, 1.0},
-                {-g * a * s / ma, 0.0, -g * s * s / ma, -ra / ma}}};
-        const std::array<double, 4> b = {0.0, 1.0 / mp, 0.0, 0.0};
-        // Trapezregel: x' = M x + b F  ->  (I - hM/2) x_n+1 = (I + hM/2) x_n + h/2 b (F_n + F_n+1)
         const double h = 1.0 / rate;
-        std::array<std::array<double, 8>, 4> erweitert{};
-        for (std::size_t i = 0; i < 4; ++i)
-            for (std::size_t j = 0; j < 4; ++j)
+        const double nennerSumme = [&] {
+            double summe = 0.0;
+            for (Zustand& z : m_kolben)
             {
-                erweitert[i][j] = (i == j ? 1.0 : 0.0) - 0.5 * h * m_m[i][j];
-                erweitert[i][j + 4] = i == j ? 1.0 : 0.0;
+                const KorpusKolben& k = z.kolben;
+                const double traege = 4.0 * k.masse / (h * h) + 2.0 * k.daempfung / h;
+                z.g = 1.0 / (traege + k.steife);
+                z.vorher = traege - k.steife;
+                z.v4 = 4.0 * k.masse / h;
+                summe += k.flaeche * k.flaeche * z.g;
             }
-        // die Inverse von (I - hM/2), nach Gauss mit Spaltenwahl
-        for (std::size_t spalte = 0; spalte < 4; ++spalte)
-        {
-            std::size_t best = spalte;
-            for (std::size_t z = spalte + 1; z < 4; ++z)
-                if (std::abs(erweitert[z][spalte]) > std::abs(erweitert[best][spalte])) best = z;
-            std::swap(erweitert[spalte], erweitert[best]);
-            const double teiler = erweitert[spalte][spalte];
-            for (double& wert : erweitert[spalte]) wert /= teiler;
-            for (std::size_t z = 0; z < 4; ++z)
-            {
-                if (z == spalte) continue;
-                const double faktor = erweitert[z][spalte];
-                for (std::size_t j = 0; j < 8; ++j) erweitert[z][j] -= faktor * erweitert[spalte][j];
-            }
-        }
-        for (std::size_t i = 0; i < 4; ++i)
-        {
-            m_bd[i] = 0.0;
-            for (std::size_t j = 0; j < 4; ++j)
-            {
-                double summe = 0.0;
-                for (std::size_t k = 0; k < 4; ++k)
-                    summe += erweitert[i][k + 4] * ((k == j ? 1.0 : 0.0) + 0.5 * h * m_m[k][j]);
-                m_ad[i][j] = summe;
-                m_bd[i] += erweitert[i][j + 4] * 0.5 * h * b[j];
-            }
-        }
+            return summe;
+        }();
+        m_nenner = 1.0 + m_alpha * nennerSumme;
+        m_h = h;
     }
     [[nodiscard]] bool an() const { return m_an; }
     /// Ein Abtastwert: die Kraft am Steg hinein, der abgestrahlte Schall heraus.
     [[nodiscard]] double schritt(double kraft)
     {
         if (!m_an) return 0.0;
-        // der Schall jetzt: die Aenderung des Volumenflusses aus dem Zustand und der Kraft
-        const double vpPunkt = m_m[1][0] * m_x[0] + m_m[1][1] * m_x[1] + m_m[1][2] * m_x[2] + kraft / m_masseDecke;
-        const double vaPunkt = m_m[3][0] * m_x[0] + m_m[3][2] * m_x[2] + m_m[3][3] * m_x[3];
-        const double schall = m_flaecheDecke * vpPunkt + m_flaecheLoch * vaPunkt;
+        // der Druck im Korpus jetzt, und der Schall jetzt: die Aenderung des Volumenflusses
+        double volumen = 0.0;
+        for (const Zustand& z : m_kolben) volumen += z.kolben.flaeche * z.x;
+        const double druck = -m_alpha * volumen;
+        double schall = 0.0;
         // weiter zum naechsten Abtastwert: die Trapezregel nimmt diese Kraft und die davor
         // (die naechste ist noch unbekannt — der Korpus hoert die Saite einen Abtastwert spaeter)
-        std::array<double, 4> neu{};
-        for (std::size_t i = 0; i < 4; ++i)
+        double summe = 0.0;
+        for (Zustand& z : m_kolben)
         {
-            double summe = m_bd[i] * (m_davor + kraft);
-            for (std::size_t j = 0; j < 4; ++j) summe += m_ad[i][j] * m_x[j];
-            neu[i] = summe;
+            const KorpusKolben& k = z.kolben;
+            const double jetzt = (k.getrieben ? kraft : 0.0) + k.flaeche * druck;
+            schall += k.flaeche * (jetzt - k.steife * z.x - k.daempfung * z.v) / k.masse;
+            const double davor = (k.getrieben ? m_davor : 0.0) + k.flaeche * druck;
+            z.basis = z.g * (davor + z.vorher * z.x + z.v4 * z.v) + (k.getrieben ? z.g * kraft : 0.0);
+            summe += k.flaeche * z.basis;
         }
-        m_x = neu;
+        const double druckNeu = -m_alpha * summe / m_nenner;
+        for (Zustand& z : m_kolben)
+        {
+            const double x = z.basis + z.g * z.kolben.flaeche * druckNeu;
+            z.v = 2.0 * (x - z.x) / m_h - z.v;
+            z.x = x;
+        }
         m_davor = kraft;
         return schall;
     }
 
 private:
+    struct Zustand
+    {
+        KorpusKolben kolben;
+        double g = 0.0;       // x_n+1 = basis + g u_n+1
+        double vorher = 0.0;  // 4m/h² + 2R/h − k
+        double v4 = 0.0;      // 4m/h
+        double basis = 0.0;
+        double x = 0.0;
+        double v = 0.0;
+    };
+
+    void setzeParlor()
+    {
+        // Hess, Tab. 1
+        constexpr double c = 343.0;          // Schallgeschwindigkeit, m/s
+        constexpr double rho = 1.205;        // Dichte der Luft, kg/m^3
+        constexpr double volumen = 0.01183;  // Korpus, m^3
+        m_alpha = rho * c * c / volumen;
+        // Decke: Masse, Steife, Daempfung, wirksame Flaeche
+        m_kolben.push_back({KorpusKolben{0.06653, 9.995e4, 8.994, 0.03747, true}});
+        // Luft im Schallloch: Masse, Daempfung, Flaeche des Schalllochs
+        m_kolben.push_back({KorpusKolben{0.001182, 0.0, 0.03803, 0.008107, false}});
+    }
+
+    void setzeKlassik()
+    {
+        // Wright, S. 138: A_h und V; die Luft wie beim Parlor (Wright nennt rho und c nicht)
+        constexpr double c = 343.0;
+        constexpr double rho = 1.205;
+        constexpr double volumen = 14e-3;     // m^3
+        constexpr double schallloch = 5.7e-3;  // m^2
+        m_alpha = rho * c * c / volumen;
+        // Tab. 7.1: Frequenz (entkoppelt), wirksame Masse, wirksame Flaeche, Guete
+        struct Mode
+        {
+            double hz, masse, flaeche, guete;
+            bool decke;
+        };
+        constexpr std::array<Mode, 11> top26 = {{
+            {185.0, 0.080, 0.0381, 20.0, true},     // T(1,1)
+            {215.0, 0.150, 0.0250, 25.0, false},    // B(1,1), der Boden
+            {243.9, 0.488, 0.0, 36.0, true},        // T(2,1)
+            {435.8, 2.715, -0.1215, 47.0, true},    // T(1,2)
+            {506.8, 0.256, -0.0265, 35.0, true},    // T(3,1)
+            {612.0, 1.093, 0.0, 22.0, true},        // T(4,1)
+            {674.3, 0.490, -0.0576, 28.0, true},    // T(1,3)
+            {737.7, 2.049, 0.0, 35.0, true},        // T(2,2)
+            {863.6, 0.272, 0.0097, 25.0, true},     // T(1,4)
+            {878.6, 0.646, 0.0107, 40.0, true},     // T(5,1)1
+            {908.0, 0.437, 0.0017, 40.0, true},     // T(5,1)2
+        }};
+        for (const Mode& m : top26)
+            m_kolben.push_back({kolbenAusMode(m.hz, m.masse, m.flaeche, m.guete, m.decke, m_alpha)});
+        // die Luft: f_h = 133 Hz, Q_h = 30 (Tab. 7.1); aus omega_h² = alpha A_h² / m_h (Gl. A.14)
+        const double wh = 2.0 * kPi * 133.0;
+        const double mh = m_alpha * schallloch * schallloch / (wh * wh);
+        m_kolben.push_back({KorpusKolben{mh, 0.0, mh * wh / 30.0, schallloch, false}});
+    }
+
     bool m_an = false;
-    std::array<std::array<double, 4>, 4> m_m{};
-    std::array<std::array<double, 4>, 4> m_ad{};
-    std::array<double, 4> m_bd{};
-    std::array<double, 4> m_x{};
+    std::vector<Zustand> m_kolben;
+    double m_alpha = 0.0;
+    double m_nenner = 1.0;
+    double m_h = 0.0;
     double m_davor = 0.0;
-    double m_flaecheDecke = 0.0;
-    double m_flaecheLoch = 0.0;
-    double m_masseDecke = 1.0;
 };
 
 /// Den Umlauf rechnen, mit Korpus (`amSteg`: der Ton wird am Steg abgenommen —
@@ -1342,7 +1398,9 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("highDamping")] = schicht.hoehenDaempfung;
         o[QStringLiteral("stiffness")] = schicht.steifheit;
         o[QStringLiteral("stringVariation")] = schicht.saitenUnterschied;
-        o[QStringLiteral("body")] = schicht.korpus == KorpusArt::Parlor ? QStringLiteral("parlor") : QStringLiteral("none");
+        o[QStringLiteral("body")] = schicht.korpus == KorpusArt::Parlor    ? QStringLiteral("parlor")
+                                    : schicht.korpus == KorpusArt::Klassik ? QStringLiteral("classical")
+                                                                           : QStringLiteral("none");
         o[QStringLiteral("bodyAmount")] = schicht.korpusAnteil;
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
@@ -1422,8 +1480,10 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.abnehmerSteg = abnehmer("pickupBridge", vorgabe.abnehmerSteg);
     neu.kabelPf = zahl("cable", vorgabe.kabelPf, kKabelMinPf, kKabelMaxPf);
     // ein Korpus, den dieses Programm nicht kennt: keiner
-    neu.korpus = wurzel.value(QStringLiteral("body")).toString() == QLatin1String("parlor") ? KorpusArt::Parlor
-                                                                                           : KorpusArt::Keiner;
+    const QString korpus = wurzel.value(QStringLiteral("body")).toString();
+    neu.korpus = korpus == QLatin1String("parlor")      ? KorpusArt::Parlor
+                 : korpus == QLatin1String("classical") ? KorpusArt::Klassik
+                                                        : KorpusArt::Keiner;
     neu.korpusAnteil = zahl("bodyAmount", vorgabe.korpusAnteil, 0.0, 1.0);
     const QString wahl = wurzel.value(QStringLiteral("pickupSelect")).toString();
     neu.abnehmerWahl = wahl == QLatin1String("neck")     ? AbnehmerWahl::Hals

@@ -120,6 +120,10 @@ enum class KorpusArt : int
     /// Response Evaluation of Acoustic Guitar Modifications“, *Savart
     /// Journal* 1(3), 2013, Tab. 1 (eine Loar LH-200).
     Parlor = 1,
+    /// Classical guitar: dasselbe Modell mit elf Moden aus Decke und Boden nach
+    /// H. Wright, *The Acoustics and Psychoacoustics of the Guitar*, Diss.
+    /// Cardiff 1996, Satz TOP26 (S. 138–140, Tab. 7.1; Entscheid S-K10 a).
+    Klassik = 2,
 };
 
 /// Die Impulsantwort eines Korpus (fuer Tests und Bilder): was er abstrahlt,
