@@ -162,7 +162,7 @@ TEST_SUITE("LoopInstrument")
         Loop loop = notenLoop({{8, 4, 64, 1.0},
                                {0, 4, 60, 0.8},
                                {0, 2, 60, 0.5},      // dieselbe Stelle und Tonhoehe: die erste bleibt
-                               {0, 4, 200, 1.0},     // zu hoch: C7
+                               {0, 4, 200, 1.0},     // zu hoch: der oberste Ton (C8)
                                {4, 0, 10, 2.0},      // Laenge 0, zu tief, zu laut
                                {60, 16, 62, 1.0},    // reicht ueber das Ende: wird kuerzer
                                {64, 4, 62, 1.0},     // beginnt hinter dem Ende: geht
@@ -183,9 +183,10 @@ TEST_SUITE("LoopInstrument")
         // --- die Klaenge: je Tonhoehe und Dauer einer; 120 BPM, ein Schritt sind 125 ms
         CHECK(loop.notenMs(m.noten[0]) == 500);
         CHECK(loop.notenMs(m.noten[2]) == 125);
-        CHECK(loop.klangNamen() == QStringList{QStringLiteral("inst:piano:60:500"), QStringLiteral("inst:piano:96:500"),
-                                               QStringLiteral("inst:piano:24:125"), QStringLiteral("inst:piano:64:500"),
+        CHECK(loop.klangNamen() == QStringList{QStringLiteral("inst:piano:60:500"), tonKlang(QStringLiteral("piano"), kHoeheMax, 500),
+                                               tonKlang(QStringLiteral("piano"), kHoeheMin, 125), QStringLiteral("inst:piano:64:500"),
                                                QStringLiteral("inst:piano:62:500")});
+        CHECK(tonKlang(QStringLiteral("piano"), 60, 500) == QStringLiteral("inst:piano:60:500"));
         // die Dauer haengt am Tempo
         loop.bpm = 60.0;
         CHECK(loop.klangNamen().first() == QStringLiteral("inst:piano:60:1000"));
@@ -331,8 +332,8 @@ TEST_SUITE("LoopInstrument")
         CHECK(tonHz(57) == doctest::Approx(220.0));
         CHECK(tonName(60) == QStringLiteral("C4"));
         CHECK(tonName(61) == QStringLiteral("C#4"));
-        CHECK(tonName(kHoeheMin) == QStringLiteral("C1"));
-        CHECK(tonName(kHoeheMax) == QStringLiteral("C7"));
+        CHECK(tonName(kHoeheMin) == QStringLiteral("A0"));  // seit S132 (S-T1 a) der Umfang eines Klaviers; bis dahin C1
+        CHECK(tonName(kHoeheMax) == QStringLiteral("C8"));  // bis dahin C7
 
         // die mitgelieferten Instrumente: die Dateien unter asset/loop/instruments, nach Titel sortiert
         const InstrumentApp app;  // der Programmordner fuer die Suche nach dem Ordner

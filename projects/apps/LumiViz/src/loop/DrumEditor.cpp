@@ -1957,7 +1957,7 @@ void DrumEditor::zeigeDetail()
     int index = m_detailNote->findData(ziel->hoehe);
     if (index < 0)
     {
-        // eine Note ausserhalb von C1 bis C7 (aus einer Datei): sie steht da, wie sie ist
+        // eine Note ausserhalb von `kHoeheMin` … `kHoeheMax` (aus einer Datei): sie steht da, wie sie ist
         m_detailNote->addItem(tonName(ziel->hoehe), ziel->hoehe);
         index = m_detailNote->count() - 1;
     }

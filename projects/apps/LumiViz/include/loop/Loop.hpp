@@ -117,10 +117,12 @@ enum class MusterArt : int
     Instrument = 1,
 };
 
-/// Die Tonhoehen einer Note, als MIDI-Nummer: C1 bis C7, sechs Oktaven
-/// (60 = C4, 69 = A4 mit 440 Hz).
-inline constexpr int kHoeheMin = 24;
-inline constexpr int kHoeheMax = 96;
+/// Die Tonhoehen einer Note, als MIDI-Nummer: A0 bis C8, der Umfang eines
+/// Klaviers (60 = C4, 69 = A4 mit 440 Hz). Bis Stufe 22 C1 bis C7; erweitert
+/// mit Stufe 23a (Entscheid Patrik S-T1 a, S132) fuer die tiefe B-Saite eines
+/// fuenfsaitigen Basses (B0) und die hohen Lagen einer Violine (bis A7).
+inline constexpr int kHoeheMin = 21;
+inline constexpr int kHoeheMax = 108;
 
 /// Eine Note eines Instrument-Musters: ab einem Schritt, so viele Schritte
 /// lang, in einer Tonhoehe.

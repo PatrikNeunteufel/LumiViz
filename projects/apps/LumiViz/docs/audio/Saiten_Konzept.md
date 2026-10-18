@@ -1,6 +1,6 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.11.0
+> **Version:** 0.12.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
@@ -245,7 +245,10 @@ am Ende von Stufe 23.
   `G4 C4 E4 A4`); zwei Noten gleicher Tonhöhe auf demselben Schritt bleiben
   wie bisher eine (keine Unisono-Paare auf zwei Saiten); dass ein neues Muster
   die Regel seines Instruments bekommt, baut 23f (im Editor).
-- **Befund:** die Noten reichen von C1 (24) bis C7 (96), `kHoeheMin` in
-  `Loop.hpp`. Die tiefe Saite eines fünfsaitigen Basses (B0 = 23) liegt
-  darunter: ihre leere Saite ist als Note nicht zu setzen. Zur Vorlage, bevor
-  23b daran rechnet.
+- ✅ **S-T1 a** (Patrik S132): **Die Noten reichen von A0 (21) bis C8 (108)**,
+  dem Umfang eines Klaviers (`kHoeheMin`, `kHoeheMax` in `Loop.hpp`; bis
+  dahin C1 bis C7). Anlass: die tiefe B-Saite eines fünfsaitigen Basses (B0 =
+  23) lag darunter, die hohen Lagen einer Violine (bis A7 = 105) darüber.
+  Dateien mit Noten im alten Umfang ändern sich nicht; die Piano-Roll hat 88
+  statt 73 Zeilen. Verworfen: b (nur unten bis B0 — die Violine stieße oben an
+  dieselbe Grenze), c (Umfang bleibt, Bass 5 fällt weg).

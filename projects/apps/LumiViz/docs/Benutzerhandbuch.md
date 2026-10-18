@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.187.0
-> **Datum:** 2026-10-17
+> **Version:** 1.188.0
+> **Datum:** 2026-10-18
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2825,7 +2825,7 @@ erscheint der Knopf **…**. Er öffnet ein kleines Feld:
 
 | Element | Wirkung |
 |---|---|
-| **Note** | Die Tonhöhe jedes Schlags, C1 bis C7. Vorbelegt nach der Art des Instruments: C2 bei Bass und Drums, sonst C4 |
+| **Note** | Die Tonhöhe jedes Schlags, A0 bis C8 (GEÄNDERT in 1.188.0: vorher C1 bis C7). Vorbelegt nach der Art des Instruments: C2 bei Bass und Drums, sonst C4 |
 | **Length** | So lang wird jeder Schlag gehalten, in Millisekunden (1 bis 30000, vorbelegt 250); danach klingt er aus. Die Länge hängt nicht am Tempo |
 | **Play** | Spielt einen Schlag der Spur, mit ihrer Lautstärke und ihrem Panorama. Stumm, solange der Loop spielt |
 | **Browse...** | Das Fenster Instruments: ein anderes Instrument wählen. Note und Length bleiben |
@@ -2964,7 +2964,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | **Base**, **Bars**, **Play pattern**, **Peak** | Wie im Drum-Editor |
 | **Instrument** | Dreiundneunzig mitgelieferte, nach Namen sortiert; das Fenster **Instruments** (**Browse...**) ordnet sie nach Art: **Keys** (8), **Bass** (12), **Lead** (7), **Pads** (9), **Plucked** (12), **Wind** (7), **Percussion** (10), **Drums** (20), **Unusual** (8). Gerechnet aus Schichten sind etwa Piano, Strings, Violin, Organ, die House-Klänge, Bell, Brass, Super Saw, Kalimba, Marimba und ungewöhnliche wie Cascade (jede Note spielt vier Töne nacheinander), Siren, Alien Choir, Broken Radio, Ghost, Reverse Swell (schwillt an und bricht ab). **Aus Formen** (Waveform Shape) klingen elf: Heart Pad, Rings Choir, Infinity Drone, Gear Bass, Moon Bass, Star Lead, Bolt Pluck, Flower Flute, Smiley Keys, Atom Bell, Cat. **Aus mitgelieferten Samples** fünfzehn: Female Choir, Hum Pad, Vocal Lead, Vocal Chop, Harp, Koto, Dulcimer, Thumb Piano, Shakuhachi, Alto Sax, Alto Flute, Angel Harp, Wind Voices, Cowbell, Clave. Bei gerechnetem Schlagwerk wie der Conga ist die Tonhöhe der Note die Tonhöhe des Schlags; Cowbell und Clave sind Aufnahmen und klingen auf A5 bzw. C6 so, wie sie aufgenommen sind — andere Noten machen den Schlag höher und kürzer oder tiefer und länger. Die gerechneten Klänge sind keine Aufnahmen — das Piano klingt nach E-Piano. Jedes ist eine Datei `.lvinst` unter `asset\loop\instruments` |
 | **Volume**, **Pan**, **M** | Lautstärke, Panorama und Stumm für das ganze Muster |
-| Klaviatur | Sechs Oktaven, C1 bis C7; jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
+| Klaviatur | Der Umfang eines Klaviers, A0 bis C8 (GEÄNDERT in 1.188.0: vorher sechs Oktaven, C1 bis C7); jedes C ist beschriftet. Ein Klick auf eine Taste spielt den Ton an, sie leuchtet dabei — nur, solange sonst nichts spielt. Spielt der Loop oder hat der Composer den Ton, bleiben die Tasten stumm; neben **M** steht dann, warum |
 | Klick auf eine freie Stelle | Setzt eine Note von einem Schritt. Mit gedrückter Taste nach rechts gezogen wird sie gleich länger |
 | Rechte Kante einer Note ziehen | Länger und kürzer, in ganzen Schritten. Der Mauszeiger wird dort zum Doppelpfeil |
 | Note ziehen | Verschiebt sie in Zeit und Tonhöhe |
@@ -3453,6 +3453,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.188.0 | 2026-10-18 | Session 132. §16 Loop: Noten reichen von A0 bis C8, dem Umfang eines Klaviers (vorher C1 bis C7) — Klaviatur der Piano-Roll und **Note** einer Drum-Spur. |
 | 1.187.0 | 2026-10-17 | Session 131. §MilkDrop: die Schalter heißen **Warp shader** und **Comp shader** und füllen dazu selbst gebaute Matrizen zeilenweise wie MilkDrop (Entscheid S2 a); Sammelliste nachgezogen. |
 | 1.186.0 | 2026-10-17 | Session 131. §MilkDrop: *Warp/Comp shader Y* heißen jetzt **Warp shader input** und **Comp shader input** und schalten dazu `rad`/`ang` wie im Original und das Wiederholen von `sampler_main` (Entscheid S1 a); Sammelliste der „bisher"-Schalter nachgezogen. |
 | 1.185.0 | 2026-10-16 | Session 130. §MilkDrop NEU **Warp shader Y** und **Comp shader Y**: die Shader sehen `y` wie MilkDrop (Standard), je Pass ein Schalter zurück; Sammelliste der „bisher"-Schalter ergänzt. |

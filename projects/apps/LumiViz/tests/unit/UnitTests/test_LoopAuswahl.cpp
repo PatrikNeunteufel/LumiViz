@@ -267,10 +267,11 @@ TEST_CASE("Loop Auswahl Noten: loeschen, versetzen bis an den Rand, im Kreis dre
         std::vector<NotenOrt> orte = {{0, 60}, {12, 72}};
         CHECK_FALSE(versetzeNoten(m, orte, -1, 0, kNotenSchritte));  // vor dem Anfang
         CHECK_FALSE(versetzeNoten(m, orte, 1, 0, kNotenSchritte));   // C5 reicht schon bis ans Ende
-        CHECK_FALSE(versetzeNoten(m, orte, 0, 25, kNotenSchritte));  // C5 + 25 laege ueber C7
-        CHECK_FALSE(versetzeNoten(m, orte, 0, -37, kNotenSchritte)); // C4 - 37 laege unter C1
+        // die Raender: seit S132 (S-T1 a) A0 und C8, vorher C1 und C7
+        CHECK_FALSE(versetzeNoten(m, orte, 0, kHoeheMax - 72 + 1, kNotenSchritte));  // C5 laege ueber dem obersten Ton
+        CHECK_FALSE(versetzeNoten(m, orte, 0, kHoeheMin - 60 - 1, kNotenSchritte));  // C4 laege unter dem untersten
         CHECK(m == vorher);
-        REQUIRE(versetzeNoten(m, orte, 0, 24, kNotenSchritte));      // genau bis C7
+        REQUIRE(versetzeNoten(m, orte, 0, kHoeheMax - 72, kNotenSchritte));          // genau bis zum obersten
         CHECK(orte.back() == NotenOrt{12, kHoeheMax});
     }
     SUBCASE("drehen: im Kreis, eine Note am Ende wird gekuerzt")

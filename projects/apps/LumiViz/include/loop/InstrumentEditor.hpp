@@ -7,7 +7,7 @@
  * Oeffnet sich ueber „Edit base" an einem Instrument-Clip. **Kopf:** Basis und
  * Zahl ihrer Clips, Takte des Musters, „Play pattern", die Spitze der Summe.
  * **Instrument-Zeile:** Instrument, Lautstaerke, Panorama, Stumm. **Raster:**
- * links die Klaviatur (C1 bis C7), rechts die Schritte; eine Note ist ein
+ * links die Klaviatur (A0 bis C8, `kHoeheMin` … `kHoeheMax`), rechts die Schritte; eine Note ist ein
  * Balken in der Zeile ihrer Tonhoehe. Darunter die Lautstaerke je Note.
  *
  * Wie der Drum-Editor aendert er den Loop nicht selbst: er meldet die neue
