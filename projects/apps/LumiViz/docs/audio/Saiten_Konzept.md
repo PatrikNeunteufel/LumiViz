@@ -1032,6 +1032,62 @@ Slide, Bend) mit eigenen Fragen, dann die Tabs.
   Versatz nach der Saite, auf der sie klingt; Palm mute und Tapping gelten
   auch für eine nicht greifbare Note.
 
+### 5o. Stufe 24c — der Klang der Spielweisen (gebaut S134)
+
+Nach S-W6 a, S-W7 a, S-W8 a; nur an Saiten *Extended KS* und *Waveguide*,
+jede andere Schicht spielt die klingende Tonhöhe wie immer. Grundlage: der
+Recherche-Bericht S134 (Agent, im Scratchpad; die tragenden Stellen von Claude
+an der Quelle nachgelesen, unten mit Fundstelle).
+
+- **Punktdämpfer im Umlauf** (`PunktDaempfer`, `Spielart`, `laufeUm`): nach
+  Pakarinen (EUSIPCO 2005, Gl. 2–3, nachgelesen S. 2): ein Widerstand R an
+  einem Serienknoten, durch geht 2/(2 + ρ), zurück kommt −ρ/(2 + ρ), ρ = R/Z0.
+  Ein Punkt x der Saite liegt im gefalteten Umlauf zweimal (x · L/2 und
+  (2 − x) · L/2); dort greift er an, in beiden Verfahren gleich.
+- **Palm mute:** der Dämpfer bei `kHandVomStegMm` = 40 mm vor dem Steg
+  (abgeleitet im Bericht aus dem Abklingen gedämpfter Töne in IDMT-SMT-Guitar,
+  ≈ 40 mm; passt zu Biral et al., ICMC 2014, S. 1485 „the first few
+  centimeters“, nachgelesen), ρ = Mute², bezogen auf die schwingende Länge
+  (gegriffen kürzer). **Gemessen:** A3 auf der D-Saite T60 0,462 s gegen
+  0,456 s nach der Formel des Berichts (T60 = 6,91 / (6,91/Ring time +
+  2 f1 ρ sin²(π x/L))); der 4. Teilton verliert schneller als der Grundton;
+  der Anschlag bleibt in der gemessenen Spanne (−3,4 dB KS, −1,7 dB WG gegen
+  −4 … +6 dB); ein Bass (A1, 864 mm) klingt gedämpft 2,31 s, die Gitarre
+  0,46 s.
+- **Harmonic:** gerechnet wird der Grundton der Saite (klingend − Teilton),
+  der Finger als Dämpfer am Knoten 1 − 1/n vom Steg (über dem Griffbrett),
+  ρ = Touch, er bleibt die ganze Note. **Gemessen:** E3 als n = 2: E2 nach
+  0,3 s −82 dB gegen E3; n = 5 −13,69 Cent gegen G#4 (Theorie −13,7).
+- **Tapping:** die Anregung am Bund (gerechnet an der gleichwertigen Stelle
+  `kAnschlagOrtMin`), geglättet bei `kTappingGlaettenHz` 640 Hz (abgeleitet:
+  0,5 ms Fingerweg nach Bilbao/Torin DAFx-14, keine Messung), mal *Tap level*;
+  ein getippter Ton hat keine Richtung. **Gemessen:** 8. Teilton gegen
+  Grundton 12 (KS) bzw. 18 dB (WG) leiser als ein Zupfton an derselben Stelle.
+- **Up:** der fertige Ton mal −*Up level*. Weil jeder Ton für sich gerechnet
+  wird, hört man das Vorzeichen nur, wo Töne sich überlagern (Bericht §2.2,
+  im Code bestätigt).
+- **Vorgaben:** *Up level* 1,0 (vorher 0,8 — ein Pegelunterschied je Saite ist
+  nicht belegt; dass Up weniger Saiten trifft, macht der Akkord); *Mute* 0,6
+  (zwischen den gemessenen Stufen M3 und M4; welche „üblich“ ist, sagt keine
+  Quelle); *Tap level* 0,75 (vorher 0,65; abgeleitet, Spanne 0,5–1,2);
+  *Touch* 0,3 (gemessen 4–6 dB je Periode, simuliert ρ ≈ 0,25–0,35).
+- **Belegt** in `test_LoopSpielweiseKlang` (fünf Fälle, der letzte legt mit
+  `LUMIVIZ_24C_WAV=<Ordner>` Hörproben der Spielweisen ab). Ohne Spielweise
+  Bit für Bit wie vorher; `test_LoopWerte` geändert nur für 20 Loops mit
+  Saiten (das Vorzeichen der Upstrokes), alle Messfälle der Saiten (KS, WG,
+  Korpus) unverändert grün.
+- **Hörproben:** `.claude/handover/hoerproben_24c/spielweisen` (je Instrument
+  normal, up, palm_mute, tapping, harmonic_n2, harmonic_n3);
+  `hoerproben_24c/vorher` (= 24b) und `nachher` je 24 Loops.
+- **Von Claude gesetzt, nicht vorgelegt:** ρ = Mute² (die gemessenen Stufen
+  liegen so gleichmäßig über dem Regler — Bericht §1.4); der Finger bleibt die
+  ganze Note liegen; der Knoten über dem Griffbrett (1 − 1/n vom Steg); beim
+  Tapping zählt die Richtung nicht.
+- **Offen:** ein Punktdämpfer unterschätzt bei starkem Mute die Höhendämpfung
+  (die Hand liegt flächig, Bericht §1.4) — zwei oder drei Punkte zwischen 20
+  und 60 mm wären eine eigene Frage; Pegel Up gegen Down und Tapping nur durch
+  eigene Aufnahmen zu schließen.
+
 ---
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)

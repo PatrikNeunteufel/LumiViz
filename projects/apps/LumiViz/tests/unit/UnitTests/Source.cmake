@@ -112,6 +112,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopCreatorSaite.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorSaiten.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpielweise.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopSpielweiseKlang.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWerte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopClipEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEffekte.cpp"

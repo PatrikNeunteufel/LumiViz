@@ -356,16 +356,23 @@ struct Schicht
 
     // --- nur Saite Extended KS und Waveguide: Playing (Stufe 24a, S-W6 a) ---
     // Je Spielweise eine Abweichung der vorhandenen Groessen, jeder Regler
-    // genau eine. Die Vorgaben sind Platzhalter (von Claude gesetzt); sie werden
-    // in Stufe 24c hergeleitet und belegt.
+    // genau eine. Vorgaben seit Stufe 24c hergeleitet (Belege in
+    // docs/audio/Saiten_Konzept.md §5o).
     /// Up level, 0 … 1: so laut schlaegt die Hand nach oben an wie nach unten
-    /// (das Vorzeichen des Anschlags dreht sich dabei immer um).
-    double aufschlagLaut = 0.8;
-    /// Mute, 0 … 1: wie stark der Handballen bei *Palm mute* am Steg daempft.
+    /// (das Vorzeichen des Anschlags dreht sich dabei immer um). Vorgabe 1: ein
+    /// Pegelunterschied je Saite ist nicht belegt; dass Up weniger Saiten trifft,
+    /// macht der Akkord, nicht der Pegel.
+    double aufschlagLaut = 1.0;
+    /// Mute, 0 … 1: wie stark der Handballen bei *Palm mute* am Steg daempft — ein
+    /// Punktdaempfer 40 mm vor dem Steg mit rho = Mute² (Vorgabe 0,6: mit Ring time
+    /// 3,2 s klingt A3 rund 0,86 s).
     double handDaempfung = 0.6;
-    /// Tap level, 0 … 1: so laut ist ein Ton beim *Tapping* (am Bund angeschlagen).
-    double tappingLaut = 0.65;
-    /// Touch, 0 … 1: wie fest der Finger beim *Harmonic* auf dem Knoten liegt.
+    /// Tap level, 0 … 1: so laut ist ein Ton beim *Tapping* (am Bund angeschlagen,
+    /// weich). Vorgabe 0,75: abgeleitet, nicht gemessen.
+    double tappingLaut = 0.75;
+    /// Touch, 0 … 1: wie fest der Finger beim *Harmonic* auf dem Knoten liegt — der
+    /// Widerstand rho = R/Z0 (Pakarinen 2005); 0,3: die Teiltoene ohne Knoten dort
+    /// fallen um rund 5 dB je Umlauf.
     double knotenDruck = 0.3;
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;

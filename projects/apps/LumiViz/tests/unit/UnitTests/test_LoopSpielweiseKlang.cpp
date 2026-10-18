@@ -1,0 +1,304 @@
+/**
+ ****************************************************************************************
+ * @file   test_LoopSpielweiseKlang.cpp
+ * @brief  Spielweisen, Stufe 24c: der Klang — Up stroke, Palm mute, Tapping, Harmonic an
+ *         den Saiten *Extended KS* und *Waveguide*, gemessen am gerechneten Ton
+ *         (docs/audio/Saiten_Konzept.md §5o; Entscheide Patrik S134: S-W6 a, S-W7 a, S-W8 a)
+ *
+ * @author Patrik Neunteufel
+ * @date   October 2026
+ *
+ * @details
+ * Ohne Ton, ohne Engine, ohne Qt-Anwendung. Gemessen: ohne Spielweise Bit fuer Bit derselbe
+ * Ton; Up dreht das Vorzeichen um und nimmt *Up level*; Palm mute verkuerzt die Klingdauer
+ * wie ein Punktdaempfer 40 mm vor dem Steg (die Formel aus dem Recherche-Bericht S134, §1.4)
+ * und die Hoehen mehr als den Grundton; ein Flageolett laesst nur die Vielfachen von n
+ * klingen, n = 5 rund 14 Cent unter der gleichstufigen Note; Tapping ist weicher und nimmt
+ * *Tap level*. Andere Schichten bleiben, wie sie sind. `LUMIVIZ_24C_WAV=<Ordner>` legt
+ * Hoerproben ab.
+ ****************************************************************************************
+ */
+
+#include <doctest.h>
+
+#include "loop/Aufnahme.hpp"  // schreibeWav
+#include "loop/Instrument.hpp"
+#include "loop/Loop.hpp"
+#include "loop/Saiten.hpp"
+
+#include "LoopOhneEngine.hpp"  // repoWurzel
+#include "SaitenMessung.hpp"   // betrag, spitze, cent, db, teilton
+
+#include <QDir>
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+using namespace lumi::loop;
+using namespace saitentest;
+
+namespace
+{
+
+constexpr int kRate = kSaitenRate;
+
+/// Eine Gitarre (Standardstimmung, 648 mm) mit einer Saiten-Schicht des Verfahrens.
+Instrument saite(SaitenModell modell)
+{
+    Instrument instrument;
+    instrument.saiten = Saitensatz{stimmungsvorlagen()[0].leer, 0, Saitenwahl::JeKlang, 648.0};
+    Schicht& s = instrument.schichten[0];
+    s.schwingung = Schwingung::Saite;
+    s.saitenModell = modell;
+    s.anstiegMs = 1.0;
+    s.ausklangMs = 200.0;
+    s.hoehenDaempfung = 0.0;
+    s.steifheit = 0.0;
+    s.anschlagHaerte = 1.0;
+    s.klingSekunden = 3.2;
+    s.saitenUnterschied = 0.0;
+    return instrument;
+}
+
+TonAngabe ton(int hoehe, int saiteNr, int dauerMs = 2000)
+{
+    TonAngabe t;
+    t.instrument = QStringLiteral("probe");
+    t.hoehe = hoehe;
+    t.dauerMs = dauerMs;
+    t.saite = saiteNr;
+    return t;
+}
+
+/// Die Abklingrate des Betrags bei `hz` zwischen zwei Fenstern, als T60 in Sekunden.
+double t60(const Klang& klang, double hz, double vonS, double bisS, double langS = 0.1)
+{
+    const double a = betrag(klang, hz, vonS, langS);
+    const double b = betrag(klang, hz, bisS, langS);
+    const double dbJeS = db(b / a) / (bisS - vonS);
+    return dbJeS < 0.0 ? -60.0 / dbJeS : 1e9;
+}
+
+double effektiv(const Klang& klang, double vonS, double langS)
+{
+    const auto von = static_cast<std::int64_t>(vonS * kRate);
+    const auto lang = static_cast<std::int64_t>(langS * kRate);
+    double summe = 0.0;
+    std::int64_t n = 0;
+    for (; n < lang && von + n < klang.frames(); ++n)
+    {
+        const double x = klang.daten[static_cast<std::size_t>(2 * (von + n))];
+        summe += x * x;
+    }
+    return n > 0 ? std::sqrt(summe / static_cast<double>(n)) : 0.0;
+}
+
+}  // namespace
+
+TEST_SUITE("LoopSpielweiseKlang")
+{
+    TEST_CASE("Loop Spielweise Klang: ohne Spielweise Bit fuer Bit derselbe Ton; Up dreht das Vorzeichen und nimmt Up level")
+    {
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            Instrument instrument = saite(modell);
+            instrument.schichten[0].aufschlagLaut = 0.5;
+            const TonAngabe ab = ton(57, 2, 800);
+            const Klang ohne = rendereTon(instrument, ab, kRate);
+            // dieselbe Rechnung wie bis Stufe 24b: die Tonhoehe allein, mit derselben Saite
+            TonAngabe ohneSaite = ab;
+            ohneSaite.saite = -1;
+            CHECK(rendereTon(instrument, ohneSaite, kRate).daten == rendereTon(instrument, 57, 800, kRate).daten);
+
+            TonAngabe auf = ab;
+            auf.richtung = Richtung::Auf;
+            const Klang hoch = rendereTon(instrument, auf, kRate);
+            REQUIRE(hoch.daten.size() == ohne.daten.size());
+            double abweichung = 0.0;
+            for (std::size_t i = 0; i < ohne.daten.size(); ++i)
+                abweichung = std::max(abweichung, std::abs(hoch.daten[i] + 0.5 * ohne.daten[i]));
+            CHECK(abweichung < 1e-6);
+        }
+
+        // --- eine Schicht, die keine Saite Extended KS / Waveguide ist, bleibt, wie sie ist (S-W6 a)
+        Instrument sinus;
+        sinus.schichten[0].schwingung = Schwingung::Sinus;
+        TonAngabe alles = ton(57, -1, 500);
+        alles.richtung = Richtung::Auf;
+        alles.artikulationen = kPalmMute | kTapping;
+        CHECK(rendereTon(sinus, alles, kRate).daten == rendereTon(sinus, 57, 500, kRate).daten);
+        Instrument klassisch = saite(SaitenModell::Klassisch);
+        CHECK(rendereTon(klassisch, alles, kRate).daten == rendereTon(klassisch, 57, 500, kRate).daten);
+    }
+
+    TEST_CASE("Loop Spielweise Klang: Palm mute — ein Punktdaempfer 40 mm vor dem Steg, die Hoehen zuerst")
+    {
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            const Instrument instrument = saite(modell);
+            // A3 auf der D-Saite (7. Bund): schwingend 648 · 2^(−7/12) = 432,5 mm
+            const TonAngabe normal = ton(57, 2);
+            TonAngabe gedaempft = normal;
+            gedaempft.artikulationen = kPalmMute;
+            const Klang offen = rendereTon(instrument, normal, kRate);
+            const Klang mute = rendereTon(instrument, gedaempft, kRate);
+            const double f1 = tonHz(57);
+
+            // die Formel (Bericht §1.4): T60 = 6,91 / (6,91/Ring time + 2 f1 rho sin²(pi x/L)), rho = Mute²
+            const double x = 40.0 / (648.0 * std::exp2(-7.0 / 12.0));
+            const double rho = 0.6 * 0.6;
+            const double erwartet = 6.91 / (6.91 / 3.2 + 2.0 * f1 * rho * std::pow(std::sin(kPi * x), 2));
+            const double gemessen = t60(mute, f1, 0.05, 0.35);
+            MESSAGE("T60 bei A3: offen " << t60(offen, f1, 0.1, 1.0) << " s, Palm mute " << gemessen << " s (Formel " << erwartet
+                                          << " s)");
+            CHECK(t60(offen, f1, 0.1, 1.0) == doctest::Approx(3.2).epsilon(0.1));
+            CHECK(gemessen == doctest::Approx(erwartet).epsilon(0.2));
+            // die Hoehen zuerst: der vierte Teilton verliert in derselben Zeit mehr als der Grundton
+            const double teilVier = db(betrag(mute, 4.0 * f1, 0.25, 0.1) / betrag(mute, 4.0 * f1, 0.05, 0.1));
+            const double grund = db(betrag(mute, f1, 0.25, 0.1) / betrag(mute, f1, 0.05, 0.1));
+            CHECK(teilVier < grund - 6.0);
+            // der Anschlag bleibt: die ersten 20 ms in der gemessenen Spanne gegen ohne (−4 … +6 dB,
+            // IDMT-SMT-Guitar, Bericht S134 §1.2) — die Hand nimmt das Ausklingen, nicht den Anschlag
+            const double anschlag = db(effektiv(mute, 0.0, 0.02) / effektiv(offen, 0.0, 0.02));
+            MESSAGE("die ersten 20 ms mit Palm mute: " << anschlag << " dB");
+            CHECK(anschlag > -4.0);
+            CHECK(anschlag < 6.0);
+        }
+
+        // --- Mute 0: kein Daempfer, derselbe Ton
+        Instrument ohneHand = saite(SaitenModell::Wellenleiter);
+        ohneHand.schichten[0].handDaempfung = 0.0;
+        TonAngabe gedaempft = ton(57, 2, 500);
+        gedaempft.artikulationen = kPalmMute;
+        CHECK(rendereTon(ohneHand, gedaempft, kRate).daten == rendereTon(ohneHand, ton(57, 2, 500), kRate).daten);
+
+        // --- ein Bass klingt gedaempft laenger als eine Gitarre (S-W6 a): A1 auf 864 mm gegen A3 auf 648 mm
+        Instrument bass = saite(SaitenModell::Wellenleiter);
+        bass.saiten = Saitensatz{{28, 33, 38, 43}, 0, Saitenwahl::JeKlang, 864.0};
+        TonAngabe tief = ton(33, 1);
+        tief.artikulationen = kPalmMute;
+        TonAngabe gitarreA = ton(57, 2);
+        gitarreA.artikulationen = kPalmMute;
+        const double bassT60 = t60(rendereTon(bass, tief, kRate), tonHz(33), 0.05, 0.6, 0.2);
+        const double gitarreT60 = t60(rendereTon(saite(SaitenModell::Wellenleiter), gitarreA, kRate), tonHz(57), 0.05, 0.35);
+        MESSAGE("Palm mute T60: Bass A1 " << bassT60 << " s, Gitarre A3 " << gitarreT60 << " s");
+        CHECK(bassT60 > 2.0 * gitarreT60);
+    }
+
+    TEST_CASE("Loop Spielweise Klang: Harmonic — nur die Vielfachen von n klingen, n = 5 rund 14 Cent tief")
+    {
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            const Instrument instrument = saite(modell);
+            const double e2 = tonHz(40);
+
+            // E3 als Flageolett n = 2 der tiefen E-Saite: der Grundton E2 ist nach 0,2 s fort, E3 klingt
+            TonAngabe flageolett = ton(52, 0);
+            flageolett.teilton = 2;
+            const Klang h = rendereTon(instrument, flageolett, kRate);
+            const Klang leer = rendereTon(instrument, ton(40, 0), kRate);
+            const double grundRest = db(betrag(h, e2, 0.3, 0.2) / betrag(h, 2.0 * e2, 0.3, 0.2));
+            const double grundLeer = db(betrag(leer, e2, 0.3, 0.2) / betrag(leer, 2.0 * e2, 0.3, 0.2));
+            MESSAGE("E2 gegen E3 nach 0,3 s: Flageolett " << grundRest << " dB, leere Saite " << grundLeer << " dB");
+            CHECK(grundRest < -40.0);
+            CHECK(grundLeer > -20.0);
+            CHECK(betrag(h, 2.0 * e2, 0.3, 0.2) > 0.1 * betrag(leer, 2.0 * e2, 0.3, 0.2));  // E3 bleibt
+
+            // n = 5: G#4 klingt als fuenfter Teilton von E2 — 13,7 Cent unter der gleichstufigen Note
+            TonAngabe fuenf = ton(68, 0);
+            fuenf.teilton = 5;
+            const Klang g = rendereTon(instrument, fuenf, kRate);
+            const double gemessen = cent(spitze(g, 5.0 * e2, 30.0, 0.3, 0.5), tonHz(68));
+            MESSAGE("n = 5: " << gemessen << " Cent gegen G#4");
+            CHECK(gemessen == doctest::Approx(-13.7).epsilon(0.1));
+
+            // Touch 0: kein Finger — der Ton der leeren Saite
+            Instrument ohneFinger = instrument;
+            ohneFinger.schichten[0].knotenDruck = 0.0;
+            CHECK(rendereTon(ohneFinger, flageolett, kRate).daten == rendereTon(ohneFinger, ton(40, 0), kRate).daten);
+        }
+    }
+
+    TEST_CASE("Loop Spielweise Klang: Tapping — am Bund, weich, Tap level")
+    {
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            Instrument instrument = saite(modell);
+            instrument.schichten[0].tappingLaut = 1.0;
+            const TonAngabe gezupft = ton(57, 2, 800);
+            TonAngabe getappt = gezupft;
+            getappt.artikulationen = kTapping;
+            const Klang t = rendereTon(instrument, getappt, kRate);
+            const double f1 = tonHz(57);
+            // am Bund und weich: gegen einen harten Zupfton an derselben Stelle (am Ende der Saite)
+            // bleibt der Grundton, der achte Teilton (1,76 kHz) faellt um den Tiefpass bei 640 Hz
+            Instrument amEnde = instrument;
+            amEnde.schichten[0].anschlagOrt = kAnschlagOrtMin;
+            const Klang p = rendereTon(amEnde, gezupft, kRate);
+            const double hellGezupft = db(teilton(p, f1, 8) / teilton(p, f1, 1));
+            const double hellGetappt = db(teilton(t, f1, 8) / teilton(t, f1, 1));
+            MESSAGE("8. Teilton gegen Grundton: gezupft am Ende " << hellGezupft << " dB, getappt " << hellGetappt << " dB");
+            CHECK(hellGetappt < hellGezupft - 10.0);
+            // nicht an der Anschlagstelle der Schicht: der Ort von Pluck position wirkt beim Tapping nicht
+            Instrument woanders = instrument;
+            woanders.schichten[0].anschlagOrt = 0.25;
+            CHECK(rendereTon(woanders, getappt, kRate).daten == t.daten);
+            // Tap level: linear
+            instrument.schichten[0].tappingLaut = 0.5;
+            const Klang halb = rendereTon(instrument, getappt, kRate);
+            REQUIRE(halb.daten.size() == t.daten.size());
+            double abweichung = 0.0;
+            for (std::size_t i = 0; i < t.daten.size(); ++i) abweichung = std::max(abweichung, std::abs(halb.daten[i] - 0.5 * t.daten[i]));
+            CHECK(abweichung < 1e-6);
+            // ein getippter Ton hat keine Richtung
+            TonAngabe getapptAuf = getappt;
+            getapptAuf.richtung = Richtung::Auf;
+            CHECK(rendereTon(instrument, getapptAuf, kRate).daten == halb.daten);
+        }
+    }
+
+    TEST_CASE("Loop Spielweise Klang: Hoerproben (LUMIVIZ_24C_WAV)")
+    {
+        const QString ziel = qEnvironmentVariable("LUMIVIZ_24C_WAV");
+        if (ziel.isEmpty())
+        {
+            MESSAGE("LUMIVIZ_24C_WAV nicht gesetzt — keine Hoerproben");
+            return;
+        }
+        REQUIRE(QDir().mkpath(ziel));
+        const QDir instrumente(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/instruments")));
+        struct Art
+        {
+            const char* name;
+            Richtung richtung;
+            int artikulationen;
+            int teilton;
+            int hoehe;
+        };
+        const Art arten[] = {{"normal", Richtung::Ab, 0, 1, 57},          {"up", Richtung::Auf, 0, 1, 57},
+                             {"palm_mute", Richtung::Ab, kPalmMute, 1, 57}, {"tapping", Richtung::Ab, kTapping, 1, 57},
+                             {"harmonic_n2", Richtung::Ab, 0, 2, 52},       {"harmonic_n3", Richtung::Ab, 0, 3, 59}};
+        for (const char* name : {"guitar", "nylon_guitar", "jazz_guitar", "overdrive_guitar"})
+        {
+            Instrument instrument;
+            CAPTURE(name);
+            REQUIRE(ladeInstrument(instrumente.filePath(QLatin1String(name) + QStringLiteral(".lvinst")), instrument));
+            for (const Art& art : arten)
+            {
+                // auf der tiefen E-Saite die Flageoletts, sonst die D-Saite
+                TonAngabe t = ton(art.hoehe, art.teilton > 1 ? 0 : 2, 1500);
+                t.richtung = art.richtung;
+                t.artikulationen = art.artikulationen;
+                t.teilton = art.teilton;
+                const Klang klang = rendereTon(instrument, t, kRate);
+                const QString datei = QDir(ziel).filePath(QStringLiteral("%1_%2.wav").arg(QLatin1String(name), QLatin1String(art.name)));
+                CHECK(schreibeWav(datei, klang.daten, kRate));
+            }
+        }
+    }
+}

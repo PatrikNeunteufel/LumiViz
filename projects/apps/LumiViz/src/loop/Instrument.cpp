@@ -589,13 +589,20 @@ Umlauf entwerfeUmlauf(const Schicht& schicht, double hz, int rate, double dicke)
     return u;
 }
 
+/// Die Glaettung des Anschlags beim *Tapping* (Stufe 24c): ein Finger braucht
+/// rund 0,5 ms auf den Bund — ein Tiefpass bei 1/(pi · 0,5 ms) ≈ 640 Hz
+/// (abgeleitet von Claude, S134: Saitenlage 1,5 mm und 3 m/s Fingertempo nach der
+/// Simulation von Bilbao und Torin, DAFx-14, S. 7 — keine Messung).
+inline constexpr double kTappingGlaettenHz = 640.0;
+
 /// Zweimal ein Tiefpass erster Ordnung mit der Grenze nach der Haerte des
-/// Anschlags (Pluck): vom Doppelten bis zum Achtzigfachen des Grundtons; 0 =
-/// er laesst alles (die Grenze liegt ueber der Bandgrenze).
-double glaettenFuer(const Schicht& schicht, double hz, int rate)
+/// Anschlags (Pluck): vom Doppelten bis zum Achtzigfachen des Grundtons; beim
+/// *Tapping* `kTappingGlaettenHz`. 0 = er laesst alles (die Grenze liegt ueber
+/// der Bandgrenze).
+double glaettenFuer(const Schicht& schicht, double hz, int rate, bool tapping = false)
 {
     const double haerte = std::clamp(schicht.anschlagHaerte, 0.0, 1.0);
-    const double grenzeHz = hz * 2.0 * std::pow(40.0, haerte);
+    const double grenzeHz = tapping ? kTappingGlaettenHz : hz * 2.0 * std::pow(40.0, haerte);
     return grenzeHz >= 0.45 * rate ? 0.0 : std::exp(-2.0 * kPi * grenzeHz / rate);
 }
 
@@ -616,14 +623,57 @@ void normiereStoss(std::vector<double>& ring)
         for (double& wert : ring) wert *= (1.0 / std::sqrt(6.0)) / effektiv;
 }
 
+/// Ein Daempfer an einem Punkt der Saite (Stufe 24c, S-W6 a): der Handballen
+/// bei *Palm mute*, der Finger auf dem Knoten bei *Harmonic*. Nach Pakarinen
+/// (EUSIPCO 2005, Gl. 2 und 3: ein Widerstand R an einem Serienknoten zweier
+/// gleicher Saitenstuecke Z0): durch geht 2/(2 + rho), zurueck kommt
+/// −rho/(2 + rho), rho = R/Z0.
+struct PunktDaempfer
+{
+    double ort = 0.5;  ///< Anteil der schwingenden Saite vom Steg aus
+    double rho = 0.0;  ///< R/Z0
+};
+
+/// Wie die Saite gespielt wird (Stufe 24c): ohne Daempfer und ohne Tapping
+/// rechnet sie Bit fuer Bit wie bis Stufe 24b.
+struct Spielart
+{
+    std::vector<PunktDaempfer> daempfer;
+    bool tapping = false;  ///< am Bund angeschlagen, weich (statt an der Anschlagstelle)
+};
+
+/// Wo der Handballen bei *Palm mute* liegt, in mm vom Steg (Stufe 24c):
+/// abgeleitet von Claude (S134) aus dem Abklingen der Teiltoene gedaempfter Toene
+/// in IDMT-SMT-Guitar (Datensatz 2, drei Gitarren, ≈ 40 mm, Spanne 5–96 mm);
+/// passt zu Biral et al. (ICMC 2014, S. 1485: „the first few centimeters of each
+/// string").
+inline constexpr double kHandVomStegMm = 40.0;
+
 /// Den Umlauf rechnen: lesen, Verlust und Steifheit, zurueckschreiben. Was in
 /// den Ton geht, sagt `abnahme(y, lese)`: `y` ist die Welle, die am Steg
 /// ankommt; `lese(d)` die Welle, die vor `d` Abtastwerten den Steg verliess
-/// (der eben geschriebene Wert ist d = 0).
+/// (der eben geschriebene Wert ist d = 0). Ein Punkt x der Saite liegt im
+/// Umlauf zweimal: auf dem Weg zum Sattel bei x · L/2, auf dem Rueckweg (am
+/// Sattel umgedreht) bei (2 − x) · L/2 — dort greifen die Daempfer an.
 template <class Abnahme>
 void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u, std::vector<double> ring,
-             std::vector<float>& daten, Abnahme abnahme)
+             std::vector<float>& daten, const Spielart& spiel, Abnahme abnahme)
 {
+    struct Knoten
+    {
+        std::size_t hin = 0;   ///< so weit vom eben geschriebenen Wert: die Welle zum Sattel
+        std::size_t her = 0;   ///< die Welle zurueck zum Steg
+        double anteil = 0.0;   ///< rho/(2 + rho)
+    };
+    std::vector<Knoten> knoten;
+    for (const PunktDaempfer& d : spiel.daempfer)
+    {
+        if (d.rho <= 0.0) continue;
+        const double x = std::clamp(d.ort, 0.005, 0.995);
+        const auto hin = static_cast<std::size_t>(std::max(1.0, std::round(x * 0.5 * u.verzug)));
+        const auto her = static_cast<std::size_t>(std::max(1.0, std::round((2.0 - x) * 0.5 * u.verzug)));
+        if (her < u.groesse && hin < her) knoten.push_back({hin, her, d.rho / (2.0 + d.rho)});
+    }
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     Reihe reihe(schicht, rate, false);  // die Saite ueberspringt die Filter wie Classic
     const std::size_t groesse = u.groesse;
@@ -655,6 +705,16 @@ void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, 
                 v = aus;
             }
         ring[schreib] = v;
+        // die Daempfer: beide Wellen am Punkt geben denselben Anteil ihrer Summe ab (die Welle
+        // zurueck steht im Umlauf mit umgedrehtem Vorzeichen)
+        for (const Knoten& k : knoten)
+        {
+            double& hin = ring[(schreib + groesse - k.hin) % groesse];
+            double& her = ring[(schreib + groesse - k.her) % groesse];
+            const double ab = k.anteil * (hin - her);
+            hin -= ab;
+            her += ab;
+        }
         const double ton = abnahme(y, lese);
         schreib = (schreib + 1) % groesse;
 
@@ -846,12 +906,13 @@ private:
 /// eine frische Abnahme (mit eigenem Gedaechtnis).
 template <class Fabrik>
 void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u,
-                    std::vector<double> ring, std::vector<float>& daten, Fabrik fabrik, bool amSteg)
+                    std::vector<double> ring, std::vector<float>& daten, const Spielart& spiel, Fabrik fabrik,
+                    bool amSteg)
 {
     const double anteil = std::clamp(schicht.korpusAnteil, 0.0, 1.0);
     if (schicht.korpus == KorpusArt::Keiner || !amSteg || anteil <= 0.0)
     {
-        laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, fabrik());
+        laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik());
         return;
     }
     std::vector<float> anfang(static_cast<std::size_t>(2 * std::max(1, rate / 10)), 0.0f);
@@ -859,7 +920,7 @@ void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int
     auto probeAbnahme = fabrik();
     double quadrateSaite = 0.0;
     double quadrateKorpus = 0.0;
-    laufeUm(schicht, hz, huelle, rate, u, ring, anfang, [&](double y, const auto& lese) {
+    laufeUm(schicht, hz, huelle, rate, u, ring, anfang, spiel, [&](double y, const auto& lese) {
         const double saite = probeAbnahme(y, lese);
         const double schall = probe.schritt(saite);
         quadrateSaite += saite * saite;
@@ -869,7 +930,7 @@ void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int
     const double faktor = quadrateKorpus > 0.0 ? std::sqrt(quadrateSaite / quadrateKorpus) : 0.0;
     Korpus korpus(schicht.korpus, rate);
     auto abnahme = fabrik();
-    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [&](double y, const auto& lese) {
+    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, [&](double y, const auto& lese) {
         const double saite = abnahme(y, lese);
         return (1.0 - anteil) * saite + anteil * faktor * korpus.schritt(saite);
     });
@@ -879,9 +940,10 @@ void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int
 /// Karplus-Strong nach Jaffe und Smith (1983). Ein Stoss Rauschen — durch die
 /// Haerte des Anschlags gefiltert und an der Anschlagstelle gekaemmt (die
 /// Teiltoene mit einem Knoten dort fehlen) — laeuft durch den Umlauf
-/// (`entwerfeUmlauf`). Der Ton ist die Welle, die am Steg ankommt.
+/// (`entwerfeUmlauf`). Der Ton ist die Welle, die am Steg ankommt. Beim
+/// *Tapping* (Stufe 24c) liegt die Anschlagstelle am Bund, der Stoss ist weich.
 void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, double dicke,
-                   std::vector<float>& daten)
+                   const Spielart& spiel, std::vector<float>& daten)
 {
     const Umlauf u = entwerfeUmlauf(schicht, hz, rate, dicke);
     const double periode = rate / hz;
@@ -890,7 +952,7 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
 
     // --- der Stoss: dieselbe feste Folge je Tonhoehe wie Classic, durch die Haerte gefiltert
     std::uint32_t folge = 12345u + static_cast<std::uint32_t>(hoehe) * 7919u;
-    const double glaetten = glaettenFuer(schicht, hz, rate);
+    const double glaetten = glaettenFuer(schicht, hz, rate, spiel.tapping);
     std::vector<double> stoss(groesse, 0.0);
     double eins = 0.0;
     double zwei = 0.0;
@@ -903,13 +965,13 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
         wert = zwei;
     }
     // an der Anschlagstelle gekaemmt: (1 - z^-M), M = Anteil mal Periode, im Umlauf gezaehlt
-    const auto kamm = static_cast<std::size_t>(std::max<long long>(
-        1, std::llround(std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax) * periode)));
+    const double anschlagOrt = spiel.tapping ? kAnschlagOrtMin : std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax);
+    const auto kamm = static_cast<std::size_t>(std::max<long long>(1, std::llround(anschlagOrt * periode)));
     for (std::size_t i = 0; i < groesse; ++i) ring[i] = stoss[i] - stoss[(i + groesse - kamm % groesse) % groesse];
     normiereStoss(ring);
 
     laufeMitKorpus(
-        schicht, hz, huelle, rate, u, std::move(ring), daten,
+        schicht, hz, huelle, rate, u, std::move(ring), daten, spiel,
         [] { return [](double y, const auto&) { return y; }; }, true);
 }
 
@@ -938,15 +1000,18 @@ inline constexpr double kPiezoHochpassHz = 106.0;
 ///   des fertigen Tons hoechstens bei `kSpitzeSaiteMax` (S-K11 a) — der Anfang
 ///   wird dafuer einmal vorab gerechnet. *Pickup select* nimmt einen oder
 ///   beide (zur Haelfte je).
+/// - **Spielart** (Stufe 24c): beim *Tapping* die Spitze des Dreiecks am Bund
+///   (am sattelseitigen Ende, gerechnet als die gleichwertige Stelle
+///   `kAnschlagOrtMin`), weich; die Daempfer greifen im Umlauf an (`laufeUm`).
 void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int rate, double dicke, double mensurMm,
-                   std::vector<float>& daten)
+                   const Spielart& spiel, std::vector<float>& daten)
 {
     const Umlauf u = entwerfeUmlauf(schicht, hz, rate, dicke);
     const double laenge = u.verzug;  // der Umlauf: zweimal die Saite
     const std::size_t groesse = u.groesse;
 
     // --- der Anschlag: ein Dreieck mit der Spitze an der Anschlagstelle, die Spitze durch die Haerte gerundet
-    const double ort = std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax);
+    const double ort = spiel.tapping ? kAnschlagOrtMin : std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax);
     const auto dreieck = [ort](double x) { return x <= ort ? x / ort : (1.0 - x) / (1.0 - ort); };
     std::vector<double> ring(groesse, 0.0);
     for (std::size_t alter = 0; alter < groesse; ++alter)
@@ -956,7 +1021,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         const double wert = k <= 0.5 * laenge ? 0.5 * dreieck(2.0 * k / laenge) : -0.5 * dreieck(2.0 - 2.0 * k / laenge);
         ring[(groesse - alter) % groesse] = wert;
     }
-    if (const double glaetten = glaettenFuer(schicht, hz, rate); glaetten > 0.0)
+    if (const double glaetten = glaettenFuer(schicht, hz, rate, spiel.tapping); glaetten > 0.0)
     {
         // im Kreis geglaettet: zwei Runden, damit der Anfang nicht anders ist als das Ende
         double eins = 0.0;
@@ -1064,7 +1129,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         std::array<double, 2> quadrate{};
         std::array<double, 2> spitzen{};
         double quadrateSteg = 0.0;
-        laufeUm(schicht, hz, huelle, rate, u, ring, anfang, [&](double y, const auto& lese) {
+        laufeUm(schicht, hz, huelle, rate, u, ring, anfang, spiel, [&](double y, const auto& lese) {
             quadrateSteg += y * y;
             for (std::size_t k = 0; k < 2; ++k)
                 if (probe[k].art != AbnehmerArt::Keiner)
@@ -1092,7 +1157,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
             return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
         };
     };
-    laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, fabrik, !nimmHals && !nimmSteg);
+    laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik, !nimmHals && !nimmSteg);
 }
 
 /// Das Rauschen (Stufe 11d): gleichverteilt, aus einem festen Zaehlwerk —
@@ -2088,9 +2153,54 @@ double saitenDicke(const Saitensatz& saiten, int saite)
     return static_cast<double>(*hoch - saiten.leer[static_cast<std::size_t>(saite)]) / static_cast<double>(*hoch - *tief);
 }
 
+/// Wie eine Saiten-Schicht *Extended KS* oder *Waveguide* einen Ton spielt
+/// (Stufe 24c, S-W6 a, S-W7 a, S-W8 a): ihr Grundton, die Spielart, der
+/// Faktor auf den fertigen Ton. Ohne Spielweise: der Ton, keine Spielart, 1.
+struct SaitenSpiel
+{
+    int ton = 60;          ///< die Tonhoehe der schwingenden Saite (bei einem Flageolett tiefer als die klingende)
+    Spielart art;
+    double faktor = 1.0;   ///< Up: −Up level (das Vorzeichen dreht sich um); Tapping: Tap level
+};
+
+SaitenSpiel saitenSpielFuer(const Instrument& instrument, const Schicht& schicht, int ton, const TonAngabe* angabe)
+{
+    SaitenSpiel spiel;
+    spiel.ton = ton;
+    if (angabe == nullptr) return spiel;
+    const int teilton = std::clamp(angabe->teilton, 1, kFlageolettTeiltonMax);
+    spiel.ton = ton - teiltonHalbtoene(teilton);
+    // die schwingende Laenge: von der Stelle, an der die Saite gegriffen ist, bis zum Steg
+    const Saitensatz& saiten = instrument.saiten;
+    int ueberLeer = 0;
+    if (angabe->saite >= 0 && angabe->saite < saiten.anzahl())
+        ueberLeer = std::max(0, angabe->hoehe - teiltonHalbtoene(teilton) - saiten.leer[static_cast<std::size_t>(angabe->saite)]);
+    const double schwingendMm = mensurVon(saiten) * std::exp2(-ueberLeer / 12.0);
+    // Palm mute: der Handballen bei kHandVomStegMm, rho = Mute² (die gemessenen Stufen liegen so
+    // gleichmaessig ueber dem Regler — von Claude gesetzt nach der Messung, S134)
+    if ((angabe->artikulationen & kPalmMute) != 0 && schicht.handDaempfung > 0.0)
+    {
+        const double m = std::clamp(schicht.handDaempfung, 0.0, 1.0);
+        spiel.art.daempfer.push_back({std::min(0.5, kHandVomStegMm / schwingendMm), m * m});
+    }
+    // Harmonic: der Finger auf dem Knoten 1/n vom Sattel (ueber dem Griffbrett), rho = Touch; er
+    // bleibt die ganze Note liegen (die Moden mit Knoten dort beruehrt er nicht)
+    if (teilton > 1 && schicht.knotenDruck > 0.0)
+        spiel.art.daempfer.push_back({1.0 - 1.0 / teilton, std::clamp(schicht.knotenDruck, 0.0, 1.0)});
+    spiel.art.tapping = (angabe->artikulationen & kTapping) != 0;
+    if (spiel.art.tapping)
+        spiel.faktor = std::clamp(schicht.tappingLaut, 0.0, 1.0);  // ein getippter Ton hat keine Richtung
+    else if (angabe->richtung == Richtung::Auf)
+        spiel.faktor = -std::clamp(schicht.aufschlagLaut, 0.0, 1.0);
+    return spiel;
+}
+
 /// Einen Ton rechnen; `saite` ist die Saite des Tons (−1 = keine), sie gibt
-/// einer Saite *Extended KS* ihre Dicke (String variation).
-Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs, int rate, int saite)
+/// einer Saite *Extended KS* ihre Dicke (String variation). `angabe` (seit
+/// Stufe 24c) traegt die Spielweise — sie wirkt nur auf Saiten *Extended KS*
+/// und *Waveguide*; jede andere Schicht spielt die klingende Tonhoehe wie immer.
+Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs, int rate, int saite,
+                         const TonAngabe* angabe = nullptr)
 {
     Klang klang;
     if (rate <= 0 || dauerMs <= 0.0) return klang;
@@ -2113,11 +2223,18 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             huelle.ende = std::max<std::int64_t>(1, hoechstens - einsatz - huelle.aus);
         const std::int64_t frames = huelle.ende + huelle.aus;
         eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
-        if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::ErweiterterKs)
-            rechneSaiteKs(schicht, ton, hz, huelle, rate, std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke, eine);
-        else if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::Wellenleiter)
-            rechneSaiteWg(schicht, hz, huelle, rate, std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke,
-                          instrument.saiten.mensurMm, eine);
+        if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch)
+        {
+            const SaitenSpiel spiel = saitenSpielFuer(instrument, schicht, ton, angabe);
+            const double saiteHz = spiel.ton == ton ? hz : tonHz(spiel.ton);
+            const double schichtDicke = std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke;
+            if (schicht.saitenModell == SaitenModell::ErweiterterKs)
+                rechneSaiteKs(schicht, spiel.ton, saiteHz, huelle, rate, schichtDicke, spiel.art, eine);
+            else
+                rechneSaiteWg(schicht, saiteHz, huelle, rate, schichtDicke, instrument.saiten.mensurMm, spiel.art, eine);
+            if (spiel.faktor != 1.0)
+                for (float& wert : eine) wert = static_cast<float>(wert * spiel.faktor);
+        }
         else if (schicht.schwingung == Schwingung::Saite)
             rechneSaite(schicht, ton, hz, huelle, rate, eine);  // Classic, unberuehrt (S-K2 b)
         else if (schicht.schwingung == Schwingung::Sample)
@@ -2216,7 +2333,7 @@ Resonanz abnehmerResonanz(AbnehmerArt art, double kabelPf)
 
 Klang rendereTon(const Instrument& instrument, const TonAngabe& ton, int rate)
 {
-    Klang klang = rendereTonAufSaite(instrument, ton.hoehe, ton.dauerMs, rate, ton.saite);
+    Klang klang = rendereTonAufSaite(instrument, ton.hoehe, ton.dauerMs, rate, ton.saite, &ton);
     if (ton.endeMs <= 0 || rate <= 0) return klang;
     // abdaempfen (S-M3 a): bis zum Ende still, die letzten Millisekunden ausgeblendet
     const std::int64_t ende = std::max<std::int64_t>(1, std::llround(ton.endeMs * static_cast<double>(rate) / 1000.0));
