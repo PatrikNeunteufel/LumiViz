@@ -138,13 +138,15 @@ void NotenRaster::setSaiten(const Saitensatz& saiten)
     update();
 }
 
-std::vector<Griff> NotenRaster::griffe() const
+void NotenRaster::plane(std::vector<Griff>* griffe, std::vector<Anschlagplan>* anschlaege) const
 {
-    std::vector<Griff> ergebnis(m_muster.noten.size());
-    if (!m_saiten.istSaiteninstrument()) return ergebnis;
+    const std::size_t zahl = m_muster.noten.size();
+    if (griffe != nullptr) griffe->assign(zahl, Griff{});
+    if (anschlaege != nullptr) anschlaege->assign(zahl, Anschlagplan{});
+    if (!m_saiten.istSaiteninstrument()) return;
     // die Planung will das Muster gerichtet — waehrend eines Zugs ist es das nicht immer:
-    // auf einer sortierten Kopie greifen und die Griffe zurueck an ihre Plaetze legen
-    std::vector<std::size_t> folge(m_muster.noten.size());
+    // auf einer sortierten Kopie planen und das Ergebnis zurueck an die Plaetze legen
+    std::vector<std::size_t> folge(zahl);
     std::iota(folge.begin(), folge.end(), std::size_t{0});
     std::stable_sort(folge.begin(), folge.end(), [this](std::size_t a, std::size_t b) {
         const Note& x = m_muster.noten[a];
@@ -155,8 +157,51 @@ std::vector<Griff> NotenRaster::griffe() const
     sortiert.noten.clear();
     for (const std::size_t platz : folge) sortiert.noten.push_back(m_muster.noten[platz]);
     const std::vector<Griff> gegriffen = greifeNoten(sortiert, m_saiten);
-    for (std::size_t k = 0; k < folge.size(); ++k) ergebnis[folge[k]] = gegriffen[k];
+    if (griffe != nullptr)
+        for (std::size_t k = 0; k < zahl; ++k) (*griffe)[folge[k]] = gegriffen[k];
+    if (anschlaege == nullptr) return;
+    const std::vector<Anschlagplan> plan = schlageAn(sortiert, m_saiten, gegriffen, m_schlaege, m_jeSchlag);
+    for (std::size_t k = 0; k < zahl; ++k) (*anschlaege)[folge[k]] = plan[k];
+}
+
+std::vector<Griff> NotenRaster::griffe() const
+{
+    std::vector<Griff> ergebnis;
+    plane(&ergebnis, nullptr);
     return ergebnis;
+}
+
+// --- Spielweisen (Stufe 24e; Skizze gebilligt, Patrik S134, S-W5 a) --------------
+
+void NotenRaster::setTempo(double bpm)
+{
+    if (bpm <= 0.0 || bpm == m_bpm) return;
+    m_bpm = bpm;
+    update();
+}
+
+std::vector<Anschlagplan> NotenRaster::anschlaege() const
+{
+    std::vector<Anschlagplan> ergebnis;
+    plane(nullptr, &ergebnis);
+    return ergebnis;
+}
+
+int NotenRaster::versatzPixel(double versatzMs) const
+{
+    // ein Schritt dauert 60000 / bpm / Schritte je Schlag ms und ist kSchrittBreite breit
+    const double schrittMs = 60000.0 / m_bpm / std::max(1, m_jeSchlag);
+    return static_cast<int>(std::lround(versatzMs / schrittMs * kSchrittBreite));
+}
+
+QString NotenRaster::artikulationsKuerzel(int artikulationen)
+{
+    QStringList kuerzel;
+    if ((artikulationen & kPalmMute) != 0) kuerzel << QStringLiteral("PM");
+    if ((artikulationen & kLetRing) != 0) kuerzel << QStringLiteral("LR");
+    if ((artikulationen & kTapping) != 0) kuerzel << QStringLiteral("T");
+    if ((artikulationen & kHarmonic) != 0) kuerzel << QString::fromUtf8("◇");
+    return kuerzel.join(QLatin1Char(' '));
 }
 
 bool NotenRaster::setzeSaite(int stelle)
@@ -598,13 +643,17 @@ void NotenRaster::paintEvent(QPaintEvent*)
     const int gewaehlt = auswahl();
     // Stufe 23f: mit Saiten traegt jede Note die Nummer ihrer Saite (S-U2 a, C–E)
     const bool mitSaiten = m_saiten.istSaiteninstrument();
-    const std::vector<Griff> alleGriffe = griffe();
+    std::vector<Griff> alleGriffe;
+    std::vector<Anschlagplan> alleAnschlaege;
+    plane(&alleGriffe, &alleAnschlaege);
     p.setFont(klein);
     for (int i = 0; i < static_cast<int>(m_muster.noten.size()); ++i)
     {
         const Note& note = m_muster.noten[static_cast<std::size_t>(i)];
-        const QRect r(xVonSchritt(note.schritt) + 1, yVonHoehe(note.hoehe) + 1, note.laenge * kSchrittBreite - 1,
-                      kZeilenHoehe - 2);
+        // I (Stufe 24e): um den Versatz des Strum verschoben
+        const int versatz = versatzPixel(alleAnschlaege[static_cast<std::size_t>(i)].versatzMs);
+        const QRect r(xVonSchritt(note.schritt) + 1 + versatz, yVonHoehe(note.hoehe) + 1,
+                      note.laenge * kSchrittBreite - 1, kZeilenHoehe - 2);
         const Griff& griff = alleGriffe[static_cast<std::size_t>(i)];
         const bool nichtGreifbar = mitSaiten && !griff.greifbar;
         QColor farbe = nichtGreifbar ? QColor(226, 75, 74) : m_muster.stumm ? text : an;
@@ -635,9 +684,50 @@ void NotenRaster::paintEvent(QPaintEvent*)
             links += 7;
         }
         const QString nummer = QString::number(saitenNummer(m_saiten, griff.saite));
-        const QString zeichen = !nichtGreifbar ? nummer : r.width() >= 20 ? QStringLiteral("! ") + nummer : QStringLiteral("!");
+        QString zeichen = !nichtGreifbar ? nummer : r.width() >= 20 ? QStringLiteral("! ") + nummer : QStringLiteral("!");
+        // K (Stufe 24e): die Artikulationen hinter der Nummer — was nicht passt, schneidet der Balken ab
+        if (const QString kuerzel = artikulationsKuerzel(note.artikulationen); !kuerzel.isEmpty())
+            zeichen += QLatin1Char(' ') + kuerzel;
         p.setPen(schrift);
         p.drawText(QRect(links, r.top(), std::max(0, r.right() - links), r.height()), Qt::AlignLeft | Qt::AlignVCenter, zeichen);
+    }
+    // I (Stufe 24e): je Akkord ein feiner Strich durch die Anschlaege, in der Reihenfolge
+    // des Anschlags; der Punkt sitzt an der zuerst angeschlagenen Note
+    if (mitSaiten)
+    {
+        QColor strich = text;
+        strich.setAlpha(170);
+        std::vector<std::size_t> folge(m_muster.noten.size());
+        std::iota(folge.begin(), folge.end(), std::size_t{0});
+        std::stable_sort(folge.begin(), folge.end(), [&](std::size_t a, std::size_t b) {
+            const Note& x = m_muster.noten[a];
+            const Note& y = m_muster.noten[b];
+            if (x.schritt != y.schritt) return x.schritt < y.schritt;
+            return alleAnschlaege[a].versatzMs < alleAnschlaege[b].versatzMs;
+        });
+        for (std::size_t k = 0; k < folge.size();)
+        {
+            std::size_t ende = k + 1;
+            const int schritt = m_muster.noten[folge[k]].schritt;
+            while (ende < folge.size() && m_muster.noten[folge[ende]].schritt == schritt) ++ende;
+            if (ende - k > 1)
+            {
+                QPolygon linie;
+                for (std::size_t j = k; j < ende; ++j)
+                {
+                    const Note& note = m_muster.noten[folge[j]];
+                    linie << QPoint(xVonSchritt(note.schritt) + 1 + versatzPixel(alleAnschlaege[folge[j]].versatzMs),
+                                    yVonHoehe(note.hoehe) + kZeilenHoehe / 2);
+                }
+                p.setPen(QPen(strich, 1.0));
+                p.setBrush(Qt::NoBrush);
+                p.drawPolyline(linie);
+                p.setPen(Qt::NoPen);
+                p.setBrush(strich);
+                p.drawEllipse(linie.front(), 2, 2);
+            }
+            k = ende;
+        }
     }
     p.setFont(font());
     p.setBrush(Qt::NoBrush);
@@ -1608,6 +1698,7 @@ void InstrumentEditor::zeigeAlles()
         m_strumZeile->zeige(ziel->strum);
         m_strumZeile->setVisible(mitSaiten);
     }
+    m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
     passeRollbalkenAn();
     zeigeAuswahl();

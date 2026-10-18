@@ -1148,6 +1148,23 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   **Belegt** in `test_LoopEditorSpielweise` (zwei Fälle,
   `LUMIVIZ_EDITOR_STRUM_BILD`); eng (35 Fälle zu Editor, Creator, Palette,
   Spieler, Spielweise) unter Release-clang und Testing-MSVC grün.
+- **Teilschritt 2 (gebaut S135):** **I** jede Note steht um ihren Versatz aus
+  der Planung (`schlageAn`, über `NotenRaster::anschlaege`) nach rechts
+  verschoben, in wahrem Maßstab (ein Schritt = `kSchrittBreite`; bei 120 bpm
+  und vier Schritten je Schlag sind 8 ms ein Pixel); je Akkord verbindet ein
+  feiner Strich die Anschläge in ihrer Reihenfolge, ein Punkt sitzt an der
+  zuerst angeschlagenen Note. **K** die Kürzel `PM LR T ◇` in dieser Folge
+  hinter der Nummer der Saite (`artikulationsKuerzel`); was nicht passt,
+  schneidet der Balken ab. Das Raster kennt dafür das Tempo (`setTempo`).
+  **Belegt** in `test_LoopEditorSpielweise` (ein Fall mehr; das Bild
+  `<name>_raster.png` mit Spread 30 ms bei 80 bpm); eng (36 Fälle) unter
+  beiden Compilern grün.
+  **Von Claude gesetzt, nicht vorgelegt:** der wahre Maßstab (kein
+  Mindestabstand — bei schnellem Tempo ist der Versatz kaum zu sehen, der
+  Strich zeigt die Reihenfolge trotzdem); kein Pfeil am Strich, sondern ein
+  Punkt am Anfang (ein Pfeil nach oben bei einem Down wäre gegen die Sprache
+  der Spieler — Down führt in der Piano-Roll von unten nach oben); Klick- und
+  Zugflächen der Noten bleiben am Schritt, ohne den Versatz.
 
 ---
 

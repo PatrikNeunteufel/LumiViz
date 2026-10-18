@@ -48,7 +48,9 @@ Instrument gitarre()
 {
     Instrument i;
     i.titel = QStringLiteral("Steel");
-    i.saiten = Saitensatz{{40, 45, 50, 55, 59, 64}, 0, Saitenwahl::Hand, 645.0};
+    i.saiten.leer = {40, 45, 50, 55, 59, 64};
+    i.saiten.wahl = Saitenwahl::Hand;
+    i.saiten.mensurMm = 645.0;
     i.saiten.strum.spreadMs = 12.0;
     i.saiten.strum.hand = {Richtung::Auf};
     i.schichten[0].schwingung = Schwingung::Saite;
@@ -117,6 +119,73 @@ TEST_CASE("Loop Instrument Editor Spielweise: S-W13 a — Vorgaben beim Wechsel 
     mitEintrag.anschlaege = {Anschlag{0, Anschlagart::Auf, -1.0}};
     wechsleVorgaben(mitEintrag, ohne, steel);
     CHECK(mitEintrag.anschlaege.size() == 1);
+}
+
+TEST_CASE("Loop Instrument Editor Spielweise: I und K — Versatz der Akkordnoten, Kuerzel der Artikulationen")
+{
+    Anwendung anwendung;
+    // K: die Kuerzel, in fester Reihenfolge
+    CHECK(NotenRaster::artikulationsKuerzel(0).isEmpty());
+    CHECK(NotenRaster::artikulationsKuerzel(kPalmMute) == QStringLiteral("PM"));
+    CHECK(NotenRaster::artikulationsKuerzel(kHarmonic | kPalmMute) == QString::fromUtf8("PM ◇"));
+    CHECK(NotenRaster::artikulationsKuerzel(kArtikulationenAlle) == QString::fromUtf8("PM LR T ◇"));
+
+    // I: 4/4, vier Schritte je Schlag; Strum der Gitarre ohne die Up-Stelle: ↓ ↑ ↓ ↑ in Achteln, 8 ms
+    Saitensatz saiten = gitarre().saiten;
+    saiten.strum = Strum{};
+    Muster mel;
+    mel.art = MusterArt::Instrument;
+    uebernimmVorgaben(mel, saiten);
+    // ein Akkord E2 A2 D3 auf Schritt 0 (Down), derselbe auf Schritt 2 (Up), ein E2 allein auf 4
+    mel.noten = {Note{0, 2, 40, 1.0, -1}, Note{0, 2, 45, 1.0, -1}, Note{0, 2, 50, 1.0, -1},
+                 Note{2, 2, 40, 1.0, -1}, Note{2, 2, 45, 1.0, -1}, Note{2, 2, 50, 1.0, -1},
+                 Note{4, 2, 40, 1.0, -1, kPalmMute}};
+    NotenRaster raster;
+    raster.setSaiten(saiten);
+    raster.setTempo(120.0);
+    raster.setMuster(mel, 4, 4);
+    const std::vector<Anschlagplan> plan = raster.anschlaege();
+    REQUIRE(plan.size() == 7);
+    // Down: die tiefe Saite zuerst, je Saite 8 ms
+    CHECK(plan[0].richtung == Richtung::Ab);
+    CHECK(plan[0].versatzMs == doctest::Approx(0.0));
+    CHECK(plan[1].versatzMs == doctest::Approx(8.0));
+    CHECK(plan[2].versatzMs == doctest::Approx(16.0));
+    // Up: die hohe zuerst
+    CHECK(plan[3].richtung == Richtung::Auf);
+    CHECK(plan[5].versatzMs == doctest::Approx(0.0));
+    CHECK(plan[3].versatzMs == doctest::Approx(16.0));
+    // ein Schritt dauert bei 120 bpm 125 ms und ist kSchrittBreite breit: 8 ms sind einen Pixel
+    CHECK(raster.versatzPixel(125.0) == NotenRaster::kSchrittBreite);
+    CHECK(raster.versatzPixel(8.0) == 1);
+    CHECK(raster.versatzPixel(16.0) == 2);
+    raster.setTempo(60.0);
+    CHECK(raster.versatzPixel(16.0) == 1);
+
+    // ohne Saiten: nichts versetzt
+    raster.setSaiten(Saitensatz{});
+    for (const Anschlagplan& a : raster.anschlaege()) CHECK(a.versatzMs == 0.0);
+
+    if (const QString ziel = qEnvironmentVariable("LUMIVIZ_EDITOR_STRUM_BILD"); !ziel.isEmpty())
+    {
+        // ein Bild des Rasters allein, gross genug fuer die paar Pixel des Versatzes: langsam, Spread 30 ms
+        NotenRaster gross;
+        Saitensatz breit = saiten;
+        breit.strum.spreadMs = 30.0;
+        Muster bild = mel;
+        uebernimmVorgaben(bild, breit);
+        bild.noten.push_back(Note{8, 4, 52, 1.0, -1, kLetRing | kHarmonic});
+        bild.noten.push_back(Note{12, 4, 57, 1.0, -1, kTapping});
+        gross.setSaiten(breit);
+        gross.setTempo(80.0);
+        gross.setMuster(bild, 4, 4);
+        gross.resize(NotenRaster::kTastenBreite + 18 * NotenRaster::kSchrittBreite,
+                     NotenRaster::kKopfHoehe + 24 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe);
+        gross.zeigeHoehe(48);
+        QString datei = ziel;
+        datei.replace(QStringLiteral(".png"), QStringLiteral("_raster.png"));
+        CHECK(gross.grab().save(datei));
+    }
 }
 
 TEST_CASE("Loop Instrument Editor Spielweise: H — die Zeile Strum des Musters, im Raster des Loops")

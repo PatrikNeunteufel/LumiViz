@@ -147,6 +147,20 @@ public:
     /// −1 = Auto. false = nichts markiert, keine Saiten, oder es aendert nichts.
     bool setzeSaite(int stelle);
 
+    // --- Spielweisen (Stufe 24e; Skizze gebilligt, Patrik S134, S-W5 a) --------
+    // I: die Noten eines Akkords stehen um ihren Versatz verschoben, ein feiner
+    // Strich verbindet ihre Anschlaege (der Punkt an der zuerst angeschlagenen);
+    // K: die Artikulationen als Kuerzel hinter der Nummer der Saite.
+    /// Das Tempo des Loops: es macht aus dem Versatz in ms eine Strecke.
+    void setTempo(double bpm);
+    /// Je Note des Musters (in seiner Reihenfolge) der Anschlag, wie die
+    /// Planung ihn setzt (`schlageAn`); ohne Saiten lauter Down ohne Versatz.
+    [[nodiscard]] std::vector<Anschlagplan> anschlaege() const;
+    /// So weit steht eine Note mit diesem Versatz rechts von ihrem Schritt, in Pixeln.
+    [[nodiscard]] int versatzPixel(double versatzMs) const;
+    /// Die Kuerzel einer Note: PM (Palm mute), LR (Let ring), T (Tapping), ◇ (Harmonic).
+    [[nodiscard]] static QString artikulationsKuerzel(int artikulationen);
+
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
     [[nodiscard]] int rollX() const { return m_rollX; }
@@ -285,6 +299,10 @@ private:
     /// das Kreuz, auf der Klaviatur die Hand.
     void zeigeZeiger(QPoint ort);
     Saitensatz m_saiten;  ///< Stufe 23f: die Saiten des Instruments; leer = keine
+    double m_bpm = 120.0;  ///< Stufe 24e: fuer den Versatz der Akkordnoten
+    /// Griffe und Anschlaege je Note in der Reihenfolge des Musters — geplant auf
+    /// einer sortierten Kopie (waehrend eines Zugs ist das Muster nicht gerichtet).
+    void plane(std::vector<Griff>* griffe, std::vector<Anschlagplan>* anschlaege) const;
 };
 
 class InstrumentEditor : public QWidget
