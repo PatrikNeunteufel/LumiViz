@@ -178,6 +178,8 @@ public:
     bool schalteArtikulation(int bit);
     /// Der Name einer Artikulation im Menue: Palm mute, Let ring, Tapping, Harmonic.
     [[nodiscard]] static QString artikulationsName(int bit);
+    /// Der Schritt unter dem Punkt in der Spur Strum, an dem eine Note beginnt; -1 = keiner.
+    [[nodiscard]] int strumBei(QPoint ort) const;
     /// Oberkante der Spur Strum: direkt unter der Zeile der Takte (S-W14 a).
     [[nodiscard]] int strumOben() const { return kKopfHoehe; }
     [[nodiscard]] int strumHoehe() const { return m_saiten.istSaiteninstrument() ? kStrumHoehe : 0; }

@@ -308,6 +308,67 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum oben, ein Kli
     }
 }
 
+TEST_CASE("Loop Instrument Editor Spielweise: J und L ueber den Editor — die Anschlaege kommen im Loop an")
+{
+    // wie im Programm: das Raster meldet, der Editor baut die neue Fassung des Loops,
+    // das Panel gibt sie mit setLoop zurueck (S135: der Editor uebernahm nur die Noten)
+    Anwendung anwendung;
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    Instrument steel = gitarre();
+    steel.saiten.strum = Strum{};
+    const QString datei = QDir(ordner.path()).filePath(QStringLiteral("steel.lvinst"));
+    REQUIRE(speichereInstrument(steel, datei));
+
+    InstrumentEditor editor;
+    Loop loop = probe(datei);  // 3/4: ein Akkord auf 0, ein E2 allein auf 4
+    QStringList gemeldet;
+    QObject::connect(&editor, &InstrumentEditor::bearbeitet, &editor, [&](const Loop& neu, const QString& was) {
+        gemeldet << was;
+        loop = neu;
+        editor.setLoop(loop);
+    });
+    REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
+    NotenRaster* raster = editor.raster();
+    raster->resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
+                   NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe + 20 * NotenRaster::kZeilenHoehe +
+                       NotenRaster::kLautHoehe);
+    raster->zeigeHoehe(45);
+    const auto mel = [&]() -> const Muster& { return *loop.findeMuster(QStringLiteral("Mel")); };
+
+    // der Zeiger findet die Spur: an einem Schritt mit Note, nicht an einem leeren
+    const QPoint inSpur(raster->xVonSchritt(0) + NotenRaster::kSchrittBreite / 2, raster->strumOben() + 8);
+    CHECK(raster->strumBei(inSpur) == 0);
+    CHECK(raster->strumBei(QPoint(raster->xVonSchritt(1) + 4, raster->strumOben() + 8)) == -1);
+    CHECK(raster->strumBei(QPoint(raster->xVonSchritt(0) + 4, raster->rasterOben() + 2)) == -1);
+
+    // J: ein Klick in die Spur — der Eintrag steht danach im Loop
+    QMouseEvent druck(QEvent::MouseButtonPress, inSpur, raster->mapToGlobal(inSpur), Qt::LeftButton, Qt::LeftButton,
+                      Qt::NoModifier);
+    QCoreApplication::sendEvent(raster, &druck);
+    QMouseEvent los(QEvent::MouseButtonRelease, inSpur, raster->mapToGlobal(inSpur), Qt::LeftButton, Qt::NoButton,
+                    Qt::NoModifier);
+    QCoreApplication::sendEvent(raster, &los);
+    REQUIRE(gemeldet.size() == 1);
+    CHECK(gemeldet.back() == QStringLiteral("Strum: Down"));
+    REQUIRE(anschlagAn(mel(), 0) != nullptr);
+    CHECK(anschlagAn(mel(), 0)->art == Anschlagart::Ab);
+    CHECK(anschlagAn(raster->muster(), 0) != nullptr);  // und das Raster zeigt ihn weiter
+
+    // L: das Menue Strum an der einzelnen E2
+    raster->markiere({NotenOrt{4, 40}});
+    REQUIRE(raster->setzeAnschlagart(Anschlagart::Auf));
+    REQUIRE(anschlagAn(mel(), 4) != nullptr);
+    CHECK(anschlagAn(mel(), 4)->art == Anschlagart::Auf);
+
+    // der Eintrag wandert mit, wenn die Note geht (24a, S-W4 a)
+    REQUIRE(raster->versetze(2, 0));
+    CHECK(anschlagAn(mel(), 4) == nullptr);
+    REQUIRE(anschlagAn(mel(), 6) != nullptr);
+    CHECK(anschlagAn(mel(), 6)->art == Anschlagart::Auf);
+    CHECK(anschlagAn(mel(), 0) != nullptr);  // der andere bleibt
+}
+
 TEST_CASE("Loop Instrument Editor Spielweise: L und M — das Menue Strum, die Haken der Artikulationen, die Hinweiszeile")
 {
     Anwendung anwendung;

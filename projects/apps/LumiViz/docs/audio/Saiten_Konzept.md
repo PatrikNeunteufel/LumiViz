@@ -1230,6 +1230,15 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   Lage, einzelne Note, der Klick versetzt die Abspielstelle nicht); eng
   (42 Fälle mit `*Loop Menue*`) unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*`
   (266 Fälle) unter Release-clang grün.
+- **Gefunden im Programm (Patrik S135) und behoben:** der Instrument-Editor
+  übernahm aus dem Raster nur die Noten (`ziel->noten = neu.noten`) — ein Klick
+  in die Spur und das Menü *Strum* schalteten im Raster, der Editor sah „nichts
+  geändert“ und zeichnete den alten Stand zurück; seit 24a ging auch ein Eintrag
+  beim Ziehen einer Note nicht mit. Jetzt übernimmt er Noten und *Anschläge*.
+  Die Tests hatten das Raster allein geprüft; neu ein Fall über den Editor wie
+  im Programm (Klick, Menü, Verschieben). Dazu zeigt die Spur über einem
+  Anschlag die Hand als Zeiger und einen Tooltip (`strumBei`). Eng (48 Fälle)
+  unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*` (267) unter Release-clang grün.
 
 ---
 

@@ -112,6 +112,8 @@ void NotenRaster::zeigeZeiger(QPoint ort)
         form = anKante(m_muster.noten[static_cast<std::size_t>(platz)], ort.x()) ? Qt::SizeHorCursor : Qt::SizeAllCursor;
     else if (ort.x() < kTastenBreite && hoeheBei(ort.y()) >= 0)
         form = Qt::PointingHandCursor;
+    else if (strumBei(ort) >= 0)
+        form = Qt::PointingHandCursor;  // J: ein Anschlag in der Spur Strum laesst sich schalten
     if (cursor().shape() != form) setCursor(form);
 }
 
@@ -336,11 +338,37 @@ bool NotenRaster::setzeSaite(int stelle)
     return true;
 }
 
+int NotenRaster::strumBei(QPoint ort) const
+{
+    if (strumHoehe() == 0 || ort.y() < strumOben() || ort.y() >= rasterOben()) return -1;
+    const int schritt = schrittBei(ort.x());
+    if (schritt < 0) return -1;
+    const bool belegt = std::any_of(m_muster.noten.begin(), m_muster.noten.end(),
+                                    [schritt](const Note& n) { return n.schritt == schritt; });
+    return belegt ? schritt : -1;
+}
+
 bool NotenRaster::event(QEvent* event)
 {
     if (event->type() == QEvent::ToolTip && m_saiten.istSaiteninstrument())
     {
         const auto* hilfe = static_cast<QHelpEvent*>(event);
+        // J: in der Spur Strum sagen, was gilt und was ein Klick tut
+        if (const int schritt = strumBei(hilfe->pos()); schritt >= 0)
+        {
+            const Anschlag* eintrag = anschlagAn(m_muster, schritt);
+            const Anschlagart art = eintrag != nullptr ? eintrag->art : Anschlagart::Hand;
+            const QString name = art == Anschlagart::Hand  ? tr("Follow hand")
+                                 : art == Anschlagart::Ab  ? tr("Down")
+                                 : art == Anschlagart::Auf ? tr("Up")
+                                                           : tr("Together");
+            QToolTip::showText(hilfe->globalPos(),
+                               tr("Strum: %1 — click: Follow hand, Down, Up, Together in turn; "
+                                  "right-click a note: Strum, Spread...")
+                                   .arg(name),
+                               this);
+            return true;
+        }
         if (const int platz = noteBei(hilfe->pos()); platz >= 0)
         {
             const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
@@ -1771,7 +1799,10 @@ void InstrumentEditor::setupUI()
         Loop fassung = m_loop;
         Muster* ziel = musterIn(fassung, m_muster);
         if (ziel == nullptr) return;
+        // was das Raster bearbeitet: die Noten und (seit Stufe 24a/24e) die Anschlaege — die
+        // wandern beim Ziehen mit und werden in der Spur Strum und im Menue gesetzt
         ziel->noten = neu.noten;
+        ziel->anschlaege = neu.anschlaege;
         fassung.richte();  // sortiert die Noten, kuerzt am Ende des Musters
         if (fassung == m_loop)
         {
