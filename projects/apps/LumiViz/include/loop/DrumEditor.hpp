@@ -434,8 +434,9 @@ Q_SIGNALS:
     void abspielstelleGewaehlt(int schritt);
     /// Creator und Fenster Instruments wollen einen Ton eines Instruments hoeren.
     void instrumentTonVerlangt(const QString& nennung, int hoehe);
-    /// Dasselbe von „Repeat note" im Creator: der Ton darf `klingtMs` lang klingen.
-    void instrumentTonLangVerlangt(const QString& nennung, int hoehe, int klingtMs);
+    /// Der Creator spielt an (seit Stufe 24d mit den Noten nach *Play as*):
+    /// `klingtMs` > 0 von „Repeat note" — so lang darf es klingen.
+    void instrumentVorhoerenVerlangt(const QString& nennung, const Muster& noten, int klingtMs);
     /// Eine Datei, die ein Klang nennt, ist neu geschrieben (ein Instrument im
     /// Creator, eine Aufnahme unter demselben Namen): wer spielt, laedt neu.
     void klaengeGeaendert();

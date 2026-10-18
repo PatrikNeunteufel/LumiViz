@@ -1088,6 +1088,41 @@ an der Quelle nachgelesen, unten mit Fundstelle).
   und 60 mm wären eine eigene Frage; Pegel Up gegen Down und Tapping nur durch
   eigene Aufnahmen zu schließen.
 
+### 5p. Stufe 24d — die Spielweisen im Creator (gebaut S134)
+
+Nach der Skizze §4b (S-W8 a), alles nur bei einem Instrument mit Tuning.
+
+- **N** `loop/StrumZeile` (neu, auch für H in 24e): *Strum*, *Spread* (ms je
+  Saite, 0 … 100), *Hand* (*Beat*, *1/2 beat*, *Step*), je Stelle ein Feld
+  ↓/↑ (ein Klick dreht es, ein abweichendes ist gedrückt hinterlegt),
+  *Alternate*, der Hinweis „default for new patterns“. Ohne Loop rechnet die
+  Zeile mit 4/4 und 4 Schritten je Schlag (8 Stellen bei *1/2 beat*). Im
+  Creator unter Tuning, stellt `Saitensatz::strum`.
+- **O** Gruppe *Playing* (`creatorGroup_playing`) hinter *Pickups*, im
+  Kasten Source: *Up level* („starts from the other side“), *Mute* („rings
+  … s at 220 Hz“ — die Formel aus §5o mit der Mensur als schwingender Länge),
+  *Tap level* („at the fret“), *Touch* („finger on the node“), darunter „Let
+  ring needs no setting · Classic has no Playing“. Nur bei *Extended KS* und
+  *Waveguide*.
+- **P** *Play as* (`creatorPlayAs`) unter der Klaviatur: Normal, Up stroke,
+  Palm mute, Tapping, Harmonic, Strum chord. `vorhoerNoten` baut die Noten
+  eines Klicks (Strum und String choice wie ein neues Muster dieses
+  Instruments; *Strum chord* = die leeren Saiten mit Capo, jede auf ihrer).
+- **Der Weg zum Ton:** der Creator sendet statt `tonVerlangt`/`tonLangVerlangt`
+  ein Signal `vorhoerenVerlangt(nennung, noten, klingtMs)`; Instrument- und
+  Drum-Editor reichen es als `instrumentVorhoerenVerlangt` weiter, das
+  Loop-Panel spielt es mit `spieleInstrumentNoten` (jede Note an Schritt 0,
+  einen Schlag lang, ein Akkord bleibt einer). Die Planung aus 24b macht
+  Versatz, Richtung und Artikulation. Eine Taste des Editors nimmt die
+  Abweichungen der Akkorde ihres Musters nicht mehr mit (`spieleVor`).
+- **Belegt** in `test_LoopCreatorSpielweise` (fünf Fälle, `LUMIVIZ_CREATOR_SPIEL_BILD`),
+  in `test_LoopSpieler` der Weg ins Panel; die fünf Verbindungen in
+  `test_LoopInstrumentEditor` auf das neue Signal umgestellt (kurze und lange
+  Töne nach `klingtMs` getrennt, wie vorher die zwei Signale).
+- **Von Claude gesetzt, nicht vorgelegt:** die Objektnamen; *Play as* bei
+  einem Instrument ohne Tuning: jede Taste ihr Ton; *Strum chord* hängt nicht
+  an der angeklickten Taste.
+
 ---
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)

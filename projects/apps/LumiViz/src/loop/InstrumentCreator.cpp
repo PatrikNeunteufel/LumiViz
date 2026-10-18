@@ -13,6 +13,7 @@
 #include "loop/SampleFrage.hpp"
 #include "loop/SaitenBild.hpp"
 #include "loop/SaitenZeile.hpp"
+#include "loop/StrumZeile.hpp"
 #include "loop/SignalWeg.hpp"
 
 #include <QAction>
@@ -565,6 +566,13 @@ void InstrumentCreator::setupUI()
     connect(m_saitenZeile, &SaitenZeile::geaendert, this,
             [this](const Saitensatz& saiten) { aendere([&saiten](Instrument& i) { i.saiten = saiten; }); });
     aussen->addWidget(m_saitenZeile);
+    // --- N: die Zeile Strum (Stufe 24d; Skizze gebilligt, Patrik S134, S-W8 a): die Vorgabe
+    // des Instruments fuer neue Muster (S-W2 a) — dasselbe Element wie H im Instrument-Editor
+    m_strumZeile = new StrumZeile(QStringLiteral("creatorStrum"), this);
+    m_strumZeile->setzeHinweis(tr("default for new patterns"));
+    connect(m_strumZeile, &StrumZeile::geaendert, this,
+            [this](const Strum& strum) { aendere([&strum](Instrument& i) { i.saiten.strum = strum; }); });
+    aussen->addWidget(m_strumZeile);
 
     auto* koerper = new QHBoxLayout;
 
@@ -1187,6 +1195,47 @@ void InstrumentCreator::setupUI()
         m_abnehmerZeilen.push_back(m_resonanzText);
     }
 
+    // --- O: Playing (Stufe 24d; Skizze gebilligt, Patrik S134, S-W8 a): je Spielweise ein
+    // Regler, jeder verstellt genau eine Groesse (S-W6 a); daneben in Klartext, was er bewirkt
+    m_spielTitel = titel(tr("Playing"), "playing");
+    regler(gitter, tr("Up level"), "creatorUpLevel", 0, 100, [](const Schicht& i) { return gerundet(i.aufschlagLaut * 100.0); },
+           [](Schicht& i, int w) { i.aufschlagLaut = w / 100.0; },
+           [prozent](const Schicht& i) { return tr("%1 · starts from the other side").arg(prozent(i.aufschlagLaut)); })
+        .schieber->setToolTip(tr("Up stroke: how loud the hand strikes upwards compared with downwards.\n"
+                                 "The stroke comes from the other side of the string"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Mute"), "creatorMute", 0, 100, [](const Schicht& i) { return gerundet(i.handDaempfung * 100.0); },
+           [](Schicht& i, int w) { i.handDaempfung = w / 100.0; },
+           [this, prozent](const Schicht& i) {
+               // die Klingdauer bei 220 Hz auf der leeren Saite: der Daempfer 40 mm vor dem Steg, rho = Mute²
+               const double m = std::clamp(i.handDaempfung, 0.0, 1.0);
+               const double mensur = mensurVon(m_instrument.saiten);
+               const double sinus = std::sin(3.14159265358979323846 * 40.0 / mensur);
+               const double klingt = 6.91 / (6.91 / i.klingSekunden + 2.0 * 220.0 * m * m * sinus * sinus);
+               return tr("%1 · rings %2 s at 220 Hz").arg(prozent(i.handDaempfung)).arg(klingt, 0, 'f', klingt < 1.0 ? 2 : 1);
+           })
+        .schieber->setToolTip(tr("Palm mute: how firmly the side of the hand rests on the strings, about 40 mm\n"
+                                 "from the bridge. The high harmonics go first, the attack stays"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Tap level"), "creatorTapLevel", 0, 100, [](const Schicht& i) { return gerundet(i.tappingLaut * 100.0); },
+           [](Schicht& i, int w) { i.tappingLaut = w / 100.0; },
+           [prozent](const Schicht& i) { return tr("%1 · at the fret").arg(prozent(i.tappingLaut)); })
+        .schieber->setToolTip(tr("Tapping: how loud a note is that a finger hammers onto the fret — soft, without a pick"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Touch"), "creatorTouch", 0, 100, [](const Schicht& i) { return gerundet(i.knotenDruck * 100.0); },
+           [](Schicht& i, int w) { i.knotenDruck = w / 100.0; },
+           [prozent](const Schicht& i) { return tr("%1 · finger on the node").arg(prozent(i.knotenDruck)); })
+        .schieber->setToolTip(tr("Harmonic: how firmly the finger touches the string at the node. Harmonics without\n"
+                                 "a node there fade; how loud the harmonic is follows from the string"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
+    {
+        auto* hinweis = new QLabel(tr("Let ring needs no setting · Classic has no Playing"), this);
+        hinweis->setObjectName(QStringLiteral("creatorPlayingHint"));
+        hinweis->setEnabled(false);
+        gitter->addWidget(hinweis, gitter->rowCount(), 1, 1, 2);
+        m_spielHinweise.push_back(hinweis);
+    }
+
     // --- Vibrato: gehoert zu Source und steht deshalb vor den Bausteinen
     m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
@@ -1363,6 +1412,29 @@ void InstrumentCreator::setupUI()
     rechts->addWidget(new QLabel(tr("Click a key to hear it"), this));
     m_tasten = new Tastenleiste(this);
     rechts->addWidget(m_tasten);
+    // --- P: Play as (Stufe 24d; Skizze gebilligt, Patrik S134, S-W8 a): wie ein Tastenklick
+    // spielt — nicht gespeichert, nur mit Tuning
+    {
+        m_spielAlsZeile = new QWidget(this);
+        auto* reihe = new QHBoxLayout(m_spielAlsZeile);
+        reihe->setContentsMargins(0, 0, 0, 0);
+        reihe->addWidget(new QLabel(tr("Play as"), m_spielAlsZeile));
+        m_spielAlsWahl = new QComboBox(m_spielAlsZeile);
+        m_spielAlsWahl->setObjectName(QStringLiteral("creatorPlayAs"));
+        m_spielAlsWahl->addItem(tr("Normal"), static_cast<int>(SpielAls::Normal));
+        m_spielAlsWahl->addItem(tr("Up stroke"), static_cast<int>(SpielAls::Auf));
+        m_spielAlsWahl->addItem(tr("Palm mute"), static_cast<int>(SpielAls::PalmMute));
+        m_spielAlsWahl->addItem(tr("Tapping"), static_cast<int>(SpielAls::Tapping));
+        m_spielAlsWahl->addItem(tr("Harmonic"), static_cast<int>(SpielAls::Harmonic));
+        m_spielAlsWahl->addItem(tr("Strum chord"), static_cast<int>(SpielAls::Akkord));
+        m_spielAlsWahl->setToolTip(tr("How a click on a key plays: as an up stroke, muted, tapped, as a harmonic —\n"
+                                      "or Strum chord: the open strings, strummed like the Strum row says"));
+        reihe->addWidget(m_spielAlsWahl);
+        reihe->addStretch(1);
+        rechts->addWidget(m_spielAlsZeile);
+        connect(m_spielAlsWahl, &QComboBox::activated, this,
+                [this](int platz) { setzeSpielAls(static_cast<SpielAls>(m_spielAlsWahl->itemData(platz).toInt())); });
+    }
     // Repeat note (Wunsch Patrik S116): der angeklickte Ton spielt immer wieder
     m_wiederholen = new QCheckBox(tr("Repeat note"), this);
     m_wiederholen->setObjectName(QStringLiteral("creatorRepeat"));
@@ -1812,11 +1884,49 @@ bool InstrumentCreator::spieleAn(int hoehe)
     }
     if (!speichereInstrument(zuHoeren, datei)) return false;
     // mit Repeat note darf der Ton bis zum naechsten klingen
-    if (wiederholt())
-        Q_EMIT tonLangVerlangt(datei, hoehe, wiederholMs());
-    else
-        Q_EMIT tonVerlangt(datei, hoehe);
+    Q_EMIT vorhoerenVerlangt(datei, vorhoerNoten(hoehe), wiederholt() ? wiederholMs() : 0);
     return true;
+}
+
+void InstrumentCreator::setzeSpielAls(SpielAls wie)
+{
+    m_spielAls = wie;
+    const QSignalBlocker ruhe(m_spielAlsWahl);
+    m_spielAlsWahl->setCurrentIndex(m_spielAlsWahl->findData(static_cast<int>(wie)));
+}
+
+Muster InstrumentCreator::vorhoerNoten(int hoehe) const
+{
+    Muster noten;
+    noten.art = MusterArt::Instrument;
+    const Saitensatz& saiten = m_instrument.saiten;
+    uebernimmVorgaben(noten, saiten);  // Strum und String choice, wie ein neues Muster dieses Instruments
+    Note note{0, 1, hoehe, 1.0};
+    const SpielAls wie = saiten.istSaiteninstrument() ? m_spielAls : SpielAls::Normal;
+    switch (wie)
+    {
+    case SpielAls::Akkord:
+        // die leeren Saiten, jede auf ihrer
+        for (int s = 0; s < saiten.anzahl(); ++s)
+            noten.noten.push_back(Note{0, 1, saiten.leer[static_cast<std::size_t>(s)] + saiten.capo, 1.0, s});
+        return noten;
+    case SpielAls::Auf:
+        noten.anschlaege.push_back(Anschlag{0, Anschlagart::Auf});
+        break;
+    case SpielAls::PalmMute:
+        note.artikulationen = kPalmMute;
+        break;
+    case SpielAls::Tapping:
+        note.artikulationen = kTapping;
+        break;
+    case SpielAls::Harmonic:
+        note.artikulationen = kHarmonic;
+        break;
+    case SpielAls::Normal:
+        break;
+    }
+    noten.noten.push_back(note);
+    return noten;
 }
 
 void InstrumentCreator::closeEvent(QCloseEvent* event)
@@ -1935,6 +2045,9 @@ void InstrumentCreator::zeigeAlles()
     if (!m_genres->hasFocus()) m_genres->setText(m_instrument.genres.join(QStringLiteral(", ")));
     if (!m_beschreibung->hasFocus()) m_beschreibung->setText(m_instrument.beschreibung);
     m_saitenZeile->zeige(m_instrument.saiten);
+    m_strumZeile->zeige(m_instrument.saiten.strum);
+    m_strumZeile->setVisible(m_instrument.saiten.istSaiteninstrument());
+    m_spielAlsZeile->setVisible(m_instrument.saiten.istSaiteninstrument());
     m_gewaehlt = std::clamp(m_gewaehlt, 0, static_cast<int>(m_instrument.schichten.size()) - 1);
     const Schicht& gewaehlte = schicht();
     // eine andere Schicht beginnt bei Source; einen Baustein, den es nicht mehr gibt, auch
@@ -2115,6 +2228,11 @@ void InstrumentCreator::zeigeAlles()
     }
     // ohne Korpus gibt es nichts zu mischen
     m_regler[m_reglerKorpusAnteil].schieber->setEnabled(gewaehlte.korpus != KorpusArt::Keiner);
+    // --- Playing (Stufe 24d): bei Extended KS und Waveguide, und nur mit Tuning (S-W5 a)
+    const bool spielen = physik && m_instrument.saiten.istSaiteninstrument();
+    m_spielTitel->setVisible(spielen);
+    for (const std::size_t platz : m_nurSpiel) zeige(platz, spielen);
+    for (QWidget* teil : m_spielHinweise) teil->setVisible(spielen);
     // --- Pickups, nur bei Waveguide (Nachtrag S-U3 a)
     const bool wellenleiter = saite && gewaehlte.saitenModell == SaitenModell::Wellenleiter;
     m_abnehmerTitel->setVisible(wellenleiter);

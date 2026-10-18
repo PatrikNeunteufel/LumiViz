@@ -1706,8 +1706,7 @@ bool InstrumentEditor::oeffneCreator(bool zeigen)
             }
             zeigeAlles();  // der Titel in der Zeile kann sich geaendert haben, auch wenn die Nennung blieb
         });
-        connect(m_creator, &InstrumentCreator::tonVerlangt, this, &InstrumentEditor::instrumentTonVerlangt);
-        connect(m_creator, &InstrumentCreator::tonLangVerlangt, this, &InstrumentEditor::instrumentTonLangVerlangt);
+        connect(m_creator, &InstrumentCreator::vorhoerenVerlangt, this, &InstrumentEditor::instrumentVorhoerenVerlangt);
         // die Aufnahme einer Sample-Schicht (Stufe 11a): dekodieren kann nur, wer die Audio-Engine hat
         connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &InstrumentEditor::sampleVerlangt);
         m_creator->setEngineGeber(m_engineGeber);  // fuer „Record..." (Stufe 11b)

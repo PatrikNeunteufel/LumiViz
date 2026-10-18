@@ -294,9 +294,11 @@ TEST_SUITE("LoopInstrumentEditor")
         QObject::connect(&creator, &InstrumentCreator::gespeichert, &creator,
                          [&](const QString& pfad) { gespeichert << pfad; });
         QStringList toene;
-        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator, [&](const QString& nennung, int hoehe) {
-            toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung);
-        });
+        // seit Stufe 24d ein Signal mit den Noten; ohne Repeat note ist klingtMs 0
+        QObject::connect(&creator, &InstrumentCreator::vorhoerenVerlangt, &creator,
+                         [&](const QString& nennung, const Muster& noten, int klingtMs) {
+                             if (klingtMs == 0) toene << QStringLiteral("%1 %2").arg(noten.noten.front().hoehe).arg(nennung);
+                         });
         const auto schieber = [&](const char* kennung) {
             auto* s = creator.findChild<QSlider*>(QString::fromLatin1(kennung));
             REQUIRE(s != nullptr);
@@ -660,9 +662,10 @@ TEST_SUITE("LoopInstrumentEditor")
             REQUIRE(wiederholen != nullptr);
             REQUIRE(abstand != nullptr);
             QStringList lang;
-            QObject::connect(&creator, &InstrumentCreator::tonLangVerlangt, &creator, [&](const QString&, int hoehe, int klingtMs) {
-                lang << QStringLiteral("%1 %2").arg(hoehe).arg(klingtMs);
-            });
+            QObject::connect(&creator, &InstrumentCreator::vorhoerenVerlangt, &creator,
+                             [&](const QString&, const Muster& noten, int klingtMs) {
+                                 if (klingtMs > 0) lang << QStringLiteral("%1 %2").arg(noten.noten.front().hoehe).arg(klingtMs);
+                             });
             CHECK_FALSE(creator.wiederholt());
             CHECK(tasten->gewaehlt() == -1);        // ohne Repeat ist keine Taste hervorgehoben
             CHECK(creator.wiederholHoehe() == 61);  // die zuletzt angeklickte
@@ -1336,8 +1339,9 @@ TEST_SUITE("LoopInstrumentEditor")
 
         // --- Anspielen: die Vorhoer-Datei traegt die Schicht, wie sie steht
         QStringList toene;
-        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator,
-                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+        QObject::connect(&creator, &InstrumentCreator::vorhoerenVerlangt, &creator, [&](const QString& nennung, const Muster& noten, int) {
+            toene << QStringLiteral("%1 %2").arg(noten.noten.front().hoehe).arg(nennung);
+        });
         REQUIRE(creator.spieleAn(57));
         Instrument vorgehoert;
         REQUIRE(holeInstrument(InstrumentCreator::vorhoerDatei(), vorgehoert));
@@ -1909,8 +1913,11 @@ TEST_SUITE("LoopInstrumentEditor")
         int gespeichert = 0;
         QObject::connect(&editor, &InstrumentEditor::instrumentGespeichert, &editor, [&] { ++gespeichert; });
         QStringList toene;
-        QObject::connect(&editor, &InstrumentEditor::instrumentTonVerlangt, &editor,
-                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+        // der Creator spielt seit Stufe 24d mit Noten an (Play as)
+        QObject::connect(&editor, &InstrumentEditor::instrumentVorhoerenVerlangt, &editor,
+                         [&](const QString& nennung, const Muster& noten, int) {
+                             toene << QStringLiteral("%1 %2").arg(noten.noten.front().hoehe).arg(nennung);
+                         });
 
         CHECK_FALSE(editor.oeffneCreator(false));  // noch keine Basis
         REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
@@ -2117,8 +2124,9 @@ TEST_SUITE("LoopInstrumentEditor")
 
         // --- anspielen, speichern, wieder oeffnen
         QStringList toene;
-        QObject::connect(&creator, &InstrumentCreator::tonVerlangt, &creator,
-                         [&](const QString& nennung, int hoehe) { toene << QStringLiteral("%1 %2").arg(hoehe).arg(nennung); });
+        QObject::connect(&creator, &InstrumentCreator::vorhoerenVerlangt, &creator, [&](const QString& nennung, const Muster& noten, int) {
+            toene << QStringLiteral("%1 %2").arg(noten.noten.front().hoehe).arg(nennung);
+        });
         REQUIRE(creator.spieleAn(60));
         CHECK(toene.size() == 1);
         Instrument vorhoer;

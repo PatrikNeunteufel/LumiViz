@@ -645,13 +645,37 @@ bool LoopPanel::spieleInstrumentTon(const QString& nennung, int hoehe, int kling
     return spieleVor(ton, hoehe, klingtMs);
 }
 
+bool LoopPanel::spieleInstrumentNoten(const QString& nennung, const Muster& noten, int klingtMs)
+{
+    if (!m_geladen || nennung.isEmpty() || noten.noten.empty()) return false;
+    Muster ton = noten;
+    ton.art = MusterArt::Instrument;
+    ton.instrument = nennung;
+    return spieleVorNoten(ton, klingtMs);
+}
+
 bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe, int klingtMs)
 {
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
-    // ein Muster mit dieser einen Note, einen Schlag lang
+    Muster ton = vorlage;
+    ton.noten = {{0, 1, hoehe, 1.0}};
+    ton.anschlaege.clear();  // die Abweichungen der Akkorde des Musters gelten fuer diesen einen Ton nicht
+    return spieleVorNoten(ton, klingtMs);
+}
+
+bool LoopPanel::spieleVorNoten(const Muster& vorlage, int klingtMs)
+{
+    // die Noten des Musters, jede an Schritt 0 und einen Schlag lang (ein Akkord bleibt einer)
     Muster ton = vorlage;
     ton.stumm = false;
-    ton.noten = {{0, m_loop.schritteJeSchlag, hoehe, 1.0}};
+    for (Note& note : ton.noten)
+    {
+        if (note.hoehe < kHoeheMin || note.hoehe > kHoeheMax) return false;
+        note.schritt = 0;
+        note.laenge = m_loop.schritteJeSchlag;
+    }
+    for (Anschlag& anschlag : ton.anschlaege) anschlag.schritt = 0;
+    if (ton.noten.empty()) return false;
     // der Ton und sein Ausklang — oder so lang, wie „Repeat note" ihn klingen laesst
     const int dauerMs = klingtMs > 0 ? klingtMs : m_loop.notenMs(ton.noten.front()) + 600;
     // so viele Takte, dass das Muster nicht von vorn beginnt, bevor die Zeit um ist
@@ -771,9 +795,11 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             // der Instrument-Creator (Stufe 10b): er spielt sein Instrument an, auch ungespeichert
             connect(m_instrumentEditor, &InstrumentEditor::instrumentTonVerlangt, this,
                     [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
-            // „Repeat note" im Creator: der Ton darf bis zum naechsten klingen
-            connect(m_instrumentEditor, &InstrumentEditor::instrumentTonLangVerlangt, this,
-                    [this](const QString& nennung, int hoehe, int klingtMs) { (void)spieleInstrumentTon(nennung, hoehe, klingtMs); });
+            // der Creator mit den Noten nach Play as (Stufe 24d); mit „Repeat note" bis zum naechsten
+            connect(m_instrumentEditor, &InstrumentEditor::instrumentVorhoerenVerlangt, this,
+                    [this](const QString& nennung, const Muster& noten, int klingtMs) {
+                        (void)spieleInstrumentNoten(nennung, noten, klingtMs);
+                    });
             // eine Instrument-Datei ist neu geschrieben: wer sie spielt, rechnet ihre Toene neu
             connect(m_instrumentEditor, &InstrumentEditor::instrumentGespeichert, this, [this] {
                 if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
@@ -832,8 +858,10 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 [this](const std::vector<Spur>& spuren) { (void)spieleSchlaege(spuren); });
         connect(m_editor, &DrumEditor::instrumentTonVerlangt, this,
                 [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
-        connect(m_editor, &DrumEditor::instrumentTonLangVerlangt, this,
-                [this](const QString& nennung, int hoehe, int klingtMs) { (void)spieleInstrumentTon(nennung, hoehe, klingtMs); });
+        connect(m_editor, &DrumEditor::instrumentVorhoerenVerlangt, this,
+                [this](const QString& nennung, const Muster& noten, int klingtMs) {
+                    (void)spieleInstrumentNoten(nennung, noten, klingtMs);
+                });
         connect(m_editor, &DrumEditor::klaengeGeaendert, this, [this] {
             if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
             meldeStand();

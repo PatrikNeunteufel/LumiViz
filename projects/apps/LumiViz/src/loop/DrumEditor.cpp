@@ -1765,8 +1765,7 @@ void DrumEditor::stelleCreator()
         if (m_palette != nullptr) m_palette->liesNeu();  // ein neues eigenes steht gleich im Fenster
         zeigeAlles();  // der Titel kann sich geaendert haben, auch wenn die Nennung blieb
     });
-    connect(m_creator, &InstrumentCreator::tonVerlangt, this, &DrumEditor::instrumentTonVerlangt);
-    connect(m_creator, &InstrumentCreator::tonLangVerlangt, this, &DrumEditor::instrumentTonLangVerlangt);
+    connect(m_creator, &InstrumentCreator::vorhoerenVerlangt, this, &DrumEditor::instrumentVorhoerenVerlangt);
     connect(m_creator, &InstrumentCreator::sampleVerlangt, this, &DrumEditor::sampleVerlangt);
     m_creator->setEngineGeber(m_engineGeber);
 }

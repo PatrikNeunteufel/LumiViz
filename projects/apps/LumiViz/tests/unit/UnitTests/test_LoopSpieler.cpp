@@ -436,6 +436,29 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
     CHECK_FALSE(panel.hoertVor());
     CHECK(panel.spieler().loop() == panel.loop());
 
+    // --- Play as im Creator (Stufe 24d): Noten mit Saite, Artikulation und Anschlag — jede an
+    //     Schritt 0, einen Schlag lang; ein Akkord bleibt einer
+    {
+        Muster vorlage;
+        vorlage.noten = {Note{7, 1, 52, 1.0, 2, kPalmMute}, Note{3, 9, 47, 0.5, 1}};
+        vorlage.anschlaege = {Anschlag{7, Anschlagart::Auf}};
+        vorlage.strum.spreadMs = 30.0;
+        REQUIRE(panel.spieleInstrumentNoten(QStringLiteral("guitar"), vorlage));
+        CHECK(panel.hoertVor());
+        const Muster& gespielt = panel.spieler().loop().muster[0];
+        CHECK(gespielt.instrument == QStringLiteral("guitar"));
+        CHECK(gespielt.art == MusterArt::Instrument);
+        CHECK(gespielt.noten == std::vector<Note>{Note{0, 4, 47, 0.5, 1}, Note{0, 4, 52, 1.0, 2, kPalmMute}});
+        CHECK(gespielt.anschlaege == std::vector<Anschlag>{Anschlag{0, Anschlagart::Auf}});
+        CHECK(gespielt.strum.spreadMs == doctest::Approx(30.0));
+        CHECK_FALSE(panel.spieleInstrumentNoten(QStringLiteral("guitar"), Muster{}));  // keine Noten
+        panel.halte();
+        // eine Taste des Editors nimmt die Abweichungen der Akkorde ihres Musters nicht mit
+        CHECK(panel.spieleTon(noten, 60));
+        CHECK(panel.spieler().loop().muster[0].anschlaege.empty());
+        panel.halte();
+    }
+
     // --- der Drum-Editor spielt einen Schlag einer Instrument-Spur an (Stufe 11c, Schritt 2):
     //     ein Muster aus dieser einen Spur mit einem Schlag am Anfang, mit ihrer Note und Length
     {

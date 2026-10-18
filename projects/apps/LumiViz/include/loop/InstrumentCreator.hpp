@@ -54,6 +54,7 @@
 
 #include "loop/Grundton.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/Loop.hpp"  // Muster: was die Tasten spielen (Stufe 24d)
 #include "loop/Sample.hpp"
 #include "shape/Kontur.hpp"
 #include "shape/Tonform.hpp"
@@ -93,6 +94,7 @@ class FormFenster;
 class SaitenBild;
 class SaitenZeile;
 class SignalWeg;
+class StrumZeile;
 
 /// Eine Kurve als Bild: Werte von -1 bis 1 (oder 0 bis 1), ueber die Breite
 /// verteilt; auf Wunsch ein senkrechter Strich an einer Stelle.
@@ -311,9 +313,31 @@ public:
     /// Die Genres aus einem Text mit Kommas — ohne Leeres, ohne Doppelte.
     [[nodiscard]] static QStringList genresAus(const QString& text);
     /// Einen Ton mit den Einstellungen anspielen, wie sie gerade stehen: die
-    /// Kopie kommt in die Vorhoer-Datei, `tonVerlangt` nennt sie. false = die
-    /// Datei liess sich nicht schreiben.
+    /// Kopie kommt in die Vorhoer-Datei, `vorhoerenVerlangt` nennt sie — mit den
+    /// Noten nach *Play as* (Stufe 24d). false = die Datei liess sich nicht
+    /// schreiben.
     bool spieleAn(int hoehe);
+
+    // --- Spielweisen (Stufe 24d; Skizze gebilligt, Patrik S134, S-W8 a) ----------
+    /// **Play as** unter der Klaviatur: wie ein Tastenklick spielt. Wird nicht
+    /// gespeichert; nur bei einem Instrument mit Tuning zu sehen.
+    enum class SpielAls : int
+    {
+        Normal = 0,
+        Auf = 1,       ///< *Up stroke*
+        PalmMute = 2,
+        Tapping = 3,
+        Harmonic = 4,  ///< der angeklickte Ton als Flageolett
+        Akkord = 5,    ///< *Strum chord*: die leeren Saiten mit Strum des Instruments
+    };
+    void setzeSpielAls(SpielAls wie);
+    [[nodiscard]] SpielAls spielAls() const { return m_spielAls; }
+    /// Die Noten, die ein Klick auf `hoehe` spielt: jede an Schritt 0, mit Saite
+    /// und Artikulationen; dazu Strum und Anschlaege wie im Muster. Laenge und
+    /// Schritt setzt, wer spielt.
+    [[nodiscard]] Muster vorhoerNoten(int hoehe) const;
+    /// Die Zeile Strum unter Tuning (fuer Tests).
+    [[nodiscard]] StrumZeile* strumZeile() const { return m_strumZeile; }
     /// Die Vorhoer-Datei (im Ordner fuer Zwischendateien).
     [[nodiscard]] static QString vorhoerDatei();
 
@@ -473,11 +497,12 @@ Q_SIGNALS:
     /// Das Instrument ist gespeichert und heisst jetzt so: `user:<name>` oder
     /// der Pfad seiner Datei (Save, Save as...).
     void gespeichert(const QString& nennung);
-    /// Einen Ton anspielen: das Instrument beim Pfad seiner Vorhoer-Datei.
-    void tonVerlangt(const QString& nennung, int hoehe);
-    /// Dasselbe von „Repeat note": der Ton darf `klingtMs` lang klingen — bis
-    /// der naechste kommt —, damit ein langer Ausklang ganz zu hoeren ist.
-    void tonLangVerlangt(const QString& nennung, int hoehe, int klingtMs);
+    /// Anspielen: das Instrument beim Pfad seiner Vorhoer-Datei, die Noten nach
+    /// *Play as* (`vorhoerNoten`, seit Stufe 24d; bis dahin `tonVerlangt` mit
+    /// einer Tonhoehe). `klingtMs` > 0 von „Repeat note": so lang darf es
+    /// klingen — bis das naechste kommt —, damit ein langer Ausklang ganz zu
+    /// hoeren ist; 0 = die uebliche Laenge.
+    void vorhoerenVerlangt(const QString& nennung, const Muster& noten, int klingtMs);
 
 protected:
     /// Das Mausrad ueber einem Regler der Schicht rollt das Feld, statt ihn zu verstellen.
@@ -692,6 +717,14 @@ private:
     KurvenBild* m_huellBild = nullptr;
     Tastenleiste* m_tasten = nullptr;
     SaitenZeile* m_saitenZeile = nullptr;  ///< die Zeile Tuning (Stufe 23e)
+    // --- Spielweisen (Stufe 24d, S-W8 a: N, O, P)
+    StrumZeile* m_strumZeile = nullptr;      ///< N: die Strum-Vorgabe des Instruments
+    QWidget* m_spielTitel = nullptr;         ///< O: die Ueberschrift Playing
+    std::vector<std::size_t> m_nurSpiel;     ///< Plaetze in `m_regler`: Up level, Mute, Tap level, Touch
+    std::vector<QWidget*> m_spielHinweise;   ///< die Zeilen in Klartext unter den Reglern
+    QComboBox* m_spielAlsWahl = nullptr;     ///< P: Play as
+    QWidget* m_spielAlsZeile = nullptr;
+    SpielAls m_spielAls = SpielAls::Normal;
     // --- die Saite nach der Physik (Stufe 23e): Model, die Gruppen String und Body
     QComboBox* m_saitenModell = nullptr;     ///< Model: Classic, Extended KS, Waveguide
     std::vector<QWidget*> m_modellZeile;     ///< Name und Auswahl Model: nur bei Plucked string

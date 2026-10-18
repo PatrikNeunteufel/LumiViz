@@ -135,6 +135,10 @@ public:
     /// `klingtMs` groesser als null („Repeat note" im Creator): so lang darf der
     /// Ton im Ganzen klingen, statt einen Schlag und 600 ms.
     bool spieleInstrumentTon(const QString& nennung, int hoehe, int klingtMs = 0);
+    /// Dasselbe mit Noten (Stufe 24d, *Play as* im Creator): jede an Schritt 0
+    /// und einen Schlag lang, mit Saite, Artikulationen, Strum und Anschlaegen
+    /// des Musters — ein Akkord bleibt einer.
+    bool spieleInstrumentNoten(const QString& nennung, const Muster& noten, int klingtMs = 0);
     /// Einen Schlag einer Spur eines Drum-Musters anspielen, mit Lautstaerke
     /// und Panorama der Spur (Play im Feld hinter „…" des Drum-Editors, Stufe
     /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.
@@ -189,6 +193,8 @@ private:
     /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
     /// `vorlage` mit dieser einen Note.
     bool spieleVor(const Muster& vorlage, int hoehe, int klingtMs = 0);
+    /// Die Noten von `vorlage` einen Schlag lang spielen, jede an Schritt 0 (Stufe 24d).
+    bool spieleVorNoten(const Muster& vorlage, int klingtMs);
     /// Einen Loop aus einem Muster „Preview" einmal anspielen; nach `dauerMs`
     /// haelt der Spieler wieder und bekommt den Loop des Panels zurueck.
     bool spieleAllein(const Muster& muster, int dauerMs);
