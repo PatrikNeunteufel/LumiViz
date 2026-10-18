@@ -1,13 +1,13 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.14.0
+> **Version:** 0.15.0
 > **Datum:** 2026-10-18 (Session 132)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
 > Patrik S132); alles andere ist offen oder Vorschlag und so bezeichnet.
 > Die Baustufen (§5) sind freigegeben (S-B1 a); gebaut sind 23a (§5a), 23b
-> (§5b) und 23c ohne Korpus (§5c).
+> (§5b), 23c ohne Korpus (§5c) und der erste Teil von 23d (§5d).
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
 > **Bezug:** [Loop_Konzept.md](Loop_Konzept.md) §4f (Instrumente aus
@@ -192,6 +192,21 @@ Versatz im Akkord.
   Verworfen: b (ein Tonabnehmer — Datei und Oberfläche zweimal ändern), c
   (nur Filter im Signal path — der folgt der Tonhöhe, die Resonanz eines
   Tonabnehmers liegt fest in Hertz).
+- ✅ **S-K6 a** (Patrik S132): **Vor dem Festlegen der Tabelle eine zweite,
+  gezielte Recherche** nur für die Lücken der ersten (Güte des Kontrabasses,
+  Stärken von Violine und Steelstring, eine Dreadnought, Tonabnehmer belastet
+  je Bauart, reale Lagen); danach die Tabelle erneut zur Vorlage. Stand der
+  ersten Recherche: §6. Verworfen: b (Lücken als markierte Annahmen — die
+  Hintertür zu S-K4 b), c (nur die Classical guitar — vier von fünf fallen
+  weg, obwohl es für ihre Lücken wahrscheinlich Quellen gibt).
+- ✅ **S-U3 a** (Patrik S132): **Skizze der Gruppe Pickups gebilligt** (§4)
+  und **eine Mensur am Instrument**: *Scale* in mm in der Zeile Tuning, jede
+  Vorlage bringt die übliche mit (je mit Quelle der Herstellerangabe).
+  Pluck position und die Position eines Tonabnehmers zeigen **mm vom Steg**
+  und rechnen intern als Anteil; der Humbucker tastet an **zwei Stellen 18 mm
+  auseinander** ab. Verworfen: b (Prozent, Humbucker auf feste 648 mm
+  bezogen — stimmt nur für eine Gitarre), c (Humbucker als eine Abtaststelle
+  — *Type* wäre nur ein Name für eine Resonanz).
 - **S-U2** Der Instrument-Editor: *String choice* am Muster, Anzeige einer
   nicht greifbaren Note — **eigene Skizze vor dem Bau**.
 - Danach Spielweisen (§1 Punkt 2) und Tabs (§1 Punkt 3) mit eigenen Fragen.
@@ -228,6 +243,19 @@ Neu gegenüber heute; alles Übrige bleibt, wie es ist.
 - **Gruppe Body** (einklappbar): *Body* (Auswahl), *Body amount*.
 - Bei *Classic* stehen statt der Gruppen String und Body nur *Damping* (wie
   heute); bei *Extended KS* fehlen *Pickup position* und die Marke *pickup*.
+- **Nachtrag S-U3 a — Zeile Tuning:** dazu **Scale** (die Mensur in mm),
+  vorbelegt von der Vorlage.
+- **Nachtrag S-U3 a — Gruppe Pickups** (nur bei *Model: Waveguide*, unter
+  *Body*; ersetzt den Regler *Pickup position* und die eine Marke *pickup*):
+  - im Saitenbild je Tonabnehmer eine Marke (*neck*, *bridge*), ein Humbucker
+    als zwei Striche; die Marken lassen sich ziehen;
+  - **Pickup select**: *Neck* / *Both* / *Bridge* (Knopfreihe);
+  - je Tonabnehmer (*Neck*, *Bridge*): **Type** — *None (acoustic)*, *Single
+    coil*, *Humbucker*, *Piezo* — und **Position** in mm vom Steg; bei *Piezo*
+    steht die Position fest am Steg (grau);
+  - **Cable** in pF, für beide gemeinsam; daneben die Resonanz, die daraus mit
+    der Induktivität der Bauart folgt (≈ kHz);
+  - Steht ein Tonabnehmer auf *None*, gilt *Pickup select* für den anderen.
 
 ---
 
@@ -343,3 +371,81 @@ am Ende von Stufe 23.
   variation; die Vorgaben 0,13 / 0,65 / 3,2 s / 0,3 / 0,1 / 0,5 aus der
   Skizze. Eine erste Fassung (Mitteln wie Classic, vier Allpässe) wirkte kaum
   und wurde bei hohen Tönen instabil — verworfen, bevor etwas gespeichert war.
+
+### 5d. Stufe 23d, erster Teil — Waveguide, Mensur, Tonabnehmer als Abtaststellen (gebaut S132)
+
+- **`SaitenModell::Wellenleiter`**, in der Datei `stringModel` `waveguide`;
+  Verlust und Steifheit teilt er mit *Extended KS* (`entwerfeUmlauf`, ein
+  Umlauf für beide; Extended KS rechnet wie vorher, gemessen dieselben Werte).
+- **Die Rechnung** (`rechneSaiteWg`): ein Umlauf = zweimal die Saite. Die
+  Auslenkung an der Stelle x (Anteil vom Steg) ist die Summe der Welle, die
+  vor x · L/2 vom Steg losging, und der, die vor (2 − x) · L/2 losging und am
+  Sattel umgedreht wurde. Anschlag: ein Dreieck mit der Spitze an der
+  Anschlagstelle, durch die Härte gerundet.
+- **Tonabnehmer** (`Abnehmer`, `AbnehmerArt`, `AbnehmerWahl`): ohne
+  Tonabnehmer die Welle am Steg. Single coil: die Geschwindigkeit an einer
+  Stelle; Humbucker: an zwei, 18 mm auseinander, je zur Hälfte; Piezo: die
+  Kraft am Steg durch einen Hochpass erster Ordnung bei 106 Hz (Zollner 6.2).
+  *Pickup select*: Neck, Both (je zur Hälfte), Bridge; steht einer auf None,
+  gilt der andere. In der Datei `pickupNeck`, `pickupBridge` (je `type`,
+  `position` in mm vom Steg), `pickupSelect`.
+- **Mensur** `Saitensatz::mensurMm`, in der Datei `scale` (nur wenn gesetzt);
+  ohne sie 648 mm.
+- **Gemessen** (`test_LoopSaiteWg`, Release-clang): Ring time 2 s bei E2
+  2,00 s, bei E5 1,85 s; Anschlag bei ¼: Teilton 4 −42 dB gegen 3; Single
+  coil bei ⅕: Teilton 5 −46 dB gegen 4; Humbucker gegen Single coil: Teilton
+  3 −0,3 dB, Teilton 36 (halbe Wellenlänge 18 mm bei 648 mm) −44 dB; Neck
+  gegen Bridge: Teilton 9 gegen 1 −18 gegen −3 dB; Piezo beim Grundton E1
+  −8,81 dB (Hochpass berechnet −8,82 dB).
+- **Noch nicht:** die Resonanz des Tonabnehmers mit dem Kabel (*Cable*) —
+  23d, zweiter Teil, nach der Tabelle (§6).
+- **Von Claude gesetzt, nicht vorgelegt:** ein magnetischer Tonabnehmer ist so
+  bemessen, dass er im ersten Zehntel einer Sekunde so laut ist wie die Saite
+  am Steg (Effektivwert), aber höchstens so spitz — der Anfang wird dafür
+  einmal vorab gerechnet (eine erste Bemessung nach dem Grundton ergab bei
+  tiefen Tönen Spitzen bis 3,1); der Anschlag als reines Dreieck ohne
+  Rauschen; die Lagen werden auf 0,2 % … 99,8 % der Saite begrenzt; die
+  Vorgaben Neck 160 mm, Bridge 40 mm, beide None, Both.
+
+---
+
+## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
+
+Recherche durch einen Agenten, die tragenden Stellen von Claude selbst in der
+Textebene der Quellen nachgelesen („bestätigt"). Noch nicht festgelegt
+(S-K6 a: zweite Recherche für die Lücken). Nicht erreichbar waren: Rossing,
+*The Science of String Instruments*; Paiva (Aalto); Paté/Le Carrou (HAL);
+Gough (IOA); Zollner 5.15.
+
+| Korpus | Belegt | Quelle | Lücke |
+|---|---|---|---|
+| Classical guitar | T(1,1) 165 Hz Q 36 · T(2,1) 204 Q 66 · B(1,2) 293 Q 50 · T(1,2) 391 Q 60 · T(3,1) 432 Q 51 · T(2,2) 607 Q 25 (Schallloch zu, je mit wirksamer Masse); Helmholtz 122 Hz Q 40 (im Modell gesetzt) | H. Wright, *The Acoustics and Psychoacoustics of the Guitar*, Diss. Cardiff 1996, S. 97–98, Tab. 5.4 — bestätigt | Stärke nur über die Masse |
+| Acoustic guitar (Steelstring, Parlor) | T(1,1)₁ 116 Hz, T(1,1)₂ 219 Hz, Helmholtz 130 Hz; Modellwerte (Masse, Steife, Dämpfung) | D. P. Hess, *Savart Journal* 1(3), 2013, S. 3, Tab. 1 — bestätigt | Güte nur gerechnet; keine Dreadnought |
+| Upright bass | A0 65–67 Hz, T1/A1 115 Hz, C2 145, C4 130, C3 155, A2 150/158 Hz | A. W. Brown, Diss. mdw Wien 2004, S. 80–83 — bestätigt (A0, T1/A1) | keine Güte, Stärke nur als Kurve |
+| Violin | A0 270 Hz, Hauptholz 420 Hz, „thick plate" 505 Hz, Bridge Hill 2,7 kHz (Mittel vieler Violinen); Bandbreite je 14 Hz | E. Jansson, *Acoustics for Violin and Guitar Makers*, KTH 2002, S. 7.11 — Frequenzen bestätigt, Bandbreiten nur in der Abbildung | keine Stärken |
+| Acoustic bass | — | — | nichts gefunden |
+
+| Tonabnehmer | Belegt | Quelle |
+|---|---|---|
+| Resonanz mit Kabel | 2–5 kHz bei 2–10 H und 300–600 pF; Q ≈ 3 im Betrieb; Überhöhung ≈ 20·lg Q | M. Zollner, *Physics of the Electric Guitar*, 5.5.4 — bestätigt |
+| Humbucker | Polabstand 18–19 mm, Kammfilter-Lücke; tiefere Resonanz, schwächere Überhöhung (qualitativ) | Zollner 5.4.4 — bestätigt; S. Patsch, *Physik Journal* 19 (2020) |
+| Lage, Apertur | Beispiel 4 und 16 cm vom Steg bei 64 cm Mensur; Apertur ≈ 1 cm | Zollner 2.8.2, 5.4.4 — bestätigt |
+| Piezo | Hochpass f = 1/(2πRC), etwa 106 Hz bei 1,5 nF und 1 MΩ | Zollner 6.2 — bestätigt |
+
+### 6b. Zweite Recherche (S-K6 a, S132) — nur die Lücken
+
+„Bestätigt" = von Claude in der Textebene der Quelle gefunden; „Abb." = aus
+einer Kurve abgelesen (±1 dB, ±10 % in der Frequenz); „Händler" = über den
+Agenten aus einer Händler- oder Ratgeberseite, nicht selbst gelesen.
+
+| Lücke | Gefunden | Quelle | Stand |
+|---|---|---|---|
+| Violine, Frequenzen | A0 275 ± 9 Hz, CBR 407 ± 31, B1− 475 ± 16, B1+ 541 ± 22 (17 Violinen) | G. Bissinger, „Structural acoustics of good and bad violins", *JASA* 124(3), 2008, S. 1767 | bestätigt |
+| Violine, Dämpfung | ζ ≈ 1 % der kritischen im 400-Hz-Band → Q ≈ 50 | Bissinger 2008, Abb. 4 | Abb., Q abgeleitet |
+| Violine, Stärke | A0, B1−, B1+ strahlen stark ab, CBR schwach — keine Zahl je Mode | Bissinger 2008, S. 1766 | nur qualitativ |
+| Kontrabass, Güte | — (Askenfelt 1982 nicht erreichbar) | — | **nicht gefunden** |
+| Steelstring, größer als Parlor | Gibson Hummingbird: 103 Hz (Atmung), 188, 202, 262, 315 Hz; keine Güte | D. Russell, Penn State (Webseite) | nur über den Agenten |
+| Single coil mit Last | Strat R = 6 kΩ, L = 2,2 H, C = 450 pF; Q der Spule 2,1–3,5 | Zollner/Zwicker, „Factoring in the Q", GITEC 2019, S. 2; Zollner 5.5.4 | bestätigt |
+| Humbucker mit Last | Q = 1,83 an 333 kΩ ∥ 450 pF (Fender, CuNiFe); Resonanz ≈ 3 kHz | Zollner/Zwicker 2019, S. 6–7 | Q bestätigt, kHz Abb.; **keine Induktivität** |
+| Lagen | Strat 152 / 98 / ≈ 41 mm vom Steg, Tele 152 / ≈ 41 mm (aus den Lagen vom Sattel gerechnet); Jazz Bass Steg 54 mm, Hals ≈ 152 mm; Les Paul widersprüchlich | S. Errede, UIUC Physics 406, „Fourier Analysis IV", S. 2; Bartolini (2025) | Errede bestätigt, mm abgeleitet; Bartolini nur über den Agenten |
+| Mensur | Gitarre 25½″ = 648 mm (bestätigt bei Errede); klassisch 650 mm; E-Bass 34″ = 864 mm; Ukulele Sopran 13–14″, Konzert 15–16″, Tenor 17–18″; Violine 327 mm (bestätigt bei Jansson S. 7.3); Kontrabass 4/4 106–110 cm | Errede; Yamaha; Händler; Jansson; Thomastik-Infeld | teils bestätigt, teils Händler |

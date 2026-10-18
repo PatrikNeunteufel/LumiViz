@@ -478,12 +478,9 @@ std::complex<double> allpassEins(double a, double w)
     return (a + z1) / (1.0 + a * z1);
 }
 
-/// Die Saite *Extended KS* (Stufe 23c; S-K1 b, S-K3 a): das erweiterte
-/// Karplus-Strong nach Jaffe und Smith (1983) mit dem Verlust- und dem
-/// Steifheitsfilter, wie sie in der Saitensynthese ueblich entworfen werden
-/// (Vaelimaeki u. a.): ein Stoss Rauschen — durch die Haerte des Anschlags
-/// gefiltert und an der Anschlagstelle gekaemmt (die Teiltoene mit einem Knoten
-/// dort fehlen) — laeuft durch eine Verzoegerung; in jedem Umlauf
+/// Der Umlauf einer Saite *Extended KS* oder *Waveguide* (Stufe 23c, 23d):
+/// der Verlust- und der Steifheitsfilter, wie sie in der Saitensynthese
+/// ueblich entworfen werden (Vaelimaeki u. a.), und die Laenge der Verzoegerung.
 ///
 /// - ein **Tiefpass erster Ordnung mit Verstaerkung** (Verlust): der Grundton
 ///   faellt in *Ring time* um 60 dB, Toene bei 2 kHz in *Ring time* mal
@@ -494,14 +491,21 @@ std::complex<double> allpassEins(double a, double w)
 ///
 /// Die Verzoegerung ist um die Laufzeit der Filter beim Grundton kuerzer — so
 /// stimmt die Tonhoehe. Bei keiner Frequenz waechst der Ton im Umlauf.
-///
-/// `dicke`, 0 … 1: wie dick die Saite gegen die duennste des Instruments ist
-/// (String variation) — sie macht die Saite dunkler und steifer.
-void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, double dicke,
-                   std::vector<float>& daten)
+/// `dicke`, 0 … 1 (String variation): macht die Saite dunkler und steifer.
+struct Umlauf
 {
-    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
-    Reihe reihe(schicht, rate, false);  // die Saite ueberspringt die Filter wie Classic
+    static constexpr int kAllpaesse = 8;
+    double a = 0.0;             ///< Tiefpass des Verlusts
+    double verstaerkung = 1.0;  ///< je Umlauf
+    double c = 0.0;             ///< Allpaesse der Steifheit; 0 = keine
+    double verzug = 2.0;        ///< Laenge der Verzoegerung, in Abtastwerten
+    std::size_t groesse = 6;    ///< Platz im Ring
+    [[nodiscard]] bool mitAllpass() const { return c != 0.0; }
+};
+
+Umlauf entwerfeUmlauf(const Schicht& schicht, double hz, int rate, double dicke)
+{
+    Umlauf u;
     const double periode = rate / hz;
     const double w0 = 2.0 * kPi * hz / rate;
 
@@ -515,13 +519,12 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
     // a so, dass der Tiefpass bei 2 kHz gegen den Grundton um zielHoch / zielGrund faellt
     const double verhaeltnis = zielHoch / zielGrund;
     const auto faellt = [&](double a) { return std::abs(tiefpassEins(a, wHoch)) / std::abs(tiefpassEins(a, w0)); };
-    double a = 0.0;
     if (verhaeltnis < 1.0)
     {
         double flach = 0.0;
         double steil = -0.999;
         if (faellt(steil) >= verhaeltnis)
-            a = steil;
+            u.a = steil;
         else
         {
             for (int i = 0; i < 60; ++i)
@@ -529,21 +532,20 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
                 const double mitte = 0.5 * (flach + steil);
                 (faellt(mitte) > verhaeltnis ? flach : steil) = mitte;
             }
-            a = 0.5 * (flach + steil);
+            u.a = 0.5 * (flach + steil);
         }
     }
+    const double a = u.a;
     // die Verstaerkung: der Grundton trifft sein Ziel — hoechstens knapp unter 1, auch bei DC
-    const double verstaerkung = std::min(0.99995, zielGrund / std::abs(tiefpassEins(a, w0)));
+    u.verstaerkung = std::min(0.99995, zielGrund / std::abs(tiefpassEins(a, w0)));
 
     // --- Steifheit: acht Allpaesse mit gleichem c; der Bezugsteilton liegt unter der Bandgrenze
-    constexpr int kAllpaesse = 8;
     const double steif = std::clamp(schicht.steifheit + 0.4 * dicke, 0.0, 1.0);
     const double inharmonisch = 0.001 * steif * steif;
     const int bezug = std::min(8, static_cast<int>(0.45 * kPi / w0));
-    double c = 0.0;
     // die Laufzeit der Filter beim Grundton, und daraus die Laenge der Verzoegerung
     const auto filterLaufzeit = [&](double koeffizient, double w) {
-        return laufzeit(tiefpassEins(a, w), w) + kAllpaesse * laufzeit(allpassEins(koeffizient, w), w);
+        return laufzeit(tiefpassEins(a, w), w) + Umlauf::kAllpaesse * laufzeit(allpassEins(koeffizient, w), w);
     };
     const auto verzugFuer = [&](double koeffizient) { return periode - filterLaufzeit(koeffizient, w0); };
     if (inharmonisch > 0.0 && bezug >= 2)
@@ -568,7 +570,7 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
         // die Verzoegerung darf nicht unter zwei Abtastwerte fallen: so weit geht c hoechstens
         while (verzugFuer(mit) < 2.0 && mit < -1e-4) mit *= 0.5;
         if (teiltonW(mit, bezug) / w0 <= zielVerhaeltnis)
-            c = mit;
+            u.c = mit;
         else
         {
             for (int i = 0; i < 50; ++i)
@@ -576,20 +578,112 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
                 const double mitte = 0.5 * (ohne + mit);
                 (teiltonW(mitte, bezug) / w0 < zielVerhaeltnis ? ohne : mit) = mitte;
             }
-            c = 0.5 * (ohne + mit);
+            u.c = 0.5 * (ohne + mit);
         }
     }
-    const bool mitAllpass = c != 0.0;
-    const double verzug = std::max(2.0, mitAllpass ? verzugFuer(c) : periode - laufzeit(tiefpassEins(a, w0), w0));
-    const auto groesse = static_cast<std::size_t>(verzug) + 4;
+    u.verzug = std::max(2.0, u.mitAllpass() ? verzugFuer(u.c) : periode - laufzeit(tiefpassEins(a, w0), w0));
+    u.groesse = static_cast<std::size_t>(u.verzug) + 4;
+    return u;
+}
+
+/// Zweimal ein Tiefpass erster Ordnung mit der Grenze nach der Haerte des
+/// Anschlags (Pluck): vom Doppelten bis zum Achtzigfachen des Grundtons; 0 =
+/// er laesst alles (die Grenze liegt ueber der Bandgrenze).
+double glaettenFuer(const Schicht& schicht, double hz, int rate)
+{
+    const double haerte = std::clamp(schicht.anschlagHaerte, 0.0, 1.0);
+    const double grenzeHz = hz * 2.0 * std::pow(40.0, haerte);
+    return grenzeHz >= 0.45 * rate ? 0.0 : std::exp(-2.0 * kPi * grenzeHz / rate);
+}
+
+/// Ohne Gleichanteil und gleich laut wie der Stoss von Classic (Effektivwert 1/sqrt(6)).
+void normiereStoss(std::vector<double>& ring)
+{
+    double mittel = 0.0;
+    for (const double wert : ring) mittel += wert;
+    mittel /= static_cast<double>(ring.size());
+    double quadrate = 0.0;
+    for (double& wert : ring)
+    {
+        wert -= mittel;
+        quadrate += wert * wert;
+    }
+    const double effektiv = std::sqrt(quadrate / static_cast<double>(ring.size()));
+    if (effektiv > 0.0)
+        for (double& wert : ring) wert *= (1.0 / std::sqrt(6.0)) / effektiv;
+}
+
+/// Den Umlauf rechnen: lesen, Verlust und Steifheit, zurueckschreiben. Was in
+/// den Ton geht, sagt `abnahme(y, lese)`: `y` ist die Welle, die am Steg
+/// ankommt; `lese(d)` die Welle, die vor `d` Abtastwerten den Steg verliess
+/// (der eben geschriebene Wert ist d = 0).
+template <class Abnahme>
+void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u, std::vector<double> ring,
+             std::vector<float>& daten, Abnahme abnahme)
+{
+    const auto frames = static_cast<std::int64_t>(daten.size() / 2);
+    Reihe reihe(schicht, rate, false);  // die Saite ueberspringt die Filter wie Classic
+    const std::size_t groesse = u.groesse;
+    const double pegel = kPegel * schicht.laut;
+    const double anstieg = std::max(1.0, schicht.anstiegMs * rate / 1000.0);
+    std::array<double, Umlauf::kAllpaesse> apEin{};
+    std::array<double, Umlauf::kAllpaesse> apAus{};
+    std::size_t schreib = 0;
+    double tief = 0.0;  // das Gedaechtnis des Tiefpasses
+    const auto lese = [&](double d) {
+        double stelle = static_cast<double>(schreib) - d;
+        while (stelle < 0.0) stelle += static_cast<double>(groesse);
+        const auto i = static_cast<std::size_t>(stelle);
+        const double rest = stelle - static_cast<double>(i);
+        return ring[i % groesse] + (ring[(i + 1) % groesse] - ring[i % groesse]) * rest;
+    };
+    for (std::int64_t t = 0; t < frames; ++t)
+    {
+        const double y = lese(u.verzug);
+        // Verlust: y_n = g (1 + a) x_n − a y_(n−1)
+        tief = u.verstaerkung * (1.0 + u.a) * y - u.a * tief;
+        double v = tief;
+        if (u.mitAllpass())
+            for (std::size_t k = 0; k < static_cast<std::size_t>(Umlauf::kAllpaesse); ++k)
+            {
+                const double aus = u.c * v + apEin[k] - u.c * apAus[k];
+                apEin[k] = v;
+                apAus[k] = aus;
+                v = aus;
+            }
+        ring[schreib] = v;
+        const double ton = abnahme(y, lese);
+        schreib = (schreib + 1) % groesse;
+
+        // die Saite klingt von selbst aus; die Huelle nimmt nur Einsatz und Ende (wie Classic)
+        double h = std::min(1.0, static_cast<double>(t) / anstieg);
+        if (t >= huelle.ende)
+        {
+            const double nach = static_cast<double>(t - huelle.ende);
+            h *= std::exp(-nach / huelle.ausklang) * std::max(0.0, 1.0 - nach / static_cast<double>(huelle.aus));
+        }
+        const auto aus = static_cast<float>(reihe.bei(ton, h, hz) * pegel);
+        daten[static_cast<std::size_t>(2 * t)] = aus;
+        daten[static_cast<std::size_t>(2 * t + 1)] = aus;
+    }
+}
+
+/// Die Saite *Extended KS* (Stufe 23c; S-K1 b, S-K3 a): das erweiterte
+/// Karplus-Strong nach Jaffe und Smith (1983). Ein Stoss Rauschen — durch die
+/// Haerte des Anschlags gefiltert und an der Anschlagstelle gekaemmt (die
+/// Teiltoene mit einem Knoten dort fehlen) — laeuft durch den Umlauf
+/// (`entwerfeUmlauf`). Der Ton ist die Welle, die am Steg ankommt.
+void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, double dicke,
+                   std::vector<float>& daten)
+{
+    const Umlauf u = entwerfeUmlauf(schicht, hz, rate, dicke);
+    const double periode = rate / hz;
+    const std::size_t groesse = u.groesse;
     std::vector<double> ring(groesse, 0.0);
 
     // --- der Stoss: dieselbe feste Folge je Tonhoehe wie Classic, durch die Haerte gefiltert
-    // (zweimal ein Tiefpass erster Ordnung, die Grenze vom Doppelten bis zum Achtzigfachen des Grundtons)
     std::uint32_t folge = 12345u + static_cast<std::uint32_t>(hoehe) * 7919u;
-    const double haerte = std::clamp(schicht.anschlagHaerte, 0.0, 1.0);
-    const double grenzeHz = hz * 2.0 * std::pow(40.0, haerte);
-    const double glaetten = grenzeHz >= 0.45 * rate ? 0.0 : std::exp(-2.0 * kPi * grenzeHz / rate);
+    const double glaetten = glaettenFuer(schicht, hz, rate);
     std::vector<double> stoss(groesse, 0.0);
     double eins = 0.0;
     double zwei = 0.0;
@@ -604,62 +698,157 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
     // an der Anschlagstelle gekaemmt: (1 - z^-M), M = Anteil mal Periode, im Umlauf gezaehlt
     const auto kamm = static_cast<std::size_t>(std::max<long long>(
         1, std::llround(std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax) * periode)));
-    double mittel = 0.0;
-    for (std::size_t i = 0; i < groesse; ++i)
-    {
-        ring[i] = stoss[i] - stoss[(i + groesse - kamm % groesse) % groesse];
-        mittel += ring[i];
-    }
-    // ohne Gleichanteil, gleich laut wie der Stoss von Classic (Effektivwert 1/sqrt(6))
-    mittel /= static_cast<double>(groesse);
-    double quadrate = 0.0;
-    for (double& wert : ring)
-    {
-        wert -= mittel;
-        quadrate += wert * wert;
-    }
-    const double effektiv = std::sqrt(quadrate / static_cast<double>(groesse));
-    if (effektiv > 0.0)
-        for (double& wert : ring) wert *= (1.0 / std::sqrt(6.0)) / effektiv;
+    for (std::size_t i = 0; i < groesse; ++i) ring[i] = stoss[i] - stoss[(i + groesse - kamm % groesse) % groesse];
+    normiereStoss(ring);
 
-    const double pegel = kPegel * schicht.laut;
-    const double anstieg = std::max(1.0, schicht.anstiegMs * rate / 1000.0);
-    std::array<double, kAllpaesse> apEin{};
-    std::array<double, kAllpaesse> apAus{};
-    std::size_t schreib = 0;
-    double tief = 0.0;  // das Gedaechtnis des Tiefpasses
-    for (std::int64_t t = 0; t < frames; ++t)
+    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [](double y, const auto&) { return y; });
+}
+
+/// Der Hochpass eines Piezo-Tonabnehmers (S-K5 a): eine kapazitive Quelle an
+/// einem Widerstand, f = 1 / (2 pi R C) — mit 1,5 nF und 1 MOhm 106 Hz
+/// (Zollner, *Physics of the Electric Guitar* 6.2).
+inline constexpr double kPiezoHochpassHz = 106.0;
+
+/// Die Saite *Waveguide* (Stufe 23d; S-K1 a, S-K5 a, S-U3 a): die Saite als
+/// zwei gegenlaeufige Wellen zwischen Steg und Sattel. Gerechnet wird ein
+/// Umlauf (`entwerfeUmlauf`) — eine Welle laeuft vom Steg zum Sattel, kehrt
+/// dort mit umgedrehtem Vorzeichen um und kommt zurueck; am Steg sitzen
+/// Verlust und Steifheit. Die Auslenkung an der Stelle x (Anteil der Saite vom
+/// Steg) ist die Summe beider Wellen dort: die eine vor x · L/2 vom Steg
+/// losgelaufen, die andere vor (2 − x) · L/2 und am Sattel umgedreht.
+///
+/// - **Anschlag:** die Saite wird an der Anschlagstelle zu einem Dreieck
+///   ausgelenkt und losgelassen (beide Wellen je die Haelfte); die Haerte
+///   rundet die Spitze.
+/// - **Abnahme:** ohne Tonabnehmer die Welle am Steg (wie akustisch). Ein
+///   magnetischer Tonabnehmer misst die Geschwindigkeit der Saite an seiner
+///   Stelle (Single coil: eine Stelle; Humbucker: zwei, 18 mm auseinander, zur
+///   Haelfte je); ein Piezo die Kraft am Steg, durch seinen Hochpass. Ein
+///   magnetischer Tonabnehmer ist so bemessen, dass er im ersten Zehntel einer
+///   Sekunde so laut ist wie die Saite am Steg (im Effektivwert) — der Anfang
+///   wird dafuer einmal vorab gerechnet. *Pickup select* nimmt einen oder
+///   beide (zur Haelfte je).
+void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int rate, double dicke, double mensurMm,
+                   std::vector<float>& daten)
+{
+    const Umlauf u = entwerfeUmlauf(schicht, hz, rate, dicke);
+    const double laenge = u.verzug;  // der Umlauf: zweimal die Saite
+    const std::size_t groesse = u.groesse;
+
+    // --- der Anschlag: ein Dreieck mit der Spitze an der Anschlagstelle, die Spitze durch die Haerte gerundet
+    const double ort = std::clamp(schicht.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax);
+    const auto dreieck = [ort](double x) { return x <= ort ? x / ort : (1.0 - x) / (1.0 - ort); };
+    std::vector<double> ring(groesse, 0.0);
+    for (std::size_t alter = 0; alter < groesse; ++alter)
     {
-        double lese = static_cast<double>(schreib) - verzug;
-        while (lese < 0.0) lese += static_cast<double>(groesse);
-        const auto i = static_cast<std::size_t>(lese);
-        const double rest = lese - static_cast<double>(i);
-        const double y = ring[i % groesse] + (ring[(i + 1) % groesse] - ring[i % groesse]) * rest;
-        // Verlust: y_n = g (1 + a) x_n − a y_(n−1)
-        tief = verstaerkung * (1.0 + a) * y - a * tief;
-        double v = tief;
-        if (mitAllpass)
-            for (std::size_t k = 0; k < static_cast<std::size_t>(kAllpaesse); ++k)
+        const double k = std::min(static_cast<double>(alter), laenge);
+        // bis zur halben Laenge die Welle zum Sattel hin, danach die zurueck (am Sattel umgedreht)
+        const double wert = k <= 0.5 * laenge ? 0.5 * dreieck(2.0 * k / laenge) : -0.5 * dreieck(2.0 - 2.0 * k / laenge);
+        ring[(groesse - alter) % groesse] = wert;
+    }
+    if (const double glaetten = glaettenFuer(schicht, hz, rate); glaetten > 0.0)
+    {
+        // im Kreis geglaettet: zwei Runden, damit der Anfang nicht anders ist als das Ende
+        double eins = 0.0;
+        double zwei = 0.0;
+        for (int runde = 0; runde < 2; ++runde)
+            for (std::size_t i = 0; i < groesse; ++i)
             {
-                const double aus = c * v + apEin[k] - c * apAus[k];
-                apEin[k] = v;
-                apAus[k] = aus;
-                v = aus;
+                eins = (1.0 - glaetten) * ring[i] + glaetten * eins;
+                zwei = (1.0 - glaetten) * eins + glaetten * zwei;
+                if (runde == 1) ring[i] = zwei;
             }
-        ring[schreib] = v;
-        schreib = (schreib + 1) % groesse;
-
-        // die Saite klingt von selbst aus; die Huelle nimmt nur Einsatz und Ende (wie Classic)
-        double h = std::min(1.0, static_cast<double>(t) / anstieg);
-        if (t >= huelle.ende)
-        {
-            const double nach = static_cast<double>(t - huelle.ende);
-            h *= std::exp(-nach / huelle.ausklang) * std::max(0.0, 1.0 - nach / static_cast<double>(huelle.aus));
-        }
-        const auto aus = static_cast<float>(reihe.bei(y, h, hz) * pegel);
-        daten[static_cast<std::size_t>(2 * t)] = aus;
-        daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
+    normiereStoss(ring);
+
+    // --- die Abnahme
+    const double mensur = mensurMm > 0.0 ? mensurMm : kMensurVorgabeMm;
+    struct Stelle
+    {
+        double x = 0.0;      ///< Anteil vom Steg
+        double davor = 0.0;  ///< die Auslenkung im Abtastwert davor
+    };
+    struct Platz
+    {
+        AbnehmerArt art = AbnehmerArt::Keiner;
+        std::array<Stelle, 2> stellen{};
+        double piezoDavorEin = 0.0;
+        double piezoDavorAus = 0.0;
+        double faktor = 1.0;  ///< die Bemessung eines magnetischen Tonabnehmers
+    };
+    const auto platz = [&](const Abnehmer& a) {
+        Platz p;
+        p.art = a.art;
+        const double x = std::clamp(a.mmVomSteg / mensur, 0.002, 0.998);
+        p.stellen[0].x = x;
+        p.stellen[1].x = std::clamp(x + kHumbuckerAbstandMm / mensur, 0.002, 0.998);
+        return p;
+    };
+    const bool hals = schicht.abnehmerHals.art != AbnehmerArt::Keiner;
+    const bool steg = schicht.abnehmerSteg.art != AbnehmerArt::Keiner;
+    const bool nimmHals = hals && (schicht.abnehmerWahl != AbnehmerWahl::Steg || !steg);
+    const bool nimmSteg = steg && (schicht.abnehmerWahl != AbnehmerWahl::Hals || !hals);
+    const double piezo = 1.0 / (1.0 + 2.0 * kPi * kPiezoHochpassHz / rate);
+
+    // ein Tonabnehmer an seinem Platz: was er bei jedem Abtastwert abgibt (`y` die Welle am Steg)
+    const auto signal = [&](Platz& p, double y, const auto& lese) {
+        if (p.art == AbnehmerArt::Piezo)
+        {
+            // die Kraft am Steg, durch den Hochpass
+            const double aus = piezo * (p.piezoDavorAus + y - p.piezoDavorEin);
+            p.piezoDavorEin = y;
+            p.piezoDavorAus = aus;
+            return aus;
+        }
+        // magnetisch: die Geschwindigkeit der Saite an der Stelle (bei zwei Spulen je zur Haelfte)
+        const int spulen = p.art == AbnehmerArt::Humbucker ? 2 : 1;
+        double summe = 0.0;
+        for (int s = 0; s < spulen; ++s)
+        {
+            Stelle& stelle = p.stellen[static_cast<std::size_t>(s)];
+            const double jetzt = lese(stelle.x * 0.5 * laenge) - lese((2.0 - stelle.x) * 0.5 * laenge);
+            summe += jetzt - stelle.davor;
+            stelle.davor = jetzt;
+        }
+        return p.faktor * summe / spulen;
+    };
+
+    std::array<Platz, 2> plaetze = {platz(schicht.abnehmerHals), platz(schicht.abnehmerSteg)};
+    if ((nimmHals && plaetze[0].art != AbnehmerArt::Piezo) || (nimmSteg && plaetze[1].art != AbnehmerArt::Piezo))
+    {
+        // die Bemessung: ein magnetischer Tonabnehmer ist im ersten Zehntel einer Sekunde so laut
+        // wie die Saite am Steg (im Effektivwert) — dafuer wird der Anfang einmal vorab gerechnet
+        std::vector<float> anfang(static_cast<std::size_t>(2 * std::max(1, rate / 10)), 0.0f);
+        std::array<Platz, 2> probe = plaetze;
+        std::array<double, 2> quadrate{};
+        std::array<double, 2> spitzen{};
+        double quadrateSteg = 0.0;
+        double spitzeSteg = 0.0;
+        laufeUm(schicht, hz, huelle, rate, u, ring, anfang, [&](double y, const auto& lese) {
+            quadrateSteg += y * y;
+            spitzeSteg = std::max(spitzeSteg, std::abs(y));
+            for (std::size_t k = 0; k < 2; ++k)
+                if (probe[k].art != AbnehmerArt::Keiner)
+                {
+                    const double s = signal(probe[k], y, lese);
+                    quadrate[k] += s * s;
+                    spitzen[k] = std::max(spitzen[k], std::abs(s));
+                }
+            return y;
+        });
+        // so laut wie am Steg — aber zu Beginn hoechstens so spitz (ein tiefer Ton nah am Steg
+        // abgenommen hat Hunderte Teiltoene, und die Geschwindigkeit hebt jeden an)
+        for (std::size_t k = 0; k < 2; ++k)
+            if (plaetze[k].art != AbnehmerArt::Keiner && plaetze[k].art != AbnehmerArt::Piezo && quadrate[k] > 0.0)
+                plaetze[k].faktor = std::min(std::sqrt(quadrateSteg / quadrate[k]), spitzeSteg / spitzen[k]);
+    }
+
+    laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, [&](double y, const auto& lese) {
+        if (!nimmHals && !nimmSteg) return y;  // akustisch: die Welle am Steg
+        const double vomHals = nimmHals ? signal(plaetze[0], y, lese) : 0.0;
+        const double vomSteg = nimmSteg ? signal(plaetze[1], y, lese) : 0.0;
+        return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
+    });
 }
 
 /// Das Rauschen (Stufe 11d): gleichverteilt, aus einem festen Zaehlwerk —
@@ -954,7 +1143,21 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch)
     {
         // seit Fassung 10 (Stufe 23c); eine Saite Classic traegt sie nicht — sie bleibt, wie sie war
-        o[QStringLiteral("stringModel")] = QStringLiteral("extendedKS");
+        const bool wellenleiter = schicht.saitenModell == SaitenModell::Wellenleiter;
+        o[QStringLiteral("stringModel")] = wellenleiter ? QStringLiteral("waveguide") : QStringLiteral("extendedKS");
+        if (wellenleiter)
+        {
+            // Stufe 23d: die Tonabnehmer, nur am Waveguide
+            const auto abnehmer = [](const Abnehmer& a) {
+                return QJsonObject{{QStringLiteral("type"), abnehmerArtName(a.art)},
+                                   {QStringLiteral("position"), a.mmVomSteg}};
+            };
+            o[QStringLiteral("pickupNeck")] = abnehmer(schicht.abnehmerHals);
+            o[QStringLiteral("pickupBridge")] = abnehmer(schicht.abnehmerSteg);
+            o[QStringLiteral("pickupSelect")] = schicht.abnehmerWahl == AbnehmerWahl::Hals   ? QStringLiteral("neck")
+                                                : schicht.abnehmerWahl == AbnehmerWahl::Steg ? QStringLiteral("bridge")
+                                                                                             : QStringLiteral("both");
+        }
         o[QStringLiteral("pluckPosition")] = schicht.anschlagOrt;
         o[QStringLiteral("pluck")] = schicht.anschlagHaerte;
         o[QStringLiteral("ringTime")] = schicht.klingSekunden;
@@ -1022,9 +1225,25 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.stereoXY = wurzel.value(QStringLiteral("shapeStereoXY")).toBool(false);
     neu.rueckwaerts = wurzel.value(QStringLiteral("shapeReverse")).toBool(false);
     // seit Fassung 10 (Stufe 23c); fehlt `stringModel` oder ist es unbekannt: Classic
-    neu.saitenModell = wurzel.value(QStringLiteral("stringModel")).toString() == QLatin1String("extendedKS")
-                           ? SaitenModell::ErweiterterKs
-                           : SaitenModell::Klassisch;
+    const QString modell = wurzel.value(QStringLiteral("stringModel")).toString();
+    neu.saitenModell = modell == QLatin1String("extendedKS")  ? SaitenModell::ErweiterterKs
+                       : modell == QLatin1String("waveguide") ? SaitenModell::Wellenleiter
+                                                              : SaitenModell::Klassisch;
+    // Stufe 23d: die Tonabnehmer; fehlen sie, gelten die Vorgaben
+    const auto abnehmer = [&](const char* schluessel, const Abnehmer& vorgabeAbnehmer) {
+        const QJsonObject o = wurzel.value(QLatin1String(schluessel)).toObject();
+        Abnehmer a;
+        a.art = abnehmerArtAusName(o.value(QStringLiteral("type")).toString());
+        a.mmVomSteg = inGrenzen(o.value(QStringLiteral("position")).toDouble(vorgabeAbnehmer.mmVomSteg), 0.0,
+                                kMensurMaxMm, vorgabeAbnehmer.mmVomSteg);
+        return a;
+    };
+    neu.abnehmerHals = abnehmer("pickupNeck", vorgabe.abnehmerHals);
+    neu.abnehmerSteg = abnehmer("pickupBridge", vorgabe.abnehmerSteg);
+    const QString wahl = wurzel.value(QStringLiteral("pickupSelect")).toString();
+    neu.abnehmerWahl = wahl == QLatin1String("neck")     ? AbnehmerWahl::Hals
+                       : wahl == QLatin1String("bridge") ? AbnehmerWahl::Steg
+                                                         : AbnehmerWahl::Beide;
     neu.anschlagOrt = zahl("pluckPosition", vorgabe.anschlagOrt, kAnschlagOrtMin, kAnschlagOrtMax);
     neu.anschlagHaerte = zahl("pluck", vorgabe.anschlagHaerte, 0.0, 1.0);
     neu.klingSekunden = zahl("ringTime", vorgabe.klingSekunden, kKlingSekundenMin, kKlingSekundenMax);
@@ -1150,6 +1369,7 @@ QJsonObject alsJson(const Instrument& instrument)
         saiten[QStringLiteral("open")] = leer;
         saiten[QStringLiteral("capo")] = instrument.saiten.capo;
         saiten[QStringLiteral("stringChoice")] = saitenwahlName(instrument.saiten.wahl);
+        if (instrument.saiten.mensurMm > 0.0) saiten[QStringLiteral("scale")] = instrument.saiten.mensurMm;  // Stufe 23d
         o[QStringLiteral("strings")] = saiten;
     }
     return o;
@@ -1199,6 +1419,7 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
         if (ton.isDouble()) neu.saiten.leer.push_back(ton.toInt());
     neu.saiten.capo = saiten.value(QStringLiteral("capo")).toInt(0);
     neu.saiten.wahl = saitenwahlAusName(saiten.value(QStringLiteral("stringChoice")).toString());
+    neu.saiten.mensurMm = saiten.value(QStringLiteral("scale")).toDouble(0.0);
     richteSaiten(neu.saiten);
     instrument = std::move(neu);
     return true;
@@ -1621,6 +1842,9 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
         if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::ErweiterterKs)
             rechneSaiteKs(schicht, ton, hz, huelle, rate, std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke, eine);
+        else if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::Wellenleiter)
+            rechneSaiteWg(schicht, hz, huelle, rate, std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke,
+                          instrument.saiten.mensurMm, eine);
         else if (schicht.schwingung == Schwingung::Saite)
             rechneSaite(schicht, ton, hz, huelle, rate, eine);  // Classic, unberuehrt (S-K2 b)
         else if (schicht.schwingung == Schwingung::Sample)

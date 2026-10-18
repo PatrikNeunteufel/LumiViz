@@ -15,6 +15,8 @@ void richteSaiten(Saitensatz& saiten)
     if (saiten.leer.size() > static_cast<std::size_t>(kSaitenMax)) saiten.leer.resize(kSaitenMax);
     for (int& ton : saiten.leer) ton = std::clamp(ton, 0, 127);
     saiten.capo = std::clamp(saiten.capo, 0, kCapoMax);
+    // 0 = nicht gesetzt (auch, was keine Zahl ist), sonst in den Grenzen
+    saiten.mensurMm = saiten.mensurMm > 0.0 ? std::clamp(saiten.mensurMm, kMensurMinMm, kMensurMaxMm) : 0.0;
     if (saiten.wahl != Saitenwahl::Hand) saiten.wahl = Saitenwahl::JeKlang;
 }
 

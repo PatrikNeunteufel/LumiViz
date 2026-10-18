@@ -24,6 +24,8 @@
 #include "loop/Instrument.hpp"
 #include "loop/Saiten.hpp"
 
+#include "SaitenMessung.hpp"  // betrag, spitze, cent, db, teilton
+
 #include <QDir>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -38,8 +40,8 @@ using namespace lumi::loop;
 namespace
 {
 
-constexpr int kRate = 44100;
-constexpr double kPi = 3.14159265358979323846;
+using namespace saitentest;
+constexpr int kRate = kSaitenRate;
 
 /// Ein Instrument mit einer Saite *Extended KS*; `stelle` aendert die Schicht.
 template <class F>
@@ -61,59 +63,6 @@ Instrument ksSaite(F stelle)
 Instrument ksSaite()
 {
     return ksSaite([](Schicht&) {});
-}
-
-/// Der Betrag bei `hz` im Fenster ab `vonS`, `langS` lang (linke Seite, Hann-Fenster).
-double betrag(const Klang& klang, double hz, double vonS, double langS)
-{
-    const auto von = static_cast<std::int64_t>(vonS * kRate);
-    const auto lang = static_cast<std::int64_t>(langS * kRate);
-    double re = 0.0;
-    double im = 0.0;
-    for (std::int64_t n = 0; n < lang && von + n < klang.frames(); ++n)
-    {
-        const double fenster = 0.5 - 0.5 * std::cos(2.0 * kPi * n / (lang - 1));
-        const double x = klang.daten[static_cast<std::size_t>(2 * (von + n))] * fenster;
-        const double phase = 2.0 * kPi * hz * n / kRate;
-        re += x * std::cos(phase);
-        im -= x * std::sin(phase);
-    }
-    return 2.0 * std::sqrt(re * re + im * im) / (0.5 * lang);
-}
-
-/// Die Frequenz des groessten Betrags um `ungefaehr` (± `centWeit`), in Schritten von 0,25 Cent.
-double spitze(const Klang& klang, double ungefaehr, double centWeit, double vonS = 0.2, double langS = 1.0)
-{
-    double beste = ungefaehr;
-    double besterBetrag = -1.0;
-    for (double cent = -centWeit; cent <= centWeit; cent += 0.25)
-    {
-        const double hz = ungefaehr * std::exp2(cent / 1200.0);
-        const double b = betrag(klang, hz, vonS, langS);
-        if (b > besterBetrag)
-        {
-            besterBetrag = b;
-            beste = hz;
-        }
-    }
-    return beste;
-}
-
-double cent(double hz, double soll)
-{
-    return 1200.0 * std::log2(hz / soll);
-}
-
-double db(double verhaeltnis)
-{
-    return 20.0 * std::log10(std::max(verhaeltnis, 1e-12));
-}
-
-/// Der Betrag des k-ten Teiltons zu Beginn (0,05 … 0,25 s), an seiner gemessenen Stelle.
-double teilton(const Klang& klang, double f0, int k)
-{
-    const double hz = spitze(klang, f0 * k, 40.0, 0.05, 0.2);
-    return betrag(klang, hz, 0.05, 0.2);
 }
 
 }  // namespace

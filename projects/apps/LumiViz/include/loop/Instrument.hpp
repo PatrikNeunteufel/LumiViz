@@ -62,6 +62,61 @@ enum class SaitenModell : int
 {
     Klassisch = 0,
     ErweiterterKs = 1,
+    /// Waveguide (Stufe 23d, S-K1 a): die Saite als zwei gegenlaeufige Wellen
+    /// zwischen Sattel und Steg — man kann sie an jeder Stelle abnehmen.
+    Wellenleiter = 2,
+};
+
+/// Die Bauart eines Tonabnehmers (Stufe 23d, S-K5 a).
+enum class AbnehmerArt : int
+{
+    Keiner = 0,     ///< None (acoustic): kein Tonabnehmer an diesem Platz
+    SingleCoil = 1, ///< eine Spule: tastet an einer Stelle ab
+    Humbucker = 2,  ///< zwei Spulen, `kHumbuckerAbstandMm` auseinander
+    Piezo = 3,      ///< unter dem Steg: nimmt die Kraft am Steg ab
+};
+
+/// Pickup select: welcher Tonabnehmer klingt.
+enum class AbnehmerWahl : int
+{
+    Hals = 0,   ///< Neck
+    Beide = 1,  ///< Both
+    Steg = 2,   ///< Bridge
+};
+
+/// Der Abstand der beiden Spulen eines Humbuckers (S-U3 a; Zollner, *Physics
+/// of the Electric Guitar* 5.4.4: Gibson-Humbucker 18 bis 19 mm).
+inline constexpr double kHumbuckerAbstandMm = 18.0;
+
+/// Wie die Bauart in einer Datei steht: `none`, `singleCoil`, `humbucker`, `piezo`.
+[[nodiscard]] inline QLatin1String abnehmerArtName(AbnehmerArt art)
+{
+    switch (art)
+    {
+    case AbnehmerArt::SingleCoil: return QLatin1String("singleCoil");
+    case AbnehmerArt::Humbucker: return QLatin1String("humbucker");
+    case AbnehmerArt::Piezo: return QLatin1String("piezo");
+    case AbnehmerArt::Keiner: break;
+    }
+    return QLatin1String("none");
+}
+/// Fehlt die Bauart oder ist sie unbekannt: keiner.
+[[nodiscard]] inline AbnehmerArt abnehmerArtAusName(const QString& name)
+{
+    if (name == QLatin1String("singleCoil")) return AbnehmerArt::SingleCoil;
+    if (name == QLatin1String("humbucker")) return AbnehmerArt::Humbucker;
+    if (name == QLatin1String("piezo")) return AbnehmerArt::Piezo;
+    return AbnehmerArt::Keiner;
+}
+
+/// Ein Tonabnehmer an seinem Platz (Neck oder Bridge).
+struct Abnehmer
+{
+    AbnehmerArt art = AbnehmerArt::Keiner;
+    /// Position: so weit vom Steg, in mm (bei Piezo zaehlt sie nicht).
+    double mmVomSteg = 0.0;
+
+    [[nodiscard]] bool operator==(const Abnehmer&) const = default;
 };
 
 /// Die Grenzen der Regler der neuen Saite (Stufe 23c).
@@ -181,6 +236,13 @@ struct Schicht
     /// unterscheiden — eine tiefere Saite ist dicker: dunkler und steifer.
     /// 0 = alle gleich; ohne Saiten am Instrument wirkt es nicht.
     double saitenUnterschied = 0.5;
+    // --- nur Waveguide: die Tonabnehmer (Stufe 23d, S-K5 a, S-U3 a) ---
+    /// Neck und Bridge; beide *None* = der Ton wird am Steg abgenommen, wie
+    /// eine akustische Saite. Vorgaben: die Lagen aus Zollner 2.8.2 (16 cm und
+    /// 4 cm vom Steg).
+    Abnehmer abnehmerHals{AbnehmerArt::Keiner, 160.0};
+    Abnehmer abnehmerSteg{AbnehmerArt::Keiner, 40.0};
+    AbnehmerWahl abnehmerWahl = AbnehmerWahl::Beide;
     double laut = 1.0;              ///< die Lautstaerke der Schicht
     /// Pan, -1 (links) … 1 (rechts); 0 = Mitte (Stufe 18, Entscheid Z3 a).
     /// Dasselbe Gesetz wie an Spur und Muster (Rechenkern): links

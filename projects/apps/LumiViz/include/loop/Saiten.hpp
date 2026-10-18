@@ -67,12 +67,29 @@ struct Saitensatz
     int capo = 0;  ///< 0 … `kCapoMax`: so viele Buende hoeher klingt jede leere Saite
     /// Die Regel, die ein neues Muster dieses Instruments bekommt (S-M2c a).
     Saitenwahl wahl = Saitenwahl::JeKlang;
+    /// Scale: die Mensur, die schwingende Laenge vom Sattel zum Steg, in mm
+    /// (Stufe 23d, Entscheid S-U3 a); 0 = nicht gesetzt — dann gilt
+    /// `kMensurVorgabeMm`. Lagen am Instrument (Tonabnehmer) stehen in mm vom
+    /// Steg und werden mit ihr zum Anteil der Saite.
+    double mensurMm = 0.0;
 
     [[nodiscard]] bool istSaiteninstrument() const { return !leer.empty(); }
     [[nodiscard]] int anzahl() const { return static_cast<int>(leer.size()); }
 
     [[nodiscard]] bool operator==(const Saitensatz&) const = default;
 };
+
+/// Die Grenzen der Mensur, in mm; und was gilt, solange keine gesetzt ist
+/// (von Claude gesetzt: eine Gitarre mit 648 mm, bis die Vorlagen ihre eigene
+/// mit Quelle tragen — S-U3 a).
+inline constexpr double kMensurMinMm = 100.0;
+inline constexpr double kMensurMaxMm = 1200.0;
+inline constexpr double kMensurVorgabeMm = 648.0;
+/// Die Mensur, mit der gerechnet wird: die gesetzte oder die Vorgabe.
+[[nodiscard]] inline double mensurVon(const Saitensatz& saiten)
+{
+    return saiten.mensurMm > 0.0 ? saiten.mensurMm : kMensurVorgabeMm;
+}
 
 /// Der Bund, in dem `hoehe` auf `saite` liegt — gezaehlt ab dem Capo (0 = die
 /// leere Saite mit Capo). Greifbar ist er in 0 … `kBuendeMax`.
