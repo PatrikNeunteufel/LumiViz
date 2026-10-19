@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Nylon Guitar",
     "category": "plucked",
     "genres": ["Bossa Nova", "Jazz Waltz", "Reggaeton"],
@@ -34,7 +34,13 @@
             "pluck": 0.35,
             "pluckPosition": 0.18,
             "highDamping": 0.5,
-            "stiffness": 0.05
+            "stiffness": 0.05,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         },
         {
             "name": "Warmth",
@@ -63,6 +69,10 @@
         "open": [40, 45, 50, 55, 59, 64],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 650
+        "scale": 650,
+        "strum": {
+            "spread": 8.0,
+            "hand": "halfBeat"
+        }
     }
 }

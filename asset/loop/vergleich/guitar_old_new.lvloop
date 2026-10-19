@@ -240,7 +240,12 @@
                 [62, 2, 71, 0.8]
             ],
             "pan": 0.3,
-            "volume": 0.9
+            "volume": 0.9,
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "bars": 4,
@@ -308,6 +313,6 @@
         "artist": "LumiViz",
         "title": "Instrument demo — old, then new"
     },
-    "version": 2,
+    "version": 9,
     "volume": 0.35
 }

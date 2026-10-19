@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 9,
     "bpm": 84,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -73,7 +73,12 @@
                 [52, 4, 40, 0.8],
                 [56, 4, 43, 0.8],
                 [60, 4, 40, 0.8]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Harp",

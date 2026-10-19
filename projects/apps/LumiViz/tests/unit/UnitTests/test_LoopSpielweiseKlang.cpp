@@ -262,6 +262,54 @@ TEST_SUITE("LoopSpielweiseKlang")
         }
     }
 
+    TEST_CASE("Loop Spielweise Klang: Tapping — Tap level gilt bei 220 Hz, tiefer lauter (S-W18 a)")
+    {
+        // der Faktor: Tap level · √(220 Hz / f1), hoechstens 1,5
+        CHECK(tappingFaktor(0.75, 220.0) == doctest::Approx(0.75));
+        CHECK(tappingFaktor(0.75, 110.0) == doctest::Approx(0.75 * std::sqrt(2.0)));
+        CHECK(tappingFaktor(0.75, 440.0) == doctest::Approx(0.75 / std::sqrt(2.0)));
+        CHECK(tappingFaktor(1.0, tonHz(28)) == doctest::Approx(kTappingFaktorMax));  // E1: 2,31 ohne Grenze
+        CHECK(tappingFaktor(0.0, 55.0) == 0.0);
+        CHECK(tappingFaktor(2.0, 220.0) == doctest::Approx(1.0));  // Tap level in 0 … 1
+
+        // im gerechneten Ton: am Bass E1 liegen Tap level 0,9 und 1,0 beide an der Grenze — derselbe
+        // Ton; an A3 (220 Hz) nicht. So wirkt die Tonhoehe der Saite, nicht nur Tap level.
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            Instrument bass = saite(modell);
+            bass.saiten = Saitensatz{{28, 33, 38, 43}, 0, Saitenwahl::JeKlang, 864.0};
+            TonAngabe tief = ton(28, 0, 500);
+            tief.artikulationen = kTapping;
+            bass.schichten[0].tappingLaut = 1.0;
+            const Klang voll = rendereTon(bass, tief, kRate);
+            bass.schichten[0].tappingLaut = 0.9;
+            CHECK(rendereTon(bass, tief, kRate).daten == voll.daten);
+
+            Instrument gitarre = saite(modell);
+            TonAngabe a3 = ton(57, 2, 500);
+            a3.artikulationen = kTapping;
+            gitarre.schichten[0].tappingLaut = 1.0;
+            const Klang a3Voll = rendereTon(gitarre, a3, kRate);
+            gitarre.schichten[0].tappingLaut = 0.9;
+            CHECK(rendereTon(gitarre, a3, kRate).daten != a3Voll.daten);
+
+            // A2 (110 Hz) mit Tap level 0,5: der Faktor 0,707 — so laut wie mit 0,707 bei 1 mal 0,707
+            Instrument mitte = saite(modell);
+            TonAngabe a2 = ton(45, 1, 500);
+            a2.artikulationen = kTapping;
+            mitte.schichten[0].tappingLaut = 1.0 / std::sqrt(2.0);  // Faktor 1
+            const Klang eins = rendereTon(mitte, a2, kRate);
+            mitte.schichten[0].tappingLaut = 0.5;
+            const Klang halb = rendereTon(mitte, a2, kRate);
+            REQUIRE(halb.daten.size() == eins.daten.size());
+            double abweichung = 0.0;
+            for (std::size_t i = 0; i < eins.daten.size(); ++i)
+                abweichung = std::max(abweichung, std::abs(halb.daten[i] - std::sqrt(0.5) * eins.daten[i]));
+            CHECK(abweichung < 1e-6);
+        }
+    }
+
     TEST_CASE("Loop Spielweise Klang: Hoerproben (LUMIVIZ_24C_WAV)")
     {
         const QString ziel = qEnvironmentVariable("LUMIVIZ_24C_WAV");

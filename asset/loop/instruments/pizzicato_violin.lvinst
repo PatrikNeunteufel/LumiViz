@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Pizzicato Violin",
     "category": "plucked",
     "genres": ["Classical"],
@@ -33,13 +33,23 @@
             "pluck": 0.5,
             "pluckPosition": 0.3,
             "ringTime": 0.8,
-            "highDamping": 0.6
+            "highDamping": 0.6,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         }
     ],
     "strings": {
         "open": [55, 62, 69, 76],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 327
+        "scale": 327,
+        "strum": {
+            "spread": 7.0,
+            "hand": "halfBeat"
+        }
     }
 }

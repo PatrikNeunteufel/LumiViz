@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 76,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -121,7 +121,12 @@
                 [60, 2, 62, 0.8],
                 [60, 2, 65, 0.8],
                 [60, 2, 69, 0.8]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Bubble",

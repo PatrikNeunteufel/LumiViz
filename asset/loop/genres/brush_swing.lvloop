@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 132,
     "beatsPerBar": 4,
     "stepsPerBeat": 3,
@@ -110,7 +110,12 @@
                 [39, 3, 49, 0.8],
                 [42, 3, 52, 0.8],
                 [45, 3, 43, 0.8]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         }
     ],
     "channels": [

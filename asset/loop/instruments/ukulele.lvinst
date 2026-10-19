@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Ukulele",
     "category": "plucked",
     "genres": ["World"],
@@ -34,13 +34,23 @@
             "pluckPosition": 0.25,
             "ringTime": 1.2,
             "highDamping": 0.4,
-            "stiffness": 0.05
+            "stiffness": 0.05,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         }
     ],
     "strings": {
         "open": [67, 60, 64, 69],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 381
+        "scale": 381,
+        "strum": {
+            "spread": 9.5,
+            "hand": "halfBeat"
+        }
     }
 }

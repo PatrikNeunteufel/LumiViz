@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 104,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -94,7 +94,12 @@
                 [60, 1, 50, 0.8],
                 [62, 1, 52, 0.8],
                 [63, 1, 55, 0.7]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 12.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Clav",
@@ -200,7 +205,12 @@
                 [60, 1, 81, 1.0],
                 [61, 1, 84, 0.7],
                 [62, 1, 81, 0.7]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Horns",

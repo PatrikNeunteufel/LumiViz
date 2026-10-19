@@ -2131,6 +2131,12 @@ double tonHz(int hoehe)
     return 440.0 * std::exp2((hoehe - 69) / 12.0);
 }
 
+double tappingFaktor(double tapLevel, double saiteHz)
+{
+    const double bezug = std::sqrt(kTappingBezugHz / std::max(saiteHz, 1.0));
+    return std::min(std::clamp(tapLevel, 0.0, 1.0) * bezug, kTappingFaktorMax);
+}
+
 QString tonName(int hoehe)
 {
     static const std::array<const char*, 12> kNamen = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
@@ -2188,8 +2194,8 @@ SaitenSpiel saitenSpielFuer(const Instrument& instrument, const Schicht& schicht
     if (teilton > 1 && schicht.knotenDruck > 0.0)
         spiel.art.daempfer.push_back({1.0 - 1.0 / teilton, std::clamp(schicht.knotenDruck, 0.0, 1.0)});
     spiel.art.tapping = (angabe->artikulationen & kTapping) != 0;
-    if (spiel.art.tapping)
-        spiel.faktor = std::clamp(schicht.tappingLaut, 0.0, 1.0);  // ein getippter Ton hat keine Richtung
+    if (spiel.art.tapping)  // ein getippter Ton hat keine Richtung
+        spiel.faktor = tappingFaktor(schicht.tappingLaut, tonHz(spiel.ton));
     else if (angabe->richtung == Richtung::Auf)
         spiel.faktor = -std::clamp(schicht.aufschlagLaut, 0.0, 1.0);
     return spiel;

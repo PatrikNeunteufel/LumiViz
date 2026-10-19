@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Finger Bass",
     "category": "bass",
     "genres": ["Classical", "Jazz", "Rock", "World"],
@@ -43,7 +43,13 @@
                 "position": 40
             },
             "pickupSelect": "both",
-            "cable": 500
+            "cable": 500,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.37,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         },
         {
             "name": "Wood",
@@ -72,6 +78,10 @@
         "open": [28, 33, 38, 43],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 864
+        "scale": 864,
+        "strum": {
+            "spread": 12.5,
+            "hand": "halfBeat"
+        }
     }
 }

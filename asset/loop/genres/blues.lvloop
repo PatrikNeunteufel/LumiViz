@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 96,
     "beatsPerBar": 4,
     "stepsPerBeat": 3,
@@ -86,7 +86,12 @@
                 [44, 1, 40, 0.6],
                 [45, 2, 42, 0.9],
                 [47, 1, 42, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Guitar 1",
@@ -161,7 +166,12 @@
                 [45, 2, 54, 0.8],
                 [47, 1, 45, 0.6],
                 [47, 1, 54, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Organ 1",
@@ -223,7 +233,12 @@
                 [44, 1, 40, 0.6],
                 [45, 2, 42, 0.9],
                 [47, 1, 42, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Guitar 2",
@@ -298,7 +313,12 @@
                 [45, 2, 54, 0.8],
                 [47, 1, 45, 0.6],
                 [47, 1, 54, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Organ 2",
@@ -360,7 +380,12 @@
                 [44, 1, 47, 0.6],
                 [45, 2, 49, 0.9],
                 [47, 1, 49, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Guitar 3",
@@ -435,7 +460,12 @@
                 [45, 2, 61, 0.8],
                 [47, 1, 52, 0.6],
                 [47, 1, 61, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Organ 3",

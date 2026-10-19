@@ -19,6 +19,11 @@ Dazu sechs neue (S-G3 a): Jazz Guitar, Finger Bass, Ukulele, Drop D Guitar,
 Pizzicato Violin, Piezo Guitar — gebaut aus `make_examples.schicht`, Werte in
 `NEU`.
 
+Seit S136 (Stufe 24f, S-W16 a bis S-W21 a) schreibt es die Instrumente mit Tuning in
+Fassung 11 mit den Vorgaben fuer Strum und *Playing* (`SPREAD_MS`, `MUTE`) und gibt zum
+Schluss jedem Muster der mitgelieferten Loops mit einem Saiteninstrument dessen Strum
+(`strum_in_loops`).
+
 **Reihenfolge:** zuerst `make_saiten_loops.py` (die Beispiel-Loops, aus denen die
 Genres gezaehlt werden), dann dieses Skript.
 
@@ -125,6 +130,65 @@ NEU = {
 }
 
 
+# --- Spielweisen, Stufe 24f (S136; docs/audio/Saiten_Konzept.md S-W16 a bis S-W20 a, §6c) -----------
+# Spread = 8 ms x Saitenabstand am Anschlagort / 11,17 mm (Freire 2018 an der Yamaha CG182S), je
+# Bauart; welche Bauart je Instrument gilt, hat Claude nach Koerper und Tonabnehmern zugeordnet.
+SPREAD_MS = {
+    "nylon_guitar": 8.0,                                    # Klassik
+    "guitar": 7.5, "piezo_guitar": 7.5,                     # Steelstring (Martin)
+    "clean_guitar": 7.0, "muted_guitar": 7.0,               # Strat, 2-Punkt-Tremolo (S-W20 a)
+    "overdrive_guitar": 7.0, "drop_d_guitar": 7.0,          # Les Paul
+    "jazz_guitar": 7.0,                                     # Archtop
+    "finger_bass": 12.5, "slap_bass": 12.5,                 # E-Bass
+    "upright_bass": 17.5,                                   # Kontrabass (Blog, S-W19 a)
+    "ukulele": 9.5,                                         # Konzert
+    "pizzicato_violin": 7.0,                                # Violine (Forum, S-W19 a)
+}
+# Mute: die Baesse nach IDMT-SMT-Bass (S-W17 a; der Upright uebertragen), sonst die Vorgabe
+MUTE = {"finger_bass": 0.37, "slap_bass": 0.37, "upright_bass": 0.37}
+# die Vorgaben des Programms (include/loop/Instrument.hpp, Spielweise.hpp) — S-W11 a: immer schreiben
+PLAYING = {"upLevel": 1.0, "mute": 0.6, "tapLevel": 0.75, "touch": 0.3}
+STRUM = {"spread": 8.0, "hand": "halfBeat"}
+
+
+def spielweisen(name, daten):
+    """Fassung 11: `strum` unter `strings`, `playing` an jeder Saite Extended KS / Waveguide."""
+    daten["version"] = max(11, int(daten.get("version", 1)))
+    if "strings" in daten:
+        daten["strings"] = dict(daten["strings"], strum=dict(STRUM, spread=SPREAD_MS[name]))
+    for schicht in daten["layers"]:
+        if schicht.get("waveform") == "string" and schicht.get("stringModel") in ("extendedKS", "waveguide"):
+            schicht["playing"] = dict(PLAYING, mute=MUTE.get(name, PLAYING["mute"]))
+    return daten
+
+
+def strum_in_loops():
+    """S-W21 a: jedes Muster eines mitgelieferten Loops mit Saiteninstrument bekommt dessen Vorgaben
+    (String choice und Strum) wie ein neues Muster im Programm (`uebernimmVorgaben`); der Loop dann in
+    Fassung 9. Mitgeliefert ist, was `asset/Asset.cmake` nennt: `*_demo`, `genres/`, `vergleich/`."""
+    vorgaben = {}
+    for datei in INSTRUMENTE.glob("*.lvinst"):
+        saiten = lies(datei).get("strings")
+        if saiten and "strum" in saiten:
+            vorgaben[datei.stem] = (saiten.get("stringChoice", "perChord"), saiten["strum"])
+    dateien = (sorted(HIER.glob("*_demo.lvloop")) + sorted((HIER / "genres").glob("*.lvloop"))
+               + sorted((HIER / "vergleich").glob("*.lvloop")))
+    zahl = 0
+    for datei in dateien:
+        loop = lies(datei)
+        geaendert = False
+        for muster in loop.get("patterns", []):
+            vorgabe = vorgaben.get(muster.get("instrument")) if muster.get("kind") == "instrument" else None
+            if vorgabe is not None:
+                muster["stringChoice"], muster["strum"] = vorgabe[0], copy.deepcopy(vorgabe[1])
+                geaendert = True
+        if geaendert:
+            loop["version"] = max(9, int(loop.get("version", 2)))
+            schreibe(datei, loop)
+            zahl += 1
+    print(zahl, "Loops mit Strum der Instrumente")
+
+
 def baue_neu(name, titel, tuning, saite, huelle, level):
     schichten = [schicht("String", "string", **huelle)]
     schichten[0].update(copy.deepcopy(saite))
@@ -166,11 +230,15 @@ def main():
                 schicht.update(copy.deepcopy(saite))
             elif schicht.get("name") in ANDERE.get(name, {}):
                 schicht.update(copy.deepcopy(ANDERE[name][schicht["name"]]))
+        if tuning is not None:
+            spielweisen(name, neu)  # das Clavinet hat keine Tuning: es bleibt in Fassung 10
         schreibe(INSTRUMENTE / f"{name}.lvinst", ergaenze(name, neu, genres))
         print(f"{name}: level {alt.get('level', 1.0)} -> {neu['level']}")
     for name, (titel, tuning, saite, huelle, level) in NEU.items():
-        schreibe(INSTRUMENTE / f"{name}.lvinst", ergaenze(name, baue_neu(name, titel, tuning, saite, huelle, level), genres))
+        daten = spielweisen(name, baue_neu(name, titel, tuning, saite, huelle, level))
+        schreibe(INSTRUMENTE / f"{name}.lvinst", ergaenze(name, daten, genres))
         print(f"{name}: neu, level {level}")
+    strum_in_loops()
 
 
 if __name__ == "__main__":

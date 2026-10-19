@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 120,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -180,7 +180,12 @@
                 [59, 1, 67, 0.7],
                 [62, 1, 64, 0.7],
                 [62, 1, 67, 0.7]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Keys",

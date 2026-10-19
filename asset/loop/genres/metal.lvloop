@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 160,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -126,7 +126,12 @@
                 [61, 1, 50, 0.7],
                 [62, 1, 53, 1.0],
                 [63, 1, 50, 0.7]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Bass",

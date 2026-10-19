@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Overdrive Guitar",
     "category": "plucked",
     "genres": ["Metal", "Rock"],
@@ -40,7 +40,13 @@
                 "position": 41
             },
             "pickupSelect": "bridge",
-            "cable": 500
+            "cable": 500,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         },
         {
             "name": "Fifth",
@@ -75,7 +81,13 @@
                 "position": 41
             },
             "pickupSelect": "bridge",
-            "cable": 500
+            "cable": 500,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         },
         {
             "name": "Octave",
@@ -110,13 +122,23 @@
                 "position": 41
             },
             "pickupSelect": "bridge",
-            "cable": 500
+            "cable": 500,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.6,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         }
     ],
     "strings": {
         "open": [40, 45, 50, 55, 59, 64],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 648
+        "scale": 648,
+        "strum": {
+            "spread": 7.0,
+            "hand": "halfBeat"
+        }
     }
 }

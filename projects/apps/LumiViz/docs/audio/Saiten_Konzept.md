@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.29.0
-> **Datum:** 2026-10-18 (Session 135; S-W13 a, Stufe 24e)
+> **Version:** 0.30.0
+> **Datum:** 2026-10-19 (Session 136; S-W16 a, Stufe 24f)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -547,6 +547,73 @@ einer Saite dasselbe wie Down). Ersetzt den Punkt aus S-W5 a J. Verworfen: b
 S-W10 a). **Von Claude gesetzt, nicht vorgelegt:** schlagen an einem Schritt
 nur getippte Noten an, steht dort „T“ statt eines Pfeils (ein getippter Ton hat
 keine Richtung, §5o).
+
+✅ **S-W16 a** (Patrik S136, Stufe 24f): ***Spread* je mitgeliefertem
+Instrument = Saitenabstand ÷ Geschwindigkeit der Hand.** Die Geschwindigkeit
+aus Freire 2018 (Table 6, S. 547: 8 ms je Saite an der Nylongitarre) und dem
+Saitenabstand der Nylongitarre; die feste Geschwindigkeit nach Barbancho 2014
+(S. 3). Die Saitenabstände am Anschlagort je Bauart (Nylon, Steel, E-Gitarre,
+Bass, Ukulele, Violine) werden recherchiert und mit Quelle in §6 eingetragen;
+gerundet auf 0,5 ms. Findet sich für eine Bauart kein belegter Abstand, bleibt
+dort 8 ms, vermerkt. **Der Wert ist nur die Vorgabe** (Patrik: „kann aber
+manuell angepasst werden“) — im Creator (Zeile Strum, N), am Muster (H) und je
+Akkord (L) wie bisher verstellbar. Verworfen: b (8 ms für alle — überträgt eine
+Messung an einer Bauart still auf andere Abstände), c (Bässe und Violine
+zugleich — eine Spielregel, keine Größe des Instruments).
+
+✅ **S-W17 a** (Patrik S136, Stufe 24f): ***Mute* der Bässe 0,37.** Finger
+Bass und Slap Bass nach IDMT-SMT-Bass (drei E-Bässe, MU gegen FS, 20 Paare;
+gedämpft nach Abeßer 2013, S. 1, „with the inner hand side“): je Paar aus T60 =
+6,91 / (6,91/T_FS + 2 f1 ρ sin²(π · 40 mm / L)), L = 864 mm · 2^(−Bund/12),
+m = √ρ — Median **0,37** (Quartile 0,32 / 0,37 / 0,45, Spanne 0,19–0,63;
+nachgerechnet S136). Der Upright Bass bekommt denselben Wert, **übertragen vom
+E-Bass** (nicht gemessen; der E-Bass ist ihm näher als die Gitarre). Die
+Gitarren behalten 0,6 (§5o). **Korrektur:** der Recherche-Bericht 24c nannte
+für den IDMT-Bass m ≈ 0,47 ohne Rechenweg; mit der Formel des Programms sind es
+0,37. Verworfen: b (Upright 0,6 — überträgt das fernere Instrument), c (alle
+0,6 — wirft weg, dass die Hand am Bass leichter liegt).
+
+✅ **S-W18 a** (Patrik S136, Stufe 24f): ***Tap level* gilt bei 220 Hz** (wie
+*Ring time*); ein getippter Ton bekommt Tap level · √(220 Hz / f1), f1 die
+Frequenz der schwingenden Saite (`tappingFaktor`, `kTappingBezugHz`), nach oben
+begrenzt bei 1,5 (+3,5 dB; `kTappingFaktorMax`, von Claude gesetzt — ohne Grenze
+läge E1 am Bass bei 1,7, und diese Zahl hängt an der unbelegten Saitenlage). Die
+Herleitung (Bericht 24c §3.2): Energie des Tippens gegen den Anschlag ≈ 127/f1,
+also Amplitude ∝ f1^−½ — die Abhängigkeit folgt aus der Form der Rechnung, nicht
+aus den angenommenen Zahlen. Alle Instrumente behalten 0,75. Verworfen: b (ein
+fester Wert je Instrument für seine Lage — innerhalb eines Instruments bliebe
+der Fehler, E2 gegen E5 9 dB), c (alles fest bis zu eigenen Aufnahmen).
+
+✅ **S-W19 a** (Patrik S136): **Kontrabass 17,5 ms, Violine 7,0 ms**, obwohl die
+Abstände nur aus einem Blog (No Treble) und einem Forum (Luthiers Forum) stammen —
+die Quelle steht in §6c so vermerkt, ein besserer Beleg ersetzt sie. Beide passen
+zur sonst belegten Bauweise (Violinensteg schmaler als ein Gitarrensteg,
+Kontrabass breiter als der E-Bass); 8 ms wären von einer ganz anderen Bauart
+übertragen. Verworfen: b (8 ms, „kein belegter Abstand“ in strenger Lesart).
+
+✅ **S-W20 a** (Patrik S136): **Clean Guitar und Muted Guitar nach der Strat mit
+2-Punkt-Tremolo, Spread 7,0 ms** (2-1/16", der Steg der laufenden Fender-Serien,
+Fender-Teileseite und StewMac; §6c). Verworfen: b (Vintage-Tremolo 2-7/32",
+7,5 ms — belegt nur an einem Nachbau und einem Ersatzsteg).
+
+**Zuordnung der mitgelieferten Instrumente (S-W16 a bis S-W20 a):** Nylon Guitar
+8,0 ms (Klassik); Guitar und Piezo Guitar 7,5 ms (Steelstring); Clean Guitar,
+Muted Guitar 7,0 ms (Strat, 2-Punkt); Overdrive Guitar, Drop D Guitar 7,0 ms (Les
+Paul); Jazz Guitar 7,0 ms (Archtop); Finger Bass, Slap Bass 12,5 ms (E-Bass);
+Upright Bass 17,5 ms (Kontrabass); Ukulele 9,5 ms; Pizzicato Violin 7,0 ms.
+*Mute* 0,37 an den drei Bässen (S-W17 a), sonst 0,6; *Up level*, *Tap level*,
+*Touch* und das Muster der Hand überall die Vorgabe des Programms. **Von Claude
+zugeordnet, nicht vorgelegt:** welche Bauart je Instrument gilt (nach Körper und
+Tonabnehmern der Vorlage).
+
+✅ **S-W21 a** (Patrik S136): **Die Skripte der mitgelieferten Loops schreiben in
+jedes Muster mit Saiteninstrument dessen Strum**, wie das Programm es bei einem
+neuen Muster tut (`uebernimmVorgaben`). Eigene alte Dateien ohne Strum bekommen
+beim Lesen weiter die Programmvorgabe (S-W11 a) — eine Datei klingt für sich
+allein. `loop_werte.txt` für die betroffenen Loops neu, Diff geprüft. Verworfen:
+b (beim Lesen die Vorgabe des Instruments — der Klang einer Datei hinge an der
+Instrumentliste beim Lesen; ein Test ohne sie läse anders als das Programm), c
+(die mitgelieferten bei 8 ms — kein Loop zeigte die Vorgaben).
 
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
@@ -1282,3 +1349,41 @@ Agenten aus einer Händler- oder Ratgeberseite, nicht selbst gelesen.
 | Humbucker mit Last | Q = 1,83 an 333 kΩ ∥ 450 pF (Fender, CuNiFe); Resonanz ≈ 3 kHz | Zollner/Zwicker 2019, S. 6–7 | Q bestätigt, kHz Abb.; **keine Induktivität** |
 | Lagen | Strat 152 / 98 / ≈ 41 mm vom Steg, Tele 152 / ≈ 41 mm (aus den Lagen vom Sattel gerechnet); Jazz Bass Steg 54 mm, Hals ≈ 152 mm; Les Paul widersprüchlich | S. Errede, UIUC Physics 406, „Fourier Analysis IV", S. 2; Bartolini (2025) | Errede bestätigt, mm abgeleitet; Bartolini nur über den Agenten |
 | Mensur | Gitarre 25½″ = 648 mm (bestätigt bei Errede); klassisch 650 mm; E-Bass 34″ = 864 mm; Ukulele Sopran 13–14″, Konzert 15–16″, Tenor 17–18″; Violine 327 mm (bestätigt bei Jansson S. 7.3); Kontrabass 4/4 106–110 cm | Errede; Yamaha; Händler; Jansson; Thomastik-Infeld | teils bestätigt, teils Händler |
+
+### 6c. Saitenabstände und Spread (S-W16 a, S136)
+
+Recherche S136 (Agent; lokal unter `.claude/handover/recherche_24f/bericht.md`
+mit allen Zitaten und Händlerseiten). Von Claude an der Quelle nachgelesen:
+Freire 2018 S. 545 „a Yamaha nylon acoustic guitar (model CG182S)“; Barbancho
+et al., „Estimation of the Direction of Strokes and Arpeggios“, ISMIR 2014,
+S. 43 „because of human physiology, in most cases the stroke is performed with
+fixed speed“; Traube/Smith, WASPAA 2001, S. 1 „The neutral position of the right
+hand is just behind the sound hole“; Yamaha Singapur, Produktseite CG182S:
+„String Spacing“ 11.8mm, „Nut Width“ 52mm, „Scale Length“ 650mm (bei 52 mm
+Sattelbreite ist der Abstand am Steg gemeint).
+
+**Rechnung:** Abstand benachbarter Saiten am Anschlagort, linear zwischen Sattel
+und Steg bei einem Fünftel der Mensur vom Steg (angenommen; bei 0,15 statt 0,2
+ändert sich der Abstand um 1,4 %). An der CG182S: 11,8 mm (Steg), 8,64 mm
+(Sattel, Graph Tech 6200-00, 43,2 mm ÷ 5) → 11,17 mm; mit 8 ms ergibt das eine
+Hand von 1,40 m/s. **Spread = 8 ms × Abstand ÷ 11,17 mm**, auf 0,5 ms gerundet.
+
+| Bauart | Abstand am Anschlagort | Spread | Quellen (Steg / Sattel) | Stand |
+|---|---|---|---|---|
+| Klassik/Nylon (CG182S) | 11,17 mm | 8,0 ms | Yamaha / Graph Tech 6200-00 | Steg gelesen |
+| Steelstring (Martin D-28, 00, 000) | 10,31 mm | 7,5 ms | Martin „Bridge String Spacing: 2 5/32"“ / Graph Tech M175-00 | über den Agenten |
+| Strat, Vintage-Tremolo (2-7/32") | 10,42 mm | 7,5 ms | StewMac, Fender Road Worn / Graph Tech 5000-00 | über den Agenten |
+| Strat, 2-Punkt-Tremolo (2-1/16") | 9,79 mm | 7,0 ms | StewMac, Fender / Graph Tech 5000-00 | über den Agenten |
+| Les Paul (ABR-1, 2-1/16") | 9,81 mm | 7,0 ms | StewMac / Graph Tech 6010-00 | über den Agenten |
+| Jazz-Archtop (2.125") | 10,07 mm | 7,0 ms | StewMac (Fishman-Steg, kein Werkssteg) / Graph Tech 6010-00 | über den Agenten |
+| E-Bass Precision / Jazz | 17,35 / 17,21 mm | 12,5 ms | StewMac „2-1/4" (57.15mm)“ / Graph Tech 1204-00, 1215-00 | über den Agenten |
+| Ukulele Konzert | 13,0–13,1 mm | 9,5 ms | Martin 0XK „1 41/64''“ / Graph Tech 1257-00, 1237-00 | über den Agenten |
+| Kontrabass | 24,4 mm | 17,5 ms | No Treble (**Blog**): „10 mm at the nut and 28 mm at the bridge“ | S-W19 a |
+| Violine | 10,02 mm | 7,0 ms | Luthiers Forum (**Forum**): Steg „G - E 33-34mm“, Sattel „16 - 16.5mm“ | S-W19 a |
+
+**Lücken:** wo Yamaha „String Spacing“ misst, steht dort nicht (Steg aus der
+Sattelbreite geschlossen); alle Sattelwerte von Ersatzsätteln (Graph Tech), keiner
+vom Hersteller; der Anschlagort nur an der Nylongitarre gestützt; dieselbe
+Geschwindigkeit der Hand über alle Bauarten ist unbelegt (Freire misst nur die
+Nylongitarre mit Plektrum); Kontrabass und Violine nur aus Blog und Forum
+(Strobel, 29 / 11 mm → 18 ms, nicht eingesehen).

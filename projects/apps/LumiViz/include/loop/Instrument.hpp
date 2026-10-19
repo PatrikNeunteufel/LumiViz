@@ -393,6 +393,17 @@ struct Schicht
     SchichtDrive& holeDrive();
 };
 
+/// *Tap level* gilt bei dieser Frequenz der schwingenden Saite, wie *Ring time*
+/// (S-W18 a, Patrik S136).
+inline constexpr double kTappingBezugHz = 220.0;
+/// Hoechstens so viel lauter als *Tap level* wird ein tiefer getippter Ton
+/// (von Claude gesetzt, S-W18 a: +3,5 dB; ohne Grenze laege E1 bei 1,7).
+inline constexpr double kTappingFaktorMax = 1.5;
+/// Der Faktor auf einen getippten Ton (S-W18 a): Tap level · √(220 Hz / f1), f1
+/// die Frequenz der schwingenden Saite — die Energie des Tippens faellt mit 1/f1
+/// (Herleitung docs/audio/Saiten_Konzept.md §5o), hoechstens `kTappingFaktorMax`.
+[[nodiscard]] double tappingFaktor(double tapLevel, double saiteHz);
+
 /// So viele Schichten traegt ein Instrument hoechstens: jede wird je Ton
 /// einzeln gerechnet. Bis Stufe 17 vier; seit Stufe 18 acht (Entscheid
 /// Patrik S120, davor gemessen: die Rechenzeit waechst gerade mit der Zahl,

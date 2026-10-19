@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 152,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -70,7 +70,12 @@
                 [52, 4, 35, 0.8],
                 [56, 4, 38, 0.8],
                 [60, 4, 36, 0.8]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Skank",
@@ -129,7 +134,12 @@
                 [62, 1, 67, 0.8],
                 [62, 1, 71, 0.8],
                 [62, 1, 74, 0.8]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 7.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Piano",

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 9,
     "bpm": 138,
     "beatsPerBar": 3,
     "stepsPerBeat": 4,
@@ -60,7 +60,12 @@
                 [24, 8, 26, 0.9],
                 [36, 4, 31, 0.9],
                 [44, 4, 38, 0.6]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 17.5,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Guitar",
@@ -95,7 +100,12 @@
                 [44, 3, 55, 0.7],
                 [44, 3, 59, 0.7],
                 [44, 3, 62, 0.7]
-            ]
+            ],
+            "stringChoice": "perChord",
+            "strum": {
+                "spread": 8.0,
+                "hand": "halfBeat"
+            }
         },
         {
             "name": "Vibes",

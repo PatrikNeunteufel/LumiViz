@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 10,
+    "version": 11,
     "title": "Upright Bass",
     "category": "bass",
     "genres": ["Blues", "Bossa Nova", "Hip-Hop", "Jazz", "Jazz Waltz", "Ska"],
@@ -33,7 +33,13 @@
             "pluck": 0.3,
             "pluckPosition": 0.25,
             "ringTime": 2.0,
-            "highDamping": 0.6
+            "highDamping": 0.6,
+            "playing": {
+                "upLevel": 1.0,
+                "mute": 0.37,
+                "tapLevel": 0.75,
+                "touch": 0.3
+            }
         },
         {
             "name": "Wood",
@@ -62,6 +68,10 @@
         "open": [28, 33, 38, 43],
         "capo": 0,
         "stringChoice": "perChord",
-        "scale": 864
+        "scale": 864,
+        "strum": {
+            "spread": 17.5,
+            "hand": "halfBeat"
+        }
     }
 }
