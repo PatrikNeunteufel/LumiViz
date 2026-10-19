@@ -307,23 +307,30 @@ TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich und schreibt sich gl
     }
 
     // --- Loops: keine Note traegt eine Saite, kein Muster eine Regel — ausser tapping_demo
-    // (S136, S-W22 a): der Lauf liegt mit Absicht ganz auf der hohen E-Saite
+    // (S136, S-W22 a): der Lauf liegt mit Absicht ganz auf der hohen E-Saite; und tabs_demo
+    // (S138, 26h): Griffbilder und die Lead-Linie setzen ihre Saiten (S-M2 a, S-T5 a)
     const QStringList loops = mitgelieferteLoops();
-    REQUIRE(loops.size() >= 38);
+    REQUIRE(loops.size() >= 40);
     int noten = 0;
     for (const QString& pfad : loops)
     {
         CAPTURE(pfad.toStdString());
         Loop loop;
         REQUIRE(ladeLoop(pfad, loop));
-        const bool mitSaite = QFileInfo(pfad).fileName() == QStringLiteral("tapping_demo.lvloop");
+        const QString name = QFileInfo(pfad).fileName();
+        const bool tapping = name == QStringLiteral("tapping_demo.lvloop");
+        const bool tabs = name == QStringLiteral("tabs_demo.lvloop");
         for (const Muster& m : loop.muster)
         {
             CHECK(m.saitenwahl == Saitenwahl::JeKlang);
-            const bool hoheE = mitSaite && m.name == QStringLiteral("Tapping");
+            const bool hoheE = tapping && m.name == QStringLiteral("Tapping");
+            const bool gesetzt = tabs && (m.name == QStringLiteral("Rhythm") || m.name == QStringLiteral("Lead"));
             for (const Note& note : m.noten)
             {
-                CHECK(note.saite == (hoheE ? 5 : -1));
+                if (gesetzt)
+                    CHECK(note.saite >= 0);
+                else
+                    CHECK(note.saite == (hoheE ? 5 : -1));
                 ++noten;
             }
         }

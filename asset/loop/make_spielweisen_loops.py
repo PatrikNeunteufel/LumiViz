@@ -40,20 +40,25 @@ KEINE_SAITE = -1
 
 def saiten_muster(b, name, inst, noten, laut=0.8, pan=0.0, hand=None, anschlaege=()):
     """Ein Muster mit Saiteninstrument. `noten`: (Schritt, Laenge, Tonhoehe, Staerke[, Saite[,
-    Artikulationen]]); `hand`: das Muster der Hand als Text (`D`/`U` je Stelle) oder None (Alternate);
+    Artikulationen[, Bend]]]) — der Bend als `[[zeit, halbtoene], …]` (`.lvloop` Fassung 10, seit S138 fuer
+    `make_tab_loops.py`); `hand`: das Muster der Hand als Text (`D`/`U` je Stelle) oder None (Alternate);
     `anschlaege`: (Schritt, Art, Spread oder None) — Art `hand`, `down`, `up`, `together`."""
     zeilen = []
     for n in noten:
         schritt, laenge, hoehe, staerke = n[:4]
         saite = n[4] if len(n) > 4 else KEINE_SAITE
         art = n[5] if len(n) > 5 else 0
+        bend = n[6] if len(n) > 6 else None
         assert 0 <= schritt and laenge >= 1 and schritt + laenge <= b.schritte * 4, (name, schritt, laenge)
         assert 21 <= hoehe <= 108 and 0 < staerke <= 1, (name, hoehe, staerke)
+        assert not bend or all(0 <= z <= 1 and 0 <= h <= 4 for z, h in bend), (name, bend)
         zeile = [schritt, laenge, hoehe, staerke]
-        if saite >= 0 or art:
+        if saite >= 0 or art or bend:
             zeile.append(saite)
-        if art:
+        if art or bend:
             zeile.append(art)
+        if bend:
+            zeile.append(bend)
         zeilen.append(zeile)
     strum = {"spread": SPREAD_MS[inst], "hand": "halfBeat"}
     if hand:

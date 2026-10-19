@@ -647,7 +647,8 @@ TEST_SUITE("LoopInstrument")
         // Drum-Spuren), Flower Flute (S123) auch nicht
         CHECK(ohneGenre == 29);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
-        CHECK(findeInstrument(QStringLiteral("guitar"))->genres == QStringList{QStringLiteral("Folk")});
+        // seit S138 (26h) spielt die Guitar auch in tabs_demo (Blues)
+        CHECK(findeInstrument(QStringLiteral("guitar"))->genres == QStringList{QStringLiteral("Blues"), QStringLiteral("Folk")});
         CHECK(findeInstrument(QStringLiteral("violin"))->genres.isEmpty());
     }
 

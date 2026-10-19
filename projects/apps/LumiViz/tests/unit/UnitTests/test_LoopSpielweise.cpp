@@ -19,6 +19,7 @@
 
 #include <doctest.h>
 
+#include "loop/Akkord.hpp"  // 26h: die Beispiele mit Griffbildern und Voicings
 #include "loop/Auswahl.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
@@ -761,6 +762,60 @@ TEST_SUITE("LoopSpielweise")
             CHECK(lauf.noten.size() == 64);
             const auto griffe = greifeNoten(lauf, saitenVon(lauf.instrument));
             CHECK(std::all_of(griffe.begin(), griffe.end(), [](const Griff& g) { return g.greifbar && g.saite == 5; }));
+        }
+        // --- tabs_demo (26h): die Begleitung sind Griffbilder der Vorlagen, die Lead-Linie verbindet
+        {
+            const Loop loop = lade("tabs_demo.lvloop");
+            const Muster& rhythmus = muster(loop, "Rhythm");
+            const Saitensatz gitarre = saitenVon(rhythmus.instrument);
+            Akkord a7;
+            REQUIRE(holeAkkord(QStringLiteral("guitar/a_7_1"), a7));
+            std::vector<std::pair<int, int>> soll;
+            for (const Note& n : akkordNoten(a7, gitarre, 4, 3, 0)) soll.emplace_back(n.hoehe, n.saite);
+            std::vector<std::pair<int, int>> ist;
+            for (const Note& n : rhythmus.noten)
+                if (n.schritt == 4) ist.emplace_back(n.hoehe, n.saite);
+            std::sort(soll.begin(), soll.end());
+            std::sort(ist.begin(), ist.end());
+            CHECK(ist == soll);  // wie das Fenster Chords sie setzt
+            const Muster& lead = muster(loop, "Lead");
+            CHECK(zaehle(lead, kLegato) == 2);  // ein Hammer-on, ein Pull-off
+            CHECK(zaehle(lead, kSlide) == 2);
+            CHECK(std::count_if(lead.noten.begin(), lead.noten.end(), [](const Note& n) { return !n.bend.empty(); }) == 3);
+            const auto griffe = greifeNoten(lead, saitenVon(lead.instrument));
+            REQUIRE(griffe.size() == lead.noten.size());
+            for (std::size_t i = 0; i < griffe.size(); ++i)
+            {
+                CAPTURE(i);
+                CHECK(griffe[i].greifbar);
+                CHECK(griffe[i].saite == lead.noten[i].saite);
+                if (lead.noten[i].artikulationen & kVerbunden)
+                {
+                    CHECK(griffe[i].vorige >= 0);  // die vorige Note liegt auf derselben Saite
+                    CHECK_FALSE(griffe[i].verbindungFehlt);
+                }
+            }
+        }
+        // --- voicings_demo (26h): ii-V-I-vi aus Voicings der Vorlagen, der tiefste Ton nah am vorigen
+        {
+            const Loop loop = lade("voicings_demo.lvloop");
+            const Muster& keys = muster(loop, "Keys");
+            const auto tiefsterIm = [&](int takt) {
+                int tief = 999;
+                for (const Note& n : keys.noten)
+                    if (n.schritt == 16 * takt) tief = std::min(tief, n.hoehe);
+                return tief;
+            };
+            CHECK(tiefsterIm(0) == 50);
+            CHECK(tiefsterIm(1) == 50);
+            CHECK(tiefsterIm(2) == 52);
+            CHECK(tiefsterIm(3) == 48);
+            std::vector<int> dm7;
+            for (const Note& n : keys.noten)
+                if (n.schritt == 0) dm7.push_back(n.hoehe);
+            std::sort(dm7.begin(), dm7.end());
+            CHECK(dm7 == std::vector<int>{50, 53, 57, 60});
+            CHECK(erkenneAkkord(dm7) == AkkordName{2, QStringLiteral("m7"), -1});
         }
     }
 

@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Tine Piano",
     "category": "keys",
-    "genres": ["Disco", "Drum and Bass", "Hip-Hop", "Lo-Fi", "Synthwave"],
+    "genres": ["Disco", "Drum and Bass", "Hip-Hop", "Jazz", "Lo-Fi", "Synthwave"],
     "description": "A soft, lightly driven sine body with a short tine two octaves above.",
     "level": 0.75,
     "layers": [

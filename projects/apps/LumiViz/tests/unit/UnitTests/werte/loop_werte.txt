@@ -365,6 +365,7 @@ loop:rock_demo.lvloop	1282909	0.479033977	183637.964
 loop:strange_demo.lvloop	1693440	0.411952049	171348.803
 loop:strum_demo.lvloop	920348	0.433916479	65080.7892
 loop:synthwave_demo.lvloop	1568000	0.441986024	185920.843
+loop:tabs_demo.lvloop	920348	0.489067763	96896.295
 loop:tapping_demo.lvloop	756000	0.431259423	98360.9771
 loop:ukulele_demo.lvloop	814154	0.34966746	57239.2058
 loop:vergleich/bossa_old_new.lvloop	2565818	0.428218365	312691.317
@@ -372,3 +373,4 @@ loop:vergleich/disco_old_new.lvloop	2822400	0.49094677	398361.029
 loop:vergleich/funk_old_new.lvloop	3256615	0.481749773	358913.347
 loop:vergleich/guitar_old_new.lvloop	3386880	0.670246363	465624.724
 loop:vergleich/rock_old_new.lvloop	2565818	0.501664042	367114.613
+loop:voicings_demo.lvloop	1008000	0.508492947	92458.9158

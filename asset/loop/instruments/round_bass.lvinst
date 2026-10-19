@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Round Bass",
     "category": "bass",
-    "genres": ["Afrobeat", "Chillout", "Lo-Fi", "Reggae"],
+    "genres": ["Afrobeat", "Chillout", "Jazz", "Lo-Fi", "Reggae"],
     "description": "A soft sine with two overtones and a short finger noise.",
     "level": 0.85,
     "layers": [

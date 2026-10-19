@@ -1,9 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.38.0
+> **Version:** 0.39.0
 > **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
-> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f und 26g gebaut, §5zb, §5zc; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f, 26g und 26h gebaut (ohne den vollen Lauf), §5zb bis §5zd; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -2098,6 +2098,38 @@ Dialog *Edit chord*.
 - Belegt in `test_LoopCreatorSpielweise` (die drei Einträge, die Noten, ganz unten der Ton
   allein; die Zahl der Einträge 9) und `test_LoopSpieler` (`spieleCreatorNoten`). Ein Bild
   ist nicht abgelegt — die Auswahl ist eine Liste mit drei Zeilen mehr.
+
+### 5zd. Stufe 26h — Mitgeliefertes (gebaut S138, ohne den vollen Lauf)
+
+- **`asset/loop/make_tab_loops.py`** (neu) schreibt zwei Beispiele: `tabs_demo` („Bent Blue",
+  Blues 92 BPM — Begleitung aus den Griffbildern `guitar/a_7_1`, `d_7_1`, `e_7_1`, gelesen aus
+  den Vorlagen, jede Note auf ihrer Saite; die Lead-Linie in der Pentatonik am 5. Bund mit
+  Hammer-on, Pull-off, zwei Slides, Bend full, Bend and release, einem halben Bend; Saiten
+  gesetzt) und `voicings_demo` („Late Changes", Jazz 84 BPM — Dm7, G7 2. Umkehrung, Cmaj7 und
+  Am7 1. Umkehrung aus `voicings/…`, der tiefste Ton nah am vorigen). Reihenfolge nach
+  `make_spielweisen_loops.py`, vor `make_saiten_instrumente.py`. Alles gerechnet, nicht nach
+  Gehör.
+- `instrument_katalog.py` und `make_saiten_instrumente.py` in einer Kopie gelaufen: nur fünf
+  Instrumente bekommen ein Genre dazu (Guitar, Overdrive Guitar, Finger Bass: Blues; Tine Piano,
+  Round Bass: Jazz), sonst byte-gleich; übernommen.
+- `loop_werte.txt`: zwei Einträge dazu (Spitzen 0,489 und 0,508), sonst unverändert.
+- **Gefunden im Bereichslauf:** `saiten_muster` (aus `make_spielweisen_loops.py`) ließ einen
+  siebten Wert — den Bend — still fallen; `tabs_demo` hatte keinen Bend. Jetzt schreibt es ihn
+  (mit Prüfung 0 … 4 Halbtöne); die vier Beispiele aus S136 bleiben byte-gleich. Der Test zählt
+  die drei Bends.
+- Bereichslauf `*Loop*,*Instrument*,*Datensicherung*,*Publish*` unter Release-clang und
+  Testing-MSVC je 331 / 331.
+- **Benutzerhandbuch 1.191.0:** Tab-Linien, Legato/Slide, Bend und Edit bend, Chords..., ein
+  neuer Abschnitt „Akkorde: das Fenster Chords" (mit Edit chord und Voicings), im Creator *In a
+  legato*, *Slide time*, *Legato level*, *Play as* mit Hammer-on/Slide/Bend; Beispiele; §17
+  `.lvchord`; Fit.
+- **Sichttest-Liste** `.claude/handover/Sichttest_TabsAkkorde.md` (lokal): T, V, C, E, W, P, L,
+  B, U.
+- Tests: in `test_LoopSpielweise` die zwei Beispiele (Griffbild wie das Fenster es setzt;
+  Legato/Slide mit voriger Note auf derselben Saite; drei Bends; Voicings mit dem tiefsten Ton);
+  in `test_LoopSaiten` ist `tabs_demo` neben `tapping_demo` ausgenommen (Saiten gesetzt),
+  mitgelieferte Loops jetzt 40.
+- **Noch offen:** der volle Lauf (Patrik S138: „den vollen Lauf noch nicht"); Sichttest.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

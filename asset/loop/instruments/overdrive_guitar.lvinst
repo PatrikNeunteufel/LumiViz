@@ -3,7 +3,7 @@
     "version": 12,
     "title": "Overdrive Guitar",
     "category": "plucked",
-    "genres": ["Metal", "Rock"],
+    "genres": ["Blues", "Metal", "Rock"],
     "description": "Six driven strings (Waveguide) on a bridge humbucker: the note, a fifth and an octave.",
     "level": 0.568,
     "layers": [

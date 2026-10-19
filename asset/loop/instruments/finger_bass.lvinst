@@ -3,7 +3,7 @@
     "version": 12,
     "title": "Finger Bass",
     "category": "bass",
-    "genres": ["Classical", "Jazz", "Rock", "World"],
+    "genres": ["Blues", "Classical", "Jazz", "Rock", "World"],
     "description": "Four strings plucked with the fingers (Waveguide) on two single coils, a sine underneath.",
     "level": 1.0,
     "layers": [
