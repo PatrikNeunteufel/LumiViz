@@ -405,6 +405,18 @@ TEST_SUITE("LoopSpielweiseKlang")
             // ... und rund −0,5 dB: das Gesetz √(Verzoegerung) allein (S-L8 a)
             CHECK(lauter > -0.8);
             CHECK(lauter < -0.2);
+
+            // --- S-L15 b: bis zwei Ganztoene — C#4 im Halten, die Ring time wie gegriffen
+            TonAngabe weit = ton(57, 2, 900);
+            weit.biegung = {TonBiegung{200, 0}, TonBiegung{290, 16}};
+            const Klang w = rendereTon(instrument, weit, kRate);
+            CHECK(std::abs(cent(spitze(w, tonHz(61), 60.0, 0.4, 0.3), tonHz(61))) < 5.0);
+            const Klang cis = rendereTon(instrument, ton(61, 2, 900), kRate);
+            const double weitT60 = t60(w, tonHz(61), 0.4, 0.8);
+            const double cisT60 = t60(cis, tonHz(61), 0.4, 0.8);
+            MESSAGE("Bend um zwei Ganztoene: " << db(effektiv(w, 0.4, 0.2) / effektiv(gerade, 0.4, 0.2)) << " dB, T60 gebogen "
+                                               << weitT60 << " s, C#4 gegriffen " << cisT60 << " s");
+            CHECK(weitT60 == doctest::Approx(cisT60).epsilon(0.03));
         }
     }
 

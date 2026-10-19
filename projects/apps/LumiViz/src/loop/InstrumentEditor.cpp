@@ -497,8 +497,8 @@ bool NotenRaster::aendereMarkierte(const std::function<void(Note&)>& aendere, co
 
 const std::vector<double>& NotenRaster::bendHoehen()
 {
-    // ½, full, 1½ — bis zur Grenze aus S-L2 a (drei Halbtoene)
-    static const std::vector<double> kBendHoehen = {1.0, 2.0, 3.0};
+    // ½, full, 1½, 2 — bis zur Grenze aus S-L15 b (vier Halbtoene)
+    static const std::vector<double> kBendHoehen = {1.0, 2.0, 3.0, 4.0};
     return kBendHoehen;
 }
 

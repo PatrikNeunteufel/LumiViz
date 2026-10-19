@@ -237,7 +237,7 @@ public:
     bool setzeBendHoehe(double halbtoene);
     /// G: die Kurve fuer die markierten Noten (Edit bend...).
     bool setzeBend(std::vector<BendPunkt> punkte);
-    /// Die Hoehen, die das Menue Bend anbietet, in Halbtoenen (½, full, 1½).
+    /// Die Hoehen, die das Menue Bend anbietet, in Halbtoenen (½, full, 1½, 2).
     [[nodiscard]] static const std::vector<double>& bendHoehen();
     /// Der Name einer Vorlage im Menue.
     [[nodiscard]] static QString bendVorlageName(BendVorlage art);

@@ -1,7 +1,7 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.32.0
-> **Datum:** 2026-10-19 (Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> **Version:** 0.33.0
+> **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -103,7 +103,7 @@ Beschreibung):
   auf eine andere Linie ziehen = derselbe Ton auf der anderen Saite (nicht greifbar: rot
   „!“); eine Zahl über eine markierte Note tippen ändert den Bund.
 - **C** Hammer-on/Pull-off als Bogen mit h/p, Slide als schräge Linie mit Pfeil, Bend als
-  Kurve mit „½“, „full“, „1½“ (S-L3 a); gesetzt über das Kontextmenü *Legato*, *Slide*,
+  Kurve mit „½“, „full“, „1½“, „2“ (S-L3 a, S-L15 b); gesetzt über das Kontextmenü *Legato*, *Slide*,
   *Bend*, *Edit bend...*.
 - **D** Knopf **Chords...** in der Zeile *Instrument* öffnet das Fenster *Chords* (S-T2 a);
   ein Griffbild auf Tab-Linien oder Piano-Roll ziehen setzt am Schritt die Noten mit Saiten.
@@ -760,7 +760,7 @@ Gespräch S136; hier als Beschreibung):
 - **C Slide:** eine schräge Linie mit Pfeil vom Ende der vorigen Note zum Anfang der
   Zielnote; Kürzel **SL**.
 - **D Bend:** in der Note eine Kurve bis zur Zeile des erreichten Tons, eine
-  gestrichelte Linie zeigt das Ziel; beschriftet „½“, „full“ (ein Ganzton), „1½“;
+  gestrichelte Linie zeigt das Ziel; beschriftet „½“, „full“ (ein Ganzton), „1½“, „2“;
   Kürzel **↗** mit der Höhe in Ganztönen.
 - **E Menü:** unter den vier Haken zwei neue, **Legato (hammer-on / pull-off)** und
   **Slide**, für die markierten Noten, mit Undo; ohne vorige Note auf derselben Saite
@@ -768,7 +768,7 @@ Gespräch S136; hier als Beschreibung):
 - **F Menü Bend:** Vorlagen *None*, *Bend*, *Bend and release*, *Pre-bend*,
   *Pre-bend and release*; Höhe ½, 1, 1½, 2 Ganztöne — beides schreibt die Punkte.
 - **G Edit bend...:** ein Dialog mit der Kurve — Zeit über die Länge der Note, Höhe
-  in Vierteltönen 0 bis 3 Halbtöne; Punkte ziehen, Doppelklick setzt oder entfernt
+  in Vierteltönen 0 bis 4 Halbtöne (S-L15 b; zuerst stand hier 3); Punkte ziehen, Doppelklick setzt oder entfernt
   einen; Auswahl Vorlage; OK / Cancel.
 - Folge: die Hinweiszeile nennt die Kürzel; *Play as* im Creator bekommt *Hammer-on*,
   *Slide*, *Bend*. Ob *Playing* Regler dafür braucht (etwa die Dauer eines Slide),
@@ -1620,7 +1620,7 @@ Nach S-L1 a, S-L2 a, S-L4 a.
 - **Artikulationen** (`Spielweise.hpp`): `kLegato` = 16, `kSlide` = 32, `kVerbunden`
   für beide; `kArtikulationenAlle` = 63.
 - **Bend** (`BendPunkt`, `Note::bend`): Punkte aus `zeit` (0 … 1, Anteil der Note) und
-  `halbtoene` (0 … `kBendHalbtoeneMax` = 3, Raster `kBendRaster` = ¼); `richteBend`
+  `halbtoene` (0 … `kBendHalbtoeneMax` = 4 seit S-L15 b, vorher 3, Raster `kBendRaster` = ¼); `richteBend`
   (Grenzen, Raster, sortiert), `bendBei` (linear zwischen den Punkten, davor und danach
   gehalten).
 - **Datei:** `.lvloop` **Fassung 10** — der Bend als siebter Wert einer Note
@@ -1827,16 +1827,16 @@ S. 117, Özaslan 2010 S. 458).
   Pre-bend and release), `bendVorlage(art, halbtoene)` — **Zeiten von Claude gesetzt:** Bend
   steigt bis 0,3 der Note; Bend and release 0,3 / hält bis 0,6 / zurück bei 0,9; Pre-bend ein
   Punkt am Anfang; Pre-bend and release hält bis 0,5, zurück bei 0,8 —, `bendVorlageVon`,
-  `bendHoehe`, `bendText` (in Ganztönen wie in Tabs: ½, full, 1½; dazwischen Achtel).
+  `bendHoehe`, `bendText` (in Ganztönen wie in Tabs: ½, full, 1½, 2; dazwischen Achtel).
 - **E Menü:** unter Palm mute, Let ring, Tapping, Harmonic die Haken **Legato (hammer-on /
   pull-off)** und **Slide** (`schalteArtikulation`; sie schließen sich aus). **F** Untermenü
-  **Bend**: die fünf Vorlagen, **Height ½ / full / 1½**, **Edit bend...**; Haken zeigen, was alle
+  **Bend**: die fünf Vorlagen, **Height ½ / full / 1½ / 2**, **Edit bend...**; Haken zeigen, was alle
   markierten tragen (`setzeBendVorlage`, `setzeBendHoehe` — eine Vorlage behält ihre Form, eine
   eigene Kurve wird gestreckt, ohne Bend wird es *Bend*). Das Menü öffnet sich auch auf einer
   Zahl der Tab-Linien (sie wird dafür markiert).
 - **G Edit bend...** (`bendDialog`, über `fuehreDialogAus`): Auswahl *Template* und *Height*,
-  die Kurve `BendKurve` (`loop/BendKurve.hpp`: Zeit über die Länge der Note, Höhe 0 … 3
-  Halbtöne in Vierteln, beschriftet ½/full/1½; Punkte ziehen, zwischen den Nachbarn;
+  die Kurve `BendKurve` (`loop/BendKurve.hpp`: Zeit über die Länge der Note, Höhe 0 … 4
+  Halbtöne in Vierteln, beschriftet ½/full/1½/2; Punkte ziehen, zwischen den Nachbarn;
   Doppelklick setzt oder entfernt einen); eine eigene Form zeigt keine Vorlage.
 - **Zeichen, Piano-Roll (S-L5 a, S-T5 a E):** hinter der Saitennummer **H**/**P** (nach der
   Richtung; ohne vorige „H/P“), **SL**, **↗** mit Höhe; Hammer-on und Pull-off als Bogen über
@@ -1852,8 +1852,13 @@ S. 117, Özaslan 2010 S. 458).
 - ✅ **S-L15 b** (Patrik S137): **Die Grenze eines Bends wird 4 Halbtöne** (2 Ganztöne, wie
   S-L3 a F): das Menü bietet ½, full, 1½ und 2, *Edit bend...* geht bis 2 Ganztöne, ebenso die
   `.lvloop` (Fassung 10 ist nicht ausgeliefert — keine neue Fassung). Verworfen: a (bei 3
-  Halbtönen bleiben — Overbends wären nicht zu setzen). **Noch nicht gebaut** (nächste Sitzung:
-  `kBendHalbtoeneMax` 4, `bendHoehen`, Tests, die Literale in `tests/` suchen).
+  Halbtönen bleiben — Overbends wären nicht zu setzen). **Gebaut S138:** `kBendHalbtoeneMax` 4, `bendHoehen`
+  ½/full/1½/2, der Dialog bis 2 (Raster und Beschriftung folgen der Grenze); die Klangseite
+  kannte keine eigene Grenze. Belegt in `test_LoopEditorVerbunden` (Schrift „2“, Vorlagen bis 4,
+  *Height 2* über das Menü, vier Höhen im Dialog) und `test_LoopSpielweiseKlang` (Bend um zwei
+  Ganztöne: C♯4 im Halten auf 5 Cent, Ring time wie C♯4 gegriffen auf 3 %, beide Verfahren). Gemessen: T60 gebogen 3,200 s gegen
+  gegriffen 3,200 s; Pegel −1,09 dB (Extended KS) / −1,00 dB (Waveguide) gegen A3 ohne Bend — das
+  Gesetz √(Verzögerung) aus S-L8 a ergibt für vier Halbtöne −1,0 dB.
 - **Offen:** bei kurzen Noten in Normalgröße überdeckt die Höhe des Bends in den Tab-Linien die
   nächste Zahl.
 

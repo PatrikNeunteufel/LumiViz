@@ -5,7 +5,7 @@
  *
  * Waagrecht die Zeit ueber die Laenge der Note (0 … 1), senkrecht die Biegung in
  * Vierteltoenen von 0 bis `kBendHalbtoeneMax` (beschriftet in Ganztoenen wie in Tabs:
- * ½, full, 1½). Punkte ziehen; ein Doppelklick auf eine freie Stelle setzt einen, auf
+ * ½, full, 1½, 2). Punkte ziehen; ein Doppelklick auf eine freie Stelle setzt einen, auf
  * einen Punkt nimmt ihn weg. Ein Punkt bleibt zwischen seinen Nachbarn.
  */
 #pragma once

@@ -100,6 +100,8 @@ TEST_CASE("Loop Editor Verbunden 26d: Vorlagen des Bends und die Schrift seiner 
     CHECK(bendText(1.0) == QStringLiteral("½"));
     CHECK(bendText(2.0) == QStringLiteral("full"));
     CHECK(bendText(3.0) == QStringLiteral("1½"));
+    CHECK(bendText(4.0) == QStringLiteral("2"));  // die Grenze nach S-L15 b
+    CHECK(kBendHalbtoeneMax == 4.0);
     CHECK(bendText(0.5) == QStringLiteral("¼"));
     CHECK(bendText(2.5) == QStringLiteral("1¼"));
     CHECK(bendText(0.0) == QStringLiteral("0"));
@@ -112,7 +114,8 @@ TEST_CASE("Loop Editor Verbunden 26d: Vorlagen des Bends und die Schrift seiner 
     CHECK(bendVorlage(BendVorlage::Bend, 9.0) == std::vector<BendPunkt>{{0.0, 0.0}, {0.3, kBendHalbtoeneMax}});  // die Grenze
     for (const BendVorlage art : {BendVorlage::Keine, BendVorlage::Bend, BendVorlage::BendZurueck, BendVorlage::VorBend,
                                   BendVorlage::VorBendZurueck})
-        for (const double h : {1.0, 2.0, 3.0}) CHECK(bendVorlageVon(bendVorlage(art, h)) == art);
+        for (const double h : {1.0, 2.0, 3.0, 4.0}) CHECK(bendVorlageVon(bendVorlage(art, h)) == art);
+    CHECK(bendVorlage(BendVorlage::Bend, 4.0) == std::vector<BendPunkt>{{0.0, 0.0}, {0.3, 4.0}});
     CHECK_FALSE(bendVorlageVon({{0.0, 0.0}, {0.5, 1.0}, {1.0, 0.5}}).has_value());  // eine eigene Form
     CHECK(bendHoehe({{0.0, 0.5}, {0.5, 2.5}}) == 2.5);
 }
@@ -201,7 +204,12 @@ TEST_CASE("Loop Editor Verbunden 26d: ueber den Editor — Legato und Slide im M
     CHECK(bendEintraege == QStringList{QStringLiteral("None"), QStringLiteral("Bend"), QStringLiteral("Bend and release [x]"),
                                        QStringLiteral("Pre-bend"), QStringLiteral("Pre-bend and release"),
                                        QStringLiteral("Height ½"), QStringLiteral("Height full"),
-                                       QStringLiteral("Height 1½ [x]"), QStringLiteral("Edit bend...")});
+                                       QStringLiteral("Height 1½ [x]"), QStringLiteral("Height 2"), QStringLiteral("Edit bend...")});
+    // S-L15 b: die Hoehe 2 (zwei Ganztoene) ueber das Menue
+    waehle(QStringLiteral("Height 2"));
+    rechtsklickAuf(0);
+    CHECK(gemeldet.back() == QStringLiteral("Bend: 2"));
+    CHECK(mel().noten[static_cast<std::size_t>(platzVon(mel(), 0))].bend == bendVorlage(BendVorlage::BendZurueck, 4.0));
     waehle(QStringLiteral("None"));
     rechtsklickAuf(0);
     CHECK(mel().noten[static_cast<std::size_t>(platzVon(mel(), 0))].bend.empty());
@@ -220,6 +228,8 @@ TEST_CASE("Loop Editor Verbunden 26d: ueber den Editor — Legato und Slide im M
         REQUIRE(hoehe != nullptr);
         CHECK(vorlage->currentText() == QStringLiteral("None"));  // ohne Bend
         CHECK(hoehe->currentText() == QStringLiteral("full"));
+        REQUIRE(hoehe->count() == 4);  // bis 2 Ganztoene (S-L15 b)
+        CHECK(hoehe->itemText(3) == QStringLiteral("2"));
         vorlage->setCurrentIndex(vorlage->findText(QStringLiteral("Pre-bend")));
         Q_EMIT vorlage->activated(vorlage->currentIndex());
         CHECK(kurve->punkte() == bendVorlage(BendVorlage::VorBend, 2.0));

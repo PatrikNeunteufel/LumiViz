@@ -151,9 +151,9 @@ struct BendPunkt
 
     [[nodiscard]] bool operator==(const BendPunkt&) const = default;
 };
-/// So weit biegt ein Bend hoechstens (S-L2 a: drei Halbtoene) — und in welchem
-/// Raster (Vierteltoene).
-inline constexpr double kBendHalbtoeneMax = 3.0;
+/// So weit biegt ein Bend hoechstens (S-L15 b: vier Halbtoene, zwei Ganztoene — vorher
+/// drei nach S-L2 a) — und in welchem Raster (Vierteltoene).
+inline constexpr double kBendHalbtoeneMax = 4.0;
 inline constexpr double kBendRaster = 0.25;
 /// So viele Punkte traegt eine Kurve hoechstens (von Claude gesetzt: die Vorlagen
 /// brauchen vier, eine gezeichnete Kurve selten mehr als acht).
@@ -186,7 +186,7 @@ enum class BendVorlage : int
 /// Die hoechste Biegung einer Kurve; 0 = kein Bend.
 [[nodiscard]] double bendHoehe(const std::vector<BendPunkt>& bend);
 /// Wie die Hoehe eines Bends geschrieben wird, in Ganztoenen wie in Tabs: „½" (ein
-/// Halbton), „full" (zwei), „1½" (drei); dazwischen Achtel und Viertel („¼", „¾", „1¼").
+/// Halbton), „full" (zwei), „1½" (drei), „2" (vier); dazwischen Achtel und Viertel („¼", „¾", „1¼").
 [[nodiscard]] QString bendText(double halbtoene);
 
 /// Der Bend in der `.lvloop` (seit Fassung 10): je Punkt `[zeit, halbtoene]`.
