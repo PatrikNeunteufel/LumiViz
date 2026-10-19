@@ -228,9 +228,10 @@ void richteReihe(std::vector<SchichtBaustein>& reihe);
 inline constexpr double kGleitMsVorgabe = 20.0;
 inline constexpr double kGleitMsMin = 5.0;
 inline constexpr double kGleitMsMax = 60.0;
-/// Legato level (Stufe 25c, S-L11 a): vorlaeufig — bemessen am Messfall in 25c
-/// (test_LoopSpielweiseKlang „25c Legato“).
-inline constexpr double kLegatoLautVorgabe = 0.5;
+/// Legato level (Stufe 25c, S-L11 a): bemessen am Messfall (Achtel bei 100 BPM,
+/// Hammer-on und Pull-off ueber 1 bis 3 Halbtoene auf A3): Sprung im Median +3 dB —
+/// 0,375 bei Extended KS, 0,374 bei Waveguide (test_LoopSpielweiseKlang „25c Legato“).
+inline constexpr double kLegatoLautVorgabe = 0.38;
 
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
 /// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze

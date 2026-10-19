@@ -2953,7 +2953,17 @@ Idee Preset-Warmup/Pre-Roll.
   1.190.0; Sichttest `.claude/handover/Sichttest_Spielweisen.md`). **Zoom der
   Editoren: vorerst nicht gemerkt** (Patrik S136) — im Composer merkt die App
   die Zeilenhöhe (ZO9 a), den Zeit-Zoom nicht; angleichen wäre eine eigene
-  Frage. Offen: Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs.**
+  Frage. Offen: Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs.
+  **Ideen Patrik S136, nicht eingeplant (erst nach dem Plan vorlegen):** (1) **Rechtsklick
+  auf die Spur Strum** öffnet das Menü Strum direkt, dort jede Art mit ihrem Pfeil
+  (Follow hand, Down ↓, Up ↑, Together) zum Wählen — heute öffnet der Rechtsklick dort
+  nichts (`NotenRaster::contextMenuEvent` beginnt erst unter der Spur), und im Menü an der
+  Note stehen die Arten ohne Symbol. (2) **Pick scrape:** mit dem Plektrum die Saite
+  entlang streichen — die Windungen umsponnener Saiten (Bass, tiefe Gitarrensaiten) geben
+  ein eigenes Rauschen; als Spielweise einer einzelnen Saite (vielleicht zwischen zwei
+  benachbarten). Physik wie das Gleitgeräusch (Pakarinen u. a., JASA 2007: Frequenz
+  n · v · d_w, Pegel ∝ Geschwindigkeit; Recherche 25 §3) — braucht die Windungsdichte
+  d_w der Saiten (Recherche 25, Lücke 4).**
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument

@@ -310,6 +310,94 @@ TEST_SUITE("LoopSpielweiseKlang")
         }
     }
 
+    TEST_CASE("Loop Spielweise Klang 25c: Legato — ein Ton, die Tonhoehe springt, die Saite wird neu angeregt")
+    {
+        // der Sprung: der lauteste Effektivwert (10 ms) in den 40 ms nach dem Wechsel gegen die 10 ms davor
+        const auto sprung = [](const Klang& k, double wechselS) {
+            double danach = 0.0;
+            for (double s = wechselS; s < wechselS + 0.04; s += 0.002) danach = std::max(danach, effektiv(k, s, 0.01));
+            return db(danach / effektiv(k, wechselS - 0.01, 0.01));
+        };
+        // Achtel bei 100 BPM: der Wechsel 300 ms nach dem Anschlag; A3 auf der D-Saite (7. Bund)
+        const auto legato = [](int von, int nach) {
+            TonAngabe t = ton(von, 2, 600);
+            t.verlauf = {TonWechsel{300, nach, false}};
+            return t;
+        };
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            Instrument instrument = saite(modell);
+            // --- die Tonhoehe: vorher A3, nachher B3 — ein Ton, kein zweiter Anschlag
+            const Klang h = rendereTon(instrument, legato(57, 59), kRate);
+            CHECK(std::abs(cent(spitze(h, tonHz(59), 60.0, 0.36, 0.2), tonHz(59))) < 3.0);
+            CHECK(std::abs(cent(spitze(h, tonHz(57), 60.0, 0.1, 0.18), tonHz(57))) < 3.0);
+
+            // --- ohne Anregung (Legato level 0) springt der Pegel nicht: nur die Laenge aendert sich
+            instrument.schichten[0].legatoLaut = 0.0;
+            const double ohne = sprung(rendereTon(instrument, legato(57, 59), kRate), 0.3);
+            CHECK(std::abs(ohne) < 1.5);
+
+            // --- die Bemessung (S-L11 a): Hammer-on 1, 2, 3 Halbtoene, Pull-off ebenso — der Median
+            // des Sprungs bei der Vorgabe ist +3 dB (Untergrenze aus Mitsou 2023, Recherche 25 §1)
+            const auto median = [&](double laut) {
+                instrument.schichten[0].legatoLaut = laut;
+                std::vector<double> spruenge;
+                for (const int weg : {1, 2, 3})
+                {
+                    spruenge.push_back(sprung(rendereTon(instrument, legato(57, 57 + weg), kRate), 0.3));
+                    spruenge.push_back(sprung(rendereTon(instrument, legato(57 + weg, 57), kRate), 0.3));
+                }
+                std::sort(spruenge.begin(), spruenge.end());
+                MESSAGE("Legato level " << laut << ": Sprung Median " << 0.5 * (spruenge[2] + spruenge[3]) << " dB (" << spruenge.front()
+                                        << " … " << spruenge.back() << ")");
+                return 0.5 * (spruenge[2] + spruenge[3]);
+            };
+            CHECK(median(kLegatoLautVorgabe) == doctest::Approx(3.0).epsilon(0.1));
+            CHECK(median(1.0) > median(0.2) + 4.0);  // der Regler wirkt
+        }
+    }
+
+    TEST_CASE("Loop Spielweise Klang 25c: Slide und Bend — die Tonhoehe gleitet, der Pegel waechst nicht")
+    {
+        for (const SaitenModell modell : {SaitenModell::ErweiterterKs, SaitenModell::Wellenleiter})
+        {
+            CAPTURE(static_cast<int>(modell));
+            Instrument instrument = saite(modell);
+            // --- Slide A3 -> D4 (5 Halbtoene), Ankunft bei 500 ms: mit 20 ms je Halbton ab 400 ms
+            TonAngabe gleiten = ton(57, 2, 900);
+            gleiten.verlauf = {TonWechsel{500, 62, true}};
+            const Klang s = rendereTon(instrument, gleiten, kRate);
+            CHECK(std::abs(cent(spitze(s, tonHz(57), 60.0, 0.15, 0.2), tonHz(57))) < 3.0);
+            CHECK(std::abs(cent(spitze(s, tonHz(62), 60.0, 0.55, 0.25), tonHz(62))) < 3.0);
+            // bis zum Beginn des Gleitens derselbe Ton wie ohne Slide
+            const Klang gerade = rendereTon(instrument, ton(57, 2, 900), kRate);
+            double vorher = 0.0;
+            for (std::size_t i = 0; i < static_cast<std::size_t>(2 * 0.39 * kRate); ++i)
+                vorher = std::max(vorher, std::abs(static_cast<double>(s.daten[i] - gerade.daten[i])));
+            CHECK(vorher < 1e-6);
+            // kein Pegelgewinn ueber den Slide (S-L8 a: Auslenkungswellen g = 1, dazu der Mehrverlust)
+            CHECK(effektiv(s, 0.52, 0.05) < effektiv(s, 0.33, 0.05));
+            // ohne Buende glatt — im Slide ein anderer Verlauf, davor gleich
+            Instrument bundlos = instrument;
+            bundlos.saiten.bundlos = true;
+            const Klang glatt = rendereTon(bundlos, gleiten, kRate);
+            double imSlide = 0.0;
+            for (std::size_t i = static_cast<std::size_t>(2 * 0.41 * kRate); i < static_cast<std::size_t>(2 * 0.49 * kRate); ++i)
+                imSlide = std::max(imSlide, std::abs(static_cast<double>(s.daten[i] - glatt.daten[i])));
+            CHECK(imSlide > 1e-4);
+
+            // --- Bend um einen Ganzton: Anstieg 200 … 290 ms, dann gehalten — B3, und gleich laut
+            TonAngabe bend = ton(57, 2, 900);
+            bend.biegung = {TonBiegung{200, 0}, TonBiegung{290, 8}};
+            const Klang b = rendereTon(instrument, bend, kRate);
+            CHECK(std::abs(cent(spitze(b, tonHz(59), 60.0, 0.4, 0.3), tonHz(59))) < 5.0);
+            const double lauter = db(effektiv(b, 0.4, 0.2) / effektiv(gerade, 0.4, 0.2));
+            MESSAGE("Bend um einen Ganzton: " << lauter << " dB gegen den Ton ohne Bend (hergeleitet +0,5 dB, gemessen −0,3 dB)");
+            CHECK(std::abs(lauter) < 1.5);
+        }
+    }
+
     TEST_CASE("Loop Spielweise Klang: Hoerproben (LUMIVIZ_24C_WAV)")
     {
         const QString ziel = qEnvironmentVariable("LUMIVIZ_24C_WAV");

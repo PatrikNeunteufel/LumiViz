@@ -27,6 +27,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 namespace lumi::loop
 {
@@ -606,6 +607,17 @@ double glaettenFuer(const Schicht& schicht, double hz, int rate, bool tapping = 
     return grenzeHz >= 0.45 * rate ? 0.0 : std::exp(-2.0 * kPi * grenzeHz / rate);
 }
 
+/// Den Ring fuer eine `Bahn` vergroessern (Stufe 25c): jeder Wert behaelt sein
+/// Alter — was q Abtastwerte zurueck lag, liegt danach ebenso weit zurueck.
+std::vector<double> vergroessereRing(const std::vector<double>& ring, std::size_t neueGroesse)
+{
+    const std::size_t alt = ring.size();
+    if (neueGroesse <= alt) return ring;
+    std::vector<double> neu(neueGroesse, 0.0);
+    for (std::size_t q = 0; q < alt; ++q) neu[(neueGroesse - q) % neueGroesse] = ring[(alt - q) % alt];
+    return neu;
+}
+
 /// Ohne Gleichanteil und gleich laut wie der Stoss von Classic (Effektivwert 1/sqrt(6)).
 void normiereStoss(std::vector<double>& ring)
 {
@@ -634,12 +646,222 @@ struct PunktDaempfer
     double rho = 0.0;  ///< R/Z0
 };
 
+/// Eine Saite, deren Laenge oder Spannung sich waehrend des Klingens aendert
+/// (Stufe 25c, S-L1 a bis S-L11 a): Legato, Slide, Bend. Je Abtastwert sagt
+/// `stand`, wie lang der Umlauf ist, welche Filter gelten und mit welchem Faktor
+/// zurueckgeschrieben wird.
+///
+/// - **Tonhoehe der Hand:** bis zu einem Wechsel die vorige; ein *Legato* springt
+///   am Schritt der Zielnote; ein *Slide* gleitet `Slide time` je Halbton und
+///   endet am Schritt der Zielnote (S-L10 a), fruehestens ab dem vorigen Wechsel —
+///   mit Buenden stufig (je Bund 43 % Halt, 57 % Uebergang, S-L9 a), ohne glatt;
+///   linear in Cent.
+/// - **Bend:** die Biegung des Tons obendrauf (Halbtoene, linear zwischen den Punkten).
+/// - **Filter:** je gegriffener Tonhoehe ein eigener Umlauf (`entwerfeUmlauf`); im
+///   Slide dazwischen gemischt, nach einem Sprung in `kWechselMs` (von Claude
+///   gesetzt: ein rekursiver Filter knackt, wenn seine Werte springen — Valimaki
+///   1995 S. 117).
+/// - **Faktor beim Schreiben (S-L8 a):** fuer Auslenkungswellen g = 1 bei Laenge und
+///   Sprung, beim Bend die Amplitude mit √(Verzoegerung); im Slide der Mehrverlust
+///   `kSlideVerlustDb` ueber die Gleitdauer.
+class Bahn
+{
+public:
+    /// Wo ein Legato die Saite neu anregt (S-L11 a).
+    struct Anregung
+    {
+        std::int64_t frame = 0;
+        bool hammer = true;  ///< Hammer-on (hoeher); sonst Pull-off
+        double beta = 0.0;   ///< Anteil der neuen Laenge vom Sattel her
+    };
+    struct Stand
+    {
+        double verzug = 2.0;
+        double a = 0.0;
+        double verstaerkung = 1.0;
+        double c = 0.0;
+        double schreibFaktor = 1.0;
+    };
+    /// Der Mehrverlust eines Slide (S-L8 a; IDMT-SMT-Guitar, Median, Recherche 25 §3).
+    static constexpr double kSlideVerlustDb = 2.0;
+    /// So lange gleiten die Filter nach einem Sprung zum neuen Satz (von Claude gesetzt).
+    static constexpr double kWechselMs = 1.0;
+    /// Der Anteil eines Bundschritts, den ein stufiger Slide auf dem Bund haelt (S-L9 a:
+    /// 1 − 0,57 aus der Messung).
+    static constexpr double kBundHalt = 0.43;
+
+    Bahn(const Schicht& schicht, int rate, double dicke, int kopfTon, int versatz, const std::vector<TonWechsel>& verlauf,
+         const std::vector<TonBiegung>& biegung, bool bundlos)
+        : m_rate(rate), m_bundlos(bundlos), m_kopf(kopfTon)
+    {
+        const auto neuerTon = [&](int ton) {
+            const double hz = tonHz(ton);
+            const Umlauf u = entwerfeUmlauf(schicht, hz, rate, dicke);
+            m_umlaeufe.push_back(u);
+            m_filterVerzug.push_back(rate / hz - u.verzug);  // die Laufzeit der Filter beim Grundton
+            m_groesse = std::max(m_groesse, u.groesse + 8);
+        };
+        neuerTon(kopfTon);
+        const double msJeHalbton = std::clamp(schicht.gleitMsJeHalbton, kGleitMsMin, kGleitMsMax);
+        int vorher = kopfTon;
+        std::int64_t vorigerWechsel = 0;
+        for (const TonWechsel& w : verlauf)
+        {
+            const int ton = w.hoehe + versatz;
+            neuerTon(ton);
+            Abschnitt ab;
+            ab.ankunft = std::max<std::int64_t>(vorigerWechsel, std::llround(w.ms * static_cast<double>(rate) / 1000.0));
+            ab.von = vorher;
+            ab.nach = ton;
+            ab.gleitet = w.gleitet;
+            ab.start = ab.ankunft;
+            if (w.gleitet)
+            {
+                const auto dauer = std::llround(std::abs(ton - vorher) * msJeHalbton * rate / 1000.0);
+                ab.start = std::max(vorigerWechsel, ab.ankunft - dauer);
+            }
+            else if (ton != vorher)
+                m_anregungen.push_back({ab.ankunft, ton > vorher, ton > vorher ? kAnschlagOrtMin
+                                                                               : std::clamp(1.0 - std::exp2(-std::abs(ton - vorher) / 12.0),
+                                                                                            kAnschlagOrtMin, kAnschlagOrtMax)});
+            m_abschnitte.push_back(ab);
+            vorher = ton;
+            vorigerWechsel = ab.ankunft;
+        }
+        for (const TonBiegung& b : biegung)
+            m_biegung.push_back({std::llround(b.ms * static_cast<double>(rate) / 1000.0), 0.25 * b.viertel});
+    }
+
+    [[nodiscard]] std::size_t groesse() const { return m_groesse; }
+    [[nodiscard]] const std::vector<Anregung>& anregungen() const { return m_anregungen; }
+
+    [[nodiscard]] Stand stand(std::int64_t t) const
+    {
+        const Lage jetzt = lage(t);
+        Stand s;
+        const Umlauf& u0 = m_umlaeufe[jetzt.filterVon];
+        const Umlauf& u1 = m_umlaeufe[jetzt.filterNach];
+        const double w = jetzt.filterMisch;
+        s.a = u0.a + (u1.a - u0.a) * w;
+        s.verstaerkung = u0.verstaerkung + (u1.verstaerkung - u0.verstaerkung) * w;
+        s.c = u0.c + (u1.c - u0.c) * w;
+        s.verzug = jetzt.verzug;
+        // der Bend: die Amplitude der Auslenkung mit √(Verzoegerung) — je Umlauf der Faktor
+        // aus dem Verhaeltnis zum Stand einen Umlauf frueher
+        const Lage frueher = lage(t - static_cast<std::int64_t>(jetzt.verzug));
+        if (frueher.bendVerhaeltnis > 0.0) s.schreibFaktor = std::sqrt(jetzt.bendVerhaeltnis / frueher.bendVerhaeltnis);
+        if (jetzt.gleitFrames > 0.0)
+            s.schreibFaktor *= std::pow(10.0, -kSlideVerlustDb / 20.0 * jetzt.verzug / jetzt.gleitFrames);
+        return s;
+    }
+
+private:
+    struct Abschnitt
+    {
+        std::int64_t start = 0;    ///< beginnt zu gleiten (beim Legato = Ankunft)
+        std::int64_t ankunft = 0;  ///< der Schritt der Zielnote
+        int von = 60;
+        int nach = 60;
+        bool gleitet = false;
+    };
+    struct Lage
+    {
+        double verzug = 2.0;
+        double bendVerhaeltnis = 1.0;  ///< Verzoegerung mit Bend durch die ohne
+        std::size_t filterVon = 0;
+        std::size_t filterNach = 0;
+        double filterMisch = 0.0;
+        double gleitFrames = 0.0;  ///< > 0: mitten in einem Slide, so lang ist er
+    };
+
+    [[nodiscard]] double biegungBei(std::int64_t t) const
+    {
+        if (m_biegung.empty()) return 0.0;
+        if (t <= m_biegung.front().first) return m_biegung.front().second;
+        for (std::size_t i = 1; i < m_biegung.size(); ++i)
+        {
+            const auto& [ta, ha] = m_biegung[i - 1];
+            const auto& [tb, hb] = m_biegung[i];
+            if (t < tb) return tb > ta ? ha + (hb - ha) * static_cast<double>(t - ta) / static_cast<double>(tb - ta) : hb;
+        }
+        return m_biegung.back().second;
+    }
+
+    [[nodiscard]] Lage lage(std::int64_t t) const
+    {
+        Lage l;
+        double ton = m_kopf;
+        std::size_t k = 0;  // der zuletzt erreichte Abschnitt + 1 (0 = noch der Kopf)
+        while (k < m_abschnitte.size() && m_abschnitte[k].start <= t) ++k;
+        double filterVerzug = m_filterVerzug[0];
+        if (k == 0) l.filterVon = l.filterNach = 0;
+        else
+        {
+            const Abschnitt& ab = m_abschnitte[k - 1];
+            const std::size_t von = k - 1;  // die Umlaeufe: 0 der Kopf, k der k-te Wechsel
+            const std::size_t nach = k;
+            if (t < ab.ankunft)
+            {
+                // mitten im Slide
+                const double w = static_cast<double>(t - ab.start) / static_cast<double>(ab.ankunft - ab.start);
+                ton = gleite(ab.von, ab.nach, w);
+                l.filterVon = von;
+                l.filterNach = nach;
+                l.filterMisch = w;
+                l.gleitFrames = static_cast<double>(ab.ankunft - ab.start);
+            }
+            else
+            {
+                ton = ab.nach;
+                const double wechsel = kWechselMs * m_rate / 1000.0;
+                const double seit = static_cast<double>(t - ab.ankunft);
+                l.filterVon = ab.gleitet || seit >= wechsel ? nach : von;
+                l.filterNach = nach;
+                l.filterMisch = ab.gleitet || seit >= wechsel ? 0.0 : seit / wechsel;
+            }
+            filterVerzug = m_filterVerzug[l.filterVon] + (m_filterVerzug[l.filterNach] - m_filterVerzug[l.filterVon]) * l.filterMisch;
+        }
+        const double ohneBend = m_rate / (440.0 * std::exp2((ton - 69.0) / 12.0)) - filterVerzug;
+        const double mitBend = m_rate / (440.0 * std::exp2((ton + biegungBei(t) - 69.0) / 12.0)) - filterVerzug;
+        l.verzug = std::max(2.0, mitBend);
+        l.bendVerhaeltnis = ohneBend > 0.0 ? l.verzug / ohneBend : 1.0;
+        return l;
+    }
+
+    /// Von `von` nach `nach` bei `w` (0 … 1) des Wegs: mit Buenden stufig, ohne glatt.
+    [[nodiscard]] double gleite(int von, int nach, double w) const
+    {
+        const int schritte = std::abs(nach - von);
+        if (m_bundlos || schritte == 0) return von + (nach - von) * w;
+        const double richtung = nach > von ? 1.0 : -1.0;
+        const double stelle = std::clamp(w, 0.0, 1.0) * schritte;
+        const double bund = std::min(std::floor(stelle), static_cast<double>(schritte - 1));
+        const double innen = stelle - bund;
+        const double weiter = innen < kBundHalt ? 0.0 : (innen - kBundHalt) / (1.0 - kBundHalt);
+        return von + richtung * (bund + weiter);
+    }
+
+    int m_rate = 44100;
+    bool m_bundlos = false;
+    double m_kopf = 60.0;
+    std::size_t m_groesse = 6;
+    std::vector<Umlauf> m_umlaeufe;
+    std::vector<double> m_filterVerzug;
+    std::vector<Abschnitt> m_abschnitte;
+    std::vector<std::pair<std::int64_t, double>> m_biegung;
+    std::vector<Anregung> m_anregungen;
+};
+
 /// Wie die Saite gespielt wird (Stufe 24c): ohne Daempfer und ohne Tapping
 /// rechnet sie Bit fuer Bit wie bis Stufe 24b.
 struct Spielart
 {
     std::vector<PunktDaempfer> daempfer;
     bool tapping = false;  ///< am Bund angeschlagen, weich (statt an der Anschlagstelle)
+    /// Stufe 25c: Legato, Slide, Bend — nullptr = eine Laenge, wie bisher.
+    const Bahn* bahn = nullptr;
+    /// Stufe 25c (S-L11 a): wie fest Hammer-on und Pull-off neu anregen.
+    double legatoLaut = 0.0;
 };
 
 /// Wo der Handballen bei *Palm mute* liegt, in mm vom Steg (Stufe 24c):
@@ -673,34 +895,51 @@ double leseLagrange(const std::vector<double>& ring, std::size_t jetzt, double d
     return summe;
 }
 
+/// Was `abnahme` zum Lesen bekommt: `lese(d)` die Welle, die vor `d` Abtastwerten
+/// den Steg verliess, und `verzug`, wie lang der Umlauf gerade ist (Stufe 25c:
+/// bei Legato, Slide und Bend aendert er sich — ein Tonabnehmer bleibt am Ort).
+struct Leser
+{
+    const std::vector<double>& ring;
+    const std::size_t& schreib;
+    double verzug = 2.0;
+    double operator()(double d) const { return leseLagrange(ring, schreib, d, 0); }
+};
+
 /// Den Umlauf rechnen: lesen, Verlust und Steifheit, zurueckschreiben. Was in
 /// den Ton geht, sagt `abnahme(y, lese)`: `y` ist die Welle, die am Steg
 /// ankommt; `lese(d)` die Welle, die vor `d` Abtastwerten den Steg verliess
 /// (der eben geschriebene Wert ist d = 0). Ein Punkt x der Saite liegt im
 /// Umlauf zweimal: auf dem Weg zum Sattel bei x · L/2, auf dem Rueckweg (am
-/// Sattel umgedreht) bei (2 − x) · L/2 — dort greifen die Daempfer an.
-template <class Abnahme>
+/// Sattel umgedreht) bei (2 − x) · L/2 — dort greifen die Daempfer an. Mit einer
+/// `Bahn` (Stufe 25c) aendern sich Laenge, Filter und Faktor je Abtastwert, und
+/// `anregen(ring, schreib, verzug, anregung)` setzt die Anregungen eines Legato.
+template <class Abnahme, class Anregen>
 void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u, std::vector<double> ring,
-             std::vector<float>& daten, const Spielart& spiel, Abnahme abnahme)
+             std::vector<float>& daten, const Spielart& spiel, Abnahme abnahme, Anregen anregen)
 {
     struct Knoten
     {
+        double x = 0.5;        ///< Anteil der Saite vom Steg
         std::size_t hin = 0;   ///< so weit vom eben geschriebenen Wert: die Welle zum Sattel
         std::size_t her = 0;   ///< die Welle zurueck zum Steg
         double anteil = 0.0;   ///< rho/(2 + rho)
+    };
+    const std::size_t groesse = ring.size();
+    const auto lege = [groesse](Knoten& k, double verzug) {
+        k.hin = static_cast<std::size_t>(std::max(1.0, std::round(k.x * 0.5 * verzug)));
+        k.her = static_cast<std::size_t>(std::max(1.0, std::round((2.0 - k.x) * 0.5 * verzug)));
+        return k.her < groesse && k.hin < k.her;
     };
     std::vector<Knoten> knoten;
     for (const PunktDaempfer& d : spiel.daempfer)
     {
         if (d.rho <= 0.0) continue;
-        const double x = std::clamp(d.ort, 0.005, 0.995);
-        const auto hin = static_cast<std::size_t>(std::max(1.0, std::round(x * 0.5 * u.verzug)));
-        const auto her = static_cast<std::size_t>(std::max(1.0, std::round((2.0 - x) * 0.5 * u.verzug)));
-        if (her < u.groesse && hin < her) knoten.push_back({hin, her, d.rho / (2.0 + d.rho)});
+        Knoten k{std::clamp(d.ort, 0.005, 0.995), 0, 0, d.rho / (2.0 + d.rho)};
+        if (lege(k, u.verzug)) knoten.push_back(k);
     }
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     Reihe reihe(schicht, rate, false);  // die Saite ueberspringt die Filter wie Classic
-    const std::size_t groesse = u.groesse;
     const double pegel = kPegel * schicht.laut;
     const double anstieg = std::max(1.0, schicht.anstiegMs * rate / 1000.0);
     std::array<double, Umlauf::kAllpaesse> apEin{};
@@ -709,27 +948,42 @@ void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, 
     double tief = 0.0;  // das Gedaechtnis des Tiefpasses
     // Lagrange 5. Ordnung (S-L7 a, bis Stufe 25b linear): nach dem Schreiben gilt der eben
     // geschriebene Wert (d = 0)
-    const auto lese = [&](double d) { return leseLagrange(ring, schreib, d, 0); };
+    Leser lese{ring, schreib, u.verzug};
+    std::size_t naechsteAnregung = 0;
     for (std::int64_t t = 0; t < frames; ++t)
     {
+        // ohne Bahn: der feste Umlauf, Bit fuer Bit wie bis Stufe 25b
+        Bahn::Stand st{u.verzug, u.a, u.verstaerkung, u.c, 1.0};
+        if (spiel.bahn != nullptr)
+        {
+            st = spiel.bahn->stand(t);
+            lese.verzug = st.verzug;
+            for (Knoten& k : knoten) (void)lege(k, st.verzug);
+        }
         // vor dem Schreiben: am Platz `schreib` steht noch der aelteste Wert
-        const double y = leseLagrange(ring, schreib, u.verzug, 1);
+        const double y = leseLagrange(ring, schreib, st.verzug, 1);
         // Verlust: y_n = g (1 + a) x_n − a y_(n−1)
-        tief = u.verstaerkung * (1.0 + u.a) * y - u.a * tief;
+        tief = st.verstaerkung * (1.0 + st.a) * y - st.a * tief;
         double v = tief;
-        if (u.mitAllpass())
+        if (st.c != 0.0)
             for (std::size_t k = 0; k < static_cast<std::size_t>(Umlauf::kAllpaesse); ++k)
             {
-                const double aus = u.c * v + apEin[k] - u.c * apAus[k];
+                const double aus = st.c * v + apEin[k] - st.c * apAus[k];
                 apEin[k] = v;
                 apAus[k] = aus;
                 v = aus;
             }
-        ring[schreib] = v;
+        ring[schreib] = spiel.bahn != nullptr ? v * st.schreibFaktor : v;
+        // Stufe 25c: ein Legato regt die Saite an seinem Schritt neu an (S-L11 a)
+        if (spiel.bahn != nullptr)
+            for (const auto& anregungen = spiel.bahn->anregungen();
+                 naechsteAnregung < anregungen.size() && anregungen[naechsteAnregung].frame <= t; ++naechsteAnregung)
+                anregen(ring, schreib, st.verzug, anregungen[naechsteAnregung]);
         // die Daempfer: beide Wellen am Punkt geben denselben Anteil ihrer Summe ab (die Welle
         // zurueck steht im Umlauf mit umgedrehtem Vorzeichen)
         for (const Knoten& k : knoten)
         {
+            if (k.her >= groesse || k.hin >= k.her) continue;
             double& hin = ring[(schreib + groesse - k.hin) % groesse];
             double& her = ring[(schreib + groesse - k.her) % groesse];
             const double ab = k.anteil * (hin - her);
@@ -925,15 +1179,15 @@ private:
 /// einer Sekunde so laut ist wie die Saite allein (Effektivwert, der Anfang
 /// einmal vorab gerechnet); Body amount mischt beide. `fabrik()` gibt je Lauf
 /// eine frische Abnahme (mit eigenem Gedaechtnis).
-template <class Fabrik>
+template <class Fabrik, class Anregen>
 void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int rate, const Umlauf& u,
                     std::vector<double> ring, std::vector<float>& daten, const Spielart& spiel, Fabrik fabrik,
-                    bool amSteg)
+                    bool amSteg, Anregen anregen)
 {
     const double anteil = std::clamp(schicht.korpusAnteil, 0.0, 1.0);
     if (schicht.korpus == KorpusArt::Keiner || !amSteg || anteil <= 0.0)
     {
-        laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik());
+        laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik(), anregen);
         return;
     }
     std::vector<float> anfang(static_cast<std::size_t>(2 * std::max(1, rate / 10)), 0.0f);
@@ -947,14 +1201,14 @@ void laufeMitKorpus(const Schicht& schicht, double hz, const Huelle& huelle, int
         quadrateSaite += saite * saite;
         quadrateKorpus += schall * schall;
         return saite;
-    });
+    }, anregen);
     const double faktor = quadrateKorpus > 0.0 ? std::sqrt(quadrateSaite / quadrateKorpus) : 0.0;
     Korpus korpus(schicht.korpus, rate);
     auto abnahme = fabrik();
     laufeUm(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, [&](double y, const auto& lese) {
         const double saite = abnahme(y, lese);
         return (1.0 - anteil) * saite + anteil * faktor * korpus.schritt(saite);
-    });
+    }, anregen);
 }
 
 /// Die Saite *Extended KS* (Stufe 23c; S-K1 b, S-K3 a): das erweiterte
@@ -990,10 +1244,37 @@ void rechneSaiteKs(const Schicht& schicht, int hoehe, double hz, const Huelle& h
     const auto kamm = static_cast<std::size_t>(std::max<long long>(1, std::llround(anschlagOrt * periode)));
     for (std::size_t i = 0; i < groesse; ++i) ring[i] = stoss[i] - stoss[(i + groesse - kamm % groesse) % groesse];
     normiereStoss(ring);
+    if (spiel.bahn != nullptr) ring = vergroessereRing(ring, spiel.bahn->groesse());
 
+    // Stufe 25c (S-L11 a): ein Legato regt neu an — ein Stoss wie der Anschlag, gekaemmt an der
+    // Stelle des Fingers (vom Sattel her gezaehlt; der Kamm ist von beiden Enden gleich), beim
+    // Pull-off weich wie ein Finger, beim Hammer-on hart (von Claude gesetzt)
+    const auto anregen = [&schicht, &spiel, rate, hoehe](std::vector<double>& r, std::size_t schreib, double verzug,
+                                                         const Bahn::Anregung& a) {
+        const auto laenge = static_cast<std::size_t>(std::max(2.0, std::floor(verzug)));
+        std::uint32_t f = 7777u + static_cast<std::uint32_t>(hoehe) * 7919u + static_cast<std::uint32_t>(a.frame);
+        const double weich = a.hammer ? 0.0 : glaettenFuer(schicht, rate / verzug, rate, true);
+        std::vector<double> neu(laenge, 0.0);
+        double e1 = 0.0;
+        double e2 = 0.0;
+        for (double& wert : neu)
+        {
+            f = f * 1664525u + 1013904223u;
+            const double rauschen = static_cast<double>(f >> 8) / 8388608.0 - 1.0;
+            e1 = (1.0 - weich) * rauschen + weich * e1;
+            e2 = (1.0 - weich) * e1 + weich * e2;
+            wert = e2;
+        }
+        const auto k = static_cast<std::size_t>(std::max<long long>(1, std::llround(a.beta * verzug)));
+        std::vector<double> gekaemmt(laenge, 0.0);
+        for (std::size_t i = 0; i < laenge; ++i) gekaemmt[i] = neu[i] - neu[(i + laenge - k % laenge) % laenge];
+        normiereStoss(gekaemmt);
+        const std::size_t g = r.size();
+        for (std::size_t q = 0; q < laenge; ++q) r[(schreib + g - q) % g] += spiel.legatoLaut * gekaemmt[q];
+    };
     laufeMitKorpus(
         schicht, hz, huelle, rate, u, std::move(ring), daten, spiel,
-        [] { return [](double y, const auto&) { return y; }; }, true);
+        [] { return [](double y, const auto&) { return y; }; }, true, anregen);
 }
 
 /// Der Hochpass eines Piezo-Tonabnehmers (S-K5 a): eine kapazitive Quelle an
@@ -1056,6 +1337,38 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
             }
     }
     normiereStoss(ring);
+    if (spiel.bahn != nullptr) ring = vergroessereRing(ring, spiel.bahn->groesse());
+
+    // Stufe 25c (S-L11 a): ein Legato regt neu an — ein Dreieck der Auslenkung mit der Spitze am
+    // Finger, vom Sattel her gezaehlt: beim Hammer-on hart am neuen Bund, beim Pull-off an der
+    // alten Bundstelle, weich wie ein Finger (von Claude gesetzt)
+    const auto anregen = [&schicht, &spiel, rate](std::vector<double>& r, std::size_t schreib, double verzug,
+                                                  const Bahn::Anregung& a) {
+        const double spitze = std::clamp(1.0 - a.beta, kAnschlagOrtMin, 1.0 - kAnschlagOrtMin);
+        const auto form = [spitze](double x) { return x <= spitze ? x / spitze : (1.0 - x) / (1.0 - spitze); };
+        const auto laenge = static_cast<std::size_t>(std::max(2.0, std::floor(verzug)));
+        std::vector<double> neu(laenge, 0.0);
+        for (std::size_t alter = 0; alter < laenge; ++alter)
+        {
+            const double k = static_cast<double>(alter);
+            neu[alter] = k <= 0.5 * verzug ? 0.5 * form(2.0 * k / verzug) : -0.5 * form(2.0 - 2.0 * k / verzug);
+        }
+        if (!a.hammer)
+            if (const double weich = glaettenFuer(schicht, rate / verzug, rate, true); weich > 0.0)
+            {
+                double e1 = 0.0;
+                double e2 = 0.0;
+                for (double& wert : neu)
+                {
+                    e1 = (1.0 - weich) * wert + weich * e1;
+                    e2 = (1.0 - weich) * e1 + weich * e2;
+                    wert = e2;
+                }
+            }
+        normiereStoss(neu);
+        const std::size_t g = r.size();
+        for (std::size_t alter = 0; alter < laenge; ++alter) r[(schreib + g - alter) % g] += spiel.legatoLaut * neu[alter];
+    };
 
     // --- die Abnahme
     const double mensur = mensurMm > 0.0 ? mensurMm : kMensurVorgabeMm;
@@ -1126,7 +1439,8 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
         for (int s = 0; s < spulen; ++s)
         {
             Stelle& stelle = p.stellen[static_cast<std::size_t>(s)];
-            const double jetzt = lese(stelle.x * 0.5 * laenge) - lese((2.0 - stelle.x) * 0.5 * laenge);
+            // die Laenge des Umlaufs, wie sie gerade ist (Stufe 25c: Legato, Slide, Bend)
+            const double jetzt = lese(stelle.x * 0.5 * lese.verzug) - lese((2.0 - stelle.x) * 0.5 * lese.verzug);
             if (stelle.erster)
             {
                 // die Saite ist ausgelenkt, aber in Ruhe — ohne das waere der erste Abtastwert ein
@@ -1160,7 +1474,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
                     spitzen[k] = std::max(spitzen[k], std::abs(s));
                 }
             return y;
-        });
+        }, anregen);
         // so laut wie am Steg (S-K11 a) — die Spitze darf ueber der am Steg liegen (die
         // Geschwindigkeit hebt jeden Teilton an, ein tiefer Ton nah am Steg hat Hunderte), der
         // fertige Ton aber hoechstens bei kSpitzeSaiteMax
@@ -1178,7 +1492,7 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
             return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
         };
     };
-    laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik, !nimmHals && !nimmSteg);
+    laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik, !nimmHals && !nimmSteg, anregen);
 }
 
 /// Das Rauschen (Stufe 11d): gleichverteilt, aus einem festen Zaehlwerk —
@@ -2261,9 +2575,18 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
         if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch)
         {
-            const SaitenSpiel spiel = saitenSpielFuer(instrument, schicht, ton, angabe);
+            SaitenSpiel spiel = saitenSpielFuer(instrument, schicht, ton, angabe);
             const double saiteHz = spiel.ton == ton ? hz : tonHz(spiel.ton);
             const double schichtDicke = std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke;
+            // Stufe 25c: ein Ton mit Verlauf oder Bend laeuft auf einer Bahn (Legato, Slide, Bend)
+            std::optional<Bahn> bahn;
+            if (angabe != nullptr && (!angabe->verlauf.empty() || !angabe->biegung.empty()))
+            {
+                bahn.emplace(schicht, rate, schichtDicke, spiel.ton, std::clamp(schicht.versatzHalbtoene, -24, 24),
+                             angabe->verlauf, angabe->biegung, instrument.saiten.bundlos);
+                spiel.art.bahn = &*bahn;
+                spiel.art.legatoLaut = std::clamp(schicht.legatoLaut, 0.0, 1.0);
+            }
             if (schicht.saitenModell == SaitenModell::ErweiterterKs)
                 rechneSaiteKs(schicht, spiel.ton, saiteHz, huelle, rate, schichtDicke, spiel.art, eine);
             else

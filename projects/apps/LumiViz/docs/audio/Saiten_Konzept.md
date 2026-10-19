@@ -1533,10 +1533,29 @@ S. 117, Özaslan 2010 S. 458).
   in 25c-3) in *Playing*; `.lvinst` Fassung 12 (`strings.fretless` immer, `playing.slideTime`,
   `playing.legatoLevel`). Die mitgelieferten Instrumente bleiben bis 25c-3 in Fassung 11
   (gelesen mit den Vorgaben).
-- **25c-3 (offen):** der zeitvariable Umlauf — Legato (Sprung, g = 1, Anregung nach
-  S-L11 a), Slide (stufig/glatt nach S-L9 a, 20 ms je Halbton endend am Zielschritt,
-  −2 dB), Bend (g = √(1+Δx)); `toeneImKanal` auf Ketten umschalten; *Legato level*
-  bemessen; Upright Bass und Pizzicato Violin *Fretless*; Messungen am gerechneten Ton,
+- **25c-3a der zeitvariable Umlauf (gebaut):** `Bahn` je Ton mit Verlauf oder Bend —
+  Tonhöhe der Hand (Legato springt, Slide gleitet 20 ms je Halbton und endet am
+  Zielschritt, mit Bünden stufig 43 % Halt / 57 % Übergang, ohne glatt; linear in
+  Cent), Bend obendrauf; je gegriffener Tonhöhe ein eigener Umlauf, im Slide gemischt,
+  nach einem Sprung in 1 ms (von Claude gesetzt, gegen Knacken der rekursiven Filter);
+  Faktor beim Schreiben nach S-L8 a (Bend √ des Verhältnisses einen Umlauf früher,
+  Slide −2 dB über die Gleitdauer). Anregung des Legato (S-L11 a): Waveguide ein Dreieck
+  der Auslenkung mit der Spitze am Finger (vom Sattel her), Extended KS ein gekämmter
+  Stoß; Hammer-on hart, Pull-off weich wie ein Finger (von Claude gesetzt). `Leser`
+  trägt die laufende Länge, damit die Tonabnehmer am Ort bleiben; der Ring wird mit
+  `vergroessereRing` auf die längste Länge gebracht. **Ohne Verlauf und Bend Bit für Bit
+  wie 25c-1** (Loop Werte unverändert).
+  **Gemessen** (`test_LoopSpielweiseKlang` „25c“): Legato A3→B3 ein Ton, Tonhöhe vorher
+  und nachher auf 3 Cent; ohne Anregung kein Sprung (|·| < 1,5 dB); *Legato level*
+  **0,38** gibt im Messfall (Achtel bei 100 BPM, Hammer-on und Pull-off über 1–3
+  Halbtöne) einen Sprung im Median +3,04 dB (KS) / +3,07 dB (WG) — Vorgabe danach
+  gesetzt. Slide A3→D4: Tonhöhe vorher/nachher auf 3 Cent, bis zum Beginn des Gleitens
+  Bit für Bit wie ohne Slide, kein Pegelgewinn, bundlos ein anderer Verlauf. Bend um
+  einen Ganzton: B3 auf 5 Cent; **−1,1 dB** gegen den ungebogenen Ton (gemessen an
+  echten Saiten −0,3 dB, hergeleitet +0,5 dB) — vermutlich, weil der Verlust je Umlauf
+  der gegriffenen Tonhöhe gilt und der gebogene Ton öfter umläuft; offen.
+- **25c-3b (offen):** `toeneImKanal` auf Ketten umschalten (Glieder schlagen nicht an);
+  Upright Bass und Pizzicato Violin *Fretless*, die Instrumente in Fassung 12;
   Hörproben, `loop_werte.txt` neu.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
