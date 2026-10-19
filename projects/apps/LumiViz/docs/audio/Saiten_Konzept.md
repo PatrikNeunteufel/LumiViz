@@ -1,7 +1,8 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.33.0
-> **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> **Version:** 0.34.0
+> **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
+> Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; 26e-1 gebaut, §5y; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -130,6 +131,69 @@ die Saiten mit den Tabs, die Voicings als nächste Stufe, ohne neue Fassung. Ver
 Saiten — Voicings später mit Fassung 2), c (für Tasten nur ein Werkzeug in der Piano-Roll —
 keine eigenen Voicings, zwei Bedienungen). Ersetzt in S-T2 a „nur bei einem
 Saiteninstrument“.
+
+✅ **S-T8 a** (Patrik S138): **Skizze des Fensters *Chords* gebilligt** (zweite Fassung,
+gezeichnet im Gespräch; auf Patriks Wunsch „der Baum ja, aber statt Namen eine Galerie von
+Thumbnails“; hier als Beschreibung):
+- **A** Kopf *For:* — Instrument und Muster des Editors, dazu Stimmung und Capo; gezeigt wird
+  nur, was nach `passtZu` passt.
+- **B** *Search* (etwa „Cm7“, „sus“, „C/E“) und eine Auswahl *Type*.
+- **C** Links ein Baum der Ordner: ★ *Favorites*, *Recently used*, die zwölf Grundtöne, darunter
+  ihre Arten, zuletzt *Your chords*.
+- **D** Rechts eine **Galerie mit einem kleinen Griffbild je Lage**, unter Köpfen nach Art
+  („C major · 5“); unter jedem Bild Akkordsymbol und Lage (*open*, *fr 3*). Ein Klick spielt an
+  und wählt; Doppelklick setzt an die Einfügemarke; ein Bild auf Tab-Linien oder Piano-Roll
+  ziehen setzt dort (S-T5 a D).
+- **E** Eine Leiste unten zeigt das gewählte Griffbild groß (übliche Form: Saiten senkrecht,
+  Sattel oben, × / ○, Finger als Zahl, „fr n“), mit Titel, Lage, Tönen und dem Zeichen
+  *computed* bei gerechneten (S-T4 a). Kleines und großes Bild zeichnet derselbe Code.
+- **F** *Move −1 / +1 fret* verschiebt auf dem Griffbrett (`toeneDesGriffbilds` mit
+  Verschiebung).
+- **G** *Play*, ★ (merkt die gezeigte Lage als Nennung, etwa `guitar/c_major_2`), *Use*.
+- **H** *New...*, *Edit...*, *Duplicate*, *Delete* — *Edit* und *Delete* an eigenen; *Edit* an
+  einer Vorlage legt eine eigene Kopie an.
+- Fußzeile mit der Bedienung.
+Verworfen: b (ein Bild je Akkord mit *Position ‹ ›* — die Form der übrigen Lagen erst nach dem
+Blättern zu sehen), dazu die erste Fassung (Namen im Baum, Lagen rechts zum Blättern). Kippt,
+wenn die Galerie mit dem Grundton allein (rund 170 Lagen bei der Gitarre) im Programm zu voll
+wirkt — dann die Arten eingeklappt. Offen: der Dialog *New/Edit* (eigene Skizze), die
+Voicings in der Galerie (26f); das Anhören regeln S-T9 a und S-T10 a.
+
+✅ **S-T9 a** (Patrik S138, auf seinen Vorschlag „Symbole für die anderen Varianten“): **In
+der Leiste unten ersetzen vier Symbole den Knopf *Play*:** ↓ *Down*, ↑ *Up*, ↓↑ *Down-up*,
+= *Together*. Jedes spielt die gewählte Lage einmal an; Down und Up mit dem Spread des Musters
+(ohne Muster der des Instruments), *Together* mit Spread 0, *Down-up* Down und eine halbe
+Zählzeit später Up im Tempo des Loops (von Claude gesetzt: wie die Vorgabe *1/2 beat* der
+Hand). **Dazu Patrik:** die gewählte Spielart **bleibt** — ein Klick auf ein anderes kleines
+Bild spielt sie, bis eine andere gewählt wird; das Symbol zeigt, welche gilt; zu Beginn Down.
+Am Eingefügten ändert sie nichts (die Richtung kommt aus der Spur Strum, S-T5 a). Verworfen: b
+(die Symbole unter dem Bild unter dem Zeiger — schwer zu finden, verdeckt den Namen).
+
+✅ **S-T10 a** (Patrik S138): **Das Fenster merkt die Spielart** in den Einstellungen
+(`chordWindow/playAs`), wie Favoriten und *Recently used*; in der Test-Exe ist das Merken
+abgeschaltet (wie bei den Gruppen des Creators). Verworfen: b (jede Sitzung mit Down — die
+Spielart ist eine Vorliebe wie die Favoriten daneben).
+
+✅ **S-T11 a** (Patrik S138): **Skizze des Dialogs *Edit chord* gebilligt** (gezeichnet im
+Gespräch; hier als Beschreibung):
+- **I** Die Stimmung fest — vom Instrument bei *New*, vom Griffbild bei *Edit*; im Dialog
+  nicht änderbar (S-T3 a).
+- **J** *First fret* ‹ ›: ab welchem Bund das Griffbrett gezeigt wird; ab 2 links die Zahl.
+- **K** *Title*, *Root*, *Type* (die Arten der Vorlagen, dazu freier Text), *Description*.
+- **L** Die Töne; daneben ein Vorschlag *sounds like: …* mit **Use name** (setzt Root, Type,
+  Title). Erkannt werden die Arten der Vorlagen; was nicht passt, zeigt keinen Vorschlag;
+  ohne Klick wird nichts gesetzt.
+- **M** Die vier Symbole zum Anhören nach S-T9 a, mit derselben gemerkten Spielart.
+- **N** Klick auf einen Bund setzt oder nimmt den Punkt (je Saite höchstens einer); Klick über
+  dem Sattel schaltet ○ leer / × nicht gespielt; Rechtsklick auf einen Punkt wählt Finger 1–4;
+  einen Punkt über Saiten ziehen setzt ein Barré; ein gestrichelter Rahmen zeigt das Feld
+  unter dem Zeiger; Hinweiszeile und Tooltip.
+- **O** Ctrl+Z / Ctrl+Y im Dialog (eigenes Undo, wie im Fenster *Kits*).
+- **P** *Cancel*, *Save* — bei *New* und an einer Vorlage eine eigene Datei `user:<titel>`
+  (vergeben: `_2`, wie *Keep both*), an einer eigenen ersetzt *Save* sie; ohne gespielte Saite
+  sagt ein Hinweis, warum nicht gespeichert wird (der Knopf bleibt anklickbar).
+Verworfen: b (ohne L — ein falsch benanntes Griffbild landet im falschen Ordner der Galerie).
+Kippt, wenn eigene Griffbilder vor allem Griffe ohne gängigen Namen sind.
 
 ✅ **S-W1 a** (Patrik S133; Bearbeitung ab der nächsten Session): **Ziel der
 Spielweisen** sind Strum (Richtung, Versatz der Saiten, Muster) und die
@@ -1861,6 +1925,35 @@ S. 117, Özaslan 2010 S. 458).
   Gesetz √(Verzögerung) aus S-L8 a ergibt für vier Halbtöne −1,0 dB.
 - **Offen:** bei kurzen Noten in Normalgröße überdeckt die Höhe des Bends in den Tab-Linien die
   nächste Zahl.
+
+### 5y. Stufe 26e-1 — Griffbild zeichnen, Namen erkennen (gebaut S138)
+
+Teilschritte von 26e (von Claude gesetzt, nach S-P1 a je eng unter beiden Compilern): 26e-1
+Zeichnen und Namen ohne Fenster, 26e-2 das Fenster *Chords* mit Knopf und Einfügen, 26e-3 der
+Dialog *Edit chord*.
+
+- **`Akkord.hpp`:** `verschobenesGriffbild` (S-T8 a F; `toeneDesGriffbilds` rechnet seither
+  darüber, Bit für Bit dieselben Töne), `AkkordArt` und `akkordArten()` — 45 Arten nach
+  Lehrbuch mit den Namen von chords-db, alle Arten der Vorlagen außer `alt` und `7sg`;
+  `AkkordName`, `erkenneAkkord`, `akkordArtText`, `akkordSymbol` (S-T11 a L). **Regel (von
+  Claude gesetzt):** die Tonklassen bilden genau eine Art auf dem Bass; sonst Dur oder Moll
+  über einem anderen Bass als Slash (C/E, A/G♯); sonst eine Art ab vier Tönen ohne Quinte;
+  je Stufe die Reihenfolge der Tabelle. C-E-A heißt damit Am/C, nicht C6 ohne Quinte.
+- **`loop/GriffbildBild`** (neu): `griffbildFenster` (mindestens vier Bünde, am Sattel solange
+  der höchste gegriffene hineinpasst, sonst ab dem tiefsten), `GriffbildLage` (Saiten, Linien,
+  Punkte, × / ○, `trifft` für die Klicks des Dialogs), `zeichneGriffbild` klein und groß
+  (Farben aus der Palette; die Bundzahl links neben Punkt und Balken).
+- Belegt in `test_LoopGriffbild` (5 Fälle; `LUMIVIZ_GRIFFBILD_BILD` legt einen Bogen mit 20
+  Gitarrenlagen klein und groß ab). Gemessen an den Vorlagen: gerechnete Griffbilder 1314
+  mit Grundton im Bass alle mit ihrer Art, davon 74 ohne Quinte als Slash gehört (ein C6 ohne
+  Quinte ist Am/C — dieselben Töne); Voicings in Grundstellung 372 / 372, Dur- und
+  Moll-Umkehrungen als Slash; chords-db vollständig mit Grundton im Bass 1322 / 1322; über
+  alle 4095 Lagen von chords-db 1714 mit ihrem Namen (die übrigen ohne Grundton im Bass, ohne
+  Grundton, mit Optionen außerhalb der Art).
+- **Befund chords-db** (Prüfung S138 gegen die Lehrbuch-Arten): rund 30 Lagen greifen Töne
+  außerhalb ihrer Art (etwa `guitar/bb_6_4` mit kleiner Terz und großer Septime,
+  `guitar/g_add9_2`, `ukulele/f_11_1`); `alt` greift immer Grundton, Terz, verminderte Quinte,
+  `7sg` (drei Lagen) wie ein Septakkord. Vorgelegt als S-T12.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

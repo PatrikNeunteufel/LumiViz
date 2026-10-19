@@ -300,16 +300,15 @@ std::vector<Akkord> passendeAkkorde(const std::vector<Akkord>& alle, const Saite
 
 std::optional<std::vector<AkkordTon>> toeneDesGriffbilds(const Akkord& akkord, const Saitensatz& saiten, int verschiebung)
 {
-    if (!akkord.istGriffbild() || !passtZu(akkord, saiten) || akkord.buende.size() != akkord.leer.size()) return std::nullopt;
+    if (!passtZu(akkord, saiten) || akkord.buende.size() != akkord.leer.size()) return std::nullopt;
+    const std::optional<Akkord> lage = verschobenesGriffbild(akkord, verschiebung);
+    if (!lage) return std::nullopt;
     std::vector<AkkordTon> toene;
-    for (std::size_t s = 0; s < akkord.buende.size(); ++s)
+    for (std::size_t s = 0; s < lage->buende.size(); ++s)
     {
-        const int bund = akkord.buende[s];
+        const int bund = lage->buende[s];
         if (bund < 0) continue;  // nicht gespielt
-        // verschoben: der Griff wandert, eine leere Saite wird mitgegriffen (Barre der Hand)
-        const int neu = bund + verschiebung;
-        if (neu < 0 || neu > kBuendeMax) return std::nullopt;
-        toene.push_back({saiten.leer[s] + saiten.capo + neu, static_cast<int>(s)});
+        toene.push_back({saiten.leer[s] + saiten.capo + bund, static_cast<int>(s)});
     }
     for (const AkkordTon& ton : toene)
         if (ton.hoehe < kHoeheMin || ton.hoehe > kHoeheMax) return std::nullopt;
@@ -342,6 +341,159 @@ std::vector<Note> akkordNoten(const Akkord& akkord, const Saitensatz& saiten, in
         noten.push_back(note);
     }
     return noten;
+}
+
+std::optional<Akkord> verschobenesGriffbild(const Akkord& akkord, int verschiebung)
+{
+    if (!akkord.istGriffbild()) return std::nullopt;
+    Akkord lage = akkord;
+    for (int& bund : lage.buende)
+    {
+        if (bund < 0) continue;  // nicht gespielt
+        // der Griff wandert, eine leere Saite wird mitgegriffen (Barre der Hand)
+        bund += verschiebung;
+        if (bund < 0 || bund > kBuendeMax) return std::nullopt;
+    }
+    for (int& bund : lage.barre)
+    {
+        bund += verschiebung;
+        if (bund < 1 || bund > kBuendeMax) return std::nullopt;
+    }
+    return lage;
+}
+
+// --- Arten und Namen ---------------------------------------------------------
+
+const std::vector<AkkordArt>& akkordArten()
+{
+    // Lehrbuchwissen; die Namen wie chords-db. Gegen die mitgelieferten Vorlagen
+    // geprueft in test_LoopAkkord (26e-1).
+    static const std::vector<AkkordArt> kArten = {
+        {QStringLiteral("major"), {0, 4, 7}},
+        {QStringLiteral("minor"), {0, 3, 7}},
+        {QStringLiteral("7"), {0, 4, 7, 10}},
+        {QStringLiteral("maj7"), {0, 4, 7, 11}},
+        {QStringLiteral("m7"), {0, 3, 7, 10}},
+        {QStringLiteral("sus2"), {0, 2, 7}},
+        {QStringLiteral("sus4"), {0, 5, 7}},
+        {QStringLiteral("dim"), {0, 3, 6}},
+        {QStringLiteral("aug"), {0, 4, 8}},
+        {QStringLiteral("6"), {0, 4, 7, 9}},
+        {QStringLiteral("m6"), {0, 3, 7, 9}},
+        {QStringLiteral("7sus4"), {0, 5, 7, 10}},
+        {QStringLiteral("dim7"), {0, 3, 6, 9}},
+        {QStringLiteral("m7b5"), {0, 3, 6, 10}},
+        {QStringLiteral("add9"), {0, 4, 7, 14}},
+        {QStringLiteral("madd9"), {0, 3, 7, 14}},
+        {QStringLiteral("9"), {0, 4, 7, 10, 14}},
+        {QStringLiteral("maj9"), {0, 4, 7, 11, 14}},
+        {QStringLiteral("m9"), {0, 3, 7, 10, 14}},
+        {QStringLiteral("69"), {0, 4, 7, 9, 14}},
+        {QStringLiteral("m69"), {0, 3, 7, 9, 14}},
+        {QStringLiteral("7b5"), {0, 4, 6, 10}},
+        {QStringLiteral("7b9"), {0, 4, 7, 10, 13}},
+        {QStringLiteral("7#9"), {0, 4, 7, 10, 15}},
+        {QStringLiteral("aug7"), {0, 4, 8, 10}},
+        {QStringLiteral("9b5"), {0, 4, 6, 10, 14}},
+        {QStringLiteral("aug9"), {0, 4, 8, 10, 14}},
+        {QStringLiteral("mmaj7"), {0, 3, 7, 11}},
+        {QStringLiteral("mmaj7b5"), {0, 3, 6, 11}},
+        {QStringLiteral("maj7b5"), {0, 4, 6, 11}},
+        {QStringLiteral("maj7#5"), {0, 4, 8, 11}},
+        {QStringLiteral("mmaj9"), {0, 3, 7, 11, 14}},
+        {QStringLiteral("m9b5"), {0, 3, 6, 10, 14}},
+        {QStringLiteral("7b9#5"), {0, 4, 8, 10, 13}},
+        {QStringLiteral("b13#9"), {0, 4, 8, 10, 15}},
+        {QStringLiteral("b13b9"), {0, 4, 8, 10, 13}},
+        {QStringLiteral("11"), {0, 4, 7, 10, 14, 17}},
+        {QStringLiteral("9#11"), {0, 4, 7, 10, 14, 18}},
+        {QStringLiteral("m11"), {0, 3, 7, 10, 14, 17}},
+        {QStringLiteral("maj11"), {0, 4, 7, 11, 14, 17}},
+        {QStringLiteral("mmaj11"), {0, 3, 7, 11, 14, 17}},
+        {QStringLiteral("13"), {0, 4, 7, 10, 14, 17, 21}},
+        {QStringLiteral("maj13"), {0, 4, 7, 11, 14, 17, 21}},
+        {QStringLiteral("13b9"), {0, 4, 7, 10, 13, 21}},
+        {QStringLiteral("13b5b9"), {0, 4, 6, 10, 13, 21}},
+    };
+    return kArten;
+}
+
+namespace
+{
+
+/// Die Tonklassen einer Art (0 … 11), als Bitfeld.
+int klassenDerArt(const AkkordArt& art)
+{
+    int klassen = 0;
+    for (const int stufe : art.stufen) klassen |= 1 << (stufe % 12);
+    return klassen;
+}
+
+/// Ein Bitfeld um `grundton` gedreht: die Klassen ueber diesem Ton.
+int gedreht(int klassen, int grundton)
+{
+    int neu = 0;
+    for (int k = 0; k < 12; ++k)
+        if (klassen & (1 << k)) neu |= 1 << ((k - grundton + 12) % 12);
+    return neu;
+}
+
+int zahlDerKlassen(int klassen)
+{
+    int zahl = 0;
+    for (int k = 0; k < 12; ++k) zahl += (klassen >> k) & 1;
+    return zahl;
+}
+
+}  // namespace
+
+std::optional<AkkordName> erkenneAkkord(const std::vector<int>& hoehen)
+{
+    if (hoehen.empty()) return std::nullopt;
+    int klassen = 0;
+    for (const int h : hoehen) klassen |= 1 << (((h % 12) + 12) % 12);
+    if (zahlDerKlassen(klassen) < 3) return std::nullopt;
+    const int bass = ((*std::min_element(hoehen.begin(), hoehen.end()) % 12) + 12) % 12;
+    constexpr int kQuinte = 1 << 7;
+    const std::vector<AkkordArt>& arten = akkordArten();
+    // Vorrang: vollstaendig mit dem Grundton im Bass, dann Dur oder Moll ueber einem
+    // anderen Bass (C-E-A ist Am/C, nicht C6 ohne Quinte), dann ohne Quinte; je Stufe
+    // die Reihenfolge der Arten
+    for (const AkkordArt& art : arten)
+        if (gedreht(klassen, bass) == klassenDerArt(art)) return AkkordName{bass, art.name, -1};
+    // Slash: der Bass darf zum Akkord gehoeren (C/E) oder nicht (A/G#)
+    for (int grundton = 0; grundton < 12; ++grundton)
+    {
+        if (grundton == bass || !(klassen & (1 << grundton))) continue;
+        for (const AkkordArt& art : {arten[0], arten[1]})
+            if (gedreht(klassen, grundton) == (klassenDerArt(art) | (1 << ((bass - grundton + 12) % 12))))
+                return AkkordName{grundton, art.name, bass};
+    }
+    for (const AkkordArt& art : arten)
+    {
+        const int soll = klassenDerArt(art);
+        if (art.stufen.size() >= 4 && (soll & kQuinte) && gedreht(klassen, bass) == (soll & ~kQuinte))
+            return AkkordName{bass, art.name, -1};
+    }
+    return std::nullopt;
+}
+
+QString akkordArtText(const AkkordName& name)
+{
+    if (name.bass < 0) return name.art;
+    const QString bass = grundtonNamen().at(name.bass);
+    return (name.art == QLatin1String("minor") ? QStringLiteral("m/") : QStringLiteral("/")) + bass;
+}
+
+QString akkordSymbol(const AkkordName& name)
+{
+    QString symbol = grundtonNamen().at(((name.grundton % 12) + 12) % 12);
+    if (name.art == QLatin1String("minor"))
+        symbol += QLatin1Char('m');
+    else if (name.art != QLatin1String("major"))
+        symbol += name.art;
+    if (name.bass >= 0) symbol += QLatin1Char('/') + grundtonNamen().at(name.bass);
+    return symbol;
 }
 
 }  // namespace lumi::loop

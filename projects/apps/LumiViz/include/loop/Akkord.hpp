@@ -152,4 +152,47 @@ struct AkkordTon
 [[nodiscard]] std::vector<Note> akkordNoten(const Akkord& akkord, const Saitensatz& saiten, int schritt, int laenge,
                                             int bezug);
 
+/// Das Griffbild um `verschiebung` Buende auf dem Griffbrett verschoben (S-T8 a F):
+/// jeder gespielte Bund wandert mit, eine leere Saite wird auf `verschiebung`
+/// gegriffen, die Barres wandern mit; Finger bleiben. Nichts, wenn es kein
+/// Griffbild ist oder ein Bund ausserhalb 0 … `kBuendeMax` laege.
+[[nodiscard]] std::optional<Akkord> verschobenesGriffbild(const Akkord& akkord, int verschiebung);
+
+// --- Arten und Namen (Stufe 26e, S-T11 a L) --------------------------------------
+
+/// Eine Art: der Name wie in den Vorlagen (chords-db) und die Stufen in Halbtoenen
+/// ueber dem Grundton (Lehrbuchwissen; die None als 14, die Undezime als 17, die
+/// Tredezime als 21).
+struct AkkordArt
+{
+    QString name;
+    std::vector<int> stufen;
+};
+/// Die Arten, die das Programm erkennt — alle Arten der mitgelieferten Vorlagen bis
+/// auf `alt` und `7sg` (in chords-db ohne gaengige Bedeutung). Die Reihenfolge ist der
+/// Vorrang beim Erkennen: die einfachen zuerst (von Claude gesetzt).
+[[nodiscard]] const std::vector<AkkordArt>& akkordArten();
+
+/// Ein erkannter Name: Grundton, Art und — bei einem Slash-Akkord — der Ton im Bass.
+struct AkkordName
+{
+    int grundton = 0;
+    QString art;    ///< `major`, `minor`, `7`, … (ohne den Bass)
+    int bass = -1;  ///< −1 = der Grundton liegt unten; sonst 0 … 11 (Slash-Akkord)
+
+    [[nodiscard]] bool operator==(const AkkordName&) const = default;
+};
+/// Wie klingen diese Toene? (S-T11 a L; Regel von Claude gesetzt, wie Spieler zaehlen):
+/// die Tonklassen muessen genau eine Art auf einem ihrer Toene bilden — oder sie ohne
+/// Quinte, wenn die Art vier Toene oder mehr hat. Liegt der Grundton nicht unten, gilt
+/// nur Dur oder Moll mit dem Bass als Slash (wie in den Vorlagen: `C/E`, `Am/G`).
+/// Vorrang: vollstaendig mit dem Grundton im Bass, dann der Slash (C-E-A ist Am/C,
+/// nicht C6 ohne Quinte), dann ohne Quinte; je Stufe die Reihenfolge von
+/// `akkordArten`. Nichts bei weniger als drei Tonklassen oder ohne Treffer.
+[[nodiscard]] std::optional<AkkordName> erkenneAkkord(const std::vector<int>& hoehen);
+/// Die Art, wie sie in der Datei steht: `major`, `7`, beim Slash `/E` oder `m/E`.
+[[nodiscard]] QString akkordArtText(const AkkordName& name);
+/// Das Akkordsymbol als Titel: `C`, `Cm`, `C7`, `C/E`, `Am/G`.
+[[nodiscard]] QString akkordSymbol(const AkkordName& name);
+
 }  // namespace lumi::loop
