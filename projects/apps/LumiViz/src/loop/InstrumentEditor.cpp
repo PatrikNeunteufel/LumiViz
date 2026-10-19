@@ -8,6 +8,7 @@
 
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"
+#include "loop/AkkordFenster.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/BendKurve.hpp"
 #include "loop/Instrument.hpp"
@@ -23,6 +24,9 @@
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QDoubleSpinBox>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGridLayout>
@@ -32,6 +36,7 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -101,6 +106,7 @@ NotenRaster::NotenRaster(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("loopNotes"));
     setFocusPolicy(Qt::StrongFocus);
+    setAcceptDrops(true);  // D (Stufe 26e-2): Griffbilder aus dem Fenster Chords
     setMouseTracking(true);  // der Mauszeiger zeigt, was ein Klick taete
 }
 
@@ -480,6 +486,62 @@ bool NotenRaster::legeAufSaite(int platz, int stelle)
     note.saite = stelle;  // derselbe Ton; ist er dort nicht greifbar, zeigt die Note „!"
     uebernimm(neu, {{note.schritt, note.hoehe}}, tr("String %1").arg(saitenNummer(m_saiten, stelle)));
     return true;
+}
+
+// --- Griffbilder (Stufe 26e-2; S-T5 a D, S-T8 a D) -----------------------------------
+
+bool NotenRaster::setzeAkkord(const Akkord& lage, int schritt)
+{
+    if (!m_saiten.istSaiteninstrument() || schritt < 0 || schritt >= schritte()) return false;
+    // die Lage ist schon verschoben: kein weiterer Bezug; einen Schritt lang wie eine getippte Zahl
+    const std::vector<Note> neue = akkordNoten(lage, m_saiten, schritt, 1, 0);
+    if (neue.empty()) return false;
+    // was am Schritt auf einer seiner Saiten liegt oder einen seiner Toene spielt, weicht
+    const std::vector<Griff> alleGriffe = griffe();
+    Muster neu = m_muster;
+    neu.noten.clear();
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& alt = m_muster.noten[i];
+        const bool weicht = alt.schritt == schritt && std::any_of(neue.begin(), neue.end(), [&](const Note& n) {
+                                return n.saite == alleGriffe[i].saite || n.hoehe == alt.hoehe;
+                            });
+        if (!weicht) neu.noten.push_back(alt);
+    }
+    std::vector<NotenOrt> marken;
+    for (const Note& n : neue)
+    {
+        neu.noten.push_back(n);
+        marken.push_back({n.schritt, n.hoehe});
+    }
+    uebernimm(neu, marken, tr("Chord %1").arg(lage.titel));
+    return true;
+}
+
+void NotenRaster::dragEnterEvent(QDragEnterEvent* event)
+{
+    if (m_saiten.istSaiteninstrument() && event->mimeData()->hasFormat(QLatin1String(AkkordFenster::kMimeTyp)))
+        event->acceptProposedAction();
+}
+
+void NotenRaster::dragMoveEvent(QDragMoveEvent* event)
+{
+    if (schrittBei(event->position().toPoint().x()) >= 0)
+        event->acceptProposedAction();
+    else
+        event->ignore();
+}
+
+void NotenRaster::dropEvent(QDropEvent* event)
+{
+    const QStringList teile =
+        QString::fromUtf8(event->mimeData()->data(QLatin1String(AkkordFenster::kMimeTyp))).split(QLatin1Char('\n'));
+    const int schritt = schrittBei(event->position().toPoint().x());
+    Akkord akkord;
+    if (teile.size() < 2 || schritt < 0 || !holeAkkord(teile[0], akkord)) return event->ignore();
+    const std::optional<Akkord> lage = verschobenesGriffbild(akkord, teile[1].toInt());
+    if (!lage || !setzeAkkord(*lage, schritt)) return event->ignore();
+    event->acceptProposedAction();
 }
 
 // --- Legato, Slide, Bend (Stufe 26d; S-L3 a A–G, S-T5 a C, E) ----------------------
@@ -2347,6 +2409,10 @@ void InstrumentEditor::setupUI()
     m_instrumentLaden = new QPushButton(tr("Load instrument..."), this);
     m_instrumentLaden->setObjectName(QStringLiteral("instrumentLoad"));
     m_instrumentLaden->setToolTip(tr("Use an instrument file (.lvinst) for this pattern"));
+    m_akkorde = new QPushButton(tr("Chords..."), this);
+    m_akkorde->setObjectName(QStringLiteral("instrumentChords"));
+    m_akkorde->setToolTip(tr("Open the Chords window: chord shapes for this tuning — listen, and insert one\n"
+                             "at the insert marker or drag it onto the tab lines or the piano roll"));
     zeile->addWidget(new QLabel(tr("Instrument"), this));
     // das Datei-Icon der Instrumente vor dem Namen (S120, Entscheid Patrik A2 a)
     if (const QIcon marke = lumi::ui::dateiArtIcon(QStringLiteral("lvinst")); !marke.isNull())
@@ -2360,6 +2426,7 @@ void InstrumentEditor::setupUI()
     zeile->addWidget(m_instrumentSuchen);
     zeile->addWidget(m_instrumentBearbeiten);
     zeile->addWidget(m_instrumentLaden);
+    zeile->addWidget(m_akkorde);
     // A (Stufe 23f, S-U2 a): String choice — nur, wenn das Instrument Saiten traegt
     m_saitenWahlName = new QLabel(tr("String choice"), this);
     m_saitenWahl = new QComboBox(this);
@@ -2458,6 +2525,7 @@ void InstrumentEditor::setupUI()
     connect(m_takte, &QSpinBox::valueChanged, this, [this](int takte) { setzeTakte(takte); });
     connect(m_play, &QPushButton::clicked, this, [this] { Q_EMIT spielenVerlangt(!m_spielt); });
     connect(m_instrumentSuchen, &QPushButton::clicked, this, [this] { oeffnePalette(); });
+    connect(m_akkorde, &QPushButton::clicked, this, [this] { oeffneAkkorde(); });
     connect(m_stumm, &QToolButton::toggled, this, [this](bool stumm) { setzeStumm(stumm); });
     connect(m_instrumentBearbeiten, &QPushButton::clicked, this, [this] { (void)oeffneCreator(); });
     connect(m_instrumentLaden, &QPushButton::clicked, this, [this] {
@@ -2684,6 +2752,7 @@ void InstrumentEditor::zeigeAlles()
         m_strumZeile->zeige(ziel->strum);
         m_strumZeile->setVisible(mitSaiten);
         m_tabHaken->setVisible(mitSaiten);  // F (Stufe 26c)
+        m_akkorde->setVisible(mitSaiten);   // D (Stufe 26e-2); die Voicings fuer alle Instrumente mit 26f
     }
     m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
@@ -2691,6 +2760,15 @@ void InstrumentEditor::zeigeAlles()
     zeigeAuswahl();
     // das Fenster „Instruments" waehlt fuer diese Basis
     if (m_palette != nullptr) m_palette->setzeZiel(m_muster);
+    // und das Fenster Chords fuer ihre Stimmung
+    if (m_akkordFenster != nullptr)
+    {
+        Instrument instrument;
+        const QString titel = holeInstrument(ziel->instrument, instrument) ? instrument.titel : ziel->instrument;
+        const bool mitSaiten = m_raster->saiten().istSaiteninstrument();
+        m_akkordFenster->setzeZiel(mitSaiten ? m_muster : QString(), titel, m_raster->saiten(), ziel->strum,
+                                   m_loop.schritteJeSchlag);
+    }
 }
 
 QString InstrumentEditor::instrumentAnzeige(const QString& nennung)
@@ -2732,6 +2810,32 @@ void InstrumentEditor::oeffnePalette(bool zeigen)
         m_palette->liesNeu();
     // das Instrument der Basis ist gewaehlt — ohne es anzuspielen
     if (const Muster* ziel = basis()) (void)m_palette->waehle(ziel->instrument);
+}
+
+AkkordFenster* InstrumentEditor::akkordFenster() const
+{
+    return m_akkordFenster;
+}
+
+void InstrumentEditor::oeffneAkkorde(bool zeigen)
+{
+    if (m_akkordFenster == nullptr)
+    {
+        m_akkordFenster = new AkkordFenster(this);
+        // Use: an die Einfuegemarke des Rasters
+        connect(m_akkordFenster, &AkkordFenster::verwenden, this,
+                [this](const Akkord& lage) { (void)m_raster->setzeAkkord(lage, m_raster->einfuegemarke()); });
+        // anhoeren mit dem Instrument dieses Musters
+        connect(m_akkordFenster, &AkkordFenster::vorhoerenVerlangt, this, [this](const Muster& noten) {
+            if (const Muster* ziel = basis()) Q_EMIT akkordVorhoerenVerlangt(ziel->instrument, noten);
+        });
+        connect(m_akkordFenster, &AkkordFenster::rueckgaengigVerlangt, this, &InstrumentEditor::rueckgaengigVerlangt);
+    }
+    zeigeAlles();  // setzt das Ziel des Fensters
+    if (zeigen)
+        m_akkordFenster->zeigeVorn();
+    else
+        m_akkordFenster->liesNeu();
 }
 
 void InstrumentEditor::zeigeAuswahl()

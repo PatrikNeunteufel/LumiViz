@@ -200,4 +200,27 @@ void zeichneGriffbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, G
     p.restore();
 }
 
+GriffbildFeld::GriffbildFeld(QWidget* parent) : QWidget(parent)
+{
+    setObjectName(QStringLiteral("chordDiagram"));
+}
+
+void GriffbildFeld::setzeAkkord(const Akkord& akkord)
+{
+    m_akkord = akkord;
+    update();
+}
+
+GriffbildLage GriffbildFeld::lage() const
+{
+    return griffbildLageIn(QRectF(rect()), m_akkord, GriffbildGroesse::Gross);
+}
+
+void GriffbildFeld::paintEvent(QPaintEvent*)
+{
+    QPainter p(this);
+    p.fillRect(rect(), palette().color(QPalette::Base));
+    zeichneGriffbild(p, QRectF(rect()), m_akkord, GriffbildGroesse::Gross, palette());
+}
+
 }  // namespace lumi::loop

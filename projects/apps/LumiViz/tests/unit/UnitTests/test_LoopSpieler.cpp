@@ -457,6 +457,18 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
         CHECK(panel.spieleTon(noten, 60));
         CHECK(panel.spieler().loop().muster[0].anschlaege.empty());
         panel.halte();
+        // das Fenster Chords (Stufe 26e-2): Down-up behaelt seine Schritte — zwei Anschlaege
+        Muster griff;
+        griff.noten = {Note{0, 2, 48, 1.0, 1}, Note{0, 2, 52, 1.0, 2}, Note{2, 8, 48, 1.0, 1}, Note{2, 8, 52, 1.0, 2}};
+        griff.anschlaege = {Anschlag{0, Anschlagart::Ab}, Anschlag{2, Anschlagart::Auf}};
+        REQUIRE(panel.spieleAkkordVor(QStringLiteral("guitar"), griff));
+        CHECK(panel.hoertVor());
+        CHECK(panel.spieler().loop().muster[0].noten == griff.noten);
+        CHECK(panel.spieler().loop().muster[0].anschlaege == griff.anschlaege);
+        CHECK(panel.spieler().loop().muster[0].instrument == QStringLiteral("guitar"));
+        CHECK_FALSE(panel.spieleAkkordVor(QStringLiteral("guitar"), Muster{}));
+        CHECK_FALSE(panel.spieleAkkordVor(QString(), griff));
+        panel.halte();
     }
 
     // --- der Drum-Editor spielt einen Schlag einer Instrument-Spur an (Stufe 11c, Schritt 2):

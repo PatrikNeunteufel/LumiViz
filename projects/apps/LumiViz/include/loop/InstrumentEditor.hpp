@@ -52,6 +52,8 @@ class QToolButton;
 namespace lumi::loop
 {
 
+class AkkordFenster;
+struct Akkord;
 class InstrumentCreator;
 class InstrumentPalette;
 class StrumZeile;
@@ -220,6 +222,12 @@ public:
     bool setzeBund(int bund);
     /// B: eine Note auf eine andere Saite legen (derselbe Ton). false = es aendert nichts.
     bool legeAufSaite(int platz, int stelle);
+    /// D (Stufe 26e-2, S-T5 a, S-T8 a): ein Griffbild am Schritt `schritt` setzen — jede
+    /// Note auf ihrer Saite, einen Schritt lang (wie eine getippte Zahl, B). Was an
+    /// diesem Schritt auf einer Saite des Griffbilds liegt oder einen seiner Toene
+    /// spielt, weicht; markiert sind danach die neuen Noten. Ein Schritt fuer Undo.
+    /// false = keine Saiten, ausserhalb des Musters, oder das Griffbild passt nicht.
+    bool setzeAkkord(const Akkord& lage, int schritt);
     /// Was in den Tab-Linien an einer Note steht: der Bund — ohne Buende der
     /// Tonname, nicht greifbar „!".
     [[nodiscard]] QString tabText(int platz) const;
@@ -331,6 +339,11 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    /// D (Stufe 26e-2): ein Griffbild aus dem Fenster *Chords* — es landet am Schritt
+    /// unter der Maus, in Tab-Linien und Piano-Roll.
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
     /// Der Tooltip einer Note: ihre Saite und ihr Bund — oder warum sie nicht greifbar ist.
     bool event(QEvent* event) override;
 
@@ -514,6 +527,14 @@ public:
     /// sonst „name (not found)".
     [[nodiscard]] static QString instrumentAnzeige(const QString& nennung);
 
+    // --- das Fenster *Chords* (Stufe 26e-2, S-T2 a, S-T8 a) --------------------
+    /// D: „Chords..." — das Fenster oeffnen (es entsteht beim ersten Mal), fuer die
+    /// Stimmung dieses Musters. **Use** dort setzt das Griffbild an die
+    /// Einfuegemarke. `zeigen` false fuellt es nur (fuer Tests).
+    void oeffneAkkorde(bool zeigen = true);
+    /// Das Fenster; nullptr, solange es noch nie geoeffnet wurde.
+    [[nodiscard]] AkkordFenster* akkordFenster() const;
+
 Q_SIGNALS:
     /// Der Creator will einen Ton hoeren: das Instrument beim Pfad seiner
     /// Vorhoer-Datei.
@@ -521,6 +542,9 @@ Q_SIGNALS:
     /// Der Creator spielt an (seit Stufe 24d mit den Noten nach *Play as*):
     /// `klingtMs` > 0 von „Repeat note" — so lang darf es klingen.
     void instrumentVorhoerenVerlangt(const QString& nennung, const Muster& noten, int klingtMs);
+    /// Das Fenster *Chords* spielt ein Griffbild an (S-T9 a): diese Noten mit dem
+    /// Instrument `nennung`, an ihren Schritten (Down-up schlaegt zweimal an).
+    void akkordVorhoerenVerlangt(const QString& nennung, const Muster& noten);
     /// Der Creator hat eine Instrument-Datei geschrieben: wer spielt, rechnet neu.
     void instrumentGespeichert();
     /// Der Creator braucht die Daten einer Aufnahme (Sample-Schicht, Stufe
@@ -586,6 +610,8 @@ private:
     QPushButton* m_instrumentSuchen = nullptr;  ///< „Browse..."
     QPushButton* m_instrumentBearbeiten = nullptr;
     QPushButton* m_instrumentLaden = nullptr;
+    QPushButton* m_akkorde = nullptr;  ///< D (Stufe 26e-2): „Chords...", nur mit Saiten
+    QPointer<AkkordFenster> m_akkordFenster;
     QPointer<InstrumentCreator> m_creator;
     std::function<IAudioEngine*()> m_engineGeber;
     QPointer<InstrumentPalette> m_palette;

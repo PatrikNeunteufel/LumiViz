@@ -1,8 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.34.0
+> **Version:** 0.35.0
 > **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
-> Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; 26e-1 gebaut, §5y; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
+> 26e-2 gebaut, §5y, §5z; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -1975,6 +1976,32 @@ Dialog *Edit chord*.
   `make_chords.py` liest `ABSTAENDE` aus derselben Datei — in einer Kopie gelaufen, alle 6373
   Dateien byte-gleich. Belegt im Fall „die Datei der Arten" (`test_LoopGriffbild`, zehn
   ungültige Dateien).
+
+### 5z. Stufe 26e-2 — das Fenster *Chords* (gebaut S138)
+
+- **`loop/AkkordFenster`** (neu) nach S-T8 a A–G: Kopf *For:* (Instrument, Muster, Stimmung,
+  Capo), *Search* (über alle Akkorde der Stimmung, gleich welcher Ordner) und *Type*; der Baum
+  (★ *Favorites*, *Recently used*, die Grundtöne mit ihren Arten und Zahlen, *Your chords*);
+  die Galerie `AkkordGalerie` (je Lage ein kleines Griffbild, Köpfe „C major · 4", darunter
+  Symbol und Lage, Tooltip); die Leiste mit `GriffbildFeld` (groß), Titel und Lage, Tönen,
+  *computed* und *unusual: … not in …* (S-T12 b, `fremdeTonklassen`), *Move −1 / +1 fret*, den
+  vier Symbolen ↓ ↑ ↓↑ = (S-T9 a; die gewählte bleibt, gemerkt unter `chordWindow/playAs`,
+  S-T10 a; in der Test-Exe nicht), ★ und **Use**. Favoriten und Zuletzt (höchstens 12) als
+  Nennung der Lage. Ein Klick auf ein anderes Bild wählt es (Verschiebung 0) und spielt an.
+- **Anhören:** `akkordZumAnhoeren` (Down, Up, Together; Down-up mit Up eine halbe Zählzeit
+  später; zwei Schläge lang — von Claude gesetzt), Weg Editor → Panel über
+  `akkordVorhoerenVerlangt` / `spieleAkkordVor` — der Weg behält die Schritte der Noten (der
+  Weg des Creators legt bewusst alles auf Schritt 0 und bleibt so).
+- **Einfügen:** Knopf **Chords...** in der Zeile *Instrument* (nur mit Saiten);
+  `NotenRaster::setzeAkkord` setzt an der Einfügemarke (Use, Doppelklick) oder am Schritt unter
+  der Maus (Ziehen, Mime `application/x-lumiviz-chord` mit Nennung und Verschiebung) — je Note
+  ihre Saite, ein Schritt lang wie eine getippte Zahl (26c); was am Schritt auf einer seiner
+  Saiten liegt oder einen seiner Töne spielt, weicht; ein Schritt für Undo („Chord C").
+- Belegt in `test_LoopAkkordFenster` (3 Fälle: Anhören je Spielart, fremde Töne, Lage; das
+  Fenster mit Baum, Galerie, Leiste, Klick, ★, Zuletzt, Suche, Type, *unusual*, *computed* bei
+  Drop D; über den Editor *Chords...*, Use an die Einfügemarke, Ziehen ins Raster;
+  `LUMIVIZ_CHORD_WINDOW_BILD`) und in `test_LoopSpieler` (`spieleAkkordVor`). Bild angesehen.
+- Noch nicht: *New/Edit/Duplicate/Delete* (H) — mit 26e-3, dem Dialog *Edit chord*.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

@@ -201,6 +201,33 @@ struct AkkordName
 /// nicht C6 ohne Quinte), dann ohne Quinte; je Stufe die Reihenfolge von
 /// `akkordArten`. Nichts bei weniger als drei Tonklassen oder ohne Treffer.
 [[nodiscard]] std::optional<AkkordName> erkenneAkkord(const std::vector<int>& hoehen);
+/// Die Tonklassen (0 … 11) eines Griffbilds, die nicht zu seiner Art gehoeren
+/// (S-T12 b: das Fenster zeigt sie als *unusual*); der Bass eines Slash-Akkords
+/// gehoert dazu. Nichts, wenn die Art unbekannt ist (`alt`, `7sg`) oder es kein
+/// Griffbild ist; leer, wenn alles passt.
+[[nodiscard]] std::optional<std::vector<int>> fremdeTonklassen(const Akkord& akkord);
+/// Die Lage, wie die Galerie sie nennt (S-T8 a D): `open`, wenn eine leere Saite
+/// klingt, sonst `fr <n>` mit dem tiefsten gegriffenen Bund.
+[[nodiscard]] QString lageText(const Akkord& akkord);
+
+// --- Anhoeren (Stufe 26e, S-T9 a, S-T10 a) ----------------------------------------
+
+/// Wie das Fenster *Chords* anspielt.
+enum class AkkordSpielart : int
+{
+    Ab = 0,        ///< ↓ *Down* — die Vorgabe
+    Auf = 1,       ///< ↑ *Up*
+    AbAuf = 2,     ///< ↓↑ *Down-up*: Down, eine halbe Zaehlzeit spaeter Up
+    Zugleich = 3,  ///< = *Together*: Spread 0
+};
+/// Die Noten zum Anhoeren: das Griffbild auf diesen Saiten (mit Capo), jede Note
+/// auf ihrer Saite; Down und Up mit dem Spread von `strum`, Together zugleich.
+/// Klingt zwei Schlaege lang (von Claude gesetzt); bei *Down-up* steht Up eine
+/// halbe Zaehlzeit nach Down (`schritteJeSchlag / 2`, mindestens ein Schritt).
+/// Leer, wenn das Griffbild so nicht zu greifen ist.
+[[nodiscard]] Muster akkordZumAnhoeren(const Akkord& lage, const Saitensatz& saiten, const Strum& strum,
+                                       AkkordSpielart art, int schritteJeSchlag);
+
 /// Die Art, wie sie in der Datei steht: `major`, `7`, beim Slash `/E` oder `m/E`.
 [[nodiscard]] QString akkordArtText(const AkkordName& name);
 /// Das Akkordsymbol als Titel: `C`, `Cm`, `C7`, `C/E`, `Am/G`.

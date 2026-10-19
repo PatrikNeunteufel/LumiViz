@@ -654,6 +654,26 @@ bool LoopPanel::spieleInstrumentNoten(const QString& nennung, const Muster& note
     return spieleVorNoten(ton, klingtMs);
 }
 
+bool LoopPanel::spieleAkkordVor(const QString& nennung, const Muster& noten)
+{
+    if (!m_geladen || nennung.isEmpty() || noten.noten.empty()) return false;
+    Muster ton = noten;
+    ton.art = MusterArt::Instrument;
+    ton.instrument = nennung;
+    ton.stumm = false;
+    int ende = 0;  // in Schritten: wo die letzte Note aufhoert
+    for (const Note& note : ton.noten)
+    {
+        if (note.hoehe < kHoeheMin || note.hoehe > kHoeheMax || note.schritt < 0) return false;
+        ende = std::max(ende, note.schritt + std::max(1, note.laenge));
+    }
+    const double schrittMs = 60000.0 / m_loop.bpm / std::max(1, m_loop.schritteJeSchlag);
+    const int dauerMs = static_cast<int>(std::lround(ende * schrittMs)) + 600;
+    const double taktMs = 60000.0 / m_loop.bpm * m_loop.schlaegeJeTakt;
+    ton.takte = std::clamp(static_cast<int>(std::ceil(dauerMs / taktMs)) + 1, kTakteMin, kTakteMax);
+    return spieleAllein(ton, dauerMs);
+}
+
 bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe, int klingtMs)
 {
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
@@ -800,6 +820,9 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                     [this](const QString& nennung, const Muster& noten, int klingtMs) {
                         (void)spieleInstrumentNoten(nennung, noten, klingtMs);
                     });
+            // das Fenster Chords spielt ein Griffbild an (Stufe 26e-2)
+            connect(m_instrumentEditor, &InstrumentEditor::akkordVorhoerenVerlangt, this,
+                    [this](const QString& nennung, const Muster& noten) { (void)spieleAkkordVor(nennung, noten); });
             // eine Instrument-Datei ist neu geschrieben: wer sie spielt, rechnet ihre Toene neu
             connect(m_instrumentEditor, &InstrumentEditor::instrumentGespeichert, this, [this] {
                 if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());

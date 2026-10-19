@@ -19,6 +19,7 @@
 
 #include <QPointF>
 #include <QRectF>
+#include <QWidget>
 
 class QPainter;
 class QPalette;
@@ -90,5 +91,27 @@ enum class GriffbildGroesse : int
 /// Highlight fuer die Punkte). Ein Voicing zeichnet nichts.
 void zeichneGriffbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, GriffbildGroesse groesse,
                       const QPalette& palette, std::optional<GriffbildFenster> fenster = std::nullopt);
+
+/// Ein Griffbild gross, als Widget — in der Leiste des Fensters *Chords* (S-T8 a E)
+/// und im Dialog *Edit chord* (S-T11 a).
+class GriffbildFeld : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit GriffbildFeld(QWidget* parent = nullptr);
+    void setzeAkkord(const Akkord& akkord);
+    [[nodiscard]] const Akkord& akkord() const { return m_akkord; }
+    /// Die Lage der Teile, wie sie gerade gezeichnet sind.
+    [[nodiscard]] GriffbildLage lage() const;
+    [[nodiscard]] QSize sizeHint() const override { return {150, 176}; }
+    [[nodiscard]] QSize minimumSizeHint() const override { return {110, 130}; }
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    Akkord m_akkord;
+};
 
 }  // namespace lumi::loop

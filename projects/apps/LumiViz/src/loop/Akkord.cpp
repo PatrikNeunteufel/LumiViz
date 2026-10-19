@@ -487,4 +487,71 @@ QString akkordSymbol(const AkkordName& name)
     return symbol;
 }
 
+std::optional<std::vector<int>> fremdeTonklassen(const Akkord& akkord)
+{
+    if (!akkord.istGriffbild()) return std::nullopt;
+    // die Art ohne den Bass: `m/E` ist Moll, `/E` Dur — der Bass gehoert dazu
+    const QString vorn = akkord.art.section(QLatin1Char('/'), 0, 0);
+    const QString art = akkord.art.contains(QLatin1Char('/'))
+                            ? (vorn == QLatin1String("m") ? QStringLiteral("minor") : vorn.isEmpty() ? QStringLiteral("major") : vorn)
+                            : akkord.art;
+    const auto bekannt = std::find_if(akkordArten().begin(), akkordArten().end(),
+                                      [&art](const AkkordArt& a) { return a.name == art; });
+    if (bekannt == akkordArten().end()) return std::nullopt;
+    int erlaubt = 0;
+    for (const int stufe : bekannt->stufen) erlaubt |= 1 << ((akkord.grundton + stufe) % 12);
+    if (akkord.art.contains(QLatin1Char('/')))
+        if (const std::optional<int> bass = grundtonAusName(akkord.art.section(QLatin1Char('/'), 1))) erlaubt |= 1 << *bass;
+    Saitensatz saiten;
+    saiten.leer = akkord.leer;
+    std::vector<int> fremd;
+    if (const auto toene = toeneDesGriffbilds(akkord, saiten))
+        for (const AkkordTon& ton : *toene)
+        {
+            const int klasse = ton.hoehe % 12;
+            if (!(erlaubt & (1 << klasse)) && std::find(fremd.begin(), fremd.end(), klasse) == fremd.end()) fremd.push_back(klasse);
+        }
+    std::sort(fremd.begin(), fremd.end());
+    return fremd;
+}
+
+QString lageText(const Akkord& akkord)
+{
+    int tief = kBuendeMax + 1;
+    for (const int bund : akkord.buende)
+    {
+        if (bund == 0) return QStringLiteral("open");
+        if (bund > 0) tief = std::min(tief, bund);
+    }
+    return tief > kBuendeMax ? QString() : QStringLiteral("fr %1").arg(tief);
+}
+
+Muster akkordZumAnhoeren(const Akkord& lage, const Saitensatz& saiten, const Strum& strum, AkkordSpielart art,
+                         int schritteJeSchlag)
+{
+    Muster noten;
+    noten.art = MusterArt::Instrument;
+    noten.strum = strum;
+    const std::optional<std::vector<AkkordTon>> toene = toeneDesGriffbilds(lage, saiten);
+    if (!toene || toene->empty()) return noten;
+    const int schlag = std::max(1, schritteJeSchlag);
+    const int halb = std::max(1, schlag / 2);
+    // ein Anschlag: alle Toene an `schritt`, `laenge` Schritte lang, in dieser Richtung
+    const auto schlage = [&](int schritt, int laenge, Anschlagart richtung) {
+        for (const AkkordTon& ton : *toene) noten.noten.push_back(Note{schritt, laenge, ton.hoehe, 1.0, ton.saite});
+        noten.anschlaege.push_back(Anschlag{schritt, richtung});
+    };
+    switch (art)
+    {
+    case AkkordSpielart::Ab: schlage(0, 2 * schlag, Anschlagart::Ab); break;
+    case AkkordSpielart::Auf: schlage(0, 2 * schlag, Anschlagart::Auf); break;
+    case AkkordSpielart::Zugleich: schlage(0, 2 * schlag, Anschlagart::Zugleich); break;
+    case AkkordSpielart::AbAuf:
+        schlage(0, halb, Anschlagart::Ab);
+        schlage(halb, 2 * schlag, Anschlagart::Auf);
+        break;
+    }
+    return noten;
+}
+
 }  // namespace lumi::loop

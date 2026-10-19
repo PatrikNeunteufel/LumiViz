@@ -139,6 +139,10 @@ public:
     /// und einen Schlag lang, mit Saite, Artikulationen, Strum und Anschlaegen
     /// des Musters — ein Akkord bleibt einer.
     bool spieleInstrumentNoten(const QString& nennung, const Muster& noten, int klingtMs = 0);
+    /// Ein Griffbild aus dem Fenster *Chords* anspielen (Stufe 26e-2, S-T9 a): die
+    /// Noten an ihren Schritten und in ihrer Laenge — *Down-up* schlaegt zweimal an —,
+    /// mit Strum und Anschlaegen des Musters; dazu 600 ms Ausklang.
+    bool spieleAkkordVor(const QString& nennung, const Muster& noten);
     /// Einen Schlag einer Spur eines Drum-Musters anspielen, mit Lautstaerke
     /// und Panorama der Spur (Play im Feld hinter „…" des Drum-Editors, Stufe
     /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.
