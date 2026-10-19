@@ -40,6 +40,7 @@
 
 class IAudioEngine;
 class QCheckBox;
+class QPainter;
 class QComboBox;
 class QLabel;
 class QPushButton;
@@ -184,6 +185,49 @@ public:
     [[nodiscard]] int strumOben() const { return kKopfHoehe; }
     [[nodiscard]] int strumHoehe() const { return m_saiten.istSaiteninstrument() ? kStrumHoehe : 0; }
 
+    // --- Tab-Linien (Stufe 26c; Skizze gebilligt, Patrik S137, S-T5 a A, B, F) --
+    // Zwischen der Spur Strum und den Noten je Saite eine Linie, oben die hoechste;
+    // links Nummer und Ton der leeren Saite. An jeder Note die Bundzahl (ohne Buende
+    // der Tonname), ein blasser Strich zeigt die Dauer. Ein Klick auf eine Linie setzt
+    // die Tab-Marke; eine getippte Zahl setzt dort einen Bund (zwei Ziffern kurz
+    // hintereinander: zweistellig). Eine Zahl auf eine andere Linie ziehen: derselbe
+    // Ton auf der anderen Saite. Nur mit Saiten, und solange der Haken *Tab* steht.
+    /// Der Haken *Tab* (F): die Linien zeigen oder nicht.
+    void setTabAn(bool an);
+    [[nodiscard]] bool tabAn() const { return m_tabAn; }
+    [[nodiscard]] int tabOben() const { return strumOben() + strumHoehe(); }
+    [[nodiscard]] int tabHoehe() const
+    {
+        return m_saiten.istSaiteninstrument() && m_tabAn ? m_saiten.anzahl() * kTabZeile + 2 * kTabRand : 0;
+    }
+    /// Die Mitte der Linie einer Saite (Stelle in `Saitensatz::leer`); oben die hoechste.
+    [[nodiscard]] int tabLinieY(int stelle) const
+    {
+        return tabOben() + kTabRand + (m_saiten.anzahl() - 1 - stelle) * kTabZeile + kTabZeile / 2;
+    }
+    /// Die Saite (Stelle) unter `y` in den Tab-Linien; -1 = keine.
+    [[nodiscard]] int tabSaiteBei(int y) const;
+    /// Die Note, deren Zahl unter dem Punkt steht (Platz in `muster().noten`); -1 = keine.
+    [[nodiscard]] int tabNoteBei(QPoint ort) const;
+    /// Die Tab-Marke: dort landet ein getippter Bund. Schritt -1 = keine.
+    void setzeTabMarke(int schritt, int stelle);
+    [[nodiscard]] int tabSchritt() const { return m_tabSchritt; }
+    [[nodiscard]] int tabSaite() const { return m_tabSaite; }
+    /// B: an der Tab-Marke den Bund `bund` setzen — liegt dort schon eine Note auf
+    /// dieser Saite, bekommt sie ihn; sonst eine neue Note von einem Schritt. Die
+    /// Saite steht danach an der Note (S-M2 a). false = keine Marke, ausserhalb der
+    /// Buende oder der Toene, oder dort klingt derselbe Ton schon.
+    bool setzeBund(int bund);
+    /// B: eine Note auf eine andere Saite legen (derselbe Ton). false = es aendert nichts.
+    bool legeAufSaite(int platz, int stelle);
+    /// Was in den Tab-Linien an einer Note steht: der Bund — ohne Buende der
+    /// Tonname, nicht greifbar „!".
+    [[nodiscard]] QString tabText(int platz) const;
+    static constexpr int kTabZeile = 14;  ///< je Saite
+    static constexpr int kTabRand = 4;    ///< oben und unten
+    /// So lange nach einer Ziffer zaehlt die naechste noch zum selben Bund (zweistellig).
+    static constexpr int kTabZifferMs = 800;
+
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
     [[nodiscard]] int rollX() const { return m_rollX; }
@@ -195,7 +239,7 @@ public:
     [[nodiscard]] int rollYMax() const;
     /// Breite und Hoehe des Ausschnitts, in dem die Noten liegen.
     [[nodiscard]] int sichtBreite() const { return width() - kTastenBreite; }
-    [[nodiscard]] int sichtHoehe() const { return height() - kKopfHoehe - kLautHoehe - strumHoehe(); }
+    [[nodiscard]] int sichtHoehe() const { return height() - kKopfHoehe - kLautHoehe - strumHoehe() - tabHoehe(); }
     /// So rollen, dass diese Tonhoehe in der Mitte liegt.
     void zeigeHoehe(int hoehe);
 
@@ -236,8 +280,9 @@ public:
     /// Der Schritt unter `x`; -1 = keiner (die Klaviatur, hinter dem Ende).
     [[nodiscard]] int schrittBei(int x) const;
     [[nodiscard]] int yVonHoehe(int hoehe) const { return rasterOben() + (kHoeheMax - hoehe) * zeilenHoehe() - m_rollY; }
-    /// Oberkante der Noten: unter der Zeile der Takte und (mit Saiten) der Spur Strum.
-    [[nodiscard]] int rasterOben() const { return kKopfHoehe + strumHoehe(); }
+    /// Oberkante der Noten: unter der Zeile der Takte und (mit Saiten) der Spur Strum
+    /// und den Tab-Linien.
+    [[nodiscard]] int rasterOben() const { return kKopfHoehe + strumHoehe() + tabHoehe(); }
     /// Die Tonhoehe unter `y`; -1 = keine (der Kopf, die Zeile der Lautstaerken).
     [[nodiscard]] int hoeheBei(int y) const;
     /// Oberkante der Zeile mit der Lautstaerke je Note.
@@ -297,6 +342,7 @@ private:
         Laut,         ///< die Lautstaerke der Noten unter der Maus
         Rahmen,       ///< mit Shift: ein Rahmen, der Noten markiert
         Gruppe,       ///< mehrere markierte Noten zusammen in Zeit und Tonhoehe
+        TabSaite,     ///< Stufe 26c: eine Zahl in den Tab-Linien auf eine andere Saite
     };
     /// Eine eigene Aenderung uebernehmen: zeigen, die Marken setzen, melden.
     void uebernimm(const Muster& neu, const std::vector<NotenOrt>& marken, const QString& was);
@@ -357,6 +403,15 @@ private:
     [[nodiscard]] std::vector<int> markierteSchritte() const;
     /// *Spread...*: der Dialog `strumSpreadQuestion` (ueber `fuehreDialogAus`).
     void frageSpread(double vorgabe);
+    // --- Stufe 26c: die Tab-Linien
+    bool m_tabAn = true;
+    int m_tabSchritt = -1;   ///< die Tab-Marke; -1 = keine
+    int m_tabSaite = -1;
+    int m_tabZiel = -1;      ///< beim Ziehen einer Zahl: die Saite unter der Maus
+    int m_tabZiffer = -1;    ///< die zuletzt getippte Ziffer an dieser Marke; -1 = keine
+    qint64 m_tabZifferZeit = 0;
+    /// Die Tab-Linien zeichnen (aus `paintEvent`).
+    void zeichneTab(QPainter& p, const std::vector<Griff>& griffe, const std::vector<Anschlagplan>& anschlaege);
 };
 
 class InstrumentEditor : public QWidget
@@ -531,6 +586,7 @@ private:
     QComboBox* m_saitenWahl = nullptr;
     QLabel* m_saitenHinweis = nullptr;
     StrumZeile* m_strumZeile = nullptr;  ///< H (Stufe 24e, S-W5 a)
+    QCheckBox* m_tabHaken = nullptr;     ///< F (Stufe 26c, S-T5 a): die Tab-Linien zeigen; der Editor merkt die Stellung
 };
 
 }  // namespace lumi::loop

@@ -221,11 +221,14 @@ TEST_CASE("Loop Instrument Editor Spielweise: J — die Spur Strum oben, ein Kli
     const int c8OhneSpur = raster.yVonHoehe(kHoeheMax);
     CHECK_FALSE(raster.schalteAnschlag(0));
     raster.setSaiten(saiten);
-    // S-W14 a: die Spur liegt zwischen der Zeile der Takte und den Noten, Note vol. bleibt unten
+    // S-W14 a: die Spur liegt zwischen der Zeile der Takte und den Noten, Note vol. bleibt unten;
+    // seit Stufe 26c (S-T5 a) folgen ihr die Tab-Linien, sechs Saiten
     CHECK(raster.strumHoehe() == NotenRaster::kStrumHoehe);
     CHECK(raster.strumOben() == NotenRaster::kKopfHoehe);
-    CHECK(raster.rasterOben() == NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe);
-    CHECK(raster.yVonHoehe(kHoeheMax) == c8OhneSpur + NotenRaster::kStrumHoehe);
+    CHECK(raster.tabOben() == NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe);
+    CHECK(raster.tabHoehe() == 6 * NotenRaster::kTabZeile + 2 * NotenRaster::kTabRand);
+    CHECK(raster.rasterOben() == NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe + raster.tabHoehe());
+    CHECK(raster.yVonHoehe(kHoeheMax) == c8OhneSpur + NotenRaster::kStrumHoehe + raster.tabHoehe());
     CHECK(raster.lautOben() == raster.height() - NotenRaster::kLautHoehe);
     CHECK(raster.hoeheBei(raster.strumOben() + 3) == -1);
     CHECK(raster.hoeheBei(raster.rasterOben()) >= kHoeheMin);
@@ -331,7 +334,7 @@ TEST_CASE("Loop Instrument Editor Spielweise: J und L ueber den Editor — die A
     REQUIRE(editor.zeige(loop, QStringLiteral("Mel")));
     NotenRaster* raster = editor.raster();
     raster->resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
-                   NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe + 20 * NotenRaster::kZeilenHoehe +
+                   NotenRaster::kKopfHoehe + NotenRaster::kStrumHoehe + raster->tabHoehe() + 20 * NotenRaster::kZeilenHoehe +
                        NotenRaster::kLautHoehe);
     raster->zeigeHoehe(45);
     const auto mel = [&]() -> const Muster& { return *loop.findeMuster(QStringLiteral("Mel")); };
@@ -384,7 +387,7 @@ TEST_CASE("Loop Instrument Editor Spielweise: L und M — das Menue Strum, die H
     raster.setMuster(mel, 4, 4);
     raster.resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite,
                   NotenRaster::kKopfHoehe + 20 * NotenRaster::kZeilenHoehe + NotenRaster::kLautHoehe +
-                      NotenRaster::kStrumHoehe);
+                      NotenRaster::kStrumHoehe + raster.tabHoehe());
     raster.zeigeHoehe(45);
     QStringList gemeldet;
     QObject::connect(&raster, &NotenRaster::geaendert, &raster,

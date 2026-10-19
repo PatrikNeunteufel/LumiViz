@@ -17,6 +17,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QContextMenuEvent>
+#include <QDateTime>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
@@ -59,6 +60,8 @@ namespace
 const char* const kInstrumentOrdner = "loop/lastInstrumentDir";
 const char* const kRechtsLoescht = "loop/notesRightClickDeletes";
 const char* const kLage = "loop/instrumentEditorGeometry";  ///< ein Pfad der Fensterlage: geht nie in einen Export
+/// F (Stufe 26c): ob die Tab-Linien zu sehen sind — gemerkt wie die Lage (in der Test-Exe nicht)
+const char* const kTabZeigen = "loop/instrumentEditorTab";
 
 bool& lageMerken()
 {
@@ -114,6 +117,10 @@ void NotenRaster::zeigeZeiger(QPoint ort)
         form = Qt::PointingHandCursor;
     else if (strumBei(ort) >= 0)
         form = Qt::PointingHandCursor;  // J: ein Anschlag in der Spur Strum laesst sich schalten
+    else if (tabSaiteBei(ort.y()) >= 0)
+        // Stufe 26c: eine Zahl laesst sich auf eine andere Saite ziehen, eine leere Stelle nimmt einen Bund,
+        // der Name der Saite spielt sie an
+        form = ort.x() < kTastenBreite ? Qt::PointingHandCursor : tabNoteBei(ort) >= 0 ? Qt::SizeVerCursor : Qt::IBeamCursor;
     if (cursor().shape() != form) setCursor(form);
 }
 
@@ -128,6 +135,7 @@ void NotenRaster::setMuster(const Muster& muster, int schlaegeJeTakt, int schrit
     richteMarken();  // was es nicht mehr gibt, faellt aus den Marken
     m_einfuegen = std::clamp(m_einfuegen, 0, schritte());
     m_abspiel = std::clamp(m_abspiel, 0, std::max(0, schritte() - 1));
+    if (m_tabSchritt >= schritte()) m_tabSchritt = m_tabSaite = -1;  // Stufe 26c: das Muster ist kuerzer geworden
     // kommt nicht die Fassung zurueck, die das Verschieben erzeugt hat, beginnt es neu
     if (m_schiebeGilt && m_muster.noten != m_schiebeErgebnis.noten) m_schiebeGilt = false;
     setRollen(m_rollX, m_rollY);  // das Muster kann kuerzer geworden sein
@@ -140,6 +148,8 @@ void NotenRaster::setSaiten(const Saitensatz& saiten)
 {
     if (saiten == m_saiten) return;
     m_saiten = saiten;
+    if (m_tabSaite >= m_saiten.anzahl()) m_tabSchritt = m_tabSaite = -1;  // Stufe 26c
+    setRollen(m_rollX, m_rollY);  // mit den Tab-Linien aendert sich die Hoehe der Noten
     update();
 }
 
@@ -340,12 +350,205 @@ bool NotenRaster::setzeSaite(int stelle)
 
 int NotenRaster::strumBei(QPoint ort) const
 {
-    if (strumHoehe() == 0 || ort.y() < strumOben() || ort.y() >= rasterOben()) return -1;
+    if (strumHoehe() == 0 || ort.y() < strumOben() || ort.y() >= tabOben()) return -1;
     const int schritt = schrittBei(ort.x());
     if (schritt < 0) return -1;
     const bool belegt = std::any_of(m_muster.noten.begin(), m_muster.noten.end(),
                                     [schritt](const Note& n) { return n.schritt == schritt; });
     return belegt ? schritt : -1;
+}
+
+// --- Tab-Linien (Stufe 26c; Skizze gebilligt, Patrik S137, S-T5 a A, B, F) -------
+
+namespace
+{
+
+/// Was an einer Note in den Tab-Linien steht: der Bund, ohne Buende der Tonname,
+/// nicht greifbar „!" (B).
+QString tabZeichen(const Note& note, const Griff& griff, const Saitensatz& saiten)
+{
+    if (!griff.greifbar) return QStringLiteral("!");
+    return saiten.bundlos ? tonName(note.hoehe) : QString::number(griff.bund);
+}
+
+/// Der Ton einer leeren Saite ohne Oktave: „E", „F#".
+QString saitenTon(int hoehe)
+{
+    QString name = tonName(hoehe);
+    while (!name.isEmpty() && (name.back().isDigit() || name.back() == QLatin1Char('-'))) name.chop(1);
+    return name;
+}
+
+}  // namespace
+
+void NotenRaster::setTabAn(bool an)
+{
+    if (an == m_tabAn) return;
+    m_tabAn = an;
+    if (!an) m_tabSchritt = m_tabSaite = -1;
+    setRollen(m_rollX, m_rollY);  // die Noten sind hoeher oder niedriger geworden
+    update();
+}
+
+int NotenRaster::tabSaiteBei(int y) const
+{
+    if (tabHoehe() == 0 || y < tabOben() + kTabRand || y >= tabOben() + tabHoehe() - kTabRand) return -1;
+    return m_saiten.anzahl() - 1 - (y - tabOben() - kTabRand) / kTabZeile;
+}
+
+int NotenRaster::tabNoteBei(QPoint ort) const
+{
+    const int stelle = tabSaiteBei(ort.y());
+    if (stelle < 0 || ort.x() < kTastenBreite) return -1;
+    std::vector<Griff> alleGriffe;
+    std::vector<Anschlagplan> alleAnschlaege;
+    plane(&alleGriffe, &alleAnschlaege);
+    for (int i = static_cast<int>(m_muster.noten.size()) - 1; i >= 0; --i)
+    {
+        const auto platz = static_cast<std::size_t>(i);
+        if (alleGriffe[platz].saite != stelle) continue;
+        // die Zahl steht am Anschlag; getroffen wird sie auf einem Schritt Breite, mindestens 16 Pixeln
+        const int links = xVonSchritt(m_muster.noten[platz].schritt) + versatzPixel(alleAnschlaege[platz].versatzMs);
+        if (ort.x() >= links && ort.x() < links + std::max(16, schrittBreite())) return i;
+    }
+    return -1;
+}
+
+QString NotenRaster::tabText(int platz) const
+{
+    if (!m_saiten.istSaiteninstrument() || platz < 0 || platz >= static_cast<int>(m_muster.noten.size())) return {};
+    return tabZeichen(m_muster.noten[static_cast<std::size_t>(platz)], griffe()[static_cast<std::size_t>(platz)], m_saiten);
+}
+
+void NotenRaster::setzeTabMarke(int schritt, int stelle)
+{
+    const bool gilt = tabHoehe() > 0 && schritt >= 0 && schritt < schritte() && stelle >= 0 && stelle < m_saiten.anzahl();
+    m_tabSchritt = gilt ? schritt : -1;
+    m_tabSaite = gilt ? stelle : -1;
+    m_tabZiffer = -1;  // eine neue Stelle: die naechste Ziffer beginnt einen neuen Bund
+    update();
+}
+
+bool NotenRaster::setzeBund(int bund)
+{
+    if (tabHoehe() == 0 || m_tabSchritt < 0 || m_tabSaite < 0 || m_tabSaite >= m_saiten.anzahl()) return false;
+    if (bund < 0 || bund > kBuendeMax) return false;
+    const int hoehe = m_saiten.leer[static_cast<std::size_t>(m_tabSaite)] + m_saiten.capo + bund;
+    if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
+    // liegt am Schritt schon eine Note auf dieser Saite, bekommt sie den Bund
+    const std::vector<Griff> alleGriffe = griffe();
+    int platz = -1;
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+        if (m_muster.noten[i].schritt == m_tabSchritt && alleGriffe[i].saite == m_tabSaite) platz = static_cast<int>(i);
+    Muster neu = m_muster;
+    if (platz >= 0)
+    {
+        Note& note = neu.noten[static_cast<std::size_t>(platz)];
+        if (note.hoehe == hoehe && note.saite == m_tabSaite) return false;
+        if (note.hoehe != hoehe && belegt(m_tabSchritt, hoehe, platz)) return false;  // derselbe Ton klingt dort schon
+        note.hoehe = hoehe;
+        note.saite = m_tabSaite;  // die Tabs setzen die Saite immer (S-M2 a)
+    }
+    else
+    {
+        if (belegt(m_tabSchritt, hoehe, -1)) return false;
+        Note note{m_tabSchritt, 1, hoehe, 1.0};  // so lang wie ein Klick in der Piano-Roll
+        note.saite = m_tabSaite;
+        neu.noten.push_back(note);
+    }
+    uebernimm(neu, {{m_tabSchritt, hoehe}}, m_saiten.bundlos ? tr("Note %1").arg(tonName(hoehe)) : tr("Fret %1").arg(bund));
+    return true;
+}
+
+bool NotenRaster::legeAufSaite(int platz, int stelle)
+{
+    if (!m_saiten.istSaiteninstrument() || platz < 0 || platz >= static_cast<int>(m_muster.noten.size()) || stelle < 0 ||
+        stelle >= m_saiten.anzahl())
+        return false;
+    Muster neu = m_muster;
+    Note& note = neu.noten[static_cast<std::size_t>(platz)];
+    if (note.saite == stelle) return false;
+    note.saite = stelle;  // derselbe Ton; ist er dort nicht greifbar, zeigt die Note „!"
+    uebernimm(neu, {{note.schritt, note.hoehe}}, tr("String %1").arg(saitenNummer(m_saiten, stelle)));
+    return true;
+}
+
+void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, const std::vector<Anschlagplan>& alleAnschlaege)
+{
+    const QPalette pal = palette();
+    const QColor text = pal.color(QPalette::Text);
+    const QColor an = pal.color(QPalette::Highlight);
+    QColor leise = text;
+    leise.setAlpha(130);
+    const int oben = tabOben();
+    const int hoch = tabHoehe();
+    QFont klein = font();
+    klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
+    p.setFont(klein);
+    p.setPen(leise);
+    p.drawLine(0, oben + hoch - 1, width(), oben + hoch - 1);
+    // links in der Spalte der Klaviatur: Nummer und Ton der leeren Saite (mit Capo der klingende)
+    for (int stelle = 0; stelle < m_saiten.anzahl(); ++stelle)
+    {
+        const int y = tabLinieY(stelle);
+        p.setPen(leise);
+        p.drawText(QRect(4, y - kTabZeile / 2, kTastenBreite - 8, kTabZeile), Qt::AlignLeft | Qt::AlignVCenter,
+                   QStringLiteral("%1  %2")
+                       .arg(saitenNummer(m_saiten, stelle))
+                       .arg(saitenTon(m_saiten.leer[static_cast<std::size_t>(stelle)] + m_saiten.capo)));
+    }
+    p.setClipRect(QRect(kTastenBreite, oben, sichtBreite(), hoch));
+    const int rechts = std::min(width(), xVonSchritt(schritte()));
+    QColor linie = text;
+    linie.setAlpha(90);
+    p.setPen(QPen(linie, 1.0));
+    for (int stelle = 0; stelle < m_saiten.anzahl(); ++stelle) p.drawLine(kTastenBreite, tabLinieY(stelle), rechts, tabLinieY(stelle));
+    // die Tab-Marke: dort landet ein getippter Bund
+    if (m_tabSchritt >= 0 && m_tabSaite >= 0)
+    {
+        const QRect marke(xVonSchritt(m_tabSchritt), tabLinieY(m_tabSaite) - kTabZeile / 2, schrittBreite(), kTabZeile);
+        QColor flaeche = an;
+        flaeche.setAlpha(60);
+        p.setPen(QPen(an, 1.2));
+        p.setBrush(flaeche);
+        p.drawRect(marke.adjusted(0, 0, -1, -1));
+        p.setBrush(Qt::NoBrush);
+    }
+    const QFontMetrics mass(klein);
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& note = m_muster.noten[i];
+        const Griff& griff = alleGriffe[i];
+        if (griff.saite < 0) continue;
+        const int y = tabLinieY(griff.saite);
+        const int x = xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs);
+        // die Dauer: ein blasser Strich hinter der Zahl
+        QColor dauer = an;
+        dauer.setAlpha(m_muster.stumm ? 40 : 80);
+        p.setPen(QPen(dauer, 3.0, Qt::SolidLine, Qt::FlatCap));
+        p.drawLine(x + 2, y, x + note.laenge * schrittBreite() - 2, y);
+        const QString zeichen = tabZeichen(note, griff, m_saiten);
+        const int breite = mass.horizontalAdvance(zeichen) + 4;
+        const QRect feld(x + 1, y - kTabZeile / 2 + 1, breite, kTabZeile - 2);
+        const bool markiert = istMarkiert(note);
+        // die Zahl schneidet die Linie: ein Feld in der Farbe des Grunds, markiert hervorgehoben
+        p.setPen(Qt::NoPen);
+        p.setBrush(markiert ? an : pal.color(QPalette::Base));
+        p.drawRect(feld);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(!griff.greifbar ? QColor(226, 75, 74) : markiert ? pal.color(QPalette::HighlightedText) : text);
+        p.drawText(feld, Qt::AlignCenter, zeichen);
+    }
+    // beim Ziehen einer Zahl: die Saite, auf die sie kaeme
+    if (m_zug == Zug::TabSaite && m_tabZiel >= 0)
+    {
+        QColor ziel = an;
+        ziel.setAlpha(110);
+        p.setPen(QPen(ziel, 2.0, Qt::DashLine));
+        p.drawLine(kTastenBreite, tabLinieY(m_tabZiel), rechts, tabLinieY(m_tabZiel));
+    }
+    p.setClipping(false);
+    p.setFont(font());
 }
 
 bool NotenRaster::event(QEvent* event)
@@ -369,7 +572,17 @@ bool NotenRaster::event(QEvent* event)
                                this);
             return true;
         }
-        if (const int platz = noteBei(hilfe->pos()); platz >= 0)
+        // Stufe 26c: eine leere Stelle der Tab-Linien sagt, was ein Klick tut
+        if (const int stelle = tabSaiteBei(hilfe->pos().y()); stelle >= 0 && tabNoteBei(hilfe->pos()) < 0)
+        {
+            QToolTip::showText(hilfe->globalPos(),
+                               tr("String %1 (%2): click here and type a fret — two digits quickly for 10 and up")
+                                   .arg(saitenNummer(m_saiten, stelle))
+                                   .arg(saitenTon(m_saiten.leer[static_cast<std::size_t>(stelle)] + m_saiten.capo)),
+                               this);
+            return true;
+        }
+        if (const int platz = std::max(noteBei(hilfe->pos()), tabNoteBei(hilfe->pos())); platz >= 0)
         {
             const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
             const Griff griff = griffe()[static_cast<std::size_t>(platz)];
@@ -379,6 +592,7 @@ bool NotenRaster::event(QEvent* event)
             if (griff.greifbar && note.saite >= 0 && note.saite == griff.saite) text += tr(" — set by you");
             if (note.saite >= 0 && note.saite != griff.saite)
                 text += tr(" (set to string %1, which cannot play it here)").arg(saitenNummer(m_saiten, note.saite));
+            if (tabNoteBei(hilfe->pos()) == platz) text += tr(" — drag to another line: the same note on that string");
             QToolTip::showText(hilfe->globalPos(), text, this);
             return true;
         }
@@ -1040,6 +1254,8 @@ void NotenRaster::paintEvent(QPaintEvent*)
         p.setClipping(false);
         p.setFont(font());
     }
+    // --- A, B (Stufe 26c, S-T5 a): die Tab-Linien zwischen der Spur Strum und den Noten
+    if (mitSaiten && tabHoehe() > 0) zeichneTab(p, alleGriffe, alleAnschlaege);
 
     // --- W8 a (S130): die Stellen der leiseren Clips desselben Loops im Composer, blasser
     p.setPen(QPen(QColor(255, 90, 70, 120), 2.0));
@@ -1065,6 +1281,17 @@ void NotenRaster::zieheBei(QPoint ort)
 {
     const int zahl = schritte();
     if (zahl <= 0) return;
+    if (m_zug == Zug::TabSaite)
+    {
+        // Stufe 26c: die Saite unter der Maus — gesetzt wird erst beim Loslassen
+        const int y = std::clamp(ort.y(), tabOben() + kTabRand, tabOben() + tabHoehe() - kTabRand - 1);
+        if (const int stelle = tabSaiteBei(y); stelle >= 0 && stelle != m_tabZiel)
+        {
+            m_tabZiel = stelle;
+            update();
+        }
+        return;
+    }
     const int schrittRoh = std::clamp(teileAb(ort.x() - kTastenBreite + m_rollX, schrittBreite()), 0, zahl - 1);
     if (m_zug == Zug::Laut)
     {
@@ -1221,9 +1448,36 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         return;
     }
     // J (Stufe 24e, S-W14 a): ein Klick in die Spur Strum schaltet den Anschlag an diesem Schritt weiter
-    if (ort.y() < rasterOben())
+    if (ort.y() < tabOben())
     {
         if (const int schritt = schrittBei(ort.x()); schritt >= 0) (void)schalteAnschlag(schritt);
+        return;
+    }
+    // B (Stufe 26c, S-T5 a): die Tab-Linien — eine Zahl greifen (auf eine andere Linie ziehen),
+    // sonst die Tab-Marke setzen; links der Name der Saite spielt die leere an
+    if (ort.y() < rasterOben())
+    {
+        const int stelle = tabSaiteBei(ort.y());
+        if (stelle < 0) return;
+        if (ort.x() < kTastenBreite)
+        {
+            Q_EMIT tonVerlangt(m_saiten.leer[static_cast<std::size_t>(stelle)] + m_saiten.capo);
+            return;
+        }
+        if (const int platz = tabNoteBei(ort); platz >= 0)
+        {
+            const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+            m_wahlSchritt = note.schritt;
+            m_wahlHoehe = note.hoehe;
+            markiere({{note.schritt, note.hoehe}});
+            setzeTabMarke(note.schritt, stelle);  // eine getippte Zahl aendert jetzt ihren Bund
+            m_vorZug = m_muster;
+            m_neu = false;
+            m_tabZiel = stelle;
+            m_zug = Zug::TabSaite;
+            return;
+        }
+        if (const int schritt = schrittBei(ort.x()); schritt >= 0) setzeTabMarke(schritt, stelle);
         return;
     }
     if (shift && ort.x() >= kTastenBreite && ort.y() < lautOben())
@@ -1333,6 +1587,17 @@ void NotenRaster::mouseReleaseEvent(QMouseEvent* event)
     const bool sammelt = m_klickSammelt;
     m_zug = Zug::Keiner;
     m_klickSammelt = false;
+    if (zug == Zug::TabSaite)
+    {
+        // Stufe 26c: auf eine andere Linie gezogen — derselbe Ton auf dieser Saite
+        const int platz = auswahl();
+        const int ziel = m_tabZiel;
+        m_tabZiel = -1;
+        if (platz >= 0 && ziel >= 0 && ziel != griffe()[static_cast<std::size_t>(platz)].saite && legeAufSaite(platz, ziel))
+            setzeTabMarke(m_wahlSchritt, ziel);
+        update();
+        return;
+    }
     if (zug == Zug::Rahmen)
     {
         m_rahmen = {};  // markieren aendert das Muster nicht
@@ -1358,6 +1623,19 @@ void NotenRaster::keyPressEvent(QKeyEvent* event)
 {
     const Qt::KeyboardModifiers tasten = event->modifiers() & ~Qt::KeypadModifier;
     const bool nurCtrl = tasten == Qt::ControlModifier;
+    // B (Stufe 26c): eine Ziffer an der Tab-Marke setzt dort einen Bund; folgt die zweite
+    // kurz darauf, wird er zweistellig (1, 2 → 12) — wie man Tabs tippt
+    if (m_tabSchritt >= 0 && tasten == Qt::NoModifier && event->key() >= Qt::Key_0 && event->key() <= Qt::Key_9)
+    {
+        const int ziffer = event->key() - Qt::Key_0;
+        const qint64 jetzt = QDateTime::currentMSecsSinceEpoch();
+        const bool weiter = m_tabZiffer >= 0 && jetzt - m_tabZifferZeit <= kTabZifferMs && m_tabZiffer * 10 + ziffer <= kBuendeMax;
+        const int bund = weiter ? m_tabZiffer * 10 + ziffer : ziffer;
+        (void)setzeBund(bund);
+        m_tabZiffer = weiter ? -1 : ziffer;  // nach zwei Ziffern beginnt die naechste einen neuen Bund
+        m_tabZifferZeit = jetzt;
+        return;
+    }
     switch (event->key())
     {
         case Qt::Key_Delete:
@@ -1392,6 +1670,11 @@ void NotenRaster::keyPressEvent(QKeyEvent* event)
             }
             break;
         case Qt::Key_Escape:
+            if (m_tabSchritt >= 0 && m_zug == Zug::Keiner)
+            {
+                setzeTabMarke(-1, -1);  // zuerst die Tab-Marke, beim naechsten Mal die Marken
+                return;
+            }
             if (!m_marken.empty() && m_zug == Zug::Keiner)
             {
                 markiere({});
@@ -1784,12 +2067,30 @@ void InstrumentEditor::setupUI()
     m_strumZeile = new StrumZeile(QStringLiteral("editorStrum"), this);
     m_strumZeile->setzeHinweis(tr("for every chord of this pattern"));
     connect(m_strumZeile, &StrumZeile::geaendert, this, [this](const Strum& strum) { setzeStrum(strum); });
-    aussen->addWidget(m_strumZeile);
+    {
+        // F (Stufe 26c, S-T5 a): der Haken Tab am Ende der Zeile Strum — die Tab-Linien im Raster
+        auto* reihe = new QHBoxLayout;
+        reihe->setContentsMargins(0, 0, 0, 0);
+        reihe->addWidget(m_strumZeile, 1);
+        m_tabHaken = new QCheckBox(tr("Tab"), this);
+        m_tabHaken->setObjectName(QStringLiteral("editorTab"));
+        m_tabHaken->setToolTip(tr("Show the tab lines between the Strum lane and the notes: one line per string,\n"
+                                  "the fret at every note. Click a line and type a fret; drag a number to another line"));
+        m_tabHaken->setChecked(!lageMerken() || QSettings().value(QLatin1String(kTabZeigen), true).toBool());
+        reihe->addWidget(m_tabHaken);
+        aussen->addLayout(reihe);
+    }
 
     // --- das Raster mit seinen Rollbalken
     auto* koerper = new QGridLayout;
     koerper->setSpacing(0);
     m_raster = new NotenRaster(this);
+    m_raster->setTabAn(m_tabHaken->isChecked());
+    connect(m_tabHaken, &QCheckBox::toggled, this, [this](bool an) {
+        m_raster->setTabAn(an);
+        passeRollbalkenAn();  // die Noten haben mehr oder weniger Hoehe
+        if (lageMerken()) QSettings().setValue(QLatin1String(kTabZeigen), an);
+    });
     m_rollY = new QScrollBar(Qt::Vertical, this);
     m_rollX = new QScrollBar(Qt::Horizontal, this);
     koerper->addWidget(m_raster, 0, 0);
@@ -1800,9 +2101,12 @@ void InstrumentEditor::setupUI()
     aussen->addLayout(koerper, 1);
     // G (Stufe 23f, S-U2 a): was die Zeichen an den Noten heissen — nur mit Saiten
     // M (Stufe 24e, S-W5 a): dazu die Pfeile der Spur Strum und die Kuerzel der Artikulationen
+    // G (Stufe 26c, S-T5 a): dazu die Tab-Linien
     m_saitenHinweis = new QLabel(tr("number = string (1 = highest) · pin = set by you · ! = not playable, sounds on the "
                                     "nearest string · Strum lane (top): ↓ ↑ grey = from the hand, blue = set by you, ≡ = "
-                                    "together, T = tapped, click to change · PM palm mute · LR let ring · T tapping · ◇ "
+                                    "together, T = tapped, click to change · Tab lines: click a line and type a fret (two "
+                                    "digits quickly for 10 and up), drag a number to another line = the same note on that "
+                                    "string · PM palm mute · LR let ring · T tapping · ◇ "
                                     "harmonic · right-click a note: String, Strum, playing styles"),
                                  this);
     m_saitenHinweis->setObjectName(QStringLiteral("instrumentStringHint"));
@@ -2054,6 +2358,7 @@ void InstrumentEditor::zeigeAlles()
         m_strumZeile->setzeRaster(m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
         m_strumZeile->zeige(ziel->strum);
         m_strumZeile->setVisible(mitSaiten);
+        m_tabHaken->setVisible(mitSaiten);  // F (Stufe 26c)
     }
     m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);

@@ -57,7 +57,11 @@ Saiteninstrument). Ins Muster durch Ziehen in Tab-Linien oder Piano-Roll oder Do
 an den Einfügepunkt; Verschieben auf dem Griffbrett ändert die Lage. Verworfen: b (feste
 Leiste im Editor — kostet dauerhaft Platz, wenige Griffbilder), c (nur ein Menü — schwer zu
 finden, kein Platz für das Bild; Merker S110). Später als angedocktes Fenster möglich, ohne
-den Ort der Daten zu ändern. **Dazu Patrik:** gespeichert als eigene Datei (S-T3), mit
+den Ort der Daten zu ändern. **Vorgabe Patrik (S137, nach 26b):** wie im Fenster
+*Instruments* (`InstrumentPalette`) ein **Anhören** — ein Klick spielt den Akkord mit dem
+Instrument des Editors — und **Favoriten** (★, mit eigenem Zweig *★ Favorites*, dazu
+*Recently used*), von der App gemerkt als Nennung (`guitar/c_major_1`, `user:<name>`); die
+Einzelheiten (Strum beim Anhören, Lage) mit der Skizze zu 26e. **Dazu Patrik:** gespeichert als eigene Datei (S-T3), mit
 eigenem Datei-Icon der Marke — das Motiv ein Griffbild
 (`asset/img/logo/icons/build_lvfx2_icons.py`, wie `lumiviz_lvkit.ico`).
 
@@ -909,7 +913,7 @@ wenn Akkorde auf dem Klavier dringender sind: dann 26f direkt nach 26b.
 | 26b | **Vorlagen:** `make_chords.py` (chords-db für Gitarre und Ukulele, gerechnet für Drop D, Bässe, Violine; die Voicings), `CREDITS.md`, Icon `lumiviz_lvchord.ico`; Bildbogen der gerechneten Griffbilder zur Durchsicht (Kipp-Bedingung S-T4 a) | jede mitgelieferte Datei liest sich; Zahl je Stimmung; jedes Griffbild klingt die Töne seiner Art |
 | 26c | **Tab-Linien:** Ansicht und Eingabe nach S-T5 a A, B, F — Bünde tippen, Saite wechseln durch Ziehen, Haken *Tab*, Zoom und Rollen mit der Piano-Roll | Bilder aus den Tests; Bedien-Fälle über den Editor |
 | 26d | **Legato, Slide, Bend bedienen** in Tab-Linien und Piano-Roll (S-T5 a C, E, G; S-L3 a A–G mit Menü und *Edit bend...*) | Bilder; Fälle über den Editor; das Gesetzte klingt (Planung 25b) |
-| 26e | **Fenster Chords mit Griffbildern** — vorher eine eigene Skizze: Liste, Griffbrett, *New*, *Edit*, *Duplicate*, *Delete*, Einfügen durch Ziehen und Doppelklick | Bilder; Wegwerf-Ordner; Einfügen über den Editor |
+| 26e | **Fenster Chords mit Griffbildern** — vorher eine eigene Skizze: Liste, Griffbrett, *New*, *Edit*, *Duplicate*, *Delete*, Einfügen durch Ziehen und Doppelklick; Anhören, ★ Favoriten und *Recently used* wie im Fenster *Instruments* (Vorgabe Patrik S137) | Bilder; Wegwerf-Ordner; Einfügen über den Editor |
 | 26f | **Voicings** im selben Fenster für Instrumente ohne Saiten (S-T6 a) | Bilder; Einfügen auf der Zeile des Loslassens |
 | 26g | **Creator:** *Play as* mit *Hammer-on*, *Slide*, *Bend* (bisher 25e) | Bilder |
 | 26h | **Mitgeliefertes:** Beispiel-Loops mit Tabs, Akkorden, Legato, Slide, Bend; Handbuch; Sichttest-Liste; Bereichslauf; **voller Lauf** | beide Compiler |
@@ -1787,6 +1791,34 @@ S. 117, Özaslan 2010 S. 458).
 - Belegt in `test_LoopAkkord` „26b“: Zahl je Ordner, jede Datei liest sich, jedes Griffbild
   greift auf seiner Stimmung, die gerechneten nur mit Tönen ihrer Art und dem Grundton im
   Bass, `mitgelieferteAkkorde` findet alle (1,4 s unter Testing-MSVC).
+
+### 5w. Stufe 26c — die Tab-Linien im Instrument-Editor (gebaut S137)
+
+- **A** im `NotenRaster` ein Streifen zwischen Spur Strum und Noten (`tabOben`,
+  `tabHoehe` = Saiten × `kTabZeile` 14 px + 2 × `kTabRand` 4 px; `rasterOben` rückt darunter),
+  je Saite eine Linie, oben die höchste (`tabLinieY`, `tabSaiteBei`); links „1 E“ … „6 E“
+  (Nummer und Ton der leeren Saite, mit Capo der klingende). Rollt und zoomt waagrecht mit.
+- **B** an jeder Note der Bund aus der Planung (`greifeNoten`), am Anschlag (mit Strum-Versatz),
+  in einem Feld, das die Linie unterbricht; markierte hervorgehoben, nicht greifbar rot „!“;
+  dahinter ein blasser Strich über die Dauer. **Bundlos: der Tonname statt der Bundzahl** (von
+  Claude gesetzt — S-L9 a sagt nur „keine Bundzahl“). Bedienung: ein Klick auf eine Linie setzt
+  die **Tab-Marke** (`setzeTabMarke`, ein Kästchen); eine Ziffer setzt dort den Bund
+  (`setzeBund`): liegt am Schritt schon eine Note auf der Saite, bekommt sie ihn, sonst eine neue
+  von einem Schritt; die Saite steht danach an der Note (S-M2 a). **Zwei Ziffern binnen
+  `kTabZifferMs` = 800 ms werden ein Bund** (1, 2 → 12; von Claude gesetzt), über 24 beginnt die
+  zweite neu. Ein Klick auf eine Zahl markiert ihre Note und setzt die Marke dorthin; ziehen auf
+  eine andere Linie (`Zug::TabSaite`, gestrichelt die Ziellinie) legt sie beim Loslassen auf diese
+  Saite (`legeAufSaite`, derselbe Ton). Ein Klick auf den Namen einer Saite spielt sie leer an;
+  Escape nimmt zuerst die Tab-Marke weg. Zeiger: Hand, Pfeil hoch/runter auf einer Zahl,
+  Textcursor auf einer leeren Stelle; Tooltips dazu.
+- **F** Haken **Tab** am Ende der Zeile *Strum* (`editorTab`, nur mit Saiten; neben, nicht in
+  `StrumZeile`, die auch im Creator steht); gemerkt unter `loop/instrumentEditorTab` — wie die
+  Lage nicht in der Test-Exe.
+- **G** die Hinweiszeile nennt die Tab-Linien.
+- Belegt in `test_LoopEditorTab` (2 Fälle über den Editor; `LUMIVIZ_EDITOR_TAB_BILD`); in
+  `test_LoopEditorSpielweise` drei Rechnungen der Höhe um `tabHoehe()` ergänzt.
+- **Noch nicht** (26d): Hammer-on, Pull-off, Slide, Bend in Linien und Piano-Roll; Zahlen
+  waagrecht ziehen (die Zeit bleibt Sache der Piano-Roll).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
