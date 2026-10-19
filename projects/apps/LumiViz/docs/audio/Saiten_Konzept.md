@@ -704,6 +704,13 @@ Lauf. Verworfen: b (getrennt — die Bedienung würde mit den Tabs ein zweites M
 angefasst), c (die Tabs zuerst — der Klang der verbundenen Noten wartete, obwohl er
 nicht an den Tabs hängt).
 
+✅ **S-L6 a** (Patrik S136): **Der Name eines Tons trägt den Verlauf lesbar**, wie
+die übrigen Zusätze: `:v<ms><art><hoehe>,…` für die Wechsel (art `l` Legato, `g`
+Slide; etwa `:v240l59,480g62`) und `:b<ms>-<viertel>,…` für den Bend (Halbtöne in
+Vierteln als ganze Zahl; etwa `:b0-0,90-8,400-8`), vor `:e`; `zerlegeTonRest` liest
+beides zurück. Verworfen: b (eine Prüfsumme — der Name ist der Weg von der Planung
+zum Klangerzeuger; ein zweiter Speicher für den Verlauf müsste mit ihm übereinstimmen).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -1420,6 +1427,35 @@ Nach S-L1 a, S-L2 a, S-L4 a.
   eines Pre-bends); eine Kurve ohne Biegung ist kein Bend (leer); `Note::bend{}` mit
   Vorgabe, damit clang bei `Note{…}` kein fehlendes Feld meldet.
 - **Noch nicht:** Planung (25b), Klang (25c), Bedienung (mit den Tabs, S-L5 a).
+
+### 5s. Stufe 25b — Planung der Ketten (gebaut S136)
+
+Nach S-L1 a, S-L2 a, S-L6 a.
+
+- **Saitenwahl** (`greifeNoten`): eine Note mit *Legato* oder *Slide* kommt auf die
+  Saite ihrer **vorigen Note** (`Griff::vorige`) — der letzten, die vor ihrem Anschlag
+  auf einer Saite anschlug, auf der beide spielbar sind; bei einer gesetzten Saite nur
+  auf dieser. Die Saite ist von der vorigen belegt, die Note klingt in ihr weiter.
+  Gibt es keine: `Griff::verbindungFehlt`, die Note wird gewählt wie bisher und schlägt
+  normal an.
+- **Ketten** (`kettenImMuster`): je Note, die von keiner kommt, eine Kette mit ihren
+  Gliedern in der Reihe der Zeit.
+- **Der Ton einer Kette** (`setzeKette`): `TonAngabe::verlauf` (je Glied ms ab dem
+  Anschlag, Tonhöhe, Slide oder Legato), `TonAngabe::biegung` (die Bends aller Noten in
+  ms, in Vierteln; zwischen zwei Noten hält der Bend, eine Note ohne Bend löst ihn
+  springend), `dauerMs` bis zum Ende des letzten Glieds. Zeiten wie in der Planung
+  (Schritte, Swing).
+- **Name** nach S-L6 a, mit Rückweg in `zerlegeTonRest`.
+- **Noch nicht eingeschaltet:** `toeneImKanal` plant weiter je Note — die Ketten nutzt
+  es erst mit dem Klang (25c), damit kein Zwischenstand Töne verschluckt.
+  `loop_werte.txt` unverändert.
+- **Belegt** in `test_LoopSpielweise` „25b“ (5h7p5 auf der G-Saite statt der leeren
+  H-Saite, fehlende Verbindung, Hammer-on nach einem Akkord von der nächsten Tonhöhe,
+  Bend in ms, Name hin und zurück).
+- **Von Claude gesetzt, nicht vorgelegt:** unter mehreren vorigen Noten die späteste,
+  dann die nächste in der Tonhöhe, dann die tiefere Saite; eine Pause dazwischen
+  trennt nicht (die Saite klingt nach); trägt eine Note Legato und Slide zugleich, gilt
+  Slide; die Biegung hält vor ihrem ersten und nach ihrem letzten Punkt.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

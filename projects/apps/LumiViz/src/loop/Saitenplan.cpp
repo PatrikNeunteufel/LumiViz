@@ -81,6 +81,45 @@ int naechstbesteSaite(const Saitensatz& saiten, int hoehe)
     return beste;
 }
 
+/// Die vorige Note einer Note mit *Legato* oder *Slide* (Stufe 25b, S-L1 a): die
+/// letzte, die vor ihrem Anschlag (`a`, der erste Platz ihres Anschlags) auf einer
+/// Saite anschlug, auf der beide spielbar sind — bei einer gesetzten Saite nur auf
+/// dieser. Unter mehreren die spaeteste, dann die naechste in der Tonhoehe, dann
+/// die tiefere Saite (von Claude gesetzt). Eine Pause dazwischen trennt nicht: die
+/// Saite klingt nach. −1 = keine.
+int vorigeNote(const std::vector<Note>& noten, const std::vector<Griff>& griffe, const Saitensatz& saiten,
+               std::size_t i, std::size_t a)
+{
+    const Note& note = noten[i];
+    const bool gesetzt = note.saite >= 0 && note.saite < saiten.anzahl();
+    int beste = -1;
+    for (std::size_t j = 0; j < a; ++j)
+    {
+        const Griff& g = griffe[j];
+        if (!g.greifbar || g.saite < 0) continue;
+        if (gesetzt && g.saite != note.saite) continue;
+        if (!spielbarAuf(saiten, g.saite, note)) continue;
+        // die letzte auf ihrer Saite vor dem Anschlag?
+        bool spaeter = false;
+        for (std::size_t k = j + 1; k < a && !spaeter; ++k)
+            spaeter = griffe[k].greifbar && griffe[k].saite == g.saite;
+        if (spaeter) continue;
+        if (beste < 0)
+        {
+            beste = static_cast<int>(j);
+            continue;
+        }
+        const Note& bisher = noten[static_cast<std::size_t>(beste)];
+        const Note& kandidat = noten[j];
+        const int abstandBisher = std::abs(bisher.hoehe - note.hoehe);
+        const int abstandKandidat = std::abs(kandidat.hoehe - note.hoehe);
+        if (std::tie(kandidat.schritt, abstandBisher, griffe[static_cast<std::size_t>(beste)].saite) >
+            std::tie(bisher.schritt, abstandKandidat, g.saite))
+            beste = static_cast<int>(j);
+    }
+    return beste;
+}
+
 }  // namespace
 
 std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
@@ -109,9 +148,29 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
         std::vector<std::size_t> offen;
         std::vector<bool> imAnschlag(static_cast<std::size_t>(anzahl), false);
         std::vector<int> festeBuende;
+        std::vector<bool> fehlt(b - a, false);
         for (std::size_t i = a; i < b; ++i)
         {
             const Note& note = noten[i];
+            // Stufe 25b (S-L1 a): Legato oder Slide — auf die Saite der vorigen Note; die ist von ihr
+            // belegt, aber sie klingt in dieser weiter
+            if ((note.artikulationen & kVerbunden) != 0)
+            {
+                const int vorige = vorigeNote(noten, griffe, saiten, i, a);
+                if (vorige >= 0)
+                {
+                    const int s = griffe[static_cast<std::size_t>(vorige)].saite;
+                    if (!imAnschlag[static_cast<std::size_t>(s)])
+                    {
+                        imAnschlag[static_cast<std::size_t>(s)] = true;
+                        griffe[i] = griffAuf(saiten, s, note);
+                        griffe[i].vorige = vorige;
+                        festeBuende.push_back(griffe[i].bund);
+                        continue;
+                    }
+                }
+                fehlt[i - a] = true;
+            }
             if (spielbarAuf(saiten, note.saite, note) && !imAnschlag[static_cast<std::size_t>(note.saite)])
             {
                 imAnschlag[static_cast<std::size_t>(note.saite)] = true;
@@ -205,7 +264,10 @@ std::vector<Griff> greifeNoten(const Muster& muster, const Saitensatz& saiten)
             }
         }
         for (std::size_t i = a; i < b; ++i)
+        {
             if (griffe[i].greifbar && griffe[i].bund > 0) lage = std::min(lage, griffe[i].bund);
+            griffe[i].verbindungFehlt = fehlt[i - a];
+        }
         if (lage != std::numeric_limits<int>::max()) vorigeLage = lage;  // nur leere Saiten: die Hand bleibt
         a = b;
     }
@@ -355,6 +417,84 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         if ((v.muster->noten[v.note].artikulationen & kLetRing) != 0) ton.dauerMs = std::max(ton.dauerMs, ton.endeMs);
     }
     return toene;
+}
+
+std::vector<Kette> kettenImMuster(const Muster& muster, const std::vector<Griff>& griffe)
+{
+    std::vector<Kette> ketten;
+    const std::size_t n = muster.noten.size();
+    if (griffe.size() != n) return ketten;
+    // je Note die Kette, zu der sie gehoert: die vorige liegt im Muster immer davor
+    std::vector<std::size_t> platz(n, 0);
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const int vorige = griffe[i].vorige;
+        if (vorige >= 0 && static_cast<std::size_t>(vorige) < i)
+        {
+            platz[i] = platz[static_cast<std::size_t>(vorige)];
+            ketten[platz[i]].glieder.push_back(i);
+        }
+        else
+        {
+            platz[i] = ketten.size();
+            ketten.push_back(Kette{i, {}});
+        }
+    }
+    return ketten;
+}
+
+void setzeKette(TonAngabe& ton, const Loop& loop, const Muster& muster, const Kette& kette)
+{
+    ton.verlauf.clear();
+    ton.biegung.clear();
+    if (kette.kopf >= muster.noten.size() || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return;
+    // dieselben Stellen wie `toeneImKanal`: Schritte mal Schrittlaenge, mit Swing
+    const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
+    const double swingMs = loop.swing * 0.5 * schrittMs;
+    const auto startMs = [&](const Note& note) {
+        const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
+        return note.schritt * schrittMs + (versetzt ? swingMs : 0.0);
+    };
+    const Note& kopf = muster.noten[kette.kopf];
+    const double nullMs = startMs(kopf);
+
+    std::vector<std::size_t> alle{kette.kopf};
+    alle.insert(alle.end(), kette.glieder.begin(), kette.glieder.end());
+    double endeMs = static_cast<double>(loop.notenMs(kopf));
+    for (const std::size_t g : kette.glieder)
+    {
+        const Note& note = muster.noten[g];
+        const double ab = startMs(note) - nullMs;
+        ton.verlauf.push_back(TonWechsel{static_cast<int>(std::lround(ab)), note.hoehe, (note.artikulationen & kSlide) != 0});
+        endeMs = std::max(endeMs, ab + loop.notenMs(note));
+    }
+    ton.dauerMs = std::max(ton.dauerMs, static_cast<int>(std::lround(endeMs)));
+
+    // die Biegung: je Note ihr Bend auf ihrer Zeit; dazwischen haelt sie, bis die naechste Note
+    // ohne Bend sie springend loest (S-L2 a)
+    const auto setze = [&ton](int ms, int viertel) {
+        if (!ton.biegung.empty() && ton.biegung.back() == TonBiegung{ms, viertel}) return;
+        ton.biegung.push_back(TonBiegung{ms, viertel});
+    };
+    for (const std::size_t i : alle)
+    {
+        const Note& note = muster.noten[i];
+        const int ab = static_cast<int>(std::lround(startMs(note) - nullMs));
+        const int laenge = loop.notenMs(note);
+        if (!ton.biegung.empty() && ton.biegung.back().ms < ab) setze(ab, ton.biegung.back().viertel);
+        if (note.bend.empty())
+        {
+            if (!ton.biegung.empty() && ton.biegung.back().viertel != 0) setze(ab, 0);
+            continue;
+        }
+        if (ton.biegung.empty() && ab > 0)
+        {
+            setze(0, 0);
+            setze(ab, 0);
+        }
+        for (const BendPunkt& p : note.bend)
+            setze(ab + static_cast<int>(std::lround(p.zeit * laenge)), static_cast<int>(std::lround(p.halbtoene / kBendRaster)));
+    }
 }
 
 }  // namespace lumi::loop

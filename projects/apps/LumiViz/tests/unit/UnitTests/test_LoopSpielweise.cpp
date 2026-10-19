@@ -874,4 +874,148 @@ TEST_SUITE("LoopSpielweise")
         REQUIRE(gedreht != w.noten.end());
         CHECK(gedreht->bend.size() == 3);
     }
+
+    TEST_CASE("Loop Spielweise 25b: Ketten — die Saite der vorigen Note, der Verlauf, der Bend in ms, der Name")
+    {
+        Saitensatz gitarre;
+        gitarre.leer = stimmungsvorlagen()[0].leer;  // E2 A2 D3 G3 B3 E4
+        gitarre.mensurMm = 648.0;
+        const auto muster = [](std::vector<Note> noten) {
+            Loop loop;  // 120 BPM, 4/4, vier Schritte je Schlag: ein Schritt 125 ms
+            Muster m;
+            m.name = QStringLiteral("Lauf");
+            m.art = MusterArt::Instrument;
+            m.instrument = QStringLiteral("guitar");
+            m.takte = 1;
+            m.noten = std::move(noten);
+            loop.muster.push_back(m);
+            loop.kanaele = {{QStringLiteral("Gitarre"), true, {{m.name, 0, 1}}}};
+            loop.richte();
+            return loop;
+        };
+
+        // --- 5h7p5 auf der G-Saite: A3 allein laege dort (2. Bund), B3 allein auf der leeren H-Saite —
+        // mit Legato bleibt der Lauf auf der G-Saite
+        {
+            Note h{2, 2, 59};
+            h.artikulationen = kLegato;
+            Note p{4, 2, 57};
+            p.artikulationen = kLegato;
+            const Loop loop = muster({Note{0, 2, 57}, h, p});
+            const Muster& m = loop.muster[0];
+            const auto griffe = greifeNoten(m, gitarre);
+            REQUIRE(griffe.size() == 3);
+            CHECK(griffe[0].saite == 3);
+            CHECK(griffe[1].saite == 3);
+            CHECK(griffe[1].bund == 4);
+            CHECK(griffe[1].vorige == 0);
+            CHECK(griffe[2].saite == 3);
+            CHECK(griffe[2].vorige == 1);
+            CHECK_FALSE(griffe[1].verbindungFehlt);
+            // ohne Legato: die leere H-Saite
+            const Loop ohne = muster({Note{0, 2, 57}, Note{2, 2, 59}});
+            CHECK(greifeNoten(ohne.muster[0], gitarre)[1].saite == 4);
+
+            const auto ketten = kettenImMuster(m, griffe);
+            REQUIRE(ketten.size() == 1);
+            CHECK(ketten[0] == Kette{0, {1, 2}});
+            TonAngabe ton;
+            ton.dauerMs = loop.notenMs(m.noten[0]);
+            setzeKette(ton, loop, m, ketten[0]);
+            CHECK(ton.verlauf == std::vector<TonWechsel>{{250, 59, false}, {500, 57, false}});
+            CHECK(ton.dauerMs == 750);  // bis zum Ende der letzten Note
+            CHECK(ton.biegung.empty());
+        }
+
+        // --- ohne vorige Note: die Verbindung fehlt, die Note schlaegt normal an
+        {
+            Note slide{8, 2, 40};
+            slide.artikulationen = kSlide;  // E2 geht nur auf der E-Saite, dort klang noch nichts
+            const Loop loop = muster({Note{0, 2, 64}, slide});
+            const auto griffe = greifeNoten(loop.muster[0], gitarre);
+            CHECK(griffe[1].verbindungFehlt);
+            CHECK(griffe[1].vorige == -1);
+            CHECK(griffe[1].greifbar);
+            CHECK(kettenImMuster(loop.muster[0], griffe).size() == 2);
+            // eine gesetzte Saite, auf der vorher nichts klang
+            Note gesetzt{4, 2, 64};
+            gesetzt.saite = 4;
+            gesetzt.artikulationen = kLegato;
+            const Loop zwei = muster({Note{0, 2, 64}, gesetzt});
+            CHECK(greifeNoten(zwei.muster[0], gitarre)[1].verbindungFehlt);
+        }
+
+        // --- nach einem Akkord: von der naechsten Tonhoehe — E2 A2 E3, dann ein Hammer-on F#3 auf der D-Saite
+        {
+            Note hammer{2, 2, 54};
+            hammer.artikulationen = kLegato;
+            const Loop loop = muster({Note{0, 4, 40}, Note{0, 4, 45}, Note{0, 4, 52}, hammer});
+            const auto griffe = greifeNoten(loop.muster[0], gitarre);
+            const auto hier = std::find_if(loop.muster[0].noten.begin(), loop.muster[0].noten.end(),
+                                           [](const Note& n) { return n.hoehe == 54; }) -
+                              loop.muster[0].noten.begin();
+            const auto von = std::find_if(loop.muster[0].noten.begin(), loop.muster[0].noten.end(),
+                                          [](const Note& n) { return n.hoehe == 52; }) -
+                             loop.muster[0].noten.begin();
+            CHECK(griffe[static_cast<std::size_t>(hier)].saite == 2);
+            CHECK(griffe[static_cast<std::size_t>(hier)].vorige == static_cast<int>(von));
+        }
+
+        // --- der Bend in ms: auf der Zeit seiner Note; die naechste Note ohne Bend loest ihn springend
+        {
+            Note gebogen{0, 2, 57};
+            gebogen.bend = {{0.0, 0.0}, {0.5, 2.0}, {1.0, 2.0}};
+            Note weiter{2, 2, 59};
+            weiter.artikulationen = kLegato;
+            const Loop loop = muster({gebogen, weiter});
+            const Muster& m = loop.muster[0];
+            const auto griffe = greifeNoten(m, gitarre);
+            TonAngabe ton;
+            ton.dauerMs = loop.notenMs(m.noten[0]);
+            setzeKette(ton, loop, m, kettenImMuster(m, griffe)[0]);
+            CHECK(ton.biegung == std::vector<TonBiegung>{{0, 0}, {125, 8}, {250, 8}, {250, 0}});
+            // eine Note allein: nur ihr Bend, ab 0
+            const Loop allein = muster({gebogen});
+            TonAngabe einzeln;
+            einzeln.dauerMs = allein.notenMs(allein.muster[0].noten[0]);
+            setzeKette(einzeln, allein, allein.muster[0], Kette{0, {}});
+            CHECK(einzeln.biegung == std::vector<TonBiegung>{{0, 0}, {125, 8}, {250, 8}});
+            CHECK(einzeln.verlauf.empty());
+            // ein Bend erst an der zweiten Note: davor ungebogen
+            Note erst{0, 2, 57};
+            Note dann{2, 2, 59};
+            dann.artikulationen = kSlide;
+            dann.bend = {{0.0, 2.0}, {1.0, 0.0}};  // ein Pre-bend, geloest
+            const Loop spaet = muster({erst, dann});
+            TonAngabe zwei;
+            setzeKette(zwei, spaet, spaet.muster[0], kettenImMuster(spaet.muster[0], greifeNoten(spaet.muster[0], gitarre))[0]);
+            CHECK(zwei.biegung == std::vector<TonBiegung>{{0, 0}, {250, 0}, {250, 8}, {500, 0}});
+            CHECK(zwei.verlauf == std::vector<TonWechsel>{{250, 59, true}});
+        }
+
+        // --- der Name traegt Verlauf und Bend lesbar und liest sich zurueck (S-L6 a)
+        {
+            TonAngabe ton;
+            ton.instrument = QStringLiteral("guitar");
+            ton.hoehe = 57;
+            ton.dauerMs = 750;
+            ton.saite = 3;
+            ton.verlauf = {{250, 59, false}, {500, 62, true}};
+            ton.biegung = {{0, 0}, {90, 8}, {400, 8}};
+            ton.endeMs = 900;
+            const QString name = tonKlang(ton);
+            CHECK(name == QStringLiteral("inst:guitar:57:750:s3:v250l59,500g62:b0-0,90-8,400-8:e900"));
+            TonAngabe zurueck;
+            REQUIRE(zerlegeTon(name, zurueck));
+            CHECK(zurueck == ton);
+            // ohne Verlauf und Bend: derselbe Name wie bisher
+            ton.verlauf.clear();
+            ton.biegung.clear();
+            CHECK(tonKlang(ton) == QStringLiteral("inst:guitar:57:750:s3:e900"));
+            // kaputt: wird nicht gelesen
+            TonAngabe nichts;
+            CHECK_FALSE(zerlegeTon(QStringLiteral("inst:guitar:57:750:v250x59"), nichts));
+            CHECK_FALSE(zerlegeTon(QStringLiteral("inst:guitar:57:750:b90"), nichts));
+        }
+    }
 }

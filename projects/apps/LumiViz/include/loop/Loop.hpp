@@ -165,6 +165,27 @@ struct Note
 /// zerlegt sich hier auch — Saite und Ende fallen dabei weg.
 bool zerlegeTon(const QString& klang, QString& instrument, int& hoehe, int& dauerMs);
 
+/// Ein Wechsel der Tonhoehe im Ton einer Kette verbundener Noten (Stufe 25b,
+/// S-L1 a): ab `ms` nach dem Anschlag die gegriffene Tonhoehe `hoehe` — als
+/// Sprung (Legato) oder gleitend (Slide).
+struct TonWechsel
+{
+    int ms = 0;
+    int hoehe = 60;
+    bool gleitet = false;  ///< Slide; sonst Legato (Hammer-on oder Pull-off)
+
+    [[nodiscard]] bool operator==(const TonWechsel&) const = default;
+};
+/// Ein Punkt der Biegung eines Tons (Stufe 25b, S-L2 a): `ms` nach dem Anschlag,
+/// die Biegung in Vierteltoenen ueber der gegriffenen Tonhoehe.
+struct TonBiegung
+{
+    int ms = 0;
+    int viertel = 0;
+
+    [[nodiscard]] bool operator==(const TonBiegung&) const = default;
+};
+
 /// Ein gerechneter Ton mit allem, was ihn ausmacht (seit Stufe 23b): bei einem
 /// Saiteninstrument auch die Saite und das Ende, an dem die naechste Note auf
 /// derselben Saite ihn abdaempft (Entscheid S-M3 a).
@@ -186,13 +207,21 @@ struct TonAngabe
     /// Ein Flageolett: der Teilton, der klingt (2 … 6); 1 = keines. Die Tonhoehe
     /// ist die klingende, gegriffen ist sie um diesen Teilton tiefer.
     int teilton = 1;
+    // --- seit Stufe 25b (S-L1 a, S-L2 a): der Verlauf einer Kette und der Bend ---
+    /// Die Wechsel der Tonhoehe, nach `ms` sortiert; leer = einer Tonhoehe. Der Ton
+    /// beginnt mit `hoehe`.
+    std::vector<TonWechsel> verlauf{};
+    /// Die Biegung, linear zwischen den Punkten, nach `ms` sortiert (zwei Punkte an
+    /// derselben Stelle: ein Sprung); leer = keine.
+    std::vector<TonBiegung> biegung{};
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
 /// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, dann (seit
 /// Stufe 24b) `:h<teilton>` bei einem Flageolett, `:u` bei Up, `:m` bei Palm
-/// mute, `:t` bei Tapping, zuletzt `:e<ms>` bei einem Ende — ohne alles
-/// derselbe Name wie bis Stufe 22.
+/// mute, `:t` bei Tapping, (seit Stufe 25b, S-L6 a) `:v<ms><l|g><hoehe>,…` bei
+/// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, zuletzt `:e<ms>` bei
+/// einem Ende — ohne alles derselbe Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

@@ -46,9 +46,35 @@ struct Griff
     /// Bei einem natuerlichen ist `bund` 0 (die Hand greift nicht), bei einem
     /// kuenstlichen der gegriffene Bund.
     int teilton = 1;
+    /// Stufe 25b (S-L1 a): bei *Legato* oder *Slide* die Note, von der sie kommt —
+    /// ihr Platz im Muster; −1 = keine. Sie liegt auf derselben Saite.
+    int vorige = -1;
+    /// Die Note traegt *Legato* oder *Slide*, hat aber keine vorige Note auf einer
+    /// Saite, auf der beide spielbar sind — sie schlaegt normal an (gezeigt mit „!“).
+    bool verbindungFehlt = false;
 
     [[nodiscard]] bool operator==(const Griff&) const = default;
 };
+
+/// Eine Kette verbundener Noten auf einer Saite (Stufe 25b, S-L1 a): die erste
+/// schlaegt an, die weiteren kommen per Legato oder Slide von der jeweils
+/// vorigen. Plaetze im Muster, in der Reihe der Kette.
+struct Kette
+{
+    std::size_t kopf = 0;
+    std::vector<std::size_t> glieder;  ///< ohne den Kopf; leer = eine Note allein
+
+    [[nodiscard]] bool operator==(const Kette&) const = default;
+};
+/// Die Ketten eines Musters aus seinen Griffen: je Note, die nicht von einer
+/// anderen kommt, eine Kette (auch eine allein), in der Reihe der Koepfe.
+[[nodiscard]] std::vector<Kette> kettenImMuster(const Muster& muster, const std::vector<Griff>& griffe);
+/// Den Ton des Kopfes zur Kette machen (Stufe 25b, S-L1 a, S-L2 a): `verlauf` je
+/// Glied (ms ab dem Anschlag des Kopfes, die Tonhoehe, Slide oder Legato),
+/// `biegung` aus den Bends aller Noten der Kette, `dauerMs` bis zum Ende des
+/// letzten Glieds. Die Zeiten wie in der Planung: Schritte mal Schrittlaenge,
+/// mit Swing. Fuer eine Note allein nur ihr Bend.
+void setzeKette(TonAngabe& ton, const Loop& loop, const Muster& muster, const Kette& kette);
 
 /// Je Note des Musters (in seiner Reihenfolge) der Griff. Ohne Saiten: lauter
 /// leere Griffe. Das Muster muss gerichtet sein (`Loop::richte`).

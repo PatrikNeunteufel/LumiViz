@@ -465,3 +465,5 @@ cmake/**/*.bak
 cmake/**/*.zip
 docs/**/*.bak
 docs/**/*.zip
+
+asset/free_Tabs/**

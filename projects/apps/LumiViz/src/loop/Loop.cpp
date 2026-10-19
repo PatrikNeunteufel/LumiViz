@@ -409,6 +409,20 @@ QString tonKlang(const TonAngabe& ton)
     if (ton.richtung == Richtung::Auf) name += QStringLiteral(":u");
     if ((ton.artikulationen & kPalmMute) != 0) name += QStringLiteral(":m");
     if ((ton.artikulationen & kTapping) != 0) name += QStringLiteral(":t");
+    // seit Stufe 25b (S-L6 a): der Verlauf und der Bend, lesbar
+    if (!ton.verlauf.empty())
+    {
+        QStringList teile;
+        for (const TonWechsel& w : ton.verlauf)
+            teile << QStringLiteral("%1%2%3").arg(w.ms).arg(w.gleitet ? QLatin1Char('g') : QLatin1Char('l')).arg(w.hoehe);
+        name += QStringLiteral(":v") + teile.join(QLatin1Char(','));
+    }
+    if (!ton.biegung.empty())
+    {
+        QStringList teile;
+        for (const TonBiegung& b : ton.biegung) teile << QStringLiteral("%1-%2").arg(b.ms).arg(b.viertel);
+        name += QStringLiteral(":b") + teile.join(QLatin1Char(','));
+    }
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
 }
@@ -416,14 +430,51 @@ QString tonKlang(const TonAngabe& ton)
 namespace
 {
 
+/// `:v240l59,480g62` — je Wechsel ms, `l` oder `g`, die Tonhoehe.
+bool zerlegeVerlauf(QStringView text, std::vector<TonWechsel>& verlauf)
+{
+    for (const QStringView teil : text.split(QLatin1Char(',')))
+    {
+        qsizetype art = 0;
+        while (art < teil.size() && teil[art].isDigit()) ++art;
+        if (art == 0 || art + 1 >= teil.size()) return false;
+        const QChar zeichen = teil[art];
+        if (zeichen != QLatin1Char('l') && zeichen != QLatin1Char('g')) return false;
+        bool msOk = false;
+        bool hoeheOk = false;
+        const int ms = teil.left(art).toInt(&msOk);
+        const int hoehe = teil.mid(art + 1).toInt(&hoeheOk);
+        if (!msOk || !hoeheOk) return false;
+        verlauf.push_back(TonWechsel{ms, hoehe, zeichen == QLatin1Char('g')});
+    }
+    return !verlauf.empty();
+}
+/// `:b0-0,90-8` — je Punkt ms und Viertel.
+bool zerlegeBiegung(QStringView text, std::vector<TonBiegung>& biegung)
+{
+    for (const QStringView teil : text.split(QLatin1Char(',')))
+    {
+        const qsizetype strich = teil.indexOf(QLatin1Char('-'));
+        if (strich <= 0) return false;
+        bool msOk = false;
+        bool viertelOk = false;
+        const int ms = teil.left(strich).toInt(&msOk);
+        const int viertel = teil.mid(strich + 1).toInt(&viertelOk);
+        if (!msOk || !viertelOk || ms < 0 || viertel < 0) return false;
+        biegung.push_back(TonBiegung{ms, viertel});
+    }
+    return !biegung.empty();
+}
+
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
-/// 24b), dann Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das
-/// als Pfad selbst einen Doppelpunkt tragen kann (C:/…).
+/// 24b), `:v…`, `:b…` (seit Stufe 25b), dann Dauer und Tonhoehe als reine
+/// Zahlen — davor das Instrument, das als Pfad selbst einen Doppelpunkt tragen
+/// kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 6; ++runde)
+    for (int runde = 0; runde < 8; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
@@ -434,6 +485,14 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
             zusatz.artikulationen |= kPalmMute;
         else if (stueck == QLatin1String("t"))
             zusatz.artikulationen |= kTapping;
+        else if (stueck.front() == QLatin1Char('v') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegeVerlauf(stueck.mid(1), zusatz.verlauf)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('b') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegeBiegung(stueck.mid(1), zusatz.biegung)) return false;
+        }
         else
         {
             const QChar art = stueck.front();
