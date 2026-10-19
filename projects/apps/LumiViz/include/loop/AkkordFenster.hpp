@@ -32,6 +32,7 @@
 
 class QButtonGroup;
 class QComboBox;
+class QHBoxLayout;
 class QLabel;
 class QLineEdit;
 class QPushButton;
@@ -43,6 +44,11 @@ namespace lumi::loop
 {
 
 class GriffbildFeld;
+
+/// G (S-T9 a) und M (S-T11 a): die vier Symbole zum Anhoeren ↓ ↑ ↓↑ = in `reihe`,
+/// je ein Knopf mit der Spielart als id der Gruppe; Namen `chordPlayDown`, `chordPlayUp`,
+/// `chordPlayDownUp`, `chordPlayTogether`.
+QButtonGroup* baueSpielartKnoepfe(QWidget* eltern, QHBoxLayout* reihe);
 
 /// Die Galerie (D): kleine Griffbilder in Reihen, unter Koepfen.
 class AkkordGalerie : public QWidget
@@ -149,6 +155,19 @@ public:
     void nimmZurueck();
     void stelleWiederHer();
 
+    // --- H (Stufe 26e-3, S-T8 a H, S-T11 a): eigene Griffbilder ------------------
+    /// *New...*: der Dialog *Edit chord* mit einem leeren Griffbild dieser Stimmung.
+    /// true = gespeichert (es steht dann gewaehlt unter *Your chords*).
+    bool neu();
+    /// *Edit...*: die gewaehlte Lage (mit Verschiebung) im Dialog — ein eigenes
+    /// ersetzt sich, eine Vorlage wird eine eigene Kopie.
+    bool bearbeite();
+    /// *Duplicate*: die gewaehlte Lage als eigene Kopie, ohne Dialog (`_2` wie *Keep both*).
+    bool dupliziere();
+    /// *Delete*: das gewaehlte eigene nach Rueckfrage loeschen (`chordDeleteQuestion`,
+    /// ueber `fuehreDialogAus`). false = kein eigenes oder abgelehnt.
+    bool loescheGewaehlten();
+
     /// Was die Galerie zeigt, von oben nach unten: die Koepfe als `[C major]`,
     /// dazwischen die Nennungen.
     [[nodiscard]] QStringList galerieZeilen() const;
@@ -182,6 +201,10 @@ private:
     void zeigeDetail();
     void merke() const;
     void zieheAb(const QString& nennung);
+    /// Den Dialog *Edit chord* fuer `vorlage` zeigen; true = gespeichert und gewaehlt.
+    bool oeffneDialog(const Akkord& vorlage);
+    /// Nach Speichern oder Loeschen: neu lesen, den eigenen waehlen.
+    void zeigeEigenen(const QString& nennung);
     [[nodiscard]] const Akkord* finde(const QString& nennung) const;
     [[nodiscard]] bool passt(const Akkord& akkord) const;
     /// Die Akkorde eines Ordners als Gruppen der Galerie.
@@ -213,6 +236,10 @@ private:
     QButtonGroup* m_spielarten = nullptr;
     QToolButton* m_favorit = nullptr;
     QPushButton* m_use = nullptr;
+    QPushButton* m_neu = nullptr;
+    QPushButton* m_bearbeiten = nullptr;
+    QPushButton* m_duplizieren = nullptr;
+    QPushButton* m_loeschen = nullptr;
 };
 
 }  // namespace lumi::loop

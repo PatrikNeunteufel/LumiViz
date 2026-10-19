@@ -282,6 +282,83 @@ bool holeAkkord(const QString& nennung, Akkord& akkord)
     return true;
 }
 
+QString freierAkkordName(const QString& titel)
+{
+    QString basis = eigenerName(titel);
+    if (basis.isEmpty()) basis = QStringLiteral("chord");
+    QString name = basis;
+    for (int n = 2; QFileInfo::exists(eigeneAkkordDatei(name)); ++n) name = QStringLiteral("%1_%2").arg(basis).arg(n);
+    return name;
+}
+
+bool loescheEigenenAkkord(const QString& nennung)
+{
+    if (!nennung.startsWith(QLatin1String(kEigenVorsatz))) return false;
+    const QString datei = eigeneAkkordDatei(nennung.mid(static_cast<int>(qstrlen(kEigenVorsatz))));
+    return !datei.isEmpty() && QFile::remove(datei);
+}
+
+// --- ein Griffbild bearbeiten ----------------------------------------------------
+
+namespace
+{
+
+/// Nach einer Aenderung: in die Grenzen, und ein Barre ohne Saite auf seinem Bund faellt weg.
+void richteNachAenderung(Akkord& akkord)
+{
+    richteAkkord(akkord);
+    std::erase_if(akkord.barre, [&](int bund) {
+        return std::count(akkord.buende.begin(), akkord.buende.end(), bund) < 2;  // ein Barre greift mindestens zwei
+    });
+}
+
+bool saiteGilt(const Akkord& akkord, int saite)
+{
+    return akkord.istGriffbild() && saite >= 0 && saite < static_cast<int>(akkord.buende.size());
+}
+
+}  // namespace
+
+void schaltePunkt(Akkord& akkord, int saite, int bund)
+{
+    if (!saiteGilt(akkord, saite) || bund < 1 || bund > kBuendeMax) return;
+    int& hier = akkord.buende[static_cast<std::size_t>(saite)];
+    hier = hier == bund ? -1 : bund;
+    akkord.finger[static_cast<std::size_t>(saite)] = 0;
+    richteNachAenderung(akkord);
+}
+
+void schalteLeer(Akkord& akkord, int saite)
+{
+    if (!saiteGilt(akkord, saite)) return;
+    int& hier = akkord.buende[static_cast<std::size_t>(saite)];
+    hier = hier == 0 ? -1 : 0;
+    akkord.finger[static_cast<std::size_t>(saite)] = 0;
+    richteNachAenderung(akkord);
+}
+
+void setzeFinger(Akkord& akkord, int saite, int finger)
+{
+    if (!saiteGilt(akkord, saite) || akkord.buende[static_cast<std::size_t>(saite)] < 1) return;
+    akkord.finger[static_cast<std::size_t>(saite)] = std::clamp(finger, 0, 4);
+}
+
+void setzeBarre(Akkord& akkord, int von, int bis, int bund)
+{
+    if (von > bis) std::swap(von, bis);
+    if (!saiteGilt(akkord, von) || !saiteGilt(akkord, bis) || von == bis || bund < 1 || bund > kBuendeMax) return;
+    const int ersterFinger = akkord.finger[static_cast<std::size_t>(von)];
+    const int finger = ersterFinger > 0 && akkord.buende[static_cast<std::size_t>(von)] == bund ? ersterFinger : 1;
+    for (int s = von; s <= bis; ++s)
+    {
+        int& hier = akkord.buende[static_cast<std::size_t>(s)];
+        if (hier < bund) hier = bund;  // leer, nicht gespielt oder tiefer: unter den Barre
+        if (hier == bund) akkord.finger[static_cast<std::size_t>(s)] = finger;
+    }
+    if (std::find(akkord.barre.begin(), akkord.barre.end(), bund) == akkord.barre.end()) akkord.barre.push_back(bund);
+    richteNachAenderung(akkord);
+}
+
 // --- Was zu einem Instrument passt, und die Noten -----------------------------
 
 bool passtZu(const Akkord& akkord, const Saitensatz& saiten)

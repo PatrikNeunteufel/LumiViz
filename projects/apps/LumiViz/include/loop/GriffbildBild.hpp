@@ -102,6 +102,9 @@ public:
     explicit GriffbildFeld(QWidget* parent = nullptr);
     void setzeAkkord(const Akkord& akkord);
     [[nodiscard]] const Akkord& akkord() const { return m_akkord; }
+    /// Welche Buende es zeigt; nichts = wie der Griff es braucht (`griffbildFenster`).
+    void setzeFenster(std::optional<GriffbildFenster> fenster);
+    [[nodiscard]] const std::optional<GriffbildFenster>& fenster() const { return m_fenster; }
     /// Die Lage der Teile, wie sie gerade gezeichnet sind.
     [[nodiscard]] GriffbildLage lage() const;
     [[nodiscard]] QSize sizeHint() const override { return {150, 176}; }
@@ -112,6 +115,7 @@ protected:
 
 private:
     Akkord m_akkord;
+    std::optional<GriffbildFenster> m_fenster;
 };
 
 }  // namespace lumi::loop

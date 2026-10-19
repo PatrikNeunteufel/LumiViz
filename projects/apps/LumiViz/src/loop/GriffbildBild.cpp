@@ -211,16 +211,22 @@ void GriffbildFeld::setzeAkkord(const Akkord& akkord)
     update();
 }
 
+void GriffbildFeld::setzeFenster(std::optional<GriffbildFenster> fenster)
+{
+    m_fenster = fenster;
+    update();
+}
+
 GriffbildLage GriffbildFeld::lage() const
 {
-    return griffbildLageIn(QRectF(rect()), m_akkord, GriffbildGroesse::Gross);
+    return griffbildLageIn(QRectF(rect()), m_akkord, GriffbildGroesse::Gross, m_fenster);
 }
 
 void GriffbildFeld::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
     p.fillRect(rect(), palette().color(QPalette::Base));
-    zeichneGriffbild(p, QRectF(rect()), m_akkord, GriffbildGroesse::Gross, palette());
+    zeichneGriffbild(p, QRectF(rect()), m_akkord, GriffbildGroesse::Gross, palette(), m_fenster);
 }
 
 }  // namespace lumi::loop

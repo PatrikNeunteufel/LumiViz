@@ -1,9 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.35.0
+> **Version:** 0.36.0
 > **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
-> 26e-2 gebaut, §5y, §5z; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -2002,6 +2002,33 @@ Dialog *Edit chord*.
   Drop D; über den Editor *Chords...*, Use an die Einfügemarke, Ziehen ins Raster;
   `LUMIVIZ_CHORD_WINDOW_BILD`) und in `test_LoopSpieler` (`spieleAkkordVor`). Bild angesehen.
 - Noch nicht: *New/Edit/Duplicate/Delete* (H) — mit 26e-3, dem Dialog *Edit chord*.
+
+### 5za. Stufe 26e-3 — eigene Griffbilder: der Dialog *Edit chord* (gebaut S138)
+
+- **Regeln am Modell** (`Akkord.hpp`, von Claude gesetzt): `schaltePunkt` (je Saite ein
+  Punkt; derselbe Bund nimmt ihn weg, die Saite spielt dann nicht ×), `schalteLeer` (○ ↔ ×; ein
+  gegriffener Punkt wird ○), `setzeFinger` (nur an einem gegriffenen Bund), `setzeBarre` (jede
+  Saite dazwischen, die tiefer liegt, leer ist oder nicht spielt, kommt auf den Bund; der
+  Finger des Barres für alle dort; ein Barre mit weniger als zwei Saiten fällt weg);
+  `freierAkkordName` (`eigenerName`, sonst `chord`; vergeben: `_2`, `_3`),
+  `loescheEigenenAkkord`.
+- **`loop/AkkordDialog`** (neu) nach S-T11 a I–P: `GriffbildEingabe` (das große Griffbild mit
+  Klick, Rechtsklick über `zeigeMenue` — *No finger*, *Finger 1–4* —, gezogenem Barre,
+  gestricheltem Feld unter der Maus, Tooltip); *First fret* ‹ › mit fünf Bünden; *Title*,
+  *Root*, *Type* (die Arten aus `types.json`, frei editierbar), *Description*; die Töne,
+  *sounds like: …* und **Use name** (`erkenneAkkord`); die vier Symbole (gemeinsame
+  `baueSpielartKnoepfe` mit dem Fenster, die Spielart meldet sich ans Fenster); eigenes Undo
+  (Ctrl+Z / Ctrl+Y); **Save** — ohne gespielte Saite ein Hinweis, ein eigenes ersetzt sich,
+  sonst ein neues `user:<name>`; ohne Titel das Symbol; `origin` fällt weg.
+- **Fenster, H:** *New...* (leeres Griffbild der Stimmung), *Edit...* (die gewählte Lage mit
+  Verschiebung; eine Vorlage wird eine eigene Kopie), *Duplicate* (ohne Dialog, Keep both),
+  *Delete* (nur eigene, Rückfrage `chordDeleteQuestion` über `fuehreDialogAus`; Favoriten
+  und Zuletzt verlieren es). Danach steht das eigene gewählt unter *Your chords*.
+- Belegt in `test_LoopAkkordDialog` (3 Fälle: Regeln und Namen ohne Qt-Anwendung; der Dialog
+  mit der Maus, Fingermenü, Vorschlag, Spielart, Undo, Barre am 5. Bund, Save;
+  `LUMIVIZ_CHORD_EDIT_BILD`; im Fenster New, Edit an Vorlage und eigenem, Cancel, Duplicate,
+  Delete mit Nein und Ja). Bilder angesehen. **Damit ist 26e fertig;** als Nächstes 26f
+  (Voicings im selben Fenster für Instrumente ohne Saiten).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

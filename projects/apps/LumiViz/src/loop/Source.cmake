@@ -13,6 +13,7 @@ dbg(DBG_OFTEN
 # Set local lists for this directory
 set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/Akkord.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/AkkordDialog.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/AkkordFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Aufnahme.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/AufnahmeFenster.cpp"
@@ -54,6 +55,7 @@ set(_local_sources
 )
 set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Akkord.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AkkordDialog.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AkkordFenster.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Aufnahme.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/AufnahmeFenster.hpp"

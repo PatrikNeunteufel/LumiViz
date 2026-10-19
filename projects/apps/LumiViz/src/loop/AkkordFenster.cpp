@@ -5,6 +5,8 @@
 
 #include "loop/AkkordFenster.hpp"
 
+#include "UI/widgets/Bedienhilfe.hpp"  // fuehreDialogAus: in Tests abfragbar
+#include "loop/AkkordDialog.hpp"
 #include "loop/GriffbildBild.hpp"
 #include "loop/Instrument.hpp"  // kEigenVorsatz, tonName
 
@@ -16,6 +18,7 @@
 #include <QHideEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
@@ -259,6 +262,36 @@ bool AkkordGalerie::event(QEvent* event)
     return QWidget::event(event);
 }
 
+QButtonGroup* baueSpielartKnoepfe(QWidget* eltern, QHBoxLayout* reihe)
+{
+    auto* gruppe = new QButtonGroup(eltern);
+    gruppe->setExclusive(true);
+    const struct
+    {
+        AkkordSpielart art;
+        const char* zeichen;
+        const char* name;
+        const char* hilfe;
+    } kSymbole[] = {
+        {AkkordSpielart::Ab, "↓", "chordPlayDown", "Down — a click in the gallery plays this"},
+        {AkkordSpielart::Auf, "↑", "chordPlayUp", "Up"},
+        {AkkordSpielart::AbAuf, "↓↑", "chordPlayDownUp", "Down-up: down, then up half a beat later"},
+        {AkkordSpielart::Zugleich, "=", "chordPlayTogether", "Together: all strings at once"},
+    };
+    for (const auto& s : kSymbole)
+    {
+        auto* knopf = new QToolButton(eltern);
+        knopf->setObjectName(QLatin1String(s.name));
+        knopf->setText(QString::fromUtf8(s.zeichen));
+        knopf->setCheckable(true);
+        knopf->setMinimumWidth(30);
+        knopf->setToolTip(AkkordFenster::tr(s.hilfe) + AkkordFenster::tr("\nThe choice stays for the next clicks"));
+        gruppe->addButton(knopf, static_cast<int>(s.art));
+        reihe->addWidget(knopf);
+    }
+    return gruppe;
+}
+
 // --- das Fenster ---------------------------------------------------------------
 
 void AkkordFenster::setzeSpielartMerken(bool an)
@@ -368,31 +401,7 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
     auto* rechts = new QVBoxLayout;
     {
         auto* spielen = new QHBoxLayout;
-        m_spielarten = new QButtonGroup(this);
-        m_spielarten->setExclusive(true);
-        const struct
-        {
-            AkkordSpielart art;
-            const char* zeichen;
-            const char* name;
-            const char* hilfe;
-        } kSymbole[] = {
-            {AkkordSpielart::Ab, "↓", "chordPlayDown", "Down — a click in the gallery plays this"},
-            {AkkordSpielart::Auf, "↑", "chordPlayUp", "Up"},
-            {AkkordSpielart::AbAuf, "↓↑", "chordPlayDownUp", "Down-up: down, then up half a beat later"},
-            {AkkordSpielart::Zugleich, "=", "chordPlayTogether", "Together: all strings at once"},
-        };
-        for (const auto& s : kSymbole)
-        {
-            auto* knopf = new QToolButton(this);
-            knopf->setObjectName(QLatin1String(s.name));
-            knopf->setText(QString::fromUtf8(s.zeichen));
-            knopf->setCheckable(true);
-            knopf->setMinimumWidth(30);
-            knopf->setToolTip(tr(s.hilfe) + tr("\nThe choice stays for the next clicks"));
-            m_spielarten->addButton(knopf, static_cast<int>(s.art));
-            spielen->addWidget(knopf);
-        }
+        m_spielarten = baueSpielartKnoepfe(this, spielen);
         m_favorit = new QToolButton(this);
         m_favorit->setObjectName(QStringLiteral("chordFavorite"));
         m_favorit->setCheckable(true);
@@ -405,6 +414,26 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
         m_use->setDefault(true);
         spielen->addWidget(m_use);
         rechts->addLayout(spielen);
+    }
+    {
+        // H (Stufe 26e-3): eigene Griffbilder
+        auto* eigene = new QHBoxLayout;
+        m_neu = new QPushButton(tr("New..."), this);
+        m_neu->setObjectName(QStringLiteral("chordNew"));
+        m_neu->setToolTip(tr("Draw your own chord shape for this tuning"));
+        m_bearbeiten = new QPushButton(tr("Edit..."), this);
+        m_bearbeiten->setObjectName(QStringLiteral("chordEdit"));
+        m_duplizieren = new QPushButton(tr("Duplicate"), this);
+        m_duplizieren->setObjectName(QStringLiteral("chordDuplicate"));
+        m_duplizieren->setToolTip(tr("Copy this position (as moved) into your chords"));
+        m_loeschen = new QPushButton(tr("Delete"), this);
+        m_loeschen->setObjectName(QStringLiteral("chordDelete"));
+        for (QPushButton* knopf : {m_neu, m_bearbeiten, m_duplizieren, m_loeschen}) eigene->addWidget(knopf);
+        rechts->addLayout(eigene);
+        connect(m_neu, &QPushButton::clicked, this, [this] { (void)neu(); });
+        connect(m_bearbeiten, &QPushButton::clicked, this, [this] { (void)bearbeite(); });
+        connect(m_duplizieren, &QPushButton::clicked, this, [this] { (void)dupliziere(); });
+        connect(m_loeschen, &QPushButton::clicked, this, [this] { (void)loescheGewaehlten(); });
     }
     rechts->addStretch(1);
     leiste->addLayout(rechts);
@@ -811,6 +840,14 @@ void AkkordFenster::zeigeDetail()
         m_favorit->setChecked(da && istFavorit(gewaehlt()));
     }
     m_use->setEnabled(da && !m_muster.isEmpty());
+    // H: Edit und Duplicate an jeder Lage, Delete nur an einem eigenen
+    m_neu->setEnabled(m_saiten.istSaiteninstrument());
+    m_bearbeiten->setEnabled(da);
+    m_bearbeiten->setToolTip(a != nullptr && eigenerAkkord(a->name) ? tr("Edit your chord")
+                                                                     : tr("Edit a copy of this position in your chords"));
+    m_duplizieren->setEnabled(da);
+    m_loeschen->setEnabled(da && a != nullptr && eigenerAkkord(a->name));
+    m_loeschen->setToolTip(m_loeschen->isEnabled() ? tr("Delete your chord") : tr("Only your own chords can be deleted"));
     m_use->setToolTip(m_muster.isEmpty() ? tr("Open an instrument pattern first")
                                          : tr("Insert at the insert marker of %1 (Shift+click in the bar row moves it)").arg(m_muster));
 }
@@ -855,6 +892,73 @@ QStringList AkkordFenster::baumZeilen() const
         for (int k = 0; k < oben->childCount(); ++k) zeilen << QStringLiteral("  ") + oben->child(k)->text(0);
     }
     return zeilen;
+}
+
+bool AkkordFenster::oeffneDialog(const Akkord& vorlage)
+{
+    AkkordDialog dialog(vorlage, m_saiten, m_strum, m_jeSchlag, m_spielart, this);
+    connect(&dialog, &AkkordDialog::vorhoerenVerlangt, this, &AkkordFenster::vorhoerenVerlangt);
+    connect(&dialog, &AkkordDialog::spielartGewaehlt, this, [this](AkkordSpielart art) { setzeSpielart(art); });
+    if (lumi::ui::fuehreDialogAus(dialog) != QDialog::Accepted || dialog.gespeichert().isEmpty()) return false;
+    zeigeEigenen(dialog.gespeichert());
+    return true;
+}
+
+void AkkordFenster::zeigeEigenen(const QString& nennung)
+{
+    liesNeu();
+    (void)waehleOrdner(kOrdnerEigene);
+    (void)waehle(nennung);
+}
+
+bool AkkordFenster::neu()
+{
+    if (!m_saiten.istSaiteninstrument()) return false;
+    Akkord leer;
+    leer.art = QStringLiteral("major");
+    leer.leer = m_saiten.leer;
+    leer.buende.assign(m_saiten.leer.size(), -1);  // noch keine Saite spielt
+    leer.finger.assign(m_saiten.leer.size(), 0);
+    return oeffneDialog(leer);
+}
+
+bool AkkordFenster::bearbeite()
+{
+    const Akkord* a = finde(gewaehlt());
+    std::optional<Akkord> l = lage();
+    if (a == nullptr || !l) return false;
+    if (!eigenerAkkord(a->name)) l->name.clear();  // eine Vorlage: eine eigene Kopie
+    return oeffneDialog(*l);
+}
+
+bool AkkordFenster::dupliziere()
+{
+    std::optional<Akkord> l = lage();
+    if (!l) return false;
+    l->herkunft.clear();
+    const QString name = freierAkkordName(l->titel);
+    const QString datei = eigeneAkkordDatei(name);
+    if (datei.isEmpty() || !speichereAkkord(datei, *l)) return false;
+    zeigeEigenen(QLatin1String(kEigenVorsatz) + name);
+    return true;
+}
+
+bool AkkordFenster::loescheGewaehlten()
+{
+    const QString nennung = gewaehlt();
+    const Akkord* a = finde(nennung);
+    if (a == nullptr || !eigenerAkkord(nennung)) return false;
+    QMessageBox frage(QMessageBox::Question, tr("Chords"), tr("Delete your chord %1?").arg(a->titel),
+                      QMessageBox::Yes | QMessageBox::No, this);
+    frage.setObjectName(QStringLiteral("chordDeleteQuestion"));
+    if (lumi::ui::fuehreDialogAus(frage) != QMessageBox::Yes) return false;
+    if (!loescheEigenenAkkord(nennung)) return false;
+    m_favoriten.removeAll(nennung);
+    m_zuletzt.removeAll(nennung);
+    merke();
+    liesNeu();
+    zeigeDetail();
+    return true;
 }
 
 void AkkordFenster::nimmZurueck()

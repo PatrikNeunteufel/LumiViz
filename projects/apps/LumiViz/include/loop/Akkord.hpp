@@ -117,6 +117,25 @@ void setzeEigenenAkkordOrdnerFuerTests(const QString& ordner);
 [[nodiscard]] std::vector<Akkord> eigeneAkkorde();
 /// Einen Akkord nach seiner Nennung holen: mitgeliefert, `user:<name>` oder Pfad.
 bool holeAkkord(const QString& nennung, Akkord& akkord);
+/// Ein freier Name fuer einen eigenen Akkord aus dem Titel (`eigenerName`; ohne
+/// brauchbaren Titel `chord`); ist er vergeben, `_2`, `_3`, … wie *Keep both*.
+[[nodiscard]] QString freierAkkordName(const QString& titel);
+/// Einen eigenen Akkord (`user:<name>`) loeschen. false = kein eigener oder nicht zu loeschen.
+bool loescheEigenenAkkord(const QString& nennung);
+
+// --- ein Griffbild bearbeiten (Stufe 26e-3, S-T11 a N; Regeln von Claude gesetzt) ---
+
+/// Klick auf einen Bund: liegt dort der Punkt der Saite, geht er weg (die Saite
+/// spielt dann nicht, ×); sonst steht er dort (je Saite einer, der Finger faellt weg).
+void schaltePunkt(Akkord& akkord, int saite, int bund);
+/// Klick ueber dem Sattel: ○ leer ↔ × nicht gespielt (ein Punkt der Saite geht weg).
+void schalteLeer(Akkord& akkord, int saite);
+/// Der Finger am Punkt einer Saite (0 = keiner, 1 … 4); nur an einem gegriffenen Bund.
+void setzeFinger(Akkord& akkord, int saite, int finger);
+/// Ein Barre ueber die Saiten `von` … `bis` am Bund `bund`: jede Saite dazwischen,
+/// die tiefer gegriffen, leer oder nicht gespielt ist, liegt danach auf `bund`; der
+/// Finger des Barres (der der ersten Saite, sonst 1) gilt fuer alle auf `bund`.
+void setzeBarre(Akkord& akkord, int von, int bis, int bund);
 
 // --- Was zu einem Instrument passt, und die Noten -----------------------------
 
