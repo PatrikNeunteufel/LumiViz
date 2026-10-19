@@ -388,21 +388,23 @@ TEST_SUITE("LoopSpielweiseKlang")
                 imSlide = std::max(imSlide, std::abs(static_cast<double>(s.daten[i] - glatt.daten[i])));
             CHECK(imSlide > 1e-4);
 
-            // --- Bend um einen Ganzton: Anstieg 200 … 290 ms, dann gehalten — B3, und gleich laut
+            // --- Bend um einen Ganzton: Anstieg 200 … 290 ms, dann gehalten — B3, und fast gleich laut
             TonAngabe bend = ton(57, 2, 900);
             bend.biegung = {TonBiegung{200, 0}, TonBiegung{290, 8}};
             const Klang b = rendereTon(instrument, bend, kRate);
             CHECK(std::abs(cent(spitze(b, tonHz(59), 60.0, 0.4, 0.3), tonHz(59))) < 5.0);
             const double lauter = db(effektiv(b, 0.4, 0.2) / effektiv(gerade, 0.4, 0.2));
             MESSAGE("Bend um einen Ganzton: " << lauter << " dB gegen den Ton ohne Bend (hergeleitet +0,5 dB, gemessen −0,3 dB)");
-            // die Ring time im Halten: gebogen gegen gegriffen (S137, Untersuchung der Lautstaerke)
+            // die Ring time im Halten (S-L14 a, S137): gebogen wie gegriffen auf derselben Hoehe
             const Klang gegriffen = rendereTon(instrument, ton(59, 2, 900), kRate);
-            MESSAGE("T60 im Halten: gebogen " << t60(b, tonHz(59), 0.4, 0.8) << " s, B3 gegriffen " << t60(gegriffen, tonHz(59), 0.4, 0.8)
-                                            << " s, A3 " << t60(gerade, tonHz(57), 0.4, 0.8) << " s");
-            MESSAGE("Pegel gleich nach dem Bend (0,30 s, 20 ms) gegen davor (0,18 s): gebogen "
-                    << db(effektiv(b, 0.30, 0.02) / effektiv(b, 0.18, 0.02)) << " dB, ungebogen "
-                    << db(effektiv(gerade, 0.30, 0.02) / effektiv(gerade, 0.18, 0.02)) << " dB");
-            CHECK(std::abs(lauter) < 1.5);
+            const double gebogenT60 = t60(b, tonHz(59), 0.4, 0.8);
+            const double gegriffenT60 = t60(gegriffen, tonHz(59), 0.4, 0.8);
+            MESSAGE("T60 im Halten: gebogen " << gebogenT60 << " s, B3 gegriffen " << gegriffenT60 << " s, A3 "
+                                            << t60(gerade, tonHz(57), 0.4, 0.8) << " s");
+            CHECK(gebogenT60 == doctest::Approx(gegriffenT60).epsilon(0.03));
+            // ... und rund −0,5 dB: das Gesetz √(Verzoegerung) allein (S-L8 a)
+            CHECK(lauter > -0.8);
+            CHECK(lauter < -0.2);
         }
     }
 

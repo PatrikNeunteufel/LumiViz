@@ -669,6 +669,7 @@ struct Umlauf
     static constexpr int kAllpaesse = 8;
     double a = 0.0;             ///< Tiefpass des Verlusts
     double verstaerkung = 1.0;  ///< je Umlauf
+    double grundJeUmlauf = 1.0; ///< so viel bleibt dem Grundton je Umlauf (das Ziel aus Ring time)
     double c = 0.0;             ///< Allpaesse der Steifheit; 0 = keine
     double verzug = 2.0;        ///< Laenge der Verzoegerung, in Abtastwerten
     std::size_t groesse = 6;    ///< Platz im Ring
@@ -685,6 +686,7 @@ Umlauf entwerfeUmlauf(const Schicht& schicht, double hz, int rate, double dicke)
     const double sekunden = std::clamp(schicht.klingSekunden, kKlingSekundenMin, kKlingSekundenMax);
     const double hoehen = std::clamp(schicht.hoehenDaempfung + 0.4 * dicke, 0.0, 1.0);
     const double zielGrund = std::pow(10.0, -3.0 / (hz * sekunden));
+    u.grundJeUmlauf = zielGrund;
     const double hzHoch = std::min(0.45 * rate, std::max(2000.0, 1.5 * hz));
     const double wHoch = 2.0 * kPi * hzHoch / rate;
     const double zielHoch = std::pow(10.0, -3.0 / (hz * sekunden * std::pow(10.0, -2.0 * hoehen)));
@@ -875,6 +877,13 @@ public:
         s.verstaerkung = u0.verstaerkung + (u1.verstaerkung - u0.verstaerkung) * w;
         s.c = u0.c + (u1.c - u0.c) * w;
         s.verzug = jetzt.verzug;
+        // der Bend (S-L14 a): es gilt der Verlust der gebogenen Hoehe — der Gewinn beim Grundton
+        // mit dem Verhaeltnis der Perioden, g0^(P/P0); so klingt er wie gegriffen auf dieser Hoehe
+        if (jetzt.bend != 0.0)
+        {
+            const double grund = u0.grundJeUmlauf + (u1.grundJeUmlauf - u0.grundJeUmlauf) * w;
+            s.verstaerkung *= std::pow(grund, std::exp2(-jetzt.bend / 12.0) - 1.0);
+        }
         // der Bend: die Amplitude der Auslenkung mit √(Verzoegerung) — je Umlauf der Faktor
         // aus dem Verhaeltnis zum Stand einen Umlauf frueher
         const Lage frueher = lage(t - static_cast<std::int64_t>(jetzt.verzug));
@@ -889,6 +898,7 @@ private:
     {
         double verzug = 2.0;
         double bendVerhaeltnis = 1.0;  ///< Verzoegerung mit Bend durch die ohne
+        double bend = 0.0;             ///< die Biegung, in Halbtoenen
         std::size_t filterVon = 0;
         std::size_t filterNach = 0;
         double filterMisch = 0.0;
@@ -929,7 +939,8 @@ private:
             filterVerzug = m_filterVerzug[l.filterVon] + (m_filterVerzug[l.filterNach] - m_filterVerzug[l.filterVon]) * l.filterMisch;
         }
         const double ohneBend = m_rate / (440.0 * std::exp2((ton - 69.0) / 12.0)) - filterVerzug;
-        const double mitBend = m_rate / (440.0 * std::exp2((ton + m_weg.biegungBei(t) - 69.0) / 12.0)) - filterVerzug;
+        l.bend = m_weg.biegungBei(t);
+        const double mitBend = m_rate / (440.0 * std::exp2((ton + l.bend - 69.0) / 12.0)) - filterVerzug;
         l.verzug = std::max(2.0, mitBend);
         l.bendVerhaeltnis = ohneBend > 0.0 ? l.verzug / ohneBend : 1.0;
         return l;

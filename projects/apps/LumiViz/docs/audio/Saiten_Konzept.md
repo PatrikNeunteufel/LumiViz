@@ -798,6 +798,16 @@ Verworfen: b (ohne Zeichen in der Liste — einem Instrument sähe man nicht an,
 Schicht folgt), c (ein Knopf „~“ in der Liste statt der Zeile — schwer zu finden, kein
 Platz für die Erklärung; Merker S110).
 
+✅ **S-L14 a** (Patrik S137, nach der Messung 25c-4): **Während eines Bends gilt der Verlust
+je Umlauf der gebogenen Tonhöhe** — ein gebogener Ton klingt so lange wie ein gegriffener
+derselben Höhe (*Ring time* gilt für jede Tonhöhe gleich). Der Gewinn je Umlauf beim
+Grundton wird mit dem Verhältnis der Perioden umgerechnet: g = g₀^(P/P₀). Erwartet rund
+−0,5 dB gegen den ungebogenen Ton (das Gesetz √(Verzögerung), S-L8 a). Ohne Bend Bit für
+Bit wie vorher. Beleg: die IDMT-Bends zeigen im Halten kein schnelleres Abklingen
+(−4 … −9 dB/s, Mehrverlust Median −0,3 dB; Recherche 25 §4). Verworfen: b (der Verlust der
+gegriffenen Höhe — T60 11 % kürzer je Ganzton, −1,1 dB; die Messung zeigt das nicht, und ein
+gebogenes B3 klänge kürzer als ein gegriffenes).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -1611,7 +1621,10 @@ S. 117, Özaslan 2010 S. 458).
   **Gemessen** (`test_LoopSpielweiseKlang` „25c-4“): jede Schwingungsart nach dem Legato auf
   B3 (5 Cent), mit Bend auf B3. **Bend:** T60 im Halten gebogen 2,85 s gegen 3,20 s
   gegriffen (Faktor 0,891 = der Ganzton) — der Verlust je Umlauf gilt der gegriffenen Höhe;
-  dazu das Gesetz √(Verzögerung) (−0,5 dB). Zusammen −1,1 dB. Entscheid offen (S-L14).
+  dazu das Gesetz √(Verzögerung) (−0,5 dB). Zusammen −1,1 dB. **Nach S-L14 a gebaut:**
+  `Umlauf::grundJeUmlauf`, im Bend der Gewinn mal g₀^(P/P₀−1) — T60 im Halten gebogen
+  3,20 s wie gegriffen, der Bend −0,61 dB (Extended KS) / −0,53 dB (Waveguide) gegen den
+  ungebogenen Ton; ohne Bend Bit für Bit wie vorher (Loop Werte unverändert).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
