@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.264.0
-> **Datum:** 2026-10-19 (Session 137)
+> **Version:** 1.265.0
+> **Datum:** 2026-10-19 (Session 138)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2968,10 +2968,15 @@ Idee Preset-Warmup/Pre-Roll.
   Griffbilder, Fenster *Chords*, `.lvchord` Griffbild oder Voicing, Vorlagen aus chords-db
   plus gerechnet, Skizze A–G, Stufe 26a–26h) und gebaut **26a** (Modell, Datei,
   Datensicherung, Publish), **26b** (6373 Vorlagen, Icon), **26c** (Tab-Linien), **26d**
-  (Legato, Slide, Bend im Editor). **Offen:** S-L15 b umsetzen (Grenze des Bends 4 Halbtöne,
-  Menü bis „2“) — vor 26e; dann **26e** Fenster *Chords* (zuerst Skizze; mit Anhören, ★
-  Favoriten, *Recently used* — Vorgabe Patrik S137), 26f Voicings, 26g Creator *Play as*, 26h
-  Mitgeliefertes und **voller Lauf**. Durchsicht der gerechneten Griffbilder durch Patrik
+  (Legato, Slide, Bend im Editor). S138: S-L15 b gebaut (Bend bis 2 Ganztöne); Skizzen und
+  Entscheide S-T8 a bis S-T14 a (Galerie, vier Spielarten zum Anhören und gemerkt, Dialog
+  *Edit chord*, Lagen aus chords-db bleiben mit Zeichen *unusual*, Arten in `types.json`,
+  Voicings); gebaut **26e** (Fenster *Chords*, Namenserkennung, eigene Griffbilder), **26f**
+  (Voicings mit Klaviatur), **26g** (*Play as* mit Hammer-on, Slide, Bend), **26h** (Beispiele
+  `tabs_demo`, `voicings_demo`, Handbuch 1.191.0, Sichttest
+  `.claude/handover/Sichttest_TabsAkkorde.md`). Nebenbei *Fit* im Instrument-Editor behoben.
+  **Stufe 26 ist durch bis auf den vollen Lauf** (Patrik S138: „den vollen Lauf noch nicht“).
+  **Offen:** voller Lauf; Sichttest Tabs und Akkorde (Exe neu bauen). Durchsicht der gerechneten Griffbilder durch Patrik
   (`.claude/handover/akkorde_26b/bogen.html`, Kipp-Bedingung S-T4 a). Bei kurzen Noten
   überdeckt in den Tab-Linien die Höhe des Bends die nächste Zahl (Befund S137).
   Befund ohne Entscheid: `.sichttest/sichttest.projekt.json` sucht nur
@@ -6050,6 +6055,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.265.0 | 2026-10-19 | Session 138. §7 Spielweisen: S-L15 b gebaut; S-T8 a bis S-T14 a entschieden; 26e bis 26h gebaut (Fenster *Chords* mit Galerie, Anhören, Favoriten, eigenen Griffbildern und Voicings; *Play as* mit Hammer-on, Slide, Bend; zwei Beispiele, Handbuch 1.191.0, Sichttest-Liste); Stufe 26 durch bis auf den vollen Lauf; Idee Patrik: Spielweisen der anderen Instrumentfamilien (Pedale, Dämpfer); Befund Karaoke-Panel S89 schwankt unter Testing-MSVC. |
 | 1.264.0 | 2026-10-19 | Session 137. §7 Spielweisen: 25c-4 *Follow string* gebaut (S-L13 a), Bend nach S-L14 a; Tabs und Akkorde entschieden (S-T1 a bis S-T7 a, S-L15 b) und gebaut 26a bis 26d; Vorgabe Patrik für das Fenster *Chords* (Anhören, Favoriten); offen S-L15 b umsetzen, 26e–26h, Durchsicht der gerechneten Griffbilder. |
 | 1.263.0 | 2026-10-19 | Session 136. §7 Spielweisen: 24f fertig (S-W16 a bis S-W22 a); Stufe 25 entschieden (S-L1 a bis S-L12 a) und gebaut bis 25c-3b; Zoom der Editoren vorerst nicht gemerkt; Ideen Patrik (Rechtsklick auf die Spur Strum mit Pfeilen, Pick scrape); Befund Muster der Projektdatei Sichttest. |
 | 1.262.0 | 2026-10-18 | Session 135. §7 Spielweisen: 24e gebaut (S-W13 a bis S-W15 a), Fehler „Anschläge kamen nicht im Loop an“ behoben; Zoom in den Loop-Editoren (E-Z1 a). |
