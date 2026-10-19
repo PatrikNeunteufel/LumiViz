@@ -223,6 +223,24 @@ public:
     /// Was in den Tab-Linien an einer Note steht: der Bund — ohne Buende der
     /// Tonname, nicht greifbar „!".
     [[nodiscard]] QString tabText(int platz) const;
+    // --- Legato, Slide, Bend (Stufe 26d; S-L3 a A–G, S-T5 a C, E) --------------
+    // Die Haken *Legato (hammer-on / pull-off)* und *Slide* im Menue (E) setzen die
+    // Bits an den markierten Noten (sie schliessen sich aus); gezeigt als Bogen mit h/p,
+    // als schraege Linie mit Pfeil (Piano-Roll) oder „/" (Tab); ohne vorige Note auf der
+    // Saite ein rotes „!". Der Bend (D, F, G) als Kurve in der Note bis zum erreichten
+    // Ton, gestrichelt das Ziel, beschriftet in Ganztoenen; in den Tab-Linien ein Pfeil.
+    /// F: die Vorlage fuer die markierten Noten — mit ihrer Hoehe, ohne Bend „full";
+    /// `Keine` nimmt ihn weg.
+    bool setzeBendVorlage(BendVorlage art);
+    /// F: die Hoehe des Bends der markierten Noten: eine Vorlage behaelt ihre Form,
+    /// eine eigene Kurve wird gestreckt, ohne Bend wird es ein *Bend*.
+    bool setzeBendHoehe(double halbtoene);
+    /// G: die Kurve fuer die markierten Noten (Edit bend...).
+    bool setzeBend(std::vector<BendPunkt> punkte);
+    /// Die Hoehen, die das Menue Bend anbietet, in Halbtoenen (½, full, 1½).
+    [[nodiscard]] static const std::vector<double>& bendHoehen();
+    /// Der Name einer Vorlage im Menue.
+    [[nodiscard]] static QString bendVorlageName(BendVorlage art);
     static constexpr int kTabZeile = 14;  ///< je Saite
     static constexpr int kTabRand = 4;    ///< oben und unten
     /// So lange nach einer Ziffer zaehlt die naechste noch zum selben Bund (zweistellig).
@@ -410,6 +428,10 @@ private:
     int m_tabZiel = -1;      ///< beim Ziehen einer Zahl: die Saite unter der Maus
     int m_tabZiffer = -1;    ///< die zuletzt getippte Ziffer an dieser Marke; -1 = keine
     qint64 m_tabZifferZeit = 0;
+    /// G: *Edit bend...* — der Dialog `bendDialog` (ueber `fuehreDialogAus`).
+    void frageBend();
+    /// Die markierten Noten mit dieser Aenderung, ein Schritt fuer Undo; false = es aendert nichts.
+    bool aendereMarkierte(const std::function<void(Note&)>& aendere, const QString& was);
     /// Die Tab-Linien zeichnen (aus `paintEvent`).
     void zeichneTab(QPainter& p, const std::vector<Griff>& griffe, const std::vector<Anschlagplan>& anschlaege);
 };

@@ -1820,6 +1820,38 @@ S. 117, Özaslan 2010 S. 458).
 - **Noch nicht** (26d): Hammer-on, Pull-off, Slide, Bend in Linien und Piano-Roll; Zahlen
   waagrecht ziehen (die Zeit bleibt Sache der Piano-Roll).
 
+### 5x. Stufe 26d — Legato, Slide und Bend im Editor (gebaut S137)
+
+- **Modell** (`Spielweise.hpp`): `BendVorlage` (None, Bend, Bend and release, Pre-bend,
+  Pre-bend and release), `bendVorlage(art, halbtoene)` — **Zeiten von Claude gesetzt:** Bend
+  steigt bis 0,3 der Note; Bend and release 0,3 / hält bis 0,6 / zurück bei 0,9; Pre-bend ein
+  Punkt am Anfang; Pre-bend and release hält bis 0,5, zurück bei 0,8 —, `bendVorlageVon`,
+  `bendHoehe`, `bendText` (in Ganztönen wie in Tabs: ½, full, 1½; dazwischen Achtel).
+- **E Menü:** unter Palm mute, Let ring, Tapping, Harmonic die Haken **Legato (hammer-on /
+  pull-off)** und **Slide** (`schalteArtikulation`; sie schließen sich aus). **F** Untermenü
+  **Bend**: die fünf Vorlagen, **Height ½ / full / 1½**, **Edit bend...**; Haken zeigen, was alle
+  markierten tragen (`setzeBendVorlage`, `setzeBendHoehe` — eine Vorlage behält ihre Form, eine
+  eigene Kurve wird gestreckt, ohne Bend wird es *Bend*). Das Menü öffnet sich auch auf einer
+  Zahl der Tab-Linien (sie wird dafür markiert).
+- **G Edit bend...** (`bendDialog`, über `fuehreDialogAus`): Auswahl *Template* und *Height*,
+  die Kurve `BendKurve` (`loop/BendKurve.hpp`: Zeit über die Länge der Note, Höhe 0 … 3
+  Halbtöne in Vierteln, beschriftet ½/full/1½; Punkte ziehen, zwischen den Nachbarn;
+  Doppelklick setzt oder entfernt einen); eine eigene Form zeigt keine Vorlage.
+- **Zeichen, Piano-Roll (S-L5 a, S-T5 a E):** hinter der Saitennummer **H**/**P** (nach der
+  Richtung; ohne vorige „H/P“), **SL**, **↗** mit Höhe; Hammer-on und Pull-off als Bogen über
+  beide Noten mit „h“/„p“, ein Slide als Linie mit Pfeil vom Ende der vorigen zur Zielnote; ohne
+  vorige Note auf der Saite ein rotes „!“ davor (`verbindungFehlt`). Der Bend als Kurve in der
+  Note bis zur Zeile des erreichten Tons, gestrichelt das Ziel, mit der Höhe.
+- **Zeichen, Tab-Linien (S-T5 a C):** Bogen mit h/p zwischen den Zahlen, „/“ oder „\“ beim
+  Slide, ein Pfeil hinauf mit der Höhe hinter der Zahl, rot „!“ ohne vorige.
+- Hinweiszeile um H/P, SL, ↗ ergänzt.
+- Belegt in `test_LoopEditorVerbunden` (2 Fälle: Vorlagen und Schrift; Menü, Bend, *Edit
+  bend...* und Tab-Linien über den Editor, `LUMIVIZ_EDITOR_VERBUNDEN_BILD`); in
+  `test_LoopEditorSpielweise` die Liste der Haken um Legato und Slide ergänzt.
+- **Offen:** die Höhe „2 Ganztöne“ aus S-L3 a F gegen die Grenze 3 Halbtöne aus S-L2 a (Frage
+  S-L15); bei kurzen Noten in Normalgröße überdeckt die Höhe des Bends in den Tab-Linien die
+  nächste Zahl.
+
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
 Recherche durch einen Agenten, die tragenden Stellen von Claude selbst in der

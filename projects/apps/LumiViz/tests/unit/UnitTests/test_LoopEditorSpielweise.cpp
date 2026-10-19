@@ -449,8 +449,10 @@ TEST_CASE("Loop Instrument Editor Spielweise: L und M — das Menue Strum, die H
     MESSAGE("Menue Strum: " << strumEintraege.join(QStringLiteral(" | ")).toStdString());
     CHECK(strumEintraege == QStringList{QStringLiteral("Follow hand"), QStringLiteral("Down"), QStringLiteral("Up [x]"),
                                         QStringLiteral("Together"), QStringLiteral("Spread... (30 ms)")});
+    // seit Stufe 26d (S-L3 a E) darunter Legato und Slide
     CHECK(haken == QStringList{QStringLiteral("Palm mute"), QStringLiteral("Let ring"), QStringLiteral("Tapping"),
-                               QStringLiteral("Harmonic")});
+                               QStringLiteral("Harmonic"), QStringLiteral("Legato (hammer-on / pull-off)"),
+                               QStringLiteral("Slide")});
     CHECK(anschlagAn(raster.muster(), 0)->art == Anschlagart::Zugleich);
     CHECK(anschlagAn(raster.muster(), 0)->spreadMs == 30.0);
     lumi::ui::setzeMenueBeobachterFuerTests([&](QMenu& menue) -> QAction* {

@@ -9,6 +9,7 @@
 #include "UI/widgets/Bedienhilfe.hpp"  // zeigeMenue, frageText: in Tests abfragbar
 #include "UI/widgets/PresetTypeIcons.hpp"
 #include "loop/Bearbeiten.hpp"
+#include "loop/BendKurve.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/InstrumentCreator.hpp"
 #include "loop/InstrumentPalette.hpp"
@@ -33,6 +34,7 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPalette>
 #include <QPushButton>
 #include <QScrollBar>
@@ -285,7 +287,12 @@ bool NotenRaster::schalteArtikulation(int bit)
         if (istMarkiert(note)) alle = alle && (note.artikulationen & bit) != 0;
     Muster neu = m_muster;
     for (Note& note : neu.noten)
-        if (istMarkiert(note)) note.artikulationen = alle ? note.artikulationen & ~bit : note.artikulationen | bit;
+    {
+        if (!istMarkiert(note)) continue;
+        note.artikulationen = alle ? note.artikulationen & ~bit : note.artikulationen | bit;
+        // Stufe 26d (S-L3 a E): Legato und Slide schliessen sich aus — eine Note kommt auf eine Art her
+        if (!alle && (bit & kVerbunden) != 0) note.artikulationen &= ~(kVerbunden & ~bit);
+    }
     if (neu == m_muster) return false;
     uebernimm(neu, m_marken, (alle ? tr("%1 off") : tr("%1 on")).arg(artikulationsName(bit)));
     return true;
@@ -323,6 +330,8 @@ QString NotenRaster::artikulationsName(int bit)
     case kLetRing: return tr("Let ring");
     case kTapping: return tr("Tapping");
     case kHarmonic: return tr("Harmonic");
+    case kLegato: return tr("Legato (hammer-on / pull-off)");  // Stufe 26d, S-L3 a E
+    case kSlide: return tr("Slide");
     default: return {};
     }
 }
@@ -473,6 +482,140 @@ bool NotenRaster::legeAufSaite(int platz, int stelle)
     return true;
 }
 
+// --- Legato, Slide, Bend (Stufe 26d; S-L3 a A–G, S-T5 a C, E) ----------------------
+
+bool NotenRaster::aendereMarkierte(const std::function<void(Note&)>& aendere, const QString& was)
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty()) return false;
+    Muster neu = m_muster;
+    for (Note& note : neu.noten)
+        if (istMarkiert(note)) aendere(note);
+    if (neu.noten == m_muster.noten) return false;
+    uebernimm(neu, m_marken, was);
+    return true;
+}
+
+const std::vector<double>& NotenRaster::bendHoehen()
+{
+    // ½, full, 1½ — bis zur Grenze aus S-L2 a (drei Halbtoene)
+    static const std::vector<double> kBendHoehen = {1.0, 2.0, 3.0};
+    return kBendHoehen;
+}
+
+QString NotenRaster::bendVorlageName(BendVorlage art)
+{
+    switch (art)
+    {
+    case BendVorlage::Keine: return tr("None");
+    case BendVorlage::Bend: return tr("Bend");
+    case BendVorlage::BendZurueck: return tr("Bend and release");
+    case BendVorlage::VorBend: return tr("Pre-bend");
+    case BendVorlage::VorBendZurueck: return tr("Pre-bend and release");
+    }
+    return {};
+}
+
+bool NotenRaster::setzeBendVorlage(BendVorlage art)
+{
+    return aendereMarkierte(
+        [art](Note& note) {
+            const double hoehe = bendHoehe(note.bend);
+            note.bend = bendVorlage(art, hoehe > 0.0 ? hoehe : 2.0);  // ohne Bend: ein Ganzton, „full"
+        },
+        art == BendVorlage::Keine ? tr("No bend") : tr("Bend: %1").arg(bendVorlageName(art)));
+}
+
+bool NotenRaster::setzeBendHoehe(double halbtoene)
+{
+    if (halbtoene <= 0.0) return false;
+    return aendereMarkierte(
+        [halbtoene](Note& note) {
+            if (note.bend.empty())
+            {
+                note.bend = bendVorlage(BendVorlage::Bend, halbtoene);
+                return;
+            }
+            if (const auto art = bendVorlageVon(note.bend); art && *art != BendVorlage::Keine)
+            {
+                note.bend = bendVorlage(*art, halbtoene);  // die Vorlage behaelt ihre Form
+                return;
+            }
+            const double alt = bendHoehe(note.bend);  // eine eigene Kurve wird gestreckt
+            for (BendPunkt& punkt : note.bend) punkt.halbtoene = punkt.halbtoene * halbtoene / alt;
+            richteBend(note.bend);
+        },
+        tr("Bend: %1").arg(bendText(halbtoene)));
+}
+
+bool NotenRaster::setzeBend(std::vector<BendPunkt> punkte)
+{
+    richteBend(punkte);
+    return aendereMarkierte([&punkte](Note& note) { note.bend = punkte; }, punkte.empty() ? tr("No bend") : tr("Edit bend"));
+}
+
+void NotenRaster::frageBend()
+{
+    if (!m_saiten.istSaiteninstrument() || m_marken.empty()) return;
+    const int platz = auswahl();
+    const std::vector<BendPunkt> jetzt = platz >= 0 ? m_muster.noten[static_cast<std::size_t>(platz)].bend : std::vector<BendPunkt>{};
+    QDialog frage(this);
+    frage.setObjectName(QStringLiteral("bendDialog"));
+    frage.setWindowTitle(tr("Edit bend"));
+    auto* form = new QVBoxLayout(&frage);
+    auto* zeile = new QHBoxLayout;
+    zeile->addWidget(new QLabel(tr("Template"), &frage));
+    auto* vorlage = new QComboBox(&frage);
+    vorlage->setObjectName(QStringLiteral("bendTemplate"));
+    for (const BendVorlage art : {BendVorlage::Keine, BendVorlage::Bend, BendVorlage::BendZurueck, BendVorlage::VorBend,
+                                  BendVorlage::VorBendZurueck})
+        vorlage->addItem(bendVorlageName(art), static_cast<int>(art));
+    zeile->addWidget(vorlage);
+    zeile->addSpacing(12);
+    zeile->addWidget(new QLabel(tr("Height"), &frage));
+    auto* hoehe = new QComboBox(&frage);
+    hoehe->setObjectName(QStringLiteral("bendHeight"));
+    for (const double h : bendHoehen()) hoehe->addItem(bendText(h), h);
+    zeile->addWidget(hoehe);
+    zeile->addStretch(1);
+    form->addLayout(zeile);
+    auto* kurve = new BendKurve(&frage);
+    kurve->setzePunkte(jetzt);
+    form->addWidget(kurve, 1);
+    auto* hinweis = new QLabel(tr("Drag a point · double-click an empty spot to add one, a point to remove it · "
+                                  "left to right: the length of the note"),
+                               &frage);
+    hinweis->setEnabled(false);
+    hinweis->setWordWrap(true);
+    form->addWidget(hinweis);
+    // was die Kurve gerade ist: eine Vorlage (sonst keine Wahl — eine eigene Form) und ihre Hoehe
+    const auto zeigeWahl = [vorlage, hoehe, kurve] {
+        std::vector<BendPunkt> punkte = kurve->punkte();
+        richteBend(punkte);
+        const std::optional<BendVorlage> art = bendVorlageVon(punkte);
+        const QSignalBlocker ruheV(vorlage);
+        const QSignalBlocker ruheH(hoehe);
+        vorlage->setCurrentIndex(art ? vorlage->findData(static_cast<int>(*art)) : -1);
+        const int stelle = hoehe->findData(bendHoehe(punkte));
+        if (stelle >= 0) hoehe->setCurrentIndex(stelle);
+    };
+    if (hoehe->findData(bendHoehe(jetzt)) < 0) hoehe->setCurrentIndex(hoehe->findData(2.0));
+    zeigeWahl();
+    const auto wende = [vorlage, hoehe, kurve] {
+        const auto art = vorlage->currentIndex() < 0 ? BendVorlage::Bend : static_cast<BendVorlage>(vorlage->currentData().toInt());
+        kurve->setzePunkte(bendVorlage(art, hoehe->currentData().toDouble()));
+    };
+    connect(vorlage, &QComboBox::activated, &frage, wende);
+    connect(hoehe, &QComboBox::activated, &frage, wende);
+    connect(kurve, &BendKurve::geaendert, &frage, zeigeWahl);
+    auto* knoepfe = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &frage);
+    connect(knoepfe, &QDialogButtonBox::accepted, &frage, &QDialog::accept);
+    connect(knoepfe, &QDialogButtonBox::rejected, &frage, &QDialog::reject);
+    form->addWidget(knoepfe);
+    frage.resize(480, 320);
+    if (lumi::ui::fuehreDialogAus(frage) != QDialog::Accepted) return;
+    (void)setzeBend(kurve->punkte());
+}
+
 void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, const std::vector<Anschlagplan>& alleAnschlaege)
 {
     const QPalette pal = palette();
@@ -515,6 +658,17 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
         p.setBrush(Qt::NoBrush);
     }
     const QFontMetrics mass(klein);
+    // je Note das Feld ihrer Zahl — fuer die Zeichen zwischen zwei Zahlen (Stufe 26d)
+    std::vector<QRect> felder(m_muster.noten.size());
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& note = m_muster.noten[i];
+        const Griff& griff = alleGriffe[i];
+        if (griff.saite < 0) continue;
+        const int x = xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs);
+        felder[i] = QRect(x + 1, tabLinieY(griff.saite) - kTabZeile / 2 + 1, mass.horizontalAdvance(tabZeichen(note, griff, m_saiten)) + 4,
+                          kTabZeile - 2);
+    }
     for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
     {
         const Note& note = m_muster.noten[i];
@@ -538,6 +692,54 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
         p.setBrush(Qt::NoBrush);
         p.setPen(!griff.greifbar ? QColor(226, 75, 74) : markiert ? pal.color(QPalette::HighlightedText) : text);
         p.drawText(feld, Qt::AlignCenter, zeichen);
+        // Stufe 26d (S-T5 a C, S-L3 a D, E): der Bend als Pfeil hinauf mit seiner Hoehe; verbunden ohne vorige ein „!"
+        if (!note.bend.empty())
+        {
+            const QPointF fuss(feld.right() + 2, y);
+            const QPointF spitze(feld.right() + 8, y - kTabZeile / 2.0 + 1);
+            QPainterPath pfeil(fuss);
+            pfeil.quadTo(QPointF(spitze.x(), fuss.y()), spitze);
+            p.setPen(QPen(text, 1.2));
+            p.setBrush(Qt::NoBrush);
+            p.drawPath(pfeil);
+            p.drawLine(spitze, spitze + QPointF(-3, 3));
+            p.drawLine(spitze, spitze + QPointF(3, 3));
+            p.drawText(QRectF(spitze.x() + 2, y - kTabZeile, 36, kTabZeile), Qt::AlignLeft | Qt::AlignVCenter,
+                       bendText(bendHoehe(note.bend)));
+        }
+        if (griff.verbindungFehlt)
+        {
+            p.setPen(QColor(226, 75, 74));
+            p.drawText(QRect(feld.left() - 8, feld.top(), 7, feld.height()), Qt::AlignRight | Qt::AlignVCenter, QStringLiteral("!"));
+        }
+    }
+    // A–C: zwischen zwei Zahlen auf derselben Linie — ein Bogen mit h oder p, ein „/" oder „\" beim Slide
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& note = m_muster.noten[i];
+        const int vorige = alleGriffe[i].vorige;
+        if (vorige < 0 || (note.artikulationen & kVerbunden) == 0 || felder[i].isNull()) continue;
+        const QRect& a = felder[static_cast<std::size_t>(vorige)];
+        const QRect& b = felder[i];
+        if (a.isNull()) continue;
+        const Note& vor = m_muster.noten[static_cast<std::size_t>(vorige)];
+        p.setPen(QPen(text, 1.2));
+        p.setBrush(Qt::NoBrush);
+        if ((note.artikulationen & kSlide) != 0)
+        {
+            const bool hinauf = note.hoehe >= vor.hoehe;
+            const int mitte = b.center().y();
+            p.drawLine(QPoint(a.right() + 3, hinauf ? mitte + 3 : mitte - 3), QPoint(b.left() - 2, hinauf ? mitte - 3 : mitte + 3));
+            continue;
+        }
+        const QPointF von(a.center().x(), a.top());
+        const QPointF bis(b.center().x(), b.top());
+        const double bogenOben = a.top() - 6.0;
+        QPainterPath pfad(von);
+        pfad.cubicTo(QPointF(von.x(), bogenOben), QPointF(bis.x(), bogenOben), bis);
+        p.drawPath(pfad);
+        p.drawText(QRectF((von.x() + bis.x()) / 2.0 - 6, bogenOben - 10, 12, 10), Qt::AlignCenter,
+                   note.hoehe >= vor.hoehe ? QStringLiteral("h") : QStringLiteral("p"));
     }
     // beim Ziehen einer Zahl: die Saite, auf die sie kaeme
     if (m_zug == Zug::TabSaite && m_tabZiel >= 0)
@@ -1051,8 +1253,84 @@ void NotenRaster::paintEvent(QPaintEvent*)
         // K (Stufe 24e): die Artikulationen hinter der Nummer — was nicht passt, schneidet der Balken ab
         if (const QString kuerzel = artikulationsKuerzel(note.artikulationen); !kuerzel.isEmpty())
             zeichen += QLatin1Char(' ') + kuerzel;
+        // A–D (Stufe 26d, S-L3 a): H oder P nach der Richtung, SL, ↗ mit der Hoehe des Bends
+        if ((note.artikulationen & kLegato) != 0)
+            zeichen += griff.vorige < 0 ? QStringLiteral(" H/P")
+                       : note.hoehe >= m_muster.noten[static_cast<std::size_t>(griff.vorige)].hoehe ? QStringLiteral(" H")
+                                                                                                     : QStringLiteral(" P");
+        if ((note.artikulationen & kSlide) != 0) zeichen += QStringLiteral(" SL");
+        if (!note.bend.empty()) zeichen += QString::fromUtf8(" ↗") + bendText(bendHoehe(note.bend));
         p.setPen(schrift);
         p.drawText(QRect(links, r.top(), std::max(0, r.right() - links), r.height()), Qt::AlignLeft | Qt::AlignVCenter, zeichen);
+        // E: verbunden, aber ohne vorige Note auf der Saite — sie schlaegt normal an: ein rotes „!" davor
+        if (griff.verbindungFehlt)
+        {
+            p.setPen(QColor(226, 75, 74));
+            p.drawText(QRect(r.left() - 10, r.top() - 2, 9, r.height() + 4), Qt::AlignRight | Qt::AlignVCenter, QStringLiteral("!"));
+        }
+        // D: der Bend als Kurve in der Note bis zur Zeile des erreichten Tons, gestrichelt das Ziel
+        if (!note.bend.empty())
+        {
+            const double mitte = yVonHoehe(note.hoehe) + zeilenHoehe() / 2.0;
+            const double ziel = mitte - bendHoehe(note.bend) * zeilenHoehe();
+            QColor kurve = text;
+            kurve.setAlpha(220);
+            p.setPen(QPen(kurve, 1.0, Qt::DashLine));
+            p.drawLine(QPointF(r.left(), ziel), QPointF(r.right(), ziel));
+            QPolygonF linie;
+            for (int k = 0; k <= 24; ++k)
+            {
+                const double t = k / 24.0;
+                linie << QPointF(r.left() + t * r.width(), mitte - bendBei(note.bend, t) * zeilenHoehe());
+            }
+            p.setPen(QPen(kurve, 1.6));
+            p.setBrush(Qt::NoBrush);
+            p.drawPolyline(linie);
+            p.drawText(QRectF(r.right() - 40, ziel - zeilenHoehe(), 40, zeilenHoehe()), Qt::AlignRight | Qt::AlignBottom,
+                       bendText(bendHoehe(note.bend)));
+        }
+    }
+    // A–C (Stufe 26d, S-L3 a): von der vorigen Note auf derselben Saite her — Hammer-on und Pull-off
+    // als Bogen mit h oder p, ein Slide als schraege Linie mit Pfeil
+    if (mitSaiten)
+    {
+        QColor bogen = text;
+        bogen.setAlpha(200);
+        for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+        {
+            const Note& note = m_muster.noten[i];
+            const int vorige = alleGriffe[i].vorige;
+            if (vorige < 0 || (note.artikulationen & kVerbunden) == 0) continue;
+            const Note& vor = m_muster.noten[static_cast<std::size_t>(vorige)];
+            const QPointF von(xVonSchritt(vor.schritt) + versatzPixel(alleAnschlaege[static_cast<std::size_t>(vorige)].versatzMs) +
+                                  vor.laenge * schrittBreite(),
+                              yVonHoehe(vor.hoehe) + zeilenHoehe() / 2.0);
+            const QPointF nach(xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs) + 1,
+                               yVonHoehe(note.hoehe) + zeilenHoehe() / 2.0);
+            p.setBrush(Qt::NoBrush);
+            p.setPen(QPen(bogen, 1.4));
+            if ((note.artikulationen & kSlide) != 0)
+            {
+                p.drawLine(von, nach);
+                const double winkel = std::atan2(nach.y() - von.y(), nach.x() - von.x());
+                const QPointF spitze[3] = {nach, nach - QPointF(std::cos(winkel - 0.45), std::sin(winkel - 0.45)) * 6.0,
+                                           nach - QPointF(std::cos(winkel + 0.45), std::sin(winkel + 0.45)) * 6.0};
+                p.setBrush(bogen);
+                p.drawPolygon(spitze, 3);
+                p.setBrush(Qt::NoBrush);
+                continue;
+            }
+            // der Bogen ueber beide Noten, von der Oberkante der vorigen zur Oberkante der Zielnote
+            const QPointF a(von.x() - 4, von.y() - zeilenHoehe() / 2.0);
+            const QPointF b(nach.x() + 4, nach.y() - zeilenHoehe() / 2.0);
+            const double hoch = std::min(a.y(), b.y()) - 9.0;
+            QPainterPath pfad(a);
+            pfad.cubicTo(QPointF(a.x(), hoch), QPointF(b.x(), hoch), b);
+            p.drawPath(pfad);
+            p.setPen(bogen);
+            p.drawText(QRectF((a.x() + b.x()) / 2.0 - 8, hoch - 13, 16, 12), Qt::AlignCenter,
+                       note.hoehe >= vor.hoehe ? QStringLiteral("h") : QStringLiteral("p"));
+        }
     }
     // I (Stufe 24e): je Akkord ein feiner Strich durch die Anschlaege, in der Reihenfolge
     // des Anschlags; der Punkt sitzt an der zuerst angeschlagenen Note
@@ -1718,7 +1996,17 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         return;
     }
     const QPoint ort = event->pos();
-    if (ort.x() < kTastenBreite || ort.y() < rasterOben() || ort.y() >= lautOben()) return;
+    // Stufe 26d (S-T5 a C): auch in den Tab-Linien — eine Zahl wird dafuer markiert wie eine Note
+    const bool inTab = tabSaiteBei(ort.y()) >= 0;
+    if (inTab)
+    {
+        if (const int platz = tabNoteBei(ort); platz >= 0 && !istMarkiert(m_muster.noten[static_cast<std::size_t>(platz)]))
+        {
+            const Note& note = m_muster.noten[static_cast<std::size_t>(platz)];
+            markiere({{note.schritt, note.hoehe}});
+        }
+    }
+    if (ort.x() < kTastenBreite || (!inTab && ort.y() < rasterOben()) || ort.y() >= lautOben()) return;
     const int hier = std::clamp(schrittUnter(ort.x()), 0, std::max(0, schritte() - 1));
     const bool etwas = !m_marken.empty();
     QMenu menu(this);
@@ -1804,7 +2092,8 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         std::vector<std::size_t> alleMarkierten;
         for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
             if (istMarkiert(m_muster.noten[i])) alleMarkierten.push_back(i);
-        for (const int bit : {kPalmMute, kLetRing, kTapping, kHarmonic})
+        // E (Stufe 26d, S-L3 a): darunter Legato und Slide
+        for (const int bit : {kPalmMute, kLetRing, kTapping, kHarmonic, kLegato, kSlide})
         {
             bool alleTragen = !alleMarkierten.empty();
             for (const std::size_t i : alleMarkierten)
@@ -1814,6 +2103,41 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
             haken->setChecked(alleTragen);
             haken->setEnabled(etwas);
         }
+
+        // F (Stufe 26d, S-L3 a): Bend — die Vorlagen, die Hoehe, Edit bend...
+        QMenu* bend = menu.addMenu(tr("Bend"));
+        bend->setObjectName(QStringLiteral("instrumentBendMenu"));
+        bend->setEnabled(etwas);
+        // was alle markierten gemeinsam tragen; sonst kein Haken
+        std::optional<std::optional<BendVorlage>> form;
+        std::optional<double> hoehe;
+        for (std::size_t k = 0; k < alleMarkierten.size(); ++k)
+        {
+            const std::vector<BendPunkt>& b = m_muster.noten[alleMarkierten[k]].bend;
+            if (k == 0)
+            {
+                form = bendVorlageVon(b);
+                hoehe = bendHoehe(b);
+            }
+            if (form && *form != bendVorlageVon(b)) form.reset();
+            if (hoehe && *hoehe != bendHoehe(b)) hoehe.reset();
+        }
+        for (const BendVorlage vorlage : {BendVorlage::Keine, BendVorlage::Bend, BendVorlage::BendZurueck, BendVorlage::VorBend,
+                                          BendVorlage::VorBendZurueck})
+        {
+            QAction* a = bend->addAction(bendVorlageName(vorlage), this, [this, vorlage] { (void)setzeBendVorlage(vorlage); });
+            a->setCheckable(true);
+            a->setChecked(form && *form == vorlage);
+        }
+        bend->addSeparator();
+        for (const double h : bendHoehen())
+        {
+            QAction* a = bend->addAction(tr("Height %1").arg(bendText(h)), this, [this, h] { (void)setzeBendHoehe(h); });
+            a->setCheckable(true);
+            a->setChecked(hoehe && *hoehe == h);
+        }
+        bend->addSeparator();
+        bend->addAction(tr("Edit bend..."), this, [this] { frageBend(); });
     }
     menu.addSeparator();
     menu.addAction(tr("Select all"), QKeySequence(Qt::CTRL | Qt::Key_A), this, [this] { markiereAlle(); });
@@ -2107,7 +2431,8 @@ void InstrumentEditor::setupUI()
                                     "together, T = tapped, click to change · Tab lines: click a line and type a fret (two "
                                     "digits quickly for 10 and up), drag a number to another line = the same note on that "
                                     "string · PM palm mute · LR let ring · T tapping · ◇ "
-                                    "harmonic · right-click a note: String, Strum, playing styles"),
+                                    "harmonic · H/P (h, p) hammer-on / pull-off, SL (/) slide, ↗ bend with its height "
+                                    "(½, full, 1½) · right-click a note: String, Strum, playing styles, Bend"),
                                  this);
     m_saitenHinweis->setObjectName(QStringLiteral("instrumentStringHint"));
     m_saitenHinweis->setEnabled(false);

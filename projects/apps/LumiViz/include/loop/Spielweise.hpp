@@ -24,6 +24,8 @@
 #include <QLatin1String>
 #include <QString>
 
+#include <optional>
+
 #include <vector>
 
 namespace lumi::loop
@@ -164,6 +166,29 @@ void richteBend(std::vector<BendPunkt>& bend);
 /// Die Biegung zur Zeit `zeit` (Anteil der Note), linear zwischen den Punkten;
 /// vor dem ersten der erste, nach dem letzten der letzte; ohne Punkte 0.
 [[nodiscard]] double bendBei(const std::vector<BendPunkt>& bend, double zeit);
+/// Die Vorlagen eines Bends (Stufe 26d, S-L2 a, S-L3 a F): sie schreiben Punkte —
+/// gespeichert wird die Kurve, nicht der Name.
+enum class BendVorlage : int
+{
+    Keine = 0,       ///< None: kein Bend
+    Bend,            ///< hinauf und gehalten
+    BendZurueck,     ///< Bend and release: hinauf, gehalten, zurueck
+    VorBend,         ///< Pre-bend: schon gebogen angeschlagen, gehalten
+    VorBendZurueck,  ///< Pre-bend and release: gebogen angeschlagen, dann zurueck
+};
+/// Die Punkte einer Vorlage mit dieser Hoehe (Halbtoene, im Raster, bis
+/// `kBendHalbtoeneMax`). Die Zeiten sind von Claude gesetzt (S137): Bend steigt im
+/// ersten Drittel der Note; Bend and release steigt bis 0,3, haelt bis 0,6, ist bei 0,9
+/// zurueck; Pre-bend and release haelt bis 0,5 und ist bei 0,8 zurueck.
+[[nodiscard]] std::vector<BendPunkt> bendVorlage(BendVorlage art, double halbtoene);
+/// Die Vorlage, deren Form die Kurve hat (gleich welche Hoehe); nichts = eine eigene Form.
+[[nodiscard]] std::optional<BendVorlage> bendVorlageVon(const std::vector<BendPunkt>& bend);
+/// Die hoechste Biegung einer Kurve; 0 = kein Bend.
+[[nodiscard]] double bendHoehe(const std::vector<BendPunkt>& bend);
+/// Wie die Hoehe eines Bends geschrieben wird, in Ganztoenen wie in Tabs: „½" (ein
+/// Halbton), „full" (zwei), „1½" (drei); dazwischen Achtel und Viertel („¼", „¾", „1¼").
+[[nodiscard]] QString bendText(double halbtoene);
+
 /// Der Bend in der `.lvloop` (seit Fassung 10): je Punkt `[zeit, halbtoene]`.
 /// Gelesen wird ungerichtet — wer liest, richtet.
 [[nodiscard]] QJsonArray bendAlsJson(const std::vector<BendPunkt>& bend);

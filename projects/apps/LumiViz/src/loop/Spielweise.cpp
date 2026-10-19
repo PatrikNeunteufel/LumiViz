@@ -173,6 +173,50 @@ void richteBend(std::vector<BendPunkt>& bend)
     bend = std::move(gerichtet);
 }
 
+std::vector<BendPunkt> bendVorlage(BendVorlage art, double halbtoene)
+{
+    std::vector<BendPunkt> punkte;
+    const double h = halbtoene;
+    switch (art)
+    {
+    case BendVorlage::Keine: break;
+    case BendVorlage::Bend: punkte = {{0.0, 0.0}, {0.3, h}}; break;
+    case BendVorlage::BendZurueck: punkte = {{0.0, 0.0}, {0.3, h}, {0.6, h}, {0.9, 0.0}}; break;
+    case BendVorlage::VorBend: punkte = {{0.0, h}}; break;
+    case BendVorlage::VorBendZurueck: punkte = {{0.0, h}, {0.5, h}, {0.8, 0.0}}; break;
+    }
+    richteBend(punkte);
+    return punkte;
+}
+
+double bendHoehe(const std::vector<BendPunkt>& bend)
+{
+    double hoehe = 0.0;
+    for (const BendPunkt& p : bend) hoehe = std::max(hoehe, p.halbtoene);
+    return hoehe;
+}
+
+std::optional<BendVorlage> bendVorlageVon(const std::vector<BendPunkt>& bend)
+{
+    if (bend.empty()) return BendVorlage::Keine;
+    const double h = bendHoehe(bend);
+    for (const BendVorlage art : {BendVorlage::Bend, BendVorlage::BendZurueck, BendVorlage::VorBend, BendVorlage::VorBendZurueck})
+        if (bendVorlage(art, h) == bend) return art;
+    return std::nullopt;
+}
+
+QString bendText(double halbtoene)
+{
+    // in Ganztoenen, auf Achtel gerundet: so schreiben Tabs die Hoehe eines Bends
+    const int achtel = static_cast<int>(std::lround(std::max(0.0, halbtoene) * 4.0));  // ein Halbton = vier Achtel
+    const int ganz = achtel / 8;
+    static const char* const kBruch[] = {"", "⅛", "¼", "⅜", "½", "⅝", "¾", "⅞"};
+    const QString bruch = QString::fromUtf8(kBruch[achtel % 8]);
+    if (ganz == 0) return bruch.isEmpty() ? QStringLiteral("0") : bruch;
+    if (ganz == 1 && bruch.isEmpty()) return QStringLiteral("full");
+    return QString::number(ganz) + bruch;
+}
+
 double bendBei(const std::vector<BendPunkt>& bend, double zeit)
 {
     if (bend.empty()) return 0.0;
