@@ -4,6 +4,7 @@
  */
 #include "paket/Sammler.hpp"
 
+#include "loop/Akkord.hpp"
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
@@ -103,6 +104,7 @@ QString eigenerOrdner(Art art)
         case Art::Kit: return lp::eigenerKitOrdner();
         case Art::Kontur: return sh::eigenerKonturOrdner();
         case Art::Sample: return lp::eigenerSampleOrdner();
+        case Art::Akkord: return lp::eigenerAkkordOrdner();
         case Art::Loop: break;
     }
     return {};
@@ -131,6 +133,7 @@ QString vorgabeName(Art art)
         case Art::Kit: return QStringLiteral("kit");
         case Art::Kontur: return QStringLiteral("shape");
         case Art::Sample: return QStringLiteral("sample");
+        case Art::Akkord: return QStringLiteral("chord");
         case Art::Loop: return QStringLiteral("loop");
     }
     return QStringLiteral("file");
@@ -255,6 +258,12 @@ private:
             case Art::Sample:
                 if (!QFileInfo(datei).isFile()) return scheitert(datei);
                 return dateiName;
+            case Art::Akkord:
+            {
+                lp::Akkord akkord;
+                if (!lp::ladeAkkord(datei, akkord)) return scheitert(datei);
+                return akkord.titel;  // ein Akkord nennt nichts
+            }
         }
         return {};
     }
@@ -281,6 +290,7 @@ private:
             case Art::Kit: a = loeseKit(nennung, basis); break;
             case Art::Kontur: a = loeseKontur(nennung, basis); break;
             case Art::Sample: a = loeseSample(nennung, basis); break;
+            case Art::Akkord:  // wird nicht genannt
             case Art::Loop: break;
         }
         switch (a.was)
@@ -358,6 +368,7 @@ QString artText(Art art)
         case Art::Loop: return QStringLiteral("lvloop");
         case Art::Kontur: return QStringLiteral("lvcontour");
         case Art::Sample: return QStringLiteral("sample");
+        case Art::Akkord: return QStringLiteral("lvchord");
     }
     return {};
 }
@@ -369,6 +380,7 @@ std::optional<Art> artVonDatei(const QString& datei)
     if (endung == QLatin1String("lvkit")) return Art::Kit;
     if (endung == QLatin1String("lvloop")) return Art::Loop;
     if (endung == QLatin1String("lvcontour")) return Art::Kontur;
+    if (endung == QLatin1String("lvchord")) return Art::Akkord;
     if (lp::sampleEndungen().contains(endung)) return Art::Sample;
     return std::nullopt;
 }
@@ -389,6 +401,7 @@ Befund befundDerNennung(Art art, const QString& nennung, const QString& basis, Q
         case Art::Kit: a = loeseKit(nennung, basis); break;
         case Art::Kontur: a = loeseKontur(nennung, basis); break;
         case Art::Sample: a = loeseSample(nennung, basis); break;
+        case Art::Akkord:
         case Art::Loop: break;
     }
     if (datei != nullptr) *datei = a.was == Aufloesung::Datei ? a.pfad : QString();

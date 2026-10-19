@@ -97,7 +97,8 @@ public:
                 return QJsonDocument(lp::alsJson(loop)).toJson(QJsonDocument::Indented);
             }
             case Art::Kontur:
-            case Art::Sample: break;
+            case Art::Sample:
+            case Art::Akkord: break;
         }
         return {};
     }
@@ -138,6 +139,7 @@ QString bereichOrdner(Art art)
         case Art::Kit: return QStringLiteral("kits");
         case Art::Kontur: return QStringLiteral("contours");
         case Art::Sample: return QStringLiteral("samples");
+        case Art::Akkord: return QStringLiteral("chords");
         case Art::Loop: break;
     }
     return {};
@@ -151,6 +153,7 @@ QString bereichId(Art art)
         case Art::Kit: return QStringLiteral("kits");
         case Art::Kontur: return QStringLiteral("shapes");
         case Art::Sample: return QStringLiteral("samples");
+        case Art::Akkord: return QStringLiteral("chords");
         case Art::Loop: break;
     }
     return {};

@@ -82,6 +82,7 @@ QString gruppenTitel(pk::Art art)
         case pk::Art::Kit: return QObject::tr("Kits");
         case pk::Art::Kontur: return QObject::tr("Shapes");
         case pk::Art::Sample: return QObject::tr("Samples");
+        case pk::Art::Akkord: return QObject::tr("Chords");
         case pk::Art::Loop: return QObject::tr("Loops");
     }
     return {};
@@ -147,6 +148,7 @@ int nutzerZahl(pk::Art art, const QString& name)
             }
             return zahl;
         }
+        case pk::Art::Akkord:  // ein Akkord setzt nur Noten — niemand nennt ihn (S-T1 a)
         case pk::Art::Loop: break;
     }
     return 0;
@@ -163,6 +165,7 @@ QString paketArtWort(pk::Art art)
         case pk::Art::Loop: return QObject::tr("loop");
         case pk::Art::Kontur: return QObject::tr("shape");
         case pk::Art::Sample: return QObject::tr("sample");
+        case pk::Art::Akkord: return QObject::tr("chord");
     }
     return {};
 }

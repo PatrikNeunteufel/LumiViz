@@ -36,10 +36,13 @@ enum class Art : int
     Loop,
     Kontur,
     Sample,
+    /// Ein Akkord (`.lvchord`, Stufe 26a, S-T3 a): nennt nichts, wird von nichts genannt —
+    /// er geht nur als Hauptding ins Paket.
+    Akkord,
 };
 
 /// Wie die Art im Manifest und im Namen des Pakets steht: `lvinst`, `lvkit`,
-/// `lvloop`, `lvcontour`, `sample`.
+/// `lvloop`, `lvcontour`, `sample`, `lvchord`.
 [[nodiscard]] QString artText(Art art);
 /// Die Art einer Datei nach ihrer Endung; ein Sample an jeder Endung von
 /// `loop::sampleEndungen`. Leer = keine Art, die sich veroeffentlichen laesst.
@@ -94,7 +97,7 @@ struct Fund
     Art art = Art::Loop;
     QString hauptdatei;  ///< absolut
     QString titel;       ///< wie das Programm das Ding nennt
-    /// Fuer Instrument, Kit, Kontur und Sample: der Name beim Empfaenger
+    /// Fuer Instrument, Kit, Kontur, Sample und Akkord: der Name beim Empfaenger
     /// (`user:<name>`). Ein Loop hat keinen — er kommt dorthin, wo der
     /// Empfaenger ihn ablegt.
     QString hauptName;

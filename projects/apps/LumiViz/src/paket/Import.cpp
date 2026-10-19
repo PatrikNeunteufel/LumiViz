@@ -6,6 +6,7 @@
 #include "paket/Import.hpp"
 
 #include "core/ZipArchiv.hpp"
+#include "loop/Akkord.hpp"
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
@@ -48,6 +49,7 @@ QString eigenePfad(Art art, const QString& name, const QString& endung)
         case Art::Instrument: return lp::eigeneDatei(name);
         case Art::Kit: return lp::eigeneKitDatei(name);
         case Art::Kontur: return sh::eigeneKonturDatei(name);
+        case Art::Akkord: return lp::eigeneAkkordDatei(name);
         case Art::Sample:
         {
             const QString ordner = lp::eigenerSampleOrdner();
@@ -309,6 +311,12 @@ bool schreibe(Art art, const QByteArray& daten, const QString& pfad, const Umben
             return sh::speichereZeichnung(zeichnung, pfad);
         }
         case Art::Sample: return schreibeRoh(pfad, daten);
+        case Art::Akkord:
+        {
+            lp::Akkord akkord;
+            if (!lp::ausJson(json, akkord)) return false;
+            return lp::speichereAkkord(pfad, akkord);
+        }
     }
     return false;
 }
@@ -317,7 +325,7 @@ bool schreibe(Art art, const QByteArray& daten, const QString& pfad, const Umben
 
 std::optional<Art> artAusText(const QString& text)
 {
-    for (const Art art : {Art::Instrument, Art::Kit, Art::Loop, Art::Kontur, Art::Sample})
+    for (const Art art : {Art::Instrument, Art::Kit, Art::Loop, Art::Kontur, Art::Sample, Art::Akkord})
         if (artText(art) == text) return art;
     return std::nullopt;
 }

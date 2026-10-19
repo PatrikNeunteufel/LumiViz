@@ -38,6 +38,94 @@ wird in drei Schichten, jede auf der vorigen:
 3. **Die Tabs:** Akkord-Tabulaturen als Ansicht **neben** der Piano-Roll,
    nicht statt ihr; eigene oder aus Vorlagen, auf dem Griffbrett verschiebbar.
 
+✅ **S-T1 a** (Patrik S137, Begriffsskizze A/B im Gespräch): **Die Tabs sind beides.**
+**Tab-Linien** sind die Ansicht im Instrument-Editor — zwischen Strum und Piano-Roll,
+mit ihr synchron; je Saite eine Linie, an jeder Note die Bundzahl; dort werden Bünde,
+Hammer-on, Pull-off, Slide und Bend gesetzt und gezeigt (S-W14 a, S-L3 a, S-L5 a).
+**Griffbilder** sind die Eingabe für Akkorde: Vorlagen und eigene, auf dem Griffbrett
+verschiebbar; ein Griffbild setzt die Noten mit ihren Saiten ins Muster, sie erscheinen
+in den Tab-Linien und in der Piano-Roll — kein zweiter Speicher für Akkorde. Verworfen:
+b (nur Tab-Linien — keine Vorlagen, die Idee S127 fehlte), c (nur Griffbilder — kein
+Platz für Melodie, „5h7“ und Bend; S-L5 a liefe ins Leere). Als Nächstes einzeln: wo die
+Griffbilder liegen, woher die Vorlagen kommen, die Skizze von Tab-Linien und Piano-Roll.
+
+✅ **S-T2 a** (Patrik S137): **Ein eigenes Fenster *Chords*, wie *Instruments* und
+*Kits*.** Es zeigt die Griffbilder zur Stimmung des geöffneten Instruments, nach Grundton
+und Art; Vorlagen und eigene nebeneinander; *New*, *Edit*, *Duplicate*, *Delete* auf einem
+Griffbrett. Geöffnet aus dem Instrument-Editor mit **Chords...** (nur bei einem
+Saiteninstrument). Ins Muster durch Ziehen in Tab-Linien oder Piano-Roll oder Doppelklick
+an den Einfügepunkt; Verschieben auf dem Griffbrett ändert die Lage. Verworfen: b (feste
+Leiste im Editor — kostet dauerhaft Platz, wenige Griffbilder), c (nur ein Menü — schwer zu
+finden, kein Platz für das Bild; Merker S110). Später als angedocktes Fenster möglich, ohne
+den Ort der Daten zu ändern. **Dazu Patrik:** gespeichert als eigene Datei (S-T3), mit
+eigenem Datei-Icon der Marke — das Motiv ein Griffbild
+(`asset/img/logo/icons/build_lvfx2_icons.py`, wie `lumiviz_lvkit.ico`).
+
+✅ **S-T3 a** (Patrik S137): **Je Griffbild eine Datei `.lvchord`** (Format
+`lumiviz-chord`, Fassung 1): Titel, Grundton, Art (etwa *major*, *minor*, *7*), die Stimmung,
+für die sie gilt (Töne der leeren Saiten), je Saite Bund, leer oder nicht gespielt, dazu die
+Finger. Vorlagen unter `asset/loop/chords`, eigene im Benutzerordner unter `chords`
+(`user:<name>`), wie Kits und Instrumente; Datensicherung und Publish nehmen den Bereich
+mit; kein *Used by* (ein Griffbild setzt nur Noten, S-T1 a). Verworfen: b (eine Sammlung
+`.lvchords` je Stimmung — jede Änderung schreibt die ganze Sammlung, ein Griffbild ließe
+sich nicht allein weitergeben), c (`.lvcord` — liest sich als „Schnur“; die Endungen folgen
+dem englischen Wort).
+
+✅ **S-T4 a** (Patrik S137): **Die Vorlagen aus einer Quelle, wo es sie gibt, sonst
+gerechnet und gekennzeichnet.** `asset/loop/make_chords.py` schreibt die Vorlagen für
+Gitarre in Standardstimmung und Ukulele aus **chords-db** (D. Rubert,
+github.com/tombatossals/chords-db; LICENSE: „MIT License“, „Copyright (c) 2016 David
+Rubert“ — gelesen S137), alle Lagen je Akkord; Eintrag in `CREDITS.md`. Gelesen: Stimmungen
+`tunings.js` Gitarre `['E2', 'A2', 'D3', 'G3', 'B3', 'E4']`, Ukulele `['G4', 'C4', 'E4',
+'A4']`; je Akkord `key`, `suffix`, `positions` mit `frets` (`x` nicht gespielt, `a` = 10),
+`fingers`, `barres`, `capo`. Die Liste der Arten nur aus einer Zusammenfassung — beim Bau
+am Inhalt prüfen. Für Stimmungen ohne Quelle (Drop D, die Bässe E A D G, die Violine
+G D A E) rechnet das Skript nach einer festen Regel: die Akkordtöne über die Saiten,
+höchstens vier Bünde Spannweite, leere Saiten bevorzugt, der Grundton im Bass; solche
+Griffbilder tragen die Herkunft `computed`, das Fenster zeigt sie mit Hinweis. Verworfen:
+b (nur die Quelle — vier mitgelieferte Instrumente ohne Vorlage), c (alles gerechnet — gerade
+die meistgespielten Griffe nicht so, wie Spieler sie greifen). Kippt, wenn die gerechneten
+Griffe bei der Durchsicht oft unspielbar wirken.
+
+✅ **S-T5 a** (Patrik S137): **Skizze des Instrument-Editors mit Tab-Linien gebilligt**
+(gezeichnet im Gespräch, auf dem Bild des Editors aus `test_LoopEditorSpielweise`; hier als
+Beschreibung):
+- **A Tab-Linien** zwischen Spur Strum und Piano-Roll, je Saite eine Linie, oben die
+  höchste; links in der Spalte der Klaviatur Nummer und Ton der leeren Saite; rollen
+  waagrecht mit, stehen senkrecht.
+- **B** Bundzahl am Anfang jeder Note, ein blasser Strich zeigt die Dauer. Klick auf eine
+  Linie und eine Zahl tippen = eine Note auf dieser Saite (Saite gesetzt, S-M2 a); eine Zahl
+  auf eine andere Linie ziehen = derselbe Ton auf der anderen Saite (nicht greifbar: rot
+  „!“); eine Zahl über eine markierte Note tippen ändert den Bund.
+- **C** Hammer-on/Pull-off als Bogen mit h/p, Slide als schräge Linie mit Pfeil, Bend als
+  Kurve mit „½“, „full“, „1½“ (S-L3 a); gesetzt über das Kontextmenü *Legato*, *Slide*,
+  *Bend*, *Edit bend...*.
+- **D** Knopf **Chords...** in der Zeile *Instrument* öffnet das Fenster *Chords* (S-T2 a);
+  ein Griffbild auf Tab-Linien oder Piano-Roll ziehen setzt am Schritt die Noten mit Saiten.
+- **E** Die Piano-Roll zeigt dieselben Zeichen (S-L5 a).
+- **F** Haken **Tab** in der Zeile *Strum* blendet die Linien aus — bei einem
+  Saiteninstrument von sich aus an, der Editor merkt die Stellung.
+- **G** Die Hinweiszeile nennt die Bedienung der Linien und die Zeichen.
+- Mit vorgelegt: eine neue Note aus den Linien bekommt die Länge des Rasters; ein Griffbild
+  setzt alle gespielten Saiten am selben Schritt, die Richtung kommt aus der Spur Strum.
+Verworfen: b (umschaltbar statt der Piano-Roll — „statt“, nicht „neben“, §1), c (unten
+unter *Note vol.* — der Griff gehört über die Noten, wie bei Strum S-W14 a).
+
+✅ **S-T6 a** (Patrik S137, auf seine Frage nach Klavier, Bläsern, Schlaginstrumenten):
+**Eine `.lvchord` ist entweder ein Griffbild oder ein Voicing — beides in Fassung 1.** Ein
+Griffbild trägt Stimmung, Bünde, Finger (S-T3 a); ein Voicing Grundton, Art und die Töne als
+Abstände über dem tiefsten Ton (etwa `[0, 4, 7]`, `[4, 7, 12]`). Das Fenster *Chords* öffnet
+sich in jedem Instrument-Editor: bei einem Saiteninstrument die Griffbilder zur Stimmung,
+sonst die Voicings; ein Voicing auf die Piano-Roll gezogen legt seinen tiefsten Ton auf die
+Zeile, auf der es losgelassen wird. Vorlagen-Voicings (Grundstellung, Umkehrungen, weite
+Lage je Art) rechnet `make_chords.py` aus den Abständen der Arten (Lehrbuchwissen, keine
+Quelle nötig). Der Drum-Editor bekommt nichts. Bläser: LumiViz spielt jedes Instrument
+mehrstimmig, ein Akkord auf *Flute* klingt wie ein Satz — keine eigene Regel. Gebaut zuerst
+die Saiten mit den Tabs, die Voicings als nächste Stufe, ohne neue Fassung. Verworfen: b (nur
+Saiten — Voicings später mit Fassung 2), c (für Tasten nur ein Werkzeug in der Piano-Roll —
+keine eigenen Voicings, zwei Bedienungen). Ersetzt in S-T2 a „nur bei einem
+Saiteninstrument“.
+
 ✅ **S-W1 a** (Patrik S133; Bearbeitung ab der nächsten Session): **Ziel der
 Spielweisen** sind Strum (Richtung, Versatz der Saiten, Muster) und die
 Artikulationen je Note — Palm mute, Let ring, Tapping, Harmonics, Hammer-on /
@@ -807,6 +895,24 @@ Bit wie vorher. Beleg: die IDMT-Bends zeigen im Halten kein schnelleres Abklinge
 (−4 … −9 dB/s, Mehrverlust Median −0,3 dB; Recherche 25 §4). Verworfen: b (der Verlust der
 gegriffenen Höhe — T60 11 % kürzer je Ganzton, −1,1 dB; die Messung zeigt das nicht, und ein
 gebogenes B3 klänge kürzer als ein gegriffenes).
+
+**Stufe 26 — Tabs und Akkorde** (✅ **S-T7 a**, Patrik S137: in Schichten, je Teilschritt
+eng nach S-P1 a unter beiden Compilern, am Ende Bereichslauf und **voller Lauf**; nimmt die
+offenen Teile 25d, 25e, 25f auf, S-L5 a; Entscheide S-T1 a bis S-T6 a in §1). Verworfen: b
+(zuerst das Fenster Chords, dann die Tab-Linien — Einfügen ohne die Ansicht, in die es
+schreibt; die Tests dafür zweimal), c (eine Stufe ohne Teilschritte — gegen S-P1 a). Kippt,
+wenn Akkorde auf dem Klavier dringender sind: dann 26f direkt nach 26b.
+
+| Stufe | Inhalt | Beleg |
+|---|---|---|
+| 26a | **Modell und Datei:** `.lvchord` Fassung 1 (Griffbild oder Voicing, S-T3 a, S-T6 a), Lesen und Schreiben, eigene Ordner, Bereich in Datensicherung und Publish; Griffbild und Voicing in Noten (mit Saiten) umrechnen | Rundweg der Datei; Umrechnung je Art ohne Qt-Anwendung; Wegwerf-Ordner |
+| 26b | **Vorlagen:** `make_chords.py` (chords-db für Gitarre und Ukulele, gerechnet für Drop D, Bässe, Violine; die Voicings), `CREDITS.md`, Icon `lumiviz_lvchord.ico`; Bildbogen der gerechneten Griffbilder zur Durchsicht (Kipp-Bedingung S-T4 a) | jede mitgelieferte Datei liest sich; Zahl je Stimmung; jedes Griffbild klingt die Töne seiner Art |
+| 26c | **Tab-Linien:** Ansicht und Eingabe nach S-T5 a A, B, F — Bünde tippen, Saite wechseln durch Ziehen, Haken *Tab*, Zoom und Rollen mit der Piano-Roll | Bilder aus den Tests; Bedien-Fälle über den Editor |
+| 26d | **Legato, Slide, Bend bedienen** in Tab-Linien und Piano-Roll (S-T5 a C, E, G; S-L3 a A–G mit Menü und *Edit bend...*) | Bilder; Fälle über den Editor; das Gesetzte klingt (Planung 25b) |
+| 26e | **Fenster Chords mit Griffbildern** — vorher eine eigene Skizze: Liste, Griffbrett, *New*, *Edit*, *Duplicate*, *Delete*, Einfügen durch Ziehen und Doppelklick | Bilder; Wegwerf-Ordner; Einfügen über den Editor |
+| 26f | **Voicings** im selben Fenster für Instrumente ohne Saiten (S-T6 a) | Bilder; Einfügen auf der Zeile des Loslassens |
+| 26g | **Creator:** *Play as* mit *Hammer-on*, *Slide*, *Bend* (bisher 25e) | Bilder |
+| 26h | **Mitgeliefertes:** Beispiel-Loops mit Tabs, Akkorden, Legato, Slide, Bend; Handbuch; Sichttest-Liste; Bereichslauf; **voller Lauf** | beide Compiler |
 
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
@@ -1625,6 +1731,33 @@ S. 117, Özaslan 2010 S. 458).
   `Umlauf::grundJeUmlauf`, im Bend der Gewinn mal g₀^(P/P₀−1) — T60 im Halten gebogen
   3,20 s wie gegriffen, der Bend −0,61 dB (Extended KS) / −0,53 dB (Waveguide) gegen den
   ungebogenen Ton; ohne Bend Bit für Bit wie vorher (Loop Werte unverändert).
+
+### 5u. Stufe 26a — Modell und Datei der Akkorde (gebaut S137)
+
+- **`loop/Akkord.hpp`** (neu): `Akkord` — Titel, Grundton (0 … 11), Art, Herkunft
+  (`computed`, S-T4 a), Beschreibung; als **Griffbild** `leer` (Stimmung), `buende`
+  (−1 nicht gespielt, 0 leer, sonst ab dem Capo), `finger` (0 … 4), `barre`; als
+  **Voicing** `abstaende` (aufsteigend ab 0, höchstens `kVoicingToeneMax` = 10 Töne in
+  `kVoicingWeiteMax` = 48 Halbtönen — von Claude gesetzt). `richteAkkord`,
+  `grundtonNamen` (C C# D Eb E F F# G Ab A Bb B — von Claude gesetzt), `grundtonAusName`
+  (liest auch Db, A#, Cb, B#).
+- **`.lvchord` Fassung 1** (`lumiviz-chord`): `title`, `root`, `type`, `origin` (nur wenn
+  gesetzt), `description`, dann `strings` (`open`, `frets`, `fingers`, `barres`) oder
+  `voicing`. Nicht gültig: fremdes Format, Fassung von morgen (`zuNeu`), ohne Grundton,
+  ohne gespielte Saite, ohne Ton.
+- **Ablage:** `mitgelieferterAkkordOrdner` (`asset/loop/chords`, mit Unterordnern, genannt
+  beim Pfad darunter: `guitar/c_major_1`), `eigenerAkkordOrdner` (`chords`, `user:<name>`),
+  `holeAkkord`, `setzeEigenenAkkordOrdnerFuerTests`.
+- **Umrechnung:** `passtZu` (Griffbild: dieselben leeren Saiten, das Capo zählt nicht;
+  Voicing: ein Instrument ohne Saiten), `passendeAkkorde`, `toeneDesGriffbilds` (mit Capo,
+  verschoben: jeder gespielte Bund wandert, eine leere Saite wird gegriffen),
+  `toeneDesVoicings`, `akkordNoten` (alle am Schritt, Lautstärke 1, das Griffbild setzt die
+  Saite).
+- **Datensicherung:** Bereich `chords` „Chords“ (13 Bereiche). **Publish:** `Art::Akkord`
+  (`lvchord`) — nur als Hauptding, er nennt nichts und wird nicht genannt; Ordner im Paket
+  `chords`.
+- Belegt in `test_LoopAkkord` (7 Fälle, ohne Qt-Anwendung, Wegwerf-Ordner); die
+  mitgelieferten Vorlagen kommen mit 26b (dann auch `asset/Asset.cmake`).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
