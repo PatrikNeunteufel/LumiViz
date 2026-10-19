@@ -1,7 +1,8 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.30.0
-> **Datum:** 2026-10-19 (Session 136; S-W16 a, Stufe 24f)
+> **Version:** 0.31.0
+> **Datum:** 2026-10-19 (Session 136; Stufe 24f fertig, S-W16 a bis S-W22 a; Stufe 25
+> S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis 25c-3b, §5r bis §5t)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;

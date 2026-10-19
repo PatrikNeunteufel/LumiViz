@@ -1,6 +1,6 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.262.0
+> **Version:** 1.263.0
 > **Datum:** 2026-10-18 (Session 135)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
@@ -2953,7 +2953,15 @@ Idee Preset-Warmup/Pre-Roll.
   1.190.0; Sichttest `.claude/handover/Sichttest_Spielweisen.md`). **Zoom der
   Editoren: vorerst nicht gemerkt** (Patrik S136) — im Composer merkt die App
   die Zeilenhöhe (ZO9 a), den Zeit-Zoom nicht; angleichen wäre eine eigene
-  Frage. Offen: Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs.
+  Frage. Stufe 25 (S-L1 a bis S-L12 a): gebaut 25a Modell und `.lvloop` 10, 25b
+  Planung der Ketten, 25c-1 Lagrange 5. Ordnung, 25c-2 `.lvinst` 12 (Fretless, Slide
+  time, Legato level), 25c-3a Klang (Bahn), 25c-3b die Planung spielt Ketten. **Offen:
+  25c-4 *Follow string* (vorher die Lage des Schalters *In a legato* im Creator
+  vorlegen); die Lautstärke des Bends (−1,1 dB gegen −0,3 dB gemessen); dann die Fragen zu
+  den Tabs und die gemeinsame Stufe Tabs + Editor (S-L5 a), danach der volle Lauf.**
+  Befund ohne Entscheid: `.sichttest/sichttest.projekt.json` sucht nur
+  `Sichttest_Composer_*.md` — `Sichttest_Saiten.md`, `Sichttest_Spielweisen.md` findet der
+  Tester nicht (Frage an Patrik S136, unbeantwortet).
   **Ideen Patrik S136, nicht eingeplant (erst nach dem Plan vorlegen):** (1) **Rechtsklick
   auf die Spur Strum** öffnet das Menü Strum direkt, dort jede Art mit ihrem Pfeil
   (Follow hand, Down ↓, Up ↑, Together) zum Wählen — heute öffnet der Rechtsklick dort
@@ -6019,6 +6027,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.263.0 | 2026-10-19 | Session 136. §7 Spielweisen: 24f fertig (S-W16 a bis S-W22 a); Stufe 25 entschieden (S-L1 a bis S-L12 a) und gebaut bis 25c-3b; Zoom der Editoren vorerst nicht gemerkt; Ideen Patrik (Rechtsklick auf die Spur Strum mit Pfeilen, Pick scrape); Befund Muster der Projektdatei Sichttest. |
 | 1.262.0 | 2026-10-18 | Session 135. §7 Spielweisen: 24e gebaut (S-W13 a bis S-W15 a), Fehler „Anschläge kamen nicht im Loop an“ behoben; Zoom in den Loop-Editoren (E-Z1 a). |
 | 1.261.0 | 2026-10-18 | Session 134. §7 Spielweisen: S-W2 a bis S-W12 a entschieden; Stufen 24a bis 24d gebaut (Modell, Planung, Klang, Creator). |
 | 1.260.0 | 2026-10-18 | Session 133. §6 Saiteninstrumente: Korpus Classical guitar, Bemessung der Tonabnehmer, 23e, 23f, 23g gebaut (S-K9 a bis S-G4 a); §7 Spielweisen: Ziel S-W1 a. |
