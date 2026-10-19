@@ -26,6 +26,7 @@
 #include <QCoreApplication>
 #include <QDoubleSpinBox>
 #include <QLabel>
+#include <QListWidget>
 #include <QPushButton>
 #include <QSlider>
 #include <QToolButton>
@@ -267,6 +268,78 @@ TEST_SUITE("LoopCreatorSpielweise")
         creator.oeffne(ohne);
         CHECK(creator.vorhoerNoten(30).noten.size() == 1);
         CHECK(creator.vorhoerNoten(30).noten[0].hoehe == 30);
+    }
+
+    TEST_CASE("Loop Creator Spielweise 25c-4: In a legato im Kasten Source, \"~\" in der Liste (S-L13 a)")
+    {
+        Anwendung anwendung;
+        InstrumentCreator creator;
+        auto* wahl = creator.findChild<QComboBox*>(QStringLiteral("creatorInALegato"));
+        auto* hinweis = creator.findChild<QLabel*>(QStringLiteral("creatorInALegatoHint"));
+        auto* liste = creator.findChild<QListWidget*>();
+        REQUIRE(wahl != nullptr);
+        REQUIRE(hinweis != nullptr);
+        REQUIRE(liste != nullptr);
+
+        Instrument instrument = gitarre(SaitenModell::Wellenleiter);
+        Schicht flaeche;
+        flaeche.name = QStringLiteral("Pad");
+        flaeche.schwingung = Schwingung::Sinus;
+        instrument.schichten.push_back(flaeche);
+        creator.oeffne(instrument);
+
+        // --- A/B: die Saite folgt immer — grau, „Follow string (always)“; die Liste zeigt „~“
+        creator.waehle(0);
+        CHECK_FALSE(wahl->isHidden());
+        CHECK_FALSE(wahl->isEnabled());
+        CHECK(wahl->currentText() == QStringLiteral("Follow string (always)"));
+        CHECK(hinweis->text() == QStringLiteral("The string itself carries the legato"));
+        CHECK(liste->item(0)->text().section(QLatin1Char('\n'), 0, 0).endsWith(QStringLiteral(" ~")));
+        CHECK_FALSE(liste->item(1)->text().section(QLatin1Char('\n'), 0, 0).endsWith(QStringLiteral(" ~")));
+
+        // --- die Flaeche: Own note, waehlbar; Follow string setzt das Feld, mit Undo
+        creator.waehle(1);
+        CHECK(wahl->isEnabled());
+        CHECK(wahl->currentText() == QStringLiteral("Own note"));
+        CHECK(hinweis->text().startsWith(QStringLiteral("Each joined note plays this layer anew")));
+        wahl->setCurrentIndex(1);
+        Q_EMIT wahl->activated(1);
+        CHECK(creator.instrument().schichten[1].folgtSaite);
+        CHECK(creator.geaendert());
+        CHECK(wahl->currentText() == QStringLiteral("Follow string"));
+        CHECK(hinweis->text().startsWith(QStringLiteral("Goes with the string as one tone")));
+        CHECK(liste->item(1)->text().section(QLatin1Char('\n'), 0, 0).endsWith(QStringLiteral(" ~")));
+        CHECK(liste->item(1)->toolTip().contains(QStringLiteral("~ follows the string")));
+
+        // --- nur im Kasten Source: ein anderer Kasten blendet die Zeile aus
+        creator.waehleStelle(InstrumentCreator::kStelleLevel);
+        CHECK(wahl->isHidden());
+        creator.waehleStelle(InstrumentCreator::kStelleSource);
+        CHECK_FALSE(wahl->isHidden());
+
+        // --- ohne Tuning: keine Zeile und kein „~“
+        Instrument ohne = creator.instrument();
+        ohne.saiten = Saitensatz{};
+        creator.oeffne(ohne);
+        creator.waehle(1);
+        CHECK(wahl->isHidden());
+        CHECK(hinweis->isHidden());
+        CHECK_FALSE(liste->item(1)->text().section(QLatin1Char('\n'), 0, 0).endsWith(QStringLiteral(" ~")));
+
+        // --- Bild: der Kasten Source der Flaeche mit Follow string
+        if (const QString ziel = qEnvironmentVariable("LUMIVIZ_CREATOR_LEGATO_BILD"); !ziel.isEmpty())
+        {
+            InstrumentCreator gezeigt;
+            Instrument mit = instrument;
+            mit.schichten[1].folgtSaite = true;
+            gezeigt.oeffne(mit);
+            gezeigt.waehle(1);
+            gezeigt.setAttribute(Qt::WA_DontShowOnScreen);
+            gezeigt.resize(1280, 900);
+            gezeigt.show();
+            QCoreApplication::processEvents();
+            CHECK(gezeigt.grab().save(ziel));
+        }
     }
 
     TEST_CASE("Loop Creator Spielweise: Bild (LUMIVIZ_CREATOR_SPIEL_BILD)")

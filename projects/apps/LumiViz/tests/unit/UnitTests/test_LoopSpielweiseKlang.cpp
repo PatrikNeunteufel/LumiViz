@@ -25,6 +25,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Saiten.hpp"
+#include "loop/Sample.hpp"  // merkeSampleDaten
 
 #include "LoopOhneEngine.hpp"  // repoWurzel
 #include "SaitenMessung.hpp"   // betrag, spitze, cent, db, teilton
@@ -394,8 +395,113 @@ TEST_SUITE("LoopSpielweiseKlang")
             CHECK(std::abs(cent(spitze(b, tonHz(59), 60.0, 0.4, 0.3), tonHz(59))) < 5.0);
             const double lauter = db(effektiv(b, 0.4, 0.2) / effektiv(gerade, 0.4, 0.2));
             MESSAGE("Bend um einen Ganzton: " << lauter << " dB gegen den Ton ohne Bend (hergeleitet +0,5 dB, gemessen −0,3 dB)");
+            // die Ring time im Halten: gebogen gegen gegriffen (S137, Untersuchung der Lautstaerke)
+            const Klang gegriffen = rendereTon(instrument, ton(59, 2, 900), kRate);
+            MESSAGE("T60 im Halten: gebogen " << t60(b, tonHz(59), 0.4, 0.8) << " s, B3 gegriffen " << t60(gegriffen, tonHz(59), 0.4, 0.8)
+                                            << " s, A3 " << t60(gerade, tonHz(57), 0.4, 0.8) << " s");
+            MESSAGE("Pegel gleich nach dem Bend (0,30 s, 20 ms) gegen davor (0,18 s): gebogen "
+                    << db(effektiv(b, 0.30, 0.02) / effektiv(b, 0.18, 0.02)) << " dB, ungebogen "
+                    << db(effektiv(gerade, 0.30, 0.02) / effektiv(gerade, 0.18, 0.02)) << " dB");
             CHECK(std::abs(lauter) < 1.5);
         }
+    }
+
+    TEST_CASE("Loop Spielweise Klang 25c-4: Follow string — jede Schwingungsart geht Legato und Bend mit, Own note bleibt")
+    {
+        // eine Aufnahme fuer die Sample-Schicht: ein Sinus bei A3, eine Sekunde
+        const QString aufnahme = QStringLiteral("user:folgt_probe");
+        {
+            std::vector<float> sinus(static_cast<std::size_t>(2 * kRate));
+            for (std::size_t i = 0; i < sinus.size() / 2; ++i)
+                sinus[2 * i] = sinus[2 * i + 1] = static_cast<float>(0.5 * std::sin(2.0 * 3.14159265358979323846 * tonHz(57) * i / kRate));
+            merkeSampleDaten(aufnahme, kRate, std::move(sinus));
+        }
+        // Achtel bei 100 BPM: der Wechsel 300 ms nach dem Anschlag
+        TonAngabe legato = ton(57, 2, 600);
+        legato.verlauf = {TonWechsel{300, 59, false}};
+        TonAngabe bend = ton(57, 2, 900);
+        bend.biegung = {TonBiegung{200, 0}, TonBiegung{290, 8}};
+        TonAngabe gerade = ton(57, 2, 600);
+        TonAngabe geradeLang = ton(57, 2, 900);
+
+        for (const Schwingung art : {Schwingung::Sinus, Schwingung::Saege, Schwingung::Rechteck, Schwingung::Form, Schwingung::Sample,
+                                     Schwingung::Saite})
+        {
+            CAPTURE(static_cast<int>(art));
+            Instrument instrument = saite(SaitenModell::Klassisch);  // Classic: eine uebrige Schicht
+            Schicht& s = instrument.schichten[0];
+            s.schwingung = art;
+            s.form = QStringLiteral("circle");
+            s.sample = aufnahme;
+            s.grundton = 57;
+            s.halten = 1.0;
+            s.saiteDaempfung = 0.9999;
+            // --- Own note (Vorgabe): Legato und Bend aendern nichts, Bit fuer Bit
+            REQUIRE_FALSE(s.folgtSaite);
+            const Klang flach = rendereTon(instrument, gerade, kRate);
+            CHECK(rendereTon(instrument, legato, kRate).daten == flach.daten);
+            CHECK(rendereTon(instrument, bend, kRate).daten == rendereTon(instrument, geradeLang, kRate).daten);
+            // --- Follow string ohne Verlauf: derselbe Ton wie bisher
+            s.folgtSaite = true;
+            CHECK(rendereTon(instrument, gerade, kRate).daten == flach.daten);
+            // --- mit Legato: vorher A3, nachher B3, ein Ton (die Bandgrenze richtet sich nach dem
+            // hoechsten Griff — davor deshalb nicht Bit fuer Bit)
+            const Klang l = rendereTon(instrument, legato, kRate);
+            REQUIRE(l.daten.size() == flach.daten.size());
+            CHECK(std::abs(cent(spitze(l, tonHz(57), 60.0, 0.1, 0.18), tonHz(57))) < 5.0);
+            CHECK(std::abs(cent(spitze(l, tonHz(59), 60.0, 0.32, 0.2), tonHz(59))) < 5.0);
+            // --- mit Bend um einen Ganzton: B3 im Halten
+            const Klang b = rendereTon(instrument, bend, kRate);
+            CHECK(std::abs(cent(spitze(b, tonHz(59), 60.0, 0.4, 0.3), tonHz(59))) < 5.0);
+        }
+
+        // --- Rauschen hat keine Tonhoehe: ohne Filter bleibt es, mit Filter folgt der Filter
+        Instrument rauschen = saite(SaitenModell::Klassisch);
+        rauschen.schichten[0].schwingung = Schwingung::Rauschen;
+        rauschen.schichten[0].folgtSaite = true;
+        CHECK(rendereTon(rauschen, legato, kRate).daten == rendereTon(rauschen, gerade, kRate).daten);
+        rauschen.schichten[0].reihe = {SchichtFilter{FilterArt::Tiefpass, 4.0, 0.0, 0.0}, SchichtHuelle{}};
+        const Klang mitFilter = rendereTon(rauschen, legato, kRate);
+        const Klang ohneVerlauf = rendereTon(rauschen, gerade, kRate);
+        const auto wechsel = static_cast<std::size_t>(2 * 0.3 * kRate);
+        CHECK(std::equal(ohneVerlauf.daten.begin(), ohneVerlauf.daten.begin() + static_cast<std::ptrdiff_t>(wechsel), mitFilter.daten.begin()));
+        double danach = 0.0;
+        for (std::size_t i = wechsel; i < mitFilter.daten.size(); ++i)
+            danach = std::max(danach, std::abs(static_cast<double>(mitFilter.daten[i] - ohneVerlauf.daten[i])));
+        CHECK(danach > 1e-4);
+        vergissSampleDaten(aufnahme);
+    }
+
+    TEST_CASE("Loop Spielweise Klang 25c-4: in einer Kette rechnet der Ton der Saite, was ihr folgt; Own note spielt je Note")
+    {
+        Instrument drei = saite(SaitenModell::ErweiterterKs);
+        Schicht folgt;
+        folgt.schwingung = Schwingung::Sinus;
+        folgt.folgtSaite = true;
+        Schicht eigen;
+        eigen.schwingung = Schwingung::Saege;
+        drei.schichten = {drei.schichten[0], folgt, eigen};
+
+        TonAngabe kette = ton(57, 2, 600);
+        kette.verlauf = {TonWechsel{300, 59, false}};
+        // --- der Ton der Saite (`:p1`): die Saite und der Sinus — wie ein Instrument aus beiden allein
+        TonAngabe saitenTon = kette;
+        saitenTon.teil = TonTeil::Folgend;
+        Instrument beide = drei;
+        beide.schichten.pop_back();
+        CHECK(rendereTon(drei, saitenTon, kRate).daten == rendereTon(beide, kette, kRate).daten);
+        // --- der Ton der Note (`:p2`): nur die Saege, und sie spielt ihre Note, ohne Verlauf
+        TonAngabe notenTon = kette;
+        notenTon.teil = TonTeil::Eigen;
+        Instrument nurEigen = drei;
+        nurEigen.schichten = {eigen};
+        CHECK(rendereTon(drei, notenTon, kRate).daten == rendereTon(nurEigen, ton(57, 2, 600), kRate).daten);
+        // --- folgt keine Schicht ausser der Saite, ist der Ton der Saite die Saite allein (wie 25c-3b)
+        Instrument ohneFolgen = drei;
+        ohneFolgen.schichten[1].folgtSaite = false;
+        Instrument nurSaite = drei;
+        nurSaite.schichten = {drei.schichten[0]};
+        CHECK(rendereTon(ohneFolgen, saitenTon, kRate).daten == rendereTon(nurSaite, kette, kRate).daten);
     }
 
     TEST_CASE("Loop Spielweise Klang: Hoerproben (LUMIVIZ_24C_WAV)")

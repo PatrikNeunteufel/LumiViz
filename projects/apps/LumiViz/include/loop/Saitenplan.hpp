@@ -117,8 +117,9 @@ struct GeplanterTon : TonAngabe
 {
     double versatzMs = 0.0;  ///< Strum (Stufe 24b) — nicht im Namen
     /// Stufe 25c (S-L12 a): beim Kopf einer Kette der Ton der Saite ueber die ganze
-    /// Kette (`TonTeil::NurSaite`, mit Verlauf und Bend) — er schlaegt mit dem Kopf an;
-    /// der Ton oben spielt dann nur die uebrigen Schichten. Leer = keiner.
+    /// Kette (`TonTeil::Folgend`, mit Verlauf und Bend: die Saite und jede Schicht mit
+    /// *Follow string*, seit 25c-4) — er schlaegt mit dem Kopf an; der Ton oben spielt
+    /// dann nur die Schichten mit *Own note*. Leer = keiner.
     std::vector<TonAngabe> zusatz{};
 };
 

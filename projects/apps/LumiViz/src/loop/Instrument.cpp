@@ -256,6 +256,140 @@ private:
     static double inBereich(double wert, double von, double bis) { return std::isfinite(wert) ? std::clamp(wert, von, bis) : 0.0; }
 };
 
+/// Der Weg der Tonhoehe eines Tons mit Verlauf oder Bend (Stufe 25c; seit 25c-4 aus
+/// der `Bahn` geloest, damit jede Schicht mit *Follow string* ihm folgt): die
+/// gegriffene Tonhoehe der Hand und die Biegung obendrauf, in Halbtoenen, je Abtastwert.
+///
+/// - Bis zu einem Wechsel die vorige; ein *Legato* springt am Schritt der Zielnote; ein
+///   *Slide* gleitet `msJeHalbton` je Halbton und endet am Schritt der Zielnote
+///   (S-L10 a), fruehestens ab dem vorigen Wechsel — mit Buenden stufig (je Bund 43 %
+///   Halt, 57 % Uebergang, S-L9 a), ohne glatt; linear in Cent.
+/// - Die Biegung linear zwischen den Punkten.
+class Handweg
+{
+public:
+    /// Ein Wechsel der Hand: ab `start` gleitet sie (beim Legato = `ankunft`), am
+    /// Schritt der Zielnote `ankunft` ist sie dort.
+    struct Abschnitt
+    {
+        std::int64_t start = 0;
+        std::int64_t ankunft = 0;
+        int von = 60;
+        int nach = 60;
+        bool gleitet = false;
+    };
+    /// Der Anteil eines Bundschritts, den ein stufiger Slide auf dem Bund haelt (S-L9 a:
+    /// 1 − 0,57 aus der Messung).
+    static constexpr double kBundHalt = 0.43;
+
+    /// `kopfTon` ist die Tonhoehe am Anschlag, `versatz` kommt auf jede Hoehe des
+    /// Verlaufs dazu (Transpose der Schicht).
+    Handweg(int rate, int kopfTon, int versatz, const std::vector<TonWechsel>& verlauf,
+            const std::vector<TonBiegung>& biegung, bool bundlos, double msJeHalbton)
+        : m_bundlos(bundlos), m_kopf(kopfTon)
+    {
+        const double jeHalbton = std::clamp(msJeHalbton, kGleitMsMin, kGleitMsMax);
+        int vorher = kopfTon;
+        std::int64_t vorigerWechsel = 0;
+        for (const TonWechsel& w : verlauf)
+        {
+            const int ton = w.hoehe + versatz;
+            Abschnitt ab;
+            ab.ankunft = std::max<std::int64_t>(vorigerWechsel, std::llround(w.ms * static_cast<double>(rate) / 1000.0));
+            ab.von = vorher;
+            ab.nach = ton;
+            ab.gleitet = w.gleitet;
+            ab.start = ab.ankunft;
+            if (w.gleitet)
+            {
+                const auto dauer = std::llround(std::abs(ton - vorher) * jeHalbton * rate / 1000.0);
+                ab.start = std::max(vorigerWechsel, ab.ankunft - dauer);
+            }
+            m_abschnitte.push_back(ab);
+            vorher = ton;
+            vorigerWechsel = ab.ankunft;
+        }
+        for (const TonBiegung& b : biegung)
+            m_biegung.push_back({std::llround(b.ms * static_cast<double>(rate) / 1000.0), 0.25 * b.viertel});
+    }
+
+    [[nodiscard]] double kopf() const { return m_kopf; }
+    [[nodiscard]] const std::vector<Abschnitt>& abschnitte() const { return m_abschnitte; }
+    /// So viele Abschnitte haben bei `t` begonnen (0 = noch der Kopf).
+    [[nodiscard]] std::size_t begonnen(std::int64_t t) const
+    {
+        std::size_t k = 0;
+        while (k < m_abschnitte.size() && m_abschnitte[k].start <= t) ++k;
+        return k;
+    }
+    /// Wie weit ein Slide bei `t` ist (0 … 1); nur gueltig zwischen `start` und `ankunft`.
+    [[nodiscard]] static double anteil(const Abschnitt& ab, std::int64_t t)
+    {
+        return static_cast<double>(t - ab.start) / static_cast<double>(ab.ankunft - ab.start);
+    }
+    /// Die gegriffene Tonhoehe bei `t`, ohne Biegung.
+    [[nodiscard]] double tonBei(std::int64_t t) const
+    {
+        const std::size_t k = begonnen(t);
+        if (k == 0) return m_kopf;
+        const Abschnitt& ab = m_abschnitte[k - 1];
+        return t < ab.ankunft ? gleite(ab.von, ab.nach, anteil(ab, t)) : ab.nach;
+    }
+    /// Die Biegung bei `t`, in Halbtoenen.
+    [[nodiscard]] double biegungBei(std::int64_t t) const
+    {
+        if (m_biegung.empty()) return 0.0;
+        if (t <= m_biegung.front().first) return m_biegung.front().second;
+        for (std::size_t i = 1; i < m_biegung.size(); ++i)
+        {
+            const auto& [ta, ha] = m_biegung[i - 1];
+            const auto& [tb, hb] = m_biegung[i];
+            if (t < tb) return tb > ta ? ha + (hb - ha) * static_cast<double>(t - ta) / static_cast<double>(tb - ta) : hb;
+        }
+        return m_biegung.back().second;
+    }
+    /// Das Verhaeltnis der klingenden Frequenz bei `t` zu der am Anschlag (ohne Biegung
+    /// am Anschlag gerechnet: ein Pre-bend beginnt hoeher).
+    [[nodiscard]] double verhaeltnis(std::int64_t t) const { return std::exp2((tonBei(t) + biegungBei(t) - m_kopf) / 12.0); }
+    /// Das groesste Verhaeltnis, das vorkommt (fuer die Bandgrenze).
+    [[nodiscard]] double hoechstes() const
+    {
+        double ton = m_kopf;
+        for (const Abschnitt& ab : m_abschnitte) ton = std::max(ton, static_cast<double>(ab.nach));
+        double biegung = 0.0;
+        for (const auto& punkt : m_biegung) biegung = std::max(biegung, punkt.second);
+        return std::exp2((ton + biegung - m_kopf) / 12.0);
+    }
+    /// Das kleinste Verhaeltnis, das vorkommt (fuer die laengste Verzoegerung).
+    [[nodiscard]] double tiefstes() const
+    {
+        double ton = m_kopf;
+        for (const Abschnitt& ab : m_abschnitte) ton = std::min(ton, static_cast<double>(ab.nach));
+        double biegung = 0.0;
+        for (const auto& punkt : m_biegung) biegung = std::min(biegung, punkt.second);
+        return std::exp2((ton + biegung - m_kopf) / 12.0);
+    }
+
+    /// Von `von` nach `nach` bei `w` (0 … 1) des Wegs: mit Buenden stufig, ohne glatt.
+    [[nodiscard]] double gleite(int von, int nach, double w) const
+    {
+        const int schritte = std::abs(nach - von);
+        if (m_bundlos || schritte == 0) return von + (nach - von) * w;
+        const double richtung = nach > von ? 1.0 : -1.0;
+        const double stelle = std::clamp(w, 0.0, 1.0) * schritte;
+        const double bund = std::min(std::floor(stelle), static_cast<double>(schritte - 1));
+        const double innen = stelle - bund;
+        const double weiter = innen < kBundHalt ? 0.0 : (innen - kBundHalt) / (1.0 - kBundHalt);
+        return von + richtung * (bund + weiter);
+    }
+
+private:
+    bool m_bundlos = false;
+    double m_kopf = 60.0;
+    std::vector<Abschnitt> m_abschnitte;
+    std::vector<std::pair<std::int64_t, double>> m_biegung;
+};
+
 /// Der Weg des Tons einer Schicht fuer eine Seite (Stufe 16b; Entscheide Patrik
 /// S117, K1 a und K2 a): die Bausteine der Reihe, von vorn nach hinten — jeder
 /// Filter mit eigenem Gedaechtnis, Drive, und die Stelle, an der die Huellkurve
@@ -359,13 +493,18 @@ void blendeAus(std::vector<float>& daten, int rate)
     }
 }
 
-void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+/// `hand` (Stufe 25c-4): die Tonhoehe folgt der Saite (*Follow string*); nullptr = sie
+/// bleibt, Bit fuer Bit wie bisher. Dasselbe bei den anderen Schwingungsarten.
+void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten,
+                      const Handweg* hand = nullptr)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     const Tonweg weg(schicht, rate);
     // Vibrato und Verstimmung heben den Ton leicht: etwas Abstand zur halben Abtastrate.
     // Eine fallende Note beginnt hoeher: die Tafel traegt nur, was auch dort darunter bleibt.
-    const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06 * weg.hoechstes())), 1, kTeiltoeneMax);
+    // Folgt sie der Saite, auch was der hoechste Griff und der Bend erreichen.
+    const double handHoechstes = hand != nullptr ? hand->hoechstes() : 1.0;
+    const int hoechster = std::clamp(static_cast<int>(rate / 2.0 / (hz * 1.06 * weg.hoechstes() * handHoechstes)), 1, kTeiltoeneMax);
     const std::vector<float> tafel = wellenzug(schicht, hoechster);
     const int stimmen = std::clamp(schicht.stimmen, 1, 3);
     std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
@@ -382,7 +521,8 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
     for (std::int64_t t = 0; t < frames; ++t)
     {
         const double h = huelle.bei(t);
-        double schritt = hz / rate * weg.bei(t);
+        const double klingtHz = hand != nullptr ? hz * hand->verhaeltnis(t) : hz;
+        double schritt = klingtHz / rate * weg.bei(t);
         if (vibrato)
         {
             const double tiefe = schicht.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
@@ -400,23 +540,36 @@ void rechneSchwingung(const Schicht& schicht, double hz, const Huelle& huelle, i
             p -= std::floor(p);
         }
         wert *= jeStimme;
-        const auto aus = static_cast<float>(reihe.bei(wert, h, hz) * pegel);
+        const auto aus = static_cast<float>(reihe.bei(wert, h, klingtHz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
 }
 
+/// Den Ring fuer eine `Bahn` (Stufe 25c) oder eine folgende Saite *Classic* (25c-4)
+/// vergroessern: jeder Wert behaelt sein Alter — was q Abtastwerte zurueck lag,
+/// liegt danach ebenso weit zurueck.
+std::vector<double> vergroessereRing(const std::vector<double>& ring, std::size_t neueGroesse)
+{
+    const std::size_t alt = ring.size();
+    if (neueGroesse <= alt) return ring;
+    std::vector<double> neu(neueGroesse, 0.0);
+    for (std::size_t q = 0; q < alt; ++q) neu[(neueGroesse - q) % neueGroesse] = ring[(alt - q) % alt];
+    return neu;
+}
+
 /// Die gezupfte Saite (Karplus-Strong): ein Stoss Rauschen laeuft durch eine
 /// Verzoegerung von einer Schwingung Laenge und wird bei jedem Umlauf weicher
-/// und leiser.
+/// und leiser. Folgt sie der Saite (`hand`, Stufe 25c-4), aendert sich die Laenge des Umlaufs mit der
+/// Tonhoehe, der Verlust je Umlauf mit ihr; der Stoss bleibt derselbe.
 void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate,
-                 std::vector<float>& daten)
+                 std::vector<float>& daten, const Handweg* hand = nullptr)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     Reihe reihe(schicht, rate, false);  // ohne die Filter: die Saite hatte nie einen
     // das Mitteln zweier Werte verzoegert um einen halben Abtastwert
     const double verzug = std::max(2.0, rate / hz - 0.5);
-    const auto groesse = static_cast<std::size_t>(verzug) + 4;
+    std::size_t groesse = static_cast<std::size_t>(verzug) + 4;
     std::vector<double> ring(groesse, 0.0);
     // der Stoss: Rauschen aus einer festen Folge je Tonhoehe
     std::uint32_t folge = 12345u + static_cast<std::uint32_t>(hoehe) * 7919u;
@@ -434,17 +587,32 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
     const double jeUmlauf = std::exp(std::log(daempfung) * 220.0 / hz);
     const double pegel = kPegel * schicht.laut;
     const double anstieg = std::max(1.0, schicht.anstiegMs * rate / 1000.0);
+    // der laengste Umlauf, der vorkommt: der Ring waechst, jeder Wert behaelt sein Alter
+    if (hand != nullptr)
+    {
+        groesse = std::max(groesse, static_cast<std::size_t>(std::max(2.0, rate / (hz * hand->tiefstes()) - 0.5)) + 4);
+        ring = vergroessereRing(ring, groesse);
+    }
 
     std::size_t schreib = 0;
     double davor = 0.0;
     for (std::int64_t t = 0; t < frames; ++t)
     {
-        double lese = static_cast<double>(schreib) - verzug;
+        double jetztVerzug = verzug;
+        double jetztUmlauf = jeUmlauf;
+        double klingtHz = hz;
+        if (hand != nullptr)
+        {
+            klingtHz = hz * hand->verhaeltnis(t);
+            jetztVerzug = std::max(2.0, rate / klingtHz - 0.5);
+            jetztUmlauf = std::exp(std::log(daempfung) * 220.0 / klingtHz);
+        }
+        double lese = static_cast<double>(schreib) - jetztVerzug;
         while (lese < 0.0) lese += static_cast<double>(groesse);
         const auto i = static_cast<std::size_t>(lese);
         const double rest = lese - static_cast<double>(i);
         const double y = ring[i % groesse] + (ring[(i + 1) % groesse] - ring[i % groesse]) * rest;
-        ring[schreib] = 0.5 * (y + davor) * jeUmlauf;
+        ring[schreib] = 0.5 * (y + davor) * jetztUmlauf;
         davor = y;
         schreib = (schreib + 1) % groesse;
 
@@ -455,7 +623,7 @@ void rechneSaite(const Schicht& schicht, int hoehe, double hz, const Huelle& hue
             const double nach = static_cast<double>(t - huelle.ende);
             h *= std::exp(-nach / huelle.ausklang) * std::max(0.0, 1.0 - nach / static_cast<double>(huelle.aus));
         }
-        const auto aus = static_cast<float>(reihe.bei(y, h, hz) * pegel);
+        const auto aus = static_cast<float>(reihe.bei(y, h, klingtHz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -607,17 +775,6 @@ double glaettenFuer(const Schicht& schicht, double hz, int rate, bool tapping = 
     return grenzeHz >= 0.45 * rate ? 0.0 : std::exp(-2.0 * kPi * grenzeHz / rate);
 }
 
-/// Den Ring fuer eine `Bahn` vergroessern (Stufe 25c): jeder Wert behaelt sein
-/// Alter — was q Abtastwerte zurueck lag, liegt danach ebenso weit zurueck.
-std::vector<double> vergroessereRing(const std::vector<double>& ring, std::size_t neueGroesse)
-{
-    const std::size_t alt = ring.size();
-    if (neueGroesse <= alt) return ring;
-    std::vector<double> neu(neueGroesse, 0.0);
-    for (std::size_t q = 0; q < alt; ++q) neu[(neueGroesse - q) % neueGroesse] = ring[(alt - q) % alt];
-    return neu;
-}
-
 /// Ohne Gleichanteil und gleich laut wie der Stoss von Classic (Effektivwert 1/sqrt(6)).
 void normiereStoss(std::vector<double>& ring)
 {
@@ -651,12 +808,7 @@ struct PunktDaempfer
 /// `stand`, wie lang der Umlauf ist, welche Filter gelten und mit welchem Faktor
 /// zurueckgeschrieben wird.
 ///
-/// - **Tonhoehe der Hand:** bis zu einem Wechsel die vorige; ein *Legato* springt
-///   am Schritt der Zielnote; ein *Slide* gleitet `Slide time` je Halbton und
-///   endet am Schritt der Zielnote (S-L10 a), fruehestens ab dem vorigen Wechsel —
-///   mit Buenden stufig (je Bund 43 % Halt, 57 % Uebergang, S-L9 a), ohne glatt;
-///   linear in Cent.
-/// - **Bend:** die Biegung des Tons obendrauf (Halbtoene, linear zwischen den Punkten).
+/// - **Tonhoehe der Hand und Bend:** der `Handweg` mit `Slide time` der Saite.
 /// - **Filter:** je gegriffener Tonhoehe ein eigener Umlauf (`entwerfeUmlauf`); im
 ///   Slide dazwischen gemischt, nach einem Sprung in `kWechselMs` (von Claude
 ///   gesetzt: ein rekursiver Filter knackt, wenn seine Werte springen — Valimaki
@@ -686,13 +838,10 @@ public:
     static constexpr double kSlideVerlustDb = 2.0;
     /// So lange gleiten die Filter nach einem Sprung zum neuen Satz (von Claude gesetzt).
     static constexpr double kWechselMs = 1.0;
-    /// Der Anteil eines Bundschritts, den ein stufiger Slide auf dem Bund haelt (S-L9 a:
-    /// 1 − 0,57 aus der Messung).
-    static constexpr double kBundHalt = 0.43;
 
     Bahn(const Schicht& schicht, int rate, double dicke, int kopfTon, int versatz, const std::vector<TonWechsel>& verlauf,
          const std::vector<TonBiegung>& biegung, bool bundlos)
-        : m_rate(rate), m_bundlos(bundlos), m_kopf(kopfTon)
+        : m_rate(rate), m_weg(rate, kopfTon, versatz, verlauf, biegung, bundlos, schicht.gleitMsJeHalbton)
     {
         const auto neuerTon = [&](int ton) {
             const double hz = tonHz(ton);
@@ -702,34 +851,14 @@ public:
             m_groesse = std::max(m_groesse, u.groesse + 8);
         };
         neuerTon(kopfTon);
-        const double msJeHalbton = std::clamp(schicht.gleitMsJeHalbton, kGleitMsMin, kGleitMsMax);
-        int vorher = kopfTon;
-        std::int64_t vorigerWechsel = 0;
-        for (const TonWechsel& w : verlauf)
+        for (const Handweg::Abschnitt& ab : m_weg.abschnitte())
         {
-            const int ton = w.hoehe + versatz;
-            neuerTon(ton);
-            Abschnitt ab;
-            ab.ankunft = std::max<std::int64_t>(vorigerWechsel, std::llround(w.ms * static_cast<double>(rate) / 1000.0));
-            ab.von = vorher;
-            ab.nach = ton;
-            ab.gleitet = w.gleitet;
-            ab.start = ab.ankunft;
-            if (w.gleitet)
-            {
-                const auto dauer = std::llround(std::abs(ton - vorher) * msJeHalbton * rate / 1000.0);
-                ab.start = std::max(vorigerWechsel, ab.ankunft - dauer);
-            }
-            else if (ton != vorher)
-                m_anregungen.push_back({ab.ankunft, ton > vorher, ton > vorher ? kAnschlagOrtMin
-                                                                               : std::clamp(1.0 - std::exp2(-std::abs(ton - vorher) / 12.0),
-                                                                                            kAnschlagOrtMin, kAnschlagOrtMax)});
-            m_abschnitte.push_back(ab);
-            vorher = ton;
-            vorigerWechsel = ab.ankunft;
+            neuerTon(ab.nach);
+            if (!ab.gleitet && ab.nach != ab.von)
+                m_anregungen.push_back({ab.ankunft, ab.nach > ab.von, ab.nach > ab.von ? kAnschlagOrtMin
+                                                                                       : std::clamp(1.0 - std::exp2(-std::abs(ab.nach - ab.von) / 12.0),
+                                                                                                    kAnschlagOrtMin, kAnschlagOrtMax)});
         }
-        for (const TonBiegung& b : biegung)
-            m_biegung.push_back({std::llround(b.ms * static_cast<double>(rate) / 1000.0), 0.25 * b.viertel});
     }
 
     [[nodiscard]] std::size_t groesse() const { return m_groesse; }
@@ -756,14 +885,6 @@ public:
     }
 
 private:
-    struct Abschnitt
-    {
-        std::int64_t start = 0;    ///< beginnt zu gleiten (beim Legato = Ankunft)
-        std::int64_t ankunft = 0;  ///< der Schritt der Zielnote
-        int von = 60;
-        int nach = 60;
-        bool gleitet = false;
-    };
     struct Lage
     {
         double verzug = 2.0;
@@ -774,37 +895,23 @@ private:
         double gleitFrames = 0.0;  ///< > 0: mitten in einem Slide, so lang ist er
     };
 
-    [[nodiscard]] double biegungBei(std::int64_t t) const
-    {
-        if (m_biegung.empty()) return 0.0;
-        if (t <= m_biegung.front().first) return m_biegung.front().second;
-        for (std::size_t i = 1; i < m_biegung.size(); ++i)
-        {
-            const auto& [ta, ha] = m_biegung[i - 1];
-            const auto& [tb, hb] = m_biegung[i];
-            if (t < tb) return tb > ta ? ha + (hb - ha) * static_cast<double>(t - ta) / static_cast<double>(tb - ta) : hb;
-        }
-        return m_biegung.back().second;
-    }
-
     [[nodiscard]] Lage lage(std::int64_t t) const
     {
         Lage l;
-        double ton = m_kopf;
-        std::size_t k = 0;  // der zuletzt erreichte Abschnitt + 1 (0 = noch der Kopf)
-        while (k < m_abschnitte.size() && m_abschnitte[k].start <= t) ++k;
+        double ton = m_weg.kopf();
+        const std::size_t k = m_weg.begonnen(t);  // der zuletzt erreichte Abschnitt + 1 (0 = noch der Kopf)
         double filterVerzug = m_filterVerzug[0];
         if (k == 0) l.filterVon = l.filterNach = 0;
         else
         {
-            const Abschnitt& ab = m_abschnitte[k - 1];
+            const Handweg::Abschnitt& ab = m_weg.abschnitte()[k - 1];
             const std::size_t von = k - 1;  // die Umlaeufe: 0 der Kopf, k der k-te Wechsel
             const std::size_t nach = k;
             if (t < ab.ankunft)
             {
                 // mitten im Slide
-                const double w = static_cast<double>(t - ab.start) / static_cast<double>(ab.ankunft - ab.start);
-                ton = gleite(ab.von, ab.nach, w);
+                const double w = Handweg::anteil(ab, t);
+                ton = m_weg.gleite(ab.von, ab.nach, w);
                 l.filterVon = von;
                 l.filterNach = nach;
                 l.filterMisch = w;
@@ -822,33 +929,17 @@ private:
             filterVerzug = m_filterVerzug[l.filterVon] + (m_filterVerzug[l.filterNach] - m_filterVerzug[l.filterVon]) * l.filterMisch;
         }
         const double ohneBend = m_rate / (440.0 * std::exp2((ton - 69.0) / 12.0)) - filterVerzug;
-        const double mitBend = m_rate / (440.0 * std::exp2((ton + biegungBei(t) - 69.0) / 12.0)) - filterVerzug;
+        const double mitBend = m_rate / (440.0 * std::exp2((ton + m_weg.biegungBei(t) - 69.0) / 12.0)) - filterVerzug;
         l.verzug = std::max(2.0, mitBend);
         l.bendVerhaeltnis = ohneBend > 0.0 ? l.verzug / ohneBend : 1.0;
         return l;
     }
 
-    /// Von `von` nach `nach` bei `w` (0 … 1) des Wegs: mit Buenden stufig, ohne glatt.
-    [[nodiscard]] double gleite(int von, int nach, double w) const
-    {
-        const int schritte = std::abs(nach - von);
-        if (m_bundlos || schritte == 0) return von + (nach - von) * w;
-        const double richtung = nach > von ? 1.0 : -1.0;
-        const double stelle = std::clamp(w, 0.0, 1.0) * schritte;
-        const double bund = std::min(std::floor(stelle), static_cast<double>(schritte - 1));
-        const double innen = stelle - bund;
-        const double weiter = innen < kBundHalt ? 0.0 : (innen - kBundHalt) / (1.0 - kBundHalt);
-        return von + richtung * (bund + weiter);
-    }
-
     int m_rate = 44100;
-    bool m_bundlos = false;
-    double m_kopf = 60.0;
+    Handweg m_weg;
     std::size_t m_groesse = 6;
     std::vector<Umlauf> m_umlaeufe;
     std::vector<double> m_filterVerzug;
-    std::vector<Abschnitt> m_abschnitte;
-    std::vector<std::pair<std::int64_t, double>> m_biegung;
     std::vector<Anregung> m_anregungen;
 };
 
@@ -1500,7 +1591,8 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
 /// dieselbe Folge: derselbe Ton ergibt dieselben Werte. Es hat keine
 /// Tonhoehe; die Note (mit Transpose) bewegt nur den Filter, der ihr folgt.
 /// Zwei Rauschen-Schichten eines Instruments tragen dieselbe Folge.
-void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten,
+                    const Handweg* hand = nullptr)
 {
     const auto frames = static_cast<std::int64_t>(daten.size() / 2);
     Reihe reihe(schicht, rate);
@@ -1511,7 +1603,8 @@ void rechneRauschen(const Schicht& schicht, double hz, const Huelle& huelle, int
         const double h = huelle.bei(t);
         folge = folge * 1664525u + 1013904223u;
         const double wert = static_cast<double>(folge >> 8) / 8388608.0 - 1.0;
-        const auto aus = static_cast<float>(reihe.bei(wert, h, hz) * pegel);
+        const double klingtHz = hand != nullptr ? hz * hand->verhaeltnis(t) : hz;  // der Filter folgt
+        const auto aus = static_cast<float>(reihe.bei(wert, h, klingtHz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = aus;
         daten[static_cast<std::size_t>(2 * t + 1)] = aus;
     }
@@ -1529,7 +1622,8 @@ constexpr double kNahtMs = 10.0;
 /// Die Aufnahme spielt so laut, wie sie ist — ohne die Luft nach oben, die eine
 /// gerechnete Schwingung bekommt (`kPegel`): bei der Note ihres Grundtons
 /// klingt sie wie die Datei (seit Stufe 11c; davor halb so laut).
-void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& huelle, int rate, std::vector<float>& daten,
+                  const Handweg* hand = nullptr)
 {
     const std::shared_ptr<const SampleDaten> quelle = sampleDaten(schicht.sample);
     if (quelle == nullptr || quelle->rate <= 0 || quelle->klang.frames() < 2) return;
@@ -1567,6 +1661,8 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
     {
         if (ort >= laenge - 1.0) break;  // die Aufnahme ist zu Ende: der Rest bleibt still
         const double h = huelle.bei(t);
+        const double folgt = hand != nullptr ? hand->verhaeltnis(t) : 1.0;
+        const double klingtHz = hand != nullptr ? hz * folgt : hz;
         const bool gehalten = schleife && t < huelle.ende;
         // an der Naht: was gleich wieder beginnt, kommt schon dazu
         const double blende = gehalten && naht > 0.0 && ort > bis - naht ? (ort - (bis - naht)) / naht : 0.0;
@@ -1574,9 +1670,12 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
         {
             double wert = lies(ort, seite);
             if (blende > 0.0) wert = wert * (1.0 - blende) + lies(ort - (bis - von), seite) * blende;
-            daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(reihen[seite].bei(wert, h, hz) * pegel);
+            daten[static_cast<std::size_t>(2 * t) + seite] = static_cast<float>(reihen[seite].bei(wert, h, klingtHz) * pegel);
         }
-        ort += schritt * weg.bei(t);
+        if (hand != nullptr)
+            ort += schritt * weg.bei(t) * folgt;
+        else
+            ort += schritt * weg.bei(t);
         if (gehalten && ort >= bis) ort -= bis - von;
     }
 }
@@ -1586,7 +1685,8 @@ void rechneSample(const Schicht& schicht, int hoehe, double hz, const Huelle& hu
 /// Abtastwert die Reihe selbst — Harmonics darf sich mit der Huellkurve von
 /// Wert zu Wert aendern, ohne dass etwas springt (Z4 a). Stimmen, Verstimmung,
 /// Vibrato und Pitch sweep wie bei `rechneSchwingung`.
-void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten)
+void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, std::vector<float>& daten,
+                const Handweg* hand = nullptr)
 {
     const std::shared_ptr<const shape::Tonform> form = shape::tonformFuer(schicht.form, schicht.formKontur);
     if (form == nullptr || form->leer()) return;  // keine Form: die Schicht schweigt
@@ -1594,7 +1694,8 @@ void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rat
     const Tonweg weg(schicht, rate);
     // Die Bandgrenze je Note: kein Teilton ueber 0,45 der Abtastrate. Vibrato und Verstimmung
     // heben den Ton leicht, eine fallende Note beginnt hoeher (wie bei den anderen Schwingungen).
-    const double hoechste = std::max(1.0, 0.45 * rate / (hz * 1.06 * weg.hoechstes()));
+    const double handHoechstes = hand != nullptr ? hand->hoechstes() : 1.0;
+    const double hoechste = std::max(1.0, 0.45 * rate / (hz * 1.06 * weg.hoechstes() * handHoechstes));
     const int stimmen = std::clamp(schicht.stimmen, 1, 3);
     std::array<double, 3> verhaeltnis = {1.0, 1.0, 1.0};
     std::array<double, 3> phase = {0.0, 0.33, 0.67};  // fest: derselbe Ton ergibt dieselben Werte
@@ -1619,7 +1720,8 @@ void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rat
     for (std::int64_t t = 0; t < frames; ++t)
     {
         const double h = huelle.bei(t);
-        double schritt = hz / rate * weg.bei(t);
+        const double klingtHz = hand != nullptr ? hz * hand->verhaeltnis(t) : hz;
+        double schritt = klingtHz / rate * weg.bei(t);
         if (vibrato)
         {
             const double tiefe = schicht.vibratoCent * std::min(1.0, static_cast<double>(t) / einsatz);
@@ -1636,10 +1738,10 @@ void rechneForm(const Schicht& schicht, double hz, const Huelle& huelle, int rat
         }
         z *= jeStimme;
         z *= dreh;
-        const auto links = static_cast<float>(reihen[0].bei(z.real(), h, hz) * pegel);
+        const auto links = static_cast<float>(reihen[0].bei(z.real(), h, klingtHz) * pegel);
         daten[static_cast<std::size_t>(2 * t)] = links;
         daten[static_cast<std::size_t>(2 * t + 1)] =
-            schicht.stereoXY ? static_cast<float>(reihen[1].bei(z.imag(), h, hz) * pegel) : links;
+            schicht.stereoXY ? static_cast<float>(reihen[1].bei(z.imag(), h, klingtHz) * pegel) : links;
     }
 }
 
@@ -1737,6 +1839,9 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
     o[QStringLiteral("on")] = schicht.an;
     o[QStringLiteral("transpose")] = schicht.versatzHalbtoene;
     o[QStringLiteral("startOffset")] = schicht.einsatzMs;
+    // Stufe 25c-4 (S-L12 a): immer, ausser an der Saite, die ohnehin folgt
+    if (!istSaitenSchicht(schicht))
+        o[QStringLiteral("inALegato")] = schicht.folgtSaite ? QStringLiteral("followString") : QStringLiteral("ownNote");
     for (const Wellenname& welle : kWellen)
         if (welle.schwingung == schicht.schwingung) o[QStringLiteral("waveform")] = QLatin1String(welle.name);
     QJsonArray obertoene;
@@ -1784,7 +1889,7 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("shapeStereoXY")] = schicht.stereoXY;
         o[QStringLiteral("shapeReverse")] = schicht.rueckwaerts;
     }
-    if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch)
+    if (istSaitenSchicht(schicht))
     {
         // seit Fassung 10 (Stufe 23c); eine Saite Classic traegt sie nicht — sie bleibt, wie sie war
         const bool wellenleiter = schicht.saitenModell == SaitenModell::Wellenleiter;
@@ -1860,6 +1965,8 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.laut = zahl("level", vorgabe.laut, 0.0, 1.0);
     neu.pan = zahl("pan", vorgabe.pan, -1.0, 1.0);  // seit Fassung 8; fehlt es, steht die Schicht in der Mitte
     neu.einsatzMs = zahl("startOffset", vorgabe.einsatzMs, 0.0, 1000.0);
+    // Stufe 25c-4 (S-L12 a); fehlt es oder ist es unbekannt: Own note
+    neu.folgtSaite = wurzel.value(QStringLiteral("inALegato")).toString() == QLatin1String("followString");
     // seit Fassung 4; in einer aelteren Datei und an anderen Schichten fehlen sie
     const double laengsteMs = kKlangMaxSekunden * 1000.0;
     neu.sample = wurzel.value(QStringLiteral("sample")).toString();
@@ -2558,16 +2665,23 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
     const auto hoechstens = static_cast<std::int64_t>(kTonMaxSekunden * rate);
     std::vector<float> eine;
     bool erste = true;
+    // Stufe 25c-4 (S-L12 a): was der Saite folgt, gleitet so schnell wie sie — mit Slide time
+    // der ersten Saiten-Schicht
+    const bool mitVerlauf = angabe != nullptr && (!angabe->verlauf.empty() || !angabe->biegung.empty());
+    double gleitMs = kGleitMsVorgabe;
+    for (const Schicht& schicht : instrument.schichten)
+        if (schicht.an && istSaitenSchicht(schicht))
+        {
+            gleitMs = schicht.gleitMsJeHalbton;
+            break;
+        }
     for (const Schicht& schicht : instrument.schichten)
     {
         if (!schicht.an) continue;
-        // Stufe 25c (S-L12 a): in einer Kette rechnet der Ton der Saite nur die Saite, die Toene der
-        // Noten nur die uebrigen Schichten
-        if (angabe != nullptr && angabe->teil != TonTeil::Alle)
-        {
-            const bool saitenSchicht = schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch;
-            if (saitenSchicht != (angabe->teil == TonTeil::NurSaite)) continue;
-        }
+        // Stufe 25c (S-L12 a): in einer Kette rechnet der Ton der Saite die Saite und was ihr
+        // folgt, die Toene der Noten die Schichten mit Own note
+        if (angabe != nullptr && angabe->teil != TonTeil::Alle && folgtDerSaite(schicht) != (angabe->teil == TonTeil::Folgend))
+            continue;
         // die Schicht setzt spaeter ein und endet mit der Note; ist die Note
         // kuerzer als der Einsatz, bleibt ein kurzer Anschlag
         const double einsatzMs = std::clamp(schicht.einsatzMs, 0.0, 1000.0);
@@ -2580,7 +2694,7 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             huelle.ende = std::max<std::int64_t>(1, hoechstens - einsatz - huelle.aus);
         const std::int64_t frames = huelle.ende + huelle.aus;
         eine.assign(static_cast<std::size_t>(2 * frames), 0.0f);
-        if (schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch)
+        if (istSaitenSchicht(schicht))
         {
             SaitenSpiel spiel = saitenSpielFuer(instrument, schicht, ton, angabe);
             const double saiteHz = spiel.ton == ton ? hz : tonHz(spiel.ton);
@@ -2601,16 +2715,26 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             if (spiel.faktor != 1.0)
                 for (float& wert : eine) wert = static_cast<float>(wert * spiel.faktor);
         }
-        else if (schicht.schwingung == Schwingung::Saite)
-            rechneSaite(schicht, ton, hz, huelle, rate, eine);  // Classic, unberuehrt (S-K2 b)
-        else if (schicht.schwingung == Schwingung::Sample)
-            rechneSample(schicht, ton, hz, huelle, rate, eine);
-        else if (schicht.schwingung == Schwingung::Rauschen)
-            rechneRauschen(schicht, hz, huelle, rate, eine);
-        else if (schicht.schwingung == Schwingung::Form)
-            rechneForm(schicht, hz, huelle, rate, eine);
         else
-            rechneSchwingung(schicht, hz, huelle, rate, eine);
+        {
+            // Stufe 25c-4: Follow string — die Tonhoehe geht den Weg der Hand mit; Own note
+            // spielt die Note, wie sie ist (auch beim Bend)
+            std::optional<Handweg> hand;
+            if (mitVerlauf && schicht.folgtSaite)
+                hand.emplace(rate, ton, std::clamp(schicht.versatzHalbtoene, -24, 24), angabe->verlauf, angabe->biegung,
+                             instrument.saiten.bundlos, gleitMs);
+            const Handweg* weg = hand ? &*hand : nullptr;
+            if (schicht.schwingung == Schwingung::Saite)
+                rechneSaite(schicht, ton, hz, huelle, rate, eine, weg);  // Classic (S-K2 b)
+            else if (schicht.schwingung == Schwingung::Sample)
+                rechneSample(schicht, ton, hz, huelle, rate, eine, weg);
+            else if (schicht.schwingung == Schwingung::Rauschen)
+                rechneRauschen(schicht, hz, huelle, rate, eine, weg);
+            else if (schicht.schwingung == Schwingung::Form)
+                rechneForm(schicht, hz, huelle, rate, eine, weg);
+            else
+                rechneSchwingung(schicht, hz, huelle, rate, eine, weg);
+        }
         // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
         if (schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht)) blendeAus(eine, rate);
         // Pan (Stufe 18): das Gesetz von Spur und Muster. In der Mitte bleibt jeder Wert,

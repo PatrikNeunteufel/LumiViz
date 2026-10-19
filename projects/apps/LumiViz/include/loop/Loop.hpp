@@ -187,13 +187,14 @@ struct TonBiegung
 };
 
 /// Welche Schichten ein Ton rechnet (Stufe 25c, S-L12 a): in einer Kette verbundener
-/// Noten laeuft die Saite (*Extended KS*, *Waveguide*) als ein Ton ueber die Kette,
-/// die uebrigen Schichten spielen je Note (*Own note*).
+/// Noten laeuft die Saite (*Extended KS*, *Waveguide*) als ein Ton ueber die Kette, mit
+/// ihr jede Schicht mit *Follow string* (seit 25c-4); die uebrigen spielen je Note
+/// (*Own note*). Welche folgt, sagt `folgtDerSaite` (Instrument.hpp).
 enum class TonTeil : int
 {
     Alle = 0,
-    NurSaite = 1,   ///< nur die Saiten-Schichten Extended KS und Waveguide
-    OhneSaite = 2,  ///< alle anderen Schichten
+    Folgend = 1,  ///< nur die Schichten, die der Saite folgen (`:p1`)
+    Eigen = 2,    ///< nur die Schichten mit *Own note* (`:p2`)
 };
 
 /// Ein gerechneter Ton mit allem, was ihn ausmacht (seit Stufe 23b): bei einem

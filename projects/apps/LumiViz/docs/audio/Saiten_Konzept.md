@@ -1,8 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.31.0
-> **Datum:** 2026-10-19 (Session 136; Stufe 24f fertig, S-W16 a bis S-W22 a; Stufe 25
-> S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis 25c-3b, §5r bis §5t)
+> **Version:** 0.32.0
+> **Datum:** 2026-10-19 (Session 137; S-L13 a, 25c-4 *Follow string*; davor S136: Stufe 24f
+> fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
+> 25c-3b, §5r bis §5t)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
 > S-M1 a, S-M2 a, S-M2b (a und b schaltbar), S-M2c a, S-M3 a, S-K1 (a und
 > b schaltbar), S-K2 b, S-K3 a und S-U1 a (Skizze des Creators gebilligt;
@@ -779,6 +780,23 @@ Schwingungsarten; ohne Verlauf rechnet jede Schicht wie bisher); das Feld kommt 
 Fassung 12, die noch nicht ausgeliefert ist. Verworfen: b (ein Schalter je Instrument —
 zu grob für ein Instrument mit kurzem Körperklang und gehaltener Fläche zugleich), c
 (immer *Own note* — gehaltene Schichten mit Legato wären dauerhaft ausgeschlossen).
+
+✅ **S-L13 a** (Patrik S137, Skizze A–C im Gespräch; hier als Beschreibung): **Der
+Schalter steht im Kasten *Source* unter *Start offset*, dazu ein Zeichen in der Liste
+*Layers*.**
+- **A:** eine Zeile **In a legato** mit der Auswahl *Own note* / *Follow string*, darunter
+  ein Satz, was sie bewirkt; Tooltip nennt Hammer-on, Pull-off, Slide und Bend.
+- **B:** an einer Saiten-Schicht (*Extended KS*, *Waveguide*) dieselbe Zeile abgeschaltet
+  mit „Follow string (always)“ und „The string itself carries the legato“.
+- Die Zeile ist nur zu sehen, wenn das Instrument Saiten hat (wie die Hinweise zu
+  *Playing*).
+- **C:** in der Liste *Layers* steht „~“ hinter dem Namen jeder Schicht, die der Saite
+  folgt (die Saiten-Schicht eingeschlossen).
+- Folge: mit *Follow string* biegt die Schicht auch bei einer einzelnen Note mit Bend
+  mit; mit *Own note* bleibt sie ungebogen.
+Verworfen: b (ohne Zeichen in der Liste — einem Instrument sähe man nicht an, welche
+Schicht folgt), c (ein Knopf „~“ in der Liste statt der Zeile — schwer zu finden, kein
+Platz für die Erklärung; Merker S110).
 
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
@@ -1579,9 +1597,21 @@ S. 117, Özaslan 2010 S. 458).
   hat Ketten). Belegt in `test_LoopSpielweise` „25c“ (Planung) und den Klangfällen;
   Hörproben der Gitarren-Proben mit Ketten unter `.claude/handover/hoerproben_25c_ketten/`
   (ohne: `hoerproben_proben/`).
-- **25c-4 (offen):** *Follow string* (S-L12 a) — die übrigen Schwingungsarten mit
-  wechselnder Tonhöhe, der Schalter *In a legato* je Schicht; die Lautstärke des Bends
-  (−1,1 dB gegen −0,3 dB gemessen) ansehen.
+- **25c-4 *Follow string* (gebaut, S137, S-L12 a, S-L13 a):** `Schicht::folgtSaite`
+  (*In a legato*, `.lvinst` Fassung 12 `inALegato` `ownNote`/`followString`, immer an jeder
+  Schicht außer der Saite; die mitgelieferten Saiteninstrumente aus
+  `make_saiten_instrumente.py`); `istSaitenSchicht`, `folgtDerSaite`. `TonTeil::Folgend`
+  (`:p1`, die Saite und was ihr folgt) und `TonTeil::Eigen` (`:p2`, *Own note*). Der Weg der
+  Tonhöhe ist aus der `Bahn` als `Handweg` gelöst (Bit für Bit wie vorher); Sinus, Dreieck,
+  Säge, Rechteck, Form, Sample und die Saite *Classic* folgen ihm, die Filter der Reihe
+  folgen der klingenden Tonhöhe (beim Rauschen nur sie), die Bandgrenze richtet sich nach dem
+  höchsten Griff; gleiten mit *Slide time* der ersten Saiten-Schicht. *Own note* spielt die
+  Note, wie sie ist, auch beim Bend. Ohne Verlauf rechnet jede Schicht wie bisher (Loop Werte
+  unverändert). Creator: Zeile *In a legato* im Kasten Source, „~“ in der Liste.
+  **Gemessen** (`test_LoopSpielweiseKlang` „25c-4“): jede Schwingungsart nach dem Legato auf
+  B3 (5 Cent), mit Bend auf B3. **Bend:** T60 im Halten gebogen 2,85 s gegen 3,20 s
+  gegriffen (Faktor 0,891 = der Ganzton) — der Verlust je Umlauf gilt der gegriffenen Höhe;
+  dazu das Gesetz √(Verzögerung) (−0,5 dB). Zusammen −1,1 dB. Entscheid offen (S-L14).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

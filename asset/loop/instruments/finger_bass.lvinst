@@ -73,7 +73,8 @@
             "vibratoRate": 0,
             "vibratoDepth": 0,
             "vibratoDelay": 0,
-            "damping": 0.996
+            "damping": 0.996,
+            "inALegato": "ownNote"
         }
     ],
     "strings": {

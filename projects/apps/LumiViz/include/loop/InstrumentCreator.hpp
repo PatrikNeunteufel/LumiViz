@@ -722,6 +722,10 @@ private:
     QWidget* m_spielTitel = nullptr;         ///< O: die Ueberschrift Playing
     std::vector<std::size_t> m_nurSpiel;     ///< Plaetze in `m_regler`: Up level, Mute, Tap level, Touch
     std::vector<QWidget*> m_spielHinweise;   ///< die Zeilen in Klartext unter den Reglern
+    // --- In a legato (Stufe 25c-4, S-L13 a): im Kasten Source, nur mit Tuning
+    QComboBox* m_legatoWahl = nullptr;       ///< Own note / Follow string
+    QLabel* m_legatoHinweis = nullptr;       ///< der Satz darunter, was die Wahl bewirkt
+    std::vector<QWidget*> m_legatoZeilen;    ///< Name, Auswahl, Satz
     QComboBox* m_spielAlsWahl = nullptr;     ///< P: Play as
     QWidget* m_spielAlsZeile = nullptr;
     SpielAls m_spielAls = SpielAls::Normal;

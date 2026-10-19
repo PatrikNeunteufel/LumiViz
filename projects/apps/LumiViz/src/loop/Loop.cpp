@@ -483,9 +483,9 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
         if (stueck == QLatin1String("u"))
             zusatz.richtung = Richtung::Auf;
         else if (stueck == QLatin1String("p1"))
-            zusatz.teil = TonTeil::NurSaite;
+            zusatz.teil = TonTeil::Folgend;
         else if (stueck == QLatin1String("p2"))
-            zusatz.teil = TonTeil::OhneSaite;
+            zusatz.teil = TonTeil::Eigen;
         else if (stueck == QLatin1String("m"))
             zusatz.artikulationen |= kPalmMute;
         else if (stueck == QLatin1String("t"))

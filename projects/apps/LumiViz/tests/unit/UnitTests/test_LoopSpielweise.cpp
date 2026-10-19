@@ -32,7 +32,9 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QFile>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QMouseEvent>
 
@@ -1061,10 +1063,10 @@ TEST_SUITE("LoopSpielweise")
         const std::vector<GeplanterTon>& runde = toene[0][0];
         REQUIRE(runde.size() == 4);
         // der Kopf: die uebrigen Schichten als eigener Ton, dazu die Saite ueber die Kette
-        CHECK(runde[0].teil == TonTeil::OhneSaite);
+        CHECK(runde[0].teil == TonTeil::Eigen);
         REQUIRE(runde[0].zusatz.size() == 1);
         const TonAngabe& saite = runde[0].zusatz.front();
-        CHECK(saite.teil == TonTeil::NurSaite);
+        CHECK(saite.teil == TonTeil::Folgend);
         CHECK(saite.verlauf == std::vector<TonWechsel>{{250, 59, false}, {500, 57, false}});
         CHECK(saite.saite == 3);
         // das Ende: die naechste Note auf der G-Saite schlaegt erst im naechsten Durchlauf an; die
@@ -1074,7 +1076,7 @@ TEST_SUITE("LoopSpielweise")
         // die Glieder: nur ihre uebrigen Schichten, ohne Ende und ohne Strum
         for (const std::size_t i : {std::size_t{1}, std::size_t{2}})
         {
-            CHECK(runde[i].teil == TonTeil::OhneSaite);
+            CHECK(runde[i].teil == TonTeil::Eigen);
             CHECK(runde[i].endeMs == 0);
             CHECK(runde[i].versatzMs == 0.0);
             CHECK(runde[i].zusatz.empty());
@@ -1092,5 +1094,79 @@ TEST_SUITE("LoopSpielweise")
         TonAngabe zurueck;
         REQUIRE(zerlegeTon(tonKlang(saite), zurueck));
         CHECK(zurueck == saite);
+    }
+
+    TEST_CASE("Loop Spielweise 25c-4: In a legato je Schicht — Own note, Follow string, in der .lvinst immer")
+    {
+        Instrument instrument;
+        instrument.saiten = gitarre();
+        Schicht saite;
+        saite.schwingung = Schwingung::Saite;
+        saite.saitenModell = SaitenModell::Wellenleiter;
+        Schicht flaeche;
+        flaeche.schwingung = Schwingung::Saege;
+        Schicht klassisch;
+        klassisch.schwingung = Schwingung::Saite;  // Classic: eine uebrige Schicht wie jede andere
+        instrument.schichten = {saite, flaeche, klassisch};
+
+        // --- wer folgt: die Saite immer, jede andere nach dem Schalter; Vorgabe Own note
+        CHECK(istSaitenSchicht(saite));
+        CHECK_FALSE(istSaitenSchicht(klassisch));
+        CHECK(folgtDerSaite(saite));
+        CHECK_FALSE(folgtDerSaite(flaeche));
+        CHECK_FALSE(folgtDerSaite(klassisch));
+        flaeche.folgtSaite = true;
+        CHECK(folgtDerSaite(flaeche));
+
+        // --- die Datei: `inALegato` an jeder Schicht ausser der Saite, auch bei der Vorgabe (S-W11 a)
+        instrument.schichten[1].folgtSaite = true;
+        const QJsonObject json = alsJson(instrument);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 12);
+        const QJsonArray schichten = json.value(QStringLiteral("layers")).toArray();
+        REQUIRE(schichten.size() == 3);
+        CHECK_FALSE(schichten.at(0).toObject().contains(QStringLiteral("inALegato")));
+        CHECK(schichten.at(1).toObject().value(QStringLiteral("inALegato")).toString() == QStringLiteral("followString"));
+        CHECK(schichten.at(2).toObject().value(QStringLiteral("inALegato")).toString() == QStringLiteral("ownNote"));
+        Instrument zurueck;
+        REQUIRE(ausJson(json, zurueck));
+        CHECK(zurueck.schichten[1].folgtSaite);
+        CHECK_FALSE(zurueck.schichten[2].folgtSaite);
+        zurueck.name = instrument.name;
+        CHECK(zurueck == instrument);
+
+        // --- fehlt das Feld oder ist es unbekannt: Own note
+        QJsonObject alt = json;
+        QJsonArray ohne = schichten;
+        QJsonObject eine = ohne.at(1).toObject();
+        eine.remove(QStringLiteral("inALegato"));
+        ohne.replace(1, eine);
+        eine[QStringLiteral("inALegato")] = QStringLiteral("sideways");
+        ohne.replace(2, eine);
+        alt[QStringLiteral("layers")] = ohne;
+        Instrument gelesen;
+        REQUIRE(ausJson(alt, gelesen));
+        CHECK_FALSE(gelesen.schichten[1].folgtSaite);
+        CHECK_FALSE(gelesen.schichten[2].folgtSaite);
+
+        // --- die mitgelieferten Saiteninstrumente: jede Schicht ausser der Saite traegt das Feld
+        const QDir ordner(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/instruments")));
+        int geprueft = 0;
+        for (const QString& name : ordner.entryList({QStringLiteral("*.lvinst")}, QDir::Files))
+        {
+            QFile datei(ordner.filePath(name));
+            REQUIRE(datei.open(QIODevice::ReadOnly));
+            const QJsonObject wurzel = QJsonDocument::fromJson(datei.readAll()).object();
+            if (wurzel.value(QStringLiteral("version")).toInt() < 12) continue;
+            CAPTURE(name);
+            for (const QJsonValue& wert : wurzel.value(QStringLiteral("layers")).toArray())
+            {
+                const QJsonObject s = wert.toObject();
+                const bool saitenSchicht = s.value(QStringLiteral("waveform")).toString() == QStringLiteral("string") &&
+                                           s.contains(QStringLiteral("stringModel"));
+                CHECK(s.contains(QStringLiteral("inALegato")) == !saitenSchicht);
+                ++geprueft;
+            }
+        }
+        CHECK(geprueft >= 13);
     }
 }

@@ -738,6 +738,32 @@ void InstrumentCreator::setupUI()
     regler(gitter, tr("Start offset"), "creatorStartOffset", 0, 200, [](const Schicht& i) { return gerundet(i.einsatzMs / 5.0); },
            [](Schicht& i, int w) { i.einsatzMs = w * 5.0; }, [ms](const Schicht& i) { return ms(i.einsatzMs); })
         .schieber->setToolTip(tr("The layer starts this long after the note begins (not an echo)"));
+    // In a legato (Stufe 25c-4; Skizze gebilligt, Patrik S137, S-L13 a): nur mit Tuning zu sehen
+    {
+        const int zeile = gitter->rowCount();
+        auto* name = new QLabel(tr("In a legato"), this);
+        m_legatoWahl = new QComboBox(this);
+        m_legatoWahl->setObjectName(QStringLiteral("creatorInALegato"));
+        m_legatoWahl->addItem(tr("Own note"), false);
+        m_legatoWahl->addItem(tr("Follow string"), true);
+        m_legatoWahl->setToolTip(tr("What this layer does when notes are joined on a string — hammer-on, pull-off, slide —\n"
+                                    "and when a note is bent.\n"
+                                    "Own note: every joined note plays this layer anew; a bend leaves it as it is.\n"
+                                    "Follow string: the layer goes with the string as one tone — it jumps, glides and bends."));
+        m_legatoHinweis = new QLabel(this);
+        m_legatoHinweis->setObjectName(QStringLiteral("creatorInALegatoHint"));
+        m_legatoHinweis->setEnabled(false);
+        m_legatoHinweis->setWordWrap(true);
+        gitter->addWidget(name, zeile, 0);
+        gitter->addWidget(m_legatoWahl, zeile, 1, 1, 2);
+        gitter->addWidget(m_legatoHinweis, zeile + 1, 1, 1, 2);
+        m_legatoZeilen = {name, m_legatoWahl, m_legatoHinweis};
+        connect(m_legatoWahl, &QComboBox::activated, this, [this](int platz) {
+            if (platz < 0 || istSaitenSchicht(schicht())) return;
+            const bool folgt = m_legatoWahl->itemData(platz).toBool();
+            aendereSchicht([folgt](Schicht& s) { s.folgtSaite = folgt; });
+        });
+    }
 
     // --- Oscillator
     titel(tr("Oscillator"), "oscillator");
@@ -1993,11 +2019,16 @@ void InstrumentCreator::zeigeListe()
     {
         const Schicht& s = m_instrument.schichten[static_cast<std::size_t>(platz)];
         QListWidgetItem* eintrag = m_liste->item(platz);
-        eintrag->setText(tr("%1 · %2\nLevel %3 % · %4%5 st")
-                             .arg(schichtTitel(s, platz), m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung))))
+        // „~“ (S-L13 a): die Schicht folgt in einem Legato der Saite
+        const bool folgt = m_instrument.saiten.istSaiteninstrument() && folgtDerSaite(s);
+        eintrag->setText(tr("%1 · %2%3\nLevel %4 % · %5%6 st")
+                             .arg(schichtTitel(s, platz), m_welle->itemText(m_welle->findData(static_cast<int>(s.schwingung))),
+                                  folgt ? QStringLiteral(" ~") : QString())
                              .arg(gerundet(s.laut * 100.0))
                              .arg(s.versatzHalbtoene > 0 ? QStringLiteral("+") : QString())
                              .arg(s.versatzHalbtoene));
+        // ohne eigenen Tooltip zeigt die Liste ihren
+        eintrag->setToolTip(folgt ? m_liste->toolTip() + QLatin1Char('\n') + tr("~ follows the string in a legato and a bend") : QString());
         eintrag->setCheckState(s.an ? Qt::Checked : Qt::Unchecked);
         // die Farbe der Schicht (F1 a): ihre eigene oder die abgeleitete
         const QColor farbe = schichtFarbe(m_instrument, platz);
@@ -2243,6 +2274,16 @@ void InstrumentCreator::zeigeAlles()
     }
     // ohne Korpus gibt es nichts zu mischen
     m_regler[m_reglerKorpusAnteil].schieber->setEnabled(gewaehlte.korpus != KorpusArt::Keiner);
+    // --- In a legato (Stufe 25c-4, S-L13 a): die Saite folgt immer, die Zeile zeigt es grau
+    {
+        const QSignalBlocker ruhe(m_legatoWahl);
+        m_legatoWahl->setItemText(1, physik ? tr("Follow string (always)") : tr("Follow string"));
+        m_legatoWahl->setCurrentIndex(physik || gewaehlte.folgtSaite ? 1 : 0);
+        m_legatoWahl->setEnabled(!physik);
+        m_legatoHinweis->setText(physik                  ? tr("The string itself carries the legato")
+                                 : gewaehlte.folgtSaite ? tr("Goes with the string as one tone: jumps, glides and bends with it")
+                                                        : tr("Each joined note plays this layer anew; a bend leaves it as it is"));
+    }
     // --- Playing (Stufe 24d): bei Extended KS und Waveguide, und nur mit Tuning (S-W5 a)
     const bool spielen = physik && m_instrument.saiten.istSaiteninstrument();
     m_spielTitel->setVisible(spielen);
@@ -2641,6 +2682,9 @@ void InstrumentCreator::zeigeStelle()
         else if (zeile < ersteGruppe)
             teil->setVisible(true);  // vor der ersten Gruppe blendet sonst niemand ein
     }
+    // In a legato wirkt nur auf Saiten (S-L13 a): ohne Tuning weg, auch im Kasten Source
+    if (!m_instrument.saiten.istSaiteninstrument())
+        for (QWidget* teil : m_legatoZeilen) teil->setVisible(false);
 }
 
 // =============================================================================

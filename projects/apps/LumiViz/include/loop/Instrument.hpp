@@ -243,6 +243,12 @@ struct Schicht
     bool an = true;              ///< aus = stumm, bleibt aber im Instrument
     int versatzHalbtoene = 0;    ///< -24…24: so weit liegt die Schicht neben der Note
     double einsatzMs = 0.0;      ///< 0…1000: so lange nach dem Anschlag setzt sie ein (kein Echo)
+    /// In a legato (Stufe 25c-4, S-L12 a, S-L13 a): false = *Own note* — jede Note einer
+    /// Kette (Hammer-on, Pull-off, Slide) spielt die Schicht als eigenen Ton, ein Bend biegt
+    /// sie nicht; true = *Follow string* — sie folgt dem Verlauf der Saite als ein Ton, mit
+    /// Spruengen, Gleiten und Biegung. Eine Saite *Extended KS* oder *Waveguide* folgt
+    /// immer (`folgtDerSaite`).
+    bool folgtSaite = false;
 
     /// Der Weg des Tons zwischen Source und Level, von vorn nach hinten. Eine
     /// neue Schicht hat nur die Envelope; eine Datei bis Fassung 6 liest sich
@@ -410,6 +416,18 @@ struct Schicht
     SchichtDrive& holeDrive();
 };
 
+/// Ist die Schicht eine Saite, die die Spielweisen kennt (*Extended KS*, *Waveguide*)?
+[[nodiscard]] inline bool istSaitenSchicht(const Schicht& schicht)
+{
+    return schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch;
+}
+/// Folgt die Schicht in einer Kette und beim Bend der Saite (S-L12 a)? Die Saite selbst
+/// immer, jede andere nach *In a legato*.
+[[nodiscard]] inline bool folgtDerSaite(const Schicht& schicht)
+{
+    return istSaitenSchicht(schicht) || schicht.folgtSaite;
+}
+
 /// *Tap level* gilt bei dieser Frequenz der schwingenden Saite, wie *Ring time*
 /// (S-W18 a, Patrik S136).
 inline constexpr double kTappingBezugHz = 220.0;
@@ -523,7 +541,10 @@ struct Instrument
 // Fassung 12 (S136, Stufe 25c, Entscheide S-L9 a bis S-L11 a) kennt unter
 // `strings` das Feld `fretless` (immer) und in `playing` dazu `slideTime` (ms je
 // Halbton) und `legatoLevel` — ein aelteres Programm liesse einen bundlosen Slide
-// stufig gleiten. Geschrieben wird Fassung 12.
+// stufig gleiten. In derselben Fassung (Stufe 25c-4, S-L12 a, noch nicht
+// ausgeliefert) traegt jede Schicht ausser einer Saite *Extended KS* oder
+// *Waveguide* `inALegato` (`ownNote`, `followString`; immer). Geschrieben wird
+// Fassung 12.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
 inline constexpr int kInstrumentFassung = 12;

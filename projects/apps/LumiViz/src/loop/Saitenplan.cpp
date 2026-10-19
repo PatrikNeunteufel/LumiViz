@@ -402,10 +402,10 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                 ton.artikulationen = note.artikulationen & (kPalmMute | kTapping);
                 ton.teilton = griff.greifbar ? griff.teilton : 1;
                 // Stufe 25c (S-L1 a, S-L12 a): ein Glied einer Kette schlaegt die Saite nicht an — es
-                // spielt nur seine uebrigen Schichten (Own note), daempft nicht und wird nicht gedaempft
+                // spielt nur seine Schichten mit Own note, daempft nicht und wird nicht gedaempft
                 if (griff.vorige >= 0)
                 {
-                    ton.teil = TonTeil::OhneSaite;
+                    ton.teil = TonTeil::Eigen;
                     ton.versatzMs = 0.0;
                     continue;
                 }
@@ -413,13 +413,14 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                 bool klingt = (note.artikulationen & kLetRing) != 0;
                 if (const int k = g.kette[i]; k >= 0)
                 {
-                    // der Kopf: die Saite als ein Ton ueber die Kette, die uebrigen Schichten wie gewohnt
+                    // der Kopf: die Saite (und was ihr folgt) als ein Ton ueber die Kette, die
+                    // Schichten mit Own note wie gewohnt
                     const Kette& kette = g.ketten[static_cast<std::size_t>(k)];
                     TonAngabe saite = ton;
-                    saite.teil = TonTeil::NurSaite;
+                    saite.teil = TonTeil::Folgend;
                     setzeKette(saite, loop, *muster, kette);
                     ton.zusatz.push_back(std::move(saite));
-                    ton.teil = TonTeil::OhneSaite;
+                    ton.teil = TonTeil::Eigen;
                     zusatz = true;
                     klingt = (muster->noten[kette.glieder.back()].artikulationen & kLetRing) != 0;
                 }

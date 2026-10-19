@@ -158,13 +158,16 @@ EIGENES_STRUM = ("strum_demo", "palm_mute_demo", "harmonics_demo", "tapping_demo
 
 def spielweisen(name, daten):
     """Fassung 12: `strum` und `fretless` unter `strings`, `playing` an jeder Saite Extended KS /
-    Waveguide."""
+    Waveguide, `inALegato` an jeder anderen Schicht."""
     daten["version"] = max(12, int(daten.get("version", 1)))
     if "strings" in daten:
         daten["strings"] = dict(daten["strings"], strum=dict(STRUM, spread=SPREAD_MS[name]), fretless=name in FRETLESS)
     for schicht in daten["layers"]:
         if schicht.get("waveform") == "string" and schicht.get("stringModel") in ("extendedKS", "waveguide"):
             schicht["playing"] = dict(PLAYING, mute=MUTE.get(name, PLAYING["mute"]))
+        else:
+            # seit S137 (Stufe 25c-4, S-L12 a): jede andere Schicht spielt im Legato ihre Note
+            schicht["inALegato"] = schicht.get("inALegato", "ownNote")
     return daten
 
 
