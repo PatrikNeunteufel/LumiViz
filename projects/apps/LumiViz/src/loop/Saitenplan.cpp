@@ -339,6 +339,9 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         Saitensatz saiten;
         std::vector<Griff> griffe;
         std::vector<Anschlagplan> anschlag;
+        /// Stufe 25c: je Note ihre Kette, wenn sie deren Kopf ist und Glieder hat; sonst −1
+        std::vector<int> kette;
+        std::vector<Kette> ketten;
     };
     std::map<const Muster*, Gegriffen> gegriffen;
     struct Vorkommen
@@ -349,6 +352,8 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         double startMs;
         const Muster* muster;
         int saite;
+        bool zusatz = false;   ///< das Ende gilt dem Ton der Saite einer Kette (Stufe 25c)
+        bool klingt = false;   ///< Let ring: bei einer Kette das ihrer letzten Note
     };
     std::vector<Vorkommen> vorkommen;
     // je Muster und Saite die Anschlaege im Durchlauf (S-M3 a: derselbe Kanal, dasselbe Muster)
@@ -367,6 +372,10 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
             richteSaiten(neu.saiten);
             neu.griffe = greifeNoten(*muster, neu.saiten);
             neu.anschlag = schlageAn(*muster, neu.saiten, neu.griffe, loop.schlaegeJeTakt, loop.schritteJeSchlag);
+            neu.ketten = kettenImMuster(*muster, neu.griffe);
+            neu.kette.assign(muster->noten.size(), -1);
+            for (std::size_t k = 0; k < neu.ketten.size(); ++k)
+                if (!neu.ketten[k].glieder.empty()) neu.kette[neu.ketten[k].kopf] = static_cast<int>(k);
             ort = gegriffen.emplace(muster, std::move(neu)).first;
         }
         const Gegriffen& g = ort->second;
@@ -392,11 +401,35 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                 ton.versatzMs = g.anschlag[i].versatzMs;
                 ton.artikulationen = note.artikulationen & (kPalmMute | kTapping);
                 ton.teilton = griff.greifbar ? griff.teilton : 1;
+                // Stufe 25c (S-L1 a, S-L12 a): ein Glied einer Kette schlaegt die Saite nicht an — es
+                // spielt nur seine uebrigen Schichten (Own note), daempft nicht und wird nicht gedaempft
+                if (griff.vorige >= 0)
+                {
+                    ton.teil = TonTeil::OhneSaite;
+                    ton.versatzMs = 0.0;
+                    continue;
+                }
+                bool zusatz = false;
+                bool klingt = (note.artikulationen & kLetRing) != 0;
+                if (const int k = g.kette[i]; k >= 0)
+                {
+                    // der Kopf: die Saite als ein Ton ueber die Kette, die uebrigen Schichten wie gewohnt
+                    const Kette& kette = g.ketten[static_cast<std::size_t>(k)];
+                    TonAngabe saite = ton;
+                    saite.teil = TonTeil::NurSaite;
+                    setzeKette(saite, loop, *muster, kette);
+                    ton.zusatz.push_back(std::move(saite));
+                    ton.teil = TonTeil::OhneSaite;
+                    zusatz = true;
+                    klingt = (muster->noten[kette.glieder.back()].artikulationen & kLetRing) != 0;
+                }
+                else if (!note.bend.empty())
+                    setzeKette(ton, loop, *muster, Kette{i, {}});  // ein Bend allein: im Ton selbst
                 if (!griff.greifbar) continue;  // eine nicht greifbare Note daempft nicht und wird nicht gedaempft
                 const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
                 const double startMs = static_cast<double>(schrittDavor + note.schritt) * schrittMs +
                                        (versetzt ? swingMs : 0.0) + ton.versatzMs;
-                vorkommen.push_back({c, r, i, startMs, muster, griff.saite});
+                vorkommen.push_back({c, r, i, startMs, muster, griff.saite, zusatz, klingt});
                 anschlaege[{muster, griff.saite}].push_back(startMs);
             }
         }
@@ -411,10 +444,12 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         const std::vector<double>& stellen = anschlaege[{v.muster, v.saite}];
         const auto danach = std::upper_bound(stellen.begin(), stellen.end(), v.startMs);
         const double naechste = danach != stellen.end() ? *danach : stellen.front() + durchlaufMs;
-        GeplanterTon& ton = toene[v.clip][v.runde][v.note];
+        GeplanterTon& geplant = toene[v.clip][v.runde][v.note];
+        // bei einer Kette gilt das Ende dem Ton der Saite (Stufe 25c), die uebrigen Schichten klingen aus
+        TonAngabe& ton = v.zusatz ? geplant.zusatz.front() : static_cast<TonAngabe&>(geplant);
         ton.endeMs = std::max(1, static_cast<int>(std::lround(naechste - v.startMs)));
         // Let ring (S-W6 a): gehalten, bis die naechste Note auf derselben Saite sie abdaempft
-        if ((v.muster->noten[v.note].artikulationen & kLetRing) != 0) ton.dauerMs = std::max(ton.dauerMs, ton.endeMs);
+        if (v.klingt) ton.dauerMs = std::max(ton.dauerMs, ton.endeMs);
     }
     return toene;
 }

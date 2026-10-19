@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 11,
+    "version": 12,
     "title": "Finger Bass",
     "category": "bass",
     "genres": ["Classical", "Jazz", "Rock", "World"],
@@ -48,7 +48,9 @@
                 "upLevel": 1.0,
                 "mute": 0.37,
                 "tapLevel": 0.75,
-                "touch": 0.3
+                "touch": 0.3,
+                "slideTime": 20.0,
+                "legatoLevel": 0.38
             }
         },
         {
@@ -82,6 +84,7 @@
         "strum": {
             "spread": 12.5,
             "hand": "halfBeat"
-        }
+        },
+        "fretless": false
     }
 }

@@ -423,6 +423,7 @@ QString tonKlang(const TonAngabe& ton)
         for (const TonBiegung& b : ton.biegung) teile << QStringLiteral("%1-%2").arg(b.ms).arg(b.viertel);
         name += QStringLiteral(":b") + teile.join(QLatin1Char(','));
     }
+    if (ton.teil != TonTeil::Alle) name += QStringLiteral(":p%1").arg(static_cast<int>(ton.teil));  // seit Stufe 25c
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
 }
@@ -468,19 +469,23 @@ bool zerlegeBiegung(QStringView text, std::vector<TonBiegung>& biegung)
 
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
-/// 24b), `:v…`, `:b…` (seit Stufe 25b), dann Dauer und Tonhoehe als reine
-/// Zahlen — davor das Instrument, das als Pfad selbst einen Doppelpunkt tragen
-/// kann (C:/…).
+/// 24b), `:v…`, `:b…` (seit Stufe 25b), `:p1`, `:p2` (seit Stufe 25c), dann
+/// Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das als Pfad
+/// selbst einen Doppelpunkt tragen kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 8; ++runde)
+    for (int runde = 0; runde < 9; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
         const QStringView stueck = QStringView(rest).mid(vor + 1);
         if (stueck == QLatin1String("u"))
             zusatz.richtung = Richtung::Auf;
+        else if (stueck == QLatin1String("p1"))
+            zusatz.teil = TonTeil::NurSaite;
+        else if (stueck == QLatin1String("p2"))
+            zusatz.teil = TonTeil::OhneSaite;
         else if (stueck == QLatin1String("m"))
             zusatz.artikulationen |= kPalmMute;
         else if (stueck == QLatin1String("t"))
@@ -646,7 +651,11 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
             {
                 if (kanaele[k].clips[c].muster != m.name) continue;
                 for (const std::vector<GeplanterTon>& runde : jeKanal[k][c])
-                    for (const TonAngabe& ton : runde) nimm(tonKlang(ton));
+                    for (const GeplanterTon& ton : runde)
+                    {
+                        nimm(tonKlang(ton));
+                        for (const TonAngabe& zusatz : ton.zusatz) nimm(tonKlang(zusatz));  // Stufe 25c
+                    }
             }
     }
     return namen;

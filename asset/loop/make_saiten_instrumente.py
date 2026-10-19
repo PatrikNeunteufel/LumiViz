@@ -146,18 +146,22 @@ SPREAD_MS = {
 }
 # Mute: die Baesse nach IDMT-SMT-Bass (S-W17 a; der Upright uebertragen), sonst die Vorgabe
 MUTE = {"finger_bass": 0.37, "slap_bass": 0.37, "upright_bass": 0.37}
-# die Vorgaben des Programms (include/loop/Instrument.hpp, Spielweise.hpp) — S-W11 a: immer schreiben
-PLAYING = {"upLevel": 1.0, "mute": 0.6, "tapLevel": 0.75, "touch": 0.3}
+# die Vorgaben des Programms (include/loop/Instrument.hpp, Spielweise.hpp) — S-W11 a: immer schreiben;
+# seit S136 (Stufe 25c, Fassung 12) dazu Slide time und Legato level (S-L10 a, S-L11 a)
+PLAYING = {"upLevel": 1.0, "mute": 0.6, "tapLevel": 0.75, "touch": 0.3, "slideTime": 20.0, "legatoLevel": 0.38}
 STRUM = {"spread": 8.0, "hand": "halfBeat"}
+# ohne Buende (S-L9 a): ein Slide gleitet stetig
+FRETLESS = ("upright_bass", "pizzicato_violin")
 # die Beispiele der Spielweisen (S-W22 a, `make_spielweisen_loops.py`) setzen ihr Strum selbst
 EIGENES_STRUM = ("strum_demo", "palm_mute_demo", "harmonics_demo", "tapping_demo")
 
 
 def spielweisen(name, daten):
-    """Fassung 11: `strum` unter `strings`, `playing` an jeder Saite Extended KS / Waveguide."""
-    daten["version"] = max(11, int(daten.get("version", 1)))
+    """Fassung 12: `strum` und `fretless` unter `strings`, `playing` an jeder Saite Extended KS /
+    Waveguide."""
+    daten["version"] = max(12, int(daten.get("version", 1)))
     if "strings" in daten:
-        daten["strings"] = dict(daten["strings"], strum=dict(STRUM, spread=SPREAD_MS[name]))
+        daten["strings"] = dict(daten["strings"], strum=dict(STRUM, spread=SPREAD_MS[name]), fretless=name in FRETLESS)
     for schicht in daten["layers"]:
         if schicht.get("waveform") == "string" and schicht.get("stringModel") in ("extendedKS", "waveguide"):
             schicht["playing"] = dict(PLAYING, mute=MUTE.get(name, PLAYING["mute"]))

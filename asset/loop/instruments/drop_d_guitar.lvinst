@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-instrument",
-    "version": 11,
+    "version": 12,
     "title": "Drop D Guitar",
     "category": "plucked",
     "genres": ["Rock"],
@@ -45,7 +45,9 @@
                 "upLevel": 1.0,
                 "mute": 0.6,
                 "tapLevel": 0.75,
-                "touch": 0.3
+                "touch": 0.3,
+                "slideTime": 20.0,
+                "legatoLevel": 0.38
             }
         }
     ],
@@ -57,6 +59,7 @@
         "strum": {
             "spread": 7.0,
             "hand": "halfBeat"
-        }
+        },
+        "fretless": false
     }
 }

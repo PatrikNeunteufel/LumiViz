@@ -71,29 +71,33 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                         const Note& note = muster->noten[noteNr];
                         const GeplanterTon* geplant =
                             toeneDesClips.empty() ? nullptr : &toeneDesClips[static_cast<std::size_t>(runde)][noteNr];
-                        const QString name = geplant == nullptr
-                                                 ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
-                                                 : tonKlang(*geplant);
-                        const int klang = klangVon.value(name, -1);
-                        const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
-                        if (neu)
-                        {
-                            Stimme stimme;
-                            stimme.klang = klang;
-                            ablauf.stimmen.push_back(std::move(stimme));
-                        }
                         const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
                         // Strum (Stufe 24b): eine Saite des Akkords schlaegt so viel spaeter an
                         const double strumFrames = geplant == nullptr ? 0.0 : geplant->versatzMs * rate / 1000.0;
                         const double stelle = static_cast<double>(schrittDavor + note.schritt) * schrittFrames +
                                               (versetzt ? swingFrames : 0.0) + strumFrames;
                         const double laut = note.laut * lautMuster;
-                        Schlag schlag;
-                        schlag.frame = std::llround(stelle);
-                        schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - muster->pan));
-                        schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
-                        schlag.bus = bus;
-                        ablauf.stimmen[ort->second].schlaege.push_back(schlag);
+                        const auto schlage = [&](const QString& name) {
+                            const int klang = klangVon.value(name, -1);
+                            const auto [ort, neu] = tonStimmeVon.try_emplace({muster, klang}, ablauf.stimmen.size());
+                            if (neu)
+                            {
+                                Stimme stimme;
+                                stimme.klang = klang;
+                                ablauf.stimmen.push_back(std::move(stimme));
+                            }
+                            Schlag schlag;
+                            schlag.frame = std::llround(stelle);
+                            schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - muster->pan));
+                            schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
+                            schlag.bus = bus;
+                            ablauf.stimmen[ort->second].schlaege.push_back(schlag);
+                        };
+                        schlage(geplant == nullptr ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
+                                                   : tonKlang(*geplant));
+                        // Stufe 25c (S-L12 a): beim Kopf einer Kette die Saite ueber die ganze Kette
+                        if (geplant != nullptr)
+                            for (const TonAngabe& zusatz : geplant->zusatz) schlage(tonKlang(zusatz));
                     }
                 }
                 continue;

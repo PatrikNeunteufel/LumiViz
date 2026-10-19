@@ -186,6 +186,16 @@ struct TonBiegung
     [[nodiscard]] bool operator==(const TonBiegung&) const = default;
 };
 
+/// Welche Schichten ein Ton rechnet (Stufe 25c, S-L12 a): in einer Kette verbundener
+/// Noten laeuft die Saite (*Extended KS*, *Waveguide*) als ein Ton ueber die Kette,
+/// die uebrigen Schichten spielen je Note (*Own note*).
+enum class TonTeil : int
+{
+    Alle = 0,
+    NurSaite = 1,   ///< nur die Saiten-Schichten Extended KS und Waveguide
+    OhneSaite = 2,  ///< alle anderen Schichten
+};
+
 /// Ein gerechneter Ton mit allem, was ihn ausmacht (seit Stufe 23b): bei einem
 /// Saiteninstrument auch die Saite und das Ende, an dem die naechste Note auf
 /// derselben Saite ihn abdaempft (Entscheid S-M3 a).
@@ -214,14 +224,17 @@ struct TonAngabe
     /// Die Biegung, linear zwischen den Punkten, nach `ms` sortiert (zwei Punkte an
     /// derselben Stelle: ein Sprung); leer = keine.
     std::vector<TonBiegung> biegung{};
+    /// Seit Stufe 25c (S-L12 a): welche Schichten dieser Ton rechnet.
+    TonTeil teil = TonTeil::Alle;
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
 /// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, dann (seit
 /// Stufe 24b) `:h<teilton>` bei einem Flageolett, `:u` bei Up, `:m` bei Palm
 /// mute, `:t` bei Tapping, (seit Stufe 25b, S-L6 a) `:v<ms><l|g><hoehe>,…` bei
-/// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, zuletzt `:e<ms>` bei
-/// einem Ende — ohne alles derselbe Name wie bis Stufe 22.
+/// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, (seit Stufe 25c) `:p1`
+/// nur die Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei einem Ende — ohne
+/// alles derselbe Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

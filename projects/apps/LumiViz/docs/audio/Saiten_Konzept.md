@@ -768,6 +768,17 @@ Energie, andere Harmonizität). Verworfen: b (ein leiser normaler Anschlag wie L
 Hammer-on und Pull-off klängen gleich und wie ein Anschlag), c (nur der Längensprung —
 widerspricht dem gemessenen neuen Einsatz).
 
+✅ **S-L12 a** (Patrik S136, auf seine Frage nach einem Schalter): **Ein Schalter je
+Schicht, *In a legato*:** **Own note** (jede Note der Kette spielt die Schicht als
+eigenen Ton — Vorgabe) oder **Follow string** (die Schicht folgt dem Verlauf der Saite
+als ein Ton, mit Sprüngen, Gleiten und Biegung). Nur die Saiten-Schicht (*Extended KS*,
+*Waveguide*) läuft immer als ein Ton über die Kette. Gebaut in zwei Teilen: *Own note*
+mit 25c-3b, *Follow string* als **25c-4** (wechselnde Tonhöhe für die übrigen
+Schwingungsarten; ohne Verlauf rechnet jede Schicht wie bisher); das Feld kommt in
+Fassung 12, die noch nicht ausgeliefert ist. Verworfen: b (ein Schalter je Instrument —
+zu grob für ein Instrument mit kurzem Körperklang und gehaltener Fläche zugleich), c
+(immer *Own note* — gehaltene Schichten mit Legato wären dauerhaft ausgeschlossen).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -1554,9 +1565,22 @@ S. 117, Özaslan 2010 S. 458).
   einen Ganzton: B3 auf 5 Cent; **−1,1 dB** gegen den ungebogenen Ton (gemessen an
   echten Saiten −0,3 dB, hergeleitet +0,5 dB) — vermutlich, weil der Verlust je Umlauf
   der gegriffenen Tonhöhe gilt und der gebogene Ton öfter umläuft; offen.
-- **25c-3b (offen):** `toeneImKanal` auf Ketten umschalten (Glieder schlagen nicht an);
-  Upright Bass und Pizzicato Violin *Fretless*, die Instrumente in Fassung 12;
-  Hörproben, `loop_werte.txt` neu.
+- **25c-3b die Planung spielt Ketten (gebaut):** `TonTeil` (alle Schichten, nur die
+  Saite, ohne die Saite; Name `:p1`/`:p2`). `toeneImKanal`: der Kopf einer Kette spielt
+  seine übrigen Schichten als eigenen Ton und bekommt einen Zusatzton
+  (`GeplanterTon::zusatz`) — die Saite über die ganze Kette, mit Verlauf und Bend; an ihm
+  hängen das Ende (die nächste Note auf der Saite nach der Kette) und *Let ring* (das der
+  letzten Note). Die Glieder spielen nur ihre übrigen Schichten (*Own note*, S-L12 a),
+  ohne Ende und ohne Strum. Eine Note mit Bend allein trägt den Bend im eigenen Ton.
+  Rechenkern und `klangNamen` nehmen die Zusatztöne mit. Die mitgelieferten
+  Saiteninstrumente in **Fassung 12** (Slide time 20, Legato level 0,38; Upright Bass
+  und Pizzicato Violin *Fretless*). `loop_werte.txt` unverändert (kein mitgelieferter Loop
+  hat Ketten). Belegt in `test_LoopSpielweise` „25c“ (Planung) und den Klangfällen;
+  Hörproben der Gitarren-Proben mit Ketten unter `.claude/handover/hoerproben_25c_ketten/`
+  (ohne: `hoerproben_proben/`).
+- **25c-4 (offen):** *Follow string* (S-L12 a) — die übrigen Schwingungsarten mit
+  wechselnder Tonhöhe, der Schalter *In a legato* je Schicht; die Lautstärke des Bends
+  (−1,1 dB gegen −0,3 dB gemessen) ansehen.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

@@ -1031,4 +1031,66 @@ TEST_SUITE("LoopSpielweise")
             CHECK_FALSE(zerlegeTon(QStringLiteral("inst:guitar:57:750:b90"), nichts));
         }
     }
+
+    TEST_CASE("Loop Spielweise 25c: die Planung spielt eine Kette als einen Ton der Saite, die uebrigen Schichten je Note")
+    {
+        Saitensatz gitarre;
+        gitarre.leer = stimmungsvorlagen()[0].leer;
+        gitarre.mensurMm = 648.0;
+        const SaitenVon saiten = [gitarre](const QString&) { return gitarre; };
+        Loop loop;  // 120 BPM: ein Schritt 125 ms, ein Takt 2 s
+        Muster m;
+        m.name = QStringLiteral("Lauf");
+        m.art = MusterArt::Instrument;
+        m.instrument = QStringLiteral("guitar");
+        m.takte = 1;
+        Note h{2, 2, 59};
+        h.artikulationen = kLegato;
+        Note p{4, 2, 57};
+        p.artikulationen = kLegato | kLetRing;
+        Note gebogen{8, 4, 64};
+        gebogen.bend = {{0.0, 0.0}, {0.5, 2.0}};
+        m.noten = {Note{0, 2, 57}, h, p, gebogen};
+        loop.muster.push_back(m);
+        loop.kanaele = {{QStringLiteral("Gitarre"), true, {{m.name, 0, 1}}}};
+        loop.richte();
+
+        const std::vector<ClipToene> toene = toeneImKanal(loop, 0, saiten);
+        REQUIRE(toene.size() == 1);
+        REQUIRE(toene[0].size() == 1);
+        const std::vector<GeplanterTon>& runde = toene[0][0];
+        REQUIRE(runde.size() == 4);
+        // der Kopf: die uebrigen Schichten als eigener Ton, dazu die Saite ueber die Kette
+        CHECK(runde[0].teil == TonTeil::OhneSaite);
+        REQUIRE(runde[0].zusatz.size() == 1);
+        const TonAngabe& saite = runde[0].zusatz.front();
+        CHECK(saite.teil == TonTeil::NurSaite);
+        CHECK(saite.verlauf == std::vector<TonWechsel>{{250, 59, false}, {500, 57, false}});
+        CHECK(saite.saite == 3);
+        // das Ende: die naechste Note auf der G-Saite schlaegt erst im naechsten Durchlauf an; die
+        // letzte Note traegt Let ring — die Saite klingt bis dorthin
+        CHECK(saite.endeMs == 2000);
+        CHECK(saite.dauerMs == 2000);
+        // die Glieder: nur ihre uebrigen Schichten, ohne Ende und ohne Strum
+        for (const std::size_t i : {std::size_t{1}, std::size_t{2}})
+        {
+            CHECK(runde[i].teil == TonTeil::OhneSaite);
+            CHECK(runde[i].endeMs == 0);
+            CHECK(runde[i].versatzMs == 0.0);
+            CHECK(runde[i].zusatz.empty());
+        }
+        // eine Note mit Bend allein: der Bend im Ton selbst, alle Schichten
+        CHECK(runde[3].teil == TonTeil::Alle);
+        CHECK(runde[3].biegung == std::vector<TonBiegung>{{0, 0}, {250, 8}});
+        CHECK(runde[3].zusatz.empty());
+
+        // die Namen: der Ton der Saite steht unter den Klaengen, mit :p1; die Toene der Noten mit :p2
+        const QStringList namen = loop.klangNamen(saiten);
+        CHECK(namen.contains(tonKlang(saite)));
+        CHECK(tonKlang(saite).contains(QStringLiteral(":p1")));
+        CHECK(tonKlang(runde[1]).endsWith(QStringLiteral(":p2")));
+        TonAngabe zurueck;
+        REQUIRE(zerlegeTon(tonKlang(saite), zurueck));
+        CHECK(zurueck == saite);
+    }
 }

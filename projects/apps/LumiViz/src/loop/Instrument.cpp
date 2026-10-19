@@ -2561,6 +2561,13 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
     for (const Schicht& schicht : instrument.schichten)
     {
         if (!schicht.an) continue;
+        // Stufe 25c (S-L12 a): in einer Kette rechnet der Ton der Saite nur die Saite, die Toene der
+        // Noten nur die uebrigen Schichten
+        if (angabe != nullptr && angabe->teil != TonTeil::Alle)
+        {
+            const bool saitenSchicht = schicht.schwingung == Schwingung::Saite && schicht.saitenModell != SaitenModell::Klassisch;
+            if (saitenSchicht != (angabe->teil == TonTeil::NurSaite)) continue;
+        }
         // die Schicht setzt spaeter ein und endet mit der Note; ist die Note
         // kuerzer als der Einsatz, bleibt ein kurzer Anschlag
         const double einsatzMs = std::clamp(schicht.einsatzMs, 0.0, 1000.0);

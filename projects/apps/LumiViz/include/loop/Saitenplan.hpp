@@ -116,6 +116,10 @@ struct Anschlagplan
 struct GeplanterTon : TonAngabe
 {
     double versatzMs = 0.0;  ///< Strum (Stufe 24b) — nicht im Namen
+    /// Stufe 25c (S-L12 a): beim Kopf einer Kette der Ton der Saite ueber die ganze
+    /// Kette (`TonTeil::NurSaite`, mit Verlauf und Bend) — er schlaegt mit dem Kopf an;
+    /// der Ton oben spielt dann nur die uebrigen Schichten. Leer = keiner.
+    std::vector<TonAngabe> zusatz{};
 };
 
 /// Die Toene eines Clips: `[Wiederholung][Note]`.
