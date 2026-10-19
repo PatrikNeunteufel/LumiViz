@@ -168,9 +168,20 @@ struct AkkordArt
     QString name;
     std::vector<int> stufen;
 };
-/// Die Arten, die das Programm erkennt — alle Arten der mitgelieferten Vorlagen bis
-/// auf `alt` und `7sg` (in chords-db ohne gaengige Bedeutung). Die Reihenfolge ist der
-/// Vorrang beim Erkennen: die einfachen zuerst (von Claude gesetzt).
+/// Die Datei der Arten unter `asset/loop/chords` (S-T13 a): das Programm und
+/// `make_chords.py` lesen beide aus ihr.
+inline constexpr const char* kAkkordArtenDatei = "types.json";
+inline constexpr const char* kAkkordArtenFormat = "lumiviz-chord-types";
+/// Die Arten aus einer Datei (Format `lumiviz-chord-types`, Fassung 1: `types` mit
+/// `name` und `steps`). Nicht gueltig: ein fremdes Format, eine andere Fassung, ein
+/// Name doppelt oder leer, Stufen nicht aufsteigend ab 0 oder weiter als
+/// `kVoicingWeiteMax`, keine Art.
+bool ladeAkkordArten(const QString& pfad, std::vector<AkkordArt>& arten);
+/// Die Arten, die das Programm erkennt, aus `types.json` der mitgelieferten Akkorde —
+/// alle Arten der Vorlagen bis auf `alt` und `7sg` (in chords-db ohne gaengige
+/// Bedeutung). Die Reihenfolge ist der Vorrang beim Erkennen: die einfachen zuerst (von
+/// Claude gesetzt). Einmal gelesen; leer, wenn die Datei fehlt — dann erkennt
+/// `erkenneAkkord` nichts.
 [[nodiscard]] const std::vector<AkkordArt>& akkordArten();
 
 /// Ein erkannter Name: Grundton, Art und — bei einem Slash-Akkord — der Ton im Bass.

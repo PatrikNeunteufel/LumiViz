@@ -66,6 +66,7 @@ lumi_asset(loop
         "chords/violin/*.lvchord"
         "chords/voicings/*.lvchord"
         "chords/CREDITS.md"
+        "chords/types.json"
         "instruments/*.lvinst"
         "genres/*.lvloop"
         "vergleich/*.lvloop"

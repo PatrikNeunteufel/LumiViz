@@ -364,58 +364,46 @@ std::optional<Akkord> verschobenesGriffbild(const Akkord& akkord, int verschiebu
 
 // --- Arten und Namen ---------------------------------------------------------
 
+bool ladeAkkordArten(const QString& pfad, std::vector<AkkordArt>& arten)
+{
+    QFile datei(pfad);
+    if (!datei.open(QIODevice::ReadOnly)) return false;
+    QJsonParseError fehler;
+    const QJsonDocument doc = QJsonDocument::fromJson(datei.readAll(), &fehler);
+    if (fehler.error != QJsonParseError::NoError || !doc.isObject()) return false;
+    const QJsonObject wurzel = doc.object();
+    if (wurzel.value(QStringLiteral("format")).toString() != QLatin1String(kAkkordArtenFormat) ||
+        wurzel.value(QStringLiteral("version")).toInt() != 1)
+        return false;
+    std::vector<AkkordArt> gelesen;
+    for (const QJsonValue& wert : wurzel.value(QStringLiteral("types")).toArray())
+    {
+        const QJsonObject o = wert.toObject();
+        AkkordArt art;
+        art.name = o.value(QStringLiteral("name")).toString();
+        art.stufen = ausFeld(o.value(QStringLiteral("steps")), -1);
+        // gueltig: ein Name, einmal; aufsteigend ab 0, in der Weite eines Voicings
+        if (art.name.isEmpty() || art.stufen.empty() || art.stufen.front() != 0 ||
+            !std::is_sorted(art.stufen.begin(), art.stufen.end()) ||
+            std::adjacent_find(art.stufen.begin(), art.stufen.end()) != art.stufen.end() ||
+            art.stufen.back() > kVoicingWeiteMax)
+            return false;
+        if (std::any_of(gelesen.begin(), gelesen.end(), [&](const AkkordArt& a) { return a.name == art.name; })) return false;
+        gelesen.push_back(std::move(art));
+    }
+    if (gelesen.empty()) return false;
+    arten = std::move(gelesen);
+    return true;
+}
+
 const std::vector<AkkordArt>& akkordArten()
 {
-    // Lehrbuchwissen; die Namen wie chords-db. Gegen die mitgelieferten Vorlagen
-    // geprueft in test_LoopAkkord (26e-1).
-    static const std::vector<AkkordArt> kArten = {
-        {QStringLiteral("major"), {0, 4, 7}},
-        {QStringLiteral("minor"), {0, 3, 7}},
-        {QStringLiteral("7"), {0, 4, 7, 10}},
-        {QStringLiteral("maj7"), {0, 4, 7, 11}},
-        {QStringLiteral("m7"), {0, 3, 7, 10}},
-        {QStringLiteral("sus2"), {0, 2, 7}},
-        {QStringLiteral("sus4"), {0, 5, 7}},
-        {QStringLiteral("dim"), {0, 3, 6}},
-        {QStringLiteral("aug"), {0, 4, 8}},
-        {QStringLiteral("6"), {0, 4, 7, 9}},
-        {QStringLiteral("m6"), {0, 3, 7, 9}},
-        {QStringLiteral("7sus4"), {0, 5, 7, 10}},
-        {QStringLiteral("dim7"), {0, 3, 6, 9}},
-        {QStringLiteral("m7b5"), {0, 3, 6, 10}},
-        {QStringLiteral("add9"), {0, 4, 7, 14}},
-        {QStringLiteral("madd9"), {0, 3, 7, 14}},
-        {QStringLiteral("9"), {0, 4, 7, 10, 14}},
-        {QStringLiteral("maj9"), {0, 4, 7, 11, 14}},
-        {QStringLiteral("m9"), {0, 3, 7, 10, 14}},
-        {QStringLiteral("69"), {0, 4, 7, 9, 14}},
-        {QStringLiteral("m69"), {0, 3, 7, 9, 14}},
-        {QStringLiteral("7b5"), {0, 4, 6, 10}},
-        {QStringLiteral("7b9"), {0, 4, 7, 10, 13}},
-        {QStringLiteral("7#9"), {0, 4, 7, 10, 15}},
-        {QStringLiteral("aug7"), {0, 4, 8, 10}},
-        {QStringLiteral("9b5"), {0, 4, 6, 10, 14}},
-        {QStringLiteral("aug9"), {0, 4, 8, 10, 14}},
-        {QStringLiteral("mmaj7"), {0, 3, 7, 11}},
-        {QStringLiteral("mmaj7b5"), {0, 3, 6, 11}},
-        {QStringLiteral("maj7b5"), {0, 4, 6, 11}},
-        {QStringLiteral("maj7#5"), {0, 4, 8, 11}},
-        {QStringLiteral("mmaj9"), {0, 3, 7, 11, 14}},
-        {QStringLiteral("m9b5"), {0, 3, 6, 10, 14}},
-        {QStringLiteral("7b9#5"), {0, 4, 8, 10, 13}},
-        {QStringLiteral("b13#9"), {0, 4, 8, 10, 15}},
-        {QStringLiteral("b13b9"), {0, 4, 8, 10, 13}},
-        {QStringLiteral("11"), {0, 4, 7, 10, 14, 17}},
-        {QStringLiteral("9#11"), {0, 4, 7, 10, 14, 18}},
-        {QStringLiteral("m11"), {0, 3, 7, 10, 14, 17}},
-        {QStringLiteral("maj11"), {0, 4, 7, 11, 14, 17}},
-        {QStringLiteral("mmaj11"), {0, 3, 7, 11, 14, 17}},
-        {QStringLiteral("13"), {0, 4, 7, 10, 14, 17, 21}},
-        {QStringLiteral("maj13"), {0, 4, 7, 11, 14, 17, 21}},
-        {QStringLiteral("13b9"), {0, 4, 7, 10, 13, 21}},
-        {QStringLiteral("13b5b9"), {0, 4, 6, 10, 13, 21}},
-    };
-    return kArten;
+    // einmal gelesen und gemerkt — aber nur, wenn die Datei da war (S-T13 a)
+    static std::vector<AkkordArt> arten;
+    if (arten.empty())
+        if (const QString ordner = mitgelieferterAkkordOrdner(); !ordner.isEmpty())
+            (void)ladeAkkordArten(QDir(ordner).filePath(QLatin1String(kAkkordArtenDatei)), arten);
+    return arten;
 }
 
 namespace
@@ -462,12 +450,15 @@ std::optional<AkkordName> erkenneAkkord(const std::vector<int>& hoehen)
     for (const AkkordArt& art : arten)
         if (gedreht(klassen, bass) == klassenDerArt(art)) return AkkordName{bass, art.name, -1};
     // Slash: der Bass darf zum Akkord gehoeren (C/E) oder nicht (A/G#)
+    std::vector<const AkkordArt*> durMoll;
+    for (const AkkordArt& art : arten)
+        if (art.name == QLatin1String("major") || art.name == QLatin1String("minor")) durMoll.push_back(&art);
     for (int grundton = 0; grundton < 12; ++grundton)
     {
         if (grundton == bass || !(klassen & (1 << grundton))) continue;
-        for (const AkkordArt& art : {arten[0], arten[1]})
-            if (gedreht(klassen, grundton) == (klassenDerArt(art) | (1 << ((bass - grundton + 12) % 12))))
-                return AkkordName{grundton, art.name, bass};
+        for (const AkkordArt* art : durMoll)
+            if (gedreht(klassen, grundton) == (klassenDerArt(*art) | (1 << ((bass - grundton + 12) % 12))))
+                return AkkordName{grundton, art->name, bass};
     }
     for (const AkkordArt& art : arten)
     {

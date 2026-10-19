@@ -24,7 +24,9 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QFile>
 #include <QImage>
+#include <QTemporaryDir>
 #include <QPainter>
 #include <QPalette>
 
@@ -119,6 +121,49 @@ TEST_CASE("Loop Griffbild 26e-1: der Name aus den Toenen")
     CHECK(akkordArtText({0, QStringLiteral("major"), 4}) == QStringLiteral("/E"));
     CHECK(akkordArtText({9, QStringLiteral("minor"), 7}) == QStringLiteral("m/G"));
     CHECK(akkordArtText({0, QStringLiteral("maj7"), -1}) == QStringLiteral("maj7"));
+}
+
+TEST_CASE("Loop Griffbild 26e-1: die Datei der Arten (S-T13 a)")
+{
+    QTemporaryDir ordner;
+    REQUIRE(ordner.isValid());
+    const auto schreibe = [&](const QByteArray& inhalt) {
+        const QString pfad = QDir(ordner.path()).filePath(QStringLiteral("types.json"));
+        QFile datei(pfad);
+        REQUIRE(datei.open(QIODevice::WriteOnly));
+        datei.write(inhalt);
+        return pfad;
+    };
+    std::vector<AkkordArt> arten;
+    REQUIRE(ladeAkkordArten(schreibe(R"({"format": "lumiviz-chord-types", "version": 1, "types": [
+        {"name": "major", "steps": [0, 4, 7]}, {"name": "9", "steps": [0, 4, 7, 10, 14]}]})"),
+                            arten));
+    REQUIRE(arten.size() == 2);
+    CHECK(arten[1].name == QStringLiteral("9"));
+    CHECK(arten[1].stufen == std::vector<int>{0, 4, 7, 10, 14});
+    // nicht gueltig — und dann bleibt, was war
+    for (const char* falsch : {
+             R"({"format": "lumiviz-chord", "version": 1, "types": [{"name": "major", "steps": [0, 4, 7]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 2, "types": [{"name": "major", "steps": [0, 4, 7]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": []})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "", "steps": [0, 4, 7]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "x", "steps": [4, 7]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "x", "steps": [0, 7, 4]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "x", "steps": [0, 4, 4]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "x", "steps": [0, 60]}]})",
+             R"({"format": "lumiviz-chord-types", "version": 1, "types": [{"name": "x", "steps": [0, 4]}, {"name": "x", "steps": [0, 3]}]})",
+             "kein JSON"})
+    {
+        CAPTURE(falsch);
+        CHECK_FALSE(ladeAkkordArten(schreibe(falsch), arten));
+        CHECK(arten.size() == 2);
+    }
+    CHECK_FALSE(ladeAkkordArten(QDir(ordner.path()).filePath(QStringLiteral("fehlt.json")), arten));
+
+    // die mitgelieferte liest das Programm: 45 Arten, Dur und Moll vorn
+    REQUIRE(akkordArten().size() == 45);
+    CHECK(akkordArten()[0].name == QStringLiteral("major"));
+    CHECK(akkordArten()[1].name == QStringLiteral("minor"));
 }
 
 TEST_CASE("Loop Griffbild 26e-1: die Arten gegen die mitgelieferten Vorlagen")

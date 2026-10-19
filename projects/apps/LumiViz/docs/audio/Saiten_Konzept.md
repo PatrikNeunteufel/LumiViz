@@ -195,6 +195,20 @@ Gespräch; hier als Beschreibung):
 Verworfen: b (ohne L — ein falsch benanntes Griffbild landet im falschen Ordner der Galerie).
 Kippt, wenn eigene Griffbilder vor allem Griffe ohne gängigen Namen sind.
 
+✅ **S-T12 b** (Patrik S138, nach dem Befund in §5y): **Alle Lagen aus chords-db bleiben;**
+das Fenster zeigt an einer Lage, die Töne außerhalb ihrer Art greift, das Zeichen *unusual* mit
+diesen Tönen (verglichen mit `akkordArten()`). `alt` und `7sg` bleiben, wie die Quelle sie
+liefert (ohne Namensvorschlag). Verworfen: a (abweichende Lagen weglassen, `7sg` als `7` — es
+ginge Quellgut verloren, das bewusste Variante sein kann), c (nichts prüfen — ein falscher Name
+bliebe unbemerkt).
+
+✅ **S-T13 a** (Patrik S138): **Die Arten stehen in einer Datei `asset/loop/chords/types.json`**
+(Name und Stufen je Art, in der Reihenfolge des Vorrangs beim Erkennen). `make_chords.py` liest
+sie statt einer eigenen Tabelle; das Programm liest sie als mitgelieferte Datei
+(`asset/Asset.cmake`); ein Test prüft, dass jede Art der Vorlagen darin steht. Verworfen: b (die
+Tabelle in `Akkord.cpp` maßgeblich, das Skript mit eigener — der Vergleich über die Vorlagen
+sähe nur die 13 gerechneten Arten).
+
 ✅ **S-W1 a** (Patrik S133; Bearbeitung ab der nächsten Session): **Ziel der
 Spielweisen** sind Strum (Richtung, Versatz der Saiten, Muster) und die
 Artikulationen je Note — Palm mute, Let ring, Tapping, Harmonics, Hammer-on /
@@ -1953,7 +1967,14 @@ Dialog *Edit chord*.
 - **Befund chords-db** (Prüfung S138 gegen die Lehrbuch-Arten): rund 30 Lagen greifen Töne
   außerhalb ihrer Art (etwa `guitar/bb_6_4` mit kleiner Terz und großer Septime,
   `guitar/g_add9_2`, `ukulele/f_11_1`); `alt` greift immer Grundton, Terz, verminderte Quinte,
-  `7sg` (drei Lagen) wie ein Septakkord. Vorgelegt als S-T12.
+  `7sg` (drei Lagen) wie ein Septakkord. Vorgelegt als S-T12 (b: bleiben, Zeichen *unusual*
+  im Fenster — gebaut mit 26e-2).
+- **Nach S-T13 a:** die Arten in `asset/loop/chords/types.json` (Format `lumiviz-chord-types`,
+  Fassung 1; in `asset/Asset.cmake`); `ladeAkkordArten`, `akkordArten()` liest sie einmal (fehlt
+  sie, erkennt `erkenneAkkord` nichts); Dur und Moll für den Slash beim Namen gesucht.
+  `make_chords.py` liest `ABSTAENDE` aus derselben Datei — in einer Kopie gelaufen, alle 6373
+  Dateien byte-gleich. Belegt im Fall „die Datei der Arten" (`test_LoopGriffbild`, zehn
+  ungültige Dateien).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

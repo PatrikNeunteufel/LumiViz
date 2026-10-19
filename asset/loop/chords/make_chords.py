@@ -17,6 +17,9 @@ Samples. Schreibt neben dieses Skript je Akkord eine `.lvchord` (Fassung 1, `loo
 - `voicings/`: je Grundton und Art Grundstellung, Umkehrungen und eine weite Lage (Lehrbuchwissen,
   `ABSTAENDE`).
 
+Die Arten (`ABSTAENDE`) liest es aus `types.json` daneben — dieselbe Datei liest das Programm
+(`akkordArten()`, S-T13 a); sie ist keine Ausgabe dieses Skripts.
+
 Der Dateiname ist der Name unter `asset/loop/chords` (`guitar/c_major_1`). Kein Zufall: zwei Laeufe
 ergeben dieselben Dateien. Vorher werden die `.lvchord` dieser Ordner geloescht (alles hier ist
 erzeugt). Zum Schluss: die Zahl je Ordner — `test_LoopAkkordVorlagen.cpp` traegt sie.
@@ -32,15 +35,10 @@ ORDNER = pathlib.Path(__file__).parent
 GRUNDTOENE = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
 STUFE = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
-# die Abstaende der Arten in Halbtoenen ueber dem Grundton (Lehrbuchwissen; die Namen wie chords-db)
-ABSTAENDE = {
-    "major": [0, 4, 7], "minor": [0, 3, 7], "dim": [0, 3, 6], "aug": [0, 4, 8],
-    "sus2": [0, 2, 7], "sus4": [0, 5, 7], "6": [0, 4, 7, 9], "m6": [0, 3, 7, 9],
-    "7": [0, 4, 7, 10], "maj7": [0, 4, 7, 11], "m7": [0, 3, 7, 10], "m7b5": [0, 3, 6, 10],
-    "dim7": [0, 3, 6, 9], "7sus4": [0, 5, 7, 10], "mmaj7": [0, 3, 7, 11], "aug7": [0, 4, 8, 10],
-    "add9": [0, 4, 7, 14], "madd9": [0, 3, 7, 14], "9": [0, 4, 7, 10, 14], "m9": [0, 3, 7, 10, 14],
-    "maj9": [0, 4, 7, 11, 14],
-}
+# die Abstaende der Arten in Halbtoenen ueber dem Grundton — aus `types.json` daneben, die auch
+# das Programm liest (S-T13 a; Lehrbuchwissen, die Namen wie chords-db)
+ABSTAENDE = {t["name"]: t["steps"]
+             for t in json.loads((ORDNER / "types.json").read_text(encoding="utf-8"))["types"]}
 # gerechnete Griffbilder: diese Arten (S-T4 a; von Claude gewaehlt — die gaengigen bis zu vier Toenen)
 GERECHNET_ARTEN = ["major", "minor", "7", "maj7", "m7", "sus2", "sus4", "dim", "aug", "m7b5", "6", "m6", "add9"]
 # Stimmungen ohne Quelle (die mitgelieferten Instrumente, `make_saiten_instrumente.py`)
