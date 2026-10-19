@@ -53,7 +53,7 @@ const std::vector<Stimmungsvorlage>& stimmungsvorlagen()
         {"bass4", "Bass 4", {28, 33, 38, 43}, 864.0},
         {"bass5", "Bass 5", {23, 28, 33, 38, 43}, 864.0},
         {"ukulele", "Ukulele", {67, 60, 64, 69}, 381.0},
-        {"violin", "Violin", {55, 62, 69, 76}, 327.0},
+        {"violin", "Violin", {55, 62, 69, 76}, 327.0, true},  // ohne Buende (S-L9 a)
     };
     return vorlagen;
 }

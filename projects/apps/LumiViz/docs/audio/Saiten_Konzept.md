@@ -722,6 +722,52 @@ Hörproben vorher/nachher. Verworfen: b (linear wie bisher — ein Slide flatter
 Helligkeit), c (Lagrange nur für Töne mit Verlauf — derselbe Ton klänge über Legato
 erreicht heller als angeschlagen).
 
+✅ **S-L8 a** (Patrik S136): **Der Gewinn bei einer Änderung des Umlaufs folgt der
+Physik der Auslenkungswellen** (im Umlauf laufen Auslenkungen, §5c/§5d): Legato und
+Slide **g = 1**, Bend **g = √(1+Δx)** — die Amplitude geht mit √(Verzögerung); dazu je
+Slide der gemessene **Mehrverlust 2 dB** (IDMT-SMT-Guitar DI, Median AR/FS, ohne Gang mit
+der Weglänge; Recherche 25 §3), gleichmäßig über die Gleitdauer. Herleitung: E/ω ist
+bei langsamer Änderung je Mode invariant (Recherche 25 §2, abgeleitet); Bend gemessen
+−0,3 dB, hergeleitet +0,5 dB beim Ganzton. Verworfen: b (Pakarinens Energiekorrektur
+√(1−Δx) — gilt für Schnellewellen, ließe einen Slide zum Sattel bis 3 dB lauter
+werden; PPV08 S. 46 nennt das Verhalten der echten Saite selbst „controversial“), c
+(keine Korrektur — beim Bend falsch, den gemessenen Mehrverlust des Slide ließe sie
+weg).
+
+✅ **S-L9 a** (Patrik S136): **Ein Slide ist stufig auf Instrumenten mit Bünden, glatt
+auf bundlosen.** Je Bund ein Halt, dazwischen ein Übergang, linear in Cent; der Übergang
+nimmt **57 %** jedes Bundschritts ein — hergeleitet aus der Messung (IDMT DI: 66 % der
+Zeit eines Slide innerhalb ±20 Cent um einen ganzen Halbton; 1 − 0,6 · Anteil = 0,66).
+Bundlos: stetig, linear in Cent. Das Instrument bekommt ein Feld **Fretless** an der
+Zeile Tuning (Vorgabe aus; die Vorlage *Violin* und der Upright Bass setzen es) —
+`.lvinst` **Fassung 12**; die Tabs brauchen es ohnehin (bundlos keine Bundzahl).
+Verworfen: b (immer stufig — der Kontrabass glitte wie eine Gitarre), c (immer glatt —
+die gemessene Bundstufe fehlte).
+
+✅ **S-L10 a** (Patrik S136): **Ein Slide dauert 20 ms je Halbton und endet am Schritt
+der Zielnote.** 20 ms aus der Messung im Zusammenhang (IDMT-Licks: 1 HT 10 ms, 2 HT
+40 ms, 3 HT 55 ms); einstellbar in *Playing* als **Slide time**, 5 bis 60 ms je Halbton
+(in der `.lvinst` Fassung 12, zusammen mit *Fretless*). Das Gleiten beginnt so viel
+früher, frühestens am Anschlag der vorigen Note; ist die vorige kürzer, gleitet es so
+viel schneller — die Zielnote kommt auf ihrem Schritt an, wie die Tab „5/7“ sie
+schreibt. Verworfen: b (35 ms fest, beginnt am Zielschritt — didaktisch langsam, jede
+Zielnote käme zu spät), c (20 ms fest ohne Regler — die Geschwindigkeit liesse sich
+dem Stil nicht anpassen).
+
+✅ **S-L11 a** (Patrik S136): **Die Legato-Anregung hat die Form der Physik, der Pegel
+ist ein Regler.** Hammer-on: ein Impuls am neuen Bund (der Finger schlägt am Ende der
+schwingenden Länge auf — schwach und hell); Pull-off: eine Zupfform an der alten
+Bundstelle, β = 1 − 2^(−n/12) vom neuen Ende (abgeleitet, Recherche 25 §1). Der Pegel
+ist **Legato level** in *Playing* (Fassung 12); die Vorgabe so, dass im Messfall
+(Achtel in Übungsgeschwindigkeit, 1 bis 3 Halbtöne) der Sprung über den abgeklungenen
+Pegel im Mittel **+3 dB** beträgt — gemessen an Mitsou 2023 über einen
+Verstärker-Simulator, also eine **Untergrenze**; ein Startwert, bis eine saubere
+DI-Aufnahme vorliegt (Protokoll in Recherche 25, Lücke 1). Gelesen: Laurson 2001 S. 47
+(Slur als kleiner Anschlag, Schleifengewinn unverändert), Özaslan 2010 S. 458 (weniger
+Energie, andere Harmonizität). Verworfen: b (ein leiser normaler Anschlag wie Laurson —
+Hammer-on und Pull-off klängen gleich und wie ein Anschlag), c (nur der Längensprung —
+widerspricht dem gemessenen neuen Einsatz).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -1467,6 +1513,31 @@ Nach S-L1 a, S-L2 a, S-L6 a.
   dann die nächste in der Tonhöhe, dann die tiefere Saite; eine Pause dazwischen
   trennt nicht (die Saite klingt nach); trägt eine Note Legato und Slide zugleich, gilt
   Slide; die Biegung hält vor ihrem ersten und nach ihrem letzten Punkt.
+
+### 5t. Stufe 25c — der Klang verbundener Noten (im Bau S136)
+
+Nach S-L7 a bis S-L11 a. Grundlage: Recherche 25 (`.claude/handover/recherche_25/`,
+tragende Stellen selbst nachgelesen: PPV08 S. 46, Laurson 2001 S. 47, Välimäki 1995
+S. 117, Özaslan 2010 S. 458).
+
+- **25c-1 Lagrange (gebaut):** `leseLagrange` — sechs Abgriffe, Verzögerung im Fenster
+  2 … 3, je Abtastwert; vor dem Schreiben eines Takts gilt der Abgriff ab 1. Für alle
+  Töne mit *Extended KS* und *Waveguide*; *Classic* bleibt linear. Gemessen:
+  `loop_werte.txt` 70 Zeilen (42 Instrument-Töne, 28 Loops mit Saiten), Summe −0,6 …
+  +1,4 dB, Spitze bis +2,6 dB (Ukulele A5) — am stärksten hoch, wo die lineare
+  Interpolation die Höhen am meisten dämpfte; Tonhöhe und Ring time unverändert (die
+  Messfälle KS/WG grün). Hörproben vorher/nachher `.claude/handover/hoerproben_25c_lagrange/`.
+- **25c-2 Fassung 12 (gebaut):** `Saitensatz::bundlos` (*Fretless*, in der Zeile Tuning,
+  die Vorlage Violin setzt es), `Schicht::gleitMsJeHalbton` (*Slide time*, 5 … 60, Vorgabe
+  20) und `Schicht::legatoLaut` (*Legato level*, 0 … 1, Vorgabe vorläufig 0,5 — bemessen
+  in 25c-3) in *Playing*; `.lvinst` Fassung 12 (`strings.fretless` immer, `playing.slideTime`,
+  `playing.legatoLevel`). Die mitgelieferten Instrumente bleiben bis 25c-3 in Fassung 11
+  (gelesen mit den Vorgaben).
+- **25c-3 (offen):** der zeitvariable Umlauf — Legato (Sprung, g = 1, Anregung nach
+  S-L11 a), Slide (stufig/glatt nach S-L9 a, 20 ms je Halbton endend am Zielschritt,
+  −2 dB), Bend (g = √(1+Δx)); `toeneImKanal` auf Ketten umschalten; *Legato level*
+  bemessen; Upright Bass und Pizzicato Violin *Fretless*; Messungen am gerechneten Ton,
+  Hörproben, `loop_werte.txt` neu.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

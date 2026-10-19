@@ -1503,7 +1503,10 @@ QJsonObject schichtAlsJson(const Schicht& schicht)
         o[QStringLiteral("playing")] = QJsonObject{{QStringLiteral("upLevel"), schicht.aufschlagLaut},
                                                    {QStringLiteral("mute"), schicht.handDaempfung},
                                                    {QStringLiteral("tapLevel"), schicht.tappingLaut},
-                                                   {QStringLiteral("touch"), schicht.knotenDruck}};
+                                                   {QStringLiteral("touch"), schicht.knotenDruck},
+                                                   // seit Fassung 12 (S-L10 a, S-L11 a)
+                                                   {QStringLiteral("slideTime"), schicht.gleitMsJeHalbton},
+                                                   {QStringLiteral("legatoLevel"), schicht.legatoLaut}};
     }
     // die eigene Farbe (F1 a, Stufe 20d); ohne sie die abgeleitete
     if (!schicht.farbe.isEmpty()) o[QStringLiteral("color")] = schicht.farbe;
@@ -1606,6 +1609,10 @@ Schicht schichtAusJson(const QJsonObject& wurzel)
     neu.handDaempfung = spielZahl("mute", vorgabe.handDaempfung);
     neu.tappingLaut = spielZahl("tapLevel", vorgabe.tappingLaut);
     neu.knotenDruck = spielZahl("touch", vorgabe.knotenDruck);
+    // seit Fassung 12 (S-L10 a, S-L11 a)
+    neu.gleitMsJeHalbton = inGrenzen(spiel.value(QLatin1String("slideTime")).toDouble(vorgabe.gleitMsJeHalbton), kGleitMsMin,
+                                     kGleitMsMax, vorgabe.gleitMsJeHalbton);
+    neu.legatoLaut = spielZahl("legatoLevel", vorgabe.legatoLaut);
     // die eigene Farbe (Stufe 20d); fehlt sie oder ist sie keine, gilt die abgeleitete
     if (const QColor farbe(wurzel.value(QStringLiteral("color")).toString()); farbe.isValid())
         neu.farbe = farbe.name(QColor::HexRgb);
@@ -1728,6 +1735,7 @@ QJsonObject alsJson(const Instrument& instrument)
         if (instrument.saiten.mensurMm > 0.0) saiten[QStringLiteral("scale")] = instrument.saiten.mensurMm;  // Stufe 23d
         // seit Fassung 11 (Stufe 24a): die Vorgabe fuer neue Muster — immer (S-W11 a)
         saiten[QStringLiteral("strum")] = strumAlsJson(instrument.saiten.strum);
+        saiten[QStringLiteral("fretless")] = instrument.saiten.bundlos;  // seit Fassung 12 (S-L9 a), immer
         o[QStringLiteral("strings")] = saiten;
     }
     return o;
@@ -1779,6 +1787,7 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     neu.saiten.wahl = saitenwahlAusName(saiten.value(QStringLiteral("stringChoice")).toString());
     neu.saiten.mensurMm = saiten.value(QStringLiteral("scale")).toDouble(0.0);
     neu.saiten.strum = strumAusJson(saiten.value(QStringLiteral("strum")).toObject());  // seit Fassung 11
+    neu.saiten.bundlos = saiten.value(QStringLiteral("fretless")).toBool(false);       // seit Fassung 12
     richteSaiten(neu.saiten);
     instrument = std::move(neu);
     return true;

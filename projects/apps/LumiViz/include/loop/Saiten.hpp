@@ -77,6 +77,9 @@ struct Saitensatz
     /// Strum, das ein neues Muster dieses Instruments bekommt (Stufe 24a,
     /// S-W2 a) — wie `wahl`.
     Strum strum;
+    /// *Fretless* (Stufe 25c, S-L9 a): ohne Buende — ein Slide gleitet stetig statt
+    /// von Bund zu Bund; die Tabs zeigen keine Bundzahl.
+    bool bundlos = false;
 
     [[nodiscard]] bool istSaiteninstrument() const { return !leer.empty(); }
     [[nodiscard]] int anzahl() const { return static_cast<int>(leer.size()); }
@@ -148,6 +151,8 @@ struct Stimmungsvorlage
     /// Die uebliche Mensur in mm (S-U3 a, S-K7 a; Belege in
     /// docs/audio/Saiten_Konzept.md §6b) — wer die Vorlage waehlt, bekommt sie.
     double mensurMm = 0.0;
+    /// Ohne Buende (Stufe 25c, S-L9 a) — wer die Vorlage waehlt, bekommt es (die Violine).
+    bool bundlos = false;
 };
 
 /// Die Vorlagen in der Reihenfolge der Auswahl — ohne *None* und *Custom*.

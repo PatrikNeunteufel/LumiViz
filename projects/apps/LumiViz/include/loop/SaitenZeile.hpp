@@ -25,6 +25,7 @@
 
 #include <vector>
 
+class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
@@ -78,6 +79,8 @@ public:
     void setzeCapo(int capo);
     void setzeMensur(double mm);
     void setzeWahl(Saitenwahl wahl);
+    /// *Fretless* (Stufe 25c, S-L9 a).
+    void setzeBundlos(bool bundlos);
 
 Q_SIGNALS:
     void geaendert(const Saitensatz& saiten);
@@ -99,6 +102,7 @@ private:
     QDoubleSpinBox* m_mensur = nullptr;
     QLabel* m_wahlName = nullptr;
     QComboBox* m_wahl = nullptr;
+    QCheckBox* m_bundlos = nullptr;  ///< Fretless (Stufe 25c)
 };
 
 }  // namespace lumi::loop

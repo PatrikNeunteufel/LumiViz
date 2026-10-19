@@ -1230,6 +1230,19 @@ void InstrumentCreator::setupUI()
         .schieber->setToolTip(tr("Harmonic: how firmly the finger touches the string at the node. Harmonics without\n"
                                  "a node there fade; how loud the harmonic is follows from the string"));
     m_nurSpiel.push_back(m_regler.size() - 1);
+    // Stufe 25c (S-L10 a, S-L11 a): was zwei Noten auf einer Saite verbindet
+    regler(gitter, tr("Slide time"), "creatorSlideTime", static_cast<int>(kGleitMsMin), static_cast<int>(kGleitMsMax),
+           [](const Schicht& i) { return gerundet(i.gleitMsJeHalbton); }, [](Schicht& i, int w) { i.gleitMsJeHalbton = w; },
+           [](const Schicht& i) { return tr("%1 ms per semitone").arg(gerundet(i.gleitMsJeHalbton)); })
+        .schieber->setToolTip(tr("Slide: how long the finger takes per semitone. The slide ends on the step of the target\n"
+                                 "note, so it starts this much earlier"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
+    regler(gitter, tr("Legato level"), "creatorLegatoLevel", 0, 100, [](const Schicht& i) { return gerundet(i.legatoLaut * 100.0); },
+           [](Schicht& i, int w) { i.legatoLaut = w / 100.0; },
+           [prozent](const Schicht& i) { return tr("%1 · hammer-on, pull-off").arg(prozent(i.legatoLaut)); })
+        .schieber->setToolTip(tr("Hammer-on and pull-off: how firmly the finger hits the fret, or plucks as it leaves.\n"
+                                 "The string keeps ringing — this only adds the new onset"));
+    m_nurSpiel.push_back(m_regler.size() - 1);
     {
         auto* hinweis = new QLabel(tr("Let ring needs no setting · Classic has no Playing"), this);
         hinweis->setObjectName(QStringLiteral("creatorPlayingHint"));

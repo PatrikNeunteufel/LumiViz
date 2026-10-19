@@ -6,6 +6,7 @@
 
 #include "loop/Instrument.hpp"  // tonName
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QLabel>
@@ -229,6 +230,13 @@ SaitenZeile::SaitenZeile(QWidget* parent) : QWidget(parent)
                           "Follow hand: the same, but staying near where the hand was."));
     lage->addWidget(paar(this, m_wahlName, m_wahl));
 
+    // Stufe 25c (S-L9 a): ohne Buende gleitet ein Slide stetig
+    m_bundlos = new QCheckBox(tr("Fretless"), this);
+    m_bundlos->setObjectName(QStringLiteral("creatorFretless"));
+    m_bundlos->setToolTip(tr("No frets (upright bass, violin): a slide glides smoothly instead of stepping from fret to fret"));
+    lage->addWidget(m_bundlos);
+    connect(m_bundlos, &QCheckBox::toggled, this, [this](bool an) { setzeBundlos(an); });
+
     connect(m_vorlage, &QComboBox::activated, this, [this](int index) { waehleVorlage(m_vorlage->itemData(index).toInt()); });
     connect(m_anzahl, &QSpinBox::valueChanged, this, [this](int anzahl) { setzeAnzahl(anzahl); });
     connect(m_capo, &QSpinBox::valueChanged, this, [this](int capo) { setzeCapo(capo); });
@@ -265,6 +273,7 @@ void SaitenZeile::waehleVorlage(int platz)
     {
         m_saiten.leer = vorlagen[static_cast<std::size_t>(platz)].leer;
         m_saiten.mensurMm = vorlagen[static_cast<std::size_t>(platz)].mensurMm;
+        m_saiten.bundlos = vorlagen[static_cast<std::size_t>(platz)].bundlos;
     }
     else
         return;  // Custom waehlt man nicht
@@ -317,6 +326,13 @@ void SaitenZeile::setzeWahl(Saitenwahl wahl)
     melde();
 }
 
+void SaitenZeile::setzeBundlos(bool bundlos)
+{
+    if (!m_saiten.istSaiteninstrument() || bundlos == m_saiten.bundlos) return;
+    m_saiten.bundlos = bundlos;
+    melde();
+}
+
 void SaitenZeile::melde()
 {
     richteSaiten(m_saiten);
@@ -334,6 +350,11 @@ void SaitenZeile::zeigeFelder()
     for (QWidget* teil : {static_cast<QWidget*>(m_anzahlName), static_cast<QWidget*>(m_capoName),
                           static_cast<QWidget*>(m_mensurName), static_cast<QWidget*>(m_wahlName)})
         teil->parentWidget()->setVisible(saiten);
+    m_bundlos->setVisible(saiten);
+    {
+        const QSignalBlocker ruhe(m_bundlos);
+        m_bundlos->setChecked(m_saiten.bundlos);
+    }
     {
         const QSignalBlocker ruhe(m_anzahl);
         m_anzahl->setValue(std::max(1, m_saiten.anzahl()));

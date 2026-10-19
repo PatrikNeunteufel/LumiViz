@@ -293,7 +293,7 @@ TEST_SUITE("LoopSpielweise")
 
         // --- Strum steht auch mit der Vorgabe da (S-W11 a); Playing an jeder Saite Extended KS / Waveguide
         QJsonObject json = alsJson(gitarre);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 11);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 12);  // seit S136 (Stufe 25c): 12
         CHECK(json.value(QStringLiteral("strings")).toObject().value(QStringLiteral("strum")).toObject() == strumAlsJson(Strum{}));
         CHECK_FALSE(alsJson(Instrument{}).contains(QStringLiteral("strings")));  // ohne Saiten kein Block
         const QJsonObject spiel = json.value(QStringLiteral("layers")).toArray().at(0).toObject().value(QStringLiteral("playing")).toObject();
@@ -314,6 +314,13 @@ TEST_SUITE("LoopSpielweise")
         gitarre.schichten[0].handDaempfung = 0.9;
         gitarre.schichten[0].tappingLaut = 0.4;
         gitarre.schichten[0].knotenDruck = 0.7;
+        // Fassung 12 (Stufe 25c): Fretless immer, Slide time und Legato level in Playing
+        CHECK(json.value(QStringLiteral("strings")).toObject().value(QStringLiteral("fretless")) == QJsonValue(false));
+        CHECK(spiel.value(QStringLiteral("slideTime")).toDouble() == doctest::Approx(kGleitMsVorgabe));
+        CHECK(spiel.value(QStringLiteral("legatoLevel")).toDouble() == doctest::Approx(kLegatoLautVorgabe));
+        gitarre.saiten.bundlos = true;
+        gitarre.schichten[0].gleitMsJeHalbton = 35.0;
+        gitarre.schichten[0].legatoLaut = 0.25;
         richteSaiten(gitarre.saiten);
         json = alsJson(gitarre);
         CHECK(json.value(QStringLiteral("strings")).toObject().value(QStringLiteral("strum")).toObject().value(QStringLiteral("pattern")).toString() ==
@@ -327,12 +334,18 @@ TEST_SUITE("LoopSpielweise")
         QJsonObject wild = json;
         QJsonArray schichten = wild.value(QStringLiteral("layers")).toArray();
         QJsonObject s = schichten[0].toObject();
-        s[QStringLiteral("playing")] = QJsonObject{{QStringLiteral("upLevel"), 7.0}, {QStringLiteral("mute"), -1.0}};
+        s[QStringLiteral("playing")] = QJsonObject{{QStringLiteral("upLevel"), 7.0},
+                                                   {QStringLiteral("mute"), -1.0},
+                                                   {QStringLiteral("slideTime"), 500.0},
+                                                   {QStringLiteral("legatoLevel"), 3.0}};
         schichten[0] = s;
         wild[QStringLiteral("layers")] = schichten;
         REQUIRE(ausJson(wild, zurueck));
         CHECK(zurueck.schichten[0].aufschlagLaut == doctest::Approx(1.0));
         CHECK(zurueck.schichten[0].handDaempfung == doctest::Approx(0.0));
+        CHECK(zurueck.schichten[0].gleitMsJeHalbton == doctest::Approx(kGleitMsMax));
+        CHECK(zurueck.schichten[0].legatoLaut == doctest::Approx(1.0));
+        CHECK(zurueck.saiten.bundlos);  // aus dem gesetzten Stand
         CHECK(zurueck.schichten[0].knotenDruck == doctest::Approx(Schicht{}.knotenDruck));  // fehlt: die Vorgabe
         QJsonObject zehn = alsJson(Instrument{});
         zehn[QStringLiteral("version")] = 10;

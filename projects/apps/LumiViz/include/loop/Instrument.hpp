@@ -224,6 +224,14 @@ using SchichtBaustein = std::variant<SchichtFilter, SchichtDrive, SchichtHuelle>
 /// steht, faellt weg, die Envelope nie —, jeder Wert in seinen Grenzen.
 void richteReihe(std::vector<SchichtBaustein>& reihe);
 
+/// Slide time (Stufe 25c, S-L10 a): Vorgabe und Grenzen, ms je Halbton.
+inline constexpr double kGleitMsVorgabe = 20.0;
+inline constexpr double kGleitMsMin = 5.0;
+inline constexpr double kGleitMsMax = 60.0;
+/// Legato level (Stufe 25c, S-L11 a): vorlaeufig — bemessen am Messfall in 25c
+/// (test_LoopSpielweiseKlang „25c Legato“).
+inline constexpr double kLegatoLautVorgabe = 0.5;
+
 /// Eine Schicht eines Instruments: ein voller Satz Einstellungen fuer den
 /// Klangerzeuger, dazu was nur die Schicht betrifft (Stufe 10c; Skizze
 /// gebilligt, Patrik S111). Die Schichten eines Instruments werden beim
@@ -374,6 +382,14 @@ struct Schicht
     /// Widerstand rho = R/Z0 (Pakarinen 2005); 0,3: die Teiltoene ohne Knoten dort
     /// fallen um rund 5 dB je Umlauf.
     double knotenDruck = 0.3;
+    /// Slide time, ms je Halbton (Stufe 25c, S-L10 a): so lange gleitet ein *Slide*
+    /// je Halbton Weg — 20 ms gemessen im Zusammenhang (IDMT-SMT-Guitar, Licks).
+    double gleitMsJeHalbton = kGleitMsVorgabe;
+    /// Legato level, 0 … 1 (Stufe 25c, S-L11 a): wie fest der Finger beim Hammer-on
+    /// aufschlaegt oder beim Pull-off zupft. Vorgabe: im Messfall (Achtel, 1 bis 3
+    /// Halbtoene) ein Sprung von +3 dB ueber den abgeklungenen Pegel — eine
+    /// Untergrenze aus einer verdichteten Aufnahme (Saiten_Konzept S-L11 a).
+    double legatoLaut = kLegatoLautVorgabe;
 
     [[nodiscard]] bool operator==(const Schicht&) const = default;
 
@@ -503,10 +519,13 @@ struct Instrument
 // `hand`, `pattern` — die Vorgabe fuer neue Muster, immer, S-W11 a) und an einer Saite *Extended KS* oder *Waveguide* den
 // Block `playing` mit `upLevel`, `mute`, `tapLevel`, `touch`. Eine eigene
 // Fassung, weil ein aelteres Programm die Spielweisen still ueberginge.
-// Geschrieben wird Fassung 11.
+// Fassung 12 (S136, Stufe 25c, Entscheide S-L9 a bis S-L11 a) kennt unter
+// `strings` das Feld `fretless` (immer) und in `playing` dazu `slideTime` (ms je
+// Halbton) und `legatoLevel` — ein aelteres Programm liesse einen bundlosen Slide
+// stufig gleiten. Geschrieben wird Fassung 12.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 11;
+inline constexpr int kInstrumentFassung = 12;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

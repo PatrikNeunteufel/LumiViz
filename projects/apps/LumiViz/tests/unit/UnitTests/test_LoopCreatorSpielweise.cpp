@@ -21,6 +21,7 @@
 #include "loop/StrumZeile.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDoubleSpinBox>
@@ -172,6 +173,45 @@ TEST_SUITE("LoopCreatorSpielweise")
         CHECK(texte.contains(QStringLiteral("70 % · starts from the other side")));
         CHECK(texte.contains(QStringLiteral("50 % · at the fret, at 220 Hz")));  // S-W18 a
         CHECK(texte.contains(QStringLiteral("40 % · finger on the node")));
+
+        // --- Stufe 25c (S-L10 a, S-L11 a): Slide time und Legato level
+        auto* gleiten = schieber("creatorSlideTime");
+        CHECK(gleiten->minimum() == static_cast<int>(kGleitMsMin));
+        CHECK(gleiten->maximum() == static_cast<int>(kGleitMsMax));
+        CHECK(gleiten->value() == static_cast<int>(kGleitMsVorgabe));
+        gleiten->setValue(35);
+        CHECK(creator.schicht().gleitMsJeHalbton == doctest::Approx(35.0));
+        schieber("creatorLegatoLevel")->setValue(60);
+        CHECK(creator.schicht().legatoLaut == doctest::Approx(0.6));
+        texte.clear();
+        for (QLabel* label : creator.findChildren<QLabel*>()) texte << label->text();
+        CHECK(texte.contains(QStringLiteral("35 ms per semitone")));
+        CHECK(texte.contains(QStringLiteral("60 % · hammer-on, pull-off")));
+        // bei Classic nicht da, wie die uebrigen Spielweisen
+        creator.oeffne(gitarre(SaitenModell::Klassisch));
+        CHECK(gleiten->isHidden());
+
+        // --- Fretless in der Zeile Tuning (S-L9 a): die Vorlage Violin setzt es, ein Klick schaltet
+        creator.oeffne(gitarre(SaitenModell::Wellenleiter));
+        auto* bundlos = creator.findChild<QCheckBox*>(QStringLiteral("creatorFretless"));
+        REQUIRE(bundlos != nullptr);
+        CHECK_FALSE(bundlos->isHidden());
+        CHECK_FALSE(bundlos->isChecked());
+        auto* vorlage = creator.findChild<QComboBox*>(QStringLiteral("creatorTuning"));
+        REQUIRE(vorlage != nullptr);
+        const int violine = vorlage->findText(QStringLiteral("Violin"));
+        REQUIRE(violine >= 0);
+        vorlage->setCurrentIndex(violine);
+        Q_EMIT vorlage->activated(violine);
+        CHECK(creator.instrument().saiten.bundlos);
+        CHECK(bundlos->isChecked());
+        bundlos->click();
+        CHECK_FALSE(creator.instrument().saiten.bundlos);
+        // ohne Tuning: kein Haken
+        Instrument ohne = gitarre(SaitenModell::Wellenleiter);
+        ohne.saiten = Saitensatz{};
+        creator.oeffne(ohne);
+        CHECK(bundlos->isHidden());
     }
 
     TEST_CASE("Loop Creator Spielweise: P — Play as, und was die Tasten dann spielen")
