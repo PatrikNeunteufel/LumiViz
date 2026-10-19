@@ -50,6 +50,8 @@ Q_SIGNALS:
     void obenGeklickt(int saite);
     void fingerVerlangt(int saite, QPoint global);
     void barreGezogen(int von, int bis, int bund);
+    /// Ein Voicing (S-T14 a H): eine Taste der Klaviatur.
+    void tonGeklickt(int hoehe);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -61,6 +63,8 @@ protected:
 private:
     std::optional<GriffbildLage::Treffer> m_zeiger;
     std::optional<GriffbildLage::Treffer> m_druck;  ///< wo die linke Taste gedrueckt wurde
+    std::optional<int> m_zeigerTon;  ///< Voicing: die Taste unter der Maus
+    std::optional<int> m_druckTon;
 };
 
 class AkkordDialog : public QDialog
@@ -71,8 +75,10 @@ public:
     /// `vorlage`: was bearbeitet wird — ein eigenes (`user:<name>`) ersetzt sich beim
     /// Speichern, alles andere wird ein neues eigenes. `saiten`, `strum`,
     /// `schritteJeSchlag` und `spielart` fuer das Anhoeren (M).
+    /// Ein Voicing (S-T14 a H) zeigt eine Klaviatur; `tiefster` ist sein tiefster Ton
+    /// (bei einem leeren die Oktave, in der die Klaviatur beginnt).
     AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, const Strum& strum, int schritteJeSchlag,
-                 AkkordSpielart spielart, QWidget* parent = nullptr);
+                 AkkordSpielart spielart, QWidget* parent = nullptr, int tiefster = 48);
 
     // --- was die Bedienelemente ausloesen (auch fuer Tests) -------------------
     [[nodiscard]] const Akkord& akkord() const { return m_akkord; }
@@ -80,6 +86,13 @@ public:
     void klickeOben(int saite);
     void waehleFinger(int saite, int finger);
     void zieheBarre(int von, int bis, int bund);
+    /// H bei einem Voicing: einen Ton setzen oder nehmen.
+    void klickeTon(int hoehe);
+    [[nodiscard]] int tiefster() const { return m_tiefster; }
+    /// Bei einem Voicing: ab welchem Ton (einem C) die Klaviatur drei Oktaven zeigt.
+    void setzeKlaviaturAb(int ton);
+    [[nodiscard]] int klaviaturAb() const { return m_klaviaturAb; }
+    [[nodiscard]] bool istVoicing() const { return !m_akkord.istGriffbild(); }
     /// J: der erste gezeigte Bund (1 … `kBuendeMax`).
     void setzeErstenBund(int bund);
     [[nodiscard]] int ersterBund() const { return m_erster; }
@@ -113,7 +126,7 @@ Q_SIGNALS:
 
 private:
     /// Eine Aenderung am Griffbild: den Stand vorher fuer Ctrl+Z merken.
-    void aendere(const Akkord& neu);
+    void aendere(const Akkord& neu, int tiefster);
     void zeige();
     void frageFinger(int saite, QPoint global);
 
@@ -124,13 +137,17 @@ private:
     int m_jeSchlag = 4;
     AkkordSpielart m_spielart = AkkordSpielart::Ab;
     int m_erster = 1;
-    std::vector<Akkord> m_zurueck;
-    std::vector<Akkord> m_vor;
+    int m_tiefster = 48;     ///< Voicing
+    int m_klaviaturAb = 36;  ///< Voicing: der erste Ton der Klaviatur
+    std::vector<std::pair<Akkord, int>> m_zurueck;  ///< je Schritt das Griffbild und der tiefste Ton
+    std::vector<std::pair<Akkord, int>> m_vor;
     QString m_gespeichert;
 
     GriffbildEingabe* m_eingabe = nullptr;
     QLabel* m_stimmung = nullptr;
     QLabel* m_ersterText = nullptr;
+    QLabel* m_ersterName = nullptr;
+    QPushButton* m_play = nullptr;
     QLineEdit* m_titel = nullptr;
     QComboBox* m_grundton = nullptr;
     QComboBox* m_art = nullptr;

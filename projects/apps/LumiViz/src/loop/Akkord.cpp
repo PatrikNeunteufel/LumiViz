@@ -546,6 +546,55 @@ std::optional<AkkordName> erkenneAkkord(const std::vector<int>& hoehen)
     return std::nullopt;
 }
 
+std::optional<int> tiefsteTonklasse(const Akkord& voicing)
+{
+    if (voicing.istGriffbild()) return std::nullopt;
+    for (const AkkordArt& art : akkordArten())
+    {
+        if (art.name != voicing.art) continue;
+        int soll = 0;
+        for (const int s : art.stufen) soll |= 1 << (s % 12);
+        for (int unten = 0; unten < 12; ++unten)
+        {
+            int ist = 0;  // die Klassen ueber dem Grundton, liegt `unten` ueber ihm unten
+            for (const int a : voicing.abstaende) ist |= 1 << ((unten + a) % 12);
+            if (ist == soll) return (voicing.grundton + unten) % 12;
+        }
+    }
+    return voicing.grundton;
+}
+
+int vorgabeTiefster(const Akkord& voicing, int oktavBeginn)
+{
+    return oktavBeginn + tiefsteTonklasse(voicing).value_or(voicing.grundton);
+}
+
+QString galerieSymbol(const Akkord& akkord)
+{
+    if (akkord.istGriffbild()) return akkord.titel;
+    const int unten = tiefsteTonklasse(akkord).value_or(akkord.grundton);
+    if (unten == akkord.grundton || akkord.titel.contains(QLatin1Char('/'))) return akkord.titel;
+    return akkord.titel + QLatin1Char('/') + grundtonNamen().at(unten);
+}
+
+void schalteVoicingTon(Akkord& voicing, int& tiefster, int hoehe)
+{
+    if (voicing.istGriffbild() || hoehe < kHoeheMin || hoehe > kHoeheMax) return;
+    std::vector<int> toene;
+    for (const int a : voicing.abstaende) toene.push_back(tiefster + a);
+    if (const auto da = std::find(toene.begin(), toene.end(), hoehe); da != toene.end())
+        toene.erase(da);
+    else
+        toene.push_back(hoehe);
+    std::sort(toene.begin(), toene.end());
+    // nicht weiter als ein Voicing reicht, nicht mehr Toene: dann bleibt es, wie es war
+    if (!toene.empty() && (toene.back() - toene.front() > kVoicingWeiteMax || static_cast<int>(toene.size()) > kVoicingToeneMax))
+        return;
+    voicing.abstaende.clear();
+    if (!toene.empty()) tiefster = toene.front();
+    for (const int t : toene) voicing.abstaende.push_back(t - tiefster);
+}
+
 QString akkordArtText(const AkkordName& name)
 {
     if (name.bass < 0) return name.art;
@@ -594,6 +643,28 @@ std::optional<std::vector<int>> fremdeTonklassen(const Akkord& akkord)
 
 QString lageText(const Akkord& akkord)
 {
+    if (!akkord.istGriffbild())
+    {
+        // die Vorlagen nennen ihre Lage; sonst aus dem tiefsten Ton und der Weite
+        static const std::pair<const char*, const char*> kNamen[] = {
+            {"Root position", "root"},      {"First inversion", "1st inv."}, {"Second inversion", "2nd inv."},
+            {"Third inversion", "3rd inv."}, {"Open position", "open"},     {"Drop 2", "drop 2"},
+        };
+        for (const auto& [satz, kurz] : kNamen)
+            if (akkord.beschreibung == QLatin1String(satz)) return QLatin1String(kurz);
+        if (akkord.abstaende.empty()) return {};
+        const int unten = tiefsteTonklasse(akkord).value_or(akkord.grundton);
+        if (unten == akkord.grundton) return akkord.abstaende.back() > 12 ? QStringLiteral("open") : QStringLiteral("root");
+        // die wievielte Stufe der Art unten liegt: 1st, 2nd, 3rd
+        std::vector<int> stufen;
+        for (const AkkordArt& art : akkordArten())
+            if (art.name == akkord.art)
+                for (const int s : art.stufen) stufen.push_back(s % 12);
+        const auto platz = std::find(stufen.begin(), stufen.end(), (unten - akkord.grundton + 12) % 12);
+        static const char* const kUmkehrung[] = {"root", "1st inv.", "2nd inv.", "3rd inv."};
+        const auto nummer = platz - stufen.begin();
+        return platz != stufen.end() && nummer < 4 ? QString::fromLatin1(kUmkehrung[nummer]) : QStringLiteral("inv.");
+    }
     int tief = kBuendeMax + 1;
     for (const int bund : akkord.buende)
     {
@@ -604,10 +675,17 @@ QString lageText(const Akkord& akkord)
 }
 
 Muster akkordZumAnhoeren(const Akkord& lage, const Saitensatz& saiten, const Strum& strum, AkkordSpielart art,
-                         int schritteJeSchlag)
+                         int schritteJeSchlag, int tiefster)
 {
     Muster noten;
     noten.art = MusterArt::Instrument;
+    if (!lage.istGriffbild())
+    {
+        // ein Voicing: alle Toene zugleich, zwei Schlaege — ohne Saiten gibt es keinen Anschlag
+        if (const auto toene = toeneDesVoicings(lage, tiefster))
+            for (const AkkordTon& ton : *toene) noten.noten.push_back(Note{0, 2 * std::max(1, schritteJeSchlag), ton.hoehe, 1.0});
+        return noten;
+    }
     noten.strum = strum;
     const std::optional<std::vector<AkkordTon>> toene = toeneDesGriffbilds(lage, saiten);
     if (!toene || toene->empty()) return noten;

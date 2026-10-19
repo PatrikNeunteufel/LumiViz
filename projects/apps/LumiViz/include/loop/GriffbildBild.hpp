@@ -21,6 +21,10 @@
 #include <QRectF>
 #include <QWidget>
 
+#include <optional>
+#include <utility>
+#include <vector>
+
 class QPainter;
 class QPalette;
 
@@ -92,16 +96,58 @@ enum class GriffbildGroesse : int
 void zeichneGriffbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, GriffbildGroesse groesse,
                       const QPalette& palette, std::optional<GriffbildFenster> fenster = std::nullopt);
 
+// --- Voicings: eine Klaviatur (Stufe 26f, S-T14 a D, E, H) --------------------
+
+/// Die Lage der Tasten einer Klaviatur von `von` bis `bis` (beide Toene, `von` ein C)
+/// in einem Feld: weisse Tasten gleich breit, schwarze daruber.
+class KlaviaturLage
+{
+public:
+    KlaviaturLage(const QRectF& feld, int von, int bis);
+    [[nodiscard]] static bool schwarz(int ton);
+    /// Das Rechteck einer Taste; leer ausserhalb.
+    [[nodiscard]] QRectF taste(int ton) const;
+    /// Wo der Punkt eines Tons sitzt: unten in seiner Taste.
+    [[nodiscard]] QPointF punkt(int ton) const;
+    /// Der Ton unter dem Punkt (die schwarze Taste zuerst); nichts ausserhalb.
+    [[nodiscard]] std::optional<int> tonBei(QPointF ort) const;
+    [[nodiscard]] int von() const { return m_von; }
+    [[nodiscard]] int bis() const { return m_bis; }
+
+private:
+    QRectF m_feld;
+    int m_von = 48;
+    int m_bis = 71;
+    double m_weiss = 1.0;  ///< Breite einer weissen Taste
+};
+/// Welche Toene eine Klaviatur fuer diese Toene zeigt: ab dem C unter dem tiefsten
+/// mindestens `oktaven` Oktaven, bis zum B ueber dem hoechsten.
+[[nodiscard]] std::pair<int, int> klaviaturBereich(const std::vector<int>& toene, int oktaven, int ohneToene = 48);
+/// Eine Klaviatur mit Punkten auf `toene` zeichnen.
+void zeichneKlaviatur(QPainter& p, const QRectF& feld, int von, int bis, const std::vector<int>& toene,
+                      GriffbildGroesse groesse, const QPalette& palette);
+/// Ein Akkord als Bild: ein Griffbild (schon verschoben) oder ein Voicing als
+/// Klaviatur mit dem tiefsten Ton auf `tiefster` (klein zwei, gross drei Oktaven).
+void zeichneAkkordbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, int tiefster, GriffbildGroesse groesse,
+                       const QPalette& palette);
+
 /// Ein Griffbild gross, als Widget — in der Leiste des Fensters *Chords* (S-T8 a E)
-/// und im Dialog *Edit chord* (S-T11 a).
+/// und im Dialog *Edit chord* (S-T11 a); ein Voicing als Klaviatur (S-T14 a E).
 class GriffbildFeld : public QWidget
 {
     Q_OBJECT
 
 public:
     explicit GriffbildFeld(QWidget* parent = nullptr);
-    void setzeAkkord(const Akkord& akkord);
+    /// `tiefster`: bei einem Voicing der tiefste Ton (sonst ohne Bedeutung).
+    void setzeAkkord(const Akkord& akkord, int tiefster = 48);
     [[nodiscard]] const Akkord& akkord() const { return m_akkord; }
+    [[nodiscard]] int tiefster() const { return m_tiefster; }
+    /// Bei einem Voicing: die Toene, wie sie klingen.
+    [[nodiscard]] std::vector<int> toene() const;
+    /// Bei einem Voicing: welche Toene die Klaviatur zeigt; nichts = wie die Toene es brauchen.
+    void setzeKlaviatur(std::optional<std::pair<int, int>> bereich);
+    [[nodiscard]] KlaviaturLage klaviaturLage() const;
     /// Welche Buende es zeigt; nichts = wie der Griff es braucht (`griffbildFenster`).
     void setzeFenster(std::optional<GriffbildFenster> fenster);
     [[nodiscard]] const std::optional<GriffbildFenster>& fenster() const { return m_fenster; }
@@ -115,7 +161,9 @@ protected:
 
 private:
     Akkord m_akkord;
+    int m_tiefster = 48;
     std::optional<GriffbildFenster> m_fenster;
+    std::optional<std::pair<int, int>> m_klaviatur;
 };
 
 }  // namespace lumi::loop

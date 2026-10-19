@@ -226,8 +226,9 @@ public:
     /// Note auf ihrer Saite, einen Schritt lang (wie eine getippte Zahl, B). Was an
     /// diesem Schritt auf einer Saite des Griffbilds liegt oder einen seiner Toene
     /// spielt, weicht; markiert sind danach die neuen Noten. Ein Schritt fuer Undo.
-    /// false = keine Saiten, ausserhalb des Musters, oder das Griffbild passt nicht.
-    bool setzeAkkord(const Akkord& lage, int schritt);
+    /// false = ausserhalb des Musters, oder das Griffbild passt nicht. Ein Voicing
+    /// (Stufe 26f, S-T14 a) setzt seinen tiefsten Ton auf `bezug`, ohne Saiten.
+    bool setzeAkkord(const Akkord& lage, int schritt, int bezug = 0);
     /// Was in den Tab-Linien an einer Note steht: der Bund — ohne Buende der
     /// Tonname, nicht greifbar „!".
     [[nodiscard]] QString tabText(int platz) const;

@@ -75,6 +75,15 @@ QString artOrdner(int grundton, const QString& art)
 
 /// Wo eine Art in der Reihe steht: die Arten der Tabelle in ihrer Reihenfolge,
 /// dahinter alle anderen (Slash, `alt`, `7sg`).
+/// Wo eine Lage eines Voicings in ihrer Gruppe steht: Grundstellung, Umkehrungen, weit.
+int rangDerLage(const Akkord& akkord)
+{
+    static const QStringList kReihe = {QStringLiteral("root"),     QStringLiteral("1st inv."), QStringLiteral("2nd inv."),
+                                       QStringLiteral("3rd inv."), QStringLiteral("open"),     QStringLiteral("drop 2")};
+    const qsizetype platz = akkord.istGriffbild() ? -1 : kReihe.indexOf(lageText(akkord));
+    return platz < 0 ? static_cast<int>(kReihe.size()) : static_cast<int>(platz);
+}
+
 int rangDerArt(const QString& art)
 {
     const std::vector<AkkordArt>& arten = akkordArten();
@@ -204,12 +213,12 @@ void AkkordGalerie::paintEvent(QPaintEvent*)
             p.drawRoundedRect(QRectF(r).adjusted(0.5, 0.5, -0.5, -0.5), 5, 5);
         }
         const QRectF bild(r.left() + (r.width() - kBildBreite) / 2.0, r.top() + 1, kBildBreite, kBildHoehe);
-        zeichneGriffbild(p, bild, a, GriffbildGroesse::Klein, palette());
+        zeichneAkkordbild(p, bild, a, a.istGriffbild() ? 0 : vorgabeTiefster(a, m_oktav), GriffbildGroesse::Klein, palette());
         p.setFont(klein);
         p.setPen(palette().color(QPalette::Text));
         const int zeile = p.fontMetrics().height();
         p.drawText(QRect(r.left(), static_cast<int>(bild.bottom()) + 1, r.width(), zeile), Qt::AlignHCenter | Qt::AlignTop,
-                   p.fontMetrics().elidedText(a.titel, Qt::ElideRight, r.width()));
+                   p.fontMetrics().elidedText(galerieSymbol(a), Qt::ElideRight, r.width()));
         p.setPen(blass);
         p.drawText(QRect(r.left(), static_cast<int>(bild.bottom()) + 1 + zeile, r.width(), zeile),
                    Qt::AlignHCenter | Qt::AlignTop, lageText(a));
@@ -390,9 +399,19 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
     }
     {
         auto* schieben = new QHBoxLayout;
-        schieben->addWidget(new QLabel(tr("Move"), this));
+        m_schiebenText = new QLabel(tr("Move"), this);
+        m_schiebenText->setObjectName(QStringLiteral("chordMoveLabel"));
+        m_oktTiefer = new QPushButton(tr("−8va"), this);
+        m_oktTiefer->setObjectName(QStringLiteral("chordOctaveDown"));
+        m_oktTiefer->setToolTip(tr("The whole voicing one octave down"));
+        m_oktHoeher = new QPushButton(tr("+8va"), this);
+        m_oktHoeher->setObjectName(QStringLiteral("chordOctaveUp"));
+        m_oktHoeher->setToolTip(tr("The whole voicing one octave up"));
+        schieben->addWidget(m_schiebenText);
         schieben->addWidget(m_tiefer);
         schieben->addWidget(m_hoeher);
+        schieben->addWidget(m_oktTiefer);
+        schieben->addWidget(m_oktHoeher);
         schieben->addStretch(1);
         mitte->addLayout(schieben);
     }
@@ -402,6 +421,10 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
     {
         auto* spielen = new QHBoxLayout;
         m_spielarten = baueSpielartKnoepfe(this, spielen);
+        m_play = new QPushButton(tr("Play"), this);
+        m_play->setObjectName(QStringLiteral("chordPlay"));
+        m_play->setToolTip(tr("Play the voicing: all notes at once"));
+        spielen->addWidget(m_play);
         m_favorit = new QToolButton(this);
         m_favorit->setObjectName(QStringLiteral("chordFavorite"));
         m_favorit->setCheckable(true);
@@ -441,6 +464,7 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
     auto* hinweis = new QLabel(tr("Click: listen · double-click or Use: insert at the insert marker · "
                                   "drag a shape onto the tab lines or the piano roll"),
                                this);
+    hinweis->setObjectName(QStringLiteral("chordHint"));
     hinweis->setEnabled(false);
     hinweis->setWordWrap(true);
     aussen->addWidget(hinweis);
@@ -469,6 +493,9 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
     connect(m_galerie, &AkkordGalerie::ziehen, this, [this](const QString& nennung) { zieheAb(nennung); });
     connect(m_tiefer, &QPushButton::clicked, this, [this] { (void)verschiebe(-1); });
     connect(m_hoeher, &QPushButton::clicked, this, [this] { (void)verschiebe(1); });
+    connect(m_oktTiefer, &QPushButton::clicked, this, [this] { (void)verschiebeOktave(-1); });
+    connect(m_oktHoeher, &QPushButton::clicked, this, [this] { (void)verschiebeOktave(1); });
+    connect(m_play, &QPushButton::clicked, this, [this] { (void)spieleAn(); });
     connect(m_spielarten, &QButtonGroup::idClicked, this,
             [this](int id) { setzeSpielart(static_cast<AkkordSpielart>(id), true); });
     connect(m_favorit, &QToolButton::clicked, this, [this](bool an) { setzeFavorit(an); });
@@ -478,19 +505,27 @@ AkkordFenster::AkkordFenster(QWidget* parent) : QWidget(parent, Qt::Window)
 }
 
 void AkkordFenster::setzeZiel(const QString& muster, const QString& instrumentTitel, const Saitensatz& saiten,
-                              const Strum& strum, int schritteJeSchlag)
+                              const Strum& strum, int schritteJeSchlag, int oktavBeginn)
 {
-    const bool andereStimmung = saiten.leer != m_saiten.leer;
+    const bool andereStimmung = saiten.leer != m_saiten.leer || oktavBeginn != m_oktavBeginn;
+    m_oktavBeginn = oktavBeginn;
+    m_galerie->setzeOktavBeginn(oktavBeginn);
     m_muster = muster;
     m_saiten = saiten;
     m_strum = strum;
     m_jeSchlag = std::max(1, schritteJeSchlag);
     QStringList toene;
     for (const int ton : saiten.leer) toene << tonName(ton);
-    m_zielZeile->setText(muster.isEmpty() ? tr("Open an instrument pattern with strings to use a chord")
-                                          : tr("For: %1 · %2 — %3, capo %4")
-                                                .arg(instrumentTitel, muster, toene.join(QLatin1Char(' ')))
-                                                .arg(saiten.capo));
+    m_zielZeile->setText(muster.isEmpty()                 ? tr("Open an instrument pattern to use a chord")
+                         : !saiten.istSaiteninstrument() ? tr("For: %1 · %2 — voicings (no strings)").arg(instrumentTitel, muster)
+                                                         : tr("For: %1 · %2 — %3, capo %4")
+                                                               .arg(instrumentTitel, muster, toene.join(QLatin1Char(' ')))
+                                                               .arg(saiten.capo));
+    if (QLabel* hinweis = findChild<QLabel*>(QStringLiteral("chordHint")))
+        hinweis->setText(zeigtVoicings() ? tr("Click: listen · double-click or Use: insert at the insert marker, lowest note as "
+                                           "shown · drag onto the piano roll: the lowest note lands on the row you drop it on")
+                                        : tr("Click: listen · double-click or Use: insert at the insert marker · "
+                                           "drag a shape onto the tab lines or the piano roll"));
     if (andereStimmung) liesNeu();
     zeigeDetail();
 }
@@ -581,7 +616,7 @@ std::vector<AkkordGalerie::Gruppe> AkkordFenster::gruppenVon(const QString& ordn
     std::stable_sort(wahl.begin(), wahl.end(), [](const Akkord* a, const Akkord* b) {
         if (a->grundton != b->grundton) return a->grundton < b->grundton;
         if (a->art != b->art) return artVor(a->art, b->art);
-        return false;
+        return rangDerLage(*a) < rangDerLage(*b);
     });
     for (const Akkord* a : wahl)
     {
@@ -691,6 +726,7 @@ bool AkkordFenster::waehle(const QString& nennung)
     if (finde(nennung) == nullptr) return false;
     m_galerie->setzeGewaehlt(nennung);
     m_verschiebung = 0;
+    if (const Akkord* a = finde(nennung); a != nullptr && !a->istGriffbild()) m_tiefster = vorgabeTiefster(*a, m_oktavBeginn);
     const QRect zelle = m_galerie->zelle(nennung);
     if (!zelle.isEmpty()) m_rolle->ensureVisible(zelle.center().x(), zelle.center().y(), 0, zelle.height());
     zeigeDetail();
@@ -706,6 +742,7 @@ std::optional<Akkord> AkkordFenster::lage() const
 {
     const Akkord* a = finde(gewaehlt());
     if (a == nullptr) return std::nullopt;
+    if (!a->istGriffbild()) return *a;
     return verschobenesGriffbild(*a, m_verschiebung);
 }
 
@@ -716,6 +753,17 @@ bool AkkordFenster::verschiebe(int buende)
     const int neu = m_verschiebung + buende;
     if (!toeneDesGriffbilds(*a, m_saiten, neu)) return false;
     m_verschiebung = neu;
+    zeigeDetail();
+    return true;
+}
+
+bool AkkordFenster::verschiebeOktave(int oktaven)
+{
+    const Akkord* a = finde(gewaehlt());
+    if (a == nullptr || a->istGriffbild() || oktaven == 0) return false;
+    const int neu = m_tiefster + 12 * oktaven;
+    if (!toeneDesVoicings(*a, neu)) return false;
+    m_tiefster = neu;
     zeigeDetail();
     return true;
 }
@@ -733,7 +781,7 @@ bool AkkordFenster::spieleAn()
 {
     const std::optional<Akkord> l = lage();
     if (!l) return false;
-    const Muster noten = akkordZumAnhoeren(*l, m_saiten, m_strum, m_spielart, m_jeSchlag);
+    const Muster noten = akkordZumAnhoeren(*l, m_saiten, m_strum, m_spielart, m_jeSchlag, m_tiefster);
     if (noten.noten.empty()) return false;
     Q_EMIT vorhoerenVerlangt(noten);
     return true;
@@ -743,9 +791,9 @@ bool AkkordFenster::verwende()
 {
     const std::optional<Akkord> l = lage();
     if (!l || m_muster.isEmpty()) return false;
-    if (!toeneDesGriffbilds(*l, m_saiten)) return false;
+    if (l->istGriffbild() ? !toeneDesGriffbilds(*l, m_saiten) : !toeneDesVoicings(*l, m_tiefster)) return false;
     const QString nennung = gewaehlt();
-    Q_EMIT verwenden(*l);
+    Q_EMIT verwenden(*l, bezug());
     merkeVerwendet(nennung);
     return true;
 }
@@ -789,7 +837,8 @@ void AkkordFenster::zieheAb(const QString& nennung)
     if (finde(nennung) == nullptr) return;
     if (nennung != gewaehlt()) (void)waehle(nennung);
     auto* daten = new QMimeData;
-    daten->setData(QLatin1String(kMimeTyp), QStringLiteral("%1\n%2").arg(nennung).arg(m_verschiebung).toUtf8());
+    daten->setData(QLatin1String(kMimeTyp),
+                   QStringLiteral("%1\n%2").arg(nennung).arg(zeigtVoicings() ? m_tiefster : m_verschiebung).toUtf8());
     auto* zug = new QDrag(m_galerie);
     zug->setMimeData(daten);
     if (const std::optional<Akkord> l = lage())
@@ -797,7 +846,7 @@ void AkkordFenster::zieheAb(const QString& nennung)
         QPixmap bild(AkkordGalerie::kBildBreite, AkkordGalerie::kBildHoehe);
         bild.fill(palette().color(QPalette::Base));
         QPainter p(&bild);
-        zeichneGriffbild(p, QRectF(bild.rect()), *l, GriffbildGroesse::Klein, palette());
+        zeichneAkkordbild(p, QRectF(bild.rect()), *l, m_tiefster, GriffbildGroesse::Klein, palette());
         p.end();
         zug->setPixmap(bild);
         zug->setHotSpot(QPoint(bild.width() / 2, bild.height() / 2));
@@ -810,7 +859,16 @@ void AkkordFenster::zeigeDetail()
     if (m_use == nullptr) return;  // waehrend des Aufbaus
     const Akkord* a = finde(gewaehlt());
     const std::optional<Akkord> l = lage();
-    m_feld->setzeAkkord(l ? *l : Akkord{});
+    m_feld->setzeAkkord(l ? *l : Akkord{}, m_tiefster);
+    // Griffbild oder Voicing (S-T14 a F, G): was zur Art gehoert, steht da
+    const bool voicing = zeigtVoicings();
+    m_tiefer->setVisible(!voicing);
+    m_hoeher->setVisible(!voicing);
+    m_oktTiefer->setVisible(voicing);
+    m_oktHoeher->setVisible(voicing);
+    m_play->setVisible(voicing);
+    for (QAbstractButton* knopf : m_spielarten->buttons()) knopf->setVisible(!voicing);
+    m_schiebenText->setText(voicing && l ? tr("Lowest note %1").arg(tonName(m_tiefster)) : tr("Move"));
     m_ungewoehnlich->setText(ungewoehnlichText());
     m_ungewoehnlich->setVisible(!m_ungewoehnlich->text().isEmpty());
     m_gerechnet->setVisible(a != nullptr && a->herkunft == QLatin1String(kHerkunftGerechnet));
@@ -827,12 +885,15 @@ void AkkordFenster::zeigeDetail()
                                                        .arg(m_verschiebung > 0 ? QStringLiteral("+%1").arg(m_verschiebung)
                                                                                : QString::number(m_verschiebung))
                                                        .arg(lageText(*l));
-        m_titel->setText(QStringLiteral("<b>%1</b> · %2").arg(a->titel.toHtmlEscaped(), lage.toHtmlEscaped()));
+        m_titel->setText(QStringLiteral("<b>%1</b> · %2").arg(galerieSymbol(*a).toHtmlEscaped(), lage.toHtmlEscaped()));
         m_toene->setText(detailText());
     }
     const bool da = l.has_value();
     m_tiefer->setEnabled(da && a != nullptr && toeneDesGriffbilds(*a, m_saiten, m_verschiebung - 1).has_value());
     m_hoeher->setEnabled(da && a != nullptr && toeneDesGriffbilds(*a, m_saiten, m_verschiebung + 1).has_value());
+    m_oktTiefer->setEnabled(da && a != nullptr && toeneDesVoicings(*a, m_tiefster - 12).has_value());
+    m_oktHoeher->setEnabled(da && a != nullptr && toeneDesVoicings(*a, m_tiefster + 12).has_value());
+    m_play->setEnabled(da);
     for (QAbstractButton* knopf : m_spielarten->buttons()) knopf->setEnabled(da);
     m_favorit->setEnabled(da);
     {
@@ -841,7 +902,7 @@ void AkkordFenster::zeigeDetail()
     }
     m_use->setEnabled(da && !m_muster.isEmpty());
     // H: Edit und Duplicate an jeder Lage, Delete nur an einem eigenen
-    m_neu->setEnabled(m_saiten.istSaiteninstrument());
+    m_neu->setEnabled(!m_muster.isEmpty() || m_saiten.istSaiteninstrument());
     m_bearbeiten->setEnabled(da);
     m_bearbeiten->setToolTip(a != nullptr && eigenerAkkord(a->name) ? tr("Edit your chord")
                                                                      : tr("Edit a copy of this position in your chords"));
@@ -857,7 +918,8 @@ QString AkkordFenster::detailText() const
     const std::optional<Akkord> l = lage();
     if (!l) return {};
     QStringList namen;
-    if (const auto toene = toeneDesGriffbilds(*l, m_saiten))
+    const auto toene = l->istGriffbild() ? toeneDesGriffbilds(*l, m_saiten) : toeneDesVoicings(*l, m_tiefster);
+    if (toene)
         for (const AkkordTon& t : *toene) namen << tonName(t.hoehe);
     return tr("Notes: %1").arg(namen.join(QLatin1Char(' ')));
 }
@@ -896,7 +958,7 @@ QStringList AkkordFenster::baumZeilen() const
 
 bool AkkordFenster::oeffneDialog(const Akkord& vorlage)
 {
-    AkkordDialog dialog(vorlage, m_saiten, m_strum, m_jeSchlag, m_spielart, this);
+    AkkordDialog dialog(vorlage, m_saiten, m_strum, m_jeSchlag, m_spielart, this, m_tiefster);
     connect(&dialog, &AkkordDialog::vorhoerenVerlangt, this, &AkkordFenster::vorhoerenVerlangt);
     connect(&dialog, &AkkordDialog::spielartGewaehlt, this, [this](AkkordSpielart art) { setzeSpielart(art); });
     if (lumi::ui::fuehreDialogAus(dialog) != QDialog::Accepted || dialog.gespeichert().isEmpty()) return false;
@@ -913,9 +975,13 @@ void AkkordFenster::zeigeEigenen(const QString& nennung)
 
 bool AkkordFenster::neu()
 {
-    if (!m_saiten.istSaiteninstrument()) return false;
     Akkord leer;
     leer.art = QStringLiteral("major");
+    if (zeigtVoicings())
+    {
+        m_tiefster = m_oktavBeginn;  // ein leeres Voicing: die Klaviatur ab seiner Oktave
+        return oeffneDialog(leer);
+    }
     leer.leer = m_saiten.leer;
     leer.buende.assign(m_saiten.leer.size(), -1);  // noch keine Saite spielt
     leer.finger.assign(m_saiten.leer.size(), 0);

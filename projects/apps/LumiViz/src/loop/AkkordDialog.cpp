@@ -26,6 +26,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <tuple>
 
 namespace lumi::loop
 {
@@ -44,6 +45,14 @@ GriffbildEingabe::GriffbildEingabe(QWidget* parent) : GriffbildFeld(parent)
 void GriffbildEingabe::paintEvent(QPaintEvent* event)
 {
     GriffbildFeld::paintEvent(event);
+    if (!akkord().istGriffbild())
+    {
+        if (!m_zeigerTon) return;
+        QPainter p(this);
+        p.setPen(QPen(QColor(0xD8, 0x5A, 0x30), 1.2, Qt::DashLine));
+        p.drawRect(klaviaturLage().taste(*m_zeigerTon).adjusted(1, 1, -1, -1));
+        return;
+    }
     if (!m_zeiger) return;
     // das Feld unter der Maus, gestrichelt (S-T11 a N)
     const GriffbildLage l = lage();
@@ -58,6 +67,11 @@ void GriffbildEingabe::paintEvent(QPaintEvent* event)
 
 void GriffbildEingabe::mousePressEvent(QMouseEvent* event)
 {
+    if (!akkord().istGriffbild())
+    {
+        if (event->button() == Qt::LeftButton) m_druckTon = klaviaturLage().tonBei(event->position());
+        return;
+    }
     const std::optional<GriffbildLage::Treffer> t = lage().trifft(event->position());
     if (!t) return;
     if (event->button() == Qt::RightButton)
@@ -71,6 +85,16 @@ void GriffbildEingabe::mousePressEvent(QMouseEvent* event)
 
 void GriffbildEingabe::mouseMoveEvent(QMouseEvent* event)
 {
+    if (!akkord().istGriffbild())
+    {
+        const std::optional<int> ton = klaviaturLage().tonBei(event->position());
+        if (ton != m_zeigerTon)
+        {
+            m_zeigerTon = ton;
+            update();
+        }
+        return;
+    }
     const std::optional<GriffbildLage::Treffer> t = lage().trifft(event->position());
     if (t != m_zeiger)
     {
@@ -81,6 +105,14 @@ void GriffbildEingabe::mouseMoveEvent(QMouseEvent* event)
 
 void GriffbildEingabe::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (!akkord().istGriffbild())
+    {
+        const std::optional<int> druck = m_druckTon;
+        m_druckTon.reset();
+        if (event->button() == Qt::LeftButton && druck && klaviaturLage().tonBei(event->position()) == druck)
+            Q_EMIT tonGeklickt(*druck);
+        return;
+    }
     if (event->button() != Qt::LeftButton || !m_druck) return;
     const GriffbildLage::Treffer druck = *m_druck;
     m_druck.reset();
@@ -103,6 +135,7 @@ void GriffbildEingabe::mouseReleaseEvent(QMouseEvent* event)
 void GriffbildEingabe::leaveEvent(QEvent* event)
 {
     m_zeiger.reset();
+    m_zeigerTon.reset();
     update();
     GriffbildFeld::leaveEvent(event);
 }
@@ -110,10 +143,12 @@ void GriffbildEingabe::leaveEvent(QEvent* event)
 // --- der Dialog ----------------------------------------------------------------
 
 AkkordDialog::AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, const Strum& strum, int schritteJeSchlag,
-                           AkkordSpielart spielart, QWidget* parent)
+                           AkkordSpielart spielart, QWidget* parent, int tiefster)
     : QDialog(parent), m_akkord(vorlage), m_saiten(saiten), m_strum(strum), m_jeSchlag(std::max(1, schritteJeSchlag)),
-      m_spielart(spielart)
+      m_spielart(spielart), m_tiefster(tiefster)
 {
+    // die Klaviatur eines Voicings: drei Oktaven ab dem C eine Oktave unter dem tiefsten Ton
+    m_klaviaturAb = std::max(12, m_tiefster - (m_tiefster % 12) - 12);
     setObjectName(QStringLiteral("chordEditDialog"));
     if (vorlage.name.startsWith(QLatin1String(kEigenVorsatz)))
         m_eigenName = vorlage.name.mid(static_cast<int>(qstrlen(kEigenVorsatz)));
@@ -138,14 +173,16 @@ AkkordDialog::AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, cons
     m_stimmung->setEnabled(false);
     QStringList toene;
     for (const int ton : m_akkord.leer) toene << tonName(ton);
-    m_stimmung->setText(tr("%1 · capo %2").arg(toene.join(QLatin1Char(' '))).arg(m_saiten.capo));
+    m_stimmung->setText(istVoicing() ? tr("Voicing — no strings")
+                                     : tr("%1 · capo %2").arg(toene.join(QLatin1Char(' '))).arg(m_saiten.capo));
     m_stimmung->setToolTip(tr("The tuning is fixed: a chord shape belongs to one tuning"));
     links->addWidget(m_stimmung);
     m_eingabe = new GriffbildEingabe(this);
     links->addWidget(m_eingabe, 1);
     {
         auto* reihe = new QHBoxLayout;
-        reihe->addWidget(new QLabel(tr("First fret"), this));
+        m_ersterName = new QLabel(istVoicing() ? tr("Keyboard from") : tr("First fret"), this);
+        reihe->addWidget(m_ersterName);
         auto* tiefer = new QPushButton(QStringLiteral("‹"), this);
         tiefer->setObjectName(QStringLiteral("chordEditFretDown"));
         tiefer->setMaximumWidth(30);
@@ -161,8 +198,18 @@ AkkordDialog::AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, cons
         reihe->addWidget(hoeher);
         reihe->addStretch(1);
         links->addLayout(reihe);
-        connect(tiefer, &QPushButton::clicked, this, [this] { setzeErstenBund(m_erster - 1); });
-        connect(hoeher, &QPushButton::clicked, this, [this] { setzeErstenBund(m_erster + 1); });
+        connect(tiefer, &QPushButton::clicked, this, [this] {
+            if (istVoicing())
+                setzeKlaviaturAb(m_klaviaturAb - 12);
+            else
+                setzeErstenBund(m_erster - 1);
+        });
+        connect(hoeher, &QPushButton::clicked, this, [this] {
+            if (istVoicing())
+                setzeKlaviaturAb(m_klaviaturAb + 12);
+            else
+                setzeErstenBund(m_erster + 1);
+        });
     }
     mitte->addLayout(links);
 
@@ -214,14 +261,22 @@ AkkordDialog::AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, cons
     {
         auto* reihe = new QHBoxLayout;
         m_spielarten = baueSpielartKnoepfe(this, reihe);
+        m_play = new QPushButton(tr("Play"), this);
+        m_play->setObjectName(QStringLiteral("chordPlay"));
+        reihe->addWidget(m_play);
+        connect(m_play, &QPushButton::clicked, this, [this] { (void)spieleAn(); });
+        // ein Voicing klingt ohne Saiten zugleich: ein Knopf statt der Spielarten (S-T14 a G)
+        m_play->setVisible(istVoicing());
+        for (QAbstractButton* knopf : m_spielarten->buttons()) knopf->setVisible(!istVoicing());
         reihe->addStretch(1);
         rechts->addLayout(reihe);
         if (QAbstractButton* knopf = m_spielarten->button(static_cast<int>(m_spielart))) knopf->setChecked(true);
         connect(m_spielarten, &QButtonGroup::idClicked, this,
                 [this](int id) { setzeSpielart(static_cast<AkkordSpielart>(id), true); });
     }
-    auto* bedienung = new QLabel(tr("Click a fret: set or remove the dot · click above the nut: open ○ / not played × · "
-                                    "right-click a dot: finger · drag a dot across strings: barre"),
+    auto* bedienung = new QLabel(istVoicing() ? tr("Click a key: add or remove the note")
+                                              : tr("Click a fret: set or remove the dot · click above the nut: open ○ / not played × · "
+                                                   "right-click a dot: finger · drag a dot across strings: barre"),
                                  this);
     bedienung->setEnabled(false);
     bedienung->setWordWrap(true);
@@ -257,18 +312,24 @@ AkkordDialog::AkkordDialog(const Akkord& vorlage, const Saitensatz& saiten, cons
     connect(m_eingabe, &GriffbildEingabe::obenGeklickt, this, &AkkordDialog::klickeOben);
     connect(m_eingabe, &GriffbildEingabe::fingerVerlangt, this, &AkkordDialog::frageFinger);
     connect(m_eingabe, &GriffbildEingabe::barreGezogen, this, &AkkordDialog::zieheBarre);
+    connect(m_eingabe, &GriffbildEingabe::tonGeklickt, this, &AkkordDialog::klickeTon);
+    if (istVoicing()) m_eingabe->setToolTip(tr("Click a key: add or remove the note"));
     resize(560, 360);
     zeige();
 }
 
-void AkkordDialog::aendere(const Akkord& neu)
+void AkkordDialog::aendere(const Akkord& neu, int tiefster)
 {
-    if (neu.buende == m_akkord.buende && neu.finger == m_akkord.finger && neu.barre == m_akkord.barre) return;
-    m_zurueck.push_back(m_akkord);
+    if (neu.buende == m_akkord.buende && neu.finger == m_akkord.finger && neu.barre == m_akkord.barre &&
+        neu.abstaende == m_akkord.abstaende && tiefster == m_tiefster)
+        return;
+    m_zurueck.emplace_back(m_akkord, m_tiefster);
     m_vor.clear();
     m_akkord.buende = neu.buende;
     m_akkord.finger = neu.finger;
     m_akkord.barre = neu.barre;
+    m_akkord.abstaende = neu.abstaende;
+    m_tiefster = tiefster;
     m_hinweis->hide();
     zeige();
 }
@@ -277,28 +338,44 @@ void AkkordDialog::klickeBund(int saite, int bund)
 {
     Akkord neu = m_akkord;
     schaltePunkt(neu, saite, bund);
-    aendere(neu);
+    aendere(neu, m_tiefster);
 }
 
 void AkkordDialog::klickeOben(int saite)
 {
     Akkord neu = m_akkord;
     schalteLeer(neu, saite);
-    aendere(neu);
+    aendere(neu, m_tiefster);
 }
 
 void AkkordDialog::waehleFinger(int saite, int finger)
 {
     Akkord neu = m_akkord;
     setzeFinger(neu, saite, finger);
-    aendere(neu);
+    aendere(neu, m_tiefster);
 }
 
 void AkkordDialog::zieheBarre(int von, int bis, int bund)
 {
     Akkord neu = m_akkord;
     setzeBarre(neu, von, bis, bund);
-    aendere(neu);
+    aendere(neu, m_tiefster);
+}
+
+void AkkordDialog::klickeTon(int hoehe)
+{
+    Akkord neu = m_akkord;
+    int tiefster = m_tiefster;
+    schalteVoicingTon(neu, tiefster, hoehe);
+    aendere(neu, tiefster);
+}
+
+void AkkordDialog::setzeKlaviaturAb(int ton)
+{
+    const int neu = std::clamp(ton - (((ton % 12) + 12) % 12), 12, kHoeheMax - 35);
+    if (neu == m_klaviaturAb) return;
+    m_klaviaturAb = neu;
+    zeige();
 }
 
 void AkkordDialog::frageFinger(int saite, QPoint global)
@@ -327,8 +404,8 @@ void AkkordDialog::setzeErstenBund(int bund)
 bool AkkordDialog::nimmZurueck()
 {
     if (m_zurueck.empty()) return false;
-    m_vor.push_back(m_akkord);
-    m_akkord = m_zurueck.back();
+    m_vor.emplace_back(m_akkord, m_tiefster);
+    std::tie(m_akkord, m_tiefster) = m_zurueck.back();
     m_zurueck.pop_back();
     zeige();
     return true;
@@ -337,8 +414,8 @@ bool AkkordDialog::nimmZurueck()
 bool AkkordDialog::stelleWiederHer()
 {
     if (m_vor.empty()) return false;
-    m_zurueck.push_back(m_akkord);
-    m_akkord = m_vor.back();
+    m_zurueck.emplace_back(m_akkord, m_tiefster);
+    std::tie(m_akkord, m_tiefster) = m_vor.back();
     m_vor.pop_back();
     zeige();
     return true;
@@ -369,7 +446,7 @@ std::optional<AkkordName> AkkordDialog::vorschlag() const
     Saitensatz leer;
     leer.leer = m_akkord.leer;
     std::vector<int> hoehen;
-    if (const auto toene = toeneDesGriffbilds(m_akkord, leer))
+    if (const auto toene = istVoicing() ? toeneDesVoicings(m_akkord, m_tiefster) : toeneDesGriffbilds(m_akkord, leer))
         for (const AkkordTon& t : *toene) hoehen.push_back(t.hoehe);
     return erkenneAkkord(hoehen);
 }
@@ -386,7 +463,7 @@ bool AkkordDialog::uebernimmVorschlag()
 
 bool AkkordDialog::spieleAn()
 {
-    const Muster noten = akkordZumAnhoeren(m_akkord, m_saiten, m_strum, m_spielart, m_jeSchlag);
+    const Muster noten = akkordZumAnhoeren(m_akkord, m_saiten, m_strum, m_spielart, m_jeSchlag, m_tiefster);
     if (noten.noten.empty()) return false;
     Q_EMIT vorhoerenVerlangt(noten);
     return true;
@@ -404,10 +481,11 @@ void AkkordDialog::setzeSpielart(AkkordSpielart art, bool anspielen)
 
 bool AkkordDialog::speichere()
 {
-    const bool spielt = std::any_of(m_akkord.buende.begin(), m_akkord.buende.end(), [](int b) { return b >= 0; });
+    const bool spielt = istVoicing() ? !m_akkord.abstaende.empty()
+                                     : std::any_of(m_akkord.buende.begin(), m_akkord.buende.end(), [](int b) { return b >= 0; });
     if (!spielt)
     {
-        m_hinweis->setText(tr("Set at least one string to play"));
+        m_hinweis->setText(istVoicing() ? tr("Set at least one note") : tr("Set at least one string to play"));
         m_hinweis->show();
         return false;
     }
@@ -439,13 +517,15 @@ QString AkkordDialog::hinweis() const
 
 void AkkordDialog::zeige()
 {
-    m_eingabe->setzeAkkord(m_akkord);
+    m_eingabe->setzeAkkord(m_akkord, m_tiefster);
     m_eingabe->setzeFenster(GriffbildFenster{m_erster, kBuendeImDialog});
-    m_ersterText->setText(QString::number(m_erster));
+    m_eingabe->setzeKlaviatur(std::make_pair(m_klaviaturAb, m_klaviaturAb + 35));
+    m_ersterText->setText(istVoicing() ? tonName(m_klaviaturAb) : QString::number(m_erster));
     QStringList namen;
-    if (const auto toene = toeneDesGriffbilds(m_akkord, m_saiten))
+    if (const auto toene = istVoicing() ? toeneDesVoicings(m_akkord, m_tiefster) : toeneDesGriffbilds(m_akkord, m_saiten))
         for (const AkkordTon& t : *toene) namen << tonName(t.hoehe);
-    m_toene->setText(namen.isEmpty() ? tr("Notes: none — set a string to play") : tr("Notes: %1").arg(namen.join(QLatin1Char(' '))));
+    m_toene->setText(namen.isEmpty() ? (istVoicing() ? tr("Notes: none — click a key") : tr("Notes: none — set a string to play"))
+                                     : tr("Notes: %1").arg(namen.join(QLatin1Char(' '))));
     const std::optional<AkkordName> name = vorschlag();
     m_vorschlag->setText(name ? tr("sounds like: %1").arg(akkordSymbol(*name)) : QString());
     m_vorschlag->setVisible(name.has_value());

@@ -490,11 +490,12 @@ bool NotenRaster::legeAufSaite(int platz, int stelle)
 
 // --- Griffbilder (Stufe 26e-2; S-T5 a D, S-T8 a D) -----------------------------------
 
-bool NotenRaster::setzeAkkord(const Akkord& lage, int schritt)
+bool NotenRaster::setzeAkkord(const Akkord& lage, int schritt, int bezug)
 {
-    if (!m_saiten.istSaiteninstrument() || schritt < 0 || schritt >= schritte()) return false;
-    // die Lage ist schon verschoben: kein weiterer Bezug; einen Schritt lang wie eine getippte Zahl
-    const std::vector<Note> neue = akkordNoten(lage, m_saiten, schritt, 1, 0);
+    if (schritt < 0 || schritt >= schritte()) return false;
+    // ein Griffbild ist schon verschoben (Bezug 0), ein Voicing liegt auf seinem tiefsten Ton;
+    // einen Schritt lang wie eine getippte Zahl
+    const std::vector<Note> neue = akkordNoten(lage, m_saiten, schritt, 1, lage.istGriffbild() ? 0 : bezug);
     if (neue.empty()) return false;
     // was am Schritt auf einer seiner Saiten liegt oder einen seiner Toene spielt, weicht
     const std::vector<Griff> alleGriffe = griffe();
@@ -504,7 +505,7 @@ bool NotenRaster::setzeAkkord(const Akkord& lage, int schritt)
     {
         const Note& alt = m_muster.noten[i];
         const bool weicht = alt.schritt == schritt && std::any_of(neue.begin(), neue.end(), [&](const Note& n) {
-                                return n.saite == alleGriffe[i].saite || n.hoehe == alt.hoehe;
+                                return (n.saite >= 0 && n.saite == alleGriffe[i].saite) || n.hoehe == alt.hoehe;
                             });
         if (!weicht) neu.noten.push_back(alt);
     }
@@ -520,8 +521,7 @@ bool NotenRaster::setzeAkkord(const Akkord& lage, int schritt)
 
 void NotenRaster::dragEnterEvent(QDragEnterEvent* event)
 {
-    if (m_saiten.istSaiteninstrument() && event->mimeData()->hasFormat(QLatin1String(AkkordFenster::kMimeTyp)))
-        event->acceptProposedAction();
+    if (event->mimeData()->hasFormat(QLatin1String(AkkordFenster::kMimeTyp))) event->acceptProposedAction();
 }
 
 void NotenRaster::dragMoveEvent(QDragMoveEvent* event)
@@ -539,6 +539,14 @@ void NotenRaster::dropEvent(QDropEvent* event)
     const int schritt = schrittBei(event->position().toPoint().x());
     Akkord akkord;
     if (teile.size() < 2 || schritt < 0 || !holeAkkord(teile[0], akkord)) return event->ignore();
+    if (!akkord.istGriffbild())
+    {
+        // ein Voicing (S-T6 a): der tiefste Ton auf der Zeile unter der Maus, sonst wie im Fenster
+        const int zeile = hoeheBei(event->position().toPoint().y());
+        if (!setzeAkkord(akkord, schritt, zeile >= 0 ? zeile : teile[1].toInt())) return event->ignore();
+        event->acceptProposedAction();
+        return;
+    }
     const std::optional<Akkord> lage = verschobenesGriffbild(akkord, teile[1].toInt());
     if (!lage || !setzeAkkord(*lage, schritt)) return event->ignore();
     event->acceptProposedAction();
@@ -2235,9 +2243,10 @@ void NotenRaster::setZeilenProzent(int prozent, int yFest)
 
 void NotenRaster::passeEin()
 {
-    // die Breite: das ganze Muster
+    // die Breite: das ganze Muster — abgerundet, denn gezeichnet wird mit ganzen Pixeln
+    // (`schrittBreite()` rundet; ein Bruchteil ab 0,5 liesse das Muster ueber den Rand ragen)
     const int zahl = std::max(1, schritte());
-    m_schrittBreite = std::clamp(static_cast<double>(sichtBreite()) / zahl, kSchrittBreiteMin, kSchrittBreiteMax);
+    m_schrittBreite = std::clamp(std::floor(static_cast<double>(sichtBreite()) / zahl), kSchrittBreiteMin, kSchrittBreiteMax);
     // die Hoehe: die Noten mit einer Zeile Luft darueber und darunter (ohne Noten: Normalhoehe um C4)
     int tief = 60;
     int hoch = 60;
@@ -2752,7 +2761,7 @@ void InstrumentEditor::zeigeAlles()
         m_strumZeile->zeige(ziel->strum);
         m_strumZeile->setVisible(mitSaiten);
         m_tabHaken->setVisible(mitSaiten);  // F (Stufe 26c)
-        m_akkorde->setVisible(mitSaiten);   // D (Stufe 26e-2); die Voicings fuer alle Instrumente mit 26f
+        // D (Stufe 26e-2): bei jedem Instrument — mit Saiten Griffbilder, sonst Voicings (26f, S-T14 a)
     }
     m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
@@ -2765,9 +2774,9 @@ void InstrumentEditor::zeigeAlles()
     {
         Instrument instrument;
         const QString titel = holeInstrument(ziel->instrument, instrument) ? instrument.titel : ziel->instrument;
-        const bool mitSaiten = m_raster->saiten().istSaiteninstrument();
-        m_akkordFenster->setzeZiel(mitSaiten ? m_muster : QString(), titel, m_raster->saiten(), ziel->strum,
-                                   m_loop.schritteJeSchlag);
+        // ein Voicing beginnt in der Oktave 3, bei einem Bass in der Oktave 2 (S-T14 a F)
+        const int oktav = InstrumentPalette::hoeheFuerArt(instrument.art) <= 36 ? 36 : 48;
+        m_akkordFenster->setzeZiel(m_muster, titel, m_raster->saiten(), ziel->strum, m_loop.schritteJeSchlag, oktav);
     }
 }
 
@@ -2823,8 +2832,9 @@ void InstrumentEditor::oeffneAkkorde(bool zeigen)
     {
         m_akkordFenster = new AkkordFenster(this);
         // Use: an die Einfuegemarke des Rasters
-        connect(m_akkordFenster, &AkkordFenster::verwenden, this,
-                [this](const Akkord& lage) { (void)m_raster->setzeAkkord(lage, m_raster->einfuegemarke()); });
+        connect(m_akkordFenster, &AkkordFenster::verwenden, this, [this](const Akkord& lage, int bezug) {
+            (void)m_raster->setzeAkkord(lage, m_raster->einfuegemarke(), bezug);
+        });
         // anhoeren mit dem Instrument dieses Musters
         connect(m_akkordFenster, &AkkordFenster::vorhoerenVerlangt, this, [this](const Muster& noten) {
             if (const Muster* ziel = basis()) Q_EMIT akkordVorhoerenVerlangt(ziel->instrument, noten);

@@ -66,6 +66,8 @@ public:
     [[nodiscard]] const std::vector<Gruppe>& gruppen() const { return m_gruppen; }
     void setzeGewaehlt(const QString& nennung);
     [[nodiscard]] const QString& gewaehlt() const { return m_gewaehlt; }
+    /// Voicings (S-T14 a D): ab welcher Oktave ihr tiefster Ton gezeichnet wird.
+    void setzeOktavBeginn(int ton) { m_oktav = ton; update(); }
     /// Die Zelle eines Akkords (fuer Tests und das Rollen); leer = nicht zu sehen.
     [[nodiscard]] QRect zelle(const QString& nennung) const;
     /// Der Akkord unter dem Punkt; leer = keiner.
@@ -105,6 +107,7 @@ private:
     std::vector<Gruppe> m_gruppen;
     std::vector<Platz> m_plaetze;
     QString m_gewaehlt;
+    int m_oktav = 48;
     QPoint m_druck;
     QString m_druckNennung;
 };
@@ -119,8 +122,12 @@ public:
     /// Fuer welches Muster das Fenster waehlt: Name, Titel des Instruments, seine
     /// Saiten (die Stimmung entscheidet, was passt), Strum des Musters (Spread beim
     /// Anhoeren) und die Schritte je Schlag (Down-up). Ohne Muster ist **Use** aus.
+    /// Ohne Saiten zeigt es die Voicings (S-T14 a); `oktavBeginn` ist dann die Oktave
+    /// ihres tiefsten Tons (48 = C3, ein Bass 36).
     void setzeZiel(const QString& muster, const QString& instrumentTitel, const Saitensatz& saiten, const Strum& strum,
-                   int schritteJeSchlag);
+                   int schritteJeSchlag, int oktavBeginn = 48);
+    /// Zeigt das Fenster Voicings (das Instrument hat keine Saiten)?
+    [[nodiscard]] bool zeigtVoicings() const { return !m_saiten.istSaiteninstrument(); }
     /// Die Akkorde neu lesen (eigene aendern sich), dazu Favoriten und Zuletzt.
     void liesNeu();
     void zeigeVorn();
@@ -139,6 +146,13 @@ public:
     /// F: die gewaehlte Lage um `buende` verschieben. false = es geht nicht weiter.
     bool verschiebe(int buende);
     [[nodiscard]] int verschiebung() const { return m_verschiebung; }
+    /// F bei Voicings (S-T14 a): um `oktaven` Oktaven. false = es geht nicht weiter.
+    bool verschiebeOktave(int oktaven);
+    /// Der tiefste Ton des gewaehlten Voicings.
+    [[nodiscard]] int tiefster() const { return m_tiefster; }
+    /// Was mit der Lage zu den Noten gehoert (`akkordNoten`): ein Griffbild ist schon
+    /// verschoben (0), ein Voicing traegt seinen tiefsten Ton.
+    [[nodiscard]] int bezug() const { return zeigtVoicings() ? m_tiefster : 0; }
     /// Die gewaehlte Lage mit ihrer Verschiebung; nichts = keine gewaehlt.
     [[nodiscard]] std::optional<Akkord> lage() const;
     /// G: die Spielart; `anspielen` spielt gleich (wie ein Klick auf das Symbol).
@@ -182,12 +196,14 @@ public:
     /// Die Spielart ueber einen Neustart merken (S-T10 a); die Test-Exe schaltet es ab.
     static void setzeSpielartMerken(bool an);
     static constexpr int kZuletztMax = 12;
-    /// Was ein gezogenes Griffbild traegt: `<nennung>\n<verschiebung>`.
+    /// Was ein gezogenes Bild traegt: `<nennung>\n<bezug>` (Griffbild: die
+    /// Verschiebung; Voicing: der tiefste Ton, falls es nicht auf einer Zeile landet).
     static constexpr const char* kMimeTyp = "application/x-lumiviz-chord";
 
 Q_SIGNALS:
-    /// Diese Lage (schon verschoben) an die Einfuegemarke setzen.
-    void verwenden(const lumi::loop::Akkord& lage);
+    /// Diese Lage (ein Griffbild schon verschoben) an die Einfuegemarke setzen; `bezug`
+    /// wie `akkordNoten` (beim Voicing der tiefste Ton).
+    void verwenden(const lumi::loop::Akkord& lage, int bezug);
     /// Diese Noten mit dem Instrument des Musters anspielen.
     void vorhoerenVerlangt(const lumi::loop::Muster& noten);
     void rueckgaengigVerlangt(bool wiederholen);
@@ -218,6 +234,8 @@ private:
     QStringList m_favoriten;
     QStringList m_zuletzt;
     int m_verschiebung = 0;
+    int m_tiefster = 48;     ///< Voicing: der tiefste Ton
+    int m_oktavBeginn = 48;  ///< Voicing: wo er zuerst liegt
     AkkordSpielart m_spielart = AkkordSpielart::Ab;
 
     QLabel* m_zielZeile = nullptr;
@@ -233,6 +251,10 @@ private:
     QLabel* m_ungewoehnlich = nullptr;
     QPushButton* m_tiefer = nullptr;
     QPushButton* m_hoeher = nullptr;
+    QLabel* m_schiebenText = nullptr;
+    QPushButton* m_oktTiefer = nullptr;  ///< Voicing: −8va
+    QPushButton* m_oktHoeher = nullptr;  ///< Voicing: +8va
+    QPushButton* m_play = nullptr;       ///< Voicing: ein Knopf statt der Spielarten
     QButtonGroup* m_spielarten = nullptr;
     QToolButton* m_favorit = nullptr;
     QPushButton* m_use = nullptr;

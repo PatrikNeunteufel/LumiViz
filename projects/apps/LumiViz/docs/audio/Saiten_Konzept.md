@@ -1,9 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.36.0
+> **Version:** 0.37.0
 > **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
-> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f gebaut, §5zb; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -209,6 +209,28 @@ sie statt einer eigenen Tabelle; das Programm liest sie als mitgelieferte Datei
 (`asset/Asset.cmake`); ein Test prüft, dass jede Art der Vorlagen darin steht. Verworfen: b (die
 Tabelle in `Akkord.cpp` maßgeblich, das Skript mit eigener — der Vergleich über die Vorlagen
 sähe nur die 13 gerechneten Arten).
+
+✅ **S-T14 a** (Patrik S138): **Skizze der Voicings im Fenster *Chords* gebilligt** (26f,
+gezeichnet im Gespräch; hier als Beschreibung). Bei einem Instrument ohne Saiten:
+- **A** *For:* Instrument und Muster, „voicings (no strings)".
+- **B** wie bisher; die Suche findet auch die Lage („inv", „open", „drop 2").
+- **C** wie bisher, Grundtöne mit ihren Arten.
+- **D** je Voicing eine kleine Klaviatur über zwei Oktaven mit Punkten; darunter das Symbol (bei
+  Umkehrungen mit Bass, „C/E") und die Lage (*root*, *1st inv.*, *2nd inv.*, *3rd inv.*, *open*,
+  *drop 2*).
+- **E** in der Leiste eine große Klaviatur über drei Oktaven und die Töne.
+- **F** *Lowest note* mit *−8va / +8va* (keine Schritte um Halbtöne — sie transponierten);
+  der tiefste Ton beginnt in der Oktave 3, bei einem Bass in der Oktave 2 (von Claude gesetzt,
+  nach `InstrumentPalette::hoeheFuerArt`).
+- **G** ein Knopf *Play* (ohne Saiten klingt alles zugleich), ★, *Use*.
+- **H** *New...* / *Edit...* öffnen *Edit chord* mit einer Klaviatur statt des Griffbretts (ein
+  Klick auf eine Taste setzt oder nimmt den Ton); Titel, Grundton, Art, *sounds like* wie
+  S-T11 a; *Duplicate*, *Delete* wie bisher.
+- **Einfügen:** *Use* und Doppelklick an die Einfügemarke mit dem gezeigten tiefsten Ton;
+  gezogen auf die Piano-Roll landet der tiefste Ton auf der Zeile unter der Maus (S-T6 a); je
+  Note ein Schritt. Der Knopf *Chords...* steht dann bei jedem Instrument.
+Verworfen: b (ohne H — Instrumente ohne Saiten hätten ein halbes Fenster; derselbe Dialog
+würde später noch einmal angefasst).
 
 ✅ **S-W1 a** (Patrik S133; Bearbeitung ab der nächsten Session): **Ziel der
 Spielweisen** sind Strum (Richtung, Versatz der Saiten, Muster) und die
@@ -2029,6 +2051,36 @@ Dialog *Edit chord*.
   `LUMIVIZ_CHORD_EDIT_BILD`; im Fenster New, Edit an Vorlage und eigenem, Cancel, Duplicate,
   Delete mit Nein und Ja). Bilder angesehen. **Damit ist 26e fertig;** als Nächstes 26f
   (Voicings im selben Fenster für Instrumente ohne Saiten).
+
+### 5zb. Stufe 26f — Voicings im Fenster *Chords* (gebaut S138, S-T14 a)
+
+- **Modell** (`Akkord.hpp`): `lageText` auch für Voicings (aus der Beschreibung der Vorlagen —
+  *Root position*, *First/Second/Third inversion*, *Open position*, *Drop 2* —, sonst aus dem
+  tiefsten Ton und der Weite), `tiefsteTonklasse` (welcher Ton der Art unten liegt; die Datei
+  nennt nur Abstände), `vorgabeTiefster` (Oktave 3, ein Bass 2), `galerieSymbol` (`C/E`),
+  `akkordZumAnhoeren` mit dem tiefsten Ton (Voicing: alles zugleich, ohne Saiten und
+  Anschlag), `schalteVoicingTon` (Dialog; der tiefste folgt, Weite und Zahl wie
+  `richteAkkord`).
+- **Bild** (`GriffbildBild`): `KlaviaturLage` (Tasten, Punkte, `tonBei`), `klaviaturBereich`,
+  `zeichneKlaviatur` (Tasten in festen Farben — sonst kehrte das dunkle Design Weiß und
+  Schwarz um; groß mit den C beschriftet), `zeichneAkkordbild` (Griffbild oder Klaviatur);
+  `GriffbildFeld` zeigt ein Voicing mit seinem tiefsten Ton.
+- **Fenster:** ohne Saiten die Voicings („voicings (no strings)"), Galerie mit Klaviaturen in
+  der Folge root, 1st, 2nd, 3rd inv., open, drop 2; Leiste mit *Lowest note*, *−8va / +8va*,
+  einem Knopf *Play* statt der Spielarten; `verwenden(lage, bezug)` und Mime mit dem tiefsten
+  Ton. *New/Edit* öffnen den Dialog mit Klaviatur (*Keyboard from* ‹ ›, drei Oktaven; Klick
+  setzt oder nimmt einen Ton; Undo mit dem tiefsten Ton).
+- **Editor:** *Chords...* bei jedem Instrument; `setzeAkkord(lage, schritt, bezug)` ohne
+  Saiten; was am Schritt einen Ton des Voicings spielt, weicht (Saiten zählen nur, wo es
+  welche gibt); gezogen landet der tiefste Ton auf der Zeile unter der Maus (S-T6 a).
+- **Nebenbei behoben:** *Fit* im Instrument-Editor rundete die Schrittbreite — bei einem
+  Bruchteil ab 0,5 ragte das Muster über den Rand (`test_LoopEditorZoom` wurde mit dem nun
+  sichtbaren *Chords...* rot, weil das Raster schmaler wurde). Jetzt abgerundet wie im
+  Drum-Editor.
+- Belegt in `test_LoopAkkordVoicing` (4 Fälle: Lage, Symbol, tiefster Ton, Anhören, Töne
+  setzen; Klaviatur mit Treffern und Bild; das Fenster mit Galerie, Oktave, Play, Use, Suche,
+  *New* mit Tasten über die Maus; über den Editor Use und Ziehen auf eine Zeile;
+  `LUMIVIZ_VOICING_BILD`). Bilder angesehen.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

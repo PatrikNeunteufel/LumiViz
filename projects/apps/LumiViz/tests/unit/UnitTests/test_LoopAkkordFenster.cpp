@@ -364,11 +364,12 @@ TEST_CASE("Loop Akkord Fenster 26e-2: ueber den Editor — Chords..., Use an die
     QCoreApplication::sendEvent(raster, &anders);
     CHECK_FALSE(anders.isAccepted());
 
-    // ohne Saiten: kein Knopf
+    // ohne Saiten: der Knopf bleibt, das Fenster zeigt Voicings (26f, S-T14 a)
     Instrument flach;
     flach.titel = QStringLiteral("Pad");
     const QString flachDatei = QDir(ordner.path()).filePath(QStringLiteral("pad.lvinst"));
     REQUIRE(speichereInstrument(flach, flachDatei));
     editor.setzeInstrument(flachDatei);
-    CHECK(knopf->isHidden());
+    CHECK_FALSE(knopf->isHidden());
+    CHECK(fenster->zeigtVoicings());
 }

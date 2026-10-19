@@ -102,6 +102,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAkkord.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAkkordFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopAkkordDialog.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopAkkordVoicing.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopGriffbild.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorTab.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEditorVerbunden.cpp"

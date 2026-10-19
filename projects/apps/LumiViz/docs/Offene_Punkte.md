@@ -2832,6 +2832,12 @@ einem `static` — ruft ein Fall es zuerst auf, solange er nicht gefunden wird,
 bleibt es für den ganzen Lauf leer. Welcher Fall das ist, ist nicht
 untersucht; ändern erst auf Patriks Wort.
 
+**Dazu S138: „Karaoke-Panel S89" schwankt** unter Testing-MSVC: `test_PaletteUi.cpp:769`
+(`combo->itemText(0) == "Abend"` — die Zeile der Presets nach `processEvents`) einmal rot im
+Bereichslauf `*Akkord*,*Griffbild*,*Editor*,*Spieler*,*Instrument*,*Zoom*` und einmal allein;
+derselbe Bereich gleich danach 130 / 130, allein dreimal grün, unter Release-clang grün. Der
+Fall berührt nichts aus Stufe 26 (Karaoke-Presets, `PresetListen`). Ursache nicht untersucht.
+
 ### ✅ Regression S84 — Tempo, Lag, Vollbild-Freeze (gelöst S85)
 
 Keine Regression aus S84: Presetverweise bekamen beim Laden keine eigenen
@@ -2981,6 +2987,14 @@ Idee Preset-Warmup/Pre-Roll.
   benachbarten). Physik wie das Gleitgeräusch (Pakarinen u. a., JASA 2007: Frequenz
   n · v · d_w, Pegel ∝ Geschwindigkeit; Recherche 25 §3) — braucht die Windungsdichte
   d_w der Saiten (Recherche 25, Lücke 4).**
+  **Idee Patrik (S138): Spielweisen auch für die anderen Instrumentfamilien** — so wie die
+  Saiten Bend, Tapping, Palm mute haben, sollen Klavier, Bläser usw. ihre eigenen haben:
+  etwa die **Pedale** am Klavier (Sustain, wohl auch Sostenuto und Una corda),
+  **Dämpfer** an Blechbläsern, dazu was die Familien sonst tragen (bei Claude als Beispiele,
+  noch nicht vorgelegt: Atem und Zungenstoß bei Bläsern, Vibrato, Pizzicato und *con
+  sordino* bei Streichern). Noch nicht entschieden: ein eigenes Konzept mit Zielbild
+  (welche Familien, welche Spielweisen, im Modell je Note, je Muster oder als Spur wie
+  Strum), danach Baustufen — vorzulegen, wenn Stufe 26 fertig ist.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument

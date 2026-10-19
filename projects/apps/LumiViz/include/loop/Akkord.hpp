@@ -225,9 +225,25 @@ struct AkkordName
 /// gehoert dazu. Nichts, wenn die Art unbekannt ist (`alt`, `7sg`) oder es kein
 /// Griffbild ist; leer, wenn alles passt.
 [[nodiscard]] std::optional<std::vector<int>> fremdeTonklassen(const Akkord& akkord);
-/// Die Lage, wie die Galerie sie nennt (S-T8 a D): `open`, wenn eine leere Saite
-/// klingt, sonst `fr <n>` mit dem tiefsten gegriffenen Bund.
+/// Die Lage, wie die Galerie sie nennt — ein Griffbild (S-T8 a D): `open`, wenn eine
+/// leere Saite klingt, sonst `fr <n>` mit dem tiefsten gegriffenen Bund; ein Voicing
+/// (S-T14 a D): `root`, `1st inv.`, `2nd inv.`, `3rd inv.`, `open`, `drop 2` — aus der
+/// Beschreibung der Vorlagen, sonst aus dem tiefsten Ton und der Weite gerechnet.
 [[nodiscard]] QString lageText(const Akkord& akkord);
+/// Welcher Ton der Art bei einem Voicing unten liegt (die Datei nennt nur die Abstaende
+/// ueber dem tiefsten): die Tonklasse 0 … 11, mit der die Klassen die Art bilden; ohne
+/// bekannte Art der Grundton. Nichts bei einem Griffbild.
+[[nodiscard]] std::optional<int> tiefsteTonklasse(const Akkord& voicing);
+/// Wo der tiefste Ton eines Voicings zuerst liegt (S-T14 a F): seine Tonklasse ab
+/// `oktavBeginn` (48 = C3; ein Bass 36 = C2).
+[[nodiscard]] int vorgabeTiefster(const Akkord& voicing, int oktavBeginn);
+/// Das Symbol unter dem kleinen Bild: der Titel, bei einem Voicing in Umkehrung mit
+/// dem Bass (`C/E`, S-T14 a D).
+[[nodiscard]] QString galerieSymbol(const Akkord& akkord);
+/// H (S-T14 a): im Dialog einen Ton eines Voicings setzen oder nehmen — `tiefster`
+/// ist der tiefste Ton und folgt, wenn sich der tiefste aendert. Der letzte Ton bleibt
+/// nicht stehen: ohne Toene ist das Voicing leer (`abstaende` leer).
+void schalteVoicingTon(Akkord& voicing, int& tiefster, int hoehe);
 
 // --- Anhoeren (Stufe 26e, S-T9 a, S-T10 a) ----------------------------------------
 
@@ -243,9 +259,11 @@ enum class AkkordSpielart : int
 /// auf ihrer Saite; Down und Up mit dem Spread von `strum`, Together zugleich.
 /// Klingt zwei Schlaege lang (von Claude gesetzt); bei *Down-up* steht Up eine
 /// halbe Zaehlzeit nach Down (`schritteJeSchlag / 2`, mindestens ein Schritt).
-/// Leer, wenn das Griffbild so nicht zu greifen ist.
+/// Leer, wenn das Griffbild so nicht zu greifen ist. Ein Voicing (S-T14 a G) klingt
+/// mit dem tiefsten Ton auf `tiefster`, alle Toene zugleich, ohne Saiten und Anschlag —
+/// `saiten`, `strum` und `art` gelten dann nicht.
 [[nodiscard]] Muster akkordZumAnhoeren(const Akkord& lage, const Saitensatz& saiten, const Strum& strum,
-                                       AkkordSpielart art, int schritteJeSchlag);
+                                       AkkordSpielart art, int schritteJeSchlag, int tiefster = 48);
 
 /// Die Art, wie sie in der Datei steht: `major`, `7`, beim Slash `/E` oder `m/E`.
 [[nodiscard]] QString akkordArtText(const AkkordName& name);

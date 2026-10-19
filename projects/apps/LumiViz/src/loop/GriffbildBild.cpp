@@ -5,6 +5,8 @@
 
 #include "loop/GriffbildBild.hpp"
 
+#include "loop/Instrument.hpp"  // tonName
+
 #include <QFont>
 #include <QPainter>
 #include <QPalette>
@@ -200,15 +202,159 @@ void zeichneGriffbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, G
     p.restore();
 }
 
+// --- Voicings: eine Klaviatur ---------------------------------------------------
+
+namespace
+{
+
+/// Die Stelle einer weissen Taste in der Oktave (C = 0 … B = 6); −1 = eine schwarze.
+int weissPlatz(int klasse)
+{
+    static constexpr int kPlatz[12] = {0, -1, 1, -1, 2, 3, -1, 4, -1, 5, -1, 6};
+    return kPlatz[((klasse % 12) + 12) % 12];
+}
+
+/// Wo die Klaviatur in einem Bild liegt: in der Mitte, so hoch wie es ihr steht.
+QRectF klaviaturFeld(const QRectF& aussen, GriffbildGroesse groesse)
+{
+    const double rand = groesse == GriffbildGroesse::Klein ? 2.0 : 6.0;
+    const double breite = aussen.width() - 2 * rand;
+    const double hoehe = std::min(aussen.height() - 2 * rand, breite * (groesse == GriffbildGroesse::Klein ? 0.5 : 0.42));
+    return {aussen.left() + rand, aussen.center().y() - hoehe / 2.0, breite, hoehe};
+}
+
+}  // namespace
+
+KlaviaturLage::KlaviaturLage(const QRectF& feld, int von, int bis) : m_feld(feld), m_von(von), m_bis(std::max(von, bis))
+{
+    int weisse = 0;
+    for (int t = m_von; t <= m_bis; ++t) weisse += schwarz(t) ? 0 : 1;
+    m_weiss = feld.width() / std::max(1, weisse);
+}
+
+bool KlaviaturLage::schwarz(int ton)
+{
+    return weissPlatz(ton) < 0;
+}
+
+QRectF KlaviaturLage::taste(int ton) const
+{
+    if (ton < m_von || ton > m_bis) return {};
+    // die weissen Tasten vor diesem Ton: eine weisse beginnt dort, eine schwarze sitzt auf der Kante
+    int weissVor = 0;
+    for (int t = m_von; t < ton; ++t) weissVor += schwarz(t) ? 0 : 1;
+    if (!schwarz(ton)) return {m_feld.left() + weissVor * m_weiss, m_feld.top(), m_weiss, m_feld.height()};
+    const double breit = m_weiss * 0.6;
+    return {m_feld.left() + weissVor * m_weiss - breit / 2.0, m_feld.top(), breit, m_feld.height() * 0.62};
+}
+
+QPointF KlaviaturLage::punkt(int ton) const
+{
+    const QRectF r = taste(ton);
+    return {r.center().x(), schwarz(ton) ? r.top() + r.height() * 0.72 : r.top() + r.height() * 0.84};
+}
+
+std::optional<int> KlaviaturLage::tonBei(QPointF ort) const
+{
+    for (int t = m_von; t <= m_bis; ++t)
+        if (schwarz(t) && taste(t).contains(ort)) return t;
+    for (int t = m_von; t <= m_bis; ++t)
+        if (!schwarz(t) && taste(t).contains(ort)) return t;
+    return std::nullopt;
+}
+
+std::pair<int, int> klaviaturBereich(const std::vector<int>& toene, int oktaven, int ohneToene)
+{
+    const int tief = toene.empty() ? ohneToene : *std::min_element(toene.begin(), toene.end());
+    const int hoch = toene.empty() ? ohneToene : *std::max_element(toene.begin(), toene.end());
+    const int von = std::max(0, tief - tief % 12);
+    return {von, std::max(von + 12 * std::max(1, oktaven) - 1, hoch - hoch % 12 + 11)};
+}
+
+void zeichneKlaviatur(QPainter& p, const QRectF& feld, int von, int bis, const std::vector<int>& toene,
+                      GriffbildGroesse groesse, const QPalette& palette)
+{
+    const KlaviaturLage lage(feld, von, bis);
+    p.save();
+    p.setRenderHint(QPainter::Antialiasing);
+    // die Tasten in ihren eigenen Farben, gleich in hellem und dunklem Design — sonst
+    // kehrt ein dunkles Design Weiss und Schwarz um (von Claude gesetzt, S138)
+    const QColor linie(0x88, 0x87, 0x80);
+    const QColor schwarzeTaste(0x2C, 0x2C, 0x2A);
+    p.setPen(QPen(linie, 0.8));
+    p.setBrush(QColor(0xF7, 0xF6, 0xF2));
+    for (int t = von; t <= bis; ++t)
+        if (!KlaviaturLage::schwarz(t)) p.drawRect(lage.taste(t));
+    p.setPen(Qt::NoPen);
+    p.setBrush(schwarzeTaste);
+    for (int t = von; t <= bis; ++t)
+        if (KlaviaturLage::schwarz(t)) p.drawRect(lage.taste(t));
+    // die Punkte; gross mit einem Ring um das C, damit man die Oktave findet
+    const double r = std::max(1.5, std::min(lage.taste(von).width() * 0.32, feld.height() * 0.12));
+    p.setBrush(palette.color(QPalette::Highlight));
+    for (const int t : toene)
+        if (t >= von && t <= bis) p.drawEllipse(lage.punkt(t), r, r);
+    if (groesse == GriffbildGroesse::Gross)
+    {
+        QFont schrift = p.font();
+        schrift.setPixelSize(std::max(8, static_cast<int>(lage.taste(von).width() * 0.42)));
+        p.setFont(schrift);
+        p.setPen(palette.color(QPalette::Text));
+        for (int t = von; t <= bis; t += 12)
+        {
+            const QRectF r2 = lage.taste(t);
+            p.drawText(QRectF(r2.left(), r2.bottom() + 1, r2.width() * 2, schrift.pixelSize() + 4), Qt::AlignLeft | Qt::AlignTop,
+                       tonName(t));
+        }
+    }
+    p.restore();
+}
+
+void zeichneAkkordbild(QPainter& p, const QRectF& aussen, const Akkord& akkord, int tiefster, GriffbildGroesse groesse,
+                       const QPalette& palette)
+{
+    if (akkord.istGriffbild())
+    {
+        zeichneGriffbild(p, aussen, akkord, groesse, palette);
+        return;
+    }
+    std::vector<int> toene;
+    if (const auto t = toeneDesVoicings(akkord, tiefster))
+        for (const AkkordTon& ton : *t) toene.push_back(ton.hoehe);
+    const auto [von, bis] = klaviaturBereich(toene, groesse == GriffbildGroesse::Klein ? 2 : 3, tiefster);
+    zeichneKlaviatur(p, klaviaturFeld(aussen, groesse), von, bis, toene, groesse, palette);
+}
+
 GriffbildFeld::GriffbildFeld(QWidget* parent) : QWidget(parent)
 {
     setObjectName(QStringLiteral("chordDiagram"));
 }
 
-void GriffbildFeld::setzeAkkord(const Akkord& akkord)
+void GriffbildFeld::setzeAkkord(const Akkord& akkord, int tiefster)
 {
     m_akkord = akkord;
+    m_tiefster = tiefster;
     update();
+}
+
+std::vector<int> GriffbildFeld::toene() const
+{
+    std::vector<int> toene;
+    if (const auto t = toeneDesVoicings(m_akkord, m_tiefster))
+        for (const AkkordTon& ton : *t) toene.push_back(ton.hoehe);
+    return toene;
+}
+
+void GriffbildFeld::setzeKlaviatur(std::optional<std::pair<int, int>> bereich)
+{
+    m_klaviatur = bereich;
+    update();
+}
+
+KlaviaturLage GriffbildFeld::klaviaturLage() const
+{
+    const auto [von, bis] = m_klaviatur ? *m_klaviatur : klaviaturBereich(toene(), 3, m_tiefster);
+    return KlaviaturLage(klaviaturFeld(QRectF(rect()), GriffbildGroesse::Gross), von, bis);
 }
 
 void GriffbildFeld::setzeFenster(std::optional<GriffbildFenster> fenster)
@@ -226,7 +372,15 @@ void GriffbildFeld::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
     p.fillRect(rect(), palette().color(QPalette::Base));
-    zeichneGriffbild(p, QRectF(rect()), m_akkord, GriffbildGroesse::Gross, palette(), m_fenster);
+    if (m_akkord.istGriffbild())
+    {
+        zeichneGriffbild(p, QRectF(rect()), m_akkord, GriffbildGroesse::Gross, palette(), m_fenster);
+        return;
+    }
+    if (m_akkord.abstaende.empty() && !m_klaviatur && m_akkord.titel.isEmpty() && m_akkord.art.isEmpty()) return;  // nichts gewaehlt
+    const KlaviaturLage lage = klaviaturLage();
+    zeichneKlaviatur(p, klaviaturFeld(QRectF(rect()), GriffbildGroesse::Gross), lage.von(), lage.bis(), toene(),
+                     GriffbildGroesse::Gross, palette());
 }
 
 }  // namespace lumi::loop
