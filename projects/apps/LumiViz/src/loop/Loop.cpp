@@ -47,9 +47,12 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // aelteres Programm verloere beides still.
 // 9 (S134, Stufe 24a, Entscheide S-W2 a bis S-W4 a, S-W11 a): ein Instrument-Muster
 // traegt immer `strum`, dazu `strokes`, wenn es welche gibt; eine Note als sechsten Wert ihre Artikulationen
-// (dann steht die Saite als fuenfter Wert da, −1 = keine). Geschrieben wird
-// immer 9.
-constexpr int kVersion = 9;
+// (dann steht die Saite als fuenfter Wert da, −1 = keine).
+// 10 (S136, Stufe 25a, Entscheide S-L1 a, S-L2 a): die Artikulationen Legato (16)
+// und Slide (32), eine Note als siebten Wert ihren Bend (`[[zeit, halbtoene], …]`,
+// dann stehen Saite und Artikulationen davor) — ein aelteres Programm verloere
+// beides still. Geschrieben wird immer 10.
+constexpr int kVersion = 10;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -693,6 +696,7 @@ void Loop::richte(QStringList* bericht)
                 note.laut = inGrenzen(note.laut, 0.0, 1.0, 1.0);
                 if (note.saite < -1 || note.saite >= kSaitenMax) note.saite = -1;
                 note.artikulationen &= kArtikulationenAlle;
+                richteBend(note.bend);
             }
             if (m.saitenwahl != Saitenwahl::Hand) m.saitenwahl = Saitenwahl::JeKlang;
             richteStrum(m.strum, handStellen(m.strum.raster, schlaegeJeTakt, schritteJeSchlag));
@@ -802,13 +806,16 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             o[QStringLiteral("mute")] = m.stumm;
             // je Note eine Zeile: Schritt, Laenge, Tonhoehe, Lautstaerke — seit
             // Fassung 8 als fuenfter Wert die Saite, nur wenn die Note eine traegt;
-            // seit Fassung 9 als sechster die Artikulationen (die Saite dann als −1)
+            // seit Fassung 9 als sechster die Artikulationen (die Saite dann als −1),
+            // seit Fassung 10 als siebter der Bend (Saite und Artikulationen dann davor)
             QJsonArray noten;
             for (const Note& note : m.noten)
             {
                 QJsonArray zeile{note.schritt, note.laenge, note.hoehe, note.laut};
-                if (note.saite >= 0 || note.artikulationen != 0) zeile.append(note.saite);
-                if (note.artikulationen != 0) zeile.append(note.artikulationen);
+                const bool mitBend = !note.bend.empty();
+                if (note.saite >= 0 || note.artikulationen != 0 || mitBend) zeile.append(note.saite);
+                if (note.artikulationen != 0 || mitBend) zeile.append(note.artikulationen);
+                if (mitBend) zeile.append(bendAlsJson(note.bend));
                 noten.append(zeile);
             }
             o[QStringLiteral("notes")] = noten;
@@ -962,7 +969,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 note.laut = werte.size() > 3 ? werte[3].toDouble(1.0) : 1.0;
                 note.saite = werte.size() > 4 ? werte[4].toInt(-1) : -1;  // seit Fassung 8
                 note.artikulationen = werte.size() > 5 ? werte[5].toInt(0) : 0;  // seit Fassung 9
-                m.noten.push_back(note);
+                if (werte.size() > 6) note.bend = bendAusJson(werte[6].toArray());  // seit Fassung 10
+                m.noten.push_back(std::move(note));
             }
             m.saitenwahl = saitenwahlAusName(o.value(QStringLiteral("stringChoice")).toString());
             // seit Fassung 9; fehlt es, gilt die Vorgabe

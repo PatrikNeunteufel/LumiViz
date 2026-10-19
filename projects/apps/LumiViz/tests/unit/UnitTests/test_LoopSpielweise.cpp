@@ -181,7 +181,7 @@ TEST_SUITE("LoopSpielweise")
         // --- ohne Spielweisen: Strum steht trotzdem da (S-W11 a), Abweichungen und sechste Werte nicht
         Loop schlicht = probe();
         const QJsonObject ohne = musterJson(alsJson(schlicht));
-        CHECK(alsJson(schlicht).value(QStringLiteral("version")).toInt() == 9);
+        CHECK(alsJson(schlicht).value(QStringLiteral("version")).toInt() == 10);
         CHECK(ohne.value(QStringLiteral("strum")).toObject() ==
               QJsonObject{{QStringLiteral("spread"), kSpreadVorgabeMs}, {QStringLiteral("hand"), QStringLiteral("halfBeat")}});
         CHECK_FALSE(ohne.contains(QStringLiteral("strokes")));
@@ -247,7 +247,7 @@ TEST_SUITE("LoopSpielweise")
         QJsonObject wild = json;
         QJsonObject wildMuster = musterJson(wild);
         QJsonArray wildNoten = wildMuster.value(QStringLiteral("notes")).toArray();
-        wildNoten[1] = QJsonArray{0, 2, 47, 1.0, -1, 0xF0 | kTapping};  // Bits von morgen
+        wildNoten[1] = QJsonArray{0, 2, 47, 1.0, -1, 0x3C0 | kTapping};  // Bits von morgen (seit S136 sind 16 und 32 bekannt)
         wildMuster[QStringLiteral("notes")] = wildNoten;
         wildMuster[QStringLiteral("strokes")] = QJsonArray{
             QJsonObject{{QStringLiteral("step"), 8}, {QStringLiteral("stroke"), QStringLiteral("down")}},
@@ -747,5 +747,131 @@ TEST_SUITE("LoopSpielweise")
             const auto griffe = greifeNoten(lauf, saitenVon(lauf.instrument));
             CHECK(std::all_of(griffe.begin(), griffe.end(), [](const Griff& g) { return g.greifbar && g.saite == 5; }));
         }
+    }
+
+    TEST_CASE("Loop Spielweise 25a: Legato, Slide und Bend — das Modell, die Grenzen, .lvloop Fassung 10")
+    {
+        // --- die Bits: zwei neue, ein unbekanntes faellt beim Richten weg
+        CHECK(kArtikulationenAlle == 63);
+        CHECK(kVerbunden == (kLegato | kSlide));
+
+        // --- die Kurve: Grenzen, Raster in Vierteln, sortiert, dieselbe Zeit — der spaetere gilt
+        std::vector<BendPunkt> bend{{0.5, 2.1}, {-0.2, 0.0}, {0.5, 1.9}, {2.0, 9.0}};
+        richteBend(bend);
+        REQUIRE(bend.size() == 3);
+        CHECK(bend[0] == BendPunkt{0.0, 0.0});
+        CHECK(bend[1] == BendPunkt{0.5, 2.0});  // 1,9 im Raster
+        CHECK(bend[2] == BendPunkt{1.0, kBendHalbtoeneMax});
+        // ohne Biegung: kein Bend
+        std::vector<BendPunkt> flach{{0.0, 0.0}, {1.0, 0.1}};
+        richteBend(flach);
+        CHECK(flach.empty());
+        // hoechstens kBendPunkteMax
+        std::vector<BendPunkt> viele;
+        for (int i = 0; i < 40; ++i) viele.push_back({i / 40.0, 1.0});
+        richteBend(viele);
+        CHECK(viele.size() == static_cast<std::size_t>(kBendPunkteMax));
+
+        // --- die Biegung ueber die Zeit: linear zwischen den Punkten, davor und danach gehalten
+        const std::vector<BendPunkt> hoch{{0.25, 0.0}, {0.5, 2.0}, {1.0, 2.0}};
+        CHECK(bendBei(hoch, 0.0) == 0.0);
+        CHECK(bendBei(hoch, 0.375) == doctest::Approx(1.0));
+        CHECK(bendBei(hoch, 0.75) == doctest::Approx(2.0));
+        CHECK(bendBei({}, 0.5) == 0.0);
+        // ein Pre-bend: am Anfang schon gebogen, ein Sprung an derselben Zeit
+        const std::vector<BendPunkt> vor{{0.0, 2.0}, {0.5, 2.0}, {1.0, 0.0}};
+        CHECK(bendBei(vor, 0.0) == 2.0);
+        CHECK(bendBei(vor, 0.75) == doctest::Approx(1.0));
+
+        // --- die Datei: Legato und Slide als Bits, der Bend als siebter Wert, hin und zurueck
+        Loop loop = probe();
+        Muster& m = loop.muster[0];
+        m.noten.push_back(Note{14, 2, 66, 0.8, -1, kLegato});
+        Note gebogen{13, 3, 57, 0.9, 2, kSlide};
+        gebogen.bend = {{0.0, 0.0}, {0.3, 2.0}, {1.0, 2.0}};
+        m.noten.push_back(gebogen);
+        loop.richte();
+        const QJsonObject json = alsJson(loop);
+        CHECK(json.value(QStringLiteral("version")).toInt() == 10);
+        const QJsonArray noten = json.value(QStringLiteral("patterns")).toArray()[0].toObject().value(QStringLiteral("notes")).toArray();
+        bool legatoGesehen = false, bendGesehen = false;
+        for (const QJsonValue& v : noten)
+        {
+            const QJsonArray zeile = v.toArray();
+            if (zeile[2].toInt() == 66)
+            {
+                legatoGesehen = true;
+                CHECK(zeile.size() == 6);  // ohne Bend: Saite −1 und die Bits
+                CHECK(zeile[5].toInt() == kLegato);
+            }
+            if (zeile[2].toInt() == 57 && zeile[0].toInt() == 13)
+            {
+                bendGesehen = true;
+                REQUIRE(zeile.size() == 7);
+                CHECK(zeile[6].toArray().size() == 3);
+            }
+        }
+        CHECK(legatoGesehen);
+        CHECK(bendGesehen);
+        Loop zurueck;
+        REQUIRE(ausJson(json, zurueck));
+        CHECK(zurueck == loop);
+
+        // --- eine Note nur mit Bend: Saite und Bits stehen trotzdem davor
+        Loop nurBend = probe();
+        nurBend.muster[0].noten[8].bend = {{0.0, 0.0}, {1.0, 1.0}};
+        const QJsonArray zeilen =
+            alsJson(nurBend).value(QStringLiteral("patterns")).toArray()[0].toObject().value(QStringLiteral("notes")).toArray();
+        bool gesehen = false;
+        for (const QJsonValue& v : zeilen)
+            if (v.toArray().size() == 7)
+            {
+                gesehen = true;
+                CHECK(v.toArray()[4].toInt() == -1);
+                CHECK(v.toArray()[5].toInt() == 0);
+            }
+        CHECK(gesehen);
+
+        // --- ein unbekanntes Bit (64) faellt weg, ein Bend ohne Biegung auch
+        QJsonObject fremd = alsJson(probe());
+        QJsonArray muster = fremd.value(QStringLiteral("patterns")).toArray();
+        QJsonObject erstes = muster[0].toObject();
+        QJsonArray mitFremdem = erstes.value(QStringLiteral("notes")).toArray();
+        mitFremdem.append(QJsonArray{2, 1, 50, 1.0, -1, 64 | kSlide, QJsonArray{QJsonArray{0.0, 0.0}}});
+        erstes[QStringLiteral("notes")] = mitFremdem;
+        muster[0] = erstes;
+        fremd[QStringLiteral("patterns")] = muster;
+        Loop gelesen;
+        REQUIRE(ausJson(fremd, gelesen));
+        const auto it = std::find_if(gelesen.muster[0].noten.begin(), gelesen.muster[0].noten.end(),
+                                     [](const Note& n) { return n.schritt == 2 && n.hoehe == 50; });
+        REQUIRE(it != gelesen.muster[0].noten.end());
+        CHECK(it->artikulationen == kSlide);
+        CHECK(it->bend.empty());
+
+        // --- der Bend wandert mit seiner Note: verschieben, kopieren und einfuegen, drehen
+        Muster w = probe().muster[0];
+        constexpr int kSchritte = 16;
+        w.noten[8].bend = {{0.0, 0.0}, {0.5, 1.0}, {1.0, 1.0}};  // die Note an 12 (E4)
+        w.noten[8].artikulationen = kLegato;
+        std::vector<NotenOrt> orte{{12, 64}};
+        REQUIRE(versetzeNoten(w, orte, 1, 2, kSchritte));
+        const auto da = std::find_if(w.noten.begin(), w.noten.end(), [](const Note& n) { return n.schritt == 13; });
+        REQUIRE(da != w.noten.end());
+        CHECK(da->hoehe == 66);
+        CHECK(da->bend.size() == 3);
+        CHECK(da->artikulationen == kLegato);
+        const std::vector<BendPunkt> erwartet = da->bend;  // `da` gilt nach dem Einfuegen nicht mehr
+        const NotenKopie kopie = kopiereNoten(w, {{13, 66}});
+        (void)fuegeNotenEin(w, kopie, 2, kSchritte);
+        const auto kopiert = std::find_if(w.noten.begin(), w.noten.end(), [](const Note& n) { return n.schritt == 2 && n.hoehe == 66; });
+        REQUIRE(kopiert != w.noten.end());
+        CHECK(kopiert->bend == erwartet);
+        CHECK(kopiert->artikulationen == kLegato);
+        std::vector<NotenOrt> zuDrehen{{2, 66}};
+        REQUIRE(dreheNoten(w, zuDrehen, 4, kSchritte));
+        const auto gedreht = std::find_if(w.noten.begin(), w.noten.end(), [](const Note& n) { return n.schritt == 6 && n.hoehe == 66; });
+        REQUIRE(gedreht != w.noten.end());
+        CHECK(gedreht->bend.size() == 3);
     }
 }

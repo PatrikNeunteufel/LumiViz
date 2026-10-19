@@ -2947,10 +2947,14 @@ Idee Preset-Warmup/Pre-Roll.
   S135: 24e Instrument-Editor gebaut (H–M; S-W13 a Vorgaben beim
   Instrumentwechsel, S-W14 a Spur Strum oben, S-W15 a Pfeil an jedem
   Anschlag); im Programm gefunden und behoben: der Editor übernahm die
-  Anschläge nicht. Dazu Zoom in beiden Editoren (E-Z1 a, Loop_Konzept). Offen:
-  24f mitgelieferte Instrumente und Loops, Handbuch, Sichttest, Bereichslauf;
-  danach Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs; Folgefrage:
-  merkt sich ein Editor den Zoom?** Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
+  Anschläge nicht. Dazu Zoom in beiden Editoren (E-Z1 a, Loop_Konzept). S136:
+  24f gebaut (S-W16 a bis S-W22 a: Spread je Bauart, Mute der Bässe 0,37, Tap
+  level bei 220 Hz, Strum in den mitgelieferten Loops, vier Beispiele; Handbuch
+  1.190.0; Sichttest `.claude/handover/Sichttest_Spielweisen.md`). **Zoom der
+  Editoren: vorerst nicht gemerkt** (Patrik S136) — im Composer merkt die App
+  die Zeilenhöhe (ZO9 a), den Zeit-Zoom nicht; angleichen wäre eine eigene
+  Frage. Offen: Stufe 25 (Hammer-on/Pull-off, Slide, Bend), dann die Tabs.**
+  Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
   trägt dafür mehrere Anschlag-Charakteristiken nebeneinander (Artikulationen).

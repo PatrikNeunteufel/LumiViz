@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QLatin1String>
 #include <QString>
@@ -130,8 +131,42 @@ enum Artikulation : int
     kLetRing = 2,   ///< *Let ring*: klingt bis zur naechsten Note auf derselben Saite
     kTapping = 4,   ///< *Tapping*: am Bund angeschlagen
     kHarmonic = 8,  ///< *Harmonic*: ein Flageolett (S-W7 a)
+    // --- zweite Stufe (Stufe 25a, S-L1 a): an der Zielnote, sie kommt von der vorigen
+    // Note auf derselben Saite und wird nicht angeschlagen
+    kLegato = 16,  ///< *Legato*: Hammer-on (hoeher) oder Pull-off (tiefer) — nach der Richtung benannt
+    kSlide = 32,   ///< *Slide*: gleitet von der vorigen Note auf derselben Saite her
 };
 /// Alle Bits, die dieses Programm kennt — andere fallen beim Lesen weg.
-inline constexpr int kArtikulationenAlle = kPalmMute | kLetRing | kTapping | kHarmonic;
+inline constexpr int kArtikulationenAlle = kPalmMute | kLetRing | kTapping | kHarmonic | kLegato | kSlide;
+/// Die Bits, die eine Note mit der vorigen auf ihrer Saite verbinden.
+inline constexpr int kVerbunden = kLegato | kSlide;
+
+/// Ein Punkt der Kurve eines Bends (Stufe 25a, S-L2 a).
+struct BendPunkt
+{
+    double zeit = 0.0;       ///< Anteil der Notenlaenge, 0 … 1 — wird die Note laenger, dehnt sich der Bend
+    double halbtoene = 0.0;  ///< die Biegung ueber dem gegriffenen Ton, 0 … `kBendHalbtoeneMax`, in Vierteln
+
+    [[nodiscard]] bool operator==(const BendPunkt&) const = default;
+};
+/// So weit biegt ein Bend hoechstens (S-L2 a: drei Halbtoene) — und in welchem
+/// Raster (Vierteltoene).
+inline constexpr double kBendHalbtoeneMax = 3.0;
+inline constexpr double kBendRaster = 0.25;
+/// So viele Punkte traegt eine Kurve hoechstens (von Claude gesetzt: die Vorlagen
+/// brauchen vier, eine gezeichnete Kurve selten mehr als acht).
+inline constexpr int kBendPunkteMax = 16;
+
+/// Werte in ihre Grenzen, die Biegung ins Raster, nach der Zeit sortiert;
+/// zweimal dieselbe Zeit: der spaetere Punkt gilt (er ist der Sprung); hoechstens
+/// `kBendPunkteMax`. Biegt die Kurve nirgends, ist sie leer — kein Bend.
+void richteBend(std::vector<BendPunkt>& bend);
+/// Die Biegung zur Zeit `zeit` (Anteil der Note), linear zwischen den Punkten;
+/// vor dem ersten der erste, nach dem letzten der letzte; ohne Punkte 0.
+[[nodiscard]] double bendBei(const std::vector<BendPunkt>& bend, double zeit);
+/// Der Bend in der `.lvloop` (seit Fassung 10): je Punkt `[zeit, halbtoene]`.
+/// Gelesen wird ungerichtet — wer liest, richtet.
+[[nodiscard]] QJsonArray bendAlsJson(const std::vector<BendPunkt>& bend);
+[[nodiscard]] std::vector<BendPunkt> bendAusJson(const QJsonArray& werte);
 
 }  // namespace lumi::loop

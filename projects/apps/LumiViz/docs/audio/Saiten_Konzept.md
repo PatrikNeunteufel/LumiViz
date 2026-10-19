@@ -631,6 +631,79 @@ der Skripte: `make_saiten_loops.py`, `make_spielweisen_loops.py`,
 Prüfstück, das die Hörproben schon sind), c (Spielweisen in die Genre-Loops —
 änderte gehörte Loops und ihre Vergleiche).
 
+**Stufe 25 — Spielweisen, zweite Stufe: was zwei Töne auf einer Saite verbindet**
+(S-W1 a; Fragen einzeln, dann Skizze, Recherche, Baustufen).
+
+✅ **S-L1 a** (Patrik S136): **Die Verbindung steht an der Zielnote, als zwei neue
+Artikulationen.** **Legato**: die Note kommt von der vorigen Note auf derselben
+Saite, ohne Anschlag — liegt sie höher, heißt es *Hammer-on*, tiefer *Pull-off*
+(das Programm benennt es nach der Richtung). **Slide**: sie gleitet von der vorigen
+Note auf derselben Saite her. Die Saitenwahl legt verbundene Noten auf dieselbe
+Saite; geht das nicht oder gibt es keine vorige Note, ist die Note rot mit „!“ und
+schlägt normal an. Die Planung rechnet eine Kette verbundener Noten zu **einem**
+Ton mit Tonhöhenverlauf (die Ausnahme, die S-M3 a als c offen ließ). Die Angabe
+wandert mit der Note (Verschieben, Kopieren, Drehen); die Tabs schreiben „5h7“
+später daraus. Verworfen: b (Liste von Notenpaaren am Muster — an allen Stellen von
+S-W4 a mitzuführen, verweist auf Noten, die sich verschieben), c (an der Startnote —
+sie wird normal angeschlagen; in 5h7p5 stünde die Angabe an der falschen Hälfte).
+
+✅ **S-L2 a** (Patrik S136): **Ein Bend ist eine Kurve an der Note.** Punkte aus
+Zeit (Anteil der Notenlänge, 0 bis 1) und Biegung in Halbtönen (in Vierteln, 0 bis
+3); wird die Note länger, dehnt sich der Bend mit. Die Note zeigt den gegriffenen
+Ton, von dem aus gebogen wird. Der Editor bietet Vorlagen, die die Punkte schreiben:
+*Bend*, *Bend and release*, *Pre-bend*, *Pre-bend and release*. Die Datei speichert
+die Punkte. Verworfen: b (feste Form und Höhe — a schließt sie als Vorlagen ein, das
+Format bliebe später zu erweitern; Merker S120), c (Spur am Muster — ein Bend gehört
+einer Saite, im Akkord wird oft nur eine gebogen).
+
+✅ **S-L3 a** (Patrik S136): **Skizze der Bedienung gebilligt** (gezeichnet im
+Gespräch S136; hier als Beschreibung):
+- **A Hammer-on:** ein Bogen „h“ von der vorigen Note auf derselben Saite zur
+  Zielnote; in der Zielnote das Kürzel **H** neben der Saitennummer.
+- **B Pull-off:** derselbe Bogen mit „p“, Kürzel **P** — H oder P nach der Richtung
+  (S-L1 a), gesetzt mit demselben Haken *Legato*.
+- **C Slide:** eine schräge Linie mit Pfeil vom Ende der vorigen Note zum Anfang der
+  Zielnote; Kürzel **SL**.
+- **D Bend:** in der Note eine Kurve bis zur Zeile des erreichten Tons, eine
+  gestrichelte Linie zeigt das Ziel; beschriftet „½“, „full“ (ein Ganzton), „1½“;
+  Kürzel **↗** mit der Höhe in Ganztönen.
+- **E Menü:** unter den vier Haken zwei neue, **Legato (hammer-on / pull-off)** und
+  **Slide**, für die markierten Noten, mit Undo; ohne vorige Note auf derselben Saite
+  rot mit „!“, die Note schlägt normal an.
+- **F Menü Bend:** Vorlagen *None*, *Bend*, *Bend and release*, *Pre-bend*,
+  *Pre-bend and release*; Höhe ½, 1, 1½, 2 Ganztöne — beides schreibt die Punkte.
+- **G Edit bend...:** ein Dialog mit der Kurve — Zeit über die Länge der Note, Höhe
+  in Vierteltönen 0 bis 3 Halbtöne; Punkte ziehen, Doppelklick setzt oder entfernt
+  einen; Auswahl Vorlage; OK / Cancel.
+- Folge: die Hinweiszeile nennt die Kürzel; *Play as* im Creator bekommt *Hammer-on*,
+  *Slide*, *Bend*. Ob *Playing* Regler dafür braucht (etwa die Dauer eines Slide),
+  klärt die Recherche zum Klang.
+Verworfen: b (Bend nur mit einem Griff in der Piano-Roll — stellt die Höhe, nicht den
+Verlauf), c (nur Kürzel und Menü — bei 5h7p5h7 zeigten nur Buchstaben, was
+zusammengehört).
+
+✅ **S-L4 a** (Patrik S136): **Stufe 25 in Schichten wie Stufe 24**, je Teilschritt
+eng nach S-P1 a, am Ende der Bereichslauf: **25a** Modell und Datei (*Legato*,
+*Slide*, Bend-Kurve, `.lvloop` Fassung 10, die Angaben wandern mit; ohne Klang) ·
+**25b** Planung (eine Kette verbundener Noten wird ein Ton mit Tonhöhenverlauf; die
+Saitenwahl legt die Kette auf eine Saite, sonst „!“; der Name des Tons trägt den
+Verlauf) · **25c** Klang (zeitvariable Verzögerung in Extended KS und Waveguide,
+Legato-Anregung, Slide, Bend; Vorgaben aus der Recherche
+`.claude/handover/recherche_25/`) · **25d** Editor nach S-L3 a · **25e** Creator
+(*Play as*; *Playing*-Regler nur, wenn die Recherche sie verlangt) · **25f**
+Mitgeliefertes (Beispiel-Loops, Handbuch, Sichttest, Bereichslauf). Danach die
+Tabs. Verworfen: b (je Spielweise durchgehend — mehrere Fassungen oder Felder auf
+Vorrat; der gemeinsame Kern aus 25b/25c würde nachgebessert).
+
+✅ **S-L5 a** (Patrik S136, ändert S-L4 a hinter 25c): **25a bis 25c wie geplant,
+dann die Fragen zu den Tabs, dann eine gemeinsame Stufe** — die Tab-Ansicht und der
+Editor für Legato, Slide und Bend (bisher 25d) zusammen, sodass die Zeichen in
+Piano-Roll und Tab von Anfang an gleich gesetzt und gezeigt werden; zum Schluss
+Creator (25e) und Mitgeliefertes mit Beispielen, Handbuch, Sichttest und dem vollen
+Lauf. Verworfen: b (getrennt — die Bedienung würde mit den Tabs ein zweites Mal
+angefasst), c (die Tabs zuerst — der Klang der verbundenen Noten wartete, obwohl er
+nicht an den Tabs hängt).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
@@ -1324,6 +1397,29 @@ Instruments; I und K (Versatz und Kürzel im Raster); J (Spur *Strum*); L und M
   unter Testing-MSVC, `*Loop*,*Instrument*,*Drum*` (267) unter Release-clang grün.
 
 ---
+
+### 5r. Stufe 25a — Modell und Datei für Legato, Slide, Bend (gebaut S136)
+
+Nach S-L1 a, S-L2 a, S-L4 a.
+
+- **Artikulationen** (`Spielweise.hpp`): `kLegato` = 16, `kSlide` = 32, `kVerbunden`
+  für beide; `kArtikulationenAlle` = 63.
+- **Bend** (`BendPunkt`, `Note::bend`): Punkte aus `zeit` (0 … 1, Anteil der Note) und
+  `halbtoene` (0 … `kBendHalbtoeneMax` = 3, Raster `kBendRaster` = ¼); `richteBend`
+  (Grenzen, Raster, sortiert), `bendBei` (linear zwischen den Punkten, davor und danach
+  gehalten).
+- **Datei:** `.lvloop` **Fassung 10** — der Bend als siebter Wert einer Note
+  (`[[zeit, halbtoene], …]`), Saite und Artikulationen stehen dann davor. Ein älteres
+  Programm verlöre Legato, Slide und Bend still.
+- **Wandert mit:** der Bend ist Teil der Note — `kopiereNoten`, `fuegeNotenEin`,
+  `versetzeNoten`, `dreheNoten` tragen ihn ohne Zusatz (belegt im Test).
+- **Belegt** in `test_LoopSpielweise` „25a“ (Grenzen, Zeitverlauf, Datei hin und zurück,
+  ein unbekanntes Bit, Mitwandern); sieben Prüfungen der Fassung auf 10 nachgezogen.
+- **Von Claude gesetzt, nicht vorgelegt:** höchstens `kBendPunkteMax` = 16 Punkte;
+  zweimal dieselbe Zeit — der spätere Punkt gilt (so steht ein Sprung, etwa am Anfang
+  eines Pre-bends); eine Kurve ohne Biegung ist kein Bend (leer); `Note::bend{}` mit
+  Vorgabe, damit clang bei `Note{…}` kein fehlendes Feld meldet.
+- **Noch nicht:** Planung (25b), Klang (25c), Bedienung (mit den Tabs, S-L5 a).
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

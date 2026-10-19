@@ -149,4 +149,61 @@ Anschlagart anschlagartAusName(const QString& name)
     return Anschlagart::Hand;
 }
 
+void richteBend(std::vector<BendPunkt>& bend)
+{
+    for (BendPunkt& p : bend)
+    {
+        p.zeit = std::isfinite(p.zeit) ? std::clamp(p.zeit, 0.0, 1.0) : 0.0;
+        const double h = std::isfinite(p.halbtoene) ? std::clamp(p.halbtoene, 0.0, kBendHalbtoeneMax) : 0.0;
+        p.halbtoene = std::round(h / kBendRaster) * kBendRaster;
+    }
+    std::stable_sort(bend.begin(), bend.end(), [](const BendPunkt& a, const BendPunkt& b) { return a.zeit < b.zeit; });
+    // zweimal dieselbe Zeit: der spaetere gilt — der Sprung (etwa ein Pre-bend, der am Anfang steht)
+    std::vector<BendPunkt> gerichtet;
+    for (const BendPunkt& p : bend)
+    {
+        if (!gerichtet.empty() && gerichtet.back().zeit == p.zeit)
+            gerichtet.back() = p;
+        else
+            gerichtet.push_back(p);
+    }
+    if (gerichtet.size() > static_cast<std::size_t>(kBendPunkteMax)) gerichtet.resize(static_cast<std::size_t>(kBendPunkteMax));
+    if (std::all_of(gerichtet.begin(), gerichtet.end(), [](const BendPunkt& p) { return p.halbtoene == 0.0; }))
+        gerichtet.clear();
+    bend = std::move(gerichtet);
+}
+
+double bendBei(const std::vector<BendPunkt>& bend, double zeit)
+{
+    if (bend.empty()) return 0.0;
+    if (zeit <= bend.front().zeit) return bend.front().halbtoene;
+    for (std::size_t i = 1; i < bend.size(); ++i)
+    {
+        const BendPunkt& a = bend[i - 1];
+        const BendPunkt& b = bend[i];
+        if (zeit <= b.zeit)
+            return b.zeit > a.zeit ? a.halbtoene + (b.halbtoene - a.halbtoene) * (zeit - a.zeit) / (b.zeit - a.zeit) : b.halbtoene;
+    }
+    return bend.back().halbtoene;
+}
+
+QJsonArray bendAlsJson(const std::vector<BendPunkt>& bend)
+{
+    QJsonArray werte;
+    for (const BendPunkt& p : bend) werte.append(QJsonArray{p.zeit, p.halbtoene});
+    return werte;
+}
+
+std::vector<BendPunkt> bendAusJson(const QJsonArray& werte)
+{
+    std::vector<BendPunkt> bend;
+    for (const QJsonValue& v : werte)
+    {
+        const QJsonArray paar = v.toArray();
+        if (paar.size() < 2) continue;
+        bend.push_back(BendPunkt{paar[0].toDouble(0.0), paar[1].toDouble(0.0)});
+    }
+    return bend;
+}
+
 }  // namespace lumi::loop

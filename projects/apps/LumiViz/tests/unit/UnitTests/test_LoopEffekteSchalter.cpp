@@ -78,7 +78,7 @@ TEST_SUITE("LoopEffekteSchalter")
 
         // --- die Datei: Fassung 7, `fxOn` nur am abgeschalteten Clip
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 9);  // fxOn seit 7; geschrieben wird die juengste
+        CHECK(json.value(QStringLiteral("version")).toInt() == 10);  // fxOn seit 7; geschrieben wird die juengste
         const QJsonArray drums = json.value(QStringLiteral("channels")).toArray().at(0).toObject().value(QStringLiteral("clips")).toArray();
         CHECK(drums.at(0).toObject().value(QStringLiteral("fxOn")) == QJsonValue(false));
         CHECK_FALSE(drums.at(1).toObject().contains(QStringLiteral("fxOn")));

@@ -1,0 +1,221 @@
+{
+    "beatsPerBar": 4,
+    "bpm": 100,
+    "channels": [
+        {
+            "clips": [
+                {
+                    "pattern": "Pattern 1",
+                    "repeat": 1,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "name": "Channel 1"
+        }
+    ],
+    "format": "lumiviz-loop",
+    "patterns": [
+        {
+            "bars": 4,
+            "instrument": "finger_bass",
+            "kind": "instrument",
+            "mute": false,
+            "name": "Pattern 1",
+            "notes": [
+                [0, 2, 43, 1],
+                [2, 2, 43, 1],
+                [2, 2, 45, 1],
+                [4, 2, 43, 1],
+                [4, 2, 48, 1],
+                [6, 2, 43, 1],
+                [6, 2, 50, 1],
+                [8, 2, 43, 1],
+                [8, 2, 48, 1],
+                [10, 2, 43, 1],
+                [10, 2, 46, 1],
+                [12, 2, 43, 1],
+                [14, 2, 43, 1],
+                [16, 2, 43, 1],
+                [18, 2, 43, 1],
+                [18, 2, 45, 1],
+                [20, 2, 43, 1],
+                [20, 2, 48, 1],
+                [22, 2, 43, 1],
+                [22, 2, 50, 1],
+                [24, 2, 43, 1],
+                [24, 2, 48, 1],
+                [26, 2, 43, 1],
+                [26, 2, 46, 1],
+                [28, 2, 43, 1],
+                [30, 2, 43, 1],
+                [32, 2, 43, 1],
+                [34, 2, 43, 1],
+                [34, 2, 45, 1],
+                [36, 2, 43, 1],
+                [36, 2, 48, 1],
+                [38, 2, 43, 1],
+                [38, 2, 50, 1],
+                [40, 2, 43, 1],
+                [40, 2, 48, 1],
+                [42, 2, 43, 1],
+                [42, 2, 46, 1],
+                [44, 2, 43, 1],
+                [46, 2, 43, 1],
+                [48, 2, 43, 1],
+                [50, 2, 43, 1],
+                [50, 2, 45, 1],
+                [52, 2, 43, 1],
+                [52, 2, 48, 1],
+                [54, 2, 43, 1],
+                [54, 2, 50, 1],
+                [56, 2, 43, 1],
+                [56, 2, 48, 1],
+                [58, 2, 43, 1],
+                [58, 2, 46, 1],
+                [60, 2, 43, 1],
+                [62, 2, 43, 1]
+            ],
+            "pan": 0,
+            "strokes": [
+                {
+                    "step": 0,
+                    "stroke": "down"
+                },
+                {
+                    "step": 2,
+                    "stroke": "up"
+                },
+                {
+                    "step": 4,
+                    "stroke": "down"
+                },
+                {
+                    "step": 6,
+                    "stroke": "down"
+                },
+                {
+                    "step": 8,
+                    "stroke": "up"
+                },
+                {
+                    "step": 10,
+                    "stroke": "down"
+                },
+                {
+                    "step": 12,
+                    "stroke": "up"
+                },
+                {
+                    "step": 14,
+                    "stroke": "down"
+                },
+                {
+                    "step": 16,
+                    "stroke": "down"
+                },
+                {
+                    "step": 18,
+                    "stroke": "up"
+                },
+                {
+                    "step": 20,
+                    "stroke": "down"
+                },
+                {
+                    "step": 22,
+                    "stroke": "up"
+                },
+                {
+                    "step": 24,
+                    "stroke": "down"
+                },
+                {
+                    "step": 26,
+                    "stroke": "up"
+                },
+                {
+                    "step": 28,
+                    "stroke": "down"
+                },
+                {
+                    "step": 30,
+                    "stroke": "up"
+                },
+                {
+                    "step": 32,
+                    "stroke": "down"
+                },
+                {
+                    "step": 34,
+                    "stroke": "up"
+                },
+                {
+                    "step": 36,
+                    "stroke": "down"
+                },
+                {
+                    "step": 38,
+                    "stroke": "up"
+                },
+                {
+                    "step": 40,
+                    "stroke": "down"
+                },
+                {
+                    "step": 42,
+                    "stroke": "up"
+                },
+                {
+                    "step": 44,
+                    "stroke": "down"
+                },
+                {
+                    "step": 46,
+                    "stroke": "up"
+                },
+                {
+                    "step": 48,
+                    "stroke": "down"
+                },
+                {
+                    "step": 50,
+                    "stroke": "up"
+                },
+                {
+                    "step": 52,
+                    "stroke": "down"
+                },
+                {
+                    "step": 54,
+                    "stroke": "up"
+                },
+                {
+                    "step": 56,
+                    "stroke": "down"
+                },
+                {
+                    "step": 58,
+                    "stroke": "up"
+                },
+                {
+                    "step": 60,
+                    "stroke": "down"
+                },
+                {
+                    "step": 62,
+                    "stroke": "down"
+                }
+            ],
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "volume": 1
+        }
+    ],
+    "stepsPerBeat": 4,
+    "swing": 0,
+    "version": 10,
+    "volume": 0.5
+}

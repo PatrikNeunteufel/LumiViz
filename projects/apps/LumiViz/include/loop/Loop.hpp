@@ -141,6 +141,11 @@ struct Note
     /// Die Artikulationen (Stufe 24a, S-W4 a): Bits aus `Artikulation`
     /// (Spielweise.hpp), 0 = keine. Wirken nur bei einem Instrument mit Saiten.
     int artikulationen = 0;
+    /// Der Bend (Stufe 25a, S-L2 a): die Kurve der Biegung ueber dem gegriffenen
+    /// Ton, leer = keiner. Wirkt nur bei einem Instrument mit Saiten.
+    /// Mit Vorgabe `{}`: so meldet clang bei `Note{schritt, laenge, hoehe}` kein
+    /// fehlendes Feld (anders als bei `Saitensatz::strum`).
+    std::vector<BendPunkt> bend{};
 
     [[nodiscard]] bool operator==(const Note&) const = default;
 };
