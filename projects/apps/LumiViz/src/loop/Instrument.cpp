@@ -649,6 +649,30 @@ struct Spielart
 /// string").
 inline constexpr double kHandVomStegMm = 40.0;
 
+/// Einen Wert `d` Abtastwerte zurueck aus dem Ring lesen, mit Lagrange 5. Ordnung
+/// (Stufe 25c, S-L7 a, nach PPV08 S. 46): sechs Abgriffe so gelegt, dass die
+/// Verzoegerung im Fenster zwischen 2 und 3 liegt — dort ist der Interpolator
+/// nahezu flach und bleibt passiv. `ring[(jetzt − q) mod groesse]` liegt q zurueck;
+/// `abQ` ist der juengste Abgriff, der schon gilt (1 vor dem Schreiben des Takts,
+/// sonst 0). Fuer sehr kleine `d` rueckt das Fenster an `abQ` heran.
+double leseLagrange(const std::vector<double>& ring, std::size_t jetzt, double d, int abQ)
+{
+    const std::size_t groesse = ring.size();
+    const auto m = static_cast<int>(std::floor(d));
+    const int erster = std::max(abQ, m - 2);
+    const double lage = d - erster;  // die Verzoegerung im Fenster, sonst 2 … 3
+    double summe = 0.0;
+    for (int k = 0; k < 6; ++k)
+    {
+        double h = 1.0;
+        for (int j = 0; j < 6; ++j)
+            if (j != k) h *= (lage - j) / static_cast<double>(k - j);
+        const auto q = static_cast<std::size_t>(erster + k) % groesse;
+        summe += h * ring[(jetzt + groesse - q) % groesse];
+    }
+    return summe;
+}
+
 /// Den Umlauf rechnen: lesen, Verlust und Steifheit, zurueckschreiben. Was in
 /// den Ton geht, sagt `abnahme(y, lese)`: `y` ist die Welle, die am Steg
 /// ankommt; `lese(d)` die Welle, die vor `d` Abtastwerten den Steg verliess
@@ -683,16 +707,13 @@ void laufeUm(const Schicht& schicht, double hz, const Huelle& huelle, int rate, 
     std::array<double, Umlauf::kAllpaesse> apAus{};
     std::size_t schreib = 0;
     double tief = 0.0;  // das Gedaechtnis des Tiefpasses
-    const auto lese = [&](double d) {
-        double stelle = static_cast<double>(schreib) - d;
-        while (stelle < 0.0) stelle += static_cast<double>(groesse);
-        const auto i = static_cast<std::size_t>(stelle);
-        const double rest = stelle - static_cast<double>(i);
-        return ring[i % groesse] + (ring[(i + 1) % groesse] - ring[i % groesse]) * rest;
-    };
+    // Lagrange 5. Ordnung (S-L7 a, bis Stufe 25b linear): nach dem Schreiben gilt der eben
+    // geschriebene Wert (d = 0)
+    const auto lese = [&](double d) { return leseLagrange(ring, schreib, d, 0); };
     for (std::int64_t t = 0; t < frames; ++t)
     {
-        const double y = lese(u.verzug);
+        // vor dem Schreiben: am Platz `schreib` steht noch der aelteste Wert
+        const double y = leseLagrange(ring, schreib, u.verzug, 1);
         // Verlust: y_n = g (1 + a) x_n − a y_(n−1)
         tief = u.verstaerkung * (1.0 + u.a) * y - u.a * tief;
         double v = tief;

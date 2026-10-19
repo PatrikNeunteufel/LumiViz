@@ -711,6 +711,17 @@ Vierteln als ganze Zahl; etwa `:b0-0,90-8,400-8`), vor `:e`; `zerlegeTonRest` li
 beides zurück. Verworfen: b (eine Prüfsumme — der Name ist der Weg von der Planung
 zum Klangerzeuger; ein zweiter Speicher für den Verlauf müsste mit ihm übereinstimmen).
 
+✅ **S-L7 a** (Patrik S136): **Die Verzögerung wird mit Lagrange 5. Ordnung gelesen**
+(6 Abgriffe, im Bereich 2 bis 3 Abtastwerte, Koeffizienten je Abtastwert) — für
+**alle** Töne mit *Extended KS* und *Waveguide*, nach PPV08 S. 46 (selbst gelesen:
+„this fifth-order Lagrange interpolator is operated in the delay range“ 2,0–3,0).
+Behebt nebenbei, dass die lineare Interpolation die Höhen je nach Bruchteil der Periode
+verschieden dämpfte. Rekursive Allpässe nicht (Välimäki 1995 S. 117: Transienten,
+„clicks in audio applications“). `loop_werte.txt` für die Loops mit Saiten neu,
+Hörproben vorher/nachher. Verworfen: b (linear wie bisher — ein Slide flatterte in der
+Helligkeit), c (Lagrange nur für Töne mit Verlauf — derselbe Ton klänge über Legato
+erreicht heller als angeschlagen).
+
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:
 b (je Spielweise durchgehend — vier Fassungen oder Felder auf Vorrat). Je
