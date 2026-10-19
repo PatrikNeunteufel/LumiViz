@@ -1,7 +1,8 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
 > **Version:** 0.32.0
-> **Datum:** 2026-10-19 (Session 137; S-L13 a, 25c-4 *Follow string*; davor S136: Stufe 24f
+> **Datum:** 2026-10-19 (Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
 > **Typ:** Konzept — Ziel, Modell, Klang, Creator. Entschieden sind S-Z1 a,
@@ -1848,8 +1849,12 @@ S. 117, Özaslan 2010 S. 458).
 - Belegt in `test_LoopEditorVerbunden` (2 Fälle: Vorlagen und Schrift; Menü, Bend, *Edit
   bend...* und Tab-Linien über den Editor, `LUMIVIZ_EDITOR_VERBUNDEN_BILD`); in
   `test_LoopEditorSpielweise` die Liste der Haken um Legato und Slide ergänzt.
-- **Offen:** die Höhe „2 Ganztöne“ aus S-L3 a F gegen die Grenze 3 Halbtöne aus S-L2 a (Frage
-  S-L15); bei kurzen Noten in Normalgröße überdeckt die Höhe des Bends in den Tab-Linien die
+- ✅ **S-L15 b** (Patrik S137): **Die Grenze eines Bends wird 4 Halbtöne** (2 Ganztöne, wie
+  S-L3 a F): das Menü bietet ½, full, 1½ und 2, *Edit bend...* geht bis 2 Ganztöne, ebenso die
+  `.lvloop` (Fassung 10 ist nicht ausgeliefert — keine neue Fassung). Verworfen: a (bei 3
+  Halbtönen bleiben — Overbends wären nicht zu setzen). **Noch nicht gebaut** (nächste Sitzung:
+  `kBendHalbtoeneMax` 4, `bendHoehen`, Tests, die Literale in `tests/` suchen).
+- **Offen:** bei kurzen Noten in Normalgröße überdeckt die Höhe des Bends in den Tab-Linien die
   nächste Zahl.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)

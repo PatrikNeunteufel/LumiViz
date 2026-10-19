@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.263.0
-> **Datum:** 2026-10-18 (Session 135)
+> **Version:** 1.264.0
+> **Datum:** 2026-10-19 (Session 137)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2955,10 +2955,19 @@ Idee Preset-Warmup/Pre-Roll.
   die Zeilenhöhe (ZO9 a), den Zeit-Zoom nicht; angleichen wäre eine eigene
   Frage. Stufe 25 (S-L1 a bis S-L12 a): gebaut 25a Modell und `.lvloop` 10, 25b
   Planung der Ketten, 25c-1 Lagrange 5. Ordnung, 25c-2 `.lvinst` 12 (Fretless, Slide
-  time, Legato level), 25c-3a Klang (Bahn), 25c-3b die Planung spielt Ketten. **Offen:
-  25c-4 *Follow string* (vorher die Lage des Schalters *In a legato* im Creator
-  vorlegen); die Lautstärke des Bends (−1,1 dB gegen −0,3 dB gemessen); dann die Fragen zu
-  den Tabs und die gemeinsame Stufe Tabs + Editor (S-L5 a), danach der volle Lauf.**
+  time, Legato level), 25c-3a Klang (Bahn), 25c-3b die Planung spielt Ketten. S137:
+  25c-4 *Follow string* gebaut (S-L12 a, S-L13 a: Zeile *In a legato* im Kasten Source, „~“
+  in der Liste); Bend-Lautstärke geklärt und nach S-L14 a behoben (Ring time der gebogenen
+  Höhe, jetzt −0,6 dB). **Tabs und Akkorde entschieden** (S-T1 a bis S-T7 a: Tab-Linien und
+  Griffbilder, Fenster *Chords*, `.lvchord` Griffbild oder Voicing, Vorlagen aus chords-db
+  plus gerechnet, Skizze A–G, Stufe 26a–26h) und gebaut **26a** (Modell, Datei,
+  Datensicherung, Publish), **26b** (6373 Vorlagen, Icon), **26c** (Tab-Linien), **26d**
+  (Legato, Slide, Bend im Editor). **Offen:** S-L15 b umsetzen (Grenze des Bends 4 Halbtöne,
+  Menü bis „2“) — vor 26e; dann **26e** Fenster *Chords* (zuerst Skizze; mit Anhören, ★
+  Favoriten, *Recently used* — Vorgabe Patrik S137), 26f Voicings, 26g Creator *Play as*, 26h
+  Mitgeliefertes und **voller Lauf**. Durchsicht der gerechneten Griffbilder durch Patrik
+  (`.claude/handover/akkorde_26b/bogen.html`, Kipp-Bedingung S-T4 a). Bei kurzen Noten
+  überdeckt in den Tab-Linien die Höhe des Bends die nächste Zahl (Befund S137).
   Befund ohne Entscheid: `.sichttest/sichttest.projekt.json` sucht nur
   `Sichttest_Composer_*.md` — `Sichttest_Saiten.md`, `Sichttest_Spielweisen.md` findet der
   Tester nicht (Frage an Patrik S136, unbeantwortet).
@@ -6027,6 +6036,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.264.0 | 2026-10-19 | Session 137. §7 Spielweisen: 25c-4 *Follow string* gebaut (S-L13 a), Bend nach S-L14 a; Tabs und Akkorde entschieden (S-T1 a bis S-T7 a, S-L15 b) und gebaut 26a bis 26d; Vorgabe Patrik für das Fenster *Chords* (Anhören, Favoriten); offen S-L15 b umsetzen, 26e–26h, Durchsicht der gerechneten Griffbilder. |
 | 1.263.0 | 2026-10-19 | Session 136. §7 Spielweisen: 24f fertig (S-W16 a bis S-W22 a); Stufe 25 entschieden (S-L1 a bis S-L12 a) und gebaut bis 25c-3b; Zoom der Editoren vorerst nicht gemerkt; Ideen Patrik (Rechtsklick auf die Spur Strum mit Pfeilen, Pick scrape); Befund Muster der Projektdatei Sichttest. |
 | 1.262.0 | 2026-10-18 | Session 135. §7 Spielweisen: 24e gebaut (S-W13 a bis S-W15 a), Fehler „Anschläge kamen nicht im Loop an“ behoben; Zoom in den Loop-Editoren (E-Z1 a). |
 | 1.261.0 | 2026-10-18 | Session 134. §7 Spielweisen: S-W2 a bis S-W12 a entschieden; Stufen 24a bis 24d gebaut (Modell, Planung, Klang, Creator). |
