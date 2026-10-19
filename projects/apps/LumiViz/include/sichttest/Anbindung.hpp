@@ -2,7 +2,8 @@
  * @file Anbindung.hpp
  * @brief Sichttest-Steuerung: der Tester `Sichttest.exe` loest in LumiViz
  *        Aktionen aus (docs/ui/Composer_Konzept.md §12.2 Naht N20;
- *        Spezifikation: SichtTest_Helper `docs/Konzept_Steuerung.md`)
+ *        Spezifikation: SichtTest_Helper `docs/Specification.md`, bis v0.4.0
+ *        `docs/Konzept_Steuerung.md`; LumiViz-Eigenes: docs/Sichttest_Steuerung.md)
  *
  * Nur mit dem Schalter `--testing` laedt LumiViz die `SichttestSteuerung1.dll`
  * aus dem Ordner der Exe — gelinkt wird nichts, ein gewoehnlicher Start laedt

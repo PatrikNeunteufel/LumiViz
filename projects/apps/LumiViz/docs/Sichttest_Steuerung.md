@@ -1,12 +1,14 @@
 # LumiViz — Sichttest-Steuerung (für Entwickler)
 
-> **Version:** 1.1.1
-> **Datum:** 2026-10-11 (Session 110)
+> **Version:** 1.2.0
+> **Datum:** 2026-10-19 (Session 136)
 > **Typ:** Wegleitung (**umgesetzt**, Session 105)
 > **Zielgruppe:** App-Entwickler — **kein Teil des Benutzerhandbuchs**, das
 > Release-Paket enthält weder Tester noch Steuerung
-> **Bezug:** `SichtTest_Helper/docs/Konzept_Steuerung.md` (verbindliche
-> Spezifikation der Schnittstelle, eigenes Repository) ·
+> **Bezug:** `SichtTest_Helper/docs/Specification.md` (verbindliche
+> Spezifikation der Schnittstelle, englisch maßgeblich, deutsch
+> `Specification.de.md`; eigenes, öffentliches Repository — bis `v0.4.0` hieß sie
+> `docs/Konzept_Steuerung.md`, §3 bis §9 tragen dieselben Nummern) ·
 > [Composer_Konzept.md](ui/Composer_Konzept.md) §12.2, Nähte N19 bis N26 ·
 > `include/sichttest/Anbindung.hpp` · `include/sichttest/AppAktionen.hpp` ·
 > `include/composer/SichttestAktionen.hpp` · `include/loop/SichttestAktionen.hpp`
@@ -37,7 +39,15 @@ Ohne `--testing` lädt LumiViz nichts davon und öffnet keinen Tester.
   `sichttest\Sichttest.exe`.
 - Der Tester findet über `.sichttest/sichttest.projekt.json` (Repo-Root) die
   Exe und die Listen `Sichttest_Composer_*.md` unter `.claude/handover`.
+  Die Datei nennt `anwendung` `LumiViz`, `start` die Release-clang-Exe
+  (`out/build/windows-ninja-release-clang/exec/LumiViz/bin/Release/LumiViz.exe`
+  mit `--testing`) und `listen` (Ordner `.claude/handover`, `muster`
+  `Sichttest_Composer_*.md`) — das Format beschreibt Specification §7.
 - An jedem Punkt **Vorbereiten** steht im Tester **▶ Ausführen**.
+- Die Steuerung verbindet sich erst, **nachdem** LumiViz seinen Startzustand
+  wiederhergestellt hat (in `MainWindow`, nach dem Wiederherstellen, hinter
+  `lumi::sichttest::verlangt`) — sonst überschriebe das Wiederherstellen, was
+  eine erste Aktion eben hergestellt hat.
 
 **Was dabei geschieht:**
 
@@ -95,6 +105,16 @@ Keine öffnet einen Dialog. Eine relative Datei gilt ab dem Root des Projekts
 `preset_laden` gibt den Auftrag nur ab: scheitert das Laden selbst, meldet
 LumiViz das in einem eigenen Dialog, die Antwort an den Tester sagt es nicht.
 
+**Warum `komposition_laden` hält** (Entscheid Patrik L1, Sync `LV-20261009-1905`):
+sie lädt ohne Dialog, schaltet den Composer aus und steht auf 0:00 — jeder
+Abschnitt beginnt im selben Zustand; erst `composer an` schaltet ein.
+
+**„fragt vorher" und „nur im ersten Lauf" sind zwei Schalter** (Befund LV,
+08.10.): `komposition_laden` ersetzt Ungespeichertes und fragt deshalb vorher —
+sie **ist** aber das Herstellen eines Abschnitts und läuft deshalb auch beim
+Fortsetzen einer Liste wieder. `komposition_schliessen` dagegen fragt und läuft
+nur im ersten Lauf (Specification §3, Zustände).
+
 **In einer Liste** steht eine Aktion als Code-Stück im Text eines Punkts:
 
 ```markdown
@@ -107,6 +127,13 @@ LumiViz das in einem eigenen Dialog, die Antwort an den Tester sagt es nicht.
 
 `@G0` führt die Aktionen des Punkts G0 derselben Liste aus. Ein einzelner Wert
 ohne Schlüssel (`composer an`) kommt als Argument `wert` an.
+
+**Das Format der LumiViz-Listen** (Specification §6.1 beschreibt Markdown
+allgemein): je Abschnitt ein Punkt **Vorbereiten**, je Punkt *Tun* und
+*Erwartet*, die Urteile getrennt in Abschnitt **U**; die Vorlagen der Listen
+liegen unter `asset/sichttest/`. Vorbild ist
+`.claude/handover/Sichttest_Composer_1_Master-Zeilen.md` mit dem Beispiel
+„M. Der shape der Zeile MASTER bleibt an seiner Zeit".
 
 ---
 
@@ -122,6 +149,11 @@ ohne Schlüssel (`composer an`) kommt als Argument `wert` an.
 | Projektdatei für den Tester | `.sichttest/sichttest.projekt.json` |
 | Verknüpfung nach dem Bau | `CMakeLists.txt` (Block `[Sichttest]`), `tools/sichttest/TestingVerknuepfung.ps1` |
 | Festes Material der Listen (Vorlagen, Presets, Testsignale) | `asset/sichttest/` |
+
+**Nicht der Kanal:** `core/EinzelInstanz` (ein QObject mit `QLocalServer`, das
+einen zweiten Start an den ersten weiterreicht) bleibt, was es ist — die
+Anwendung soll für den Tester nicht lauschen; der Kanal gehört der DLL
+(Specification §4).
 
 **Eine neue Aktion** ist eine Funktion, die sich auch ohne Tester rufen lässt
 (`Ergebnis f(VisualizerWidget&, const QJsonObject&)`), plus eine Zeile beim
@@ -144,6 +176,25 @@ liegen `SichttestSteuerung1.dll` und der Ordner `sichttest\`.
   `sichttest\Sichttest.exe` neben der Exe.
 - **Ins Release-Paket gehören Tester, DLL und Verknüpfung nicht** (die
   Verknüpfung trägt einen festen Pfad).
+- **Warum der Tester in `sichttest\` liegt und nicht neben der Exe:** ein
+  Debug-Build von LumiViz lädt `Qt6Cored.dll`, der Tester das Qt seines Pakets —
+  im eigenen Ordner kommen sich die beiden nicht in die Quere (Specification §7.1).
+- **Nur eine Instanz je Exe** (`Application.cpp`, Meldung „LumiViz is already
+  running …"): ein zweiter Start endet sofort. Darum kann der Tester „gestartet,
+  aber nicht verbunden" melden, wenn schon ein LumiViz ohne `--testing` läuft
+  (Specification §6.3).
+
+---
+
+## 7. Herkunft
+
+Gebaut in Schritt 4 der Umsetzung (Session 105): `LumiViz.exe --testing`, die
+ersten Aktionen (Sync LV-1), Listen mit `aktion:`-Stücken, die eigene Kopie
+`projects/exec/Sichttest` entfernt (LV-2). Benannt waren zuerst fünfzehn Aktionen
+(Sync `LV-20261008-2244`), gebaut ab dem 09.10. zuerst `komposition_laden`,
+`composer`, `edit`, `fit`; heute achtzehn (§3). Bis `v0.4.0` stand das alles auch
+in der Spezifikation von SichtTest_Helper; seit dem 19.10.2026 beschreibt die nur
+noch die Anbindung *irgendeiner* Anwendung, LumiViz-Eigenes steht hier.
 
 ---
 
@@ -170,6 +221,7 @@ liegen `SichttestSteuerung1.dll` und der Ordner `sichttest\`.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.2.0 | 2026-10-19 | Session 136. Übergabe aus SichtTest_Helper (Sync `sync_sichttest`, `Uebergabe_LV.md` L1–L10): Bezug auf `Specification.md` statt `Konzept_Steuerung.md`; §2 Projektdatei und Verbinden nach dem Startzustand; §3 warum `komposition_laden` hält, zwei Schalter, Format der Listen; §4 EinzelInstanz ist nicht der Kanal; §5 Ordner des Testers, eine Instanz; neu §7 Herkunft. |
 | 1.1.1 | 2026-10-11 | Session 110. §3 `loop_editor` öffnet auch den Instrument-Editor. |
 | 1.1.0 | 2026-10-11 | Session 110. §3 drei Aktionen für das Panel Loop: `loop_laden`, `loop_wiedergabe`, `loop_editor`; §4 und §6 nachgezogen. |
 | 1.0.0 | 2026-10-10 | Session 105. Erstfassung — aus dem Benutzerhandbuch (§18, dort entfernt: der Tester ist ein Werkzeug für Entwickler) und ergänzt um Aktionen, Code-Orte, Bezug des Pakets und Tests. |
