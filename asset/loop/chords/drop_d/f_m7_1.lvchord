@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fm7",
+    "root": "F",
+    "type": "m7",
+    "origin": "computed",
+    "description": "Position 1, from fret 1 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            3,
+            3,
+            1,
+            1,
+            1,
+            1
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            1,
+            1,
+            1
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

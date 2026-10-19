@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Balt",
+    "root": "B",
+    "type": "alt",
+    "description": "Position 1, from fret 1",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            4,
+            3,
+            1,
+            2
+        ],
+        "fingers": [
+            4,
+            3,
+            1,
+            2
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bbdim7",
+    "root": "Bb",
+    "type": "dim7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        6,
+        9,
+        15
+    ]
+}

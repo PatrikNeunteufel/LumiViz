@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb9#11",
+    "root": "Eb",
+    "type": "9#11",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            6,
+            7,
+            5,
+            8
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

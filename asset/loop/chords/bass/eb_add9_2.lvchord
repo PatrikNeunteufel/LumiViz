@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebadd9",
+    "root": "Eb",
+    "type": "add9",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            11,
+            8,
+            8,
+            0
+        ],
+        "fingers": [
+            2,
+            1,
+            1,
+            0
+        ],
+        "barres": [
+            8
+        ]
+    }
+}

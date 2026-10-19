@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gm6",
+    "root": "G",
+    "type": "m6",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        8,
+        14
+    ]
+}

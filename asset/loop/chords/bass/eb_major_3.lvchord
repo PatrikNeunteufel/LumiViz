@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb",
+    "root": "Eb",
+    "type": "major",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            11,
+            10,
+            8,
+            0
+        ],
+        "fingers": [
+            3,
+            2,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

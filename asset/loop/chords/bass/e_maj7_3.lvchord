@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Emaj7",
+    "root": "E",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            0,
+            6,
+            6,
+            8
+        ],
+        "fingers": [
+            0,
+            1,
+            1,
+            2
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

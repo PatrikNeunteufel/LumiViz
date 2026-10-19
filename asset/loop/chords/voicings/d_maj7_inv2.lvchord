@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmaj7",
+    "root": "D",
+    "type": "maj7",
+    "description": "Second inversion",
+    "voicing": [
+        0,
+        4,
+        5,
+        9
+    ]
+}

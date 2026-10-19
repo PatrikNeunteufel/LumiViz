@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bmaj7",
+    "root": "B",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 3, from fret 7 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            7,
+            9,
+            8,
+            8
+        ],
+        "fingers": [
+            1,
+            4,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

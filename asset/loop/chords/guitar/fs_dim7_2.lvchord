@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#dim7",
+    "root": "F#",
+    "type": "dim7",
+    "description": "Position 2, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            2,
+            3,
+            4,
+            2,
+            4,
+            2
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            1,
+            4,
+            1
+        ],
+        "barres": [
+            2
+        ]
+    }
+}

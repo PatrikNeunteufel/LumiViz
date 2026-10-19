@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dalt",
+    "root": "D",
+    "type": "alt",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            6,
+            7,
+            7,
+            -1
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            0
+        ],
+        "barres": []
+    }
+}

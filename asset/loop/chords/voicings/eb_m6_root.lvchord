@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebm6",
+    "root": "Eb",
+    "type": "m6",
+    "description": "Root position",
+    "voicing": [
+        0,
+        3,
+        7,
+        9
+    ]
+}

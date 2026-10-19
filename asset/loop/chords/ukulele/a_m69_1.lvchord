@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Am69",
+    "root": "A",
+    "type": "m69",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            4,
+            4,
+            2,
+            3
+        ],
+        "fingers": [
+            3,
+            4,
+            1,
+            2
+        ],
+        "barres": []
+    }
+}

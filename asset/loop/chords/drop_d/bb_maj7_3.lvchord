@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bbmaj7",
+    "root": "Bb",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            8,
+            5,
+            0,
+            7,
+            6,
+            5
+        ],
+        "fingers": [
+            4,
+            1,
+            0,
+            3,
+            2,
+            1
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

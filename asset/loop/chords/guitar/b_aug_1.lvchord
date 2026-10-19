@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Baug",
+    "root": "B",
+    "type": "aug",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            2,
+            1,
+            0,
+            0,
+            -1
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            0,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

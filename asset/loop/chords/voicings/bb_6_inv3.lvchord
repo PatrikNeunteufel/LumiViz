@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bb6",
+    "root": "Bb",
+    "type": "6",
+    "description": "Third inversion",
+    "voicing": [
+        0,
+        3,
+        7,
+        10
+    ]
+}

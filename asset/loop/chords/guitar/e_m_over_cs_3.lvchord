@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Em/C#",
+    "root": "E",
+    "type": "m/C#",
+    "description": "Position 3, from fret 9",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            9,
+            10,
+            9,
+            12,
+            12,
+            12
+        ],
+        "fingers": [
+            1,
+            2,
+            1,
+            4,
+            4,
+            4
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

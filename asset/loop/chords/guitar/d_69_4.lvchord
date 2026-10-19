@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "D69",
+    "root": "D",
+    "type": "69",
+    "description": "Position 4, from fret 11",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            12,
+            12,
+            11,
+            12,
+            12
+        ],
+        "fingers": [
+            0,
+            2,
+            2,
+            1,
+            3,
+            4
+        ],
+        "barres": [
+            12
+        ]
+    }
+}

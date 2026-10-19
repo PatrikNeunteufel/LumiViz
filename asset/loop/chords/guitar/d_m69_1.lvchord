@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dm69",
+    "root": "D",
+    "type": "m69",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            3,
+            2,
+            0,
+            0
+        ],
+        "fingers": [
+            0,
+            4,
+            2,
+            1,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abaug9",
+    "root": "Ab",
+    "type": "aug9",
+    "description": "Position 3, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            4,
+            5,
+            5,
+            6
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

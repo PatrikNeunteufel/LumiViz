@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#7",
+    "root": "F#",
+    "type": "7",
+    "description": "First inversion",
+    "voicing": [
+        0,
+        3,
+        6,
+        8
+    ]
+}

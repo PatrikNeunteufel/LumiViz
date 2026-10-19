@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abmmaj7",
+    "root": "Ab",
+    "type": "mmaj7",
+    "description": "Position 1, from fret 1",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            2,
+            1,
+            1,
+            4,
+            3
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            1,
+            4,
+            3
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

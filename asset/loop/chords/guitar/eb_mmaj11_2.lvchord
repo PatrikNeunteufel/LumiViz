@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebmmaj11",
+    "root": "Eb",
+    "type": "mmaj11",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            6,
+            4,
+            7,
+            6,
+            4
+        ],
+        "fingers": [
+            0,
+            3,
+            1,
+            4,
+            3,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

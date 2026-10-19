@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#6",
+    "root": "C#",
+    "type": "6",
+    "origin": "computed",
+    "description": "Position 3, from fret 11 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            -1,
+            11,
+            13,
+            13
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebaug",
+    "root": "Eb",
+    "type": "aug",
+    "description": "Position 3, from fret 3",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            4,
+            3,
+            3,
+            6
+        ],
+        "fingers": [
+            2,
+            1,
+            1,
+            4
+        ],
+        "barres": [
+            3
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Amaj7",
+    "root": "A",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            0,
+            6,
+            6,
+            5,
+            4
+        ],
+        "fingers": [
+            0,
+            0,
+            3,
+            4,
+            2,
+            1
+        ],
+        "barres": []
+    }
+}

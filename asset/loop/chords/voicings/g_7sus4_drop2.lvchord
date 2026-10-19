@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G7sus4",
+    "root": "G",
+    "type": "7sus4",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        10,
+        15
+    ]
+}

@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bmadd9",
+    "root": "B",
+    "type": "madd9",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            4,
+            4,
+            2,
+            -1
+        ],
+        "fingers": [
+            0,
+            4,
+            2,
+            3,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

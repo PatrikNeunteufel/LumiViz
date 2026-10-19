@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "B11",
+    "root": "B",
+    "type": "11",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            2,
+            3,
+            0,
+            4
+        ],
+        "fingers": [
+            1,
+            2,
+            0,
+            3
+        ],
+        "barres": []
+    }
+}

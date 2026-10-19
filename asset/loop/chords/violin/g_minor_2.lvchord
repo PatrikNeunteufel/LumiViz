@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gm",
+    "root": "G",
+    "type": "minor",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            0,
+            0,
+            5,
+            6
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            2
+        ],
+        "barres": []
+    }
+}

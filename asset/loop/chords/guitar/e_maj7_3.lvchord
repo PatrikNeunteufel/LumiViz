@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Emaj7",
+    "root": "E",
+    "type": "maj7",
+    "description": "Position 3, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            7,
+            6,
+            4,
+            4,
+            4
+        ],
+        "fingers": [
+            0,
+            4,
+            3,
+            1,
+            1,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

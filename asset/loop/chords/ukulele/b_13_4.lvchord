@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "B13",
+    "root": "B",
+    "type": "13",
+    "description": "Position 4, from fret 11",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            13,
+            13,
+            11,
+            12
+        ],
+        "fingers": [
+            3,
+            4,
+            1,
+            2
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Emaj7",
+    "root": "E",
+    "type": "maj7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        9,
+        16
+    ]
+}

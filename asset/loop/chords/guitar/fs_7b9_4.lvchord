@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#7b9",
+    "root": "F#",
+    "type": "7b9",
+    "description": "Position 4, from fret 12",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            14,
+            13,
+            14,
+            12,
+            -1,
+            -1
+        ],
+        "fingers": [
+            3,
+            2,
+            4,
+            1,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

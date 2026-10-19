@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebdim7",
+    "root": "Eb",
+    "type": "dim7",
+    "description": "First inversion",
+    "voicing": [
+        0,
+        3,
+        6,
+        9
+    ]
+}

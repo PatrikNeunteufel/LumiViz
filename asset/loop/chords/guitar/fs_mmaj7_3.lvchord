@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#mmaj7",
+    "root": "F#",
+    "type": "mmaj7",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            9,
+            7,
+            6,
+            6,
+            -1
+        ],
+        "fingers": [
+            0,
+            4,
+            2,
+            1,
+            1,
+            0
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

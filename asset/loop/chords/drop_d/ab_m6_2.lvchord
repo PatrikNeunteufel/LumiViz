@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm6",
+    "root": "Ab",
+    "type": "m6",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            6,
+            6,
+            3,
+            4,
+            0,
+            -1
+        ],
+        "fingers": [
+            3,
+            4,
+            1,
+            2,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

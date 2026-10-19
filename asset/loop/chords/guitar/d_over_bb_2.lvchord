@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "D/Bb",
+    "root": "D",
+    "type": "/Bb",
+    "description": "Position 2, from fret 1",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            1,
+            4,
+            2,
+            3,
+            2
+        ],
+        "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            2
+        ],
+        "barres": [
+            2
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abmaj7",
+    "root": "Ab",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 3, from fret 10 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            13,
+            10,
+            10,
+            11
+        ],
+        "fingers": [
+            3,
+            1,
+            1,
+            2
+        ],
+        "barres": [
+            10
+        ]
+    }
+}

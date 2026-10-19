@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm9",
+    "root": "Ab",
+    "type": "m9",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            4,
+            1,
+            1,
+            1,
+            0,
+            2
+        ],
+        "fingers": [
+            4,
+            1,
+            1,
+            2,
+            0,
+            3
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

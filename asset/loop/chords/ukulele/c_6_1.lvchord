@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C6",
+    "root": "C",
+    "type": "6",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "fingers": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

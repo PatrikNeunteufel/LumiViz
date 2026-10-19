@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb6",
+    "root": "Eb",
+    "type": "6",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        9,
+        14
+    ]
+}

@@ -1759,6 +1759,35 @@ S. 117, Özaslan 2010 S. 458).
 - Belegt in `test_LoopAkkord` (7 Fälle, ohne Qt-Anwendung, Wegwerf-Ordner); die
   mitgelieferten Vorlagen kommen mit 26b (dann auch `asset/Asset.cmake`).
 
+### 5v. Stufe 26b — die mitgelieferten Akkorde (gebaut S137)
+
+- **`asset/loop/chords/make_chords.py <ChordsDb-Ordner>`** schreibt 6373 Dateien:
+  `guitar/` 2069 und `ukulele/` 2114 Lagen aus chords-db 0.5.1 (npm `lib/guitar.json`,
+  `lib/ukulele.json`; die Originale außerhalb des Repos unter `…\cmake\ChordsDb\0.5.1`).
+  Gelesen: die Bünde stehen dort ab `baseFret` (`f > 0` → `baseFret + f − 1`, die Barres
+  ebenso); jede Lage trägt `midi` — die Umrechnung wird gegen sie geprüft, alle 4183 Lagen
+  stimmen. Gitarre 529 Akkorde in 63 Arten (darunter 22 Slash-Akkorde), Ukulele 552 in 46.
+- **Gerechnet** (S-T4 a, `origin` `computed`): `drop_d/` 468, `bass/` 426, `violin/` 420 —
+  13 Arten (von Claude gewählt: major, minor, 7, maj7, m7, sus2, sus4, dim, aug, m7b5, 6, m6,
+  add9), je Grundton bis zu drei Lagen. Regel: nur Töne der Art, alle außer der Quinte bei
+  vier Tönen, der Grundton als tiefster, klingende Saiten ohne Lücke (mindestens drei),
+  höchstens vier Bünde, höchstens vier Finger (Barre am tiefsten Bund = einer), Wertung:
+  mehr klingende Saiten, mehr leere, tiefere Lage. **Bildbogen zur Durchsicht:**
+  `.claude/handover/akkorde_26b/bogen.html` (Kipp-Bedingung S-T4 a).
+- **Voicings** `voicings/` 876: 19 Arten × 12 Grundtöne — Grundstellung, Umkehrungen (bis
+  zur Oktave), weite Lage (Dreiklang: Grundton, Quinte, Terz + 12) oder Drop 2 (Vierklang).
+- Namen `<grundton>_<art>_<lage>` (`c_major_1`, `cs_m_over_b_2`, `g_7_inv1`); Titel als
+  Akkordsymbol (`C`, `Cm`, `G7`, `C/E`); Beschreibung „Position n, open“ oder „…, from fret n“.
+- `CREDITS.md` mit dem MIT-Lizenztext (wortgleich mit `LICENSE` geprüft),
+  `THIRD_PARTY_NOTICES.md` (neuer Abschnitt), `asset/Asset.cmake` (sechs Ordner und
+  `CREDITS.md`). **`AssetAbgleich.cmake`:** das Entfernen am Ziel mit `list(REMOVE_ITEM)`
+  statt `IN_LIST` je Datei — vorher 35 s je Bau mit den Akkorden, jetzt 1,9 s.
+- Icon **`lumiviz_lvchord.ico`** (Marke mit Griffbild, `zeichen_griffbild`), eingetragen in
+  `register_file_icons.ps1` (`LumiViz.Chord`) und im README der Icons, PNG fürs Handbuch.
+- Belegt in `test_LoopAkkord` „26b“: Zahl je Ordner, jede Datei liest sich, jedes Griffbild
+  greift auf seiner Stimmung, die gerechneten nur mit Tönen ihrer Art und dem Grundton im
+  Bass, `mitgelieferteAkkorde` findet alle (1,4 s unter Testing-MSVC).
+
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 
 Recherche durch einen Agenten, die tragenden Stellen von Claude selbst in der

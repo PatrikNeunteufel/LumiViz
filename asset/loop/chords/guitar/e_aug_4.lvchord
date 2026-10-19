@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eaug",
+    "root": "E",
+    "type": "aug",
+    "description": "Position 4, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            12,
+            11,
+            10,
+            9,
+            9,
+            0
+        ],
+        "fingers": [
+            4,
+            3,
+            2,
+            1,
+            1,
+            0
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

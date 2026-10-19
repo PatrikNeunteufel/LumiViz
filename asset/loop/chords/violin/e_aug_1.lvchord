@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eaug",
+    "root": "E",
+    "type": "aug",
+    "origin": "computed",
+    "description": "Position 1, from fret 2 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            -1,
+            2,
+            3,
+            4
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

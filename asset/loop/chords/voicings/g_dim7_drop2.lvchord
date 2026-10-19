@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gdim7",
+    "root": "G",
+    "type": "dim7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        6,
+        9,
+        15
+    ]
+}

@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eadd9",
+    "root": "E",
+    "type": "add9",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            2,
+            2,
+            4,
+            4,
+            0,
+            4
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            3,
+            0,
+            4
+        ],
+        "barres": [
+            2
+        ]
+    }
+}

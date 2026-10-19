@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#7",
+    "root": "F#",
+    "type": "7",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            11,
+            8,
+            9,
+            0
+        ],
+        "fingers": [
+            3,
+            1,
+            2,
+            0
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Adim7",
+    "root": "A",
+    "type": "dim7",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            5,
+            6,
+            7,
+            5,
+            7,
+            5
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            1,
+            4,
+            1
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Em69",
+    "root": "E",
+    "type": "m69",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            7,
+            5,
+            6,
+            7,
+            7
+        ],
+        "fingers": [
+            0,
+            3,
+            1,
+            2,
+            4,
+            4
+        ],
+        "barres": [
+            7
+        ]
+    }
+}

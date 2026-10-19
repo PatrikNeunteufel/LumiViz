@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gmadd9",
+    "root": "G",
+    "type": "madd9",
+    "description": "Position 3, from fret 10",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            12,
+            10,
+            10,
+            12
+        ],
+        "fingers": [
+            3,
+            1,
+            1,
+            4
+        ],
+        "barres": [
+            10
+        ]
+    }
+}

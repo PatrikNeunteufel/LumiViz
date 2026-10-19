@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "E13b5b9",
+    "root": "E",
+    "type": "13b5b9",
+    "description": "Position 1, from fret 1",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            3,
+            2,
+            1,
+            4
+        ],
+        "fingers": [
+            3,
+            2,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

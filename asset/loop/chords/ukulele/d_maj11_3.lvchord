@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmaj11",
+    "root": "D",
+    "type": "maj11",
+    "description": "Position 3, from fret 10",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            11,
+            13,
+            12,
+            10
+        ],
+        "fingers": [
+            2,
+            4,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Caug",
+    "root": "C",
+    "type": "aug",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            8,
+            7,
+            6,
+            5,
+            5,
+            -1
+        ],
+        "fingers": [
+            4,
+            3,
+            2,
+            1,
+            1,
+            0
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

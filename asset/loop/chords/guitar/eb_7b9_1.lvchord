@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb7b9",
+    "root": "Eb",
+    "type": "7b9",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            1,
+            0,
+            2,
+            0
+        ],
+        "fingers": [
+            0,
+            0,
+            2,
+            0,
+            4,
+            0
+        ],
+        "barres": []
+    }
+}

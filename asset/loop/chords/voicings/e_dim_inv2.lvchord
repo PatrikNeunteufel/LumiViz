@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Edim",
+    "root": "E",
+    "type": "dim",
+    "description": "Second inversion",
+    "voicing": [
+        0,
+        6,
+        9
+    ]
+}

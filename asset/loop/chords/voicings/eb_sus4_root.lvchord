@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebsus4",
+    "root": "Eb",
+    "type": "sus4",
+    "description": "Root position",
+    "voicing": [
+        0,
+        5,
+        7
+    ]
+}

@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bm7",
+    "root": "B",
+    "type": "m7",
+    "description": "Root position",
+    "voicing": [
+        0,
+        3,
+        7,
+        10
+    ]
+}

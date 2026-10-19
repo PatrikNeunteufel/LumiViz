@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebadd9",
+    "root": "Eb",
+    "type": "add9",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            8,
+            7,
+            6,
+            8
+        ],
+        "fingers": [
+            3,
+            2,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

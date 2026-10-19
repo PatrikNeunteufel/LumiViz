@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F/A",
+    "root": "F",
+    "type": "/A",
+    "description": "Position 2, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            5,
+            3,
+            3,
+            2,
+            -1,
+            -1
+        ],
+        "fingers": [
+            4,
+            2,
+            3,
+            1,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

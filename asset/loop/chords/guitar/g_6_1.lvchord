@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G6",
+    "root": "G",
+    "type": "6",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            3,
+            2,
+            0,
+            0,
+            0,
+            0
+        ],
+        "fingers": [
+            2,
+            1,
+            0,
+            0,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

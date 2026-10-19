@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebm7b5",
+    "root": "Eb",
+    "type": "m7b5",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            8,
+            9,
+            9,
+            9
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

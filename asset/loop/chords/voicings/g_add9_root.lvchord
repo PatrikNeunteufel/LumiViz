@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gadd9",
+    "root": "G",
+    "type": "add9",
+    "description": "Root position",
+    "voicing": [
+        0,
+        4,
+        7,
+        14
+    ]
+}

@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmadd9",
+    "root": "D",
+    "type": "madd9",
+    "description": "Position 2, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            3,
+            2,
+            5,
+            -1
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            1,
+            4,
+            0
+        ],
+        "barres": []
+    }
+}

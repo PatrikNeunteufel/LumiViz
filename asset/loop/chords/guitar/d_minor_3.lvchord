@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dm",
+    "root": "D",
+    "type": "minor",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            8,
+            7,
+            7,
+            6,
+            -1
+        ],
+        "fingers": [
+            0,
+            4,
+            2,
+            3,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

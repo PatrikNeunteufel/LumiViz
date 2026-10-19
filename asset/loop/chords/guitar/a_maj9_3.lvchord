@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Amaj9",
+    "root": "A",
+    "type": "maj9",
+    "description": "Position 3, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            0,
+            6,
+            6,
+            5,
+            7
+        ],
+        "fingers": [
+            0,
+            0,
+            2,
+            3,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

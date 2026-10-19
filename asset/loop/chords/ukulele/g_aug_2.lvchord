@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gaug",
+    "root": "G",
+    "type": "aug",
+    "description": "Position 2, from fret 2",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            4,
+            3,
+            3,
+            2
+        ],
+        "fingers": [
+            3,
+            2,
+            2,
+            1
+        ],
+        "barres": [
+            3
+        ]
+    }
+}

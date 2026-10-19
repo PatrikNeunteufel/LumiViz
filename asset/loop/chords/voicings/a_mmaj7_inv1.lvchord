@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ammaj7",
+    "root": "A",
+    "type": "mmaj7",
+    "description": "First inversion",
+    "voicing": [
+        0,
+        4,
+        8,
+        9
+    ]
+}

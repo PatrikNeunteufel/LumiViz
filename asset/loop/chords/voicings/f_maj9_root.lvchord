@@ -1,0 +1,15 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmaj9",
+    "root": "F",
+    "type": "maj9",
+    "description": "Root position",
+    "voicing": [
+        0,
+        4,
+        7,
+        11,
+        14
+    ]
+}

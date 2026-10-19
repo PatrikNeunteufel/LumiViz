@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb7sus4",
+    "root": "Eb",
+    "type": "7sus4",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            6,
+            6,
+            6,
+            4,
+            4
+        ],
+        "fingers": [
+            0,
+            2,
+            3,
+            4,
+            1,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

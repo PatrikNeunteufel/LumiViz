@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebsus4",
+    "root": "Eb",
+    "type": "sus4",
+    "origin": "computed",
+    "description": "Position 1, from fret 3 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            -1,
+            6,
+            6,
+            3
+        ],
+        "fingers": [
+            0,
+            2,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

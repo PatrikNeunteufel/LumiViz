@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "E6",
+    "root": "E",
+    "type": "6",
+    "origin": "computed",
+    "description": "Position 1, from fret 2 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            -1,
+            2,
+            4,
+            4
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

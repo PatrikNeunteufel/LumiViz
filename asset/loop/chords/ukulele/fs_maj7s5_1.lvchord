@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gbmaj7#5",
+    "root": "F#",
+    "type": "maj7#5",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            3,
+            5,
+            2,
+            5
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

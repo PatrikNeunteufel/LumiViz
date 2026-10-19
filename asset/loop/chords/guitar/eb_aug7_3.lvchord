@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebaug7",
+    "root": "Eb",
+    "type": "aug7",
+    "description": "Position 3, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            11,
+            10,
+            11,
+            0,
+            0,
+            9
+        ],
+        "fingers": [
+            3,
+            2,
+            4,
+            0,
+            0,
+            1
+        ],
+        "barres": []
+    }
+}

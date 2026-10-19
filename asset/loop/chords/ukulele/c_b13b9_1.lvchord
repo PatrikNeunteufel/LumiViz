@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Cb13b9",
+    "root": "C",
+    "type": "b13b9",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            1,
+            1,
+            0,
+            1
+        ],
+        "fingers": [
+            1,
+            2,
+            0,
+            3
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gm7b5",
+    "root": "G",
+    "type": "m7b5",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        6,
+        9,
+        16
+    ]
+}

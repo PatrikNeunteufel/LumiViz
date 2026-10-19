@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Aaug",
+    "root": "A",
+    "type": "aug",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            0,
+            3,
+            2,
+            2,
+            1
+        ],
+        "fingers": [
+            0,
+            0,
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

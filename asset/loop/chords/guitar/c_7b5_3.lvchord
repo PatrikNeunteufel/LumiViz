@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C7b5",
+    "root": "C",
+    "type": "7b5",
+    "description": "Position 3, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            8,
+            -1,
+            8,
+            9,
+            7,
+            0
+        ],
+        "fingers": [
+            2,
+            0,
+            3,
+            4,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

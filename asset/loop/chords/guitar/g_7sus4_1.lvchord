@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G7sus4",
+    "root": "G",
+    "type": "7sus4",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            3,
+            3,
+            0,
+            0,
+            1,
+            1
+        ],
+        "fingers": [
+            2,
+            3,
+            0,
+            0,
+            1,
+            1
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

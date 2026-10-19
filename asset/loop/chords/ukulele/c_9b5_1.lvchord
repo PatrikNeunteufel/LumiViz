@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C9b5",
+    "root": "C",
+    "type": "9b5",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            3,
+            4,
+            2,
+            5
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

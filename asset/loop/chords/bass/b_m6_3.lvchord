@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bm6",
+    "root": "B",
+    "type": "m6",
+    "origin": "computed",
+    "description": "Position 3, from fret 5 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            7,
+            5,
+            6,
+            7
+        ],
+        "fingers": [
+            3,
+            1,
+            2,
+            4
+        ],
+        "barres": []
+    }
+}

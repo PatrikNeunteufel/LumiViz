@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F6",
+    "root": "F",
+    "type": "6",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            1,
+            0,
+            0,
+            2
+        ],
+        "fingers": [
+            1,
+            0,
+            0,
+            2
+        ],
+        "barres": []
+    }
+}

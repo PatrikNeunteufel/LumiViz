@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F6",
+    "root": "F",
+    "type": "6",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            7,
+            9,
+            8,
+            8
+        ],
+        "fingers": [
+            1,
+            4,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

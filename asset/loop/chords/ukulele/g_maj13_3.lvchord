@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gmaj13",
+    "root": "G",
+    "type": "maj13",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            9,
+            9,
+            7,
+            9
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            4
+        ],
+        "barres": []
+    }
+}

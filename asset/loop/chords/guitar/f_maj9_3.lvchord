@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmaj9",
+    "root": "F",
+    "type": "maj9",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            8,
+            7,
+            9,
+            8,
+            -1
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            4,
+            3,
+            0
+        ],
+        "barres": []
+    }
+}

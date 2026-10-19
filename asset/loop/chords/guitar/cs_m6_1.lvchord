@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#m6",
+    "root": "C#",
+    "type": "m6",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            4,
+            2,
+            3,
+            2,
+            4
+        ],
+        "fingers": [
+            0,
+            3,
+            1,
+            2,
+            1,
+            4
+        ],
+        "barres": [
+            2
+        ]
+    }
+}

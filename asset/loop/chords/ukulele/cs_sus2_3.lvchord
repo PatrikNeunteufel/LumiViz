@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dbsus2",
+    "root": "C#",
+    "type": "sus2",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            8,
+            8,
+            9,
+            11
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            4
+        ],
+        "barres": [
+            8
+        ]
+    }
+}

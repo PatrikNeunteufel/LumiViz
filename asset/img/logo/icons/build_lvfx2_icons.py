@@ -29,6 +29,8 @@ Erzeugt sechzehn .ico (16–256 px) neben diesem Skript:
                         das Datei-Icon fuer Kits `.lvkit` (Session 124;
                         Entscheide Patrik I1 a, I2 a: am Vorschaublatt aus
                         drei Fassungen gewaehlt).
+- `lumiviz_lvchord.ico` „Marke" mit einem Griffbild — das Datei-Icon fuer Akkorde
+                        `.lvchord` (Session 137, Entscheid S-T3 a).
 - `lumiviz_faecher.ico` „Faecher" — drei gleich grosse Icons diagonal
                         gestaffelt. Reserve.
 - `lumiviz_lvcomp.ico`  der Faecher mit Zeitstrahl und Abspielmarke — das
@@ -275,6 +277,27 @@ def zeichen_trommel(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
         d.ellipse((x0 - k, y0 - k, x0 + k, y0 + k), fill=(*BERNSTEIN, 255))
 
 
+def zeichen_griffbild(d: ImageDraw.ImageDraw, cx: int, cy: int, r: int) -> None:
+    """Ein Griffbild (Session 137, Entscheid S-T3 a; Wunsch Patrik: „das Motiv ein
+    Griffbild"): vier Saiten, oben der Sattel, drei Buende, darauf drei Finger in den
+    Farben des Logos — nur vier Saiten, damit es bei 32 px lesbar bleibt."""
+    b, h = int(r * 0.56), int(r * 0.62)
+    links, rechts, oben, unten = cx - b, cx + b, cy - h, cy + h
+    hell = (235, 235, 235, 255)
+    d.rectangle((links - 6, oben - int(r * 0.07), rechts + 6, oben + int(r * 0.07)), fill=hell)  # der Sattel
+    for i in range(1, 4):
+        y = oben + (unten - oben) * i // 3
+        d.line([(links, y), (rechts, y)], fill=(150, 156, 168, 255), width=12)
+    for i in range(4):
+        x = links + (rechts - links) * i // 3
+        d.line([(x, oben), (x, unten)], fill=hell, width=14)
+    k = int(r * 0.17)
+    for saite, bund, farbe in ((1, 0, CYAN), (2, 1, MAGENTA), (3, 1, BERNSTEIN)):
+        x = links + (rechts - links) * saite // 3
+        y = oben + (unten - oben) * (2 * bund + 1) // 6
+        d.ellipse((x - k, y - k, x + k, y + k), fill=(*farbe, 255))
+
+
 def marke(icon: Image.Image, zeichen=zeichen_ebenen) -> Image.Image:
     """Das Icon ganz, unten rechts ein Kreis mit einem Zeichen — eine Familie:
     je Verwendung ein eigenes Zeichen im Kreis (Idee Patrik S89)."""
@@ -352,6 +375,8 @@ def main() -> int:
     als_ico(marke(icon, zeichen_verlauf), "lumiviz_grad.ico")
     # Session 124: Kits (.lvkit)
     als_ico(marke(icon, zeichen_trommel), "lumiviz_lvkit.ico")
+    # Session 137: Akkorde (.lvchord)
+    als_ico(marke(icon, zeichen_griffbild), "lumiviz_lvchord.ico")
     als_ico(faecher(icon), "lumiviz_faecher.ico")
     als_ico(komposition(icon), "lumiviz_lvcomp.ico")
     # Das Icon der App (Session 100): dasselbe Bild wie `lumiviz.ico`, auf ein

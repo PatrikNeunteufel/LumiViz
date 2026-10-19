@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#7",
+    "root": "C#",
+    "type": "7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        9,
+        15
+    ]
+}

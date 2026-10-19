@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F9b5",
+    "root": "F",
+    "type": "9b5",
+    "description": "Position 3, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            8,
+            9,
+            0,
+            10,
+            11
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            0,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

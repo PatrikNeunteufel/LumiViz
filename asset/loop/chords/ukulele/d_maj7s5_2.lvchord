@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmaj7#5",
+    "root": "D",
+    "type": "maj7#5",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            7,
+            6,
+            6,
+            4
+        ],
+        "fingers": [
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

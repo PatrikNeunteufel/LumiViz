@@ -10,7 +10,9 @@
  *
  * @details
  * Ohne Fenster und ohne Qt-Anwendung; eigene Akkorde in einem Wegwerf-Ordner
- * (`setzeEigenenAkkordOrdnerFuerTests`). Die mitgelieferten Vorlagen kommen mit 26b.
+ * (`setzeEigenenAkkordOrdnerFuerTests`). Seit 26b die mitgelieferten Vorlagen aus
+ * `asset/loop/chords/make_chords.py` (Zahl je Ordner; vom Arbeitsordner aus gelesen — die
+ * Test-Exe aus dem Projekt-Root starten).
  ****************************************************************************************
  */
 
@@ -18,15 +20,21 @@
 
 #include "core/Datensicherung.hpp"
 #include "loop/Akkord.hpp"
+#include "loop/Instrument.hpp"  // istEigenerName
 #include "paket/Sammler.hpp"
+
+#include "LoopOhneEngine.hpp"  // repoWurzel
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
 
+#include <algorithm>
+#include <map>
 #include <vector>
 
 using namespace lumi::loop;
@@ -291,6 +299,101 @@ TEST_SUITE("LoopAkkord")
         REQUIRE(speichereAkkord(frei, ohneTitel));
         REQUIRE(ladeAkkord(frei, geholt));
         CHECK(geholt.titel == QStringLiteral("g_shape"));
+    }
+
+    TEST_CASE("Loop Akkord 26b: die mitgelieferten Vorlagen — Zahl je Ordner, jede liest sich und klingt ihre Art")
+    {
+        // die Zahl je Ordner aus `asset/loop/chords/make_chords.py` (wer neu erzeugt, stellt sie nach)
+        struct Ordner
+        {
+            const char* name;
+            int zahl;
+            std::vector<int> leer;  // leer = Voicings
+            bool gerechnet;
+        };
+        const std::vector<Ordner> ordner = {
+            {"guitar", 2069, {40, 45, 50, 55, 59, 64}, false}, {"ukulele", 2114, {67, 60, 64, 69}, false},
+            {"drop_d", 468, {38, 45, 50, 55, 59, 64}, true},   {"bass", 426, {28, 33, 38, 43}, true},
+            {"violin", 420, {55, 62, 69, 76}, true},           {"voicings", 876, {}, false},
+        };
+        // die Arten der gerechneten Griffbilder (wie ABSTAENDE im Skript; Lehrbuchwissen)
+        const std::map<QString, std::vector<int>> abstaende = {
+            {QStringLiteral("major"), {0, 4, 7}},  {QStringLiteral("minor"), {0, 3, 7}},    {QStringLiteral("7"), {0, 4, 7, 10}},
+            {QStringLiteral("maj7"), {0, 4, 7, 11}}, {QStringLiteral("m7"), {0, 3, 7, 10}}, {QStringLiteral("sus2"), {0, 2, 7}},
+            {QStringLiteral("sus4"), {0, 5, 7}},   {QStringLiteral("dim"), {0, 3, 6}},      {QStringLiteral("aug"), {0, 4, 8}},
+            {QStringLiteral("m7b5"), {0, 3, 6, 10}}, {QStringLiteral("6"), {0, 4, 7, 9}},   {QStringLiteral("m6"), {0, 3, 7, 9}},
+            {QStringLiteral("add9"), {0, 4, 7, 14}},
+        };
+        const QDir basis(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/chords")));
+        int zusammen = 0;
+        for (const Ordner& o : ordner)
+        {
+            CAPTURE(o.name);
+            const QDir hier(basis.filePath(QLatin1String(o.name)));
+            const QStringList dateien = hier.entryList({QStringLiteral("*.lvchord")}, QDir::Files);
+            CHECK(dateien.size() == o.zahl);
+            zusammen += static_cast<int>(dateien.size());
+            Saitensatz saiten;
+            saiten.leer = o.leer;
+            for (const QString& datei : dateien)
+            {
+                CAPTURE(datei.toStdString());
+                Akkord a;
+                REQUIRE(ladeAkkord(hier.filePath(datei), a));
+                CHECK(istEigenerName(QFileInfo(datei).completeBaseName()));
+                CHECK(a.herkunft == (o.gerechnet ? QString::fromLatin1(kHerkunftGerechnet) : QString()));
+                if (o.leer.empty())
+                {
+                    CHECK_FALSE(a.istGriffbild());
+                    CHECK(toeneDesVoicings(a, 48).has_value());
+                    continue;
+                }
+                REQUIRE(a.leer == o.leer);
+                const auto toene = toeneDesGriffbilds(a, saiten);
+                REQUIRE(toene.has_value());
+                if (!o.gerechnet) continue;
+                // gerechnet (S-T4 a): nur Toene der Art, der Grundton im Bass, hoechstens vier Buende
+                REQUIRE(abstaende.count(a.art) == 1);
+                std::vector<int> stufen;
+                for (const int s : abstaende.at(a.art)) stufen.push_back((a.grundton + s) % 12);
+                int tiefster = 1000;
+                for (const AkkordTon& t : *toene)
+                {
+                    CHECK(std::find(stufen.begin(), stufen.end(), t.hoehe % 12) != stufen.end());
+                    tiefster = std::min(tiefster, t.hoehe);
+                }
+                CHECK(tiefster % 12 == a.grundton);
+                int tief = 99;
+                int hoch = 0;
+                for (const int b : a.buende)
+                    if (b > 0)
+                    {
+                        tief = std::min(tief, b);
+                        hoch = std::max(hoch, b);
+                    }
+                CHECK(hoch - std::min(tief, hoch) <= 3);
+            }
+        }
+        CHECK(zusammen == 6373);
+
+        // bekannte Griffe: C-Dur in der ersten Lage (chords-db x32010), ein Voicing
+        Akkord c;
+        REQUIRE(ladeAkkord(basis.filePath(QStringLiteral("guitar/c_major_1.lvchord")), c));
+        CHECK(c.buende == std::vector<int>{-1, 3, 2, 0, 1, 0});
+        CHECK(c.titel == QStringLiteral("C"));
+        CHECK(c.beschreibung == QStringLiteral("Position 1, open"));
+        Akkord g7;
+        REQUIRE(ladeAkkord(basis.filePath(QStringLiteral("voicings/g_7_inv1.lvchord")), g7));
+        CHECK(g7.titel == QStringLiteral("G7"));
+        CHECK(g7.abstaende == std::vector<int>{0, 3, 6, 8});  // B D F G
+
+        // das Programm findet sie beim Pfad unter `asset/loop/chords` (vom Arbeitsordner aus)
+        CHECK(static_cast<int>(mitgelieferteAkkorde().size()) == zusammen);
+        Akkord geholt;
+        REQUIRE(holeAkkord(QStringLiteral("guitar/c_major_1"), geholt));
+        CHECK(geholt.buende == c.buende);
+        CHECK(passendeAkkorde(mitgelieferteAkkorde(), gitarre()).size() == 2069);
+        CHECK(passendeAkkorde(mitgelieferteAkkorde(), Saitensatz{}).size() == 876);
     }
 
     TEST_CASE("Loop Akkord 26a: Datensicherung und Publish kennen die Akkorde")

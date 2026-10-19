@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#7sus4",
+    "root": "C#",
+    "type": "7sus4",
+    "description": "First inversion",
+    "voicing": [
+        0,
+        2,
+        5,
+        7
+    ]
+}

@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#maj7#5",
+    "root": "C#",
+    "type": "maj7#5",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            4,
+            7,
+            5,
+            6,
+            -1
+        ],
+        "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            0
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Am/G",
+    "root": "A",
+    "type": "m/G",
+    "description": "Position 3, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            3,
+            3,
+            2,
+            5,
+            5,
+            5
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            4,
+            4,
+            4
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

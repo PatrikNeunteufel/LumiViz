@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#m6",
+    "root": "F#",
+    "type": "m6",
+    "description": "Second inversion",
+    "voicing": [
+        0,
+        2,
+        5,
+        8
+    ]
+}

@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bdim",
+    "root": "B",
+    "type": "dim",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            2,
+            0,
+            4,
+            0,
+            1
+        ],
+        "fingers": [
+            0,
+            2,
+            0,
+            3,
+            0,
+            1
+        ],
+        "barres": []
+    }
+}

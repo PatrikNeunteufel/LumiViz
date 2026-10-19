@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmmaj7b5",
+    "root": "F",
+    "type": "mmaj7b5",
+    "description": "Position 1, from fret 1",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            1,
+            4,
+            1,
+            2
+        ],
+        "fingers": [
+            1,
+            4,
+            1,
+            2
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

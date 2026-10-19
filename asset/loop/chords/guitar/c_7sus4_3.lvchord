@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C7sus4",
+    "root": "C",
+    "type": "7sus4",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            5,
+            5,
+            6,
+            6
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            1,
+            2,
+            3
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

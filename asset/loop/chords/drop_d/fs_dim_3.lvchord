@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#dim",
+    "root": "F#",
+    "type": "dim",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            4,
+            0,
+            4,
+            5,
+            7,
+            5
+        ],
+        "fingers": [
+            1,
+            0,
+            1,
+            2,
+            4,
+            3
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

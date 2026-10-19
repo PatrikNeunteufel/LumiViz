@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebmmaj11",
+    "root": "Eb",
+    "type": "mmaj11",
+    "description": "Position 3, from fret 11",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            11,
+            14,
+            13,
+            11
+        ],
+        "fingers": [
+            1,
+            4,
+            3,
+            1
+        ],
+        "barres": [
+            11
+        ]
+    }
+}

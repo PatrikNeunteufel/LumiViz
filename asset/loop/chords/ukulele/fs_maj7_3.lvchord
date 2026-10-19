@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gbmaj7",
+    "root": "F#",
+    "type": "maj7",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            11,
+            10,
+            9,
+            8
+        ],
+        "fingers": [
+            4,
+            3,
+            2,
+            1
+        ],
+        "barres": []
+    }
+}

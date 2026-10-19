@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G7",
+    "root": "G",
+    "type": "7",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            5,
+            2,
+            3,
+            0,
+            0,
+            3
+        ],
+        "fingers": [
+            4,
+            1,
+            2,
+            0,
+            0,
+            3
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmadd9",
+    "root": "F",
+    "type": "madd9",
+    "description": "Position 3, from fret 10",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            13,
+            12,
+            13,
+            10
+        ],
+        "fingers": [
+            3,
+            2,
+            4,
+            1
+        ],
+        "barres": []
+    }
+}

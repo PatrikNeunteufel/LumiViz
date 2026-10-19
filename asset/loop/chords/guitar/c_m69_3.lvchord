@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Cm69",
+    "root": "C",
+    "type": "m69",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            8,
+            6,
+            7,
+            7,
+            -1,
+            -1
+        ],
+        "fingers": [
+            4,
+            1,
+            2,
+            3,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

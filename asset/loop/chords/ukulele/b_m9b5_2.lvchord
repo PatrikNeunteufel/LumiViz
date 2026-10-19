@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bm9b5",
+    "root": "B",
+    "type": "m9b5",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            7,
+            5,
+            5,
+            4
+        ],
+        "fingers": [
+            4,
+            2,
+            2,
+            1
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

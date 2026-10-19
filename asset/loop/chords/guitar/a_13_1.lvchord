@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "A13",
+    "root": "A",
+    "type": "13",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            0,
+            2,
+            0,
+            2,
+            2
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            0,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

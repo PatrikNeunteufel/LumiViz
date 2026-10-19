@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fm11",
+    "root": "F",
+    "type": "m11",
+    "description": "Position 4, from fret 11",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            13,
+            11,
+            13,
+            12,
+            11,
+            11
+        ],
+        "fingers": [
+            3,
+            1,
+            4,
+            2,
+            1,
+            1
+        ],
+        "barres": [
+            11
+        ]
+    }
+}

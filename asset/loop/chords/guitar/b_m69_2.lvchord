@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bm69",
+    "root": "B",
+    "type": "m69",
+    "description": "Position 2, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            6,
+            6,
+            7,
+            7
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            2,
+            3,
+            3
+        ],
+        "barres": [
+            6,
+            7
+        ]
+    }
+}

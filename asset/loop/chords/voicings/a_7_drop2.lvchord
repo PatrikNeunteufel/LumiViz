@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "A7",
+    "root": "A",
+    "type": "7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        9,
+        15
+    ]
+}

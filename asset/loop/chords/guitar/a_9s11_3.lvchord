@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "A9#11",
+    "root": "A",
+    "type": "9#11",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            7,
+            8,
+            8,
+            9
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

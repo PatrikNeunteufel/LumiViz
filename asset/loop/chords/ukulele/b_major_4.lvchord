@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "B",
+    "root": "B",
+    "type": "major",
+    "description": "Position 4, from fret 11",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            11,
+            11,
+            11,
+            14
+        ],
+        "fingers": [
+            1,
+            1,
+            1,
+            4
+        ],
+        "barres": [
+            11
+        ]
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm7b5",
+    "root": "Ab",
+    "type": "m7b5",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            6,
+            5,
+            4,
+            4,
+            0,
+            4
+        ],
+        "fingers": [
+            3,
+            2,
+            1,
+            1,
+            0,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

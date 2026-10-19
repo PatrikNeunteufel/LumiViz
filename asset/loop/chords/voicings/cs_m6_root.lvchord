@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#m6",
+    "root": "C#",
+    "type": "m6",
+    "description": "Root position",
+    "voicing": [
+        0,
+        3,
+        7,
+        9
+    ]
+}

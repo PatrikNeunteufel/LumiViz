@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dm9b5",
+    "root": "D",
+    "type": "m9b5",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            5,
+            5,
+            4,
+            7
+        ],
+        "fingers": [
+            2,
+            2,
+            1,
+            4
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

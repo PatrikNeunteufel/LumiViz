@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#6",
+    "root": "C#",
+    "type": "6",
+    "description": "Second inversion",
+    "voicing": [
+        0,
+        2,
+        5,
+        9
+    ]
+}

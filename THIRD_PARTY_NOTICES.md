@@ -261,8 +261,22 @@ die Mikrofone je Anschlag zu Stereo gemischt, Stille vorn weg, die letzten
 
 Urheber, Eintrag und Datei stehen je Sample in
 **`asset/loop/samples/CREDITS.md`** — diese Datei geht mit neben die Exe und
-muss bei jeder Weitergabe dabei sein. Sie sind die einzigen fremden Inhalte
-unter `asset/` (Entscheid Patrik S123, 2 a).
+muss bei jeder Weitergabe dabei sein. Neben ihnen sind die Griffbilder unter
+`asset/loop/chords/` fremde Inhalte (unten; Entscheid Patrik S123, 2 a, und
+S137, S-T4 a).
+
+## Mitgelieferte Akkorde — `asset/loop/chords/` (MIT)
+
+Die Griffbilder für Gitarre (Standardstimmung) und Ukulele unter
+`asset/loop/chords/guitar/` und `ukulele/` stammen aus **chords-db** von David
+Rubert (<https://github.com/tombatossals/chords-db>, npm-Paket
+`@tombatossals/chords-db` 0.5.1), unter der **MIT License**
+(„Copyright (c) 2016 David Rubert“; geprüft S137). LumiViz hat sie umgerechnet:
+je Lage eine Datei `.lvchord`, die Bünde ab dem Sattel, gegen die Töne der
+Quelle geprüft (`asset/loop/chords/make_chords.py`). Der Lizenztext steht in
+**`asset/loop/chords/CREDITS.md`** — diese Datei geht mit neben die Exe. Die
+Griffbilder unter `drop_d/`, `bass/`, `violin/` und die Voicings unter
+`voicings/` sind von LumiViz gerechnet.
 
 ## Nicht enthaltene Inhalte
 
@@ -279,4 +293,5 @@ ungeklärt sind:
 LumiViz kann diese Dateien **laden**; mitgeliefert werden sie nicht. Die in
 `asset/` enthaltenen Presets, Ketten und Shader sind Eigenwerk bzw. von den
 Skripten unter `asset/calibration/` erzeugt — ausgenommen die Samples unter
-`asset/loop/samples/` (oben).
+`asset/loop/samples/` und die Griffbilder aus chords-db unter
+`asset/loop/chords/` (oben).

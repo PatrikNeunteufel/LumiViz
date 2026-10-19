@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bbmaj7#5",
+    "root": "Bb",
+    "type": "maj7#5",
+    "description": "Position 2, from fret 3",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            4,
+            3,
+            3,
+            5
+        ],
+        "fingers": [
+            0,
+            0,
+            2,
+            1,
+            1,
+            4
+        ],
+        "barres": [
+            3
+        ]
+    }
+}

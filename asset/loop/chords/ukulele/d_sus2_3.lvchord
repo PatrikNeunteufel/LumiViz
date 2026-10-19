@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dsus2",
+    "root": "D",
+    "type": "sus2",
+    "description": "Position 3, from fret 9",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            9,
+            9,
+            10,
+            12
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            4
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

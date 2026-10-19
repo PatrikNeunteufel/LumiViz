@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Baug",
+    "root": "B",
+    "type": "aug",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            2,
+            5,
+            0,
+            4,
+            3
+        ],
+        "fingers": [
+            0,
+            1,
+            4,
+            0,
+            3,
+            2
+        ],
+        "barres": []
+    }
+}

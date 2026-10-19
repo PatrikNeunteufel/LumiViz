@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ab11",
+    "root": "Ab",
+    "type": "11",
+    "description": "Position 1, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            4,
+            4,
+            4,
+            5,
+            4,
+            4
+        ],
+        "fingers": [
+            1,
+            1,
+            1,
+            2,
+            1,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

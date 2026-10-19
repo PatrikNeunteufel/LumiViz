@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dbmaj13",
+    "root": "C#",
+    "type": "maj13",
+    "description": "Position 2, from fret 5",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            5,
+            5,
+            6,
+            6
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            2
+        ],
+        "barres": [
+            5,
+            6
+        ]
+    }
+}

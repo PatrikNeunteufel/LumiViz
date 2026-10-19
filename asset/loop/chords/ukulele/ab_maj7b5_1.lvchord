@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abmaj7b5",
+    "root": "Ab",
+    "type": "maj7b5",
+    "description": "Position 1, from fret 1",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            1,
+            2,
+            3,
+            3
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

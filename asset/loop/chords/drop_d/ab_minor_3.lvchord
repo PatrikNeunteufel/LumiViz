@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm",
+    "root": "Ab",
+    "type": "minor",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            11,
+            9,
+            8,
+            0,
+            11
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            1,
+            0,
+            4
+        ],
+        "barres": []
+    }
+}

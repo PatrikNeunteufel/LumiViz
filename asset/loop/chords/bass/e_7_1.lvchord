@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "E7",
+    "root": "E",
+    "type": "7",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            0,
+            2,
+            0,
+            1
+        ],
+        "fingers": [
+            0,
+            2,
+            0,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb9",
+    "root": "Eb",
+    "type": "9",
+    "description": "Root position",
+    "voicing": [
+        0,
+        4,
+        7,
+        10,
+        14
+    ]
+}

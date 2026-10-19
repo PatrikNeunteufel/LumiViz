@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fdim7",
+    "root": "F",
+    "type": "dim7",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            7,
+            8,
+            9,
+            7,
+            9,
+            7
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            1,
+            4,
+            1
+        ],
+        "barres": [
+            7
+        ]
+    }
+}

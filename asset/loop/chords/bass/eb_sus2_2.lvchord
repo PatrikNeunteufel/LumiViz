@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebsus2",
+    "root": "Eb",
+    "type": "sus2",
+    "origin": "computed",
+    "description": "Position 2, from fret 8 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            11,
+            8,
+            8,
+            8
+        ],
+        "fingers": [
+            2,
+            1,
+            1,
+            1
+        ],
+        "barres": [
+            8
+        ]
+    }
+}

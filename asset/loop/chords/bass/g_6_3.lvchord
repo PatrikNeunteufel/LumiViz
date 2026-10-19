@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G6",
+    "root": "G",
+    "type": "6",
+    "origin": "computed",
+    "description": "Position 3, from fret 12 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            15,
+            14,
+            14,
+            12
+        ],
+        "fingers": [
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Csus2",
+    "root": "C",
+    "type": "sus2",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            -1,
+            3,
+            0,
+            0
+        ],
+        "fingers": [
+            0,
+            1,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

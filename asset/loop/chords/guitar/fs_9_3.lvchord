@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#9",
+    "root": "F#",
+    "type": "9",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            9,
+            9,
+            8,
+            9,
+            9,
+            9
+        ],
+        "fingers": [
+            2,
+            2,
+            1,
+            3,
+            3,
+            4
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

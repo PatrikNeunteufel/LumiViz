@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fm6",
+    "root": "F",
+    "type": "m6",
+    "origin": "computed",
+    "description": "Position 2, from fret 10 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            10,
+            10,
+            11,
+            10
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            1
+        ],
+        "barres": [
+            10
+        ]
+    }
+}

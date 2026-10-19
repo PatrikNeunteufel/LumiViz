@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Baug",
+    "root": "B",
+    "type": "aug",
+    "description": "Position 4, from fret 4",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            4,
+            7,
+            7,
+            6
+        ],
+        "fingers": [
+            1,
+            3,
+            4,
+            2
+        ],
+        "barres": []
+    }
+}

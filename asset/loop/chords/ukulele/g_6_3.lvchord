@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "G6",
+    "root": "G",
+    "type": "6",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            7,
+            7,
+            7,
+            7
+        ],
+        "fingers": [
+            1,
+            1,
+            1,
+            1
+        ],
+        "barres": [
+            7
+        ]
+    }
+}

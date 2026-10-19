@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#m",
+    "root": "F#",
+    "type": "minor",
+    "origin": "computed",
+    "description": "Position 3, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            11,
+            11,
+            0,
+            14
+        ],
+        "fingers": [
+            1,
+            1,
+            0,
+            2
+        ],
+        "barres": [
+            11
+        ]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bbm",
+    "root": "Bb",
+    "type": "minor",
+    "origin": "computed",
+    "description": "Position 3, from fret 10 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            -1,
+            13,
+            11,
+            10
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            1
+        ],
+        "barres": []
+    }
+}

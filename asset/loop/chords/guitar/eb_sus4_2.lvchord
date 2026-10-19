@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebsus4",
+    "root": "Eb",
+    "type": "sus4",
+    "description": "Position 2, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            6,
+            6,
+            8,
+            8,
+            9,
+            6
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            3,
+            4,
+            1
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

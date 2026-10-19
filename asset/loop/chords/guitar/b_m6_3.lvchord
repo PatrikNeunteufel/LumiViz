@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bm6",
+    "root": "B",
+    "type": "m6",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            7,
+            -1,
+            6,
+            7,
+            7,
+            -1
+        ],
+        "fingers": [
+            2,
+            0,
+            1,
+            3,
+            4,
+            0
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gbmadd9",
+    "root": "F#",
+    "type": "madd9",
+    "description": "Position 2, from fret 9",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            11,
+            9,
+            9,
+            11
+        ],
+        "fingers": [
+            3,
+            1,
+            1,
+            4
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

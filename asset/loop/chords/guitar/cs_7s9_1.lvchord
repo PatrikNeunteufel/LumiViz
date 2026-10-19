@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#7#9",
+    "root": "C#",
+    "type": "7#9",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            4,
+            3,
+            4,
+            2,
+            0
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            4,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

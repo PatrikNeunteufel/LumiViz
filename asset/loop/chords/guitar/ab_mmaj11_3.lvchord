@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abmmaj11",
+    "root": "Ab",
+    "type": "mmaj11",
+    "description": "Position 3, from fret 9",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            11,
+            9,
+            12,
+            11,
+            9
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            4,
+            3,
+            1
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

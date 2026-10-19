@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmaj13",
+    "root": "D",
+    "type": "maj13",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            5,
+            5,
+            6,
+            7,
+            7
+        ],
+        "fingers": [
+            0,
+            1,
+            1,
+            2,
+            3,
+            4
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

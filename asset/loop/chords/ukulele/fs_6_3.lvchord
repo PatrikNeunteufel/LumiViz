@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gb6",
+    "root": "F#",
+    "type": "6",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            8,
+            10,
+            9,
+            9
+        ],
+        "fingers": [
+            1,
+            4,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#sus2",
+    "root": "C#",
+    "type": "sus2",
+    "origin": "computed",
+    "description": "Position 3, from fret 8 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            9,
+            11,
+            11,
+            8
+        ],
+        "fingers": [
+            2,
+            3,
+            4,
+            1
+        ],
+        "barres": []
+    }
+}

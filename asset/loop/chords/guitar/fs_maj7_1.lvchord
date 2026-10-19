@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#maj7",
+    "root": "F#",
+    "type": "maj7",
+    "description": "Position 1, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            2,
+            4,
+            3,
+            3,
+            2,
+            2
+        ],
+        "fingers": [
+            1,
+            4,
+            2,
+            3,
+            1,
+            1
+        ],
+        "barres": [
+            2
+        ]
+    }
+}

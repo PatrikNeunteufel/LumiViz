@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#sus2",
+    "root": "F#",
+    "type": "sus2",
+    "origin": "computed",
+    "description": "Position 3, from fret 6 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            9,
+            6,
+            6,
+            7,
+            9
+        ],
+        "fingers": [
+            0,
+            3,
+            1,
+            1,
+            2,
+            4
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Adim",
+    "root": "A",
+    "type": "dim",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            8,
+            9,
+            8,
+            6
+        ],
+        "fingers": [
+            2,
+            4,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Faug",
+    "root": "F",
+    "type": "aug",
+    "description": "Position 2, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            8,
+            7,
+            6,
+            6,
+            -1
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            1,
+            1,
+            0
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

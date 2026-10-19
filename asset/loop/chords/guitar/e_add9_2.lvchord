@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eadd9",
+    "root": "E",
+    "type": "add9",
+    "description": "Position 2, from fret 4",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            7,
+            6,
+            4,
+            7,
+            4
+        ],
+        "fingers": [
+            0,
+            3,
+            2,
+            1,
+            4,
+            1
+        ],
+        "barres": [
+            4
+        ]
+    }
+}

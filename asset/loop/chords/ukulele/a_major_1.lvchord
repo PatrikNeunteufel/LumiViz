@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "A",
+    "root": "A",
+    "type": "major",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            2,
+            1,
+            0,
+            0
+        ],
+        "fingers": [
+            2,
+            1,
+            0,
+            0
+        ],
+        "barres": []
+    }
+}

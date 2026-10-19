@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C6",
+    "root": "C",
+    "type": "6",
+    "description": "Third inversion",
+    "voicing": [
+        0,
+        3,
+        7,
+        10
+    ]
+}

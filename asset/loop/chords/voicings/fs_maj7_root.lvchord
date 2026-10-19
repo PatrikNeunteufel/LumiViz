@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F#maj7",
+    "root": "F#",
+    "type": "maj7",
+    "description": "Root position",
+    "voicing": [
+        0,
+        4,
+        7,
+        11
+    ]
+}

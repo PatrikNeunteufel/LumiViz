@@ -23,7 +23,8 @@
 # ⚠ NUR EIGENE WERKE. Was hier steht, wird mit der Exe weitergegeben. Fremde
 # Presets, Shader und Texturen gehoeren nicht hinein — siehe
 # THIRD_PARTY_NOTICES.md, „Nicht enthaltene Inhalte“. Einzige Ausnahme: die
-# Samples unter loop/samples (CC BY 3.0, CC BY 4.0, CC0, mit Nennung; unten bei loop). Draussen bleiben auch
+# Samples unter loop/samples (CC BY 3.0, CC BY 4.0, CC0, mit Nennung; unten bei loop) und die
+# Griffbilder aus chords-db unter loop/chords (MIT, mit Nennung in chords/CREDITS.md; S137). Draussen bleiben auch
 # Pflegenotizen (README.md), Erzeuger-Skripte und Arbeitsdateien.
 #
 # Eine Datei unter asset/ geaendert? LumiViz bauen — das Programm liest die
@@ -58,6 +59,13 @@ lumi_asset(loop
         "samples/*.wav"
         "samples/CREDITS.md"
         "kits/*.lvkit"
+        "chords/guitar/*.lvchord"
+        "chords/ukulele/*.lvchord"
+        "chords/drop_d/*.lvchord"
+        "chords/bass/*.lvchord"
+        "chords/violin/*.lvchord"
+        "chords/voicings/*.lvchord"
+        "chords/CREDITS.md"
         "instruments/*.lvinst"
         "genres/*.lvloop"
         "vergleich/*.lvloop"

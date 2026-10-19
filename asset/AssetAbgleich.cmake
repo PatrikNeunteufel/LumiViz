@@ -90,12 +90,15 @@ function(lumi_asset bereich)
     # --- entfernen, was am Ziel liegt und nicht dazugehoert
     set(entfernt 0)
     if(IS_DIRECTORY "${ziel}")
-        file(GLOB_RECURSE ist RELATIVE "${ziel}" "${ziel}/*")
-        foreach(rel IN LISTS ist)
-            if(NOT rel IN_LIST dateien)
-                file(REMOVE "${ziel}/${rel}")
-                math(EXPR entfernt "${entfernt} + 1")
-            endif()
+        # die Differenz in einem Zug: `IN_LIST` je Datei waere quadratisch — bei den
+        # Akkorden (S137, ueber 6000 Dateien) rund 30 s je Bau
+        file(GLOB_RECURSE fremd RELATIVE "${ziel}" "${ziel}/*")
+        if(dateien)
+            list(REMOVE_ITEM fremd ${dateien})
+        endif()
+        foreach(rel IN LISTS fremd)
+            file(REMOVE "${ziel}/${rel}")
+            math(EXPR entfernt "${entfernt} + 1")
         endforeach()
         # leere Ordner, die tiefsten zuerst
         file(GLOB_RECURSE ordnerListe LIST_DIRECTORIES true RELATIVE "${ziel}" "${ziel}/*")

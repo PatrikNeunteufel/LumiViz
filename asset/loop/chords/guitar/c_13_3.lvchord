@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C13",
+    "root": "C",
+    "type": "13",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            8,
+            7,
+            7,
+            7,
+            8,
+            6
+        ],
+        "fingers": [
+            3,
+            2,
+            2,
+            2,
+            4,
+            1
+        ],
+        "barres": [
+            7
+        ]
+    }
+}

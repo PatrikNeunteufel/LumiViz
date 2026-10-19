@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmaj7b5",
+    "root": "F",
+    "type": "maj7b5",
+    "description": "Position 3, from fret 8",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            8,
+            9,
+            9,
+            10,
+            -1
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            0
+        ],
+        "barres": []
+    }
+}

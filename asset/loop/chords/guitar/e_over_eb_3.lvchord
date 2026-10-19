@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "E/D#",
+    "root": "E",
+    "type": "/D#",
+    "description": "Position 3, from fret 9",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            11,
+            11,
+            9,
+            9,
+            12,
+            12
+        ],
+        "fingers": [
+            2,
+            3,
+            1,
+            1,
+            4,
+            4
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

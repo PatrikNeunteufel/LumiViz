@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#add9",
+    "root": "C#",
+    "type": "add9",
+    "origin": "computed",
+    "description": "Position 1, from fret 6 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            9,
+            8,
+            6,
+            8
+        ],
+        "fingers": [
+            4,
+            2,
+            1,
+            3
+        ],
+        "barres": []
+    }
+}

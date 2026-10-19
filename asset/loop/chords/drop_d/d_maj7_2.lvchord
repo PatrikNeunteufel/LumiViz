@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Dmaj7",
+    "root": "D",
+    "type": "maj7",
+    "origin": "computed",
+    "description": "Position 2, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            0,
+            0,
+            4,
+            6,
+            3,
+            5
+        ],
+        "fingers": [
+            0,
+            0,
+            2,
+            4,
+            1,
+            3
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm7",
+    "root": "Ab",
+    "type": "m7",
+    "origin": "computed",
+    "description": "Position 3, from fret 13 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            13,
+            13,
+            14,
+            14
+        ],
+        "fingers": [
+            1,
+            1,
+            2,
+            3
+        ],
+        "barres": [
+            13
+        ]
+    }
+}

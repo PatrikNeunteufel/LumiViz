@@ -1,0 +1,36 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Badd9",
+    "root": "B",
+    "type": "add9",
+    "origin": "computed",
+    "description": "Position 1, from fret 1 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            38,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            2,
+            1,
+            4,
+            2,
+            -1
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            4,
+            3,
+            0
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bb6",
+    "root": "Bb",
+    "type": "6",
+    "description": "Position 2, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            6,
+            5,
+            0,
+            0,
+            6,
+            6
+        ],
+        "fingers": [
+            2,
+            1,
+            0,
+            0,
+            3,
+            4
+        ],
+        "barres": []
+    }
+}

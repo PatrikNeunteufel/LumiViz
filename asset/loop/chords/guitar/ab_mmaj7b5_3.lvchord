@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abmmaj7b5",
+    "root": "Ab",
+    "type": "mmaj7b5",
+    "description": "Position 3, from fret 10",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            10,
+            11,
+            12,
+            12,
+            12,
+            -1
+        ],
+        "fingers": [
+            1,
+            2,
+            3,
+            3,
+            3,
+            0
+        ],
+        "barres": [
+            12
+        ]
+    }
+}

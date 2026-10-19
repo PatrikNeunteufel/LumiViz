@@ -1,0 +1,38 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abalt",
+    "root": "Ab",
+    "type": "alt",
+    "description": "Position 3, from fret 10",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            11,
+            10,
+            13,
+            13,
+            10
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            4,
+            4,
+            1
+        ],
+        "barres": [
+            10,
+            13
+        ]
+    }
+}

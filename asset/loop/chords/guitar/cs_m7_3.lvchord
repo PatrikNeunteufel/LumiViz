@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "C#m7",
+    "root": "C#",
+    "type": "m7",
+    "description": "Position 3, from fret 9",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            9,
+            11,
+            9,
+            9,
+            9,
+            9
+        ],
+        "fingers": [
+            1,
+            4,
+            1,
+            1,
+            1,
+            1
+        ],
+        "barres": [
+            9
+        ]
+    }
+}

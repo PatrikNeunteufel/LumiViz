@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F",
+    "root": "F",
+    "type": "major",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            5,
+            8,
+            7,
+            5,
+            6,
+            5
+        ],
+        "fingers": [
+            1,
+            4,
+            3,
+            1,
+            2,
+            1
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

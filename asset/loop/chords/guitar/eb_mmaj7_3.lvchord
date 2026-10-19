@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebmmaj7",
+    "root": "Eb",
+    "type": "mmaj7",
+    "description": "Position 3, from fret 6",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            6,
+            8,
+            7,
+            7,
+            6
+        ],
+        "fingers": [
+            0,
+            1,
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": [
+            6
+        ]
+    }
+}

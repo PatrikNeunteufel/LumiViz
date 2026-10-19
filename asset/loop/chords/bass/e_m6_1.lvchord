@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Em6",
+    "root": "E",
+    "type": "m6",
+    "origin": "computed",
+    "description": "Position 1, open — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            28,
+            33,
+            38,
+            43
+        ],
+        "frets": [
+            0,
+            4,
+            2,
+            0
+        ],
+        "fingers": [
+            0,
+            2,
+            1,
+            0
+        ],
+        "barres": []
+    }
+}

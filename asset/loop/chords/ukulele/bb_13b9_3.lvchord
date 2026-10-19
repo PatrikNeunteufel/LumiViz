@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Bb13b9",
+    "root": "Bb",
+    "type": "13b9",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            7,
+            8,
+            7,
+            10
+        ],
+        "fingers": [
+            1,
+            2,
+            1,
+            4
+        ],
+        "barres": [
+            7
+        ]
+    }
+}

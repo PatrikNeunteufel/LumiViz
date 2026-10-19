@@ -1,0 +1,31 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gbm11",
+    "root": "F#",
+    "type": "m11",
+    "description": "Position 3, from fret 11",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            14,
+            11,
+            12,
+            11
+        ],
+        "fingers": [
+            4,
+            1,
+            2,
+            1
+        ],
+        "barres": [
+            11
+        ]
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Esus4",
+    "root": "E",
+    "type": "sus4",
+    "description": "Open position",
+    "voicing": [
+        0,
+        7,
+        17
+    ]
+}

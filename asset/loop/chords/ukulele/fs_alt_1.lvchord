@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gbalt",
+    "root": "F#",
+    "type": "alt",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            3,
+            0,
+            2,
+            1
+        ],
+        "fingers": [
+            3,
+            0,
+            2,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "F11",
+    "root": "F",
+    "type": "11",
+    "description": "Position 2, from fret 3",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            3,
+            3,
+            3,
+            3,
+            4,
+            5
+        ],
+        "fingers": [
+            1,
+            1,
+            1,
+            1,
+            2,
+            3
+        ],
+        "barres": [
+            3
+        ]
+    }
+}

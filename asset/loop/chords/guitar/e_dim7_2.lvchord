@@ -1,0 +1,35 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Edim7",
+    "root": "E",
+    "type": "dim7",
+    "description": "Position 2, from fret 2",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            2,
+            3,
+            2,
+            3
+        ],
+        "fingers": [
+            0,
+            0,
+            1,
+            3,
+            2,
+            4
+        ],
+        "barres": []
+    }
+}

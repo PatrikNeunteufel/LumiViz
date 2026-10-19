@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Fmaj7#5",
+    "root": "F",
+    "type": "maj7#5",
+    "description": "Position 3, from fret 7",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            10,
+            9,
+            9,
+            7
+        ],
+        "fingers": [
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": []
+    }
+}

@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "D7b5",
+    "root": "D",
+    "type": "7b5",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            -1,
+            0,
+            1,
+            1,
+            2
+        ],
+        "fingers": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            2
+        ],
+        "barres": [
+            1
+        ]
+    }
+}

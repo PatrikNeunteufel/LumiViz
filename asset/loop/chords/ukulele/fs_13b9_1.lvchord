@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Gb13b9",
+    "root": "F#",
+    "type": "13b9",
+    "description": "Position 1, open",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            0,
+            3,
+            0,
+            1
+        ],
+        "fingers": [
+            0,
+            3,
+            0,
+            1
+        ],
+        "barres": []
+    }
+}

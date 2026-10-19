@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ab7",
+    "root": "Ab",
+    "type": "7",
+    "description": "Root position",
+    "voicing": [
+        0,
+        4,
+        7,
+        10
+    ]
+}

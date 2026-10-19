@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Aaug",
+    "root": "A",
+    "type": "aug",
+    "description": "Position 3, from fret 5",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            5,
+            -1,
+            7,
+            6,
+            6,
+            5
+        ],
+        "fingers": [
+            1,
+            0,
+            4,
+            2,
+            3,
+            1
+        ],
+        "barres": [
+            5
+        ]
+    }
+}

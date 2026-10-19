@@ -1,0 +1,29 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Eb11",
+    "root": "Eb",
+    "type": "11",
+    "description": "Position 1, from fret 8",
+    "strings": {
+        "open": [
+            67,
+            60,
+            64,
+            69
+        ],
+        "frets": [
+            10,
+            8,
+            9,
+            10
+        ],
+        "fingers": [
+            3,
+            1,
+            2,
+            4
+        ],
+        "barres": []
+    }
+}

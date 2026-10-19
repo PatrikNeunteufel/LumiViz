@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Abm7",
+    "root": "Ab",
+    "type": "m7",
+    "description": "Drop 2",
+    "voicing": [
+        0,
+        5,
+        8,
+        15
+    ]
+}

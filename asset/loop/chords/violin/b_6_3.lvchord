@@ -1,0 +1,30 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "B6",
+    "root": "B",
+    "type": "6",
+    "origin": "computed",
+    "description": "Position 3, from fret 9 — computed by rule (no source for this tuning)",
+    "strings": {
+        "open": [
+            55,
+            62,
+            69,
+            76
+        ],
+        "frets": [
+            -1,
+            9,
+            11,
+            11
+        ],
+        "fingers": [
+            0,
+            1,
+            2,
+            3
+        ],
+        "barres": []
+    }
+}

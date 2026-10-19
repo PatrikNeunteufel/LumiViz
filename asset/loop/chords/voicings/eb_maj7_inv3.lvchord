@@ -1,0 +1,14 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "Ebmaj7",
+    "root": "Eb",
+    "type": "maj7",
+    "description": "Third inversion",
+    "voicing": [
+        0,
+        1,
+        5,
+        8
+    ]
+}

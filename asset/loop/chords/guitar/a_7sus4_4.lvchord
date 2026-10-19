@@ -1,0 +1,37 @@
+{
+    "format": "lumiviz-chord",
+    "version": 1,
+    "title": "A7sus4",
+    "root": "A",
+    "type": "7sus4",
+    "description": "Position 4, from fret 10",
+    "strings": {
+        "open": [
+            40,
+            45,
+            50,
+            55,
+            59,
+            64
+        ],
+        "frets": [
+            -1,
+            12,
+            12,
+            12,
+            10,
+            10
+        ],
+        "fingers": [
+            0,
+            2,
+            3,
+            4,
+            1,
+            1
+        ],
+        "barres": [
+            10
+        ]
+    }
+}
