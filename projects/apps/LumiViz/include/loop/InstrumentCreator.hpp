@@ -329,12 +329,19 @@ public:
         Tapping = 3,
         Harmonic = 4,  ///< der angeklickte Ton als Flageolett
         Akkord = 5,    ///< *Strum chord*: die leeren Saiten mit Strum des Instruments
+        // Stufe 26g (S-L3 a Folge): die verbundenen — sie kommen auf dem angeklickten Ton an
+        // (von Claude gesetzt: ein Ganzton darunter angeschlagen, nach einem Achtel weiter)
+        HammerOn = 6,  ///< *Hammer-on*: ein Ganzton tiefer, dann per Legato der Ton
+        Slide = 7,     ///< *Slide*: ein Ganzton tiefer, dann hinauf gleitend
+        Bend = 8,      ///< *Bend*: ein Ganzton tiefer angeschlagen und zum Ton gebogen (full)
     };
     void setzeSpielAls(SpielAls wie);
     [[nodiscard]] SpielAls spielAls() const { return m_spielAls; }
     /// Die Noten, die ein Klick auf `hoehe` spielt: jede an Schritt 0, mit Saite
     /// und Artikulationen; dazu Strum und Anschlaege wie im Muster. Laenge und
-    /// Schritt setzt, wer spielt.
+    /// Schritt setzt, wer spielt — ausser bei *Hammer-on* und *Slide*: zwei Noten an
+    /// Schritt 0 und 2 (Laengen 2 und 4, ein Schritt ein Sechzehntel), die das Panel
+    /// so spielt (`LoopPanel::spieleCreatorNoten`).
     [[nodiscard]] Muster vorhoerNoten(int hoehe) const;
     /// Die Zeile Strum unter Tuning (fuer Tests).
     [[nodiscard]] StrumZeile* strumZeile() const { return m_strumZeile; }

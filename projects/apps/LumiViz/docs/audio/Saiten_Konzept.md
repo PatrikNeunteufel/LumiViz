@@ -1,9 +1,9 @@
 # LumiViz — Saiteninstrumente (Konzept)
 
-> **Version:** 0.37.0
+> **Version:** 0.38.0
 > **Datum:** 2026-10-19 (Session 138: S-L15 b gebaut, Bend bis 2 Ganztöne; S-T8 a bis S-T11 a
 > Skizzen des Fensters *Chords* und des Dialogs *Edit chord*; S-T12 b, S-T13 a; 26e-1 und
-> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f gebaut, §5zb; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
+> 26e-2, 26e-3 gebaut — 26e fertig, §5y bis §5za; S-T14 a, 26f und 26g gebaut, §5zb, §5zc; davor Session 137; S-L13 a bis S-L15 b, 25c-4 *Follow string*; Tabs und
 > Akkorde S-T1 a bis S-T7 a, gebaut 26a bis 26d, §5u–§5x; davor S136: Stufe 24f
 > fertig, S-W16 a bis S-W22 a; Stufe 25 S-L1 a bis S-L12 a, gebaut 25a, 25b, 25c-1 bis
 > 25c-3b, §5r bis §5t)
@@ -2081,6 +2081,23 @@ Dialog *Edit chord*.
   setzen; Klaviatur mit Treffern und Bild; das Fenster mit Galerie, Oktave, Play, Use, Suche,
   *New* mit Tasten über die Maus; über den Editor Use und Ziehen auf eine Zeile;
   `LUMIVIZ_VOICING_BILD`). Bilder angesehen.
+
+### 5zc. Stufe 26g — *Play as* mit Hammer-on, Slide, Bend (gebaut S138)
+
+- **Creator:** *Play as* (`creatorPlayAs`) trägt drei Einträge mehr: *Hammer-on*, *Slide*,
+  *Bend*. **Von Claude gesetzt:** sie kommen auf dem angeklickten Ton an — ein Ganzton darunter
+  angeschlagen, nach einem Achtel (Schritt 2, ein Schritt ein Sechzehntel) der Ton per
+  Legato bzw. Slide; *Bend* schlägt den Ganzton darunter an und biegt ihn mit der Vorlage
+  *Bend*, full, hinauf. Ganz unten (kein Ganzton darunter) spielt der Ton allein. Die
+  Saite der Zielnote findet die Planung (Kette, 25b).
+- **Panel:** `spieleCreatorNoten` — Noten an einem Schritt wie bisher
+  (`spieleInstrumentNoten`, ein Schlag, *Repeat note*), an verschiedenen Schritten mit Schritt
+  und Länge (`spieleAkkordVor`); beide Creator-Wege (Instrument- und Drum-Editor) gehen
+  darüber. Der Vertrag von `spieleInstrumentNoten` bleibt (alles auf Schritt 0).
+- *Playing* braucht keine Regler dafür (die Recherche zu 25 verlangte keine; S-L3 a Folge).
+- Belegt in `test_LoopCreatorSpielweise` (die drei Einträge, die Noten, ganz unten der Ton
+  allein; die Zahl der Einträge 9) und `test_LoopSpieler` (`spieleCreatorNoten`). Ein Bild
+  ist nicht abgelegt — die Auswahl ist eine Liste mit drei Zeilen mehr.
 
 ## 6. Messwerte für Korpus und Tonabnehmer (erste Recherche, S132)
 

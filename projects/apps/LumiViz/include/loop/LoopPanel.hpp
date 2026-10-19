@@ -143,6 +143,11 @@ public:
     /// Noten an ihren Schritten und in ihrer Laenge — *Down-up* schlaegt zweimal an —,
     /// mit Strum und Anschlaegen des Musters; dazu 600 ms Ausklang.
     bool spieleAkkordVor(const QString& nennung, const Muster& noten);
+    /// Was der Creator anspielt: stehen alle Noten an einem Schritt, wie
+    /// `spieleInstrumentNoten` (ein Schlag, mit *Repeat note*); stehen sie an
+    /// verschiedenen (*Hammer-on*, *Slide* aus *Play as*, Stufe 26g), behalten sie
+    /// Schritte und Laengen wie `spieleAkkordVor`.
+    bool spieleCreatorNoten(const QString& nennung, const Muster& noten, int klingtMs);
     /// Einen Schlag einer Spur eines Drum-Musters anspielen, mit Lautstaerke
     /// und Panorama der Spur (Play im Feld hinter „…" des Drum-Editors, Stufe
     /// 11c): ihr Klang — oder der Ton ihres Instruments, mit Note und Length.

@@ -1468,8 +1468,12 @@ void InstrumentCreator::setupUI()
         m_spielAlsWahl->addItem(tr("Tapping"), static_cast<int>(SpielAls::Tapping));
         m_spielAlsWahl->addItem(tr("Harmonic"), static_cast<int>(SpielAls::Harmonic));
         m_spielAlsWahl->addItem(tr("Strum chord"), static_cast<int>(SpielAls::Akkord));
+        m_spielAlsWahl->addItem(tr("Hammer-on"), static_cast<int>(SpielAls::HammerOn));
+        m_spielAlsWahl->addItem(tr("Slide"), static_cast<int>(SpielAls::Slide));
+        m_spielAlsWahl->addItem(tr("Bend"), static_cast<int>(SpielAls::Bend));
         m_spielAlsWahl->setToolTip(tr("How a click on a key plays: as an up stroke, muted, tapped, as a harmonic —\n"
-                                      "or Strum chord: the open strings, strummed like the Strum row says"));
+                                      "or Strum chord: the open strings, strummed like the Strum row says.\n"
+                                      "Hammer-on, Slide, Bend arrive on the clicked note from a whole tone below"));
         reihe->addWidget(m_spielAlsWahl);
         reihe->addStretch(1);
         rechts->addWidget(m_spielAlsZeile);
@@ -1962,6 +1966,20 @@ Muster InstrumentCreator::vorhoerNoten(int hoehe) const
         break;
     case SpielAls::Harmonic:
         note.artikulationen = kHarmonic;
+        break;
+    case SpielAls::HammerOn:
+    case SpielAls::Slide:
+        // ein Ganzton darunter angeschlagen, nach einem Achtel der Ton — auf derselben Saite (25b)
+        if (hoehe - 2 < kHoeheMin) break;
+        noten.noten.push_back(Note{0, 2, hoehe - 2, 1.0});
+        note = Note{2, 4, hoehe, 1.0};
+        note.artikulationen = wie == SpielAls::HammerOn ? kLegato : kSlide;
+        break;
+    case SpielAls::Bend:
+        // ein Ganzton darunter angeschlagen und hinauf gebogen: die Kurve *Bend*, full
+        if (hoehe - 2 < kHoeheMin) break;
+        note = Note{0, 4, hoehe - 2, 1.0};
+        note.bend = bendVorlage(BendVorlage::Bend, 2.0);
         break;
     case SpielAls::Normal:
         break;

@@ -469,6 +469,17 @@ TEST_CASE("Loop Panel: New instrument clip und der Instrument-Editor — eine Ta
         CHECK_FALSE(panel.spieleAkkordVor(QStringLiteral("guitar"), Muster{}));
         CHECK_FALSE(panel.spieleAkkordVor(QString(), griff));
         panel.halte();
+        // der Creator (Stufe 26g): Hammer-on behaelt seine Schritte, ein einzelner Schritt wird ein Schlag
+        Muster hammer;
+        hammer.noten = {Note{0, 2, 55, 1.0}, Note{2, 4, 57, 1.0, -1, kLegato}};
+        REQUIRE(panel.spieleCreatorNoten(QStringLiteral("guitar"), hammer, 0));
+        CHECK(panel.spieler().loop().muster[0].noten == hammer.noten);
+        panel.halte();
+        Muster einer;
+        einer.noten = {Note{0, 1, 57, 1.0}};
+        REQUIRE(panel.spieleCreatorNoten(QStringLiteral("guitar"), einer, 0));
+        CHECK(panel.spieler().loop().muster[0].noten == std::vector<Note>{Note{0, 4, 57, 1.0}});
+        panel.halte();
     }
 
     // --- der Drum-Editor spielt einen Schlag einer Instrument-Spur an (Stufe 11c, Schritt 2):

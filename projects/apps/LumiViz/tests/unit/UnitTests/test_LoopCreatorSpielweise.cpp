@@ -81,7 +81,7 @@ TEST_SUITE("LoopCreatorSpielweise")
         CHECK_FALSE(mute->isHidden());
         CHECK_FALSE(spielAls->isHidden());
         CHECK(creator.findChild<QLabel*>(QStringLiteral("creatorStrumHint"))->text() == QStringLiteral("default for new patterns"));
-        CHECK(spielAls->count() == 6);
+        CHECK(spielAls->count() == 9);  // seit 26g mit Hammer-on, Slide, Bend
 
         // --- Extended KS: dasselbe; Classic: Strum und Play as ja, Playing nein (S-W6 a)
         creator.oeffne(gitarre(SaitenModell::ErweiterterKs));
@@ -261,6 +261,32 @@ TEST_SUITE("LoopCreatorSpielweise")
         }
         REQUIRE(creator.spieleAn(30));
         CHECK(gespielt.back().noten.size() == 6);
+
+        // Stufe 26g: Hammer-on, Slide, Bend — sie kommen auf dem angeklickten Ton an
+        CHECK(wahl->count() == 9);
+        waehle(InstrumentCreator::SpielAls::HammerOn);
+        {
+            const Muster m = creator.vorhoerNoten(57);
+            REQUIRE(m.noten.size() == 2);
+            CHECK(m.noten[0] == Note{0, 2, 55, 1.0});
+            CHECK(m.noten[1].schritt == 2);
+            CHECK(m.noten[1].hoehe == 57);
+            CHECK(m.noten[1].artikulationen == kLegato);
+        }
+        waehle(InstrumentCreator::SpielAls::Slide);
+        CHECK(creator.vorhoerNoten(57).noten.back().artikulationen == kSlide);
+        waehle(InstrumentCreator::SpielAls::Bend);
+        {
+            const Muster m = creator.vorhoerNoten(57);
+            REQUIRE(m.noten.size() == 1);
+            CHECK(m.noten[0].hoehe == 55);
+            CHECK(m.noten[0].bend == bendVorlage(BendVorlage::Bend, 2.0));
+        }
+        // ganz unten gibt es keinen Ganzton darunter: der Ton allein
+        waehle(InstrumentCreator::SpielAls::HammerOn);
+        CHECK(creator.vorhoerNoten(kHoeheMin + 1).noten.size() == 1);
+        CHECK(creator.vorhoerNoten(kHoeheMin + 1).noten[0].artikulationen == 0);
+        waehle(InstrumentCreator::SpielAls::Normal);
 
         // ohne Tuning spielt jede Taste ihren Ton, wie immer
         Instrument ohne = instrument;

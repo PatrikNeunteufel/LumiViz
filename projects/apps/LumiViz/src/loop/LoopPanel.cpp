@@ -674,6 +674,13 @@ bool LoopPanel::spieleAkkordVor(const QString& nennung, const Muster& noten)
     return spieleAllein(ton, dauerMs);
 }
 
+bool LoopPanel::spieleCreatorNoten(const QString& nennung, const Muster& noten, int klingtMs)
+{
+    const bool folge = std::any_of(noten.noten.begin(), noten.noten.end(),
+                                   [&](const Note& n) { return n.schritt != noten.noten.front().schritt; });
+    return folge ? spieleAkkordVor(nennung, noten) : spieleInstrumentNoten(nennung, noten, klingtMs);
+}
+
 bool LoopPanel::spieleVor(const Muster& vorlage, int hoehe, int klingtMs)
 {
     if (hoehe < kHoeheMin || hoehe > kHoeheMax) return false;
@@ -818,7 +825,7 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
             // der Creator mit den Noten nach Play as (Stufe 24d); mit „Repeat note" bis zum naechsten
             connect(m_instrumentEditor, &InstrumentEditor::instrumentVorhoerenVerlangt, this,
                     [this](const QString& nennung, const Muster& noten, int klingtMs) {
-                        (void)spieleInstrumentNoten(nennung, noten, klingtMs);
+                        (void)spieleCreatorNoten(nennung, noten, klingtMs);
                     });
             // das Fenster Chords spielt ein Griffbild an (Stufe 26e-2)
             connect(m_instrumentEditor, &InstrumentEditor::akkordVorhoerenVerlangt, this,
@@ -883,7 +890,7 @@ bool LoopPanel::oeffneEditor(const QString& muster, bool zeigen)
                 [this](const QString& nennung, int hoehe) { (void)spieleInstrumentTon(nennung, hoehe); });
         connect(m_editor, &DrumEditor::instrumentVorhoerenVerlangt, this,
                 [this](const QString& nennung, const Muster& noten, int klingtMs) {
-                    (void)spieleInstrumentNoten(nennung, noten, klingtMs);
+                    (void)spieleCreatorNoten(nennung, noten, klingtMs);
                 });
         connect(m_editor, &DrumEditor::klaengeGeaendert, this, [this] {
             if (m_vorhoeren == 0) m_spieler.setzeLoop(spielFassung());
