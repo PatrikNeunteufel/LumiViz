@@ -1219,8 +1219,10 @@ void InstrumentCreator::setupUI()
     m_nurSpiel.push_back(m_regler.size() - 1);
     regler(gitter, tr("Tap level"), "creatorTapLevel", 0, 100, [](const Schicht& i) { return gerundet(i.tappingLaut * 100.0); },
            [](Schicht& i, int w) { i.tappingLaut = w / 100.0; },
-           [prozent](const Schicht& i) { return tr("%1 · at the fret").arg(prozent(i.tappingLaut)); })
-        .schieber->setToolTip(tr("Tapping: how loud a note is that a finger hammers onto the fret — soft, without a pick"));
+           [prozent](const Schicht& i) { return tr("%1 · at the fret, at 220 Hz").arg(prozent(i.tappingLaut)); })
+        .schieber->setToolTip(tr("Tapping: how loud a note is that a finger hammers onto the fret — soft, without a pick.\n"
+                                 "The level holds at 220 Hz; a lower tapped note is louder, a higher one softer, as with a\n"
+                                 "real finger — up to one and a half times as loud"));
     m_nurSpiel.push_back(m_regler.size() - 1);
     regler(gitter, tr("Touch"), "creatorTouch", 0, 100, [](const Schicht& i) { return gerundet(i.knotenDruck * 100.0); },
            [](Schicht& i, int w) { i.knotenDruck = w / 100.0; },

@@ -24,8 +24,8 @@ Fassung 11 mit den Vorgaben fuer Strum und *Playing* (`SPREAD_MS`, `MUTE`) und g
 Schluss jedem Muster der mitgelieferten Loops mit einem Saiteninstrument dessen Strum
 (`strum_in_loops`).
 
-**Reihenfolge:** zuerst `make_saiten_loops.py` (die Beispiel-Loops, aus denen die
-Genres gezaehlt werden), dann dieses Skript.
+**Reihenfolge:** zuerst `make_saiten_loops.py` und `make_spielweisen_loops.py` (die
+Beispiel-Loops, aus denen die Genres gezaehlt werden), dann dieses Skript.
 
 Zwei Laeufe ergeben dieselben Dateien. **Wer `make_examples.py` oder
 `make_genres.py` neu laufen laesst, laesst danach dieses Skript laufen** —
@@ -149,6 +149,8 @@ MUTE = {"finger_bass": 0.37, "slap_bass": 0.37, "upright_bass": 0.37}
 # die Vorgaben des Programms (include/loop/Instrument.hpp, Spielweise.hpp) — S-W11 a: immer schreiben
 PLAYING = {"upLevel": 1.0, "mute": 0.6, "tapLevel": 0.75, "touch": 0.3}
 STRUM = {"spread": 8.0, "hand": "halfBeat"}
+# die Beispiele der Spielweisen (S-W22 a, `make_spielweisen_loops.py`) setzen ihr Strum selbst
+EIGENES_STRUM = ("strum_demo", "palm_mute_demo", "harmonics_demo", "tapping_demo")
 
 
 def spielweisen(name, daten):
@@ -175,6 +177,8 @@ def strum_in_loops():
                + sorted((HIER / "vergleich").glob("*.lvloop")))
     zahl = 0
     for datei in dateien:
+        if datei.stem in EIGENES_STRUM:
+            continue
         loop = lies(datei)
         geaendert = False
         for muster in loop.get("patterns", []):

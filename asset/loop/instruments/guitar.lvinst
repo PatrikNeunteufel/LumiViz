@@ -3,7 +3,7 @@
     "version": 11,
     "title": "Guitar",
     "category": "plucked",
-    "genres": [],
+    "genres": ["Folk"],
     "description": "Six strings in standard tuning (Extended KS) through the parlor body.",
     "level": 1.0,
     "layers": [

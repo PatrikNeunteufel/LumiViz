@@ -28,7 +28,10 @@
 #include "loop/Saitenplan.hpp"
 #include "loop/Spielweise.hpp"
 
+#include "LoopOhneEngine.hpp"  // repoWurzel
+
 #include <QApplication>
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QMouseEvent>
@@ -663,5 +666,86 @@ TEST_SUITE("LoopSpielweise")
             CHECK(gefunden);
         }
         CHECK(ablauf.klangNamen == loop.klangNamen(nurGitarre()));
+    }
+
+    TEST_CASE("Loop Spielweise: die vier Beispiele der Spielweisen (S136, S-W22 a) spielen, was sie zeigen")
+    {
+        // aus der Datei, mit den Saiten der mitgelieferten Instrumente — wie das Programm sie plant
+        const QDir ordner(looptest::repoWurzel().filePath(QStringLiteral("asset/loop")));
+        const auto saitenVon = [&ordner](const QString& name) {
+            Instrument instrument;
+            REQUIRE(ladeInstrument(ordner.filePath(QStringLiteral("instruments/%1.lvinst").arg(name)), instrument));
+            return instrument.saiten;
+        };
+        const auto lade = [&ordner](const char* datei) {
+            Loop loop;
+            REQUIRE(ladeLoop(ordner.filePath(QString::fromLatin1(datei)), loop));
+            CHECK(loop.muster.size() >= 2);
+            return loop;
+        };
+        const auto muster = [](const Loop& loop, const char* name) -> const Muster& {
+            const auto it = std::find_if(loop.muster.begin(), loop.muster.end(),
+                                         [name](const Muster& m) { return m.name == QString::fromLatin1(name); });
+            REQUIRE(it != loop.muster.end());
+            return *it;
+        };
+        const auto zaehle = [](const Muster& m, int bits) {
+            return std::count_if(m.noten.begin(), m.noten.end(), [bits](const Note& n) { return (n.artikulationen & bits) == bits; });
+        };
+
+        // --- strum_demo: Spread der Guitar, Together auf der Eins des vierten Takts, Schluss mit 40 ms
+        {
+            const Loop loop = lade("strum_demo.lvloop");
+            const Muster& gitarre = muster(loop, "Guitar");
+            CHECK(gitarre.strum.spreadMs == doctest::Approx(7.5));
+            CHECK(gitarre.strum.hand.empty());  // D D U U D U ist die abwechselnde Hand
+            REQUIRE(gitarre.anschlaege.size() == 2);
+            CHECK(gitarre.anschlaege[0] == Anschlag{48, Anschlagart::Zugleich, -1.0});
+            CHECK(gitarre.anschlaege[1] == Anschlag{60, Anschlagart::Hand, 40.0});
+            const Saitensatz saiten = saitenVon(gitarre.instrument);
+            const auto griffe = greifeNoten(gitarre, saiten);
+            CHECK(std::all_of(griffe.begin(), griffe.end(), [](const Griff& g) { return g.greifbar; }));
+            const auto plan = schlageAn(gitarre, saiten, griffe, loop.schlaegeJeTakt, loop.schritteJeSchlag);
+            int auf = 0;
+            for (std::size_t i = 0; i < plan.size(); ++i)
+                if (plan[i].richtung == Richtung::Auf) ++auf;
+            CHECK(auf > 0);  // die Ups der Hand kommen an
+        }
+        // --- palm_mute_demo: gedaempfte Achtel, nur Downstrokes, der Schluss klingt aus
+        {
+            const Loop loop = lade("palm_mute_demo.lvloop");
+            const Muster& riff = muster(loop, "Riff");
+            CHECK(zaehle(riff, kPalmMute) == 3 * 7 * 2);
+            CHECK(zaehle(riff, kLetRing) == 3);
+            CHECK(handAlsText(riff.strum.hand) == QStringLiteral("DDDDDDDD"));
+            CHECK(zaehle(muster(loop, "Bass"), kPalmMute) == 3 * 7);
+            const auto plan = schlageAn(riff, saitenVon(riff.instrument), greifeNoten(riff, saitenVon(riff.instrument)),
+                                        loop.schlaegeJeTakt, loop.schritteJeSchlag);
+            CHECK(std::all_of(plan.begin(), plan.end(), [](const Anschlagplan& a) { return a.richtung == Richtung::Ab; }));
+        }
+        // --- harmonics_demo: jedes Flageolett ist ein natuerliches auf einer leeren Saite
+        {
+            const Loop loop = lade("harmonics_demo.lvloop");
+            const Muster& glocke = muster(loop, "Harmonics");
+            CHECK(zaehle(glocke, kHarmonic | kLetRing) == static_cast<long long>(glocke.noten.size()));
+            const auto griffe = greifeNoten(glocke, saitenVon(glocke.instrument));
+            REQUIRE(griffe.size() == glocke.noten.size());
+            for (const Griff& g : griffe)
+            {
+                CHECK(g.greifbar);
+                CHECK(g.teilton >= 2);
+                CHECK(g.bund == 0);
+            }
+            CHECK(zaehle(muster(loop, "Arpeggio"), kLetRing) == 32);
+        }
+        // --- tapping_demo: der Lauf auf der hohen E-Saite, zwei Takte getippt, zwei gezupft
+        {
+            const Loop loop = lade("tapping_demo.lvloop");
+            const Muster& lauf = muster(loop, "Tapping");
+            CHECK(zaehle(lauf, kTapping) == 32);
+            CHECK(lauf.noten.size() == 64);
+            const auto griffe = greifeNoten(lauf, saitenVon(lauf.instrument));
+            CHECK(std::all_of(griffe.begin(), griffe.end(), [](const Griff& g) { return g.greifbar && g.saite == 5; }));
+        }
     }
 }

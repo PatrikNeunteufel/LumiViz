@@ -582,7 +582,8 @@ Herleitung (Bericht 24c §3.2): Energie des Tippens gegen den Anschlag ≈ 127/f
 also Amplitude ∝ f1^−½ — die Abhängigkeit folgt aus der Form der Rechnung, nicht
 aus den angenommenen Zahlen. Alle Instrumente behalten 0,75. Verworfen: b (ein
 fester Wert je Instrument für seine Lage — innerhalb eines Instruments bliebe
-der Fehler, E2 gegen E5 9 dB), c (alles fest bis zu eigenen Aufnahmen).
+der Fehler, E2 gegen E5 9 dB), c (alles fest bis zu eigenen Aufnahmen). Im Creator
+heißt die Zeile seither „… · at the fret, at 220 Hz“, der Tooltip nennt den Bezug.
 
 ✅ **S-W19 a** (Patrik S136): **Kontrabass 17,5 ms, Violine 7,0 ms**, obwohl die
 Abstände nur aus einem Blog (No Treble) und einem Forum (Luthiers Forum) stammen —
@@ -614,6 +615,21 @@ allein. `loop_werte.txt` für die betroffenen Loops neu, Diff geprüft. Verworfe
 b (beim Lesen die Vorgabe des Instruments — der Klang einer Datei hinge an der
 Instrumentliste beim Lesen; ein Test ohne sie läse anders als das Programm), c
 (die mitgelieferten bei 8 ms — kein Loop zeigte die Vorgaben).
+
+✅ **S-W22 a** (Patrik S136): **Vier neue Beispiel-Loops, je einer mit klarem
+Schwerpunkt**, aus `asset/loop/make_spielweisen_loops.py`, nach Rechnung gesetzt,
+nicht nach Gehör: `strum_demo` (Folk, Guitar: D D U U D U in Achteln — das ergibt
+die abwechselnde Hand von selbst —, im vierten Takt *Together* auf der Eins und ein
+langsam gebrochener Schlussakkord mit Spread 40 ms), `palm_mute_demo` (Rock, Drop
+D Guitar und Finger Bass gedämpft, die Eins offen, Schluss mit *Let ring*),
+`harmonics_demo` (Ambient, Clean Guitar mit natürlichen Flageoletts am 12., 7.
+und 5. Bund, Nylon Guitar mit Arpeggio und *Let ring*), `tapping_demo` (Rock,
+Overdrive Guitar: derselbe Lauf zwei Takte getippt, zwei gezupft). Sie behalten
+ihr eigenes Strum: `strum_in_loops` nimmt sie aus (`EIGENES_STRUM`). Reihenfolge
+der Skripte: `make_saiten_loops.py`, `make_spielweisen_loops.py`,
+`make_saiten_instrumente.py`. Verworfen: b (ein Loop „Playing styles“ — ein
+Prüfstück, das die Hörproben schon sind), c (Spielweisen in die Genre-Loops —
+änderte gehörte Loops und ihre Vergleiche).
 
 **Stufe 24 — Spielweisen, erste Stufe** (✅ **S-W9 a**, Patrik S134: in
 Schichten wie Stufe 23; die Dateien ändern sich einmal, vollständig). Verworfen:

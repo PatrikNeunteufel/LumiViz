@@ -306,7 +306,8 @@ TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich und schreibt sich gl
         CHECK(nochmal == instrument);
     }
 
-    // --- Loops: keine Note traegt eine Saite, kein Muster eine Regel
+    // --- Loops: keine Note traegt eine Saite, kein Muster eine Regel — ausser tapping_demo
+    // (S136, S-W22 a): der Lauf liegt mit Absicht ganz auf der hohen E-Saite
     const QStringList loops = mitgelieferteLoops();
     REQUIRE(loops.size() >= 38);
     int noten = 0;
@@ -315,12 +316,14 @@ TEST_CASE("Loop Saiten: jede mitgelieferte Datei liest sich und schreibt sich gl
         CAPTURE(pfad.toStdString());
         Loop loop;
         REQUIRE(ladeLoop(pfad, loop));
+        const bool mitSaite = QFileInfo(pfad).fileName() == QStringLiteral("tapping_demo.lvloop");
         for (const Muster& m : loop.muster)
         {
             CHECK(m.saitenwahl == Saitenwahl::JeKlang);
+            const bool hoheE = mitSaite && m.name == QStringLiteral("Tapping");
             for (const Note& note : m.noten)
             {
-                CHECK(note.saite == -1);
+                CHECK(note.saite == (hoheE ? 5 : -1));
                 ++noten;
             }
         }

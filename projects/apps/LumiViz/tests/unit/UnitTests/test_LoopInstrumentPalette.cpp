@@ -199,9 +199,9 @@ TEST_CASE("Loop Instruments-Fenster: der Baum nach Art — waehlen, anspielen, v
     CHECK(toene.last() == QStringLiteral("slap_bass 48"));
     REQUIRE(fenster.waehle(QStringLiteral("piano")));
     CHECK(fenster.vorhoerHoehe() == 60);
-    // ein Instrument ohne Genre: nur Art
-    REQUIRE(fenster.waehle(QStringLiteral("guitar")));
-    CHECK(titel->text() == QStringLiteral("<b>Guitar</b> · Plucked"));
+    // ein Instrument ohne Genre: nur Art (bis S136 die Guitar — seither steht sie in strum_demo, Folk)
+    REQUIRE(fenster.waehle(QStringLiteral("violin")));
+    CHECK(titel->text() == QStringLiteral("<b>Violin</b> · Pads and strings"));
     CHECK(satz->text().endsWith(QStringLiteral(" 1 layer.")));
 
     // --- verwenden: nur mit einem Muster; es rueckt in Recently used, die Wahl bleibt
@@ -277,7 +277,7 @@ TEST_CASE("Loop Instruments-Fenster: Suche und Genre — was nicht passt, versch
     // „All" und die Genres, die die Instrumente tragen
     CHECK(genre->itemText(0) == QStringLiteral("All"));
     CHECK(genre->count() == bekannteGenres().size() + 1);
-    CHECK(bekannteGenres().size() == 29);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py; S133: Classical (pizzicato_demo)
+    CHECK(bekannteGenres().size() == 30);  // S123: Chillout, Electronica, Jazz, World aus make_showcase.py; S133: Classical (pizzicato_demo); S136: Folk (strum_demo)
     CHECK(bekannteGenres().contains(QStringLiteral("Funk")));
 
     // --- Genre: die vier aus dem Funk-Loop, je unter ihrer Art

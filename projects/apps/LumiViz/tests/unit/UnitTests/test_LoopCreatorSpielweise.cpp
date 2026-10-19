@@ -170,7 +170,7 @@ TEST_SUITE("LoopCreatorSpielweise")
         for (QLabel* label : creator.findChildren<QLabel*>()) texte << label->text();
         CHECK(texte.contains(QStringLiteral("80 % · rings 0.55 s at 220 Hz")));
         CHECK(texte.contains(QStringLiteral("70 % · starts from the other side")));
-        CHECK(texte.contains(QStringLiteral("50 % · at the fret")));
+        CHECK(texte.contains(QStringLiteral("50 % · at the fret, at 220 Hz")));  // S-W18 a
         CHECK(texte.contains(QStringLiteral("40 % · finger on the node")));
     }
 

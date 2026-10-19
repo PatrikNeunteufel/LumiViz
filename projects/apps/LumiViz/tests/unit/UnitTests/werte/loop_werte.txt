@@ -355,13 +355,17 @@ loop:genres/trap.lvloop	1209600	0.517275453	168310.226
 loop:genres/vocal_house.lvloop	2048516	0.411416233	146541.584
 loop:genres/waltz.lvloop	920348	0.401582897	68400.4148
 loop:genres/zen_garden.lvloop	3628800	0.37404415	367164.378
+loop:harmonics_demo.lvloop	1114105	0.212306827	28539.1956
 loop:house_demo.lvloop	2048516	0.515623629	348579.415
 loop:instrument_demo.lvloop	1693440	0.670246363	232520.102
 loop:jazz_guitar_demo.lvloop	641455	0.334918022	50428.6392
+loop:palm_mute_demo.lvloop	641455	0.564334154	125755.934
 loop:pizzicato_demo.lvloop	756000	0.242551193	14889.4793
 loop:rock_demo.lvloop	1282909	0.47903195	183570.281
 loop:strange_demo.lvloop	1693440	0.411952049	171348.803
+loop:strum_demo.lvloop	920348	0.420351446	63431.1555
 loop:synthwave_demo.lvloop	1568000	0.441986024	185920.843
+loop:tapping_demo.lvloop	756000	0.431272656	98304.1995
 loop:ukulele_demo.lvloop	814154	0.346889675	57023.0148
 loop:vergleich/bossa_old_new.lvloop	2565818	0.428218365	312636.593
 loop:vergleich/disco_old_new.lvloop	2822400	0.49094677	398356.113

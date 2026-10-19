@@ -3,7 +3,7 @@
     "version": 11,
     "title": "Nylon Guitar",
     "category": "plucked",
-    "genres": ["Bossa Nova", "Jazz Waltz", "Reggaeton"],
+    "genres": ["Ambient", "Bossa Nova", "Jazz Waltz", "Reggaeton"],
     "description": "Six strings plucked with the finger (Extended KS) through the classical guitar body, a warm triangle underneath.",
     "level": 0.638,
     "layers": [

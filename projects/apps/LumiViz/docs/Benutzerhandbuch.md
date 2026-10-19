@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.189.0
-> **Datum:** 2026-10-18
+> **Version:** 1.190.0
+> **Datum:** 2026-10-19
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2876,6 +2876,7 @@ viel markiert ist und was die Tasten tun.
 
 | Geste | Wirkung |
 |---|---|
+| **Ctrl+Mausrad**, **Alt+Mausrad**, **Ctrl+Alt+Mausrad** | NEU in 1.190.0. Zoomt die Zeit, die Höhe der Spuren oder beides — wie die Zeitachse des Composers. **Fit** im Kopf zeigt wieder das ganze Muster in der Breite, die Spuren in normaler Höhe |
 | **Shift+Ziehen** | Markiert einen Bereich, auch über mehrere Spuren. Der ganze Bereich zählt, auch seine leeren Schritte. Markierte Schritte tragen einen hellen Rand |
 | **Ctrl+Klick** auf einen Schritt | Nimmt ihn dazu oder heraus. So lassen sich auch einzelne, verstreute Schritte markieren |
 | **Ctrl+A**, **Esc** | Alle Schritte markieren; die Marken aufheben |
@@ -2972,6 +2973,7 @@ Ein Muster spielt **ein** Instrument und beliebig viele Töne zugleich.
 | Rechtsklick auf eine Note | Markiert sie und öffnet ein Menü, in dem **Delete** steht. Mit dem Haken **Right-click deletes** löscht der Rechtsklick die Note sofort (so war es bisher immer); die Stellung des Hakens bleibt gemerkt |
 | Zeile **Note vol.** unten | Die Lautstärke der Note, die an dem Schritt beginnt: klicken oder ziehen. Beginnen dort mehrere, gilt es für alle — außer eine von ihnen ist angeklickt |
 | Mausrad | Rollt die Tonhöhen; mit Shift die Zeit. Dazu die Rollbalken am Rand |
+| **Ctrl+Mausrad**, **Alt+Mausrad**, **Ctrl+Alt+Mausrad** | NEU in 1.190.0. Zoomt die Zeit, die Höhe der Zeilen oder beides — wie die Zeitachse des Composers. **Fit** im Kopf zeigt wieder das ganze Muster in der Breite und die Noten in der Höhe. Der Tooltip von Fit nennt die Gesten |
 
 Das Raster (Schläge je Takt, Schritte je Schlag, Swing) gilt für den ganzen
 Loop und wird im Drum-Editor gestellt. Wird es gröber, gehen Noten verloren,
@@ -3096,6 +3098,9 @@ Korpus und Tonabnehmern.
 | **String choice** | Wie eine Note ohne eigene Saite eine findet — die Vorgabe für neue Muster. **Per chord**: Noten, die zugleich klingen, auf verschiedenen Saiten, die Bünde nah beieinander. **Follow hand**: ebenso, aber nah an der Lage des vorigen Anschlags |
 | Gruppe **String** | Bei Extended KS und Waveguide. Zuerst das **Saitenbild**: Sattel links, Steg rechts, die Marke **pluck** und bei Waveguide die Tonabnehmer **neck** und **bridge** (ein Humbucker als zwei Striche). Die Marken lassen sich mit der Maus ziehen (der Zeiger wird zum Doppelpfeil). Darunter **Pluck position** (wo angeschlagen wird, vom Steg aus — bei einem Viertel fehlt der vierte Teilton), **Pluck** (weich wie ein Finger bis hart wie ein Plektrum), **Ring time** (bis der Grundton um 60 dB gefallen ist), **High damping** (wie viel schneller die Höhen vergehen), **Stiffness** (die Obertöne etwas höher, wie beim Klavier), **String variation** (eine tiefere Saite ist dicker: dunkler und steifer) |
 | Gruppe **Body** | **Body**: None, **Acoustic guitar (Parlor)** oder **Classical guitar** — Decke, Boden und Luft schwingen mit der Saite, mit den Werten gemessener Gitarren. **Body amount**: wie viel des Tons durch den Korpus kommt. Er wirkt auf den Ton am Steg — hinter einem Tonabnehmer nicht |
+| Zeile **Strum** | NEU in 1.190.0. Unter der Zeile Tuning: wie ein **neues** Muster dieses Instruments anschlägt („default for new patterns“). **Spread**: wie lange die Hand von einer Saite zur nächsten braucht, in ms (0 = alle zugleich; ein Akkord über sechs Saiten braucht fünfmal so lange). **Hand**: wie oft die Hand im Takt ab und auf geht — **Beat**, **1/2 beat** (Vorgabe) oder **Step**; dahinter je Stelle ein Pfeil ↓ oder ↑, ein Klick dreht ihn um. **Alternate** setzt alle Stellen zurück auf ab, auf, ab, auf. Ein Akkord nimmt die Richtung der Stelle, an der er beginnt |
+| Gruppe **Playing** | NEU in 1.190.0. Nur bei Extended KS und Waveguide; wie die Spielweisen klingen. **Up level**: wie laut die Hand nach oben anschlägt gegen nach unten (ein Up beginnt außerdem auf der anderen Seite der Saite). **Mute**: wie fest der Handballen bei *Palm mute* rund 40 mm vor dem Steg aufliegt — die Höhen gehen zuerst, der Anschlag bleibt. **Tap level**: wie laut ein getippter Ton ist, bei 220 Hz; ein tieferer getippter Ton klingt dazu lauter, ein höherer leiser, wie bei einem echten Finger (bis höchstens das Anderthalbfache). **Touch**: wie fest der Finger beim Flageolett auf dem Knoten liegt. *Let ring* braucht keinen Regler, *Classic* hat keine Gruppe Playing |
+| **Play as** | NEU in 1.190.0. Unter den Tasten: wie ein Klick auf eine Taste spielt — **Normal**, **Up stroke**, **Palm mute**, **Tapping**, **Harmonic** oder **Strum chord** (die leeren Saiten, angeschlagen, wie die Zeile Strum sagt). Wird nicht gespeichert |
 | Gruppe **Pickups** | Nur bei Waveguide. **Pickup select** Neck / Both / Bridge (grau, solange nur ein Platz einen Tonabnehmer hat); je Platz **Type** (None (acoustic), Single coil, Humbucker, Piezo) und **Position** in mm vom Steg (grau bei None und Piezo); **Cable** in pF, darunter die Resonanz, die daraus folgt — mehr pF klingt dunkler. Ein Tonabnehmer klingt so laut wie die Saite am Steg |
 
 | Im Instrument-Editor, bei einem Saiteninstrument | Wirkung |
@@ -3105,6 +3110,23 @@ Korpus und Tonabnehmern.
 | Eine rot schraffierte Note mit **!** | Auf keiner freien Saite greifbar (zu tief, zu hoch oder mehr Noten zugleich als Saiten) — sie klingt trotzdem, auf der nächstbesten Saite; der Tooltip nennt sie |
 | Ein Punkt auf einer Taste | Der Ton einer leeren Saite (mit Capo) |
 | Rechtsklick auf eine Note → **String** | Für die markierten Noten: **Auto** (die Regel wählt) oder eine bestimmte Saite; was nicht greifbar ist, steht grau |
+| Zeile **Strum** | NEU in 1.190.0. Über dem Raster, dieselbe Zeile wie im Creator, aber für dieses Muster („for every chord of this pattern“), im Raster des Loops; Undo. Ein neues Muster bekommt die Vorgabe seines Instruments. Wechselst du das Instrument, folgen Strum und String choice dem neuen nur, wo das Muster noch die Vorgabe des alten trägt — was du selbst gestellt hast, bleibt |
+| Spur **Strum** | NEU in 1.190.0. Zwischen der Zeile mit den Taktnummern und den Noten: an jedem Schritt, an dem eine Note beginnt, ein Pfeil — grau, wie die Hand ihn schlägt; blau mit einer Nadel, wenn du ihn gesetzt hast. Ein Klick schaltet weiter: **Follow hand** → **Down** → **Up** → **Together** (alle Saiten zugleich); bei einer einzelnen Note ohne Together. Schlagen dort nur getippte Noten an, steht **T** statt eines Pfeils. Der Tooltip sagt, was gilt. Der Pfeil sitzt dazu auch an der Note: ein kleiner Strich zeigt, wie viel später sie im Akkord anschlägt |
+| Die Kürzel in einer Note | NEU in 1.190.0. **PM** Palm mute, **LR** Let ring, **T** Tapping, **◇** Harmonic |
+| Rechtsklick auf eine Note → **Strum** | NEU in 1.190.0. Für die Akkorde der markierten Noten: **Follow hand**, **Down**, **Up**, **Together**, und **Spread...** — ein eigener Abstand der Saiten für diese Akkorde (ganz unten: wie das Muster) |
+| Rechtsklick auf eine Note → **Palm mute**, **Let ring**, **Tapping**, **Harmonic** | NEU in 1.190.0. Haken für die markierten Noten, frei kombinierbar; Undo. **Palm mute**: der Handballen dämpft am Steg. **Let ring**: die Note klingt, bis die nächste auf derselben Saite beginnt, nicht nur so lang wie ihr Balken. **Tapping**: ein Finger tippt die Note auf den Bund — weicher, ohne Richtung. **Harmonic**: ein Flageolett; die Note zeigt den Ton, der klingt. Zuerst wird ein natürliches gesucht (leere Saite, 12., 7., 5. Bund …), sonst ein künstliches (gegriffen, der Knoten zwölf Bünde darüber); geht keines, ist die Note rot mit **!** |
+| Die Zeile unter dem Raster | Nennt die Gesten; ohne Markierung auch das Zoomen |
+
+**Wo die Vorgaben herkommen.** NEU in 1.190.0. Die mitgelieferten Saiteninstrumente
+schlagen mit dem Abstand an, den ihre Bauart verlangt: eine Hand, die gleich schnell über
+die Saiten streicht, braucht bei weit auseinander liegenden Saiten länger. Gemessen ist
+das an einer Nylongitarre (8 ms je Saite); daraus gerechnet **Nylon Guitar** 8,0 ms,
+**Guitar** und **Piezo Guitar** 7,5, **Clean**, **Muted**, **Overdrive**, **Drop D** und
+**Jazz Guitar** 7,0, **Pizzicato Violin** 7,0, **Ukulele** 9,5, **Finger** und **Slap
+Bass** 12,5, **Upright Bass** 17,5 ms. Die drei Bässe dämpfen bei Palm mute leichter
+(Mute 0,37 statt 0,6), wie an echten E-Bässen gemessen. Alles lässt sich im Creator, am
+Muster und je Akkord verstellen. Die mitgelieferten Loops tragen in ihren Saitenmustern
+das Strum ihrer Instrumente.
 
 Mitgeliefert spielen seit 1.189.0 **Guitar, Nylon Guitar, Clean Guitar, Muted Guitar,
 Overdrive Guitar, Upright Bass, Slap Bass** (mit Tuning) und **Clavinet** (ohne Tuning,
@@ -3309,6 +3331,10 @@ Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
 | `ukulele_demo.lvloop` | NEU. Ukulele in Achteln, Piezo Guitar, Finger Bass |
 | `drop_d_demo.lvloop` | NEU. Drop D Guitar mit Powerchords auf der leeren D-Saite, Finger Bass |
 | `pizzicato_demo.lvloop` | NEU. Zwei Pizzicato Violins und Finger Bass |
+| `strum_demo.lvloop` | NEU in 1.190.0. Guitar in Achteln, ab-ab-auf-auf-ab-auf (die Ups treffen nur die oberen Saiten); im vierten Takt ein Akkord **Together** und ein langsam gebrochener Schluss (Spread 40 ms) |
+| `palm_mute_demo.lvloop` | NEU in 1.190.0. Drop D Guitar und Finger Bass in gedämpften Achteln, nur Downstrokes, die Eins offen; der Schlussakkord mit **Let ring** |
+| `harmonics_demo.lvloop` | NEU in 1.190.0. Clean Guitar mit natürlichen Flageoletts am 12., 7. und 5. Bund, darunter die Nylon Guitar mit einem Arpeggio und **Let ring** |
+| `tapping_demo.lvloop` | NEU in 1.190.0. Overdrive Guitar: derselbe Lauf auf der hohen E-Saite, zwei Takte getippt, zwei gezupft |
 
 Im Unterordner `asset\loop\vergleich` (NEU in 1.189.0) liegen fünf Vergleiche: Bossa,
 Funk, Disco, Rock und Guitar je zweimal hintereinander — zuerst mit den Instrumenten
@@ -3493,6 +3519,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.190.0 | 2026-10-19 | Sessions 134–136. §16 Loop NEU **Spielweisen** der Saiteninstrumente: im Creator die Zeile **Strum** (Spread, Hand, Pfeile je Stelle, Alternate), die Gruppe **Playing** (Up level, Mute, Tap level bei 220 Hz, Touch) und **Play as**; im Instrument-Editor die Zeile **Strum** des Musters, die Spur **Strum** (Pfeil je Anschlag, Klick schaltet Follow hand / Down / Up / Together, T für getippt), die Kürzel PM, LR, T, ◇ in den Noten, im Rechtsklick-Menü **Strum** (mit Spread...) und die Haken **Palm mute**, **Let ring**, **Tapping**, **Harmonic**; Vorgaben je Saiteninstrument und woher sie kommen; vier neue Beispiele (`strum_demo`, `palm_mute_demo`, `harmonics_demo`, `tapping_demo`). Instrument- und Drum-Editor: NEU **Zoom** mit Ctrl/Alt/Ctrl+Alt+Mausrad und **Fit** |
 | 1.189.0 | 2026-10-18 | Session 133. §16 Loop NEU **Saiteninstrumente**: im Creator die Zeile **Tuning** (Strings, Capo, Scale, String choice), **Model** (Classic, Extended KS, Waveguide), die Gruppen **String** (mit dem Saitenbild und ziehbaren Marken), **Body** (Parlor, Classical guitar) und **Pickups**; im Instrument-Editor **String choice**, die Nummer der Saite je Note, nicht greifbare Noten, das Menü **String**. Mitgelieferte Gitarren, Bässe und Clavinet spielen auf den neuen Saiten, die alten als „(old)“; sechs neue Instrumente, vier Beispiele und fünf Vergleiche unter `asset\loop\vergleich`. |
 | 1.188.0 | 2026-10-18 | Session 132. §16 Loop: Noten reichen von A0 bis C8, dem Umfang eines Klaviers (vorher C1 bis C7) — Klaviatur der Piano-Roll und **Note** einer Drum-Spur. |
 | 1.187.0 | 2026-10-17 | Session 131. §MilkDrop: die Schalter heißen **Warp shader** und **Comp shader** und füllen dazu selbst gebaute Matrizen zeilenweise wie MilkDrop (Entscheid S2 a); Sammelliste nachgezogen. |

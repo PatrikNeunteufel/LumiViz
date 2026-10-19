@@ -642,11 +642,13 @@ TEST_SUITE("LoopInstrument")
         CHECK(jeArt[QStringLiteral("percussion")] == 10);
         CHECK(jeArt[QStringLiteral("drums")] == 20);  // Stufe 11f, S123, drei Besen S124
         CHECK(jeArt[QStringLiteral("unusual")] == 8);
-        // die Genres sind aus den mitgelieferten Loops gezaehlt: Guitar und Violin stehen in keinem,
-        // die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine Drum-Spuren), Flower Flute (S123) auch nicht
-        CHECK(ohneGenre == 30);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie)
+        // die Genres sind aus den mitgelieferten Loops gezaehlt: Violin steht in keinem (Guitar bis S136,
+        // seither in strum_demo), die Drums auch nicht (gezaehlt werden nur Instrument-Muster, keine
+        // Drum-Spuren), Flower Flute (S123) auch nicht
+        CHECK(ohneGenre == 29);  // seit S124 mit den drei Besen, seit S133 die acht *_old (kein Loop nutzt sie)
         CHECK(findeInstrument(QStringLiteral("slap_bass"))->genres == QStringList{QStringLiteral("Funk")});
-        CHECK(findeInstrument(QStringLiteral("guitar"))->genres.isEmpty());
+        CHECK(findeInstrument(QStringLiteral("guitar"))->genres == QStringList{QStringLiteral("Folk")});
+        CHECK(findeInstrument(QStringLiteral("violin"))->genres.isEmpty());
     }
 
     TEST_CASE("Loop Instrument: eigene im Benutzerordner — user:<name>, ein eigener Raum (P2 a)")

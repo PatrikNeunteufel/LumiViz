@@ -3,7 +3,7 @@
     "version": 11,
     "title": "Clean Guitar",
     "category": "plucked",
-    "genres": ["Afrobeat", "Blues", "Disco", "Reggae", "Ska"],
+    "genres": ["Afrobeat", "Ambient", "Blues", "Disco", "Reggae", "Ska"],
     "description": "Six strings (Waveguide) with single coils at neck and bridge, a quieter string an octave above.",
     "level": 0.398,
     "layers": [
