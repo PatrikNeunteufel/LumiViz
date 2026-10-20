@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.90.0
+> **Version:** 0.91.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3628,13 +3628,23 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 
 | Stufe | Inhalt |
 |---|---|
-| 27a | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
+| 27a ✅ | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
 | 27b | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: Modell, `.lvloop` Fassung 11, Klang; Oberfläche zuerst als Skizze |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
+
+**Wie 27a gebaut ist (S139):** `audio/Lautheit.hpp` (`lumi::audio`) statt `composer/Lautheit.hpp`;
+der Composer nennt die Namen mit `audio::`. `Lautheit` trägt dazu `momentanMaxLufs` und
+`kurzzeitMaxLufs` — gleitende Rechteckfenster von 0,4 s und 3 s ohne Gate (EBU Tech 3341, 2023,
+S. 7), **je Abtastwert**, nicht in Stücken von 100 ms: Fall 13 verlangt für einen Ton von genau
+400 ms, um i · 20 ms versetzt, Max M = −23,0 ± 0,1; die Summe im Fenster wird nach jedem Umlauf
+neu gezählt. Kürzer als das Fenster: `kLufsStille`. Die integrierte Lautheit rechnet Bit für Bit
+wie vorher. `test_ComposerLautheit.cpp`: zwei Fälle mehr — 1, 2, 9, 10, 12, 13 aus Tabelle 1 bei
+48 und 44,1 kHz (11 und 14 sind für laufende Anzeigen), dazu kurze Töne, Stille, ein Schlag in
+langer Stille, stückweises Füttern. Der Wächter S128 bleibt grün.
 
 ## 5. Stufen
 
@@ -3762,6 +3772,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.91.0** (S139, 2026-10-20): §4n Stufe 27a gebaut — die Messung unter `audio/Lautheit`, Momentary- und Short-term-Maximum.
 - **0.90.0** (S139, 2026-10-20): §4n Lautstärke im Loop — Befund (Messung Titanium und aller Instrumente, 21 LU Streuung), LL1 a bis LL5 a; Stufe 27 in §5.
 - **0.89.0** (S139, 2026-10-20): §3.2 Audio-Clip als dritte Art im Loop-Panel mit Autotune-Spur (Erinnerung Patrik), Bezug zur Spur Pitch aus `Spielweisen_Konzept.md` SF3 a.
 - **0.88.0** (S135, 2026-10-18): Entscheid **E-Z1 a** — Zoom in Instrument- und

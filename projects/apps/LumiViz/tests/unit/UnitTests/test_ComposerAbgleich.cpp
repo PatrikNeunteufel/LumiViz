@@ -54,6 +54,10 @@
 #include <functional>
 
 using namespace lumi::composer;
+using lumi::audio::kLufsStille;
+using lumi::audio::Lautheit;
+using lumi::audio::LautheitsMessung;
+using lumi::audio::messeLautheit;
 
 namespace
 {

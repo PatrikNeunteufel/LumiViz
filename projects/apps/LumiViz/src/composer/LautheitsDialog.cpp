@@ -296,7 +296,7 @@ void LautheitsDialog::zeigeZeile(int i)
     if (z.messung.has_value())
     {
         laut = z.messung->stille ? tr("silent") : QStringLiteral("%1 LUFS").arg(QString::number(z.messung->lufs, 'f', 1));
-        spitze = z.messung->stille && z.messung->spitzeDb <= kLufsStille ? QStringLiteral("–") : dbText(z.messung->spitzeDb);
+        spitze = z.messung->stille && z.messung->spitzeDb <= audio::kLufsStille ? QStringLiteral("–") : dbText(z.messung->spitzeDb);
     }
     else if (z.gemessenFehlgeschlagen)
         laut = tr("not readable");
@@ -569,7 +569,7 @@ void LautheitsDialog::misseNaechste()
         m_warten.erase(m_warten.begin());
         // ein Song, den LumiViz schon kennt
         if (!was.loop)
-            if (const std::optional<Lautheit> da = m_gemerkt.hole(was.datei, was.einsatzMs, was.dauerMs, m_rate))
+            if (const std::optional<audio::Lautheit> da = m_gemerkt.hole(was.datei, was.einsatzMs, was.dauerMs, m_rate))
             {
                 nimmErgebnis(was, da);
                 continue;
@@ -604,7 +604,7 @@ void LautheitsDialog::misseNaechste()
                 prozent->store(static_cast<int>(anteil * 100.0));
                 return !abbruch->load();
             };
-            std::optional<Lautheit> ergebnis = was.loop
+            std::optional<audio::Lautheit> ergebnis = was.loop
                                                    ? messeLoop(programm, rate, melde)
                                                    : messeSong(*engine, was.datei, was.einsatzMs, was.dauerMs, rate, melde);
             if (abbruch->load()) return;
@@ -628,7 +628,7 @@ void LautheitsDialog::misseNaechste()
     Q_EMIT messungFertig();
 }
 
-void LautheitsDialog::nimmErgebnis(const AbgleichZeile& was, std::optional<Lautheit> ergebnis)
+void LautheitsDialog::nimmErgebnis(const AbgleichZeile& was, std::optional<audio::Lautheit> ergebnis)
 {
     if (ergebnis.has_value() && !was.loop) m_gemerkt.merke(was.datei, was.einsatzMs, was.dauerMs, m_rate, *ergebnis);
     for (AbgleichZeile& z : m_abgleich.zeilen())

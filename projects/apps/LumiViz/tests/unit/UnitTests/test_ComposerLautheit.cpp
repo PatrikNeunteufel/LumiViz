@@ -15,6 +15,9 @@
  *   Seite 8) — Stereo-Sinus 1000 Hz, je Kanal die genannte Spitze, gleichphasig;
  *   erwartet die genannte integrierte Lautheit ±0,1 LU. Dazu die Spitze, Stille,
  *   stueckweises Fuettern und warum es R128 ist (der Bass zaehlt weniger).
+ * - Seit S139 (Stufe 27a, die Messung liegt jetzt unter `audio/`): die Maxima
+ *   der Momentary- und Short-term-Lautheit an den Faellen 1, 2, 9, 10, 12, 13
+ *   derselben Tabelle.
  * - Beleg zu L3b a: je mitgeliefertem Loop gleicht ein Durchlauf dem naechsten?
  *   Gerechnet werden drei Durchlaeufe am Stueck, verglichen der zweite mit dem
  *   dritten; der erste faengt ohne Nachklang an und wird nur gemeldet.
@@ -26,7 +29,7 @@
 #include <doctest.h>
 
 #include "LoopOhneEngine.hpp"
-#include "composer/Lautheit.hpp"
+#include "audio/Lautheit.hpp"
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
@@ -41,7 +44,10 @@
 #include <numbers>
 #include <vector>
 
-using namespace lumi::composer;
+using lumi::audio::kLufsStille;
+using lumi::audio::Lautheit;
+using lumi::audio::LautheitsMessung;
+using lumi::audio::messeLautheit;
 
 namespace
 {
@@ -108,6 +114,88 @@ TEST_SUITE("ComposerLautheit")
             CHECK(std::abs(messeLautheit(sinus({{20.0, -26.0}, {20.1, -20.0}, {20.0, -26.0}}, rate), rate).lufs +
                            23.0) <= 0.1);
         }
+    }
+
+    // S139, Stufe 27a: Momentary und Short-term (EBU Tech 3341, 2023, Tabelle 1, gedruckte Seite 8).
+    // Die Faelle fuer Messungen an Dateien („file-based meters"): 10 und 13 je Abschnitt eine eigene
+    // Messung — der Ton liegt um i * 0,15 s bzw. i * 20 ms versetzt und ist genau so lang wie das
+    // Fenster; nur ein Fenster, das je Abtastwert gleitet, trifft ihn ganz. 11 und 14 sind fuer
+    // laufende Anzeigen („live meters") und hier nicht nachgestellt.
+    TEST_CASE("Lautheit: Momentary und Short-term — die Faelle 1, 2, 9, 10, 12, 13 aus EBU Tech 3341")
+    {
+        for (const int rate : {48000, 44100})
+        {
+            CAPTURE(rate);
+            // 1 und 2: M, S = −23,0 bzw. −33,0 LUFS
+            const Lautheit eins = messeLautheit(sinus({{20.0, -23.0}}, rate), rate);
+            CHECK(std::abs(eins.momentanMaxLufs + 23.0) <= 0.1);
+            CHECK(std::abs(eins.kurzzeitMaxLufs + 23.0) <= 0.1);
+            const Lautheit zwei = messeLautheit(sinus({{20.0, -33.0}}, rate), rate);
+            CHECK(std::abs(zwei.momentanMaxLufs + 33.0) <= 0.1);
+            CHECK(std::abs(zwei.kurzzeitMaxLufs + 33.0) <= 0.1);
+
+            // 9: (1,34 s bei −20, 1,66 s bei −30) fuenfmal — S = −23,0, gleich nach 3 s, also auch das Maximum
+            std::vector<Ton> neun;
+            for (int i = 0; i < 5; ++i)
+            {
+                neun.push_back({1.34, -20.0});
+                neun.push_back({1.66, -30.0});
+            }
+            CHECK(std::abs(messeLautheit(sinus(neun, rate), rate).kurzzeitMaxLufs + 23.0) <= 0.1);
+
+            // 12: (0,18 s bei −20, 0,22 s bei −30) 25-mal — M = −23,0 nach 1 s, also auch das Maximum
+            std::vector<Ton> zwoelf;
+            for (int i = 0; i < 25; ++i)
+            {
+                zwoelf.push_back({0.18, -20.0});
+                zwoelf.push_back({0.22, -30.0});
+            }
+            CHECK(std::abs(messeLautheit(sinus(zwoelf, rate), rate).momentanMaxLufs + 23.0) <= 0.1);
+
+            // 10: je Abschnitt i * 0,15 s Stille, 3 s bei −23, 1 s Stille → Max S = −23,0
+            // 13: je Abschnitt i * 20 ms Stille, 400 ms bei −23, 1 s Stille → Max M = −23,0
+            for (int i = 0; i < 20; ++i)
+            {
+                CAPTURE(i);
+                const Lautheit zehn = messeLautheit(sinus({{i * 0.15, -200.0}, {3.0, -23.0}, {1.0, -200.0}}, rate), rate);
+                CHECK(std::abs(zehn.kurzzeitMaxLufs + 23.0) <= 0.1);
+                const Lautheit dreizehn =
+                    messeLautheit(sinus({{i * 0.02, -200.0}, {0.4, -23.0}, {1.0, -200.0}}, rate), rate);
+                CHECK(std::abs(dreizehn.momentanMaxLufs + 23.0) <= 0.1);
+            }
+        }
+    }
+
+    TEST_CASE("Lautheit: Momentary und Short-term — kuerzer als das Fenster, Stille, stueckweise")
+    {
+        constexpr int rate = 48000;
+        // kuerzer als 3 s: kein Short-term, aber Momentary
+        const Lautheit kurz = messeLautheit(sinus({{1.0, -23.0}}, rate), rate);
+        CHECK(kurz.kurzzeitMaxLufs == kLufsStille);
+        CHECK(std::abs(kurz.momentanMaxLufs + 23.0) <= 0.1);
+        // kuerzer als 0,4 s: keines
+        CHECK(messeLautheit(sinus({{0.3, -10.0}}, rate), rate).momentanMaxLufs == kLufsStille);
+        // Stille: keines
+        const Lautheit still = messeLautheit(std::vector<float>(2 * rate * 4, 0.0f), rate);
+        CHECK(still.momentanMaxLufs == kLufsStille);
+        CHECK(still.kurzzeitMaxLufs == kLufsStille);
+        // ein lauter Schlag in langer Stille: das Maximum haengt nicht an der Laenge der Stille
+        const Lautheit schlag = messeLautheit(sinus({{30.0, -200.0}, {0.4, -14.0}, {30.0, -200.0}}, rate), rate);
+        CHECK(std::abs(schlag.momentanMaxLufs + 14.0) <= 0.1);
+        // stueckweise in ungeraden Happen wie am Stueck
+        const std::vector<float> ton = sinus({{3.0, -30.0}, {7.0, -18.0}, {2.0, -40.0}}, rate);
+        LautheitsMessung m(rate);
+        std::size_t frame = 0;
+        for (std::size_t happen = 1; frame < ton.size() / 2; happen = happen * 3 % 4097 + 1)
+        {
+            const std::size_t n = std::min(happen, ton.size() / 2 - frame);
+            m.fuettere(ton.data() + 2 * frame, n);
+            frame += n;
+        }
+        const Lautheit ganz = messeLautheit(ton, rate);
+        CHECK(m.ergebnis().momentanMaxLufs == doctest::Approx(ganz.momentanMaxLufs).epsilon(1e-9));
+        CHECK(m.ergebnis().kurzzeitMaxLufs == doctest::Approx(ganz.kurzzeitMaxLufs).epsilon(1e-9));
+        CHECK(std::abs(ganz.kurzzeitMaxLufs + 18.0) <= 0.1);
     }
 
     TEST_CASE("Lautheit: Spitze, Stille, kurzer Ton, stueckweise gefuettert")

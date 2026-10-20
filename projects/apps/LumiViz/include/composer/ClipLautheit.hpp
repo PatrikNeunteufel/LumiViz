@@ -12,7 +12,7 @@
  */
 #pragma once
 
-#include "composer/Lautheit.hpp"
+#include "audio/Lautheit.hpp"
 
 #include <QString>
 
@@ -37,7 +37,7 @@ using MessFortschritt = std::function<bool(double anteil)>;
 
 /// Einen Song messen: `dauerMs` ab `einsatzMs` (0 = bis zum Ende), in `rate`.
 /// nullopt = nicht lesbar oder abgebrochen. Darf in einem eigenen Thread laufen.
-[[nodiscard]] std::optional<Lautheit> messeSong(IAudioEngine& engine, const QString& datei, std::int64_t einsatzMs,
+[[nodiscard]] std::optional<audio::Lautheit> messeSong(IAudioEngine& engine, const QString& datei, std::int64_t einsatzMs,
                                                 std::int64_t dauerMs, int rate, const MessFortschritt& fortschritt);
 
 /// Einen Loop zum Messen vorbereiten: die Fassung, die das Loop-Panel offen
@@ -50,7 +50,7 @@ using MessFortschritt = std::function<bool(double anteil)>;
 /// Ohne Engine; darf in einem eigenen Thread laufen. Ein Programm aus
 /// `bereiteLoopVor` misst **einmal** — das Gedaechtnis seiner Effekte gehoert
 /// dieser Messung; fuer eine neue Messung neu vorbereiten.
-[[nodiscard]] std::optional<Lautheit> messeLoop(const std::shared_ptr<const loop::Programm>& programm, int rate,
+[[nodiscard]] std::optional<audio::Lautheit> messeLoop(const std::shared_ptr<const loop::Programm>& programm, int rate,
                                                 const MessFortschritt& fortschritt);
 
 /// Gemessene Songs, gemerkt in einer Datei (G5-3 a) — auch ueber einen
@@ -67,9 +67,9 @@ public:
     SongLautheiten();
     explicit SongLautheiten(QString datei);
 
-    [[nodiscard]] std::optional<Lautheit> hole(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs,
+    [[nodiscard]] std::optional<audio::Lautheit> hole(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs,
                                                int rate) const;
-    void merke(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs, int rate, const Lautheit& wert);
+    void merke(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs, int rate, const audio::Lautheit& wert);
     /// Die Eintraege zu diesem Song vergessen (Measure again).
     void vergiss(const QString& song);
     /// Schreiben, wenn sich etwas geaendert hat. false = nicht zu schreiben.
@@ -80,7 +80,7 @@ private:
     [[nodiscard]] static QString schluessel(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs,
                                             int rate);
     QString m_datei;
-    std::map<QString, Lautheit> m_werte;
+    std::map<QString, audio::Lautheit> m_werte;
     bool m_geaendert = false;
 };
 

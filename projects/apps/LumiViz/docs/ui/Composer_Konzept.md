@@ -1,7 +1,7 @@
 # LumiViz — Composer (Konzept)
 
-> **Version:** 0.97.0
-> **Datum:** 2026-10-16 (Session 130)
+> **Version:** 0.98.0
+> **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — **gebilligt, alle Entscheide gefallen** (Patrik S93: C2 a,
 > C3 eigener Mischer, C4 a, C5 a, C6 a mit Sperre, C7 a, C9 a, C10 a);
 > Stufen **C0 bis C2 erledigt und im Programm gesehen**; **C3 (Bearbeiten,
@@ -1378,7 +1378,9 @@ Loop-Kleinkram“):**
   für die Pfeile (vorgelegt war 0,1 für Pfeile und 0,5 für das Rad — ein
   Qt-Feld kennt nur einen Schritt); bei mehreren markierten Clips stellt das
   Feld nur den angeklickten.
-- ✅ **G3 Messbaustein** (S126): `composer/Lautheit` — `LautheitsMessung`
+- ✅ **G3 Messbaustein** (S126): `composer/Lautheit` — **seit S139 `audio/Lautheit`**
+  (`lumi::audio`, für Composer und Loop, Loop_Konzept §4n, Stufe 27a; dazu die
+  Maxima der Momentary- und Short-term-Lautheit) — `LautheitsMessung`
   (stückweise fütterbar) und `messeLautheit`, K-Filter für jede Abtastrate
   (Kennwerte wie in libebur128), Blöcke 400 ms / 75 %, Gates −70 LUFS und
   −10 LU, Sample-Spitze (kein True Peak). `test_ComposerLautheit.cpp`:
@@ -1974,6 +1976,7 @@ bauen, Unit-Tests, Vergleichslauf.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 0.98.0 | 2026-10-20 | Session 139 — §9g G3: die Messung liegt jetzt unter `audio/Lautheit` (Stufe 27a im Loop_Konzept), mit Momentary- und Short-term-Maximum. |
 | 0.97.0 | 2026-10-16 | Session 130 — §9f: Rechtsklick *Open in Loop panel* auf einem Loop-Clip, auch ohne Edit (Wunsch Patrik) |
 | 0.96.0 | 2026-10-16 | Session 130 — §9h: Sichttest 11 C1, Entscheid **C1 c**: das Panel Player zeigt einen ausgeschalteten Clip an der Stelle mit „(off)", ohne Songwechsel |
 | 0.95.0 | 2026-10-16 | Session 130 — §9g: Sichttest 11 L2 gemessen (der Limiter ohne Vorschau knackte), Entscheid **L2-1 b**: 5 ms Vorschau, Verzögerung nur bei gesetztem Haken |

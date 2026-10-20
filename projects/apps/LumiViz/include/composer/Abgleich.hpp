@@ -13,7 +13,7 @@
 #pragma once
 
 #include "composer/Komposition.hpp"
-#include "composer/Lautheit.hpp"
+#include "audio/Lautheit.hpp"
 
 #include <QString>
 
@@ -40,7 +40,7 @@ struct AbgleichZeile
     bool spielt = true;          ///< Kanal und Clip an — sonst grau, gemessen wird trotzdem
     double gainVorherDb = 0.0;   ///< beim Oeffnen des Dialogs (bzw. als die Zeile dazukam)
     double gainDb = 0.0;         ///< im Dialog
-    std::optional<Lautheit> messung;
+    std::optional<audio::Lautheit> messung;
     bool gemessenFehlgeschlagen = false;  ///< nicht lesbar: keine Werte, kein Vorschlag
 
     /// Derselbe Clip im Sinn des Neu-Lesens: dieselbe Datei, derselbe Ausschnitt.

@@ -16,6 +16,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/AudioPlayer.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/BassEngine.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Begrenzer.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Lautheit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Playlist.cpp"
 )
 set(_local_headers

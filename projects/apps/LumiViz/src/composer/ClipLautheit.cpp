@@ -32,11 +32,11 @@ namespace lumi::composer
 // Messen
 // =============================================================================
 
-std::optional<Lautheit> messeSong(IAudioEngine& engine, const QString& datei, std::int64_t einsatzMs,
+std::optional<audio::Lautheit> messeSong(IAudioEngine& engine, const QString& datei, std::int64_t einsatzMs,
                                   std::int64_t dauerMs, int rate, const MessFortschritt& fortschritt)
 {
     if (rate <= 0) return std::nullopt;
-    LautheitsMessung messung(rate);
+    audio::LautheitsMessung messung(rate);
     const double gesamt = dauerMs > 0 ? static_cast<double>(dauerMs) * rate / 1000.0 : 0.0;
     double bisher = 0.0;
     const bool fertig = engine.decodeStereoChunks(
@@ -66,7 +66,7 @@ std::shared_ptr<const loop::Programm> bereiteLoopVor(const QString& datei, IAudi
     return programm;
 }
 
-std::optional<Lautheit> messeLoop(const std::shared_ptr<const loop::Programm>& programm, int rate,
+std::optional<audio::Lautheit> messeLoop(const std::shared_ptr<const loop::Programm>& programm, int rate,
                                   const MessFortschritt& fortschritt)
 {
     if (programm == nullptr || rate <= 0 || programm->ablauf.durchlaufFrames <= 0) return std::nullopt;
@@ -79,7 +79,7 @@ std::optional<Lautheit> messeLoop(const std::shared_ptr<const loop::Programm>& p
     const std::int64_t durchlauf = programm->ablauf.durchlaufFrames;
     constexpr int kBlock = 1024;
     std::vector<float> block(2 * kBlock);
-    LautheitsMessung messung(rate);
+    audio::LautheitsMessung messung(rate);
     for (std::int64_t stelle = 0; stelle < 2 * durchlauf; stelle += kBlock)
     {
         const int frames = static_cast<int>(std::min<std::int64_t>(kBlock, 2 * durchlauf - stelle));
@@ -133,9 +133,9 @@ SongLautheiten::SongLautheiten(QString datei) : m_datei(std::move(datei))
     for (const QJsonValue& v : wurzel.value(QStringLiteral("songs")).toArray())
     {
         const QJsonObject o = v.toObject();
-        Lautheit l;
-        l.lufs = o.value(QStringLiteral("lufs")).toDouble(kLufsStille);
-        l.spitzeDb = o.value(QStringLiteral("peak")).toDouble(kLufsStille);
+        audio::Lautheit l;
+        l.lufs = o.value(QStringLiteral("lufs")).toDouble(audio::kLufsStille);
+        l.spitzeDb = o.value(QStringLiteral("peak")).toDouble(audio::kLufsStille);
         l.stille = o.value(QStringLiteral("silent")).toBool(true);
         m_werte[o.value(QStringLiteral("key")).toString()] = l;
     }
@@ -155,7 +155,7 @@ QString SongLautheiten::schluessel(const QString& song, std::int64_t einsatzMs, 
         .arg(rate);
 }
 
-std::optional<Lautheit> SongLautheiten::hole(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs,
+std::optional<audio::Lautheit> SongLautheiten::hole(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs,
                                              int rate) const
 {
     const QString s = schluessel(song, einsatzMs, dauerMs, rate);
@@ -166,7 +166,7 @@ std::optional<Lautheit> SongLautheiten::hole(const QString& song, std::int64_t e
 }
 
 void SongLautheiten::merke(const QString& song, std::int64_t einsatzMs, std::int64_t dauerMs, int rate,
-                           const Lautheit& wert)
+                           const audio::Lautheit& wert)
 {
     const QString s = schluessel(song, einsatzMs, dauerMs, rate);
     if (s.isEmpty()) return;

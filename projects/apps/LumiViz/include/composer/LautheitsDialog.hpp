@@ -98,7 +98,7 @@ private:
     void stelleWiederHer();
     /// Die naechste wartende Zeile messen (aus dem Speicher, sonst im Thread).
     void misseNaechste();
-    void nimmErgebnis(const AbgleichZeile& was, std::optional<Lautheit> ergebnis);
+    void nimmErgebnis(const AbgleichZeile& was, std::optional<audio::Lautheit> ergebnis);
     void halteMessungAn();
     void merkeZielwahl() const;
 

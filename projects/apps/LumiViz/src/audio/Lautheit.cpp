@@ -1,6 +1,7 @@
 /**
  * @file Lautheit.cpp
- * @brief Composer: Lautheit nach EBU R128 / ITU-R BS.1770 (Composer_Konzept §9g)
+ * @brief Lautheit nach EBU R128 / ITU-R BS.1770 (Composer_Konzept §9g;
+ *        seit S139 unter `audio/`, Loop_Konzept §4n, Stufe 27a)
  *
  * Der Weg nach BS.1770: K-Filter je Kanal (Hochton-Anhebung, dann Hochpass),
  * mittleres Quadrat in Bloecken von 400 ms mit 75 % Ueberlappung (gerechnet
@@ -8,17 +9,20 @@
  * Kanaele), absolutes Gate −70 LUFS, relatives Gate 10 LU unter dem Mittel der
  * Bloecke ueber dem absoluten. Die Filter werden fuer jede Abtastrate aus
  * ihren Kennwerten gerechnet (die Norm nennt Koeffizienten nur fuer 48 kHz);
- * Kennwerte und Formeln wie in libebur128 (MIT). Belegt an den Prueftoenen
- * aus EBU Tech 3341 (test_ComposerLautheit.cpp).
+ * Kennwerte und Formeln wie in libebur128 (MIT). Momentary und Short-term
+ * nach EBU Tech 3341 (2023, S. 7): gleitende Rechteckfenster von 0,4 s und
+ * 3 s ueber dasselbe gefilterte Signal, ohne Gate, je Abtastwert. Belegt an
+ * den Prueftoenen aus EBU Tech 3341 (test_ComposerLautheit.cpp).
  */
 
-#include "composer/Lautheit.hpp"
+#include "audio/Lautheit.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <numeric>
 
-namespace lumi::composer
+namespace lumi::audio
 {
 
 namespace
@@ -34,11 +38,32 @@ double lautheitAus(double mittleresQuadrat)
     return kVersatz + 10.0 * std::log10(mittleresQuadrat);
 }
 
+std::size_t frames(int sampleRate, double sekunden)
+{
+    return static_cast<std::size_t>(std::max(1L, std::lround(sekunden * std::max(1, sampleRate))));
+}
+
 }  // namespace
+
+void LautheitsMessung::Fenster::nimm(double quadrat)
+{
+    summe += quadrat - werte[stelle];
+    werte[stelle] = quadrat;
+    if (++stelle == werte.size())
+    {
+        stelle = 0;
+        summe = std::accumulate(werte.begin(), werte.end(), 0.0);
+    }
+    if (gefuellt < werte.size()) ++gefuellt;
+    if (gefuellt == werte.size())
+        groesstesMittel = std::max(groesstesMittel, std::max(0.0, summe) / static_cast<double>(werte.size()));
+}
 
 LautheitsMessung::LautheitsMessung(int sampleRate)
     : m_stueckFrames(static_cast<std::size_t>(std::max(1, sampleRate / 10)))
 {
+    m_momentan.werte.assign(frames(sampleRate, 0.4), 0.0);
+    m_kurzzeit.werte.assign(frames(sampleRate, 3.0), 0.0);
     const double fs = static_cast<double>(std::max(1, sampleRate));
     {
         // Stufe 1: Hochton-Anhebung um rund 4 dB
@@ -79,13 +104,17 @@ void LautheitsMessung::fuettere(const float* stereo, std::size_t frames)
 {
     for (std::size_t i = 0; i < frames; ++i)
     {
+        double quadrat = 0.0;
         for (int kanal = 0; kanal < 2; ++kanal)
         {
             const float x = stereo[2 * i + static_cast<std::size_t>(kanal)];
             m_spitze = std::max(m_spitze, std::abs(x));
             const double y = m_hochpass[kanal].schritt(m_shelf[kanal].schritt(x));
-            m_summe += y * y;
+            quadrat += y * y;
+            m_summe += y * y;  // je Kanal wie vor S139: die integrierte Lautheit bleibt Bit fuer Bit
         }
+        m_momentan.nimm(quadrat);
+        m_kurzzeit.nimm(quadrat);
         if (++m_imStueck == m_stueckFrames)
         {
             m_stuecke.push_back(m_summe / static_cast<double>(m_stueckFrames));
@@ -99,6 +128,8 @@ Lautheit LautheitsMessung::ergebnis() const
 {
     Lautheit l;
     if (m_spitze > 0.0f) l.spitzeDb = 20.0 * std::log10(static_cast<double>(m_spitze));
+    if (m_momentan.groesstesMittel > 0.0) l.momentanMaxLufs = lautheitAus(m_momentan.groesstesMittel);
+    if (m_kurzzeit.groesstesMittel > 0.0) l.kurzzeitMaxLufs = lautheitAus(m_kurzzeit.groesstesMittel);
     if (m_stuecke.size() < kStueckeJeBlock) return l;
 
     // die Bloecke: je vier Stuecke, um eines versetzt (75 % Ueberlappung)
@@ -140,4 +171,4 @@ Lautheit messeLautheit(const std::vector<float>& stereo, int sampleRate)
     return messung.ergebnis();
 }
 
-}  // namespace lumi::composer
+}  // namespace lumi::audio
