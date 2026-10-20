@@ -29,6 +29,7 @@
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QKeyEvent>
+#include <QCheckBox>
 #include <QDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -1124,6 +1125,21 @@ TEST_SUITE("LoopArrangement")
         doppelklick(feld0.center());
         CHECK(panel.loop().kanaele[0].gainDb == kKanalGainMinDb);
         lumi::ui::setzeDialogBeobachterFuerTests({});
+
+        // --- der Schalter Limiter (27e-3, LL7 a): gehoert zum Loop, Vorgabe an, ein Undo-Schritt
+        auto* limiter = panel.findChild<QCheckBox*>(QStringLiteral("loopLimiter"));
+        REQUIRE(limiter != nullptr);
+        CHECK(limiter->isChecked());
+        limiter->click();
+        CHECK_FALSE(panel.loop().limiter);
+        CHECK(bus->undoDescription() == "Turn off limiter");
+        REQUIRE(bus->undo());
+        CHECK(panel.loop().limiter);
+        CHECK(limiter->isChecked());
+        Loop ohneLimiter = panel.loop();
+        ohneLimiter.limiter = false;
+        panel.setzeLoop(ohneLimiter);
+        CHECK_FALSE(limiter->isChecked());
 
         // --- `LUMIVIZ_LOOP_FADER_BILD=<datei.png>` legt ein Bild des Panels mit Fadern ab
         if (const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_FADER_BILD"); !bild.isEmpty())

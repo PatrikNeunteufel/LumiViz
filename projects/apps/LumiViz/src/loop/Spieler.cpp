@@ -51,6 +51,8 @@ void Spieler::setzeLoop(const Loop& loop)
 
 void Spieler::ladeProgramm()
 {
+    // der Begrenzer am Mixer des Loops (27e-3, LL7 a): wie der Loop es sagt
+    m_engine->setMixerLimiter(m_mixer, m_loop.limiter);
     const int rate = m_engine->getSampleRate();
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
     const SaitenVon saiten = saitenAusInstrumenten();

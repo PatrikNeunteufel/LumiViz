@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.96.0
+> **Version:** 0.97.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3632,7 +3632,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c ✅ | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d ✅ | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
-| 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 ✅ Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
+| 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 ✅ Oberfläche, zuerst die Skizze; 27e-3 ✅ Begrenzer am Ausgang (LL7 a, LL13 a) |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
 
@@ -3777,6 +3777,20 @@ Zeiger, Ziehen (auch fein, bis −∞), Undo je Zug, Rad mit halber Raste, Ctrl+
 Doppelklick mit drei Eingaben; `LUMIVIZ_LOOP_FADER_BILD=<datei.png>` legt ein Bild ab
 (angesehen). **Offen:** der Klang folgt beim Ziehen noch nicht live; der Name eines
 ausgeschalteten Kanals wird mit „(off)“ früh gekürzt.
+
+✅ **LL13 a** (Patrik S139; Skizze: der Schalter *Limiter* in der zweiten Zeile, vor *Scroll with
+playhead*): **Der Limiter des Loops gilt nur, wenn das Loop-Panel den Loop spielt**; im Composer
+gilt allein der Limiter der Komposition am Ausgang. Verworfen: b (je Loop-Clip ein eigener
+Begrenzer im Composer — formte Loops, die in der Summe nicht übersteuern; zwei hintereinander
+pumpen eher).
+
+**Wie 27e-3 gebaut ist (S139):** `Loop::limiter` (Vorgabe an), in der `.lvloop` `limiter`
+(Fassung 11, immer geschrieben, fehlt = an). Der `Spieler` hängt beim Laden des Programms
+`setMixerLimiter(m_mixer, m_loop.limiter)` an seinen Mixer — derselbe Baustein `audio/Begrenzer`
+wie im Composer; ändert sich der Loop beim Spielen, folgt er. Im Panel der Schalter *Limiter*
+(`loopLimiter`) mit Tooltip, ein Undo-Schritt („Turn on/off limiter“). Tests: in
+`test_LoopFader` die Datei, in `test_LoopSpieler` „Loop Limiter 27e-3“ (Papp-Engine: an, aus beim
+Spielen, Start ohne), in `test_LoopArrangement` der Schalter mit Undo. Bild angesehen.
 
 **Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
 +24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
@@ -3940,6 +3954,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.97.0** (S139, 2026-10-20): §4n LL13 a; Stufe 27e-3 gebaut — der Begrenzer am Ausgang des Loop-Panels.
 - **0.96.0** (S139, 2026-10-20): §4n LL12 a; Stufe 27e-2 gebaut — der Fader im Kopf jedes Kanals.
 - **0.95.0** (S139, 2026-10-20): §4n LL9 a bis LL11 a; Stufe 27d gebaut — Drum-Probe, die Kits auf dem Drum-Anker (−21,89 LUFS, 8,5 LU unter dem Bezug der Instrumente), drei Rollen gekappt.
 - **0.94.0** (S139, 2026-10-20): §4n Stufe 27c gebaut — Instrumente auf dem Bezug (`instrument_pegel.py`), Loops nachgezogen, `.lvinst` Fassung 13.

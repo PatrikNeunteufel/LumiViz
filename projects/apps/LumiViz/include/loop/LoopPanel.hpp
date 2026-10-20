@@ -249,6 +249,7 @@ private:
     QLabel* m_stelle = nullptr;
     QPushButton* m_fit = nullptr;
     QCheckBox* m_mitlaufen = nullptr;  ///< Scroll with playhead (S127, W3 a)
+    QCheckBox* m_limiter = nullptr;    ///< der Begrenzer am Ausgang (27e-3, LL7 a), gehoert zum Loop
     Taktachse* m_achse = nullptr;
     QLabel* m_clipZeile = nullptr;
     QLabel* m_hinweis = nullptr;

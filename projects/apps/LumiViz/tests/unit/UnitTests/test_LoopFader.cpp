@@ -158,6 +158,25 @@ TEST_SUITE("LoopFader")
         CHECK(f.gainFaktor() == doctest::Approx(std::pow(10.0, 24.0 / 20.0)));
     }
 
+    TEST_CASE("Loop Limiter 27e-3: limiter in der Datei — immer geschrieben, fehlt = an, aus bleibt aus")
+    {
+        Loop an = drumLoop(0.0);
+        CHECK(an.limiter);
+        const QJsonObject json = alsJson(an);
+        REQUIRE(json.contains(QStringLiteral("limiter")));
+        CHECK(json.value(QStringLiteral("limiter")).toBool());
+        Loop aus = an;
+        aus.limiter = false;
+        Loop gelesen;
+        REQUIRE(ausJson(alsJson(aus), gelesen));
+        CHECK_FALSE(gelesen.limiter);
+        CHECK(gelesen == aus);
+        QJsonObject ohne = alsJson(aus);
+        ohne.remove(QStringLiteral("limiter"));
+        REQUIRE(ausJson(ohne, gelesen));
+        CHECK(gelesen.limiter);
+    }
+
     TEST_CASE("Loop Fader 27e-1: der Fader am Klang — doppelt, still, bei 0 dB Bit fuer Bit")
     {
         const std::vector<float> null = rechneOhneEffekte(drumLoop(0.0));

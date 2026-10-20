@@ -584,6 +584,34 @@ TEST_CASE("Loop Spieler: uebernimmt den Ton, der Player schweigt und spielt dana
     }
 }
 
+// Stufe 27e-3 (S139, Entscheide Patrik LL7 a, LL13 a): der Begrenzer am Mixer des Loops
+TEST_CASE("Loop Limiter 27e-3: der Spieler haengt den Begrenzer an, wie der Loop es sagt")
+{
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Spieler spieler;
+    Loop loop = spielLoop({1, 0, 0, 0});
+    CHECK(loop.limiter);  // Vorgabe an
+    spieler.setzeLoop(loop);
+    REQUIRE(spieler.starte(engine, player));
+    REQUIRE_FALSE(engine.limiterAufrufe.empty());
+    CHECK(engine.limiterAn);
+    // aus: beim naechsten Stand des Loops, waehrend er spielt
+    loop.limiter = false;
+    spieler.setzeLoop(loop);
+    CHECK_FALSE(engine.limiterAn);
+    loop.limiter = true;
+    spieler.setzeLoop(loop);
+    CHECK(engine.limiterAn);
+    spieler.halte(false);
+    // ein Loop, der aus ist, startet ohne Begrenzer
+    loop.limiter = false;
+    spieler.setzeLoop(loop);
+    REQUIRE(spieler.starte(engine, player));
+    CHECK_FALSE(engine.limiterAn);
+    spieler.halte(false);
+}
+
 TEST_CASE("Loop Spieler: Rangfolge — der Composer steht ueber dem Loop")
 {
     LoopPappEngine engine;

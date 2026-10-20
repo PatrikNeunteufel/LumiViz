@@ -519,6 +519,11 @@ struct Loop
     /// oben: die Spuren addieren sich, begrenzt wird nichts (Entscheid Patrik
     /// S108, L6 a).
     double laut = 0.5;
+    /// Der Begrenzer am Ausgang (Stufe 27e-3, Entscheide Patrik LL7 a, LL13 a): haelt
+    /// die Summe unter 0 dB, solange das Loop-Panel den Loop spielt — im Composer gilt
+    /// allein der Limiter der Komposition. In der Datei `limiter` (Fassung 11, immer
+    /// geschrieben); fehlt es, ist er an.
+    bool limiter = true;
 
     std::vector<Muster> muster;
     std::vector<Kanal> kanaele;

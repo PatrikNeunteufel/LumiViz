@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.194.0
+> **Version:** 1.195.0
 > **Datum:** 2026-10-20
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2653,6 +2653,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | Clip-Zeile | Zum angeklickten Clip: Basis, Takte, Wiederholungen und wie viele Clips die Basis spielen |
 | Kanal am **Namen** ziehen | Legt den Kanal an einen anderen Platz — ein Strich zeigt, wo er landet; Esc bricht ab. Oder Rechtsklick auf den Namen → **Move channel up** / **Move channel down**. Clips und Auswahl gehen mit, der Klang bleibt; ein Schritt für Undo |
 | **Fader** rechts im Kanalkopf | Die Lautstärke des Kanals in dB, von −∞ bis +24 dB, für alle Clips darin — zum Mischen. Senkrecht **ziehen** oder das **Mausrad** stellt ihn in Schritten von 0,5 dB, mit **Shift** von 0,1 dB; **Doppelklick** öffnet ein Feld zum Tippen (auch „-6,5“ oder „-inf“); **Ctrl+Klick** setzt 0 dB. Bei 0 dB steht der Wert matt da, sonst gerahmt; über dem Feld nennt die Zeile unter der Achse die Gesten. Er wirkt nach den Effekten der Clips, wie an einem Mischpult; jeder Zug ist ein Schritt für Undo. Neben den Instrumenten liegen die Drums eines frischen Kits rund 8 dB leiser — hier gleicht man es aus |
+| Haken **Limiter** | Hält die Summe aller Kanäle unter 0 dB, solange das Panel den Loop spielt: Spitzen darüber — etwa von einem Fader über 0 dB — werden weich gesenkt statt abgeschnitten, alles darunter bleibt, wie es ist. Aus: die Summe geht, wie sie ist. Gehört zum Loop, Vorgabe an. Im Composer gilt stattdessen sein eigener Limiter |
 
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
 oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
@@ -3571,6 +3572,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.195.0 | 2026-10-20 | Session 139. §16 Loop: der Haken Limiter im Panel (Stufe 27e-3). |
 | 1.194.0 | 2026-10-20 | Session 139. §16 Loop: der Fader je Kanal im Kopf des Kanals (Stufe 27e-2). |
 | 1.193.0 | 2026-10-20 | Session 139. §16 Kits: die mitgelieferten Kits gleich laut (Stufe 27d). |
 | 1.192.0 | 2026-10-20 | Session 139. §16 Loop: Level des ganzen Instruments im Creator in dB bis +24 dB; die mitgelieferten Instrumente gleich laut (Stufe 27c). |

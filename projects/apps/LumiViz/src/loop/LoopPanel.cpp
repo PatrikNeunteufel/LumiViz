@@ -299,6 +299,23 @@ void LoopPanel::setupUI()
            "Continuous or page by page as set for the Composer (Settings). While you drag a scroll "
            "bar, nothing moves."));
     connect(m_mitlaufen, &QCheckBox::toggled, this, [](bool an) { QSettings().setValue(QLatin1String(kMitlaufen), an); });
+    // der Begrenzer am Ausgang (27e-3, Entscheide Patrik LL7 a, LL13 a): gehoert zum Loop, Vorgabe an
+    m_limiter = new QCheckBox(tr("Limiter"), this);
+    m_limiter->setObjectName(QStringLiteral("loopLimiter"));
+    m_limiter->setChecked(true);
+    m_limiter->setToolTip(
+        tr("Keeps the sum of all channels below 0 dB while this panel plays the loop.\n\n"
+           "On: peaks above 0 dB — for example from a channel fader above 0 dB — are turned down "
+           "smoothly instead of clipping. Everything below passes unchanged.\n\n"
+           "Off: the sum goes out as it is; peaks above 0 dB clip at the output.\n\n"
+           "In the Composer the limiter of the composition applies instead. Saved with the loop."));
+    connect(m_limiter, &QCheckBox::clicked, this, [this](bool an) {
+        if (!m_geladen) return;
+        Loop neuer = m_loop;
+        neuer.limiter = an;
+        bearbeite(neuer, an ? tr("Turn on limiter") : tr("Turn off limiter"));
+    });
+    spielReihe->addWidget(m_limiter);
     spielReihe->addWidget(m_mitlaufen);
     spielReihe->addWidget(m_fit);
     aussen->addLayout(spielReihe);
@@ -1055,6 +1072,10 @@ void LoopPanel::zeigeDatei()
     {
         const QSignalBlocker ruhe(m_bpm);
         m_bpm->setValue(m_loop.bpm);
+    }
+    {
+        const QSignalBlocker ruhe(m_limiter);
+        m_limiter->setChecked(m_loop.limiter);
     }
     m_info->setText(tr("%1 BPM · channels: %2 · bars: %3 · %4 s")
                         .arg(m_loop.bpm, 0, 'f', m_loop.bpm == std::floor(m_loop.bpm) ? 0 : 1)

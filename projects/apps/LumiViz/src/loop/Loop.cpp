@@ -53,7 +53,8 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // dann stehen Saite und Artikulationen davor) — ein aelteres Programm verloere
 // beides still.
 // 11 (S139, Stufe 27e-1, Entscheid LL3 a): der Fader je Kanal `gain` in dB — ein
-// aelteres Programm spielte jeden Kanal mit 0 dB. Geschrieben wird immer 11.
+// aelteres Programm spielte jeden Kanal mit 0 dB. Dazu (27e-3, LL7 a) `limiter`
+// am Loop. Geschrieben wird immer 11.
 constexpr int kVersion = 11;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
@@ -851,6 +852,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
     wurzel[QStringLiteral("stepsPerBeat")] = loop.schritteJeSchlag;
     wurzel[QStringLiteral("swing")] = loop.swing;
     wurzel[QStringLiteral("volume")] = loop.laut;
+    wurzel[QStringLiteral("limiter")] = loop.limiter;  // seit Fassung 11, immer geschrieben
     // die Tags: nur, was gesetzt ist — ein Loop ohne Tags traegt den Block nicht
     QJsonObject tags;
     const auto tag = [&tags](const char* name, const QString& wert) {
@@ -994,6 +996,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
     neu.schritteJeSchlag = wurzel.value(QStringLiteral("stepsPerBeat")).toInt(neu.schritteJeSchlag);
     neu.swing = wurzel.value(QStringLiteral("swing")).toDouble(neu.swing);
     neu.laut = wurzel.value(QStringLiteral("volume")).toDouble(neu.laut);
+    neu.limiter = wurzel.value(QStringLiteral("limiter")).toBool(true);  // seit Fassung 11; fehlt es: an
     const QJsonObject tags = wurzel.value(QStringLiteral("tags")).toObject();
     neu.tags.titel = tags.value(QStringLiteral("title")).toString();
     neu.tags.kuenstler = tags.value(QStringLiteral("artist")).toString();
