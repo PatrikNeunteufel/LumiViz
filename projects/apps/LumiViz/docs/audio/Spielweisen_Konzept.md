@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.7.0
+> **Version:** 0.8.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a, SF7 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF7 a (Patrik S139, S140);
+> Session 140: SF6 a, SF7 a, SF8 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF8 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -32,8 +32,8 @@ gut"); die Liste ist der Umfang, nicht schon die Reihenfolge:
 | Für alle | Vibrato, Crescendo/Swell innerhalb einer Note |
 | Schlagwerk | Wirbel, Abdämpfen mit der Hand (Becken, Vibraphon) |
 
-**Drei Arten von Spielweisen** (Vorschlag Claude S139, zum Ort im Modell; noch
-nicht entschieden):
+**Drei Arten von Spielweisen** (Vorschlag Claude S139, zum Ort im Modell; als Regel
+entschieden mit SF8 a):
 
 | Art | Beispiele | Ort |
 |---|---|---|
@@ -161,17 +161,38 @@ string* übernimmt schon heute nur die Tonführung, nicht den Klang). Kippt, wen
 eine Spur verwirrt, die nur einen Teil der Schichten erreicht — dann eher eine Anzeige im
 Kopf der Spur, welche Schichten sie erreicht, als b.
 
+✅ **SF8 a** (Patrik S140): **Drei Orte der Klang-Spielweisen, gewählt danach, wie oft die
+Spielweise wechselt.** Jede hat genau einen Ort. **Nie** (wie das Instrument gebaut ist,
+ein fester Registersatz, die Dämpferart, die ein Spieler mitbringt): in der Ausstattung
+von Schicht oder Instrument, wie `bundlos`. **Über eine Passage** (Una corda, Dämpfer,
+Register, Leslie langsam/schnell, Motor an/aus): eine Spur je Muster mit Umschaltstellen,
+wie Strum — sie erscheint nur, wo Bauart und Ausstattung sie tragen (SF6 a), und gilt für
+die Schichten nach SF7 a; die Spur setzt den Schalter, **das Modell rechnet den Übergang**
+(das Hochlaufen des Leslie, das Umstecken eines Dämpfers). **Je Note** (Pizzicato, Fall,
+Doit, Zungenstoß, Tremolo, Spiccato, Col legno, Flatterzunge, Growl, Wirbel, Abdämpfen):
+eine Artikulation an der Note, wie Palm mute, die mit der Note wandert. Wechselt eine
+Spielweise passagenweise, wird aber je Note gespielt (Pizzicato und Arco), liegt sie an
+der Note; eine Passage setzt die Mehrfachauswahl — keine zweite Ablage. Damit gilt als
+Regel, was im Saitenstrang gebaut ist (Strum als Spur; Palm mute, Tapping, Harmonic an der
+Note; `bundlos` am Saitensatz). Verworfen: b (alles an der Note — kein Ort für den
+Übergang zwischen den Noten, also auch nicht für die Zeit zum Umstecken), c (alles als
+Spur — Fall und Doit blieben stehen, wenn die Note verschoben oder kopiert wird). Kippt,
+wenn die Recherche einer Familie eine Spielweise findet, die Passage und Note braucht und
+sich nicht über die Mehrfachauswahl setzen lässt — dann für genau diese ein eigener
+Entscheid „Spur als Vorgabe, die Note überschreibt“.
+
 ## 2. Offen
 
 - Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
   im Saitenstrang (S132–S138).
-- Der Ort der Klang-Spielweisen (Bauart, Spur, Note) — einzeln; die Steuer-Spielweisen: SF5 d.
+- Je Klang-Spielweise der Ort nach SF8 a — in der Recherche ihrer Familie.
 - Die Zeit zum Umstecken eines Dämpfers: belegen, dann entscheiden.
 
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.8.0 | 2026-10-20 | Session 140. SF8 a (drei Orte der Klang-Spielweisen: Ausstattung, Spur je Muster, Artikulation an der Note). |
 | 0.7.0 | 2026-10-20 | Session 140. SF7 a (Spuren aller Schichten zusammen; *Follow* folgt bei den gemeinsamen, die übrigen rechnet die Schicht selbst). |
 | 0.6.0 | 2026-10-20 | Session 140. SF6 a (Bauart als Obergrenze, Ausstattung je Instrument; Tabelle der Steuer-Spielweisen je Bauart, noch unbelegt). |
 | 0.5.0 | 2026-10-20 | Session 139. SF5 d (fünf Spuren je Muster, dazu Expression am Clip, malgenommen). |
