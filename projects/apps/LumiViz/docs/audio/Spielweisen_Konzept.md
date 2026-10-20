@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.8.0
+> **Version:** 0.11.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a, SF7 a, SF8 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF8 a (Patrik S139, S140);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -59,7 +59,8 @@ Familie steht **nicht** als Feld in der Datei; wo sie gezeigt oder gefiltert wir
 das Programm sie aus den Bauarten ab. Verworfen: a (nur aus der Bauart — das
 Sustain-Pedal fehlte jedem Synth, obwohl jedes Keyboard es hat), b (Feld `family` als
 Quelle — zwei Angaben, die sich widersprechen können, und Klang-Spielweisen ohne
-Rechnung).
+Rechnung). *Die Liste der Bauarten ist mit SF10 a neu gefasst: Paar aus Anregung und
+Schwinger.*
 
 ✅ **SF2 a** (Patrik S139): **Die Bauart bestimmt, welche Steuer-Spielweisen ein
 Instrument mit Modell hat.** Jede Bauart nennt die, die ihr echtes Vorbild hat, und
@@ -98,7 +99,8 @@ mitgelieferten Dateien umzuschreiben). Kippt, wenn die Spur auch die Rate führe
 
 ✅ **SF5 d** (Patrik S139; zuerst a, dann „c als Zusatz?" — daraus d): **Fünf Spuren je
 Muster** im Instrument-Editor, wie Strum — unter den Noten, einzeln ein- und
-ausklappbar, in der `.lvloop`; **Sustain** und **Sostenuto** als Stufen 0 … 1 (auch das
+ausklappbar, in der `.lvloop` (*der Ort im Editor ist mit der Skizze §1a ersetzt: oben,
+unter Strum; Ein- und Ausblenden über Haken, SK1 a*); **Sustain** und **Sostenuto** als Stufen 0 … 1 (auch das
 halbe Pedal, wie am Flügel — noch zu belegen), **Expression**, **Vibrato**, **Pitch** als
 Kurven; eine leere Spur = Vorgabe des Instruments. **Dazu am Clip im Loop-Panel ein
 Verlauf Expression** über die ganze Länge des Clips mit allen Wiederholungen, mit der
@@ -144,7 +146,8 @@ ein Beleg gegen eine Zeile ändert nur die Zeile.
 | ohne Bauart (Synth) | ja | ja | ja | ja | ja (SF2 a) |
 
 *Herkunft der Tabelle:* aus dem Gedächtnis (Claude S140), nicht belegt — jede Zeile wird
-in der Recherche ihrer Familie belegt.
+in der Recherche ihrer Familie belegt. *Mit SF10 a gilt sie je Paar aus Anregung und
+Schwinger; die Tabelle dort ersetzt diese.*
 
 ✅ **SF7 a** (Patrik S140): **Die Spuren aller Schichten zusammen; eine Schicht mit
 *Follow* folgt bei den gemeinsamen und nimmt die übrigen selbst.** Der Instrument-Editor
@@ -181,10 +184,112 @@ wenn die Recherche einer Familie eine Spielweise findet, die Passage und Note br
 sich nicht über die Mehrfachauswahl setzen lässt — dann für genau diese ein eigener
 Entscheid „Spur als Vorgabe, die Note überschreibt“.
 
+✅ **SF9 a** (Patrik S140): **Zuerst die Spuren, dann die Familien in der Reihenfolge
+ihrer Verwandtschaft zur Saite.** **Stufe 1:** die fünf Steuer-Spuren je Muster (SF5 d),
+Expression am Clip und die Spuren der Klang-Spielweisen (SF8 a) — gebaut und gehört an
+Synth-Schichten und an der heutigen Saite (Vibrato, Expression über die Tonabnehmer, Pitch
+über *Tremolo arm*). Danach die Familien: (1) **Hammer-Saite** — Saite und Korpus da, neu
+Hammer, Dämpfer, Mitschwingen beim Sustain; (2) **Bogen-Saite** — Saitensatz und Korpus da,
+neu die Anregung durch den Bogen; (3) **Platte und Stab** — ein neues Modell aus
+Schwingungsformen; (4) **Lippe und Rohr** und (5) **Rohrblatt und Rohr** — sie teilen ein
+neues Rohr-Modell. Je Familie Recherche, Modell, Messung, Hörproben wie im Saitenstrang
+(S132–S138). Mitgeliefert heute: Hammer-Saite `piano`, `house_piano`; Bogen-Saite
+`violin`, `strings`, `pizzicato_violin`, `upright_bass`; Platte und Stab `marimba`,
+`vibraphone`, `bell`, `kalimba`, `thumb_piano`, `steel_drum`; Lippe und Rohr `brass`;
+Rohrblatt und Rohr `sax`, `alto_sax`. Verworfen: b (nach den Spuren zuerst das Rohr — prüft
+die Regeln am fernsten Modell früh, aber die Regeln SF6 a bis SF8 a tragen eigene
+Kipp-Bedingungen; bricht eine am Rohr, ändert sich die Regel, nicht das Gebaute), c (die
+Spuren verteilt mit den Familien — legte das Modell der Spur an der Hammer-Saite fest, bevor
+Pitch und Expression es geprüft haben). Kippt, wenn Patrik eine Familie im Klang vorziehen
+will (wie S139 die Lautstärke) — dann rückt sie hinter Stufe 1 vor, die übrige Reihenfolge
+bleibt. *Mit SF10 a kommen die Flöten mit dem Rohr-Schritt, Rhodes und Kalimba mit
+Platte und Stab, Pfeifenorgel und Tonrad nach den Rohren.*
+
+✅ **SF10 a** (Patrik S140): **Die Bauart ist ein Paar aus Anregung und Schwinger.**
+**Anregungen:** Zupfen, Hammer, Schlägel, Bogen, Lippe, Rohrblatt, Luftstrahl.
+**Schwinger:** Saite, Platte/Stab, Rohr, dazu das **Tonrad** als elektromechanischer
+Schwinger ohne Anregung. Je Anregung und je Schwinger ein Modell: das Rohr dient drei
+Anregungen (Lippe, Rohrblatt, Luftstrahl), die Saite vier (Zupfen, Hammer, Bogen, die
+Tangente des Clavinets als Hammer). Die Tabelle aus SF6 a gilt je Paar; die Steuer-Spielweisen
+folgen aus den beiden Achsen: **Expression, Vibrato, Pitch nur bei dauernder Anregung**
+(Bogen, Lippe, Rohrblatt, Luftstrahl) — bei Zupfen, Hammer, Schlägel Expression nur über
+einen Tonabnehmer, Pitch nur über einen *Tremolo arm*, Vibrato an der gezupften Saite über
+den Finger (SF6 a); **Sustain über den Damper des Schwingers**, Sostenuto als Ausstattung.
+Eine neue Kombination hat damit von selbst ihre Spuren.
+
+| Instrument | Anregung | Schwinger | Ausstattung |
+|---|---|---|---|
+| Gitarre, Bass, Ukulele (heute) | Zupfen | Saite | Tonabnehmer, *Tremolo arm* |
+| Klavier (`piano`, `house_piano`) | Hammer | Saite | Damper, Sostenuto (Flügel) |
+| Clavinet | Hammer | Saite | Damper, Tonabnehmer |
+| Geige, Streicher, Kontrabass | Bogen | Saite | |
+| Vibraphon | Schlägel | Stab | Damper |
+| Marimba, Glocke, Steel drum | Schlägel | Stab/Platte | |
+| Rhodes (`tine_piano`) | Hammer | Stab | Damper, Tonabnehmer |
+| Kalimba, Thumb piano | Zupfen | Stab | |
+| Blech (`brass`) | Lippe | Rohr | |
+| Saxophon | Rohrblatt | Rohr | |
+| Flöte, Altflöte, Shakuhachi | Luftstrahl | Rohr | |
+| Pfeifenorgel | Luftstrahl oder Rohrblatt je Register | Rohr | Register |
+| Hammond | — | Tonrad | Leslie |
+
+Welche Orgel `organ` und `house_organ` sind, klärt die Recherche ihrer Familie.
+*Herkunft:* die Einordnung und die Regel aus dem Gedächtnis (Claude S140); dass die
+Anregung als nichtlineare Stelle an den Schwinger gekoppelt gerechnet wird (Lippe,
+Rohrblatt, Bogen am Wellenleiter), ist im Rohr-Schritt zu belegen. Verworfen: b (die Liste
+um ganze Bauarten erweitern — „Schneide und Rohr“, „Stab mit Hammer“, „Tonrad-Orgel“ —
+jede Kombination ein eigenes Ganzes, zwei Rohre und zwei Hämmer, und gezupfte und
+angeschlagene Stäbe blieben eine Bauart), c (ohne Bauart, bis die Familie dran ist — schiebt
+die Frage auf, während Spuren an Instrumenten ohne Einordnung gebaut würden). Kippt, wenn
+die Recherche am Rohr zeigt, dass Anregung und Schwinger dort nur gemeinsam rechenbar sind
+— dann für das Rohr b, für die übrigen bleibt a.
+
+### 1a. Skizze Stufe 1 (Patrik S140, gebilligt)
+
+Zwei Fassungen gezeichnet; gebilligt ist der Instrument-Editor aus Fassung 2 und der Clip
+aus Fassung 1 (Patrik: die Kurve über dem Clip „war schon gut so").
+
+**Instrument-Editor.** Die Spuren liegen **oben, unter Strum** — nicht unter den Noten
+(Frage Patrik: „wieso unterhalb der Keys und nicht wie Strum?"). Was über der Zeit gespielt
+wird, steht damit beisammen über dem Raster; was zu einer Note gehört (Tab-Linien, Noten,
+*Note vol.*), darunter. Von oben: Taktzeile, Strum (bei Saiten), **Sustain, Sostenuto,
+Expression, Vibrato, Pitch**, danach die Klang-Spuren (SF8 a, etwa *Una corda*), dann die
+Tab-Linien, die Noten, *Note vol.* Damit ist der Ort aus SF5 d („unter den Noten") ersetzt.
+- **Zeile *Lanes*** unter der Strum-Zeile: je Spur ein Haken, die vollen Namen; dazu der Haken
+  *Tab* (heute am Ende der Strum-Zeile). Es erscheinen nur die Spuren, die das Instrument
+  trägt (SF6 a, SF7 a). Ausblenden: SK1 a.
+- **Pedale** (Sustain, Sostenuto) als Stufen 0 … 1, als Fläche von unten gezeichnet; das
+  halbe Pedal ist eine halbe Fläche.
+- **Kurven** (Expression, Vibrato, Pitch) mit Punkten zum Ziehen, wie der Bend; Pitch mit
+  einer Mittellinie (die gespielte Höhe).
+- **Eine leere Spur** zeigt eine gestrichelte Linie und „Instrument default" (SF4 a, SF5 d).
+- **Klang-Spuren** in derselben Leiste, anders gefärbt, als Schalter an/aus mit
+  Umschaltstellen (SF8 a); in Stufe 1 nur der Mechanismus.
+- Der Name jeder Spur steht in der linken Spalte (heute 44 px, wie *Strum* und *Note vol.*)
+  — Kürzel oder volle Namen: SK2.
+
+**Loop-Panel.** Die **Expression eines Clips liegt als Kurve auf dem Clip**, über seine ganze
+Länge mit allen Wiederholungen, mit Punkten zum Ziehen; ohne Kurve zeichnet der Clip
+nichts (Wert 1). Der Kanal behält seine Höhe. (Patriks Gegenvorschlag — der Kanal
+anderthalbfach hoch, die Kurve im unteren Drittel — war aus einem Missverständnis der
+Skizze entstanden und ist zurückgenommen.)
+
+✅ **SK1 a** (Patrik S140): **Ausblenden ist nur Ansicht.** Der Haken in der Zeile *Lanes*
+blendet eine Spur ein oder aus; ihre Werte bleiben in der `.lvloop` und klingen weiter.
+Trägt eine ausgeblendete Spur Werte, steht ein Punkt hinter ihrem Namen (*Vibrato •*,
+Tooltip „hidden, still playing"). Beim Öffnen eines Musters sind die Spuren mit Werten
+eingeblendet. Gelöscht wird nur über das Kontextmenü der Spur, *Clear lane*. Verworfen:
+b (Ausblenden schaltet stumm — dasselbe Muster klänge je nach Ansicht anders), c
+(Ausblenden löscht nach Rückfrage — eine Geste der Ansicht, die Daten löscht; das leistet
+*Clear lane*). Kippt, wenn der Vergleich mit und ohne Spur oft gebraucht wird — dann ein
+Stummschalter im Kopf jeder Spur dazu, wie *Effects on* am Clip; der Haken bleibt Ansicht.
+
 ## 2. Offen
 
-- Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
-  im Saitenstrang (S132–S138).
+- SK2: die Namen der Spuren in der linken Spalte (Kürzel oder volle Namen).
+- Der Bereich von Pitch (Halbtöne, fest oder je Instrument) und von Expression (0 … 1
+  oder dB).
+
 - Je Klang-Spielweise der Ort nach SF8 a — in der Recherche ihrer Familie.
 - Die Zeit zum Umstecken eines Dämpfers: belegen, dann entscheiden.
 
@@ -192,6 +297,9 @@ Entscheid „Spur als Vorgabe, die Note überschreibt“.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.11.0 | 2026-10-20 | Session 140. §1a Skizze Stufe 1 (Spuren oben unter Strum, Zeile *Lanes*, Expression als Kurve auf dem Clip), SK1 a (Ausblenden ist nur Ansicht); Ort aus SF5 d ersetzt. |
+| 0.10.0 | 2026-10-20 | Session 140. SF10 a (Bauart = Anregung × Schwinger; Einordnung der mitgelieferten Instrumente; Steuer-Spielweisen aus den zwei Achsen). |
+| 0.9.0 | 2026-10-20 | Session 140. SF9 a (Stufe 1 die Spuren, dann Hammer-Saite, Bogen-Saite, Platte und Stab, Lippe und Rohr, Rohrblatt und Rohr). |
 | 0.8.0 | 2026-10-20 | Session 140. SF8 a (drei Orte der Klang-Spielweisen: Ausstattung, Spur je Muster, Artikulation an der Note). |
 | 0.7.0 | 2026-10-20 | Session 140. SF7 a (Spuren aller Schichten zusammen; *Follow* folgt bei den gemeinsamen, die übrigen rechnet die Schicht selbst). |
 | 0.6.0 | 2026-10-20 | Session 140. SF6 a (Bauart als Obergrenze, Ausstattung je Instrument; Tabelle der Steuer-Spielweisen je Bauart, noch unbelegt). |
