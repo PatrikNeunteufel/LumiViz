@@ -80,12 +80,25 @@ struct Saitensatz
     /// *Fretless* (Stufe 25c, S-L9 a): ohne Buende — ein Slide gleitet stetig statt
     /// von Bund zu Bund; die Tabs zeigen keine Bundzahl.
     bool bundlos = false;
+    /// *Tremolo arm* (Stufe 28c-2a, SK11 a): so weit senkt und hebt der Vibratohebel den
+    /// Ton, in Halbtoenen (0 … `kHebelMaxHt`); beide 0 = kein Hebel — dann wirkt die Spur
+    /// Pitch an der Saite nicht (SF6 a). In der Datei `tremoloDown`, `tremoloUp` (seit
+    /// `.lvinst` Fassung 15, immer).
+    double hebelRunterHt = 0.0;
+    double hebelHochHt = 0.0;
 
     [[nodiscard]] bool istSaiteninstrument() const { return !leer.empty(); }
+    [[nodiscard]] bool hatHebel() const { return hebelRunterHt > 0.0 || hebelHochHt > 0.0; }
     [[nodiscard]] int anzahl() const { return static_cast<int>(leer.size()); }
 
     [[nodiscard]] bool operator==(const Saitensatz&) const = default;
 };
+
+/// Der Vibratohebel (SK11 a): die Grenze je Richtung, und was gilt, wenn man ihn im
+/// Creator einschaltet (von Claude gesetzt, in den Hoerproben zu pruefen).
+inline constexpr double kHebelMaxHt = 24.0;
+inline constexpr double kHebelRunterVorgabe = 2.0;
+inline constexpr double kHebelHochVorgabe = 1.0;
 
 /// Die Grenzen der Mensur, in mm; und was gilt, solange keine gesetzt ist
 /// (von Claude gesetzt: eine Gitarre mit 648 mm, bis die Vorlagen ihre eigene

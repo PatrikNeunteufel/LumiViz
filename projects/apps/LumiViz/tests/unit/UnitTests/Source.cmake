@@ -133,6 +133,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopPedal.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopExpression.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopVibratoPitch.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopSaiteSpuren.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKits.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopPegel.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopKitFenster.cpp"

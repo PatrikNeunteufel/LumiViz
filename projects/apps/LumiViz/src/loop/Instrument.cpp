@@ -349,14 +349,16 @@ public:
         return m_biegung.back().second;
     }
     /// Die Spuren Pitch und Vibrato des Musters (Stufe 28c-1b): die Tonhoehe in Cent,
-    /// gekappt auf ±`rangeHt` Halbtoene (*Pitch range*, SK3 a), und die Tiefe des
-    /// Vibratos in Cent mit `vibratoHz` und dem Einsatz der Schicht (SF4 a, SK10 a).
-    void setzeSpuren(int rate, const std::vector<TonPunkt>& tonhoehe, double rangeHt, const std::vector<TonPunkt>& vibrato,
-                     double vibratoHz, double einsatzMs)
+    /// gekappt auf −`untenHt` … +`obenHt` Halbtoene (*Pitch range*, SK3 a; an der Saite
+    /// der Vibratohebel, SK11 a), und die Tiefe des Vibratos in Cent mit `vibratoHz` und
+    /// dem Einsatz der Schicht (SF4 a, SK10 a).
+    void setzeSpuren(int rate, const std::vector<TonPunkt>& tonhoehe, double untenHt, double obenHt,
+                     const std::vector<TonPunkt>& vibrato, double vibratoHz, double einsatzMs)
     {
-        const double grenze = std::clamp(rangeHt, 0.0, kPitchRangeMax);
+        const double unten = std::clamp(untenHt, 0.0, kPitchRangeMax);
+        const double oben = std::clamp(obenHt, 0.0, kPitchRangeMax);
         for (const TonPunkt& p : tonhoehe)
-            m_spurTon.push_back({std::llround(p.ms * static_cast<double>(rate) / 1000.0), std::clamp(p.cent / 100.0, -grenze, grenze)});
+            m_spurTon.push_back({std::llround(p.ms * static_cast<double>(rate) / 1000.0), std::clamp(p.cent / 100.0, -unten, oben)});
         for (const TonPunkt& p : vibrato)
             m_spurVibrato.push_back({std::llround(p.ms * static_cast<double>(rate) / 1000.0), std::max(0.0, p.cent * 1.0)});
         m_vibratoSchritt = 2.0 * kPi * vibratoHz / rate;
@@ -370,14 +372,21 @@ public:
     /// am Anschlag gerechnet: ein Pre-bend beginnt hoeher).
     [[nodiscard]] double verhaeltnis(std::int64_t t) const
     {
+        return std::exp2((tonBei(t) + biegungBei(t) + spurBei(t) - m_kopf) / 12.0);
+    }
+    /// Was die Spuren Pitch und Vibrato bei `t` zur Tonhoehe geben, in Halbtoenen (an der
+    /// Saite wie der Bend ueber die Spannung, Stufe 28c-2a).
+    [[nodiscard]] double spurBei(std::int64_t t) const
+    {
         double cent = 0.0;
         if (!m_spurVibrato.empty())
         {
             const double tiefe = linear(m_spurVibrato, t) * std::min(1.0, static_cast<double>(t) / m_vibratoEinsatz);
             cent = tiefe * std::sin(m_vibratoSchritt * static_cast<double>(t));
         }
-        return std::exp2((tonBei(t) + biegungBei(t) + linear(m_spurTon, t) - m_kopf) / 12.0 + cent / 1200.0);
+        return linear(m_spurTon, t) + cent / 100.0;
     }
+    [[nodiscard]] bool hatSpuren() const { return !m_spurTon.empty() || !m_spurVibrato.empty(); }
     /// Das groesste Verhaeltnis, das vorkommt (fuer die Bandgrenze).
     [[nodiscard]] double hoechstes() const
     {
@@ -919,6 +928,16 @@ public:
         }
     }
 
+    /// Stufe 28c-2a: die Spuren Pitch (nur mit Vibratohebel, gekappt auf seine Grenzen) und
+    /// Vibrato ueber die Spannung. Ein Hebel senkt den Ton unter alles, was die Noten
+    /// greifen: der Ring waechst mit dem tiefsten Stand.
+    void setzeSpuren(int rate, const std::vector<TonPunkt>& tonhoehe, double untenHt, double obenHt,
+                     const std::vector<TonPunkt>& vibrato, double vibratoHz, double einsatzMs)
+    {
+        m_weg.setzeSpuren(rate, tonhoehe, untenHt, obenHt, vibrato, vibratoHz, einsatzMs);
+        m_groesse = std::max(m_groesse, static_cast<std::size_t>(std::ceil(static_cast<double>(m_groesse) / m_weg.tiefstes())) + 8);
+    }
+
     [[nodiscard]] std::size_t groesse() const { return m_groesse; }
     [[nodiscard]] const std::vector<Anregung>& anregungen() const { return m_anregungen; }
 
@@ -995,7 +1014,8 @@ private:
             filterVerzug = m_filterVerzug[l.filterVon] + (m_filterVerzug[l.filterNach] - m_filterVerzug[l.filterVon]) * l.filterMisch;
         }
         const double ohneBend = m_rate / (440.0 * std::exp2((ton - 69.0) / 12.0)) - filterVerzug;
-        l.bend = m_weg.biegungBei(t);
+        // Stufe 28c-2a: Vibrato und Vibratohebel aendern die Spannung wie der Bend
+        l.bend = m_weg.biegungBei(t) + m_weg.spurBei(t);
         const double mitBend = m_rate / (440.0 * std::exp2((ton + l.bend - 69.0) / 12.0)) - filterVerzug;
         l.verzug = std::max(2.0, mitBend);
         l.bendVerhaeltnis = ohneBend > 0.0 ? l.verzug / ohneBend : 1.0;
@@ -2227,6 +2247,9 @@ QJsonObject alsJson(const Instrument& instrument)
         // seit Fassung 11 (Stufe 24a): die Vorgabe fuer neue Muster — immer (S-W11 a)
         saiten[QStringLiteral("strum")] = strumAlsJson(instrument.saiten.strum);
         saiten[QStringLiteral("fretless")] = instrument.saiten.bundlos;  // seit Fassung 12 (S-L9 a), immer
+        // seit Fassung 15 (Stufe 28c-2a, SK11 a): der Vibratohebel, immer
+        saiten[QStringLiteral("tremoloDown")] = instrument.saiten.hebelRunterHt;
+        saiten[QStringLiteral("tremoloUp")] = instrument.saiten.hebelHochHt;
         o[QStringLiteral("strings")] = saiten;
     }
     return o;
@@ -2280,6 +2303,8 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     neu.saiten.mensurMm = saiten.value(QStringLiteral("scale")).toDouble(0.0);
     neu.saiten.strum = strumAusJson(saiten.value(QStringLiteral("strum")).toObject());  // seit Fassung 11
     neu.saiten.bundlos = saiten.value(QStringLiteral("fretless")).toBool(false);       // seit Fassung 12
+    neu.saiten.hebelRunterHt = saiten.value(QStringLiteral("tremoloDown")).toDouble(0.0);  // seit Fassung 15
+    neu.saiten.hebelHochHt = saiten.value(QStringLiteral("tremoloUp")).toDouble(0.0);
     richteSaiten(neu.saiten);
     instrument = std::move(neu);
     return true;
@@ -2740,12 +2765,23 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
     // der ersten Saiten-Schicht
     const bool mitVerlauf = angabe != nullptr && (!angabe->verlauf.empty() || !angabe->biegung.empty());
     double gleitMs = kGleitMsVorgabe;
+    // Stufe 28c-2a: das Vibrato der Saite (Rate und Einsatz der ersten Saiten-Schicht, ohne
+    // Rate die Vorgabe, SK10 a) — was ihr folgt, schwingt mit ihr
+    double saiteVibratoHz = kVibratoHzVorgabe;
+    double saiteVibratoEinsatzMs = 0.0;
     for (const Schicht& schicht : instrument.schichten)
         if (schicht.an && istSaitenSchicht(schicht))
         {
             gleitMs = schicht.gleitMsJeHalbton;
+            if (schicht.vibratoHz > 0.0)
+            {
+                saiteVibratoHz = schicht.vibratoHz;
+                saiteVibratoEinsatzMs = schicht.vibratoEinsatzMs;
+            }
             break;
         }
+    const bool mitSpuren = angabe != nullptr && (!angabe->tonhoehe.empty() || !angabe->vibrato.empty());
+    const bool hebel = instrument.saiten.hatHebel();
     for (const Schicht& schicht : instrument.schichten)
     {
         if (!schicht.an) continue;
@@ -2772,10 +2808,17 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             const double schichtDicke = std::clamp(schicht.saitenUnterschied, 0.0, 1.0) * dicke;
             // Stufe 25c: ein Ton mit Verlauf oder Bend laeuft auf einer Bahn (Legato, Slide, Bend)
             std::optional<Bahn> bahn;
-            if (angabe != nullptr && (!angabe->verlauf.empty() || !angabe->biegung.empty()))
+            // Stufe 28c-2a (SF6 a): Vibrato hat jede Saite (der Finger), Pitch nur mit Vibratohebel
+            static const std::vector<TonPunkt> kKeine;
+            const std::vector<TonPunkt>& saitePitch = angabe != nullptr && hebel ? angabe->tonhoehe : kKeine;
+            const bool saiteSpuren = angabe != nullptr && (!saitePitch.empty() || !angabe->vibrato.empty());
+            if (angabe != nullptr && (!angabe->verlauf.empty() || !angabe->biegung.empty() || saiteSpuren))
             {
                 bahn.emplace(schicht, rate, schichtDicke, spiel.ton, std::clamp(schicht.versatzHalbtoene, -24, 24),
                              angabe->verlauf, angabe->biegung, instrument.saiten.bundlos);
+                if (saiteSpuren)
+                    bahn->setzeSpuren(rate, saitePitch, instrument.saiten.hebelRunterHt, instrument.saiten.hebelHochHt,
+                                      angabe->vibrato, saiteVibratoHz, saiteVibratoEinsatzMs);
                 spiel.art.bahn = &*bahn;
                 spiel.art.legatoLaut = std::clamp(schicht.legatoLaut, 0.0, 1.0);
             }
@@ -2797,12 +2840,19 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
             // Stufe 28c-1b: die Spuren Pitch und Vibrato des Musters — die Tonhoehe bis
             // *Pitch range*, das Vibrato mit Rate und Einsatz der Schicht, ohne Rate 5,5 Hz
             // ohne Einsatz (SK10 a)
-            if (angabe != nullptr && (!angabe->tonhoehe.empty() || !angabe->vibrato.empty()))
+            if (mitSpuren)
             {
                 if (!hand) hand.emplace(rate, ton, 0, std::vector<TonWechsel>{}, std::vector<TonBiegung>{}, true, gleitMs);
+                // Stufe 28c-2a (SF7 a): eine Schicht mit Follow string folgt der Saite, wo die Saite
+                // die Spur traegt — dem Vibrato immer, Pitch mit Vibratohebel in seinen Grenzen;
+                // ohne Hebel rechnet sie Pitch selbst, mit ihrer Pitch range
+                const bool folgt = schicht.folgtSaite && instrument.saiten.istSaiteninstrument();
                 const bool eigeneRate = schicht.vibratoHz > 0.0;
-                hand->setzeSpuren(rate, angabe->tonhoehe, schicht.pitchRangeHt, angabe->vibrato,
-                                  eigeneRate ? schicht.vibratoHz : kVibratoHzVorgabe, eigeneRate ? schicht.vibratoEinsatzMs : 0.0);
+                const double unten = folgt && hebel ? instrument.saiten.hebelRunterHt : schicht.pitchRangeHt;
+                const double oben = folgt && hebel ? instrument.saiten.hebelHochHt : schicht.pitchRangeHt;
+                const double hz = folgt ? saiteVibratoHz : eigeneRate ? schicht.vibratoHz : kVibratoHzVorgabe;
+                const double einsatzVibrato = folgt ? saiteVibratoEinsatzMs : eigeneRate ? schicht.vibratoEinsatzMs : 0.0;
+                hand->setzeSpuren(rate, angabe->tonhoehe, unten, oben, angabe->vibrato, hz, einsatzVibrato);
             }
             const Handweg* weg = hand ? &*hand : nullptr;
             if (schicht.schwingung == Schwingung::Saite)

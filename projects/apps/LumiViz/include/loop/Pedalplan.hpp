@@ -64,5 +64,9 @@ inline constexpr double kPedalSchwelle = 0.5;
 /// Wert (von Claude gesetzt). Eine Spur Pitch, die ueberall 0 ist, faellt weg — der Ton
 /// heisst dann wie ohne sie.
 [[nodiscard]] TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
+/// Die Spuren Pitch und Vibrato ueber einen Ton legen, der mit der Note `note` dieses
+/// Vorkommens anschlaegt und `ton.dauerMs` gehalten wird — wie in `tonImClip`; auch fuer
+/// die Toene eines Instruments mit Saiten (Stufe 28c-2a, `toeneImKanal`).
+void setzeSpuren(TonAngabe& ton, const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
 
 }  // namespace lumi::loop

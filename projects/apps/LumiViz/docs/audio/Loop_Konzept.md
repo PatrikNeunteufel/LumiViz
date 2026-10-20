@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.101.0
+> **Version:** 0.102.0
 > **Datum:** 2026-10-20 (Session 140)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3990,6 +3990,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.102.0** (S140, 2026-10-20): `.lvinst` Fassung 15 — `strings.tremoloDown`, `strings.tremoloUp` (der Vibratohebel, Halbtöne, immer; Spielweisen_Konzept SK11 a, Stufe 28c-2a).
 - **0.101.0** (S140, 2026-10-20): §4f `.lvinst` Fassung 14 mit `pitchRange` je Schicht (Stufe 28c-1b).
 - **0.100.0** (S140, 2026-10-20): §4 Datei — `.lvloop` Fassung 12 mit `patterns[].lanes` und `channels[].clips[].expression` (Stufe 28a, Spielweisen_Konzept §3).
 - **0.99.0** (S139, 2026-10-20): §4n Stufe 27g — Hörprobe Titanium vorher und nachher, Sichttest-Liste; Stufe 27 gebaut bis auf den vollen Lauf.

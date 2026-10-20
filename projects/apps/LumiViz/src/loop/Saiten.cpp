@@ -19,6 +19,10 @@ void richteSaiten(Saitensatz& saiten)
     // 0 = nicht gesetzt (auch, was keine Zahl ist), sonst in den Grenzen
     saiten.mensurMm = saiten.mensurMm > 0.0 ? std::clamp(saiten.mensurMm, kMensurMinMm, kMensurMaxMm) : 0.0;
     if (saiten.wahl != Saitenwahl::Hand) saiten.wahl = Saitenwahl::JeKlang;
+    // der Vibratohebel (SK11 a): je Richtung 0 … kHebelMaxHt
+    const auto hebel = [](double ht) { return std::isfinite(ht) ? std::clamp(ht, 0.0, kHebelMaxHt) : 0.0; };
+    saiten.hebelRunterHt = hebel(saiten.hebelRunterHt);
+    saiten.hebelHochHt = hebel(saiten.hebelHochHt);
     // das Instrument kennt das Raster des Loops nicht: hoechstens ein Takt im feinsten
     richteStrum(saiten.strum);
 }

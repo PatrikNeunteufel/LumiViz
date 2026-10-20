@@ -237,6 +237,31 @@ SaitenZeile::SaitenZeile(QWidget* parent) : QWidget(parent)
     lage->addWidget(m_bundlos);
     connect(m_bundlos, &QCheckBox::toggled, this, [this](bool an) { setzeBundlos(an); });
 
+    // Stufe 28c-2a (SK11 a): der Vibratohebel — wie weit er senkt und hebt
+    m_hebel = new QCheckBox(tr("Tremolo arm"), this);
+    m_hebel->setObjectName(QStringLiteral("creatorTremoloArm"));
+    m_hebel->setToolTip(tr("A tremolo arm (whammy bar): the Pitch lane of a pattern bends the strings within its range.\n"
+                           "Without it the strings ignore the Pitch lane"));
+    lage->addWidget(m_hebel);
+    const auto hebelFeld = [this](const char* name, const QString& vorsatz, const QString& tipp) {
+        auto* feld = new QDoubleSpinBox(this);
+        feld->setObjectName(QLatin1String(name));
+        feld->setRange(0.0, kHebelMaxHt);
+        feld->setDecimals(1);
+        feld->setSingleStep(0.5);
+        feld->setPrefix(vorsatz);
+        feld->setSuffix(tr(" st"));
+        feld->setToolTip(tipp);
+        return feld;
+    };
+    m_hebelRunter = hebelFeld("creatorTremoloDown", QStringLiteral("↓ "), tr("How far the arm lowers the pitch, in semitones"));
+    m_hebelHoch = hebelFeld("creatorTremoloUp", QStringLiteral("↑ "), tr("How far the arm raises the pitch, in semitones (0 = it only lowers)"));
+    lage->addWidget(m_hebelRunter);
+    lage->addWidget(m_hebelHoch);
+    connect(m_hebel, &QCheckBox::toggled, this, [this](bool an) { setzeHebel(an); });
+    connect(m_hebelRunter, &QDoubleSpinBox::valueChanged, this, [this](double ht) { setzeHebelRunter(ht); });
+    connect(m_hebelHoch, &QDoubleSpinBox::valueChanged, this, [this](double ht) { setzeHebelHoch(ht); });
+
     connect(m_vorlage, &QComboBox::activated, this, [this](int index) { waehleVorlage(m_vorlage->itemData(index).toInt()); });
     connect(m_anzahl, &QSpinBox::valueChanged, this, [this](int anzahl) { setzeAnzahl(anzahl); });
     connect(m_capo, &QSpinBox::valueChanged, this, [this](int capo) { setzeCapo(capo); });
@@ -333,6 +358,28 @@ void SaitenZeile::setzeBundlos(bool bundlos)
     melde();
 }
 
+void SaitenZeile::setzeHebel(bool an)
+{
+    if (!m_saiten.istSaiteninstrument() || an == m_saiten.hatHebel()) return;
+    m_saiten.hebelRunterHt = an ? kHebelRunterVorgabe : 0.0;
+    m_saiten.hebelHochHt = an ? kHebelHochVorgabe : 0.0;
+    melde();
+}
+
+void SaitenZeile::setzeHebelRunter(double ht)
+{
+    if (!m_saiten.istSaiteninstrument() || ht == m_saiten.hebelRunterHt) return;
+    m_saiten.hebelRunterHt = ht;
+    melde();
+}
+
+void SaitenZeile::setzeHebelHoch(double ht)
+{
+    if (!m_saiten.istSaiteninstrument() || ht == m_saiten.hebelHochHt) return;
+    m_saiten.hebelHochHt = ht;
+    melde();
+}
+
 void SaitenZeile::melde()
 {
     richteSaiten(m_saiten);
@@ -354,6 +401,18 @@ void SaitenZeile::zeigeFelder()
     {
         const QSignalBlocker ruhe(m_bundlos);
         m_bundlos->setChecked(m_saiten.bundlos);
+    }
+    // Stufe 28c-2a: die Grenzen des Hebels nur, wenn es einen gibt
+    m_hebel->setVisible(saiten);
+    m_hebelRunter->setVisible(saiten && m_saiten.hatHebel());
+    m_hebelHoch->setVisible(saiten && m_saiten.hatHebel());
+    {
+        const QSignalBlocker ruhe(m_hebel);
+        const QSignalBlocker ruheRunter(m_hebelRunter);
+        const QSignalBlocker ruheHoch(m_hebelHoch);
+        m_hebel->setChecked(m_saiten.hatHebel());
+        m_hebelRunter->setValue(m_saiten.hebelRunterHt);
+        m_hebelHoch->setValue(m_saiten.hebelHochHt);
     }
     {
         const QSignalBlocker ruhe(m_anzahl);

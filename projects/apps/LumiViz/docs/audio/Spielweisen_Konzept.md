@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.21.0
+> **Version:** 0.22.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK10 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK10 a (Patrik S139, S140);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK11 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -480,10 +480,40 @@ mit Saiten bekommt Vibrato und Pitch erst mit 28c-2. *Rechenzeit* (Release-clang
 ein Muster von 16 Noten auf vier Tonhöhen — ohne Spuren 4 Töne in 2,0 ms, mit Pitch und
 Vibrato 16 Töne in 14,6 ms (Testing-MSVC 3,4 und 36,1 ms).
 
+✅ **SK11 a** (Patrik S140): **Der Vibratohebel sind zwei Zahlen am Saitensatz.** *Tremolo arm*
+steht als zwei Werte in Halbtönen: wie weit nach unten (`tremoloDown`) und nach oben
+(`tremoloUp`); 0 und 0 = kein Hebel — dann wirkt die Spur Pitch an der Saite nicht. Wer den
+Hebel im Creator einschaltet, bekommt 2 nach unten und 1 nach oben (von Claude gesetzt, in den
+Hörproben zu prüfen). Die Spur wird an der Saite auf diese Grenzen gekappt. In der `.lvinst`
+beide immer (Fassung 15). *Beleg:* eine Suche nach Zahlen (S140) fand keine; was sie zur
+Bauweise fand (Vintage senkt nur, Floyd Rose senkt und hebt), stammt aus der Zusammenfassung
+des Suchwerkzeugs, nicht aus den Seiten — kein Beleg. Verworfen: b (ein Schalter mit fester
+Spanne — ein Steg, der nur senkt, liesse sich nicht ausdrücken), c (die Bauart des Stegs mit
+festen Spannen je Bauart — Spannen ohne Beleg im Format; der Creator kann die Bauarten als
+Vorlagen anbieten, die die zwei Zahlen setzen). Kippt, wenn ein Beleg zeigt, dass jede Bauart
+eine feste Spanne hat.
+
+**Klang 28c-2a ✅** (Vibrato und Pitch an der Saite; `Bahn` und `Handweg` im Instrument,
+`setzeSpuren` in `loop/Pedalplan`, aufgerufen von `toeneImKanal`): die Töne eines
+Saiteninstruments tragen die Spuren wie die eines Synths, je Teil (Saite mit ihren Folgern,
+*Own note*, Kette) ab ihrer Note und so lange sie gehalten werden. **An der Saite** wirken
+beide über die Spannung wie der Bend: Vibrato immer (der Finger; Rate der ersten
+Saiten-Schicht, ohne Rate 5,5 Hz nach SK10 a), Pitch nur mit Vibratohebel und auf seine
+Grenzen gekappt (SK11 a); ohne Hebel überhört die Saite Pitch, Bit für Bit. Senkt der Hebel
+den Ton, wächst der Ring der Saite mit dem tiefsten Stand. **Eine Schicht mit Follow
+string** schwingt mit dem Vibrato der Saite und folgt Pitch mit Hebel in seinen Grenzen;
+ohne Hebel rechnet sie Pitch selbst, mit ihrer *Pitch range* — sie kann sich so gegen die
+Saite verstimmen (wörtlich nach SF7 a, Patrik S140 angezeigt). **Eine Schicht mit Own note**
+nimmt beide Spuren immer mit ihren eigenen Werten. Der Creator: in der Zeile *Tuning* der
+Haken *Tremolo arm* mit ↓ und ↑ in Halbtönen. `.lvinst` Fassung 15. *Gemessen* (beide
+Compiler, `test_LoopSaiteSpuren`): Hebel +1 = 100 ct, −3 mit Grenze 2 = −200 ct, ein Fall um
+zwei Oktaven trifft E2 auf 0 ct; Vibrato von 50 ct an der Saite −49 bis +49,5 ct.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.22.0 | 2026-10-20 | Session 140. SK11 a (Vibratohebel als zwei Zahlen); Stufe 28c-2a gebaut (Vibrato und Pitch an der Saite, `.lvinst` 15). |
 | 0.21.0 | 2026-10-20 | Session 140. Stufe 28c-1b gebaut (Vibrato und Pitch im Ton, Pitch range, `.lvinst` 14); 28c-1 fertig. |
 | 0.20.0 | 2026-10-20 | Session 140. SK9 a (Pegel e², Beleg MIDI-Empfehlung), SK10 a (Vibrato-Rate 5,5 Hz, wo die Schicht keine hat); Stufe 28c-1a gebaut (Expression im Rechenkern). |
 | 0.19.0 | 2026-10-20 | Session 140. Stufe 28b gebaut: Planung der Pedale (`loop/Pedalplan`). |

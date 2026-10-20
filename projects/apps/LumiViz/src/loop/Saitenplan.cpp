@@ -408,11 +408,17 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                 // Stufe 28b (SF6 a, SF7 a): die Saite hat kein Pedal — die Pedale halten nur die
                 // Schichten mit Own note; die der Saite folgen, klingen mit ihr
                 const int gehalten = gehaltenMs(loop, *muster, clip.wiederholungen, static_cast<int>(r), i);
+                // Stufe 28c-2a: die Spuren Pitch und Vibrato ueber jedem Ton, ab seiner Note und
+                // so lange er gehalten wird (welche Schicht sie nimmt, entscheidet das Instrument)
+                const auto spuren = [&](TonAngabe& t, std::size_t vonNote) {
+                    setzeSpuren(t, loop, *muster, clip.wiederholungen, static_cast<int>(r), vonNote);
+                };
                 if (griff.vorige >= 0)
                 {
                     ton.teil = TonTeil::Eigen;
                     ton.versatzMs = 0.0;
                     ton.dauerMs = std::max(ton.dauerMs, gehalten);
+                    spuren(ton, i);
                     continue;
                 }
                 bool zusatz = false;
@@ -425,15 +431,18 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                     TonAngabe saite = ton;
                     saite.teil = TonTeil::Folgend;
                     setzeKette(saite, loop, *muster, kette);
+                    spuren(saite, i);  // ueber die ganze Kette, ab dem Kopf
                     ton.zusatz.push_back(std::move(saite));
                     ton.teil = TonTeil::Eigen;
                     zusatz = true;
                     klingt = (muster->noten[kette.glieder.back()].artikulationen & kLetRing) != 0;
                     ton.dauerMs = std::max(ton.dauerMs, gehalten);  // die Schichten mit Own note
+                    spuren(ton, i);
                 }
                 else
                 {
                     if (!note.bend.empty()) setzeKette(ton, loop, *muster, Kette{i, {}});  // ein Bend allein: im Ton selbst
+                    spuren(ton, i);
                     if (gehalten > ton.dauerMs)
                     {
                         // gehalten: die Saite und was ihr folgt wie ohne Pedal, die Schichten mit
@@ -441,6 +450,7 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                         TonAngabe eigen = ton;
                         eigen.teil = TonTeil::Eigen;
                         eigen.dauerMs = gehalten;
+                        spuren(eigen, i);
                         ton.teil = TonTeil::Folgend;
                         ton.zusatz.push_back(std::move(eigen));
                     }

@@ -81,6 +81,11 @@ public:
     void setzeWahl(Saitenwahl wahl);
     /// *Fretless* (Stufe 25c, S-L9 a).
     void setzeBundlos(bool bundlos);
+    /// *Tremolo arm* (Stufe 28c-2a, SK11 a): an = die Vorgaben (2 nach unten, 1 nach oben),
+    /// aus = beide 0. Die Grenzen je Richtung in Halbtoenen; sind beide 0, ist er aus.
+    void setzeHebel(bool an);
+    void setzeHebelRunter(double ht);
+    void setzeHebelHoch(double ht);
 
 Q_SIGNALS:
     void geaendert(const Saitensatz& saiten);
@@ -103,6 +108,9 @@ private:
     QLabel* m_wahlName = nullptr;
     QComboBox* m_wahl = nullptr;
     QCheckBox* m_bundlos = nullptr;  ///< Fretless (Stufe 25c)
+    QCheckBox* m_hebel = nullptr;    ///< Tremolo arm (Stufe 28c-2a)
+    QDoubleSpinBox* m_hebelRunter = nullptr;
+    QDoubleSpinBox* m_hebelHoch = nullptr;
 };
 
 }  // namespace lumi::loop

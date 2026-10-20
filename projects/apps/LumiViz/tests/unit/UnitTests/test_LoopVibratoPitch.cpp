@@ -238,7 +238,7 @@ TEST_SUITE("LoopVibratoPitch")
     {
         Instrument instrument = sinus(7.0);
         const QJsonObject json = alsJson(instrument);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 14);
+        CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);  // pitchRange seit 14; geschrieben wird die juengste
         const QJsonObject schicht = json.value(QStringLiteral("layers")).toArray().at(0).toObject();
         REQUIRE(schicht.contains(QStringLiteral("pitchRange")));
         CHECK(schicht.value(QStringLiteral("pitchRange")).toDouble() == 7.0);

@@ -563,10 +563,13 @@ struct Instrument
 // schnitte es auf 1 ab und spielte das Instrument zu leise.
 // Fassung 14 (S140, Stufe 28c-1b, Entscheid SK3 a): jede Schicht traegt `pitchRange`
 // (Halbtoene, immer) — ein aelteres Programm folgte der Spur Pitch nicht und kennt
-// das Feld nicht. Geschrieben wird Fassung 14.
+// das Feld nicht.
+// Fassung 15 (S140, Stufe 28c-2a, Entscheid SK11 a): `strings` traegt den Vibratohebel
+// `tremoloDown` und `tremoloUp` (Halbtoene, immer) — ein aelteres Programm kennte den
+// Hebel nicht. Geschrieben wird Fassung 15.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 14;
+inline constexpr int kInstrumentFassung = 15;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

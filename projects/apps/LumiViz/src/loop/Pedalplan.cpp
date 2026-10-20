@@ -183,7 +183,16 @@ TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, 
     ton.instrument = muster.instrument;
     ton.hoehe = n.hoehe;
     ton.dauerMs = gehaltenMs(loop, muster, wiederholungen, runde, note);
-    if (loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ton;
+    setzeSpuren(ton, loop, muster, wiederholungen, runde, note);
+    return ton;
+}
+
+void setzeSpuren(TonAngabe& ton, const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note)
+{
+    ton.tonhoehe.clear();
+    ton.vibrato.clear();
+    if (note >= muster.noten.size() || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return;
+    const Note& n = muster.noten[note];
     const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
     const double schritte = static_cast<double>(muster.takte) * loop.schritteJeTakt();
     const int mal = std::max(1, wiederholungen);
@@ -193,7 +202,6 @@ TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, 
     if (std::all_of(ton.tonhoehe.begin(), ton.tonhoehe.end(), [](const TonPunkt& p) { return p.cent == 0; }))
         ton.tonhoehe.clear();
     ton.vibrato = kurveImTon(muster.zeitspuren.von(Steuerspur::Vibrato), schritte, mal, anschlag, bis, schrittMs, 1.0);
-    return ton;
 }
 
 }  // namespace lumi::loop
