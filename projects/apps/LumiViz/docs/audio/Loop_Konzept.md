@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.91.0
+> **Version:** 0.92.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3629,7 +3629,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | Stufe | Inhalt |
 |---|---|
 | 27a ✅ | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
-| 27b | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
+| 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: Modell, `.lvloop` Fassung 11, Klang; Oberfläche zuerst als Skizze |
@@ -3645,6 +3645,30 @@ neu gezählt. Kürzer als das Fenster: `kLufsStille`. Die integrierte Lautheit r
 wie vorher. `test_ComposerLautheit.cpp`: zwei Fälle mehr — 1, 2, 9, 10, 12, 13 aus Tabelle 1 bei
 48 und 44,1 kHz (11 und 14 sind für laufende Anzeigen), dazu kurze Töne, Stille, ein Schlag in
 langer Stille, stückweises Füttern. Der Wächter S128 bleibt grün.
+
+**Wie 27b gebaut ist (S139):** `loop/Pegel` — `standardProbe(instrument, art)` (120 BPM,
+C-Dur über zwei Oktaven je zwei Schritte mit 0,9, zwei Schritte Pause, Akkord 1-3-5-8 einen
+Takt mit 0,7, ein Takt Ausklang; Grundton C4, Art `bass` C2; Loop und Muster 1),
+`rechneStandardprobe` (wie das Programm: `plane` mit den Saiten dieses Instruments, Töne
+aus `rendereTon`, `rechne` — auch für ein Instrument ohne Datei), `messeInstrument`
+(Short-term-Maximum), `messeSchlag` (Momentary-Maximum, eine Sekunde Stille dahinter),
+`messeDrumInstrument` (C2, `kSpurDauerMs`). `test_LoopPegel.cpp`: drei Fälle — Aufbau der
+Probe; halbe Lautstärke misst 6,02 dB leiser (`organ`, `clean_guitar`); ein Messfall, der
+alle Instrumente und je Kit jede Rolle meldet (`LUMIVIZ_PEGEL_DATEI=<datei.tsv>`).
+
+**Gemessen mit 27b** (Release-clang, Werte lokal unter `.claude/handover/lautheit_s139/`):
+
+- 87 Instrumente ohne Drums: **−28,3** (`pizzicato_violin`) bis **−6,1** (`thumb_piano`)
+  LUFS S max, **Median −13,4** — deckt sich mit der Messung vor 27b (−17,9 bei Loop 0,6,
+  also 4,4 dB tiefer). 69 der 87 tragen heute ein Volume unter 1 (`clean_guitar` 0,398).
+- Auf den Median kämen **29 Instrumente nur mit Volume über 1** — bis 5,55
+  (`pizzicato_violin`, +14,9 dB), 4,57 (`muted_guitar`), 3,85 (`shape_bolt_pluck`). Volume
+  (`level` in der `.lvinst`) ist heute auf 0 … 1 begrenzt → Frage vor 27c.
+- **Kits: der Abstand zur Kick nach R128 bestätigt `ZIEL_DB` nicht** (Median über die
+  Kits, LUFS M max): Snare +1,0 (Ziel −2), Clap −1,2 (−4), Hat −2,4 (−7), Open hat +4,0
+  (−2), Ride −1,6 (−5), Crash +6,4 (0), Tom +3,6 (+2), Perc +0,5 (−3), Rim −2,9, FX +2,6.
+  Das K-Filter hebt die Höhen, das Fenster von 0,4 s zählt den Ausklang von Crash und
+  Open hat mit; der Effektivwert der ersten 300 ms (S123) tat beides nicht → Frage vor 27d.
 
 ## 5. Stufen
 
@@ -3772,6 +3796,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.92.0** (S139, 2026-10-20): §4n Stufe 27b gebaut (`loop/Pegel`, `test_LoopPegel`), gemessen: 29 Instrumente bräuchten Volume über 1, die Abstände der Kit-Rollen nach R128 bestätigen `ZIEL_DB` nicht.
 - **0.91.0** (S139, 2026-10-20): §4n Stufe 27a gebaut — die Messung unter `audio/Lautheit`, Momentary- und Short-term-Maximum.
 - **0.90.0** (S139, 2026-10-20): §4n Lautstärke im Loop — Befund (Messung Titanium und aller Instrumente, 21 LU Streuung), LL1 a bis LL5 a; Stufe 27 in §5.
 - **0.89.0** (S139, 2026-10-20): §3.2 Audio-Clip als dritte Art im Loop-Panel mit Autotune-Spur (Erinnerung Patrik), Bezug zur Spur Pitch aus `Spielweisen_Konzept.md` SF3 a.
