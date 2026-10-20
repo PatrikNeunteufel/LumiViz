@@ -1,8 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.5.0
-> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF5 d (Patrik S139);
+> **Version:** 0.6.0
+> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> Session 140: SF6 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF6 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -116,9 +117,39 @@ Spannung, wie der Bend) und Swell; die **Bogen-Saite** als neue Bauart auf der S
 Spielweise der Geige; das Dämpferpedal am Hackbrett (`dulcimer`). Wie das neue Vibrato
 sich zur festen Einstellung je Schicht verhält: SF4 a.
 
+✅ **SF6 a** (Patrik S140): **Die Bauart ist die Obergrenze, die Ausstattung je
+Instrument entscheidet.** Jede Bauart nennt die Steuer-Spielweisen, die ihr Vorbild haben
+kann (Tabelle unten); was ein Instrument davon wirklich hat, steht in seiner
+**Ausstattung**, wie `bundlos` am Saitensatz: *Damper* an Platte und Stab (mit
+Dämpferleiste dämpft das Loslassen und das Pedal hält; ohne klingt jede Note frei aus,
+die Spur Sustain fehlt), *Sostenuto* an der Hammer-Saite, *Tremolo arm* an der Saite.
+Expression an der Saite steht nicht als eigenes Feld in der Datei — das Programm liest sie
+aus den Tonabnehmern ab (ein Tonabnehmer: ja; `none`: nein). Eine Spur erscheint im
+Instrument-Editor nur, wo Bauart und Ausstattung sie tragen. Die Ausstattung ist Teil des
+Modells und wird gerechnet — keine zweite Angabe neben der Bauart (SF2 b), sondern der Bau
+selbst. Verworfen: b (alles, was die Bauart haben kann, an jedem Instrument — die Marimba
+bekäme ein Pedal, das sie nicht hat), c (nur, was alle Vorbilder der Bauart haben — dem
+Vibraphon fehlte das Pedal, das sein Klang braucht). Kippt, wenn die Recherche je Familie
+zeigt, dass die Ausstattung innerhalb einer Bauart kaum schwankt (dann wäre b gleichwertig);
+ein Beleg gegen eine Zeile ändert nur die Zeile.
+
+| Bauart | Sustain | Sostenuto | Expression | Vibrato | Pitch |
+|---|---|---|---|---|---|
+| Hammer-Saite (Klavier) | ja | Ausstattung (Flügel) | nein — nach dem Anschlag nicht steuerbar | nein | nein |
+| Saite, gezupft (heute) | nein | nein | Ausstattung (Tonabnehmer: Knopf, Pedal) | ja (Finger) | Ausstattung (Vibratohebel) |
+| Bogen-Saite | nein | nein | ja (Bogen) | ja | ja (Glissando) |
+| Lippe und Rohr | nein | nein | ja | ja | ja (Lippe, Posaunenzug) |
+| Rohrblatt und Rohr | nein | nein | ja | ja | ja (Bend, Glissando) |
+| Platte und Stab | Ausstattung (Dämpferleiste) | nein | nein | nein — der Motor des Vibraphons ist Klang-Spielweise | nein |
+| ohne Bauart (Synth) | ja | ja | ja | ja | ja (SF2 a) |
+
+*Herkunft der Tabelle:* aus dem Gedächtnis (Claude S140), nicht belegt — jede Zeile wird
+in der Recherche ihrer Familie belegt.
+
 ## 2. Offen
 
-- Welche der fünf Steuer-Spielweisen (SF3 a) jede Bauart hat (SF2 a).
+- Welche Spuren ein Instrument mit Modellschicht und Synth-Schicht zeigt (Folge von SF6 a,
+  hängt am Schalter *Follow* aus SF1 c).
 - Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
   im Saitenstrang (S132–S138).
 - Der Ort der Klang-Spielweisen (Bauart, Spur, Note) — einzeln; die Steuer-Spielweisen: SF5 d.
@@ -128,6 +159,7 @@ sich zur festen Einstellung je Schicht verhält: SF4 a.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.6.0 | 2026-10-20 | Session 140. SF6 a (Bauart als Obergrenze, Ausstattung je Instrument; Tabelle der Steuer-Spielweisen je Bauart, noch unbelegt). |
 | 0.5.0 | 2026-10-20 | Session 139. SF5 d (fünf Spuren je Muster, dazu Expression am Clip, malgenommen). |
 | 0.4.0 | 2026-10-20 | Session 139. SF4 a (Vibrato der Schicht als Vorgabe, die Spur setzt die Tiefe). |
 | 0.3.0 | 2026-10-20 | Session 139. SF3 a (fünf Steuer-Spielweisen, Beleg der MIDI-Belegung). |
