@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.98.0
+> **Version:** 0.99.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3634,7 +3634,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27d ✅ | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 ✅ Oberfläche, zuerst die Skizze; 27e-3 ✅ Begrenzer am Ausgang (LL7 a, LL13 a) |
 | 27f ✅ | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
-| 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
+| 27g ✅ | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf — **ohne den vollen Lauf** (Patrik S139: „noch immer nicht“) |
 
 **Wie 27a gebaut ist (S139):** `audio/Lautheit.hpp` (`lumi::audio`) statt `composer/Lautheit.hpp`;
 der Composer nennt die Namen mit `audio::`. `Lautheit` trägt dazu `momentanMaxLufs` und
@@ -3817,6 +3817,14 @@ beantwortet die Rückfrage beim bestehenden Save mit *Save as it is*. **Offen:**
 Instrument mit Sample-Schicht wird erst gemessen, wenn seine Aufnahme gemerkt ist (im Fenster
 *Instruments* oft nicht — dann ohne Marke).
 
+**27g (S139):** Hörprobe Titanium vorher und nachher (lokal unter
+`.claude/handover/lautheit_s139/hoerproben/`), je Kanal gemessen: Guitar −45,2 → −34,3 LUFS
+(+10,9), Pad −36,6 → −34,2, Bass −29,4 → −33,2, Piano −25,9 → −29,9, FX −37,1 → −39,0; Drums,
+Chords und Lead gleich (Chords und Lead spielen eigene Instrumente des Loops, nicht
+angeglichen). Der Abstand der Kanäle (ohne FX) schrumpft von 22,4 auf 11,5 LU; die Drums liegen
+weiter vorn — das gleicht der Fader. Sichttest-Liste `.claude/handover/Sichttest_Lautstaerke.md`
+(lokal; H, F, L, M, I, K, Urteile U1 bis U6). **Der volle Lauf steht aus** (Patrik S139).
+
 **Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
 +24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
 `gain` am Kanal, immer geschrieben; fehlt es, 0 dB; begrenzt beim Lesen. Im Klang: ein Schlag
@@ -3883,7 +3891,7 @@ Pegel, bis 27d sie nachzieht.
 | 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; **21e gemacht** (S124: Icon `lumiviz_lvkit.ico` — Entscheid I2 a, Fassung A: Snare von der Seite mit gekreuzten Sticks, am Vorschaublatt aus drei gewählt; am Knopf Kit und in Import data; `register_file_icons.ps1` mit `.lvkit`; Benutzerhandbuch 1.163.0 §16 „Kits", §17; Liste `Sichttest_Kits.md` (lokal); voller Lauf 1215 / 1215, 0 Skips) — **Stufe 21 fertig**, im Programm ungesehen bis auf Patriks ersten Blick (K10 a) |
 | 22 | **Kurze Muster, Auffüllen, Kopie mit Zeitraum, Springen** (§4m) | S124: Entscheide B1 a, B2 a, B3 a, B4 b; gebaut; `test_LoopTakteSprung.cpp`, vier Fälle; Benutzerhandbuch 1.165.0; **im Programm ungesehen** |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
-| 27 | **Lautstärke im Loop** (§4n): Messung nach `audio/`, Instrumente und Kits auf einen Bezug, Fader je Kanal, *Match level* | S139: Entscheide LL1 a bis LL5 a; nicht gebaut |
+| 27 | **Lautstärke im Loop** (§4n): Messung nach `audio/`, Instrumente und Kits auf einen Bezug, Fader je Kanal, Limiter, *Match level* | S139: Entscheide LL1 a bis LL14 a; gebaut 27a bis 27g — der volle Lauf steht aus (Patrik) |
 
 ---
 
@@ -3979,6 +3987,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.99.0** (S139, 2026-10-20): §4n Stufe 27g — Hörprobe Titanium vorher und nachher, Sichttest-Liste; Stufe 27 gebaut bis auf den vollen Lauf.
 - **0.98.0** (S139, 2026-10-20): §4n LL14 a; Stufe 27f gebaut — Match level im Creator, Rückfrage beim Speichern, Marke im Fenster Instruments.
 - **0.97.0** (S139, 2026-10-20): §4n LL13 a; Stufe 27e-3 gebaut — der Begrenzer am Ausgang des Loop-Panels.
 - **0.96.0** (S139, 2026-10-20): §4n LL12 a; Stufe 27e-2 gebaut — der Fader im Kopf jedes Kanals.
