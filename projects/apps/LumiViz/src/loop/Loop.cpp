@@ -51,8 +51,10 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 10 (S136, Stufe 25a, Entscheide S-L1 a, S-L2 a): die Artikulationen Legato (16)
 // und Slide (32), eine Note als siebten Wert ihren Bend (`[[zeit, halbtoene], …]`,
 // dann stehen Saite und Artikulationen davor) — ein aelteres Programm verloere
-// beides still. Geschrieben wird immer 10.
-constexpr int kVersion = 10;
+// beides still.
+// 11 (S139, Stufe 27e-1, Entscheid LL3 a): der Fader je Kanal `gain` in dB — ein
+// aelteres Programm spielte jeden Kanal mit 0 dB. Geschrieben wird immer 11.
+constexpr int kVersion = 11;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -547,6 +549,12 @@ const Muster* Loop::findeMuster(const QString& name) const
     return it == muster.end() ? nullptr : &*it;
 }
 
+double Kanal::gainFaktor() const
+{
+    if (gainDb <= kKanalGainMinDb) return 0.0;  // an der unteren Grenze: −∞
+    return std::pow(10.0, std::min(gainDb, kKanalGainMaxDb) / 20.0);
+}
+
 int Loop::clipTakte(const LoopClip& clip) const
 {
     const Muster* m = findeMuster(clip.muster);
@@ -953,6 +961,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
         QJsonObject k;
         k[QStringLiteral("name")] = kanal.name;
         k[QStringLiteral("enabled")] = kanal.an;
+        k[QStringLiteral("gain")] = kanal.gainDb;  // seit Fassung 11, immer geschrieben
         QJsonArray clips;
         for (const LoopClip& clip : kanal.clips)
         {
@@ -1111,6 +1120,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
         Kanal kanal;
         kanal.name = k.value(QStringLiteral("name")).toString();
         kanal.an = k.value(QStringLiteral("enabled")).toBool(true);
+        // seit Fassung 11; fehlt es: 0 dB
+        kanal.gainDb = std::clamp(k.value(QStringLiteral("gain")).toDouble(0.0), kKanalGainMinDb, kKanalGainMaxDb);
         for (const QJsonValue& cv : k.value(QStringLiteral("clips")).toArray())
         {
             const QJsonObject c = cv.toObject();

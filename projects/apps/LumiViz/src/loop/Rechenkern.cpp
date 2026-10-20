@@ -36,6 +36,8 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
     {
         const Kanal& kanal = loop.kanaele[kanalNr];
         if (!kanal.an) continue;
+        // der Fader (Stufe 27e-1): ohne Effekte am Schlag, mit Effekten am Bus — nach den Effekten
+        const double fader = kanal.gainFaktor();
         // je Kanal: (Muster, Spur) -> Stimme
         std::map<std::pair<const Muster*, std::size_t>, std::size_t> stimmeVon;
         // je Kanal: (Instrument-Muster, Ton) -> Stimme. Jeder Ton — Tonhoehe
@@ -56,12 +58,13 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
             if (clip.effekteWirken())
             {
                 bus = static_cast<int>(ablauf.busse.size());
-                ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte});
+                ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte, static_cast<float>(fader)});
             }
+            const double faderAmSchlag = bus < 0 ? fader : 1.0;
             if (muster->art == MusterArt::Instrument)
             {
                 if (muster->stumm) continue;
-                const double lautMuster = muster->laut * loop.laut;
+                const double lautMuster = muster->laut * loop.laut * faderAmSchlag;
                 for (int runde = 0; runde < clip.wiederholungen; ++runde)
                 {
                     const std::int64_t schrittDavor =
@@ -128,7 +131,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                         const bool versetzt = (i % loop.schritteJeSchlag) % 2 == 1;
                         const double stelle = static_cast<double>(schrittDavor + i) * schrittFrames +
                                               (versetzt ? swingFrames : 0.0);
-                        const double laut = wert * spur.laut * loop.laut;
+                        const double laut = wert * spur.laut * loop.laut * faderAmSchlag;
                         Schlag schlag;
                         schlag.frame = std::llround(stelle);
                         schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - spur.pan));
@@ -188,14 +191,17 @@ void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_
             const Schlag& schlag = schlaege[static_cast<std::size_t>(g % anzahl)];
             // auch die Schnitt-Blende eines Schlags bleibt in seinem Bus
             float* const ziel = busAus != nullptr && schlag.bus >= 0 ? busAus[schlag.bus] : aus;
+            // ohne Busse geht ein Schlag mit Effekten unbearbeitet nach `aus` — dann mit dem Fader
+            const float fader =
+                busAus == nullptr && schlag.bus >= 0 ? ablauf.busse[static_cast<std::size_t>(schlag.bus)].faktor : 1.0f;
             for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)
             {
                 const float blende =
                     f < naechster ? 1.0f : 1.0f - static_cast<float>(f - naechster) / kSchnittFrames;
                 const std::int64_t imKlang = f - start;
                 const std::int64_t imBlock = f - von;
-                ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende;
-                ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende;
+                ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende * fader;
+                ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende * fader;
             }
         }
     }

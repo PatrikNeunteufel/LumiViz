@@ -158,7 +158,9 @@ void Klangerzeuger::render(float* out, int frames)
                 else
                     effekte->stille[b] += n;
                 effekte->ketten[b].rechne(block, n);
-                for (std::ptrdiff_t i = 0; i < 2 * static_cast<std::ptrdiff_t>(n); ++i) ziel[i] += block[i];
+                // der Fader des Kanals nach den Effekten (Stufe 27e-1); bei 0 dB genau 1
+                const float fader = p->ablauf.busse[b].faktor;
+                for (std::ptrdiff_t i = 0; i < 2 * static_cast<std::ptrdiff_t>(n); ++i) ziel[i] += block[i] * fader;
             }
         }
     }

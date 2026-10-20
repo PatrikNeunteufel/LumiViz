@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.92.0
+> **Version:** 0.93.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -276,7 +276,7 @@ JSON, Schlüssel englisch wie in `.lvcomp`:
 | `patterns[].tracks[].sound` | `kit:<Name>` = Klang aus dem mitgelieferten Kit; sonst ein Pfad, relativ zur Datei, wenn das Sample unter ihrem Ordner liegt, sonst absolut | — |
 | `patterns[].tracks[].volume`, `pan`, `mute` | je Spur; Panorama -1 (links) bis 1 (rechts): in der Mitte beide Seiten voll, zur Seite fällt die andere ab | 0 bis 1, -1 bis 1 |
 | `patterns[].rows` | je Spur eine Zeile, je Schritt eine Lautstärke, 0 = aus | 0 bis 1 |
-| `channels[]` | Kanäle mit Name und Schalter; ein Kanal nimmt Clips jeder Art auf | — |
+| `channels[]` | Kanäle mit Name und Schalter; ein Kanal nimmt Clips jeder Art auf; seit Fassung 11 (S139) `gain` = der Fader in dB, immer geschrieben, wirkt nach den Effekten der Clips | `gain` −60 … +24, −60 = still, fehlt = 0 |
 | `channels[].clips[]` | `pattern` = Name des Musters, `start` = Takt (0 = der erste), `repeat` = wie oft hintereinander | `repeat` ab 1 |
 
 Die Datei schreibt die Schritte einer Spur auf **eine Zeile** (Qt setzte
@@ -3632,7 +3632,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
-| 27e | Fader je Kanal nach LL3 a: Modell, `.lvloop` Fassung 11, Klang; Oberfläche zuerst als Skizze |
+| 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
 
@@ -3669,6 +3669,52 @@ alle Instrumente und je Kit jede Rolle meldet (`LUMIVIZ_PEGEL_DATEI=<datei.tsv>`
   (−2), Ride −1,6 (−5), Crash +6,4 (0), Tom +3,6 (+2), Perc +0,5 (−3), Rim −2,9, FX +2,6.
   Das K-Filter hebt die Höhen, das Fenster von 0,4 s zählt den Ausklang von Crash und
   Open hat mit; der Effektivwert der ersten 300 ms (S123) tat beides nicht → Frage vor 27d.
+
+✅ **LL6 a** (Patrik S139): **Das Volume des Instruments darf über 1, bis +24 dB (× 15,85)**
+— dieselbe Grenze wie der Fader je Kanal (LL3 a) und das Gain im Composer; im Creator in dB
+(−∞ … +24, Vorgabe 0 dB), in der Datei `level` linear; `.lvinst` Fassung 13 (eine ältere
+schnitte über 1 ab). 27c setzt jedes mitgelieferte Instrument auf `level` mal den Abstand
+zum Bezug. Verworfen: c (Bezug auf das leiseste, rund −28 LUFS — alles bis 22 dB leiser, der
+Loop kann nicht anheben). Vor dem Schreiben die Spitzen prüfen (Bedingung aus der Vorlage).
+
+**Spitzen nach dem Angleich** (S139, aus Spitze und Short-term-Maximum der Probe): der
+Scheitelfaktor reicht bis 22,9 dB (`muted_guitar`), 21,8 (`pizzicato_violin`), 19,8
+(`clave`); auf dem Bezug bei Loop 1 läge `muted_guitar` bei +9,5 dBFS, bei Loop 0,5 kämen
+8 Proben über 0 dBFS. Ein tieferer Bezug löst es kaum (keine Probe über 0 dBFS bei Loop 1
+erst bei rund −23 LUFS) — Übersteuern entsteht in der Summe am Ausgang.
+
+✅ **LL7 a** (Patrik S139): **Der Bezug bleibt der Median, −13,4 LUFS S max bei Loop 1**
+(dasselbe, was LL2 a als „rund −18" bei Loop 0,6 nannte). **Das Loop-Panel bekommt einen
+Begrenzer am Ausgang** — derselbe Baustein `audio/Begrenzer` wie im Composer, Schalter
+*Limiter*, Vorgabe an, in der `.lvloop`; ein eigener Schritt 27e-2 nach dem Fader.
+Verworfen: b (Bezug −17 LUFS — schützt nur die Probe, nicht die Summe, und alles wird
+leiser), c (nichts am Ausgang — jede lauter gedrehte Gitarre übersteuert hart). Kippt, wenn
+der Begrenzer an gezupften Instrumenten hörbar pumpt (Hörprobe Titanium nach 27c).
+
+**Nachziehen der Loops** (S139, vorab gerechnet): von 221 Instrument-Mustern in 53
+mitgelieferten Loops kämen 43 über Lautstärke 1 (bis 1,69, `sub_bass` in `house_demo`). Mit
+dem Fader je Kanal geht es auf: 39 Kanäle bekommen einen Fader über 0 dB, höchstens
++4,5 dB; kein Muster liegt in zwei Kanälen mit verschiedenem Fader.
+
+✅ **LL8 a** (Patrik S139): **Der Fader zuerst, ohne Oberfläche.** Neue Reihenfolge:
+27e-1 (Fader je Kanal in Modell, `.lvloop` Fassung 11, Klang) → 27c (Volume bis +24 dB,
+Creator in dB, Instrumente auf den Bezug, Loops nachziehen — was über 1 käme, geht in den
+Fader des Kanals; `loop_werte.txt` neu, Diff prüfen) → 27d (Kits) → 27e-2 (Oberfläche des
+Faders, zuerst die Skizze) → 27e-3 (Begrenzer am Ausgang, LL7 a) → 27f → 27g. Jeder Schritt
+hinterlässt einen grünen Stand. Verworfen: b (Muster-Lautstärke bis +24 dB — eine dritte
+Stelle, die anhebt; das Mischen bliebe am Muster), c (bei 1 kappen — 43 Muster bis 4,6 dB
+leiser, gegen LL2 a).
+
+**Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
++24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
+`gain` am Kanal, immer geschrieben; fehlt es, 0 dB; begrenzt beim Lesen. Im Klang: ein Schlag
+ohne Effekte trägt den Fader selbst (`plane`), ein Clip mit Effekten trägt ihn am `Bus`
+(`Bus::faktor`) — der Klangerzeuger nimmt den Bus **nach** den Effekten mal den Fader, wie an
+einem Mischpult; `rechne` ohne Busse gibt ihn dem Schlag. Bei 0 dB rechnet alles Bit für Bit
+wie vorher (mal 1). `test_LoopFader.cpp`: drei Fälle — Datei (immer geschrieben, Grenzen,
+fehlt = 0 dB), Klang (+6,02 dB doppelt, −60 still, zwei Kanäle), nach den Effekten (mit
+Distortion am Clip ist der Ausgang bei +6,02 dB genau das Doppelte); die Literale der Fassung
+in sieben Testdateien auf 11. Keine Oberfläche (27e-2).
 
 ## 5. Stufen
 
@@ -3796,6 +3842,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.93.0** (S139, 2026-10-20): §4n LL6 a bis LL8 a (Volume bis +24 dB, Begrenzer am Ausgang, der Fader zuerst), Befunde zu Spitzen und Nachziehen; Stufe 27e-1 gebaut (Fader je Kanal, `.lvloop` Fassung 11).
 - **0.92.0** (S139, 2026-10-20): §4n Stufe 27b gebaut (`loop/Pegel`, `test_LoopPegel`), gemessen: 29 Instrumente bräuchten Volume über 1, die Abstände der Kit-Rollen nach R128 bestätigen `ZIEL_DB` nicht.
 - **0.91.0** (S139, 2026-10-20): §4n Stufe 27a gebaut — die Messung unter `audio/Lautheit`, Momentary- und Short-term-Maximum.
 - **0.90.0** (S139, 2026-10-20): §4n Lautstärke im Loop — Befund (Messung Titanium und aller Instrumente, 21 LU Streuung), LL1 a bis LL5 a; Stufe 27 in §5.

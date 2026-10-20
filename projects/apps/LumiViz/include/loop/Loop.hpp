@@ -465,12 +465,24 @@ struct LoopClip
     [[nodiscard]] bool operator==(const LoopClip&) const = default;
 };
 
+/// Die Grenzen des Faders je Kanal in dB (Entscheid Patrik S139, LL3 a: wie das
+/// Gain im Composer bis +24 dB). An der unteren Grenze schweigt der Kanal (−∞).
+inline constexpr double kKanalGainMinDb = -60.0;
+inline constexpr double kKanalGainMaxDb = 24.0;
+
 struct Kanal
 {
     QString name;
     bool an = true;
     /// Nach `Loop::richte` nach Start sortiert und ueberlappungsfrei.
     std::vector<LoopClip> clips;
+    /// Der Fader (Stufe 27e-1, LL3 a): `kKanalGainMinDb` … `kKanalGainMaxDb`,
+    /// 0 = unveraendert. Er wirkt nach den Effekten der Clips, wie an einem
+    /// Mischpult. In der Datei `gain` (seit Fassung 11, immer geschrieben).
+    double gainDb = 0.0;
+
+    /// `gainDb` als Faktor auf die Amplitude: 0 dB = genau 1, an der unteren Grenze 0.
+    [[nodiscard]] double gainFaktor() const;
 
     [[nodiscard]] bool operator==(const Kanal&) const = default;
 };

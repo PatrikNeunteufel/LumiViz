@@ -361,7 +361,7 @@ TEST_CASE("Loop Datei: die Effekte am Clip stehen in Fassung 3, Fassung 2 wird w
     SUBCASE("ein Clip ohne Effekte traegt das Feld nicht; geschrieben wird Fassung 3")
     {
         const QJsonObject json = alsJson(loop);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 10);  // seit S136: Legato, Slide, Bend (10, test_LoopSpielweise.cpp); S134: Strum, Anschlaege, Artikulationen (9, test_LoopSpielweise.cpp); S132: die Saite einer Note und String choice (8, test_LoopSaiten.cpp); S124: fxOn am Clip (E1 a, 7), Muster ab 1 Takt (B1 a, 6); S118: die Reihe `path` am Clip (test_LoopBausteine.cpp); S115: Drum-Spuren mit eigenem Sample oder Instrument (4)
+        CHECK(json.value(QStringLiteral("version")).toInt() == 11);  // seit S139: der Fader je Kanal (11, test_LoopKern.cpp); seit S136: Legato, Slide, Bend (10, test_LoopSpielweise.cpp); S134: Strum, Anschlaege, Artikulationen (9, test_LoopSpielweise.cpp); S132: die Saite einer Note und String choice (8, test_LoopSaiten.cpp); S124: fxOn am Clip (E1 a, 7), Muster ab 1 Takt (B1 a, 6); S118: die Reihe `path` am Clip (test_LoopBausteine.cpp); S115: Drum-Spuren mit eigenem Sample oder Instrument (4)
         const QJsonObject clip =
             json.value(QStringLiteral("channels")).toArray()[0].toObject().value(QStringLiteral("clips")).toArray()[0].toObject();
         CHECK(!clip.contains(QStringLiteral("effects")));

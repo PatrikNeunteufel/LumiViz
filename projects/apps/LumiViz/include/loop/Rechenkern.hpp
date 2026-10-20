@@ -70,6 +70,9 @@ struct Bus
     int kanal = 0;      ///< Index des Kanals im Loop
     int startTakt = 0;  ///< zusammen mit dem Kanal: welcher Clip
     ClipEffekte effekte;
+    /// Der Fader des Kanals (Stufe 27e-1): wer den Bus nach den Effekten
+    /// dazumischt, nimmt ihn mal diesen Faktor. Die Schlaege im Bus tragen ihn nicht.
+    float faktor = 1.0f;
 };
 
 /// Eine Spur eines Musters in einem Kanal, mit allen ihren Schlaegen.
