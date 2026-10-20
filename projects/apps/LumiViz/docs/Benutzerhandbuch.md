@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.193.0
+> **Version:** 1.194.0
 > **Datum:** 2026-10-20
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2652,6 +2652,7 @@ Clap, Tom) unter `asset\loop\kit`. Zwei weitere Beispiele mit Instrumenten:
 | Klick oder Ziehen im **Lineal** | Spielt der Loop, springt er an die Stelle (auf den Schritt genau). Sonst setzt es die **grüne Marke**: dort beginnt **Play**. Ein Klick ganz links nimmt sie wieder an den Anfang; ein anderer Loop beginnt wieder vorn |
 | Clip-Zeile | Zum angeklickten Clip: Basis, Takte, Wiederholungen und wie viele Clips die Basis spielen |
 | Kanal am **Namen** ziehen | Legt den Kanal an einen anderen Platz — ein Strich zeigt, wo er landet; Esc bricht ab. Oder Rechtsklick auf den Namen → **Move channel up** / **Move channel down**. Clips und Auswahl gehen mit, der Klang bleibt; ein Schritt für Undo |
+| **Fader** rechts im Kanalkopf | Die Lautstärke des Kanals in dB, von −∞ bis +24 dB, für alle Clips darin — zum Mischen. Senkrecht **ziehen** oder das **Mausrad** stellt ihn in Schritten von 0,5 dB, mit **Shift** von 0,1 dB; **Doppelklick** öffnet ein Feld zum Tippen (auch „-6,5“ oder „-inf“); **Ctrl+Klick** setzt 0 dB. Bei 0 dB steht der Wert matt da, sonst gerahmt; über dem Feld nennt die Zeile unter der Achse die Gesten. Er wirkt nach den Effekten der Clips, wie an einem Mischpult; jeder Zug ist ein Schritt für Undo. Neben den Instrumenten liegen die Drums eines frischen Kits rund 8 dB leiser — hier gleicht man es aus |
 
 **Wer den Ton hat.** Es spielt immer nur einer: der Composer, das Panel Loop
 oder der Player — in dieser Rangfolge. **Play** im Panel Loop hält den Player
@@ -3570,6 +3571,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.194.0 | 2026-10-20 | Session 139. §16 Loop: der Fader je Kanal im Kopf des Kanals (Stufe 27e-2). |
 | 1.193.0 | 2026-10-20 | Session 139. §16 Kits: die mitgelieferten Kits gleich laut (Stufe 27d). |
 | 1.192.0 | 2026-10-20 | Session 139. §16 Loop: Level des ganzen Instruments im Creator in dB bis +24 dB; die mitgelieferten Instrumente gleich laut (Stufe 27c). |
 | 1.191.0 | 2026-10-19 | Sessions 137–138. §16 Loop NEU **Tabs und Akkorde**: im Instrument-Editor die **Tab-Linien** (Haken Tab, Bünde tippen, Zahl auf eine andere Saite ziehen), im Rechtsklick-Menü **Legato (hammer-on / pull-off)**, **Slide** und das Untermenü **Bend** mit **Edit bend...** (bis zwei Ganztöne), der Knopf **Chords...** und das **Fenster Chords** mit Griffbildern (aus chords-db und gerechnet) oder Voicings, Anhören in vier Spielarten, Favoriten, eigene Akkorde im Dialog **Edit chord**; im Creator **In a legato**, **Slide time**, **Legato level** und bei **Play as** Hammer-on, Slide, Bend. Zwei neue Beispiele (`tabs_demo`, `voicings_demo`). §17 NEU `.lvchord`. **Fit** im Instrument-Editor zeigt das Muster jetzt ganz |

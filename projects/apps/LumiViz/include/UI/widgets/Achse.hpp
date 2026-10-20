@@ -56,10 +56,14 @@ public:
     /// Mitte der Zeile (0 = die oberste Zeile unter den Kopfzeilen).
     [[nodiscard]] int yVonZeile(int zeile) const;
 
-    static constexpr int kKopfBreite = 96;   ///< Spalte mit den Zeilennamen
+    static constexpr int kKopfBreite = 96;   ///< Spalte mit den Zeilennamen — die Vorgabe von `kopfBreite()`
     static constexpr int kRand = 10;         ///< frei rechts neben dem Ende
     static constexpr int kLinealHoehe = 24;
     static constexpr int kZeilenHoehe = 36;
+
+    /// Die Breite der Spalte mit den Zeilennamen. Eine Ableitung kann sie breiter
+    /// machen (das Loop-Panel traegt dort den Fader, Stufe 27e-2); der Composer bleibt bei `kKopfBreite`.
+    [[nodiscard]] virtual int kopfBreite() const { return kKopfBreite; }
 
     [[nodiscard]] int kopfZeilen() const { return m_kopfZeilen; }
     /// Oberkante und Hoehe einer Zeile; negativ = eine Kopfzeile unter dem

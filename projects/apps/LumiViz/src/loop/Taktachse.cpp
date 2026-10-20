@@ -19,6 +19,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <array>
@@ -386,7 +387,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             // die Zeile, auf der ein neuer Kanal entsteht
             p.setPen(pal.color(QPalette::Disabled, QPalette::Text));
             if (namePasst(hoch))
-                p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
+                p.drawText(QRect(8, oben, kopfBreite() - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
                            tr("New channel"));
             continue;
         }
@@ -396,15 +397,33 @@ void Taktachse::paintEvent(QPaintEvent*)
         p.setPen(name);
         const QString titel = kanal.an ? kanal.name : tr("%1 (off)").arg(kanal.name);
         if (namePasst(hoch))
-            p.drawText(QRect(8, oben, kKopfBreite - 12, hoch), Qt::AlignLeft | Qt::AlignVCenter,
-                       fontMetrics().elidedText(titel, Qt::ElideRight, kKopfBreite - 12));
+        {
+            // der Fader (27e-2, LL12 a): rechts im Kopf; bei 0 dB matt, sonst gerahmt
+            const QRect feld = faderFeld(k);
+            const int nameBreit = std::max(0, feld.left() - 8 - 6);
+            p.drawText(QRect(8, oben, nameBreit, hoch), Qt::AlignLeft | Qt::AlignVCenter,
+                       fontMetrics().elidedText(titel, Qt::ElideRight, nameBreit));
+            const bool aktiv = k == m_faderUnterMaus || k == m_faderZug;
+            QColor schrift = kanal.gainDb == 0.0 && !aktiv ? pal.color(QPalette::Disabled, QPalette::Text) : text;
+            if (!kanal.an) schrift.setAlpha(110);
+            if (kanal.gainDb != 0.0 || aktiv)
+            {
+                QColor rand = aktiv ? pal.color(QPalette::Highlight) : linie;
+                if (!kanal.an) rand.setAlpha(110);
+                p.setPen(QPen(rand, aktiv ? 1.5 : 1.0));
+                p.setBrush(Qt::NoBrush);
+                p.drawRoundedRect(QRectF(feld).adjusted(0.5, 0.5, -0.5, -0.5), 3, 3);
+            }
+            p.setPen(schrift);
+            p.drawText(feld, Qt::AlignCenter, faderText(kanal.gainDb));
+        }
 
         p.setClipRect(ausschnitte.zeilenZeit);
         for (int c = 0; c < static_cast<int>(kanal.clips.size()); ++c)
         {
             const LoopClip& clip = kanal.clips[static_cast<std::size_t>(c)];
             const QRect r = clipRechteck(k, c);
-            if (r.right() < kKopfBreite || r.left() > width()) continue;  // aus dem Fenster gerollt
+            if (r.right() < kopfBreite() || r.left() > width()) continue;  // aus dem Fenster gerollt
             const bool gewaehlt = istMarkiert(k, c);
             const QColor farbe = basisFarbe(clip.muster, kanal.an);
             p.setPen(gewaehlt ? QPen(pal.color(QPalette::Highlight), 2.0) : QPen(farbe.darker(150), 1.0));
@@ -412,7 +431,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             // hineingezoomt kann ein Clip viele tausend Pixel breit sein: gezeichnet
             // wird nur, was im Fenster liegt (und etwas mehr, fuer die runden Ecken)
             p.drawRoundedRect(
-                r.intersected(QRect(kKopfBreite - 12, r.top(), width() - kKopfBreite + 24, r.height())), 4, 4);
+                r.intersected(QRect(kopfBreite() - 12, r.top(), width() - kopfBreite() + 24, r.height())), 4, 4);
             p.setBrush(Qt::NoBrush);
 
             // die Wiederholungen: ein gestrichelter Strich an jeder Mustergrenze
@@ -431,7 +450,7 @@ void Taktachse::paintEvent(QPaintEvent*)
             // der Name bleibt am linken Rand des Fensters stehen, wenn der
             // Anfang des Clips hinausgerollt ist
             QRect namensFeld = r.adjusted(6, 0, -4, 0);
-            namensFeld.setLeft(std::max(r.left(), kKopfBreite) + 6);
+            namensFeld.setLeft(std::max(r.left(), kopfBreite()) + 6);
             // die Marke „fx": an diesem Clip ist ein Effekt eingeschaltet (Stufe 12);
             // ist sein Schalter aus (E1 a), steht sie matt da — die Reihe bleibt
             if (clip.effekte.einerAn() && r.width() >= 48 && namePasst(r.height()))
@@ -460,7 +479,7 @@ void Taktachse::paintEvent(QPaintEvent*)
     }
     p.setClipRect(ausschnitte.zeilen);
     p.setPen(linie);
-    p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
+    p.drawLine(kopfBreite() - 1, 0, kopfBreite() - 1, unten);
     // --- ein Kanal wird am Namen gezogen (7b a, wie im Composer): seine Zeile
     //     hervorgehoben, ein Strich an der Kante der Zeile, an der er landet
     if (m_kanalZug >= 0 && m_kanalZiel >= 0 && m_kanalZug < kanaele)
@@ -496,7 +515,7 @@ void Taktachse::paintEvent(QPaintEvent*)
     unterlage();
     p.setClipRect(ausschnitte.lineal);
     p.setPen(linie);
-    p.drawLine(kKopfBreite - 1, 0, kKopfBreite - 1, unten);
+    p.drawLine(kopfBreite() - 1, 0, kopfBreite() - 1, unten);
     p.setClipRect(ausschnitte.linealZeit);
     auflage();
 }
@@ -505,7 +524,7 @@ Taktachse::Griff Taktachse::griffBei(QPoint ort, int* kanal, int* clip) const
 {
     *kanal = -1;
     *clip = -1;
-    if (!m_geladen || ort.x() < kKopfBreite) return Griff::Keiner;
+    if (!m_geladen || ort.x() < kopfBreite()) return Griff::Keiner;
     const int k = kanalBei(ort.y());
     if (k < 0) return Griff::Keiner;
     const auto& clips = m_loop.kanaele[static_cast<std::size_t>(k)].clips;
@@ -543,9 +562,23 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
         Q_EMIT stelleGewaehlt(schrittBeiX(ort.x()));
         return;
     }
+    // am Fader (27e-2, LL12 a): Ctrl+Klick setzt 0 dB, sonst zieht die Maus ihn senkrecht
+    if (const int fader = faderBei(ort); fader >= 0)
+    {
+        if ((event->modifiers() & Qt::ControlModifier) != 0)
+        {
+            kanalGain(fader, 0.0);
+            return;
+        }
+        m_faderZug = fader;
+        m_faderStartY = ort.y();
+        m_faderStartDb = m_loop.kanaele[static_cast<std::size_t>(fader)].gainDb;
+        m_vorZug = m_loop;
+        return;
+    }
     // am Kanalnamen (7b a): der Kanal laesst sich an einen anderen Platz ziehen —
     // vorbereitet wird es hier, gezogen erst, wenn die Maus sich bewegt
-    if (ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+    if (ort.x() < kopfBreite() && kanalBei(ort.y()) >= 0)
     {
         m_kanalZug = kanalBei(ort.y());
         m_kanalZiel = -1;
@@ -561,7 +594,7 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
     {
         // freie Flaeche: von hier laesst sich ein Rahmen aufziehen; mit Ctrl
         // kommt, was er trifft, zu den Marken dazu
-        if (ort.x() >= kKopfBreite)
+        if (ort.x() >= kopfBreite())
         {
             m_griff = Griff::Rahmen;
             m_zugLaeuft = false;
@@ -724,6 +757,20 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
         schwenkeZu(ort);
         return;
     }
+    if (m_faderZug >= 0 && (event->buttons() & Qt::LeftButton))
+    {
+        // 0,1 dB je Pixel in Schritten von 0,5 dB; mit Shift 0,02 dB je Pixel in Schritten von 0,1 dB
+        const bool fein = (event->modifiers() & Qt::ShiftModifier) != 0;
+        const double schritt = fein ? 0.1 : 0.5;
+        const double roh = m_faderStartDb + (m_faderStartY - ort.y()) * (fein ? 0.02 : 0.1);
+        const double db = std::clamp(std::round(roh / schritt) * schritt, kKanalGainMinDb, kKanalGainMaxDb);
+        m_loop = m_vorZug;
+        m_loop.kanaele[static_cast<std::size_t>(m_faderZug)].gainDb = db;
+        setCursor(Qt::SizeVerCursor);
+        update();
+        Q_EMIT hinweis(tr("Channel gain: %1").arg(faderText(db)));
+        return;
+    }
     if (m_kanalZug >= 0 && (event->buttons() & Qt::LeftButton))
     {
         // ein Kanal wird am Namen gezogen: er fiele auf die Zeile unter der Maus
@@ -745,7 +792,11 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
     int kanal = -1;
     int clip = -1;
     const Griff griff = griffBei(ort, &kanal, &clip);
-    if (ort.x() < kKopfBreite && kanalBei(ort.y()) >= 0)
+    const int fader = faderBei(ort);
+    setzeFaderUnterMaus(fader);
+    if (fader >= 0)
+        setCursor(Qt::SizeVerCursor);  // am Fader: senkrecht ziehen
+    else if (ort.x() < kopfBreite() && kanalBei(ort.y()) >= 0)
         setCursor(Qt::OpenHandCursor);  // am Kanalnamen: der Kanal laesst sich verschieben
     else if (griff == Griff::KanteLinks || griff == Griff::KanteRechts)
         setCursor(Qt::SizeHorCursor);
@@ -756,6 +807,20 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
 void Taktachse::mouseReleaseEvent(QMouseEvent* event)
 {
     merkeTaste(event->buttons() != Qt::NoButton);
+    if (m_faderZug >= 0 && event->button() == Qt::LeftButton)
+    {
+        // ein Zug am Fader ist ein Undo-Schritt, wie weit er auch ging
+        const Loop gezogen = m_loop;
+        m_loop = m_vorZug;
+        m_faderZug = -1;
+        unsetCursor();
+        Q_EMIT hinweis(faderBei(event->position().toPoint()) >= 0 ? faderHinweis() : QString());
+        if (gezogen != m_vorZug)
+            uebernimm(gezogen, m_kanal, m_clip, tr("Channel gain"));
+        else
+            update();
+        return;
+    }
     if (m_imLineal && event->button() == Qt::LeftButton)
     {
         m_imLineal = false;
@@ -957,6 +1022,36 @@ bool Taktachse::verlangeEffekte()
 void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
 {
     if (!m_geladen || event->button() != Qt::LeftButton) return;
+    if (const int fader = faderBei(event->position().toPoint()); fader >= 0)
+    {
+        // am Fader (27e-2): den Wert tippen — „-6.5", „-6,5", „+3", „-inf"
+        m_faderZug = -1;
+        bool ok = false;
+        const double jetzt = m_loop.kanaele[static_cast<std::size_t>(fader)].gainDb;
+        const QString vorgabe = jetzt <= kKanalGainMinDb ? QStringLiteral("-inf") : QString::number(jetzt, 'f', 1);
+        const QString eingabe =
+            lumi::ui::frageText(this, tr("Channel gain"),
+                                tr("Gain of %1 in dB, %2 to +%3 (%2 = silent):")
+                                    .arg(m_loop.kanaele[static_cast<std::size_t>(fader)].name)
+                                    .arg(kKanalGainMinDb, 0, 'f', 0)
+                                    .arg(kKanalGainMaxDb, 0, 'f', 0),
+                                vorgabe, &ok)
+                .trimmed();
+        if (!ok) return;
+        QString zahl = eingabe;
+        zahl.replace(QLatin1Char(','), QLatin1Char('.')).replace(QChar(0x2212), QLatin1Char('-'));
+        zahl.remove(QStringLiteral("dB"), Qt::CaseInsensitive);
+        zahl = zahl.trimmed();
+        if (zahl.compare(QStringLiteral("-inf"), Qt::CaseInsensitive) == 0 || zahl == QStringLiteral("-∞"))
+        {
+            kanalGain(fader, kKanalGainMinDb);
+            return;
+        }
+        bool zahlOk = false;
+        const double db = zahl.toDouble(&zahlOk);
+        if (zahlOk) kanalGain(fader, db);
+        return;
+    }
     int kanal = -1;
     int clip = -1;
     if (griffBei(event->position().toPoint(), &kanal, &clip) == Griff::Keiner) return;
@@ -1007,6 +1102,86 @@ void Taktachse::kanalVerschieben(int von, int nach)
     uebernimm(neu, m_kanal >= 0 ? platzNachVerschieben(m_kanal, von, nach) : m_kanal, m_clip, tr("Move channel"));
 }
 
+void Taktachse::kanalGain(int kanal, double db)
+{
+    if (!m_geladen || m_griff != Griff::Keiner || kanal < 0 || kanal >= static_cast<int>(m_loop.kanaele.size())) return;
+    Loop neu = m_loop;
+    neu.kanaele[static_cast<std::size_t>(kanal)].gainDb = std::clamp(db, kKanalGainMinDb, kKanalGainMaxDb);
+    if (neu == m_loop) return;
+    uebernimm(neu, m_kanal, m_clip, tr("Channel gain"));
+}
+
+QRect Taktachse::faderFeld(int kanal) const
+{
+    if (kanal < 0 || kanal >= static_cast<int>(m_loop.kanaele.size())) return {};
+    const int hoch = zeileHoch(kanal);
+    if (!namePasst(hoch)) return {};
+    const QFontMetrics masse = fontMetrics();
+    const int breit = masse.horizontalAdvance(QStringLiteral("−60.0 dB")) + 10;
+    const int feldHoch = masse.height() + 4;
+    return {kopfBreite() - breit - 8, zeileOben(kanal) + (hoch - feldHoch) / 2, breit, feldHoch};
+}
+
+int Taktachse::faderBei(QPoint ort) const
+{
+    if (!m_geladen || ort.x() >= kopfBreite() || ort.y() < kLinealHoehe) return -1;
+    const int kanal = kanalBei(ort.y());
+    return kanal >= 0 && faderFeld(kanal).contains(ort) ? kanal : -1;
+}
+
+QString Taktachse::faderText(double db)
+{
+    if (db <= kKanalGainMinDb) return QStringLiteral("−∞ dB");
+    const double gerundet = std::round(db * 10.0) / 10.0;
+    if (gerundet == 0.0) return QStringLiteral("0.0 dB");
+    return (gerundet > 0.0 ? QStringLiteral("+") : QStringLiteral("−")) + QString::number(std::abs(gerundet), 'f', 1) +
+           QStringLiteral(" dB");
+}
+
+QString Taktachse::faderHinweis()
+{
+    return tr("Channel gain · drag up or down or turn the wheel, with Shift in fine steps · double-click to type · "
+              "Ctrl+click for 0 dB");
+}
+
+void Taktachse::setzeFaderUnterMaus(int kanal)
+{
+    if (kanal == m_faderUnterMaus) return;
+    m_faderUnterMaus = kanal;
+    update();
+    Q_EMIT hinweis(kanal >= 0 ? faderHinweis() : QString());
+}
+
+void Taktachse::leaveEvent(QEvent* event)
+{
+    if (m_faderZug < 0) setzeFaderUnterMaus(-1);
+    lumi::ui::Achse::leaveEvent(event);
+}
+
+void Taktachse::wheelEvent(QWheelEvent* event)
+{
+    // ueber dem Fader (27e-2): das Rad stellt ihn — 0,5 dB je Raste, mit Shift 0,1 dB
+    const Qt::KeyboardModifiers tasten =
+        event->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier | Qt::AltModifier);
+    const int fader = faderBei(event->position().toPoint());
+    if (fader < 0 || (tasten != Qt::NoModifier && tasten != Qt::ShiftModifier))
+    {
+        lumi::ui::Achse::wheelEvent(event);
+        return;
+    }
+    const QPoint grad = event->angleDelta();
+    m_faderRadRest += grad.y() != 0 ? grad.y() : grad.x();  // mit Shift meldet das System das Rad oft waagrecht
+    const int rasten = m_faderRadRest / 120;
+    m_faderRadRest -= rasten * 120;
+    if (rasten != 0)
+    {
+        const double schritt = tasten == Qt::ShiftModifier ? 0.1 : 0.5;
+        const double jetzt = m_loop.kanaele[static_cast<std::size_t>(fader)].gainDb;
+        kanalGain(fader, std::round((jetzt + rasten * schritt) / schritt) * schritt);
+    }
+    event->accept();
+}
+
 void Taktachse::kanalSchalten(int kanal, bool an)
 {
     if (!m_geladen || m_griff != Griff::Keiner) return;
@@ -1027,7 +1202,7 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         return;
     }
     const int kanal = kanalBei(ort.y());
-    if (kanal >= 0 && ort.x() < kKopfBreite)
+    if (kanal >= 0 && ort.x() < kopfBreite())
     {
         // am Kanalnamen
         const Kanal& k = m_loop.kanaele[static_cast<std::size_t>(kanal)];

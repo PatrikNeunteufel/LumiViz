@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.95.0
+> **Version:** 0.96.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3632,7 +3632,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c ✅ | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d ✅ | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
-| 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
+| 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 ✅ Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
 
@@ -3756,6 +3756,27 @@ Gekappt (der Bericht des Tests, über 1 LU): `rock_n_roll` Crash (`lib:drs_crash
 `strange` Snare (`lib:snap`) 5,4 LU, `lo_fi` Clap (`lib:snap`) 3,1 LU; dazu `electro` Hat
 0,3 dB und `hand_drums` Perc 1 0,0 dB (unter der Toleranz). Offen nach LL11 a: je Rolle so
 lassen oder einen lauteren Klang wählen.
+
+✅ **LL12 a** (Patrik S139; Skizze A gezeigt): **Der Fader steht im Kopf jedes Kanals**, rechts
+neben dem Namen — bei 0 dB matt, sonst gerahmt, ein stummer Kanal −∞. Senkrecht ziehen oder
+das Rad in Schritten von 0,5 dB, mit Shift 0,1 dB; Doppelklick zum Tippen; Ctrl+Klick 0 dB;
+über dem Wert der Zeiger ↕ und die Gesten in der Statuszeile; jede Änderung über Undo. Der Kopf
+wird rund 50 px breiter. Verworfen: b (ein Feld Gain in der zweiten Zeile für den gewählten
+Kanal, wie im Composer — Mischen braucht das Verhältnis aller auf einen Blick).
+
+**Wie 27e-2 gebaut ist (S139):** die Basis `lumi::ui::Achse` hat `kopfBreite()` (virtuell,
+Vorgabe `kKopfBreite` 96 — der Composer bleibt, wie er ist); `Taktachse` überschreibt sie mit
+`kKopfBreiteLoop` 150. `Taktachse::faderFeld`, `kanalGain` (ein Undo-Schritt, begrenzt),
+`faderText` („+4.0 dB“, „0.0 dB“, „−∞ dB“), `faderHinweis`; Ziehen: 0,1 dB je Pixel in
+Schritten von 0,5, mit Shift 0,02 je Pixel in Schritten von 0,1 — ein Zug ist ein Undo-Schritt,
+der Klang ändert sich erst beim Loslassen; das Rad sammelt bis zur Raste; Doppelklick über
+`lumi::ui::frageText` (Komma, Minuszeichen, „dB“, „-inf“); das Signal `hinweis` füllt die
+Zeile `loopClip`. Der Druck aufs Feld zieht nicht den Kanal (7b a bleibt am Namen).
+`test_LoopArrangement.cpp`: ein Fall „Loop Fader 27e-2“ über Panel und Achse — Feld, Hinweis und
+Zeiger, Ziehen (auch fein, bis −∞), Undo je Zug, Rad mit halber Raste, Ctrl+Klick, Grenze,
+Doppelklick mit drei Eingaben; `LUMIVIZ_LOOP_FADER_BILD=<datei.png>` legt ein Bild ab
+(angesehen). **Offen:** der Klang folgt beim Ziehen noch nicht live; der Name eines
+ausgeschalteten Kanals wird mit „(off)“ früh gekürzt.
 
 **Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
 +24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
@@ -3919,6 +3940,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.96.0** (S139, 2026-10-20): §4n LL12 a; Stufe 27e-2 gebaut — der Fader im Kopf jedes Kanals.
 - **0.95.0** (S139, 2026-10-20): §4n LL9 a bis LL11 a; Stufe 27d gebaut — Drum-Probe, die Kits auf dem Drum-Anker (−21,89 LUFS, 8,5 LU unter dem Bezug der Instrumente), drei Rollen gekappt.
 - **0.94.0** (S139, 2026-10-20): §4n Stufe 27c gebaut — Instrumente auf dem Bezug (`instrument_pegel.py`), Loops nachgezogen, `.lvinst` Fassung 13.
 - **0.93.0** (S139, 2026-10-20): §4n LL6 a bis LL8 a (Volume bis +24 dB, Begrenzer am Ausgang, der Fader zuerst), Befunde zu Spitzen und Nachziehen; Stufe 27e-1 gebaut (Fader je Kanal, `.lvloop` Fassung 11).

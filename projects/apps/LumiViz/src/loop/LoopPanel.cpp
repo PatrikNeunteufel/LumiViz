@@ -355,6 +355,13 @@ void LoopPanel::setupUI()
 
     connect(m_achse, &Taktachse::bearbeitet, this, &LoopPanel::bearbeite);
     connect(m_achse, &Taktachse::auswahlGeaendert, this, &LoopPanel::zeigeClip);
+    // am Fader (27e-2): die Zeile unter der Achse nennt die Gesten; ohne Hinweis wieder den Clip
+    connect(m_achse, &Taktachse::hinweis, this, [this](const QString& text) {
+        if (text.isEmpty())
+            zeigeClip();
+        else
+            m_clipZeile->setText(text);
+    });
     connect(m_achse, &Taktachse::editorVerlangt, this, [this](const QString& muster) { (void)oeffneEditor(muster); });
     connect(m_achse, &Taktachse::effekteVerlangt, this, [this] { (void)oeffneEffekte(); });
     // B4 (S124): ein Klick ins Lineal — dorthin springen, oder dort beginnen

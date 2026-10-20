@@ -298,7 +298,8 @@ TEST_SUITE("LoopTakteSprung")
         achse.setLoop(lang, true);
         std::vector<int> stellen;
         QObject::connect(&achse, &Taktachse::stelleGewaehlt, &achse, [&](int s) { stellen.push_back(s); });
-        klick(achse, QPoint(achse.xVonTakt(2) + 1, 5));
+        // auf die Linie: seit dem breiteren Kopf (27e-2) ist ein Pixel daneben schon ueber einen halben Schritt
+        klick(achse, QPoint(achse.xVonTakt(2), 5));
         REQUIRE(stellen.size() == 1u);
         CHECK(stellen[0] == 32);  // Takt 3 beginnt bei Schritt 32
         maus(achse, QEvent::MouseButtonPress, QPoint(achse.xVonTakt(1) + 1, 5), Qt::LeftButton, Qt::NoModifier);

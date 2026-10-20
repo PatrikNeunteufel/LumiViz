@@ -16,6 +16,7 @@
 #include "loop/LoopPanel.hpp"
 #include "loop/Offen.hpp"
 #include "loop/Taktachse.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 #include "services/CommandBus.hpp"
 #include "services/EventBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -28,8 +29,11 @@
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QKeyEvent>
+#include <QDialog>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMouseEvent>
+#include <QWheelEvent>
 #include <QPushButton>
 #include <QSettings>
 #include <QTemporaryDir>
@@ -522,7 +526,7 @@ TEST_SUITE("LoopArrangement")
             CHECK(Taktachse::anzeigeTakte(probe()) == 20);
             CHECK(Taktachse::anzeigeTakte(Loop{}) == 16);
             CHECK(achse.zeitGanz());
-            CHECK(achse.xVonTakt(0) == Taktachse::kKopfBreite);
+            CHECK(achse.xVonTakt(0) == achse.kopfBreite());
             CHECK(achse.xVonTakt(20) == achse.width() - Taktachse::kRand);
             CHECK(achse.taktBei(achse.xVonTakt(5) + 3) == 5);
             const QRect a = achse.clipRechteck(0, 0);
@@ -994,5 +998,148 @@ TEST_SUITE("LoopArrangement")
         CHECK_FALSE(panel.oeffne(fremd));
         CHECK(panel.oeffne(pfad));
         CHECK(bericht->text().isEmpty());
+    }
+    // Stufe 27e-2 (S139, Entscheid Patrik LL12 a): der Fader im Kopf jedes Kanals —
+    // ueber das Panel und die Achse, wie im Programm (Memory „Test-Eingaben wie im Programm")
+    TEST_CASE("Loop Fader 27e-2: im Kopf der Kanaele — Feld, Ziehen, Rad, Ctrl+Klick, Doppelklick, Undo, Hinweis")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        ICommandBus* bus = dienste.tryResolve<ICommandBus>();
+        REQUIRE(bus != nullptr);
+        LoopPanel panel(dienste);  // nicht gezeigt
+        panel.resize(900, 300);
+        auto* clipZeile = panel.findChild<QLabel*>(QStringLiteral("loopClip"));
+        REQUIRE(clipZeile != nullptr);
+        Loop loop = probe();
+        loop.kanaele[1].gainDb = 4.0;
+        panel.neu();  // wie im Programm: erst New (oder Load), dann ist die Achse bereit
+        panel.setzeLoop(loop);
+        Taktachse& achse = *panel.taktachse();
+        achse.resize(900, 220);
+        const auto gain = [&achse](int k) { return achse.loop().kanaele[static_cast<std::size_t>(k)].gainDb; };
+
+        // --- der Kopf ist breiter, das Feld steht rechts darin
+        CHECK(achse.kopfBreite() == Taktachse::kKopfBreiteLoop);
+        CHECK(achse.xVonTakt(0) == achse.kopfBreite());
+        const QRect feld0 = achse.faderFeld(0);
+        REQUIRE_FALSE(feld0.isEmpty());
+        CHECK(feld0.right() < achse.kopfBreite());
+        CHECK(feld0.left() > 60);  // der Name behaelt Platz
+        CHECK(achse.faderFeld(9).isEmpty());
+        CHECK(Taktachse::faderText(0.0) == QStringLiteral("0.0 dB"));
+        CHECK(Taktachse::faderText(4.0) == QStringLiteral("+4.0 dB"));
+        CHECK(Taktachse::faderText(-6.5) == QStringLiteral("−6.5 dB"));
+        CHECK(Taktachse::faderText(kKanalGainMinDb) == QStringLiteral("−∞ dB"));
+        CHECK(Taktachse::faderText(-0.04) == QStringLiteral("0.0 dB"));
+
+        // --- ueber dem Feld: der Hinweis in der Zeile, wieder weg daneben
+        maus(achse, QEvent::MouseMove, feld0.center(), Qt::NoButton, Qt::NoButton);
+        CHECK(clipZeile->text() == Taktachse::faderHinweis());
+        CHECK(achse.cursor().shape() == Qt::SizeVerCursor);
+        maus(achse, QEvent::MouseMove, QPoint(20, feld0.center().y()), Qt::NoButton, Qt::NoButton);
+        CHECK(clipZeile->text() != Taktachse::faderHinweis());
+
+        // --- ziehen: 20 Pixel hinauf = +2,0 dB, ein Undo-Schritt; der Name wird dabei nicht gezogen
+        const QPoint mitte = feld0.center();
+        maus(achse, QEvent::MouseButtonPress, mitte, Qt::LeftButton, Qt::LeftButton);
+        maus(achse, QEvent::MouseMove, mitte - QPoint(0, 10), Qt::NoButton, Qt::LeftButton);
+        CHECK(achse.faderImZug() == 0);
+        CHECK(achse.kanalImZug() == -1);
+        maus(achse, QEvent::MouseMove, mitte - QPoint(0, 20), Qt::NoButton, Qt::LeftButton);
+        CHECK(clipZeile->text() == QStringLiteral("Channel gain: +2.0 dB"));
+        CHECK(gain(0) == doctest::Approx(2.0));
+        CHECK(panel.loop().kanaele[0].gainDb == 0.0);  // erst beim Loslassen
+        maus(achse, QEvent::MouseButtonRelease, mitte - QPoint(0, 20), Qt::LeftButton, Qt::NoButton);
+        CHECK(panel.loop().kanaele[0].gainDb == doctest::Approx(2.0));
+        CHECK(bus->undoDescription() == "Channel gain");
+        // mit Shift fein: 10 Pixel = 0,2 dB, in Schritten von 0,1
+        maus(achse, QEvent::MouseButtonPress, mitte, Qt::LeftButton, Qt::LeftButton);
+        maus(achse, QEvent::MouseMove, mitte - QPoint(0, 10), Qt::NoButton, Qt::LeftButton, Qt::ShiftModifier);
+        maus(achse, QEvent::MouseButtonRelease, mitte - QPoint(0, 10), Qt::LeftButton, Qt::NoButton, Qt::ShiftModifier);
+        CHECK(panel.loop().kanaele[0].gainDb == doctest::Approx(2.2));
+        // weit hinunter: an der unteren Grenze still
+        maus(achse, QEvent::MouseButtonPress, mitte, Qt::LeftButton, Qt::LeftButton);
+        maus(achse, QEvent::MouseMove, mitte + QPoint(0, 2000), Qt::NoButton, Qt::LeftButton);
+        maus(achse, QEvent::MouseButtonRelease, mitte + QPoint(0, 2000), Qt::LeftButton, Qt::NoButton);
+        CHECK(panel.loop().kanaele[0].gainDb == kKanalGainMinDb);
+        // Undo nimmt die Zuege einzeln zurueck
+        REQUIRE(bus->undo());
+        CHECK(panel.loop().kanaele[0].gainDb == doctest::Approx(2.2));
+        REQUIRE(bus->undo());
+        REQUIRE(bus->undo());
+        CHECK(panel.loop().kanaele[0].gainDb == 0.0);
+
+        // --- das Rad: 0,5 dB je Raste, mit Shift 0,1 dB; es rollt dort nicht
+        const auto rad = [&achse](QPoint ort, int grad, Qt::KeyboardModifiers dazu = Qt::NoModifier) {
+            QWheelEvent ereignis(QPointF(ort), QPointF(achse.mapToGlobal(ort)), QPoint(), QPoint(0, grad), Qt::NoButton,
+                                 dazu, Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(&achse, &ereignis);
+        };
+        const QRect feld1 = achse.faderFeld(1);
+        rad(feld1.center(), 240);
+        CHECK(panel.loop().kanaele[1].gainDb == doctest::Approx(5.0));
+        rad(feld1.center(), -120, Qt::ShiftModifier);
+        CHECK(panel.loop().kanaele[1].gainDb == doctest::Approx(4.9));
+        rad(feld1.center(), 60);  // eine halbe Raste: noch nichts
+        CHECK(panel.loop().kanaele[1].gainDb == doctest::Approx(4.9));
+        rad(feld1.center(), 60);
+        CHECK(panel.loop().kanaele[1].gainDb == doctest::Approx(5.5));  // 4,9 + 0,5 = 5,4, auf den halben dB gerundet
+        // Ctrl+Klick: 0 dB
+        maus(achse, QEvent::MouseButtonPress, feld1.center(), Qt::LeftButton, Qt::LeftButton, Qt::ControlModifier);
+        maus(achse, QEvent::MouseButtonRelease, feld1.center(), Qt::LeftButton, Qt::NoButton, Qt::ControlModifier);
+        CHECK(panel.loop().kanaele[1].gainDb == 0.0);
+        // die obere Grenze
+        achse.kanalGain(1, 99.0);
+        CHECK(panel.loop().kanaele[1].gainDb == kKanalGainMaxDb);
+
+        // --- Doppelklick: tippen, auch mit Komma, Minuszeichen und -inf
+        QString frage;
+        QString antwort = QStringLiteral("−6,5 dB");
+        lumi::ui::setzeDialogBeobachterFuerTests([&](QDialog& d) {
+            auto* feld = d.findChild<QLineEdit*>();
+            REQUIRE(feld != nullptr);
+            frage = d.windowTitle();
+            feld->setText(antwort);
+            return static_cast<int>(QDialog::Accepted);
+        });
+        const auto doppelklick = [&achse](QPoint ort) {
+            maus(achse, QEvent::MouseButtonPress, ort, Qt::LeftButton, Qt::LeftButton);
+            maus(achse, QEvent::MouseButtonRelease, ort, Qt::LeftButton, Qt::NoButton);
+            maus(achse, QEvent::MouseButtonDblClick, ort, Qt::LeftButton, Qt::LeftButton);
+            maus(achse, QEvent::MouseButtonRelease, ort, Qt::LeftButton, Qt::NoButton);
+        };
+        doppelklick(feld0.center());
+        CHECK(frage == QStringLiteral("Channel gain"));
+        CHECK(panel.loop().kanaele[0].gainDb == doctest::Approx(-6.5));
+        antwort = QStringLiteral("-inf");
+        doppelklick(feld0.center());
+        CHECK(panel.loop().kanaele[0].gainDb == kKanalGainMinDb);
+        antwort = QStringLiteral("abc");  // keine Zahl: nichts
+        doppelklick(feld0.center());
+        CHECK(panel.loop().kanaele[0].gainDb == kKanalGainMinDb);
+        lumi::ui::setzeDialogBeobachterFuerTests({});
+
+        // --- `LUMIVIZ_LOOP_FADER_BILD=<datei.png>` legt ein Bild des Panels mit Fadern ab
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_LOOP_FADER_BILD"); !bild.isEmpty())
+        {
+            Loop gezeigt = probe();
+            (void)kanalHinzu(gezeigt);
+            (void)kanalSchalten(gezeigt, 2, false);
+            gezeigt.kanaele[2].clips = {{QStringLiteral("A"), 0, 1}};
+            gezeigt.kanaele[0].gainDb = 4.0;
+            gezeigt.kanaele[1].gainDb = -6.5;
+            gezeigt.kanaele[2].gainDb = kKanalGainMinDb;
+            panel.setzeLoop(gezeigt);
+            panel.taktachse()->waehle(0, 0);
+            maus(*panel.taktachse(), QEvent::MouseMove, panel.taktachse()->faderFeld(1).center(), Qt::NoButton,
+                 Qt::NoButton);
+            CHECK(panel.grab().save(bild));
+        }
     }
 }

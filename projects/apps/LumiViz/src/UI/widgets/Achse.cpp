@@ -71,17 +71,17 @@ void Achse::beginneNeu()
 
 int Achse::zeitBreite() const
 {
-    return std::max(1, width() - kKopfBreite - kRand);
+    return std::max(1, width() - kopfBreite() - kRand);
 }
 
 int Achse::xVon(std::int64_t stelle) const
 {
-    if (m_laenge <= 0) return kKopfBreite;
+    if (m_laenge <= 0) return kopfBreite();
     if (zeitGanz())
-        return kKopfBreite + static_cast<int>(static_cast<double>(stelle) / static_cast<double>(m_laenge) *
+        return kopfBreite() + static_cast<int>(static_cast<double>(stelle) / static_cast<double>(m_laenge) *
                                                   zeitBreite() + 0.5);
     // hineingezoomt (S102): der feste Massstab, um `rollX` nach links versetzt
-    return kKopfBreite + static_cast<int>(std::floor(static_cast<double>(stelle) / einheitJePixel() + 0.5)) -
+    return kopfBreite() + static_cast<int>(std::floor(static_cast<double>(stelle) / einheitJePixel() + 0.5)) -
            m_rollX;
 }
 
@@ -90,11 +90,11 @@ std::int64_t Achse::stelleVon(int x) const
     if (m_laenge <= 0) return 0;
     if (zeitGanz())
     {
-        const double anteil = static_cast<double>(x - kKopfBreite) / static_cast<double>(zeitBreite());
+        const double anteil = static_cast<double>(x - kopfBreite()) / static_cast<double>(zeitBreite());
         return std::clamp<std::int64_t>(
             static_cast<std::int64_t>(anteil * static_cast<double>(m_laenge) + 0.5), 0, m_laenge);
     }
-    const double einheiten = static_cast<double>(x - kKopfBreite + m_rollX) * einheitJePixel();
+    const double einheiten = static_cast<double>(x - kopfBreite() + m_rollX) * einheitJePixel();
     return std::clamp<std::int64_t>(static_cast<std::int64_t>(std::floor(einheiten + 0.5)), 0, m_laenge);
 }
 
@@ -132,8 +132,8 @@ void Achse::zoomeZeit(double faktor, int xFest)
     const double alt = einheitJePixel();
     // der Festpunkt: die Zeit unter `xFest` — ueber der Spalte der Namen die
     // an deren rechter Kante
-    const int x = std::max(xFest, kKopfBreite);
-    const double zeit = static_cast<double>(x - kKopfBreite + m_rollX) * alt;
+    const int x = std::max(xFest, kopfBreite());
+    const double zeit = static_cast<double>(x - kopfBreite() + m_rollX) * alt;
     const double neu = std::max(m_feinsteJePixel, alt / faktor);
     if (neu >= ganz * 0.999)
     {
@@ -144,7 +144,7 @@ void Achse::zoomeZeit(double faktor, int xFest)
     else
     {
         m_einheitJePixel = neu;
-        m_rollX = std::clamp(static_cast<int>(std::floor(zeit / neu + 0.5)) - (x - kKopfBreite), 0, rollXMax());
+        m_rollX = std::clamp(static_cast<int>(std::floor(zeit / neu + 0.5)) - (x - kopfBreite()), 0, rollXMax());
     }
     update();
     Q_EMIT rollenGeaendert();
@@ -200,7 +200,7 @@ QSize Achse::sizeHint() const
 QSize Achse::minimumSizeHint() const
 {
     // das Lineal und zwei Zeilen: was nicht hineinpasst, rollt (S102)
-    return {kKopfBreite + 160, kLinealHoehe + 2 * kZeilenHoehe};
+    return {kopfBreite() + 160, kLinealHoehe + 2 * kZeilenHoehe};
 }
 
 int Achse::inhaltHoehe() const
@@ -365,8 +365,8 @@ Achse::Flaechen Achse::flaechen() const
     Flaechen f;
     f.lineal = QRect(0, 0, width(), kLinealHoehe);
     f.zeilen = QRect(0, kLinealHoehe, width(), std::max(0, height() - kLinealHoehe));
-    f.linealZeit = f.lineal.adjusted(kKopfBreite - 1, 0, 0, 0);
-    f.zeilenZeit = f.zeilen.adjusted(kKopfBreite - 1, 0, 0, 0);
+    f.linealZeit = f.lineal.adjusted(kopfBreite() - 1, 0, 0, 0);
+    f.zeilenZeit = f.zeilen.adjusted(kopfBreite() - 1, 0, 0, 0);
     return f;
 }
 
@@ -377,7 +377,7 @@ void Achse::zeichneLinealStriche(QPainter& p, std::int64_t schritt, int unten,
     QColor linie = text;
     linie.setAlpha(50);
     // die Striche nur im sichtbaren Stueck Zeit: hineingezoomt waeren es sonst Tausende
-    const std::int64_t von = stelleVon(kKopfBreite) / schritt * schritt;
+    const std::int64_t von = stelleVon(kopfBreite()) / schritt * schritt;
     const std::int64_t bis = std::min(m_laenge, stelleVon(width()) + schritt);
     QFont klein = font();
     klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
@@ -445,7 +445,7 @@ void AchsenRahmen::gleicheAb()
         const QSignalBlocker ruhe(m_waagrecht);
         m_waagrecht->setRange(0, maxX);
         // eine Seite: die Zeit, die rechts der Namensspalte zu sehen ist
-        m_waagrecht->setPageStep(std::max(1, m_achse->width() - Achse::kKopfBreite));
+        m_waagrecht->setPageStep(std::max(1, m_achse->width() - m_achse->kopfBreite()));
         m_waagrecht->setValue(m_achse->rollX());
     }
     m_waagrecht->setVisible(maxX > 0);  // nur, wenn in die Zeit hineingezoomt ist

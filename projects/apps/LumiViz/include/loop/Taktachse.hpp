@@ -41,6 +41,10 @@ public:
 
     /// So viele Ticks hat ein Takt.
     static constexpr std::int64_t kTicksJeTakt = 960;
+    /// Die Spalte der Kanalnamen ist hier breiter als in der Basis: rechts steht
+    /// der Fader des Kanals (Stufe 27e-2, Entscheid Patrik LL12 a).
+    static constexpr int kKopfBreiteLoop = 150;
+    [[nodiscard]] int kopfBreite() const override { return kKopfBreiteLoop; }
     /// Der feinste Massstab: vier Ticks je Pixel, ein Takt ist dann 240 Pixel breit.
     static constexpr double kFeinsteTicksJePixel = 4.0;
 
@@ -116,6 +120,18 @@ public:
     void kanalLoeschen(int kanal);
     void kanalUmbenennen(int kanal, const QString& name);
     void kanalSchalten(int kanal, bool an);
+    /// Den Fader des Kanals stellen (Stufe 27e-2): begrenzt auf `kKanalGainMinDb` …
+    /// `kKanalGainMaxDb`, ein Undo-Schritt. Auch Ziehen, Rad, Doppelklick und Ctrl+Klick am Feld.
+    void kanalGain(int kanal, double db);
+    /// Das Feld des Faders im Kopf eines Kanals; leer = es gibt den Kanal nicht
+    /// oder seine Zeile ist zu niedrig fuer Schrift.
+    [[nodiscard]] QRect faderFeld(int kanal) const;
+    /// Der Kanal, dessen Fader gerade gezogen wird (-1 = keiner).
+    [[nodiscard]] int faderImZug() const { return m_faderZug; }
+    /// Wie der Fader im Kopf steht: „+4.0 dB", „0.0 dB", „−6.5 dB", „−∞ dB".
+    [[nodiscard]] static QString faderText(double db);
+    /// Was die Statuszeile ueber dem Fader sagt.
+    [[nodiscard]] static QString faderHinweis();
     /// Den Kanal an einen anderen Platz legen (S127, Entscheid Patrik 7b a) —
     /// auch durch Ziehen am Namen oder Rechtsklick „Move channel up/down".
     /// Clips, Marken und Auswahl gehen mit; ein Undo-Schritt.
@@ -151,6 +167,9 @@ Q_SIGNALS:
     void effekteVerlangt();
     /// Ein Klick oder Zug im Lineal (B4): dorthin springen, oder dort beginnen.
     void stelleGewaehlt(int schritt);
+    /// Ein Hinweis zur Bedienung unter der Maus (Stufe 27e-2: am Fader, auch sein
+    /// Wert waehrend des Ziehens); leer = keiner mehr.
+    void hinweis(const QString& text);
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
@@ -163,8 +182,14 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 
 private:
+    /// Der Kanal, auf dessen Fader `ort` zeigt; -1 = keiner.
+    [[nodiscard]] int faderBei(QPoint ort) const;
+    /// Die Maus steht ueber dem Fader von `kanal` (-1 = ueber keinem): Hervorhebung und Hinweis.
+    void setzeFaderUnterMaus(int kanal);
     /// Ein Zug an einem Clip.
     enum class Griff
     {
@@ -213,6 +238,11 @@ private:
     int m_kanalZug = -1;           ///< der Kanal, der am Namen gezogen wird (7b)
     int m_kanalZiel = -1;          ///< der Platz, auf den er fiele
     QPoint m_kanalZugStart;
+    int m_faderZug = -1;         ///< der Kanal, dessen Fader gezogen wird (27e-2)
+    int m_faderStartY = 0;
+    double m_faderStartDb = 0.0;
+    int m_faderUnterMaus = -1;   ///< hervorgehoben, solange die Maus darueber steht
+    int m_faderRadRest = 0;      ///< ein feines Rad sammelt bis zur Raste
 };
 
 }  // namespace lumi::loop
