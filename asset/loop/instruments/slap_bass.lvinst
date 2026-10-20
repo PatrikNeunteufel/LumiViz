@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Funk"],
     "description": "Four strings plucked hard (Waveguide) on a bridge single coil, a thump below and a short pop an octave above.",
-    "level": 0.938,
+    "level": 0.9635,
     "layers": [
         {
             "name": "String",

@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Jazz"],
     "description": "A recorded harp note with a short sine body.",
-    "level": 0.85,
+    "level": 0.6098,
     "layers": [
         {
             "name": "Harp",

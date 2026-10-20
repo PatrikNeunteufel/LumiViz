@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.191.0
-> **Datum:** 2026-10-19
+> **Version:** 1.192.0
+> **Datum:** 2026-10-20
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -3045,7 +3045,7 @@ die Klaviatur des Editors.
 | **Type**, **Genres**, **Description** | Die zweite Zeile: wo das Instrument einsortiert ist (eine von neun Arten), zu welchen Genres es gehört (mit Kommas getrennt; beim Tippen schlägt das Feld die vorhandenen vor) und ein Satz dazu |
 | **Save** | Wählbar, sobald etwas geändert ist. Bei einem eigenen Instrument schreibt es ohne Rückfrage an seinen Ort. Bei einem mitgelieferten sagt der Dialog **Save instrument**, dass Originale nicht überschrieben werden, und fragt nach einem **Namen** für deine Kopie — der vorgeschlagene lässt sich behalten oder ändern. Der Dialog zeigt, wie die Datei heißen wird, und warnt, wenn es den Namen unter deinen eigenen schon gibt. Danach spielt das Muster die Kopie |
 | **Save as...** | Derselbe Dialog, bei jedem Instrument: eine Kopie unter einem neuen Namen zu deinen eigenen Dateien; das bisherige bleibt, wie es ist, und das Muster spielt danach die Kopie. Einen Ort wählst du nicht (GEÄNDERT in 1.141.0: vorher ein Dateidialog an beliebigem Ort). Eine `.lvinst` für jemand anderen holst du aus dem Ordner oder über den Export deiner Daten |
-| **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen |
+| **Level** (oben) | Lautstärke des ganzen Instruments gegen die anderen — seit 1.192.0 in **dB**, von −∞ (ganz links) bis **+24 dB**; 0 dB lässt es, wie es gebaut ist. Die mitgelieferten Instrumente sind so eingestellt, dass sie gleich laut klingen: Volume 1 an einem Muster heißt bei jedem dasselbe. Die mitgelieferten Loops klingen dabei wie vorher; wo ein Muster dafür lauter als 1 sein müsste, steht der Überschuss im Fader seines Kanals |
 | **Peak** | Der größte Ausschlag eines Tons (C4) mit diesen Einstellungen — mit allen eingeschalteten Schichten |
 | **Layers** | Die Schichten des Instruments, eine bis acht (GEÄNDERT in 1.153.0: vorher vier). Jede Schicht wird je Ton eigens gerechnet und zu den anderen addiert — mit jeder steigt **Peak**; liegt er über 1, die Level der Schichten zurücknehmen. Ein Klick wählt eine Schicht — die Regler in der Mitte gelten für sie. Der Haken schaltet sie stumm, ohne sie zu löschen. NEU in 1.161.0: der **Farbpunkt** — jede Waveform hat ihre Farbfamilie (Sine Blau, Triangle Grün, Saw Rot, Square Orange, Plucked string Ocker, Noise Grau, Sample Violett), die zweite, dritte, vierte Schicht derselben Art eine andere Abstufung; eine Shape-Schicht trägt die Farbe ihrer Kontur. Ein Klick auf den Punkt (oder ein Rechtsklick auf die Schicht): **Colour...** wählt eine eigene, **Automatic** stellt zurück |
 | **Add layer** | Eine neue Schicht: Sine, eine Stimme |
@@ -3563,6 +3563,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.192.0 | 2026-10-20 | Session 139. §16 Loop: Level des ganzen Instruments im Creator in dB bis +24 dB; die mitgelieferten Instrumente gleich laut (Stufe 27c). |
 | 1.191.0 | 2026-10-19 | Sessions 137–138. §16 Loop NEU **Tabs und Akkorde**: im Instrument-Editor die **Tab-Linien** (Haken Tab, Bünde tippen, Zahl auf eine andere Saite ziehen), im Rechtsklick-Menü **Legato (hammer-on / pull-off)**, **Slide** und das Untermenü **Bend** mit **Edit bend...** (bis zwei Ganztöne), der Knopf **Chords...** und das **Fenster Chords** mit Griffbildern (aus chords-db und gerechnet) oder Voicings, Anhören in vier Spielarten, Favoriten, eigene Akkorde im Dialog **Edit chord**; im Creator **In a legato**, **Slide time**, **Legato level** und bei **Play as** Hammer-on, Slide, Bend. Zwei neue Beispiele (`tabs_demo`, `voicings_demo`). §17 NEU `.lvchord`. **Fit** im Instrument-Editor zeigt das Muster jetzt ganz |
 | 1.190.0 | 2026-10-19 | Sessions 134–136. §16 Loop NEU **Spielweisen** der Saiteninstrumente: im Creator die Zeile **Strum** (Spread, Hand, Pfeile je Stelle, Alternate), die Gruppe **Playing** (Up level, Mute, Tap level bei 220 Hz, Touch) und **Play as**; im Instrument-Editor die Zeile **Strum** des Musters, die Spur **Strum** (Pfeil je Anschlag, Klick schaltet Follow hand / Down / Up / Together, T für getippt), die Kürzel PM, LR, T, ◇ in den Noten, im Rechtsklick-Menü **Strum** (mit Spread...) und die Haken **Palm mute**, **Let ring**, **Tapping**, **Harmonic**; Vorgaben je Saiteninstrument und woher sie kommen; vier neue Beispiele (`strum_demo`, `palm_mute_demo`, `harmonics_demo`, `tapping_demo`). Instrument- und Drum-Editor: NEU **Zoom** mit Ctrl/Alt/Ctrl+Alt+Mausrad und **Fit** |
 | 1.189.0 | 2026-10-18 | Session 133. §16 Loop NEU **Saiteninstrumente**: im Creator die Zeile **Tuning** (Strings, Capo, Scale, String choice), **Model** (Classic, Extended KS, Waveguide), die Gruppen **String** (mit dem Saitenbild und ziehbaren Marken), **Body** (Parlor, Classical guitar) und **Pickups**; im Instrument-Editor **String choice**, die Nummer der Saite je Note, nicht greifbare Noten, das Menü **String**. Mitgelieferte Gitarren, Bässe und Clavinet spielen auf den neuen Saiten, die alten als „(old)“; sechs neue Instrumente, vier Beispiele und fünf Vergleiche unter `asset\loop\vergleich`. |

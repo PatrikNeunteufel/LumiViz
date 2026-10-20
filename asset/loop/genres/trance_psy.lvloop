@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 145,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "rolling_bass",
-            "volume": 1.0,
+            "volume": 0.7563,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -117,7 +117,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "acid_bass",
-            "volume": 0.7,
+            "volume": 0.2889,
             "pan": 0.2,
             "mute": false,
             "notes": [
@@ -192,7 +192,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "broken_radio",
-            "volume": 0.5,
+            "volume": 0.6735,
             "pan": -0.35,
             "mute": false,
             "notes": [
@@ -219,7 +219,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "alien_choir",
-            "volume": 0.6,
+            "volume": 0.898,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -234,7 +234,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "cascade",
-            "volume": 0.6,
+            "volume": 0.6263,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -247,7 +247,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "siren",
-            "volume": 0.35,
+            "volume": 0.5355,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -265,7 +265,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -276,7 +277,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -287,7 +289,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Radio",
@@ -298,7 +301,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Choir",
@@ -309,7 +313,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Cascade",
@@ -320,7 +325,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "FX",
@@ -331,7 +337,8 @@
                     "start": 12,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

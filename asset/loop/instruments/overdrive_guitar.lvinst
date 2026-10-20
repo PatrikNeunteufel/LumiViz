@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Blues", "Metal", "Rock"],
     "description": "Six driven strings (Waveguide) on a bridge humbucker: the note, a fifth and an octave.",
-    "level": 0.568,
+    "level": 0.3769,
     "layers": [
         {
             "name": "String",

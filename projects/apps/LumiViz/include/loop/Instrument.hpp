@@ -470,7 +470,10 @@ struct Instrument
     /// der Pfad einer Datei `.lvinst` an freiem Ort. Steht nicht in der Datei.
     QString name;
     QString titel;      ///< wie es im Programm steht
-    double laut = 1.0;  ///< die Lautstaerke des ganzen Instruments
+    /// Die Lautstaerke des ganzen Instruments, 0 … `kInstrumentLautMax` (seit
+    /// Fassung 13, Stufe 27c, Entscheid LL6 a: auch ueber 1, bis +24 dB). Die
+    /// mitgelieferten stehen damit auf dem Bezug (`kInstrumentBezugLufs`, Pegel.hpp).
+    double laut = 1.0;
     /// Mindestens eine, hoechstens `kSchichtenMax`.
     std::vector<Schicht> schichten = {Schicht{}};
     // --- seit Fassung 3 (Entscheid F3 b): fuer das Fenster „Instruments"
@@ -543,11 +546,18 @@ struct Instrument
 // Halbton) und `legatoLevel` — ein aelteres Programm liesse einen bundlosen Slide
 // stufig gleiten. In derselben Fassung (Stufe 25c-4, S-L12 a, noch nicht
 // ausgeliefert) traegt jede Schicht ausser einer Saite *Extended KS* oder
-// *Waveguide* `inALegato` (`ownNote`, `followString`; immer). Geschrieben wird
-// Fassung 12.
+// *Waveguide* `inALegato` (`ownNote`, `followString`; immer).
+// Fassung 13 (S139, Stufe 27c, Entscheid LL6 a): `level` des ganzen Instruments
+// darf ueber 1 gehen, bis `kInstrumentLautMax` (+24 dB) — ein aelteres Programm
+// schnitte es auf 1 ab und spielte das Instrument zu leise. Geschrieben wird
+// Fassung 13.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 12;
+inline constexpr int kInstrumentFassung = 13;
+
+/// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
+/// Fader je Kanal und das Gain im Composer).
+inline constexpr double kInstrumentLautMax = 15.848931924611133;
 
 /// Das Instrument als JSON (ohne `name` — der ist, wie das Muster es nennt).
 [[nodiscard]] QJsonObject alsJson(const Instrument& instrument);

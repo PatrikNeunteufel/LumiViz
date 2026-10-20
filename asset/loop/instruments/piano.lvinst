@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Ska"],
     "description": "A sine with five overtones that fades over a long decay.",
-    "level": 1.0,
+    "level": 0.6294,
     "layers": [
         {
             "waveform": "sine",

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 92,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "guitar",
-            "volume": 0.85,
+            "volume": 0.4059,
             "pan": 0.15,
             "mute": false,
             "notes": [
@@ -176,7 +176,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -187,7 +188,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Jazz"],
     "description": "Six strings plucked softly (Waveguide) on a neck humbucker, warm and dark.",
-    "level": 0.51,
+    "level": 1.3465,
     "layers": [
         {
             "name": "String",

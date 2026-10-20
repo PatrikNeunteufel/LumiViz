@@ -5,7 +5,7 @@
     "category": "lead",
     "genres": ["Synthwave"],
     "description": "The star with forty harmonics, driven, with vibrato and a soft octave above.",
-    "level": 0.5,
+    "level": 0.4385,
     "layers": [
         {
             "name": "Star",

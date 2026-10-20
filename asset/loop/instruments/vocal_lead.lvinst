@@ -5,7 +5,7 @@
     "category": "lead",
     "genres": ["House"],
     "description": "A recorded female voice singing ha, held in a loop, with a quiet filtered saw.",
-    "level": 0.85,
+    "level": 0.5367,
     "layers": [
         {
             "name": "Ha",

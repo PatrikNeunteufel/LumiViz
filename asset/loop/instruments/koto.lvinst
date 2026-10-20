@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Ambient", "World"],
     "description": "A recorded koto note that rings for three seconds.",
-    "level": 0.8,
+    "level": 0.5774,
     "layers": [
         {
             "name": "Koto",

@@ -5,7 +5,7 @@
     "category": "pads",
     "genres": ["Drum and Bass", "House", "Reggaeton", "Trance"],
     "description": "Three detuned saws through a low filter, very slow in and out.",
-    "level": 1.0,
+    "level": 1.3063,
     "layers": [
         {
             "waveform": "saw",

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 132,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -50,7 +50,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "jazz_guitar",
-            "volume": 0.8,
+            "volume": 0.303,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -110,7 +110,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "finger_bass",
-            "volume": 0.9,
+            "volume": 0.7594,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -148,7 +148,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -159,7 +160,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -170,7 +172,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

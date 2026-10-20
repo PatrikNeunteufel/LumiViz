@@ -25,6 +25,8 @@ es hier ein — `main` bricht ab, wenn eine Datei im Katalog fehlt.
 import json
 from pathlib import Path
 
+from instrument_pegel import fassung as pegel_fassung, level as pegel_level
+
 HIER = Path(__file__).resolve().parent
 
 ARTEN = ("keys", "bass", "lead", "pads", "plucked", "wind", "percussion", "drums", "unusual")
@@ -188,9 +190,12 @@ def ergaenze(name, daten, genres=None):
     else:
         # Fassung 1 ist flach: eine Schicht, `level` ist ihre Lautstaerke
         level, schichten = 1.0, [{k: v for k, v in daten.items() if k not in _KOPF or k == "level"}]
+    # der Pegel auf den Bezug (S139, Stufe 27c): aus instrument_pegel.PEGEL, ueber 1 in Fassung 13
+    level = pegel_level(name, level)
     neu = {
         # mindestens 3; eine Datei mit Feldern einer spaeteren Fassung (Drums: 6) behaelt ihre Zahl
-        "format": "lumiviz-instrument", "version": max(3, int(daten.get("version", 1))), "title": daten["title"],
+        "format": "lumiviz-instrument", "version": pegel_fassung(level, max(3, int(daten.get("version", 1)))),
+        "title": daten["title"],
         "category": art, "genres": genres.get(name, []), "description": beschreibung,
         "level": level, "layers": schichten,
     }

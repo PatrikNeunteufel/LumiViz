@@ -5,7 +5,7 @@
     "category": "pads",
     "genres": ["Ambient"],
     "description": "Detuned saws on the note and a fifth above, over a sine an octave below.",
-    "level": 0.55,
+    "level": 0.5772,
     "layers": [
         {
             "name": "Root",

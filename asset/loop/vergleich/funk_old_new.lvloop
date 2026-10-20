@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 104,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "slap_bass",
-            "volume": 0.9,
+            "volume": 0.8762,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -106,7 +106,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clavinet",
-            "volume": 0.7,
+            "volume": 0.4309,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -165,7 +165,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "muted_guitar",
-            "volume": 0.7,
+            "volume": 0.1528,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -217,7 +217,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.7,
+            "volume": 0.7949,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -243,7 +243,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "slap_bass_old",
-            "volume": 0.9,
+            "volume": 0.8306,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -286,7 +286,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clavinet_old",
-            "volume": 0.7,
+            "volume": 0.4455,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -345,7 +345,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "muted_guitar_old",
-            "volume": 0.7,
+            "volume": 0.2064,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -403,7 +403,8 @@
                     "start": 16,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -419,7 +420,8 @@
                     "start": 16,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -435,7 +437,8 @@
                     "start": 16,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Clav",
@@ -451,7 +454,8 @@
                     "start": 20,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Horns",
@@ -467,7 +471,8 @@
                     "start": 24,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

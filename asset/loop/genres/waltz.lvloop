@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 138,
     "beatsPerBar": 3,
     "stepsPerBeat": 4,
@@ -50,7 +50,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "upright_bass",
-            "volume": 1.0,
+            "volume": 0.9669,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -72,7 +72,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "nylon_guitar",
-            "volume": 0.7,
+            "volume": 0.2116,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -112,7 +112,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vibraphone",
-            "volume": 0.7,
+            "volume": 0.8838,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -130,7 +130,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "flute",
-            "volume": 0.6,
+            "volume": 0.906,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -153,7 +153,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -164,7 +165,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -175,7 +177,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Vibes",
@@ -186,7 +189,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Flute",
@@ -197,7 +201,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

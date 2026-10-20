@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 104,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "slap_bass",
-            "volume": 0.9,
+            "volume": 0.8762,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -106,7 +106,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clavinet",
-            "volume": 0.7,
+            "volume": 0.4309,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -165,7 +165,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "muted_guitar",
-            "volume": 0.7,
+            "volume": 0.1528,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -217,7 +217,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.7,
+            "volume": 0.7949,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -249,7 +249,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -260,7 +261,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -271,7 +273,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Clav",
@@ -282,7 +285,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Horns",
@@ -293,7 +297,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

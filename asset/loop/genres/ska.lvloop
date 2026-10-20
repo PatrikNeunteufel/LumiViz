@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 152,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -50,7 +50,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "upright_bass",
-            "volume": 1.0,
+            "volume": 0.9669,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -82,7 +82,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clean_guitar",
-            "volume": 0.7,
+            "volume": 0.2009,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -146,7 +146,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "piano",
-            "volume": 0.5,
+            "volume": 0.7944,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -205,7 +205,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.6,
+            "volume": 0.6814,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -234,7 +234,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "sax",
-            "volume": 0.5,
+            "volume": 0.9998,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -259,7 +259,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -270,7 +271,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -281,7 +283,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Piano",
@@ -292,7 +295,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Horns",
@@ -303,7 +307,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Sax",
@@ -314,7 +319,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 1.07
         }
     ]
 }

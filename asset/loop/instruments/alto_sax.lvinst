@@ -5,7 +5,7 @@
     "category": "wind",
     "genres": ["Jazz"],
     "description": "A recorded alto saxophone note with its own vibrato, held in a loop.",
-    "level": 0.85,
+    "level": 0.5215,
     "layers": [
         {
             "name": "Sax",

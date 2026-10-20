@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 130,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -66,7 +66,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "rolling_bass",
-            "volume": 1.0,
+            "volume": 0.7563,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -125,7 +125,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "chord_stab",
-            "volume": 0.7,
+            "volume": 0.2768,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -184,7 +184,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "broken_radio",
-            "volume": 0.4,
+            "volume": 0.5388,
             "pan": -0.35,
             "mute": false,
             "notes": [
@@ -203,7 +203,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "hoover",
-            "volume": 0.5,
+            "volume": 0.6503,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -222,7 +222,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -233,7 +234,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Stab",
@@ -244,7 +246,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Noise",
@@ -255,7 +258,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Hoover",
@@ -271,7 +275,8 @@
                     "start": 12,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

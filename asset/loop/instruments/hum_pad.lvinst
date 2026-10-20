@@ -5,7 +5,7 @@
     "category": "pads",
     "genres": ["Chillout"],
     "description": "A recorded female hum with an uh an octave below, slow in and out, over a soft sine.",
-    "level": 0.85,
+    "level": 0.5331,
     "layers": [
         {
             "name": "Hum",

@@ -5,7 +5,7 @@
     "category": "pads",
     "genres": [],
     "description": "A single bright saw with a soft attack and strong vibrato.",
-    "level": 1.0,
+    "level": 0.7915,
     "layers": [
         {
             "waveform": "saw",

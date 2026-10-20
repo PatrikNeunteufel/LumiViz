@@ -2203,7 +2203,8 @@ bool ausJson(const QJsonObject& wurzel, Instrument& instrument, bool* zuNeu)
     }
     else
     {
-        neu.laut = inGrenzen(wurzel.value(QStringLiteral("level")).toDouble(1.0), 0.0, 1.0, 1.0);
+        // seit Fassung 13 auch ueber 1 (LL6 a); aeltere trugen nie mehr als 1
+        neu.laut = inGrenzen(wurzel.value(QStringLiteral("level")).toDouble(1.0), 0.0, kInstrumentLautMax, 1.0);
         for (const QJsonValue& schicht : wurzel.value(QStringLiteral("layers")).toArray())
         {
             if (neu.schichten.size() >= static_cast<std::size_t>(kSchichtenMax)) break;
@@ -2779,7 +2780,7 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
     }
     if (instrument.laut != 1.0)
     {
-        const auto laut = static_cast<float>(std::clamp(instrument.laut, 0.0, 1.0));
+        const auto laut = static_cast<float>(std::clamp(instrument.laut, 0.0, kInstrumentLautMax));
         for (float& wert : klang.daten) wert *= laut;
     }
     return klang;

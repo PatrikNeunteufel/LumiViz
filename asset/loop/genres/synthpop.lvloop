@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 118,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bass",
-            "volume": 0.9,
+            "volume": 0.6391,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -101,7 +101,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "super_saw",
-            "volume": 0.6,
+            "volume": 0.7951,
             "pan": -0.15,
             "mute": false,
             "notes": [
@@ -124,7 +124,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "pluck",
-            "volume": 0.5,
+            "volume": 0.2201,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -199,7 +199,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "lead",
-            "volume": 0.5,
+            "volume": 0.6809,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -225,7 +225,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.5,
+            "volume": 0.5678,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -266,7 +266,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -277,7 +278,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Chords",
@@ -288,7 +290,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Arp",
@@ -299,7 +302,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -310,7 +314,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Hook",
@@ -321,7 +326,8 @@
                     "start": 12,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

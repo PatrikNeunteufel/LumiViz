@@ -109,6 +109,22 @@ constexpr int kObertonRegler = 8;         ///< der 2. bis 9. Teilton als Regler
 constexpr double kDaempfungVon = 0.98;    ///< der Regler Damping reicht von hier …
 constexpr double kDaempfungBis = 0.9999;  ///< … bis hier
 
+// Der Regler des ganzen Instruments in Zehntel-dB (Stufe 27c): ganz links still
+constexpr int kGesamtMinZehntel = -600;
+constexpr int kGesamtMaxZehntel = 240;
+
+double lautAusZehnteln(int zehntel)
+{
+    if (zehntel <= kGesamtMinZehntel) return 0.0;
+    return std::min(kInstrumentLautMax, std::pow(10.0, zehntel / 200.0));
+}
+
+int zehntelAusLaut(double laut)
+{
+    if (laut <= 0.0) return kGesamtMinZehntel;
+    return std::clamp(static_cast<int>(std::lround(200.0 * std::log10(laut))), kGesamtMinZehntel, kGesamtMaxZehntel);
+}
+
 int gerundet(double wert)
 {
     return static_cast<int>(std::lround(wert));
@@ -521,9 +537,10 @@ void InstrumentCreator::setupUI()
     kopf->addWidget(m_publish);
     m_gesamt = new QSlider(Qt::Horizontal, this);
     m_gesamt->setObjectName(QStringLiteral("creatorMasterLevel"));
-    m_gesamt->setRange(0, 100);
+    // in Zehntel-dB (Stufe 27c, LL6 a): ganz links −∞, rechts +24 dB
+    m_gesamt->setRange(kGesamtMinZehntel, kGesamtMaxZehntel);
     m_gesamt->setFixedWidth(90);
-    m_gesamt->setToolTip(tr("Level of the whole instrument"));
+    m_gesamt->setToolTip(tr("Level of the whole instrument, up to +24 dB"));
     m_gesamtWert = new QLabel(this);
     m_gesamtWert->setMinimumWidth(40);
     m_gesamtWert->setEnabled(false);
@@ -1561,7 +1578,7 @@ void InstrumentCreator::setupUI()
         m_wiederholTakt->start(wiederholMs());
     });
     connect(m_gesamt, &QSlider::valueChanged, this, [this](int wert) {
-        aendere([wert](Instrument& i) { i.laut = wert / 100.0; });
+        aendere([wert](Instrument& i) { i.laut = lautAusZehnteln(wert); });
     });
     connect(m_schichtName, &QLineEdit::editingFinished, this, [this] {
         const QString name = m_schichtName->text().trimmed();
@@ -2121,8 +2138,12 @@ void InstrumentCreator::zeigeAlles()
     m_stelleFuer = m_gewaehlt;
     {
         const QSignalBlocker ruhe(m_gesamt);
-        m_gesamt->setValue(gerundet(m_instrument.laut * 100.0));
-        m_gesamtWert->setText(QStringLiteral("%1 %").arg(gerundet(m_instrument.laut * 100.0)));
+        const int zehntel = zehntelAusLaut(m_instrument.laut);
+        m_gesamt->setValue(zehntel);
+        m_gesamtWert->setText(zehntel <= kGesamtMinZehntel ? QStringLiteral("−∞ dB")
+                                                           : QStringLiteral("%1%2 dB")
+                                                                 .arg(zehntel > 0 ? QStringLiteral("+") : QString())
+                                                                 .arg(zehntel / 10.0, 0, 'f', 1));
     }
     zeigeListe();
     m_schichtKopf->setText(tr("Layer %1").arg(m_gewaehlt + 1));

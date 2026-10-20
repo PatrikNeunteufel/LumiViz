@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 11,
     "bpm": 110,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -70,7 +70,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_gear_bass",
-            "volume": 0.8,
+            "volume": 0.9997,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -113,7 +113,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_heart_pad",
-            "volume": 0.45,
+            "volume": 0.3576,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -136,7 +136,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_bolt_pluck",
-            "volume": 0.45,
+            "volume": 0.105,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -211,7 +211,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_star_lead",
-            "volume": 0.5,
+            "volume": 0.5701,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -236,7 +236,8 @@
                     "start": 4,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -247,7 +248,8 @@
                     "start": 4,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 2.62
         },
         {
             "name": "Pad",
@@ -268,7 +270,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Arp",
@@ -289,7 +292,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -318,7 +322,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

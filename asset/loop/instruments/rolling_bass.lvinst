@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Acid Trance", "Psytrance", "Techno", "Trance"],
     "description": "A short, driven saw with a sine sub, made for fast repeated notes.",
-    "level": 0.7,
+    "level": 0.9255,
     "layers": [
         {
             "name": "Roll",

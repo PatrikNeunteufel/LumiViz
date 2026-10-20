@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Afrobeat", "Blues", "Reggae", "Rock"],
     "description": "A sine with five overtones that holds at full level while the key is down.",
-    "level": 1.0,
+    "level": 0.539,
     "layers": [
         {
             "waveform": "sine",

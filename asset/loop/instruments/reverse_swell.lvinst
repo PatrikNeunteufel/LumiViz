@@ -5,7 +5,7 @@
     "category": "unusual",
     "genres": ["Ambient"],
     "description": "Detuned saws that swell for a second and then stop at once.",
-    "level": 0.7,
+    "level": 0.6194,
     "layers": [
         {
             "name": "Swell",

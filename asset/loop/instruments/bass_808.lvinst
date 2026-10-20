@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Afrobeat", "Reggaeton", "Trap"],
     "description": "A driven sine with a long decay and a short click.",
-    "level": 0.8,
+    "level": 0.5325,
     "layers": [
         {
             "name": "Boom",

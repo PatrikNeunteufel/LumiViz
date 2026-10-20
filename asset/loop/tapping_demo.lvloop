@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 112,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "overdrive_guitar",
-            "volume": 0.75,
+            "volume": 0.9993,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -97,7 +97,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "finger_bass",
-            "volume": 0.85,
+            "volume": 0.7172,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -156,7 +156,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Tapping",
@@ -167,7 +168,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 1.07
         },
         {
             "name": "Bass",
@@ -178,7 +180,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

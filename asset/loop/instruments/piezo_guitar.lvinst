@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["World"],
     "description": "Six strings (Waveguide) taken at the bridge by a piezo, like an acoustic on stage.",
-    "level": 0.505,
+    "level": 1.2388,
     "layers": [
         {
             "name": "String",

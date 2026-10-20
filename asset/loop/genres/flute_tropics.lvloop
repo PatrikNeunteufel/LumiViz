@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 11,
     "bpm": 108,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -69,7 +69,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bass_808",
-            "volume": 0.8,
+            "volume": 0.9997,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -92,7 +92,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "thumb_piano",
-            "volume": 0.5,
+            "volume": 0.9991,
             "pan": 0.2,
             "mute": false,
             "notes": [
@@ -127,7 +127,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "alto_flute",
-            "volume": 0.55,
+            "volume": 0.9997,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -151,7 +151,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "steel_drum",
-            "volume": 0.4,
+            "volume": 0.3272,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -192,7 +192,8 @@
                     "start": 0,
                     "repeat": 6
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -203,7 +204,8 @@
                     "start": 4,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 1.6
         },
         {
             "name": "Thumb",
@@ -224,7 +226,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 1.31
         },
         {
             "name": "Steel",
@@ -235,7 +238,8 @@
                     "start": 8,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Flute",
@@ -256,7 +260,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.06
         }
     ]
 }

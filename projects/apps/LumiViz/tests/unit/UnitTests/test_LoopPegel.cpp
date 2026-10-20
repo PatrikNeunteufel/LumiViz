@@ -137,6 +137,35 @@ TEST_SUITE("LoopPegel")
         CHECK(rechneStandardprobe(organ, kRate).size() == static_cast<std::size_t>(8 * kRate * 2));
     }
 
+    // Stufe 27c (LL2 a): die mitgelieferten Instrumente stehen auf dem Bezug. Wer eines im Klang
+    // aendert, misst neu und laesst asset/loop/instrument_pegel.py --messung laufen.
+    TEST_CASE("Loop Pegel 27c: jedes mitgelieferte Instrument ausser den Drums liegt auf dem Bezug (±1 LU)")
+    {
+        const PegelApp app;
+        // derselbe Bezug im Programm und im Skript
+        QFile skript(looptest::repoWurzel().filePath(QStringLiteral("asset/loop/instrument_pegel.py")));
+        REQUIRE(skript.open(QIODevice::ReadOnly));
+        const QRegularExpressionMatch treffer =
+            QRegularExpression(QStringLiteral("\\nBEZUG_LUFS = (-?[0-9.]+)\\n")).match(QString::fromUtf8(skript.readAll()));
+        REQUIRE(treffer.hasMatch());
+        CHECK(treffer.captured(1).toDouble() == kInstrumentBezugLufs);
+
+        int geprueft = 0;
+        int ueberEins = 0;
+        for (const Instrument& instrument : instrumente())
+        {
+            if (instrument.art == QLatin1String("drums")) continue;
+            CAPTURE(instrument.name.toStdString());
+            looptest::merkeSamplesOhneEngine(instrument);
+            const double wert = messeInstrument(instrument, kRate).kurzzeitMaxLufs;
+            CHECK(std::abs(wert - kInstrumentBezugLufs) <= 1.0);
+            ++geprueft;
+            if (instrument.laut > 1.0) ++ueberEins;
+        }
+        MESSAGE(geprueft << " Instrumente auf dem Bezug, davon " << ueberEins << " mit Volume ueber 1");
+        CHECK(geprueft > 80);
+    }
+
     TEST_CASE("Loop Pegel: Messung aller mitgelieferten Instrumente und Kits (meldet nur Zahlen)")
     {
         const PegelApp app;

@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.93.0
+> **Version:** 0.94.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3630,7 +3630,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 |---|---|
 | 27a ✅ | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
 | 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
-| 27c | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
+| 27c ✅ | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
@@ -3715,6 +3715,31 @@ wie vorher (mal 1). `test_LoopFader.cpp`: drei Fälle — Datei (immer geschrieb
 fehlt = 0 dB), Klang (+6,02 dB doppelt, −60 still, zwei Kanäle), nach den Effekten (mit
 Distortion am Clip ist der Ausgang bei +6,02 dB genau das Doppelte); die Literale der Fassung
 in sieben Testdateien auf 11. Keine Oberfläche (27e-2).
+
+**Wie 27c gebaut ist (S139):** `Instrument::laut` 0 … `kInstrumentLautMax` (+24 dB), `.lvinst`
+Fassung 13 (Literale in `tests/` nachgezogen), im Creator der Regler *Level* oben in Zehntel-dB
+(−∞ … +24). `kInstrumentBezugLufs` = −13,4 in `loop/Pegel.hpp`. Neu
+`asset/loop/instrument_pegel.py`: `PEGEL` (je Instrument alt, neu), `--messung <tsv>` rechnet
+aus der Messung von `test_LoopPegel` das neue `level` und schreibt alle Instrumente über
+`instrument_katalog` (dessen `ergaenze` setzt es — so übersteht es einen neuen Lauf jedes
+Instrument-Skripts; **die Datei behält ihre Fassung**: das Programm liest `level` bis +24 dB in
+jeder Fassung, und eine Fassung 13 behauptete Felder, die eine von einem Skript gebaute Datei
+nicht trägt — ein erster Lauf hob 29 auf 13, `test_LoopSpielweise` fand das fehlende
+`inALegato`; das Programm selbst schreibt immer 13), `--loops` zieht jeden mitgelieferten Loop unter Fassung 11
+nach (Muster × alt/neu, der Überschuss in den Fader auf zwei Stellen aufgerundet, `gain` an
+jedem Kanal, Fassung 11). Zuerst in einer Kopie gelaufen und verglichen. Ergebnis: 87
+Instrumente, 29 mit Volume über 1 (bis 5,55); 53 Loops, 24 Kanäle mit Fader über 0 dB
+(bis +4,54). Nachgemessen: alle 87 bei −13,40 ± 0,002 LUFS. `loop_werte.txt` neu: die Loops
+ändern ihre Summe um höchstens 0,0016 dB (Rundung), die Instrumente genau um ihren Faktor,
+keine Länge ändert sich. Tests nachgezogen: in `test_LoopInstrument` gilt die Grenze „ein Ton
+bleibt unter 0,75" nur noch für die Drums (bis 27d) — für die übrigen ist eine Spitze darüber
+nach LL7 a kein Fehler am Instrument mehr, ihre Lautheit hält `test_LoopPegel` fest (eine
+Grenze „ohne Volume unter 1" hielten auch die Drums und `super_saw` nie: ihr Volume gehört zum
+Bau); Tests mit `organ` und `violin` setzen nicht mehr Volume 1 voraus. `test_LoopPegel.cpp`: ein Fall mehr — jedes Instrument ±1 LU am
+Bezug, derselbe Bezug in Programm und Skript. **Offen:** Load instrument als Schichten
+(`schichtenAus`) legt das Volume des Instruments in die Schichten, deren *Level* bei 1 endet —
+ein Instrument über 1 wird dabei leiser; die Kits (27d) spielen die Instrumente mit dem neuen
+Pegel, bis 27d sie nachzieht.
 
 ## 5. Stufen
 
@@ -3842,6 +3867,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.94.0** (S139, 2026-10-20): §4n Stufe 27c gebaut — Instrumente auf dem Bezug (`instrument_pegel.py`), Loops nachgezogen, `.lvinst` Fassung 13.
 - **0.93.0** (S139, 2026-10-20): §4n LL6 a bis LL8 a (Volume bis +24 dB, Begrenzer am Ausgang, der Fader zuerst), Befunde zu Spitzen und Nachziehen; Stufe 27e-1 gebaut (Fader je Kanal, `.lvloop` Fassung 11).
 - **0.92.0** (S139, 2026-10-20): §4n Stufe 27b gebaut (`loop/Pegel`, `test_LoopPegel`), gemessen: 29 Instrumente bräuchten Volume über 1, die Abstände der Kit-Rollen nach R128 bestätigen `ZIEL_DB` nicht.
 - **0.91.0** (S139, 2026-10-20): §4n Stufe 27a gebaut — die Messung unter `audio/Lautheit`, Momentary- und Short-term-Maximum.

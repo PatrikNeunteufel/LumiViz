@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Ambient", "House"],
     "description": "An almost pure sine that holds.",
-    "level": 1.0,
+    "level": 0.4745,
     "layers": [
         {
             "waveform": "sine",

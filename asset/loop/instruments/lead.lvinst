@@ -5,7 +5,7 @@
     "category": "lead",
     "genres": ["Metal", "Rock", "Synth-Pop"],
     "description": "A bright square with vibrato.",
-    "level": 1.0,
+    "level": 0.7343,
     "layers": [
         {
             "waveform": "square",

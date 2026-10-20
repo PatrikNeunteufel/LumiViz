@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 72,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "fifth_pad",
-            "volume": 0.7,
+            "volume": 0.667,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -36,7 +36,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "reverse_swell",
-            "volume": 0.6,
+            "volume": 0.6781,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -55,7 +55,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "ghost",
-            "volume": 0.6,
+            "volume": 0.8577,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -68,7 +68,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "flute",
-            "volume": 0.8,
+            "volume": 0.999,
             "pan": 0.15,
             "mute": false,
             "notes": [
@@ -91,7 +91,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bell",
-            "volume": 0.7,
+            "volume": 0.9759,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -106,7 +106,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "cascade",
-            "volume": 0.6,
+            "volume": 0.6263,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -125,7 +125,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Swell",
@@ -136,7 +137,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Ghost",
@@ -147,7 +149,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Flute",
@@ -158,7 +161,8 @@
                     "start": 4,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 1.65
         },
         {
             "name": "Bells",
@@ -174,7 +178,8 @@
                     "start": 12,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Cascade",
@@ -185,7 +190,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

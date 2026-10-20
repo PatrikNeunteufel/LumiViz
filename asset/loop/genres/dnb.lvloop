@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 174,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "reese_bass",
-            "volume": 0.9,
+            "volume": 0.9995,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -85,7 +85,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "warm_pad",
-            "volume": 0.6,
+            "volume": 0.4593,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -104,7 +104,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "tine_piano",
-            "volume": 0.6,
+            "volume": 0.9124,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -139,7 +139,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vibraphone",
-            "volume": 0.6,
+            "volume": 0.7576,
             "pan": 0.15,
             "mute": false,
             "notes": [
@@ -163,7 +163,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -174,7 +175,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.65
         },
         {
             "name": "Pad",
@@ -185,7 +187,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Keys",
@@ -196,7 +199,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -207,7 +211,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

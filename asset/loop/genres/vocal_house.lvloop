@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 11,
     "bpm": 124,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -66,7 +66,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_moon_bass",
-            "volume": 0.85,
+            "volume": 0.5489,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -93,7 +93,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vocal_chop",
-            "volume": 0.6,
+            "volume": 0.4751,
             "pan": 0.15,
             "mute": false,
             "notes": [
@@ -120,7 +120,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "female_choir",
-            "volume": 0.45,
+            "volume": 0.6677,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -143,7 +143,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vocal_lead",
-            "volume": 0.5,
+            "volume": 0.7919,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -168,7 +168,8 @@
                     "start": 0,
                     "repeat": 6
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -179,7 +180,8 @@
                     "start": 4,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Chops",
@@ -200,7 +202,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Choir",
@@ -236,7 +239,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -257,7 +261,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

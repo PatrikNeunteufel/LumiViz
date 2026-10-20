@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 76,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clean_guitar",
-            "volume": 0.8,
+            "volume": 0.2296,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -49,7 +49,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "nylon_guitar",
-            "volume": 0.75,
+            "volume": 0.2267,
             "pan": -0.25,
             "mute": false,
             "notes": [
@@ -128,7 +128,8 @@
                     "start": 4,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Harmonics",
@@ -139,7 +140,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Arpeggio",
@@ -150,7 +152,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

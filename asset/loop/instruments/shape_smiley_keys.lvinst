@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["Electronica", "Hip-Hop"],
     "description": "One layer per contour of the smiley: face on the note, eyes and mouth above it.",
-    "level": 0.5,
+    "level": 0.5651,
     "layers": [
         {
             "name": "Face",

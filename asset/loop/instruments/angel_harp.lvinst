@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Chillout"],
     "description": "The recorded harp with a female oo choir that swells in an octave above.",
-    "level": 0.75,
+    "level": 0.5827,
     "layers": [
         {
             "name": "Harp",

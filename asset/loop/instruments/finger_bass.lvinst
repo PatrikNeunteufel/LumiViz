@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Blues", "Classical", "Jazz", "Rock", "World"],
     "description": "Four strings plucked with the fingers (Waveguide) on two single coils, a sine underneath.",
-    "level": 1.0,
+    "level": 1.1852,
     "layers": [
         {
             "name": "String",

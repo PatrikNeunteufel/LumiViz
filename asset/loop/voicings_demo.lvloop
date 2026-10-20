@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 10,
+    "version": 11,
     "bpm": 84,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "tine_piano",
-            "volume": 0.75,
+            "volume": 0.9991,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -60,7 +60,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "round_bass",
-            "volume": 0.85,
+            "volume": 0.988,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -118,7 +118,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Keys",
@@ -129,7 +130,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 1.15
         },
         {
             "name": "Bass",
@@ -140,7 +142,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

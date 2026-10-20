@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 120,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -66,7 +66,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bass",
-            "volume": 0.9,
+            "volume": 0.6391,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -109,7 +109,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "strings",
-            "volume": 0.6,
+            "volume": 0.6399,
             "pan": -0.25,
             "mute": false,
             "notes": [
@@ -128,7 +128,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clean_guitar",
-            "volume": 0.6,
+            "volume": 0.1722,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -192,7 +192,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "tine_piano",
-            "volume": 0.6,
+            "volume": 0.9124,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -239,7 +239,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.6,
+            "volume": 0.6814,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -268,7 +268,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -279,7 +280,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -290,7 +292,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Keys",
@@ -301,7 +304,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Strings",
@@ -312,7 +316,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Melody",
@@ -323,7 +328,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

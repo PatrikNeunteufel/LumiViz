@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 11,
     "bpm": 90,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -61,7 +61,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "angel_harp",
-            "volume": 0.55,
+            "volume": 0.7079,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -104,7 +104,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "hum_pad",
-            "volume": 0.5,
+            "volume": 0.7972,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -123,7 +123,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "round_bass",
-            "volume": 0.8,
+            "volume": 0.9299,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -148,7 +148,8 @@
                     "start": 4,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Harp",
@@ -177,7 +178,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Hum",
@@ -198,7 +200,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -209,7 +212,8 @@
                     "start": 4,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

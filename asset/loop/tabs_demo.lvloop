@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 10,
+    "version": 11,
     "bpm": 92,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -17,7 +17,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "guitar",
-            "volume": 0.75,
+            "volume": 0.3581,
             "pan": -0.25,
             "mute": false,
             "notes": [
@@ -73,7 +73,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "overdrive_guitar",
-            "volume": 0.7,
+            "volume": 0.9994,
             "pan": 0.2,
             "mute": false,
             "notes": [
@@ -139,7 +139,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "finger_bass",
-            "volume": 0.85,
+            "volume": 0.7172,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -210,7 +210,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Rhythm",
@@ -221,7 +222,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -232,7 +234,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.47
         },
         {
             "name": "Bass",
@@ -243,7 +246,8 @@
                     "start": 0,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

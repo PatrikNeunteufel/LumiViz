@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Drum and Bass"],
     "description": "Three widely detuned saws over a sine sub.",
-    "level": 0.6,
+    "level": 0.5013,
     "layers": [
         {
             "name": "Reese",

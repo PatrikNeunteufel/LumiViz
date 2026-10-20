@@ -5,7 +5,7 @@
     "category": "wind",
     "genres": ["Ambient", "World"],
     "description": "A recorded shakuhachi note, held in a loop, with a breath of band-passed noise.",
-    "level": 0.85,
+    "level": 0.8518,
     "layers": [
         {
             "name": "Bamboo",

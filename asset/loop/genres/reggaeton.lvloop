@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 94,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bass_808",
-            "volume": 0.9,
+            "volume": 0.9989,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -85,7 +85,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "nylon_guitar",
-            "volume": 0.7,
+            "volume": 0.2116,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -125,7 +125,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "steel_drum",
-            "volume": 0.7,
+            "volume": 0.5726,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -152,7 +152,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "warm_pad",
-            "volume": 0.5,
+            "volume": 0.3828,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -171,7 +171,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "cowbell",
-            "volume": 0.4,
+            "volume": 0.2363,
             "pan": 0.4,
             "mute": false,
             "notes": [
@@ -204,7 +204,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -215,7 +216,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 2.63
         },
         {
             "name": "Guitar",
@@ -226,7 +228,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pad",
@@ -237,7 +240,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -248,7 +252,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Perc",
@@ -259,7 +264,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Electronica", "Synthwave"],
     "description": "The gear shape, driven; the attack opens its teeth, then it settles to a round tone over a sine.",
-    "level": 0.6,
+    "level": 0.3551,
     "layers": [
         {
             "name": "Gear",

@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["House"],
     "description": "A sine with four overtones and a quick attack, for stabbed chords.",
-    "level": 1.0,
+    "level": 0.802,
     "layers": [
         {
             "waveform": "sine",

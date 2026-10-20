@@ -363,7 +363,7 @@ TEST_SUITE("LoopInstrumentEditor")
         schieber("creatorLevel")->setValue(50);
         CHECK(creator.schicht().vibratoHz == doctest::Approx(5.6));
         CHECK(creator.schicht().laut == doctest::Approx(0.5));
-        CHECK(creator.instrument().laut == doctest::Approx(1.0));  // das ganze Instrument hat seinen eigenen Regler
+        CHECK(creator.instrument().laut == doctest::Approx(findeInstrument(QStringLiteral("violin"))->laut));  // das ganze Instrument hat seinen eigenen Regler
 
         // --- die Schwingung bestimmt, welche Regler es gibt
         creator.oeffne(*strings);
@@ -773,7 +773,8 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(welle->zweite().empty());  // eine Schicht: keine zweite Kurve
         CHECK_FALSE(creator.entferne());
         CHECK_FALSE(creator.schiebe(1));
-        CHECK(schieber("creatorMasterLevel")->value() == 100);
+        // Zehntel-dB seit Stufe 27c — das Volume der Orgel auf dem Bezug
+        CHECK(schieber("creatorMasterLevel")->value() == static_cast<int>(std::lround(200.0 * std::log10(organ->laut))));
         const QString spitzeEine = spitze->text();
 
         // --- Add layer: Grundeinstellung, gewaehlt; die Regler zeigen jetzt sie
@@ -822,8 +823,14 @@ TEST_SUITE("LoopInstrumentEditor")
         CHECK(InstrumentCreator::schichtTitel(creator.schicht(), 1) == QStringLiteral("2 Shimmer"));
         CHECK(creator.instrument().schichten[0] == organ->schichten[0]);  // die erste blieb, wie sie war
         // der Regler des ganzen Instruments
-        schieber("creatorMasterLevel")->setValue(80);
-        CHECK(creator.instrument().laut == doctest::Approx(0.8));
+        schieber("creatorMasterLevel")->setValue(-60);  // −6,0 dB
+        CHECK(creator.instrument().laut == doctest::Approx(std::pow(10.0, -0.3)));
+        schieber("creatorMasterLevel")->setValue(60);  // +6,0 dB: ueber 1 (LL6 a)
+        CHECK(creator.instrument().laut == doctest::Approx(std::pow(10.0, 0.3)));
+        schieber("creatorMasterLevel")->setValue(-600);  // ganz links: still
+        CHECK(creator.instrument().laut == 0.0);
+        schieber("creatorMasterLevel")->setValue(-19);
+        CHECK(creator.instrument().laut == doctest::Approx(std::pow(10.0, -0.095)));
         CHECK(creator.schicht().laut == doctest::Approx(0.35));
 
         // --- waehlen: ein Klick in der Liste; die Mitte zeigt die andere Schicht
@@ -911,7 +918,7 @@ TEST_SUITE("LoopInstrumentEditor")
         REQUIRE(vorgehoert.schichten.size() == 1);
         CHECK(vorgehoert.schichten[0].name == QStringLiteral("Shimmer"));
         CHECK(vorgehoert.schichten[0].an);
-        CHECK(vorgehoert.laut == doctest::Approx(0.8));
+        CHECK(vorgehoert.laut == doctest::Approx(std::pow(10.0, -0.095)));
         creator.setNurGewaehlte(false);
         CHECK_FALSE(nurWahl->isChecked());
 

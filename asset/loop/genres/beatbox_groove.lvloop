@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 5,
+    "version": 11,
     "bpm": 92,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -77,7 +77,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_moon_bass",
-            "volume": 0.85,
+            "volume": 0.5489,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -100,7 +100,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "shape_smiley_keys",
-            "volume": 0.5,
+            "volume": 0.4424,
             "pan": 0.2,
             "mute": false,
             "notes": [
@@ -135,7 +135,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vocal_chop",
-            "volume": 0.55,
+            "volume": 0.4355,
             "pan": -0.15,
             "mute": false,
             "notes": [
@@ -158,7 +158,8 @@
                     "start": 0,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -169,7 +170,8 @@
                     "start": 4,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Keys",
@@ -190,7 +192,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Hook",
@@ -211,7 +214,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

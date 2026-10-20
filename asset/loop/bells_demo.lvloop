@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 92,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -50,7 +50,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "fifth_pad",
-            "volume": 0.6,
+            "volume": 0.5717,
             "pan": -0.1,
             "mute": false,
             "notes": [
@@ -69,7 +69,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "kalimba",
-            "volume": 0.8,
+            "volume": 0.7101,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -112,7 +112,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "marimba",
-            "volume": 0.8,
+            "volume": 0.6263,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -147,7 +147,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bell",
-            "volume": 0.8,
+            "volume": 0.9998,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -166,7 +166,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "sub_bass",
-            "volume": 0.8,
+            "volume": 0.9997,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -195,7 +195,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pad",
@@ -206,7 +207,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Kalimba",
@@ -217,7 +219,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Marimba",
@@ -228,7 +231,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bells",
@@ -239,7 +243,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.95
         },
         {
             "name": "Bass",
@@ -250,7 +255,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 4.54
         }
     ]
 }

@@ -5,7 +5,7 @@
     "category": "percussion",
     "genres": ["Afrobeat", "Reggaeton"],
     "description": "A sine with strong overtones, a detuned ring an octave above and a short hit.",
-    "level": 0.7,
+    "level": 0.8557,
     "layers": [
         {
             "name": "Pan",

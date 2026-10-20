@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 84,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -53,7 +53,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "upright_bass",
-            "volume": 0.85,
+            "volume": 0.8218,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -85,7 +85,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "harp",
-            "volume": 0.45,
+            "volume": 0.6273,
             "pan": 0.2,
             "mute": false,
             "notes": [
@@ -124,7 +124,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "alto_sax",
-            "volume": 0.55,
+            "volume": 0.8965,
             "pan": -0.15,
             "mute": false,
             "notes": [
@@ -151,7 +151,8 @@
                     "start": 0,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -162,7 +163,8 @@
                     "start": 0,
                     "repeat": 5
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Harp",
@@ -183,7 +185,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Sax",
@@ -204,7 +207,8 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

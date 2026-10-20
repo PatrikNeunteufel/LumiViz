@@ -5,7 +5,7 @@
     "category": "wind",
     "genres": ["Afrobeat"],
     "description": "A recorded alto flute note with its own vibrato, held in a loop.",
-    "level": 0.85,
+    "level": 0.4644,
     "layers": [
         {
             "name": "Flute",

@@ -25,6 +25,12 @@
 namespace lumi::loop
 {
 
+/// Der Bezug (Entscheide Patrik S139, LL2 a, LL7 a): so laut misst die
+/// Standardprobe jedes mitgelieferten Instruments ausser den Drums — der Median
+/// vor Stufe 27c, Short-term-Maximum bei Loop 1. `asset/loop/instrument_pegel.py`
+/// traegt denselben Wert (`BEZUG_LUFS`; ein Test vergleicht beide).
+inline constexpr double kInstrumentBezugLufs = -13.4;
+
 /// Die Standardprobe als Loop: 120 BPM, 4/4, Sechzehntel; eine Dur-Tonleiter
 /// ueber zwei Oktaven (15 Toene, je zwei Schritte, Lautstaerke 0,9), zwei
 /// Schritte Pause, dann der Akkord Grundton, Terz, Quinte, Oktave ueber einen

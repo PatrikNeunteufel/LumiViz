@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 138,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -83,7 +83,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "rolling_bass",
-            "volume": 0.9,
+            "volume": 0.6807,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -110,7 +110,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "trance_pluck",
-            "volume": 0.7,
+            "volume": 0.2829,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -185,7 +185,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "super_saw",
-            "volume": 0.6,
+            "volume": 0.7951,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -268,7 +268,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "warm_pad",
-            "volume": 0.6,
+            "volume": 0.4593,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -287,7 +287,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "trance_lead",
-            "volume": 0.7,
+            "volume": 0.7339,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -326,7 +326,8 @@
                     "start": 24,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -342,7 +343,8 @@
                     "start": 24,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pluck",
@@ -353,7 +355,8 @@
                     "start": 4,
                     "repeat": 7
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Chords",
@@ -369,7 +372,8 @@
                     "start": 24,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pad",
@@ -380,7 +384,8 @@
                     "start": 16,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -391,7 +396,8 @@
                     "start": 16,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

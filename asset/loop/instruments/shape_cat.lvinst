@@ -5,7 +5,7 @@
     "category": "unusual",
     "genres": ["Electronica"],
     "description": "The cat shape sliding up into the note, bright at first, with late vibrato: a meow.",
-    "level": 0.75,
+    "level": 0.7265,
     "layers": [
         {
             "name": "Meow",

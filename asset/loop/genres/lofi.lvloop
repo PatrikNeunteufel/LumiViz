@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 78,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -50,7 +50,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "round_bass",
-            "volume": 1.0,
+            "volume": 0.9996,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -73,7 +73,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "tine_piano",
-            "volume": 0.7,
+            "volume": 0.9992,
             "pan": -0.2,
             "mute": false,
             "notes": [
@@ -112,7 +112,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "vibraphone",
-            "volume": 0.7,
+            "volume": 0.8838,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -131,7 +131,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "kalimba",
-            "volume": 0.5,
+            "volume": 0.4438,
             "pan": 0.4,
             "mute": false,
             "notes": [
@@ -154,7 +154,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -165,7 +166,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 1.31
         },
         {
             "name": "Keys",
@@ -176,7 +178,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.55
         },
         {
             "name": "Vibes",
@@ -187,7 +190,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Kalimba",
@@ -198,7 +202,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

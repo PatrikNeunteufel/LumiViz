@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Disco", "Synth-Pop", "Synthwave"],
     "description": "A filtered saw with a short filter sweep.",
-    "level": 1.0,
+    "level": 1.4082,
     "layers": [
         {
             "waveform": "saw",

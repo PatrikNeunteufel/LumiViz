@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 160,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "overdrive_guitar",
-            "volume": 0.8,
+            "volume": 0.9993,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -138,7 +138,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "growl_bass",
-            "volume": 0.8,
+            "volume": 0.9994,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -181,7 +181,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "lead",
-            "volume": 0.5,
+            "volume": 0.6809,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -244,7 +244,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "strings",
-            "volume": 0.5,
+            "volume": 0.5332,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -269,7 +269,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Guitar",
@@ -280,7 +281,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 1.63
         },
         {
             "name": "Bass",
@@ -291,7 +293,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 3.1
         },
         {
             "name": "Strings",
@@ -302,7 +305,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -313,7 +317,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

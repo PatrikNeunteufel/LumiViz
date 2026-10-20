@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 76,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "round_bass",
-            "volume": 1.0,
+            "volume": 0.9996,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -93,7 +93,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "clean_guitar",
-            "volume": 0.7,
+            "volume": 0.2009,
             "pan": 0.35,
             "mute": false,
             "notes": [
@@ -133,7 +133,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "organ",
-            "volume": 0.5,
+            "volume": 0.9276,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -176,7 +176,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "brass",
-            "volume": 0.5,
+            "volume": 0.5678,
             "pan": 0.1,
             "mute": false,
             "notes": [
@@ -199,7 +199,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "siren",
-            "volume": 0.35,
+            "volume": 0.5355,
             "pan": -0.4,
             "mute": false,
             "notes": [
@@ -217,7 +217,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -228,7 +229,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 1.31
         },
         {
             "name": "Guitar",
@@ -239,7 +241,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Organ",
@@ -250,7 +253,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Horns",
@@ -261,7 +265,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "FX",
@@ -272,7 +277,8 @@
                     "start": 12,
                     "repeat": 1
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

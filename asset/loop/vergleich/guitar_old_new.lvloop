@@ -16,7 +16,8 @@
                 }
             ],
             "enabled": true,
-            "name": "Drums"
+            "name": "Drums",
+            "gain": 0.0
         },
         {
             "clips": [
@@ -32,7 +33,8 @@
                 }
             ],
             "enabled": true,
-            "name": "Chords"
+            "name": "Chords",
+            "gain": 0.0
         },
         {
             "clips": [
@@ -48,7 +50,8 @@
                 }
             ],
             "enabled": true,
-            "name": "Bass"
+            "name": "Bass",
+            "gain": 0.0
         },
         {
             "clips": [
@@ -84,7 +87,8 @@
                 }
             ],
             "enabled": true,
-            "name": "Lead"
+            "name": "Lead",
+            "gain": 4.03
         }
     ],
     "format": "lumiviz-loop",
@@ -143,7 +147,7 @@
                 [48, 16, 62, 0.7]
             ],
             "pan": -0.2,
-            "volume": 0.9
+            "volume": 0.9598
         },
         {
             "bars": 4,
@@ -170,7 +174,7 @@
                 [60, 2, 31, 0.7]
             ],
             "pan": 0,
-            "volume": 1
+            "volume": 0.7101
         },
         {
             "bars": 4,
@@ -197,7 +201,7 @@
                 [56, 8, 67, 0.9]
             ],
             "pan": 0.1,
-            "volume": 1
+            "volume": 0.999
         },
         {
             "bars": 4,
@@ -240,7 +244,7 @@
                 [62, 2, 71, 0.8]
             ],
             "pan": 0.3,
-            "volume": 0.9,
+            "volume": 0.2702,
             "stringChoice": "perChord",
             "strum": {
                 "spread": 7.5,
@@ -261,7 +265,7 @@
                 [48, 16, 74, 0.8]
             ],
             "pan": -0.1,
-            "volume": 0.8
+            "volume": 0.6355
         },
         {
             "bars": 4,
@@ -304,7 +308,7 @@
                 [62, 2, 71, 0.8]
             ],
             "pan": 0.3,
-            "volume": 0.9
+            "volume": 0.2534
         }
     ],
     "stepsPerBeat": 4,
@@ -313,6 +317,6 @@
         "artist": "LumiViz",
         "title": "Instrument demo — old, then new"
     },
-    "version": 9,
+    "version": 11,
     "volume": 0.35
 }

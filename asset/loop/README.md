@@ -60,6 +60,17 @@ es dort ein und ruft `python asset/loop/instrument_katalog.py`;
 Instrumente gehören nicht hierher: sie liegen im Benutzerordner der App unter
 `instruments` und heißen im Loop `user:<name>` (Entscheid P2 a).
 
+**Pegel (S139, Stufe 27c):** jedes mitgelieferte Instrument außer den Drums misst mit der
+Standardprobe gleich laut (−13,4 LUFS, Loop_Konzept §4n). Das `level` dafür steht in
+**`instrument_pegel.py`** (`PEGEL`, je Instrument alt und neu); `instrument_katalog.ergaenze`
+setzt es, auch wenn ein Skript das Instrument neu schreibt; die Datei behält ihre Fassung. Wer ein
+Instrument im Klang ändert: messen (`LUMIVIZ_PEGEL_DATEI=<datei.tsv>`, Fall „Loop Pegel:
+Messung“ in `test_LoopPegel.cpp`), dann `python asset/loop/instrument_pegel.py --messung
+<datei.tsv>`. Ein Loop-Skript, das neu läuft, schreibt seine Loops mit den alten
+Muster-Lautstärken (Fassung unter 11) — danach `python asset/loop/instrument_pegel.py --loops`:
+es zieht sie nach (Muster mal alt/neu, der Überschuss in den Fader des Kanals) und setzt
+Fassung 11.
+
 | Datei | Titel | Wie gerechnet |
 |---|---|---|
 | `bass.lvinst` | Bass | Säge mit Tiefpass, den die Hüllkurve kurz öffnet |

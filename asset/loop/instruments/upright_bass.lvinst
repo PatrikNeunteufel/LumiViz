@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Blues", "Bossa Nova", "Hip-Hop", "Jazz", "Jazz Waltz", "Ska"],
     "description": "Four strings plucked softly (Extended KS, no body yet) with a woody sine underneath.",
-    "level": 0.954,
+    "level": 0.9867,
     "layers": [
         {
             "name": "String",

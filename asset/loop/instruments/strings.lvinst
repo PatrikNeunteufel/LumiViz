@@ -5,7 +5,7 @@
     "category": "pads",
     "genres": ["Disco", "Metal"],
     "description": "Three detuned saws with a slow attack and light vibrato.",
-    "level": 1.0,
+    "level": 0.9377,
     "layers": [
         {
             "waveform": "saw",

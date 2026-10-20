@@ -413,7 +413,11 @@ TEST_SUITE("LoopInstrument")
             MESSAGE(instrument.titel.toStdString() << ": A4, " << ton.frames() << " Abtastwerte, Spitze "
                                                    << std::to_string(groesster));
             CHECK(groesster > 0.05f);
-            CHECK(groesster <= 0.75f);
+            // Seit Stufe 27c steht das Volume der Instrumente auf dem Bezug (LL2 a; die Lautheit haelt
+            // test_LoopPegel.cpp fest), der Schutz vor Uebersteuern sitzt am Ausgang (LL7 a) — eine
+            // Spitze ueber 0,75 ist dort kein Fehler mehr. Die Drums bleiben bis Stufe 27d, wie sie sind.
+            const bool drum = instrument.art == QLatin1String("drums");
+            if (drum) CHECK(groesster <= 0.75f);
             bool endlich = true;
             bool beideGleich = true;
             for (std::size_t i = 0; i + 1 < ton.daten.size(); i += 2)
@@ -454,7 +458,7 @@ TEST_SUITE("LoopInstrument")
                 for (const float wert : rand.daten)
                     if (!std::isfinite(wert)) randEndlich = false;
                 CHECK(randEndlich);
-                CHECK(spitze(rand.daten) <= 0.9f);
+                if (drum) CHECK(spitze(rand.daten) <= 0.9f);
             }
         }
         // eine laengere Note ist ein laengerer Klang; ohne Dauer oder Rate gibt es keinen
@@ -508,11 +512,11 @@ TEST_SUITE("LoopInstrument")
             QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("drive")}, {QStringLiteral("amount"), 7.0}},
                        QJsonObject{{QStringLiteral("type"), QStringLiteral("envelope")}}};
         wild[QStringLiteral("layers")] = QJsonArray{wildeSchicht};
-        wild[QStringLiteral("level")] = 3.0;
+        wild[QStringLiteral("level")] = 99.0;  // seit Stufe 27c bis +24 dB (LL6 a)
         Instrument gezaehmt;
         REQUIRE(ausJson(wild, gezaehmt));
         REQUIRE(gezaehmt.schichten.size() == 1);
-        CHECK(gezaehmt.laut == doctest::Approx(1.0));
+        CHECK(gezaehmt.laut == doctest::Approx(kInstrumentLautMax));
         CHECK(gezaehmt.schichten[0].stimmen == 3);
         CHECK(gezaehmt.schichten[0].halten == doctest::Approx(1.0));
         CHECK(gezaehmt.schichten[0].schwingung == Schwingung::Sinus);  // die Vorgabe
@@ -828,7 +832,7 @@ TEST_SUITE("LoopInstrument")
         zwei.schichten.push_back(oben);
         const QJsonObject json = alsJson(zwei);
         CHECK(json.value(QStringLiteral("version")).toInt() == kInstrumentFassung);
-        CHECK(kInstrumentFassung == 12);  // seit S136: Fretless, Slide time, Legato level (12, Stufe 25c); S134: Strum am Instrument und Playing an der Saite (11, Stufe 24a, test_LoopSpielweise.cpp); S132: die Saiten des Instruments (10, Stufe 23a, test_LoopSaiten.cpp); S121: die Schwingung Shape (9, Stufe 19c, test_ShapeTon.cpp); S120: Pan je Schicht und acht Schichten (8, Stufe 18); S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
+        CHECK(kInstrumentFassung == 13);  // seit S139: level ueber 1 (13, Stufe 27c); seit S136: Fretless, Slide time, Legato level (12, Stufe 25c); S134: Strum am Instrument und Playing an der Saite (11, Stufe 24a, test_LoopSpielweise.cpp); S132: die Saiten des Instruments (10, Stufe 23a, test_LoopSaiten.cpp); S121: die Schwingung Shape (9, Stufe 19c, test_ShapeTon.cpp); S120: Pan je Schicht und acht Schichten (8, Stufe 18); S118: die Reihe `path` je Schicht (7, test_LoopBausteine.cpp); S116: Art und Resonanz des Filters (6), Rauschen und Pitch sweep (5); S115: Sample als Schicht (test_LoopSample.cpp); S114: Art, Genres, Beschreibung
         CHECK(json.value(QStringLiteral("level")).toDouble() == doctest::Approx(0.8));
         CHECK_FALSE(json.contains(QStringLiteral("waveform")));  // oben stehen nur Titel und Level
         REQUIRE(json.value(QStringLiteral("layers")).toArray().size() == 2);
@@ -953,10 +957,13 @@ TEST_SUITE("LoopInstrument")
 
         // --- der Ton: die Summe der Schichten, jede an ihrer Tonhoehe und ab ihrem Einsatz
         Instrument unten = orgel;  // nur die erste Schicht
+        unten.laut = 1.0;  // die Summe Bit fuer Bit: ohne Volume des Instruments (Stufe 27c)
         Instrument nurOben = orgel;
+        nurOben.laut = 1.0;
         nurOben.schichten = {oben};
         nurOben.schichten[0].einsatzMs = 0.0;
         Instrument summe = orgel;
+        summe.laut = 1.0;
         summe.schichten.push_back(oben);
         const Klang a = rendereTon(unten, 57, 500.0, kRate);
         const Klang b = rendereTon(nurOben, 57, 460.0, kRate);  // 40 ms spaeter, endet mit der Note

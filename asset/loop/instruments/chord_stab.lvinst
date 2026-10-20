@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["House", "Techno"],
     "description": "Three detuned saws through a filter that snaps shut.",
-    "level": 1.0,
+    "level": 2.5293,
     "layers": [
         {
             "waveform": "saw",

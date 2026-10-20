@@ -5,7 +5,7 @@
     "category": "keys",
     "genres": ["House"],
     "description": "A bright sine with seven overtones and no sustain, for short chords.",
-    "level": 1.0,
+    "level": 1.2222,
     "layers": [
         {
             "waveform": "sine",

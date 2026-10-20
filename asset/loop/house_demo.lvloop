@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 124,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -58,7 +58,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "house_organ",
-            "volume": 1.0,
+            "volume": 0.7393,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -89,7 +89,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "house_piano",
-            "volume": 0.8,
+            "volume": 0.6546,
             "pan": 0.15,
             "mute": false,
             "notes": [
@@ -180,7 +180,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "warm_pad",
-            "volume": 0.7,
+            "volume": 0.5359,
             "pan": -0.15,
             "mute": false,
             "notes": [
@@ -203,7 +203,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "sub_bass",
-            "volume": 0.8,
+            "volume": 0.9997,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -222,7 +222,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "pluck",
-            "volume": 0.7,
+            "volume": 0.3081,
             "pan": 0.3,
             "mute": false,
             "notes": [
@@ -297,7 +297,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "acid_bass",
-            "volume": 0.8,
+            "volume": 0.1958,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -340,7 +340,7 @@
             "bars": 4,
             "kind": "instrument",
             "instrument": "chord_stab",
-            "volume": 0.8,
+            "volume": 0.3163,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -389,7 +389,8 @@
                     "start": 0,
                     "repeat": 6
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -410,7 +411,8 @@
                     "start": 16,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 4.54
         },
         {
             "name": "Keys",
@@ -426,7 +428,8 @@
                     "start": 12,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pad",
@@ -437,7 +440,8 @@
                     "start": 8,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Lead",
@@ -448,7 +452,8 @@
                     "start": 16,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

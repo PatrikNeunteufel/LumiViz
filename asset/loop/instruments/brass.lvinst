@@ -5,7 +5,7 @@
     "category": "wind",
     "genres": ["Afrobeat", "Disco", "Funk", "Reggae", "Ska", "Synth-Pop", "Synthwave"],
     "description": "Two detuned saws with a filter that opens on the attack, and a square edge.",
-    "level": 0.7,
+    "level": 0.6164,
     "layers": [
         {
             "name": "Section",

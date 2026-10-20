@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Classical"],
     "description": "Four violin strings plucked with the finger (Extended KS, no body yet), short.",
-    "level": 1.0,
+    "level": 5.559,
     "layers": [
         {
             "name": "String",

@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 2,
+    "version": 11,
     "bpm": 140,
     "beatsPerBar": 4,
     "stepsPerBeat": 4,
@@ -66,7 +66,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bass_808",
-            "volume": 1.0,
+            "volume": 0.9995,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -89,7 +89,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "bell",
-            "volume": 0.5,
+            "volume": 0.6971,
             "pan": 0.25,
             "mute": false,
             "notes": [
@@ -124,7 +124,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "kalimba",
-            "volume": 0.5,
+            "volume": 0.4438,
             "pan": -0.3,
             "mute": false,
             "notes": [
@@ -167,7 +167,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "ghost",
-            "volume": 0.6,
+            "volume": 0.8577,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -186,7 +186,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "808",
@@ -197,7 +198,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 3.54
         },
         {
             "name": "Bells",
@@ -208,7 +210,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Keys",
@@ -219,7 +222,8 @@
                     "start": 8,
                     "repeat": 2
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Pad",
@@ -230,7 +234,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

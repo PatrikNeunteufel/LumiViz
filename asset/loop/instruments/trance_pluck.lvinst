@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": ["Trance"],
     "description": "Detuned saws in two octaves through a snapping filter, over a short sine.",
-    "level": 0.75,
+    "level": 1.8557,
     "layers": [
         {
             "name": "Pluck",

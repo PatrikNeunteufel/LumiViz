@@ -1,6 +1,6 @@
 {
     "format": "lumiviz-loop",
-    "version": 9,
+    "version": 11,
     "bpm": 132,
     "beatsPerBar": 4,
     "stepsPerBeat": 3,
@@ -90,7 +90,7 @@
             "kind": "instrument",
             "bars": 4,
             "instrument": "upright_bass",
-            "volume": 0.85,
+            "volume": 0.8218,
             "pan": 0.0,
             "mute": false,
             "notes": [
@@ -128,7 +128,8 @@
                     "start": 0,
                     "repeat": 4
                 }
-            ]
+            ],
+            "gain": 0.0
         },
         {
             "name": "Bass",
@@ -139,7 +140,8 @@
                     "start": 4,
                     "repeat": 3
                 }
-            ]
+            ],
+            "gain": 0.0
         }
     ]
 }

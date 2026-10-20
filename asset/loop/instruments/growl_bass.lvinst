@@ -5,7 +5,7 @@
     "category": "bass",
     "genres": ["Experimental", "Metal", "Rock"],
     "description": "A heavily driven saw and square with vibrato over a sine sub.",
-    "level": 0.55,
+    "level": 0.3081,
     "layers": [
         {
             "name": "Growl",

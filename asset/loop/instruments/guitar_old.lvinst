@@ -5,7 +5,7 @@
     "category": "plucked",
     "genres": [],
     "description": "The guitar before stage 23: a single plucked string.",
-    "level": 1.0,
+    "level": 2.2333,
     "layers": [
         {
             "waveform": "string",

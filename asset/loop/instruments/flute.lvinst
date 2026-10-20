@@ -5,7 +5,7 @@
     "category": "wind",
     "genres": ["Ambient", "Bossa Nova", "Jazz Waltz"],
     "description": "A triangle with vibrato, a breathy sine an octave above and a short chiff.",
-    "level": 0.8,
+    "level": 0.5298,
     "layers": [
         {
             "name": "Tone",
