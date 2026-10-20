@@ -1318,7 +1318,11 @@ void InstrumentCreator::setupUI()
     m_vibratoTitel = titel(tr("Vibrato"), "vibrato");
     regler(gitter, tr("Rate"), "creatorVibratoRate", 0, 120, [](const Schicht& i) { return gerundet(i.vibratoHz * 10.0); },
            [](Schicht& i, int w) { i.vibratoHz = w / 10.0; },
-           [](const Schicht& i) { return QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1); });
+           [](const Schicht& i) {
+               // SK10 a: ohne eigene Rate nimmt die Spur Vibrato die Vorgabe
+               return i.vibratoHz > 0.0 ? QStringLiteral("%1 Hz").arg(i.vibratoHz, 0, 'f', 1)
+                                        : tr("off · %1 Hz with the Vibrato lane").arg(kVibratoHzVorgabe, 0, 'f', 1);
+           });
     m_nichtSaite.push_back(m_regler.size() - 1);
     m_nichtSample.push_back(m_regler.size() - 1);
     regler(gitter, tr("Depth"), "creatorVibratoDepth", 0, 50, [](const Schicht& i) { return gerundet(i.vibratoCent); },
@@ -1332,6 +1336,13 @@ void InstrumentCreator::setupUI()
            [ms](const Schicht& i) { return ms(i.vibratoEinsatzMs); });
     m_nichtSaite.push_back(m_regler.size() - 1);
     m_nichtSample.push_back(m_regler.size() - 1);
+    // Stufe 28c-1b (SK3 a): so weit folgt die Schicht der Spur Pitch
+    regler(gitter, tr("Pitch range"), "creatorPitchRange", 0, static_cast<int>(kPitchRangeMax),
+           [](const Schicht& i) { return gerundet(i.pitchRangeHt); }, [](Schicht& i, int w) { i.pitchRangeHt = w; },
+           [](const Schicht& i) { return tr("±%1 semitones · Pitch lane").arg(gerundet(i.pitchRangeHt)); })
+        .schieber->setToolTip(tr("How far this layer follows the Pitch lane of a pattern, up and down.\n"
+                                 "Points beyond it are kept, but the layer stops there"));
+    m_nichtSaite.push_back(m_regler.size() - 1);
     m_gruppen.back().ende = gitter->rowCount();
     m_zeilenSource.bis = gitter->rowCount();
 

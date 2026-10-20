@@ -123,4 +123,77 @@ int gehaltenMs(const Loop& loop, const Muster& muster, int wiederholungen, int r
     return std::max(loop.notenMs(n), static_cast<int>(std::lround((bis - anschlag) * schrittMs)));
 }
 
+bool spieltJeVorkommen(const Muster& muster)
+{
+    return hatPedal(muster) || !muster.zeitspuren.von(Steuerspur::Pitch).empty() ||
+           !muster.zeitspuren.von(Steuerspur::Vibrato).empty();
+}
+
+namespace
+{
+
+/// Eine Kurve der Spur ueber den Ton: von `anschlag` bis `bis` (Schritte ab dem Anfang
+/// des Clips), in Cent (`jeWert` Cent je Wert der Spur).
+std::vector<TonPunkt> kurveImTon(const std::vector<SpurPunkt>& spur, double schritte, int mal, double anschlag,
+                                 double bis, double schrittMs, double jeWert)
+{
+    std::vector<TonPunkt> punkte;
+    if (spur.empty()) return punkte;
+    const double clipEnde = mal * schritte;
+    // der Wert an `x`: in seiner Wiederholung (`ab` = der Durchlauf, dessen Anfang gilt), hinter dem Clip der Wert dort
+    const auto wert = [&](double x, int durchlauf) {
+        const double imDurchlauf = std::min(x, clipEnde) - durchlauf * schritte;
+        return kurveBei(spur, imDurchlauf, 0.0);
+    };
+    const auto setze = [&](double x, double w) {
+        const TonPunkt p{static_cast<int>(std::lround((x - anschlag) * schrittMs)), static_cast<int>(std::lround(w * jeWert))};
+        if (!punkte.empty() && punkte.back() == p) return;
+        punkte.push_back(p);
+    };
+    const auto durchlaufVon = [&](double x) { return std::clamp(static_cast<int>(std::floor(x / schritte)), 0, mal - 1); };
+    const int erster = durchlaufVon(anschlag);
+    setze(anschlag, wert(anschlag, erster));
+    for (int r = erster; r < mal; ++r)
+    {
+        const double davor = r * schritte;
+        if (davor >= bis) break;
+        if (r > erster)
+        {
+            // die Naht: der letzte Wert des vorigen Durchlaufs, dann der erste dieses
+            setze(davor, wert(davor - 1e-9, r - 1));
+            setze(davor, spur.front().wert);
+        }
+        for (const SpurPunkt& p : spur)
+        {
+            const double x = davor + p.stelle;
+            if (x > anschlag && x < bis) setze(x, p.wert);
+        }
+    }
+    setze(bis, wert(bis, durchlaufVon(std::min(bis, clipEnde) - 1e-9)));
+    return punkte;
+}
+
+}  // namespace
+
+TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note)
+{
+    TonAngabe ton;
+    if (note >= muster.noten.size()) return ton;
+    const Note& n = muster.noten[note];
+    ton.instrument = muster.instrument;
+    ton.hoehe = n.hoehe;
+    ton.dauerMs = gehaltenMs(loop, muster, wiederholungen, runde, note);
+    if (loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return ton;
+    const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
+    const double schritte = static_cast<double>(muster.takte) * loop.schritteJeTakt();
+    const int mal = std::max(1, wiederholungen);
+    const double anschlag = runde * schritte + n.schritt;
+    const double bis = anschlag + ton.dauerMs / schrittMs;
+    ton.tonhoehe = kurveImTon(muster.zeitspuren.von(Steuerspur::Pitch), schritte, mal, anschlag, bis, schrittMs, 100.0);
+    if (std::all_of(ton.tonhoehe.begin(), ton.tonhoehe.end(), [](const TonPunkt& p) { return p.cent == 0; }))
+        ton.tonhoehe.clear();
+    ton.vibrato = kurveImTon(muster.zeitspuren.von(Steuerspur::Vibrato), schritte, mal, anschlag, bis, schrittMs, 1.0);
+    return ton;
+}
+
 }  // namespace lumi::loop

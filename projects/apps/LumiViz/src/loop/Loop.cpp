@@ -431,6 +431,14 @@ QString tonKlang(const TonAngabe& ton)
         for (const TonBiegung& b : ton.biegung) teile << QStringLiteral("%1-%2").arg(b.ms).arg(b.viertel);
         name += QStringLiteral(":b") + teile.join(QLatin1Char(','));
     }
+    // seit Stufe 28c-1b: die Spuren Pitch und Vibrato, je Punkt ms und Cent
+    const auto verlaufText = [](const std::vector<TonPunkt>& punkte) {
+        QStringList teile;
+        for (const TonPunkt& p : punkte) teile << QStringLiteral("%1=%2").arg(p.ms).arg(p.cent);
+        return teile.join(QLatin1Char(','));
+    };
+    if (!ton.tonhoehe.empty()) name += QStringLiteral(":q") + verlaufText(ton.tonhoehe);
+    if (!ton.vibrato.empty()) name += QStringLiteral(":w") + verlaufText(ton.vibrato);
     if (ton.teil != TonTeil::Alle) name += QStringLiteral(":p%1").arg(static_cast<int>(ton.teil));  // seit Stufe 25c
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
@@ -474,16 +482,32 @@ bool zerlegeBiegung(QStringView text, std::vector<TonBiegung>& biegung)
     }
     return !biegung.empty();
 }
+/// `:q0=0,500=-150` — je Punkt ms und Cent (Stufe 28c-1b; der Wert darf negativ sein).
+bool zerlegePunkte(QStringView text, std::vector<TonPunkt>& punkte)
+{
+    for (const QStringView teil : text.split(QLatin1Char(',')))
+    {
+        const qsizetype gleich = teil.indexOf(QLatin1Char('='));
+        if (gleich <= 0) return false;
+        bool msOk = false;
+        bool centOk = false;
+        const int ms = teil.left(gleich).toInt(&msOk);
+        const int cent = teil.mid(gleich + 1).toInt(&centOk);
+        if (!msOk || !centOk || ms < 0) return false;
+        punkte.push_back(TonPunkt{ms, cent});
+    }
+    return !punkte.empty();
+}
 
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
-/// 24b), `:v…`, `:b…` (seit Stufe 25b), `:p1`, `:p2` (seit Stufe 25c), dann
+/// 24b), `:v…`, `:b…` (seit Stufe 25b), `:q…`, `:w…` (seit Stufe 28c-1b), `:p1`, `:p2` (seit Stufe 25c), dann
 /// Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das als Pfad
 /// selbst einen Doppelpunkt tragen kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 9; ++runde)
+    for (int runde = 0; runde < 11; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
@@ -505,6 +529,14 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
         else if (stueck.front() == QLatin1Char('b') && stueck.size() > 1 && stueck[1].isDigit())
         {
             if (!zerlegeBiegung(stueck.mid(1), zusatz.biegung)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('q') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegePunkte(stueck.mid(1), zusatz.tonhoehe)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('w') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegePunkte(stueck.mid(1), zusatz.vibrato)) return false;
         }
         else
         {
@@ -657,19 +689,19 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
         }
         if (!saiten || !saiten(m.instrument).istSaiteninstrument())
         {
-            if (!hatPedal(m))
+            if (!spieltJeVorkommen(m))
             {
                 for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
                 continue;
             }
-            // mit Pedal (Stufe 28b): je Vorkommen so lange, wie es haelt — dieselbe Rechnung wie `plane`
+            // mit Pedal (Stufe 28b), Pitch oder Vibrato (28c-1b): je Vorkommen — dieselbe Rechnung wie `plane`
             for (const Kanal& kanal : kanaele)
                 for (const LoopClip& clip : kanal.clips)
                 {
                     if (clip.muster != m.name) continue;
                     for (int r = 0; r < clip.wiederholungen; ++r)
                         for (std::size_t i = 0; i < m.noten.size(); ++i)
-                            nimm(tonKlang(m.instrument, m.noten[i].hoehe, gehaltenMs(*this, m, clip.wiederholungen, r, i)));
+                            nimm(tonKlang(tonImClip(*this, m, clip.wiederholungen, r, i)));
                 }
             continue;
         }

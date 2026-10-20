@@ -187,6 +187,16 @@ struct TonBiegung
     [[nodiscard]] bool operator==(const TonBiegung&) const = default;
 };
 
+/// Ein Punkt eines Verlaufs im Ton (Stufe 28c-1b): `ms` nach dem Anschlag ein Wert in
+/// Cent — die Tonhoehe der Spur Pitch oder die Tiefe der Spur Vibrato.
+struct TonPunkt
+{
+    int ms = 0;
+    int cent = 0;
+
+    [[nodiscard]] bool operator==(const TonPunkt&) const = default;
+};
+
 /// Welche Schichten ein Ton rechnet (Stufe 25c, S-L12 a): in einer Kette verbundener
 /// Noten laeuft die Saite (*Extended KS*, *Waveguide*) als ein Ton ueber die Kette, mit
 /// ihr jede Schicht mit *Follow string* (seit 25c-4); die uebrigen spielen je Note
@@ -228,15 +238,22 @@ struct TonAngabe
     std::vector<TonBiegung> biegung{};
     /// Seit Stufe 25c (S-L12 a): welche Schichten dieser Ton rechnet.
     TonTeil teil = TonTeil::Alle;
+    // --- seit Stufe 28c-1b (SF4 a, SK3 a, SK10 a): die Spuren des Musters ueber dem Ton ---
+    /// Die Spur Pitch: Cent ueber der Note, linear zwischen den Punkten, nach dem letzten
+    /// der letzte; zwei Punkte an derselben Stelle: ein Sprung (an der Naht). Leer = keine.
+    std::vector<TonPunkt> tonhoehe{};
+    /// Die Spur Vibrato: die Tiefe in Cent, ebenso. Leer = das Vibrato der Schicht.
+    std::vector<TonPunkt> vibrato{};
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
 /// Der Name: wie `tonKlang`, bei einer Saite `:s<saite>` dahinter, dann (seit
 /// Stufe 24b) `:h<teilton>` bei einem Flageolett, `:u` bei Up, `:m` bei Palm
 /// mute, `:t` bei Tapping, (seit Stufe 25b, S-L6 a) `:v<ms><l|g><hoehe>,…` bei
-/// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, (seit Stufe 25c) `:p1`
-/// nur die Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei einem Ende — ohne
-/// alles derselbe Name wie bis Stufe 22.
+/// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, (seit Stufe 28c-1b)
+/// `:q<ms>=<cent>,…` bei der Spur Pitch und `:w<ms>=<cent>,…` bei der Spur Vibrato,
+/// (seit Stufe 25c) `:p1` nur die Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei
+/// einem Ende — ohne alles derselbe Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

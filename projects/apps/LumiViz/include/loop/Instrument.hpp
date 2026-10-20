@@ -225,6 +225,13 @@ using SchichtBaustein = std::variant<SchichtFilter, SchichtDrive, SchichtHuelle>
 void richteReihe(std::vector<SchichtBaustein>& reihe);
 
 /// Slide time (Stufe 25c, S-L10 a): Vorgabe und Grenzen, ms je Halbton.
+/// *Pitch range* einer Schicht (Stufe 28c-1b, SK3 a): die Vorgabe wie das Pitch-Rad
+/// eines Keyboards, die Grenze die groesste Spanne der Spur Pitch.
+inline constexpr double kPitchRangeVorgabe = 2.0;
+inline constexpr double kPitchRangeMax = 24.0;
+/// Die Rate der Spur Vibrato an einer Schicht ohne eigene Rate (SK10 a: der haeufigste
+/// Wert der mitgelieferten Instrumente, gezaehlt S140).
+inline constexpr double kVibratoHzVorgabe = 5.5;
 inline constexpr double kGleitMsVorgabe = 20.0;
 inline constexpr double kGleitMsMin = 5.0;
 inline constexpr double kGleitMsMax = 60.0;
@@ -271,6 +278,10 @@ struct Schicht
     double vibratoHz = 0.0;
     double vibratoCent = 0.0;
     double vibratoEinsatzMs = 0.0;  ///< so lange waechst es an
+    /// *Pitch range* (Stufe 28c-1b, SK3 a): so weit folgt die Schicht der Spur Pitch, in
+    /// Halbtoenen nach oben und unten (0 … `kPitchRangeMax`); was darueber hinaus geht,
+    /// wird beim Rechnen gekappt. In der Datei `pitchRange` (seit Fassung 14, immer).
+    double pitchRangeHt = kPitchRangeVorgabe;
 
     double saiteDaempfung = 0.996;  ///< nur Saite *Classic*: 0.9…0.9999, groesser klingt laenger
 
@@ -549,11 +560,13 @@ struct Instrument
 // *Waveguide* `inALegato` (`ownNote`, `followString`; immer).
 // Fassung 13 (S139, Stufe 27c, Entscheid LL6 a): `level` des ganzen Instruments
 // darf ueber 1 gehen, bis `kInstrumentLautMax` (+24 dB) — ein aelteres Programm
-// schnitte es auf 1 ab und spielte das Instrument zu leise. Geschrieben wird
-// Fassung 13.
+// schnitte es auf 1 ab und spielte das Instrument zu leise.
+// Fassung 14 (S140, Stufe 28c-1b, Entscheid SK3 a): jede Schicht traegt `pitchRange`
+// (Halbtoene, immer) — ein aelteres Programm folgte der Spur Pitch nicht und kennt
+// das Feld nicht. Geschrieben wird Fassung 14.
 
 /// Die Fassung, die dieses Programm schreibt; eine hoehere liest es nicht.
-inline constexpr int kInstrumentFassung = 13;
+inline constexpr int kInstrumentFassung = 14;
 
 /// So laut darf ein ganzes Instrument hoechstens sein: +24 dB (LL6 a, wie der
 /// Fader je Kanal und das Gain im Composer).

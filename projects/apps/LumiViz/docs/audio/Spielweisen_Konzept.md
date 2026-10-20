@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.20.0
+> **Version:** 0.21.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK10 a)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK10 a (Patrik S139, S140);
@@ -365,7 +365,7 @@ die Schwelle als Vorgabe.
 |---|---|
 | 28a ✅ | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
 | 28b ✅ | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
-| 28c-1 | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
+| 28c-1 ✅ | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. |
 | 28d | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
 | 28e | Loop-Panel: die Expression-Kurve auf dem Clip. |
@@ -463,10 +463,28 @@ Tonabnehmer, SF6 a). Ohne Spur und Kurve bleibt jeder Abtastwert, wie er war. *F
 Modells 28a:* ein Punkt genau am Ende des Musters fällt beim Richten weg wie eine Note dort —
 ein Verlauf, der bis zum Ende steigen soll, endet mit einem Punkt kurz davor.
 
+**Klang 28c-1b ✅** (Vibrato und Pitch; `tonImClip` in `loop/Pedalplan`, `Handweg` im
+Instrument): beide ändern die Tonhöhe und gehören deshalb in den Ton. Ein Muster mit Punkten
+auf Pitch oder Vibrato (oder den Pedalen) rechnet seine Töne **je Vorkommen**; der Ton
+trägt die Spuren in ms ab dem Anschlag (`:q<ms>=<cent>,…`, `:w<ms>=<cent>,…` im Namen),
+über die Naht in die nächste Wiederholung, hinter dem Clip mit dem Wert dort. Gelesen wird
+bis zum Ende der gehaltenen Note; **im Ausklang gilt der letzte Wert** (von Claude gesetzt).
+Gerechnet über den Weg der Tonhöhe, den jede Schwingung schon kennt — damit bekommen auch
+Sample, Rauschen und die Saite *Classic* ein Vibrato. **Pitch** wird je Schicht auf
+±*Pitch range* gekappt (`pitchRange`, Vorgabe 2, bis 24 Halbtöne; `.lvinst` Fassung 14;
+im Creator in der Gruppe Vibrato). **Vibrato**: wo die Spur Punkte trägt, schweigt das
+Vibrato der Schicht, die Spur setzt die Tiefe (SF4 a); Rate und Einsatz der Schicht, ohne
+Rate 5,5 Hz ohne Einsatz (SK10 a; im Creator steht bei Rate 0 „off · 5.5 Hz with the
+Vibrato lane"). Eine Spur Pitch, die überall 0 ist, ändert den Namen nicht. Ein Instrument
+mit Saiten bekommt Vibrato und Pitch erst mit 28c-2. *Rechenzeit* (Release-clang, S140):
+ein Muster von 16 Noten auf vier Tonhöhen — ohne Spuren 4 Töne in 2,0 ms, mit Pitch und
+Vibrato 16 Töne in 14,6 ms (Testing-MSVC 3,4 und 36,1 ms).
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.21.0 | 2026-10-20 | Session 140. Stufe 28c-1b gebaut (Vibrato und Pitch im Ton, Pitch range, `.lvinst` 14); 28c-1 fertig. |
 | 0.20.0 | 2026-10-20 | Session 140. SK9 a (Pegel e², Beleg MIDI-Empfehlung), SK10 a (Vibrato-Rate 5,5 Hz, wo die Schicht keine hat); Stufe 28c-1a gebaut (Expression im Rechenkern). |
 | 0.19.0 | 2026-10-20 | Session 140. Stufe 28b gebaut: Planung der Pedale (`loop/Pedalplan`). |
 | 0.18.0 | 2026-10-20 | Session 140. SK8 a (Expression am Clip in Takten ab dem Clip-Anfang); Modell 28a. |

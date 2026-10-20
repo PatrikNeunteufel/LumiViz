@@ -177,11 +177,10 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                             schlag.ausdruck = ausdruck;
                             ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                         };
-                        // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b; ohne Pedal `notenMs`)
-                        schlage(geplant == nullptr
-                                    ? tonKlang(muster->instrument, note.hoehe,
-                                               gehaltenMs(loop, *muster, clip.wiederholungen, runde, noteNr))
-                                    : tonKlang(*geplant));
+                        // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b), mit Pitch und
+                        // Vibrato (28c-1b) — ohne Spuren derselbe Name wie bis Stufe 27
+                        schlage(geplant == nullptr ? tonKlang(tonImClip(loop, *muster, clip.wiederholungen, runde, noteNr))
+                                                   : tonKlang(*geplant));
                         // Stufe 25c (S-L12 a): beim Kopf einer Kette die Saite ueber die ganze Kette
                         if (geplant != nullptr)
                             for (const TonAngabe& zusatz : geplant->zusatz) schlage(tonKlang(zusatz));

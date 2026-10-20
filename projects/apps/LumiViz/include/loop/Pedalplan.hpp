@@ -53,4 +53,16 @@ inline constexpr double kPedalSchwelle = 0.5;
 /// Pedal genau `Loop::notenMs`, sonst die Zeit vom Anschlag bis `gehaltenBis`.
 [[nodiscard]] int gehaltenMs(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
 
+/// Rechnet das Muster seine Toene je Vorkommen (Pedal, Pitch oder Vibrato tragen Punkte)?
+/// Sonst heissen sie wie bis Stufe 27, je Tonhoehe und Dauer einer.
+[[nodiscard]] bool spieltJeVorkommen(const Muster& muster);
+
+/// Der Ton dieses Vorkommens eines Instruments ohne Saiten (Stufe 28c-1b): Dauer nach
+/// den Pedalen (`gehaltenMs`), dazu die Spuren Pitch und Vibrato ueber ihm — in ms ab
+/// dem Anschlag, ueber die Naht in die naechste Wiederholung, hinter dem Ende des Clips
+/// der Wert dort. Gelesen bis zum Ende der gehaltenen Note; im Ausklang gilt der letzte
+/// Wert (von Claude gesetzt). Eine Spur Pitch, die ueberall 0 ist, faellt weg — der Ton
+/// heisst dann wie ohne sie.
+[[nodiscard]] TonAngabe tonImClip(const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
+
 }  // namespace lumi::loop
