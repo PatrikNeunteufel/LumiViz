@@ -4,6 +4,9 @@
  */
 
 #include "loop/InstrumentPalette.hpp"
+#include "loop/Pegel.hpp"
+#include <QColor>
+#include <cmath>
 
 #include "loop/Loop.hpp"
 
@@ -102,7 +105,11 @@ InstrumentPalette::InstrumentPalette(QWidget* parent) : QWidget(parent, Qt::Wind
     m_baum = new QTreeWidget(this);
     m_baum->setObjectName(QStringLiteral("instrumentPaletteTree"));
     m_baum->setHeaderHidden(true);
-    m_baum->setColumnCount(1);
+    // die zweite Spalte (27f): wie weit ein eigenes Instrument von den anderen abweicht
+    m_baum->setColumnCount(2);
+    m_baum->header()->setStretchLastSection(false);
+    m_baum->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_baum->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     m_baum->setUniformRowHeights(true);
     m_baum->setContextMenuPolicy(Qt::CustomContextMenu);
     aussen->addWidget(m_baum, 1);
@@ -194,7 +201,21 @@ QTreeWidgetItem* InstrumentPalette::blatt(QTreeWidgetItem* kopf, const Instrumen
     eintrag->setText(0, instrument.titel);
     eintrag->setData(0, kRolleNennung, instrument.name);
     eintrag->setToolTip(0, instrument.beschreibung);
+    if (const auto abstand = abstandVon(instrument.name))
+    {
+        eintrag->setText(1, QStringLiteral("%1%2 dB").arg(*abstand > 0.0 ? QStringLiteral("+") : QStringLiteral("−"))
+                                .arg(std::abs(*abstand), 0, 'f', 1));
+        eintrag->setForeground(1, QColor(0xd9, 0xa4, 0x3a));
+        eintrag->setToolTip(1, *abstand > 0.0 ? tr("Louder than the other instruments — open it and use Match")
+                                              : tr("Quieter than the other instruments — open it and use Match"));
+    }
     return eintrag;
+}
+
+std::optional<double> InstrumentPalette::abstandVon(const QString& nennung) const
+{
+    const auto da = m_abstaende.find(nennung);
+    return da == m_abstaende.end() ? std::nullopt : std::optional<double>(da->second);
 }
 
 void InstrumentPalette::liesNeu()
@@ -208,6 +229,12 @@ void InstrumentPalette::liesNeu()
     }
     m_alle = instrumente();
     for (Instrument& eigenes : eigeneInstrumente()) m_alle.push_back(std::move(eigenes));
+    // 27f: wie weit die eigenen vom Bezug liegen — die mitgelieferten stehen darauf
+    m_abstaende.clear();
+    for (const Instrument& instrument : m_alle)
+        if (istEigenesInstrument(instrument.name))
+            if (const auto abstand = abstandZumBezug(instrument, 44100); abstand && std::abs(*abstand) > kBezugToleranzDb)
+                m_abstaende[instrument.name] = *abstand;
     {
         // die Genres, die es gibt — die Wahl bleibt, wenn es sie noch gibt
         const QString gewaehltesGenre = m_genre->currentData().toString();

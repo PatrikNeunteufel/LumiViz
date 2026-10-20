@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.97.0
+> **Version:** 0.98.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3633,7 +3633,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27c ✅ | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
 | 27d ✅ | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 ✅ Oberfläche, zuerst die Skizze; 27e-3 ✅ Begrenzer am Ausgang (LL7 a, LL13 a) |
-| 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
+| 27f ✅ | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
 
 **Wie 27a gebaut ist (S139):** `audio/Lautheit.hpp` (`lumi::audio`) statt `composer/Lautheit.hpp`;
@@ -3791,6 +3791,31 @@ wie im Composer; ändert sich der Loop beim Spielen, folgt er. Im Panel der Scha
 (`loopLimiter`) mit Tooltip, ein Undo-Schritt („Turn on/off limiter“). Tests: in
 `test_LoopFader` die Datei, in `test_LoopSpieler` „Loop Limiter 27e-3“ (Papp-Engine: an, aus beim
 Spielen, Start ohne), in `test_LoopArrangement` der Schalter mit Undo. Bild angesehen.
+
+✅ **LL14 a** (Patrik S139; Skizze in drei Teilen; ersetzt in LL2 a „Das Fenster *Instruments*
+zeigt beim Speichern …“ — gespeichert wird im Creator): **(1)** im Kopf des Creators ein Knopf
+**Match** neben *Level*, darunter die Abweichung, nach jeder Änderung neu gemessen (*6.2 dB
+louder than the other instruments*, innerhalb ±1 LU *as loud as the other instruments*); Match
+setzt *Level* so, dass die Standardprobe −13,4 LUFS misst, ein Undo-Schritt. **(2)** Beim
+Speichern (Save, Save as…), wenn es mehr als 1 dB abweicht: *Match and save*, *Save as it is*,
+*Cancel*. **(3)** Im Fenster *Instruments* bei eigenen, die mehr als 1 dB abweichen, die
+Abweichung neben dem Namen. Verworfen: b (nur Knopf und Anzeige — alte eigene blieben unbemerkt
+schief), c (beim Speichern still angleichen — überschriebe Absicht).
+
+**Wie 27f gebaut ist (S139):** `loop/Pegel`: `kBezugToleranzDb` 1, `abstandZumBezug`,
+`lautAufBezug` (leer bei der Art `drums` — sie folgen den Kits —, bei einer Sample-Schicht ohne
+gemerkte Aufnahme und bei Stille). Creator: Knopf `creatorMatch`, Anzeige `creatorLoudness` rechts in
+der Zeile Tuning (gelb, wenn es abweicht; eine eigene Zeile machte das Fenster zu hoch), gemessen 300 ms nach der letzten Änderung (`messeAbstand`),
+`gleicheAn`, `frageNachPegel` (eine `QMessageBox` `creatorLevelQuestion` über
+`lumi::ui::fuehreDialogAus`, Knöpfe `creatorLevelMatchSave`, `creatorLevelKeep`, Cancel) vor Save
+und vor dem Namen bei Save as…. Fenster *Instruments*: eine zweite Spalte, gemessen beim Lesen
+(`liesNeu`), nur eigene; `abstandVon`. `test_LoopPegel.cpp`: ein Fall „Loop Pegel 27f“ —
+Abweichung und Volume auf dem Bezug, Match im Creator (auch über 1), Drums, die Rückfrage mit
+Cancel, so lassen, angleichen, danach keine Frage mehr, die Marke im Fenster;
+`LUMIVIZ_MATCH_LEVEL_BILD=<datei.png>` legt zwei Bilder ab (angesehen). `test_LoopInstrumentEditor`
+beantwortet die Rückfrage beim bestehenden Save mit *Save as it is*. **Offen:** ein eigenes
+Instrument mit Sample-Schicht wird erst gemessen, wenn seine Aufnahme gemerkt ist (im Fenster
+*Instruments* oft nicht — dann ohne Marke).
 
 **Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
 +24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
@@ -3954,6 +3979,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.98.0** (S139, 2026-10-20): §4n LL14 a; Stufe 27f gebaut — Match level im Creator, Rückfrage beim Speichern, Marke im Fenster Instruments.
 - **0.97.0** (S139, 2026-10-20): §4n LL13 a; Stufe 27e-3 gebaut — der Begrenzer am Ausgang des Loop-Panels.
 - **0.96.0** (S139, 2026-10-20): §4n LL12 a; Stufe 27e-2 gebaut — der Fader im Kopf jedes Kanals.
 - **0.95.0** (S139, 2026-10-20): §4n LL9 a bis LL11 a; Stufe 27d gebaut — Drum-Probe, die Kits auf dem Drum-Anker (−21,89 LUFS, 8,5 LU unter dem Bezug der Instrumente), drei Rollen gekappt.

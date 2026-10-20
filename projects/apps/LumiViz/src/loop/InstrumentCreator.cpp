@@ -10,6 +10,8 @@
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/FormFenster.hpp"
 #include "loop/Kit.hpp"  // bibliotheksKlaenge
+#include "loop/Pegel.hpp"  // Match level (27f)
+#include "UI/widgets/Bedienhilfe.hpp"  // fuehreDialogAus: die Rueckfrage in Tests abfragbar
 #include "loop/SampleFrage.hpp"
 #include "loop/SaitenBild.hpp"
 #include "loop/SaitenZeile.hpp"
@@ -547,9 +549,22 @@ void InstrumentCreator::setupUI()
     kopf->addWidget(new QLabel(tr("Level"), this));
     kopf->addWidget(m_gesamt);
     kopf->addWidget(m_gesamtWert);
+    // Match (27f, LL14 a): Level so, dass das Instrument so laut ist wie die anderen
+    m_angleichen = new QPushButton(tr("Match"), this);
+    m_angleichen->setObjectName(QStringLiteral("creatorMatch"));
+    m_angleichen->setToolTip(tr("Set Level so that this instrument is as loud as the other instruments "
+                                "(a scale and a chord, measured as EBU R128 short-term loudness)"));
+    kopf->addWidget(m_angleichen);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
     aussen->addLayout(kopf);
+    // wie weit es von den anderen liegt: rechts in der Zeile Tuning (dort ist Platz, es kostet keine Hoehe)
+    m_abstandZeile = new QLabel(this);
+    m_abstandZeile->setObjectName(QStringLiteral("creatorLoudness"));
+    m_messTakt = new QTimer(this);
+    m_messTakt->setSingleShot(true);
+    m_messTakt->setInterval(300);
+    connect(m_messTakt, &QTimer::timeout, this, &InstrumentCreator::messeAbstand);
 
     // --- die zweite Zeile (Stufe 14b; Skizze gebilligt, Patrik S114): was das
     // Fenster „Instruments" von einem Instrument zeigt und wonach es filtert
@@ -582,7 +597,12 @@ void InstrumentCreator::setupUI()
     m_saitenZeile = new SaitenZeile(this);
     connect(m_saitenZeile, &SaitenZeile::geaendert, this,
             [this](const Saitensatz& saiten) { aendere([&saiten](Instrument& i) { i.saiten = saiten; }); });
-    aussen->addWidget(m_saitenZeile);
+    {
+        auto* reihe = new QHBoxLayout;
+        reihe->addWidget(m_saitenZeile, 1);
+        reihe->addWidget(m_abstandZeile, 0, Qt::AlignRight | Qt::AlignTop);  // Match level (27f)
+        aussen->addLayout(reihe);
+    }
     // --- N: die Zeile Strum (Stufe 24d; Skizze gebilligt, Patrik S134, S-W8 a): die Vorgabe
     // des Instruments fuer neue Muster (S-W2 a) — dasselbe Element wie H im Instrument-Editor
     m_strumZeile = new StrumZeile(QStringLiteral("creatorStrum"), this);
@@ -1553,7 +1573,9 @@ void InstrumentCreator::setupUI()
         if (text != m_instrument.beschreibung) aendere([&text](Instrument& i) { i.beschreibung = text; });
     });
     connect(m_zurueck, &QPushButton::clicked, this, &InstrumentCreator::setzeZurueck);
+    connect(m_angleichen, &QPushButton::clicked, this, [this] { (void)gleicheAn(); });
     connect(m_speichern, &QPushButton::clicked, this, [this] {
+        if (!frageNachPegel()) return;  // 27f: weicht es ab, zuerst fragen
         // ein mitgeliefertes oder neues: eine eigene Kopie unter einem Namen
         if (m_datei.isEmpty())
         {
@@ -1564,7 +1586,9 @@ void InstrumentCreator::setupUI()
             QMessageBox::warning(this, tr("Instrument"), tr("Could not write %1").arg(QDir::toNativeSeparators(m_datei)));
     });
     // Save as...: immer eine Kopie unter neuem Namen in den Benutzerordner — kein Dateidialog (Entscheid E1 a, S117)
-    connect(m_speichernUnter, &QPushButton::clicked, this, [this] { (void)frageNachNamen(); });
+    connect(m_speichernUnter, &QPushButton::clicked, this, [this] {
+        if (frageNachPegel()) (void)frageNachNamen();
+    });
     // Publish (Publish_Konzept.md P2 a): die gespeicherte Datei; ein mitgeliefertes hat keine
     connect(m_publish, &QPushButton::clicked, this, [this] {
         lumi::ui::veroeffentlicheAusFenster(this, lumi::paket::Art::Instrument, m_datei, geaendert());
@@ -2106,8 +2130,73 @@ Instrument InstrumentCreator::fuerBild(bool nurGewaehlte) const
     return bild;
 }
 
+void InstrumentCreator::messeAbstand()
+{
+    m_messTakt->stop();
+    m_abstand = abstandZumBezug(m_instrument, 44100);
+    m_angleichen->setEnabled(m_abstand.has_value() && std::abs(*m_abstand) > 0.05);
+    if (!m_abstand)
+    {
+        m_abstandZeile->setText(m_instrument.art == QLatin1String("drums")
+                                    ? tr("Drums follow the kits")
+                                    : tr("Loudness not measured — a sample is not loaded"));
+        m_abstandZeile->setStyleSheet(QString());
+        return;
+    }
+    const double a = *m_abstand;
+    if (std::abs(a) <= kBezugToleranzDb)
+    {
+        m_abstandZeile->setText(tr("as loud as the other instruments"));
+        m_abstandZeile->setStyleSheet(QString());
+        m_abstandZeile->setEnabled(false);
+        return;
+    }
+    m_abstandZeile->setEnabled(true);
+    m_abstandZeile->setText(a > 0.0 ? tr("%1 dB louder than the other instruments").arg(a, 0, 'f', 1)
+                                    : tr("%1 dB quieter than the other instruments").arg(-a, 0, 'f', 1));
+    m_abstandZeile->setStyleSheet(QStringLiteral("color: #d9a43a;"));
+}
+
+bool InstrumentCreator::gleicheAn()
+{
+    const std::optional<double> laut = lautAufBezug(m_instrument, 44100);
+    if (!laut || std::abs(*laut - m_instrument.laut) < 1e-9) return false;
+    aendere([&laut](Instrument& i) { i.laut = *laut; });
+    messeAbstand();
+    return true;
+}
+
+bool InstrumentCreator::frageNachPegel()
+{
+    messeAbstand();
+    if (!m_abstand || std::abs(*m_abstand) <= kBezugToleranzDb) return true;
+    QMessageBox frage(this);
+    frage.setObjectName(QStringLiteral("creatorLevelQuestion"));
+    frage.setWindowTitle(tr("Save instrument"));
+    frage.setIcon(QMessageBox::Question);
+    frage.setText(*m_abstand > 0.0
+                      ? tr("%1 is %2 dB louder than the other instruments. Match its level before saving?")
+                            .arg(m_instrument.titel)
+                            .arg(*m_abstand, 0, 'f', 1)
+                      : tr("%1 is %2 dB quieter than the other instruments. Match its level before saving?")
+                            .arg(m_instrument.titel)
+                            .arg(-*m_abstand, 0, 'f', 1));
+    QPushButton* angleichen = frage.addButton(tr("Match and save"), QMessageBox::AcceptRole);
+    angleichen->setObjectName(QStringLiteral("creatorLevelMatchSave"));
+    QPushButton* lassen = frage.addButton(tr("Save as it is"), QMessageBox::DestructiveRole);
+    lassen->setObjectName(QStringLiteral("creatorLevelKeep"));
+    QPushButton* abbrechen = frage.addButton(QMessageBox::Cancel);
+    frage.setDefaultButton(angleichen);
+    (void)lumi::ui::fuehreDialogAus(frage);
+    const QAbstractButton* gewaehlt = frage.clickedButton();
+    if (gewaehlt == nullptr || gewaehlt == abbrechen) return false;
+    if (gewaehlt == angleichen) (void)gleicheAn();
+    return true;
+}
+
 void InstrumentCreator::zeigeAlles()
 {
+    if (m_messTakt != nullptr) m_messTakt->start();  // 27f: kurz nach der letzten Aenderung messen
     setWindowTitle(tr("Instrument: %1").arg(m_instrument.titel) + (geaendert() ? QStringLiteral(" *") : QString()));
     if (!m_titel->hasFocus() || m_titel->text().trimmed().isEmpty()) m_titel->setText(m_instrument.titel);
     m_herkunftZeile->setText(m_herkunft);

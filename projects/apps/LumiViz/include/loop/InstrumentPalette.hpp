@@ -28,6 +28,8 @@
 #include <QStringList>
 #include <QWidget>
 
+#include <map>
+#include <optional>
 #include <vector>
 
 class QComboBox;
@@ -47,6 +49,10 @@ class InstrumentPalette : public QWidget
 
 public:
     explicit InstrumentPalette(QWidget* parent = nullptr);
+
+    /// Wie weit ein eigenes Instrument vom Bezug abweicht (Stufe 27f, LL14 a), in dB;
+    /// leer = es weicht nicht mehr als `kBezugToleranzDb` ab, ist nicht zu messen oder kein eigenes.
+    [[nodiscard]] std::optional<double> abstandVon(const QString& nennung) const;
 
     /// Fuer welches Muster das Fenster gerade waehlt; leer = es ist kein
     /// Instrument-Muster offen, **Use** ist dann aus. Waehlt das Fenster fuer
@@ -133,6 +139,8 @@ private:
 
     QString m_ziel;
     std::vector<Instrument> m_alle;  ///< mitgelieferte, dann eigene
+    /// Eigene, die mehr als `kBezugToleranzDb` vom Bezug abweichen (27f): Nennung -> dB.
+    std::map<QString, double> m_abstaende;
     QStringList m_favoriten;         ///< Nennungen
     QStringList m_zuletzt;           ///< juengstes zuerst
 

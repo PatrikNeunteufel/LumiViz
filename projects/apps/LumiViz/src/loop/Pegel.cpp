@@ -5,7 +5,10 @@
 
 #include "loop/Pegel.hpp"
 
+#include "loop/Sample.hpp"
+
 #include <algorithm>
+#include <cmath>
 
 namespace lumi::loop
 {
@@ -67,6 +70,24 @@ std::vector<float> rechneStandardprobe(const Instrument& instrument, int rate)
 audio::Lautheit messeInstrument(const Instrument& instrument, int rate)
 {
     return audio::messeLautheit(rechneStandardprobe(instrument, rate), rate);
+}
+
+std::optional<double> abstandZumBezug(const Instrument& instrument, int rate)
+{
+    if (instrument.art == QLatin1String("drums")) return std::nullopt;
+    for (const Schicht& schicht : instrument.schichten)
+        if (schicht.an && schicht.schwingung == Schwingung::Sample && sampleDaten(schicht.sample) == nullptr)
+            return std::nullopt;
+    const double wert = messeInstrument(instrument, rate).kurzzeitMaxLufs;
+    if (wert <= audio::kLufsStille) return std::nullopt;
+    return wert - kInstrumentBezugLufs;
+}
+
+std::optional<double> lautAufBezug(const Instrument& instrument, int rate)
+{
+    const std::optional<double> abstand = abstandZumBezug(instrument, rate);
+    if (!abstand) return std::nullopt;
+    return std::clamp(instrument.laut * std::pow(10.0, -*abstand / 20.0), 0.0, kInstrumentLautMax);
 }
 
 audio::Lautheit messeSchlag(const Klang& klang, int rate)

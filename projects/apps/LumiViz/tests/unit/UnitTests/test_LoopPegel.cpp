@@ -28,9 +28,20 @@
 #include "audio/Lautheit.hpp"
 #include "loop/DrumKit.hpp"
 #include "loop/Instrument.hpp"
+#include "loop/InstrumentCreator.hpp"
+#include "loop/InstrumentPalette.hpp"
 #include "loop/Pegel.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 
+#include <QApplication>
 #include <QCoreApplication>
+#include <QDialog>
+#include <QDir>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QTemporaryDir>
+#include <QTreeWidget>
 #include <QFile>
 #include <QRegularExpression>
 #include <QTextStream>
@@ -245,6 +256,167 @@ TEST_SUITE("LoopPegel")
             for (const KitZeile& k : kitZeilen)
                 aus << "kit\t" << k.kit << '\t' << QString::number(k.wert, 'f', 3) << '\t' << k.rolle << '\t' << k.klang << '\n';
             MESSAGE("abgelegt: " << datei.toStdString());
+        }
+    }
+    // Stufe 27f (S139, Entscheid Patrik LL14 a): Match level im Creator und im Fenster Instruments —
+    // eigene Instrumente in einem Wegwerf-Ordner, die Rueckfrage ueber `setzeDialogBeobachterFuerTests`
+    TEST_CASE("Loop Pegel 27f: Match im Creator, die Rueckfrage beim Speichern, die Marke im Fenster Instruments")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        QTemporaryDir tmp;
+        REQUIRE(tmp.isValid());
+        setzeEigenenInstrumentOrdnerFuerTests(QDir(tmp.path()).filePath(QStringLiteral("instruments")));
+        struct Zurueck
+        {
+            ~Zurueck()
+            {
+                setzeEigenenInstrumentOrdnerFuerTests(QString());
+                lumi::ui::setzeDialogBeobachterFuerTests({});
+            }
+        } zurueck;
+
+        // --- die Abweichung: ein Instrument doppelt so laut liegt 6,02 dB ueber dem Bezug
+        Instrument orgel = *findeInstrument(QStringLiteral("organ"));
+        REQUIRE(abstandZumBezug(orgel, kRate).has_value());
+        CHECK(std::abs(*abstandZumBezug(orgel, kRate)) <= 0.05);  // mitgeliefert: auf dem Bezug
+        Instrument laut = orgel;
+        laut.laut = orgel.laut * 2.0;
+        CHECK(*abstandZumBezug(laut, kRate) == doctest::Approx(20.0 * std::log10(2.0)).epsilon(0.01));
+        CHECK(*lautAufBezug(laut, kRate) == doctest::Approx(orgel.laut).epsilon(0.001));
+        CHECK_FALSE(abstandZumBezug(*findeInstrument(QStringLiteral("drum_kick")), kRate).has_value());
+
+        // --- im Creator: die Anzeige, Match
+        InstrumentCreator creator;  // nicht gezeigt
+        creator.oeffne(laut);
+        auto* zeile = creator.findChild<QLabel*>(QStringLiteral("creatorLoudness"));
+        auto* angleichen = creator.findChild<QPushButton*>(QStringLiteral("creatorMatch"));
+        auto* save = creator.findChild<QPushButton*>(QStringLiteral("creatorSave"));
+        auto* saveAs = creator.findChild<QPushButton*>(QStringLiteral("creatorSaveAs"));
+        REQUIRE(zeile != nullptr);
+        REQUIRE(angleichen != nullptr);
+        REQUIRE(save != nullptr);
+        REQUIRE(saveAs != nullptr);
+        creator.messeAbstand();
+        REQUIRE(creator.abstand().has_value());
+        CHECK(*creator.abstand() == doctest::Approx(6.02).epsilon(0.01));
+        CHECK(zeile->text() == QStringLiteral("6.0 dB louder than the other instruments"));
+        CHECK(angleichen->isEnabled());
+        angleichen->click();
+        CHECK(std::abs(*creator.abstand()) <= 0.05);
+        CHECK(creator.instrument().laut == doctest::Approx(orgel.laut).epsilon(0.001));
+        CHECK(zeile->text() == QStringLiteral("as loud as the other instruments"));
+        CHECK_FALSE(angleichen->isEnabled());
+        // ueber 1 geht es auch (LL6 a): ein leises wird angehoben
+        creator.aendere([](Instrument& i) { i.laut = 0.05; });
+        creator.messeAbstand();
+        CHECK(zeile->text().endsWith(QStringLiteral("dB quieter than the other instruments")));
+        REQUIRE(creator.gleicheAn());
+        CHECK(std::abs(*creator.abstand()) <= 0.05);
+
+        // --- Drums: nicht zu messen, sie folgen den Kits
+        creator.oeffne(*findeInstrument(QStringLiteral("drum_kick")));
+        creator.messeAbstand();
+        CHECK_FALSE(creator.abstand().has_value());
+        CHECK(zeile->text() == QStringLiteral("Drums follow the kits"));
+        CHECK_FALSE(angleichen->isEnabled());
+
+        // --- beim Speichern: weicht es ab, fragt der Creator — Save as it is, Match and save, Cancel
+        QString antwort;
+        int fragen = 0;
+        QString frageText;
+        lumi::ui::setzeDialogBeobachterFuerTests([&](QDialog& d) {
+            if (d.objectName() == QStringLiteral("creatorLevelQuestion"))
+            {
+                ++fragen;
+                auto& box = dynamic_cast<QMessageBox&>(d);
+                frageText = box.text();
+                // leer = abbrechen (ein leerer Name faende mit findChild jeden Knopf)
+                if (antwort.isEmpty())
+                    box.button(QMessageBox::Cancel)->click();
+                else if (auto* knopf = d.findChild<QPushButton*>(antwort))
+                    knopf->click();
+                return static_cast<int>(QDialog::Accepted);
+            }
+            // der Name der eigenen Kopie: der Vorschlag
+            if (auto* sichern = d.findChildren<QPushButton*>().isEmpty() ? nullptr : d.findChildren<QPushButton*>().last())
+                sichern->click();
+            return static_cast<int>(QDialog::Accepted);
+        });
+        Instrument eigenesLaut = laut;
+        eigenesLaut.titel = QStringLiteral("Loud Organ");
+        REQUIRE(speichereEigenes(eigenesLaut, QStringLiteral("loud_organ")));
+        Instrument eigenes;
+        REQUIRE(holeInstrument(QStringLiteral("user:loud_organ"), eigenes));
+        creator.oeffne(eigenes);
+        creator.aendere([](Instrument& i) { i.beschreibung = QStringLiteral("loud"); });
+        // abbrechen: nichts geschrieben
+        antwort.clear();
+        save->click();
+        CHECK(fragen == 1);
+        CHECK(frageText == QStringLiteral("Loud Organ is 6.0 dB louder than the other instruments. Match its level before saving?"));
+        CHECK(creator.geaendert());
+        // so lassen: geschrieben, wie es ist
+        antwort = QStringLiteral("creatorLevelKeep");
+        save->click();
+        CHECK(fragen == 2);
+        CHECK_FALSE(creator.geaendert());
+        REQUIRE(holeInstrument(QStringLiteral("user:loud_organ"), eigenes));
+        CHECK(eigenes.laut == doctest::Approx(laut.laut));
+        // im Fenster Instruments: die Marke bei diesem eigenen
+        {
+            InstrumentPalette fenster;
+            fenster.liesNeu();
+            REQUIRE(fenster.abstandVon(QStringLiteral("user:loud_organ")).has_value());
+            CHECK(*fenster.abstandVon(QStringLiteral("user:loud_organ")) == doctest::Approx(6.02).epsilon(0.01));
+            CHECK_FALSE(fenster.abstandVon(QStringLiteral("organ")).has_value());  // mitgeliefert: keine
+            const auto* baum = fenster.findChild<QTreeWidget*>(QStringLiteral("instrumentPaletteTree"));
+            REQUIRE(baum != nullptr);
+            const auto treffer = baum->findItems(QStringLiteral("Loud Organ"), Qt::MatchExactly | Qt::MatchRecursive, 0);
+            REQUIRE_FALSE(treffer.isEmpty());
+            CHECK(treffer.front()->text(1) == QStringLiteral("+6.0 dB"));
+            CHECK(treffer.front()->text(0) == QStringLiteral("Loud Organ"));  // der Name bleibt, wie er ist
+            if (const QString bild = qEnvironmentVariable("LUMIVIZ_MATCH_LEVEL_BILD"); !bild.isEmpty())
+            {
+                fenster.resize(330, 560);
+                (void)fenster.waehle(QStringLiteral("user:loud_organ"));
+                CHECK(fenster.grab().save(bild + QStringLiteral(".instruments.png")));
+            }
+        }
+        // angleichen und speichern: auf dem Bezug; danach fragt Save nicht mehr
+        creator.aendere([](Instrument& i) { i.beschreibung = QStringLiteral("matched"); });
+        antwort = QStringLiteral("creatorLevelMatchSave");
+        save->click();
+        CHECK(fragen == 3);
+        CHECK_FALSE(creator.geaendert());
+        REQUIRE(holeInstrument(QStringLiteral("user:loud_organ"), eigenes));
+        CHECK(eigenes.laut == doctest::Approx(orgel.laut).epsilon(0.001));
+        creator.aendere([](Instrument& i) { i.beschreibung = QStringLiteral("again"); });
+        save->click();
+        CHECK(fragen == 3);
+        CHECK_FALSE(creator.geaendert());
+        {
+            InstrumentPalette fenster;
+            fenster.liesNeu();
+            CHECK_FALSE(fenster.abstandVon(QStringLiteral("user:loud_organ")).has_value());
+        }
+        // Save as... fragt ebenso (der Knopf ruft frageNachPegel vor dem Namen; der Name-Dialog
+        // laeuft ueber exec und wird hier nicht geoeffnet)
+        creator.aendere([](Instrument& i) { i.laut *= 4.0; });
+        antwort = QStringLiteral("creatorLevelKeep");
+        CHECK(creator.frageNachPegel());
+        CHECK(fragen == 4);
+        antwort.clear();
+        CHECK_FALSE(creator.frageNachPegel());  // abgebrochen
+        CHECK(saveAs->isEnabled());
+
+        if (const QString bild = qEnvironmentVariable("LUMIVIZ_MATCH_LEVEL_BILD"); !bild.isEmpty())
+        {
+            creator.resize(1500, 1020);
+            creator.messeAbstand();
+            CHECK(creator.grab().save(bild));
         }
     }
 }

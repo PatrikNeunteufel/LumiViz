@@ -20,6 +20,7 @@
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
 
+#include <optional>
 #include <vector>
 
 namespace lumi::loop
@@ -30,6 +31,19 @@ namespace lumi::loop
 /// vor Stufe 27c, Short-term-Maximum bei Loop 1. `asset/loop/instrument_pegel.py`
 /// traegt denselben Wert (`BEZUG_LUFS`; ein Test vergleicht beide).
 inline constexpr double kInstrumentBezugLufs = -13.4;
+
+/// So weit darf ein Instrument vom Bezug abweichen, ohne dass der Creator fragt
+/// oder das Fenster *Instruments* es markiert (Stufe 27f, Entscheid Patrik LL14 a).
+inline constexpr double kBezugToleranzDb = 1.0;
+
+/// Wie weit die Standardprobe von `instrument` vom Bezug abweicht, in dB
+/// (positiv = lauter als die anderen). Leer = nicht zu messen: die Art `drums`
+/// (sie folgen den Kits, LL10 a), eine Sample-Schicht, deren Aufnahme nicht
+/// gemerkt ist (sie schwiege und verfaelschte die Messung), oder Stille.
+[[nodiscard]] std::optional<double> abstandZumBezug(const Instrument& instrument, int rate);
+/// Das Volume, mit dem `instrument` auf dem Bezug laege — begrenzt auf
+/// 0 … `kInstrumentLautMax`. Leer wie oben.
+[[nodiscard]] std::optional<double> lautAufBezug(const Instrument& instrument, int rate);
 
 /// Die Standardprobe als Loop: 120 BPM, 4/4, Sechzehntel; eine Dur-Tonleiter
 /// ueber zwei Oktaven (15 Toene, je zwei Schritte, Lautstaerke 0,9), zwei

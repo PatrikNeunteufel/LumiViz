@@ -18,6 +18,7 @@
 #include <doctest.h>
 
 #include "PappAufnahme.hpp"
+#include "UI/widgets/Bedienhilfe.hpp"
 #include "loop/AufnahmeFenster.hpp"
 #include "loop/Bearbeiten.hpp"
 #include "loop/Instrument.hpp"
@@ -51,6 +52,7 @@
 #include <QSlider>
 #include <QStringList>
 #include <QTemporaryDir>
+#include <QDialog>
 
 #include <algorithm>
 #include <cmath>
@@ -622,10 +624,15 @@ TEST_SUITE("LoopInstrumentEditor")
         // das Original bleibt
         CHECK(findeInstrument(QStringLiteral("strings"))->schichten[0].verstimmungCent == doctest::Approx(9.0));
 
-        // --- Save: in die eigene Datei
+        // --- Save: in die eigene Datei — weicht der Pegel ab (27f), fragt der Creator: so lassen
         schieber("creatorSustain")->setValue(50);
         CHECK(save->isEnabled());
+        lumi::ui::setzeDialogBeobachterFuerTests([](QDialog& d) {
+            if (auto* lassen = d.findChild<QPushButton*>(QStringLiteral("creatorLevelKeep"))) lassen->click();
+            return static_cast<int>(QDialog::Accepted);
+        });
         save->click();
+        lumi::ui::setzeDialogBeobachterFuerTests({});
         CHECK(gespeichert.size() == 2);
         CHECK_FALSE(creator.geaendert());
         REQUIRE(ladeInstrument(pfad, ausDatei));

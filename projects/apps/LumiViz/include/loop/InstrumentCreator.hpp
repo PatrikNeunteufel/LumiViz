@@ -68,6 +68,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class IAudioEngine;
@@ -289,6 +290,20 @@ public:
     /// keine (ein mitgeliefertes: `speichereAlsEigenes`), oder das Schreiben
     /// gelang nicht.
     bool speichere();
+
+    // --- Match level (Stufe 27f, Entscheid Patrik LL14 a) -------------------
+    /// Die Standardprobe jetzt messen und die Anzeige stellen (nach einer
+    /// Aenderung geschieht es von selbst, kurz verzoegert).
+    void messeAbstand();
+    /// Der zuletzt gemessene Abstand zum Bezug in dB (positiv = lauter); leer =
+    /// nicht zu messen (Drums, Sample ohne Aufnahme, still).
+    [[nodiscard]] std::optional<double> abstand() const { return m_abstand; }
+    /// „Match": Level so, dass die Standardprobe auf dem Bezug liegt — ein Schritt.
+    /// false = nicht zu messen, oder es liegt schon dort.
+    bool gleicheAn();
+    /// Vor Save und Save as...: weicht es mehr als `kBezugToleranzDb` ab, fragen —
+    /// *Match and save*, *Save as it is* oder abbrechen. false = abgebrochen.
+    bool frageNachPegel();
     /// Als neue Datei an freiem Ort schreiben; sie ist danach die Datei des
     /// Creators. Seit S117 fuehrt kein Knopf mehr hierher (Save as... fragt
     /// nach dem Namen); `speichere` schreibt so eine geladene Datei an ihren Ort.
@@ -582,6 +597,10 @@ private:
     QPushButton* m_speichernUnter = nullptr;
     QPushButton* m_publish = nullptr;
     QLabel* m_spitze = nullptr;
+    QPushButton* m_angleichen = nullptr;  ///< Match (27f)
+    QLabel* m_abstandZeile = nullptr;     ///< wie weit es vom Bezug liegt (27f)
+    QTimer* m_messTakt = nullptr;         ///< misst kurz nach einer Aenderung
+    std::optional<double> m_abstand;
     // die zweite Zeile im Kopf (Stufe 14b): fuer das Fenster „Instruments"
     QComboBox* m_art = nullptr;
     QLineEdit* m_genres = nullptr;
