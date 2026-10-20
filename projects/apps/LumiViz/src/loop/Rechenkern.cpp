@@ -18,6 +18,63 @@
 namespace lumi::loop
 {
 
+namespace
+{
+
+using Stuecke = std::vector<std::pair<std::int64_t, double>>;
+
+/// Ein stueckweise linearer Verlauf, der vorwaerts gelesen wird: der Leser merkt sich
+/// das Stueck, in dem er zuletzt war — `rechne` liest Abtastwert fuer Abtastwert.
+class Leser
+{
+public:
+    explicit Leser(const Stuecke& stuecke) : m_stuecke(stuecke) {}
+    /// Der Wert an `x`: vor dem ersten Eintrag der erste, nach dem letzten der letzte,
+    /// dazwischen linear; an zwei Eintraegen derselben Stelle gilt der spaetere.
+    double bei(std::int64_t x)
+    {
+        if (m_stuecke.empty()) return 1.0;
+        if (x < m_stuecke[m_i].first) m_i = 0;  // zurueck (ein neuer Schlag)
+        while (m_i + 1 < m_stuecke.size() && m_stuecke[m_i + 1].first <= x) ++m_i;
+        const auto& [xa, wa] = m_stuecke[m_i];
+        if (x <= xa || m_i + 1 >= m_stuecke.size()) return x < xa ? m_stuecke.front().second : wa;
+        const auto& [xb, wb] = m_stuecke[m_i + 1];
+        return wa + (wb - wa) * static_cast<double>(x - xa) / static_cast<double>(xb - xa);
+    }
+
+private:
+    const Stuecke& m_stuecke;
+    std::size_t m_i = 0;
+};
+
+/// Die Kurve einer Spur ueber die Wiederholungen eines Clips (Stufe 28c-1): je
+/// Durchlauf am Anfang der erste Wert, die Punkte, bis zur Naht der letzte.
+Stuecke ueberDieWiederholungen(const std::vector<SpurPunkt>& spur, double clipSchritt, double schritte, int mal,
+                               double schrittFrames)
+{
+    Stuecke stuecke;
+    if (spur.empty()) return stuecke;
+    const auto frame = [&](double schritt) { return std::llround((clipSchritt + schritt) * schrittFrames); };
+    for (int r = 0; r < mal; ++r)
+    {
+        const double davor = r * schritte;
+        stuecke.emplace_back(frame(davor), spur.front().wert);
+        for (const SpurPunkt& p : spur) stuecke.emplace_back(frame(davor + p.stelle), p.wert);
+        stuecke.emplace_back(frame(davor + schritte), spur.back().wert);
+    }
+    return stuecke;
+}
+
+}  // namespace
+
+double Ausdruck::wert(std::int64_t frame) const
+{
+    const std::int64_t x = std::min(frame, ende);
+    Leser m(muster);
+    Leser c(clip);
+    return m.bei(x) * c.bei(x);
+}
+
 Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
 {
     Ablauf ablauf;
@@ -62,6 +119,28 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                 ablauf.busse.push_back({static_cast<int>(kanalNr), clip.startTakt, clip.effekte, static_cast<float>(fader)});
             }
             const double faderAmSchlag = bus < 0 ? fader : 1.0;
+            // Expression (Stufe 28c-1): die Spur des Musters und die Kurve am Clip — an einem
+            // Drumkit nur die Kurve; ein Instrument mit Saiten bekommt sie mit 28c-2
+            int ausdruck = -1;
+            if (toeneDesClips.empty())
+            {
+                static const std::vector<SpurPunkt> kKeine;
+                const std::vector<SpurPunkt>& spur =
+                    muster->art == MusterArt::Instrument ? muster->zeitspuren.von(Steuerspur::Expression) : kKeine;
+                if (!spur.empty() || !clip.expression.empty())
+                {
+                    const double schritte = static_cast<double>(muster->takte) * jeTakt;
+                    const double clipSchritt = static_cast<double>(clip.startTakt) * jeTakt;
+                    const int mal = std::max(1, clip.wiederholungen);
+                    Ausdruck a;
+                    a.muster = ueberDieWiederholungen(spur, clipSchritt, schritte, mal, schrittFrames);
+                    for (const SpurPunkt& p : clip.expression)
+                        a.clip.emplace_back(std::llround((clip.startTakt + p.stelle) * jeTakt * schrittFrames), p.wert);
+                    a.ende = std::llround((clipSchritt + mal * schritte) * schrittFrames);
+                    ausdruck = static_cast<int>(ablauf.ausdruecke.size());
+                    ablauf.ausdruecke.push_back(std::move(a));
+                }
+            }
             if (muster->art == MusterArt::Instrument)
             {
                 if (muster->stumm) continue;
@@ -95,6 +174,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                             schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - muster->pan));
                             schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + muster->pan));
                             schlag.bus = bus;
+                            schlag.ausdruck = ausdruck;
                             ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                         };
                         // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b; ohne Pedal `notenMs`)
@@ -141,6 +221,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                         schlag.links = static_cast<float>(laut * std::min(1.0, 1.0 - spur.pan));
                         schlag.rechts = static_cast<float>(laut * std::min(1.0, 1.0 + spur.pan));
                         schlag.bus = bus;
+                        schlag.ausdruck = ausdruck;
                         ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                     }
                 }
@@ -198,14 +279,35 @@ void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_
             // ohne Busse geht ein Schlag mit Effekten unbearbeitet nach `aus` — dann mit dem Fader
             const float fader =
                 busAus == nullptr && schlag.bus >= 0 ? ablauf.busse[static_cast<std::size_t>(schlag.bus)].faktor : 1.0f;
+            if (schlag.ausdruck < 0)
+            {
+                for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)
+                {
+                    const float blende =
+                        f < naechster ? 1.0f : 1.0f - static_cast<float>(f - naechster) / kSchnittFrames;
+                    const std::int64_t imKlang = f - start;
+                    const std::int64_t imBlock = f - von;
+                    ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende * fader;
+                    ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende * fader;
+                }
+                continue;
+            }
+            // Expression (Stufe 28c-1, SK9 a): der Pegel e² an der Stelle des Abtastwerts im
+            // Durchlauf — hinter dem Ende des Clips der Wert dort
+            const Ausdruck& ausdruck = ablauf.ausdruecke[static_cast<std::size_t>(schlag.ausdruck)];
+            Leser muster(ausdruck.muster);
+            Leser clip(ausdruck.clip);
             for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)
             {
                 const float blende =
                     f < naechster ? 1.0f : 1.0f - static_cast<float>(f - naechster) / kSchnittFrames;
                 const std::int64_t imKlang = f - start;
                 const std::int64_t imBlock = f - von;
-                ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende * fader;
-                ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende * fader;
+                const std::int64_t x = std::min(schlag.frame + imKlang, ausdruck.ende);
+                const double e = muster.bei(x) * clip.bei(x);
+                const auto pegel = static_cast<float>(e * e);
+                ziel[2 * imBlock] += klang[2 * imKlang] * schlag.links * blende * fader * pegel;
+                ziel[2 * imBlock + 1] += klang[2 * imKlang + 1] * schlag.rechts * blende * fader * pegel;
             }
         }
     }

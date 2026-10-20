@@ -35,6 +35,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace lumi::loop
@@ -61,6 +62,33 @@ struct Schlag
     /// Index in `Ablauf::busse`, wenn der Clip des Schlags Effekte hat; -1 =
     /// der Schlag geht unbearbeitet in die Summe.
     int bus = -1;
+    /// Index in `Ablauf::ausdruecke`, wenn sein Clip einen Verlauf Expression
+    /// traegt (Stufe 28c-1); -1 = keiner, der Ton klingt, wie er ist.
+    int ausdruck = -1;
+};
+
+/// Der Verlauf Expression eines Clips (Stufe 28c-1; Entscheide Patrik SF5 d, SK4 a,
+/// SK9 a): die Spur des Musters ueber alle Wiederholungen und die Kurve am Clip, beide
+/// 0 … 1, in Abtastwerten des Durchlaufs. Ein Ton des Clips wird mit dem Pegel an
+/// seiner Stelle malgenommen — auch sein Nachklang, mit dem Wert am Ende des Clips.
+struct Ausdruck
+{
+    /// Die Spur des Musters: je Durchlauf ihre Punkte, davor und dahinter der erste
+    /// und der letzte Wert; zwei Eintraege an derselben Stelle sind ein Sprung (an
+    /// der Naht). Leer = 1.
+    std::vector<std::pair<std::int64_t, double>> muster;
+    /// Die Kurve am Clip (SK8 a); leer = 1.
+    std::vector<std::pair<std::int64_t, double>> clip;
+    std::int64_t ende = 0;  ///< das Ende des Clips — dahinter gilt der Wert dort
+
+    /// e = Muster mal Clip an `frame`; der Pegel einer Synth-Schicht ist e² (SK9 a:
+    /// 40 · lg e dB, wie die MIDI-Empfehlung).
+    [[nodiscard]] double wert(std::int64_t frame) const;
+    [[nodiscard]] double pegel(std::int64_t frame) const
+    {
+        const double e = wert(frame);
+        return e * e;
+    }
 };
 
 /// Ein Clip mit eingeschalteten Effekten (Stufe 12, G1 b): seine Schlaege
@@ -98,6 +126,10 @@ struct Ablauf
     /// — auch wenn der Clip gerade keinen Schlag hat: sein Nachklang soll
     /// nicht abreissen, wenn jemand den letzten Schritt loescht.
     std::vector<Bus> busse;
+    /// Je Clip mit einem Verlauf Expression einer (Stufe 28c-1): ein Drumkit mit der
+    /// Kurve am Clip, ein Instrument ohne Saiten dazu mit der Spur des Musters. Ein
+    /// Instrument mit Saiten bekommt Expression mit Stufe 28c-2 (ueber die Tonabnehmer).
+    std::vector<Ausdruck> ausdruecke;
 };
 
 /// Den Loop uebersetzen. Er muss gerichtet sein (`Loop::richte`). Kanaele,

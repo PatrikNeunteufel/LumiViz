@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.19.0
+> **Version:** 0.20.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK8 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK8 a (Patrik S139, S140);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK10 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK10 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -425,10 +425,49 @@ Töne wie bis Stufe 27 (`loop_werte.txt` unverändert). **Mit Saiten** hält die
 Pedal (`:p1`) und die Schichten mit *Own note* als eigener, gehaltener Ton (`:p2`, SF7 a);
 in einer Kette hält der Ton der Schichten mit *Own note*.
 
+✅ **SK9 a** (Patrik S140): **Die Pegelkurve von Expression an einer Synth-Schicht ist
+quadratisch, wie die MIDI-Empfehlung.** Eine Synth-Schicht nimmt ihren Ton mal e², mit e als
+Produkt aus Spur des Musters und Kurve am Clip — in dB 40 · lg e: 0,5 = −12 dB, 0,25 =
+−24 dB, 0 = still. Der Tooltip zeigt den Pegel in dB. *Beleg* (jazzdup.nfshost.com,
+„Volume", eine Abschrift einer verbreiteten, inoffiziellen Beschreibung der MIDI-Spezifikation,
+abgerufen 2026-10-20, Wortlaut): „It is recommended that a device use the volume value in a
+logarithmic manner, as specified by the following formula if only the coarse value is used:
+40 log (Volume/127)“ und „Note: In the above formula, "Volume" may be equal to Channel Volume
+* Expression.“ Nicht in einem Dokument der MIDI Association geprüft; eine Suche nach GM2
+ohne Treffer zum Wortlaut. Verworfen: b (linear, 20 · lg e — der hörbare Bereich läge in
+der unteren Hälfte), c (−60 … 0 dB gleichmäßig — ein Sprung zur Stille bei 0, ohne Vorbild).
+Kippt, wenn die Hörproben zeigen, dass ein gezogenes Crescendo am Anfang zu lange leise
+bleibt.
+
+✅ **SK10 a** (Patrik S140): **Ohne eigene Rate gilt für die Spur Vibrato eine Vorgabe.** Hat
+eine Schicht keine Rate (0), nimmt die Spur Vibrato 5,5 Hz und Einsatz 0; hat sie eine, gelten
+Rate und Einsatz der Schicht (SF4 a). Ohne Spur ändert sich nichts. Im Creator steht bei
+Rate 0 der Hinweis „5.5 Hz with the Vibrato lane". *Befund* (gezählt in
+`asset/loop/instruments` ohne `_old`, S140): 20 von 99 Instrumenten tragen eine Schicht mit
+Rate, 79 nicht; der häufigste Wert ist 5,5 Hz (fünf Schichten), die Spanne 0,4 bis 20 Hz.
+5,5 Hz von Claude gesetzt (der häufigste Wert); dass gesungenes und gestrichenes Vibrato um
+5 bis 7 Hz liegt, aus dem Gedächtnis — in der Recherche der Bogen-Saite zu belegen.
+Verworfen: b (ohne Rate wirkt die Spur nicht — nähme 79 von 99 Instrumenten die Spur, die
+im Editor erscheint), c (die Spur führt auch die Rate — eine zweite Angabe neben der
+Schicht, kippte SF4 a ohne Anlass aus Hörproben). Kippt, wenn die Hörproben zeigen, dass
+Instrumente sehr verschiedene Raten brauchen — dann c prüfen.
+
+**Klang 28c-1a ✅** (Expression; `Ausdruck` im Rechenkern): Expression ist an einer
+Synth-Schicht ein reiner Pegel und wird deshalb nicht in den Ton gerechnet, sondern im
+Rechenkern je Schlag über ihn gelegt — die Töne bleiben, wie sie sind. Je Clip ein Verlauf:
+die Spur des Musters über alle Wiederholungen (vor dem ersten Punkt eines Durchlaufs der
+erste Wert, an der Naht ein Sprung) mal die Kurve am Clip; der Pegel e² (SK9 a); ein Ton,
+der über das Ende des Clips nachklingt, behält den Wert dort. Ein Drumkit-Clip nimmt nur
+die Kurve am Clip. Ein Instrument mit Saiten bekommt Expression erst mit 28c-2 (über die
+Tonabnehmer, SF6 a). Ohne Spur und Kurve bleibt jeder Abtastwert, wie er war. *Folge des
+Modells 28a:* ein Punkt genau am Ende des Musters fällt beim Richten weg wie eine Note dort —
+ein Verlauf, der bis zum Ende steigen soll, endet mit einem Punkt kurz davor.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.20.0 | 2026-10-20 | Session 140. SK9 a (Pegel e², Beleg MIDI-Empfehlung), SK10 a (Vibrato-Rate 5,5 Hz, wo die Schicht keine hat); Stufe 28c-1a gebaut (Expression im Rechenkern). |
 | 0.19.0 | 2026-10-20 | Session 140. Stufe 28b gebaut: Planung der Pedale (`loop/Pedalplan`). |
 | 0.18.0 | 2026-10-20 | Session 140. SK8 a (Expression am Clip in Takten ab dem Clip-Anfang); Modell 28a. |
 | 0.17.0 | 2026-10-20 | Session 140. §3 Stufe 28, SK7 a (28a Modell und Datei bis 28f Abschluss). |
