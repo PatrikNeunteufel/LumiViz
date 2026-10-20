@@ -10,13 +10,13 @@
             "instrument": "drum_kick_808",
             "note": 36,
             "length": 250,
-            "volume": 0.279,
+            "volume": 0.307,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:snare_808",
-            "volume": 0.556,
+            "volume": 0.563,
             "pan": 0.0
         },
         {
@@ -25,13 +25,13 @@
             "instrument": "drum_clap",
             "note": 36,
             "length": 250,
-            "volume": 0.785,
+            "volume": 0.633,
             "pan": 0.0
         },
         {
             "role": "hat",
             "sound": "lib:hat_808_closed",
-            "volume": 0.432,
+            "volume": 0.675,
             "pan": 0.2
         },
         {
@@ -40,7 +40,7 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
-            "volume": 0.653,
+            "volume": 0.63,
             "pan": 0.2
         },
         {
@@ -49,7 +49,7 @@
             "instrument": "drum_tom_low",
             "note": 36,
             "length": 250,
-            "volume": 0.676,
+            "volume": 0.724,
             "pan": -0.25
         },
         {
@@ -58,7 +58,7 @@
             "instrument": "drum_tom_high",
             "note": 36,
             "length": 250,
-            "volume": 0.822,
+            "volume": 0.797,
             "pan": 0.25
         },
         {
@@ -67,7 +67,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
-            "volume": 0.432,
+            "volume": 0.419,
             "pan": -0.15
         }
     ]

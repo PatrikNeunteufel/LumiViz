@@ -10,7 +10,7 @@
             "instrument": "drum_beatbox_kick",
             "note": 36,
             "length": 250,
-            "volume": 1.0,
+            "volume": 0.942,
             "pan": 0.0
         },
         {
@@ -22,7 +22,7 @@
         {
             "role": "hat",
             "sound": "lib:beatbox_hat_closed",
-            "volume": 0.316,
+            "volume": 0.277,
             "pan": 0.2
         },
         {
@@ -31,7 +31,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
-            "volume": 0.343,
+            "volume": 0.326,
             "pan": 0.2
         },
         {
@@ -40,19 +40,19 @@
             "instrument": "shape_cat",
             "note": 64,
             "length": 400,
-            "volume": 0.447,
+            "volume": 0.491,
             "pan": 0.3
         },
         {
             "role": "perc 2",
             "sound": "lib:voice_female_gliss",
-            "volume": 0.17,
+            "volume": 0.178,
             "pan": -0.3
         },
         {
             "role": "fx",
             "sound": "lib:voice_male_hey",
-            "volume": 0.473,
+            "volume": 0.446,
             "pan": 0.0
         },
         {
@@ -61,7 +61,7 @@
             "instrument": "shape_atom_bell",
             "note": 48,
             "length": 400,
-            "volume": 0.759,
+            "volume": 0.817,
             "pan": -0.25
         }
     ]

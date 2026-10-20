@@ -1,6 +1,6 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.192.0
+> **Version:** 1.193.0
 > **Datum:** 2026-10-20
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
@@ -2905,6 +2905,13 @@ Kick, die Snare, die Hi-Hat … Ein Kit zu wählen gibt jeder Spur den Klang ihr
 Rolle aus dem Kit — die Schritte bleiben, wie sie sind. So klingt derselbe Beat
 mit einem Klick wie eine 808, wie ein Rock-Schlagzeug oder wie Besen.
 
+Seit 1.193.0 sind die mitgelieferten Kits **gleich laut**: die Kick jedes Kits gleich laut,
+jede andere Rolle im selben Abstand zur Kick wie in den anderen Kits. Wer das Kit wechselt,
+hört einen anderen Klang, nicht einen lauteren oder leiseren Beat. Drei Klänge erreichen
+ihren Abstand auch mit voller Lautstärke nicht (Crash in Rock'n'Roll, Snare in Strange, Clap
+in Lo-fi) und klingen etwas zurückgenommen. Neben den Instrumenten liegen die Drums eines
+frischen Kits rund 8 dB leiser — beim Mischen gleicht das der Fader des Kanals aus.
+
 **Die Rollen:** kick, snare, clap, rim, hat, open hat, ride, crash, tom, perc
 und fx. Mehrere derselben Art werden nummeriert (tom 1, tom 2, crash 2 …). Das
 Etikett **Role** jeder Spur zeigt ihre Rolle; ein Klick darauf wählt eine
@@ -3563,6 +3570,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.193.0 | 2026-10-20 | Session 139. §16 Kits: die mitgelieferten Kits gleich laut (Stufe 27d). |
 | 1.192.0 | 2026-10-20 | Session 139. §16 Loop: Level des ganzen Instruments im Creator in dB bis +24 dB; die mitgelieferten Instrumente gleich laut (Stufe 27c). |
 | 1.191.0 | 2026-10-19 | Sessions 137–138. §16 Loop NEU **Tabs und Akkorde**: im Instrument-Editor die **Tab-Linien** (Haken Tab, Bünde tippen, Zahl auf eine andere Saite ziehen), im Rechtsklick-Menü **Legato (hammer-on / pull-off)**, **Slide** und das Untermenü **Bend** mit **Edit bend...** (bis zwei Ganztöne), der Knopf **Chords...** und das **Fenster Chords** mit Griffbildern (aus chords-db und gerechnet) oder Voicings, Anhören in vier Spielarten, Favoriten, eigene Akkorde im Dialog **Edit chord**; im Creator **In a legato**, **Slide time**, **Legato level** und bei **Play as** Hammer-on, Slide, Bend. Zwei neue Beispiele (`tabs_demo`, `voicings_demo`). §17 NEU `.lvchord`. **Fit** im Instrument-Editor zeigt das Muster jetzt ganz |
 | 1.190.0 | 2026-10-19 | Sessions 134–136. §16 Loop NEU **Spielweisen** der Saiteninstrumente: im Creator die Zeile **Strum** (Spread, Hand, Pfeile je Stelle, Alternate), die Gruppe **Playing** (Up level, Mute, Tap level bei 220 Hz, Touch) und **Play as**; im Instrument-Editor die Zeile **Strum** des Musters, die Spur **Strum** (Pfeil je Anschlag, Klick schaltet Follow hand / Down / Up / Together, T für getippt), die Kürzel PM, LR, T, ◇ in den Noten, im Rechtsklick-Menü **Strum** (mit Spread...) und die Haken **Palm mute**, **Let ring**, **Tapping**, **Harmonic**; Vorgaben je Saiteninstrument und woher sie kommen; vier neue Beispiele (`strum_demo`, `palm_mute_demo`, `harmonics_demo`, `tapping_demo`). Instrument- und Drum-Editor: NEU **Zoom** mit Ctrl/Alt/Ctrl+Alt+Mausrad und **Fit** |

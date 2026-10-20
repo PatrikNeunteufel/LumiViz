@@ -13,13 +13,13 @@
         {
             "role": "snare",
             "sound": "lib:snare_909",
-            "volume": 0.351,
+            "volume": 0.374,
             "pan": 0.0
         },
         {
             "role": "clap",
             "sound": "lib:clap_707",
-            "volume": 0.457,
+            "volume": 0.589,
             "pan": 0.0
         },
         {
@@ -28,13 +28,13 @@
             "instrument": "drum_hat_closed",
             "note": 36,
             "length": 250,
-            "volume": 0.933,
+            "volume": 0.793,
             "pan": 0.2
         },
         {
             "role": "open hat",
             "sound": "lib:hat_707_open",
-            "volume": 0.495,
+            "volume": 0.498,
             "pan": 0.2
         },
         {
@@ -43,7 +43,7 @@
             "instrument": "drum_ride",
             "note": 36,
             "length": 250,
-            "volume": 0.716,
+            "volume": 0.506,
             "pan": 0.25
         },
         {
@@ -52,13 +52,13 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
-            "volume": 0.432,
+            "volume": 0.43,
             "pan": -0.15
         },
         {
             "role": "perc 1",
             "sound": "lib:tambourine",
-            "volume": 0.813,
+            "volume": 0.655,
             "pan": 0.3
         }
     ]

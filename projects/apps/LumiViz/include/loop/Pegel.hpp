@@ -55,4 +55,12 @@ inline constexpr double kInstrumentBezugLufs = -13.4;
 /// eine Drum-Spur es spielt — und als Schlag gemessen.
 [[nodiscard]] audio::Lautheit messeDrumInstrument(const Instrument& instrument, int rate);
 
+/// Die Standardprobe fuer Drums (Stufe 27d, Entscheid Patrik LL10 a): `schlag`
+/// auf jedem Viertel, zwei Takte bei 120 BPM, dahinter ein leerer Takt —
+/// gerechnet wie ein Loop (`plane`, `rechne`), Spur und Loop mit Volume 1.
+/// Gemessen wie die Probe der Instrumente: das Mass ist `kurzzeitMaxLufs`.
+/// So liegt die Kick eines Kits auf derselben Skala wie ein Instrument.
+[[nodiscard]] std::vector<float> rechneDrumProbe(const Klang& schlag, int rate);
+[[nodiscard]] audio::Lautheit messeDrumProbe(const Klang& schlag, int rate);
+
 }  // namespace lumi::loop

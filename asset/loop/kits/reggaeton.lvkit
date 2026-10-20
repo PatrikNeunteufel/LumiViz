@@ -10,19 +10,19 @@
             "instrument": "drum_kick_808",
             "note": 36,
             "length": 250,
-            "volume": 0.279,
+            "volume": 0.307,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:snare_808",
-            "volume": 0.556,
+            "volume": 0.563,
             "pan": 0.0
         },
         {
             "role": "clap",
             "sound": "lib:clap_707",
-            "volume": 0.457,
+            "volume": 0.574,
             "pan": 0.0
         },
         {
@@ -31,31 +31,31 @@
             "instrument": "drum_hat_closed",
             "note": 36,
             "length": 250,
-            "volume": 0.933,
+            "volume": 0.773,
             "pan": 0.2
         },
         {
             "role": "open hat",
             "sound": "lib:hat_707_open",
-            "volume": 0.495,
+            "volume": 0.486,
             "pan": 0.2
         },
         {
             "role": "perc 1",
             "sound": "lib:conga_high",
-            "volume": 0.861,
+            "volume": 0.981,
             "pan": 0.3
         },
         {
             "role": "perc 2",
             "sound": "lib:rim",
-            "volume": 0.531,
+            "volume": 0.897,
             "pan": -0.3
         },
         {
             "role": "perc 3",
             "sound": "lib:cowbell",
-            "volume": 0.646,
+            "volume": 0.684,
             "pan": 0.15
         }
     ]

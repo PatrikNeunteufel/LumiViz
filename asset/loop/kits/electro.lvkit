@@ -10,7 +10,7 @@
             "instrument": "drum_kick_punch",
             "note": 36,
             "length": 250,
-            "volume": 0.813,
+            "volume": 0.802,
             "pan": 0.0
         },
         {
@@ -19,7 +19,7 @@
             "instrument": "drum_snare_fat",
             "note": 36,
             "length": 250,
-            "volume": 0.804,
+            "volume": 0.808,
             "pan": 0.0
         },
         {
@@ -28,7 +28,7 @@
             "instrument": "drum_clap_stack",
             "note": 36,
             "length": 250,
-            "volume": 1.0,
+            "volume": 0.872,
             "pan": 0.0
         },
         {
@@ -46,7 +46,7 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
-            "volume": 0.653,
+            "volume": 0.646,
             "pan": 0.2
         },
         {
@@ -55,7 +55,7 @@
             "instrument": "drum_tom_low",
             "note": 36,
             "length": 250,
-            "volume": 0.676,
+            "volume": 0.743,
             "pan": -0.25
         },
         {
@@ -64,7 +64,7 @@
             "instrument": "drum_tom_high",
             "note": 36,
             "length": 250,
-            "volume": 0.822,
+            "volume": 0.818,
             "pan": 0.25
         },
         {
@@ -73,7 +73,7 @@
             "instrument": "drum_crash",
             "note": 36,
             "length": 250,
-            "volume": 0.432,
+            "volume": 0.43,
             "pan": -0.15
         }
     ]

@@ -10,31 +10,31 @@
             "instrument": "drum_beatbox_kick",
             "note": 36,
             "length": 250,
-            "volume": 1.0,
+            "volume": 0.942,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:beatbox_snare",
-            "volume": 0.569,
+            "volume": 0.549,
             "pan": 0.0
         },
         {
             "role": "hat",
             "sound": "lib:beatbox_hat_closed",
-            "volume": 0.316,
+            "volume": 0.277,
             "pan": 0.2
         },
         {
             "role": "open hat",
             "sound": "lib:beatbox_hat_open",
-            "volume": 0.243,
+            "volume": 0.24,
             "pan": 0.2
         },
         {
             "role": "fx",
             "sound": "lib:voice_male_hey",
-            "volume": 0.473,
+            "volume": 0.446,
             "pan": 0.0
         }
     ]

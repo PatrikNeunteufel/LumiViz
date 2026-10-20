@@ -7,91 +7,91 @@
         {
             "role": "kick",
             "sound": "lib:crocell_kick_left",
-            "volume": 0.624,
+            "volume": 0.737,
             "pan": 0.0
         },
         {
             "role": "kick 2",
             "sound": "lib:crocell_kick_right",
-            "volume": 0.668,
+            "volume": 0.796,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:crocell_snare",
-            "volume": 0.733,
+            "volume": 0.82,
             "pan": 0.0
         },
         {
             "role": "hat",
             "sound": "lib:crocell_hat",
-            "volume": 0.442,
+            "volume": 0.407,
             "pan": 0.0
         },
         {
             "role": "open hat",
             "sound": "lib:crocell_hat_open",
-            "volume": 0.452,
+            "volume": 0.467,
             "pan": 0.0
         },
         {
             "role": "ride",
             "sound": "lib:crocell_ride",
-            "volume": 1.0,
+            "volume": 0.822,
             "pan": 0.0
         },
         {
             "role": "crash",
             "sound": "lib:crocell_crash1",
-            "volume": 0.61,
+            "volume": 0.622,
             "pan": 0.0
         },
         {
             "role": "crash 2",
             "sound": "lib:crocell_crash2",
-            "volume": 0.507,
+            "volume": 0.5,
             "pan": 0.0
         },
         {
             "role": "crash 3",
             "sound": "lib:crocell_crash3",
-            "volume": 0.501,
+            "volume": 0.458,
             "pan": 0.0
         },
         {
             "role": "tom 1",
             "sound": "lib:crocell_tom1",
-            "volume": 0.569,
+            "volume": 0.579,
             "pan": -0.25
         },
         {
             "role": "tom 2",
             "sound": "lib:crocell_tom2",
-            "volume": 0.684,
+            "volume": 0.706,
             "pan": 0.25
         },
         {
             "role": "tom 3",
             "sound": "lib:crocell_tom3",
-            "volume": 0.944,
+            "volume": 0.971,
             "pan": 0.0
         },
         {
             "role": "tom 4",
             "sound": "lib:crocell_tom4",
-            "volume": 0.776,
+            "volume": 0.845,
             "pan": 0.1
         },
         {
             "role": "perc 1",
             "sound": "lib:crocell_splash",
-            "volume": 0.427,
+            "volume": 0.318,
             "pan": 0.3
         },
         {
             "role": "fx",
             "sound": "lib:crocell_china",
-            "volume": 0.716,
+            "volume": 0.491,
             "pan": 0.0
         }
     ]

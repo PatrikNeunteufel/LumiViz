@@ -10,25 +10,25 @@
             "instrument": "drum_kick",
             "note": 36,
             "length": 250,
-            "volume": 0.412,
+            "volume": 0.424,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "kit:snare",
-            "volume": 0.596,
+            "volume": 0.481,
             "pan": 0.0
         },
         {
             "role": "rim",
             "sound": "lib:rim",
-            "volume": 0.596,
+            "volume": 0.62,
             "pan": 0.0
         },
         {
             "role": "hat",
             "sound": "lib:hat_808_closed",
-            "volume": 0.432,
+            "volume": 0.69,
             "pan": 0.2
         },
         {
@@ -37,13 +37,13 @@
             "instrument": "drum_hat_open",
             "note": 36,
             "length": 250,
-            "volume": 0.653,
+            "volume": 0.644,
             "pan": 0.2
         },
         {
             "role": "perc 1",
             "sound": "lib:tambourine",
-            "volume": 0.813,
+            "volume": 0.653,
             "pan": 0.3
         },
         {
@@ -52,7 +52,7 @@
             "instrument": "drum_tom_high",
             "note": 36,
             "length": 250,
-            "volume": 0.822,
+            "volume": 0.815,
             "pan": -0.25
         }
     ]

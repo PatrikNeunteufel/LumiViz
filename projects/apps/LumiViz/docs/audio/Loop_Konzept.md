@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.94.0
+> **Version:** 0.95.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3631,7 +3631,7 @@ Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
 | 27a ✅ | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
 | 27b ✅ | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
 | 27c ✅ | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
-| 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
+| 27d ✅ | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
 | 27e | Fader je Kanal nach LL3 a: 27e-1 ✅ Modell, `.lvloop` Fassung 11, Klang (vor 27c, LL8 a); 27e-2 Oberfläche, zuerst die Skizze; 27e-3 Begrenzer am Ausgang (LL7 a) |
 | 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
 | 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
@@ -3704,6 +3704,58 @@ Faders, zuerst die Skizze) → 27e-3 (Begrenzer am Ausgang, LL7 a) → 27f → 2
 hinterlässt einen grünen Stand. Verworfen: b (Muster-Lautstärke bis +24 dB — eine dritte
 Stelle, die anhebt; das Mischen bliebe am Muster), c (bei 1 kappen — 43 Muster bis 4,6 dB
 leiser, gegen LL2 a).
+
+✅ **LL9 a** (Patrik S139): **Die Abstände der Rollen, wie die Kits heute klingen — nach R128
+gemessen**, als Median über die Kits (LUFS M max gegen die Kick): Snare +1,0, Clap −1,2,
+Hat −2,4, Open hat +4,0, Ride −1,6, Crash +6,4, Tom +3,6, Perc +0,5, Rim −2,9, FX +2,6. 27d
+setzt die Kick jedes Kits auf den Anker und jede andere Rolle auf ihren Median; `ZIEL_DB` in
+`make_kits.py` bekommt die neuen Werte und das neue Maß. Verworfen: b (die Zahlen aus
+`ZIEL_DB` als R128-Ziele — sie meinten das alte Maß; Hats −4,6 dB, Crash −6,4 dB, alle
+Drum-Loops anders), c (neu aus Quellen — der Fader regelt die Mischung ohnehin).
+
+**Vorab gerechnet zu 27d (S139):** die Kicks liegen heute bei rund −21 LUFS (M max eines
+Schlags, je Kit −19,8 bis −22,4). Mit der Kick auf −13,4 bräuchten **94 von 114 Rollen ein
+Volume über 1** (bis 4,5) — eine Kit-Rolle und eine Drum-Spur gehen nur bis 1. Mit dem Anker
+−21,0 wären es 4 (bis 1,88), mit −19,0 28, mit −17,0 56. Dazu: das Momentary-Maximum eines
+Schlags und das Short-term-Maximum der achtsekündigen Probe sind nicht dieselbe Skala.
+
+✅ **LL10 a** (Patrik S139; ersetzt in LL4 a „Die Kick bekommt die Bezugslautheit der
+Instrumente"): **Ein eigener Anker für die Drums, gemessen wie die Instrumente** — eine
+Standardprobe für Drums (ein Takt, die Kick auf jedem Viertel), Short-term-Maximum; der Anker ist
+der Median der heutigen Kits auf dieser Probe; jedes Kit so, dass seine Kick dort liegt, die
+übrigen Rollen nach LL9 a auf ihren Median-Abstand (als Schlag gemessen). Volume bleibt bis 1;
+was darüber käme (heute rund 4 Rollen), wird auf 1 gekappt und im Bericht genannt. Den Abstand
+Drum-Anker gegen Instrument-Bezug misst 27d und schreibt ihn hierher; beim Mischen gleicht ihn der
+Fader. Verworfen: b (Volume von Kit-Rolle und Drum-Spur bis +24 dB — zwei neue Fassungen, eine
+dritte Stelle, die anhebt, Spitzen dauernd am Begrenzer), c (den Bezug der Instrumente auf die
+Drums senken — gegen LL7 a, 27c noch einmal). Frage Patrik dazu: lässt sich das Kappen in den
+Settings abschalten? (→ LL11)
+
+✅ **LL11 a** (Patrik S139): **Zuerst mit dem Kappen bauen und messen**; der Bericht nennt
+jede gekappte Rolle mit dem Abstand, der fehlt; danach je Rolle: so lassen oder in
+`make_kits.py` einen lauteren Klang derselben Rolle. Ein Schalter in den Settings nicht —
+das Kappen ist die Grenze des Modells (Volume einer Kit-Rolle und Drum-Spur bis 1), und eine
+Einstellung, die die Bedeutung einer Datei ändert, liesse denselben Loop auf zwei Rechnern
+verschieden laut klingen. Verworfen: b (Kit-Rollen bis +24 dB, `.lvkit` Fassung 2 — die
+Drum-Spur müsste mit, die dritte Stelle, die anhebt).
+
+**Wie 27d gebaut ist (S139):** `loop/Pegel`: `rechneDrumProbe`, `messeDrumProbe` (der Schlag
+auf jedem Viertel, zwei Takte bei 120 BPM und ein Takt Ausklang, wie ein Loop gerechnet,
+Short-term-Maximum). `test_LoopKits.cpp`: der Fall „Loop Kits: Pegel" misst je Klang Schlag
+(M max) und Drum-Probe (S max) bei Volume 1, legt sie mit `LUMIVIZ_KIT_PEGEL_DATEI` ab und
+prüft: jede Kick ±1 LU am Anker, jede Rolle ±1 LU an ihrem Median-Abstand zur Kick, außer einer
+gekappten (Volume 1 und doch darunter — gemeldet). `make_kits.py`: `DRUM_ANKER_LUFS`,
+`ABSTAND_DB` (LL9 a), `PEGEL` (Schlag, Probe), `--messung <tsv>` trägt die Messung ein (beim
+ersten Lauf den Anker) und schreibt die Kits; am Ende die gekappten Rollen. Zuerst in einer
+Kopie gelaufen: in den `.lvkit` ändert sich nur `volume`. Die mitgelieferten Loops ändern sich
+nicht — ihre Drum-Spuren tragen Klang und Volume selbst.
+
+**Gemessen mit 27d:** **Drum-Anker −21,89 LUFS** (Median der Kicks auf der Drum-Probe vor 27d)
+— der Bezug der Instrumente liegt **8,5 LU darüber**; das gleicht beim Mischen der Fader.
+Gekappt (der Bericht des Tests, über 1 LU): `rock_n_roll` Crash (`lib:drs_crash_left`) 5,5 LU,
+`strange` Snare (`lib:snap`) 5,4 LU, `lo_fi` Clap (`lib:snap`) 3,1 LU; dazu `electro` Hat
+0,3 dB und `hand_drums` Perc 1 0,0 dB (unter der Toleranz). Offen nach LL11 a: je Rolle so
+lassen oder einen lauteren Klang wählen.
 
 **Wie 27e-1 gebaut ist (S139):** `Kanal::gainDb` (`kKanalGainMinDb` −60 … `kKanalGainMaxDb`
 +24; an der unteren Grenze still) und `gainFaktor()` (0 dB = genau 1). `.lvloop` Fassung 11:
@@ -3867,6 +3919,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.95.0** (S139, 2026-10-20): §4n LL9 a bis LL11 a; Stufe 27d gebaut — Drum-Probe, die Kits auf dem Drum-Anker (−21,89 LUFS, 8,5 LU unter dem Bezug der Instrumente), drei Rollen gekappt.
 - **0.94.0** (S139, 2026-10-20): §4n Stufe 27c gebaut — Instrumente auf dem Bezug (`instrument_pegel.py`), Loops nachgezogen, `.lvinst` Fassung 13.
 - **0.93.0** (S139, 2026-10-20): §4n LL6 a bis LL8 a (Volume bis +24 dB, Begrenzer am Ausgang, der Fader zuerst), Befunde zu Spitzen und Nachziehen; Stufe 27e-1 gebaut (Fader je Kanal, `.lvloop` Fassung 11).
 - **0.92.0** (S139, 2026-10-20): §4n Stufe 27b gebaut (`loop/Pegel`, `test_LoopPegel`), gemessen: 29 Instrumente bräuchten Volume über 1, die Abstände der Kit-Rollen nach R128 bestätigen `ZIEL_DB` nicht.

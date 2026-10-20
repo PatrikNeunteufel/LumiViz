@@ -7,37 +7,37 @@
         {
             "role": "kick",
             "sound": "lib:drs_kick",
-            "volume": 0.912,
+            "volume": 0.804,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:drs_snare",
-            "volume": 0.759,
+            "volume": 0.845,
             "pan": 0.0
         },
         {
             "role": "rim",
             "sound": "lib:drs_rim",
-            "volume": 1.0,
+            "volume": 0.789,
             "pan": 0.0
         },
         {
             "role": "hat",
             "sound": "lib:drs_hat",
-            "volume": 0.407,
+            "volume": 0.359,
             "pan": 0.0
         },
         {
             "role": "open hat",
             "sound": "lib:drs_hat_open",
-            "volume": 0.417,
+            "volume": 0.421,
             "pan": 0.0
         },
         {
             "role": "ride",
             "sound": "lib:drs_ride",
-            "volume": 0.335,
+            "volume": 0.304,
             "pan": 0.0
         },
         {
@@ -49,19 +49,19 @@
         {
             "role": "tom 1",
             "sound": "lib:drs_tom1",
-            "volume": 0.767,
+            "volume": 0.759,
             "pan": -0.25
         },
         {
             "role": "tom 2",
             "sound": "lib:drs_tom2",
-            "volume": 0.891,
+            "volume": 0.924,
             "pan": 0.25
         },
         {
             "role": "tom 3",
             "sound": "lib:drs_tom3",
-            "volume": 0.966,
+            "volume": 0.994,
             "pan": 0.0
         }
     ]

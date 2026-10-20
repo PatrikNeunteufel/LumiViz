@@ -7,13 +7,13 @@
         {
             "role": "kick",
             "sound": "lib:djembe_low",
-            "volume": 0.412,
+            "volume": 0.413,
             "pan": 0.0
         },
         {
             "role": "snare",
             "sound": "lib:djembe_slap",
-            "volume": 0.427,
+            "volume": 0.495,
             "pan": 0.0
         },
         {
@@ -22,37 +22,37 @@
             "instrument": "drum_shaker",
             "note": 36,
             "length": 250,
-            "volume": 0.676,
+            "volume": 0.575,
             "pan": 0.2
         },
         {
             "role": "open hat",
             "sound": "lib:tambourine",
-            "volume": 0.912,
+            "volume": 0.977,
             "pan": 0.2
         },
         {
             "role": "perc 1",
             "sound": "lib:conga_high",
-            "volume": 0.861,
+            "volume": 1.0,
             "pan": 0.3
         },
         {
             "role": "perc 2",
             "sound": "lib:darbuka_doom",
-            "volume": 0.309,
+            "volume": 0.389,
             "pan": -0.3
         },
         {
             "role": "perc 3",
             "sound": "lib:darbuka_tak",
-            "volume": 0.537,
+            "volume": 0.756,
             "pan": 0.15
         },
         {
             "role": "perc 4",
             "sound": "lib:clave",
-            "volume": 0.668,
+            "volume": 0.596,
             "pan": -0.15
         }
     ]

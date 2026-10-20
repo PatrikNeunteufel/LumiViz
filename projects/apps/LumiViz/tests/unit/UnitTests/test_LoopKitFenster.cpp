@@ -178,7 +178,9 @@ TEST_SUITE("LoopKitFenster")
         CHECK(fenster.geaendert());
         REQUIRE(holeKit(QStringLiteral("user:808_copy"), gelesen));
         CHECK(gelesen.titel == QStringLiteral("Mein 808 neu"));
-        CHECK(gelesen.klaenge[0].laut == doctest::Approx(0.279));  // geschrieben ist, was gespeichert war
+        DrumKit original;  // das Volume steht seit Stufe 27d aus der Messung (make_kits.py), nicht als Zahl hier
+        REQUIRE(holeKit(QStringLiteral("808"), original));
+        CHECK(gelesen.klaenge[0].laut == doctest::Approx(original.klaenge[0].laut));  // geschrieben ist, was gespeichert war
         REQUIRE(fenster.rueckgaengig());  // Undo nimmt die Aenderung, nicht den Titel
         CHECK(fenster.kit().titel == QStringLiteral("Mein 808 neu"));
         CHECK_FALSE(fenster.geaendert());

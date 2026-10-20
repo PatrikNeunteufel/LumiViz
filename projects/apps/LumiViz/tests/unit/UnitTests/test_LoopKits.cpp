@@ -7,8 +7,8 @@
  * Ohne Ton, ohne Fenster. Eigene Kits liegen in einem Wegwerf-Ordner
  * (`setzeEigenenKitOrdnerFuerTests`); die mitgelieferten liest der Test vom
  * Arbeitsordner aus — die Test-Exe aus dem Projekt-Root starten.
- * `LUMIVIZ_KIT_PEGEL=1` gibt den gemessenen Pegel je Klang aus — fuer
- * `PEGEL_DB` in `asset/loop/kits/make_kits.py`.
+ * `LUMIVIZ_KIT_PEGEL_DATEI=<datei.tsv>` legt den Pegel je Klang nach EBU R128 ab
+ * (seit Stufe 27d) — fuer `make_kits.py --messung`.
  */
 
 #include <doctest.h>
@@ -18,6 +18,7 @@
 #include "loop/Instrument.hpp"
 #include "loop/Kit.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Pegel.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -27,6 +28,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
+#include <QTextStream>
 
 #include <algorithm>
 #include <cmath>
@@ -74,16 +76,6 @@ KitKlang kk(const QString& rolle, const QString& klang, double laut = 1.0, doubl
     k.laut = laut;
     k.pan = pan;
     return k;
-}
-
-/// Effektivwert der ersten 300 ms, in dB (Stereo: beide Seiten zusammen)
-double pegelDb(const std::vector<float>& stereo, int rate)
-{
-    const std::size_t n = std::min(stereo.size(), static_cast<std::size_t>(rate * 0.3) * 2);
-    if (n == 0) return -200.0;
-    double summe = 0.0;
-    for (std::size_t i = 0; i < n; ++i) summe += static_cast<double>(stereo[i]) * stereo[i];
-    return 10.0 * std::log10(summe / static_cast<double>(n) + 1e-20);
 }
 
 }  // namespace
@@ -424,45 +416,112 @@ TEST_SUITE("Loop Kits")
         CHECK(wendeKitAn(ohne, QStringLiteral("gibt es nicht"), kit, beide).angelegt.isEmpty());
     }
 
-    TEST_CASE("Loop Kits: Pegel — je Rolle ueber die Kits angeglichen; LUMIVIZ_KIT_PEGEL=1 gibt die Messung aus")
+    // Stufe 27d (Entscheide Patrik S139, LL4 a, LL9 a, LL10 a, LL11 a): gemessen nach EBU R128 — die
+    // Kick mit der Drum-Probe (Short-term-Maximum, wie die Instrumente), jede Rolle als Schlag
+    // (Momentary-Maximum) gegen die Kick ihres Kits. `LUMIVIZ_KIT_PEGEL_DATEI=<datei.tsv>` legt die
+    // Messung bei Volume 1 fuer `make_kits.py --messung` ab.
+    TEST_CASE("Loop Kits: Pegel — die Kick jedes Kits auf dem Drum-Anker, jede Rolle auf ihrem Abstand (R128, Stufe 27d)")
     {
         const KitApp app;
         constexpr int kRate = 44100;
-        const bool ausgeben = qEnvironmentVariableIntValue("LUMIVIZ_KIT_PEGEL") == 1;
-        std::map<QString, double> gemessen;  // je Klang bei Volume 1
-        std::map<QString, std::vector<std::pair<QString, double>>> jeArt;  // je Art: (Kit, Pegel mit Volume)
+        struct Zeile
+        {
+            QString kit;
+            QString rolle;
+            QString was;
+            double laut;
+            double schlag;  // Momentary-Maximum eines Schlags bei Volume 1
+            double probe;   // Short-term-Maximum der Drum-Probe bei Volume 1
+        };
+        std::vector<Zeile> zeilen;
         for (const DrumKit& kit : mitgelieferteKits())
             for (const KitKlang& klang : kit.klaenge)
             {
                 const QString was = klang.instrument.isEmpty() ? klang.klang : klang.instrument;
-                std::vector<float> ton;
+                Klang ton;
                 if (!klang.instrument.isEmpty())
                 {
                     const Instrument* instrument = findeInstrument(klang.instrument);
                     REQUIRE(instrument != nullptr);
                     looptest::merkeSamplesOhneEngine(*instrument);
-                    ton = rendereTon(*instrument, klang.hoehe, klang.dauerMs, kRate).daten;
+                    ton = rendereTon(*instrument, klang.hoehe, klang.dauerMs, kRate);
                 }
                 else
-                    ton = looptest::liesWav(looptest::mitgelieferteWav(klang.klang)).daten;
+                    ton = looptest::liesWav(looptest::mitgelieferteWav(klang.klang));
                 CAPTURE(was.toStdString());
-                REQUIRE_FALSE(ton.empty());
-                const double pegel = pegelDb(ton, kRate);
-                gemessen[was] = pegel;
-                jeArt[leseRolle(klang.rolle)->art].push_back({kit.name, pegel + 20.0 * std::log10(klang.laut)});
+                REQUIRE_FALSE(ton.daten.empty());
+                zeilen.push_back({kit.name, klang.rolle, was, klang.laut, messeSchlag(ton, kRate).momentanMaxLufs,
+                                  messeDrumProbe(ton, kRate).kurzzeitMaxLufs});
             }
-        if (ausgeben)
-            for (const auto& [was, pegel] : gemessen) MESSAGE("    \"" << was.toStdString() << "\": " << std::round(pegel * 10.0) / 10.0 << ",");
-        // je Rolle liegen die Kits beieinander: hoechstens 5 dB auseinander (Volume ist hoechstens 1 — ein
-        // leiser Klang erreicht sein Ziel nicht immer: der Snap als Snare in Strange bleibt 4,9 dB darunter, S123)
+        REQUIRE_FALSE(zeilen.empty());
+        if (const QString datei = qEnvironmentVariable("LUMIVIZ_KIT_PEGEL_DATEI"); !datei.isEmpty())
+        {
+            QFile f(datei);
+            REQUIRE(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            QTextStream aus(&f);
+            aus << "# Loop Kits: Pegel (test_LoopKits.cpp, Stufe 27d): Kit <Tab> Rolle <Tab> Klang <Tab> Volume <Tab> "
+                   "Schlag M max <Tab> Probe S max (beide bei Volume 1, LUFS)\n";
+            for (const Zeile& z : zeilen)
+                aus << z.kit << '\t' << z.rolle << '\t' << z.was << '\t' << z.laut << '\t' << QString::number(z.schlag, 'f', 3)
+                    << '\t' << QString::number(z.probe, 'f', 3) << '\n';
+            MESSAGE("abgelegt: " << datei.toStdString());
+        }
+
+        const auto median = [](std::vector<double> w) {
+            std::sort(w.begin(), w.end());
+            return w.size() % 2 == 1 ? w[w.size() / 2] : (w[w.size() / 2 - 1] + w[w.size() / 2]) / 2.0;
+        };
+        const auto db = [](double laut) { return 20.0 * std::log10(laut); };
+        // die Kicks: mit ihrem Volume auf der Drum-Probe beieinander (±1 LU um ihren Median, den Anker)
+        std::map<QString, const Zeile*> kickVon;
+        std::vector<double> kicks;
+        for (const Zeile& z : zeilen)
+            if (z.rolle == QLatin1String("kick"))
+            {
+                kickVon[z.kit] = &z;
+                kicks.push_back(z.probe + db(z.laut));
+            }
+        REQUIRE(kickVon.size() == mitgelieferteKits().size());
+        const double anker = median(kicks);
+        MESSAGE("Drum-Anker (Kick auf der Drum-Probe, S max): " << anker << " LUFS; der Bezug der Instrumente liegt "
+                                                                 << (kInstrumentBezugLufs - anker) << " LU darueber");
+        for (const auto& [kit, kick] : kickVon)
+        {
+            CAPTURE(kit.toStdString());
+            const bool gekappt = kick->laut >= 0.999 && kick->probe < anker - 1.0;
+            if (!gekappt) CHECK(std::abs(kick->probe + db(kick->laut) - anker) <= 1.0);
+        }
+        // jede andere Rolle: als Schlag gegen die Kick ihres Kits, je Art ±1 LU um den Median — ausser
+        // eine gekappte (Volume 1 und doch darunter, LL11 a: der Bericht nennt sie)
+        std::map<QString, std::vector<std::pair<const Zeile*, double>>> jeArt;
+        for (const Zeile& z : zeilen)
+        {
+            if (z.rolle == QLatin1String("kick")) continue;
+            const Zeile* kick = kickVon[z.kit];
+            jeArt[leseRolle(z.rolle)->art].push_back({&z, z.schlag + db(z.laut) - (kick->schlag + db(kick->laut))});
+        }
+        int gekappteRollen = 0;
         for (const auto& [art, werte] : jeArt)
         {
-            CAPTURE(art.toStdString());
-            const auto [lo, hi] = std::minmax_element(werte.begin(), werte.end(),
-                                                      [](const auto& a, const auto& b) { return a.second < b.second; });
-            MESSAGE(art.toStdString() << ": " << werte.size() << " Kits, " << lo->first.toStdString() << " "
-                                      << lo->second << " dB bis " << hi->first.toStdString() << " " << hi->second << " dB");
-            CHECK(hi->second - lo->second <= 5.0);
+            std::vector<double> nur;
+            for (const auto& w : werte) nur.push_back(w.second);
+            const double m = median(nur);
+            MESSAGE(art.toStdString() << ": " << werte.size() << " Rollen, Abstand zur Kick im Median " << m << " LU");
+            for (const auto& [z, abstand] : werte)
+            {
+                CAPTURE(z->kit.toStdString());
+                CAPTURE(z->rolle.toStdString());
+                if (z->laut >= 0.999 && abstand < m - 1.0)
+                {
+                    ++gekappteRollen;
+                    MESSAGE("gekappt: " << z->kit.toStdString() << ", " << z->rolle.toStdString() << " ("
+                                        << z->was.toStdString() << ") fehlen " << (m - abstand) << " LU");
+                    continue;
+                }
+                CHECK(std::abs(abstand - m) <= 1.0);
+            }
         }
+        MESSAGE(gekappteRollen << " Rollen gekappt");
     }
+
 }

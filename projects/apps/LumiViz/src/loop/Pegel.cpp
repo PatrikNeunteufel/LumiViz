@@ -81,4 +81,31 @@ audio::Lautheit messeDrumInstrument(const Instrument& instrument, int rate)
     return messeSchlag(rendereTon(instrument, 36, kSpurDauerMs, rate), rate);
 }
 
+std::vector<float> rechneDrumProbe(const Klang& schlag, int rate)
+{
+    Muster m;
+    m.name = QStringLiteral("Probe");
+    m.art = MusterArt::Drumkit;
+    m.takte = 3;  // zwei Takte Probe, einer Ausklang
+    m.spuren = {Spur(QStringLiteral("Probe"), QStringLiteral("kit:probe"), 1.0, 0.0)};
+    m.zeilen = {std::vector<double>(static_cast<std::size_t>(3 * 16), 0.0)};
+    for (int schritt = 0; schritt < 2 * 16; schritt += 4) m.zeilen[0][static_cast<std::size_t>(schritt)] = 1.0;
+    Loop probe;
+    probe.laut = 1.0;
+    probe.muster = {m};
+    probe.kanaele = {{QStringLiteral("Probe"), true, {{QStringLiteral("Probe"), 0, 1}}}};
+    probe.richte();
+    const Ablauf ablauf = plane(probe, rate);
+    const std::vector<Klang> klaenge(static_cast<std::size_t>(ablauf.klangNamen.size()), schlag);
+    const auto frames = static_cast<int>(ablauf.durchlaufFrames);
+    std::vector<float> aus(static_cast<std::size_t>(std::max(0, frames)) * 2);
+    if (frames > 0) rechne(ablauf, klaenge, 0, frames, aus.data());
+    return aus;
+}
+
+audio::Lautheit messeDrumProbe(const Klang& schlag, int rate)
+{
+    return audio::messeLautheit(rechneDrumProbe(schlag, rate), rate);
+}
+
 }  // namespace lumi::loop
