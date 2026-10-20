@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.11.0
+> **Version:** 0.17.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a (Patrik S139, S140);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK7 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK7 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -266,7 +266,7 @@ Tab-Linien, die Noten, *Note vol.* Damit ist der Ort aus SF5 d („unter den Not
 - **Klang-Spuren** in derselben Leiste, anders gefärbt, als Schalter an/aus mit
   Umschaltstellen (SF8 a); in Stufe 1 nur der Mechanismus.
 - Der Name jeder Spur steht in der linken Spalte (heute 44 px, wie *Strum* und *Note vol.*)
-  — Kürzel oder volle Namen: SK2.
+  als Kürzel: SK2 a.
 
 **Loop-Panel.** Die **Expression eines Clips liegt als Kurve auf dem Clip**, über seine ganze
 Länge mit allen Wiederholungen, mit Punkten zum Ziehen; ohne Kurve zeichnet der Clip
@@ -284,19 +284,111 @@ b (Ausblenden schaltet stumm — dasselbe Muster klänge je nach Ansicht anders)
 *Clear lane*). Kippt, wenn der Vergleich mit und ohne Spur oft gebraucht wird — dann ein
 Stummschalter im Kopf jeder Spur dazu, wie *Effects on* am Clip; der Haken bleibt Ansicht.
 
-## 2. Offen
+✅ **SK2 a** (Patrik S140): **Kürzel in der Spalte, volle Namen in der Zeile *Lanes* und im
+Tooltip.** In der linken Spalte *Sus*, *Sost*, *Expr*, *Vib*, *Pitch*; eine Klang-Spur
+bekommt ihr Kürzel aus ihrer Bauart (etwa *Corda*). Der volle Name steht am Haken der
+Zeile *Lanes* — dort in derselben Reihenfolge — und im Tooltip über dem Kürzel. Die Spalte
+behält ihre Breite (44 px). Verworfen: b (die Spalte breiter, etwa 72 px — nimmt jedem
+Muster Breite, auch ohne Spuren), c (der Name blass in der Spur — Text über den Punkten am
+Taktanfang). Kippt, wenn eine Klang-Spur einen Namen hat, der sich nicht klar auf etwa
+sechs Zeichen kürzen lässt — dann eine breitere Spalte nur bei sichtbaren Spuren prüfen.
 
-- SK2: die Namen der Spuren in der linken Spalte (Kürzel oder volle Namen).
-- Der Bereich von Pitch (Halbtöne, fest oder je Instrument) und von Expression (0 … 1
-  oder dB).
+✅ **SK3 a** (Patrik S140): **Pitch in der Datei in Halbtönen, die Grenze vom Instrument.**
+Die Spur Pitch speichert Halbtöne mit Bruchteil (Cent-genau), unabhängig von einem
+Bereich — wie der Bend je Note (`kBendHalbtoeneMax`, S-L15 b). Die Grenze geben Bauart
+und Ausstattung vor (SF10 a; etwa *Tremolo arm* mit eigener Grenze unten und oben); eine
+Synth-Schicht hat eine einstellbare *Pitch range* bis ±24 Halbtöne, Vorgabe ±2. Die Spur
+zeigt den Bereich ihres Instruments; ein Wert jenseits der Grenze wird beim Rechnen
+gekappt und in der Spur als gekappt gezeichnet, aber nicht verändert. Die Bereiche der
+Vorbilder (Synth ±2, Vibratohebel, Fall am Blech, Posaunenzug) aus dem Gedächtnis — in der
+Recherche der Familien zu belegen. Verworfen: b (fest ±2, normiert wie MIDI — der Wert
+wechselte mit dem Bereich seine Bedeutung, ein Fall über eine Oktave wäre unmöglich; ein
+späterer MIDI-Eingang rechnet mit dem Bereich des Instruments um), c (fest ±12 — ein
+Vibratohebel dürfte eine Oktave hinauf). Kippt, wenn das Kappen beim Wechsel des
+Instruments verwirrt — dann ein Hinweis beim Wechsel, wie viele Punkte jenseits der neuen
+Grenze liegen; das Datenformat bleibt.
+
+✅ **SK4 a** (Patrik S140): **Expression 0 … 1 als Stärke; 1 heißt „wie die Note gespielt
+ist“.** Leer = 1, ohne Kurve am Clip ebenso. Malgenommen werden *Note vol.* der Note, die
+Spur des Musters und die Kurve am Clip. Was das Ergebnis bewirkt, entscheidet die Schicht:
+eine Synth-Schicht macht daraus einen Pegel (über eine feste Kurve, in Stufe 1 gemessen und
+festgelegt), ein Modell mit dauernder Anregung die Stärke der Anregung (Blasdruck,
+Bogendruck) samt Klangfarbe; bei Zupfen, Hammer, Schlägel wirkt sie nur über den
+Tonabnehmer, als Pegel nach dem Abnehmer (SF10 a). Der Tooltip zeigt am Synth dazu den
+Pegel in dB. Dass der MIDI-Regler Expression von sich aus ganz offen steht, aus dem
+Gedächtnis — zu belegen. Verworfen: b (dB als Pegel, am Clip hinzugezählt — jedes Modell
+drehte nur den Pegel; der Fader je Kanal, LL3 a, arbeitet schon in dB), c (0 … 1 als Faktor
+auf das fertige Signal — ein Crescendo am Blech ohne die Helligkeit des lauteren Spielens).
+Kippt, wenn die Hörproben in Stufe 1 einen Swell über 1 hinaus verlangen, ohne die Noten
+leiser zu setzen — dann ein Bereich bis zu einer Obergrenze über 1; das Datenformat bleibt.
+
+✅ **SK5 a** (Patrik S140): **Die Spur gilt im Clip; an seinem Ende wird das Pedal
+losgelassen.** Die Spur wird wie das Muster gelesen, Durchlauf für Durchlauf. An der Naht
+zwischen zwei Wiederholungen gilt, was die Spur dort sagt: am Ende gedrückt und am Anfang
+gedrückt — die Noten klingen über die Naht weiter; am Anfang oben — dort wird gedämpft.
+Am letzten Ende eines Clips gilt das Pedal als losgelassen: gehaltene Noten gehen in ihren
+Ausklang wie beim Heben des Fußes, abgeschnitten wird nichts. Ein Schlussakkord, der frei
+ausklingen soll, bekommt einen Takt mehr mit gedrücktem Pedal. `plane` rechnet die Dauer
+jeder Note aus Note und Pedal, je Clip für sich — der Klang eines Clips hängt nicht am
+vorigen (L1 a: `rechne` hat kein Gedächtnis, `include/loop/Rechenkern.hpp`). Verworfen:
+b (das Pedal als Zustand des Kanals bis zum nächsten Clip — ein Clip klänge je nach
+Vorgänger anders, ein Start in der Mitte müsste rückwärts suchen), c (am Clip-Ende bleibt
+das Pedal gedrückt — das Ende klänge anders als jede Naht davor, obwohl die Spur dasselbe
+sagt). Kippt, wenn der freie Ausklang am Ende oft gebraucht wird — dann ein Haken je Clip
+*Let ring at end*, der für diesen Clip c gilt; a bleibt die Vorgabe.
+
+✅ **SK6 a** (Patrik S140): **Das halbe Pedal: am Synth eine Schwelle, im Modell der
+Dämpfer.** Eine Synth-Schicht liest Sustain und Sostenuto als Schalter — ab 0,5 hält sie,
+darunter nicht. Ein Modell mit Damper (Hammer-Saite, Stab mit Dämpferleiste; SF6 a, SF10 a)
+liest den Wert als Andruck des Dämpfers: 0 voll gedämpft, 1 frei, dazwischen klingt die
+Note schneller oder langsamer aus; wie der Andruck die Dämpfung setzt, misst die Recherche
+der Hammer-Saite. Eine Synth-Schicht mit *Follow* hält, solange die Saite des Modells
+klingt (SF7 a), und folgt so auch dem halben Pedal. Dass der MIDI-Regler 64 bei 0–63 aus
+und bei 64–127 an ist und manche Klangerzeuger ihn stufenlos lesen, aus dem Gedächtnis — zu
+belegen. Verworfen: b (am Synth stufenlos über den Release — eine Wirkung ohne Vorbild; ein
+weiches Nachlassen leisten Expression und die Hüllkurve), c (nur 0 und 1 — nähme dem
+Klavier eine echte Spielweise, die SF5 d wollte). Kippt, wenn die Hörproben in Stufe 1 ein
+stufenloses Sustain an Synth-Schichten verlangen — dann b als Schalter an der Synth-Schicht,
+die Schwelle als Vorgabe.
+
+## 2. Offen
 
 - Je Klang-Spielweise der Ort nach SF8 a — in der Recherche ihrer Familie.
 - Die Zeit zum Umstecken eines Dämpfers: belegen, dann entscheiden.
+
+## 3. Stufe 28 — die Spuren (Stufe 1 aus SF9 a)
+
+✅ **SK7 a** (Patrik S140): **Erst Daten und Klang, dann die Oberfläche, wie in Stufe 27.**
+
+| Schritt | Inhalt |
+|---|---|
+| 28a | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
+| 28b | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
+| 28c-1 | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
+| 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. |
+| 28d | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
+| 28e | Loop-Panel: die Expression-Kurve auf dem Clip. |
+| 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). |
+
+Der Mechanismus der Klang-Spuren kommt mit 28a und 28d; er klingt erst mit der
+Hammer-Saite. **Rechenpunkt:** heute ist ein Ton vorab nach Tonhöhe und Dauer gerechnet;
+mit Kurven über der Zeit wird jede Note eigen — Vorbild sind die Töne je Vorkommen der
+Saiten (`inst:…:s<n>:e<ms>`), die Rechenzeit wird in 28c-1 gemessen. Verworfen: b (erst die
+Oberfläche — eine Oberfläche ohne Wirkung, ein Fehler im Rechenweg fiele spät auf), c (Spur
+für Spur durch alle Bereiche — legte das gemeinsame Modell an Sustain fest und änderte es
+bei Pitch). Kippt, wenn Patrik die Spuren früh im Programm sehen will — dann rückt 28d
+hinter 28a vor, der übrige Plan bleibt.
 
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.17.0 | 2026-10-20 | Session 140. §3 Stufe 28, SK7 a (28a Modell und Datei bis 28f Abschluss). |
+| 0.16.0 | 2026-10-20 | Session 140. SK6 a (halbes Pedal: Schwelle am Synth, Andruck des Dämpfers im Modell). |
+| 0.15.0 | 2026-10-20 | Session 140. SK5 a (die Pedal-Spur gilt im Clip, am Clip-Ende losgelassen, an der Naht der Wert der Spur). |
+| 0.14.0 | 2026-10-20 | Session 140. SK4 a (Expression 0 … 1 als Stärke, malgenommen mit *Note vol.* und Clip, die Schicht übersetzt). |
+| 0.13.0 | 2026-10-20 | Session 140. SK3 a (Pitch in Halbtönen, die Grenze vom Instrument, Synth *Pitch range* bis ±24, Vorgabe ±2). |
+| 0.12.0 | 2026-10-20 | Session 140. SK2 a (Kürzel in der linken Spalte, volle Namen in *Lanes* und im Tooltip). |
 | 0.11.0 | 2026-10-20 | Session 140. §1a Skizze Stufe 1 (Spuren oben unter Strum, Zeile *Lanes*, Expression als Kurve auf dem Clip), SK1 a (Ausblenden ist nur Ansicht); Ort aus SF5 d ersetzt. |
 | 0.10.0 | 2026-10-20 | Session 140. SF10 a (Bauart = Anregung × Schwinger; Einordnung der mitgelieferten Instrumente; Steuer-Spielweisen aus den zwei Achsen). |
 | 0.9.0 | 2026-10-20 | Session 140. SF9 a (Stufe 1 die Spuren, dann Hammer-Saite, Bogen-Saite, Platte und Stab, Lippe und Rohr, Rohrblatt und Rohr). |
