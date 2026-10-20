@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.265.0
-> **Datum:** 2026-10-19 (Session 138)
+> **Version:** 1.266.0
+> **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -2997,9 +2997,12 @@ Idee Preset-Warmup/Pre-Roll.
   etwa die **Pedale** am Klavier (Sustain, wohl auch Sostenuto und Una corda),
   **Dämpfer** an Blechbläsern, dazu was die Familien sonst tragen (bei Claude als Beispiele,
   noch nicht vorgelegt: Atem und Zungenstoß bei Bläsern, Vibrato, Pizzicato und *con
-  sordino* bei Streichern). Noch nicht entschieden: ein eigenes Konzept mit Zielbild
-  (welche Familien, welche Spielweisen, im Modell je Note, je Muster oder als Spur wie
-  Strum), danach Baustufen — vorzulegen, wenn Stufe 26 fertig ist.
+  sordino* bei Streichern). **S139: Konzept begonnen** — `docs/audio/Spielweisen_Konzept.md`
+  0.5.0: Zielbild (alle Familien, Klang nach echten Instrumenten), SF1 c (Steuer-Spielweisen für
+  alle, Klang-Spielweisen aus der Bauart), SF2 a, SF3 a (Sustain, Sostenuto, Expression, Vibrato,
+  Pitch), SF4 a, SF5 d (Spuren je Muster, Expression auch am Clip). **Offen** (§2 dort): die
+  Steuer-Spielweisen je Bauart, der Ort der Klang-Spielweisen, die Reihenfolge der Familien, je
+  Familie Recherche/Modell/Messung; die Zeit zum Umstecken eines Dämpfers belegen.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -3904,6 +3907,25 @@ Idee Preset-Warmup/Pre-Roll.
     Trail sind in S89 gebaut (Changelog 1.82.0; `FieldBindings.cpp`
     `blendStrength`; bereinigt S129). **Offen:** **Sichttest Patrik** (über AVS-/MilkDrop-Presets, mit
     Post-Bloom, mit Render Scale).
+
+### 🟡 Lautstärke im Loop — Stufe 27 gebaut, Sichttest und voller Lauf offen (S139)
+
+Patrik S139: Instrumente klangen im Loop teils zu leise (Titanium). Gemessen (EBU R128): die
+Instrumente streuten bei gleicher Probe um 21 LU. Entschieden LL1 a bis LL14 a und gebaut 27a bis
+27g (`docs/audio/Loop_Konzept.md` §4n): Instrumente auf den Bezug −13,4 LUFS, Kits auf einen
+Drum-Anker −21,89 LUFS, Fader je Kanal, Limiter im Loop-Panel, *Match* im Creator. **Offen:**
+
+- **Sichttest** `.claude/handover/Sichttest_Lautstaerke.md` (lokal), Urteile U1 bis U6.
+- **Drei gekappte Kit-Rollen** (LL11 a): Crash in Rock'n'Roll (5,5 LU), Snare in Strange und Clap in
+  Lo-fi (beide `lib:snap`, 5,4 und 3,1 LU) — so lassen oder einen lauteren Klang wählen.
+- **Fader beim Ziehen** klingt erst beim Loslassen (live wäre besser zum Mischen nach Gehör).
+- Der Name eines ausgeschalteten Kanals wird mit „(off)" früh gekürzt.
+- *Load instrument* als Schichten legt das Volume in die Schichten, deren Level bei 1 endet — ein
+  Instrument über 1 wird dabei leiser.
+- Eigene Instrumente mit Sample-Schicht werden im Fenster *Instruments* erst gemessen, wenn die
+  Aufnahme geladen ist (dann ohne Marke).
+- Drums liegen beim Anlegen 8,5 LU unter den Instrumenten (LL10 a) — U2 im Sichttest.
+- **Voller Lauf** der Stufen 26 und 27 (Patrik: noch nicht).
 
 ### 🟡 Umstellung auf Englisch fortsetzen (Entscheide Patrik S83; S84 bis auf die Screenshots erledigt)
 
@@ -6055,6 +6077,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.266.0 | 2026-10-20 | Session 139. §7 Spielweisen der Instrumentfamilien: Konzept begonnen (SF1 c bis SF5 d); §7 NEU Lautstärke im Loop: Stufe 27 gebaut (LL1 a bis LL14 a), offen Sichttest, drei gekappte Kit-Rollen, Fader live, voller Lauf. |
 | 1.265.0 | 2026-10-19 | Session 138. §7 Spielweisen: S-L15 b gebaut; S-T8 a bis S-T14 a entschieden; 26e bis 26h gebaut (Fenster *Chords* mit Galerie, Anhören, Favoriten, eigenen Griffbildern und Voicings; *Play as* mit Hammer-on, Slide, Bend; zwei Beispiele, Handbuch 1.191.0, Sichttest-Liste); Stufe 26 durch bis auf den vollen Lauf; Idee Patrik: Spielweisen der anderen Instrumentfamilien (Pedale, Dämpfer); Befund Karaoke-Panel S89 schwankt unter Testing-MSVC. |
 | 1.264.0 | 2026-10-19 | Session 137. §7 Spielweisen: 25c-4 *Follow string* gebaut (S-L13 a), Bend nach S-L14 a; Tabs und Akkorde entschieden (S-T1 a bis S-T7 a, S-L15 b) und gebaut 26a bis 26d; Vorgabe Patrik für das Fenster *Chords* (Anhören, Favoriten); offen S-L15 b umsetzen, 26e–26h, Durchsicht der gerechneten Griffbilder. |
 | 1.263.0 | 2026-10-19 | Session 136. §7 Spielweisen: 24f fertig (S-W16 a bis S-W22 a); Stufe 25 entschieden (S-L1 a bis S-L12 a) und gebaut bis 25c-3b; Zoom der Editoren vorerst nicht gemerkt; Ideen Patrik (Rechtsklick auf die Spur Strum mit Pfeilen, Pick scrape); Befund Muster der Projektdatei Sichttest. |
