@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.88.0
-> **Datum:** 2026-10-18 (Session 135)
+> **Version:** 0.89.0
+> **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -194,6 +194,13 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
   Die Liste der Effekte am Clip wird so angelegt, dass es ohne Umbau
   dazukommt; die Messung des Grundtons teilt es mit **Detect** der
   Sample-Instrumente (§4h).
+- **Audio-Clip als dritte Art im Loop-Panel** (Patrik S139, Erinnerung an S113):
+  neben Drumkit- und Instrument-Clip ein Clip mit einer **Wellenform** — einzelne
+  Samples, eine Gesangsspur „oder was auch immer". Im Editor dazu eine
+  **Autotune-Spur**, nicht nur ein Effekt am Clip wie oben. Noch nicht entschieden:
+  Ort der Spur, Datei, Bearbeitung der Wellenform. Bezug (Claude): die Spur Pitch
+  aus [Spielweisen_Konzept.md](Spielweisen_Konzept.md) SF3 a führt eine Tonhöhe über
+  der Zeit; ob die Autotune-Spur dieselbe Art Spur ist, ist zu klären.
 
 ### 3.3 Noch offen
 
@@ -3686,6 +3693,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.89.0** (S139, 2026-10-20): §3.2 Audio-Clip als dritte Art im Loop-Panel mit Autotune-Spur (Erinnerung Patrik), Bezug zur Spur Pitch aus `Spielweisen_Konzept.md` SF3 a.
 - **0.88.0** (S135, 2026-10-18): Entscheid **E-Z1 a** — Zoom in Instrument- und
   Drum-Editor mit den Gesten der Zeitachse und *Fit* („Zoom in den Editoren“).
 - **0.87.0** (S130, 2026-10-16): Entscheid **W8-2 a** — liegt ein Muster im Loop

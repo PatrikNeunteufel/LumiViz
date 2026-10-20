@@ -1,8 +1,8 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.2.0
-> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c und SF2 a (Patrik S139);
+> **Version:** 0.4.0
+> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF4 a (Patrik S139);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -70,16 +70,40 @@ Bauart; Unechtes geht mit einer Synth-Schicht, die der Modellschicht folgt), c (
 jedem Instrument — am Modell Spielweisen, die nicht echt klingen können). Kippt, wenn
 Hörproben zeigen, dass eine Familie ohne Vorbild Pedal oder Swell musikalisch braucht.
 
+✅ **SF3 a** (Patrik S139): **Fünf Steuer-Spielweisen — die Regler eines Keyboards:**
+**Sustain** (Noten klingen weiter, bis das Pedal losgelassen wird), **Sostenuto** (nur die
+beim Treten klingenden Noten werden gehalten), **Expression** (Lautstärke über der Zeit,
+Swell), **Vibrato** (Tiefe über der Zeit, wie das Modulationsrad), **Pitch** (Tonhöhe über
+der Zeit, wie das Pitch-Rad). Una corda, Dämpfer und Register sind Klang-Spielweisen ihrer
+Bauart. Verworfen: b (nur Sustain, Expression, Vibrato — das Zielbild will alle drei
+Klavierpedale, und ohne Pitch gäbe es an Synth und Bläsern keinen Fall oder Doit), c (die
+ganze Reglerbelegung — das Soft-Pedal hat am Synth keine feste Bedeutung, Aftertouch und
+Breath sind Eingabewege, gerechnet Expression oder Vibrato). Kippt nicht bei Live-MIDI:
+dann kommen Aftertouch und Breath als **Eingänge** auf diese Spuren dazu.
+*Beleg MIDI-Belegung* (MIDI Association, „MIDI 1.0 Control Change Messages", Table 3,
+abgerufen 2026-10-20, Wortlaut): 1 „Modulation Wheel or Lever", 2 „Breath Controller",
+11 „Expression Controller", 64 „Damper Pedal on/off (Sustain)", 66 „Sostenuto On/Off",
+67 „Soft Pedal On/Off". Pitch Bend steht nicht in der Tabelle (eigene Nachricht — aus
+dem Gedächtnis, auf der Seite nicht belegt).
+
+✅ **SF4 a** (Patrik S139): **Das Vibrato der Schicht ist die Vorgabe des Instruments;
+wo die Spur Vibrato Werte hat, setzt sie die Tiefe** — auch auf 0. Rate und Einsatz kommen
+immer von der Schicht (`vibratoRate`, `vibratoDelay`); ohne Spur klingt alles wie heute.
+Mit einer Bauart rechnet das Modell das Vibrato echt (an der Saite über die Spannung, wie
+der Bend); Rate, Tiefe und Einsatz der Schicht sind dann die Vorgabe des Spielers.
+Verworfen: b (die Spur addiert — gerade spielen und das Vibrato kommen lassen ginge
+nicht), c (Vibrato nur noch in der Spur — der Klang des Instruments hinge am Loop, alle
+mitgelieferten Dateien umzuschreiben). Kippt, wenn die Spur auch die Rate führen soll.
+
 **An den Saiten** (Antwort Claude S139, Vorschlag): Vibrato über der Zeit (über die
 Spannung, wie der Bend) und Swell; die **Bogen-Saite** als neue Bauart auf der Saite
 (Saitensatz, Korpus) für `violin`, `strings`, `upright_bass` — Pizzicato wird dann eine
 Spielweise der Geige; das Dämpferpedal am Hackbrett (`dulcimer`). Wie das neue Vibrato
-sich zur festen Einstellung je Schicht verhält, ist ein eigener Entscheid.
+sich zur festen Einstellung je Schicht verhält: SF4 a.
 
 ## 2. Offen
 
-- Die Liste der Steuer-Spielweisen (SF1 c, Gruppe 1) und je Bauart (SF2 a); das
-  Verhältnis zum Vibrato je Schicht.
+- Welche der fünf Steuer-Spielweisen (SF3 a) jede Bauart hat (SF2 a).
 - Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
   im Saitenstrang (S132–S138).
 - Der Ort je Spielweise (Bauart, Spur, Note) — einzeln.
@@ -89,5 +113,7 @@ sich zur festen Einstellung je Schicht verhält, ist ein eigener Entscheid.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.4.0 | 2026-10-20 | Session 139. SF4 a (Vibrato der Schicht als Vorgabe, die Spur setzt die Tiefe). |
+| 0.3.0 | 2026-10-20 | Session 139. SF3 a (fünf Steuer-Spielweisen, Beleg der MIDI-Belegung). |
 | 0.2.0 | 2026-10-20 | Session 139. SF2 a (die Bauart bestimmt die Steuer-Spielweisen eines Modells); Antwort zu den Saiten. |
 | 0.1.0 | 2026-10-20 | Session 139. Angelegt: Zielbild (alle Familien, Klang nach echten Instrumenten), drei Arten von Spielweisen als Vorschlag, SF1 c. |
