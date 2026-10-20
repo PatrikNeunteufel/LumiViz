@@ -1,8 +1,8 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.4.0
-> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF4 a (Patrik S139);
+> **Version:** 0.5.0
+> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF5 d (Patrik S139);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -95,6 +95,21 @@ Verworfen: b (die Spur addiert — gerade spielen und das Vibrato kommen lassen 
 nicht), c (Vibrato nur noch in der Spur — der Klang des Instruments hinge am Loop, alle
 mitgelieferten Dateien umzuschreiben). Kippt, wenn die Spur auch die Rate führen soll.
 
+✅ **SF5 d** (Patrik S139; zuerst a, dann „c als Zusatz?" — daraus d): **Fünf Spuren je
+Muster** im Instrument-Editor, wie Strum — unter den Noten, einzeln ein- und
+ausklappbar, in der `.lvloop`; **Sustain** und **Sostenuto** als Stufen 0 … 1 (auch das
+halbe Pedal, wie am Flügel — noch zu belegen), **Expression**, **Vibrato**, **Pitch** als
+Kurven; eine leere Spur = Vorgabe des Instruments. **Dazu am Clip im Loop-Panel ein
+Verlauf Expression** über die ganze Länge des Clips mit allen Wiederholungen, mit der
+Spur des Musters **malgenommen** (ohne ihn 1). Pedale, Vibrato und Pitch nur im Muster.
+Verworfen: e (alle fünf am Clip, überschreibend — zwei Ablagen für denselben Wert),
+a (nur im Muster — kein Bogen über Wiederholungen; der `LoopClip` hat heute keine
+Lautstärke), b (Kurven je Note — Fall und Doit sind schon Klang-Spielweisen der Note),
+c (nur am Clip — dasselbe Muster klänge je nach Ort anders). Offen: ein Pedal, das am
+Ende des Musters gedrückt ist, über die Clipgrenze halten (Regel, eigener Entscheid);
+wächst ein Vibrato über ein Solo, wäre der nächste Schritt ein malgenommenes Vibrato am
+Clip, nicht e.
+
 **An den Saiten** (Antwort Claude S139, Vorschlag): Vibrato über der Zeit (über die
 Spannung, wie der Bend) und Swell; die **Bogen-Saite** als neue Bauart auf der Saite
 (Saitensatz, Korpus) für `violin`, `strings`, `upright_bass` — Pizzicato wird dann eine
@@ -106,13 +121,14 @@ sich zur festen Einstellung je Schicht verhält: SF4 a.
 - Welche der fünf Steuer-Spielweisen (SF3 a) jede Bauart hat (SF2 a).
 - Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
   im Saitenstrang (S132–S138).
-- Der Ort je Spielweise (Bauart, Spur, Note) — einzeln.
+- Der Ort der Klang-Spielweisen (Bauart, Spur, Note) — einzeln; die Steuer-Spielweisen: SF5 d.
 - Die Zeit zum Umstecken eines Dämpfers: belegen, dann entscheiden.
 
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.5.0 | 2026-10-20 | Session 139. SF5 d (fünf Spuren je Muster, dazu Expression am Clip, malgenommen). |
 | 0.4.0 | 2026-10-20 | Session 139. SF4 a (Vibrato der Schicht als Vorgabe, die Spur setzt die Tiefe). |
 | 0.3.0 | 2026-10-20 | Session 139. SF3 a (fünf Steuer-Spielweisen, Beleg der MIDI-Belegung). |
 | 0.2.0 | 2026-10-20 | Session 139. SF2 a (die Bauart bestimmt die Steuer-Spielweisen eines Modells); Antwort zu den Saiten. |

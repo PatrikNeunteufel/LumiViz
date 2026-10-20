@@ -1,6 +1,6 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.89.0
+> **Version:** 0.90.0
 > **Datum:** 2026-10-20 (Session 139)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
@@ -3568,6 +3568,74 @@ gelten schon, *Fit* und die Hinweiszeile machen sie sichtbar).
 
 ---
 
+## 4n. Lautstärke im Loop (S139 — Entscheide LL1 a bis LL5 a; nicht gebaut)
+
+**Anlass** (Patrik S139): „gewisse Instrumente scheinen in der Gesamtzusammenstellung
+eines Loops teilweise etwas leise (Titanium-Beispiel)". **LL1 a:** zuerst messen, dann
+entscheiden.
+
+**Befund** (gemessen S139, EBU R128 mit eigenem Messer, Probe EBU Tech 3341 Fall 1:
+−23,04 statt −23,0 LUFS; Release-clang, ohne Engine; Dateien und Skripte lokal unter
+`.claude/handover/lautheit_s139/`):
+
+- `titanium_versuch.lvloop` je Kanal: Drums −22,8 LUFS, Piano −25,9, Chords −29,0,
+  Bass −29,4, Lead −32,7, Pad −36,6, FX −37,1, **Guitar −45,2** (22 LU unter den Drums).
+- Alle 107 Instrumente mit derselben Probe (Tonleiter über zwei Oktaven und Akkord,
+  Loop 0,6; der Fall „das Beispiel instrument_demo“ mit `LUMIVIZ_INSTRUMENT_WAV`),
+  Short-term-Maximum (3 s): ohne Drums **−31,5** (`muted_guitar`) bis **−10,6**
+  (`thumb_piano`), **21 LU**; Median −17,9; mittlere 80 % −26,1 bis −13,7. Die gezupften
+  Saiten liegen unten (`clean_guitar` −28,6, `nylon_guitar` −27,3), die Fassungen `_old`
+  ebenso — nicht erst das Saitenmodell. Das integrierte Maß gibt fast dieselbe Reihe.
+- Die Gitarre in Titanium: Instrument −28,6, Loop 0,26 (−7,3 dB gegen die Probe),
+  Muster 0,55 (−5,2 dB), leisere Noten. Keine Stelle im Loop hebt über 1 an
+  (Note, Drum-Spur, Muster, Loop je 0 … 1; am `LoopClip` und am `Kanal` keine Lautstärke).
+- **Ursache: vor allem die Instrumente** — gleiche Lautstärke klingt bis 21 LU verschieden.
+
+✅ **LL2 a** (Patrik S139): **Jedes mitgelieferte Instrument auf eine gemeinsame
+Bezugslautheit** — Short-term-Maximum der Standardprobe, Bezug der heutige Median, rund
+−18 LUFS; ein Test hält jedes auf ±1 LU fest. Das Fenster *Instruments* zeigt beim Speichern
+eines eigenen Instruments die Abweichung und bietet *Match level* an. Die mitgelieferten
+Loops werden nachgezogen, sodass sie klingen wie bisher (Muster-Lautstärke mal Kehrwert);
+danach `loop_werte.txt` neu und den Diff prüfen; käme eine Muster-Lautstärke über 1, braucht
+es die Lautstärke über 1 am Clip (LL3). Gemischt wird danach mit den Lautstärken im Loop.
+Verworfen: b (*Match loudness* je Loop — jeder Loop gliche die Fehler der Instrumente einzeln
+aus), c (nur Lautstärke über 1, von Hand — behebt die Ursache nicht). Kippt, wenn Instrumente
+bewusst verschieden laut bleiben sollen (dann ein Bezug je Art).
+
+✅ **LL3 a** (Patrik S139): **Ein Fader je Kanal** im Loop-Panel, in dB von −∞ bis
++24 dB (wie das Gain im Composer), Vorgabe 0 dB, in der `.lvloop` am Kanal. Am Clip kein
+eigener Pegel — was ein einzelner Clip anders braucht, setzt der Verlauf Expression aus
+[Spielweisen_Konzept.md](Spielweisen_Konzept.md) SF5 d (flach = ein fester Pegel).
+Verworfen: b (Gain je Clip wie im Composer — jeder Clip einzeln, ein neuer käme mit 0 dB;
+neben dem Verlauf zwei Felder für dieselbe Sache), c (beides — eine dritte Angabe). Kippt,
+wenn ein Kanal bewusst verschiedene Instrumente abwechselt.
+
+✅ **LL4 a** (Patrik S139): **Ein Maß für alles, EBU R128.** Drum-Klänge mit dem
+Momentary-Maximum (400 ms) eines Schlags, Instrumente mit dem Short-term-Maximum der
+Probe. Die **Kick** bekommt die Bezugslautheit der Instrumente; die übrigen Rollen behalten
+ihren heutigen Abstand zur Kick (aus `ZIEL_DB` in `make_kits.py`, S123): Snare −2,
+Clap −4, Hat −7, Open hat −2, Ride −5, Crash 0, Tom +2, Perc −3, FX 0. `make_kits.py`
+rechnet die Volumes neu, die mitgelieferten Loops werden wie bei LL2 a nachgezogen.
+Verworfen: b (Kits mit eigenem Maß und Bezug — Drums gegen Instrumente in jedem Loop von
+Hand), c (alle Rollen gleich laut — gegen die gewollten Abstände). Kippt, wenn die Kick
+nicht der Anker ist (Anker je Kit). Die Abstände sind aus `ZIEL_DB` abgelesen, nicht neu
+gemessen — beim Bau prüfen, ob das neue Maß sie bestätigt.
+
+✅ **LL5 a** (Patrik S139): **Stufe 27 jetzt bauen**, danach weiter mit dem
+Spielweisen-Konzept — die Spielweisen bauen auf der Lautstärke auf (der Verlauf Expression
+aus SF5 d rechnet mit dem Fader; Hörproben neuer Bauarten gegen gleich laute Instrumente).
+Verworfen: b (zuerst das Spielweisen-Konzept fertig). Die Stufen:
+
+| Stufe | Inhalt |
+|---|---|
+| 27a | Die Messung zieht von `composer/` nach `audio/` (`lumi::audio`; der Wächter S128 verbietet `loop/` → `composer/`); der Composer liest von dort; dazu Momentary- und Short-term-Maximum; die Fälle aus EBU Tech 3341 am neuen Ort |
+| 27b | Messen im Programm: Standardprobe je Instrument, ein Schlag je Drum-Klang; ein Fall meldet alle Werte, ändert nichts |
+| 27c | Die mitgelieferten Instrumente auf den Bezug — vorher Frage an Patrik: neues Feld *Level* am Instrument oder Schicht-Pegel verrechnen; Loops nachziehen, `loop_werte.txt` neu, Diff prüfen; Test hält ±1 LU |
+| 27d | Kits nach LL4 a: `make_kits.py` auf das neue Maß, Kick als Anker, Abstände prüfen, Loops nachziehen |
+| 27e | Fader je Kanal nach LL3 a: Modell, `.lvloop` Fassung 11, Klang; Oberfläche zuerst als Skizze |
+| 27f | *Match level* im Fenster *Instruments* und im Creator; zuerst die Skizze |
+| 27g | Abschluss: Handbuch, Sichttest-Liste, Hörprobe Titanium vorher/nachher, voller Lauf |
+
 ## 5. Stufen
 
 | Stufe | Inhalt | Stand |
@@ -3598,6 +3666,7 @@ gelten schon, *Fit* und die Hinweiszeile machen sie sichtbar).
 | 21 | **Kits als eigene Einheit** (§4l): Rollen, `.lvkit`, Knopf Kit im Drum-Editor, Fenster Kits, vierzehn mitgelieferte Kits | S123: Entscheide K1 a bis K9 a, Skizzen gebilligt (Drum-Editor gezeigt, Fenster Kits K8 a); **21a gebaut** (`loop/DrumKit`: Rollen lesen, schreiben, raten, nummerieren; `.lvkit` Fassung 1; Ablage mitgeliefert und eigen; Kitwechsel nach K2 a und K5 a; `weichtAb`; `kitAusMuster`; in der `.lvloop` die freiwilligen Felder `role` und `kit`; Bereich Kits in Export und Import; zehn Kits aus `asset/loop/kits/make_kits.py`, Volume nach Messung; `test_LoopKits.cpp`, sieben Fälle) ; **21b gebaut** (Drum-Editor: Knopf Kit mit Menü, „(changed)", Zeile mit dem Ergebnis, Etikett Role je Spur, Add track mit den Rollen des Kits, Save as kit...; ein Fall in `test_LoopDrumEditor.cpp`, `LUMIVIZ_DRUM_KIT_BILD`) ; **21c gebaut** (S124: das Fenster Kits, `loop/KitFenster`; die Auswahl Sound als Bauteil `loop/KlangAuswahl`; Edit kits... im Drum-Editor; `LoopPanel::spieleSchlaege`; die zuletzt geöffneten Loops; `test_LoopKitFenster.cpp`, drei Fälle, `LUMIVIZ_KIT_FENSTER_BILD`; im Programm ungesehen) ; **21d gebaut** (S124, Entscheide D1 a bis D6 a: 37 Stereo-Samples aus DrumGizmo, drei gerechnete Besen, Rock'n'Roll, Hardrock, Heavy Metal, Jazz Brushes, Brush Swing; vierzehn Kits) ; **21e gemacht** (S124: Icon `lumiviz_lvkit.ico` — Entscheid I2 a, Fassung A: Snare von der Seite mit gekreuzten Sticks, am Vorschaublatt aus drei gewählt; am Knopf Kit und in Import data; `register_file_icons.ps1` mit `.lvkit`; Benutzerhandbuch 1.163.0 §16 „Kits", §17; Liste `Sichttest_Kits.md` (lokal); voller Lauf 1215 / 1215, 0 Skips) — **Stufe 21 fertig**, im Programm ungesehen bis auf Patriks ersten Blick (K10 a) |
 | 22 | **Kurze Muster, Auffüllen, Kopie mit Zeitraum, Springen** (§4m) | S124: Entscheide B1 a, B2 a, B3 a, B4 b; gebaut; `test_LoopTakteSprung.cpp`, vier Fälle; Benutzerhandbuch 1.165.0; **im Programm ungesehen** |
 | 18 | **Pan je Schicht und acht Schichten je Instrument** — die erste Stufe aus [Shape_Konzept.md](Shape_Konzept.md) §6a und §14 (Klang aus einer Form; die Stufen 19 und 20 stehen dort) | S120: Entscheid Z3 a (S119) und „Grenze auf acht" (Patrik S120, davor gemessen); **gebaut:** `Schicht::pan` mit dem Gesetz von Spur und Muster (links `min(1, 1 − pan)`, rechts `min(1, 1 + pan)`), `kSchichtenMax` 8, `.lvinst` Fassung 8; im Creator der Regler **Pan** im Kasten Level, der Kasten nennt ihn neben der Mitte; alte Instrumente rechnen Bit für Bit wie vorher (`test_LoopWerte` unverändert grün); ein neuer Fall in `test_LoopInstrument.cpp`, Ergänzungen in `test_LoopInstrumentEditor.cpp`; Benutzerhandbuch 1.153.0, Liste 10 Abschnitt V; **im Programm ungesehen und ungehört** |
+| 27 | **Lautstärke im Loop** (§4n): Messung nach `audio/`, Instrumente und Kits auf einen Bezug, Fader je Kanal, *Match level* | S139: Entscheide LL1 a bis LL5 a; nicht gebaut |
 
 ---
 
@@ -3693,6 +3762,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.90.0** (S139, 2026-10-20): §4n Lautstärke im Loop — Befund (Messung Titanium und aller Instrumente, 21 LU Streuung), LL1 a bis LL5 a; Stufe 27 in §5.
 - **0.89.0** (S139, 2026-10-20): §3.2 Audio-Clip als dritte Art im Loop-Panel mit Autotune-Spur (Erinnerung Patrik), Bezug zur Spur Pitch aus `Spielweisen_Konzept.md` SF3 a.
 - **0.88.0** (S135, 2026-10-18): Entscheid **E-Z1 a** — Zoom in Instrument- und
   Drum-Editor mit den Gesten der Zeitachse und *Fit* („Zoom in den Editoren“).
