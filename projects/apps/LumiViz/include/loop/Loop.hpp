@@ -22,6 +22,7 @@
 
 #include "loop/Bausteine.hpp"
 #include "loop/Saiten.hpp"
+#include "loop/Zeitspur.hpp"
 
 #include <QJsonObject>
 #include <QString>
@@ -284,6 +285,11 @@ struct Muster
     /// anschlaegt (`Loop::richte`). Wer Noten verschiebt, kopiert oder dreht,
     /// nimmt den Eintrag ihres Schritts mit (Auswahl.hpp, Bearbeiten.hpp).
     std::vector<Anschlag> anschlaege;
+    /// Die Spuren ueber der Zeit (Stufe 28a, SF5 d): Sustain, Sostenuto,
+    /// Expression, Vibrato, Pitch und die Schalter der Klang-Spielweisen, in
+    /// Schritten dieses Musters (Zeitspur.hpp). Leer = die Vorgaben des
+    /// Instruments. In der Datei `lanes` (seit Fassung 12, immer geschrieben).
+    Zeitspuren zeitspuren;
 
     [[nodiscard]] bool operator==(const Muster&) const = default;
 };
@@ -451,6 +457,11 @@ struct LoopClip
     /// der Clip klingt trocken, die Reihe bleibt, wie sie ist (die Marke „fx"
     /// steht matt). In der Datei `fxOn`, nur wenn aus.
     bool effekteAn = true;
+    /// Der Verlauf Expression ueber den Clip (Stufe 28a, SF5 d, SK8 a): 0 … 1, in
+    /// Takten ab dem Anfang des Clips, mit der Spur des Musters malgenommen; leer
+    /// = 1. Punkte hinter dem Ende bleiben und sind nicht zu hoeren. In der Datei
+    /// `expression` (seit Fassung 12, immer geschrieben).
+    std::vector<SpurPunkt> expression;
     /// Wirken seine Effekte gerade — Schalter an und ein Baustein an?
     [[nodiscard]] bool effekteWirken() const { return effekteAn && effekte.einerAn(); }
 

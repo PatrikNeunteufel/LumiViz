@@ -8,6 +8,7 @@
 #include <QSettings>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <vector>
 
@@ -183,7 +184,11 @@ int setzeAnfang(Loop& loop, int kanal, int clip, int startTakt)
     int mal = (ende - startTakt + takte / 2) / takte;
     mal = std::clamp(mal, 1, std::max(1, (ende - davor) / takte));
     ziel.wiederholungen = mal;
+    const int alterStart = ziel.startTakt;
     ziel.startTakt = ende - mal * takte;
+    // die Expression bleibt an ihrer Stelle im Arrangement (SK8 a); Punkte vor dem
+    // neuen Anfang bleiben, wie die hinter dem Ende
+    for (SpurPunkt& p : ziel.expression) p.stelle += alterStart - ziel.startTakt;
     return clip;
 }
 
@@ -425,6 +430,16 @@ bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederh
         }
     }
     ziel->anschlaege.insert(ziel->anschlaege.end(), mit.begin(), mit.end());
+    // die Spuren ueber der Zeit wiederholen sich mit den Noten (Stufe 28a)
+    const auto wiederhole = [altSchritte, neuSchritte](std::vector<SpurPunkt>& punkte) {
+        std::vector<SpurPunkt> dazu;
+        for (const SpurPunkt& p : punkte)
+            for (double beginn = p.stelle + altSchritte; beginn < neuSchritte; beginn += altSchritte)
+                dazu.push_back(SpurPunkt{beginn, p.wert});
+        punkte.insert(punkte.end(), dazu.begin(), dazu.end());
+    };
+    for (std::vector<SpurPunkt>& punkte : ziel->zeitspuren.steuer) wiederhole(punkte);
+    for (SchalterSpur& schalter : ziel->zeitspuren.schalter) wiederhole(schalter.punkte);
     loop.richte();
     return true;
 }
@@ -532,6 +547,22 @@ bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag)
             anschlaege.push_back(neu);
         }
         m.anschlaege = std::move(anschlaege);
+        // die Spuren ueber der Zeit (Stufe 28a): jeder Punkt bleibt an derselben Stelle
+        // im Schlag; einer in einem Schlag, den es nicht mehr gibt, geht
+        const auto umrechnen = [=](std::vector<SpurPunkt>& punkte) {
+            std::vector<SpurPunkt> neu;
+            for (const SpurPunkt& p : punkte)
+            {
+                const double schlagAlt = p.stelle / alteSchritte;  // Schlaege ab dem Anfang des Musters
+                const double takt = std::floor(schlagAlt / alteSchlaege);
+                const double imTakt = schlagAlt - takt * alteSchlaege;
+                if (imTakt >= schlaege) continue;
+                neu.push_back(SpurPunkt{(takt * schlaege + imTakt) * schritte, p.wert});
+            }
+            punkte = std::move(neu);
+        };
+        for (std::vector<SpurPunkt>& punkte : m.zeitspuren.steuer) umrechnen(punkte);
+        for (SchalterSpur& schalter : m.zeitspuren.schalter) umrechnen(schalter.punkte);
         for (std::vector<double>& zeile : m.zeilen)
         {
             std::vector<double> neu(static_cast<std::size_t>(m.takte * schlaege * schritte), 0.0);

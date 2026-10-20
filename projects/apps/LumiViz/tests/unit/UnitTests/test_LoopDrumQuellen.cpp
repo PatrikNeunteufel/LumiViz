@@ -174,7 +174,7 @@ TEST_SUITE("Loop Drum-Quellen")
         const Loop loop = dreiQuellen(instDatei);
 
         const QJsonObject json = alsJson(loop, basis);
-        CHECK(json.value(QStringLiteral("version")).toInt() == 11);  // die Felder gibt es seit Fassung 4; geschrieben wird die juengste
+        CHECK(json.value(QStringLiteral("version")).toInt() == 12);  // die Felder gibt es seit Fassung 4; geschrieben wird die juengste
         const QJsonArray spuren = json.value(QStringLiteral("patterns")).toArray().at(0).toObject().value(QStringLiteral("tracks")).toArray();
         REQUIRE(spuren.size() == 3);
         CHECK(spuren.at(0).toObject().value(QStringLiteral("sound")).toString() == QStringLiteral("kit:kick"));

@@ -389,7 +389,7 @@ TEST_CASE("Loop Signal path: ein Clip traegt eine Reihe — .lvloop Fassung 5 mi
                              ClipHall{true, 0.5, 2.0, 0.4, 0.3}}};
     loop.kanaele[0].clips[0].effekte = reihe;
     const QJsonObject json = alsJson(loop);
-    CHECK(json.value(QStringLiteral("version")).toInt() == 11);  // seit S139: der Fader je Kanal (11); seit S136: Legato, Slide, Bend (10); S134: Strum und Artikulationen (9); S132: die Saite einer Note (8); S124: Muster ab 1 Takt (6), fxOn am Clip (7)
+    CHECK(json.value(QStringLiteral("version")).toInt() == 12);  // seit S140: die Spuren ueber der Zeit (12); seit S139: der Fader je Kanal (11); seit S136: Legato, Slide, Bend (10); S134: Strum und Artikulationen (9); S132: die Saite einer Note (8); S124: Muster ab 1 Takt (6), fxOn am Clip (7)
     const auto clipIn = [](const QJsonObject& wurzel) {
         return wurzel.value(QStringLiteral("channels")).toArray().at(0).toObject().value(QStringLiteral("clips")).toArray().at(0).toObject();
     };

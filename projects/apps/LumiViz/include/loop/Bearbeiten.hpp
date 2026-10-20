@@ -56,7 +56,8 @@ int versetzeClip(Loop& loop, int kanal, int clip, int zielKanal, int startTakt);
 /// naechsten Clip.
 int setzeEnde(Loop& loop, int kanal, int clip, int endeTakt);
 /// Die linke Kante ziehen: das Ende bleibt, der Anfang rueckt in ganzen
-/// Mustern — hoechstens bis zum Clip davor oder bis Takt 0.
+/// Mustern — hoechstens bis zum Clip davor oder bis Takt 0. Die Expression des
+/// Clips bleibt an ihrer Stelle im Arrangement (SK8 a).
 int setzeAnfang(Loop& loop, int kanal, int clip, int startTakt);
 /// Eine verbundene Kopie hinter den Clip legen, an die erste Stelle, an die
 /// sie passt. Gibt ihren Platz zurueck.
@@ -121,8 +122,8 @@ QString neueBasisAus(Loop& loop, int kanal, int clip);
 /// schneidet die hinteren Schritte ab, laenger haengt leere an — oder, mit
 /// `wiederholen` (Entscheid B2 a), wiederholt in den neuen Takten die
 /// bisherigen der Reihe nach (aus 1 Takt vier gleiche, aus 3 auf 4 die Takte
-/// 1, 2, 3, 1): Schritte mit ihrer Lautstaerke, Noten; eine Note, die ueber
-/// das Ende reichte, wird gekuerzt. Seine Clips werden mit ihm laenger oder
+/// 1, 2, 3, 1): Schritte mit ihrer Lautstaerke, Noten, die Spuren ueber der
+/// Zeit (Stufe 28a); eine Note, die ueber das Ende reichte, wird gekuerzt. Seine Clips werden mit ihm laenger oder
 /// kuerzer; ein Clip dahinter, in den einer hineinwuechse, rueckt nach hinten.
 bool setzeMusterTakte(Loop& loop, const QString& muster, int takte, bool wiederholen = false);
 /// Der Haken „Repeat when lengthening" beider Editoren (B2 a): das Programm
@@ -132,7 +133,9 @@ void setzeWiederholenBeimVerlaengern(bool an);
 /// Das Raster des ganzen Loops setzen (je 1 bis `kRasterMax`). Jeder Schritt
 /// bleibt an seiner Stelle im Takt, wo das neue Raster sie kennt: ein Schlag,
 /// den es nicht mehr gibt, und ein Schritt, der zwischen zwei neue faellt,
-/// gehen verloren.
+/// gehen verloren. Ein Punkt einer Spur ueber der Zeit (Stufe 28a) bleibt an
+/// derselben Stelle im Schlag, auch zwischen zwei Schritten; nur in einem Schlag,
+/// den es nicht mehr gibt, geht er.
 bool setzeRaster(Loop& loop, int schlaegeJeTakt, int schritteJeSchlag);
 /// Eine Spur an das Muster haengen („Track N"), mit einer leeren Zeile. Ihr
 /// Klang ist der erste aus `kitKlaenge`, den das Muster noch nicht spielt —

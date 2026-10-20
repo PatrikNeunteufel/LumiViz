@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.99.0
-> **Datum:** 2026-10-20 (Session 139)
+> **Version:** 0.100.0
+> **Datum:** 2026-10-20 (Session 140)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -278,6 +278,8 @@ JSON, Schlüssel englisch wie in `.lvcomp`:
 | `patterns[].rows` | je Spur eine Zeile, je Schritt eine Lautstärke, 0 = aus | 0 bis 1 |
 | `channels[]` | Kanäle mit Name und Schalter; ein Kanal nimmt Clips jeder Art auf; seit Fassung 11 (S139) `gain` = der Fader in dB, immer geschrieben, wirkt nach den Effekten der Clips | `gain` −60 … +24, −60 = still, fehlt = 0 |
 | `channels[].clips[]` | `pattern` = Name des Musters, `start` = Takt (0 = der erste), `repeat` = wie oft hintereinander | `repeat` ab 1 |
+| `patterns[].lanes` | seit Fassung 12 (S140, Stufe 28a): die Spuren über der Zeit eines Instrument-Musters — `sustain`, `sostenuto`, `expression`, `vibrato`, `pitch` je `[[stelle, wert], …]` (Stelle in Schritten mit Bruchteil), `switches` je Klang-Spielweise beim Namen; immer geschrieben, leer = Vorgabe des Instruments (Spielweisen_Konzept §3) | Pedale und Expression 0 … 1, Vibrato 0 … 100 Cent, Pitch ±24 Halbtöne, Schalter 0/1 |
+| `channels[].clips[].expression` | seit Fassung 12: der Verlauf Expression über den Clip, `[[takt, wert], …]` ab dem Anfang des Clips (SK8 a), mit der Spur des Musters malgenommen; immer geschrieben, leer = 1 | 0 … 1 |
 
 Die Datei schreibt die Schritte einer Spur auf **eine Zeile** (Qt setzte
 sonst jede Zahl auf eine eigene).
@@ -3987,6 +3989,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.100.0** (S140, 2026-10-20): §4 Datei — `.lvloop` Fassung 12 mit `patterns[].lanes` und `channels[].clips[].expression` (Stufe 28a, Spielweisen_Konzept §3).
 - **0.99.0** (S139, 2026-10-20): §4n Stufe 27g — Hörprobe Titanium vorher und nachher, Sichttest-Liste; Stufe 27 gebaut bis auf den vollen Lauf.
 - **0.98.0** (S139, 2026-10-20): §4n LL14 a; Stufe 27f gebaut — Match level im Creator, Rückfrage beim Speichern, Marke im Fenster Instruments.
 - **0.97.0** (S139, 2026-10-20): §4n LL13 a; Stufe 27e-3 gebaut — der Begrenzer am Ausgang des Loop-Panels.

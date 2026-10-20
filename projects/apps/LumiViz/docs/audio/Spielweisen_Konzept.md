@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.17.0
+> **Version:** 0.18.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK7 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK7 a (Patrik S139, S140);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK8 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK8 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -270,7 +270,8 @@ Tab-Linien, die Noten, *Note vol.* Damit ist der Ort aus SF5 d („unter den Not
 
 **Loop-Panel.** Die **Expression eines Clips liegt als Kurve auf dem Clip**, über seine ganze
 Länge mit allen Wiederholungen, mit Punkten zum Ziehen; ohne Kurve zeichnet der Clip
-nichts (Wert 1). Der Kanal behält seine Höhe. (Patriks Gegenvorschlag — der Kanal
+nichts (Wert 1). Der Kanal behält seine Höhe. Die Punkte stehen in Takten ab dem Anfang
+des Clips (SK8 a, §3). (Patriks Gegenvorschlag — der Kanal
 anderthalbfach hoch, die Kurve im unteren Drittel — war aus einem Missverständnis der
 Skizze entstanden und ist zurückgenommen.)
 
@@ -362,7 +363,7 @@ die Schwelle als Vorgabe.
 
 | Schritt | Inhalt |
 |---|---|
-| 28a | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
+| 28a ✅ | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
 | 28b | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
 | 28c-1 | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. |
@@ -379,10 +380,43 @@ für Spur durch alle Bereiche — legte das gemeinsame Modell an Sustain fest un
 bei Pitch). Kippt, wenn Patrik die Spuren früh im Programm sehen will — dann rückt 28d
 hinter 28a vor, der übrige Plan bleibt.
 
+✅ **SK8 a** (Patrik S140): **Die Punkte der Expression am Clip stehen in Takten ab dem
+Anfang des Clips** (mit Bruchteil). Wird der Clip länger, bleibt die Kurve, wo sie ist;
+hinter dem letzten Punkt gilt sein Wert. Wird er kürzer, bleiben die Punkte dahinter
+erhalten, sind nicht zu hören und werden blass gezeichnet; kommt der Clip auf die alte
+Länge, ist die Kurve wieder ganz. Wer den Clip verschiebt, nimmt die Kurve mit.
+Verworfen: b (im Anteil der Clip-Länge, wie der Bend an der Note — das Ziel eines
+Crescendos rutschte bei jeder Änderung der Länge; ein Bend ist eine Gestalt der Note, die
+Kurve am Clip ein Verlauf über einem Stück). Kippt, wenn beim Verlängern meist ein
+mitwachsender Bogen gewollt ist — dann ein Eintrag *Stretch expression to clip*, der die
+Punkte einmalig umrechnet; das Datenformat bleibt a.
+
+**Modell 28a** (von Claude gesetzt, nach SF5 d, SK1 a bis SK8 a): `loop/Zeitspur.hpp`.
+Ein Punkt hat eine Stelle und einen Wert; die Stelle im Muster in **Schritten mit
+Bruchteil** (ein Pedal lässt sich kurz nach dem Anschlag treten), am Clip in Takten (SK8 a).
+Drei Arten: **Stufen** (Sustain, Sostenuto, 0 … 1; der Wert gilt bis zum nächsten Punkt,
+vor dem ersten ist das Pedal oben), **Kurve** (Expression 0 … 1, Vibrato in Cent 0 … 100
+wie `vibratoDepth` der Schicht, Pitch in Halbtönen bis ±24 nach SK3 a; linear zwischen den
+Punkten, vor dem ersten der erste, nach dem letzten der letzte, wie `bendBei`),
+**Schalter** (die Klang-Spuren, beim Namen; ein Name, den das Programm nicht kennt,
+bleibt beim Lesen stehen). Eine leere Spur ist die Vorgabe. Je Stelle ein Punkt (der
+spätere gilt, wie beim Bend); höchstens 4096 Punkte je Spur (eine Grenze für die Datei).
+Im Muster gehen Punkte hinter dem Ende mit, wie Noten (`richte`); *Repeat when
+lengthening* wiederholt die Spuren mit den Noten; ein neues Raster (`setzeRaster`) hält
+jeden Punkt an derselben Stelle im Schlag, Punkte in einem Schlag, den es nicht mehr gibt,
+gehen. Am Clip: wird die linke Kante gezogen, bleibt die Kurve an ihrer Stelle im
+Arrangement (die Punkte rücken um den Versatz); Punkte vor dem neuen Anfang bleiben wie die
+hinter dem Ende (Auslegung von SK8 a, Claude S140). Die Kurve am Clip gilt für jeden Clip,
+auch für ein Drumkit. Ein Drumkit-Muster trägt keine Spuren. In der `.lvloop` (**Fassung 12**, alle Felder
+immer geschrieben): am Instrument-Muster `lanes` mit `sustain`, `sostenuto`,
+`expression`, `vibrato`, `pitch` (je `[[stelle, wert], …]`) und `switches` (je Name eine
+solche Liste); am Clip `expression`.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.18.0 | 2026-10-20 | Session 140. SK8 a (Expression am Clip in Takten ab dem Clip-Anfang); Modell 28a. |
 | 0.17.0 | 2026-10-20 | Session 140. §3 Stufe 28, SK7 a (28a Modell und Datei bis 28f Abschluss). |
 | 0.16.0 | 2026-10-20 | Session 140. SK6 a (halbes Pedal: Schwelle am Synth, Andruck des Dämpfers im Modell). |
 | 0.15.0 | 2026-10-20 | Session 140. SK5 a (die Pedal-Spur gilt im Clip, am Clip-Ende losgelassen, an der Naht der Wert der Spur). |

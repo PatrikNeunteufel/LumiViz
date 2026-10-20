@@ -54,8 +54,12 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // beides still.
 // 11 (S139, Stufe 27e-1, Entscheid LL3 a): der Fader je Kanal `gain` in dB — ein
 // aelteres Programm spielte jeden Kanal mit 0 dB. Dazu (27e-3, LL7 a) `limiter`
-// am Loop. Geschrieben wird immer 11.
-constexpr int kVersion = 11;
+// am Loop.
+// 12 (S140, Stufe 28a, Entscheide SF5 d, SK1 a bis SK8 a): die Spuren ueber der Zeit —
+// am Instrument-Muster `lanes` (Sustain, Sostenuto, Expression, Vibrato, Pitch und
+// `switches`), am Clip `expression`, beide immer geschrieben — ein aelteres Programm
+// verloere beides still. Geschrieben wird immer 12.
+constexpr int kVersion = 12;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
@@ -791,6 +795,7 @@ void Loop::richte(QStringList* bericht)
                                       }),
                           m.noten.end());
             richteAnschlaege(m);
+            richteZeitspuren(m.zeitspuren, schritte);
             continue;
         }
         m.instrument.clear();
@@ -798,6 +803,7 @@ void Loop::richte(QStringList* bericht)
         m.saitenwahl = Saitenwahl::JeKlang;
         m.strum = Strum{};
         m.anschlaege.clear();
+        m.zeitspuren = Zeitspuren{};  // ein Drumkit traegt keine Spuren ueber der Zeit
         m.laut = 1.0;
         m.pan = 0.0;
         m.stumm = false;
@@ -829,6 +835,7 @@ void Loop::richte(QStringList* bericht)
             clip.startTakt = std::max(0, clip.startTakt);
             clip.wiederholungen = std::max(1, clip.wiederholungen);
             richteEffekte(clip.effekte);
+            richtePunkte(clip.expression, 0.0, 1.0);  // Punkte hinter dem Ende bleiben (SK8 a)
         }
         std::stable_sort(kanal.clips.begin(), kanal.clips.end(),
                          [](const LoopClip& a, const LoopClip& b) { return a.startTakt < b.startTakt; });
@@ -914,6 +921,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
                 }
                 o[QStringLiteral("strokes")] = anschlaege;
             }
+            o[QStringLiteral("lanes")] = zeitspurenAlsJson(m.zeitspuren);  // seit Fassung 12, immer
             muster.append(o);
             continue;
         }
@@ -973,6 +981,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             c[QStringLiteral("repeat")] = clip.wiederholungen;
             if (!clip.effekte.reihe.empty()) c[QStringLiteral("path")] = reiheAlsJson(clip.effekte);
             if (!clip.effekteAn) c[QStringLiteral("fxOn")] = false;  // seit Fassung 7
+            c[QStringLiteral("expression")] = punkteAlsJson(clip.expression);  // seit Fassung 12, immer
             clips.append(c);
         }
         k[QStringLiteral("clips")] = clips;
@@ -1064,6 +1073,8 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
                 anschlag.spreadMs = a.value(QStringLiteral("spread")).toDouble(-1.0);
                 m.anschlaege.push_back(anschlag);
             }
+            // seit Fassung 12; fehlt es, gelten die Vorgaben des Instruments
+            m.zeitspuren = zeitspurenAusJson(o.value(QStringLiteral("lanes")).toObject());
             neu.muster.push_back(std::move(m));
             continue;
         }
@@ -1133,6 +1144,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             clip.startTakt = c.value(QStringLiteral("start")).toInt(0);
             clip.wiederholungen = c.value(QStringLiteral("repeat")).toInt(1);
             clip.effekteAn = c.value(QStringLiteral("fxOn")).toBool(true);
+            clip.expression = punkteAusJson(c.value(QStringLiteral("expression")).toArray());  // seit Fassung 12
             // seit Fassung 5 die Reihe `path`; davor die drei festen `effects`
             if (const QJsonValue reihe = c.value(QStringLiteral("path")); reihe.isArray())
                 clip.effekte = reiheAusJson(reihe.toArray(), bericht);
