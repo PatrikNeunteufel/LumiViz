@@ -5,6 +5,7 @@
 
 #include "loop/Rechenkern.hpp"
 
+#include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 
 #include <QHash>
@@ -96,8 +97,11 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
                             schlag.bus = bus;
                             ablauf.stimmen[ort->second].schlaege.push_back(schlag);
                         };
-                        schlage(geplant == nullptr ? tonKlang(muster->instrument, note.hoehe, loop.notenMs(note))
-                                                   : tonKlang(*geplant));
+                        // ohne Saiten: so lange, wie die Pedale halten (Stufe 28b; ohne Pedal `notenMs`)
+                        schlage(geplant == nullptr
+                                    ? tonKlang(muster->instrument, note.hoehe,
+                                               gehaltenMs(loop, *muster, clip.wiederholungen, runde, noteNr))
+                                    : tonKlang(*geplant));
                         // Stufe 25c (S-L12 a): beim Kopf einer Kette die Saite ueber die ganze Kette
                         if (geplant != nullptr)
                             for (const TonAngabe& zusatz : geplant->zusatz) schlage(tonKlang(zusatz));

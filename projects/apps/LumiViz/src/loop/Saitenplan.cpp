@@ -5,6 +5,8 @@
 
 #include "loop/Saitenplan.hpp"
 
+#include "loop/Pedalplan.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -403,10 +405,14 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                 ton.teilton = griff.greifbar ? griff.teilton : 1;
                 // Stufe 25c (S-L1 a, S-L12 a): ein Glied einer Kette schlaegt die Saite nicht an — es
                 // spielt nur seine Schichten mit Own note, daempft nicht und wird nicht gedaempft
+                // Stufe 28b (SF6 a, SF7 a): die Saite hat kein Pedal — die Pedale halten nur die
+                // Schichten mit Own note; die der Saite folgen, klingen mit ihr
+                const int gehalten = gehaltenMs(loop, *muster, clip.wiederholungen, static_cast<int>(r), i);
                 if (griff.vorige >= 0)
                 {
                     ton.teil = TonTeil::Eigen;
                     ton.versatzMs = 0.0;
+                    ton.dauerMs = std::max(ton.dauerMs, gehalten);
                     continue;
                 }
                 bool zusatz = false;
@@ -423,9 +429,22 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
                     ton.teil = TonTeil::Eigen;
                     zusatz = true;
                     klingt = (muster->noten[kette.glieder.back()].artikulationen & kLetRing) != 0;
+                    ton.dauerMs = std::max(ton.dauerMs, gehalten);  // die Schichten mit Own note
                 }
-                else if (!note.bend.empty())
-                    setzeKette(ton, loop, *muster, Kette{i, {}});  // ein Bend allein: im Ton selbst
+                else
+                {
+                    if (!note.bend.empty()) setzeKette(ton, loop, *muster, Kette{i, {}});  // ein Bend allein: im Ton selbst
+                    if (gehalten > ton.dauerMs)
+                    {
+                        // gehalten: die Saite und was ihr folgt wie ohne Pedal, die Schichten mit
+                        // Own note als eigener Ton, so lange das Pedal haelt
+                        TonAngabe eigen = ton;
+                        eigen.teil = TonTeil::Eigen;
+                        eigen.dauerMs = gehalten;
+                        ton.teil = TonTeil::Folgend;
+                        ton.zusatz.push_back(std::move(eigen));
+                    }
+                }
                 if (!griff.greifbar) continue;  // eine nicht greifbare Note daempft nicht und wird nicht gedaempft
                 const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
                 const double startMs = static_cast<double>(schrittDavor + note.schritt) * schrittMs +

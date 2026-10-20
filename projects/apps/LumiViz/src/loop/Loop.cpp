@@ -5,6 +5,7 @@
 
 #include "loop/Loop.hpp"
 
+#include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
 #include "loop/Sample.hpp"
 
@@ -656,7 +657,20 @@ QStringList Loop::klangNamen(const SaitenVon& saiten) const
         }
         if (!saiten || !saiten(m.instrument).istSaiteninstrument())
         {
-            for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
+            if (!hatPedal(m))
+            {
+                for (const Note& note : m.noten) nimm(tonKlang(m.instrument, note.hoehe, notenMs(note)));
+                continue;
+            }
+            // mit Pedal (Stufe 28b): je Vorkommen so lange, wie es haelt — dieselbe Rechnung wie `plane`
+            for (const Kanal& kanal : kanaele)
+                for (const LoopClip& clip : kanal.clips)
+                {
+                    if (clip.muster != m.name) continue;
+                    for (int r = 0; r < clip.wiederholungen; ++r)
+                        for (std::size_t i = 0; i < m.noten.size(); ++i)
+                            nimm(tonKlang(m.instrument, m.noten[i].hoehe, gehaltenMs(*this, m, clip.wiederholungen, r, i)));
+                }
             continue;
         }
         for (std::size_t k = 0; k < kanaele.size(); ++k)

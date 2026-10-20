@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.18.0
+> **Version:** 0.19.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK8 a)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK8 a (Patrik S139, S140);
@@ -364,7 +364,7 @@ die Schwelle als Vorgabe.
 | Schritt | Inhalt |
 |---|---|
 | 28a ✅ | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
-| 28b | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
+| 28b ✅ | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
 | 28c-1 | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. |
 | 28d | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
@@ -412,10 +412,24 @@ immer geschrieben): am Instrument-Muster `lanes` mit `sustain`, `sostenuto`,
 `expression`, `vibrato`, `pitch` (je `[[stelle, wert], …]`) und `switches` (je Name eine
 solche Liste); am Clip `expression`.
 
+**Planung 28b** (`loop/Pedalplan.hpp`; nach SK5 a, SK6 a, SF6 a, SF7 a): die Pedale
+verlängern eine Note, ihr Ton wird länger gehalten und klingt danach aus — je Vorkommen
+im Clip gerechnet. **Sustain** hält eine Note, deren Ende bei gedrücktem Pedal liegt, bis
+zum Loslassen. **Sostenuto** hält nur die Noten, die beim Treten angeschlagen und noch nicht
+zu Ende sind — eine im selben Moment angeschlagene zählt mit (von Claude gesetzt). An einer
+Synth-Schicht ab 0,5 gedrückt (SK6 a). **Schlägt dieselbe Tonhöhe im Clip neu an, endet der
+gehaltene Ton dort** (von Claude gesetzt: eine Taste hat eine Saite; im Rechenkern schneidet
+derselbe Ton sich ohnehin selbst ab). Ein Muster ohne Punkte auf den Pedalen behält seine
+Töne wie bis Stufe 27 (`loop_werte.txt` unverändert). **Mit Saiten** hält die Saite nicht
+(SF6 a): ein gehaltener Ton zerfällt in die Saite mit ihren folgenden Schichten wie ohne
+Pedal (`:p1`) und die Schichten mit *Own note* als eigener, gehaltener Ton (`:p2`, SF7 a);
+in einer Kette hält der Ton der Schichten mit *Own note*.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.19.0 | 2026-10-20 | Session 140. Stufe 28b gebaut: Planung der Pedale (`loop/Pedalplan`). |
 | 0.18.0 | 2026-10-20 | Session 140. SK8 a (Expression am Clip in Takten ab dem Clip-Anfang); Modell 28a. |
 | 0.17.0 | 2026-10-20 | Session 140. §3 Stufe 28, SK7 a (28a Modell und Datei bis 28f Abschluss). |
 | 0.16.0 | 2026-10-20 | Session 140. SK6 a (halbes Pedal: Schwelle am Synth, Andruck des Dämpfers im Modell). |
