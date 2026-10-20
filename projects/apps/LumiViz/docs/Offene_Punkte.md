@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.266.0
-> **Datum:** 2026-10-20 (Session 139)
+> **Version:** 1.267.0
+> **Datum:** 2026-10-20 (Session 140)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3000,9 +3000,21 @@ Idee Preset-Warmup/Pre-Roll.
   sordino* bei Streichern). **S139: Konzept begonnen** — `docs/audio/Spielweisen_Konzept.md`
   0.5.0: Zielbild (alle Familien, Klang nach echten Instrumenten), SF1 c (Steuer-Spielweisen für
   alle, Klang-Spielweisen aus der Bauart), SF2 a, SF3 a (Sustain, Sostenuto, Expression, Vibrato,
-  Pitch), SF4 a, SF5 d (Spuren je Muster, Expression auch am Clip). **Offen** (§2 dort): die
-  Steuer-Spielweisen je Bauart, der Ort der Klang-Spielweisen, die Reihenfolge der Familien, je
-  Familie Recherche/Modell/Messung; die Zeit zum Umstecken eines Dämpfers belegen.
+  Pitch), SF4 a, SF5 d (Spuren je Muster, Expression auch am Clip). **S140: Konzept bis Stufe 1
+  entschieden, Stufe 28 gebaut bis 28c-2a** — `Spielweisen_Konzept.md` 0.22.0: SF6 a (Bauart als
+  Obergrenze, Ausstattung je Instrument), SF7 a (Spuren aller Schichten, *Follow* folgt bei den
+  gemeinsamen), SF8 a (drei Orte der Klang-Spielweisen), SF9 a (Reihenfolge: Spuren, Hammer-Saite,
+  Bogen-Saite, Platte und Stab, Lippe und Rohr, Rohrblatt und Rohr), SF10 a (Bauart = Anregung ×
+  Schwinger), Skizze Stufe 1 §1a (Spuren oben unter Strum, Zeile *Lanes*, Expression auf dem Clip),
+  SK1 a bis SK11 a; gebaut 28a (Zeitspuren, `.lvloop` 12), 28b (Pedale in der Planung), 28c-1
+  (Expression als Pegel e², Vibrato und Pitch im Ton, *Pitch range*, `.lvinst` 14), 28c-2a
+  (Vibrato und Pitch an der Saite, Vibratohebel, `.lvinst` 15). **Offen:** 28c-2b Expression an
+  der Saite (je Schicht, nur mit Tonabnehmer — in den Ton gerechnet), Hörproben 28c-1/28c-2, 28d
+  Instrument-Editor (Zeile *Lanes*, Spuren zeichnen), 28e Kurve am Clip, 28f Abschluss mit vollem
+  Lauf; im Programm noch nichts angesehen (Regler *Pitch range*, Haken *Tremolo arm* nur im Test).
+  Je Familie danach Recherche/Modell/Messung; der Ort jeder Klang-Spielweise; die Zeit zum
+  Umstecken eines Dämpfers belegen; die Vorgaben des Hebels (2/1 Halbtöne) und 5,5 Hz in den
+  Hörproben prüfen.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6077,6 +6089,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.267.0 | 2026-10-20 | Session 140. §7 Spielweisen der Instrumentfamilien: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a entschieden; Stufe 28 gebaut bis 28c-2a (Zeitspuren, Pedale, Expression, Vibrato, Pitch, Vibratohebel); offen 28c-2b, Hörproben, 28d bis 28f. |
 | 1.266.0 | 2026-10-20 | Session 139. §7 Spielweisen der Instrumentfamilien: Konzept begonnen (SF1 c bis SF5 d); §7 NEU Lautstärke im Loop: Stufe 27 gebaut (LL1 a bis LL14 a), offen Sichttest, drei gekappte Kit-Rollen, Fader live, voller Lauf. |
 | 1.265.0 | 2026-10-19 | Session 138. §7 Spielweisen: S-L15 b gebaut; S-T8 a bis S-T14 a entschieden; 26e bis 26h gebaut (Fenster *Chords* mit Galerie, Anhören, Favoriten, eigenen Griffbildern und Voicings; *Play as* mit Hammer-on, Slide, Bend; zwei Beispiele, Handbuch 1.191.0, Sichttest-Liste); Stufe 26 durch bis auf den vollen Lauf; Idee Patrik: Spielweisen der anderen Instrumentfamilien (Pedale, Dämpfer); Befund Karaoke-Panel S89 schwankt unter Testing-MSVC. |
 | 1.264.0 | 2026-10-19 | Session 137. §7 Spielweisen: 25c-4 *Follow string* gebaut (S-L13 a), Bend nach S-L14 a; Tabs und Akkorde entschieden (S-T1 a bis S-T7 a, S-L15 b) und gebaut 26a bis 26d; Vorgabe Patrik für das Fenster *Chords* (Anhören, Favoriten); offen S-L15 b umsetzen, 26e–26h, Durchsicht der gerechneten Griffbilder. |
