@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.6.0
+> **Version:** 0.7.0
 > **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF6 a (Patrik S139, S140);
+> Session 140: SF6 a, SF7 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF7 a (Patrik S139, S140);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -146,10 +146,23 @@ ein Beleg gegen eine Zeile ändert nur die Zeile.
 *Herkunft der Tabelle:* aus dem Gedächtnis (Claude S140), nicht belegt — jede Zeile wird
 in der Recherche ihrer Familie belegt.
 
+✅ **SF7 a** (Patrik S140): **Die Spuren aller Schichten zusammen; eine Schicht mit
+*Follow* folgt bei den gemeinsamen und nimmt die übrigen selbst.** Der Instrument-Editor
+zeigt jede Spur, die mindestens eine Schicht trägt. Die Modellschicht trägt, was Bauart
+und Ausstattung ihr geben (SF6 a), und überhört den Rest. Eine Synth-Schicht ohne *Follow*
+trägt alle fünf und rechnet sie für sich. Eine Synth-Schicht mit *Follow* richtet sich bei
+den Spuren, die auch die Modellschicht trägt, nach deren Ergebnis — sie hält, solange die
+Saite des Modells klingt, und gibt mit dessen Dämpfer frei —, die übrigen rechnet sie
+selbst. So kommt die Tonhöhe über der Zeit in ein Klavier, wie SF2 a es vorsieht: Pitch
+wirkt nur auf die Pad-Schicht. Verworfen: b (nur die Modellschicht bestimmt die Spuren —
+schließt den Weg für Unechtes aus SF2 a), c (eine Schicht mit *Follow* nimmt nur die
+Spuren des Modells — Unechtes nur mit einer Schicht, die nicht mit dem Pedal hält; *Follow
+string* übernimmt schon heute nur die Tonführung, nicht den Klang). Kippt, wenn im Sichttest
+eine Spur verwirrt, die nur einen Teil der Schichten erreicht — dann eher eine Anzeige im
+Kopf der Spur, welche Schichten sie erreicht, als b.
+
 ## 2. Offen
 
-- Welche Spuren ein Instrument mit Modellschicht und Synth-Schicht zeigt (Folge von SF6 a,
-  hängt am Schalter *Follow* aus SF1 c).
 - Die Reihenfolge der Familien; je Familie Recherche, Modell, Messung, Hörproben wie
   im Saitenstrang (S132–S138).
 - Der Ort der Klang-Spielweisen (Bauart, Spur, Note) — einzeln; die Steuer-Spielweisen: SF5 d.
@@ -159,6 +172,7 @@ in der Recherche ihrer Familie belegt.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.7.0 | 2026-10-20 | Session 140. SF7 a (Spuren aller Schichten zusammen; *Follow* folgt bei den gemeinsamen, die übrigen rechnet die Schicht selbst). |
 | 0.6.0 | 2026-10-20 | Session 140. SF6 a (Bauart als Obergrenze, Ausstattung je Instrument; Tabelle der Steuer-Spielweisen je Bauart, noch unbelegt). |
 | 0.5.0 | 2026-10-20 | Session 139. SF5 d (fünf Spuren je Muster, dazu Expression am Clip, malgenommen). |
 | 0.4.0 | 2026-10-20 | Session 139. SF4 a (Vibrato der Schicht als Vorgabe, die Spur setzt die Tiefe). |
