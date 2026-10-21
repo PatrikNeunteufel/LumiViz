@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.267.0
-> **Datum:** 2026-10-20 (Session 140)
+> **Version:** 1.268.0
+> **Datum:** 2026-10-21 (Session 141)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3023,6 +3023,15 @@ Idee Preset-Warmup/Pre-Roll.
   Je Familie danach Recherche/Modell/Messung; der Ort jeder Klang-Spielweise; die Zeit zum
   Umstecken eines Dämpfers belegen; die Vorgaben des Hebels (2/1 Halbtöne) und 5,5 Hz in den
   Hörproben prüfen.
+  **S141: Stufe 28 gebaut bis auf den vollen Lauf** — 28c-2b (Expression an der Saite hinter dem
+  Tonabnehmer, SK12 a), 28d (Zeile *Lanes*, Spuren im Instrument-Editor), 28e (Kurve am Clip, SK13 a),
+  28f (`lanes_demo`, Handbuch 1.197.0, Sichttest `Sichttest_Spuren.md`). **Konzept Hammer-Saite
+  begonnen** (`Spielweisen_Konzept.md` §4, 0.27.0): Zielbild (alle Instrumente, alle Teile, alle
+  Spielweisen), Befund „Töne werden bei Play bzw. 2 s vor einem Composer-Clip auf dem UI-Thread
+  gerechnet, ohne Speicher je Tonname“, H1 a bis H3 a (Töne vorab), F1 a bis F6 a (Freeze, Idee
+  Patrik), vorgemerkt Compute-Shader. **Offen:** Stufe 29 Töne vorab (Plan in S142, zuerst die
+  Thread-Sicherheit von `rendereTon`), 30 Freeze, 31 ff. Hammer-Saite (Recherche; ein Upright mit
+  geprüfter Lizenz fehlt); gesammelt später: voller Lauf 26–28, Sichttests, Hörproben.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6098,6 +6107,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.268.0 | 2026-10-21 | Session 141. §7 Spielweisen: Stufe 28 gebaut bis auf den vollen Lauf (28c-2b bis 28f); Konzept Hammer-Saite begonnen (Zielbild, H1 a bis H3 a Töne vorab, F1 a bis F6 a Freeze, Bauplan 29/30/31); Befund Tab-Linien und Karaoke-Panel S89 behoben. |
 | 1.267.0 | 2026-10-20 | Session 140. §7 Spielweisen der Instrumentfamilien: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a entschieden; Stufe 28 gebaut bis 28c-2a (Zeitspuren, Pedale, Expression, Vibrato, Pitch, Vibratohebel); offen 28c-2b, Hörproben, 28d bis 28f. |
 | 1.266.0 | 2026-10-20 | Session 139. §7 Spielweisen der Instrumentfamilien: Konzept begonnen (SF1 c bis SF5 d); §7 NEU Lautstärke im Loop: Stufe 27 gebaut (LL1 a bis LL14 a), offen Sichttest, drei gekappte Kit-Rollen, Fader live, voller Lauf. |
 | 1.265.0 | 2026-10-19 | Session 138. §7 Spielweisen: S-L15 b gebaut; S-T8 a bis S-T14 a entschieden; 26e bis 26h gebaut (Fenster *Chords* mit Galerie, Anhören, Favoriten, eigenen Griffbildern und Voicings; *Play as* mit Hammer-on, Slide, Bend; zwei Beispiele, Handbuch 1.191.0, Sichttest-Liste); Stufe 26 durch bis auf den vollen Lauf; Idee Patrik: Spielweisen der anderen Instrumentfamilien (Pedale, Dämpfer); Befund Karaoke-Panel S89 schwankt unter Testing-MSVC. |
