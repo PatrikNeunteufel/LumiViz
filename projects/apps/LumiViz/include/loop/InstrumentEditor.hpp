@@ -30,6 +30,7 @@
 #include "loop/Saitenplan.hpp"  // Griff (Stufe 23f)
 #include "UI/widgets/Achse.hpp"  // Mitlaufen
 
+#include <QFont>
 #include <QPoint>
 #include <QPointer>
 #include <QRect>
@@ -239,6 +240,10 @@ public:
     /// Was in den Tab-Linien an einer Note steht: der Bund — ohne Buende der
     /// Tonname, nicht greifbar „!".
     [[nodiscard]] QString tabText(int platz) const;
+    /// Wo die Hoehe eines Bends in den Tab-Linien steht: ueber dem Pfeil rechts der Zahl.
+    /// Leer, wenn die Note keinen Bend traegt — oder wenn dort eine andere Zahl stuende
+    /// (Befund S137, kurze Noten): dann nennt sie nur der Tooltip der Note.
+    [[nodiscard]] QRect tabBendFeld(int platz) const;
     // --- Legato, Slide, Bend (Stufe 26d; S-L3 a A–G, S-T5 a C, E) --------------
     // Die Haken *Legato (hammer-on / pull-off)* und *Slide* im Menue (E) setzen die
     // Bits an den markierten Noten (sie schliessen sich aus); gezeigt als Bogen mit h/p,
@@ -522,6 +527,13 @@ private:
     bool aendereMarkierte(const std::function<void(Note&)>& aendere, const QString& was);
     /// Die Tab-Linien zeichnen (aus `paintEvent`).
     void zeichneTab(QPainter& p, const std::vector<Griff>& griffe, const std::vector<Anschlagplan>& anschlaege);
+    /// Die kleinere Schrift der Tab-Linien.
+    [[nodiscard]] QFont tabSchrift() const;
+    /// Je Note das Feld ihrer Zahl in den Tab-Linien; leer = sie steht auf keiner Saite.
+    [[nodiscard]] std::vector<QRect> tabFelder(const std::vector<Griff>& griffe,
+                                               const std::vector<Anschlagplan>& anschlaege) const;
+    /// Das Feld der Hoehe des Bends der Note `platz` (s. `tabBendFeld`) zu diesen Feldern.
+    [[nodiscard]] QRect bendFeld(std::size_t platz, const std::vector<QRect>& felder) const;
     // --- Stufe 28d: die Spuren ueber der Zeit (InstrumentEditorSpuren.cpp)
     std::array<bool, kSteuerspuren> m_traegt{true, true, true, true, true};
     double m_pitchBereich = kPitchHalbtoeneMax;

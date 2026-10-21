@@ -267,3 +267,39 @@ TEST_CASE("Loop Editor Tab 26c: ueber den Editor — Bund tippen (auch zweistell
     taste(*raster, Qt::Key_3, QStringLiteral("3"));  // ohne Marke: nichts
     CHECK(mel().noten.size() == vorher);
 }
+
+TEST_CASE("Loop Editor Tab Befund S137: die Hoehe eines Bends verdeckt keine Zahl")
+{
+    Anwendung anwendung;
+    NotenRaster raster;
+    raster.setSaiten(gitarre().saiten);
+    // A3 auf der G-Saite (Bund 2), einen Schritt lang, mit Bend full — gleich danach H3 auf der H-Saite
+    Note gebogen{0, 1, 57, 1.0, 3};
+    gebogen.bend = bendVorlage(BendVorlage::Bend, 2.0);
+    Muster m;
+    m.name = QStringLiteral("Mel");
+    m.art = MusterArt::Instrument;
+    m.takte = 1;
+    m.noten = {gebogen, Note{1, 1, 59, 1.0, 4}};
+    raster.setMuster(m, 4, 4);
+    raster.resize(NotenRaster::kTastenBreite + 32 * NotenRaster::kSchrittBreite, 500);
+    REQUIRE(raster.tabText(0) == QStringLiteral("2"));
+    REQUIRE(raster.tabText(1) == QStringLiteral("0"));
+
+    // die Hoehe laege auf der Zahl der naechsten Note: sie steht nicht da (der Tooltip nennt sie)
+    CHECK(raster.tabBendFeld(0).isNull());
+    // dieselbe Note auf der Saite gleich danach: ebenso
+    m.noten[1] = Note{1, 1, 59, 1.0, 3};
+    raster.setMuster(m, 4, 4);
+    CHECK(raster.tabBendFeld(0).isNull());
+    // mit Platz dahinter steht sie rechts des Pfeils, im Band zur Linie darueber
+    m.noten[1] = Note{8, 1, 59, 1.0, 4};
+    raster.setMuster(m, 4, 4);
+    const QRect feld = raster.tabBendFeld(0);
+    REQUIRE_FALSE(feld.isNull());
+    CHECK(feld.left() > raster.xVonSchritt(0) + 10);
+    CHECK(feld.bottom() < raster.tabLinieY(3));
+    CHECK(feld.top() >= raster.tabLinieY(4) - NotenRaster::kTabZeile / 2);
+    // ohne Bend kein Feld
+    CHECK(raster.tabBendFeld(1).isNull());
+}

@@ -283,6 +283,9 @@ void KaraokePanel::setupUI()
         m_eventSubscriptions.push_back(bus->subscribeScoped<PresetListsChangedEvent>(
             [this](const PresetListsChangedEvent&) {
                 m_presetZeile->setLaufend(PresetListen::laufendesKaraokePreset());
+                // S141: nach dem Speichern gilt die Ebene als ungeaendert — der Stern geht gleich,
+                // nicht erst mit dem naechsten Takt (sonst stand „Abend *" bis zu 500 ms zu lange)
+                aktualisiereZustand();
             }));
     }
 }

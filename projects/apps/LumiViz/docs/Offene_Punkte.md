@@ -2836,7 +2836,13 @@ untersucht; ändern erst auf Patriks Wort.
 (`combo->itemText(0) == "Abend"` — die Zeile der Presets nach `processEvents`) einmal rot im
 Bereichslauf `*Akkord*,*Griffbild*,*Editor*,*Spieler*,*Instrument*,*Zoom*` und einmal allein;
 derselbe Bereich gleich danach 130 / 130, allein dreimal grün, unter Release-clang grün. Der
-Fall berührt nichts aus Stufe 26 (Karaoke-Presets, `PresetListen`). Ursache nicht untersucht.
+Fall berührt nichts aus Stufe 26 (Karaoke-Presets, `PresetListen`). ~~Ursache nicht untersucht.~~
+✅ **Ursache gefunden und behoben S141 — ein Fehler im Programm:** nach dem Speichern
+(`speichereKaraokeNach` meldet `PresetListsChangedEvent`) setzte das Panel nur den Namen neu, den
+Stern „geändert“ erst der nächste Takt (500 ms). Tickte der Takt zwischen Edit und Speichern —
+unter Last, unter Testing-MSVC —, stand danach „Abend *“. Jetzt liest das Panel dort gleich den
+Stand (`aktualisiereZustand`). Der Test wartet vor dem Speichern bewusst einen Takt ab: ohne den Fix
+jedes Mal rot, mit ihm grün (beide Compiler, je dreimal).
 
 ### ✅ Regression S84 — Tempo, Lag, Vollbild-Freeze (gelöst S85)
 
@@ -2977,8 +2983,10 @@ Idee Preset-Warmup/Pre-Roll.
   `.claude/handover/Sichttest_TabsAkkorde.md`). Nebenbei *Fit* im Instrument-Editor behoben.
   **Stufe 26 ist durch bis auf den vollen Lauf** (Patrik S138: „den vollen Lauf noch nicht“).
   **Offen:** voller Lauf; Sichttest Tabs und Akkorde (Exe neu bauen). Durchsicht der gerechneten Griffbilder durch Patrik
-  (`.claude/handover/akkorde_26b/bogen.html`, Kipp-Bedingung S-T4 a). Bei kurzen Noten
-  überdeckt in den Tab-Linien die Höhe des Bends die nächste Zahl (Befund S137).
+  (`.claude/handover/akkorde_26b/bogen.html`, Kipp-Bedingung S-T4 a). ~~Bei kurzen Noten
+  überdeckt in den Tab-Linien die Höhe des Bends die nächste Zahl (Befund S137).~~ ✅ **behoben
+  S141:** erst Dauer und Bend, darüber die Zahlen; die Höhe steht nur, wo sie keine Zahl verdeckt
+  (`tabBendFeld`), sonst nennt sie der Tooltip der Note.
   Befund ohne Entscheid: `.sichttest/sichttest.projekt.json` sucht nur
   `Sichttest_Composer_*.md` — `Sichttest_Saiten.md`, `Sichttest_Spielweisen.md` findet der
   Tester nicht (Frage an Patrik S136, unbeantwortet).
@@ -3196,7 +3204,8 @@ Idee Preset-Warmup/Pre-Roll.
     viermal Pakete, bevor LumiViz sie selbst geholt hatte (v0.3.0, v0.3.1,
     v0.3.2, v0.3.3) — jedes Mal beiseitegelegt, neu geholt und inhaltsgleich
     gefunden; woher sie kamen, ist nicht geklärt.
-  - **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
+  - ✅ *(S141: Ursache gefunden und behoben — s. „Dazu S138: Karaoke-Panel S89 schwankt" in §7.)*
+    **🔧 `test_PaletteUi.cpp:765` wackelt wieder:** der Fall „Karaoke-Panel
     S89: Schalter, Editor der Ebene, Ablage und Karaoke-Presets" fiel in
     zwei von vier vollen Läufen um (`combo->itemText(0) == "Abend"`); in S96
     zweimal, in S97 bis S102 über 44 Läufe nie. Von S103 nicht berührt;

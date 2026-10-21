@@ -438,6 +438,52 @@ QString NotenRaster::tabText(int platz) const
     return tabZeichen(m_muster.noten[static_cast<std::size_t>(platz)], griffe()[static_cast<std::size_t>(platz)], m_saiten);
 }
 
+QFont NotenRaster::tabSchrift() const
+{
+    QFont klein = font();
+    klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
+    return klein;
+}
+
+std::vector<QRect> NotenRaster::tabFelder(const std::vector<Griff>& alleGriffe, const std::vector<Anschlagplan>& alleAnschlaege) const
+{
+    const QFontMetrics mass(tabSchrift());
+    std::vector<QRect> felder(m_muster.noten.size());
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& note = m_muster.noten[i];
+        const Griff& griff = alleGriffe[i];
+        if (griff.saite < 0) continue;
+        const int x = xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs);
+        felder[i] = QRect(x + 1, tabLinieY(griff.saite) - kTabZeile / 2 + 1,
+                          mass.horizontalAdvance(tabZeichen(note, griff, m_saiten)) + 4, kTabZeile - 2);
+    }
+    return felder;
+}
+
+QRect NotenRaster::bendFeld(std::size_t platz, const std::vector<QRect>& felder) const
+{
+    if (platz >= m_muster.noten.size() || felder[platz].isNull() || m_muster.noten[platz].bend.empty()) return {};
+    // ueber der Spitze des Pfeils, im Band zur Linie darueber
+    const QRect& feld = felder[platz];
+    const int y = feld.center().y();
+    const QString hoehe = bendText(bendHoehe(m_muster.noten[platz].bend));
+    const QRect text(feld.right() + 10, y - kTabZeile, QFontMetrics(tabSchrift()).horizontalAdvance(hoehe) + 2, kTabZeile);
+    // Befund S137: bei kurzen Noten laege die Hoehe auf der naechsten Zahl — dann steht sie nicht da
+    for (std::size_t j = 0; j < felder.size(); ++j)
+        if (j != platz && !felder[j].isNull() && text.intersects(felder[j])) return {};
+    return text;
+}
+
+QRect NotenRaster::tabBendFeld(int platz) const
+{
+    if (!m_saiten.istSaiteninstrument() || tabHoehe() == 0 || platz < 0) return {};
+    std::vector<Griff> alleGriffe;
+    std::vector<Anschlagplan> alleAnschlaege;
+    plane(&alleGriffe, &alleAnschlaege);
+    return bendFeld(static_cast<std::size_t>(platz), tabFelder(alleGriffe, alleAnschlaege));
+}
+
 void NotenRaster::setzeTabMarke(int schritt, int stelle)
 {
     const bool gilt = tabHoehe() > 0 && schritt >= 0 && schritt < schritte() && stelle >= 0 && stelle < m_saiten.anzahl();
@@ -698,9 +744,7 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
     leise.setAlpha(130);
     const int oben = tabOben();
     const int hoch = tabHoehe();
-    QFont klein = font();
-    klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.0));
-    p.setFont(klein);
+    p.setFont(tabSchrift());
     p.setPen(leise);
     p.drawLine(0, oben + hoch - 1, width(), oben + hoch - 1);
     // links in der Spalte der Klaviatur: Nummer und Ton der leeren Saite (mit Capo der klingende)
@@ -730,42 +774,22 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
         p.drawRect(marke.adjusted(0, 0, -1, -1));
         p.setBrush(Qt::NoBrush);
     }
-    const QFontMetrics mass(klein);
     // je Note das Feld ihrer Zahl — fuer die Zeichen zwischen zwei Zahlen (Stufe 26d)
-    std::vector<QRect> felder(m_muster.noten.size());
+    const std::vector<QRect> felder = tabFelder(alleGriffe, alleAnschlaege);
+    // zuerst Dauer und Bend, darueber die Zahlen: eine Zahl bleibt immer lesbar (Befund S137)
     for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
     {
         const Note& note = m_muster.noten[i];
-        const Griff& griff = alleGriffe[i];
-        if (griff.saite < 0) continue;
-        const int x = xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs);
-        felder[i] = QRect(x + 1, tabLinieY(griff.saite) - kTabZeile / 2 + 1, mass.horizontalAdvance(tabZeichen(note, griff, m_saiten)) + 4,
-                          kTabZeile - 2);
-    }
-    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
-    {
-        const Note& note = m_muster.noten[i];
-        const Griff& griff = alleGriffe[i];
-        if (griff.saite < 0) continue;
-        const int y = tabLinieY(griff.saite);
-        const int x = xVonSchritt(note.schritt) + versatzPixel(alleAnschlaege[i].versatzMs);
+        if (felder[i].isNull()) continue;
+        const QRect& feld = felder[i];
+        const int y = feld.center().y();
         // die Dauer: ein blasser Strich hinter der Zahl
         QColor dauer = an;
         dauer.setAlpha(m_muster.stumm ? 40 : 80);
         p.setPen(QPen(dauer, 3.0, Qt::SolidLine, Qt::FlatCap));
-        p.drawLine(x + 2, y, x + note.laenge * schrittBreite() - 2, y);
-        const QString zeichen = tabZeichen(note, griff, m_saiten);
-        const int breite = mass.horizontalAdvance(zeichen) + 4;
-        const QRect feld(x + 1, y - kTabZeile / 2 + 1, breite, kTabZeile - 2);
-        const bool markiert = istMarkiert(note);
-        // die Zahl schneidet die Linie: ein Feld in der Farbe des Grunds, markiert hervorgehoben
-        p.setPen(Qt::NoPen);
-        p.setBrush(markiert ? an : pal.color(QPalette::Base));
-        p.drawRect(feld);
-        p.setBrush(Qt::NoBrush);
-        p.setPen(!griff.greifbar ? QColor(226, 75, 74) : markiert ? pal.color(QPalette::HighlightedText) : text);
-        p.drawText(feld, Qt::AlignCenter, zeichen);
-        // Stufe 26d (S-T5 a C, S-L3 a D, E): der Bend als Pfeil hinauf mit seiner Hoehe; verbunden ohne vorige ein „!"
+        p.drawLine(feld.left() + 1, y, feld.left() - 1 + note.laenge * schrittBreite() - 2, y);
+        // Stufe 26d (S-T5 a C, S-L3 a D, E): der Bend als Pfeil hinauf mit seiner Hoehe — die Hoehe nur,
+        // wo sie keine andere Zahl verdeckt; sonst nennt sie der Tooltip
         if (!note.bend.empty())
         {
             const QPointF fuss(feld.right() + 2, y);
@@ -777,9 +801,25 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
             p.drawPath(pfeil);
             p.drawLine(spitze, spitze + QPointF(-3, 3));
             p.drawLine(spitze, spitze + QPointF(3, 3));
-            p.drawText(QRectF(spitze.x() + 2, y - kTabZeile, 36, kTabZeile), Qt::AlignLeft | Qt::AlignVCenter,
-                       bendText(bendHoehe(note.bend)));
+            if (const QRect hoehe = bendFeld(i, felder); !hoehe.isNull())
+                p.drawText(hoehe, Qt::AlignLeft | Qt::AlignVCenter, bendText(bendHoehe(note.bend)));
         }
+    }
+    for (std::size_t i = 0; i < m_muster.noten.size(); ++i)
+    {
+        const Note& note = m_muster.noten[i];
+        const Griff& griff = alleGriffe[i];
+        if (felder[i].isNull()) continue;
+        const QRect& feld = felder[i];
+        const bool markiert = istMarkiert(note);
+        // die Zahl schneidet die Linie: ein Feld in der Farbe des Grunds, markiert hervorgehoben
+        p.setPen(Qt::NoPen);
+        p.setBrush(markiert ? an : pal.color(QPalette::Base));
+        p.drawRect(feld);
+        p.setBrush(Qt::NoBrush);
+        p.setPen(!griff.greifbar ? QColor(226, 75, 74) : markiert ? pal.color(QPalette::HighlightedText) : text);
+        p.drawText(feld, Qt::AlignCenter, tabZeichen(note, griff, m_saiten));
+        // verbunden ohne vorige ein „!"
         if (griff.verbindungFehlt)
         {
             p.setPen(QColor(226, 75, 74));
@@ -869,6 +909,8 @@ bool NotenRaster::event(QEvent* event)
             if (griff.greifbar && note.saite >= 0 && note.saite == griff.saite) text += tr(" — set by you");
             if (note.saite >= 0 && note.saite != griff.saite)
                 text += tr(" (set to string %1, which cannot play it here)").arg(saitenNummer(m_saiten, note.saite));
+            // Befund S137: die Hoehe des Bends steht auch hier — in den Tab-Linien fehlt sie, wo kein Platz ist
+            if (!note.bend.empty()) text += tr(", bend %1").arg(bendText(bendHoehe(note.bend)));
             if (tabNoteBei(hilfe->pos()) == platz) text += tr(" — drag to another line: the same note on that string");
             QToolTip::showText(hilfe->globalPos(), text, this);
             return true;

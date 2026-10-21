@@ -754,6 +754,20 @@ TEST_CASE("Karaoke-Panel S89: Schalter, Editor der Ebene, Ablage und Karaoke-Pre
         const KaraokePanel::Ziel ziel{&vis, &mutex, services.tryResolve<IEventBus>(), nullptr};
         const QString abend = tmp.filePath(QStringLiteral("woanders/Abend.lvkar"));
         CHECK(vis.karaokeGeaendert());                              // der Edit von eben
+        // S141: einen Takt des Panels (500 ms) abwarten — die Zeile traegt jetzt den Stern. So lief
+        // der Fall unter Last schon bisher; danach stand nach dem Speichern „Abend *" (er wackelte)
+        auto* kopfZeile = panel.findChild<lumi::ui::PresetZeile*>();
+        REQUIRE(kopfZeile != nullptr);
+        auto* kopfCombo = kopfZeile->findChild<QComboBox*>(QStringLiteral("presetZeileCombo"));
+        REQUIRE(kopfCombo != nullptr);
+        QElapsedTimer takt;
+        takt.start();
+        while (takt.elapsed() < 700 && !kopfCombo->itemText(0).endsWith(QStringLiteral(" *")))
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+            QThread::msleep(10);
+        }
+        REQUIRE(kopfCombo->itemText(0).endsWith(QStringLiteral(" *")));
         CHECK_FALSE(KaraokePanel::speichereKaraokeNach(ziel, ablage));  // die Ablage ist kein Preset
         REQUIRE(KaraokePanel::speichereKaraokeNach(ziel, abend));   // der Ordner entsteht
         CHECK(QFile::exists(abend));
