@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Warm Pad",
     "category": "pads",
-    "genres": ["Drum and Bass", "House", "Reggaeton", "Trance"],
+    "genres": ["Ambient", "Drum and Bass", "House", "Reggaeton", "Trance"],
     "description": "Three detuned saws through a low filter, very slow in and out.",
     "level": 1.3063,
     "layers": [

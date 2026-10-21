@@ -1,7 +1,7 @@
 # LumiViz — Benutzerhandbuch
 
-> **Version:** 1.196.0
-> **Datum:** 2026-10-20
+> **Version:** 1.197.0
+> **Datum:** 2026-10-21
 > **Typ:** Benutzerhandbuch
 > **Status:** Aktiv
 > **Zielgruppe:** Anwender
@@ -2693,6 +2693,11 @@ Die Achse wird bedient wie die Zeitachse des Composers — nur in Takten.
 | → **Delete** (auch Entf) | Entfernt den Clip, bei mehreren alle markierten. Spielt danach kein Clip mehr eine Basis, geht sie mit |
 | → **Edit base** (auch Doppelklick) | Öffnet den Editor für die Basis: den Drum-Editor oder, bei einem Instrument-Clip, den Instrument-Editor |
 | → **Make new base and edit** | Löst den Clip von seinen Kopien: er bekommt eine eigene Basis „<Name> 2" und der Editor öffnet sich dafür |
+| **Expression am Clip** | NEU in 1.197.0. Ein Verlauf der Stärke über den ganzen Clip mit allen Wiederholungen — etwa ein Crescendo über acht Takte —, malgenommen mit der Spur Expression des Musters. Ein Clip mit Kurve zeigt sie als Linie über sich; ohne Kurve zeichnet er nichts (volle Stärke) |
+| Am markierten Clip: Klick auf die gestrichelte Linie „Expression 1" oder auf die Kurve | Setzt einen Punkt, in Sechzehnteln eines Takts; mit **Alt** frei. Der markierte Clip zeigt dafür seine Punkte, ohne Kurve die gestrichelte Linie oben. An einem Clip, der nicht markiert ist, verschiebt ein Klick wie immer; die Kanten gehen vor |
+| Einen Punkt ziehen, Doppelklick auf einen Punkt | Verschieben zwischen den Nachbarn; löschen (der Doppelklick öffnet hier nicht den Editor). Die Zeile unter der Achse nennt den Wert in dB |
+| → **Clear expression** | Nimmt die Kurve des Clips weg; grau, wenn er keine hat |
+| Kurve und Länge | Die Punkte stehen in Takten ab dem Anfang des Clips: wird er länger, bleibt die Kurve, wo sie ist, und dahinter gilt der letzte Wert; wird er kürzer, bleiben die Punkte dahinter erhalten (blass, nicht zu hören) und kommen zurück, wenn er wieder länger wird. Wer den Clip verschiebt, nimmt die Kurve mit |
 | Rechtsklick auf eine freie Stelle → **Add channel** | Ein neuer Kanal „Channel N" |
 | Rechtsklick auf einen Kanalnamen | **Rename channel...**, **Turn channel off** / **on**, **Delete channel** |
 | Esc beim Ziehen | Bricht den Zug ab |
@@ -3011,6 +3016,35 @@ Kopierte gemerkt, wenn der Editor ein anderes Muster zeigt.
 Passt beim Einfügen etwas nicht mehr ins Muster, steht unter dem Raster, wie
 viele Noten keinen Platz hatten und wie viele am Ende gekürzt wurden.
 
+**Spuren über der Zeit.** NEU in 1.197.0. Was ein Spieler mit Fuß und Hand über
+die Noten hinweg tut, steht in eigenen Spuren über dem Raster — wie die Regler
+eines Keyboards: **Sustain** und **Sostenuto** (die Pedale), **Expression** (die
+Stärke), **Vibrato** (seine Tiefe in Cent) und **Pitch** (die Tonhöhe in
+Halbtönen). Sie gehören zum Muster und wiederholen sich mit ihm. Eine leere Spur
+ist die Vorgabe des Instruments: kein Pedal, volle Stärke, das Vibrato der
+Schicht, die gespielte Höhe.
+
+| Element | Wirkung |
+|---|---|
+| Zeile **Lanes** | Unter der Zeile Strum: je Spur, die das Instrument trägt, ein Haken mit ihrem Namen; rechts **Tab** (die Tab-Linien, bis 1.196.0 am Ende der Zeile Strum). Der Haken blendet die Spur ein oder aus — **nur die Ansicht**: eine ausgeblendete Spur klingt weiter. Trägt sie dann Werte, steht ein Punkt hinter ihrem Namen (*Vibrato •*, Tooltip „hidden, still playing"). Beim Öffnen eines Musters sind die Spuren mit Werten eingeblendet, die übrigen aus |
+| Welche Spuren | Ein Instrument ohne Saiten trägt alle fünf. Ein Saiteninstrument trägt **Vibrato** immer (der Finger), **Expression** nur mit Tonabnehmer, **Pitch** nur mit Vibratohebel (*Tremolo arm* im Creator) und die **Pedale** nur, wenn eine Schicht mit *Own note* dabei ist; eine Schicht, die keine Saite ist, nimmt Expression, Vibrato und Pitch immer. Eine Spur mit Werten, die das Instrument nicht trägt (nach einem Wechsel des Instruments), bleibt in der Zeile — blass, mit dem Tooltip „This instrument does not use it" |
+| Die Spuren im Raster | Unter der Spur Strum je eingeblendeter Spur eine Leiste, links ihr Kürzel (**Sus**, **Sost**, **Expr**, **Vib**, **Pitch**; der volle Name im Tooltip). Die Pedale als Fläche von unten — ein halb gedrücktes Pedal ist eine halbe Fläche; Expression, Vibrato und Pitch als Linie mit Punkten. **Pitch** zeigt den Bereich des Instruments um eine Mittellinie (die gespielte Höhe); ein Wert jenseits davon wird beim Spielen auf die Grenze gekappt und steht als roter, hohler Punkt am Rand. Eine leere Spur ist gestrichelt und sagt „Instrument default" |
+| Klick in eine Spur | Setzt einen Punkt auf den nächsten Schritt; weitergezogen wandert er mit. Mit **Alt** frei zwischen den Schritten. Der Zeiger wird dort zum Kreuz |
+| Einen Punkt ziehen | Verschiebt ihn in Zeit und Wert — zwischen seinen Nachbarn, nicht über sie hinaus. Der Zeiger wird über einem Punkt zum Kreuzpfeil |
+| Doppelklick auf einen Punkt | Löscht ihn |
+| Rechtsklick in eine Spur | **Delete point** (über einem Punkt) und **Clear lane** (alle Punkte der Spur) |
+| Tooltip | Der Wert des Punkts: die Pedale in Prozent, **Expression mit dem Pegel in dB** (0,5 = −12 dB, 0 = still), Vibrato in Cent, Pitch in Halbtönen |
+
+Jeder Zug ist ein Schritt für Undo. Wie die Spuren klingen: ein **Pedal** hält
+eine Note über ihr Ende hinaus — **Sustain** jede, deren Ende bei gedrücktem
+Pedal liegt, **Sostenuto** nur die, die beim Treten schon klangen; ab halb
+gedrückt gilt es, am Ende des Clips ist es los. **Expression** macht leiser:
+der Pegel ist das Quadrat (0,5 = −12 dB); an einer Saite wirkt sie direkt hinter
+dem Tonabnehmer, vor dem Drive — wie der Lautstärkeknopf einer Gitarre, ein
+leiserer Ton zerrt weniger. **Vibrato** setzt die Tiefe; Rate und Delay kommen
+von der Schicht, ohne eigene Rate 5,5 Hz. **Pitch** zieht die Tonhöhe, gekappt
+auf *Pitch range* der Schicht, an der Saite auf den Vibratohebel.
+
 ### Eigene Instrumente: der Instrument-Creator
 
 Ein Instrument ist eine Datei `.lvinst`. Die mitgelieferten liegen unter
@@ -3083,7 +3117,8 @@ die Klaviatur des Editors.
 | **Cutoff**, **Filter envelope** | Die Grenze des Filters; sie geht mit der Tonhöhe mit. Cutoff ganz links ist „open" (der Filter tut nichts, sein Kasten ist grau geschrieben, Type und Resonance sind grau), sonst die Grenze als Vielfaches des Grundtons. Filter envelope verschiebt sie mit dem Anschlag nach oben — sie folgt der Hüllkurve der Schicht, gleich wo der Filter in der Zeile steht. Bei einer gezupften Saite wird ein Filter übersprungen; sein Kasten sagt „skipped“ |
 | **Resonance** | Betont die Stelle an der Grenze: weiter rechts klingt der Filter dort mit, bis er fast pfeift — mit Envelope zusammen der typische Klang eines Synthesizer-Basses. Beim Band-pass stellt sie die Breite: weiter rechts wird das Band schmaler. Mit mehr Resonance wird der übrige Ton leiser. Ein Low-pass mit 0 % ist genau der Filter von früher; schon bei 1 % ist er etwas heller |
 | **Drive** | Unter einem Kasten **Drive**. Ein Verzerrer an dieser Stelle des Wegs: ganz links aus, weiter rechts rauer und lauter im Eindruck |
-| **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst |
+| **Rate**, **Depth**, **Delay** (Vibrato) | Wie schnell, wie stark, und wie lange es nach dem Einsatz anwächst. Trägt das Muster eine Spur **Vibrato**, setzt sie die Tiefe; ohne eigene Rate (0) steht „off · 5.5 Hz with the Vibrato lane" — die Spur nimmt dann 5,5 Hz |
+| **Pitch range** (Vibrato) | NEU in 1.197.0. Wie weit die Spur **Pitch** diese Schicht nach oben und unten ziehen darf, in Halbtönen (Vorgabe 2, bis 24); was darüber hinaus geht, wird gekappt |
 | **Noise** (Waveform) | Rauschen hat keine Tonhöhe: jede Taste spielt dasselbe, und Voices, Detune, Pitch sweep, die Obertöne und Vibrato fehlen. Geformt wird es mit Hüllkurve, Filter und Drive — kurz und ungefiltert ist es der Klick eines Schlags, länger der Teppich einer Snare. Der Filter geht weiter mit der Note mit: mit Cutoff klingt eine tiefere Taste dumpfer. Das Bild oben heißt dann **Noise** und zeigt ein kurzes Stück |
 | **One cycle**, **Envelope of a note** | Das Bild einer Schwingung und der Hüllkurve — je Schicht eine einzelne Stimme ohne Vibrato und ohne Pitch sweep. Die Linie ist die Summe aller eingeschalteten Schichten; bei mehreren zeigt die gestrichelte die gewählte allein |
 | Klaviatur | Ein Klick spielt den Ton mit den Einstellungen, wie sie gerade stehen — auch ungespeichert. Nur, solange sonst nichts spielt |
@@ -3104,6 +3139,7 @@ Korpus und Tonabnehmern.
 | **Strings** | Wie viele Saiten, 1 bis 12. Eine neue Saite kommt oben dazu, eine Quarte über der höchsten |
 | Die Felder der Saiten | Je Saite der Ton der leeren Saite, von der tiefsten an. Getippt wird ein Name (E2, C#4, Bb3) oder eine Zahl, oder mit den Pfeilen. Der Tooltip nennt die Nummer der Saite: gezählt wird wie am Instrument, die **hohe Saite ist 1** (bei der Gitarre die hohe E-Saite) |
 | **Capo** | So viele Bünde höher klingt jede leere Saite |
+| **Tremolo arm** | NEU in 1.197.0. Der Vibratohebel: mit ihm folgt die Saite der Spur **Pitch** — **↓** wie weit er sie senkt, **↑** wie weit er sie hebt, in Halbtönen (eingeschaltet 2 und 1). Ohne Hebel überhört die Saite Pitch; Vibrato (der Finger) wirkt immer |
 | **Scale** | Die Mensur in mm, die schwingende Länge vom Sattel zum Steg; die Vorlage setzt sie. Die Lage der Tonabnehmer gilt in mm vom Steg |
 | **String choice** | Wie eine Note ohne eigene Saite eine findet — die Vorgabe für neue Muster. **Per chord**: Noten, die zugleich klingen, auf verschiedenen Saiten, die Bünde nah beieinander. **Follow hand**: ebenso, aber nah an der Lage des vorigen Anschlags |
 | Gruppe **String** | Bei Extended KS und Waveguide. Zuerst das **Saitenbild**: Sattel links, Steg rechts, die Marke **pluck** und bei Waveguide die Tonabnehmer **neck** und **bridge** (ein Humbucker als zwei Striche). Die Marken lassen sich mit der Maus ziehen (der Zeiger wird zum Doppelpfeil). Darunter **Pluck position** (wo angeschlagen wird, vom Steg aus — bei einem Viertel fehlt der vierte Teilton), **Pluck** (weich wie ein Finger bis hart wie ein Plektrum), **Ring time** (bis der Grundton um 60 dB gefallen ist), **High damping** (wie viel schneller die Höhen vergehen), **Stiffness** (die Obertöne etwas höher, wie beim Klavier), **String variation** (eine tiefere Saite ist dicker: dunkler und steifer) |
@@ -3388,6 +3424,7 @@ Unter `asset\loop` liegen Loops zum Laden über **Load** oder den Audio Browser:
 | `tapping_demo.lvloop` | NEU in 1.190.0. Overdrive Guitar: derselbe Lauf auf der hohen E-Saite, zwei Takte getippt, zwei gezupft |
 | `tabs_demo.lvloop` | NEU in 1.191.0. Blues in A: Guitar mit Griffbildern aus dem Fenster Chords (A7, D7, E7), Overdrive Guitar mit **Hammer-on**, **Pull-off**, **Slide**, **Bend** und **Bend and release** — die Saiten sind gesetzt, die Tab-Linien zeigen die Bünde; Finger Bass |
 | `voicings_demo.lvloop` | NEU in 1.191.0. ii-V-I in C auf dem Tine Piano aus Voicings: Dm7, G7 in der zweiten Umkehrung, Cmaj7 und Am7 in der ersten — der tiefste Ton bleibt nah beieinander; Round Bass |
+| `lanes_demo.lvloop` | NEU in 1.197.0. „Slow Swell", die **Spuren über der Zeit**: das Piano mit kurzen Akkorden, die das **Sustain**-Pedal hält (je Takt gewechselt); das Warm Pad mit zwei Bogen **Expression** und einer **Kurve am Clip**, die über zwei Takte einblendet; der Lead mit wachsendem **Vibrato** in den langen Tönen, **Pitch** zieht den ersten an und lässt den letzten fallen; die Clean Guitar mit Volume-Swells über den Tonabnehmer; der Round Bass fällt am Ende (die Spur will fünf Halbtöne, *Pitch range* lässt zwei) |
 
 Im Unterordner `asset\loop\vergleich` (NEU in 1.189.0) liegen fünf Vergleiche: Bossa,
 Funk, Disco, Rock und Guitar je zweimal hintereinander — zuerst mit den Instrumenten
@@ -3573,6 +3610,7 @@ läuft, ist in diesem Fall nicht festgelegt.
 
 | Version | Datum | Änderungen |
 |---|---|---|
+| 1.197.0 | 2026-10-21 | Sessions 140–141. §16 Loop NEU **Spuren über der Zeit**: im Instrument-Editor die Zeile **Lanes** (Haken je Spur, Tab dorthin verschoben) und die Spuren **Sustain**, **Sostenuto**, **Expression**, **Vibrato**, **Pitch** über dem Raster — Punkte setzen, ziehen, löschen, **Clear lane**; welche Spur ein Instrument trägt; wie sie klingen (Pedal, Pegel e², an der Saite hinter dem Tonabnehmer). Im Panel Loop die **Expression am Clip** als Kurve (am markierten Clip zu bearbeiten, **Clear expression**). Im Creator **Pitch range** und **Tremolo arm**. Neues Beispiel `lanes_demo` |
 | 1.196.0 | 2026-10-20 | Session 139. §16 Loop: Match im Creator, die Rückfrage beim Speichern, die Abweichung im Fenster Instruments (Stufe 27f). |
 | 1.195.0 | 2026-10-20 | Session 139. §16 Loop: der Haken Limiter im Panel (Stufe 27e-3). |
 | 1.194.0 | 2026-10-20 | Session 139. §16 Loop: der Fader je Kanal im Kopf des Kanals (Stufe 27e-2). |

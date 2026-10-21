@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.25.0
+> **Version:** 0.26.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK13 a (Patrik S139–S141);
@@ -382,7 +382,7 @@ die Schwelle als Vorgabe.
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. *28c-2a ✅, 28c-2b ✅ (SK12 a), Hörproben offen.* |
 | 28d ✅ | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
 | 28e ✅ | Loop-Panel: die Expression-Kurve auf dem Clip (SK13 a). |
-| 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). |
+| 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). *Gebaut S141 bis auf den vollen Lauf: `lanes_demo`, Handbuch 1.197.0, Sichttest-Liste `Sichttest_Spuren.md` (lokal).* |
 
 Der Mechanismus der Klang-Spuren kommt mit 28a und 28d; er klingt erst mit der
 Hammer-Saite. **Rechenpunkt:** heute ist ein Ton vorab nach Tonhöhe und Dauer gerechnet;
@@ -592,10 +592,23 @@ der Clip keine Kurve hat. *Geprüft* (`test_LoopClipExpression`, beide Compiler)
 Panel mit CommandBus und Undo; ein nicht markierter Clip verschiebt sich wie bisher; Bild mit
 `LUMIVIZ_LOOP_EXPRESSION_BILD`.
 
+**Abschluss 28f** (bis auf den vollen Lauf): das Beispiel **`lanes_demo`** aus
+`asset/loop/make_spuren_loops.py` — „Slow Swell“, je Spur ein Kanal, der sie hörbar macht:
+Piano mit Sustain (Pedalwechsel je Takt), Warm Pad mit Expression und Kurve am Clip, Lead mit
+Vibrato und Pitch, Clean Guitar mit Volume-Swells über den Tonabnehmer, Round Bass mit einem
+Fall, der auf *Pitch range* gekappt wird. Fassung 12 mit allen Feldern der Fassungen 11 und 12
+(eine Fassung ist eine Zusage über die ganze Datei); gemischt gegen die Pegel seit S139,
+`instrument_pegel.py --loops` lässt die Datei, wie sie ist. Dazu im Katalog das Genre *Ambient* an
+Piano, Warm Pad, Lead, Round Bass (`instrument_katalog.py`, zuerst in einer Kopie gelaufen; nur die
+Zeile `genres` ändert sich; `make_saiten_instrumente.py` danach ohne Änderung). `loop_werte.txt`:
+ein Eintrag dazu, die übrigen unverändert. Test `test_LoopSpurenBeispiel`. Benutzerhandbuch 1.197.0;
+Sichttest-Liste `.claude/handover/Sichttest_Spuren.md` (L, B, K, C, H, U).
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.26.0 | 2026-10-21 | Session 141. Stufe 28f bis auf den vollen Lauf (Beispiel `lanes_demo`, Handbuch, Sichttest-Liste). |
 | 0.25.0 | 2026-10-21 | Session 141. SK13 a (Kurve am markierten Clip); Stufe 28e gebaut. |
 | 0.24.0 | 2026-10-21 | Session 141. Stufe 28d gebaut (Zeile *Lanes*, Spuren im Raster, bearbeiten). |
 | 0.23.0 | 2026-10-21 | Session 141. SK12 a (Expression an der Saite im Ton, hinter dem Tonabnehmer, vor dem Drive); Stufe 28c-2b gebaut. |

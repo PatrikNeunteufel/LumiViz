@@ -359,6 +359,7 @@ loop:harmonics_demo.lvloop	1114105	0.21260415	28693.8616
 loop:house_demo.lvloop	2048516	0.515627086	348582.105
 loop:instrument_demo.lvloop	1693440	0.670242131	232649.042
 loop:jazz_guitar_demo.lvloop	641455	0.335136414	50511.5046
+loop:lanes_demo.lvloop	1008000	0.35161826	96775.4773
 loop:palm_mute_demo.lvloop	641455	0.566127896	125834.577
 loop:pizzicato_demo.lvloop	756000	0.252541184	15011.5761
 loop:rock_demo.lvloop	1282909	0.479026228	183635.269

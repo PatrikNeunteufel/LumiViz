@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Lead",
     "category": "lead",
-    "genres": ["Metal", "Rock", "Synth-Pop"],
+    "genres": ["Ambient", "Metal", "Rock", "Synth-Pop"],
     "description": "A bright square with vibrato.",
     "level": 0.7343,
     "layers": [

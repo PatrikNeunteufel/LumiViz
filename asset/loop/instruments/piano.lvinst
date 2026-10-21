@@ -3,7 +3,7 @@
     "version": 3,
     "title": "Piano",
     "category": "keys",
-    "genres": ["Ska"],
+    "genres": ["Ambient", "Ska"],
     "description": "A sine with five overtones that fades over a long decay.",
     "level": 0.6294,
     "layers": [
