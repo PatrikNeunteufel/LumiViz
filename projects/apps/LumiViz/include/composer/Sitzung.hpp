@@ -29,6 +29,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -119,6 +120,17 @@ public:
     void springe(std::int64_t stelleMs);
 
     [[nodiscard]] bool laeuft() const;
+    /// Play wartet auf die Toene der Loop-Clips (Stufe 29e, H2 a, TV7 a A): die Uhr
+    /// steht noch, sie laeuft an, sobald alles da ist. `pausiere` und `stoppe` brechen ab.
+    [[nodiscard]] bool wartetAufToene() const { return m_wartetAufToene; }
+    /// Wie weit die Toene aller Loop-Clips vorbereitet sind: fertige und alle; 0 und 0 =
+    /// nichts offen.
+    [[nodiscard]] int toeneVorbereitet() const { return m_toene != nullptr ? m_toene->erledigt() : 0; }
+    [[nodiscard]] int toeneVorzubereiten() const { return m_toene != nullptr ? m_toene->gesamt() : 0; }
+    /// Was die Tonfuehrung waehrend des Spielens rechnet (TV7 a C und D).
+    [[nodiscard]] Tonfuehrung::Vorbereitung tonVorbereitung() const { return m_ton.vorbereitung(); }
+    /// Warten, bis die Toene der Loop-Clips vorbereitet sind — blockiert. Fuer Tests.
+    void warteAufToene();
     [[nodiscard]] std::int64_t stelleMs() const;
     /// Die Stelle im hinteren Fenster, die in der Schleife mit Ueberlappung
     /// zugleich laeuft (S99); -1 = keine, auch bei ausgeschaltetem Composer.
@@ -316,8 +328,26 @@ private:
     /// Den Ton freigeben — die Playlist haengt wieder. `melden`: der Titel
     /// des Players gilt wieder als laufender Song (nicht beim Beenden).
     void gibTonFrei(bool melden = true);
+    /// Die Toene aller Loop-Clips der Komposition vorab rechnen (Stufe 29e, H1 a) —
+    /// neu nur, wenn sich ihre Namen, die Rate oder ein Instrument geaendert haben.
+    /// Liest dafuer jede Loop-Datei (die offene Fassung des Loop-Panels zuerst).
+    void bereiteToeneVor();
+    /// Ohne neu zu lesen: ist der Auftrag fertig? true = alle Toene da.
+    bool toeneDa();
+    /// Die Uhr anwerfen (was `spiele` tut, sobald die Toene da sind).
+    void starteUhr();
+    void verwirfToene();
 
     Tonfuehrung m_ton;
+    /// Rechnet die Toene aller Loop-Clips (Stufe 29e); nullptr = nichts offen.
+    std::unique_ptr<lumi::loop::Tonauftrag> m_toene;
+    QStringList m_toeneNamen;          ///< wozu `m_toene` (oder der fertige Stand) gehoert
+    int m_toeneRate = 0;
+    std::uint64_t m_toeneFassung = 0;
+    bool m_toeneGeprueft = false;      ///< `m_toeneNamen` ist einmal ermittelt
+    bool m_wartetAufToene = false;
+    /// Abgebrochene Auftraege, die auslaufen; sie enden spaetestens mit der Sitzung.
+    std::vector<std::unique_ptr<lumi::loop::Tonauftrag>> m_toeneVerworfen;
     bool m_tonVersagt = false;  ///< die Engine hat keinen Mixer: nicht je Takt neu versuchen
     bool m_liefVorAus = false;  ///< die Komposition lief, als der Composer ausgeschaltet wurde
     bool m_songLief = false;    ///< zuletzt an den Renderer gemeldet

@@ -43,6 +43,7 @@
 #include "audio/AudioEvents.hpp"
 #include "audio/IAudioEngine.hpp"
 #include "composer/Komposition.hpp"
+#include "loop/Tonauftrag.hpp"
 
 #include <QString>
 
@@ -138,6 +139,19 @@ public:
     /// Wie oft eine Quelle nachgesetzt wurde, weil sie der Uhr davonlief —
     /// seit dem Uebernehmen.
     [[nodiscard]] int nachgesetzt() const { return m_nachgesetzt; }
+    /// Was die Loop-Clips im Hintergrund rechnen (Stufe 29e, TV7 a): fertige und alle
+    /// Klaenge ihrer Auftraege; `luecken` = mindestens einer spielt ohne die fehlenden
+    /// Noten (D), sonst klingt das bisherige Programm (C). 0 und 0 = nichts zu rechnen.
+    struct Vorbereitung
+    {
+        int erledigt = 0;
+        int gesamt = 0;
+        bool luecken = false;
+    };
+    [[nodiscard]] Vorbereitung vorbereitung() const;
+    /// Warten, bis die Auftraege der Loop-Clips fertig sind, und umschalten — blockiert.
+    /// Fuer Tests.
+    void warteAufToene();
     /// Wie viele Quellen der Mixer gerade hat (auch die im Vorlauf).
     [[nodiscard]] int quellen() const;
     /// Wie viele davon Loops sind.
@@ -209,6 +223,11 @@ private:
         int takte = 0;
     };
     std::vector<Abgeloest> m_abgeloest;
+    /// Auftraege der Loops, die abgebrochen sind und auslaufen (Stufe 29e); sie
+    /// enden spaetestens mit der Fuehrung — vor der Engine (Bootstrap_Integration §6.7).
+    std::vector<std::unique_ptr<lumi::loop::Tonauftrag>> m_verworfen;
+    /// Den Auftrag eines Loops abbrechen und auslaufen lassen.
+    void verwirfAuftrag(LoopQuelle& loop);
     float m_laut = -1.0f;             ///< zuletzt am Mixer gesetzt
     int m_limiter = -1;               ///< Limiter zuletzt am Mixer: 1 an, 0 aus, −1 noch nicht gesetzt
     /// Je Loop-Datei des letzten Takts: Stelle im Durchlauf und Pegel ihres lautesten Clips.

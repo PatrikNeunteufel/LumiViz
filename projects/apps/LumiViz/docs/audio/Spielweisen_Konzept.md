@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.34.0
+> **Version:** 0.35.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV6 a, WX1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV6 a und WX1 a (Patrik S139–S142);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV7 a und WX1 a (Patrik S139–S142);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -952,10 +952,45 @@ Dekodieren anhält. **Testfalle:** der Tonspeicher gilt für das ganze Programm 
 BassEngine leeren ihn zuerst, sonst könnten Klänge einer Engine aus Pappe zu denselben Dateien
 klingen (`test_LoopWiedergabe`). Im Programm nicht angesehen.
 
+✅ **TV7 a** (Patrik S142, nach Skizze): **Der Composer zeigt das Warten wie das Loop-Panel — im Feld
+Zeit der Kopfzeile** ([On] [Play] [Stop] [Loop] [Resume] [Zeit] [Edit] [Sync] …; eine Meldezeile hat
+das Panel nicht). Die Skizze in vier Zuständen:
+- **A** — Play gedrückt oder die Komposition geöffnet, Töne fehlen: die Uhr steht, im Feld Zeit steht
+  in Akzentfarbe „Preparing sounds… 12 / 40“ — gezählt die Töne **aller** Loop-Clips der Komposition
+  (H2 a). Play zeigt schon Pause, Stop bricht ab.
+- **B** — alles da: die Uhr läuft ab der Stelle, an der Play gedrückt wurde.
+- **C** — ein Loop im Loop-Panel geändert, während der Composer ihn spielt: der Clip klingt wie bisher,
+  hinter der Zeit „· updating sounds 3 / 5“.
+- **D** — ein Sprung zu einem Clip, dessen Töne der Speicher verworfen hat: die Uhr läuft weiter, nur
+  die fehlenden Noten schweigen, hinter der Zeit in Warnfarbe „· some notes silent, preparing 7 / 20“.
+
+Verworfen: b (eigene Meldezeile — schöbe das Panel bei jedem Warten um eine Zeile), c (in D die Uhr
+kurz anhalten — gegen H2 a, und am Composer hängen Bild und Karaoke). Kippt, wenn das Warten auf alle
+Loop-Clips bei großen Kompositionen spürbar dauert — dann nur auf die Clips der ersten Sekunden
+warten und den Rest im Hintergrund rechnen; das ändert H2 a und braucht einen eigenen Entscheid.
+
+**Gebaut 29e (S142):** Die `Sitzung` rechnet beim Laden einer Komposition (und nach jeder
+Bearbeitung) die Töne **aller Loop-Clips** der eingeschalteten Audio-Kanäle vorab — je Loop-Datei
+einmal gelesen, die offene Fassung des Loop-Panels zuerst; neu nur, wenn sich Namen, Rate oder ein
+Instrument geändert haben. `spiele` wirft die Uhr erst an, wenn alles da ist (`wartetAufToene`), der
+Takt startet sie danach; `pausiere`/`stoppe` brechen das Warten ab; auch der Weg „lief vor dem
+Ausschalten, läuft beim Einschalten weiter“ wartet. In der `Tonfuehrung` holt jede `LoopQuelle`
+ihre Klänge über einen Tonauftrag: aus dem Speicher sofort, sonst im Hintergrund — ohne Programm
+(neuer Clip, D) spielt sie mit Lücken, nach einer Änderung (C) das bisherige Programm; je Takt
+schaltet sie um, sobald der Auftrag fertig ist (ein anderer Durchlauf gilt als Sprung). Abgebrochene
+Aufträge laufen aus, ohne die Oberfläche zu blockieren. Das Feld Zeit zeigt TV7 a A, C (Akzentfarbe)
+und D (Warnfarbe `#d8b400` wie im Dialog *Match loudness*); Play zeigt beim Warten Pause, ein Klick
+bricht ab. **ClipLautheit** blieb, wie sie ist: sie lädt über `ladeKlaenge` und damit seit 29b aus
+dem Speicher. Tests: in `test_LoopSpieler` D und C an der Tonführung, in `test_ComposerPanel` „S142
+Panel 29e“ (Laden mit Vorladen, Play wartet, Pause bricht ab, die Uhr läuft an). **Nur unter
+Release-clang geprüft** (Composer 151 / 151, Bereich 498 / 498) — Testing-MSVC weggelassen (Patrik,
+zum Abschluss). Im Programm nicht angesehen.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.35.0 | 2026-10-21 | Session 142. TV7 a (das Warten im Composer im Feld Zeit, Skizze A–D); Stufe 29e gebaut (Vorladen in der Sitzung, Play wartet, Loop-Quellen der Tonführung über den Tonauftrag). |
 | 0.34.0 | 2026-10-21 | Session 142. Stufe 29d gebaut (Spieler über den Tonauftrag, Warten, Umschalten, Vorladen, Anzeige im Loop-Panel und im Instrument-Editor). |
 | 0.33.0 | 2026-10-21 | Session 142. TV5 a (Anzeige des Wartens an der Stelle von „Bar · Step“, Skizze A–D); TV6 a (Anspielen über den Hintergrund, sofort aus dem Speicher). |
 | 0.32.0 | 2026-10-21 | Session 142. Stufe 29c gebaut (`loop/Tonauftrag`, `ladeKlaenge` als Auftrag auf dem rufenden Thread, `test_LoopTonauftrag` mit dem BASS-Beleg). |

@@ -32,6 +32,7 @@
 #include "composer/KurvenEditor.hpp"
 #include "composer/Sitzung.hpp"
 #include "loop/Loop.hpp"
+#include "loop/Tonspeicher.hpp"
 #include "services/CommandBus.hpp"
 #include "services/EventBus.hpp"
 #include "services/ICommandBus.hpp"
@@ -69,7 +70,9 @@
 #include <QTemporaryDir>
 #include <QThread>
 
+#include <atomic>
 #include <functional>
+#include <thread>
 
 using namespace lumi::multieffect;
 using namespace lumi::composer;
@@ -3305,5 +3308,110 @@ TEST_SUITE("ComposerPanel")
         // --- Undo nimmt die Clips einzeln zurueck
         while (tonClips().size() > 0 && bus->canUndo()) REQUIRE(bus->undo());
         CHECK(tonClips().empty());
+    }
+
+    TEST_CASE("S142 Panel 29e: Play wartet auf die Toene der Loop-Clips — im Feld Zeit steht es (TV7 a)")
+    {
+        int argc = 1;
+        char arg0[10] = "UnitTests";
+        char* argv[2] = {arg0, nullptr};
+        QApplication app{argc, argv};
+        EigeneEinstellungen einstellungen;
+
+        // die Engine aus Pappe dekodiert, haelt aber an, solange der Fall es will
+        class HaltendeEngine : public papp::PappEngine
+        {
+        public:
+            std::atomic<bool> halten{false};
+            std::atomic<int> gefragt{0};
+            [[nodiscard]] std::vector<float> decodeStereo(const QString&, int, double) override
+            {
+                ++gefragt;
+                while (halten) std::this_thread::yield();
+                return std::vector<float>(200, 0.5f);
+            }
+        };
+
+        QTemporaryDir dir;
+        REQUIRE(dir.isValid());
+        // ein Loop, dessen Klang eine Datei ist, die es nicht gibt: er liegt nie im Tonspeicher
+        lumi::loop::Loop loop;
+        loop.schlaegeJeTakt = 1;
+        lumi::loop::Muster m;
+        m.name = QStringLiteral("M");
+        m.spuren = {{QStringLiteral("A"), dir.filePath(QStringLiteral("klopf.wav")), 1.0, 0.0, false}};
+        m.zeilen = {{1, 0, 0, 0}};
+        loop.muster = {m};
+        loop.kanaele = {{QStringLiteral("K"), true, {{QStringLiteral("M"), 0, 1}}}};
+        const QString loopDatei = dir.filePath(QStringLiteral("beat.lvloop"));
+        REQUIRE(lumi::loop::speichereLoop(loop, loopDatei));
+        Komposition k;
+        Kanal ton;
+        ton.name = QStringLiteral("A1");
+        ton.art = KanalArt::Audio;
+        ton.clips = {clip(loopDatei, 0, 8000)};
+        k.kanaele = {ton};
+        const QString datei = dir.filePath(QStringLiteral("loops.lvcomp"));
+        REQUIRE(speichereKomposition(k, datei));
+
+        ServiceContainer dienste;
+        dienste.registerSingleton<ICommandBus>([](ServiceContainer&) { return std::make_unique<CommandBus>(); });
+        dienste.registerSingleton<IAudioEngine>(
+            [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new HaltendeEngine); });
+        auto* engine = dynamic_cast<HaltendeEngine*>(dienste.tryResolve<IAudioEngine>());
+        REQUIRE(engine != nullptr);
+
+        VisualizerWidget widget(dienste);
+        widget.setFrameMode(RenderPacing::Unlimited, 60);
+        widget.resize(200, 150);
+        testfenster::platziere(widget);
+        widget.show();
+        if (!widget.hasVisualizer() || !warte([&] { return widget.isVisible(); }))
+        {
+            MESSAGE("Kein Visualizer oder kein sichtbares Fenster (Headless?) — uebersprungen");
+            return;
+        }
+        ComposerPanel panel(dienste);
+        panel.setFenster(&widget);
+        panel.resize(900, 420);
+        testfenster::platziere(panel);
+        panel.show();
+        auto* zeit = panel.findChild<QLabel*>(QStringLiteral("composerZeit"));
+        auto* play = panel.findChild<QPushButton*>(QStringLiteral("composerPlay"));
+        REQUIRE(zeit != nullptr);
+        REQUIRE(play != nullptr);
+        Sitzung* sitzung = panel.sitzung();
+
+        // --- laden: die Toene werden gleich vorab gerechnet (H1 a) — hier haengen sie
+        lumi::loop::tonspeicher().leere();
+        engine->halten = true;
+        REQUIRE(sitzung->lade(datei));
+        REQUIRE(warte([&] { return engine->gefragt.load() > 0; }));
+
+        // --- Play: die Uhr steht, das Feld Zeit sagt, was gerechnet wird; Play zeigt Pause
+        play->click();
+        CHECK(sitzung->wartetAufToene());
+        CHECK_FALSE(sitzung->laeuft());
+        REQUIRE(warte([&] { return zeit->text().startsWith(QStringLiteral("Preparing sounds… 0 / 1")); }));
+        CHECK(play->toolTip() == QStringLiteral("Pause"));
+
+        // --- Pause bricht das Warten ab; Play wartet wieder
+        play->click();
+        CHECK_FALSE(sitzung->wartetAufToene());
+        CHECK_FALSE(sitzung->laeuft());
+        play->click();
+        CHECK(sitzung->wartetAufToene());
+
+        // --- die Toene sind da: die Uhr laeuft
+        engine->halten = false;
+        sitzung->warteAufToene();
+        CHECK_FALSE(sitzung->wartetAufToene());
+        CHECK(sitzung->laeuft());
+        REQUIRE(warte([&] { return !zeit->text().startsWith(QStringLiteral("Preparing")); }));
+        // die Tonfuehrung holt den Klang fuer ihren Clip selbst noch einmal: eine Datei, die es nicht
+        // gibt, liegt nie im Speicher — dann klingt der Clip, sobald auch sein Auftrag fertig ist (D)
+        REQUIRE(warte([&] { return sitzung->tonVorbereitung().gesamt == 0; }));
+        sitzung->stoppe();
+        lumi::loop::tonspeicher().leere();
     }
 }

@@ -2597,7 +2597,7 @@ void ComposerPanel::setupUI()
     });
     connect(m_spielen, &QPushButton::clicked, this, [this] {
         if (m_sitzung == nullptr) return;
-        if (m_sitzung->laeuft())
+        if (m_sitzung->laeuft() || m_sitzung->wartetAufToene())  // waehrend des Wartens: abbrechen (TV7 a)
             m_sitzung->pausiere();
         else
             m_sitzung->spiele();
@@ -2902,7 +2902,8 @@ void ComposerPanel::zeigeStand()
 {
     const bool geladen = m_sitzung != nullptr && m_sitzung->geladen();
     const bool an = geladen && m_sitzung->an();
-    const bool laeuft = an && m_sitzung->laeuft();
+    // wartet Play auf die Toene der Loop-Clips, zeigt der Knopf schon Pause (TV7 a A)
+    const bool laeuft = an && (m_sitzung->laeuft() || m_sitzung->wartetAufToene());
     const bool schleife = m_sitzung != nullptr ? m_sitzung->schleife() : false;
 
     // Schalter und Knoepfe nur anfassen, wenn sich etwas geaendert hat — der
@@ -2948,9 +2949,25 @@ void ComposerPanel::zeigeStand()
                                   : Sitzung::mitlaufenSeitenweise() ? Zeitachse::Mitlaufen::Seitenweise
                                                                     : Zeitachse::Mitlaufen::Stetig);
     const std::int64_t stelle = geladen ? m_sitzung->stelleMs() : 0;
-    m_zeit->setText(geladen ? QStringLiteral("%1 / %2").arg(zeitText(stelle),
-                                                             zeitText(m_sitzung->laengeMs()))
-                            : QString());
+    // TV7 a (Stufe 29e): was gerechnet wird, steht im Feld Zeit — A an seiner Stelle, C und D dahinter
+    QString zeit = geladen ? QStringLiteral("%1 / %2").arg(zeitText(stelle), zeitText(m_sitzung->laengeMs())) : QString();
+    QString farbe;
+    if (geladen && m_sitzung->wartetAufToene())
+    {
+        zeit = tr("Preparing sounds… %1 / %2").arg(m_sitzung->toeneVorbereitet()).arg(m_sitzung->toeneVorzubereiten());
+        farbe = QStringLiteral("color: palette(highlight);");
+    }
+    else if (const Tonfuehrung::Vorbereitung v = m_sitzung != nullptr ? m_sitzung->tonVorbereitung() : Tonfuehrung::Vorbereitung{};
+             geladen && v.gesamt > 0)
+    {
+        // D in Warnfarbe: Noten schweigen; C in Akzentfarbe: es klingt noch der bisherige Stand
+        zeit += v.luecken ? tr(" · some notes silent, preparing %1 / %2").arg(v.erledigt).arg(v.gesamt)
+                          : tr(" · updating sounds %1 / %2").arg(v.erledigt).arg(v.gesamt);
+        // die Warnfarbe wie im Dialog Match loudness (LautheitsDialog)
+        farbe = v.luecken ? QStringLiteral("color: #d8b400;") : QStringLiteral("color: palette(highlight);");
+    }
+    if (m_zeit->text() != zeit) m_zeit->setText(zeit);
+    if (m_zeit->styleSheet() != farbe) m_zeit->setStyleSheet(farbe);
     m_zeitachse->setStelle(stelle);
     m_zeitachse->setSchleife(schleife, geladen ? m_sitzung->zweiteStelleMs() : -1);
 }

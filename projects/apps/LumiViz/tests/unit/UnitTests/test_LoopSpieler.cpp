@@ -943,6 +943,7 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
     {
         // im Vorlauf: die Quelle steht schon im Mixer, angehalten — einen Song meldet noch niemand
         Tonfuehrung::Ergebnis e = fuehrung.takt(k, 0, true);
+        fuehrung.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29e)
         CHECK(fuehrung.quellen() == 1);
         CHECK(fuehrung.loops() == 1);
         REQUIRE(engine.generator != nullptr);
@@ -1017,6 +1018,7 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
     SUBCASE("hat das Loop-Panel die Datei offen, spielt der Clip dessen Fassung und folgt ihr (L7 a)")
     {
         Tonfuehrung::Ergebnis e = fuehrung.takt(k, 1000, true);
+        fuehrung.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29e)
         REQUIRE(e.songGewechselt);
         e = fuehrung.takt(k, 1400, true);
         CHECK_FALSE(e.songGewechselt);
@@ -1065,6 +1067,37 @@ TEST_CASE("Loop im Composer: ein Loop-Clip ist ein Klangerzeuger im Mixer, wiede
         CHECK(engine.generator == nullptr);
         e = fuehrung.takt(fehlt, 133, true);
         CHECK(engine.zahl(QStringLiteral("generator")) == 0);
+    }
+
+    SUBCASE("Stufe 29e: fehlen Toene, schweigen nur sie (D); nach einer Aenderung klingt das Bisherige (C)")
+    {
+        // D: der Clip beginnt, sein Klang wird noch gerechnet — der Klangerzeuger laeuft, still
+        engine.halten = true;
+        (void)fuehrung.takt(k, 1000, true);
+        Tonfuehrung::Vorbereitung v = fuehrung.vorbereitung();
+        CHECK(v.gesamt == 1);
+        CHECK(v.erledigt == 0);
+        CHECK(v.luecken);
+        REQUIRE(engine.generator != nullptr);
+        CHECK(ersterWert(engine.generator) == 0.0f);
+        engine.halten = false;
+        fuehrung.warteAufToene();
+        CHECK(fuehrung.vorbereitung().gesamt == 0);
+
+        // C: das Panel meldet eine Fassung mit einem anderen Klang — bis er da ist, klingt der bisherige
+        Loop offen = loop;
+        offen.muster[0].spuren[0].klang = QStringLiteral("C:/s/b.wav");
+        engine.halten = true;
+        meldeOffen(pfad, offen);
+        (void)fuehrung.takt(k, 1033, true);
+        v = fuehrung.vorbereitung();
+        CHECK(v.gesamt == 1);
+        CHECK_FALSE(v.luecken);
+        engine.halten = false;
+        fuehrung.warteAufToene();
+        CHECK(fuehrung.vorbereitung().gesamt == 0);
+        CHECK(engine.dekodiert.contains(QStringLiteral("C:/s/b.wav")));
+        meldeOffen({}, {});
     }
 
     SUBCASE("ohne Titel in den Tags gilt der Dateiname")

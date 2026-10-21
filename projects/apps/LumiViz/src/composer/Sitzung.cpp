@@ -12,6 +12,9 @@
 #include "composer/AppAnbindung.hpp"  // AusgeschalteterClipEvent (S130)
 #include "composer/Bearbeiten.hpp"
 #include "composer/Bildquelle.hpp"
+#include "loop/Instrument.hpp"  // saitenAusInstrumenten, instrumentFassung (Stufe 29e)
+#include "loop/Loop.hpp"
+#include "loop/Offen.hpp"
 #include "services/IEventBus.hpp"
 #include "services/ServiceContainer.hpp"
 #include "services/events/UIEvents.hpp"
@@ -127,6 +130,7 @@ bool Sitzung::lade(const QString& pfad, QStringList* bericht)
     ++m_ladung;
     m_stelleMs = 0;
     m_liefVorAus = false;  // eine andere Komposition laeuft nicht „weiter"
+    bereiteToeneVor();     // H1 a: die Toene der Loop-Clips schon jetzt, im Hintergrund
     Q_EMIT kompositionGeaendert();
     Q_EMIT geaendert();
     return true;
@@ -191,6 +195,7 @@ void Sitzung::setzeKomposition(Komposition neu)
         q->spiegleStand();
     }
     m_stelleMs = std::clamp<std::int64_t>(m_stelleMs, 0, laengeMs());
+    bereiteToeneVor();  // ein neuer Loop-Clip bringt neue Toene (Stufe 29e)
     Q_EMIT kompositionBearbeitet();
     Q_EMIT geaendert();
 }
@@ -235,7 +240,15 @@ void Sitzung::setAn(bool an)
         neu->uhr().springe(m_stelleMs);
         // Einstellung (Wunsch Patrik S98): lief die Komposition, als der Composer
         // ausgeschaltet wurde, laeuft sie beim Einschalten weiter
-        if (m_liefVorAus && laeuftNachEinWeiter()) neu->uhr().starte();
+        if (m_liefVorAus && laeuftNachEinWeiter())
+        {
+            // H2 a: erst, wenn die Toene der Loop-Clips da sind — sonst wartet sie (Stufe 29e)
+            bereiteToeneVor();
+            if (toeneDa())
+                neu->uhr().starte();
+            else
+                m_wartetAufToene = true;
+        }
         m_liefVorAus = false;
         neu->spiegleStand();
         {
@@ -253,7 +266,8 @@ void Sitzung::setAn(bool an)
     }
     else
     {
-        m_liefVorAus = laeuft();
+        m_liefVorAus = laeuft() || m_wartetAufToene;
+        m_wartetAufToene = false;
         loeseKette();  // Effect Chain zurueck an die Kette, BEVOR die Renderer der Clips gehen
         gibTonFrei();  // der Player gehoert wieder der Playlist
         protokolliereMessung();
@@ -524,6 +538,21 @@ void Sitzung::spiele()
 {
     if (!m_geladen) return;
     setAn(true);
+    if (quelle() == nullptr) return;
+    // H2 a (Stufe 29e): erst, wenn die Toene aller Loop-Clips da sind — bis dahin steht die Uhr
+    bereiteToeneVor();
+    if (!toeneDa())
+    {
+        m_wartetAufToene = true;
+        Q_EMIT geaendert();
+        return;
+    }
+    m_wartetAufToene = false;
+    starteUhr();
+}
+
+void Sitzung::starteUhr()
+{
     Bildquelle* q = quelle();
     if (q == nullptr) return;
     {
@@ -534,8 +563,72 @@ void Sitzung::spiele()
     Q_EMIT geaendert();
 }
 
+void Sitzung::warteAufToene()
+{
+    if (m_toene != nullptr) m_toene->warte();
+    if (m_wartetAufToene && toeneDa())
+    {
+        m_wartetAufToene = false;
+        starteUhr();
+    }
+}
+
+void Sitzung::verwirfToene()
+{
+    if (m_toene == nullptr) return;
+    m_toene->brichAb();
+    m_toeneVerworfen.push_back(std::move(m_toene));
+}
+
+bool Sitzung::toeneDa()
+{
+    if (m_toene == nullptr) return true;
+    if (!m_toene->fertig()) return false;
+    verwirfToene();  // fertig: die Toene liegen im Speicher, seine Threads laufen aus
+    return true;
+}
+
+void Sitzung::bereiteToeneVor()
+{
+    std::erase_if(m_toeneVerworfen, [](const std::unique_ptr<lumi::loop::Tonauftrag>& a) { return a->ruht(); });
+    IAudioEngine* engine = m_widget.dienste().tryResolve<IAudioEngine>();
+    if (engine == nullptr || !m_geladen) return;  // ohne Engine kein Ton: nichts zu warten
+    // die Toene aller Loop-Clips der eingeschalteten Audio-Kanaele, je Loop-Datei einmal gelesen
+    const lumi::loop::SaitenVon saiten = lumi::loop::saitenAusInstrumenten();
+    QStringList namen;
+    QStringList gelesen;
+    for (const Kanal& kanal : m_komposition.kanaele)
+    {
+        if (kanal.art != KanalArt::Audio || !kanal.an) continue;
+        for (const Clip& clip : kanal.clips)
+        {
+            if (!clip.an || !istLoop(clip.datei) || gelesen.contains(clip.datei)) continue;
+            gelesen << clip.datei;
+            lumi::loop::Loop loop;
+            if (!lumi::loop::offenerLoop(clip.datei, loop) && !lumi::loop::ladeLoop(clip.datei, loop)) continue;
+            loop.richte();
+            namen << loop.klangNamen(saiten);
+        }
+    }
+    const int rate = engine->getSampleRate();
+    const std::uint64_t fassung = lumi::loop::instrumentFassung();
+    if (m_toeneGeprueft && namen == m_toeneNamen && rate == m_toeneRate && fassung == m_toeneFassung) return;
+    verwirfToene();
+    m_toeneGeprueft = true;
+    m_toeneNamen = namen;
+    m_toeneRate = rate;
+    m_toeneFassung = fassung;
+    if (namen.isEmpty()) return;
+    auto auftrag = std::make_unique<lumi::loop::Tonauftrag>(
+        namen, rate, [engine](const QString& datei, int r, double maxSekunden) { return engine->decodeStereo(datei, r, maxSekunden); });
+    if (auftrag->ausSpeicher()) return;  // alles im Speicher: nichts zu warten
+    auftrag->starte();
+    m_toene = std::move(auftrag);
+}
+
 void Sitzung::pausiere()
 {
+    m_wartetAufToene = false;
     Bildquelle* q = quelle();
     if (q == nullptr) return;
     {
@@ -548,6 +641,7 @@ void Sitzung::pausiere()
 
 void Sitzung::stoppe()
 {
+    m_wartetAufToene = false;
     if (Bildquelle* q = quelle())
     {
         QMutexLocker halt(&m_widget.renderMutex());
@@ -629,6 +723,12 @@ void Sitzung::beimTakt()
         bindeKette();
         q = quelle();
         if (q == nullptr) return;
+    }
+    // H2 a (Stufe 29e): Play wartete auf die Toene der Loop-Clips — jetzt sind sie da
+    if (m_wartetAufToene && toeneDa())
+    {
+        m_wartetAufToene = false;
+        starteUhr();
     }
     fuehreTon(*q);  // C5: der Audiokanal fuehrt den Player
     if (q->standAmEnde())

@@ -12,6 +12,7 @@
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Offen.hpp"
+#include "loop/Tonauftrag.hpp"
 
 #include <QFileInfo>
 #include <QStringList>
@@ -42,6 +43,13 @@ struct Tonfuehrung::LoopQuelle
     std::uint64_t instrumente = 0;       ///< `instrumentFassung()` beim Laden der Klaenge
     int rate = 0;
     double durchlaufMs = 0.0;            ///< ein Durchlauf, wie der Klangerzeuger ihn spielt
+    /// Rechnet Toene, die nicht im Speicher lagen (Stufe 29e) — zu `auftragNamen`.
+    std::unique_ptr<lumi::loop::Tonauftrag> auftrag;
+    QStringList auftragNamen;
+    std::uint64_t auftragInstrumente = 0;
+    /// Er spielt mit Luecken: was fehlte, schweigt, bis der Auftrag fertig ist
+    /// (H2 a, TV7 a D). Sonst klingt waehrend des Auftrags das bisherige Programm (C).
+    bool lueckenhaft = false;
 
     /// Den Loop holen: die Fassung, die das Loop-Panel offen hat (auch die
     /// ungespeicherte, L7 a) — sonst die Datei. false = kein Loop.
@@ -56,8 +64,12 @@ struct Tonfuehrung::LoopQuelle
     }
 
     /// Den Loop uebersetzen und dem Klangerzeuger geben; die Klaenge werden
-    /// nur neu geladen, wenn sich die Klaenge der Spuren geaendert haben.
-    void baue(IAudioEngine& engine)
+    /// nur neu geladen, wenn sich die Klaenge der Spuren geaendert haben. Seit
+    /// Stufe 29e ueber einen Tonauftrag: was im Tonspeicher liegt, sofort —
+    /// den Rest im Hintergrund. Bis er da ist, klingt das bisherige Programm
+    /// (C); gab es keines, spielt der Clip ohne die fehlenden Noten (D).
+    /// `verworfen`: wohin ein ueberholter Auftrag geht, um auszulaufen.
+    void baue(IAudioEngine& engine, std::vector<std::unique_ptr<lumi::loop::Tonauftrag>>& verworfen)
     {
         rate = engine.getSampleRate();
         // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
@@ -65,16 +77,62 @@ struct Tonfuehrung::LoopQuelle
         const QStringList namen = loop.klangNamen(saiten);
         // auch wenn eine Instrument-Datei neu gespeichert wurde
         const std::uint64_t fassung = lumi::loop::instrumentFassung();
-        if (klaenge == nullptr || namen != klangNamen || fassung != instrumente)
+        const auto verwirf = [&verworfen](std::unique_ptr<lumi::loop::Tonauftrag>& a) {
+            if (a == nullptr) return;
+            a->brichAb();
+            verworfen.push_back(std::move(a));
+        };
+        if (klaenge != nullptr && namen == klangNamen && fassung == instrumente)
+            verwirf(auftrag);  // dieselben Klaenge: ein laufender Auftrag ist ueberholt
+        else if (auftrag == nullptr || namen != auftragNamen || fassung != auftragInstrumente)
         {
-            klaenge = std::make_shared<const lumi::loop::Klaenge>(
-                lumi::loop::ladeKlaenge(namen, engine, rate));
-            klangNamen = namen;
-            instrumente = fassung;
+            verwirf(auftrag);
+            auto neu = std::make_unique<lumi::loop::Tonauftrag>(
+                namen, rate, [&engine](const QString& datei, int r, double maxSekunden) {
+                    return engine.decodeStereo(datei, r, maxSekunden);
+                });
+            if (neu->ausSpeicher())
+                setzeKlaenge(neu->klaenge(), namen, fassung);
+            else
+            {
+                // D: noch nichts zu spielen — was im Speicher lag, klingt schon, der Rest schweigt
+                if (klaenge == nullptr)
+                {
+                    klaenge = std::make_shared<const lumi::loop::Klaenge>(neu->klaenge());
+                    lueckenhaft = true;
+                }
+                neu->starte();
+                auftrag = std::move(neu);
+                auftragNamen = namen;
+                auftragInstrumente = fassung;
+            }
         }
+        if (klaenge == nullptr) return;
         const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, saiten);
         durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
         erzeuger.setzeProgramm(programm);
+    }
+
+    /// Ist der Auftrag fertig, mit seinen Klaengen neu uebersetzen (je Takt).
+    /// true = umgeschaltet.
+    bool pruefe(std::vector<std::unique_ptr<lumi::loop::Tonauftrag>>& verworfen)
+    {
+        if (auftrag == nullptr || !auftrag->fertig()) return false;
+        setzeKlaenge(auftrag->klaenge(), auftragNamen, auftragInstrumente);
+        auftrag->brichAb();  // fertig: seine Threads laufen gerade aus
+        verworfen.push_back(std::move(auftrag));
+        const auto programm = lumi::loop::baueProgramm(loop, rate, klaenge, lumi::loop::saitenAusInstrumenten());
+        durchlaufMs = rate > 0 ? 1000.0 * static_cast<double>(programm->ablauf.durchlaufFrames) / rate : 0.0;
+        erzeuger.setzeProgramm(programm);
+        return true;
+    }
+
+    void setzeKlaenge(lumi::loop::Klaenge neu, const QStringList& namen, std::uint64_t fassung)
+    {
+        klaenge = std::make_shared<const lumi::loop::Klaenge>(std::move(neu));
+        klangNamen = namen;
+        instrumente = fassung;
+        lueckenhaft = false;
     }
 
     /// Die Stelle im Durchlauf zu einer Stelle im Loop (er wiederholt sich).
@@ -177,7 +235,10 @@ void Tonfuehrung::gibFrei(bool playerWeiter)
 {
     if (!fuehrt()) return;
     for (const Quelle& q : m_quellen)
+    {
         if (q.handle != INVALID_STREAM) m_engine->mixerRemoveSource(q.handle);
+        if (q.loop != nullptr) verwirfAuftrag(*q.loop);
+    }
     // die Klangerzeuger der Loops leben, bis der Mixer fort ist
     const std::vector<Quelle> bisher = std::move(m_quellen);
     m_quellen.clear();
@@ -191,6 +252,36 @@ void Tonfuehrung::gibFrei(bool playerWeiter)
     m_player = nullptr;
     m_playlist = nullptr;
     m_mixer = INVALID_STREAM;
+}
+
+void Tonfuehrung::verwirfAuftrag(LoopQuelle& loop)
+{
+    if (loop.auftrag == nullptr) return;
+    loop.auftrag->brichAb();
+    m_verworfen.push_back(std::move(loop.auftrag));
+}
+
+Tonfuehrung::Vorbereitung Tonfuehrung::vorbereitung() const
+{
+    Vorbereitung v;
+    for (const Quelle& q : m_quellen)
+    {
+        if (q.loop == nullptr || q.loop->auftrag == nullptr) continue;
+        v.erledigt += q.loop->auftrag->erledigt();
+        v.gesamt += q.loop->auftrag->gesamt();
+        v.luecken = v.luecken || q.loop->lueckenhaft;
+    }
+    return v;
+}
+
+void Tonfuehrung::warteAufToene()
+{
+    for (Quelle& q : m_quellen)
+    {
+        if (q.loop == nullptr || q.loop->auftrag == nullptr) continue;
+        q.loop->auftrag->warte();
+        (void)q.loop->pruefe(m_verworfen);
+    }
 }
 
 int Tonfuehrung::quellen() const
@@ -268,6 +359,9 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
 
     const bool liefZuletzt = m_liefZuletzt;
     m_liefZuletzt = laeuft;
+
+    // --- Auftraege, die ausgelaufen sind (Stufe 29e): wer ruht, blockiert nicht mehr
+    std::erase_if(m_verworfen, [](const std::unique_ptr<lumi::loop::Tonauftrag>& a) { return a->ruht(); });
 
     // --- Klangerzeuger, deren Quelle vor ein paar Takten ging: jetzt duerfen sie gehen
     for (Abgeloest& a : m_abgeloest) --a.takte;
@@ -363,7 +457,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
             loop->datei = clip->datei;
             if (loop->lies())
             {
-                loop->baue(engine);
+                loop->baue(engine, m_verworfen);
                 q.handle = engine.mixerAddGenerator(m_mixer, &loop->erzeuger);
                 if (q.handle != INVALID_STREAM)
                 {
@@ -391,7 +485,11 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
         if (!q.vergeben && q.handle != INVALID_STREAM)
         {
             engine.mixerRemoveSource(q.handle);
-            if (q.loop != nullptr) m_abgeloest.push_back({q.loop, kAbgeloestTakte});
+            if (q.loop != nullptr)
+            {
+                verwirfAuftrag(*q.loop);  // er laeuft aus, ohne dass jemand auf ihn wartet
+                m_abgeloest.push_back({q.loop, kAbgeloestTakte});
+            }
         }
     m_quellen = std::move(quellen);
 
@@ -419,6 +517,12 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
                                             : schritt != 0;
         q.sollMs = soll;
         if (q.handle == INVALID_STREAM) continue;
+        // Toene, die im Hintergrund fertig wurden (Stufe 29e): jetzt umschalten
+        if (q.loop != nullptr)
+        {
+            const double vorher = q.loop->durchlaufMs;
+            if (q.loop->pruefe(m_verworfen) && q.loop->durchlaufMs != vorher) sprang = true;
+        }
         // Ein Loop, den das Loop-Panel offen hat, folgt dessen Fassung (L7 a):
         // geaendert hat sich nur etwas, wenn das Panel seit dem letzten Blick
         // gemeldet hat. Ist der Durchlauf danach anders lang (Tempo, Clips),
@@ -435,7 +539,7 @@ Tonfuehrung::Ergebnis Tonfuehrung::takt(const Komposition& komposition, std::int
                     const double vorher = q.loop->durchlaufMs;
                     const bool tagsAnders = !(neu.tags == q.loop->loop.tags);
                     q.loop->loop = neu;
-                    q.loop->baue(engine);
+                    q.loop->baue(engine, m_verworfen);
                     if (q.loop->durchlaufMs != vorher) sprang = true;
                     // der laufende Song heisst jetzt anders: er wird neu gemeldet
                     if ((tagsAnders || q.loop->durchlaufMs != vorher) && q.schluessel == m_laufend) m_laufend = {};

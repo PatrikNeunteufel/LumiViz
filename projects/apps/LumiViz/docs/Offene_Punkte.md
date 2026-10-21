@@ -1,7 +1,7 @@
 # LumiViz — Offene Punkte (Arbeitsliste)
 
-> **Version:** 1.268.0
-> **Datum:** 2026-10-21 (Session 141)
+> **Version:** 1.269.0
+> **Datum:** 2026-10-21 (Session 142)
 > **Typ:** Status/Arbeitsliste
 > **Status:** Aktiv — **SSOT für „was ist noch offen"**
 > **Sprache:** Deutsch
@@ -3032,6 +3032,15 @@ Idee Preset-Warmup/Pre-Roll.
   Patrik), vorgemerkt Compute-Shader. **Offen:** Stufe 29 Töne vorab (Plan in S142, zuerst die
   Thread-Sicherheit von `rendereTon`), 30 Freeze, 31 ff. Hammer-Saite (Recherche; ein Upright mit
   geprüfter Lizenz fehlt); gesammelt später: voller Lauf 26–28, Sichttests, Hörproben.
+  **S142: Stufe 29 gebaut bis 29e** (`Spielweisen_Konzept.md` §4.5, 0.35.0): TV1 a bis TV7 a
+  entschieden; 29a `rendereTon` auf mehreren Threads, 29b `loop/Tonspeicher`, 29c `loop/Tonauftrag`,
+  29d Loop-Panel (Play wartet, Vorladen, „Preparing sounds…“, Hinweiszeilen in beiden Editoren),
+  29e Composer (Vorladen beim Öffnen, Play wartet, „Preparing sounds…“ im Feld Zeit, C und D).
+  **29e nur unter Release-clang geprüft** (Patrik: MSVC zum Abschluss weggelassen). Dazu WX1 a
+  (Stufe 30: erst die Rechnung, dann *Export audio…*, dann Freeze) und der **Audio-Clip im Loop als
+  Stufe 31**, die Hammer-Saite rückt auf **32 ff.** **Offen:** 29e unter Testing-MSVC; 29f (Grenze
+  in den Settings, Handbuch, Sichttest-Liste, Bereichslauf); WX2 Format, WX3 Mix des Loop-Clips im
+  Composer; im Programm nichts angesehen.
   Ursprung: Anschlag **down** und **up** klingen verschieden und spielen
   die Saiten eines Akkords leicht versetzt in ihrer Reihenfolge; Muster wie
   down-up-down-up einstellbar; **Tapping** mit eigenem Attack. Ein Instrument
@@ -6107,6 +6116,7 @@ genannt, wo Stereo entstehen soll. Nur notiert.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 1.269.0 | 2026-10-21 | Session 142. §7 Spielweisen: Stufe 29 Töne vorab gebaut bis 29e (TV1 a bis TV7 a); WX1 a; Audio-Clip im Loop als Stufe 31, Hammer-Saite 32 ff. |
 | 1.268.0 | 2026-10-21 | Session 141. §7 Spielweisen: Stufe 28 gebaut bis auf den vollen Lauf (28c-2b bis 28f); Konzept Hammer-Saite begonnen (Zielbild, H1 a bis H3 a Töne vorab, F1 a bis F6 a Freeze, Bauplan 29/30/31); Befund Tab-Linien und Karaoke-Panel S89 behoben. |
 | 1.267.0 | 2026-10-20 | Session 140. §7 Spielweisen der Instrumentfamilien: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a entschieden; Stufe 28 gebaut bis 28c-2a (Zeitspuren, Pedale, Expression, Vibrato, Pitch, Vibratohebel); offen 28c-2b, Hörproben, 28d bis 28f. |
 | 1.266.0 | 2026-10-20 | Session 139. §7 Spielweisen der Instrumentfamilien: Konzept begonnen (SF1 c bis SF5 d); §7 NEU Lautstärke im Loop: Stufe 27 gebaut (LL1 a bis LL14 a), offen Sichttest, drei gekappte Kit-Rollen, Fader live, voller Lauf. |
