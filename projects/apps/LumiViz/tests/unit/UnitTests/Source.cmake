@@ -126,6 +126,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopWerte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopTonThreads.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopTonspeicher.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/test_LoopTonauftrag.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopClipEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopEffekte.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/test_LoopInstrumentEditor.cpp"

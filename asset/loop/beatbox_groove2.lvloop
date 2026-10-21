@@ -1,0 +1,330 @@
+{
+    "beatsPerBar": 4,
+    "bpm": 92,
+    "channels": [
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "pattern": "Beat",
+                    "repeat": 5,
+                    "start": 0
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Drums"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "pattern": "Bass",
+                    "repeat": 4,
+                    "start": 4
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Bass"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "decay": 2.2,
+                            "mix": 0.2,
+                            "on": true,
+                            "size": 0.6,
+                            "type": "reverb"
+                        }
+                    ],
+                    "pattern": "Keys",
+                    "repeat": 4,
+                    "start": 4
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Keys"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "path": [
+                        {
+                            "damping": 0.4,
+                            "feedback": 0.4,
+                            "mix": 0.3,
+                            "on": true,
+                            "time": "1/8",
+                            "type": "echo"
+                        }
+                    ],
+                    "pattern": "Hook",
+                    "repeat": 3,
+                    "start": 8
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Hook"
+        },
+        {
+            "clips": [
+                {
+                    "expression": [
+                    ],
+                    "pattern": "Beat 2",
+                    "repeat": 1,
+                    "start": 4
+                },
+                {
+                    "expression": [
+                    ],
+                    "pattern": "Beat 2",
+                    "repeat": 1,
+                    "start": 12
+                }
+            ],
+            "enabled": true,
+            "gain": 0,
+            "name": "Channel 1"
+        }
+    ],
+    "format": "lumiviz-loop",
+    "limiter": true,
+    "patterns": [
+        {
+            "bars": 4,
+            "kind": "drumkit",
+            "name": "Beat",
+            "rows": [
+                [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+            ],
+            "tracks": [
+                {
+                    "mute": false,
+                    "name": "Kick",
+                    "pan": 0,
+                    "sound": "lib:beatbox_kick",
+                    "volume": 1
+                },
+                {
+                    "instrument": "drum_beatbox_kick",
+                    "length": 250,
+                    "mute": false,
+                    "name": "Sub",
+                    "note": 36,
+                    "pan": 0,
+                    "sound": "kit:kick",
+                    "volume": 0.5
+                },
+                {
+                    "mute": false,
+                    "name": "Snare",
+                    "pan": 0,
+                    "sound": "lib:beatbox_snare",
+                    "volume": 0.9
+                },
+                {
+                    "mute": false,
+                    "name": "Hat",
+                    "pan": 0.2,
+                    "sound": "lib:beatbox_hat_closed",
+                    "volume": 0.5
+                },
+                {
+                    "mute": false,
+                    "name": "Open Hat",
+                    "pan": -0.2,
+                    "sound": "lib:beatbox_hat_open",
+                    "volume": 0.4
+                },
+                {
+                    "mute": false,
+                    "name": "Hey",
+                    "pan": 0,
+                    "sound": "lib:voice_male_hey",
+                    "volume": 0.5
+                }
+            ]
+        },
+        {
+            "bars": 4,
+            "instrument": "shape_moon_bass",
+            "kind": "instrument",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
+            "mute": false,
+            "name": "Bass",
+            "notes": [
+                [0, 4, 38, 0.9],
+                [6, 2, 38, 0.7],
+                [10, 4, 50, 0.8],
+                [16, 4, 38, 0.9],
+                [22, 2, 38, 0.7],
+                [26, 4, 50, 0.8],
+                [32, 4, 34, 0.9],
+                [38, 2, 34, 0.7],
+                [42, 4, 46, 0.8],
+                [48, 4, 33, 0.9],
+                [54, 2, 33, 0.7],
+                [58, 4, 45, 0.8]
+            ],
+            "pan": 0,
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "volume": 0.5489
+        },
+        {
+            "bars": 4,
+            "instrument": "shape_smiley_keys",
+            "kind": "instrument",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
+            "mute": false,
+            "name": "Keys",
+            "notes": [
+                [0, 4, 50, 0.6],
+                [0, 4, 53, 0.6],
+                [0, 4, 57, 0.6],
+                [6, 4, 50, 0.6],
+                [6, 4, 53, 0.6],
+                [6, 4, 57, 0.6],
+                [16, 4, 50, 0.6],
+                [16, 4, 53, 0.6],
+                [16, 4, 57, 0.6],
+                [22, 4, 50, 0.6],
+                [22, 4, 53, 0.6],
+                [22, 4, 57, 0.6],
+                [32, 4, 46, 0.6],
+                [32, 4, 50, 0.6],
+                [32, 4, 53, 0.6],
+                [38, 4, 46, 0.6],
+                [38, 4, 50, 0.6],
+                [38, 4, 53, 0.6],
+                [48, 4, 45, 0.6],
+                [48, 4, 49, 0.6],
+                [48, 4, 52, 0.6],
+                [54, 4, 45, 0.6],
+                [54, 4, 49, 0.6],
+                [54, 4, 52, 0.6]
+            ],
+            "pan": 0.2,
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "volume": 0.4424
+        },
+        {
+            "bars": 4,
+            "instrument": "vocal_chop",
+            "kind": "instrument",
+            "lanes": {
+                "expression": [
+                ],
+                "pitch": [
+                ],
+                "sostenuto": [
+                ],
+                "sustain": [
+                ],
+                "switches": {
+                },
+                "vibrato": [
+                ]
+            },
+            "mute": false,
+            "name": "Hook",
+            "notes": [
+                [4, 2, 69, 0.8],
+                [6, 2, 67, 0.7],
+                [8, 4, 65, 0.8],
+                [36, 2, 69, 0.8],
+                [38, 2, 70, 0.8],
+                [40, 4, 69, 0.8]
+            ],
+            "pan": -0.15,
+            "strum": {
+                "hand": "halfBeat",
+                "spread": 8
+            },
+            "volume": 0.4355
+        },
+        {
+            "bars": 4,
+            "kind": "drumkit",
+            "name": "Beat 2",
+            "rows": [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            ],
+            "tracks": [
+                {
+                    "mute": false,
+                    "name": "Track 1",
+                    "pan": 0.88,
+                    "sound": "lib:voice_female_ha",
+                    "volume": 0.47
+                },
+                {
+                    "mute": false,
+                    "name": "Track 2",
+                    "pan": -0.94,
+                    "sound": "lib:voice_female_ha",
+                    "volume": 0.44
+                }
+            ]
+        }
+    ],
+    "stepsPerBeat": 4,
+    "swing": 0.12,
+    "tags": {
+        "artist": "LumiViz",
+        "genre": "Hip-Hop",
+        "title": "Beatbox Groove"
+    },
+    "version": 12,
+    "volume": 0.26
+}

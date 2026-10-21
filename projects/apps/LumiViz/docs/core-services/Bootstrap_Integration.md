@@ -1,7 +1,7 @@
 # Bootstrap & Integration — Init-Reihenfolge, Services, Event-Flow, Shutdown
 
-> **Version:** 1.3.0
-> **Datum:** 2026-08-07
+> **Version:** 1.4.0
+> **Datum:** 2026-10-21 (S142: §6.7 Töne im Hintergrund)
 > **Typ:** Guide
 > **Status:** Aktiv
 > **Sprache:** Deutsch
@@ -311,6 +311,23 @@ Event-Loop überhaupt noch läuft), und **jede** Erklärung gegen ihre Gegenprob
 gestellt — die Kausalität stand erst fest, als 3/3 gegen 3/3 sauber trennten.
 Für Teardown-Fragen ist das der vorgesehene Weg; `LumiViz.log` ist zeilenweise
 geflusht und trägt die Marken aus Abschnitt 5.
+
+### 6.7 Töne im Hintergrund: der Auftrag stirbt vor der Engine
+
+Seit Stufe 29c (Spielweisen_Konzept §4.5, TV3 a) lädt ein `loop::Tonauftrag` die
+Klänge eines Loops auf einem Pool von Threads; dekodiert wird dort über einen
+`Dekodierer`, der die Audio-Engine nutzt (`decodeStereo`).
+
+> **Regel:** Wer einen Auftrag mit einem Dekodierer der Engine hält, bricht ihn ab
+> und zerstört ihn, **bevor** die Engine herunterfährt. Der Destruktor des
+> Auftrags hält an und wartet auf seine Threads; ein Name, den ein Thread schon
+> begonnen hat, wird noch zu Ende geladen — also kann ein Thread bis zum Ende
+> einer Dekodierung in BASS stecken. Ein Auftrag darf deshalb nicht länger leben
+> als der Besitzer der Engine.
+
+Die Threads fassen nichts von Qt an außer `QString`, `QFile`, `QDir`,
+`QFileInfo` und `QJsonDocument` — keine `QObject`s, keine Signale. Den Fortschritt
+liest, wer ihn braucht, über `erledigt()`/`gesamt()`.
 
 ---
 

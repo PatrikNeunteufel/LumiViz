@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.102.0
-> **Datum:** 2026-10-20 (Session 140)
+> **Version:** 0.103.0
+> **Datum:** 2026-10-21 (Session 142)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -201,6 +201,8 @@ Komposition kennt nur `rasterSekunden`), eigener Code im Ton-Thread.
   Ort der Spur, Datei, Bearbeitung der Wellenform. Bezug (Claude): die Spur Pitch
   aus [Spielweisen_Konzept.md](Spielweisen_Konzept.md) SF3 a führt eine Tonhöhe über
   der Zeit; ob die Autotune-Spur dieselbe Art Spur ist, ist zu klären.
+  **Vorgemerkt als Stufe 31** (Patrik S142, `Spielweisen_Konzept.md` §4.4): nach Freeze,
+  das den Weg zum Abspielen einer Wellenform im Rechenkern mitbringt.
 
 ### 3.3 Noch offen
 
@@ -3990,6 +3992,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.103.0** (S142, 2026-10-21): §3.2 Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik; Spielweisen_Konzept §4.4).
 - **0.102.0** (S140, 2026-10-20): `.lvinst` Fassung 15 — `strings.tremoloDown`, `strings.tremoloUp` (der Vibratohebel, Halbtöne, immer; Spielweisen_Konzept SK11 a, Stufe 28c-2a).
 - **0.101.0** (S140, 2026-10-20): §4f `.lvinst` Fassung 14 mit `pitchRange` je Schicht (Stufe 28c-1b).
 - **0.100.0** (S140, 2026-10-20): §4 Datei — `.lvloop` Fassung 12 mit `patterns[].lanes` und `channels[].clips[].expression` (Stufe 28a, Spielweisen_Konzept §3).

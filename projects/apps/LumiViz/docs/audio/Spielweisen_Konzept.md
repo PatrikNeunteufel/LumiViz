@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.30.0
+> **Version:** 0.32.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV4 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a und TV1 a bis TV4 a (Patrik S139–S142);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV4 a, WX1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV4 a und WX1 a (Patrik S139–S142);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -774,12 +774,27 @@ die Datei würde viele MB groß, jedes Speichern schriebe alles).
 |---|---|
 | 29 | **Töne vorab** (H1 a bis H3 a): Speicher je Tonname im Arbeitsspeicher (Grenze in den Settings, 1 GB), Rechnen im Hintergrund auf mehreren Kernen, Vorladen beim Öffnen eines Loops und einer Komposition, „Preparing sounds… n / m“, eine Bearbeitung schaltet um, sobald die neuen Töne fertig sind. |
 | 30 | **Freeze** (F1 a bis F5 a): „Freeze clip“ / „Unfreeze clip“ im Kontextmenü, Hash aus allen Eingaben und der Klangfassung mit dem Test an `loop_werte.txt`, Wellenform bis zum Ausgang des Clips mit Nachklang, neu eingefroren beim Speichern, Messung je Clip mit Zeichen ab 1 s, Ordner `frozen` mit Grenze 2 GB und „Clear frozen clips“, Publish nimmt die Wellenformen mit. Die eingefrorene Wellenform spielt im Rechenkern wie ein langer Klang ab dem Beginn des Clips — der Audio-Clip im Loop (`Loop_Konzept.md` §3.2) ist dafür nicht nötig. |
-| 31 ff. | **Hammer-Saite** (Zielbild §4.1): Recherche, Entscheide, Skizze, Modell, Messung gegen *Salamander Grand Piano*; zuerst Flügel und Upright, danach die übrigen Instrumente der Familie. Die Recherche beginnt schon während 29 und 30 (Dokumentarbeit, hängt an nichts davon). |
+| 31 | **Audio-Clip im Loop** (Patrik S142, vorgemerkt; `Loop_Konzept.md` §3.2): die dritte Clip-Art neben Drumkit und Instrument, ein Clip mit einer Wellenform (Samples, Gesang …) und einer Autotune-Spur. Beginnt mit eigenen Entscheiden und einer Skizze — Ort der Spur, Datei, Bearbeitung der Wellenform, Autotune-Spur und Spur Pitch, *Bounce* (F1 c). Das Abspielen einer Wellenform im Rechenkern bringt Stufe 30 mit. |
+| 32 ff. | **Hammer-Saite** (Zielbild §4.1): Recherche, Entscheide, Skizze, Modell, Messung gegen *Salamander Grand Piano*; zuerst Flügel und Upright, danach die übrigen Instrumente der Familie. Die Recherche beginnt schon während 29 bis 31 (Dokumentarbeit, hängt an nichts davon). Bis S142 Stufe 31 ff. — der Audio-Clip ist davor gerückt. |
 
 Verworfen: b (Töne vorab, dann die Hammer-Saite, Freeze erst danach — die Werte, die sich am Flügel
 prüfen ließen, stehen ohnehin in den Settings und kippen das Gebaute nicht), c (zuerst die
 Hammer-Saite — gegen H1 a „vor dem Klavier“). Kippt, wenn der Flügel früher zu hören sein soll, als
 29 und 30 dauern — dann rückt die Hammer-Saite hinter 29 vor.
+
+**Idee Patrik (S142):** Im Kontextmenü von Clips — Instrument- und Drumkit-Clips im Loop-Panel, der
+Loop-Clip im Composer — einen Clip als Wellenform exportieren. Im Code gab es dafür nichts (gesucht in
+`loop/` und `composer/` nach Export, Bounce, Render).
+
+✅ **WX1 a** (Patrik S142): **Stufe 30 beginnt mit der Rechnung „ein Clip als Wellenform“; darauf
+zuerst der Export, dann Freeze.** 30a die Rechnung (nach F3 a), 30b „Export audio…“ im Kontextmenü
+der drei Clip-Arten mit einem Dialog zum Speichern, 30c ff. Freeze wie entschieden. Einzeln danach:
+WX2 das Format, WX3 ob der Loop-Clip im Composer den Loop mit seinem Mix (Fader, Limiter) exportiert
+oder nur bis zum Ausgang des Clips wie Freeze. Der Export bringt **keine dritte Clip-Art** in den
+Loop: der Audio-Clip (`Loop_Konzept.md` §3.2) bleibt ein eigenes Thema. Verworfen: b (eigene kleine
+Stufe vor Freeze mit eigener Rechnung — Freeze müsste sie übernehmen oder doppeln), c (nach Freeze —
+nichts spricht dafür außer der Reihenfolge der Ideen). Kippt, wenn der Export vor 29c bis 29f gebraucht
+wird — dann rücken 30a und 30b hinter 29b vor, die Rechnung bleibt eine.
 
 ### 4.5 Stufe 29 „Töne vorab“ — Teilschritte
 
@@ -877,10 +892,25 @@ und einer Klangdatei in einem Wegwerf-Ordner: ein zweites Laden rechnet nichts, 
 Instrument nur seine Töne, eine geänderte Datei wird neu dekodiert, jeder Ton Bit für Bit wie
 `rendereTon`).
 
+**Gebaut 29c (S142):** `loop/Tonauftrag` — Klangnamen und Rate hinein, je Name ein Klang heraus;
+jeder Name einmal geladen, auch wenn er mehrfach vorkommt; je Instrument einmal geholt (mit
+Samples und Fingerabdruck), verschiedene Instrumente nebeneinander. `rechneHier` lädt auf dem
+rufenden Thread, `starte` auf einem Pool (Kerne − 1); `erledigt`/`gesamt` zeigen den Fortschritt,
+`brichAb` hält an (ein begonnener Name wird zu Ende geladen), der Destruktor bricht ab und wartet.
+Dekodiert wird über einen `Dekodierer` (TV3 a). Der Bericht steht in der Reihenfolge der Namen,
+gleich welcher Thread was zuerst fand. **`ladeKlaenge` ist jetzt ein Auftrag auf dem rufenden
+Thread** — eine Ladearbeit für vorn und hinten. Lebenszyklus: `Bootstrap_Integration.md` §6.7 (der
+Auftrag stirbt vor der Engine). Test `test_LoopTonauftrag`: dieselben Namen vorn und auf vier
+Threads, Bit für Bit gleich, derselbe Bericht; Anhalten, während der Thread im Dekodierer wartet;
+**BASS dekodiert die 78 mitgelieferten Samples auf 8 Threads Bit für Bit wie nacheinander** — der
+Beleg zu TV3 a, den die BASS-Hilfe nicht ausdrücklich gibt (läuft nur mit Ausgabegerät).
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.32.0 | 2026-10-21 | Session 142. Stufe 29c gebaut (`loop/Tonauftrag`, `ladeKlaenge` als Auftrag auf dem rufenden Thread, `test_LoopTonauftrag` mit dem BASS-Beleg). |
+| 0.31.0 | 2026-10-21 | Session 142. Idee Patrik Export eines Clips als Wellenform; WX1 a (Stufe 30: erst die Rechnung, dann Export, dann Freeze); Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik), Hammer-Saite 32 ff. |
 | 0.30.0 | 2026-10-21 | Session 142. TV4 a (Programme halten geteilte Zeiger auf die Töne); Stufe 29b gebaut (`loop/Tonspeicher`, `ladeKlaenge` über den Speicher, Typ `Klaenge`, `test_LoopTonspeicher`). |
 | 0.29.0 | 2026-10-21 | Session 142. Stufe 29a gebaut (`instrumente()` mit Sperre, Fassung atomar, `test_LoopTonThreads`). |
 | 0.28.0 | 2026-10-21 | Session 142. §4.5 Stufe 29: Befund Threadsicherheit von `rendereTon` (Kern ja, Rand nein), TV1 a (sechs Teilschritte 29a–29f), TV2 a (Schlüssel als Fingerabdruck der Eingaben), Befund BASS, TV3 a (Dekodieren im Hintergrund, Drum-Klänge im Tonspeicher). |
