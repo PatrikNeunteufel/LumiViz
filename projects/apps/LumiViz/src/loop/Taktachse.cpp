@@ -297,6 +297,188 @@ QColor Taktachse::basisFarbe(const QString& muster, bool an) const
     return farbe;
 }
 
+// --- Die Expression am Clip (Stufe 28e; Skizze §1a, SK8 a, SK13 a) -----------------
+
+int Taktachse::yVonAusdruck(const QRect& clip, double wert)
+{
+    // vier Pixel Luft oben und unten: die Linie bei 1 liegt nicht auf dem Rand
+    const int spanne = std::max(1, clip.height() - 8);
+    return clip.bottom() - 4 - static_cast<int>(std::lround(std::clamp(wert, 0.0, 1.0) * spanne));
+}
+
+double Taktachse::ausdruckBei(const QRect& clip, int y)
+{
+    const int spanne = std::max(1, clip.height() - 8);
+    const double wert = static_cast<double>(clip.bottom() - 4 - y) / spanne;
+    return std::clamp(std::round(wert * 100.0) / 100.0, 0.0, 1.0);
+}
+
+double Taktachse::clipStelleBei(const LoopClip& clip, int x, bool frei) const
+{
+    const double takte = static_cast<double>(stelleVon(x)) / kTicksJeTakt - clip.startTakt;
+    return frei ? std::round(takte * 100.0) / 100.0 : std::round(takte * 16.0) / 16.0;
+}
+
+int Taktachse::xVonClipStelle(const LoopClip& clip, double stelle) const
+{
+    return xVon(std::llround((clip.startTakt + stelle) * static_cast<double>(kTicksJeTakt)));
+}
+
+bool Taktachse::kurveGreifbar(int kanal, int clip) const
+{
+    // der angeklickte Clip, wenn er allein markiert ist (SK13 a)
+    return kanal >= 0 && kanal == m_kanal && clip == m_clip && auswahl() != nullptr && m_gruppe.size() <= 1;
+}
+
+int Taktachse::ausdruckPunktBei(int kanal, int clip, QPoint ort) const
+{
+    if (!kurveGreifbar(kanal, clip)) return -1;
+    const LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    const QRect r = clipRechteck(kanal, clip);
+    int bester = -1;
+    int abstand = 6;
+    for (int i = 0; i < static_cast<int>(c.expression.size()); ++i)
+    {
+        const SpurPunkt& p = c.expression[static_cast<std::size_t>(i)];
+        const int d = std::max(std::abs(ort.x() - xVonClipStelle(c, p.stelle)), std::abs(ort.y() - yVonAusdruck(r, p.wert)));
+        if (d < abstand)
+        {
+            abstand = d;
+            bester = i;
+        }
+    }
+    return bester;
+}
+
+bool Taktachse::aufAusdruck(int kanal, int clip, QPoint ort) const
+{
+    if (!kurveGreifbar(kanal, clip)) return false;
+    const LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    const QRect r = clipRechteck(kanal, clip);
+    if (!r.contains(ort)) return false;
+    const double stelle = static_cast<double>(stelleVon(ort.x())) / kTicksJeTakt - c.startTakt;
+    return std::abs(ort.y() - yVonAusdruck(r, kurveBei(c.expression, stelle, 1.0))) <= 4;
+}
+
+int Taktachse::legeAusdruckPunkt(LoopClip& clip, SpurPunkt punkt)
+{
+    std::vector<SpurPunkt>& punkte = clip.expression;
+    const auto gleich = std::find_if(punkte.begin(), punkte.end(), [&](const SpurPunkt& p) { return p.stelle == punkt.stelle; });
+    if (gleich != punkte.end())
+    {
+        gleich->wert = punkt.wert;  // je Stelle ein Punkt: er ersetzt den alten
+        return static_cast<int>(gleich - punkte.begin());
+    }
+    if (static_cast<int>(punkte.size()) >= kZeitspurPunkteMax) return -1;
+    const auto neu = punkte.insert(
+        std::upper_bound(punkte.begin(), punkte.end(), punkt, [](const SpurPunkt& a, const SpurPunkt& b) { return a.stelle < b.stelle; }),
+        punkt);
+    return static_cast<int>(neu - punkte.begin());
+}
+
+bool Taktachse::setzeAusdruckPunkt(int kanal, int clip, SpurPunkt punkt)
+{
+    if (clipRechteck(kanal, clip).isEmpty()) return false;
+    Loop neu = m_loop;
+    LoopClip& c = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    punkt.wert = std::clamp(punkt.wert, 0.0, 1.0);
+    if (legeAusdruckPunkt(c, punkt) < 0 || neu == m_loop) return false;
+    uebernimm(neu, kanal, clip, tr("Add expression point"));
+    return true;
+}
+
+bool Taktachse::loescheAusdruckPunkt(int kanal, int clip, int index)
+{
+    if (clipRechteck(kanal, clip).isEmpty()) return false;
+    Loop neu = m_loop;
+    std::vector<SpurPunkt>& punkte = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)].expression;
+    if (index < 0 || index >= static_cast<int>(punkte.size())) return false;
+    punkte.erase(punkte.begin() + index);
+    uebernimm(neu, kanal, clip, tr("Delete expression point"));
+    return true;
+}
+
+bool Taktachse::leereAusdruck(int kanal, int clip)
+{
+    if (clipRechteck(kanal, clip).isEmpty()) return false;
+    Loop neu = m_loop;
+    std::vector<SpurPunkt>& punkte = neu.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)].expression;
+    if (punkte.empty()) return false;
+    punkte.clear();
+    uebernimm(neu, kanal, clip, tr("Clear expression"));
+    return true;
+}
+
+void Taktachse::zieheAusdruck(QPoint ort, bool frei)
+{
+    if (m_zugKanal < 0 || m_zugClip < 0) return;
+    LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(m_zugKanal)].clips[static_cast<std::size_t>(m_zugClip)];
+    std::vector<SpurPunkt>& punkte = c.expression;
+    if (m_ausdruckIndex < 0 || m_ausdruckIndex >= static_cast<int>(punkte.size())) return;
+    // zwischen den Nachbarn (je Stelle ein Punkt, die Reihenfolge bleibt) und im Clip
+    const double davor = m_ausdruckIndex > 0 ? punkte[static_cast<std::size_t>(m_ausdruckIndex - 1)].stelle : -1e9;
+    const double danach = m_ausdruckIndex + 1 < static_cast<int>(punkte.size())
+                              ? punkte[static_cast<std::size_t>(m_ausdruckIndex + 1)].stelle
+                              : 1e9;
+    const double stelle = std::clamp(clipStelleBei(c, ort.x(), frei), 0.0, static_cast<double>(m_loop.clipTakte(c)));
+    SpurPunkt& p = punkte[static_cast<std::size_t>(m_ausdruckIndex)];
+    if (stelle > davor && stelle < danach) p.stelle = stelle;
+    p.wert = ausdruckBei(clipRechteck(m_zugKanal, m_zugClip), ort.y());
+    Q_EMIT hinweis(tr("Expression: %1").arg(p.wert <= 0.0 ? tr("%1 (silent)").arg(p.wert, 0, 'f', 2)
+                                                            : tr("%1 (%2 dB)").arg(p.wert, 0, 'f', 2).arg(expressionDb(p.wert), 0, 'f', 1)));
+    update();
+}
+
+void Taktachse::zeichneAusdruck(QPainter& p, int kanal, int clip, const QRect& r)
+{
+    const LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+    const bool greifbar = kurveGreifbar(kanal, clip);
+    if (c.expression.empty() && !greifbar) return;  // ohne Kurve zeichnet der Clip nichts (Wert 1)
+    const double laenge = m_loop.clipTakte(c);
+    const QRect innen = r.adjusted(1, 1, -1, -1);
+    p.save();
+    p.setClipRect(innen, Qt::IntersectClip);
+    if (c.expression.empty())
+    {
+        // der angeklickte Clip ohne Kurve: die Linie bei 1, an der man ansetzt
+        p.setPen(QPen(QColor(255, 255, 255, 170), 1.0, Qt::DashLine));
+        const int y = yVonAusdruck(r, 1.0);
+        p.drawLine(r.left() + 2, y, r.right() - 2, y);
+        if (r.height() >= 28)
+        {
+            QFont klein = font();
+            klein.setPointSizeF(std::max(6.5, klein.pointSizeF() - 1.5));
+            p.setFont(klein);
+            p.drawText(QRect(r.left(), y + 1, r.width() - 6, 14), Qt::AlignRight | Qt::AlignTop, tr("Expression 1"));
+            p.setFont(font());
+        }
+        p.restore();
+        return;
+    }
+    // die Kurve: vor dem ersten Punkt dessen Wert, hinter dem letzten dessen — bis zum Ende des Clips
+    QPolygon linie;
+    linie << QPoint(r.left(), yVonAusdruck(r, kurveBei(c.expression, 0.0, 1.0)));
+    for (const SpurPunkt& punkt : c.expression)
+        if (punkt.stelle > 0.0 && punkt.stelle < laenge) linie << QPoint(xVonClipStelle(c, punkt.stelle), yVonAusdruck(r, punkt.wert));
+    linie << QPoint(r.right(), yVonAusdruck(r, kurveBei(c.expression, laenge, 1.0)));
+    p.setPen(QPen(QColor(255, 255, 255, greifbar ? 230 : 150), greifbar ? 1.6 : 1.2));
+    p.drawPolyline(linie);
+    p.restore();
+    if (!greifbar) return;
+    // die Punkte; hinter dem Ende (oder vor dem Anfang) blass — nicht zu hoeren (SK8 a)
+    for (int i = 0; i < static_cast<int>(c.expression.size()); ++i)
+    {
+        const SpurPunkt& punkt = c.expression[static_cast<std::size_t>(i)];
+        const bool hoerbar = punkt.stelle >= 0.0 && punkt.stelle <= laenge;
+        const bool gezogen = m_griff == Griff::Ausdruck && m_ausdruckIndex == i;
+        QColor farbe(255, 255, 255, hoerbar ? 255 : 90);
+        p.setPen(QPen(farbe, 1.0));
+        p.setBrush(gezogen ? QBrush(palette().color(QPalette::Highlight)) : QBrush(farbe));
+        p.drawEllipse(QPoint(xVonClipStelle(c, punkt.stelle), yVonAusdruck(r, punkt.wert)), 3, 3);
+    }
+    p.setBrush(Qt::NoBrush);
+}
+
 void Taktachse::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
@@ -433,6 +615,8 @@ void Taktachse::paintEvent(QPaintEvent*)
             p.drawRoundedRect(
                 r.intersected(QRect(kopfBreite() - 12, r.top(), width() - kopfBreite() + 24, r.height())), 4, 4);
             p.setBrush(Qt::NoBrush);
+            // Stufe 28e (Skizze §1a): die Expression als Kurve auf dem Clip, unter dem Namen
+            zeichneAusdruck(p, k, c, r);
 
             // die Wiederholungen: ein gestrichelter Strich an jeder Mustergrenze
             const Muster* basis = m_loop.findeMuster(clip.muster);
@@ -473,8 +657,22 @@ void Taktachse::paintEvent(QPaintEvent*)
                                              ? tr("%1 × %2").arg(clip.muster).arg(clip.wiederholungen)
                                              : clip.muster;
             if (namePasst(r.height()))
-                p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter,
-                           fontMetrics().elidedText(beschriftung, Qt::ElideRight, std::max(0, namensFeld.width())));
+            {
+                const QString aufschrift =
+                    fontMetrics().elidedText(beschriftung, Qt::ElideRight, std::max(0, namensFeld.width()));
+                // Stufe 28e: kreuzt die Kurve den Namen, bleibt er auf einem leichten Grund lesbar
+                if (!clip.expression.empty() && !aufschrift.isEmpty())
+                {
+                    const QRect grund =
+                        p.boundingRect(namensFeld, Qt::AlignLeft | Qt::AlignVCenter, aufschrift).adjusted(-3, 0, 3, 0);
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(QColor(0, 0, 0, 70));
+                    p.drawRoundedRect(grund, 3, 3);
+                    p.setBrush(Qt::NoBrush);
+                    p.setPen(Qt::white);
+                }
+                p.drawText(namensFeld, Qt::AlignLeft | Qt::AlignVCenter, aufschrift);
+            }
         }
     }
     p.setClipRect(ausschnitte.zeilen);
@@ -590,6 +788,34 @@ void Taktachse::mousePressEvent(QMouseEvent* event)
     const Griff griff = griffBei(ort, &kanal, &clip);
     const bool ctrl = (event->modifiers() & Qt::ControlModifier) != 0;
     m_klickSammelt = false;
+    // Stufe 28e (SK13 a): am angeklickten Clip einen Punkt der Expression greifen — oder auf
+    // Linie oder Kurve einen setzen und weiterziehen; die Kanten gehen vor
+    if (!ctrl && griff == Griff::Verschieben && kurveGreifbar(kanal, clip))
+    {
+        int punkt = ausdruckPunktBei(kanal, clip, ort);
+        const bool neu = punkt < 0;
+        if (neu && aufAusdruck(kanal, clip, ort))
+        {
+            m_vorZug = m_loop;
+            LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+            const bool frei = (event->modifiers() & Qt::AltModifier) != 0;
+            punkt = legeAusdruckPunkt(c, {clipStelleBei(c, ort.x(), frei), ausdruckBei(clipRechteck(kanal, clip), ort.y())});
+            if (punkt < 0) m_loop = m_vorZug;
+        }
+        else if (!neu)
+            m_vorZug = m_loop;
+        if (punkt >= 0)
+        {
+            m_griff = Griff::Ausdruck;
+            m_ausdruckIndex = punkt;
+            m_ausdruckNeu = neu;
+            m_zugKanal = kanal;
+            m_zugClip = clip;
+            m_zugLaeuft = false;
+            update();
+            return;
+        }
+    }
     if (griff == Griff::Keiner)
     {
         // freie Flaeche: von hier laesst sich ein Rahmen aufziehen; mit Ctrl
@@ -713,6 +939,7 @@ void Taktachse::zieheZu(QPoint ort)
             platz = setzeEnde(m_loop, m_zugKanal, m_zugClip, naechsterTakt(maus));
             break;
         case Griff::Rahmen:
+        case Griff::Ausdruck:  // zieht `zieheAusdruck`
         case Griff::Keiner:
             return;
     }
@@ -731,6 +958,11 @@ void Taktachse::brichZugAb()
     if (m_griff == Griff::Keiner) return;
     if (m_griff == Griff::Rahmen)
         m_rahmen = {};
+    else if (m_griff == Griff::Ausdruck)
+    {
+        m_loop = m_vorZug;  // Stufe 28e: der Punkt geht zurueck (ein neuer verschwindet)
+        m_ausdruckIndex = -1;
+    }
     else if (m_zugLaeuft)
     {
         m_loop = m_vorZug;
@@ -781,6 +1013,11 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
         update();
         return;
     }
+    if (m_griff == Griff::Ausdruck && (event->buttons() & Qt::LeftButton))
+    {
+        zieheAusdruck(ort, (event->modifiers() & Qt::AltModifier) != 0);
+        return;
+    }
     if (m_griff != Griff::Keiner && (event->buttons() & Qt::LeftButton))
     {
         if (!m_zugLaeuft && (ort - m_zugStart).manhattanLength() < 4) return;
@@ -794,6 +1031,25 @@ void Taktachse::mouseMoveEvent(QMouseEvent* event)
     const Griff griff = griffBei(ort, &kanal, &clip);
     const int fader = faderBei(ort);
     setzeFaderUnterMaus(fader);
+    // Stufe 28e (SK13 a): an der Kurve des angeklickten Clips sagen Zeiger und Hinweis, was geht
+    const int punkt = griff == Griff::Verschieben ? ausdruckPunktBei(kanal, clip, ort) : -1;
+    const bool linie = punkt < 0 && griff == Griff::Verschieben && aufAusdruck(kanal, clip, ort);
+    if (punkt >= 0 || linie)
+    {
+        const LoopClip& c = m_loop.kanaele[static_cast<std::size_t>(kanal)].clips[static_cast<std::size_t>(clip)];
+        const double wert = punkt >= 0 ? c.expression[static_cast<std::size_t>(punkt)].wert : 1.0;
+        Q_EMIT hinweis(punkt >= 0 ? tr("Expression %1 dB — drag to move, double-click to delete")
+                                        .arg(wert <= 0.0 ? tr("silent") : QString::number(expressionDb(wert), 'f', 1))
+                                  : tr("Click to add an expression point (Alt: off the grid); right-click: Clear expression"));
+        m_hinweisAusdruck = true;
+        setCursor(punkt >= 0 ? Qt::SizeAllCursor : Qt::CrossCursor);
+        return;
+    }
+    if (m_hinweisAusdruck && fader < 0)
+    {
+        m_hinweisAusdruck = false;
+        Q_EMIT hinweis(QString());
+    }
     if (fader >= 0)
         setCursor(Qt::SizeVerCursor);  // am Fader: senkrecht ziehen
     else if (ort.x() < kopfBreite() && kanalBei(ort.y()) >= 0)
@@ -842,6 +1098,19 @@ void Taktachse::mouseReleaseEvent(QMouseEvent* event)
         unsetCursor();
         update();
         if (nach >= 0 && nach != von) kanalVerschieben(von, nach);
+        return;
+    }
+    if (m_griff == Griff::Ausdruck && event->button() == Qt::LeftButton)
+    {
+        // Stufe 28e: ein gesetzter oder gezogener Punkt — ein Undo-Schritt
+        const Loop gezogen = m_loop;
+        m_loop = m_vorZug;
+        m_griff = Griff::Keiner;
+        m_ausdruckIndex = -1;
+        if (gezogen != m_vorZug)
+            uebernimm(gezogen, m_zugKanal, m_zugClip, m_ausdruckNeu ? tr("Add expression point") : tr("Move expression point"));
+        else
+            update();
         return;
     }
     if (m_griff == Griff::Keiner) return;
@@ -1055,6 +1324,13 @@ void Taktachse::mouseDoubleClickEvent(QMouseEvent* event)
     int kanal = -1;
     int clip = -1;
     if (griffBei(event->position().toPoint(), &kanal, &clip) == Griff::Keiner) return;
+    // Stufe 28e (SK13 a): auf einem Punkt der Expression nimmt der Doppelklick ihn weg
+    if (const int punkt = ausdruckPunktBei(kanal, clip, event->position().toPoint()); punkt >= 0)
+    {
+        brichZugAb();
+        (void)loescheAusdruckPunkt(kanal, clip, punkt);
+        return;
+    }
     brichZugAb();  // der zweite Druck hat einen Zug vorbereitet
     waehle(kanal, clip);
     (void)bearbeiteBasis();
@@ -1263,6 +1539,12 @@ void Taktachse::contextMenuEvent(QContextMenuEvent* event)
         umbenennen->setEnabled(!gruppe);
         menu.addAction(gruppe ? tr("Delete %1 clips").arg(zahl) : tr("Delete"), this,
                        [this] { (void)loescheAuswahl(); });
+        // Stufe 28e (SK13 a): die Kurve dieses Clips weg
+        menu.addSeparator();
+        const bool kurve =
+            !m_loop.kanaele[static_cast<std::size_t>(clipKanal)].clips[static_cast<std::size_t>(clip)].expression.empty();
+        menu.addAction(tr("Clear expression"), this, [this, clipKanal, clip] { (void)leereAusdruck(clipKanal, clip); })
+            ->setEnabled(!gruppe && kurve);
     }
     else
     {

@@ -29,6 +29,8 @@
 #include <cstdint>
 #include <vector>
 
+class QPainter;
+
 namespace lumi::loop
 {
 
@@ -156,6 +158,33 @@ public:
     /// verbundene Kopien erkennt (S109). `an` false = Kanal aus, grau.
     [[nodiscard]] QColor basisFarbe(const QString& muster, bool an) const;
 
+    // --- Die Expression am Clip (Stufe 28e; Skizze §1a, SK8 a, SK13 a) ---------
+    // Jeder Clip mit Kurve zeichnet sie ueber seine ganze Laenge. Der angeklickte
+    // (allein markierte) zeigt dazu die Punkte, ohne Kurve eine gestrichelte Linie bei
+    // 1 („Expression 1"): ein Klick auf Linie oder Kurve setzt einen Punkt und zieht ihn
+    // (in Sechzehnteln eines Takts, mit Alt frei), ein Punkt laesst sich ziehen, ein
+    // Doppelklick nimmt ihn weg; im Menue *Clear expression*. Punkte hinter dem Ende des
+    // Clips sind blass (SK8 a).
+    /// Die Hoehe eines Werts 0 … 1 im Rechteck eines Clips (1 oben, 0 unten).
+    [[nodiscard]] static int yVonAusdruck(const QRect& clip, double wert);
+    /// Der Wert unter `y` im Rechteck eines Clips, auf Hundertstel.
+    [[nodiscard]] static double ausdruckBei(const QRect& clip, int y);
+    /// Die Stelle unter `x` in Takten ab dem Anfang des Clips: auf Sechzehntel eines
+    /// Takts, `frei` auf Hundertstel.
+    [[nodiscard]] double clipStelleBei(const LoopClip& clip, int x, bool frei) const;
+    [[nodiscard]] int xVonClipStelle(const LoopClip& clip, double stelle) const;
+    /// Bearbeitet die Maus gerade die Kurve dieses Clips (er ist allein markiert)?
+    [[nodiscard]] bool kurveGreifbar(int kanal, int clip) const;
+    /// Der Punkt der Kurve unter dem Ort (bis 5 Pixel daneben); -1 = keiner.
+    [[nodiscard]] int ausdruckPunktBei(int kanal, int clip, QPoint ort) const;
+    /// Liegt der Ort auf der Linie oder der Kurve (bis 4 Pixel daneben)?
+    [[nodiscard]] bool aufAusdruck(int kanal, int clip, QPoint ort) const;
+    /// Einen Punkt setzen (an derselben Stelle ersetzt er den alten) — ein Undo-Schritt.
+    bool setzeAusdruckPunkt(int kanal, int clip, SpurPunkt punkt);
+    bool loescheAusdruckPunkt(int kanal, int clip, int index);
+    /// *Clear expression*. false = der Clip hat keine Kurve.
+    bool leereAusdruck(int kanal, int clip);
+
 Q_SIGNALS:
     /// Ein Clip wurde angeklickt — oder die freie Flaeche (dann -1, -1).
     void auswahlGeaendert();
@@ -198,7 +227,17 @@ private:
         KanteLinks,
         KanteRechts,
         Rahmen,  ///< auf freier Flaeche: ein Rahmen, der Clips markiert
+        Ausdruck,  ///< Stufe 28e: ein Punkt der Expression am angeklickten Clip
     };
+    /// Einen Punkt in die Kurve legen, ohne zu melden; sein Platz, -1 = nicht moeglich.
+    static int legeAusdruckPunkt(LoopClip& clip, SpurPunkt punkt);
+    /// Den gegriffenen Punkt an diese Stelle ziehen: zwischen seinen Nachbarn, im Clip.
+    void zieheAusdruck(QPoint ort, bool frei);
+    /// Die Kurve eines Clips zeichnen (aus `paintEvent`).
+    void zeichneAusdruck(QPainter& p, int kanal, int clip, const QRect& r);
+    int m_ausdruckIndex = -1;    ///< der gegriffene Punkt
+    bool m_ausdruckNeu = false;  ///< der Zug begann mit einem neuen Punkt
+    bool m_hinweisAusdruck = false;  ///< der Hinweis spricht gerade von der Kurve
     /// Die Marken in Ordnung bringen, nachdem sich der Loop oder der
     /// angeklickte Clip geaendert hat: was es nicht mehr gibt, faellt heraus;
     /// der angeklickte gehoert immer dazu.

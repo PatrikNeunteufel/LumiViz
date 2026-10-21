@@ -24,6 +24,7 @@
 #include <QString>
 
 #include <array>
+#include <cmath>
 #include <vector>
 
 namespace lumi::loop
@@ -70,6 +71,11 @@ inline constexpr double kPitchHalbtoeneMax = 24.0;
 /// Wie die Spur in einer Datei heisst: `sustain`, `sostenuto`, `expression`,
 /// `vibrato`, `pitch`.
 [[nodiscard]] QLatin1String steuerspurName(Steuerspur spur);
+/// Der Pegel einer Expression `e` in dB (SK9 a: e², also 40 · lg e); bei 0 −∞.
+[[nodiscard]] inline double expressionDb(double e)
+{
+    return 40.0 * std::log10(e);
+}
 
 /// Ein Schalter einer Klang-Spielweise ueber der Zeit (SF8 a), etwa *Una corda*:
 /// an (1) oder aus (0) ab jeder Stelle. Beim Namen genannt; welche es gibt,

@@ -280,7 +280,7 @@ QString NotenRaster::wertText(const LeistenSpur& spur, double wert)
         case Steuerspur::Expression:
             // SK9 a: der Pegel e², in dB 40 · lg e
             return wert <= 0.0 ? tr("%1 (silent)").arg(wert, 0, 'f', 2)
-                               : tr("%1 (%2 dB)").arg(wert, 0, 'f', 2).arg(40.0 * std::log10(wert), 0, 'f', 1);
+                               : tr("%1 (%2 dB)").arg(wert, 0, 'f', 2).arg(expressionDb(wert), 0, 'f', 1);
         case Steuerspur::Vibrato:
             return tr("%1 cents").arg(std::lround(wert));
         case Steuerspur::Pitch:

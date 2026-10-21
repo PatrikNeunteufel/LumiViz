@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.24.0
+> **Version:** 0.25.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK12 a (Patrik S139–S141);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK13 a (Patrik S139–S141);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -275,6 +275,19 @@ des Clips (SK8 a, §3). (Patriks Gegenvorschlag — der Kanal
 anderthalbfach hoch, die Kurve im unteren Drittel — war aus einem Missverständnis der
 Skizze entstanden und ist zurückgenommen.)
 
+✅ **SK13 a** (Patrik S141, im Gespräch E1): **Die Kurve am Clip bearbeitet man am
+markierten Clip.** Ein markierter Clip zeigt seine Kurve mit Punkten; ohne Kurve eine
+gestrichelte Linie oben bei 1, beschriftet „Expression 1“. Ein Klick auf die Linie oder die
+Kurve (bis 4 px daneben) setzt einen Punkt und zieht ihn weiter, auf den Takt mit Bruchteil
+in Sechzehnteln, mit Alt frei. Punkte lassen sich ziehen, ein Doppelklick auf einen Punkt
+löscht ihn; der Doppelklick auf den Clip öffnet weiter den Editor. Im Kontextmenü des
+Clips *Clear expression*. Ein nicht markierter Clip zeichnet seine Kurve ohne Punkte; ein
+Klick darauf markiert und verschiebt ihn wie bisher. Verworfen: b (ein Schalter
+*Expression* im Kopf des Panels — gegen „kein Schalter Edit“, ein Modus wird vergessen), c
+(Alt+Klick — nur auffindbar, wer die Taste kennt; der Fall aus S110). Kippt, wenn das Band um
+die Linie beim Verschieben des markierten Clips im Sichttest stört (dann c dazu), oder wenn
+die Kurve auch auf nicht markierten Clips greifbar sein soll (dann b).
+
 ✅ **SK1 a** (Patrik S140): **Ausblenden ist nur Ansicht.** Der Haken in der Zeile *Lanes*
 blendet eine Spur ein oder aus; ihre Werte bleiben in der `.lvloop` und klingen weiter.
 Trägt eine ausgeblendete Spur Werte, steht ein Punkt hinter ihrem Namen (*Vibrato •*,
@@ -368,7 +381,7 @@ die Schwelle als Vorgabe.
 | 28c-1 ✅ | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. *28c-2a ✅, 28c-2b ✅ (SK12 a), Hörproben offen.* |
 | 28d ✅ | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
-| 28e | Loop-Panel: die Expression-Kurve auf dem Clip. |
+| 28e ✅ | Loop-Panel: die Expression-Kurve auf dem Clip (SK13 a). |
 | 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). |
 
 Der Mechanismus der Klang-Spuren kommt mit 28a und 28d; er klingt erst mit der
@@ -566,10 +579,24 @@ sich einer erst, wenn eine Bauart ihn anbietet (ab der Hammer-Saite). *Geprüft*
 (`test_LoopEditorSpuren`, beide Compiler): über den Editor wie im Programm, die Spuren kommen
 im Loop an; Bild mit `LUMIVIZ_EDITOR_SPUREN_BILD`.
 
+**Loop-Panel 28e ✅** (`Taktachse`; SK8 a, SK13 a): jeder Clip mit Kurve zeichnet sie über
+seine ganze Länge mit allen Wiederholungen, unter dem Namen (der Name liegt dann auf einem
+leichten Grund, damit die Kurve ihn nicht durchstreicht); ohne Kurve nichts. Der allein
+markierte Clip zeigt die Punkte, ohne Kurve die gestrichelte Linie bei 1 mit „Expression 1“;
+Punkte hinter dem Ende des Clips blass. Gesten wie SK13 a; die Kanten des Clips gehen vor.
+Zeiger und Statuszeile sagen, was geht, über einem Punkt mit dem Pegel in dB
+(`expressionDb` in `Zeitspur.hpp`, von Editor und Panel geteilt). Undo-Schritte *Add
+expression point*, *Move expression point*, *Delete expression point*, *Clear expression*.
+Esc während des Ziehens nimmt den Punkt zurück. *Clear expression* steht grau im Menü, wenn
+der Clip keine Kurve hat. *Geprüft* (`test_LoopClipExpression`, beide Compiler): über das
+Panel mit CommandBus und Undo; ein nicht markierter Clip verschiebt sich wie bisher; Bild mit
+`LUMIVIZ_LOOP_EXPRESSION_BILD`.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.25.0 | 2026-10-21 | Session 141. SK13 a (Kurve am markierten Clip); Stufe 28e gebaut. |
 | 0.24.0 | 2026-10-21 | Session 141. Stufe 28d gebaut (Zeile *Lanes*, Spuren im Raster, bearbeiten). |
 | 0.23.0 | 2026-10-21 | Session 141. SK12 a (Expression an der Saite im Ton, hinter dem Tonabnehmer, vor dem Drive); Stufe 28c-2b gebaut. |
 | 0.22.0 | 2026-10-20 | Session 140. SK11 a (Vibratohebel als zwei Zahlen); Stufe 28c-2a gebaut (Vibrato und Pitch an der Saite, `.lvinst` 15). |

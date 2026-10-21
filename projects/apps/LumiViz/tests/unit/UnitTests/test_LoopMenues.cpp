@@ -183,7 +183,8 @@ TEST_SUITE("Loop Menues")
             CAPTURE(text);
             CHECK(fang.texte.contains(QString::fromLatin1(text)));
         }
-        CHECK(fang.grau.isEmpty());
+        // grau nur Clear expression (Stufe 28e): der Clip hat keine Kurve
+        CHECK(fang.grau == QStringList{QStringLiteral("Clear expression")});
         fang.waehle = QStringLiteral("Rename base...");
         fang.dialog = antworte(QStringLiteral("Neu"));
         rechts(achse, achse.clipRechteck(0, 0).center());
