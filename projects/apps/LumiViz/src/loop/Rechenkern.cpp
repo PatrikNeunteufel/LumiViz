@@ -7,6 +7,7 @@
 
 #include "loop/Pedalplan.hpp"
 #include "loop/Saitenplan.hpp"
+#include "loop/Stueckweise.hpp"
 
 #include <QHash>
 
@@ -20,32 +21,6 @@ namespace lumi::loop
 
 namespace
 {
-
-using Stuecke = std::vector<std::pair<std::int64_t, double>>;
-
-/// Ein stueckweise linearer Verlauf, der vorwaerts gelesen wird: der Leser merkt sich
-/// das Stueck, in dem er zuletzt war — `rechne` liest Abtastwert fuer Abtastwert.
-class Leser
-{
-public:
-    explicit Leser(const Stuecke& stuecke) : m_stuecke(stuecke) {}
-    /// Der Wert an `x`: vor dem ersten Eintrag der erste, nach dem letzten der letzte,
-    /// dazwischen linear; an zwei Eintraegen derselben Stelle gilt der spaetere.
-    double bei(std::int64_t x)
-    {
-        if (m_stuecke.empty()) return 1.0;
-        if (x < m_stuecke[m_i].first) m_i = 0;  // zurueck (ein neuer Schlag)
-        while (m_i + 1 < m_stuecke.size() && m_stuecke[m_i + 1].first <= x) ++m_i;
-        const auto& [xa, wa] = m_stuecke[m_i];
-        if (x <= xa || m_i + 1 >= m_stuecke.size()) return x < xa ? m_stuecke.front().second : wa;
-        const auto& [xb, wb] = m_stuecke[m_i + 1];
-        return wa + (wb - wa) * static_cast<double>(x - xa) / static_cast<double>(xb - xa);
-    }
-
-private:
-    const Stuecke& m_stuecke;
-    std::size_t m_i = 0;
-};
 
 /// Die Kurve einer Spur ueber die Wiederholungen eines Clips (Stufe 28c-1): je
 /// Durchlauf am Anfang der erste Wert, die Punkte, bis zur Naht der letzte.
@@ -70,8 +45,8 @@ Stuecke ueberDieWiederholungen(const std::vector<SpurPunkt>& spur, double clipSc
 double Ausdruck::wert(std::int64_t frame) const
 {
     const std::int64_t x = std::min(frame, ende);
-    Leser m(muster);
-    Leser c(clip);
+    StueckLeser m(muster);
+    StueckLeser c(clip);
     return m.bei(x) * c.bei(x);
 }
 
@@ -120,7 +95,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
             }
             const double faderAmSchlag = bus < 0 ? fader : 1.0;
             // Expression (Stufe 28c-1): die Spur des Musters und die Kurve am Clip — an einem
-            // Drumkit nur die Kurve; ein Instrument mit Saiten bekommt sie mit 28c-2
+            // Drumkit nur die Kurve; ein Instrument mit Saiten traegt sie im Ton (28c-2b, SK12 a)
             int ausdruck = -1;
             if (toeneDesClips.empty())
             {
@@ -294,8 +269,8 @@ void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_
             // Expression (Stufe 28c-1, SK9 a): der Pegel e² an der Stelle des Abtastwerts im
             // Durchlauf — hinter dem Ende des Clips der Wert dort
             const Ausdruck& ausdruck = ablauf.ausdruecke[static_cast<std::size_t>(schlag.ausdruck)];
-            Leser muster(ausdruck.muster);
-            Leser clip(ausdruck.clip);
+            StueckLeser muster(ausdruck.muster);
+            StueckLeser clip(ausdruck.clip);
             for (std::int64_t f = std::max(ab, start); f < std::min(bis, ende); ++f)
             {
                 const float blende =

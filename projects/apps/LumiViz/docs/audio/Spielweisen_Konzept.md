@@ -1,9 +1,9 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.22.0
-> **Datum:** 2026-10-20 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK11 a (Patrik S139, S140);
+> **Version:** 0.23.0
+> **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK12 a (Patrik S139–S141);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -366,7 +366,7 @@ die Schwelle als Vorgabe.
 | 28a ✅ | Modell und Datei: Spuren als Stufen, Kurve, Schalter; die fünf Steuer-Spuren am Muster, die Expression-Kurve am `LoopClip`; `.lvloop` Fassung 12, alle Felder immer geschrieben. |
 | 28b ✅ | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
 | 28c-1 ✅ | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
-| 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. |
+| 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. *28c-2a ✅, 28c-2b ✅ (SK12 a), Hörproben offen.* |
 | 28d | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
 | 28e | Loop-Panel: die Expression-Kurve auf dem Clip. |
 | 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). |
@@ -509,10 +509,43 @@ Haken *Tremolo arm* mit ↓ und ↑ in Halbtönen. `.lvinst` Fassung 15. *Gemess
 Compiler, `test_LoopSaiteSpuren`): Hebel +1 = 100 ct, −3 mit Grenze 2 = −200 ct, ein Fall um
 zwei Oktaven trifft E2 auf 0 ct; Vibrato von 50 ct an der Saite −49 bis +49,5 ct.
 
+✅ **SK12 a** (Patrik S141, im Gespräch X1): **Expression an der Saite sitzt im Ton, direkt
+hinter dem Tonabnehmer, vor der Reihe der Schicht** — wie der Lautstärkeknopf der Gitarre:
+ein leiserer Ton zerrt weniger. Jede andere Schicht nimmt den Pegel am Ende der Schicht.
+Spur und Kurve stehen im Namen des Tons; ein Clip mit Kurve hat eigene Töne. *Befund:* an
+den mitgelieferten Instrumenten tragen Saiten-Schichten mit Tonabnehmer einen Drive
+(`overdrive_guitar` 0,75, `clavinet` 0,35, `slap_bass` 0,2) — der Ort ist hörbar. Folge:
+mit Drive ist e = 0,5 nicht genau −12 dB, der Tooltip in dB stimmt dort nur ohne Drive.
+Verworfen: b (im Ton am Ende jeder Schicht, nach dem Drive — wie ein Volume-Pedal hinter dem
+Verstärker; ein gültiges Vorbild, aber nicht der Abnehmer aus SK4 a), c (im Rechenkern wie
+am Synth, der Ton in einen Teil mit und einen ohne Expression geteilt — ein Ort für die
+Pegelkurve und weniger Töne, aber der Pegel säße hinter dem Drive, und eine zweite Teilung
+neben `:p1`/`:p2`). Kippt, wenn die Hörproben zeigen, dass ein Swell an der verzerrten
+Gitarre seine Zerrung behalten soll (dann b), oder wenn die Rechenzeit der Töne je Clip
+spürbar wird (dann c).
+
+**Klang 28c-2b ✅** (Expression an einem Instrument mit Saiten; `setzeAusdruck` in
+`loop/Pedalplan`, aufgerufen von `toeneImKanal` nach dem Ende je Ton; `Ausdrucksweg` im
+Instrument; der stückweise Leser in `loop/Stueckweise.hpp`, mit dem Rechenkern geteilt): jeder
+Ton trägt die Spur des Musters (`:x<ms>=<tausendstel>,…`) und die Kurve am Clip
+(`:y…`) getrennt, ab seinem Anschlag (mit Swing und Strum) bis zum Ende des Clips — auch
+im Ausklang — oder bis zu seinem eigenen Ende (`:e`); hinter dem Clip der Wert dort. Je
+Abtastwert werden beide malgenommen, der Pegel ist e² (SK9 a). **An der Saite** wirkt er nur
+mit Tonabnehmer, direkt dahinter, vor der Reihe (SK12 a); akustisch und *Extended KS*
+rechnet die Saite Bit für Bit wie ohne. **Jede andere Schicht** nimmt ihn immer, am Ende der
+Schicht (SF7 a). Der Rechenkern legt bei Saiten keinen zweiten Pegel darüber. Ein Verlauf,
+der überall 1 ist, fällt weg; ohne Spur und Kurve heißen die Töne wie vorher (`Loop Werte`
+unverändert). *Gemessen* (beide Compiler, `test_LoopSaiteExpression`): Tonabnehmer, e = 0,5:
+−12,04 dB; mit Drive 0,75: −6,70 dB; Saite akustisch plus Sinus: der Sinus genau ein
+Viertel (Abweichung 1,5 · 10⁻⁸); im Ausklang bei 1,0 s 0,250. *Rechenzeit:* ein Muster von
+16 Noten auf vier Tonhöhen an einer Waveguide-Gitarre — ohne Expression 4 Töne in 5,1 ms,
+mit Spur 16 Töne in 20,8 ms (Release-clang; Testing-MSVC 29 und 113 ms).
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.23.0 | 2026-10-21 | Session 141. SK12 a (Expression an der Saite im Ton, hinter dem Tonabnehmer, vor dem Drive); Stufe 28c-2b gebaut. |
 | 0.22.0 | 2026-10-20 | Session 140. SK11 a (Vibratohebel als zwei Zahlen); Stufe 28c-2a gebaut (Vibrato und Pitch an der Saite, `.lvinst` 15). |
 | 0.21.0 | 2026-10-20 | Session 140. Stufe 28c-1b gebaut (Vibrato und Pitch im Ton, Pitch range, `.lvinst` 14); 28c-1 fertig. |
 | 0.20.0 | 2026-10-20 | Session 140. SK9 a (Pegel e², Beleg MIDI-Empfehlung), SK10 a (Vibrato-Rate 5,5 Hz, wo die Schicht keine hat); Stufe 28c-1a gebaut (Expression im Rechenkern). |

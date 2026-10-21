@@ -68,5 +68,14 @@ inline constexpr double kPedalSchwelle = 0.5;
 /// Vorkommens anschlaegt und `ton.dauerMs` gehalten wird — wie in `tonImClip`; auch fuer
 /// die Toene eines Instruments mit Saiten (Stufe 28c-2a, `toeneImKanal`).
 void setzeSpuren(TonAngabe& ton, const Loop& loop, const Muster& muster, int wiederholungen, int runde, std::size_t note);
+/// Die Expression ueber einen Ton eines Instruments mit Saiten legen (Stufe 28c-2b; SF6 a,
+/// SF7 a, SK12 a): die Spur des Musters und die Kurve am Clip, je fuer sich, in ms ab dem
+/// Anschlag — der liegt `versatzMs` hinter dem Schritt der Note (Swing, Strum). Gelesen bis
+/// zum Ende des Clips, auch im Ausklang; traegt der Ton ein Ende (`endeMs`, vorher setzen),
+/// bis dorthin. Hinter dem Ende des Clips gilt der Wert dort. Ein Verlauf, der ueberall 1
+/// ist, faellt weg — der Ton heisst dann wie ohne ihn. Ein Instrument ohne Saiten nimmt
+/// Expression im Rechenkern (Stufe 28c-1a).
+void setzeAusdruck(TonAngabe& ton, const Loop& loop, const Muster& muster, const LoopClip& clip, int runde, std::size_t note,
+                   double versatzMs);
 
 }  // namespace lumi::loop

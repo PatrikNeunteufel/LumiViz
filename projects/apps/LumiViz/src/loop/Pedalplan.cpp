@@ -204,4 +204,48 @@ void setzeSpuren(TonAngabe& ton, const Loop& loop, const Muster& muster, int wie
     ton.vibrato = kurveImTon(muster.zeitspuren.von(Steuerspur::Vibrato), schritte, mal, anschlag, bis, schrittMs, 1.0);
 }
 
+void setzeAusdruck(TonAngabe& ton, const Loop& loop, const Muster& muster, const LoopClip& clip, int runde, std::size_t note,
+                   double versatzMs)
+{
+    ton.ausdruckMuster.clear();
+    ton.ausdruckClip.clear();
+    if (note >= muster.noten.size() || loop.bpm <= 0.0 || loop.schritteJeSchlag <= 0) return;
+    const double schrittMs = 60000.0 / loop.bpm / loop.schritteJeSchlag;
+    const int jeTakt = loop.schritteJeTakt();
+    const double schritte = static_cast<double>(muster.takte) * jeTakt;
+    const int mal = std::max(1, clip.wiederholungen);
+    const double clipEnde = mal * schritte;
+    const double anschlag = runde * schritte + muster.noten[note].schritt + versatzMs / schrittMs;
+    // bis zum Ende des Clips, bei einem Ende des Tons bis dorthin (dahinter klingt er nicht)
+    double bis = clipEnde;
+    if (ton.endeMs > 0) bis = std::min(bis, anschlag + ton.endeMs / schrittMs);
+    if (bis <= anschlag) bis = anschlag;
+    const auto voll = [](const std::vector<PegelPunkt>& punkte) {
+        return std::all_of(punkte.begin(), punkte.end(), [](const PegelPunkt& p) { return p.tausendstel == 1000; });
+    };
+
+    // die Spur des Musters, Durchlauf fuer Durchlauf wie Pitch und Vibrato
+    for (const TonPunkt& p : kurveImTon(muster.zeitspuren.von(Steuerspur::Expression), schritte, mal, anschlag, bis,
+                                        schrittMs, 1000.0))
+        ton.ausdruckMuster.push_back({p.ms, std::clamp(p.cent, 0, 1000)});
+    if (voll(ton.ausdruckMuster)) ton.ausdruckMuster.clear();
+
+    // die Kurve am Clip (SK8 a, in Takten ab dem Anfang des Clips); hinter dem Ende des Clips der
+    // Wert dort — auch wenn die Kurve dahinter Punkte traegt (ein gekuerzter Clip)
+    if (!clip.expression.empty())
+    {
+        const auto setze = [&](double x) {
+            const double w = kurveBei(clip.expression, std::min(x, clipEnde) / jeTakt, 1.0);
+            const PegelPunkt p{static_cast<int>(std::lround((x - anschlag) * schrittMs)),
+                               std::clamp(static_cast<int>(std::lround(w * 1000.0)), 0, 1000)};
+            if (ton.ausdruckClip.empty() || !(ton.ausdruckClip.back() == p)) ton.ausdruckClip.push_back(p);
+        };
+        setze(anschlag);
+        for (const SpurPunkt& p : clip.expression)
+            if (const double x = p.stelle * jeTakt; x > anschlag && x < bis) setze(x);
+        setze(bis);
+        if (voll(ton.ausdruckClip)) ton.ausdruckClip.clear();
+    }
+}
+
 }  // namespace lumi::loop

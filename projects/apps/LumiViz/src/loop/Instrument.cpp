@@ -8,6 +8,7 @@
 #include "loop/Kit.hpp"
 #include "loop/Saitenplan.hpp"  // kAbdaempfenMs (Stufe 23b)
 #include "loop/Sample.hpp"
+#include "loop/Stueckweise.hpp"  // die Expression im Ton (Stufe 28c-2b)
 #include "shape/Kontur.hpp"   // die Farbe einer Shape-Schicht (Stufe 20d)
 #include "shape/Tonform.hpp"  // die Schwingung Form (Stufe 19c)
 
@@ -1030,6 +1031,44 @@ private:
     std::vector<Anregung> m_anregungen;
 };
 
+/// Die Expression eines Tons (Stufe 28c-2b; SF6 a, SF7 a, SK9 a, SK12 a): die Spur des
+/// Musters und die Kurve am Clip in Abtastwerten ab dem Anschlag. Gelesen wird je Schicht
+/// mit eigenen Lesern (`pegel`); der Pegel ist e², e das Produkt beider.
+class Ausdrucksweg
+{
+public:
+    Ausdrucksweg(int rate, const std::vector<PegelPunkt>& muster, const std::vector<PegelPunkt>& clip)
+        : m_muster(stuecke(rate, muster)), m_clip(stuecke(rate, clip))
+    {
+    }
+    /// Ein Leser des Pegels, vorwaerts: `bei(t)` mit `t` in Abtastwerten ab dem Anschlag.
+    class Leser
+    {
+    public:
+        explicit Leser(const Ausdrucksweg& weg) : m_muster(weg.m_muster), m_clip(weg.m_clip) {}
+        double pegel(std::int64_t t)
+        {
+            const double e = m_muster.bei(t) * m_clip.bei(t);
+            return e * e;
+        }
+
+    private:
+        StueckLeser m_muster;
+        StueckLeser m_clip;
+    };
+
+private:
+    static Stuecke stuecke(int rate, const std::vector<PegelPunkt>& punkte)
+    {
+        Stuecke s;
+        for (const PegelPunkt& p : punkte)
+            s.emplace_back(std::llround(p.ms * static_cast<double>(rate) / 1000.0), p.tausendstel / 1000.0);
+        return s;
+    }
+    Stuecke m_muster;
+    Stuecke m_clip;
+};
+
 /// Wie die Saite gespielt wird (Stufe 24c): ohne Daempfer und ohne Tapping
 /// rechnet sie Bit fuer Bit wie bis Stufe 24b.
 struct Spielart
@@ -1040,6 +1079,11 @@ struct Spielart
     const Bahn* bahn = nullptr;
     /// Stufe 25c (S-L11 a): wie fest Hammer-on und Pull-off neu anregen.
     double legatoLaut = 0.0;
+    /// Stufe 28c-2b (SK12 a): die Expression — sie wirkt nur hinter einem Tonabnehmer, vor
+    /// der Reihe der Schicht; nullptr = keine. `ausdruckAb`: so viele Abtastwerte nach dem
+    /// Anschlag setzt die Schicht ein.
+    const Ausdrucksweg* ausdruck = nullptr;
+    std::int64_t ausdruckAb = 0;
 };
 
 /// Wo der Handballen bei *Palm mute* liegt, in mm vom Steg (Stufe 24c):
@@ -1662,12 +1706,18 @@ void rechneSaiteWg(const Schicht& schicht, double hz, const Huelle& huelle, int 
     }
 
     // je Lauf eine frische Abnahme mit eigenem Gedaechtnis der Tonabnehmer
+    // Stufe 28c-2b (SK12 a): die Expression direkt hinter dem Tonabnehmer, wie der Knopf am
+    // Instrument — vor der Reihe der Schicht (ein leiserer Ton zerrt weniger)
     const auto fabrik = [&] {
-        return [&signal, nimmHals, nimmSteg, eigene = plaetze](double y, const auto& lese) mutable {
+        std::optional<Ausdrucksweg::Leser> ausdruck;
+        if (spiel.ausdruck != nullptr) ausdruck.emplace(*spiel.ausdruck);
+        return [&signal, nimmHals, nimmSteg, eigene = plaetze, ausdruck, t = spiel.ausdruckAb](double y,
+                                                                                                const auto& lese) mutable {
             if (!nimmHals && !nimmSteg) return y;  // akustisch: die Welle am Steg
             const double vomHals = nimmHals ? signal(eigene[0], y, lese) : 0.0;
             const double vomSteg = nimmSteg ? signal(eigene[1], y, lese) : 0.0;
-            return nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
+            const double aus = nimmHals && nimmSteg ? 0.5 * (vomHals + vomSteg) : vomHals + vomSteg;
+            return ausdruck ? aus * ausdruck->pegel(t++) : aus;
         };
     };
     laufeMitKorpus(schicht, hz, huelle, rate, u, std::move(ring), daten, spiel, fabrik, !nimmHals && !nimmSteg, anregen);
@@ -2782,6 +2832,11 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
         }
     const bool mitSpuren = angabe != nullptr && (!angabe->tonhoehe.empty() || !angabe->vibrato.empty());
     const bool hebel = instrument.saiten.hatHebel();
+    // Stufe 28c-2b (SF6 a, SF7 a, SK12 a): Expression — an der Saite nur mit Tonabnehmer, an
+    // jeder anderen Schicht immer
+    std::optional<Ausdrucksweg> ausdruck;
+    if (angabe != nullptr && (!angabe->ausdruckMuster.empty() || !angabe->ausdruckClip.empty()))
+        ausdruck.emplace(rate, angabe->ausdruckMuster, angabe->ausdruckClip);
     for (const Schicht& schicht : instrument.schichten)
     {
         if (!schicht.an) continue;
@@ -2821,6 +2876,11 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
                                       angabe->vibrato, saiteVibratoHz, saiteVibratoEinsatzMs);
                 spiel.art.bahn = &*bahn;
                 spiel.art.legatoLaut = std::clamp(schicht.legatoLaut, 0.0, 1.0);
+            }
+            if (ausdruck)
+            {
+                spiel.art.ausdruck = &*ausdruck;
+                spiel.art.ausdruckAb = einsatz;
             }
             if (schicht.saitenModell == SaitenModell::ErweiterterKs)
                 rechneSaiteKs(schicht, spiel.ton, saiteHz, huelle, rate, schichtDicke, spiel.art, eine);
@@ -2865,6 +2925,17 @@ Klang rendereTonAufSaite(const Instrument& instrument, int hoehe, double dauerMs
                 rechneForm(schicht, hz, huelle, rate, eine, weg);
             else
                 rechneSchwingung(schicht, hz, huelle, rate, eine, weg);
+            // Stufe 28c-2b (SK12 a): eine Schicht ohne Saite nimmt die Expression am Ende
+            if (ausdruck)
+            {
+                Ausdrucksweg::Leser leser(*ausdruck);
+                for (std::size_t i = 0; i + 1 < eine.size(); i += 2)
+                {
+                    const auto pegel = static_cast<float>(leser.pegel(einsatz + static_cast<std::int64_t>(i / 2)));
+                    eine[i] *= pegel;
+                    eine[i + 1] *= pegel;
+                }
+            }
         }
         // der Klang endet bei null — auch wenn hinter der Envelope ein Filter nachschwingt
         if (schicht.schwingung != Schwingung::Saite && filterHinterHuelle(schicht)) blendeAus(eine, rate);

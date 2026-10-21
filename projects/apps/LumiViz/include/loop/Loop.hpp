@@ -197,6 +197,16 @@ struct TonPunkt
     [[nodiscard]] bool operator==(const TonPunkt&) const = default;
 };
 
+/// Ein Punkt eines Pegelverlaufs im Ton (Stufe 28c-2b, SK12 a): `ms` nach dem Anschlag
+/// die Stärke der Expression in Tausendsteln (0 … 1000).
+struct PegelPunkt
+{
+    int ms = 0;
+    int tausendstel = 1000;
+
+    [[nodiscard]] bool operator==(const PegelPunkt&) const = default;
+};
+
 /// Welche Schichten ein Ton rechnet (Stufe 25c, S-L12 a): in einer Kette verbundener
 /// Noten laeuft die Saite (*Extended KS*, *Waveguide*) als ein Ton ueber die Kette, mit
 /// ihr jede Schicht mit *Follow string* (seit 25c-4); die uebrigen spielen je Note
@@ -244,6 +254,14 @@ struct TonAngabe
     std::vector<TonPunkt> tonhoehe{};
     /// Die Spur Vibrato: die Tiefe in Cent, ebenso. Leer = das Vibrato der Schicht.
     std::vector<TonPunkt> vibrato{};
+    // --- seit Stufe 28c-2b (SF6 a, SF7 a, SK12 a): Expression an einem Instrument mit Saiten ---
+    /// Die Spur Expression des Musters ueber dem Ton, bis zum Ende des Clips (auch im
+    /// Ausklang), linear zwischen den Punkten, danach der letzte; zwei Punkte an derselben
+    /// Stelle: ein Sprung (an der Naht). Leer = 1.
+    std::vector<PegelPunkt> ausdruckMuster{};
+    /// Die Kurve Expression am Clip ueber dem Ton, ebenso. Leer = 1. Je Abtastwert werden
+    /// beide malgenommen, der Pegel ist das Quadrat (SK9 a).
+    std::vector<PegelPunkt> ausdruckClip{};
 
     [[nodiscard]] bool operator==(const TonAngabe&) const = default;
 };
@@ -252,8 +270,10 @@ struct TonAngabe
 /// mute, `:t` bei Tapping, (seit Stufe 25b, S-L6 a) `:v<ms><l|g><hoehe>,…` bei
 /// einem Verlauf und `:b<ms>-<viertel>,…` bei einem Bend, (seit Stufe 28c-1b)
 /// `:q<ms>=<cent>,…` bei der Spur Pitch und `:w<ms>=<cent>,…` bei der Spur Vibrato,
-/// (seit Stufe 25c) `:p1` nur die Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei
-/// einem Ende — ohne alles derselbe Name wie bis Stufe 22.
+/// (seit Stufe 28c-2b) `:x<ms>=<tausendstel>,…` bei der Spur Expression und
+/// `:y<ms>=<tausendstel>,…` bei der Kurve am Clip, (seit Stufe 25c) `:p1` nur die
+/// Saite, `:p2` ohne die Saite, zuletzt `:e<ms>` bei einem Ende — ohne alles
+/// derselbe Name wie bis Stufe 22.
 [[nodiscard]] QString tonKlang(const TonAngabe& ton);
 /// Den Namen wieder zerlegen. false = kein Ton.
 bool zerlegeTon(const QString& klang, TonAngabe& ton);

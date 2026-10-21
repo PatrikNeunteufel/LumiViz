@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 
 namespace lumi::loop
 {
@@ -431,14 +432,17 @@ QString tonKlang(const TonAngabe& ton)
         for (const TonBiegung& b : ton.biegung) teile << QStringLiteral("%1-%2").arg(b.ms).arg(b.viertel);
         name += QStringLiteral(":b") + teile.join(QLatin1Char(','));
     }
-    // seit Stufe 28c-1b: die Spuren Pitch und Vibrato, je Punkt ms und Cent
-    const auto verlaufText = [](const std::vector<TonPunkt>& punkte) {
+    // seit Stufe 28c-1b: die Spuren Pitch und Vibrato, je Punkt ms und Cent; seit 28c-2b
+    // Expression, je Punkt ms und Tausendstel
+    const auto verlaufText = [](const auto& punkte, auto wert) {
         QStringList teile;
-        for (const TonPunkt& p : punkte) teile << QStringLiteral("%1=%2").arg(p.ms).arg(p.cent);
+        for (const auto& p : punkte) teile << QStringLiteral("%1=%2").arg(p.ms).arg(p.*wert);
         return teile.join(QLatin1Char(','));
     };
-    if (!ton.tonhoehe.empty()) name += QStringLiteral(":q") + verlaufText(ton.tonhoehe);
-    if (!ton.vibrato.empty()) name += QStringLiteral(":w") + verlaufText(ton.vibrato);
+    if (!ton.tonhoehe.empty()) name += QStringLiteral(":q") + verlaufText(ton.tonhoehe, &TonPunkt::cent);
+    if (!ton.vibrato.empty()) name += QStringLiteral(":w") + verlaufText(ton.vibrato, &TonPunkt::cent);
+    if (!ton.ausdruckMuster.empty()) name += QStringLiteral(":x") + verlaufText(ton.ausdruckMuster, &PegelPunkt::tausendstel);
+    if (!ton.ausdruckClip.empty()) name += QStringLiteral(":y") + verlaufText(ton.ausdruckClip, &PegelPunkt::tausendstel);
     if (ton.teil != TonTeil::Alle) name += QStringLiteral(":p%1").arg(static_cast<int>(ton.teil));  // seit Stufe 25c
     if (ton.endeMs > 0) name += QStringLiteral(":e%1").arg(ton.endeMs);
     return name;
@@ -482,32 +486,36 @@ bool zerlegeBiegung(QStringView text, std::vector<TonBiegung>& biegung)
     }
     return !biegung.empty();
 }
-/// `:q0=0,500=-150` — je Punkt ms und Cent (Stufe 28c-1b; der Wert darf negativ sein).
-bool zerlegePunkte(QStringView text, std::vector<TonPunkt>& punkte)
+/// `:q0=0,500=-150` — je Punkt ms und Cent (Stufe 28c-1b; der Wert darf negativ sein);
+/// `:x0=1000,500=250` — je Punkt ms und Tausendstel (Stufe 28c-2b; 0 … 1000).
+template <class Punkt>
+bool zerlegePunkte(QStringView text, std::vector<Punkt>& punkte)
 {
     for (const QStringView teil : text.split(QLatin1Char(',')))
     {
         const qsizetype gleich = teil.indexOf(QLatin1Char('='));
         if (gleich <= 0) return false;
         bool msOk = false;
-        bool centOk = false;
+        bool wertOk = false;
         const int ms = teil.left(gleich).toInt(&msOk);
-        const int cent = teil.mid(gleich + 1).toInt(&centOk);
-        if (!msOk || !centOk || ms < 0) return false;
-        punkte.push_back(TonPunkt{ms, cent});
+        const int wert = teil.mid(gleich + 1).toInt(&wertOk);
+        if (!msOk || !wertOk || ms < 0) return false;
+        if constexpr (std::is_same_v<Punkt, PegelPunkt>)
+            if (wert < 0 || wert > 1000) return false;
+        punkte.push_back(Punkt{ms, wert});
     }
     return !punkte.empty();
 }
 
 /// Den Namen eines Tons zerlegen (ohne Vorsatz). Von hinten: die Zusaetze
 /// `:e<ms>`, `:s<n>` (seit Stufe 23b), `:h<n>`, `:u`, `:m`, `:t` (seit Stufe
-/// 24b), `:v…`, `:b…` (seit Stufe 25b), `:q…`, `:w…` (seit Stufe 28c-1b), `:p1`, `:p2` (seit Stufe 25c), dann
-/// Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das als Pfad
+/// 24b), `:v…`, `:b…` (seit Stufe 25b), `:q…`, `:w…` (seit Stufe 28c-1b), `:x…`, `:y…` (seit Stufe 28c-2b),
+/// `:p1`, `:p2` (seit Stufe 25c), dann Dauer und Tonhoehe als reine Zahlen — davor das Instrument, das als Pfad
 /// selbst einen Doppelpunkt tragen kann (C:/…).
 bool zerlegeTonRest(QString rest, TonAngabe& ton)
 {
     TonAngabe zusatz;
-    for (int runde = 0; runde < 11; ++runde)
+    for (int runde = 0; runde < 13; ++runde)
     {
         const qsizetype vor = rest.lastIndexOf(QLatin1Char(':'));
         if (vor < 0 || vor + 2 > rest.size()) break;
@@ -537,6 +545,14 @@ bool zerlegeTonRest(QString rest, TonAngabe& ton)
         else if (stueck.front() == QLatin1Char('w') && stueck.size() > 1 && stueck[1].isDigit())
         {
             if (!zerlegePunkte(stueck.mid(1), zusatz.vibrato)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('x') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegePunkte(stueck.mid(1), zusatz.ausdruckMuster)) return false;
+        }
+        else if (stueck.front() == QLatin1Char('y') && stueck.size() > 1 && stueck[1].isDigit())
+        {
+            if (!zerlegePunkte(stueck.mid(1), zusatz.ausdruckClip)) return false;
         }
         else
         {

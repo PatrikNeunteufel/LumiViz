@@ -128,7 +128,8 @@ struct Ablauf
     std::vector<Bus> busse;
     /// Je Clip mit einem Verlauf Expression einer (Stufe 28c-1): ein Drumkit mit der
     /// Kurve am Clip, ein Instrument ohne Saiten dazu mit der Spur des Musters. Ein
-    /// Instrument mit Saiten bekommt Expression mit Stufe 28c-2 (ueber die Tonabnehmer).
+    /// Instrument mit Saiten traegt Expression im Ton (Stufe 28c-2b, SK12 a:
+    /// `TonAngabe::ausdruckMuster`, `ausdruckClip`) und hat hier keinen Eintrag.
     std::vector<Ausdruck> ausdruecke;
 };
 

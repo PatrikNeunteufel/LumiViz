@@ -100,6 +100,7 @@ set(_local_headers
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Spieler.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Zeitspur.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Pedalplan.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/../../include/loop/Stueckweise.hpp"
 )
 set(_local_templates
     # (no templates - *.t; *.tpp)

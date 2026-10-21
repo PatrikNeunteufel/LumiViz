@@ -481,6 +481,27 @@ std::vector<ClipToene> toeneImKanal(const Loop& loop, std::size_t kanalNr, const
         // Let ring (S-W6 a): gehalten, bis die naechste Note auf derselben Saite sie abdaempft
         if (v.klingt) ton.dauerMs = std::max(ton.dauerMs, ton.endeMs);
     }
+
+    // Stufe 28c-2b (SK12 a): die Expression ueber jedem Ton, ab seinem Anschlag (mit Swing und
+    // Strum) bis zum Ende des Clips oder seinem eigenen — erst jetzt, da das Ende feststeht
+    for (std::size_t c = 0; c < toene.size(); ++c)
+    {
+        if (toene[c].empty()) continue;
+        const LoopClip& clip = kanal.clips[c];
+        const Muster* muster = loop.findeMuster(clip.muster);
+        if (muster == nullptr) continue;
+        if (muster->zeitspuren.von(Steuerspur::Expression).empty() && clip.expression.empty()) continue;
+        for (std::size_t r = 0; r < toene[c].size(); ++r)
+            for (std::size_t i = 0; i < toene[c][r].size(); ++i)
+            {
+                const Note& note = muster->noten[i];
+                GeplanterTon& ton = toene[c][r][i];
+                const bool versetzt = (note.schritt % loop.schritteJeSchlag) % 2 == 1;
+                const double versatzMs = (versetzt ? swingMs : 0.0) + ton.versatzMs;
+                setzeAusdruck(ton, loop, *muster, clip, static_cast<int>(r), i, versatzMs);
+                for (TonAngabe& zusatz : ton.zusatz) setzeAusdruck(zusatz, loop, *muster, clip, static_cast<int>(r), i, versatzMs);
+            }
+    }
     return toene;
 }
 
