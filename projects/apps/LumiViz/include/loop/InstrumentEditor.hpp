@@ -14,6 +14,9 @@
  * Note zeigt ihre Saite, und unter dem Raster erklaert eine Zeile die Zeichen.
  * **Spielweisen (Stufe 24e; Skizze gebilligt, Patrik S134, S-W5 a):** unter der
  * Instrument-Zeile die Zeile *Strum* des Musters (H).
+ * **Spuren ueber der Zeit (Stufe 28d; Skizze §1a gebilligt, Patrik S140):** darunter die
+ * Zeile *Lanes* — je Spur, die das Instrument traegt, ein Haken, dazu *Tab*; im Raster
+ * die eingeblendeten Spuren unter der Spur Strum.
  *
  * Wie der Drum-Editor aendert er den Loop nicht selbst: er meldet die neue
  * Fassung mit `bearbeitet`, das Loop-Panel fuehrt sie ueber Undo aus und gibt
@@ -33,6 +36,8 @@
 #include <QString>
 #include <QWidget>
 
+#include <array>
+#include <cmath>
 #include <functional>
 #include <optional>
 #include <utility>
@@ -40,6 +45,8 @@
 
 class IAudioEngine;
 class QCheckBox;
+class QContextMenuEvent;
+class QHelpEvent;
 class QPainter;
 class QComboBox;
 class QLabel;
@@ -197,7 +204,7 @@ public:
     /// Der Haken *Tab* (F): die Linien zeigen oder nicht.
     void setTabAn(bool an);
     [[nodiscard]] bool tabAn() const { return m_tabAn; }
-    [[nodiscard]] int tabOben() const { return strumOben() + strumHoehe(); }
+    [[nodiscard]] int tabOben() const { return spurenOben() + spurenHoehe(); }
     [[nodiscard]] int tabHoehe() const
     {
         return m_saiten.istSaiteninstrument() && m_tabAn ? m_saiten.anzahl() * kTabZeile + 2 * kTabRand : 0;
@@ -255,6 +262,70 @@ public:
     /// So lange nach einer Ziffer zaehlt die naechste noch zum selben Bund (zweistellig).
     static constexpr int kTabZifferMs = 800;
 
+    // --- Spuren ueber der Zeit (Stufe 28d; Skizze §1a, SK1 a, SK2 a) ------------
+    // Unter der Spur Strum (oder der Zeile der Takte) je eingeblendeter Spur eine Leiste:
+    // Sustain, Sostenuto, Expression, Vibrato, Pitch, danach die Schalter des Musters.
+    // Links das Kuerzel (der volle Name im Tooltip). Pedale und Schalter als Flaeche von
+    // unten, Expression, Vibrato und Pitch als Kurve mit Punkten, Pitch um eine
+    // Mittellinie; eine leere Spur gestrichelt mit „Instrument default". Ein Klick setzt
+    // einen Punkt auf den Schritt (mit Alt frei) und zieht ihn weiter, ein Punkt laesst
+    // sich ziehen (zwischen seinen Nachbarn), ein Doppelklick nimmt ihn weg; im Menue
+    // *Delete point* und *Clear lane*. Je Zug ein Schritt fuer Undo.
+    /// Eine Spur der Leiste: eine Steuer-Spur — oder mit `schalter` ein Schalter beim Namen.
+    struct LeistenSpur
+    {
+        Steuerspur steuer = Steuerspur::Sustain;
+        QString schalter;  ///< leer = die Steuer-Spur
+
+        [[nodiscard]] bool operator==(const LeistenSpur&) const = default;
+    };
+    /// Welche Steuer-Spuren das Instrument traegt (`traegtSpur`) und wie weit Pitch
+    /// reicht (`pitchBereichHt`; die Spur zeigt ±so viel, 0 = 2).
+    void setzeGetrageneSpuren(const std::array<bool, kSteuerspuren>& traegt, double pitchBereichHt);
+    [[nodiscard]] bool traegt(Steuerspur spur) const { return m_traegt[static_cast<std::size_t>(spur)]; }
+    /// Die Spuren, die die Zeile *Lanes* anbietet: die getragenen und die, die Werte
+    /// tragen (sie klingen nur, wo das Instrument sie traegt), dann die Schalter des Musters.
+    [[nodiscard]] std::vector<LeistenSpur> angeboteneSpuren() const;
+    /// SK1 a: ein- und ausblenden ist nur Ansicht.
+    void setzeSpurSichtbar(const LeistenSpur& spur, bool sichtbar);
+    [[nodiscard]] bool spurSichtbar(const LeistenSpur& spur) const;
+    /// SK1 a beim Oeffnen eines Musters: die Spuren mit Werten ein, die uebrigen aus.
+    void zeigeSpurenMitWerten();
+    [[nodiscard]] std::vector<LeistenSpur> sichtbareSpuren() const;
+    [[nodiscard]] bool hatWerte(const LeistenSpur& spur) const;
+    /// SK2 a: das Kuerzel in der linken Spalte (Sus, Sost, Expr, Vib, Pitch; ein Schalter
+    /// die ersten sechs Zeichen seines Namens) und der volle Name.
+    [[nodiscard]] static QString spurKuerzel(const LeistenSpur& spur);
+    [[nodiscard]] static QString spurName(const LeistenSpur& spur);
+    [[nodiscard]] int spurenOben() const { return strumOben() + strumHoehe(); }
+    [[nodiscard]] int spurenHoehe() const { return static_cast<int>(sichtbareSpuren().size()) * kSpurHoehe; }
+    [[nodiscard]] int spurOben(int nr) const { return spurenOben() + nr * kSpurHoehe; }
+    /// Die Spur (Platz in `sichtbareSpuren`) unter `y`; -1 = keine.
+    [[nodiscard]] int spurBei(int y) const;
+    /// Die Grenzen der Werte einer Spur, wie sie gezeichnet wird.
+    [[nodiscard]] std::pair<double, double> spurBereich(const LeistenSpur& spur) const;
+    [[nodiscard]] int yVonWert(int nr, double wert) const;
+    /// Der Wert unter `y` in der Spur `nr`, in ihren Grenzen (ein Schalter: 0 oder 1).
+    [[nodiscard]] double wertBei(int nr, int y) const;
+    /// Die Stelle unter `x` in Schritten: auf den naechsten Schritt gerundet, `frei` mit Bruchteil.
+    [[nodiscard]] double stelleBei(int x, bool frei) const;
+    [[nodiscard]] int xVonStelle(double stelle) const
+    {
+        return kTastenBreite + static_cast<int>(std::lround(stelle * m_schrittBreite)) - m_rollX;
+    }
+    /// Der Punkt der Spur `nr` unter dem Ort (bis `kPunktFang` Pixel daneben); -1 = keiner.
+    [[nodiscard]] int spurPunktBei(int nr, QPoint ort) const;
+    /// Einen Punkt setzen — an derselben Stelle ersetzt er den alten. false = es aendert nichts.
+    bool setzeSpurPunkt(const LeistenSpur& spur, SpurPunkt punkt);
+    bool loescheSpurPunkt(const LeistenSpur& spur, int index);
+    /// *Clear lane*: alle Punkte der Spur weg. false = sie war leer.
+    bool leereSpur(const LeistenSpur& spur);
+    /// Ein Wert der Spur als Text: Pedale in Prozent, Expression mit dem Pegel in dB
+    /// (SK9 a), Vibrato in Cent, Pitch in Halbtoenen, ein Schalter on/off.
+    [[nodiscard]] static QString wertText(const LeistenSpur& spur, double wert);
+    static constexpr int kSpurHoehe = 36;  ///< je eingeblendeter Spur
+    static constexpr int kPunktFang = 6;   ///< so nah faengt die Maus einen Punkt
+
     // --- Rollen ---------------------------------------------------------------
     void setRollen(int x, int y);
     [[nodiscard]] int rollX() const { return m_rollX; }
@@ -266,7 +337,7 @@ public:
     [[nodiscard]] int rollYMax() const;
     /// Breite und Hoehe des Ausschnitts, in dem die Noten liegen.
     [[nodiscard]] int sichtBreite() const { return width() - kTastenBreite; }
-    [[nodiscard]] int sichtHoehe() const { return height() - kKopfHoehe - kLautHoehe - strumHoehe() - tabHoehe(); }
+    [[nodiscard]] int sichtHoehe() const { return height() - rasterOben() - kLautHoehe; }
     /// So rollen, dass diese Tonhoehe in der Mitte liegt.
     void zeigeHoehe(int hoehe);
 
@@ -307,9 +378,9 @@ public:
     /// Der Schritt unter `x`; -1 = keiner (die Klaviatur, hinter dem Ende).
     [[nodiscard]] int schrittBei(int x) const;
     [[nodiscard]] int yVonHoehe(int hoehe) const { return rasterOben() + (kHoeheMax - hoehe) * zeilenHoehe() - m_rollY; }
-    /// Oberkante der Noten: unter der Zeile der Takte und (mit Saiten) der Spur Strum
-    /// und den Tab-Linien.
-    [[nodiscard]] int rasterOben() const { return kKopfHoehe + strumHoehe() + tabHoehe(); }
+    /// Oberkante der Noten: unter der Zeile der Takte, (mit Saiten) der Spur Strum, den
+    /// eingeblendeten Spuren (Stufe 28d) und den Tab-Linien.
+    [[nodiscard]] int rasterOben() const { return tabOben() + tabHoehe(); }
     /// Die Tonhoehe unter `y`; -1 = keine (der Kopf, die Zeile der Lautstaerken).
     [[nodiscard]] int hoeheBei(int y) const;
     /// Oberkante der Zeile mit der Lautstaerke je Note.
@@ -336,6 +407,8 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    /// Stufe 28d: ein Doppelklick auf einen Punkt einer Spur nimmt ihn weg.
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
@@ -375,6 +448,7 @@ private:
         Rahmen,       ///< mit Shift: ein Rahmen, der Noten markiert
         Gruppe,       ///< mehrere markierte Noten zusammen in Zeit und Tonhoehe
         TabSaite,     ///< Stufe 26c: eine Zahl in den Tab-Linien auf eine andere Saite
+        SpurPunkt,    ///< Stufe 28d: ein Punkt einer Spur ueber der Zeit
     };
     /// Eine eigene Aenderung uebernehmen: zeigen, die Marken setzen, melden.
     void uebernimm(const Muster& neu, const std::vector<NotenOrt>& marken, const QString& was);
@@ -448,6 +522,28 @@ private:
     bool aendereMarkierte(const std::function<void(Note&)>& aendere, const QString& was);
     /// Die Tab-Linien zeichnen (aus `paintEvent`).
     void zeichneTab(QPainter& p, const std::vector<Griff>& griffe, const std::vector<Anschlagplan>& anschlaege);
+    // --- Stufe 28d: die Spuren ueber der Zeit (InstrumentEditorSpuren.cpp)
+    std::array<bool, kSteuerspuren> m_traegt{true, true, true, true, true};
+    double m_pitchBereich = kPitchHalbtoeneMax;
+    std::array<bool, kSteuerspuren> m_steuerSichtbar{};
+    std::vector<QString> m_schalterSichtbar;  ///< die eingeblendeten Schalter, beim Namen
+    LeistenSpur m_spurZug;                    ///< beim Ziehen eines Punkts: seine Spur
+    int m_spurIndex = -1;                     ///< und sein Platz darin
+    /// Die Punkte einer Spur im Muster; nullptr = ein Schalter, den das Muster nicht traegt.
+    [[nodiscard]] static std::vector<lumi::loop::SpurPunkt>* punkteVon(Muster& muster, const LeistenSpur& spur);
+    [[nodiscard]] static const std::vector<lumi::loop::SpurPunkt>* punkteVon(const Muster& muster, const LeistenSpur& spur);
+    /// Einen Punkt ins Muster legen, ohne zu melden (an derselben Stelle ersetzt er den
+    /// alten); sein Platz in der Spur, -1 = nicht moeglich.
+    int legeSpurPunkt(const LeistenSpur& spur, lumi::loop::SpurPunkt punkt);
+    /// Den gegriffenen Punkt an diese Stelle ziehen: zwischen seinen Nachbarn, im Muster.
+    void zieheSpurPunkt(QPoint ort, bool frei);
+    /// Eine Aenderung an den Spuren melden (ein Schritt fuer Undo).
+    void meldeSpuren(const QString& was);
+    /// Die Spuren zeichnen (aus `paintEvent`).
+    void zeichneSpuren(QPainter& p);
+    /// Tooltip, Menue und Zeiger in den Spuren; false = der Ort liegt nicht in ihnen.
+    bool spurTooltip(const QHelpEvent& hilfe);
+    bool spurMenue(const QContextMenuEvent& event);
 };
 
 class InstrumentEditor : public QWidget
@@ -501,6 +597,8 @@ public:
     void setzeStrum(const Strum& strum);
     /// Die Zeile Strum (fuer Tests).
     [[nodiscard]] StrumZeile* strumZeile() const { return m_strumZeile; }
+    /// Stufe 28d: die Haken der Zeile *Lanes* (fuer Tests), in der Reihenfolge der Spuren.
+    [[nodiscard]] const std::vector<QCheckBox*>& spurHaken() const { return m_spurHaken; }
 
     // --- der Instrument-Creator (Stufe 10b) -----------------------------------
     /// „Edit instrument...": den Creator mit dem Instrument dieser Basis
@@ -636,6 +734,12 @@ private:
     QLabel* m_saitenHinweis = nullptr;
     StrumZeile* m_strumZeile = nullptr;  ///< H (Stufe 24e, S-W5 a)
     QCheckBox* m_tabHaken = nullptr;     ///< F (Stufe 26c, S-T5 a): die Tab-Linien zeigen; der Editor merkt die Stellung
+    // --- Stufe 28d (Skizze §1a, SK1 a): die Zeile Lanes
+    QWidget* m_spurZeile = nullptr;
+    QLabel* m_spurTitel = nullptr;
+    std::vector<QCheckBox*> m_spurHaken;  ///< je angebotener Spur einer, in ihrer Reihenfolge
+    /// Die Haken der Zeile Lanes nach dem Raster richten (Namen, Punkt bei Werten, Stellung).
+    void zeigeSpurZeile();
 };
 
 }  // namespace lumi::loop

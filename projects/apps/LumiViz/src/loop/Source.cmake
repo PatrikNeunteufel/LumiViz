@@ -31,6 +31,7 @@ set(_local_sources
     "${CMAKE_CURRENT_LIST_DIR}/InstrumentCreator.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/InstrumentPalette.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/InstrumentEditor.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/InstrumentEditorSpuren.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Kit.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/KitFenster.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/KlangAuswahl.cpp"

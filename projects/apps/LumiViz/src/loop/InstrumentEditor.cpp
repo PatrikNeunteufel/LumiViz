@@ -125,6 +125,9 @@ void NotenRaster::zeigeZeiger(QPoint ort)
         form = Qt::PointingHandCursor;
     else if (strumBei(ort) >= 0)
         form = Qt::PointingHandCursor;  // J: ein Anschlag in der Spur Strum laesst sich schalten
+    else if (const int nr = spurBei(ort.y()); nr >= 0 && ort.y() < tabOben() && ort.x() >= kTastenBreite)
+        // Stufe 28d: ein Punkt laesst sich ziehen, eine freie Stelle nimmt einen
+        form = spurPunktBei(nr, ort) >= 0 ? Qt::SizeAllCursor : Qt::CrossCursor;
     else if (tabSaiteBei(ort.y()) >= 0)
         // Stufe 26c: eine Zahl laesst sich auf eine andere Saite ziehen, eine leere Stelle nimmt einen Bund,
         // der Name der Saite spielt sie an
@@ -365,7 +368,7 @@ bool NotenRaster::setzeSaite(int stelle)
 
 int NotenRaster::strumBei(QPoint ort) const
 {
-    if (strumHoehe() == 0 || ort.y() < strumOben() || ort.y() >= tabOben()) return -1;
+    if (strumHoehe() == 0 || ort.y() < strumOben() || ort.y() >= spurenOben()) return -1;
     const int schritt = schrittBei(ort.x());
     if (schritt < 0) return -1;
     const bool belegt = std::any_of(m_muster.noten.begin(), m_muster.noten.end(),
@@ -825,6 +828,8 @@ void NotenRaster::zeichneTab(QPainter& p, const std::vector<Griff>& alleGriffe, 
 
 bool NotenRaster::event(QEvent* event)
 {
+    // Stufe 28d: in den Spuren ueber der Zeit — bei jedem Instrument
+    if (event->type() == QEvent::ToolTip && spurTooltip(*static_cast<QHelpEvent*>(event))) return true;
     if (event->type() == QEvent::ToolTip && m_saiten.istSaiteninstrument())
     {
         const auto* hilfe = static_cast<QHelpEvent*>(event);
@@ -1602,7 +1607,10 @@ void NotenRaster::paintEvent(QPaintEvent*)
         p.setClipping(false);
         p.setFont(font());
     }
-    // --- A, B (Stufe 26c, S-T5 a): die Tab-Linien zwischen der Spur Strum und den Noten
+    // --- Stufe 28d (Skizze §1a): die Spuren ueber der Zeit unter der Spur Strum
+    zeichneSpuren(p);
+    p.setFont(font());
+    // --- A, B (Stufe 26c, S-T5 a): die Tab-Linien zwischen den Spuren und den Noten
     if (mitSaiten && tabHoehe() > 0) zeichneTab(p, alleGriffe, alleAnschlaege);
 
     // --- W8 a (S130): die Stellen der leiseren Clips desselben Loops im Composer, blasser
@@ -1796,9 +1804,25 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
         return;
     }
     // J (Stufe 24e, S-W14 a): ein Klick in die Spur Strum schaltet den Anschlag an diesem Schritt weiter
-    if (ort.y() < tabOben())
+    if (ort.y() < spurenOben())
     {
         if (const int schritt = schrittBei(ort.x()); schritt >= 0) (void)schalteAnschlag(schritt);
+        return;
+    }
+    // Stufe 28d: in einer Spur ueber der Zeit einen Punkt greifen — oder einen setzen und weiterziehen
+    if (ort.y() < tabOben())
+    {
+        const int nr = spurBei(ort.y());
+        if (nr < 0 || ort.x() < kTastenBreite) return;
+        const bool frei = (event->modifiers() & Qt::AltModifier) != 0;
+        m_spurZug = sichtbareSpuren()[static_cast<std::size_t>(nr)];
+        m_vorZug = m_muster;
+        m_spurIndex = spurPunktBei(nr, ort);
+        m_neu = m_spurIndex < 0;
+        if (m_neu) m_spurIndex = legeSpurPunkt(m_spurZug, {stelleBei(ort.x(), frei), wertBei(nr, ort.y())});
+        if (m_spurIndex < 0) return;  // hinter dem Ende des Musters, oder die Spur ist voll
+        m_zug = Zug::SpurPunkt;
+        update();
         return;
     }
     // B (Stufe 26c, S-T5 a): die Tab-Linien — eine Zahl greifen (auf eine andere Linie ziehen),
@@ -1917,7 +1941,9 @@ void NotenRaster::mousePressEvent(QMouseEvent* event)
 
 void NotenRaster::mouseMoveEvent(QMouseEvent* event)
 {
-    if (m_zug != Zug::Keiner && (event->buttons() & Qt::LeftButton))
+    if (m_zug == Zug::SpurPunkt && (event->buttons() & Qt::LeftButton))
+        zieheSpurPunkt(event->position().toPoint(), (event->modifiers() & Qt::AltModifier) != 0);
+    else if (m_zug != Zug::Keiner && (event->buttons() & Qt::LeftButton))
         zieheBei(event->position().toPoint());
     else if (event->buttons() == Qt::NoButton)
         zeigeZeiger(event->position().toPoint());
@@ -1952,6 +1978,14 @@ void NotenRaster::mouseReleaseEvent(QMouseEvent* event)
         update();
         return;
     }
+    if (zug == Zug::SpurPunkt)
+    {
+        // Stufe 28d: ein gesetzter oder gezogener Punkt — ein Schritt fuer Undo
+        m_spurIndex = -1;
+        update();
+        if (m_muster != m_vorZug) meldeSpuren(m_neu ? tr("Add lane point") : tr("Move lane point"));
+        return;
+    }
     if (m_muster == m_vorZug)
     {
         // ein Klick ohne Zug auf eine von mehreren markierten: nur sie bleibt
@@ -1965,6 +1999,20 @@ void NotenRaster::mouseReleaseEvent(QMouseEvent* event)
                         : zug == Zug::Gruppe        ? tr("Move notes")
                                                     : tr("Change note volume");
     Q_EMIT geaendert(m_muster, was);
+}
+
+void NotenRaster::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    // Stufe 28d: ein Doppelklick auf einen Punkt einer Spur nimmt ihn weg
+    const QPoint ort = event->position().toPoint();
+    if (event->button() == Qt::LeftButton && ort.y() >= spurenOben() && ort.y() < tabOben())
+    {
+        if (const int nr = spurBei(ort.y()); nr >= 0)
+            if (const int punkt = spurPunktBei(nr, ort); punkt >= 0)
+                (void)loescheSpurPunkt(sichtbareSpuren()[static_cast<std::size_t>(nr)], punkt);
+        return;
+    }
+    QWidget::mouseDoubleClickEvent(event);
 }
 
 void NotenRaster::keyPressEvent(QKeyEvent* event)
@@ -2065,6 +2113,7 @@ void NotenRaster::contextMenuEvent(QContextMenuEvent* event)
         m_rechtsGeloescht = false;
         return;
     }
+    if (spurMenue(*event)) return;  // Stufe 28d: Delete point, Clear lane
     const QPoint ort = event->pos();
     // Stufe 26d (S-T5 a C): auch in den Tab-Linien — eine Zahl wird dafuer markiert wie eine Note
     const bool inTab = tabSaiteBei(ort.y()) >= 0;
@@ -2467,18 +2516,27 @@ void InstrumentEditor::setupUI()
     m_strumZeile = new StrumZeile(QStringLiteral("editorStrum"), this);
     m_strumZeile->setzeHinweis(tr("for every chord of this pattern"));
     connect(m_strumZeile, &StrumZeile::geaendert, this, [this](const Strum& strum) { setzeStrum(strum); });
+    aussen->addWidget(m_strumZeile);
     {
-        // F (Stufe 26c, S-T5 a): der Haken Tab am Ende der Zeile Strum — die Tab-Linien im Raster
-        auto* reihe = new QHBoxLayout;
+        // Stufe 28d (Skizze §1a, SK1 a): die Zeile Lanes — je Spur, die das Instrument traegt,
+        // ein Haken mit dem vollen Namen (die Haken setzt `zeigeSpurZeile`); am Ende der Haken
+        // Tab (F, Stufe 26c, S-T5 a; bis Stufe 28c am Ende der Zeile Strum)
+        m_spurZeile = new QWidget(this);
+        m_spurZeile->setObjectName(QStringLiteral("editorLanes"));
+        auto* reihe = new QHBoxLayout(m_spurZeile);
         reihe->setContentsMargins(0, 0, 0, 0);
-        reihe->addWidget(m_strumZeile, 1);
-        m_tabHaken = new QCheckBox(tr("Tab"), this);
+        m_spurTitel = new QLabel(tr("Lanes"), m_spurZeile);
+        m_spurTitel->setToolTip(tr("Show or hide the lanes above the notes. Hiding only hides — the values stay and play;\n"
+                                   "a dot after the name: hidden, still playing. Right-click in a lane: Clear lane"));
+        reihe->addWidget(m_spurTitel);
+        reihe->addStretch(1);
+        m_tabHaken = new QCheckBox(tr("Tab"), m_spurZeile);
         m_tabHaken->setObjectName(QStringLiteral("editorTab"));
-        m_tabHaken->setToolTip(tr("Show the tab lines between the Strum lane and the notes: one line per string,\n"
+        m_tabHaken->setToolTip(tr("Show the tab lines above the notes: one line per string,\n"
                                   "the fret at every note. Click a line and type a fret; drag a number to another line"));
         m_tabHaken->setChecked(!lageMerken() || QSettings().value(QLatin1String(kTabZeigen), true).toBool());
         reihe->addWidget(m_tabHaken);
-        aussen->addLayout(reihe);
+        aussen->addWidget(m_spurZeile);
     }
 
     // --- das Raster mit seinen Rollbalken
@@ -2597,6 +2655,7 @@ void InstrumentEditor::setupUI()
         // wandern beim Ziehen mit und werden in der Spur Strum und im Menue gesetzt
         ziel->noten = neu.noten;
         ziel->anschlaege = neu.anschlaege;
+        ziel->zeitspuren = neu.zeitspuren;  // Stufe 28d: die Spuren ueber der Zeit
         fassung.richte();  // sortiert die Noten, kuerzt am Ende des Musters
         if (fassung == m_loop)
         {
@@ -2696,8 +2755,60 @@ bool InstrumentEditor::zeige(const Loop& loop, const QString& muster)
     m_loop = loop;
     m_muster = muster;
     zeigeAlles();
-    if (andere) zeigeAusschnitt();
+    if (andere)
+    {
+        // SK1 a: beim Oeffnen eines Musters sind die Spuren mit Werten eingeblendet
+        m_raster->zeigeSpurenMitWerten();
+        zeigeSpurZeile();
+        passeRollbalkenAn();
+        zeigeAusschnitt();
+    }
     return true;
+}
+
+void InstrumentEditor::zeigeSpurZeile()
+{
+    const std::vector<NotenRaster::LeistenSpur> spuren = m_raster->angeboteneSpuren();
+    auto* reihe = static_cast<QHBoxLayout*>(m_spurZeile->layout());
+    // je angebotener Spur ein Haken; die Zahl aendert sich mit dem Instrument und den Schaltern
+    while (m_spurHaken.size() > spuren.size())
+    {
+        delete m_spurHaken.back();
+        m_spurHaken.pop_back();
+    }
+    while (m_spurHaken.size() < spuren.size())
+    {
+        auto* haken = new QCheckBox(m_spurZeile);
+        const auto platz = static_cast<int>(m_spurHaken.size());
+        haken->setObjectName(QStringLiteral("editorLane%1").arg(platz));
+        connect(haken, &QCheckBox::toggled, this, [this, platz](bool an) {
+            const std::vector<NotenRaster::LeistenSpur> jetzt = m_raster->angeboteneSpuren();
+            if (platz >= static_cast<int>(jetzt.size())) return;
+            m_raster->setzeSpurSichtbar(jetzt[static_cast<std::size_t>(platz)], an);
+            zeigeSpurZeile();      // der Punkt hinter dem Namen
+            passeRollbalkenAn();   // die Noten haben mehr oder weniger Hoehe
+        });
+        reihe->insertWidget(1 + platz, haken);
+        m_spurHaken.push_back(haken);
+    }
+    for (std::size_t i = 0; i < spuren.size(); ++i)
+    {
+        const NotenRaster::LeistenSpur& spur = spuren[i];
+        QCheckBox* haken = m_spurHaken[i];
+        const bool sichtbar = m_raster->spurSichtbar(spur);
+        const bool versteckt = !sichtbar && m_raster->hatWerte(spur);
+        const bool getragen = !spur.schalter.isEmpty() || m_raster->traegt(spur.steuer);
+        // SK1 a: traegt eine ausgeblendete Spur Werte, steht ein Punkt hinter ihrem Namen
+        haken->setText(NotenRaster::spurName(spur) + (versteckt ? QString::fromUtf8(" •") : QString()));
+        QString hilfe = versteckt ? tr("hidden, still playing") : QString();
+        if (!getragen)
+            hilfe += (hilfe.isEmpty() ? QString() : QStringLiteral("\n")) +
+                     tr("This instrument does not use it — the values stay in the pattern");
+        haken->setToolTip(hilfe);
+        const QSignalBlocker ruhe(haken);
+        haken->setChecked(sichtbar);
+    }
+    m_spurZeile->setVisible(!spuren.empty() || m_raster->saiten().istSaiteninstrument());
 }
 
 void InstrumentEditor::setLoop(const Loop& loop)
@@ -2748,9 +2859,17 @@ void InstrumentEditor::zeigeAlles()
     }
     // Stufe 23f: die Saiten des Instruments — ohne sie ist von alledem nichts zu sehen
     {
-        const Saitensatz saiten = saitenVon(ziel->instrument);
+        Instrument instrument;
+        const bool gefunden = holeInstrument(ziel->instrument, instrument);
+        const Saitensatz saiten = gefunden ? instrument.saiten : Saitensatz{};
         const bool mitSaiten = saiten.istSaiteninstrument();
         m_raster->setSaiten(saiten);
+        // Stufe 28d (SF6 a, SF7 a): nur die Spuren, die das Instrument traegt; ein Instrument,
+        // das sich nicht finden laesst, zeigt alle
+        std::array<bool, kSteuerspuren> traegt{true, true, true, true, true};
+        if (gefunden)
+            for (const Steuerspur s : kAlleSteuerspuren) traegt[static_cast<std::size_t>(s)] = traegtSpur(instrument, s);
+        m_raster->setzeGetrageneSpuren(traegt, gefunden ? pitchBereichHt(instrument) : kPitchHalbtoeneMax);
         m_saitenWahlName->setVisible(mitSaiten);
         m_saitenWahl->setVisible(mitSaiten);
         m_saitenHinweis->setVisible(mitSaiten);
@@ -2765,6 +2884,7 @@ void InstrumentEditor::zeigeAlles()
     }
     m_raster->setTempo(m_loop.bpm);
     m_raster->setMuster(*ziel, m_loop.schlaegeJeTakt, m_loop.schritteJeSchlag);
+    zeigeSpurZeile();
     passeRollbalkenAn();
     zeigeAuswahl();
     // das Fenster „Instruments" waehlt fuer diese Basis

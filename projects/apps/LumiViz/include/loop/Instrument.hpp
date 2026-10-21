@@ -438,6 +438,13 @@ struct Schicht
 {
     return istSaitenSchicht(schicht) || schicht.folgtSaite;
 }
+/// Nimmt ein Tonabnehmer die Saite ab (nur *Waveguide*)? Dann wirkt Expression an ihr
+/// (Stufe 28c-2b, SF6 a, SK12 a).
+[[nodiscard]] inline bool hatAbnehmer(const Schicht& schicht)
+{
+    return schicht.schwingung == Schwingung::Saite && schicht.saitenModell == SaitenModell::Wellenleiter &&
+           (schicht.abnehmerHals.art != AbnehmerArt::Keiner || schicht.abnehmerSteg.art != AbnehmerArt::Keiner);
+}
 
 /// *Tap level* gilt bei dieser Frequenz der schwingenden Saite, wie *Ring time*
 /// (S-W18 a, Patrik S136).
@@ -592,6 +599,18 @@ bool ladeInstrument(const QString& pfad, Instrument& instrument, bool* zuNeu = n
 /// Titel sortiert; `name` ist der Dateiname ohne Endung. Einmal gelesen und
 /// gemerkt. Leer = der Ordner ist nicht da.
 [[nodiscard]] const std::vector<Instrument>& instrumente();
+/// Traegt das Instrument diese Steuer-Spur (Stufe 28d; SF6 a, SF7 a, Skizze §1a)? Der
+/// Instrument-Editor zeigt nur sie. Ohne Saiten traegt jede Schicht alle fuenf. Mit
+/// Saiten (wie die Planung rechnet, Stufen 28b, 28c-2): die Pedale halten nur Schichten
+/// mit *Own note*; Expression wirkt an jeder Schicht ausser einer Saite ohne Tonabnehmer;
+/// Vibrato an jeder Schicht (an der Saite der Finger); Pitch an jeder Schicht ausser der
+/// Saite, an ihr nur mit Vibratohebel. Ohne Schicht, die an ist, keine.
+[[nodiscard]] bool traegtSpur(const Instrument& instrument, Steuerspur spur);
+/// Wie weit die Spur Pitch an diesem Instrument wirkt, in Halbtoenen nach beiden Seiten:
+/// die groesste *Pitch range* der Schichten ohne Saite, mit Vibratohebel dessen groessere
+/// Grenze (SK3 a, SK11 a). Die Spur zeigt diesen Bereich; 0 = sie wirkt nicht.
+[[nodiscard]] double pitchBereichHt(const Instrument& instrument);
+
 /// Das mitgelieferte Instrument mit diesem Namen; nullptr = keins.
 [[nodiscard]] const Instrument* findeInstrument(const QString& name);
 /// Das Instrument, das ein Muster nennt: ein mitgeliefertes beim Namen, ein

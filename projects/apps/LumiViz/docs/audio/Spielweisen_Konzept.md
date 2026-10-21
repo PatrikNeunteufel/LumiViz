@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.23.0
+> **Version:** 0.24.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a)
 > **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK12 a (Patrik S139–S141);
@@ -367,7 +367,7 @@ die Schwelle als Vorgabe.
 | 28b ✅ | Planung: Sustain und Sostenuto setzen die Dauer der Noten (SK5 a, SK6 a), am Synth mit der Schwelle — an gerechneten Tönen gemessen, ohne Engine. |
 | 28c-1 ✅ | Klang an Synth-Schichten: Expression mit der Pegelkurve, gemessen und festgelegt (SK4 a); Vibrato-Tiefe (SF4 a); Pitch mit *Pitch range* (SK3 a, `.lvinst` Fassung 14); Töne je Vorkommen; Rechenzeit gemessen. |
 | 28c-2 | Klang an der Saite: Vibrato über die Spannung, Expression über die Tonabnehmer, Pitch über *Tremolo arm* (neues Feld am Saitensatz); Hörproben. *28c-2a ✅, 28c-2b ✅ (SK12 a), Hörproben offen.* |
-| 28d | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
+| 28d ✅ | Instrument-Editor: Zeile *Lanes*, Spuren zeichnen und bearbeiten (§1a, SK1 a, SK2 a), ein Fall durch den Editor. |
 | 28e | Loop-Panel: die Expression-Kurve auf dem Clip. |
 | 28f | Abschluss: Beispiel-Loops, Handbuch, Sichttest-Liste, voller Lauf (wenn Patrik ihn freigibt). |
 
@@ -541,10 +541,36 @@ Viertel (Abweichung 1,5 · 10⁻⁸); im Ausklang bei 1,0 s 0,250. *Rechenzeit:*
 16 Noten auf vier Tonhöhen an einer Waveguide-Gitarre — ohne Expression 4 Töne in 5,1 ms,
 mit Spur 16 Töne in 20,8 ms (Release-clang; Testing-MSVC 29 und 113 ms).
 
+**Editor 28d ✅** (Instrument-Editor; `NotenRaster` in `InstrumentEditorSpuren.cpp`,
+`traegtSpur` und `pitchBereichHt` im Instrument): die Skizze §1a, wie gebilligt. **Welche
+Spuren** das Instrument trägt, rechnet es wie die Planung (SF6 a, SF7 a): ohne Saiten alle
+fünf; mit Saiten die Pedale nur bei einer Schicht mit *Own note*, Expression an jeder Schicht
+außer einer Saite ohne Tonabnehmer, Vibrato immer, Pitch an jeder Schicht außer der Saite,
+an ihr nur mit Vibratohebel. Eine Spur mit Werten, die das Instrument nicht trägt, bleibt in
+der Zeile *Lanes* (im Raster blass gezeichnet, Tooltip „This instrument does not use it — the values stay in the
+pattern") — sonst lägen Daten unsichtbar im Muster. **Zeile *Lanes*** unter der Zeile
+*Strum*: je Spur ein Haken mit dem vollen Namen, rechts *Tab* (von der Zeile *Strum*
+hierher). **Im Raster** unter der Spur Strum je eingeblendeter Spur 36 px, links das Kürzel
+(SK2 a), die Schläge leise, die Takte kräftiger. Pitch zeigt den Bereich des Instruments
+(`pitchBereichHt`; ohne 2 Halbtöne); ein Wert dahinter wird am Rand gezeichnet, der Punkt
+hohl und rot (SK3 a). *Von Claude gesetzt, wie der Bend und die Noten im selben Fenster:*
+ein Klick in eine Spur setzt einen Punkt auf den nächsten Schritt und zieht ihn weiter;
+**mit Alt frei** (Hundertstel eines Schritts); ein Punkt lässt sich ziehen, er bleibt
+zwischen seinen Nachbarn; ein Doppelklick nimmt ihn weg; das Kontextmenü der Spur hat
+*Delete point* und *Clear lane* (SK1 a). Werte auf Hundertstel, Vibrato auf ganze Cent; ein
+Schalter ist an oder aus (obere oder untere Hälfte). Der Tooltip zeigt den Wert —
+Expression mit dem Pegel in dB (SK9 a). Je Zug ein Schritt für Undo: *Add lane point*,
+*Move lane point*, *Delete lane point*, *Clear lane*. Die **Schalter** (Klang-Spuren, SF8 a)
+zeigt die Leiste, wenn das Muster welche trägt — anders gefärbt, als Fläche; anlegen lässt
+sich einer erst, wenn eine Bauart ihn anbietet (ab der Hammer-Saite). *Geprüft*
+(`test_LoopEditorSpuren`, beide Compiler): über den Editor wie im Programm, die Spuren kommen
+im Loop an; Bild mit `LUMIVIZ_EDITOR_SPUREN_BILD`.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.24.0 | 2026-10-21 | Session 141. Stufe 28d gebaut (Zeile *Lanes*, Spuren im Raster, bearbeiten). |
 | 0.23.0 | 2026-10-21 | Session 141. SK12 a (Expression an der Saite im Ton, hinter dem Tonabnehmer, vor dem Drive); Stufe 28c-2b gebaut. |
 | 0.22.0 | 2026-10-20 | Session 140. SK11 a (Vibratohebel als zwei Zahlen); Stufe 28c-2a gebaut (Vibrato und Pitch an der Saite, `.lvinst` 15). |
 | 0.21.0 | 2026-10-20 | Session 140. Stufe 28c-1b gebaut (Vibrato und Pitch im Ton, Pitch range, `.lvinst` 14); 28c-1 fertig. |

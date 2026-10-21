@@ -2983,6 +2983,45 @@ Klang rendereTon(const Instrument& instrument, int hoehe, double dauerMs, int ra
     return rendereTonAufSaite(instrument, hoehe, dauerMs, rate, -1);
 }
 
+bool traegtSpur(const Instrument& instrument, Steuerspur spur)
+{
+    const bool mitSaiten = instrument.saiten.istSaiteninstrument();
+    const auto irgendeine = [&](const auto& traegt) {
+        return std::any_of(instrument.schichten.begin(), instrument.schichten.end(),
+                           [&](const Schicht& s) { return s.an && traegt(s); });
+    };
+    switch (spur)
+    {
+        case Steuerspur::Sustain:
+        case Steuerspur::Sostenuto:
+            // Stufe 28b: mit Saiten halten die Pedale nur die Schichten mit Own note
+            return irgendeine([&](const Schicht& s) { return !mitSaiten || !folgtDerSaite(s); });
+        case Steuerspur::Expression:
+            // Stufe 28c-2b: an der Saite nur mit Tonabnehmer
+            return irgendeine([&](const Schicht& s) { return !mitSaiten || !istSaitenSchicht(s) || hatAbnehmer(s); });
+        case Steuerspur::Vibrato:
+            return irgendeine([](const Schicht&) { return true; });
+        case Steuerspur::Pitch:
+            // Stufe 28c-2a: an der Saite nur mit Vibratohebel
+            return irgendeine([&](const Schicht& s) { return !istSaitenSchicht(s) || instrument.saiten.hatHebel(); });
+    }
+    return false;
+}
+
+double pitchBereichHt(const Instrument& instrument)
+{
+    double bereich = 0.0;
+    for (const Schicht& s : instrument.schichten)
+    {
+        if (!s.an) continue;
+        if (!istSaitenSchicht(s))
+            bereich = std::max(bereich, std::clamp(s.pitchRangeHt, 0.0, kPitchRangeMax));
+        else if (instrument.saiten.hatHebel())
+            bereich = std::max({bereich, instrument.saiten.hebelRunterHt, instrument.saiten.hebelHochHt});
+    }
+    return std::min(bereich, kPitchHalbtoeneMax);
+}
+
 std::vector<double> korpusImpulsantwort(KorpusArt art, int rate, int frames)
 {
     Korpus korpus(art, rate);
