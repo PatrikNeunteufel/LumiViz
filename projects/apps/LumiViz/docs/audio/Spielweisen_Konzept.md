@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.28.0
+> **Version:** 0.29.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV3 a)
@@ -844,10 +844,20 @@ MP3 sein). Kippt halb, wenn der Test Abweichungen oder Abstürze zeigt: dann im 
 einer Sperre, eins nach dem anderen; zurück zu b erst, wenn BASS auch so auf einem fremden Thread
 versagt.
 
+**Gebaut 29a (S142):** `instrumente()` hält eine Sperre und setzt seine Liste genau einmal (leer
+zurück kommt eine eigene Liste, die niemand füllt — fehlte der Ordner, versucht der nächste Aufruf es
+wieder); `fassung()` der Instrumente ist `std::atomic` (die der Zeichnungen war es schon). Test
+`test_LoopTonThreads`: 2174 Töne — alle Tonnamen der mitgelieferten Loops, geplant wie im Programm,
+und je Instrument eine Probe — erst allein, dann auf 8 Threads aus einer gemeinsamen Liste, nach
+`vergissTonformen`; jede Prüfsumme gleich (Release-clang rund 10 s). Nicht abgedeckt: der Wettlauf
+beim allerersten Aufruf von `instrumente()` — die gemerkte Liste lässt sich in der Test-Exe nicht
+zurücksetzen.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.29.0 | 2026-10-21 | Session 142. Stufe 29a gebaut (`instrumente()` mit Sperre, Fassung atomar, `test_LoopTonThreads`). |
 | 0.28.0 | 2026-10-21 | Session 142. §4.5 Stufe 29: Befund Threadsicherheit von `rendereTon` (Kern ja, Rand nein), TV1 a (sechs Teilschritte 29a–29f), TV2 a (Schlüssel als Fingerabdruck der Eingaben), Befund BASS, TV3 a (Dekodieren im Hintergrund, Drum-Klänge im Tonspeicher). |
 | 0.27.0 | 2026-10-21 | Session 141. §4 Familie Hammer-Saite: Zielbild (alle Instrumente, alle Teile, alle Spielweisen; Geräusche abschaltbar), freie Aufnahmen (Salamander, CC-BY 3.0), Befund „wann ein Ton gerechnet wird“; H1 a bis H3 a (Töne vorab: Speicher je Tonname, Hintergrund, Vorladen, Play wartet, 1 GB im Arbeitsspeicher); vorgemerkt Compute-Shader; Idee Patrik Freeze mit F1 a bis F5 a; Bauplan F6 a (29 Töne vorab, 30 Freeze, 31 ff. Hammer-Saite). |
 | 0.26.0 | 2026-10-21 | Session 141. Stufe 28f bis auf den vollen Lauf (Beispiel `lanes_demo`, Handbuch, Sichttest-Liste). |

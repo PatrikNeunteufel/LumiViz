@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -1913,9 +1914,10 @@ double inGrenzen(double wert, double von, double bis, double ersatz)
     return std::isfinite(wert) ? std::clamp(wert, von, bis) : ersatz;
 }
 
-std::uint64_t& fassung()
+/// Atomar (Stufe 29a): Toene werden im Hintergrund gerechnet, die Fassung liest jeder Thread.
+std::atomic<std::uint64_t>& fassung()
 {
-    static std::uint64_t eine = 0;
+    static std::atomic<std::uint64_t> eine{0};
     return eine;
 }
 
@@ -2404,22 +2406,30 @@ QString instrumentOrdner()
 
 const std::vector<Instrument>& instrumente()
 {
-    // einmal gelesen und gemerkt — aber nur, wenn der Ordner da war
+    // einmal gelesen und gemerkt — aber nur, wenn der Ordner da war. Seit Stufe 29a von jedem
+    // Thread aus: `alle` wird genau einmal gesetzt, unter der Sperre, und danach nie mehr
+    // veraendert; leer zurueckgegeben wird eine eigene Liste, die niemand fuellt.
+    static const std::vector<Instrument> kKeine;
+    static std::mutex sperre;
     static std::vector<Instrument> alle;
+    const std::lock_guard<std::mutex> halt(sperre);
     if (!alle.empty()) return alle;
     const QString ordner = instrumentOrdner();
-    if (ordner.isEmpty()) return alle;
+    if (ordner.isEmpty()) return kKeine;
+    std::vector<Instrument> gelesen;
     const QStringList dateien = QDir(ordner).entryList({QStringLiteral("*.lvinst")}, QDir::Files, QDir::Name);
     for (const QString& datei : dateien)
     {
         Instrument instrument;
         if (!ladeInstrument(QDir(ordner).filePath(datei), instrument)) continue;
         instrument.name = QFileInfo(datei).completeBaseName();  // ein mitgeliefertes heisst wie seine Datei
-        alle.push_back(std::move(instrument));
+        gelesen.push_back(std::move(instrument));
     }
-    std::stable_sort(alle.begin(), alle.end(), [](const Instrument& a, const Instrument& b) {
+    if (gelesen.empty()) return kKeine;
+    std::stable_sort(gelesen.begin(), gelesen.end(), [](const Instrument& a, const Instrument& b) {
         return a.titel.compare(b.titel, Qt::CaseInsensitive) < 0;
     });
+    alle = std::move(gelesen);
     return alle;
 }
 
