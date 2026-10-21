@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.27.0
+> **Version:** 0.28.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a und F1 a bis F6 a (Patrik S139–S141);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV3 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a und TV1 a bis TV3 a (Patrik S139–S142);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -781,10 +781,74 @@ prüfen ließen, stehen ohnehin in den Settings und kippen das Gebaute nicht), c
 Hammer-Saite — gegen H1 a „vor dem Klavier“). Kippt, wenn der Flügel früher zu hören sein soll, als
 29 und 30 dauern — dann rückt die Hammer-Saite hinter 29 vor.
 
+### 4.5 Stufe 29 „Töne vorab“ — Teilschritte
+
+**Befund (Code S142, gelesen): darf `rendereTon` auf mehreren Threads laufen?** Der Rechenkern ja:
+er rechnet auf einem `const Instrument&` mit lokalen Daten; die zwei geteilten Speicher, die er liest,
+sind gesperrt (`sampleDaten`, `Sample.cpp:215`; `shape::tonformFuer`, `Tonform.cpp:470`; die
+mitgelieferten Zeichnungen darunter einmal und threadsicher gelesen). **Nicht threadfest ist der
+Rand:** `instrumente()` füllt seine Liste beim ersten Aufruf ohne Sperre (`Instrument.cpp:2408`,
+mit Absicht wiederholbar, wenn der Ordner fehlte); `fassung()` für Instrumente und für Zeichnungen
+ist ein einfacher `uint64_t`; die gemerkte Map aus `saitenAusInstrumenten()` hat keine Sperre (je
+Thread ein eigenes Objekt); `ladeKlaenge` dekodiert Samples über BASS (`decodeStereo`) — ob BASS
+threadsicher ist, vor dem Bau in der Doku nachlesen. **Gerechnet wird heute an drei Orten**, jeder
+für sich und auf dem Thread der Oberfläche: `Spieler::ladeProgramm`, `Tonfuehrung::LoopQuelle::baue`
+und die Lautheitsmessung je Clip im Composer (`ClipLautheit.cpp:63`).
+
+✅ **TV1 a** (Patrik S142): **Sechs Teilschritte, von innen nach außen** — jede Schicht ist belegt,
+bevor die nächste auf ihr aufbaut.
+
+| Teilschritt | Inhalt |
+|---|---|
+| 29a | **Threadfest machen:** `instrumente()` mit Sperre (wiederholt weiter, wenn der Ordner fehlte), beide `fassung()` als `std::atomic`. Test: jedes mitgelieferte Instrument auf mehreren Threads gleichzeitig, Bit für Bit gegen einen Lauf allein (auch Sample- und Shape-Schichten). Kein Verhalten ändert sich, `Loop Werte` bleibt. |
+| 29b | **Speicher je Tonname** (`loop/Tonspeicher`; Schlüssel: TV2): Grenze 1 GB, der am längsten nicht gebrauchte Ton geht, je Ton die gemessene Rechenzeit (für F4 a). `ladeKlaenge` holt aus dem Speicher, noch synchron; Spieler, Tonführung und ClipLautheit teilen ihn, eine Bearbeitung rechnet nur neue Namen. Tests: ein zweiter Aufruf rechnet nichts, die Grenze verwirft das Älteste, Werte Bit für Bit gleich. |
+| 29c | **Im Hintergrund:** ein Auftrag (Liste von Tonnamen) auf einem Pool von Threads (Kerne − 1), meldet n / m, lässt sich abbrechen; wo Samples dekodiert werden: TV3. Test ohne Fenster. |
+| 29d | **Loop-Panel:** Play wartet mit „Preparing sounds… n / m“, Stop bricht ab (H2 a); Vorladen beim Öffnen eines Loops; eine Bearbeitung während des Spielens lässt die alten Töne klingen und schaltet um, wenn die neuen fertig sind; das Anspielen im Editor wird mitgeprüft. Tests über das Panel. |
+| 29e | **Composer:** Vorladen beim Öffnen einer Komposition für alle Loop-Clips, Play wartet; `LoopQuelle` und ClipLautheit holen aus dem Speicher; der Vorlauf von 2 s bleibt nur für den Fall „verworfen“ (fehlende Noten still, die Zeile sagt es). |
+| 29f | **Abschluss:** Grenze in den Settings, Handbuch, Sichttest-Liste, Bereichslauf. |
+
+Verworfen: b (drei Teilschritte nach Orten: Speicher mit Absicherung und Hintergrund in einem — ein
+roter Test hätte drei mögliche Ursachen, und Wettläufe sind selten und schwer nachzustellen). Kippt,
+wenn 29a sehr klein ausfällt — dann gehört es an den Anfang von 29b, die Reihenfolge bleibt.
+
+✅ **TV2 a** (Patrik S142): **Der Schlüssel ist ein Fingerabdruck der Eingaben.** Tonname + Rate +
+Hash über das Instrument, wie es in die Datei geschrieben würde (`alsJson`), dazu je Sample-Schicht
+Größe und Änderungszeit der Datei (der Schlüssel von `sampleDaten`) und je Shape-Schicht der Inhalt
+der Zeichnung. Ein geändertes Instrument bekommt neue Schlüssel, seine alten Töne fallen mit der Zeit
+über die Grenze heraus; alle anderen bleiben. `instrumentFassung()` heißt für den Speicher nur noch
+„nachsehen“, nicht „wegwerfen“. Auch Titel, Genres und Beschreibung gehen in den Hash — bewusst: wer
+nur klangrelevante Felder hasht, muss jedes neue Feld dort eintragen. Verworfen: b (die globale Zahl
+wie heute — jedes *Save* im Creator leerte den ganzen Speicher, eine von Hand geänderte Datei bliebe
+unbemerkt), c (eine Zahl je Instrument — richtig nur, solange jede Änderung alle Benutzer findet,
+heute sieben Stellen; eine vergessene brächte still falsche Töne, wie bei H3 b verworfen). Kippt, wenn
+das Hashen beim Vorladen einer großen Komposition spürbar dauert — dann den Hash je Datei und
+Änderungszeit merken, der Schlüssel bleibt.
+
+**Befund BASS (S142, lokale `bass.chm` 2.4, alle Seiten nach *thread-safe*, *simultaneously*,
+*current thread* durchsucht; die Hilfe von BASSmix nicht):** Gerät und Fehlercode gelten je Thread
+(`BASS_SetDevice`: „The device setting is local to the current thread“); ist in einem Thread kein
+Gerät gewählt, nimmt BASS das niedrigste initialisierte. Dekodier-Kanäle spielen nicht ab und haben
+keine Wiedergabepuffer. Ein Satz, dass mehrere Threads gleichzeitig dekodieren dürfen, steht nicht
+da — erschlossen, nicht belegt.
+
+✅ **TV3 a** (Patrik S142): **Dekodieren gehört zum Auftrag im Hintergrund.** Der Auftrag bekommt
+keine ganze Engine, nur eine Funktion „Datei und Rate → Stereo-Daten“. Auch die Klänge der
+Drum-Spuren (`kit:`, `lib:`, eigene Samples) kommen in den Tonspeicher, Schlüssel nach TV2 (Nennung,
+Rate, Größe und Änderungszeit der Datei), und zählen in „n / m“ mit. Die Engine fährt erst herunter,
+wenn alle Aufträge abgebrochen und beendet sind — als Regel in den Lebenszyklus-Vertrag
+(`Bootstrap_Integration.md` §6, mit 29c). Ein Test in 29c dekodiert dieselben Dateien auf mehreren
+Threads gleichzeitig und vergleicht Bit für Bit mit einem Lauf nacheinander. Verworfen: b (vorher auf
+der Oberfläche dekodieren — gegen H1 a, Play und Anzeige warteten auf Verschiedenes, die
+Drum-Klänge blieben ohne gemeinsamen Speicher), c (eigener WAV-Leser — eigene Samples dürfen FLAC und
+MP3 sein). Kippt halb, wenn der Test Abweichungen oder Abstürze zeigt: dann im Hintergrund hinter
+einer Sperre, eins nach dem anderen; zurück zu b erst, wenn BASS auch so auf einem fremden Thread
+versagt.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.28.0 | 2026-10-21 | Session 142. §4.5 Stufe 29: Befund Threadsicherheit von `rendereTon` (Kern ja, Rand nein), TV1 a (sechs Teilschritte 29a–29f), TV2 a (Schlüssel als Fingerabdruck der Eingaben), Befund BASS, TV3 a (Dekodieren im Hintergrund, Drum-Klänge im Tonspeicher). |
 | 0.27.0 | 2026-10-21 | Session 141. §4 Familie Hammer-Saite: Zielbild (alle Instrumente, alle Teile, alle Spielweisen; Geräusche abschaltbar), freie Aufnahmen (Salamander, CC-BY 3.0), Befund „wann ein Ton gerechnet wird“; H1 a bis H3 a (Töne vorab: Speicher je Tonname, Hintergrund, Vorladen, Play wartet, 1 GB im Arbeitsspeicher); vorgemerkt Compute-Shader; Idee Patrik Freeze mit F1 a bis F5 a; Bauplan F6 a (29 Töne vorab, 30 Freeze, 31 ff. Hammer-Saite). |
 | 0.26.0 | 2026-10-21 | Session 141. Stufe 28f bis auf den vollen Lauf (Beispiel `lanes_demo`, Handbuch, Sichttest-Liste). |
 | 0.25.0 | 2026-10-21 | Session 141. SK13 a (Kurve am markierten Clip); Stufe 28e gebaut. |
