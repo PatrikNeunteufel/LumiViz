@@ -1,9 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.26.0
+> **Version:** 0.27.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
-> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a und SK1 a bis SK13 a (Patrik S139–S141);
+> Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a und F1 a bis F6 a (Patrik S139–S141);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -604,10 +605,187 @@ Zeile `genres` ändert sich; `make_saiten_instrumente.py` danach ohne Änderung)
 ein Eintrag dazu, die übrigen unverändert. Test `test_LoopSpurenBeispiel`. Benutzerhandbuch 1.197.0;
 Sichttest-Liste `.claude/handover/Sichttest_Spuren.md` (L, B, K, C, H, U).
 
+## 4. Familie Hammer-Saite (Familie 1 aus SF9 a)
+
+### 4.1 Zielbild (Patrik S141)
+
+Antworten auf fünf Fragen (Claude S141, je mit Vorschlag):
+
+1. **Instrumente: alle.** Zuerst Konzertflügel und Klavier (Upright); danach kommen ebenso
+   Honky-tonk (verstimmte Saitenchöre), der E-Flügel (wie CP-70: Saiten mit Tonabnehmer), das
+   Clavinet mit echter Tangente statt Zupfen, Hackbrett und Cimbalom gerechnet statt aufgenommen.
+   Sie sind Vorlagen derselben Bauart (Hammer × Saite, SF10 a); nichts davon fällt weg.
+2. **Was man hören muss: alles, wie vorgeschlagen.** Der Filzhammer (laut gespielt heller, nicht
+   nur lauter); zwei bis drei Saiten je Ton mit Schwebung und zweistufigem Ausklang; die gestreckte
+   Stimmung (Inharmonizität); der Resonanzboden; das Mitschwingen der übrigen Saiten bei
+   gedrücktem Pedal; die Geräusche — Dämpfer, Pedal, Mechanik —, diese **abschaltbar**.
+3. **Spielweisen: alle.** Sustain (mit halbem Pedal), Sostenuto, Una corda; dazu das Moderator- oder
+   Übepedal (Upright), Abdämpfen mit der Hand und das präparierte Klavier.
+4. **Messen:** Literatur (etwa Chaigne/Askenfelt, Bank) und Aufnahmen eines echten Flügels.
+   Patrik hat keine eigenen — eine freie Sammlung wird gesucht, Lizenz und Inhalt geprüft, bevor
+   sie benutzt wird.
+5. **Rechenzeit:** Frage Patrik: „die Rechnung wäre ja einmalig beim Laden, oder? Der Composer
+   könnte auch alle etwaigen Loops vorladen.“ — Antwort mit Befund aus dem Code in 4.2.
+
+**Freie Aufnahmen (Suche S141):** *Salamander Grand Piano* (Alexander Holm, Yamaha C5) — auf
+archive.org (`SalamanderGrandPianoV3`, abgerufen 2026-10-21) als Feld „Usage: Attribution 3.0“ und
+„Licence: CC-by“; 48 kHz/24 bit, 16 Anschlagstufen je kleine Terz, dazu Hammergeräusch beim
+Loslassen (chromatisch, eine Stufe), Saitenresonanz beim Loslassen (kleine Terzen, drei Stufen),
+Pedalgeräusche. Die Behauptung, die Sammlung sei seit 2022 gemeinfrei, steht nur auf einer
+Drittseite — nicht geprüft; es gilt CC-BY 3.0 (Nennung in `CREDITS.md`, wenn etwas davon
+mitgeliefert würde; zum Messen nicht nötig). *University of Iowa MIS*: „may be downloaded and used
+for any projects, without restrictions“ (theremin.music.uiowa.edu/mis.html), der Flügel nicht
+genannt, in einem Unterrichtsraum aufgenommen. Ein Upright mit an der Quelle geprüfter Lizenz:
+noch keins gefunden.
+
+### 4.2 Befund: wann ein Ton gerechnet wird (Code S141, gelesen)
+
+Nicht einmal beim Laden. **Im Loop-Panel** rechnet `Spieler::ladeProgramm` erst beim Play
+(`Spieler.cpp:49`, `setzeLoop` rechnet nur, wenn er spielt); während er spielt, prüft jede
+Bearbeitung die Liste der Tonnamen und rechnet **die ganze Liste** neu, sobald sich ein Name ändert
+(`Spieler.cpp:62`) — einen Speicher je Tonname gibt es nicht, nur die dekodierten Samples sind
+gemerkt. **Im Composer** bekommt jeder Loop-Clip seine eigene `LoopQuelle` und rechnet rund zwei
+Sekunden vor seinem Beginn (`Tonfuehrung.cpp:362-366`, `kVorlaufMs = 2000`); zwei Clips desselben
+Loops teilen nichts, eine wieder gebrauchte Quelle rechnet neu. **Alles auf dem Thread der
+Oberfläche**, synchron (kein `QtConcurrent`/`std::thread` unter `loop/`). Bisher genügte das, weil
+die Töne in Millisekunden entstehen (16 Töne einer Gitarre 20,8 ms, Release-clang, S141). Ein
+Flügel nach Zielbild — 88 Töne, Saitenchöre, Resonanzboden, Mitschwingen, mit Pedal Töne je
+Vorkommen — wird um Größenordnungen teurer; dann stockt die Oberfläche beim Play und vor jedem
+Clip.
+
+✅ **H1 a** (Patrik S141): **Vor dem Klavier eine eigene Stufe „Töne vorab“.** Ein Speicher je
+Tonname für das ganze Programm, mit einer Obergrenze, die das Älteste verwirft; Loop-Panel,
+Composer und alle Clips desselben Loops teilen ihn, eine Bearbeitung rechnet nur die neuen Namen.
+Gerechnet wird im Hintergrund auf mehreren Kernen, nicht auf dem Thread der Oberfläche. Angestoßen
+schon beim Laden eines Loops und beim Laden einer Komposition (für alle Loop-Clips) — Patriks
+Vorschlag. Was geschieht, wenn ein Ton beim Abspielen noch nicht fertig ist: Folgefrage. Verworfen:
+b (nur der Speicher je Tonname — das erste Play und der Composer stockten weiter, Hintergrund und
+Vorladen kämen bei der nächsten Familie ohnehin), c (nichts ändern, den Flügel sparsam bauen —
+gegen das Zielbild). Kippt, wenn die erste Messung eines Flügel-Modells zeigt, dass ein Ton nur
+Millisekunden braucht — dann reicht b.
+
+✅ **H2 a** (Patrik S141): **Play beginnt erst, wenn alle Töne fertig sind** — im Loop-Panel wie im
+Composer; bis dahin „Preparing sounds… 12 / 40“, Stop bricht ab. Eine Bearbeitung während des
+Spielens lässt die bisherigen Töne klingen und schaltet um, sobald die neuen fertig sind — es fehlt
+nie ein Ton, die Änderung wird nur einen Moment später hörbar. Tritt der Fall doch ein (ein Sprung
+im Composer zu einem Clip, dessen Töne der Speicher verworfen hat), bleiben nur die fehlenden Noten
+still, und die Zeile sagt es. Verworfen: b (sofort spielen, fehlende Noten still — Lücken, die
+nach Fehler klingen; eine Hörprobe wäre nicht verlässlich), c (sofort spielen mit schnellem Ersatz —
+täuscht über den Klang). Kippt, wenn das Warten nach dem Öffnen eines Loops im Alltag spürbar dauert
+(über zwei Sekunden) — dann b als Schalter daneben prüfen.
+
+✅ **H3 a** (Patrik S141): **Der Speicher liegt im Arbeitsspeicher**, die Obergrenze in den Settings
+einstellbar, Vorgabe 1 GB; ist sie erreicht, geht der am längsten nicht gebrauchte Ton. Nach einem
+Neustart wird neu gerechnet. *Größen:* eine Sekunde Stereo bei 48 kHz als Gleitkomma rund 384 KB,
+ein Klavierton mit 10 s Ausklang fast 4 MB, die Höchstlänge 30 s rund 11,5 MB. Verworfen: b (dazu
+ein Speicher auf der Platte mit Schlüssel aus Name, Instrument-Datei und Fassung des Rechenkerns —
+kann veralten: ändert sich der Rechenkern, ohne dass die Fassung mitwächst, kämen alte Töne still
+zurück und verfälschten Hörproben), c (feste Grenze — passt nicht für jeden Rechner). Kippt, wenn
+das Öffnen eines Loops nach einem Neustart am Flügel spürbar dauert — dann b als eigene Stufe, mit
+der Fassung des Rechenkerns im Schlüssel und einem Test, der sichert, dass sie mitwächst.
+
+**Vorgemerkt (Patrik S141): Compute-Shader für den Fall der Fälle.** Frage Patrik, ob zur Rechnung
+CUDA dienen kann. Antwort Claude: Die heutige Saite rechnet Abtastwert für Abtastwert und lässt sich
+kaum verteilen; parallel liegen Resonanzboden (viele Schwingungsformen), Mitschwingen (bis rund 230
+gekoppelte Saiten) und eine Saite als Gitter (Finite Differenzen). CUDA liefe nur auf NVIDIA (die
+4090, nicht die Radeon 610M), bräuchte das Toolkit im Bau und rechnet auf Spielkarten in doppelter
+Genauigkeit langsam. Falls die CPU nach der Messung am Flügel nicht reicht: **Compute-Shader über
+OpenGL** (schon im Programm, NVIDIA und AMD), dann als Entscheid mit Messwerten.
+
+### 4.3 Idee Patrik (S141): rechenintensive Clips vorrechnen und als Wellenform abspielen
+
+Wortlaut Patrik: „was, wenn rechenintensive Loop-Clips vorgerechnet werden und als Waveform
+abgespeichert werden, um diese alternativ abzuspielen? Dass Waveforms auch im Loop eingefügt werden
+können, ist sowieso geplant. Das Waveform wird mittels Hash für den ganzen Clip inklusive aller
+Modifikationen gespeichert, so ist klar, wann das Waveform neu gerechnet werden muss. (Kann auch für
+andere Instrumente außer Flügel sinnvoll sein, aber evtl. gibt es einen Indikatorwert, um zu zeigen,
+wo es sinnvoll wäre?) Die Option kann über das Kontextmenü eines Clips aktiviert werden.“
+
+*Einordnung Claude:* in Audioprogrammen als *Freeze* bekannt. Es ergänzt H1 a, ersetzt es nicht —
+wer bearbeitet, braucht die Töne einzeln (H1 a); wer nur abspielt, nimmt die fertige Wellenform.
+Anschluss an den vorgemerkten **Audio-Clip im Loop** (`Loop_Konzept.md` §3.2): das Abspielen einer
+Wellenform im Loop wäre derselbe Weg. Der Hash löst die Frage „wann neu rechnen“ für alle
+**Eingaben** (Muster, Instrument-Dateien, Samples, Kit, Clip mit Effekten und Kurve, Tempo, Swing);
+was er von selbst nicht sieht, ist eine **Änderung am Rechenkern** — dieselbe Gefahr wie bei H3 b.
+Abhilfe: eine *Klangfassung* des Programms im Hash und ein Test, der rot wird, wenn
+`loop_werte.txt` sich ändert, ohne dass die Klangfassung mitwächst. Offene Fragen, einzeln: F1 die
+Form, danach was in die Wellenform gehört (Effekte, Kurve, Kanal-Fader?), der Indikator, der Ort der
+Dateien und die Reihenfolge der Stufen.
+
+✅ **F1 a** (Patrik S141): **Freeze als Eigenschaft des Clips.** Im Kontextmenü „Freeze clip“ /
+„Unfreeze clip“; ein eingefrorener Clip spielt seine Wellenform, als Datei mit dem Hash als Namen
+(Hash aus allen Eingaben und der Klangfassung); gleiche Clips teilen eine Datei; eine Marke am Clip
+zeigt eingefroren oder „wird gerechnet“. Er bleibt bearbeitbar. *Mit dem Einwand Patrik:* „es sollte
+doch nicht gleich das Wave neu gerechnet resp. überschrieben werden, wenn man den Clip überarbeitet —
+das wäre too much, solange man das noch rückgängig machen kann.“ Überschrieben wird nie (der Name
+ist der Hash: ein neuer Stand ist eine neue Datei; Undo findet die alte wieder). Wann nach einer
+Bearbeitung neu gerechnet wird und was bis dahin spielt: F2. Verworfen: b („Bounce to audio“ —
+getrennt vom Muster, ein vergessener veralteter Audio-Clip wäre ein stiller Fehler), c (beides —
+*Bounce* hängt am Audio-Clip im Loop, `Loop_Konzept.md` §3.2, und wird dort entschieden).
+
+✅ **F2 a** (Patrik S141): **Neu eingefroren wird beim Speichern des Loops.** Wird ein eingefrorener
+Clip bearbeitet, spielt er bis zum Speichern live (die Töne aus H1 a, nur neue werden gerechnet);
+die Marke zeigt „frozen · changed“. Beim Speichern wird der neue Stand im Hintergrund eingefroren,
+bis dahin spielt er live weiter. Macht ein Undo den Stand wieder gleich dem eingefrorenen, gilt
+dessen Datei sofort. Grund: der Composer spielt Loops aus der gespeicherten Datei — die Wellenform
+passt dann genau zu dem, was er liest; Speichern ist der Moment, in dem ein Stand gilt. Verworfen: b
+(nach einer Pause ohne Bearbeitung — rechnete mitten im Bearbeiten, die Datei passte zu einem
+ungespeicherten Stand), c (nur von Hand „Refreeze clip“ — ein vergessenes Refreeze ließe den
+Composer still live rechnen). Kippt, wenn lange ohne Speichern bearbeitet wird und live zu langsam
+spielt — dann b als Schalter dazu.
+
+✅ **F3 a** (Patrik S141): **In die Wellenform gehört alles bis zum Ausgang des Clips:** Noten,
+Lautstärke und Panorama des Musters, Effekte am Clip, Kurve am Clip, über alle Wiederholungen, mit
+dem **Nachklang** hinter dem Ende (ausklingende Töne, Hall, Echo). Live bleiben Fader und Schalter
+des Kanals, Lautstärke des Loops und Limiter — Mischen ändert den Hash nicht. Die Grenze liegt, wo
+heute der Bus eines Clips endet. Verworfen: b (nur die Noten, Effekte und Kurve live — Hall und Echo
+kosten beim Spielen, gerade die soll Freeze sparen; Effekte verstellen ist Bearbeiten, dafür gilt
+F2 a), c (auch Kanal-Fader und Lautstärke des Loops — ein Fader-Zug ist Mischen, keine Bearbeitung).
+Kippt, wenn Clip-Effekte oft im Zusammenspiel abgestimmt werden, während der Clip eingefroren
+bleibt — dann b.
+
+✅ **F4 a** (Patrik S141): **Gemessen, als Zeichen am Clip.** Beim Rechnen der Töne (H1 a) misst das
+Programm je Clip, wie lange seine Töne brauchen, auf diesem Rechner. Ab einer Schwelle (Vorgabe 1 s,
+in den Settings) trägt der Clip im Loop-Panel ein kleines Zeichen; der Tooltip etwa „Computing this
+clip takes 3.2 s — Freeze clip to start it at once“; im Kontextmenü „Freeze clip (3.2 s to
+compute)“. Vor dem ersten Rechnen keine Zahl. Die Schwelle liegt unter den 2 s, die H2 a spürbar
+nennt. Verworfen: b (geschätzt aus Kostenwerten je Schicht — irrt bei jedem neuen Modell und bei
+Tönen je Vorkommen, gerade am Flügel), c (nur die Zahl im Menü — man müsste suchen). Kippt nicht auf
+b, wenn die Messung schwankt (Drosseln unter Hitze, S107): dann der kleinste von mehreren
+Messwerten.
+
+✅ **F5 a** (Patrik S141), **mit Zusatz: bei Publish mit exportiert.** Die Wellenformen liegen in
+einem Ordner im Benutzerbereich des Programms (unter AppData, neben eigenen Instrumenten und
+Samples, etwa `frozen`), je Datei eine WAV mit 32-bit Gleitkomma. Sie sind ein Speicher, kein
+Werk — jederzeit neu zu rechnen —, deshalb nicht im Export der eigenen Daten (Datensicherung).
+Grenze in den Settings (Vorgabe 2 GB), danach gehen die am längsten nicht gespielten; dazu „Clear
+frozen clips“. Die Marke „frozen“ steht in der `.lvloop` am Clip; fehlt die Datei, wird sie neu
+gerechnet. *Zusatz Patrik:* **Publish nimmt die Wellenformen eines Pakets mit**, damit der Empfänger
+nicht wartet; er nutzt sie nur, wo der Hash (mit der Klangfassung) bei ihm derselbe ist — sonst
+rechnet er neu. Verworfen: b (neben der `.lvloop` in `<name>.frozen` — Dateien in Patriks Ordnern,
+die keiner bestellt hat; bei mitgelieferten Loops nicht möglich), c (in der `.lvloop` eingebettet —
+die Datei würde viele MB groß, jedes Speichern schriebe alles).
+
+### 4.4 Bauplan (F6 a)
+
+✅ **F6 a** (Patrik S141): **Erst das Fundament, dann der Flügel.**
+
+| Stufe | Inhalt |
+|---|---|
+| 29 | **Töne vorab** (H1 a bis H3 a): Speicher je Tonname im Arbeitsspeicher (Grenze in den Settings, 1 GB), Rechnen im Hintergrund auf mehreren Kernen, Vorladen beim Öffnen eines Loops und einer Komposition, „Preparing sounds… n / m“, eine Bearbeitung schaltet um, sobald die neuen Töne fertig sind. |
+| 30 | **Freeze** (F1 a bis F5 a): „Freeze clip“ / „Unfreeze clip“ im Kontextmenü, Hash aus allen Eingaben und der Klangfassung mit dem Test an `loop_werte.txt`, Wellenform bis zum Ausgang des Clips mit Nachklang, neu eingefroren beim Speichern, Messung je Clip mit Zeichen ab 1 s, Ordner `frozen` mit Grenze 2 GB und „Clear frozen clips“, Publish nimmt die Wellenformen mit. Die eingefrorene Wellenform spielt im Rechenkern wie ein langer Klang ab dem Beginn des Clips — der Audio-Clip im Loop (`Loop_Konzept.md` §3.2) ist dafür nicht nötig. |
+| 31 ff. | **Hammer-Saite** (Zielbild §4.1): Recherche, Entscheide, Skizze, Modell, Messung gegen *Salamander Grand Piano*; zuerst Flügel und Upright, danach die übrigen Instrumente der Familie. Die Recherche beginnt schon während 29 und 30 (Dokumentarbeit, hängt an nichts davon). |
+
+Verworfen: b (Töne vorab, dann die Hammer-Saite, Freeze erst danach — die Werte, die sich am Flügel
+prüfen ließen, stehen ohnehin in den Settings und kippen das Gebaute nicht), c (zuerst die
+Hammer-Saite — gegen H1 a „vor dem Klavier“). Kippt, wenn der Flügel früher zu hören sein soll, als
+29 und 30 dauern — dann rückt die Hammer-Saite hinter 29 vor.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.27.0 | 2026-10-21 | Session 141. §4 Familie Hammer-Saite: Zielbild (alle Instrumente, alle Teile, alle Spielweisen; Geräusche abschaltbar), freie Aufnahmen (Salamander, CC-BY 3.0), Befund „wann ein Ton gerechnet wird“; H1 a bis H3 a (Töne vorab: Speicher je Tonname, Hintergrund, Vorladen, Play wartet, 1 GB im Arbeitsspeicher); vorgemerkt Compute-Shader; Idee Patrik Freeze mit F1 a bis F5 a; Bauplan F6 a (29 Töne vorab, 30 Freeze, 31 ff. Hammer-Saite). |
 | 0.26.0 | 2026-10-21 | Session 141. Stufe 28f bis auf den vollen Lauf (Beispiel `lanes_demo`, Handbuch, Sichttest-Liste). |
 | 0.25.0 | 2026-10-21 | Session 141. SK13 a (Kurve am markierten Clip); Stufe 28e gebaut. |
 | 0.24.0 | 2026-10-21 | Session 141. Stufe 28d gebaut (Zeile *Lanes*, Spuren im Raster, bearbeiten). |
