@@ -29,6 +29,8 @@
 
 #include <cstdint>
 #include <cstring>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace looptest
@@ -199,10 +201,21 @@ inline void merkeSamplesOhneEngine(const lumi::loop::Instrument& instrument)
     }
 }
 
+/// Klaenge als Werte in die geteilte Form des Rechenkerns (Stufe 29b, TV4 a):
+/// ein leerer wird `nullptr`.
+inline lumi::loop::Klaenge geteilt(std::vector<lumi::loop::Klang> werte)
+{
+    lumi::loop::Klaenge klaenge;
+    klaenge.reserve(werte.size());
+    for (lumi::loop::Klang& klang : werte)
+        klaenge.push_back(klang.daten.empty() ? nullptr : std::make_shared<const lumi::loop::Klang>(std::move(klang)));
+    return klaenge;
+}
+
 /// Die Klaenge eines Ablaufs ohne Audio-Engine: Toene gerechnet, das Kit und
 /// die mitgelieferten Samples aus ihren WAV-Dateien. Was sich nicht findet,
-/// bleibt leer.
-inline std::vector<lumi::loop::Klang> klaengeOhneEngine(const lumi::loop::Ablauf& ablauf)
+/// bleibt `nullptr`. Am Tonspeicher vorbei: jeder Aufruf rechnet.
+inline lumi::loop::Klaenge klaengeOhneEngine(const lumi::loop::Ablauf& ablauf)
 {
     using namespace lumi::loop;
     std::vector<Klang> klaenge;
@@ -222,7 +235,7 @@ inline std::vector<lumi::loop::Klang> klaengeOhneEngine(const lumi::loop::Ablauf
         else
             klaenge.push_back({});
     }
-    return klaenge;
+    return geteilt(std::move(klaenge));
 }
 
 }  // namespace looptest

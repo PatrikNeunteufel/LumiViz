@@ -62,7 +62,7 @@ void Spieler::ladeProgramm()
     if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate || instrumente != m_instrumentFassung)
     {
         m_bericht.clear();
-        m_klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(namen, *m_engine, rate, &m_bericht));
+        m_klaenge = std::make_shared<const Klaenge>(ladeKlaenge(namen, *m_engine, rate, &m_bericht));
         m_klangNamen = namen;
         m_klangRate = rate;
         m_instrumentFassung = instrumente;

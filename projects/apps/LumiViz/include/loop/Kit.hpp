@@ -49,10 +49,11 @@ namespace lumi::loop
 inline constexpr double kKlangMaxSekunden = 30.0;
 
 /// Die Klaenge zu den Namen laden (`Loop::klangNamen`, `Ablauf::klangNamen`),
-/// in `rate` — je Name einer, in derselben Reihenfolge. Ein Klang, der sich
-/// nicht laden laesst, bleibt leer (seine Spuren schweigen) und bekommt eine
-/// Zeile im `bericht`.
-[[nodiscard]] std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate,
-                                             QStringList* bericht = nullptr);
+/// in `rate` — je Name einer, in derselben Reihenfolge. Seit Stufe 29b aus dem
+/// Tonspeicher (`loop/Tonspeicher.hpp`): gerechnet oder dekodiert wird nur, was
+/// dort noch nicht liegt. Ein Klang, der sich nicht laden laesst, bleibt
+/// `nullptr` (seine Spuren schweigen) und bekommt eine Zeile im `bericht`.
+[[nodiscard]] Klaenge ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate,
+                                  QStringList* bericht = nullptr);
 
 }  // namespace lumi::loop

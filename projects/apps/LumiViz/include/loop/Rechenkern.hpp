@@ -35,6 +35,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -52,6 +53,11 @@ struct Klang
     std::vector<float> daten;
     [[nodiscard]] std::int64_t frames() const { return static_cast<std::int64_t>(daten.size() / 2); }
 };
+
+/// Die Klaenge eines Ablaufs, je Name einer (Stufe 29b, Entscheid TV4 a): geteilt mit
+/// dem Tonspeicher und mit jedem anderen Programm, das denselben Ton spielt.
+/// `nullptr` = kein Klang, die Stimme schweigt (wie ein leerer).
+using Klaenge = std::vector<std::shared_ptr<const Klang>>;
 
 /// Ein Schlag im Durchlauf.
 struct Schlag
@@ -145,13 +151,13 @@ struct Ablauf
 
 /// `frames` Abtastwerte ab `von` nach `aus` schreiben (Stereo, `2 * frames`
 /// Werte; der Block wird ueberschrieben). `klaenge[i]` ist der Klang zu
-/// `ablauf.klangNamen[i]`; fehlt er oder ist er leer, schweigt die Stimme.
+/// `ablauf.klangNamen[i]`; fehlt er, ist er `nullptr` oder leer, schweigt die Stimme.
 ///
 /// `busAus`: je Eintrag in `ablauf.busse` ein eigener Block derselben Groesse
 /// (auch er wird ueberschrieben) — die Schlaege eines Clips mit Effekten
 /// landen dann dort statt in `aus`, unbearbeitet; wer ruft, rechnet die
 /// Effekte und mischt dazu. Ohne `busAus` geht alles unbearbeitet nach `aus`.
-void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus,
+void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int frames, float* aus,
             float* const* busAus = nullptr);
 
 }  // namespace lumi::loop

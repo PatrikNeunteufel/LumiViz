@@ -121,7 +121,7 @@ std::vector<float> rechneLoop(const QString& pfad, bool ohneStrum = false)
         }
     const SaitenVon saiten = saitenAusInstrumenten();
     const Ablauf ablauf = plane(loop, kRate, saiten);
-    const auto klaenge = std::make_shared<const std::vector<Klang>>(looptest::klaengeOhneEngine(ablauf));
+    const auto klaenge = std::make_shared<const Klaenge>(looptest::klaengeOhneEngine(ablauf));
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge, saiten));
     const int frames = static_cast<int>(ablauf.durchlaufFrames);

@@ -60,7 +60,7 @@ std::shared_ptr<const loop::Programm> bereiteLoopVor(const QString& datei, IAudi
     // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
     const loop::SaitenVon saiten = loop::saitenAusInstrumenten();
     auto klaenge =
-        std::make_shared<const std::vector<loop::Klang>>(loop::ladeKlaenge(geladen.klangNamen(saiten), engine, rate));
+        std::make_shared<const loop::Klaenge>(loop::ladeKlaenge(geladen.klangNamen(saiten), engine, rate));
     auto programm = loop::baueProgramm(geladen, rate, std::move(klaenge), saiten);
     if (programm == nullptr || programm->ablauf.durchlaufFrames <= 0) return nullptr;
     return programm;

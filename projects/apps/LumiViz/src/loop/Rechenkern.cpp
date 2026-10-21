@@ -206,7 +206,7 @@ Ablauf plane(const Loop& loop, int rate, const SaitenVon& saiten)
     return ablauf;
 }
 
-void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von, int frames, float* aus,
+void rechne(const Ablauf& ablauf, const Klaenge& klaenge, std::int64_t von, int frames, float* aus,
             float* const* busAus)
 {
     if (frames <= 0) return;
@@ -224,7 +224,9 @@ void rechne(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_
         const std::vector<Schlag>& schlaege = stimme.schlaege;
         const auto anzahl = static_cast<std::int64_t>(schlaege.size());
         if (anzahl == 0 || stimme.klang < 0 || static_cast<std::size_t>(stimme.klang) >= klaenge.size()) continue;
-        const Klang& klangDerStimme = klaenge[static_cast<std::size_t>(stimme.klang)];
+        const Klang* gefunden = klaenge[static_cast<std::size_t>(stimme.klang)].get();
+        if (gefunden == nullptr) continue;
+        const Klang& klangDerStimme = *gefunden;
         const std::int64_t laenge = klangDerStimme.frames();
         if (laenge == 0) continue;
         const float* klang = klangDerStimme.daten.data();

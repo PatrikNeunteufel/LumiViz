@@ -37,7 +37,7 @@ struct Tonfuehrung::LoopQuelle
     QString datei;
     lumi::loop::Loop loop;               ///< gerichtet — was gerade spielt
     std::uint64_t gesehen = 0;           ///< `offenFassung` beim letzten Blick ins Loop-Panel
-    std::shared_ptr<const std::vector<lumi::loop::Klang>> klaenge;
+    std::shared_ptr<const lumi::loop::Klaenge> klaenge;
     QStringList klangNamen;              ///< die Klaenge, zu denen `klaenge` gehoert
     std::uint64_t instrumente = 0;       ///< `instrumentFassung()` beim Laden der Klaenge
     int rate = 0;
@@ -67,7 +67,7 @@ struct Tonfuehrung::LoopQuelle
         const std::uint64_t fassung = lumi::loop::instrumentFassung();
         if (klaenge == nullptr || namen != klangNamen || fassung != instrumente)
         {
-            klaenge = std::make_shared<const std::vector<lumi::loop::Klang>>(
+            klaenge = std::make_shared<const lumi::loop::Klaenge>(
                 lumi::loop::ladeKlaenge(namen, engine, rate));
             klangNamen = namen;
             instrumente = fassung;

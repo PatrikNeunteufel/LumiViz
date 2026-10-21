@@ -166,7 +166,7 @@ TEST_SUITE("ComposerClipLautheit")
         const lumi::loop::Ablauf ablauf = lumi::loop::plane(loop, kRate);
         REQUIRE(ablauf.durchlaufFrames > 0);
         const auto klaenge =
-            std::make_shared<const std::vector<lumi::loop::Klang>>(looptest::klaengeOhneEngine(ablauf));
+            std::make_shared<const lumi::loop::Klaenge>(looptest::klaengeOhneEngine(ablauf));
 
         // von Hand: zwei Durchlaeufe am Stueck, gemessen der zweite
         Lautheit erwartet;

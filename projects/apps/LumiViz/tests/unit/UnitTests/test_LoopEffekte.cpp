@@ -281,11 +281,11 @@ Loop effektLoop(const ClipEffekte& effekte, double ersterSchritt = 1.0)
     return loop;
 }
 
-std::shared_ptr<const std::vector<Klang>> effektKlang()
+std::shared_ptr<const Klaenge> effektKlang()
 {
-    auto klaenge = std::make_shared<std::vector<Klang>>(1);
-    (*klaenge)[0].daten.assign(2 * 2000, 0.5f);
-    return klaenge;
+    Klang klang;
+    klang.daten.assign(2 * 2000, 0.5f);
+    return std::make_shared<const Klaenge>(Klaenge{std::make_shared<const Klang>(std::move(klang))});
 }
 
 /// `frames` Abtastwerte aus dem Klangerzeuger holen, in Bloecken wie der Mixer.

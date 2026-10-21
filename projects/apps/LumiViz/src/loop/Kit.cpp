@@ -8,13 +8,16 @@
 #include "core/Mitgeliefert.hpp"
 #include "loop/Instrument.hpp"
 #include "loop/Sample.hpp"
+#include "loop/Tonspeicher.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 
 #include <algorithm>
+#include <chrono>
 #include <map>
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -88,20 +91,31 @@ QString klangDatei(const QString& klang)
     return QDir(ordner).filePath(name + QStringLiteral(".wav"));
 }
 
-std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate, QStringList* bericht)
+Klaenge ladeKlaenge(const QStringList& namen, IAudioEngine& engine, int rate, QStringList* bericht)
 {
-    std::vector<Klang> klaenge(static_cast<std::size_t>(namen.size()));
-    std::map<QString, std::optional<Instrument>> geholt;
+    using Uhr = std::chrono::steady_clock;
+    const auto msSeit = [](Uhr::time_point anfang) {
+        return std::chrono::duration<double, std::milli>(Uhr::now() - anfang).count();
+    };
+    // ein Instrument, einmal geholt, mit seinem Fingerabdruck (TV2 a)
+    struct Geholt
+    {
+        std::optional<Instrument> instrument;
+        QByteArray abdruck;
+    };
+    Tonspeicher& speicher = tonspeicher();
+    Klaenge klaenge(static_cast<std::size_t>(namen.size()));
+    std::map<QString, Geholt> geholt;
     QStringList zuNeu;  // Dateien einer Fassung, die dieses Programm nicht kennt
     for (std::size_t i = 0; i < klaenge.size(); ++i)
     {
         const QString& klang = namen[static_cast<qsizetype>(i)];
         if (istTon(klang))
         {
-            // der Ton eines gerechneten Instruments: er entsteht hier, nicht aus einer Datei
+            // der Ton eines gerechneten Instruments: aus dem Tonspeicher oder hier gerechnet
             TonAngabe ton;  // seit Stufe 23b mit Saite und Ende
             const QString& instrument = ton.instrument;
-            const Instrument* gefunden = nullptr;
+            const Geholt* gefunden = nullptr;
             if (zerlegeTon(klang, ton))
             {
                 // je Instrument einmal holen — eine eigene Datei wird dabei gelesen
@@ -130,12 +144,28 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
                                 if (!bericht->contains(zeile)) bericht->append(zeile);
                             }
                         }
-                    ort = geholt.emplace(instrument, da ? std::optional<Instrument>(std::move(neu)) : std::nullopt).first;
+                    Geholt eintrag;
+                    if (da)
+                    {
+                        eintrag.abdruck = instrumentAbdruck(neu);
+                        eintrag.instrument = std::move(neu);
+                    }
+                    ort = geholt.emplace(instrument, std::move(eintrag)).first;
                 }
-                if (ort->second.has_value()) gefunden = &*ort->second;
+                if (ort->second.instrument.has_value()) gefunden = &ort->second;
             }
             if (gefunden != nullptr)
-                klaenge[i] = rendereTon(*gefunden, ton, rate);
+            {
+                const QString schluessel = tonSchluessel(klang, rate, gefunden->abdruck);
+                klaenge[i] = speicher.hole(schluessel);
+                if (klaenge[i] == nullptr)
+                {
+                    const auto anfang = Uhr::now();
+                    auto neu = std::make_shared<const Klang>(rendereTon(*gefunden->instrument, ton, rate));
+                    speicher.lege(schluessel, neu, msSeit(anfang));
+                    klaenge[i] = std::move(neu);
+                }
+            }
             else if (bericht != nullptr)
             {
                 const QString zeile = (zuNeu.contains(instrument) ? QStringLiteral("Instrument needs a newer LumiViz: %1")
@@ -145,9 +175,28 @@ std::vector<Klang> ladeKlaenge(const QStringList& namen, IAudioEngine& engine, i
             }
             continue;
         }
+        // ein dekodierter Klang: ebenso aus dem Tonspeicher (TV3 a), sein Schluessel traegt die Datei —
+        // nur eine Datei, die es gibt: an einer anderen liesse sich keine Aenderung erkennen
         const QString datei = klangDatei(klang);
-        if (!datei.isEmpty()) klaenge[i].daten = engine.decodeStereo(datei, rate, kKlangMaxSekunden);
-        if (klaenge[i].daten.empty() && bericht != nullptr)
+        if (!datei.isEmpty())
+        {
+            const bool merkbar = QFileInfo(datei).isFile();
+            const QString schluessel = merkbar ? klangSchluessel(klang, datei, rate) : QString();
+            if (merkbar) klaenge[i] = speicher.hole(schluessel);
+            if (klaenge[i] == nullptr)
+            {
+                const auto anfang = Uhr::now();
+                Klang neu;
+                neu.daten = engine.decodeStereo(datei, rate, kKlangMaxSekunden);
+                if (!neu.daten.empty())
+                {
+                    auto geteilt = std::make_shared<const Klang>(std::move(neu));
+                    if (merkbar) speicher.lege(schluessel, geteilt, msSeit(anfang));
+                    klaenge[i] = std::move(geteilt);
+                }
+            }
+        }
+        if (klaenge[i] == nullptr && bericht != nullptr)
             bericht->append(QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(klang)));
     }
     return klaenge;

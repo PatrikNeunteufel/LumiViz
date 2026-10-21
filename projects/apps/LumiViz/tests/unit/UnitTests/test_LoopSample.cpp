@@ -416,14 +416,16 @@ TEST_SUITE("Loop Sample")
         REQUIRE(speichereInstrument(sampleInstrument(QStringLiteral("user:ton")), pfad));
 
         QStringList bericht;
-        const std::vector<Klang> klaenge =
+        const Klaenge klaenge =
             ladeKlaenge({tonKlang(pfad, 69, 250), tonKlang(pfad, 71, 250)}, engine, kRate, &bericht);
         REQUIRE(klaenge.size() == 2);
         CHECK(bericht.isEmpty());
         CHECK(engine.gefragt == QStringList{QDir(u.ordner).filePath(QStringLiteral("ton.wav"))});  // einmal, nicht je Ton
-        CHECK(spitze(klaenge[0], 1000, 10000) > 0.4f);
-        CHECK(spitze(klaenge[1], 1000, 10000) > 0.4f);
-        const int p = periode(klaenge[0], 2000, 4000, 80, 125);
+        REQUIRE(klaenge[0] != nullptr);
+        REQUIRE(klaenge[1] != nullptr);
+        CHECK(spitze(*klaenge[0], 1000, 10000) > 0.4f);
+        CHECK(spitze(*klaenge[1], 1000, 10000) > 0.4f);
+        const int p = periode(*klaenge[0], 2000, 4000, 80, 125);
         CHECK(p >= 99);
         CHECK(p <= 102);
         REQUIRE(sampleDaten(QStringLiteral("user:ton")) != nullptr);
@@ -442,10 +444,11 @@ TEST_SUITE("Loop Sample")
         ohne.schichten.push_back(sampleInstrument(QStringLiteral("user:ton")).schichten[0]);
         ohne.schichten[3].an = false;  // eine stumme Schicht wird nicht geladen
         REQUIRE(speichereInstrument(ohne, pfadFehlt));
-        const std::vector<Klang> stumm =
+        const Klaenge stumm =
             ladeKlaenge({tonKlang(pfadFehlt, 69, 250), tonKlang(pfadFehlt, 71, 250)}, engine, kRate, &bericht);
-        CHECK(stumm[0].frames() > 0);
-        CHECK(spitze(stumm[0], 0, stumm[0].frames()) == 0.0f);
+        REQUIRE(stumm[0] != nullptr);
+        CHECK(stumm[0]->frames() > 0);
+        CHECK(spitze(*stumm[0], 0, stumm[0]->frames()) == 0.0f);
         CHECK(bericht == QStringList{QStringLiteral("Sample not loaded: ") + QDir::toNativeSeparators(fehlt),
                                      QStringLiteral("Sample not loaded: (none)"),
                                      QStringLiteral("Sample not loaded: user:gibt_es_nicht")});

@@ -22,6 +22,7 @@
 #include "loop/Offen.hpp"
 #include "loop/Sample.hpp"
 #include "loop/Taktachse.hpp"
+#include "loop/Tonspeicher.hpp"
 #include "shape/Kontur.hpp"  // zaehleZeichnungFassung
 #include "services/ICommandBus.hpp"
 #include "services/ServiceContainer.hpp"
@@ -136,6 +137,7 @@ LoopPanel::LoopPanel(ServiceContainer& services, QWidget* parent)
         m_importSubscription = bus->subscribeScoped<UserDataImportedEvent>([this](const UserDataImportedEvent&) {
             zaehleInstrumentFassung();
             vergissSampleDaten();
+            tonspeicher().leere();  // wie die Samples: ein Archiv kann Dateien mit altem Stand ersetzen
             lumi::shape::zaehleZeichnungFassung();
             if (m_editor) m_editor->liesEigeneNeu();
             if (m_instrumentEditor) m_instrumentEditor->liesEigeneNeu();

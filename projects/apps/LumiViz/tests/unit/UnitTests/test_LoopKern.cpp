@@ -168,12 +168,20 @@ Klang bunterKlang(int frames, std::uint32_t saat)
     return k;
 }
 
+/// Klaenge als Werte geteilt, wie der Rechenkern sie nimmt (Stufe 29b): ein leerer wird `nullptr`.
+Klaenge geteilt(const std::vector<Klang>& werte)
+{
+    Klaenge klaenge;
+    for (const Klang& klang : werte) klaenge.push_back(klang.daten.empty() ? nullptr : std::make_shared<const Klang>(klang));
+    return klaenge;
+}
+
 std::vector<float> rechneBereich(const Ablauf& ablauf, const std::vector<Klang>& klaenge, std::int64_t von,
                                  int frames)
 {
     // mit Unsinn vorbelegt: `rechne` muss den Block ganz ueberschreiben
     std::vector<float> aus(static_cast<std::size_t>(frames) * 2, 9.0f);
-    rechne(ablauf, klaenge, von, frames, aus.data());
+    rechne(ablauf, geteilt(klaenge), von, frames, aus.data());
     return aus;
 }
 
@@ -752,7 +760,7 @@ TEST_CASE("Loop Rechenkern: dieselben Werte, gleich in welchen Bloecken und von 
         for (int i = 0; stelle < gesamt; ++i)
         {
             const int frames = static_cast<int>(std::min<std::int64_t>(groessen[i % 7], gesamt - stelle));
-            rechne(ablauf, klaenge, stelle, frames, gestueckelt.data() + 2 * stelle);
+            rechne(ablauf, geteilt(klaenge), stelle, frames, gestueckelt.data() + 2 * stelle);
             stelle += frames;
         }
         CHECK(std::memcmp(gestueckelt.data(), amStueck.data(), amStueck.size() * sizeof(float)) == 0);

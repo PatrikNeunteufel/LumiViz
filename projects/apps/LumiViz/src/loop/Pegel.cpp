@@ -54,12 +54,13 @@ std::vector<float> rechneStandardprobe(const Instrument& instrument, int rate)
     const Saitensatz saiten = instrument.saiten;
     const SaitenVon saitenVon = [saiten](const QString&) { return saiten; };
     const Ablauf ablauf = plane(probe, rate, saitenVon);
-    std::vector<Klang> klaenge;
+    // das Instrument, wie es gerade ist (auch ungespeichert): ohne den Tonspeicher gerechnet
+    Klaenge klaenge;
     klaenge.reserve(static_cast<std::size_t>(ablauf.klangNamen.size()));
     for (const QString& klangName : ablauf.klangNamen)
     {
         TonAngabe ton;
-        klaenge.push_back(zerlegeTon(klangName, ton) ? rendereTon(instrument, ton, rate) : Klang{});
+        klaenge.push_back(zerlegeTon(klangName, ton) ? std::make_shared<const Klang>(rendereTon(instrument, ton, rate)) : nullptr);
     }
     const auto frames = static_cast<int>(ablauf.durchlaufFrames);
     std::vector<float> aus(static_cast<std::size_t>(std::max(0, frames)) * 2);
@@ -117,7 +118,7 @@ std::vector<float> rechneDrumProbe(const Klang& schlag, int rate)
     probe.kanaele = {{QStringLiteral("Probe"), true, {{QStringLiteral("Probe"), 0, 1}}}};
     probe.richte();
     const Ablauf ablauf = plane(probe, rate);
-    const std::vector<Klang> klaenge(static_cast<std::size_t>(ablauf.klangNamen.size()), schlag);
+    const Klaenge klaenge(static_cast<std::size_t>(ablauf.klangNamen.size()), std::make_shared<const Klang>(schlag));
     const auto frames = static_cast<int>(ablauf.durchlaufFrames);
     std::vector<float> aus(static_cast<std::size_t>(std::max(0, frames)) * 2);
     if (frames > 0) rechne(ablauf, klaenge, 0, frames, aus.data());

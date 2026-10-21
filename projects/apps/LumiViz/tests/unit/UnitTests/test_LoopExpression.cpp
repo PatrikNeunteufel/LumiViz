@@ -76,7 +76,7 @@ Loop instrumentLoop()
 }
 
 /// Je Klang ein Sinus bei 220 Hz, Spitze 0,5, `ms` lang.
-std::vector<Klang> sinus(const Ablauf& ablauf, int ms)
+Klaenge sinus(const Ablauf& ablauf, int ms)
 {
     Klang k;
     const int frames = kRate * ms / 1000;
@@ -86,7 +86,7 @@ std::vector<Klang> sinus(const Ablauf& ablauf, int ms)
         k.daten.push_back(x);
         k.daten.push_back(x);
     }
-    return std::vector<Klang>(static_cast<std::size_t>(ablauf.klangNamen.size()), k);
+    return Klaenge(static_cast<std::size_t>(ablauf.klangNamen.size()), std::make_shared<const Klang>(std::move(k)));
 }
 
 std::vector<float> rechneLoop(const Loop& loop, int ms)

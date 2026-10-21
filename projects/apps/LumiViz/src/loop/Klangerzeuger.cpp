@@ -15,7 +15,7 @@ namespace lumi::loop
 namespace
 {
 
-const std::vector<Klang> kKeineKlaenge;
+const Klaenge kKeineKlaenge;
 
 /// Ein Bus, in den so lange nichts kam, gilt als verklungen.
 constexpr std::int64_t kLangeStill = std::int64_t{1} << 60;
@@ -46,7 +46,7 @@ void uebernimmGedaechtnis(const Programm* alt, const Programm& neu)
 }  // namespace
 
 std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
-                                             std::shared_ptr<const std::vector<Klang>> klaenge, const SaitenVon& saiten)
+                                             std::shared_ptr<const Klaenge> klaenge, const SaitenVon& saiten)
 {
     auto programm = std::make_shared<Programm>();
     programm->ablauf = plane(loop, rate, saiten);
@@ -126,7 +126,7 @@ void Klangerzeuger::render(float* out, int frames)
         return;
     }
     std::int64_t von = m_stelle.load();
-    const std::vector<Klang>& klaenge = p->klaenge != nullptr ? *p->klaenge : kKeineKlaenge;
+    const Klaenge& klaenge = p->klaenge != nullptr ? *p->klaenge : kKeineKlaenge;
     EffektZustand* const effekte = p->effekte.get();
     if (effekte == nullptr)
         rechne(p->ablauf, klaenge, von, frames, out);

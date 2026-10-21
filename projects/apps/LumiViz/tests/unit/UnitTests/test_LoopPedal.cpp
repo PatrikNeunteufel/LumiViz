@@ -84,12 +84,12 @@ Instrument probe()
 std::vector<float> rechneLoop(const Loop& loop)
 {
     const Ablauf ablauf = plane(loop, kRate);
-    std::vector<Klang> klaenge;
+    Klaenge klaenge;
     for (const QString& name : ablauf.klangNamen)
     {
         TonAngabe ton;
         REQUIRE(zerlegeTon(name, ton));
-        klaenge.push_back(rendereTon(probe(), ton, kRate));
+        klaenge.push_back(std::make_shared<const Klang>(rendereTon(probe(), ton, kRate)));
     }
     std::vector<float> aus(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
     rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), aus.data());

@@ -66,7 +66,7 @@ Loop drumLoop(double gainDb, bool mitVerzerrung = false)
 }
 
 /// Je Klangname des Ablaufs ein Sinus von 50 ms bei 220 Hz, Spitze 0,5.
-std::vector<Klang> sinusKlaenge(const Ablauf& ablauf)
+Klaenge sinusKlaenge(const Ablauf& ablauf)
 {
     Klang k;
     const int frames = kRate / 20;
@@ -76,7 +76,7 @@ std::vector<Klang> sinusKlaenge(const Ablauf& ablauf)
         k.daten.push_back(x);
         k.daten.push_back(x);
     }
-    return std::vector<Klang>(static_cast<std::size_t>(ablauf.klangNamen.size()), k);
+    return Klaenge(static_cast<std::size_t>(ablauf.klangNamen.size()), std::make_shared<const Klang>(std::move(k)));
 }
 
 std::vector<float> rechneOhneEffekte(const Loop& loop)
@@ -91,7 +91,7 @@ std::vector<float> rechneOhneEffekte(const Loop& loop)
 std::vector<float> rechneMitEffekten(const Loop& loop)
 {
     const Ablauf ablauf = plane(loop, kRate);
-    const auto klaenge = std::make_shared<const std::vector<Klang>>(sinusKlaenge(ablauf));
+    const auto klaenge = std::make_shared<const Klaenge>(sinusKlaenge(ablauf));
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(baueProgramm(loop, kRate, klaenge));
     const int frames = static_cast<int>(ablauf.durchlaufFrames);

@@ -82,11 +82,11 @@ Loop schlagLoop(std::vector<double> zeile, double bpm = 120.0)
     return loop;
 }
 
-std::shared_ptr<const std::vector<Klang>> einKlang(int frames, float wert)
+std::shared_ptr<const Klaenge> einKlang(int frames, float wert)
 {
     Klang k;
     k.daten.assign(static_cast<std::size_t>(frames) * 2, wert);
-    return std::make_shared<const std::vector<Klang>>(std::vector<Klang>{k});
+    return std::make_shared<const Klaenge>(Klaenge{std::make_shared<const Klang>(std::move(k))});
 }
 
 std::vector<float> rendere(Klangerzeuger& erzeuger, int frames)
@@ -258,25 +258,30 @@ TEST_CASE("Loop Kit: die Engine dekodiert die Klaenge — Stereo, in der verlang
         REQUIRE(namen.size() == 6);
         REQUIRE(namen[0] == QStringLiteral("kit:kick"));
         QStringList bericht;
-        std::vector<Klang> klaenge = ladeKlaenge(namen, engine, 44100, &bericht);
+        Klaenge klaenge = ladeKlaenge(namen, engine, 44100, &bericht);
         CHECK(bericht.isEmpty());
         REQUIRE(klaenge.size() == 6u);
-        for (const Klang& k : klaenge) CHECK(k.frames() > 3000);
-        CHECK(klaenge[0].frames() == 22050);
+        for (const auto& k : klaenge)
+        {
+            REQUIRE(k != nullptr);
+            CHECK(k->frames() > 3000);
+        }
+        CHECK(klaenge[0]->frames() == 22050);
 
         namen[1] = QStringLiteral("kit:gibtsnicht");
         klaenge = ladeKlaenge(namen, engine, 44100, &bericht);
         REQUIRE(bericht.size() == 1);
         CHECK(bericht[0] == QStringLiteral("Sound not loaded: kit:gibtsnicht"));
-        CHECK(klaenge[1].frames() == 0);
-        CHECK(klaenge[2].frames() > 3000);
+        CHECK(klaenge[1] == nullptr);
+        REQUIRE(klaenge[2] != nullptr);
+        CHECK(klaenge[2]->frames() > 3000);
     }
     SUBCASE("das Beispiel uebersteuert nicht: die Summe bleibt unter 1")
     {
         Loop loop;
         REQUIRE(ladeBeispiel(loop));
         const Ablauf ablauf = plane(loop, 44100);
-        const std::vector<Klang> klaenge = ladeKlaenge(ablauf.klangNamen, engine, 44100);
+        const Klaenge klaenge = ladeKlaenge(ablauf.klangNamen, engine, 44100);
         std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
         rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
         float groesster = 0.0f;
@@ -306,7 +311,7 @@ TEST_CASE("Loop Wiedergabe: der Klangerzeuger spielt das Beispiel im Mixer der B
     REQUIRE(ladeBeispiel(loop));
     QStringList bericht;
     const auto klaenge =
-        std::make_shared<const std::vector<Klang>>(ladeKlaenge(loop.klangNamen(), engine, rate, &bericht));
+        std::make_shared<const Klaenge>(ladeKlaenge(loop.klangNamen(), engine, rate, &bericht));
     REQUIRE(bericht.isEmpty());
 
     Klangerzeuger erzeuger;  // lebt laenger als seine Quelle im Mixer
@@ -390,7 +395,7 @@ TEST_CASE("Loop Messung: der Klangerzeuger gegen die Wanduhr — Abstand, Unruhe
     const int rate = engine.getSampleRate();
     Loop loop;
     REQUIRE(ladeBeispiel(loop));
-    const auto klaenge = std::make_shared<const std::vector<Klang>>(ladeKlaenge(loop.klangNamen(), engine, rate));
+    const auto klaenge = std::make_shared<const Klaenge>(ladeKlaenge(loop.klangNamen(), engine, rate));
     Klangerzeuger erzeuger;
     erzeuger.setzeProgramm(baueProgramm(loop, rate, klaenge));
     const AudioStreamHandle mixer = engine.createMixer();

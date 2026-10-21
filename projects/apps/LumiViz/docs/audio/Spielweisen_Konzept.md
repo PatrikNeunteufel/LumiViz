@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.29.0
+> **Version:** 0.30.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV3 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a und TV1 a bis TV3 a (Patrik S139–S142);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV4 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a und TV1 a bis TV4 a (Patrik S139–S142);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -853,10 +853,35 @@ und je Instrument eine Probe — erst allein, dann auf 8 Threads aus einer gemei
 beim allerersten Aufruf von `instrumente()` — die gemerkte Liste lässt sich in der Test-Exe nicht
 zurücksetzen.
 
+✅ **TV4 a** (Patrik S142): **Die Programme halten geteilte Zeiger auf die Töne im Speicher.** Neuer
+Typ `Klaenge = std::vector<std::shared_ptr<const Klang>>` (`nullptr` = kein Klang, die Stimme
+schweigt); `ladeKlaenge`, `Programm::klaenge`, `baueProgramm` und `rechne` nehmen ihn. Ein Ton
+existiert einmal; verwirft der Speicher einen, den ein spielendes Programm noch hält, lebt er, bis
+das Programm ihn loslässt. Verworfen: b (Kopien wie heute — der Speicher spart Rechenzeit, aber jeder
+Spieler und jeder Clip im Composer hielte eine Kopie, die Grenze aus H3 a begrenzte nichts), c
+(`Klang::daten` teilt seine Daten — jede Stelle, die einen Klang baut oder schreibt, änderte sich, und
+der Typ, mit dem gerechnet wird, wäre kein einfacher Vektor mehr). Kippt, wenn Klänge außerhalb der
+Programme häufig als Wert weitergereicht werden — dann c.
+
+**Gebaut 29b (S142):** `loop/Tonspeicher` (Grenze, der am längsten nicht gebrauchte Ton geht zuerst,
+je Ton die gemessene Rechen- oder Dekodierzeit, Zähler; von jedem Thread aus benutzbar),
+`instrumentAbdruck`, `tonSchluessel`, `klangSchluessel`; `ladeKlaenge` holt jeden Ton und jeden
+dekodierten Klang aus dem Speicher und rechnet nur, was fehlt; der Typ `Klaenge` in Rechenkern,
+Klangerzeuger, Spieler, Tonführung, ClipLautheit und Pegel. Zwei Regeln, die sich erst beim Bau
+zeigten: **eine Klangdatei, die es nicht gibt, kommt nicht in den Speicher** (an ihr ließe sich keine
+Änderung erkennen — die Engine aus Pappe der Tests „dekodierte“ solche Pfade, ihre Klänge blieben
+über Testfälle hinweg liegen); **nach einem Import leert das Loop-Panel den Speicher** wie schon die
+Samples (ein Archiv kann Dateien mit altem Stand ersetzen). Die Grenze steht noch fest auf 1 GB (in
+den Settings: 29f). Test `test_LoopTonspeicher` (der Speicher allein; `ladeKlaenge` mit Instrumenten
+und einer Klangdatei in einem Wegwerf-Ordner: ein zweites Laden rechnet nichts, ein geändertes
+Instrument nur seine Töne, eine geänderte Datei wird neu dekodiert, jeder Ton Bit für Bit wie
+`rendereTon`).
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.30.0 | 2026-10-21 | Session 142. TV4 a (Programme halten geteilte Zeiger auf die Töne); Stufe 29b gebaut (`loop/Tonspeicher`, `ladeKlaenge` über den Speicher, Typ `Klaenge`, `test_LoopTonspeicher`). |
 | 0.29.0 | 2026-10-21 | Session 142. Stufe 29a gebaut (`instrumente()` mit Sperre, Fassung atomar, `test_LoopTonThreads`). |
 | 0.28.0 | 2026-10-21 | Session 142. §4.5 Stufe 29: Befund Threadsicherheit von `rendereTon` (Kern ja, Rand nein), TV1 a (sechs Teilschritte 29a–29f), TV2 a (Schlüssel als Fingerabdruck der Eingaben), Befund BASS, TV3 a (Dekodieren im Hintergrund, Drum-Klänge im Tonspeicher). |
 | 0.27.0 | 2026-10-21 | Session 141. §4 Familie Hammer-Saite: Zielbild (alle Instrumente, alle Teile, alle Spielweisen; Geräusche abschaltbar), freie Aufnahmen (Salamander, CC-BY 3.0), Befund „wann ein Ton gerechnet wird“; H1 a bis H3 a (Töne vorab: Speicher je Tonname, Hintergrund, Vorladen, Play wartet, 1 GB im Arbeitsspeicher); vorgemerkt Compute-Shader; Idee Patrik Freeze mit F1 a bis F5 a; Bauplan F6 a (29 Töne vorab, 30 Freeze, 31 ff. Hammer-Saite). |

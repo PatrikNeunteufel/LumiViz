@@ -274,11 +274,12 @@ TEST_SUITE("Loop Drum-Quellen")
         CHECK(klangDatei(QStringLiteral("user:gibt_es_nicht")).isEmpty());
         CHECK(klangDatei(QStringLiteral("user:../samples/knock")).isEmpty());  // nichts ausserhalb des Ordners
         QStringList bericht;
-        const std::vector<Klang> direkt =
+        const Klaenge direkt =
             ladeKlaenge({QStringLiteral("user:knock"), QStringLiteral("user:gibt_es_nicht")}, engine, 48000, &bericht);
         REQUIRE(direkt.size() == 2);
-        CHECK(direkt[0].daten == sinus(48000));
-        CHECK(direkt[1].frames() == 0);
+        REQUIRE(direkt[0] != nullptr);
+        CHECK(direkt[0]->daten == sinus(48000));
+        CHECK(direkt[1] == nullptr);
         CHECK(bericht == QStringList{QStringLiteral("Sound not loaded: user:gibt_es_nicht")});
 
         // --- dasselbe Sample in einer Sample-Schicht, gespielt bei seinem Grundton und so lang, wie es ist
@@ -298,17 +299,18 @@ TEST_SUITE("Loop Drum-Quellen")
         spur.hoehe = 60;
         spur.dauerMs = 1000;
         bericht.clear();
-        const std::vector<Klang> alsTon = ladeKlaenge({spur.spielt()}, engine, 48000, &bericht);
+        const Klaenge alsTon = ladeKlaenge({spur.spielt()}, engine, 48000, &bericht);
         REQUIRE(alsTon.size() == 1);
         CHECK(bericht.isEmpty());
-        REQUIRE(alsTon[0].frames() >= 48000);
+        REQUIRE(alsTon[0] != nullptr);
+        REQUIRE(alsTon[0]->frames() >= 48000);
         bool gleich = true;
         for (std::size_t i = 0; i < 2 * 47999; ++i)
-            if (alsTon[0].daten[i] != direkt[0].daten[i]) gleich = false;
+            if (alsTon[0]->daten[i] != direkt[0]->daten[i]) gleich = false;
         CHECK(gleich);
         // dahinter ist nichts mehr: die Aufnahme ist zu Ende
         float rest = 0.0f;
-        for (std::size_t i = 2 * 48000; i < alsTon[0].daten.size(); ++i) rest = std::max(rest, std::abs(alsTon[0].daten[i]));
+        for (std::size_t i = 2 * 48000; i < alsTon[0]->daten.size(); ++i) rest = std::max(rest, std::abs(alsTon[0]->daten[i]));
         CHECK(rest == 0.0f);
     }
 

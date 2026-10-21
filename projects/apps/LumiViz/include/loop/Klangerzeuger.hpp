@@ -57,7 +57,7 @@ struct EffektZustand
 struct Programm
 {
     Ablauf ablauf;
-    std::shared_ptr<const std::vector<Klang>> klaenge;
+    std::shared_ptr<const Klaenge> klaenge;
     /// nullptr, wenn kein Clip Effekte hat. Das Programm bleibt, wie es ist —
     /// was sich hier aendert, ist nur, was die Effekte gehoert haben.
     std::shared_ptr<EffektZustand> effekte;
@@ -68,7 +68,7 @@ struct Programm
 /// bei `plane` (Stufe 23b): dieselbe Auskunft, mit der die Klaenge zu
 /// `loop.klangNamen(saiten)` geladen wurden.
 [[nodiscard]] std::shared_ptr<const Programm> baueProgramm(const Loop& loop, int rate,
-                                                           std::shared_ptr<const std::vector<Klang>> klaenge,
+                                                           std::shared_ptr<const Klaenge> klaenge,
                                                            const SaitenVon& saiten = {});
 
 class Klangerzeuger final : public IAudioGenerator

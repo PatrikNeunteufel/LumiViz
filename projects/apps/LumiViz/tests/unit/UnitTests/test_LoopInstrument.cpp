@@ -302,8 +302,9 @@ TEST_SUITE("LoopInstrument")
         CHECK(ablauf.durchlaufFrames == std::llround(64 * ablauf.schrittFrames));
 
         // rechne: mit Klaengen aus lauter Einsen addieren sich die drei Toene des Akkords
-        std::vector<Klang> klaenge(4);
-        for (Klang& k : klaenge) k.daten.assign(2 * 1000, 1.0f);
+        Klang eins;
+        eins.daten.assign(2 * 1000, 1.0f);
+        const Klaenge klaenge(4, std::make_shared<const Klang>(std::move(eins)));
         std::vector<float> block(2 * 100);
         rechne(ablauf, klaenge, 0, 100, block.data());
         CHECK(block[0] == doctest::Approx(0.25f + 0.125f + 0.25f));  // links
@@ -951,8 +952,8 @@ TEST_SUITE("LoopInstrument")
         CHECK(zuNeu);
         papp::PappMischEngine engine;
         QStringList bericht;
-        const std::vector<Klang> stumm = ladeKlaenge({tonKlang(pfadMorgen, 60, 250), tonKlang(pfadMorgen, 62, 250)}, engine, kRate, &bericht);
-        CHECK(stumm[0].frames() == 0);
+        const Klaenge stumm = ladeKlaenge({tonKlang(pfadMorgen, 60, 250), tonKlang(pfadMorgen, 62, 250)}, engine, kRate, &bericht);
+        CHECK(stumm[0] == nullptr);
         CHECK(bericht == QStringList{QStringLiteral("Instrument needs a newer LumiViz: ") + QDir::toNativeSeparators(pfadMorgen)});
 
         // --- der Ton: die Summe der Schichten, jede an ihrer Tonhoehe und ab ihrem Einsatz
@@ -1048,14 +1049,17 @@ TEST_SUITE("LoopInstrument")
         const QStringList namen = {QStringLiteral("inst:piano:60:250"), QStringLiteral("inst:tuba:60:250"),
                                    QStringLiteral("inst:guitar:45:500"), QStringLiteral("inst:tuba:62:250"),
                                    tonKlang(pfad, 60, 250), tonKlang(fehlt, 60, 250)};
-        const std::vector<Klang> klaenge = ladeKlaenge(namen, engine, kRate, &bericht);
+        const Klaenge klaenge = ladeKlaenge(namen, engine, kRate, &bericht);
         REQUIRE(klaenge.size() == 6);
-        CHECK(klaenge[0].frames() > 11025);
-        CHECK(klaenge[1].frames() == 0);
-        CHECK(klaenge[2].frames() > 22050);
+        REQUIRE(klaenge[0] != nullptr);
+        REQUIRE(klaenge[2] != nullptr);
+        REQUIRE(klaenge[4] != nullptr);
+        CHECK(klaenge[0]->frames() > 11025);
+        CHECK(klaenge[1] == nullptr);
+        CHECK(klaenge[2]->frames() > 22050);
         // die eigene Datei klingt wie das Instrument, aus dem sie gespeichert wurde
-        CHECK(klaenge[4].daten == rendereTon(eigenes, 60, 250.0, kRate).daten);
-        CHECK(klaenge[5].frames() == 0);
+        CHECK(klaenge[4]->daten == rendereTon(eigenes, 60, 250.0, kRate).daten);
+        CHECK(klaenge[5] == nullptr);
         // einmal je Instrument, nicht je Ton
         CHECK(bericht == QStringList{QStringLiteral("Instrument not found: tuba"),
                                      QStringLiteral("Instrument not found: ") + QDir::toNativeSeparators(fehlt)});
@@ -1089,11 +1093,11 @@ TEST_SUITE("LoopInstrument")
                                       QStringLiteral("pluck"), QStringLiteral("sub_bass"), QStringLiteral("warm_pad")});
 
         const Ablauf ablauf = plane(loop, kRate);
-        const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+        const Klaenge klaenge = klaengeOhneEngine(ablauf);
         for (std::size_t i = 0; i < klaenge.size(); ++i)
         {
             CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
-            CHECK(klaenge[i].frames() > 0);
+            CHECK((klaenge[i] != nullptr && klaenge[i]->frames() > 0));
         }
         std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
         rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
@@ -1129,7 +1133,7 @@ TEST_SUITE("LoopInstrument")
 
         const Ablauf ablauf = plane(loop, kRate);
         CHECK(ablauf.busse.size() == 5u);
-        const auto klaenge = std::make_shared<const std::vector<Klang>>(klaengeOhneEngine(ablauf));
+        const auto klaenge = std::make_shared<const Klaenge>(klaengeOhneEngine(ablauf));
         const int frames = static_cast<int>(ablauf.durchlaufFrames);
         std::vector<float> trocken(static_cast<std::size_t>(frames) * 2);
         rechne(ablauf, *klaenge, 0, frames, trocken.data());
@@ -1179,11 +1183,11 @@ TEST_SUITE("LoopInstrument")
                 gespielt << m.instrument;
             }
             const Ablauf ablauf = plane(loop, kRate);
-            const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+            const Klaenge klaenge = klaengeOhneEngine(ablauf);
             for (std::size_t i = 0; i < klaenge.size(); ++i)
             {
                 CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
-                CHECK(klaenge[i].frames() > 0);
+                CHECK((klaenge[i] != nullptr && klaenge[i]->frames() > 0));
             }
             std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
             rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
@@ -1235,11 +1239,11 @@ TEST_SUITE("LoopInstrument")
                 gespielt << m.instrument;
             }
             const Ablauf ablauf = plane(loop, kRate);
-            const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+            const Klaenge klaenge = klaengeOhneEngine(ablauf);
             for (std::size_t i = 0; i < klaenge.size(); ++i)
             {
                 CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
-                CHECK(klaenge[i].frames() > 0);
+                CHECK((klaenge[i] != nullptr && klaenge[i]->frames() > 0));
             }
             std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
             rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
@@ -1287,11 +1291,11 @@ TEST_SUITE("LoopInstrument")
         CHECK(instrumentMuster == 5);
 
         const Ablauf ablauf = plane(loop, kRate);
-        const std::vector<Klang> klaenge = klaengeOhneEngine(ablauf);
+        const Klaenge klaenge = klaengeOhneEngine(ablauf);
         for (std::size_t i = 0; i < klaenge.size(); ++i)
         {
             CAPTURE(ablauf.klangNamen[static_cast<qsizetype>(i)].toStdString());
-            CHECK(klaenge[i].frames() > 0);
+            CHECK((klaenge[i] != nullptr && klaenge[i]->frames() > 0));
         }
         std::vector<float> alles(static_cast<std::size_t>(ablauf.durchlaufFrames) * 2);
         rechne(ablauf, klaenge, 0, static_cast<int>(ablauf.durchlaufFrames), alles.data());
@@ -1335,7 +1339,7 @@ TEST_SUITE("LoopInstrument")
             Loop probe = notenLoop(noten, instrument.name);
             probe.laut = 0.6;
             const Ablauf a = plane(probe, kRate);
-            const std::vector<Klang> k = klaengeOhneEngine(a);
+            const Klaenge k = klaengeOhneEngine(a);
             std::vector<float> werte(static_cast<std::size_t>(a.durchlaufFrames) * 2);
             rechne(a, k, 0, static_cast<int>(a.durchlaufFrames), werte.data());
             MESSAGE(instrument.titel.toStdString() << ": Hoerprobe, groesster Betrag " << std::to_string(spitze(werte)));

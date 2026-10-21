@@ -253,7 +253,7 @@ TEST_SUITE("ComposerLautheit")
             if (!lumi::loop::ladeLoop(pfad, loop)) continue;
             const lumi::loop::Ablauf ablauf = lumi::loop::plane(loop, rate);
             const auto klaenge =
-                std::make_shared<const std::vector<lumi::loop::Klang>>(looptest::klaengeOhneEngine(ablauf));
+                std::make_shared<const lumi::loop::Klaenge>(looptest::klaengeOhneEngine(ablauf));
             lumi::loop::Klangerzeuger erzeuger;
             erzeuger.setzeProgramm(lumi::loop::baueProgramm(loop, rate, klaenge));
             const auto frames = static_cast<std::size_t>(ablauf.durchlaufFrames);
