@@ -282,6 +282,9 @@ public:
     void setKitKlaenge(const QStringList& klaenge);
     /// Spielt gerade dieses Muster allein — und wo steht es (Schritt im Muster)?
     void setSpielt(bool spielt, double schritt);
+    /// Ein Satz am Ende der Kopfzeile: warum Play pattern gerade still ist (der Composer
+    /// hat den Ton, die Klaenge werden gerechnet — Stufe 29d). Leer = kein Hinweis.
+    void setHinweis(const QString& text);
     /// Die Marke allein, ohne den Knopf Play pattern (S127, W1 a): das Arrangement
     /// oder der Composer spielt dieses Muster gerade; -1 = keine. Mit `art` folgt
     /// der Ausschnitt ihr (W3 a) — nicht, solange am Rollbalken gezogen wird.
@@ -570,6 +573,7 @@ private:
     QSpinBox* m_takte = nullptr;
     QPushButton* m_play = nullptr;
     QLabel* m_spitze = nullptr;
+    QLabel* m_hinweis = nullptr;
     QSpinBox* m_schlaege = nullptr;
     QSpinBox* m_jeSchlag = nullptr;
     QDoubleSpinBox* m_swing = nullptr;

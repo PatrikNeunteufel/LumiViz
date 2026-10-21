@@ -32,6 +32,7 @@
 #include "loop/Offen.hpp"
 #include "loop/SichttestAktionen.hpp"
 #include "loop/Spieler.hpp"
+#include "loop/Tonspeicher.hpp"
 #include "services/EventBus.hpp"
 #include "services/ServiceContainer.hpp"
 
@@ -48,8 +49,12 @@
 #include <QTemporaryDir>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <climits>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 using namespace lumi::loop;
@@ -64,6 +69,8 @@ public:
     IAudioGenerator* generator = nullptr;  ///< der eingehaengte Generator; nullptr = keiner
     AudioStreamHandle generatorQuelle = INVALID_STREAM;
     QStringList dekodiert;                 ///< die Dateien, in der Reihenfolge von `decodeStereo`
+    std::mutex sperre;
+    std::atomic<bool> halten{false};  ///< das Dekodieren wartet, bis der Fall es freigibt (Stufe 29d)
     bool ohneMixer = false;
 
     [[nodiscard]] AudioStreamHandle createMixer() override
@@ -89,7 +96,11 @@ public:
     }
     [[nodiscard]] std::vector<float> decodeStereo(const QString& filePath, int, double) override
     {
-        dekodiert << filePath;
+        {
+            const std::lock_guard<std::mutex> halt(sperre);  // die Threads eines Tonauftrags (Stufe 29d)
+            dekodiert << filePath;
+        }
+        while (halten) std::this_thread::yield();
         if (filePath.contains(QStringLiteral("gibtsnicht"))) return {};
         return std::vector<float>(200, 0.5f);  // 100 Abtastwerte auf 0.5
     }
@@ -218,6 +229,7 @@ TEST_CASE("Loop Panel: laden, Play und Stop, und der zuletzt geladene Loop kommt
         CHECK(play->text() == QStringLiteral("Stop"));
         CHECK(!player->isPlaying());
         CHECK(lumi::loop::tonMixer() == engine->mixer);
+        panel.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
         CHECK(engine->dekodiert.size() == 6);  // die sechs Klaenge des Kits
         CHECK(bericht->text().isEmpty());
 
@@ -552,6 +564,7 @@ TEST_CASE("Loop Spieler: uebernimmt den Ton, der Player schweigt und spielt dana
     CHECK(!player.isPlaying());
     CHECK(player.isPaused());
     // und es klingt: der erste Schlag, Klang 0.5
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     CHECK(ersterWert(engine.generator) == 0.5f);
     CHECK(spieler.bericht().isEmpty());
 
@@ -686,6 +699,7 @@ TEST_CASE("Loop Spieler: ein geaenderter Loop gilt sofort, Klaenge werden nur be
     spieler.setzeLoop(spielLoop({1, 0, 0, 0}));
     CHECK(engine.dekodiert.isEmpty());  // geladen wird erst, wenn gespielt wird
     REQUIRE(spieler.starte(engine, player));
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     REQUIRE(engine.dekodiert.size() == 1);
     CHECK(engine.dekodiert[0] == QStringLiteral("C:/s/a.wav"));
     CHECK(ersterWert(engine.generator) == 0.5f);
@@ -698,12 +712,14 @@ TEST_CASE("Loop Spieler: ein geaenderter Loop gilt sofort, Klaenge werden nur be
 
     // ein anderer Klang: neu geladen
     spieler.setzeLoop(spielLoop({1, 0, 0, 0}, QStringLiteral("C:/s/b.wav")));
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     REQUIRE(engine.dekodiert.size() == 2);
     CHECK(engine.dekodiert[1] == QStringLiteral("C:/s/b.wav"));
     CHECK(spieler.bericht().isEmpty());
 
     // ein Klang, der sich nicht laden laesst: Bericht, die Spur schweigt
     spieler.setzeLoop(spielLoop({1, 0, 0, 0}, QStringLiteral("C:/s/gibtsnicht.wav")));
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     REQUIRE(spieler.bericht().size() == 1);
     CHECK(spieler.bericht()[0].startsWith(QStringLiteral("Sound not loaded: ")));
     spieler.starte(engine, player);
@@ -719,6 +735,7 @@ TEST_CASE("Loop Spieler: die Stelle in Schritten, und Play beginnt von vorn")
     CHECK(spieler.stelleSchritte() == 0.0);
     REQUIRE(spieler.starte(engine, player));
     CHECK(spieler.stelleSchritte() == 0.0);
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
 
     // der Mixer holt 11025 Abtastwerte: bei 120 BPM und 44100 Hz zwei Schritte
     std::vector<float> block(2 * 11025);
@@ -787,6 +804,7 @@ TEST_CASE("Loop Spieler: die Spitze der Summe — der groesste Betrag seit der l
     CHECK(spieler.nimmSpitze() == 0.0f);  // er spielt nicht
     REQUIRE(spieler.starte(engine, player));
     REQUIRE(engine.generator != nullptr);
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     CHECK(spieler.nimmSpitze() == 0.0f);  // noch kein Block gerechnet
     CHECK(ersterWert(engine.generator) == 0.5f);
     CHECK(spieler.nimmSpitze() == 0.5f);
@@ -799,6 +817,7 @@ TEST_CASE("Loop Spieler: die Spitze der Summe — der groesste Betrag seit der l
     laut.muster[0].zeilen = {{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}};
     spieler.setzeLoop(laut);
     REQUIRE(spieler.starte(engine, player));  // von vorn
+    spieler.warteAufToene();  // die Klaenge kommen aus dem Hintergrund (Stufe 29d)
     (void)ersterWert(engine.generator);
     CHECK(spieler.nimmSpitze() == doctest::Approx(1.5f));
 }
@@ -1552,4 +1571,173 @@ TEST_CASE("Loop im Composer: ein Loop-Clip hat kein Ende — die Komposition lae
     REQUIRE(gelesen.kanaele[0].clips.size() == 2);
     CHECK(gelesen.kanaele[0].clips[0].endeMs == 9000);
     CHECK(gelesen.kanaele[0].clips[0].quellMs == 0);
+}
+
+// =============================================================================
+// Stufe 29d: Play wartet auf die Toene (H2 a, TV5 a, TV6 a)
+// =============================================================================
+
+TEST_CASE("Loop Spieler 29d: Play wartet still, bis die Toene da sind — Stop bricht ab")
+{
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Spieler spieler;
+    spieler.setzeLoop(spielLoop({1, 0, 0, 0}));
+    engine.halten = true;
+    REQUIRE(spieler.starte(engine, player));
+    CHECK(spieler.spielt());
+    CHECK(spieler.wartet());
+    CHECK(spieler.bereitet());
+    CHECK(spieler.vorzubereiten() == 1);
+    CHECK(spieler.vorbereitet() == 0);
+    REQUIRE(engine.generator != nullptr);
+    CHECK(ersterWert(engine.generator) == 0.0f);  // still, solange gerechnet wird
+    CHECK(spieler.springe(2.0));                  // gemerkt: dort beginnt er
+    spieler.takt();
+    CHECK(spieler.wartet());
+
+    engine.halten = false;
+    spieler.warteAufToene();
+    CHECK_FALSE(spieler.wartet());
+    CHECK_FALSE(spieler.bereitet());
+    CHECK(spieler.stelleSchritte() == doctest::Approx(2.0));
+    REQUIRE(spieler.starte(engine, player));  // von vorn
+    CHECK(ersterWert(engine.generator) == 0.5f);
+    spieler.halte();
+
+    // Stop, waehrend gerechnet wird: nichts spielt, nichts wartet
+    spieler.setzeLoop(spielLoop({1, 0, 0, 0}, QStringLiteral("C:/s/c.wav")));
+    engine.halten = true;
+    REQUIRE(spieler.starte(engine, player));
+    CHECK(spieler.wartet());
+    spieler.halte();
+    CHECK_FALSE(spieler.spielt());
+    CHECK_FALSE(spieler.wartet());
+    CHECK_FALSE(spieler.bereitet());
+    engine.halten = false;  // der verworfene Auftrag laeuft aus — der Spieler wartet am Ende auf ihn
+}
+
+TEST_CASE("Loop Spieler 29d: eine Bearbeitung waehrend des Spielens — die alten Toene klingen, bis die neuen da sind")
+{
+    LoopPappEngine engine;
+    SpielPlayer player;
+    Spieler spieler;
+    spieler.setzeLoop(spielLoop({1, 0, 0, 0}));
+    REQUIRE(spieler.starte(engine, player));
+    spieler.warteAufToene();
+    CHECK(ersterWert(engine.generator) == 0.5f);
+
+    engine.halten = true;
+    spieler.setzeLoop(spielLoop({0.5, 0, 0, 0}, QStringLiteral("C:/s/b.wav")));
+    CHECK(spieler.bereitet());
+    CHECK_FALSE(spieler.wartet());
+    REQUIRE(spieler.starte(engine, player));  // von vorn: noch das bisherige Programm
+    CHECK(ersterWert(engine.generator) == 0.5f);
+
+    engine.halten = false;
+    spieler.warteAufToene();
+    CHECK_FALSE(spieler.bereitet());
+    REQUIRE(spieler.starte(engine, player));
+    CHECK(ersterWert(engine.generator) == 0.25f);  // jetzt die Bearbeitung
+}
+
+TEST_CASE("Loop Spieler 29d: ladeVor — Play findet die Toene fertig, oder uebernimmt den Auftrag")
+{
+    LoopPappEngine engine;
+    SpielPlayer player;
+    {
+        Spieler spieler;
+        spieler.setzeLoop(spielLoop({1, 0, 0, 0}));
+        spieler.ladeVor(engine);
+        CHECK(spieler.laedtVor());
+        for (int i = 0; i < 2000 && spieler.laedtVor(); ++i)
+        {
+            spieler.takt();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        REQUIRE_FALSE(spieler.laedtVor());
+        CHECK(engine.dekodiert.size() == 1);
+        REQUIRE(spieler.starte(engine, player));
+        CHECK_FALSE(spieler.wartet());  // nichts zu rechnen: er spielt sofort
+        CHECK(ersterWert(engine.generator) == 0.5f);
+        CHECK(engine.dekodiert.size() == 1);
+    }
+    {
+        // Play mitten im Vorladen: derselbe Auftrag rechnet weiter, nichts doppelt
+        Spieler spieler;
+        spieler.setzeLoop(spielLoop({1, 0, 0, 0}, QStringLiteral("C:/s/d.wav")));
+        engine.halten = true;
+        spieler.ladeVor(engine);
+        REQUIRE(spieler.starte(engine, player));
+        CHECK(spieler.wartet());
+        CHECK_FALSE(spieler.laedtVor());
+        engine.halten = false;
+        spieler.warteAufToene();
+        CHECK(engine.dekodiert.count(QStringLiteral("C:/s/d.wav")) == 1);
+        CHECK(ersterWert(engine.generator) == 0.5f);
+    }
+}
+
+TEST_CASE("Loop Panel 29d: an der Stelle von Bar · Step steht, was vorbereitet wird")
+{
+    int argc = 1;
+    char arg0[10] = "UnitTests";
+    char* argv[2] = {arg0, nullptr};
+    QApplication app{argc, argv};
+    LoopEinstellungen einstellungen;
+    QDir wurzel = QFileInfo(QString::fromLocal8Bit(__FILE__)).absoluteDir();
+    for (int i = 0; i < 6; ++i) wurzel.cdUp();
+    const QString beispiel = wurzel.filePath(QStringLiteral("asset/loop/drums_demo.lvloop"));
+
+    ServiceContainer dienste;
+    dienste.registerSingleton<IAudioEngine>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioEngine>(new LoopPappEngine); });
+    dienste.registerSingleton<IAudioPlayer>(
+        [](ServiceContainer&) { return std::unique_ptr<IAudioPlayer>(new SpielPlayer); });
+    auto* engine = dynamic_cast<LoopPappEngine*>(dienste.tryResolve<IAudioEngine>());
+    REQUIRE(engine != nullptr);
+    tonspeicher().leere();  // die Kit-Klaenge sollen noch nicht im Speicher liegen
+    {
+        LoopPanel panel(dienste);
+        auto* play = panel.findChild<QPushButton*>(QStringLiteral("loopPlay"));
+        auto* stelle = panel.findChild<QLabel*>(QStringLiteral("loopPosition"));
+        REQUIRE(play != nullptr);
+        REQUIRE(stelle != nullptr);
+
+        engine->halten = true;
+        REQUIRE(panel.lade(beispiel));
+        CHECK(panel.spieler().laedtVor());  // H1 a: beim Oeffnen vorab
+        play->click();
+        CHECK(play->text() == QStringLiteral("Stop"));
+        CHECK(panel.spieler().wartet());
+        CHECK_FALSE(panel.spieler().laedtVor());  // Play hat den Auftrag uebernommen
+        CHECK(stelle->text() == QStringLiteral("Preparing sounds… 0 / 6"));
+
+        engine->halten = false;
+        panel.warteAufToene();
+        CHECK_FALSE(panel.spieler().wartet());
+        CHECK(stelle->text() == QStringLiteral("Bar 1 · Step 1"));
+        play->click();
+        CHECK(play->text() == QStringLiteral("Play"));
+
+        // der Drum-Editor: Play pattern wartet, seine Hinweiszeile sagt es (Patrik S142)
+        const QString basis = panel.loop().muster[0].name;
+        REQUIRE(panel.oeffneEditor(basis, false));
+        DrumEditor* editor = panel.editor();
+        REQUIRE(editor != nullptr);
+        auto* hinweis = editor->findChild<QLabel*>(QStringLiteral("drumHint"));
+        REQUIRE(hinweis != nullptr);
+        CHECK(hinweis->text().isEmpty());
+        tonspeicher().leere();  // sonst laege alles schon im Speicher
+        engine->halten = true;
+        REQUIRE(panel.spieleMuster(basis));
+        CHECK(panel.spieler().wartet());
+        CHECK(hinweis->text().startsWith(QStringLiteral("Preparing sounds… 0 / ")));
+        CHECK(stelle->text().isEmpty());  // ein Muster allein: im Arrangement keine Stelle
+        engine->halten = false;
+        panel.warteAufToene();
+        CHECK(hinweis->text().isEmpty());
+        panel.halte();
+    }
+    tonspeicher().leere();  // Klaenge der Engine aus Pappe zu echten Dateien: nicht liegen lassen
 }

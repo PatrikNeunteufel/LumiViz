@@ -28,6 +28,7 @@
 #include "loop/Klangerzeuger.hpp"
 #include "loop/Loop.hpp"
 #include "loop/Rechenkern.hpp"
+#include "loop/Tonspeicher.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -220,6 +221,9 @@ TEST_CASE("Loop Kit: der Ordner wird gefunden, ein Klang wird zu seiner Datei")
 TEST_CASE("Loop Kit: die Engine dekodiert die Klaenge — Stereo, in der verlangten Abtastrate")
 {
     SpielApp app;
+    // der Tonspeicher gilt fuer das ganze Programm: Klaenge, die eine Engine aus Pappe in
+    // anderen Faellen zu denselben Dateien gelegt hat, sollen hier nicht klingen (Stufe 29b)
+    lumi::loop::tonspeicher().leere();
     BassEngine engine;
     if (!engine.initialize())
     {
@@ -300,6 +304,9 @@ TEST_CASE("Loop Kit: die Engine dekodiert die Klaenge — Stereo, in der verlang
 TEST_CASE("Loop Wiedergabe: der Klangerzeuger spielt das Beispiel im Mixer der BassEngine")
 {
     SpielApp app;
+    // der Tonspeicher gilt fuer das ganze Programm: Klaenge, die eine Engine aus Pappe in
+    // anderen Faellen zu denselben Dateien gelegt hat, sollen hier nicht klingen (Stufe 29b)
+    lumi::loop::tonspeicher().leere();
     BassEngine engine;
     if (!engine.initialize())
     {
@@ -386,6 +393,9 @@ TEST_CASE("Loop Wiedergabe: der Klangerzeuger spielt das Beispiel im Mixer der B
 TEST_CASE("Loop Messung: der Klangerzeuger gegen die Wanduhr — Abstand, Unruhe, Drift")
 {
     SpielApp app;
+    // der Tonspeicher gilt fuer das ganze Programm: Klaenge, die eine Engine aus Pappe in
+    // anderen Faellen zu denselben Dateien gelegt hat, sollen hier nicht klingen (Stufe 29b)
+    lumi::loop::tonspeicher().leere();
     BassEngine engine;
     if (!engine.initialize())
     {
@@ -481,6 +491,9 @@ TEST_CASE("Loop Messung: der Klangerzeuger gegen die Wanduhr — Abstand, Unruhe
 TEST_CASE("Loop im Composer, mit Ton: der Clip spielt im Mixer der BassEngine und bleibt an der Uhr")
 {
     SpielApp app;
+    // der Tonspeicher gilt fuer das ganze Programm: Klaenge, die eine Engine aus Pappe in
+    // anderen Faellen zu denselben Dateien gelegt hat, sollen hier nicht klingen (Stufe 29b)
+    lumi::loop::tonspeicher().leere();
     BassEngine engine;
     if (!engine.initialize())
     {

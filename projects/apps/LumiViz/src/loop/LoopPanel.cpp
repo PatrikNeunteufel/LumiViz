@@ -486,6 +486,8 @@ bool LoopPanel::lade(const QString& pfad)
     m_achse->setLoop(m_loop, true);
     if (m_editor != nullptr) m_editor->setLoop(m_loop);  // gibt es seine Basis hier nicht, schliesst er sich
     if (m_instrumentEditor != nullptr) m_instrumentEditor->setLoop(m_loop);
+    // H1 a: die Toene schon jetzt im Hintergrund rechnen — Play findet sie dann im Speicher
+    if (IAudioEngine* engine = services().tryResolve<IAudioEngine>()) m_spieler.ladeVor(*engine);
     QSettings().setValue(QLatin1String(kLetzteDatei), pfad);
     merkeGeoeffnetenLoop(pfad);  // fuer „Used by" im Fenster Kits
     setzeStartstelle(0);         // ein anderer Loop beginnt wieder vorn
@@ -800,12 +802,23 @@ bool LoopPanel::spieleAllein(const Muster& muster, int dauerMs)
     }
     const int nummer = ++m_vorhoerNr;
     m_vorhoeren = nummer;
+    // wird sein Klang noch gerechnet (TV6 a), laeuft die Zeit erst, wenn er da ist
+    m_vorhoerDauerMs = 0;
+    if (m_spieler.wartet())
+        m_vorhoerDauerMs = std::max(1, dauerMs);
+    else
+        beendeVorhoerenNach(dauerMs);
+    zeigeStand();
+    return true;
+}
+
+void LoopPanel::beendeVorhoerenNach(int dauerMs)
+{
     // nach dem Ton und seinem Ausklang haelt der Spieler wieder — ausser ein neuerer Ton laeuft
+    const int nummer = m_vorhoeren;
     QTimer::singleShot(dauerMs, this, [this, nummer] {
         if (m_vorhoeren == nummer) beendeVorhoeren();
     });
-    zeigeStand();
-    return true;
 }
 
 void LoopPanel::beendeVorhoeren()
@@ -1037,6 +1050,12 @@ void LoopPanel::meldeSong()
 void LoopPanel::beimTakt()
 {
     m_spieler.takt();
+    // ein angespielter Ton, dessen Klang gerade fertig wurde: jetzt laeuft seine Zeit (TV6 a)
+    if (m_vorhoeren != 0 && m_vorhoerDauerMs > 0 && !m_spieler.wartet())
+    {
+        beendeVorhoerenNach(m_vorhoerDauerMs);
+        m_vorhoerDauerMs = 0;
+    }
     meldeSong();
     // der Composer kann den Ton uebernommen haben: dann spielt auch kein Muster mehr allein
     if (!m_spieler.spielt() && (!m_solo.isEmpty() || m_vorhoeren != 0))
@@ -1160,11 +1179,23 @@ void LoopPanel::zeigeStand()
         if (!stellen.empty()) arrangement = m_loop.schritteVonMs(stellen.front());
         for (std::size_t i = 1; i < stellen.size(); ++i) neben.push_back(m_loop.schritteVonMs(stellen[i]));
     }
+    // TV5 a: was gerechnet wird, steht an der Stelle von „Bar · Step"
+    const bool bereitetVor = spielt && m_solo.isEmpty() && m_spieler.wartet();
+    const QString vorbereitet = QStringLiteral("%1 / %2").arg(m_spieler.vorbereitet()).arg(m_spieler.vorzubereiten());
     setzeText(m_stelle, [&]() -> QString {
+        if (bereitetVor) return tr("Preparing sounds… %1").arg(vorbereitet);
         if (arrangement < 0.0) return {};
         const int schritt = static_cast<int>(arrangement);
-        return tr("Bar %1 · Step %2").arg(schritt / m_loop.schritteJeTakt() + 1).arg(schritt % m_loop.schritteJeTakt() + 1);
+        const QString stelle =
+            tr("Bar %1 · Step %2").arg(schritt / m_loop.schritteJeTakt() + 1).arg(schritt % m_loop.schritteJeTakt() + 1);
+        return spielt && m_spieler.bereitet() ? stelle + tr(" · updating sounds %1").arg(vorbereitet) : stelle;
     }());
+    const bool akzent = bereitetVor || (spielt && m_spieler.bereitet());
+    if (m_stelle->property("akzent").toBool() != akzent)
+    {
+        m_stelle->setProperty("akzent", akzent);
+        m_stelle->setStyleSheet(akzent ? QStringLiteral("color: palette(highlight);") : QString());
+    }
     const QString knopf = spielt ? tr("Stop") : tr("Play");
     if (m_play->text() != knopf) m_play->setText(knopf);
     m_play->setEnabled(m_geladen && darf);
@@ -1215,6 +1246,14 @@ void LoopPanel::zeigeStand()
         m_editor->setSpielt(allein, m_spieler.stelleSchritte());
         m_editor->zeigeMarke(imMuster(m_editor->muster(), allein), art, nebenImMuster(m_editor->muster(), allein));
         m_editor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
+        // warum Play pattern still ist — oder noch (TV5 a, D; Patrik S142: wie im Instrument-Editor)
+        const bool tonWartet = m_spieler.wartet() && m_vorhoeren != 0;
+        const bool musterWartet = m_spieler.wartet() && m_solo == m_editor->muster();
+        m_editor->setHinweis(!darf          ? tr("The Composer plays the audio — Play pattern is silent")
+                             : tonWartet    ? tr("Preparing sound…")
+                             : musterWartet ? tr("Preparing sounds… %1").arg(vorbereitet)
+                             : allein && m_spieler.bereitet() ? tr("Updating sounds %1").arg(vorbereitet)
+                                                              : QString());
     }
     if (m_instrumentEditor != nullptr)
     {
@@ -1223,10 +1262,15 @@ void LoopPanel::zeigeStand()
         m_instrumentEditor->zeigeMarke(imMuster(m_instrumentEditor->muster(), allein), art,
                                        nebenImMuster(m_instrumentEditor->muster(), allein));
         m_instrumentEditor->setSpitze(spielt ? static_cast<double>(m_spitze) : -1.0);
-        // warum ein Klick auf eine Taste gerade nichts hoeren laesst
-        m_instrumentEditor->setHinweis(!darf     ? tr("The Composer plays the audio — keys and Play pattern are silent")
-                                       : spielt ? tr("Keys are silent while the loop plays")
-                                                : QString());
+        // warum ein Klick auf eine Taste gerade nichts hoeren laesst — oder noch nicht (TV5 a, D; TV6 a)
+        const bool tonWartet = m_spieler.wartet() && m_vorhoeren != 0;
+        const bool musterWartet = m_spieler.wartet() && m_solo == m_instrumentEditor->muster();
+        m_instrumentEditor->setHinweis(!darf          ? tr("The Composer plays the audio — keys and Play pattern are silent")
+                                       : tonWartet    ? tr("Preparing sound…")
+                                       : musterWartet ? tr("Preparing sounds… %1").arg(vorbereitet)
+                                       : allein && m_spieler.bereitet() ? tr("Updating sounds %1").arg(vorbereitet)
+                                       : spielt       ? tr("Keys are silent while the loop plays")
+                                                      : QString());
     }
 
     QStringList zeilen = m_ladeBericht;

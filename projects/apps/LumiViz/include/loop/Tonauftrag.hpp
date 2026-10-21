@@ -47,6 +47,11 @@ public:
     Tonauftrag(const Tonauftrag&) = delete;
     Tonauftrag& operator=(const Tonauftrag&) = delete;
 
+    /// Nur nachsehen (TV6 a): liegt jeder Klang schon im Tonspeicher, ist der Auftrag danach
+    /// fertig, ohne dass etwas gerechnet oder dekodiert wurde — true. Sonst false; was sich
+    /// fand, ist gemerkt, und `rechneHier` oder `starte` laden den Rest. Holt die
+    /// Instrumente (ihre Dateien), dekodiert aber nichts.
+    [[nodiscard]] bool ausSpeicher();
     /// Alles auf dem rufenden Thread laden; danach ist der Auftrag fertig.
     void rechneHier();
     /// Im Hintergrund laden, auf `threads` Threads (0 = Kerne − 1, mindestens einer).
@@ -57,6 +62,9 @@ public:
     void warte();
 
     [[nodiscard]] bool fertig() const { return m_erledigt.load() == gesamt(); }
+    /// Kein Thread des Auftrags arbeitet mehr (fertig oder nach `brichAb` angehalten) —
+    /// dann blockiert der Destruktor nicht.
+    [[nodiscard]] bool ruht() const { return m_laufend.load() == 0; }
     [[nodiscard]] bool abgebrochen() const { return m_abbruch.load(); }
     [[nodiscard]] int erledigt() const { return m_erledigt.load(); }
     /// Die verschiedenen Namen — so viel ist zu tun.
@@ -70,8 +78,12 @@ public:
 
 private:
     struct Gemeinsam;  ///< je Instrument einmal geholt, unter einer Sperre
+    struct Geholt;
     void arbeite();
     void lade(std::size_t einer);
+    /// Den Klang aus dem Speicher holen, ohne zu rechnen; der Schluessel fuer `lade`.
+    /// `geholt` = das Instrument eines Tons (nullptr bei einer Datei).
+    bool ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& geholt);
 
     QStringList m_namen;
     int m_rate = 0;
@@ -84,6 +96,7 @@ private:
     std::atomic<std::size_t> m_naechster{0};
     std::atomic<int> m_erledigt{0};
     std::atomic<bool> m_abbruch{false};
+    std::atomic<int> m_laufend{0};            ///< Threads, die noch arbeiten
     std::vector<std::thread> m_threads;
 };
 

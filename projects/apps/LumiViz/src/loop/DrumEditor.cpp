@@ -919,6 +919,12 @@ void DrumEditor::setupUI()
     kopf->addWidget(m_fx);
     kopf->addWidget(new QLabel(tr("Peak"), this));
     kopf->addWidget(m_spitze);
+    // warum Play pattern gerade still ist (Stufe 29d, TV5 a D): wie im Instrument-Editor
+    m_hinweis = new QLabel(this);
+    m_hinweis->setObjectName(QStringLiteral("drumHint"));
+    m_hinweis->setEnabled(false);  // grau: eine Auskunft
+    kopf->addSpacing(12);
+    kopf->addWidget(m_hinweis);
     aussen->addLayout(kopf);
     // was der letzte Kitwechsel getan hat (K2 a): getroffen, ohne Gegenstueck, was Add track anbietet
     m_kitZeile = new QLabel(this);
@@ -1560,6 +1566,11 @@ void DrumEditor::spurMenue(int spur, QPoint ort)
     runter->setEnabled(spur + 1 < static_cast<int>(ziel->spuren.size()));
     menu.addAction(tr("Remove track"), this, [this, spur] { spurLoeschen(spur); });
     lumi::ui::zeigeMenue(menu, ort);
+}
+
+void DrumEditor::setHinweis(const QString& text)
+{
+    if (m_hinweis->text() != text) m_hinweis->setText(text);
 }
 
 void DrumEditor::setSpielt(bool spielt, double schritt)

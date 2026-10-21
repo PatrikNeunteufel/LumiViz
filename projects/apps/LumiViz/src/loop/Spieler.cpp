@@ -1,6 +1,6 @@
 /**
  * @file Spieler.cpp
- * @brief Loop: ein Loop spielt allein, ohne Composer (Stufe 5b)
+ * @brief Loop: ein Loop spielt allein, ohne Composer (Stufe 5b; Toene im Hintergrund seit Stufe 29d)
  */
 
 #include "loop/Spieler.hpp"
@@ -20,6 +20,12 @@ namespace
 
 Spieler* g_spielender = nullptr;
 
+/// Dekodieren ueber die Engine (TV3 a) — auf den Threads eines Auftrags.
+Dekodierer dekodiererVon(IAudioEngine& engine)
+{
+    return [&engine](const QString& datei, int rate, double maxSekunden) { return engine.decodeStereo(datei, rate, maxSekunden); };
+}
+
 }  // namespace
 
 Spieler::Spieler(Vorrang vorrang) : m_vorrang(std::move(vorrang))
@@ -30,6 +36,9 @@ Spieler::Spieler(Vorrang vorrang) : m_vorrang(std::move(vorrang))
 Spieler::~Spieler()
 {
     halte(false);
+    // die Threads der Auftraege enden hier — vor der Engine (Bootstrap_Integration.md §6.7)
+    m_vorab.reset();
+    m_verworfen.clear();
 }
 
 Spieler* Spieler::spielender()
@@ -46,28 +55,97 @@ void Spieler::setzeLoop(const Loop& loop)
 {
     m_loop = loop;
     m_loop.richte();
-    if (spielt()) ladeProgramm();
+    if (spielt()) ladeProgramm(false);
 }
 
-void Spieler::ladeProgramm()
+Spieler::Satz Spieler::satzJetzt(int rate) const
+{
+    // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm;
+    // eine neu gespeicherte Instrument-Datei gibt andere Toene
+    return {m_loop.klangNamen(saitenAusInstrumenten()), rate, instrumentFassung()};
+}
+
+void Spieler::nimmKlaenge(Tonauftrag& auftrag, const Satz& satz)
+{
+    m_klaenge = std::make_shared<const Klaenge>(auftrag.klaenge());
+    m_bericht = auftrag.bericht();
+    m_satz = satz;
+}
+
+void Spieler::verwirf(std::unique_ptr<Tonauftrag>& auftrag)
+{
+    if (auftrag == nullptr) return;
+    auftrag->brichAb();
+    m_verworfen.push_back(std::move(auftrag));
+}
+
+void Spieler::raeumeAuf()
+{
+    // wer ruht, blockiert nicht mehr beim Zerstoeren
+    std::erase_if(m_verworfen, [](const std::unique_ptr<Tonauftrag>& a) { return a->ruht(); });
+}
+
+void Spieler::ladeProgramm(bool vonVorn)
 {
     // der Begrenzer am Mixer des Loops (27e-3, LL7 a): wie der Loop es sagt
     m_engine->setMixerLimiter(m_mixer, m_loop.limiter);
     const int rate = m_engine->getSampleRate();
-    // die Saiten der Instrumente (Stufe 23b): dieselbe Auskunft fuer Namen und Programm
-    const SaitenVon saiten = saitenAusInstrumenten();
-    const QStringList namen = m_loop.klangNamen(saiten);
-    // auch wenn eine Instrument-Datei neu gespeichert wurde: ihre Toene sind dann andere
-    const std::uint64_t instrumente = instrumentFassung();
-    if (m_klaenge == nullptr || namen != m_klangNamen || rate != m_klangRate || instrumente != m_instrumentFassung)
+    const Satz satz = satzJetzt(rate);
+    if (m_klaenge != nullptr && satz == m_satz)
     {
-        m_bericht.clear();
-        m_klaenge = std::make_shared<const Klaenge>(ladeKlaenge(namen, *m_engine, rate, &m_bericht));
-        m_klangNamen = namen;
-        m_klangRate = rate;
-        m_instrumentFassung = instrumente;
+        // dieselben Klaenge: das Programm gleich, ein laufender Auftrag ist ueberholt
+        verwirf(m_auftrag);
+        m_wartet = false;
+        m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+        return;
     }
-    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saiten));
+    if (m_auftrag == nullptr || !(m_auftragSatz == satz))
+    {
+        verwirf(m_auftrag);
+        if (m_vorab != nullptr && m_vorabSatz == satz)
+        {
+            // was vorab rechnet, ist genau das: uebernehmen statt neu anzufangen
+            m_auftrag = std::move(m_vorab);
+        }
+        else
+        {
+            auto auftrag = std::make_unique<Tonauftrag>(satz.namen, rate, dekodiererVon(*m_engine));
+            if (auftrag->ausSpeicher())
+            {
+                // TV6 a: alles im Speicher — sofort, ohne Hintergrund
+                nimmKlaenge(*auftrag, satz);
+                m_wartet = false;
+                m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+                return;
+            }
+            auftrag->starte();
+            m_auftrag = std::move(auftrag);
+        }
+        m_auftragSatz = satz;
+    }
+    if (vonVorn)
+    {
+        // bis die Toene da sind, still (H2 a); das alte Programm gehoerte zu einem anderen Loop
+        m_erzeuger.setzeProgramm(nullptr);
+        m_wartet = true;
+        m_startSchritt = 0.0;
+    }
+    schalteUm();  // vielleicht ist er schon fertig
+}
+
+void Spieler::schalteUm()
+{
+    if (m_auftrag == nullptr || !m_auftrag->fertig()) return;
+    nimmKlaenge(*m_auftrag, m_auftragSatz);
+    verwirf(m_auftrag);  // fertig: seine Threads laufen gerade aus
+    const int rate = m_satz.rate;
+    m_erzeuger.setzeProgramm(baueProgramm(m_loop, rate, m_klaenge, saitenAusInstrumenten()));
+    if (m_wartet)
+    {
+        m_wartet = false;
+        m_erzeuger.setzeStelle(0);
+        if (m_startSchritt > 0.0) (void)springe(m_startSchritt);
+    }
 }
 
 bool Spieler::starte(IAudioEngine& engine, IAudioPlayer& player)
@@ -76,6 +154,7 @@ bool Spieler::starte(IAudioEngine& engine, IAudioPlayer& player)
     if (spielt())
     {
         m_erzeuger.setzeStelle(0);
+        m_startSchritt = 0.0;
         return true;
     }
     // es gibt nur einen Ton: ein anderer Spieler gibt ihn ab
@@ -98,17 +177,43 @@ bool Spieler::starte(IAudioEngine& engine, IAudioPlayer& player)
     m_laut = -1.0f;
     g_spielender = this;
 
-    ladeProgramm();
-    m_erzeuger.setzeStelle(0);
+    ladeProgramm(true);
+    if (!m_wartet) m_erzeuger.setzeStelle(0);
     takt();  // die Lautstaerke steht, bevor der erste Block zu hoeren ist
     engine.setSourcePaused(m_quelle, false);
     engine.play(m_mixer);
     return true;
 }
 
+void Spieler::ladeVor(IAudioEngine& engine)
+{
+    if (spielt()) return;
+    const Satz satz = satzJetzt(engine.getSampleRate());
+    if ((m_klaenge != nullptr && satz == m_satz) || (m_vorab != nullptr && m_vorabSatz == satz)) return;
+    verwirf(m_vorab);
+    auto auftrag = std::make_unique<Tonauftrag>(satz.namen, satz.rate, dekodiererVon(engine));
+    if (auftrag->ausSpeicher())
+    {
+        nimmKlaenge(*auftrag, satz);
+        return;
+    }
+    auftrag->starte();
+    m_vorab = std::move(auftrag);
+    m_vorabSatz = satz;
+}
+
+void Spieler::warteAufToene()
+{
+    if (m_auftrag == nullptr) return;
+    m_auftrag->warte();
+    schalteUm();
+}
+
 void Spieler::halte(bool playerWeiter)
 {
     if (!spielt()) return;
+    verwirf(m_auftrag);
+    m_wartet = false;
     m_engine->mixerRemoveSource(m_quelle);
     m_engine->freeStream(m_mixer);
     IAudioPlayer* player = m_player;
@@ -124,6 +229,13 @@ void Spieler::halte(bool playerWeiter)
 
 void Spieler::takt()
 {
+    raeumeAuf();
+    if (m_vorab != nullptr && m_vorab->fertig())
+    {
+        // vorab gerechnet: die Klaenge stehen fuer das naechste Play bereit
+        nimmKlaenge(*m_vorab, m_vorabSatz);
+        verwirf(m_vorab);
+    }
     if (!spielt()) return;
     if (!darfSpielen())
     {
@@ -131,6 +243,7 @@ void Spieler::takt()
         halte(false);
         return;
     }
+    schalteUm();
     // der Player schweigt; seine Lautstaerke, sein Mute und sein Pegel gelten
     // fuer den Mixer des Loops
     if (m_player->isPlaying()) m_player->pause();
@@ -145,6 +258,12 @@ void Spieler::takt()
 bool Spieler::springe(double schritt)
 {
     if (!spielt()) return false;
+    if (m_wartet)
+    {
+        // noch kein Programm: dort beginnt er, wenn die Toene da sind
+        m_startSchritt = std::max(0.0, schritt);
+        return true;
+    }
     const std::shared_ptr<const Programm> programm = m_erzeuger.programm();
     if (programm == nullptr || programm->ablauf.schrittFrames <= 0.0) return false;
     std::int64_t frame = std::llround(std::max(0.0, schritt) * programm->ablauf.schrittFrames);

@@ -111,6 +111,12 @@ public:
     bool spiele();
     void halte();
     [[nodiscard]] const Spieler& spieler() const { return m_spieler; }
+    /// Warten, bis die Toene im Hintergrund fertig sind (Stufe 29d) — blockiert. Fuer Tests.
+    void warteAufToene()
+    {
+        m_spieler.warteAufToene();
+        zeigeStand();
+    }
     [[nodiscard]] Taktachse* taktachse() const { return m_achse; }
 
     // --- der Drum-Editor (Stufe 6b) -------------------------------------------
@@ -199,6 +205,8 @@ private:
     void meldeSong();
     /// Das Anspielen beenden (falls eines laeuft): der Spieler haelt und bekommt den Loop zurueck.
     void beendeVorhoeren();
+    /// Das laufende Anspielen nach `dauerMs` beenden (ein neuerer Ton laeuft weiter).
+    void beendeVorhoerenNach(int dauerMs);
     /// Einen Ton einen Schlag lang spielen: ein Loop aus einem Muster wie
     /// `vorlage` mit dieser einen Note.
     bool spieleVor(const Muster& vorlage, int hoehe, int klingtMs = 0);
@@ -224,7 +232,10 @@ private:
     int m_gemeldeteStelle = -1; ///< die zuletzt an den Bus gemeldete Stelle (ms)
     int m_stelleTakte = 0;
     int m_vorhoerNr = 0;
-    QString m_solo;        ///< das Muster, das allein spielt; leer = der ganze Loop
+    /// Ein angespielter Ton, dessen Klang noch gerechnet wird (TV6 a): so lange klingt er,
+    /// sobald er da ist; 0 = keiner wartet.
+    int m_vorhoerDauerMs = 0;
+    QString m_solo;       ///< das Muster, das allein spielt; leer = der ganze Loop
     float m_spitze = 0.0f;  ///< der groesste Betrag der Summe seit Play oder der letzten Aenderung
 
     Spieler m_spieler;

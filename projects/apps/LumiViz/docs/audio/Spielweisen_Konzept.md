@@ -1,10 +1,10 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.32.0
+> **Version:** 0.34.0
 > **Datum:** 2026-10-21 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
-> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV4 a, WX1 a)
-> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV4 a und WX1 a (Patrik S139–S142);
+> Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV6 a, WX1 a)
+> **Typ:** Konzept — Ziel, Modell, Klang. Entschieden sind SF1 c bis SF10 a, SK1 a bis SK13 a, H1 a bis H3 a, F1 a bis F6 a, TV1 a bis TV6 a und WX1 a (Patrik S139–S142);
 > alles andere ist offen oder Vorschlag und so bezeichnet.
 > **Status:** Entwurf
 > **Zielgruppe:** App-Entwickler
@@ -905,10 +905,59 @@ Threads, Bit für Bit gleich, derselbe Bericht; Anhalten, während der Thread im
 **BASS dekodiert die 78 mitgelieferten Samples auf 8 Threads Bit für Bit wie nacheinander** — der
 Beleg zu TV3 a, den die BASS-Hilfe nicht ausdrücklich gibt (läuft nur mit Ausgabegerät).
 
+✅ **TV5 a** (Patrik S142, nach Skizze): **Das Warten steht an der Stelle von „Bar · Step“, der Knopf
+wird sofort zu Stop.** Die Skizze in vier Zuständen, Spielzeile [Play] [BPM] [Info] [Bar · Step]
+[Limiter] [Scroll with playhead] [Fit]:
+- **A** — Play gedrückt, Töne fehlen: der Knopf zeigt „Stop“, an der Stelle von „Bar · Step“ steht
+  in Akzentfarbe „Preparing sounds… 12 / 40“; Stop bricht ab.
+- **B** — alles da: der Loop beginnt von vorn (oder an der Startmarke), dort steht wieder
+  „Bar · Step“.
+- **C** — eine Bearbeitung während des Spielens: die alten Töne klingen weiter, hinter „Bar · Step“
+  steht „· updating sounds 3 / 5“, bis umgeschaltet ist.
+- **D** — die Editoren (*Play pattern*) ebenso, der Text in ihrer Hinweiszeile.
+
+Das Vorladen beim Öffnen eines Loops zeigt nichts, solange niemand Play drückt; drückt man Play
+mittendrin, zeigt A den Rest. Verworfen: b (Fortschritt im Knopf — Zustand und Bedienung vermischt,
+der Knopf würde breiter oder der Text zu knapp), c (Balken unter der Spielzeile — schiebt das Panel
+bei jeder Bearbeitung um eine Zeile). Kippt, wenn das Warten am Flügel so lange dauert, dass man
+abschätzen will, wie lange noch — dann c als Ergänzung zu a.
+
+✅ **TV6 a** (Patrik S142): **Auch das Anspielen geht über den Hintergrund — mit einer Abkürzung für
+Töne aus dem Speicher.** `Spieler::starte` schaut zuerst, ob alle Töne im Speicher liegen; dann
+beginnt er sofort. Fehlt etwas, rechnet der Auftrag im Hintergrund, der Ton klingt, sobald er da ist,
+die Hinweiszeile des Editors zeigt „Preparing sound…“; ein neuer Anschlag ersetzt einen, der noch
+rechnet. Betrifft `LoopPanel::spieleAllein` (Taste und Note im Editor, eine Drum-Spur, ▶ im Dialog
+*Import package*). Verworfen: b (ein fehlender Ton sofort vorn wie heute — die Oberfläche stünde,
+solange er rechnet, und es blieben zwei Ladewege). Kippt, wenn die bis zu 33 ms, die der Takt des
+Spielers bis zum Umschalten zufügt, beim Spielen auf der Klaviatur stören — dann prüft der Spieler
+häufiger, solange ein Auftrag läuft.
+
+**Gebaut 29d (S142):** Der `Spieler` lädt über einen `Tonauftrag`. `ausSpeicher` prüft zuerst, ob
+alles im Tonspeicher liegt (TV6 a: dann sofort); sonst rechnet der Auftrag im Hintergrund. Beim Start
+(`starte`) übernimmt der Spieler den Ton und spielt still (`wartet`), `takt` schaltet um, sobald alles
+da ist, und beginnt von vorn — oder an der Stelle, zu der inzwischen gesprungen wurde (die
+Startmarke B4). Eine Bearbeitung während des Spielens lässt das bisherige Programm klingen
+(`bereitet`). Stop bricht ab; ein abgebrochener Auftrag läuft aus, ohne die Oberfläche zu
+blockieren, und endet spätestens mit dem Spieler. `ladeVor` rechnet beim Öffnen eines Loops vorab
+(H1 a); Play mitten im Vorladen **übernimmt diesen Auftrag**, statt dieselben Töne ein zweites Mal
+zu rechnen. Das Loop-Panel zeigt nach TV5 a „Preparing sounds… n / m“ und „· updating sounds n / m“;
+der Instrument-Editor in seiner Hinweiszeile „Preparing sound…“ (Anspielen), „Preparing sounds… n /
+m“ (*Play pattern*) und „Updating sounds n / m“. **Der Drum-Editor bekam dafür eine graue
+Hinweiszeile am Ende seiner Kopfzeile** (Patrik S142, „wie der Instrument-Editor — noch in 29d“),
+mit denselben Texten und „The Composer plays the audio — Play pattern is silent“. Ein angespielter
+Ton zählt seine Dauer erst, wenn sein Klang da ist. Tests in `test_LoopSpieler` (Play wartet still,
+Springen beim Warten, Stop beim Warten; Bearbeitung während des Spielens; Vorladen und Übernahme; die
+Anzeige im Panel und im Drum-Editor), dazu eine Engine aus Pappe, die das
+Dekodieren anhält. **Testfalle:** der Tonspeicher gilt für das ganze Programm — Fälle mit der echten
+BassEngine leeren ihn zuerst, sonst könnten Klänge einer Engine aus Pappe zu denselben Dateien
+klingen (`test_LoopWiedergabe`). Im Programm nicht angesehen.
+
 ## Versionen
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.34.0 | 2026-10-21 | Session 142. Stufe 29d gebaut (Spieler über den Tonauftrag, Warten, Umschalten, Vorladen, Anzeige im Loop-Panel und im Instrument-Editor). |
+| 0.33.0 | 2026-10-21 | Session 142. TV5 a (Anzeige des Wartens an der Stelle von „Bar · Step“, Skizze A–D); TV6 a (Anspielen über den Hintergrund, sofort aus dem Speicher). |
 | 0.32.0 | 2026-10-21 | Session 142. Stufe 29c gebaut (`loop/Tonauftrag`, `ladeKlaenge` als Auftrag auf dem rufenden Thread, `test_LoopTonauftrag` mit dem BASS-Beleg). |
 | 0.31.0 | 2026-10-21 | Session 142. Idee Patrik Export eines Clips als Wellenform; WX1 a (Stufe 30: erst die Rechnung, dann Export, dann Freeze); Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik), Hammer-Saite 32 ff. |
 | 0.30.0 | 2026-10-21 | Session 142. TV4 a (Programme halten geteilte Zeiger auf die Töne); Stufe 29b gebaut (`loop/Tonspeicher`, `ladeKlaenge` über den Speicher, Typ `Klaenge`, `test_LoopTonspeicher`). |

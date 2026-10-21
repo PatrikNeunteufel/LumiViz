@@ -34,22 +34,29 @@ double msSeit(Uhr::time_point anfang)
     return std::chrono::duration<double, std::milli>(Uhr::now() - anfang).count();
 }
 
+QString sampleZeile(const QString& sample)
+{
+    return QStringLiteral("Sample not loaded: %1").arg(sample.isEmpty() ? QStringLiteral("(none)") : QDir::toNativeSeparators(sample));
+}
+
 }  // namespace
 
-/// Je Instrument einmal geholt — mit seinen Samples und seinem Fingerabdruck (TV2 a).
-/// Wer ein Instrument zuerst braucht, holt es; wer es zugleich braucht, wartet an seiner
-/// Sperre. Verschiedene Instrumente werden nebeneinander geholt.
+/// Ein Instrument, einmal geholt — mit seinem Fingerabdruck (TV2 a). Wer es zuerst braucht,
+/// holt es; wer es zugleich braucht, wartet an seiner Sperre. Die Aufnahmen seiner
+/// Sample-Schichten werden erst dekodiert, wenn ein Ton wirklich gerechnet wird.
+struct Tonauftrag::Geholt
+{
+    std::mutex sperre;
+    bool geholt = false;
+    bool samples = false;  ///< die Aufnahmen sind dekodiert (oder fehlen)
+    std::optional<Instrument> instrument;
+    QByteArray abdruck;
+    QStringList zeilen;  ///< was auffiel: Samples, nicht gefunden, zu neu
+};
+
+/// Je Instrument ein `Geholt`; verschiedene Instrumente werden nebeneinander geholt.
 struct Tonauftrag::Gemeinsam
 {
-    struct Geholt
-    {
-        std::mutex sperre;
-        bool fertig = false;
-        std::optional<Instrument> instrument;
-        QByteArray abdruck;
-        QStringList zeilen;  ///< was beim Holen auffiel: Samples, nicht gefunden, zu neu
-    };
-
     std::mutex sperre;
     std::map<QString, std::unique_ptr<Geholt>> instrumente;
 
@@ -92,6 +99,20 @@ Tonauftrag::~Tonauftrag()
     warte();
 }
 
+bool Tonauftrag::ausSpeicher()
+{
+    if (!m_threads.empty() || m_erledigt.load() > 0) return fertig();
+    bool alle = true;
+    for (std::size_t einer = 0; einer < m_einzeln.size(); ++einer)
+    {
+        QString schluessel;
+        Geholt* geholt = nullptr;
+        if (!ausSpeicher(einer, schluessel, geholt)) alle = false;
+    }
+    if (alle) m_erledigt = gesamt();
+    return alle;
+}
+
 void Tonauftrag::rechneHier()
 {
     arbeite();
@@ -102,7 +123,12 @@ void Tonauftrag::starte(int threads)
     if (!m_threads.empty()) return;
     int zahl = threads > 0 ? threads : static_cast<int>(std::thread::hardware_concurrency()) - 1;
     zahl = std::min(std::max(zahl, 1), gesamt());
-    for (int t = 0; t < zahl; ++t) m_threads.emplace_back([this] { arbeite(); });
+    m_laufend = zahl;
+    for (int t = 0; t < zahl; ++t)
+        m_threads.emplace_back([this] {
+            arbeite();
+            --m_laufend;
+        });
 }
 
 void Tonauftrag::brichAb()
@@ -127,91 +153,114 @@ void Tonauftrag::arbeite()
     }
 }
 
-void Tonauftrag::lade(std::size_t einer)
+bool Tonauftrag::ausSpeicher(std::size_t einer, QString& schluessel, Geholt*& geholt)
 {
+    if (m_ergebnis[einer] != nullptr) return true;
     const QString& klang = m_einzeln[einer];
-    Tonspeicher& speicher = tonspeicher();
     if (istTon(klang))
     {
-        // der Ton eines gerechneten Instruments: aus dem Tonspeicher oder hier gerechnet
         TonAngabe ton;  // seit Stufe 23b mit Saite und Ende
         if (!zerlegeTon(klang, ton))
         {
-            m_zeilen[einer] << QStringLiteral("Instrument not found: %1").arg(klang);
-            return;
+            if (m_zeilen[einer].isEmpty()) m_zeilen[einer] << QStringLiteral("Instrument not found: %1").arg(klang);
+            return true;  // nichts zu laden
         }
-        Gemeinsam::Geholt& geholt = m_gemeinsam->eintrag(ton.instrument);
+        geholt = &m_gemeinsam->eintrag(ton.instrument);
         {
-            const std::lock_guard<std::mutex> halt(geholt.sperre);
-            if (!geholt.fertig)
+            const std::lock_guard<std::mutex> halt(geholt->sperre);
+            if (!geholt->geholt)
             {
                 // je Instrument einmal holen — eine eigene Datei wird dabei gelesen
                 Instrument neu;
                 bool zuNeu = false;
-                const bool da = holeInstrument(ton.instrument, neu, &zuNeu);
-                if (da)
+                if (holeInstrument(ton.instrument, neu, &zuNeu))
                 {
-                    // die Aufnahmen seiner Sample-Schichten: einmal dekodiert und gemerkt (Stufe 11a)
+                    // eine Aufnahme, deren Datei fehlt, faellt schon hier auf — auch wenn
+                    // der Ton aus dem Speicher kommt (dort liegt er dann still)
                     for (const Schicht& schicht : neu.schichten)
                     {
                         if (schicht.schwingung != Schwingung::Sample || !schicht.an) continue;
-                        if (sampleDaten(schicht.sample) != nullptr) continue;
                         const QString datei = sampleDatei(schicht.sample);
-                        if (!datei.isEmpty()) merkeSampleDaten(schicht.sample, kSampleRate, m_dekodierer(datei, kSampleRate, kKlangMaxSekunden));
-                        if (sampleDaten(schicht.sample) == nullptr)
-                        {
-                            const QString zeile = QStringLiteral("Sample not loaded: %1")
-                                                      .arg(schicht.sample.isEmpty() ? QStringLiteral("(none)")
-                                                                                    : QDir::toNativeSeparators(schicht.sample));
-                            if (!geholt.zeilen.contains(zeile)) geholt.zeilen << zeile;
-                        }
+                        if ((datei.isEmpty() || !QFileInfo(datei).isFile()) && !geholt->zeilen.contains(sampleZeile(schicht.sample)))
+                            geholt->zeilen << sampleZeile(schicht.sample);
                     }
-                    geholt.abdruck = instrumentAbdruck(neu);
-                    geholt.instrument = std::move(neu);
+                    geholt->abdruck = instrumentAbdruck(neu);
+                    geholt->instrument = std::move(neu);
                 }
                 else
                 {
-                    geholt.zeilen << (zuNeu ? QStringLiteral("Instrument needs a newer LumiViz: %1")
-                                            : QStringLiteral("Instrument not found: %1"))
-                                         .arg(ton.instrument.isEmpty() ? klang : QDir::toNativeSeparators(ton.instrument));
+                    geholt->zeilen << (zuNeu ? QStringLiteral("Instrument needs a newer LumiViz: %1")
+                                             : QStringLiteral("Instrument not found: %1"))
+                                          .arg(ton.instrument.isEmpty() ? klang : QDir::toNativeSeparators(ton.instrument));
                 }
-                geholt.fertig = true;
+                geholt->geholt = true;
             }
         }
-        if (!geholt.instrument.has_value()) return;
-        const QString schluessel = tonSchluessel(klang, m_rate, geholt.abdruck);
-        m_ergebnis[einer] = speicher.hole(schluessel);
-        if (m_ergebnis[einer] == nullptr)
+        if (!geholt->instrument.has_value()) return true;  // nicht zu laden: still
+        schluessel = tonSchluessel(klang, m_rate, geholt->abdruck);
+        m_ergebnis[einer] = tonspeicher().hole(schluessel);
+        return m_ergebnis[einer] != nullptr;
+    }
+    // eine Klangdatei: nur eine, die es gibt, steht im Speicher — an einer anderen liesse
+    // sich keine Aenderung erkennen
+    const QString datei = klangDatei(klang);
+    if (datei.isEmpty())
+    {
+        if (m_zeilen[einer].isEmpty()) m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(klang));
+        return true;
+    }
+    if (!QFileInfo(datei).isFile()) return false;  // dekodieren: die Engine weiss, was daraus wird
+    schluessel = klangSchluessel(klang, datei, m_rate);
+    m_ergebnis[einer] = tonspeicher().hole(schluessel);
+    return m_ergebnis[einer] != nullptr;
+}
+
+void Tonauftrag::lade(std::size_t einer)
+{
+    QString schluessel;
+    Geholt* geholt = nullptr;
+    if (ausSpeicher(einer, schluessel, geholt)) return;
+    const QString& klang = m_einzeln[einer];
+    if (geholt != nullptr)
+    {
+        // ein Ton: die Aufnahmen seiner Sample-Schichten einmal dekodieren und merken (Stufe 11a)
         {
-            const auto anfang = Uhr::now();
-            auto neu = std::make_shared<const Klang>(rendereTon(*geholt.instrument, ton, m_rate));
-            speicher.lege(schluessel, neu, msSeit(anfang));
-            m_ergebnis[einer] = std::move(neu);
+            const std::lock_guard<std::mutex> halt(geholt->sperre);
+            if (!geholt->samples)
+            {
+                for (const Schicht& schicht : geholt->instrument->schichten)
+                {
+                    if (schicht.schwingung != Schwingung::Sample || !schicht.an) continue;
+                    if (sampleDaten(schicht.sample) != nullptr) continue;
+                    const QString datei = sampleDatei(schicht.sample);
+                    if (!datei.isEmpty()) merkeSampleDaten(schicht.sample, kSampleRate, m_dekodierer(datei, kSampleRate, kKlangMaxSekunden));
+                    if (sampleDaten(schicht.sample) == nullptr && !geholt->zeilen.contains(sampleZeile(schicht.sample)))
+                        geholt->zeilen << sampleZeile(schicht.sample);
+                }
+                geholt->samples = true;
+            }
         }
+        TonAngabe ton;
+        (void)zerlegeTon(klang, ton);
+        const auto anfang = Uhr::now();
+        auto neu = std::make_shared<const Klang>(rendereTon(*geholt->instrument, ton, m_rate));
+        tonspeicher().lege(schluessel, neu, msSeit(anfang));
+        m_ergebnis[einer] = std::move(neu);
         return;
     }
-    // ein dekodierter Klang: ebenso aus dem Tonspeicher (TV3 a), sein Schluessel traegt die Datei —
-    // nur eine Datei, die es gibt: an einer anderen liesse sich keine Aenderung erkennen
+    // ein dekodierter Klang (TV3 a)
     const QString datei = klangDatei(klang);
-    if (!datei.isEmpty())
+    const auto anfang = Uhr::now();
+    Klang neu;
+    neu.daten = m_dekodierer(datei, m_rate, kKlangMaxSekunden);
+    if (!neu.daten.empty())
     {
-        const bool merkbar = QFileInfo(datei).isFile();
-        const QString schluessel = merkbar ? klangSchluessel(klang, datei, m_rate) : QString();
-        if (merkbar) m_ergebnis[einer] = speicher.hole(schluessel);
-        if (m_ergebnis[einer] == nullptr)
-        {
-            const auto anfang = Uhr::now();
-            Klang neu;
-            neu.daten = m_dekodierer(datei, m_rate, kKlangMaxSekunden);
-            if (!neu.daten.empty())
-            {
-                auto geteilt = std::make_shared<const Klang>(std::move(neu));
-                if (merkbar) speicher.lege(schluessel, geteilt, msSeit(anfang));
-                m_ergebnis[einer] = std::move(geteilt);
-            }
-        }
+        auto geteilt = std::make_shared<const Klang>(std::move(neu));
+        if (!schluessel.isEmpty()) tonspeicher().lege(schluessel, geteilt, msSeit(anfang));
+        m_ergebnis[einer] = std::move(geteilt);
     }
-    if (m_ergebnis[einer] == nullptr) m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(klang));
+    else
+        m_zeilen[einer] << QStringLiteral("Sound not loaded: %1").arg(QDir::toNativeSeparators(klang));
 }
 
 Klaenge Tonauftrag::klaenge() const
@@ -235,7 +284,7 @@ QStringList Tonauftrag::bericht() const
         nimm(m_zeilen[einer]);
         TonAngabe ton;
         if (!istTon(m_einzeln[einer]) || !zerlegeTon(m_einzeln[einer], ton)) continue;
-        if (const Gemeinsam::Geholt* geholt = m_gemeinsam->finde(ton.instrument)) nimm(geholt->zeilen);
+        if (const Geholt* geholt = m_gemeinsam->finde(ton.instrument)) nimm(geholt->zeilen);
     }
     return alle;
 }
