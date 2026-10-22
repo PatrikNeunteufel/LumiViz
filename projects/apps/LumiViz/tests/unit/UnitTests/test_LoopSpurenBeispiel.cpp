@@ -12,8 +12,9 @@
  * Liest das Beispiel aus dem Repo (vom Arbeitsordner aus, wie test_LoopSaiten); ohne Ton,
  * ohne Fenster, ohne Engine.
  *
- * - Die Datei: Fassung 12 mit allen Feldern, die das Programm schreibt; das Programm liest
- *   und schreibt sie ohne Verlust.
+ * - Die Datei: Fassung 12 mit allen Feldern dieser Fassung (seit S144 schreibt das Programm 13 —
+ *   das Beispiel bleibt eine Datei der Fassung 12); das Programm liest und schreibt sie ohne
+ *   Verlust.
  * - Die Spuren: Sustain an den Keys, Expression am Pad mit Kurve am Clip, Vibrato und Pitch
  *   am Lead, Expression an der Gitarre, Pitch am Bass.
  * - Die Planung wie im Programm (`saitenAusInstrumenten`): das Pedal haelt die Keys, das Pad
@@ -48,7 +49,7 @@ TEST_SUITE("LoopSpurenBeispiel")
             if (QFileInfo(p).fileName() == QStringLiteral("lanes_demo.lvloop")) pfad = p;
         REQUIRE_FALSE(pfad.isEmpty());  // mitgeliefert: es steht in asset/Asset.cmake (*_demo)
 
-        // --- die Datei: Fassung 12 mit allen Feldern, die das Programm immer schreibt
+        // --- die Datei: Fassung 12 mit allen Feldern, die das Programm in dieser Fassung immer schreibt
         QFile datei(pfad);
         REQUIRE(datei.open(QIODevice::ReadOnly));
         const QJsonObject wurzel = QJsonDocument::fromJson(datei.readAll()).object();

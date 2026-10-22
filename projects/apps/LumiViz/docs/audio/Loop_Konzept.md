@@ -1,7 +1,7 @@
 # LumiViz — Loop (Konzept)
 
-> **Version:** 0.104.0
-> **Datum:** 2026-10-21 (Session 142)
+> **Version:** 0.105.0
+> **Datum:** 2026-10-22 (Session 144)
 > **Typ:** Konzept — Entscheide L1 bis L8 gefallen (Patrik S108); gebaut sind
 > Beleg, Kern (Fassung 2: Arrangement aus Kanälen und Clips), Kit und die
 > Wiedergabe mit einem ersten Panel, das nur lädt und spielt (Stufen 2 bis
@@ -282,6 +282,7 @@ JSON, Schlüssel englisch wie in `.lvcomp`:
 | `channels[].clips[]` | `pattern` = Name des Musters, `start` = Takt (0 = der erste), `repeat` = wie oft hintereinander | `repeat` ab 1 |
 | `patterns[].lanes` | seit Fassung 12 (S140, Stufe 28a): die Spuren über der Zeit eines Instrument-Musters — `sustain`, `sostenuto`, `expression`, `vibrato`, `pitch` je `[[stelle, wert], …]` (Stelle in Schritten mit Bruchteil), `switches` je Klang-Spielweise beim Namen; immer geschrieben, leer = Vorgabe des Instruments (Spielweisen_Konzept §3) | Pedale und Expression 0 … 1, Vibrato 0 … 100 Cent, Pitch ±24 Halbtöne, Schalter 0/1 |
 | `channels[].clips[].expression` | seit Fassung 12: der Verlauf Expression über den Clip, `[[takt, wert], …]` ab dem Anfang des Clips (SK8 a), mit der Spur des Musters malgenommen; immer geschrieben, leer = 1 | 0 … 1 |
+| `channels[].clips[].frozen` | seit Fassung 13 (S144, Stufe 30f, FV2 a): der Abdruck des Stands, der beim letzten Speichern eingefroren wurde; gespielt wird die Wellenform zum jetzigen Abdruck (Spielweisen_Konzept §4.4); immer geschrieben, leer = nicht eingefroren; ein anderer Wert wird beim Lesen leer, mit einer Zeile im Bericht | 40 Zeichen `0-9a-f` oder leer |
 
 Die Datei schreibt die Schritte einer Spur auf **eine Zeile** (Qt setzte
 sonst jede Zahl auf eine eigene).
@@ -3992,6 +3993,7 @@ ist die Latenz ein Vielfaches); Release-clang.
 
 ## 8. Changelog
 
+- **0.105.0** (S144, 2026-10-22): §4 Datei — `.lvloop` Fassung 13 mit `channels[].clips[].frozen` (Stufe 30f-1, Spielweisen_Konzept FV2 a).
 - **0.104.0** (S143, 2026-10-22): Dateiformat `volume` — wirkt nach den Effekten und Fadern (Spielweisen_Konzept WX5 a).
 - **0.103.0** (S142, 2026-10-21): §3.2 Audio-Clip im Loop als Stufe 31 vorgemerkt (Patrik; Spielweisen_Konzept §4.4).
 - **0.102.0** (S140, 2026-10-20): `.lvinst` Fassung 15 — `strings.tremoloDown`, `strings.tremoloUp` (der Vibratohebel, Halbtöne, immer; Spielweisen_Konzept SK11 a, Stufe 28c-2a).

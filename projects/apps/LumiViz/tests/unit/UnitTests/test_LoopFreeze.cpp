@@ -26,6 +26,10 @@
  * `setzeFrozenOrdnerFuerTests`, die Einstellungen in `LumiVizTest` / `LoopFreeze`) und
  * die Zeile *Frozen Clips* im Settings-Panel; die Rueckfrage von *Clear frozen clips*
  * beantwortet der Test (`setzeDialogBeobachterFuerTests`).
+ *
+ * Seit Stufe 30f (FV2 a) die Marke `frozen` am Clip: immer geschrieben, `.lvloop`
+ * Fassung 13, ohne sie nicht eingefroren, nur ein Abdruck zaehlt, sie aendert den
+ * Abdruck nicht.
  ****************************************************************************************
  */
 
@@ -52,7 +56,9 @@
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
@@ -521,5 +527,97 @@ TEST_SUITE("Loop Freeze")
         }
         lumi::ui::setzeDialogBeobachterFuerTests({});
         setzeFrozenOrdnerFuerTests({});
+    }
+
+    TEST_CASE("Loop Freeze 30f, FV2 a: die Marke frozen am Clip — Datei, Fassung 12, richten, Abdruck")
+    {
+        FreezeApp app;
+        const SaitenVon saiten = saitenAusInstrumenten();
+        Loop loop = probeLoop();
+        const ClipOrt keys{1, 1};
+        const QByteArray abdruck = clipAbdruck(loop, keys, kRate, saiten);
+        REQUIRE(abdruck.size() == 40);
+        const QString marke = QString::fromLatin1(abdruck);
+
+        // die Marke klingt nicht: das Einfrieren aendert den Abdruck nicht (sonst waere ein
+        // eingefrorener Clip sofort „veraendert")
+        loop.kanaele[1].clips[0].frozen = marke;
+        CHECK(clipAbdruck(loop, keys, kRate, saiten) == abdruck);
+        CHECK(clipAbdruck(loop, ClipOrt{1, 4}, kRate, saiten) == clipAbdruck(probeLoop(), ClipOrt{1, 4}, kRate, saiten));
+
+        const auto clipsVon = [](const QJsonObject& json, int kanal) {
+            return json.value(QStringLiteral("channels")).toArray().at(kanal).toObject().value(QStringLiteral("clips")).toArray();
+        };
+
+        SUBCASE("immer geschrieben, Fassung 13, ohne Verlust gelesen")
+        {
+            const QJsonObject json = alsJson(loop);
+            CHECK(json.value(QStringLiteral("version")).toInt() == 13);
+            const QJsonArray drums = clipsVon(json, 0);
+            const QJsonArray tasten = clipsVon(json, 1);
+            REQUIRE(drums.size() == 1);
+            REQUIRE(tasten.size() == 2);
+            CHECK(drums.at(0).toObject().contains(QStringLiteral("frozen")));  // auch leer (Memory „Datei-Felder immer schreiben")
+            CHECK(drums.at(0).toObject().value(QStringLiteral("frozen")).toString().isEmpty());
+            CHECK(tasten.at(0).toObject().value(QStringLiteral("frozen")).toString() == marke);
+            CHECK(tasten.at(1).toObject().contains(QStringLiteral("frozen")));
+            CHECK(tasten.at(1).toObject().value(QStringLiteral("frozen")).toString().isEmpty());
+
+            QTemporaryDir ordner;
+            REQUIRE(ordner.isValid());
+            const QString pfad = ordner.filePath(QStringLiteral("frozen.lvloop"));
+            REQUIRE(speichereLoop(loop, pfad));
+            Loop wieder;
+            QStringList bericht;
+            REQUIRE(ladeLoop(pfad, wieder, &bericht));
+            CHECK(bericht.isEmpty());
+            CHECK(wieder.kanaele[1].clips[0].frozen == marke);
+            CHECK(wieder == loop);
+        }
+        SUBCASE("eine Datei der Fassung 12 ohne das Feld: nicht eingefroren")
+        {
+            QJsonObject alt = alsJson(loop);
+            alt[QStringLiteral("version")] = 12;
+            QJsonArray kanaele = alt.value(QStringLiteral("channels")).toArray();
+            for (int k = 0; k < kanaele.size(); ++k)
+            {
+                QJsonObject kanal = kanaele.at(k).toObject();
+                QJsonArray clips = kanal.value(QStringLiteral("clips")).toArray();
+                for (int c = 0; c < clips.size(); ++c)
+                {
+                    QJsonObject clip = clips.at(c).toObject();
+                    clip.remove(QStringLiteral("frozen"));
+                    clips.replace(c, clip);
+                }
+                kanal[QStringLiteral("clips")] = clips;
+                kanaele.replace(k, kanal);
+            }
+            alt[QStringLiteral("channels")] = kanaele;
+            Loop gelesen;
+            QStringList bericht;
+            REQUIRE(ausJson(alt, gelesen, {}, &bericht));
+            CHECK(bericht.isEmpty());
+            for (const Kanal& kanal : gelesen.kanaele)
+                for (const LoopClip& clip : kanal.clips) CHECK(clip.frozen.isEmpty());
+        }
+        SUBCASE("richten: nur ein Abdruck zaehlt, sonst nicht eingefroren und eine Zeile im Bericht")
+        {
+            for (const QString& falsch : {QStringLiteral("frozen"), marke.toUpper(), marke.left(39), marke + QLatin1Char('0'),
+                                          marke.left(39) + QLatin1Char('g')})
+            {
+                CAPTURE(falsch.toStdString());
+                Loop l = loop;
+                l.kanaele[1].clips[0].frozen = falsch;
+                QStringList bericht;
+                l.richte(&bericht);
+                CHECK(l.kanaele[1].clips[0].frozen.isEmpty());
+                CHECK(bericht.contains(QStringLiteral("Frozen mark not valid: ") + falsch));
+            }
+            Loop richtig = loop;
+            QStringList bericht;
+            richtig.richte(&bericht);
+            CHECK(richtig.kanaele[1].clips[0].frozen == marke);
+            CHECK(bericht.isEmpty());
+        }
     }
 }

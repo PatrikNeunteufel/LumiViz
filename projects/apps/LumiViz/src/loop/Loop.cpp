@@ -60,13 +60,24 @@ const QString kFormat = QStringLiteral("lumiviz-loop");
 // 12 (S140, Stufe 28a, Entscheide SF5 d, SK1 a bis SK8 a): die Spuren ueber der Zeit —
 // am Instrument-Muster `lanes` (Sustain, Sostenuto, Expression, Vibrato, Pitch und
 // `switches`), am Clip `expression`, beide immer geschrieben — ein aelteres Programm
-// verloere beides still. Geschrieben wird immer 12.
-constexpr int kVersion = 12;
+// verloere beides still.
+// 13 (S144, Stufe 30f, Entscheid FV2 a): am Clip `frozen`, der Abdruck des
+// eingefrorenen Stands, immer geschrieben (leer = nicht eingefroren) — ein
+// aelteres Programm verloere ihn still. Geschrieben wird immer 13.
+constexpr int kVersion = 13;
 constexpr int kVersionAelteste = 2;
 const QString kKitVorsatz = QStringLiteral("kit:");
 const QString kBibliothekVorsatz = QStringLiteral("lib:");
 const QString kArtDrumkit = QStringLiteral("drumkit");
 const QString kArtInstrument = QStringLiteral("instrument");
+
+/// Sieht der Text aus wie ein Abdruck (`clipAbdruck`: 40 Zeichen 0–9, a–f)?
+bool istAbdruck(const QString& text)
+{
+    return text.size() == 40 && std::all_of(text.begin(), text.end(), [](QChar z) {
+               return (z >= u'0' && z <= u'9') || (z >= u'a' && z <= u'f');
+           });
+}
 const QString kTonVorsatz = QStringLiteral("inst:");
 const QString kInstrumentVorgabe = QStringLiteral("piano");
 const QString kInstrumentEndung = QStringLiteral(".lvinst");
@@ -898,6 +909,12 @@ void Loop::richte(QStringList* bericht)
             clip.wiederholungen = std::max(1, clip.wiederholungen);
             richteEffekte(clip.effekte);
             richtePunkte(clip.expression, 0.0, 1.0);  // Punkte hinter dem Ende bleiben (SK8 a)
+            // Freeze (30f): nur ein Abdruck zaehlt, sonst nicht eingefroren
+            if (!clip.frozen.isEmpty() && !istAbdruck(clip.frozen))
+            {
+                if (bericht != nullptr) bericht->append(QStringLiteral("Frozen mark not valid: %1").arg(clip.frozen));
+                clip.frozen.clear();
+            }
         }
         std::stable_sort(kanal.clips.begin(), kanal.clips.end(),
                          [](const LoopClip& a, const LoopClip& b) { return a.startTakt < b.startTakt; });
@@ -1044,6 +1061,7 @@ QJsonObject alsJson(const Loop& loop, const QString& basisOrdner)
             if (!clip.effekte.reihe.empty()) c[QStringLiteral("path")] = reiheAlsJson(clip.effekte);
             if (!clip.effekteAn) c[QStringLiteral("fxOn")] = false;  // seit Fassung 7
             c[QStringLiteral("expression")] = punkteAlsJson(clip.expression);  // seit Fassung 12, immer
+            c[QStringLiteral("frozen")] = clip.frozen;                         // seit Fassung 13, immer
             clips.append(c);
         }
         k[QStringLiteral("clips")] = clips;
@@ -1207,6 +1225,7 @@ bool ausJson(const QJsonObject& wurzel, Loop& loop, const QString& basisOrdner, 
             clip.wiederholungen = c.value(QStringLiteral("repeat")).toInt(1);
             clip.effekteAn = c.value(QStringLiteral("fxOn")).toBool(true);
             clip.expression = punkteAusJson(c.value(QStringLiteral("expression")).toArray());  // seit Fassung 12
+            clip.frozen = c.value(QStringLiteral("frozen")).toString();  // seit Fassung 13; fehlt es: nicht eingefroren
             // seit Fassung 5 die Reihe `path`; davor die drei festen `effects`
             if (const QJsonValue reihe = c.value(QStringLiteral("path")); reihe.isArray())
                 clip.effekte = reiheAusJson(reihe.toArray(), bericht);

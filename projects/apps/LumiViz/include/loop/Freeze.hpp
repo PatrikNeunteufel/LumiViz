@@ -16,7 +16,8 @@
  * Groesse und Aenderungszeit gemerkt und nur bei einer Aenderung neu gelesen. Nicht hinein
  * gehen, was live bleibt — Fader und Schalter des Kanals, die Lautstaerke des
  * Loops, der Limiter (F3 a, WX5 a) —, und was nicht klingt: Tags, Namen von Kanal
- * und Muster, die Stelle des Clips im Loop. Gleiche Clips teilen so eine Datei.
+ * und Muster, die Stelle des Clips im Loop, seine Marke `frozen` (30f). Gleiche Clips
+ * teilen so eine Datei.
  *
  * Die Klangfassung waechst mit jeder Aenderung am Rechenkern, die gerechnete Toene
  * aendert — sonst spielten alte Wellenformen still weiter (H3 b). Ein Test haelt

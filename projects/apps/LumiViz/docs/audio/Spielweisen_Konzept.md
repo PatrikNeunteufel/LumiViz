@@ -1,6 +1,6 @@
 # LumiViz — Spielweisen der Instrumentfamilien (Konzept)
 
-> **Version:** 0.43.0
+> **Version:** 0.44.0
 > **Datum:** 2026-10-22 (Session 139: Zielbild, SF1 c, SF2 a, SF3 a, SF4 a, SF5 d;
 > Session 140: SF6 a bis SF10 a, Skizze Stufe 1, SK1 a bis SK11 a; Session 141: SK12 a, SK13 a,
 > Zielbild Hammer-Saite, H1 a bis H3 a, F1 a bis F6 a; Session 142: TV1 a bis TV7 a, WX1 a;
@@ -938,6 +938,15 @@ Doppel des jetzigen. Ein geändertes Instrument oder eine neue Klangfassung gilt
 Clip verändert wurde oder seine Datei nur fehlt, sagte die Datei nicht). Kippt, wenn die Marke nur
 „frozen“ und „computing…“ zeigen soll und Publish den Abdruck ohnehin rechnet — dann b.
 
+**Gebaut 30f-1 (S144):** `LoopClip::frozen` (der Abdruck als Text, leer = nicht eingefroren), `.lvloop`
+Fassung 13 mit `frozen` an jedem Clip, auch leer; eine ältere Datei liest sich als nicht eingefroren;
+`Loop::richte` leert alles, was nicht 40 Zeichen `0-9a-f` ist, mit „Frozen mark not valid“ im Bericht;
+`abdruckFassung` leert die Marke — das Einfrieren ändert den Abdruck nicht. Abweichung vom Plan:
+`lanes_demo` bleibt eine Datei der Fassung 12 (sie trägt alle Felder ihrer Fassung; eine Fassungsnummer
+ist eine Zusage über die ganze Datei), `make_spuren_loops.py` unverändert. Literale in neun Testdateien
+auf 13; Test in `test_LoopFreeze` (Datei, Fassung 12 ohne Feld, Richten, Abdruck). Eng unter Release-clang
+und Testing-MSVC 73 / 73, die App unter clang gebaut.
+
 **Befund vor 30a (S143):** Die Lautstärke des Loops (`Loop::laut`) wurde in jeden Schlag gerechnet
 (`Rechenkern.cpp`, `plane`), also **vor** den Effekten der Clips; der Fader des Kanals wirkt nach
 ihnen (27e-1). Weil Drive nicht linear ist, verstellte die Lautstärke des Loops die Zerrung eines
@@ -1279,6 +1288,7 @@ zurückgestellt, Patrik S143). Im Programm nicht angesehen.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 0.44.0 | 2026-10-22 | Session 144. Stufe 30f-1 gebaut (`frozen` am Clip, `.lvloop` 13). |
 | 0.43.0 | 2026-10-22 | Session 144. Plan 30f (drei Teilschritte); FV1 a (der Nachklang eines eingefrorenen Clips klingt über die Naht); FV2 a (`frozen` trägt den Abdruck des eingefrorenen Stands). |
 | 0.42.0 | 2026-10-22 | Session 143. FZ3 a (Zeile *Frozen Clips*, Skizze); Stufe 30e gebaut (Ordner `frozen`, Grenze, Settings). |
 | 0.41.0 | 2026-10-22 | Session 143. FZ1 a (Freeze in sechs Teilschritten 30d–30i); Stufe 30d gebaut (`loop/Freeze`, Wächter der Klangfassung); Befund Pfade im Abdruck, FZ2 a (Dateien über ihren Inhalt, gebaut). |

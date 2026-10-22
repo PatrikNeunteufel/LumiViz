@@ -499,6 +499,12 @@ struct LoopClip
     /// = 1. Punkte hinter dem Ende bleiben und sind nicht zu hoeren. In der Datei
     /// `expression` (seit Fassung 12, immer geschrieben).
     std::vector<SpurPunkt> expression;
+    /// Freeze (Stufe 30f, Entscheid FV2 a): der Abdruck (`clipAbdruck`, 40 Hex-Zeichen)
+    /// des Stands, der beim letzten Speichern eingefroren wurde; leer = nicht
+    /// eingefroren. Gespielt wird die Wellenform zum **jetzigen** Abdruck — weicht er
+    /// hiervon ab, ist der Clip seit dem Einfrieren veraendert. Geht nicht in den
+    /// Abdruck ein. In der Datei `frozen` (seit Fassung 13, immer geschrieben).
+    QString frozen;
     /// Wirken seine Effekte gerade — Schalter an und ein Baustein an?
     [[nodiscard]] bool effekteWirken() const { return effekteAn && effekte.einerAn(); }
 

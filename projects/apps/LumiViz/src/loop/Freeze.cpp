@@ -138,6 +138,7 @@ std::optional<Loop> abdruckFassung(const Loop& loop, ClipOrt ort)
     Loop kopie = loop;
     LoopClip clip = loop.kanaele[static_cast<std::size_t>(ort.kanal)].clips[static_cast<std::size_t>(nr)];
     clip.startTakt = 0;
+    clip.frozen.clear();  // die Marke klingt nicht (30f) — sonst aenderte das Einfrieren den Abdruck
     kopie.kanaele[static_cast<std::size_t>(ort.kanal)].clips = {clip};
     std::optional<Loop> fassung = clipFassung(kopie, ClipOrt{ort.kanal, 0});
     if (!fassung || fassung->muster.size() != 2 || fassung->kanaele.size() != 2) return std::nullopt;
